@@ -28,21 +28,24 @@
   For parsing the configuration URU files
 *************************************************/
 
-#ifndef __U_CONFIG_PARSER_
-#define __U_CONFIG_PARSER_
 #define __U_CONFIG_PARSER_ID "$Id$"
 
-//#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 5
 
 #include "config.h"
-#include "debug.h"
-
-#include "config_parser.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+
+#ifdef __WIN32__
+#include "windoze.h"
+#endif
+
+#include "config_parser.h"
+
+#include "debug.h"
 
 // We don't want sockets, network, protocol, and nothing else here, it's only a parser
 // and it should be a parser
@@ -50,12 +53,20 @@
 //configuration variables moved to tmp_config.cpp and tmp_config.h, since the new
 // netcore is not using them.
 
+//TODO: read_config only works on: A) Absolute paths, B) relative paths to the current working directory. Needs to be fixed, to read relative paths from the specific config file.
+
+//ChangeLog: Allowed array has been removed, any directive is now allowed.
+
 /** Handle nicely foreign languages. setlocale() is not sufficient on systems which didn't installed all locales,
  so we better use our own function. Feel free to add other accents according to your language.
 */
 long my_isalpha(int c) {
+#ifdef __WIN32__
+	return(IsCharAlpha(c));
+#else
   return((long)index("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ·‡‚‰\
-ÈËÍÎÛÚÙˆ˙˘˚¸Á«Ò—", c));
+ÈËÍÎÛÚÙˆ˙˘˚¸Á«Ò—", c)); //<- Not sure how this looks like under UTF, but I'm sure that it looks horrible.
+#endif
 }
 
 /**
@@ -69,7 +80,7 @@ long my_isalpha(int c) {
 	be called several times, and will override any previous
 	value(s)
 */
-int read_config(FILE * dsc, char * conf,st_config ** cfg2, char ** allowed, int nall) {
+int read_config(FILE * dsc, char * conf,st_config ** cfg2) { //, char ** allowed, int nall) {
 	FILE * f;
 
 	st_config * cfg=*cfg2;
@@ -88,7 +99,7 @@ int read_config(FILE * dsc, char * conf,st_config ** cfg2, char ** allowed, int 
 	Byte quote=0; //quote mode
 	Byte slash=0; //slash mode
 	Byte win=0; //windoze mode
-	Byte check=0; //check if valid
+//	Byte check=0; //check if valid
 	Byte key=0; //are we in key mode?
 
 	Byte store_key=0; //store the key?
@@ -112,9 +123,9 @@ int read_config(FILE * dsc, char * conf,st_config ** cfg2, char ** allowed, int 
 	while(!feof(f)) {
 		c=fgetc(f);
 		//printf("%c%i",c,mode); fflush(0);
-		if(c=='#' && quote==0) {
+		if((c=='#' || c==';') && quote==0) {
 			if(mode==1 || mode==2 || mode==3) {
-				fprintf(dsc,"ERR: Parse error reading %s at line %i, unexpected \"#\"",conf,l);
+				fprintf(dsc,"ERR: Parse error reading %s at line %i, unexpected \"%c\"",conf,l,c);
 				parse_error=1;
 			}
 			comment=1;  //activate comment flag
@@ -302,8 +313,11 @@ int read_config(FILE * dsc, char * conf,st_config ** cfg2, char ** allowed, int 
 			left_buffer[sizeA]='\0';
 			right_buffer[sizeB]='\0';
 
+			DBG(8,"sk:%i,mode:%i,key:%i,sizeA:%i,sizeB:%i\n",store_key,mode,key,sizeA,sizeB);
+			DBG(3,"read %s:%s [%s]\n",left_buffer,right_buffer,cfg->keys[current_key].key);
+
 			if(!strcmp((const char *)left_buffer,"read_config")) {
-				ret=read_config(dsc,(char *)right_buffer,&cfg,allowed,nall);
+				ret=read_config(dsc,(char *)right_buffer,&cfg); //,allowed,nall);
 				if(ret<=-4) {
 					fprintf(dsc,"ERR: Fatal error reading include file %s at line %i of %s\n",right_buffer,l-1,conf);
 					return -4;
@@ -313,17 +327,17 @@ int read_config(FILE * dsc, char * conf,st_config ** cfg2, char ** allowed, int 
 				}
 			} else {
 
-				check=0;
+/*				check=0;
 				for(e=0; e<nall; e++) {
 					if(!strcmp((const char *)allowed[e],left_buffer)) {
 						check=1;
 						break;
 					}
-				}
-				if(check!=1) {
+				} */
+/*				if(check!=1) {
 					fprintf(dsc,"WAR: Unknown configuration directive %s reading %s at line %i\n",left_buffer,conf,l);
 					warning=1;
-				} else {
+				} else { */
 					found_key=-1;
 					if(cfg->keys[current_key].config==NULL) {
 						cfg->keys[current_key].n++;
@@ -369,8 +383,10 @@ int read_config(FILE * dsc, char * conf,st_config ** cfg2, char ** allowed, int 
 					}
 					strcpy((char *)cfg->keys[current_key].config[found_key].value,\
 					(const char *)right_buffer);
-				}
+				//}
 			}
+			sizeA=0;
+			sizeB=0;
 		}
 		store_key=0;
 
@@ -387,8 +403,128 @@ int read_config(FILE * dsc, char * conf,st_config ** cfg2, char ** allowed, int 
 	return 0;
 }
 
-U32 cnf_getU32(U32 defecto,char * what,char * where,st_config * cfg) {
+/** adds a new key
+*/
+int cnf_add_key(char * value,char * what,char * where,st_config ** cfg2) {
+	DBG(4,"adding key [%s] %s:%s\n",where,what,value);
+	st_config * cfg;
+	int e,found_key,current_key;
+	if(*cfg2==NULL) {
+		*cfg2=(st_config *)malloc(sizeof(st_config));
+		cfg=*cfg2;
+		cfg->n=0;
+		cfg->keys=NULL;
+		if(cfg==NULL) {
+			return -4;
+		}
+	}
+	cfg=*cfg2;
 
+	found_key=-1;
+	if(cfg->keys==NULL) {
+		cfg->n++;
+		cfg->keys=(st_config_keys *)malloc(sizeof(st_config_keys) * cfg->n);
+	} else {
+		//search a previous key
+		for(e=0; e<cfg->n; e++) {
+			if(!strcmp((const char *)cfg->keys[e].key,(const char *)where)) {
+				found_key=e;
+				break;
+			}
+		}
+
+		if(found_key!=-1) { current_key=found_key; }
+		else { //then create it
+			cfg->n++;
+			cfg->keys=(st_config_keys *)realloc((void *)cfg->keys,\
+			sizeof(st_config_keys) * cfg->n);
+		}
+	}
+
+	if(cfg->keys==NULL) {
+		return -4;
+	}
+	if(found_key==-1) {
+		current_key=cfg->n-1;
+		strcpy((char *)cfg->keys[current_key].key,(char *)where);
+		cfg->keys[current_key].n=0;
+		cfg->keys[current_key].config=NULL;
+	}
+
+	//now the value
+	found_key=-1;
+	if(cfg->keys[current_key].config==NULL) {
+		cfg->keys[current_key].n++;
+		cfg->keys[current_key].config=(st_config_vals *)\
+		malloc(sizeof(st_config_vals) * cfg->keys[current_key].n);
+		if(cfg->keys[current_key].config==NULL) {
+			return -4;
+		}
+	} else {
+
+		for(e=0; e<cfg->keys[current_key].n; e++) {
+			if(!strcmp((const char *)cfg->keys[current_key].config[e].name,\
+			(const char *)what)) {
+				found_key=e;
+				break;
+			}
+		}
+		if(found_key==-1) {
+			cfg->keys[current_key].n++;
+			cfg->keys[current_key].config=(st_config_vals *)\
+			realloc((void *)cfg->keys[current_key].config,\
+			sizeof(st_config_vals) * cfg->keys[current_key].n);
+		}
+	}
+	if(cfg->keys[current_key].config==NULL) {
+		return -4;
+	}
+	if(found_key==-1) {
+		found_key=cfg->keys[current_key].n-1;
+		strcpy((char *)cfg->keys[current_key].config[found_key].name,\
+		(const char *)what);
+		cfg->keys[current_key].config[found_key].value=NULL;
+	}
+
+	if(cfg->keys[current_key].config[found_key].value!=NULL) {
+		free((void *)cfg->keys[current_key].config[found_key].value);
+	}
+	cfg->keys[current_key].config[found_key].value=(char *)\
+	malloc(sizeof(char) * strlen((char *)value)+1);
+	if(cfg->keys[current_key].config[found_key].value==NULL) {
+		return -4;
+	}
+	strcpy((char *)cfg->keys[current_key].config[found_key].value,\
+	(const char *)value);
+	return 0;
+}
+
+
+/** Checks if an specific var is available
+		\returns 1 if true, elsewhere if not
+*/
+char cnf_exists(char * what,char * where,st_config * cfg) {
+	DBG(4,"cnf_exists? [%s] %s\n",where,what);
+	int i,e;
+	if(cfg==NULL) return 0;
+	for(i=0; i<cfg->n; i++) {
+		if(!strcmp((const char *)cfg->keys[i].key,(const char *)where)) {
+			for(e=0; e<cfg->keys[i].n; e++) {
+				if(!strcmp((const char *)cfg->keys[i].config[e].name,(const char *)what)) {
+					DBG(4,"true\n");
+					return 1;
+				}
+			}
+			break;
+		}
+	}
+	DBG(4,"false\n");
+	return 0;
+}
+
+//gets a U32 value
+U32 cnf_getU32(U32 defecto,char * what,char * where,st_config * cfg) {
+	DBG(4,"getU32 [%s] %s:%i\n",where,what,defecto);
 	int i,e;
 
 	if(cfg==NULL) return defecto;
@@ -396,18 +532,56 @@ U32 cnf_getU32(U32 defecto,char * what,char * where,st_config * cfg) {
 		if(!strcmp((const char *)cfg->keys[i].key,(const char *)where)) {
 			for(e=0; e<cfg->keys[i].n; e++) {
 				if(!strcmp((const char *)cfg->keys[i].config[e].name,(const char *)what)) {
+					DBG(4,"return %i\n",atoi(cfg->keys[i].config[e].value));
 					return(atoi(cfg->keys[i].config[e].value));
 				}
 			}
 			break;
 		}
 	}
+	DBG(4,"return %i\n",defecto);
 	//abort();
 	return defecto;
 }
 
-U16 cnf_getU16(U16 defecto,char * what,char * where,st_config * cfg) {
+//sets a U32 value
+void cnf_setU32(U32 val,char * what,char * where,st_config ** cfg2) {
+	DBG(4,"setU32 [%s] %s:%i\n",where,what,val);
+	char * value=NULL;
+	value=(char *)malloc(101*sizeof(char));
+	snprintf(value,100,"%i",val);
 
+	cnf_add_key(value,what,where,cfg2);
+
+	if(value!=NULL) { free((void *)value); }
+}
+
+//sets a U32 value
+void cnf_setU16(U16 val,char * what,char * where,st_config ** cfg2) {
+	DBG(4,"setU16 [%s] %s:%i\n",where,what,val);
+	char * value=NULL;
+	value=(char *)malloc(101*sizeof(char));
+	snprintf(value,50,"%i",val);
+
+	cnf_add_key(value,what,where,cfg2);
+
+	if(value!=NULL) { free((void *)value); }
+}
+
+void cnf_setByte(Byte val,char * what,char * where,st_config ** cfg2) {
+	DBG(4,"setByte [%s] %s:%i\n",where,what,val);
+	char * value=NULL;
+	value=(char *)malloc(101*sizeof(char));
+	snprintf(value,5,"%i",val);
+
+	cnf_add_key(value,what,where,cfg2);
+
+	if(value!=NULL) { free((void *)value); }
+}
+
+
+U16 cnf_getU16(U16 defecto,char * what,char * where,st_config * cfg) {
+	DBG(4,"getU16 [%s] %s:%i\n",where,what,defecto);
 	int i,e;
 
 	if(cfg==NULL) {
@@ -418,18 +592,20 @@ U16 cnf_getU16(U16 defecto,char * what,char * where,st_config * cfg) {
 		if(!strcmp((const char *)cfg->keys[i].key,(const char *)where)) {
 			for(e=0; e<cfg->keys[i].n; e++) {
 				if(!strcmp((const char *)cfg->keys[i].config[e].name,(const char *)what)) {
+					DBG(4,"return %i\n",atoi(cfg->keys[i].config[e].value));
 					return((U16)atoi(cfg->keys[i].config[e].value));
 				}
 			}
 			break;
 		}
 	}
+	DBG(4,"return %i\n",defecto);
 	//abort();
 	return defecto;
 }
 
 Byte cnf_getByte(Byte defecto,char * what,char * where,st_config * cfg) {
-
+	DBG(4,"getByte [%s] %s:%i\n",where,what,defecto);
 	int i,e;
 
 	DBG(5,"%s,%s\n",what,where);
@@ -447,36 +623,92 @@ Byte cnf_getByte(Byte defecto,char * what,char * where,st_config * cfg) {
 			for(e=0; e<cfg->keys[i].n; e++) {
 				DBG(6,"%i-%i\n",i,e);
 				if(!strcmp((const char *)cfg->keys[i].config[e].name,(const char *)what)) {
+					DBG(4,"return %i\n",atoi(cfg->keys[i].config[e].value));
 					return((Byte)atoi(cfg->keys[i].config[e].value));
 				}
 			}
 			break;
 		}
 	}
+	DBG(4,"return %i\n",defecto);
 	return defecto;
 }
 
-Byte * cnf_getString(Byte * defecto,char * what,char * where,st_config * cfg) {
-
+char * cnf_getString(const char * defecto,const char * what,const char * where,st_config * cfg) {
+	DBG(4,"getString [%s] %s:%s\n",where,what,defecto);
 	int i,e;
 
 	DBG(5,"%s,%s\n",what,defecto);
 
 	if(cfg==NULL) {
 		DBG(5,"Is cfg null?");
-		return defecto;
+		return (char *)defecto;
 	}
 	for(i=0; i<cfg->n; i++) {
 		if(!strcmp((const char *)cfg->keys[i].key,(const char *)where)) {
 			for(e=0; e<cfg->keys[i].n; e++) {
 				if(!strcmp((const char *)cfg->keys[i].config[e].name,(const char *)what)) {
-					return((Byte *)((cfg->keys[i].config[e].value)));
+					DBG(4,"return %s\n",cfg->keys[i].config[e].value);
+					return((char *)((cfg->keys[i].config[e].value)));
 				}
 			}
 			break;
 		}
 	}
-	return defecto;
+	DBG(4,"return %s\n",defecto);
+	return (char *)defecto;
 }
 
-#endif
+void cnf_copy(const char * to, const char * from,st_config ** cfg2) {
+	DBG(4,"copy from %s to %s\n",from,to);
+	int i,e;
+	st_config * cfg;
+	cfg=*cfg2;
+
+	if(cfg==NULL) return;
+	if(!strcmp(from,to)) return;
+	for(i=0; i<cfg->n; i++) {
+		if(!strcmp((const char *)cfg->keys[i].key,(const char *)from)) {
+
+			for(e=0; e<cfg->keys[i].n; e++) {
+				cnf_add_key((char *)((cfg->keys[i].config[e].value)),\
+				(char *)cfg->keys[i].config[e].name,\
+				(char *)to,cfg2);
+			}
+
+			break;
+		}
+	}
+}
+
+void cnf_copy_key(const char * to_name,const char * from_name,const char * to, const char * from,st_config ** cfg2) {
+	DBG(4,"copy from %s:%s to %s:%s\n",from,from_name,to,to_name);
+	if(cnf_exists((char *)from_name,(char *)from,*cfg2)==1) {
+		cnf_add_key((char *)cnf_getString("",(char *)from_name,(char *)from,*cfg2),(char *)to_name,(char *)to,cfg2);
+	}
+}
+
+
+void cnf_destroy(st_config ** cfg2) {
+
+	int i,e;
+	st_config * cfg;
+	cfg=*cfg2;
+
+	if(*cfg2==NULL) return;
+
+	for(i=0; i<cfg->n; i++) {
+		for(e=0; e<cfg->keys[i].n; e++) {
+			if(cfg->keys[i].config[e].value!=NULL) {
+				free((void *)cfg->keys[i].config[e].value);
+			}
+		}
+		if(cfg->keys[i].config!=NULL) {
+			free((void *)cfg->keys[i].config);
+		}
+	}
+	free((void *)cfg->keys);
+	free((void *)*cfg2);
+	cfg2=NULL;
+}
+

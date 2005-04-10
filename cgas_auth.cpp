@@ -37,22 +37,31 @@
 //#define _DBG_LEVEL_ 10
 
 #include "config.h"
-#include "debug.h"
 
-#include <sys/socket.h>
 #include <sys/types.h>
-#include <netinet/in.h>
-#include <netdb.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <arpa/inet.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
+
+#ifdef __WIN32__
+#include "windoze.h"
+#include <winsock.h>
+#else
+#include <sys/socket.h>
+#include <netdb.h>
+//#include <netinet/in.h> //not sure if other OS will need them...
+//#include <arpa/inet.h>
+#endif
 
 #include "data_types.h"
+#include "stdebug.h"
 
 #include "cgas_auth.h"
+
+#include "debug.h"
 
 extern char * VERSION;
 
@@ -61,7 +70,7 @@ int CGAS_parse_response(char * msg,int size,char * hash,char * passwd,char * uid
 /** Parse out the Auth Credentials [INTERNAL USE ONLY]
 */
 int CGAS_parse_response(char * msg,int size,char * hash,char * passwd,char * uid) {
-	//Let's go to use some type of weird Tunning machine for this
+	//Let's go to use some type of weird Turing machine for this
 	int c; //current_char
 	char left_buffer[1024]; //Max size of a variable
 	char right_buffer[1024]; //Max size of a value
@@ -212,7 +221,7 @@ int CGAS_parse_response(char * msg,int size,char * hash,char * passwd,char * uid
 
 /** Querys the Auth credentials to the Cyan's Global Auth Server
 */
-int CGAS_query(char * login,char * challenge,char * client_ip,char * hash,char * passwd,char * uid) {
+int CGAS_query(char * login,char * challenge,char * client_ip,char * hash,char * passwd,char * uid,Byte log) {
 	//WARNING - YOU MUST NEVER EDIT THESE VARS
 	char * cgas_host="auth.plasma.corelands.com";
 	unsigned short int cgas_port=80;
@@ -230,6 +239,9 @@ int CGAS_query(char * login,char * challenge,char * client_ip,char * hash,char *
 	//Auth result
 	// <=0 -> Failed
 	// 1 -> OK
+
+	static U32 last_query=0;
+	U32 now;
 
 	int sock; //the socket
 	struct sockaddr_in server; // server address struct
@@ -266,7 +278,16 @@ int CGAS_query(char * login,char * challenge,char * client_ip,char * hash,char *
 	if(!strcmp(last_challenge,challenge)) { return -1; }
 	strcpy(last_challenge,challenge);
 	//two consequtive challenges meants that something is going wrong, or someone is attempting some type of weird hack
-	
+
+	//another sanity check, only allow one query per ip and per second.
+	now=(U32)time(NULL);
+	static char last_ip[50]="";
+
+	if(!strcmp(last_ip,client_ip) && (now-last_query)<1) {
+		return -1;
+	}
+	strcpy(last_ip,client_ip);
+
 	//Perform sanity checks
 	if(strlen(user_agent)>=100 || strlen(login)>=100 || strlen(challenge)!=32 || strlen(client_ip)>=40 || strlen(login)==0 || strlen(client_ip)==0 || strlen(user_agent)==0) {
 		return -1; //Avoid to send a malformed (hacked) petition to the server.
@@ -303,32 +324,71 @@ X-plClientIP: %s\r\n\r\n\
 
 	msg_size=strlen(msg); //Get the msg size
 
-	FILE * f_cgas;
-	f_cgas=fopen("CGASauth.log","a");
-	fprintf(f_cgas,"Sent:\n%s\n",msg);
+	//FILE * f_cgas;
+	//f_cgas=fopen("CGASauth.log","a");
+	//fprintf(f_cgas,"Sent:\n%s\n",msg);
+	st_log * f_cgas=NULL;
+	if(log==1) {
+		f_cgas=open_log("CGASauth.log",2,DF_APPEND);
+		stamp2log(f_cgas);
+		print2log(f_cgas,"Sent:\n%s\n",msg);
+	}
 
 	//Send the msg to the server
 	if(send(sock,msg,msg_size,0)!=msg_size) {
-			perror("sended number of bytes!=msg_size?");
-			fprintf(f_cgas,"Error on send()\n");
-			fclose(f_cgas);
+			ERR(3,"sended number of bytes!=msg_size?");
+			//perror("sended number of bytes!=msg_size?");
+			//fprintf(f_cgas,"Error on send()\n");
+			//fclose(f_cgas);
+			if(log==1) {
+				plog(f_cgas,"Error on send()\n");
+				close_log(f_cgas);
+			}
+#ifdef __WIN32__
+			closesocket(sock);
+#else
+			close(sock);
+#endif
 			return -1;
 	}
 
 	//Now check the server answer
-	fprintf(f_cgas,"Received:\n");
+	if(log==1) {
+		//fprintf(f_cgas,"Received:\n");
+		plog(f_cgas,"Received:\n");
+	}
 	//Recieve the message
 	if((rcv_size=recv(sock,buf,HTTP_BUFFER_SIZE-1,0))<=0) {
-		perror("recv");
-		fprintf(f_cgas,"Error on recv()\n");
-		fclose(f_cgas);
+		//perror("recv");
+		ERR(3,"recv");
+		//fprintf(f_cgas,"Error on recv()\n");
+		//fclose(f_cgas);
+		if(log==1) {
+			print2log(f_cgas,"Error on recv()\n");
+			close_log(f_cgas);
+		}
+#ifdef __WIN32__
+		closesocket(sock);
+#else
+		close(sock);
+#endif
 		return -1;
 	}
 	buf[rcv_size] = '\0';
-	fprintf(f_cgas,"%s\n",buf);
-	fclose(f_cgas);
+	if(log==1) {
+		//fprintf(f_cgas,"%s\n",buf);
+		//fclose(f_cgas);
+		print2log(f_cgas,"%s\n",buf);
+		close_log(f_cgas);
+	}
 
+#ifdef __WIN32__
+	closesocket(sock);
+#else
 	close(sock);
+#endif
+
+	last_query=(U32)time(NULL);
 
 	//Now parse out the credentials
 	ret=CGAS_parse_response(buf,rcv_size,hash,passwd,uid);

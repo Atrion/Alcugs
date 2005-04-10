@@ -24,6 +24,9 @@
 *                                                                              *
 *******************************************************************************/
 
+/*
+  Conversion between different data types
+*/
 
 #ifndef __U_CONV_FUNS_H_
 #define __U_CONV_FUNS_H_
@@ -31,8 +34,10 @@
 
 #include "data_types.h" //for Byte, and others
 
+//creates a 0000000000000000 valid guid
+const Byte * get_guid(Byte * guid);
 //creates a 00000-0000-0000-0000-000000000000 valid guid
-Byte * create_str_guid(Byte * guid);
+const Byte * create_str_guid(Byte * guid);
 Byte * str_guid_to_hex(Byte * guid);
 
 //returns a pointer to a formated time string

@@ -31,19 +31,38 @@
 //#define _DBG_LEVEL_ 10
 
 #include "config.h"
-#include "debug.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "data_types.h" //for Byte, and others
 #include "conv_funs.h"
 
-Byte * create_str_guid(Byte * guid) {
+#include "debug.h"
+
+/**
+	Converts an hex guid to ascii
+*/
+const Byte * get_guid(Byte * guid) {
+
+	if(guid==NULL) return (const Byte *)"null";
+
+	static Byte str_guid[17];
+	hex2ascii2(str_guid,guid,8);
+	return str_guid;
+}
+
+/**
+	Converts an hex uid to ascii.
+*/
+const Byte * create_str_guid(Byte * guid) {
 	int off1=0;
 	int off2=0;
+
+	if(guid==NULL) return (const Byte *)"null";
 
 	Byte str_guid[33];
 	static Byte str_guid2[50];
@@ -78,11 +97,20 @@ Byte * create_str_guid(Byte * guid) {
 	return str_guid2;
 }
 
+/**
+	Converts an Ascii guid to hex
+*/
+
 Byte * str_guid_to_hex(Byte * guid) {
 	int off1=0;
 	int off2=0;
 
 	static Byte str_guid[50];
+
+	int i;
+	for(i=0; i<(int)strlen((const char *)guid); i++) {
+		guid[i]=toupper(guid[i]);
+	}
 
 	ascii2hex2(str_guid+off1,guid+off2,4); //ID1
 	off1+=4;
@@ -103,6 +131,7 @@ Byte * str_guid_to_hex(Byte * guid) {
 	#if 0
 	Byte kk[100];
 	hex2ascii2(kk,str_guid,16);
+	printf("-->%s<--",guid);
 	printf("-->%s<--",kk);
 	abort();
 	#endif
@@ -110,7 +139,9 @@ Byte * str_guid_to_hex(Byte * guid) {
 	return str_guid; //In hex
 }
 
-//returns a pointer to a formated time string
+/**
+ returns a pointer to a formated time string
+*/
 Byte * get_stime(U32 timestamp, U32 microseconds) {
 	static Byte btime[50];
 	Byte tmptime[25];
@@ -127,13 +158,12 @@ Byte * get_stime(U32 timestamp, U32 microseconds) {
 	return btime;
 }
 
-/*------------------------------------------
-  Conversion functions for the
-	 MD5-Champ challenge used in Uru
+/**
+  Conversion functions
 	 hex2ascii out must be 2*in
 	 ascii2hex in must be 2*out
 	 REMEMBER, SIZE of the smallest string!!!
--------------------------------------------*/
+*/
 void hex2ascii2(Byte * out, Byte * in, int size) {
 	int i;
 	for(i=0; i<size; i++) {
@@ -153,7 +183,7 @@ void ascii2hex2(Byte * out, Byte * in, int size) {
 	}
 }
 
-/*------------------------------------------------------------
+/**
   De/Encodes the specific UruString associated to a buffer.
 	The result will be put on out, and it must have the required
 	size to host it!!!
@@ -162,7 +192,7 @@ void ascii2hex2(Byte * out, Byte * in, int size) {
 	 how
 	  0x00 -> Normal string
 		0x01 -> Invert Bits string
--------------------------------------------------------------*/
+*/
 int decode_urustring(unsigned char* out, unsigned char* in, U16 max_size) {
 	U16 size;
 	Byte how;
@@ -252,7 +282,9 @@ char check_buf(Byte * buf, Byte car, int n) {
 	return 1; //true
 }
 
-//Strips out some characters that win32 doesn't like..
+/**
+	Strips out some characters that win32 doesn't like..
+*/
 void str_filter(Byte * what) {
 	int i=0,e=0;
 	while(what[i]!=0) {

@@ -26,6 +26,7 @@
 
 /*
 	MySQL driver abstraction.
+	(At current time only MySQL is supported)
 */
 
 
@@ -34,24 +35,55 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_SQL_DB_H_ID "$Id$"
 
+#ifdef __WIN32__
+#include "windoze.h"
+#endif
+
+#include <mysql/mysql.h>
+
 #include "data_types.h"
+#include "stdebug.h"
 
-/*--------------------------------------------
-  Closes the mysql connection
----------------------------------------------*/
-void close_mysql_connection(MYSQL * conn);
+//error codes
+#define SQL_OK     0 //the requested operation was succesfully performed
+#define SQL_ERR   -1 //An error ocurred
+#define SQL_NOMEM -2 //Not enough memory to allocate a struct
 
-/*---------------------------------------------
-  Starts the mysql connection
-----------------------------------------------*/
-MYSQL * make_mysql_connection();
 
-/*------------------------------------------------------------
-  Displays any mysql error
-------------------------------------------------------------*/
-void print_mysql_error(MYSQL * conn);
+//flags
+#define SQL_LOG      0x01   //Enable logging
+#define SQL_LOGQ     0x02   //Log sql querys
+#define SQL_CREATEDB 0x04   //Allow db creation if not exists?
+#define SQL_STAYCONN 0x08   //Always stay connected to the database (maintains a persistent link)
+#define SQL_CREATABL 0x10   //Allow to create tables if them doesn't exist
 
-//int create_mysql_database(char * name, MYSQL *conn);
+typedef struct {
+	MYSQL * conn; //<! Mysql connection handler
+	Byte flags; //<! Flags
+	char * host; //<! Database host
+	U16 port; //<! Db port
+	char * username; //<! Db username
+	char * passwd; //<! Db password
+	char * name; //<! Database name
+	U32 timeout; //<! Connection timeout
+	U32 stamp; //<! Time of the last query
+
+	st_log * sql; //<! SQL logging subsystem
+	st_log * err; //<! Error logging subsystem
+	st_log * log; //<! Standard logging sybsystem
+
+} st_sql;
+
+
+void sql_init(st_sql * db);
+void sql_start(st_sql * db);
+void sql_idle(st_sql * db);
+void sql_shutdown(st_sql * db);
+
+int sql_begin(st_sql * db);
+int sql_query(st_sql * db,char * query,char * name);
+void sql_error(st_sql * db,char * msg);
+void sql_end(st_sql * db);
 
 #endif
 

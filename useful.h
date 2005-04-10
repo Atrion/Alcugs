@@ -29,11 +29,16 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_USEFUL_H_ID "$Id$"
 
-#include<stdio.h>
-#include<string.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "data_types.h"
 
 char * ask();
+int get_host_info(char * argv,char * hostname,char * username,U16 * port,char * avie);
 
+U32 get_microseconds();
+double get_current_time();
 
 #endif
 

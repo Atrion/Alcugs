@@ -54,10 +54,21 @@ typedef struct {
 } st_config;
 
 
-int read_config(FILE * dsc, char * conf,st_config ** cfg, char ** allowed, int nall);
+int read_config(FILE * dsc, char * conf,st_config ** cfg); //, char ** allowed, int nall);
 U32 cnf_getU32(U32 defecto,char * what,char * where,st_config * cfg);
 U16 cnf_getU16(U16 defecto,char * what,char * where,st_config * cfg);
 Byte cnf_getByte(Byte defecto,char * what,char * where,st_config * cfg);
-Byte * cnf_getString(Byte * defecto,char * what,char * where,st_config * cfg);
+char * cnf_getString(const char * defecto,const char * what,const char * where,st_config * cfg);
+char cnf_exists(char * what,char * where,st_config * cfg);
+
+void cnf_setU32(U32 val,char * what,char * where,st_config ** cfg2);
+void cnf_setU16(U16 val,char * what,char * where,st_config ** cfg2);
+void cnf_setByte(Byte val,char * what,char * where,st_config ** cfg2);
+int cnf_add_key(char * value,char * what,char * where,st_config ** cfg2);
+
+void cnf_copy(const char * to, const char * from,st_config ** cfg2);
+void cnf_copy_key(const char * to_name,const char * from_name,const char * to, const char * from,st_config ** cfg2);
+
+void cnf_destroy(st_config ** cfg2);
 
 #endif

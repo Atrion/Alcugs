@@ -24,20 +24,23 @@
 *                                                                              *
 *******************************************************************************/
 
+// License file
+
 #ifndef _U_LICENSE_
 #define _U_LICENSE_
 
 #define _U_LICENSE_ID "$Id$"
 
-#include <stdio.h>
-#include <string.h>
-
 //#define _DBG_LEVEL_ 10
 
 #include "config.h"
-#include "debug.h"
+
+#include <stdio.h>
+#include <string.h>
 
 #include "license.h"
+
+#include "debug.h"
 
 /*--------------------------------
       disclaimer(s) - don't touch
@@ -457,8 +460,18 @@ Public License instead of this License.\n\
     to the Alcugs H'uru server team for the immediate creation of a fix for\n\
     the especific hole.\n\
 \n\
+    Addemdum:\n\
+    You must remember that the GPL, obligates you to release the sources of\n\
+    any project that is using or is based on the Alcugs H'uru server sources.\n\
+    You must also credit to the original Authors of the work, and never claim\n\
+    that you wrote the software.\n\
+\n\
+\n\
     ~The Alcugs H'uru Server Team.\n\
     24th of October of 2004.\n\
+\n\
+\n\
+    Revised: 14th of Decemeber of 2004.\n\
 \n\
     You may pass the output of license to \"more\" using a pipe \"./uru -l | more\"\n\
     \n";
@@ -473,6 +486,14 @@ int license_check(FILE * desc,int argc,char * argv[]) {
 	}
 	fprintf(desc,"%s",__uru_disclaimer_short);
 	return 0;
+}
+
+void show_disclaimer() {
+	printf("%s",__uru_disclaimer_short);
+}
+
+void show_bigdisclaimer() {
+	printf("%s",__uru_disclaimer_long);
 }
 
 

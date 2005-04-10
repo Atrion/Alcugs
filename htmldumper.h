@@ -31,29 +31,23 @@
 //returns the pointer to the string associated to this node
 const char * vault_get_type(Byte type);
 //get the permissions
-void dump_permissions(FILE * f,U32 permissions);
+void dump_permissions(st_log * f,U32 permissions);
 //print the flags
-void dump_flags(FILE * f,U32 flag1,U32 flag2,U32 flag3);
+void dump_flags(st_log * f,U32 flag1,U32 flag2,U32 flag3);
 
 //returns the pointer to the string associated to this node
 const char * vault_get_folder_type(U32 type);
-
 const char * vault_get_operation(Byte type);
-
 const char * vault_get_task(Byte type);
-
 const char * vault_get_data_type(U16 dtype);
-
 const char * vault_get_sub_data_type(Byte type);
 
 //html dumper
-int vault_parse_node_data(FILE * f, t_vault_node * n);
-
-void htmlParseCreatableGenericValue(FILE * f,void * data);
-
-void htmlParseCreatableStream(FILE * f,void * data,Byte id);
-
-void htmlVaultParse(t_vault_mos * vobj,st_uru_client * u,int recv);
+int vault_parse_node_data(st_log * f, t_vault_node * n);
+void htmlParseCreatableGenericValue(st_log * f,void * data);
+void htmlParseCreatableStream(st_log * f,void * data,Byte id);
+//rcv flag 0x01 from peer, 0x00 to peer
+void htmlVaultParse(st_unet * net,t_vault_mos * vobj,int sid,int recv);
 
 #endif
 

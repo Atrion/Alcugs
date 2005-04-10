@@ -26,16 +26,12 @@
 
 //server side message parser
 
-#ifndef __U_AUTH_MSG_H_
-#define __U_AUTH_MSG_H_
+#ifndef __U_PSAUTH_MSG_H_
+#define __U_PSAUTH_MSG_H_
 /* CVS tag - DON'T TOUCH*/
-#define __U_AUTH_MSG_H_ID "$Id$"
+#define __U_PSAUTH_MSG_H_ID "$Id$"
 
-/*-----------------------------------------------------------------
-	processes the plNetMsg and sends the adient reply (preliminar)
-	 -- returns the size of the packet --
-------------------------------------------------------------------*/
-int process_auth_plNetMsg(int sock,Byte * buf,int size,st_uru_client * u);
+int process_sauth_plNetMsg(st_unet * net,Byte * buf,int size,int sid);
 
 #endif
 

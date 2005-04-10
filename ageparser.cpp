@@ -31,7 +31,6 @@
 //#define _DBG_LEVEL_ 10
 
 #include "config.h"
-#include "debug.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -42,19 +41,22 @@
 #include <sys/types.h>
 #include <stdio.h>
 
-#define DEBUG
+#ifdef __WIN32__
+#include "windoze.h"
+#endif
 
 #include "data_types.h" //for U32,Byte and others
 #include "files.h" //to open close files into a buffer (nice eh!)
 #include "conv_funs.h"
+#include "stdebug.h"
 
 #include "ageparser.h"
 
+#include "debug.h"
+
 //parse out age structures
-
-
 void init_age_def(t_age_def * age) {
-	bzero(age,sizeof(t_age_def));
+	memset(age,0,sizeof(t_age_def));
 	age->page=NULL;
 }
 
@@ -62,8 +64,9 @@ void destroy_age_def(t_age_def * age) {
 	if(age!=NULL) {
 		if(age->page!=NULL) {
 			free((void *)age->page);
+			age->page=NULL;
 		}
-		free((void *)age);
+		//free((void *)age);
 	}
 }
 
@@ -79,7 +82,7 @@ int age_add_page(char * right_buffer,t_page_def ** page,S32 * n_pages) {
 		*page=(t_page_def *)realloc((void *)*page,sizeof(t_page_def) * *n_pages);
 	}
 	if(*page==NULL) {
-		fprintf(stderr,"FATAL, not enough memory!!!\n");
+		print2log(f_err,"FATAL, not enough memory!!!\n");
 		abort();
 		return -1;
 	}
@@ -132,7 +135,7 @@ int age_add_page(char * right_buffer,t_page_def ** page,S32 * n_pages) {
 
 }
 
-int parse_age_descriptor(FILE * dsc,char * buf,int size,t_age_def * age) {
+int parse_age_descriptor(st_log * dsc,char * buf,int size,t_age_def * age) {
 	int c; //current_char
 	char left_buffer[1024]; //Max size of a variable
 	char right_buffer[1024]; //Max size of a value
@@ -156,7 +159,7 @@ int parse_age_descriptor(FILE * dsc,char * buf,int size,t_age_def * age) {
 		//printf("[%c](%i)",c,mode); fflush(0);
 		if(c=='#' && quote==0) {
 			if(mode==1 || mode==2 || mode==3) {
-				fprintf(dsc,"ERR: Parse error at line %i, unexpected \"#\"",l);
+				print2log(dsc,"ERR: Parse error at line %i, unexpected \"#\"",l);
 				parse_error=1;
 			}
 			comment=1;  //activate comment flag
@@ -165,7 +168,7 @@ int parse_age_descriptor(FILE * dsc,char * buf,int size,t_age_def * age) {
 		else if(c=='\n' || c=='\r') {
 			comment=0;
 			if(mode==1 || mode==2) {
-				fprintf(dsc,"ERR: Parse error at line %i, missing right member\n",l);
+				print2log(dsc,"ERR: Parse error at line %i, missing right member\n",l);
 				parse_error=1;
 			}
 			if(c=='\r') {
@@ -186,7 +189,7 @@ int parse_age_descriptor(FILE * dsc,char * buf,int size,t_age_def * age) {
 			if(quote==1) { quote=0; mode=4; }
 			else if(mode==2) { mode=3; quote=1; }
 			else {
-				fprintf(dsc,"ERR: Parse error at line %i, unexpected '\"'\n",l);
+				print2log(dsc,"ERR: Parse error at line %i, unexpected '\"'\n",l);
 				parse_error=1;
 			}
 			win=0;
@@ -202,7 +205,7 @@ int parse_age_descriptor(FILE * dsc,char * buf,int size,t_age_def * age) {
 			if(quote==1) {
 				slash=1;
 			} else {
-				fprintf(dsc,"ERR: Parse error at line %i, unexpected '\\'\n",l);
+				print2log(dsc,"ERR: Parse error at line %i, unexpected '\\'\n",l);
 				parse_error=1;
 			}
 			win=0;
@@ -215,7 +218,7 @@ int parse_age_descriptor(FILE * dsc,char * buf,int size,t_age_def * age) {
 			}
 			else if(mode==3) {
 				if(c=='=') {
-					fprintf(dsc,"ERR: Parse error at line %i, unexpected \"=\"\n",l);
+					print2log(dsc,"ERR: Parse error at line %i, unexpected \"=\"\n",l);
 					parse_error=1;
 				}
 				mode=4;
@@ -223,7 +226,7 @@ int parse_age_descriptor(FILE * dsc,char * buf,int size,t_age_def * age) {
 			win=0;
 		} else if(isalpha(c) && comment==0 && mode==0) { //first character of a config directive
 			if(i>=1024) {
-				fprintf(dsc,"ERR: Parse error at line %i, line too long\n",l);
+				print2log(dsc,"ERR: Parse error at line %i, line too long\n",l);
 				parse_error=1;
 			}
 			left_buffer[i]=tolower(c);
@@ -233,7 +236,7 @@ int parse_age_descriptor(FILE * dsc,char * buf,int size,t_age_def * age) {
 			//printf("<mode-is-now-%i>",mode);
 		} else if(isprint(c) && comment==0 && (mode==1 || mode==2 || mode==3)) {
 			if(i>=1024) {
-				fprintf(dsc,"ERR: Parse error at line %i, line too long\n",l);
+				print2log(dsc,"ERR: Parse error at line %i, line too long\n",l);
 				parse_error=1;
 			}
 			if(mode==1) {
@@ -247,7 +250,7 @@ int parse_age_descriptor(FILE * dsc,char * buf,int size,t_age_def * age) {
 			win=0;
 		} else if(comment==0 && n<size) {
 			printf("n:%isize:%i\n",n,size); fflush(0);
-			fprintf(dsc,"ERR: Parse error at line %i, unexpected character '%c'\n",l,c);
+			print2log(dsc,"ERR: Parse error at line %i, unexpected character '%c'\n",l,c);
 			parse_error=1;
 		}
 		n++;
@@ -258,53 +261,53 @@ int parse_age_descriptor(FILE * dsc,char * buf,int size,t_age_def * age) {
 
 			if(!strcmp(left_buffer,"startdatetime")) {
 				if(!isdigit(right_buffer[0])) {
-					fprintf(dsc,"ERR: Parse error at line %i, invalid type %s\n",l-1,right_buffer);
+					print2log(dsc,"ERR: Parse error at line %i, invalid type %s\n",l-1,right_buffer);
 					parse_error=1;
 				} else {
 					age->StartDateTime = atoi(right_buffer);
 				}
 			} else if(!strcmp(left_buffer,"daylength")) {
 				if(!isdigit(right_buffer[0])) {
-					fprintf(dsc,"ERR: Parse error at line %i, invalid type %s\n",l-1,right_buffer);
+					print2log(dsc,"ERR: Parse error at line %i, invalid type %s\n",l-1,right_buffer);
 					parse_error=1;
 				} else {
 					age->DayLength= (float)atof(right_buffer);
 				}
 			} else if(!strcmp(left_buffer,"maxcapacity")) {
 				if(!isdigit(right_buffer[0])) {
-					fprintf(dsc,"ERR: Parse error at line %i, invalid type %s\n",l-1,right_buffer);
+					print2log(dsc,"ERR: Parse error at line %i, invalid type %s\n",l-1,right_buffer);
 					parse_error=1;
 				} else {
 					age->MaxCapacity= (U16)atoi(right_buffer);
 				}
 			} else if(!strcmp(left_buffer,"lingertime")) {
 				if(!isdigit(right_buffer[0])) {
-					fprintf(dsc,"ERR: Parse error at line %i, invalid type %s\n",l-1,right_buffer);
+					print2log(dsc,"ERR: Parse error at line %i, invalid type %s\n",l-1,right_buffer);
 					parse_error=1;
 				} else {
 					age->LingerTime= (U16)atoi(right_buffer);
 				}
 			} else if(!strcmp(left_buffer,"sequenceprefix")) {
 				if(!isdigit(right_buffer[0]) && (right_buffer[0]!='-')) {
-					fprintf(dsc,"ERR: Parse error at line %i, invalid type %s\n",l-1,right_buffer);
+					print2log(dsc,"ERR: Parse error at line %i, invalid type %s\n",l-1,right_buffer);
 					parse_error=1;
 				} else {
 					age->SequencePrefix= (U16)atoi(right_buffer);
 				}
 			} else if(!strcmp(left_buffer,"releaseversion")) {
 				if(!isdigit(right_buffer[0])) {
-					fprintf(dsc,"ERR: Parse error at line %i, invalid type %s\n",l-1,right_buffer);
+					print2log(dsc,"ERR: Parse error at line %i, invalid type %s\n",l-1,right_buffer);
 					parse_error=1;
 				} else {
 					age->ReleaseVersion= (U16)atoi(right_buffer);
 				}
 			} else if(!strcmp(left_buffer,"page")) {
 				if(age_add_page(right_buffer,&age->page,&age->n_pages)<0) {
-					fprintf(dsc,"ERR: Parse error at line %i, invalid syntax\n",l-1);
+					print2log(dsc,"ERR: Parse error at line %i, invalid syntax\n",l-1);
 					parse_error=1;
 				}
 			} else {
-				fprintf(dsc,"ERR: Unknown configuration directive %s at line %i\n",left_buffer,l-1);
+				print2log(dsc,"ERR: Unknown configuration directive %s at line %i\n",left_buffer,l-1);
 				parse_error=1;
 			}
 			sizeA=0;
@@ -319,7 +322,7 @@ int parse_age_descriptor(FILE * dsc,char * buf,int size,t_age_def * age) {
 	return (0);
 }
 
-int read_age_descriptor(FILE * f,char * address,t_age_def ** p_age) {
+int read_age_descriptor(st_log * f,char * address,t_age_def ** p_age) {
 
 	t_age_def * age=NULL;
 	char * buf=NULL;
@@ -328,7 +331,7 @@ int read_age_descriptor(FILE * f,char * address,t_age_def ** p_age) {
 
 	*p_age=(t_age_def *)malloc(sizeof(t_age_def) * 1);
 	if(*p_age==NULL) {
-		fprintf(f,"ERR: Not enought memory!\n");
+		print2log(f,"ERR: Not enought memory!\n");
 		return -1;
 	}
 	age=*p_age;
@@ -343,7 +346,7 @@ int read_age_descriptor(FILE * f,char * address,t_age_def ** p_age) {
 	}
 
 	if(ret==0) {
-		ret=parse_age_descriptor(stdout,buf,filesize,age);
+		ret=parse_age_descriptor(f_uru,buf,filesize,age);
 	}
 
 	if(buf!=NULL) {
@@ -353,7 +356,7 @@ int read_age_descriptor(FILE * f,char * address,t_age_def ** p_age) {
 	return ret;
 }
 
-int read_all_age_descriptors(FILE * f,char * address,t_age_def ** p_age) {
+int read_all_age_descriptors(st_log * f,char * address,t_age_def ** p_age) {
 
 	t_age_def * age=NULL;
 	char * buf=NULL;
@@ -367,13 +370,13 @@ int read_all_age_descriptors(FILE * f,char * address,t_age_def ** p_age) {
 	int n_ages=0;
 
 	if((dir=opendir(address))== NULL) {
-		fprintf(f,"ERR: Opening %s\n",address);
-		perror("opendir()");
+		print2log(f,"ERR: Opening %s\n",address);
+		logerr(f,"opendir()");
 		return -1;
 	} else {
 		while((entry=readdir(dir))!= NULL) {
 			if(!strcasecmp(entry->d_name+(strlen(entry->d_name)-4),".age")) {
-				fprintf(f,"Reading %s...\n",entry->d_name);
+				print2log(f,"Reading %s...\n",entry->d_name);
 				sprintf(loopy,"%s/%s",address,entry->d_name);
 
 				n_ages++;
@@ -383,7 +386,7 @@ int read_all_age_descriptors(FILE * f,char * address,t_age_def ** p_age) {
 					*p_age=(t_age_def *)realloc((void *)*p_age,sizeof(t_age_def) * n_ages);
 				}
 				if(*p_age==NULL) {
-					fprintf(f,"ERR: Not enought memory!\n");
+					print2log(f,"ERR: Not enought memory!\n");
 					return -1;
 				}
 				age=&(*p_age)[n_ages-1];
@@ -400,7 +403,7 @@ int read_all_age_descriptors(FILE * f,char * address,t_age_def ** p_age) {
 				}
 
 				if(ret==0) {
-					ret=parse_age_descriptor(stdout,buf,filesize,age);
+					ret=parse_age_descriptor(f_uru,buf,filesize,age);
 				}
 
 				if(buf!=NULL) {
@@ -410,7 +413,7 @@ int read_all_age_descriptors(FILE * f,char * address,t_age_def ** p_age) {
 				dump_age_descriptor(f,*age);
 
 				if(ret<0) {
-					fprintf(f,"ERR: A problem ocurred reading %s\n",loopy);
+					print2log(f,"ERR: A problem ocurred reading %s\n",loopy);
 					return -1;
 				}
 			}
@@ -422,17 +425,17 @@ int read_all_age_descriptors(FILE * f,char * address,t_age_def ** p_age) {
 }
 
 
-void dump_age_descriptor(FILE * f,t_age_def age) {
-	fprintf(f,"StartDateTime=%i\n",age.StartDateTime);
-	fprintf(f,"DayLength=%f\n",age.DayLength);
-	fprintf(f,"MaxCapacity=%i\n",age.MaxCapacity);
-	fprintf(f,"LingerTime=%i\n",age.LingerTime);
-	fprintf(f,"SequencePrefix=%i\n",age.SequencePrefix);
-	fprintf(f,"ReleaseVersion=%i\n",age.ReleaseVersion);
+void dump_age_descriptor(st_log * f,t_age_def age) {
+	print2log(f,"StartDateTime=%i\n",age.StartDateTime);
+	print2log(f,"DayLength=%f\n",age.DayLength);
+	print2log(f,"MaxCapacity=%i\n",age.MaxCapacity);
+	print2log(f,"LingerTime=%i\n",age.LingerTime);
+	print2log(f,"SequencePrefix=%i\n",age.SequencePrefix);
+	print2log(f,"ReleaseVersion=%i\n",age.ReleaseVersion);
 
 	int i;
 	for(i=0; i<age.n_pages; i++) {
-		fprintf(f,"Page=%s,%i,%i\n",age.page[i].name,age.page[i].id,age.page[i].sdl);
+		print2log(f,"Page=%s,%i,%i\n",age.page[i].name,age.page[i].id,age.page[i].sdl);
 	}
 
 }
@@ -454,7 +457,7 @@ int main(int argc, char * argv[]) {
 	t_age_def * age=NULL; //The age struct
 
 	if((dir=opendir(argv[1]))== NULL) {
-		fprintf(stderr,"ERR: Opening %s\n",argv[1]);
+		print2log(stderr,"ERR: Opening %s\n",argv[1]);
 		perror("opendir()");
 		return -1;
 	} else {
@@ -469,6 +472,7 @@ int main(int argc, char * argv[]) {
 
 				if(age!=NULL) {
 					destroy_age_def(age);
+					free((void *)age);
 				}
 			}
 		}

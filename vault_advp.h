@@ -33,11 +33,11 @@ extern st_vault_mgrs * vmgrs;
 extern int n_vmgrs;
 
 void init_vmgr_data(st_vault_mgrs ** t);
-int check_me_in(int id,int node,st_uru_client * u);
-int plVaultBcastNodeReferenceAdded(int sock,int father,int son);
-int plVaultBcastNodeReferenceRemoved(int sock,int father,int son);
-int plVaultBcastNodeSaved(int sock,int index,double timestamp);
-int plVaultBcastOnlineState(int sock,t_vault_node * n);
-int plAdvVaultParser(int sock,t_vault_mos * obj,st_uru_client * u);
+int check_me_in(st_unet * net,int id,int node,int sid);
+int plVaultBcastNodeReferenceAdded(st_unet * net,int father,int son);
+int plVaultBcastNodeReferenceRemoved(st_unet * net,int father,int son);
+int plVaultBcastNodeSaved(st_unet * net,int index,double timestamp);
+int plVaultBcastOnlineState(st_unet * net,t_vault_node * n);
+int plAdvVaultParser(st_unet * net,t_vault_mos * obj,int sid);
 
 #endif

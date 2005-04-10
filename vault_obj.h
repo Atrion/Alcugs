@@ -34,49 +34,44 @@
 //New vault parsing functions
 void plMainVaultInit(t_vault_mos * mobj);
 void plMainVaultDestroy(t_vault_mos * mobj,int tpots_flag);
+
 void plVaultItmInit(t_vault_object * itm);
 void plVaultItmDestroy(t_vault_object * itm,int tpots_flag);
+
 int storeCreatableGenericValue(void ** data,Byte * buf,int size);
+int streamCreatableGenericValue(Byte * buf,void * data);
 void destroyCreatableGenericValue(void ** data);
+
+int streamCreatableStream(Byte * buf,void * data);
 int storeCreatableStream(void ** data,Byte * buf,int size);
 void destroyCreatableStream(void ** data);
+
 int storeVaultNodeRef(void ** data,Byte * buf,int size);
 void destroyVaultNodeRef(void ** data);
-void destroyServerGuid(void ** data);
+int streamVaultNodeRef(Byte * buf,void * data);
+
 int streamServerGuid(Byte * buf,void * data);
 int storeServerGuid(void ** data,Byte * buf,int size);
+void destroyServerGuid(void ** data);
+
 int storeAgeLinkStruct(void ** data,Byte * buf,int size);
 int streamAgeLinkStruct(Byte * buf,void * data);
 void destroyAgeLinkStruct(void ** data);
 
-
+//values
 int plVItmGetInteger(t_vault_object * o);
 void plVItmPutInteger(t_vault_object * o,int integer);
+
 double plVItmGetTimestamp(t_vault_object * o);
 void plVItmPutTimestamp(t_vault_object * o,double stamp);
+
 Byte * plVItmGetString(t_vault_object * o);
 void plVItmPutString(t_vault_object * o,Byte * str);
 
 //!Creates objects data structs (remember to destroy them!)
 t_vault_object * vaultCreateItems(int n);
 
-//creates this data type
-int streamCreatableGenericValue(Byte * buf,void * data);
-
-int streamCreatableStream(Byte * buf,void * data);
-
-void destroyCreatableStream(void ** data);
-
-void destroyServerGuid(void ** data);
-
-int storeVaultNodeRef(void ** data,Byte * buf,int size);
-
-void destroyVaultNodeRef(void ** data);
-
-int streamVaultNodeRef(Byte * buf,void * data);
-
 int storeVaultNode(void ** data,Byte * buf, int size);
-
 int streamVaultNode(Byte * buf,void * data);
 
 /** Unpacks the vault into the correct structs,

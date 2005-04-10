@@ -36,21 +36,28 @@
 //#define _DBG_LEVEL_ 10
 
 #include "config.h"
-#include "debug.h"
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <time.h>
+#include <sys/time.h>
+#include <unistd.h>
 
 #include "data_types.h"
 #include "stdebug.h"
-#include "debug.h"
 #include "conv_funs.h"
 #include "protocol.h"
 #include "urunet.h"
 #include "vaultstrs.h"
+#include "prot.h"
 
-#include "urumsg.h"
+//#include "urumsg.h"
+#include "gvaultmsg.h"
 
+#include "vaultsubsys.h"
+#include "vserversys.h"
+#include "urustructs.h"
 #include "vaultstrs.h"
 #include "vnodes.h"
 #include "vault_obj.h"
@@ -65,6 +72,8 @@
 
 #include "vault_tasks.h"
 
+#include "debug.h"
+
 int plVaultInitVault() {
 	int ret;
 
@@ -76,7 +85,7 @@ int plVaultInitVault() {
 	n_nodes=6;
 	DBG(4,"plVaultGetFolder()\n");
 
-	if(plVaultGetFolder()<0) {
+	if(plVaultGetFolder(&db)<0) {
 		print2log(f_err,"ERR: FATAL - Cannot negotatiate the folder, IS the MySQL server down?, or is there a misconfiguration?!\n");
 		return -1;
 	}
@@ -91,46 +100,41 @@ int plVaultInitVault() {
   // Create AllPlayers folder
 	n[0].type=KFolderNode;
 	n[0].torans=KAllPlayersFolder;	// 12
-	plVaultFindNode(&n[0],&mfs,1); //create the node if not exists
+	plVaultFindNode(&n[0],&mfs,1,&db); //create the node if not exists
 
   // Create AllAgeGlobalSDLNodesFolder folder
 	n[1].type=KFolderNode;
 	n[1].torans=KAllAgeGlobalSDLNodesFolder;	// 20
-	plVaultFindNode(&n[1],&mfs,1); //create the node if not exists
+	plVaultFindNode(&n[1],&mfs,1,&db); //create the node if not exists
 
   // Create PublicAges folder
-	n[2].type=KFolderNode; 
+	n[2].type=KFolderNode;
 	n[2].torans=KPublicAgesFolder; // 22
-	plVaultFindNode(&n[2],&mfs,1); //create the node if not exists
+	plVaultFindNode(&n[2],&mfs,1,&db); //create the node if not exists
 
   // Create System node
 	n[3].type=KSystem; // 24
-	system=plVaultFindNode(&n[3],&mfs,1); //create the node if not exists
+	system=plVaultFindNode(&n[3],&mfs,1,&db); //create the node if not exists
 
   // Create GlobalInbox folder
 	n[4].type=KFolderNode;
 	n[4].torans=KGlobalInboxFolder; // 30
-	global=plVaultFindNode(&n[4],&mfs,1); //create the node if not exists
+	global=plVaultFindNode(&n[4],&mfs,1,&db); //create the node if not exists
 
   //  Create System->GlobalInboxFolder link
-	plVaultCreateRef(KVaultID,system,global,0,0,0); //link it
+	plVaultCreateRef(KVaultID,system,global,0,0,0,&db); //link it
 
 	DBG(5,"Creating the default Welcome Message\n");
 	n[5].type=KTextNoteNode;	// 26
-	DBG(6,"strcpy()\n");
-	strncpy((char *)n[5].entry_name,(char *)global_welcome_title,STR_MAX_SIZE);
-	DBG(7,"I bet that is an enless loop in the malloc\n");
-	n[5].data=(Byte *)malloc(sizeof(Byte) * (1000+1)); // don't forget \0 so add 1
-	DBG(7,"Nope, malloc worked fine\n");
-	DBG(6,"strcpy()\n");
-	strncpy((char *)n[5].data,(char *)global_welcome_text,1000); //here was a nice buffer overflow that caused LOTS of hateful headaches.
-	DBG(6,"strlen()\n");
+	strncpy((char *)n[5].entry_name,(char *)gvinit_title,STR_MAX_SIZE-1);
+	n[5].data=(Byte *)malloc(sizeof(Byte) * (1024));
+	strncpy((char *)n[5].data,(char *)gvinit_desc,1023); //here was a nice buffer
 	n[5].data_size=strlen((char *)n[5].data)+1;
 	DBG(6,"plVaultCreateNode()\n");
-	id=plVaultCreateNode(&n[5]);
+	id=plVaultCreateNode(&n[5],&db);
 	DBG(6,"plVaultCreateRef()\n");
 	// Create GlobalInbox->TextNote link
-	plVaultCreateRef(0,global,id,0,0,0);  //KVaultID (must be 0 to be DRC owned)
+	plVaultCreateRef(0,global,id,0,0,0,&db);  //KVaultID (must be 0 to be DRC owned)
 
 	DBG(5,"n_nodes=%i\n",n_nodes);
 	for(i=0; i<n_nodes; i++) {
@@ -155,7 +159,7 @@ int plVaultCreateAge(t_AgeInfoStruct * ainfo) {
 	init_node(&n);
 	n.type=KVNodeMgrAgeNode;	// 3
 	hex2ascii2(n.entry_name,ainfo->guid,8); //Set the age guid
-	age_mgr=plVaultFindNode(&n,&mfs,1); //Find or create the Age MGR node
+	age_mgr=plVaultFindNode(&n,&mfs,1,&db); //Find or create the Age MGR node
 	destroy_node(&n);
 
 	//Now get the Age Info Node
@@ -169,18 +173,18 @@ int plVaultCreateAge(t_AgeInfoStruct * ainfo) {
 	hex2ascii2(n.guid,ainfo->guid,8); //set the age guid
 	strcpy((char *)n.entry_value,(char *)ainfo->display_name);
 	//-->
-	age_info=plVaultFindNode(&n,&mfs,1); //Find or create the Age Info Node
+	age_info=plVaultFindNode(&n,&mfs,1,&db); //Find or create the Age Info Node
 
 	//n_tnodes=1;
 	//plVaultFetchNodes(&tnodes,1,&age_info); //Get that node
 
 	// Create Age->AgeInfo link
-	plVaultCreateRef(0,age_mgr,age_info,0,0,0);
+	plVaultCreateRef(0,age_mgr,age_info,0,0,0,&db);
 	destroy_node(&n);
 	return age_info; //return the age_info id
 }
 
-int plVaultAddLinkingPoint(int sock,int ki,int age_id,t_SpawnPoint * spoint) {
+int plVaultAddLinkingPoint(st_unet * net,int ki,int age_id,t_SpawnPoint * spoint) {
 
 	t_vault_node n;
 	t_vault_manifest mfs;
@@ -197,18 +201,18 @@ int plVaultAddLinkingPoint(int sock,int ki,int age_id,t_SpawnPoint * spoint) {
 	n.type=KFolderNode; //0x16
 	n.torans=KAgesIOwnFolder; // 23
 	n.owner=ki; //Owner, the KI
-	oages_id=plVaultFindNode(&n,&mfs,0); //Now we have the Folder ID
+	oages_id=plVaultFindNode(&n,&mfs,0,&db); //Now we have the Folder ID
 	if(oages_id<=0) { //Not found, or db error (then create it, with the reference)
-		oages_id=plVaultFindNode(&n,&mfs,1);
-		plVaultCreateRef(ki,ki,oages_id,0,0,0);
-		if(sock!=-1) {
-			plVaultBcastNodeReferenceAdded(sock,ki,oages_id);
+		oages_id=plVaultFindNode(&n,&mfs,1,&db);
+		plVaultCreateRef(ki,ki,oages_id,0,0,0,&db);
+		if(net!=NULL) {
+			plVaultBcastNodeReferenceAdded(net,ki,oages_id);
 		}
 	}
 	if(oages_id>0) {
 		//Now get all the tree of references
 		wref=NULL;
-		n_refs=plVaultGetCrossRef(oages_id,&wref);
+		n_refs=plVaultGetCrossRef(oages_id,&wref,&db);
 		if(n_refs>=0) {
 			//Now search in the manifest the NODE
 			found=0;
@@ -224,7 +228,8 @@ int plVaultAddLinkingPoint(int sock,int ki,int age_id,t_SpawnPoint * spoint) {
 			if(found!=0) { //we found the node
 				//fetch the node
 				n_tnodes=1;
-				plVaultFetchNodes(&tnodes,1,(U32 *)&found);
+				int tmp1=0;
+				plVaultFetchNodes(&tnodes,&tmp1,(U32 *)&found,1,&db);
 			} else { //node not found, create it
 				tnodes=(t_vault_node *)malloc(sizeof(t_vault_node) * 1);
 				init_node(tnodes);
@@ -255,22 +260,22 @@ int plVaultAddLinkingPoint(int sock,int ki,int age_id,t_SpawnPoint * spoint) {
 			tnodes->data_size=strlen((char *)tnodes->data); //Update size of data
 
 			if(found!=0) { //we found the node
-				plVaultUpdateNode(tnodes); //update the node
+				plVaultUpdateNode(tnodes,&db); //update the node
 				double stamp;
 				time((time_t *)&stamp);
-				if(sock!=-1) {
-					plVaultBcastNodeSaved(sock,tnodes->index,stamp);
+				if(net!=NULL) {
+					plVaultBcastNodeSaved(net,tnodes->index,stamp);
 				}
 			} else { //node not found
 				//time((time_t *)&tnodes->timestamp); //unusefull
-				found=plVaultCreateNode(tnodes);
+				found=plVaultCreateNode(tnodes,&db);
 				//Link the link node with the Age Info Node
-				plVaultCreateRef(ki,found,age_id,0,0,0);
+				plVaultCreateRef(ki,found,age_id,0,0,0,&db);
 				//Link the AgesIOwnFolder with the Link Node
-				plVaultCreateRef(ki,oages_id,found,0,0,0);
+				plVaultCreateRef(ki,oages_id,found,0,0,0,&db);
 				//Send a Vault Notification
-				if(sock!=-1) {
-					plVaultBcastNodeReferenceAdded(sock,oages_id,found);
+				if(net!=NULL) {
+					plVaultBcastNodeReferenceAdded(net,oages_id,found);
 				}
 			}
 		}
@@ -286,7 +291,7 @@ int plVaultAddLinkingPoint(int sock,int ki,int age_id,t_SpawnPoint * spoint) {
 }
 
 //Age id, is the Age Info node eh!!
-int plVaultAddOwnerToAge(int sock,int age_id,int ki) {
+int plVaultAddOwnerToAge(st_unet * net,int age_id,int ki) {
 	t_vault_node n;
 	t_vault_manifest mfs;
 	init_node(&n);
@@ -296,13 +301,13 @@ int plVaultAddOwnerToAge(int sock,int age_id,int ki) {
 	n.type=KPlayerInfoListNode; // 30
 	n.torans=KAgeOwnersFolder; // 19
 	n.owner=age_id;
-	age_owners=plVaultFindNode(&n,&mfs,0);
+	age_owners=plVaultFindNode(&n,&mfs,0,&db);
 	if(age_owners<=0) {
 		//Not found, then create it
-		age_owners=plVaultFindNode(&n,&mfs,1);
-		plVaultCreateRef(0,age_id,age_owners,0,0,0);
-		if(sock!=-1) {
-			plVaultBcastNodeReferenceAdded(sock,age_id,age_owners);
+		age_owners=plVaultFindNode(&n,&mfs,1,&db);
+		plVaultCreateRef(0,age_id,age_owners,0,0,0,&db);
+		if(net!=NULL) {
+			plVaultBcastNodeReferenceAdded(net,age_id,age_owners);
 		}
 	}
 	if(age_owners>0) {
@@ -311,11 +316,11 @@ int plVaultAddOwnerToAge(int sock,int age_id,int ki) {
 		n.type=KPlayerInfoNode; // 23
 		n.torans=0;
 		n.owner=ki;
-		p_info=plVaultFindNode(&n,&mfs,0);
+		p_info=plVaultFindNode(&n,&mfs,0,&db);
 		if(p_info>0) { //found the player Info node (create the reference)
-			plVaultCreateRef(0,age_owners,p_info,0,0,0);
-			if(sock!=-1) {
-				plVaultBcastNodeReferenceAdded(sock,age_owners,p_info);
+			plVaultCreateRef(0,age_owners,p_info,0,0,0,&db);
+			if(net!=NULL) {
+				plVaultBcastNodeReferenceAdded(net,age_owners,p_info);
 			}
 		}
 	}
@@ -323,7 +328,9 @@ int plVaultAddOwnerToAge(int sock,int age_id,int ki) {
 	return age_owners;
 }
 
-int plVaultUpdatePlayerStatus(int sock,U32 id,Byte * age,Byte * guid,Byte state,U32 online_time,st_uru_client * u) {
+int plVaultUpdatePlayerStatus(st_unet * net,U32 id,Byte * age,Byte * guid,Byte state,U32 online_time,int sid) {
+
+	st_uru_client * u=&net->s[sid];
 
 	t_vault_node n;
 	t_vault_manifest mfs;
@@ -336,40 +343,44 @@ int plVaultUpdatePlayerStatus(int sock,U32 id,Byte * age,Byte * guid,Byte state,
 		for(i=0; i<n_vmgrs; i++) {
 			DBG(5,"id:%i vs %i\n",vmgrs[i].id,id);
 			if(vmgrs[i].id==(int)id) {
-				vmgrs[i].ip=u->client_ip;
-				vmgrs[i].port=u->client_port;
+				vmgrs[i].ip=u->ip;
+				vmgrs[i].port=u->port;
 				vmgrs[i].sid=u->sid;
 			}
 		}
 	}
 
+	DBG(5,"dmalloc_verify()\n");
+	dmalloc_verify(NULL);
 
 	//Fetch the player id
-	plVaultFetchNodes(&tnodes,1,&id);
+	int tmp2=0;
+	plVaultFetchNodes(&tnodes,&tmp2,&id,1,&db);
 	//DBG(5,"Fetch tnodes, address is:%i\n",&tnodes);
 
 	//Update the online time
 	tnodes->unk7+=online_time;
 	time((time_t *)&tnodes->timestamp);
-	plVaultUpdateNode(tnodes);
-	plVaultBcastNodeSaved(sock,tnodes->index,(double)tnodes->timestamp);
+	plVaultUpdateNode(tnodes,&db);
+	plVaultBcastNodeSaved(net,tnodes->index,(double)tnodes->timestamp);
 	//Now update the Player Info Node
 	init_node(&n);
 	n.type=KPlayerInfoNode; // 23
 	n.owner=id; //Player Owner
-	info_node=plVaultFindNode(&n,&mfs,0);
+	info_node=plVaultFindNode(&n,&mfs,0,&db);
 	if(info_node>0) {
 		destroy_node(tnodes);
 		free((void *)tnodes);
 		tnodes=NULL;
-		plVaultFetchNodes(&tnodes,1,(U32 *)&info_node);
+		int tmp3=0;
+		plVaultFetchNodes(&tnodes,&tmp3,(U32 *)&info_node,1,&db);
 		//DBG(5,"Fetch tnodes, address is:%i\n",&tnodes);
 		strcpy((char *)tnodes->entry_name,(char *)age);
 		strcpy((char *)tnodes->sub_entry_name,(char *)guid);
 		tnodes->torans=state;
 		time((time_t *)&tnodes->timestamp);
-		plVaultUpdateNode(tnodes);
-		plVaultBcastOnlineState(sock,tnodes);
+		plVaultUpdateNode(tnodes,&db);
+		plVaultBcastOnlineState(net,tnodes);
 		//plVaultBcastNodeSaved(sock,tnodes->index,(double)tnodes->timestamp);
 	}
 
@@ -394,7 +405,7 @@ int plVaultUpdatePlayerStatus(int sock,U32 id,Byte * age,Byte * guid,Byte state,
 	returns 0 if player already exists
 	returns KI if player has been succesfully created
 --------------------------------------------------------------------*/
-int plVaultCreatePlayer(int sock,Byte * login,Byte * guid, Byte * avie,Byte * gender,Byte access_level) {
+int plVaultCreatePlayer(st_unet * net,Byte * login,Byte * guid, Byte * avie,Byte * gender,Byte access_level) {
 	int ret; //for store result codes
 	int ki=-1;
 	int ref,admin; //for store references
@@ -410,7 +421,7 @@ int plVaultCreatePlayer(int sock,Byte * login,Byte * guid, Byte * avie,Byte * ge
 	n->type=2; //player MGR node
 	strcpy((char *)n->avie,(char *)avie);
 
-	ki=plVaultFindNode(n,&mfs,0); //returns id if founds a player
+	ki=plVaultFindNode(n,&mfs,0,&db); //returns id if founds a player
 
 	destroy_node(n);
 
@@ -439,10 +450,10 @@ int plVaultCreatePlayer(int sock,Byte * login,Byte * guid, Byte * avie,Byte * ge
 		//--->find the allplayers node
 		n[2].type=KFolderNode; //Folder 22
 		n[2].torans=KAllPlayersFolder; //all players 12
-		admin=plVaultFindNode(&n[2],&mfs,0);
+		admin=plVaultFindNode(&n[2],&mfs,0,&db);
 		if(admin==0) {
 			plVaultInitVault(); //if not exists it will be created
-			admin=plVaultFindNode(&n[2],&mfs,1);
+			admin=plVaultFindNode(&n[2],&mfs,1,&db);
 		}
 		//<---
 
@@ -459,7 +470,7 @@ int plVaultCreatePlayer(int sock,Byte * login,Byte * guid, Byte * avie,Byte * ge
 		strcpy((char *)n[0].entry_value,(const char *)login);
 		n[0].unk8=access_level;
 
-		ki=plVaultCreateNode(&n[0]);
+		ki=plVaultCreateNode(&n[0],&db);
 
 		if(ki>0) {
 			gettimeofday(&tv,NULL);
@@ -472,17 +483,17 @@ int plVaultCreatePlayer(int sock,Byte * login,Byte * guid, Byte * avie,Byte * ge
 			n[1].microseconds=tv.tv_usec;
 			n[1].id2=ki;
 			strcpy((char *)n[1].avie,(const char *)avie);
-			ref=plVaultCreateNode(&n[1]);
+			ref=plVaultCreateNode(&n[1],&db);
 
 			//plVaultCreateRef(0,ki,ref,tstamp,tv.tv_usec,0);
 			// Create Player->PlayerInfo link
-			plVaultCreateRef(ki,ki,ref,tstamp,tv.tv_usec,0);
+			plVaultCreateRef(ki,ki,ref,tstamp,tv.tv_usec,0,&db);
 
 			//link with the admin node
-			plVaultCreateRef(ki,admin,ref,tstamp,tv.tv_usec,0);
+			plVaultCreateRef(ki,admin,ref,tstamp,tv.tv_usec,0,&db);
 
 			//do vault broadcast
-			plVaultBcastNodeReferenceAdded(sock,admin,ref);
+			plVaultBcastNodeReferenceAdded(net,admin,ref);
 
 			//---now all folders---
 			//create reference to the unknown generic public inbox folder
@@ -524,14 +535,14 @@ int plVaultCreatePlayer(int sock,Byte * login,Byte * guid, Byte * avie,Byte * ge
 			int city_id,hood_id;
 			t_AgeInfoStruct ainfo;
 			t_SpawnPoint spoint;
-			bzero(&ainfo,sizeof(t_AgeInfoStruct));
-			bzero(&spoint,sizeof(t_SpawnPoint));
+			memset(&ainfo,0,sizeof(t_AgeInfoStruct));
+			memset(&spoint,0,sizeof(t_SpawnPoint));
 			Byte a_guid[17];
 
 			strcpy((char *)spoint.title,"FerryTerminal");
 			strcpy((char *)spoint.name,"LinkInPointFerry");
 
-			city_id=plVaultFindNode(&n[3],&mfs,0);
+			city_id=plVaultFindNode(&n[3],&mfs,0,&db);
 			if(city_id<=0) {
 				//then create it
 				strcpy((char *)ainfo.filename,"city");
@@ -544,30 +555,30 @@ int plVaultCreatePlayer(int sock,Byte * login,Byte * guid, Byte * avie,Byte * ge
 			}
 			if(city_id>0) {
 				//Add the linking point
-				plVaultAddLinkingPoint(sock,ki,city_id,&spoint);
+				plVaultAddLinkingPoint(net,ki,city_id,&spoint);
 			}
 
 			strcpy((char *)n[3].entry_name,"Neighborhood");
-			bzero(&ainfo,sizeof(t_AgeInfoStruct));
+			memset(&ainfo,0,sizeof(t_AgeInfoStruct));
 
 			strcpy((char *)spoint.title,"Default");
 			strcpy((char *)spoint.name,"LinkInPointDefault");
 
-			hood_id=plVaultFindNode(&n[3],&mfs,0);
+			hood_id=plVaultFindNode(&n[3],&mfs,0,&db);
 			if(hood_id<=0) {
 				//then create it
 				strcpy((char *)ainfo.filename,"Neighborhood");
 				strcpy((char *)ainfo.instance_name,"Neighborhood");
-				strcpy((char *)ainfo.user_name,(char *)global_neighborhood_name);
-				strcpy((char *)ainfo.display_name,(char *)global_neighborhood_comment);
+				strcpy((char *)ainfo.user_name,(char *)ghood_name);
+				strcpy((char *)ainfo.display_name,(char *)ghood_desc);
 				generate_newguid(a_guid,(Byte *)"Neighborhood",0);
 				ascii2hex2(ainfo.guid,a_guid,8);
 				hood_id=plVaultCreateAge(&ainfo);
 			}
 			if(hood_id>0) {
 				//Add the linking point
-				plVaultAddLinkingPoint(sock,ki,hood_id,&spoint);
-				plVaultAddOwnerToAge(sock,hood_id,ki);
+				plVaultAddLinkingPoint(net,ki,hood_id,&spoint);
+				plVaultAddOwnerToAge(net,hood_id,ki);
 			}
 
 		}
@@ -591,7 +602,7 @@ int plVaultCreatePlayer(int sock,Byte * login,Byte * guid, Byte * avie,Byte * ge
 	returns -1 on db error
 	returns 0 or >0 on success
 --------------------------------------------------------------------*/
-int plVaultDeletePlayer(int sock,Byte * guid, U32 ki,Byte access_level) {
+int plVaultDeletePlayer(st_unet * net,Byte * guid, U32 ki,Byte access_level) {
 	int ret; //for store result codes
 
 	int i;
@@ -606,7 +617,8 @@ int plVaultDeletePlayer(int sock,Byte * guid, U32 ki,Byte access_level) {
 
 	n_nodes=1;
 	i=1;
-	plVaultFetchNodes(&n,1,&ki); //only one node to fetch
+	int tmp4=0;
+	plVaultFetchNodes(&n,&tmp4,&ki,1,&db); //only one node to fetch
 	//n->index;
 
 	if((access_level<=AcAdmin || !strcmp((char *)create_str_guid(guid),(char *)n->uid)) && n->index==ki) {
@@ -616,27 +628,27 @@ int plVaultDeletePlayer(int sock,Byte * guid, U32 ki,Byte access_level) {
 		init_node(&n2);
 		n2.type=23; //Player Info Node
 		n2.owner=ki; //The Owner of the Player info Node
-		info=plVaultFindNode(&n2,&mfs,0);
+		info=plVaultFindNode(&n2,&mfs,0,&db);
 		destroy_node(&n2);
 
 		int * table=NULL;
 		int n_table=0;
 
-		n_table=plVaultGetParentNodes(ki,&table);
+		n_table=plVaultGetParentNodes(ki,&table,&db);
 		for(i=0; i<n_table; i++) {
-			plVaultBcastNodeReferenceRemoved(sock,table[i],ki);
+			plVaultBcastNodeReferenceRemoved(net,table[i],ki);
 		}
 
-		ret=plVaultRemoveNodeRef2(0,ki,1,1); //force player deletion
+		ret=plVaultRemoveNodeRef2(0,ki,1,1,&db); //force player deletion
 
 		if(table!=NULL) { free((void *)table); }
 
-		n_table=plVaultGetParentNodes(info,&table);
+		n_table=plVaultGetParentNodes(info,&table,&db);
 		for(i=0; i<n_table; i++) {
-			plVaultBcastNodeReferenceRemoved(sock,table[i],info);
+			plVaultBcastNodeReferenceRemoved(net,table[i],info);
 		}
 
-		ret=plVaultRemoveNodeRef2(0,info,1,1); //force all Player Info Node(s) deletion
+		ret=plVaultRemoveNodeRef2(0,info,1,1,&db); //force all Player Info Node(s) deletion
 
 		if(table!=NULL) { free((void *)table); }
 
@@ -660,7 +672,8 @@ int plVaultDeletePlayer(int sock,Byte * guid, U32 ki,Byte access_level) {
 
 
 //we sent a struct (with the vault task stuff)
-int plAdvVaultTaskParser(int sock,t_vault_mos * obj,st_uru_client * u) {
+int plAdvVaultTaskParser(st_unet * net,t_vault_mos * obj,int sid) {
+	st_uru_client * u=&net->s[sid];
 	int i; //,e;
 	int id,ret;
 	int success=0;
@@ -718,7 +731,7 @@ int plAdvVaultTaskParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 			n.type=KFolderNode; //0x16
 			n.torans=0x17; //AgesIOwnFolder
 			n.owner=robj.mgr; //Owner, the KI
-			ret=plVaultFindNode(&n,&mfs,0); //Now we have the Folder ID
+			ret=plVaultFindNode(&n,&mfs,0,&db); //Now we have the Folder ID
 			if(ret<=0) { //Not found, or db error
 				//ret=plVaultFindNode(&n,&mfs,1);
 				//then link it
@@ -726,7 +739,7 @@ int plAdvVaultTaskParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 			}
 			//Now get all the tree of references
 			wref=NULL;
-			n_refs=plVaultGetCrossRef(ret,&wref);
+			n_refs=plVaultGetCrossRef(ret,&wref,&db);
 			if(n_refs>=0) {
 				//2nd Search for the AgeNode
 				destroy_node(&n);
@@ -743,7 +756,7 @@ int plAdvVaultTaskParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 					}
 					ascii2hex2(wals->ainfo.guid,n.guid,8);
 				}
-				id=plVaultFindNode(&n,&mfs,0); //Now we have the age ID
+				id=plVaultFindNode(&n,&mfs,0,&db); //Now we have the age ID
 				if(id<=0) { //Age Info node not found, then create it..
 					id=plVaultCreateAge(&wals->ainfo);
 					//search again
@@ -766,7 +779,8 @@ int plAdvVaultTaskParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 				if(found!=0) { //we found the node
 					//fetch the node
 					n_tnodes=1;
-					plVaultFetchNodes(&tnodes,1,(U32 *)&found);
+					int tmp5=0;
+					plVaultFetchNodes(&tnodes,&tmp5,(U32 *)&found,1,&db);
 				} else { //node not found, create it
 					n_tnodes=1;
 					tnodes=(t_vault_node *)malloc(sizeof(t_vault_node) * 1);
@@ -798,32 +812,32 @@ int plAdvVaultTaskParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 				tnodes->data_size=strlen((char *)tnodes->data); //Update size of data
 
 				if(found!=0) { //we found the node
-					plVaultUpdateNode(tnodes); //update the node
+					plVaultUpdateNode(tnodes,&db); //update the node
 					double stamp;
 					time((time_t *)&stamp);
-					plVaultBcastNodeSaved(sock,tnodes->index,stamp);
+					plVaultBcastNodeSaved(net,tnodes->index,stamp);
 				} else { //node not found
 					//time((time_t *)&tnodes->timestamp); //unusefull
-					found=plVaultCreateNode(tnodes);
+					found=plVaultCreateNode(tnodes,&db);
 					//Link the link node with the Age Info Node
-					plVaultCreateRef(robj.mgr,found,id,0,0,0);
+					plVaultCreateRef(robj.mgr,found,id,0,0,0,&db);
 					//Link the AgesIOwnFolder with the Link Node
-					plVaultCreateRef(robj.mgr,ret,found,0,0,0);
+					plVaultCreateRef(robj.mgr,ret,found,0,0,0,&db);
 					//Send a Vault Notification
-					plVaultBcastNodeReferenceAdded(sock,ret,found);
+					plVaultBcastNodeReferenceAdded(net,ret,found);
 				}
 				//Find the player info node & and add it to the age
-				plVaultAddOwnerToAge(sock,id,robj.mgr);
+				plVaultAddOwnerToAge(net,id,robj.mgr);
 
 				//Now generate the vault task response
 				robj.itm=vaultCreateItems(1);
 				robj.n_itms=1;
 				robj.itm[0].id=0x01; //The Id of the Link Node
 				plVItmPutInteger(&robj.itm[0],found);
-				u->adv_msg.cmd=NetMsgVaultTask;
-				htmlVaultParse(&robj,u,0);
+				u->hmsg.cmd=NetMsgVaultTask;
+				htmlVaultParse(net,&robj,sid,0);
 				DBG(5,"Sending vault task\n");
-				plNetMsgVaultTask(sock,&robj,u,0);
+				plNetMsgVaultTask(net,&robj,sid);
 				DBG(5,"Vault task send\n");
 			}
 			if(wref!=NULL) { free((void *)wref); }

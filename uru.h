@@ -29,36 +29,24 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_URU_H_ID "$Id$"
 
+#include "config_parser.h"
+
+extern st_config * global_config; //the config params are here
+
+void kill_player(st_unet * net,int reason,int sid,Byte flag);
+
+#if 0
+
 #include "ageparser.h"
 #include "sdlparser.h"
-
-extern st_uru_client * all_players; //the big struct
-
-extern st_uru_client * auth; //points to the auth server
-extern st_uru_client * vault; //points to the vault server
-extern st_uru_client * track; //poinst to the tracking server
-
-extern st_uru_client * meta; //points to the metaserver
-
-extern int whoami; //To fix a big problem caused by the restructuration
-	//same codes as prot.h
-	/* KAgent 1 //unused, lobby does the job
-	   KLobby 2
-	   KGame 3
-	   KVault 4
-	   KAuth 5
-	   KAdmin 6
-	   KLookup 7 //tracking
-	   KClient 8
-	   KMeta 9
-		 KTracking 7
-	*/
 
 extern t_sdl_def * global_sdl; //sdl struct
 extern int global_sdl_n; //number of global sdl records
 
 extern t_age_def * global_age_def; //age struct
 extern int global_age_def_n; //number of ages
+
+#endif
 
 #endif
 

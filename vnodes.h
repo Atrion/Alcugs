@@ -31,16 +31,8 @@
 #include "data_types.h"
 #include "vaultstrs.h"
 
-/** Initialitzes a node
-*/
 void init_node(t_vault_node * node);
-
-/** Destroys the node
-*/
 void destroy_node(t_vault_node * node);
-
-/** Node dumper
-*/
 void dump_node(Byte * buf, int max);
 
 /** Puts the node into the buffer, and returns the size of the node
@@ -54,7 +46,7 @@ int node2stream(Byte * buf,t_vault_node * node);
 	\param node: the addres of the node struct, where only _one_ node will be stored\n
 	returns the size of the parsed node
 */
-int vault_parse_node(FILE * f,Byte * buf, int max_stream, t_vault_node * node);
+int vault_parse_node(st_log * f,Byte * buf, int max_stream, t_vault_node * node);
 
 
 #endif

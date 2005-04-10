@@ -196,18 +196,18 @@
 #define DVaultNode2            0x043A
 
 //sub data types
-#define DInteger 0x00 //(4 bytes) integer ****
+#define DInteger 0x00 //(4 bytes) integer
 #define DFloat 0x01 //(4 bytes) float
 #define DBool 0x02 //(1 byte) byte (boolean value)
-#define DUruString 0x03 //an urustring ****
+#define DUruString 0x03 //an (32 bytes STRING)
 #define DPlKey 0x04 //uruobject
 #define DStruct 0x05 //a list of variables (an struct)
-#define DCreatable 0x06 //arghhah!!
+#define DCreatable 0x06 //arghhah!! **
 #define DTimestamp 0x07 //a Timestamp (I think that is in double format) **
 #define DTime 0x08 // the timestamp and the microseconds (8 bytes)
 #define DByte 0x09 //a byte
 #define DShort 0x0A //a short integer (2 bytes)
-#define DAgeTimeOfDay 0x0B //I bet that is also timestamp+microseconds (8 bytes)
+#define DAgeTimeOfDay 0x0B //I bet that is also timestamp+microseconds (8 bytes) **
 #define DVector3 0x32 //Three floats (4+4+4 bytes)
 #define DPoint3 0x33 //Three floats (4+4+4 bytes)
 #define DQuaternion 0x36 //Four floats (4+4+4+4 bytes)
@@ -216,7 +216,6 @@
 
 //---internal for now (later we will use dynamic memory)
 //#ifndef STR_MAX_SIZE
-#define STR_MAX_SIZE 254
 //#endif
 //useful structs
 
@@ -231,26 +230,6 @@ typedef struct {
 	U32 last_node; //the last stored node id
 	U32 n_nodes; //the number of stored nodes
 } t_vault_dat_header;
-
-/*
-//!an object
-typedef struct {
-	//1st object
-	S32 ki; //a ki number (4 bytes) (outdated)
-	//-------------------------------
-	U32 code; //a code (3 bytes)
-	Byte format; //the msg format (1 byte) 0x01 (uncompressed) 0x03 (compressed)
-	U32 real_size; //the realsize (always) 4 bytes
-	U32 comp_size; //the compressed size (only if 0x03) 4 bytes
-	//----- If 0x03 after inflating.., or well...
-	U32 n_objs; //number of packet objects (4 bytes)
-	//and then on object one, go the objects
-	//only on the 2n object
-	U16 tail; //a tail for the object2 (2 bytes)
-	//the second object is:
-	//code + format + ki + tail (always) (0x0A bytes)
-} t_vault_main_object;
-*/
 
 //!manifest
 typedef struct {
@@ -322,36 +301,12 @@ typedef struct {
 	//---------------------------------------------------
 	U32 unk13; // <--- blob1 A
 	U32 unk14; // <--- blob1 B [BlobGuid_1]
+	/* unk15 & unk16 removed from vault version 2 and above */
 	U32 unk15; // <--- blob2 A
 	U32 unk16; // <--- blob2 B [BlobGuid_2]
 	//eof -- 0x6A (total blank node size in bytes)
 } t_vault_node;
 //plVaultNode 0x0439
-
-#if 0
-//!a vault object
-typedef struct {
-	Byte format_flag; //a content formater flag (1 byte) <- vault command, or mask ->
-	Byte unk1; //a blank space (1 byte)
-	U16 cmd; //the vault operation to do (2 bytes)
-	//one or other
-	Byte format; //the data type format (1 byte)
-	U32 data_size; //the data size (4 bytes)
-	//<->
-	U32 num_items; //the number of sub-items (4 bytes or 2 bytes)
-	//abstract - data contents
-	U32 integer;
-	Byte ustring[200]; //an uru string
-	Byte guid[0x20]; //be sure that is big
-	U32 * table; //a table of integers (the pointer to the table) 0x0A
-	t_vault_manifest * manifest; //the list of nodes (the manifest)
-	t_vault_cross_ref * cross_ref; //the list of cross references
-	t_vault_node * node; //a list of nodes
-	//U32 raw_data_size; //raw data size
-	Byte * raw_data; //the raw data pointer
-
-} t_vault_object;
-#endif
 
 typedef struct {
 	Byte format; //data type
@@ -388,30 +343,6 @@ typedef struct {
 	//U32 raw_data_size; //raw data size*/
 } t_vault_object;
 
-#if 0
-//!vault structure
-typedef struct {
-	//1st object
-	U32 ki; //the player's ki number (4 bytes)
-	Byte code; //a command (1 byte)
-	U16 unk1; //always 0 (2 bytes)
-	Byte format; //the msg format (1 byte) 0x01 (uncompressed) 0x03 (compressed)
-	//---><--
-	U32 real_size; //the (uncompressed if 0x03) size of the container data (4 bytes)
-	//---<>--
-	U32 comp_size; //IF 0x03, the compressed size
-	//Byte * data; //pointer to the offset where the data starts
-	//the data contents
-	U16 n_itms; //number of packeted items (2 bytes)
-	t_vault_object * itm; //pointer to the first vault item
-	//---end -- 2nd object
-	Byte fcode; //the second object code (1 byte)
-	U16 unk2; //always 0 (2 bytes)
-	Byte unk_byte; //always 0 (1 byte)
-	U32 fki; //another ki number (4 bytes)
-	U16 tail; //always 0x0001 (2 bytes)
-} t_vault_mos;
-#endif
 
 //!vault main object struct
 typedef struct {
@@ -433,53 +364,5 @@ typedef struct {
 	U32 mgr; //vmgr id (4 bytes)   // In Vtask is Client (4 bytes)
 	U16 vn; //(old tail) (2 bytes) // Not in Vtask
 } t_vault_mos;
-
-
-///<---->
-
-#if 0
-//!plAgeLinkStruct
-typedef struct {
-	U16 unk1; //always 0x0023 (2 bytes)
-	Byte mask; //the mask seen 0x2F & 0x0F (1 byte)
-	Byte age_file_name[STR_MAX_SIZE+1]; //name of the age. Urustring16 (2 bytes + len(age_name))
-	Byte age_name[STR_MAX_SIZE+1]; //the age name
-	Byte age_guid[0x20]; //the age guid
-	Byte owner_name[STR_MAX_SIZE+1]; //the owner
-	Byte full_name[STR_MAX_SIZE+1]; //the full name
-	Byte unk2; //(1 byte) always 0x01
-	U32 unk3; //(4 bytes) always 0x01
-	U32 unk4; //(4 bytes) always 0x07
-	Byte link_name[STR_MAX_SIZE+1]; //the link name
-	Byte link_point[STR_MAX_SIZE+1]; //the linking point
-	U16 unk5; //(2 bytes) always 0x00
-} plAgeLinkStruct;
-#endif
-
-typedef struct {
-	Byte mask; //The mask
-	Byte filename[STR_MAX_SIZE+1]; //age filename
-	Byte instance_name[STR_MAX_SIZE+1]; //age instance name
-	Byte guid[8]; //Age Guid
-	Byte user_name[STR_MAX_SIZE+1]; //user defined name
-	Byte display_name[STR_MAX_SIZE+1]; //The display name
-	U32 language; //Age Language, seen always 0
-} t_AgeInfoStruct;
-
-typedef struct {
-	U32 mask; //A mask, always 0x00000007
-	Byte title[STR_MAX_SIZE+1]; //Title of the link (Default)
-	Byte name[STR_MAX_SIZE+1]; //Name of the link (LinkingPointDefault)
-	Byte camera[STR_MAX_SIZE+1]; //Camera stack of the link (Null)
-} t_SpawnPoint;
-
-typedef struct {
-	U16 mask; //The mask
-	t_AgeInfoStruct ainfo; //age information
-	Byte unk; //Linking rules
-	U32 rules; //An unknown U32 that is always 0x01 (code needs to be fixed!)
-	t_SpawnPoint spoint; //the spawn point
-	Byte ccr; //It's a CCR?
-} t_AgeLinkStruct; //0x02BF
 
 #endif

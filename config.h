@@ -25,6 +25,10 @@
 *******************************************************************************/
 
 //for debugging
+/*
+	Note this file will be overwritten by config.h files, automatically generated
+	by configure.
+*/
 
 #ifndef __U_CONFIG_
 #define __U_CONFIG_
@@ -33,6 +37,12 @@
 
 //! Enable debugging?
 #define _DEBUG_
+
+//! Enable malloc debugging?
+//#define _MALLOC_DBG_
+
+//! Enable dmalloc debugging?
+//#define _DMALLOC_DBG_
 
 //! Enable global debug level
 #ifndef _DBG_LEVEL_

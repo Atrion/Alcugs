@@ -24,22 +24,14 @@
 *                                                                              *
 *******************************************************************************/
 
-// UruNet class implementation will be here (temporany, it will be a list of all, C functions)
+//server side message parser
 
-/*
-	this will contain all related with using the socket
-*/
-
-#ifndef __U_SCAUTH_MSG_H_
-#define __U_SCAUTH_MSG_H_
+#ifndef __U_PSCAUTH_MSG_H_
+#define __U_PSCAUTH_MSG_H_
 /* CVS tag - DON'T TOUCH*/
-#define __U_SCAUTH_MSG_H_ID "$Id$"
+#define __U_PSCAUTH_MSG_H_ID "$Id$"
 
-/*-----------------------------------------------------------------
-	processes the plNetMsg and sends the adient reply (preliminar)
-	 -- returns the size of the packet --
-------------------------------------------------------------------*/
-int process_scauth_plNetMsg(int sock,Byte * buf,int size,st_uru_client * u);
+int process_scauth_plNetMsg(st_unet * net,Byte * buf,int size,int sid);
 
 #endif
 

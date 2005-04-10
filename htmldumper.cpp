@@ -24,28 +24,37 @@
 *                                                                              *
 *******************************************************************************/
 
-#ifndef _HTML_DUMPER
-#define _HTML_DUMPER
 #define _HTML_DUMPER_ID "$Id$"
 
 //#define _DBG_LEVEL_ 10
 
 #include "config.h"
-#include "debug.h"
 
-#include<stdio.h>
+#include <stdio.h>
 #include <string.h>
+#include <time.h>
 
-#include "debug.h"
+#ifdef __WIN32__
+#include "windoze.h"
+#endif
+
 #include "stdebug.h"
 #include "files.h"
 #include "conv_funs.h"
 #include "data_types.h"
 #include "vaultstrs.h"
+#include "urustructs.h"
 #include "vnodes.h"
 #include "prot.h"
 
+#include "urunet.h"
+#include "protocol.h"
+
+#include "vaultsubsys.h"
+
 #include "htmldumper.h"
+
+#include "debug.h"
 
 //returns the pointer to the string associated to this node
 const char * vault_get_type(Byte type) {
@@ -75,255 +84,288 @@ const char * vault_get_type(Byte type) {
 }
 
 //get the permissions
-void dump_permissions(FILE * f,U32 permissions) {
+void dump_permissions(st_log * f,U32 permissions) {
 	Byte perm;
-	fprintf(f,"<table border=1><tr><td colspan=2>Other</td><td colspan=2>Group</td><td colspan=2>Owner</td></tr>\n");
-	fprintf(f,"<tr><td>w</td><td>r</td><td>w</td><td>r</td><td>w</td><td>r</td></tr>\n");
-	fprintf(f,"<tr><td>");
+	static U32 ntag=1;
+	//spoiler tag
+	print2log(f,"<div onclick=\"document.getElementById('per_a_%i').style.display='block';\
+ this.style.display='none';\" id=\"per_b_%i\" style=\"display: inline; cursor: pointer;\
+\"><b>Permissions:</b> %02X (%i)</div>\n",ntag,ntag,permissions,permissions);
+	print2log(f,"<div id=\"per_a_%i\" style=\"display: none;\">\n",ntag);
+	print2log(f,"<div onclick=\"document.getElementById('per_a_%i').style.display='none';\
+ document.getElementById('per_b_%i').style.display='inline';\" style=\"cursor: pointer;\
+ \"><b>Permissions:</b> %02X (%i)</div>\n",ntag,ntag,permissions,permissions);
+	//spoiler tag head
+
+	print2log(f,"<table border=1><tr><td colspan=2>Other</td><td colspan=2>Group</td><td colspan=2>Owner</td></tr>\n");
+	print2log(f,"<tr><td>w</td><td>r</td><td>w</td><td>r</td><td>w</td><td>r</td></tr>\n");
+	print2log(f,"<tr><td>");
 	perm=(Byte)permissions;
 	if(perm & KOtherWrite) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"</td><td>");
+	print2log(f,"</td><td>");
 	if(perm & KOtherRead) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"</td><td>");
+	print2log(f,"</td><td>");
 	if(perm & KGroupWrite) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"</td><td>");
+	print2log(f,"</td><td>");
 	if(perm & KGroupRead) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"</td><td>");
+	print2log(f,"</td><td>");
 	if(perm & KOwnerWrite) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"</td><td>");
+	print2log(f,"</td><td>");
 	if(perm & KOwnerRead) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"</td></tr>");
-	fprintf(f,"</table>\n");
+	print2log(f,"</td></tr>");
+	print2log(f,"</table>\n");
+
+	//end spoiler tag
+	print2log(f,"</div>\n");
+	ntag++;
+	//end spoler tag
 }
 
 //print the flags
-void dump_flags(FILE * f,U32 flag1,U32 flag2,U32 flag3) {
-	//Byte perm;
-	fprintf(f,"<table border=1><tr><td>flag_name</td><td>value</td></tr>\n");
-	fprintf(f,"<tr><td>MIndex</td><td>");
+void dump_flags(st_log * f,U32 flag1,U32 flag2,U32 flag3) {
+	//spoiler tag
+	static U32 ntag=1;
+	print2log(f,"<div onclick=\"document.getElementById('flags_a_%i').style.display='block';\
+ this.style.display='none';\" id=\"flags_b_%i\" style=\"display: inline; cursor: pointer;\
+\"><b>Flags:</b> 1=%08X(%i) 2=%08X(%i) 3=%08X(%i)</div>\n",\
+ntag,ntag,flag1,flag1,flag2,flag2,flag3,flag3);
+	print2log(f,"<div id=\"flags_a_%i\" style=\"display: none;\">\n",ntag);
+	print2log(f,"<div onclick=\"document.getElementById('flags_a_%i').style.display='none';\
+ document.getElementById('flags_b_%i').style.display='inline';\" style=\"cursor: pointer;\
+ \"><b>Flags:</b> 1=%08X(%i) 2=%08X(%i) 3=%08X(%i)</div>\n",\
+ntag,ntag,flag1,flag1,flag2,flag2,flag3,flag3);
+	//spoiler tag head
+
+
+	print2log(f,"<table border=1><tr><td>flag_name</td><td>value</td></tr>\n");
+	print2log(f,"<tr><td>MIndex</td><td>");
 	if(flag2 & MIndex) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MType</td><td>");
+	print2log(f,"<tr><td>MType</td><td>");
 	if(flag2 & MType) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MOwner</td><td>");
+	print2log(f,"<tr><td>MOwner</td><td>");
 	if(flag2 & MOwner) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MUnk1</td><td>");
+	print2log(f,"<tr><td>MUnk1</td><td>");
 	if(flag2 & MUnk1) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MStamp1</td><td>");
+	print2log(f,"<tr><td>MStamp1</td><td>");
 	if(flag2 & MStamp1) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MId1</td><td>");
+	print2log(f,"<tr><td>MId1</td><td>");
 	if(flag2 & MId1) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MStamp2</td><td>");
+	print2log(f,"<tr><td>MStamp2</td><td>");
 	if(flag2 & MStamp2) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MStamp3</td><td>");
+	print2log(f,"<tr><td>MStamp3</td><td>");
 	if(flag2 & MStamp3) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MAgeCoords</td><td>");
+	print2log(f,"<tr><td>MAgeCoords</td><td>");
 	if(flag2 & MAgeCoords) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MAgeName</td><td>");
+	print2log(f,"<tr><td>MAgeName</td><td>");
 	if(flag2 & MAgeName) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MHexGuid</td><td>");
+	print2log(f,"<tr><td>MHexGuid</td><td>");
 	if(flag2 & MHexGuid) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MTorans</td><td>");
+	print2log(f,"<tr><td>MTorans</td><td>");
 	if(flag2 & MTorans) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MDistance</td><td>");
+	print2log(f,"<tr><td>MDistance</td><td>");
 	if(flag2 & MDistance) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MElevation</td><td>");
+	print2log(f,"<tr><td>MElevation</td><td>");
 	if(flag2 & MElevation) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MUnk5</td><td>");
+	print2log(f,"<tr><td>MUnk5</td><td>");
 	if(flag2 & MUnk5) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MId2</td><td>");
+	print2log(f,"<tr><td>MId2</td><td>");
 	if(flag2 & MId2) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MUnk7</td><td>");
+	print2log(f,"<tr><td>MUnk7</td><td>");
 	if(flag2 & MUnk7) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MUnk8</td><td>");
+	print2log(f,"<tr><td>MUnk8</td><td>");
 	if(flag2 & MUnk8) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MUnk9</td><td>");
+	print2log(f,"<tr><td>MUnk9</td><td>");
 	if(flag2 & MUnk9) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MEntryName</td><td>");
+	print2log(f,"<tr><td>MEntryName</td><td>");
 	if(flag2 & MEntryName) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MSubEntry</td><td>");
+	print2log(f,"<tr><td>MSubEntry</td><td>");
 	if(flag2 & MSubEntry) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MOwnerName</td><td>");
+	print2log(f,"<tr><td>MOwnerName</td><td>");
 	if(flag2 & MOwnerName) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MGuid</td><td>");
+	print2log(f,"<tr><td>MGuid</td><td>");
 	if(flag2 & MGuid) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MStr1</td><td>");
+	print2log(f,"<tr><td>MStr1</td><td>");
 	if(flag2 & MStr1) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MStr2</td><td>");
+	print2log(f,"<tr><td>MStr2</td><td>");
 	if(flag2 & MStr2) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MAvie</td><td>");
+	print2log(f,"<tr><td>MAvie</td><td>");
 	if(flag2 & MAvie) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MUid</td><td>");
+	print2log(f,"<tr><td>MUid</td><td>");
 	if(flag2 & MUid) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MEValue</td><td>");
+	print2log(f,"<tr><td>MEValue</td><td>");
 	if(flag2 & MEValue) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MEntry2</td><td>");
+	print2log(f,"<tr><td>MEntry2</td><td>");
 	if(flag2 & MEntry2) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MData1</td><td>");
+	print2log(f,"<tr><td>MData1</td><td>");
 	if(flag2 & MData1) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MData2</td><td>");
+	print2log(f,"<tr><td>MData2</td><td>");
 	if(flag2 & MData2) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MBlob1</td><td>");
+	print2log(f,"<tr><td>MBlob1</td><td>");
 	if(flag3 & MBlob1) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"<tr><td>MBlob2</td><td>");
+	print2log(f,"<tr><td>MBlob2</td><td>");
 	if(flag3 & MBlob2) {
-		fprintf(f,"X");
+		print2log(f,"X");
 	} else {
-		fprintf(f,"&nbsp;");
+		print2log(f,"&nbsp;");
 	}
-	fprintf(f,"</td></tr>");
-	fprintf(f,"</table>\n");
+	print2log(f,"</td></tr>");
+	print2log(f,"</table>\n");
+	//end spoiler tag
+	print2log(f,"</div>\n");
+	ntag++;
+	//end spoler tag
 }
 
 //returns the pointer to the string associated to this node
@@ -438,65 +480,67 @@ const char * vault_get_sub_data_type(Byte type) {
 
 
 //html dumper
-int vault_parse_node_data(FILE * f, t_vault_node * n) {
+int vault_parse_node_data(st_log * f, t_vault_node * n) {
 	char * cstamp;
 	Byte guid[9];
-	fprintf(f,"<h1 id=\"%i\">Node %i</h1>\n",n->index,n->index);
+	print2log(f,"<h1 id=\"%i\">Node %i</h1>\n",n->index,n->index);
 
-	fprintf(f,"<b>Sep1:</b> %08X(%i)<br>\n",n->unkA,n->unkA);
-	fprintf(f,"<b>Sep2:</b> %08X(%i)<br>\n",n->unkB,n->unkB);
-	fprintf(f,"<b>Sep3:</b> %08X(%i)<br>\n",n->unkC,n->unkC);
+	//print2log(f,"<b>Sep1:</b> %08X(%i)<br>\n",n->unkA,n->unkA);
+	//print2log(f,"<b>Sep2:</b> %08X(%i)<br>\n",n->unkB,n->unkB);
+	//print2log(f,"<b>Sep3:</b> %08X(%i)<br>\n",n->unkC,n->unkC);
 	dump_flags(f,n->unkA,n->unkB,n->unkC);
+	print2log(f,"<br>");
 
-	fprintf(f,"<b>Type:</b> %s %02X(%i)<br>\n",vault_get_type(n->type),n->type,n->type);
-	fprintf(f,"<b>Permissions:</b> %02X(%i)<br>\n",n->permissions,n->permissions);
+	print2log(f,"<b>Type:</b> %s %02X(%i)<br>\n",vault_get_type(n->type),n->type,n->type);
+	//print2log(f,"<b>Permissions:</b> %02X(%i)<br>\n",n->permissions,n->permissions);
 	dump_permissions(f,n->permissions);
-	fprintf(f,"<b>Owner:</b> <a href=\"#%i\">%08X(%i)</a><br>\n",n->owner,n->owner,n->owner);
-	if(n->unk1!=0) fprintf(f,"<b>Unk1:</b> %08X(%i)<br>\n",n->unk1,n->unk1);
+	print2log(f,"<br>");
+	print2log(f,"<b>Owner:</b> <a href=\"#%i\">%08X(%i)</a><br>\n",n->owner,n->owner,n->owner);
+	if(n->unk1!=0) print2log(f,"<b>Unk1:</b> %08X(%i)<br>\n",n->unk1,n->unk1);
 	if(n->timestamp!=0) {
 		cstamp=ctime((time_t *)&n->timestamp);
-		fprintf(f,"<b>Timestamp:</b> %s %i<br>\n",cstamp,n->microseconds);
+		print2log(f,"<b>Timestamp:</b> %s %i<br>\n",cstamp,n->microseconds);
 		//free(cstamp);
 	}
-	fprintf(f,"<b>Id1:</b> %08X(%i)<br>\n",n->id1,n->id1);
+	print2log(f,"<b>Id1:</b> %08X(%i)<br>\n",n->id1,n->id1);
 	if(n->timestamp2!=0) {
 		cstamp=ctime((time_t *)&n->timestamp2);
-		fprintf(f,"<b>Timestamp2:</b> %s %i<br>\n",cstamp,n->microseconds2);
+		print2log(f,"<b>Timestamp2:</b> %s %i<br>\n",cstamp,n->microseconds2);
 		//free(cstamp);
 	}
 	if(n->timestamp3!=0) {
 		cstamp=ctime((time_t *)&n->timestamp3);
-		fprintf(f,"<b>Timestamp3:</b> %s %i<br>\n",cstamp,n->microseconds3);
+		print2log(f,"<b>Timestamp3:</b> %s %i<br>\n",cstamp,n->microseconds3);
 		//free(cstamp);
 	}
-	if(n->age_name[0]!=0) fprintf(f,"<b>Age Name:</b> %s<br>\n",n->age_name);
+	if(n->age_name[0]!=0) print2log(f,"<b>Age Name:</b> %s<br>\n",n->age_name);
 	hex2ascii2(guid,n->age_guid,8);
-	if(guid[0]!=0) fprintf(f,"<b>Age Hex Guid:</b> %s<br>\n",guid);
-	if(n->torans!=0) fprintf(f,"<b>Torans:</b> %08X(%i) %s<br>\n",n->torans,n->torans,vault_get_folder_type(n->torans));
-	if(n->distance!=0) fprintf(f,"<b>Distance:</b> %08X(%i)<br>\n",n->distance,n->distance);
-	if(n->elevation!=0) fprintf(f,"<b>Elevation:</b> %08X(%i)<br>\n",n->elevation,n->elevation);
-	if(n->unk5!=0) fprintf(f,"<b>Unk5:</b> %08X(%i)<br>\n",n->unk5,n->unk5);
-	if(n->id2!=0) fprintf(f,"<b>Id2:</b> %08X(%i)<br>\n",n->id2,n->id2);
-	if(n->unk7!=0) fprintf(f,"<b>Unk7:</b> %08X(%i)<br>\n",n->unk7,n->unk7);
-	if(n->unk8!=0) fprintf(f,"<b>Unk8:</b> %08X(%i)<br>\n",n->unk8,n->unk8);
-	if(n->unk9!=0) fprintf(f,"<b>Unk9:</b> %08X(%i)<br>\n",n->unk9,n->unk9);
+	if(guid[0]!=0) print2log(f,"<b>Age Hex Guid:</b> %s<br>\n",guid);
+	if(n->torans!=0) print2log(f,"<b>Torans:</b> %08X(%i) %s<br>\n",n->torans,n->torans,vault_get_folder_type(n->torans));
+	if(n->distance!=0) print2log(f,"<b>Distance:</b> %08X(%i)<br>\n",n->distance,n->distance);
+	if(n->elevation!=0) print2log(f,"<b>Elevation:</b> %08X(%i)<br>\n",n->elevation,n->elevation);
+	if(n->unk5!=0) print2log(f,"<b>Unk5:</b> %08X(%i)<br>\n",n->unk5,n->unk5);
+	if(n->id2!=0) print2log(f,"<b>Id2:</b> %08X(%i)<br>\n",n->id2,n->id2);
+	if(n->unk7!=0) print2log(f,"<b>Unk7:</b> %08X(%i)<br>\n",n->unk7,n->unk7);
+	if(n->unk8!=0) print2log(f,"<b>Unk8:</b> %08X(%i)<br>\n",n->unk8,n->unk8);
+	if(n->unk9!=0) print2log(f,"<b>Unk9:</b> %08X(%i)<br>\n",n->unk9,n->unk9);
 	//str_filter(n->entry_name); //keep out < >
 	Byte auxiliar23[200];
 	strcpy((char *)auxiliar23,(char *)n->entry_name);
 	str_filter(auxiliar23);
-	if(n->entry_name[0]!=0) fprintf(f,"<b>Entry Name:</b> %s<br>\n",auxiliar23);
-	if(n->sub_entry_name[0]!=0) fprintf(f,"<b>Sub Entry Name:</b> %s<br>\n",n->sub_entry_name);
-	if(n->owner_name[0]!=0) fprintf(f,"<b>Owner Name:</b> %s<br>\n",n->owner_name);
-	if(n->guid[0]!=0) fprintf(f,"<b>Guid:</b> %s<br>\n",n->guid);
-	if(n->str1[0]!=0) fprintf(f,"<b>Str1:</b> %s<br>\n",n->str1);
-	if(n->str2[0]!=0) fprintf(f,"<b>Str2:</b> %s<br>\n",n->str2);
-	if(n->avie[0]!=0) fprintf(f,"<b>Avie:</b> %s<br>\n",n->avie);
-	if(n->uid[0]!=0) fprintf(f,"<b>Uid:</b> %s<br>\n",n->uid);
-	if(n->entry_value[0]!=0) fprintf(f,"<b>Entry value:</b> %s<br>\n",n->entry_value);
-	if(n->entry2[0]!=0) fprintf(f,"<b>Entry2:</b> %s<br>\n",n->entry2);
+	if(n->entry_name[0]!=0) print2log(f,"<b>Entry Name:</b> %s<br>\n",auxiliar23);
+	if(n->sub_entry_name[0]!=0) print2log(f,"<b>Sub Entry Name:</b> %s<br>\n",n->sub_entry_name);
+	if(n->owner_name[0]!=0) print2log(f,"<b>Owner Name:</b> %s<br>\n",n->owner_name);
+	if(n->guid[0]!=0) print2log(f,"<b>Guid:</b> %s<br>\n",n->guid);
+	if(n->str1[0]!=0) print2log(f,"<b>Str1:</b> %s<br>\n",n->str1);
+	if(n->str2[0]!=0) print2log(f,"<b>Str2:</b> %s<br>\n",n->str2);
+	if(n->avie[0]!=0) print2log(f,"<b>Avie:</b> %s<br>\n",n->avie);
+	if(n->uid[0]!=0) print2log(f,"<b>Uid:</b> %s<br>\n",n->uid);
+	if(n->entry_value[0]!=0) print2log(f,"<b>Entry value:</b> %s<br>\n",n->entry_value);
+	if(n->entry2[0]!=0) print2log(f,"<b>Entry2:</b> %s<br>\n",n->entry2);
 	if(n->data_size!=0) {
-		fprintf(f,"<b>Data Size:</b> %08X(%i)<br>\n",n->data_size,n->data_size);
-		fprintf(f,"<b>Data contents:</b><br>\n");
+		print2log(f,"<b>Data Size:</b> %08X(%i)<br>\n",n->data_size,n->data_size);
+		print2log(f,"<b>Data contents:</b><br>\n");
 		char filename1[1000];
 		char filename2[1000];
 		int raw_data=0;
@@ -511,7 +555,7 @@ int vault_parse_node_data(FILE * f, t_vault_node * n) {
 				//the image
 				sprintf(filename1,"%s.%s.%i.%i.%i.jpg",auxiliar24,auxiliar23,n->index,n->timestamp,n->microseconds);
 				str_filter((Byte *)filename1); //NEVER trust USER INPUT!!
-				strcpy(filename2,(const char *)global_log_files_path); //path_to_images
+				strcpy(filename2,(const char *)stdebug_config->path); //path_to_images
 				strcat(filename2,"/data/");
 				mkdir(filename2,00750);
 				strcat(filename2,filename1);
@@ -519,11 +563,11 @@ int vault_parse_node_data(FILE * f, t_vault_node * n) {
 				image_file=fopen(filename2,"wb");
 				if(image_file!=NULL) {
 					fwrite(n->data+0x04,(*(U32 *)n->data)*sizeof(Byte),1,image_file);
-					fprintf(f,"<img src=\"data\%s\"><br>\n",filename1);
+					print2log(f,"<img src=\"data/%s\"><br>\n",filename1);
 					fclose(image_file);
 				} else {
-					fprintf(f,"<b>Error creating image...</b><br>\n");
-					fprintf(stderr,"? %s - %s ",filename2,global_log_files_path); //path_to_images
+					print2log(f,"<b>Error creating image...</b><br>\n");
+					print2log(f_err,"? %s - %s ",filename2,stdebug_config->path); //path_to_images
 					perror("error creating file...");
 				}
 				break;
@@ -531,48 +575,48 @@ int vault_parse_node_data(FILE * f, t_vault_node * n) {
 				sprintf(filename1,"%s.%s.%i.%i.%i.links",n->age_name,n->entry_name,n->index,n->timestamp,n->microseconds);
 				str_filter((Byte *)filename1); //NEVER trust USER INPUT!!
 
-				fprintf(f,"List of linking points<pre>\n");
+				print2log(f,"List of linking points<pre>\n");
 				dump_packet(f,n->data,n->data_size,0,7);
-				//fprintf(f,"%s",n->data);
-				fprintf(f,"</pre><br>\n");
+				//print2log(f,"%s",n->data);
+				print2log(f,"</pre><br>\n");
 				raw_data=1;
 				break;
 			case KTextNoteNode:
 				sprintf(filename1,"%s.%s.%i.%i.%i.txt",n->age_name,n->entry_name,n->index,n->timestamp,n->microseconds);
 				str_filter((Byte *)filename1); //NEVER trust USER INPUT!!
 
-				fprintf(f,"Text Note<pre>\n");
+				print2log(f,"Text Note<pre>\n");
 				dump_packet(f,n->data,n->data_size,0,7);
-				fprintf(f,"</pre><br>\n");
+				print2log(f,"</pre><br>\n");
 				raw_data=1;
 				break;
 			case KMarkerNode:
 				sprintf(filename1,"%s.%s.%i.%i.%i.marker",n->age_name,n->entry_name,n->index,n->timestamp,n->microseconds);
 				str_filter((Byte *)filename1); //NEVER trust USER INPUT!!
-				fprintf(f,"MARKER byte code<pre>\n");
+				print2log(f,"MARKER byte code<pre>\n");
 				dump_packet(f,n->data,n->data_size,0,7);
-				fprintf(f,"</pre><br>\n");
+				print2log(f,"</pre><br>\n");
 				raw_data=1;
 				break;
 			case KSDLNode:
 				sprintf(filename1,"%s.%s.%i.%i.%i.sdl_byte",n->age_name,n->entry_name,n->index,n->timestamp,n->microseconds);
 				str_filter((Byte *)filename1); //NEVER trust USER INPUT!!
-				fprintf(f,"SDL byte code<pre>\n");
+				print2log(f,"SDL byte code<pre>\n");
 				dump_packet(f,n->data,n->data_size,0,7);
-				fprintf(f,"</pre><br>\n");
+				print2log(f,"</pre><br>\n");
 				raw_data=1;
 				break;
 			default:
 				sprintf(filename1,"%s.%s.%i.%i.%i.raw",n->age_name,n->entry_name,n->index,n->timestamp,n->microseconds);
 				str_filter((Byte *)filename1); //NEVER trust USER INPUT!!
-				fprintf(f,"Unknown byte code<pre>\n");
+				print2log(f,"Unknown byte code<pre>\n");
 				dump_packet(f,n->data,n->data_size,0,7);
-				fprintf(f,"</pre><br>\n");
+				print2log(f,"</pre><br>\n");
 				raw_data=1;
 				break;
 		}
 		if(raw_data==1) {
-			strcpy(filename2,(const char *)global_log_files_path);
+			strcpy(filename2,(const char *)stdebug_config->path);
 			strcat(filename2,"/data/");
 			mkdir(filename2,00750);
 			strcat(filename2,filename1);
@@ -580,51 +624,54 @@ int vault_parse_node_data(FILE * f, t_vault_node * n) {
 			image_file=fopen(filename2,"wb");
 			if(image_file!=NULL) {
 				fwrite(n->data,n->data_size*sizeof(Byte),1,image_file);
-				fprintf(f,"<a href=\"data\%s\">%s</a><br>\n",filename1,filename1);
+				print2log(f,"<a href=\"data/%s\">%s</a><br>\n",filename1,filename1);
 				fclose(image_file);
 			} else {
-				fprintf(f,"<b>Error creating data file...</b><br>\n");
-				fprintf(stderr,"? %s - %s ",filename2,global_log_files_path);
+				print2log(f,"<b>Error creating data file...</b><br>\n");
+				print2log(f_err,"? %s - %s ",filename2,stdebug_config->path);
 				perror("error creating file...");
 			}
 		}
 	}
-	if(n->data2_size!=0) fprintf(f,"<b>Data2:</b> %08X(%i) bytes !! (not implemented, if we found one, I will implement it!<br>\n",n->data2_size,n->data2_size);
-	if(n->unk13!=0) fprintf(f,"<b>Unk13:</b> %08X(%i)<br>\n",n->unk13,n->unk13);
-	if(n->unk14!=0) fprintf(f,"<b>Unk14:</b> %08X(%i)<br>\n",n->unk14,n->unk14);
-	if(n->unk15!=0) fprintf(f,"<b>Unk15:</b> %08X(%i)<br>\n",n->unk15,n->unk15);
-	if(n->unk16!=0) fprintf(f,"<b>Unk16:</b> %08X(%i)<br>\n",n->unk16,n->unk16);
-	fprintf(f,"<hr>");
+	if(n->data2_size!=0) {
+	print2log(f,"<b>Data2:</b> %08X(%i) bytes !! (not implemented, if we found one, I will implement it!<br>\n",n->data2_size,n->data2_size);
+	plog(f_err,"Found a Vault stream with DATA 2 - FIX ME\n");
+	}
+	if(n->unk13!=0) print2log(f,"<b>Unk13:</b> %08X(%i)<br>\n",n->unk13,n->unk13);
+	if(n->unk14!=0) print2log(f,"<b>Unk14:</b> %08X(%i)<br>\n",n->unk14,n->unk14);
+	if(n->unk15!=0) print2log(f,"<b>Unk15:</b> %08X(%i)<br>\n",n->unk15,n->unk15);
+	if(n->unk16!=0) print2log(f,"<b>Unk16:</b> %08X(%i)<br>\n",n->unk16,n->unk16);
+	print2log(f,"<hr>");
 
 	return 0;
 }
 
-void htmlParseCreatableGenericValue(FILE * f,void * data) {
+void htmlParseCreatableGenericValue(st_log * f,void * data) {
 	t_CreatableGenericValue * wdata;
 	wdata=(t_CreatableGenericValue *)data;
-	fprintf(f,"Dtype: %i-%s<br>Value(s):\n",\
+	print2log(f,"Dtype: %i-%s<br>Value(s):\n",\
 wdata->format,vault_get_sub_data_type(wdata->format));
 	switch(wdata->format) {
 		case DInteger:
-			fprintf(f,"(%08X)%i",*(U32 *)(wdata->data),*(U32 *)(wdata->data));
+			print2log(f,"(%08X)%i",*(U32 *)(wdata->data),*(U32 *)(wdata->data));
 			break;
 		case DUruString:
-			fprintf(f,"%s",(Byte *)(wdata->data));
+			print2log(f,"%s",(Byte *)(wdata->data));
 			break;
 		case DTimestamp:
-			fprintf(f,"%f",*(double *)(wdata->data));
+			print2log(f,"%f",*(double *)(wdata->data));
 			break;
 		default:
-			fprintf(f,"<font color=red>Unknown strange sub-meta-data type!</font>\n");
+			print2log(f,"<font color=red>Unknown strange sub-meta-data type!</font>\n");
 			break;
 	}
-	fprintf(f,"<br>");
+	print2log(f,"<br>");
 }
 
-void htmlParseCreatableStream(FILE * f,void * data,Byte id) {
+void htmlParseCreatableStream(st_log * f,void * data,Byte id) {
 	t_CreatableStream * wdata;
 	wdata=(t_CreatableStream *)data;
-	fprintf(f,"Size: %i<br>Contents:<br>\n",wdata->size);
+	print2log(f,"Size: %i<br>Contents:<br>\n",wdata->size);
 	int offset=0;
 	int n_itms,i;
 	U32 val;
@@ -636,135 +683,153 @@ void htmlParseCreatableStream(FILE * f,void * data,Byte id) {
 		case 0x0A:
 			n_itms=*(U16 *)(buf+offset);
 			offset+=2;
-			fprintf(f,"NVals: %i\n<br>Value(s):",n_itms);
+			print2log(f,"NVals: %i\n<br>Value(s):",n_itms);
 			for(i=0; i<n_itms; i++) {
 				val=*(U32 *)(buf+offset);
 				offset+=4;
-				fprintf(f," (%08X)%i,",val,val);
+				print2log(f," (%08X)%i,",val,val);
 			}
-			//fprintf(f,"(%08X)%i",*(U32 *)(wdata->data),*(U32 *)(wdata->data));
+			//print2log(f,"(%08X)%i",*(U32 *)(wdata->data),*(U32 *)(wdata->data));
 			break;
 		case 0x0E:
 			n_itms=*(U32 *)(buf+offset);
 			offset+=4;
-			fprintf(f,"NVals: %i\n<br>Value(s):<br>",n_itms);
+			print2log(f,"NVals: %i\n<br>Value(s):<br>",n_itms);
 			for(i=0; i<n_itms; i++) {
 				val=*(U32 *)(buf+offset);
 				offset+=4;
 				time=*(double *)(buf+offset);
 				offset+=8;
-				fprintf(f,"[%i] ID:(%08X)%i Stamp:%f<br>",i+1,val,val,time);
+				print2log(f,"[%i] ID:(%08X)%i Stamp:%f<br>",i+1,val,val,time);
 			}
 			break;
 		case 0x0F:
 			n_itms=*(U32 *)(buf+offset);
 			offset+=4;
-			fprintf(f,"NVals: %i\n<br>Value(s):<br>",n_itms);
+			print2log(f,"NVals: %i\n<br>Value(s):<br>",n_itms);
 			for(i=0; i<n_itms; i++) {
 				val=*(U32 *)(buf+offset);
 				offset+=4;
-				fprintf(f,"[%i] Id1:(%08X)%i ",i+1,val,val);
+				print2log(f,"[%i] Id1:(%08X)%i ",i+1,val,val);
 				val=*(U32 *)(buf+offset);
 				offset+=4;
-				fprintf(f,"Id2:(%08X)%i ",val,val);
+				print2log(f,"Id2:(%08X)%i ",val,val);
 				val=*(U32 *)(buf+offset);
 				offset+=4;
-				fprintf(f,"Id3:(%08X)%i ",val,val);
+				print2log(f,"Id3:(%08X)%i ",val,val);
 				timestr=ctime((time_t *)(buf+offset));
 				offset+=4;
 				val=*(U32 *)(buf+offset);
 				offset+=4;
-				fprintf(f,"Stamp:%s %ius ",timestr,val);
+				print2log(f,"Stamp:%s %ius ",timestr,val);
 				//free((void *)timestr);
 				val=*(Byte *)(buf+offset);
 				offset++;
-				fprintf(f,"Flag:%i<br>\n",val);
+				print2log(f,"Flag:%i<br>\n",val);
 			}
 			break;
 		case 0x06:
 			t_vault_node node;
+			init_node(&node);
 			offset=0;
 			int ret;
-			fprintf(f,"<table border=1>");
+			print2log(f,"<table border=1>");
 			while(offset<(int)wdata->size) {
 				ret=vault_parse_node(f,buf+offset,wdata->size,&node);
 				if(ret<0) {
-					fprintf(f,"<font color=red>An error ocurred parsing the stream!!</font>\n");
+					print2log(f,"<font color=red>An error ocurred parsing the stream!!</font>\n");
 					break;
 				} else {
 					offset+=ret;
 				}
-				fprintf(f,"<tr><td bgcolor=green><font color=blue>Node: %i</font></td></tr>",node.index);
-				fprintf(f,"<tr><td>\n");
+				print2log(f,"<tr><td bgcolor=green><font color=blue>Node: %i</font></td></tr>",node.index);
+				print2log(f,"<tr><td>\n");
 				vault_parse_node_data(f,&node);
-				fprintf(f,"</td></tr>\n");
+				print2log(f,"</td></tr>\n");
+				destroy_node(&node);
+				init_node(&node);
 			}
-			fprintf(f,"</table>");
+			print2log(f,"</table>");
 			break;
 		default:
-			fprintf(f,"<font color=red>Unknown strange stream-data type!</font>\n");
+			print2log(f,"<font color=red>Unknown strange stream-data type!</font>\n");
 			break;
 	}
-	fprintf(f,"<br>\n");
+	print2log(f,"<br>\n");
 }
 
-void htmlVaultParse(t_vault_mos * vobj,st_uru_client * u,int recv) {
+void ip2log(st_log * f,st_uru_client * u) {
+	print2log(f,"%s:%i",get_ip(u->ip),ntohs(u->port));
+}
 
-	FILE * f;
+//recv flag 0x01 RCV, elsewhere SND
+void htmlVaultParse(st_unet * net,t_vault_mos * vobj,int sid,int recv) {
+	st_log * f;
 	f=f_vhtml;
+
+	if(f==NULL) return; //when it's dissabled, don't do anything
+
+	if(net_check_address(net,sid)!=0) { return; }
+	st_uru_client * u=&net->s[sid];
+
+	//this will ensure vault log file rotation
+	print2log(f,"<!--");
+	stamp2log(f);
+	rotate_log(f,0); //force it
+	print2log(f,"-->\n");
 
 	DBG(8,"step1\n");
 	//recieved from client?
 	if(recv==1) {
-		fprintf(f,"<h1><font color=blue>From: ");
+		print2log(f,"<h1><font color=blue>RCV From: ");
 		ip2log(f,u);
-		fprintf(f," To Server: [%s:%i]</font></h1>",global_bind_hostname,global_port);
+		print2log(f," To: [%s:%i]</font></h1>",system_addr,system_port);
 	} else {
-		fprintf(f,"<h1><font color=red>From Server: [%s:%i] To: ",global_bind_hostname,global_port);
+		print2log(f,"<h1><font color=red>SND From: [%s:%i] To: ",system_addr,system_port);
 		ip2log(f,u);
-		fprintf(f,"</font></h1>");
+		print2log(f,"</font></h1>");
 	}
 
 	DBG(8,"step2\n");
-	fprintf(f,"<b>Client Id: %i[%i] (%s,%s)</b><br>\n",u->ki,u->adv_msg.ki,u->avatar_name,u->login);
+	print2log(f,"<b>Client Id: %i[%i] (%s,%s)</b><br>\n",u->ki,u->hmsg.ki,u->name,u->acct);
 
 	//now the vault
-	if(u->adv_msg.cmd==NetMsgVault || u->adv_msg.cmd==NetMsgVault) {
-		fprintf(f,"<b>NetMsgVault ");
-	} else if(u->adv_msg.cmd==NetMsgVaultTask) {
-		fprintf(f,"<b>NetMsgVaultTask ");
+	if(u->hmsg.cmd==NetMsgVault || u->hmsg.cmd==NetMsgVault) {
+		print2log(f,"<b>NetMsgVault ");
+	} else if(u->hmsg.cmd==NetMsgVaultTask) {
+		print2log(f,"<b>NetMsgVaultTask ");
 	} else {
-		fprintf(f,"<b>??%04X?? ",u->adv_msg.cmd);
+		print2log(f,"<b>??%04X?? ",u->hmsg.cmd);
 	}
 	if(recv==1) {
-		fprintf(f,"<RCV>");
+		print2log(f,"<RCV>");
 	} else {
-		fprintf(f,"<SND>");
+		print2log(f,"<SND>");
 	}
-	fprintf(f," CMD: %i",vobj->cmd);
-	if(u->adv_msg.cmd!=NetMsgVaultTask) {
-		fprintf(f," %s</b><br>\n",vault_get_operation(vobj->cmd));
+	print2log(f," CMD: %i",vobj->cmd);
+	if(u->hmsg.cmd!=NetMsgVaultTask) {
+		print2log(f," %s</b><br>\n",vault_get_operation(vobj->cmd));
 	} else {
-		fprintf(f," %s</b><br>\n",vault_get_task(vobj->cmd));
+		print2log(f," %s</b><br>\n",vault_get_task(vobj->cmd));
 	}
-	fprintf(f,"Result: %i, Zlib: %i, RSize: %i, CSize: %i<br>\n",vobj->result,vobj->zlib,vobj->real_size,vobj->comp_size);
-	fprintf(f,"NItems: %i,",vobj->n_itms);
-	if(u->adv_msg.cmd!=NetMsgVaultTask) {
-		fprintf(f,"Ctx:%i,Res:%i,<b>Mgr:%i</b>,Vn:%i<br>\n",vobj->ctx,\
+	print2log(f,"Result: %i, Zlib: %i, RSize: %i, CSize: %i<br>\n",vobj->result,vobj->zlib,vobj->real_size,vobj->comp_size);
+	print2log(f,"NItems: %i,",vobj->n_itms);
+	if(u->hmsg.cmd!=NetMsgVaultTask) {
+		print2log(f,"Ctx:%i,Res:%i,<b>Mgr:%i</b>,Vn:%i<br>\n",vobj->ctx,\
 	vobj->res,vobj->mgr,vobj->vn);
 	} else {
-		fprintf(f,"Sub:%i,<b>Client:%i</b><br>\n",vobj->ctx,vobj->mgr);
+		print2log(f,"Sub:%i,<b>Client:%i</b><br>\n",vobj->ctx,vobj->mgr);
 	}
 	int i;
-	fprintf(f,"<table border=1>");
+	print2log(f,"<table border=1>");
 
 	DBG(8,"step3\n");
 
 	for(i=0; i<vobj->n_itms; i++) {
-		fprintf(f,"<tr><td bgcolor=cyan><b>Item %i</b></td></tr>",i+1);
-		fprintf(f,"<tr><td>");
-		fprintf(f,"<font color=red>Id: <b>%i(%02X)</b></font>",vobj->itm[i].id,vobj->itm[i].id);
-		fprintf(f," Unk1: %i, dtype: %04X %s<br>\n",vobj->itm[i].unk1,vobj->itm[i].dtype,vault_get_data_type(vobj->itm[i].dtype));
+		print2log(f,"<tr><td bgcolor=cyan><b>Item %i</b></td></tr>",i+1);
+		print2log(f,"<tr><td>");
+		print2log(f,"<font color=red>Id: <b>%i(%02X)</b></font>",vobj->itm[i].id,vobj->itm[i].id);
+		print2log(f," Unk1: %i, dtype: %04X %s<br>\n",vobj->itm[i].unk1,vobj->itm[i].dtype,vault_get_data_type(vobj->itm[i].dtype));
 
 		//now parse the sub-data
 		switch(vobj->itm[i].dtype) {
@@ -780,7 +845,7 @@ void htmlVaultParse(t_vault_mos * vobj,st_uru_client * u,int recv) {
 				DBG(7,"ServerGuid\n");
 				Byte dugid[40];
 				hex2ascii2(dugid,(Byte *)vobj->itm[i].data,8);
-				fprintf(f,"Server Guid: %s<br>\n",dugid);
+				print2log(f,"Server Guid: %s<br>\n",dugid);
 				break;
 			case DVaultNode:
 				DBG(7,"VaultNode\n");
@@ -793,19 +858,19 @@ void htmlVaultParse(t_vault_mos * vobj,st_uru_client * u,int recv) {
 				DBG(8,"step1\n");
 				wcross=(t_vault_cross_ref *)vobj->itm[i].data;
 				DBG(8,"step2\n");
-				fprintf(f,"Id1:(%08X)%i ",wcross->id1,wcross->id1);
+				print2log(f,"Id1:(%08X)%i ",wcross->id1,wcross->id1);
 				DBG(8,"step3\n");
-				fprintf(f,"Id2:(%08X)%i ",wcross->id2,wcross->id2);
+				print2log(f,"Id2:(%08X)%i ",wcross->id2,wcross->id2);
 				DBG(8,"step4\n");
-				fprintf(f,"Id3:(%08X)%i ",wcross->id3,wcross->id3);
+				print2log(f,"Id3:(%08X)%i ",wcross->id3,wcross->id3);
 				DBG(8,"step5\n");
 				timestr2=ctime((const time_t *)&(wcross->timestamp)); //<-- windoze is crashing here?
 				DBG(8,"step6\n");
-				fprintf(f,"Stamp:%s %ius ",timestr2,wcross->microseconds);
-				//fprintf(f,"Stamp:%s %ius ",wcross->timestamp,wcross->microseconds);
+				print2log(f,"Stamp:%s %ius ",timestr2,wcross->microseconds);
+				//print2log(f,"Stamp:%s %ius ",wcross->timestamp,wcross->microseconds);
 				DBG(8,"step7\n");
 				//free((void *)timestr2);
-				fprintf(f,"Flag:%i<br>\n",wcross->flag);
+				print2log(f,"Flag:%i<br>\n",wcross->flag);
 				DBG(8,"step8\n");
 				break;
 			case DAgeLinkStruct:
@@ -815,180 +880,31 @@ void htmlVaultParse(t_vault_mos * vobj,st_uru_client * u,int recv) {
 				Byte digid[40];
 				hex2ascii2(digid,(Byte *)wlink->ainfo.guid,8);
 
-				fprintf(f,"Mask: %04X<br>",wlink->mask);
-				fprintf(f,"AgeInfoStruct: Mask:%02X,fname:%s,iname:%s,guid:%s,\
+				print2log(f,"Mask: %04X<br>",wlink->mask);
+				print2log(f,"AgeInfoStruct: Mask:%02X,fname:%s,iname:%s,guid:%s,\
 uname:%s,dname:%s,lan:%i<br>",\
 wlink->ainfo.mask,wlink->ainfo.filename,wlink->ainfo.instance_name,\
 digid,wlink->ainfo.user_name,wlink->ainfo.display_name,wlink->ainfo.language);
-				fprintf(f,"UNK_BYTE: %02X<br>",wlink->unk);
-				fprintf(f,"LinkingRules: %i<br>",wlink->rules);
-				fprintf(f,"SpawnPoint: Mask:%08X,t:%s,n:%s,c:%s<br>\n",wlink->spoint.mask,\
+				print2log(f,"UNK_BYTE: %02X<br>",wlink->unk);
+				print2log(f,"LinkingRules: %i<br>",wlink->rules);
+				print2log(f,"SpawnPoint: Mask:%08X,t:%s,n:%s,c:%s<br>\n",wlink->spoint.mask,\
 wlink->spoint.title,wlink->spoint.name,wlink->spoint.camera);
-				fprintf(f,"CCR:%i<br>\n",wlink->ccr);
+				print2log(f,"CCR:%i<br>\n",wlink->ccr);
 				break;
 			default:
 				DBG(7,"Unk\n");
-				fprintf(f,"<font color=Red>Unknonw Meta-Data type!</font><br>\n");
+				print2log(f,"<font color=Red>Unknonw Meta-Data type!</font><br>\n");
 				break;
 		}
 		//end sub meta-data parser
 		DBG(8,"step4\n");
 
-		fprintf(f,"</td></tr>\n");
+		print2log(f,"</td></tr>\n");
 	}
-	fprintf(f,"</table>\n");
+	print2log(f,"</table>\n");
 
 	//end
-	fprintf(f,"<i>End of transmission</i><hr>\n");
-	fflush(f);
+	print2log(f,"<i>End of transmission</i><hr>\n");
+	logflush(f);
 }
-
-#if 0
-
-//html dumper
-int vault_parse_node_data2(FILE * f, t_vault_node * n) {
-	char * cstamp;
-	Byte guid[9];
-	fprintf(f,"<h1 id=\"%i\">Node %i</h1>\n",n->index,n->index);
-
-	fprintf(f,"<b>Sep1:</b> %08X(%i)<br>\n",n->unkA,n->unkA);
-	fprintf(f,"<b>Sep2:</b> %08X(%i)<br>\n",n->unkB,n->unkB);
-	fprintf(f,"<b>Sep3:</b> %08X(%i)<br>\n",n->unkC,n->unkC);
-
-	fprintf(f,"<b>Type:</b> %s %02X(%i)<br>\n",vault_get_type(n->type),n->type,n->type);
-	fprintf(f,"<b>Permissions:</b> %02X(%i)<br>\n",n->permissions,n->permissions);
-	dump_permissions(f,n->permissions);
-	fprintf(f,"<b>Owner:</b> <a href=\"#%i\">%08X(%i)</a><br>\n",n->owner,n->owner,n->owner);
-	if(n->unk1!=0) fprintf(f,"<b>Unk1:</b> %08X(%i)<br>\n",n->unk1,n->unk1);
-	if(n->timestamp!=0) {
-		cstamp=ctime((time_t *)&n->timestamp);
-		fprintf(f,"<b>Timestamp:</b> %s %i<br>\n",cstamp,n->microseconds);
-		free(cstamp);
-	}
-	fprintf(f,"<b>Id1:</b> %08X(%i)<br>\n",n->id1,n->id1);
-	if(n->timestamp2!=0) {
-		cstamp=ctime((time_t *)&n->timestamp2);
-		fprintf(f,"<b>Timestamp2:</b> %s %i<br>\n",cstamp,n->microseconds2);
-		free(cstamp);
-	}
-	if(n->timestamp3!=0) {
-		cstamp=ctime((time_t *)&n->timestamp3);
-		fprintf(f,"<b>Timestamp3:</b> %s %i<br>\n",cstamp,n->microseconds3);
-		free(cstamp);
-	}
-	if(n->age_name[0]!=0) fprintf(f,"<b>Age Name:</b> %s<br>\n",n->age_name);
-	hex2ascii(n->age_guid,guid,8);
-	if(guid[0]!=0) fprintf(f,"<b>Age Hex Guid:</b> %s<br>\n",guid);
-	if(n->torans!=0) fprintf(f,"<b>Torans:</b> %08X(%i)<br>\n",n->torans,n->torans);
-	if(n->distance!=0) fprintf(f,"<b>Distance:</b> %08X(%i)<br>\n",n->distance,n->distance);
-	if(n->elevation!=0) fprintf(f,"<b>Elevation:</b> %08X(%i)<br>\n",n->elevation,n->elevation);
-	if(n->unk5!=0) fprintf(f,"<b>Unk5:</b> %08X(%i)<br>\n",n->unk5,n->unk5);
-	if(n->id2!=0) fprintf(f,"<b>Id2:</b> %08X(%i)<br>\n",n->id2,n->id2);
-	if(n->unk7!=0) fprintf(f,"<b>Unk7:</b> %08X(%i)<br>\n",n->unk7,n->unk7);
-	if(n->unk8!=0) fprintf(f,"<b>Unk8:</b> %08X(%i)<br>\n",n->unk8,n->unk8);
-	if(n->unk9!=0) fprintf(f,"<b>Unk9:</b> %08X(%i)<br>\n",n->unk9,n->unk9);
-	str_filter(n->entry_name); //keep out < >
-	if(n->entry_name[0]!=0) fprintf(f,"<b>Entry Name:</b> %s<br>\n",n->entry_name);
-	if(n->sub_entry_name[0]!=0) fprintf(f,"<b>Sub Entry Name:</b> %s<br>\n",n->sub_entry_name);
-	if(n->owner_name[0]!=0) fprintf(f,"<b>Owner Name:</b> %s<br>\n",n->owner_name);
-	if(n->guid[0]!=0) fprintf(f,"<b>Guid:</b> %s<br>\n",n->guid);
-	if(n->unk10!=0) fprintf(f,"<b>Unk10:</b> %08X(%i)<br>\n",n->unk10,n->unk10);
-	if(n->avie[0]!=0) fprintf(f,"<b>Avie:</b> %s<br>\n",n->avie);
-	if(n->uid[0]!=0) fprintf(f,"<b>Uid:</b> %s<br>\n",n->uid);
-	if(n->entry_value[0]!=0) fprintf(f,"<b>Entry value:</b> %s<br>\n",n->entry_value);
-	if(n->unk11!=0) fprintf(f,"<b>Unk11:</b> %08X(%i)<br>\n",n->unk11,n->unk11);
-	if(n->data_size!=0) {
-		fprintf(f,"<b>Data Size:</b> %08X(%i)<br>\n",n->data_size,n->data_size);
-		fprintf(f,"<b>Data contents:</b><br>\n");
-		char filename1[1000];
-		char filename2[1000];
-		int raw_data=0;
-		if(n->age_name[0]==0) {
-			strcpy((char *)n->age_name,"Unnamed");
-		}
-		switch (n->type) {
-			case KImageNode:
-				//the image
-				sprintf(filename1,"%s.%s.%i.%i.jpg",n->age_name,n->entry_name,n->index,n->microseconds);
-				strcpy(filename2,path_to_images);
-				strcat(filename2,"/");
-				strcat(filename2,filename1);
-				FILE * image_file;
-				image_file=fopen(filename2,"wb");
-				if(image_file!=NULL) {
-					fwrite(n->data+0x04,(*(U32 *)n->data)*sizeof(Byte),1,image_file);
-					fprintf(f,"<img src=\"%s\"><br>\n",filename1);
-					fclose(image_file);
-				} else {
-					fprintf(f,"<b>Error creating image...</b><br>\n");
-					fprintf(stderr,"? %s - %s ",filename2,path_to_images);
-					perror("error creating file...");
-				}
-				break;
-			case KAgeLinkNode:
-				sprintf(filename1,"%s.%s.%i.%i.links",n->age_name,n->entry_name,n->index,n->microseconds);
-				fprintf(f,"List of linking points<pre>\n");
-				dump_packet(f,n->data,n->data_size,0,7);
-				fprintf(f,"</pre><br>\n");
-				raw_data=1;
-				break;
-			case KTextNoteNode:
-				sprintf(filename1,"%s.%s.%i.%i.txt",n->age_name,n->entry_name,n->index,n->microseconds);
-				fprintf(f,"Text Note<pre>\n");
-				dump_packet(f,n->data,n->data_size,0,7);
-				fprintf(f,"</pre><br>\n");
-				raw_data=1;
-				break;
-			case KMarkerNode:
-				sprintf(filename1,"%s.%s.%i.%i.marker",n->age_name,n->entry_name,n->index,n->microseconds);
-				fprintf(f,"SDL byte code<pre>\n");
-				dump_packet(f,n->data,n->data_size,0,7);
-				fprintf(f,"</pre><br>\n");
-				raw_data=1;
-				break;
-			case KSDLNode:
-				sprintf(filename1,"%s.%s.%i.%i.sdl_byte",n->age_name,n->entry_name,n->index,n->microseconds);
-				fprintf(f,"SDL byte code<pre>\n");
-				dump_packet(f,n->data,n->data_size,0,7);
-				fprintf(f,"</pre><br>\n");
-				raw_data=1;
-				break;
-			default:
-				sprintf(filename1,"%s.%s.%i.%i.raw",n->age_name,n->entry_name,n->index,n->microseconds);
-				fprintf(f,"Unknown byte code<pre>\n");
-				dump_packet(f,n->data,n->data_size,0,7);
-				fprintf(f,"</pre><br>\n");
-				raw_data=1;
-				break;
-		}
-		if(raw_data==1) {
-			strcpy(filename2,path_to_images);
-			strcat(filename2,"/");
-			strcat(filename2,filename1);
-			FILE * image_file;
-			image_file=fopen(filename2,"wb");
-			if(image_file!=NULL) {
-				fwrite(n->data,n->data_size*sizeof(Byte),1,image_file);
-				fprintf(f,"<a href=\"%s\">%s</a><br>\n",filename1,filename1);
-				fclose(image_file);
-			} else {
-				fprintf(f,"<b>Error creating data file...</b><br>\n");
-				fprintf(stderr,"? %s - %s ",filename2,path_to_images);
-				perror("error creating file...");
-			}
-		}
-	}
-	if(n->unk12!=0) fprintf(f,"<b>Unk12:</b> %08X(%i)<br>\n",n->unk12,n->unk12);
-	if(n->unk13!=0) fprintf(f,"<b>Unk13:</b> %08X(%i)<br>\n",n->unk13,n->unk13);
-	if(n->unk14!=0) fprintf(f,"<b>Unk14:</b> %08X(%i)<br>\n",n->unk14,n->unk14);
-	if(n->unk15!=0) fprintf(f,"<b>Unk15:</b> %08X(%i)<br>\n",n->unk15,n->unk15);
-	if(n->unk16!=0) fprintf(f,"<b>Unk16:</b> %08X(%i)<br>\n",n->unk16,n->unk16);
-	fprintf(f,"<hr>");
-
-	return 0;
-}
-
-#endif
-
-#endif
 

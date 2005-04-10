@@ -4,17 +4,14 @@ We are working to fix them up.
 Vault
 * Vault task RegisterVisitAge is not working. This causes the issues related
  with books that don't work if you are not owner of the age. (see the Relto bookself)
+* Some ages are not sending the correct linking rules, and then they fail to send
+the RegisterOwnedAge vault task.
 
 General
 * Loadclone issues.
 
 * Member list bug.
 
-* Cannot bing 0.0.0.0 or 127.0.0.1, causes a lot of problems. All runs fine if you bind
+* Cannot bind 0.0.0.0 or 127.0.0.1, causes a lot of problems. All runs fine if you bind
   to a fixed address.
-
-AvatarCustomization
-* The age is shared between several people.
-  Not a bug, will be solved when the multi-instance operation mode is finished.
-
 

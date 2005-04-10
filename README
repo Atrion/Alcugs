@@ -16,10 +16,14 @@ For the impatient
 Congratulations, you have arribed here, now continue reading! :)
 
 
-Requirements
-------------
+Requirements for Building the servers, tools and API
+----------------------------------------------------
 
-You need to have development headers and libraryes of openssl,mysql,zlib, and other stuff...
+You need to have installed the development headers and librarier of:
+* openssl
+* mysql
+* zlib
+* python
 
 
 Compiling

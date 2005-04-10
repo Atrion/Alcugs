@@ -31,31 +31,31 @@
 //#define _DBG_LEVEL_ 10
 
 #include "config.h"
-#include "debug.h"
 
-
-#include<stdio.h>
+#include <stdio.h>
 #include <string.h>
 
-#include "debug.h"
+#ifdef __WIN32__
+#include "windoze.h"
+#endif
+
 #include "stdebug.h"
 #include "files.h"
 #include "conv_funs.h"
 #include "data_types.h"
 #include "vaultstrs.h"
 
+#include "vaultsubsys.h"
+
 #include "vnodes.h"
 
-//delimiters (out dated)
-//const U32 delimiter1=0x00000002;
-//const U32 delimiter2=0xFFFFFFFF;
-//const U32 delimiter3=0x00000007;
+#include "debug.h"
 
 
 /** Initialitzes a node
 */
 void init_node(t_vault_node * node) {
-	bzero(node,sizeof(t_vault_node));
+	memset(node,0,sizeof(t_vault_node));
 	node->data=NULL;
 	node->data2=NULL;
 }
@@ -64,11 +64,18 @@ void init_node(t_vault_node * node) {
 */
 void destroy_node(t_vault_node * node) {
 	if(node->data_size!=0 && node->data!=NULL) {
+	//if(node->data!=NULL) {
+		DBG(5,"data size is %i\n,",node->data_size);
 		free(node->data);
+		node->data=NULL;
 	}
 	if(node->data2_size!=0 && node->data2!=NULL) {
+	//if(node->data2!=NULL) {
 		free(node->data2);
+		node->data2=NULL;
 	}
+	static int t=0;
+	plog(f_vmgr,"destroy_node %i times\n",t++);
 }
 
 /** Node dumper
@@ -99,13 +106,15 @@ void dump_node(Byte * buf, int max) {
 /** Puts the node into the buffer, and returns the size of the node
 */
 int node2stream(Byte * buf,t_vault_node * node) {
+	DBG(5,"dmalloc_verify()\n");
+	dmalloc_verify(NULL);
 	int offset=0; //the offset
 	//found two vaules for this var 0x00000002 and 0x00000001
 	*(U32 *)(buf+offset)=node->unkA;
 	offset+=0x04;
 	//check the know values
 	if(!(node->unkA==0x00000002 || node->unkA==0x00000001)) {
-		fprintf(f_vmgr,"UNE: sep1=%08X(%i)\n",node->unkA,node->unkA);
+		print2log(f_vmgr,"UNE: sep1=%08X(%i)\n",node->unkA,node->unkA);
 	}
 	//these are bool variables
 	*(U32 *)(buf+offset)=node->unkB;
@@ -115,7 +124,7 @@ int node2stream(Byte * buf,t_vault_node * node) {
 		*(U32 *)(buf+offset)=node->unkC;
 		offset+=0x04;
 		if((node->unkC & 0xFFFFFFF8)!=0x00000000) {
-			fprintf(f_vmgr,"UNE: sep3=%08X(%i)\n",node->unkC,node->unkC);
+			print2log(f_vmgr,"UNE: sep3=%08X(%i)\n",node->unkC,node->unkC);
 		}
 	}
 	//mandatory - always seen values
@@ -126,7 +135,7 @@ int node2stream(Byte * buf,t_vault_node * node) {
 	*(U32 *)(buf+offset)=node->permissions;
 	offset+=0x04;
 	if((node->permissions & 0xFFFFFF00) !=0) {
-		fprintf(f_vmgr,"ERR: Warning format inconsitency on node.permissions at %i\n",node->index);
+		print2log(f_vmgr,"ERR: Warning format inconsitency on node.permissions at %i\n",node->index);
 	}
 	*(S32 *)(buf+offset)=node->owner;
 	offset+=0x04;
@@ -232,16 +241,23 @@ strlen((const char *)node->entry_value),0);
 strlen((const char *)node->entry2),0);
 	}
 	if(buf[7] & 0x40) {
+		DBG(6,"offset:%i\n",offset);
 		*(U32 *)(buf+offset)=node->data_size;
 		offset+=0x04;
-		memcpy(buf+offset,node->data,node->data_size);
-		offset+=node->data_size;
+		DBG(5,"data2_size %i\n",node->data2_size);
+		if(node->data_size>0) {
+			memcpy(buf+offset,node->data,node->data_size);
+			offset+=node->data_size;
+		}
 	}
 	if(buf[7] & 0x80) {
 		*(U32 *)(buf+offset)=node->data2_size;
 		offset+=0x04;
-		memcpy(buf+offset,node->data2,node->data2_size);
-		offset+=node->data2_size;
+		DBG(5,"data2_size %i\n",node->data2_size);
+		if(node->data2_size>0) {
+			memcpy(buf+offset,node->data2,node->data2_size);
+			offset+=node->data2_size;
+		}
 	}
 	//last values------------------------
 	if(node->unkA==0x00000002) {
@@ -258,6 +274,8 @@ strlen((const char *)node->entry2),0);
 			offset+=0x04;
 		}
 	}
+	DBG(5,"dmalloc_verify()\n");
+	dmalloc_verify(NULL);
 	return offset;
 }
 
@@ -268,14 +286,14 @@ strlen((const char *)node->entry2),0);
 	\param node: the addres of the node struct, where only _one_ node will be stored\n
 	returns the size of the parsed node
 */
-int vault_parse_node(FILE * f,Byte * buf, int max_stream, t_vault_node * node) {
+int vault_parse_node(st_log * f,Byte * buf, int max_stream, t_vault_node * node) {
 	int offset=0; //the offset
 	//found two vaules for this var 0x00000002 and 0x00000001
 	node->unkA=*(U32 *)(buf+offset);
 	offset+=0x04;
 	//check the known values
 	if(!(node->unkA==0x00000002 || node->unkA==0x00000001)) {
-		fprintf(f,"UNE: sep1=%08X(%i)\n",node->unkA,node->unkA);
+		print2log(f,"UNE: sep1=%08X(%i)\n",node->unkA,node->unkA);
 		dump_node(buf,max_stream); //dump the node to the filesystem
 		return -1;
 	}
@@ -287,13 +305,17 @@ int vault_parse_node(FILE * f,Byte * buf, int max_stream, t_vault_node * node) {
 		node->unkC=*(U32 *)(buf+offset);
 		offset+=0x04;
 		if((node->unkC & 0xFFFFFFF8)!=0x00000000) {
-			fprintf(f,"UNE: sep3=%08X(%i)\n",node->unkC,node->unkC);
+			print2log(f,"UNE: sep3=%08X(%i)\n",node->unkC,node->unkC);
 			dump_node(buf,max_stream); //dump the node to the filesystem
 			return -1;
 		}
 	} else {
 		node->unkC=0;
 	}
+
+	static int t=0;
+	plog(f_vmgr,"parse_node %i times\n",t++);
+
 	//----------------------------------------
 	//mandatory - always seen values
 	node->index=*(U32 *)(buf+offset);
@@ -303,14 +325,14 @@ int vault_parse_node(FILE * f,Byte * buf, int max_stream, t_vault_node * node) {
 	node->permissions=*(U32 *)(buf+offset);
 	offset+=0x04;
 	if((node->permissions & 0xFFFFFF00) !=0) {
-		fprintf(f,"ERR: Warning format inconsitency on node.permissions at %i\n",node->index);
+		print2log(f,"ERR: Warning format inconsitency on node.permissions at %i\n",node->index);
 	}
 	node->owner=*(S32 *)(buf+offset);
 	offset+=0x04;
 	node->unk1=*(U32 *)(buf+offset); //always 0
 	offset+=0x04;
 	if((node->unk1 & 0xFFFFFFFF) !=0) {
-		fprintf(f,"ERR: Warning format inconsitency %08X(%i) on node.unk1 at %i\n",node->unk1,node->unk1,node->index);
+		print2log(f,"ERR: Warning format inconsitency %08X(%i) on node.unk1 at %i\n",node->unk1,node->unk1,node->index);
 	}
 	node->timestamp=*(U32 *)(buf+offset);
 	offset+=0x04;

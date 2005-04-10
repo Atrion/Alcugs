@@ -24,6 +24,8 @@
 *                                                                              *
 *******************************************************************************/
 
+/* All The Uru Protocol is here */
+
 #ifndef __U_PROT_
 #define __U_PROT_
 /* CVS tag - DON'T TOUCH*/
@@ -39,15 +41,15 @@
 #define plNetTimestamp  0x00000001 //* contains a Timestamp
 #define plNetX          0x00000200 //* contains the X
 #define plNetKi         0x00001000 //* contains the ki
-
-//handled by the message processor, and that will be handled by the netcore
-// in the near future.
-#define plNetGUI        0x00004000 //* contains a guid
-#define plNetIP         0x10000000 //* This message should contain client's ip address
-
-#define plNetCustom     0x00020000 //¿*? Unknown purpose flag
+//but we don't know the exact place, so we placed them anywhere.
+#define plNetGUI        0x00004000 //* contains a player guid
+//#define plNetIp2        0x10000000 //wrong plNetIP
+#define plNetIP         0x00000010 //* This message should contain client's ip address
 
 //Suppositions for unidentified flags.
+#define plNetCustom     0x00020000 //¿*? Unknown purpose flag
+
+#define plNetStateReq   0x00000800 //(unknown, seen on the 1st plNetMsgStateRequest)
 #define plNetP2P        0x08000000 //p2p request?
 
 
@@ -61,6 +63,7 @@
 #define AcCCR 7
 #define AcMod 10
 #define AcPlayer 15
+#define AcWarned 16
 #define AcNotActivated 25
 #define AcBanned 30
 #define AcNotRes 40
@@ -83,6 +86,11 @@
 //custom
 #define KMeta 9
 #define KTracking 7
+#define KTest 10
+#define KData 11
+
+#define KBcast 255
+
 
 //Reasons (Auth)
 #define AAuthSucceeded 0x00
@@ -94,6 +102,9 @@
 #define AInvalidPasswd 0xFD
 #define AInvalidUser 0xFE
 //#define AUnspecifiedServerError 0xFF
+//Custom
+#define AHacked 0xF6
+#define ABanned 0xF5
 
 //Reasons (Leave)
 #define RStopResponding 0x00
@@ -102,7 +113,7 @@
 #define RJoining 0x18
 #define RLeaving 0x19
 #define RQuitting 0x1A
-
+//custom
 #define RInGame 0x14
 
 //Reasons (Terminated)
@@ -133,6 +144,14 @@
 #define NetMsg1 0x02
 #define NetCustMsg0 0x0A
 #define NetCustMsg1 0x0B
+
+//Linking Rules
+#define KBasicLink 0
+#define KOriginalBook 1
+#define KSubAgeBook 2
+#define KOwnedBook 3
+#define KVisitBook 4
+#define KChildAgeBook 5
 
 //tpots modifier
 //#define NetTPOTSmod 0x0428
@@ -207,6 +226,9 @@
 ///All types that are >0x03BC are now incremented +1
 ///thx to ngilb120
 
+//not implemented
+//hmm the list is empty :D
+
 //custom
 #define NetMsgCustomAuthAsk            0x1001
 #define NetMsgCustomAuthResponse       0x1002
@@ -228,9 +250,6 @@
 #define NetMsgCustomVaultPlayerStatus  0x1012
 #define NetMsgCustomMetaRegister       0x1013
 #define NetMsgCustomMetaPing           0x1014
-//not implemented
-
 
 
 #endif
-

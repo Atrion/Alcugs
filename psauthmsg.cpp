@@ -24,226 +24,148 @@
 *                                                                              *
 *******************************************************************************/
 
-//server side message parser
+// UruNet class implementation will be here (temporany, it will be a list of all, C functions)
 
-#ifndef __U_AUTH_MSG_
-#define __U_AUTH_MSG_
+/*
+	this will contain all related with using the socket
+*/
+
 /* CVS tag - DON'T TOUCH*/
-#define __U_AUTH_MSG_ID "$Id$"
+#define __U_PSAUTH_MSG_ID "$Id$"
 
-//#define _DBG_LEVEL_ 10
+#define _DBG_LEVEL_ 10
 
 #include "config.h"
-#include "debug.h"
 
-#include "config_parser.h"
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#include "data_types.h"
 #include "stdebug.h"
-#include "conv_funs.h"
-#include "protocol.h"
 #include "urunet.h"
+#include "protocol.h"
+#include "prot.h"
 
-#include "vaultstrs.h"
-#include "urumsg.h"
+#include "conv_funs.h"
 
-#include "auth_db.h"
-#include "cgas_auth.h"
+#include "gbasicmsg.h"
+#include "gauthmsg.h"
 
 #include "psauthmsg.h"
 
-/*-----------------------------------------------------------------
-	processes the plNetMsg and sends the adient reply (preliminar)
-	 -- returns the size of the packet --
-------------------------------------------------------------------*/
-int process_auth_plNetMsg(int sock,Byte * buf,int size,st_uru_client * u) {
+#include "debug.h"
 
-	if(_DBG_LEVEL_>=3) {
-		dump_packet(f_uru,buf,size,0,7);
-		print2log(f_uru,"\n-------------\n");
+
+/**
+	processes basic plNetMsg's
+*/
+int process_sauth_plNetMsg(st_unet * net,Byte * buf,int size,int sid) {
+	if(net_check_address(net,sid)!=0) return UNET_OUTOFRANGE;
+	st_uru_client * u=&net->s[sid];
+
+#if _DBG_LEVEL_ > 3
+	if(size>0) {
+		nlog(net->log,net,sid,"Recieved a packet of %i bytes...\n",size);
+		dump_packet(net->log,buf,size,0,7);
+		print2log(net->log,"\n-------------\n");
 	}
+	if(size>1024*256) {
+		plog(net->err,"Attention Packet is bigger than 256KBytes, that Is impossible!\n");
+		DBG(5,"Abort Condition");
+		abort();
+		return UNET_TOOBIG;
+	}
+#endif
 
-	int offset=0;
-	int i,n;
+	int n=0,off=0,dsid=-1,i;
+	st_uru_client * d;
 
-	int rcode;
+	Byte proto=0;
+	int rcode=AUnspecifiedServerError; //0xFF
 
-	//THE BIG VERY VERY BIG Switch
-	switch (u->adv_msg.cmd) {
-		case NetMsgCustomAuthAsk:
-			//int rcode;
-			U32 ip;
-			Byte hash[33];
-			Byte aux_hash[33];
-			//Byte * md5buffer;
-			print2log(f_uru,"<RCV> NetMsgCustomAuthAsk ");
+	switch(u->hmsg.cmd) {
+		case NetMsgCustomAuthResponse:
+			print2log(f_uru,"<RCV> NetMsgCustomAuthResponse \n");
 			//login
-			offset+=decode_urustring(u->login,buf+offset,100);
-			offset+=2;
-			//challenge
-			memcpy(u->challenge,buf+offset,16);
-			offset+=16;
-			hex2ascii2(aux_hash,u->challenge,16);
-			print2log(f_uru,"challenge: %s ",aux_hash);
-			//hash (client answer)
-			memcpy(hash,buf+offset,16);
-			offset+=16;
-			hex2ascii2(aux_hash,hash,16);
-			print2log(f_uru,"hash: %s ",aux_hash);
-			//build
-			u->release=*(Byte *)(buf+offset);
-			offset++;
-			print2log(f_uru,"build: %i ",u->release);
-			//ip
-			ip=*(U32 *)(buf+offset);
-			offset+=4;
+			off+=decode_urustring((Byte *)u->acct,buf+off,100);
+			off+=2;
 
-			//WARNING!, THE MODIFICATION OF THIS CODE IN THE WHOLE OR PART WITH THE PURPOSE OF
-			//BYPASSING THE CYAN'S GLOBAL AUTH SERVER GOES AGAINST THE URU CLIENT LICENSE
-
-			//U32 s_att; //timestamp of last attempt
-			U32 n_att; //Number of attempts
-			U32 current_t; //Current time
-			time((time_t *)&current_t); //set current stamp
-
-
-			Byte str_challenge[40];
-			Byte * str_ip;
-			Byte str_hash[40];
-			Byte guid[40];
-
-			hex2ascii2(str_challenge,u->challenge,16);
-			str_ip=(Byte *)get_ip(ip);
-
-			int ret;
-			int userexists;
-
-			ret=0;
-
-			rcode=plVaultQueryUserName(u->login);
-			userexists=(rcode<0 ? 0:1);
-			strcpy((char *)u->passwd,"");
-
-			ret=CGAS_query((char *)u->login,(char *)str_challenge,(char *)str_ip,\
-(char *)str_hash,(char *)u->passwd,(char *)guid);
-			if(ret!=1) {
-				rcode=AcNotRes;
-			} else if(rcode<0 || rcode==AcNotRes) {
-				//rcode=15; //Normal default auth level
-				rcode=global_default_access_level;
-			}
-
-			if(rcode<0) { //Not found!
-				print2log(f_uru," Acc. Not Found! ");
-				rcode=0xFE; //invalid username/passwd
-				u->access_level=AcNotActivated;
-			} else {
-				u->access_level=rcode;
-				if(u->access_level<AcNotActivated) { rcode=0x01; } //a passwd must be in the buffer
-				else if(u->access_level<AcNotRes) {
-					print2log(f_uru," Account Disabled! ");
-					rcode=0xFC;
-				} else {
-					print2log(f_uru," MySql server down? ");
-					rcode=0xFF;
-				}
-			}
-
-			if(rcode==0x01) {
-				ascii2hex2(aux_hash,str_hash,16);
-				for(i=0; i<0x10; i++) {
-					if(aux_hash[i]!=hash[i]) {
-						rcode=0xFD;
+			if(!(u->hmsg.flags & plNetGUI)) { //old protocol version
+				proto=1;
+				//search by login
+				for(i=0; i<(int)net->n; i++) {
+					DBG(3,"searching for %s - %s (%i,%i) -%i \n",u->acct,\
+					net->s[i].acct,u->hmsg.x,net->s[i].ki,i);
+					if(!strcmp((char *)net->s[i].acct,(char *)u->acct) && \
+					u->hmsg.x==(U32)net->s[i].ki && net->s[i].whoami==0) {
+						dsid=i;
 						break;
+					}
+				}
+			} else { //new protocol
+				//search by sid, and check ip port
+				if(net_check_address(net,u->hmsg.x)==0) {
+					dsid=u->hmsg.x;
+					if(!(net->s[dsid].ip==u->hmsg.ip && net->s[dsid].port==u->hmsg.port && \
+					net->s[dsid].whoami==0)) {
+						dsid=-1;
 					}
 				}
 			}
 
-			//Check tryes and timestamp (this should dissable login after 5 attempts, for 5 minutes
-			/*
-			if(n_att>5 && current_t-s_att<(5*60)) {
-				rcode=0xFC; //Account disabled
-				print2log(f_uru," Maxium number of attempts reached, disabling login for 5 minutes\n");
-			}*/
-
-			//check internal release
-			#if 0
-			if(rcode==0x01 && u->release==TIntRel && u->access_level>AcCCR) {
-				print2log(f_uru," Unauthorized client! ");
-				rcode=0xFC;
-			}
-			#endif
-
-			//server version check
-			if(u->adv_msg.max_version!=global_max_version || u->adv_msg.min_version!=global_min_version) {
-				print2log(f_err," ERR: Protocol version server mismatch %i.%i vs %i.%i\n",u->adv_msg.max_version,u->adv_msg.min_version,global_max_version,global_min_version);
-				rcode=0xFF;
-			}
-
-			//put the guid
-			//printf("--->%s<--",guid);
-			for(i=0; i<(int)strlen((char *)guid); i++) {
-				guid[i]=toupper(guid[i]);
-			}
-			memcpy((char *)u->guid,(char *)str_guid_to_hex(guid),16);
-
-			//check internal release
-			if(rcode==0x01 && u->release==TIntRel && u->access_level>AcCCR) {
-				print2log(f_uru," Unauthorized client! ");
-				rcode=0xFC;
+			if(dsid!=-1) {
+				d=&net->s[dsid];
+				//result
+				rcode=*(Byte *)(buf+off);
+				off++;
+				//passwd
+				off+=decode_urustring(d->passwd,buf+off,33);
+				off+=2;
+				if(proto==1) {
+					//GUID
+					memcpy(d->uid,buf+off,16);
+					off+=16;
+				} else {
+					memcpy(d->uid,u->hmsg.guid,16);
+				}
+				d->access_level=*(Byte *)(buf+off);
+				off++;
+			} else {
+				print2log(f_err,"ERR: Player %s not found!\n",u->acct);
+				n=1;
+				break;
 			}
 
-			// do we allow non_existing users in our accounts table ?
-			if (!userexists && !global_allow_unknown_accounts) {
-				print2log(f_uru," Unauthorized client! ");
-				rcode=0xFC;
-			}
+			d->hmsg.x=d->x; //set the x, just in case
 
-			if(rcode==0x01) {
+			if(rcode==AAuthSucceeded) { //0x00
+				memcpy(d->hmsg.guid,d->uid,16);
 				print2log(f_uru," Valid passwd auth\n");
-				stamp2log(f_acc);
-				print2log(f_acc,"Succesfull login for %s, guid:%s, ip:%s\n",u->login,guid,str_ip);
-
-				// Store new user into accounts table 
-				// if auto_register_account is not active AND user dosen't exist, don't store
-				if ((global_auto_register_account || userexists) && !plVaultStoreUserInfo(u->login, userexists, (int)1))
-				  print2log(f_uru,"Can't store user infos into accounts table\n");
-
-				//plNetMsgAccountAuthenticated(sock,0x00,u);
-				plNetMsgCustomAuthResponse(sock,u->login,0x00,u->passwd,u->access_level,u);
-				//u->authenticated=1;
-				//print2log(f_uru," I HAVE SETUP AUTHENTICATED WITH VALUE=2<---\n\n");
+				nlog(net->sec,net,dsid,"Succesfull login for %s\n",u->acct);
+				plNetMsgAccountAuthenticated(net,0x00,dsid);
+				d->authenticated=2;
+				d->timeout=2*60; //set 2 minutes
+				d->whoami=KClient; //set that the peer is a client
 			} else {
 				print2log(f_uru," Incorrect passwd auth\n");
-				stamp2log(f_acc);
-				print2log(f_acc,"Auth failed for %s, reason %i, ip:%s\n",u->login,rcode,str_ip);
-				//plNetMsgAccountAuthenticated(sock,rcode,u);
-				plNetMsgCustomAuthResponse(sock,u->login,rcode,u->passwd,u->access_level,u);
-				n_att++;
-				//plNetMsgTerminated(sock,RNotAuthenticated,u);
-				//plNetMsgTerminated(go out);
+				nlog(net->sec,net,dsid,"Auth failed for %s, reason %i,%s\n",u->acct,rcode,\
+				unet_get_auth_code(rcode));
+				memset(d->uid,0,16);
+				plNetMsgAccountAuthenticated(net,rcode,dsid);
+				plNetMsgTerminated(net,RNotAuthenticated,dsid);
+				plNetEndConnection(net,dsid);
 			}
-			//abort();
 			logflush(f_uru);
-			logflush(f_acc);
-			n=0;
+			logflush(net->sec);
+			n=1;
 			break;
 		default:
-			//print2log(f_uru,"<RCV> Uknown Type of packet! %04X\n",u->msg.cmd1);
-			//---store
-			//char unk_mes[100];
-			//static Byte unk_mes_rot=0;
-			//sprintf(unk_mes,"dumps/unk%02i.raw",unk_mes_rot);
-			//savefile(buf,n,unk_mes);
-			//---end store
-			//plNetMsgTerminated(sock,RKickedOff,u);
-			//abort();
-			n=-7;
+			n=0;
 			break;
 	}
-
 	logflush(f_uru);
 
 	return n;
-
 }
-#endif
 

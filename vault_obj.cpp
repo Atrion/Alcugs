@@ -32,22 +32,27 @@
 //#define _DBG_LEVEL_ 10
 
 #include "config.h"
-#include "debug.h"
 
-
-#include<stdio.h>
+#include <stdio.h>
 #include <string.h>
 #include <zlib.h>
 
-#include "debug.h"
 #include "stdebug.h"
 #include "files.h"
 #include "conv_funs.h"
 #include "data_types.h"
+#include "urustructs.h"
 #include "vaultstrs.h"
 #include "vnodes.h"
 
+#include "vaultsubsys.h"
+
+#include "urunet.h"
+#include "protocol.h"
+
 #include "vault_obj.h"
+
+#include "debug.h"
 
 int plVItmGetInteger(t_vault_object * o) {
 	if(o->dtype!=DCreatableGenericValue || \
@@ -105,7 +110,7 @@ void plVItmPutString(t_vault_object * o,Byte * str) {
 
 //init the main vault object
 void plMainVaultInit(t_vault_mos * mobj) {
-	bzero(mobj,sizeof(t_vault_mos));
+	memset(mobj,0,sizeof(t_vault_mos));
 	mobj->itm=NULL;
 }
 
@@ -116,7 +121,7 @@ void plMainVaultDestroy(t_vault_mos * mobj,int tpots_flag) {
 	if(mobj->itm!=NULL) {
 		for(i=0; i<mobj->n_itms; i++) {
 			DBG(6,"Destroying Item %i...\n",i)
-			plVaultItmDestroy(mobj->itm,tpots_flag);
+			plVaultItmDestroy(&mobj->itm[i],tpots_flag);
 			DBG(6,"destroyed.\n");
 		}
 		free((void *)mobj->itm);
@@ -127,7 +132,7 @@ void plMainVaultDestroy(t_vault_mos * mobj,int tpots_flag) {
 }
 
 void plVaultItmInit(t_vault_object * itm) {
-	bzero(itm,sizeof(t_vault_object));
+	memset(itm,0,sizeof(t_vault_object));
 	itm->data=NULL;
 }
 
@@ -143,13 +148,19 @@ void plVaultItmDestroy(t_vault_object * itm,int tpots_flag) {
 		DBG(6,"Attempting to destroy object type %04X\n",itm->dtype);
 		switch(itm->dtype) {
 			case DCreatableGenericValue:
+				DBG(6,"Attemting to destroy a DCreatableGenericValue..\n");
 				destroyCreatableGenericValue(&itm->data);
+				DBG(6,"destroyed.\n");
 				break;
 			case DCreatableStream:
+				DBG(6,"Attemting to destroy a DCreatableStream..\n");
 				destroyCreatableStream(&itm->data);
+				DBG(6,"destroyed.\n");
 				break;
 			case DServerGuid:
+				DBG(6,"Attemting to destroy a DServerGuid..\n");
 				destroyServerGuid(&itm->data);
+				DBG(6,"destroyed.\n");
 				break;
 			case DAgeLinkStruct:
 				DBG(6,"Attemting to destroy a AgeLinkStruct..\n");
@@ -158,12 +169,19 @@ void plVaultItmDestroy(t_vault_object * itm,int tpots_flag) {
 				break;
 			default:
 				if(itm->dtype==DVaultNodeRef+tpots_mod) {
+					DBG(6,"Attemting to destroy a DVaultNodeRef+%i..\n",tpots_mod);
 					destroyVaultNodeRef(&itm->data);
+					DBG(6,"destroyed.\n");
 				} else if(itm->dtype==DVaultNode+tpots_mod) {
-					destroy_node((t_vault_node *)&itm->data);
+					DBG(6,"Attemting to destroy a DVaultNode+%i..\n",tpots_mod);
+					destroy_node((t_vault_node *)itm->data);
 					free((void *)itm->data);
+					DBG(6,"destroyed.\n");
 				} else {
+					DBG(6,"Attemting to destroy a %04X..\n",itm->dtype);
 					free((void *)itm->data);
+					DBG(6,"destroyed.\n");
+					plog(f_vmgr,"ERR: Attemting to destroy a unknwon type? %s\n",_WHERE("VaultItmDestroy"));
 				}
 		}
 		//free((void *)itm->data);
@@ -183,6 +201,8 @@ t_vault_object * vaultCreateItems(int n) {
 	return o;
 }
 
+
+///Creatable Generic Value
 
 //creates this data type
 int storeCreatableGenericValue(void ** data,Byte * buf,int size) {
@@ -272,6 +292,8 @@ void destroyCreatableGenericValue(void ** data) {
 	*data=NULL;
 }
 
+/// Creatable Stream
+
 int storeCreatableStream(void ** data,Byte * buf,int size) {
 	int off=0;
 	int ret=0;
@@ -282,6 +304,9 @@ int storeCreatableStream(void ** data,Byte * buf,int size) {
 	wdata->size=*(U32 *)(buf+off);
 	off+=4;
 	wdata->data=NULL;
+
+	static int t=0;
+	plog(f_vmgr,"storeCreatableStream %i times\n",t++);
 
 	if(wdata->size>(U32)size) { ret=-1; }
 	else {
@@ -329,7 +354,11 @@ void destroyCreatableStream(void ** data) {
 		free(*data);
 		*data=NULL;
 	}
+	static int t=0;
+	plog(f_vmgr,"destroyCreatableStream %i times\n",t++);
 }
+
+/// Age Link Struct
 
 int storeAgeLinkStruct(void ** data,Byte * buf,int size) {
 	int offset=0;
@@ -339,7 +368,10 @@ int storeAgeLinkStruct(void ** data,Byte * buf,int size) {
 	if(*data==NULL) return -1;
 	wdata=(t_AgeLinkStruct *)(*data);
 
-	bzero(wdata,sizeof(t_AgeLinkStruct));
+	memset(wdata,0,sizeof(t_AgeLinkStruct));
+
+	static int t=0;
+	plog(f_vmgr,"storeAgeLinkStruct %i times\n",t++);
 
 	//Initial Mask (U16) for the AgeLinkStruct
 	// Found 0x0023 In VaultTasks
@@ -592,8 +624,14 @@ void destroyAgeLinkStruct(void ** data) {
 		free(*data);
 		*data=NULL;
 	}
+
+	static int t=0;
+	plog(f_vmgr,"destroyAgeLinkStruct %i times\n",t++);
+
 }
 
+
+/// Server Guid
 
 int storeServerGuid(void ** data,Byte * buf,int size) {
 	int off=0;
@@ -622,6 +660,8 @@ void destroyServerGuid(void ** data) {
 		*data=NULL;
 	}
 }
+
+//// Vault Node Ref
 
 int storeVaultNodeRef(void ** data,Byte * buf,int size) {
 	int off=0;
@@ -674,10 +714,13 @@ int streamVaultNodeRef(Byte * buf,void * data) {
 	return off;
 }
 
+//// A node
+
 int storeVaultNode(void ** data,Byte * buf, int size) {
 	//int off=0;
 	int ret=0;
 	t_vault_node * wdata;
+	if(*data!=NULL) { free(*data); *data=NULL; }
 	*data=malloc(sizeof(t_vault_node) * 1);
 	if(*data==NULL) return -1;
 	wdata=(t_vault_node *)(*data);
@@ -685,10 +728,15 @@ int storeVaultNode(void ** data,Byte * buf, int size) {
 	init_node(wdata);
 	ret=vault_parse_node(f_vmgr,buf,size,wdata);
 
+	static int t=0;
+	plog(f_vmgr,"storeVaultNode called %i times...\n",t++);
+
 	if(ret<0) {
 		print2log(f_vmgr,"An error ocurred parsing a vault node\n");
 		destroy_node(wdata);
 		free(*data);
+		*data=NULL;
+		plog(f_vmgr,"ERR: parsing a vault node %s\n",_WHERE("storeVaultNode"));
 	}
 	return ret;
 }
@@ -703,6 +751,7 @@ int streamVaultNode(Byte * buf,void * data) {
 	return off;
 }
 
+//// Vault packer - unpacker
 
 /** Unpacks the vault into the correct structs,
  it also umcompresses if is necessary
@@ -736,6 +785,7 @@ int plVaultUnpack(Byte * buf,t_vault_mos * obj,int size,st_uru_client * u,int fl
 		print2log(f_vmgr,"VPR: Warning, non-zero %i (%04X) result code\n",obj->result,obj->result);
 		dump_packet(f_vmgr,buf,size,0,7);
 		print2log(f_vmgr,"\n");
+		plog(f_vmgr,"ERR: bad result %s\n",_WHERE("vaultunpack"));
 		return -1;
 	}
 	obj->zlib=*(Byte *)(buf+offset);
@@ -753,6 +803,7 @@ int plVaultUnpack(Byte * buf,t_vault_mos * obj,int size,st_uru_client * u,int fl
 		buf=(Byte *)malloc(obj->real_size * sizeof(Byte));
 		if(buf==NULL) {
 			print2log(f_vmgr,"Not enough free memory!\n");
+			plog(f_vmgr,"ERR: where did you put your ram? - %s\n",_WHERE("vaultunpack"));
 			return -1;
 		}
 		offset=0;
@@ -760,6 +811,7 @@ int plVaultUnpack(Byte * buf,t_vault_mos * obj,int size,st_uru_client * u,int fl
 		//uncompress
 		if(uncompress(buf,(uLongf *)&size,old_buf+old_offset,obj->comp_size)!=0) {
 			print2log(f_vmgr,"Seems that an error ocurred uncompressing the stream!\n");
+			plog(f_vmgr,"ERR: cannot uncompress on %s\n",_WHERE("vaultunpack"));
 			free((void *)buf); //free the buffer
 			return -1;
 		}
@@ -767,6 +819,7 @@ int plVaultUnpack(Byte * buf,t_vault_mos * obj,int size,st_uru_client * u,int fl
 		//now all continues
 	} else if(obj->zlib!=0x01) {
 			print2log(f_vmgr,"Unknow (zlib)format %02X\n",obj->zlib);
+			plog(f_vmgr,"ERR: unknow zlib format on %s\n",_WHERE("vaultunpack"));
 			return -1;
 	}
 	//normal parser here
@@ -872,6 +925,7 @@ _end_for:
 		print2log(f_vmgr,"Warning, size mismatch! %i vs %i\n",offset,size);
 		dump_packet(f_vmgr,buf,size,0,7);
 		print2log(f_vmgr,"\n");
+		plog(f_err,"ERR: size mismatch on %s\n",_WHERE("vaultunpack"));
 		return -1;
 	}
 
@@ -939,6 +993,7 @@ int plVaultPack(Byte ** dbuf,t_vault_mos * obj,st_uru_client * u,Byte flags) {
 				break;
 			default:
 				print2log(f_vmgr,"FATAL: Invalid non-implemented format Type - STOP!\n");
+				plog(f_vmgr,"ERR: unimplemented stuff on %s\n",_WHERE("vaultpack"));
 				return -1;
 		}
 		size+=1000;
@@ -947,7 +1002,7 @@ int plVaultPack(Byte ** dbuf,t_vault_mos * obj,st_uru_client * u,Byte flags) {
 	*dbuf=(Byte *)malloc(sizeof(Byte) * size);
 	DBG(5,"and now size is %i\n",size);
 
-	savefile((char *)*dbuf,size,"zlibdumpbefore.raw");
+	//savefile((char *)*dbuf,size,"zlibdumpbefore.raw");
 
 	//object one
 	*(Byte *)(*dbuf+off)=obj->cmd;
@@ -971,11 +1026,12 @@ int plVaultPack(Byte ** dbuf,t_vault_mos * obj,st_uru_client * u,Byte flags) {
 		off+=4;
 		//allocate a buffer for the things that will be compressed
 		buf=(Byte *)malloc(sizeof(Byte) * size);
-		savefile((char *)buf,size,"zlibdump2before.raw");
+		//savefile((char *)buf,size,"zlibdump2before.raw");
 	} else if(obj->zlib==0x01) {
 		buf=*dbuf+off;
 	} else {
 		print2log(f_vmgr,"Hei, what's up with this code %02X\n",obj->zlib);
+		plog(f_vmgr,"ERR: unimplemented stuff on %s\n",_WHERE("vaultpack"));
 		free((void *)dbuf);
 		return -1;
 	}
@@ -1030,8 +1086,9 @@ int plVaultPack(Byte ** dbuf,t_vault_mos * obj,st_uru_client * u,Byte flags) {
 				offset+=streamVaultNodeRef(buf+offset,obj->itm[i].data);
 				break;
 			default:
-				printf("fatal!! - fix-me not implemented\n");
-				fflush(0);
+				plog(f_vmgr,"fatal!! - fix-me not implemented\n");
+				plog(f_vmgr,"ERR: unimplemented vault data type error on %s\n",_WHERE("vaultpack"));
+				logflush(f_err);
 		}
 	}
 	//end normal parser
@@ -1049,8 +1106,8 @@ int plVaultPack(Byte ** dbuf,t_vault_mos * obj,st_uru_client * u,Byte flags) {
 		obj->comp_size=size; //this must be the buffer size before calling compress!!
 		int ret;
 		DBG(5,"Compressing...comp_size:%i,off:%i,offset:%i\n",obj->comp_size,off,offset);
-			savefile((char *)buf,offset,"zlibdump.raw");
-			savefile((char *)*dbuf,size,"zlibdump2.raw");
+			//savefile((char *)buf,offset,"zlibdump.raw");
+			//savefile((char *)*dbuf,size,"zlibdump2.raw");
 
 		ret=compress(*dbuf+off,(uLongf *)&obj->comp_size,buf,offset);
 		DBG(5,"Compresssed...\n");
@@ -1060,9 +1117,10 @@ int plVaultPack(Byte ** dbuf,t_vault_mos * obj,st_uru_client * u,Byte flags) {
 			//perror("bad, very bad...");
 			print2log(f_vmgr,"zlib error-> comp_size:%i,off:%i,offset:%i,ret:%i\n",obj->comp_size,off,offset,ret);
 			success=-1;
-			savefile((char *)buf,offset,"zlibdump.raw");
-			savefile((char *)*dbuf,size,"zlibdump2.raw");
+			//savefile((char *)buf,offset,"zlibdump.raw");
+			//savefile((char *)*dbuf,size,"zlibdump2.raw");
 			//abort();
+			plog(f_vmgr,"ERR: zlib error %s\n",_WHERE("vaultpack"));
 		}
 		//store the compressed size
 		*(U32 *)(*dbuf+size_offset+4)=obj->comp_size;
@@ -1074,7 +1132,11 @@ int plVaultPack(Byte ** dbuf,t_vault_mos * obj,st_uru_client * u,Byte flags) {
 	}
 	DBG(6,"Checkpoint 120\n");
 
-	if(success!=0) { free((void *)*dbuf); return -1; }
+	if(success!=0) {
+		plog(f_vmgr,"ERR: non-success code on %s\n",_WHERE("vaultpack"));
+		free((void *)*dbuf);
+		return -1;
+	}
 
 	//the 2nd object goes here
 	if(flags==0x02) { //vaulttask

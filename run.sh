@@ -3,7 +3,7 @@
 # This script 'starts' an specific game server
 
 if [ -z "$1" ]; then
-	echo "Usage ./run.sh Age"
+	echo "Usage ./run.sh Age [guid]"
 	exit
 fi
 
@@ -57,6 +57,11 @@ fi
 port=`grep "$game " servers.list | awk '{print $2}'`
 guid=`grep "$game " servers.list | awk '{print $3}'`
 
+if [ -n "$2" ]; then
+	guid = $2
+fi
+
 echo "Running $game with $guid at $port..."
 
-./uru_game -p $port -guid $guid -name $game
+
+./uru_game -p $port -guid $guid -name $game -log log/game/$game/$guid/

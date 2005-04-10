@@ -24,155 +24,158 @@
 *                                                                              *
 *******************************************************************************/
 
-/* Old debug system ---
-This is the debug system that is used in version 1.0.3 of the server.
-Version 1.0.5 is a more object oriented server */
+/* UNET 3 debbuging system */
 
 #ifndef __U_DEBUG_H_
 #define __U_DEBUG_H_
 #define __U_DEBUG_H_ID $Id$
 
-#include <string.h>
-#include <stdarg.h>
-#include <time.h>
-#include <sys/time.h>
-#include <unistd.h>
-
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
-#include <sys/stat.h>
+#include <stdio.h>
 #include <sys/types.h>
-#include <fcntl.h>
-#include <unistd.h>
-
-//print debug info?
-#define _DEBUG_LOGS
-#define _DEBUG_DUMP_PACKETS
-
-extern int global_logs_enabled; //print logs?
-
-extern const char * BUILD;
-extern const char * SNAME;
-extern const char * ID;
-extern const char * VERSION;
 
 #include "data_types.h"
-//perhaps we need the config_parser, for some variables
-#include "config_parser.h" //for parsing configuration files (all globals are here)
-#include "tmp_config.h"
 
-//global log files file descriptors
-extern FILE * f_err;
-extern const char * l_err; //stores stderr
-extern FILE * f_uru;
-extern const char * l_uru;
+#define DF_OPEN      0x0001
+#define DF_HTML      0x0002
+#define DF_SYSLOG    0x0004
+#define DF_STDOUT    0x0008
+#define DF_STDERR    0x0010
+#define DF_DEFSTDOUT 0x0020
+#define DF_APPEND    0x0040
+#define DF_DB        0x0080
+#define DF_LOGD      0x0100
+#define DF_UDP       0x0200
+#define DF_TCP       0x0400
+#define DF_STAMP     0x0800
+#define DF_IP        0x1000
+#define DF_ANOY      0x2000
+#define DF_NODUMP    0x4000
 
-extern FILE * f_une;
-extern const char * l_une;
+typedef struct {
+	char * name;
+	FILE * dsc;
+	U16 flags; /* 0x01 file is open, (internal flag)
+								 0x02 is an html file,
+								 0x04 mirror events to syslog (unimplemented)
+								 0x08 mirror to stdout
+								 0x10 mirror to stderr
+								 0x20 default to stdout
+								 0x40 don't rotate, append instead (only works on open_log_file();)
+								 0x80 log events into the local database (not implemented, and module
+											needs to be compiled with db suppport enabled)
+								 0x100 send events to the uru_log daemon (not implemented, yet)
+								 0x200 send events to a remote udp listener. (not implemented)
+								 0x400 send events to a remote tcp client. (not implemented)
+										(the last 3 ones, need to be compiled with unet support)
+								 0x800 enable timestamp logging
+								 0x1000 enable ip logging
+								 0x2000 anoys the user with message boxes
+								 0x4000 avoids dumping to the console
+							*/
+	char level;    /* 0 dissabled  (logging level)
+										1 lowest
+										2 low
+										3 normal
+										4 med
+										5 high
+										6 max
+									*/
+	int facility; //this params are passed to syslog
+	int priority; //this params are passed to syslog
+} st_log;
 
-extern FILE * f_vlt;
-extern const char * l_vlt;
+typedef struct {
+	//files
+	Byte silent; //!< set what to print to the console
+	//silent
+	// 0 - print all, ignoring if them have stdout or stderr flags, html are not print.
+	// 1 - print only msgs with stderr or stdout flags.
+	// 2 - print only msgs with stderr flags
+	// 3 - don't print nothing
 
-extern FILE * f_vmgr;
-extern const char * l_vmgr;
+	//global verbose level vs silent
+	//  0 - 3
+	//  1 - 2
+	//  2 - 1
+	// >3 - 0
 
-extern FILE * f_vhtml;
-extern const char * l_vhtml;
+	int n_files2rotate; //!< set number the files to rotate
+												/* 0 - logging disabled
+												   1 - one file (old behaviour)
+													 >2 - rotate logs
+												*/
+	char * path; //!<path to the log directory
+	int rotate_size; //!< maxium size of a file, if reached, file will be rotated
+	mode_t creation_mask; //!< default permissions mask
+	char level; //!< current logging level (0 - disabled, 1 minimal, 6 huge)
+	U16 log_flags; //!< default flags assigned to a log file on creation
+	//build vars
+	char * build; //!< build
+	//syslog
+	char * syslogname; //<! the syslog name
+	char syslog_enabled; //<! enable syslog logging? (0x01 yes, 0x0 no)
+	//db
+	char * dbhost; //<!database params
+	U16 dbport;
+	char * dbname;
+	char * dbuser;
+	char * dbpasswd;
+	char * dbeventtable;
+	char db_enabled; //<! 0x01 enabled, 0x00 disabled
+	//unet
+	char * host; //<! udp/tcp listener
+	U16 port;
+	char protocol; //UDP, TCP <! 0x00 disabled, 0x01 udp, 0x02 tcp
+	int n_logs; //How many log files are open
+	st_log ** logs; //Pointer to each one
+} st_log_config;
 
-extern FILE * f_vtask;
-extern const char * l_vtask;
+extern st_log_config * stdebug_config;
 
-extern FILE * f_acc;
-extern const char * l_acc;
+//basic log subsystems
+extern st_log * f_err;
+extern st_log * f_uru;
 
-extern FILE * f_ack;
-extern const char * l_ack;
+//-->
+void log_init();
+void log_shutdown();
 
-extern FILE * f_bcast;
-extern const char * l_bcast;
+//For forked childs
+void log_shutdown_silent();
 
-extern FILE * f_sdl;
-extern const char * l_sdl;
+st_log * open_log(const char * name, char level, U16 flags);
+int rotate_log(st_log * file,char force);
+void close_log(st_log * log);
+void close_log_silent(st_log * log); //for forked stuff (internal, don't use, use log_shutdown_silent instead)
+
+void print2log(st_log * log, char * msg, ...);
+void stamp2log(st_log * log);
+
+void plog(st_log * log, char * msg, ...);
+void logl(st_log * log, char level,char * msg, ...);
+
+void logflush(st_log * log);
+
+void dumpbuf(st_log * dsc,unsigned char* buf, unsigned int n);
+void dump_packet(st_log * dsc,unsigned char* buf, unsigned int n, unsigned int e, int how);
+
+void lognl(st_log * log);
+
+void logerr(st_log * log,char *msg);
+
+void log_openstdlogs();
 
 
-void dump_logs_to_std();
+#if 0
 
-FILE * open_log_file(const char * name);
-void close_log_file(FILE * file);
-void print2log(FILE * file, char * msg, ...);
-
-/*--------------------------------------------
-   Controls open/close the log files
----------------------------------------------*/
-void open_log_files();
-void close_log_files();
-
-/*-------------------------------------
- Opens a log file to write,
- returns the file descriptor
- associated to the log file
---------------------------------------*/
-FILE * open_log_file(const char * name);
-
-/*---------------------------
-  Closes the log file
-----------------------------*/
-void close_log_file(FILE * file);
-
-/*-----------------------------------------------
-  Prints a timestamp into the log file
------------------------------------------------*/
-void stamp2log(FILE * file);
-
-/*-----------------------------------------------
-  Prints the ip into the log file
------------------------------------------------*/
-void ip2log_old(FILE * file, U32 ip, U16 port);
-void ip2log(FILE * file, st_uru_client * s);
-char * get_ip(U32 ip);
-/*----------------------------------------------
-  Gets the microseconds value
------------------------------------------------*/
+//Deleted or moved to other files
 U32 get_microseconds();
 
-/*----------------------------------------------
-  Adds and an entry to the specified log file
-----------------------------------------------*/
-void plog(FILE * file, char * msg, ...);
+void ip2log_old(FILE * file, U32 ip, U16 port);
+void ip2log(FILE * file, st_uru_client * s);
 
-/*----------------------------------------------
-  Adds and an entry to the specified log file
-----------------------------------------------*/
-void print2log(FILE * file, char * msg, ...);
 
-/*-----------------------------------------
-  fflush to all logging outputs..
------------------------------------------*/
-void logflush(FILE * file);
-
-/*-------------------------------
-control fatal error messages
------------------------------*/
-void error(char *msg);
-
-/*-------------------------------------------------------------
- Dumps the packet into the desired FileStream
- how
-  0 -- Hex
-  1 -- Human readable
-  2 -- Spaced human readable
-  3 -- Inverted bits Human readable
-  4 -- Spaced Inverted bits Human readable
-  5 -- Hex table
-  6 -- Hex table with inverted bits
-  7 -- Hex table with and without inverted bits
-e = offset
-n = buffer size
-buf = The Buffer
-dsc = File descriptor where the packet will be dumped
- --------------------------------------------------------------*/
-void dump_packet(FILE * dsc,unsigned char* buf, unsigned int n, unsigned int e, int how);
+char * get_string_time(int stamp,int micros);
+#endif
 
 #endif

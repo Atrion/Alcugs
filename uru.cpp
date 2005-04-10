@@ -28,122 +28,115 @@
 const char * ID = "$Id$";
 const char * BUILD =  __DATE__ " " __TIME__;
 const char * SNAME = "Alcugs (uru server)";
-const char * VERSION = "1.1.15";
-const char * __uru_head ="\nAlcugs H'uru Server project\n\n";
+const char * VERSION = "1.3.1l"; //Urunet 3, updated 27/01/2005
 
 //#define _DBG_LEVEL_ 10
 
 #include "config.h"
-#include "debug.h"
 
-#define I_AM_NOT_A_CLIENT
-
-/*Includes - will be fixed with the rewrite*/
 #include <stdio.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <sys/types.h>
 #include <unistd.h>
-#include <stdlib.h>
-#include <math.h>
+#include <sys/types.h>
+#include <string.h>
 #include <ctype.h>
 #include <signal.h>
-#include <string.h>
-#include <stdarg.h>
+#include <stdlib.h>
+#include <time.h>
+#include <netdb.h>
+
+#ifdef __WIN32__
+#include <windows.h>
+#include "windoze.h"
+#endif
 
 #include "license.h" //mandatory, contains the license information
+#include "version.h"
 
-#include "data_types.h" //!<for data types used in this file
-#include "config_parser.h" //for parsing configuration files (all globals are here)
-#include "tmp_config.h"
+#include "data_types.h" //for data types used in this file
 #include "stdebug.h" //for debugging
 
-#include "protocol.h" //all protocol specs
+/* netcore */
 #include "urunet.h" //network functions
+#include "protocol.h" //protocol stuff
+#include "prot.h"
 
-//global variable that points to all players struct
-st_uru_client * all_players=NULL;
-st_uru_client * auth=NULL; //points to the auth server
-st_uru_client * vault=NULL; //points to the vault server
-st_uru_client * track=NULL; //poinst to the tracking server
+#include "useful.h"
 
-st_uru_client * meta=NULL; //points to the metaserver
+#include "config_parser.h" //configuration
 
-int whoami=0; //Server type
+#include "settings.h" //uru settings
 
-//WORLD vars
-//int global_n_players=0; //total number of local players
+//--- protocol msgs---
+/* msg generator */
+#include "gbasicmsg.h" //basic msg's
 
-//--- protocol ---
-#include "urumsg.h" //all <SND> msg's
-#include "pservermsg.h" //all server messages parser
-#include "pclientmsg.h" //client message parser
+/* msg parser */
+#include "pbasicmsg.h" //basic server msg's
+#include "pnetmsg.h" //basic server msg's (before auth)
 #include "pdefaultmsg.h" //default message (default)
-#include "pscauthmsg.h" //server-client auth message parser (also all other messages)
 
-#ifdef I_AM_THE_AUTH_SERVER
-#ifdef _INTERNAL_STUFF_AUTH //*removed* from the public tree
-#include "psauthmsg_internal.cpp" //old auth server message parser
-#else
-#include "psauthmsg.h" //auth server message parser
+#if defined(I_AM_A_GAME_SERVER) || defined(I_AM_A_LOBBY_SERVER)
+#include "gcsbvaultmsg.h" //vault msgs
+#include "gctrackingmsg.h" //tracking msgs
+#include "pcauthmsg.h" //client auth
+#include "psauthmsg.h" //server auth
+#include "pcbvaultmsg.h" //client basic vault
+#include "psbvaultmsg.h" //server basic vault
+#include "pclobbymsg.h" //lobby basic
+#include "ptrackingmsg.h" //server tracking
+#include "pvaultfordmsg.h" //vault forwarder
+#include "pvaultroutermsg.h" //vault router
+#include "lobbysubsys.h" //lobby subsystem
 #endif
+
+//auth subsystem
+#if defined(I_AM_THE_AUTH_SERVER)
+#include "pscauthmsg.h" //auth server message parser
+#include "auth.h" //authentication subsystem
+#endif
+
+//vault subsystem
+#if defined(I_AM_A_GAME_SERVER) || defined(I_AM_A_LOBBY_SERVER) || (I_AM_THE_VAULT_SERVER)
+#include "vaultsubsys.h" //vault subsystem
 #endif
 
 #ifdef I_AM_THE_VAULT_SERVER
-#include "psvaultmsg.h" //vault server message parser
-#include "vault_db.h"
-#endif
-
-#ifdef I_AM_THE_TRACKING_SERVER
-#include "pstrackingmsg.h" //tracking server message parser
-#endif
-
-#ifdef I_AM_THE_META_SERVER
-#include "psmetamsg.h" //tracking server message parser
+#include "pvaultservermsg.h" //NetMsgVault and NetMsgVaultTask adv parsers
+#include "pcsbvaultmsg.h" //vault server basic vault
+#include "vserversys.h" //vault server subsystem
 #endif
 
 #ifdef I_AM_A_GAME_SERVER
-#include "psgamemsg.h" //Game server message parser
+#include "gamesubsys.h" //game server subsystem
+#include "pythonsubsys.h" //Python subsystem
 #endif
 
-#include "sdlparser.h" //SDL byte code parser
-#include "ageparser.h" //Age parser
+#ifdef I_AM_THE_TRACKING_SERVER
+#include "pctrackingmsg.h" //tracking server message parser
+#include "trackingsubsys.h" //tracking subsystem
+#endif
 
+#ifdef I_AM_THE_META_SERVER
+//#include "psmetamsg.h" //tracking server message parser
+#endif
 
-//full sdl headers only
-t_sdl_def * global_sdl=NULL; //sdl struct
-int global_sdl_n=0; //number of global sdl records
-//we need TODO..
-//  -- minimized only sdl headers
-//  -- dynamic game objects memory struct (read/write it from disk on server start/stop)
+#include "debug.h"
 
-t_age_def * global_age_def=NULL; //age struct
-int global_age_def_n=0; //total number of ages
+//Be carefull with this, well, It's temporal, but It's going to change!
+st_unet net; //net session
 
+//globals & shared
+st_config * global_config=NULL; //the config params are here
 
+//netcore status
+int __state_running=1; //is the server running?
+int __s_terminated_flag=0; //if true log out all players and then put it false again
 
-int __s_run; //is the server running
-int __s_terminated_flag; //if true log out all players and then put it false again
-
-
-int _force_config_read=0;
-
-/**
-Prints version info to the specific file descriptor
-*/
-void version_info(FILE * f_dsc) {
-	print2log(f_dsc,"%s",__uru_disclaimer_short);
-	print2log(f_dsc,"%s",__uru_head);
-	print2log(f_dsc,"\n%s.  Build %s - Version %s\nId: %s\n",SNAME,BUILD,VERSION,ID);
-	print2log(f_dsc,"Uru protocol %s min version %s max version supported\n",__U_PROTOCOL_VMIN,__U_PROTOCOL_VMAX);
-	logflush(f_dsc);
-}
-
+//other
+int _force_config_read=0; //force server launch with syntax errors on config files?
 
 void parameters_usage() {
-	printf("Usage: urud [-VDhf] [-v n] [-p 5000] [-c uru.conf] [-guid 0000000000000010] [-log logs] [-bcast 1]\n\n\
+	printf("Usage: urud [-VDhfl] [-v n] [-p 5000] [-c uru.conf] [-name AvatarCustomization] [-guid 0000000000000010] [-log logs] [-bcast 1] [-nokill] [-clean]\n\n\
  -V: show version and end\n\
  -D: Daemon mode\n\
  -v 3: Set Verbose level\n\
@@ -154,64 +147,29 @@ void parameters_usage() {
  -guid XXXXXXXX: Set the server guid\n\
  -name XXXXX: Set the age filename\n\
  -log folder: Set the logging folder\n\
- -bcast 1/0: Enable disable server broadcasts\n\n");
-}
-
-/*******************************************************************
-   check the parameters
-	 i -> position, iterator
-	 what -> the paramenter to check "-v", "-V"
-	 type -> 0 check only the presence
-	         1 is a string, get it
-	         2 is an integer, get it
-	 result -> if 1, then the pointer to the string is stored here
-	 iresult -> if 2, then the pointer to the int is stored here
-
-	 returns 1 if the value is present
-	         0 if not
-	         -1 on error
-
-******************************************************************/
-int parameters_parse(int argc, char * argv[], int i, char * what, char type, int * result) {
-	if(!strcmp(argv[i],what)) {
-		if(type!=0 && i==argc-1) {
-			fprintf(stderr,"ERR: Incorrect number of arguments supplied for %s\n\n",what);
-			parameters_usage();
-			exit(-1);
-			return -1;
-		}
-		if(type==0) { return 1; }
-		if(type==1) { //string
-			*result=i+1; //return the interator to that string
-			return 1;
-		}
-		if(type==2 && isdigit(argv[i+1][0])) {
-			*result=atoi(argv[i+1]);
-			return 1;
-		}
-		fprintf(stderr,"ERR: Incorrect supplied arguments for %s\n\n",what);
-		parameters_usage();
-		exit(-1);
-		return -1;
-	}
-	return 0;
-
+ -bcast 1/0: Enable disable server broadcasts\n\
+ -l: Shows the servers license\n\
+ -nokill: Don't kill the gameservers, let them running [kGame].\n\
+ -clean: Performs vault cleanup on vault server startup [kVault].\n\n");
 }
 
 /**
-   searches the uru.conf file trought different
-	 places
+   searches the uru.conf file trought different places
+	 flags:
+	 0x00 don't override
+	 0x01 override some directives
 */
-int load_configuration(FILE * dsc, Byte * aux_file) {
+int load_configuration(FILE * dsc, Byte * aux_file,st_config ** cfg2,char flags) {
 	int res;
 	if(aux_file!=NULL) {
-		res=get_config(dsc,(char *)aux_file);
-		if(res==2) {
-			fprintf(dsc,"ERR: Cannot read custom %s - using defaults\n",global_config_alt);
-			return 0;
-		}
-	} else
-	res=get_config(dsc,(char *)"uru.conf");
+		res=get_config(dsc,(char *)aux_file,cfg2,flags);
+	} else {
+		res=get_config(dsc,(char *)"uru.conf",cfg2,flags);
+	}
+
+	if(res==2) {
+		fprintf(dsc,"ERR: Cannot read custom %s - using defaults\n",aux_file);
+	}
 	if(res<=-4) {
 		fprintf(stderr,"ERR: Fatal error ocurred reading config file!\n");
 		exit(-1); //avoid to do nothing
@@ -235,38 +193,57 @@ int load_configuration(FILE * dsc, Byte * aux_file) {
 */
 void s_handler(int s) {
 	static int st_alarm=0;
-	stamp2log(f_uru);
-	print2log(f_uru,"DBG: Recieved signal %i\n",s);
+	plog(f_uru,"DBG: Recieved signal %i\n",s);
 	switch (s) {
 		case SIGHUP: //reload configuration
-			print2log(f_uru,"INF: ReReading configuration\n\n");
+			plog(f_uru,"INF: ReReading configuration\n\n");
 			//parse uru.conf goes here
-			load_configuration(f_err,global_config_alt);
+			load_configuration(stderr,(Byte *)cnf_getString("uru.conf","read_config","global",\
+			global_config),&global_config,0x01);
 			signal(SIGHUP, s_handler);
+			//stop/start the diferent subsystems
+#if defined(I_AM_THE_AUTH_SERVER)
+			reload_auth_driver();
+#endif
+#if defined(I_AM_A_GAME_SERVER) || defined(I_AM_A_LOBBY_SERVER)
+			reload_lobby_subsys();
+			reload_vault_subsys();
+#endif
+#if defined(I_AM_THE_VAULT_SERVER)
+			reload_vault_subsys();
+			update_vault_server_subsys(); //Don't use reload, because it will drop the MGRS!
+#endif
+#if defined(I_AM_THE_TRACKING_SERVER)
+			reload_tracking_subsys();
+#endif
+#if defined(I_AM_THE_GAME_SERVER)
+			update_game_subsys();
+			update_python_subsys();
+#endif
 			break;
 		case SIGALRM:
 		case SIGTERM: //terminate the server in a elegant way
 		case SIGINT:
-			if(__s_run==0) {
-				print2log(f_uru,"INF: Killed\n");
-				close_log_files();
+			if(__state_running==0) {
+				plog(f_uru,"INF: Killed\n");
+				log_shutdown();
 				printf("Killed!\n");
 				exit(0);
 			} //At second Time, kill it
-			__s_terminated_flag=1;
-			__s_run=0; //tell to the main while, that the server stops the execution
+			//__s_terminated_flag=1;
+			__state_running=0; //tell to the main while, that the server stops the execution
 			signal(s,s_handler);
 			break;
 		case SIGUSR1:
 			//I need to add here the logrotate function to rotate the logs.
 			//Send an emergency "server will be down" message, start a countdown and terminate the server in a elegant way
 			if(st_alarm) {
-				print2log(f_uru,"INF: Automatic -Emergency- Shutdown CANCELLED\n\n");
+				plog(f_uru,"INF: Automatic -Emergency- Shutdown CANCELLED\n\n");
 				//code to send to players a Shutdown Cancelled
 				st_alarm=0;
 				alarm(0);
 			} else {
-				print2log(f_uru,"INF: Automatic -Emergency- Shutdown In progress in 30 seconds\n\n");
+				plog(f_uru,"INF: Automatic -Emergency- Shutdown In progress in 30 seconds\n\n");
 				//code to send to players a Shutdown In progress
 				st_alarm=1;
 				signal(SIGALRM, s_handler);
@@ -277,7 +254,7 @@ void s_handler(int s) {
 		case SIGUSR2: //Send a TERMINATED message to all logged players.
 			//Put on the terminated flag, this will send the TERMINATED message to all players
 			__s_terminated_flag=1;
-			print2log(f_uru,"INF: TERMINATED message sent to all players.\n\n");
+			plog(f_uru,"INF: TERMINATED message sent to all players.\n\n");
 			signal(SIGUSR2, s_handler);
 			break;
 #if 0
@@ -288,13 +265,11 @@ void s_handler(int s) {
 			break;
 #endif
 		case SIGSEGV:
-			stamp2log(f_err);
-			print2log(f_err,"TERRIBLE FATAL ERROR: SIGSEGV recieved!!!\n\n");
-			close_log_files();
+			plog(f_err,"TERRIBLE FATAL ERROR: SIGSEGV recieved!!!\n\n");
+			log_shutdown();
 			exit(-1);
 		default:
-			stamp2log(f_err);
-			print2log(f_err,"\nERR: Unexpected signal recieved!\n\n");
+			plog(f_err,"\nERR: Unexpected signal recieved!\n\n");
 	}
 }
 
@@ -302,33 +277,44 @@ void s_handler(int s) {
  Install the handlers
 */
 void install_handlers() {
-	signal(SIGHUP, s_handler); //reload configuration
 	signal(SIGTERM, s_handler); //terminate the server in a elegant way
 	signal(SIGINT, s_handler); //terminate the server in a elegant way
+#ifndef __WIN32__
+	signal(SIGHUP, s_handler); //reload configuration
 	signal(SIGUSR1, s_handler); //Send an emergency "server will be down" message, start a countdown and terminate the server in a elegant way
-	signal(SIGUSR2, s_handler); //Send a TERMINATED message to all loged players.
+	signal(SIGUSR2, s_handler); //Send a TERMINATED message to all logged players.
 	//signal(SIGCHLD, s_handler);
 	signal(SIGCHLD, SIG_IGN); // avoid zombies
+#endif
 	//signal(SIGSEGV, s_handler); //Cath SIGSEGV
 }
 
 /**
   parse arguments, returns -1 if it fails
 */
-int u_parse_arguments(int argc, char * argv[]) {
+int u_parse_arguments(int argc, char * argv[],st_config ** cfg2) {
 	int i,ret;
-	for(i=1; i<argc; i++) {
-		if(parameters_parse(argc,argv,i,"-V",0,NULL)) { version_info(stdout); exit(0); }
-		else if(parameters_parse(argc,argv,i,"-l",0,NULL)) {
-			fprintf(stdout,"%s",__uru_disclaimer_long);
-			exit(0);
-		}
-		else if(parameters_parse(argc,argv,i,"-D",0,NULL)) { global_daemon_mode=1; }
-		else if(parameters_parse(argc,argv,i,"-D",0,NULL)) { _force_config_read=1; }
-		else if(parameters_parse(argc,argv,i,"-v",2,&ret)) {
-			i++;
-			global_verbose_level=(Byte)ret;
-			switch (global_verbose_level) {
+	int silent;
+
+	for (i=1; i<argc; i++) {
+		if(!strcmp(argv[i],"-h")) {
+			parameters_usage(); return -1;
+		} else if(!strcmp(argv[i],"-V")) {
+			version(stdout);
+			return -1;
+		} else if(!strcmp(argv[i],"-l")) {
+			version(stdout);
+			show_bigdisclaimer();
+			return -1;
+		} else if(!strcmp(argv[i],"-D")) {
+			cnf_add_key("1","daemon","global",cfg2);
+		} else if(!strcmp(argv[i],"-nokill")) {
+			cnf_add_key("1","game.persistent","global",cfg2);
+		} else if(!strcmp(argv[i],"-f")) {
+			_force_config_read=1;
+		} else if(!strcmp(argv[i],"-v") && argc>i+1) {
+			i++; ret=atoi(argv[i]);
+			switch (ret) {
 				case 0:
 					silent=3;
 					break;
@@ -341,143 +327,412 @@ int u_parse_arguments(int argc, char * argv[]) {
 				default:
 					silent=0;
 			}
-		}
-		else if (parameters_parse(argc,argv,i,"-p",2,&global_port)) i++; //server port
-		else if (parameters_parse(argc,argv,i,"-c",1,&ret)) { //server config file
+			cnf_add_key(argv[i],"verbose_level","global",cfg2);
+			cnf_setU32(silent,"d.silent","global",cfg2);
+		} else if(!strcmp(argv[i],"-p") && argc>i+1) {
 			i++;
-			global_config_alt=(Byte *)argv[i];
-		}
-		else if (parameters_parse(argc,argv,i,"-guid",1,&ret)) { //server guid
+			cnf_add_key(argv[i],"port","global",cfg2);
+		} else if(!strcmp(argv[i],"-c") && argc>i+1) {
 			i++;
-			strcpy((char *)global_age_guid,argv[i]);
-			strcpy((char *)global_age.guid,argv[i]);
-		}
-		else if (parameters_parse(argc,argv,i,"-name",1,&ret)) { //server name
+			cnf_add_key(argv[i],"read_config","global",cfg2);
+		} else if(!strcmp(argv[i],"-guid") && argc>i+1) {
 			i++;
-			strcpy((char *)global_age.filename,argv[i]);
-			strcpy((char *)global_age.name,argv[i]);
-		}
-		else if (parameters_parse(argc,argv,i,"-log",1,&ret)) { //server logs path
+			cnf_add_key(argv[i],"age_guid","global",cfg2);
+		} else if(!strcmp(argv[i],"-name") && argc>i+1) {
 			i++;
-			strcpy((char *)global_log_files_path,argv[i]);
-		}
-		else if (parameters_parse(argc,argv,i,"-bcast",2,&global_broadcast)) i++; //server broadcast flag
-		else {
+			cnf_add_key(argv[i],"age_filename","global",cfg2);
+		} else if(!strcmp(argv[i],"-log") && argc>i+1) {
+			i++;
+			cnf_add_key(argv[i],"log_files_path","global",cfg2);
+		} else if(!strcmp(argv[i],"-bcast") && argc>i+1) {
+			i++;
+			cnf_add_key(argv[i],"broadcast","global",cfg2);
+		} else if(!strcmp(argv[i],"-clean")) {
+			cnf_add_key("1","vault.clean","global",cfg2);
+		} else {
 			parameters_usage();
-			exit(0);
+			return -1;
 		}
 	}
 	return 0;
 }
 
-/* -----------------------------------------------
+/**
+	Reload the configuration when the server is running.
+	0x00 startup
+	0x01 reload
+*/
+void	reaply_settings(st_unet * net,Byte flags) {
+
+	if(cnf_exists("net.maxconnections","global",global_config)==1) {
+		net->max=cnf_getByte(net->max,"net.maxconnections","global",global_config);
+	}
+	if(cnf_exists("net.timeout","global",global_config)==1) {
+		net->timeout=cnf_getU32(net->max,"net.timeout","global",global_config);
+	}
+	if(cnf_exists("net.up","global",global_config)==1) {
+		net->nat_up=cnf_getU32(net->nat_up/1000,"net.up","global",global_config)*1000;
+	}
+	if(cnf_exists("net.down","global",global_config)==1) {
+		net->nat_down=cnf_getU32(net->nat_down/1000,"net.down","global",global_config)*1000;
+	}
+	if(cnf_exists("net.lan.up","global",global_config)==1) {
+		net->lan_up=cnf_getU32(net->lan_up/1000,"net.up","global",global_config)*1000;
+	}
+	if(cnf_exists("net.lan.down","global",global_config)==1) {
+		net->lan_down=cnf_getU32(net->lan_down/1000,"net.down","global",global_config)*1000;
+	}
+
+	//public address
+	strcpy(net->address,(char *)cnf_getString(net->address,\
+	"public_address","global",global_config));
+
+	net->lan_mask=(U32)inet_addr(cnf_getString("255.255.255.0",\
+	"private_mask","global",global_config));
+
+	if(cnf_exists("private_network","global",global_config)==1) {
+		net->lan_addr=(U32)inet_addr(cnf_getString("0.0.0.0",\
+		"private_network","global",global_config));
+	} else {
+		struct hostent *host;
+		host=gethostbyname(cnf_getString("localhost",\
+	"bind","global",global_config));
+		if(host!=NULL) {
+			net->lan_addr=*(U32 *)host->h_addr_list[0] & net->lan_mask;
+		} else {
+			net->lan_addr=0;
+		}
+	}
+
+	net->spawn_start=cnf_getU16(5000,"spawn.start","global",global_config);
+	net->spawn_stop=cnf_getU16(6000,"spawn.stop","global",global_config);
+
+	if(cnf_getByte(0,"net.noflood","global",global_config)) {
+		net->flags |=  UNET_NOFLOOD; //enable anti flooding
+	} else {
+		net->flags &=  ~UNET_NOFLOOD; //disable
+	}
+
+	//depreceated ~old protocol
+	// will be removed in the future, we are not going to support the old protocol, in
+	// new releases
+	net->pro_auth=cnf_getByte(0,"auth.oldprotocol","global",global_config);
+	net->pro_vault=cnf_getByte(0,"vault.oldprotocol","global",global_config);
+	net->pro_tracking=cnf_getByte(0,"tracking.oldprotocol","global",global_config);
+	if(net->pro_auth!=0 && net->pro_auth!=1) net->pro_auth=0;
+	if(net->pro_vault!=0 && net->pro_vault!=1) net->pro_vault=0;
+	if(net->pro_tracking!=0 && net->pro_tracking!=1) net->pro_tracking=0;
+	if(net->pro_tracking==0) {
+		printf("Remove abort call from uru.cpp...\n");
+		fflush(0);
+		abort();
+	}
+
+}
+
+/** Kills the specific player by sid
+		flag: 0x01 clean the session
+		flag: 0x02 don't send terminated
+*/
+void kill_player(st_unet * net,int reason,int sid,Byte flag) {
+	if(net_check_address(net,sid)!=0) return;
+
+	//but be sure that we are not killing a server...
+	if(net->whoami==KLobby || net->whoami==KGame) {
+		if(net->s[sid].whoami!=KClient && net->s[sid].whoami!=0) return;
+	} else {
+		if(net->s[sid].whoami!=KGame && net->s[sid].whoami!=KLobby &&\
+		 net->s[sid].whoami!=0) return;
+	}
+
+#if !defined(I_AM_A_GAME_SERVER) && !defined(I_AM_A_LOBBY_SERVER)
+	net->s[sid].hmsg.ki=0;
+#endif
+
+	//do here the correct an nice player cleanning
+	nlog(f_uru,net,sid,"Killing... disconnecting peer %i: %i %s\n",sid,net->s[sid].whoami,\
+	unet_get_destination(net->s[sid].whoami));
+
+	if(!(flag & 0x02)) {
+		plNetMsgTerminated(net,reason,sid);
+	}
+
+#if defined(I_AM_A_GAME_SERVER) || defined(I_AM_A_LOBBY_SERVER)
+	if(net->s[sid].ki!=0) {
+		U32 timer;
+		timer=time(NULL);
+
+		timer=timer-net->s[sid].nego_stamp;
+
+		if(reason!=RLoggedInElsewhere) {
+			plNetMsgCustomPlayerStatus(net,0,0,net->tracking,sid,net->pro_tracking);
+		}
+
+		net->s[net->pro_vault].hmsg.ki=net->s[sid].ki;
+
+		plNetMsgCustomVaultPlayerStatus(net,(char *)"",(char *)"0000000000000000",\
+		0,timer,net->vault,net->pro_vault);
+	}
+#endif
+
+	nlog(net->sec,net,sid,"Connection terminated %i %s %i\n",reason,unet_get_reason_code(reason),flag);
+
+	if(flag & 0x01) {
+		plNetDestroySession(net,sid); //hmmm
+	} else {
+		plNetEndConnection(net,sid); //<- this one is better, a lot better
+	}
+}
+
+/** Kills the specific player by ki
+*/
+void kill_playerbyki(st_unet * net,int reason,int ki,Byte flag) {
+	DBG(5,"kill_playerbyki ki:%i f:%i\n",ki,flag);
+	if(ki<=0) return;
+
+	int i;
+	for(i=0; i<(int)net->n; i++) {
+		DBG(5,"[%i] %i=%i?\n",i,net->s[i].ki,ki);
+		if(net->s[i].ki==ki) {
+			kill_player(net,reason,i,flag);
+		}
+	}
+}
+
+//flag 0x01 and clean, 0x00 and not clean
+void kill_players(st_unet * net,Byte flag) {
+	int i;
+	plog(f_uru,"INF: Server logoff, disconnecting all players\n");
+	for(i=0; i<(int)net->n; i++) {
+		if(net->s[i].ip!=0) {
+			kill_player(net,RKickedOff,i,flag);
+		}
+	}
+}
+
+#if defined(I_AM_A_GAME_SERVER) || defined(I_AM_A_LOBBY_SERVER)
+/**
+	Starts the connection to the specified peer
+*/
+int reconnect2peer(st_unet * net,int dst) {
+	int ret=0;
+	U16 port;
+	char * host;
+	int sid=-1;
+	Byte flags=0;
+
+	switch(dst) {
+		case KAuth:
+			host=(char *)cnf_getString("127.0.0.1","auth","global",global_config);
+			port=cnf_getU16(2010,"auth.port","global",global_config);
+			break;
+		case KVault:
+			host=(char *)cnf_getString("127.0.0.1","vault","global",global_config);
+			port=cnf_getU16(2012,"vault.port","global",global_config);
+			flags |=UNET_VAL0;
+			break;
+		case KTracking:
+			host=(char *)cnf_getString("127.0.0.1","tracking","global",global_config);
+			port=cnf_getU16(2011,"tracking.port","global",global_config);
+			flags |=UNET_VAL0;
+			break;
+		case KMeta:
+			host="metaserver.uru3.almlys.dyns.net";
+			port=8000;
+			break;
+		default:
+			plog(f_err,"Connection to the unknown service %i requested!\n",dst);
+			ret=UNET_ERR;
+			break;
+	}
+
+	if(ret==UNET_OK) {
+		ret=plNetConnect(net,&sid,host,port,flags);
+	}
+
+	if(ret==UNET_OK) {
+		net->s[sid].timeout=5*60; //set timeout
+		net->s[sid].whoami=dst; //set peer type
+		//and send server hello if required
+
+		switch(dst) {
+			case KAuth:
+				net->auth=sid;
+				plNetMsgAlive(net,sid);
+				break;
+			case KVault:
+				net->vault=sid;
+				plNetMsgAlive(net,sid);
+				break;
+			case KTracking:
+				net->tracking=sid;
+				plNetMsgAlive(net,sid);
+				plNetMsgCustomSetGuid(net,sid,net->pro_tracking);
+				break;
+			case KMeta:
+				net->meta=sid;
+				break;
+		}
+	}
+
+	if(ret!=UNET_OK) {
+		print2log(f_err,"There was a problem contacting with the %i %s server. Error %i %s\n",dst,unet_get_destination(dst),ret,get_unet_error(ret));
+		sid=-1;
+	}
+	return sid;
+}
+#endif
+
+/*-----------------------------------------------
     MAIN CODE
 -------------------------------------------------*/
 int main(int argc, char * argv[]) {
 
-	int sock, i, n; //the socket, generic iterator, output buffer size
-	int sid; //session identifier
+	char hostname[300];
+	U16 port=5000;
 
-	Byte* buf; //pointer to the buffer
+	Byte * msg=NULL;
+	int ret,i,off,size,sid; //return codes, msg offset, msg size, session identifier
 
-	//allocate the big session memory struct
-	//st_uru_client * session=NULL; //alls sessions are here
+	//Init the net struct
+	plNetInitStruct(&net);
 
-	//set initial number of players
-	global_max_clients=10;
+	//Set here initial default unet flags
+	net.flags &= (~UNET_ELOG & ~UNET_FLOG); //globally disable logging
 
-	//protection to avoid a possible unwanted DOS
-	int __meta_status=0;
+#ifdef __WIN32__
+	//Because Windows is a piece of shit, we need to calibrate the clock, by performing several calls to get_microseconds()
+	int windows_sucks=1;
+	while(windows_sucks++<1000) {
+		get_microseconds();
+	}
+	//Note: windoze calibration code will be moved to the netcore initialitzacion code rather that being done here.
+#endif
 
-	global_logs_enabled=1;
+	//init entropy
+	srandom(get_microseconds() + ((U32)(time(NULL) % 10000)));
 
-// to parse configuration file according to server type
+	//set the server role
 #if defined(I_AM_A_GAME_SERVER)
-	whoami=KGame;
+	net.whoami=KGame;
+	strcpy(net.name,"Game");
+	Byte persistent=0;
 #elif defined(I_AM_THE_AUTH_SERVER)
-	whoami=KAuth;
+	net.whoami=KAuth;
+	strcpy(net.name,"Auth");
+	net.timeout=15*60; //Change the timeout
 #elif defined(I_AM_THE_VAULT_SERVER)
-	whoami=KVault;
+	net.whoami=KVault;
+	strcpy(net.name,"Vault");
+	net.timeout=30*60; //Change the timeout
 #elif defined(I_AM_THE_TRACKING_SERVER)
-	whoami=KTracking;
+	net.whoami=KTracking;
+	strcpy(net.name,"Tracking");
+	net.timeout=5*60; //Change the timeout
 #elif defined(I_AM_A_LOBBY_SERVER)
-	whoami=KLobby;
+	net.whoami=KLobby;
+	strcpy(net.name,"Lobby");
 #elif defined(I_AM_THE_META_SERVER)
-	whoami=KMeta;
+	net.whoami=KMeta;
+	strcpy(net.name,"Meta");
+	net.timeout=15; //Change the timeout
+#elif defined(I_AM_THE_DATA_SERVER)
+	net.whoami=KData;
+	strcpy(net.name,"Data");
+	net.timeout=15; //Change the timeout
+#elif defined(I_AM_THE_ADMIN_SERVER)
+	net.whoami=KAdmin;
+	strcpy(net.name,"Admin");
+	net.timeout=15; //Change the timeout
 #else
 #error Unsuported server type!
 #endif
 
-#if defined(I_AM_THE_TRACKING_SERVER) || defined(I_AM_THE_VAULT_SERVER) || defined(I_AM_THE_AUTH_SERVER) || defined(I_AM_THE_META_SERVER)
-	global_the_bar=0; //no clients
-#else
-	#define AUTH_SERVER_REQUIRED
-	#define VAULT_SERVER_REQUIRED
-	#define TRACKING_SERVER_REQUIRED
-	global_the_bar=3; //1 auth connection, 2 vault connection, 3 tracking connection
-#endif
-
-	global_client_count=global_the_bar;
-
-	strcpy((char *)global_age.guid,"0000000000000000");
-	strcpy((char *)global_age.name,"");
-#ifdef I_AM_A_LOBBY_SERVER
-	strcpy((char *)global_age.name,"Lobby");
-#endif
-
-	//if(license_check(argc,argv)==1) {
-	//	return -1;
-	//}
+	cnf_setByte(net.whoami,"whoami","global",&global_config);
+	strcpy(net.guid,"0000000000000000");
 
 	//parse arguments goes here
-	u_parse_arguments(argc,argv);
+	if(u_parse_arguments(argc,argv,&global_config)!=0) { return -1; }
 
 	//parse uru.conf goes here
-	if(load_configuration(stderr,global_config_alt)==-1 && _force_config_read!=1) {
+	if(load_configuration(stderr,\
+	(Byte *)cnf_getString("uru.conf","read_config","global",global_config),\
+	&global_config,0)==-1 && _force_config_read!=1) {
 		fprintf(stderr,"FATAL, reading configuration, please check the syntax\n");
 		return -1;
 	}
-
-	//here
-#ifdef I_AM_A_LOBBY_SERVER
-#define META_SERVER_REQUIRED
-	if(global_enable_metaserver==1) {
-		global_the_bar++;
-		global_client_count++;
-	}
-#endif
-
-	all_players=(st_uru_client *)(malloc(sizeof(st_uru_client) * (global_client_count+1)));
-
-	if(all_players==NULL) {
-		fprintf(stderr,"FATAL, not enough memory to operate\n");
-		return -1;
-	}
-
-	//all_players=session;
-
-	//init the big session struct to default values
-	u_init_session(all_players,global_client_count);
 
 	/*install some handlers */
 	install_handlers();
 
 	//enter into dameon mode if required
-	if(global_daemon_mode) { daemon(1,0); }
+	if(cnf_getByte(0,"daemon","global",global_config)) { daemon(1,0); }
 
-	//open log files
-	open_log_files();
-	//<-
+	log_init(); //automatically started by the netcore, but the log_shutdown call is mandatory
+	//log_init() is a must before this call
+	stdebug_config->silent=cnf_getByte(0,"d.silent","global",global_config);
 
-	//if(license_check(argc,argv)==1) {
-	//	return -1;
-	//}
+	if(cnf_exists("log_files_path","global",global_config)==1) {
+		char * path;
+		path=(char *)cnf_getString("log/","log_files_path","global",global_config);
+		//we can safely ignore the leak, since this line is only called one time,
+		// but if you want to be nice, you can add a free at the end of the code, being
+		// extremely carefull, since the default path points to an static struct.
+		stdebug_config->path=(char *)malloc(sizeof(char)*(strlen(path)+1));
+		strcpy(stdebug_config->path,path);
+	}
+	//set other stdebug_config params __here__
+
+	if(cnf_getByte(1,"log.enabled","global",global_config)) {
+		log_openstdlogs();
+	}
+
+	//set other net params __here__
+	if(cnf_getByte(1,"net.log.enabled","global",global_config)) {
+		net.flags |= UNET_FLOG | UNET_ELOG;
+	}
+
+	if(cnf_getByte(0,"net.auth","global",global_config)==0) {
+		net.flags &= ~UNET_NETAUTH; //dissable net.auth
+	}
+
+	//logs
+	if(cnf_getByte(1,"net.log.chk","global",global_config)==0) {
+		net.flags |= UNET_DLCHK;
+	}
+	if(cnf_getByte(1,"net.log.une","global",global_config)==0) {
+		net.flags |= UNET_DLUNE;
+	}
+	if(cnf_getByte(1,"net.log.ack","global",global_config)==0) {
+		net.flags |= UNET_DLACK;
+	}
+	if(cnf_getByte(1,"net.log.sec","global",global_config)==0) {
+		net.flags |= UNET_DLSEC;
+	}
+
+	if(cnf_exists("age_guid","global",global_config)) {
+		strncpy(net.guid,cnf_getString("","age_guid","global",global_config),17);
+	}
+	if(cnf_exists("age_filename","global",global_config)) {
+		strncpy(net.name,cnf_getString("","age_filename","global",global_config),190);
+	}
 
 	//some info
 	version_info(f_uru);
 
+	if(cnf_getByte(0,"stop","global",global_config)!=0) {
+		plog(f_err,"Server startup aborted!\n\nRTFM!!.\nThere is a stop or dissabled entry in the server configuration file (remove that entry).\n\n");
+		fprintf(stderr,"Server startup aborted!\n");
+		log_shutdown();
+		return -1;
+	}
+
+	reaply_settings(&net,0);
+
+
 #if defined(I_AM_A_GAME_SERVER)
 	print2log(f_uru,"<GAME SERVER>\n");
+	persistent=cnf_getByte(0,"game.persistent","global",global_config);
 #elif defined(I_AM_THE_AUTH_SERVER)
 	print2log(f_uru,"<AUTH SERVER>\n");
 #elif defined(I_AM_THE_VAULT_SERVER)
@@ -488,577 +743,420 @@ int main(int argc, char * argv[]) {
 	print2log(f_uru,"<LOBBY SERVER>\n");
 #elif defined(I_AM_THE_META_SERVER)
 	print2log(f_uru,"<META SERVER>\n");
+#elif defined(I_AM_THE_DATA_SERVER)
+	print2log(f_uru,"<DATA SERVER>\n");
+#elif defined(I_AM_THE_ADMIN_SERVER)
+	print2log(f_uru,"<ADMIN SERVER>\n");
 #else
 #error Unsuported server type!
 #endif
-
-#ifdef I_AM_A_GAME_SERVER
-	print2log(f_uru,"Parsing SDL files...\n");
-	if(read_sdl_files((char *)global_sdl_folder,&global_sdl,&global_sdl_n)<0) {
-		print2log(f_err,"FATAL, failed to parse the sdl files...\n");
-		return -1;
+	lognl(f_uru);
+	plog(f_uru,"The Server is running...\nPresh CTRL+C to kill the server.\n\n");
+	print2log(f_uru,"Max Clients allowed: ");
+	if(net.n==0) {
+		print2log(f_uru,"unlimited, yay!\n\n");
+	} else {
+		print2log(f_uru,"%i\n\n",net.n);
 	}
-	print2log(f_uru,"Parsing AGE descriptor...\n");
-
-	char path_to_age[500];
-
-	sprintf(path_to_age,"%s/%s.age",global_age_folder,global_age.name);
-
-
-	if(read_age_descriptor(f_sdl,path_to_age,&global_age_def)<0) {
-		print2log(f_err,"FATAL, failed to load %s...\n",path_to_age);
-		return -1;
-	}
-	dump_age_descriptor(f_sdl,*global_age_def);
-	global_age_def_n=1;
-
-
-#endif
-
-#if defined(I_AM_THE_TRACKING_SERVER) or defined(I_AM_THE_VAULT_SERVER)
-
-	print2log(f_uru,"Parsing AGE descriptors...\n");
-
-	global_age_def_n=read_all_age_descriptors(f_sdl,(char *)global_age_folder,&global_age_def);
-	if(global_age_def_n<=0) {
-		print2log(f_err,"FATAL, failed to read AGE descriptors from %s...\n",global_age_folder);
-		return -1;
-	}
-
-#endif
-
-	print2log(f_uru,"\n");
-	stamp2log(f_uru);
-	print2log(f_uru,"\nPresh CTRL+C to kill the server.\n\n");
-	print2log(f_uru,"Max Clients allowed: %i\n\n",global_max_clients);
-	print2log(f_uru,"Broadcast is %i\n\n",global_broadcast);
 	logflush(f_uru);
-	//<--
+	//<-- multithreaded goes here
+	//set binding port/address
+	port=cnf_getU16(port,"port","global",global_config);
+	strcpy(hostname,(char *)cnf_getString("0.0.0.0","bind","global",global_config));
 
-	//multithreaded is necessary, and goes here (ummm, I never did something multithreaded at this level of complexity before
+	ret=plNetStartOp(port,hostname,&net);
+	DBG(2,"plNetStartOp res:%i\n",ret);
 
-	//Start the Network Operation
 #if I_AM_A_GAME_SERVER
-tryagain:
-#endif
-
-/*
-	This is a small temporal fix to avoid the current linking problems.
-
-	but, this operation needs to be performed in the tracking server, and not
-	in the game server. (It will gibe up as soon as reaches the port 6000)
-
-	/me noticed that plasma does something similar, it tryes several times on
-	the same port until the old instance stops, but this way is more faster.
-*/
-
-		sock=plNetStartOp(global_port,(char *)global_bind_hostname);
-		if(sock<0) {
-			stamp2log(f_err);
-			print2log(f_err,"ERR: FATAL cannot start the Network Operation\n");
-			#if I_AM_A_GAME_SERVER
-				print2log(f_uru,"Attempting on another port\n");
-				global_port+=27;
-				if(global_port<=6000) { goto tryagain; }
-			#endif
-			close_log_files();
-			error("ERR: FATAL cannot start the Network Operation\n");
-			return -1; //be sure that all is killed
-		}
-
-
-	//SET global system flags.
-	__s_run=1; //server running
-	__s_terminated_flag=0; //TERMINATED message flag
-
-	int ret=0;
-#ifdef AUTH_SERVER_REQUIRED
-	//auth always in sid=1
-	auth=&all_players[1];
-
-	//get the host
-	if(unet_set_host_info((char *)global_auth_hostname,global_auth_port,auth)<0) {
-		print2log(f_err,"Error parsing auth server hostname\n");
-	}
-
-	//set validation and version
-	auth->validation=0x02;
-	auth->minor_version=6;
-	auth->major_version=12;
-	auth->maxPacketSz=1024; //set maxpacketsize
-	auth->release=0x00; //magic number 7//TDbg; //set debug release
-
-	//init client & server headers (on udp server is this program & client is the remote host)
-	uru_init_header(&auth->server,auth->validation);
-	uru_init_header(&auth->client,auth->validation);
-
-	//initial negotiation
-	auth->authenticated=0;
-	auth->negotiated=0;
-	auth->flag=1; //solved 234 bugs with this line (is very important) also added a SEGFAULT
-	auth->tpots=2; //2-no tpots
-
-	//set the session initial time
-	time(&auth->timestamp);
-	auth->microseconds=get_microseconds();
-
-	auth->adv_msg.max_version=12;
-	auth->adv_msg.min_version=6;
-
-	ret=plNetClientComm(sock,auth);
-	if(ret<0) {
-		print2log(f_err,"There was a problem contacting with the auth server\n");
-	}
-
-
-#endif
-
-#ifdef VAULT_SERVER_REQUIRED
-	//vault always in sid=2
-	vault=&all_players[2];
-
-	//get the host
-	if(unet_set_host_info((char *)global_vault_hostname,global_vault_port,vault)<0) {
-		print2log(f_err,"Error parsing vault server hostname\n");
-	}
-
-	//set validation and version
-	vault->validation=0x02;
-	vault->minor_version=7;
-	vault->major_version=12;
-	vault->maxPacketSz=1024; //set maxpacketsize
-	vault->release=0x00; //magic number 7//TDbg; //set debug release
-
-	//init client & server headers (on udp server is this program & client is the remote host)
-	uru_init_header(&vault->server,vault->validation);
-	uru_init_header(&vault->client,vault->validation);
-
-	//initial negotiation
-	vault->authenticated=0;
-	vault->negotiated=0;
-	vault->flag=1; //solved 234 bugs with this line (is very important) also added a SEGFAULT
-	vault->tpots=2;
-
-	//set the session initial time
-	time(&vault->timestamp);
-	vault->microseconds=get_microseconds();
-
-	vault->adv_msg.max_version=12;
-	vault->adv_msg.min_version=7;
-
-	ret=plNetClientComm(sock,vault);
-	if(ret<0) {
-		print2log(f_err,"There was a problem contacting with the vault server\n");
-	}
-
-#endif
-
-#ifdef TRACKING_SERVER_REQUIRED
-	//tracking always in sid=3
-	track=&all_players[3];
-
-	//get the host
-	if(unet_set_host_info((char *)global_tracking_hostname,global_tracking_port,track)<0) {
-		print2log(f_err,"Error parsing tracking server hostname\n");
-	}
-
-	//set validation and version
-	track->validation=0x02;
-	track->minor_version=7;
-	track->major_version=12;
-	track->maxPacketSz=1024; //set maxpacketsize
-	track->release=0x00; //magic number 7//TDbg; //set debug release
-
-	//init client & server headers (on udp server is this program & client is the remote host)
-	uru_init_header(&track->server,track->validation);
-	uru_init_header(&track->client,track->validation);
-
-	//initial negotiation
-	track->authenticated=0;
-	track->negotiated=0;
-	track->flag=1; //solved 234 bugs with this line (is very important) also added a SEGFAULT
-	track->tpots=2;
-
-	//set the session initial time
-	time(&track->timestamp);
-	track->microseconds=get_microseconds();
-
-	track->adv_msg.max_version=12;
-	track->adv_msg.min_version=7;
-
-	ret=plNetClientComm(sock,track);
-	if(ret<0) {
-		print2log(f_err,"There was a problem contacting with the tracking server\n");
-	}
-
-
-#endif
-
-#ifdef META_SERVER_REQUIRED
-	if(global_enable_metaserver==1) {
-		//tracking always in sid=4
-		meta=&all_players[4];
-
-		//get the host
-		if(unet_set_host_info((char *)global_metaserver_address,global_metaserver_port,meta)<0) {
-			print2log(f_err,"Error parsing metaserver server hostname\n");
-		}
-
-		//set validation and version
-		meta->validation=0x02;
-		meta->minor_version=7;
-		meta->major_version=12;
-		meta->maxPacketSz=1024; //set maxpacketsize
-		meta->release=0x00; //magic number 7//TDbg; //set debug release
-
-		//init client & server headers (on udp server is this program & client is the remote host)
-		uru_init_header(&meta->server,meta->validation);
-		uru_init_header(&meta->client,meta->validation);
-
-		//initial negotiation
-		meta->authenticated=0;
-		meta->negotiated=0;
-		meta->flag=1; //solved 234 bugs with this line (is very important) also added a SEGFAULT
-		meta->tpots=2;
-
-		//set the session initial time
-		time(&meta->timestamp);
-		meta->microseconds=get_microseconds();
-
-		meta->adv_msg.max_version=12;
-		meta->adv_msg.min_version=7;
-
-		ret=plNetClientComm(sock,meta);
-		if(ret<0) {
-			print2log(f_err,"There was a problem contacting with the meta server\n");
+	if(ret!=UNET_OK) {
+		plog(f_err,"Urunet startup failed, with return code n: %i %s!\n",ret,\
+		get_unet_error(ret));
+		int i;
+		for(i=0; i<25; i++) {
+			port+=(random() % 12);
+			plog(f_err,"Attempting on port %i\n",port);
+			ret=plNetStartOp(port,hostname,&net);
+			if(ret==UNET_OK) break;
 		}
 	}
-
 #endif
 
-#ifdef I_AM_THE_VAULT_SERVER
+	if(ret!=UNET_OK) {
+		plog(f_err,"Urunet startup failed, with return code n: %i %s!\n",ret,\
+		get_unet_error(ret));
+		cnf_destroy(&global_config); //destroy the configuration struct
+		log_shutdown();
+		exit(-1);
+	}
 
-	int ver;
-	ver=plVaultGetVersion();
-
-	if(ver<vault_version && ver>=0) {
-		plog(f_uru,"INF: Your vault format is outdated, I'm going to try to migrate it to the new format.\n");
-		if(plVaultMigrate(ver)<0) {
-			plog(f_err,"WAR: Fatal, vault migration from version %i to version %i failed!!\n",ver,vault_version);
-		}
-	} //else //ok, error, non-existent, failed, etc..
-
-	if(plVaultGetFolder()<0) {
-		print2log(f_err,"FATAL, cannot negotiate the folder name, the mysql database may be down, or there is a corruption in the vault database, check your configuration settings!\n");
-		return -1;
+//Startup the different subsystems
+#if defined(I_AM_THE_AUTH_SERVER)
+	if(init_auth_driver()<0 && _force_config_read!=1) {
+		plog(f_err,"Auth Subsystem failure!\n Check the auth.log and sql.log for more information\n\n");
+		plNetStopOp(&net);
+		cnf_destroy(&global_config); //destroy the configuration struct
+		log_shutdown();
+		exit(-1);
 	}
 #endif
 
-//#ifdef I_AM_A_GAME_SERVER
-if(track!=NULL) {
-	plNetMsgCustomSetGuid(sock,global_age.guid,global_age.name,\
-global_public_ip_address,global_private_network_mask,track);
-}
-//#endif
+#if defined(I_AM_A_GAME_SERVER)
+	if(init_game_subsys(&net)<0 && _force_config_read!=1) {
+		plog(f_err,"Game Server Subsystem failure!\n Check the sdl.log for more information\n\n");
+		plNetStopOp(&net);
+		cnf_destroy(&global_config); //destroy the configuration struct
+		log_shutdown();
+		exit(-1);
+	}
+	if(init_python_subsys(&net)<0 && _force_config_read!=1) {
+		plog(f_err,"Python Subsystem failure!\n Check the python.log for more information\n\n");
+		stop_game_subsys();
+		plNetStopOp(&net);
+		cnf_destroy(&global_config); //destroy the configuration struct
+		log_shutdown();
+		exit(-1);
+	}
+#endif
 
+#if defined(I_AM_A_GAME_SERVER) || defined(I_AM_A_LOBBY_SERVER)
+	reconnect2peer(&net,KAuth);
+	reconnect2peer(&net,KVault);
+	reconnect2peer(&net,KTracking);
+	init_lobby_subsys();
+	init_vault_subsys();
+#endif
 
-	plog(f_uru,"INF: %s [%s] ready - node %i\n",global_age.name,global_age.guid,global_age.node);
+#if defined(I_AM_THE_VAULT_SERVER)
+	init_vault_subsys();
+	if(init_vault_server_subsys()<0 && _force_config_read!=1) {
+		plog(f_err,"Vault Server Subsystem failure!\n Check the vmgr.log and sql.log for more information\n\n");
+		stop_vault_subsys();
+		plNetStopOp(&net);
+		cnf_destroy(&global_config); //destroy the configuration struct
+		log_shutdown();
+		exit(-1);
+	}
+#endif
+
+#if defined(I_AM_THE_TRACKING_SERVER)
+	init_tracking_subsys();
+#endif
+
+	plog(f_uru,"INF: %s [%s] ready\n",net.name,net.guid);
 
 	//SingleThreaded main bucle
-	while(__s_run==1) {
+	while(__state_running==1) {
 		//waiting for Messages
-		/*if(global_client_count>=4) {
-			DBG(6,"[%i] ip is %08X\n",4,session[4].client_ip);
-		}*/
 		DBG(4,"after plNetRecv\n");
-		n = plNetRecv(sock,&sid,&all_players);
-		DBG(4,"before plNetRecv\n");
-		//all_players=session;
-#ifdef AUTH_SERVER_REQUIRED
-		//auth always in sid=1
-		auth=&all_players[1];
-#endif
-#ifdef VAULT_SERVER_REQUIRED
-		//vault always in sid=2
-		vault=&all_players[2];
-#endif
-#ifdef TRACKING_SERVER_REQUIRED
-		//tracking always in sid=3
-		track=&all_players[3];
-#endif
-#ifdef META_SERVER_REQUIRED
-		if(global_enable_metaserver==1) {
-			meta=&all_players[4];
-		}
-#endif
+		ret=plNetRecv(&net,&sid);
+		DBG(2,"plNetRcv event:%i from peer:%i\n",ret,sid);
 
-		/*if(global_client_count>=4) {
-			DBG(6,"[%i] ip is %08X\n",4,session[4].client_ip);
-		}*/
-
-		DBG(5,"step 1\n");
-		if(n<0 && n!=-1) {
-			stamp2log(f_err);
-			print2log(f_err,"ERR: Fatal cannot recieve a message\n");
-			ERR(4,"FATAL - CANNOT RECIEVE\n");
-			//return -1; //be sure that all is killed
+		if(ret<0) { //cath up error codes
+			nlog(f_err,&net,sid,"ERR: %i %s\n",ret,get_unet_error(ret));
 		}
-		DBG(5,"step 2\n");
+
 		if(__s_terminated_flag==1) { //Kill all players
-			print2log(f_uru,"INF: Server logoff, disconnecting all players\n");
-			for(i=global_the_bar+1; i<=global_client_count; i++) {
-				if(all_players[i].client_ip!=0) {
-		#if defined(I_AM_THE_TRACKING_SERVER) || defined(I_AM_THE_VAULT_SERVER) || defined(I_AM_THE_AUTH_SERVER)
-					all_players[i].ki=0;
-					all_players[i].adv_msg.ki=0;
-		#endif
-					plNetMsgTerminated(sock,RKickedOff,&all_players[i]);
-					all_players[i].client_ip=0;
-					all_players[i].flag=0;
-				}
-			}
+			kill_players(&net,0);
 			__s_terminated_flag=0;
 		}
-
 		DBG(5,"step 3\n");
-		DBG(5,"n is %i\n",n);
-		//if nothing went bad, then process the packet
-		if(n>0) {
 
-			buf=all_players[sid].rcv_msg;
-
-			switch(all_players[sid].client.t) {
-				case NetMsg0:
-				case NetMsg1:
-					//THE MOM OF THE EGGS... In other words... LA MARE DELS OUS!!!
-					int off;
-					off=parse_plNet_msg(all_players[sid].rcv_msg,&all_players[sid]);
-					st_uru_client * a;
-					a=&all_players[sid];
-					if(sid!=0 && sid<=global_the_bar) { //act as a client parser
-						ret=process_client_plNetMsg(sock,a->rcv_msg+off,n-off,a);
-						if(ret==-7) {
-							ret=process_scauth_plNetMsg(sock,a->rcv_msg+off,n-off,a);
-						}
-						if(ret==-7) {
-							ret=process_default_plNetMsg(sock,a->rcv_msg+off,n-off,a);
-						}
-						if(ret<0) {
-							if(a->adv_msg.cmd!=NetMsgTerminated && a->adv_msg.cmd!=NetMsgPlayerTerminated) {
-							print2log(f_err,"ERR: There was a problem parsing client message %04X\n",a->adv_msg.cmd);
-							}
-							//search by ki
-#if 1
-							if(a->adv_msg.ki>1000 && (a->adv_msg.cmd==NetMsgTerminated || a->adv_msg.cmd==NetMsgPlayerTerminated)) {
-								int aux_reason=a->adv_msg.reason;
-//#ifdef I_AM_THE_GAME_SERVER
-								if(track!=NULL && a==track && a->adv_msg.cmd==NetMsgTerminated) {
-									plNetMsgCustomSetGuid(sock,global_age.guid,global_age.name,\
-global_public_ip_address,global_private_network_mask,track);
-
-								}
-//#endif
-								for(i=global_the_bar+1; i<=global_client_count; i++) {
-									if((U32)all_players[i].ki==a->adv_msg.ki) {
-										a=&all_players[i];
-										plNetMsgTerminated(sock,aux_reason,a);
-										break;
-									}
-								}
-							} else if(a->adv_msg.cmd==NetMsgTerminated && a==track) {
-									plog(f_uru,"Tracking says to shut down the service... Shutting down...\n");
-									__s_run=0;
-							}
-							//end search
-#endif
-						}
-					} else {
-						ret=-7;
-						//GUI(4,session[sid].guid);
-#ifdef I_AM_THE_AUTH_SERVER
-						if(ret==-7) {
-							ret=process_auth_plNetMsg(sock,a->rcv_msg+off,n-off,a);
-						}
-#endif
-			//GUI(4,session[sid].guid);
-#ifdef I_AM_THE_VAULT_SERVER
-						if(ret==-7) {
-							ret=process_svault_plNetMsg(sock,a->rcv_msg+off,n-off,a);
-						}
-#endif
-#ifdef I_AM_THE_TRACKING_SERVER
-						if(ret==-7) {
-							ret=process_stracking_plNetMsg(sock,a->rcv_msg+off,n-off,a);
-						}
-#endif
-#ifdef I_AM_THE_META_SERVER
-						if(ret==-7) {
-							ret=process_smeta_plNetMsg(sock,a->rcv_msg+off,n-off,a);
-						}
-#endif
-			//GUI(4,session[sid].guid);
-						if(ret==-7) {
-							ret=process_server_plNetMsg(sock,a->rcv_msg+off,n-off,a);
-						}
-#ifdef I_AM_A_GAME_SERVER
-						if(ret==-7 || ret==-15) {
-							ret=process_sgame_plNetMsg(sock,a->rcv_msg+off,n-off,a);
-						}
-#endif
-									//GUI(4,session[sid].guid);
-						if(ret==-7) {
-							ret=process_default_plNetMsg(sock,a->rcv_msg+off,n-off,a);
-						}
-									//GUI(4,session[sid].guid);
-						if(ret==-15) {
-							print2log(f_uru,"The player attempted to send a message without being authed\n");
-							plNetMsgTerminated(sock,RNotAuthenticated,a);
-						} else if(ret<0) {
-							print2log(f_uru,"There was a problem parsing server message %04X\n",a->adv_msg.cmd);
-#ifdef I_AM_A_GAME_SERVER
-							if(0) {
-#endif
-								plNetMsgTerminated(sock,RUnknown,a);
-#ifdef I_AM_A_GAME_SERVER
-							}
-#endif
-						}
-						//GUI(4,session[sid].guid);
-					}
-
-					/*if(sid!=0 && sid<s_the_bar) { //client parser
-						process_sclient_plNetMsg(sock,
-					}
-					process_server_plNetMsg(sock,\
-session[sid].rcv_msg+off,n-off,&session[sid]);*/
-					//n=uru_process_packet(buf,n,i,session[sid],&flags);
-					//GUI(4,session[sid].guid);
+		switch(ret) {
+			case UNET_FLOOD:
+#if defined(I_AM_A_LOBBY_SERVER) || defined(I_AM_A_GAME_SERVER)
+				if(net.s[sid].whoami==KClient || net.s[sid].whoami==0) {
+					nlog(net.sec,&net,sid,"WAR: Kicked a player that was flooding the server.\n");
+					logflush(net.sec);
+					kill_player(&net,RKickedOff,sid,0);
+					//plNetDestroySession(&net,sid);
 					break;
-				default:
-					stamp2log(f_une);
-					ip2log(f_une,&all_players[sid]);
-					print2log(f_une,"[sid: %i] ERR: Recieved an unexpected packet code %0x02\n",sid,all_players[sid].client.t);
-					//abort();
-					print2log(f_une,"<----------- Unexpected packet ------------->\n");
-					dump_packet(f_une,buf,n,0,5);
-					print2log(f_une,"\n<-------------------------------------------->\n\n");
-			}
-		} else {
-
-			static Byte timer=0;
-
-			//idle operations
-			if(n==-1) {
-				timer++;
-				if(timer%30==0) {
-					print2log(f_uru,"Idle...\n");
-					DBG(3,"Doing idle operation...\n");
-					for(i=global_the_bar; i>0; i--) {
-						if(plNetCheckAckDone(&all_players[i])==1) {
-							if(meta!=&all_players[i]) {
-								DBG(3,"Sending an alive message to %i\n",i);
-								plNetMsgAlive(sock,&all_players[i]);
-							} else {
-								__meta_status=0;
+				}
+#endif
+			case UNET_MSGRCV:
+			case UNET_NEWCONN:
+				DBG(3,"ret:%i peer:%i, new message from %s:%i\n",ret,\
+				sid,get_ip(net.s[sid].ip),htons(net.s[sid].port));
+				size=plNetGetMsg(&net,sid,&msg); //get the message
+				DBG(5,"Got a message from sid:%i of %i bytes\n",sid,size);
+				//parse the message
+				#if _DBG_LEVEL_ > 3
+				dumpbuf(f_uru,msg,size);
+				lognl(f_uru);
+				#endif
+				off=parse_plNet_msg(&net,msg,size,sid); //parse the header
+				//--->
+				if(net.s[sid].hmsg.cmd==NetMsgLeave) {
+					ret=*(Byte *)(msg+off); //get the reason code
+					nlog(net.log,&net,sid,"NetMsgLeave - Reason %i %s\n",\
+					ret,unet_get_reason_code(ret));
+#if defined(I_AM_A_GAME_SERVER) || defined(I_AM_A_LOBBY_SERVER)
+					if(net.s[sid].whoami==KClient || net.s[sid].whoami==0) {
+						//do here the player disconnection... (from tracking and vault)
+						kill_player(&net,ret,sid,0x02);
+						//plNetEndConnection(&net,sid);
+						//plNetDestroySession(&net,sid);
+					}
+#else
+					//plNetDestroySession(&net,sid);
+					plNetEndConnection(&net,sid);
+#endif
+				} else if(net.s[sid].hmsg.cmd==NetMsgTerminated || \
+				net.s[sid].hmsg.cmd==NetMsgPlayerTerminated) {
+					ret=*(Byte *)(msg+off); //get the reason code
+					nlog(net.log,&net,sid,"NetMsgTerminated - Reason %i %s\n",\
+					ret,unet_get_reason_code(ret));
+#if defined(I_AM_A_GAME_SERVER) || defined(I_AM_A_LOBBY_SERVER)
+					if(net.s[sid].whoami==KTracking || net.s[sid].whoami==KVault || \
+					 net.s[sid].whoami==KAuth) {
+						if(net.s[sid].whoami==KTracking && net.s[sid].hmsg.ki==0 && \
+						 net.s[sid].hmsg.cmd==NetMsgTerminated) {
+							plog(f_uru,"Tracking says to shut down the service... Shutting down...\n");
+							__state_running=0;
+						} else {
+							if(net.s[sid].hmsg.ki>0) {
+								kill_playerbyki(&net,ret,net.s[sid].hmsg.ki,0);
+								//abort();
+							}
+							//run here code to reconnect to the server (another hello, etc..)
+							if(net.s[sid].hmsg.cmd==NetMsgTerminated) {
+								reconnect2peer(&net,net.s[sid].whoami);
+							}
+						}
+					}
+#endif
+				} else { //process here the messages
+					//message parser
+					ret=process_basic_plNetMsg(&net,msg+off,size-off,sid);
+					if(ret==0) {
+#if defined(I_AM_A_GAME_SERVER) || defined(I_AM_A_LOBBY_SERVER)
+						if(net.s[sid].whoami==KClient || net.s[sid].whoami==0) {
+							//for clients
+							if(net.s[sid].authenticated!=1) { //is authed?
+								ret=process_cauth_plNetMsg(&net,msg+off,size-off,sid); //auth
+							} else { //is authed
+								ret=0;
+								if(ret==0 && net.s[sid].ki!=0) { //check other sublevel messages
+									//check for NetMsgVault and VaultTask messages, and directly send
+									// themm to the Vault
+									ret=process_vaultford_plNetMsg(&net,msg+off,size-off,sid);
+								}
+								if(ret==0) {
+									ret=process_clobby_plNetMsg(&net,msg+off,size-off,sid); //lobby funs
+								}
+								if(ret==0) {
+									ret=process_cbvault_plNetMsg(&net,msg+off,size-off,sid); //basic vault
+								}
 							}
 						} else {
-							if(meta!=NULL && meta==&all_players[i]) {
-								__meta_status++;
+							//for servers
+							switch(net.s[sid].whoami) {
+								case KAuth:
+									ret=process_sauth_plNetMsg(&net,msg+off,size-off,sid);
+									break;
+								case KVault:
+									ret=process_vaultrouter_plNetMsg(&net,msg+off,size-off,sid);
+									if(ret==0) {
+										ret=process_sbvault_plNetMsg(&net,msg+off,size-off,sid);
+									}
+									break;
+								case KTracking:
+									ret=process_tracking_plNetMsg(&net,msg+off,size-off,sid);
+									break;
+								default:
+									nlog(f_err,&net,sid,"WAR: Recieved a message from an unknown peer\n");
+									ret=0;
+									break;
 							}
 						}
-					}
-#ifdef I_AM_THE_TRACKING_SERVER
-					do_idle_operation();
-#endif
-
-#ifdef I_AM_THE_META_SERVER
-					do_meta_idle_operation(sock);
-#endif
-
-#ifdef I_AM_A_GAME_SERVER
-					static Byte kill_me=0;
-					if(global_the_bar>=global_client_count) {
-						kill_me++;
-					} else {
-						if(kill_me>=2) {
-							plNetMsgCustomSetGuid(sock,global_age.guid,global_age.name,\
-global_public_ip_address,global_private_network_mask,track);
+#elif defined(I_AM_THE_AUTH_SERVER)
+						ret=process_scauth_plNetMsg(&net,msg+off,size-off,sid);
+#elif defined(I_AM_THE_VAULT_SERVER)
+						ret=process_vaultserver_plNetMsg(&net,msg+off,size-off,sid);
+						if(ret==0) {
+							ret=process_csbvault_plNetMsg(&net,msg+off,size-off,sid);
 						}
-						kill_me=0;
-					}
-					if(kill_me==2) {
-						plNetMsgLeave(sock,RQuitting,track); //attempt to accelerate logout
-					}
-					if(kill_me>2) { //set more time, and see what happens
-						__s_run=0;
-						plog(f_uru,"Since I'm alone, and sad, I'm going to kill myself\n");
-					}
+#elif defined(I_AM_THE_TRACKING_SERVER)
+						ret=process_ctracking_plNetMsg(&net,msg+off,size-off,sid);
 #endif
-				}
-			}
+					}//end per server msg processor
 
-		}
-		static int counter=0;
-		counter++;
-		if(n!=-1 && counter>300) {
-			counter=0;
-			for(i=global_the_bar; i>0; i--) {
-				if(plNetCheckAckDone(&all_players[i])==1) {
-					if(meta!=&all_players[i]) {
-						DBG(3,"Sending an alive message to %i\n",i);
-						plNetMsgAlive(sock,&all_players[i]);
-					} else {
-						__meta_status=0;
+					if(ret==0 && net.s[sid].authenticated==1) {
+						ret=process_net_plNetMsg(&net,msg+off,size-off,sid); //basic (authed)
 					}
+
+					if(ret==0) { //default message
+						ret=process_default_plNetMsg(&net,msg+off,size-off,sid);
+					}
+
+					if(ret!=1) {
+
+#if defined(I_AM_A_GAME_SERVER) || defined(I_AM_A_LOBBY_SERVER)
+						nlog(f_err,&net,sid,"ERR: Unimplemented message %08X %s, or client is not authenticated\n",net.s[sid].hmsg.cmd,unet_get_msg_code(net.s[sid].hmsg.cmd));
+						if(net.s[sid].whoami==KClient) {
+							if(ret==-1) {
+								kill_player(&net,RKickedOff,sid,0);
+							} else if(ret==-2) {
+								kill_player(&net,RUnknown,sid,0);
+							} else {
+								//kill_player(&net,RUnknown,sid,0);
+							}
+						} else if(net.s[sid].whoami==0) {
+							kill_player(&net,RNotAuthenticated,sid,0x02);
+						}
+#else
+						nlog(f_err,&net,sid,"WAR: Ignored message %08X %s\n",net.s[sid].hmsg.cmd,unet_get_msg_code(net.s[sid].hmsg.cmd));
+#endif
+					}
+				} //end message parser
+				logflush(f_uru);
+				logflush(f_err);
+				//--->
+				//ha, this caused a big memory leak
+				if(msg!=NULL) {
+					free((void *)msg);
+					msg=NULL;
+				}
+				break;
+			case UNET_TIMEOUT:
+			case UNET_TERMINATED:
+				DBG(3,"ret:%i peer:%i, connection terminated/timeout from %s:%i\n",ret,\
+				sid,get_ip(net.s[sid].ip),htons(net.s[sid].port));
+				nlog(f_uru,&net,sid,"Timeout\n");
+#if defined(I_AM_A_LOBBY_SERVER) || defined(I_AM_A_GAME_SERVER)
+				if(net.s[sid].whoami==0) {
+					plNetDestroySession(&net,sid);
+				} else if(net.s[sid].whoami==KClient) {
+					kill_player(&net,RTimedOut,sid,0x01);
+					//plNetDestroySession(&net,sid);
 				} else {
-					if(meta!=NULL && meta==&all_players[i]) {
-						__meta_status++;
+					//Check the peer, and send again a ServerHello message
+					int peer;
+					peer=net.s[sid].whoami;
+					plNetDestroySession(&net,sid);
+					plog(f_err,"WAR: Peer %i:%s is not responding (timeout)...\n",\
+					peer,unet_get_destination(peer));
+					logflush(f_err);
+					reconnect2peer(&net,peer);
+				}
+#elif defined(I_AM_THE_TRACKING_SERVER) || defined(I_AM_THE_VAULT_SERVER) || defined(I_AM_THE_AUTH_SERVER)
+				if(net.s[sid].whoami==0) {
+					plNetDestroySession(&net,sid);
+				} else {
+					//plNetMsgTerminated(&net,RTimedOut,sid);
+					plNetDestroySession(&net,sid);
+				}
+#elif defined(I_AM_THE_META_SERVER)
+				plNetDestroySession(&net,sid); //destroy in silence
+#else
+				plNetMsgTerminated(&net,RTimedOut,sid);
+				plNetDestroySession(&net,sid);
+#endif
+				break;
+			//case UNET_OK:
+			default:
+				//netcore idling..
+				//ignore this event
+				//Idle stuff
+				//plog(f_uru,"Netcore is idle...\n");
+				#if defined(I_AM_A_GAME_SERVER)
+				static U32 timer=0;
+				static int left=0;
+				int players=0;
+				if(!persistent) {
+					for(i=0; i<(int)net.n; i++) {
+						if(net.s[i].whoami==KClient) { players=1; break; }
+					}
+					if(players!=0 || timer==0) {
+						if(timer!=0 && net.timestamp-timer>=4) {
+							reconnect2peer(&net,KTracking);
+							left=0;
+						}
+						timer=net.timestamp;
+					}
+					else if((net.timestamp-timer)>=4) {
+							if(left==0) {
+								plNetMsgLeave(&net,RQuitting,net.tracking);
+								left=1;
+							}
+							if((net.timestamp-timer)>=8) {
+								__state_running=0;
+								plog(f_uru,"Since I'm alone, and sad, I'm going to kill myself\n");
+							}
 					}
 				}
-			}
+				python_subsys_idle_operation();
+				#elif defined(I_AM_THE_AUTH_SERVER)
+				auth_idle_operation();
+				#elif defined(I_AM_THE_VAULT_SERVER)
+				vault_server_subsys_idle_operation();
+				#elif defined(I_AM_THE_TRACKING_SERVER)
+				tracking_subsys_idle_operation(&net);
+				#endif
+				break;
 		}
 
-		//print2log(f_uru,"%i\n",__meta_status);
 
-		if(meta!=NULL && __meta_status>1) {
-			print2log(f_err,"INFO: Seems that the metaserver is down, unreachable, dead, or overloaded :(\n");
-			meta->client_ip=0;
-			meta=NULL; //disable the metaserver
-			global_enable_metaserver=0;
+#if defined(I_AM_A_GAME_SERVER) || defined(I_AM_A_LOBBY_SERVER)
+		//check for sending alive to the server peers
+		int peer;
+		peer=plNetServerSearch(&net,KAuth);
+		if(peer!=-1 && (net.timestamp-net.s[peer].alive_stamp)>(net.s[peer].timeout/2)) {
+			net.s[peer].alive_stamp=net.timestamp;
+			plNetMsgAlive(&net,peer);
 		}
-
-		//clear the last session id
-		//sid=0;
-		DBG(5,"step 4\n");
-
-	} //main gameserver loop
-
-		DBG(5,"ending game server loop\n");
-
-	print2log(f_uru,"INF: Server logoff, disconnecting all players\n");
-	for(i=global_the_bar+1; i<=global_client_count; i++) {
-		if(all_players[i].client_ip!=0) {
-#if defined(I_AM_THE_TRACKING_SERVER) || defined(I_AM_THE_VAULT_SERVER) || defined(I_AM_THE_AUTH_SERVER)
-			all_players[i].ki=0;
-			all_players[i].adv_msg.ki=0;
+		peer=plNetServerSearch(&net,KVault);
+		if(peer!=-1 && (net.timestamp-net.s[peer].alive_stamp)>(net.s[peer].timeout/2)) {
+			net.s[peer].alive_stamp=net.timestamp;
+			plNetMsgAlive(&net,peer);
+		}
+		peer=plNetServerSearch(&net,KTracking);
+		if(peer!=-1 && (net.timestamp-net.s[peer].alive_stamp)>(net.s[peer].timeout/2)) {
+			net.s[peer].alive_stamp=net.timestamp;
+			plNetMsgAlive(&net,peer);
+		}
 #endif
-			plNetMsgTerminated(sock,RKickedOff,&all_players[i]);
-			all_players[i].client_ip=0;
-			all_players[i].flag=0;
+		DBG(5,"step 4\n");
+	} //main gameserver loop
+	DBG(5,"ending game server loop\n");
+
+	kill_players(&net,1);
+
+	for(i=0; i<(int)net.n; i++) {
+		if(net.s[i].ip!=0 && net.s[i].whoami!=0) {
+			nlog(f_uru,&net,i,"Leaving... disconnecting peer %i: %i %s\n",i,net.s[i].whoami,\
+			unet_get_destination(net.s[i].whoami));
+			plNetMsgLeave(&net,RQuitting,i);
 		}
 	}
 
-	for(i=global_the_bar; i>0; i--) {
-		print2log(f_uru,"Leaving... disconnecting peer %i\n",i);
-		if(all_players[i].client_ip!=0) {
-			plNetMsgLeave(sock,RQuitting,&all_players[i]);
-		}
-	}
+	//stop the different subsystems (In the correct order)
+#if defined(I_AM_THE_AUTH_SERVER)
+	stop_auth_driver();
+#endif
 
-	close(sock); //close the socket
+#if defined(I_AM_THE_VAULT_SERVER)
+	stop_vault_server_subsys();
+	stop_vault_subsys();
+#endif
+
+#if defined(I_AM_A_GAME_SERVER)
+	stop_python_subsys();
+	stop_game_subsys();
+#endif
+
+#if defined(I_AM_A_GAME_SERVER) || defined(I_AM_A_LOBBY_SERVER)
+	stop_vault_subsys();
+	stop_lobby_subsys();
+#endif
+
+#if defined(I_AM_THE_TRACKING_SERVER)
+	stop_tracking_subsys();
+#endif
+
+	plNetStopOp(&net);
+	cnf_destroy(&global_config); //destroy the configuration struct
 	print2log(f_uru,"INF: SERVICE Sanely TERMINATED\n\n");
-	/* closing the log files */
-	close_log_files();
+	log_shutdown();
 
 	return 0;
 }

@@ -26,23 +26,16 @@
 
 /*
 	MySQL driver for the Auth server
-	*public implementation*
 */
-
 
 #ifndef __U_AUTH_DB_H_
 #define __U_AUTH_DB_H_
 /* CVS tag - DON'T TOUCH*/
 #define __U_AUTH_DB_H_ID "$Id$"
 
-int plVaultInitializeAuthDB();
-/*-----------------------------------------------------------
-  Query the database for an specified username
-	get the passwd and
-	Then return the user access_level
-	returns -1 if it was no possible to find a user
-------------------------------------------------------------*/
-int plVaultQueryUserName(Byte * login);
-/* Store user informations info accounts table */
-int plVaultStoreUserInfo(Byte * login, int exists, int dologin);
+int plVaultQueryUserName(Byte * login, U32 * attempt, U32 * att,st_sql * db);
+int plVaultAddUser(Byte * login,Byte * guid,Byte * ip,Byte a_level,st_sql * db);
+int plVaultUpdateUser(Byte * login,Byte * guid,Byte * ip,int n_tryes,st_sql * db);
+int plVaultInitializeAuthDB(st_sql * db,char force);
+
 #endif

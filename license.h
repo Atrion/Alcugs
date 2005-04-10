@@ -37,5 +37,7 @@ extern const char * __uru_disclaimer_short;
 extern const char * __uru_disclaimer_long;
 
 int license_check(FILE * desc,int argc,char * argv[]);
+void show_disclaimer();
+void show_bigdisclaimer();
 
 #endif

@@ -40,18 +40,33 @@
 //#define _DBG_LEVEL_ 10
 
 #include "config.h"
-#include "debug.h"
-
 
 #include <string.h>
 
+#ifdef __WIN32__
+#include "windoze.h"
+#endif
+
 #include "data_types.h"
 #include "conv_funs.h"
-#include "config_parser.h"
-#include "tmp_config.h"
-#include "uru.h"
+//#include "config_parser.h"
+//#include "tmp_config.h"
+//#include "urunet.h"
+//#include "uru.h"
+
+#include "stdebug.h"
+#include "ageparser.h"
+//#include "vaultsubsys.h"
 
 #include "guid_gen.h"
+
+#include "debug.h"
+
+//This vars are created or defined in the tracking/game/vault subsystems
+extern char * global_private_ages;
+extern int global_muinstance_mode;
+extern t_age_def * global_age_def; //age struct
+extern int global_age_def_n; //total number of ages
 
 int find_age_sequence_number(Byte * age_name) {
 
@@ -169,7 +184,7 @@ int check_if_age_is_private(Byte * age_name)
 
 void generate_newguid(Byte * guid2,Byte * age_name,U32 ki) {
 	Byte guid[8];
-	bzero(guid,8);
+	memset(guid,0,8);
 	int i=6;
 
 	/*

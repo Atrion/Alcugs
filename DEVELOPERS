@@ -48,3 +48,7 @@ manage the load, we will make the access private to some users.
 for discussion about the development. It's strongly recomended to subscribe to this
 list.
 
+* Six: Changes that will affect to a database format, or a changes in the format
+of the configuraion files, or changes in how the source tree is organized need
+to be discussed with the other devs.
+

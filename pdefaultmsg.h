@@ -24,20 +24,15 @@
 *                                                                              *
 *******************************************************************************/
 
-/*
-	this will contain all related with using the socket
-*/
+//server side message parser
 
-#ifndef __U_DEFAULT_MSG_H_
-#define __U_DEFAULT_MSG_H_
+#ifndef __U_PDEFAULT_MSG_H_
+#define __U_PDEFAULT_MSG_H_
 /* CVS tag - DON'T TOUCH*/
-#define __U_DEFAULT_MSG_H_ID "$Id$"
+#define __U_PDEFAULT_MSG_H_ID "$Id$"
 
-/*-----------------------------------------------------------------
-	processes the plNetMsg and sends the adient reply (preliminar)
-	 -- returns the size of the packet --
-------------------------------------------------------------------*/
-int process_default_plNetMsg(int sock,Byte * buf,int size,st_uru_client * u);
+int process_default_plNetMsg(st_unet * net,Byte * buf,int size,int sid);
+void dump_msg(char * name,U16 cmd,Byte rot,Byte * buf,int size);
 
 #endif
 

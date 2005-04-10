@@ -52,9 +52,9 @@ typedef struct {
 void init_age_def(t_age_def * age);
 void destroy_age_def(t_age_def * age);
 int age_add_page(char * right_buffer,t_page_def ** page,S32 * n_pages);
-int parse_age_descriptor(FILE * dsc,char * buf,int size,t_age_def * age);
-int read_age_descriptor(FILE * f,char * address,t_age_def ** p_age);
-void dump_age_descriptor(FILE * f,t_age_def age);
-int read_all_age_descriptors(FILE * f,char * address,t_age_def ** p_age);
+int parse_age_descriptor(st_log * dsc,char * buf,int size,t_age_def * age);
+int read_age_descriptor(st_log * f,char * address,t_age_def ** p_age);
+void dump_age_descriptor(st_log * f,t_age_def age);
+int read_all_age_descriptors(st_log * f,char * address,t_age_def ** p_age);
 
 #endif

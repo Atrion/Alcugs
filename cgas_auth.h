@@ -36,6 +36,6 @@
 
 /** Querys the Auth credentials to the Cyan's Global Auth Server
 */
-int CGAS_query(char * login,char * challenge,char * client_ip,char * hash,char * passwd,char * uid);
+int CGAS_query(char * login,char * challenge,char * client_ip,char * hash,char * passwd,char * uid,Byte log);
 
 #endif

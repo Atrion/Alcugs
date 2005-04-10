@@ -31,6 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_DEGUB_A_ID "$Id$"
 
+
 #ifdef _DBG_LEVEL_
  #if (_DBG_LEVEL_ == 0)
   #ifdef _DEBUG_
@@ -52,6 +53,32 @@ fprintf(stderr, __VA_ARGS__); fflush(stderr); }
 #define ERR(a,...) if((a)<=_DBG_LEVEL_) { fprintf(stderr,"DBG%i:%s:%s:%i> ",_DBG_LEVEL_,__FILE__,__FUNCTION__,__LINE__);\
 fprintf(stderr, __VA_ARGS__); perror(""); fflush(stderr); }
 
+#define _WHERE(a) __dbg_where(a,__FILE__,__FUNCTION__,__LINE__)
+
+char * __dbg_where(const char * a,const char * b,const char * c,int d);
+
+#ifdef _MALLOC_DBG_
+
+#include <stdio.h>
+
+extern FILE * fdbg;
+
+#define malloc(a) malloc(a); fdbg=fopen("mem.log","a"); fprintf(fdbg,"DBG%i:%s:%s:%i>malloc(%08X)\n",_DBG_LEVEL_,__FILE__,__FUNCTION__,__LINE__,a); fclose(fdbg);
+#define realloc(a,b) realloc(a,b); fdbg=fopen("mem.log","a"); fprintf(fdbg,"DBG%i:%s:%s:%i>realloc(%08X,%08X)\n",_DBG_LEVEL_,__FILE__,__FUNCTION__,__LINE__,a,b); fclose(fdbg);
+#define free(a) free(a); fdbg=fopen("mem.log","a"); fprintf(fdbg,"DBG%i:%s:%s:%i>free(%08X)\n",_DBG_LEVEL_,__FILE__,__FUNCTION__,__LINE__,a); fclose(fdbg);
+
+#else
+
+#ifdef _DMALLOC_DBG_
+#include "dmalloc/dmalloc.h"
+#else
+#define dmalloc_verify(a)
+#endif
+
+
+#endif
+
+
 #else
 
 #ifdef _DBG_LEVEL_
@@ -62,6 +89,10 @@ fprintf(stderr, __VA_ARGS__); perror(""); fflush(stderr); }
 #define DBG(a,...)
 
 #define ERR(a,...)
+
+#define _WHERE(a) a
+
+#define dmalloc_verify(a)
 
 #endif
 

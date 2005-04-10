@@ -32,7 +32,6 @@
 //#define _DBG_LEVEL_ 10
 
 #include "config.h"
-#include "debug.h"
 
 //enable/disable the debug
 //#define _File_DBG
@@ -50,6 +49,8 @@
 #endif
 
 #include "files.h"
+
+#include "debug.h"
 
 //! Return the size of a file
 long int get_file_size(char * path) {
@@ -85,7 +86,7 @@ int readWDYS(char ** buf, char * path) {
 	fread(out,sizeof(char)*12,1,f);
 	out[12]='\0';
 	if(strcmp(out,"whatdoyousee")) {
-		fprintf(stderr,"ERR: This is not an Uru \"whatdoyousee\" file, %s\n",out);
+		//fprintf(stderr,"ERR: This is not an Uru \"whatdoyousee\" file, %s\n",out);
 	fclose(f);
 	return -2;
 	}

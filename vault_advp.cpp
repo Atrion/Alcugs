@@ -32,8 +32,13 @@
 //#define _DBG_LEVEL_ 10
 
 #include "config.h"
-#include "debug.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <time.h>
+#include <sys/time.h>
 
 #include "data_types.h"
 #include "stdebug.h"
@@ -43,7 +48,15 @@
 #include "urunet.h"
 #include "vaultstrs.h"
 
-#include "urumsg.h"
+#include "vserversys.h"
+#include "vaultsubsys.h"
+#include "urustructs.h"
+//#include "urumsg.h"
+
+#include "gbasicmsg.h"
+#include "gvaultmsg.h"
+
+#include "prot.h"
 
 #include "vaultstrs.h"
 #include "vnodes.h"
@@ -56,12 +69,14 @@
 
 #include "vault_advp.h"
 
+#include "debug.h"
+
 st_vault_mgrs * vmgrs=NULL;
 int n_vmgrs=0;
 
 void init_vmgr_data(st_vault_mgrs ** t) {
 	*t=(st_vault_mgrs *)malloc(sizeof(st_vault_mgrs) * 1);
-	bzero(*t,sizeof(st_vault_mgrs));
+	memset(*t,0,sizeof(st_vault_mgrs));
 }
 
 int check_me_in(int id,int node,st_uru_client * u) {
@@ -69,8 +84,8 @@ int check_me_in(int id,int node,st_uru_client * u) {
 	for(i=0; i<n_vmgrs; i++) {
 		DBG(5,"id:%i vs %i node:%i vs %i\n",vmgrs[i].id,id,vmgrs[i].node,node);
 		if(vmgrs[i].id==id && vmgrs[i].node==node) {
-			vmgrs[i].ip=u->client_ip;
-			vmgrs[i].port=u->client_port;
+			vmgrs[i].ip=u->ip;
+			vmgrs[i].port=u->port;
 			vmgrs[i].sid=u->sid;
 			return 1;
 		}
@@ -79,7 +94,7 @@ int check_me_in(int id,int node,st_uru_client * u) {
 	return 0;
 }
 
-int plVaultBcastNodeReferenceAdded(int sock,int father,int son) {
+int plVaultBcastNodeReferenceAdded(st_unet * net,int father,int son) {
 	t_vault_mos robj; //---> remember to destroy it
 	plMainVaultInit(&robj); //set default on generated response ojbect
 	int i,e,t_n;
@@ -100,11 +115,11 @@ int plVaultBcastNodeReferenceAdded(int sock,int father,int son) {
 	robj.itm[0].data=malloc(sizeof(t_vault_cross_ref) * 1);
 	wref=(t_vault_cross_ref *)robj.itm[0].data;
 
-	bzero(wref,sizeof(t_vault_cross_ref));
+	memset(wref,0,sizeof(t_vault_cross_ref));
 	wref->id2=father;
 	wref->id3=son;
 
-	t_n=plVaultGetMGRS(wref->id2,&table);
+	t_n=plVaultGetMGRS(wref->id2,&table,&db);
 
 	if(t_n>0) {
 		//And now broadcast the message to all clients
@@ -113,13 +128,13 @@ int plVaultBcastNodeReferenceAdded(int sock,int father,int son) {
 			if(vmgrs[i].node!=0) {
 				for(e=0; e<t_n; e++) {
 					DBG(5,"for(e=0; e<t_n; e++) e:%i,t_n:%i\n",e,t_n);
-					if(vmgrs[i].sid<=global_client_count && vmgrs[i].node==table[e] && vmgrs[i].ip==all_players[vmgrs[i].sid].client_ip && vmgrs[i].port==all_players[vmgrs[i].sid].client_port) {
+					if((int)vmgrs[i].sid<(int)net->n && vmgrs[i].node==table[e] && vmgrs[i].ip==net->s[vmgrs[i].sid].ip && vmgrs[i].port==net->s[vmgrs[i].sid].port) {
 						//sent the broadcast message to that client
 						DBG(5,"Vault Broadcast to %i..\n",vmgrs[i].id);
-						all_players[vmgrs[i].sid].adv_msg.ki=vmgrs[i].id;
+						net->s[vmgrs[i].sid].hmsg.ki=vmgrs[i].id;
 						robj.mgr=vmgrs[i].node;
-						htmlVaultParse(&robj,&all_players[vmgrs[i].sid],0);
-						plNetMsgVault(sock,&robj,&all_players[vmgrs[i].sid],plNetVersion);
+						htmlVaultParse(net,&robj,vmgrs[i].sid,0);
+						plNetMsgVault(net,&robj,vmgrs[i].sid);
 						break;
 					}
 				}
@@ -137,7 +152,7 @@ int plVaultBcastNodeReferenceAdded(int sock,int father,int son) {
 }
 
 
-int plVaultBcastNodeReferenceRemoved(int sock,int father,int son) {
+int plVaultBcastNodeReferenceRemoved(st_unet * net,int father,int son) {
 	t_vault_mos robj; //---> remember to destroy it
 	plMainVaultInit(&robj); //set default on generated response ojbect
 	int i,e,t_n;
@@ -158,11 +173,11 @@ int plVaultBcastNodeReferenceRemoved(int sock,int father,int son) {
 	robj.itm[0].data=malloc(sizeof(t_vault_cross_ref) * 1);
 	wref=(t_vault_cross_ref *)robj.itm[0].data;
 
-	bzero(wref,sizeof(t_vault_cross_ref));
+	memset(wref,0,sizeof(t_vault_cross_ref));
 	wref->id2=father;
 	wref->id3=son;
 
-	t_n=plVaultGetMGRS(wref->id2,&table);
+	t_n=plVaultGetMGRS(wref->id2,&table,&db);
 
 	if(t_n>0) {
 		//And now broadcast the message to all clients
@@ -171,13 +186,13 @@ int plVaultBcastNodeReferenceRemoved(int sock,int father,int son) {
 			if(vmgrs[i].node!=0) {
 				for(e=0; e<t_n; e++) {
 					DBG(5,"for(e=0; e<t_n; e++) e:%i,t_n:%i\n",e,t_n);
-					if(vmgrs[i].sid<=global_client_count && vmgrs[i].node==table[e] && vmgrs[i].ip==all_players[vmgrs[i].sid].client_ip && vmgrs[i].port==all_players[vmgrs[i].sid].client_port) {
+					if((int)vmgrs[i].sid<(int)net->n && vmgrs[i].node==table[e] && vmgrs[i].ip==net->s[vmgrs[i].sid].ip && vmgrs[i].port==net->s[vmgrs[i].sid].port) {
 						//sent the broadcast message to that client
 						DBG(5,"Vault Broadcast to %i..\n",vmgrs[i].id);
-						all_players[vmgrs[i].sid].adv_msg.ki=vmgrs[i].id;
+						net->s[vmgrs[i].sid].hmsg.ki=vmgrs[i].id;
 						robj.mgr=vmgrs[i].node;
-						htmlVaultParse(&robj,&all_players[vmgrs[i].sid],0);
-						plNetMsgVault(sock,&robj,&all_players[vmgrs[i].sid],plNetVersion);
+						htmlVaultParse(net,&robj,vmgrs[i].sid,0);
+						plNetMsgVault(net,&robj,vmgrs[i].sid);
 						break;
 					}
 				}
@@ -195,7 +210,7 @@ int plVaultBcastNodeReferenceRemoved(int sock,int father,int son) {
 }
 
 
-int plVaultBcastNodeSaved(int sock,int index,double timestamp) {
+int plVaultBcastNodeSaved(st_unet * net,int index,double timestamp) {
 	t_vault_mos robj; //---> remember to destroy it
 	plMainVaultInit(&robj); //set default on generated response ojbect
 	int i,e,t_n;
@@ -217,7 +232,7 @@ int plVaultBcastNodeSaved(int sock,int index,double timestamp) {
 	plVItmPutTimestamp(&robj.itm[1],timestamp);
 	robj.itm[1].id=0x18; //Timestamp
 
-	t_n=plVaultGetMGRS(index,&table); //Get the managers
+	t_n=plVaultGetMGRS(index,&table,&db); //Get the managers
 
 	if(t_n>0) {
 		//And now broadcast the message to all clients
@@ -226,13 +241,13 @@ int plVaultBcastNodeSaved(int sock,int index,double timestamp) {
 			if(vmgrs[i].node!=0) {
 				for(e=0; e<t_n; e++) {
 					DBG(5,"for(e=0; e<t_n; e++) e:%i,t_n:%i\n",e,t_n);
-					if(vmgrs[i].sid<=global_client_count && vmgrs[i].node==table[e] && vmgrs[i].ip==all_players[vmgrs[i].sid].client_ip && vmgrs[i].port==all_players[vmgrs[i].sid].client_port) {
+					if((int)vmgrs[i].sid<(int)net->n && vmgrs[i].node==table[e] && vmgrs[i].ip==net->s[vmgrs[i].sid].ip && vmgrs[i].port==net->s[vmgrs[i].sid].port) {
 						//sent the broadcast message to that client
 						DBG(5,"Vault Broadcast to %i..\n",vmgrs[i].id);
-						all_players[vmgrs[i].sid].adv_msg.ki=vmgrs[i].id;
+						net->s[vmgrs[i].sid].hmsg.ki=vmgrs[i].id;
 						robj.mgr=vmgrs[i].node;
-						htmlVaultParse(&robj,&all_players[vmgrs[i].sid],0);
-						plNetMsgVault(sock,&robj,&all_players[vmgrs[i].sid],plNetVersion);
+						htmlVaultParse(net,&robj,vmgrs[i].sid,0);
+						plNetMsgVault(net,&robj,vmgrs[i].sid);
 						break;
 					}
 				}
@@ -249,7 +264,7 @@ int plVaultBcastNodeSaved(int sock,int index,double timestamp) {
 	return 0;
 }
 
-int plVaultBcastOnlineState(int sock,t_vault_node * n) {
+int plVaultBcastOnlineState(st_unet * net,t_vault_node * n) {
 	t_vault_mos robj; //---> remember to destroy it
 	plMainVaultInit(&robj); //set default on generated response ojbect
 	int i,e,t_n;
@@ -293,7 +308,7 @@ int plVaultBcastOnlineState(int sock,t_vault_node * n) {
 	plVItmPutInteger(&robj.itm[nid],n->torans);
 
 
-	t_n=plVaultGetMGRS(n->index,&table); //Get the managers
+	t_n=plVaultGetMGRS(n->index,&table,&db); //Get the managers
 
 	if(t_n>0) {
 		//And now broadcast the message to all clients
@@ -302,13 +317,13 @@ int plVaultBcastOnlineState(int sock,t_vault_node * n) {
 			if(vmgrs[i].node!=0) {
 				for(e=0; e<t_n; e++) {
 					DBG(5,"for(e=0; e<t_n; e++) e:%i,t_n:%i\n",e,t_n);
-					if(vmgrs[i].sid<=global_client_count && vmgrs[i].node==table[e] && vmgrs[i].ip==all_players[vmgrs[i].sid].client_ip && vmgrs[i].port==all_players[vmgrs[i].sid].client_port) {
+					if(vmgrs[i].sid<(int)net->n && vmgrs[i].node==table[e] && vmgrs[i].ip==net->s[vmgrs[i].sid].ip && vmgrs[i].port==net->s[vmgrs[i].sid].port) {
 						//sent the broadcast message to that client
 						DBG(5,"Vault Broadcast to %i..\n",vmgrs[i].id);
-						all_players[vmgrs[i].sid].adv_msg.ki=vmgrs[i].id;
+						net->s[vmgrs[i].sid].hmsg.ki=vmgrs[i].id;
 						robj.mgr=vmgrs[i].node;
-						htmlVaultParse(&robj,&all_players[vmgrs[i].sid],0);
-						plNetMsgVault(sock,&robj,&all_players[vmgrs[i].sid],plNetVersion);
+						htmlVaultParse(net,&robj,vmgrs[i].sid,0);
+						plNetMsgVault(net,&robj,vmgrs[i].sid);
 						break;
 					}
 				}
@@ -327,7 +342,8 @@ int plVaultBcastOnlineState(int sock,t_vault_node * n) {
 
 
 //we sent a struct (with the vault stuff)
-int plAdvVaultParser(int sock,t_vault_mos * obj,st_uru_client * u) {
+int plAdvVaultParser(st_unet * net,t_vault_mos * obj,int sid) {
+	st_uru_client * u=&net->s[sid];
 	int i,e;
 	int id,ret;
 	int success=0;
@@ -466,7 +482,7 @@ int plAdvVaultParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 					if(id!=u->ki) {
 						DBG(4,"Invalid ki, disconnecting this client...");
 						print2log(f_vmgr,"Requested Vault Connect for an invalid player id, got %i, expected %i.\n",id,u->ki);
-						plNetMsgTerminated(sock,RKickedOff,u);
+						plNetMsgPlayerTerminated(net,RKickedOff,sid);
 					} else {
 						DBG(4,"Good ki, set answer\n");
 						ret=id;
@@ -480,13 +496,13 @@ int plAdvVaultParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 						plVItmPutString(&robj.itm[1],(Byte *)global_vault_folder_name);
 						robj.itm[1].id=23; //0x17 - vault folder
 						DBG(4,"Calling Html parser...\n");
-						htmlVaultParse(&robj,u,0);
+						htmlVaultParse(net,&robj,sid,0);
 						DBG(4,"Sending the message...\n");
-						plNetMsgVault(sock,&robj,u,plNetVersion); //send the update
+						plNetMsgVault(net,&robj,sid); //send the update
 						connected=1;
 					}
 				} else if(n.type==3) { //age node
-					ret=plVaultFindNode(&n,&mfs,1);
+					ret=plVaultFindNode(&n,&mfs,1,&db);
 					robj.itm=vaultCreateItems(3);
 					robj.n_itms=3;
 					plVItmPutInteger(&robj.itm[0],ret);
@@ -495,11 +511,11 @@ int plAdvVaultParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 					robj.itm[1].id=21; //0x17 - Age Name
 					plVItmPutString(&robj.itm[2],(Byte *)global_vault_folder_name);
 					robj.itm[2].id=23; //0x17 - vault folder
-					htmlVaultParse(&robj,u,0);
-					plNetMsgVault(sock,&robj,u,plNetVersion); //send the update
+					htmlVaultParse(net,&robj,sid,0);
+					plNetMsgVault(net,&robj,sid); //send the update
 					connected=1;
 				} else if(n.type==5) { //admin node
-					ret=plVaultFindNode(&n,&mfs,1);
+					ret=plVaultFindNode(&n,&mfs,1,&db);
 					robj.itm=vaultCreateItems(3);
 					robj.n_itms=3;
 					plVItmPutInteger(&robj.itm[0],n.type);
@@ -508,8 +524,8 @@ int plAdvVaultParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 					robj.itm[1].id=2; //node VMGR ID
 					plVItmPutString(&robj.itm[2],(Byte *)global_vault_folder_name);
 					robj.itm[2].id=23; //0x17 - vault folder
-					htmlVaultParse(&robj,u,0);
-					plNetMsgVault(sock,&robj,u,plNetVersion); //send the update
+					htmlVaultParse(net,&robj,sid,0);
+					plNetMsgVault(net,&robj,sid); //send the update
 					connected=1;
 				} else {
 					//ret=plVaultFindNode(&n,&mfs,0);
@@ -522,8 +538,8 @@ int plAdvVaultParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 						init_vmgr_data(&vmgrs);
 						vmgrs[0].id=u->ki;
 						vmgrs[0].node=ret;
-						vmgrs[0].ip=u->client_ip;
-						vmgrs[0].port=u->client_port;
+						vmgrs[0].ip=u->ip;
+						vmgrs[0].port=u->port;
 						vmgrs[0].sid=u->sid;
 					} else if(vmgrs!=NULL) {
 						int mt=-1;
@@ -545,8 +561,8 @@ int plAdvVaultParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 						}
 						vmgrs[mt].id=u->ki;
 						vmgrs[mt].node=ret;
-						vmgrs[mt].ip=u->client_ip;
-						vmgrs[mt].port=u->client_port;
+						vmgrs[mt].ip=u->ip;
+						vmgrs[mt].port=u->port;
 						vmgrs[mt].sid=u->sid;
 					} else {
 						plog(f_err,"VMGRS ERROR!!: This should not be happening, something terribly has gone wrong, head for the cover!\n");
@@ -557,8 +573,8 @@ int plAdvVaultParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 			case VDisconnect: //0x02 //disconnect
 				print2log(f_vmgr,"Vault Disconnect for %i\n",u->ki);
 				robj.n_itms=0;
-				htmlVaultParse(&robj,u,0);
-				plNetMsgVault(sock,&robj,u,plNetVersion);
+				htmlVaultParse(net,&robj,sid,0);
+				plNetMsgVault(net,&robj,sid);
 				if(n_vmgrs<=0) break;
 				for(i=0; i<n_vmgrs; i++) {
 					if(vmgrs[i].id==u->ki && vmgrs[i].node==(int)robj.mgr) {
@@ -586,11 +602,11 @@ int plAdvVaultParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 				if(table!=NULL) {
 					free((void *)table);
 				}
-				t_n=plVaultGetMGRS(wref->id2,&table);
+				t_n=plVaultGetMGRS(wref->id2,&table,&db);
 				int valre;
 				valre=0;
 				valre=plVaultCreateRef(wref->id1,wref->id2,wref->id3,\
-	wref->timestamp,wref->microseconds,wref->flag);
+	wref->timestamp,wref->microseconds,wref->flag,&db);
 				if(valre<0 || t_n<=0) { break; } //Cath up duplicate references
 				DBG(5,"Storing items...\n");
 				robj.itm=vaultCreateItems(1);
@@ -612,14 +628,14 @@ int plAdvVaultParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 					if((vmgrs[i].node!=ret || vmgrs[i].id!=u->ki) && vmgrs[i].node!=0) {
 						for(e=0; e<t_n; e++) {
 							DBG(5,"for(e=0; e<t_n; e++) e:%i,t_n:%i\n",e,t_n);
-							if(vmgrs[i].sid<=global_client_count && vmgrs[i].node==table[e]\
-	&& vmgrs[i].ip==all_players[vmgrs[i].sid].client_ip && vmgrs[i].port==all_players[vmgrs[i].sid].client_port) {
+							if(vmgrs[i].sid<(int)net->n && vmgrs[i].node==table[e]\
+	&& vmgrs[i].ip==net->s[vmgrs[i].sid].ip && vmgrs[i].port==net->s[vmgrs[i].sid].port) {
 								//sent the broadcast message to that client
 								DBG(5,"Vault Broadcast to %i..\n",vmgrs[i].id);
-								all_players[vmgrs[i].sid].adv_msg.ki=vmgrs[i].id;
+								net->s[vmgrs[i].sid].hmsg.ki=vmgrs[i].id;
 								robj.mgr=vmgrs[i].node;
-								htmlVaultParse(&robj,&all_players[vmgrs[i].sid],0);
-								plNetMsgVault(sock,&robj,&all_players[vmgrs[i].sid],plNetVersion);
+								htmlVaultParse(net,&robj,vmgrs[i].sid,0);
+								plNetMsgVault(net,&robj,vmgrs[i].sid);
 								break;
 							}
 						}
@@ -633,15 +649,15 @@ int plAdvVaultParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 				if(table!=NULL) {
 					free((void *)table);
 				}
-				t_n=plVaultGetMGRS(node_parent,&table);
-				plVaultRemoveNodeRef(node_parent,node_son,0);
+				t_n=plVaultGetMGRS(node_parent,&table,&db);
+				plVaultRemoveNodeRef(node_parent,node_son,0,&db);
 				robj.itm=vaultCreateItems(2);
 				robj.n_itms=1;
 				robj.itm[0].id=0x07; //Node Reference
 				robj.itm[0].dtype=DVaultNodeRef;
 				robj.itm[0].data=malloc(sizeof(t_vault_cross_ref) * 1);
 				wref=(t_vault_cross_ref *)robj.itm[0].data;
-				bzero(wref,sizeof(t_vault_cross_ref));
+				memset(wref,0,sizeof(t_vault_cross_ref));
 				wref->id2=node_parent;
 				wref->id3=node_son;
 				//plVItmPutInteger(&robj.itm[0],node_son);
@@ -657,13 +673,13 @@ int plAdvVaultParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 				for(i=0; i<n_vmgrs; i++) {
 					if((vmgrs[i].node!=ret || vmgrs[i].id!=u->ki) && vmgrs[i].node!=0) {
 						for(e=0; e<t_n; e++) {
-							if(vmgrs[i].sid<=global_client_count && vmgrs[i].node==table[e]\
-	&& vmgrs[i].ip==all_players[vmgrs[i].sid].client_ip && vmgrs[i].port==all_players[vmgrs[i].sid].client_port) {
+							if(vmgrs[i].sid<(int)net->n && vmgrs[i].node==table[e]\
+	&& vmgrs[i].ip==net->s[vmgrs[i].sid].ip && vmgrs[i].port==net->s[vmgrs[i].sid].port) {
 								//sent the broadcast message to that client
-								all_players[vmgrs[i].sid].adv_msg.ki=vmgrs[i].id;
+								net->s[vmgrs[i].sid].hmsg.ki=vmgrs[i].id;
 								robj.mgr=vmgrs[i].node;
-								htmlVaultParse(&robj,&all_players[vmgrs[i].sid],0);
-								plNetMsgVault(sock,&robj,&all_players[vmgrs[i].sid],plNetVersion);
+								htmlVaultParse(net,&robj,vmgrs[i].sid,0);
+								plNetMsgVault(net,&robj,vmgrs[i].sid);
 								break;
 							}
 						}
@@ -675,12 +691,14 @@ int plAdvVaultParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 				print2log(f_vmgr,"Vault NegotiateManifest for %i\n",u->ki);
 				if(table!=NULL && t_n>=1) {
 					//get the manifest (only the first int table[0]
-					int num; //n nodes
+					int num,num_ref; //n nodes
 					t_vault_manifest * mfs2; //remember to destroy it
+					t_vault_cross_ref * vref;
 					mfs2=NULL;
+					vref=NULL;
 					DBG(4,"Before VaultGetManifest...\n");
 					robj.zlib=0x03; //set compressed flag
-					num=plVaultGetManifest(table[0],&mfs2);
+					plVaultGetManifest(table[0],&mfs2,&num,&vref,&num_ref,&db);
 					DBG(4,"After VaultGetManifest...\n");
 					robj.itm=vaultCreateItems(2);
 					robj.n_itms=2;
@@ -709,9 +727,8 @@ int plAdvVaultParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 						free((void *)mfs2);
 					}
 					//now get all cross references
-					t_vault_cross_ref * vref;
-					vref=NULL;
-					num=plVaultGetCrossRef(table[0],&vref);
+					//num=plVaultGetCrossRef(table[0],&vref,&db);
+					num=num_ref; //quick hack
 					robj.itm[1].id=15; //cross refs //0x0F
 					robj.itm[1].dtype=DCreatableStream;
 					robj.itm[1].data=malloc(sizeof(t_CreatableStream) * 1);
@@ -740,8 +757,8 @@ int plAdvVaultParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 						free((void *)vref);
 					}
 					//end negotiation - now send it
-					htmlVaultParse(&robj,u,0);
-					plNetMsgVault(sock,&robj,u,plNetVersion);
+					htmlVaultParse(net,&robj,sid,0);
+					plNetMsgVault(net,&robj,sid);
 				}
 				break;
 			//****************************** SaveNode ******************************
@@ -767,10 +784,10 @@ int plAdvVaultParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 					//query db & store new index in this object
 					plVItmPutInteger(&robj.itm[0],wnode->index);
 					robj.itm[0].id=0x09; //The Old index of the Vault Node
-					plVItmPutInteger(&robj.itm[1],plVaultCreateNode(wnode));
+					plVItmPutInteger(&robj.itm[1],plVaultCreateNode(wnode,&db));
 					robj.itm[1].id=0x0B; //New Index for that vault Node
-					htmlVaultParse(&robj,u,0);
-					plNetMsgVault(sock,&robj,u,plNetVersion);
+					htmlVaultParse(net,&robj,sid,0);
+					plNetMsgVault(net,&robj,sid);
 				} else {
 					robj.itm=vaultCreateItems(2);
 					robj.n_itms=1; //number of items
@@ -778,9 +795,9 @@ int plAdvVaultParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 					plVItmPutInteger(&robj.itm[0],wnode->index);
 					robj.itm[0].id=0x09; //The Old index of the Vault Node
 					//query db
-					plVaultUpdateNode(wnode);
-					htmlVaultParse(&robj,u,0);
-					plNetMsgVault(sock,&robj,u,plNetVersion);
+					plVaultUpdateNode(wnode,&db);
+					htmlVaultParse(net,&robj,sid,0);
+					plNetMsgVault(net,&robj,sid);
 
 					robj.n_itms=2; //number of items
 					//store timestamp
@@ -793,21 +810,21 @@ int plAdvVaultParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 					robj.res=0;
 					robj.vn=0;
 
-					t_n=plVaultGetMGRS(wnode->index,&table);
+					t_n=plVaultGetMGRS(wnode->index,&table,&db);
 					//And now broadcast the message to all clients
 					for(i=0; i<n_vmgrs; i++) {
 						DBG(5,"for(i=0; i<n_vmgrs; i++) i:%i,n_vmgrs:%i\n",i,n_vmgrs);
 						if((vmgrs[i].node!=ret || vmgrs[i].id!=u->ki) && vmgrs[i].node!=0) {
 							for(e=0; e<t_n; e++) {
 								DBG(5,"for(e=0; e<t_n; e++) e:%i,t_n:%i\n",e,t_n);
-								if(vmgrs[i].sid<=global_client_count && vmgrs[i].node==table[e]\
-		&& vmgrs[i].ip==all_players[vmgrs[i].sid].client_ip && vmgrs[i].port==all_players[vmgrs[i].sid].client_port) {
+								if(vmgrs[i].sid<(int)net->n && vmgrs[i].node==table[e]\
+		&& vmgrs[i].ip==net->s[vmgrs[i].sid].ip && vmgrs[i].port==net->s[vmgrs[i].sid].port) {
 									//sent the broadcast message to that client
 									DBG(5,"Vault Broadcast to %i..\n",vmgrs[i].id);
-									all_players[vmgrs[i].sid].adv_msg.ki=vmgrs[i].id;
+									net->s[vmgrs[i].sid].hmsg.ki=vmgrs[i].id;
 									robj.mgr=vmgrs[i].node;
-									htmlVaultParse(&robj,&all_players[vmgrs[i].sid],0);
-									plNetMsgVault(sock,&robj,&all_players[vmgrs[i].sid],plNetVersion);
+									htmlVaultParse(net,&robj,vmgrs[i].sid,0);
+									plNetMsgVault(net,&robj,vmgrs[i].sid);
 									break;
 								}
 							}
@@ -818,15 +835,15 @@ int plAdvVaultParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 			//****************************** FindNode ******************************
 			case 0x07: //find node
 				print2log(f_vmgr,"Vault FindNode for %i\n",u->ki);
-				ret=plVaultFindNode(wnode, &mfs,1);
+				ret=plVaultFindNode(wnode, &mfs,1,&db);
 				robj.itm=vaultCreateItems(2);
 				robj.n_itms=2;
 				plVItmPutInteger(&robj.itm[0],ret);
 				robj.itm[0].id=9; //found node index
 				plVItmPutTimestamp(&robj.itm[1],mfs.timestamp);
 				robj.itm[1].id=0x18; //Node timestamp
-				htmlVaultParse(&robj,u,0);
-				plNetMsgVault(sock,&robj,u,plNetVersion); //send the update
+				htmlVaultParse(net,&robj,sid,0);
+				plNetMsgVault(net,&robj,sid); //send the update
 				break;
 			//****************************** FetchNodes ******************************
 			case 0x08: //FetchNodes
@@ -836,8 +853,9 @@ int plAdvVaultParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 					int size; //size of stream
 					t_vault_node * node3; //remember to destroy it
 					node3=NULL;
-					size=plVaultFetchNodes(&node3,t_n,(U32 *)table);
-					DBG(5,"End fetching nodes from db...\n");
+					int n_fetched=0;
+					size=plVaultFetchNodes(&node3,&n_fetched,(U32 *)table,t_n,&db);
+					DBG(5,"End fetching nodes from db, avg size is %i...\n",size);
 					robj.zlib=0x03; //set compressed flag
 					DBG(5,"Create Items...\n");
 					robj.itm=vaultCreateItems(3);
@@ -854,33 +872,41 @@ int plAdvVaultParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 					robj.itm[2].id=0x1F; //EOF
 					plVItmPutInteger(&robj.itm[2],0);
 					//end set EOF
-					while(processed<t_n) {
-						DBG(5,"Processing... processed:%i,t_n:%i\n",processed,t_n);
+					while(processed<n_fetched) {
+						DBG(5,"Processing... processed:%i,n_fetched:%i,t_n:%i\n",processed,n_fetched,t_n);
 						off=0;
 						stored=0;
-						while(off<128000 && processed<t_n) {
+	DBG(5,"dmalloc_verify()\n");
+	dmalloc_verify(NULL);
+						while(off<128000 && processed<n_fetched) {
 							//vault_parse_node_data(f_vhtml,&node3[processed]);
+							DBG(5,"offset:%i,processed:%i,stored:%i\n",off,processed,stored);
 							off+=node2stream(buf+off,&node3[processed]);
 							processed++;
 							stored++;
+	DBG(5,"dmalloc_verify()\n");
+	dmalloc_verify(NULL);
 						}
 						wcreat->size=off;
 						//set number of nodes
 						robj.itm[1].id=0x19;
 						plVItmPutInteger(&robj.itm[1],stored);
-						if(processed>=t_n-1) {
+						if(processed>=n_fetched-1) {
 							robj.n_itms=3;
 						} else {
 							robj.n_itms=2;
 						}
 						DBG(5,"Calling to the html parser...\n");
-						htmlVaultParse(&robj,u,0);
+						htmlVaultParse(net,&robj,sid,0);
 						DBG(5,"Sending the message...\n");
-						plNetMsgVault(sock,&robj,u,plNetVersion);
+						plNetMsgVault(net,&robj,sid);
 						DBG(5,"Message sent...\n");
 					}
 					robj.n_itms=3; //por si acaso
-					if(node3!=NULL) {
+					if(node3!=NULL) { //destroy this garbage
+						for(i=0; i<n_fetched; i++) {
+							destroy_node(&node3[i]);
+						}
 						free((void *)node3);
 					}
 				}
@@ -893,22 +919,22 @@ int plAdvVaultParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 					n.type=30; //Info List node
 					n.torans=4; //PeopleIKnowAboutFolder
 					n.owner=rcv_player;
-					id=plVaultFindNode(&n,&mfs,0);
+					id=plVaultFindNode(&n,&mfs,0,&db);
 					if(id<=0) { //not found
-						id=plVaultFindNode(&n,&mfs,1); //Create the folder
-						plVaultCreateRef(0,rcv_player,id,0,0,0);
-						plVaultBcastNodeReferenceAdded(sock,rcv_player,id);
+						id=plVaultFindNode(&n,&mfs,1,&db); //Create the folder
+						plVaultCreateRef(0,rcv_player,id,0,0,0,&db);
+						plVaultBcastNodeReferenceAdded(net,rcv_player,id);
 					}
 					destroy_node(&n);
 					init_node(&n);
 					//Find The sender Info List Node
 					n.type=23; //Player Info Node
 					n.owner=u->ki; //Sender KI
-					ret=plVaultFindNode(&n,&mfs,0);
+					ret=plVaultFindNode(&n,&mfs,0,&db);
 					if(id>0 && ret>0) {
 						//Add the player to the Recent folder
-						plVaultCreateRef(0,id,ret,0,0,0);
-						plVaultBcastNodeReferenceAdded(sock,id,ret);
+						plVaultCreateRef(0,id,ret,0,0,0,&db);
+						plVaultBcastNodeReferenceAdded(net,id,ret);
 
 						destroy_node(&n);
 						init_node(&n);
@@ -916,15 +942,15 @@ int plAdvVaultParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 						n.type=22; //Folder Node
 						n.torans=1; //InboxFolder
 						n.owner=rcv_player; //The destination
-						id=plVaultFindNode(&n,&mfs,0);
+						id=plVaultFindNode(&n,&mfs,0,&db);
 						if(id<=0) { //not found, create it
-							id=plVaultFindNode(&n,&mfs,1);
-							plVaultCreateRef(0,rcv_player,id,0,0,0);
-							plVaultBcastNodeReferenceAdded(sock,rcv_player,id);
+							id=plVaultFindNode(&n,&mfs,1,&db);
+							plVaultCreateRef(0,rcv_player,id,0,0,0,&db);
+							plVaultBcastNodeReferenceAdded(net,rcv_player,id);
 						}
 						if(id>0) { //And now add the node that we recieved from player
-							plVaultCreateRef(u->ki,id,wnode->index,0,0,0);
-							plVaultBcastNodeReferenceAdded(sock,id,wnode->index);
+							plVaultCreateRef(u->ki,id,wnode->index,0,0,0,&db);
+							plVaultBcastNodeReferenceAdded(net,id,wnode->index);
 						}
 					}
 				}
@@ -991,7 +1017,7 @@ int plAdvVaultParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 			case 0x0A: //setseen
 				print2log(f_vmgr,"Vault SetSeen for %i\n",u->ki);
 				DBG(5,"Calling plVaultSeetRefSeen\n");
-				plVaultSeetRefSeen(node_parent,node_son,seen_flag);
+				plVaultSeetRefSeen(node_parent,node_son,seen_flag,&db);
 				DBG(5,"After the plVaultSeetRefSeen call\n");
 				break;
 			default:
@@ -1010,7 +1036,7 @@ int plAdvVaultParser(int sock,t_vault_mos * obj,st_uru_client * u) {
 		print2log(f_vmgr,"Failed parsing vault stream!\n");
 	}
 	printf("RETURNING from vault_do_magic_stuff with value %i\n",success);
-	fflush(0);
+	//fflush(0);
 	return success;
 }
 

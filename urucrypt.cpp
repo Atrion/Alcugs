@@ -26,7 +26,7 @@
 
 #define _UruCrypt_ID "$Id$"
 #define _MAYOR_ 1
-#define _MINOR_ 2
+#define _MINOR_ 3
 
 #include <stdio.h>
 #include <string.h>
