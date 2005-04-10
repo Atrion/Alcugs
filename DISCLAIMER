@@ -1,0 +1,62 @@
+    Alcugs H'uru server
+
+    Copyright (C) 2004  The Alcugs H'uru Server Team
+    See the file AUTHORS for more info about the team
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+    Please see the file COPYING for the full license.
+
+
+    In addition to this license:
+
+    This software/project is not official and is NOT supported by Cyan and Cyan
+    is NOT responsible for any damage to your system it may cause, for whatever
+    reason. This software may be incompatible with any past, present and future
+    Cyan projects.
+    Use of Cyan's AUTH server does NOT represent any time of agreements or
+    arrangements between Cyan and this project. This project was created WITHOUT
+    aid from Cyan.
+    Your game or machine can crash or be damaged if you host or connect to a
+    shard running the Alcugs H'uru server software.
+    This software is not the plasma server, is not a modification of the plasma
+    server, and It don't contains any source code of the plasma server.
+    It's a completely different server software written from scratch.
+
+    About the Auth Server:
+    You MUST NEVER edit/change/modify any part of this project, or create a
+    derivative work with the purpose of bypassing the Cyan's Global Auth Server.
+    Hosting a server that bypasses the CGAS (Cyan's Global Auth Server), is an
+    illicit activity, and it clearly breaks the Uru client End User License
+    Agreement.
+
+    About Cracking:
+    You MUST NEVER edit/change/modify any part of this project, or create a
+    derivative work with the purpose of: causing damage, exploiting,
+    manipulating, destroying, causing a denegation of the service, intrussion,
+    or anything else with illicit results to any Plasma or Alcugs Uru servers;
+    causing damage, exploiting, manipulating, destroying, causing a denegation
+    of the service, intrussion, or anything else with illicit results to any
+    client running any version of the Uru Clients.
+    You can ignore the above notice ONLY if YOU ARE THE ADMISTRATOR/OWNER of
+    the shard or you have written permission from the shard owner and you are
+    the owner of any connected client/system or you have written permission from
+    the owners of all the connected clients/systems.
+    All exploits, and security holes discovered must be immediatly notificated
+    to the Alcugs H'uru server team for the immediate creation of a fix for
+    the especific hole.
+
+    ~The Alcugs H'uru Server Team.
+    24th of October of 2004.

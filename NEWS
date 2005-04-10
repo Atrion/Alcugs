@@ -1,0 +1,49 @@
+                       /  "  '  "  '  `  "  '  \
+                      /$%&$#$%#$&%&$&$&$$%&$%#$&\
+                      #=========================#
+                      # ~ Alcugs H'uru Server ~ #
+                      #-=======================-#
+                     /--(     Latest news     )--\
+--------------------/|\-------------------------/|\--------------------------
+|Home: http://alcugs.almlys.dyns.net                                        |
+|Forums: http://www.cobbs.ca                                                |
+|Mailing-list: http://www.sf.net/projects/alcugs/                           |
+-----------------------------------------------------------------------------
+
+01/Dec/2004 - Release 1.1.15 (pre)
+===========================================================================0
+
+ * Small change in the vault format, wipe is recomened, but not required,
+   the vault will be automatically converted to the new format.
+   It's extremely recomended to do a backup of your vault if you apreciate
+   it a lot.
+ * Experimental Multiple instance mode is now enabled by default,
+   AvatarCustomization, Personal & Nexus are now private ages.
+   I think that it's fun to have Cleft as a shared age, if it causes
+   problems, you can make it private by adding it to the list.
+ * Now, you can easily add new ages to the server. The server will allow you
+   to link only to the ages that are listed inside the tracking/vault/lobby 
+   age folders.
+
+20/Nov/2004 - Release 1.1.14
+===========================================================================0
+
+ * Some sdl stuff has been implemented that will allow you to do
+   more things than the previous version. There are still some
+   known nasty bugs. You can succesfully solve Cleft now, also
+   other ages may be solvable, there are still problems with the
+   camera and the cursor, that may be caused by some missing game
+   messages. Be aware that the game servers are still not storing
+   the progress in the filesystem or the vault, each time that
+   you link into the age again, all the progress will be reset
+   to the default values. (You should be able to do the path
+   of the shell puzzle, it will be funny to see someone else playing
+   with the big ball...)
+ * For the next version there are major changes planned, all the
+   SDL parsing functions are going to be rewritten from scratch, and
+   then it will be more easy to store things in the vault.
+
+
+                             ~~ooOoo~~
+
+

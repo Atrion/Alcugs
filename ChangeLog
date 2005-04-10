@@ -1,0 +1,392 @@
+2004-12-01 00:20  almlys
+
+	* BUGS, Feature-Requests, ageparser.cpp, ageparser.h, guid_gen.cpp,
+	  guid_gen.h, install.sh, pstrackingmsg.cpp, uru.cpp,
+	  vault_tasks.cpp: Protection against bogus ages & initial changes
+	  to allow multiple instances
+
+2004-11-30 11:35  khoufou_cvs
+
+	* uruconvert.cpp, vault_tasks.cpp: More work on uruconvert.
+	  Cleanup up vault_tasks.cpp and corrected a possible overflow on
+	  welcome text (missing \0 in count).
+
+2004-11-30 01:45  khoufou_cvs
+
+	* mysql.cpp, mysql.h, uruconvert.cpp: Corrected some functions in
+	  mysql.* Begin parsing of UntilUru vault database.
+
+2004-11-29 01:44  almlys
+
+	* msg_parser.cpp, psgamemsg.cpp: small fix for the
+	  AvatarCustomization age
+
+2004-11-28 02:33  almlys
+
+	* ChangeLog, msg_parser.cpp, pscauthmsg.cpp, pservermsg.cpp,
+	  psgamemsg.cpp, urumsg.cpp, uruprp.cpp, vault_obj.cpp,
+	  vault_tasks.cpp: Fixed issues with some auth response failed
+	  messages and fixed the annoying cursor bug, now you can visit
+	  ahnonay if you can. There are also some changes in the prp
+	  patcher
+
+2004-11-24 17:42  almlys
+
+	* conv_funs.cpp, uruprp.cpp: Fixed another vault crash related
+	  issue
+
+2004-11-24 12:04  almlys
+
+	* pstrackingmsg.cpp, uruprp.cpp: Fixed Tracking server issues...
+
+2004-11-23 17:56  khoufou_cvs
+
+	* mysql.cpp, mysql.h, uruconvert.cpp: More work on conversion
+	  utility.
+
+2004-11-23 14:01  almlys
+
+	* uruprp.cpp: small fix
+
+2004-11-23 13:56  almlys
+
+	* Makefile, adv_gamemsgparser.cpp, adv_gamemsgparser.h, install.sh,
+	  prpstuff.h, urumsg.cpp, uruprp.cpp: Added the prp patcher... to
+	  be able to use the KI again...
+
+2004-11-22 16:58  khoufou_cvs
+
+	* uruconvert.cpp: Started unrilutu<->huru database convertion prog.
+
+2004-11-22 16:56  khoufou_cvs
+
+	* Makefile, mysql.cpp, mysql.h: mysql.*: Code cleaning.  Makefile:
+	  Added uruconvert compilation directives.
+
+2004-11-22 12:08  khoufou_cvs
+
+	* mysql.cpp, mysql.h: [no log message]
+
+2004-11-20 16:49  almlys
+
+	* psgamemsg.cpp, pstrackingmsg.cpp, urumsg.cpp: Fixed
+	  AvatarCustomization crashes, and fixed some multiplayer
+	  crashes...
+
+2004-11-20 04:37  almlys
+
+	* Makefile, NEWS, psgamemsg.cpp, sdlparser.cpp, uru.cpp, uru.h,
+	  urucmd.cpp, urumsg.cpp, urumsg.h, uruping.cpp, urusdl.cpp: yep,
+	  Initial SDL state IS now being SENT
+
+2004-11-19 14:13  almlys
+
+	* .cvsignore, ChangeLog, Makefile, env.sh, prot.h, urucrypt.cpp,
+	  script/README, script/decrypt_all.sh: Added urucrypt to the
+	  sources
+
+2004-11-18 17:35  khoufou_cvs
+
+	* log.cpp, mysql.cpp, mysql.h: Corrected minor type in log.cpp.
+	  Created mysql generic functions for use with uruconvert proggy,
+	  converting untiluru->huru (WIP).
+
+2004-11-17 00:19  almlys
+
+	* htmldumper.cpp, pservermsg.cpp: Attempted to fix a crash that
+	  only happens when you are using an inferior OS
+
+2004-11-16 23:24  almlys
+
+	* adv_gamemsgparser.cpp, ageparser.cpp, cgas_auth.cpp,
+	  config_parser.cpp, conv_funs.cpp, files.cpp, guid_gen.cpp,
+	  htmldumper.cpp, injector.cpp, license.cpp, msg_parser.cpp,
+	  pclientmsg.cpp, pdefaultmsg.cpp, protocol.cpp, psauthmsg.cpp,
+	  pscauthmsg.cpp, pservermsg.cpp, psgamemsg.cpp, psmetamsg.cpp,
+	  pstrackingmsg.cpp, psvaultmsg.cpp, sdlparser.cpp, stdebug.cpp,
+	  urucmd.cpp, urumsg.cpp, urunet.cpp, uruping.cpp, urusdl.cpp,
+	  useful.cpp, vault_advp.cpp, vault_obj.cpp, vault_tasks.cpp,
+	  vnodes.cpp: added debug.h to all source files, to be able to set
+	  a global debugging level
+
+2004-11-15 23:09  almlys
+
+	* Makefile: small fix
+
+2004-11-14 17:23  almlys
+
+	* .cvsignore, Makefile, ageparser.cpp, ageparser.h,
+	  config_parser.cpp, config_parser.h, psgamemsg.cpp, uru.cpp: *.age
+	  parser finished...
+
+2004-11-14 04:30  almlys
+
+	* Makefile, urusdl.cpp: Well at least compiles on windows, now I
+	  need to figure out why it nicely crashes... (windows sucks a lot)
+
+2004-11-14 02:21  almlys
+
+	* vault_advp.cpp: Vault fix to avoid more crashes...
+
+2004-11-13 20:57  almlys
+
+	* install.sh: installer fix
+
+2004-11-13 20:38  almlys
+
+	* .cvsignore, ChangeLog, Makefile, sdlparser.cpp, urusdl.cpp:
+	  Urusdl
+
+2004-11-13 15:16  almlys
+
+	* meta_db.cpp, psmetamsg.cpp: another small fix for the metaserver
+
+2004-11-13 14:59  almlys
+
+	* meta_db.cpp, uru.cpp: Small fix for the metaserver
+
+2004-11-13 03:26  almlys
+
+	* .cvsignore, Makefile, config_parser.cpp, data_types.h,
+	  meta_db.cpp, meta_db.h, pscauthmsg.cpp, psmetamsg.cpp,
+	  psmetamsg.h, uru.cpp, uru.h, urumsg.cpp, urunet.cpp, urunet.h:
+	  Meta server should be finished now..
+
+2004-11-12 04:18  almlys
+
+	* .cvsignore, Makefile, config_parser.cpp, pscauthmsg.cpp,
+	  pstrackingmsg.cpp, purgue.sh, tclean.sh, uru.cpp, urucmd.cpp,
+	  urumsg.cpp, uruping.cpp: All metaserver messages should be
+	  implemented now..
+
+2004-11-11 12:28  almlys
+
+	* pstrackingmsg.cpp, sql.h, uru.cpp, uru.h, urumsg.h: implemented
+	  some Metaserver messages
+
+2004-11-11 03:17  almlys
+
+	* .cvsignore, ChangeLog, config_parser.cpp, config_parser.h,
+	  psauthmsg.cpp, purgue.sh: Added a new option to allow private
+	  shards with a default access level
+
+2004-11-11 02:45  almlys
+
+	* .cvsignore, README, install.sh, license.cpp, license.h, run.sh,
+	  uru.cpp, script/addadmin.sh, script/huru-servers.sh: Added Sjaak
+	  modified Strikers nice start/stop script and added a script to
+	  start stand alone game servers
+
+2004-11-10 22:25  almlys
+
+	* ChangeLog: cvs2cl.pl
+
+2004-11-10 22:11  almlys
+
+	* Makefile, config_parser.cpp, pscauthmsg.cpp, pservermsg.cpp,
+	  sql.cpp, uru.cpp: Fixed a big bug caused by the code
+	  reestructuration
+
+2004-11-10 16:34  khoufou_cvs
+
+	* log.cpp, log.h, sql.cpp: Added log.cpp and log.h to handle
+	  logging to syslog and/or to files. Embedded is a small test
+	  program.  Just a small modification to mysql_init call test
+	  indentation.
+
+2004-11-09 15:20  almlys
+
+	* ChangeLog, sql.cpp: Fixed SQL broken code
+
+2004-11-09 12:36  khoufou_cvs
+
+	* config_parser.cpp, config_parser.h, vault_tasks.cpp,
+	  docs/README.parameters: Added welcome_title and welcome_text to
+	  configure global Ki message upton Vault initialization.  Modified
+	  config_parser.cpp to handle foreign character set.
+
+2004-11-09 10:57  khoufou_cvs
+
+	* sql.cpp, sql.h: SQL cleaning.
+
+2004-11-09 10:54  khoufou_cvs
+
+	* sql.cpp: Removed unnecessary mysql connections. First step to
+	  MySQL cleanup.
+
+2004-11-09 10:37  khoufou_cvs
+
+	* docs/README.parameters: First documentation of config file
+	  parameters.
+
+2004-11-09 00:25  almlys
+
+	* ChangeLog, tclean.sh, script/addadmin.sh, script/vaultwipe.sh:
+	  Added some wipe/admin scripts
+
+2004-11-08 22:45  khoufou_cvs
+
+	* etc/: allclean.sh, cleanlog.sh: Clean all log files
+
+2004-11-08 22:31  khoufou_cvs
+
+	* ChangeLog: [no log message]
+
+2004-11-08 16:03  almlys
+
+	* ChangeLog, auth_db.cpp, auth_db.h, install.sh, psauthmsg.cpp,
+	  uru.cpp, vault_db.cpp: Now, the auth database is automatically
+	  created if it is missing
+
+2004-11-07 03:00  almlys
+
+	* install.sh: metaserver option was missing..
+
+2004-11-06 23:07  almlys
+
+	* .cvsignore, Makefile, config.h, debug.h, install.sh, license.h,
+	  prot.h, purgue.sh, uru.cpp, uru.h, vault_db.cpp: some minor
+	  fixes..
+
+2004-11-06 18:04  almlys
+
+	* ChangeLog, TODO, prot.h, urumsg.cpp: Added MetaServer messages
+
+2004-11-06 04:29  almlys
+
+	* config_parser.cpp, config_parser.h: Added Metaserver vars
+
+2004-11-06 03:45  almlys
+
+	* AUTHORS: Added Khoufou to the list
+
+2004-11-05 17:00  almlys
+
+	* purgue.sh, sdlparser.h, sql.h, uru.cpp: ? what happened here?
+
+2004-11-05 15:51  almlys
+
+	* .cvsignore, BUGS, ChangeLog, Makefile, auth_db.cpp, install.sh,
+	  protocol.cpp: More patches..
+
+2004-11-05 03:21  almlys
+
+	* Feature-Requests, Makefile, TODO, adv_gamemsgparser.cpp,
+	  adv_gamemsgparser.h, auth_db.cpp, auth_db.h, auth_server.cpp,
+	  cgas_auth.cpp, cgas_auth.h, clean.sh, config_parser.cpp,
+	  config_parser.h, debug.h, files.cpp, files.h, game_server.cpp,
+	  guid_gen.cpp, guid_gen.h, htmldumper.cpp, htmldumper.h,
+	  install.sh, license.cpp, license.h, msg_parser.cpp, msg_parser.h,
+	  new_vault.cpp, pclientmsg.cpp, pclientmsg.h, pdefaultmsg.cpp,
+	  pdefaultmsg.h, psauthmsg.cpp, psauthmsg.h, pscauthmsg.cpp,
+	  pscauthmsg.h, pservermsg.cpp, pservermsg.h, psgamemsg.cpp,
+	  psgamemsg.h, pstrackingmsg.cpp, pstrackingmsg.h, psvaultmsg.cpp,
+	  psvaultmsg.h, sdlparser.cpp, sdlparser.h, semaphore.cpp, sql.cpp,
+	  sql.h, svault.cpp, uru.cpp, uru.h, urucmd.cpp, urumsg.cpp,
+	  urumsg.h, urunet.cpp, urunet2.cpp, uruping.cpp, urusdl.cpp,
+	  vault.cpp, vault_advp.cpp, vault_advp.h, vault_db.cpp,
+	  vault_db.h, vault_obj.cpp, vault_obj.h, vault_tasks.cpp,
+	  vault_tasks.h, vaultstrs.cpp, vaultstrs.h, vnodes.cpp, vnodes.h,
+	  vtask.cpp, whatdoyousee.cpp, whatdoyousee.h: Solved vault loop,
+	  added Khoufou patches, fixed some stability issues, reorganized
+	  the code, and other things...
+
+2004-11-03 17:40  almlys
+
+	* install.sh: Fixed age files path issue
+
+2004-11-03 12:25  almlys
+
+	* uru.cpp: Fixed "'" bug
+
+2004-11-03 12:16  almlys
+
+	* ChangeLog, sdlparser.cpp, uru.cpp: Fixed a problem when parsing
+	  the GreatZero.sdl file
+
+2004-11-03 12:02  almlys
+
+	* AUTHORS, BUGS, ChangeLog, DEVELOPERS, HELPING, README: Added
+	  mailing list address
+
+2004-11-03 11:43  almlys
+
+	* .cvsignore, ChangeLog, htmldumper.cpp, install.sh, sql.cpp,
+	  uru.cpp, vault_advp.cpp, vault_db.cpp: All free() problems should
+	  be fixed now...
+
+2004-11-03 03:49  almlys
+
+	* conv_funs.cpp, protocol.cpp, psauthmsg.cpp, pservermsg.cpp,
+	  sql.cpp, stdebug.cpp, uru.cpp, urumsg.cpp, urunet.cpp,
+	  vault_db.cpp, vault_tasks.cpp: Fixed some free(tptr) calls,
+	  thanks to Khoufou Now, Game servers will automatically close on
+	  inactivity.
+
+2004-10-27 01:19  almlys
+
+	* .cvsignore, BUGS, ChangeLog, Makefile, install.sh, purgue.sh,
+	  run.sh, sql.cpp, uru.conf, urunet.cpp: Fixed install.sh passwd
+	  issue and added more stuff, also now the vault & auth server
+	  should automatically create the configured databases.
+
+2004-10-26 02:14  almlys
+
+	* ChangeLog, install.sh: Added some code to the installer
+
+2004-10-25 12:45  almlys
+
+	* ChangeLog: Added the ChangeLog file
+
+2004-10-25 12:45  almlys
+
+	* docs/.cvsignore: Added a new .cvsignore to ignore the
+	  Auto-Generated documentation tree.
+
+2004-10-25 12:41  almlys
+
+	* .cvsignore: Fixed the file ignore list
+
+2004-10-25 04:43  almlys
+
+	* Doxyfile, TODO, adv_gamemsgparser.cpp, auth_db.cpp,
+	  auth_server.cpp, cgas_auth.cpp, config_parser.cpp,
+	  config_parser.h, servers.list, tclean.sh, .cvsignore, AUTHORS,
+	  COPYING, DEVELOPERS, DISCLAIMER, Feature-Requests, HELPING,
+	  LICENSE, Makefile, README, clean.sh, conv_funs.cpp, conv_funs.h,
+	  data_types.h, debug.h, disclaimer_head.txt, files.cpp, files.h,
+	  game_server.cpp, guid_gen.cpp, htmldumper.cpp, injector.cpp,
+	  injector.h, install.sh, license.cpp, msg_parser.cpp,
+	  new_vault.cpp, pclientmsg.cpp, pdefaultmsg.cpp, prot.h,
+	  protocol.cpp, protocol.h, psauthmsg.cpp, pscauthmsg.cpp,
+	  pservermsg.cpp, psgamemsg.cpp, pstrackingmsg.cpp, psvaultmsg.cpp,
+	  sdlparser.cpp, semaphore.cpp, sql.cpp, stdebug.cpp, stdebug.h,
+	  svault.cpp, uru.conf, uru.cpp, urucmd.cpp, urumsg.cpp,
+	  urunet.cpp, urunet.h, urunet2.cpp, uruping.cpp, urusdl.cpp,
+	  useful.cpp, useful.h, vault.cpp, vault_advp.cpp, vault_db.cpp,
+	  vault_obj.cpp, vault_tasks.cpp, vaultstrs.cpp, vnodes.cpp,
+	  vtask.cpp, whatdoyousee.cpp, docs/vault_db.txt,
+	  script/auth_db.sql: Initial New fresh Import to the Repository
+	  from the old one
+
+2004-10-25 04:43  almlys
+
+	* Doxyfile, TODO, adv_gamemsgparser.cpp, auth_db.cpp,
+	  auth_server.cpp, cgas_auth.cpp, config_parser.cpp,
+	  config_parser.h, servers.list, tclean.sh, .cvsignore, AUTHORS,
+	  COPYING, DEVELOPERS, DISCLAIMER, Feature-Requests, HELPING,
+	  LICENSE, Makefile, README, clean.sh, conv_funs.cpp, conv_funs.h,
+	  data_types.h, debug.h, disclaimer_head.txt, files.cpp, files.h,
+	  game_server.cpp, guid_gen.cpp, htmldumper.cpp, injector.cpp,
+	  injector.h, install.sh, license.cpp, msg_parser.cpp,
+	  new_vault.cpp, pclientmsg.cpp, pdefaultmsg.cpp, prot.h,
+	  protocol.cpp, protocol.h, psauthmsg.cpp, pscauthmsg.cpp,
+	  pservermsg.cpp, psgamemsg.cpp, pstrackingmsg.cpp, psvaultmsg.cpp,
+	  sdlparser.cpp, semaphore.cpp, sql.cpp, stdebug.cpp, stdebug.h,
+	  svault.cpp, uru.conf, uru.cpp, urucmd.cpp, urumsg.cpp,
+	  urunet.cpp, urunet.h, urunet2.cpp, uruping.cpp, urusdl.cpp,
+	  useful.cpp, useful.h, vault.cpp, vault_advp.cpp, vault_db.cpp,
+	  vault_obj.cpp, vault_tasks.cpp, vaultstrs.cpp, vnodes.cpp,
+	  vtask.cpp, whatdoyousee.cpp, docs/vault_db.txt,
+	  script/auth_db.sql: Initial revision
+

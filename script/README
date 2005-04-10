@@ -1,0 +1,12 @@
+addadmin.sh ---> adds admin privilegues to the specified user
+  (you should have already logged at least one time)
+auth_db.sql ---> auth database script (useless, now that is automatically created)
+decrypt_all.sh --> decrypts all whatdoyousee files from source dir to destination dir
+huru-servers.sh --> A start/stop sample script
+README --> this file
+vaultwipe.sh --> does, what the filename says.
+
+hurulib.sh --> variables and functions shared by some scripts
+checkpublicages.sh --> check ages status from player (or All for all players). P means age is private.
+showplayers.sh --> show idx, username, guid and current age location (if online) of players.
+viewplayer.sh -> POC, prints database tree for named player.
