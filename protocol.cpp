@@ -68,14 +68,13 @@ const int unet_max_version = 1;
 const int unet_min_version = 2; //this number is increassed on protocol changes.
 /* Backwards compatibility is a must */
 
-/*---------------------------------------------------
- De/s the specific packet into Uru protocol 2
+/**
+ \brief Encodes the specific packet into Uru protocol 2
+*/
 
- k = offset MOD 8
-
- cod: c = x * 2 ^ k MOD 255
- dec: x = c * 2 ^ (8-k) MOD 255
----------------------------------------------------*/
+/* k = offset MOD 8
+   enc: c = x * 2 ^ k MOD 255
+*/
 void encode_packet(unsigned char* buf2,unsigned char* buf, int n) {
 	int i;
 	for(i=0; i<n; i++) {
@@ -83,6 +82,13 @@ void encode_packet(unsigned char* buf2,unsigned char* buf, int n) {
 	}
 }
 
+/**
+ Decodes the specific packet from Uru protocol 2
+*/
+
+/* k = offset MOD 8
+   dec: x = c * 2 ^ (8-k) MOD 255
+*/
 void decode_packet(unsigned char* buf, int n) {
 	int i;
 	for(i=0; i<n; i++) {
@@ -90,7 +96,7 @@ void decode_packet(unsigned char* buf, int n) {
 	}
 }
 
-/* Debug the V1 checksum */
+/** Debug the V1 checksum */
 U32 uru_checksum1trace(Byte * buf, int size) {
 	int i;
 	U32 aux=0;
@@ -125,14 +131,14 @@ U32 uru_checksum1trace(Byte * buf, int size) {
 	return aux;
 }
 
-/*---------------------------------------------------------------------
-Computes the Uru known checksums
-  alg
-	 0 -> prime sum
-	 1 -> live md5 sum
-	 2 -> live md5 + passwd sum
-	 (REMEMBER THAT aux_hash must be 32 bytes and contain an ascii hash
-----------------------------------------------------------------------*/
+/**
+  \brief Computes the Uru known checksums
+  \param alg
+	 0 -> prime sum,
+	 1 -> live md5 sum,
+	 2 -> live md5 + passwd sum,
+  \note REMEMBER THAT aux_hash must be 32 bytes and contain an ascii hash
+*/
 U32 uru_checksum(Byte* buf, int size, int alg, Byte * aux_hash) {
 	int i;
 	U32 aux=0;
@@ -215,21 +221,23 @@ U32 uru_checksum(Byte* buf, int size, int alg, Byte * aux_hash) {
 	return aux;
 }
 
-/*--------------------------------------------------------------------------------
-  1st- Gets the validation level
-	2nd- Checks if is a valid Uru Protocol formated packet
-	3th- compute the checksum
-	4th- Decode the packet
-	5th- put the results in the session struct
+/**
+\brief Validates a packet
+\note 
+	1st- Gets the validation level,
+	2nd- Checks if is a valid Uru Protocol formated packet,
+	3th- compute the checksum,
+	4th- Decode the packet,
+	5th- put the results in the session struct,
 
 	Net - NO
 
-	Return Values
+\return
 	 0 -> Yes, all went OK! :)
 	 1 -> Ok, but checksum failed :(
 	 2 -> Validation level too high
 	 3 -> Bogus packet!!
----------------------------------------------------------------------------------*/
+*/
 int uru_validate_packet(Byte * buf,int n,st_uru_client * u) {
 	U32 checksum;
 #ifndef _NO_CHECKSUM
@@ -301,10 +309,10 @@ int uru_validate_packet(Byte * buf,int n,st_uru_client * u) {
 
 
 /**
-assings the header structure
+\brief assings the header structure
 of the specified buffer (ACK flags)
 
-if success returns the number of the first data byte
+\return if success returns the number of the first data byte
 on any other case returns 0
 */
 int uru_get_header(unsigned char * buf,int n,st_uru_head * u) {
@@ -410,16 +418,16 @@ int uru_get_header(unsigned char * buf,int n,st_uru_head * u) {
 	return offset;
 }
 
-/*-------------------------------------------------------
-   Prints the Uru Encapsulation header of a packet
---------------------------------------------------------*/
+/**
+   \brief Prints the Uru Encapsulation header of a packet
+*/
 void uru_print_header(st_log * f_dsc,st_uru_head * u) {
 	print2log(f_dsc,"[%i] ->%02X<- {%i,%i (%i) %i,%i} - %02X|%i bytes",u->p_n,u->t,u->fr_n,u->sn,u->fr_t,u->fr_ack,u->ps,u->size,u->size);
 }
 
-/*--------------------------------------------------------
-  Gets the size of the header, and where the data starts
----------------------------------------------------------*/
+/**
+  \brief Gets the size of the header, and where the data starts
+*/
 int uru_get_header_start(st_uru_head * u) {
 	if(u->ch==0x01 || u->ch==0x02) return 32; //with checksum
 	else return 28; //with no-checksum
@@ -427,9 +435,9 @@ int uru_get_header_start(st_uru_head * u) {
 
 #if 0
 
-/*--------------------------------------------------------
+/**
   Increments the packet counter, and updates the buffer
----------------------------------------------------------*/
+*/
 void uru_update_packet_counter(Byte * buf, st_uru_head * u) {
 	u->p_n++;
 	if(buf[1]==0x01 || buf[1]==0x02) {
@@ -439,9 +447,9 @@ void uru_update_packet_counter(Byte * buf, st_uru_head * u) {
 	}
 }
 
-/*-----------------------------------------------------------
+/**
   Increases the message counter, with the specified flags
-------------------------------------------------------------*/
+*/
 void uru_inc_msg_counter(uru_head * server) {
 		//update flags
 		server->p_n++;
@@ -450,10 +458,10 @@ void uru_inc_msg_counter(uru_head * server) {
 
 #endif
 
-/*------------------------------------------------------
-assings the header structure to the specified buffer
-returns the size of the header
-----------------------------------------------------*/
+/**
+\brief assings the header structure to the specified buffer
+\return returns the size of the header
+*/
 int uru_put_header(unsigned char * buf,st_uru_head * u) {
 	int offset=2;
 
@@ -514,9 +522,9 @@ int uru_put_header(unsigned char * buf,st_uru_head * u) {
 
 #if 0
 
-/*------------------------------------------------------
+/**
 Initialitzes (zeroes) the uru header
-----------------------------------------------------*/
+*/
 void uru_init_header(uru_head * u, Byte validation) {
 	u->ch = validation; //(outdated legacy)
 	u->p_n=0;
@@ -529,10 +537,10 @@ void uru_init_header(uru_head * u, Byte validation) {
 	u->size=0x00;
 }
 
-/*---------------------------------------------------------------
+/**
   updates the ack flags, and generates a new ack packet
 	that will  be put in the buffer
-------------------------------------------------------------*/
+*/
 int uru_get_ack_reply(Byte * buf, st_uru_client * u) {
 	int n;
 
@@ -574,12 +582,12 @@ int uru_get_ack_reply(Byte * buf, st_uru_client * u) {
 	return 0x12+n;
 }
 
-/*----------------------------------------------------
-  Parses and ACK reply, and updates the flags
+/**
+  \brief Parses and ACK reply, and updates the flags
 	also, it need to clear from the buffer the acked
 	packet and do other stuff.
-	Returns 0 if it fails, returns size on success
-----------------------------------------------------*/
+  \return Returns 0 if it fails, returns size on success
+*/
 int uru_process_ack(Byte * buf,int n,int start,st_uru_client * u) {
 	U32 i;
 	int non_std=0;
@@ -676,10 +684,10 @@ int uru_process_ack(Byte * buf,int n,int start,st_uru_client * u) {
 	return (u->client.size + start);
 }
 
-/*------------------------------------------------------
-  Creates a valid negotation packet (I think)
-	returns the size
--------------------------------------------------------*/
+/**
+  \brief Creates a valid negotation packet (I think)
+  \return returns the size
+*/
 int uru_get_negotation_reply(Byte * buf,st_uru_client * u) {
 	int n;
 	char * timestamp;
@@ -717,11 +725,11 @@ int uru_get_negotation_reply(Byte * buf,st_uru_client * u) {
 	return(n+u->server.size);
 }
 
-/*--------------------------------------------------------
-   Process the (Re)Negotation packets
-	 returns 0 for not sending a Negotation reply
-	 returns -1 if an error occurs
----------------------------------------------------------*/
+/**
+   \brief Process the (Re)Negotation packets
+   \return returns 0 for not sending a Negotation reply
+   \return returns -1 if an error occurs
+*/
 int uru_process_negotation(Byte * buf,int n,int start,st_uru_client * u) {
 	char * timestamp;
 	U32 microseconds;
@@ -772,7 +780,7 @@ int uru_process_negotation(Byte * buf,int n,int start,st_uru_client * u) {
 #endif
 
 /** Gets all plNet msg header vars
-		/returns the size
+		/return returns the size
 */
 int parse_plNet_msg(st_unet * net,Byte * buf,int size,int sid) {
 	st_uru_client * u=&net->s[sid];
@@ -994,7 +1002,7 @@ int put_plNetMsg_header(st_unet * net,Byte * buf,int size,int sid) {
 
 
 /**
-	copyes one plNetMsg header to another one
+	copies one plNetMsg header to another one
 	sid=destination
 	ssid=source
 */

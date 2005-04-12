@@ -44,7 +44,7 @@
 #include "debug.h"
 
 /**
-	Converts an hex guid to ascii
+  \brief Converts an hex guid to ascii
 */
 const Byte * get_guid(Byte * guid) {
 
@@ -56,7 +56,7 @@ const Byte * get_guid(Byte * guid) {
 }
 
 /**
-	Converts an hex uid to ascii.
+  \brief Converts an hex uid to ascii.
 */
 const Byte * create_str_guid(Byte * guid) {
 	int off1=0;
@@ -98,7 +98,7 @@ const Byte * create_str_guid(Byte * guid) {
 }
 
 /**
-	Converts an Ascii guid to hex
+  \brief Converts an Ascii guid to hex
 */
 
 Byte * str_guid_to_hex(Byte * guid) {
@@ -140,7 +140,7 @@ Byte * str_guid_to_hex(Byte * guid) {
 }
 
 /**
- returns a pointer to a formated time string
+  \brief returns a pointer to a formated time string
 */
 Byte * get_stime(U32 timestamp, U32 microseconds) {
 	static Byte btime[50];
@@ -159,10 +159,10 @@ Byte * get_stime(U32 timestamp, U32 microseconds) {
 }
 
 /**
-  Conversion functions
-	 hex2ascii out must be 2*in
-	 ascii2hex in must be 2*out
-	 REMEMBER, SIZE of the smallest string!!!
+  \brief Converts hex data to an ASCII string
+  \param out pointer to the output buffer (must be 2*size)
+  \param in pointer to the input data
+  \param size size of the input data
 */
 void hex2ascii2(Byte * out, Byte * in, int size) {
 	int i;
@@ -174,6 +174,13 @@ void hex2ascii2(Byte * out, Byte * in, int size) {
 	out[size*2]='\0';
 }
 
+
+/**
+  \brief Converts an ASCII string to hex data
+  \param out pointer to the output buffer
+  \param in pointer to the input data
+  \param size size of the input data (must be 2*size)
+*/
 void ascii2hex2(Byte * out, Byte * in, int size) {
 	//humm I will write it if i need it :D
 	int i;
@@ -184,14 +191,11 @@ void ascii2hex2(Byte * out, Byte * in, int size) {
 }
 
 /**
-  De/Encodes the specific UruString associated to a buffer.
-	The result will be put on out, and it must have the required
+  \brief Decodes the specific UruString associated to a buffer.
+  \note The result will be put on out, and it must have the required
 	size to host it!!!
-	The size of the string is returned, so be sure to add 2
+  \return The size of the decoded string is returned, so be sure to add 2
 	to continue moving throught the buffer!!!
-	 how
-	  0x00 -> Normal string
-		0x01 -> Invert Bits string
 */
 int decode_urustring(unsigned char* out, unsigned char* in, U16 max_size) {
 	U16 size;
@@ -215,6 +219,15 @@ int decode_urustring(unsigned char* out, unsigned char* in, U16 max_size) {
 	return size;
 }
 
+/**
+  \brief Encodes the specific UruString associated to a buffer.
+  \note The result will be put on out, and it must have the required
+	size to host it!!!
+  \param how
+	0x00 -> Normal string
+    0x01 -> Invert Bits string
+  \return The size of the encoded string with its "header" is returned.
+*/
 int encode_urustring(unsigned char* out, unsigned char* in, U16 size, Byte how) {
 	int i;
 	if(how==0x01) { how=0xF0; }
@@ -271,8 +284,8 @@ int encode_urustring32(unsigned char* out, unsigned char* in, U32 size, Byte how
 }
 */
 
-/** Check if the char X is present n bytes in the buffer
-		\return Returns true if is the case, false in any other case
+/** \brief Check if the char X is present n bytes in the buffer
+	\return Returns true if is the case, false in any other case
 */
 char check_buf(Byte * buf, Byte car, int n) {
 	int i;
@@ -283,7 +296,7 @@ char check_buf(Byte * buf, Byte car, int n) {
 }
 
 /**
-	Strips out some characters that win32 doesn't like..
+	\brief Strips out some characters that win32 doesn't like in file names
 */
 void str_filter(Byte * what) {
 	int i=0,e=0;

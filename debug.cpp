@@ -85,10 +85,10 @@
 		}
 
 		char * __dbg_where(const char * a,const char * b,int d) {
-	static char buffer[500];
+			static char buffer[500];
 			sprintf(buffer,"%s:%i:%s",b,d,a);
-	return (char *)buffer;
-}
+			return (char *)buffer;
+		}
 
 	#else
 		//MSVC Version > 6 (should support __FUNCTION__)

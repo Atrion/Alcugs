@@ -49,8 +49,8 @@
 #include "debug.h"
 
 /**
-	Sends a ping, to the host specified in the session struct (client <--> server)
-	flags: 0x01 echo reply
+	\brief Sends a ping, to the host specified in the session struct (client <--> server)
+	\param flags 0x01 echo reply,
 				 0x00 new ping request
 */
 int plNetMsgPing(st_unet * net,U16 flags,double mtime,Byte destination,int sid,int ssid) {
