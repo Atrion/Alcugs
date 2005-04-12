@@ -52,7 +52,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib Ws2_32.lib zlib.lib libmysql.lib NetCore.lib /nologo /subsystem:console /machine:I386
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib Ws2_32.lib zlib.lib libmysql.lib /nologo /subsystem:console /machine:I386 /out:"uru_auth_r.exe"
 
 !ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
 
@@ -98,8 +98,6 @@ SOURCE=.\conv_funs.cpp
 
 !IF  "$(CFG)" == "uru_auth - Win32 Release"
 
-# PROP Exclude_From_Build 1
-
 !ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
 
 !ENDIF 
@@ -110,8 +108,6 @@ SOURCE=.\conv_funs.cpp
 SOURCE=.\conv_funs.h
 
 !IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-# PROP Exclude_From_Build 1
 
 !ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
 
@@ -124,8 +120,6 @@ SOURCE=.\debug.cpp
 
 !IF  "$(CFG)" == "uru_auth - Win32 Release"
 
-# PROP Exclude_From_Build 1
-
 !ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
 
 !ENDIF 
@@ -136,8 +130,6 @@ SOURCE=.\debug.cpp
 SOURCE=.\debug.h
 
 !IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-# PROP Exclude_From_Build 1
 
 !ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
 
@@ -150,8 +142,6 @@ SOURCE=.\gbasicmsg.cpp
 
 !IF  "$(CFG)" == "uru_auth - Win32 Release"
 
-# PROP Exclude_From_Build 1
-
 !ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
 
 !ENDIF 
@@ -162,8 +152,6 @@ SOURCE=.\gbasicmsg.cpp
 SOURCE=.\gbasicmsg.h
 
 !IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-# PROP Exclude_From_Build 1
 
 !ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
 
@@ -176,8 +164,6 @@ SOURCE=.\license.cpp
 
 !IF  "$(CFG)" == "uru_auth - Win32 Release"
 
-# PROP Exclude_From_Build 1
-
 !ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
 
 !ENDIF 
@@ -189,8 +175,6 @@ SOURCE=.\license.h
 
 !IF  "$(CFG)" == "uru_auth - Win32 Release"
 
-# PROP Exclude_From_Build 1
-
 !ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
 
 !ENDIF 
@@ -199,18 +183,30 @@ SOURCE=.\license.h
 # Begin Source File
 
 SOURCE=.\md5.cpp
+
+!IF  "$(CFG)" == "uru_auth - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\md5.h
+
+!IF  "$(CFG)" == "uru_auth - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\prot.h
 
 !IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-# PROP Exclude_From_Build 1
 
 !ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
 
@@ -223,8 +219,6 @@ SOURCE=.\protocol.cpp
 
 !IF  "$(CFG)" == "uru_auth - Win32 Release"
 
-# PROP Exclude_From_Build 1
-
 !ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
 
 !ENDIF 
@@ -235,8 +229,6 @@ SOURCE=.\protocol.cpp
 SOURCE=.\protocol.h
 
 !IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-# PROP Exclude_From_Build 1
 
 !ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
 
@@ -249,8 +241,6 @@ SOURCE=.\stdebug.cpp
 
 !IF  "$(CFG)" == "uru_auth - Win32 Release"
 
-# PROP Exclude_From_Build 1
-
 !ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
 
 !ENDIF 
@@ -261,8 +251,6 @@ SOURCE=.\stdebug.cpp
 SOURCE=.\stdebug.h
 
 !IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-# PROP Exclude_From_Build 1
 
 !ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
 
@@ -275,8 +263,6 @@ SOURCE=.\urunet.cpp
 
 !IF  "$(CFG)" == "uru_auth - Win32 Release"
 
-# PROP Exclude_From_Build 1
-
 !ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
 
 !ENDIF 
@@ -287,8 +273,6 @@ SOURCE=.\urunet.cpp
 SOURCE=.\urunet.h
 
 !IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-# PROP Exclude_From_Build 1
 
 !ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
 
@@ -301,8 +285,6 @@ SOURCE=.\useful.cpp
 
 !IF  "$(CFG)" == "uru_auth - Win32 Release"
 
-# PROP Exclude_From_Build 1
-
 !ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
 
 !ENDIF 
@@ -313,8 +295,6 @@ SOURCE=.\useful.cpp
 SOURCE=.\useful.h
 
 !IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-# PROP Exclude_From_Build 1
 
 !ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
 
@@ -327,8 +307,6 @@ SOURCE=.\version.cpp
 
 !IF  "$(CFG)" == "uru_auth - Win32 Release"
 
-# PROP Exclude_From_Build 1
-
 !ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
 
 !ENDIF 
@@ -339,8 +317,6 @@ SOURCE=.\version.cpp
 SOURCE=.\version.h
 
 !IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-# PROP Exclude_From_Build 1
 
 !ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
 

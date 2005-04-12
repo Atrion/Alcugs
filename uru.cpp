@@ -585,10 +585,26 @@ int reconnect2peer(st_unet * net,int dst) {
 }
 #endif
 
+#ifdef __WIN32__
+int __stdcall _windows_control_handler(unsigned long type)
+{
+   if(type==CTRL_C_EVENT || type==CTRL_CLOSE_EVENT)
+   {
+      s_handler(SIGINT);
+      return true;
+   }
+   return false;
+}
+#endif
+
 /*-----------------------------------------------
     MAIN CODE
 -------------------------------------------------*/
 int main(int argc, char * argv[]) {
+
+#ifdef __WIN32__
+	SetConsoleCtrlHandler(_windows_control_handler, true);
+#endif
 
 	char hostname[300];
 	U16 port=5000;
@@ -1159,6 +1175,10 @@ int main(int argc, char * argv[]) {
 	cnf_destroy(&global_config); //destroy the configuration struct
 	print2log(f_uru,"INF: SERVICE Sanely TERMINATED\n\n");
 	log_shutdown();
+
+#ifdef __WIN32__
+	SetConsoleCtrlHandler(_windows_control_handler, false);
+#endif
 
 	return 0;
 }

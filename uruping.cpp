@@ -175,8 +175,23 @@ void install_handlers() {
 	signal(SIGINT, s_handler);
 }
 
+#ifdef __WIN32__
+int __stdcall _windows_control_handler(unsigned long type)
+{
+   if(type==CTRL_C_EVENT || type==CTRL_CLOSE_EVENT)
+   {
+      s_handler(SIGINT);
+      return true;
+   }
+   return false;
+}
+#endif
 
 int main(int argc, char * argv[]) {
+
+#ifdef __WIN32__
+	SetConsoleCtrlHandler(_windows_control_handler, true);
+#endif
 
 	int ret,i,sid,isid; //sid session identifier
 	st_unet net;
@@ -805,6 +820,10 @@ int main(int argc, char * argv[]) {
 	if(global_logs_enabled==1) {
 		close_log_files();
 	}
+
+#ifdef __WIN32__
+	SetConsoleCtrlHandler(_windows_control_handler, false);
+#endif
 
 	return 0;
 }
