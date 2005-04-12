@@ -36,7 +36,6 @@ const char * VERSION = "1.6";
 #include "config.h"
 
 #include <stdio.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <string.h>
 #include <ctype.h>
@@ -45,8 +44,11 @@ const char * VERSION = "1.6";
 #include <time.h>
 
 #ifdef __WIN32__
-#include <windows.h>
-#include "windoze.h"
+#  include "windoze.h"
+#endif
+
+#ifndef __MSVC__
+#  include <unistd.h>
 #endif
 
 #include "license.h"

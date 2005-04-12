@@ -375,6 +375,18 @@ SOURCE=.\whatdoyousee.cpp
 SOURCE=.\whatdoyousee.h
 # End Source File
 # End Group
+# Begin Source File
+
+SOURCE=.\config.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\windoze.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\windoze.h
+# End Source File
 # End Group
 # Begin Group "VaultObj"
 
@@ -555,14 +567,6 @@ SOURCE=.\uru.cpp
 # Begin Source File
 
 SOURCE=.\uru.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\windoze.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\windoze.h
 # End Source File
 # End Target
 # End Project

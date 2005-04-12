@@ -3,7 +3,7 @@ Microsoft Developer Studio Workspace File, Format Version 6.00
 
 ###############################################################################
 
-Project: "all"=".\all.dsp" - Package Owner=<4>
+Project: "servers"=".\servers.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -79,6 +79,18 @@ Package=<4>
 ###############################################################################
 
 Project: "uru_vault"=".\uru_vault.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "uruping"=".\uruping.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
