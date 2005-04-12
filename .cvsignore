@@ -75,3 +75,9 @@ uruprp
 uruprppatch
 core.*
 hurusetup
+tmp_msvc
+tmp_msvc/*
+*.ncb
+*.opt
+*.plg
+*.ilk
