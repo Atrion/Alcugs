@@ -31,7 +31,7 @@
 #ifndef __U_URUGGCTRACKINGMSG_H_
 #define __U_URUGGCTRACKINGMSG_H_
 /* CVS tag - DON'T TOUCH*/
-#define __U_URUGGCTRACKINGMSG_H_ID "$Id: urumsg.h,v 1.3 2004/11/20 03:37:32 almlys Exp $"
+#define __U_URUGGCTRACKINGMSG_H_ID "$Id$"
 
 int plNetMsgCustomPlayerStatus(st_unet * net,Byte flag,Byte status,int sid,int ssid,Byte proto);
 int plNetMsgCustomSetGuid(st_unet * net,int sid,Byte proto);

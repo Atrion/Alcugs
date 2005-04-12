@@ -25,7 +25,7 @@
 *******************************************************************************/
 
 /* Don't touch - NEVER */
-const char * ID = "$Id: uruping.cpp,v 1.6 2004/12/01 10:17:06 almlys Exp $";
+const char * ID = "$Id$";
 const char * BUILD =  __DATE__ " " __TIME__;
 const char * SNAME = "UruTestingSuit";
 const char * VERSION = "1.2b";

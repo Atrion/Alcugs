@@ -27,7 +27,7 @@
 //This is the vault subsystem required to parse those vault messages
 
 /* CVS tag - DON'T TOUCH*/
-#define __U_LOBBYSUBSYS_ID "$Id: psauthmsg_internal.cpp,v 1.1 2004/10/24 11:20:27 almlys Exp $"
+#define __U_LOBBYSUBSYS_ID "$Id$"
 const char * _lobby_driver_ver="1.1.1a";
 
 //#define _DBG_LEVEL_ 10

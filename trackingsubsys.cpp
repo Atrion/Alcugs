@@ -27,7 +27,7 @@
 //This is the vault subsystem required to parse those vault messages
 
 /* CVS tag - DON'T TOUCH*/
-#define __U_TRACKINGSUBSYS_ID "$Id: psauthmsg_internal.cpp,v 1.1 2004/10/24 11:20:27 almlys Exp $"
+#define __U_TRACKINGSUBSYS_ID "$Id$"
 const char * _tracking_driver_ver="1.1.1c";
 
 //#define _DBG_LEVEL_ 10
@@ -40,8 +40,11 @@ const char * _tracking_driver_ver="1.1.1c";
 #include <time.h>
 
 #ifdef __WIN32__
+
 #  include "windoze.h"
+
 #endif
+
 
 #include "data_types.h"
 #include "stdebug.h"
@@ -813,3 +816,4 @@ void xml_dump_players(st_unet * net,st_log * f_xml,int sid) {
 		}
 	}
 }
+

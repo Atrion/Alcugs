@@ -38,12 +38,13 @@ RSC=rc.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 0
-# PROP Output_Dir "tmp/uru_auth_r"
-# PROP Intermediate_Dir "tmp/uru_auth_r"
+# PROP Output_Dir "tmp_msvc/uru_auth_r"
+# PROP Intermediate_Dir "tmp_msvc/uru_auth_r"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /W3 /GX /O2 /I "C:\uru_server3 build" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /D "I_AM_THE_AUTH_SERVER" /YX /FD /c
+# ADD CPP /nologo /W3 /GX /O2 /I "C:\uru_server3 build" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /D "I_AM_THE_AUTH_SERVER" /D "__WIN32__" /D "__MSVC__" /FD /c
+# SUBTRACT CPP /YX
 # ADD BASE RSC /l 0x407 /d "NDEBUG"
 # ADD RSC /l 0x407 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -62,12 +63,13 @@ LINK32=link.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 1
-# PROP Output_Dir "tmp/uru_auth_d"
-# PROP Intermediate_Dir "tmp/uru_auth_d"
+# PROP Output_Dir "tmp_msvc/uru_auth_d"
+# PROP Intermediate_Dir "tmp_msvc/uru_auth_d"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /I "C:\uru_server3 build" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /D "I_AM_THE_AUTH_SERVER" /D "DETECT_LEAKS" /FR /YX /FD /GZ /c
+# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /I "C:\uru_server3 build" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /D "I_AM_THE_AUTH_SERVER" /D "__WIN32__" /D "__MSVC__" /FR /FD /GZ /c
+# SUBTRACT CPP /YX
 # ADD BASE RSC /l 0x407 /d "_DEBUG"
 # ADD RSC /l 0x407 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -479,10 +481,6 @@ SOURCE=.\auth_db.cpp
 SOURCE=.\auth_db.h
 # End Source File
 # End Group
-# Begin Source File
-
-SOURCE=..\..\..\..\tracealloc.cpp
-# End Source File
 # Begin Source File
 
 SOURCE=.\uru.cpp

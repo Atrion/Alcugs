@@ -29,7 +29,7 @@
 #ifndef __U_AUTH_H_
 #define __U_AUTH_H_
 /* CVS tag - DON'T TOUCH*/
-#define __U_AUTH_H_ID "$Id: psauthmsg_internal.cpp,v 1.1 2004/10/24 11:20:27 almlys Exp $"
+#define __U_AUTH_H_ID "$Id$"
 
 int authenticate_player(char * login,char * challenge,char * aux_hash,char release,\
 char * ip,char * passwd,char * guid,char * access_level);

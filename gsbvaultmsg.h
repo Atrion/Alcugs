@@ -31,7 +31,7 @@
 #ifndef __U_URUGSBVAULTMSG_H_
 #define __U_URUGSBVAULTMSG_H_
 /* CVS tag - DON'T TOUCH*/
-#define __U_URUGSBVAULTMSG_H_ID "$Id: urumsg.h,v 1.3 2004/11/20 03:37:32 almlys Exp $"
+#define __U_URUGSBVAULTMSG_H_ID "$Id$"
 
 int plNetMsgCustomVaultPlayerList(st_unet * net,Byte * data,int data_size,int sid,Byte proto);
 int plNetMsgCustomVaultPlayerCreated(st_unet * net,Byte status,int sid,Byte proto);

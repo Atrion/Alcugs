@@ -29,7 +29,7 @@
 */
 
 /* CVS tag - DON'T TOUCH*/
-#define __U_URUGLOBBYMSG_ID "$Id: urumsg.cpp,v 1.11 2004/11/28 01:33:03 almlys Exp $"
+#define __U_URUGLOBBYMSG_ID "$Id$"
 
 //#define _DBG_LEVEL_ 10
 

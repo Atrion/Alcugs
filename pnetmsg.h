@@ -29,7 +29,7 @@
 #ifndef __U_PNET_MSG_H_
 #define __U_PNET_MSG_H_
 /* CVS tag - DON'T TOUCH*/
-#define __U_PNET_MSG_H_ID "$Id: pservermsg.h,v 1.1 2004/11/05 02:21:17 almlys Exp $"
+#define __U_PNET_MSG_H_ID "$Id$"
 
 int process_net_plNetMsg(st_unet * net,Byte * buf,int size,int sid);
 

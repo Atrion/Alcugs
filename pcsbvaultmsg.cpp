@@ -29,7 +29,7 @@
 */
 
 /* CVS tag - DON'T TOUCH*/
-#define __U_PCSBVAULT_MSG_ID "$Id: pservermsg.cpp,v 1.7 2004/11/28 01:33:03 almlys Exp $"
+#define __U_PCSBVAULT_MSG_ID "$Id$"
 
 //#define _DBG_LEVEL_ 10
 

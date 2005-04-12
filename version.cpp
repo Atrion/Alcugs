@@ -25,7 +25,7 @@
 *******************************************************************************/
 
 /* CVS tag - DON'T TOUCH*/
-#define __U_VERSION_ID "$Id: urunet.cpp,v 1.6 2004/11/16 22:24:28 almlys Exp $"
+#define __U_VERSION_ID "$Id$"
 
 //#define _DBG_LEVEL_ 10
 

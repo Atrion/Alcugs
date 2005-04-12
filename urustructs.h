@@ -26,7 +26,7 @@
 
 #ifndef _URU_STRUCTS
 #define _URU_STRUCTS
-#define _URU_STRUCTS_ID "$Id: vaultstrs.h,v 1.1 2004/11/05 02:21:18 almlys Exp $"
+#define _URU_STRUCTS_ID "$Id$"
 
 
 typedef struct {

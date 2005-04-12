@@ -31,7 +31,7 @@
 #ifndef __U_URUGVAULTMSG_H_
 #define __U_URUGVAULTMSG_H_
 /* CVS tag - DON'T TOUCH*/
-#define __U_URUGVAULTMSG_H_ID "$Id: urumsg.h,v 1.3 2004/11/20 03:37:32 almlys Exp $"
+#define __U_URUGVAULTMSG_H_ID "$Id$"
 
 #include "vaultstrs.h"
 

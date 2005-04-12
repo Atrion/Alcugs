@@ -43,10 +43,9 @@
 	You know windows sucks and linux rocks.
  */
 
-#define __U_WINDOZE_ID $Id: stdebug.h,v 1.2 2004/12/02 23:09:36 almlys Exp $
+#define __U_WINDOZE_ID $Id$
 
 #ifdef __WIN32__
-
 //#define _DBG_LEVEL_ 10
 
 #include "config.h"
@@ -56,6 +55,7 @@
 #ifndef __MSVC__
 #  include <sys/time.h>
 #endif
+
 
 #include "windoze.h"
 
@@ -213,3 +213,4 @@ char *strsep(char **pcadena, const char *delim) {
 
 
 #endif
+

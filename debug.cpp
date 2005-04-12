@@ -29,7 +29,7 @@
 #ifndef __U_DEBUG_A_I_
 #define __U_DEBUG_A_I_
 /* CVS tag - DON'T TOUCH*/
-#define __U_DEGUB_A_I_ID "$Id: debug.h,v 1.4 2004/12/02 22:31:46 almlys Exp $"
+#define __U_DEGUB_A_I_ID "$Id$"
 
 #include <stdio.h>
 

@@ -30,7 +30,7 @@
 
 #ifndef __U_PYTHON_H_
 #define __U_PYTHON_H_
-#define __U_PYTHON_ID $Id: data_types.h,v 1.2 2004/11/13 02:26:55 almlys Exp $
+#define __U_PYTHON_ID $Id$
 
 //This is the only one, so it can be changed, easily
 #include <python2.2/Python.h>

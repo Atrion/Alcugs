@@ -31,7 +31,7 @@
 #ifndef __U_SETTINGS_DB_H_
 #define __U_SETTINGS_DB_H_
 /* CVS tag - DON'T TOUCH*/
-#define __U_SETTINGS_DB_H_ID "$Id: auth_db.h,v 1.3 2004/12/02 14:40:50 khoufou_cvs Exp $"
+#define __U_SETTINGS_DB_H_ID "$Id$"
 
 char * plVaultSettingsGetKey(char * what,st_sql * db);
 int plVaultSettingsAddKey(char * what,char * value,st_sql * db);

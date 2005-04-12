@@ -26,7 +26,7 @@
 
 #ifndef __U_SETTINGS_H_
 #define __U_SETTINGS_H_
-#define __U_SETTINGS_H_ID "$Id: tmp_config.h,v 1.2 2004/12/02 22:31:46 almlys Exp $"
+#define __U_SETTINGS_H_ID "$Id$"
 
 #if 0
 

@@ -31,7 +31,7 @@
 #ifndef __U_URUGSCAUTHMSG_H_
 #define __U_URUGSCAUTHMSG_H_
 /* CVS tag - DON'T TOUCH*/
-#define __U_URUGSCAUTHMSG_H_ID "$Id: urumsg.h,v 1.3 2004/11/20 03:37:32 almlys Exp $"
+#define __U_URUGSCAUTHMSG_H_ID "$Id$"
 
 int plNetMsgCustomAuthAsk(st_unet * net,Byte * hash,int sid,int ssid,Byte proto);
 

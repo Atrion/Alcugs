@@ -27,7 +27,7 @@
 //server side message parser
 
 /* CVS tag - DON'T TOUCH*/
-#define __U_AUTH_ID "$Id: psauthmsg_internal.cpp,v 1.1 2004/10/24 11:20:27 almlys Exp $"
+#define __U_AUTH_ID "$Id$"
 const char * _auth_driver_ver="1.1.1f-pb";
 
 //#define _DBG_LEVEL_ 10

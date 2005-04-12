@@ -87,6 +87,7 @@
 
 #define random rand
 #define srandom srand
+
 #define usleep Sleep
 
 #define isblank(c) (c==' ' || c=='\t')
@@ -141,3 +142,4 @@ char *strsep(char **pcadena, const char *delim);
 #endif
 
 #endif
+

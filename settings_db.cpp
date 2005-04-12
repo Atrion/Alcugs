@@ -29,7 +29,7 @@
 */
 
 /* CVS tag - DON'T TOUCH*/
-#define __U_SETTINGS_DB_ID "$Id: auth_db.cpp,v 1.6 2004/12/02 22:20:37 almlys Exp $"
+#define __U_SETTINGS_DB_ID "$Id$"
 
 //#define _DBG_LEVEL_ 10
 

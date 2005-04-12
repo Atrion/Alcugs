@@ -29,7 +29,7 @@
 #ifndef __U_VAULTSERVERSYS_H_
 #define __U_VAULTSERVERSYS_H_
 /* CVS tag - DON'T TOUCH*/
-#define __U_VAULTSERVERSYS_H_ID "$Id: psauthmsg_internal.cpp,v 1.1 2004/10/24 11:20:27 almlys Exp $"
+#define __U_VAULTSERVERSYS_H_ID "$Id$"
 
 #include "sql.h"
 

@@ -24,7 +24,7 @@
 *                                                                              *
 *******************************************************************************/
 
-#define __U_SETTINGS_ID "$Id: tmp_config.cpp,v 1.6 2004/12/03 15:19:39 khoufou_cvs Exp $"
+#define __U_SETTINGS_ID "$Id$"
 
 //#define _DBG_LEVEL_ 10
 

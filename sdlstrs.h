@@ -30,7 +30,7 @@
 
 #ifndef __U_SDLSTRS_H_
 #define __U_SDLSTRS_H_
-#define __U_SDLSTRS_H_ID $Id: data_types.h,v 1.2 2004/11/13 02:26:55 almlys Exp $
+#define __U_SDLSTRS_H_ID $Id$
 
 #include "data_types.h"
 #include "urustructs.h"

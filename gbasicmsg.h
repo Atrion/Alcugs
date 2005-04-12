@@ -31,7 +31,7 @@
 #ifndef __U_URUGBASICMSG_H_
 #define __U_URUGBASICMSG_H_
 /* CVS tag - DON'T TOUCH*/
-#define __U_URUGBASICMSG_H_ID "$Id: urumsg.h,v 1.3 2004/11/20 03:37:32 almlys Exp $"
+#define __U_URUGBASICMSG_H_ID "$Id$"
 
 int plNetMsgPing(st_unet * net,U16 flags,double mtime,Byte destination,int sid,int ssid);
 int plNetMsgLeave(st_unet * net,Byte reason,int sid);
