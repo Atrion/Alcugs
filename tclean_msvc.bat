@@ -1,7 +1,7 @@
 REM cleans the temporary MSVC files from the tree
 REM $Id$
 
-tclean
+call tclean
 
 del   "*.ilk"             /f /q
 del   "*.opt"             /f /q
