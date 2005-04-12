@@ -24,39 +24,40 @@
 *                                                                              *
 *******************************************************************************/
 
-#ifndef __U_SDL_PARSER_H_
-#define __U_SDL_PARSER_H_
-#define __U_SDL_PARSER_H_ID "$Id$"
+#ifndef __U_SDL_DESC_H_
+#define __U_SDL_DESC_H_
+#define __U_SDL_DESC_H_ID "$Id: sdlparser.h,v 1.2 2004/11/05 16:00:27 almlys Exp $"
 
-//Utility to uncompress/decompress uru files (works!)
+//init & destroy
+void init_sdl_def(t_sdl_def * sdl,int n);
+void destroy_sdl_def(t_sdl_def * sdl,int n);
 
-#define SSTR 100
+char * sdl_get_var_type(Byte type);
+char * sdl_get_var_type_nspc(Byte type);
+int sdl_get_var_type_from_name(char * buf);
 
-typedef struct {
-	U16 u16k1; //seen always 0x00, but sometimes seen 0x0001
-	Byte static1; //seen always 0x06
-	Byte n_vals; //Number of stored values (or index?)
-	//TODOt_sdl_bin_var * vars; //Each stored value
-	Byte n_strs; //Number of stored structs
-	//TODOt_sdl_bin_var * vars; //Each stored struct
+//internal only
+int sdl_parse_default_options(st_log * f,char * buf,t_sdl_var * var);
+int sdl_compile(st_log * f,Byte * buf,int totalsize,t_sdl_def * sdl);
+int update_sdl_version_structs(st_log * f,t_sdl_def * sdl,int n_sdl);
+//--
 
-} t_sdl_binary;
+//You must use these ones, the reader and the streamer
+//Reads states from plain to struct.
+int sdl_statedesc_reader(st_log * f,Byte * buf,int totalsize,t_sdl_def ** sdl2,int * n_sdl);
+//Streams states from struct to buffer.
+int sdl_statedesc_streamer(st_log * f,Byte ** buf2,t_sdl_def * sdl,int n_sdl);
+//Puts streams from buffer to struct.
+int sdl_parse_contents(st_log * f,Byte * buf,int totalsize,t_sdl_def ** sdl2,int * n_sdl);
 
-//for sdl binary thingyes
-typedef struct {
-	Byte object; //0x00 no UruObjectDesc, 0x01 UruObjectDesc
-	//Byte sdl_magic 0x080
-	//----
-	Byte name[SSTR+1]; //The sdl name (IUSTR)
-	U16 version; //The sdl version
-	st_UruObjectDesc o; //The associated object (only if object==0x01)
-	t_sdl_binary bin; //The sdl binary data
-} t_sdl_head;
+//Returns -1, if not found, elsewhere the index in the sdl struct where is it
+// requires the struct, and the number of elements
+int find_sdl_descriptor(Byte * name,U16 version,t_sdl_def * sdl,int n);
 
+//Creates a new list, but without dupped descriptors, only the latests versions
+int sdl_get_last_descriptors(st_log * f,t_sdl_def ** sdlo,int * n_sdlo,t_sdl_def * sdl,int n_sdl);
 
-int sdl_parse_sub_data(FILE * f,Byte * buf,int totalsize,t_sdl_def * sdl,int sdl_id);
-//to parse sdl files
-int sdl_parse_binary_data(FILE * f,Byte * buf,int totalsize,t_sdl_def * sdl,int n_sdl);
-
+//Reads all descriptors from the specified sdl folder
+int read_sdl_files(st_log * f,char * address,t_sdl_def ** sdl,int * n_sdl);
 
 #endif

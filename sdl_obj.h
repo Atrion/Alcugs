@@ -24,39 +24,15 @@
 *                                                                              *
 *******************************************************************************/
 
-#ifndef __U_SDL_PARSER_H_
-#define __U_SDL_PARSER_H_
-#define __U_SDL_PARSER_H_ID "$Id$"
+#ifndef __U_SDL_OBJ_H_
+#define __U_SDL_OBJ_H_
+#define __U_SDL_OBJ_H_ID "$Id: sdlparser.h,v 1.2 2004/11/05 16:00:27 almlys Exp $"
 
-//Utility to uncompress/decompress uru files (works!)
+#include "urustructs.h"
 
-#define SSTR 100
-
-typedef struct {
-	U16 u16k1; //seen always 0x00, but sometimes seen 0x0001
-	Byte static1; //seen always 0x06
-	Byte n_vals; //Number of stored values (or index?)
-	//TODOt_sdl_bin_var * vars; //Each stored value
-	Byte n_strs; //Number of stored structs
-	//TODOt_sdl_bin_var * vars; //Each stored struct
-
-} t_sdl_binary;
-
-//for sdl binary thingyes
-typedef struct {
-	Byte object; //0x00 no UruObjectDesc, 0x01 UruObjectDesc
-	//Byte sdl_magic 0x080
-	//----
-	Byte name[SSTR+1]; //The sdl name (IUSTR)
-	U16 version; //The sdl version
-	st_UruObjectDesc o; //The associated object (only if object==0x01)
-	t_sdl_binary bin; //The sdl binary data
-} t_sdl_head;
-
-
-int sdl_parse_sub_data(FILE * f,Byte * buf,int totalsize,t_sdl_def * sdl,int sdl_id);
-//to parse sdl files
-int sdl_parse_binary_data(FILE * f,Byte * buf,int totalsize,t_sdl_def * sdl,int n_sdl);
-
+int storeUruObjectDesc(Byte * buf,st_UruObjectDesc * o,int size);
+int streamUruObjectDesc(Byte * buf,st_UruObjectDesc * o);
+void dumpUruObjectDesc(st_log * f,st_UruObjectDesc * o);
+int compareUruObjectDesc(st_UruObjectDesc * a,st_UruObjectDesc * b);
 
 #endif

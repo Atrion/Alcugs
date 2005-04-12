@@ -24,39 +24,49 @@
 *                                                                              *
 *******************************************************************************/
 
-#ifndef __U_SDL_PARSER_H_
-#define __U_SDL_PARSER_H_
-#define __U_SDL_PARSER_H_ID "$Id$"
+/**
+	Basic elemental Uru messages
+*/
 
-//Utility to uncompress/decompress uru files (works!)
+/* CVS tag - DON'T TOUCH*/
+#define __U_URUGNETMSG_ID "$Id: urumsg.cpp,v 1.11 2004/11/28 01:33:03 almlys Exp $"
 
-#define SSTR 100
+//#define _DBG_LEVEL_ 10
 
-typedef struct {
-	U16 u16k1; //seen always 0x00, but sometimes seen 0x0001
-	Byte static1; //seen always 0x06
-	Byte n_vals; //Number of stored values (or index?)
-	//TODOt_sdl_bin_var * vars; //Each stored value
-	Byte n_strs; //Number of stored structs
-	//TODOt_sdl_bin_var * vars; //Each stored struct
+#include "config.h"
 
-} t_sdl_binary;
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
-//for sdl binary thingyes
-typedef struct {
-	Byte object; //0x00 no UruObjectDesc, 0x01 UruObjectDesc
-	//Byte sdl_magic 0x080
-	//----
-	Byte name[SSTR+1]; //The sdl name (IUSTR)
-	U16 version; //The sdl version
-	st_UruObjectDesc o; //The associated object (only if object==0x01)
-	t_sdl_binary bin; //The sdl binary data
-} t_sdl_head;
+#include "stdebug.h"
+#include "protocol.h"
+#include "prot.h"
+#include "urunet.h"
 
+#include "gnetmsg.h"
 
-int sdl_parse_sub_data(FILE * f,Byte * buf,int totalsize,t_sdl_def * sdl,int sdl_id);
-//to parse sdl files
-int sdl_parse_binary_data(FILE * f,Byte * buf,int totalsize,t_sdl_def * sdl,int n_sdl);
+#include "debug.h"
 
+/**
+	Sets the timeout (client)
+*/
+int plNetMsgSetTimeout(st_unet * net,float timeout,int sid) {
+	if(net_check_address(net,sid)!=0) { return -1; }
+	st_uru_client * u=&net->s[sid];
+	int off=0,ret=0;
 
-#endif
+	Byte buf[OUT_BUFFER_SIZE]; //the out buffer
+
+	u->hmsg.cmd=NetMsgSetTimeout;
+	u->hmsg.flags=(plNetKi | plNetAck | plNetCustom);
+
+	*(float *)(buf+off)=timeout;
+
+	print2log(f_uru,"<SND> SetTimeout %f\n",timeout);
+
+	ret=plNetSendMsg(net,buf,off,sid,0);
+
+	return ret;
+}
+

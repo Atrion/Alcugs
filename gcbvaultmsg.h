@@ -24,39 +24,19 @@
 *                                                                              *
 *******************************************************************************/
 
-#ifndef __U_SDL_PARSER_H_
-#define __U_SDL_PARSER_H_
-#define __U_SDL_PARSER_H_ID "$Id$"
+/**
+	Basic message generator
+*/
 
-//Utility to uncompress/decompress uru files (works!)
+#ifndef __U_URUGCBVAULTMSG_H_
+#define __U_URUGCBVAULTMSG_H_
+/* CVS tag - DON'T TOUCH*/
+#define __U_URUGCBVAULTMSG_H_ID "$Id: urumsg.h,v 1.3 2004/11/20 03:37:32 almlys Exp $"
 
-#define SSTR 100
-
-typedef struct {
-	U16 u16k1; //seen always 0x00, but sometimes seen 0x0001
-	Byte static1; //seen always 0x06
-	Byte n_vals; //Number of stored values (or index?)
-	//TODOt_sdl_bin_var * vars; //Each stored value
-	Byte n_strs; //Number of stored structs
-	//TODOt_sdl_bin_var * vars; //Each stored struct
-
-} t_sdl_binary;
-
-//for sdl binary thingyes
-typedef struct {
-	Byte object; //0x00 no UruObjectDesc, 0x01 UruObjectDesc
-	//Byte sdl_magic 0x080
-	//----
-	Byte name[SSTR+1]; //The sdl name (IUSTR)
-	U16 version; //The sdl version
-	st_UruObjectDesc o; //The associated object (only if object==0x01)
-	t_sdl_binary bin; //The sdl binary data
-} t_sdl_head;
-
-
-int sdl_parse_sub_data(FILE * f,Byte * buf,int totalsize,t_sdl_def * sdl,int sdl_id);
-//to parse sdl files
-int sdl_parse_binary_data(FILE * f,Byte * buf,int totalsize,t_sdl_def * sdl,int n_sdl);
-
+int plNetMsgRequestMyVaultPlayerList(st_unet * net,int sid);
+int plNetMsgCreatePlayer(st_unet * net,Byte * avie,Byte * gender, Byte * friendn, Byte * key, Byte * dat,int data_size,int sid);
+int plNetMsgDeletePlayer(st_unet * net,int sid);
 
 #endif
+
+
