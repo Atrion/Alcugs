@@ -41,7 +41,12 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include <unistd.h>
+
+#ifndef __MSVC__
+#  include <unistd.h>
+#else
+#  include <direct.h> //mkdir
+#endif
 
 #include "data_types.h"
 #include "stdebug.h"

@@ -35,9 +35,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
-#include <unistd.h>
 
-//! Return the size of a file
+#ifndef __MSVC__
+#  include <unistd.h>
+#endif
+
+//! Returns the size of a file
 long int get_file_size(char * path);
 
 

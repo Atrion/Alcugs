@@ -41,8 +41,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
-#include <sys/time.h>
-#include <unistd.h>
+
+#ifndef __MSVC__
+#  include <sys/time.h>
+#  include <unistd.h>
+#endif
 
 #include "data_types.h"
 #include "stdebug.h"
@@ -75,7 +78,7 @@
 #include "debug.h"
 
 int plVaultInitVault() {
-	int ret;
+	int ret=1;
 
 	t_vault_node * n=NULL;
 	t_vault_manifest mfs;

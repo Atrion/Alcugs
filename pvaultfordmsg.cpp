@@ -128,7 +128,7 @@ int process_vaultford_plNetMsg(st_unet * net,Byte * buf,int size,int sid) {
 #endif
 			} else { plog(f_err,"ERR: Vault seems to be down!\n"); }
 			break;
-		case NetMsgVaultTask:
+		case NetMsgVaultTask: {
 			n=1;
 			print2log(f_uru,"<RCV> NetMsgVaultTask for %i (%i) \n",u->hmsg.ki,u->ki);
 			//--- store
@@ -154,7 +154,7 @@ int process_vaultford_plNetMsg(st_unet * net,Byte * buf,int size,int sid) {
 				plMainVaultDestroy(&vault_task,0);
 				n=1;
 			}  else { plog(f_err,"ERR: Vault seems to be down!\n"); }
-			break;
+		} break;
 		default:
 			n=UNET_OK;
 			break;

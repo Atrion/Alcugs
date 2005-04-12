@@ -38,7 +38,10 @@
 #include <string.h>
 
 #include <time.h>
-#include <sys/time.h>
+
+#ifndef __MSVC__
+#  include <sys/time.h>
+#endif
 
 #include "data_types.h"
 #include "stdebug.h"

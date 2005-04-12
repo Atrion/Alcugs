@@ -49,10 +49,13 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
-#include <unistd.h>
 
 #ifdef __WIN32__
 #include "windoze.h"
+#endif
+
+#ifndef __MSVC__
+#  include <unistd.h>
 #endif
 
 #include <mysql/mysql.h>

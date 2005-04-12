@@ -40,7 +40,7 @@
 #include <string.h>
 
 #ifdef __WIN32__
-#include "windoze.h"
+#  include "windoze.h"
 #endif
 
 #include <mysql/mysql.h>

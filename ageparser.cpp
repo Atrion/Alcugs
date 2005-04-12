@@ -36,13 +36,16 @@
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
-#include <dirent.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <stdio.h>
 
 #ifdef __WIN32__
-#include "windoze.h"
+#  include "windoze.h"
+#endif
+
+#ifndef __MSVC__
+#  include <dirent.h>
 #endif
 
 #include "data_types.h" //for U32,Byte and others
@@ -356,6 +359,8 @@ int read_age_descriptor(st_log * f,char * address,t_age_def ** p_age) {
 	return ret;
 }
 
+#ifndef __MSVC__
+
 int read_all_age_descriptors(st_log * f,char * address,t_age_def ** p_age) {
 
 	t_age_def * age=NULL;
@@ -423,6 +428,92 @@ int read_all_age_descriptors(st_log * f,char * address,t_age_def ** p_age) {
 
 	return n_ages;
 }
+
+#else
+//using MSVC
+
+int read_all_age_descriptors(st_log * f,char * address,t_age_def ** p_age) {
+
+    bool done;
+    HANDLE filelist;
+    char dir[MAX_PATH+1];
+    WIN32_FIND_DATA filedata;
+
+    sprintf(dir, "%s/*", address);
+
+	t_age_def *age=NULL;
+	char *buf=NULL;
+	int filesize;
+	int ret=0;
+
+	char loopy[500];
+	int n_ages=0;
+
+    filelist = FindFirstFile(dir, &filedata);
+    if (filelist != INVALID_HANDLE_VALUE)
+    {
+        done=false;
+        while(!done)
+        {
+			if((!lstrcmpi(filedata.cFileName+(strlen(filedata.cFileName)-4),".age")) && (!(filedata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))) {
+				print2log(f,"Reading %s...\n",filedata.cFileName);
+				sprintf(loopy,"%s/%s",address,filedata.cFileName);
+
+				n_ages++;
+				if(*p_age==NULL) {
+					*p_age=(t_age_def *)malloc(sizeof(t_age_def) * n_ages);
+				} else {
+					*p_age=(t_age_def *)realloc((void *)*p_age,sizeof(t_age_def) * n_ages);
+				}
+				if(*p_age==NULL) {
+					print2log(f,"ERR: Not enought memory!\n");
+					FindClose(filelist);
+					return -1;
+				}
+				age=&(*p_age)[n_ages-1];
+				init_age_def(age);
+
+				strncpy((char *)age->name,filedata.cFileName,strlen(filedata.cFileName)-4);
+
+				filesize=readWDYS(&buf,loopy);
+				if(filesize<=0) {
+					filesize=readfile(&buf,loopy);
+				}
+				if(filesize<=0) {
+					ret=-2;
+				}
+
+				if(ret==0) {
+					ret=parse_age_descriptor(f_uru,buf,filesize,age);
+				}
+
+				if(buf!=NULL) {
+					free((void *)buf);
+				}
+
+				dump_age_descriptor(f,*age);
+
+				if(ret<0) {
+					print2log(f,"ERR: A problem ocurred reading %s\n",loopy);
+					FindClose(filelist);
+					return -1;
+				}
+			}
+
+            if (!FindNextFile(filelist, &filedata))
+            {
+                if (GetLastError()==ERROR_NO_MORE_FILES)
+                {
+                    done=true;
+                }
+            }
+        }
+    }
+	FindClose(filelist);
+
+	return n_ages;
+}
+#endif //__MSVC__
 
 
 void dump_age_descriptor(st_log * f,t_age_def age) {

@@ -30,18 +30,73 @@
 
 #ifndef __U_WINDOZE_H_
 #define __U_WINDOZE_H_
-#define __U_WINDOZE_H_ID $Id: stdebug.h,v 1.2 2004/12/02 23:09:36 almlys Exp $
+#define __U_WINDOZE_H_ID $Id$
 
 #ifdef __WIN32__
 
+#include <winsock2.h>
+#define socklen_t int
+
+#ifdef __MSVC__
+//surpress some unneeded includes... i know, the list is long
+#  define NOGDICAPMASKS     // CC_*, LC_*, PC_*, CP_*, TC_*, RC_
+#  define NOVIRTUALKEYCODES // VK_*
+#  define NOWINMESSAGES     // WM_*, EM_*, LB_*, CB_*
+#  define NOWINSTYLES       // WS_*, CS_*, ES_*, LBS_*, SBS_*, CBS_*
+#  define NOSYSMETRICS      // SM_*
+#  define NOMENUS           // MF_*
+#  define NOICONS           // IDI_*
+#  define NOKEYSTATES       // MK_*
+#  define NOSYSCOMMANDS     // SC_*
+#  define NORASTEROPS       // Binary and Tertiary raster ops
+#  define NOSHOWWINDOW      // SW_*
+#  define OEMRESOURCE       // OEM Resource values
+#  define NOATOM            // Atom Manager routines
+#  define NOCLIPBOARD       // Clipboard routines
+#  define NOCOLOR           // Screen colors
+#  define NOCTLMGR          // Control and Dialog routines
+#  define NODRAWTEXT        // DrawText() and DT_*
+#  define NOGDI             // All GDI defines and routines
+#  define NONLS             // All NLS defines and routines
+#  define NOMEMMGR          // GMEM_*, LMEM_*, GHND, LHND, associated routines
+#  define NOMETAFILE        // typedef METAFILEPICT
+#  define NOMINMAX          // Macros min(a,b) and max(a,b)
+#  define NOMSG             // typedef MSG and associated routines
+#  define NOOPENFILE        // OpenFile(), OemToAnsi, AnsiToOem, and OF_*
+#  define NOSCROLL          // SB_* and scrolling routines
+#  define NOSERVICE         // All Service Controller routines, SERVICE_ equates, etc.
+#  define NOSOUND           // Sound driver routines
+#  define NOTEXTMETRIC      // typedef TEXTMETRIC and associated routines
+#  define NOWH              // SetWindowsHook and WH_*
+#  define NOWINOFFSETS      // GWL_*, GCL_*, associated routines
+#  define NOCOMM            // COMM driver routines
+#  define NOKANJI           // Kanji support stuff.
+#  define NOHELP            // Help engine interface.
+#  define NOPROFILER        // Profiler interface.
+#  define NODEFERWINDOWPOS  // DeferWindowPos routines
+#  define NOMCX             // Modem Configuration Extensions
+#  include <time.h>
+#else
+#  include <sys/time.h>
+#  include <unistd.h>
+#endif
+
 #include <windows.h>
-#include <sys/time.h>
-#include <unistd.h>
 
 #define mkdir(a,b) mkdir(a)
 
 #define random rand
 #define srandom srand
+#define usleep Sleep
+
+#define isblank(c) (c==' ' || c=='\t')
+
+#ifdef __MSVC__
+#  define strcasecmp lstrcmpi
+#  define snprintf _snprintf
+#  define vsnprintf _vsnprintf
+#  define getcwd(a,b) _getcwd(a,b)
+#endif
 
 //signals
 #define SIGHUP  NSIG+1
@@ -78,9 +133,7 @@
 int gettimeofday(struct timeval *tv, struct timezone *tz);
 
 //another very important missing function
-void usleep(unsigned long usec);
 int getuid(void);
-int isblank(int c);
 int daemon(int a,int b);
 unsigned int alarm(unsigned int sec);
 char *strsep(char **pcadena, const char *delim);

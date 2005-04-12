@@ -42,17 +42,22 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <time.h>
 #include <stdlib.h>
 #include <stdarg.h>
 
 #ifndef __WIN32__
-#include <netdb.h>
-#include <sys/socket.h>
-//#include <netinet/in.h>
-//#include <sys/types.h>
+#  include <netdb.h>
+#  include <sys/socket.h>
+//#  include <netinet/in.h>
+//#  include <sys/types.h>
+#else
+#  include "windoze.h" //vsnprintf
+#endif
+
+#ifndef __MSVC__
+#  include <unistd.h>
 #endif
 
 #include "prot.h" //protocol
@@ -256,7 +261,7 @@ int uru_net_send(st_unet * net,Byte * buf,int n,int sid) {
 	}
 	DBG(4,"After the Sendto call...\n");
 	if(buf2!=NULL) { free((void *)buf2); buf2=NULL; }
-	DBG(2,"returning from uru_net_send RET:%i\n",n)
+	DBG(2,"returning from uru_net_send RET:%i\n",n);
 	return n;
 }
 

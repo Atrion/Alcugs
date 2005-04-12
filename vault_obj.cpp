@@ -120,7 +120,7 @@ void plMainVaultDestroy(t_vault_mos * mobj,int tpots_flag) {
 	DBG(6,"Attempting to Destroy vault allocated data, %i items...\n",mobj->n_itms);
 	if(mobj->itm!=NULL) {
 		for(i=0; i<mobj->n_itms; i++) {
-			DBG(6,"Destroying Item %i...\n",i)
+			DBG(6,"Destroying Item %i...\n",i);
 			plVaultItmDestroy(&mobj->itm[i],tpots_flag);
 			DBG(6,"destroyed.\n");
 		}

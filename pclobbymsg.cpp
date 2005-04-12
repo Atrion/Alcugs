@@ -154,7 +154,7 @@ int process_clobby_plNetMsg(st_unet * net,Byte * buf,int size,int sid) {
 				}
 			}
 			break;
-		case NetMsgFindAge: //0x037A
+		case NetMsgFindAge: { //0x037A
 			n=1;
 			print2log(f_uru,"<RCV> NetMsgFindAge ");
 			Byte aguid[19];
@@ -200,7 +200,7 @@ as->spoint.camera,as->ccr);
 				u->status=RInroute; //set player in route
 			}
 			destroyAgeLinkStruct((void **)&as);
-			break;
+		} break;
 		default:
 			n=UNET_OK;
 			break;

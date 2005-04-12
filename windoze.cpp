@@ -52,8 +52,10 @@
 #include "config.h"
 
 #include <stdio.h>
-#include <sys/time.h>
-#include <windows.h>
+
+#ifndef __MSVC__
+#  include <sys/time.h>
+#endif
 
 #include "windoze.h"
 
@@ -89,7 +91,7 @@ int gettimeofday(struct timeval *tv, struct timezone *tz) {
 
 	//candidate 3
 #if 0
-	//Thanks to Idmo for the next piece of code.
+	//Thanks to The.Modificator for the next piece of code.
 	//But it don't has the resolution required for our purposes.
 	ULARGE_INTEGER tmp;
 	unsigned long long int test = 0x019db1ded53e8000LL;
@@ -190,27 +192,15 @@ int gettimeofday(struct timeval *tv, struct timezone *tz) {
 	return 0;
 }
 
-void usleep(unsigned long usec) {
-	//TODO, if you are a windows programer, please fill this function with the missing code
-	// i'm not going to waste more time searching for an equivalent. It's not my fault
-	// that windows sucks a lot.
-
-	/* Current placeholder code, but you MUST replace this code, or well... */
-	const unsigned int adj=50000; //depending of your proccessor you need to adj this var.
-	unsigned int i;
-	for(i=0; i<adj*usec; i++);
-
-	// I still don't understand why too many people are still using Windows.
-}
-
 //TODO, if you are a windows programer, please fill these functions with the missing code
 // i'm not going to waste more time searching for an equivalent. It's not my fault
 // that windows sucks a lot.
 
 int getuid(void) { return 10000; }
-int isblank(int c) { return( c==' ' || c =='\t'); }
 int daemon(int a,int b) { return 0; }
 unsigned int alarm(unsigned int sec) { return 0; }
+
+///TODO porting: strsep has to be rewritten. sometimes it causes errors.
 
 char *strsep(char **pcadena, const char *delim) {
 	char * what=*pcadena;

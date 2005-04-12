@@ -39,7 +39,6 @@
 #include "config.h"
 
 #include <sys/types.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -47,13 +46,17 @@
 #include <time.h>
 
 #ifdef __WIN32__
-#include "windoze.h"
-#include <winsock.h>
+#  include "windoze.h"
+#  include <winsock.h>
 #else
-#include <sys/socket.h>
-#include <netdb.h>
-//#include <netinet/in.h> //not sure if other OS will need them...
-//#include <arpa/inet.h>
+#  include <sys/socket.h>
+#  include <netdb.h>
+//#  include <netinet/in.h> //not sure if other OS will need them...
+//#  include <arpa/inet.h>
+#endif
+
+#ifndef __MSVC__
+#  include <unistd.h>
 #endif
 
 #include "data_types.h"
@@ -63,7 +66,7 @@
 
 #include "debug.h"
 
-extern char * VERSION;
+extern const char * VERSION;
 
 int CGAS_parse_response(char * msg,int size,char * hash,char * passwd,char * uid);
 

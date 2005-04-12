@@ -33,6 +33,11 @@
 #include <stdio.h>
 #include <sys/types.h>
 
+#ifdef __MSVC__
+#  define mode_t unsigned short
+#endif
+
+
 #include "data_types.h"
 
 #define DF_OPEN      0x0001

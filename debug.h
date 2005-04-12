@@ -31,7 +31,6 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_DEGUB_A_ID "$Id$"
 
-
 #ifdef _DBG_LEVEL_
  #if (_DBG_LEVEL_ == 0)
   #ifdef _DEBUG_
@@ -47,6 +46,44 @@
 #define _DBG_LEVEL_ 0
 #endif
 
+#ifdef __MSVC__
+//this looks like crap, i know... but it should work.
+
+typedef void(*_DBGorERR_pointer)(int a, char *msg, ...);
+//void _DBGorERR(int a,...);
+
+#if (_MSC_VER <= 1200)
+	//MSVC Version 6 or lower (doesn't support __FUNCTION__)
+
+
+	_DBGorERR_pointer _DBG_before(int dbglvl, char *file, int line);
+	_DBGorERR_pointer _ERR_before(int dbglvl, char *file, int line);
+
+	#define DBG _DBG_before(_DBG_LEVEL_,__FILE__,__LINE__) 
+	#define ERR _ERR_before(_DBG_LEVEL_,__FILE__,__LINE__) 
+
+	#define _WHERE(a) __dbg_where(a,__FILE__,__LINE__)
+
+	char * __dbg_where(const char * a,const char * b,int d);
+
+#else
+	//MSVC Version > 6 (should support __FUNCTION__)
+
+	_DBGorERR_pointer _DBG_before(int dbglvl, char *file, char *function, int line);
+	_DBGorERR_pointer _ERR_before(int dbglvl, char *file, char *function, int line);
+
+	#define DBG _DBG_before(_DBG_LEVEL_,__FILE__,__FUNCTION__,__LINE__) 
+	#define ERR _ERR_before(_DBG_LEVEL_,__FILE__,__FUNCTION__,__LINE__) 
+
+	#define _WHERE(a) __dbg_where(a,__FILE__,__FUNCTION__,__LINE__)
+
+	char * __dbg_where(const char * a,const char * b,const char * c,int d);
+
+#endif //(_MSC_VER <= 1200)
+
+#else
+//no MSVC
+
 #define DBG(a,...)  if((a)<=_DBG_LEVEL_) { fprintf(stderr,"DBG%i:%s:%s:%i> ",_DBG_LEVEL_,__FILE__,__FUNCTION__,__LINE__);\
 fprintf(stderr, __VA_ARGS__); fflush(stderr); }
 
@@ -56,6 +93,10 @@ fprintf(stderr, __VA_ARGS__); perror(""); fflush(stderr); }
 #define _WHERE(a) __dbg_where(a,__FILE__,__FUNCTION__,__LINE__)
 
 char * __dbg_where(const char * a,const char * b,const char * c,int d);
+
+#endif //MSVC
+
+
 
 #ifdef _MALLOC_DBG_
 
@@ -86,9 +127,18 @@ extern FILE * fdbg;
 #define _DBG_LEVEL_ 0
 #endif
 
+#ifndef __WIN32__
 #define DBG(a,...)
-
 #define ERR(a,...)
+#else
+__inline void DBG(int a,...) {}
+__inline void ERR(int a,...) {}
+#if 0
+#  define DBG()
+#  define ERR()
+#  pragma warning(disable:4002) //disable warning "too many actual parameters for macro 'identifier'"
+#endif
+#endif
 
 #define _WHERE(a) a
 

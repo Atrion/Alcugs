@@ -33,11 +33,119 @@
 
 #include <stdio.h>
 
-char * __dbg_where(const char * a,const char * b,const char * c,int d) {
+#ifdef __MSVC__
+	//this looks like crap, i know...
+
+	#include <stddef.h>
+	#include <stdarg.h>
+
+	typedef void(*_DBGorERR_pointer)(int a, char *msg, ...);
+
+	int g_dbglvl;
+	char *g_file;
+	#if (_MSC_VER > 1200)
+		char *g_function; //only needed if MSVC Version > 6
+	#endif
+	int g_line;
+	int dbg_or_err; //0=>DBG, 1=>ERR
+
+	#if (_MSC_VER <= 1200)
+		//MSVC Version 6 or lower (doesn't support __FUNCTION__)
+
+		void _DBGorERR(int a, char *text, ...)
+		{
+			if(a<=g_dbglvl)
+			{
+				va_list args;
+				va_start(args, text);
+				fprintf(stderr,dbg_or_err?"ERR":"DBG");
+				fprintf(stderr,"%i:%s:%i> ",/*g_dbglvl*/ a,g_file,g_line);
+				vfprintf(stderr, text, args);
+				fflush(stderr);
+				va_end(args);
+			}
+		}
+
+		_DBGorERR_pointer _DBG_before(int dbglvl, char *file, int line)
+		{
+			g_dbglvl=dbglvl;
+			g_file=file;
+			g_line=line;
+			dbg_or_err = 0;
+			return &_DBGorERR;
+		}
+
+		_DBGorERR_pointer _ERR_before(int dbglvl, char *file, int line)
+		{
+			g_dbglvl=dbglvl;
+			g_file=file;
+			g_line=line;
+			dbg_or_err = 1;
+			return &_DBGorERR;
+		}
+
+		char * __dbg_where(const char * a,const char * b,int d) {
 	static char buffer[500];
-	sprintf(buffer,"%s:%s:%i:%s",b,c,d,a);
+			sprintf(buffer,"%s:%i:%s",b,d,a);
 	return (char *)buffer;
 }
+
+	#else
+		//MSVC Version > 6 (should support __FUNCTION__)
+
+		void _DBGorERR(int a, char *text, ...)
+		{
+			if(a<=g_dbglvl)
+			{
+				va_list b;
+				va_start(b,text);
+				fprintf(stderr,dbg_or_err?"ERR":"DBG");
+				fprintf(stderr,"%i:%s:%s:%i> ",/*g_dbglvl*/ a,g_file,g_function,g_line);
+				vfprintf(stderr, text, b);
+				fflush(stderr);
+				va_end(b);
+			}
+		}
+
+		_DBGorERR_pointer _DBG_before(int dbglvl, char *file, char *function, int line)
+		{
+			g_dbglvl=dbglvl;
+			g_file=file;
+			g_function=function;
+			g_line=line;
+			dbg_or_err = 0;
+			return &_DBGorERR;
+		}
+
+		_DBGorERR_pointer _ERR_before(int dbglvl, char *file, char *function, int line)
+		{
+			g_dbglvl=dbglvl;
+			g_file=file;
+			g_function=function;
+			g_line=line;
+			dbg_or_err = 1;
+			return &_DBGorERR;
+		}
+
+		char * __dbg_where(const char * a,const char * b,const char * c,int d) {
+			static char buffer[500];
+			sprintf(buffer,"%s:%s:%i:%s",b,c,d,a);
+			return (char *)buffer;
+		}
+
+	#endif //(_MSC_VER <= 1200)
+
+#else
+	//no MSVC
+
+	char * __dbg_where(const char * a,const char * b,const char * c,int d) {
+		static char buffer[500];
+		sprintf(buffer,"%s:%s:%i:%s",b,c,d,a);
+		return (char *)buffer;
+	}
+
+#endif
+
 
 #ifdef _MALLOC_DBG_
 

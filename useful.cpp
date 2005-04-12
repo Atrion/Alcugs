@@ -35,10 +35,13 @@
 
 #include <stdlib.h>
 #include <time.h>
-#include <sys/time.h>
 
 #ifdef __WIN32__
-#include "windoze.h"
+#  include "windoze.h"
+#endif
+
+#ifndef __MSVC__
+#  include <sys/time.h>
 #endif
 
 #include "useful.h"

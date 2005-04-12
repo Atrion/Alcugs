@@ -38,7 +38,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+
+#ifndef __MSVC__
+#  include <unistd.h>
+#endif
 
 #include "data_types.h"
 #include "stdebug.h"

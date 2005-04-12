@@ -35,7 +35,11 @@
 #include <time.h>
 
 #ifdef __WIN32__
-#include "windoze.h"
+#  include "windoze.h"
+#endif
+
+#ifdef __MSVC__
+#  include <direct.h> //mkdir
 #endif
 
 #include "stdebug.h"

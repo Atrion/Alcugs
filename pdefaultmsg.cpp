@@ -41,10 +41,15 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include <unistd.h>
 
 #ifdef __WIN32__
-#include "windoze.h"
+#  include "windoze.h"
+#endif
+
+#ifndef __MSVC__
+#  include <unistd.h>
+#else
+#  include <direct.h> //mkdir
 #endif
 
 #include "data_types.h"

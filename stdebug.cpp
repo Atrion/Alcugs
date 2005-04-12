@@ -38,18 +38,22 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <stdarg.h>
 #include <time.h>
-#include <sys/time.h>
 #include <ctype.h>
 #include <errno.h>
 
 #ifdef __WIN32__
-#include "windoze.h"
-#include <windows.h>
+#  include "windoze.h"
 #else
-#include <syslog.h>
+#  include <syslog.h>
+#endif
+
+#ifndef __MSVC__
+#  include <unistd.h>
+#  include <sys/time.h>
+#else
+#  include <direct.h> //mkdir
 #endif
 
 #include "stdebug.h"

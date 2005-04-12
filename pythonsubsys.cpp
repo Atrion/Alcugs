@@ -39,6 +39,14 @@ const char * _python_driver_ver="1.1.1b";
 #include <stdlib.h>
 #include <time.h>
 
+#ifdef __WIN32__
+#  include "windoze.h"
+#endif
+
+#ifdef __MSVC__
+#  include <direct.h>
+#endif
+
 #include "pythonh.h" //python zzzzzzzzzzzz
 
 #include "data_types.h"

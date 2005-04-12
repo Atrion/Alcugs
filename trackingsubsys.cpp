@@ -39,6 +39,10 @@ const char * _tracking_driver_ver="1.1.1c";
 #include <stdlib.h>
 #include <time.h>
 
+#ifdef __WIN32__
+#  include "windoze.h"
+#endif
+
 #include "data_types.h"
 #include "stdebug.h"
 #include "prot.h"
