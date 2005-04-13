@@ -2,8 +2,11 @@ CC=g++
 ARGS=-Wall -g
 # -DDMALLOC_FUNC_CHECK
 
+#the next items are appened to the compilers args
+ALC_INCLUDE_PATH=-I/usr/include/python2.2
+
 #compiler + args
-COMP=${CC} ${ARGS}
+COMP=${CC} ${ARGS} ${ALC_INCLUDE_PATH}
 
 #libraryes
 

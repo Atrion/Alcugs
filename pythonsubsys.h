@@ -33,6 +33,10 @@
 
 #include "ageparser.h"
 
+/* Flags */
+#define PY_EXISTS    0x01
+#define PY_ONIDLE    0x02
+
 extern st_unet * gnet;
 
 extern st_log * f_python;
