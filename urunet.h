@@ -49,24 +49,24 @@
 #define OUT_BUFFER_SIZE 1024
 
 //! Urunet event table <0 errors, 0 ok, >0 events
-#define UNET_PARSEERR -12 /* Error parsing a plNet Msg */
-#define UNET_OUTOFRANGE -11 /* Out of range */
-#define UNET_NOTAUTHED -10 /* Not authenticated */
-#define UNET_REJECTED -9 /* Connection was rejected */
-#define UNET_TOMCONS -8 /* Too many connections, new connection ignored */
-#define UNET_NONURU -7 /* Recieved a message of a unknown protocol */
-#define UNET_CRCERR -6 /* checksum validation failed */
-#define UNET_TOOBIG -5 /* message too big */
-#define UNET_ERR -4 /* an error occurred */
-#define UNET_NOBIND -3 /* Impossible to bind to address */
-#define UNET_INHOST -2 /* Invalid host (cannot resolve or bind to address) */
-#define UNET_FINIT -1  /* Cannot initizalize the netcore */
-#define UNET_OK 0 /* Successfull operation (or netcore timeout loop) */
-#define UNET_MSGRCV 1 /* A new message has been recieved */
-#define UNET_NEWCONN 2 /* New incomming connection stablished */
-#define UNET_TIMEOUT 3 /* Connection to peer has ended the timer */
-#define UNET_TERMINATED 4 /* Connection to peer terminated */
-#define UNET_FLOOD 5 /* This event occurs when a player is flooding the server,
+#define UNET_PARSEERR -12 /* !< Error parsing a plNet Msg */
+#define UNET_OUTOFRANGE -11 /* !<  Out of range */
+#define UNET_NOTAUTHED -10 /* !< Not authenticated */
+#define UNET_REJECTED -9 /* !< Connection was rejected */
+#define UNET_TOMCONS -8 /* !< Too many connections, new connection ignored */
+#define UNET_NONURU -7 /* !< Recieved a message of a unknown protocol */
+#define UNET_CRCERR -6 /* !< checksum validation failed */
+#define UNET_TOOBIG -5 /* !< message too big */
+#define UNET_ERR -4 /* !< an error occurred */
+#define UNET_NOBIND -3 /* !< Impossible to bind to address */
+#define UNET_INHOST -2 /* !< Invalid host (cannot resolve or bind to address) */
+#define UNET_FINIT -1  /* !< Cannot initizalize the netcore */
+#define UNET_OK 0 /* !< Successfull operation (or netcore timeout loop) */
+#define UNET_MSGRCV 1 /* !< A new message has been recieved */
+#define UNET_NEWCONN 2 /* !< New incomming connection stablished */
+#define UNET_TIMEOUT 3 /* !< Connection to peer has ended the timer */
+#define UNET_TERMINATED 4 /* !< Connection to peer terminated */
+#define UNET_FLOOD 5 /* !< This event occurs when a player is flooding the server,
                         aka a DOS attack, normally this happens when fly mode is used,
                         the vault can toggle this event very frequently, so it should
                         be ignored */
@@ -110,7 +110,7 @@ typedef struct {
 	Byte fr_ack;      //last fragmented packet acknowledged
 	U32 ps;           //last acknowledged packet (3 bytes)
 	U32 size;         //packet size (4 bytes)
-	//-- advanced fields (negotation) --
+	//-- advanced fields (negotation) -- ** depreceated **
 	//U32 microseconds; //Store the last microseconds, or session variable
 	//time_t timestamp; //Store the last timestamp
 	//-- custom fields (for fragmentation building)
@@ -147,6 +147,10 @@ typedef struct {
 	int whoami; //peer type
 	Byte validation; //store the validation level (0,1,2)
 	Byte authenticated; //it's the peer authed? (0,1,2)
+	//Byte cflags; **proposed, for next major unet changes **
+	/* 0x01 UNET_CVALID message validated by the checksum test
+		 0x02 UNET_CBUSSY bussy flag is up
+	*/
 	Byte validated; //has the checksum test passed? (0,1)
 	Byte bussy; //bussy flag (0,1) If this flag is activated, messages are keept in the rcv buffer
 	Byte max_version; //peer major version
@@ -154,6 +158,8 @@ typedef struct {
 	Byte tpots; //tpots version 0=undefined, 1=tpots client, 2=non-tpots client
 	U32 ip; //peer ip
 	U16 port; //peer port
+	/* Note IP/port pairs are in the network order, Future plans is to make all host order */
+	/* Note2: proposed change, all timestamp pairs are going to be a single double like the ones used in uruping. */
 	U32 timeout; //the peer timeout
 	U32 timestamp; //last time that we recieved a packet from it
 	U32 microseconds; //last time that ....
@@ -177,7 +183,8 @@ typedef struct {
 	Byte release; //type of client
 	U16 maxPacketSz; //Maxium size of the packets. Must be 1024 (always)
 	Byte access_level; //the access level of the peer
-	Byte status; //the player status, defined inside a states machine
+	Byte status; //the player status, defined inside a states machine (see the states machine doc)
+	Byte paged; //0x00 non-paged player, 0x01 player is paged
 	//flux control
 	U32 bandwidth; //client reported bandwidth (negotiated technology)
 	Byte window; //the peer window size

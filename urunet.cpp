@@ -2506,42 +2506,4 @@ void plNetEndConnection(st_unet * net,int sid) {
 	net->s[sid].status=0;
 }
 
-#if 0
-
-/*---------------------------------------------------------------
-	Sends the TERMINATED message
-----------------------------------------------------------------*/
-int plNetMsgPlayerTerminated(int sock, int code, st_uru_client * u) {
-	int start;
-	int off;
-
-	Byte buf[OUT_BUFFER_SIZE]; //the out buffer
-
-	u->adv_msg.cmd=NetMsgPlayerTerminated; //0x02C6
-	u->adv_msg.format=0x00021000 | plNetVersion; //flags ki + custom
-	u->server.t=0x00; //ack off
-
-	//yes this one is really important
-	u->server.ch=u->validation; //set the validation level of the packet
-
-	///gets the size of the header
-	start=uru_get_header_start(&u->server);
-	off=start;
-
-	print2log(f_uru,"<SND> NetMsgPlayerTerminated. Reason [%i] %s ",\
-	code,unet_get_reason_code(code));
-
-	off+=put_plNetMsg_header(buf+off,u);
-
-	*(buf+off)=(Byte)code; //the reason
-	off++;
-
-	//set total raw size
-	u->server.size=off-start; //Now, we have the correct size of the packet
-
-	off=plNetAdvMsgSender(sock,buf,off,u);
-
-	return off;
-}
-#endif
 
