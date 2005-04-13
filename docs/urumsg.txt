@@ -1,3 +1,4 @@
+$Id$
 
 **Basic**
 ---------
@@ -84,7 +85,10 @@ pmetamsg ->
 **Game**
 --------
 
-gcgamemsg -> Generates most of the game msgs. NetMsgJoinReq,.....
+gcjgamemsg -> Generate: NetMsgJoinReq,....
+*pcjgamemsg -> parser
+
+gcgamemsg -> Generates most of the game msgs. 
 *pcgamemsg -> Parse them..
 
 ggamemsg -> Generates most of the game msgs. NetMsgJoinAck,....

@@ -110,8 +110,7 @@ const char * VERSION = "1.3.1l"; //Urunet 3, updated 27/01/2005
 
 #ifdef I_AM_A_GAME_SERVER
 #include "pcgamemsg.h" //game message parser
-//TODO split the joinAck message to another parser, the game message parser will be
-//  processed only if the player has joined the age.
+#include "pcjgamemsg.h" //game message parser (only the joinreq message)
 #include "gamesubsys.h" //game server subsystem
 #include "pythonsubsys.h" //Python subsystem
 #endif
@@ -962,7 +961,11 @@ int main(int argc, char * argv[]) {
 									ret=process_vaultford_plNetMsg(&net,msg+off,size-off,sid);
 #if defined(I_AM_A_GAME_SERVER)
 									if(ret==0) {
-										ret=process_cgame_plNetMsg(&net,msg+off,size-off,sid); //game message parser
+										if(net.s[sid].paged==0x01) {
+											ret=process_cgame_plNetMsg(&net,msg+off,size-off,sid); //game message parser (other messages)
+										} else {
+											ret=process_cjgame_plNetMsg(&net,msg+off,size-off,sid); //game message parser (netmsgjoinreq)
+										}
 									}
 #endif
 								}
@@ -1014,6 +1017,13 @@ int main(int argc, char * argv[]) {
 						ret=process_default_plNetMsg(&net,msg+off,size-off,sid);
 					}
 
+					/*
+						0  not parsed
+						1  succesfully parsed
+						-1 hack attempt, kick the player, kill it, and report to the authorities what he has done.
+						-2 unknown, the server is depressed because all eforts to understand the message failed.
+						elsewhere, kill or not to kill, that's is the question.
+					*/
 					if(ret!=1) {
 
 #if defined(I_AM_A_GAME_SERVER) || defined(I_AM_A_LOBBY_SERVER)
