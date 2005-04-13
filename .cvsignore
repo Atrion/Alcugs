@@ -1,5 +1,7 @@
 *.o
 *.exe
+*.pyc
+*.swp
 docs/source
 docs/source*
 docs/source/*
