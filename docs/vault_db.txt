@@ -119,7 +119,7 @@ All microseconds fields can be zero without any problem.
  11-14 -> *unused*
  15 -> Player Level
  16-24 -> *unused*
- 25 -> Account Not Activated (Dissabled)
+ 25 -> Account Not Activated (Disabled)
  26-29 -> *unused*
  30 -> Banned
 

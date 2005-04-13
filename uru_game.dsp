@@ -472,6 +472,14 @@ SOURCE=.\gamesubsys.cpp
 
 SOURCE=.\gamesubsys.h
 # End Source File
+# Begin Source File
+
+SOURCE=.\pcgamemsg.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\pcgamemsg.h
+# End Source File
 # End Group
 # Begin Source File
 

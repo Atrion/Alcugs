@@ -81,5 +81,5 @@ urusdl -> Testing tool, and SDL editor.
 ---------------
 adv_gamemsgparser -> UruObjects parser (prp objects, for load clone mainly)
 injector -> Loads/writes a message from the memory. (use files instead)
-msg_parser -> Parses some game messages (for load clone an others)
+msg_parser -> Parses some game messages (for load clone and others)
 
