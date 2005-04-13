@@ -68,7 +68,7 @@ TRACKINGOBJ=${SERVEROBJ} gtrackingmsg.o pctrackingmsg.o trackingsubsys.o agepars
  guid_gen.o
 LOBBYOBJ=${SERVEROBJ} ${CAUTHOBJ} ${CVAULTOBJ} pclobbymsg.o gctrackingmsg.o globbymsg.o\
  pvaultfordmsg.o pvaultroutermsg.o ${VAULTSS} ptrackingmsg.o lobbysubsys.o
-GAMEOBJ=${LOBBYOBJ} gamesubsys.o ${PYTHONSS} ageparser.o
+GAMEOBJ=${LOBBYOBJ} gamesubsys.o ${PYTHONSS} ageparser.o pcgamemsg.o
 
 #base
 BASE=${NETCORE} ${CMHS}

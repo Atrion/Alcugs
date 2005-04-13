@@ -109,6 +109,9 @@ const char * VERSION = "1.3.1l"; //Urunet 3, updated 27/01/2005
 #endif
 
 #ifdef I_AM_A_GAME_SERVER
+#include "pcgamemsg.h" //game message parser
+//TODO split the joinAck message to another parser, the game message parser will be
+//  processed only if the player has joined the age.
 #include "gamesubsys.h" //game server subsystem
 #include "pythonsubsys.h" //Python subsystem
 #endif
@@ -957,6 +960,11 @@ int main(int argc, char * argv[]) {
 									//check for NetMsgVault and VaultTask messages, and directly send
 									// themm to the Vault
 									ret=process_vaultford_plNetMsg(&net,msg+off,size-off,sid);
+#if defined(I_AM_A_GAME_SERVER)
+									if(ret==0) {
+										ret=process_cgame_plNetMsg(&net,msg+off,size-off,sid); //game message parser
+									}
+#endif
 								}
 								if(ret==0) {
 									ret=process_clobby_plNetMsg(&net,msg+off,size-off,sid); //lobby funs
