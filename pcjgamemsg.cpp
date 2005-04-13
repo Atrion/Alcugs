@@ -89,16 +89,15 @@ int process_cjgame_plNetMsg(st_unet * net,Byte * buf,int size,int sid) {
 	}
 #endif
 
-	int i,n=0,off=0,dsid=-1;
-	st_uru_client * vault=NULL;
-	st_uru_client * track=NULL;
+	int n=0; //i,n=0,off=0,dsid=-1;
+	//st_uru_client * vault=NULL;
+	//st_uru_client * track=NULL;
 
 	switch(u->hmsg.cmd) {
-		case NetMsgJoinAck:
+		case NetMsgJoinReq:
 			plog(net->log,"TODO - joinning operation code goes here\n");
 			n=-2;
-		//TODO netmsgjoinack & co
-		// TODO find the turing States machine and write it down, we need it here.
+			break;
 		default:
 			n=UNET_OK;
 			break;

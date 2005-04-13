@@ -89,9 +89,9 @@ int process_cgame_plNetMsg(st_unet * net,Byte * buf,int size,int sid) {
 	}
 #endif
 
-	int i,n=0,off=0,dsid=-1;
-	st_uru_client * vault=NULL;
-	st_uru_client * track=NULL;
+	int n=0; //i,n=0,off=0,dsid=-1;
+	//st_uru_client * vault=NULL;
+	//st_uru_client * track=NULL;
 
 	switch(u->hmsg.cmd) {
 		//TODO netmsgjoinack & co
