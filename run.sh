@@ -45,7 +45,10 @@ if [[ "$1" == "Restoration" || "$1" == "tree" || "$1" == "watcher" ]]; then
 	game="RestorationGuild"
 fi
 
-
+if [ -n "$2" ]; then
+        inguid=$2
+fi
+	
 
 res=`grep "$game " servers.list | awk '{print $1}'`
 
@@ -57,8 +60,8 @@ fi
 port=`grep "$game " servers.list | awk '{print $2}'`
 guid=`grep "$game " servers.list | awk '{print $3}'`
 
-if [ -n "$2" ]; then
-	guid = $2
+if [ -n "$inguid" ]; then
+	guid=$inguid
 fi
 
 echo "Running $game with $guid at $port..."
