@@ -31,7 +31,7 @@
 //#define _DBG_LEVEL_ 10
 
 #include "config.h"
-#include "debug.h"
+//#include "debug.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -1089,7 +1089,7 @@ int sdl_decompress_and_parse_t_sdl_head(st_log *log, Byte *buf,t_sdl_def * sdl,i
 	off++;
 	if((out->object_present!=0x01) && (out->object_present!=0x00))
 	{
-		plog(log,"Unexpected flag; object_present is %02X instead of 0x01 or 0x00\n",parsed_sdl_head.object);
+		plog(log,"Unexpected flag; object_present is %02X instead of 0x01 or 0x00\n",out->object_present);
 		return -1;
 	}
 
@@ -1131,7 +1131,7 @@ int sdl_decompress_and_parse_t_sdl_head(st_log *log, Byte *buf,t_sdl_def * sdl,i
 	off+=2;
 	out->version=*(U16 *)(dbuf+off);
 	off+=2;
-	plog(f,"SDL:%s Version:%i\n",out->name,out->version);
+	plog(log,"SDL:%s Version:%i\n",out->name,out->version);
 	
 	if(out->object_present==0x01)
 	{
