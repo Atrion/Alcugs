@@ -26,7 +26,9 @@
 
 #ifndef __U_SDL_DESC_H_
 #define __U_SDL_DESC_H_
-#define __U_SDL_DESC_H_ID "$Id: sdlparser.h,v 1.2 2004/11/05 16:00:27 almlys Exp $"
+#define __U_SDL_DESC_H_ID "$Id$"
+
+#include "sdlstrs.h"
 
 //init & destroy
 void init_sdl_def(t_sdl_def * sdl,int n);
@@ -61,3 +63,4 @@ int sdl_get_last_descriptors(st_log * f,t_sdl_def ** sdlo,int * n_sdlo,t_sdl_def
 int read_sdl_files(st_log * f,char * address,t_sdl_def ** sdl,int * n_sdl);
 
 #endif
+

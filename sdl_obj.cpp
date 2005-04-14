@@ -24,7 +24,7 @@
 *                                                                              *
 *******************************************************************************/
 
-#define __U_SDL_OBJ_ID "$Id: sdlparser.cpp,v 1.6 2004/11/20 03:37:32 almlys Exp $"
+#define __U_SDL_OBJ_ID "$Id$"
 
 //#define _DBG_LEVEL_ 10
 

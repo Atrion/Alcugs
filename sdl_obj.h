@@ -26,7 +26,7 @@
 
 #ifndef __U_SDL_OBJ_H_
 #define __U_SDL_OBJ_H_
-#define __U_SDL_OBJ_H_ID "$Id: sdlparser.h,v 1.2 2004/11/05 16:00:27 almlys Exp $"
+#define __U_SDL_OBJ_H_ID "$Id$"
 
 #include "urustructs.h"
 

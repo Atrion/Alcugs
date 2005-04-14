@@ -24,7 +24,7 @@
 *                                                                              *
 *******************************************************************************/
 
-#define __U_SDL_DESC_ID "$Id: sdlparser.cpp,v 1.6 2004/11/20 03:37:32 almlys Exp $"
+#define __U_SDL_DESC_ID "$Id$"
 
 //#define _DBG_LEVEL_ 10
 
@@ -36,7 +36,16 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
-#include <dirent.h>
+
+#ifdef __WIN32__
+#  include "windoze.h"
+#endif
+
+#ifndef __MSVC__
+#  include <dirent.h>
+#else
+#  include <direct.h>
+#endif
 
 #include "data_types.h" //for U32,Byte and others
 #include "sdlstrs.h"
@@ -177,7 +186,7 @@ int sdl_parse_default_options(st_log * f,char * buf,t_sdl_var * var) {
 				return -1;
 			}
 		}
-		else if((c==' ' || isblank(c))) {
+		else if(isblank(c)) {
 			if(mode==1) {
 				mode=2;
 				sizeA=i;
@@ -1210,6 +1219,8 @@ int sdl_get_last_descriptors(st_log * f,t_sdl_def ** sdlo,int * n_sdlo,t_sdl_def
 	return 0;
 }
 
+#ifndef __MSVC__
+
 //Reads all descriptors from disk
 int read_sdl_files(st_log * f,char * address,t_sdl_def ** sdl,int * n_sdl) {
 	DIR *dir;
@@ -1263,6 +1274,80 @@ int read_sdl_files(st_log * f,char * address,t_sdl_def ** sdl,int * n_sdl) {
 
 	return 1;
 }
+
+#else
+//using MSVC
+
+int read_sdl_files(st_log * f,char * address,t_sdl_def ** sdl,int * n_sdl) {
+
+    bool done;
+    HANDLE filelist;
+    char dir[MAX_PATH+1];
+    WIN32_FIND_DATA filedata;
+
+    sprintf(dir, "%s/*", address);
+
+	char *buf=NULL;
+	int totalsize,off;
+	int ret=0;
+
+	st_log *err=f;
+
+	char loopy[500];
+
+    filelist = FindFirstFile(dir, &filedata);
+    if (filelist != INVALID_HANDLE_VALUE)
+    {
+        done=false;
+        while(!done)
+        {
+			if((!lstrcmpi(filedata.cFileName+(strlen(filedata.cFileName)-4),".sdl")) && (!(filedata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))) {
+				print2log(f,"Reading %s...\n",filedata.cFileName);
+				sprintf(loopy,"%s/%s",address,filedata.cFileName);
+
+				totalsize=readWDYS((char **)&buf,loopy);
+				if(totalsize<0) {
+					totalsize=readfile((char **)&buf,loopy);
+				}
+				if(totalsize<0) {
+					print2log(err,"ERR: A problem ocurred reading %s\n",loopy);
+					return -1;
+				}
+				off=0;
+				if(sdl_statedesc_reader(f,(Byte *)(buf+off),totalsize-off,sdl,n_sdl)<0) {
+					print2log(err,"ERR: SDL error in statedesc reader call, Something has gone wrong, head for the cover!\n");
+					return -1;
+				}
+				if(buf!=NULL) {
+					free((void *)buf);
+				}
+			}
+
+            if (!FindNextFile(filelist, &filedata))
+            {
+                if (GetLastError()==ERROR_NO_MORE_FILES)
+                {
+                    done=true;
+                }
+            }
+        }
+    }
+	FindClose(filelist);
+
+	//dump the SDL binary info
+	Byte * dbuf=NULL;
+	totalsize=sdl_statedesc_streamer(f,&dbuf,*sdl,*n_sdl);
+
+	char dumps_path[200];
+	sprintf(dumps_path,"%s/dumps",stdebug_config->path);
+	mkdir(dumps_path,00750);
+	strcat(dumps_path,"/sdl_dump.raw");
+	savefile((char *)dbuf,totalsize,dumps_path);
+
+	return 1;
+}
+
+#endif //__MSVC__
 
 
 #ifdef _SDL_TEST_
@@ -1361,3 +1446,4 @@ int main(int argc,char * argv[]) {
 }
 
 #endif
+
