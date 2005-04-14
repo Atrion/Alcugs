@@ -68,8 +68,14 @@
 
 #include "debug.h"
 
-const int vault_version=1; //Please only change on major vault format changes, and be sure that
+const int vault_version=2; //Please only change on major vault format changes, and be sure that
 //the plVaultMigrate has implementation for the required changes!!!
+/* Version history:
+		0 -> old very old format
+		1 -> last version
+		2 -> extremely experimental, adds DniCityX2Finale to allow end game sequence play
+		//NOTE THIS WILL HAVE UNEXPECTED AND UNWANTED RESULTS ON NON TPOTS CLIENTS!!!
+*/
 
 extern char * ghood_desc;
 extern char * ghood_name;
@@ -2903,6 +2909,122 @@ int plVaultMigrate_from0to1(st_sql * db) {
 	return ret;
 }
 
+/**
+	WARNING. THIS COULD HAVE UNEXPECTED RESULTS
+*/
+int plVaultMigrate_from1to2(st_sql * db) {
+	MYSQL_RES *result; //the results
+	MYSQL_ROW row; //a mysql row
+
+	char query[1024];
+	int ret; //for store result codes
+
+	//int vault_id;
+	int i;
+
+	ret=sql_begin(db);
+	if(ret!=SQL_OK) {
+		return -1;
+	}
+
+	//now re-create the hood & the city
+	sprintf(query,"Select v.idx from %s v where v.type=2",vault_table);
+
+	if(sql_query(db,query,_WHERE("blah"))!=SQL_OK) {
+		ret=-1;
+	} else {
+		ret=0;
+		result = mysql_store_result(db->conn); //store the query results
+
+		if(result==NULL) {
+			//print_mysql_error(conn);
+		} else {
+			//get the number of rows
+			ret=mysql_num_rows(result);
+
+			int ki;
+
+			for(i=0; i<ret; i++) {
+				row=mysql_fetch_row(result);
+
+				ki=atoi(row[0]);
+
+				//create all the garbage here
+				t_vault_node n;
+				t_vault_manifest mfs;
+				init_node(&n);
+
+				//Now link that player with Ae'gura and with the Hood
+				n.type=KAgeInfoNode; // 33
+				strcpy((char *)n.entry_name,"DniCityX2Finale");
+				int city_id; //,hood_id;
+				t_AgeInfoStruct ainfo;
+				t_SpawnPoint spoint;
+				memset(&ainfo,0,sizeof(t_AgeInfoStruct));
+				memset(&spoint,0,sizeof(t_SpawnPoint));
+				Byte a_guid[17];
+
+				strcpy((char *)spoint.title,"Default");
+				strcpy((char *)spoint.name,"LinkInPointDefault");
+
+				city_id=plVaultFindNode(&n,&mfs,0,db);
+				if(city_id<=0) {
+					//then create it
+					strcpy((char *)ainfo.filename,"DniCityX2Finale");
+					strcpy((char *)ainfo.instance_name,"DniCityX2Finale");
+					strcpy((char *)ainfo.user_name,"");
+					strcpy((char *)ainfo.display_name,"");
+					generate_newguid(a_guid,(Byte *)"city",0);
+					ascii2hex2(ainfo.guid,a_guid,8);
+					city_id=plVaultCreateAge(&ainfo);
+				}
+				if(city_id>0) {
+					//Add the linking point
+					plVaultAddLinkingPoint(NULL,ki,city_id,&spoint);
+				}
+
+				destroy_node(&n);
+
+			}
+			mysql_free_result(result);
+		}
+	}
+
+	if(ret>=0) {
+		sprintf(query,"UPDATE %s SET `timestamp` = '%i', `entry_value` = '1'\
+ where type=29 and entry_name='Blah';",vault_table,(int)time(NULL));
+
+		if(sql_query(db,query,_WHERE("blah"))!=SQL_OK) {
+			//print_mysql_error(conn);
+		}
+	}
+	
+		
+	if(ret>=0) {
+
+		//query here the database
+		char build[200];
+		sprintf(build,"%s Build: %s Id: %s",text2,BUILD,ID);
+		char version[200];
+		sprintf(version,"%s %s",SNAME,VERSION);
+
+		sprintf(query,"UPDATE %s SET `entry2` = '%s', `sub_entry_name` = '%s', `torans` = '%i'\
+ where type=6;",vault_table,build,version,vault_version);
+
+		//print2log(f_vlt,"\nplVaultMigrate_from0to1, Query: %s\n",query);
+
+		if(sql_query(db,query,_WHERE("blah"))!=SQL_OK) {
+			//print_mysql_error(conn);
+			ret=-1;
+		} else {
+			ret=0;
+		}
+	}
+
+	sql_end(db);
+	return ret;
+}
+
 
 int plVaultMigrate(int ver,st_sql * db) {
 
@@ -2914,8 +3036,8 @@ int plVaultMigrate(int ver,st_sql * db) {
 			if(ret<0) break;
 		case 1:
 			//do here stuff to migrate from 1 to 2
-			//ret=plVaultMigrate_from1to2();
-			//if(ret<0) break;
+			ret=plVaultMigrate_from1to2(db);
+			if(ret<0) break;
 		case 2:
 			//do here stuff to migrate from 2 to 3
 			//ret=plVaultMigrate_from2to3();

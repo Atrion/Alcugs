@@ -584,6 +584,32 @@ int plVaultCreatePlayer(st_unet * net,Byte * login,Byte * guid, Byte * avie,Byte
 				plVaultAddOwnerToAge(net,hood_id,ki);
 			}
 
+			/******* EXPERIMENTAL BLOCK OF CODE */
+			int finale_id;
+			
+			strcpy((char *)n[3].entry_name,"DniCityX2Finale");
+			memset(&ainfo,0,sizeof(t_AgeInfoStruct));
+
+			strcpy((char *)spoint.title,"Default");
+			strcpy((char *)spoint.name,"LinkInPointDefault");
+
+			finale_id=plVaultFindNode(&n[3],&mfs,0,&db);
+			if(finale_id<=0) {
+				//then create it
+				strcpy((char *)ainfo.filename,"DniCityX2Finale");
+				strcpy((char *)ainfo.instance_name,"DniCityX2Finale");
+				strcpy((char *)ainfo.user_name,(char *)"");
+				strcpy((char *)ainfo.display_name,(char *)"");
+				generate_newguid(a_guid,(Byte *)"DniCityX2Finale",0);
+				ascii2hex2(ainfo.guid,a_guid,8);
+				finale_id=plVaultCreateAge(&ainfo);
+			}
+			if(finale_id>0) {
+				//Add the linking point
+				plVaultAddLinkingPoint(net,ki,finale_id,&spoint);
+				plVaultAddOwnerToAge(net,finale_id,ki);
+			}
+			/**** EXPERIMENTAL BLOCK OF CODE ENDS */
 		}
 
 		ret=ki; //o well let's go to test this initial stuff .. hummm!
