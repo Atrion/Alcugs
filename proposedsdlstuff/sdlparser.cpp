@@ -414,7 +414,7 @@ int sdl_parse_t_sdl_binary(st_log * log, Byte * buf,t_sdl_def * sdl,int n_sdl,in
 					break;
 				}
 				default:
-					plog(log,"    Error, unexpected type %02X.\n",sdl[sdl_id].vars[index_number].type);
+					plog(log,"    Error, unexpected type 0x%02X.\n",sdl[sdl_id].vars[index_number].type);
 					return -1;
 			}
 
@@ -545,7 +545,7 @@ int sdl_parse_t_sdl_binary(st_log * log, Byte * buf,t_sdl_def * sdl,int n_sdl,in
 					plog(log,"\n    [/sub-SDL list]\n");
 				} break;
 				default:
-					plog(log,"    Error, unexpected type %02X in the structure list. (It should just contain tuples of the 0x05 type.)\n",sdl[sdl_id].vars[realindex].type);
+					plog(log,"    Error, unexpected type 0x%02X in the structure list. (It should just contain tuples of the 0x05 type.)\n",sdl[sdl_id].vars[realindex].type);
 					return -1;
 			}
 		}
@@ -890,7 +890,7 @@ int sdl_stream_t_sdl_binary(t_sdl_binary * bin,t_sdl_def * sdl,int n_sdl,int sdl
 	return off;
 }
 
-/**	\brief creates a plain t_sdl_binary structure by using an SDL definition as a template
+/**	\brief creates a plain t_sdl_binary structure by using a SDL definition as a template
 	\param bin the t_sdl_binary in which the data will be stored
 	\param sdl Pointer to the SDL definitions
 	\param n_sdl counter of the SDL definitions
@@ -1021,21 +1021,23 @@ int sdl_update_t_sdl_binary(/*t_sdl_def * sdl,int n_sdl,int sdl_id,*/t_sdl_binar
 					memcpy(bin1->structs[i].data,bin2->structs[j].data,bin1->structs[i].data_size);
 				}
 
+#if 0
 				gettimeofday((timeval *)&bin1->values[i].timestamp,0);
 				//the plasma servers don't do something like that...
+#endif
 
 				break;
 			}
 		}
 		if(how == 1)
 		{
-			/*
+#if 0
 			//add the flag 0x04 (timestamp)
 			if(bin1->structs[i].flags & 0x08)
 				bin1->structs[i].flags = 0x0C; //0x04|0x08;
 			else
 				bin1->structs[i].flags = 0x04;
-			*/
+#endif
 
 			bin1->structs[i].string2[0]=0x00; //remove the string...
 		}
