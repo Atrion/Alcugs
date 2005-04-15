@@ -3,7 +3,6 @@ We are working to fix them up.
 
 Vault
 * Vault Manager shows garbage on the create age guid on new avies.
-* New created players should not be poping into the age owners folder of DniCityX2Finale.
 
 Game/Vault (vclient communications)
 * Vault task RegisterVisitAge is not working. This causes the issues related

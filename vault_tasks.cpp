@@ -607,7 +607,7 @@ int plVaultCreatePlayer(st_unet * net,Byte * login,Byte * guid, Byte * avie,Byte
 			if(finale_id>0) {
 				//Add the linking point
 				plVaultAddLinkingPoint(net,ki,finale_id,&spoint);
-				plVaultAddOwnerToAge(net,finale_id,ki);
+				//plVaultAddOwnerToAge(net,finale_id,ki);
 			}
 			/**** EXPERIMENTAL BLOCK OF CODE ENDS */
 		}
