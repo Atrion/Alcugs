@@ -34,9 +34,6 @@
 
 #ifdef __WIN32__
 
-#include <winsock2.h>
-#define socklen_t int
-
 #ifdef __MSVC__
 //surpress some unneeded includes... i know, the list is long
 #  define NOGDICAPMASKS     // CC_*, LC_*, PC_*, CP_*, TC_*, RC_
@@ -81,9 +78,13 @@
 #  include <unistd.h>
 #endif
 
-#include <windows.h>
+#define socklen_t int
 
 #define mkdir(a,b) mkdir(a)
+#ifdef __MSVC__
+#  pragma warning(disable: 4003)
+//don't show the warning C4003 (not enough actual parameters for macro 'identifier')
+#endif
 
 #define random rand
 #define srandom srand
@@ -98,6 +99,9 @@
 #  define vsnprintf _vsnprintf
 #  define getcwd(a,b) _getcwd(a,b)
 #endif
+
+#include <winsock2.h>
+#include <windows.h>
 
 //signals
 #define SIGHUP  NSIG+1

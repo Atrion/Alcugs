@@ -445,6 +445,10 @@ SOURCE=.\pythonglue.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\pythonh.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\pythonh.h
 # End Source File
 # Begin Source File
@@ -479,6 +483,14 @@ SOURCE=.\pcgamemsg.cpp
 # Begin Source File
 
 SOURCE=.\pcgamemsg.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\pcjgamemsg.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\pcjgamemsg.h
 # End Source File
 # End Group
 # Begin Source File

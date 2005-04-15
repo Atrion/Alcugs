@@ -202,13 +202,22 @@ unsigned int alarm(unsigned int sec) { return 0; }
 
 ///TODO porting: strsep has to be rewritten. sometimes it causes errors.
 
-char *strsep(char **pcadena, const char *delim) {
+char *strsep(char **pcadena, const char *delim)
+{
 	char * what=*pcadena;
-	while(**pcadena!=0 && **pcadena!=*delim) {
-		*pcadena++;
+	while(**pcadena!=0 && **pcadena!=*delim)
+	{
+		(*pcadena)++;
 	}
-	if(**pcadena==0) return NULL;
-	else return what;
+
+	if(**pcadena==0)
+		return NULL;
+	else
+	{
+		**pcadena=0;
+		(*pcadena)++;
+		return what;
+	}
 }
 
 

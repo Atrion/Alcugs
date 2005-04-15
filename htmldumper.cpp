@@ -486,7 +486,7 @@ const char * vault_get_sub_data_type(Byte type) {
 //html dumper
 int vault_parse_node_data(st_log * f, t_vault_node * n) {
 	char * cstamp;
-	Byte guid[9];
+	Byte guid[17];
 	print2log(f,"<h1 id=\"%i\">Node %i</h1>\n",n->index,n->index);
 
 	//print2log(f,"<b>Sep1:</b> %08X(%i)<br>\n",n->unkA,n->unkA);
@@ -748,7 +748,7 @@ void htmlParseCreatableStream(st_log * f,void * data,Byte id) {
 				}
 				print2log(f,"<tr><td bgcolor=green><font color=blue>Node: %i</font></td></tr>",node.index);
 				print2log(f,"<tr><td>\n");
-				vault_parse_node_data(f,&node);
+				vault_parse_node_data(f,&node); //last thing before the crash
 				print2log(f,"</td></tr>\n");
 				destroy_node(&node);
 				init_node(&node);
