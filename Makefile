@@ -59,7 +59,7 @@ CVAULTOBJ=psbvaultmsg.o gbvaultmsg.o pcbvaultmsg.o gcsbvaultmsg.o
 VAULTSS=vault_obj.o vaultsubsys.o vnodes.o gvaultmsg.o htmldumper.o
 
 #python sub system
-PYTHONSS=pythonsubsys.o pythonglue.o
+PYTHONSS=pythonsubsys.o pythonglue.o pythonh.o
 
 AGEPARSER=
 

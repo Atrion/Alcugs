@@ -28,7 +28,7 @@
 const char * ID = "$Id$";
 const char * BUILD =  __DATE__ " " __TIME__;
 const char * SNAME = "Alcugs (uru server)";
-const char * VERSION = "1.3.1l"; //Urunet 3, updated 27/01/2005
+const char * VERSION = "1.3.1m"; //Urunet 3, updated 27/01/2005
 
 //#define _DBG_LEVEL_ 10
 

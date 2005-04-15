@@ -24,24 +24,86 @@
 *                                                                              *
 *******************************************************************************/
 
-//server side message parser
+//Python Subsystem
 
-#ifndef __U_PYTHONSUBSYS_H_
-#define __U_PYTHONSUBSYS_H_
 /* CVS tag - DON'T TOUCH*/
-#define __U_PYTHONSUBSYS_H_ID "$Id$"
+#define __U_PYTHONH_ID "$Id$"
 
-#include "ageparser.h"
+//#define _DBG_LEVEL_ 10
 
-extern st_unet * gnet;
+#include "config.h"
 
-extern st_log * f_python;
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
-int init_python_subsys(st_unet * net);
-void stop_python_subsys();
-void reload_python_subsys(st_unet * net);
-void update_python_subsys();
-void python_subsys_idle_operation();
+#include "pythonh.h"
 
-#endif
+#include "debug.h"
+
+/** Imports a new Module
+*/
+st_pymodule * pyt_import(char * name) {
+	st_pymodule * ret=NULL;
+	PyObject * pName;
+	pName = PyString_FromString(name);
+	//TODO error checking
+	ret=(st_pymodule *)malloc(sizeof(st_pymodule) * 1);
+	if (ret!=NULL) {
+		memset(ret,0,sizeof(st_pymodule));
+		ret->obj = PyImport_Import(pName);
+		if(ret->obj!=NULL) {
+			ret->flags |= PYN_EXISTS;
+		} else {
+			free((void *)ret);
+			ret=NULL;
+		}
+	}
+	Py_DECREF(pName); //destroy pName
+	return ret;
+}
+
+/** Runs a method. Returns a new reference (returned value), that you must destroy it */
+PyObject * pyt_call(st_pymodule * where, char * what, PyObject * pArgs) {
+	if(where==NULL || !(where->flags & PYN_EXISTS)) return NULL;
+
+	PyObject * pDict, * pFunc, * pValue;
+	
+	pDict = PyModule_GetDict(where->obj);
+	/* pDict, borrowed reference */
+	pFunc = PyDict_GetItemString(pDict,what);
+	/* pFunc, borrowed */
+	//Check if can be called
+	if(pFunc && PyCallable_Check(pFunc)) {
+		//call it
+		pValue = PyObject_CallObject(pFunc, pArgs);
+	} else { 
+		return NULL; 
+	}
+	return pValue;
+}
+
+/** Returns true (1) if the selected method exists, else it returns false (0) */
+int pyt_exists(st_pymodule * where, char * what) {
+	if(where==NULL || !(where->flags & PYN_EXISTS)) return 0;
+
+	PyObject * pDict, * pFunc;
+	
+	pDict = PyModule_GetDict(where->obj);
+	/* pDict, borrowed reference */
+	pFunc = PyDict_GetItemString(pDict,what);
+	/* pFunc, borrowed */
+	//Check if can be called
+	if(pFunc && PyCallable_Check(pFunc)) { return 1; }
+	return 0;
+}
+
+/** If a python error ocurred, returns 1 and prints it to the python log, else returns 0 */
+int pyt_error() {
+	if(PyErr_Occurred()) {
+		PyErr_Print();
+		return 1;
+	}
+	return 0;
+}
 

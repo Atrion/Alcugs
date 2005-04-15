@@ -43,14 +43,15 @@
 #define plNetKi         0x00001000 //* contains the ki
 //but we don't know the exact place, so we placed them anywhere.
 #define plNetGUI        0x00004000 //* contains a player guid
-//#define plNetIp2        0x10000000 //wrong plNetIP
+//#define plNetIP        0x10000000 //wrong plNetIP
+//Mental Note: The current GoE shard build is still using the wrong plNetIP, all servers must be updated at the same time.
 #define plNetIP         0x00000010 //* This message should contain client's ip address
 
 //Suppositions for unidentified flags.
 #define plNetCustom     0x00020000 //¿*? Unknown purpose flag
 
 #define plNetStateReq   0x00000800 //(unknown, seen on the 1st plNetMsgStateRequest)
-#define plNetP2P        0x08000000 //p2p request?
+#define plNetP2P        0x08000000 //p2p request? (seen on plNetMsgJoinReq)
 
 
 //An '*' means that the flag adds a new data field in the unet header.
@@ -250,6 +251,10 @@
 #define NetMsgCustomVaultPlayerStatus  0x1012
 #define NetMsgCustomMetaRegister       0x1013
 #define NetMsgCustomMetaPing           0x1014
-
+#define NetMsgCustomServerVault        0x1015
+#define NetMsgCustomServerVaultTask    0x1016
+#define NetMsgCustomSaveGame           0x1017
+#define NetMsgCustomLoadGame           0x1018
+#define NetMsgCustomCmd                0x1019
 
 #endif

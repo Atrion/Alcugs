@@ -24,11 +24,11 @@
 *                                                                              *
 *******************************************************************************/
 
-//This is the vault subsystem required to parse those vault messages
+//Python Subsystem
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_PYTHONSUBSYS_ID "$Id$"
-const char * _python_driver_ver="1.1.1b";
+const char * _python_driver_ver="1.1.1d";
 
 //#define _DBG_LEVEL_ 10
 
@@ -74,6 +74,7 @@ st_log * f_python=NULL;
 
 st_unet * gnet=NULL;
 
+st_pymodule * pym_xSystem,* pym_xAge;
 
 int init_python_subsys(st_unet * net) {
 	int ret=0;
@@ -94,8 +95,9 @@ int init_python_subsys(st_unet * net) {
 	//Start up Python
 	Py_Initialize();
 
-	//glue
+	//set up glues here
 	initalcugs();
+	//end glue setting
 
 	//set scripts paths
 	char pydir[500];
@@ -118,6 +120,59 @@ print sys.path\n");
 	plog(f_python,"INF: Python subsystem v %s started\n",_python_driver_ver);
 	plog(f_python,"Python Version: %s\n",Py_GetVersion());
 
+	//import xSystem
+	pym_xSystem=pyt_import("xSystem");
+	if(pym_xSystem==NULL) {
+		pyt_error();
+	}
+	//import xAge
+	pym_xAge=pyt_import(net->name);
+	if(pym_xAge==NULL) {
+		pyt_error();
+	}
+
+#if 0
+	//OLD CODE, 2 b rmd
+	//try to import xSystem module
+	PyObject * pName, * pDict, * pFunc, * pValue;
+	
+	pName = PyString_FromString("xSystem");
+	//TODO error checking
+	p_xSystem = PyImport_Import(pName);
+	Py_DECREF(pName); //destroy pName
+	
+	//try to run onStartup() method
+	if(p_xSystem!=NULL) {
+		p_xSystem_f |= PYN_EXISTS;
+		pDict = PyModule_GetDict(p_xSystem);
+		/* pDict, borrowed reference */
+		pFunc = PyDict_GetItemString(pDict,"onStartup");
+		/* pFunc, borrowed */
+		//Check if can be called
+		
+		if(pFunc && PyCallable_Check(pFunc)) {
+			//onStartup()
+			pValue = PyObject_CallObject(pFunc, NULL);
+			if(pValue!=NULL) {
+				plog(f_python,"xSystem.onStartup() ret:%ld\n",PyInt_AsLong(pValue));
+				Py_DECREF(pValue);
+			} else {
+				PyErr_Print();
+			}
+			//MENTAL NOTE: borrowed references must not be Py_DECREF-ed
+		} else if (PyErr_Occurred()) { //on Error
+			PyErr_Print();
+			plog(f_python,"This module don't has an onStartup() method\n");
+		}
+	} else {
+		PyErr_Print();
+		plog(f_python,"Failed to import xSystem!");
+	}
+
+	abort();
+#endif
+
+#if 1 //hmmm
 	sprintf(buf,"\
 import traceback\n\
 try:\n\
@@ -134,13 +189,20 @@ except:\n\
 \n\
 ",net->name,net->name);
 	PyRun_SimpleString(buf);
-
-	PyRun_SimpleString("xSystem.onStartup()");
-	sprintf(buf,"%s.onStartup()",net->name);
-	PyRun_SimpleString(buf);
+#endif
+	
+	//if(pym_xSystem!=NULL) {
+	if(pyt_exists(pym_xSystem,"onStartup")) {
+		PyRun_SimpleString("xSystem.onStartup()");
+	}
+	//if(pym_xAge!=NULL) {
+	if(pyt_exists(pym_xAge,"onStartup")) {
+		sprintf(buf,"%s.onStartup()",net->name);
+		PyRun_SimpleString(buf);
+	}
 
 	logflush(f_python);
-
+	
 	return ret;
 }
 
@@ -166,10 +228,14 @@ except:\n\
 ",gnet->name,gnet->name);
 	PyRun_SimpleString(buf);
 */
-	PyRun_SimpleString("xSystem.onShutdown()");
-	sprintf(buf,"%s.onShutdown()",gnet->name);
-	PyRun_SimpleString(buf);
 
+	if(pyt_exists(pym_xSystem,"onShutdown")) {
+		PyRun_SimpleString("xSystem.onShutdown()");
+	}
+	if(pyt_exists(pym_xAge,"onShutdown")) {
+		sprintf(buf,"%s.onShutdown()",gnet->name);
+		PyRun_SimpleString(buf);
+	}
 
 	plog(f_python,"INF: python subsystem stopped\n");
 
@@ -195,8 +261,12 @@ void update_python_subsys() {
 void python_subsys_idle_operation() {
 	char buf[1024];
 
-	PyRun_SimpleString("xSystem.onIdle()");
-	sprintf(buf,"%s.onIdle()",gnet->name);
-	PyRun_SimpleString(buf);
+	if(pyt_exists(pym_xSystem,"onIdle")) {
+		PyRun_SimpleString("xSystem.onIdle()");
+	}
+	if(pyt_exists(pym_xAge,"onIdle")) {
+		sprintf(buf,"%s.onIdle()",gnet->name);
+		PyRun_SimpleString(buf);
+	}
 }
 

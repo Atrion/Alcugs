@@ -35,5 +35,25 @@
 //This is the only one, so it can be changed, easily
 #include <Python.h>
 
+#include "data_types.h"
+
+//stuff
+
+/* Flags */
+#define PYN_EXISTS    0x01
+#define PYN_ONIDLE    0x02
+
+typedef struct {
+	char * name;
+	Byte flags;
+	PyObject * obj;
+} st_pymodule;
+
+st_pymodule * pyt_import(char * name);
+PyObject * pyt_call(st_pymodule * where, char * what, PyObject * pArgs);
+int pyt_exists(st_pymodule * where, char * what);
+int pyt_error();
+
+
 #endif
 
