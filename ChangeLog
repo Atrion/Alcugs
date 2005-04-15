@@ -1,392 +1,2103 @@
-2004-12-01 00:20  almlys
-
-	* BUGS, Feature-Requests, ageparser.cpp, ageparser.h, guid_gen.cpp,
-	  guid_gen.h, install.sh, pstrackingmsg.cpp, uru.cpp,
-	  vault_tasks.cpp: Protection against bogus ages & initial changes
-	  to allow multiple instances
-
-2004-11-30 11:35  khoufou_cvs
-
-	* uruconvert.cpp, vault_tasks.cpp: More work on uruconvert.
-	  Cleanup up vault_tasks.cpp and corrected a possible overflow on
-	  welcome text (missing \0 in count).
-
-2004-11-30 01:45  khoufou_cvs
-
-	* mysql.cpp, mysql.h, uruconvert.cpp: Corrected some functions in
-	  mysql.* Begin parsing of UntilUru vault database.
-
-2004-11-29 01:44  almlys
-
-	* msg_parser.cpp, psgamemsg.cpp: small fix for the
-	  AvatarCustomization age
-
-2004-11-28 02:33  almlys
-
-	* ChangeLog, msg_parser.cpp, pscauthmsg.cpp, pservermsg.cpp,
-	  psgamemsg.cpp, urumsg.cpp, uruprp.cpp, vault_obj.cpp,
-	  vault_tasks.cpp: Fixed issues with some auth response failed
-	  messages and fixed the annoying cursor bug, now you can visit
-	  ahnonay if you can. There are also some changes in the prp
-	  patcher
-
-2004-11-24 17:42  almlys
-
-	* conv_funs.cpp, uruprp.cpp: Fixed another vault crash related
-	  issue
-
-2004-11-24 12:04  almlys
-
-	* pstrackingmsg.cpp, uruprp.cpp: Fixed Tracking server issues...
-
-2004-11-23 17:56  khoufou_cvs
-
-	* mysql.cpp, mysql.h, uruconvert.cpp: More work on conversion
-	  utility.
-
-2004-11-23 14:01  almlys
-
-	* uruprp.cpp: small fix
-
-2004-11-23 13:56  almlys
-
-	* Makefile, adv_gamemsgparser.cpp, adv_gamemsgparser.h, install.sh,
-	  prpstuff.h, urumsg.cpp, uruprp.cpp: Added the prp patcher... to
-	  be able to use the KI again...
-
-2004-11-22 16:58  khoufou_cvs
-
-	* uruconvert.cpp: Started unrilutu<->huru database convertion prog.
-
-2004-11-22 16:56  khoufou_cvs
-
-	* Makefile, mysql.cpp, mysql.h: mysql.*: Code cleaning.  Makefile:
-	  Added uruconvert compilation directives.
-
-2004-11-22 12:08  khoufou_cvs
-
-	* mysql.cpp, mysql.h: [no log message]
-
-2004-11-20 16:49  almlys
-
-	* psgamemsg.cpp, pstrackingmsg.cpp, urumsg.cpp: Fixed
-	  AvatarCustomization crashes, and fixed some multiplayer
-	  crashes...
-
-2004-11-20 04:37  almlys
-
-	* Makefile, NEWS, psgamemsg.cpp, sdlparser.cpp, uru.cpp, uru.h,
-	  urucmd.cpp, urumsg.cpp, urumsg.h, uruping.cpp, urusdl.cpp: yep,
-	  Initial SDL state IS now being SENT
-
-2004-11-19 14:13  almlys
-
-	* .cvsignore, ChangeLog, Makefile, env.sh, prot.h, urucrypt.cpp,
-	  script/README, script/decrypt_all.sh: Added urucrypt to the
-	  sources
-
-2004-11-18 17:35  khoufou_cvs
-
-	* log.cpp, mysql.cpp, mysql.h: Corrected minor type in log.cpp.
-	  Created mysql generic functions for use with uruconvert proggy,
-	  converting untiluru->huru (WIP).
-
-2004-11-17 00:19  almlys
-
-	* htmldumper.cpp, pservermsg.cpp: Attempted to fix a crash that
-	  only happens when you are using an inferior OS
-
-2004-11-16 23:24  almlys
-
-	* adv_gamemsgparser.cpp, ageparser.cpp, cgas_auth.cpp,
-	  config_parser.cpp, conv_funs.cpp, files.cpp, guid_gen.cpp,
-	  htmldumper.cpp, injector.cpp, license.cpp, msg_parser.cpp,
-	  pclientmsg.cpp, pdefaultmsg.cpp, protocol.cpp, psauthmsg.cpp,
-	  pscauthmsg.cpp, pservermsg.cpp, psgamemsg.cpp, psmetamsg.cpp,
-	  pstrackingmsg.cpp, psvaultmsg.cpp, sdlparser.cpp, stdebug.cpp,
-	  urucmd.cpp, urumsg.cpp, urunet.cpp, uruping.cpp, urusdl.cpp,
-	  useful.cpp, vault_advp.cpp, vault_obj.cpp, vault_tasks.cpp,
-	  vnodes.cpp: added debug.h to all source files, to be able to set
-	  a global debugging level
-
-2004-11-15 23:09  almlys
-
-	* Makefile: small fix
-
-2004-11-14 17:23  almlys
-
-	* .cvsignore, Makefile, ageparser.cpp, ageparser.h,
-	  config_parser.cpp, config_parser.h, psgamemsg.cpp, uru.cpp: *.age
-	  parser finished...
-
-2004-11-14 04:30  almlys
-
-	* Makefile, urusdl.cpp: Well at least compiles on windows, now I
-	  need to figure out why it nicely crashes... (windows sucks a lot)
-
-2004-11-14 02:21  almlys
-
-	* vault_advp.cpp: Vault fix to avoid more crashes...
-
-2004-11-13 20:57  almlys
-
-	* install.sh: installer fix
-
-2004-11-13 20:38  almlys
-
-	* .cvsignore, ChangeLog, Makefile, sdlparser.cpp, urusdl.cpp:
-	  Urusdl
-
-2004-11-13 15:16  almlys
-
-	* meta_db.cpp, psmetamsg.cpp: another small fix for the metaserver
-
-2004-11-13 14:59  almlys
-
-	* meta_db.cpp, uru.cpp: Small fix for the metaserver
-
-2004-11-13 03:26  almlys
-
-	* .cvsignore, Makefile, config_parser.cpp, data_types.h,
-	  meta_db.cpp, meta_db.h, pscauthmsg.cpp, psmetamsg.cpp,
-	  psmetamsg.h, uru.cpp, uru.h, urumsg.cpp, urunet.cpp, urunet.h:
-	  Meta server should be finished now..
-
-2004-11-12 04:18  almlys
-
-	* .cvsignore, Makefile, config_parser.cpp, pscauthmsg.cpp,
-	  pstrackingmsg.cpp, purgue.sh, tclean.sh, uru.cpp, urucmd.cpp,
-	  urumsg.cpp, uruping.cpp: All metaserver messages should be
-	  implemented now..
-
-2004-11-11 12:28  almlys
-
-	* pstrackingmsg.cpp, sql.h, uru.cpp, uru.h, urumsg.h: implemented
-	  some Metaserver messages
-
-2004-11-11 03:17  almlys
-
-	* .cvsignore, ChangeLog, config_parser.cpp, config_parser.h,
-	  psauthmsg.cpp, purgue.sh: Added a new option to allow private
-	  shards with a default access level
-
-2004-11-11 02:45  almlys
-
-	* .cvsignore, README, install.sh, license.cpp, license.h, run.sh,
-	  uru.cpp, script/addadmin.sh, script/huru-servers.sh: Added Sjaak
-	  modified Strikers nice start/stop script and added a script to
-	  start stand alone game servers
-
-2004-11-10 22:25  almlys
-
-	* ChangeLog: cvs2cl.pl
-
-2004-11-10 22:11  almlys
-
-	* Makefile, config_parser.cpp, pscauthmsg.cpp, pservermsg.cpp,
-	  sql.cpp, uru.cpp: Fixed a big bug caused by the code
-	  reestructuration
-
-2004-11-10 16:34  khoufou_cvs
-
-	* log.cpp, log.h, sql.cpp: Added log.cpp and log.h to handle
-	  logging to syslog and/or to files. Embedded is a small test
-	  program.  Just a small modification to mysql_init call test
-	  indentation.
-
-2004-11-09 15:20  almlys
-
-	* ChangeLog, sql.cpp: Fixed SQL broken code
-
-2004-11-09 12:36  khoufou_cvs
-
-	* config_parser.cpp, config_parser.h, vault_tasks.cpp,
-	  docs/README.parameters: Added welcome_title and welcome_text to
-	  configure global Ki message upton Vault initialization.  Modified
-	  config_parser.cpp to handle foreign character set.
-
-2004-11-09 10:57  khoufou_cvs
-
-	* sql.cpp, sql.h: SQL cleaning.
-
-2004-11-09 10:54  khoufou_cvs
-
-	* sql.cpp: Removed unnecessary mysql connections. First step to
-	  MySQL cleanup.
-
-2004-11-09 10:37  khoufou_cvs
-
-	* docs/README.parameters: First documentation of config file
-	  parameters.
-
-2004-11-09 00:25  almlys
-
-	* ChangeLog, tclean.sh, script/addadmin.sh, script/vaultwipe.sh:
-	  Added some wipe/admin scripts
-
-2004-11-08 22:45  khoufou_cvs
-
-	* etc/: allclean.sh, cleanlog.sh: Clean all log files
-
-2004-11-08 22:31  khoufou_cvs
-
-	* ChangeLog: [no log message]
-
-2004-11-08 16:03  almlys
-
-	* ChangeLog, auth_db.cpp, auth_db.h, install.sh, psauthmsg.cpp,
-	  uru.cpp, vault_db.cpp: Now, the auth database is automatically
-	  created if it is missing
-
-2004-11-07 03:00  almlys
-
-	* install.sh: metaserver option was missing..
-
-2004-11-06 23:07  almlys
-
-	* .cvsignore, Makefile, config.h, debug.h, install.sh, license.h,
-	  prot.h, purgue.sh, uru.cpp, uru.h, vault_db.cpp: some minor
-	  fixes..
-
-2004-11-06 18:04  almlys
-
-	* ChangeLog, TODO, prot.h, urumsg.cpp: Added MetaServer messages
-
-2004-11-06 04:29  almlys
-
-	* config_parser.cpp, config_parser.h: Added Metaserver vars
-
-2004-11-06 03:45  almlys
-
-	* AUTHORS: Added Khoufou to the list
-
-2004-11-05 17:00  almlys
-
-	* purgue.sh, sdlparser.h, sql.h, uru.cpp: ? what happened here?
-
-2004-11-05 15:51  almlys
-
-	* .cvsignore, BUGS, ChangeLog, Makefile, auth_db.cpp, install.sh,
-	  protocol.cpp: More patches..
-
-2004-11-05 03:21  almlys
-
-	* Feature-Requests, Makefile, TODO, adv_gamemsgparser.cpp,
-	  adv_gamemsgparser.h, auth_db.cpp, auth_db.h, auth_server.cpp,
-	  cgas_auth.cpp, cgas_auth.h, clean.sh, config_parser.cpp,
-	  config_parser.h, debug.h, files.cpp, files.h, game_server.cpp,
-	  guid_gen.cpp, guid_gen.h, htmldumper.cpp, htmldumper.h,
-	  install.sh, license.cpp, license.h, msg_parser.cpp, msg_parser.h,
-	  new_vault.cpp, pclientmsg.cpp, pclientmsg.h, pdefaultmsg.cpp,
-	  pdefaultmsg.h, psauthmsg.cpp, psauthmsg.h, pscauthmsg.cpp,
-	  pscauthmsg.h, pservermsg.cpp, pservermsg.h, psgamemsg.cpp,
-	  psgamemsg.h, pstrackingmsg.cpp, pstrackingmsg.h, psvaultmsg.cpp,
-	  psvaultmsg.h, sdlparser.cpp, sdlparser.h, semaphore.cpp, sql.cpp,
-	  sql.h, svault.cpp, uru.cpp, uru.h, urucmd.cpp, urumsg.cpp,
-	  urumsg.h, urunet.cpp, urunet2.cpp, uruping.cpp, urusdl.cpp,
-	  vault.cpp, vault_advp.cpp, vault_advp.h, vault_db.cpp,
-	  vault_db.h, vault_obj.cpp, vault_obj.h, vault_tasks.cpp,
-	  vault_tasks.h, vaultstrs.cpp, vaultstrs.h, vnodes.cpp, vnodes.h,
-	  vtask.cpp, whatdoyousee.cpp, whatdoyousee.h: Solved vault loop,
-	  added Khoufou patches, fixed some stability issues, reorganized
-	  the code, and other things...
-
-2004-11-03 17:40  almlys
-
-	* install.sh: Fixed age files path issue
-
-2004-11-03 12:25  almlys
-
-	* uru.cpp: Fixed "'" bug
-
-2004-11-03 12:16  almlys
-
-	* ChangeLog, sdlparser.cpp, uru.cpp: Fixed a problem when parsing
-	  the GreatZero.sdl file
-
-2004-11-03 12:02  almlys
-
-	* AUTHORS, BUGS, ChangeLog, DEVELOPERS, HELPING, README: Added
-	  mailing list address
-
-2004-11-03 11:43  almlys
-
-	* .cvsignore, ChangeLog, htmldumper.cpp, install.sh, sql.cpp,
-	  uru.cpp, vault_advp.cpp, vault_db.cpp: All free() problems should
-	  be fixed now...
-
-2004-11-03 03:49  almlys
-
-	* conv_funs.cpp, protocol.cpp, psauthmsg.cpp, pservermsg.cpp,
-	  sql.cpp, stdebug.cpp, uru.cpp, urumsg.cpp, urunet.cpp,
-	  vault_db.cpp, vault_tasks.cpp: Fixed some free(tptr) calls,
-	  thanks to Khoufou Now, Game servers will automatically close on
-	  inactivity.
-
-2004-10-27 01:19  almlys
-
-	* .cvsignore, BUGS, ChangeLog, Makefile, install.sh, purgue.sh,
-	  run.sh, sql.cpp, uru.conf, urunet.cpp: Fixed install.sh passwd
-	  issue and added more stuff, also now the vault & auth server
-	  should automatically create the configured databases.
-
-2004-10-26 02:14  almlys
-
-	* ChangeLog, install.sh: Added some code to the installer
-
-2004-10-25 12:45  almlys
-
-	* ChangeLog: Added the ChangeLog file
-
-2004-10-25 12:45  almlys
-
-	* docs/.cvsignore: Added a new .cvsignore to ignore the
-	  Auto-Generated documentation tree.
-
-2004-10-25 12:41  almlys
-
-	* .cvsignore: Fixed the file ignore list
-
-2004-10-25 04:43  almlys
-
-	* Doxyfile, TODO, adv_gamemsgparser.cpp, auth_db.cpp,
-	  auth_server.cpp, cgas_auth.cpp, config_parser.cpp,
-	  config_parser.h, servers.list, tclean.sh, .cvsignore, AUTHORS,
-	  COPYING, DEVELOPERS, DISCLAIMER, Feature-Requests, HELPING,
-	  LICENSE, Makefile, README, clean.sh, conv_funs.cpp, conv_funs.h,
-	  data_types.h, debug.h, disclaimer_head.txt, files.cpp, files.h,
-	  game_server.cpp, guid_gen.cpp, htmldumper.cpp, injector.cpp,
-	  injector.h, install.sh, license.cpp, msg_parser.cpp,
-	  new_vault.cpp, pclientmsg.cpp, pdefaultmsg.cpp, prot.h,
-	  protocol.cpp, protocol.h, psauthmsg.cpp, pscauthmsg.cpp,
-	  pservermsg.cpp, psgamemsg.cpp, pstrackingmsg.cpp, psvaultmsg.cpp,
-	  sdlparser.cpp, semaphore.cpp, sql.cpp, stdebug.cpp, stdebug.h,
-	  svault.cpp, uru.conf, uru.cpp, urucmd.cpp, urumsg.cpp,
-	  urunet.cpp, urunet.h, urunet2.cpp, uruping.cpp, urusdl.cpp,
-	  useful.cpp, useful.h, vault.cpp, vault_advp.cpp, vault_db.cpp,
-	  vault_obj.cpp, vault_tasks.cpp, vaultstrs.cpp, vnodes.cpp,
-	  vtask.cpp, whatdoyousee.cpp, docs/vault_db.txt,
-	  script/auth_db.sql: Initial New fresh Import to the Repository
-	  from the old one
-
-2004-10-25 04:43  almlys
-
-	* Doxyfile, TODO, adv_gamemsgparser.cpp, auth_db.cpp,
-	  auth_server.cpp, cgas_auth.cpp, config_parser.cpp,
-	  config_parser.h, servers.list, tclean.sh, .cvsignore, AUTHORS,
-	  COPYING, DEVELOPERS, DISCLAIMER, Feature-Requests, HELPING,
-	  LICENSE, Makefile, README, clean.sh, conv_funs.cpp, conv_funs.h,
-	  data_types.h, debug.h, disclaimer_head.txt, files.cpp, files.h,
-	  game_server.cpp, guid_gen.cpp, htmldumper.cpp, injector.cpp,
-	  injector.h, install.sh, license.cpp, msg_parser.cpp,
-	  new_vault.cpp, pclientmsg.cpp, pdefaultmsg.cpp, prot.h,
-	  protocol.cpp, protocol.h, psauthmsg.cpp, pscauthmsg.cpp,
-	  pservermsg.cpp, psgamemsg.cpp, pstrackingmsg.cpp, psvaultmsg.cpp,
-	  sdlparser.cpp, semaphore.cpp, sql.cpp, stdebug.cpp, stdebug.h,
-	  svault.cpp, uru.conf, uru.cpp, urucmd.cpp, urumsg.cpp,
-	  urunet.cpp, urunet.h, urunet2.cpp, uruping.cpp, urusdl.cpp,
-	  useful.cpp, useful.h, vault.cpp, vault_advp.cpp, vault_db.cpp,
-	  vault_obj.cpp, vault_tasks.cpp, vaultstrs.cpp, vnodes.cpp,
-	  vtask.cpp, whatdoyousee.cpp, docs/vault_db.txt,
-	  script/auth_db.sql: Initial revision
-
+# Note this file is automatically generated by the output of svn -v log
+------------------------------------------------------------------------
+r189 | almlys | 2005-04-15 03:46:58 +0200 (vie, 15 abr 2005) | 1 line
+Rutas cambiadas:
+   M /alcugs/trunk/Makefile
+   M /alcugs/trunk/prot.h
+   A /alcugs/trunk/pythonh.cpp
+   M /alcugs/trunk/pythonh.h
+   M /alcugs/trunk/pythonsubsys.cpp
+   M /alcugs/trunk/pythonsubsys.h
+   M /alcugs/trunk/uru.cpp
+
+Fixing python, phase 1
+------------------------------------------------------------------------
+r188 | The.Modificator | 2005-04-14 11:58:45 +0200 (jue, 14 abr 2005) | 1 line
+Rutas cambiadas:
+   M /alcugs/trunk/proposedsdlstuff/sdlparser.cpp
+
+corrected some more things in sdlparser.cpp
+------------------------------------------------------------------------
+r187 | The.Modificator | 2005-04-14 11:04:43 +0200 (jue, 14 abr 2005) | 1 line
+Rutas cambiadas:
+   M /alcugs/trunk/proposedsdlstuff/sdlparser.cpp
+
+corrected a log message in sdlparser.cpp
+------------------------------------------------------------------------
+r186 | The.Modificator | 2005-04-14 07:05:23 +0200 (jue, 14 abr 2005) | 1 line
+Rutas cambiadas:
+   M /alcugs/trunk/pcgamemsg.cpp
+   M /alcugs/trunk/pcgamemsg.h
+   M /alcugs/trunk/pcjgamemsg.cpp
+   M /alcugs/trunk/pcjgamemsg.h
+   A /alcugs/trunk/proposedsdlstuff
+   A /alcugs/trunk/proposedsdlstuff/sdlparser.cpp
+   A /alcugs/trunk/proposedsdlstuff/sdlparser.h
+   M /alcugs/trunk/sdl_desc.cpp
+   M /alcugs/trunk/sdl_desc.h
+   M /alcugs/trunk/sdl_obj.cpp
+   M /alcugs/trunk/sdl_obj.h
+   M /alcugs/trunk/sdlstrs.h
+
+added the proposed SDL stuff, some property changes
+------------------------------------------------------------------------
+r185 | almlys | 2005-04-14 03:59:57 +0200 (jue, 14 abr 2005) | 1 line
+Rutas cambiadas:
+   M /alcugs/trunk/vault_db.cpp
+   M /alcugs/trunk/vault_tasks.cpp
+
+Tpots End Game Sequence workaround
+------------------------------------------------------------------------
+r184 | almlys | 2005-04-13 16:06:48 +0200 (mié, 13 abr 2005) | 2 lines
+Rutas cambiadas:
+   M /alcugs/trunk/Makefile
+   M /alcugs/trunk/pythonh.h
+   M /alcugs/trunk/pythonsubsys.h
+
+Portability
+
+------------------------------------------------------------------------
+r183 | almlys | 2005-04-13 15:22:51 +0200 (mié, 13 abr 2005) | 1 line
+Rutas cambiadas:
+   M /alcugs/trunk/pcgamemsg.cpp
+   M /alcugs/trunk/pcjgamemsg.cpp
+
+joinack -> joinreq
+------------------------------------------------------------------------
+r182 | almlys | 2005-04-13 15:15:13 +0200 (mié, 13 abr 2005) | 1 line
+Rutas cambiadas:
+   M /alcugs/trunk/pcgamemsg.cpp
+   M /alcugs/trunk/pcgamemsg.h
+   M /alcugs/trunk/pcjgamemsg.cpp
+   M /alcugs/trunk/pcjgamemsg.h
+
+Id?
+------------------------------------------------------------------------
+r181 | almlys | 2005-04-13 15:12:48 +0200 (mié, 13 abr 2005) | 1 line
+Rutas cambiadas:
+   M /alcugs/trunk/Makefile
+   M /alcugs/trunk/docs/urumsg.txt
+   A /alcugs/trunk/pcjgamemsg.cpp
+   A /alcugs/trunk/pcjgamemsg.h
+   M /alcugs/trunk/uru.cpp
+
+added JoinAck parser
+------------------------------------------------------------------------
+r180 | almlys | 2005-04-13 14:14:34 +0200 (mié, 13 abr 2005) | 1 line
+Rutas cambiadas:
+   A /alcugs/trunk/docs/plstate.dia
+   A /alcugs/trunk/docs/plstate.png
+
+Added States Machine graph
+------------------------------------------------------------------------
+r179 | almlys | 2005-04-13 13:53:04 +0200 (mié, 13 abr 2005) | 1 line
+Rutas cambiadas:
+   M /alcugs/trunk/urunet.cpp
+   M /alcugs/trunk/urunet.h
+
+added player is paged flag
+------------------------------------------------------------------------
+r178 | The.Modificator | 2005-04-13 13:47:48 +0200 (mié, 13 abr 2005) | 1 line
+Rutas cambiadas:
+   M /alcugs/trunk/docs/api.txt
+   M /alcugs/trunk/docs/urumsg.txt
+   M /alcugs/trunk/docs/vault_db.txt
+   M /alcugs/trunk/uru_game.dsp
+
+added the pcgamemsg.cpp to the MSVC project file and set some svn properties
+------------------------------------------------------------------------
+r177 | almlys | 2005-04-13 12:53:05 +0200 (mié, 13 abr 2005) | 1 line
+Rutas cambiadas:
+   M /alcugs/trunk/docs
+   M /alcugs/trunk/docs/.cvsignore
+   A /alcugs/trunk/docs/api.txt
+   A /alcugs/trunk/docs/urumsg.txt
+
+some docs
+------------------------------------------------------------------------
+r176 | almlys | 2005-04-13 11:27:22 +0200 (mié, 13 abr 2005) | 1 line
+Rutas cambiadas:
+   M /alcugs/trunk/Makefile
+   A /alcugs/trunk/pcgamemsg.cpp
+   A /alcugs/trunk/pcgamemsg.h
+   M /alcugs/trunk/uru.cpp
+
+Game message parser
+------------------------------------------------------------------------
+r175 | almlys | 2005-04-13 10:45:13 +0200 (mié, 13 abr 2005) | 1 line
+Rutas cambiadas:
+   M /alcugs/trunk
+   M /alcugs/trunk/.cvsignore
+   M /alcugs/trunk/Doxyfile
+
+doxygen -u
+------------------------------------------------------------------------
+r174 | almlys | 2005-04-13 04:04:03 +0200 (mié, 13 abr 2005) | 2 lines
+Rutas cambiadas:
+   M /alcugs/trunk/scripts/huru-servers-debug.sh
+   M /alcugs/trunk/scripts/huru-servers.sh
+
+snv:executable bit
+
+------------------------------------------------------------------------
+r173 | almlys | 2005-04-13 04:02:53 +0200 (mié, 13 abr 2005) | 2 lines
+Rutas cambiadas:
+   M /alcugs/trunk/env.sh
+   M /alcugs/trunk/install.sh
+   M /alcugs/trunk/purgue.sh
+   M /alcugs/trunk/tclean.sh
+
+All of them must be executables, so svn:executable must be set
+
+------------------------------------------------------------------------
+r172 | almlys | 2005-04-13 04:01:56 +0200 (mié, 13 abr 2005) | 2 lines
+Rutas cambiadas:
+   M /alcugs/trunk/run.sh
+
+must be an executable, so must have svn:executable property
+
+------------------------------------------------------------------------
+r171 | almlys | 2005-04-13 03:54:19 +0200 (mié, 13 abr 2005) | 2 lines
+Rutas cambiadas:
+   M /alcugs/trunk/python
+   M /alcugs/trunk/run.sh
+   M /alcugs/trunk/uru.conf
+
+Who broke run.sh?
+
+------------------------------------------------------------------------
+r170 | almlys | 2005-04-13 02:50:38 +0200 (mié, 13 abr 2005) | 2 lines
+Rutas cambiadas:
+   M /alcugs/trunk
+   M /alcugs/trunk/.cvsignore
+
+Ignore compiled python files, we only want source.
+
+------------------------------------------------------------------------
+r169 | almlys | 2005-04-12 20:54:46 +0200 (mar, 12 abr 2005) | 2 lines
+Rutas cambiadas:
+   M /alcugs/trunk
+
+updated svn:ignore
+
+------------------------------------------------------------------------
+r168 | almlys | 2005-04-12 20:52:07 +0200 (mar, 12 abr 2005) | 2 lines
+Rutas cambiadas:
+   M /alcugs/trunk/.cvsignore
+
+updated
+
+------------------------------------------------------------------------
+r167 | The.Modificator | 2005-04-12 19:50:34 +0200 (mar, 12 abr 2005) | 1 line
+Rutas cambiadas:
+   M /alcugs/trunk/conv_funs.cpp
+   M /alcugs/trunk/debug.cpp
+   M /alcugs/trunk/gbasicmsg.cpp
+   M /alcugs/trunk/protocol.cpp
+
+tested some doxygen functions by converting some plain comments to the doxygen format
+------------------------------------------------------------------------
+r166 | The.Modificator | 2005-04-12 19:01:17 +0200 (mar, 12 abr 2005) | 1 line
+Rutas cambiadas:
+   M /alcugs/trunk/uru.cpp
+   M /alcugs/trunk/uru_auth.dsp
+   M /alcugs/trunk/uru_game.dsp
+   M /alcugs/trunk/uru_lobby.dsp
+   M /alcugs/trunk/uru_tracking.dsp
+   M /alcugs/trunk/uru_vault.dsp
+   M /alcugs/trunk/uruping.cpp
+   M /alcugs/trunk/uruping.dsp
+
+corrected some MSVC project settings and added the control handler for Win32 console applications
+------------------------------------------------------------------------
+r165 | The.Modificator | 2005-04-12 18:44:33 +0200 (mar, 12 abr 2005) | 1 line
+Rutas cambiadas:
+   M /alcugs/trunk/tclean_msvc.bat
+
+tclean_msvc.bat will work correctly now
+------------------------------------------------------------------------
+r164 | The.Modificator | 2005-04-12 18:41:45 +0200 (mar, 12 abr 2005) | 1 line
+Rutas cambiadas:
+   A /alcugs/trunk/tclean_msvc.bat
+   A /alcugs/trunk/uruping.dsp
+
+added a tclean for temporary MSVC files (and the uruping project file which I've forgotten before)
+------------------------------------------------------------------------
+r163 | The.Modificator | 2005-04-12 18:37:12 +0200 (mar, 12 abr 2005) | 1 line
+Rutas cambiadas:
+   M /alcugs/trunk/alcugs.dsw
+   D /alcugs/trunk/all.dsp
+   A /alcugs/trunk/servers.dsp (de /alcugs/trunk/all.dsp:162)
+   M /alcugs/trunk/uru_auth.dsp
+   M /alcugs/trunk/uru_game.dsp
+   M /alcugs/trunk/uru_lobby.dsp
+   M /alcugs/trunk/uru_tracking.dsp
+   M /alcugs/trunk/uru_vault.dsp
+   M /alcugs/trunk/uruping.cpp
+
+added uruping to the MSVC files
+------------------------------------------------------------------------
+r162 | The.Modificator | 2005-04-12 18:23:20 +0200 (mar, 12 abr 2005) | 1 line
+Rutas cambiadas:
+   A /alcugs/trunk/tclean.bat
+
+added a windows version of tclean
+------------------------------------------------------------------------
+r161 | The.Modificator | 2005-04-12 17:59:52 +0200 (mar, 12 abr 2005) | 1 line
+Rutas cambiadas:
+   M /alcugs/trunk/docs/.cvsignore
+
+property changes
+------------------------------------------------------------------------
+r160 | The.Modificator | 2005-04-12 17:57:19 +0200 (mar, 12 abr 2005) | 1 line
+Rutas cambiadas:
+   M /alcugs/trunk/.cvsignore
+
+
+------------------------------------------------------------------------
+r159 | The.Modificator | 2005-04-12 17:56:29 +0200 (mar, 12 abr 2005) | 1 line
+Rutas cambiadas:
+   M /alcugs/trunk/sdlparser.cpp
+   M /alcugs/trunk/sdlparser.h
+
+mostly property changes
+------------------------------------------------------------------------
+r158 | The.Modificator | 2005-04-12 17:47:30 +0200 (mar, 12 abr 2005) | 1 line
+Rutas cambiadas:
+   M /alcugs/trunk/.cvsignore
+   M /alcugs/trunk/adv_gamemsgparser.cpp
+   M /alcugs/trunk/adv_gamemsgparser.h
+   M /alcugs/trunk/ageparser.cpp
+   M /alcugs/trunk/ageparser.h
+   M /alcugs/trunk/alcugs.dsw
+   M /alcugs/trunk/all.dsp
+   M /alcugs/trunk/auth.cpp
+   M /alcugs/trunk/auth.h
+   M /alcugs/trunk/auth_db.cpp
+   M /alcugs/trunk/auth_db.h
+   M /alcugs/trunk/cgas_auth.cpp
+   M /alcugs/trunk/cgas_auth.h
+   M /alcugs/trunk/config.h
+   M /alcugs/trunk/config_parser.cpp
+   M /alcugs/trunk/config_parser.h
+   M /alcugs/trunk/conv_funs.cpp
+   M /alcugs/trunk/conv_funs.h
+   M /alcugs/trunk/data_types.h
+   M /alcugs/trunk/debug.cpp
+   M /alcugs/trunk/debug.h
+   M /alcugs/trunk/disclaimer_head.txt
+   M /alcugs/trunk/env.sh
+   M /alcugs/trunk/files.cpp
+   M /alcugs/trunk/files.h
+   M /alcugs/trunk/gamesubsys.cpp
+   M /alcugs/trunk/gamesubsys.h
+   M /alcugs/trunk/gauthmsg.cpp
+   M /alcugs/trunk/gauthmsg.h
+   M /alcugs/trunk/gbasicmsg.cpp
+   M /alcugs/trunk/gbasicmsg.h
+   M /alcugs/trunk/gbvaultmsg.cpp
+   M /alcugs/trunk/gbvaultmsg.h
+   M /alcugs/trunk/gcsbvaultmsg.cpp
+   M /alcugs/trunk/gcsbvaultmsg.h
+   M /alcugs/trunk/gctrackingmsg.cpp
+   M /alcugs/trunk/gctrackingmsg.h
+   M /alcugs/trunk/globbymsg.cpp
+   M /alcugs/trunk/globbymsg.h
+   M /alcugs/trunk/gsauthmsg.cpp
+   M /alcugs/trunk/gsauthmsg.h
+   M /alcugs/trunk/gsbvaultmsg.cpp
+   M /alcugs/trunk/gsbvaultmsg.h
+   M /alcugs/trunk/gscauthmsg.cpp
+   M /alcugs/trunk/gscauthmsg.h
+   M /alcugs/trunk/gtrackingmsg.cpp
+   M /alcugs/trunk/gtrackingmsg.h
+   M /alcugs/trunk/guid_gen.cpp
+   M /alcugs/trunk/guid_gen.h
+   M /alcugs/trunk/gvaultmsg.cpp
+   M /alcugs/trunk/gvaultmsg.h
+   M /alcugs/trunk/htmldumper.cpp
+   M /alcugs/trunk/htmldumper.h
+   M /alcugs/trunk/injector.cpp
+   M /alcugs/trunk/injector.h
+   M /alcugs/trunk/install.sh
+   M /alcugs/trunk/install.sh.new
+   M /alcugs/trunk/license.cpp
+   M /alcugs/trunk/license.h
+   M /alcugs/trunk/lobbysubsys.cpp
+   M /alcugs/trunk/lobbysubsys.h
+   M /alcugs/trunk/log.cpp
+   M /alcugs/trunk/log.h
+   M /alcugs/trunk/md5.cpp
+   M /alcugs/trunk/md5.h
+   M /alcugs/trunk/meta_db.cpp
+   M /alcugs/trunk/meta_db.h
+   M /alcugs/trunk/msg_parser.cpp
+   M /alcugs/trunk/msg_parser.h
+   M /alcugs/trunk/mysql.cpp
+   M /alcugs/trunk/mysql.h
+   M /alcugs/trunk/pbasicmsg.cpp
+   M /alcugs/trunk/pbasicmsg.h
+   M /alcugs/trunk/pcauthmsg.cpp
+   M /alcugs/trunk/pcauthmsg.h
+   M /alcugs/trunk/pcbvaultmsg.cpp
+   M /alcugs/trunk/pcbvaultmsg.h
+   M /alcugs/trunk/pclientmsg.cpp
+   M /alcugs/trunk/pclientmsg.h
+   M /alcugs/trunk/pclobbymsg.cpp
+   M /alcugs/trunk/pclobbymsg.h
+   M /alcugs/trunk/pcsbvaultmsg.cpp
+   M /alcugs/trunk/pcsbvaultmsg.h
+   M /alcugs/trunk/pctrackingmsg.cpp
+   M /alcugs/trunk/pctrackingmsg.h
+   M /alcugs/trunk/pdefaultmsg.cpp
+   M /alcugs/trunk/pdefaultmsg.h
+   M /alcugs/trunk/pnetmsg.cpp
+   M /alcugs/trunk/pnetmsg.h
+   M /alcugs/trunk/prot.h
+   M /alcugs/trunk/protocol.cpp
+   M /alcugs/trunk/protocol.h
+   M /alcugs/trunk/prpstuff.h
+   M /alcugs/trunk/psauthmsg.cpp
+   M /alcugs/trunk/psauthmsg.h
+   M /alcugs/trunk/psbvaultmsg.cpp
+   M /alcugs/trunk/psbvaultmsg.h
+   M /alcugs/trunk/pscauthmsg.cpp
+   M /alcugs/trunk/pscauthmsg.h
+   M /alcugs/trunk/pservermsg.cpp
+   M /alcugs/trunk/pservermsg.h
+   M /alcugs/trunk/psgamemsg.cpp
+   M /alcugs/trunk/psgamemsg.h
+   M /alcugs/trunk/psmetamsg.cpp
+   M /alcugs/trunk/psmetamsg.h
+   M /alcugs/trunk/pstrackingmsg.cpp
+   M /alcugs/trunk/pstrackingmsg.h
+   M /alcugs/trunk/psvaultmsg.cpp
+   M /alcugs/trunk/psvaultmsg.h
+   M /alcugs/trunk/ptrackingmsg.cpp
+   M /alcugs/trunk/ptrackingmsg.h
+   M /alcugs/trunk/purgue.sh
+   M /alcugs/trunk/pvaultfordmsg.cpp
+   M /alcugs/trunk/pvaultfordmsg.h
+   M /alcugs/trunk/pvaultroutermsg.cpp
+   M /alcugs/trunk/pvaultroutermsg.h
+   M /alcugs/trunk/pvaultservermsg.cpp
+   M /alcugs/trunk/pvaultservermsg.h
+   M /alcugs/trunk/python/Personal.py
+   M /alcugs/trunk/python/README
+   M /alcugs/trunk/python/xSystem.py
+   M /alcugs/trunk/pythonglue.cpp
+   M /alcugs/trunk/pythonglue.h
+   M /alcugs/trunk/pythonh.h
+   M /alcugs/trunk/pythonsubsys.cpp
+   M /alcugs/trunk/pythonsubsys.h
+   M /alcugs/trunk/run.sh
+   M /alcugs/trunk/sdlstrs.h
+   M /alcugs/trunk/settings.cpp
+   M /alcugs/trunk/settings.h
+   M /alcugs/trunk/settings_db.cpp
+   M /alcugs/trunk/settings_db.h
+   M /alcugs/trunk/sql.cpp
+   M /alcugs/trunk/sql.h
+   M /alcugs/trunk/stdebug.cpp
+   M /alcugs/trunk/stdebug.h
+   M /alcugs/trunk/tclean.sh
+   M /alcugs/trunk/tmp_config.cpp
+   M /alcugs/trunk/tmp_config.h
+   M /alcugs/trunk/trackingsubsys.cpp
+   M /alcugs/trunk/trackingsubsys.h
+   M /alcugs/trunk/uru.cpp
+   M /alcugs/trunk/uru.h
+   M /alcugs/trunk/uru_auth.dsp
+   M /alcugs/trunk/uru_game.dsp
+   M /alcugs/trunk/uru_lobby.dsp
+   M /alcugs/trunk/uru_tracking.dsp
+   M /alcugs/trunk/uru_vault.dsp
+   M /alcugs/trunk/urucmd.cpp
+   M /alcugs/trunk/uruconvert.cpp
+   M /alcugs/trunk/urucrypt.cpp
+   M /alcugs/trunk/urumsg.cpp
+   M /alcugs/trunk/urumsg.h
+   M /alcugs/trunk/urumsgtest.cpp
+   M /alcugs/trunk/urunet.cpp
+   M /alcugs/trunk/urunet.h
+   M /alcugs/trunk/uruping.cpp
+   M /alcugs/trunk/uruprp.cpp
+   M /alcugs/trunk/urusdl.cpp
+   M /alcugs/trunk/urustructs.h
+   M /alcugs/trunk/useful.cpp
+   M /alcugs/trunk/useful.h
+   M /alcugs/trunk/vault_advp.cpp
+   M /alcugs/trunk/vault_advp.h
+   M /alcugs/trunk/vault_db.cpp
+   M /alcugs/trunk/vault_db.h
+   M /alcugs/trunk/vault_obj.cpp
+   M /alcugs/trunk/vault_obj.h
+   M /alcugs/trunk/vault_tasks.cpp
+   M /alcugs/trunk/vault_tasks.h
+   M /alcugs/trunk/vaultstrs.h
+   M /alcugs/trunk/vaultsubsys.cpp
+   M /alcugs/trunk/vaultsubsys.h
+   M /alcugs/trunk/version.cpp
+   M /alcugs/trunk/version.h
+   M /alcugs/trunk/vnodes.cpp
+   M /alcugs/trunk/vnodes.h
+   M /alcugs/trunk/vserversys.cpp
+   M /alcugs/trunk/vserversys.h
+   M /alcugs/trunk/whatdoyousee.cpp
+   M /alcugs/trunk/whatdoyousee.h
+   M /alcugs/trunk/windoze.cpp
+   M /alcugs/trunk/windoze.h
+
+mostly property changes
+------------------------------------------------------------------------
+r157 | almlys | 2005-04-12 17:30:25 +0200 (mar, 12 abr 2005) | 2 lines
+Rutas cambiadas:
+   M /alcugs/trunk/scripts/README
+
+Added a small warning
+
+------------------------------------------------------------------------
+r156 | almlys | 2005-04-12 17:24:30 +0200 (mar, 12 abr 2005) | 2 lines
+Rutas cambiadas:
+   D /alcugs/trunk/etc
+
+rm etc
+
+------------------------------------------------------------------------
+r155 | almlys | 2005-04-12 17:17:43 +0200 (mar, 12 abr 2005) | 2 lines
+Rutas cambiadas:
+   D /alcugs/trunk/script
+   A /alcugs/trunk/scripts (de /alcugs/trunk/script:153)
+   R /alcugs/trunk/scripts/README (de /alcugs/trunk/script/README:154)
+   R /alcugs/trunk/scripts/addadmin.sh (de /alcugs/trunk/script/addadmin.sh:154)
+   A /alcugs/trunk/scripts/allclean.sh (de /alcugs/trunk/script/allclean.sh:154)
+   R /alcugs/trunk/scripts/auth_db.sql (de /alcugs/trunk/script/auth_db.sql:154)
+   R /alcugs/trunk/scripts/checkpublicages.sh (de /alcugs/trunk/script/checkpublicages.sh:154)
+   A /alcugs/trunk/scripts/cleanlog.sh (de /alcugs/trunk/script/cleanlog.sh:154)
+   R /alcugs/trunk/scripts/decrypt_all.sh (de /alcugs/trunk/script/decrypt_all.sh:154)
+   R /alcugs/trunk/scripts/givemuseum.sh (de /alcugs/trunk/script/givemuseum.sh:154)
+   R /alcugs/trunk/scripts/huru-servers-debug.sh (de /alcugs/trunk/script/huru-servers-debug.sh:154)
+   R /alcugs/trunk/scripts/huru-servers.sh (de /alcugs/trunk/script/huru-servers.sh:154)
+   R /alcugs/trunk/scripts/hurulib.sh (de /alcugs/trunk/script/hurulib.sh:154)
+   R /alcugs/trunk/scripts/modifylevelaccount.sh (de /alcugs/trunk/script/modifylevelaccount.sh:154)
+   R /alcugs/trunk/scripts/showplayers.sh (de /alcugs/trunk/script/showplayers.sh:154)
+   R /alcugs/trunk/scripts/vaultwipe.sh (de /alcugs/trunk/script/vaultwipe.sh:154)
+   R /alcugs/trunk/scripts/viewplayer.sh (de /alcugs/trunk/script/viewplayer.sh:154)
+
+script -> scripts
+
+------------------------------------------------------------------------
+r154 | almlys | 2005-04-12 17:15:04 +0200 (mar, 12 abr 2005) | 2 lines
+Rutas cambiadas:
+   D /alcugs/trunk/etc/allclean.sh
+   D /alcugs/trunk/etc/cleanlog.sh
+   A /alcugs/trunk/script/allclean.sh (de /alcugs/trunk/etc/allclean.sh:153)
+   A /alcugs/trunk/script/cleanlog.sh (de /alcugs/trunk/etc/cleanlog.sh:153)
+
+Moved some scripts to the scripts directory
+
+------------------------------------------------------------------------
+r153 | almlys | 2005-04-12 16:55:29 +0200 (mar, 12 abr 2005) | 2 lines
+Rutas cambiadas:
+   A /alcugs/trunk/gcauthmsg.cpp
+   A /alcugs/trunk/gcauthmsg.h
+   A /alcugs/trunk/gcbvaultmsg.cpp
+   A /alcugs/trunk/gcbvaultmsg.h
+   A /alcugs/trunk/gnetmsg.cpp
+   A /alcugs/trunk/gnetmsg.h
+   A /alcugs/trunk/sdl_desc.cpp
+   A /alcugs/trunk/sdl_desc.h
+   A /alcugs/trunk/sdl_obj.cpp
+   A /alcugs/trunk/sdl_obj.h
+   M /alcugs/trunk/sdlparser.cpp
+   M /alcugs/trunk/sdlparser.h
+
+Added some missing files
+
+------------------------------------------------------------------------
+r152 | The.Modificator | 2005-04-12 15:41:06 +0200 (mar, 12 abr 2005) | 1 line
+Rutas cambiadas:
+   M /alcugs/trunk/ageparser.cpp
+   A /alcugs/trunk/alcugs.dsw
+   A /alcugs/trunk/all.dsp
+   M /alcugs/trunk/cgas_auth.cpp
+   M /alcugs/trunk/debug.cpp
+   M /alcugs/trunk/debug.h
+   M /alcugs/trunk/files.h
+   M /alcugs/trunk/htmldumper.cpp
+   M /alcugs/trunk/license.cpp
+   M /alcugs/trunk/pclobbymsg.cpp
+   M /alcugs/trunk/pcsbvaultmsg.cpp
+   M /alcugs/trunk/pdefaultmsg.cpp
+   M /alcugs/trunk/ptrackingmsg.cpp
+   M /alcugs/trunk/pvaultfordmsg.cpp
+   M /alcugs/trunk/pythonsubsys.cpp
+   M /alcugs/trunk/settings_db.cpp
+   M /alcugs/trunk/sql.cpp
+   M /alcugs/trunk/stdebug.cpp
+   M /alcugs/trunk/stdebug.h
+   M /alcugs/trunk/trackingsubsys.cpp
+   M /alcugs/trunk/uru.cpp
+   A /alcugs/trunk/uru_auth.dsp
+   A /alcugs/trunk/uru_game.dsp
+   A /alcugs/trunk/uru_lobby.dsp
+   A /alcugs/trunk/uru_tracking.dsp
+   A /alcugs/trunk/uru_vault.dsp
+   M /alcugs/trunk/urunet.cpp
+   M /alcugs/trunk/useful.cpp
+   M /alcugs/trunk/vault_advp.cpp
+   M /alcugs/trunk/vault_obj.cpp
+   M /alcugs/trunk/vault_tasks.cpp
+   M /alcugs/trunk/vnodes.cpp
+   M /alcugs/trunk/windoze.cpp
+   M /alcugs/trunk/windoze.h
+
+Porting to MSVC
+------------------------------------------------------------------------
+r151 | The.Modificator | 2005-04-12 15:38:23 +0200 (mar, 12 abr 2005) | 1 line
+Rutas cambiadas:
+   M /alcugs/trunk/.cvsignore
+
+Added the MSVC temp files to the list.
+------------------------------------------------------------------------
+r142 | almlys | 2005-04-11 01:51:18 +0200 (lun, 11 abr 2005) | 2 lines
+Rutas cambiadas:
+   M /alcugs/trunk/AUTHORS
+   M /alcugs/trunk/BUGS
+   M /alcugs/trunk/DEVELOPERS
+   M /alcugs/trunk/DISCLAIMER
+   M /alcugs/trunk/Doxyfile
+   M /alcugs/trunk/Makefile
+   M /alcugs/trunk/NEWS
+   M /alcugs/trunk/README
+   M /alcugs/trunk/ageparser.cpp
+   M /alcugs/trunk/ageparser.h
+   A /alcugs/trunk/auth.cpp
+   A /alcugs/trunk/auth.h
+   M /alcugs/trunk/auth_db.cpp
+   M /alcugs/trunk/auth_db.h
+   M /alcugs/trunk/cgas_auth.cpp
+   M /alcugs/trunk/cgas_auth.h
+   M /alcugs/trunk/config.h
+   M /alcugs/trunk/config_parser.cpp
+   M /alcugs/trunk/config_parser.h
+   M /alcugs/trunk/conv_funs.cpp
+   M /alcugs/trunk/conv_funs.h
+   M /alcugs/trunk/data_types.h
+   A /alcugs/trunk/debug.cpp
+   M /alcugs/trunk/debug.h
+   M /alcugs/trunk/env.sh
+   M /alcugs/trunk/files.cpp
+   A /alcugs/trunk/gamesubsys.cpp
+   A /alcugs/trunk/gamesubsys.h
+   A /alcugs/trunk/gauthmsg.cpp
+   A /alcugs/trunk/gauthmsg.h
+   A /alcugs/trunk/gbasicmsg.cpp
+   A /alcugs/trunk/gbasicmsg.h
+   A /alcugs/trunk/gbvaultmsg.cpp
+   A /alcugs/trunk/gbvaultmsg.h
+   A /alcugs/trunk/gcsbvaultmsg.cpp
+   A /alcugs/trunk/gcsbvaultmsg.h
+   A /alcugs/trunk/gctrackingmsg.cpp
+   A /alcugs/trunk/gctrackingmsg.h
+   A /alcugs/trunk/globbymsg.cpp
+   A /alcugs/trunk/globbymsg.h
+   A /alcugs/trunk/gsauthmsg.cpp
+   A /alcugs/trunk/gsauthmsg.h
+   A /alcugs/trunk/gsbvaultmsg.cpp
+   A /alcugs/trunk/gsbvaultmsg.h
+   A /alcugs/trunk/gscauthmsg.cpp
+   A /alcugs/trunk/gscauthmsg.h
+   A /alcugs/trunk/gtrackingmsg.cpp
+   A /alcugs/trunk/gtrackingmsg.h
+   M /alcugs/trunk/guid_gen.cpp
+   A /alcugs/trunk/gvaultmsg.cpp
+   A /alcugs/trunk/gvaultmsg.h
+   M /alcugs/trunk/htmldumper.cpp
+   M /alcugs/trunk/htmldumper.h
+   M /alcugs/trunk/license.cpp
+   M /alcugs/trunk/license.h
+   A /alcugs/trunk/lobbysubsys.cpp
+   A /alcugs/trunk/lobbysubsys.h
+   A /alcugs/trunk/md5.cpp
+   A /alcugs/trunk/md5.h
+   A /alcugs/trunk/pbasicmsg.cpp
+   A /alcugs/trunk/pbasicmsg.h
+   A /alcugs/trunk/pcauthmsg.cpp
+   A /alcugs/trunk/pcauthmsg.h
+   A /alcugs/trunk/pcbvaultmsg.cpp
+   A /alcugs/trunk/pcbvaultmsg.h
+   A /alcugs/trunk/pclobbymsg.cpp
+   A /alcugs/trunk/pclobbymsg.h
+   A /alcugs/trunk/pcsbvaultmsg.cpp
+   A /alcugs/trunk/pcsbvaultmsg.h
+   A /alcugs/trunk/pctrackingmsg.cpp
+   A /alcugs/trunk/pctrackingmsg.h
+   M /alcugs/trunk/pdefaultmsg.cpp
+   M /alcugs/trunk/pdefaultmsg.h
+   A /alcugs/trunk/pnetmsg.cpp
+   A /alcugs/trunk/pnetmsg.h
+   M /alcugs/trunk/prot.h
+   M /alcugs/trunk/protocol.cpp
+   M /alcugs/trunk/protocol.h
+   M /alcugs/trunk/psauthmsg.cpp
+   M /alcugs/trunk/psauthmsg.h
+   A /alcugs/trunk/psbvaultmsg.cpp
+   A /alcugs/trunk/psbvaultmsg.h
+   M /alcugs/trunk/pscauthmsg.cpp
+   M /alcugs/trunk/pscauthmsg.h
+   A /alcugs/trunk/ptrackingmsg.cpp
+   A /alcugs/trunk/ptrackingmsg.h
+   A /alcugs/trunk/pvaultfordmsg.cpp
+   A /alcugs/trunk/pvaultfordmsg.h
+   A /alcugs/trunk/pvaultroutermsg.cpp
+   A /alcugs/trunk/pvaultroutermsg.h
+   A /alcugs/trunk/pvaultservermsg.cpp
+   A /alcugs/trunk/pvaultservermsg.h
+   A /alcugs/trunk/python
+   A /alcugs/trunk/python/Personal.py
+   A /alcugs/trunk/python/README
+   A /alcugs/trunk/python/xSystem.py
+   A /alcugs/trunk/pythonglue.cpp
+   A /alcugs/trunk/pythonglue.h
+   A /alcugs/trunk/pythonh.h
+   A /alcugs/trunk/pythonsubsys.cpp
+   A /alcugs/trunk/pythonsubsys.h
+   M /alcugs/trunk/run.sh
+   A /alcugs/trunk/sdlstrs.h
+   M /alcugs/trunk/servers.list
+   A /alcugs/trunk/settings.cpp
+   A /alcugs/trunk/settings.h
+   A /alcugs/trunk/settings_db.cpp
+   A /alcugs/trunk/settings_db.h
+   M /alcugs/trunk/sql.cpp
+   M /alcugs/trunk/sql.h
+   M /alcugs/trunk/stdebug.cpp
+   M /alcugs/trunk/stdebug.h
+   A /alcugs/trunk/trackingsubsys.cpp
+   A /alcugs/trunk/trackingsubsys.h
+   M /alcugs/trunk/uru.conf
+   M /alcugs/trunk/uru.cpp
+   M /alcugs/trunk/uru.h
+   M /alcugs/trunk/urucrypt.cpp
+   A /alcugs/trunk/urumsgtest.cpp
+   M /alcugs/trunk/urunet.cpp
+   M /alcugs/trunk/urunet.h
+   M /alcugs/trunk/uruping.cpp
+   A /alcugs/trunk/urustructs.h
+   M /alcugs/trunk/useful.cpp
+   M /alcugs/trunk/useful.h
+   M /alcugs/trunk/vault_advp.cpp
+   M /alcugs/trunk/vault_advp.h
+   M /alcugs/trunk/vault_db.cpp
+   M /alcugs/trunk/vault_db.h
+   M /alcugs/trunk/vault_obj.cpp
+   M /alcugs/trunk/vault_obj.h
+   M /alcugs/trunk/vault_tasks.cpp
+   M /alcugs/trunk/vault_tasks.h
+   M /alcugs/trunk/vaultstrs.h
+   A /alcugs/trunk/vaultsubsys.cpp
+   A /alcugs/trunk/vaultsubsys.h
+   A /alcugs/trunk/version.cpp
+   A /alcugs/trunk/version.h
+   M /alcugs/trunk/vnodes.cpp
+   M /alcugs/trunk/vnodes.h
+   A /alcugs/trunk/vserversys.cpp
+   A /alcugs/trunk/vserversys.h
+   A /alcugs/trunk/windoze.cpp
+   A /alcugs/trunk/windoze.h
+
+Urunet 3 Main Branch
+
+------------------------------------------------------------------------
+r139 | almlys | 2005-04-11 01:04:39 +0200 (lun, 11 abr 2005) | 2 lines
+Rutas cambiadas:
+   M /alcugs/trunk/adv_gamemsgparser.cpp
+   M /alcugs/trunk/adv_gamemsgparser.h
+   M /alcugs/trunk/ageparser.cpp
+   M /alcugs/trunk/ageparser.h
+   M /alcugs/trunk/auth_db.cpp
+   M /alcugs/trunk/auth_db.h
+   M /alcugs/trunk/cgas_auth.cpp
+   M /alcugs/trunk/cgas_auth.h
+   M /alcugs/trunk/config.h
+   M /alcugs/trunk/config_parser.cpp
+   M /alcugs/trunk/config_parser.h
+   M /alcugs/trunk/conv_funs.cpp
+   M /alcugs/trunk/conv_funs.h
+   M /alcugs/trunk/data_types.h
+   M /alcugs/trunk/debug.h
+   M /alcugs/trunk/files.cpp
+   M /alcugs/trunk/files.h
+   M /alcugs/trunk/guid_gen.cpp
+   M /alcugs/trunk/guid_gen.h
+   M /alcugs/trunk/htmldumper.cpp
+   M /alcugs/trunk/htmldumper.h
+   M /alcugs/trunk/injector.cpp
+   M /alcugs/trunk/injector.h
+   M /alcugs/trunk/license.cpp
+   M /alcugs/trunk/license.h
+   M /alcugs/trunk/log.cpp
+   M /alcugs/trunk/log.h
+   M /alcugs/trunk/meta_db.cpp
+   M /alcugs/trunk/meta_db.h
+   M /alcugs/trunk/msg_parser.cpp
+   M /alcugs/trunk/msg_parser.h
+   M /alcugs/trunk/mysql.cpp
+   M /alcugs/trunk/mysql.h
+   M /alcugs/trunk/pclientmsg.cpp
+   M /alcugs/trunk/pclientmsg.h
+   M /alcugs/trunk/pdefaultmsg.cpp
+   M /alcugs/trunk/pdefaultmsg.h
+   M /alcugs/trunk/prot.h
+   M /alcugs/trunk/protocol.cpp
+   M /alcugs/trunk/protocol.h
+   M /alcugs/trunk/prpstuff.h
+   M /alcugs/trunk/psauthmsg.cpp
+   M /alcugs/trunk/psauthmsg.h
+   M /alcugs/trunk/pscauthmsg.cpp
+   M /alcugs/trunk/pscauthmsg.h
+   M /alcugs/trunk/pservermsg.cpp
+   M /alcugs/trunk/pservermsg.h
+   M /alcugs/trunk/psgamemsg.cpp
+   M /alcugs/trunk/psgamemsg.h
+   M /alcugs/trunk/psmetamsg.cpp
+   M /alcugs/trunk/psmetamsg.h
+   M /alcugs/trunk/pstrackingmsg.cpp
+   M /alcugs/trunk/pstrackingmsg.h
+   M /alcugs/trunk/psvaultmsg.cpp
+   M /alcugs/trunk/psvaultmsg.h
+   M /alcugs/trunk/sdlparser.cpp
+   M /alcugs/trunk/sdlparser.h
+   M /alcugs/trunk/sql.cpp
+   M /alcugs/trunk/sql.h
+   M /alcugs/trunk/stdebug.cpp
+   M /alcugs/trunk/stdebug.h
+   M /alcugs/trunk/tmp_config.cpp
+   M /alcugs/trunk/tmp_config.h
+   M /alcugs/trunk/uru.cpp
+   M /alcugs/trunk/uru.h
+   M /alcugs/trunk/urucmd.cpp
+   M /alcugs/trunk/uruconvert.cpp
+   M /alcugs/trunk/urucrypt.cpp
+   M /alcugs/trunk/urumsg.cpp
+   M /alcugs/trunk/urumsg.h
+   M /alcugs/trunk/urunet.cpp
+   M /alcugs/trunk/urunet.h
+   M /alcugs/trunk/uruping.cpp
+   M /alcugs/trunk/uruprp.cpp
+   M /alcugs/trunk/urusdl.cpp
+   M /alcugs/trunk/useful.cpp
+   M /alcugs/trunk/useful.h
+   M /alcugs/trunk/vault_advp.cpp
+   M /alcugs/trunk/vault_advp.h
+   M /alcugs/trunk/vault_db.cpp
+   M /alcugs/trunk/vault_db.h
+   M /alcugs/trunk/vault_obj.cpp
+   M /alcugs/trunk/vault_obj.h
+   M /alcugs/trunk/vault_tasks.cpp
+   M /alcugs/trunk/vault_tasks.h
+   M /alcugs/trunk/vaultstrs.h
+   M /alcugs/trunk/vnodes.cpp
+   M /alcugs/trunk/vnodes.h
+   M /alcugs/trunk/whatdoyousee.cpp
+   M /alcugs/trunk/whatdoyousee.h
+
+added property svn:keywords Id HeadURL
+
+------------------------------------------------------------------------
+r136 | almlys | 2005-04-11 00:33:37 +0200 (lun, 11 abr 2005) | 2 lines
+Rutas cambiadas:
+   D /alcugs/branches/trunk
+   A /alcugs/trunk (de /alcugs/branches/trunk:135)
+
+I hope that now it's at the correct place
+
+------------------------------------------------------------------------
+r134 | almlys | 2005-04-11 00:30:38 +0200 (lun, 11 abr 2005) | 2 lines
+Rutas cambiadas:
+   A /alcugs/branches/trunk (de /alcugs/trunk/trunk:133)
+   D /alcugs/trunk/trunk
+
+trunk/trunk/* must go under trunk 
+
+------------------------------------------------------------------------
+r133 | almlys | 2005-04-11 00:27:08 +0200 (lun, 11 abr 2005) | 2 lines
+Rutas cambiadas:
+   A /alcugs/trunk/trunk (de /trunk:132)
+   D /trunk
+
+hmmm
+
+------------------------------------------------------------------------
+r132 | khoufou_cvs | 2004-12-16 11:00:08 +0100 (jue, 16 dic 2004) | 2 lines
+Rutas cambiadas:
+   A /trunk/script/huru-servers-debug.sh
+
+Created this script to keep track of debug info (have to modify uru.cpp daemon(1,1) for this.
+
+------------------------------------------------------------------------
+r131 | khoufou_cvs | 2004-12-10 10:31:33 +0100 (vie, 10 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/install.sh.new
+
+Modified installer to properly set metaserver and auth logging in proper sections (global).
+
+------------------------------------------------------------------------
+r130 | khoufou_cvs | 2004-12-09 00:02:25 +0100 (jue, 09 dic 2004) | 3 lines
+Rutas cambiadas:
+   A /trunk/script/givemuseum.sh
+   M /trunk/script/hurulib.sh
+
+Converted givemuseum UU script to Huru. Also added an update timestamp function to hurulib
+(updtimestamp).
+
+------------------------------------------------------------------------
+r129 | almlys | 2004-12-08 23:07:41 +0100 (mié, 08 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/htmldumper.cpp
+
+Fixed small issue.
+
+------------------------------------------------------------------------
+r128 | khoufou_cvs | 2004-12-08 17:15:17 +0100 (mié, 08 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/script/checkpublicages.sh
+   M /trunk/script/hurulib.sh
+
+checkpublicages.sh now determines at run times available age names from vault.
+
+------------------------------------------------------------------------
+r127 | khoufou_cvs | 2004-12-08 16:33:04 +0100 (mié, 08 dic 2004) | 3 lines
+Rutas cambiadas:
+   M /trunk/script/README
+   A /trunk/script/checkpublicages.sh
+   A /trunk/script/hurulib.sh
+   A /trunk/script/showplayers.sh
+   A /trunk/script/viewplayer.sh
+
+Added some scripts converted from my UntilUru collection, and created checkpublicages.sh script to check
+current vault status for private ages. Copy them into your bin directory.
+
+------------------------------------------------------------------------
+r126 | khoufou_cvs | 2004-12-07 01:00:48 +0100 (mar, 07 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/install.sh.new
+
+Added defaults for all configuration parameters.
+
+------------------------------------------------------------------------
+r125 | khoufou_cvs | 2004-12-06 17:38:23 +0100 (lun, 06 dic 2004) | 4 lines
+Rutas cambiadas:
+   M /trunk/install.sh.new
+
+Modified script to get default from already existing config file. You can also edit default values at start
+of file. Those will be used if they can't be found in an existing config file. Existing config file must
+meet (as for now) new format with [...] sections.
+
+------------------------------------------------------------------------
+r124 | almlys | 2004-12-05 17:39:09 +0100 (dom, 05 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/cgas_auth.cpp
+
+ Additional sanity check to the CGAS code.
+
+------------------------------------------------------------------------
+r123 | almlys | 2004-12-04 17:49:55 +0100 (sáb, 04 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/pstrackingmsg.cpp
+   M /trunk/uru.cpp
+
+Small fix
+
+------------------------------------------------------------------------
+r122 | khoufou_cvs | 2004-12-04 11:02:30 +0100 (sáb, 04 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/script/huru-servers.sh
+
+Added sbin in PATH for pidof location in Slackware distro (thx tolip_wen).
+
+------------------------------------------------------------------------
+r121 | almlys | 2004-12-03 17:25:34 +0100 (vie, 03 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/protocol.cpp
+   M /trunk/pscauthmsg.cpp
+   M /trunk/psgamemsg.cpp
+
+ Added InGame status, and workarounds against ghosts
+
+------------------------------------------------------------------------
+r120 | almlys | 2004-12-03 16:25:39 +0100 (vie, 03 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/uru.cpp
+
+ Avoid ghosts
+
+------------------------------------------------------------------------
+r119 | khoufou_cvs | 2004-12-03 16:19:39 +0100 (vie, 03 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/tmp_config.cpp
+
+Quick fix for missing parsed "bin" parameter.
+
+------------------------------------------------------------------------
+r118 | khoufou_cvs | 2004-12-03 15:06:46 +0100 (vie, 03 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/script/huru-servers.sh
+
+Applied (finally) fix provided by tolip_wen (tac command on huru stop).
+
+------------------------------------------------------------------------
+r117 | khoufou_cvs | 2004-12-03 14:47:08 +0100 (vie, 03 dic 2004) | 2 lines
+Rutas cambiadas:
+   A /trunk/install.sh.new
+
+Rewrote install.sh script under a temporary name for users to test it.
+
+------------------------------------------------------------------------
+r116 | almlys | 2004-12-03 05:10:12 +0100 (vie, 03 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/uru.cpp
+
+ Well, tomorrow I will see if this fix works or not.
+
+------------------------------------------------------------------------
+r115 | almlys | 2004-12-03 03:59:55 +0100 (vie, 03 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/pscauthmsg.cpp
+
+Fixed problem where the lobby was unable to find the uru_game binary files.
+
+------------------------------------------------------------------------
+r114 | almlys | 2004-12-03 01:47:33 +0100 (vie, 03 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/uru.conf
+
+updated sample config file
+
+------------------------------------------------------------------------
+r113 | almlys | 2004-12-03 01:37:08 +0100 (vie, 03 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/uru.conf
+
+Added better configuration example file
+
+------------------------------------------------------------------------
+r112 | almlys | 2004-12-03 01:07:45 +0100 (vie, 03 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/config_parser.cpp
+   M /trunk/tmp_config.cpp
+
+This time works, I'm sure.
+
+------------------------------------------------------------------------
+r111 | almlys | 2004-12-03 00:55:04 +0100 (vie, 03 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/urusdl.cpp
+
+small fix
+
+------------------------------------------------------------------------
+r110 | almlys | 2004-12-03 00:50:51 +0100 (vie, 03 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk
+   M /trunk/.cvsignore
+   M /trunk/config_parser.cpp
+   M /trunk/tmp_config.cpp
+   M /trunk/uru.conf
+
+Now, it works, with an example file, now I need to fix the installer...
+
+------------------------------------------------------------------------
+r109 | almlys | 2004-12-03 00:09:36 +0100 (vie, 03 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/stdebug.h
+
+was this one
+
+------------------------------------------------------------------------
+r108 | almlys | 2004-12-03 00:08:30 +0100 (vie, 03 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/urunet.h
+
+?
+
+------------------------------------------------------------------------
+r107 | almlys | 2004-12-03 00:06:15 +0100 (vie, 03 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/Makefile
+
+adding makefile
+
+------------------------------------------------------------------------
+r106 | almlys | 2004-12-03 00:04:24 +0100 (vie, 03 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/uru.cpp
+
+and the missing uru.cpp file.., yes..
+
+------------------------------------------------------------------------
+r105 | almlys | 2004-12-03 00:03:39 +0100 (vie, 03 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/config_parser.cpp
+   M /trunk/config_parser.h
+   M /trunk/tmp_config.cpp
+   M /trunk/vault_db.cpp
+
+New config parser, unet2 -> unet3, don't blame me if the current distro is broken, there are still a lot of things that need to be fixed.
+
+------------------------------------------------------------------------
+r104 | khoufou_cvs | 2004-12-02 23:38:50 +0100 (jue, 02 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/script/huru-servers.sh
+
+Modified huru_server.sh script to handle 'reload' parameter, to reload configuration.
+
+------------------------------------------------------------------------
+r103 | almlys | 2004-12-02 23:31:46 +0100 (jue, 02 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/debug.h
+   M /trunk/script/addadmin.sh
+   A /trunk/script/modifylevelaccount.sh
+   M /trunk/tmp_config.cpp
+   M /trunk/tmp_config.h
+
+Added script to change user acces level, and some fixes on the tmp config
+
+------------------------------------------------------------------------
+r102 | khoufou_cvs | 2004-12-02 23:26:59 +0100 (jue, 02 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/install.sh
+
+Corrected install.sh script for age/sdl parameters and added default values for some options.
+
+------------------------------------------------------------------------
+r101 | almlys | 2004-12-02 23:22:07 +0100 (jue, 02 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/guid_gen.cpp
+
+Delete that abort now! (this happens for going too fast)
+
+------------------------------------------------------------------------
+r100 | almlys | 2004-12-02 23:20:37 +0100 (jue, 02 dic 2004) | 3 lines
+Rutas cambiadas:
+   M /trunk/auth_db.cpp
+
+Fixed issue where some versions of Mysql can't create multiple tables in the same
+query.
+
+------------------------------------------------------------------------
+r99 | almlys | 2004-12-02 23:17:48 +0100 (jue, 02 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/guid_gen.cpp
+
+fixed strsep issue..
+
+------------------------------------------------------------------------
+r98 | almlys | 2004-12-02 22:09:36 +0100 (jue, 02 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/guid_gen.cpp
+
+argh - now there is a conflict between the new config_parser and the old one, please wait before downloading all this stuff.
+
+------------------------------------------------------------------------
+r97 | almlys | 2004-12-02 22:06:23 +0100 (jue, 02 dic 2004) | 3 lines
+Rutas cambiadas:
+   M /trunk/guid_gen.cpp
+
+Fixed problem in GUID generator, now is tested, and now it works as it should
+really work.
+
+------------------------------------------------------------------------
+r96 | almlys | 2004-12-02 21:50:55 +0100 (jue, 02 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk
+   M /trunk/.cvsignore
+
+fixed cvsignore
+
+------------------------------------------------------------------------
+r95 | almlys | 2004-12-02 21:24:25 +0100 (jue, 02 dic 2004) | 3 lines
+Rutas cambiadas:
+   A /trunk/tmp_config.cpp
+   A /trunk/tmp_config.h
+
+Temporal configuration files parser. Transition from urunet2 to urunet3
+ Unused by urunet3
+
+------------------------------------------------------------------------
+r94 | khoufou_cvs | 2004-12-02 18:04:00 +0100 (jue, 02 dic 2004) | 3 lines
+Rutas cambiadas:
+   M /trunk/install.sh
+
+Modified install.sh to allow single configuration file (or multiple) and added newly created
+parameters, also added sdl and age parameters to avoid symlinks.
+
+------------------------------------------------------------------------
+r93 | khoufou_cvs | 2004-12-02 16:06:31 +0100 (jue, 02 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/config_parser.cpp
+   M /trunk/config_parser.h
+   M /trunk/psauthmsg.cpp
+
+Implemented allow_unknown_accounts parameter. 0 to close your server to only known accounts.
+
+------------------------------------------------------------------------
+r92 | khoufou_cvs | 2004-12-02 15:40:50 +0100 (jue, 02 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/auth_db.cpp
+   M /trunk/auth_db.h
+   M /trunk/config_parser.cpp
+   M /trunk/config_parser.h
+   M /trunk/psauthmsg.cpp
+
+Implemented login/logout history tracking.
+
+------------------------------------------------------------------------
+r91 | khoufou_cvs | 2004-12-02 10:31:02 +0100 (jue, 02 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/AUTHORS
+
+*** empty log message ***
+
+------------------------------------------------------------------------
+r90 | khoufou_cvs | 2004-12-01 15:43:35 +0100 (mié, 01 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/guid_gen.cpp
+
+*** empty log message ***
+
+------------------------------------------------------------------------
+r89 | khoufou_cvs | 2004-12-01 15:42:32 +0100 (mié, 01 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/guid_gen.cpp
+
+Modified the function to find if age is private. Now it *really* workds the way it should :)
+
+------------------------------------------------------------------------
+r88 | khoufou_cvs | 2004-12-01 15:07:48 +0100 (mié, 01 dic 2004) | 4 lines
+Rutas cambiadas:
+   M /trunk/pscauthmsg.cpp
+
+Modified pscauthmsg.cpp to handle global_config_alt nicely (path to uru.conf).
+This way, if "age" and "sdl" parameters are set in config file, no need to store them under
+lobby/ directory anymore and create links.
+
+------------------------------------------------------------------------
+r87 | khoufou_cvs | 2004-12-01 14:19:31 +0100 (mié, 01 dic 2004) | 3 lines
+Rutas cambiadas:
+   M /trunk/guid_gen.cpp
+
+Modified check_if_age_is_private() to initialize i=0 otherwyse we get our
+loved segfault :)
+
+------------------------------------------------------------------------
+r86 | khoufou_cvs | 2004-12-01 13:59:44 +0100 (mié, 01 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/docs/vault_db.txt
+
+Modified to reflect recent changes in vault table structure.
+
+------------------------------------------------------------------------
+r85 | khoufou_cvs | 2004-12-01 11:19:26 +0100 (mié, 01 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/docs/README.parameters
+
+Modified parameters documentation to reflect single configuration file options.
+
+------------------------------------------------------------------------
+r84 | khoufou_cvs | 2004-12-01 11:17:07 +0100 (mié, 01 dic 2004) | 6 lines
+Rutas cambiadas:
+   M /trunk/config_parser.cpp
+   M /trunk/docs/README.parameters
+   M /trunk/script/huru-servers.sh
+   M /trunk/uru.cpp
+   M /trunk/urucmd.cpp
+   M /trunk/uruping.cpp
+   M /trunk/urusdl.cpp
+   M /trunk/vault_db.cpp
+
+Modified config_parser.cpp to handle a single configuration file.
+See README.parameters. Changes: bind -> public_bind, port -> public_port for
+lobby, all other servers use auth_*_port to get their own port and *_server
+to bind. Changed huru_servers.sh to get binaries from $HOME/bin directory.
+Corrected vault_db.cpp for incorrect vault table creation.
+
+------------------------------------------------------------------------
+r83 | khoufou_cvs | 2004-12-01 09:27:40 +0100 (mié, 01 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/docs/README.parameters
+
+Updated parameters documentation.
+
+------------------------------------------------------------------------
+r82 | almlys | 2004-12-01 04:56:53 +0100 (mié, 01 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/ChangeLog
+   M /trunk/NEWS
+   M /trunk/ageparser.cpp
+   M /trunk/ageparser.h
+   M /trunk/config_parser.cpp
+   M /trunk/config_parser.h
+   M /trunk/guid_gen.cpp
+   M /trunk/install.sh
+   M /trunk/servers.list
+   M /trunk/uru.cpp
+   M /trunk/uru.h
+   M /trunk/vault_db.cpp
+   M /trunk/vault_db.h
+   M /trunk/vault_tasks.cpp
+
+Experimental multiple instance mode implemented, but needs to be tested
+
+------------------------------------------------------------------------
+r81 | almlys | 2004-12-01 00:20:51 +0100 (mié, 01 dic 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/BUGS
+   M /trunk/Feature-Requests
+   M /trunk/ageparser.cpp
+   M /trunk/ageparser.h
+   M /trunk/guid_gen.cpp
+   M /trunk/guid_gen.h
+   M /trunk/install.sh
+   M /trunk/pstrackingmsg.cpp
+   M /trunk/uru.cpp
+   M /trunk/vault_tasks.cpp
+
+Protection against bogus ages & initial changes to allow multiple instances
+
+------------------------------------------------------------------------
+r80 | khoufou_cvs | 2004-11-30 11:35:34 +0100 (mar, 30 nov 2004) | 3 lines
+Rutas cambiadas:
+   M /trunk/uruconvert.cpp
+   M /trunk/vault_tasks.cpp
+
+More work on uruconvert.
+Cleanup up vault_tasks.cpp and corrected a possible overflow on welcome text (missing \0 in count).
+
+------------------------------------------------------------------------
+r79 | khoufou_cvs | 2004-11-30 01:45:26 +0100 (mar, 30 nov 2004) | 3 lines
+Rutas cambiadas:
+   M /trunk/mysql.cpp
+   M /trunk/mysql.h
+   M /trunk/uruconvert.cpp
+
+Corrected some functions in mysql.*
+Begin parsing of UntilUru vault database.
+
+------------------------------------------------------------------------
+r78 | almlys | 2004-11-29 01:44:47 +0100 (lun, 29 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/msg_parser.cpp
+   M /trunk/psgamemsg.cpp
+
+small fix for the AvatarCustomization age
+
+------------------------------------------------------------------------
+r77 | almlys | 2004-11-28 02:33:03 +0100 (dom, 28 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/ChangeLog
+   M /trunk/msg_parser.cpp
+   M /trunk/pscauthmsg.cpp
+   M /trunk/pservermsg.cpp
+   M /trunk/psgamemsg.cpp
+   M /trunk/urumsg.cpp
+   M /trunk/uruprp.cpp
+   M /trunk/vault_obj.cpp
+   M /trunk/vault_tasks.cpp
+
+Fixed issues with some auth response failed messages and fixed the annoying cursor bug, now you can visit ahnonay if you can. There are also some changes in the prp patcher
+
+------------------------------------------------------------------------
+r76 | almlys | 2004-11-24 17:42:48 +0100 (mié, 24 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/conv_funs.cpp
+   M /trunk/uruprp.cpp
+
+Fixed another vault crash related issue
+
+------------------------------------------------------------------------
+r75 | almlys | 2004-11-24 12:04:07 +0100 (mié, 24 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/pstrackingmsg.cpp
+   M /trunk/uruprp.cpp
+
+Fixed Tracking server issues...
+
+------------------------------------------------------------------------
+r74 | khoufou_cvs | 2004-11-23 17:56:18 +0100 (mar, 23 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/mysql.cpp
+   M /trunk/mysql.h
+   M /trunk/uruconvert.cpp
+
+More work on conversion utility.
+
+------------------------------------------------------------------------
+r73 | almlys | 2004-11-23 14:01:37 +0100 (mar, 23 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/uruprp.cpp
+
+small fix
+
+------------------------------------------------------------------------
+r72 | almlys | 2004-11-23 13:56:58 +0100 (mar, 23 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/Makefile
+   M /trunk/adv_gamemsgparser.cpp
+   M /trunk/adv_gamemsgparser.h
+   M /trunk/install.sh
+   A /trunk/prpstuff.h
+   M /trunk/urumsg.cpp
+   A /trunk/uruprp.cpp
+
+Added the prp patcher... to be able to use the KI again...
+
+------------------------------------------------------------------------
+r71 | khoufou_cvs | 2004-11-22 16:58:41 +0100 (lun, 22 nov 2004) | 2 lines
+Rutas cambiadas:
+   A /trunk/uruconvert.cpp
+
+Started unrilutu<->huru database convertion prog.
+
+------------------------------------------------------------------------
+r70 | khoufou_cvs | 2004-11-22 16:56:51 +0100 (lun, 22 nov 2004) | 3 lines
+Rutas cambiadas:
+   M /trunk/Makefile
+   M /trunk/mysql.cpp
+   M /trunk/mysql.h
+
+mysql.*: Code cleaning.
+Makefile: Added uruconvert compilation directives.
+
+------------------------------------------------------------------------
+r69 | khoufou_cvs | 2004-11-22 12:08:48 +0100 (lun, 22 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/mysql.cpp
+   M /trunk/mysql.h
+
+*** empty log message ***
+
+------------------------------------------------------------------------
+r68 | almlys | 2004-11-20 16:49:48 +0100 (sáb, 20 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/psgamemsg.cpp
+   M /trunk/pstrackingmsg.cpp
+   M /trunk/urumsg.cpp
+
+Fixed AvatarCustomization crashes, and fixed some multiplayer crashes...
+
+------------------------------------------------------------------------
+r67 | almlys | 2004-11-20 04:37:32 +0100 (sáb, 20 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/Makefile
+   A /trunk/NEWS
+   M /trunk/psgamemsg.cpp
+   M /trunk/sdlparser.cpp
+   M /trunk/uru.cpp
+   M /trunk/uru.h
+   M /trunk/urucmd.cpp
+   M /trunk/urumsg.cpp
+   M /trunk/urumsg.h
+   M /trunk/uruping.cpp
+   M /trunk/urusdl.cpp
+
+yep, Initial SDL state IS now being SENT
+
+------------------------------------------------------------------------
+r66 | almlys | 2004-11-19 14:13:04 +0100 (vie, 19 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk
+   M /trunk/.cvsignore
+   M /trunk/ChangeLog
+   M /trunk/Makefile
+   A /trunk/env.sh
+   M /trunk/prot.h
+   A /trunk/script/README
+   A /trunk/script/decrypt_all.sh
+   A /trunk/urucrypt.cpp
+
+Added urucrypt to the sources
+
+------------------------------------------------------------------------
+r65 | khoufou_cvs | 2004-11-18 17:35:56 +0100 (jue, 18 nov 2004) | 4 lines
+Rutas cambiadas:
+   M /trunk/log.cpp
+   A /trunk/mysql.cpp
+   A /trunk/mysql.h
+
+Corrected minor type in log.cpp.
+Created mysql generic functions for use with uruconvert proggy, converting
+untiluru->huru (WIP).
+
+------------------------------------------------------------------------
+r64 | almlys | 2004-11-17 00:19:28 +0100 (mié, 17 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/htmldumper.cpp
+   M /trunk/pservermsg.cpp
+
+Attempted to fix a crash that only happens when you are using an inferior OS
+
+------------------------------------------------------------------------
+r63 | almlys | 2004-11-16 23:24:28 +0100 (mar, 16 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/adv_gamemsgparser.cpp
+   M /trunk/ageparser.cpp
+   M /trunk/cgas_auth.cpp
+   M /trunk/config_parser.cpp
+   M /trunk/conv_funs.cpp
+   M /trunk/files.cpp
+   M /trunk/guid_gen.cpp
+   M /trunk/htmldumper.cpp
+   M /trunk/injector.cpp
+   M /trunk/license.cpp
+   M /trunk/msg_parser.cpp
+   M /trunk/pclientmsg.cpp
+   M /trunk/pdefaultmsg.cpp
+   M /trunk/protocol.cpp
+   M /trunk/psauthmsg.cpp
+   M /trunk/pscauthmsg.cpp
+   M /trunk/pservermsg.cpp
+   M /trunk/psgamemsg.cpp
+   M /trunk/psmetamsg.cpp
+   M /trunk/pstrackingmsg.cpp
+   M /trunk/psvaultmsg.cpp
+   M /trunk/sdlparser.cpp
+   M /trunk/stdebug.cpp
+   M /trunk/urucmd.cpp
+   M /trunk/urumsg.cpp
+   M /trunk/urunet.cpp
+   M /trunk/uruping.cpp
+   M /trunk/urusdl.cpp
+   M /trunk/useful.cpp
+   M /trunk/vault_advp.cpp
+   M /trunk/vault_obj.cpp
+   M /trunk/vault_tasks.cpp
+   M /trunk/vnodes.cpp
+
+added debug.h to all source files, to be able to set a global debugging level
+
+------------------------------------------------------------------------
+r62 | almlys | 2004-11-15 23:09:04 +0100 (lun, 15 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/Makefile
+
+small fix
+
+------------------------------------------------------------------------
+r61 | almlys | 2004-11-14 17:23:52 +0100 (dom, 14 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk
+   M /trunk/.cvsignore
+   M /trunk/Makefile
+   A /trunk/ageparser.cpp
+   A /trunk/ageparser.h
+   M /trunk/config_parser.cpp
+   M /trunk/config_parser.h
+   M /trunk/psgamemsg.cpp
+   M /trunk/uru.cpp
+
+*.age parser finished...
+
+------------------------------------------------------------------------
+r60 | almlys | 2004-11-14 04:30:15 +0100 (dom, 14 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/Makefile
+   M /trunk/urusdl.cpp
+
+Well at least compiles on windows, now I need to figure out why it nicely crashes... (windows sucks a lot)
+
+------------------------------------------------------------------------
+r59 | almlys | 2004-11-14 02:21:56 +0100 (dom, 14 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/vault_advp.cpp
+
+Vault fix to avoid more crashes...
+
+------------------------------------------------------------------------
+r58 | almlys | 2004-11-13 20:57:01 +0100 (sáb, 13 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/install.sh
+
+installer fix
+
+------------------------------------------------------------------------
+r57 | almlys | 2004-11-13 20:38:25 +0100 (sáb, 13 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk
+   M /trunk/.cvsignore
+   M /trunk/ChangeLog
+   M /trunk/Makefile
+   M /trunk/sdlparser.cpp
+   A /trunk/urusdl.cpp
+
+Urusdl
+
+------------------------------------------------------------------------
+r56 | almlys | 2004-11-13 15:16:21 +0100 (sáb, 13 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/meta_db.cpp
+   M /trunk/psmetamsg.cpp
+
+another small fix for the metaserver
+
+------------------------------------------------------------------------
+r55 | almlys | 2004-11-13 14:59:47 +0100 (sáb, 13 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/meta_db.cpp
+   M /trunk/uru.cpp
+
+Small fix for the metaserver
+
+------------------------------------------------------------------------
+r54 | almlys | 2004-11-13 03:26:55 +0100 (sáb, 13 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk
+   M /trunk/.cvsignore
+   M /trunk/Makefile
+   M /trunk/config_parser.cpp
+   M /trunk/data_types.h
+   A /trunk/meta_db.cpp
+   A /trunk/meta_db.h
+   M /trunk/pscauthmsg.cpp
+   A /trunk/psmetamsg.cpp
+   A /trunk/psmetamsg.h
+   M /trunk/uru.cpp
+   M /trunk/uru.h
+   M /trunk/urumsg.cpp
+   M /trunk/urunet.cpp
+   M /trunk/urunet.h
+
+Meta server should be finished now..
+
+------------------------------------------------------------------------
+r53 | almlys | 2004-11-12 04:18:43 +0100 (vie, 12 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk
+   M /trunk/.cvsignore
+   M /trunk/Makefile
+   M /trunk/config_parser.cpp
+   M /trunk/pscauthmsg.cpp
+   M /trunk/pstrackingmsg.cpp
+   M /trunk/purgue.sh
+   M /trunk/tclean.sh
+   M /trunk/uru.cpp
+   M /trunk/urucmd.cpp
+   M /trunk/urumsg.cpp
+   M /trunk/uruping.cpp
+
+All metaserver messages should be implemented now..
+
+------------------------------------------------------------------------
+r52 | almlys | 2004-11-11 12:28:01 +0100 (jue, 11 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/pstrackingmsg.cpp
+   M /trunk/sql.h
+   M /trunk/uru.cpp
+   M /trunk/uru.h
+   M /trunk/urumsg.h
+
+implemented some Metaserver messages
+
+------------------------------------------------------------------------
+r51 | almlys | 2004-11-11 03:17:41 +0100 (jue, 11 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk
+   M /trunk/.cvsignore
+   M /trunk/ChangeLog
+   M /trunk/config_parser.cpp
+   M /trunk/config_parser.h
+   M /trunk/psauthmsg.cpp
+   M /trunk/purgue.sh
+
+Added a new option to allow private shards with a default access level
+
+------------------------------------------------------------------------
+r50 | almlys | 2004-11-11 02:45:09 +0100 (jue, 11 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk
+   M /trunk/.cvsignore
+   M /trunk/README
+   M /trunk/install.sh
+   M /trunk/license.cpp
+   M /trunk/license.h
+   M /trunk/run.sh
+   M /trunk/script/addadmin.sh
+   A /trunk/script/huru-servers.sh
+   M /trunk/uru.cpp
+
+Added Sjaak modified Strikers nice start/stop script and added a script to start stand alone game servers
+
+------------------------------------------------------------------------
+r49 | almlys | 2004-11-10 22:25:23 +0100 (mié, 10 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/ChangeLog
+
+cvs2cl.pl
+
+------------------------------------------------------------------------
+r48 | almlys | 2004-11-10 22:11:17 +0100 (mié, 10 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/Makefile
+   M /trunk/config_parser.cpp
+   M /trunk/pscauthmsg.cpp
+   M /trunk/pservermsg.cpp
+   M /trunk/sql.cpp
+   M /trunk/uru.cpp
+
+Fixed a big bug caused by the code reestructuration
+
+------------------------------------------------------------------------
+r47 | khoufou_cvs | 2004-11-10 16:34:44 +0100 (mié, 10 nov 2004) | 3 lines
+Rutas cambiadas:
+   A /trunk/log.cpp
+   A /trunk/log.h
+   M /trunk/sql.cpp
+
+Added log.cpp and log.h to handle logging to syslog and/or to files. Embedded is a small test program.
+Just a small modification to mysql_init call test indentation.
+
+------------------------------------------------------------------------
+r46 | almlys | 2004-11-09 15:20:12 +0100 (mar, 09 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/ChangeLog
+   M /trunk/sql.cpp
+
+Fixed SQL broken code
+
+------------------------------------------------------------------------
+r45 | khoufou_cvs | 2004-11-09 12:36:28 +0100 (mar, 09 nov 2004) | 3 lines
+Rutas cambiadas:
+   M /trunk/config_parser.cpp
+   M /trunk/config_parser.h
+   M /trunk/docs/README.parameters
+   M /trunk/vault_tasks.cpp
+
+Added welcome_title and welcome_text to configure global Ki message upton Vault initialization.
+Modified config_parser.cpp to handle foreign character set.
+
+------------------------------------------------------------------------
+r44 | khoufou_cvs | 2004-11-09 10:57:55 +0100 (mar, 09 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/sql.cpp
+   M /trunk/sql.h
+
+SQL cleaning.
+
+------------------------------------------------------------------------
+r43 | khoufou_cvs | 2004-11-09 10:54:17 +0100 (mar, 09 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/sql.cpp
+
+Removed unnecessary mysql connections. First step to MySQL cleanup.
+
+------------------------------------------------------------------------
+r42 | khoufou_cvs | 2004-11-09 10:37:43 +0100 (mar, 09 nov 2004) | 2 lines
+Rutas cambiadas:
+   A /trunk/docs/README.parameters
+
+First documentation of config file parameters.
+
+------------------------------------------------------------------------
+r41 | almlys | 2004-11-09 00:25:29 +0100 (mar, 09 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/ChangeLog
+   A /trunk/script/addadmin.sh
+   A /trunk/script/vaultwipe.sh
+   M /trunk/tclean.sh
+
+Added some wipe/admin scripts
+
+------------------------------------------------------------------------
+r40 | khoufou_cvs | 2004-11-08 22:45:18 +0100 (lun, 08 nov 2004) | 2 lines
+Rutas cambiadas:
+   A /trunk/etc
+   A /trunk/etc/allclean.sh
+   A /trunk/etc/cleanlog.sh
+
+Clean all log files
+
+------------------------------------------------------------------------
+r39 | khoufou_cvs | 2004-11-08 22:31:59 +0100 (lun, 08 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/ChangeLog
+
+*** empty log message ***
+
+------------------------------------------------------------------------
+r38 | almlys | 2004-11-08 16:03:13 +0100 (lun, 08 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/ChangeLog
+   M /trunk/auth_db.cpp
+   M /trunk/auth_db.h
+   M /trunk/install.sh
+   M /trunk/psauthmsg.cpp
+   M /trunk/uru.cpp
+   M /trunk/vault_db.cpp
+
+Now, the auth database is automatically created if it is missing
+
+------------------------------------------------------------------------
+r37 | almlys | 2004-11-07 03:00:50 +0100 (dom, 07 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/install.sh
+
+metaserver option was missing..
+
+------------------------------------------------------------------------
+r36 | almlys | 2004-11-06 23:07:33 +0100 (sáb, 06 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk
+   M /trunk/.cvsignore
+   M /trunk/Makefile
+   A /trunk/config.h
+   M /trunk/debug.h
+   M /trunk/install.sh
+   M /trunk/license.h
+   M /trunk/prot.h
+   M /trunk/purgue.sh
+   M /trunk/uru.cpp
+   M /trunk/uru.h
+   M /trunk/vault_db.cpp
+
+some minor fixes..
+
+------------------------------------------------------------------------
+r35 | almlys | 2004-11-06 18:04:07 +0100 (sáb, 06 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/ChangeLog
+   M /trunk/TODO
+   M /trunk/prot.h
+   M /trunk/urumsg.cpp
+
+Added MetaServer messages
+
+------------------------------------------------------------------------
+r34 | almlys | 2004-11-06 04:29:50 +0100 (sáb, 06 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/config_parser.cpp
+   M /trunk/config_parser.h
+
+Added Metaserver vars
+
+------------------------------------------------------------------------
+r33 | almlys | 2004-11-06 03:45:07 +0100 (sáb, 06 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/AUTHORS
+
+Added Khoufou to the list
+
+------------------------------------------------------------------------
+r32 | almlys | 2004-11-05 17:00:27 +0100 (vie, 05 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/purgue.sh
+   M /trunk/sdlparser.h
+   M /trunk/sql.h
+   M /trunk/uru.cpp
+
+? what happened here?
+
+------------------------------------------------------------------------
+r31 | almlys | 2004-11-05 15:51:09 +0100 (vie, 05 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk
+   M /trunk/.cvsignore
+   M /trunk/BUGS
+   M /trunk/ChangeLog
+   M /trunk/Makefile
+   M /trunk/auth_db.cpp
+   M /trunk/install.sh
+   M /trunk/protocol.cpp
+
+More patches..
+
+------------------------------------------------------------------------
+r30 | almlys | 2004-11-05 03:21:18 +0100 (vie, 05 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/Feature-Requests
+   M /trunk/Makefile
+   M /trunk/TODO
+   M /trunk/adv_gamemsgparser.cpp
+   A /trunk/adv_gamemsgparser.h
+   M /trunk/auth_db.cpp
+   A /trunk/auth_db.h
+   D /trunk/auth_server.cpp
+   M /trunk/cgas_auth.cpp
+   A /trunk/cgas_auth.h
+   D /trunk/clean.sh
+   M /trunk/config_parser.cpp
+   M /trunk/config_parser.h
+   M /trunk/debug.h
+   M /trunk/files.cpp
+   M /trunk/files.h
+   D /trunk/game_server.cpp
+   M /trunk/guid_gen.cpp
+   A /trunk/guid_gen.h
+   M /trunk/htmldumper.cpp
+   A /trunk/htmldumper.h
+   M /trunk/install.sh
+   M /trunk/license.cpp
+   A /trunk/license.h
+   M /trunk/msg_parser.cpp
+   A /trunk/msg_parser.h
+   D /trunk/new_vault.cpp
+   M /trunk/pclientmsg.cpp
+   A /trunk/pclientmsg.h
+   M /trunk/pdefaultmsg.cpp
+   A /trunk/pdefaultmsg.h
+   M /trunk/psauthmsg.cpp
+   A /trunk/psauthmsg.h
+   M /trunk/pscauthmsg.cpp
+   A /trunk/pscauthmsg.h
+   M /trunk/pservermsg.cpp
+   A /trunk/pservermsg.h
+   M /trunk/psgamemsg.cpp
+   A /trunk/psgamemsg.h
+   M /trunk/pstrackingmsg.cpp
+   A /trunk/pstrackingmsg.h
+   M /trunk/psvaultmsg.cpp
+   A /trunk/psvaultmsg.h
+   M /trunk/sdlparser.cpp
+   A /trunk/sdlparser.h
+   D /trunk/semaphore.cpp
+   M /trunk/sql.cpp
+   A /trunk/sql.h
+   D /trunk/svault.cpp
+   M /trunk/uru.cpp
+   A /trunk/uru.h
+   M /trunk/urucmd.cpp
+   M /trunk/urumsg.cpp
+   A /trunk/urumsg.h
+   M /trunk/urunet.cpp
+   D /trunk/urunet2.cpp
+   M /trunk/uruping.cpp
+   D /trunk/urusdl.cpp
+   D /trunk/vault.cpp
+   M /trunk/vault_advp.cpp
+   A /trunk/vault_advp.h
+   M /trunk/vault_db.cpp
+   A /trunk/vault_db.h
+   M /trunk/vault_obj.cpp
+   A /trunk/vault_obj.h
+   M /trunk/vault_tasks.cpp
+   A /trunk/vault_tasks.h
+   D /trunk/vaultstrs.cpp
+   A /trunk/vaultstrs.h
+   M /trunk/vnodes.cpp
+   A /trunk/vnodes.h
+   D /trunk/vtask.cpp
+   M /trunk/whatdoyousee.cpp
+   A /trunk/whatdoyousee.h
+
+Solved vault loop, added Khoufou patches, fixed some stability issues, reorganized the code, and other things...
+
+------------------------------------------------------------------------
+r29 | almlys | 2004-11-03 17:40:32 +0100 (mié, 03 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/install.sh
+
+Fixed age files path issue
+
+------------------------------------------------------------------------
+r28 | almlys | 2004-11-03 12:25:15 +0100 (mié, 03 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/uru.cpp
+
+Fixed "'" bug
+
+------------------------------------------------------------------------
+r27 | almlys | 2004-11-03 12:16:09 +0100 (mié, 03 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/ChangeLog
+   M /trunk/sdlparser.cpp
+   M /trunk/uru.cpp
+
+Fixed a problem when parsing the GreatZero.sdl file
+
+------------------------------------------------------------------------
+r26 | almlys | 2004-11-03 12:02:08 +0100 (mié, 03 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/AUTHORS
+   M /trunk/BUGS
+   M /trunk/ChangeLog
+   M /trunk/DEVELOPERS
+   M /trunk/HELPING
+   M /trunk/README
+
+Added mailing list address
+
+------------------------------------------------------------------------
+r25 | almlys | 2004-11-03 11:43:36 +0100 (mié, 03 nov 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk
+   M /trunk/.cvsignore
+   M /trunk/ChangeLog
+   M /trunk/htmldumper.cpp
+   M /trunk/install.sh
+   M /trunk/sql.cpp
+   M /trunk/uru.cpp
+   M /trunk/vault_advp.cpp
+   M /trunk/vault_db.cpp
+
+All free() problems should be fixed now...
+
+------------------------------------------------------------------------
+r24 | almlys | 2004-11-03 03:49:55 +0100 (mié, 03 nov 2004) | 3 lines
+Rutas cambiadas:
+   M /trunk/conv_funs.cpp
+   M /trunk/protocol.cpp
+   M /trunk/psauthmsg.cpp
+   M /trunk/pservermsg.cpp
+   M /trunk/sql.cpp
+   M /trunk/stdebug.cpp
+   M /trunk/uru.cpp
+   M /trunk/urumsg.cpp
+   M /trunk/urunet.cpp
+   M /trunk/vault_db.cpp
+   M /trunk/vault_tasks.cpp
+
+Fixed some free(tptr) calls, thanks to Khoufou
+Now, Game servers will automatically close on inactivity.
+
+------------------------------------------------------------------------
+r23 | almlys | 2004-10-27 01:19:18 +0200 (mié, 27 oct 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk
+   M /trunk/.cvsignore
+   A /trunk/BUGS
+   M /trunk/ChangeLog
+   M /trunk/Makefile
+   M /trunk/install.sh
+   A /trunk/purgue.sh
+   A /trunk/run.sh
+   M /trunk/sql.cpp
+   M /trunk/uru.conf
+   M /trunk/urunet.cpp
+
+Fixed install.sh passwd issue and added more stuff, also now the vault & auth server should automatically create the configured databases.
+
+------------------------------------------------------------------------
+r22 | almlys | 2004-10-26 02:14:06 +0200 (mar, 26 oct 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/ChangeLog
+   M /trunk/install.sh
+
+Added some code to the installer
+
+------------------------------------------------------------------------
+r21 | almlys | 2004-10-25 12:45:51 +0200 (lun, 25 oct 2004) | 2 lines
+Rutas cambiadas:
+   A /trunk/ChangeLog
+
+Added the ChangeLog file
+
+------------------------------------------------------------------------
+r20 | almlys | 2004-10-25 12:45:24 +0200 (lun, 25 oct 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk/docs
+   A /trunk/docs/.cvsignore
+
+Added a new .cvsignore to ignore the Auto-Generated documentation tree.
+
+------------------------------------------------------------------------
+r19 | almlys | 2004-10-25 12:41:23 +0200 (lun, 25 oct 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk
+   M /trunk/.cvsignore
+
+Fixed the file ignore list
+
+------------------------------------------------------------------------
+r15 | almlys | 2004-10-25 04:43:33 +0200 (lun, 25 oct 2004) | 2 lines
+Rutas cambiadas:
+   M /trunk
+   A /trunk/.cvsignore
+   A /trunk/AUTHORS
+   A /trunk/COPYING
+   A /trunk/DEVELOPERS
+   A /trunk/DISCLAIMER
+   A /trunk/Doxyfile
+   A /trunk/Feature-Requests
+   A /trunk/HELPING
+   A /trunk/LICENSE
+   A /trunk/Makefile
+   A /trunk/README
+   A /trunk/TODO
+   A /trunk/adv_gamemsgparser.cpp
+   A /trunk/auth_db.cpp
+   A /trunk/auth_server.cpp
+   A /trunk/cgas_auth.cpp
+   A /trunk/clean.sh
+   A /trunk/config_parser.cpp
+   A /trunk/config_parser.h
+   A /trunk/conv_funs.cpp
+   A /trunk/conv_funs.h
+   A /trunk/data_types.h
+   A /trunk/debug.h
+   A /trunk/disclaimer_head.txt
+   A /trunk/docs
+   A /trunk/docs/vault_db.txt
+   A /trunk/files.cpp
+   A /trunk/files.h
+   A /trunk/game_server.cpp
+   A /trunk/guid_gen.cpp
+   A /trunk/htmldumper.cpp
+   A /trunk/injector.cpp
+   A /trunk/injector.h
+   A /trunk/install.sh
+   A /trunk/license.cpp
+   A /trunk/msg_parser.cpp
+   A /trunk/new_vault.cpp
+   A /trunk/pclientmsg.cpp
+   A /trunk/pdefaultmsg.cpp
+   A /trunk/prot.h
+   A /trunk/protocol.cpp
+   A /trunk/protocol.h
+   A /trunk/psauthmsg.cpp
+   A /trunk/pscauthmsg.cpp
+   A /trunk/pservermsg.cpp
+   A /trunk/psgamemsg.cpp
+   A /trunk/pstrackingmsg.cpp
+   A /trunk/psvaultmsg.cpp
+   A /trunk/script
+   A /trunk/script/auth_db.sql
+   A /trunk/sdlparser.cpp
+   A /trunk/semaphore.cpp
+   A /trunk/servers.list
+   A /trunk/sql.cpp
+   A /trunk/stdebug.cpp
+   A /trunk/stdebug.h
+   A /trunk/svault.cpp
+   A /trunk/tclean.sh
+   A /trunk/uru.conf
+   A /trunk/uru.cpp
+   A /trunk/urucmd.cpp
+   A /trunk/urumsg.cpp
+   A /trunk/urunet.cpp
+   A /trunk/urunet.h
+   A /trunk/urunet2.cpp
+   A /trunk/uruping.cpp
+   A /trunk/urusdl.cpp
+   A /trunk/useful.cpp
+   A /trunk/useful.h
+   A /trunk/vault.cpp
+   A /trunk/vault_advp.cpp
+   A /trunk/vault_db.cpp
+   A /trunk/vault_obj.cpp
+   A /trunk/vault_tasks.cpp
+   A /trunk/vaultstrs.cpp
+   A /trunk/vnodes.cpp
+   A /trunk/vtask.cpp
+   A /trunk/whatdoyousee.cpp
+
+Initial revision
+
+------------------------------------------------------------------------
+r14 | (sin autor) | 2004-10-25 04:43:33 +0200 (lun, 25 oct 2004) | 1 line
+Rutas cambiadas:
+   A /branches
+   A /tags
+   A /trunk
+
+New repository initialized by cvs2svn.
+------------------------------------------------------------------------

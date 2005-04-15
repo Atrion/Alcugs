@@ -2,8 +2,6 @@ Alcugs H'uru server emulator project.
 
 Status
 ------
-This is an attempt of a server emulator.
-
 Check the file TODO to see what is still not implented.
 
 Read the file COPYING and DISCLAIMER to check the license.
@@ -19,7 +17,7 @@ Congratulations, you have arribed here, now continue reading! :)
 Requirements for Building the servers, tools and API
 ----------------------------------------------------
 
-You need to have installed the development headers and librarier of:
+You need to have installed the development headers and libraries of:
 * openssl
 * mysql
 * zlib
@@ -36,16 +34,39 @@ $ make all
 
 (There could be some minor problems on other *nix systems)
 
-If you are using the inferior OS called 'windows'.
+If you are using 'windows'.
+
+A) Upgrade your OS to Linux
+
+or
+
+B) Build with Cygwin
+
 1) Download and install Cygwin
 2) Download mysql with the C API
-3) Fix the Makefiles
-4) Compile by the same way
+3) download python 2.2 with the dev headers
+4) Fix the Makefiles
+5) Compile by the same way
+
+or
+
+C) Build with MinGW
+
+1) Download and intall MinGW or Dev-Cpp
+2) And do the same as B).
+
+or
+
+D) Build with MSVC
+
+1) There are some files that should allow you to compile with MSVC.
+
 
 
 Installing
 ----------
 
+NOTE AUTOMATED INSTALLATION IS BROKEN, PLEASE USE MANUAL INSTALLATION!
 A) Automated installation:
 
 Type
@@ -59,39 +80,21 @@ copy the client sdl and age files inside the lobby/sdl and lobby/age folders.
 --
 
 B) Manual installation:
-1) Just create the next void directoryes:
+1) If everything when well, you only need to understand the uru.conf file, and you need
+to configure it for your purposes.
+Then you can start the servers. There is a script somewhere that should allow you to start
+them.
+You can also manually start the servers in the following order.
 
-auth
-vault
-tracking
-lobby
+uru_auth -D
+uru_vault -D
+uru_tracking -D
+uru_lobby -D
 
-2) And
-* copy the uru_auth and uru.conf to the auth directory.
-* copy the uru_vault and uru.conf to the vault directory.
-* copy the uru_track and uru.conf to the tracking directory.
-* copy the uru_lobby, uru_game and uru.conf to the lobby directory.
-* create a sdl directory (case sensitive), inside the lobby directory, and copy the contents,
-of the specific client that you are going to use. Using different SDL files in the client
-than the ones in the server will cause a nice stack dump in the client side, and a nice
-SEGFAULT in the server side. (The server allows both, encrypted and plain text sdl files).
-Remember to udpate the SDL files in the vault manager.
+NOTE FOR UNET3 BRANCH: The unet3 Game server is not finished, and not useful for playing it,
+you will need to replace the binary uru_game with an older one, and use the game.config option
+pointing to an old configuration file.
 
-3) Configure each one of the different uru.conf files, all of them are different.
-Never use the 127.0.0.1 address or you will have problems. Pay attention to config
-the correct address to each specific server, auth, vault, tracking.
-And be sure that you put the correct public IP address in the required field.
-Also, you need to create and configure a mysql user account with permissions to create
- databases.
-The database names are specified in the config file.
-
-4) Start the servers in the next order: auth, vault, track, lobby.
-
-5) Point your client to the server and enjoy :)
-
-PD: Also be sure that the fork servers on demand is enabled, or you will need to manually
-star each game server. Load on demand is disabled if your client stays stuck several hours
-in the "Finding Age..." step.
 
 Configuring
 -----------
@@ -131,13 +134,12 @@ What To Do if It don't works?
 
 If you are reading this, then is because it is not working.
 Is expected to have several problems. I'm sure that it compiles without
-problems in Mandrake 9.1 where it is being developed. Some issues with
-Mandrake 10 have been recently solved.
+problems on Debian Sarge where it is being developed.
 You will need to send me, or post to the forums the output of the
 compilation results.
 
 If you have a problem related with the compiled servers, then you will need
-to send me the log files, and or copy the last 500 hundred lines from the stdout
+to send me the log files, and or copy the last lines from the stdout
 of the server that crashed.
 
 Contact
