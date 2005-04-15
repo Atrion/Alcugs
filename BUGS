@@ -2,6 +2,10 @@ Ok, this list contains a list of known bugs and issues.
 We are working to fix them up.
 
 Vault
+* Vault Manager shows garbage on the create age guid on new avies.
+* New created players should not be poping into the age owners folder of DniCityX2Finale.
+
+Game/Vault (vclient communications)
 * Vault task RegisterVisitAge is not working. This causes the issues related
  with books that don't work if you are not owner of the age. (see the Relto bookself)
 * Some ages are not sending the correct linking rules, and then they fail to send
