@@ -126,6 +126,16 @@ int gettimeofday(struct timeval *tv, struct timezone *tz) {
 //int i;
 
 //for(i=0; i<5000; i++) {
+	static int firstrun=1;
+
+	if(firstrun==1)
+	{
+		firstrun=0;
+		DBG(0,"Calibrating clock..\n");
+		for(int calibrator=0;calibrator<1000;calibrator++)
+			gettimeofday(tv,tz);
+		DBG(0,"Clock calibrated..\n");
+	}
 
 	static unsigned __int64 count=0;
 	static unsigned __int64 frq=0;

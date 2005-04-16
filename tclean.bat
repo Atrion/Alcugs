@@ -50,7 +50,7 @@ del   "tracking/log"   /s /f /q
 rmdir "tracking/log"   /s    /q
 del   "tracking/dumps" /s /f /q
 rmdir "tracking/dumps" /s    /q
-del   "tracking/*.raw" /f /q
+del   "tracking/*.raw"    /f /q
 
 del   "meta/log"       /s /f /q
 rmdir "meta/log"       /s    /q

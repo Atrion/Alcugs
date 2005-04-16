@@ -620,15 +620,6 @@ int main(int argc, char * argv[]) {
 	//Set here initial default unet flags
 	net.flags &= (~UNET_ELOG & ~UNET_FLOG); //globally disable logging
 
-#ifdef __WIN32__
-	//Because Windows is a piece of shit, we need to calibrate the clock, by performing several calls to get_microseconds()
-	int windows_sucks=1;
-	while(windows_sucks++<1000) {
-		get_microseconds();
-	}
-	//Note: windoze calibration code will be moved to the netcore initialitzacion code rather that being done here.
-#endif
-
 	//init entropy
 	srandom(get_microseconds() + ((U32)(time(NULL) % 10000)));
 
