@@ -44,6 +44,9 @@
 //! Enable dmalloc debugging?
 //#define _DMALLOC_DBG_
 
+//! Allow to abort?
+#define _DBG_ABORT_
+
 //! Enable global debug level
 #ifndef _DBG_LEVEL_
 #define _DBG_LEVEL_ 0

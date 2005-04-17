@@ -58,14 +58,30 @@
 #include "debug.h"
 
 //class's (objects)
-//Access to the python Logfile
+//Access to the python Logfile (and other logs)
 extern PyTypeObject ptLog_Type;
 
 typedef struct{
 	PyObject_HEAD
 	st_log * log;
 } ptLog_Object;
-//end class
+
+//Access to the configuration
+extern PyTypeObject ptConfig_Type;
+
+typedef struct {
+	PyObject_HEAD
+	st_config * cnf;
+} ptConfig_Object;
+
+//Access to the netcore
+extern PyTypeObject ptNet_Type;
+
+typedef struct {
+	PyObject_HEAD
+	st_unet * net;
+} ptNet_Object;
+//end classes
 
 //def's
 static PyObject* alcugs_PtGetAgeName(PyObject *self, PyObject *args) {
@@ -213,10 +229,99 @@ PyTypeObject ptLog_Type = {
 	0, /*tp_as_mapping*/
 	0 /*tp_hash*/
 };
-//end class
+//end ptLog class
 
-//method def's
+//begin ptConfig class
+static PyObject * ptConfig_new(PyObject * self,PyObject * args) {
+	ptConfig_Object * ptConfig;
+
+	if(!PyArg_ParseTuple(args, ""))
+		return NULL;
+
+	ptConfig = PyObject_New(ptConfig_Object, &ptConfig_Type);
+	//constructors
+
+	return (PyObject *)ptConfig;
+}
+
+static void ptConfig_dealloc(PyObject * self) {
+	//Destructors
+	PyObject_Del(self);
+}
+
+static PyObject* ptConfig_getkey(PyObject *self, PyObject *args) {
+	PyObject * pRet;
+	char * key,* where;
+	where="global";
+	if(!PyArg_ParseTuple(args, "s|s",&key,&where))
+		return NULL;
+
+	pRet = PyString_FromString(cnf_getString("",key,(const char *)where,global_config));
+
+	return pRet;
+}
+
+static PyObject* ptConfig_setkey(PyObject *self, PyObject *args) {
+	char * val,* key,* where;
+	int ret;
+	where="global";
+	if(!PyArg_ParseTuple(args, "ss|s",&val,&key,&where))
+		return NULL;
+	
+	ret=cnf_add_key(val,key,where,&global_config);
+
+	if(ret==0) {
+		Py_INCREF(Py_None);
+		return Py_None;
+	} else {
+		return NULL;
+	}
+}
+
+static PyObject* ptConfig_reload(PyObject *self, PyObject *args) {
+	return NULL;
+}
+
+//Methods
+static PyMethodDef ptConfig_methods[] = {
+	{"getkey", (PyCFunction)ptConfig_getkey, METH_VARARGS,
+		"Returns the string for the selected key. Params: key, [section]"},
+	{"setkey", (PyCFunction)ptConfig_setkey, METH_VARARGS,
+		"Sets a new value for that key. Params: value, key, [section]"},
+	{"reload", (PyCFunction)ptConfig_reload, METH_VARARGS,
+		"Reloads the configuration"},
+	{NULL, NULL, 0, NULL} /* sentinel */
+};
+
+static PyObject * ptConfig_getattr(PyObject * obj, char * name) {
+	return Py_FindMethod(ptConfig_methods, (PyObject *)obj, name);
+}
+
+PyTypeObject ptConfig_Type = {
+	PyObject_HEAD_INIT(NULL)
+	0,
+	"ptConfig",
+	sizeof(ptConfig_Object),
+	0,
+	ptConfig_dealloc, /*tp_dealloc*/
+	0, /*tp_print*/
+	ptConfig_getattr, /*tp_getattr*/
+	0, /*tp_setattr*/
+	0, /*tp_compare*/
+	0, /*tp_repr*/
+	0, /*tp_as_number*/
+	0, /*tp_as_sequence*/
+	0, /*tp_as_mapping*/
+	0 /*tp_hash*/
+};
+//end ptConfig class
+
+//end classes
+
+
+//method def's. WARNING, THIS LIST IS GOING TO BE VERY HUGE!!
 static PyMethodDef AlcugsMethods[] = {
+//GLUED METHODS
 	{"PtGetAgeName", alcugs_PtGetAgeName, METH_VARARGS,
 		"Return the current age name."},
 	{"PtGetAgeGUID", alcugs_PtGetAgeGUID, METH_VARARGS,
@@ -231,8 +336,11 @@ static PyMethodDef AlcugsMethods[] = {
 		"Returns timestamp of the current time."},
 	{"PtGetMicros", alcugs_PtGetMicros, METH_VARARGS,
 		"Returns microseconds of the current time."},
+//GLUED CLASSES
 	{"ptLog", ptLog_new, METH_VARARGS,
 		"Creates a new log file."},
+	{"ptConfig", ptConfig_new, METH_VARARGS,
+		"Returns the config manager abstract object"},
 	{NULL, NULL, 0, NULL}
 };
 

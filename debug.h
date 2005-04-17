@@ -37,14 +37,14 @@
    #undef _DEBUG_
   #endif
  #endif
-#endif
+#endif //_DBG_LEVEL_
 
 
 #ifdef _DEBUG_
 
 #ifndef _DBG_LEVEL_
 #define _DBG_LEVEL_ 0
-#endif
+#endif //_DBG_LEVEL_
 
 #ifdef __MSVC__
 //this looks like crap, i know... but it should work.
@@ -96,7 +96,8 @@ char * __dbg_where(const char * a,const char * b,const char * c,int d);
 
 #endif //MSVC
 
-
+//TODO, port to other platforms
+#define _DIE(a) { DBG(0,"ABORT: %s",_WHERE(a)); abort(); }
 
 #ifdef _MALLOC_DBG_
 
@@ -108,24 +109,25 @@ extern FILE * fdbg;
 #define realloc(a,b) realloc(a,b); fdbg=fopen("mem.log","a"); fprintf(fdbg,"DBG%i:%s:%s:%i>realloc(%08X,%08X)\n",_DBG_LEVEL_,__FILE__,__FUNCTION__,__LINE__,a,b); fclose(fdbg);
 #define free(a) free(a); fdbg=fopen("mem.log","a"); fprintf(fdbg,"DBG%i:%s:%s:%i>free(%08X)\n",_DBG_LEVEL_,__FILE__,__FUNCTION__,__LINE__,a); fclose(fdbg);
 
-#else
+#else //_MALLOC_DBG_
 
 #ifdef _DMALLOC_DBG_
 #include "dmalloc/dmalloc.h"
-#else
+#else //_DMALLOC_DBG_
 #define dmalloc_verify(a)
-#endif
+#endif //_DMALLOC_DBG_
 
 
-#endif
+#endif //_MALLOC_DBG_
 
 
-#else
+#else //_DEBUG_
+//NO DEBUG
 
 #ifdef _DBG_LEVEL_
 #undef _DBG_LEVEL_
 #define _DBG_LEVEL_ 0
-#endif
+#endif //_DBG_LEVEL_
 
 #ifndef __WIN32__
 #define DBG(a,...)
@@ -138,14 +140,19 @@ __inline void ERR(int a,...) {}
 #  define ERR()
 #  pragma warning(disable:4002) //disable warning "too many actual parameters for macro 'identifier'"
 #endif
-#endif
+#endif //__WIN32__
 
 #define _WHERE(a) a
 
+//TODO, port to other platforms
+#define _DIE(a) { printf("ABORT: %s",a); abort(); }
+//NOTE: _DIE must always stop the execution of the program, if not, unexpected results
+// that could end on massive data lost could happen.
+
 #define dmalloc_verify(a)
 
-#endif
+#endif //_DEBUG_
 
 
-#endif
+#endif //__U_DEBUG_A_
 

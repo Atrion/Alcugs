@@ -1,5 +1,6 @@
 #
 # Alcugs Server Project
+# $Id$
 #
 """Each age.py is referenced by each game server age instance, this
 is only a sample file, where I'm going to be adding some examples

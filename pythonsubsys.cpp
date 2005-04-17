@@ -28,7 +28,7 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_PYTHONSUBSYS_ID "$Id$"
-const char * _python_driver_ver="1.1.1d";
+const char * _python_driver_ver="1.1.1e";
 
 //#define _DBG_LEVEL_ 10
 
@@ -172,7 +172,7 @@ print sys.path\n");
 	abort();
 #endif
 
-#if 1 //hmmm
+#if 0 //hmmm
 	sprintf(buf,"\
 import traceback\n\
 try:\n\
@@ -191,16 +191,30 @@ except:\n\
 	PyRun_SimpleString(buf);
 #endif
 	
+	PyObject * pObject;
+
 	//if(pym_xSystem!=NULL) {
-	if(pyt_exists(pym_xSystem,"onStartup")) {
-		PyRun_SimpleString("xSystem.onStartup()");
-	}
+	//if(pyt_exists(pym_xSystem,"onStartup")) {
+		//PyRun_SimpleString("xSystem.onStartup()");
+		//pObject=pyt_call(pym_xSystem,"onStartup",NULL);
+	//}
+	
+	pObject=pyt_call(pym_xSystem,"onStartup",NULL);
+	pyt_error();
+	Py_XDECREF(pObject); //Py_XDECREF() will decrease the number of references if not null.
+	
 	//if(pym_xAge!=NULL) {
+	#if 0
 	if(pyt_exists(pym_xAge,"onStartup")) {
 		sprintf(buf,"%s.onStartup()",net->name);
 		PyRun_SimpleString(buf);
 	}
+	#endif
 
+	pObject=pyt_call(pym_xAge,"onStartup",NULL);
+	pyt_error();
+	Py_XDECREF(pObject); //Py_XDECREF() will decrease the number of references if not null.
+	
 	logflush(f_python);
 	
 	return ret;
@@ -209,7 +223,7 @@ except:\n\
 void stop_python_subsys() {
 	if(python_initialitzed!=1) return;
 
-	char buf[1024];
+	//char buf[1024];
 /*
 	sprintf(buf,"\
 import traceback\n\
@@ -229,6 +243,7 @@ except:\n\
 	PyRun_SimpleString(buf);
 */
 
+#if 0
 	if(pyt_exists(pym_xSystem,"onShutdown")) {
 		PyRun_SimpleString("xSystem.onShutdown()");
 	}
@@ -236,6 +251,18 @@ except:\n\
 		sprintf(buf,"%s.onShutdown()",gnet->name);
 		PyRun_SimpleString(buf);
 	}
+#endif
+
+	PyObject * pObject;
+	
+	pObject=pyt_call(pym_xSystem,"onShutdown",NULL);
+	pyt_error();
+	Py_XDECREF(pObject); //Py_XDECREF() will decrease the number of references if not null.
+	
+	pObject=pyt_call(pym_xAge,"onShutdown",NULL);
+	pyt_error();
+	Py_XDECREF(pObject); //Py_XDECREF() will decrease the number of references if not null.
+
 
 	plog(f_python,"INF: python subsystem stopped\n");
 
@@ -259,8 +286,9 @@ void update_python_subsys() {
 }
 
 void python_subsys_idle_operation() {
-	char buf[1024];
+	//char buf[1024];
 
+#if 0
 	if(pyt_exists(pym_xSystem,"onIdle")) {
 		PyRun_SimpleString("xSystem.onIdle()");
 	}
@@ -268,5 +296,17 @@ void python_subsys_idle_operation() {
 		sprintf(buf,"%s.onIdle()",gnet->name);
 		PyRun_SimpleString(buf);
 	}
+#endif
+
+	PyObject * pObject;
+	
+	pObject=pyt_call(pym_xSystem,"onIdle",NULL);
+	pyt_error();
+	Py_XDECREF(pObject); //Py_XDECREF() will decrease the number of references if not null.
+	
+	pObject=pyt_call(pym_xAge,"onIdle",NULL);
+	pyt_error();
+	Py_XDECREF(pObject); //Py_XDECREF() will decrease the number of references if not null.
+
 }
 

@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_URUNET_ID "$Id$"
 
-//#define _DBG_LEVEL_ 10
+#define _DBG_LEVEL_ 2
 
 //#define _STEP_BY_STEP_
 
@@ -1424,16 +1424,25 @@ int plNetSearchSession(st_unet * net,U32 ip,U16 port,int * sid) {
 
 	int i;
 	int s_new=-1, s_old=-1;
+	
+//Debug sid's
+#define DBGSID1L 0 //6
+#define DBGSID2L 0 //8
+#define DBGSID3L 0 //9
 
 	for(i=0; i<(int)net->n; i++) {
-		DBG(8,"i:%i,net->n:%i\n",i,net->n);
+		DBG(DBGSID2L,"i:%i,net->n:%i\n",i,net->n);
 		if(net->s[i].flag==0x00) { //This is not going to happen never
 			plog(net->err,"Now, I think that the problem is serious, it may be the weather, but the problem is serious\n");
 			dumpBuffers(net,0x00);
+			//plog(net->err,_WHERE("FATAL, Abort call on unet3 code\n"));
 			//abort();
+			_DIE("flag should not be 0x00\n");
+			//TODO, flag=0 is defunct, now there are only these flags.
+			//  1=in use, 2=deleted, 3=timeout  0 is only used for initizialitzation
 			if(s_new!=-1 && s_new>i) {
 				s_new=i;
-				DBG(6,"lowest new sid found:%i\n",s_new);
+				DBG(DBGSID1L,"lowest new sid found:%i\n",s_new);
 			} else {
 				if(i>0 && net->s[i-1].flag==0x02) {
 					net->s[i-1].flag=0x00; //go back
@@ -1443,12 +1452,12 @@ int plNetSearchSession(st_unet * net,U32 ip,U16 port,int * sid) {
 		} else if(net->s[i].flag==0x02) {
 			if(s_new!=-1 && s_new>i) {
 				s_new=i;
-				DBG(6,"lowest new recycled sid found:%i\n",s_new);
+				DBG(DBGSID1L,"lowest new recycled sid found:%i\n",s_new);
 			}
 		} else if(net->s[i].flag==0x01 || net->s[i].flag==0x03) {
 			if(net->s[i].ip==ip && net->s[i].port==port) {
 				s_old=i; //we found it
-				DBG(6,"lowest old sid found:%i\n",s_old);
+				DBG(DBGSID1L,"lowest old sid found:%i\n",s_old);
 				break; //all done!
 			}
 		} else {
@@ -1458,7 +1467,7 @@ int plNetSearchSession(st_unet * net,U32 ip,U16 port,int * sid) {
 
 	*sid=-1;
 	if(s_old!=-1) {
-		DBG(9,"Old sid:%i\n",*sid);
+		DBG(DBGSID2L,"Old sid:%i\n",*sid);
 		*sid=s_old;
 		if(net->s[*sid].flag==0x03) {
 			//plNetDestroySession(net,i); //avoid memory garbage
@@ -1469,7 +1478,7 @@ int plNetSearchSession(st_unet * net,U32 ip,U16 port,int * sid) {
 			return UNET_MSGRCV;
 		}
 	} else if(s_new!=-1) {
-		DBG(9,"recycled sid:%i\n",*sid);
+		DBG(DBGSID2L,"recycled sid:%i\n",*sid);
 		*sid=s_new;
 		destroyAllDataStructures(&net->s[*sid]);
 		return UNET_NEWCONN;
@@ -1481,13 +1490,14 @@ int plNetSearchSession(st_unet * net,U32 ip,U16 port,int * sid) {
 		if(aux==NULL) { return UNET_ERR; }
 		net->s=aux;
 		*sid=net->n-1;
-		DBG(9,"New sid:%i\n",*sid);
+		DBG(DBGSID2L,"New sid:%i\n",*sid);
 		return UNET_NEWCONN;
 	} else {
-		DBG(9,"something went wrong\n");
+		DBG(DBGSID3L,"something went wrong\n");
 		return UNET_TOMCONS;
 	}
-	DBG(9,"this part is never reached...\n");
+	DBG(DBGSID3L,"this part is never reached...\n");
+	_DIE("got into an unreachable part of the code\n");
 	return UNET_ERR;
 }
 

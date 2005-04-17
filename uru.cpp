@@ -28,7 +28,7 @@
 const char * ID = "$Id$";
 const char * BUILD =  __DATE__ " " __TIME__;
 const char * SNAME = "Alcugs (uru server)";
-const char * VERSION = "1.3.1n"; //Urunet 3, updated 27/01/2005
+const char * VERSION = "1.3.1o"; //Urunet 3, updated 27/01/2005
 
 //#define _DBG_LEVEL_ 10
 
@@ -427,9 +427,7 @@ void	reaply_settings(st_unet * net,Byte flags) {
 	if(net->pro_vault!=0 && net->pro_vault!=1) net->pro_vault=0;
 	if(net->pro_tracking!=0 && net->pro_tracking!=1) net->pro_tracking=0;
 	if(net->pro_tracking==0) {
-		printf("Remove abort call from uru.cpp...\n");
-		fflush(0);
-		abort();
+		_DIE("You want to fry your tracking server?, then set tracking.oldprotocol=1\n");
 	}
 
 }
@@ -790,6 +788,7 @@ int main(int argc, char * argv[]) {
 			if(ret==UNET_OK) break;
 		}
 	}
+	cnf_setU16(port,"port","global",&global_config);
 #endif
 
 	if(ret!=UNET_OK) {
