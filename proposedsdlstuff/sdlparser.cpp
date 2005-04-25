@@ -26,7 +26,7 @@
 
 #ifndef __U_SDL_PARSER_
 #define __U_SDL_PARSER_
-#define __U_SDL_PARSER_ID "$Id: sdlparser.cpp 159 2005-04-12 15:56:29Z The.Modificator $"
+#define __U_SDL_PARSER_ID "$Id$"
 
 //#define _DBG_LEVEL_ 10
 

@@ -81,6 +81,16 @@ typedef struct {
 	PyObject_HEAD
 	st_unet * net;
 } ptNet_Object;
+
+#if 0
+//Access to the SDL vars - see proposedsdlstuff/pythonglue_partial.cpp
+extern PyTypeObject ptSDL_Type;
+
+typedef struct {
+	PyObject_HEAD
+	//TODO
+} ptSDL_Object;
+#endif
 //end classes
 
 //def's
@@ -131,6 +141,19 @@ static PyObject* alcugs_PtGetPythonLog(PyObject *self, PyObject *args) {
 
 	return (PyObject *)ptLog;
 }
+
+#if 0
+static PyObject* alcugs_PtGetAgeSDL(PyObject *self, PyObject *args) {
+	ptSDL_Object * ptSDL;
+	if(!PyArg_ParseTuple(args, ""))
+		return NULL;
+
+	ptSDL = PyObject_New(ptSDL_Object, &ptSDL_Type);
+	//ptSDL->bin=sdl;
+
+	return (PyObject *)ptSDL;
+}
+#endif
 //end def's
 
 //class's (objects) def's/method's
@@ -336,6 +359,10 @@ static PyMethodDef AlcugsMethods[] = {
 		"Returns timestamp of the current time."},
 	{"PtGetMicros", alcugs_PtGetMicros, METH_VARARGS,
 		"Returns microseconds of the current time."},
+#if 0
+	{"PtGetAgeSDL", alcugs_PtGetAgeSDL, METH_VARARGS,
+		"Returns a ptSDL object representing the SDL vars."}, 
+#endif
 //GLUED CLASSES
 	{"ptLog", ptLog_new, METH_VARARGS,
 		"Creates a new log file."},

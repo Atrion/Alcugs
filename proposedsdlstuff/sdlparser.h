@@ -26,7 +26,7 @@
 
 #ifndef __U_SDL_PARSER_H_
 #define __U_SDL_PARSER_H_
-#define __U_SDL_PARSER_H_ID "$Id: sdlparser.h 159 2005-04-12 15:56:29Z The.Modificator $"
+#define __U_SDL_PARSER_H_ID "$Id$"
 
 #include "sdl_desc.h"
 #include "sdl_obj.h"

@@ -214,6 +214,9 @@ unsigned int alarm(unsigned int sec) { return 0; }
 
 char *strsep(char **pcadena, const char *delim)
 {
+	if(**pcadena==0)
+		return NULL;
+
 	char * what=*pcadena;
 	while(**pcadena!=0 && **pcadena!=*delim)
 	{
@@ -221,13 +224,14 @@ char *strsep(char **pcadena, const char *delim)
 	}
 
 	if(**pcadena==0)
-		return NULL;
-	else
 	{
 		**pcadena=0;
 		(*pcadena)++;
-		return what;
 	}
+	else
+		**pcadena=0;
+
+	return what;
 }
 
 
