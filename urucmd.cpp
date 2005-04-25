@@ -26,116 +26,92 @@
 
 /*******************************************************************************
 * Uru Command line                                                             *
-*                                                                              *
-*    License will be added here                                                *
-*                                                                              *
 *******************************************************************************/
 
 /* Don't touch - NEVER */
 const char * ID = "$Id$";
 const char * BUILD =  __DATE__ " " __TIME__;
 const char * SNAME = "UruCmd";
-const char * VERSION = "1.4";
+const char * VERSION = "1.5a";
 /* */
 
 //#define _DBG_LEVEL_ 10
 
 #include "config.h"
-#include "debug.h"
 
-
-//paranoic dbg level
-//#define _DBG_PARANOIC
-
+#include <stdio.h>
+#include <sys/types.h>
+#include <string.h>
+#include <ctype.h>
 #include <signal.h>
+#include <stdlib.h>
+#include <time.h>
 
+#if 0 //tbd
+#include <signal.h>
 //for threads
 #include <pthread.h>
-
 //for semaphores
 #include <semaphore.h>
-
 /*
 //for semaphores
 #include <sys/types.h>
 #include <sys/ipc.h>
 #inlcude <sys/sem.h>
 */
+#endif
 
-/*Includes */
-//#ifndef _DBG_LEVEL_
-#define _DBG_LEVEL_ 0
-//#endif
+#ifdef __WIN32__
+#  include "windoze.h"
+#endif
 
-#include "useful.h" //useful generic functions
-#include "debug.h" //for debugging
+#ifndef __MSVC__
+#  include <unistd.h>
+#endif
+
+#include "license.h"
+#include "version.h"
+
 #include "data_types.h" //for data types used in this file
-#include "config_parser.h" //for globals
 #include "stdebug.h" //for debugging
-#include "protocol.h" //all protocol specs
+
+/* netcore */
 #include "urunet.h" //network functions
+#include "protocol.h" //protocol stuff
+#include "prot.h"
 
-//global variable that points to all players struct
-st_uru_client * all_players;
-st_uru_client * auth=NULL; //points to the auth server
-st_uru_client * vault=NULL; //points to the vault server
-st_uru_client * track=NULL; //poinst to the tracking server
-st_uru_client * meta=NULL;
+#include "useful.h"
 
-#include "urumsg.h" //generic messages generator
-#include "pclientmsg.h" //client messages parser
+/* msg generator's */
+#include "gbasicmsg.h" //basic msg's
 
-#include "sdlparser.h"
-#include "ageparser.h"
+/* msg parser's */
+//#include "pbasicmsg.h" //basic server msg's
 
-//yes, yes I know, I need to fix this shit
+#include "debug.h"
 
-//full sdl headers only
-t_sdl_def * global_sdl=NULL; //sdl struct
-int global_sdl_n=0; //number of global sdl records
-//we need TODO..
-//  -- minimized only sdl headers
-//  -- dynamic game objects memory struct (read/write it from disk on server start/stop)
+//check admin?
+#define __VTC 0
 
-t_age_def * global_age_def=NULL; //age struct
-
-int whoami;
+#if 0
+//netcore status
+int __state_running=1;
 
 //status
 volatile int __state_running=1;
 volatile int __netcore_running=1;
 volatile int __nths=1;
 
-//pointer to all the client structs
-st_uru_client * ses=NULL;
-int sock;
-
 //semaphore
 sem_t msg_sem; //is there a message?
 sem_t pmsg_sem; //has been the message processed?
+#endif
 
-const char * __uru_disclaimer9 = "\n\
-    This program is distributed in the hope that it will be useful,\n\
-    but WITHOUT ANY WARRANTY; without even the implied warranty of\n\
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n\
-    This program has been specially designed for the H'uru server project.\n\
-    Use it at your own risk.\n\n\
-    You may get some technical/help assistance at COBBS forums:\n\
-            http://www.cobbs.ca\n\n\
-    \n";
-
-
-void version() {
-	printf("%s %s - Build: %s\n",SNAME,VERSION,BUILD);
-}
-
-void disclaimer() {
-	printf("%s",__uru_disclaimer9);
-}
 
 void parameters_usage() {
-	version();
-	printf("Usage: urucmd user@server:port [options]\n\n\
+	version(stdout);
+	printf("Usage: urucmd user#avie@server:port [options]\n\n\
+ -l: Show license info\n\
  -V: show version and end\n\
  -h: Show short help and end\n\
  -v: Set the verbose level\n\
@@ -146,47 +122,7 @@ void parameters_usage() {
  -nl: Enable netcore logs\n");
 }
 
-/*******************************************************************
-   check the parameters
-	 i -> position, iterator
-	 what -> the paramenter to check "-v", "-V"
-	 type -> 0 check only the presence
-	         1 is a string, get it
-	         2 is an integer, get it
-	 result -> if 1, then the pointer to the string is stored here
-	 iresult -> if 2, then the pointer to the int is stored here
-
-	 returns 1 if the value is present
-	         0 if not
-	         -1 on error
-
-******************************************************************/
-int parameters_parse(int argc, char * argv[], int i, char * what, char type, int * result) {
-	if(!strcmp(argv[i],what)) {
-		if(type!=0 && i==argc-1) {
-			fprintf(stderr,"ERR: Incorrect number of arguments supplied for %s\n\n",what);
-			parameters_usage();
-			exit(-1);
-			return -1;
-		}
-		if(type==0) { return 1; }
-		if(type==1) { //string
-			*result=i+1; //return the interator to that string
-			return 1;
-		}
-		if(type==2 && isdigit(argv[i+1][0])) {
-			*result=atoi(argv[i+1]);
-			return 1;
-		}
-		fprintf(stderr,"ERR: Incorrect supplied arguments for %s\n\n",what);
-		parameters_usage();
-		exit(-1);
-		return -1;
-	}
-	return 0;
-
-}
-
+#if 0
 void install_handlers();
 //handler
 void s_handler(int s) {
@@ -217,70 +153,9 @@ void install_handlers() {
 	//signal(SIGSEGV, s_handler);
 	//note some things are still NOT implemented ;)
 }
+#endif
 
-
-//this seems a tunning machine ;) , well at least Models Abstractes de Càlcul was
-//useful for something ;)
-int get_host_info(char * argv,char * hostname,char * username,U16 * port) {
-	unsigned int i;
-
-	int a=0,b=0,c=0;
-	int q=0;
-
-	char left[100]="";
-	char mid[100]="";
-	char right[100]="";
-
-	for(i=0; i<strlen(argv); i++) {
-
-		if(argv[i]=='@') { q=1; }
-		else if(argv[i]==':') { q=2; }
-		else {
-
-			switch (q) {
-				case 0:
-					left[a]=argv[i];
-					a++;
-					break;
-				case 1:
-					mid[b]=argv[i];
-					b++;
-					break;
-				case 2:
-					right[c]=argv[i];
-					c++;
-					break;
-				default:
-					return -1;
-			}
-		}
-
-	}
-	left[a]='\0';
-	mid[b]='\0';
-	right[c]='\0';
-
-	switch (q) {
-		case 0:
-			strcpy(hostname,left);
-			break;
-		case 1:
-			strcpy(username,left);
-			strcpy(hostname,mid);
-			break;
-		case 2:
-			if(b!=0) {
-				strcpy(username,left);
-				strcpy(hostname,mid);
-			} else {
-				strcpy(hostname,left);
-			}
-			*port=atoi(right);
-			break;
-	}
-	return 1;
-}
-
+#if 0
 void host_error() {
 	fprintf(stderr,"There was a problem trying to connect to the specified host! Host down?");
 	exit(-1);
@@ -350,66 +225,50 @@ void print_player_menu(U16 n,st_vault_player * p) {
 	}
 	DBG(5,"end the menu printing..\n");
 }
-
+#endif
 
 int main(int argc, char * argv[]) {
+	int ret,i,sid,isid; //sid session identifier
+	st_unet net;
 
-	int i,ret;
-
-	//int sock; //the socket
+	Byte silent=3; //0; //3
 
 	//destination settings...
 	char hostname[100]="";
 	char username[100]="";
 	char password_hash[30]="";
+	char password[100]="";
+	char avie[100]="";
 	int port=5000;
 
+	int val=2; //validation level
+
 	//local settings...
-	int l_port=0;
 	char l_hostname[100]="0.0.0.0";
+	int l_port=0;
 
-	//session id
-	int sid=0;
-	//msg size
-	int size;
-	//offset
-	int off=0;
+	int size, off=0; //msg size & offset
+	Byte * msg=NULL; //pointer to the message
 
-	//st_uru_client * ses=NULL; //all sessions will be here
-	st_uru_client * u=NULL; //pointer to the session handler
-	ses=NULL;
+	Byte flags=0;
 
-	//global parameters
-	global_max_clients=1;
-	global_client_count=1;
-	//global_reserved_admin_slots=0;
-	global_logs_enabled=0;
-	global_verbose_level=0;
-	silent=3;
+	plNetInitStruct(&net);
 
-	//parameters
-	//if(argc==1) { parameters_usage(); return 0; }
+	net.flags &= (~UNET_ELOG & ~UNET_FLOG); //disable logging
 
+	//parse parameters
 	for (i=1; i<argc; i++) {
-		if(parameters_parse(argc,argv,i,"-h",0,NULL)) { parameters_usage(); return -1; }
-		else if(parameters_parse(argc,argv,i,"-V",0,NULL)) {
-			version();
+		if(!strcmp(argv[i],"-h")) { parameters_usage(); return -1; }
+		else if(!strcmp(argv[i],"-V")) {
+			version(stdout);
+			//show_disclaimer();
 			return -1;
-		} else if(parameters_parse(argc,argv,i,"-lp",2,&l_port)) i++;
-		else if(parameters_parse(argc,argv,i,"-rp",2,&port)) i++;
-		else if(parameters_parse(argc,argv,i,"-nl",0,NULL)) {
-			global_logs_enabled=1;
-		}
-		else if(parameters_parse(argc,argv,i,"-lh",1,&ret)) {
-			strcpy(l_hostname,argv[ret]); i++;
-		}
-		else if(parameters_parse(argc,argv,i,"-rh",1,&ret)) {
-			strcpy(hostname,argv[ret]); i++;
-		}
-		else if(parameters_parse(argc,argv,i,"-v",2,&ret)) {
-			i++;
-			global_verbose_level=(Byte)ret;
-			switch (global_verbose_level) {
+		} else if(!strcmp(argv[i],"-lp") && argc>i+1) { i++; l_port=atoi(argv[i]); }
+		else if(!strcmp(argv[i],"-rp") && argc>i+1) { i++; port=atoi(argv[i]); }
+		else if(!strcmp(argv[i],"-nl")) { net.flags |= UNET_FLOG | UNET_ELOG; /* enable logging */ }
+		else if(!strcmp(argv[i],"-val") && argc>i+1) { i++; val=atoi(argv[i]); }
+		else if(!strcmp(argv[i],"-v") && argc>i+1) { i++; ret=atoi(argv[i]);
+			switch (ret) {
 				case 0:
 					silent=3;
 					break;
@@ -423,10 +282,22 @@ int main(int argc, char * argv[]) {
 					silent=0;
 			}
 		}
+		else if(!strcmp(argv[i],"-lh") && argc>i+1) {
+			i++;
+			strcpy(l_hostname,argv[i]);
+		}
+		else if(!strcmp(argv[i],"-l")) {
+			version(stdout);
+			show_bigdisclaimer();
+			exit(0);
+		}
+		else if(!strcmp(argv[i],"-rh") && argc>i+1) {
+			i++;
+			strcpy(hostname,argv[i]);
+		}
 		else {
 			if(i==1) {
-				if(get_host_info(argv[1],hostname,username,(U16 *)(&port))!=1) {
-					printf("There was an error parsing the hostname\n");
+				if(get_host_info(argv[1],hostname,username,((U16 *)&port),avie)!=1) {
 					parameters_usage();
 					return -1;
 				}
@@ -436,109 +307,79 @@ int main(int argc, char * argv[]) {
 			}
 		}
 	}
-	//end params
 
-	version();
-	disclaimer();
+	version(stdout);
 
-	if(global_logs_enabled==1) {
-		open_log_files();
+	//kk
+	switch(val) {
+		case 0:
+			flags |=UNET_VAL0;
+			break;
+		case 1:
+			flags |=UNET_VAL1;
+			break;
+		case 2:
+			//default
+			flags |=UNET_VAL2;
+			break;
+		case 3:
+			flags |=UNET_VAL3; // 0x02 | 0x01
+			break;
+		default:
+			printf("\nError: Unimplemented validation level %i requested.\n",val);
+			exit(0);
 	}
 
+	//end params
+	log_init(); //automatically started by the netcore, but the log_shutdown call is mandatory
+	stdebug_config->silent=silent; //log_init() is a must before this call
+	//set other stdebug_config params __here__
+
+	//set other net params here
+	if(bcast==1) { //set broadcast address
+		net.flags |= UNET_BCAST;
+	}
+
+	if(silent!=3) {
+		net.flags |= UNET_ELOG;
+	}
+	
 	printf("Please be sure that you are using the latest version!\n");
 
-	if(!strcmp(hostname,"")) {
-		printf("Please enter the destination host/ip: ");
-		fflush(0);
+	while(!strcmp(hostname,"")) {
+		printf("\nPlease enter destination host/ip: ");
 		strcpy(hostname,ask());
 	}
 
-	printf("Connecting to %s@%s:%i...\n",username,hostname,port);
-
-	install_handlers();
-	sock=plNetStartOp(l_port,l_hostname);
-
-	//create semaphores
-	sem_init(&msg_sem,0,0);
-	sem_init(&pmsg_sem,0,0);
-
-
-	if(sock<0) {
-		fprintf(stderr,"Fatal; I cannot start the Netcore!\n");
-		return -1;
-	}
-
-	//allocate struct
-	ses=(st_uru_client *)(malloc(sizeof(st_uru_client) * (global_client_count+1)));
-	if(ses==NULL) {
-		fprintf(stderr,"Fatal: Insufficient free memory to continue...\n");
-		exit(-1);
-	}
-	DBG(2,"INF: Struct allocated\n");
-
-	//init session vars
-	u_init_session(ses,global_client_count);
-
-	u=&ses[1];
-
-	//get the host
-	if(unet_set_host_info(hostname,port,u)<0) {
-		parameters_usage(); return -1;
-	}
-
-	//set validation and version
-	u->validation=0x02;
-	u->minor_version=7;
-	u->major_version=12;
-	u->maxPacketSz=1024; //set maxpacketsize
-	u->release=0x07; //magic number 7//TDbg; //set debug release
-
-	//init client & server headers (on udp server is this program & client is the remote host)
-	uru_init_header(&u->server,u->validation);
-	uru_init_header(&u->client,u->validation);
-
-
-	//login here
-	if(!strcmp(username,"")) {
-		printf("Please enter your username: ");
-		fflush(0);
+	while(!strcmp(username,"")) {
+		printf("\nPlease enter your username: ");
 		strcpy(username,ask());
 	}
 
-	//get password
-	strcpy((char *)u->passwd,getpass("Please enter your password: "));
-	//DBG(4,"passwd is: %s\n",u->passwd);
-	MD5(u->passwd,strlen((const char *)u->passwd),(Byte *)password_hash);
-	hex2ascii2(u->passwd,(Byte *)password_hash,16);
+	strcpy((char *)password,getpass("Please enter your password: "));
+	MD5((Byte *)password,strlen((const char *)password),(Byte *)password_hash);
+	memset((char *)password,0,strlen((const char *)password)
+	hex2ascii2((Byte *)password,(Byte *)password_hash,16);
+	
+	printf("Connecting to %s#%s@%s:%i...\n",username,avie,hostname,port);
 
-	DBG(3,"passwd hash: %s\n",u->passwd);
+	//install_handlers(); /* Set up the signal handlers */
 
-	//set login
-	strcpy((char *)u->login,username);
+	ret=plNetStartOp(l_port,l_hostname,&net);
 
-	//initial negotiation
-	u->authenticated=0;
-	u->negotiated=0;
-	u->flag=1; //solved 234 bugs with this line (is very important) also added a SEGFAULT
-	ret=plNetClientComm(sock,u);
-	if(ret<0) {
-		host_error();
+	DBG(2,"plNetStartOp res:%i\n",ret);
+
+	if(ret!=UNET_OK) {
+		fprintf(stderr,"Urunet startup failed, with return code n: %i!\n",ret);
+		exit(-1);
 	}
 
-	//set the session initial time
-	time(&u->timestamp);
-	u->microseconds=get_microseconds();
+	#if 0
+	//create semaphores
+	sem_init(&msg_sem,0,0);
+	sem_init(&pmsg_sem,0,0);
+	#endif
 
-	//and now create the msg
-	u->adv_msg.timestamp=u->timestamp;
-	u->adv_msg.microseconds=u->microseconds;
-	//set player id to 0
-	u->ki=0;
-	u->adv_msg.ki=0;
-	u->adv_msg.x=0; //set x
-	u->adv_msg.max_version=u->major_version;
-	u->adv_msg.min_version=u->minor_version;
-	u->adv_msg.release=u->release;
 // ---- start stuff here
 	printf("Authenticating...\n");
 	ret=plNetAuthenticateHello(sock,(Byte *)username,u);

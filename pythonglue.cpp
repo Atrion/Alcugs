@@ -71,7 +71,7 @@ extern PyTypeObject ptConfig_Type;
 
 typedef struct {
 	PyObject_HEAD
-	st_config * cnf;
+	//st_config * cnf;
 } ptConfig_Object;
 
 //Access to the netcore
@@ -79,7 +79,7 @@ extern PyTypeObject ptNet_Type;
 
 typedef struct {
 	PyObject_HEAD
-	st_unet * net;
+	//st_unet * net;
 } ptNet_Object;
 
 #if 0

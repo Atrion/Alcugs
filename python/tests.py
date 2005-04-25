@@ -43,7 +43,7 @@ def config():
         cfg.setkey("Boa shard","shard.name")
         print "Now, your shard name is: %s" % cfg.getkey("shard.name")
         cfg.setkey(old_name,"shard.name")
-        print "Let's restore the old nome, just in case %s" % cfg.getkey("shard.name")
+        print "Let's restore the old name, just in case %s" % cfg.getkey("shard.name")
         print "Unitialitzed data <%s>" % cfg.getkey("this_key_does_not_exist")
         print "That's all folks!"
     except Exception, detail:
