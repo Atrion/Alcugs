@@ -136,9 +136,9 @@ int process_clobby_plNetMsg(st_unet * net,Byte * buf,int size,int sid) {
 					if(dsid>=0) {
 						track=&net->s[dsid];
 						track->hmsg.ki=u->hmsg.ki;
-						plNetMsgCustomPlayerStatus(net,2,RJoining,dsid,sid,net->pro_tracking);
 						u->ki=(S32)u->hmsg.ki; //now set the ki
 						u->status=RJoining;
+						plNetMsgCustomPlayerStatus(net,2,RJoining,dsid,sid,net->pro_tracking);
 						plNetMsgActivePlayerSet(net,sid);
 						dsid=plNetServerSearch(net,KVault);
 						if(dsid>=0) {
