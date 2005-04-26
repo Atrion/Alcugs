@@ -28,9 +28,9 @@
 const char * ID = "$Id$";
 const char * BUILD =  __DATE__ " " __TIME__;
 const char * SNAME = "Alcugs (uru server)";
-const char * VERSION = "1.3.1o"; //Urunet 3, updated 27/01/2005
+const char * VERSION = "1.3.1p"; //Urunet 3, updated 27/01/2005
 
-//#define _DBG_LEVEL_ 10
+#define _DBG_LEVEL_ 10
 
 #include "config.h"
 
@@ -437,14 +437,27 @@ void	reaply_settings(st_unet * net,Byte flags) {
 		flag: 0x02 don't send terminated
 */
 void kill_player(st_unet * net,int reason,int sid,Byte flag) {
-	if(net_check_address(net,sid)!=0) return;
+	nlog(net->sec,net,sid,"kill_player() request peer:%i,whoami:%i[%s],reason:%i[%s],flag:%i\n",sid,net->s[sid].whoami,\
+	unet_get_destination(net->s[sid].whoami),reason,unet_get_reason_code(reason),flag);
+	if(net_check_address(net,sid)!=0) {
+		plog(net->sec,"kill_player request failed, Reason: Out of range %i\n",sid);
+		return;
+	}
 
 	//but be sure that we are not killing a server...
 	if(net->whoami==KLobby || net->whoami==KGame) {
-		if(net->s[sid].whoami!=KClient && net->s[sid].whoami!=0) return;
+		if(net->s[sid].whoami!=KClient && net->s[sid].whoami!=0) {
+			plog(net->sec,"kill_player request failed, Reason: Invalid type of client #1 %i\n",net->s[sid].whoami,\
+	unet_get_destination(net->s[sid].whoami));
+			return;
+		}
 	} else {
 		if(net->s[sid].whoami!=KGame && net->s[sid].whoami!=KLobby &&\
-		 net->s[sid].whoami!=0) return;
+		 net->s[sid].whoami!=0) {
+			plog(net->sec,"kill_player request failed, Reason: Invalid type of client #2 %i\n",net->s[sid].whoami,\
+	unet_get_destination(net->s[sid].whoami));
+			return;
+		}
 	}
 
 #if !defined(I_AM_A_GAME_SERVER) && !defined(I_AM_A_LOBBY_SERVER)
@@ -452,10 +465,11 @@ void kill_player(st_unet * net,int reason,int sid,Byte flag) {
 #endif
 
 	//do here the correct an nice player cleanning
-	nlog(f_uru,net,sid,"Killing... disconnecting peer %i: %i %s\n",sid,net->s[sid].whoami,\
+	nlog(net->sec,net,sid,"Killing... disconnecting peer %i: %i %s\n",sid,net->s[sid].whoami,\
 	unet_get_destination(net->s[sid].whoami));
 
 	if(!(flag & 0x02)) {
+		plog(net->sec,"kill_player, a plNetMsgTerminated reason %i was sent",reason);
 		plNetMsgTerminated(net,reason,sid);
 	}
 
@@ -466,6 +480,7 @@ void kill_player(st_unet * net,int reason,int sid,Byte flag) {
 
 		timer=timer-net->s[sid].nego_stamp;
 
+		plog(net->sec,"kill_player, Player status update code is being run...\n");
 		if(reason!=RLoggedInElsewhere) {
 			plNetMsgCustomPlayerStatus(net,0,0,net->tracking,sid,net->pro_tracking);
 		}
@@ -480,8 +495,10 @@ void kill_player(st_unet * net,int reason,int sid,Byte flag) {
 	nlog(net->sec,net,sid,"Connection terminated %i %s %i\n",reason,unet_get_reason_code(reason),flag);
 
 	if(flag & 0x01) {
+		plog(net->sec,"plNetDestroySession() call\n");
 		plNetDestroySession(net,sid); //hmmm
 	} else {
+		plog(net->sec,"plNetEndConnection() call\n");
 		plNetEndConnection(net,sid); //<- this one is better, a lot better
 	}
 }

@@ -91,6 +91,8 @@ int plNetMsgCustomPlayerStatus(st_unet * net,Byte flag,Byte status,int sid,int s
 		memcpy(buf+off,s->uid,16);
 		off+=16;
 	}
+	//remember to update the KI number!
+	u->hmsg.ki=s->ki; //don't trus never (source->hmsg.ki), but the server should be killing anyone that just sends a different ki number that the one issued and validated on the SetPlayer
 
 	print2log(f_uru,"<SND> NetMsgCustomPlayerStatus id %i,%s,%s, %02X,%02X\n",s->ki,s->acct,s->name,flag,status);
 
