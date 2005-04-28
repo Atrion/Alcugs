@@ -198,9 +198,19 @@ int read_config(FILE * dsc, char * conf,st_config ** cfg2) { //, char ** allowed
 		}
 		else if(slash==1) {
 			slash=0;
-			if(c=='n') { right_buffer[i]='\n'; }
-			else if(c=='\n' || c=='\r') { i--; } //do nothing
-			else { right_buffer[i]=c; }
+			if(c=='n')
+			{
+				right_buffer[i]='\n';
+			}
+			else if(c=='\n' || c=='\r')
+			{
+				i--;
+			} //do nothing
+			else
+			{
+				right_buffer[i++]='\\';
+				right_buffer[i]=c;
+			}
 			i++;
 			win=0;
 		}

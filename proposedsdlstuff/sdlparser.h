@@ -28,6 +28,7 @@
 #define __U_SDL_PARSER_H_
 #define __U_SDL_PARSER_H_ID "$Id$"
 
+#include "sdlstrs.h"
 #include "sdl_desc.h"
 #include "sdl_obj.h"
 
@@ -40,8 +41,8 @@ typedef struct {
 	//if (type==0x02)
 	  //Byte static2; //0x00
 	    Byte string2[SSTR+1]; /** some information
-	                              (for example, if the relto door is opened
-	                              from the outside, this string contains "fromOutside") */
+                                  (example: if the relto door is opened from the outside,
+                                   this string contains "fromOutside") */
 	//endif (type==0x02)
 
 	Byte flags; /** 0x04 will make the timestamp (with microseconds) appear,

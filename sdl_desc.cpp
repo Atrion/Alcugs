@@ -1155,6 +1155,28 @@ int find_sdl_descriptor(Byte * name,U16 version,t_sdl_def * sdl,int n) {
 	return -1; //not found :(
 }
 
+/**	\brief Returns the index of an entry in a t_sdl_def list that has a
+	        specified name and the highest found version number
+*/
+int find_sdl_descriptor_by_name(Byte * name,t_sdl_def * sdl,int n)
+{
+	int i;
+	U16 last_ver=0;
+	int ret=-1;
+
+
+	for(i=0; i<n; i++)
+	{
+		if(!strcmp((char *)name,(char *)sdl[i].name))
+		{
+			if(last_ver<sdl[i].version)
+				ret=i;
+		}
+	}
+	return ret;
+}
+
+
 /**
 Creates a new sdl_desc struct, but without duplicates, it will store only the latest
 version. (The new descriptor will be osdl)

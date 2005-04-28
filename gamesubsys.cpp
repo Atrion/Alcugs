@@ -50,7 +50,6 @@ const char * _game_driver_ver="1.1.1a";
 #include "uru.h"
 
 #include "ageparser.h"
-//#include "sdlparser.h" //SDL byte code parser
 
 #include "gamesubsys.h"
 
@@ -62,9 +61,12 @@ int game_initialitzed=0;
 t_age_def * global_age_def=NULL; //age struct
 int global_age_def_n=0; //total number of ages
 
-//full sdl headers only
-//t_sdl_def * ghsdl=NULL; //sdl Headers struct
-int ghsdl_n=0; //number of global sdl records
+#ifdef TEST_SDL
+t_sdl_def * global_sdl_def=NULL;
+int global_sdl_def_n=0;
+
+t_sdl_head * global_sdl_bin=NULL; //!TODO: sdl
+#endif
 
 st_log * f_sdl=NULL;
 
@@ -86,6 +88,10 @@ int init_game_subsys(st_unet * net) {
 	if(cnf_getByte(1,"sdl.log","global",global_config)==1) {
 		f_sdl=open_log("sdl.log",2,DF_STDOUT);
 	}
+
+
+	/////////////////////////////////////////////////////////
+	//age stuff
 
 	print2log(f_sdl,"Parsing AGE %s descriptor...\n",net->name);
 
@@ -118,6 +124,44 @@ int init_game_subsys(st_unet * net) {
 	}
 	dump_age_descriptor(f_sdl,*global_age_def);
 
+
+#ifdef TEST_SDL
+	/////////////////////////////////////////////////////////
+	//SDL stuff
+
+	//1st destroy if it already exists
+	if(global_sdl_def_n!=0) {
+		destroy_sdl_def(global_sdl_def,global_sdl_def_n);
+		global_sdl_def_n=0;
+		if(global_sdl_def!=NULL) {
+			free((void *)global_sdl_def);
+			global_sdl_def=NULL;
+		}
+	}
+
+	aux = (char *)cnf_getString("./sdl/","sdl","global",global_config);
+
+
+	ret=read_sdl_files(f_sdl,aux,&global_sdl_def,&global_sdl_def_n);
+	if(ret<0) {
+		print2log(f_sdl,"FATAL, failed to read SDL descriptors...\n");
+		ret=-1;
+		stop_game_subsys();
+		return ret;
+	}
+
+	global_sdl_bin=(t_sdl_head *)malloc(sizeof(t_sdl_head));
+
+	int sdl_id=find_sdl_descriptor_by_name((Byte *)&net->name,global_sdl_def,global_sdl_def_n);
+
+	strcpy((char *)&global_sdl_bin->name,net->name);
+	global_sdl_bin->version=global_sdl_def[sdl_id].version;
+	global_sdl_bin->object_present=0;
+	//global_sdl_bin->o=0;
+
+	sdl_fill_t_sdl_binary_by_sdl_id(&global_sdl_bin->bin,global_sdl_def,global_sdl_def_n,sdl_id);
+#endif //TEST_SDL
+
 	plog(f_sdl,"INF: Game subsystem v %s started\n",_game_driver_ver);
 	logflush(f_sdl);
 
@@ -127,6 +171,23 @@ int init_game_subsys(st_unet * net) {
 void stop_game_subsys() {
 	if(game_initialitzed!=1) return;
 	plog(f_sdl,"INF: Game subsystem stopped\n");
+
+#ifdef TEST_SDL
+	int sdl_id=find_sdl_descriptor((Byte *)&global_sdl_bin->name,global_sdl_bin->version,global_sdl_def,global_sdl_def_n);
+
+	sdl_free_t_sdl_binary(&global_sdl_bin->bin,global_sdl_def,global_sdl_def_n,sdl_id);
+	free(global_sdl_bin);
+
+	//destroy the sdl descriptors
+	if(global_sdl_def_n!=0) {
+		destroy_sdl_def(global_sdl_def,global_sdl_def_n);
+		global_sdl_def_n=0;
+		if(global_sdl_def!=NULL) {
+			free((void *)global_sdl_def);
+			global_sdl_def=NULL;
+		}
+	}
+#endif //TEST_SDL
 
 	//destroy the age descriptor
 	if(global_age_def_n!=0) {

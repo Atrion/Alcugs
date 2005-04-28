@@ -50,7 +50,9 @@
 #include "uru.h"
 
 //#include "ageparser.h"
-//#include "sdlparser.h" //SDL byte code parser
+#ifdef TEST_SDL
+#include "proposedsdlstuff/sdlparser.h" //SDL byte code parser
+#endif
 
 #include "pythonsubsys.h"
 #include "pythonglue.h"
@@ -82,13 +84,14 @@ typedef struct {
 	//st_unet * net;
 } ptNet_Object;
 
-#if 0
+#ifdef TEST_SDL
 //Access to the SDL vars - see proposedsdlstuff/pythonglue_partial.cpp
 extern PyTypeObject ptSDL_Type;
 
 typedef struct {
 	PyObject_HEAD
 	//TODO
+	t_sdl_binary * bin;
 } ptSDL_Object;
 #endif
 //end classes
@@ -142,7 +145,7 @@ static PyObject* alcugs_PtGetPythonLog(PyObject *self, PyObject *args) {
 	return (PyObject *)ptLog;
 }
 
-#if 0
+#ifdef TEST_SDL
 static PyObject* alcugs_PtGetAgeSDL(PyObject *self, PyObject *args) {
 	ptSDL_Object * ptSDL;
 	if(!PyArg_ParseTuple(args, ""))
@@ -157,6 +160,9 @@ static PyObject* alcugs_PtGetAgeSDL(PyObject *self, PyObject *args) {
 //end def's
 
 //class's (objects) def's/method's
+#ifdef TEST_SDL
+#include "proposedsdlstuff/pythonglue_partial.cpp"
+#endif
 //Python Log
 static PyObject * ptLog_new(PyObject * self,PyObject * args) {
 	ptLog_Object * ptLog;

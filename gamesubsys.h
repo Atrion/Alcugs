@@ -41,6 +41,17 @@ typedef struct {
 } st_gobjects;
 
 
+extern t_age_def * global_age_def; //age struct
+extern int global_age_def_n; //total number of ages
+
+#ifdef TEST_SDL
+#include "proposedsdlstuff/sdlparser.h"
+extern t_sdl_def * global_sdl_def;
+extern int global_sdl_def_n;
+
+extern t_sdl_head * global_sdl_bin;
+#endif
+
 int init_game_subsys(st_unet * net);
 void stop_game_subsys();
 void reload_game_subsys(st_unet * net);

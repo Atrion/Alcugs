@@ -55,6 +55,7 @@ int sdl_parse_contents(st_log * f,Byte * buf,int totalsize,t_sdl_def ** sdl2,int
 //Returns -1, if not found, elsewhere the index in the sdl struct where is it
 // requires the struct, and the number of elements
 int find_sdl_descriptor(Byte * name,U16 version,t_sdl_def * sdl,int n);
+int find_sdl_descriptor_by_name(Byte * name,t_sdl_def * sdl,int n);
 
 //Creates a new list, but without dupped descriptors, only the latests versions
 int sdl_get_last_descriptors(st_log * f,t_sdl_def ** sdlo,int * n_sdlo,t_sdl_def * sdl,int n_sdl);

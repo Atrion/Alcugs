@@ -28,9 +28,10 @@
 #define __U_PYTHONGLUE_PT_SDL_OBJECT_ID "$Id$"
 
 
+#include "../gamesubsys.h"
 
 
-
+#if 0
 //Access to the SDL vars
 extern PyTypeObject ptSDL_Type;
 
@@ -38,7 +39,7 @@ typedef struct {
 	PyObject_HEAD
 	t_sdl_binary * bin;
 } ptSDL_Object;
-
+#endif
 
 
 
@@ -60,6 +61,44 @@ static void ptSDL_dealloc(PyObject * self) {
 	PyObject_Del(self);
 }
 
+
+PyObject* Py_BuildValue_va(char *outputformatstr,int inputc,va_list inputs)
+{
+	char * inptr=(char *)inputs+(sizeof(void*)*inputc);
+
+	void *startesp;
+
+	_asm
+	{
+		mov startesp, esp;
+	}
+
+	for(int i=inputc; i>0;i--)
+	{
+		inptr-=sizeof(void *);
+		
+		_asm
+		{
+			push inptr;
+		}
+	}
+
+	PyObject *return_val;
+
+	_asm
+	{
+		push outputformatstr;
+		call Py_BuildValue;
+		mov esp, startesp;
+		mov return_val,eax;
+	}
+
+	return return_val;
+}
+
+
+
+
 static PyObject* ptSDL_getitem(PyObject *self, PyObject *args)
 {
 	char * key;
@@ -68,9 +107,9 @@ static PyObject* ptSDL_getitem(PyObject *self, PyObject *args)
 
 	t_sdl_head *head = global_sdl_bin;
 
-	int sdlindex=find_sdl_descriptor(head->name,head->version,global_sdl,global_sdl_n);
+	int sdlindex=find_sdl_descriptor(head->name,head->version,global_sdl_def,global_sdl_def_n);
 
-	t_sdl_def *sdldesc=&global_sdl[sdlindex];
+	t_sdl_def *sdldesc=&global_sdl_def[sdlindex];
 
 	for(int i=0; i<head->bin.n_values; i++)
 	{
@@ -135,7 +174,9 @@ static PyObject* ptSDL_getitem(PyObject *self, PyObject *args)
 			outputformatstr[binvar->array_count+1]=')';
 			outputformatstr[binvar->array_count+2]=0;
 
-			return Py_BuildValue(outputformatstr,&outputs);
+			PyObject * ret=Py_BuildValue_va(outputformatstr,binvar->array_count,(char *)outputs);
+			free(outputs);
+			return ret;
 		}
 		//else: didn't find the searched key
 	}
