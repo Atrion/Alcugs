@@ -52,6 +52,7 @@
 //#include "ageparser.h"
 #ifdef TEST_SDL
 #include "proposedsdlstuff/sdlparser.h" //SDL byte code parser
+#include "gamesubsys.h"
 #endif
 
 #include "pythonsubsys.h"
@@ -91,7 +92,7 @@ extern PyTypeObject ptSDL_Type;
 typedef struct {
 	PyObject_HEAD
 	//TODO
-	t_sdl_binary * bin;
+	t_sdl_head * bin_head;
 } ptSDL_Object;
 #endif
 //end classes
@@ -152,7 +153,7 @@ static PyObject* alcugs_PtGetAgeSDL(PyObject *self, PyObject *args) {
 		return NULL;
 
 	ptSDL = PyObject_New(ptSDL_Object, &ptSDL_Type);
-	//ptSDL->bin=sdl;
+	ptSDL->bin_head=global_sdl_bin;
 
 	return (PyObject *)ptSDL;
 }
@@ -365,7 +366,7 @@ static PyMethodDef AlcugsMethods[] = {
 		"Returns timestamp of the current time."},
 	{"PtGetMicros", alcugs_PtGetMicros, METH_VARARGS,
 		"Returns microseconds of the current time."},
-#if 0
+#ifdef TEST_SDL
 	{"PtGetAgeSDL", alcugs_PtGetAgeSDL, METH_VARARGS,
 		"Returns a ptSDL object representing the SDL vars."}, 
 #endif

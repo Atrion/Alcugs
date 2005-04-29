@@ -44,16 +44,16 @@
 //#include <sys/types.h>
 
 #ifdef __WIN32__
-#  include "windoze.h"
+#  include "../windoze.h"
 #endif
 
-#include "data_types.h" //for U32,Byte and others
-#include "conv_funs.h"
-#include "stdebug.h"
+#include "../data_types.h" //for U32,Byte and others
+#include "../conv_funs.h"
+#include "../stdebug.h"
 
-#include "urustructs.h"
-#include "sdl_desc.h"
-#include "sdl_obj.h"
+#include "../urustructs.h"
+#include "../sdl_desc.h"
+#include "../sdl_obj.h"
 
 #include "sdlparser.h"
 

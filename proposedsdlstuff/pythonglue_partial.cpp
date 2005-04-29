@@ -37,13 +37,17 @@ extern PyTypeObject ptSDL_Type;
 
 typedef struct {
 	PyObject_HEAD
-	t_sdl_binary * bin;
+	t_sdl_head * bin_head;
 } ptSDL_Object;
 #endif
 
 
 
 //begin ptSDL class
+
+//this function will never be called from an external file
+//as currently only the PtGetAgeSDL() function is allowed
+//to create ptSDL objects
 static PyObject * ptSDL_new(PyObject * self,PyObject * args) {
 	ptSDL_Object * ptSDL;
 
@@ -53,6 +57,8 @@ static PyObject * ptSDL_new(PyObject * self,PyObject * args) {
 	ptSDL = PyObject_New(ptSDL_Object, &ptSDL_Type);
 	//constructors
 
+	ptSDL->bin_head=0;
+
 	return (PyObject *)ptSDL;
 }
 
@@ -61,51 +67,26 @@ static void ptSDL_dealloc(PyObject * self) {
 	PyObject_Del(self);
 }
 
-
-PyObject* Py_BuildValue_va(char *outputformatstr,int inputc,va_list inputs)
+static int ptSDL_count(PyObject *self)
 {
-	char * inptr=(char *)inputs+(sizeof(void*)*inputc);
+	if(((ptSDL_Object *)self)->bin_head==0)
+		return -1;
 
-	void *startesp;
-
-	_asm
-	{
-		mov startesp, esp;
-	}
-
-	for(int i=inputc; i>0;i--)
-	{
-		inptr-=sizeof(void *);
-		
-		_asm
-		{
-			push inptr;
-		}
-	}
-
-	PyObject *return_val;
-
-	_asm
-	{
-		push outputformatstr;
-		call Py_BuildValue;
-		mov esp, startesp;
-		mov return_val,eax;
-	}
-
-	return return_val;
+	return  ((ptSDL_Object *)self)->bin_head->bin.n_values
+	       +((ptSDL_Object *)self)->bin_head->bin.n_structs;
 }
-
-
-
 
 static PyObject* ptSDL_getitem(PyObject *self, PyObject *args)
 {
 	char * key;
-	if(!PyArg_ParseTuple(args, "s",&key))
-		return NULL;
+	key=PyString_AsString(args);
+	//if(!PyArg_ParseTuple(args,"s",&key))
+	//	return NULL;
 
-	t_sdl_head *head = global_sdl_bin;
+	t_sdl_head *head = ((ptSDL_Object *)self)->bin_head;
+
+	if(head==0)
+		return NULL;
 
 	int sdlindex=find_sdl_descriptor(head->name,head->version,global_sdl_def,global_sdl_def_n);
 
@@ -120,74 +101,111 @@ static PyObject* ptSDL_getitem(PyObject *self, PyObject *args)
 			t_sdl_bin_tuple * binvar=&(head->bin.values[i]);
 			t_sdl_var * descvar=&(sdldesc->vars[head->bin.values[i].index]);
 
-			PyObject **outputs = (PyObject **)malloc(sizeof(PyObject *)*binvar->array_count);
-			char *outputformatstr = (char *)malloc(binvar->array_count+3);
+			int array_count;
+			if(descvar->array_size)
+				array_count=descvar->array_size;
+			else
+				array_count=binvar->array_count;
 
-			outputformatstr[0]='(';
+			PyObject **outputs = (PyObject **)malloc(sizeof(PyObject *)*array_count);
 
-			for(int j=0; j<binvar->array_count; j++)
+			for(int j=0; j<array_count; j++)
 			{
-				outputformatstr[j+1]='O';
 				switch(descvar->type)
 				{
 					case 0: //INT (4 bytes)
-						outputs[j]=Py_BuildValue("i", *(int *)head->bin.values[i].data);
+						if(binvar->flags | 0x08)
+							outputs[j]=Py_BuildValue("i", atoi((char *)&descvar->default_value)); //use default value
+						else
+							outputs[j]=Py_BuildValue("i", *(int *)head->bin.values[i].data);
+
 						break;
 					case 1: //FLOAT (4 bytes)
-						outputs[j]=Py_BuildValue("f", *(float *)head->bin.values[i].data);
+						if(binvar->flags | 0x08)
+							outputs[j]=Py_BuildValue("f", (float)atof((char *)&descvar->default_value)); //use default value
+						else
+							outputs[j]=Py_BuildValue("f", *(float *)head->bin.values[i].data);
 						break;
 					case 3: //STRING32 (32 bytes)
-						outputs[j]=PyString_FromString((char *)head->bin.values[i].data);
+						if(binvar->flags | 0x08)
+							outputs[j]=PyString_FromString((char *)&descvar->default_value); //use default value
+						else
+							outputs[j]=PyString_FromString((char *)head->bin.values[i].data);
 						break;
 					case 5: //Sub SDL
 						//plog(log,"   Error: There a struct in the value list.\n");
+						free(outputs);
 						return NULL;
 						//outputs[j]=NULL;
 						break;
 					case 2: //BOOL (1 byte)
 					case 9: //BYTE (1 byte)
-						outputs[j]=Py_BuildValue("b", *(char *)head->bin.values[i].data);
+						if(binvar->flags | 0x08)
+							outputs[j]=Py_BuildValue("b", (char)atoi((char *)&descvar->default_value)); //use default value
+						else
+							outputs[j]=Py_BuildValue("b", *(char *)head->bin.values[i].data);
 						break;
 					case 0xA: //SHORT (2 bytes)
-						outputs[j]=Py_BuildValue("h", *(short *)head->bin.values[i].data);
+						if(binvar->flags | 0x08)
+							outputs[j]=Py_BuildValue("h", (short)atoi((char *)&descvar->default_value)); //use default value
+						else
+							outputs[j]=Py_BuildValue("h", *(short *)head->bin.values[i].data);
 						break;
 					case 8: //TIME (4+4 bytes)
+						free(outputs);
 						return NULL;
 						//outputs[j]=NULL;
 						//Py_BuildValue("i", *(int *)head->bin.values[i].data);
 						break;
 					case 50: //VECTOR3 (3 floats)
 					case 51: //POINT3 (3 floats)
+						free(outputs);
 						return NULL;
 						break;
 					case 54: //QUATERNION (4 floats)
+						free(outputs);
 						return NULL;
 						break;
 					case 55: //RGB8 (3 bytes)
+						free(outputs);
 						return NULL;
 						break;
 					case 4: //PLKEY (UruObject)
+						free(outputs);
 						return NULL;
 						break;
 				};
 			}
-			outputformatstr[binvar->array_count+1]=')';
-			outputformatstr[binvar->array_count+2]=0;
 
-			PyObject * ret=Py_BuildValue_va(outputformatstr,binvar->array_count,(char *)outputs);
+			char *outputformatstr = (char *)malloc(array_count+3);
+
+			outputformatstr[0]='(';
+			memset(outputformatstr+1,'O',array_count);
+			outputformatstr[array_count+1]=')';
+			outputformatstr[array_count+2]=0;
+
+			PyObject * ret=Py_VaBuildValue(outputformatstr,(char *)outputs);
+			free(outputformatstr);
 			free(outputs);
 			return ret;
 		}
 		//else: didn't find the searched key
 	}
-
+	char errormsg[512];
+	snprintf((char *)&errormsg,511,"didn't find the searched key (\"%s\")",key);
+	PyErr_SetString(PyExc_KeyError,(char *)&errormsg);
 	return NULL;
 }
 
 //Methods
+static PyMappingMethods ptSDL_mapping = {
+	(inquiry)		ptSDL_count, /*mp_length*/
+	(binaryfunc)	ptSDL_getitem, /*mp_subscript*/
+	(objobjargproc)	0, /*mp_ass_subscript*/
+};
+
 static PyMethodDef ptSDL_methods[] = {
-	{"__getitem__", (PyCFunction)ptSDL_getitem, METH_VARARGS,
-		"Standard array accessor []."},
+
 	{NULL, NULL, 0, NULL} /* sentinel */
 };
 
@@ -209,7 +227,7 @@ PyTypeObject ptSDL_Type = {
 	0, /*tp_repr*/
 	0, /*tp_as_number*/
 	0, /*tp_as_sequence*/
-	0, /*tp_as_mapping*/
+	&ptSDL_mapping, /*tp_as_mapping*/
 	0 /*tp_hash*/
 };
 //end ptSDL class

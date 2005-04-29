@@ -100,8 +100,24 @@ int init_python_subsys(st_unet * net) {
 	//end glue setting
 
 	//set scripts paths
+	char pydira[500];
+	getcwd(pydira,499);
 	char pydir[500];
-	getcwd(pydir,499);
+
+	unsigned int l=0;
+	for(unsigned int k=0; k<strlen(pydira);)
+	{
+		pydir[l]=pydira[k];
+		l++;
+		if(pydira[k]=='\\')
+		{
+			pydir[l]='\\';
+			l++;
+		}
+		k++;
+	}
+	pydir[l]=0;
+	
 	char buf[1024];
 	sprintf(buf,"\
 import sys\n\

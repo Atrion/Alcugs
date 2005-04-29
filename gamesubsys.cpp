@@ -150,16 +150,23 @@ int init_game_subsys(st_unet * net) {
 		return ret;
 	}
 
-	global_sdl_bin=(t_sdl_head *)malloc(sizeof(t_sdl_head));
-
 	int sdl_id=find_sdl_descriptor_by_name((Byte *)&net->name,global_sdl_def,global_sdl_def_n);
 
-	strcpy((char *)&global_sdl_bin->name,net->name);
-	global_sdl_bin->version=global_sdl_def[sdl_id].version;
-	global_sdl_bin->object_present=0;
-	//global_sdl_bin->o=0;
+	if(sdl_id>=0)
+	{
+		global_sdl_bin=(t_sdl_head *)malloc(sizeof(t_sdl_head));
 
-	sdl_fill_t_sdl_binary_by_sdl_id(&global_sdl_bin->bin,global_sdl_def,global_sdl_def_n,sdl_id);
+		strcpy((char *)&global_sdl_bin->name,net->name);
+		global_sdl_bin->version=global_sdl_def[sdl_id].version;
+		global_sdl_bin->object_present=0;
+		//global_sdl_bin->o=0;
+
+		sdl_fill_t_sdl_binary_by_sdl_id(&global_sdl_bin->bin,global_sdl_def,global_sdl_def_n,sdl_id);
+	}
+	else
+	{
+		global_sdl_bin=0;
+	}
 #endif //TEST_SDL
 
 	plog(f_sdl,"INF: Game subsystem v %s started\n",_game_driver_ver);
@@ -173,10 +180,15 @@ void stop_game_subsys() {
 	plog(f_sdl,"INF: Game subsystem stopped\n");
 
 #ifdef TEST_SDL
-	int sdl_id=find_sdl_descriptor((Byte *)&global_sdl_bin->name,global_sdl_bin->version,global_sdl_def,global_sdl_def_n);
 
-	sdl_free_t_sdl_binary(&global_sdl_bin->bin,global_sdl_def,global_sdl_def_n,sdl_id);
-	free(global_sdl_bin);
+	if(global_sdl_bin!=0)
+	{
+		int sdl_id=find_sdl_descriptor((Byte *)&global_sdl_bin->name,global_sdl_bin->version,global_sdl_def,global_sdl_def_n);
+
+		if(sdl_id>=0)
+			sdl_free_t_sdl_binary(&global_sdl_bin->bin,global_sdl_def,global_sdl_def_n,sdl_id);
+		free(global_sdl_bin);
+	}
 
 	//destroy the sdl descriptors
 	if(global_sdl_def_n!=0) {

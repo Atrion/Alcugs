@@ -49,8 +49,24 @@ def config():
     except Exception, detail:
         print "Basic test failed, reason: %s" % (detail)
         
+def sdl_stuff():
+    try:
+        if(PtGetAgeName()=="Personal"):
+          print "Testing the PtGetAgeSDL() function and the ptSDL class"
+          sdl=PtGetAgeSDL()
+          print "The psnlLibraryDoorClosed tuple should be:"
+          print sdl['psnlLibraryDoorClosed']
+          print "The CurentPage tuple should be:"
+          print sdl['CurrentPage']
+          print "...if it is really like that, SDL stuff works! :D"
+          print "now we're testing what happens if the ptSDL class doesn't find a matching key:"
+          print sdl['this_key_does_not_exist']
+          print "you won't see me!"
+    except Exception, detail:
+        print "exception while doing the SDL test, reason: %s" % (detail)
 
 def doall():
     basic()
     config()
+    #sdl_stuff() #uncomment this when testing the sdl stuff
     

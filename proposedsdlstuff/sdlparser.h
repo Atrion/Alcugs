@@ -28,9 +28,9 @@
 #define __U_SDL_PARSER_H_
 #define __U_SDL_PARSER_H_ID "$Id$"
 
-#include "sdlstrs.h"
-#include "sdl_desc.h"
-#include "sdl_obj.h"
+#include "../sdlstrs.h"
+#include "../sdl_desc.h"
+#include "../sdl_obj.h"
 
 #define SSTR 0x0FFF
 
