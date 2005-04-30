@@ -30,7 +30,7 @@
 
 #define __U_CONFIG_PARSER_ID "$Id$"
 
-//#define _DBG_LEVEL_ 10
+#define _DBG_LEVEL_ 10
 
 #include "config.h"
 
@@ -560,9 +560,14 @@ int cnf_add_key_xy(char * gvalue,char * what,char * where,int x,int y,st_config 
 	oy=cfg->keys[current_key].config[found_key].y;
 	
 	my=( oy > (y+1) ? oy : (y+1));
-	
+
+		DBG(8,"dmalloc_verify()\n");
+	dmalloc_verify();
+
+		
 	if(ox<(x+1)) {
 		//then we must resize & copy
+		DBG(5,"malloc %i bytes\n",((my)*(x+1)));
 		value=(char **)malloc(sizeof(char *)*((my)*(x+1)));
 		memset(value,0,(sizeof(char *)*((my)*(x+1))));
 		for(j=0; j<oy; j++) {
@@ -582,21 +587,52 @@ int cnf_add_key_xy(char * gvalue,char * what,char * where,int x,int y,st_config 
 		cfg->keys[current_key].config[found_key].value=value;
 		value=NULL;
 	}
+	
+		DBG(8,"dmalloc_verify()\n");
+	dmalloc_verify();
+
+	
 	if(oy<(y+1)) {
-		value=(char **)realloc(cfg->keys[current_key].config[found_key].value,sizeof(char *)*((y+1)*(ox)));
-		memset((value+((ox)*(oy))),0,(sizeof(char *)*(((y+1)*(ox)))-((ox)*(oy))));
+		value=(char **)realloc((void *)(cfg->keys[current_key].config[found_key].value),sizeof(char *)*((y+1)*(ox)));
+		DBG(5,"realloc %i bytes\n",((y+1)*(ox)));
+		if(value==NULL) { _DIE("FATAL: value is NULL!"); }
+		DBG(7,"memset off:%i size:%i\n",((ox)*(oy)),((((y+1)*(ox)))-((ox)*(oy))));
+		memset((value+((ox)*(oy))),0,(sizeof(char *)*((((y+1)*(ox)))-((ox)*(oy)))));
 		cfg->keys[current_key].config[found_key].value=value;
 		value=NULL;
 	}
+
+	DBG(8,"dmalloc_verify()\n");
+	dmalloc_verify();
 	
 	char ** pval=NULL;
-	pval=(cfg->keys[current_key].config[found_key].value)+((ox*y)+x);
+	
+		DBG(8,"dmalloc_verify()\n");
+	dmalloc_verify();
 
-	if(*pval!=NULL) {
-		free((void *)*pval);
+	DBG(8,"%i\n",(ox*y)+x);
+	DBG(8,"ckey:%i,fkey:%i\n",current_key,found_key);
+	pval=(cfg->keys[current_key].config[found_key].value+((ox*y)+x));
+	DBG(8,"key:%s\n",cfg->keys[current_key].key);
+	
+		DBG(8,"dmalloc_verify()\n");
+	dmalloc_verify();
+	
+	DBG(8,"var:%s\n",cfg->keys[current_key].config[found_key].name);
+
+			DBG(8,"dmalloc_verify()\n");
+	dmalloc_verify();
+		
+	//pval=cfg->keys[current_key].config[found_key].value;
+
+	DBG(8,"dmalloc_verify()\n");
+	dmalloc_verify();
+	
+	if(((char *)(*pval))!=NULL) {
+		free((void *)(*pval));
 		*pval=NULL;
 	}
-	*pval=(char *)malloc(sizeof(char) * strlen((char *)gvalue)+1);
+	*pval=(char *)malloc(sizeof(char) * (strlen((char *)gvalue)+1));
 	if(*pval==NULL) {
 		return -4;
 	}
@@ -827,6 +863,7 @@ void cnf_destroy(st_config ** cfg2) {
 #ifdef _TEST_
 
 // g++ -Wall -g config_parser.cpp -o cfgtest -D_TEST_
+// g++ -Wall -g config_parser.cpp -o cfgtest -D_TEST_ debug.o -ldmalloccxx -DDMALLOC_FUNC_CHECK
 
 int main() {
 

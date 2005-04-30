@@ -27,7 +27,8 @@ endif
 
 #debbuging interface
 ifeq ($(DMALLOC),1)
-	DBGLIB=dmalloc/libdmallocxx.a
+	DBGLIB=-ldmallocxx
+	#dmalloc/libdmallocxx.a
 else
 	DBGLIB=
 endif
