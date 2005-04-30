@@ -30,7 +30,7 @@ const char * BUILD =  __DATE__ " " __TIME__;
 const char * SNAME = "Alcugs (uru server)";
 const char * VERSION = "1.3.1p"; //Urunet 3, updated 27/01/2005
 
-//#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 5
 
 #include "config.h"
 

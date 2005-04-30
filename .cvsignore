@@ -51,6 +51,8 @@ uruprppatch
 uruproxy
 urumsgtest
 hurusetup
+gsetup
+cfgtest
 start.sh
 auth_db_p.*
 auth_p.*
@@ -80,6 +82,7 @@ share/*
 configure.scan
 huru_servers.sh
 core.*
+core
 tmp_msvc
 tmp_msvc/*
 *.ncb

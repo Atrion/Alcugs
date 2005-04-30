@@ -33,6 +33,10 @@ WINDBLIB=-lmysql
 PYLIB=-lpython2.2
 WINPYLIB=-lpython22
 
+#wxWidgets
+WXFLAGS= $(shell wx-config --cxxflags)
+WXLIBS= $(shell wx-config --libs)
+
 #base
 BASELIBS=${CRYPTOLIB} ${ZLIB} ${DBGLIB}
 WINBASELIBS=${WINSOCKETS} ${ZLIB}
@@ -85,8 +89,8 @@ WINBASE=${NETCORE} ${CMHS} ${WIN}
 
 #$@ $<
 
-CLIENT_APP=uruping
-WINCLIENT_APP=uruping.exe
+CLIENT_APP=uruping urucrypt
+WINCLIENT_APP=uruping.exe urucrypt.exe
 
 SERVERS=uru_auth uru_vault uru_tracking uru_lobby uru_game
 WINSERVERS=uru_auth.exe uru_vault.exe uru_tracking.exe uru_lobby.exe uru_game.exe
@@ -142,8 +146,18 @@ urucrypt.exe: urucrypt.cpp files.o whatdoyousee.o license.o
 	$(COMP) urucrypt.cpp -o urucrypt.exe files.o whatdoyousee.o license.o
 
 
+#unfinished app's
+urucmd: urucmd.cpp $(BASE)
+	$(COMP) urucmd.cpp -o urucmd $(BASE) $(BASELIBS)
+
+plfire: plfire.cpp $(BASE) $(VAULTSS)
+	$(COMP) plfire.cpp -o plfire $(BASE) $(VAULTSS) $(BASELIBS)
+
+gsetup: gsetup.cpp gsetup.h
+	$(COMP) gsetup.cpp -o gsetup $(WXFLAGS) $(WXLIBS)
 
 
+	
 #internal app's
 uruproxy: uruproxy.cpp $(BASE) $(VAULTSS)
 	$(COMP) uruproxy.cpp -o uruproxy $(BASE) $(VAULTSS) $(BASELIBS)

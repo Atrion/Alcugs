@@ -36,25 +36,34 @@
 
 #include <stdio.h>
 
+//! A tuple of configuration values (only bidimensional tuples are allowed)
 typedef struct {
 	char name[200];
-	char * value;
+	char ** value;
+	int x; //< Number of columns
+	int y; //< Number of rows
 } st_config_vals;
 
-//!configuration struct
+//! Configuration struct
 typedef struct {
 	char key[200];
 	int n;
 	st_config_vals * config;
 } st_config_keys;
 
+//! A group of configuration keys
 typedef struct {
 	int n;
 	st_config_keys * keys;
 } st_config;
 
+#define CNF_FATALERR -4 //terrible error, execution should stop
+#define CNF_OPENFAIL -3 //if it fails to open the file
+#define CNF_PARSEERR -2 //if a parser error happens
+#define CNF_WARNING  -1 //if a warning ocurred
+#define CNF_SUCCESS   0 //if success
 
-int read_config(FILE * dsc, char * conf,st_config ** cfg); //, char ** allowed, int nall);
+int read_config(FILE * dsc, char * conf,st_config ** cfg);
 U32 cnf_getU32(U32 defecto,char * what,char * where,st_config * cfg);
 U16 cnf_getU16(U16 defecto,char * what,char * where,st_config * cfg);
 Byte cnf_getByte(Byte defecto,char * what,char * where,st_config * cfg);
@@ -65,6 +74,7 @@ void cnf_setU32(U32 val,char * what,char * where,st_config ** cfg2);
 void cnf_setU16(U16 val,char * what,char * where,st_config ** cfg2);
 void cnf_setByte(Byte val,char * what,char * where,st_config ** cfg2);
 int cnf_add_key(char * value,char * what,char * where,st_config ** cfg2);
+int cnf_add_key_xy(char * gvalue,char * what,char * where,int x,int y,st_config ** cfg2);
 
 void cnf_copy(const char * to, const char * from,st_config ** cfg2);
 void cnf_copy_key(const char * to_name,const char * from_name,const char * to, const char * from,st_config ** cfg2);

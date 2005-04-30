@@ -8,7 +8,21 @@
 |Home: http://alcugs.almlys.dyns.net                                        |
 -----------------------------------------------------------------------------
 
-16/Apr/2004 - Release 1.3.1n (beta)
+30/Apr/2005 - Release 1.3.1p (beta)
+===========================================================================0
+
+ * Config Parser now allows tuples, it's still not finished, but you will
+   see it working with the Alcugs client.
+   To avoid problems, be sure that in uru.conf all values on any variable 
+   that have a coma ',' are between 2 '"', or the parser will put each
+   value into different fields of the tuple.
+ * Work on the Plasma Firewall is also progressing.
+ * Also, you will need the development headers and libraryes of wxWidgets
+   to be able to compile the first extremely alpha versions of the
+   Alcugs Client & Patcher.
+
+
+16/Apr/2005 - Release 1.3.1n (beta)
 ===========================================================================0
 
  * There are several changes from release 1.1.15 to this release.
