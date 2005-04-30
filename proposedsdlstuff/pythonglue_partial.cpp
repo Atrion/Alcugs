@@ -86,9 +86,12 @@ static PyObject* ptSDL_getitem(PyObject *self, PyObject *args)
 	//	return NULL;
 
 	t_sdl_head *head = ((ptSDL_Object *)self)->bin_head;
-
 	if(head==0)
+	{
+		snprintf((char *)&errormsg,511,"a really strange error has occured (ptSDL->bin_head was 0)");
+		PyErr_SetString(PyExc_Exception,(char *)&errormsg);
 		return NULL;
+	}
 
 	int sdlindex=find_sdl_descriptor(head->name,head->version,global_sdl_def,global_sdl_def_n);
 
@@ -201,20 +204,19 @@ static PyObject* ptSDL_getitem(PyObject *self, PyObject *args)
 
 static int ptSDL_setitem(PyObject *self, PyObject *args, PyObject *values)
 {
+	char errormsg[512];
 	char * key;
 	key=PyString_AsString(args);
 	if(key==NULL)
-	{
-		//!TODO exception
-		return 1;
-	}
+		return -1;
 
 	t_sdl_head *head = ((ptSDL_Object *)self)->bin_head;
 
 	if(head==0)
 	{
-		//!TODO exception
-		return 1;
+		snprintf((char *)&errormsg,511,"a really strange error has occured (ptSDL->bin_head was 0)");
+		PyErr_SetString(PyExc_Exception,(char *)&errormsg);
+		return -1;
 	}
 
 	int sdlindex=find_sdl_descriptor(head->name,head->version,global_sdl_def,global_sdl_def_n);
@@ -236,8 +238,9 @@ static int ptSDL_setitem(PyObject *self, PyObject *args, PyObject *values)
 			else
 			{
 				//!TODO implement handling of tuples with a variable length
-				return 1;
-				array_count=binvar->array_count;
+				return -1;
+				//array_count=[where can i get the tuple item count???]
+				//array_count=binvar->array_count;
 			}
 
 			void *tuple;
@@ -260,7 +263,7 @@ static int ptSDL_setitem(PyObject *self, PyObject *args, PyObject *values)
 					tupleitemsize=sizeof(PyObject *);
 					break;
 				case 5: //Sub SDL
-					return 1;
+					return -1;
 					break;
 				case 2: //BOOL (1 byte)
 				case 9: //BYTE (1 byte)
@@ -272,20 +275,20 @@ static int ptSDL_setitem(PyObject *self, PyObject *args, PyObject *values)
 					tupleitemsize=sizeof(short);
 					break;
 				case 8: //TIME (4+4 bytes)
-					return 1;
+					return -1;
 					break;
 				case 50: //VECTOR3 (3 floats)
 				case 51: //POINT3 (3 floats)
-					return 1;
+					return -1;
 					break;
 				case 54: //QUATERNION (4 floats)
-					return 1;
+					return -1;
 					break;
 				case 55: //RGB8 (3 bytes)
-					return 1;
+					return -1;
 					break;
 				case 4: //PLKEY (UruObject)
-					return 1;
+					return -1;
 					break;
 			}
 			memset(parsestr,parsechar,array_count);
@@ -303,10 +306,11 @@ static int ptSDL_setitem(PyObject *self, PyObject *args, PyObject *values)
 
 			if(!PyArg_VaParse(values,parsestr,(char *)tupleptrs))
 			{
-				//!TODO add exception +frees
-
+				//!TODO add frees
 				free(tupleptrs);
-				return 1;
+				free(parsestr);
+				free(tuple);
+				return -1;
 			}
 
 			free(tupleptrs);
@@ -391,7 +395,6 @@ copystuff:
 		}
 		//else: didn't find the searched key
 	}
-	char errormsg[512];
 	snprintf((char *)&errormsg,511,"didn't find the searched key (\"%s\")",key);
 	PyErr_SetString(PyExc_KeyError,(char *)&errormsg);
 

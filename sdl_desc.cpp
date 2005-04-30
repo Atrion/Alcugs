@@ -1298,6 +1298,9 @@ int read_sdl_files(st_log * f,char * address,t_sdl_def ** sdl,int * n_sdl) {
 	strcat(dumps_path,"/sdl_dump.raw");
 	savefile((char *)dbuf,totalsize,dumps_path);
 
+	if(dbuf)
+		free(dbuf);
+
 	return 1;
 }
 
@@ -1361,7 +1364,6 @@ int read_sdl_files(st_log * f,char * address,t_sdl_def ** sdl,int * n_sdl) {
     }
 	FindClose(filelist);
 
-
 	update_sdl_version_structs(f,*sdl,*n_sdl);
 
 	//dump the SDL binary info
@@ -1373,6 +1375,9 @@ int read_sdl_files(st_log * f,char * address,t_sdl_def ** sdl,int * n_sdl) {
 	mkdir(dumps_path,00750);
 	strcat(dumps_path,"/sdl_dump.raw");
 	savefile((char *)dbuf,totalsize,dumps_path);
+
+	if(dbuf)
+		free(dbuf);
 
 	return 1;
 }
@@ -1600,6 +1605,8 @@ int sdl_statedesc_reader_fast(st_log * f,Byte * buf,int totalsize,t_sdl_def ** s
 					print2log(f,"unexpected data directly after STATEDESC (line %i)\n",line);
 					return -1;
 				}
+
+				def->content.flag=0x01;
 			}
 			else if(!isspace(offchar))
 			{
@@ -2108,9 +2115,38 @@ int sdl_statedesc_reader_fast(st_log * f,Byte * buf,int totalsize,t_sdl_def ** s
 					return -1;
 				}
 			}
-			else if(offchar=='#')
+			else if(offchar=='#' || offchar=='\r' || offchar=='\n')
 			{
-				comment=1;
+				switch(var->content.type) {
+					case 55: //RGB8
+						var->content.n_itms=3;
+						var->content.itm_type=9;
+						break;
+					case 50: //POINT3
+					case 51: //VECTOR3
+						var->content.n_itms=3;
+						var->content.itm_type=1;
+						break;
+					case 54: //QUATERNION
+						var->content.n_itms=4;
+						var->content.itm_type=1;
+						break;
+					default:
+						var->content.n_itms=1;
+						var->content.itm_type=var->content.type;
+				}
+
+				//now check if it is an struct
+				if(var->content.struct_name[0]!=0)
+				{
+					var->content.flag=0x01;
+					var->content.default_option|=4;
+				}
+
+				var->content.static1=0x03;
+				var->content.u16k1=0x00;
+				var->content.u16k2=0x00;
+
 
 				var->next=(tmp_sdl_vars *)malloc(sizeof(tmp_sdl_vars));
 				var=var->next;
@@ -2118,10 +2154,14 @@ int sdl_statedesc_reader_fast(st_log * f,Byte * buf,int totalsize,t_sdl_def ** s
 
 				memset(var,0,sizeof(tmp_sdl_vars));
 
-				mode=9; //search for var
-			}
-			else if(offchar=='\r' || offchar=='\n')
-			{
+
+
+				mode=9;
+				if(offchar=='#')
+				{
+					comment=1;
+					continue;
+				}
 				if(offchar=='\r')
 					off++;
 				if(offchar=='\n')
@@ -2129,13 +2169,6 @@ int sdl_statedesc_reader_fast(st_log * f,Byte * buf,int totalsize,t_sdl_def ** s
 
 				line++;
 
-				var->next=(tmp_sdl_vars *)malloc(sizeof(tmp_sdl_vars));
-				var=var->next;
-				varcount++;
-
-				memset(var,0,sizeof(tmp_sdl_vars));
-
-				mode=9;
 			}
 			else if(isspace(offchar))
 			{
