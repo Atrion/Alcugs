@@ -9,8 +9,7 @@ endif
 #the next items are appened to the compilers args
 ALC_INCLUDE_PATH=-I/usr/include/python2.2
 WIN_ICPREFIX=${MINGWDIR}\\include
-WINALC_INCLUDE_PATH=-I${WIN_ICPREFIX}\\python2.2
-
+WINALC_INCLUDE_PATH=-I${WIN_ICPREFIX}\\python2.2 -I${WIN_ICPREFIX}\\wx\msw
 #compiler + args
 ifeq ($(WINDOZE),1)
 	COMP=${CC} ${ARGS} ${WINALC_INCLUDE_PATH}
@@ -61,8 +60,14 @@ else
 endif
 
 #wxWidgets
-WXFLAGS= $(shell wx-config --cxxflags)
-WXLIBS= $(shell wx-config --libs)
+ifeq ($(WINDOZE),1)
+	WXFLAGS=-fno-rtti -fno-exceptions -fno-pcc-struct-return -fstrict-aliasing -Wall -D__WXMSW__ -D__GNUWIN32__ -DWINVER=0x400 -D__WIN95__ -DSTRICT
+#-fvtable-thunks  -D__WXDEBUG__
+	WXLIBS=-lwxmsw -lcomdlg32 -luser32 -lgdi32 -lole32 -lwsock32 -lcomctl32 -lctl3d32 -lgcc -lstdc++ -lshell32 -loleaut32 -ladvapi32 -luuid -lpng -ltiff -ljpeg -lz
+else
+	WXFLAGS= $(shell wx-config --cxxflags)
+	WXLIBS= $(shell wx-config --libs)
+endif
 
 #base
 BASELIBS=${SOCKETS} ${CRYPTOLIB} ${ZLIB} ${DBGLIB}

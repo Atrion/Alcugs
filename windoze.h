@@ -89,7 +89,7 @@
 #define random rand
 #define srandom srand
 
-#define usleep Sleep
+#define usleep(a) Sleep(a/1000) //It was so funny that it went toooooo slow, and that is because a millisecond is not the same as a microsecond. We really need a usleep for windows.
 
 #define isblank(c) (c==' ' || c=='\t')
 
