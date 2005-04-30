@@ -926,6 +926,7 @@ int sdl_statedesc_streamer(st_log * f,Byte ** buf2,t_sdl_def * sdl,int n_sdl) {
 	}
 
 	if(ok==-1) {
+		free(*buf2);
 		print2log(ferr,"Parse error at offset %i,%08X\n",off,off);
 		return -1;
 	}

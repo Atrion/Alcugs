@@ -54,11 +54,28 @@ def sdl_stuff():
         if(PtGetAgeName()=="Personal"):
           print "Testing the PtGetAgeSDL() function and the ptSDL class"
           sdl=PtGetAgeSDL()
+          
           print "The psnlLibraryDoorClosed tuple should be:"
           print sdl['psnlLibraryDoorClosed']
+         
           print "The CurentPage tuple should be:"
           print sdl['CurrentPage']
           print "...if it is really like that, SDL stuff works! :D"
+
+
+          print "ok - let's go to the next level of doing funny stuff... let's change a value"
+
+          mem=sdl['CurrentPage']         
+          sdl['CurrentPage']=(0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0)
+          
+          print "The CurrentPage tuple is now:"
+          print sdl['CurrentPage']
+          
+          sdl['CurrentPage']=mem
+          
+          print "changed value back... the CurrentPage tuple is now:"
+          print sdl['CurrentPage']
+          
           print "now we're testing what happens if the ptSDL class doesn't find a matching key:"
           print sdl['this_key_does_not_exist']
           print "you won't see me!"

@@ -68,7 +68,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /I "C:\uru_server3 build" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /D "I_AM_A_GAME_SERVER" /D "__WIN32__" /D "__MSVC__" /D "TEST_SDL" /FR /FD /GZ /c
+# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /I "C:\uru_server3 build" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /D "I_AM_A_GAME_SERVER" /D "__WIN32__" /D "__MSVC__" /D "TEST_SDL" /D "DETECT_LEAKS" /FR /FD /GZ /c
 # SUBTRACT CPP /YX
 # ADD BASE RSC /l 0x407 /d "_DEBUG"
 # ADD RSC /l 0x407 /d "_DEBUG"
@@ -77,7 +77,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib Ws2_32.lib zlib.lib /nologo /subsystem:console /debug /machine:I386 /nodefaultlib:"MSVCRT" /out:"uru_game.exe" /pdbtype:sept
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib Ws2_32.lib zlib.lib /nologo /subsystem:console /debug /machine:I386 /nodefaultlib:"MSVCRT" /nodefaultlib:"LIBCMT" /out:"uru_game.exe" /pdbtype:sept
 
 !ENDIF 
 
@@ -207,6 +207,10 @@ SOURCE=.\whatdoyousee.h
 # Begin Source File
 
 SOURCE=.\config.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\data_types.h
 # End Source File
 # Begin Source File
 

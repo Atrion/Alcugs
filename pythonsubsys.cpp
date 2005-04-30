@@ -279,6 +279,8 @@ except:\n\
 	pyt_error();
 	Py_XDECREF(pObject); //Py_XDECREF() will decrease the number of references if not null.
 
+	free(pym_xSystem);
+	free(pym_xAge);
 
 	plog(f_python,"INF: python subsystem stopped\n");
 

@@ -80,6 +80,8 @@ static PyObject* ptSDL_getitem(PyObject *self, PyObject *args)
 {
 	char * key;
 	key=PyString_AsString(args);
+	if(key==NULL)
+		return NULL;
 	//if(!PyArg_ParseTuple(args,"s",&key))
 	//	return NULL;
 
@@ -114,23 +116,23 @@ static PyObject* ptSDL_getitem(PyObject *self, PyObject *args)
 				switch(descvar->type)
 				{
 					case 0: //INT (4 bytes)
-						if(binvar->flags | 0x08)
+						if(binvar->flags & 0x08)
 							outputs[j]=Py_BuildValue("i", atoi((char *)&descvar->default_value)); //use default value
 						else
-							outputs[j]=Py_BuildValue("i", *(int *)head->bin.values[i].data);
+							outputs[j]=Py_BuildValue("i", ((int *)head->bin.values[i].data)[j]);
 
 						break;
 					case 1: //FLOAT (4 bytes)
-						if(binvar->flags | 0x08)
+						if(binvar->flags & 0x08)
 							outputs[j]=Py_BuildValue("f", (float)atof((char *)&descvar->default_value)); //use default value
 						else
-							outputs[j]=Py_BuildValue("f", *(float *)head->bin.values[i].data);
+							outputs[j]=Py_BuildValue("f", ((float *)head->bin.values[i].data)[j]);
 						break;
 					case 3: //STRING32 (32 bytes)
-						if(binvar->flags | 0x08)
+						if(binvar->flags & 0x08)
 							outputs[j]=PyString_FromString((char *)&descvar->default_value); //use default value
 						else
-							outputs[j]=PyString_FromString((char *)head->bin.values[i].data);
+							outputs[j]=PyString_FromString((char *)head->bin.values[i].data+32*j);
 						break;
 					case 5: //Sub SDL
 						//plog(log,"   Error: There a struct in the value list.\n");
@@ -140,16 +142,16 @@ static PyObject* ptSDL_getitem(PyObject *self, PyObject *args)
 						break;
 					case 2: //BOOL (1 byte)
 					case 9: //BYTE (1 byte)
-						if(binvar->flags | 0x08)
+						if(binvar->flags & 0x08)
 							outputs[j]=Py_BuildValue("b", (char)atoi((char *)&descvar->default_value)); //use default value
 						else
-							outputs[j]=Py_BuildValue("b", *(char *)head->bin.values[i].data);
+							outputs[j]=Py_BuildValue("b", ((char *)head->bin.values[i].data)[j]);
 						break;
 					case 0xA: //SHORT (2 bytes)
-						if(binvar->flags | 0x08)
+						if(binvar->flags & 0x08)
 							outputs[j]=Py_BuildValue("h", (short)atoi((char *)&descvar->default_value)); //use default value
 						else
-							outputs[j]=Py_BuildValue("h", *(short *)head->bin.values[i].data);
+							outputs[j]=Py_BuildValue("h", ((short *)head->bin.values[i].data)[j]);
 						break;
 					case 8: //TIME (4+4 bytes)
 						free(outputs);
@@ -197,11 +199,211 @@ static PyObject* ptSDL_getitem(PyObject *self, PyObject *args)
 	return NULL;
 }
 
+static int ptSDL_setitem(PyObject *self, PyObject *args, PyObject *values)
+{
+	char * key;
+	key=PyString_AsString(args);
+	if(key==NULL)
+	{
+		//!TODO exception
+		return 1;
+	}
+
+	t_sdl_head *head = ((ptSDL_Object *)self)->bin_head;
+
+	if(head==0)
+	{
+		//!TODO exception
+		return 1;
+	}
+
+	int sdlindex=find_sdl_descriptor(head->name,head->version,global_sdl_def,global_sdl_def_n);
+
+	t_sdl_def *sdldesc=&global_sdl_def[sdlindex];
+
+	for(int i=0; i<head->bin.n_values; i++)
+	{
+		if(!strcmp((char *)&sdldesc->vars[head->bin.values[i].index].name,key))
+		{
+			//found the searched key!
+
+			t_sdl_bin_tuple * binvar=&(head->bin.values[i]);
+			t_sdl_var * descvar=&(sdldesc->vars[head->bin.values[i].index]);
+
+			int array_count;
+			if(descvar->array_size)
+				array_count=descvar->array_size;
+			else
+			{
+				//!TODO implement handling of tuples with a variable length
+				return 1;
+				array_count=binvar->array_count;
+			}
+
+			void *tuple;
+			char *parsestr=(char *)malloc(array_count+1);
+
+			char parsechar;
+			size_t tupleitemsize;
+			switch(descvar->type)
+			{
+				case 0: //INT (4 bytes)
+					parsechar='i';
+					tupleitemsize=sizeof(int);
+					break;
+				case 1: //FLOAT (4 bytes)
+					parsechar='f';
+					tupleitemsize=sizeof(float);
+					break;
+				case 3: //STRING32 (32 bytes)
+					parsechar='s';
+					tupleitemsize=sizeof(PyObject *);
+					break;
+				case 5: //Sub SDL
+					return 1;
+					break;
+				case 2: //BOOL (1 byte)
+				case 9: //BYTE (1 byte)
+					parsechar='b';
+					tupleitemsize=sizeof(char);
+					break;
+				case 0xA: //SHORT (2 bytes)
+					parsechar='h';
+					tupleitemsize=sizeof(short);
+					break;
+				case 8: //TIME (4+4 bytes)
+					return 1;
+					break;
+				case 50: //VECTOR3 (3 floats)
+				case 51: //POINT3 (3 floats)
+					return 1;
+					break;
+				case 54: //QUATERNION (4 floats)
+					return 1;
+					break;
+				case 55: //RGB8 (3 bytes)
+					return 1;
+					break;
+				case 4: //PLKEY (UruObject)
+					return 1;
+					break;
+			}
+			memset(parsestr,parsechar,array_count);
+			parsestr[array_count]=0;
+
+			tuple=malloc(tupleitemsize*array_count);
+
+			//this looks like crap but works like charm! ;-)
+			void *tupleptrs=malloc(sizeof(size_t)*array_count);
+			size_t *tupleptr=(size_t *)tupleptrs;
+			for(int j=0; j<array_count; j++)
+			{
+				tupleptr[j]=(size_t)((size_t)tuple+j*tupleitemsize);
+			}
+
+			if(!PyArg_VaParse(values,parsestr,(char *)tupleptrs))
+			{
+				//!TODO add exception +frees
+
+				free(tupleptrs);
+				return 1;
+			}
+
+			free(tupleptrs);
+
+			free(parsestr);
+
+			for(j=0; j<array_count; j++)
+			{
+				switch(descvar->type)
+				{
+					case 0: //INT (4 bytes)
+						if(((int *)tuple)[j]!=atoi((char *)&descvar->default_value))
+							goto copystuff;
+						break;
+					case 1: //FLOAT (4 bytes)
+						if(((float *)tuple)[j]!=(float)atof((char *)&descvar->default_value))
+							goto copystuff;
+						break;
+					case 3: //STRING32 (32 bytes)
+						if(strcmp(PyString_AsString(&((PyObject *)tuple)[j]),(char *)&descvar->default_value))
+							goto copystuff;
+						break;
+					case 5: //Sub SDL
+						return 1;
+						break;
+					case 2: //BOOL (1 byte)
+					case 9: //BYTE (1 byte)
+						if(((char *)tuple)[j]!=(char)atoi((char *)&descvar->default_value))
+							goto copystuff;
+						break;
+					case 0xA: //SHORT (2 bytes)
+						if(((short *)tuple)[j]!=(short)atoi((char *)&descvar->default_value))
+							goto copystuff;
+						break;
+					case 8: //TIME (4+4 bytes)
+						return 1;
+						break;
+					case 50: //VECTOR3 (3 floats)
+					case 51: //POINT3 (3 floats)
+						return 1;
+						break;
+					case 54: //QUATERNION (4 floats)
+						return 1;
+						break;
+					case 55: //RGB8 (3 bytes)
+						return 1;
+						break;
+					case 4: //PLKEY (UruObject)
+						return 1;
+						break;
+				}
+			}
+
+			//the values are equal to the defaults
+
+			free(tuple);
+
+			if(binvar->data_size!=0)
+			{
+				free(binvar->data);
+				binvar->data=0;
+				binvar->data_size=0;
+			}
+
+			binvar->flags|=0x08;
+
+			return 0;
+
+copystuff:
+			if(binvar->data_size==0)
+			{
+				binvar->data=malloc(tupleitemsize*array_count);
+				binvar->data_size=tupleitemsize*array_count;
+			}
+			memcpy(binvar->data,tuple,tupleitemsize*array_count);
+
+			free(tuple);
+
+			binvar->flags=binvar->flags & ~0x08;
+
+			return 0;
+		}
+		//else: didn't find the searched key
+	}
+	char errormsg[512];
+	snprintf((char *)&errormsg,511,"didn't find the searched key (\"%s\")",key);
+	PyErr_SetString(PyExc_KeyError,(char *)&errormsg);
+
+	return 1;
+}
+
+
 //Methods
 static PyMappingMethods ptSDL_mapping = {
 	(inquiry)		ptSDL_count, /*mp_length*/
 	(binaryfunc)	ptSDL_getitem, /*mp_subscript*/
-	(objobjargproc)	0, /*mp_ass_subscript*/
+	(objobjargproc)	ptSDL_setitem, /*mp_ass_subscript*/
 };
 
 static PyMethodDef ptSDL_methods[] = {
