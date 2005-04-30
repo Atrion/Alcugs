@@ -35,7 +35,7 @@
 #include "data_types.h"
 #include "urustructs.h"
 
-#define SSTR 0x0FFF
+#define SSTR 0x00FF
 
 //*.sav file format
 typedef struct {

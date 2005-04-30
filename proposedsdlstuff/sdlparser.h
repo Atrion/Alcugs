@@ -32,7 +32,7 @@
 #include "../sdl_desc.h"
 #include "../sdl_obj.h"
 
-#define SSTR 0x0FFF
+#define SSTR 0x00FF
 
 typedef struct {
 	int index; //!index in the associated t_sdl_def

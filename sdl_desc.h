@@ -47,6 +47,7 @@ int update_sdl_version_structs(st_log * f,t_sdl_def * sdl,int n_sdl);
 //You must use these ones, the reader and the streamer
 //Reads states from plain to struct.
 int sdl_statedesc_reader(st_log * f,Byte * buf,int totalsize,t_sdl_def ** sdl2,int * n_sdl);
+int sdl_statedesc_reader_fast(st_log * f,Byte * buf,int totalsize,t_sdl_def ** sdl2,int * n_sdl);
 //Streams states from struct to buffer.
 int sdl_statedesc_streamer(st_log * f,Byte ** buf2,t_sdl_def * sdl,int n_sdl);
 //Puts streams from buffer to struct.
