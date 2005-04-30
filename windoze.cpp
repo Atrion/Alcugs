@@ -234,6 +234,21 @@ char *strsep(char **pcadena, const char *delim)
 	return what;
 }
 
+char *getpass( const char * prompt ) {
+	//TODO, I though that windows had something for asking passwords in the console.
+	puts(prompt);
+	static char what[500];
+	int str_len;
+	fflush(0);
+	fgets(what,500,stdin);
+	str_len=strlen(what);
+	if(what[str_len-1]=='\n') {
+		what[str_len-1]='\0';
+		str_len--;
+	}
+	return what;
+}
+
 
 #endif
 

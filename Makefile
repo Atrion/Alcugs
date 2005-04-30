@@ -1,47 +1,80 @@
 CC=g++
-ARGS=-Wall -g
-# -DDMALLOC_FUNC_CHECK
+
+ifeq ($(DMALLOC),1)
+	ARGS=-Wall -g -DDMALLOC_FUNC_CHECK
+else
+	ARGS=-Wall -g
+endif
 
 #the next items are appened to the compilers args
 ALC_INCLUDE_PATH=-I/usr/include/python2.2
+WIN_ICPREFIX=${MINGWDIR}\\include
+WINALC_INCLUDE_PATH=-I${WIN_ICPREFIX}\\python2.2
 
 #compiler + args
-COMP=${CC} ${ARGS} ${ALC_INCLUDE_PATH}
+ifeq ($(WINDOZE),1)
+	COMP=${CC} ${ARGS} ${WINALC_INCLUDE_PATH}
+else
+	COMP=${CC} ${ARGS} ${ALC_INCLUDE_PATH}
+endif
 
 #libraryes
 
 #debbuging interface
-DBGLIB=
-#dmalloc/libdmallocxx.a
+ifeq ($(DMALLOC),1)
+	DBGLIB=dmalloc/libdmallocxx.a
+else
+	DBGLIB=
+endif
 
 # BLIBS=-lm -lcrypto
 # THREADLIB=-lpthread
 ZLIB=-lz
 
 #cryptography
-CRYPTOLIB=-lcrypto
+ifeq ($(WINDOZE),1)
+	CRYPTOLIB=
+else
+	CRYPTOLIB=-lcrypto
+endif
 #-leay32
 
 #sockets
-WINSOCKETS=-lwsock32
+ifeq ($(WINDOZE),1)
+	SOCKETS=-lwsock32
+else
+	SOCKETS=
+endif
 
 #database
-DBLIB=-lmysqlclient
-WINDBLIB=-lmysql
+ifeq ($(WINDOZE),1)
+	DBLIB=-lmysql
+else
+	DBLIB=-lmysqlclient
+endif
 
 #python
-PYLIB=-lpython2.2
-WINPYLIB=-lpython22
+ifeq ($(WINDOZE),1)
+	PYLIB=-lpython22
+else
+	PYLIB=-lpython2.2
+endif
 
 #wxWidgets
 WXFLAGS= $(shell wx-config --cxxflags)
 WXLIBS= $(shell wx-config --libs)
 
 #base
-BASELIBS=${CRYPTOLIB} ${ZLIB} ${DBGLIB}
-WINBASELIBS=${WINSOCKETS} ${ZLIB}
+BASELIBS=${SOCKETS} ${CRYPTOLIB} ${ZLIB} ${DBGLIB}
 
 #end libs
+
+#sufixes
+ifeq ($(WINDOZE),1)
+	EXE=.exe
+else
+	EXE=
+endif
 
 #object dependencies
 #porting
@@ -78,9 +111,11 @@ LOBBYOBJ=${SERVEROBJ} ${CAUTHOBJ} ${CVAULTOBJ} pclobbymsg.o gctrackingmsg.o glob
 GAMEOBJ=${LOBBYOBJ} gamesubsys.o ${PYTHONSS} ageparser.o pcgamemsg.o pcjgamemsg.o
 
 #base
-BASE=${NETCORE} ${CMHS}
-WINBASE=${NETCORE} ${CMHS} ${WIN}
-
+ifeq ($(WINDOZE),1)
+	BASE=${NETCORE} ${CMHS} ${WIN}
+else
+	BASE=${NETCORE} ${CMHS}
+endif
 #end objects
 
 #all foo.cpp will be foo.o
@@ -89,83 +124,55 @@ WINBASE=${NETCORE} ${CMHS} ${WIN}
 
 #$@ $<
 
-CLIENT_APP=uruping urucrypt
-WINCLIENT_APP=uruping.exe urucrypt.exe
+CLIENT_APP=uruping$(EXE) urucrypt$(EXE)
 
-SERVERS=uru_auth uru_vault uru_tracking uru_lobby uru_game
-WINSERVERS=uru_auth.exe uru_vault.exe uru_tracking.exe uru_lobby.exe uru_game.exe
+SERVERS=uru_auth$(EXE) uru_vault$(EXE) uru_tracking$(EXE) uru_lobby$(EXE) uru_game$(EXE)
 
 ALL_PRGS=${CLIENT_APP} ${SERVERS}
-WINALL_PRGS=${WINCLIENT_APP} ${WINSERVERS}
 
 all: ${CLIENT_APP} ${SERVERS}
 
-win: ${WINCLIENT_APP} ${WINSERVERS}
+max: ${ALL_PRGS} uru_authp$(EXE) uruproxy$(EXE) urumsgtest$(EXE)
 
-max: ${ALL_PRGS} uru_authp uruproxy urumsgtest
-
-uru_authp: uru.cpp $(BASE) $(AUTHOBJ) $(AUTH1)
-	$(COMP) uru.cpp -o uru_authp -DI_AM_THE_AUTH_SERVER $(BASE) $(AUTHOBJ) $(AUTH1)\
+#Server daemons
+uru_authp$(EXE): uru.cpp $(BASE) $(AUTHOBJ) $(AUTH1)
+	$(COMP) uru.cpp -o uru_authp$(EXE) -DI_AM_THE_AUTH_SERVER $(BASE) $(AUTHOBJ) $(AUTH1)\
 	 $(BASELIBS) $(DBLIB)
-uru_auth: uru.cpp $(BASE) $(AUTHOBJ) $(AUTH2)
-	$(COMP) uru.cpp -o uru_auth -DI_AM_THE_AUTH_SERVER $(BASE) $(AUTHOBJ) $(AUTH2)\
+uru_auth$(EXE): uru.cpp $(BASE) $(AUTHOBJ) $(AUTH2)
+	$(COMP) uru.cpp -o uru_auth$(EXE) -DI_AM_THE_AUTH_SERVER $(BASE) $(AUTHOBJ) $(AUTH2)\
 	 $(BASELIBS) $(DBLIB)
-uru_auth.exe: uru.cpp $(WINBASE) $(AUTHOBJ) $(AUTH2)
-	$(COMP) uru.cpp -o uru_auth.exe -DI_AM_THE_AUTH_SERVER $(WINBASE) $(AUTHOBJ) $(AUTH2)\
-	$(WINBASELIBS) $(WINDBLIB)
+uru_tracking$(EXE): uru.cpp $(BASE) $(TRACKINGOBJ)
+	$(COMP) uru.cpp -o uru_tracking$(EXE) -DI_AM_THE_TRACKING_SERVER $(BASE) $(TRACKINGOBJ) $(BASELIBS)
+uru_vault$(EXE): uru.cpp $(BASE) $(VAULTOBJ)
+	$(COMP) uru.cpp -o uru_vault$(EXE) -DI_AM_THE_VAULT_SERVER $(BASE) $(VAULTOBJ) $(BASELIBS) $(DBLIB)
+uru_lobby$(EXE): uru.cpp $(BASE) $(LOBBYOBJ)
+	$(COMP) uru.cpp -o uru_lobby$(EXE) -DI_AM_A_LOBBY_SERVER $(BASE) $(LOBBYOBJ) $(BASELIBS)
+uru_game$(EXE): uru.cpp $(BASE) $(GAMEOBJ)
+	$(COMP) uru.cpp -o uru_game$(EXE) -DI_AM_A_GAME_SERVER $(BASE) $(GAMEOBJ) $(BASELIBS) $(PYLIB)
 
-uru_tracking: uru.cpp $(BASE) $(TRACKINGOBJ)
-	$(COMP) uru.cpp -o uru_tracking -DI_AM_THE_TRACKING_SERVER $(BASE) $(TRACKINGOBJ) $(BASELIBS)
-uru_tracking.exe: uru.cpp $(WINBASE) $(TRACKINGOBJ)
-	$(COMP) uru.cpp -o uru_tracking.exe -DI_AM_THE_TRACKING_SERVER $(WINBASE) $(TRACKINGOBJ) $(WINBASELIBS)
+#Console app's
+uruping$(EXE): uruping.cpp $(BASE)
+	$(COMP) uruping.cpp -o uruping$(EXE) $(BASE) $(BASELIBS)
+urucrypt$(EXE): urucrypt.cpp files.o whatdoyousee.o license.o
+	$(COMP) urucrypt.cpp -o urucrypt$(EXE) files.o whatdoyousee.o license.o
+urucmd$(EXE): urucmd.cpp $(BASE)
+	$(COMP) urucmd.cpp -o urucmd$(EXE) $(BASE) $(BASELIBS)
 
-uru_vault: uru.cpp $(BASE) $(VAULTOBJ)
-	$(COMP) uru.cpp -o uru_vault -DI_AM_THE_VAULT_SERVER $(BASE) $(VAULTOBJ) $(BASELIBS) $(DBLIB)
-uru_vault.exe: uru.cpp $(WINBASE) $(VAULTOBJ)
-	$(COMP) uru.cpp -o uru_vault.exe -DI_AM_THE_VAULT_SERVER $(WINBASE) $(VAULTOBJ) $(WINBASELIBS) $(WINDBLIB)
+#Plasma firewall
+plfire$(EXE): plfire.cpp $(BASE) $(VAULTSS)
+	$(COMP) plfire.cpp -o plfire$(EXE) $(BASE) $(VAULTSS) $(BASELIBS)
 
-uru_lobby: uru.cpp $(BASE) $(LOBBYOBJ)
-	$(COMP) uru.cpp -o uru_lobby -DI_AM_A_LOBBY_SERVER $(BASE) $(LOBBYOBJ) $(BASELIBS)
-uru_lobby.exe: uru.cpp $(WINBASE) $(LOBBYOBJ)
-	$(COMP) uru.cpp -o uru_lobby.exe -DI_AM_A_LOBBY_SERVER $(WINBASE) $(LOBBYOBJ) $(WINBASELIBS)
+#Alcugs client
+gsetup$(EXE): gsetup.cpp gsetup.h
+	$(COMP) gsetup.cpp -o gsetup$(EXE) $(WXFLAGS) $(WXLIBS)
 
-uru_game: uru.cpp $(BASE) $(GAMEOBJ)
-	$(COMP) uru.cpp -o uru_game -DI_AM_A_GAME_SERVER $(BASE) $(GAMEOBJ) $(BASELIBS) $(PYLIB)
-uru_game.exe: uru.cpp $(WINBASE) $(GAMEOBJ)
-	$(COMP) uru.cpp -o uru_game.exe -DI_AM_A_GAME_SERVER $(WINBASE) $(GAMEOBJ) $(WINBASELIBS) $(WINPYLIB)
-
-
-uruping: uruping.cpp $(BASE)
-	$(COMP) uruping.cpp -o uruping $(BASE) $(BASELIBS)
-uruping.exe: uruping.cpp $(WINBASE)
-	$(COMP) uruping.cpp -o uruping $(WINBASE) $(WINBASELIBS)
-
-urucrypt: urucrypt.cpp files.o whatdoyousee.o license.o
-	$(COMP) urucrypt.cpp -o urucrypt files.o whatdoyousee.o license.o
-urucrypt.exe: urucrypt.cpp files.o whatdoyousee.o license.o
-	$(COMP) urucrypt.cpp -o urucrypt.exe files.o whatdoyousee.o license.o
-
-
-#unfinished app's
-urucmd: urucmd.cpp $(BASE)
-	$(COMP) urucmd.cpp -o urucmd $(BASE) $(BASELIBS)
-
-plfire: plfire.cpp $(BASE) $(VAULTSS)
-	$(COMP) plfire.cpp -o plfire $(BASE) $(VAULTSS) $(BASELIBS)
-
-gsetup: gsetup.cpp gsetup.h
-	$(COMP) gsetup.cpp -o gsetup $(WXFLAGS) $(WXLIBS)
-
-
-	
 #internal app's
-uruproxy: uruproxy.cpp $(BASE) $(VAULTSS)
-	$(COMP) uruproxy.cpp -o uruproxy $(BASE) $(VAULTSS) $(BASELIBS)
+uruproxy$(EXE): uruproxy.cpp $(BASE) $(VAULTSS)
+	$(COMP) uruproxy.cpp -o uruproxy$(EXE) $(BASE) $(VAULTSS) $(BASELIBS)
 
 #testing app's
-urumsgtest: urumsgtest.cpp $(BASE)
-	$(COMP) urumsgtest.cpp -o urumsgtest $(BASE) $(BASELIBS)
-
+urumsgtest$(EXE): urumsgtest.cpp $(BASE)
+	$(COMP) urumsgtest.cpp -o urumsgtest$(EXE) $(BASE) $(BASELIBS)
 
 doc:
 	doxygen

@@ -142,7 +142,7 @@ int getuid(void);
 int daemon(int a,int b);
 unsigned int alarm(unsigned int sec);
 char *strsep(char **pcadena, const char *delim);
-
+char *getpass( const char * prompt );
 #endif
 
 #endif

@@ -43,12 +43,13 @@ const char * VERSION = "1.3.1p"; //Urunet 3, updated 27/01/2005
 #include <time.h>
 
 #ifdef __WIN32__
-#  include "windoze.h"
+#include "windoze.h"
+#else
+#include <netdb.h>
 #endif
 
 #ifndef __MSVC__
-#  include <unistd.h>
-#  include <netdb.h>
+#include <unistd.h>
 #endif
 
 #include "license.h" //mandatory, contains the license information
