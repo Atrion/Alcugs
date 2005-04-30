@@ -30,7 +30,7 @@
 
 #define __U_CONFIG_PARSER_ID "$Id$"
 
-#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 10
 
 #include "config.h"
 
@@ -470,6 +470,7 @@ int cnf_add_key(char * value,char * what,char * where,st_config ** cfg2) {
 /** adds a new key
 */
 int cnf_add_key_xy(char * gvalue,char * what,char * where,int x,int y,st_config ** cfg2) {
+	if(gvalue==NULL) return 0;
 	DBG(4,"adding key at (%i,%i) [%s] %s:%s\n",x,y,where,what,gvalue);
 	st_config * cfg;
 	int e,found_key,current_key;
@@ -561,10 +562,8 @@ int cnf_add_key_xy(char * gvalue,char * what,char * where,int x,int y,st_config 
 	
 	my=( oy > (y+1) ? oy : (y+1));
 
-		DBG(8,"dmalloc_verify()\n");
-	dmalloc_verify();
-
-		
+	DBG(5,"oy:%i,ox:%i,my:%i\n",oy,ox,my);
+	
 	if(ox<(x+1)) {
 		//then we must resize & copy
 		DBG(5,"malloc %i bytes\n",((my)*(x+1)));
@@ -583,15 +582,13 @@ int cnf_add_key_xy(char * gvalue,char * what,char * where,int x,int y,st_config 
 		cfg->keys[current_key].config[found_key].y=my;
 		ox=x+1;
 		oy=my;
-		free((void *)cfg->keys[current_key].config[found_key].value);
+		if(cfg->keys[current_key].config[found_key].value!=NULL) {
+			free((void *)cfg->keys[current_key].config[found_key].value);
+		}
 		cfg->keys[current_key].config[found_key].value=value;
 		value=NULL;
 	}
-	
-		DBG(8,"dmalloc_verify()\n");
-	dmalloc_verify();
-
-	
+		
 	if(oy<(y+1)) {
 		value=(char **)realloc((void *)(cfg->keys[current_key].config[found_key].value),sizeof(char *)*((y+1)*(ox)));
 		DBG(5,"realloc %i bytes\n",((y+1)*(ox)));
@@ -600,30 +597,15 @@ int cnf_add_key_xy(char * gvalue,char * what,char * where,int x,int y,st_config 
 		memset((value+((ox)*(oy))),0,(sizeof(char *)*((((y+1)*(ox)))-((ox)*(oy)))));
 		cfg->keys[current_key].config[found_key].value=value;
 		value=NULL;
+		cfg->keys[current_key].config[found_key].y=my;
 	}
-
-	DBG(8,"dmalloc_verify()\n");
-	dmalloc_verify();
-	
 	char ** pval=NULL;
 	
-		DBG(8,"dmalloc_verify()\n");
-	dmalloc_verify();
-
 	DBG(8,"%i\n",(ox*y)+x);
 	DBG(8,"ckey:%i,fkey:%i\n",current_key,found_key);
 	pval=(cfg->keys[current_key].config[found_key].value+((ox*y)+x));
-	DBG(8,"key:%s\n",cfg->keys[current_key].key);
-	
-		DBG(8,"dmalloc_verify()\n");
-	dmalloc_verify();
-	
-	DBG(8,"var:%s\n",cfg->keys[current_key].config[found_key].name);
-
-			DBG(8,"dmalloc_verify()\n");
-	dmalloc_verify();
-		
-	//pval=cfg->keys[current_key].config[found_key].value;
+	DBG(9,"key:%s\n",cfg->keys[current_key].key);
+	DBG(9,"var:%s\n",cfg->keys[current_key].config[found_key].name);
 
 	DBG(8,"dmalloc_verify()\n");
 	dmalloc_verify();
@@ -632,6 +614,10 @@ int cnf_add_key_xy(char * gvalue,char * what,char * where,int x,int y,st_config 
 		free((void *)(*pval));
 		*pval=NULL;
 	}
+	
+	DBG(8,"dmalloc_verify()\n");
+	dmalloc_verify();
+	
 	*pval=(char *)malloc(sizeof(char) * (strlen((char *)gvalue)+1));
 	if(*pval==NULL) {
 		return -4;
@@ -779,9 +765,14 @@ Byte cnf_getByte(Byte defecto,char * what,char * where,st_config * cfg) {
 }
 
 char * cnf_getString(const char * defecto,const char * what,const char * where,st_config * cfg) {
+	return(cnf_getString_xy(defecto,what,where,0,0,cfg));
+}
+
+char * cnf_getString_xy(const char * defecto,const char * what,const char * where,int x,int y,st_config * cfg) {
 	DBG(4,"getString [%s] %s:%s\n",where,what,defecto);
 	int i,e;
 
+	int nx;
 	DBG(5,"%s,%s\n",what,defecto);
 
 	if(cfg==NULL) {
@@ -793,8 +784,9 @@ char * cnf_getString(const char * defecto,const char * what,const char * where,s
 			for(e=0; e<cfg->keys[i].n; e++) {
 				if(!strcmp((const char *)cfg->keys[i].config[e].name,(const char *)what)) {
 					if(cfg->keys[i].config[e].value==NULL) return (char *)defecto;
-					DBG(4,"return %s\n",(*(cfg->keys[i].config[e].value)));
-					return((char *)(*(cfg->keys[i].config[e].value)));
+					nx=cfg->keys[i].config[e].x;
+					DBG(4,"return %s\n",(*(cfg->keys[i].config[e].value+((nx*y)+x))));
+					return((char *)(*(cfg->keys[i].config[e].value+((nx*y)+x))));
 				}
 			}
 			break;
@@ -804,10 +796,57 @@ char * cnf_getString(const char * defecto,const char * what,const char * where,s
 	return (char *)defecto;
 }
 
+int cnf_getrows(const char * what,const char * where,st_config * cfg) {
+	DBG(4,"getrows [%s] %s\n",where,what);
+	int i,e;
+
+	if(cfg==NULL) {
+		DBG(5,"Is cfg null?");
+		return 0;
+	}
+	for(i=0; i<cfg->n; i++) {
+		if(!strcmp((const char *)cfg->keys[i].key,(const char *)where)) {
+			for(e=0; e<cfg->keys[i].n; e++) {
+				if(!strcmp((const char *)cfg->keys[i].config[e].name,(const char *)what)) {
+					if(cfg->keys[i].config[e].value==NULL) return 0;
+					DBG(4,"return %i\n",(cfg->keys[i].config[e].y));
+					return(cfg->keys[i].config[e].y);
+				}
+			}
+			break;
+		}
+	}
+	return 0;
+}
+
+int cnf_getcols(const char * what,const char * where,st_config * cfg) {
+	DBG(4,"getcols [%s] %s\n",where,what);
+	int i,e;
+
+	if(cfg==NULL) {
+		DBG(5,"Is cfg null?");
+		return 0;
+	}
+	for(i=0; i<cfg->n; i++) {
+		if(!strcmp((const char *)cfg->keys[i].key,(const char *)where)) {
+			for(e=0; e<cfg->keys[i].n; e++) {
+				if(!strcmp((const char *)cfg->keys[i].config[e].name,(const char *)what)) {
+					if(cfg->keys[i].config[e].value==NULL) return 0;
+					DBG(4,"return %i\n",(cfg->keys[i].config[e].x));
+					return(cfg->keys[i].config[e].x);
+				}
+			}
+			break;
+		}
+	}
+	return 0;
+}
+
+
 /** Copy all vars from a keygroup to another one */
 void cnf_copy(const char * to, const char * from,st_config ** cfg2) {
 	DBG(4,"copy from %s to %s\n",from,to);
-	int i,e;
+	int i,e,j,k,nx,ny;
 	st_config * cfg;
 	cfg=*cfg2;
 
@@ -817,11 +856,16 @@ void cnf_copy(const char * to, const char * from,st_config ** cfg2) {
 		if(!strcmp((const char *)cfg->keys[i].key,(const char *)from)) {
 
 			for(e=0; e<cfg->keys[i].n; e++) {
-				cnf_add_key((char *)((*(cfg->keys[i].config[e].value))),\
-				(char *)cfg->keys[i].config[e].name,\
-				(char *)to,cfg2);
+				nx=cfg->keys[i].config[e].x;
+				ny=cfg->keys[i].config[e].y;
+				for(j=0; j<ny; j++) {
+					for(k=0; k<nx; k++) {
+						cnf_add_key_xy((char *)((*(cfg->keys[i].config[e].value+((nx*j)+k)))),\
+						(char *)cfg->keys[i].config[e].name,\
+						(char *)to,k,j,cfg2);
+					}
+				}
 			}
-
 			break;
 		}
 	}
@@ -830,23 +874,41 @@ void cnf_copy(const char * to, const char * from,st_config ** cfg2) {
 
 /** Copy a var from one key group to another one, under other name */
 void cnf_copy_key(const char * to_name,const char * from_name,const char * to, const char * from,st_config ** cfg2) {
+	int j,k,nx,ny;
 	DBG(4,"copy from %s:%s to %s:%s\n",from,from_name,to,to_name);
 	if(cnf_exists((char *)from_name,(char *)from,*cfg2)==1) {
-		cnf_add_key((char *)cnf_getString("",(char *)from_name,(char *)from,*cfg2),(char *)to_name,(char *)to,cfg2);
+		nx=cnf_getcols((char *)from_name,(char *)from,*cfg2);
+		ny=cnf_getrows((char *)from_name,(char *)from,*cfg2);
+		for(j=0; j<ny; j++) {
+			for(k=0; k<nx; k++) {
+				cnf_add_key_xy((char *)cnf_getString_xy("",(char *)from_name,(char *)from,k,j,*cfg2),(char *)to_name,(char *)to,k,j,cfg2);
+			}
+		}
 	}
 }
 
 void cnf_destroy(st_config ** cfg2) {
 
-	int i,e;
+	int i,e,j,k,x,y;
 	st_config * cfg;
 	cfg=*cfg2;
+	char ** pu=NULL;
 
 	if(*cfg2==NULL) return;
 
 	for(i=0; i<cfg->n; i++) {
 		for(e=0; e<cfg->keys[i].n; e++) {
 			if(cfg->keys[i].config[e].value!=NULL) {
+				x=cfg->keys[i].config[e].x;
+				y=cfg->keys[i].config[e].y;
+				for(j=0; j<y; j++) {
+					for(k=0; k<x; k++) {
+						pu=((cfg->keys[i].config[e].value)+((j*x)+k));
+						if(*pu!=NULL) {
+							free((void *)*(pu));
+						}
+					}
+				}
 				free((void *)cfg->keys[i].config[e].value);
 			}
 		}
@@ -910,6 +972,10 @@ int main() {
 	cnf_copy_key("laura","maria","koka","tests",&cfg);
 	cnf_copy_key("maria","laura","koka","tests",&cfg);
 
+	
+	cnf_copy("mecachis","testing",&cfg);
+	cnf_copy_key("apophis","tuple","vim","testing",&cfg);
+	
 	//dump all
 	int i,e,j,k,nx,ny;
 

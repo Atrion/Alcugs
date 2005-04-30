@@ -68,6 +68,7 @@ U32 cnf_getU32(U32 defecto,char * what,char * where,st_config * cfg);
 U16 cnf_getU16(U16 defecto,char * what,char * where,st_config * cfg);
 Byte cnf_getByte(Byte defecto,char * what,char * where,st_config * cfg);
 char * cnf_getString(const char * defecto,const char * what,const char * where,st_config * cfg);
+char * cnf_getString_xy(const char * defecto,const char * what,const char * where,int x,int y,st_config * cfg);
 char cnf_exists(char * what,char * where,st_config * cfg);
 
 void cnf_setU32(U32 val,char * what,char * where,st_config ** cfg2);
