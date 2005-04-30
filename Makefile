@@ -1,15 +1,21 @@
 CC=g++
 
-ifeq ($(DMALLOC),1)
-	ARGS=-Wall -g -DDMALLOC_FUNC_CHECK
+ifeq ($(WINDOZE),1)
+	ARGSX=-Wall -g
 else
-	ARGS=-Wall -g
+	ARGSX=-Wall -g 
+endif
+
+ifeq ($(DMALLOC),1)
+	ARGS=${ARGSX} -DDMALLOC_FUNC_CHECK
+else
+	ARGS=${ARGSX}
 endif
 
 #the next items are appened to the compilers args
 ALC_INCLUDE_PATH=-I/usr/include/python2.2
 WIN_ICPREFIX=${MINGWDIR}\\include
-WINALC_INCLUDE_PATH=-I${WIN_ICPREFIX}\\python2.2 -I${WIN_ICPREFIX}\\wx\msw
+WINALC_INCLUDE_PATH=-I${WIN_ICPREFIX}\\python2.2
 #compiler + args
 ifeq ($(WINDOZE),1)
 	COMP=${CC} ${ARGS} ${WINALC_INCLUDE_PATH}
@@ -61,12 +67,14 @@ endif
 
 #wxWidgets
 ifeq ($(WINDOZE),1)
-	WXFLAGS=-fno-rtti -fno-exceptions -fno-pcc-struct-return -fstrict-aliasing -Wall -D__WXMSW__ -D__GNUWIN32__ -DWINVER=0x400 -D__WIN95__ -DSTRICT
+	WXFLAGS=-fno-rtti -fno-exceptions -fno-pcc-struct-return -fstrict-aliasing -Wl,--subsystem,windows -D__WXMSW__ -D__GNUWIN32__ -DWINVER=0x400 -D__WIN95__ -DSTRICT
 #-fvtable-thunks  -D__WXDEBUG__
 	WXLIBS=-lwxmsw -lcomdlg32 -luser32 -lgdi32 -lole32 -lwsock32 -lcomctl32 -lctl3d32 -lgcc -lstdc++ -lshell32 -loleaut32 -ladvapi32 -luuid -lpng -ltiff -ljpeg -lz
+	WXINC=
 else
 	WXFLAGS= $(shell wx-config --cxxflags)
 	WXLIBS= $(shell wx-config --libs)
+	WXINC= -I${WIN_ICPREFIX}\\wx\msw
 endif
 
 #base
@@ -83,7 +91,7 @@ endif
 
 #object dependencies
 #porting
-WIN=md5.o windoze.o
+WIN=md5.o windoze.o resources.o
 
 NETCORE=urunet.o protocol.o stdebug.o conv_funs.o license.o version.o\
  gbasicmsg.o useful.o debug.o
@@ -129,13 +137,24 @@ endif
 
 #$@ $<
 
+resources.o: almlys.ico resources.rc
+	windres --use-temp-file -i resources.rc -o resources.o --include-dir ${WIN_ICPREFIX} --define __WIN32__ --define __WIN95__ --define __GNUWIN32__
+
 CLIENT_APP=uruping$(EXE) urucrypt$(EXE)
+
+GUI_APP=gsetup$(EXE)
 
 SERVERS=uru_auth$(EXE) uru_vault$(EXE) uru_tracking$(EXE) uru_lobby$(EXE) uru_game$(EXE)
 
-ALL_PRGS=${CLIENT_APP} ${SERVERS}
+ALL_PRGS=${CLIENT_APP} ${SERVERS} ${GUI_APP}
 
-all: ${CLIENT_APP} ${SERVERS}
+servers: ${SERVERS}
+
+tools: ${CLIENT_APP}
+
+gui: ${GUI_APP}
+
+all: ${ALL_PRGS}
 
 max: ${ALL_PRGS} uru_authp$(EXE) uruproxy$(EXE) urumsgtest$(EXE)
 
@@ -168,9 +187,10 @@ plfire$(EXE): plfire.cpp $(BASE) $(VAULTSS)
 	$(COMP) plfire.cpp -o plfire$(EXE) $(BASE) $(VAULTSS) $(BASELIBS)
 
 #Alcugs client
-gsetup$(EXE): gsetup.cpp gsetup.h
-	$(COMP) gsetup.cpp -o gsetup$(EXE) $(WXFLAGS) $(WXLIBS)
+gsetup$(EXE): gsetup.cpp gsetup.h $(BASE)
+	$(COMP) $(WXINC) gsetup.cpp -o gsetup$(EXE) $(WXFLAGS) $(WXLIBS) $(BASE) $(BASELIBS)
 
+	
 #internal app's
 uruproxy$(EXE): uruproxy.cpp $(BASE) $(VAULTSS)
 	$(COMP) uruproxy.cpp -o uruproxy$(EXE) $(BASE) $(VAULTSS) $(BASELIBS)

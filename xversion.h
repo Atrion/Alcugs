@@ -24,94 +24,20 @@
 *                                                                              *
 *******************************************************************************/
 
-/* Packet injector and mangler */
-
-/*
-
-Reads a packet from the filesystem, and injects it to the client in raw mode.
-
-It also rewrites all needed headers before sending it.
-
- --*/
-
-#ifndef __U_INJECTOR_
-#define __U_INJECTOR_
 /* CVS tag - DON'T TOUCH*/
-#define __U_INJECTOR_ID "$Id$"
+#ifndef __U_XVERSION_H_
+#define __U_XVERSION_H_
+#define __U_XVERSION_H_ID "$Id$"
 
-//#define _DBG_LEVEL_ 10
+//Alcugs version numbers
+#define alcMAX_VER 1
+#define alcMIN_VER 3
+#define alcREL_VER 1
+#define alcBET_VER 16
+#define alcSTR_VER "1.3.1p"
+#define alcREVISION "$Revision$"
 
-#include "config.h"
-#include "debug.h"
-
-#include "injector.h"
-
-/*------------------------------------------
-  Loads the packet into the buffer
-	Warning with the SEGFAULT's
-	and returns the size of the loaded buffer
--------------------------------------------*/
-int load_packet(Byte * buf, const char * packet) {
-	const char * f_path="raw_src/";
-	FILE * f;
-	char * path;
-	int i=0;
-	char mychar;
-
-	path = (char *)malloc((strlen(packet) + strlen(f_path)+1)*sizeof(char));
-	strcpy(path,(const char *)f_path);
-	strcat(path,packet);
-
-	f=fopen(path,"rb");
-	free(path);
-	if(f==NULL) {
-		fprintf(f_err,"ERR: Fatal - Cannot Open %s to read \n",path);
-		perror("returned error");
-		return 0;
-	}
-
-	while(!feof(f)) {
-		mychar=fgetc(f);
-		if(!feof(f)) {
-			buf[i]=mychar;
-			i++;
-		}
-	}
-
-	fclose(f);
-	return i;
-}
-
-/*---------------------------------------------------------
-	Stores a packet in the filesystem
----------------------------------------------------------*/
-
-int store_packet(Byte * buf, int n, const char * packet) {
-	const char * f_path="raw_wrt/";
-	FILE * f;
-	char * path;
-	int i=0;
-	//char mychar;
-
-	path = (char *)malloc((strlen(packet) + strlen(f_path)+1)*sizeof(char));
-	strcpy(path,(const char *)f_path);
-	strcat(path,packet);
-
-	f=fopen(path,"wb");
-	free(path);
-	if(f==NULL) {
-		fprintf(f_err,"ERR: Fatal - Cannot Open %s to write \n",path);
-		perror("returned error");
-		return 0;
-	}
-
-	for(i=0; i<n; i++) {
-		fputc(buf[i],f);
-	}
-
-	fclose(f);
-	return n;
-}
+//Protocol version numbers
 
 
 #endif

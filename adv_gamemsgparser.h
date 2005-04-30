@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs H'uru server                                                       *
 *                                                                              *
-*    Copyright (C) 2004  The Alcugs H'uru Server Team                          *
+*    Copyright (C) 2004-2005  The Alcugs H'uru Server Team                     *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -30,6 +30,8 @@
 	Used to parse UruGame objects, and some very old outdated and non-functional code
 
 */
+
+#error THIS FILE IS DEPRECEATED!
 
 #ifndef __ADVGAMEMSG_SPARSER_S_H_
 #define __ADVGAMEMSG_SPARSER_S_H_

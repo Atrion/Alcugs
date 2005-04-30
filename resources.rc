@@ -1,0 +1,29 @@
+AppIcon ICON "almlys.ico"
+#include "wx/msw/wx.rc"
+
+#include "xversion.h"
+
+//$Id$
+
+1 VERSIONINFO
+FILEVERSION alcMAX_VER,alcMIN_VER,alcREL_VER,alcBET_VER
+PRODUCTVERSION alcMAX_VER,alcMIN_VER,alcREL_VER,alcBET_VER
+FILEFLAGSMASK 0
+FILEOS 0x40000
+FILETYPE 1
+{
+ BLOCK "StringFileInfo"
+ {
+  BLOCK "040904E4"
+  {
+   VALUE "CompanyName", "Alcugs"
+   VALUE "FileDescription", "Rev: " alcREVISION " - Built:" __DATE__ " " __TIME__
+   VALUE "FileVersion", alcSTR_VER
+   VALUE "InternalName", "Alcugs"
+   VALUE "LegalCopyright", "Copyright 2005 Alcugs Project"
+   VALUE "OriginalFilename", ""
+   VALUE "ProductName", "Alcugs Server"
+   VALUE "ProductVersion", alcSTR_VER
+  }
+ }
+}

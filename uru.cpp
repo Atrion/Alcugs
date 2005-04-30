@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs H'uru server                                                       *
 *                                                                              *
-*    Copyright (C) 2004  The Alcugs H'uru Server Team                          *
+*    Copyright (C) 2004-2005  The Alcugs H'uru Server Team                     *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -25,10 +25,11 @@
 *******************************************************************************/
 
 /* Build vars - Don't touch - NEVER */
+#include "xversion.h"
 const char * ID = "$Id$";
 const char * BUILD =  __DATE__ " " __TIME__;
 const char * SNAME = "Alcugs (uru server)";
-const char * VERSION = "1.3.1p"; //Urunet 3, updated 27/01/2005
+const char * VERSION = alcSTR_VER;//"1.3.1p"; //Urunet 3, updated 27/01/2005
 
 //#define _DBG_LEVEL_ 5
 
