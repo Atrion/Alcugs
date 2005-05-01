@@ -77,6 +77,9 @@ void cnf_setByte(Byte val,char * what,char * where,st_config ** cfg2);
 int cnf_add_key(char * value,char * what,char * where,st_config ** cfg2);
 int cnf_add_key_xy(char * gvalue,char * what,char * where,int x,int y,st_config ** cfg2);
 
+int cnf_getrows(const char * what,const char * where,st_config * cfg);
+int cnf_getcols(const char * what,const char * where,st_config * cfg);
+
 void cnf_copy(const char * to, const char * from,st_config ** cfg2);
 void cnf_copy_key(const char * to_name,const char * from_name,const char * to, const char * from,st_config ** cfg2);
 

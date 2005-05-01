@@ -68,14 +68,16 @@ endif
 
 #wxWidgets
 ifeq ($(WINDOZE),1)
-	WXFLAGS=-fno-rtti -fno-exceptions -fno-pcc-struct-return -fstrict-aliasing -Wl,--subsystem,windows -D__WXMSW__ -D__GNUWIN32__ -DWINVER=0x400 -D__WIN95__ -DSTRICT
+	WXFLAGS=-fno-rtti -fno-exceptions -fno-pcc-struct-return -fstrict-aliasing -D__WXMSW__ -D__GNUWIN32__ -DWINVER=0x400 -D__WIN95__ -DSTRICT 
+	#-Wl,--subsystem,windows
 #-fvtable-thunks  -D__WXDEBUG__
 	WXLIBS=-lwxmsw -lcomdlg32 -luser32 -lgdi32 -lole32 -lwsock32 -lcomctl32 -lctl3d32 -lgcc -lstdc++ -lshell32 -loleaut32 -ladvapi32 -luuid -lpng -ltiff -ljpeg -lz
 	WXINC=
+	# -I${WIN_ICPREFIX}\\wx\\msw
 else
 	WXFLAGS= $(shell wx-config --cxxflags)
 	WXLIBS= $(shell wx-config --libs)
-	WXINC= -I${WIN_ICPREFIX}\\wx\msw
+	WXINC=
 endif
 
 #base
