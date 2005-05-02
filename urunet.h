@@ -213,6 +213,10 @@ typedef struct {
 #define UNET_DLUNE    0x400 /* Dissable une log */
 #define UNET_DLSEC    0x800 /* Dissable sec log */
 
+#define UNET_DEFAULT_FLAGS UNET_NBLOCK | UNET_ELOG | UNET_ECRC | UNET_AUTOSP | UNET_NOFLOOD | UNET_FLOG | UNET_NETAUTH
+
+typedef U16 t_unet_flags;
+
 //! Urunet handler
 typedef struct {
 #ifdef __WIN32__
@@ -225,7 +229,7 @@ typedef struct {
 	int opt;
 	struct sockaddr_in server; //<! Server sockaddr
 	//!blocking socket
-	U16 flags; /* 0x01 non-blocking socket
+	t_unet_flags flags; /* 0x01 non-blocking socket
 								 0x02 enable netcore logging
 							   0x04 crc check enabled
 								 0x08 auto speed correction
@@ -330,24 +334,5 @@ int plNetServerSearch(st_unet * net,Byte type);
 
 void plNetEndConnection(st_unet * net,int sid);
 
-#if 0
-
-//Deleted moved, or internal only
-
-void unet_set_recv_host(st_uru_client * u);
-int unet_set_host_info(char * hostname,int port,st_uru_client * u);
-int plNetCheckAckDone(st_uru_client * u);
-int uru_net_send(int sock,Byte * buf,int n,st_uru_client * u);
-
-void u_init_session(st_uru_client * session,int max);
-
-int plNetSend(int sock, Byte * buf, int n,st_uru_client * u);
-
-int plNetClientComm(int sock, st_uru_client * u);
-int plNetClientCommResponse(int sock, st_uru_client * u);
-
-int plNetAdvMsgSender(int sock,Byte * buf,int size,st_uru_client * u);
-
-#endif
 
 #endif

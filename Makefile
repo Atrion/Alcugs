@@ -68,17 +68,27 @@ endif
 
 #wxWidgets
 ifeq ($(WINDOZE),1)
-	WXFLAGS=-fno-rtti -fno-exceptions -fno-pcc-struct-return -fstrict-aliasing -D__WXMSW__ -D__GNUWIN32__ -DWINVER=0x400 -D__WIN95__ -DSTRICT 
+	WXFLAGS= -D__WXMSW__ -D__GNUWIN32__ -DWINVER=0x400 -D__WIN95__
+	# -DSTRICT -fstrict-aliasing -fno-rtti  -fno-exceptions -fno-pcc-struct-return
 	#-Wl,--subsystem,windows
-#-fvtable-thunks  -D__WXDEBUG__
-	WXLIBS=-lwxmsw -lcomdlg32 -luser32 -lgdi32 -lole32 -lwsock32 -lcomctl32 -lctl3d32 -lgcc -lstdc++ -lshell32 -loleaut32 -ladvapi32 -luuid -lpng -ltiff -ljpeg -lz
+#  -D__WXDEBUG__ -fvtable-thunks 
+	WXLIBS= -lwxmsw -lcomdlg32 -luser32 -lgdi32 -lole32 -lwsock32 -lcomctl32 -lctl3d32 -lgcc -lstdc++ -lshell32 -loleaut32 -ladvapi32 -luuid -lpng -ltiff -ljpeg -lz
 	WXINC=
 	# -I${WIN_ICPREFIX}\\wx\\msw
+	#Hide windows console
+	ifeq ($NOCONSOLE),1)
+		GUI=-Wl,--subsystem,windows
+	else
+		GUI=
+	endif
 else
 	WXFLAGS= $(shell wx-config --cxxflags)
 	WXLIBS= $(shell wx-config --libs)
 	WXINC=
+	GUI=
 endif
+
+XCOMP=${COMP} ${WXFLAGS}
 
 #base
 BASELIBS=${SOCKETS} ${CRYPTOLIB} ${ZLIB} ${DBGLIB}
@@ -126,6 +136,8 @@ LOBBYOBJ=${SERVEROBJ} ${CAUTHOBJ} ${CVAULTOBJ} pclobbymsg.o gctrackingmsg.o glob
  pvaultfordmsg.o pvaultroutermsg.o ${VAULTSS} ptrackingmsg.o lobbysubsys.o
 GAMEOBJ=${LOBBYOBJ} gamesubsys.o ${PYTHONSS} ageparser.o pcgamemsg.o pcjgamemsg.o
 
+CGUI=glicense.o netcore.o
+
 #base
 ifeq ($(WINDOZE),1)
 	BASE=${NETCORE} ${CMHS} ${WIN}
@@ -136,7 +148,7 @@ endif
 
 #all foo.cpp will be foo.o
 %.o: %.cpp %.h
-	$(COMP) -c $<
+	$(XCOMP) -c $<
 
 #$@ $<
 
@@ -190,10 +202,9 @@ plfire$(EXE): plfire.cpp $(BASE) $(VAULTSS)
 	$(COMP) plfire.cpp -o plfire$(EXE) $(BASE) $(VAULTSS) $(BASELIBS)
 
 #Alcugs client
-gsetup$(EXE): gsetup.cpp gsetup.h $(BASE)
-	$(COMP) $(WXINC) gsetup.cpp -o gsetup$(EXE) $(WXFLAGS) $(WXLIBS) $(BASE) $(BASELIBS)
+gsetup$(EXE): gsetup.cpp gsetup.h $(BASE) $(CGUI)
+	$(XCOMP) $(WXINC) gsetup.cpp -o gsetup$(EXE) $(GUI) $(BASE) $(CGUI) $(BASELIBS) $(WXLIBS)
 
-	
 #internal app's
 uruproxy$(EXE): uruproxy.cpp $(BASE) $(VAULTSS)
 	$(COMP) uruproxy.cpp -o uruproxy$(EXE) $(BASE) $(VAULTSS) $(BASELIBS)
