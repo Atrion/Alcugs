@@ -78,6 +78,7 @@ void gHtml::OnLinkClicked(const wxHtmlLinkInfo& link) {
 		//char buf[500];
 		//sprintf(buf,"mozilla %s",link.GetTarget().c_str());
 		//wxShell(buf);
+		if(brownser.IsEmpty()) { return; }
 		if(link.GetHref().Find("\"")!=-1) return;
 		url=brownser + " \"" + link.GetHref() + "\"";
 		wxShell(url);
