@@ -58,7 +58,13 @@ gHtml::gHtml(wxWindow *parent, wxWindowID id, const wxPoint& pos, const wxSize& 
 	:wxHtmlWindow(parent,id,pos,size,style) {
 	if(brownser.IsEmpty()) {
 #ifdef __WIN32__
-		brownser="start \"\""; //this should work
+		//brownser="start \"\""; //this should work
+		/* Note: "start "" "format c:"" is a nice link, so I have temporany disabled this thingie */
+		brownser="";
+		/* I need to search more, I will add a verification to ensure "http" on the links.
+		 But I'm still not sure. Nobody knows how many other exploits may be hidden under http://address2exploit
+		 Of course, this does not happen under Linux. Or at least I don't know any way to exploit a link that is directly passed to firefox. 
+		 Well, the brownser command will be configurable from the settings page, so the user will be able to put the full address to his favourite brownser*/
 #else
 		brownser="firefox";
 #endif
