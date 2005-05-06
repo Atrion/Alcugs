@@ -17,19 +17,30 @@ FILETYPE 1
 {
  BLOCK "StringFileInfo"
  {
+ #ifdef __MSVC__
   BLOCK "000004E4"
+ #else
+  BLOCK "040904E4"
+ #endif
   {
-   VALUE "CompanyName", "Alcugs Project Team"
+   VALUE "CompanyName", "Alcugs H'uru Server Project Team"
+ #ifdef __MSVC__
    VALUE "FileDescription", alcFILEDESC
+ #else
+   //it must be
+   VALUE "FileDescription", alcXBUILDINFO
+ #endif
    VALUE "FileVersion", alcSTR_VER
    VALUE "InternalName", "alcugs"
-   VALUE "LegalCopyright", "Copyright 2005 Alcugs Project Team"
-   VALUE "ProductName", "Alcugs Server Software"
+   VALUE "LegalCopyright", "Copyright 2005 Alcugs H'uru Server Project Team"
+   VALUE "ProductName", "Alcugs H'uru Server Software"
    VALUE "ProductVersion", alcSTR_VER
   }
  }
+#ifdef __MSVC__ 
  BLOCK "VarFileInfo"
  {
    VALUE "Translation", 0x0000 0x04E4
  }
+#endif
 }

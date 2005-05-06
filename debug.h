@@ -129,7 +129,7 @@ extern FILE * fdbg;
 #define _DBG_LEVEL_ 0
 #endif //_DBG_LEVEL_
 
-#ifndef __WIN32__
+#ifndef __MSVC__
 #define DBG(a,...)
 #define ERR(a,...)
 #else
@@ -142,7 +142,6 @@ extern FILE * fdbg;
 
 #define _WHERE(a) a
 
-//TODO, port to other platforms
 #define _DIE(a) { printf("ABORT: %s",a); abort(); }
 //NOTE: _DIE must always stop the execution of the program, if not, unexpected results
 // that could end on massive data lost could happen.

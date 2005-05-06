@@ -41,6 +41,8 @@
 #define alcTIME __TIME__
 #define alcBUILD_TIME alcDATE " " alcTIME
 
+#define alcXBUILDINFO "Rev: " alcREVISION " - Built:" alcBUILD_TIME
+
 #if defined(I_AM_A_GAME_SERVER)
 #  define alcFILEDESC "Alcugs Game Server"
 #elif defined(I_AM_THE_AUTH_SERVER)
