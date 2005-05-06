@@ -49,7 +49,7 @@
 
 //! Enable global debug level
 #ifndef _DBG_LEVEL_
-#define _DBG_LEVEL_ 0
+#define _DBG_LEVEL_ 10
 #endif
 
 //#define DETECT_LEAKS
