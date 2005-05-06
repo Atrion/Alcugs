@@ -46,7 +46,7 @@ RSC=rc.exe
 # ADD CPP /nologo /W3 /GX /O2 /I "C:\uru_server3 build" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /D "I_AM_THE_AUTH_SERVER" /D "__WIN32__" /D "__MSVC__" /FD /c
 # SUBTRACT CPP /YX
 # ADD BASE RSC /l 0x407 /d "NDEBUG"
-# ADD RSC /l 0x407 /d "NDEBUG"
+# ADD RSC /l 0x417 /d "NDEBUG" /d "__WIN32__" /d "__MSVC__" /d "I_AM_THE_AUTH_SERVER"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
@@ -71,14 +71,13 @@ LINK32=link.exe
 # ADD CPP /nologo /W3 /Gm /GX /ZI /Od /I "C:\uru_server3 build" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /D "I_AM_THE_AUTH_SERVER" /D "__WIN32__" /D "__MSVC__" /FR /FD /GZ /c
 # SUBTRACT CPP /YX
 # ADD BASE RSC /l 0x407 /d "_DEBUG"
-# ADD RSC /l 0x407 /d "_DEBUG"
+# ADD RSC /l 0x417 /d "_DEBUG" /d "__WIN32__" /d "__MSVC__" /d "I_AM_THE_AUTH_SERVER"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib Ws2_32.lib zlib.lib libmysql.lib /nologo /subsystem:console /debug /machine:I386 /out:"uru_auth.exe" /pdbtype:sept
-# SUBTRACT LINK32 /pdb:none
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib Ws2_32.lib zlib.lib libmysql.lib /nologo /subsystem:console /debug /debugtype:both /machine:I386 /out:"uru_auth.exe" /pdbtype:sept
 
 !ENDIF 
 
@@ -95,233 +94,86 @@ LINK32=link.exe
 # Begin Source File
 
 SOURCE=.\conv_funs.cpp
-
-!IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
 SOURCE=.\conv_funs.h
-
-!IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
 SOURCE=.\debug.cpp
-
-!IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
 SOURCE=.\debug.h
-
-!IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
 SOURCE=.\gbasicmsg.cpp
-
-!IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
 SOURCE=.\gbasicmsg.h
-
-!IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
 SOURCE=.\license.cpp
-
-!IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
 SOURCE=.\license.h
-
-!IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
 SOURCE=.\md5.cpp
-
-!IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
 SOURCE=.\md5.h
-
-!IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
 SOURCE=.\prot.h
-
-!IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
 SOURCE=.\protocol.cpp
-
-!IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
 SOURCE=.\protocol.h
-
-!IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
 SOURCE=.\stdebug.cpp
-
-!IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
 SOURCE=.\stdebug.h
-
-!IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
 SOURCE=.\urunet.cpp
-
-!IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
 SOURCE=.\urunet.h
-
-!IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
 SOURCE=.\useful.cpp
-
-!IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
 SOURCE=.\useful.h
-
-!IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
 SOURCE=.\version.cpp
-
-!IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
 SOURCE=.\version.h
-
-!IF  "$(CFG)" == "uru_auth - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "uru_auth - Win32 Debug"
-
-!ENDIF 
-
 # End Source File
 # End Group
 # Begin Group "CMHS"
@@ -471,11 +323,19 @@ SOURCE=.\auth_db.h
 # End Group
 # Begin Source File
 
+SOURCE=.\resources.rc
+# End Source File
+# Begin Source File
+
 SOURCE=.\uru.cpp
 # End Source File
 # Begin Source File
 
 SOURCE=.\uru.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\xversion.h
 # End Source File
 # End Target
 # End Project

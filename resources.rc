@@ -1,5 +1,8 @@
 AppIcon ICON "almlys.ico"
+
+#ifndef __MSVC__
 #include "wx/msw/wx.rc"
+#endif
 
 #include "xversion.h"
 
@@ -14,16 +17,19 @@ FILETYPE 1
 {
  BLOCK "StringFileInfo"
  {
-  BLOCK "040904E4"
+  BLOCK "000004E4"
   {
-   VALUE "CompanyName", "Alcugs"
-   VALUE "FileDescription", "Rev: " alcREVISION " - Built:" __DATE__ " " __TIME__
+   VALUE "CompanyName", "Alcugs Project Team"
+   VALUE "FileDescription", alcFILEDESC
    VALUE "FileVersion", alcSTR_VER
-   VALUE "InternalName", "Alcugs"
-   VALUE "LegalCopyright", "Copyright 2005 Alcugs Project"
-   VALUE "OriginalFilename", ""
-   VALUE "ProductName", "Alcugs Server"
+   VALUE "InternalName", "alcugs"
+   VALUE "LegalCopyright", "Copyright 2005 Alcugs Project Team"
+   VALUE "ProductName", "Alcugs Server Software"
    VALUE "ProductVersion", alcSTR_VER
   }
+ }
+ BLOCK "VarFileInfo"
+ {
+   VALUE "Translation", 0x0000 0x04E4
  }
 }

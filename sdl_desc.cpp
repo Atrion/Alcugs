@@ -1523,10 +1523,19 @@ int sdl_statedesc_reader_fast(st_log * f,Byte * buf,int totalsize,t_sdl_def ** s
 	//13: search end of var name
 	//14: find closing ]
 	//15: find additional information (DEFAULT, DEFAULTOPTION, DISPLAYOPTION, INTERNAL, PHASED)
-	//    or search for a line break
+	//    or search for a line break or a comment
+	//-----------------------------------------------------------
 	//16: find equal sign after DEFAULT
 	//17: find default data start
 	//18: find end of default data
+	//-----------------------------------------------------------
+	//26: find equal sign after DEFAULTOPTION
+	//27: find default option data start
+	//28: find end of default option data
+	//-----------------------------------------------------------
+	//36: find equal sign after DISPLAYOPTION
+	//37: find display option data start
+	//38: find end of display option data
 	//-----------------------------------------------------------
 */
 	int off=0;
@@ -1578,620 +1587,645 @@ int sdl_statedesc_reader_fast(st_log * f,Byte * buf,int totalsize,t_sdl_def ** s
 			}
 		}
 
-		if(mode==0)
+		switch(mode)
 		{
-			//0: out of a statedesc block, wait for one or for a comment
-			if(offchar=='\r' || offchar=='\n')
+			case 0:
 			{
-				if(offchar=='\r')
-					off++;
-				if(offchar=='\n')
-					off++;
-
-				line++;
-			}
-			else if(offchar=='#')
-			{
-				comment=1;
-			}
-			else if(!memcmp("STATEDESC",offchar_ptr,sizeof("STATEDESC")-1))
-			{
-				//found statedesc block
-				mode=1;
-				off+=sizeof("STATEDESC")-1;
-				if(!isspace(offchar) || offchar=='\n' || offchar=='\r')
+				//0: out of a statedesc block, wait for one or for a comment
+				if(offchar=='\r' || offchar=='\n')
 				{
-					print2log(f,sdl_reading_error);
-					print2log(f,"unexpected data directly after STATEDESC (line %i)\n",line);
-					return -1;
-				}
+					if(offchar=='\r')
+						off++;
+					if(offchar=='\n')
+						off++;
 
-				def->content.flag=0x01;
-			}
-			else if(!isspace(offchar))
-			{
-				print2log(f,sdl_reading_error);
-				print2log(f,"unexpected data out of STATEDESC (line %i)\n",line);
-				return -1;
-			}
-		}
-		else if(mode==1)
-		{
-			//1: found a statedesc block, search for name
-			if(offchar=='\r' || offchar=='\n')
-			{
-				print2log(f,sdl_reading_error);
-				print2log(f,"found a linebreak after STATEDESC (line %i)\n",line);
-				return -1;
-			}
-			if(!isspace(offchar))
-			{
-				startpos=off;
-				mode=2;
-			}
-			
-			off++;
-		}
-		else if(mode==2)
-		{
-			//2: found the name, search for end
-			if(isspace(offchar))
-			{
-
-				//found end of the name
-				endpos=off;
-
-				//store it
-				memcpy(&def->content.name,buf+startpos,endpos-startpos);
-				def->content.name[endpos-startpos]=0;
-
-				mode=3;
-			}
-			else
-				off++;
-		}
-		else if(mode==3)
-		{
-			//3: search for the curly bracket
-			if(offchar=='#')
-			{
-				comment=1;
-				continue;
-			}
-
-			if(offchar=='\r' || offchar=='\n')
-			{
-				if(offchar=='\r')
-					off++;
-				if(offchar=='\n')
-					off++;
-
-				line++;
-			}
-			if(offchar=='{')
-			{
-				mode=4;
-			}
-			off++;
-		}
-		else if(mode==4)
-		{
-			if(offchar=='#')
-			{
-				comment=1;
-				mode=5;
-				continue;
-			}
-
-			int newline=0;
-			//4: found curly bracket, search newline
-			if(offchar=='\r')
-			{
-				newline=1;
-				off++;
-			}
-
-			if(offchar=='\n')
-			{
-				newline=1;
-				off++;
-			}
-
-			if(newline)
-			{
-				//found newline
-				line++;
-				mode=5;
-			}
-			else
-				off++;
-		}
-		//-----------------------------------------------------------
-		else if(mode==5)
-		{
-			//5: in a statedesc block, search version
-			if(!memcmp("VERSION",offchar_ptr,sizeof("VERSION")-1))
-			{
-				//found version
-				mode=6;
-				off+=sizeof("VERSION")-1;
-				if(!isspace(offchar) || offchar=='\n' || offchar=='\r')
-				{
-					print2log(f,sdl_reading_error);
-					print2log(f,"unexpected data directly after VERSION (line %i)\n",line);
-					return -1;
-				}
-			}
-			else if(offchar=='#')
-			{
-				comment=1;
-			}
-			else if(isspace(offchar))
-			{
-				int newline=0;
-				if(offchar=='\n')
-				{
-					off++;
-					newline=1;
-				}
-				if(offchar=='\r')
-				{
-					off++;
-					newline=1;
-				}
-				if(newline)
-					line++;
-				else
-					off++;
-			}
-			else
-			{
-				print2log(f,sdl_reading_error);
-				print2log(f,"unexpected data after the opening curly bracket (line %i)\n",line);
-				return -1;
-			}
-		}
-		else if(mode==6)
-		{
-			//6: in a statedesc block after VERSION, search version number
-			if(offchar=='\n' || offchar=='\r')
-			{
-				print2log(f,sdl_reading_error);
-				print2log(f,"unexpected line break after VERSION (lines %i/%i)\n",line,line+1);
-				return -1;
-			}
-
-			if(!isspace(offchar))
-			{
-				//found version number start point
-				startpos=off;
-				mode=7;
-			}
-			off++;
-		}
-		else if(mode==7)
-		{
-			//7: in a statedesc block after VERSION, search end of version number
-			if(isspace(offchar))
-			{
-				endpos=off;
-
-				memcpy(&tmpbuf,buf+startpos,endpos-startpos);
-				tmpbuf[endpos-startpos]=0;
-
-				def->content.version=atoi((char *)&tmpbuf);
-
-				mode=8;
-			}
-			else
-				off++;
-		}
-		else if(mode==8)
-		{
-			//8: in a statedesc block after the version, search for newline or comment
-
-			if(offchar=='\r' || offchar=='\n')
-			{
-				if(offchar=='\r')
-					off++;
-				if(offchar=='\n')
-					off++;
-
-				line++;
-				mode=9;
-			}
-			else if(offchar=='#')
-			{
-				comment=1;
-				mode=9;
-			}
-			else if(!isspace(offchar))
-			{
-				print2log(f,sdl_reading_error);
-				print2log(f,"unexpected data after the version (line %i)\n",line);
-				return -1;
-			}
-			else
-				off++;
-		}
-		else if(mode==9)
-		{
-			//9: search for VAR
-			if(!memcmp("VAR",offchar_ptr,sizeof("VAR")-1))
-			{
-				//found version
-				mode=10;
-				off+=sizeof("VAR")-1;
-				if(!isspace(offchar) || offchar=='\n' || offchar=='\r')
-				{
-					print2log(f,sdl_reading_error);
-					print2log(f,"unexpected data directly after VAR (line %i)\n",line);
-					return -1;
-				}
-			}
-			else if(offchar=='#')
-			{
-				comment=1;
-			}
-			else if(isspace(offchar))
-			{
-				int newline=0;
-				if(offchar=='\r')
-				{
-					off++;
-					newline=1;
-				}
-				if(offchar=='\n')
-				{
-					off++;
-					newline=1;
-				}
-				if(newline)
-				{
 					line++;
 				}
-				else
-					off++;
-			}
-			else if(offchar=='}')
-			{
-
-				def->content.vars=(t_sdl_var *)malloc(sizeof(t_sdl_var)*varcount);
-				var=&sdl_vars;
-
-				tmp_sdl_vars *tmp_var;
-				for(int i=0; i<varcount; i++)
+				else if(offchar=='#')
 				{
-					memcpy(&def->content.vars[i],&var->content,sizeof(t_sdl_var));
-					tmp_var=var;
-					var=var->next;
-					if(tmp_var!=&sdl_vars)
-						free(tmp_var);
+					comment=1;
 				}
-				if(var!=&sdl_vars)
-					free(var);
+				else if(!memcmp("STATEDESC",offchar_ptr,sizeof("STATEDESC")-1))
+				{
+					//found statedesc block
+					mode=1;
+					off+=sizeof("STATEDESC")-1;
+					if(!isspace(offchar) || offchar=='\n' || offchar=='\r')
+					{
+						print2log(f,sdl_reading_error);
+						print2log(f,"unexpected data directly after STATEDESC (line %i)\n",line);
+						return -1;
+					}
 
-
-				var=&sdl_vars;
-
-				memset(var,0,sizeof(tmp_sdl_vars));
-
-				def->content.n_vars=varcount;
-				varcount=0;
-
-				def->next=(tmp_sdl_defs *)malloc(sizeof(tmp_sdl_defs));
-				def=def->next;
-
-				defcount++;
-
-				memset(def,0,sizeof(tmp_sdl_defs));
-
-				mode=0;
-
-				off++;
-			}
-			else
-			{
-				print2log(f,sdl_reading_error);
-				print2log(f,"unexpected data in a STATEDESC block (line %i)\n",line);
-				return -1;
-			}
-		}
-		else if(mode==10)
-		{
-			//10: search for var type
-			if(offchar=='\n' || offchar=='\r')
-			{
-				print2log(f,sdl_reading_error);
-				print2log(f,"unexpected line break after VAR (lines %i/%i)\n",line,line+1);
-				return -1;
-			}
-
-			if(!isspace(offchar))
-			{
-				startpos=off;
-				mode=11;
-			}
-			off++;
-		}
-		else if(mode==11)
-		{
-			//11: read var type
-			if(isspace(offchar))
-			{
-				if(offchar=='\n' || offchar=='\r')
+					def->content.flag=0x01;
+				}
+				else if(!isspace(offchar))
 				{
 					print2log(f,sdl_reading_error);
-					print2log(f,"unexpected line break directly after the var type (lines %i/%i)\n",line,line+1);
+					print2log(f,"unexpected data out of STATEDESC (line %i)\n",line);
 					return -1;
 				}
-
-				endpos=off;
-
-				memcpy(&tmpbuf,buf+startpos,endpos-startpos);
-				tmpbuf[endpos-startpos]=0;
-
-				int type;
-				if(tmpbuf[0]=='$')
-				{
-					type=0x05;
-					strcpy((char *)&var->content.struct_name,(char *)&tmpbuf+1);
-					var->content.struct_version=0;
-				}
-				else
-					type=sdl_get_var_type_from_name((char *)&tmpbuf);
-
-				if(type<0)
+			} break;
+			case 1:
+			{
+				//1: found a statedesc block, search for name
+				if(offchar=='\r' || offchar=='\n')
 				{
 					print2log(f,sdl_reading_error);
-					print2log(f,"unknown type \"%s\" specified (line %i)\n",(char *)&tmpbuf,line);
+					print2log(f,"found a linebreak after STATEDESC (line %i)\n",line);
 					return -1;
 				}
-				var->content.type=type;
-
-				mode=12;
-			}
-			else
-				off++;
-		}
-		else if(mode==12)
-		{
-			//12: search var name
-
-			if(offchar=='\n' || offchar=='\r')
-			{
-				print2log(f,sdl_reading_error);
-				print2log(f,"unexpected line break after the var type (lines %i/%i)\n",line,line+1);
-				return -1;
-			}
-
-			if(!isspace(offchar))
-			{
-				startpos=off;
-				mode=13;
-			}
-			off++;
-		}
-		else if(mode==13)
-		{
-			//13... argh - the number of misfortune ;-)
-			//13: search end of var name
-
-			if(offchar=='[')
-			{
-				endpos=off;
-
-				memcpy(&var->content.name,buf+startpos,endpos-startpos);
-				var->content.name[endpos-startpos]=0;
-
-				startpos=++off;
-
-				mode=14;
-			}
-			else if(isspace(offchar))
-			{
-				//argh, should NOT happen
-				if(offchar=='\n' || offchar=='\r')
-				{
-					print2log(f,sdl_reading_error);
-					print2log(f,"unexpected line break between the var name and the expected tuple item count (lines %i/%i)\n",line,line+1);
-				}
-				else
-				{
-					print2log(f,sdl_reading_error);
-					print2log(f,"unexpected blank between the var name and the expected tuple item count (line %i)\n",line);
-				}
-				return -1;
-			}
-			else
-				off++;
-		}
-		else if(mode==14)
-		{
-			//14: find closing ]
-			if(isspace(offchar))
-			{
-				//argh, should NOT happen
-				if(offchar=='\n' || offchar=='\r')
-				{
-					print2log(f,sdl_reading_error);
-					print2log(f,"unexpected line break in the tuple item count (lines %i/%i)\n",line,line+1);
-				}
-				else
-				{
-					print2log(f,sdl_reading_error);
-					print2log(f,"unexpected blank in the tuple item count (line %i)\n",line);
-				}
-				return -1;
-			}
-
-			if(offchar==']')
-			{
-				endpos=off;
-
-				if(endpos-startpos>0)
-				{
-					memcpy(&tmpbuf,buf+startpos,endpos-startpos);
-					tmpbuf[endpos-startpos]=0;
-
-					var->content.array_size=atoi((char *)&tmpbuf);
-				}
-				else
-				{
-					var->content.array_size=0;
-				}
-
-				off++;
-
 				if(!isspace(offchar))
 				{
-					print2log(f,sdl_reading_error);
-					print2log(f,"unexpected data directly after the closing ] (line %i)\n",line);
-					return -1;
+					startpos=off;
+					mode=2;
 				}
-
-				mode=15;
-			}
-			else
+				
 				off++;
-		}
-		else if(mode==15)
-		{
-			//15: find additional information (DEFAULT, DEFAULTOPTION, DISPLAYOPTION, INTERNAL, PHASED)
-			//    or search for a line break
-
-			if(!memcmp("PHASED",offchar_ptr,sizeof("PHASED")-1))
+			} break;
+			case 2:
 			{
-				off+=sizeof("PHASED")-1;
-				if(offchar=='\n' || offchar=='\r' || !isspace(offchar))
+				//2: found the name, search for end
+				if(isspace(offchar))
 				{
-					print2log(f,sdl_reading_error);
-					print2log(f,"unexpected data directly after PHASED (line %i)\n",line);
-					return -1;
+
+					//found end of the name
+					endpos=off;
+
+					//store it
+					memcpy(&def->content.name,buf+startpos,endpos-startpos);
+					def->content.name[endpos-startpos]=0;
+
+					mode=3;
 				}
-				var->content.default_option|=2; //VAULT flag
-			}
-			else if(!memcmp("INTERNAL",offchar_ptr,sizeof("INTERNAL")-1))
+				else
+					off++;
+			} break;
+			case 3:
 			{
-				off+=sizeof("INTERNAL")-1;
-				if(offchar=='\n' || offchar=='\r' || !isspace(offchar))
-				{
-					print2log(f,sdl_reading_error);
-					print2log(f,"unexpected data directly after INTERNAL (line %i)\n",line);
-					return -1;
-				}
-				var->content.default_option|=1; //hidden flag
-			}
-			else if(!memcmp("DISPLAYOPTION",offchar_ptr,sizeof("DISPLAYOPTION")-1))
-			{
-				mode=36;
-				off+=sizeof("DISPLAYOPTION")-1;
-				if(offchar=='\n' || offchar=='\r' || (!isspace(offchar) && offchar!='='))
-				{
-					print2log(f,sdl_reading_error);
-					print2log(f,"unexpected data directly after DISPLAYOPTION (line %i)\n",line);
-					return -1;
-				}
-			}
-			else if(!memcmp("DEFAULTOPTION",offchar_ptr,sizeof("DEFAULTOPTION")-1))
-			{
-				mode=26;
-				off+=sizeof("DEFAULTOPTION")-1;
-				if(offchar=='\n' || offchar=='\r' || (!isspace(offchar) && offchar!='='))
-				{
-					print2log(f,sdl_reading_error);
-					print2log(f,"unexpected data directly after DEFAULTOPTION (line %i)\n",line);
-					return -1;
-				}
-			}
-			else if(!memcmp("DEFAULT",offchar_ptr,sizeof("DEFAULT")-1))
-			{
-				mode=16;
-				off+=sizeof("DEFAULT")-1;
-				if(offchar=='\n' || offchar=='\r' || (!isspace(offchar) && offchar!='='))
-				{
-					print2log(f,sdl_reading_error);
-					print2log(f,"unexpected data directly after DEFAULT (line %i)\n",line);
-					return -1;
-				}
-			}
-			else if(offchar=='#' || offchar=='\r' || offchar=='\n')
-			{
-				switch(var->content.type) {
-					case 55: //RGB8
-						var->content.n_itms=3;
-						var->content.itm_type=9;
-						break;
-					case 50: //POINT3
-					case 51: //VECTOR3
-						var->content.n_itms=3;
-						var->content.itm_type=1;
-						break;
-					case 54: //QUATERNION
-						var->content.n_itms=4;
-						var->content.itm_type=1;
-						break;
-					default:
-						var->content.n_itms=1;
-						var->content.itm_type=var->content.type;
-				}
-
-				//now check if it is an struct
-				if(var->content.struct_name[0]!=0)
-				{
-					var->content.flag=0x01;
-					var->content.default_option|=4;
-				}
-
-				var->content.static1=0x03;
-				var->content.u16k1=0x00;
-				var->content.u16k2=0x00;
-
-
-				var->next=(tmp_sdl_vars *)malloc(sizeof(tmp_sdl_vars));
-				var=var->next;
-				varcount++;
-
-				memset(var,0,sizeof(tmp_sdl_vars));
-
-
-
-				mode=9;
+				//3: search for the curly bracket
 				if(offchar=='#')
 				{
 					comment=1;
 					continue;
 				}
+
+				if(offchar=='\r' || offchar=='\n')
+				{
+					if(offchar=='\r')
+						off++;
+					if(offchar=='\n')
+						off++;
+
+					line++;
+				}
+				if(offchar=='{')
+				{
+					mode=4;
+				}
+				off++;
+			} break;
+			case 4:
+			{
+				//4: found curly bracket, search newline
+				if(offchar=='#')
+				{
+					comment=1;
+					mode=5;
+					continue;
+				}
+
+				int newline=0;
 				if(offchar=='\r')
+				{
+					newline=1;
 					off++;
+				}
+
 				if(offchar=='\n')
+				{
+					newline=1;
+					off++;
+				}
+
+				if(newline)
+				{
+					//found newline
+					line++;
+					mode=5;
+				}
+				else
+					off++;
+			} break;
+			//-----------------------------------------------------------
+			case 5:
+			{
+				//5: in a statedesc block, search version
+				if(!memcmp("VERSION",offchar_ptr,sizeof("VERSION")-1))
+				{
+					//found version
+					mode=6;
+					off+=sizeof("VERSION")-1;
+					if(!isspace(offchar) || offchar=='\n' || offchar=='\r')
+					{
+						print2log(f,sdl_reading_error);
+						print2log(f,"unexpected data directly after VERSION (line %i)\n",line);
+						return -1;
+					}
+				}
+				else if(offchar=='#')
+				{
+					comment=1;
+				}
+				else if(isspace(offchar))
+				{
+					int newline=0;
+					if(offchar=='\n')
+					{
+						off++;
+						newline=1;
+					}
+					if(offchar=='\r')
+					{
+						off++;
+						newline=1;
+					}
+					if(newline)
+						line++;
+					else
+						off++;
+				}
+				else
+				{
+					print2log(f,sdl_reading_error);
+					print2log(f,"unexpected data after the opening curly bracket (line %i)\n",line);
+					return -1;
+				}
+			} break;
+			case 6:
+			{
+				//6: in a statedesc block after VERSION, search version number
+				if(offchar=='\n' || offchar=='\r')
+				{
+					print2log(f,sdl_reading_error);
+					print2log(f,"unexpected line break after VERSION (lines %i/%i)\n",line,line+1);
+					return -1;
+				}
+
+				if(!isspace(offchar))
+				{
+					//found version number start point
+					startpos=off;
+					mode=7;
+				}
+				off++;
+			} break;
+			case 7:
+			{
+				//7: in a statedesc block after VERSION, search end of version number
+				if(isspace(offchar))
+				{
+					endpos=off;
+
+					memcpy(&tmpbuf,buf+startpos,endpos-startpos);
+					tmpbuf[endpos-startpos]=0;
+
+					def->content.version=atoi((char *)&tmpbuf);
+
+					mode=8;
+				}
+				else
+					off++;
+			} break;
+			case 8:
+			{
+				//8: in a statedesc block after the version, search for newline or comment
+
+				if(offchar=='\r' || offchar=='\n')
+				{
+					if(offchar=='\r')
+						off++;
+					if(offchar=='\n')
+						off++;
+
+					line++;
+					mode=9;
+				}
+				else if(offchar=='#')
+				{
+					comment=1;
+					mode=9;
+				}
+				else if(!isspace(offchar))
+				{
+					print2log(f,sdl_reading_error);
+					print2log(f,"unexpected data after the version (line %i)\n",line);
+					return -1;
+				}
+				else
+					off++;
+			} break;
+			case 9:
+			{
+				//9: search for VAR
+				if(!memcmp("VAR",offchar_ptr,sizeof("VAR")-1))
+				{
+					//found version
+					mode=10;
+					off+=sizeof("VAR")-1;
+					if(!isspace(offchar) || offchar=='\n' || offchar=='\r')
+					{
+						print2log(f,sdl_reading_error);
+						print2log(f,"unexpected data directly after VAR (line %i)\n",line);
+						return -1;
+					}
+				}
+				else if(offchar=='#')
+				{
+					comment=1;
+				}
+				else if(isspace(offchar))
+				{
+					int newline=0;
+					if(offchar=='\r')
+					{
+						off++;
+						newline=1;
+					}
+					if(offchar=='\n')
+					{
+						off++;
+						newline=1;
+					}
+					if(newline)
+					{
+						line++;
+					}
+					else
+						off++;
+				}
+				else if(offchar=='}')
+				{
+
+					def->content.vars=(t_sdl_var *)malloc(sizeof(t_sdl_var)*varcount);
+					var=&sdl_vars;
+
+					tmp_sdl_vars *tmp_var;
+					for(int i=0; i<varcount; i++)
+					{
+						memcpy(&def->content.vars[i],&var->content,sizeof(t_sdl_var));
+						tmp_var=var;
+						var=var->next;
+						if(tmp_var!=&sdl_vars)
+							free(tmp_var);
+					}
+					if(var!=&sdl_vars)
+						free(var);
+
+
+					var=&sdl_vars;
+
+					memset(var,0,sizeof(tmp_sdl_vars));
+
+					def->content.n_vars=varcount;
+					varcount=0;
+
+					def->next=(tmp_sdl_defs *)malloc(sizeof(tmp_sdl_defs));
+					def=def->next;
+
+					defcount++;
+
+					memset(def,0,sizeof(tmp_sdl_defs));
+
+					mode=0;
+
+					off++;
+				}
+				else
+				{
+					print2log(f,sdl_reading_error);
+					print2log(f,"unexpected data in a STATEDESC block (line %i)\n",line);
+					return -1;
+				}
+			} break;
+			case 10:
+			{
+				//10: search for var type
+				if(offchar=='\n' || offchar=='\r')
+				{
+					print2log(f,sdl_reading_error);
+					print2log(f,"unexpected line break after VAR (lines %i/%i)\n",line,line+1);
+					return -1;
+				}
+
+				if(!isspace(offchar))
+				{
+					startpos=off;
+					mode=11;
+				}
+				off++;
+			} break;
+			case 11:
+			{
+				//11: read var type
+				if(isspace(offchar))
+				{
+					if(offchar=='\n' || offchar=='\r')
+					{
+						print2log(f,sdl_reading_error);
+						print2log(f,"unexpected line break directly after the var type (lines %i/%i)\n",line,line+1);
+						return -1;
+					}
+
+					endpos=off;
+
+					memcpy(&tmpbuf,buf+startpos,endpos-startpos);
+					tmpbuf[endpos-startpos]=0;
+
+					int type;
+					if(tmpbuf[0]=='$')
+					{
+						type=0x05;
+						strcpy((char *)&var->content.struct_name,(char *)&tmpbuf+1);
+						var->content.struct_version=0;
+					}
+					else
+						type=sdl_get_var_type_from_name((char *)&tmpbuf);
+
+					if(type<0)
+					{
+						print2log(f,sdl_reading_error);
+						print2log(f,"unknown type \"%s\" specified (line %i)\n",(char *)&tmpbuf,line);
+						return -1;
+					}
+					var->content.type=type;
+
+					mode=12;
+				}
+				else
+					off++;
+			} break;
+			case 12:
+			{
+				//12: search var name
+				if(offchar=='\n' || offchar=='\r')
+				{
+					print2log(f,sdl_reading_error);
+					print2log(f,"unexpected line break after the var type (lines %i/%i)\n",line,line+1);
+					return -1;
+				}
+
+				if(!isspace(offchar))
+				{
+					startpos=off;
+					mode=13;
+				}
+				off++;
+			} break;
+			case 13:
+			{
+				//13... argh - the number of misfortune ;-)
+				//13: search end of var name
+
+				if(offchar=='[')
+				{
+					endpos=off;
+
+					memcpy(&var->content.name,buf+startpos,endpos-startpos);
+					var->content.name[endpos-startpos]=0;
+
+					startpos=++off;
+
+					mode=14;
+				}
+				else if(isspace(offchar))
+				{
+					//argh, should NOT happen
+					if(offchar=='\n' || offchar=='\r')
+					{
+						print2log(f,sdl_reading_error);
+						print2log(f,"unexpected line break between the var name and the expected tuple item count (lines %i/%i)\n",line,line+1);
+					}
+					else
+					{
+						print2log(f,sdl_reading_error);
+						print2log(f,"unexpected blank between the var name and the expected tuple item count (line %i)\n",line);
+					}
+					return -1;
+				}
+				else
+					off++;
+			} break;
+			case 14:
+			{
+				//14: find closing ]
+				if(isspace(offchar))
+				{
+					//argh, should NOT happen
+					if(offchar=='\n' || offchar=='\r')
+					{
+						print2log(f,sdl_reading_error);
+						print2log(f,"unexpected line break in the tuple item count (lines %i/%i)\n",line,line+1);
+					}
+					else
+					{
+						print2log(f,sdl_reading_error);
+						print2log(f,"unexpected blank in the tuple item count (line %i)\n",line);
+					}
+					return -1;
+				}
+
+				if(offchar==']')
+				{
+					endpos=off;
+
+					if(endpos-startpos>0)
+					{
+						memcpy(&tmpbuf,buf+startpos,endpos-startpos);
+						tmpbuf[endpos-startpos]=0;
+
+						var->content.array_size=atoi((char *)&tmpbuf);
+					}
+					else
+					{
+						var->content.array_size=0;
+					}
+
 					off++;
 
-				line++;
+					if(!isspace(offchar))
+					{
+						print2log(f,sdl_reading_error);
+						print2log(f,"unexpected data directly after the closing ] (line %i)\n",line);
+						return -1;
+					}
 
-			}
-			else if(isspace(offchar))
+					mode=15;
+				}
+				else
+					off++;
+			} break;
+			case 15:
 			{
-				off++;
-			}
-			else
+				//15: find additional information (DEFAULT, DEFAULTOPTION, DISPLAYOPTION, INTERNAL, PHASED)
+				//    or search for a line break
+
+				if(!memcmp("PHASED",offchar_ptr,sizeof("PHASED")-1))
+				{
+					off+=sizeof("PHASED")-1;
+					if(offchar=='\n' || offchar=='\r' || !isspace(offchar))
+					{
+						print2log(f,sdl_reading_error);
+						print2log(f,"unexpected data directly after PHASED (line %i)\n",line);
+						return -1;
+					}
+					var->content.default_option|=2; //VAULT flag
+				}
+				else if(!memcmp("INTERNAL",offchar_ptr,sizeof("INTERNAL")-1))
+				{
+					off+=sizeof("INTERNAL")-1;
+					if(offchar=='\n' || offchar=='\r' || !isspace(offchar))
+					{
+						print2log(f,sdl_reading_error);
+						print2log(f,"unexpected data directly after INTERNAL (line %i)\n",line);
+						return -1;
+					}
+					var->content.default_option|=1; //hidden flag
+				}
+				else if(!memcmp("DISPLAYOPTION",offchar_ptr,sizeof("DISPLAYOPTION")-1))
+				{
+					mode=36;
+					off+=sizeof("DISPLAYOPTION")-1;
+					if(offchar=='\n' || offchar=='\r' || (!isspace(offchar) && offchar!='='))
+					{
+						print2log(f,sdl_reading_error);
+						print2log(f,"unexpected data directly after DISPLAYOPTION (line %i)\n",line);
+						return -1;
+					}
+				}
+				else if(!memcmp("DEFAULTOPTION",offchar_ptr,sizeof("DEFAULTOPTION")-1))
+				{
+					mode=26;
+					off+=sizeof("DEFAULTOPTION")-1;
+					if(offchar=='\n' || offchar=='\r' || (!isspace(offchar) && offchar!='='))
+					{
+						print2log(f,sdl_reading_error);
+						print2log(f,"unexpected data directly after DEFAULTOPTION (line %i)\n",line);
+						return -1;
+					}
+				}
+				else if(!memcmp("DEFAULT",offchar_ptr,sizeof("DEFAULT")-1))
+				{
+					mode=16;
+					off+=sizeof("DEFAULT")-1;
+					if(offchar=='\n' || offchar=='\r' || (!isspace(offchar) && offchar!='='))
+					{
+						print2log(f,sdl_reading_error);
+						print2log(f,"unexpected data directly after DEFAULT (line %i)\n",line);
+						return -1;
+					}
+				}
+				else if(offchar=='#' || offchar=='\r' || offchar=='\n')
+				{
+					switch(var->content.type) {
+						case 55: //RGB8
+							var->content.n_itms=3;
+							var->content.itm_type=9;
+							break;
+						case 50: //POINT3
+						case 51: //VECTOR3
+							var->content.n_itms=3;
+							var->content.itm_type=1;
+							break;
+						case 54: //QUATERNION
+							var->content.n_itms=4;
+							var->content.itm_type=1;
+							break;
+						default:
+							var->content.n_itms=1;
+							var->content.itm_type=var->content.type;
+					}
+
+					//now check if it is an struct
+					if(var->content.struct_name[0]!=0)
+					{
+						var->content.flag=0x01;
+						var->content.default_option|=4;
+					}
+
+					var->content.static1=0x03;
+					var->content.u16k1=0x00;
+					var->content.u16k2=0x00;
+
+
+					var->next=(tmp_sdl_vars *)malloc(sizeof(tmp_sdl_vars));
+					var=var->next;
+					varcount++;
+
+					memset(var,0,sizeof(tmp_sdl_vars));
+
+
+
+					mode=9;
+					if(offchar=='#')
+					{
+						comment=1;
+						continue;
+					}
+					if(offchar=='\r')
+						off++;
+					if(offchar=='\n')
+						off++;
+
+					line++;
+
+				}
+				else if(isspace(offchar))
+				{
+					off++;
+				}
+				else
+				{
+					print2log(f,sdl_reading_error);
+					print2log(f,"unexpected data directly after a var definition (line %i)\n",line);
+					return -1;
+				}
+			} break;
+			//----------------------------------------------------------------------------------------------
+			case 16:
 			{
-				print2log(f,sdl_reading_error);
-				print2log(f,"unexpected data directly after a var definition (line %i)\n",line);
-				return -1;
-			}
-		}
-		//----------------------------------------------------------------------------------------------
-		else if(mode==16)
-		{
-			//16: find equal sign after DEFAULT
-			if(offchar=='=')
+				//16: find equal sign after DEFAULT
+				if(offchar=='=')
+				{
+					mode=17;
+					off++;
+				}
+				else if(isspace(offchar))
+				{
+					if(offchar=='\n' || offchar=='\r')
+					{
+						print2log(f,sdl_reading_error);
+						print2log(f,"unexpected line break after DEFAULT (lines %i/%i)\n",line,line+1);
+						return -1;
+					}
+
+					off++;
+				}
+				else
+				{
+					print2log(f,sdl_reading_error);
+					print2log(f,"unexpected data directly after DEFAULT (line %i)\n",line);
+					return -1;
+				}
+			} break;
+			case 17:
 			{
-				mode=17;
-				off++;
-			}
-			else if(isspace(offchar))
-			{
+				//17: find default data start
+
+				//!TODO: add the ability to parse default strings and vectors
+				//format: (value[,value])
+				//    or: [(]value[)]
+
 				if(offchar=='\n' || offchar=='\r')
 				{
 					print2log(f,sdl_reading_error);
@@ -2199,176 +2233,153 @@ int sdl_statedesc_reader_fast(st_log * f,Byte * buf,int totalsize,t_sdl_def ** s
 					return -1;
 				}
 
-				off++;
-			}
-			else
-			{
-				print2log(f,sdl_reading_error);
-				print2log(f,"unexpected data directly after DEFAULT (line %i)\n",line);
-				return -1;
-			}
-		}
-		else if(mode==17)
-		{
-			//17: find default data start
-
-			//!TODO: add the ability to parse default strings and vectors
-			//format: (value[,value])
-			//    or: [(]value[)]
-
-			if(offchar=='\n' || offchar=='\r')
-			{
-				print2log(f,sdl_reading_error);
-				print2log(f,"unexpected line break after DEFAULT (lines %i/%i)\n",line,line+1);
-				return -1;
-			}
-
-			if(!isspace(offchar))
-			{
-				startpos=off;
-				mode=18;
-			}
-			off++;
-		}
-		else if(mode==18)
-		{
-			//18: find end of default data
-			if(isspace(offchar))
-			{
-				endpos=off;
-				memcpy(&var->content.default_value,buf+startpos,endpos-startpos);
-				var->content.default_value[endpos-startpos]=0;
-				mode=15;
-			}
-			else
-				off++;
-		}
-		//----------------------------------------------------------------------------------------------
-		else if(mode==26)
-		{
-			//26: find end ofsign after DEFAULTOPTION
-			if(offchar=='=')
-			{
-				mode=27;
-				off++;
-			}
-			else if(isspace(offchar))
-			{
-				if(offchar=='\n' || offchar=='\r')
+				if(!isspace(offchar))
 				{
-					print2log(f,sdl_reading_error);
-					print2log(f,"unexpected line break after DEFAULTOPTION (lines %i/%i)\n",line,line+1);
-					return -1;
+					startpos=off;
+					mode=18;
 				}
-
 				off++;
-			}
-			else
+			} break;
+			case 18:
 			{
-				print2log(f,sdl_reading_error);
-				print2log(f,"unexpected data directly after DEFAULTOPTION (line %i)\n",line);
-				return -1;
-			}
-		}
-		else if(mode==27)
-		{
-			//27: find default option data start
-
-			if(offchar=='\n' || offchar=='\r')
-			{
-				print2log(f,sdl_reading_error);
-				print2log(f,"unexpected line break after DEFAULTOPTION (lines %i/%i)\n",line,line+1);
-				return -1;
-			}
-
-			if(!isspace(offchar))
-			{
-				startpos=off;
-				mode=28;
-			}
-			off++;
-		}
-		else if(mode==28)
-		{
-			//28: find end of default option data
-			if(isspace(offchar))
-			{
-				endpos=off;
-				memcpy(&tmpbuf,buf+startpos,endpos-startpos);
-				tmpbuf[endpos-startpos]=0;
-
-				if(!strcmp((char *)&tmpbuf,"VAULT"))
-					var->content.default_option|=2; //VAULT flag
-					
-				mode=15;
-			}
-			else
-				off++;
-		}
-		//----------------------------------------------------------------------------------------------
-		else if(mode==36)
-		{
-			//36: find equal sign after DISPLAYOPTION
-			if(offchar=='=')
-			{
-				mode=37;
-				off++;
-			}
-			else if(isspace(offchar))
-			{
-				if(offchar=='\n' || offchar=='\r')
+				//18: find end of default data
+				if(isspace(offchar))
 				{
-					print2log(f,sdl_reading_error);
-					print2log(f,"unexpected line break after DEFAULTOPTION (lines %i/%i)\n",line,line+1);
-					return -1;
+					endpos=off;
+					memcpy(&var->content.default_value,buf+startpos,endpos-startpos);
+					var->content.default_value[endpos-startpos]=0;
+					mode=15;
 				}
-
-				off++;
-			}
-			else
-			{
-				print2log(f,sdl_reading_error);
-				print2log(f,"unexpected data directly after DEFAULTOPTION (line %i)\n",line);
-				return -1;
-			}
-		}
-		else if(mode==37)
-		{
-			//37: find display option data start
-
-			if(offchar=='\n' || offchar=='\r')
-			{
-				print2log(f,sdl_reading_error);
-				print2log(f,"unexpected line break after DEFAULTOPTION (lines %i/%i)\n",line,line+1);
-				return -1;
-			}
-
-			if(!isspace(offchar))
-			{
-				startpos=off;
-				mode=38;
-			}
-			off++;
-		}
-		else if(mode==38)
-		{
-			//38: find end of display option data
-			if(isspace(offchar))
-			{
-				endpos=off;
-				memcpy(&tmpbuf,buf+startpos,endpos-startpos);
-				tmpbuf[endpos-startpos]=0;
-
-				if(!strcmp((char *)&tmpbuf,"hidden"))
-					var->content.default_option|=1; //hidden flag
 				else
-					strcpy((char *)&var->content.display_options,(char *)&tmpbuf);
-					
-				mode=15;
-			}
-			else
+					off++;
+			} break;
+			//----------------------------------------------------------------------------------------------
+			case 26:
+			{
+				//26: find equal sign after DEFAULTOPTION
+				if(offchar=='=')
+				{
+					mode=27;
+					off++;
+				}
+				else if(isspace(offchar))
+				{
+					if(offchar=='\n' || offchar=='\r')
+					{
+						print2log(f,sdl_reading_error);
+						print2log(f,"unexpected line break after DEFAULTOPTION (lines %i/%i)\n",line,line+1);
+						return -1;
+					}
+
+					off++;
+				}
+				else
+				{
+					print2log(f,sdl_reading_error);
+					print2log(f,"unexpected data directly after DEFAULTOPTION (line %i)\n",line);
+					return -1;
+				}
+			} break;
+			case 27:
+			{
+				//27: find default option data start
+
+				if(offchar=='\n' || offchar=='\r')
+				{
+					print2log(f,sdl_reading_error);
+					print2log(f,"unexpected line break after DEFAULTOPTION (lines %i/%i)\n",line,line+1);
+					return -1;
+				}
+
+				if(!isspace(offchar))
+				{
+					startpos=off;
+					mode=28;
+				}
 				off++;
-		}
+			} break;
+			case 28:
+			{
+				//28: find end of default option data
+				if(isspace(offchar))
+				{
+					endpos=off;
+					memcpy(&tmpbuf,buf+startpos,endpos-startpos);
+					tmpbuf[endpos-startpos]=0;
+
+					if(!strcmp((char *)&tmpbuf,"VAULT"))
+						var->content.default_option|=2; //VAULT flag
+						
+					mode=15;
+				}
+				else
+					off++;
+			} break;
+			//----------------------------------------------------------------------------------------------
+			case 36:
+			{
+				//36: find equal sign after DISPLAYOPTION
+				if(offchar=='=')
+				{
+					mode=37;
+					off++;
+				}
+				else if(isspace(offchar))
+				{
+					if(offchar=='\n' || offchar=='\r')
+					{
+						print2log(f,sdl_reading_error);
+						print2log(f,"unexpected line break after DEFAULTOPTION (lines %i/%i)\n",line,line+1);
+						return -1;
+					}
+
+					off++;
+				}
+				else
+				{
+					print2log(f,sdl_reading_error);
+					print2log(f,"unexpected data directly after DEFAULTOPTION (line %i)\n",line);
+					return -1;
+				}
+			} break;
+			case 37:
+			{
+				//37: find display option data start
+
+				if(offchar=='\n' || offchar=='\r')
+				{
+					print2log(f,sdl_reading_error);
+					print2log(f,"unexpected line break after DEFAULTOPTION (lines %i/%i)\n",line,line+1);
+					return -1;
+				}
+
+				if(!isspace(offchar))
+				{
+					startpos=off;
+					mode=38;
+				}
+				off++;
+			} break;
+			case 38:
+			{
+				//38: find end of display option data
+				if(isspace(offchar))
+				{
+					endpos=off;
+					memcpy(&tmpbuf,buf+startpos,endpos-startpos);
+					tmpbuf[endpos-startpos]=0;
+
+					if(!strcmp((char *)&tmpbuf,"hidden"))
+						var->content.default_option|=1; //hidden flag
+					else
+						strcpy((char *)&var->content.display_options,(char *)&tmpbuf);
+						
+					mode=15;
+				}
+				else
+					off++;
+			} break;
+		} //switch(mode)
 	};
 
 	t_sdl_def *insertptr;

@@ -22,7 +22,7 @@ CFG=servers - Win32 Debug
 !MESSAGE 
 
 # Begin Project
-# PROP serversowPerConfigDependencies 0
+# PROP AllowPerConfigDependencies 0
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
 MTL=midl.exe
@@ -65,11 +65,7 @@ SOURCE=.\config.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\windoze.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\windoze.h
+SOURCE=.\xversion.h
 # End Source File
 # End Target
 # End Project

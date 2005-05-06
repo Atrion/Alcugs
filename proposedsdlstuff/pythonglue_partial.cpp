@@ -76,8 +76,17 @@ static int ptSDL_count(PyObject *self)
 	       +((ptSDL_Object *)self)->bin_head->bin.n_structs;
 }
 
+#define OOM_CHECK(var,todo)	if(!var) \
+							{ \
+								snprintf((char *)&errormsg,511,"out of memory"); \
+								PyErr_SetString(PyExc_MemoryError,(char *)&errormsg); \
+								todo \
+								return NULL; \
+							}
+
 static PyObject* ptSDL_getitem(PyObject *self, PyObject *args)
 {
+	char errormsg[512];
 	char * key;
 	key=PyString_AsString(args);
 	if(key==NULL)
@@ -94,6 +103,13 @@ static PyObject* ptSDL_getitem(PyObject *self, PyObject *args)
 	}
 
 	int sdlindex=find_sdl_descriptor(head->name,head->version,global_sdl_def,global_sdl_def_n);
+
+	if(sdlindex<0)
+	{
+		snprintf((char *)&errormsg,511,"a really strange error has occured (did not find the searched SDL descriptor)");
+		PyErr_SetString(PyExc_Exception,(char *)&errormsg);
+		return NULL;
+	}
 
 	t_sdl_def *sdldesc=&global_sdl_def[sdlindex];
 
@@ -113,6 +129,7 @@ static PyObject* ptSDL_getitem(PyObject *self, PyObject *args)
 				array_count=binvar->array_count;
 
 			PyObject **outputs = (PyObject **)malloc(sizeof(PyObject *)*array_count);
+			OOM_CHECK(outputs)
 
 			for(int j=0; j<array_count; j++)
 			{
@@ -137,12 +154,14 @@ static PyObject* ptSDL_getitem(PyObject *self, PyObject *args)
 						else
 							outputs[j]=PyString_FromString((char *)head->bin.values[i].data+32*j);
 						break;
+#if 0
 					case 5: //Sub SDL
 						//plog(log,"   Error: There a struct in the value list.\n");
 						free(outputs);
 						return NULL;
 						//outputs[j]=NULL;
 						break;
+#endif
 					case 2: //BOOL (1 byte)
 					case 9: //BYTE (1 byte)
 						if(binvar->flags & 0x08)
@@ -156,6 +175,7 @@ static PyObject* ptSDL_getitem(PyObject *self, PyObject *args)
 						else
 							outputs[j]=Py_BuildValue("h", ((short *)head->bin.values[i].data)[j]);
 						break;
+#if 0
 					case 8: //TIME (4+4 bytes)
 						free(outputs);
 						return NULL;
@@ -179,10 +199,17 @@ static PyObject* ptSDL_getitem(PyObject *self, PyObject *args)
 						free(outputs);
 						return NULL;
 						break;
+#endif
+					default:
+						free(outputs);
+						snprintf((char *)&errormsg,511,"the requested type %s can not be copied to a Python value yet",sdl_get_var_type_nspc(descvar->type));
+						PyErr_SetString(PyExc_NotImplementedError,(char *)&errormsg);
+						return NULL;
 				};
 			}
 
 			char *outputformatstr = (char *)malloc(array_count+3);
+			OOM_CHECK(outputformatstr,free(outputs);)
 
 			outputformatstr[0]='(';
 			memset(outputformatstr+1,'O',array_count);
@@ -196,11 +223,20 @@ static PyObject* ptSDL_getitem(PyObject *self, PyObject *args)
 		}
 		//else: didn't find the searched key
 	}
-	char errormsg[512];
 	snprintf((char *)&errormsg,511,"didn't find the searched key (\"%s\")",key);
 	PyErr_SetString(PyExc_KeyError,(char *)&errormsg);
 	return NULL;
 }
+#undef OOM_CHECK
+
+
+#define OOM_CHECK(var,todo)	if(!var) \
+							{ \
+								snprintf((char *)&errormsg,511,"out of memory"); \
+								PyErr_SetString(PyExc_MemoryError,(char *)&errormsg); \
+								todo \
+								return -1; \
+							}
 
 static int ptSDL_setitem(PyObject *self, PyObject *args, PyObject *values)
 {
@@ -221,6 +257,13 @@ static int ptSDL_setitem(PyObject *self, PyObject *args, PyObject *values)
 
 	int sdlindex=find_sdl_descriptor(head->name,head->version,global_sdl_def,global_sdl_def_n);
 
+	if(sdlindex<0)
+	{
+		snprintf((char *)&errormsg,511,"a really strange error has occured (did not find the searched SDL descriptor)");
+		PyErr_SetString(PyExc_Exception,(char *)&errormsg);
+		return -1;
+	}
+
 	t_sdl_def *sdldesc=&global_sdl_def[sdlindex];
 
 	for(int i=0; i<head->bin.n_values; i++)
@@ -229,22 +272,31 @@ static int ptSDL_setitem(PyObject *self, PyObject *args, PyObject *values)
 		{
 			//found the searched key!
 
+			if(!PyTuple_Check(values))
+			{
+				snprintf((char *)&errormsg,511,"the value is not a tuple");
+				PyErr_SetString(PyExc_TypeError,(char *)&errormsg);
+				return -1;
+			}
+
 			t_sdl_bin_tuple * binvar=&(head->bin.values[i]);
 			t_sdl_var * descvar=&(sdldesc->vars[head->bin.values[i].index]);
 
 			int array_count;
-			if(descvar->array_size)
-				array_count=descvar->array_size;
-			else
-			{
-				//!TODO implement handling of tuples with a variable length
-				return -1;
-				//array_count=[where can i get the tuple item count???]
-				//array_count=binvar->array_count;
-			}
 
-			void *tuple;
-			char *parsestr=(char *)malloc(array_count+1);
+			if(descvar->array_size)
+			{
+				int tuplecount=PyTuple_Size(values);
+				if(descvar->array_size!=tuplecount)
+				{
+					snprintf((char *)&errormsg,511,"tuple item count does not match the expected number %i",tuplecount);
+					PyErr_SetString(PyExc_ValueError,(char *)&errormsg);
+					return -1;
+				}
+				array_count=descvar->array_size;
+			}
+			else
+				array_count=PyTuple_Size(values);
 
 			char parsechar;
 			size_t tupleitemsize;
@@ -262,9 +314,11 @@ static int ptSDL_setitem(PyObject *self, PyObject *args, PyObject *values)
 					parsechar='s';
 					tupleitemsize=sizeof(PyObject *);
 					break;
+#if 0
 				case 5: //Sub SDL
 					return -1;
 					break;
+#endif
 				case 2: //BOOL (1 byte)
 				case 9: //BYTE (1 byte)
 					parsechar='b';
@@ -274,6 +328,7 @@ static int ptSDL_setitem(PyObject *self, PyObject *args, PyObject *values)
 					parsechar='h';
 					tupleitemsize=sizeof(short);
 					break;
+#if 0
 				case 8: //TIME (4+4 bytes)
 					return -1;
 					break;
@@ -290,14 +345,26 @@ static int ptSDL_setitem(PyObject *self, PyObject *args, PyObject *values)
 				case 4: //PLKEY (UruObject)
 					return -1;
 					break;
+#endif
+				default:
+					snprintf((char *)&errormsg,511,"the requested type %s can not be changed by Python yet",sdl_get_var_type_nspc(descvar->type));
+					PyErr_SetString(PyExc_NotImplementedError,(char *)&errormsg);
+					return -1;
 			}
+
+			char *parsestr=(char *)malloc(array_count+1);
+			OOM_CHECK(parsestr)
+
 			memset(parsestr,parsechar,array_count);
 			parsestr[array_count]=0;
 
-			tuple=malloc(tupleitemsize*array_count);
+			void *tuple=malloc(tupleitemsize*array_count);
+			OOM_CHECK(parsestr,free(parsestr);)
 
 			//this looks like crap but works like charm! ;-)
 			void *tupleptrs=malloc(sizeof(size_t)*array_count);
+			OOM_CHECK(parsestr,free(parsestr); free(tuple);)
+
 			size_t *tupleptr=(size_t *)tupleptrs;
 			for(int j=0; j<array_count; j++)
 			{
@@ -333,9 +400,11 @@ static int ptSDL_setitem(PyObject *self, PyObject *args, PyObject *values)
 						if(strcmp(PyString_AsString(&((PyObject *)tuple)[j]),(char *)&descvar->default_value))
 							goto copystuff;
 						break;
+#if 0
 					case 5: //Sub SDL
 						return 1;
 						break;
+#endif
 					case 2: //BOOL (1 byte)
 					case 9: //BYTE (1 byte)
 						if(((char *)tuple)[j]!=(char)atoi((char *)&descvar->default_value))
@@ -345,6 +414,7 @@ static int ptSDL_setitem(PyObject *self, PyObject *args, PyObject *values)
 						if(((short *)tuple)[j]!=(short)atoi((char *)&descvar->default_value))
 							goto copystuff;
 						break;
+#if 0
 					case 8: //TIME (4+4 bytes)
 						return 1;
 						break;
@@ -361,6 +431,7 @@ static int ptSDL_setitem(PyObject *self, PyObject *args, PyObject *values)
 					case 4: //PLKEY (UruObject)
 						return 1;
 						break;
+#endif
 				}
 			}
 
@@ -374,6 +445,8 @@ static int ptSDL_setitem(PyObject *self, PyObject *args, PyObject *values)
 				binvar->data=0;
 				binvar->data_size=0;
 			}
+
+			binvar->array_count=0;
 
 			binvar->flags|=0x08;
 
@@ -389,7 +462,9 @@ copystuff:
 
 			free(tuple);
 
-			binvar->flags=binvar->flags & ~0x08;
+			binvar->array_count=array_count;
+
+			binvar->flags&=~0x08;
 
 			return 0;
 		}
@@ -398,8 +473,9 @@ copystuff:
 	snprintf((char *)&errormsg,511,"didn't find the searched key (\"%s\")",key);
 	PyErr_SetString(PyExc_KeyError,(char *)&errormsg);
 
-	return 1;
+	return -1;
 }
+#undef OOM_CHECK
 
 
 //Methods

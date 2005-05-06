@@ -215,6 +215,13 @@ void update_tracking_subsys() {
 
 void tracking_subsys_idle_operation(st_unet * net) {
 	// Do idle tasks here
+
+#if 0
+	cur=lobbys[i].childs[e];
+	if(cur==-1 || net_check_address(net,cur)!=0 || net->s[cur].ip==0)
+		//!TODO cleanup!!!
+#endif
+
 	tracking_dump_players_list(net);
 }
 

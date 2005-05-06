@@ -133,13 +133,11 @@ extern FILE * fdbg;
 #define DBG(a,...)
 #define ERR(a,...)
 #else
-__inline void DBG(int a,...) {}
-__inline void ERR(int a,...) {}
-#if 0
 #  define DBG()
 #  define ERR()
-#  pragma warning(disable:4002) //disable warning "too many actual parameters for macro 'identifier'"
-#endif
+#  ifdef _MSC_VER
+#    pragma warning(disable:4002) //disable warning "too many actual parameters for macro 'identifier'"
+#  endif
 #endif //__WIN32__
 
 #define _WHERE(a) a

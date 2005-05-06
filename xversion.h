@@ -37,8 +37,34 @@
 #define alcSTR_VER "1.3.1p"
 #define alcREVISION "$Revision$"
 
+#define alcDATE __DATE__
+#define alcTIME __TIME__
+#define alcBUILD_TIME alcDATE " " alcTIME
+
+#if defined(I_AM_A_GAME_SERVER)
+#  define alcFILEDESC "Alcugs Game Server"
+#elif defined(I_AM_THE_AUTH_SERVER)
+#  define alcFILEDESC "Alcugs Auth Server"
+#elif defined(I_AM_THE_VAULT_SERVER)
+#  define alcFILEDESC "Alcugs Vault Server"
+#elif defined(I_AM_THE_TRACKING_SERVER)
+#  define alcFILEDESC "Alcugs Tracking Server"
+#elif defined(I_AM_A_LOBBY_SERVER)
+#  define alcFILEDESC "Alcugs Lobby Server"
+#elif defined(I_AM_THE_META_SERVER)
+#  define alcFILEDESC "Alcugs Meta Server"
+#elif defined(I_AM_THE_DATA_SERVER)
+#  define alcFILEDESC "Alcugs Data Server"
+#elif defined(I_AM_THE_ADMIN_SERVER)
+#  define alcFILEDESC "Alcugs Admin Server"
+#elif defined(I_AM_URUPING)
+#  define alcFILEDESC "Alcugs URUPING"
+#else
+#  define alcFILEDESC "Unknown part of the Alcugs Server Software"
+#endif
+
+
 //Protocol version numbers
 
 
 #endif
-

@@ -30,7 +30,7 @@
 
 //#define _DBG_LEVEL_ 10
 
-#include "config.h"
+#include "../config.h"
 //#include "debug.h"
 
 #include <stdlib.h>

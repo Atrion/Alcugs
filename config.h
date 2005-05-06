@@ -52,5 +52,20 @@
 #define _DBG_LEVEL_ 0
 #endif
 
+//#define DETECT_LEAKS
+
+#if defined(_DEBUG) && defined(WIN32) && defined(DETECT_LEAKS) && !defined(IN_TRACEALLOC_CPP)
+	namespace tracealloc
+	{
+		void* __cdecl malloc(size_t s);
+		void __cdecl free(void* pMem);
+		void* __cdecl realloc(void *pMem, size_t s);
+	}
+
+	#define malloc(s) tracealloc::malloc(s)
+	#define free(p) tracealloc::free(p)
+	#define realloc(p,s) tracealloc::realloc(p,s)
+#endif
+
 
 #endif
