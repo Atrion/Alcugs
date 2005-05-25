@@ -46,6 +46,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <errno.h>
 
 #ifndef __WIN32__
 #  include <netdb.h>
@@ -1750,6 +1751,10 @@ int plNetRecv(st_unet * net,int * sid) {
 	/* Don't trust tv value after the call */
 
 	if(valret<0) {
+		if (errno == EINTR) {
+			// simply go around again, a signal was probably delivered
+			return UNET_OK;
+		}
 		neterror(net->err,"ERR in select() ");
 		return UNET_ERR;
 	}

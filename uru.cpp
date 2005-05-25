@@ -47,6 +47,7 @@ const char * VERSION = alcSTR_VER;//"1.3.1p"; //Urunet 3, updated 27/01/2005
 #include "windoze.h"
 #else
 #include <netdb.h>
+#include <sys/wait.h>
 #endif
 
 #ifndef __MSVC__
@@ -263,13 +264,13 @@ void s_handler(int s) {
 			plog(f_uru,"INF: TERMINATED message sent to all players.\n\n");
 			signal(SIGUSR2, s_handler);
 			break;
-#if 0
 		case SIGCHLD:
 			stamp2log(f_err);
 			print2log(f_err,"INF: RECEIVED SIGCHLD: a child has exited\n\n");
+			int status;
+			waitpid(-1, &status, WNOHANG);
 			signal(SIGCHLD, s_handler);
 			break;
-#endif
 		case SIGSEGV:
 			plog(f_err,"TERRIBLE FATAL ERROR: SIGSEGV recieved!!!\n\n");
 			log_shutdown();
@@ -289,8 +290,8 @@ void install_handlers() {
 	signal(SIGHUP, s_handler); //reload configuration
 	signal(SIGUSR1, s_handler); //Send an emergency "server will be down" message, start a countdown and terminate the server in a elegant way
 	signal(SIGUSR2, s_handler); //Send a TERMINATED message to all logged players.
-	//signal(SIGCHLD, s_handler);
-	signal(SIGCHLD, SIG_IGN); // avoid zombies
+	signal(SIGCHLD, s_handler);
+	//signal(SIGCHLD, SIG_IGN); // avoid zombies
 #endif
 	//signal(SIGSEGV, s_handler); //Cath SIGSEGV
 }

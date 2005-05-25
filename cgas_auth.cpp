@@ -46,13 +46,13 @@
 #include <time.h>
 
 #ifdef __WIN32__
-#  include "windoze.h"
-#  include <winsock.h>
+#include "windoze.h"
+#include <winsock.h>
 #else
-#  include <sys/socket.h>
-#  include <netdb.h>
-//#  include <netinet/in.h> //not sure if other OS will need them...
-//#  include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <netinet/in.h> //not sure if other OS will need them... *REQUIRED BY: NetBSD
+//#include <arpa/inet.h>
 #endif
 
 #ifndef __MSVC__
