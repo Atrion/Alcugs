@@ -76,6 +76,10 @@ st_unet * gnet=NULL;
 
 st_pymodule * pym_xSystem,* pym_xAge;
 
+
+
+PyObject * alcugs_PtGetPythonLog_subsys(int stdoutflag); //prototype for the init stuff
+
 int init_python_subsys(st_unet * net) {
 	int ret=0;
 	if(python_initialitzed) return 0;
@@ -100,24 +104,47 @@ int init_python_subsys(st_unet * net) {
 	//end glue setting
 
 	//set scripts paths
-	char pydira[500];
-	getcwd(pydira,499);
 	char pydir[500];
-
-	unsigned int l=0;
-	for(unsigned int k=0; k<strlen(pydira);)
+	errno=0;
+	getcwd(pydir,499-strlen(aux));
+	if(errno==ERANGE)
 	{
-		pydir[l]=pydira[k];
-		l++;
-		if(pydira[k]=='\\')
-		{
-			pydir[l]='\\';
-			l++;
-		}
-		k++;
+		//!TODO path is too long to be stored in pydir
 	}
-	pydir[l]=0;
-	
+
+	//!TODO some error handling!
+	PyObject * sys_module = PyImport_ImportModule("sys");
+		PyObject * sys_path_list = PyObject_GetAttrString(sys_module,"path");
+
+			PyObject * str;
+
+			str = PyString_FromString(pydir);
+				PyList_Append(sys_path_list,str);
+			Py_DECREF(str);
+
+			strcat(pydir,"/");
+			strcat(pydir,aux);
+
+			str = PyString_FromString(pydir);
+				PyList_Append(sys_path_list,str);
+			Py_DECREF(str);
+
+		Py_DECREF(sys_path_list);
+
+
+		PyObject *pylog;
+		
+		pylog = alcugs_PtGetPythonLog_subsys(1);
+			PyObject_SetAttrString(sys_module,"stdout",pylog);
+		Py_DECREF(pylog);
+
+		pylog = alcugs_PtGetPythonLog_subsys(2);
+			PyObject_SetAttrString(sys_module,"stderr",pylog);
+		Py_DECREF(pylog);
+
+	Py_DECREF(sys_module);
+
+#if 0 //old code!
 	char buf[1024];
 	sprintf(buf,"\
 import sys\n\
@@ -132,6 +159,7 @@ ___p=alcugs.PtGetPythonLog()\n\
 sys.stdout=___p\n\
 sys.stderr=___p\n\
 print sys.path\n");
+#endif
 
 	plog(f_python,"INF: Python subsystem v %s started\n",_python_driver_ver);
 	plog(f_python,"Python Version: %s\n",Py_GetVersion());
