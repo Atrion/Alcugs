@@ -3610,7 +3610,7 @@ presetting ac_cv_c_bigendian=no (or yes) will help" >&2;}
 esac
 
 #out
-                                        ac_config_files="$ac_config_files Makefile docs/Makefile include/Makefile src/Makefile"
+                                                                                ac_config_files="$ac_config_files Makefile docs/Makefile include/Makefile src/Makefile src/alcbase/Makefile src/unet/Makefile src/servers/Makefile src/test/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -4172,6 +4172,10 @@ do
   "docs/Makefile" ) CONFIG_FILES="$CONFIG_FILES docs/Makefile" ;;
   "include/Makefile" ) CONFIG_FILES="$CONFIG_FILES include/Makefile" ;;
   "src/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
+  "src/alcbase/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/alcbase/Makefile" ;;
+  "src/unet/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/unet/Makefile" ;;
+  "src/servers/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/servers/Makefile" ;;
+  "src/test/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/test/Makefile" ;;
   "depfiles" ) CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
   "config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5

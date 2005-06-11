@@ -1,1 +1,1 @@
-subdirs = docs include src
+SUBDIRS = docs include src
