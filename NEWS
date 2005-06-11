@@ -8,6 +8,31 @@
 |Home: http://alcugs.almlys.dyns.net                                        |
 -----------------------------------------------------------------------------
 
+11/Jun/2005 - Structural Changes in the source tree
+===========================================================================0
+
+ * Autoconf is now being added as the prefered system, to configure, and
+   compile the servers. Also, there several structural changes in the
+   development tree are beind done now.
+   Makefile, and config.h has been removed.
+   Until autoconf is not fully integrated, you need two do these steps:
+    $mv alcconfig.h config.h
+    and to build the servers, you need to pass Makefile.old in this way:
+    $make -f Makefile.old all
+   If you want to try autconf. Just try:
+    $./configure
+    $make
+    and optionally
+    $make install
+    then the servers will be installed under /usr/local/, you can also force
+    an specific directory with:
+    $./configure --prefix=/home/alcugs
+   Note, don't expect autoconf to work in the current version, we are still
+   integrating it with the sources.
+   And if everything else fails, try an old revision, or post your problem
+   at the forums.
+
+
 30/Apr/2005 - Release 1.3.1p (beta)
 ===========================================================================0
 

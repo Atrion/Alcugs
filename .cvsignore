@@ -89,3 +89,10 @@ tmp_msvc/*
 *.opt
 *.plg
 *.ilk
+autom4te.cache
+autom4te.cache/*
+config.h
+config.log
+config.status
+Makefile
+stamp-h1

@@ -1,0 +1,1 @@
+subdirs = docs include src

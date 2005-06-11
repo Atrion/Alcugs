@@ -1,0 +1,15 @@
+
+#init
+AC_INIT([alcugs],[1.3.1])
+AC_CONFIG_HEADERS([config.h])
+AM_INIT_AUTOMAKE
+#progs
+AC_PROG_CC
+AC_PROG_CXX
+AC_PROG_RANLIB
+AC_PROG_INSTALL
+AC_C_BIGENDIAN
+#out
+AC_CONFIG_FILES([Makefile docs/Makefile include/Makefile src/Makefile])
+AC_OUTPUT
+
