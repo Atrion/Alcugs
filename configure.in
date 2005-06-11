@@ -15,6 +15,9 @@ AC_PROG_INSTALL
 AC_HEADER_STDC
 AC_CHECK_HEADERS([unistd.h])
 
+#check for google/coredumper.h
+AC_CHECK_HEADERS([google/coredumper.h], AC_SUBST(GOOGLE_LIBS,-lcoredumper))
+
 #types
 AC_C_BIGENDIAN
 #structures
@@ -24,6 +27,7 @@ AC_C_CONST
 #library funs
 AC_PROG_GCC_TRADITIONAL
 #system services
+
 
 #out
 AC_CONFIG_FILES([Makefile docs/Makefile include/Makefile \

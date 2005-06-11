@@ -56,4 +56,9 @@
 */
 //#define _TX_ABORT_ 1
 
+/** Google's coredumper support
+*/
+#define _GOOGLE_COREDUMPER_ 1
+
+
 #endif

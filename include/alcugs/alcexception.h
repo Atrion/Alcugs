@@ -35,6 +35,12 @@
 
 namespace alc {
 
+/** Dumps core to coredumps directory. TODO: implement a Mutex here */
+void alcWriteCoreDump();
+//0x00 - dissabled, 0x01 - enabled, 0x02 -always
+void alcSetCoreDumpFlags(char f);
+void alcSetAbort(bool c);
+
 #define txExcLevels 20
 
 /** Exception, Base virtual class */
@@ -50,7 +56,7 @@ public:
 	virtual char * what();
 	/** Returns a backtrace (Only on Linux) */
 	char * backtrace();
-	~txBase();
+	virtual ~txBase();
 private:
 	void _preparebacktrace();
 	char * msg;
