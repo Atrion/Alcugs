@@ -40,6 +40,11 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCDEBUG_H_ID "$Id$"
 
+#ifdef __cplusplus
+extern "C" {
+using namespace std
+#endif
+
 #ifdef _DBG_LEVEL_
  #if (_DBG_LEVEL_ == 0)
   #ifdef _DEBUG_
@@ -159,6 +164,9 @@ extern FILE * fdbg;
 
 #endif //_DEBUG_
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif //__U_DEBUG_A_
 

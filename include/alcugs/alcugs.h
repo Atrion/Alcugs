@@ -63,6 +63,16 @@
 
 #include "alcconfig.h"
 
+//std includes
+#include <iostream>
+#include <cstdio>
+
+//system includes
+
+
+//alcugs includes
+#include "alcexception.h"
+#include "alctypes.h"
 
 
 #endif
