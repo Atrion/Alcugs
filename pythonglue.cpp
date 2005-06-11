@@ -296,7 +296,7 @@ static PyObject* ptLog_write(PyObject *self, PyObject *args) {
 	else if(((ptLog_Object *)self)->stdoutflag==2)
 	{
 		//stderr stuff
-		static nonewerr=0;
+		static int nonewerr=0;
 		if(!strcmp(msg,"    "))
 		{
 			nonewerr=1;
