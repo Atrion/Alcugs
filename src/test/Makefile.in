@@ -46,6 +46,7 @@ AWK = @AWK@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
+CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CXX = @CXX@
 CXXDEPMODE = @CXXDEPMODE@
@@ -56,6 +57,7 @@ DEPDIR = @DEPDIR@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
+EGREP = @EGREP@
 EXEEXT = @EXEEXT@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -111,6 +113,8 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 INCLUDES = -I$(top_srcdir)/include/alcugs/
 
+LDADD = $(top_srcdir)/src/alcbase/libalcugsbase.a
+
 bin_PROGRAMS = test
 test_SOURCES = test.cpp
 subdir = src/test
@@ -124,7 +128,7 @@ PROGRAMS = $(bin_PROGRAMS)
 am_test_OBJECTS = test.$(OBJEXT)
 test_OBJECTS = $(am_test_OBJECTS)
 test_LDADD = $(LDADD)
-test_DEPENDENCIES =
+test_DEPENDENCIES = $(top_srcdir)/src/alcbase/libalcugsbase.a
 test_LDFLAGS =
 
 DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)

@@ -42,7 +42,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-using namespace std
+using namespace std;
 #endif
 
 #ifdef _DBG_LEVEL_

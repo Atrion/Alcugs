@@ -50,4 +50,10 @@
 #define _DBG_LEVEL_ 0
 #endif
 
+/** Abort on Exception.
+		If you enable this, the program will automatically abort when it launches and
+		exception. Only useful to get Coredumps.
+*/
+//#define _TX_ABORT_ 1
+
 #endif
