@@ -16,7 +16,9 @@ AC_HEADER_STDC
 AC_CHECK_HEADERS([unistd.h])
 
 #check for google/coredumper.h
-AC_CHECK_HEADERS([google/coredumper.h], AC_SUBST(GOOGLE_LIBS,-lcoredumper))
+AC_CHECK_HEADERS([google/coredumper.h], AC_SUBST(GOOGLE_LIBS,-lcoredumper), AC_MSG_RESULT([[ Support for Google coredumper dissabled, you may want to download coredumper from goog-coredumper.sf.net ]]))
+
+
 
 #types
 AC_C_BIGENDIAN

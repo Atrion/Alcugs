@@ -40,6 +40,8 @@ void alcWriteCoreDump();
 //0x00 - dissabled, 0x01 - enabled, 0x02 -always
 void alcSetCoreDumpFlags(char f);
 void alcSetAbort(bool c);
+void alcSetCoreDumpPath(char * p);
+char * alcGetCoreDumpPath();
 
 #define txExcLevels 20
 

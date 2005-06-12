@@ -98,42 +98,25 @@ typedef void(*_DBGorERR_pointer)(int a, char *msg, ...);
 #else
 //no MSVC
 
-#define DBG(a,...)  if((a)<=_DBG_LEVEL_) { fprintf(stderr,"DBG%i:%s:%s:%i> ",_DBG_LEVEL_,__FILE__,__FUNCTION__,__LINE__);\
+#define DBG(a,...)  if((a)<=_DBG_LEVEL_) { fprintf(stderr,"DBG%i:%s:%s:%i> ",a,__FILE__,__FUNCTION__,__LINE__);\
 fprintf(stderr, __VA_ARGS__); fflush(stderr); }
 
-#define ERR(a,...) if((a)<=_DBG_LEVEL_) { fprintf(stderr,"DBG%i:%s:%s:%i> ",_DBG_LEVEL_,__FILE__,__FUNCTION__,__LINE__);\
+#define ERR(a,...) if((a)<=_DBG_LEVEL_) { fprintf(stderr,"DBG%i:%s:%s:%i> ",a,__FILE__,__FUNCTION__,__LINE__);\
 fprintf(stderr, __VA_ARGS__); perror(""); fflush(stderr); }
 
-#define _WHERE(a) __dbg_where(a,__FILE__,__FUNCTION__,__LINE__)
+#define _WHERE(...) __dbg_where(__FILE__,__FUNCTION__,__LINE__,__VA_ARGS__)
 
-char * __dbg_where(const char * a,const char * b,const char * c,int d);
+char * __dbg_where(const char * b,const char * c,int d,const char * a,...);
 
 #endif //MSVC
 
-//TODO, port to other platforms
 #define _DIE(a) { DBG(0,"ABORT: %s",_WHERE(a)); abort(); }
-
-#ifdef _MALLOC_DBG_
-
-#include <stdio.h>
-
-extern FILE * fdbg;
-
-#define malloc(a) malloc(a); fdbg=fopen("mem.log","a"); fprintf(fdbg,"DBG%i:%s:%s:%i>malloc(%08X)\n",_DBG_LEVEL_,__FILE__,__FUNCTION__,__LINE__,a); fclose(fdbg);
-#define realloc(a,b) realloc(a,b); fdbg=fopen("mem.log","a"); fprintf(fdbg,"DBG%i:%s:%s:%i>realloc(%08X,%08X)\n",_DBG_LEVEL_,__FILE__,__FUNCTION__,__LINE__,a,b); fclose(fdbg);
-#define free(a) free(a); fdbg=fopen("mem.log","a"); fprintf(fdbg,"DBG%i:%s:%s:%i>free(%08X)\n",_DBG_LEVEL_,__FILE__,__FUNCTION__,__LINE__,a); fclose(fdbg);
-
-#else //_MALLOC_DBG_
 
 #ifdef _DMALLOC_DBG_
 #include "dmalloc/dmalloc.h"
 #else //_DMALLOC_DBG_
 #define dmalloc_verify(a)
 #endif //_DMALLOC_DBG_
-
-
-#endif //_MALLOC_DBG_
-
 
 #else //_DEBUG_
 //NO DEBUG
@@ -154,7 +137,7 @@ extern FILE * fdbg;
 #  endif
 #endif //__WIN32__
 
-#define _WHERE(a) a
+#define _WHERE(...) ""
 
 #define _DIE(a) { printf("ABORT: %s",a); abort(); }
 //NOTE: _DIE must always stop the execution of the program, if not, unexpected results

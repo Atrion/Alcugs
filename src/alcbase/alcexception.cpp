@@ -104,6 +104,12 @@ void alcWriteCoreDump() {
 void alcSetCoreDumpFlags(char f) {
 	txvCore=f;
 }
+void alcSetCoreDumpPath(char * p) {
+	txvCorePath=p;
+}
+char * alcGetCoreDumpPath() {
+	return txvCorePath;
+}
 void alcSetAbort(bool c) {
 	txvAbort=c;
 }
