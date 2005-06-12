@@ -52,6 +52,7 @@ public:
 			\param core If true, it will try to generate a coredump (requires the google Coredumper library), and of course, only works on a real operating system.
 	*/
 	txBase(char * msg="",bool abort=false,bool core=false);
+	txBase(char * name,char * msg,bool abort,bool core);
 	/**	Returns the description message */
 	virtual char * what();
 	/** Returns a backtrace (Only on Linux) */
@@ -65,8 +66,36 @@ private:
 	char * bt;
 	bool abort;
 	bool core;
+	char * imsg;
+	char * name;
 };
 //End Exception
+
+/** Out Of Range */
+class txOutOfRange : public txBase {
+public:
+	txOutOfRange(char * msg="",bool abort=false,bool core=false) :txBase("OutOfRange",msg,abort,core) {}
+};
+/** unknown flags */
+class txUnkFlags : public txBase {
+public:
+	txUnkFlags(char * msg="",bool abort=false,bool core=false) :txBase("UnkFlags",msg,abort,core) {}
+};
+/** unknown flags */
+class txUnexpectedData : public txBase {
+public:
+	txUnexpectedData(char * msg="",bool abort=false,bool core=false) :txBase("UnexpectedData",msg,abort,core) {}
+};
+/** No Mem */
+class txNoMem : public txBase {
+public:
+	txNoMem(char * msg="",bool abort=false,bool core=false) :txBase("NoMem",msg,abort,core) {}
+};
+/** Ref Err */
+class txRefErr : public txBase {
+public:
+	txRefErr(char * msg="",bool abort=false,bool core=false) :txBase("RefErr",msg,abort,core) {}
+};
 
 } //End alc namespace
 

@@ -113,9 +113,22 @@ void alcSetAbort(bool c) {
 
 //Base class
 txBase::txBase(char * msg,bool abort,bool core) {
+	this->name=NULL;
 	this->abort=abort;
 	this->core=core;
 	this->msg=msg;
+	this->size=0;
+	this->bt=NULL;
+	this->imsg=NULL;
+	this->_preparebacktrace();
+}
+txBase::txBase(char * name,char * msg,bool abort,bool core) {
+	this->name=name;
+	this->imsg=(char *)malloc(sizeof(char) * (strlen(name) + strlen(msg) + 2));
+	if(this->imsg!=NULL) { strcpy(this->imsg,name); strcat(this->imsg,":"); strcat(this->imsg,msg); }
+	this->abort=abort;
+	this->core=core;
+	this->msg=this->imsg;
 	this->size=0;
 	this->bt=NULL;
 	this->_preparebacktrace();
@@ -174,12 +187,13 @@ char * txBase::what() { return msg; }
 char * txBase::backtrace() { return bt; }
 txBase::~txBase() {
 	if(bt!=NULL) std::free((void *)bt);
+	if(imsg!=NULL) std::free((void *)imsg);
 }
 //End base
 
 
-//End Exceptions
 
+//End Exceptions
 
 } //End alc namespace
 

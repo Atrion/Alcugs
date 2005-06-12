@@ -54,11 +54,11 @@
 		If you enable this, the program will automatically abort when it launches and
 		exception. Only useful to get Coredumps.
 */
-//#define _TX_ABORT_ 1
+//#define _TX_ABORT_
 
 /** Google's coredumper support
 */
-#define _GOOGLE_COREDUMPER_ 1
+#define _GOOGLE_COREDUMPER_
 
 
 #endif

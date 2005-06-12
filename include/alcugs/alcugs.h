@@ -72,7 +72,7 @@
 
 //alcugs includes
 #include "alcexception.h"
-//#include "alctypes.h"
+#include "alctypes.h"
 
 
 #endif
