@@ -4,6 +4,25 @@ AC_INIT([alcugs],[1.3.1])
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
+
+AH_TOP([#ifndef __U_CONFIG_H
+#define __U_CONFIG_H])
+AH_BOTTOM([
+#endif])
+
+CXXFLAGS="-Wall -rdynamic -g3 -O0"
+
+#Platform info
+AC_CANONICAL_HOST
+AC_DEFINE_UNQUOTED(_PLATFORM_, "${host}",
+[Define this to be the canonical name (cpu-vendor-os) of your sytem.])
+AC_DEFINE_UNQUOTED(_CPU_,"${host_cpu}",
+[Define this to be the name of the CPU of your system.])
+AC_DEFINE_UNQUOTED(_VENDOR_,"${host_vendor}",
+[Define this to be the name of the vendor of your system.])
+AC_DEFINE_UNQUOTED(_OS_, "${host_os}",
+[Define this to be the name of the OS of your system.])
+
 #progs
 AC_PROG_CC
 AC_PROG_CXX
@@ -18,7 +37,11 @@ AC_CHECK_HEADERS([unistd.h])
 #check for google/coredumper.h
 AC_CHECK_HEADERS([google/coredumper.h], AC_SUBST(GOOGLE_LIBS,-lcoredumper), AC_MSG_RESULT([[ Support for Google coredumper dissabled, you may want to download coredumper from goog-coredumper.sf.net ]]))
 
-
+#dmalloc
+AC_ARG_WITH([dmalloc],
+ [AC_HELP_STRING([--with-dmalloc],
+  [link against dmalloc (default NO)])],
+ [AC_CHECK_HEADERS([dmalloc.h], ALC_LIBS="${ALC_LIBS} -ldmalloccxx", AC_MSG_FAILURE([dmalloc.h not found!]))])
 
 #types
 AC_C_BIGENDIAN
@@ -31,9 +54,18 @@ AC_PROG_GCC_TRADITIONAL
 #system services
 
 
+# vars
+AC_ARG_VAR([ALC_DBG_LEVEL],
+[Debug Level])
+
+
+AC_SUBST(ALC_LIBS,[${ALC_LIBS}])
+
 #out
 AC_CONFIG_FILES([Makefile docs/Makefile include/Makefile \
- src/Makefile src/alcbase/Makefile src/unet/Makefile src/servers/Makefile \
+ src/Makefile \
+ src/alcbase/Makefile src/alcbase/test/Makefile \
+ src/unet/Makefile src/servers/Makefile \
  src/test/Makefile])
 AC_OUTPUT
 

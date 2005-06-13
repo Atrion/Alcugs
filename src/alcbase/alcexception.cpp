@@ -161,7 +161,7 @@ void txBase::_preparebacktrace() {
 		msize+=std::strlen(strings[i])+6;
 	}
 	msize+=30;
-	bt=(char *)std::malloc(sizeof(char) * msize);
+	bt=(char *)malloc(sizeof(char) * msize);
 	if(bt!=NULL) {
 		std::memset(bt,0,msize);
 		std::sprintf(bt,"Backtrace with %u levels:\n",size);
@@ -175,7 +175,7 @@ void txBase::_preparebacktrace() {
 	bt=(char *)std::malloc(sizeof(char) * 50);
 	std::sprintf(bt,"Backtrace not implemented in your OS\n");
 #endif
-	if(strings!=NULL) std::free((void *)strings);
+	if(strings!=NULL) free((void *)strings);
 	if((txvCore & 0x02) || this->core) { alcWriteCoreDump(); }
 	if(txvAbort || this->abort) {
 		fprintf(stderr,"Exception %s:\n%s\n",this->what(),this->backtrace());
@@ -192,8 +192,8 @@ void txBase::_preparebacktrace() {
 char * txBase::what() { return msg; }
 char * txBase::backtrace() { return bt; }
 txBase::~txBase() {
-	if(bt!=NULL) std::free((void *)bt);
-	if(imsg!=NULL) std::free((void *)imsg);
+	if(bt!=NULL) free((void *)bt);
+	if(imsg!=NULL) free((void *)imsg);
 }
 //End base
 

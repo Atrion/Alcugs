@@ -36,12 +36,6 @@
 //! Enable debugging?
 #define _DEBUG_
 
-//! Enable malloc debugging?
-//#define _MALLOC_DBG_
-
-//! Enable dmalloc debugging?
-//#define _DMALLOC_DBG_
-
 //! Allow to abort?
 #define _DBG_ABORT_
 

@@ -40,6 +40,8 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCDEBUG_H_ID "$Id$"
 
+#include <assert.h>
+
 #ifdef __cplusplus
 extern "C" {
 using namespace std;
@@ -96,7 +98,7 @@ typedef void(*_DBGorERR_pointer)(int a, char *msg, ...);
 #endif //(_MSC_VER <= 1200)
 
 #else
-//no MSVC
+// !__MSVC__
 
 #define DBG(a,...)  if((a)<=_DBG_LEVEL_) { fprintf(stderr,"DBG%i:%s:%s:%i> ",a,__FILE__,__FUNCTION__,__LINE__);\
 fprintf(stderr, __VA_ARGS__); fflush(stderr); }
@@ -108,12 +110,13 @@ fprintf(stderr, __VA_ARGS__); perror(""); fflush(stderr); }
 
 char * __dbg_where(const char * b,const char * c,int d,const char * a,...);
 
-#endif //MSVC
+#endif //__MSVC__
 
 #define _DIE(a) { DBG(0,"ABORT: %s",_WHERE(a)); abort(); }
 
-#ifdef _DMALLOC_DBG_
-#include "dmalloc/dmalloc.h"
+#if defined(HAVE_DMALLOC_H)
+#include <dmalloc.h>
+#define dmalloc_verify(a) { DBG(5,"dmalloc_verify()\n"); dmalloc_verify(a); }
 #else //_DMALLOC_DBG_
 #define dmalloc_verify(a)
 #endif //_DMALLOC_DBG_

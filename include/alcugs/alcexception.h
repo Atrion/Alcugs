@@ -98,6 +98,32 @@ class txRefErr : public txBase {
 public:
 	txRefErr(char * msg="",bool abort=false,bool core=false) :txBase("RefErr",msg,abort,core) {}
 };
+/** Write Err */
+class txWriteErr : public txBase {
+public:
+	txWriteErr(char * msg="",bool abort=false,bool core=false) :txBase("WriteErr",msg,abort,core) {}
+};
+/** No File */
+class txNoFile : public txBase {
+public:
+	txNoFile(char * msg="",bool abort=false,bool core=false) :txBase("NoFile",msg,abort,core) {}
+};
+/** Unk Err */
+class txUnkErr : public txBase {
+public:
+	txUnkErr(char * msg="",bool abort=false,bool core=false) :txBase("UnkErr",msg,abort,core) {}
+};
+/** No File */
+class txNotFound : public txBase {
+public:
+	txNotFound(char * msg="",bool abort=false,bool core=false) :txBase("NotFound",msg,abort,core) {}
+};
+/** No File */
+class txNoAccess : public txBase {
+public:
+	txNoAccess(char * msg="",bool abort=false,bool core=false) :txBase("NoAccess",msg,abort,core) {}
+};
+
 
 } //End alc namespace
 
