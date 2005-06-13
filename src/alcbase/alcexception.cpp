@@ -88,11 +88,14 @@ void alcWriteCoreDump() {
 	int strsize=60;
 	if(txvCorePath!=NULL) strsize+=strlen(txvCorePath);
 	char * where=(char *)malloc(sizeof(char) * strsize+1);
-	memset(where,0,strsize+1);
-	if(txvCorePath!=NULL) sprintf(where,"%s/core-%06i-%08X.core",txvCorePath,pid,t);
-	else sprintf(where,"core-%06i-%08X.core",pid,t);
+	if(where) {
+		memset(where,0,strsize+1);
+		if(txvCorePath!=NULL) sprintf(where,"%s/core-%06i-%08X.core",txvCorePath,pid,t);
+		else sprintf(where,"core-%06i-%08X.core",pid,t);
 	
-	if(txvCore & 0x01) google::WriteCoreDump((const char *)where);
+		if(txvCore & 0x01) google::WriteCoreDump((const char *)where);
+		free((void *)where);
+	}
 	#else
 	DBG(5,"is not enabled\n");
 	#ifdef __WIN32__

@@ -34,8 +34,20 @@ AC_PROG_INSTALL
 AC_HEADER_STDC
 AC_CHECK_HEADERS([unistd.h])
 
+#Zlib
+AC_CHECK_HEADERS([zlib.h], , AC_MSG_FAILURE([zlib.h not found!]))
+AC_CHECK_LIB(z,compress, , AC_MSG_FAILURE([zlib not found!]))
+
 #check for google/coredumper.h
-AC_CHECK_HEADERS([google/coredumper.h], AC_SUBST(GOOGLE_LIBS,-lcoredumper), AC_MSG_RESULT([[ Support for Google coredumper dissabled, you may want to download coredumper from goog-coredumper.sf.net ]]))
+#AC_CHECK_HEADERS([google/coredumper.h], AC_SUBST(GOOGLE_LIBS,-lcoredumper), AC_MSG_RESULT([[ Support for Google coredumper dissabled, you may want to download coredumper from goog-coredumper.sf.net ]]))
+
+AC_ARG_WITH([coredumper],
+ [AC_HELP_STRING([--with-coredumper],
+  [link against google coredumper (default YES)])])
+
+	if test "${with_coredumper}" != "no" ; then
+		AC_CHECK_HEADERS([google/coredumper.h], [AC_CHECK_LIB(coredumper,WriteCoreDump, , AC_MSG_FAILURE([Google coredumper not found (buf I have found the header !?)]))], AC_MSG_RESULT([[ Support for Google coredumper dissabled, you may want to download coredumper from goog-coredumper.sf.net ]]))	
+	fi
 
 #dmalloc
 AC_ARG_WITH([dmalloc],
@@ -44,10 +56,11 @@ AC_ARG_WITH([dmalloc],
  [AC_CHECK_HEADERS([dmalloc.h], ALC_LIBS="${ALC_LIBS} -ldmalloccxx", AC_MSG_FAILURE([dmalloc.h not found!]))])
 
 #types
-AC_C_BIGENDIAN
 #structures
-AC_C_CONST
+
 #compiler specific
+AC_C_BIGENDIAN
+AC_C_CONST
 
 #library funs
 AC_PROG_GCC_TRADITIONAL
