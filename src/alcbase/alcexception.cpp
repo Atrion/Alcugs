@@ -174,11 +174,11 @@ void txBase::_preparebacktrace() {
 			std::strcat(bt,"\n");
 		}
 	}
+	if(strings!=NULL) free((void *)strings);
 #else
 	bt=(char *)std::malloc(sizeof(char) * 50);
 	std::sprintf(bt,"Backtrace not implemented in your OS\n");
 #endif
-	if(strings!=NULL) free((void *)strings);
 	if((txvCore & 0x02) || this->core) { alcWriteCoreDump(); }
 	if(txvAbort || this->abort) {
 		fprintf(stderr,"Exception %s:\n%s\n",this->what(),this->backtrace());

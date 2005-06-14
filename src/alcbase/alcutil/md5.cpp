@@ -56,7 +56,7 @@
 		here http://sourceforge.net/projects/libmd5-rfc/
  */
 
-#include "md5.h"
+#include "alcutil/md5.h"
 #include <string.h>
 
 #undef BYTE_ORDER	/* 1 = big-endian, -1 = little-endian, 0 = unknown */

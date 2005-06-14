@@ -25,72 +25,74 @@
 *******************************************************************************/
 
 /**
-	You should include this file at the begginging of any program that uses the
-	Alcugs API.
-	
-	If you have plans to use the Alcugs debuging interface, you should include
-	alcdebug.h at the end of your include list.
-	
-	So, your code will look something like this.
-	
-	//other includes
-	
-	#include <alcugs.h>
-	
-	//Other alcugs includes
-	
-	//other includes
-	
-	#include <alcdebug.h>
-	
-	//You can't include nothing here - It may cause problems.
-	
-	Also, you should not include alcdebug.h inside any other header file.
-	
-	Note: If you are going to install these on your system, they must reside in their
-	own alcugs directory. For example: "/usr/include/alcugs/" or "/usr/local/include/alcugs".
-	Remember to pass the -I/usr/include/alcugs parameter to your compiler.
-	
+	Alcugs OS related thingyes
 */
 
-#ifndef __U_ALCUGS_H_
-#define __U_ALCUGS_H_
-#define __U_ALCUGS_H_ID "$Id$"
+/* CVS tag - DON'T TOUCH*/
+#define __U_ALCOS_ID "$Id$"
 
-#if defined(HAVE_CONFIG_H) and defined(HAVE_WINCONFIG_H)
-#error You can only use config.h, or winconfig.h, but not both
-#endif
+#define _DBG_LEVEL_ 10
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "alcugs.h"
 
-#ifdef HAVE_WINCONFIG_H
-#include "winconfig.h"
-#endif
+#include <sys/stat.h>
+#include <unistd.h>
 
-#include "alcconfig.h"
+//alcos.h already included in alcugs.h
 
-//std includes
-#include <iostream>
-#include <cstdio>
+#include "alcdebug.h"
 
-//system includes
+namespace alc {
 
-#ifdef __WIN32__
-#include "alcutil/windoze.h"
-#endif
+using namespace std;
 
-namespace std {       
-#include <sys/types.h>
-#include <dirent.h>
+/* dir entry */
+tDirEntry::tDirEntry() {
+	name=NULL;
+	type=0;
 }
+tDirEntry::~tDirEntry() {}
+/* end dir entry */
 
-//alcugs includes
-#include "alcexception.h"
-#include "alctypes.h"
+/* tDirectory */
+tDirectory::tDirectory() {
+	dir=NULL;
+	entry=NULL;
+}
+tDirectory::~tDirectory() {
+	this->close();
+}
+void tDirectory::open(char * path) {
+	dir=opendir((const char *)path);
+	if(dir==NULL) throw txBase(_WHERE("OpenDirFailed"));
+	this->path=path;
+}
+void tDirectory::close() {
+	if(dir!=NULL) closedir(dir);
+}
+tDirEntry * tDirectory::getEntry() {
+	entry=readdir(dir);
+	if(entry==NULL) return NULL;
+	ent.name=entry->d_name;
+	#ifdef __WIN32__
+	//ent.type=0;
+	char * kpath=(char *)malloc(sizeof(char) * (strlen(entry->d_name) + strlen(this->path) + 4));
+	strcpy(kpath,this->path);
+	strcat(kpath,"\\");
+	strcat(kpath,entry->d_name);
+	struct stat buf;
+	stat((const char *)kpath,&buf);
+	if(S_ISDIR(buf.st_mode)) ent.type=0x04;
+	else ent.type=0x08;
+	//ent.type=buf.st_mode;
+	#else
+	ent.type=entry->d_type; // 0x04 - Directory, 0x08 Regular file
+	#endif
+	return &ent;
+}
+void tDirectory::rewind() {
+	rewinddir(dir);
+}
+/* end tDirectory */
 
-#include "alcutil/alcos.h"
-
-
-#endif
+} //end namespace alc

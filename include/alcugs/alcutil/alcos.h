@@ -25,72 +25,41 @@
 *******************************************************************************/
 
 /**
-	You should include this file at the begginging of any program that uses the
-	Alcugs API.
-	
-	If you have plans to use the Alcugs debuging interface, you should include
-	alcdebug.h at the end of your include list.
-	
-	So, your code will look something like this.
-	
-	//other includes
-	
-	#include <alcugs.h>
-	
-	//Other alcugs includes
-	
-	//other includes
-	
-	#include <alcdebug.h>
-	
-	//You can't include nothing here - It may cause problems.
-	
-	Also, you should not include alcdebug.h inside any other header file.
-	
-	Note: If you are going to install these on your system, they must reside in their
-	own alcugs directory. For example: "/usr/include/alcugs/" or "/usr/local/include/alcugs".
-	Remember to pass the -I/usr/include/alcugs parameter to your compiler.
-	
+	Alcugs OS related things.
 */
 
-#ifndef __U_ALCUGS_H_
-#define __U_ALCUGS_H_
-#define __U_ALCUGS_H_ID "$Id$"
+#ifndef __U_ALCOS_H
+#define __U_ALCOS_H
+/* CVS tag - DON'T TOUCH*/
+#define __U_ALCOS_H_ID "$Id$"
 
-#if defined(HAVE_CONFIG_H) and defined(HAVE_WINCONFIG_H)
-#error You can only use config.h, or winconfig.h, but not both
-#endif
+namespace alc {
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+/** A Directory entry */
+class tDirEntry {
+public:
+	tDirEntry();
+	~tDirEntry();
+	char * name;
+	int type;
+};
 
-#ifdef HAVE_WINCONFIG_H
-#include "winconfig.h"
-#endif
+/** Directory */
+class tDirectory {
+public:
+	tDirectory();
+	~tDirectory();
+	void open(char * path);
+	void close();
+	tDirEntry * getEntry();
+	void rewind();
+private:
+	std::DIR *dir;
+	struct std::dirent *entry;
+	tDirEntry ent;
+	char * path;
+};
 
-#include "alcconfig.h"
-
-//std includes
-#include <iostream>
-#include <cstdio>
-
-//system includes
-
-#ifdef __WIN32__
-#include "alcutil/windoze.h"
-#endif
-
-namespace std {       
-#include <sys/types.h>
-#include <dirent.h>
-}
-
-//alcugs includes
-#include "alcexception.h"
-#include "alctypes.h"
-
-#include "alcutil/alcos.h"
-
+} //End alc namespace
 
 #endif
