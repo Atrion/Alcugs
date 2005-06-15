@@ -90,6 +90,8 @@ namespace std {
 #include "alcexception.h"
 #include "alctypes.h"
 
+#include "urutypes/urubasetypes.h"
+
 #include "alcutil/alcos.h"
 
 

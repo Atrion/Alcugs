@@ -53,13 +53,10 @@ extern "C" {
 }
 }
 
-
-#if defined(HAVE_GOOGLE_COREDUMPER_H) and defined(_GOOGLE_COREDUMPER_)
+#if defined(HAVE_GOOGLE_COREDUMPER_H)
 namespace google {
 #include <google/coredumper.h>
 }
-#else
-#undef HAVE_GOOGLE_COREDUMPER_H
 #endif
 
 //alcexception already included in alcugs.h
@@ -68,12 +65,7 @@ namespace google {
 
 namespace alc {
 
-#ifdef _TX_ABORT_
-static bool txvAbort=1;
-#else
 static bool txvAbort=0;
-#endif
-
 static char txvCore=0x01; //0x00 - dissabled, 0x01 - enabled, 0x02 -always
 static char * txvCorePath=NULL;
 
@@ -199,8 +191,6 @@ txBase::~txBase() {
 	if(imsg!=NULL) free((void *)imsg);
 }
 //End base
-
-
 
 //End Exceptions
 

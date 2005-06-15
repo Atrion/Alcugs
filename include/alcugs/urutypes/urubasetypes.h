@@ -25,29 +25,42 @@
 *******************************************************************************/
 
 /**
-	Alcugs Configuration file.
+	Alcugs Basic data types, and buffer classes.
 */
 
-#ifndef __U_ALCCONFIG_H
-#define __U_ALCCONFIG_H
+#ifndef __U_URUBASETYPES_H
+#define __U_URUBASETYPES_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_CONFIG_H_ID "$Id$"
+#define __U_URUBASETYPES_H_ID "$Id$"
 
-//! Enable debugging?
-#define _DEBUG_
+namespace alc {
 
-//! Allow to abort?
-#define _DBG_ABORT_
+/** Wdys buffer */
+class tWDYSBuf :public tMBuf {
+public:
+	tWDYSBuf() :tMBuf() {}
+	void encrypt();
+	void decrypt();
+};
 
-//! Enable global debug level
-#ifndef _DBG_LEVEL_
-#define _DBG_LEVEL_ 0
-#endif
+/** Urustring */
+class tUStr :public tBaseType {
+public:
+	tUStr();
+	virtual int stream(tBBuf &buf);
+	virtual int stream(tBBuf &buf,bool inv);
+	virtual void store(tBBuf &buf);
+	virtual U32 size();
+	void set(Byte * val,U32 _s=0);
+	void set(char * val,U32 _s=0);
+	Byte * str();
+	U32 len();
+	virtual ~tUStr();
+private:
+	Byte * name;
+	U16 msize;
+};
 
-/** Abort on Exception.
-		If you enable this, the program will automatically abort when it launches and
-		exception. Only useful to get Coredumps.
-*/
-//#define _TX_ABORT_
+} //End alc namespace
 
 #endif
