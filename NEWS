@@ -8,6 +8,30 @@
 |Home: http://alcugs.almlys.dyns.net                                        |
 -----------------------------------------------------------------------------
 
+17/Jun/2005 - Urunet 3+ Under development ;)
+===========================================================================0
+
+ * With the structural changes, the base netcore is being partially 
+   re-written. There is still nothing usable on that new tree, but
+   if you want to start testing it, the current way to do it now is:
+   1st) Generate the configure file
+   $ ./reconf.sh
+   2nd) Run configure
+   $ ./configure --prefix=/I/want/to/install/the/servers/at/this/location
+   3rd) Compile
+   $ make
+   4th) Check
+   $ make check
+   5th) Install (optional) (I have not tested it, but I suppose, that
+                         all binaries will go to the $prefix/bin directory)
+   $ make install
+
+   But, why is the netcore being re-written?
+    1) I have the hope that urunet3 + will be finished this time.
+    2) Adding new game messages is going to be more easy.
+    3) It will be more easy to introduce the SDL (StateDesc) parser.
+    4) It will help to introduce balanced trees to the vault server.
+
 11/Jun/2005 - Structural Changes in the source tree
 ===========================================================================0
 
