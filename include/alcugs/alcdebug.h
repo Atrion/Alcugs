@@ -118,7 +118,7 @@ char * __dbg_where(const char * b,const char * c,int d,const char * a,...);
 #include <dmalloc.h>
 #define dmalloc_verify(a) { DBG(5,"dmalloc_verify()\n"); dmalloc_verify(a); }
 #else //_DMALLOC_DBG_
-#define dmalloc_verify(a)
+#define dmalloc_verify(a)l
 #endif //_DMALLOC_DBG_
 
 #else //_DEBUG_

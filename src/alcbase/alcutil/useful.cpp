@@ -24,109 +24,147 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Alcugs OS related thingyes
-*/
-
+#ifndef __U_USEFUL_
+#define __U_USEFUL_
 /* CVS tag - DON'T TOUCH*/
-#define __U_ALCOS_ID "$Id$"
+#define __U_USEFUL_ID "$Id$"
 
 //#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
 
-#include <sys/stat.h>
-#include <unistd.h>
-
-//alcos.h already included in alcugs.h
-
 #include "alcdebug.h"
 
 namespace alc {
 
-using namespace std;
+/**
+	Waits for user input, blocks until user has not entered something followed by return
+*/
+const char * alcConsoleAsk() {
+	static char what[500];
+	int str_len;
+	fflush(0);
+	fgets(what,500,stdin);
+	str_len=strlen(what);
+	if(what[str_len-1]=='\n') {
+		what[str_len-1]='\0';
+		str_len--;
+	}
 
+	return what;
+}
 
-char * alcGetExt(const char * addr) {
-	static char ext[11];
-	int i;
-	for(i=strlen(addr); i>((int)(strlen(addr)-10)); i--) {
-		if(addr[i]=='/' || addr[i]=='\\' || addr[i]==':' || addr[i]=='.') {
+/**
+	Transforms a  username#avie@host:port  into hostname, username, avie and port
+*/
+int alcGetLoginInfo(char * argv,char * hostname,char * username,U16 * port,char * avie) {
+	unsigned int i;
+
+	int a=0,b=0,c=0;
+	int q=0;
+
+	char left[100]="";
+	char mid[100]="";
+	char right[100]="";
+
+	for(i=0; i<strlen(argv); i++) {
+
+		if(argv[i]=='@') { q=1; }
+		else if(argv[i]==':') { q=2; }
+		else {
+
+			switch (q) {
+				case 0:
+					left[a]=argv[i];
+					a++;
+					break;
+				case 1:
+					mid[b]=argv[i];
+					b++;
+					break;
+				case 2:
+					right[c]=argv[i];
+					c++;
+					break;
+				default:
+					return -1;
+			}
+		}
+
+	}
+	left[a]='\0';
+	mid[b]='\0';
+	right[c]='\0';
+
+	switch (q) {
+		case 0:
+			strcpy(hostname,left);
 			break;
+		case 1:
+			strcpy(username,left);
+			strcpy(hostname,mid);
+			break;
+		case 2:
+			if(b!=0) {
+				strcpy(username,left);
+				strcpy(hostname,mid);
+			} else {
+				strcpy(hostname,left);
+			}
+			*port=atoi(right);
+			break;
+	}
+
+	//check for avie
+	a=0; b=0; q=0;
+	for(i=0; i<strlen(username); i++) {
+
+		if(username[i]=='#') { q=1; }
+		else {
+			switch (q) {
+				case 0:
+					left[a]=username[i];
+					a++;
+					break;
+				case 1:
+					mid[b]=username[i];
+					b++;
+					break;
+			}
 		}
 	}
-	memset(ext,0,sizeof(ext));
-	//printf("prext:%s\n",ext);
-	if(addr[i]=='.') {
-		strncpy(ext,addr+(i+1),strlen(addr)-(i+1));
-	} else {
-		strcpy(ext,"");
-	}
-	//printf("ext:%s,%s,%i\n",addr,ext,sizeof(ext));
-	return ext;
-}
+	left[a]='\0';
+	mid[b]='\0';
 
-void alcStripExt(char * addr) {
-	int i=0;
-	for(i=strlen(addr); i>(int)(strlen(addr)-10); i--) {
-		if(addr[i]=='/' || addr[i]=='\\' || addr[i]==':') {
+	switch (q) {
+		case 0:
+			strcpy(username,left);
 			break;
-		} else if(addr[i]=='.') {
-			addr[i]='\0';
+		case 1:
+			strcpy(username,left);
+			strcpy(avie,mid);
 			break;
-		}
 	}
+
+	return 1;
 }
 
+/**
+	Quick way to get microseconds
+*/
+U32 alcGetMicroseconds() {
+	struct timeval tv;
 
+	gettimeofday(&tv,NULL);
+	return tv.tv_usec;
+}
 
-/* dir entry */
-tDirEntry::tDirEntry() {
-	name=NULL;
-	type=0;
+/** Gets the current time as double*/
+double alcGetCurrentTime() {
+	return ((double)time(NULL) + ((double)alcGetMicroseconds() / 1000000));
 }
-tDirEntry::~tDirEntry() {}
-/* end dir entry */
 
-/* tDirectory */
-tDirectory::tDirectory() {
-	dir=NULL;
-	entry=NULL;
 }
-tDirectory::~tDirectory() {
-	this->close();
-}
-void tDirectory::open(char * path) {
-	dir=opendir((const char *)path);
-	if(dir==NULL) throw txBase(_WHERE("OpenDirFailed"));
-	this->path=path;
-}
-void tDirectory::close() {
-	if(dir!=NULL) closedir(dir);
-}
-tDirEntry * tDirectory::getEntry() {
-	entry=readdir(dir);
-	if(entry==NULL) return NULL;
-	ent.name=entry->d_name;
-	#ifdef __WIN32__
-	//ent.type=0;
-	char * kpath=(char *)malloc(sizeof(char) * (strlen(entry->d_name) + strlen(this->path) + 4));
-	strcpy(kpath,this->path);
-	strcat(kpath,"\\");
-	strcat(kpath,entry->d_name);
-	struct stat buf;
-	stat((const char *)kpath,&buf);
-	if(S_ISDIR(buf.st_mode)) ent.type=0x04;
-	else ent.type=0x08;
-	//ent.type=buf.st_mode;
-	#else
-	ent.type=entry->d_type; // 0x04 - Directory, 0x08 Regular file
-	#endif
-	return &ent;
-}
-void tDirectory::rewind() {
-	rewinddir(dir);
-}
-/* end tDirectory */
 
-} //end namespace alc
+#endif
+

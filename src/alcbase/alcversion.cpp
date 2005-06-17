@@ -24,52 +24,51 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Alcugs OS related things.
-*/
-
-#ifndef __U_ALCOS_H
-#define __U_ALCOS_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_ALCOS_H_ID "$Id$"
+#define __U_ALCVERSION_ID "$Id$"
+
+//#define _DBG_LEVEL_ 10
+
+#include "alcugs.h"
+
+#include "alcdebug.h"
 
 namespace alc {
 
-/** 
-	\param filename name
-	\return the extension 
-*/
-char * alcGetExt(const char * addr);
+char tvalcVerTextShort[500];
+char tvalcVerText[1024];
 
-/** Strips the extension from a filename */
-void alcStripExt(char * addr);
+static bool tvalcVerInit=false;
 
+void _alcVersionInitVars() {
+	if(tvalcVerInit) return;
+	char p[200];
+	char * p1=tvalcVerTextShort;
+	char * p2=tvalcVerText;
+	//short
+	sprintf(p1,"%s.  Build %s - Version %s\nId: %s\n",alcXSNAME,alcXBUILD,alcXVERSION,alcXID);
+	sprintf(p,"Alcugs %s - Version %s\n",alcXBUILDINFO,alcSTR_VER);
+	strcat(p1,p);
+	//sprintf(p,"Supported Uru protocols 12.0-12.7\n");
+	//strcat(p1,p);
+	sprintf(p,"Unet 3+ Protocol %i.%i\n",alcProtoMAX_VER,alcProtoMIN_VER);
+	strcat(p1,p);
+	//long
+	sprintf(p2,"%s",alcLicenseTextShort());
+	sprintf(p,"%s","Alcugs H'uru server\n");
+	strcat(p2,p);
+	strcat(p2,p1);
+}
 
-/** A Directory entry */
-class tDirEntry {
-public:
-	tDirEntry();
-	~tDirEntry();
-	char * name;
-	int type;
-};
+const char * alcVersionTextShort() {
+	_alcVersionInitVars();
+	return (const char *)tvalcVerTextShort;
+}
 
-/** Directory */
-class tDirectory {
-public:
-	tDirectory();
-	~tDirectory();
-	void open(char * path);
-	void close();
-	tDirEntry * getEntry();
-	void rewind();
-private:
-	std::DIR *dir;
-	struct std::dirent *entry;
-	tDirEntry ent;
-	char * path;
-};
+const char * alcVersionText() {
+	_alcVersionInitVars();
+	return (const char *)tvalcVerText;
+}
 
-} //End alc namespace
+}
 
-#endif

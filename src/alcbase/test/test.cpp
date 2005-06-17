@@ -374,6 +374,80 @@ void part3() {
 
 }
 
+int log_test() {
+
+	tLog log1;
+	tLog log2;
+	tLog system;
+
+	DBG(5,"attempting to open the log file\n");
+
+	log1.open("test",5,0);
+	system.open("sys",5,DF_SYSLOG);
+
+	//tvLogConfig->syslog_enabled=0x01;
+
+	system.log("Hello world\n");
+	system.logl(10,"This line will be not printed\n");
+	system.logl(1,"This one yes\n");
+
+	DBG(5,"attempting to print into the log file\n");
+
+	log1.stamp();
+	log1.print("This is a test\n");
+
+	log1.rotate(true);
+
+	log1.print("The test continues\n");
+
+	log1.rotate(false);
+
+	log2.open("maika/sordida",4,DF_HTML);
+
+	log1.print("I'm going to continue writting here\n");
+
+	log1.rotate();
+	log2.rotate();
+	log2.rotate();
+	log2.rotate();
+	log2.rotate();
+	log2.rotate();
+	log2.rotate();
+	log2.rotate();
+
+	log2.print("Now, I'm generating an <b>html</b> file\n");
+
+	log1.print("ABDCADFADSFASDFASFDDASFDASFASDFASFSAASDFASDFASDFASDFASDFASDFADFAS\n");
+	log1.flush();
+
+	log1.rotate();
+
+	char * kk="afjsakflñjasfdñalsdkfjskdlfñjasdfjj3\
+	8p94r37u9jujujoiasdfujasdofuasdfuñjlkasfdhasjfkl\
+	8p94r37u9jujujoiasdfujasdofuasdfuñjlkasfdhasjfkl\
+	8p94r37u9jujujoiasdfujasdofuasdfuñjlkasfdhasjfkl\
+	ñasdfhasfpiuoeñawhfe43w89piyehyhfwe";
+
+	char * kk3="hola whola ";
+
+	log1.dumpbuf((Byte *)kk,strlen(kk));
+	log1.nl();
+
+	log1.dumpbuf((Byte *)kk3,strlen(kk3));
+	log1.nl();
+
+	log1.print("The test ends _here_\n");
+	
+	dmalloc_verify(NULL);
+
+	log1.close();
+	log2.close();
+	system.close();
+	
+	lstd->log("Hi here\n");
+
+	return 0;
+}
 
 int main(int argc, char * argv[]) {
 	std::cout << "Alcugs test suit" <<std::endl;
@@ -381,12 +455,16 @@ int main(int argc, char * argv[]) {
 	DBG(4,"Starting testing suit...\n");
 
 	try {
+		alcInit();
 		do_tests();
 		ok_the_real_ones();
 		punto_y_aparte();
 		filebuffer();
 		part2();
 		part3();
+			dmalloc_verify(NULL);
+		log_test();
+			dmalloc_verify(NULL);
 		std::cout<< "Success!!" << std::endl;
 	} catch (txBase &t) {
 		std::cout<< "Cauth Exception " << t.what() << std::endl;
@@ -397,4 +475,5 @@ int main(int argc, char * argv[]) {
 		return -1;
 	}
 	
+	return 0;
 }

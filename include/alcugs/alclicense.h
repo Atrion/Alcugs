@@ -24,52 +24,14 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Alcugs OS related things.
-*/
+#ifndef __U_ALCLICENSE_H
+#define __U_ALCLICENSE_H
 
-#ifndef __U_ALCOS_H
-#define __U_ALCOS_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_ALCOS_H_ID "$Id$"
+#define __U_ALCLICENSE_H_ID "$Id$"
 
 namespace alc {
-
-/** 
-	\param filename name
-	\return the extension 
-*/
-char * alcGetExt(const char * addr);
-
-/** Strips the extension from a filename */
-void alcStripExt(char * addr);
-
-
-/** A Directory entry */
-class tDirEntry {
-public:
-	tDirEntry();
-	~tDirEntry();
-	char * name;
-	int type;
-};
-
-/** Directory */
-class tDirectory {
-public:
-	tDirectory();
-	~tDirectory();
-	void open(char * path);
-	void close();
-	tDirEntry * getEntry();
-	void rewind();
-private:
-	std::DIR *dir;
-	struct std::dirent *entry;
-	tDirEntry ent;
-	char * path;
-};
-
-} //End alc namespace
+	const char * alcLicenseTextShort();
+	const char * alcLicenseText();
+}
 
 #endif

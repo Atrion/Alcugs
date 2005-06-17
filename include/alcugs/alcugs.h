@@ -70,6 +70,12 @@
 #endif
 
 #include "alcconfig.h"
+#include "alcxversion.h"
+
+#ifdef VERSION
+#undef VERSION
+#endif
+#define VERSION alcSTR_VER
 
 //std includes
 #include <iostream>
@@ -83,16 +89,22 @@
 
 namespace std {       
 #include <sys/types.h>
+#include <sys/time.h>
 #include <dirent.h>
 }
 
 //alcugs includes
 #include "alcexception.h"
 #include "alctypes.h"
+#include "alcmain.h"
+#include "alcversion.h"
+#include "alclicense.h"
 
 #include "urutypes/urubasetypes.h"
 
 #include "alcutil/alcos.h"
-
+#include "alcutil/conv_funs.h"
+#include "alcutil/useful.h"
+#include "alcutil/alclog.h"
 
 #endif

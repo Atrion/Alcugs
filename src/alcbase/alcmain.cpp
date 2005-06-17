@@ -25,51 +25,51 @@
 *******************************************************************************/
 
 /**
-	Alcugs OS related things.
+	Alcugs Lib Main code
 */
 
-#ifndef __U_ALCOS_H
-#define __U_ALCOS_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_ALCOS_H_ID "$Id$"
+#define __U_ALCMAIN_ID "$Id$"
+
+#define _DBG_LEVEL_ 10
+
+#include "alcugs.h"
+
+
+#include "alcdebug.h"
 
 namespace alc {
 
-/** 
-	\param filename name
-	\return the extension 
-*/
-char * alcGetExt(const char * addr);
+static volatile bool alcInitialized=false;
 
-/** Strips the extension from a filename */
-void alcStripExt(char * addr);
+void alcInit(int argc,char ** argv) {
+	if(alcInitialized) return;
+	alcInitialized=true;
+	DBG(5,"alcInit()\n");
+	
+	DBG(6,"Starting log system...\n");
+	alcLogInit();
+	alcLogOpenStdLogs();
 
 
-/** A Directory entry */
-class tDirEntry {
-public:
-	tDirEntry();
-	~tDirEntry();
-	char * name;
-	int type;
-};
+	atexit(&alcShutdown);
+}
 
-/** Directory */
-class tDirectory {
-public:
-	tDirectory();
-	~tDirectory();
-	void open(char * path);
-	void close();
-	tDirEntry * getEntry();
-	void rewind();
-private:
-	std::DIR *dir;
-	struct std::dirent *entry;
-	tDirEntry ent;
-	char * path;
-};
+void alcShutdown() {
+	if(!alcInitialized) return;
+	alcInitialized=false;
+	DBG(5,"alcShutdown()\n");
+	
+	DBG(5,"Stopping log system...\n");
+	alcLogShutdown();
+	
+}
 
-} //End alc namespace
+void alcOnFork() {
 
-#endif
+	DBG(5,"alcLogShutdown from a forked child...\n");
+	alcLogShutdown(true);
+
+}
+
+}

@@ -24,52 +24,20 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Alcugs OS related things.
-*/
-
-#ifndef __U_ALCOS_H
-#define __U_ALCOS_H
+#ifndef __U_USEFUL_H
+#define __U_USEFUL_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_ALCOS_H_ID "$Id$"
+#define __U_USEFUL_H_ID "$Id$"
 
 namespace alc {
 
-/** 
-	\param filename name
-	\return the extension 
-*/
-char * alcGetExt(const char * addr);
+const char * alcConsoleAsk();
+int alcGetLoginInfo(char * argv,char * hostname,char * username,U16 * port,char * avie);
 
-/** Strips the extension from a filename */
-void alcStripExt(char * addr);
+U32 alcGetMicroseconds();
+double alcGetCurrentTime();
 
-
-/** A Directory entry */
-class tDirEntry {
-public:
-	tDirEntry();
-	~tDirEntry();
-	char * name;
-	int type;
-};
-
-/** Directory */
-class tDirectory {
-public:
-	tDirectory();
-	~tDirectory();
-	void open(char * path);
-	void close();
-	tDirEntry * getEntry();
-	void rewind();
-private:
-	std::DIR *dir;
-	struct std::dirent *entry;
-	tDirEntry ent;
-	char * path;
-};
-
-} //End alc namespace
+}
 
 #endif
+

@@ -24,52 +24,40 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Alcugs OS related things.
+/* NOTE:
+	This file is only for version numbers, windres is very sensible
+	to the syntax.
 */
 
-#ifndef __U_ALCOS_H
-#define __U_ALCOS_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_ALCOS_H_ID "$Id$"
+#ifndef __U_XVERSION_H_
+#define __U_XVERSION_H_
+#define __U_XVERSION_H_ID "$Id$"
 
-namespace alc {
+//Alcugs version numbers
+#define alcMAX_VER 1
+#define alcMIN_VER 3
+#define alcREL_VER 3
+#define alcBET_VER 1
+#define alcSTR_VER "1.3.3a"
+#define alcREVISION "$Revision$"
 
-/** 
-	\param filename name
-	\return the extension 
+#define alcDATE __DATE__
+#define alcTIME __TIME__
+#define alcBUILD_TIME alcDATE " " alcTIME
+
+#define alcXBUILDINFO "Rev: " alcREVISION " - Built:" alcBUILD_TIME
+
+//Protocol version numbers
+#define alcProtoMAX_VER 1
+#define alcProtoMIN_VER 3
+#define alcProtoVer 
+//alcProtoMIN_VER+(100*alcProtoMAX_VER)
+
+/* NOTE:
+	* <= 1.1  - Unet2 and older versions of the servers
+	* 1.2     - Unet3 protocol messages
+	* 1.3     - Unet3+ protocol
 */
-char * alcGetExt(const char * addr);
-
-/** Strips the extension from a filename */
-void alcStripExt(char * addr);
-
-
-/** A Directory entry */
-class tDirEntry {
-public:
-	tDirEntry();
-	~tDirEntry();
-	char * name;
-	int type;
-};
-
-/** Directory */
-class tDirectory {
-public:
-	tDirectory();
-	~tDirectory();
-	void open(char * path);
-	void close();
-	tDirEntry * getEntry();
-	void rewind();
-private:
-	std::DIR *dir;
-	struct std::dirent *entry;
-	tDirEntry ent;
-	char * path;
-};
-
-} //End alc namespace
 
 #endif

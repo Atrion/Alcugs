@@ -25,51 +25,30 @@
 *******************************************************************************/
 
 /**
-	Alcugs OS related things.
+	Alcugs Lib Main code.
 */
 
-#ifndef __U_ALCOS_H
-#define __U_ALCOS_H
+#ifndef __U_ALCMAIN_H
+#define __U_ALCMAIN_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_ALCOS_H_ID "$Id$"
+#define __U_ALCMAIN_H_ID "$Id$"
+
+/* You need to define these vars in your app's */
+extern const char * alcXSNAME;
+extern const char * alcXBUILD;
+extern const char * alcXVERSION;
+extern const char * alcXID;
 
 namespace alc {
 
-/** 
-	\param filename name
-	\return the extension 
+/** Start Alcugs library 
+		\param argc Number of args
+		\param argv args
 */
-char * alcGetExt(const char * addr);
+void alcInit(int argc=0,char ** argv=NULL);
+/** Stop Alcugs library */
+void alcShutdown();
 
-/** Strips the extension from a filename */
-void alcStripExt(char * addr);
-
-
-/** A Directory entry */
-class tDirEntry {
-public:
-	tDirEntry();
-	~tDirEntry();
-	char * name;
-	int type;
-};
-
-/** Directory */
-class tDirectory {
-public:
-	tDirectory();
-	~tDirectory();
-	void open(char * path);
-	void close();
-	tDirEntry * getEntry();
-	void rewind();
-private:
-	std::DIR *dir;
-	struct std::dirent *entry;
-	tDirEntry ent;
-	char * path;
-};
-
-} //End alc namespace
+}
 
 #endif

@@ -7,8 +7,10 @@ INCLUDES = -I$(top_srcdir)/include/alcugs/
 
 lib_LIBRARIES = libalcugsbase.a
 
-libalcugsbase_a_SOURCES = alcexception.cpp alctypes.cpp alcdebug.cpp \
- alcutil/md5.cpp urutypes/whatdoyousee.cpp urutypes/urubasetypes.cpp alcutil/alcos.cpp
+libalcugsbase_a_SOURCES = alcexception.cpp alcmain.cpp alctypes.cpp alcdebug.cpp \
+ alclicense.cpp alcversion.cpp \
+ alcutil/alclog.cpp alcutil/alcos.cpp alcutil/md5.cpp \
+ alcutil/conv_funs.cpp alcutil/useful.cpp \
+ urutypes/whatdoyousee.cpp urutypes/urubasetypes.cpp
 #libalcugsbase_a_LIBADD = alcexcpetion.o
-
 
