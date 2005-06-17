@@ -28,18 +28,19 @@
 	URUNET 3+
 */
 
-#ifndef __U_UNET_H
-#define __U_UNET_H
+#ifndef __U_NETLOG_H
+#define __U_NETLOG_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_UNET_H_ID "$Id$"
+#define __U_NETLOG_H_ID "$Id$"
 
-#include <netdb.h>
-#include <sys/socket.h>
+namespace alc {
+
+char * alcGetStrIp(U32 ip);
 
 
-#include "urunet.h"
-#include "netlog.h"
 
+
+
+}
 
 #endif
-

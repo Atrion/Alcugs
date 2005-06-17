@@ -162,7 +162,7 @@ void alcLogShutdown(bool silent) {
 }
 
 void alcLogInit() {
-	DBG(5,"alcLogInit()..");
+	DBG(5,"alcLogInit()..\n");
 	if(tvLogConfig==NULL) {
 		alcLogSetDefaults();
 	}
@@ -335,12 +335,18 @@ int tLog::rotate(bool force) {
 	int ret;
 
 	struct stat file_stats;
+	
+	DBG(5,"init..\n");
 
-	if(!(this->flags & DF_OPEN)) return 0;
+	//if(!(this->flags & DF_OPEN)) return 0;
 
+	DBG(5,"2..\n");
+	
 	if(tvLogConfig->n_files2rotate<=0 || this->level==0) {
 		return 0;
 	}
+	
+	DBG(5,"3..\n");
 
 	size=strlen(this->name) + strlen((const char *)tvLogConfig->path);
 
@@ -354,6 +360,7 @@ int tLog::rotate(bool force) {
 	if(gustavo==NULL) { free((void *)path); free((void *)croak);
 		free((void *)croak2); return -1; }
 
+	DBG(5,"4..\n");
 
 	if(this->name[0]!='/') {
 		strcpy(path,tvLogConfig->path);

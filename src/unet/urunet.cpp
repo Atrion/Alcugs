@@ -36,95 +36,329 @@
 #include "alcugs.h"
 #include "urunet/unet.h"
 
+#include <unistd.h>
+#include <fcntl.h>
+
 #include "alcdebug.h"
 
 namespace alc {
 
 tUnet::tUnet(char * lhost,U16 lport) {
 	DBG(9,"tUnet()\n");
-	//this->init();
+	this->init();
+	this->StartOp(lport,lhost);
 }
 tUnet::~tUnet() {
 	DBG(9,"~tUnet()\n");
 }
-
 /**
 	Fills the unet struct with the default values
 */
-/*
 void tUnet::init() {
 	DBG(9,"tUnet::init()\n");
-	memset((void *)net,0,sizeof(*net));
-	net->flags=UNET_NBLOCK | UNET_ELOG | UNET_ECRC | UNET_AUTOSP | UNET_NOFLOOD | UNET_FLOG | UNET_NETAUTH;
+	flags=UNET_NBLOCK | UNET_ELOG | UNET_ECRC | UNET_AUTOSP | UNET_NOFLOOD | UNET_FLOG | UNET_NETAUTH;
+	whoami=0; //None (new connection) //KClient; //default type of peer
 
-	net->whoami=0; //None (new connection) //KClient; //default type of peer
+	unet_sec=1; //netcore timeout to do another loop (seconds)
+	unet_usec=0; //netcore timeout to do another loop (microseconds)
 
-	net->unet_sec=1; //netcore timeout to do another loop (seconds)
-	net->unet_usec=0; //netcore timeout to do another loop (milliseconds)
+	conn_timeout=3; //default timeout
+	timeout=2000; //2 seconds (re-transmission)
 
-	net->timeout=15; //1*60; //default timeout (this one, is now working fine)
-	net->ack_timeout=1; //2 seconds
+	//initial server timestamp
+	ntime=((U32)time(NULL) * 1000000) + alcGetMicroseconds();
 
-	time((time_t *)&net->timestamp); //initial server timestamp
-	net->microseconds=get_microseconds();
+	this->n=0; //<! Current number of connections (internal, private)
+	this->max=0; //<! Maxium number of connections (default 0, unlimited)
 
-	net->n=0; //<! Current number of connections (internal, private)
-	net->max=0; //<! Maxium number of connections (default 0, unlimited)
-	//this number should be always bigger than 2 times the maxium number of players
-	net->s=NULL;
-
-	net->lan_addr=0x00001AAC;
-	net->lan_mask=0x00FFFFFF; //<! LAN mask, in network byte order (default 255.255.255.0)
+	this->lan_addr=0x00001AAC;
+	this->lan_mask=0x00FFFFFF; //<! LAN mask, in network byte order (default 255.255.255.0)
 	//! Bandwidth speed (lo interface -> maxium)
-	net->lan_up=100 * 1000 * 1000;
-	net->lan_down=100 * 1000 * 1000;
-	net->nat_up=128 * 1000;
-	net->nat_down=512 * 1000;
+	this->lan_up=100 * 1000 * 1000;
+	this->lan_down=100 * 1000 * 1000;
+	this->nat_up=128 * 1000;
+	this->nat_down=512 * 1000;
 
 	//peers
-	net->auth=-1;
-	net->vault=-1;
-	net->tracking=-1;
-	net->meta=-1;
+	this->auth=-1;
+	this->vault=-1;
+	this->tracking=-1;
+	this->meta=-1;
 
 	//logs
-	net->log=NULL;
-	net->err=NULL;
-	net->unx=NULL;
-	net->ack=NULL;
-	net->chk=NULL;
-	net->sec=NULL;
+	this->log=NULL;
+	this->err=NULL;
+	this->unx=NULL;
+	this->ack=NULL;
+	this->chk=NULL;
+	this->sec=NULL;
 }
+
+/** private error function
 */
+void tUnet::neterror(char * msg) {
+#ifdef __WIN32__
+	this->err->log("%s: winsock error code:%i\n",msg,WSAGetLastError());
+#else
+	this->err->logerr(msg);
+#endif
+}
+
+/**
+	Starts the network operation
+	\param port to listen,
+	\param FQHN e.g. "localhost", or "0.0.0.0" to bind all addresses
+	\return 0 if success, non-zero failed
+*/
+int tUnet::StartOp(U16 port,char * hostname) {
+	dumpBuffers(0x00);
+	//open unet log files
+	if(this->flags & UNET_ELOG) {
+		if(this->log==NULL) {
+			if(lstd==NULL) {
+				this->log=new tLog;
+				this->log->open(NULL,3,DF_STDOUT);
+				lstd=this->log;
+			} else {
+				this->log=lstd;
+			}
+		}
+		if(this->err==NULL) {
+			if(lerr==NULL) {
+				this->err=new tLog;
+				this->err->open(NULL,2,DF_STDERR);
+				lerr=this->err;
+			} else {
+				this->err=lerr;
+			}
+		}
+		if(this->unx==NULL && (this->flags & UNET_FLOG) && !(this->flags & UNET_DLUNE)) {
+			this->unx=new tLog;
+			this->unx->open("unexpected.log",4,0);
+		} else {
+			this->unx=new tLog;
+			this->unx->open(NULL,4,0);
+		}
+		if(this->ack==NULL && (this->flags & UNET_FLOG) && !(this->flags & UNET_DLACK)) {
+			this->ack=new tLog;
+			this->ack->open("ack.html",4,DF_HTML);
+		} else {
+			this->ack=new tLog;
+			this->ack->open(NULL,4,DF_HTML);
+		}
+		if(this->chk==NULL && (this->flags & UNET_FLOG) && !(this->flags & UNET_DLCHK)) {
+			this->chk=new tLog;
+			this->chk->open("chk.log",4,0);
+		} else {
+			this->chk=new tLog;
+			this->chk->open(NULL,4,0);
+		}
+		if(this->sec==NULL && (this->flags & UNET_FLOG) && !(this->flags & UNET_DLSEC)) {
+			this->sec=new tLog;
+			this->sec->open("access.log",4,0);
+		} else {
+			this->sec=new tLog;
+			this->sec->open(NULL,4,0);
+		}
+	}
+
+#ifdef __WIN32__
+	//start up winsock
+	memset(&this->ws,0,sizeof(this->ws));
+	log->log->log("INF: Hasecorp Windoze sockets XP...\n");
+
+	if(WSAStartup(MAKEWORD(1,1),&this->ws)!=0) {
+		neterror("ERR: Cannot start up winsock ");
+		//winsock error here
+		return UNET_FINIT;
+	}
+
+	this->log->print("Winsock Version %d, %d\n",this->ws.wHighVersion,this->ws.wVersion);
+	this->log->print(" %s - %s\n",this->ws.szDescription,this->ws.szSystemStatus);
+	this->log->print(" maxsockets:%i, maxUdpDg:%i\n",this->ws.iMaxSockets,\
+	this->ws.iMaxUdpDg);
+	this->log->print(" vendor: %s\n",this->ws.lpVendorInfo);
+#else
+	this->log->print("INF: Linux sockets...\n");
+#endif
+
+	//creating the socket
+	//udp is listed as 17, but always 0 (ip) is used
+	this->sock=socket(AF_INET,SOCK_DGRAM,0);
+
+#ifdef __WIN32__
+	if(this->sock==INVALID_SOCKET) {
+#else
+	if(this->sock<0) {
+#endif
+		neterror("ERR: Fatal - Failed Creating socket ");
+		return UNET_FINIT;
+	}
+	this->log->log("DBG: Socket created\n");
+
+	if(this->flags & UNET_NBLOCK) {
+
+#ifdef __WIN32__
+		//set non-blocking
+		this->nNoBlock = 1;
+		if(ioctlsocket(this->sock, FIONBIO, &this->nNoBlock)!=0) {
+			neterror("ERR: Fatal setting socket as non-blocking\n");
+		}
+#else
+		//set non-blocking
+		long arg;
+		if((arg = fcntl(this->sock,F_GETFL, NULL))<0) {
+			this->err->logerr("ERR: Fatal setting socket as non-blocking (fnctl F_GETFL)\n");
+			return UNET_FINIT;
+		}
+		arg |= O_NONBLOCK;
+
+		if(fcntl(this->sock, F_SETFL, arg)<0) {
+			this->err->log("ERR: Fatal setting socket as non-blocking\n");
+			return UNET_FINIT;
+		}
+#endif
+
+	} else {
+		this->log->log("DBG: Non-blocking socket set\n");
+	}
+
+	//broadcast ?
+	if(this->flags & UNET_BCAST) {
+		this->opt = 1;
+		#ifdef __WIN32__
+		if(setsockopt(this->sock, SOL_SOCKET, SO_BROADCAST, (const char *)&this->opt, sizeof(int))!=0) {
+			neterror(this->err,"ERR: Fatal - Failed setting BCAST socket ");
+			return UNET_FINIT;
+		}
+		#else
+		if(setsockopt(this->sock, SOL_SOCKET, SO_BROADCAST, &this->opt, sizeof(int))!=0) {
+			neterror("ERR: Fatal - Failed setting BCAST socket ");
+			return UNET_FINIT;
+		}
+		#endif
+	}
+
+	//set network specific options
+	this->server.sin_family=AF_INET; //UDP IP
+
+	if(!strcmp("0.0.0.0",hostname)) { //gethostbyname already does that, but just in case
+		this->server.sin_addr.s_addr=htonl(INADDR_ANY); //any address
+	} else {
+		struct hostent *host;
+		host=gethostbyname(hostname); //<- non-freed structure reported by dmalloc, huh :/ ?
+		if(host==NULL) {
+			this->err->log("ERR: Fatal cannot resolve address %s:%i\n",hostname,port);
+			return UNET_INHOST;
+		}
+		this->server.sin_addr.s_addr=*(U32 *)host->h_addr_list[0];
+	}
+
+	this->server.sin_port=htons(port); //port 5000 default
+
+	//binding port
+	if(bind(this->sock,(struct sockaddr *)&this->server,sizeof(this->server))<0) {
+		this->err->log("ERR: Fatal - Failed binding to address %s:%i\n",hostname,port);
+		neterror("bind() ");
+		return UNET_NOBIND;
+	}
+	// 10 February 2004 - Alcugs development starts from scratch.
+	// 10 February 2005 - Alcugs development continues..
+	// The next line of code was originally written in 10/Feb/2004,
+	// when the first listenning udp server named urud (uru daemon)
+	// was compiled on that day.
+	this->log->log("DBG: Listening to incoming datagrams on %s port udp %i\n\n",hostname,port);
+
+	if(this->max!=0) {
+		this->log->log("DBG: Accepting up to %i connections\n",this->max);
+	} else {
+		this->log->log("DBG: Accepting unlimited connections\n",this->max);
+	}
+
+	this->log->flush();
+
+	dumpBuffers(0x01);
+
+	return UNET_OK; //return success code
+}
+
+
+/*
+	Dumps all data structures, with the address and the contents in hex
+	flags
+	0x01 append to the last log file (elsewhere destroy the last one)
+*/
+void tUnet::dumpBuffers(Byte flags) {
+#if _DBG_LEVEL_ > 2
+	tLog * f=new tLog;
+	if(flags & 0x01) {
+		f->open("memdump.log",5,DF_APPEND);
+	} else {
+		f->open("memdump.log",5,0);
+	}
+	if(f==NULL) return;
+
+	//well dump all
+	f->log("Starting up Netcore memory report\n\n");
+
+	f->print("Unet at 0x%08X\n",(int)this);
+	f->dumpbuf((Byte *)this,sizeof(*this));
+	f->nl();
+	#ifndef __WIN32__
+	f->print("net->sock:%i\n",this->sock);
+	#endif
+	f->print("net->server.sin_family:%02X\n",this->server.sin_family);
+	f->print("net->server.sin_port:%02X (%i)\n",this->server.sin_port,htons(this->server.sin_port));
+	f->print("net->server.sin_addr:%s\n",alcGetStrIp(this->server.sin_addr.s_addr));
+	f->print("net->flags:%i\n",this->flags);
+	f->print("net->unet_sec:%i\n",this->unet_sec);
+	f->print("net->unet_usec:%i\n",this->unet_usec);
+	f->print("net->max_version:%i\n",this->max_version);
+	f->print("net->min_version:%i\n",this->min_version);
+	f->print("net->timestamp:%s\n",alcGetStrTime((U32)(this->ntime / 1000000),((U32)this->ntime % 1000000)));
+	f->print("net->conn_timeout:%i\n",this->conn_timeout);
+	f->print("net->timeout:%i\n",this->timeout);
+	f->print("net->n:%i\n",this->n);
+	f->print("net->max:%i\n",this->max);
+	//f->print("net->s:0x%08X\n",(int)this->s);
+	f->print("net->whoami:%i\n",this->whoami);
+	f->print("net->lan_addr:%i %s\n",this->lan_addr,alcGetStrIp(this->lan_addr));
+	f->print("net->lan_mask:%i %s\n",this->lan_mask,alcGetStrIp(this->lan_mask));
+	f->print("net->lan_up:%i\n",this->lan_up);
+	f->print("net->lan_down:%i\n",this->lan_down);
+	f->print("net->nat_up:%i\n",this->nat_up);
+	f->print("net->nat_down:%i\n",this->nat_down);
+	f->print("net->nat_up:%i\n",this->nat_up);
+	f->print("net->nat_down:%i\n",this->nat_down);
+	f->print("Session table\n");
+	//session table
+	//////dumpSessions(f,net);
+
+	/*
+	if(net->s!=NULL) {
+		dumpbuf(f,(Byte *)net->s,sizeof(*net->s));
+		lognl(f);
+		int i;
+		for(i=0; i<(int)net->n; i++) {
+			dumpSessionBuffers(f,net,i);
+		}
+	} */
+	f->log("Ending memory report\n");
+	f->close();
+	delete f;
+#endif
+}
 
 }
 
 
 #if 0
 
-//#define _STEP_BY_STEP_
-
 //enable noise in the netcore?
 //#define _NOISE_
 
 #include <fcntl.h>
-#include <time.h>
-#include <stdlib.h>
-#include <stdarg.h>
 #include <errno.h>
-
-#ifndef __WIN32__
-#  include <netdb.h>
-#  include <sys/socket.h>
-//#  include <netinet/in.h>
-//#  include <sys/types.h>
-#else
-#  include "windoze.h" //vsnprintf
-#endif
-
-#ifndef __MSVC__
-#  include <unistd.h>
-#endif
 
 #include "prot.h" //protocol
 #include "protocol.h"
@@ -149,16 +383,6 @@ const U32 unet_snd_expire = 70; //40 seconds should be enough for a 56Kbps user
 
 const int unet_flood_pckts = 80; //needs to be adjusted
 
-/** gets the ip address string of a host ip in network byte order
-*/
-char * get_ip(U32 ip) {
-	in_addr cip;
-	static char mip[16];
-	cip.s_addr=(unsigned long)ip;
-	strcpy(mip, inet_ntoa(cip));
-	//print2log(f_uru,"DBGDBGDBG:<<<----->>>>%s:%08X\n",mip,ip);
-	return mip;
-}
 
 /** network logging function
 */
@@ -184,15 +408,7 @@ void nlog(st_log * log,st_unet * net,int sid,char * msg,...) {
 	create_str_guid((Byte *)net->s[sid].uid),buf); //get_guid((Byte *)net->s[sid].guid)
 }
 
-/** private error function
-*/
-void neterror(st_log * log,char * msg) {
-#ifdef __WIN32__
-	plog(log,"%s: winsock error code:%i\n",msg,WSAGetLastError());
-#else
-	logerr(log,msg);
-#endif
-}
+
 
 /**
   Sends and encrypts(if necessary) the correct packet
@@ -1030,197 +1246,6 @@ int ack_update(st_unet * net,Byte * buf,int size,int sid) {
 	return UNET_OK;
 }
 
-/**
-	Starts the network operation
-	/param port to listen,
-	/param FQHN e.g. "localhost", or "0.0.0.0" to bind all addresses
-	/param a unet struct
-	/return 0 if success, non-zero failed
-*/
-int plNetStartOp(U16 port,char * hostname,st_unet * net) {
-
-	log_init();
-	dumpBuffers(net,0x00);
-	//open unet log files
-	if(net->flags & UNET_ELOG) {
-		if((f_uru==NULL || f_err==NULL) && net->flags & UNET_FLOG) {
-			log_openstdlogs();
-		}
-		if(net->log==NULL) {
-			/*if(f_uru==NULL) {
-				net->log=open_log("unet.log",3,DF_STDOUT);
-			} else {
-				net->log=f_uru;
-			}*/
-			if(f_uru==NULL) {
-				net->log=open_log(NULL,3,DF_STDOUT);
-				f_uru=net->log;
-			} else {
-				net->log=f_uru;
-			}
-		}
-		if(net->err==NULL) {
-			/*
-			if(f_err==NULL) {
-				net->err=open_log("uneterr.log",2,DF_STDERR);
-			} else {
-				net->err=f_err;
-			} */
-			if(f_err==NULL) {
-				net->err=open_log(NULL,2,DF_STDERR);
-				f_err=net->err;
-			} else {
-				net->err=f_err;
-			}
-		}
-		if(net->unx==NULL && (net->flags & UNET_FLOG) && !(net->flags & UNET_DLUNE)) {
-			net->unx=open_log("unexpected.log",4,0);
-			f_une=net->unx;
-		} else {
-			net->unx=open_log(NULL,4,0);
-			f_une=net->unx;
-		}
-		if(net->ack==NULL && (net->flags & UNET_FLOG) && !(net->flags & UNET_DLACK)) {
-			net->ack=open_log("ack.html",4,DF_HTML);
-		} else {
-			net->ack=open_log(NULL,4,DF_HTML);
-		}
-		if(net->chk==NULL && (net->flags & UNET_FLOG) && !(net->flags & UNET_DLCHK)) {
-			net->chk=open_log("chk.log",4,0);
-			f_chk=net->chk;
-		} else {
-			net->chk=open_log(NULL,4,0);
-			f_chk=net->chk;
-		}
-		if(net->sec==NULL && (net->flags & UNET_FLOG) && !(net->flags & UNET_DLSEC)) {
-			net->sec=open_log("access.log",4,0);
-		} else {
-			net->sec=open_log(NULL,4,0);
-		}
-	}
-
-#ifdef __WIN32__
-	//start up winsock
-	//WSADATA ws;
-	memset(&net->ws,0,sizeof(net->ws));
-
-	plog(net->log,"INF: Hasecorp Windoze sockets XP...\n");
-
-	if(WSAStartup(MAKEWORD(1,1),&net->ws)!=0) {
-		neterror(net->err,"ERR: Cannot start up winsock ");
-		//winsock error here
-		return UNET_FINIT;
-	}
-
-	print2log(net->log,"Winsock Version %d, %d\n",net->ws.wHighVersion,net->ws.wVersion);
-	print2log(net->log," %s - %s\n",net->ws.szDescription,net->ws.szSystemStatus);
-	print2log(net->log," maxsockets:%i, maxUdpDg:%i\n",net->ws.iMaxSockets,\
-	net->ws.iMaxUdpDg);
-	print2log(net->log," vendor: %s\n",net->ws.lpVendorInfo);
-
-#else
-	plog(net->log,"INF: Linux sockets...\n");
-#endif
-
-	//creating the socket
-	//udp is listed as 17, but always 0 (ip) is used
-	net->sock=socket(AF_INET,SOCK_DGRAM,0);
-
-#ifdef __WIN32__
-	if(net->sock==INVALID_SOCKET) {
-#else
-	if(net->sock<0) {
-#endif
-		neterror(net->err,"ERR: Fatal - Failed Creating socket ");
-		return UNET_FINIT;
-	}
-	plog(net->log,"DBG: Socket created\n");
-
-	if(net->flags & UNET_NBLOCK) {
-
-#ifdef __WIN32__
-		//set non-blocking
-		net->nNoBlock = 1;
-		if(ioctlsocket(net->sock, FIONBIO, &net->nNoBlock)!=0) {
-			neterror(net->err,"ERR: Fatal setting socket as non-blocking\n");
-		}
-#else
-		//set non-blocking
-		long arg;
-		if((arg = fcntl(net->sock,F_GETFL, NULL))<0) {
-			logerr(net->err,"ERR: Fatal setting socket as non-blocking (fnctl F_GETFL)\n");
-			return UNET_FINIT;
-		}
-		arg |= O_NONBLOCK;
-
-		if(fcntl(net->sock, F_SETFL, arg)<0) {
-			logerr(net->err,"ERR: Fatal setting socket as non-blocking\n");
-			return UNET_FINIT;
-		}
-#endif
-
-	} else {
-		plog(net->log,"DBG: Non-blocking socket set\n");
-	}
-
-	//broadcast ?
-	if(net->flags & UNET_BCAST) {
-		net->opt = 1;
-		#ifdef __WIN32__
-		if(setsockopt(net->sock, SOL_SOCKET, SO_BROADCAST, (const char *)&net->opt, sizeof(int))!=0) {
-			neterror(net->err,"ERR: Fatal - Failed setting BCAST socket ");
-			return UNET_FINIT;
-		}
-		#else
-		if(setsockopt(net->sock, SOL_SOCKET, SO_BROADCAST, &net->opt, sizeof(int))!=0) {
-			neterror(net->err,"ERR: Fatal - Failed setting BCAST socket ");
-			return UNET_FINIT;
-		}
-		#endif
-	}
-
-	//set network specific options
-	net->server.sin_family=AF_INET; //UDP IP
-
-	if(!strcmp("0.0.0.0",hostname)) { //gethostbyname already does that, but just in case
-		net->server.sin_addr.s_addr=htonl(INADDR_ANY); //any address
-	} else {
-		struct hostent *host;
-		host=gethostbyname(hostname); //<- non-freed structure reported by dmalloc, huh :/ ?
-		if(host==NULL) {
-			plog(net->err,"ERR: Fatal cannot resolve address %s:%i\n",hostname,port);
-			return UNET_INHOST;
-		}
-		net->server.sin_addr.s_addr=*(U32 *)host->h_addr_list[0];
-	}
-
-	net->server.sin_port=htons(port); //port 5000 default
-
-	//binding port
-	if(bind(net->sock,(struct sockaddr *)&net->server,sizeof(net->server))<0) {
-		plog(net->err,"ERR: Fatal - Failed binding to address %s:%i\n",hostname,port);
-		neterror(net->err,"bind() ");
-		return UNET_NOBIND;
-	}
-	// 10 February 2004 - Alcugs development starts from scratch.
-	// 10 February 2005 - Alcugs development continues..
-	// The next line of code was originally written in 10/Feb/2004,
-	// when the first listenning udp server named urud (uru daemon)
-	// was compiled on that day.
-	plog(net->log,"DBG: Listening to incoming datagrams on %s port udp %i\n\n",hostname,port);
-
-	if(net->max!=0) {
-		plog(net->log,"DBG: Accepting up to %i connections\n",net->max);
-	} else {
-		plog(net->log,"DBG: Accepting unlimited connections\n",net->max);
-	}
-
-	logflush(net->log);
-
-	dumpBuffers(net,0x01);
-
-	return UNET_OK; //return success code
-}
 
 /**
 	Stops the network operation
@@ -2245,7 +2270,7 @@ int plNetSendMsg(st_unet * net,Byte * msg,int size,int sid,Byte flags) {
 
 
 void dumpHmsg(st_log * f,st_unet_hmsg * h) {
-	print2log(f,"hmsg->cmd:%i\n",h->cmd);
+	f->print("hmsg->cmd:%i\n",h->cmd);
 	print2log(f,"hmsg->flags:0x%08X\n",h->flags);
 	print2log(f,"hmsg->max_version:%i\n",h->max_version);
 	print2log(f,"hmsg->min_version:%i\n",h->min_version);
@@ -2355,73 +2380,6 @@ void dumpSessionBuffers(st_log * f,st_unet * net,int sid) {
 	}
 
 }
-
-/*
-	Dumps all data structures, with the address and the contents in hex
-	flags
-	0x01 append to the last log file (elsewhere destroy the last one)
-*/
-void dumpBuffers(st_unet * net,Byte flags) {
-#if _DBG_LEVEL_ > 2
-	st_log * f;
-	if(flags & 0x01) {
-		f=open_log("memdump.log",5,DF_APPEND);
-	} else {
-		f=open_log("memdump.log",5,0);
-	}
-	if(f==NULL) return;
-
-	//well dump all
-	plog(f,"Starting up Netcore memory report\n\n");
-
-	print2log(f,"Unet at 0x%08X\n",(int)net);
-	if(net!=NULL) {
-		dumpbuf(f,(Byte *)net,sizeof(*net));
-		lognl(f);
-	#ifndef __WIN32__
-		print2log(f,"net->sock:%i\n",net->sock);
-	#endif
-		print2log(f,"net->server.sin_family:%02X\n",net->server.sin_family);
-		print2log(f,"net->server.sin_port:%02X (%i)\n",net->server.sin_port,htons(net->server.sin_port));
-		print2log(f,"net->server.sin_addr:%s\n",get_ip(net->server.sin_addr.s_addr));
-		print2log(f,"net->flags:%i\n",net->flags);
-		print2log(f,"net->unet_sec:%i\n",net->unet_sec);
-		print2log(f,"net->unet_usec:%i\n",net->unet_usec);
-		print2log(f,"net->max_version:%i\n",net->max_version);
-		print2log(f,"net->min_version:%i\n",net->min_version);
-		print2log(f,"net->timestamp:%s\n",get_stime(net->timestamp,net->microseconds));
-		print2log(f,"net->timeout:%i\n",net->timeout);
-		print2log(f,"net->ack_timeout:%i\n",net->ack_timeout);
-		print2log(f,"net->n:%i\n",net->n);
-		print2log(f,"net->max:%i\n",net->max);
-		print2log(f,"net->s:0x%08X\n",(int)net->s);
-		print2log(f,"net->whoami:%i\n",net->whoami);
-		print2log(f,"net->lan_addr:%i %s\n",net->lan_addr,get_ip(net->lan_addr));
-		print2log(f,"net->lan_mask:%i %s\n",net->lan_mask,get_ip(net->lan_mask));
-		print2log(f,"net->lan_up:%i\n",net->lan_up);
-		print2log(f,"net->lan_down:%i\n",net->lan_down);
-		print2log(f,"net->nat_up:%i\n",net->nat_up);
-		print2log(f,"net->nat_down:%i\n",net->nat_down);
-		print2log(f,"net->nat_up:%i\n",net->nat_up);
-		print2log(f,"net->nat_down:%i\n",net->nat_down);
-		print2log(f,"Session table\n");
-		//session table
-		dumpSessions(f,net);
-
-		if(net->s!=NULL) {
-			dumpbuf(f,(Byte *)net->s,sizeof(*net->s));
-			lognl(f);
-			int i;
-			for(i=0; i<(int)net->n; i++) {
-				dumpSessionBuffers(f,net,i);
-			}
-		}
-	}
-	plog(f,"Ending memory report\n");
-	close_log(f);
-#endif
-}
-
 
 char net_check_address(st_unet * net,int sid) {
 	if(sid<0 || sid>=(int)net->n) {

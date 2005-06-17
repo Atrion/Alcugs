@@ -25,21 +25,39 @@
 *******************************************************************************/
 
 /**
-	URUNET 3+
+	URUNET 3
 */
 
-#ifndef __U_UNET_H
-#define __U_UNET_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_UNET_H_ID "$Id$"
+#define __U_NETLOG_ID "$Id$"
 
-#include <netdb.h>
+#define _DBG_LEVEL_ 10
+
+#include "alcugs.h"
+#include "urunet/unet.h"
+
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#include "alcdebug.h"
+
+namespace alc {
+
+/** gets the ip address string of a host ip in network byte order
+*/
+char * alcGetStrIp(U32 ip) {
+	in_addr cip;
+	static char mip[16];
+	cip.s_addr=(unsigned long)ip;
+	strcpy(mip, inet_ntoa(cip));
+	//print2log(f_uru,"DBGDBGDBG:<<<----->>>>%s:%08X\n",mip,ip);
+	return mip;
+}
 
 
-#include "urunet.h"
-#include "netlog.h"
 
 
-#endif
+}
+
 

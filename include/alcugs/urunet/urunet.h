@@ -35,32 +35,6 @@
 
 namespace alc {
 
-class tUnet {
-public:
-	tUnet(char * lhost="0.0.0.0",U16 lport=0);
-	virtual ~tUnet();
-
-};
-
-}
-
-#if 0
-
-#include "data_types.h"
-#include "stdebug.h"
-
-#ifdef __WIN32__
-//#include <winsock.h>
-#include <winsock2.h>
-#define socklen_t int
-#else
-#include <arpa/inet.h>
-#endif
-
-//udp packet max buffer size (0xFFFF) - any packet should be bigger.
-#define INC_BUF_SIZE 65535
-#define OUT_BUFFER_SIZE 1024
-
 //! Urunet event table <0 errors, 0 ok, >0 events
 #define UNET_PARSEERR -12 /* !< Error parsing a plNet Msg */
 #define UNET_OUTOFRANGE -11 /* !<  Out of range */
@@ -79,13 +53,116 @@ public:
 #define UNET_NEWCONN 2 /* !< New incomming connection stablished */
 #define UNET_TIMEOUT 3 /* !< Connection to peer has ended the timer */
 #define UNET_TERMINATED 4 /* !< Connection to peer terminated */
-#define UNET_FLOOD 5 /* !< This event occurs when a player is flooding the server,
-                        aka a DOS attack, normally this happens when fly mode is used,
-                        the vault can toggle this event very frequently, so it should
-                        be ignored */
+#define UNET_FLOOD 5 /* !< This event occurs when a player is flooding the server */
 //note events UNET_FLOOD, UNET_TERMINATED, UNET_NEWCONN, and UNET_MSGRCV always contain
 // a new incoming message (from the affected peer), if the size of it is non-zero.
 //other events don't contain an incomming message, and the message size will be always zero
+
+typedef U16 tUnetFlags;
+
+//! Urunet flags
+#define UNET_NBLOCK   0x001 /* non-blocking socket */
+#define UNET_ELOG     0x002 /* enable netcore logging */
+#define UNET_ECRC     0x004 /* crc check enabled */
+#define UNET_AUTOSP   0x008 /* auto speed correction */
+#define UNET_NOFLOOD  0x010 /* enable flooding control */
+#define UNET_BCAST    0x020 /* enable broadcast */
+#define UNET_FLOG     0x040 /* enable file based logging, (also, 0x02 must be present) */
+#define UNET_NETAUTH  0x080 /* Enable authentication through servers */
+#define UNET_DLACK    0x100 /* Dissable ack trace */
+#define UNET_DLCHK    0x200 /* Dissable chk log */
+#define UNET_DLUNE    0x400 /* Dissable une log */
+#define UNET_DLSEC    0x800 /* Dissable sec log */
+
+#define UNET_DEFAULT_FLAGS UNET_NBLOCK | UNET_ELOG | UNET_ECRC | UNET_AUTOSP | UNET_NOFLOOD | UNET_FLOG | UNET_NETAUTH
+
+class tUnet {
+public:
+	tUnet(char * lhost="0.0.0.0",U16 lport=0);
+	virtual ~tUnet();
+private:
+	void init();
+	int tUnet::StartOp(U16 port,char * hostname);
+	void tUnet::neterror(char * msg);
+	void tUnet::dumpBuffers(Byte flags);
+
+	
+#ifdef __WIN32__
+	WSADATA ws; //<! The winsock stack
+	SOCKET sock; //<! The socket
+	u_long nNoBlock; //<! non-blocking (private)
+#else
+	int sock; //<! The socket
+#endif
+	int opt;
+	struct sockaddr_in server; //<! Server sockaddr
+	//!blocking socket
+	tUnetFlags flags; //explained -^
+	U16 unet_sec; //netcore timeout to do another loop (seconds)
+	U32 unet_usec; //netcore timeout to do another loop (microseconds)
+
+	Byte max_version; //Default protocol version
+	Byte min_version;
+
+	double ntime; //current time (in usecs)
+
+	U32 conn_timeout; //default timeout (to disconnect a session) (seconds) [3 secs]
+	U32 timeout; //default timeout when the send clock expires (re-transmission) (milliseconds)
+
+	U32 n; //<! Current number of connections
+	U32 max; //<! Maxium number of connections (default 0, unlimited)
+	//this number should be always bigger than 2 times the maxium number of players
+	//st_uru_client * s;
+
+	int whoami; //type of _this_ server
+	//Byte clt; //0x00 auto, 0x01 unix socket, 0x02 lo, 0x03 LAN, 0x04 WAN
+
+	U32 lan_addr; //<! LAN address, in network byte order
+	U32 lan_mask; //<! LAN mask, in network byte order (default 255.255.255.0)
+	//! Bandwidth speed (lo interface -> maxium)
+	U32 lan_up;
+	U32 lan_down;
+	U32 nat_up;
+	U32 nat_down;
+
+	char name[200]; //<! The system/server name, normally the age filename
+	char guid[18]; //<! This system guid (age guid) (in Ascii)
+
+	char address[50]; //<! This system public address (in Ascii)
+
+	U16 spawn_start; //first port to spawn
+	U16 spawn_stop; //last port to spawn (gameservers)
+
+	//peers
+	int auth; // (Game/Lobby)
+	int vault; // (Game/Lobby/Tracking)
+	int tracking; // (Game/Lobby)
+	int meta; // (Tracking(local meta)/Lobby(remote metas))
+	int data; // (Meta) [hmm]
+
+	//protocol versions (0=newest)
+	int pro_auth;
+	int pro_vault;
+	int pro_tracking;
+	int pro_meta;
+	int pro_data;
+
+	//!logging subsystem
+	tLog * log; //stdout
+	tLog * err; //stderr
+	tLog * unx; //unexpected
+	tLog * ack; //ack drawing
+	tLog * chk; //checksum results
+	tLog * sec; //security log
+};
+
+}
+
+#if 0
+
+//udp packet max buffer size (0xFFFF) - any packet should be bigger.
+#define INC_BUF_SIZE 65535
+#define OUT_BUFFER_SIZE 1024
 
 //! Uruent incoming message cue
 typedef struct {
@@ -212,109 +289,10 @@ typedef struct {
 	S16 vpos; //last packet sent
 } st_uru_client;
 
-//! Urunet flags
-#define UNET_NBLOCK 0x01 /* non-blocking socket */
-#define UNET_ELOG   0x02 /* enable netcore logging */
-#define UNET_ECRC   0x04 /* crc check enabled */
-#define UNET_AUTOSP 0x08 /* auto speed correction */
-#define UNET_NOFLOOD 0x10 /* enable flooding control */
-#define UNET_BCAST   0x20 /* enable broadcast */
-#define UNET_FLOG    0x40 /* enable file based logging, (also, 0x02 must be present) */
-#define UNET_NETAUTH 0x80 /* Enable authentication through servers */
-#define UNET_DLACK    0x100 /* Dissable ack trace */
-#define UNET_DLCHK    0x200 /* Dissable chk log */
-#define UNET_DLUNE    0x400 /* Dissable une log */
-#define UNET_DLSEC    0x800 /* Dissable sec log */
-
-#define UNET_DEFAULT_FLAGS UNET_NBLOCK | UNET_ELOG | UNET_ECRC | UNET_AUTOSP | UNET_NOFLOOD | UNET_FLOG | UNET_NETAUTH
-
-typedef U16 t_unet_flags;
-
-//! Urunet handler
-typedef struct {
-#ifdef __WIN32__
-	WSADATA ws; //<! The winsock stack
-	SOCKET sock; //<! The socket
-	u_long nNoBlock; //<! non-blocking (private)
-#else
-	int sock; //<! The socket
-#endif
-	int opt;
-	struct sockaddr_in server; //<! Server sockaddr
-	//!blocking socket
-	t_unet_flags flags; /* 0x01 non-blocking socket
-								 0x02 enable netcore logging
-							   0x04 crc check enabled
-								 0x08 auto speed correction
-								 0x10 flooding control
-								 0x20 enable broadcast
-								 0x40 enable file based logging, (also, 0x02 must be present)
-								 0x80 net auth - Enable authentication through servers
-							*/
-	U16 unet_sec; //netcore timeout to do another loop (seconds)
-	U32 unet_usec; //netcore timeout to do another loop (milliseconds)
-
-	Byte max_version; //Default protocol version
-	Byte min_version;
-
-	U32 timestamp; //current time
-	U32 microseconds; //curent time
-
-	U32 timeout; //default timeout (to disconnect a session)
-	U32 ack_timeout; //default timeout when the ack clock expires.
-
-	U32 n; //<! Current number of connections
-	U32 max; //<! Maxium number of connections (default 0, unlimited)
-	//this number should be always bigger than 2 times the maxium number of players
-	st_uru_client * s;
-
-	int whoami; //type of _this_ server
-	//Byte clt; //0x00 auto, 0x01 unix socket, 0x02 lo, 0x03 LAN, 0x04 WAN
-
-	U32 lan_addr; //<! LAN address, in network byte order
-	U32 lan_mask; //<! LAN mask, in network byte order (default 255.255.255.0)
-	//! Bandwidth speed (lo interface -> maxium)
-	U32 lan_up;
-	U32 lan_down;
-	U32 nat_up;
-	U32 nat_down;
-
-	char name[200]; //<! The system/server name, normally the age filename
-	char guid[18]; //<! This system guid (age guid) (in Ascii)
-
-	char address[50]; //<! This system public address (in Ascii)
-
-	U16 spawn_start; //first port to spawn
-	U16 spawn_stop; //last port to spawn (gameservers)
-
-	//peers
-	int auth; // (Game/Lobby)
-	int vault; // (Game/Lobby/Tracking)
-	int tracking; // (Game/Lobby)
-	int meta; // (Tracking(local meta)/Lobby(remote metas))
-	int data; // (Meta) [hmm]
-
-	//protocol versions (0=newest)
-	int pro_auth;
-	int pro_vault;
-	int pro_tracking;
-	int pro_meta;
-	int pro_data;
-
-	//!logging subsystem
-	st_log * log; //stdout
-	st_log * err; //stderr
-	st_log * unx; //unexpected
-	st_log * ack; //ack drawing
-	st_log * chk; //checksum results
-	st_log * sec; //security log
-} st_unet;
-
 char * get_ip(U32 ip);
 
 void nlog(st_log * log,st_unet * net,int sid,char * msg,...);
 
-void plNetInitStruct(st_unet * net);
 int plNetStartOp(U16 port,char * hostname,st_unet * net);
 void plNetStopOp(st_unet * net);
 

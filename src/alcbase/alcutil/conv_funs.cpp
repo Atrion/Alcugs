@@ -33,7 +33,6 @@
 #include "alcdebug.h"
 
 namespace alc {
-using namespace alc;
 
 /**
   \brief Converts an hex guid to ascii
