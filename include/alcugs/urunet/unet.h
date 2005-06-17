@@ -31,7 +31,7 @@
 #ifndef __U_UNET_H
 #define __U_UNET_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_UNET_H_ID "$Id: urunet.h 221 2005-05-02 23:07:19Z almlys $"
+#define __U_UNET_H_ID "$Id$"
 
 #include "urunet.h"
 

@@ -107,4 +107,6 @@ config.h.in
 depcomp
 mkinstalldirs
 */Makefile.in
-
+config.sub
+*.layout
+config.guess
