@@ -133,6 +133,31 @@ const Byte * alcGetStrTime(U32 timestamp, U32 microseconds) {
 	return btime;
 }
 
+const Byte * alcGetStrTime(double stamp, const char format) {
+	U32 time,micros;
+	if(stamp!=0) {
+		switch(format) {
+			case 'u':
+				micros = (U32)stamp % 1000000;
+				time = (U32)(stamp/1000000);
+				break;
+			case 'm':
+				micros = (U32)(stamp*1000) % 1000000;
+				time = (U32)(stamp/1000);
+				break;
+			case 's':
+			default:
+				micros = (U32)(stamp*1000000) % 1000000;
+				time = (U32)(stamp);
+				break;
+		}
+	} else {
+		time=alcGetTime();
+		micros=alcGetMicroseconds();
+	}
+	return alcGetStrTime(time,micros);
+}
+
 /**
   \brief Converts hex data to an ASCII string
   \param out pointer to the output buffer (must be 2*size)

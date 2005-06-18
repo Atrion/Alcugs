@@ -25,37 +25,62 @@
 *******************************************************************************/
 
 /**
-	URUNET 3
+	URUNET 3+
 */
 
+#ifndef __U_NETSESSION_H
+#define __U_NETSESSION_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_NETLOG_ID "$Id$"
-
-#define _DBG_LEVEL_ 10
-
-#include "alcugs.h"
-#include "urunet/unet.h"
-
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
-#include "alcdebug.h"
+#define __U_NETSESSION_H_ID "$Id$"
 
 namespace alc {
 
-/** gets the ip address string of a host ip in network byte order
-*/
-char * alcGetStrIp(U32 ip) {
-	in_addr cip;
-	static char mip[16];
-	cip.s_addr=(unsigned long)ip;
-	strcpy(mip, inet_ntoa(cip));
-	//print2log(f_uru,"DBGDBGDBG:<<<----->>>>%s:%08X\n",mip,ip);
-	return mip;
-}
+class tNetSessionMgr;
+
+class tNetSession {
+public:
+	tNetSession();
+	~tNetSession();
+private:
+	void init();
+	U32 ip;
+	U16 port;
+	int sid;
+	friend class tNetSessionMgr;
+};
+
+class tNetSessionIte {
+public:
+	U32 ip;
+	U16 port;
+	int sid;
+	tNetSessionIte() {
+		ip=0; port=0; sid=-1;
+	}
+	tNetSessionIte(U32 ip,U16 port,int sid=-1) {
+		this->ip=ip;
+		this->port=port;
+		this->sid=sid;
+	}
+};
+
+class tNetSessionMgr {
+public:
+	tNetSessionMgr(int limit=0);
+	~tNetSessionMgr();
+	tNetSession * search(tNetSessionIte &ite);
+	void rewind();
+	void end();
+	void destroy(tNetSessionIte &ite);
+	tNetSession * getNext();
+private:
+	int off;
+	int n;
+	int max;
+	tNetSession ** table;
+};
 
 
 }
 
-
+#endif

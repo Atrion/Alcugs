@@ -159,9 +159,21 @@ U32 alcGetMicroseconds() {
 	return tv.tv_usec;
 }
 
+U32 alcGetTime() {
+	return (U32)time(NULL);
+}
+
 /** Gets the current time as double*/
-double alcGetCurrentTime() {
-	return ((double)time(NULL) + ((double)alcGetMicroseconds() / 1000000));
+double alcGetCurrentTime(const char format) {
+	switch(format) {
+		case 'u':
+			return ((double)time(NULL) * 1000000) + (double)alcGetMicroseconds();
+		case 'm':
+			return ((double)time(NULL) * 1000) + ((double)alcGetMicroseconds() / 1000);
+		case 's':
+		default:
+			return ((double)time(NULL) + ((double)alcGetMicroseconds() / 1000000));
+	}
 }
 
 }

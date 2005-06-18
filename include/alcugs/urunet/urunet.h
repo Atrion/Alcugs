@@ -35,6 +35,10 @@
 
 namespace alc {
 
+//udp packet max buffer size (0xFFFF) - any packet should be bigger.
+#define INC_BUF_SIZE 65535
+#define OUT_BUFFER_SIZE 1024
+
 //! Urunet event table <0 errors, 0 ok, >0 events
 #define UNET_PARSEERR -12 /* !< Error parsing a plNet Msg */
 #define UNET_OUTOFRANGE -11 /* !<  Out of range */
@@ -83,6 +87,10 @@ public:
 private:
 	void init();
 	int tUnet::StartOp(U16 port,char * hostname);
+	void tUnet::StopOp();
+	
+	int tUnet::Recv(int * sid);
+	
 	void tUnet::neterror(char * msg);
 	void tUnet::dumpBuffers(Byte flags);
 
@@ -159,10 +167,6 @@ private:
 }
 
 #if 0
-
-//udp packet max buffer size (0xFFFF) - any packet should be bigger.
-#define INC_BUF_SIZE 65535
-#define OUT_BUFFER_SIZE 1024
 
 //! Uruent incoming message cue
 typedef struct {
@@ -293,10 +297,6 @@ char * get_ip(U32 ip);
 
 void nlog(st_log * log,st_unet * net,int sid,char * msg,...);
 
-int plNetStartOp(U16 port,char * hostname,st_unet * net);
-void plNetStopOp(st_unet * net);
-
-int plNetRecv(st_unet * net,int * sid);
 int plNetConnect(st_unet * net,int * sid,char * address,U16 port,Byte flags);
 #define UNET_VAL0 0x02
 #define UNET_VAL1 0x01
@@ -311,7 +311,6 @@ int plNetGetMsg(st_unet * net,int sid,Byte ** msg);
 
 void dumpSession(st_log * log,st_unet * net,int i);
 void dumpSessions(st_log * log,st_unet * net);
-void dumpBuffers(st_unet * net,Byte flags);
 
 char * get_unet_error(S16 code);
 

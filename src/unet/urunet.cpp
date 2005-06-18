@@ -50,6 +50,7 @@ tUnet::tUnet(char * lhost,U16 lport) {
 }
 tUnet::~tUnet() {
 	DBG(9,"~tUnet()\n");
+	this->StopOp();
 }
 /**
 	Fills the unet struct with the default values
@@ -66,7 +67,7 @@ void tUnet::init() {
 	timeout=2000; //2 seconds (re-transmission)
 
 	//initial server timestamp
-	ntime=((U32)time(NULL) * 1000000) + alcGetMicroseconds();
+	ntime=alcGetCurrentTime('u');
 
 	this->n=0; //<! Current number of connections (internal, private)
 	this->max=0; //<! Maxium number of connections (default 0, unlimited)
@@ -218,9 +219,9 @@ int tUnet::StartOp(U16 port,char * hostname) {
 			return UNET_FINIT;
 		}
 #endif
-
-	} else {
 		this->log->log("DBG: Non-blocking socket set\n");
+	} else {
+		this->log->log("DBG: blocking socket set\n");
 	}
 
 	//broadcast ?
@@ -238,6 +239,8 @@ int tUnet::StartOp(U16 port,char * hostname) {
 		}
 		#endif
 	}
+	
+	//chk?
 
 	//set network specific options
 	this->server.sin_family=AF_INET; //UDP IP
@@ -282,6 +285,310 @@ int tUnet::StartOp(U16 port,char * hostname) {
 	return UNET_OK; //return success code
 }
 
+/**
+	Stops the network operation
+*/
+void tUnet::StopOp() {
+	int i;
+	dumpBuffers(0x01);
+	for(i=0; i<(int)this->n; i++) {
+		//plNetDestroySession(net,i);
+	}
+	dumpBuffers(0x01);
+
+#ifdef __WIN32__
+	closesocket(this->sock);
+	if(WSACleanup()!=0) {
+		neterror("WSACleanup() ");
+	}
+#else
+	close(this->sock);
+#endif
+	this->log->log("DBG: Socket clossed\n");
+	if(this->log!=lstd) {
+		this->log->close();
+		delete this->log;
+		this->log=NULL;
+	}
+	if(this->err!=lerr) {
+		this->err->close();
+		delete this->err;
+		this->err=NULL;
+	}
+	this->ack->close();
+	this->chk->close();
+	this->unx->close();
+	this->sec->close();
+	delete this->ack;
+	delete this->chk;
+	delete this->unx;
+	delete this->sec;
+	this->ack=NULL;
+	this->chk=NULL;
+	this->unx=NULL;
+	this->sec=NULL;
+}
+
+
+/**
+	Urunet the netcore, does all, it's the heart of the server
+	/param the unet descriptor and a place to store the peer_id
+	/return an unet event
+*/
+int tUnet::Recv(int * sid) {
+	int n,i,ret,ret2; //,off; //size of packet, and iterator, return codes & 2
+	int s_old; //identifier for and old session found
+	int s_new; //identifier for a void slot session found
+	Byte buf[INC_BUF_SIZE]; //internal rcv buffer
+
+	static char checker=0;
+
+	struct sockaddr_in client; //client struct
+	socklen_t client_len; //client len size
+	client_len=sizeof(struct sockaddr_in); //get client struct size
+
+	*sid=-1; n=0; s_old=-1; s_new=-1;
+
+	//waiting for packets - timeout
+	fd_set rfds;
+	struct timeval tv;
+	int valret;
+
+	/* Check socket for new messages */
+	FD_ZERO(&rfds);
+	FD_SET(this->sock, &rfds);
+	/* Set timeout */
+	tv.tv_sec = this->unet_sec;
+	tv.tv_usec = this->unet_usec;
+
+	DBG(7,"waiting for incoming messages...\n");
+	valret = select(this->sock+1, &rfds, NULL, NULL, &tv);
+	/* Don't trust tv value after the call */
+
+	if(valret<0) {
+		if (errno == EINTR) {
+			// simply go around again, a signal was probably delivered
+			return UNET_OK;
+		}
+		neterror("ERR in select() ");
+		return UNET_ERR;
+	}
+
+#if _DBG_LEVEL_>7
+	if (valret) { DBG(7,"Data recieved...\n"); } 
+	else { DBG(7,"No data recieved...\n"); }
+#endif
+	//set stamp
+	this->ntime=alcGetCurrentTime('u');
+	DBG(6,"Stamp set...\n");
+
+	if(!valret || checker>50) {
+		checker=0;
+		//perform basic netcore things
+		// - send non-acked packets, check dead hosts & resend pending packets
+		// returns on UNET_TIMEOUT
+		/*
+		DBG(8,"for i=0; i<%i; i++\n",net->n);
+		for(i=0; i<(int)net->n; i++) {
+			DBG(9,"forstp i=%i\n",i);
+			if(net->s[i].flag==0x00) break; //stop (there is nothing else ahead)
+			else if(net->s[i].flag==0x01) {
+				//check timeout
+				if((net->timestamp - net->s[i].timestamp)>=net->s[i].timeout) {
+					//timeout event
+					DBG(5,"timeout event on peer:%i ip:%s:%i\n",i,get_ip(net->s[i].ip),ntohs(net->s[i].port));
+					net->s[i].flag=0x03; //terminated/timeout
+					*sid=i;
+					return UNET_TIMEOUT;
+				}
+				//check non-acked packets
+				if((net->timestamp - net->s[i].ack_stamp)>=net->ack_timeout) {
+					DBG(6,"plNetReSendMessages(net,%i)\n",i);
+					if(plNetReSendMessages(net,i)==UNET_TIMEOUT) {
+						DBG(5,"ack: timeout event on peer:%i ip:%s:%i\n",i,get_ip(net->s[i].ip),ntohs(net->s[i].port));
+						net->s[i].flag=0x03; //terminated/timeout
+						*sid=i;
+						return UNET_TIMEOUT;
+					}
+				}
+			}
+		}
+		*/
+	} else {
+		checker++;
+	}
+
+	DBG(5,"Before recvfrom\n");
+	//while() //get 10 messages from the buffer in a single row //TODO
+			//return on UNET_TERMINATED, UNET_MSGRCV or UNET_NEWCONN
+
+	//waiting for packets
+#ifdef __WIN32__
+	n = recvfrom(this->sock,(char *)buf,INC_BUF_SIZE,0,(struct sockaddr *)&client,&client_len);
+#else
+	n = recvfrom(this->sock,(void *)buf,INC_BUF_SIZE,0,(struct sockaddr *)&client,&client_len);
+#endif
+
+	DBG(5,"After recvfrom\n");
+
+#ifdef _NOISE_
+	if((random() % 100) >= in_noise) {
+		//nothing, goes well
+		DBG(5,"Incomming Packet accepted\n");
+	} else {
+		DBG(5,"Incomming Packet dropped\n");
+		n=0; //drop the message
+	}
+#endif
+
+	//DBG(5,"I'm here at line 1699, well, it was line 1699, I'm sure that still is line 1699...\n");
+	if(n<0 && valret) { //problems?
+		//DBG(5,"I'm going to call to neterr()..\n");
+		neterror("ERR: Fatal recieving a message... ");
+		//DBG(5,"Now, I'm getting out with an UNET_ERROR return code\n");
+		return UNET_ERR;
+	}
+	//DBG(5,"Windows Sucks..\n");
+
+	if(n>0) { //we have a message
+		/*
+			TODO: Do firewall checking here.
+			return UNET_REJECTED if the host is blacklisted
+		*/
+
+		if(n>OUT_BUFFER_SIZE) {
+			this->err->log("[ip:%s:%i] ERR: Recieved a really big message of %i bytes\n",alcGetStrIp(client.sin_addr.s_addr),ntohs(client.sin_port),n);
+			return UNET_TOOBIG;
+		} //catch up impossible big messages
+		//do things with the message here
+
+		/*
+			Uru protocol check
+			Drop packet if it is not an Uru packet without wasting a session
+		*/
+		if(buf[0]!=0x03) { //not an Uru protocol packet don't waste an slot for it
+			this->unx->log("[ip:%s:%i] ERR: Unexpected Non-Uru protocol packet found\n",alcGetStrIp(client.sin_addr.s_addr),ntohs(client.sin_port));
+			this->unx->dumpbuf(buf,n);
+			this->unx->nl();
+			return UNET_NONURU;
+		}
+
+		#if 0
+		/*
+		find the session id, and control where to manage and save data
+		*/
+		DBG(8,"Search session...\n");
+		////ret=plNetSearchSession(net,client.sin_addr.s_addr,client.sin_port,sid);
+		DBG(4,"search result %i\n",ret);
+
+		switch(ret) {
+			case UNET_NEWCONN:
+				DBG(5,"Initializing session %i\n",*sid);
+				plNetInitSession(net,*sid);
+				net->s[*sid].ip=client.sin_addr.s_addr;
+				net->s[*sid].port=client.sin_port;
+				nlog(net->log,net,*sid,"INF: New peer - incomming message of %i bytes\n",n);
+				nlog(net->sec,net,*sid,"INF: New incomming peer\n");
+				dumpSessions(net->sec,net);
+				logflush(net->sec);
+				time((time_t *)&net->s[*sid].nego_stamp);
+				net->s[*sid].nego_micros=get_microseconds();
+				net->s[*sid].alive_stamp=net->s[*sid].nego_stamp; //set last alive stamp
+				//time((time_t *)&net->s[*sid].last_check);
+				break;
+			case UNET_MSGRCV:
+				nlog(net->log,net,*sid,"INF: Old peer - incomming message of %i bytes\n",n);
+				break;
+			case UNET_TOMCONS:
+				ret=UNET_TOMCONS;
+				*sid=-1;
+				break;
+			default:
+				ret=UNET_ERR;
+				*sid=-1;
+				break;
+		}
+
+		if(ret==UNET_NEWCONN || ret==UNET_MSGRCV) {
+			//copy structures
+			DBG(5,"before memcpy()\n");
+			memcpy(net->s[*sid].sock_array,&client,sizeof(struct sockaddr_in));
+			net->s[*sid].a_client_size=client_len;
+			DBG(5,"after memcpy()\n");
+
+			//call message processor and assembler
+			DBG(5,"before processClientMsg() call\n");
+			ret2=processClientMsg(net,buf,n,*sid);
+			DBG(5,"after processClientMsg() call\n");
+			if(ret2!=UNET_MSGRCV) ret=ret2;
+
+			//if i'm bussy
+			if(net->s[*sid].bussy==1) ret=UNET_OK; //nothing to see here, move along...
+
+		}
+
+	} else {
+		//we have nothing
+		ret=UNET_OK;
+	}
+
+	st_uru_client * u=NULL;
+
+	//check for pending messages if ret!=UNET_NEWCONN or UNET_MSGRCV
+	if(ret!=UNET_NEWCONN && ret!=UNET_MSGRCV && ret!=UNET_FLOOD) {
+		DBG(5,"pending messages check...\n");
+
+		for(i=0; i<(int)net->n; i++) {
+			if(net->s[i].flag==0x00) break; //stop (there is nothing else ahead)
+			else if(net->s[i].flag==0x01 && net->s[i].bussy==0) {
+				//first check that it's not bussy
+				//then
+				u=&net->s[i];
+				st_unet_rcvmsg * ite; //iterator, that goes through all messages
+				st_unet_rcvmsg * prev; //pointer to the previous message
+				ite=u->rcvmsg;
+				prev=u->rcvmsg;
+
+				DBG(7,"Search for a message...\n");
+				while(ite!=NULL) {
+					if((net->timestamp - ite->stamp) > unet_snd_expire) { //expire messages
+						nlog(net->err,net,i,"INF: Message %i expired!\n",ite->sn);
+						// delete the expired message
+						//It's the first one
+						if(ite==u->rcvmsg) {
+							//then set to the next one
+							u->rcvmsg=(st_unet_rcvmsg *)(ite->next);
+							prev=u->rcvmsg; //update prev
+							if(ite->buf!=NULL) free((void *)ite->buf);
+							free((void *)ite);
+							ite=prev;
+						} else {
+							prev->next=ite->next;
+							if(ite->buf!=NULL) free((void *)ite->buf);
+							free((void *)ite);
+							ite=(st_unet_rcvmsg *)prev->next;
+						}
+					} else {
+						if(ite->completed==0x01) { //we found it!
+							*sid=i;
+							return UNET_MSGRCV;
+						}
+						//set the next message
+						prev=ite;
+						ite=(st_unet_rcvmsg *)ite->next;
+					}
+				}
+				DBG(7,"End message search...\n");
+			}
+		} 	
+#endif
+
+	}
+
+	DBG(7,"Returning from plNetRecv with ret:%i\n",ret);
+	return ret;
+}
+
 
 /*
 	Dumps all data structures, with the address and the contents in hex
@@ -315,7 +622,7 @@ void tUnet::dumpBuffers(Byte flags) {
 	f->print("net->unet_usec:%i\n",this->unet_usec);
 	f->print("net->max_version:%i\n",this->max_version);
 	f->print("net->min_version:%i\n",this->min_version);
-	f->print("net->timestamp:%s\n",alcGetStrTime((U32)(this->ntime / 1000000),((U32)this->ntime % 1000000)));
+	f->print("net->timestamp:%s\n",alcGetStrTime(this->ntime,'u'));
 	f->print("net->conn_timeout:%i\n",this->conn_timeout);
 	f->print("net->timeout:%i\n",this->timeout);
 	f->print("net->n:%i\n",this->n);
@@ -1247,43 +1554,7 @@ int ack_update(st_unet * net,Byte * buf,int size,int sid) {
 }
 
 
-/**
-	Stops the network operation
-*/
-void plNetStopOp(st_unet * net) {
-	int i;
-	dumpBuffers(net,0x01);
-	for(i=0; i<(int)net->n; i++) {
-		plNetDestroySession(net,i);
-	}
-	dumpBuffers(net,0x01);
 
-#ifdef __WIN32__
-	closesocket(net->sock);
-	if(WSACleanup()!=0) {
-		neterror(net->err,"WSACleanup() ");
-	}
-#else
-	close(net->sock);
-#endif
-	plog(net->log,"DBG: Socket clossed\n");
-	if(net->log!=f_uru) {
-		close_log(net->log);
-		net->log=NULL;
-	}
-	if(net->err!=f_err) {
-		close_log(net->err);
-		net->err=NULL;
-	}
-	close_log(net->ack);
-	close_log(net->chk);
-	close_log(net->unx);
-	close_log(net->sec);
-	net->ack=NULL;
-	net->chk=NULL;
-	net->unx=NULL;
-	net->sec=NULL;
-}
 
 void dumpSession(st_log * log,st_unet * net,int i) {
 	print2log(log,"[%i] f:%i,w:%i,auth:%i,val:%i,ip:%s:%i,wins:%i,a:(%s,%s)[%s]\n",\
@@ -1728,268 +1999,6 @@ int processClientMsg(st_unet * net,Byte * buf,int n,int sid) {
 	return ret;
 }
 
-
-/**
-	Urunet the netcore, does all, it's the heart of the server
-	/param the unet descriptor and a place to store the peer_id
-	/return an unet event
-*/
-int plNetRecv(st_unet * net,int * sid) {
-	int n,i,ret,ret2; //,off; //size of packet, and iterator, return codes & 2
-	int s_old; //identifier for and old session found
-	int s_new; //identifier for a void slot session found
-	Byte buf[INC_BUF_SIZE]; //internal rcv buffer
-
-	static char checker=0;
-
-	struct sockaddr_in client; //client struct
-	socklen_t client_len; //client len size
-	client_len=sizeof(struct sockaddr_in); //get client struct size
-
-	*sid=-1; n=0; s_old=-1; s_new=-1;
-
-	//waiting for packets - timeout
-	fd_set rfds;
-	struct timeval tv;
-	int valret;
-
-	/* Check socket for new messages */
-	FD_ZERO(&rfds);
-	FD_SET(net->sock, &rfds);
-	/* Set timeout */
-	tv.tv_sec = net->unet_sec;
-	tv.tv_usec = net->unet_usec;
-
-	DBG(7,"waiting for incoming messages...\n");
-	valret = select(net->sock+1, &rfds, NULL, NULL, &tv);
-	/* Don't trust tv value after the call */
-
-	if(valret<0) {
-		if (errno == EINTR) {
-			// simply go around again, a signal was probably delivered
-			return UNET_OK;
-		}
-		neterror(net->err,"ERR in select() ");
-		return UNET_ERR;
-	}
-
-#if _DBG_LEVEL_>7
-	if (valret) {
-			DBG(7,"Data recieved...\n");
-			/* FD_ISSET(0, &rfds) it's true */
-	} else {
-			DBG(7,"No data recieved...\n");
-	}
-#endif
-
-	//set stamp
-	time((time_t *)&net->timestamp); //initial server timestamp
-	net->microseconds=get_microseconds();
-
-	DBG(6,"Stamp set...\n");
-
-	if(!valret || checker>50) {
-		checker=0;
-		//perform basic netcore things
-		// - send non-acked packets, check dead hosts & resend pending packets
-		// returns on UNET_TIMEOUT
-		DBG(8,"for i=0; i<%i; i++\n",net->n);
-		for(i=0; i<(int)net->n; i++) {
-			DBG(9,"forstp i=%i\n",i);
-			if(net->s[i].flag==0x00) break; //stop (there is nothing else ahead)
-			else if(net->s[i].flag==0x01) {
-				//check timeout
-				if((net->timestamp - net->s[i].timestamp)>=net->s[i].timeout) {
-					//timeout event
-					DBG(5,"timeout event on peer:%i ip:%s:%i\n",i,get_ip(net->s[i].ip),ntohs(net->s[i].port));
-					net->s[i].flag=0x03; //terminated/timeout
-					*sid=i;
-					return UNET_TIMEOUT;
-				}
-				//check non-acked packets
-				if((net->timestamp - net->s[i].ack_stamp)>=net->ack_timeout) {
-					DBG(6,"plNetReSendMessages(net,%i)\n",i);
-					if(plNetReSendMessages(net,i)==UNET_TIMEOUT) {
-						DBG(5,"ack: timeout event on peer:%i ip:%s:%i\n",i,get_ip(net->s[i].ip),ntohs(net->s[i].port));
-						net->s[i].flag=0x03; //terminated/timeout
-						*sid=i;
-						return UNET_TIMEOUT;
-					}
-				}
-			}
-		}
-	} else {
-		checker++;
-	}
-
-	DBG(5,"Before recvfrom\n");
-	//while() //get 10 messages from the buffer in a single row //TODO
-			//return on UNET_TERMINATED, UNET_MSGRCV or UNET_NEWCONN
-
-	//waiting for packets
-#ifdef __WIN32__
-	n = recvfrom(net->sock,(char *)buf,INC_BUF_SIZE,0,(struct sockaddr *)&client,&client_len);
-#else
-	n = recvfrom(net->sock,(void *)buf,INC_BUF_SIZE,0,(struct sockaddr *)&client,&client_len);
-#endif
-
-	DBG(5,"After recvfrom\n");
-
-#ifdef _NOISE_
-	if((random() % 100) >= in_noise) {
-		//nothing, goes well
-		DBG(5,"Incomming Packet accepted\n");
-	} else {
-		DBG(5,"Incomming Packet dropped\n");
-		n=0; //drop the message
-	}
-#endif
-
-	//DBG(5,"I'm here at line 1699, well, it was line 1699, I'm sure that still is line 1699...\n");
-	if(n<0 && valret) { //problems?
-		//DBG(5,"I'm going to call to neterr()..\n");
-		neterror(net->err,"ERR: Fatal recieving a message... ");
-		//DBG(5,"Now, I'm getting out with an UNET_ERROR return code\n");
-		return UNET_ERR;
-	}
-	//DBG(5,"Windows Sucks..\n");
-
-	if(n>0) { //we have a message
-
-		/*
-			TODO: Do firewall checking here.
-			return UNET_REJECTED if the host is blacklisted
-		*/
-
-		if(n>OUT_BUFFER_SIZE) {
-			plog(net->err,"[ip:%s:%i] ERR: Recieved a really big message of %i bytes\n",get_ip(client.sin_addr.s_addr),ntohs(client.sin_port),n);
-			return UNET_TOOBIG;
-		} //catch up impossible big messages
-		//do things with the message here
-
-		/*
-			Uru protocol check
-			Drop packet if it is not an Uru packet without wasting a session
-		*/
-		if(buf[0]!=0x03) { //not an Uru protocol packet don't waste an slot for it
-			plog(net->unx,"[ip:%s:%i] ERR: Unexpected Non-Uru protocol packet found\n",get_ip(client.sin_addr.s_addr),ntohs(client.sin_port));
-			dumpbuf(net->unx,buf,n);
-			lognl(net->unx);
-			return UNET_NONURU;
-		}
-
-		/*
-		find the session id, and control where to manage and save data
-		*/
-		DBG(8,"Search session...\n");
-		ret=plNetSearchSession(net,client.sin_addr.s_addr,client.sin_port,sid);
-		DBG(4,"search result %i\n",ret);
-
-		switch(ret) {
-			case UNET_NEWCONN:
-				DBG(5,"Initializing session %i\n",*sid);
-				plNetInitSession(net,*sid);
-				net->s[*sid].ip=client.sin_addr.s_addr;
-				net->s[*sid].port=client.sin_port;
-				nlog(net->log,net,*sid,"INF: New peer - incomming message of %i bytes\n",n);
-				nlog(net->sec,net,*sid,"INF: New incomming peer\n");
-				dumpSessions(net->sec,net);
-				logflush(net->sec);
-				time((time_t *)&net->s[*sid].nego_stamp);
-				net->s[*sid].nego_micros=get_microseconds();
-				net->s[*sid].alive_stamp=net->s[*sid].nego_stamp; //set last alive stamp
-				//time((time_t *)&net->s[*sid].last_check);
-				break;
-			case UNET_MSGRCV:
-				nlog(net->log,net,*sid,"INF: Old peer - incomming message of %i bytes\n",n);
-				break;
-			case UNET_TOMCONS:
-				ret=UNET_TOMCONS;
-				*sid=-1;
-				break;
-			default:
-				ret=UNET_ERR;
-				*sid=-1;
-				break;
-		}
-
-		if(ret==UNET_NEWCONN || ret==UNET_MSGRCV) {
-			//copy structures
-			DBG(5,"before memcpy()\n");
-			memcpy(net->s[*sid].sock_array,&client,sizeof(struct sockaddr_in));
-			net->s[*sid].a_client_size=client_len;
-			DBG(5,"after memcpy()\n");
-
-			//call message processor and assembler
-			DBG(5,"before processClientMsg() call\n");
-			ret2=processClientMsg(net,buf,n,*sid);
-			DBG(5,"after processClientMsg() call\n");
-			if(ret2!=UNET_MSGRCV) ret=ret2;
-
-			//if i'm bussy
-			if(net->s[*sid].bussy==1) ret=UNET_OK; //nothing to see here, move along...
-
-		}
-
-	} else {
-		//we have nothing
-		ret=UNET_OK;
-	}
-
-	st_uru_client * u=NULL;
-
-	//check for pending messages if ret!=UNET_NEWCONN or UNET_MSGRCV
-	if(ret!=UNET_NEWCONN && ret!=UNET_MSGRCV && ret!=UNET_FLOOD) {
-		DBG(5,"pending messages check...\n");
-
-		for(i=0; i<(int)net->n; i++) {
-			if(net->s[i].flag==0x00) break; //stop (there is nothing else ahead)
-			else if(net->s[i].flag==0x01 && net->s[i].bussy==0) {
-				//first check that it's not bussy
-				//then
-				u=&net->s[i];
-				st_unet_rcvmsg * ite; //iterator, that goes through all messages
-				st_unet_rcvmsg * prev; //pointer to the previous message
-				ite=u->rcvmsg;
-				prev=u->rcvmsg;
-
-				DBG(7,"Search for a message...\n");
-				while(ite!=NULL) {
-					if((net->timestamp - ite->stamp) > unet_snd_expire) { //expire messages
-						nlog(net->err,net,i,"INF: Message %i expired!\n",ite->sn);
-						// delete the expired message
-						//It's the first one
-						if(ite==u->rcvmsg) {
-							//then set to the next one
-							u->rcvmsg=(st_unet_rcvmsg *)(ite->next);
-							prev=u->rcvmsg; //update prev
-							if(ite->buf!=NULL) free((void *)ite->buf);
-							free((void *)ite);
-							ite=prev;
-						} else {
-							prev->next=ite->next;
-							if(ite->buf!=NULL) free((void *)ite->buf);
-							free((void *)ite);
-							ite=(st_unet_rcvmsg *)prev->next;
-						}
-					} else {
-						if(ite->completed==0x01) { //we found it!
-							*sid=i;
-							return UNET_MSGRCV;
-						}
-						//set the next message
-						prev=ite;
-						ite=(st_unet_rcvmsg *)ite->next;
-					}
-				}
-				DBG(7,"End message search...\n");
-			}
-		}
-	}
-
-	DBG(7,"Returning from plNetRecv with ret:%i\n",ret);
-	return ret;
-}
 
 /**
 	Starts a connection to an specific host

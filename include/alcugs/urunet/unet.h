@@ -39,6 +39,7 @@
 
 #include "urunet.h"
 #include "netlog.h"
+#include "netsession.h"
 
 
 #endif

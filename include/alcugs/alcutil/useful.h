@@ -34,8 +34,9 @@ namespace alc {
 const char * alcConsoleAsk();
 int alcGetLoginInfo(char * argv,char * hostname,char * username,U16 * port,char * avie);
 
+U32 alcGetTime();
 U32 alcGetMicroseconds();
-double alcGetCurrentTime();
+double alcGetCurrentTime(const char format='s');
 
 }
 
