@@ -115,7 +115,7 @@ void alcLogShutdown(bool silent=false);
 
 void alcLogSetDefaults();
 
-void alcLogOpenStdLogs();
+void alcLogOpenStdLogs(bool shutup=false);
 
 char * alcHtmlGenerateHead(char * title,char * powered);
 

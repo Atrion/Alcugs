@@ -24,31 +24,121 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Alcugs Lib Main code.
-*/
+//#define _DBG_LEVEL_ 10
 
-#ifndef __U_ALCMAIN_H
-#define __U_ALCMAIN_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_ALCMAIN_H_ID "$Id$"
+//Program vars
+const char * alcXID = "$Id$";
+const char * alcXBUILD =  __DATE__ " " __TIME__;
+const char * alcXSNAME = "UruCrypt";
+const char * alcXVERSION = "2.0";
 
-/* You need to define these vars in your app's */
-extern const char * alcXSNAME;
-extern const char * alcXBUILD;
-extern const char * alcXVERSION;
-extern const char * alcXID;
+#include<alcugs.h>
 
-namespace alc {
+#include<alcdebug.h>
 
-/** Start Alcugs library 
-		\param argc Number of args
-		\param argv args
-*/
-void alcInit(int argc=0,char ** argv=NULL,bool shutup=false);
-/** Stop Alcugs library */
-void alcShutdown();
+using namespace alc;
 
+void usage() {
+	printf("Usage:\nFor decrypt: \n\
+ urucrypt d source.sdl destination.sdl.dec\n\
+For encrypt:\n\
+ urucrypt e source.sdl.dec destination.sdl\n\
+-l Shows license text\n");
+	fflush(0);
 }
 
-#endif
+//main
+int main(int argc, char * argv[]) {
+
+	printf("This is the Uru \"whatdoyousee\" encoder/decoder\n\n");
+	
+	try {
+	
+	alcInit(argc,argv,true);
+	printf(alcVersionText());
+	
+	if(argc>1 && !strcmp(argv[1],"-l")) {
+		printf(alcLicenseText());
+		return 0;
+	} else if(argc>1 && !strcmp(argv[1],"-h")) {
+		usage();
+	}
+
+	tFBuf f1;
+	tWDYSBuf w1;
+	
+	char xap[1024];
+	
+	//new feature :)
+	if(argc==2) {
+		f1.open(argv[1]);
+		w1.put(f1);
+		f1.close();
+		try {
+			w1.decrypt();
+			if(w1.size()>0) {
+				strcpy(xap,argv[1]);
+				strcat(xap,".dec");
+				f1.open(xap,"wb");
+				f1.put(w1);
+				f1.close();
+			}
+		} catch(txUnexpectedData &t) {
+			w1.encrypt();
+			if(w1.size()>0) {
+				strcpy(xap,argv[1]);
+				strcat(xap,".cry"); //Jaffa CRE!!
+				f1.open(xap,"wb");
+				f1.put(w1);
+				f1.close();
+			}
+		}
+		return 0;
+	}
+
+  if(argc!=4) {
+		usage();
+		return -1;
+  }
+	
+	char what;
+
+  if(!strcmp(argv[1],"d")) {
+    what=1;
+  } else if(!strcmp(argv[1],"e")) {
+    what=2;
+  } else {
+    usage();
+		return 1;
+  }
+  fflush(0);
+
+	if(what==1) {
+		f1.open(argv[2]);
+		w1.put(f1);
+		f1.close();
+		w1.decrypt();
+		f1.open(argv[3],"wb");
+		f1.put(w1);
+		f1.close();
+  } else if(what==2) {
+		f1.open(argv[2]);
+		w1.put(f1);
+		f1.close();
+		w1.encrypt();
+		f1.open(argv[3],"wb");
+		f1.put(w1);
+		f1.close();
+  }
+
+  return 0;
+	
+	} catch(txBase &t) {
+		printf("Exception: %s\n",t.what());
+		printf(t.backtrace());
+	} catch(...) {
+		printf("ERROR: Unknown exception...\n");
+	}
+	
+}
+

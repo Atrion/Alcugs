@@ -168,14 +168,16 @@ void alcLogInit() {
 	}
 }
 
-void alcLogOpenStdLogs() {
+void alcLogOpenStdLogs(bool shutup) {
 	if(lerr==NULL) {
 		lerr=new tLog();
-		lerr->open("error.log",2,DF_STDERR);
+		if(shutup) lerr->open(NULL,2,DF_STDERR);
+		else lerr->open("error.log",2,DF_STDERR);
 	}
 	if(lstd==NULL) {
 		lstd=new tLog();
-		lstd->open("uru.log",2,DF_STDOUT);
+		if(shutup) lstd->open(NULL,2,DF_STDOUT);
+		else lstd->open("uru.log",2,DF_STDOUT);
 	}
 }
 

@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCMAIN_ID "$Id$"
 
-#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
 
@@ -42,14 +42,14 @@ namespace alc {
 
 static volatile bool alcInitialized=false;
 
-void alcInit(int argc,char ** argv) {
+void alcInit(int argc,char ** argv,bool shutup) {
 	if(alcInitialized) return;
 	alcInitialized=true;
 	DBG(5,"alcInit()\n");
 	
 	DBG(6,"Starting log system...\n");
 	alcLogInit();
-	alcLogOpenStdLogs();
+	alcLogOpenStdLogs(shutup);
 
 
 	atexit(&alcShutdown);

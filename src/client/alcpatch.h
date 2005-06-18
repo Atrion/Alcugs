@@ -24,31 +24,39 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Alcugs Lib Main code.
-*/
-
-#ifndef __U_ALCMAIN_H
-#define __U_ALCMAIN_H
+#ifndef __U_ALCPATCH_H_
+#define __U_ALCPATCH_H_
 /* CVS tag - DON'T TOUCH*/
-#define __U_ALCMAIN_H_ID "$Id$"
+#define __U_ALCPATCH_H_ID "$Id$"
 
-/* You need to define these vars in your app's */
-extern const char * alcXSNAME;
-extern const char * alcXBUILD;
-extern const char * alcXVERSION;
-extern const char * alcXID;
-
-namespace alc {
-
-/** Start Alcugs library 
-		\param argc Number of args
-		\param argv args
+/** 
+	Root window class
 */
-void alcInit(int argc=0,char ** argv=NULL,bool shutup=false);
-/** Stop Alcugs library */
-void alcShutdown();
+class gWiz:public wxWizard {
+private:
+	DECLARE_EVENT_TABLE()
+public:
+	gWiz(const wxChar *title, int width, int height);
+	~gWiz();
+	void gWiz::OnCancel(wxWizardEvent& ev);
+private:
+};
 
-}
+
+/**
+	Main app class
+*/
+class gMainApp:public wxApp {
+public:
+	virtual bool OnInit();
+	alc::package pkg;
+	wxString uu_path;
+	wxString tpots_path;
+private:
+	gWiz * w_root;
+};
+
+DECLARE_APP(gMainApp)
 
 #endif
+
