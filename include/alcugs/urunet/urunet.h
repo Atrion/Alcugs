@@ -120,7 +120,7 @@ private:
 	U32 n; //<! Current number of connections
 	U32 max; //<! Maxium number of connections (default 0, unlimited)
 	//this number should be always bigger than 2 times the maxium number of players
-	//st_uru_client * s;
+	tNetSessionMgr * smgr; //Session MGR
 
 	int whoami; //type of _this_ server
 	//Byte clt; //0x00 auto, 0x01 unix socket, 0x02 lo, 0x03 LAN, 0x04 WAN

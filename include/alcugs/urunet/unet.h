@@ -36,10 +36,10 @@
 #include <netdb.h>
 #include <sys/socket.h>
 
-
-#include "urunet.h"
-#include "netlog.h"
 #include "netsession.h"
+#include "netlog.h"
+#include "urunet.h"
+
 
 
 #endif

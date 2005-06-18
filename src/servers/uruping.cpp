@@ -140,10 +140,12 @@ int main(int argc,char * argv[]) {
 		lstd->print(alcVersionText());
 	}
 	
+	
 	tUnet * unet=new tUnet();
+
+	
 	
 	delete unet;
-	
 	
 	//stop Alcugs library (optional, not required)
 	//alcShutdown();

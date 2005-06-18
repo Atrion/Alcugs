@@ -71,6 +71,7 @@ void tUnet::init() {
 
 	this->n=0; //<! Current number of connections (internal, private)
 	this->max=0; //<! Maxium number of connections (default 0, unlimited)
+	this->smgr=NULL;
 
 	this->lan_addr=0x00001AAC;
 	this->lan_mask=0x00FFFFFF; //<! LAN mask, in network byte order (default 255.255.255.0)
@@ -272,6 +273,8 @@ int tUnet::StartOp(U16 port,char * hostname) {
 	// was compiled on that day.
 	this->log->log("DBG: Listening to incoming datagrams on %s port udp %i\n\n",hostname,port);
 
+	smgr=new tNetSessionMgr(this->max);
+
 	if(this->max!=0) {
 		this->log->log("DBG: Accepting up to %i connections\n",this->max);
 	} else {
@@ -291,9 +294,7 @@ int tUnet::StartOp(U16 port,char * hostname) {
 void tUnet::StopOp() {
 	int i;
 	dumpBuffers(0x01);
-	for(i=0; i<(int)this->n; i++) {
-		//plNetDestroySession(net,i);
-	}
+	if(smgr!=NULL) delete smgr;
 	dumpBuffers(0x01);
 
 #ifdef __WIN32__
