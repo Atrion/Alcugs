@@ -519,6 +519,24 @@ void tStrBuf::writeStr(const Byte * t) {
 	this->write((Byte *)t,strlen((const char *)t));
 }
 
+void tTime::store(tBBuf &t) {
+	t.getU32(seconds);
+	t.getU32(microseconds);
+}
+int tTime::stream(tBBuf &t) {
+	t.putU32(seconds);
+	t.putU32(microseconds);
+}
+U32 tTime::size() { return 8; }
+SByte tTime::compare(tTime &t) {
+	if(seconds==t.seconds) {
+		if(microseconds==t.microseconds) return 0;
+		if(microseconds<t.microseconds) return 1;
+		return -1;
+	}
+	if(seconds>t.seconds) return 1;
+	return -1;
+}
 
 
 } //end namespace alc

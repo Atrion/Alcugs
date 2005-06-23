@@ -28,21 +28,44 @@
 	URUNET 3+
 */
 
-#ifndef __U_UNET_H
-#define __U_UNET_H
+#ifndef __U_NETSESSIONMGR_H
+#define __U_NETSESSIONMGR_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_UNET_H_ID "$Id$"
+#define __U_NETSESSIONMGR_H_ID "$Id$"
 
-#include <netdb.h>
-#include <sys/socket.h>
+namespace alc {
 
-#include "prot.h"
-#include "netsession.h"
-#include "netsessionmgr.h"
-#include "netlog.h"
-#include "urunet.h"
+class tNetSessionIte {
+public:
+	U32 ip;
+	U16 port;
+	int sid;
+	tNetSessionIte() {
+		ip=0; port=0; sid=-1;
+	}
+	tNetSessionIte(U32 ip,U16 port,int sid=-1) {
+		this->ip=ip;
+		this->port=port;
+		this->sid=sid;
+	}
+};
 
+class tNetSessionMgr {
+public:
+	tNetSessionMgr(int limit=0);
+	~tNetSessionMgr();
+	tNetSession * search(tNetSessionIte &ite);
+	void rewind();
+	void end();
+	void destroy(tNetSessionIte &ite);
+	tNetSession * getNext();
+private:
+	int off;
+	int n;
+	int max;
+	tNetSession ** table;
+};
 
+}
 
 #endif
-

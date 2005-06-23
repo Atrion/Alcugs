@@ -263,6 +263,20 @@ private:
 /** Time */
 class tTime :public tBaseType {
 public:
+	virtual void store(tBBuf &t);
+	virtual int stream(tBBuf &t);
+	virtual U32 size()=0;
+	virtual SByte compare(tTime &t);
+	virtual bool operator==(tTime &t) { return(seconds==t.seconds && microseconds==t.microseconds); }
+	virtual bool operator!=(tTime &t) { return(seconds!=t.seconds || microseconds!=t.microseconds); }
+	virtual bool operator>(tTime &t) { return(this->compare(t)<0); }
+	virtual bool operator<(tTime &t) { return(this->compare(t)>0); }
+	virtual bool operator>=(tTime &t) { return(this->compare(t)<=0); }
+	virtual bool operator<=(tTime &t) { return(this->compare(t)>=0); }
+/*	tTime operator+(tTime &a,tTime &b);
+	tTime operator-(tTIme &a,tTime &b);
+	void asDouble(char how='s');
+	void str();*/
 	U32 seconds;
 	U32 microseconds;
 };

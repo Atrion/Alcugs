@@ -55,6 +55,7 @@ char * alcGetStrIp(U32 ip) {
 	return mip;
 }
 
+#if 0
 /**
 	Returns the string explaining the error that ocurred
 */
@@ -95,6 +96,8 @@ const char * alcGetStrUnetErr(S16 code) {
 			return "Undefined, unexpected, unknown and unwanted error code";
 	}
 }
+
+#endif
 
 }
 

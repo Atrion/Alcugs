@@ -113,12 +113,12 @@ private:
 	Byte max_version; //Default protocol version
 	Byte min_version;
 
-	double ntime; //current time (in usecs)
+	U32 ntime_sec; //current time (in secs)
+	U32 ntime_usec; //(in usecs)
 
 	U32 conn_timeout; //default timeout (to disconnect a session) (seconds) [3 secs]
 	U32 timeout; //default timeout when the send clock expires (re-transmission) (milliseconds)
 
-	U32 n; //<! Current number of connections
 	U32 max; //<! Maxium number of connections (default 0, unlimited)
 	//this number should be always bigger than 2 times the maxium number of players
 	tNetSessionMgr * smgr; //Session MGR
@@ -227,73 +227,6 @@ typedef struct {
 	U16 port; //peer port (used in routing)
 } st_unet_hmsg;
 
-//! Urunet kernel client header -
-typedef struct {
-	Byte flag; // 0x00 free, 0x01 in use, 0x02 deleted, 0x03 terminated/timeout
-	int sid; //peer id
-	st_uru_head client; //!<client session vars (remote)
-	st_uru_head server; //!<server session vars (local)
-	char sock_array[sizeof(struct sockaddr_in)];
-	socklen_t a_client_size;
-	U32 old_p_n; //previus p_n, used in the aging control
-	char * w; //window
-	U32 wite;
-	//---
-	int whoami; //peer type
-	Byte validation; //store the validation level (0,1,2)
-	Byte authenticated; //it's the peer authed? (0,1,2)
-	//Byte cflags; **proposed, for next major unet changes **
-	/* 0x01 UNET_CVALID message validated by the checksum test
-		 0x02 UNET_CBUSSY bussy flag is up
-	*/
-	Byte validated; //has the checksum test passed? (0,1)
-	Byte bussy; //bussy flag (0,1) If this flag is activated, messages are keept in the rcv buffer
-	Byte max_version; //peer major version
-	Byte min_version; //peer minor version
-	Byte tpots; //tpots version 0=undefined, 1=tpots client, 2=non-tpots client
-	U32 ip; //peer ip
-	U16 port; //peer port
-	/* Note IP/port pairs are in the network order, Future plans is to make all host order */
-	/* Note2: proposed change, all timestamp pairs are going to be a single double like the ones used in uruping. */
-	U32 timeout; //the peer timeout
-	U32 timestamp; //last time that we recieved a packet from it
-	U32 microseconds; //last time that ....
-	U32 ack_stamp; //last time that we sent a packet to it
-	U32 ack_micros;
-	U32 nego_stamp; //negotiation timestamp (set up at beggining of connection)
-	U32 nego_micros;
-	U32 renego_stamp;
-	U32 renego_micros;
-	U32 alive_stamp; //last time that we send the NetMsgAlive
-	st_unet_hmsg hmsg; //the message header
-	char name[201]; //peer name (vault, lobby, AvatarCustomization) or player name (string)
-	char acct[201]; //peer account name (string)
-	char uid[41]; //peer uid (client) (in hex)
-	char guid[20]; //peer guid (server) (string)
-	Byte passwd[34]; //peer passwd hash (used in V2) (string)
-	Byte challenge[16]; //peer challenge (used in auth) (hex)
-	int ki; //player set and valid id
-	int x; //x value
-	Byte reason; //reason code
-	Byte release; //type of client
-	U16 maxPacketSz; //Maxium size of the packets. Must be 1024 (always)
-	Byte access_level; //the access level of the peer
-	Byte status; //the player status, defined inside a states machine (see the states machine doc)
-	Byte paged; //0x00 non-paged player, 0x01 player is paged
-	//flux control
-	U32 bandwidth; //client reported bandwidth (negotiated technology)
-	Byte window; //the peer window size
-	//flood control
-	U32 last_check; //time of last check
-	int npkts; //number of packets since last check
-	//inc messages
-	st_unet_rcvmsg * rcvmsg; //incomming message cue
-	//out messages
-	st_unet_sndmsg * sndmsg; //outcomming message cue
-	int success; //number of the total succesfully sent messages, reseted when ack is not recieved
-	S16 vpos; //last packet sent
-} st_uru_client;
-
 char * get_ip(U32 ip);
 
 void nlog(st_log * log,st_unet * net,int sid,char * msg,...);
@@ -306,16 +239,7 @@ int plNetConnect(st_unet * net,int * sid,char * address,U16 port,Byte flags);
 
 int plNetSendMsg(st_unet * net,Byte * msg,int size,int sid,Byte flags);
 
-void plNetDestroySession(st_unet * net,int sid);
-
 int plNetGetMsg(st_unet * net,int sid,Byte ** msg);
-
-void dumpSession(st_log * log,st_unet * net,int i);
-void dumpSessions(st_log * log,st_unet * net);
-
-char * get_unet_error(S16 code);
-
-char net_check_address(st_unet * net,int sid);
 
 char plNetIsFini(st_unet * net,int sid);
 
