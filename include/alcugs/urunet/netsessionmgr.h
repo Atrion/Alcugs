@@ -52,7 +52,7 @@ public:
 
 class tNetSessionMgr {
 public:
-	tNetSessionMgr(int limit=0);
+	tNetSessionMgr(tUnet * net,int limit=0);
 	~tNetSessionMgr();
 	tNetSession * search(tNetSessionIte &ite);
 	void rewind();
@@ -64,6 +64,7 @@ private:
 	int n;
 	int max;
 	tNetSession ** table;
+	tUnet * net;
 };
 
 }

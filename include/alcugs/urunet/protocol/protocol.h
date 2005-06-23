@@ -31,51 +31,23 @@
 	No sockets here, Please!!
 */
 
-#ifndef __U_PROTOCOL_H_
-#define __U_PROTOCOL_H_
+#ifndef __U_PROTOCOL_H
+#define __U_PROTOCOL_H
 /* CVS tag - DON'T TOUCH*/
 #define __U_PROTOCOL_H_ID "$Id$"
-#define __U_PROTOCOL_V "1.3.1c"
-#define __U_PROTOCOL_VMAX "12.07"
-#define __U_PROTOCOL_VMIN "12.00"
 
 //disable checksum checks
 //#define _NO_CHECKSUM
 
-#include "data_types.h" //data types
-#include "stdebug.h"
-#include "urunet.h"
+namespace alc {
 
-extern st_log * f_chk;
-extern st_log * f_une;
+void alcEncodePacket(unsigned char* buf2,unsigned char* buf, int n);
+void alcDecodePacket(unsigned char* buf, int n);
 
-extern const int unet_max_version;
-extern const int unet_min_version;
+int alcUruValidatePacket(Byte * buf,int n,Byte * validation,Byte authed=0,Byte * phash=NULL);
+U32 alcUruChecksum(Byte* buf, int size, int alg, Byte * aux_hash);
 
 #if 0
-//Version separator were some major protocol differences are seen (V1 vs V2)
-#define _U_VERSION 0x05
-
-//protocol info is here
-#include "prot.h"
-
-/*Includes */
-#include<unistd.h>
-#include<stdlib.h>
-#include<math.h>
-#include<ctype.h>
-#include<time.h>
-
-#include "conv_funs.h" //conversion functions
-#include "config_parser.h" //for parsing configuration files (all globals are here)
-#include "stdebug.h"
-#endif
-
-void encode_packet(unsigned char * buf2,unsigned char* buf, int n);
-void decode_packet(unsigned char* buf, int n);
-
-int uru_validate_packet(Byte * buf,int n,st_uru_client * u);
-U32 uru_checksum(Byte* buf, int size, int alg, Byte * aux_hash);
 
 void uru_print_header(st_log * f_dsc,st_uru_head * u);
 int uru_get_header(unsigned char * buf,int n,st_uru_head * u);
@@ -90,26 +62,6 @@ int put_plNetMsg_header(st_unet * net,Byte * buf,int size,int sid);
 
 void copy_plNetMsg_header(st_unet * net,int sid,int ssid,int flags);
 
-#if 0
-
-//deleted moved or internal only
-
-void uru_update_packet_counter(Byte * buf, uru_head * u);
-
-void uru_inc_msg_counter(uru_head * server);
-
-void uru_init_header(uru_head * u, Byte validation);
-
-int uru_get_ack_reply(Byte * buf, st_uru_client * u);
-
-int uru_process_ack(Byte * buf,int n,int start,st_uru_client * u);
-
-int uru_get_negotation_reply(Byte * buf,st_uru_client * u);
-
-int uru_process_negotation(Byte * buf,int n,int start,st_uru_client * u);
-
-#endif
-
 //get chars of diferent code values
 char * unet_get_release(int rel);
 char * unet_get_destination(int dest);
@@ -118,5 +70,9 @@ char * unet_get_auth_code(int code);
 char * unet_get_avatar_code(int code);
 char * unet_get_str_ip(int ip);
 char * unet_get_msg_code(U16 code);
+#endif
+
+
+}
 
 #endif

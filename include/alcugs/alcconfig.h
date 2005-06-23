@@ -31,7 +31,7 @@
 #ifndef __U_ALCCONFIG_H
 #define __U_ALCCONFIG_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_CONFIG_H_ID "$Id$"
+#define __U_ALCCONFIG_H_ID "$Id$"
 
 //! Enable debugging?
 #define _DEBUG_
@@ -49,5 +49,8 @@
 		exception. Only useful to get Coredumps.
 */
 //#define _TX_ABORT_
+
+// Noise and latency debbuging tests
+#define _UNET_DBG_
 
 #endif

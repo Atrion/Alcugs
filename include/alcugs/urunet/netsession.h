@@ -36,51 +36,54 @@
 namespace alc {
 
 class tNetSessionMgr;
+class tUnet;
 
 class tNetSession {
 public:
-	tNetSession();
+	tNetSession(tUnet * net);
 	~tNetSession();
 private:
+	void processMsg(Byte * buf,int size);
 	void init();
+	tUnet * net;
 	U32 ip;
 	U16 port;
 	int sid;
+	char sock_array[sizeof(struct sockaddr_in)];
+	socklen_t a_client_size;
+	
+	Byte validation; //store the validation level (0,1,2)
+	Byte authenticated; //it's the peer authed? (0,1,2)
+
+	//client time
+	U32 time_sec;
+	U32 time_usec;
+	
+	Byte passwd[34]; //peer passwd hash (used in V2) (string)
+
+
 	friend class tNetSessionMgr;
+	friend class tUnet;
 };
 
 #if 0
 //! Urunet kernel client header -
 typedef struct {
-	Byte flag; // 0x00 free, 0x01 in use, 0x02 deleted, 0x03 terminated/timeout
-	int sid; //peer id
 	st_uru_head client; //!<client session vars (remote)
 	st_uru_head server; //!<server session vars (local)
-	char sock_array[sizeof(struct sockaddr_in)];
-	socklen_t a_client_size;
+
 	U32 old_p_n; //previus p_n, used in the aging control
 	char * w; //window
 	U32 wite;
 	//---
 	int whoami; //peer type
-	Byte validation; //store the validation level (0,1,2)
-	Byte authenticated; //it's the peer authed? (0,1,2)
-	//Byte cflags; **proposed, for next major unet changes **
-	/* 0x01 UNET_CVALID message validated by the checksum test
-		 0x02 UNET_CBUSSY bussy flag is up
-	*/
-	Byte validated; //has the checksum test passed? (0,1)
+
 	Byte bussy; //bussy flag (0,1) If this flag is activated, messages are keept in the rcv buffer
 	Byte max_version; //peer major version
 	Byte min_version; //peer minor version
 	Byte tpots; //tpots version 0=undefined, 1=tpots client, 2=non-tpots client
-	U32 ip; //peer ip
-	U16 port; //peer port
-	/* Note IP/port pairs are in the network order, Future plans is to make all host order */
-	/* Note2: proposed change, all timestamp pairs are going to be a single double like the ones used in uruping. */
 	U32 timeout; //the peer timeout
-	U32 timestamp; //last time that we recieved a packet from it
-	U32 microseconds; //last time that ....
+	
 	U32 ack_stamp; //last time that we sent a packet to it
 	U32 ack_micros;
 	U32 nego_stamp; //negotiation timestamp (set up at beggining of connection)
@@ -93,7 +96,7 @@ typedef struct {
 	char acct[201]; //peer account name (string)
 	char uid[41]; //peer uid (client) (in hex)
 	char guid[20]; //peer guid (server) (string)
-	Byte passwd[34]; //peer passwd hash (used in V2) (string)
+	
 	Byte challenge[16]; //peer challenge (used in auth) (hex)
 	int ki; //player set and valid id
 	int x; //x value

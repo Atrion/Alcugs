@@ -45,18 +45,22 @@ namespace alc {
 
 tUnet::tUnet(char * lhost,U16 lport) {
 	DBG(9,"tUnet()\n");
+	initialized=false;
 	this->init();
-	this->StartOp(lport,lhost);
+	if(lhost==NULL) strcpy(bindaddr,"0.0.0.0");
+	else strcpy(bindaddr,lhost);
+	bindport=lport;
 }
 tUnet::~tUnet() {
 	DBG(9,"~tUnet()\n");
-	this->StopOp();
+	stopOp();
 }
 /**
 	Fills the unet struct with the default values
 */
 void tUnet::init() {
 	DBG(9,"tUnet::init()\n");
+	if(initialized) return;
 	flags=UNET_NBLOCK | UNET_ELOG | UNET_ECRC | UNET_AUTOSP | UNET_NOFLOOD | UNET_FLOG | UNET_NETAUTH;
 	whoami=0; //None (new connection) //KClient; //default type of peer
 
@@ -69,38 +73,61 @@ void tUnet::init() {
 	timeout=2000; //2 seconds (re-transmission) [initial RTT]
 
 	//initial server timestamp
-	ntime=alcGetCurrentTime('u');
+	ntime_sec=alcGetTime();
+	ntime_usec=alcGetMicroseconds();
+	
+	max_version=12;
+	min_version=7;
 
-	this->n=0; //<! Current number of connections (internal, private)
-	this->max=0; //<! Maxium number of connections (default 0, unlimited)
-	this->smgr=NULL;
+	max=0; //<! Maxium number of connections (default 0, unlimited)
+	smgr=NULL;
 
-	this->lan_addr=0x00001AAC;
-	this->lan_mask=0x00FFFFFF; //<! LAN mask, in network byte order (default 255.255.255.0)
+	lan_addr=0x00001AAC;
+	lan_mask=0x00FFFFFF; //<! LAN mask, in network byte order (default 255.255.255.0)
 	//! Bandwidth speed (lo interface -> maxium)
-	this->lan_up=100 * 1000 * 1000;
-	this->lan_down=100 * 1000 * 1000;
-	this->nat_up=128 * 1000;
-	this->nat_down=512 * 1000;
+	lan_up=100 * 1000 * 1000;
+	lan_down=100 * 1000 * 1000;
+	nat_up=128 * 1000;
+	nat_down=512 * 1000;
 
 	//peers
-	this->auth=-1;
-	this->vault=-1;
-	this->tracking=-1;
-	this->meta=-1;
+	auth=-1;
+	vault=-1;
+	tracking=-1;
+	meta=-1;
 
 	//logs
-	this->log=NULL;
-	this->err=NULL;
-	this->unx=NULL;
-	this->ack=NULL;
-	this->chk=NULL;
-	this->sec=NULL;
+	log=NULL;
+	err=NULL;
+	unx=NULL;
+	ack=NULL;
+	chk=NULL;
+	sec=NULL;
+	
+	#ifdef _UNET_DBG_
+	lim_down_cap=4000; //in bytes
+	lim_up_cap=4000; //in bytes
+	in_noise=25; //(0-100)
+	out_noise=25; //(0-100)
+	latency=500; //(in msecs)
+	cur_down_quota=0;
+	cur_up_quota=0;
+	ip_overhead=20+8;
+	quota_check=1;
+	time_quota_check=ntime_sec;
+	#endif
+	
 }
+void tUnet::setFlags(tUnetFlags flags) {
+	this->flags |= flags;
+}
+void tUnet::unsetFlags(tUnetFlags flags) {
+	this->flags &= ~flags;
+}
+tUnetFlags tUnet::getFlags() { return this->flags; }
 
-/** private error function
-*/
 void tUnet::neterror(char * msg) {
+	if(!initialized) return;
 #ifdef __WIN32__
 	this->err->log("%s: winsock error code:%i\n",msg,WSAGetLastError());
 #else
@@ -108,14 +135,7 @@ void tUnet::neterror(char * msg) {
 #endif
 }
 
-/**
-	Starts the network operation
-	\param port to listen,
-	\param FQHN e.g. "localhost", or "0.0.0.0" to bind all addresses
-	\return 0 if success, non-zero failed
-*/
-int tUnet::StartOp(U16 port,char * hostname) {
-	dumpBuffers(0x00);
+void tUnet::_openlogs() {
 	//open unet log files
 	if(this->flags & UNET_ELOG) {
 		if(this->log==NULL) {
@@ -165,18 +185,20 @@ int tUnet::StartOp(U16 port,char * hostname) {
 			this->sec->open(NULL,4,0);
 		}
 	}
+}
 
+
+void tUnet::startOp() {
+	if(initialized) return;
+	_openlogs();
+	//create an udp (17) socket
 #ifdef __WIN32__
-	//start up winsock
 	memset(&this->ws,0,sizeof(this->ws));
-	log->log->log("INF: Hasecorp Windoze sockets XP...\n");
-
+	log->log("INF: Hasecorp Windoze sockets XP...\n");
 	if(WSAStartup(MAKEWORD(1,1),&this->ws)!=0) {
 		neterror("ERR: Cannot start up winsock ");
-		//winsock error here
-		return UNET_FINIT;
+		throw txUnetIniErr(_WHERE("cannot start winsock"));
 	}
-
 	this->log->print("Winsock Version %d, %d\n",this->ws.wHighVersion,this->ws.wVersion);
 	this->log->print(" %s - %s\n",this->ws.szDescription,this->ws.szSystemStatus);
 	this->log->print(" maxsockets:%i, maxUdpDg:%i\n",this->ws.iMaxSockets,\
@@ -185,18 +207,16 @@ int tUnet::StartOp(U16 port,char * hostname) {
 #else
 	this->log->print("INF: Linux sockets...\n");
 #endif
-
-	//creating the socket
-	//udp is listed as 17, but always 0 (ip) is used
 	this->sock=socket(AF_INET,SOCK_DGRAM,0);
 
 #ifdef __WIN32__
-	if(this->sock==INVALID_SOCKET) {
+	if(this->sock==INVALID_SOCKET)
 #else
-	if(this->sock<0) {
+	if(this->sock<0)
 #endif
+	{
 		neterror("ERR: Fatal - Failed Creating socket ");
-		return UNET_FINIT;
+		throw txUnetIniErr(_WHERE("cannot create socket"));
 	}
 	this->log->log("DBG: Socket created\n");
 
@@ -207,19 +227,20 @@ int tUnet::StartOp(U16 port,char * hostname) {
 		this->nNoBlock = 1;
 		if(ioctlsocket(this->sock, FIONBIO, &this->nNoBlock)!=0) {
 			neterror("ERR: Fatal setting socket as non-blocking\n");
+			throw txUnetIniErr(_WHERE("Failed setting a non-blocking socket"));
 		}
 #else
 		//set non-blocking
 		long arg;
 		if((arg = fcntl(this->sock,F_GETFL, NULL))<0) {
 			this->err->logerr("ERR: Fatal setting socket as non-blocking (fnctl F_GETFL)\n");
-			return UNET_FINIT;
+			throw txUnetIniErr(_WHERE("Failed setting a non-blocking socket"));
 		}
 		arg |= O_NONBLOCK;
 
 		if(fcntl(this->sock, F_SETFL, arg)<0) {
 			this->err->log("ERR: Fatal setting socket as non-blocking\n");
-			return UNET_FINIT;
+			throw txUnetIniErr(_WHERE("Failed setting a non-blocking socket"));
 		}
 #endif
 		this->log->log("DBG: Non-blocking socket set\n");
@@ -231,16 +252,14 @@ int tUnet::StartOp(U16 port,char * hostname) {
 	if(this->flags & UNET_BCAST) {
 		this->opt = 1;
 		#ifdef __WIN32__
-		if(setsockopt(this->sock, SOL_SOCKET, SO_BROADCAST, (const char *)&this->opt, sizeof(int))!=0) {
-			neterror(this->err,"ERR: Fatal - Failed setting BCAST socket ");
-			return UNET_FINIT;
-		}
+		if(setsockopt(this->sock, SOL_SOCKET, SO_BROADCAST, (const char *)&this->opt, sizeof(int))!=0)
 		#else
-		if(setsockopt(this->sock, SOL_SOCKET, SO_BROADCAST, &this->opt, sizeof(int))!=0) {
-			neterror("ERR: Fatal - Failed setting BCAST socket ");
-			return UNET_FINIT;
-		}
+		if(setsockopt(this->sock, SOL_SOCKET, SO_BROADCAST, &this->opt, sizeof(int))!=0)
 		#endif
+		{
+			neterror("ERR: Fatal - Failed setting BCAST socket ");
+			throw txUnetIniErr(_WHERE("Failed setting a BCAST socket"));
+		}
 	}
 	
 	//chk?
@@ -248,56 +267,50 @@ int tUnet::StartOp(U16 port,char * hostname) {
 	//set network specific options
 	this->server.sin_family=AF_INET; //UDP IP
 
-	if(!strcmp("0.0.0.0",hostname)) { //gethostbyname already does that, but just in case
+	if(!strcmp("0.0.0.0",bindaddr)) { //gethostbyname already does that, but just in case
 		this->server.sin_addr.s_addr=htonl(INADDR_ANY); //any address
 	} else {
 		struct hostent *host;
-		host=gethostbyname(hostname); //<- non-freed structure reported by dmalloc, huh :/ ?
+		host=gethostbyname(bindaddr); //<- non-freed structure reported by dmalloc, huh :/ ?
 		if(host==NULL) {
-			this->err->log("ERR: Fatal cannot resolve address %s:%i\n",hostname,port);
-			return UNET_INHOST;
+			this->err->log("ERR: Fatal cannot resolve address %s:%i\n",bindaddr,bindport);
+			throw txUnetIniErr(_WHERE("Cannot resolve address %s:%i",bindaddr,bindport));
 		}
 		this->server.sin_addr.s_addr=*(U32 *)host->h_addr_list[0];
 	}
 
-	this->server.sin_port=htons(port); //port 5000 default
+	this->server.sin_port=htons(bindport); //port 5000 default
 
 	//binding port
 	if(bind(this->sock,(struct sockaddr *)&this->server,sizeof(this->server))<0) {
-		this->err->log("ERR: Fatal - Failed binding to address %s:%i\n",hostname,port);
+		this->err->log("ERR: Fatal - Failed binding to address %s:%i\n",bindaddr,bindport);
 		neterror("bind() ");
-		return UNET_NOBIND;
+		throw txUnetIniErr(_WHERE("Cannot bind to address %s:%i",bindaddr,bindport));
 	}
 	// 10 February 2004 - Alcugs development starts from scratch.
 	// 10 February 2005 - Alcugs development continues..
 	// The next line of code was originally written in 10/Feb/2004,
 	// when the first listenning udp server named urud (uru daemon)
 	// was compiled on that day.
-	this->log->log("DBG: Listening to incoming datagrams on %s port udp %i\n\n",hostname,port);
+	this->log->log("DBG: Listening to incoming datagrams on %s port udp %i\n\n",bindaddr,bindport);
 
-	smgr=new tNetSessionMgr(this->max);
+	smgr=new tNetSessionMgr(this,this->max);
 
 	if(this->max!=0) {
 		this->log->log("DBG: Accepting up to %i connections\n",this->max);
 	} else {
 		this->log->log("DBG: Accepting unlimited connections\n",this->max);
 	}
-
 	this->log->flush();
-
-	dumpBuffers(0x01);
-
-	return UNET_OK; //return success code
+	initialized=true;
 }
 
 /**
 	Stops the network operation
 */
-void tUnet::StopOp() {
-	int i;
-	dumpBuffers(0x01);
+void tUnet::stopOp() {
+	if(!initialized) return;
 	if(smgr!=NULL) delete smgr;
-	dumpBuffers(0x01);
 
 #ifdef __WIN32__
 	closesocket(this->sock);
@@ -330,21 +343,17 @@ void tUnet::StopOp() {
 	this->chk=NULL;
 	this->unx=NULL;
 	this->sec=NULL;
+	initialized=false;
 }
 
 
-/**
-	Urunet the netcore, does all, it's the heart of the server
-	/param the unet descriptor and a place to store the peer_id
-	/return an unet event
-*/
-int tUnet::Recv(int * sid) {
+/** Urunet the netcore, does all, it's the heart of the server */
+int tUnet::Recv() {
+	int n;
 	Byte buf[INC_BUF_SIZE]; //internal rcv buffer
 	
 	tNetSessionIte ite;
 	tNetSession * session=NULL;
-
-	static char checker=0;
 
 	struct sockaddr_in client; //client struct
 	socklen_t client_len; //client len size
@@ -380,67 +389,37 @@ int tUnet::Recv(int * sid) {
 	else { DBG(7,"No data recieved...\n"); }
 #endif
 	//set stamp
-	this->ntime=alcGetCurrentTime('u');
-	DBG(6,"Stamp set...\n");
-
-#if 0
-	if(!valret || checker>50) {
-		checker=0;
-		//perform basic netcore things
-		// - send non-acked packets, check dead hosts & resend pending packets
-		// returns on UNET_TIMEOUT
-		/*
-		DBG(8,"for i=0; i<%i; i++\n",net->n);
-		for(i=0; i<(int)net->n; i++) {
-			DBG(9,"forstp i=%i\n",i);
-			if(net->s[i].flag==0x00) break; //stop (there is nothing else ahead)
-			else if(net->s[i].flag==0x01) {
-				//check timeout
-				if((net->timestamp - net->s[i].timestamp)>=net->s[i].timeout) {
-					//timeout event
-					DBG(5,"timeout event on peer:%i ip:%s:%i\n",i,get_ip(net->s[i].ip),ntohs(net->s[i].port));
-					net->s[i].flag=0x03; //terminated/timeout
-					*sid=i;
-					return UNET_TIMEOUT;
-				}
-				//check non-acked packets
-				if((net->timestamp - net->s[i].ack_stamp)>=net->ack_timeout) {
-					DBG(6,"plNetReSendMessages(net,%i)\n",i);
-					if(plNetReSendMessages(net,i)==UNET_TIMEOUT) {
-						DBG(5,"ack: timeout event on peer:%i ip:%s:%i\n",i,get_ip(net->s[i].ip),ntohs(net->s[i].port));
-						net->s[i].flag=0x03; //terminated/timeout
-						*sid=i;
-						return UNET_TIMEOUT;
-					}
-				}
-			}
-		}
-		*/
-	} else {
-		checker++;
-	}
-#endif
+	ntime_sec=alcGetTime();
+	ntime_usec=alcGetMicroseconds();
+	
+	//Here, the old netcore performed some work (ack check, retransmission, timeout, pending paquets to send...)
 
 	DBG(5,"Before recvfrom\n");
-	//while() //get 10 messages from the buffer in a single row //TODO
-			//return on UNET_TERMINATED, UNET_MSGRCV or UNET_NEWCONN
-
-	//waiting for packets
 #ifdef __WIN32__
 	n = recvfrom(this->sock,(char *)buf,INC_BUF_SIZE,0,(struct sockaddr *)&client,&client_len);
 #else
 	n = recvfrom(this->sock,(void *)buf,INC_BUF_SIZE,0,(struct sockaddr *)&client,&client_len);
 #endif
-
 	DBG(5,"After recvfrom\n");
 
-#ifdef _NOISE_
-	if((random() % 100) >= in_noise) {
-		//nothing, goes well
-		DBG(5,"Incomming Packet accepted\n");
-	} else {
-		DBG(5,"Incomming Packet dropped\n");
-		n=0; //drop the message
+#ifdef _UNET_DBG_
+	if(n>0) {
+		if(in_noise && (random() % 100) >= in_noise) {
+			DBG(5,"Incomming Packet accepted\n");
+		} else {
+			DBG(5,"Incomming Packet dropped\n");
+			n=0;
+		}
+		//check quotas
+		if(ntime_sec-time_quota_check>=quota_check) {
+			cur_down_quota=0;
+			time_quota_check=ntime_sec;
+		}
+		if(n>0 && (cur_down_quota+n+ip_overhead)>lim_down_cap) {
+			DBG(5,"Paquet dropped by quotas\n");
+		} else {
+			cur_down_quota+=n+ip_overhead;
+		}
 	}
 #endif
 
@@ -450,8 +429,7 @@ int tUnet::Recv(int * sid) {
 	}
 
 	if(n>0) { //we have a message
-		/*
-			TODO: Do firewall checking here.
+		/*TODO: Do firewall checking here.
 			return UNET_REJECTED if the host is blacklisted
 		*/
 
@@ -459,9 +437,7 @@ int tUnet::Recv(int * sid) {
 			this->err->log("[ip:%s:%i] ERR: Recieved a really big message of %i bytes\n",alcGetStrIp(client.sin_addr.s_addr),ntohs(client.sin_port),n);
 			return UNET_TOOBIG;
 		} //catch up impossible big messages
-		/*
-			Uru protocol check
-		*/
+		/* Uru protocol check */
 		if(buf[0]!=0x03) { //not an Uru protocol packet don't waste an slot for it
 			this->unx->log("[ip:%s:%i] ERR: Unexpected Non-Uru protocol packet found\n",alcGetStrIp(client.sin_addr.s_addr),ntohs(client.sin_port));
 			this->unx->dumpbuf(buf,n);
@@ -473,128 +449,33 @@ int tUnet::Recv(int * sid) {
 		ite.ip=client.sin_addr.s_addr;
 		ite.port=client.sin_port;
 		ite.sid=-1;
-		smgr.search(ite);
-
-		#if 0
 		
-		switch(ret) {
-			case UNET_NEWCONN:
-				DBG(5,"Initializing session %i\n",*sid);
-				plNetInitSession(net,*sid);
-				net->s[*sid].ip=client.sin_addr.s_addr;
-				net->s[*sid].port=client.sin_port;
-				nlog(net->log,net,*sid,"INF: New peer - incomming message of %i bytes\n",n);
-				nlog(net->sec,net,*sid,"INF: New incomming peer\n");
-				dumpSessions(net->sec,net);
-				logflush(net->sec);
-				time((time_t *)&net->s[*sid].nego_stamp);
-				net->s[*sid].nego_micros=get_microseconds();
-				net->s[*sid].alive_stamp=net->s[*sid].nego_stamp; //set last alive stamp
-				//time((time_t *)&net->s[*sid].last_check);
-				break;
-			case UNET_MSGRCV:
-				nlog(net->log,net,*sid,"INF: Old peer - incomming message of %i bytes\n",n);
-				break;
-			case UNET_TOMCONS:
-				ret=UNET_TOMCONS;
-				*sid=-1;
-				break;
-			default:
-				ret=UNET_ERR;
-				*sid=-1;
-				break;
+		try {
+			session=smgr->search(ite);
+		} catch(txToMCons) {
+			return UNET_TOMCONS;
 		}
-
-		if(ret==UNET_NEWCONN || ret==UNET_MSGRCV) {
-			//copy structures
-			DBG(5,"before memcpy()\n");
-			memcpy(net->s[*sid].sock_array,&client,sizeof(struct sockaddr_in));
-			net->s[*sid].a_client_size=client_len;
-			DBG(5,"after memcpy()\n");
-
-			//call message processor and assembler
-			DBG(5,"before processClientMsg() call\n");
-			ret2=processClientMsg(net,buf,n,*sid);
-			DBG(5,"after processClientMsg() call\n");
-			if(ret2!=UNET_MSGRCV) ret=ret2;
-
-			//if i'm bussy
-			if(net->s[*sid].bussy==1) ret=UNET_OK; //nothing to see here, move along...
-
-		}
-
-	} else {
-		//we have nothing
-		ret=UNET_OK;
-	}
-
-	st_uru_client * u=NULL;
-
-	//check for pending messages if ret!=UNET_NEWCONN or UNET_MSGRCV
-	if(ret!=UNET_NEWCONN && ret!=UNET_MSGRCV && ret!=UNET_FLOOD) {
-		DBG(5,"pending messages check...\n");
-
-		for(i=0; i<(int)net->n; i++) {
-			if(net->s[i].flag==0x00) break; //stop (there is nothing else ahead)
-			else if(net->s[i].flag==0x01 && net->s[i].bussy==0) {
-				//first check that it's not bussy
-				//then
-				u=&net->s[i];
-				st_unet_rcvmsg * ite; //iterator, that goes through all messages
-				st_unet_rcvmsg * prev; //pointer to the previous message
-				ite=u->rcvmsg;
-				prev=u->rcvmsg;
-
-				DBG(7,"Search for a message...\n");
-				while(ite!=NULL) {
-					if((net->timestamp - ite->stamp) > unet_snd_expire) { //expire messages
-						nlog(net->err,net,i,"INF: Message %i expired!\n",ite->sn);
-						// delete the expired message
-						//It's the first one
-						if(ite==u->rcvmsg) {
-							//then set to the next one
-							u->rcvmsg=(st_unet_rcvmsg *)(ite->next);
-							prev=u->rcvmsg; //update prev
-							if(ite->buf!=NULL) free((void *)ite->buf);
-							free((void *)ite);
-							ite=prev;
-						} else {
-							prev->next=ite->next;
-							if(ite->buf!=NULL) free((void *)ite->buf);
-							free((void *)ite);
-							ite=(st_unet_rcvmsg *)prev->next;
-						}
-					} else {
-						if(ite->completed==0x01) { //we found it!
-							*sid=i;
-							return UNET_MSGRCV;
-						}
-						//set the next message
-						prev=ite;
-						ite=(st_unet_rcvmsg *)ite->next;
-					}
-				}
-				DBG(7,"End message search...\n");
-			}
-		} 	
-#endif
+		
+		//process the message, and do the correct things with it
+		memcpy(session->sock_array,&client,sizeof(struct sockaddr_in));
+		session->a_client_size=client_len;
+		session->processMsg(buf,n);
 
 	}
-
-	DBG(7,"Returning from plNetRecv with ret:%i\n",ret);
-	return ret;
+	return UNET_OK;
 }
 
 
-/*
+/**
 	Dumps all data structures, with the address and the contents in hex
 	flags
 	0x01 append to the last log file (elsewhere destroy the last one)
 */
 void tUnet::dump(tLog * sf,Byte flags) {
 #if _DBG_LEVEL_ > 2
+	tLog * f;
 	if(sf==NULL) {
-		tLog * f=new tLog;
+		f=new tLog;
 		if(flags & 0x01) {
 			f->open("memdump.log",5,DF_APPEND);
 		} else {
@@ -622,10 +503,9 @@ void tUnet::dump(tLog * sf,Byte flags) {
 	f->print("net->unet_usec:%i\n",this->unet_usec);
 	f->print("net->max_version:%i\n",this->max_version);
 	f->print("net->min_version:%i\n",this->min_version);
-	f->print("net->timestamp:%s\n",alcGetStrTime(this->ntime,'u'));
+	f->print("net->timestamp:%s\n",alcGetStrTime(this->ntime_sec,this->ntime_usec));
 	f->print("net->conn_timeout:%i\n",this->conn_timeout);
 	f->print("net->timeout:%i\n",this->timeout);
-	f->print("net->n:%i\n",this->n);
 	f->print("net->max:%i\n",this->max);
 	f->print("net->whoami:%i\n",this->whoami);
 	f->print("net->lan_addr:%i %s\n",this->lan_addr,alcGetStrIp(this->lan_addr));
@@ -650,1421 +530,5 @@ void tUnet::dump(tLog * sf,Byte flags) {
 
 } //end namespace
 
-#if 0
 
-//enable noise in the netcore?
-//#define _NOISE_
 
-#include <fcntl.h>
-#include <errno.h>
-
-#include "prot.h" //protocol
-#include "protocol.h"
-
-#ifdef _NOISE_
-/* Noise (0-100)*/
-const int out_noise=10;
-const int in_noise=10;
-#endif
-
-/* RCV window size */
-const int rcv_win=2*8;
-
-/* SND Window size */
-const int max_win=60; //200 ~ 40
-const int min_win=4;
-
-/* magic number */
-const int magic_delta=8 * (OUT_BUFFER_SIZE+25); //300
-
-const U32 unet_snd_expire = 70; //40 seconds should be enough for a 56Kbps user
-
-const int unet_flood_pckts = 80; //needs to be adjusted
-
-
-/** network logging function
-*/
-void nlog(st_log * log,st_unet * net,int sid,char * msg,...) {
-	va_list ap;
-	static char buf[1025];
-
-	if(log==NULL) return;
-
-	va_start(ap,msg);
-	vsnprintf(buf,sizeof(buf)-1,msg,ap);
-	va_end(ap);
-
-	//protection
-	if(sid>=(int)net->n || sid<0) {
-		plog(f_err,"Attempted access to an address out of range %i out of %i...\n",sid,net->n);
-		plog(log,"[%i] %s",sid,buf);
-		return;
-	}
-
-	plog(log,"[%i][%s:%i][%i,%i](%s,%s,%s) %s",sid,get_ip(net->s[sid].ip),\
-	ntohs(net->s[sid].port),net->s[sid].whoami,net->s[sid].ki,net->s[sid].acct,net->s[sid].name,\
-	create_str_guid((Byte *)net->s[sid].uid),buf); //get_guid((Byte *)net->s[sid].guid)
-}
-
-
-
-/**
-  Sends and encrypts(if necessary) the correct packet
-	Returns size if all gone well
-	returns <0 if something went wrong
-	(this is a low level function)
-*/
-int uru_net_send(st_unet * net,Byte * buf,int n,int sid) {
-	//inet
-	struct sockaddr_in client; //client struct
-
-	st_uru_client * u=&net->s[sid];
-
-	Byte * buf2=NULL;
-
-	if(n>OUT_BUFFER_SIZE) {
-		plog(net->err,"ERR: Attempted to send a message of %i bytes, and that is not possible!\n",n);
-		return -1;
-	}
-
-	//copy the inet struct
-	memcpy(&client,u->sock_array,sizeof(struct sockaddr_in));
-	client.sin_family=AF_INET; //UDP IP (????)
-	client.sin_addr.s_addr=u->ip; //address
-	client.sin_port=u->port; //port
-
-#if _DBG_LEVEL_ > 3
-	print2log(net->log,"DBG: <SND>");
-	uru_print_header(net->log,&u->server);
-	print2log(net->log,"\n");
-	logflush(net->log);
-#endif
-
-	htmlDumpHeaderRaw(net,net->ack,*u,buf,n,1);
-
-	DBG(5,"validation level is %i\n",u->server.ch);
-
-	//if(buf[1]==0x01 && buf[6]==0x42) abort();
-	//if(buf[6]==0x42) {
-		//printf("presh enter to continue...\n"); fflush(0);
-		//ask();
-	//}
-	if(u->server.ch != buf[1]) {
-		DBG(7,"Validation mismatch %i vs %i!\n",u->server.ch,buf[1]);
-		plog(net->err,"ERR: Validation mismatch %i vs %i!\n",u->server.ch,buf[1]);
-		return -1;
-		//abort();
-	}
-
-#ifdef _STEP_BY_STEP_
-	printf("presh enter to continue...\n"); fflush(0);
-	ask();
-#endif
-
-	if(u->server.ch==2) {
-		//DBG(4,"Validation 2 packet found...\n");
-		DBG(4,"Enconding validation 2 packet of %i bytes...\n",n);
-		buf2=(Byte *)malloc(sizeof(Byte) * OUT_BUFFER_SIZE);
-		if(buf2==NULL) { plog(net->err,"Fatal attmeting to allocate buffer in uru_net_send()"); return -1; }
-		encode_packet(buf2,buf,n);
-		buf=buf2; //don't need to decode again
-		if(u->authenticated==1) {
-			DBG(4,"Client is authenticated, doing checksum...\n");
-			//DBG(4,"Doing checksum...\n");
-			*((U32 *)(buf+2))=uru_checksum(buf,n,2,u->passwd);
-			DBG(4,"Checksum done!...\n");
-		} else {
-			DBG(4,"Client is not authenticated, doing checksum...\n");
-			//DBG(4,"Doing checksum...\n");
-			*((U32 *)(buf+2))=uru_checksum(buf,n,1,NULL);
-			DBG(4,"Checksum done!...\n");
-		}
-		buf[1]=0x02;
-	} else if(u->server.ch==1) {
-		*((U32 *)(buf+2))=uru_checksum(buf,n,0,NULL);
-		buf[1]=0x01;
-	} else {
-		buf[1]=0x00;
-	}
-	//DBG(4,"Magic number added...\n");
-	buf[0]=0x03; //magic number
-	DBG(4,"Before the Sendto call...\n");
-	//
-#ifdef _NOISE_
-	if((random() % 100) >= out_noise) {
-#endif
-
-#ifdef __WIN32__
-	n = sendto(net->sock,(const char *)buf,n,0,(struct sockaddr *)&client,sizeof(struct sockaddr));
-#else
-	n = sendto(net->sock,(char *)buf,n,0,(struct sockaddr *)&client,sizeof(struct sockaddr));
-#endif
-
-#ifdef _NOISE_
-	} else {
-		n=0;
-	}
-#endif
-
-	if(n<0) {
-		ERR(2,"n<0 ?, %i",n);
-		neterror(net->err," sendto() ");
-	}
-	DBG(4,"After the Sendto call...\n");
-	if(buf2!=NULL) { free((void *)buf2); buf2=NULL; }
-	DBG(2,"returning from uru_net_send RET:%i\n",n);
-	return n;
-}
-
-/** Generates an ack reply
-		At current time, we are acking each packet individually
-			TODO, put them in a buffer, and send them after processing 10-20 messages
-			from the buffer
-			NO!, imagine that, a single ACK packet acking 20 big messages is lost!!,
-			now, we must resend again these 20 big messages, because we are not sure
-			if the client have recieved them. I prefer single ack packets instead of paying
-			this high price if a multiple ack packet is lost.
-*/
-int send_ackReply(st_unet * net,int sid) {
-	st_uru_client * u=&net->s[sid];
-	int n,start;//,off;
-	Byte buf[OUT_BUFFER_SIZE]; //an ack buffer
-
-	//update the pck counter
-	u->server.p_n++;
-
-	/* Check if the last message sent, had the ack flag on
-		as a rule, messages must be sent in order */
-	if(u->server.t & 0x02) {
-		u->server.ps=u->server.sn;
-		u->server.fr_ack=u->server.fr_n;
-		//the second field, only contains the seq number from the latest packet with
-		//the ack flag enabled.
-	}
-	//now update the other fields
-	u->server.sn++;
-	u->server.fr_n=0;
-	u->server.fr_t=0;
-	u->server.t=0x80;
-	u->server.size=0x01;
-
-	//V1 has the validation level 1 disabled on all ACK packets
-	if(u->validation<=0x01) {
-		u->server.ch=0x00;
-	} else {
-		u->server.ch=0x02;
-	}
-	u->server.cs=0xFFFFFFFF;
-
-	start=uru_put_header(buf,&u->server);
-	n=start;
-
-	//now create the packet
-	*(U16 *)(buf+n)=0x00;
-	// only one ack this time
-	n+=2;
-	*(Byte *)(buf+n)=u->client.fr_n;
-	n++;
-	*(U32 *)(buf+n)=u->client.sn & 0x00FFFFFF;
-	n+=3;
-	*(U32 *)(buf+n)=0x00;
-	n+=4;
-
-	*(Byte *)(buf+n)=u->client.fr_ack;
-	n++;
-	*(U32 *)(buf+n)=u->client.ps & 0x00FFFFFF;
-	n+=3;
-	*(U32 *)(buf+n)=0x00;
-	n+=4;
-
-	print2log(net->log,"<SND> Ack (%i,%i) (%i,%i)\n",\
-	u->client.fr_n,u->client.sn,u->client.fr_ack,u->client.ps);
-
-	//uru_print_header(net->log,&u->server);
-	//htmlDumpHeader(net->ack,*u,u->server,buf+start,n,1);
-
-#if _DBG_LEVEL_ > 3
-	dumpbuf(net->log,buf,n);
-	lognl(net->log);
-#endif
-	return(uru_net_send(net,buf,n,sid));
-}
-
-/**
-	Sends up to windowsize packets
-	window size will be decreassed by one if the autospeed mode is on and a packet
-	has been sent more than 2 times
-	window size will be increassed by one if the autospeed mode is on, and the latest
-	200 sent packets were sent only one time. (the first one)
-	If a packet has been send more than 6 times, then a UNET_TIMEOUT event code will be
-	returned if not, it will return UNET_OK
-*/
-int plNetReSendMessages(st_unet * net,int sid) {
-	st_uru_client * u=&net->s[sid];
-	int i=0;
-	int start;
-
-	const Byte auto_dec = 2;
-	const Byte auto_inc = 200;
-	const Byte timeout = 10; //number of tryes before the timeout
-
-	Byte wk=0;
-
-#ifdef _SINGLE_MSG_
-	int last_sn=0,cur_sn; //last sequence number form a previous message
-	Byte n_last_frags=0;
-#endif
-
-	//DBG(5,"dmalloc_verify()\n");
-	//dmalloc_verify(NULL);
-
-	st_unet_sndmsg * ite=u->sndmsg;
-
-	if((net->timestamp - u->ack_stamp )>= net->ack_timeout) {
-		u->ack_stamp=net->timestamp;
-		u->vpos=0;
-	}
-
-	//DBG(5,"dmalloc_verify()\n");
-	//dmalloc_verify(NULL);
-
-	while((i<u->window || (wk<2 && u->window==0)) && ite!=NULL) {
-		wk++; //at least always, two are sent
-
-		if(i>=u->vpos) { //check last sent message id
-			u->vpos=i+1; //update the counter
-
-			DBG(6,"message %i\n",i);
-			//send messages
-			if(ite->tryes>timeout || ite->buf==NULL) return UNET_TIMEOUT; //timeout event on this peer, or buf is NULL, something that is not possible
-			//small fix
-			if(*(Byte *)((ite->buf)+1)==0x00) { start=2; }
-			else { start=6; }
-
-#ifdef _SINGLE_MSG_
-			cur_sn=(*(U32 *)((ite->buf)+start+10) & 0x00FFFFFF);
-
-			if(n_last_frags!=0 && cur_sn!=last_sn) {
-				//UruExplorer hates this, so wait a little before sending the next message.
-				u->vpos=0;
-				break;
-			}
-			n_last_frags=*(Byte *)((ite->buf)+start+13);
-			last_sn=cur_sn;
-#endif
-//Update, seems that UruExplorer, may accept it, but it may have some small issues.
-
-			//end small fix
-			if(ite->tryes>0) u->success=0; //reset success counter
-			if(u->window!=0 && ite->tryes>auto_dec && (net->flags & UNET_AUTOSP)) {
-				u->window--;
-				if(u->window<min_win) u->window=min_win;
-				nlog(net->log,net,sid,"Now window size is:%i\n",u->window);
-			}
-			ite->tryes++;
-			u->server.p_n++;
-			u->server.ch=*(Byte *)((ite->buf)+1);
-			DBG(6,"Validation level is:%i\n",*(Byte *)((ite->buf)+1));
-
-	#if _DBG_LEVEL_ > 9
-			DBG(4,"Buffer details before updating counter %i bytes:\n",ite->size);
-			dumpbuf(net->log,ite->buf,ite->size);
-			lognl(net->log);
-			if(*(Byte *)((ite->buf)+1)==0x00 && (*(Byte *)((ite->buf)+start+4)!=0x42) && *(Byte *)((ite->buf)+start+4)!=0x02) {
-				//abort();
-			}
-			if(*(Byte *)((ite->buf)+1)==0x01 && (*(Byte *)((ite->buf)+start+4)==0x42)) {
-				//abort();
-			}
-	#endif
-			*(U32 *)((ite->buf)+start)=u->server.p_n; //update counter
-			//htmlDumpHeader(net->ack,*u,u->server,ite->buf+start,ite->size,1);
-			//send the message
-			//buffer dumper
-	#if _DBG_LEVEL_ > 8
-			DBG(4,"Buffer details after updating counter %i bytes:\n",ite->size);
-			dumpbuf(net->log,ite->buf,ite->size);
-			lognl(net->log);
-	#endif
-			DBG(5,"uru_net_send call, size:%i bytes\n",ite->size);
-			uru_net_send(net,ite->buf,ite->size,sid);
-		} //end check vpos
-		i++;
-		ite=(st_unet_sndmsg *)ite->next; //set the next one (argh!)
-	}
-
-	if(u->success>auto_inc && (net->flags & UNET_AUTOSP)) {
-		u->window++;
-		if(u->window<max_win) u->window=max_win;
-		nlog(net->log,net,sid,"Now window size is:%i\n",u->window);
-	}
-
-	DBG(5,"dmalloc_verify()\n");
-	dmalloc_verify(NULL);
-	return UNET_OK;
-}
-
-/**
-	Sends the message from the net struct in the Uru protocol
-	buf is a valid uru message from the next layer
-	n is the size.
-	An uru message can only be 253952 bytes in V0x01 & V0x02 and 254976 in V0x00
-	So, if your offline savegames are bigger than 250KBytes, blame to the Cyan network
-	designer, not me.
-
-	flags are
-	0x00 - normal non ack flag packet
-	0x02 - request for the ack flag
-	0x40 - it's a negotiation
-	0x80 - dump the packet to the buffer
-	0x20 - force validation 0
-*/
-int plNetSend(st_unet * net, Byte * msg, int size,int sid,Byte flags) {
-	if(net_check_address(net,sid)!=0) return UNET_ERR; //Hmm?
-	st_uru_client * u=&net->s[sid];
-	Byte * buf=NULL;
-
-	int start,off,pkt_sz,n_packets,i;
-
-	DBG(7,"Ok, I'm going to send a packet of %i bytes, for peer %i, with flags %02X\n",size,sid,flags);
-
-	DBG(5,"dmalloc_verify()\n");
-	dmalloc_verify(NULL);
-
-	/*
-		1st) non-ack packets are directly send
-		2nd) others go trough this process
-			A) Fragment it, if it is necessary
-			B) Store each fragment in the msg cue
-			C) Send only up to window size packets (call the int plNetReSendMessages(st_unet * net,int sid) function to do it
-	*/
-
-	//store in one var the total number of bytes sent in one second,
-	// if that number is bigger than the available configured in the wan up param,
-	// then start dropping packets.
-	// reset to zero, each new second
-
-	//pck seq numbers
-
-	/* Check if the last message sent, had the ack flag on
-		as a rule, messages must be sent in order */
-	if(u->server.t & 0x02) {
-		u->server.ps=u->server.sn;
-		u->server.fr_ack=u->server.fr_n;
-		//the second field, only contains the seq number from the latest packet with
-		//the ack flag enabled.
-		DBG(5,"The previous sent packet had the ack flag on\n");
-	}
-	//now update the other fields
-	u->server.sn++;
-	u->server.fr_n=0;
-
-	u->server.t=0x00;
-
-	if(flags & 0x02) {
-		u->server.t |= 0x02; //ack flag on
-		DBG(5,"ack flag on\n");
-	}
-	if(flags & 0x40) {
-		u->server.t |= 0x40; //negotiation packet
-		DBG(5,"It's a negotation packet\n");
-	}
-
-	if(flags & 0x20) {
-		u->server.ch=0x00;
-		DBG(5,"forced validation 0\n");
-	} else {
-		u->server.ch=u->validation;
-		DBG(6,"validation level is %i\n",u->server.ch);
-	}
-
-	//////
-	//if(u->server.ch==0x00 && flags!=0x42) abort();
-	/////
-
-	if((u->server.t & 0x40) && (u->server.ch==0x01)) { u->server.ch=0x00; }
-	DBG(6,"Sending a packet of validation level %i\n",u->server.ch);
-
-	//////
-	//if(u->server.ch==0x01 && flags==0x42) abort();
-	//////
-
-	if(u->server.ch==0x00) { start=28; } else { start=32; }
-	u->server.cs=0xFFFFFFFF;
-
-	off=start;
-
-	DBG(5,"dmalloc_verify()\n");
-	dmalloc_verify(NULL);
-
-	//ok 0x00 are directly sent
-	if(!(u->server.t & 0x02)) {
-		//update the pck counter
-		u->server.p_n++;
-		u->server.size=size;
-		off+=size;
-		buf=(Byte *)malloc(sizeof(Byte) * (off+50));
-		if(buf==NULL) return UNET_ERR;
-		uru_put_header(buf,&u->server);
-		memcpy(buf+start,msg,size);
-		DBG(6,"uru_net_send call, with a size of %i for sid %i\n",off,sid);
-#if _DBG_LEVEL_ > 5
-		dumpbuf(net->log,buf,off);
-		lognl(net->log);
-		logflush(net->log);
-#endif
-		uru_net_send(net,buf,off,sid);
-		if(buf!=NULL) {
-			free((void *)buf);
-			buf=NULL;
-		}
-	} else {
-		//Ok, do all the hard stuff
-		pkt_sz=OUT_BUFFER_SIZE - start; //get maxium message size
-		n_packets=(size-1)/pkt_sz; //get number of fragments
-		DBG(5,"pkt_sz:%i n_pkts:%i\n",pkt_sz,n_packets);
-		if(n_packets>=256) {
-			nlog(net->err,net,sid,"ERR: Attempted to send a packet of size %i bytes, that don't fits inside an uru message, sorry! :(\n",size);
-			return UNET_TOOBIG;
-		}
-		u->server.fr_t=n_packets; //set it
-
-		for(i=0; i<=n_packets; i++) {
-			if(i!=0) { //<- Troublemaker
-				u->server.ps=u->server.sn;
-				u->server.fr_ack=u->server.fr_n;
-			}
-			u->server.fr_n=i; //set fragment number
-
-			if(i==n_packets) {
-				u->server.size=size - (i*pkt_sz);
-			} else {
-				u->server.size=pkt_sz;
-			}
-			/* sanity check */
-			if(u->server.size>OUT_BUFFER_SIZE) {
-				nlog(net->err,net,sid,"ERR: A fragment has %i bytes!!, that's impossible, pkt_sz:%i\n",u->server.size,pkt_sz);
-			}
-			//ok, we are here, then store the message in the buffer
-
-	DBG(5,"dmalloc_verify()\n");
-	dmalloc_verify(NULL);
-
-			if(u->sndmsg==NULL) {
-				u->sndmsg=(st_unet_sndmsg *)malloc(sizeof(st_unet_sndmsg) * 1);
-				if(u->sndmsg==NULL) return UNET_ERR;
-				memset(u->sndmsg,0,sizeof(st_unet_sndmsg));
-				u->sndmsg->next=NULL;
-				u->sndmsg->size=start + u->server.size;
-				#if _DBG_LEVEL_ > 3
-					if(start + u->server.size<=0) { abort(); }
-				#endif
-				u->sndmsg->buf=(Byte *)malloc(sizeof(Byte) * (u->sndmsg->size+5));
-				buf=u->sndmsg->buf;
-			} else {
-				st_unet_sndmsg * ite=NULL;
-				ite=u->sndmsg;
-				while(ite->next!=NULL) {
-					ite=(st_unet_sndmsg *)ite->next; //go to the end of the message cue
-				}
-				ite->next=malloc(sizeof(st_unet_sndmsg) * 1);
-				if(ite->next==NULL) return UNET_ERR;
-				memset((st_unet_sndmsg *)ite->next,0,sizeof(st_unet_sndmsg));
-				ite=(st_unet_sndmsg *)ite->next;
-				ite->next=NULL;
-				ite->size=start + u->server.size;
-				ite->buf=(Byte *)malloc(sizeof(Byte) * (ite->size+5));
-				buf=ite->buf;
-			}
-			if(buf==NULL) return UNET_ERR;
-#if _DBG_LEVEL_ > 7
-			DBG(6,"Buffer details:\n");
-			dumpbuf(net->log,buf,start+u->server.size);
-			lognl(net->log);
-			logflush(net->log);
-#endif
-			uru_put_header(buf,&u->server);
-#if _DBG_LEVEL_ > 6
-			DBG(6,"Buffer details after put_header():\n");
-			dumpbuf(net->log,buf,start+u->server.size);
-			lognl(net->log);
-			logflush(net->log);
-#endif
-			memcpy(buf+start,msg+(i*pkt_sz),u->server.size);
-#if _DBG_LEVEL_ > 6
-			DBG(6,"Buffer details after memcpy:\n");
-			dumpbuf(net->log,buf,start+u->server.size);
-			lognl(net->log);
-			logflush(net->log);
-#endif
-		}
-		//now send them
-		//printf("presh enter to continue...\n"); fflush(0);
-		//ask();
-
-		DBG(5,"before plNetReSendMessages call\n");
-		plNetReSendMessages(net,sid);
-		DBG(5,"after plNetReSendMessages call\n");
-	}
-
-		DBG(5,"dmalloc_verify()\n");
-		dmalloc_verify(NULL);
-	//if(buf!=NULL) free((void *)buf);
-
-	return UNET_OK;
-}
-
-/**
-	Sends a negotation request
-	(returns the error code returned by net_send)
-*/
-int plNetClientComm(st_unet * net, int sid) {
-	st_uru_client * u=&net->s[sid];
-	int n,start;
-	char * timestamp;
-
-	Byte buf[OUT_BUFFER_SIZE]; //the out buffer
-
-#if 0
-
-	//update the pck counter
-	u->server.p_n++;
-
-	/* Check if the last message sent, had the ack flag on
-		as a rule, messages must be sent in order */
-	if(u->server.t & 0x02) {
-		u->server.ps=u->server.sn;
-		u->server.fr_ack=u->server.fr_n;
-		//the second field, only contains the seq number from the latest packet with
-		//the ack flag enabled.
-	}
-	//now update the other fields
-	u->server.sn++;
-	u->server.fr_n=0;
-	u->server.t=0x42; //Negotiation
-	u->server.size=0x0C;
-
-	//V1 has the validation level 1 disabled on all negotiation packets
-	if(u->validation<=0x01) {
-		u->server.ch=0x00;
-	} else {
-		u->server.ch=0x02;
-	}
-	u->server.cs=0xFFFFFFFF;
-
-	start=uru_put_header(buf,&u->server);
-	n=start;
-
-#else
-	start=0;
-	n=start;
-#endif
-
-	//now create the packet
-	//server bandwidth
-	DBG(8,"%08X %08X %08X\n",u->ip,net->lan_mask,net->lan_addr);
-	if((u->ip & 0x00FFFFFF) == 0x0000007F) { //lo
-		*(U32 *)(buf+n)=100000000;
-	} else if((u->ip & net->lan_mask) == net->lan_addr) { //LAN
-		*(U32 *)(buf+n)=net->lan_down;
-	} else {
-		*(U32 *)(buf+n)=net->nat_down; //WAN
-	}
-	n+=4;
-
-	timestamp=ctime((const time_t *)&u->nego_stamp);
-
-	print2log(net->log,"<SND> (Re)Negotation us: %i bandwidth: %i bps time: %s",u->nego_micros,*(U32 *)(buf+start),timestamp);
-
-	//store timestamp
-	*(U32 *)(buf+n)=u->nego_stamp;
-	n+=4;
-	*(U32 *)(buf+n)=u->nego_micros;
-	n+=4;
-
-//	htmlDumpHeader(net->ack,*u,u->server,buf+start,n,1);
-
-#if _DBG_LEVEL_ > 3
-	dumpbuf(net->log,buf,n);
-	lognl(net->log);
-#endif
-
-#if 0
-	return(uru_net_send(net,buf,n,sid));
-#else
-	plNetSend(net,buf,n,sid,0x42);
-#endif
-
-	DBG(3,"I'm here...\n");
-	//printf("presh enter to continue...\n"); fflush(0);
-	//ask();
-
-	//if(u->server.ch==0x01) abort();
-
-	return 0;
-}
-
-int parse_negotiation(st_unet * net,Byte * buf,int n,int sid) {
-	st_uru_client * u=&net->s[sid];
-	char * timestamp;
-	U32 stamp,micros;
-	int off=0;
-
-	u->bandwidth=*(U32 *)(buf+off);
-	off+=4;
-	stamp=*(U32 *)(buf+off);
-	off+=4;
-	micros=*(U32 *)(buf+off);
-	off+=4;
-
-	timestamp=ctime((const time_t *)&stamp);
-
-	print2log(net->log,"<RCV> (Re)Negotation us: %i bandwidth: %i bps time: %s",micros,u->bandwidth,timestamp);
-
-	if(stamp!=u->renego_stamp && micros!=u->renego_micros) {
-		//reset server/client pn, sn, frn, ... et all
-		//u->server.p_n=0;
-		//u->server.fr_n=0;
-		//u->server.sn=0;
-		//u->server.fr_ack=0;
-		//u->server.ps=0;
-		u->old_p_n=0; //last packet
-		u->wite=u->client.sn; //the window iterator
-		memset(u->w,0,sizeof(char) * rcv_win); //unset all
-
-		u->renego_stamp=stamp;
-		u->renego_micros=micros;
-		DBG(5,"the window is:%i\n",u->window);
-		if(u->window!=0) {
-			DBG(5,"Sending a negotiation packet here...\n");
-			plNetClientComm(net,sid);
-		}
-		u->window=0; //reset the window size instead (this will force to recalculate the window)
-		//we need to send it, if the client sends a different time
-	} else {
-		plog(net->log,"Recieved an old re-negotiation message\n");
-	}
-	return 0;
-}
-
-/**
-	Message assembler
-	1) Find the slot in the cue (& delete old messages)
-		1.1) If exists put the message on it
-		1.2) If not create a new one in the correct place
-	2) Put the piece in the correct part and update the bitmask
-	3) Check if the message is completed
-*/
-int net_assemble_message(st_unet * net,Byte * buf,int n,int sid) {
-	st_uru_client * u=&net->s[sid];
-
-	int start;
-
-	U32 sn=u->client.sn; //the message number
-	Byte frn=u->client.fr_n; //the message fragment
-	Byte nfrs=u->client.fr_t; //total number of fragments
-
-	st_unet_rcvmsg * ite; //iterator, that goes through all messages
-	st_unet_rcvmsg * prev; //pointer to the previous message
-	st_unet_rcvmsg * found=NULL; //we found it?
-	st_unet_rcvmsg * fetch=NULL; //store the message with the sn<current_sn
-	ite=u->rcvmsg;
-	prev=u->rcvmsg;
-
-	DBG(7,"Search for a message...\n");
-	while(ite!=NULL) {
-		if((net->timestamp - ite->stamp) > unet_snd_expire) { //expire messages
-			nlog(net->err,net,sid,"INF: Message %i expired!\n",ite->sn);
-			// delete the expired message
-			//It's the first one
-			if(ite==u->rcvmsg) {
-				//then set to the next one
-				u->rcvmsg=(st_unet_rcvmsg *)(ite->next);
-				prev=u->rcvmsg; //update prev
-				if(ite->buf!=NULL) free((void *)ite->buf);
-				free((void *)ite);
-				ite=prev;
-			} else {
-				prev->next=ite->next;
-				if(ite->buf!=NULL) free((void *)ite->buf);
-				free((void *)ite);
-				ite=(st_unet_rcvmsg *)prev->next;
-			}
-		} else {
-			if(ite->sn==sn) { //we found it!
-				found=ite;
-			}
-			if(ite->sn<sn) { //fetch for insertion
-				fetch=ite;
-			}
-			//set the next message
-			prev=ite;
-			ite=(st_unet_rcvmsg *)ite->next;
-		}
-	}
-	DBG(7,"End message search...\n");
-
-	if(found==NULL) { //not found, then create it
-		ite=(st_unet_rcvmsg *)malloc(sizeof(st_unet_rcvmsg) * 1);
-		if(ite==NULL) {
-			plog(net->err,"FATAL, not enough memory allocating a buffer in the net_assembler!\n");
-			return -1;
-		}
-		memset((void *)ite,0,sizeof(st_unet_rcvmsg));
-		ite->sn=sn;
-		ite->buf=(Byte *)malloc(sizeof(Byte) * (OUT_BUFFER_SIZE*(nfrs+1)));
-		ite->stamp=net->timestamp;
-		if(ite->buf==NULL) {
-			plog(net->err,"FATAL, not enough memory allocating a message buffer in the net_assembler!\n");
-			free((void *)ite);
-			return -1;
-		}
-		if(fetch==NULL) {
-			ite->next=(void *)(u->rcvmsg);
-			u->rcvmsg=ite;
-		} else {
-			ite->next=(void *)(fetch->next);
-			fetch->next=ite;
-		}
-		found=ite;
-	}
-
-	DBG(7,"buf.. message insertion code worked...\n");
-
-	//wow, that was ugly, now this is more ugly ;)
-
-	//Assemble the messages
-	//additional paranoic sanity check
-	if(found==NULL || found->buf==NULL) {
-		plog(net->err,"FATAL, found or buf are NULL! - this is terrible!\n");
-		return -1;
-	}
-
-	start=uru_get_header_start(&u->client);
-
-	if(!((found->check[frn/8] >> (frn%8)) & 0x01)) {
-		//Ok, we found a missing fragment
-		found->check[frn/8] |= (0x01<<(frn%8));
-
-		//perform sanity checks
-		if((int)u->client.size!=(int)n || ((int)(OUT_BUFFER_SIZE-(int)start)!=(int)n && (int)frn!=(int)nfrs)) { //to lazy to check which one was causing the warning
-			plog(net->err,"FATAL, sanity check on message size failed %i=?%i=?%i!!!!\n",u->client.size,n,OUT_BUFFER_SIZE-start);
-			return -1;
-		}
-
-		memcpy(found->buf+(frn * (OUT_BUFFER_SIZE-start)),buf,u->client.size);
-
-		found->size+=u->client.size;
-
-		if(found->fr_count==nfrs) { //well, we finished, notify the caller
-			DBG(8,"We have a full message in the message assembler...\n");
-			found->completed=0x01;
-			return 1;
-		} else {
-			found->fr_count++;
-		}
-	} //else, nope, this fragmet may be from a repeated fragment
-
-	DBG(8,"No full message this time...\n");
-	return 0;
-}
-
-/**
-	Does the ack thingy
-*/
-int ack_update(st_unet * net,Byte * buf,int size,int sid) {
-	st_uru_client * u=&net->s[sid];
-
-	int i,off,sn,snf,start,gotsn;
-	Byte frn,frnf,gotfrn,nfrags;
-	off=2;
-	Byte * biff=NULL;
-
-	int A1,A2,A3;
-
-	st_unet_sndmsg * ite=NULL;
-	st_unet_sndmsg * prev=NULL;
-
-	print2log(net->log,"<RCV>");
-	for(i=0; i<(int)u->client.size; i++) {
-		A1=*(U32 *)(buf+off); //<--
-		frn=*(Byte *)(buf+off);
-		off++;
-		sn=*(U32 *)(buf+off) & 0x00FFFFFF;
-		off+=3;
-		off+=4;
-		A3=*(U32 *)(buf+off); //<--
-		frnf=*(Byte *)(buf+off);
-		off++;
-		snf=*(U32 *)(buf+off) & 0x00FFFFFF;
-		off+=3;
-		off+=4;
-		if(i!=0) print2log(net->log,"    |");
-		print2log(net->log," Ack %i,%i %i,%i\n",frn,sn,frnf,snf);
-		//well, do it
-		ite=u->sndmsg;
-		prev=ite;
-		while(ite!=NULL) {
-			if(ite->buf==NULL) { plog(net->err,"Fatal error occurred, the ack buffer is NULL!\n"); return UNET_ERR; }
-			biff=ite->buf;
-			if(biff[1]==0x00) start=11;
-			else start=15;
-			A2=*(U32 *)(biff+start); //<--
-			gotfrn=*(Byte *)(biff+start);
-			gotsn=*(U32 *)(biff+start+1) & 0x00FFFFFF;
-			nfrags=*(Byte *)(biff+start+4);
-
-			//if((gotsn>snf || (gotsn==snf && gotfrn>frnf && gotfrn<=frn)) && gotsn<=sn) {
-			//if((A1==A2) || (nfrags==0 && A1>=A2 && A2>A3) || (sn==gotsn && nfrags!=0 && gotsn==snf && frn>=gotfrn && gotfrn>frnf)) { //hmmm
-			if(A1>=A2 && A2>A3) {
-				//then delete
-				plog(net->log,"Deleting packet %i,%i\n",gotfrn,gotsn);
-				u->vpos--;
-				if(u->vpos<0) { u->vpos=0; }
-				//1st
-				dumpBuffers(net,0x01);
-				if(ite==u->sndmsg) {
-					u->sndmsg=(st_unet_sndmsg *)(ite->next);
-					prev=u->sndmsg;
-					if(ite->buf!=NULL) free((void *)ite->buf);
-					free((void *)ite);
-					ite=prev;
-				} else {
-					prev->next=ite->next;
-					if(ite->buf!=NULL) free((void *)ite->buf);
-					free((void *)ite);
-					ite=(st_unet_sndmsg *)prev->next;
-				}
-			} else {
-				prev=ite;
-				ite=(st_unet_sndmsg *)ite->next; //set next one
-			}
-		}
-	}
-	return UNET_OK;
-}
-
-/** Internal only low level message processor */
-int processClientMsg(st_unet * net,Byte * buf,int n,int sid) {
-
-	int ret2,off,ret;
-
-	st_uru_client * s=&net->s[sid];
-
-	//update client session time
-	time((time_t *)&s->timestamp);
-	s->microseconds=get_microseconds();
-
-	//nlog(net->log,net,sid,"what's up %i:%i\n",s->timestamp,s->microseconds);
-
-	//validate the message
-	ret2=uru_validate_packet(buf,n,s);
-
-	if(ret2!=0 && net->flags & UNET_ECRC) {
-		if(ret2==1) {
-			nlog(net->chk,net,sid,"ERR: Failed validating the message!\n");
-			dumpbuf(net->chk,buf,n);
-			lognl(net->chk);
-			return UNET_CRCERR;
-		} else {
-			nlog(net->unx,net,sid,"ERR: Non-Uru protocol packet recieved!\n");
-			dumpbuf(net->unx,buf,n);
-			lognl(net->unx);
-			return UNET_NONURU;
-		}
-	}
-
-	ret=UNET_OK;
-
-	#if _DBG_LEVEL_ > 2
-		DBG(2,"RAW Packet follows: \n");
-		dumpbuf(net->log,buf,n);
-		lognl(net->log);
-	#endif
-
-	//get client header
-	off=uru_get_header(buf,n,&s->client);
-	print2log(net->log,"<RCV>");
-	uru_print_header(net->log,&s->client);
-	lognl(net->log);
-
-	htmlDumpHeader(net->ack,*s,s->client,buf+off,n-off,0);
-
-	int window;
-	//Check negotiation status & peer technology level
-	if(s->window==0 && s->bandwidth!=0) {
-		if((s->ip & 0x00FFFFFF) == 0x0000007F) { //lo
-			window=200;
-		} else if((s->ip & net->lan_mask) == net->lan_addr) { //LAN
-			window=((net->lan_up > s->bandwidth) ? s->bandwidth : net->lan_up)\
-			 / magic_delta;
-		} else { //WAN
-			window=((net->nat_up > s->bandwidth) ? s->bandwidth : net->nat_up)\
-			 / magic_delta;
-		}
-		if(window>max_win) window=max_win;
-		else if(window<min_win) window=min_win;
-		s->window=window;
-		plog(net->log,"Set a window of %i\n",window);
-	}
-
-	if(s->window==0 || s->bandwidth==0) {
-		//request a negotiation message
-		plNetClientComm(net,sid);
-	}
-	//<--
-
-	if(s->client.t & 0x02) {
-		//this packet must be acked
-		send_ackReply(net,sid); //Ack replyes are immediatly sent
-	}
-	if(s->client.t==0x42) { //Negotiation Message
-		parse_negotiation(net,buf+off,n-off,sid);
-		ret=UNET_OK;
-	}
-
-	//fix the problem that happens every 15-30 days of server uptime
-#if 1
-	if(s->server.sn>=8388605 || s->client.sn>=8388605) {
-		plog(f_err,"INF: Congratulations!, you have reached the maxium allowed sequence number, don't worry, this is not an error\n");
-		s->server.p_n=0;
-		s->server.fr_n=0;
-		s->server.sn=0;
-		s->server.fr_ack=0;
-		s->server.ps=0;
-		s->nego_stamp=(U32)time(NULL);
-		s->nego_micros=get_microseconds();
-		s->renego_stamp=0,
-		s->renego_micros=0;
-		plNetClientComm(net,sid);
-	}
-#endif
-
-	//check for duplicates ***************
-	//drop already parsed messages
-	//nlog(f_err,net,sid,"INF: (Before) window is:\n");
-	//dumpbuf(f_err,(Byte *)s->w,rcv_win);
-	//lognl(f_err);
-	if(!(s->client.sn > s->wite || s->client.sn <= (s->wite+rcv_win))) {
-		nlog(f_err,net,sid,"INF: Dropped packet %i out of the window by sn\n",\
-		s->client.sn);
-		logflush(f_err);
-		return UNET_OK;
-	} else { //then check if is already marked
-		int i,start,ck;
-		start=s->wite % (rcv_win*8);
-		i=s->client.sn % (rcv_win*8);
-		if(((s->w[i/8] >> (i%8)) & 0x01) && s->client.fr_n==0 && s->client.t!=0x42) {
-			nlog(f_err,net,sid,"INF: Dropped already parsed packet %i\n",s->client.sn);
-			logflush(f_err);
-			return UNET_OK;
-		} else {
-			s->w[i/8] |= (0x01<<(i%8)); //activate bit
-			while((i==start && ((s->w[i/8] >> (i%8)) & 0x01))) { //move the iterator
-				s->w[i/8] &= ~(0x01<<(i%8)); //deactivate bit
-				i++; start++;
-				s->wite++;
-				if(i>=rcv_win*8) { i=0; start=0; }
-				//nlog(f_err,net,sid,"INF: A bit was deactivated (1)\n");
-			}
-			ck=(i < start ? i+(rcv_win*8) : i);
-			while((ck-start)>((rcv_win*8)/2)) {
-				DBG(5,"ck: %i,start:%i\n",ck,start);
-				s->w[start/8] &= ~(0x01<<(start%8)); //deactivate bit
-				start++;
-				s->wite++;
-				if(start>=rcv_win*8) { start=0; ck=i; }
-				//nlog(f_err,net,sid,"INF: A bit was deactivated (2)\n");
-			}
-			//nlog(f_err,net,sid,"INF: Packet %i accepted to be parsed\n",s->client.sn);
-		}
-	}
-	//nlog(f_err,net,sid,"INF: (After) window is:\n");
-	//dumpbuf(f_err,(Byte *)s->w,rcv_win);
-	//lognl(f_err);
-	//end duplicate check ***********
-
-
-/*	if(s->client.p_n<=s->old_p_n && s->client.t!=NetClientComm && s->client.t!=0x80) { //0x42
-		nlog(net->err,net,sid,"INF: Discarded an old message %i\n",s->client.p_n);
-		return UNET_OK;
-	}
-	s->old_p_n=s->client.p_n;
-*/
-
-	if(s->client.t==NetAck) { //0x80
-		//process here the ack packet
-		ack_update(net,buf+off,n-off,sid);
-		//V2 auth ext
-		if(s->authenticated==2) { s->authenticated=1; }
-		ret=UNET_OK;
-	} else {
-		if(s->client.t==0x02) { //before was a &, instead of an ==
-			//flooding control
-			if(net->flags & UNET_NOFLOOD) {
-				if(net->timestamp - s->last_check > 5) {
-					time((time_t *)&s->last_check);
-					s->npkts=0;
-				} else {
-					s->npkts++;
-					if(s->npkts>unet_flood_pckts) { //needs to be adjusted
-						ret=UNET_FLOOD;
-					}
-				}
-			}
-			//end flooding control
-
-			//this packet must be acked
-			//send_ackReply(net,sid); //Ack replyes are immediatly sent
-
-		}
-		/*
-		if(s->client.t==0x42) { //Negotiation Message
-			parse_negotiation(net,buf+off,n-off,sid);
-			ret=UNET_OK;
-		}
-		*/
-
-		if(s->client.t==0x02 || s->client.t==0x00) {
-			//call the message assembler
-			ret2=net_assemble_message(net,buf+off,n-off,sid);
-
-			if(ret2==0) { ret=UNET_OK; }
-			else if(ret2==1) {
-				if(ret!=UNET_FLOOD) ret=UNET_MSGRCV;
-			}
-			else {
-				ret=UNET_ERR;
-			}
-		}
-	}
-
-	/*
-	if(ret==UNET_MSGRCV || ret==UNET_FLOOD) {
-		//determine here if we need to set UNET_OK because the client is bussy
-		//already done in another part of the code
-
-	}
-	*/
-
-	//dumpbuf(net->log,buf,n);
-	//lognl(net->log);
-
-	return ret;
-}
-
-
-/**
-	Starts a connection to an specific host
-
-	flags:
-		0x01 - force validation level 1
-		0x02 - force validation level 0
-		0x01 & 0x02 - force validation level 3 (* not implemented *)
-*/
-
-int plNetConnect(st_unet * net,int * sid,char * address,U16 port,Byte flags) {
-
-	int ret;
-
-	struct sockaddr_in client;
-	struct hostent *host;
-	host=gethostbyname(address);
-	if(host==NULL) {
-		return UNET_INHOST;
-	}
-
-	//printf("%08X\n",flags);
-	//abort();
-	if((flags & 0x03)==0x03) {
-		ret=UNET_ERR;
-		plog(net->err,"WAR: Validation level 3 still not implemented!\n");
-		return ret;
-	}
-
-	//now search a session for the new connection
-	ret=plNetSearchSession(net,*(U32 *)host->h_addr_list[0],htons(port),sid);
-
-	switch(ret) {
-		case UNET_NEWCONN:
-			plNetInitSession(net,*sid);
-			net->s[*sid].ip=*(U32 *)host->h_addr_list[0];
-			net->s[*sid].port=htons(port);
-			nlog(net->log,net,*sid,"INF: New peer - outcomming message\n");
-			nlog(net->sec,net,*sid,"INF: New outcomming peer\n");
-			logflush(net->sec);
-			time((time_t *)&net->s[*sid].nego_stamp);
-			net->s[*sid].nego_micros=get_microseconds();
-			net->s[*sid].alive_stamp=net->s[*sid].nego_stamp; //set last alive stamp
-			//time((time_t *)&net->s[*sid].last_check);
-			//set default version
-			net->s[*sid].max_version=12;
-			net->s[*sid].min_version=6;
-			break;
-		case UNET_MSGRCV:
-			nlog(net->log,net,*sid,"INF: Old peer - outcomming message\n");
-			break;
-		case UNET_TOMCONS:
-			ret=UNET_TOMCONS;
-			break;
-		default:
-			ret=UNET_ERR;
-			break;
-	}
-
-	if(ret==UNET_NEWCONN || ret==UNET_MSGRCV) {
-		st_uru_client * s=&net->s[*sid];
-		//copy structures
-		client.sin_family=AF_INET; //UDP IP
-		client.sin_addr.s_addr=s->ip; //address
-		client.sin_port=s->port; //port
-		memcpy(net->s[*sid].sock_array,&client,sizeof(struct sockaddr_in));
-		net->s[*sid].a_client_size=sizeof(struct sockaddr_in);
-
-		//update client session time
-		time((time_t *)&s->timestamp);
-		s->microseconds=get_microseconds();
-		ret=UNET_OK;
-
-		if(flags & 0x02) {
-			if(flags & 0x01) {
-				//validation level 3 requested
-				s->validation=3;
-				ret=UNET_ERR;
-				nlog(net->err,net,*sid,"ERR: Validation level 3 still not implemented!\n");
-			}
-			s->validation=0;
-		} else if(flags & 0x01) {
-			s->validation=1;
-		} else {
-			s->validation=2;
-		}
-		//do the initial negotiation
-		if(ret==UNET_OK) {
-			plNetClientComm(net,*sid);
-		}
-	}
-
-	return ret;
-}
-
-
-/**
-	Gets the next message from the queue
-	remember to destroy the buffer after parsing it!
-*/
-
-int plNetGetMsg(st_unet * net,int sid,Byte ** msg) {
-
-	int size;
-
-	st_unet_rcvmsg * ite=NULL;
-	st_unet_rcvmsg * prev=NULL;
-	ite=net->s[sid].rcvmsg;
-	prev=ite;
-
-	while(ite!=NULL && ite->completed!=1) {
-		prev=ite;
-		ite=(st_unet_rcvmsg *)ite->next;
-	}
-
-	if(ite!=NULL) {
-
-		*msg=ite->buf;
-		size=ite->size;
-		#if _DBG_LEVEL_ > 3
-		DBG(4,"message size is %i\n",size);
-		if(size<=0) {
-			DBG(5,"abort condition\n");
-			abort();
-		}
-		#endif
-
-		if(ite==net->s[sid].rcvmsg) {
-			net->s[sid].rcvmsg=(st_unet_rcvmsg *)(ite->next);
-			free((void *)ite);
-		} else {
-			prev->next=ite->next;
-			free((void *)ite);
-		}
-
-	} else {
-		*msg=NULL;
-		size=0;
-		DBG(6,"ite is NULL? (sid:%i)\n",sid);
-		#if _DBG_LEVEL_ > 3
-		dumpBuffers(net,0x01);
-		//abort();
-		#endif
-	}
-	return size;
-}
-
-/**
-	Sends a single message to a single host. (Unicast)
-		flags are, the same as plNetSend
-	0x00 - normal non ack flag packet
-	0x02 - request for the ack flag
-	0x40 - it's a negotiation
-	0x80 - dump the packet to the buffer
-	0x20 - force validation 0
-*/
-int plNetSendMsg(st_unet * net,Byte * msg,int size,int sid,Byte flags) {
-	st_uru_client * u=&net->s[sid];
-	int n,off=0;
-	//char flags=0;
-	Byte * buf=NULL;
-
-	//set avg header size
-	#define AVG_HEADER_SIZE 500
-
-	//determine if we need to set the ack flag
-	if(u->hmsg.flags & plNetAck) {
-		flags |=0x02;
-	} else {
-		flags |=0x00;
-	}
-
-	//temporany fix V1
-	//if(u->validation==1) { flags |=0x20; }
-	//end temporany fix for V1
-
-	DBG(5,"I'm going to send a message of %i bytes...\n",size);
-	#if _DBG_LEVEL_ > 2
-		if(size<0) {
-			DBG(4,"Message size of %i bytes is impossible, abort condition\n",size);
-			abort();
-		}
-	#endif
-
-	buf=(Byte *)malloc(sizeof(Byte) * (size+AVG_HEADER_SIZE));
-	if(buf==NULL) return -1;
-
-#if _DBG_LEVEL_ > 2
-	print2log(net->log,"\n");
-	dump_packet(net->log,buf-0x20,off+0x80,0,7);
-	print2log(net->log,"\n-------------\n");
-#endif
-
-	off=put_plNetMsg_header(net,buf,size+AVG_HEADER_SIZE,sid);
-	//udpate the header flags with the correct size and all other data
-	//uru_put_header(buf,&u->server); <-- not yet..
-
-#if _DBG_LEVEL_ > 2
-	print2log(net->log,"\n");
-	dump_packet(net->log,buf-0x20,off+0x80,0,7);
-	print2log(net->log,"\n-------------\n");
-#endif
-
-	if(size>0) {
-		memcpy(buf+off,msg,size);
-		off+=size;
-	}
-
-	nlog(net->log,net,sid,"<SND %s %i>\n",unet_get_msg_code(u->hmsg.cmd),off);
-
-#if _DBG_LEVEL_ > 2
-	print2log(net->log,"\n");
-	dump_packet(net->log,buf-0x20,off+0x80,0,7);
-	print2log(net->log,"\n-------------\n");
-#endif
-
-	DBG(5,"dmalloc_verify()\n");
-	dmalloc_verify(NULL);
-	DBG(5,"before plNetSend %i bytes flags: %i, peer: %i...\n",off,flags,sid);
-	n=plNetSend(net, buf,off,sid,flags);
-	DBG(5,"after plNetSend...\n");
-	DBG(5,"dmalloc_verify()\n");
-	dmalloc_verify(NULL);
-
-	DBG(5,"allocated struct has %i bytes...\n",size+AVG_HEADER_SIZE);
-	DBG(5,"buffer contents:\n");
-#if _DBG_LEVEL_ > 2
-	print2log(net->log,"\n");
-	dump_packet(net->log,buf-0x20,off+0x80,0,7);
-	print2log(net->log,"\n-------------\n");
-#endif
-	DBG(5,"before a free...\n");
-	if(buf!=NULL) free((void *)buf);
-	DBG(5,"after a free...\n");
-
-	return n;
-}
-
-char plNetIsFini(st_unet * net,int sid) {
-	if(net_check_address(net,sid)!=0) { return 1; }
-	if(net->s[sid].sndmsg==NULL) { return 1; }
-	return 0;
-}
-
-int plNetClientSearchByIp(st_unet * net,U32 ip,U16 port) {
-	int i;
-	for(i=0; i<(int)net->n; i++) {
-		if(net->s[i].ip==htonl(ip) && net->s[i].port==htons(port)) {
-			return i;
-		}
-	}
-	return -1;
-}
-
-int plNetClientSearchByKI(st_unet * net,U32 ki) {
-	int i;
-	DBG(5,"plNetclientSearchByKi %i\n",ki);
-	for(i=0; i<(int)net->n; i++) {
-		DBG(5,"[%i] %i=%i?\n",i,ki,net->s[i].ki);
-		if((int)net->s[i].ki==(int)ki) {
-			return i;
-		}
-	}
-	return -1;
-}
-
-/**
-	Gets a valid sid, for an specific server service
-*/
-int plNetServerSearch(st_unet * net,Byte type) {
-
-	int sid=-1;
-
-	switch(type) {
-		case KAuth:
-			sid=net->auth;
-			break;
-		case KVault:
-			sid=net->vault;
-			break;
-		case KTracking:
-			sid=net->tracking;
-			break;
-		case KMeta:
-			sid=net->meta;
-			break;
-		default:
-			return -1;
-	}
-
-	if(net_check_address(net,sid)!=0) return -1;
-
-	if(net->s[sid].whoami!=type) {
-		return -1;
-	}
-
-	return sid;
-}
-
-/**
-	You must be cleanning dead/kicked peer by this way to avoid nasty problems
-*/
-void plNetEndConnection(st_unet * net,int sid) {
-	if(net_check_address(net,sid)!=0) return;
-	nlog(net->sec,net,sid,"Connection to peer ended...\n");
-	logflush(net->sec);
-	net->s[sid].timeout=5; //set 5 timeout seconds, and then sayonara
-	net->s[sid].authenticated=0;
-	net->s[sid].whoami=0;
-	net->s[sid].bussy=0;
-	net->s[sid].ki=0;
-	net->s[sid].status=0;
-}
-
-#endif

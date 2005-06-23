@@ -520,12 +520,13 @@ void tStrBuf::writeStr(const Byte * t) {
 }
 
 void tTime::store(tBBuf &t) {
-	t.getU32(seconds);
-	t.getU32(microseconds);
+	seconds=t.getU32();
+	microseconds=t.getU32();
 }
 int tTime::stream(tBBuf &t) {
 	t.putU32(seconds);
 	t.putU32(microseconds);
+	return 8;
 }
 U32 tTime::size() { return 8; }
 SByte tTime::compare(tTime &t) {

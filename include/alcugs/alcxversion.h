@@ -51,8 +51,8 @@
 //Protocol version numbers
 #define alcProtoMAX_VER 1
 #define alcProtoMIN_VER 3
-#define alcProtoVer 
-//alcProtoMIN_VER+(100*alcProtoMAX_VER)
+#define alcProtoVer 1003
+//alcProtoMIN_VER+(1000*alcProtoMAX_VER)
 
 /* NOTE:
 	* <= 1.1  - Unet2 and older versions of the servers

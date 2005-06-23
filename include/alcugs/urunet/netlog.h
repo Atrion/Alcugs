@@ -38,6 +38,20 @@ namespace alc {
 char * alcGetStrIp(U32 ip);
 //const char * alcGetStrUnetErr(S16 code);
 
+class txUnet : public txBase {
+public:
+	txUnet(char * name="unet",char * msg="Unknown Unet Error",bool abort=false,bool core=false) :txBase(name,msg,abort,core) {}
+};
+
+class txUnetIniErr : public txUnet {
+public:
+	txUnetIniErr(char * msg="",bool abort=false,bool core=false) :txUnet("UnetIniError",msg,abort,core) {}
+};
+
+class txToMCons : public txUnet {
+public:
+	txToMCons(char * msg="",bool abort=false,bool core=false) :txUnet("txToMCons",msg,abort,core) {}
+};
 
 
 

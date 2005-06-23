@@ -41,9 +41,10 @@
 namespace alc {
 
 /* Sesion Mgr */
-tNetSessionMgr::tNetSessionMgr(int limit) {
+tNetSessionMgr::tNetSessionMgr(tUnet * net,int limit) {
 	DBG(5,"tNetSessionMgr()\n");
 	this->max=limit;
+	this->net=net;
 	off=0;
 	n=0;
 	table=NULL;
@@ -81,22 +82,22 @@ tNetSession * tNetSessionMgr::search(tNetSessionIte &ite) {
 	if(lsid!=-1) {
 		i=lsid;
 		ite.sid=i;
-		table[i] = new tNetSession();
+		table[i] = new tNetSession(net);
 		table[i]->ip=ite.ip;
 		table[i]->port=ite.port;
 		table[i]->sid=ite.sid;
 		return table[i];
 	}
 	//does not exist
-	//if(max!=0 && n>=max) throw TooBig(_WHERE(""));
+	if(max!=0 && n>=max) throw txToMCons(_WHERE("To many connections %i:%i",n,max));
 	tNetSession ** ntable;
 	ntable=(tNetSession **)realloc((void *)table,sizeof(tNetSession) * (n+1));
-	//if(ntable==NULL) throw NoMem(_WHERE(""));
+	if(ntable==NULL) throw txNoMem(_WHERE(""));
 	table=ntable;
 	ite.sid=n;
 	i=n;
 	n++;
-	table[i] = new tNetSession();
+	table[i] = new tNetSession(net);
 	table[i]->ip=ite.ip;
 	table[i]->port=ite.port;
 	table[i]->sid=ite.sid;

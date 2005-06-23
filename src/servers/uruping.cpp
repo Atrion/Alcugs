@@ -141,9 +141,12 @@ int main(int argc,char * argv[]) {
 	}
 	
 	
-	tUnet * unet=new tUnet();
+	tUnet * unet=new tUnet(NULL,5000);
+	unet->startOp();
 
-	
+	for(i=0; i<20; i++) {
+		unet->Recv();
+	}
 	
 	delete unet;
 	

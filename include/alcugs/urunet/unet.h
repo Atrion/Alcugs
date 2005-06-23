@@ -36,7 +36,8 @@
 #include <netdb.h>
 #include <sys/socket.h>
 
-#include "prot.h"
+#include "protocol/prot.h"
+#include "protocol/protocol.h"
 #include "netsession.h"
 #include "netsessionmgr.h"
 #include "netlog.h"

@@ -65,18 +65,19 @@ namespace alc {
 typedef U16 tUnetFlags;
 
 //! Urunet flags
-#define UNET_NBLOCK   0x001 /* non-blocking socket */
-#define UNET_ELOG     0x002 /* enable netcore logging */
-#define UNET_ECRC     0x004 /* crc check enabled */
-#define UNET_AUTOSP   0x008 /* auto speed correction */
-#define UNET_NOFLOOD  0x010 /* enable flooding control */
-#define UNET_BCAST    0x020 /* enable broadcast */
-#define UNET_FLOG     0x040 /* enable file based logging, (also, 0x02 must be present) */
-#define UNET_NETAUTH  0x080 /* Enable authentication through servers */
-#define UNET_DLACK    0x100 /* Dissable ack trace */
-#define UNET_DLCHK    0x200 /* Dissable chk log */
-#define UNET_DLUNE    0x400 /* Dissable une log */
-#define UNET_DLSEC    0x800 /* Dissable sec log */
+#define UNET_NBLOCK   0x0001 /* non-blocking socket */
+#define UNET_ELOG     0x0002 /* enable netcore logging */
+#define UNET_ECRC     0x0004 /* crc check enabled */
+#define UNET_AUTOSP   0x0008 /* auto speed correction */
+#define UNET_NOFLOOD  0x0010 /* enable flooding control */
+#define UNET_BCAST    0x0020 /* enable broadcast */
+#define UNET_FLOG     0x0040 /* enable file based logging, (also, 0x02 must be present) */
+#define UNET_NETAUTH  0x0080 /* Enable authentication through servers */
+#define UNET_DLACK    0x0100 /* Dissable ack trace */
+#define UNET_DLCHK    0x0200 /* Dissable chk log */
+#define UNET_DLUNE    0x0400 /* Dissable une log */
+#define UNET_DLSEC    0x0800 /* Dissable sec log */
+
 
 #define UNET_DEFAULT_FLAGS UNET_NBLOCK | UNET_ELOG | UNET_ECRC | UNET_AUTOSP | UNET_NOFLOOD | UNET_FLOG | UNET_NETAUTH
 
@@ -85,16 +86,23 @@ public:
 	tUnet(char * lhost="0.0.0.0",U16 lport=0);
 	void setFlags(tUnetFlags flags);
 	void unsetFlags(tUnetFlags flags);
+	tUnetFlags getFlags();
 	void startOp();
 	void stopOp();
 	virtual ~tUnet();
 	void dump(tLog * f=NULL,Byte flags=0x01);
+	int Recv();
+	U32 getTime() { return ntime_sec; }
+	U32 getMicroseconds() { return ntime_usec; }
 private:
 	void init();
-	
-	int Recv(int * sid);
+	void _openlogs();
 	
 	void neterror(char * msg);
+	
+	friend class tNetSession;
+	
+	bool initialized;
 
 #ifdef __WIN32__
 	WSADATA ws; //<! The winsock stack
@@ -120,11 +128,9 @@ private:
 	U32 timeout; //default timeout when the send clock expires (re-transmission) (milliseconds)
 
 	U32 max; //<! Maxium number of connections (default 0, unlimited)
-	//this number should be always bigger than 2 times the maxium number of players
 	tNetSessionMgr * smgr; //Session MGR
 
 	int whoami; //type of _this_ server
-	//Byte clt; //0x00 auto, 0x01 unix socket, 0x02 lo, 0x03 LAN, 0x04 WAN
 
 	U32 lan_addr; //<! LAN address, in network byte order
 	U32 lan_mask; //<! LAN mask, in network byte order (default 255.255.255.0)
@@ -137,7 +143,9 @@ private:
 	char name[200]; //<! The system/server name, normally the age filename
 	char guid[18]; //<! This system guid (age guid) (in Ascii)
 
-	char address[50]; //<! This system public address (in Ascii)
+	char address[100]; //<! This system public address (in Ascii)
+	char bindaddr[100]; //<! Server bind address
+	U16 bindport; //<! Server bind port
 
 	U16 spawn_start; //first port to spawn
 	U16 spawn_stop; //last port to spawn (gameservers)
@@ -163,6 +171,20 @@ private:
 	tLog * ack; //ack drawing
 	tLog * chk; //checksum results
 	tLog * sec; //security log
+	
+	//debugging stuff
+	#ifdef _UNET_DBG_
+	U32 lim_down_cap; //in bytes
+	U32 lim_up_cap; //in bytes
+	Byte in_noise; //(0-100)
+	Byte out_noise; //(0-100)
+	U32 latency; //(in msecs)
+	U32 cur_down_quota;
+	U32 cur_up_quota;
+	U32 ip_overhead;
+	Byte quota_check; //(in seconds)
+	U32 time_quota_check; //last quota check (in seconds)
+	#endif
 };
 
 }

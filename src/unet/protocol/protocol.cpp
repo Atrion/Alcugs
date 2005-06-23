@@ -36,46 +36,24 @@ No sockets please
 /* CVS tag - DON'T TOUCH*/
 #define __U_PROTOCOL_ID "$Id$"
 
-//#define _DBG_LEVEL_ 10
+#define _DBG_LEVEL_ 10
 
-#include "config.h"
+#include "alcugs.h"
 
-#include <stdio.h>
-#include <sys/stat.h>
-#include <stdlib.h>
-#include <time.h>
-#include <string.h>
+namespace md5 {
+#include "md5.h"
+}
 
-//for the md5 checksum
-#include "md5.h" //but we get the function from the crypto library, on windows we use
-                 // that implementation
+#include "alcdebug.h"
 
-#include "stdebug.h"
-#include "urunet.h"
-#include "conv_funs.h"
-#include "useful.h"
-#include "prot.h"
-
-#include "protocol.h"
-
-#include "debug.h"
-
-st_log * f_chk=NULL;
-st_log * f_une=NULL;
-
-/* These numbers must never be touched */
-const int unet_max_version = 1;
-const int unet_min_version = 2; //this number is increassed on protocol changes.
-/* Backwards compatibility is a must */
+namespace alc {
 
 /**
- \brief Encodes the specific packet into Uru protocol 2
-*/
-
-/* k = offset MOD 8
+ \brief Encodes the specific packet into Uru validation level 2
+   k = offset MOD 8
    enc: c = x * 2 ^ k MOD 255
 */
-void encode_packet(unsigned char* buf2,unsigned char* buf, int n) {
+void alcEncodePacket(unsigned char* buf2,unsigned char* buf, int n) {
 	int i;
 	for(i=0; i<n; i++) {
 		buf2[i] = buf[i] << (i%8) | buf[i] >> (8-(i%8));
@@ -83,21 +61,20 @@ void encode_packet(unsigned char* buf2,unsigned char* buf, int n) {
 }
 
 /**
- Decodes the specific packet from Uru protocol 2
-*/
-
-/* k = offset MOD 8
+ Decodes the specific packet from Uru validation level 2
+   k = offset MOD 8
    dec: x = c * 2 ^ (8-k) MOD 255
 */
-void decode_packet(unsigned char* buf, int n) {
+void alcDecodePacket(unsigned char* buf, int n) {
 	int i;
 	for(i=0; i<n; i++) {
 		buf[i] = buf[i] >> (i%8) | buf[i] << (8-(i%8));
 	}
 }
 
+#if 0
 /** Debug the V1 checksum */
-U32 uru_checksum1trace(Byte * buf, int size) {
+U32 alcUruChecksum1Trace(Byte * buf, int size) {
 	int i;
 	U32 aux=0;
 	//S32 saux=0;
@@ -130,6 +107,7 @@ U32 uru_checksum1trace(Byte * buf, int size) {
 	print2log(f_chk," %08X\n\n",aux);
 	return aux;
 }
+#endif
 
 /**
   \brief Computes the Uru known checksums
@@ -139,7 +117,7 @@ U32 uru_checksum1trace(Byte * buf, int size) {
 	 2 -> live md5 + passwd sum,
   \note REMEMBER THAT aux_hash must be 32 bytes and contain an ascii hash
 */
-U32 uru_checksum(Byte* buf, int size, int alg, Byte * aux_hash) {
+U32 alcUruChecksum(Byte* buf, int size, int alg, Byte * aux_hash) {
 	int i;
 	U32 aux=0;
 	//S32 saux=0;
@@ -151,29 +129,15 @@ U32 uru_checksum(Byte* buf, int size, int alg, Byte * aux_hash) {
 	DBG(4,"Checksum %i requested, packet size is %i...\n",alg,size);
 	switch(alg) {
 		case 0:
-			//be sure that the last chunck of bytes is zero
-			//for(i=size; i<size+4; i++) {
-			//	if(i>=INC_BUF_SIZE) { break; }
-			//	buf[i]=0;
-			//}  HA HA HA HA HA HA HA HA HA HA HA HA HA HA HA HA HA HA HA...
 			for(i=6; i<(size-4); i=i+4) {
 				aux = aux + *((U32 *)(buf+i)); //V1 - working Checksum algorithm
 			}
-
-			//extension <--
 			whoi=((size-6)%4);
-			if(whoi==1) {
+			if(whoi==1 || whoi==2) {
 				aux += *((Byte *)(buf+size-1));
-			} else if(whoi==2) {
-				//aux -= *((U32 *)(buf+size-2));
-				aux += *((Byte *)(buf+size-1));
-			} else if(whoi==3) {
-				//aux -= *((U32 *)(buf+size-3));
 			} else if(whoi==0) {
 				aux += *((U32 *)(buf+size-4));
-			}
-
-			//aux=saux;
+			} //else if whoi==3 Noop
 			break;
 		case 1:
 		case 2:
@@ -203,19 +167,13 @@ U32 uru_checksum(Byte* buf, int size, int alg, Byte * aux_hash) {
 				dumpbuf(f_uru,md5buffer,aux_size);
 				abort();
 			}*/
-			DBG(5,"computing md5...\n");
-			MD5(md5buffer, aux_size, hash);
+			md5::MD5(md5buffer, aux_size, hash);
 			//print2log(f_chkal,"\n<-\n");
-
 			aux = *((U32 *)hash);
-			DBG(5,"after a free call\n");
 			free(md5buffer);
-			DBG(5,"before a free call\n");
-
 			break;
 		default:
-			//print2log(f_chkal,"ERR: Unimplemented Checksum V%i algorithm requested\n",alg);
-			plog(f_err,"ERR: Uru Checksum V%i is currenlty not supported in this version of the server.\n\n",alg);
+			lerr->log("ERR: Uru Checksum V%i is currenlty not supported in this version of the server.\n\n",alg);
 			aux = 0xFFFFFFFF;
 	}
 	return aux;
@@ -238,66 +196,60 @@ U32 uru_checksum(Byte* buf, int size, int alg, Byte * aux_hash) {
 	 2 -> Validation level too high
 	 3 -> Bogus packet!!
 */
-int uru_validate_packet(Byte * buf,int n,st_uru_client * u) {
+int alcUruValidatePacket(Byte * buf,int n,Byte * validation,Byte authed=0,Byte * phash=NULL) {
 	U32 checksum;
 #ifndef _NO_CHECKSUM
 	U32 aux_checksum;
 #endif
-	if(n>=2 && buf[0]==0x03) { //magix uru number
+	if(n>=2 && buf[0]==0x03) { //magic uru number
 		if(buf[1]!=0) {
-			u->validation=buf[1]; //store the validation level
+			*validation=buf[1]; //store the validation level
 		}
-		if(buf[1]==0x00) { u->validated=1; u->client.cs=0x00; return 0; } //All went OK with validation level 0
+		if(buf[1]==0x00) { return 0; } //All went OK with validation level 0
 		checksum=*(U32 *)(buf+0x02); //store the checksum
-		u->client.cs=checksum; //it's used to calculate the challenge (legacy)
 #ifndef _NO_CHECKSUM
 		if(buf[1]==0x01) { //validation level 1
-			aux_checksum=uru_checksum(buf, n, 0, NULL);
+			aux_checksum=alcUruChecksum(buf, n, 0, NULL);
 		} else
 #endif
 		if(buf[1]==0x02) { //validation level 2
-			//print2log(f_uru,"--- authenticated? %i\n",u->authenticated);
 #ifndef _NO_CHECKSUM
-			if(u->authenticated==1) { //authenticated?
-				//hex2ascii(u->passwd,hash,16); //get the string of the hash
-				aux_checksum=uru_checksum(buf, n, 2, u->passwd);
+			if(authed) { //authenticated?
+				aux_checksum=alcUruChecksum(buf, n, 2, phash);
 			} else {
-			aux_checksum=uru_checksum(buf, n, 1, NULL);
+				aux_checksum=alcUruChecksum(buf, n, 1, NULL);
 			}
 #endif
-			decode_packet(buf,n); //Now the packet will be readable
-			//be sure to take bak the 0x02 byte to the header
-			buf[1]=0x02;
+			alcDecodePacket(buf,n); //Now the packet will be readable
+			buf[1]=0x02; //be sure to take bak the 0x02 byte to the header
 		}
 #ifndef _NO_CHECKSUM
 		else {
 			return 2; //humm??
 		}
-		if(aux_checksum==checksum) { u->validated=1; return 0; } //All went ok with v1
+		if(aux_checksum==checksum) { return 0; } //All went ok with v1/v2
 		else {
 			//work around (swap the checksum algorithms)
 			if(buf[1]==0x02) { //validation level 2
-				encode_packet(buf,buf,n);
+				alcEncodePacket(buf,buf,n);
 				buf[1]=0x02;
-				if(u->authenticated==1) { //authenticated?
-					//hex2ascii(u->passwd,hash,16); //get the string of the hash
-					aux_checksum=uru_checksum(buf, n, 1, NULL);
+				if(authed) { //authenticated?
+					aux_checksum=alcUruChecksum(buf, n, 1, NULL);
 				} else {
-					aux_checksum=uru_checksum(buf, n, 2, u->passwd);
+					aux_checksum=alcUruChecksum(buf, n, 2, phash);
 				}
-				decode_packet(buf,n); //Now the packet will be readable
+				alcDecodePacket(buf,n); //Now the packet will be readable
 				//be sure to take bak the 0x02 byte to the header
 				buf[1]=0x02;
-				if(aux_checksum==checksum) { u->validated=1; return 0; } //All went ok with v1
+				if(aux_checksum==checksum) { return 0; } //All went ok with v1
 			}
-
-			plog(f_chk,"ERR: Validation level %i, got: %08X exp: %08X\n",u->validation,u->client.cs,aux_checksum);
-			if(u->validation==1) {
+			lerr->log("ERR: Validation level %i, got: %08X exp: %08X\n",*validation,checksum,aux_checksum);
+			/*if(u->validation==1) {
 				uru_checksum1trace(buf, n);
 			}
 			dumpbuf(f_chk,buf,n);
 			lognl(f_chk);
-			u->validated=0;
+			u->validated=0;*/
 			return 1;
 		} //:(
 #else
@@ -307,6 +259,7 @@ int uru_validate_packet(Byte * buf,int n,st_uru_client * u) {
 	return 3; //aiieee!!!
 }
 
+#if 0
 
 /**
 \brief assings the header structure
@@ -433,30 +386,6 @@ int uru_get_header_start(st_uru_head * u) {
 	else return 28; //with no-checksum
 }
 
-#if 0
-
-/**
-  Increments the packet counter, and updates the buffer
-*/
-void uru_update_packet_counter(Byte * buf, st_uru_head * u) {
-	u->p_n++;
-	if(buf[1]==0x01 || buf[1]==0x02) {
-		*((U32 *)(buf+6))=u->p_n;
-	} else {
-		*((U32 *)(buf+2))=u->p_n;
-	}
-}
-
-/**
-  Increases the message counter, with the specified flags
-*/
-void uru_inc_msg_counter(uru_head * server) {
-		//update flags
-		server->p_n++;
-		server->sn++;
-}
-
-#endif
 
 /**
 \brief assings the header structure to the specified buffer
@@ -520,264 +449,6 @@ int uru_put_header(unsigned char * buf,st_uru_head * u) {
 	return offset;
 }
 
-#if 0
-
-/**
-Initialitzes (zeroes) the uru header
-*/
-void uru_init_header(uru_head * u, Byte validation) {
-	u->ch = validation; //(outdated legacy)
-	u->p_n=0;
-	u->t=0x00;
-	u->fr_n=0;
-	u->sn=0;
-	u->fr_t=0;
-	u->fr_ack=0;
-	u->ps=0;
-	u->size=0x00;
-}
-
-/**
-  updates the ack flags, and generates a new ack packet
-	that will  be put in the buffer
-*/
-int uru_get_ack_reply(Byte * buf, st_uru_client * u) {
-	int n;
-
-	//update flags
-	u->server.fr_n=0; //put the fragment number to zero
-	u->server.p_n++;
-	u->server.t=0x80;
-	u->server.sn++;
-	u->server.size=0x01;
-
-	if(u->validation<=0x01) {
-		u->server.ch=0x00; //disable checksum on all V1 packets
-		//(Negotation and Ack packets don't have checksum)
-	}
-
-	//puts the header in the buffer
-	n=uru_put_header(buf,&u->server);
-
-	//create ack_packet
-	//two blanks
-	*(U16 *)(buf+n)=0x00;
-	//fragment ack
-	buf[n+2]=u->client.fr_n;
-	//sn ack
-	*(U32 *)(buf+n+3)=u->client.sn;
-	//4 blanks
-	*(U32 *)(buf+n+6)=0x00;
-
-	// fr ack
-	buf[n+0x0A]=u->client.fr_ack;
-	// ps ack
-	*(U32 *)(buf+n+0x0B)=u->client.ps;
-
-	//4 blanks
-	*(U32 *)(buf+n+0x0E)=0x00;
-
-	print2log(f_uru,"<SND> Ack (%i,%i) (%i,%i)\n",u->client.fr_n,u->client.sn,u->client.fr_ack,u->client.ps);
-
-	return 0x12+n;
-}
-
-/**
-  \brief Parses and ACK reply, and updates the flags
-	also, it need to clear from the buffer the acked
-	packet and do other stuff.
-  \return Returns 0 if it fails, returns size on success
-*/
-int uru_process_ack(Byte * buf,int n,int start,st_uru_client * u) {
-	U32 i;
-	int non_std=0;
-
-	Byte fr_n;
-	U16 sn;
-
-	Byte fr_ack;
-	U16 ps;
-
-	U16 unknownZ;
-	U32 unknownA;
-	U32 unknownB;
-
-	unknownZ=*(U16 *)(buf+start);
-	if(unknownZ!=0) { non_std=1; }
-
-	print2log(f_uru,"<RCV> Ack");
-
-	int stats_n=0, del_n=0;
-
-	//Do for each ack.
-	for(i=0; i<u->client.size; i++) {
-		fr_n=*(Byte *)(buf+start+2+(i*16));
-		sn=*(U32 *)(buf+start+3+(i*16));
-		unknownA=*(U32 *)(buf+start+6+(i*16));
-		fr_ack=*(Byte *)(buf+start+0x0A+(i*16));
-		ps=*(U32 *)(buf+start+0x0B+(i*16));
-		unknownB=*(U32 *)(buf+start+14+(i*16));
-		if(i!=0) { print2log(f_uru," |"); }
-		print2log(f_uru," (%i,%i) (%i,%i)",fr_n,sn,fr_ack,ps);
-
-		if(unknownA!=0 || unknownB!=0) { non_std=1; }
-
-		/*
-		TODO: This need to change, search in the buffer for the acked packets
-		and delete them, if something strange happens log the unexpected packets.
-		*/
-
-		/* temporany patch */ //erres un chapussero
-		Byte e;
-		int n_start;
-		Byte ack_fr;
-		U32 ack_sn;
-
-		stats_n=0;
-
-		for(e=0; e<MAX_PACKETS_IN_BUFFER; e++) {
-			if(u->out[e][0]==0x01) { //the slot is in use
-				if(u->out[e][1]==0x00) { n_start=11; } //28
-				else { n_start=15; } //32
-				ack_sn=(*(U32 *)(u->out[e]+n_start+1)) & 0x00FFFFFF;
-				ack_fr=*(Byte *)(u->out[e]+n_start);
-				//printf("\n@@@@@@@@@@\nack_sn %i, ack_fr %i\n sn %i, fr_n %i, ps %i, fr_ack %i\n",ack_sn,ack_fr,sn,fr_n,ps,fr_ack);
-				//if((ack_sn<=sn && ack_fr<=fr_n) && (ack_sn>ps && (ack_fr>fr_ack || ack_fr==0))) {
-				////if((ack_sn<=sn && ack_fr<=fr_n)) { //<-- old
-				if((ack_sn==sn && ack_fr==fr_n)) { //<-- new
-					//ok
-					u->out[e][0]=0x02; //reset acked packet
-					//printf("\n##############DELETED PACKET FROM BUFFER!!\n");
-					del_n++;
-				} else {
-					stats_n++;
-				}
-				//dump_packet(stdout,u->out[e],30,0,5);
-			}
-		}
-
-
-		/* end of temporany patch */
-
-		if(fr_n==u->server.fr_n && sn==u->server.sn) {  //perfect it's an ack of the last packet sent
-			if(fr_ack!=u->server.fr_ack || ps!=u->server.ps) {
-				print2log(f_uru," ERR: Found an ack packet that breaks the rules!\n");
-				non_std=1;
-			}
-			u->server.fr_ack=u->server.fr_n; //update flags
-			u->server.ps=u->server.sn;
-		} else if(fr_n>u->server.fr_n || sn>u->server.sn) {
-			print2log(f_uru," ERR: Recieved an ack of a packet that I have not send!? %i - %i\n",fr_n,u->server.fr_n);
-			//non_std=1;
-		} else {
-			print2log(f_uru," INF: Discarding old ack packet?\n");
-			//non_std=1;
-		}
-	}
-
-	print2log(f_uru,"\nINF: Deleted %i packets, pending %i pkts",del_n,stats_n);
-
-	print2log(f_uru,"\n");
-
-	if(non_std==1) return 0;
-
-	return (u->client.size + start);
-}
-
-/**
-  \brief Creates a valid negotation packet (I think)
-  \return returns the size
-*/
-int uru_get_negotation_reply(Byte * buf,st_uru_client * u) {
-	int n;
-	char * timestamp;
-
-	//update flags
-	u->server.fr_n=0; //put the fragment number to zero
-	//u->server.p_n++;
-	u->server.t=0x42;
-	//u->server.sn++;
-	u->server.size=0x0C;
-
-	if(u->validation<=0x01) {
-		u->server.ch=0x00; //disable checksum on all V1 packets
-		//(Negotation and Ack packets don't have checksum)
-	}
-
-	n=uru_put_header(buf,&u->server);
-
-	//server bandwidth
-	*(U32 *)(buf+n)=global_bandwidth;
-
-	//time(&u->timestamp);
-	timestamp=ctime((const time_t *)&u->server.timestamp);
-
-	print2log(f_uru,"<SND> (Re)Negotation us: %i bandwidth: %i bps time: %s",u->server.microseconds,global_bandwidth,timestamp);
-	//free(timestamp);
-
-	//store timestamp
-	*(time_t *)(buf+n+4)=u->server.timestamp;
-	//*(time_t *)(buf+n+4)=u->nego_timestamp;
-	//microseconds?
-	*(U32 *)(buf+n+8)=u->server.microseconds; //what will do this?
-	//*(U32 *)(buf+n+8)=u->nego_microseconds;
-
-	return(n+u->server.size);
-}
-
-/**
-   \brief Process the (Re)Negotation packets
-   \return returns 0 for not sending a Negotation reply
-   \return returns -1 if an error occurs
-*/
-int uru_process_negotation(Byte * buf,int n,int start,st_uru_client * u) {
-	char * timestamp;
-	U32 microseconds;
-	time_t stamp;
-
-	u->bandwidth=*(U32 *)(buf+start);
-	stamp=*(time_t *)(buf+4+start);
-	microseconds=*(U32 *)(buf+8+start); //this is a session idemtifier, I'm very sure
-
-	timestamp=ctime((const time_t *)&stamp);
-
-	print2log(f_uru,"<RCV> (Re)Negotation us: %i bandwidth: %i bps time: %s",microseconds,u->bandwidth,timestamp);
-	//free(timestamp);
-
-	if(microseconds>=1000000) { //if microseconds if bigger than 1 second, then something is going wrong..
-		stamp2log(f_une);
-		ip2log_old(f_une,u->client_ip,u->client_port);
-		print2log(f_une,"ERR: Strange microseconds value found in Negotation packet!\n");
-		dump_packet(f_une,buf,n,start,5);
-		print2log(f_une,"\n");
-	}
-
-	//That's all for now about negotation packets
-	//printf("<- %i,%i -- %i,%i -->\n",u->client.microseconds,microseconds,(U32)u->client.timestamp,(U32)stamp);
-	if(u->client.microseconds==microseconds && u->client.timestamp==stamp) {
-		print2log(f_uru,"INF: Discarding old (Re)Negotation packet\n");
-		return 0;
-	}
-	u->client.microseconds=microseconds;
-	u->client.timestamp=stamp;
-
-	//2nd test
-	/*if(u->nego_microseconds==(U32)microseconds && u->nego_timestamp==(U32)stamp) {
-		print2log(f_uru,"INF: 2nd Discarding old (Re)Negotation packet\n");
-		return 0;
-	}
-	u->nego_microseconds=microseconds;
-	u->nego_timestamp=stamp;*/
-
-	return (start+u->client.size);
-}
-
-/* the next version of the plnetmsg processor
-	puts all stuff in a struct... well
-
-*/
-
-#endif
 
 /** Gets all plNet msg header vars
 		/return returns the size
@@ -1548,14 +1219,6 @@ void htmlDumpHeaderRaw(st_unet * net,st_log * log,st_uru_client c,Byte * buf,int
 	htmlDumpHeader(log,c,h,buf+aux,size,flux);
 }
 
-#if 0
-
-char * unet_get_str_ip(int ip) {
-	in_addr cip;
-	static char mip[16];
-	cip.s_addr=(unsigned long)ip;
-	strcpy(mip, inet_ntoa(cip));
-	return mip;
-}
-
 #endif
+
+} //namespace

@@ -41,8 +41,10 @@
 namespace alc {
 
 /* Session */
-tNetSession::tNetSession() {
+tNetSession::tNetSession(tUnet * net) {
 	DBG(5,"tNetSession()\n");
+	this->net=net;
+	init();
 }
 tNetSession::~tNetSession() {
 	DBG(5,"~tNetSession()\n");
@@ -51,6 +53,32 @@ void tNetSession::init() {
 	DBG(5,"init()\n");
 	ip=0;
 	port=0;
+	sid=-1;
+	validation=0;
+	authenticated=0;
+}
+void tNetSession::processMsg(Byte * buf,int size) {
+	DBG(5,"Message of %i bytes\n",size);
+	//stamp
+	time_sec=alcGetTime();
+	time_usec=alcGetMicroseconds();
+	
+	int ret;
+	
+	ret=alcUruValidatePacket(buf,size,&validation,authenticated,passwd);
+	
+	if(ret!=0 && (ret!=1 || net->flags & UNET_ECRC)) {
+		if(ret==1) net->err->log("ERR: Failed Validating a message!\n");
+		else net->err->log("ERR: Non-Uru protocol packet recieved!\n");
+	}
+	
+	#if _DBG_LEVEL_ > 2
+	DBG(2,"RAW Packet follows: \n");
+	net->log->dumpbuf(buf,size);
+	net->log->nl();
+	#endif
+	
+	
 }
 /* End session */
 
