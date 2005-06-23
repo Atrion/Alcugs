@@ -36,7 +36,7 @@
 namespace alc {
 
 char * alcGetStrIp(U32 ip);
-
+const char * alcGetStrUnetErr(S16 code);
 
 
 

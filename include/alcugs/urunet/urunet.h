@@ -83,18 +83,19 @@ typedef U16 tUnetFlags;
 class tUnet {
 public:
 	tUnet(char * lhost="0.0.0.0",U16 lport=0);
+	void setFlags(tUnetFlags flags);
+	void unsetFlags(tUnetFlags flags);
+	void startOp();
+	void stopOp();
 	virtual ~tUnet();
+	void dump(tLog * f=NULL,Byte flags=0x01);
 private:
 	void init();
-	int tUnet::StartOp(U16 port,char * hostname);
-	void tUnet::StopOp();
 	
-	int tUnet::Recv(int * sid);
+	int Recv(int * sid);
 	
-	void tUnet::neterror(char * msg);
-	void tUnet::dumpBuffers(Byte flags);
+	void neterror(char * msg);
 
-	
 #ifdef __WIN32__
 	WSADATA ws; //<! The winsock stack
 	SOCKET sock; //<! The socket

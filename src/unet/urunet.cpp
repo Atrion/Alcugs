@@ -60,11 +60,13 @@ void tUnet::init() {
 	flags=UNET_NBLOCK | UNET_ELOG | UNET_ECRC | UNET_AUTOSP | UNET_NOFLOOD | UNET_FLOG | UNET_NETAUTH;
 	whoami=0; //None (new connection) //KClient; //default type of peer
 
-	unet_sec=1; //netcore timeout to do another loop (seconds)
-	unet_usec=0; //netcore timeout to do another loop (microseconds)
+	//netcore timeout < min(all RTT's)
+	unet_sec=1; //(seconds)
+	unet_usec=0; //(microseconds)
 
-	conn_timeout=3; //default timeout
-	timeout=2000; //2 seconds (re-transmission)
+	conn_timeout=5; //default timeout (seconds) (sensible to NetMsgSetTimeout (higher when connected)
+	/* set to 30 when authed (client should send alive every 10 seconds)*/
+	timeout=2000; //2 seconds (re-transmission) [initial RTT]
 
 	//initial server timestamp
 	ntime=alcGetCurrentTime('u');
@@ -337,18 +339,16 @@ void tUnet::StopOp() {
 	/return an unet event
 */
 int tUnet::Recv(int * sid) {
-	int n,i,ret,ret2; //,off; //size of packet, and iterator, return codes & 2
-	int s_old; //identifier for and old session found
-	int s_new; //identifier for a void slot session found
 	Byte buf[INC_BUF_SIZE]; //internal rcv buffer
+	
+	tNetSessionIte ite;
+	tNetSession * session=NULL;
 
 	static char checker=0;
 
 	struct sockaddr_in client; //client struct
 	socklen_t client_len; //client len size
 	client_len=sizeof(struct sockaddr_in); //get client struct size
-
-	*sid=-1; n=0; s_old=-1; s_new=-1;
 
 	//waiting for packets - timeout
 	fd_set rfds;
@@ -383,6 +383,7 @@ int tUnet::Recv(int * sid) {
 	this->ntime=alcGetCurrentTime('u');
 	DBG(6,"Stamp set...\n");
 
+#if 0
 	if(!valret || checker>50) {
 		checker=0;
 		//perform basic netcore things
@@ -418,6 +419,7 @@ int tUnet::Recv(int * sid) {
 	} else {
 		checker++;
 	}
+#endif
 
 	DBG(5,"Before recvfrom\n");
 	//while() //get 10 messages from the buffer in a single row //TODO
@@ -442,14 +444,10 @@ int tUnet::Recv(int * sid) {
 	}
 #endif
 
-	//DBG(5,"I'm here at line 1699, well, it was line 1699, I'm sure that still is line 1699...\n");
 	if(n<0 && valret) { //problems?
-		//DBG(5,"I'm going to call to neterr()..\n");
 		neterror("ERR: Fatal recieving a message... ");
-		//DBG(5,"Now, I'm getting out with an UNET_ERROR return code\n");
 		return UNET_ERR;
 	}
-	//DBG(5,"Windows Sucks..\n");
 
 	if(n>0) { //we have a message
 		/*
@@ -461,11 +459,8 @@ int tUnet::Recv(int * sid) {
 			this->err->log("[ip:%s:%i] ERR: Recieved a really big message of %i bytes\n",alcGetStrIp(client.sin_addr.s_addr),ntohs(client.sin_port),n);
 			return UNET_TOOBIG;
 		} //catch up impossible big messages
-		//do things with the message here
-
 		/*
 			Uru protocol check
-			Drop packet if it is not an Uru packet without wasting a session
 		*/
 		if(buf[0]!=0x03) { //not an Uru protocol packet don't waste an slot for it
 			this->unx->log("[ip:%s:%i] ERR: Unexpected Non-Uru protocol packet found\n",alcGetStrIp(client.sin_addr.s_addr),ntohs(client.sin_port));
@@ -474,14 +469,14 @@ int tUnet::Recv(int * sid) {
 			return UNET_NONURU;
 		}
 
-		#if 0
-		/*
-		find the session id, and control where to manage and save data
-		*/
 		DBG(8,"Search session...\n");
-		////ret=plNetSearchSession(net,client.sin_addr.s_addr,client.sin_port,sid);
-		DBG(4,"search result %i\n",ret);
+		ite.ip=client.sin_addr.s_addr;
+		ite.port=client.sin_port;
+		ite.sid=-1;
+		smgr.search(ite);
 
+		#if 0
+		
 		switch(ret) {
 			case UNET_NEWCONN:
 				DBG(5,"Initializing session %i\n",*sid);
@@ -596,15 +591,19 @@ int tUnet::Recv(int * sid) {
 	flags
 	0x01 append to the last log file (elsewhere destroy the last one)
 */
-void tUnet::dumpBuffers(Byte flags) {
+void tUnet::dump(tLog * sf,Byte flags) {
 #if _DBG_LEVEL_ > 2
-	tLog * f=new tLog;
-	if(flags & 0x01) {
-		f->open("memdump.log",5,DF_APPEND);
+	if(sf==NULL) {
+		tLog * f=new tLog;
+		if(flags & 0x01) {
+			f->open("memdump.log",5,DF_APPEND);
+		} else {
+			f->open("memdump.log",5,0);
+		}
+		if(f==NULL) return;
 	} else {
-		f->open("memdump.log",5,0);
+		f=sf;
 	}
-	if(f==NULL) return;
 
 	//well dump all
 	f->log("Starting up Netcore memory report\n\n");
@@ -628,7 +627,6 @@ void tUnet::dumpBuffers(Byte flags) {
 	f->print("net->timeout:%i\n",this->timeout);
 	f->print("net->n:%i\n",this->n);
 	f->print("net->max:%i\n",this->max);
-	//f->print("net->s:0x%08X\n",(int)this->s);
 	f->print("net->whoami:%i\n",this->whoami);
 	f->print("net->lan_addr:%i %s\n",this->lan_addr,alcGetStrIp(this->lan_addr));
 	f->print("net->lan_mask:%i %s\n",this->lan_mask,alcGetStrIp(this->lan_mask));
@@ -640,25 +638,17 @@ void tUnet::dumpBuffers(Byte flags) {
 	f->print("net->nat_down:%i\n",this->nat_down);
 	f->print("Session table\n");
 	//session table
-	//////dumpSessions(f,net);
-
-	/*
-	if(net->s!=NULL) {
-		dumpbuf(f,(Byte *)net->s,sizeof(*net->s));
-		lognl(f);
-		int i;
-		for(i=0; i<(int)net->n; i++) {
-			dumpSessionBuffers(f,net,i);
-		}
-	} */
+	
 	f->log("Ending memory report\n");
-	f->close();
-	delete f;
+	if(sf==NULL) {
+		f->close();
+		delete f;
+	}
 #endif
 }
 
-}
 
+} //end namespace
 
 #if 0
 
@@ -1554,244 +1544,7 @@ int ack_update(st_unet * net,Byte * buf,int size,int sid) {
 	return UNET_OK;
 }
 
-
-
-
-void dumpSession(st_log * log,st_unet * net,int i) {
-	print2log(log,"[%i] f:%i,w:%i,auth:%i,val:%i,ip:%s:%i,wins:%i,a:(%s,%s)[%s]\n",\
-	i,net->s[i].flag,net->s[i].whoami,net->s[i].authenticated,net->s[i].validated,\
-	get_ip(net->s[i].ip),ntohs(net->s[i].port),net->s[i].window,net->s[i].name,\
-	net->s[i].acct,net->s[i].uid);
-}
-
-/**
-	Dumps the session table
-*/
-void dumpSessions(st_log * log,st_unet * net) {
-	int i;
-	for(i=0; i<(int)net->n; i++) {
-		dumpSession(log,net,i);
-	}
-}
-
-/**
-	Creates all the required data structures with the correct default values
-*/
-void plNetInitSession(st_unet * net,int sid) {
-
-	DBG(7,"init sid %i...\n",sid);
-	memset((void *)&net->s[sid],0,sizeof(st_uru_client));
-	net->s[sid].flag=0x01; //Set In use
-	net->s[sid].sid=sid; //set sid
-
-	//set timeout
-	net->s[sid].timeout=net->timeout;
-
-	//memset should be already doing that, but just in case
-	//net->s[sid].name=NULL;
-	//net->s[sid].acct=NULL;
-	//net->s[sid].uid=NULL;
-	//net->s[sid].passwd=NULL;
-	net->s[sid].w=(char *)malloc(sizeof(char) * rcv_win);
-	memset(net->s[sid].w,0,sizeof(char) * rcv_win);
-	net->s[sid].wite=0;
-
-	net->s[sid].rcvmsg=NULL;
-	net->s[sid].sndmsg=NULL;
-
-	DBG(7,"session %i initialized...\n",sid);
-}
-
-/** Internal only, destroys all data structures from one slot,
-    never use it from another layer
-*/
-void destroyAllDataStructures(st_uru_client * who) {
-
-	DBG(8,"destroyAllDataStructures() init ...\n");
-	//if(who->name!=NULL) { free((void *)who->name); who->name=NULL; }
-	//if(who->acct!=NULL) { free((void *)who->acct); who->acct=NULL; }
-	//if(who->uid!=NULL) { free((void *)who->uid); who->uid=NULL; }
-	//if(who->passwd!=NULL) { free((void *)who->passwd); who->passwd=NULL; }
-
-	free((void *)who->w);
-
-	st_unet_rcvmsg * msg;
-	while(who->rcvmsg!=NULL) {
-		msg=who->rcvmsg;
-		who->rcvmsg=(st_unet_rcvmsg *)(who->rcvmsg->next);
-		if(msg->buf!=NULL) {
-			free((void *)msg->buf);
-		}
-		free((void *)msg);
-	}
-	DBG(8,"OK, incomming message buffer succesfully destroyed!\n");
-
-	st_unet_sndmsg * msg2;
-	while(who->sndmsg!=NULL) {
-		msg2=who->sndmsg;
-		who->sndmsg=(st_unet_sndmsg *)(who->sndmsg->next);
-		if(msg2->buf!=NULL) {
-			free((void *)msg2->buf);
-		}
-		free((void *)msg2);
-	}
-	DBG(8,"OK, outcomming message buffer succesfully destroyed!\n");
-
-	memset(who,0,sizeof(st_uru_client)); //just in case
-	DBG(8,"destroyAllDataStructures() ending...\n");
-}
-
-/**
-	Destroys all the data structures from an specific session
-*/
-void plNetDestroySession(st_unet * net,int sid) {
-	//0x00 latest new session in the struct
-	//0x01 in use
-	//0x02 deleted
-	//0x03 terminated/timeout (waiting for a decission from the app layer)
-
-	if(net_check_address(net,sid)!=0) { return; } //avoid reading out of range
-	nlog(net->sec,net,sid,"Connection to peer destroyed...\n");
-	logflush(net->sec);
-
-	int vflag=-1;
-
-	int n;
-	n=net->n-1;
-	DBG(6,"destroying session %i\n",sid);
-
-	//catch up strange impossible situations, and notify them (sanity check)
-	if(sid<n && net->s[sid+1].flag==0x00) {
-		plog(net->err,"ERR: Something weird in the session table!\n");
-		dumpSessions(net->err,net);
-	}
-
-	if(sid==n) { // || net->s[sid+1].flag==0x00) {
-		net->s[sid].flag=0x00;
-		vflag=0;
-		//go back deleting stuff
-		while(sid>=0 && (net->s[sid].flag==0x02 || net->s[sid].flag==0x00)) {
-			destroyAllDataStructures(&net->s[sid]);
-			sid--;
-		}
-		n=sid;
-
-		net->n=n+1;
-		if(net->n==0) {
-			free((void *)net->s);
-			net->s=NULL;
-		} else {
-			st_uru_client * aux;
-			aux=(st_uru_client *)realloc((void *)net->s,sizeof(st_uru_client) * net->n);
-			if(aux==NULL) {
-				plog(net->err,"FATAL: Not enough memory!, session was not destroyed\n");
-			} else {
-				net->s=aux;
-			}
-		}
-
-	} else {
-		destroyAllDataStructures(&net->s[sid]); //this sets the flag to 0!!!
-		net->s[sid].flag=0x02;
-		vflag=0x02;
-	}
-
-	plog(net->sec,"Session destroyer results are: flag:%i,sid:%i,net->n:%i\n",vflag,sid,net->n);
-	dumpSessions(net->sec,net);
-
-	DBG(7,"session destroyed...\n");
-}
-
-/**
-	Returns the session sid from the specified ip address.
-	If also will create a new session, if no session was found
-	It will return one of the next events: UNET_TOMCONS, UNET_NEWCONN, UNET_OK.
-*/
-int plNetSearchSession(st_unet * net,U32 ip,U16 port,int * sid) {
-
-	int i;
-	int s_new=-1, s_old=-1;
-	
-//Debug sid's
-#define DBGSID1L 0 //6
-#define DBGSID2L 0 //8
-#define DBGSID3L 0 //9
-
-	for(i=0; i<(int)net->n; i++) {
-		DBG(DBGSID2L,"i:%i,net->n:%i\n",i,net->n);
-		if(net->s[i].flag==0x00) { //This is not going to happen never
-			plog(net->err,"Now, I think that the problem is serious, it may be the weather, but the problem is serious\n");
-			dumpBuffers(net,0x00);
-			//plog(net->err,_WHERE("FATAL, Abort call on unet3 code\n"));
-			//abort();
-			_DIE("flag should not be 0x00\n");
-			//TODO, flag=0 is defunct, now there are only these flags.
-			//  1=in use, 2=deleted, 3=timeout  0 is only used for initizialitzation
-			if(s_new!=-1 && s_new>i) {
-				s_new=i;
-				DBG(DBGSID1L,"lowest new sid found:%i\n",s_new);
-			} else {
-				if(i>0 && net->s[i-1].flag==0x02) {
-					net->s[i-1].flag=0x00; //go back
-				}
-			}
-			break; //stop (there is nothing else ahead)
-		} else if(net->s[i].flag==0x02) {
-			if(s_new!=-1 && s_new>i) {
-				s_new=i;
-				DBG(DBGSID1L,"lowest new recycled sid found:%i\n",s_new);
-			}
-		} else if(net->s[i].flag==0x01 || net->s[i].flag==0x03) {
-			if(net->s[i].ip==ip && net->s[i].port==port) {
-				s_old=i; //we found it
-				DBG(DBGSID1L,"lowest old sid found:%i\n",s_old);
-				break; //all done!
-			}
-		} else {
-			plog(net->err,"Houston, We Have A Problem!\n");
-		}
-	}
-
-	*sid=-1;
-	if(s_old!=-1) {
-		DBG(DBGSID2L,"Old sid:%i\n",*sid);
-		*sid=s_old;
-		if(net->s[*sid].flag==0x03) {
-			//plNetDestroySession(net,i); //avoid memory garbage
-			//destroyAllDataStructures(&net->s[*sid]);
-			//return UNET_NEWCONN;
-			return UNET_MSGRCV;
-		} else {
-			return UNET_MSGRCV;
-		}
-	} else if(s_new!=-1) {
-		DBG(DBGSID2L,"recycled sid:%i\n",*sid);
-		*sid=s_new;
-		destroyAllDataStructures(&net->s[*sid]);
-		return UNET_NEWCONN;
-	} else if(net->n<net->max || net->max==0) {
-		//well do the job here
-		net->n++;
-		st_uru_client * aux;
-		aux=(st_uru_client *)realloc((void *)net->s,sizeof(st_uru_client) * net->n);
-		if(aux==NULL) { return UNET_ERR; }
-		net->s=aux;
-		*sid=net->n-1;
-		DBG(DBGSID2L,"New sid:%i\n",*sid);
-		return UNET_NEWCONN;
-	} else {
-		DBG(DBGSID3L,"something went wrong\n");
-		return UNET_TOMCONS;
-	}
-	DBG(DBGSID3L,"this part is never reached...\n");
-	_DIE("got into an unreachable part of the code\n");
-	return UNET_ERR;
-}
-
-/** Internal only low level message processor
-
-*/
-
+/** Internal only low level message processor */
 int processClientMsg(st_unet * net,Byte * buf,int n,int sid) {
 
 	int ret2,off,ret;
@@ -2095,46 +1848,6 @@ int plNetConnect(st_unet * net,int * sid,char * address,U16 port,Byte flags) {
 	return ret;
 }
 
-/**
-	Returns the string explaining the error that ocurred
-*/
-
-char * get_unet_error(S16 code) {
-	switch (code) {
-		case UNET_REJECTED:
-			return "The connection was rejected";
-		case UNET_TOMCONS:
-			return "Reached the maxium number of connections supported by this system";
-		case UNET_NONURU:
-			return "Ignored a non-uru message, generated by another protocol, a port scan, or another unknown system";
-		case UNET_CRCERR:
-			return "Ignored an incomming message due to a checksum missmatch";
-		case UNET_TOOBIG:
-			return "The message was discarded, because it was biggest than the Uru maxium transmission unit";
-		case UNET_ERR:
-			return "A generic system error occurred";
-		case UNET_NOBIND:
-			return "Cannot bind to the requested address";
-		case UNET_INHOST:
-			return "Cannot resolve or bind the requested address";
-		case UNET_FINIT:
-			return "Fatal error occurred on netcore initialization";
-		case UNET_OK:
-			return "The last operation was succesfull";
-		case UNET_MSGRCV:
-			return "A new message has been recieved";
-		case UNET_NEWCONN:
-			return "A new connection has been stablished";
-		case UNET_TIMEOUT:
-			return "Connection timeout";
-		case UNET_TERMINATED:
-			return "Connection terminated by peer";
-		case UNET_FLOOD:
-			return "The Peer is flooding the netcore";
-		default:
-			return "Undefined, unexpected, unknown and unwanted error code";
-	}
-}
 
 /**
 	Gets the next message from the queue
@@ -2278,128 +1991,6 @@ int plNetSendMsg(st_unet * net,Byte * msg,int size,int sid,Byte flags) {
 	return n;
 }
 
-
-void dumpHmsg(st_log * f,st_unet_hmsg * h) {
-	f->print("hmsg->cmd:%i\n",h->cmd);
-	print2log(f,"hmsg->flags:0x%08X\n",h->flags);
-	print2log(f,"hmsg->max_version:%i\n",h->max_version);
-	print2log(f,"hmsg->min_version:%i\n",h->min_version);
-	print2log(f,"hmsg->timestamp:%s\n",get_stime(h->stamp,h->micros));
-	print2log(f,"hmsg->x:%i\n",h->x);
-	print2log(f,"hmsg->ki:%i\n",h->ki);
-	print2log(f,"hmsg->guid:%s\n",get_guid(h->guid));
-	print2log(f,"hmsg->ip:%i %s\n",h->ip,get_ip(htonl(h->ip)));
-	print2log(f,"hmsg->port:%i\n",h->port);
-}
-
-void dumpSessionBuffers(st_log * f,st_unet * net,int sid) {
-	st_uru_client * s = &net->s[sid];
-
-	print2log(f,"sid:%i\n",sid);
-	print2log(f,"s->flag:%i\n",s->flag);
-	print2log(f,"s->sid:%i\n",s->sid);
-	print2log(f,"s->client:");
-	uru_print_header(f,&s->client);
-	lognl(f);
-	print2log(f,"s->server:");
-	uru_print_header(f,&s->server);
-	lognl(f);
-	print2log(f,"s->sock_array.sin_family:%02X\n",((struct sockaddr_in *)s->sock_array)->sin_family);
-	print2log(f,"s->sock_array.sin_port:%02X (%i)\n",((struct sockaddr_in*)s->sock_array)->sin_port,htons(((struct sockaddr_in*)s->sock_array)->sin_port));
-	print2log(f,"s->sock_array.sin_addr:%s\n",get_ip(((struct sockaddr_in*)s->sock_array)->sin_addr.s_addr));
-	print2log(f,"s->a_client_size:%i\n",s->a_client_size);
-	print2log(f,"s->old_p_n:%i\n",s->old_p_n);
-	print2log(f,"s->whoami:%i\n",s->whoami);
-	print2log(f,"s->validation:%i\n",s->validation);
-	print2log(f,"s->authenticated:%i\n",s->authenticated);
-	print2log(f,"s->validated:%i\n",s->validated);
-	print2log(f,"s->max_version:%i\n",s->max_version);
-	print2log(f,"s->min_version:%i\n",s->min_version);
-	print2log(f,"s->ip:%i %s\n",s->ip,get_ip(s->ip));
-	print2log(f,"s->port:%i %i\n",s->port,ntohs(s->port));
-	print2log(f,"s->timeout:%i\n",s->timeout);
-	print2log(f,"s->timestamp:%s\n",get_stime(s->timestamp,s->microseconds));
-	print2log(f,"s->ack_stamp:%s\n",get_stime(s->ack_stamp,s->ack_micros));
-	print2log(f,"s->nego_stamp:%s\n",get_stime(s->nego_stamp,s->nego_micros));
-	print2log(f,"s->renego_stamp:%s\n",get_stime(s->renego_stamp,s->renego_micros));
-	dumpHmsg(f,&s->hmsg);
-	print2log(f,"s->name:%s\n",s->name);
-	print2log(f,"s->acct:%s\n",s->acct);
-	print2log(f,"s->uid:%s\n",s->uid);
-//	print2log(f,"s->guid:%s\n",get_guid((Byte *)s->guid));
-	print2log(f,"s->passwd:%s\n",s->passwd);
-	print2log(f,"s->ki:%i\n",s->ki);
-	print2log(f,"s->reason:%i\n",s->reason);
-	print2log(f,"s->release:%i\n",s->release);
-	print2log(f,"s->bandwidth:%i\n",s->bandwidth);
-	print2log(f,"s->window:%i\n",s->window);
-	print2log(f,"s->last_check:%s\n",get_stime(s->last_check,0));
-	print2log(f,"s->npkts:%i\n",s->npkts);
-	print2log(f,"s->sucess:%i\n",s->success);
-	print2log(f,"s->vpos:%i\n",s->vpos);
-	int i=0;
-	st_unet_rcvmsg * rcv;
-	rcv=s->rcvmsg;
-	print2log(f,"s->rcvmsg:0x%08X\n",(int)s->rcvmsg);
-	print2log(f,"s->sndmsg:0x%08X\n",(int)s->sndmsg);
-	print2log(f,"RCV msg buffer\n");
-	while(rcv!=NULL) {
-		print2log(f,"rcvmsg %i at 0x%08X ----\n",i,(int)rcv);
-		dumpbuf(f,(Byte *)rcv,sizeof(*rcv));
-		lognl(f);
-		print2log(f,"rcvmsg->size:%i\n",rcv->size);
-		print2log(f,"rcvmsg->buf:\n");
-		if(rcv->buf!=NULL) {
-			dumpbuf(f,rcv->buf,rcv->size);
-		} else {
-			print2log(f,"null");
-		}
-		lognl(f);
-		print2log(f,"rcvmsg->sn:%i\n",rcv->sn);
-		print2log(f,"rcvmsg->stamp:%s\n",get_stime(rcv->stamp,0));
-		print2log(f,"rcvmsg->check:\n");
-		dumpbuf(f,(Byte *)rcv->check,sizeof(rcv->check));
-		lognl(f);
-		print2log(f,"rcvmsg->next:0x%08X\n",(int)rcv->next);
-		print2log(f,"rcvmsg->fr_count:%i\n",rcv->fr_count);
-		print2log(f,"rcvmsg->completed:%i\n",rcv->completed);
-		rcv=(st_unet_rcvmsg *)rcv->next;
-		i++;
-	}
-
-	i=0;
-	st_unet_sndmsg * snd;
-	snd=s->sndmsg;
-	print2log(f,"SND msg buffer\n");
-	while(snd!=NULL) {
-		print2log(f,"sndmsg %i at 0x%08X ----\n",i,(int)snd);
-		dumpbuf(f,(Byte *)snd,sizeof(*snd));
-		lognl(f);
-		print2log(f,"sndmsg->size:%i\n",snd->size);
-		print2log(f,"sndmsg->buf:\n");
-		if(snd->buf!=NULL) {
-			dumpbuf(f,snd->buf,snd->size);
-		} else {
-			print2log(f,"null");
-		}
-		lognl(f);
-		print2log(f,"sndmsg->tryes:%i\n",snd->tryes);
-		print2log(f,"sndmsg->next:0x%08X\n",(int)snd->next);
-		snd=(st_unet_sndmsg *)snd->next;
-		i++;
-	}
-
-}
-
-char net_check_address(st_unet * net,int sid) {
-	if(sid<0 || sid>=(int)net->n) {
-		plog(net->err,"WAR: Address out of range %i out of %i\n",sid,net->n);
-		//abort();
-		return -1;
-	}
-	return 0;
-}
-
 char plNetIsFini(st_unet * net,int sid) {
 	if(net_check_address(net,sid)!=0) { return 1; }
 	if(net->s[sid].sndmsg==NULL) { return 1; }
@@ -2416,7 +2007,6 @@ int plNetClientSearchByIp(st_unet * net,U32 ip,U16 port) {
 	return -1;
 }
 
-
 int plNetClientSearchByKI(st_unet * net,U32 ki) {
 	int i;
 	DBG(5,"plNetclientSearchByKi %i\n",ki);
@@ -2428,7 +2018,6 @@ int plNetClientSearchByKI(st_unet * net,U32 ki) {
 	}
 	return -1;
 }
-
 
 /**
 	Gets a valid sid, for an specific server service
