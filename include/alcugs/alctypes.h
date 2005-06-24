@@ -230,6 +230,36 @@ private:
 	Byte * xbuf;
 };
 
+/** Static buffer */
+class tSBuf :public tBBuf {
+public:
+	tSBuf(Byte * buf,U32 msize) {
+		off=0;
+		this->msize=msize;
+		this->buf=buf;
+	}
+	virtual U32 tell() { return off; }
+	virtual void set(U32 pos) { off=pos; }
+	virtual void write(Byte * val,U32 n) {}
+	virtual void write(SByte * val,U32 n) {}
+	virtual Byte * read(U32 n=0) {
+		Byte * auxbuf=buf+off;
+		if(n) off+=n;
+		else off=msize;
+		return auxbuf;
+	}
+	virtual int stream(tBBuf &buf) {
+		buf.write(this->buf,msize);
+		return msize;
+	}
+	virtual void store(tBBuf &buf) {}
+	virtual U32 size() { return msize; }
+private:
+	Byte * buf;
+	U32 off;
+	U32 msize;
+};
+
 /** Zlib buffer */
 class tZBuf :public tMBuf {
 public:

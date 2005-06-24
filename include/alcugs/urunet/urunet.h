@@ -212,28 +212,6 @@ typedef struct {
 	void * next; //The next message in the cue (ensure ordered delivery)
 } st_unet_sndmsg;
 
-//! Urunet header
-typedef struct {
-	Byte ch; //ch_byte 0x01 checksum, 0x00 no checksum
-	U32 cs; //checksum (4 bytes)
-	//---- ACK control ----//
-	U32 p_n;          //packet number (4 bytes)
-	Byte t;           //type of packet (1 byte) followed by 4 blanks
-	U32 unknownA;     //Unknown variable A (4 bytes)
-	Byte fr_n;        //number of fragmented packet (1 byte)
-	U32 sn;           //sequence number (3 bytes)
-	Byte fr_t;        //total number of fragmented packets (1 byte) followed by 4 blanks
-	U32 unknownB;     //Unknown variable B (4 bytes)
-	Byte fr_ack;      //last fragmented packet acknowledged
-	U32 ps;           //last acknowledged packet (3 bytes)
-	U32 size;         //packet size (4 bytes)
-	//-- advanced fields (negotation) -- ** depreceated **
-	//U32 microseconds; //Store the last microseconds, or session variable
-	//time_t timestamp; //Store the last timestamp
-	//-- custom fields (for fragmentation building)
-	//Byte fr_count;    //counts the number of processed fragmented packets.
-} st_uru_head;
-
 typedef struct {
 	U16 cmd; //message code
 	U32 flags; //message flags

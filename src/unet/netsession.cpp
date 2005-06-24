@@ -73,11 +73,20 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	}
 	
 	#if _DBG_LEVEL_ > 2
-	DBG(2,"RAW Packet follows: \n");
+	net->log->log("RAW Packet follows: \n");
 	net->log->dumpbuf(buf,size);
 	net->log->nl();
 	#endif
 	
+	tSBuf mbuf(buf,size);
+	
+	tUnetUruMsg msg;
+	
+	mbuf.get(msg);
+	net->log->log("<RCV> ");
+	msg.dumpheader(net->log);
+	net->log->nl();
+	msg.htmlDumpHeader(net->ack,0,ip,port);
 	
 }
 /* End session */

@@ -47,13 +47,45 @@ void alcDecodePacket(unsigned char* buf, int n);
 int alcUruValidatePacket(Byte * buf,int n,Byte * validation,Byte authed=0,Byte * phash=NULL);
 U32 alcUruChecksum(Byte* buf, int size, int alg, Byte * aux_hash);
 
+char * alcUnetGetRelease(Byte rel);
+char * alcUnetGetDestination(Byte dest);
+char * alcUnetGetReasonCode(Byte code);
+char * alcUnetGetAuthCode(Byte code);
+char * alcUnetGetAvatarCode(Byte code);
+char * alcUnetGetMsgCode(U16 code);
+
+class tUnetUruMsg :public tBaseType {
+public:
+	virtual ~tUnetUruMsg() {}
+	virtual void store(tBBuf &t);
+	virtual int stream(tBBuf &t);
+	virtual U32 size();
+	/** Get header size */
+	U32 hSize();
+	void dumpheader(tLog * f);
+	void htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port);
+private:
+	void _update();
+//Uru protocol
+//Byte vid 0x03
+Byte val; // 0x00,0x01,0x02
+//U32 cs (only if val>0)
+U32 pn; //pck num
+Byte tf; //type/flags
+//U32 unkA
+Byte frn; //num fragment(1 byte)
+U32 sn; //seq num (3 bytes)
+ U32 csn; // -
+Byte frt; //total fragments (1 Byte)
+//U32 unkB
+Byte pfr;
+U32 ps;
+ U32 cps; // -
+U32 dsize;
+tMBuf data;
+};
+
 #if 0
-
-void uru_print_header(st_log * f_dsc,st_uru_head * u);
-int uru_get_header(unsigned char * buf,int n,st_uru_head * u);
-int uru_put_header(unsigned char * buf,st_uru_head * u);
-int uru_get_header_start(st_uru_head * u);
-
 void htmlDumpHeader(st_log * log,st_uru_client c,st_uru_head h,Byte * buf,int size,int flux);
 void htmlDumpHeaderRaw(st_unet * net,st_log * log,st_uru_client c,Byte * buf,int size,int flux);
 
@@ -61,15 +93,6 @@ int parse_plNet_msg(st_unet * net,Byte * buf,int size,int sid);
 int put_plNetMsg_header(st_unet * net,Byte * buf,int size,int sid);
 
 void copy_plNetMsg_header(st_unet * net,int sid,int ssid,int flags);
-
-//get chars of diferent code values
-char * unet_get_release(int rel);
-char * unet_get_destination(int dest);
-char * unet_get_reason_code(int code);
-char * unet_get_auth_code(int code);
-char * unet_get_avatar_code(int code);
-char * unet_get_str_ip(int ip);
-char * unet_get_msg_code(U16 code);
 #endif
 
 

@@ -52,6 +52,7 @@ private:
 	char sock_array[sizeof(struct sockaddr_in)];
 	socklen_t a_client_size;
 	
+	
 	Byte validation; //store the validation level (0,1,2)
 	Byte authenticated; //it's the peer authed? (0,1,2)
 

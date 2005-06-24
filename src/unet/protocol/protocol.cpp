@@ -39,6 +39,7 @@ No sockets please
 #define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
+#include "urunet/unet.h"
 
 namespace md5 {
 #include "md5.h"
@@ -196,7 +197,7 @@ U32 alcUruChecksum(Byte* buf, int size, int alg, Byte * aux_hash) {
 	 2 -> Validation level too high
 	 3 -> Bogus packet!!
 */
-int alcUruValidatePacket(Byte * buf,int n,Byte * validation,Byte authed=0,Byte * phash=NULL) {
+int alcUruValidatePacket(Byte * buf,int n,Byte * validation,Byte authed,Byte * phash) {
 	U32 checksum;
 #ifndef _NO_CHECKSUM
 	U32 aux_checksum;
@@ -259,196 +260,170 @@ int alcUruValidatePacket(Byte * buf,int n,Byte * validation,Byte authed=0,Byte *
 	return 3; //aiieee!!!
 }
 
-#if 0
-
-/**
-\brief assings the header structure
-of the specified buffer (ACK flags)
-
-\return if success returns the number of the first data byte
-on any other case returns 0
-*/
-int uru_get_header(unsigned char * buf,int n,st_uru_head * u) {
-	U32 i; //normal unsigned iterator
-	int offset=2;
-	unsigned char non_std=0; //if 1, non-standard packet found
-
-	//ch_byte
-	u->ch=(U16)buf[1];
-
-	//checksum
-	if(buf[1]==0x01 || buf[1]==0x02) { //0x01 (0x02 encoded) (chksum) or 0x00 (without chksum)
-		offset=6;
+//Unet Uru Message
+void tUnetUruMsg::store(tBBuf &t) {
+	U32 hsize=28;
+	t.seek(1);
+	val=t.getByte();
+	if(val>0) {
+		t.seek(4);
+		hsize+=4; //32
 	}
-
-	//Generic Packet counter
-	u->p_n=*((U32 *)(buf+offset));
-	offset+=4; //U32
-
-	#if _DBG_LEVEL_ > 5
-	if(u->p_n>50000) {
-		DBG(5,"invalid pn %i\n",u->p_n);
-		dumpbuf(f_err,buf,n);
-		//abort();
-	}
-	#endif
-
-	//type of message
-	u->t=buf[offset];
-	offset++;
-
-	//4 blank spaces (unkownA)
-	u->unknownA=*((U32 *)(buf+offset));
-
-	if(u->unknownA!=0) { non_std=1; }
-	offset+=4;
-
-	//Number of data fragment
-	u->fr_n=*((Byte *)(buf+offset));
-	offset++;
-	//Current message number
-	u->sn=(*((U32 *)(buf+offset)) & 0x00FFFFFF); //be sure that the msb is not the fr_t
-	offset+=3;
-
-	//Total number of fragments
-	u->fr_t=*((Byte *)(buf+offset));
-	offset++;
-
-	//4 blank spaces (unkownB)
-	u->unknownB=*((U32 *)(buf+offset));
-
-	if(u->unknownB!=0) { non_std=1; }
-	offset+=4;
-
-	//Last fragmented packet ack.
-	u->fr_ack=*((Byte *)(buf+offset));
-	offset++;
-	//Last ack recieved. (or last (re)negotation)
-	u->ps=(*((U32 *)(buf+offset)) & 0x00FFFFFF);
-	offset+=3;
-
-	//packet size
-	u->size=*((U32 *)(buf+offset));
-
-	offset=offset+4;
-	//iterator now at the beginging of the data
-
-	//size consistency check, being 1024 the maxPacketSize
-	if(u->size>1024) { non_std=1;	}
-
-	if(non_std==1) {
-		print2log(f_une,"<-------- Attention-UNKNOWN PACKET FOUND!! dump here: -------->\n");
-		print2log(f_une,"\n");
-		dump_packet(f_une,buf,n,0,5);
-		print2log(f_une,"\n<-------------- End UNKNOWN -------------------------------->\n");
-		//abort();
-		return 0; //abandon to do nothing. (no response to client)
-	}
-
-	//now let's go to test the size theory
-	if(u->ch==0x01 || u->ch==0x02) { //checksum
-		i=n-32;
+	pn=t.getU32();
+	tf=t.getByte();
+	if(tf & UNetExt) {
+		hsize-=8; //20 - 24
+		csn=t.getU32();
+		frt=t.getByte();
 	} else {
-		i=n-28;
+		if(t.getU32()!=0) throw txUnexpectedData(_WHERE("Non-zero unk1"));
+		csn=t.getU32();
+		frt=t.getByte();
+		if(t.getU32()!=0) throw txUnexpectedData(_WHERE("Non-zero unk2"));
+	}
+	cps=t.getU32();
+	dsize=t.getU32();
+	//check size
+	if(tf & UNetAckReply) {
+		if(tf & UNetExt) {
+			if(t.size()-hsize!=dsize*8) throw txUnexpectedData(_WHERE("Alcugs Protocol Ack reply incorrect size!\n"));
+		} else {
+			if(t.size()-hsize!=(dsize*16)+2) throw txUnexpectedData(_WHERE("Uru Protocol Ack reply incorrect size!\n"));
+		}
+	} else {
+		if(t.size()-hsize!=dsize) throw txUnexpectedData(_WHERE("Message size check failed %i!=%i\n",dsize,t.size()-hsize));
+	}
+	data.clear();
+	data.write(t.read(),dsize);
+	frn=csn & 0x000000FF;
+	sn=csn >> 8;
+	pfr=cps & 0x000000FF;
+	ps=cps >> 8;
+}
+int tUnetUruMsg::stream(tBBuf &t) {
+	t.putByte(0x03); //already done by the sender ()
+	t.putByte(val);
+	if(val>0) t.putU32(0xFFFFFFFF);
+	t.putU32(pn); //generic pkg counter (re-written by the sender() )
+	//next part is not touched by the sender
+	t.putByte(tf);
+	if(tf & UNetExt) {
+		t.putU32(csn);
+		t.putByte(frt);
+	} else {
+		t.putU32(0); //4 blanks
+		t.putU32(csn);
+		t.putByte(frt);
+		t.putU32(0);
+	}
+	t.putU32(cps);
+	t.putU32(data.size());
+	t.put(data);
+	return this->size();
+}
+U32 tUnetUruMsg::size() {
+	return data.size() + hSize();
+}
+U32 tUnetUruMsg::hSize() {
+	U32 hsize=28;
+	if(val>0) hsize+=4;
+	if(tf & UNetExt) hsize-=8;
+	return hsize;
+}
+void tUnetUruMsg::_update() {
+	dsize=data.size();
+	frn=csn & 0x000000FF;
+	sn=csn >> 8;
+	pfr=cps & 0x000000FF;
+	ps=cps >> 8;
+}
+void tUnetUruMsg::dumpheader(tLog * f) {
+	f->print("[%i] ->%02X<- {%i,%i (%i) %i,%i} - %02X|%i bytes",pn,tf,sn,frn,frt,ps,pfr,data.size(),data.size());
+}
+//flux 0 client -> server, 1 server -> client
+void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
+	static int count=0;
+	count++;
+
+	log->print("%04i: ",count);
+	log->stamp();
+
+	switch(tf) {
+		case UNetAckReply: //0x80
+			log->print("<font color=red>");
+			break;
+		case UNetNegotiation | UNetAckReq: //0x42
+			log->print("<font color=green>");
+			break;
+		case 0x00: //0x00
+			log->print("<font color=blue>");
+			break;
+		case UNetAckReq: //0x02
+			log->print("<font color=black>");
+			break;
+		default:
+			log->print("<font color=pink>");
+			break;
 	}
 
-	if(i==u->size && u->t==0x80) {
-		print2log(f_uru,"INF: Unexpected size mismatch for 0x80! %i = %i?\n",i,u->size);
-		print2log(f_une,"ERR: Size mismatch!! Type: %i, Size: %i, Exp_Size: %i\n",i,u->size);
-		dump_packet(f_une,buf,n,0,5);
-		print2log(f_une,"\n-----------------------------------\n");
-		return 0; //abandon to do nothing. (no response to client)
+	if(flux==0) {
+		log->print("<b> me <- ");
+	} else {
+		log->print(" me -> ");
 	}
-	else {
-		if(i!=u->size && u->t!=0x80) {
-			print2log(f_uru,"INF: Unexpected size mismatch! %i = %i?\n",i,u->size);
-			print2log(f_une,"ERR: Size mismatch!! Type: %i, Size: %i, Exp_Size: %i\n",i,u->size);
-			dump_packet(f_une,buf,n,0,5);
-			print2log(f_une,"\n-----------------------------------\n");
-			return 0; //abandon to do nothing. (no response to client)
+	log->print("%i %i,%i (%i) %i,%i ",pn,sn,frn,frt,ps,pfr);
+
+	if(flux==0) {
+		log->print(" <- %s:%i</b> ",alcGetStrIp(ip),ntohs(port));
+	} else {
+		log->print(" -> %s:%i ",alcGetStrIp(ip),ntohs(port));
+	}
+
+	int i;
+	data.rewind();
+	Byte * buf;
+	buf=data.read();
+	
+
+	switch(tf) {
+		case UNetAckReply: //0x80
+			log->print("ack");
+			for(i=0; i<(int)dsize; i++) {
+				if(i!=0) { log->print(" |"); }
+				log->print(" %i,%i %i,%i",*(Byte *)((buf+2)+i*0x10),*(U32 *)((buf+3)+i*0x10),*(Byte *)((buf+2+8)+i*0x10),*(U32 *)((buf+3+8)+i*0x10));
+			}
+			break;
+		case UNetNegotiation | UNetAckReq: //0x42
+			log->print("Negotiation ");
+			char * times;
+			times=ctime((const time_t *)(buf+4));
+			log->print("%i bps, %s",*(U32 *)(buf),alcGetStrTime(*(U32 *)buf+4,*(U32 *)buf+8));
+			break;
+		case 0x00: //0x00
+			log->print("plNetMsg0 ");
+			break;
+		case UNetAckReq: //0x02
+			log->print("plNetMsg1 ");
+			break;
+		default:
+			log->print("ERROR! ");
+			break;
+	}
+
+	log->print("</font>");
+
+	if((tf==0x00 || tf==0x02)) {
+		if(frn==0) {
+			log->print("(%04X) %s %08X",*(U16 *)(buf),alcUnetGetMsgCode(*(U16 *)(buf)),*(U32 *)(buf+2));
+		} else {
+			log->print("frg..");
 		}
 	}
-	return offset;
+	log->print("<br>\n");
+	log->flush();
 }
 
-/**
-   \brief Prints the Uru Encapsulation header of a packet
-*/
-void uru_print_header(st_log * f_dsc,st_uru_head * u) {
-	print2log(f_dsc,"[%i] ->%02X<- {%i,%i (%i) %i,%i} - %02X|%i bytes",u->p_n,u->t,u->fr_n,u->sn,u->fr_t,u->fr_ack,u->ps,u->size,u->size);
-}
-
-/**
-  \brief Gets the size of the header, and where the data starts
-*/
-int uru_get_header_start(st_uru_head * u) {
-	if(u->ch==0x01 || u->ch==0x02) return 32; //with checksum
-	else return 28; //with no-checksum
-}
-
-
-/**
-\brief assings the header structure to the specified buffer
-\return returns the size of the header
-*/
-int uru_put_header(unsigned char * buf,st_uru_head * u) {
-	int offset=2;
-
-	//if(u->ch==0x01 && u->t==0x42) abort();
-
-	//ch_byte (validation level)
-	buf[1]=u->ch;
-
-	//checksum
-	if(buf[1]==0x01 || buf[1]==0x02) { //0x01 (0x02 encoded) (chksum) or 0x00 (without chksum)
-		*((U32 *)(buf+2))=0xFFFFFFFF;
-		offset=6;
-	}
-
-	//Generic Packet counter
-	*((U32 *)(buf+offset))=u->p_n; //we are going to put it in the net_snd
-	offset+=4; //U32
-
-	//type of message
-	buf[offset]=u->t;
-	offset++;
-
-	//4 blank spaces (unkownA)
-	*(U32 *)(buf+offset)=0;
-	offset+=4;
-
-	//Number of data fragment
-	*((Byte *)(buf+offset))=u->fr_n;
-	offset++;
-	//Current message number
-	*((U32 *)(buf+offset))=u->sn;
-	offset+=3;
-
-	//Total number of fragments
-	*((Byte *)(buf+offset))=u->fr_t;
-	offset++;
-
-	//4 blank spaces
-	*(U32 *)(buf+offset)=0;
-	offset+=4;
-
-	//Last fragmented packet ack.
-	*((Byte *)(buf+offset))=u->fr_ack;
-	offset++;
-	//Last ack recieved. (or last (re)negotation)
-	*((U32 *)(buf+offset))=u->ps;
-
-	offset+=3;
-
-	//packet size
-	*((U32 *)(buf+offset))=u->size;
-
-	offset=offset+4;
-	//iterator now at the beginging of the data
-
-	return offset;
-}
-
+#if 0
 
 /** Gets all plNet msg header vars
 		/return returns the size
@@ -744,7 +719,9 @@ void copy_plNetMsg_header(st_unet * net,int sid,int ssid,int flags) {
 
 }
 
-char * unet_get_release(int rel) {
+#endif
+
+char * alcUnetGetRelease(Byte rel) {
 	static char * ret;
 	switch(rel) {
 		case 0x03:
@@ -763,7 +740,7 @@ char * unet_get_release(int rel) {
 	return ret;
 }
 
-char * unet_get_destination(int dest) {
+char * alcUnetGetDestination(Byte dest) {
 	static char * ret;
 	switch(dest) {
 		case 0x01:
@@ -809,7 +786,7 @@ char * unet_get_destination(int dest) {
 	return ret;
 }
 
-char * unet_get_reason_code(int code) {
+char * alcUnetGetReasonCode(Byte code) {
 	static char * ret;
 	switch(code) {
 		case 0x00:
@@ -861,7 +838,7 @@ char * unet_get_reason_code(int code) {
 	return ret;
 }
 
-char * unet_get_auth_code(int code) {
+char * alcUnetGetAuthCode(Byte code) {
 	static char * ret;
 	switch(code) {
 		case 0x00:
@@ -895,7 +872,7 @@ char * unet_get_auth_code(int code) {
 	return ret;
 }
 
-char * unet_get_avatar_code(int code) {
+char * alcUnetGetAvatarCode(Byte code) {
 	static char * ret;
 	switch(code) {
 		case 0x00:
@@ -932,7 +909,7 @@ char * unet_get_avatar_code(int code) {
 	return ret;
 }
 
-char * unet_get_msg_code(U16 code) {
+char * alcUnetGetMsgCode(U16 code) {
 	static char * ret;
 	switch(code) {
 		case 0x0218:
@@ -1116,6 +1093,8 @@ char * unet_get_msg_code(U16 code) {
 	return ret;
 }
 
+
+#if 0
 
 //flux 0 client -> server, 1 server -> client
 void htmlDumpHeader(st_log * log,st_uru_client c,st_uru_head h,Byte * buf,int size,int flux) {

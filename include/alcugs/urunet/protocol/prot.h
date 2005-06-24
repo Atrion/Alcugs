@@ -31,6 +31,15 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_PROT_H_ID "$Id$"
 
+//UruMsgFlags
+#define UNetAckReply    0x80
+#define UNetNegotiation 0x40
+#define UNetAckReq      0x02
+//custom
+#define UNetForce0      0x20
+#define UNetExt         0x10 //Alcugs extension request - Validation 3 (reduced header)
+#define UNetExp         0x01 //Additional flags byte
+
 //known flags for plnetmsg's
 #define plNetFirewalled 0x00000020 //Firewalled flag only
 #define plNetBcast      0x00000400 //Bcast flag only (if that flag is enabled, do a bcast)
@@ -137,14 +146,6 @@
 #define ANameIsNotAllowed 0xFD
 #define AMaxNumberPerAccountReached 0xFE
 #define AUnspecifiedServerError 0xFF
-
-//define type of messages here
-#define NetClientComm 0x42
-#define NetAck 0x80
-#define NetMsg0 0x00
-#define NetMsg1 0x02
-#define NetCustMsg0 0x0A
-#define NetCustMsg1 0x0B
 
 //Linking Rules
 #define KBasicLink 0
