@@ -423,6 +423,22 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
 	log->flush();
 }
 
+//Base message
+void tmNetClientComm::store(tBBuf &t) {
+	bandwidth=t.getU32();
+	t.get(timestamp);
+}
+int tmNetClientComm::stream(tBBuf &t) {
+	t.putU32(bandwidth);
+	t.put(timestamp);
+	return 12;
+}
+Byte * tmNetClientComm::str() {
+	static Byte cnt[1024];
+	sprintf((char *)cnt,"(Re)Negotation bandwidth: %i bps time: %s",bandwidth,(char *)timestamp.str());
+	return cnt;
+}
+
 #if 0
 
 /** Gets all plNet msg header vars

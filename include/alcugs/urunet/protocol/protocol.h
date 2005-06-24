@@ -85,8 +85,27 @@ U32 dsize;
 tMBuf data;
 };
 
+class tmBase :public tBaseType {
+public:
+	virtual void store(tBBuf &t)=0;
+	virtual int stream(tBBuf &t)=0;
+	virtual U32 size() { return 0; }
+	virtual Byte * str()=0;
+	Byte bhflags;
+};
+
+class tmNetClientComm :public tmBase {
+public:
+	virtual void store(tBBuf &t);
+	virtual int stream(tBBuf &t);
+	tmNetClientComm() { bhflags=0x42; };
+	tmNetClientComm(tTime &t,U32 bw) { timestamp=t; bandwidth=bw; bhflags=0x42; }
+	Byte * str();
+	tTime timestamp;
+	U32 bandwidth;
+};
+
 #if 0
-void htmlDumpHeader(st_log * log,st_uru_client c,st_uru_head h,Byte * buf,int size,int flux);
 void htmlDumpHeaderRaw(st_unet * net,st_log * log,st_uru_client c,Byte * buf,int size,int flux);
 
 int parse_plNet_msg(st_unet * net,Byte * buf,int size,int sid);

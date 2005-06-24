@@ -59,12 +59,13 @@ tNetSessionMgr::~tNetSessionMgr() {
 		free((void *)table);
 	}
 }
-tNetSession * tNetSessionMgr::search(tNetSessionIte &ite) {
+tNetSession * tNetSessionMgr::search(tNetSessionIte &ite,bool create) {
 	if(ite.sid!=-1 && ite.sid<n && table[ite.sid]!=NULL) {
 		if(table[ite.sid]->ip==ite.ip && table[ite.sid]->port==ite.port) {
 			return table[ite.sid];
 		}
 	}
+	if(!create) return NULL;
 	//then create/search
 	int i;
 	int lsid=-1;

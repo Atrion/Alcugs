@@ -64,9 +64,9 @@ void tUnet::init() {
 	flags=UNET_NBLOCK | UNET_ELOG | UNET_ECRC | UNET_AUTOSP | UNET_NOFLOOD | UNET_FLOG | UNET_NETAUTH;
 	whoami=0; //None (new connection) //KClient; //default type of peer
 
-	//netcore timeout < min(all RTT's)
-	unet_sec=1; //(seconds)
-	unet_usec=0; //(microseconds)
+	//netcore timeout < min(all RTT's), nope, it must be the min tts (stt)
+	unet_sec=0; //(seconds)
+	unet_usec=100000; //(microseconds)
 
 	conn_timeout=5; //default timeout (seconds) (sensible to NetMsgSetTimeout (higher when connected)
 	/* set to 30 when authed (client should send alive every 10 seconds)*/
@@ -105,16 +105,18 @@ void tUnet::init() {
 	sec=NULL;
 	
 	#ifdef _UNET_DBG_
-	lim_down_cap=4000; //in bytes
-	lim_up_cap=4000; //in bytes
+	lim_down_cap=2000; //in bytes
+	lim_up_cap=2000; //in bytes
 	in_noise=25; //(0-100)
 	out_noise=25; //(0-100)
 	latency=500; //(in msecs)
 	cur_down_quota=0;
 	cur_up_quota=0;
 	ip_overhead=20+8;
-	quota_check=1;
-	time_quota_check=ntime_sec;
+	quota_check_sec=0;
+	quota_check_usec=500000;
+	time_quota_check_sec=ntime_sec;
+	time_quota_check_usec=ntime_usec;
 	#endif
 	
 }
@@ -411,14 +413,17 @@ int tUnet::Recv() {
 			n=0;
 		}
 		//check quotas
-		if(ntime_sec-time_quota_check>=quota_check) {
+		if(ntime_sec-time_quota_check_sec>=quota_check_sec || ntime_usec-time_quota_check_usec>=quota_check_usec) {
 			cur_down_quota=0;
-			time_quota_check=ntime_sec;
+			time_quota_check_sec=ntime_sec;
+			time_quota_check_usec=ntime_usec;
 		}
-		if(n>0 && (cur_down_quota+n+ip_overhead)>lim_down_cap) {
-			DBG(5,"Paquet dropped by quotas\n");
-		} else {
-			cur_down_quota+=n+ip_overhead;
+		if(n>0) {
+			if((cur_down_quota+n+ip_overhead)>lim_down_cap) {
+				DBG(5,"Paquet dropped by quotas, in use:%i,req:%i, max:%i\n",cur_down_quota,n+ip_overhead,lim_down_cap);
+			} else {
+				cur_down_quota+=n+ip_overhead;
+			}
 		}
 	}
 #endif
@@ -463,6 +468,189 @@ int tUnet::Recv() {
 
 	}
 	return UNET_OK;
+}
+
+/**
+	Sends the message (internal use only)
+	An uru message can only be 253952 bytes in V0x01 & V0x02 and 254976 in V0x00
+	(only Nego and normal messages, ack are handled by another function)
+*/
+void tUnet::basesend(tNetSession * u,tmBase &msg) {
+	DBG(7,"basesend\n");
+	log->log("<SND> %s\n",msg.str());
+	tMBuf buf;
+	buf.put(msg);
+	U32 psize=buf.size();
+	DBG(7,"Ok, I'm going to send a packet of %i bytes, for peer %i, with flags %02X\n",psize,u->sid,msg.bhflags);
+
+	tUnetUruMsg * cmsg;
+	
+	/* Check if the last message sent, had the ack flag on
+		as a rule, messages must be sent in order */
+	if(u->server.tf & 0x02) {
+		u->server.ps=u->server.sn;
+		u->server.pfr=u->server.frn;
+		//the second field, only contains the seq number from the latest packet with
+		//the ack flag enabled.
+		DBG(5,"The previous sent packet had the ack flag on\n");
+	}
+	//now update the other fields
+	u->server.sn++;
+	u->server.frn=0;
+	u->server.tf=0x00;
+
+	if(flags & 0x02) {
+		u->server.tf |= 0x02; //ack flag on
+		DBG(5,"ack flag on\n");
+	}
+	if(flags & 0x40) {
+		u->server.tf |= 0x40; //negotiation packet
+		DBG(5,"It's a negotation packet\n");
+	}
+
+	if(flags & 0x20) {
+		u->server.val=0x00;
+		DBG(5,"forced validation 0\n");
+	} else {
+		u->server.val=u->validation;
+		DBG(6,"validation level is %i\n",u->server.val);
+	}
+
+	//On validation level 1 - ack and negotiations don't have checksum verification
+	/* I still don't understand wtf was thinking the network dessigner with doing a MD5 of each
+		packet? - 
+	*/
+	if((u->server.tf & 0x40) && (u->server.val==0x01)) { u->server.val=0x00; }
+	DBG(6,"Sending a packet of validation level %i\n",u->server.val);
+
+	//fragment the messages and put them in to the send qeue
+	
+	#if 0
+	
+	if(u->server.ch==0x00) { start=28; } else { start=32; }
+	u->server.cs=0xFFFFFFFF;
+
+	off=start;
+
+	DBG(5,"dmalloc_verify()\n");
+	dmalloc_verify(NULL);
+
+	//ok 0x00 are directly sent
+	if(!(u->server.t & 0x02)) {
+		//update the pck counter
+		u->server.p_n++;
+		u->server.size=size;
+		off+=size;
+		buf=(Byte *)malloc(sizeof(Byte) * (off+50));
+		if(buf==NULL) return UNET_ERR;
+		uru_put_header(buf,&u->server);
+		memcpy(buf+start,msg,size);
+		DBG(6,"uru_net_send call, with a size of %i for sid %i\n",off,sid);
+#if _DBG_LEVEL_ > 5
+		dumpbuf(net->log,buf,off);
+		lognl(net->log);
+		logflush(net->log);
+#endif
+		uru_net_send(net,buf,off,sid);
+		if(buf!=NULL) {
+			free((void *)buf);
+			buf=NULL;
+		}
+	} else {
+		//Ok, do all the hard stuff
+		pkt_sz=OUT_BUFFER_SIZE - start; //get maxium message size
+		n_packets=(size-1)/pkt_sz; //get number of fragments
+		DBG(5,"pkt_sz:%i n_pkts:%i\n",pkt_sz,n_packets);
+		if(n_packets>=256) {
+			nlog(net->err,net,sid,"ERR: Attempted to send a packet of size %i bytes, that don't fits inside an uru message, sorry! :(\n",size);
+			return UNET_TOOBIG;
+		}
+		u->server.fr_t=n_packets; //set it
+
+		for(i=0; i<=n_packets; i++) {
+			if(i!=0) { //<- Troublemaker
+				u->server.ps=u->server.sn;
+				u->server.fr_ack=u->server.fr_n;
+			}
+			u->server.fr_n=i; //set fragment number
+
+			if(i==n_packets) {
+				u->server.size=size - (i*pkt_sz);
+			} else {
+				u->server.size=pkt_sz;
+			}
+			/* sanity check */
+			if(u->server.size>OUT_BUFFER_SIZE) {
+				nlog(net->err,net,sid,"ERR: A fragment has %i bytes!!, that's impossible, pkt_sz:%i\n",u->server.size,pkt_sz);
+			}
+			//ok, we are here, then store the message in the buffer
+
+	DBG(5,"dmalloc_verify()\n");
+	dmalloc_verify(NULL);
+
+			if(u->sndmsg==NULL) {
+				u->sndmsg=(st_unet_sndmsg *)malloc(sizeof(st_unet_sndmsg) * 1);
+				if(u->sndmsg==NULL) return UNET_ERR;
+				memset(u->sndmsg,0,sizeof(st_unet_sndmsg));
+				u->sndmsg->next=NULL;
+				u->sndmsg->size=start + u->server.size;
+				#if _DBG_LEVEL_ > 3
+					if(start + u->server.size<=0) { abort(); }
+				#endif
+				u->sndmsg->buf=(Byte *)malloc(sizeof(Byte) * (u->sndmsg->size+5));
+				buf=u->sndmsg->buf;
+			} else {
+				st_unet_sndmsg * ite=NULL;
+				ite=u->sndmsg;
+				while(ite->next!=NULL) {
+					ite=(st_unet_sndmsg *)ite->next; //go to the end of the message cue
+				}
+				ite->next=malloc(sizeof(st_unet_sndmsg) * 1);
+				if(ite->next==NULL) return UNET_ERR;
+				memset((st_unet_sndmsg *)ite->next,0,sizeof(st_unet_sndmsg));
+				ite=(st_unet_sndmsg *)ite->next;
+				ite->next=NULL;
+				ite->size=start + u->server.size;
+				ite->buf=(Byte *)malloc(sizeof(Byte) * (ite->size+5));
+				buf=ite->buf;
+			}
+			if(buf==NULL) return UNET_ERR;
+#if _DBG_LEVEL_ > 7
+			DBG(6,"Buffer details:\n");
+			dumpbuf(net->log,buf,start+u->server.size);
+			lognl(net->log);
+			logflush(net->log);
+#endif
+			uru_put_header(buf,&u->server);
+#if _DBG_LEVEL_ > 6
+			DBG(6,"Buffer details after put_header():\n");
+			dumpbuf(net->log,buf,start+u->server.size);
+			lognl(net->log);
+			logflush(net->log);
+#endif
+			memcpy(buf+start,msg+(i*pkt_sz),u->server.size);
+#if _DBG_LEVEL_ > 6
+			DBG(6,"Buffer details after memcpy:\n");
+			dumpbuf(net->log,buf,start+u->server.size);
+			lognl(net->log);
+			logflush(net->log);
+#endif
+		}
+		//now send them
+		//printf("presh enter to continue...\n"); fflush(0);
+		//ask();
+
+		DBG(5,"before plNetReSendMessages call\n");
+		plNetReSendMessages(net,sid);
+		DBG(5,"after plNetReSendMessages call\n");
+	}
+
+		DBG(5,"dmalloc_verify()\n");
+		dmalloc_verify(NULL);
+	//if(buf!=NULL) free((void *)buf);
+
+	return UNET_OK;
+	#endif
 }
 
 

@@ -43,25 +43,39 @@ public:
 	tNetSession(tUnet * net);
 	~tNetSession();
 private:
-	void processMsg(Byte * buf,int size);
 	void init();
+	void processMsg(Byte * buf,int size);
+
+	void negotiate();
+	
 	tUnet * net;
 	U32 ip;
 	U16 port;
 	int sid;
 	char sock_array[sizeof(struct sockaddr_in)];
 	socklen_t a_client_size;
-	
+	//server Message counters
+	struct {
+		Byte val;
+		U32 pn;
+		Byte tf;
+		Byte frn;
+		U32 sn;
+		Byte pfr;
+		U32 ps;
+	} server;
 	
 	Byte validation; //store the validation level (0,1,2)
 	Byte authenticated; //it's the peer authed? (0,1,2)
 
-	//client time
-	U32 time_sec;
-	U32 time_usec;
+	tTime timestamp; //current client time
+	tTime nego_stamp; //initial negotiation stamp
 	
 	Byte passwd[34]; //peer passwd hash (used in V2) (string)
 
+	//flux control
+	U32 bandwidth; //client reported bandwidth (negotiated technology) (in bps)
+	U32 cabal; //cur avg bw (in bytes per second)
 
 	friend class tNetSessionMgr;
 	friend class tUnet;

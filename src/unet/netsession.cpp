@@ -56,12 +56,17 @@ void tNetSession::init() {
 	sid=-1;
 	validation=0;
 	authenticated=0;
+	bandwidth=0;
+	cabal=0;
+	nego_stamp.seconds=0;
+	nego_stamp.microseconds=0;
+	memset((void *)&server,0,sizeof(server));
 }
 void tNetSession::processMsg(Byte * buf,int size) {
 	DBG(5,"Message of %i bytes\n",size);
 	//stamp
-	time_sec=alcGetTime();
-	time_usec=alcGetMicroseconds();
+	timestamp.seconds=alcGetTime();
+	timestamp.microseconds=alcGetMicroseconds();
 	
 	int ret;
 	
@@ -88,7 +93,42 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	net->log->nl();
 	msg.htmlDumpHeader(net->ack,0,ip,port);
 	
+	//set avg cabal
+	if(cabal==0 && bandwidth!=0) {
+		if((ip & 0x00FFFFFF) == 0x0000007F) { //lo
+			cabal=100000000/8; //100Mbps
+		} else if((ip & net->lan_mask) == net->lan_addr) { //LAN
+			cabal=((net->lan_up > bandwidth) ? bandwidth : net->lan_up) / 8;
+		} else { //WAN
+			cabal=((net->nat_up > bandwidth) ? bandwidth : net->nat_up) / 8;
+		}
+		net->log->log("Cabal is now %i (%i bps)\n",cabal,cabal*8);
+	}
+	//How do you say "Cabal" in English?
+	
+	if(bandwidth==0 || cabal==0) {
+		nego_stamp=timestamp;
+		negotiate();
+	}
+	
+	
 }
+void tNetSession::negotiate() {
+	U32 sbw;
+	//server bandwidth
+	DBG(8,"%08X %08X %08X\n",ip,net->lan_mask,net->lan_addr);
+	if((ip & 0x00FFFFFF) == 0x0000007F) { //lo
+		sbw=100000000;
+	} else if((ip & net->lan_mask) == net->lan_addr) { //LAN
+		sbw=net->lan_down;
+	} else {
+		sbw=net->nat_down; //WAN
+	}
+
+	tmNetClientComm comm(nego_stamp,sbw);
+	net->basesend(this,comm);
+}
+
 /* End session */
 
 }

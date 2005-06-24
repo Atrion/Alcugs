@@ -100,6 +100,10 @@ private:
 	
 	void neterror(char * msg);
 	
+	//void send();
+	void basesend(tNetSession * u,tmBase & m);
+	//void rawsend();
+	
 	friend class tNetSession;
 	
 	bool initialized;
@@ -182,8 +186,10 @@ private:
 	U32 cur_down_quota;
 	U32 cur_up_quota;
 	U32 ip_overhead;
-	Byte quota_check; //(in seconds)
-	U32 time_quota_check; //last quota check (in seconds)
+	Byte quota_check_sec; //(in seconds)
+	U32 quota_check_usec; //(useconds)
+	U32 time_quota_check_sec; //last quota check (in seconds)
+	U32 time_quota_check_usec;
 	#endif
 };
 

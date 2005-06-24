@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCTYPES_ID "$Id$"
 
-//#define _DBG_LEVEL_ 10
+#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
 
@@ -71,6 +71,7 @@ void tBaseType::copy(tBaseType &t) {
 	this->_pcopy(t);
 	tMBuf * aux=new tMBuf();
 	aux->put(t);
+	aux->rewind();
 	this->store(*aux);
 	delete aux;
 }
@@ -520,6 +521,7 @@ void tStrBuf::writeStr(const Byte * t) {
 }
 
 void tTime::store(tBBuf &t) {
+	DBG(5,"Buffer status size:%i,offset:%i\n",t.size(),t.tell());
 	seconds=t.getU32();
 	microseconds=t.getU32();
 }
@@ -538,6 +540,42 @@ SByte tTime::compare(tTime &t) {
 	if(seconds>t.seconds) return 1;
 	return -1;
 }
-
+tTime operator+(tTime &a,tTime &b) {
+	tTime r;
+	r.seconds=a.seconds + b.seconds;
+	r.microseconds=a.microseconds + b.microseconds;
+	return r;
+}
+tTime operator-(tTime &a,tTime &b) {
+	tTime r;
+	r.seconds=a.seconds - b.seconds;
+	r.microseconds=a.microseconds - b.microseconds;
+	return r;
+}
+double tTime::asDouble(char how) {
+	switch(how) {
+		case 'u':
+			return ((double)seconds * 1000000) + (double)microseconds;
+		case 'm':
+			return ((double)seconds * 1000) + ((double)microseconds / 1000);
+		case 's':
+		default:
+			return ((double)seconds + ((double)microseconds / 1000000));
+	}
+}
+U32 tTime::asU32(char how) {
+	switch(how) {
+		case 'u':
+			return ((seconds %1000) * 1000000) + microseconds;
+		case 'm':
+			return ((seconds %1000000) * 1000) + (microseconds / 1000);
+		case 's':
+		default:
+			return seconds;
+	}
+}
+const Byte * tTime::str() {
+	return alcGetStrTime(seconds,microseconds);
+}
 
 } //end namespace alc

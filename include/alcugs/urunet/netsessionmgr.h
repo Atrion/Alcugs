@@ -54,7 +54,7 @@ class tNetSessionMgr {
 public:
 	tNetSessionMgr(tUnet * net,int limit=0);
 	~tNetSessionMgr();
-	tNetSession * search(tNetSessionIte &ite);
+	tNetSession * search(tNetSessionIte &ite,bool create=true);
 	void rewind();
 	void end();
 	void destroy(tNetSessionIte &ite);

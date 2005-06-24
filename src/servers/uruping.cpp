@@ -132,26 +132,34 @@ int main(int argc,char * argv[]) {
 		}
 	}
 
-	//start Alcugs library
-	alcInit(argc,argv);
+	try {
 	
-	//special mode
-	if(mrtg==0) {
-		lstd->print(alcVersionText());
-	}
+		//start Alcugs library
+		alcInit(argc,argv);
+	
+		//special mode
+		if(mrtg==0) {
+			lstd->print(alcVersionText());
+		}
 	
 	
-	tUnet * unet=new tUnet(NULL,5000);
-	unet->startOp();
+		tUnet * unet=new tUnet(NULL,5000);
+		unet->startOp();
 
-	for(i=0; i<20; i++) {
-		unet->Recv();
+		for(i=0; i<20; i++) {
+			unet->Recv();
+		}
+	
+		delete unet;
+	
+		//stop Alcugs library (optional, not required)
+		//alcShutdown();
+		
+	} catch(txBase &t) {
+		printf("Exception %s\n%s\n",t.what(),t.backtrace());
+	} catch(...) {
+		printf("Unknown Exception\n");
 	}
-	
-	delete unet;
-	
-	//stop Alcugs library (optional, not required)
-	//alcShutdown();
 	
 	return 0;
 }
