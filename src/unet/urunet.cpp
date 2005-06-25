@@ -70,7 +70,7 @@ void tUnet::init() {
 
 	conn_timeout=5; //default timeout (seconds) (sensible to NetMsgSetTimeout (higher when connected)
 	/* set to 30 when authed (client should send alive every 10 seconds)*/
-	timeout=2000; //2 seconds (re-transmission) [initial RTT]
+	timeout=2000000; //2 seconds (re-transmission) [initial RTT]
 
 	//initial server timestamp
 	ntime_sec=alcGetTime();
@@ -104,6 +104,8 @@ void tUnet::init() {
 	chk=NULL;
 	sec=NULL;
 	
+	ip_overhead=20+8;
+
 	#ifdef _UNET_DBG_
 	lim_down_cap=2000; //in bytes
 	lim_up_cap=2000; //in bytes
@@ -112,7 +114,6 @@ void tUnet::init() {
 	latency=500; //(in msecs)
 	cur_down_quota=0;
 	cur_up_quota=0;
-	ip_overhead=20+8;
 	quota_check_sec=0;
 	quota_check_usec=500000;
 	time_quota_check_sec=ntime_sec;
@@ -127,6 +128,13 @@ void tUnet::unsetFlags(tUnetFlags flags) {
 	this->flags &= ~flags;
 }
 tUnetFlags tUnet::getFlags() { return this->flags; }
+
+void tUnet::updateNetTime() {
+	//set stamp
+	ntime_sec=alcGetTime();
+	ntime_usec=alcGetMicroseconds();
+	net_time=(((ntime_sec % 1000)*1000000)+ntime_usec);
+}
 
 void tUnet::neterror(char * msg) {
 	if(!initialized) return;
@@ -393,6 +401,7 @@ int tUnet::Recv() {
 	//set stamp
 	ntime_sec=alcGetTime();
 	ntime_usec=alcGetMicroseconds();
+	net_time=(((ntime_sec % 1000)*1000000)+ntime_usec);
 	
 	//Here, the old netcore performed some work (ack check, retransmission, timeout, pending paquets to send...)
 
@@ -479,12 +488,16 @@ void tUnet::basesend(tNetSession * u,tmBase &msg) {
 	DBG(7,"basesend\n");
 	log->log("<SND> %s\n",msg.str());
 	tMBuf buf;
+	U32 csize,psize,hsize,pkt_sz,n_pkts;
+	Byte flags=msg.bhflags;
+	
+	tUnetUruMsg * pmsg=NULL;
+	
 	buf.put(msg);
-	U32 psize=buf.size();
+	psize=buf.size();
+	buf.rewind();
 	DBG(7,"Ok, I'm going to send a packet of %i bytes, for peer %i, with flags %02X\n",psize,u->sid,msg.bhflags);
 
-	tUnetUruMsg * cmsg;
-	
 	/* Check if the last message sent, had the ack flag on
 		as a rule, messages must be sent in order */
 	if(u->server.tf & 0x02) {
@@ -508,7 +521,7 @@ void tUnet::basesend(tNetSession * u,tmBase &msg) {
 		DBG(5,"It's a negotation packet\n");
 	}
 
-	if(flags & 0x20) {
+	if(flags & UNetForce0) {
 		u->server.val=0x00;
 		DBG(5,"forced validation 0\n");
 	} else {
@@ -525,134 +538,62 @@ void tUnet::basesend(tNetSession * u,tmBase &msg) {
 
 	//fragment the messages and put them in to the send qeue
 	
-	#if 0
-	
-	if(u->server.ch==0x00) { start=28; } else { start=32; }
-	u->server.cs=0xFFFFFFFF;
+	if(u->server.val==0x00) { hsize=28; } else { hsize=32; }
+	if(u->server.tf & UNetExt) { hsize-=8; }
 
-	off=start;
-
-	DBG(5,"dmalloc_verify()\n");
-	dmalloc_verify(NULL);
-
-	//ok 0x00 are directly sent
-	if(!(u->server.t & 0x02)) {
-		//update the pck counter
-		u->server.p_n++;
-		u->server.size=size;
-		off+=size;
-		buf=(Byte *)malloc(sizeof(Byte) * (off+50));
-		if(buf==NULL) return UNET_ERR;
-		uru_put_header(buf,&u->server);
-		memcpy(buf+start,msg,size);
-		DBG(6,"uru_net_send call, with a size of %i for sid %i\n",off,sid);
-#if _DBG_LEVEL_ > 5
-		dumpbuf(net->log,buf,off);
-		lognl(net->log);
-		logflush(net->log);
-#endif
-		uru_net_send(net,buf,off,sid);
-		if(buf!=NULL) {
-			free((void *)buf);
-			buf=NULL;
-		}
-	} else {
-		//Ok, do all the hard stuff
-		pkt_sz=OUT_BUFFER_SIZE - start; //get maxium message size
-		n_packets=(size-1)/pkt_sz; //get number of fragments
-		DBG(5,"pkt_sz:%i n_pkts:%i\n",pkt_sz,n_packets);
-		if(n_packets>=256) {
-			nlog(net->err,net,sid,"ERR: Attempted to send a packet of size %i bytes, that don't fits inside an uru message, sorry! :(\n",size);
-			return UNET_TOOBIG;
-		}
-		u->server.fr_t=n_packets; //set it
-
-		for(i=0; i<=n_packets; i++) {
-			if(i!=0) { //<- Troublemaker
-				u->server.ps=u->server.sn;
-				u->server.fr_ack=u->server.fr_n;
-			}
-			u->server.fr_n=i; //set fragment number
-
-			if(i==n_packets) {
-				u->server.size=size - (i*pkt_sz);
-			} else {
-				u->server.size=pkt_sz;
-			}
-			/* sanity check */
-			if(u->server.size>OUT_BUFFER_SIZE) {
-				nlog(net->err,net,sid,"ERR: A fragment has %i bytes!!, that's impossible, pkt_sz:%i\n",u->server.size,pkt_sz);
-			}
-			//ok, we are here, then store the message in the buffer
-
-	DBG(5,"dmalloc_verify()\n");
-	dmalloc_verify(NULL);
-
-			if(u->sndmsg==NULL) {
-				u->sndmsg=(st_unet_sndmsg *)malloc(sizeof(st_unet_sndmsg) * 1);
-				if(u->sndmsg==NULL) return UNET_ERR;
-				memset(u->sndmsg,0,sizeof(st_unet_sndmsg));
-				u->sndmsg->next=NULL;
-				u->sndmsg->size=start + u->server.size;
-				#if _DBG_LEVEL_ > 3
-					if(start + u->server.size<=0) { abort(); }
-				#endif
-				u->sndmsg->buf=(Byte *)malloc(sizeof(Byte) * (u->sndmsg->size+5));
-				buf=u->sndmsg->buf;
-			} else {
-				st_unet_sndmsg * ite=NULL;
-				ite=u->sndmsg;
-				while(ite->next!=NULL) {
-					ite=(st_unet_sndmsg *)ite->next; //go to the end of the message cue
-				}
-				ite->next=malloc(sizeof(st_unet_sndmsg) * 1);
-				if(ite->next==NULL) return UNET_ERR;
-				memset((st_unet_sndmsg *)ite->next,0,sizeof(st_unet_sndmsg));
-				ite=(st_unet_sndmsg *)ite->next;
-				ite->next=NULL;
-				ite->size=start + u->server.size;
-				ite->buf=(Byte *)malloc(sizeof(Byte) * (ite->size+5));
-				buf=ite->buf;
-			}
-			if(buf==NULL) return UNET_ERR;
-#if _DBG_LEVEL_ > 7
-			DBG(6,"Buffer details:\n");
-			dumpbuf(net->log,buf,start+u->server.size);
-			lognl(net->log);
-			logflush(net->log);
-#endif
-			uru_put_header(buf,&u->server);
-#if _DBG_LEVEL_ > 6
-			DBG(6,"Buffer details after put_header():\n");
-			dumpbuf(net->log,buf,start+u->server.size);
-			lognl(net->log);
-			logflush(net->log);
-#endif
-			memcpy(buf+start,msg+(i*pkt_sz),u->server.size);
-#if _DBG_LEVEL_ > 6
-			DBG(6,"Buffer details after memcpy:\n");
-			dumpbuf(net->log,buf,start+u->server.size);
-			lognl(net->log);
-			logflush(net->log);
-#endif
-		}
-		//now send them
-		//printf("presh enter to continue...\n"); fflush(0);
-		//ask();
-
-		DBG(5,"before plNetReSendMessages call\n");
-		plNetReSendMessages(net,sid);
-		DBG(5,"after plNetReSendMessages call\n");
+	pkt_sz=u->maxPacketSz - hsize; //get maxium message size
+	n_pkts=(psize-1)/pkt_sz; //get number of fragments
+	DBG(5,"pkt_sz:%i n_pkts:%i\n",pkt_sz,n_pkts);
+	if(n_pkts>=256) {
+		err->log("%s ERR: Attempted to send a packet of size %i bytes, that don't fits inside an uru message\n",u->str(),psize);
+		throw txTooBig(_WHERE("%s packet of %i bytes don't fits inside an uru message\n",u->str(),psize));
 	}
-
-		DBG(5,"dmalloc_verify()\n");
-		dmalloc_verify(NULL);
-	//if(buf!=NULL) free((void *)buf);
-
-	return UNET_OK;
-	#endif
+	
+	U32 i,tts=0;
+	
+	for(i=0; i<=n_pkts; i++) {
+		if(i!=0 && u->server.tf & 0x02) { //<- Troublemaker
+			u->server.ps=u->server.sn;
+			u->server.pfr=u->server.frn;
+		}
+		u->server.frn=i; //set fragment number
+		//get current paquet size
+		if(i==n_pkts) csize=psize - (i*pkt_sz);
+		else csize=pkt_sz;
+		
+		pmsg=new tUnetUruMsg();
+		pmsg->val=u->server.val;
+		//pmsg.pn NOT in this layer (done in the msg sender)
+		pmsg->tf=u->server.tf;
+		pmsg->frn=u->server.frn;
+		pmsg->sn=u->server.sn;
+		pmsg->frt=n_pkts;
+		pmsg->pfr=u->server.pfr;
+		pmsg->ps=u->server.ps;
+		
+		pmsg->data.write(buf.read(csize),csize);
+		
+		pmsg->_update();
+		pmsg->timestamp=net_time;
+		
+		if(u->cabal) {
+			pmsg->timestamp+=tts;
+			tts+=((csize+hsize+ip_overhead)*1000000)/u->cabal;
+		}
+		#ifdef _UNET_DBG_
+		pmsg->timestamp+=latency;
+		#endif
+		
+		//put pmsg to the qeue
+		u->sndq->add(pmsg);
+	}
+	
+	u->doWork(); //send messages
 }
 
+void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
+
+}
 
 /**
 	Dumps all data structures, with the address and the contents in hex

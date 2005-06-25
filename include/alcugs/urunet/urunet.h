@@ -81,6 +81,7 @@ typedef U16 tUnetFlags;
 
 #define UNET_DEFAULT_FLAGS UNET_NBLOCK | UNET_ELOG | UNET_ECRC | UNET_AUTOSP | UNET_NOFLOOD | UNET_FLOG | UNET_NETAUTH
 
+
 class tUnet {
 public:
 	tUnet(char * lhost="0.0.0.0",U16 lport=0);
@@ -94,6 +95,9 @@ public:
 	int Recv();
 	U32 getTime() { return ntime_sec; }
 	U32 getMicroseconds() { return ntime_usec; }
+	//max resolution 15 minutes
+	U32 getNetTime() { return net_time; }
+	void updateNetTime();
 private:
 	void init();
 	void _openlogs();
@@ -102,7 +106,7 @@ private:
 	
 	//void send();
 	void basesend(tNetSession * u,tmBase & m);
-	//void rawsend();
+	void rawsend(tNetSession * u,tUnetUruMsg * m);
 	
 	friend class tNetSession;
 	
@@ -127,9 +131,10 @@ private:
 
 	U32 ntime_sec; //current time (in secs)
 	U32 ntime_usec; //(in usecs)
+	U32 net_time; //(in usecs) [resolution of 15 minutes] (relative)
 
 	U32 conn_timeout; //default timeout (to disconnect a session) (seconds) [3 secs]
-	U32 timeout; //default timeout when the send clock expires (re-transmission) (milliseconds)
+	U32 timeout; //default timeout when the send clock expires (re-transmission) (microseconds)
 
 	U32 max; //<! Maxium number of connections (default 0, unlimited)
 	tNetSessionMgr * smgr; //Session MGR
@@ -176,6 +181,7 @@ private:
 	tLog * chk; //checksum results
 	tLog * sec; //security log
 	
+	U32 ip_overhead;
 	//debugging stuff
 	#ifdef _UNET_DBG_
 	U32 lim_down_cap; //in bytes
@@ -185,7 +191,6 @@ private:
 	U32 latency; //(in msecs)
 	U32 cur_down_quota;
 	U32 cur_up_quota;
-	U32 ip_overhead;
 	Byte quota_check_sec; //(in seconds)
 	U32 quota_check_usec; //(useconds)
 	U32 time_quota_check_sec; //last quota check (in seconds)
@@ -208,15 +213,6 @@ typedef struct {
 	Byte fr_count; //Number of fragments
 	Byte completed; //It's the message completed, and prepared for the app layer?
 } st_unet_rcvmsg;
-
-//! Urunet outcomming message cue
-//Only messages with the ack bit set are stored here, the others go directly to the clients
-typedef struct {
-	Byte * buf; //The raw message with all: header, timestamp, and packet counters
-	int size; //The raw message size
-	Byte tryes; //The number of times that this message has been send
-	void * next; //The next message in the cue (ensure ordered delivery)
-} st_unet_sndmsg;
 
 typedef struct {
 	U16 cmd; //message code

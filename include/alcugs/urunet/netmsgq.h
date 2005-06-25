@@ -28,22 +28,71 @@
 	URUNET 3+
 */
 
-#ifndef __U_UNET_H
-#define __U_UNET_H
+#ifndef __U_NETMSGQ_H
+#define __U_NETMSGQ_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_UNET_H_ID "$Id$"
+#define __U_NETMSGQ_H_ID "$Id$"
 
-#include <netdb.h>
-#include <sys/socket.h>
+namespace alc {
 
-#include "protocol/prot.h"
-#include "protocol/protocol.h"
-#include "netmsgq.h"
-#include "netsession.h"
-#include "netsessionmgr.h"
-#include "netlog.h"
-#include "urunet.h"
+class tUnetOutMsgQ {
+public:
+	tUnetOutMsgQ() {
+		first=last=current=prev=NULL;
+		n=0;
+	}
+	~tUnetOutMsgQ() {
+		current=first;
+		while(current) {
+			first=first->next;
+			delete current;
+			current=first;
+		}
+	}
+	tUnetUruMsg * getNext() {
+		if(current==NULL) prev=current=first;
+		else {
+			prev=current;
+			current=current->next;
+		}
+		return current;
+	}
+	void deleteCurrent() {
+		if(current) {
+			if(current==first) {
+				prev=first=first->next;
+				delete current;
+				current=prev;
+			} else {
+				prev->next=current->next;
+				if(current==last) last=prev;
+				delete current;
+				current=prev->next;
+			}
+			n--;
+		}
+	}
+	void add(tUnetUruMsg * msg) {
+		if(first==NULL) { 
+			first=msg;
+		} else {
+			last->next=msg;
+		}
+		last=msg;
+		n++;
+	}
+	void rewind() {
+		prev=current=first;
+	}
+	U32 len() { return n; }
+private:
+	tUnetUruMsg * first;
+	tUnetUruMsg * last;
+	tUnetUruMsg * current;
+	tUnetUruMsg * prev;
+	U32 n;
+};
 
+}
 
 #endif
-

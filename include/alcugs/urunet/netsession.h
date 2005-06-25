@@ -42,10 +42,16 @@ class tNetSession {
 public:
 	tNetSession(tUnet * net);
 	~tNetSession();
+	char * str(char how='s');
 private:
 	void init();
 	void processMsg(Byte * buf,int size);
+	void doWork();
 
+	void updateRTT(U32 newread);
+	void increaseCabal();
+	void decreaseCabal();
+	
 	void negotiate();
 	
 	tUnet * net;
@@ -64,9 +70,9 @@ private:
 		Byte pfr;
 		U32 ps;
 	} server;
-	
 	Byte validation; //store the validation level (0,1,2)
 	Byte authenticated; //it's the peer authed? (0,1,2)
+	U16 maxPacketSz; //Maxium size of the packets. Must be 1024 (always)
 
 	tTime timestamp; //current client time
 	tTime nego_stamp; //initial negotiation stamp
@@ -76,9 +82,19 @@ private:
 	//flux control
 	U32 bandwidth; //client reported bandwidth (negotiated technology) (in bps)
 	U32 cabal; //cur avg bw (in bytes per second)
+	
+	U32 last_msg_time; //last snd msg time in usecs
+	U32 rtt;
+	U32 timeout;
+	S32 desviation;
+	tUnetOutMsgQ * sndq; //outcomming message queue
+	//tUnetInMsgQ * rcvq; //incomming message queue
+	
+	bool idle;
 
 	friend class tNetSessionMgr;
 	friend class tUnet;
+	//friend class tUnetUruMsg;
 };
 
 #if 0
@@ -101,8 +117,7 @@ typedef struct {
 	
 	U32 ack_stamp; //last time that we sent a packet to it
 	U32 ack_micros;
-	U32 nego_stamp; //negotiation timestamp (set up at beggining of connection)
-	U32 nego_micros;
+	
 	U32 renego_stamp;
 	U32 renego_micros;
 	U32 alive_stamp; //last time that we send the NetMsgAlive
@@ -117,7 +132,6 @@ typedef struct {
 	int x; //x value
 	Byte reason; //reason code
 	Byte release; //type of client
-	U16 maxPacketSz; //Maxium size of the packets. Must be 1024 (always)
 	Byte access_level; //the access level of the peer
 	Byte status; //the player status, defined inside a states machine (see the states machine doc)
 	Byte paged; //0x00 non-paged player, 0x01 player is paged
@@ -127,10 +141,7 @@ typedef struct {
 	//flood control
 	U32 last_check; //time of last check
 	int npkts; //number of packets since last check
-	//inc messages
-	st_unet_rcvmsg * rcvmsg; //incomming message cue
-	//out messages
-	st_unet_sndmsg * sndmsg; //outcomming message cue
+
 	int success; //number of the total succesfully sent messages, reseted when ack is not recieved
 	S16 vpos; //last packet sent
 } st_uru_client;

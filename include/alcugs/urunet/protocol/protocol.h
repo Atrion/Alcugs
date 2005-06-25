@@ -54,8 +54,13 @@ char * alcUnetGetAuthCode(Byte code);
 char * alcUnetGetAvatarCode(Byte code);
 char * alcUnetGetMsgCode(U16 code);
 
+class tUnet;
+class tUnetOutMsgQ;
+class tNetSession;
+
 class tUnetUruMsg :public tBaseType {
 public:
+	tUnetUruMsg() { next=NULL; tryes=0; }
 	virtual ~tUnetUruMsg() {}
 	virtual void store(tBBuf &t);
 	virtual int stream(tBBuf &t);
@@ -66,23 +71,29 @@ public:
 	void htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port);
 private:
 	void _update();
-//Uru protocol
-//Byte vid 0x03
-Byte val; // 0x00,0x01,0x02
-//U32 cs (only if val>0)
-U32 pn; //pck num
-Byte tf; //type/flags
-//U32 unkA
-Byte frn; //num fragment(1 byte)
-U32 sn; //seq num (3 bytes)
- U32 csn; // -
-Byte frt; //total fragments (1 Byte)
-//U32 unkB
-Byte pfr;
-U32 ps;
- U32 cps; // -
-U32 dsize;
-tMBuf data;
+	tUnetUruMsg * next;
+	U32 timestamp; //message stamp in usecs
+	Byte tryes;
+	//Uru protocol
+	//Byte vid 0x03
+	Byte val; // 0x00,0x01,0x02
+	//U32 cs (only if val>0)
+	U32 pn; //pck num
+	Byte tf; //type/flags
+	//U32 unkA
+	Byte frn; //num fragment(1 byte)
+	U32 sn; //seq num (3 bytes)
+		U32 csn; // -
+	Byte frt; //total fragments (1 Byte)
+	//U32 unkB
+	Byte pfr;
+	U32 ps;
+		U32 cps; // -
+	U32 dsize;
+	tMBuf data;
+	friend class tUnet;
+	friend class tUnetOutMsgQ;
+	friend class tNetSession;
 };
 
 class tmBase :public tBaseType {

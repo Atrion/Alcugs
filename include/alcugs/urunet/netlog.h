@@ -53,7 +53,10 @@ public:
 	txToMCons(char * msg="",bool abort=false,bool core=false) :txUnet("txToMCons",msg,abort,core) {}
 };
 
-
+class txTooBig : public txUnet {
+public:
+	txTooBig(char * msg="",bool abort=false,bool core=false) :txUnet("txTooBig",msg,abort,core) {}
+};
 
 }
 

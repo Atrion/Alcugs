@@ -25,25 +25,24 @@
 *******************************************************************************/
 
 /**
-	URUNET 3+
+	URUNET 3
 */
 
-#ifndef __U_UNET_H
-#define __U_UNET_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_UNET_H_ID "$Id$"
+#define __U_NETMSGQ_ID "$Id$"
 
-#include <netdb.h>
-#include <sys/socket.h>
+#define _DBG_LEVEL_ 10
 
-#include "protocol/prot.h"
-#include "protocol/protocol.h"
-#include "netmsgq.h"
-#include "netsession.h"
-#include "netsessionmgr.h"
-#include "netlog.h"
-#include "urunet.h"
+#include "alcugs.h"
+#include "urunet/unet.h"
+
+#include "alcdebug.h"
+
+namespace alc {
 
 
-#endif
+
+
+}
+
 

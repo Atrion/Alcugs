@@ -45,9 +45,11 @@ tNetSession::tNetSession(tUnet * net) {
 	DBG(5,"tNetSession()\n");
 	this->net=net;
 	init();
+	sndq = new tUnetOutMsgQ;
 }
 tNetSession::~tNetSession() {
 	DBG(5,"~tNetSession()\n");
+	delete sndq;
 }
 void tNetSession::init() {
 	DBG(5,"init()\n");
@@ -56,11 +58,48 @@ void tNetSession::init() {
 	sid=-1;
 	validation=0;
 	authenticated=0;
+	maxPacketSz=1024;
 	bandwidth=0;
 	cabal=0;
+	last_msg_time=0;
+	rtt=net->timeout/2;
+	timeout=net->timeout;
+	desviation=0;
 	nego_stamp.seconds=0;
 	nego_stamp.microseconds=0;
 	memset((void *)&server,0,sizeof(server));
+	idle=false;
+}
+char * tNetSession::str(char how) {
+	static char cnt[1024];
+	sprintf(cnt,"[%i][%s:%i]",sid,alcGetStrIp(ip),ntohs(port));
+	return cnt;
+}
+void tNetSession::updateRTT(U32 newread) {
+	if(rtt==0) rtt=newread;
+	#if 1 //Original
+		const U32 alpha=800;
+		rtt=((alpha*rtt)/1000) + ((1000-alpha)*newread);
+		timeout=2*rtt;
+	#else //Jacobson/Karels
+		S32 alpha=125;
+		S32 u=1;
+		S32 delta=4;
+		S32 diff;
+		diff=(S32)newread - (S32)rtt;
+		(S32)rtt+=(alpha*diff)/1000;
+		desviation+=(alpha*(abs(diff)-desviation))/1000;
+		timeout=u*rtt + delta*desviation;
+	#endif
+}
+void tNetSession::increaseCabal() {
+	U32 delta=800;
+	cabal+=delta;
+}
+void tNetSession::decreaseCabal() {
+	U32 epsilon=4096;
+	cabal=cabal/2;
+	if(cabal<epsilon) cabal=epsilon;
 }
 void tNetSession::processMsg(Byte * buf,int size) {
 	DBG(5,"Message of %i bytes\n",size);
@@ -111,8 +150,61 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		negotiate();
 	}
 	
-	
 }
+
+//Send, and re-send messages
+void tNetSession::doWork() {
+
+	if(net->net_time>=last_msg_time) {
+
+		sndq->rewind();
+		if(sndq->getNext()==NULL) {
+			last_msg_time=0;
+			idle=true;
+		}
+		idle=false;
+		sndq->rewind();
+		tUnetUruMsg * curmsg;
+		
+		U32 quota_max=1024;
+		U32 cur_quota=0;
+		
+		U32 minTH=10;
+		U32 maxTH=150;
+
+		while((curmsg=sndq->getNext())!=NULL && (cur_quota<quota_max)) {
+			
+			if(curmsg->timestamp<=net->net_time) {
+				//we can send the message
+				if(curmsg->tf & 0x80) {
+					//send paquet
+					cur_quota+=curmsg->size();
+					net->rawsend(this,curmsg);
+					sndq->deleteCurrent();
+				} else if(curmsg->tf & 0x02) {
+					//send paquet
+					cur_quota+=curmsg->size();
+					net->rawsend(this,curmsg);
+					curmsg->timestamp+=timeout;
+					curmsg->timestamp;
+				} else {
+					//probabilistic drop (of voice, and other non-ack paquets)
+					if(net->net_time-curmsg->timestamp > timeout) {
+						//Unacceptable - drop it
+						sndq->deleteCurrent();
+					} else if(sndq->len()>minTH && (random()%maxTH)>sndq->len()) {
+						sndq->deleteCurrent();
+					} else {
+						//TODO send paquet
+						sndq->deleteCurrent();
+					}
+				} //end prob drop
+			} //end time check
+		} //end while
+		last_msg_time=net->net_time;
+	}
+}
+
 void tNetSession::negotiate() {
 	U32 sbw;
 	//server bandwidth
