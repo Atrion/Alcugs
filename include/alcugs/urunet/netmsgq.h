@@ -161,6 +161,7 @@ public:
 			current=msg;
 		}
 		if(msg->next==NULL) last=msg;
+		n++;
 	}
 	void insertBefore(T * msg) {
 		if(first==NULL) {
@@ -168,13 +169,14 @@ public:
 		} else {
 			if(current=first) {
 				msg->next=first;
-				prev=current=first=msg;
+				prev=first=msg;
 			} else {
 				msg->next=current;
 				prev->next=msg;
 				prev=msg;
 			}
 		}
+		n++;
 	}
 	void rewind() {
 		prev=current=NULL;

@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETSESSION_ID "$Id$"
 
-#define _DBG_LEVEL_ 10
+#define _DBG_LEVEL_ 7
 
 #include "alcugs.h"
 #include "urunet/unet.h"
@@ -178,7 +178,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		msg.data.rewind();
 		msg.data.get(comm);
 		net->log->log("<RCV> ");
-		net->log->print((const char *)comm.str());
+		net->log->print("%s\n",(const char *)comm.str());
 		bandwidth=comm.bandwidth;
 		if(renego_stamp==comm.timestamp || negotiating) {
 			net->log->print(" Ignored");
@@ -213,51 +213,158 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	tUnetAck * ack,* cack;
 	U32 A,B;
 	
-	net->log->log("ack %i,%i %i,%i\n",msg.sn,msg.frn,msg.ps,msg.pfr);
+	net->log->log("stacking ack %i,%i %i,%i\n",msg.sn,msg.frn,msg.ps,msg.pfr);
 	
 	A=msg.csn;
-	B=msg.csn;
+	B=msg.cps;
 	
 	ack=new tUnetAck();
 	ack->A=msg.csn;
 	ack->B=msg.cps;
-	U32 tts=((maxPacketSz * 1000000)/cabal) * msg.frt;
+	U32 tts=0;
+	if(msg.frt) {
+		if(cabal) tts=((msg.frt * maxPacketSz * 1000000)/cabal);
+		else tts=((msg.frt * maxPacketSz * 1000000)/4096);
+	}
 	if(tts>rtt) tts=rtt;
 	ack->timestamp=net->net_time + tts;
+	
+	int i=0;
 
+	ackq->add(ack);
+	
+#if 0
+	//This crap does not work as intended
 	ackq->rewind();
+	if(ackq->getNext()==NULL) {
+		ackq->add(ack);
+	} else {
+		ackq->rewind();
+		while((cack=ackq->getNext())!=NULL) {
+			net->log->log("2store[%i] %i,%i %i,%i\n",i,(ack->A & 0x000000FF),(ack->A >> 8),(ack->B & 0x000000FF),(ack->B >> 8));
+			net->log->log("2check[%i] %i,%i %i,%i\n",i,(cack->A & 0x000000FF),(cack->A >> 8),(cack->B & 0x000000FF),(cack->B >> 8));
+
+			i++;
+			if(cack->A>=B && cack->A<=A) {
+				ack->B=cack->B;
+				//ackq->insertBefore(ack);
+				if(cack->next==NULL) {
+					ackq->add(ack);
+					break;
+				} else {
+					ackq->deleteCurrent();
+				}
+				net->log->log("A\n");
+				//break;
+			} else
+			if(cack->A<B && cack->next==NULL) {
+				ackq->insert(ack);
+				net->log->log("B\n");
+				break;
+			} else
+			if(A<cack->B) {
+				ackq->insertBefore(ack);
+				net->log->log("C\n");
+				break;
+			} else
+			if(A>=cack->B && A<=cack->A) {
+				cack->B=(B>cack->B ? cack->B : B);
+				net->log->log("D\n");
+				break;
+			}
+		}
+	}
+	
+	net->log->log("ack stack TAIL looks like:\n");
+	i=0;
 	while((cack=ackq->getNext())!=NULL) {
-		if(cack->A>=B && cack->A<=A) {
-			ack->B=cack->B;
-			ackq->insertBefore(ack);
-			ackq->deleteCurrent();
-		}
-		if(cack->A<B) {
-			ackq->insert(ack);
-			break;
-		}
-		if(A<cack->B) {
-			ackq->insertBefore(ack);
-			break;
-		}
-		if(A>=cack->B && A<=cack->A) {
-			cack->B=B;
-			break;
-		}
+		net->log->log("st-ack[%i] %i,%i %i,%i\n",i++,(cack->A & 0x000000FF),(cack->A >> 8),(cack->B & 0x000000FF),(cack->B >> 8));
+	}
+#endif
+
+	net->log->log("ack stack looks like:\n");
+	ackq->rewind();
+	i=0;
+	while((cack=ackq->getNext())!=NULL) {
+		net->log->log("st-ack[%i] %i,%i %i,%i\n",i++,(cack->A & 0x000000FF),(cack->A >> 8),(cack->B & 0x000000FF),(cack->B >> 8));
 	}
 }
 
 
 void tNetSession::ackUpdate() {
+
+	U32 i,maxacks=30,hsize;
+
 	ackq->rewind();
 	tUnetAck * ack;
 	ack=ackq->getNext();
-	if(ack==NULL || ack->timestamp>net->net_time) return;
+	if(ack==NULL || ack->timestamp>net->net_time) {
+		if(ack) net->updatetimer(net->net_time-ack->timestamp);
+		return;
+	}
 
-	tUnetUruMsg * msg;
-	msg=new tUnetUruMsg;
+	tUnetUruMsg * pmsg;
 	
-	//add stuff here
+	server.frn=0;
+	server.tf=0x80;
+	server.val=validation;
+	if(server.val==0x01) { server.val=0x00; }
+	if(server.val==0x00) { hsize=28; } else { hsize=32; }
+	if(server.tf & UNetExt) { hsize-=8; }
+
+	ackq->rewind();
+	while((ack=ackq->getNext())) {
+	
+		pmsg=new tUnetUruMsg;
+	
+		if(server.tf & 0x02) {
+			server.ps=server.sn;
+			server.pfr=server.frn;
+			//the second field, only contains the seq number from the latest packet with
+			//the ack flag enabled.
+			DBG(8,"The previous sent packet had the ack flag on\n");
+		}
+		//now update the other fields
+		server.sn++;
+		
+		pmsg->val=server.val;
+		//pmsg.pn NOT in this layer (done in the msg sender)
+		pmsg->tf=server.tf;
+		pmsg->frn=server.frn;
+		pmsg->sn=server.sn;
+		pmsg->frt=0;
+		pmsg->pfr=server.pfr;
+		pmsg->ps=server.ps;
+
+		//pmsg->data.write(buf.read(csize),csize);
+		pmsg->data.putU16(0);
+		
+		ackq->rewind();
+		i=0;
+		while((ack=ackq->getNext()) && i<maxacks) {
+			pmsg->data.putU32(ack->A);
+			pmsg->data.putU32(0);
+			pmsg->data.putU32(ack->B);
+			pmsg->data.putU32(0);
+			ackq->deleteCurrent();
+			i++;
+		}
+		
+		pmsg->_update();
+		pmsg->timestamp=net->net_time;
+		pmsg->dsize=i;
+
+		if(cabal) {
+			pmsg->timestamp+=(((i*16)+2+hsize+net->ip_overhead)*1000000)/cabal;
+		}
+		#ifdef _UNET_DBG_
+		pmsg->timestamp+=net->latency;
+		#endif
+		
+		//put pmsg to the qeue
+		sndq->add(pmsg);
+	}
+
 	
 }
 
@@ -271,7 +378,12 @@ void tNetSession::doWork() {
 		sndq->rewind();
 		if(sndq->getNext()==NULL) {
 			last_msg_time=0;
-			idle=true;
+			ackq->rewind();
+			if(ackq->getNext()==NULL) {
+				idle=true;
+			} else {
+				idle=false;
+			}
 			return;
 		}
 		idle=false;
@@ -285,7 +397,7 @@ void tNetSession::doWork() {
 		U32 maxTH=150;
 		U32 tts;
 
-		while((curmsg=sndq->getNext())!=NULL && (cur_quota<quota_max)) {
+		while((curmsg=sndq->getNext())!=NULL && (cur_quota<=quota_max)) {
 			
 			if(curmsg->timestamp<=net->net_time) {
 				//we can send the message
@@ -330,18 +442,20 @@ void tNetSession::doWork() {
 					}
 				} //end prob drop
 			} //end time check
+			 else { DBG(8,"Too soon to send a message\n"); }
 		} //end while
 		if(cabal) tts=((cur_quota*1000000)/cabal);
 		else tts=((cur_quota*1000000)/4096);
+		DBG(8,"tts is now:%i quota:%i,cabal:%i\n",tts,cur_quota,cabal);
 		last_msg_time=net->net_time + tts;
 		net->updatetimer(tts);
-	}
+	} else { DBG(8,"Too soon to check sndq"); }
 }
 
 void tNetSession::negotiate() {
 	U32 sbw;
 	//server bandwidth
-	DBG(8,"%08X %08X %08X\n",ip,net->lan_mask,net->lan_addr);
+	DBG(9,"%08X %08X %08X\n",ip,net->lan_mask,net->lan_addr);
 	if((ip & 0x00FFFFFF) == 0x0000007F) { //lo
 		sbw=100000000;
 	} else if((ip & net->lan_mask) == net->lan_addr) { //LAN

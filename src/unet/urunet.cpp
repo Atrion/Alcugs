@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_URUNET_ID "$Id$"
 
-#define _DBG_LEVEL_ 8
+#define _DBG_LEVEL_ 7
 
 #include "alcugs.h"
 #include "urunet/unet.h"
@@ -111,9 +111,9 @@ void tUnet::init() {
 	#ifdef _UNET_DBG_
 	lim_down_cap=2000; //in bytes
 	lim_up_cap=2000; //in bytes
-	in_noise=25; //(0-100)
-	out_noise=25; //(0-100)
-	latency=500; //(in msecs)
+	in_noise=0; //25; //(0-100)
+	out_noise=0; //25; //(0-100)
+	latency=500000;//500000; //(in usecs)
 	cur_down_quota=0;
 	cur_up_quota=0;
 	quota_check_sec=0;
@@ -147,7 +147,7 @@ void tUnet::updatetimer(U32 usec) {
 		if(usec<unet_usec) unet_usec=usec;
 	}
 	if(unet_usec<xmin_th) unet_usec=xmin_th;
-	DBG(5,"Timer is now %i usecs (%i)\n",unet_usec,usec);
+	//DBG(5,"Timer is now %i usecs (%i)\n",unet_usec,usec);
 }
 
 void tUnet::neterror(char * msg) {
@@ -430,8 +430,8 @@ int tUnet::Recv() {
 
 #ifdef _UNET_DBG_
 	if(n>0) {
-		if(in_noise && (random() % 100) >= in_noise) {
-			DBG(5,"Incomming Packet accepted\n");
+		if(!in_noise || (random() % 100) >= in_noise) {
+			DBG(8,"Incomming Packet accepted\n");
 		} else {
 			DBG(5,"Incomming Packet dropped\n");
 			n=0;
@@ -520,7 +520,7 @@ void tUnet::doWork() {
 	(only Nego and normal messages, ack are handled by another function)
 */
 void tUnet::basesend(tNetSession * u,tmBase &msg) {
-	DBG(7,"basesend\n");
+	DBG(9,"basesend\n");
 	log->log("<SND> %s\n",msg.str());
 	tMBuf buf;
 	U32 csize,psize,hsize,pkt_sz,n_pkts;
@@ -542,7 +542,7 @@ void tUnet::basesend(tNetSession * u,tmBase &msg) {
 		u->server.pfr=u->server.frn;
 		//the second field, only contains the seq number from the latest packet with
 		//the ack flag enabled.
-		DBG(5,"The previous sent packet had the ack flag on\n");
+		DBG(8,"The previous sent packet had the ack flag on\n");
 	}
 	//now update the other fields
 	u->server.sn++;
@@ -551,19 +551,19 @@ void tUnet::basesend(tNetSession * u,tmBase &msg) {
 
 	if(flags & 0x02) {
 		u->server.tf |= 0x02; //ack flag on
-		DBG(5,"ack flag on\n");
+		DBG(7,"ack flag on\n");
 	}
 	if(flags & 0x40) {
 		u->server.tf |= 0x40; //negotiation packet
-		DBG(5,"It's a negotation packet\n");
+		DBG(7,"It's a negotation packet\n");
 	}
 
 	if(flags & UNetForce0) {
 		u->server.val=0x00;
-		DBG(5,"forced validation 0\n");
+		DBG(7,"forced validation 0\n");
 	} else {
 		u->server.val=u->validation;
-		DBG(6,"validation level is %i\n",u->server.val);
+		DBG(7,"validation level is %i\n",u->server.val);
 	}
 
 	//On validation level 1 - ack and negotiations don't have checksum verification
@@ -644,8 +644,8 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 	client.sin_addr.s_addr=u->ip; //address
 	client.sin_port=u->port; //port
 
-	DBG(7,"Server pn is %08X\n",u->server.pn);
-	DBG(7,"Server sn is %08X,%08X\n",u->server.sn,msg->sn);
+	DBG(9,"Server pn is %08X\n",u->server.pn);
+	DBG(9,"Server sn is %08X,%08X\n",u->server.sn,msg->sn);
 	//assert(u->server.sn==0);
 	//assert(u->server.pn==0);
 	u->server.pn++;
@@ -675,19 +675,19 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 	buf=mbuf->read();
 
 	if(msg->val==2) {
-		DBG(4,"Enconding validation 2 packet of %i bytes...\n",msize);
+		DBG(8,"Enconding validation 2 packet of %i bytes...\n",msize);
 		buf2=(Byte *)malloc(sizeof(Byte) * msize);
 		if(buf2==NULL) { throw txNoMem(_WHERE("")); }
 		alcEncodePacket(buf2,buf,msize);
 		buf=buf2; //don't need to decode again
 		if(u->authenticated==1) {
-			DBG(4,"Client is authenticated, doing checksum...\n");
+			DBG(8,"Client is authenticated, doing checksum...\n");
 			*((U32 *)(buf+2))=alcUruChecksum(buf,msize,2,u->passwd);
-			DBG(4,"Checksum done!...\n");
+			DBG(8,"Checksum done!...\n");
 		} else {
-			DBG(4,"Client is not authenticated, doing checksum...\n");
+			DBG(8,"Client is not authenticated, doing checksum...\n");
 			*((U32 *)(buf+2))=alcUruChecksum(buf,msize,1,NULL);
-			DBG(4,"Checksum done!...\n");
+			DBG(8,"Checksum done!...\n");
 		}
 		buf[1]=0x02;
 	} else if(msg->val==1) {
@@ -697,11 +697,11 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 		buf[1]=0x00;
 	}
 	buf[0]=0x03; //magic number
-	DBG(4,"Before the Sendto call...\n");
+	DBG(9,"Before the Sendto call...\n");
 	//
 #ifdef _UNET_DBG_
-	if(out_noise && (random() % 100) >= out_noise) {
-		DBG(5,"Outcomming Packet accepted\n");
+	if(!out_noise || (random() % 100) >= out_noise) {
+		DBG(8,"Outcomming Packet accepted\n");
 	} else {
 		DBG(5,"Outcomming Packet dropped\n");
 		msize=0;
@@ -734,10 +734,10 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 		ERR(2,"n<0 ?, %i",msize);
 		neterror(" sendto() ");
 	}
-	DBG(4,"After the Sendto call...\n");
+	DBG(9,"After the Sendto call...\n");
 	if(buf2!=NULL) { free((void *)buf2); }
 	delete mbuf;
-	DBG(2,"returning from uru_net_send RET:%i\n",msize);
+	DBG(8,"returning from uru_net_send RET:%i\n",msize);
 }
 
 /**
