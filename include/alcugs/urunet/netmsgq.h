@@ -35,6 +35,7 @@
 
 namespace alc {
 
+#if 0
 class tUnetOutMsgQ {
 public:
 	tUnetOutMsgQ() {
@@ -97,6 +98,96 @@ private:
 	tUnetUruMsg * prev;
 	U32 n;
 };
+#endif
+
+template <class T> class tUnetMsgQ {
+public:
+	tUnetMsgQ() {
+		first=last=current=prev=NULL;
+		n=0;
+	}
+	~tUnetMsgQ() {
+		clear();
+	}
+	void clear() {
+		current=first;
+		while(current) {
+			first=first->next;
+			delete current;
+			current=first;
+		}
+		first=last=current=prev=NULL;
+		n=0;
+	}
+	T* getNext() {
+		if(current==NULL) prev=current=first;
+		else {
+			prev=current;
+			current=current->next;
+		}
+		return current;
+	}
+	void deleteCurrent() {
+		if(current) {
+			if(current==first) {
+				prev=first=first->next;
+				delete current;
+				current=prev;
+			} else {
+				prev->next=current->next;
+				if(current==last) last=prev;
+				delete current;
+				current=prev->next;
+			}
+			n--;
+		}
+	}
+	void add(T * msg) {
+		if(first==NULL) { 
+			first=msg;
+		} else {
+			last->next=msg;
+		}
+		last=msg;
+		n++;
+	}
+	void insert(T * msg) {
+		if(first==NULL) {
+			prev=current=first=msg;
+		} else {
+			prev=current;
+			msg->next=prev->next;
+			prev->next=msg;
+			current=msg;
+		}
+		if(msg->next==NULL) last=msg;
+	}
+	void insertBefore(T * msg) {
+		if(first==NULL) {
+			prev=current=first=msg;
+		} else {
+			if(current=first) {
+				msg->next=first;
+				prev=current=first=msg;
+			} else {
+				msg->next=current;
+				prev->next=msg;
+				prev=msg;
+			}
+		}
+	}
+	void rewind() {
+		prev=current=NULL;
+	}
+	U32 len() { return n; }
+private:
+	T* first;
+	T* last;
+	T* current;
+	T* prev;
+	U32 n;
+};
+
 
 }
 

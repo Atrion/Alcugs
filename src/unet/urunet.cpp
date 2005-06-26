@@ -736,6 +736,7 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 	}
 	DBG(4,"After the Sendto call...\n");
 	if(buf2!=NULL) { free((void *)buf2); }
+	delete mbuf;
 	DBG(2,"returning from uru_net_send RET:%i\n",msize);
 }
 

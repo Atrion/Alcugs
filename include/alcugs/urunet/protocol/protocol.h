@@ -69,9 +69,9 @@ public:
 	U32 hSize();
 	void dumpheader(tLog * f);
 	void htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port);
+	tUnetUruMsg * next;
 private:
 	void _update();
-	tUnetUruMsg * next;
 	U32 timestamp; //message stamp in usecs
 	Byte tryes;
 	//Uru protocol
@@ -92,8 +92,17 @@ private:
 	U32 dsize;
 	tMBuf data;
 	friend class tUnet;
-	friend class tUnetOutMsgQ;
+	//friend class tUnetMsgQ;
 	friend class tNetSession;
+};
+
+class tUnetAck {
+public:
+	tUnetAck() { next=NULL; }
+	U32 timestamp;
+	U32 A;
+	U32 B;
+	tUnetAck * next;
 };
 
 class tmBase :public tBaseType {

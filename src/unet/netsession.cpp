@@ -45,11 +45,13 @@ tNetSession::tNetSession(tUnet * net) {
 	DBG(5,"tNetSession()\n");
 	this->net=net;
 	init();
-	sndq = new tUnetOutMsgQ;
+	sndq = new tUnetMsgQ<tUnetUruMsg>;
+	ackq = new tUnetMsgQ<tUnetAck>;
 }
 tNetSession::~tNetSession() {
 	DBG(5,"~tNetSession()\n");
 	delete sndq;
+	delete ackq;
 }
 void tNetSession::init() {
 	DBG(5,"init()\n");
@@ -108,12 +110,16 @@ void tNetSession::increaseCabal() {
 	if(cabal>max_cabal) cabal=max_cabal;
 	DBG(5,"+Cabal is now %i (max:%i)\n",cabal,max_cabal);
 }
-void tNetSession::decreaseCabal() {
+void tNetSession::decreaseCabal(bool partial) {
 	if(!cabal) return;
 	U32 epsilon=4096;
 	U32 delta=800;
-	cabal=cabal/2;
-	max_cabal-=delta;
+	U32 gamma=120;
+	if(partial) cabal-=(gamma*cabal)/1000;
+	else {
+		cabal=cabal/2;
+		max_cabal-=delta;
+	}
 	if(cabal<epsilon) cabal=epsilon;
 	if(max_cabal<epsilon) max_cabal=epsilon;
 	DBG(5,"-Cabal is now %i (max:%i)\n",cabal,max_cabal);
@@ -165,6 +171,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 
 	if(msg.tf & 0x02) {
 		//ack reply
+		createAckReply(msg);
 	}
 	if(msg.tf & 0x40) {
 		tmNetClientComm comm;
@@ -201,8 +208,63 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	
 }
 
+
+void tNetSession::createAckReply(tUnetUruMsg &msg) {
+	tUnetAck * ack,* cack;
+	U32 A,B;
+	
+	net->log->log("ack %i,%i %i,%i\n",msg.sn,msg.frn,msg.ps,msg.pfr);
+	
+	A=msg.csn;
+	B=msg.csn;
+	
+	ack=new tUnetAck();
+	ack->A=msg.csn;
+	ack->B=msg.cps;
+	U32 tts=((maxPacketSz * 1000000)/cabal) * msg.frt;
+	if(tts>rtt) tts=rtt;
+	ack->timestamp=net->net_time + tts;
+
+	ackq->rewind();
+	while((cack=ackq->getNext())!=NULL) {
+		if(cack->A>=B && cack->A<=A) {
+			ack->B=cack->B;
+			ackq->insertBefore(ack);
+			ackq->deleteCurrent();
+		}
+		if(cack->A<B) {
+			ackq->insert(ack);
+			break;
+		}
+		if(A<cack->B) {
+			ackq->insertBefore(ack);
+			break;
+		}
+		if(A>=cack->B && A<=cack->A) {
+			cack->B=B;
+			break;
+		}
+	}
+}
+
+
+void tNetSession::ackUpdate() {
+	ackq->rewind();
+	tUnetAck * ack;
+	ack=ackq->getNext();
+	if(ack==NULL || ack->timestamp>net->net_time) return;
+
+	tUnetUruMsg * msg;
+	msg=new tUnetUruMsg;
+	
+	//add stuff here
+	
+}
+
 //Send, and re-send messages
 void tNetSession::doWork() {
+
+	ackUpdate(); //get ack messages
 
 	if(net->net_time>=last_msg_time) {
 
@@ -236,7 +298,11 @@ void tNetSession::doWork() {
 					//send paquet
 					success++;
 					if(curmsg->tryes!=0) {
-						decreaseCabal();
+						if(curmsg->tryes==1) {
+							decreaseCabal(true);
+						} else {
+							decreaseCabal(false);
+						}
 						success=0;
 					} else if(success>=20) {
 						increaseCabal();
@@ -265,8 +331,8 @@ void tNetSession::doWork() {
 				} //end prob drop
 			} //end time check
 		} //end while
-		if(cabal) tts=(cur_quota*1000000/cabal);
-		else tts=(cur_quota*1000000/4096);
+		if(cabal) tts=((cur_quota*1000000)/cabal);
+		else tts=((cur_quota*1000000)/4096);
 		last_msg_time=net->net_time + tts;
 		net->updatetimer(tts);
 	}

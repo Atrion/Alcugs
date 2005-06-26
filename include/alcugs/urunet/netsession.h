@@ -48,9 +48,12 @@ private:
 	void processMsg(Byte * buf,int size);
 	void doWork();
 
+	void createAckReply(tUnetUruMsg &msg);
+	void ackUpdate();
+
 	void updateRTT(U32 newread);
 	void increaseCabal();
-	void decreaseCabal();
+	void decreaseCabal(bool partial);
 	
 	void negotiate();
 	
@@ -92,7 +95,9 @@ private:
 	U32 rtt;
 	U32 timeout;
 	S32 desviation;
-	tUnetOutMsgQ * sndq; //outcomming message queue
+	
+	tUnetMsgQ<tUnetAck> * ackq; //Pig acks
+	tUnetMsgQ<tUnetUruMsg> * sndq; //outcomming message queue
 	//tUnetInMsgQ * rcvq; //incomming message queue
 	
 	bool idle;
