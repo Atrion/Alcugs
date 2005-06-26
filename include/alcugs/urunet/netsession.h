@@ -76,12 +76,17 @@ private:
 
 	tTime timestamp; //current client time
 	tTime nego_stamp; //initial negotiation stamp
+	tTime renego_stamp; //remote nego stamp
+	U32 conn_timeout; //In secs
+	bool negotiating;
 	
 	Byte passwd[34]; //peer passwd hash (used in V2) (string)
 
 	//flux control
 	U32 bandwidth; //client reported bandwidth (negotiated technology) (in bps)
 	U32 cabal; //cur avg bw (in bytes per second)
+	U32 max_cabal;
+	U32 success;
 	
 	U32 last_msg_time; //last snd msg time in usecs
 	U32 rtt;
@@ -113,13 +118,7 @@ typedef struct {
 	Byte max_version; //peer major version
 	Byte min_version; //peer minor version
 	Byte tpots; //tpots version 0=undefined, 1=tpots client, 2=non-tpots client
-	U32 timeout; //the peer timeout
 	
-	U32 ack_stamp; //last time that we sent a packet to it
-	U32 ack_micros;
-	
-	U32 renego_stamp;
-	U32 renego_micros;
 	U32 alive_stamp; //last time that we send the NetMsgAlive
 	st_unet_hmsg hmsg; //the message header
 	char name[201]; //peer name (vault, lobby, AvatarCustomization) or player name (string)
@@ -141,9 +140,6 @@ typedef struct {
 	//flood control
 	U32 last_check; //time of last check
 	int npkts; //number of packets since last check
-
-	int success; //number of the total succesfully sent messages, reseted when ack is not recieved
-	S16 vpos; //last packet sent
 } st_uru_client;
 
 #endif

@@ -49,6 +49,10 @@ void alcInit(int argc=0,char ** argv=NULL,bool shutup=false);
 /** Stop Alcugs library */
 void alcShutdown();
 
+void alcOnFork();
+
+void alcSignal(int signum, void (*handler)(int));
+
 }
 
 #endif

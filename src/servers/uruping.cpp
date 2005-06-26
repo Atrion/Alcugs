@@ -75,6 +75,18 @@ void parameters_usage() {
   [255] Broadcast\n\n");
 }
 
+int __state_running=1;
+
+//handler
+void s_handler(int s) {
+	lstd->log("INF: Catch up signal %i\n",s);
+	if(__state_running==0) {
+		lerr->log("killed\n");
+		exit(-1);
+	}
+	__state_running=0;
+}
+
 int main(int argc,char * argv[]) {
 
 	int i;
@@ -136,7 +148,7 @@ int main(int argc,char * argv[]) {
 	
 		//start Alcugs library
 		alcInit(argc,argv);
-	
+		
 		//special mode
 		if(mrtg==0) {
 			lstd->print(alcVersionText());
@@ -145,8 +157,11 @@ int main(int argc,char * argv[]) {
 	
 		tUnet * unet=new tUnet(NULL,5000);
 		unet->startOp();
+		
+		alcSignal(SIGTERM, s_handler);
+		alcSignal(SIGINT, s_handler);
 
-		for(i=0; i<20; i++) {
+		while(__state_running) {
 			unet->Recv();
 		}
 	

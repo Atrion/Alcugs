@@ -36,7 +36,7 @@ No sockets please
 /* CVS tag - DON'T TOUCH*/
 #define __U_PROTOCOL_ID "$Id$"
 
-#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
 #include "urunet/unet.h"
@@ -283,24 +283,28 @@ void tUnetUruMsg::store(tBBuf &t) {
 	}
 	cps=t.getU32();
 	dsize=t.getU32();
+	U32 xdsize=dsize;
 	//check size
 	if(tf & UNetAckReply) {
 		if(tf & UNetExt) {
-			if(t.size()-hsize!=dsize*8) throw txUnexpectedData(_WHERE("Alcugs Protocol Ack reply incorrect size!\n"));
+			xdsize=dsize*8;
+			if(t.size()-hsize!=xdsize) throw txUnexpectedData(_WHERE("Alcugs Protocol Ack reply incorrect size!\n"));
 		} else {
-			if(t.size()-hsize!=(dsize*16)+2) throw txUnexpectedData(_WHERE("Uru Protocol Ack reply incorrect size!\n"));
+			xdsize=(dsize*16)+2;
+			if(t.size()-hsize!=xdsize) throw txUnexpectedData(_WHERE("Uru Protocol Ack reply incorrect size!\n"));
 		}
 	} else {
 		if(t.size()-hsize!=dsize) throw txUnexpectedData(_WHERE("Message size check failed %i!=%i\n",dsize,t.size()-hsize));
 	}
 	data.clear();
-	data.write(t.read(),dsize);
+	data.write(t.read(),xdsize);
 	frn=csn & 0x000000FF;
 	sn=csn >> 8;
 	pfr=cps & 0x000000FF;
 	ps=cps >> 8;
 }
 int tUnetUruMsg::stream(tBBuf &t) {
+	DBG(5,"[%i] ->%02X<- {%i,%i (%i) %i,%i} - %02X|%i bytes\n",pn,tf,sn,frn,frt,ps,pfr,dsize,dsize);
 	t.putByte(0x03); //already done by the sender ()
 	t.putByte(val);
 	if(val>0) t.putU32(0xFFFFFFFF);
@@ -317,7 +321,8 @@ int tUnetUruMsg::stream(tBBuf &t) {
 		t.putU32(0);
 	}
 	t.putU32(cps);
-	t.putU32(data.size());
+	t.putU32(dsize);
+	data.rewind();
 	t.put(data);
 	return this->size();
 }
@@ -332,10 +337,12 @@ U32 tUnetUruMsg::hSize() {
 }
 void tUnetUruMsg::_update() {
 	dsize=data.size();
-	frn=csn & 0x000000FF;
-	sn=csn >> 8;
-	pfr=cps & 0x000000FF;
-	ps=cps >> 8;
+	//frn=csn & 0x000000FF;
+	//sn=csn >> 8;
+	//pfr=cps & 0x000000FF;
+	//ps=cps >> 8;
+	csn=frn | sn<<8;
+	cps=pfr | ps<<8;
 }
 void tUnetUruMsg::dumpheader(tLog * f) {
 	f->print("[%i] ->%02X<- {%i,%i (%i) %i,%i} - %02X|%i bytes",pn,tf,sn,frn,frt,ps,pfr,data.size(),data.size());
@@ -397,7 +404,7 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
 			log->print("Negotiation ");
 			char * times;
 			times=ctime((const time_t *)(buf+4));
-			log->print("%i bps, %s",*(U32 *)(buf),alcGetStrTime(*(U32 *)buf+4,*(U32 *)buf+8));
+			log->print("%i bps, %s",*(U32 *)(buf),alcGetStrTime(*(U32 *)(buf+4),*(U32 *)(buf+8)));
 			break;
 		case 0x00: //0x00
 			log->print("plNetMsg0 ");

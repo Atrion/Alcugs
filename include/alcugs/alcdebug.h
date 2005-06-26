@@ -140,7 +140,11 @@ char * __dbg_where(const char * b,const char * c,int d,const char * a,...);
 #  endif
 #endif //__WIN32__
 
-#define _WHERE(...) ""
+//#define _WHERE(...) ""
+
+#define _WHERE(...) __dbg_where(__FILE__,__FUNCTION__,__LINE__,__VA_ARGS__)
+
+char * __dbg_where(const char * b,const char * c,int d,const char * a,...);
 
 #define _DIE(a) { printf("ABORT: %s",a); abort(); }
 //NOTE: _DIE must always stop the execution of the program, if not, unexpected results

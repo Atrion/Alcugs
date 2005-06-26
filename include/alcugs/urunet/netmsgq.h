@@ -42,12 +42,17 @@ public:
 		n=0;
 	}
 	~tUnetOutMsgQ() {
+		clear();
+	}
+	void clear() {
 		current=first;
 		while(current) {
 			first=first->next;
 			delete current;
 			current=first;
 		}
+		first=last=current=prev=NULL;
+		n=0;
 	}
 	tUnetUruMsg * getNext() {
 		if(current==NULL) prev=current=first;
@@ -82,7 +87,7 @@ public:
 		n++;
 	}
 	void rewind() {
-		prev=current=first;
+		prev=current=NULL;
 	}
 	U32 len() { return n; }
 private:

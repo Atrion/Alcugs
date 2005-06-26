@@ -25,13 +25,13 @@
 *******************************************************************************/
 
 /**
-	URUNET 3
+	URUNET 3+
 */
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_URUNET_ID "$Id$"
 
-#define _DBG_LEVEL_ 10
+#define _DBG_LEVEL_ 8
 
 #include "alcugs.h"
 #include "urunet/unet.h"
@@ -65,8 +65,8 @@ void tUnet::init() {
 	whoami=0; //None (new connection) //KClient; //default type of peer
 
 	//netcore timeout < min(all RTT's), nope, it must be the min tts (stt)
-	unet_sec=0; //(seconds)
-	unet_usec=100000; //(microseconds)
+	unet_sec=1; //(seconds)
+	unet_usec=0; //(microseconds)
 
 	conn_timeout=5; //default timeout (seconds) (sensible to NetMsgSetTimeout (higher when connected)
 	/* set to 30 when authed (client should send alive every 10 seconds)*/
@@ -104,6 +104,8 @@ void tUnet::init() {
 	chk=NULL;
 	sec=NULL;
 	
+	idle=false;
+	
 	ip_overhead=20+8;
 
 	#ifdef _UNET_DBG_
@@ -134,6 +136,18 @@ void tUnet::updateNetTime() {
 	ntime_sec=alcGetTime();
 	ntime_usec=alcGetMicroseconds();
 	net_time=(((ntime_sec % 1000)*1000000)+ntime_usec);
+}
+
+void tUnet::updatetimer(U32 usec) {
+	U32 xmin_th=50000;
+	if(unet_sec) {
+		unet_sec=0;
+		unet_usec=usec;
+	} else {
+		if(usec<unet_usec) unet_usec=usec;
+	}
+	if(unet_usec<xmin_th) unet_usec=xmin_th;
+	DBG(5,"Timer is now %i usecs (%i)\n",unet_usec,usec);
 }
 
 void tUnet::neterror(char * msg) {
@@ -381,7 +395,7 @@ int tUnet::Recv() {
 	tv.tv_sec = this->unet_sec;
 	tv.tv_usec = this->unet_usec;
 
-	DBG(7,"waiting for incoming messages...\n");
+	DBG(9,"waiting for incoming messages...\n");
 	valret = select(this->sock+1, &rfds, NULL, NULL, &tv);
 	/* Don't trust tv value after the call */
 
@@ -395,8 +409,8 @@ int tUnet::Recv() {
 	}
 
 #if _DBG_LEVEL_>7
-	if (valret) { DBG(7,"Data recieved...\n"); } 
-	else { DBG(7,"No data recieved...\n"); }
+	if (valret) { DBG(9,"Data recieved...\n"); } 
+	else { DBG(9,"No data recieved...\n"); }
 #endif
 	//set stamp
 	ntime_sec=alcGetTime();
@@ -404,14 +418,15 @@ int tUnet::Recv() {
 	net_time=(((ntime_sec % 1000)*1000000)+ntime_usec);
 	
 	//Here, the old netcore performed some work (ack check, retransmission, timeout, pending paquets to send...)
+	doWork();
 
-	DBG(5,"Before recvfrom\n");
+	DBG(9,"Before recvfrom\n");
 #ifdef __WIN32__
 	n = recvfrom(this->sock,(char *)buf,INC_BUF_SIZE,0,(struct sockaddr *)&client,&client_len);
 #else
 	n = recvfrom(this->sock,(void *)buf,INC_BUF_SIZE,0,(struct sockaddr *)&client,&client_len);
 #endif
-	DBG(5,"After recvfrom\n");
+	DBG(9,"After recvfrom\n");
 
 #ifdef _UNET_DBG_
 	if(n>0) {
@@ -430,6 +445,7 @@ int tUnet::Recv() {
 		if(n>0) {
 			if((cur_down_quota+n+ip_overhead)>lim_down_cap) {
 				DBG(5,"Paquet dropped by quotas, in use:%i,req:%i, max:%i\n",cur_down_quota,n+ip_overhead,lim_down_cap);
+				n=0;
 			} else {
 				cur_down_quota+=n+ip_overhead;
 			}
@@ -479,6 +495,25 @@ int tUnet::Recv() {
 	return UNET_OK;
 }
 
+void tUnet::doWork() {
+	smgr->rewind();
+	idle=true;
+	unet_sec=10;
+	unet_usec=0;
+	
+	tNetSession * cur;
+	while((cur=smgr->getNext())) {
+		if(ntime_sec-cur->timestamp.seconds>cur->conn_timeout) {
+			//TODO timeout event
+		} else {
+			cur->doWork();
+			if(!cur->idle) idle=false;
+		}
+	}
+
+}
+
+
 /**
 	Sends the message (internal use only)
 	An uru message can only be 253952 bytes in V0x01 & V0x02 and 254976 in V0x00
@@ -500,6 +535,8 @@ void tUnet::basesend(tNetSession * u,tmBase &msg) {
 
 	/* Check if the last message sent, had the ack flag on
 		as a rule, messages must be sent in order */
+	//assert(u->server.sn==0);
+
 	if(u->server.tf & 0x02) {
 		u->server.ps=u->server.sn;
 		u->server.pfr=u->server.frn;
@@ -571,10 +608,17 @@ void tUnet::basesend(tNetSession * u,tmBase &msg) {
 		pmsg->pfr=u->server.pfr;
 		pmsg->ps=u->server.ps;
 		
+		//DBG(7,"Server sn is %08X,%08X\n",u->server.sn,pmsg->sn);
+		//assert(u->server.sn==1);
+		
 		pmsg->data.write(buf.read(csize),csize);
 		
 		pmsg->_update();
 		pmsg->timestamp=net_time;
+
+		//DBG(7,"Server sn is %08X,%08X\n",u->server.sn,pmsg->sn);
+		//assert(u->server.sn==1);
+
 		
 		if(u->cabal) {
 			pmsg->timestamp+=tts;
@@ -592,7 +636,107 @@ void tUnet::basesend(tNetSession * u,tmBase &msg) {
 }
 
 void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
+	struct sockaddr_in client; //client struct
 
+	//copy the inet struct
+	memcpy(&client,u->sock_array,sizeof(struct sockaddr_in));
+	client.sin_family=AF_INET; //UDP IP (????)
+	client.sin_addr.s_addr=u->ip; //address
+	client.sin_port=u->port; //port
+
+	DBG(7,"Server pn is %08X\n",u->server.pn);
+	DBG(7,"Server sn is %08X,%08X\n",u->server.sn,msg->sn);
+	//assert(u->server.sn==0);
+	//assert(u->server.pn==0);
+	u->server.pn++;
+	msg->pn=u->server.pn;
+	
+	log->log("<SND> ");
+	msg->dumpheader(log);
+	log->nl();
+	msg->htmlDumpHeader(ack,1,u->ip,u->port);
+
+	//store message into buffer
+	tMBuf * mbuf;
+	mbuf = new tMBuf(msg->size());
+	mbuf->put(*msg);
+
+	#if _DBG_LEVEL_ > 2
+	log->log("<SND> RAW Packet follows: \n");
+	log->dumpbuf(*mbuf);
+	log->nl();
+	#endif
+	
+	DBG(5,"validation level is %i,%i\n",u->validation,msg->val);
+	
+	U32 msize=mbuf->size();
+	mbuf->rewind();
+	Byte * buf, * buf2=NULL;
+	buf=mbuf->read();
+
+	if(msg->val==2) {
+		DBG(4,"Enconding validation 2 packet of %i bytes...\n",msize);
+		buf2=(Byte *)malloc(sizeof(Byte) * msize);
+		if(buf2==NULL) { throw txNoMem(_WHERE("")); }
+		alcEncodePacket(buf2,buf,msize);
+		buf=buf2; //don't need to decode again
+		if(u->authenticated==1) {
+			DBG(4,"Client is authenticated, doing checksum...\n");
+			*((U32 *)(buf+2))=alcUruChecksum(buf,msize,2,u->passwd);
+			DBG(4,"Checksum done!...\n");
+		} else {
+			DBG(4,"Client is not authenticated, doing checksum...\n");
+			*((U32 *)(buf+2))=alcUruChecksum(buf,msize,1,NULL);
+			DBG(4,"Checksum done!...\n");
+		}
+		buf[1]=0x02;
+	} else if(msg->val==1) {
+		*((U32 *)(buf+2))=alcUruChecksum(buf,msize,0,NULL);
+		buf[1]=0x01;
+	} else {
+		buf[1]=0x00;
+	}
+	buf[0]=0x03; //magic number
+	DBG(4,"Before the Sendto call...\n");
+	//
+#ifdef _UNET_DBG_
+	if(out_noise && (random() % 100) >= out_noise) {
+		DBG(5,"Outcomming Packet accepted\n");
+	} else {
+		DBG(5,"Outcomming Packet dropped\n");
+		msize=0;
+	}
+	//check quotas
+	if(ntime_sec-time_quota_check_sec>=quota_check_sec || ntime_usec-time_quota_check_usec>=quota_check_usec) {
+		cur_up_quota=0;
+		time_quota_check_sec=ntime_sec;
+		time_quota_check_usec=ntime_usec;
+	}
+	if(msize>0) {
+		if((cur_up_quota+msize+ip_overhead)>lim_up_cap) {
+			DBG(5,"Paquet dropped by quotas, in use:%i,req:%i, max:%i\n",cur_up_quota,msize+ip_overhead,lim_up_cap);
+			msize=0;
+		} else {
+			cur_up_quota+=msize+ip_overhead;
+		}
+	}
+#endif
+
+	if(msize>0) {
+#ifdef __WIN32__
+		msize = sendto(sock,(const char *)buf,msize,0,(struct sockaddr *)&client,sizeof(struct sockaddr));
+#else
+		msize = sendto(sock,(char *)buf,msize,0,(struct sockaddr *)&client,sizeof(struct sockaddr));
+#endif
+	}
+
+	if(msize<0) {
+		ERR(2,"n<0 ?, %i",msize);
+		neterror(" sendto() ");
+	}
+	DBG(4,"After the Sendto call...\n");
+	if(buf2!=NULL) { free((void *)buf2); }
+	DBG(2,"returning from uru_net_send RET:%i\n",msize);
 }
 
 /**

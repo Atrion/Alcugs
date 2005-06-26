@@ -102,6 +102,9 @@ private:
 	void init();
 	void _openlogs();
 	
+	void updatetimer(U32 usecs);
+	void doWork();
+	
 	void neterror(char * msg);
 	
 	//void send();
@@ -112,6 +115,7 @@ private:
 	
 	bool initialized;
 
+	bool idle;
 #ifdef __WIN32__
 	WSADATA ws; //<! The winsock stack
 	SOCKET sock; //<! The socket

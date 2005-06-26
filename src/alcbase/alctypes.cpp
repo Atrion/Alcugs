@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCTYPES_ID "$Id$"
 
-#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
 
@@ -337,7 +337,7 @@ Byte * tMBuf::read(U32 n) {
 	if(n==0) n=msize-off;
 	if(n==0) return NULL;
 	off+=n;
-	if(off>msize || buf==NULL || buf->buf==NULL) { printf("off:%u,msize:%u\n",off,msize); off-=n; throw txOutOfRange(_WHERE("OutOfRange")); }
+	if(off>msize || buf==NULL || buf->buf==NULL) { DBG(5,"off:%u,msize:%u\n",off,msize); off-=n; throw txOutOfRange(_WHERE("OutOfRange %i>%i",off+n,msize)); }
 	return buf->buf+pos;
 }
 int tMBuf::stream(tBBuf &b) {

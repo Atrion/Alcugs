@@ -91,6 +91,7 @@ namespace std {
 #include <sys/types.h>
 #include <sys/time.h>
 #include <dirent.h>
+#include <signal.h>
 }
 
 //alcugs includes

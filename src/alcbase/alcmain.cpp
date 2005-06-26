@@ -35,6 +35,10 @@
 
 #include "alcugs.h"
 
+namespace std {
+#include <signal.h>
+};
+
 
 #include "alcdebug.h"
 
@@ -70,6 +74,10 @@ void alcOnFork() {
 	DBG(5,"alcLogShutdown from a forked child...\n");
 	alcLogShutdown(true);
 
+}
+
+void alcSignal(int signum, void (*handler)(int)) {
+	std::signal(signum,handler);
 }
 
 }

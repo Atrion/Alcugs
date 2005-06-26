@@ -303,6 +303,10 @@ public:
 	virtual bool operator<(tTime &t) { return(this->compare(t)>0); }
 	virtual bool operator>=(tTime &t) { return(this->compare(t)<=0); }
 	virtual bool operator<=(tTime &t) { return(this->compare(t)>=0); }
+	void operator=(tTime &t) {
+		seconds=t.seconds;
+		microseconds=t.microseconds;
+	}
 
 	double asDouble(char how='s');
 	U32 asU32(char how='s');
