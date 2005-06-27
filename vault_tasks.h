@@ -42,7 +42,7 @@ int plVaultInitVault();
 */
 int plVaultCreateAge(t_AgeInfoStruct * ainfo);
 
-int plVaultAddLinkingPoint(st_unet * net,int ki,int age_id,t_SpawnPoint * spoint);
+int plVaultAddLinkingPoint(st_unet * net,int ki,int age_id,t_SpawnPoint * spoint,int no_update);
 
 //Age id, is the Age Info node eh!!
 int plVaultAddOwnerToAge(st_unet * net,int age_id,int ki);

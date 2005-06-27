@@ -59,6 +59,12 @@
 
 //#include "gbasicmsg.h"
 
+//-
+#include "vnodes.h"
+
+#include "uru.h"
+#include "config_parser.h"
+
 #include "vserversys.h"
 #include "vault_db.h"
 
@@ -248,6 +254,57 @@ int process_csbvault_plNetMsg(st_unet * net,Byte * buf,int size,int sid) {
 			level=0;
 			plVaultUpdatePlayerStatus(net,u->hmsg.ki,age,guid,state,online_time,sid);
 			n=1;
+			
+			
+			//BEGIN a'moaca' - *hack* for non-working linking rules
+			//NOTE, I have not done enough testing to consider this hack safe,
+			//     also the problem should be solved on the unet3+ game servers
+			//     since the new game servers are years away, this hack can be a temporany
+			//     solution for some people.
+			static Byte _TMP_hack_link_rules = 0; //0 non init, 1 allowed, 2 dissabled
+			if(_TMP_hack_link_rules==2) { break; }
+			if(_TMP_hack_link_rules==0) {
+				if(cnf_getByte(0,"vault.tmp.hacks.linkrules","global",global_config)==1) {
+					_TMP_hack_link_rules=1; //enabled
+				} else _TMP_hack_link_rules=2; //dissabled (default)
+			}
+			if (_TMP_hack_link_rules==1 && (!strcmp((char *)age, "Ahnonay")
+					|| !strcmp((char *)age, "Neighborhood02")
+					|| !strcmp((char *)age, "Myst"))) {
+				int age_id;
+				t_vault_node node;
+				t_SpawnPoint spoint;
+				t_vault_manifest mfs; //a manifest
+
+				//memset(&node,0,sizeof(t_vault_node));
+				//Suggest usage of init_node, this will be enforced when we have the tVaultNode class implemented
+				init_node(&node);
+				node.type=KAgeInfoNode; // 33
+				strncpy((char *)&node.entry_name,(char *)age,sizeof(node.entry_name));
+				memset(&spoint,0,sizeof(t_SpawnPoint));
+				strcpy((char *)spoint.title,"Default");
+				strcpy((char *)spoint.name,"LinkInPointDefault");
+				age_id=plVaultFindNode(&node,&mfs,0,&db);
+				print2log(f_uru,"Want to add age link: KI %i age %s age_id %i\n",u->hmsg.ki,age,age_id);
+				if (age_id <= 0) {
+					// this is an error
+					//n=0; NOO!
+					/* 0 - send message to another parser, since this parser cannot parse it
+					   1 - succesfully parsed
+						-1 - Hack attempt - Immediatly kill the player.
+						-2 - Server error - Depending of the configuration the player will be or not killed.
+						Oh, and seems that this is going to change again.
+						AFAIK, this error codes are currently ignored by the vault server
+					*/
+					n=1;
+				} else {
+					plVaultAddLinkingPoint(net,u->hmsg.ki,age_id,&spoint,1);
+					//plVaultAddOwnerToAge(net,age_id,u->hmsg.ki); // ???
+					n=1;
+				}
+				destroy_node(&node);
+			}
+			//END
 			break;
 		default:
 			n=UNET_OK;

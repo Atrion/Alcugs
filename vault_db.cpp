@@ -2852,7 +2852,7 @@ int plVaultMigrate_from0to1(st_sql * db) {
 					}
 					if(city_id>0) {
 						//Add the linking point
-						plVaultAddLinkingPoint(NULL,ki,city_id,&spoint);
+						plVaultAddLinkingPoint(NULL,ki,city_id,&spoint,0);
 					}
 
 					strcpy((char *)n.entry_name,"Neighborhood");
@@ -2874,7 +2874,7 @@ int plVaultMigrate_from0to1(st_sql * db) {
 					}
 					if(hood_id>0) {
 						//Add the linking point
-						plVaultAddLinkingPoint(NULL,ki,hood_id,&spoint);
+						plVaultAddLinkingPoint(NULL,ki,hood_id,&spoint,0);
 						plVaultAddOwnerToAge(NULL,hood_id,ki);
 					}
 
@@ -2983,7 +2983,7 @@ int plVaultMigrate_from1to2(st_sql * db) {
 				}
 				if(city_id>0) {
 					//Add the linking point
-					plVaultAddLinkingPoint(NULL,ki,city_id,&spoint);
+					plVaultAddLinkingPoint(NULL,ki,city_id,&spoint,0);
 				}
 
 				destroy_node(&n);

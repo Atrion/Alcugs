@@ -187,7 +187,7 @@ int plVaultCreateAge(t_AgeInfoStruct * ainfo) {
 	return age_info; //return the age_info id
 }
 
-int plVaultAddLinkingPoint(st_unet * net,int ki,int age_id,t_SpawnPoint * spoint) {
+int plVaultAddLinkingPoint(st_unet * net,int ki,int age_id,t_SpawnPoint * spoint,int no_update) {
 
 	t_vault_node n;
 	t_vault_manifest mfs;
@@ -225,6 +225,14 @@ int plVaultAddLinkingPoint(st_unet * net,int ki,int age_id,t_SpawnPoint * spoint
 					found=wref[i].id2; //The link node
 				}
 			}
+			
+			//BEGIN a'moaca' - skip out early if instructed, otherwise you'll do a nice job of frying your Kirel link node (don't know about the others)
+			if (found && no_update) {
+				destroy_node(&n);
+				return found;
+			}
+			//END
+
 			//Todo (look the code of the old vtask.cpp), you need to:
 			// 1-Create the node if it doesn't exists, and broadcast the added references
 			// 2-Fetch the old node, and update it, and then broadcast the SavedNode
@@ -558,7 +566,7 @@ int plVaultCreatePlayer(st_unet * net,Byte * login,Byte * guid, Byte * avie,Byte
 			}
 			if(city_id>0) {
 				//Add the linking point
-				plVaultAddLinkingPoint(net,ki,city_id,&spoint);
+				plVaultAddLinkingPoint(net,ki,city_id,&spoint,0);
 			}
 
 			strcpy((char *)n[3].entry_name,"Neighborhood");
@@ -580,7 +588,7 @@ int plVaultCreatePlayer(st_unet * net,Byte * login,Byte * guid, Byte * avie,Byte
 			}
 			if(hood_id>0) {
 				//Add the linking point
-				plVaultAddLinkingPoint(net,ki,hood_id,&spoint);
+				plVaultAddLinkingPoint(net,ki,hood_id,&spoint,0);
 				plVaultAddOwnerToAge(net,hood_id,ki);
 			}
 
@@ -606,7 +614,7 @@ int plVaultCreatePlayer(st_unet * net,Byte * login,Byte * guid, Byte * avie,Byte
 			}
 			if(finale_id>0) {
 				//Add the linking point
-				plVaultAddLinkingPoint(net,ki,finale_id,&spoint);
+				plVaultAddLinkingPoint(net,ki,finale_id,&spoint,0);
 				//plVaultAddOwnerToAge(net,finale_id,ki);
 			}
 			/**** EXPERIMENTAL BLOCK OF CODE ENDS */
