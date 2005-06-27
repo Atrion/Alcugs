@@ -98,7 +98,7 @@ private:
 	
 	tUnetMsgQ<tUnetAck> * ackq; //Pig acks
 	tUnetMsgQ<tUnetUruMsg> * sndq; //outcomming message queue
-	//tUnetInMsgQ * rcvq; //incomming message queue
+	//tUnetMsgQ<tUnetUruMsg> * rcvq; //incomming message queue
 	
 	bool idle;
 
@@ -110,9 +110,6 @@ private:
 #if 0
 //! Urunet kernel client header -
 typedef struct {
-	st_uru_head client; //!<client session vars (remote)
-	st_uru_head server; //!<server session vars (local)
-
 	U32 old_p_n; //previus p_n, used in the aging control
 	char * w; //window
 	U32 wite;
@@ -139,8 +136,6 @@ typedef struct {
 	Byte access_level; //the access level of the peer
 	Byte status; //the player status, defined inside a states machine (see the states machine doc)
 	Byte paged; //0x00 non-paged player, 0x01 player is paged
-	//flux control
-	U32 bandwidth; //client reported bandwidth (negotiated technology)
 	Byte window; //the peer window size
 	//flood control
 	U32 last_check; //time of last check

@@ -85,7 +85,7 @@ char * tNetSession::str(char how) {
 }
 void tNetSession::updateRTT(U32 newread) {
 	if(rtt==0) rtt=newread;
-	#if 1 //Original
+	#if 0 //Original
 		const U32 alpha=800;
 		rtt=((alpha*rtt)/1000) + ((1000-alpha)*newread);
 		timeout=2*rtt;
@@ -245,9 +245,9 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	
 	int i=0;
 
-	ackq->add(ack);
-	
 #if 0
+	ackq->add(ack);
+#else
 	//This crap does not work as intended
 	ackq->rewind();
 	if(ackq->getNext()==NULL) {
@@ -259,32 +259,35 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 			net->log->log("2check[%i] %i,%i %i,%i\n",i,(cack->A & 0x000000FF),(cack->A >> 8),(cack->B & 0x000000FF),(cack->B >> 8));
 
 			i++;
-			if(cack->A>=B && cack->A<=A) {
-				ack->B=cack->B;
-				//ackq->insertBefore(ack);
+			if(A>=cack->A && B<=cack->A) {
+				net->log->log("A\n");
 				if(cack->next==NULL) {
-					ackq->add(ack);
+					cack->A=A;
+					cack->B=(cack->B > B ? B : cack->B);
 					break;
 				} else {
+					B=ack->B=(cack->B > B ? B : cack->B);
 					ackq->deleteCurrent();
+					ackq->rewind();
+					continue;
 				}
-				net->log->log("A\n");
-				//break;
-			} else
-			if(cack->A<B && cack->next==NULL) {
-				ackq->insert(ack);
+			} else if(B>cack->A) {
 				net->log->log("B\n");
-				break;
-			} else
-			if(A<cack->B) {
-				ackq->insertBefore(ack);
+				if(cack->next==NULL) { ackq->add(ack); break; }
+				else continue;
+			} if(A<cack->B) {
 				net->log->log("C\n");
+				ackq->insertBefore(ack);
 				break;
-			} else
-			if(A>=cack->B && A<=cack->A) {
-				cack->B=(B>cack->B ? cack->B : B);
+			} else if(A<=cack->A && A>=cack->B) {
 				net->log->log("D\n");
-				break;
+				A=ack->A=cack->A;
+				B=ack->B=(cack->B > B ? B : cack->B);
+				bool isNull=(cack->next==NULL);
+				ackq->deleteCurrent();
+				ackq->rewind();
+				if(isNull) { ackq->add(ack); break; }
+				else continue;
 			}
 		}
 	}
@@ -306,6 +309,8 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 
 
 void tNetSession::ackUpdate() {
+
+	return;
 
 	U32 i,maxacks=30,hsize;
 
