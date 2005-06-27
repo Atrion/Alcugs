@@ -165,16 +165,15 @@ public:
 	}
 	void insertBefore(T * msg) {
 		if(first==NULL) {
-			prev=current=first=msg;
+			prev=first=last=msg;
+			current=NULL;
+		} else if(current==NULL || current==first) {
+			msg->next=first;
+			prev=first=msg;
 		} else {
-			if(current=first) {
-				msg->next=first;
-				prev=first=msg;
-			} else {
-				msg->next=current;
-				prev->next=msg;
-				prev=msg;
-			}
+			msg->next=current;
+			prev->next=msg;
+			prev=msg;
 		}
 		n++;
 	}
