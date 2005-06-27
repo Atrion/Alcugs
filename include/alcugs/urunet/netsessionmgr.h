@@ -67,6 +67,16 @@ private:
 	tUnet * net;
 };
 
+class tNetEvent {
+public:
+	tNetEvent(tNetSessionIte who,int what) { sid=who; id=what; next=NULL; }
+	tNetEvent(tNetEvent &t) { sid=t.sid; id=t.id; next=NULL; }
+	tNetEvent() { next=NULL; }
+	tNetSessionIte sid;
+	int id;
+	tNetEvent * next;
+};
+
 }
 
 #endif

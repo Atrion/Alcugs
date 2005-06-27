@@ -178,12 +178,13 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		msg.data.rewind();
 		msg.data.get(comm);
 		net->log->log("<RCV> ");
-		net->log->print("%s\n",(const char *)comm.str());
+		net->log->print("%s",(const char *)comm.str());
 		bandwidth=comm.bandwidth;
 		if(renego_stamp==comm.timestamp || negotiating) {
-			net->log->print(" Ignored");
+			net->log->print(" Ignored\n");
 			negotiating=false;
 		} else {
+			net->log->nl();
 			renego_stamp=comm.timestamp;
 			//clear snd buffer
 			DBG(5,"Clearing send buffer\n");
@@ -196,12 +197,25 @@ void tNetSession::processMsg(Byte * buf,int size) {
 			//}
 			cabal=0;
 		}
-		net->log->nl();
 	} else if(bandwidth==0 || cabal==0) {
 		nego_stamp=timestamp;
 		negotiate();
 		negotiating=true;
 	}
+	
+	//fix the problem that happens every 15-30 days of server uptime
+	if(server.sn>=8388605 || msg.sn>=8388605) {
+		net->err->log("INF: Congratulations!, you have reached the maxium allowed sequence number, don't worry, this is not an error\n");
+		server.pn=0;
+		server.frn=0;
+		server.sn=0;
+		server.pfr=0;
+		server.ps=0;
+		nego_stamp=timestamp;
+		renego_stamp.seconds=0;
+		negotiate();
+	}
+
 	
 	//check duplicates
 
@@ -421,7 +435,10 @@ void tNetSession::doWork() {
 					}
 					if(curmsg->tryes>=6) {
 						sndq->deleteCurrent();
-						//TODO timeout event
+						//timeout event
+						tNetSessionIte ite(ip,port,sid);
+						tNetEvent * evt=new tNetEvent(ite,UNET_TIMEOUT);
+						net->events->add(evt);
 					} else {
 						cur_quota+=curmsg->size();
 						net->rawsend(this,curmsg);

@@ -98,6 +98,7 @@ public:
 	//max resolution 15 minutes
 	U32 getNetTime() { return net_time; }
 	void updateNetTime();
+	tNetEvent * getEvent();
 private:
 	void init();
 	void _openlogs();
@@ -185,6 +186,9 @@ private:
 	tLog * chk; //checksum results
 	tLog * sec; //security log
 	
+	//event queue
+	tUnetMsgQ<tNetEvent> * events;
+
 	U32 ip_overhead;
 	//debugging stuff
 	#ifdef _UNET_DBG_

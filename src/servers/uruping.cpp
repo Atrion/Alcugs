@@ -163,6 +163,13 @@ int main(int argc,char * argv[]) {
 
 		while(__state_running) {
 			unet->Recv();
+			
+			tNetEvent * evt;
+			while((evt=unet->getEvent())) {
+				printf("Event id %i from host %s:%i\n",evt->id,alcGetStrIp(evt->sid.ip),ntohs(evt->sid.port));
+				delete evt;
+			}
+			
 		}
 	
 		delete unet;

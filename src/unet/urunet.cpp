@@ -50,10 +50,12 @@ tUnet::tUnet(char * lhost,U16 lport) {
 	if(lhost==NULL) strcpy(bindaddr,"0.0.0.0");
 	else strcpy(bindaddr,lhost);
 	bindport=lport;
+	events=new tUnetMsgQ<tNetEvent>;
 }
 tUnet::~tUnet() {
 	DBG(9,"~tUnet()\n");
 	stopOp();
+	delete events;
 }
 /**
 	Fills the unet struct with the default values
@@ -105,7 +107,7 @@ void tUnet::init() {
 	sec=NULL;
 	
 	idle=false;
-	
+
 	ip_overhead=20+8;
 
 	#ifdef _UNET_DBG_
@@ -148,6 +150,16 @@ void tUnet::updatetimer(U32 usec) {
 	}
 	if(unet_usec<xmin_th) unet_usec=xmin_th;
 	//DBG(5,"Timer is now %i usecs (%i)\n",unet_usec,usec);
+}
+
+tNetEvent * tUnet::getEvent() {
+	tNetEvent * evt,* ev;
+	events->rewind();
+	evt=events->getNext();
+	if(evt==NULL) return NULL;
+	ev=new tNetEvent(*evt);
+	events->deleteCurrent();
+	return ev;
 }
 
 void tUnet::neterror(char * msg) {
@@ -504,7 +516,10 @@ void tUnet::doWork() {
 	tNetSession * cur;
 	while((cur=smgr->getNext())) {
 		if(ntime_sec-cur->timestamp.seconds>cur->conn_timeout) {
-			//TODO timeout event
+			//timeout event
+			tNetSessionIte ite(cur->ip,cur->port,cur->sid);
+			tNetEvent * evt=new tNetEvent(ite,UNET_TIMEOUT);
+			events->add(evt);
 		} else {
 			cur->doWork();
 			if(!cur->idle) idle=false;
