@@ -118,12 +118,52 @@ class tmNetClientComm :public tmBase {
 public:
 	virtual void store(tBBuf &t);
 	virtual int stream(tBBuf &t);
-	tmNetClientComm() { bhflags=0x42; };
+	tmNetClientComm() { bhflags=0x42; }
 	tmNetClientComm(tTime &t,U32 bw) { timestamp=t; bandwidth=bw; bhflags=0x42; }
 	Byte * str();
 	tTime timestamp;
 	U32 bandwidth;
 };
+
+class tmNetAck :public tmBase {
+public:
+	virtual void store(tBBuf &t);
+	virtual int stream(tBBuf &t);
+	tmNetAck() { bhflags=0x80; }
+	virtual ~tmNetAck();
+	void add(tUnetAck * a);
+	void clear();
+private:
+	tUnetMsgQ<tUnetAck> * ackq;
+};
+
+class tmMsgBase :public tmBase {
+public:
+	virtual void store(tBBuf &t);
+	virtual int stream(tBBuf &t);
+	tmMsgBase(Byte flags=0x02);
+	virtual ~tmMsgBase();
+	U32 ki;
+	U32 x;
+	U32 ip;
+	U32 port;
+	U32 sid;
+	//et all
+};
+
+/* You must derive any message from the above class, e.g:
+class tmAuthenticateHello :public tmMsgBase {
+public:
+	//...
+	String Login;
+	U32 maxpaquetsize;
+	Byte release;
+};
+
+
+
+*/
+
 
 #if 0
 void htmlDumpHeaderRaw(st_unet * net,st_log * log,st_uru_client c,Byte * buf,int size,int flux);

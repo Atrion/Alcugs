@@ -113,9 +113,9 @@ void tUnet::init() {
 	#ifdef _UNET_DBG_
 	lim_down_cap=2000; //in bytes
 	lim_up_cap=2000; //in bytes
-	in_noise=0; //25; //(0-100)
-	out_noise=0; //25; //(0-100)
-	latency=500000;//500000; //(in usecs)
+	in_noise=25; //25; //(0-100)
+	out_noise=25; //25; //(0-100)
+	latency=400000; //500000; //(in usecs)
 	cur_down_quota=0;
 	cur_up_quota=0;
 	quota_check_sec=0;
@@ -142,6 +142,7 @@ void tUnet::updateNetTime() {
 
 void tUnet::updatetimer(U32 usec) {
 	U32 xmin_th=50000;
+	if(usec>=1000000) return;
 	if(unet_sec) {
 		unet_sec=0;
 		unet_usec=usec;

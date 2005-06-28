@@ -37,8 +37,8 @@
 #include <sys/socket.h>
 
 #include "protocol/prot.h"
-#include "protocol/protocol.h"
 #include "netmsgq.h"
+#include "protocol/protocol.h"
 #include "netsession.h"
 #include "netsessionmgr.h"
 #include "netlog.h"

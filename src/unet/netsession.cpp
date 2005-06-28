@@ -246,9 +246,10 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	int i=0;
 
 #if 0
+	//Non-Plasma like ack's
 	ackq->add(ack);
 #else
-	//This crap does not work as intended
+	//Plasma like ack's (acks are retarded, and packed)
 	ackq->rewind();
 	if(ackq->getNext()==NULL) {
 		ackq->add(ack);
@@ -310,7 +311,7 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 
 void tNetSession::ackUpdate() {
 
-	return;
+	//return;
 
 	U32 i,maxacks=30,hsize;
 
@@ -318,7 +319,10 @@ void tNetSession::ackUpdate() {
 	tUnetAck * ack;
 	ack=ackq->getNext();
 	if(ack==NULL || ack->timestamp>net->net_time) {
-		if(ack) net->updatetimer(net->net_time-ack->timestamp);
+		if(ack) {
+			net->updatetimer(net->net_time-ack->timestamp);
+			DBG(5,"ack time %i,%i,%i\n",net->net_time-ack->timestamp,net->net_time,ack->timestamp);
+		}
 		return;
 	}
 
