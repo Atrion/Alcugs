@@ -52,6 +52,8 @@ private:
 	void init();
 	void processMsg(Byte * buf,int size);
 	void doWork();
+	
+	Byte checkDuplicate(tUnetUruMsg &msg);
 
 	void createAckReply(tUnetUruMsg &msg);
 	void ackUpdate();
@@ -84,6 +86,10 @@ private:
 	tNetSessionFlags cflags; //Session flags
 	U16 maxPacketSz; //Maxium size of the packets. Must be 1024 (always)
 
+	char * w; //rcv window
+	U32 wite;
+	U32 rcv_win;
+	
 	tTime timestamp; //current client time
 	tTime nego_stamp; //initial negotiation stamp
 	tTime renego_stamp; //remote nego stamp
@@ -115,12 +121,6 @@ private:
 };
 
 #if 0
-//! Urunet kernel client header -
-typedef struct {
-	U32 old_p_n; //previus p_n, used in the aging control
-	char * w; //window
-	U32 wite;
-	//---
 	int whoami; //peer type
 
 	Byte bussy; //bussy flag (0,1) If this flag is activated, messages are keept in the rcv buffer
@@ -147,8 +147,6 @@ typedef struct {
 	//flood control
 	U32 last_check; //time of last check
 	int npkts; //number of packets since last check
-} st_uru_client;
-
 #endif
 
 

@@ -116,7 +116,7 @@ void tUnet::init() {
 	lim_up_cap=8000; //in bytes
 	in_noise=0; //25; //25; //(0-100)
 	out_noise=0; //25; //25; //(0-100)
-	latency=0; //200000; //500000; //(in usecs)
+	latency=200000; //200000; //500000; //(in usecs)
 	cur_down_quota=0;
 	cur_up_quota=0;
 	quota_check_sec=0;
@@ -480,7 +480,7 @@ int tUnet::Recv() {
 			return UNET_TOOBIG;
 		} //catch up impossible big messages
 		/* Uru protocol check */
-		if(buf[0]!=0x03) { //not an Uru protocol packet don't waste an slot for it
+		if(n<=20 || buf[0]!=0x03) { //not an Uru protocol packet don't waste an slot for it
 			this->unx->log("[ip:%s:%i] ERR: Unexpected Non-Uru protocol packet found\n",alcGetStrIp(client.sin_addr.s_addr),ntohs(client.sin_port));
 			this->unx->dumpbuf(buf,n);
 			this->unx->nl();
@@ -505,6 +505,10 @@ int tUnet::Recv() {
 			session->processMsg(buf,n);
 		} catch(txProtocolError &t) {
 			this->unx->log("%s Protocol Error %s\nBacktrace:%s\n",session->str(),t.what(),t.backtrace());
+			return UNET_ERR;
+		} catch(txBase &t) {
+			this->err->log("%s FATAL ERROR (perhaps someone is attempting something nasty, or you have found a bug)\n\
+%s\nBacktrace:%s\n",session->str(),t.what(),t.backtrace());
 			return UNET_ERR;
 		}
 

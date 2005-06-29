@@ -272,6 +272,8 @@ void tUnetUruMsg::store(tBBuf &t) {
 	pn=t.getU32();
 	tf=t.getByte();
 	if(tf & UNetExp) throw txUnexpectedData(_WHERE("Expansion flag not supported on this server version"));
+	if((tf & 0x40) && (tf & 0x80)) throw txUnexpectedData(_WHERE("That must be a maliciusly crafted paquet, flags 0x80 and 0x40 cannot be set at the same time"));
+	if(tf & (0x20 | 0x08 | 0x04)) throw txUnexpectedData(_WHERE("Illegal flags %02X",tf));
 	if(tf & UNetExt) {
 		hsize-=8; //20 - 24
 		csn=t.getU32();
@@ -284,6 +286,7 @@ void tUnetUruMsg::store(tBBuf &t) {
 	}
 	cps=t.getU32();
 	dsize=t.getU32();
+	if(dsize==0) throw txUnexpectedData(_WHERE("A zero sized message!?"));
 	U32 xdsize=dsize;
 	//check size
 	if(tf & UNetAckReply) {

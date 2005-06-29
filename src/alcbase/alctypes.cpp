@@ -439,6 +439,34 @@ void tFBuf::flush() {
 }
 /* end File buffer */
 
+/* static buffer */
+tSBuf::tSBuf(Byte * buf,U32 msize) {
+	off=0;
+	this->msize=msize;
+	this->buf=buf;
+}
+U32 tSBuf::tell() { return off; }
+void tSBuf::set(U32 pos) {
+	if(pos>msize) throw txOutOfRange(_WHERE("Cannot access pos %i, size %i\n",pos,msize));
+	off=pos; 
+}
+Byte * tSBuf::read(U32 n) {
+	Byte * auxbuf=buf+off;
+	if(n) {
+		off+=n;
+		if(off>msize) { off-=n; throw txOutOfRange(_WHERE("Cannot read pos %i,len:%i size %i\n",off,n,msize)); }
+	}
+	else off=msize;
+	return auxbuf;
+}
+int tSBuf::stream(tBBuf &buf) {
+	buf.write(this->buf,msize);
+	return msize;
+}
+U32 tSBuf::size() { return msize; }
+
+/* end static buffer */
+
 /* tZBuf */
 void tZBuf::compress() {
 	tRefBuf * aux=this->buf;

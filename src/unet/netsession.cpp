@@ -62,6 +62,12 @@ void tNetSession::init() {
 	authenticated=0;
 	cflags=0; //default flags
 	maxPacketSz=1024;
+	//window settings
+	rcv_win=4*8;
+	wite=0;
+	w=(char *)malloc(sizeof(char) * rcv_win);
+	memset(w,0,sizeof(char) * rcv_win);
+	//end window
 	bandwidth=0;
 	cabal=0;
 	max_cabal=0;
@@ -185,10 +191,11 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	}
 	//How do you say "Cabal" in English?
 
+	/* //Avoid sending ack for messages out of the window
 	if(msg.tf & 0x02) {
 		//ack reply
 		createAckReply(msg);
-	}
+	}*/
 	if(msg.tf & 0x40) {
 		tmNetClientComm comm;
 		msg.data.rewind();
@@ -205,7 +212,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 			//clear snd buffer
 			DBG(5,"Clearing send buffer\n");
 			sndq->clear();
-			//reset counters and window
+			//TODO reset counters and window
 			//if(cabal!=0) {
 				if(nego_stamp.seconds==0) nego_stamp=timestamp;
 				negotiate();
@@ -232,12 +239,78 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		negotiate();
 	}
 
-	
 	//check duplicates
+	ret=checkDuplicate(msg);
+	
+	if(ret!=2 && (msg.tf & 0x02)) {
+		//ack reply
+		createAckReply(msg);
+	}
 
+	if(ret==0) {
+	
+		if(msg.tf & 0x80) {
+			//ack update
+			if(authenticated==2) authenticated=1;
+		} else if(1) {
+		
+		}
+	
+	
+	
+	
+	}
 	
 	doWork();
-	
+}
+
+/**
+	\return 2 - Out of the window
+	\return 1 - Marked
+	\return 0 - Non-Marked
+*/
+Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
+	//drop already parsed messages
+	//nlog(f_err,net,sid,"INF: (Before) window is:\n");
+	//dumpbuf(f_err,(Byte *)s->w,rcv_win);
+	//lognl(f_err);
+	if(!(msg.sn > wite || msg.sn <= (wite+rcv_win))) {
+		net->err->log("%s INF: Dropped packet %i out of the window by sn\n",str(),msg.sn);
+		net->err->flush();
+		return 2;
+	} else { //then check if is already marked
+		U32 i,start,ck;
+		start=wite % (rcv_win*8);
+		i=msg.sn % (rcv_win*8);
+		if(((w[i/8] >> (i%8)) & 0x01) && msg.frn==0) {
+			net->err->log("%s INF: Dropped already parsed packet %i\n",str(),msg.sn);
+			net->err->flush();
+			return 1;
+		} else {
+			w[i/8] |= (0x01<<(i%8)); //activate bit
+			while((i==start && ((w[i/8] >> (i%8)) & 0x01))) { //move the iterator
+				w[i/8] &= ~(0x01<<(i%8)); //deactivate bit
+				i++; start++;
+				wite++;
+				if(i>=rcv_win*8) { i=0; start=0; }
+				//nlog(f_err,net,sid,"INF: A bit was deactivated (1)\n");
+			}
+			ck=(i < start ? i+(rcv_win*8) : i);
+			while((ck-start)>((rcv_win*8)/2)) {
+				DBG(5,"ck: %i,start:%i\n",ck,start);
+				w[start/8] &= ~(0x01<<(start%8)); //deactivate bit
+				start++;
+				wite++;
+				if(start>=rcv_win*8) { start=0; ck=i; }
+				//nlog(f_err,net,sid,"INF: A bit was deactivated (2)\n");
+			}
+			//nlog(f_err,net,sid,"INF: Packet %i accepted to be parsed\n",s->client.sn);
+		}
+	}
+	//nlog(f_err,net,sid,"INF: (After) window is:\n");
+	//dumpbuf(f_err,(Byte *)s->w,rcv_win);
+	//lognl(f_err);
+	return 0;
 }
 
 
