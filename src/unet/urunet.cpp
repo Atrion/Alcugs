@@ -93,10 +93,11 @@ void tUnet::init() {
 	nat_down=512 * 1000;
 
 	//peers
+	/*
 	auth=-1;
 	vault=-1;
 	tracking=-1;
-	meta=-1;
+	meta=-1;*/
 
 	//logs
 	log=NULL;
@@ -111,11 +112,11 @@ void tUnet::init() {
 	ip_overhead=20+8;
 
 	#ifdef _UNET_DBG_
-	lim_down_cap=2000; //in bytes
-	lim_up_cap=2000; //in bytes
-	in_noise=25; //25; //(0-100)
-	out_noise=25; //25; //(0-100)
-	latency=400000; //500000; //(in usecs)
+	lim_down_cap=8000; //in bytes
+	lim_up_cap=8000; //in bytes
+	in_noise=0; //25; //25; //(0-100)
+	out_noise=0; //25; //25; //(0-100)
+	latency=0; //200000; //500000; //(in usecs)
 	cur_down_quota=0;
 	cur_up_quota=0;
 	quota_check_sec=0;
@@ -141,8 +142,8 @@ void tUnet::updateNetTime() {
 }
 
 void tUnet::updatetimer(U32 usec) {
-	U32 xmin_th=50000;
-	if(usec>=1000000) return;
+	U32 xmin_th=50;
+	if(usec>=1000000) { throw(txBase(_WHERE(""),true,true)); return; }
 	if(unet_sec) {
 		unet_sec=0;
 		unet_usec=usec;
@@ -426,9 +427,7 @@ int tUnet::Recv() {
 	else { DBG(9,"No data recieved...\n"); }
 #endif
 	//set stamp
-	ntime_sec=alcGetTime();
-	ntime_usec=alcGetMicroseconds();
-	net_time=(((ntime_sec % 1000)*1000000)+ntime_usec);
+	updateNetTime();
 	
 	//Here, the old netcore performed some work (ack check, retransmission, timeout, pending paquets to send...)
 	doWork();
@@ -502,19 +501,33 @@ int tUnet::Recv() {
 		//process the message, and do the correct things with it
 		memcpy(session->sock_array,&client,sizeof(struct sockaddr_in));
 		session->a_client_size=client_len;
-		session->processMsg(buf,n);
+		try {
+			session->processMsg(buf,n);
+		} catch(txProtocolError &t) {
+			this->unx->log("%s Protocol Error %s\nBacktrace:%s\n",session->str(),t.what(),t.backtrace());
+			return UNET_ERR;
+		}
 
 	}
+	
+	U32 old_net_time=net_time;
+	updateNetTime();
+	
+	DBG(7,"Loop time %i\n",net_time-old_net_time);
+	
+	//doWork();
+	
 	return UNET_OK;
 }
 
 void tUnet::doWork() {
 	smgr->rewind();
 	idle=true;
-	unet_sec=10;
-	unet_usec=0;
+	//unet_sec=10;
+	//unet_usec=0;
 	
 	tNetSession * cur;
+	smgr->rewind();
 	while((cur=smgr->getNext())) {
 		if(ntime_sec-cur->timestamp.seconds>cur->conn_timeout) {
 			//timeout event
@@ -525,6 +538,11 @@ void tUnet::doWork() {
 			cur->doWork();
 			if(!cur->idle) idle=false;
 		}
+	}
+	
+	if(idle) {
+		unet_sec=10;
+		unet_usec=0;
 	}
 
 }
@@ -573,6 +591,10 @@ void tUnet::basesend(tNetSession * u,tmBase &msg) {
 		u->server.tf |= 0x40; //negotiation packet
 		DBG(7,"It's a negotation packet\n");
 	}
+	if(flags & 0x80) {
+		u->server.tf |= 0x80; //ack packet
+		DBG(7,"It's an ack packet\n");
+	}
 
 	if(flags & UNetForce0) {
 		u->server.val=0x00;
@@ -581,12 +603,19 @@ void tUnet::basesend(tNetSession * u,tmBase &msg) {
 		u->server.val=u->validation;
 		DBG(7,"validation level is %i\n",u->server.val);
 	}
+	
+	//check if we are using alcugs upgraded protocol
+	if((u->cflags & UNetUpgraded) || (flags & UNetExt)) {
+		u->server.val=0x00;
+		u->server.tf |= UNetExt;
+		DBG(5,"Sending an Alcugs Extended paquet\n");
+	}
 
 	//On validation level 1 - ack and negotiations don't have checksum verification
 	/* I still don't understand wtf was thinking the network dessigner with doing a MD5 of each
 		packet? - 
 	*/
-	if((u->server.tf & 0x40) && (u->server.val==0x01)) { u->server.val=0x00; }
+	if((u->server.tf & (0x40 | 0x80)) && (u->server.val==0x01)) { u->server.val=0x00; }
 	DBG(6,"Sending a packet of validation level %i\n",u->server.val);
 
 	//fragment the messages and put them in to the send qeue
@@ -624,22 +653,14 @@ void tUnet::basesend(tNetSession * u,tmBase &msg) {
 		pmsg->pfr=u->server.pfr;
 		pmsg->ps=u->server.ps;
 		
-		//DBG(7,"Server sn is %08X,%08X\n",u->server.sn,pmsg->sn);
-		//assert(u->server.sn==1);
-		
 		pmsg->data.write(buf.read(csize),csize);
 		
 		pmsg->_update();
 		pmsg->timestamp=net_time;
 
-		//DBG(7,"Server sn is %08X,%08X\n",u->server.sn,pmsg->sn);
-		//assert(u->server.sn==1);
-
+		pmsg->timestamp+=tts;
+		tts=u->computetts(csize+hsize+ip_overhead);
 		
-		if(u->cabal) {
-			pmsg->timestamp+=tts;
-			tts+=((csize+hsize+ip_overhead)*1000000)/u->cabal;
-		}
 		#ifdef _UNET_DBG_
 		pmsg->timestamp+=latency;
 		#endif

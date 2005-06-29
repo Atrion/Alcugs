@@ -60,12 +60,13 @@ void tNetSession::init() {
 	sid=-1;
 	validation=0;
 	authenticated=0;
+	cflags=0; //default flags
 	maxPacketSz=1024;
 	bandwidth=0;
 	cabal=0;
 	max_cabal=0;
 	last_msg_time=0;
-	rtt=net->timeout/2;
+	rtt=0; //net->timeout/2;
 	timeout=net->timeout;
 	conn_timeout=net->conn_timeout;
 	desviation=0;
@@ -103,27 +104,37 @@ void tNetSession::updateRTT(U32 newread) {
 }
 void tNetSession::increaseCabal() {
 	if(!cabal) return;
-	U32 delta=800;
-	cabal+=delta;
-	max_cabal+=delta/50;
-	if(max_cabal>bandwidth) max_cabal=bandwidth;
-	if(cabal>max_cabal) cabal=max_cabal;
+	U32 delta=275;
+	U32 inc=(delta*cabal)/1000;
+	cabal+=inc;
+	if(cabal>max_cabal) {
+		cabal=max_cabal;
+		max_cabal+=inc/2;
+		if(max_cabal>(bandwidth/8)) max_cabal=(bandwidth/8);
+	}
 	DBG(5,"+Cabal is now %i (max:%i)\n",cabal,max_cabal);
 }
 void tNetSession::decreaseCabal(bool partial) {
 	if(!cabal) return;
-	U32 epsilon=4096;
-	U32 delta=800;
+	U32 min_cabal=4096;
+	U32 delta=100;
 	U32 gamma=120;
 	if(partial) cabal-=(gamma*cabal)/1000;
 	else {
 		cabal=cabal/2;
-		max_cabal-=delta;
+		max_cabal-=(delta*max_cabal)/1000;
+		if(max_cabal<min_cabal) max_cabal=min_cabal;
 	}
-	if(cabal<epsilon) cabal=epsilon;
-	if(max_cabal<epsilon) max_cabal=epsilon;
+	if(cabal<min_cabal) cabal=min_cabal;
 	DBG(5,"-Cabal is now %i (max:%i)\n",cabal,max_cabal);
 }
+
+//psize cannot be > 4k
+U32 tNetSession::computetts(U32 psize) {
+	if (cabal) return((psize*1000000)/cabal);
+	return((psize*1000000)/4098);
+}
+
 void tNetSession::processMsg(Byte * buf,int size) {
 	DBG(5,"Message of %i bytes\n",size);
 	//stamp
@@ -149,11 +160,16 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	
 	tUnetUruMsg msg;
 	
-	mbuf.get(msg);
-	net->log->log("<RCV> ");
-	msg.dumpheader(net->log);
-	net->log->nl();
-	msg.htmlDumpHeader(net->ack,0,ip,port);
+	try {
+		mbuf.get(msg);
+		net->log->log("<RCV> ");
+		msg.dumpheader(net->log);
+		net->log->nl();
+		msg.htmlDumpHeader(net->ack,0,ip,port);
+	} catch(txUnexpectedData &t) {
+		net->unx->log("%s Unexpected Data %s\nBacktrace:%s\n",str(),t.what(),t.backtrace());
+		throw txProtocolError(_WHERE("Cannot parse a message"));
+	}
 	
 	//set avg cabal
 	if(cabal==0 && bandwidth!=0) {
@@ -220,6 +236,8 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	//check duplicates
 
 	
+	doWork();
+	
 }
 
 
@@ -237,10 +255,10 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	ack->B=msg.cps;
 	U32 tts=0;
 	if(msg.frt) {
-		if(cabal) tts=((msg.frt * maxPacketSz * 1000000)/cabal);
-		else tts=((msg.frt * maxPacketSz * 1000000)/4096);
+		tts=computetts(msg.frt * maxPacketSz * 1000000);
 	}
 	if(tts>rtt) tts=rtt;
+	net->updatetimer(tts);
 	ack->timestamp=net->net_time + tts;
 	
 	int i=0;
@@ -310,19 +328,13 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 
 
 void tNetSession::ackUpdate() {
-
 	//return;
-
-	U32 i,maxacks=30,hsize;
+	U32 i,maxacks=30,hsize,tts;
 
 	ackq->rewind();
 	tUnetAck * ack;
 	ack=ackq->getNext();
 	if(ack==NULL || ack->timestamp>net->net_time) {
-		if(ack) {
-			net->updatetimer(net->net_time-ack->timestamp);
-			DBG(5,"ack time %i,%i,%i\n",net->net_time-ack->timestamp,net->net_time,ack->timestamp);
-		}
 		return;
 	}
 
@@ -331,6 +343,10 @@ void tNetSession::ackUpdate() {
 	server.frn=0;
 	server.tf=0x80;
 	server.val=validation;
+	if(cflags & UNetUpgraded) {
+		server.tf = 0x80 | UNetExt;
+		server.val = 0x00;
+	}
 	if(server.val==0x01) { server.val=0x00; }
 	if(server.val==0x00) { hsize=28; } else { hsize=32; }
 	if(server.tf & UNetExt) { hsize-=8; }
@@ -339,7 +355,7 @@ void tNetSession::ackUpdate() {
 	while((ack=ackq->getNext())) {
 	
 		pmsg=new tUnetUruMsg;
-	
+
 		if(server.tf & 0x02) {
 			server.ps=server.sn;
 			server.pfr=server.frn;
@@ -360,14 +376,17 @@ void tNetSession::ackUpdate() {
 		pmsg->ps=server.ps;
 
 		//pmsg->data.write(buf.read(csize),csize);
+		if(!(pmsg->tf & UNetExt))
 		pmsg->data.putU16(0);
 		
 		ackq->rewind();
 		i=0;
 		while((ack=ackq->getNext()) && i<maxacks) {
 			pmsg->data.putU32(ack->A);
+			if(!(pmsg->tf & UNetExt))
 			pmsg->data.putU32(0);
 			pmsg->data.putU32(ack->B);
+			if(!(pmsg->tf & UNetExt))
 			pmsg->data.putU32(0);
 			ackq->deleteCurrent();
 			i++;
@@ -377,39 +396,41 @@ void tNetSession::ackUpdate() {
 		pmsg->timestamp=net->net_time;
 		pmsg->dsize=i;
 
-		if(cabal) {
-			pmsg->timestamp+=(((i*16)+2+hsize+net->ip_overhead)*1000000)/cabal;
-		}
+		if(!(pmsg->tf & UNetExt))
+			tts=computetts((i*16)+2+hsize+net->ip_overhead);
+		else
+			tts=computetts((i*8)+hsize+net->ip_overhead);
+			
 		#ifdef _UNET_DBG_
-		pmsg->timestamp+=net->latency;
+		tts+=net->latency;
 		#endif
+		pmsg->timestamp+=tts;
+		net->updatetimer(tts);
 		
 		//put pmsg to the qeue
 		sndq->add(pmsg);
 	}
-
 	
 }
 
 //Send, and re-send messages
 void tNetSession::doWork() {
 
+	idle=false;
+
 	ackUpdate(); //get ack messages
 
 	if(net->net_time>=last_msg_time) {
 
-		sndq->rewind();
-		if(sndq->getNext()==NULL) {
+		if(sndq->isEmpty()) {
 			last_msg_time=0;
-			ackq->rewind();
-			if(ackq->getNext()==NULL) {
+			if(ackq->isEmpty()) {
 				idle=true;
 			} else {
 				idle=false;
 			}
 			return;
 		}
-		idle=false;
 		sndq->rewind();
 		tUnetUruMsg * curmsg;
 		
@@ -470,8 +491,7 @@ void tNetSession::doWork() {
 			} //end time check
 			 else { DBG(8,"Too soon to send a message\n"); }
 		} //end while
-		if(cabal) tts=((cur_quota*1000000)/cabal);
-		else tts=((cur_quota*1000000)/4096);
+		tts=computetts(cur_quota);
 		DBG(8,"tts is now:%i quota:%i,cabal:%i\n",tts,cur_quota,cabal);
 		last_msg_time=net->net_time + tts;
 		net->updatetimer(tts);

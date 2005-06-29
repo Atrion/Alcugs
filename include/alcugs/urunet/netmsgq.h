@@ -180,6 +180,9 @@ public:
 	void rewind() {
 		prev=current=NULL;
 	}
+	bool isEmpty() {
+		return(first==NULL);
+	}
 	U32 len() { return n; }
 private:
 	T* first;

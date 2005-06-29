@@ -58,6 +58,12 @@ public:
 	txTooBig(char * msg="",bool abort=false,bool core=false) :txUnet("txTooBig",msg,abort,core) {}
 };
 
+class txProtocolError : public txUnet {
+public:
+	txProtocolError(char * msg="",bool abort=false,bool core=false) :txUnet("txProtocolError",msg,abort,core) {}
+};
+
+
 }
 
 #endif

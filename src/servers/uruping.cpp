@@ -166,7 +166,7 @@ int main(int argc,char * argv[]) {
 			
 			tNetEvent * evt;
 			while((evt=unet->getEvent())) {
-				printf("Event id %i from host %s:%i\n",evt->id,alcGetStrIp(evt->sid.ip),ntohs(evt->sid.port));
+				lstd->log("Event id %i from host [%i]%s:%i\n",evt->id,evt->sid.sid,alcGetStrIp(evt->sid.ip),ntohs(evt->sid.port));
 				delete evt;
 			}
 			

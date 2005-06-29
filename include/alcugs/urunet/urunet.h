@@ -164,6 +164,7 @@ private:
 	U16 spawn_start; //first port to spawn
 	U16 spawn_stop; //last port to spawn (gameservers)
 
+#if 0
 	//peers
 	int auth; // (Game/Lobby)
 	int vault; // (Game/Lobby/Tracking)
@@ -177,6 +178,7 @@ private:
 	int pro_tracking;
 	int pro_meta;
 	int pro_data;
+#endif
 
 	//!logging subsystem
 	tLog * log; //stdout

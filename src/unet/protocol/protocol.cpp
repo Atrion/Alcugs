@@ -271,6 +271,7 @@ void tUnetUruMsg::store(tBBuf &t) {
 	}
 	pn=t.getU32();
 	tf=t.getByte();
+	if(tf & UNetExp) throw txUnexpectedData(_WHERE("Expansion flag not supported on this server version"));
 	if(tf & UNetExt) {
 		hsize-=8; //20 - 24
 		csn=t.getU32();
@@ -357,15 +358,19 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
 
 	switch(tf) {
 		case UNetAckReply: //0x80
+		case UNetAckReply | UNetExt:
 			log->print("<font color=red>");
 			break;
 		case UNetNegotiation | UNetAckReq: //0x42
+		case UNetNegotiation | UNetAckReq | UNetExt:
 			log->print("<font color=green>");
 			break;
 		case 0x00: //0x00
+		case UNetExt:
 			log->print("<font color=blue>");
 			break;
 		case UNetAckReq: //0x02
+		case UNetAckReq | UNetExt:
 			log->print("<font color=black>");
 			break;
 		default:
@@ -400,16 +405,26 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
 				log->print(" %i,%i %i,%i",*(Byte *)((buf+2)+i*0x10),*(U32 *)((buf+3)+i*0x10),*(Byte *)((buf+2+8)+i*0x10),*(U32 *)((buf+3+8)+i*0x10));
 			}
 			break;
+		case UNetAckReply | UNetExt: //0x80
+			log->print("aack");
+			for(i=0; i<(int)dsize; i++) {
+				if(i!=0) { log->print(" |"); }
+				log->print(" %i,%i %i,%i",*(Byte *)((buf)+i*0x08),*(U32 *)((buf+1)+i*0x08),*(Byte *)((buf+4)+i*0x08),*(U32 *)((buf+1+4)+i*0x08));
+			}
+			break;
 		case UNetNegotiation | UNetAckReq: //0x42
+		case UNetNegotiation | UNetAckReq | UNetExt:
 			log->print("Negotiation ");
 			char * times;
 			times=ctime((const time_t *)(buf+4));
 			log->print("%i bps, %s",*(U32 *)(buf),alcGetStrTime(*(U32 *)(buf+4),*(U32 *)(buf+8)));
 			break;
 		case 0x00: //0x00
+		case UNetExt:
 			log->print("plNetMsg0 ");
 			break;
 		case UNetAckReq: //0x02
+		case UNetAckReq | UNetExt:
 			log->print("plNetMsg1 ");
 			break;
 		default:
@@ -419,7 +434,7 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
 
 	log->print("</font>");
 
-	if((tf==0x00 || tf==0x02)) {
+	if((tf==0x00 || tf==0x02 || tf==UNetExt || tf==(0x02 | UNetExt))) {
 		if(frn==0) {
 			log->print("(%04X) %s %08X",*(U16 *)(buf),alcUnetGetMsgCode(*(U16 *)(buf)),*(U32 *)(buf+2));
 		} else {

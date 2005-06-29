@@ -38,6 +38,11 @@ namespace alc {
 class tNetSessionMgr;
 class tUnet;
 
+typedef Byte tNetSessionFlags;
+
+#define UNetUpgraded 0x01
+
+
 class tNetSession {
 public:
 	tNetSession(tUnet * net);
@@ -54,6 +59,7 @@ private:
 	void updateRTT(U32 newread);
 	void increaseCabal();
 	void decreaseCabal(bool partial);
+	U32 computetts(U32 pkqsize);
 	
 	void negotiate();
 	
@@ -75,6 +81,7 @@ private:
 	} server;
 	Byte validation; //store the validation level (0,1,2)
 	Byte authenticated; //it's the peer authed? (0,1,2)
+	tNetSessionFlags cflags; //Session flags
 	U16 maxPacketSz; //Maxium size of the packets. Must be 1024 (always)
 
 	tTime timestamp; //current client time
