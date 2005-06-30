@@ -8,6 +8,20 @@
 |Home: http://alcugs.almlys.dyns.net                                        |
 -----------------------------------------------------------------------------
 
+30/Jun/2005 - Urunet 3+ Development Finished - Starting to port the servers
+===========================================================================0
+
+ * The new heart of the servers is now finished, and prepared to enter into
+ a complex betatest phase. Now, the re-write of all the old servers starts
+ and this time, the game servers are going to be ported from Urunet 2 to 3.
+ New Netcore features:
+  * Protection against illegally crafted messages, that will crash an old
+  version of the netcore.
+  * Prouds to be more stable. (Me hopes that)
+  * Better flux and congestion control. Messages should be really delivered
+  at the speed negotiated between the client and the server.
+  * Backtrace reports if something goes bad.
+
 17/Jun/2005 - Urunet 3+ Under development ;)
 ===========================================================================0
 
