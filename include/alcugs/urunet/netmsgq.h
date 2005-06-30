@@ -127,6 +127,9 @@ public:
 		}
 		return current;
 	}
+	T* getCurrent() {
+		return current;
+	}
 	void deleteCurrent() {
 		if(current) {
 			if(current==first) {

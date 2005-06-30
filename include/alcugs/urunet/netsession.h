@@ -57,6 +57,7 @@ private:
 
 	void createAckReply(tUnetUruMsg &msg);
 	void ackUpdate();
+	void ackCheck(tUnetUruMsg &msg);
 
 	void updateRTT(U32 newread);
 	void increaseCabal();

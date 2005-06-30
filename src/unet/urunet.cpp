@@ -669,6 +669,8 @@ void tUnet::basesend(tNetSession * u,tmBase &msg) {
 		pmsg->timestamp+=latency;
 		#endif
 		
+		pmsg->snd_timestamp=pmsg->timestamp;
+		
 		//put pmsg to the qeue
 		u->sndq->add(pmsg);
 	}

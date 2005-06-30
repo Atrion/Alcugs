@@ -212,7 +212,9 @@ void tNetSession::processMsg(Byte * buf,int size) {
 			//clear snd buffer
 			DBG(5,"Clearing send buffer\n");
 			sndq->clear();
-			//TODO reset counters and window
+			//reset counters and window
+			wite=msg.sn; //reset win iterator
+			memset(w,0,sizeof(char) * rcv_win); //unset all
 			//if(cabal!=0) {
 				if(nego_stamp.seconds==0) nego_stamp=timestamp;
 				negotiate();
@@ -251,6 +253,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	
 		if(msg.tf & 0x80) {
 			//ack update
+			ackCheck(msg);
 			if(authenticated==2) authenticated=1;
 		} else if(1) {
 		
@@ -484,6 +487,61 @@ void tNetSession::ackUpdate() {
 		sndq->add(pmsg);
 	}
 	
+}
+
+void tNetSession::ackCheck(tUnetUruMsg &t) {
+
+	U32 i,A1,A2,A3;
+	U32 sn,ps;
+	Byte frn,pfr;
+
+	net->log->log("<RCV>");
+	t.data.rewind();
+	if(!(t.tf & UNetExt)) {
+		if(t.data.getU16()!=0) throw txUnexpectedData(_WHERE("ack unknown data"));
+	}
+	for(i=0; i<t.dsize; i++) {
+		A1=t.data.getU32();
+		if(!(t.tf & UNetExt))
+			if(t.data.getU32()!=0) throw txUnexpectedData(_WHERE("ack unknown data"));
+		A3=t.data.getU32();
+		if(!(t.tf & UNetExt))
+			if(t.data.getU32()!=0) throw txUnexpectedData(_WHERE("ack unknown data"));
+		frn=A1 & 0x000000FF;
+		pfr=A3 & 0x000000FF;
+		sn=A1 >> 8;
+		ps=A3 >> 8;
+		if(i!=0) net->log->print("    |");
+		net->log->print(" Ack %i,%i %i,%i\n",sn,frn,ps,pfr);
+		//well, do it
+		tUnetUruMsg * msg=NULL;
+		sndq->rewind();
+		msg=sndq->getNext();
+		while((msg!=NULL)) {
+			A2=msg->csn;
+			
+			if(A1>=A2 && A2>A3) {
+				//then delete
+				net->log->log("Deleting packet %i,%i\n",msg->sn,msg->frn);
+				if(msg->tryes==1 && A1==A2) {
+					U32 crtt=net->net_time-msg->snd_timestamp;
+					#ifdef _UNET_DBG_
+					crtt+=net->latency;
+					#endif
+					updateRTT(crtt);
+				}
+				if(msg->tf & 0x02) {
+					sndq->deleteCurrent();
+					msg=sndq->getCurrent();
+				} else {
+					msg=sndq->getNext();
+				}
+			} else {
+				msg=sndq->getNext();
+			}
+		}
+	}
+
 }
 
 //Send, and re-send messages

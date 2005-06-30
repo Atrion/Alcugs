@@ -72,7 +72,8 @@ public:
 	tUnetUruMsg * next;
 private:
 	void _update();
-	U32 timestamp; //message stamp in usecs
+	U32 timestamp; //message stamp in usecs (to send)
+	U32 snd_timestamp; //original send stamp
 	Byte tryes;
 	//Uru protocol
 	//Byte vid 0x03
