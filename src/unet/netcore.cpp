@@ -28,23 +28,49 @@
 	URUNET 3+
 */
 
-#ifndef __U_UNET_H
-#define __U_UNET_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_UNET_H_ID "$Id$"
+#define __U_NETCORE_ID "$Id$"
 
-#include <netdb.h>
-#include <sys/socket.h>
+#define _DBG_LEVEL_ 7
 
-#include "protocol/prot.h"
-#include "netmsgq.h"
-#include "protocol/protocol.h"
-#include "netsession.h"
-#include "netsessionmgr.h"
-#include "netlog.h"
-#include "urunet.h"
-#include "netcore.h"
+#include "alcugs.h"
+#include "urunet/unet.h"
+
+#include "alcdebug.h"
+
+namespace alc {
+
+tUnetBase::tUnetBase(char * lhost,U16 lport) :tUnet(lhost,lport) {
+	state_running=false;
+}
+
+tUnetBase::~tUnetBase() {
+	stop(5);
+}
+
+void tUnetBase::stop(Byte timeout) {
+	stop_timeout=timeout;
+	state_running=false;
+}
+
+//Blocks
+void tUnetBase::run() {
+	while(state_running==1) {
+		Recv();
+		
+		tNetEvent * evt;
+		while((evt=getEvent())) {
+			lstd->log("Event id %i from host [%i]%s:%i\n",evt->id,evt->sid.sid,alcGetStrIp(evt->sid.ip),ntohs(evt->sid.port));
+			delete evt;
+		}
+
+	}
+}
 
 
-#endif
+
+
+} //end namespace
+
+
 

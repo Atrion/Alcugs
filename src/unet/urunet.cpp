@@ -417,6 +417,8 @@ int tUnet::Recv() {
 	DBG(9,"waiting for incoming messages...\n");
 	valret = select(this->sock+1, &rfds, NULL, NULL, &tv);
 	/* Don't trust tv value after the call */
+	
+	//BEGIN ** CRITICIAL REGION STARTS HERE **
 
 	if(valret<0) {
 		if (errno == EINTR) {

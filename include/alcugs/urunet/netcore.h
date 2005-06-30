@@ -28,23 +28,32 @@
 	URUNET 3+
 */
 
-#ifndef __U_UNET_H
-#define __U_UNET_H
+#ifndef __U_NETCORE_H
+#define __U_NETCORE_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_UNET_H_ID "$Id$"
+#define __U_NETCORE_H_ID "$Id$"
 
-#include <netdb.h>
-#include <sys/socket.h>
+namespace alc {
 
-#include "protocol/prot.h"
-#include "netmsgq.h"
-#include "protocol/protocol.h"
-#include "netsession.h"
-#include "netsessionmgr.h"
-#include "netlog.h"
-#include "urunet.h"
-#include "netcore.h"
+class tUnetBase :public tUnet {
+public:
+	tUnetBase(char * lhost="0.0.0.0",U16 lport=0);
+	~tUnetBase();
+	void run();
+	void stop(Byte timeout=5);
+	/*
+	virtual void onNewConnection();
+	virtual void onMsgRecieved();
+	virtual void onConnectionClossed();
+	virtual void onTerminated();
+	virtual void onConnectionFlood();
+	virtual void onConnectionTimeout();*/
+private:
+	bool state_running;
+	Byte stop_timeout;
+};
 
+
+}
 
 #endif
-
