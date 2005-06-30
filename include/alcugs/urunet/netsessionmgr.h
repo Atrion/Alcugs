@@ -69,12 +69,13 @@ private:
 
 class tNetEvent {
 public:
-	tNetEvent(tNetSessionIte who,int what) { sid=who; id=what; next=NULL; }
-	tNetEvent(tNetEvent &t) { sid=t.sid; id=t.id; next=NULL; }
-	tNetEvent() { next=NULL; }
+	tNetEvent(tNetSessionIte who,int what,U16 cmd=0x00) { sid=who; id=what; next=NULL; this->cmd=cmd; }
+	tNetEvent(tNetEvent &t) { sid=t.sid; id=t.id; next=NULL; cmd=t.cmd; }
+	tNetEvent() { next=NULL; id=0; cmd=0; }
 	tNetSessionIte sid;
 	int id;
 	tNetEvent * next;
+	U16 cmd;
 };
 
 }

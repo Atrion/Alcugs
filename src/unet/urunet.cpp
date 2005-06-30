@@ -91,7 +91,12 @@ void tUnet::init() {
 	lan_down=100 * 1000 * 1000;
 	nat_up=128 * 1000;
 	nat_down=512 * 1000;
+	
+	flood_check_sec=5;
+	max_flood_pkts=85;
 
+	snd_expire=30; //should be enough
+	
 	//peers
 	/*
 	auth=-1;

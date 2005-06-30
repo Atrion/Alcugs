@@ -47,11 +47,13 @@ tNetSession::tNetSession(tUnet * net) {
 	init();
 	sndq = new tUnetMsgQ<tUnetUruMsg>;
 	ackq = new tUnetMsgQ<tUnetAck>;
+	rcvq = new tUnetMsgQ<tUnetMsg>;
 }
 tNetSession::~tNetSession() {
 	DBG(5,"~tNetSession()\n");
 	delete sndq;
 	delete ackq;
+	delete rcvq;
 }
 void tNetSession::init() {
 	DBG(5,"init()\n");
@@ -68,6 +70,8 @@ void tNetSession::init() {
 	w=(char *)malloc(sizeof(char) * rcv_win);
 	memset(w,0,sizeof(char) * rcv_win);
 	//end window
+	flood_last_check=0;
+	flood_npkts=0;
 	bandwidth=0;
 	cabal=0;
 	max_cabal=0;
@@ -89,6 +93,18 @@ char * tNetSession::str(char how) {
 	static char cnt[1024];
 	sprintf(cnt,"[%i][%s:%i]",sid,alcGetStrIp(ip),ntohs(port));
 	return cnt;
+}
+U32 tNetSession::getHeaderSize() {
+	U32 my=28;
+	if(validation>0) my+=4;
+	if(cflags & UNetUpgraded) my-=8;
+	return my;
+}
+U32 tNetSession::getMaxFragmentSize() {
+	return(maxPacketSz-getHeaderSize());
+}
+U32 tNetSession::getMaxDataSize() {
+	return(getMaxFragmentSize() * 256);
 }
 void tNetSession::updateRTT(U32 newread) {
 	if(rtt==0) rtt=newread;
@@ -147,13 +163,14 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	timestamp.seconds=alcGetTime();
 	timestamp.microseconds=alcGetMicroseconds();
 	
-	int ret;
+	int ret; //,ret2;
 	
 	ret=alcUruValidatePacket(buf,size,&validation,authenticated,passwd);
 	
 	if(ret!=0 && (ret!=1 || net->flags & UNET_ECRC)) {
 		if(ret==1) net->err->log("ERR: Failed Validating a message!\n");
 		else net->err->log("ERR: Non-Uru protocol packet recieved!\n");
+		return;
 	}
 	
 	#if _DBG_LEVEL_ > 2
@@ -255,16 +272,79 @@ void tNetSession::processMsg(Byte * buf,int size) {
 			//ack update
 			ackCheck(msg);
 			if(authenticated==2) authenticated=1;
-		} else if(1) {
-		
+		} else {
+			if((msg.tf & 0x02) && (net->flags & UNET_NOFLOOD)) { //flood control
+				if(net->ntime_sec - flood_last_check > net->flood_check_sec) {
+					flood_last_check=net->ntime_sec;
+					flood_npkts=0;
+				} else {
+					flood_npkts++;
+					if(flood_npkts>net->max_flood_pkts) {
+						//UNET_FLOOD event
+						tNetSessionIte ite(ip,port,sid);
+						tNetEvent * evt=new tNetEvent(ite,UNET_FLOOD);
+						net->events->add(evt);
+					}
+				}
+			} //end flood control
+			
+			if(!(msg.tf & 0x40)) {
+				assembleMessage(msg);
+			}
 		}
-	
-	
-	
-	
 	}
 	
 	doWork();
+}
+
+void tNetSession::assembleMessage(tUnetUruMsg &t) {
+	U32 frg_size=maxPacketSz - t.hSize();
+	tUnetMsg * msg;
+	rcvq->rewind();
+	msg=rcvq->getNext();
+	while(msg!=NULL) {
+		if(msg->completed==0 && (net->ntime_sec - msg->stamp) > net->snd_expire) {
+			net->err->log("%s INF: Message %i expired!\n",str(),msg->sn);
+			rcvq->deleteCurrent();
+			msg=rcvq->getCurrent();
+		} else if(msg->sn==t.sn) {
+			break;
+		} else if(msg->sn<t.sn) {
+			msg=new tUnetMsg((t.frt+1) * frg_size);
+			msg->sn=t.sn;
+			msg->frt=t.frt;
+			msg->hsize=t.hSize();
+			rcvq->insertBefore(msg);
+			break;
+		} else {
+			msg=rcvq->getNext();
+		}
+	}
+	if(msg==NULL) {
+		msg=new tUnetMsg((t.frt+1) * frg_size);
+		msg->sn=t.sn;
+		msg->frt=t.frt;
+		msg->hsize=t.hSize();
+		rcvq->add(msg);
+	}
+	msg->stamp=net->ntime_sec;
+	if(msg->frt!=t.frt || msg->hsize!=t.hSize()) throw(txProtocolError(_WHERE("Inconsistency on fragmented stream %i %i %i %i",msg->frt,t.frt,msg->hsize,t.hSize())));
+	
+	if(!((msg->check[t.frn/8] >> (t.frn%8)) & 0x01)) {
+		//found missing fragment
+		msg->check[t.frn/8] |= (0x01<<(t.frn%8));
+		
+		msg->data->set(t.frn * frg_size);
+		t.data.rewind();
+		msg->data->write(t.data.read(),t.data.size());
+		
+		if(msg->fr_count==t.frt) {
+			msg->completed=0x01;
+		} else {
+			msg->fr_count++;
+		}
+	}
+
 }
 
 /**
@@ -537,6 +617,10 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 					msg=sndq->getNext();
 				}
 			} else {
+				//Force re-transmission
+				if((msg->tf & 0x02) && A3>=A2 && msg->tryes==1) {
+					msg->timestamp-=rtt;
+				}
 				msg=sndq->getNext();
 			}
 		}
@@ -550,6 +634,8 @@ void tNetSession::doWork() {
 	idle=false;
 
 	ackUpdate(); //get ack messages
+	
+	//TODO check rcvq
 
 	if(net->net_time>=last_msg_time) {
 

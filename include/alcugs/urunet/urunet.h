@@ -191,6 +191,12 @@ private:
 	//event queue
 	tUnetMsgQ<tNetEvent> * events;
 
+	//flood control
+	U32 max_flood_pkts;
+	U32 flood_check_sec;
+	
+	U32 snd_expire; //(seconds to expire a message in the rcv buffer)
+	
 	U32 ip_overhead;
 	//debugging stuff
 	#ifdef _UNET_DBG_
@@ -212,18 +218,6 @@ private:
 
 #if 0
 
-//! Uruent incoming message cue
-typedef struct {
-	Byte * buf; //The message
-	int size; //The size of the message
-	U32 sn; //The message number
-	U32 stamp; //The message timestamp
-	char check[32]; //The bitmap
-	void * next; //Pointer to the next message
-	Byte fr_count; //Number of fragments
-	Byte completed; //It's the message completed, and prepared for the app layer?
-} st_unet_rcvmsg;
-
 typedef struct {
 	U16 cmd; //message code
 	U32 flags; //message flags
@@ -238,10 +232,6 @@ typedef struct {
 	U32 ip; //peer ip (used in routing) //plNetIP
 	U16 port; //peer port (used in routing)
 } st_unet_hmsg;
-
-char * get_ip(U32 ip);
-
-void nlog(st_log * log,st_unet * net,int sid,char * msg,...);
 
 int plNetConnect(st_unet * net,int * sid,char * address,U16 port,Byte flags);
 #define UNET_VAL0 0x02

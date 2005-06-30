@@ -48,6 +48,9 @@ public:
 	tNetSession(tUnet * net);
 	~tNetSession();
 	char * str(char how='s');
+	U32 getMaxFragmentSize();
+	U32 getMaxDataSize();
+	U32 getHeaderSize();
 private:
 	void init();
 	void processMsg(Byte * buf,int size);
@@ -58,6 +61,8 @@ private:
 	void createAckReply(tUnetUruMsg &msg);
 	void ackUpdate();
 	void ackCheck(tUnetUruMsg &msg);
+	
+	void assembleMessage(tUnetUruMsg &msg);
 
 	void updateRTT(U32 newread);
 	void increaseCabal();
@@ -90,6 +95,9 @@ private:
 	char * w; //rcv window
 	U32 wite;
 	U32 rcv_win;
+	//flood control
+	U32 flood_last_check;
+	U32 flood_npkts;
 	
 	tTime timestamp; //current client time
 	tTime nego_stamp; //initial negotiation stamp
@@ -112,7 +120,7 @@ private:
 	
 	tUnetMsgQ<tUnetAck> * ackq; //Pig acks
 	tUnetMsgQ<tUnetUruMsg> * sndq; //outcomming message queue
-	//tUnetMsgQ<tUnetUruMsg> * rcvq; //incomming message queue
+	tUnetMsgQ<tUnetMsg> * rcvq; //incomming message queue
 	
 	bool idle;
 
@@ -144,10 +152,6 @@ private:
 	Byte access_level; //the access level of the peer
 	Byte status; //the player status, defined inside a states machine (see the states machine doc)
 	Byte paged; //0x00 non-paged player, 0x01 player is paged
-	Byte window; //the peer window size
-	//flood control
-	U32 last_check; //time of last check
-	int npkts; //number of packets since last check
 #endif
 
 

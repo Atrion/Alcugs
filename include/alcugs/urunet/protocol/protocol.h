@@ -58,6 +58,22 @@ class tUnet;
 class tUnetOutMsgQ;
 class tNetSession;
 
+class tUnetMsg {
+public:
+	tUnetMsg(U32 size=1024) { next=NULL; completed=0; fr_count=0; data=new tMBuf(size); memset(check,0,32); }
+	~tUnetMsg() { delete data; }
+	tUnetMsg * next;
+	U32 sn;
+	U32 stamp;
+	Byte completed;
+	Byte fr_count; //Number of fragments
+	char check[32]; //bitmap
+	tMBuf * data;
+	//sanity check
+	U32 frt;
+	Byte hsize;
+};
+
 class tUnetUruMsg :public tBaseType {
 public:
 	tUnetUruMsg() { next=NULL; tryes=0; }
