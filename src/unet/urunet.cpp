@@ -170,13 +170,7 @@ tNetEvent * tUnet::getEvent() {
 }
 
 tNetSession * tUnet::getSession(tNetSessionIte &t) {
-	tNetSession * session;
-	try {
-		session=smgr->search(t);
-		return session;
-	} catch(txToMCons) {
-		return NULL;
-	}
+	return(smgr->search(t,false));
 }
 
 void tUnet::destroySession(tNetSessionIte &t) {
