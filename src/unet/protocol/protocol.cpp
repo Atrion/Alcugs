@@ -42,7 +42,7 @@ No sockets please
 #include "urunet/unet.h"
 
 namespace md5 {
-#include "md5.h"
+#include "alcutil/md5.h"
 }
 
 #include "alcdebug.h"

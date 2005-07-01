@@ -132,7 +132,7 @@ void tNetSession::updateRTT(U32 newread) {
 		S32 delta=4;
 		S32 diff;
 		diff=(S32)newread - (S32)rtt;
-		(S32)rtt+=(alpha*diff)/1000;
+		rtt=(S32)rtt+((alpha*diff)/1000);
 		desviation+=(alpha*(abs(diff)-desviation))/1000;
 		timeout=u*rtt + delta*desviation;
 	#endif

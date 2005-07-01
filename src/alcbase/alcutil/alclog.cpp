@@ -41,7 +41,10 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdarg.h>
+
+#ifndef __WIN32__
 #include <syslog.h>
+#endif
 
 #include "alcdebug.h"
 

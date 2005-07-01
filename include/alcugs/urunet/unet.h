@@ -33,8 +33,10 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_UNET_H_ID "$Id$"
 
+#ifndef __WIN32__
 #include <netdb.h>
 #include <sys/socket.h>
+#endif
 
 #include "protocol/prot.h"
 #include "netmsgq.h"

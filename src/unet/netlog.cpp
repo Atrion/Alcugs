@@ -36,9 +36,11 @@
 #include "alcugs.h"
 #include "urunet/unet.h"
 
+#ifndef __WIN32__
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 
 #include "alcdebug.h"
 
