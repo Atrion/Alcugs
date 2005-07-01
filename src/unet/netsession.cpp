@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETSESSION_ID "$Id$"
 
-#define _DBG_LEVEL_ 7
+//#define _DBG_LEVEL_ 7
 
 #include "alcugs.h"
 #include "urunet/unet.h"
@@ -41,25 +41,33 @@
 namespace alc {
 
 /* Session */
-tNetSession::tNetSession(tUnet * net) {
+tNetSession::tNetSession(tUnet * net,U32 ip,U16 port,int sid) {
 	DBG(5,"tNetSession()\n");
 	this->net=net;
+	this->ip=ip;
+	this->port=port;
+	this->sid=sid;
 	init();
 	sndq = new tUnetMsgQ<tUnetUruMsg>;
 	ackq = new tUnetMsgQ<tUnetAck>;
 	rcvq = new tUnetMsgQ<tUnetMsg>;
+	//new conn event
+	tNetSessionIte ite(ip,port,sid);
+	tNetEvent * evt=new tNetEvent(ite,UNET_NEWCONN);
+	net->events->add(evt);
 }
 tNetSession::~tNetSession() {
 	DBG(5,"~tNetSession()\n");
+	free((void *)w);
 	delete sndq;
 	delete ackq;
 	delete rcvq;
 }
 void tNetSession::init() {
 	DBG(5,"init()\n");
-	ip=0;
+	/*ip=0;
 	port=0;
-	sid=-1;
+	sid=-1;*/
 	validation=0;
 	authenticated=0;
 	cflags=0; //default flags
@@ -88,6 +96,12 @@ void tNetSession::init() {
 	memset((void *)&server,0,sizeof(server));
 	assert(server.pn==0);
 	idle=false;
+	whoami=0;
+	bussy=0;
+	max_version=0;
+	min_version=0;
+	tpots=0;
+	proto=0; //alcProtoMIN_VER
 }
 char * tNetSession::str(char how) {
 	static char cnt[1024];
@@ -340,6 +354,9 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 		
 		if(msg->fr_count==t.frt) {
 			msg->completed=0x01;
+			//tNetSessionIte ite(ip,port,sid);
+			//tNetEvent * evt=new tNetEvent(ite,UNET_MSGRCV);
+			//net->events->add(evt);
 		} else {
 			msg->fr_count++;
 		}
@@ -631,11 +648,25 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 //Send, and re-send messages
 void tNetSession::doWork() {
 
+	tNetEvent * evt;
+	tNetSessionIte ite(ip,port,sid);
+
 	idle=false;
 
 	ackUpdate(); //get ack messages
 	
 	//TODO check rcvq
+	if(!bussy) {
+		rcvq->rewind();
+		tUnetMsg * g;
+		while((g=rcvq->getNext())) {
+			if(g->completed==0x01) {
+				evt=new tNetEvent(ite,UNET_MSGRCV);
+				net->events->add(evt);
+				break;
+			}
+		}
+	}
 
 	if(net->net_time>=last_msg_time) {
 
@@ -683,8 +714,7 @@ void tNetSession::doWork() {
 					if(curmsg->tryes>=6) {
 						sndq->deleteCurrent();
 						//timeout event
-						tNetSessionIte ite(ip,port,sid);
-						tNetEvent * evt=new tNetEvent(ite,UNET_TIMEOUT);
+						evt=new tNetEvent(ite,UNET_TIMEOUT);
 						net->events->add(evt);
 					} else {
 						cur_quota+=curmsg->size();

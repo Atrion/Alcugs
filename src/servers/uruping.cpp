@@ -75,7 +75,20 @@ void parameters_usage() {
   [255] Broadcast\n\n");
 }
 
-int __state_running=1;
+class tUnetPing :public tUnetBase {
+public:
+	tUnetPing(char * lhost,U16 lport) :tUnetBase(lhost,lport) {}
+	virtual void onNewConnection(tNetEvent * ev) { lstd->log("New Connection\n"); }
+	virtual void onMsgRecieved(tNetEvent * ev) {}
+	virtual void onConnectionClossed(tNetEvent * ev) {}
+	virtual void onTerminated(tNetEvent * ev) {}
+	virtual void onConnectionFlood(tNetEvent * ev) {}
+	virtual void onConnectionTimeout(tNetEvent * ev) {}
+
+};
+
+tUnetPing * netcore=NULL;
+Byte __state_running=1;
 
 //handler
 void s_handler(int s) {
@@ -85,6 +98,7 @@ void s_handler(int s) {
 		exit(-1);
 	}
 	__state_running=0;
+	netcore->stop(5);
 }
 
 int main(int argc,char * argv[]) {
@@ -153,26 +167,15 @@ int main(int argc,char * argv[]) {
 		if(mrtg==0) {
 			lstd->print(alcVersionText());
 		}
-	
-	
-		tUnet * unet=new tUnet(NULL,5000);
-		unet->startOp();
+
+		netcore=new tUnetPing(NULL,5000);
 		
 		alcSignal(SIGTERM, s_handler);
 		alcSignal(SIGINT, s_handler);
-
-		while(__state_running) {
-			unet->Recv();
-			
-			tNetEvent * evt;
-			while((evt=unet->getEvent())) {
-				lstd->log("Event id %i from host [%i]%s:%i\n",evt->id,evt->sid.sid,alcGetStrIp(evt->sid.ip),ntohs(evt->sid.port));
-				delete evt;
-			}
-			
-		}
+		
+		netcore->run();
 	
-		delete unet;
+		delete netcore;
 	
 		//stop Alcugs library (optional, not required)
 		//alcShutdown();

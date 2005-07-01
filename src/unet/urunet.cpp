@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_URUNET_ID "$Id$"
 
-#define _DBG_LEVEL_ 7
+//#define _DBG_LEVEL_ 7
 
 #include "alcugs.h"
 #include "urunet/unet.h"
@@ -109,7 +109,7 @@ void tUnet::init() {
 	err=NULL;
 	unx=NULL;
 	ack=NULL;
-	chk=NULL;
+	//chk=NULL;
 	sec=NULL;
 	
 	idle=false;
@@ -169,6 +169,20 @@ tNetEvent * tUnet::getEvent() {
 	return ev;
 }
 
+tNetSession * tUnet::getSession(tNetSessionIte &t) {
+	tNetSession * session;
+	try {
+		session=smgr->search(t);
+		return session;
+	} catch(txToMCons) {
+		return NULL;
+	}
+}
+
+void tUnet::destroySession(tNetSessionIte &t) {
+	smgr->destroy(t);
+}
+
 void tUnet::neterror(char * msg) {
 	if(!initialized) return;
 #ifdef __WIN32__
@@ -213,6 +227,7 @@ void tUnet::_openlogs() {
 			this->ack=new tLog;
 			this->ack->open(NULL,4,DF_HTML);
 		}
+#if 0
 		if(this->chk==NULL && (this->flags & UNET_FLOG) && !(this->flags & UNET_DLCHK)) {
 			this->chk=new tLog;
 			this->chk->open("chk.log",4,0);
@@ -220,6 +235,7 @@ void tUnet::_openlogs() {
 			this->chk=new tLog;
 			this->chk->open(NULL,4,0);
 		}
+#endif
 		if(this->sec==NULL && (this->flags & UNET_FLOG) && !(this->flags & UNET_DLSEC)) {
 			this->sec=new tLog;
 			this->sec->open("access.log",4,0);
@@ -375,15 +391,15 @@ void tUnet::stopOp() {
 		this->err=NULL;
 	}
 	this->ack->close();
-	this->chk->close();
+	//this->chk->close();
 	this->unx->close();
 	this->sec->close();
 	delete this->ack;
-	delete this->chk;
+	//delete this->chk;
 	delete this->unx;
 	delete this->sec;
 	this->ack=NULL;
-	this->chk=NULL;
+	//this->chk=NULL;
 	this->unx=NULL;
 	this->sec=NULL;
 	initialized=false;
@@ -521,7 +537,9 @@ int tUnet::Recv() {
 
 	}
 	
+	#if _DBG_LEVEL_ >= 7
 	U32 old_net_time=net_time;
+	#endif
 	updateNetTime();
 	
 	DBG(7,"Loop time %i\n",net_time-old_net_time);

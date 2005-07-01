@@ -41,7 +41,7 @@
 namespace alc {
 
 tUnetBase::tUnetBase(char * lhost,U16 lport) :tUnet(lhost,lport) {
-	state_running=false;
+	state_running=true;
 }
 
 tUnetBase::~tUnetBase() {
@@ -55,16 +55,56 @@ void tUnetBase::stop(Byte timeout) {
 
 //Blocks
 void tUnetBase::run() {
-	while(state_running==1) {
+	startOp();
+	while(state_running) {
 		Recv();
 		
 		tNetEvent * evt;
+		tNetSession * u;
 		while((evt=getEvent())) {
-			lstd->log("Event id %i from host [%i]%s:%i\n",evt->id,evt->sid.sid,alcGetStrIp(evt->sid.ip),ntohs(evt->sid.port));
+			//lstd->log("Event id %i from host [%i]%s:%i\n",evt->id,evt->sid.sid,alcGetStrIp(evt->sid.ip),ntohs(evt->sid.port));+
+			
+			u=getSession(evt->sid);
+			
+			switch(evt->id) {
+				case UNET_NEWCONN:
+					sec->log("%s New Connection\n",u->str());
+					onNewConnection(evt);
+					break;
+				case UNET_TIMEOUT:
+					sec->log("%s Timeout\n",u->str());
+					onConnectionTimeout(evt);
+					if(!evt->veto) {
+						//TODO SND terminated
+						sec->log("%s Ended\n",u->str());
+						evt->id=UNET_TERMINATED;
+						onConnectionClossed(evt);
+						destroySession(evt->sid);
+					}
+					break;
+				case UNET_FLOOD:
+					sec->log("%s Flood Attack\n",u->str());
+					onConnectionFlood(evt);
+					if(!evt->veto) {
+						//TODO SND terminated
+						u->setPeerType(0);
+						u->setTimeout(2);
+					}
+					break;
+				case UNET_MSGRCV:
+					log->log("%s New MSG Recieved\n",u->str());
+					onMsgRecieved(evt);
+					break;
+				default:
+					err->log("%s Unknown Event id %i\n",u->str(),evt->id);
+					break;
+			}
+			
 			delete evt;
 		}
 
 	}
+	stopOp();
 }
 
 

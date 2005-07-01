@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETSESSIONMGR_ID "$Id$"
 
-#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
 #include "urunet/unet.h"
@@ -83,10 +83,10 @@ tNetSession * tNetSessionMgr::search(tNetSessionIte &ite,bool create) {
 	if(lsid!=-1) {
 		i=lsid;
 		ite.sid=i;
-		table[i] = new tNetSession(net);
-		table[i]->ip=ite.ip;
+		table[i] = new tNetSession(net,ite.ip,ite.port,ite.sid);
+		/*table[i]->ip=ite.ip;
 		table[i]->port=ite.port;
-		table[i]->sid=ite.sid;
+		table[i]->sid=ite.sid;*/
 		return table[i];
 	}
 	//does not exist
@@ -98,10 +98,10 @@ tNetSession * tNetSessionMgr::search(tNetSessionIte &ite,bool create) {
 	ite.sid=n;
 	i=n;
 	n++;
-	table[i] = new tNetSession(net);
-	table[i]->ip=ite.ip;
+	table[i] = new tNetSession(net,ite.ip,ite.port,ite.sid);
+	/*table[i]->ip=ite.ip;
 	table[i]->port=ite.port;
-	table[i]->sid=ite.sid;
+	table[i]->sid=ite.sid;*/
 	return table[i];
 }
 void tNetSessionMgr::destroy(tNetSessionIte &ite) {

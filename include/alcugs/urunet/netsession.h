@@ -45,12 +45,14 @@ typedef Byte tNetSessionFlags;
 
 class tNetSession {
 public:
-	tNetSession(tUnet * net);
+	tNetSession(tUnet * net,U32 ip,U16 port,int sid);
 	~tNetSession();
 	char * str(char how='s');
 	U32 getMaxFragmentSize();
 	U32 getMaxDataSize();
 	U32 getHeaderSize();
+	void setTimeout(U32 tout) { conn_timeout=tout; }
+	void setPeerType(Byte wtf) { whoami=wtf; }
 private:
 	void init();
 	void processMsg(Byte * buf,int size);
@@ -127,16 +129,17 @@ private:
 	friend class tNetSessionMgr;
 	friend class tUnet;
 	//friend class tUnetUruMsg;
-};
-
-#if 0
+	
 	int whoami; //peer type
 
 	Byte bussy; //bussy flag (0,1) If this flag is activated, messages are keept in the rcv buffer
 	Byte max_version; //peer major version
 	Byte min_version; //peer minor version
 	Byte tpots; //tpots version 0=undefined, 1=tpots client, 2=non-tpots client
-	
+	U32 proto; //peer unet protocol version
+};
+
+#if 0
 	U32 alive_stamp; //last time that we send the NetMsgAlive
 	st_unet_hmsg hmsg; //the message header
 	char name[201]; //peer name (vault, lobby, AvatarCustomization) or player name (string)

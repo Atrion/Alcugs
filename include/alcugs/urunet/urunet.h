@@ -99,6 +99,8 @@ public:
 	U32 getNetTime() { return net_time; }
 	void updateNetTime();
 	tNetEvent * getEvent();
+	tNetSession * getSession(tNetSessionIte &t);
+	void destroySession(tNetSessionIte &t);
 private:
 	void init();
 	void _openlogs();
@@ -180,13 +182,15 @@ private:
 	int pro_data;
 #endif
 
+protected:
 	//!logging subsystem
 	tLog * log; //stdout
 	tLog * err; //stderr
 	tLog * unx; //unexpected
 	tLog * ack; //ack drawing
-	tLog * chk; //checksum results
+	//tLog * chk; //checksum results
 	tLog * sec; //security log
+private:
 	
 	//event queue
 	tUnetMsgQ<tNetEvent> * events;

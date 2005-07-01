@@ -35,19 +35,19 @@
 
 namespace alc {
 
+/** Base abstract class, you need to derive your server/client app's from here */
 class tUnetBase :public tUnet {
 public:
 	tUnetBase(char * lhost="0.0.0.0",U16 lport=0);
 	~tUnetBase();
 	void run();
 	void stop(Byte timeout=5);
-	/*
-	virtual void onNewConnection();
-	virtual void onMsgRecieved();
-	virtual void onConnectionClossed();
-	virtual void onTerminated();
-	virtual void onConnectionFlood();
-	virtual void onConnectionTimeout();*/
+	virtual void onNewConnection(tNetEvent * ev)=0;
+	virtual void onMsgRecieved(tNetEvent * ev)=0;
+	virtual void onConnectionClossed(tNetEvent * ev)=0;
+	virtual void onTerminated(tNetEvent * ev)=0;
+	virtual void onConnectionFlood(tNetEvent * ev)=0;
+	virtual void onConnectionTimeout(tNetEvent * ev)=0;
 private:
 	bool state_running;
 	Byte stop_timeout;
