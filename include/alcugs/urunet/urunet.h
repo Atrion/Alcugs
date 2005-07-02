@@ -58,6 +58,7 @@ namespace alc {
 #define UNET_TIMEOUT 3 /* !< Connection to peer has ended the timer */
 #define UNET_TERMINATED 4 /* !< Connection to peer terminated */
 #define UNET_FLOOD 5 /* !< This event occurs when a player is flooding the server */
+#define UNET_CLOSSING 6
 //note events UNET_FLOOD, UNET_TERMINATED, UNET_NEWCONN, and UNET_MSGRCV always contain
 // a new incoming message (from the affected peer), if the size of it is non-zero.
 //other events don't contain an incomming message, and the message size will be always zero

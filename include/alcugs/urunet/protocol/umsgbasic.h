@@ -24,35 +24,23 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	URUNET 3+
-*/
+/* The Uru protocol, is here */
 
-#ifndef __U_NETCORE_H
-#define __U_NETCORE_H
+#ifndef __U_UMSGBASIC_H
+#define __U_UMSGBASIC_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_NETCORE_H_ID "$Id$"
+#define __U_UMSGBASIC_H_ID "$Id$"
 
 namespace alc {
 
-/** Base abstract class, you need to derive your server/client app's from here */
-class tUnetBase :public tUnet {
+class tmTerminated :public tmMsgBase {
 public:
-	tUnetBase(char * lhost="0.0.0.0",U16 lport=0);
-	~tUnetBase();
-	void run();
-	void stop(Byte timeout=5);
-	void terminate(tNetSessionIte & who);
-	virtual void onNewConnection(tNetEvent * ev) {}
-	virtual void onMsgRecieved(tNetEvent * ev)=0;
-	virtual void onConnectionClossed(tNetEvent * ev) {}
-	virtual void onTerminated(tNetEvent * ev) {}
-	virtual void onConnectionFlood(tNetEvent * ev) {}
-	virtual void onConnectionTimeout(tNetEvent * ev) {}
-	//virtual void onConnectionClossing(tNetEvent * ev) {}
-private:
-	bool state_running;
-	Byte stop_timeout;
+	virtual void store(tBBuf &t);
+	virtual int stream(tBBuf &t);
+	tmTerminated(tNetSession * u=NULL,U32 who=0,Byte what=RKickedOff,bool ack=false);
+	Byte * str();
+	//format
+	Byte reason;
 };
 
 

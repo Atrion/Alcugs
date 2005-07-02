@@ -663,7 +663,7 @@ Byte * tmMsgBase::str() {
 		dbg.printf(" ip:%s:%i(%s:%i),",alcGetStrIp(ip),ntohs(port),alcGetStrIp(htonl(ip)),port);
 	if(flags & plNetSid)
 		dbg.printf(" sid:%i,",sid);
-	
+
 	dbg.putByte(0);
 	dbg.rewind();
 	return dbg.read();

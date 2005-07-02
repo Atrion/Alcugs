@@ -53,6 +53,8 @@ public:
 	U32 getHeaderSize();
 	void setTimeout(U32 tout) { conn_timeout=tout; }
 	void setPeerType(Byte wtf) { whoami=wtf; }
+	Byte getPeerType() { return whoami; }
+	void send(tmMsgBase & t);
 private:
 	void init();
 	void processMsg(Byte * buf,int size);
@@ -130,6 +132,7 @@ private:
 	friend class tUnet;
 	//friend class tUnetUruMsg;
 	friend class tmMsgBase;
+	friend class tUnetBase;
 	
 	int whoami; //peer type
 

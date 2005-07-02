@@ -53,6 +53,16 @@ void tUnetBase::stop(Byte timeout) {
 	state_running=false;
 }
 
+void tUnetBase::terminate(tNetSessionIte & who) {
+	//tNetEvent * ev=new tNetEvent(who,UNET_CLOSSING);
+	tNetSession * u=getSession(who);
+	//onConnectionClossing(ev);
+	u->setPeerType(0);
+	u->setTimeout(2);
+	u->timestamp.seconds=alcGetTime();
+	//delete ev;
+}
+
 //Blocks
 void tUnetBase::run() {
 	startOp();
@@ -61,6 +71,9 @@ void tUnetBase::run() {
 		
 		tNetEvent * evt;
 		tNetSession * u;
+		
+		tmTerminated * terminated;
+		
 		while((evt=getEvent())) {
 			//lstd->log("Event id %i from host [%i]%s:%i\n",evt->id,evt->sid.sid,alcGetStrIp(evt->sid.ip),ntohs(evt->sid.port));+
 			
@@ -70,16 +83,23 @@ void tUnetBase::run() {
 				case UNET_NEWCONN:
 					sec->log("%s New Connection\n",u->str());
 					onNewConnection(evt);
+					u->setPeerType(1);
 					break;
 				case UNET_TIMEOUT:
+					terminated=new tmTerminated(u,0,RKickedOff);
+					u->send(*terminated);
+					delete terminated;
 					sec->log("%s Timeout\n",u->str());
 					onConnectionTimeout(evt);
 					if(!evt->veto) {
-						//TODO SND terminated
-						sec->log("%s Ended\n",u->str());
-						evt->id=UNET_TERMINATED;
-						onConnectionClossed(evt);
-						destroySession(evt->sid);
+						if(u->getPeerType()==0) {
+							sec->log("%s Ended\n",u->str());
+							evt->id=UNET_TERMINATED;
+							onConnectionClossed(evt);
+							destroySession(evt->sid);
+						} else {
+							terminate(evt->sid);
+						}
 					}
 					break;
 				case UNET_FLOOD:
@@ -87,13 +107,18 @@ void tUnetBase::run() {
 					onConnectionFlood(evt);
 					if(!evt->veto) {
 						//TODO SND terminated
-						u->setPeerType(0);
-						u->setTimeout(2);
 					}
 					break;
 				case UNET_MSGRCV:
 					log->log("%s New MSG Recieved\n",u->str());
+					u->rcvq->rewind();
+					tUnetMsg * msg;
+					msg=u->rcvq->getNext();
+					while(msg!=NULL && msg->completed!=1)
+						msg=u->rcvq->getNext();
+					if(msg==NULL) break;
 					onMsgRecieved(evt);
+					u->rcvq->deleteCurrent();
 					break;
 				default:
 					err->log("%s Unknown Event id %i\n",u->str(),evt->id);

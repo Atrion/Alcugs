@@ -178,7 +178,6 @@ public:
 	U32 ip;
 	U32 port;
 	U32 sid;
-	Byte reason;
 protected:
 	tNetSession * u;
 	tStrBuf dbg;

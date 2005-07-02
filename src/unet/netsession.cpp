@@ -108,6 +108,7 @@ char * tNetSession::str(char how) {
 	sprintf(cnt,"[%i][%s:%i]",sid,alcGetStrIp(ip),ntohs(port));
 	return cnt;
 }
+
 U32 tNetSession::getHeaderSize() {
 	U32 my=28;
 	if(validation>0) my+=4;
@@ -762,6 +763,10 @@ void tNetSession::negotiate() {
 
 	tmNetClientComm comm(nego_stamp,sbw);
 	net->basesend(this,comm);
+}
+
+void tNetSession::send(tmMsgBase & t) {
+	net->basesend(this,t);
 }
 
 /* End session */

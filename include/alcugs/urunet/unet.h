@@ -46,6 +46,7 @@
 #include "netlog.h"
 #include "urunet.h"
 #include "netcore.h"
+#include "protocol/umsgbasic.h"
 
 
 #endif

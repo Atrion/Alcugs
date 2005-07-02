@@ -24,38 +24,52 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	URUNET 3+
-*/
+/* The Uru protocol, is here */
 
-#ifndef __U_NETCORE_H
-#define __U_NETCORE_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_NETCORE_H_ID "$Id$"
+#define __U_UMSGBASIC_ID "$Id$"
+
+//#define _DBG_LEVEL_ 10
+
+#include "alcugs.h"
+#include "urunet/unet.h"
+
+#include "alcdebug.h"
 
 namespace alc {
 
-/** Base abstract class, you need to derive your server/client app's from here */
-class tUnetBase :public tUnet {
-public:
-	tUnetBase(char * lhost="0.0.0.0",U16 lport=0);
-	~tUnetBase();
-	void run();
-	void stop(Byte timeout=5);
-	void terminate(tNetSessionIte & who);
-	virtual void onNewConnection(tNetEvent * ev) {}
-	virtual void onMsgRecieved(tNetEvent * ev)=0;
-	virtual void onConnectionClossed(tNetEvent * ev) {}
-	virtual void onTerminated(tNetEvent * ev) {}
-	virtual void onConnectionFlood(tNetEvent * ev) {}
-	virtual void onConnectionTimeout(tNetEvent * ev) {}
-	//virtual void onConnectionClossing(tNetEvent * ev) {}
-private:
-	bool state_running;
-	Byte stop_timeout;
-};
-
-
+tmTerminated::tmTerminated(tNetSession * u,U32 who,Byte what,bool ack)
+ :tmMsgBase(NetMsgTerminated,plNetKi | plNetCustom,u) {
+	if(ack)
+		setFlags(plNetAck);
+	ki=who;
+	reason=what;
+}
+void tmTerminated::store(tBBuf &t) {
+	tmMsgBase::store(t);
+	reason=t.getByte();
+}
+int tmTerminated::stream(tBBuf &t) {
+	int off;
+	off=tmMsgBase::stream(t);
+	t.putByte(reason);
+	off++;
+	return off;
+}
+Byte * tmTerminated::str() {
+	#ifdef _UNET_MSGDBG_
+	tmMsgBase::str();
+	dbg.end();
+	dbg.seek(-1);
+	dbg.printf("Reason [%i] %s ",reason,alcUnetGetReasonCode(reason));
+	dbg.putByte(0);
+	dbg.rewind();
+	return dbg.read();
+	#else
+	return tmMsgBase::str();
+	#endif
 }
 
-#endif
+
+
+} //namespace
