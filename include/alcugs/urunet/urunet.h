@@ -115,6 +115,7 @@ private:
 	void rawsend(tNetSession * u,tUnetUruMsg * m);
 	
 	friend class tNetSession;
+	friend class tmMsgBase;
 	
 	bool initialized;
 
@@ -221,21 +222,6 @@ private:
 }
 
 #if 0
-
-typedef struct {
-	U16 cmd; //message code
-	U32 flags; //message flags
-	//--- header
-	Byte max_version; //major version  //plNetVersion
-	Byte min_version; //minor version
-	U32 stamp; //plNetTimestamp
-	U32 micros;
-	U32 x; //session message identifier, (used in routing) //plNetX
-	U32 ki; //player unique id (used in routing) //plNetKi
-	Byte guid[17]; //player uid (in hex) (used in routing) //plNetGUI
-	U32 ip; //peer ip (used in routing) //plNetIP
-	U16 port; //peer port (used in routing)
-} st_unet_hmsg;
 
 int plNetConnect(st_unet * net,int * sid,char * address,U16 port,Byte flags);
 #define UNET_VAL0 0x02

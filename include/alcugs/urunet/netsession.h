@@ -129,6 +129,7 @@ private:
 	friend class tNetSessionMgr;
 	friend class tUnet;
 	//friend class tUnetUruMsg;
+	friend class tmMsgBase;
 	
 	int whoami; //peer type
 

@@ -42,12 +42,12 @@ public:
 	~tUnetBase();
 	void run();
 	void stop(Byte timeout=5);
-	virtual void onNewConnection(tNetEvent * ev)=0;
+	virtual void onNewConnection(tNetEvent * ev) {}
 	virtual void onMsgRecieved(tNetEvent * ev)=0;
-	virtual void onConnectionClossed(tNetEvent * ev)=0;
-	virtual void onTerminated(tNetEvent * ev)=0;
-	virtual void onConnectionFlood(tNetEvent * ev)=0;
-	virtual void onConnectionTimeout(tNetEvent * ev)=0;
+	virtual void onConnectionClossed(tNetEvent * ev) {}
+	virtual void onTerminated(tNetEvent * ev) {}
+	virtual void onConnectionFlood(tNetEvent * ev) {}
+	virtual void onConnectionTimeout(tNetEvent * ev) {}
 private:
 	bool state_running;
 	Byte stop_timeout;

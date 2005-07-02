@@ -448,7 +448,7 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
 	log->flush();
 }
 
-//Base message
+//Negotiation
 void tmNetClientComm::store(tBBuf &t) {
 	bandwidth=t.getU32();
 	t.get(timestamp);
@@ -459,308 +459,218 @@ int tmNetClientComm::stream(tBBuf &t) {
 	return 12;
 }
 Byte * tmNetClientComm::str() {
+	#ifdef _UNET_MSGDBG_
 	static Byte cnt[1024];
 	sprintf((char *)cnt,"(Re)Negotation bandwidth: %i bps time: %s",bandwidth,(char *)timestamp.str());
 	return cnt;
+	#else
+	return "Negotiation";
+	#endif
 }
 
-#if 0
-
-/** Gets all plNet msg header vars
-		/return returns the size
-*/
-int parse_plNet_msg(st_unet * net,Byte * buf,int size,int sid) {
-	st_uru_client * u=&net->s[sid];
-	int off=0;
-	if(buf==NULL) {
-		DBG(3,"Null buffer? (size:%i,sid:%i)\n",size,sid);
-		return -1;
-	}
-	u->hmsg.cmd=*(U16 *)(buf+off);
-	off+=2;
-	u->hmsg.flags=*(U32 *)(buf+off);
-	off+=4;
-
-	//put here a cmd printer
-	print2log(net->log,"\n %04X %08X\n",u->hmsg.cmd,u->hmsg.flags);
-
-	if(u->hmsg.flags & plNetAck) {
-		print2log(net->log," Ack flag on\n");
-	} else {
-		print2log(net->log," Ack flag off\n");
-	}
-	if(u->hmsg.flags & plNetFirewalled) {
-		print2log(net->log," Firewalled flag ON\n");
-	}
-	if(u->hmsg.flags & plNetBcast) {
-		print2log(net->log," Bcast flag ON\n");
-	}
-	if(u->hmsg.flags & plNetCustom) {
-		print2log(net->log," UCPNPI flag ON\n");
-	}
-
-	if(u->hmsg.flags & plNetVersion) {
-		u->hmsg.max_version=*(Byte *)(buf+off);
-		off++;
-		u->hmsg.min_version=*(Byte *)(buf+off);
-		off++;
-		print2log(net->log," Version: %i.%i\n",u->hmsg.max_version,u->hmsg.min_version);
-		//now set up version in u var (compatibility)
-		//IA-guess
-		if(u->max_version==0) {
-			u->max_version=u->hmsg.max_version;
-			u->min_version=u->hmsg.min_version;
-		}
-		// END IA
-	}// else {
-		//u->adv_msg.min_version=0;
-		//u->adv_msg.max_version=0;
-	//}
-
-	//IA-guess the protocol version from behaviours
-	// The first message is always an auth hello that contains the version numbers
-	if(u->hmsg.flags & plNetTimestamp && u->max_version==0) {
-		u->max_version=12; //sure (normally on ping proves)
-		u->min_version=6;
-	} else if(u->max_version==0) {
-		u->max_version=12;
-		u->min_version=0;
-	}// END IA
-
-	DBG(5,"Detected version is %i.%i\n",u->max_version,u->min_version);
-	//abort();
-
-	//NetMsgPing should have always the timestamp enabled in new versions.
-	if(u->hmsg.flags & plNetTimestamp || u->min_version<0x06) { // || u->hmsg.cmd==NetMsgPing) {
-		u->hmsg.stamp=*(U32 *)(buf+off);
-		off+=4;
-		u->hmsg.micros=*(U32 *)(buf+off);
-		off+=4;
-		print2log(f_uru," Timestamp: %s\n",get_stime(u->hmsg.stamp,u->hmsg.micros));
-	} else {
-		u->hmsg.stamp=0;
-		u->hmsg.micros=0;
-	}
-	if(u->hmsg.flags & plNetX) {
-		u->hmsg.x=*(U32 *)(buf+off);
-		off+=4;
-		print2log(net->log," x: %i\n",u->hmsg.x);
-	} else {
-		u->hmsg.x=0;
-	}
-	if(u->hmsg.flags & plNetKi) {
-		u->hmsg.ki=*(U32 *)(buf+off);
-		off+=4;
-		print2log(net->log," ki: %i\n",u->hmsg.ki);
-	} else {
-		u->hmsg.ki=0;
-	}
-	if(u->hmsg.flags & plNetGUI) {
-		memcpy(u->hmsg.guid,buf+off,16);
-		off+=16;
-		print2log(net->log," guid: %s\n",create_str_guid(u->hmsg.guid));
-	}
-	if(u->hmsg.flags & plNetIP) {
-		u->hmsg.ip=*(U32 *)(buf+off);
-		off+=4;
-		u->hmsg.port=*(U16 *)(buf+off);
-		off+=2;
-		print2log(f_uru," ip: %s:%i\n",get_ip(u->hmsg.ip),u->hmsg.port);
-	}
-	//now catch undocumented protocol flags
-
-	if(u->hmsg.flags & ~(plNetAck | plNetBcast | plNetVersion | plNetTimestamp | \
-	plNetX | plNetKi | plNetGUI | plNetIP | plNetCustom)) {
-		nlog(net->unx,net,sid,"Problem parsing a plNetMsg header format mask %08X\n",u->hmsg.flags & ~(plNetAck | plNetBcast | plNetVersion | plNetTimestamp | \
-	plNetX | plNetKi | plNetGUI | plNetIP | plNetCustom));
-		dumpbuf(net->unx,buf,size);
-		lognl(net->unx);
-		lognl(net->unx);
-	}
-
-	return off;
+//Base message
+tmMsgBase::tmMsgBase(U16 cmd,U32 flags,tNetSession * us) {
+	this->cmd=cmd;
+	this->flags=flags;
+	u=us;
+	//set bhflags
+	bhflags=0;
+	if(this->flags & plNetAck)
+		bhflags |= UNetAckReq;
 }
-
-/**
-	puts in the buffer all plnet msg header vars
-*/
-int put_plNetMsg_header(st_unet * net,Byte * buf,int size,int sid) {
-	st_uru_client * u=&net->s[sid];
-	int off=0;
-
-	//the msg command
-	*(U16 *)(buf+off)=u->hmsg.cmd;
-	off+=2;
-	//format flags
-	*(U32 *)(buf+off)=u->hmsg.flags;
-	off+=4;
-
-	//put here a cmd printer
-	print2log(net->log,"\n %04X %08X\n",u->hmsg.cmd,u->hmsg.flags);
-
-	if(u->hmsg.flags & plNetAck) {
-		print2log(net->log," Ack flag on\n");
-	} else {
-		print2log(net->log," Ack flag off\n");
-	}
-	if(u->hmsg.flags & plNetFirewalled) {
-		print2log(net->log," Firewalled flag ON\n");
-	}
-	if(u->hmsg.flags & plNetBcast) {
-		print2log(net->log," Bcast flag ON\n");
-	}
-	if(u->hmsg.flags & plNetCustom) {
-		print2log(net->log," UCPNPI flag ON\n");
-	}
-
-	//put things
-	if(u->hmsg.flags & plNetVersion) {
-		print2log(net->log," Version: %i.%i\n",u->hmsg.max_version,u->hmsg.min_version);
-		*(Byte *)(buf+off)=u->hmsg.max_version;
-		off++;
-		*(Byte *)(buf+off)=u->hmsg.min_version;
-		off++;
-	}
-
-	//we must specify a valid version number after sending the first message
-#if 0
-	//IA-guess the protocol version from behaviours
-	if(u->hmsg.flags & plNetTimestamp && u->max_version==0) {
-		u->max_version=12; //sure (normally on ping proves)
-		u->min_version=6;
-	} else if(u->max_version==0) {
-		u->max_version=12;
-		u->min_version=0;
-	}// END IA
-#endif
-
-	//NetMsgPing should have always the timestamp enabled in new versions.
-	if(u->hmsg.flags & plNetTimestamp || (u->min_version<6 && u->max_version==12)) { // || u->adv_msg.cmd==NetMsgPing) {
-		DBG(2,"minor version is %i\n",u->min_version);
-		if(u->hmsg.stamp==0) {
-			time((time_t *)&u->hmsg.stamp);
-			u->hmsg.micros=get_microseconds();
-		}
-		print2log(net->log," Timestamp: %s\n",get_stime(u->hmsg.stamp,u->hmsg.micros));
-		*(U32 *)(buf+off)=u->hmsg.stamp;
-		off+=4;
-		*(U32 *)(buf+off)=u->hmsg.micros;
-		off+=4;
-	}
-	if(u->hmsg.flags & plNetX) {
-		print2log(net->log," x: %i\n",u->hmsg.x);
-		*(U32 *)(buf+off)=u->hmsg.x;
-		off+=4;
-	}
-	if(u->hmsg.flags & plNetKi) {
-		print2log(net->log," ki: %i\n",u->hmsg.ki);
-		*(U32 *)(buf+off)=u->hmsg.ki;
-		off+=4;
-	}
-
-	if(u->hmsg.flags & plNetGUI) {
-		memcpy(buf+off,u->hmsg.guid,16);
-		off+=16;
-		print2log(net->log," guid: %s\n",create_str_guid(u->hmsg.guid));
-	}
-	if(u->hmsg.flags & plNetIP) {
-		*(U32 *)(buf+off)=u->hmsg.ip;
-		off+=4;
-		*(U16 *)(buf+off)=u->hmsg.port;
-		off+=2;
-		print2log(f_uru," ip: %s:%i\n",get_ip(u->hmsg.ip),u->hmsg.port);
-	}
-
-#if 0
-	//now catch undocumented protocol flags
-	if(u->adv_msg.format & 0xEFF8ADDE) { //0xFFF8ADFE
-		stamp2log(f_une);
-		ip2log(f_une,u);
-		plog(f_une,"[%s,%s]",u->login,u->avatar_name);
-		print2log(f_une,"Problem parsing a plNetMsg header format mask %08X\n",u->adv_msg.format & 0xFFF8ADFE);
-		//dump_packet(f_une,buf,u->client.size,0,0x07);
-		//print2log(f_une,"\n");
-		//off=-1;
-	}
-#endif //this was useless
-
-	return off;
+void tmMsgBase::setFlags(U16 f) {
+	this->flags |= f;
+	if(f & plNetAck)
+		bhflags |= UNetAckReq;
 }
-
-
-/**
-	copies one plNetMsg header to another one
-	sid=destination
-	ssid=source
-*/
-void copy_plNetMsg_header(st_unet * net,int sid,int ssid,int flags) {
-	if(net_check_address(net,sid)!=0) return;
-	if(net_check_address(net,ssid)!=0) return;
-	st_uru_client * u=&net->s[sid];
-	st_uru_client * s=&net->s[ssid];
-	//int off=0;
-
-	//the msg command
-	u->hmsg.cmd=s->hmsg.cmd;
-	//format flags
-	u->hmsg.flags=s->hmsg.flags;
-
-	//put here a cmd printer
-	//print2log(net->log," %04X %08X\n",u->hmsg.cmd,u->hmsg.flags);
-
-	/*
-	if(flags & plNetAck) {
-		print2log(net->log," Ack flag on\n");
-	} else {
-		print2log(net->log," Ack flag off\n");
-	}
-	if(u->hmsg.flags & plNetFirewalled) {
-		print2log(net->log," Firewalled flag ON\n");
-	}
-	if(u->hmsg.flags & plNetBcast) {
-		print2log(net->log," Bcast flag ON\n");
-	}
-	if(u->hmsg.flags & plNetCustom) {
-		print2log(net->log," UCPNPI flag ON\n");
-	}
-	*/
-
-	//put things
+void tmMsgBase::unsetFlags(U16 f) {
+	this->flags &= ~f;
+	if(f & plNetAck)
+		bhflags &= ~UNetAckReq;
+}
+U32 tmMsgBase::getFlags() {
+	return flags;
+}
+void tmMsgBase::setSession(tNetSession *uu) {
+	u=uu;
+}
+void tmMsgBase::store(tBBuf &t) {
+	//base
+	cmd=t.getU16();
+	flags=t.getU32();
 	if(flags & plNetVersion) {
-		//print2log(net->log," Version: %i.%i\n",u->hmsg.max_version,u->hmsg.min_version);
-		u->hmsg.max_version=s->hmsg.max_version;
-		u->hmsg.min_version=s->hmsg.min_version;
+		max_version=t.getByte();
+		min_version=t.getByte();
+		if(u && u->max_version==0) {
+			u->max_version=max_version;
+			u->min_version=min_version;
+		}
+	} else {
+		max_version=0;
+		min_version=0;
+	}
+	//BEGIN ** guess the protocol version from behaviours
+	// The first message is always an auth hello that contains the version numbers
+	if(u && u->max_version==0) {
+		if(flags & plNetTimestamp) {
+			u->max_version=12; //sure (normally on ping proves)
+			u->min_version=6;
+		} else {
+			u->max_version=12;
+			u->min_version=0;
+		}
+		DBG(5,"Detected version is %i.%i\n",u->max_version,u->min_version);
+	}
+	//END guess protocol version
+	
+	//NetMsgPing should have always the timestamp enabled in new versions.
+	if(flags & plNetTimestamp || (u && u->min_version<0x06)) {
+		t.get(timestamp);
+	} else {
+		timestamp.seconds=0;
+		timestamp.microseconds=0;
 	}
 
-	//NetMsgPing should have always the timestamp enabled in new versions.
-	if(flags & plNetTimestamp) {
-		//DBG(2,"minor version is %i\n",u->min_version);
-		//print2log(net->log," Timestamp: %s\n",get_stime(u->hmsg.stamp,u->hmsg.micros));
-		u->hmsg.stamp=s->hmsg.stamp;
-		u->hmsg.micros=s->hmsg.stamp;
-	}
 	if(flags & plNetX) {
-		//print2log(net->log," x: %i\n",u->hmsg.x);
-		u->hmsg.x=s->hmsg.x;
+		x=t.getU32();
+	} else {
+		x=0;
 	}
 	if(flags & plNetKi) {
-		//print2log(net->log," ki: %i\n",u->hmsg.ki);
-		u->hmsg.ki=s->hmsg.ki;
+		ki=t.getU32();
+	} else {
+		ki=0;
 	}
-
+	
+	//**
 	if(flags & plNetGUI) {
-		memcpy(u->hmsg.guid,s->hmsg.guid,16);
-		//print2log(net->log,"\n guid: %s\n",get_guid(u->hmsg.guid));
+		memcpy(guid,t.read(16),16);
+	} else {
+		memset(guid,0,16);
 	}
 	if(flags & plNetIP) {
-		u->hmsg.ip=s->hmsg.ip;
-		u->hmsg.port=s->hmsg.port;
-		//print2log(f_uru," ip: %s:%i\n",get_ip(u->hmsg.ip),u->hmsg.port);
+		ip=t.getU32();
+		port=t.getU16();
+	} else {
+		ip=0;
+		port=0;
+	}
+	if(flags & plNetSid) {
+		sid=t.getU32();
 	}
 
+	U32 check=plNetAck | plNetBcast | plNetVersion | plNetTimestamp | \
+	plNetX | plNetKi | plNetGUI | plNetIP | plNetCustom;
+	
+	//now catch undocumented protocol flags
+	if((flags & ~(check)) && u) {
+		u->net->unx->log("%s Problem parsing a plNetMsg header format mask %08X\n",u->str(),flags & ~(check));
+		u->net->unx->dumpbuf(t);
+		u->net->unx->nl();
+		u->net->unx->nl();
+	}
 }
-
-#endif
+int tmMsgBase::stream(tBBuf &t) {
+	int off=0;
+	t.putU16(cmd);
+	off+=2;
+	t.putU32(flags);
+	off+=4;
+	if(flags & plNetVersion) {
+		t.putByte(max_version);
+		t.putByte(min_version);
+		off+=2;
+	}
+	if(flags & plNetTimestamp || (u && u->min_version<6)) {
+		if(timestamp.seconds==0) {
+			timestamp.seconds=alcGetTime();
+			timestamp.microseconds=alcGetMicroseconds();
+		}
+		t.put(timestamp);
+		off+=8;
+	}
+	if(flags & plNetX) {
+		t.putU32(x);
+		off+=4;
+	}
+	if(flags & plNetKi) {
+		t.putU32(ki);
+		off+=4;
+	}
+	if(flags & plNetGUI) {
+		t.write(guid,16);
+		off+=16;
+	}
+	if(flags & plNetIP) {
+		t.putU32(ip);
+		t.putU16(port);
+		off+=6;
+	}
+	if(flags & plNetSid) {
+		t.putU32(sid);
+		off+=4;
+	}
+	return off;
+}
+void tmMsgBase::copyProps(tmMsgBase &t) {
+	if(flags & plNetVersion) {
+		max_version=t.max_version;
+		min_version=t.min_version;
+	}
+	if(flags & plNetTimestamp) {
+		timestamp=t.timestamp;
+	}
+	if(flags & plNetX) {
+		x=t.x;
+	}
+	if(flags & plNetKi) {
+		ki=t.ki;
+	}
+	if(flags & plNetGUI) {
+		memcpy(guid,t.guid,16);
+	}
+	if(flags & plNetIP) {
+		ip=t.ip;
+		port=t.port;
+	}
+	if(flags & plNetSid) {
+		sid=t.sid;
+	}
+}
+Byte * tmMsgBase::str() {
+	#ifdef _UNET_MSGDBG_
+	dbg.printf("%s %04X %08X\nFlags:",alcUnetGetMsgCode(cmd),cmd,flags);
+	if(flags & plNetAck)
+		dbg.writeStr(" ack");
+	if(flags & plNetFirewalled)
+		dbg.writeStr(" firewalled");
+	if(flags & plNetBcast)
+		dbg.writeStr(" bcast");
+	if(flags & plNetCustom)
+		dbg.writeStr(" UCPNPI");
+	if(flags & plNetVersion)
+		dbg.printf(" version(%i,%i)",max_version,min_version);
+	if(flags & plNetTimestamp)
+		dbg.writeStr(timestamp.str());
+	dbg.nl();
+	if(flags & plNetX)
+		dbg.printf(" x:%i,",x);
+	if(flags & plNetKi)
+		dbg.printf(" ki:%i,",ki);
+	if(flags & plNetGUI)
+		dbg.printf(" guid:%s,",alcGetStrGuid(guid));
+	if(flags & plNetIP)
+		dbg.printf(" ip:%s:%i(%s:%i),",alcGetStrIp(ip),ntohs(port),alcGetStrIp(htonl(ip)),port);
+	if(flags & plNetSid)
+		dbg.printf(" sid:%i,",sid);
+	
+	dbg.putByte(0);
+	dbg.rewind();
+	return dbg.read();
+	#else
+	return alcUnetGetMsgCode(cmd);
+	#endif
+}
 
 char * alcUnetGetRelease(Byte rel) {
 	static char * ret;

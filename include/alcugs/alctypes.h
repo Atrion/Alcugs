@@ -274,6 +274,8 @@ public:
 	Byte * getLine();
 	void writeStr(const Byte * t);
 	void writeStr(const SByte * t) { writeStr((const Byte *)t); }
+	void printf(const char * msg, ...);
+	void nl() { writeStr("\n"); }
 private:
 	Byte * bufstr;
 };

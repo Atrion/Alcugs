@@ -26,13 +26,14 @@
 
 #define _DBG_LEVEL_ 10
 
+#include<alcugs.h>
+
 //Program vars
 const char * alcXID = "$Id$";
 const char * alcXBUILD =  __DATE__ " " __TIME__;
 const char * alcXSNAME = "UruPing";
-const char * alcXVERSION = "2.0";
+const char * alcXVERSION = alcSTR_VER;
 
-#include<alcugs.h>
 #include<urunet/unet.h>
 
 
@@ -77,14 +78,19 @@ void parameters_usage() {
 
 class tUnetPing :public tUnetBase {
 public:
-	tUnetPing(char * lhost,U16 lport) :tUnetBase(lhost,lport) {}
-	virtual void onNewConnection(tNetEvent * ev) { lstd->log("New Connection\n"); }
+	tUnetPing(char * lhost=NULL,U16 lport=0,Byte listen=0) :tUnetBase(lhost,lport) {
+		this->listen=listen;
+	}
+	virtual void onNewConnection(tNetEvent * ev) { 
+		lstd->log("New Connection\n"); 
+	}
 	virtual void onMsgRecieved(tNetEvent * ev) {}
 	virtual void onConnectionClossed(tNetEvent * ev) {}
 	virtual void onTerminated(tNetEvent * ev) {}
 	virtual void onConnectionFlood(tNetEvent * ev) {}
 	virtual void onConnectionTimeout(tNetEvent * ev) {}
-
+private:
+	Byte listen;
 };
 
 tUnetPing * netcore=NULL;

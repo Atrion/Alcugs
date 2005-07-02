@@ -38,6 +38,9 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <stdarg.h>
+
+
 namespace zlib {
 #include <zlib.h>
 }
@@ -547,6 +550,20 @@ Byte * tStrBuf::getLine() {
 void tStrBuf::writeStr(const Byte * t) {
 	this->write((Byte *)t,strlen((const char *)t));
 }
+void tStrBuf::printf(const char * msg, ...) {
+	va_list ap;
+	
+	char buffer[1024];
+
+	va_start(ap,msg);
+	       
+	vsnprintf(buffer,1023,msg,ap);
+	buffer[1023]='\0';
+	this->write((Byte *)buffer,strlen(buffer));
+	
+	va_end(ap);
+}
+
 
 void tTime::store(tBBuf &t) {
 	DBG(5,"Buffer status size:%i,offset:%i\n",t.size(),t.tell());

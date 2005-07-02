@@ -354,6 +354,9 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 		
 		if(msg->fr_count==t.frt) {
 			msg->completed=0x01;
+			msg->data->rewind();
+			msg->cmd=msg->data->getU16();
+			msg->data->rewind();
 			//tNetSessionIte ite(ip,port,sid);
 			//tNetEvent * evt=new tNetEvent(ite,UNET_MSGRCV);
 			//net->events->add(evt);
@@ -655,7 +658,7 @@ void tNetSession::doWork() {
 
 	ackUpdate(); //get ack messages
 	
-	//TODO check rcvq
+	//check rcvq
 	if(!bussy) {
 		rcvq->rewind();
 		tUnetMsg * g;
@@ -672,7 +675,7 @@ void tNetSession::doWork() {
 
 		if(sndq->isEmpty()) {
 			last_msg_time=0;
-			if(ackq->isEmpty()) {
+			if(ackq->isEmpty() && rcvq->isEmpty()) {
 				idle=true;
 			} else {
 				idle=false;

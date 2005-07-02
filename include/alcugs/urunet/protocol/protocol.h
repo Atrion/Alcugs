@@ -63,6 +63,7 @@ public:
 	tUnetMsg(U32 size=1024) { next=NULL; completed=0; fr_count=0; data=new tMBuf(size); memset(check,0,32); }
 	~tUnetMsg() { delete data; }
 	tUnetMsg * next;
+	U16 cmd;
 	U32 sn;
 	U32 stamp;
 	Byte completed;
@@ -158,14 +159,29 @@ class tmMsgBase :public tmBase {
 public:
 	virtual void store(tBBuf &t);
 	virtual int stream(tBBuf &t);
-	tmMsgBase(Byte flags=0x02);
-	virtual ~tmMsgBase();
-	U32 ki;
+	tmMsgBase(U16 cmd,U32 flags,tNetSession * us=NULL);
+	virtual ~tmMsgBase() {};
+	void setFlags(U16 f);
+	void unsetFlags(U16 f);
+	U32 getFlags();
+	void setSession(tNetSession *uu);
+	void copyProps(tmMsgBase &t);
+	Byte * str();
+	U16 cmd;
+	U32 flags;
+	Byte max_version;
+	Byte min_version;
+	tTime timestamp;
 	U32 x;
+	U32 ki;
+	Byte guid[16];
 	U32 ip;
 	U32 port;
 	U32 sid;
-	//et all
+	Byte reason;
+protected:
+	tNetSession * u;
+	tStrBuf dbg;
 };
 
 /* You must derive any message from the above class, e.g:
@@ -177,20 +193,11 @@ public:
 	Byte release;
 };
 
-
-
 */
-
 
 #if 0
 void htmlDumpHeaderRaw(st_unet * net,st_log * log,st_uru_client c,Byte * buf,int size,int flux);
-
-int parse_plNet_msg(st_unet * net,Byte * buf,int size,int sid);
-int put_plNetMsg_header(st_unet * net,Byte * buf,int size,int sid);
-
-void copy_plNetMsg_header(st_unet * net,int sid,int ssid,int flags);
 #endif
-
 
 }
 

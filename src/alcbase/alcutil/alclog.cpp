@@ -632,9 +632,10 @@ void tLog::flush() {
 
 void tLog::dumpbuf(tBBuf & t, U32 n, U32 e, Byte how) {
 	if(n==0) n=t.size();
+	U32 where=t.tell();
 	t.rewind();
 	this->dumpbuf(t.read(n),n,e,how);
-	t.rewind();
+	t.set(where);
 }
 
 /*-------------------------------------------------------------

@@ -53,4 +53,7 @@
 // Noise and latency debbuging tests
 #define _UNET_DBG_
 
+// Debugging information attached to messages
+#define _UNET_MSGDBG_
+
 #endif
