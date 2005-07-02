@@ -581,7 +581,7 @@ int tmMsgBase::stream(tBBuf &t) {
 		t.putByte(min_version);
 		off+=2;
 	}
-	if(flags & plNetTimestamp || (u && u->min_version<6)) {
+	if(flags & plNetTimestamp || (u && (u->min_version<6 && u->max_version==12))) {
 		if(timestamp.seconds==0) {
 			timestamp.seconds=alcGetTime();
 			timestamp.microseconds=alcGetMicroseconds();

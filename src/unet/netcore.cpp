@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETCORE_ID "$Id$"
 
-#define _DBG_LEVEL_ 7
+#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
 #include "urunet/unet.h"
@@ -78,6 +78,10 @@ void tUnetBase::run() {
 			//lstd->log("Event id %i from host [%i]%s:%i\n",evt->id,evt->sid.sid,alcGetStrIp(evt->sid.ip),ntohs(evt->sid.port));+
 			
 			u=getSession(evt->sid);
+			if(u==NULL) {
+				delete evt;
+				continue;
+			}
 			
 			switch(evt->id) {
 				case UNET_NEWCONN:
@@ -110,7 +114,10 @@ void tUnetBase::run() {
 					}
 					break;
 				case UNET_MSGRCV:
+					dmalloc_verify(NULL);
+					DBG(8,"SEGFAULT!??? BEGIN\n");
 					log->log("%s New MSG Recieved\n",u->str());
+					DBG(8,"SEGFAULT!??? END\n");
 					u->rcvq->rewind();
 					tUnetMsg * msg;
 					msg=u->rcvq->getNext();

@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_URUNET_ID "$Id$"
 
-//#define _DBG_LEVEL_ 7
+#define _DBG_LEVEL_ 3
 
 #include "alcugs.h"
 #include "urunet/unet.h"
@@ -531,7 +531,7 @@ int tUnet::Recv() {
 
 	}
 	
-	#if _DBG_LEVEL_ >= 7
+	#if _DBG_LEVEL_ >= 1
 	U32 old_net_time=net_time;
 	#endif
 	updateNetTime();
