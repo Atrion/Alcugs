@@ -81,14 +81,12 @@ public:
 	tUnetPing(char * lhost=NULL,U16 lport=0,Byte listen=0) :tUnetBase(lhost,lport) {
 		this->listen=listen;
 	}
-	virtual void onNewConnection(tNetEvent * ev) { 
+	virtual void onNewConnection(tNetEvent * ev,tNetSession * u) { 
 		lstd->log("New Connection\n"); 
 	}
-	virtual void onMsgRecieved(tNetEvent * ev) {}
-	virtual void onConnectionClossed(tNetEvent * ev) {}
-	virtual void onTerminated(tNetEvent * ev) {}
-	virtual void onConnectionFlood(tNetEvent * ev) {}
-	virtual void onConnectionTimeout(tNetEvent * ev) {}
+	virtual int onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
+		return 0;
+	}
 private:
 	Byte listen;
 };

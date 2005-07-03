@@ -65,7 +65,6 @@ tNetSession * tNetSessionMgr::search(tNetSessionIte &ite,bool create) {
 			return table[ite.sid];
 		}
 	}
-	if(!create) return NULL;
 	//then create/search
 	int i;
 	int lsid=-1;
@@ -79,6 +78,8 @@ tNetSession * tNetSessionMgr::search(tNetSessionIte &ite,bool create) {
 			}
 		}
 	}
+	if(!create) return NULL;
+
 	//not found
 	if(lsid!=-1) {
 		i=lsid;

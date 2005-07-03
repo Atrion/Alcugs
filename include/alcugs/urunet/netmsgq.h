@@ -130,6 +130,28 @@ public:
 	T* getCurrent() {
 		return current;
 	}
+	T* unstackNext() {
+		T* ret=NULL;
+		if(current==NULL) prev=current=first;
+		else {
+			prev=current;
+			current=current->next;
+		}
+		if(current) {
+			if(current==first) {
+				prev=first=first->next;
+				ret=current;
+				current=prev;
+			} else {
+				prev->next=current->next;
+				if(current==last) last=prev;
+				ret=current;
+				current=prev->next;
+			}
+			n--;
+		}
+		return ret;
+	}
 	void deleteCurrent() {
 		if(current) {
 			if(current==first) {

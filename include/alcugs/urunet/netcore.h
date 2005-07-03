@@ -42,15 +42,16 @@ public:
 	~tUnetBase();
 	void run();
 	void stop(Byte timeout=5);
-	void terminate(tNetSessionIte & who);
-	virtual void onNewConnection(tNetEvent * ev) {}
-	virtual void onMsgRecieved(tNetEvent * ev)=0;
-	virtual void onConnectionClossed(tNetEvent * ev) {}
+	void terminate(tNetSessionIte & who,bool silent=false,Byte reason=RKickedOff);
+	virtual void onNewConnection(tNetEvent * ev,tNetSession * u) {}
+	virtual int onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u)=0;
+	virtual void onConnectionClossed(tNetEvent * ev,tNetSession * u) {}
 	virtual void onTerminated(tNetEvent * ev) {}
-	virtual void onConnectionFlood(tNetEvent * ev) {}
-	virtual void onConnectionTimeout(tNetEvent * ev) {}
+	virtual void onConnectionFlood(tNetEvent * ev,tNetSession * u) {}
+	virtual void onConnectionTimeout(tNetEvent * ev,tNetSession * u) {}
 	//virtual void onConnectionClossing(tNetEvent * ev) {}
 private:
+	int parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u);
 	bool state_running;
 	Byte stop_timeout;
 };

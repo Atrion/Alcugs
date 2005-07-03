@@ -69,6 +69,7 @@ void tUnet::init() {
 	//netcore timeout < min(all RTT's), nope, it must be the min tts (stt)
 	unet_sec=1; //(seconds)
 	unet_usec=0; //(microseconds)
+	timer=10;
 
 	conn_timeout=5; //default timeout (seconds) (sensible to NetMsgSetTimeout (higher when connected)
 	/* set to 30 when authed (client should send alive every 10 seconds)*/
@@ -563,8 +564,10 @@ void tUnet::doWork() {
 		}
 	}
 	
+	if(!events->isEmpty()) idle=false;
+	
 	if(idle) {
-		unet_sec=10;
+		unet_sec=timer;
 		unet_usec=0;
 	}
 
@@ -582,6 +585,8 @@ void tUnet::basesend(tNetSession * u,tmBase &msg) {
 	tMBuf buf;
 	U32 csize,psize,hsize,pkt_sz,n_pkts;
 	Byte flags=msg.bhflags;
+	
+	updateNetTime();
 	
 	tUnetUruMsg * pmsg=NULL;
 	

@@ -33,16 +33,64 @@
 
 namespace alc {
 
+/** TERMINATED message */
 class tmTerminated :public tmMsgBase {
 public:
 	virtual void store(tBBuf &t);
 	virtual int stream(tBBuf &t);
-	tmTerminated(tNetSession * u=NULL,U32 who=0,Byte what=RKickedOff,bool ack=false);
+	tmTerminated(tNetSession * u=NULL,U32 ki=0,Byte reason=RKickedOff,bool ack=false);
 	Byte * str();
 	//format
 	Byte reason;
 };
 
+/** Leave */
+class tmLeave :public tmMsgBase {
+public:
+	virtual void store(tBBuf &t);
+	virtual int stream(tBBuf &t);
+	tmLeave(tNetSession * u=NULL,U32 ki=0,Byte reason=RQuitting);
+	Byte * str();
+	//format
+	Byte reason;
+};
+
+/** Alive */
+class tmAlive :public tmMsgBase {
+public:
+	tmAlive::tmAlive(tNetSession * u=NULL,U32 ki=0)
+ :tmMsgBase(NetMsgAlive,plNetKi | plNetAck | plNetCustom,u) {
+		this->ki=ki;
+	}
+	//format
+};
+
+/** Player terminated */
+class tmPlayerTerminated :public tmMsgBase {
+public:
+	virtual void store(tBBuf &t);
+	virtual int stream(tBBuf &t);
+	tmPlayerTerminated(tNetSession * u=NULL,U32 ki=0,Byte reason=RKickedOff);
+	tmPlayerTerminated(tNetSession * u,tNetSessionIte &ite,Byte reason=RKickedOff);
+	Byte * str();
+	//format
+	Byte reason;
+};
+
+/** Ping */
+class tmPing :public tmMsgBase {
+public:
+	virtual void store(tBBuf &t);
+	virtual int stream(tBBuf &t);
+	tmPing(tNetSession * u=NULL,double mtime=0,U32 ki=0,U32 x=0,Byte dst=KLobby,bool ack=true);
+	void setReply();
+	void setRouteInfo(tNetSessionIte &ite);
+	void unsetRouteInfo();
+	Byte * str();
+	//format
+	double mtime;
+	Byte destination;
+};
 
 }
 

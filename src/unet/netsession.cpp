@@ -102,6 +102,7 @@ void tNetSession::init() {
 	min_version=0;
 	tpots=0;
 	proto=0; //alcProtoMIN_VER
+	ki=0;
 }
 char * tNetSession::str(char how) {
 	static char cnt[1024];
@@ -172,6 +173,10 @@ U32 tNetSession::computetts(U32 psize) {
 	return((psize*1000000)/4098);
 }
 
+tNetSessionIte tNetSession::getIte() {
+	return(tNetSessionIte(ip,port,sid));
+}
+
 void tNetSession::processMsg(Byte * buf,int size) {
 	DBG(5,"Message of %i bytes\n",size);
 	//stamp
@@ -235,23 +240,25 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		net->log->log("<RCV> ");
 		net->log->print("%s",(const char *)comm.str());
 		bandwidth=comm.bandwidth;
-		if(renego_stamp==comm.timestamp || negotiating) {
+		if(renego_stamp==comm.timestamp) {
 			net->log->print(" Ignored\n");
 			negotiating=false;
 		} else {
 			net->log->nl();
 			renego_stamp=comm.timestamp;
-			//clear snd buffer
-			DBG(5,"Clearing send buffer\n");
-			sndq->clear();
 			//reset counters and window
 			wite=msg.sn; //reset win iterator
 			memset(w,0,sizeof(char) * rcv_win); //unset all
-			//if(cabal!=0) {
+			if(!negotiating) {
+				//clear snd buffer
+				DBG(5,"Clearing send buffer\n");
+				sndq->clear();
 				if(nego_stamp.seconds==0) nego_stamp=timestamp;
 				negotiate();
 				negotiating=true;
-			//}
+			} else {
+				negotiating=false;
+			}
 			cabal=0;
 		}
 	} else if(bandwidth==0 || cabal==0) {
@@ -640,7 +647,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 			} else {
 				//Force re-transmission
 				if((msg->tf & 0x02) && A3>=A2 && msg->tryes==1) {
-					msg->timestamp-=rtt;
+					msg->timestamp-=timeout/2;
 				}
 				msg=sndq->getNext();
 			}
@@ -730,8 +737,10 @@ void tNetSession::doWork() {
 					//probabilistic drop (of voice, and other non-ack paquets)
 					if(net->net_time-curmsg->timestamp > timeout) {
 						//Unacceptable - drop it
+						net->err->log("Dropped a 0x00 packet due to unaceptable msg time %i,%i,%i\n",timeout,net->net_time-curmsg->timestamp,rtt);
 						sndq->deleteCurrent();
 					} else if(sndq->len()>minTH && (random()%maxTH)>sndq->len()) {
+						net->err->log("Dropped a 0x00 packet due to a big queue\n");
 						sndq->deleteCurrent();
 					} else {
 						cur_quota+=curmsg->size();

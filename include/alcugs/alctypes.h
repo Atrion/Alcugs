@@ -115,12 +115,14 @@ public:
 	virtual void putS32(S32 val);
 	virtual void putByte(Byte val);
 	virtual void putSByte(SByte val);
+	virtual void putDouble(double val);
 	virtual U16 getU16();
 	virtual S16 getS16();
 	virtual U32 getU32();
 	virtual S32 getS32();
 	virtual Byte getByte();
 	virtual SByte getSByte();
+	virtual double getDouble();
 	/** Puts an object into the buffer (streams the object) */
 	virtual U32 put(tBaseType &t);
 	/** Gets an object form the buffer (stores object from stream) */

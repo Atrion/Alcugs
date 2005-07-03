@@ -117,6 +117,9 @@ void tBBuf::putByte(Byte val) {
 void tBBuf::putSByte(SByte val) {
 	this->write((Byte *)&val,1);
 }
+void tBBuf::putDouble(double val) {
+	this->write((Byte *)&val,8);
+}
 U16 tBBuf::getU16() {
 	return(*(U16 *)(this->read(2)));
 }
@@ -134,6 +137,9 @@ Byte tBBuf::getByte() {
 }
 SByte tBBuf::getSByte() {
 	return(*(SByte *)(this->read(1)));
+}
+double tBBuf::getDouble() {
+	return(*(double *)(this->read(8)));
 }
 U32 tBBuf::put(tBaseType &t) {
 	return(t.stream(*this));

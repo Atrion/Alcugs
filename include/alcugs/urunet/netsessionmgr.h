@@ -59,6 +59,9 @@ public:
 	void end();
 	void destroy(tNetSessionIte &ite);
 	tNetSession * getNext();
+	bool empty() {
+		return n==0;
+	}
 private:
 	int off;
 	int n;

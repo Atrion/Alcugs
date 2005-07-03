@@ -159,12 +159,13 @@ class tmMsgBase :public tmBase {
 public:
 	virtual void store(tBBuf &t);
 	virtual int stream(tBBuf &t);
-	tmMsgBase(U16 cmd,U32 flags,tNetSession * us=NULL);
+	tmMsgBase(U16 cmd,U32 flags,tNetSession * d=NULL,tNetSession * s=NULL);
 	virtual ~tmMsgBase() {};
-	void setFlags(U16 f);
-	void unsetFlags(U16 f);
+	void setFlags(U32 f);
+	void unsetFlags(U32 f);
 	U32 getFlags();
-	void setSession(tNetSession *uu);
+	void setDestination(tNetSession *u);
+	void setSource(tNetSession *s);
 	void copyProps(tmMsgBase &t);
 	Byte * str();
 	U16 cmd;
@@ -179,7 +180,8 @@ public:
 	U32 port;
 	U32 sid;
 protected:
-	tNetSession * u;
+	tNetSession * u; //destination
+	tNetSession * s; //source
 	tStrBuf dbg;
 };
 

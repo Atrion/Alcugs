@@ -102,11 +102,17 @@ public:
 	tNetEvent * getEvent();
 	tNetSession * getSession(tNetSessionIte &t);
 	void destroySession(tNetSessionIte &t);
+	//
+	void setTimer(Byte timer) {
+		this->timer=timer;
+	}
 private:
 	void init();
 	void _openlogs();
-	
+
+protected:
 	void updatetimer(U32 usecs);
+private:
 	void doWork();
 	
 	void neterror(char * msg);
@@ -120,7 +126,10 @@ private:
 	
 	bool initialized;
 
+protected:
 	bool idle;
+private:
+	Byte timer;
 #ifdef __WIN32__
 	WSADATA ws; //<! The winsock stack
 	SOCKET sock; //<! The socket
@@ -135,6 +144,7 @@ private:
 	U16 unet_sec; //netcore timeout to do another loop (seconds)
 	U32 unet_usec; //netcore timeout to do another loop (microseconds)
 
+protected:
 	Byte max_version; //Default protocol version
 	Byte min_version;
 
@@ -184,7 +194,7 @@ private:
 	int pro_data;
 #endif
 
-protected:
+//protected:
 	//!logging subsystem
 	tLog * log; //stdout
 	tLog * err; //stderr

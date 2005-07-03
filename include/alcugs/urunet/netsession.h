@@ -35,6 +35,7 @@
 
 namespace alc {
 
+class tNetSessionIte;
 class tNetSessionMgr;
 class tUnet;
 
@@ -55,6 +56,7 @@ public:
 	void setPeerType(Byte wtf) { whoami=wtf; }
 	Byte getPeerType() { return whoami; }
 	void send(tmMsgBase & t);
+	tNetSessionIte getIte();
 private:
 	void init();
 	void processMsg(Byte * buf,int size);
@@ -133,7 +135,8 @@ private:
 	//friend class tUnetUruMsg;
 	friend class tmMsgBase;
 	friend class tUnetBase;
-	
+
+public:
 	int whoami; //peer type
 
 	Byte bussy; //bussy flag (0,1) If this flag is activated, messages are keept in the rcv buffer
@@ -141,6 +144,9 @@ private:
 	Byte min_version; //peer minor version
 	Byte tpots; //tpots version 0=undefined, 1=tpots client, 2=non-tpots client
 	U32 proto; //peer unet protocol version
+	
+	U32 ki; //player set and valid id
+
 };
 
 #if 0
@@ -152,7 +158,6 @@ private:
 	char guid[20]; //peer guid (server) (string)
 	
 	Byte challenge[16]; //peer challenge (used in auth) (hex)
-	int ki; //player set and valid id
 	int x; //x value
 	Byte reason; //reason code
 	Byte release; //type of client
