@@ -84,15 +84,33 @@ public:
 	virtual void onNewConnection(tNetEvent * ev,tNetSession * u) { 
 		lstd->log("New Connection\n"); 
 	}
-	virtual int onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
-		return 0;
-	}
+	virtual int onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u);
 private:
 	Byte listen;
 };
 
 tUnetPing * netcore=NULL;
 Byte __state_running=1;
+
+int tUnetPing::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
+
+	int ret=0;
+	
+	tmPing ping;
+
+	switch(msg->cmd) {
+		case NetMsgPing:
+			msg->data->get(ping);
+			ping.setReply();
+			u->send(ping);
+			ret=1;
+			break;
+		default:
+			ret=0;
+			break;
+	}
+	return ret;
+}
 
 //handler
 void s_handler(int s) {

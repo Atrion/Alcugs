@@ -225,6 +225,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		}
 		net->log->log("Cabal is now %i (%i bps)\n",cabal,cabal*8);
 		max_cabal=cabal;
+		negotiating=false;
 	}
 	//How do you say "Cabal" in English?
 
@@ -256,15 +257,15 @@ void tNetSession::processMsg(Byte * buf,int size) {
 				if(nego_stamp.seconds==0) nego_stamp=timestamp;
 				negotiate();
 				negotiating=true;
-			} else {
-				negotiating=false;
 			}
 			cabal=0;
 		}
 	} else if(bandwidth==0 || cabal==0) {
-		nego_stamp=timestamp;
-		negotiate();
-		negotiating=true;
+		if(!negotiating) {
+			nego_stamp=timestamp;
+			negotiate();
+			negotiating=true;
+		}
 	}
 	
 	//fix the problem that happens every 15-30 days of server uptime
@@ -278,6 +279,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		nego_stamp=timestamp;
 		renego_stamp.seconds=0;
 		negotiate();
+		negotiating=true;
 	}
 
 	//check duplicates
@@ -735,7 +737,7 @@ void tNetSession::doWork() {
 					}
 				} else {
 					//probabilistic drop (of voice, and other non-ack paquets)
-					if(net->net_time-curmsg->timestamp > timeout) {
+					if(net->net_time-curmsg->timestamp > 2*timeout) {
 						//Unacceptable - drop it
 						net->err->log("Dropped a 0x00 packet due to unaceptable msg time %i,%i,%i\n",timeout,net->net_time-curmsg->timestamp,rtt);
 						sndq->deleteCurrent();

@@ -122,7 +122,7 @@ void tUnet::init() {
 	lim_up_cap=8000; //in bytes
 	in_noise=0; //25; //25; //(0-100)
 	out_noise=0; //25; //25; //(0-100)
-	latency=200000; //200000; //500000; //(in usecs)
+	latency=0; //200000; //200000; //500000; //(in usecs)
 	cur_down_quota=0;
 	cur_up_quota=0;
 	quota_check_sec=0;
