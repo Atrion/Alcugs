@@ -76,6 +76,7 @@ void tUnetBase::run() {
 	
 	tNetEvent * evt;
 	tNetSession * u;
+	tUnetMsg * msg;
 	int ret=0;
 	/*
 		0 - non parsed
@@ -130,7 +131,6 @@ void tUnetBase::run() {
 					dmalloc_verify(NULL);
 					log->log("%s New MSG Recieved\n",u->str());
 					u->rcvq->rewind();
-					tUnetMsg * msg;
 					msg=u->rcvq->getNext();
 					while(msg!=NULL && msg->completed!=1)
 						msg=u->rcvq->getNext();
@@ -180,10 +180,24 @@ void tUnetBase::run() {
 			}
 			switch(evt->id) {
 				case UNET_MSGRCV:
-					u->rcvq->clear();
+					u->rcvq->rewind();
+					msg=u->rcvq->getNext();
+					while(msg!=NULL && msg->completed!=1)
+						msg=u->rcvq->getNext();
+					if(msg!=NULL && msg.cmd==NetMsgLeave) {
+						tmLeave msgleave;
+						msg->data->get(msgleave);
+						log->log("<RCV> %s\n",msgleave.str());
+						terminate(evt->sid,true,msgleave.reason);
+						u->rcvq->deleteCurrent();
+					} else {
+						terminate(evt->sid,false,RKickedOff);
+						u->rcvq->clear();
+					}
+					break;
 				case UNET_NEWCONN:
 				case UNET_FLOOD:
-					//terminate(evt->sid,false,RKickedOff);
+					terminate(evt->sid,false,RKickedOff);
 					break;
 				case UNET_TIMEOUT:
 					sec->log("%s Ended\n",u->str());
