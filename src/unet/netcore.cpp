@@ -184,7 +184,7 @@ void tUnetBase::run() {
 					msg=u->rcvq->getNext();
 					while(msg!=NULL && msg->completed!=1)
 						msg=u->rcvq->getNext();
-					if(msg!=NULL && msg.cmd==NetMsgLeave) {
+					if(msg!=NULL && msg->cmd==NetMsgLeave) {
 						tmLeave msgleave;
 						msg->data->get(msgleave);
 						log->log("<RCV> %s\n",msgleave.str());
