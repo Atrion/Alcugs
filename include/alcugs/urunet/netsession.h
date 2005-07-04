@@ -42,7 +42,7 @@ class tUnet;
 typedef Byte tNetSessionFlags;
 
 #define UNetUpgraded 0x01
-
+#define UNetNoConn   0x02
 
 class tNetSession {
 public:
@@ -137,7 +137,8 @@ private:
 	friend class tUnetBase;
 
 public:
-	int whoami; //peer type
+	Byte whoami; //peer type
+	Byte client; //it's a client or a server?
 
 	Byte bussy; //bussy flag (0,1) If this flag is activated, messages are keept in the rcv buffer
 	Byte max_version; //peer major version

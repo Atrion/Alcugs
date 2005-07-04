@@ -78,7 +78,8 @@ typedef U16 tUnetFlags;
 #define UNET_DLCHK    0x0200 /* Dissable chk log */
 #define UNET_DLUNE    0x0400 /* Dissable une log */
 #define UNET_DLSEC    0x0800 /* Dissable sec log */
-
+#define UNET_LQUIET   0x1000 /* Dissable dumping to the console */
+#define UNET_NOCONN   0x2000 /* Non connected server */
 
 #define UNET_DEFAULT_FLAGS UNET_NBLOCK | UNET_ELOG | UNET_ECRC | UNET_AUTOSP | UNET_NOFLOOD | UNET_FLOG | UNET_NETAUTH
 
@@ -104,7 +105,7 @@ public:
 	void destroySession(tNetSessionIte &t);
 	//
 	void setTimer(Byte timer) {
-		this->timer=timer;
+		if(timer!=0) this->timer=timer;
 	}
 private:
 	void init();
@@ -112,6 +113,8 @@ private:
 
 protected:
 	void updatetimer(U32 usecs);
+	tNetSessionIte netConnect(char * hostname,U16 port,Byte validation,Byte flags);
+
 private:
 	void doWork();
 	

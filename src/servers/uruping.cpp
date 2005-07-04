@@ -78,39 +78,118 @@ void parameters_usage() {
 
 class tUnetPing :public tUnetBase {
 public:
-	tUnetPing(char * lhost=NULL,U16 lport=0,Byte listen=0) :tUnetBase(lhost,lport) {
-		this->listen=listen;
-	}
-	virtual void onNewConnection(tNetEvent * ev,tNetSession * u) { 
-		lstd->log("New Connection\n"); 
-	}
+	tUnetPing(char * lhost=NULL,U16 lport=0,Byte listen=0,double time=1,int num=5,int flood=1);
+	virtual ~tUnetPing();
+	virtual void onNewConnection(tNetEvent * ev,tNetSession * u);
 	virtual int onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u);
+	virtual void onConnectionFlood(tNetEvent * ev,tNetSession *u) {
+		ev->Veto();
+	}
+	virtual void onIdle(bool idle);
+	void setSource(Byte s);
+	void setDestination(Byte d);
+	void setDestinationAddress(char * d,U16 port);
+	void setValidation(Byte val);
 private:
 	Byte listen;
+	tLog * out;
+	double time;
+	int num;
+	int flood;
+	Byte destination;
+	char * d_host;
+	U16 d_port;
+	Byte validation;
+	int count;
+	tNetSessionIte dstite;
 };
 
-tUnetPing * netcore=NULL;
-Byte __state_running=1;
+tUnetPing::tUnetPing(char * lhost,U16 lport,Byte listen,double time,int num,int flood) :tUnetBase(lhost,lport) {
+	this->listen=listen;
+	out=lstd;
+	setTimer((U32)time);
+	this->time=time;
+	this->num=num;
+	this->flood=flood;
+	destination=KLobby;
+	d_host=NULL;
+	d_port=5000;
+	count=0;
+	dstite.ip=0;
+	dstite.port=0;
+	dstite.sid=-1;
+	validation=2;
+}
+tUnetPing::~tUnetPing() {
+
+}
+
+void tUnetPing::setSource(Byte s) {
+	whoami=s;
+}
+void tUnetPing::setDestination(Byte d) {
+	destination=d;
+}
+void tUnetPing::setDestinationAddress(char * d,U16 port) {
+	d_host=d;
+	d_port=port;
+}
+void tUnetPing::setValidation(Byte val) {
+	validation=val;
+}
+
+
+void tUnetPing::onNewConnection(tNetEvent * ev,tNetSession * u) {
+	if(listen==0) {
+		//out->log("%s Connection refused\n",u->str());
+		//terminate(ev->sid,true);
+	}
+}
 
 int tUnetPing::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
-
 	int ret=0;
-	
+
 	tmPing ping;
 
 	switch(msg->cmd) {
 		case NetMsgPing:
+			ping.setSource(u);
 			msg->data->get(ping);
-			ping.setReply();
-			u->send(ping);
+			if(listen==0) {
+				//
+			} else {
+				out->log("Ping from %s:%i x=%i dest=%i %s time=%0.3f ms .... pong....\n",\
+				alcGetStrIp(ev->sid.ip),ntohs(ev->sid.port),ping.x,ping.destination,\
+				alcUnetGetDestination(ping.destination),ping.mtime*1000);
+				ping.setReply();
+				u->send(ping);
+			}
 			ret=1;
 			break;
 		default:
-			ret=0;
+			if(listen==0) {
+				ret=1;
+			} else {
+				ret=0;
+			}
 			break;
 	}
 	return ret;
 }
+
+void tUnetPing::onIdle(bool idle) {
+	if(listen==0) {
+
+		if(count==0) {
+			dstite=netConnect(d_host,d_port,validation,0);
+		}
+	
+	}
+}
+
+
+tUnetPing * netcore=NULL;
+Byte __state_running=1;
 
 //handler
 void s_handler(int s) {
@@ -126,14 +205,27 @@ void s_handler(int s) {
 int main(int argc,char * argv[]) {
 
 	int i;
-	U32 l_port=0,port=5000;
-	U32 num=0,flood=0;
-	Byte bcast=0,listen=0,destination=0,source=0,val=2,mrtg=0,loglevel=0;
-	double time=1;
+	
+	Byte loglevel=2;
+	//local settings
 	char l_hostname[100]="0.0.0.0";
+	U16 l_port=0;
+	//remote settings
 	char hostname[100]="";
 	char username[100]="";
 	char avie[100]="";
+	U16 port=5000;
+	
+	Byte val=2; //validation level
+	
+	double time=1; //time
+	Byte destination=KLobby,source=0,admin=0;
+	
+	if (__VTC) admin=1;
+	
+	//options
+	int num=5,flood=1; //num probes & flood multiplier
+	Byte bcast=0,listen=0,mrtg=0,nlogs=0;;
 
 	//parse parameters
 	for (i=1; i<argc; i++) {
@@ -145,7 +237,8 @@ int main(int argc,char * argv[]) {
 		else if(!strcmp(argv[i],"-rp") && argc>i+1) { i++; port=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-b")) { bcast=1; }
 		else if(!strcmp(argv[i],"-lm")) { listen=1; }
-		else if(!strcmp(argv[i],"-nl")) { /*net.flags |= UNET_FLOG | UNET_ELOG;*/ /* enable logging */ }
+		else if(!strcmp(argv[i],"-i_know_what_i_am_doing")) { admin=1; }
+		else if(!strcmp(argv[i],"-nl")) { nlogs=1; }
 		else if(!strcmp(argv[i],"-t") && argc>i+1) { i++; time=atof(argv[i]); }
 		else if(!strcmp(argv[i],"-n") && argc>i+1) { i++; num=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-d") && argc>i+1) { i++; destination=atoi(argv[i]); }
@@ -183,17 +276,66 @@ int main(int argc,char * argv[]) {
 	try {
 	
 		//start Alcugs library
-		alcInit(argc,argv);
+		alcInit(argc,argv,nlogs!=1);
+		alcLogSetLogLevel(loglevel);
 		
 		//special mode
 		if(mrtg==0) {
 			lstd->print(alcVersionText());
 		}
-
-		netcore=new tUnetPing(NULL,5000);
 		
+		if(time<0.2 && (admin==0 || __WTC==0)) {
+			if(__WTC) {
+				printf("\nOnly the administrator can set less than 0.2 seconds\n Setting up to 1 second. (enable admin mode with -i_know_what_i_am_doing)\n");
+			} else {
+				printf("\nTime must be bigger than 0.2 seconds\n Setting up to 1 second.\n");
+			}
+			time=1;
+		}
+		
+		if(flood<=0) flood=1;
+		
+		if(flood>1 && (admin==0 || __WTC==0)) {
+			if(__WTC) {
+				printf("\nOnly the administrator can perform stressing flood tests to the server.\n Dissabling flooding.\n");
+			} else {
+				printf("\nFlood dissabled.\n");
+			}
+			flood=1;
+		}
+		
+		if(mrtg==1) num=1;
+
+		netcore=new tUnetPing(l_hostname,l_port,listen,time,num,flood);
+		
+		netcore->setFlags(UNET_LQUIET);
+		if(nlogs) {
+			netcore->setFlags(UNET_ELOG | UNET_FLOG);
+		} else {
+			netcore->unsetFlags(UNET_ELOG | UNET_FLOG);
+		}
+		if(loglevel!=0) netcore->setFlags(UNET_ELOG);
+		
+		if(bcast) netcore->setFlags(UNET_BCAST);
+		else netcore->unsetFlags(UNET_BCAST);
+
+		while(listen==0 && !strcmp(hostname,"")) {
+			printf("\nHostname not set, please enter destination host: ");
+			strcpy(hostname,alcConsoleAsk());
+		}
+
+		if(listen==0 && mrtg==0) {
+			printf("Connecting to %s#%s@%s:%i...\n",username,avie,hostname,port);
+			printf("Sending ping probe to %i %s...\n",destination,alcUnetGetDestination(destination));
+		}
+
 		alcSignal(SIGTERM, s_handler);
 		alcSignal(SIGINT, s_handler);
+		
+		netcore->setSource(source);
+		netcore->setDestination(destination);
+		netcore->setDestinationAddress(hostname,port);
+		netcore->setValidation(val);
 		
 		netcore->run();
 	
@@ -213,205 +355,14 @@ int main(int argc,char * argv[]) {
 
 
 #if 0
-
-int main(int argc, char * argv[]) {
-
-	int dst,destination=KLobby,source=-1; //default destination
 	int num=5,count=0,rcvn=0; //number of probes
 	double avg=0,min=10000,max=0; //avg latency time
-	int size, off=0; //msg size & offset
-	Byte * msg=NULL; //pointer to the message
-	int listen=0; //listenning mode
-	int mrtg=0; //for MRTG users
-	char bcast=0; //broadcast ping?
-	int flood=1; //flooding multiplier
 	int flooding_wk=1;
-
-	Byte flags=0;
-
+	
 	//time structs - to compute the rtt
-	//struct timeval tv;
-	//time_t timestamp;
 	double startup;
 	double current;
 	double rcv;
-
-
-	plNetInitStruct(&net);
-
-	net.flags &= (~UNET_ELOG & ~UNET_FLOG); //disable logging
-	//if(license_check(stdout,argc,argv)) exit(0);
-
-	//parse parameters
-	for (i=1; i<argc; i++) {
-		if(!strcmp(argv[i],"-h")) { parameters_usage(); return -1; }
-		else if(!strcmp(argv[i],"-V")) {
-			version(stdout);
-			//show_disclaimer();
-			return -1;
-		} else if(!strcmp(argv[i],"-lp") && argc>i+1) { i++; l_port=atoi(argv[i]); }
-		else if(!strcmp(argv[i],"-rp") && argc>i+1) { i++; port=atoi(argv[i]); }
-		else if(!strcmp(argv[i],"-b")) { bcast=1; }
-		else if(!strcmp(argv[i],"-lm")) { listen=1; }
-		else if(!strcmp(argv[i],"-nl")) { net.flags |= UNET_FLOG | UNET_ELOG; /* enable logging */ }
-		else if(!strcmp(argv[i],"-t") && argc>i+1) { i++; time=atof(argv[i]); }
-		else if(!strcmp(argv[i],"-n") && argc>i+1) { i++; num=atoi(argv[i]); }
-		else if(!strcmp(argv[i],"-d") && argc>i+1) { i++; destination=atoi(argv[i]); }
-		else if(!strcmp(argv[i],"-s") && argc>i+1) { i++; source=atoi(argv[i]); }
-		else if(!strcmp(argv[i],"-val") && argc>i+1) { i++; val=atoi(argv[i]); }
-		else if(!strcmp(argv[i],"-f") && argc>i+1) { i++; flood=atoi(argv[i]); }
-		else if(!strcmp(argv[i],"-one")) { mrtg=1; }
-		else if(!strcmp(argv[i],"-v") && argc>i+1) { i++; ret=atoi(argv[i]);
-			//stdebug_config->silent=
-/*			global_verbose_level=(Byte)ret; */
-			switch (ret) {
-				case 0:
-					silent=3;
-					break;
-				case 1:
-					silent=2;
-					break;
-				case 2:
-					silent=1;
-					break;
-				default:
-					silent=0;
-			}
-		}
-		else if(!strcmp(argv[i],"-lh") && argc>i+1) {
-			i++;
-			strcpy(l_hostname,argv[i]);
-		}
-		else if(!strcmp(argv[i],"-l")) {
-			version(stdout);
-			show_bigdisclaimer();
-			exit(0);
-		}
-		else if(!strcmp(argv[i],"-rh") && argc>i+1) {
-			i++;
-			strcpy(hostname,argv[i]);
-		}
-		else {
-			if(i==1) {
-				if(get_host_info(argv[1],hostname,username,((U16 *)&port),avie)!=1) {
-					parameters_usage();
-					return -1;
-				}
-			} else {
-				parameters_usage();
-				return -1;
-			}
-		}
-	}
-
-	//special mode
-	if(mrtg==0) {
-		version(stdout);
-	}
-
-	#if 0
-	if(tm!=0) {
-/*
-		printf("Your OS can't do that, please upgrade your OS to something better!\n Setting up to 1 second.\n");
-		//or someone must write an usleep(x); function for windows ;)
-		tm=0; t=1;
-*/
-		//t=(tm/1000);
-		//tm=tm%1000;
-		t=0;
-	} else {
-		tm=t*1000;
-	}
-
-	if(tm<200 && t<1 && getuid()!=0 && __VTC) {
-		printf("\nOnly the administrator can set less than 0.2 seconds\n Setting up to 1 second.\n");
-		//t=1;
-		tm=1000;
-	}
-	#endif
-
-	if(time<0.2 && __VTC && getuid()!=0) {
-		printf("\nOnly the administrator can set less than 0.2 seconds\n Setting up to 1 second.\n");
-		time=1;
-	}
-
-	if(flood<=0) { flood=1; }
-
-	if(flood>1 && __VTC && getuid()!=0) {
-		printf("\nOnly the administrator can perform stressing flood tests to the server.\n Dissabling flooding.\n");
-		flood=0;
-	}
-
-	if(mrtg==1) {
-		num=1;
-	}
-
-	switch(val) {
-		case 0:
-			flags |=UNET_VAL0;
-			break;
-		case 1:
-			flags |=UNET_VAL1;
-			break;
-		case 2:
-			//default
-			flags |=UNET_VAL2;
-			break;
-		case 3:
-			flags |=UNET_VAL3; // 0x02 | 0x01
-			break;
-		default:
-			printf("\nError: Unimplemented validation level %i requested.\n",val);
-			exit(0);
-	}
-
-	//end params
-	log_init(); //automatically started by the netcore, but the log_shutdown call is mandatory
-	stdebug_config->silent=silent; //log_init() is a must before this call
-	//set other stdebug_config params __here__
-
-	//set other net params here
-	if(bcast==1) { //set broadcast address
-		net.flags |= UNET_BCAST;
-	}
-
-	if(silent!=3) {
-		net.flags |= UNET_ELOG;
-	}
-
-/*
-	int r,f;
-	for(r=0; r<500; r++) {
-		stamp2log(f_uru);
-		lognl(f_uru);
-		for(f=0; f<500000; f++);
-	}
-	abort();
-*/
-
-	while(listen==0 && !strcmp(hostname,"")) {
-		printf("\nHostname not set, please enter destination host: ");
-		strcpy(hostname,ask());
-	}
-
-	if(listen==0 && mrtg==0) {
-		printf("Connecting to %s#%s@%s:%i...\n",username,avie,hostname,port);
-		printf("Sending ping probe to %i %s...\n",destination,unet_get_destination(destination));
-	}
-
-	install_handlers(); /* Set up the signal handlers */
-
-	ret=plNetStartOp(l_port,l_hostname,&net);
-
-	DBG(2,"plNetStartOp res:%i\n",ret);
-
-	if(ret!=UNET_OK) {
-		fprintf(stderr,"Urunet startup failed, with return code n: %i!\n",ret);
-		//#ifdef __WIN32__
-		//MessageBox(NULL,"Urunet startup failed!","unet",MB_ICONERROR);
-		//#endif
-		exit(-1);
-	}
 
 	//set up net params here
 	if(time<2) { //reconfigure netcore time loop

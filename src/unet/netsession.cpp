@@ -71,6 +71,12 @@ void tNetSession::init() {
 	validation=0;
 	authenticated=0;
 	cflags=0; //default flags
+	if(net->flags & UNET_NOCONN) {
+		cflags |= UNetNoConn;
+		bandwidth=(4096*8)*2;
+		cabal=4096;
+		max_cabal=4096;
+	}
 	maxPacketSz=1024;
 	//window settings
 	rcv_win=4*8;
@@ -103,6 +109,7 @@ void tNetSession::init() {
 	tpots=0;
 	proto=0; //alcProtoMIN_VER
 	ki=0;
+	client=1;
 }
 char * tNetSession::str(char how) {
 	static char cnt[1024];
@@ -737,7 +744,7 @@ void tNetSession::doWork() {
 					}
 				} else {
 					//probabilistic drop (of voice, and other non-ack paquets)
-					if(net->net_time-curmsg->timestamp > 2*timeout) {
+					if(net->net_time-curmsg->timestamp > 4*timeout) {
 						//Unacceptable - drop it
 						net->err->log("Dropped a 0x00 packet due to unaceptable msg time %i,%i,%i\n",timeout,net->net_time-curmsg->timestamp,rtt);
 						sndq->deleteCurrent();

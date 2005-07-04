@@ -106,12 +106,12 @@ void tUnet::init() {
 	meta=-1;*/
 
 	//logs
-	log=NULL;
-	err=NULL;
-	unx=NULL;
-	ack=NULL;
-	//chk=NULL;
-	sec=NULL;
+	log=lnull;
+	err=lnull;
+	unx=lnull;
+	ack=lnull;
+	//chk=lnull;
+	sec=lnull;
 	
 	idle=false;
 
@@ -148,7 +148,7 @@ void tUnet::updateNetTime() {
 }
 
 void tUnet::updatetimer(U32 usec) {
-	U32 xmin_th=50;
+	U32 xmin_th=20000;
 	if(usec>=1000000) { throw(txBase(_WHERE(""),true,true)); return; }
 	if(unet_sec) {
 		unet_sec=0;
@@ -190,32 +190,38 @@ void tUnet::neterror(char * msg) {
 void tUnet::_openlogs() {
 	//open unet log files
 	if(this->flags & UNET_ELOG) {
-		if(this->log==NULL) {
-			if(lstd==NULL) {
+		if(this->log==lnull) {
+			if(this->flags & UNET_LQUIET) {
 				this->log=new tLog;
-				this->log->open(NULL,3,DF_STDOUT);
-				lstd=this->log;
+				if(this->flags & UNET_FLOG) {
+					this->log->open("urunet.log",2,0);
+				} else {
+					this->log->open(NULL,2,0);
+				}
 			} else {
 				this->log=lstd;
 			}
 		}
-		if(this->err==NULL) {
-			if(lerr==NULL) {
+		if(this->err==lnull) {
+			if(this->flags & UNET_LQUIET) {
 				this->err=new tLog;
-				this->err->open(NULL,2,DF_STDERR);
-				lerr=this->err;
+				if(this->flags & UNET_FLOG) {
+					this->err->open("uneterr.log",2,0);
+				} else {
+					this->err->open(NULL,2,0);
+				}
 			} else {
 				this->err=lerr;
 			}
 		}
-		if(this->unx==NULL && (this->flags & UNET_FLOG) && !(this->flags & UNET_DLUNE)) {
+		if(this->unx==lnull && (this->flags & UNET_FLOG) && !(this->flags & UNET_DLUNE)) {
 			this->unx=new tLog;
 			this->unx->open("unexpected.log",4,0);
 		} else {
 			this->unx=new tLog;
 			this->unx->open(NULL,4,0);
 		}
-		if(this->ack==NULL && (this->flags & UNET_FLOG) && !(this->flags & UNET_DLACK)) {
+		if(this->ack==lnull && (this->flags & UNET_FLOG) && !(this->flags & UNET_DLACK)) {
 			this->ack=new tLog;
 			this->ack->open("ack.html",4,DF_HTML);
 		} else {
@@ -231,7 +237,7 @@ void tUnet::_openlogs() {
 			this->chk->open(NULL,4,0);
 		}
 #endif
-		if(this->sec==NULL && (this->flags & UNET_FLOG) && !(this->flags & UNET_DLSEC)) {
+		if(this->sec==lnull && (this->flags & UNET_FLOG) && !(this->flags & UNET_DLSEC)) {
 			this->sec=new tLog;
 			this->sec->open("access.log",4,0);
 		} else {
@@ -375,31 +381,74 @@ void tUnet::stopOp() {
 	close(this->sock);
 #endif
 	this->log->log("DBG: Socket clossed\n");
-	if(this->log!=lstd) {
+	if(this->log!=lstd && this->log!=lnull) {
 		this->log->close();
 		delete this->log;
-		this->log=NULL;
+		this->log=lnull;
 	}
-	if(this->err!=lerr) {
+	if(this->err!=lerr && this->log!=lnull) {
 		this->err->close();
 		delete this->err;
-		this->err=NULL;
+		this->err=lnull;
 	}
-	this->ack->close();
-	//this->chk->close();
-	this->unx->close();
-	this->sec->close();
-	delete this->ack;
-	//delete this->chk;
-	delete this->unx;
-	delete this->sec;
-	this->ack=NULL;
-	//this->chk=NULL;
-	this->unx=NULL;
-	this->sec=NULL;
+	if(this->ack!=lnull) {
+		this->ack->close();
+		delete this->ack;
+		this->ack=lnull;
+	}
+	if(this->unx!=lnull) {
+		this->unx->close();
+		delete this->unx;
+		this->unx=lnull;
+	}
+	if(this->sec!=lnull) {
+		this->sec->close();
+		delete this->sec;
+		this->sec=lnull;
+	}
 	initialized=false;
 }
 
+tNetSessionIte tUnet::netConnect(char * hostname,U16 port,Byte validation,Byte flags) {
+	tNetSessionIte ite;
+	
+	struct sockaddr_in client;
+	struct hostent *host;
+	host=gethostbyname(hostname);
+	
+	if(host==NULL) throw txBase(_WHERE("Cannot resolve host: %s",hostname));
+	
+	ite.ip=*(U32 *)host->h_addr_list[0];
+	ite.port=htons(port);
+	ite.sid=-1;
+	
+	tNetSession * u=smgr->search(ite);
+	
+	u->validation=validation;
+	u->cflags |= flags;
+	
+	client.sin_family=AF_INET;
+	client.sin_addr.s_addr=ite.ip;
+	client.sin_port=ite.port;
+	memcpy(u->sock_array,&client,sizeof(struct sockaddr_in));
+	u->a_client_size=sizeof(struct sockaddr_in);
+	
+	u->timestamp.seconds=alcGetTime();
+	u->timestamp.microseconds=alcGetMicroseconds();
+
+	
+	if(!u->cflags & UNetNoConn) {
+		u->nego_stamp=u->timestamp;
+		u->negotiate();
+		u->negotiating=true;
+	} else {
+		u->bandwidth=(4096*8)*2;
+		u->cabal=4096;
+		u->max_cabal=4096;
+	}
+	
+	return ite;
+}
 
 /** Urunet the netcore, does all, it's the heart of the server */
 int tUnet::Recv() {

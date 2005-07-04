@@ -29,7 +29,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_UMSGBASIC_ID "$Id$"
 
-#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
 #include "urunet/unet.h"

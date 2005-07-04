@@ -56,4 +56,9 @@
 // Debugging information attached to messages
 #define _UNET_MSGDBG_
 
+// Check admin?
+#define __VTC 1
+// Enable dangerous testing options
+#define __WTC 1
+
 #endif

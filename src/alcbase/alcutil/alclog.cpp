@@ -52,6 +52,7 @@ namespace alc {
 
 tLog * lstd=NULL;
 tLog * lerr=NULL;
+tLog * lnull=NULL;
 
 typedef struct {
 	//files
@@ -136,6 +137,13 @@ void alcLogSetDefaults() {
 	}
 }
 
+void alcLogSetLogLevel(Byte level) {
+	if(tvLogConfig!=NULL) {
+		if(level>3) level=3;
+		tvLogConfig->silent=((((char)level)*(-1)) + 3);
+	}
+}
+
 void alcLogShutdown(bool silent) {
 	int i;
 	if(lerr!=NULL) {
@@ -147,6 +155,11 @@ void alcLogShutdown(bool silent) {
 		lstd->close(silent);
 		delete lstd;
 		lstd=NULL;
+	}
+	if(lnull!=NULL) {
+		lnull->close(silent);
+		delete lnull;
+		lnull=NULL;
 	}
 	for(i=0; i<tvLogConfig->n_logs; i++) {
 		if(tvLogConfig->logs[i]!=NULL) {
@@ -181,6 +194,10 @@ void alcLogOpenStdLogs(bool shutup) {
 		lstd=new tLog();
 		if(shutup) lstd->open(NULL,2,DF_STDOUT);
 		else lstd->open("uru.log",2,DF_STDOUT);
+	}
+	if(lnull==NULL) {
+		lnull=new tLog();
+		lnull->open(NULL,0,0);
 	}
 }
 
@@ -347,7 +364,7 @@ int tLog::rotate(bool force) {
 
 	DBG(5,"2..\n");
 	
-	if(tvLogConfig->n_files2rotate<=0 || this->level==0) {
+	if(this->name==NULL || tvLogConfig->n_files2rotate<=0 || this->level==0) {
 		return 0;
 	}
 	
@@ -512,6 +529,7 @@ void tLog::print(const char * msg, ...) {
 */
 void tLog::stamp() {
 	static Byte count=0;
+	if(!this->level) return;
 
 	count++;
 	if(count>250) { count=0; this->rotate(false); }
@@ -631,6 +649,7 @@ void tLog::flush() {
 
 
 void tLog::dumpbuf(tBBuf & t, U32 n, U32 e, Byte how) {
+	if(!this->level) return;
 	if(n==0) n=t.size();
 	U32 where=t.tell();
 	t.rewind();
@@ -657,6 +676,8 @@ dsc = File descriptor where the packet will be dumped
 void tLog::dumpbuf(Byte * buf, U32 n, U32 e, Byte how) {
 #ifdef _DEBUG_DUMP_PACKETS
 	unsigned int i=0,j=0,k=0;
+
+	if(!this->level) return;
 
 	if(n>2048) {
 		this->print("MESSAGE of %i bytes TOO BIG TO BE DUMPED!! cutting it\n",n);

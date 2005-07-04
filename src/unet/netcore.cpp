@@ -58,7 +58,7 @@ void tUnetBase::terminate(tNetSessionIte & who,bool silent,Byte reason) {
 	//tNetEvent * ev=new tNetEvent(who,UNET_CLOSSING);
 	tNetSession * u=getSession(who);
 	//onConnectionClossing(ev);
-	if(!silent) {
+	if(!silent && u->client==1) {
 		tmTerminated * terminated=new tmTerminated(u,u->ki,reason,true);
 		u->send(*terminated);
 		delete terminated;
@@ -68,6 +68,14 @@ void tUnetBase::terminate(tNetSessionIte & who,bool silent,Byte reason) {
 	u->setTimeout(3);
 	u->timestamp.seconds=alcGetTime();
 	//delete ev;
+}
+
+void tUnetBase::leave(tNetSessionIte & who,Byte reason) {
+	tNetSession * u=getSession(who);
+	tmLeave * leave=new tmLeave(u,u->ki,reason);
+	u->send(*leave);
+	delete leave;
+	terminate(who,true,reason);
 }
 
 //Blocks
@@ -128,7 +136,7 @@ void tUnetBase::run() {
 					}
 					break;
 				case UNET_MSGRCV:
-					dmalloc_verify(NULL);
+					//dmalloc_verify(NULL);
 					log->log("%s New MSG Recieved\n",u->str());
 					u->rcvq->rewind();
 					msg=u->rcvq->getNext();
@@ -139,13 +147,23 @@ void tUnetBase::run() {
 					if(ret==0) {
 						ret=onMsgRecieved(evt,msg,u);
 					}
-					if(ret==0 || ret==-1) {
-						err->log("%s Kicked off due to a parse error in a previus message\n",u->str());
-						terminate(evt->sid,false,RKickedOff);
-					}
-					if(ret==-2) {
-						sec->log("%s Kicked off due to cracking\n",u->str());
-						terminate(evt->sid,false,RKickedOff);
+					if(u->client==1) {
+						if(ret==0) {
+							err->log("%s Unexpected message %04X (%s)\n",u->str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
+							terminate(evt->sid,false,RKickedOff);
+						}
+						else if(ret==-1) {
+							err->log("%s Kicked off due to a parse error in a previus message %04X (%s)\n",u->str());
+							terminate(evt->sid,false,RKickedOff);
+						}
+						if(ret==-2) {
+							sec->log("%s Kicked off due to cracking %04 (%s)\n",u->str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
+							terminate(evt->sid,false,RKickedOff);
+						}
+					} else {
+						if(ret!=1) {
+							err->log("%s Error code %i parsing message %04X (%s)\n",u->str(),ret,msg->cmd,alcUnetGetMsgCode(msg->cmd));
+						}
 					}
 					u->rcvq->deleteCurrent();
 					break;
@@ -156,6 +174,7 @@ void tUnetBase::run() {
 			
 			delete evt;
 		}
+		onIdle(idle);
 
 	}
 	//terminating the service
@@ -164,7 +183,11 @@ void tUnetBase::run() {
 	smgr->rewind();
 	while((u=smgr->getNext())) {
 		ite=u->getIte();
-		terminate(ite,false,RKickedOff);
+		if(u->client) {
+			terminate(ite,false,RKickedOff);
+		} else {
+			leave(ite,RQuitting);
+		}
 	}
 	
 	U32 startup=getTime();
@@ -224,7 +247,9 @@ void tUnetBase::run() {
 		}
 	}
 	
+	log->log("INF: Service sanely terminated\n");
 	stopOp();
+
 }
 
 int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
@@ -232,13 +257,26 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
 	int ret=0;
 	
 	tmLeave msgleave;
+	tmTerminated msgterminated;
 
 	switch(msg->cmd) {
 		case NetMsgLeave:
+			ret=1;
+			if(u->client==0) break;
 			msg->data->get(msgleave);
 			log->log("<RCV> %s\n",msgleave.str());
+			ev->id=UNET_TERMINATED;
+			onLeave(ev,msgleave.reason,u);
 			terminate(ev->sid,true,msgleave.reason);
+			break;
+		case NetMsgTerminated:
 			ret=1;
+			if(u->client==1) break;
+			msg->data->get(msgterminated);
+			log->log("<RCV> %s\n",msgterminated.str());
+			ev->id=UNET_TERMINATED;
+			onTerminated(ev,msgterminated.reason,u);
+			terminate(ev->sid,true,msgterminated.reason);
 			break;
 		default:
 			ret=0;

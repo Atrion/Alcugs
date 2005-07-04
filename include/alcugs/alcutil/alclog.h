@@ -109,6 +109,7 @@ private:
 //basic log subsystems
 extern tLog * lerr;
 extern tLog * lstd;
+extern tLog * lnull;
 
 void alcLogInit();
 void alcLogShutdown(bool silent=false);
@@ -116,6 +117,8 @@ void alcLogShutdown(bool silent=false);
 void alcLogSetDefaults();
 
 void alcLogOpenStdLogs(bool shutup=false);
+
+void alcLogSetLogLevel(Byte level);
 
 char * alcHtmlGenerateHead(char * title,char * powered);
 
