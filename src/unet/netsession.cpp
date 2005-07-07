@@ -235,6 +235,11 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		negotiating=false;
 	}
 	//How do you say "Cabal" in English?
+	
+	//Protocol Upgrade
+	if(msg.tf & UNetExt) {
+		cflags |= UNetUpgraded;
+	}
 
 	/* //Avoid sending ack for messages out of the window
 	if(msg.tf & 0x02) {

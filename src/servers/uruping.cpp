@@ -86,6 +86,7 @@ public:
 		ev->Veto();
 	}
 	virtual void onIdle(bool idle);
+	virtual void onStop();
 	void setSource(Byte s);
 	void setDestination(Byte d);
 	void setDestinationAddress(char * d,U16 port);
@@ -102,12 +103,18 @@ private:
 	Byte validation;
 	int count;
 	tNetSessionIte dstite;
+	double current;
+	double startup;
+	double rcv;
+	double min,max,avg;
+	int rcvn;
 };
 
 tUnetPing::tUnetPing(char * lhost,U16 lport,Byte listen,double time,int num,int flood) :tUnetBase(lhost,lport) {
 	this->listen=listen;
 	out=lstd;
-	setTimer((U32)time);
+	setTimer(1);
+	updatetimer(1000);
 	this->time=time;
 	this->num=num;
 	this->flood=flood;
@@ -119,6 +126,10 @@ tUnetPing::tUnetPing(char * lhost,U16 lport,Byte listen,double time,int num,int 
 	dstite.port=0;
 	dstite.sid=-1;
 	validation=2;
+	min=10000;
+	max=0;
+	avg=0;
+	rcvn=0;
 }
 tUnetPing::~tUnetPing() {
 
@@ -138,6 +149,14 @@ void tUnetPing::setValidation(Byte val) {
 	validation=val;
 }
 
+void tUnetPing::onStop() {
+	if(listen==0) {
+		count=flood*count;
+		out->print("\nStats:\nrecieved %i packets of %i sent, %i%% packet loss, time: %0.3f ms\n",\
+		rcvn,count,(100-((rcvn*100)/count)),(current-startup)*1000);
+		out->print("min/avg/max times = %0.3f/%0.3f/%0.3f\n",min*1000,(avg/rcvn)*1000,max*1000);
+	}
+}
 
 void tUnetPing::onNewConnection(tNetEvent * ev,tNetSession * u) {
 	if(listen==0) {
@@ -156,7 +175,17 @@ int tUnetPing::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
 			ping.setSource(u);
 			msg->data->get(ping);
 			if(listen==0) {
-				//
+				if(dstite==ev->sid) {
+					current=alcGetCurrentTime();
+					rcv=current-ping.mtime;
+					out->log("Pong from %s:%i x=%i dest=%i %s time=%0.3f ms\n",\
+					alcGetStrIp(ev->sid.ip),ntohs(ev->sid.port),ping.x,ping.destination,\
+					alcUnetGetDestination(ping.destination),rcv*1000);
+					rcvn++;
+					avg+=rcv;
+					if(rcv<min) min=rcv;
+					if(rcv>max) max=rcv;
+				}
 			} else {
 				out->log("Ping from %s:%i x=%i dest=%i %s time=%0.3f ms .... pong....\n",\
 				alcGetStrIp(ev->sid.ip),ntohs(ev->sid.port),ping.x,ping.destination,\
@@ -178,12 +207,42 @@ int tUnetPing::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
 }
 
 void tUnetPing::onIdle(bool idle) {
+	int i;
 	if(listen==0) {
 
+		updatetimer(100);
 		if(count==0) {
 			dstite=netConnect(d_host,d_port,validation,0);
+			current=startup=alcGetCurrentTime();
 		}
-	
+
+		tNetSession * u=NULL;
+		u=getSession(dstite);
+		if(u==NULL) {
+			stop();
+			return;
+		}
+
+		rcv=alcGetCurrentTime();
+		if((rcv-current)>time || count==0) {
+			if(count<num || num==0 || count==0) {
+				//snd ping message
+				tmPing ping;
+				ping.destination=destination;
+				ping.setDestination(u);
+				ping.setFlags(plNetTimestamp);
+
+				count++;
+				for(i=0; i<flood; i++) {
+					ping.x = (flood * (count-1)) + i;
+					current = alcGetCurrentTime(),
+					ping.mtime = current;
+					u->send(ping);
+				}
+			} else if((rcv-current) > (4*time) || (u && (rcv-current) > ((u->getRTT()+(u->getRTT()/2))/1000000))) {
+				stop();
+			}
+		}
 	}
 }
 

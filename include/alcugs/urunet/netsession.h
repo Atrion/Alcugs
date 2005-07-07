@@ -57,6 +57,7 @@ public:
 	Byte getPeerType() { return whoami; }
 	void send(tmMsgBase & t);
 	tNetSessionIte getIte();
+	U32 getRTT() { return rtt; }
 private:
 	void init();
 	void processMsg(Byte * buf,int size);

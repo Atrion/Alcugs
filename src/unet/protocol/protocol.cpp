@@ -412,7 +412,7 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
 			log->print("aack");
 			for(i=0; i<(int)dsize; i++) {
 				if(i!=0) { log->print(" |"); }
-				log->print(" %i,%i %i,%i",*(Byte *)((buf)+i*0x08),*(U32 *)((buf+1)+i*0x08),*(Byte *)((buf+4)+i*0x08),*(U32 *)((buf+1+4)+i*0x08));
+				log->print(" %i,%i %i,%i",*(Byte *)((buf)+i*0x08),(*(U32 *)((buf+1)+i*0x08)) & 0x00FFFFFF,*(Byte *)((buf+4)+i*0x08),(*(U32 *)((buf+1+4)+i*0x08)) & 0x00FFFFFF);
 			}
 			break;
 		case UNetNegotiation | UNetAckReq: //0x42

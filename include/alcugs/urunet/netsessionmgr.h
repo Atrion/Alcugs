@@ -48,6 +48,9 @@ public:
 		this->port=port;
 		this->sid=sid;
 	}
+	bool operator==(tNetSessionIte &t) {
+		return(ip==t.ip && port==t.port);
+	}
 };
 
 class tNetSessionMgr {

@@ -148,7 +148,7 @@ void tUnet::updateNetTime() {
 }
 
 void tUnet::updatetimer(U32 usec) {
-	U32 xmin_th=20000;
+	U32 xmin_th=500;
 	if(usec>=1000000) { throw(txBase(_WHERE(""),true,true)); return; }
 	if(unet_sec) {
 		unet_sec=0;
@@ -427,6 +427,11 @@ tNetSessionIte tUnet::netConnect(char * hostname,U16 port,Byte validation,Byte f
 	u->validation=validation;
 	u->cflags |= flags;
 	
+	if(validation>=3) {
+		u->validation=0;
+		u->cflags |= UNetUpgraded;
+	}
+	
 	client.sin_family=AF_INET;
 	client.sin_addr.s_addr=ite.ip;
 	client.sin_port=ite.port;
@@ -435,12 +440,16 @@ tNetSessionIte tUnet::netConnect(char * hostname,U16 port,Byte validation,Byte f
 	
 	u->timestamp.seconds=alcGetTime();
 	u->timestamp.microseconds=alcGetMicroseconds();
-
+	u->client=0;
 	
-	if(!u->cflags & UNetNoConn) {
+	u->max_version=max_version;
+	u->min_version=min_version;
+	u->proto=alcProtoMIN_VER;
+	
+	if(!(u->cflags & UNetNoConn)) {
 		u->nego_stamp=u->timestamp;
-		u->negotiate();
 		u->negotiating=true;
+		u->negotiate();
 	} else {
 		u->bandwidth=(4096*8)*2;
 		u->cabal=4096;

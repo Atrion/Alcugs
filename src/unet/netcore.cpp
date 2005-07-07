@@ -247,6 +247,8 @@ void tUnetBase::run() {
 		}
 	}
 	
+	onStop();
+	
 	log->log("INF: Service sanely terminated\n");
 	stopOp();
 

@@ -57,8 +57,8 @@
 #define _UNET_MSGDBG_
 
 // Check admin?
-#define __VTC 1
+#define __VTC 0
 // Enable dangerous testing options
-#define __WTC 1
+#define __WTC 0
 
 #endif
