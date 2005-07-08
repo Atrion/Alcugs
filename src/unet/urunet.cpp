@@ -745,7 +745,7 @@ void tUnet::basesend(tNetSession * u,tmBase &msg) {
 		pmsg->timestamp=net_time;
 
 		pmsg->timestamp+=tts;
-		tts=u->computetts(csize+hsize+ip_overhead);
+		tts+=u->computetts(csize+hsize+ip_overhead);
 		
 		#ifdef _UNET_DBG_
 		pmsg->timestamp+=latency;
@@ -757,6 +757,8 @@ void tUnet::basesend(tNetSession * u,tmBase &msg) {
 		if(flags & UNetUrgent) {
 			rawsend(u,pmsg);
 			if(flags & 0x02) {
+				pmsg->snd_timestamp=net_time;
+				pmsg->timestamp+=rtt;
 				u->sndq->add(pmsg);
 			}
 		} else {
