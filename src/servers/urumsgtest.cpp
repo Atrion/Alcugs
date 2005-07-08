@@ -23,7 +23,6 @@
 *                                                                              *
 *                                                                              *
 *******************************************************************************/
-
 #define _DBG_LEVEL_ 10
 
 #include<alcugs.h>
@@ -31,7 +30,7 @@
 //Program vars
 const char * alcXID = "$Id$";
 const char * alcXBUILD =  __DATE__ " " __TIME__;
-const char * alcXSNAME = "UruPing";
+const char * alcXSNAME = "UruTestingSuit";
 const char * alcXVERSION = alcSTR_VER;
 
 #include<urunet/unet.h>
@@ -43,12 +42,10 @@ using namespace alc;
 
 void parameters_usage() {
 	printf(alcVersionText());
-	printf("Usage: uruping server:port [options]\n\n\
+	printf("Usage: urumsgtest peer:port [options]\n\n\
+ -file x: Set the file to upload\n\
  -val x: set validation level (0-3) (default 2)\n\
  -nl: enable netcore logs\n\
- -t x: set the sleep time in seconds\n\
- -f x: Flooding multiplier\n\
- -n x: set the number of proves, 0=infinite (CTR+C stops), 5 if not set\n\
  -V: show version and end\n\
  -h: Show short help and end\n\
  -v x: Set the verbose level\n\
@@ -57,39 +54,44 @@ void parameters_usage() {
  -lh x: Set the local host\n\
  -rh x: Set the remote host\n\
  -lm: Set listenning mode\n\
- -one: Does only one ping probe and displays that value\n\
- -b: Pings to the broadcast\n\
- -d x: Set the destination.\n\
- -s x: Set the source.\n\
- -u:   Set Urgent flag.\n\
- Valid source/destination addresses are:\n\
-  [1]   Agent\n\
-  [2]   Lobby\n\
-  [3]   Game\n\
-  [4]   Vault\n\
-  [5]   Auth\n\
-  [6]   Admin\n\
-  [7]   Tracking/Lookup\n\
-  [8]   Client\n\
-  [9]   Meta\n\
-  [10]  Test\n\
-  [11]  Data\n\
-  [255] Broadcast\n\n");
+ -u:   Set Urgent flag.\n\n");
 }
 
-class tUnetPing :public tUnetBase {
+class tmData :public tmMsgBase {
 public:
-	tUnetPing(char * lhost=NULL,U16 lport=0,Byte listen=0,double time=1,int num=5,int flood=1);
-	virtual ~tUnetPing();
-	virtual void onNewConnection(tNetEvent * ev,tNetSession * u);
+	virtual void store(tBBuf &t);
+	virtual int stream(tBBuf &t);
+	tmData(tNetSession * u=NULL);
+	//format
+	tMBuf data;
+};
+
+tmData::tmData(tNetSession * u)
+ :tmMsgBase(0x1313,plNetTimestamp | plNetAck,u) {}
+void tmData::store(tBBuf &t) {
+	tmMsgBase::store(t);
+	data.clear();
+	t.get(data);
+}
+int tmData::stream(tBBuf &t) {
+	int off;
+	off=tmMsgBase::stream(t);
+	t.put(data);
+	off+=data.size();
+	return off;
+}
+
+
+
+class tUnetSimpleFileServer :public tUnetBase {
+public:
+	tUnetSimpleFileServer(char * lhost=NULL,U16 lport=0,Byte listen=0);
+	virtual ~tUnetSimpleFileServer();
 	virtual int onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u);
 	virtual void onConnectionFlood(tNetEvent * ev,tNetSession *u) {
 		ev->Veto();
 	}
-	virtual void onIdle(bool idle);
-	virtual void onStop();
-	void setSource(Byte s);
-	void setDestination(Byte d);
+	virtual void onStart();
 	void setDestinationAddress(char * d,U16 port);
 	void setValidation(Byte val);
 	void setUrgent() {
@@ -98,108 +100,47 @@ public:
 private:
 	Byte listen;
 	tLog * out;
-	double time;
-	int num;
-	int flood;
-	Byte destination;
 	char * d_host;
 	U16 d_port;
 	Byte validation;
-	int count;
-	tNetSessionIte dstite;
-	double current;
-	double startup;
-	double rcv;
-	double min,max,avg;
-	int rcvn;
 	bool urgent;
 };
 
-tUnetPing::tUnetPing(char * lhost,U16 lport,Byte listen,double time,int num,int flood) :tUnetBase(lhost,lport) {
+tUnetSimpleFileServer::tUnetSimpleFileServer(char * lhost,U16 lport,Byte listen) :tUnetBase(lhost,lport) {
 	this->listen=listen;
 	out=lstd;
 	setTimer(1);
 	updatetimer(1000);
-	this->time=time;
-	this->num=num;
-	this->flood=flood;
-	destination=KLobby;
 	d_host=NULL;
 	d_port=5000;
-	count=0;
-	dstite.ip=0;
-	dstite.port=0;
-	dstite.sid=-1;
 	validation=2;
-	min=10000;
-	max=0;
-	avg=0;
-	rcvn=0;
 	urgent=false;
 }
-tUnetPing::~tUnetPing() {
+tUnetSimpleFileServer::~tUnetSimpleFileServer() {
 
 }
 
-void tUnetPing::setSource(Byte s) {
-	whoami=s;
-}
-void tUnetPing::setDestination(Byte d) {
-	destination=d;
-}
-void tUnetPing::setDestinationAddress(char * d,U16 port) {
+void tUnetSimpleFileServer::setDestinationAddress(char * d,U16 port) {
 	d_host=d;
 	d_port=port;
 }
-void tUnetPing::setValidation(Byte val) {
+void tUnetSimpleFileServer::setValidation(Byte val) {
 	validation=val;
 }
 
-void tUnetPing::onStop() {
+void tUnetSimpleFileServer::onStart() {
 	if(listen==0) {
-		count=flood*count;
-		out->print("\nStats:\nrecieved %i packets of %i sent, %i%% packet loss, time: %0.3f ms\n",\
-		rcvn,count,(100-((rcvn*100)/count)),(current-startup)*1000);
-		out->print("min/avg/max times = %0.3f/%0.3f/%0.3f\n",min*1000,(avg/rcvn)*1000,max*1000);
+
 	}
 }
 
-void tUnetPing::onNewConnection(tNetEvent * ev,tNetSession * u) {
-	if(listen==0) {
-		//out->log("%s Connection refused\n",u->str());
-		//terminate(ev->sid,true);
-	}
-}
-
-int tUnetPing::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
+int tUnetSimpleFileServer::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
 	int ret=0;
 
 	tmPing ping;
 
 	switch(msg->cmd) {
-		case NetMsgPing:
-			ping.setSource(u);
-			msg->data->get(ping);
-			if(listen==0) {
-				if(dstite==ev->sid) {
-					current=alcGetCurrentTime();
-					rcv=current-ping.mtime;
-					out->log("Pong from %s:%i x=%i dest=%i %s time=%0.3f ms\n",\
-					alcGetStrIp(ev->sid.ip),ntohs(ev->sid.port),ping.x,ping.destination,\
-					alcUnetGetDestination(ping.destination),rcv*1000);
-					rcvn++;
-					avg+=rcv;
-					if(rcv<min) min=rcv;
-					if(rcv>max) max=rcv;
-				}
-			} else {
-				out->log("Ping from %s:%i x=%i dest=%i %s time=%0.3f ms .... pong....\n",\
-				alcGetStrIp(ev->sid.ip),ntohs(ev->sid.port),ping.x,ping.destination,\
-				alcUnetGetDestination(ping.destination),ping.mtime*1000);
-				ping.setReply();
-				if(urgent) ping.setUrgent();
-				u->send(ping);
-			}
+		case 0x1313:
 			ret=1;
 			break;
 		default:
@@ -213,49 +154,7 @@ int tUnetPing::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
 	return ret;
 }
 
-void tUnetPing::onIdle(bool idle) {
-	int i;
-	if(listen==0) {
-
-		updatetimer(100);
-		if(count==0) {
-			dstite=netConnect(d_host,d_port,validation,0);
-			current=startup=alcGetCurrentTime();
-		}
-
-		tNetSession * u=NULL;
-		u=getSession(dstite);
-		if(u==NULL) {
-			stop();
-			return;
-		}
-
-		rcv=alcGetCurrentTime();
-		if((rcv-current)>time || count==0) {
-			if(count<num || num==0 || count==0) {
-				//snd ping message
-				tmPing ping;
-				ping.destination=destination;
-				ping.setDestination(u);
-				ping.setFlags(plNetTimestamp);
-				if(urgent) ping.setUrgent();
-
-				count++;
-				for(i=0; i<flood; i++) {
-					ping.x = (flood * (count-1)) + i;
-					current = alcGetCurrentTime(),
-					ping.mtime = current;
-					u->send(ping);
-				}
-			} else if((rcv-current) > (4*time) || (u && (rcv-current) > ((u->getRTT()+(u->getRTT()/2))/1000000))) {
-				stop();
-			}
-		}
-	}
-}
-
-
-tUnetPing * netcore=NULL;
+tUnetSimpleFileServer * netcore=NULL;
 Byte __state_running=1;
 
 //handler
@@ -283,16 +182,12 @@ int main(int argc,char * argv[]) {
 	char avie[100]="";
 	U16 port=5000;
 	
+	char file[500];
+	
 	Byte val=2; //validation level
 	
-	double time=1; //time
-	Byte destination=KLobby,source=0,admin=0;
-	
-	if (__VTC) admin=1;
-	
 	//options
-	int num=5,flood=1; //num probes & flood multiplier
-	Byte bcast=0,listen=0,mrtg=0,nlogs=0,urgent=0;
+	Byte listen=0,nlogs=0,urgent=0;
 
 	//parse parameters
 	for (i=1; i<argc; i++) {
@@ -302,17 +197,10 @@ int main(int argc,char * argv[]) {
 			return -1;
 		} else if(!strcmp(argv[i],"-lp") && argc>i+1) { i++; l_port=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-rp") && argc>i+1) { i++; port=atoi(argv[i]); }
-		else if(!strcmp(argv[i],"-b")) { bcast=1; }
+		else if(!strcmp(argv[i],"-f") && argc>i+1) { i++; strcpy(file,argv[i]); }
 		else if(!strcmp(argv[i],"-lm")) { listen=1; }
-		else if(!strcmp(argv[i],"-i_know_what_i_am_doing")) { admin=1; }
 		else if(!strcmp(argv[i],"-nl")) { nlogs=1; }
-		else if(!strcmp(argv[i],"-t") && argc>i+1) { i++; time=atof(argv[i]); }
-		else if(!strcmp(argv[i],"-n") && argc>i+1) { i++; num=atoi(argv[i]); }
-		else if(!strcmp(argv[i],"-d") && argc>i+1) { i++; destination=atoi(argv[i]); }
-		else if(!strcmp(argv[i],"-s") && argc>i+1) { i++; source=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-val") && argc>i+1) { i++; val=atoi(argv[i]); }
-		else if(!strcmp(argv[i],"-f") && argc>i+1) { i++; flood=atoi(argv[i]); }
-		else if(!strcmp(argv[i],"-one")) { mrtg=1; }
 		else if(!strcmp(argv[i],"-u")) { urgent=1; }
 		else if(!strcmp(argv[i],"-v") && argc>i+1) { i++; loglevel=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-lh") && argc>i+1) {
@@ -347,34 +235,9 @@ int main(int argc,char * argv[]) {
 		alcInit(argc,argv,nlogs!=1);
 		alcLogSetLogLevel(loglevel);
 		
-		//special mode
-		if(mrtg==0) {
-			lstd->print(alcVersionText());
-		}
-		
-		if(time<0.2 && (admin==0 || __WTC==0)) {
-			if(__WTC) {
-				printf("\nOnly the administrator can set less than 0.2 seconds\n Setting up to 1 second. (enable admin mode with -i_know_what_i_am_doing)\n");
-			} else {
-				printf("\nTime must be bigger than 0.2 seconds\n Setting up to 1 second.\n");
-			}
-			time=1;
-		}
-		
-		if(flood<=0) flood=1;
-		
-		if(flood>1 && (admin==0 || __WTC==0)) {
-			if(__WTC) {
-				printf("\nOnly the administrator can perform stressing flood tests to the server.\n Dissabling flooding.\n");
-			} else {
-				printf("\nFlood dissabled.\n");
-			}
-			flood=1;
-		}
-		
-		if(mrtg==1) num=1;
+		lstd->print(alcVersionText());
 
-		netcore=new tUnetPing(l_hostname,l_port,listen,time,num,flood);
+		netcore=new tUnetSimpleFileServer(l_hostname,l_port,listen);
 		
 		netcore->setFlags(UNET_LQUIET);
 		if(nlogs) {
@@ -383,36 +246,35 @@ int main(int argc,char * argv[]) {
 			netcore->unsetFlags(UNET_ELOG | UNET_FLOG);
 		}
 		if(loglevel!=0) netcore->setFlags(UNET_ELOG);
-		
-		if(bcast) netcore->setFlags(UNET_BCAST);
-		else netcore->unsetFlags(UNET_BCAST);
 
 		while(listen==0 && !strcmp(hostname,"")) {
 			printf("\nHostname not set, please enter destination host: ");
 			strcpy(hostname,alcConsoleAsk());
 		}
 
-		if(listen==0 && mrtg==0) {
-			printf("Connecting to %s#%s@%s:%i...\n",username,avie,hostname,port);
-			printf("Sending ping probe to %i %s...\n",destination,alcUnetGetDestination(destination));
+		if(listen==0 && !strcmp(file,"")) {
+			printf("No input file specified!\n");
+			exit(0);
 		}
-		if(listen!=0) {
+		
+		if(listen==0) {
+			printf("Connecting to %s#%s@%s:%i...\n",username,avie,hostname,port);
+			printf("Sending file...\n");
+		} else {
 			printf("Waiting for messages... CTR+C stops\n");
 		}
 
 		alcSignal(SIGTERM, s_handler);
 		alcSignal(SIGINT, s_handler);
-		
-		netcore->setSource(source);
-		netcore->setDestination(destination);
-		netcore->setDestinationAddress(hostname,port);
+
 		netcore->setValidation(val);
+		netcore->setDestinationAddress(hostname,port);
 		if(urgent==1) netcore->setUrgent();
 		
 		netcore->run();
 	
 		delete netcore;
-	
+
 		//stop Alcugs library (optional, not required)
 		//alcShutdown();
 		

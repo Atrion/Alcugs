@@ -93,6 +93,7 @@ void tUnetBase::run() {
 		-2 - parse error
 	*/
 
+	onStart();
 	while(state_running) {
 		Recv();
 		

@@ -54,6 +54,7 @@ public:
 	virtual void onConnectionTimeout(tNetEvent * ev,tNetSession * u) {}
 	virtual void onIdle(bool idle=false) {}
 	virtual void onStop() {}
+	virtual void onStart() {}
 	//virtual void onConnectionClossing(tNetEvent * ev) {}
 private:
 	int parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u);
