@@ -97,6 +97,9 @@ public:
 	void setUrgent() {
 		urgent=true;
 	}
+	void setFile(char * file) {
+		strcpy(this->file,file);
+	}
 private:
 	Byte listen;
 	tLog * out;
@@ -104,6 +107,7 @@ private:
 	U16 d_port;
 	Byte validation;
 	bool urgent;
+	char file[500];
 };
 
 tUnetSimpleFileServer::tUnetSimpleFileServer(char * lhost,U16 lport,Byte listen) :tUnetBase(lhost,lport) {
@@ -130,17 +134,41 @@ void tUnetSimpleFileServer::setValidation(Byte val) {
 
 void tUnetSimpleFileServer::onStart() {
 	if(listen==0) {
-
+		tmData data;
+		tNetSessionIte dstite;
+		dstite=netConnect(d_host,d_port,validation,0);
+		tNetSession * u=NULL;
+		u=getSession(dstite);
+		if(u==NULL) {
+			stop();
+			return;
+		}
+		data.setDestination(u);
+		if(urgent) data.setUrgent();
+		tFBuf f1;
+		f1.open(file);
+		data.data.clear();
+		data.data.put(f1);
+		f1.close();
+		u->send(data);
 	}
 }
 
 int tUnetSimpleFileServer::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
 	int ret=0;
 
-	tmPing ping;
+	tmData data;
 
 	switch(msg->cmd) {
 		case 0x1313:
+			if(listen!=0) {
+				tmData data;
+				msg->data->get(data);
+				tFBuf f1;
+				f1.open("rcvmsg.raw","wb");
+				f1.put(data.data);
+				f1.close();
+			}
 			ret=1;
 			break;
 		default:
@@ -183,6 +211,7 @@ int main(int argc,char * argv[]) {
 	U16 port=5000;
 	
 	char file[500];
+	memset(file,0,500);
 	
 	Byte val=2; //validation level
 	
@@ -270,6 +299,7 @@ int main(int argc,char * argv[]) {
 		netcore->setValidation(val);
 		netcore->setDestinationAddress(hostname,port);
 		if(urgent==1) netcore->setUrgent();
+		netcore->setFile(file);
 		
 		netcore->run();
 	
