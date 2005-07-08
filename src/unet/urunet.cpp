@@ -758,7 +758,7 @@ void tUnet::basesend(tNetSession * u,tmBase &msg) {
 			rawsend(u,pmsg);
 			if(flags & 0x02) {
 				pmsg->snd_timestamp=net_time;
-				pmsg->timestamp+=rtt;
+				pmsg->timestamp+=u->rtt;
 				u->sndq->add(pmsg);
 			}
 		} else {
