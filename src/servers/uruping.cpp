@@ -61,6 +61,7 @@ void parameters_usage() {
  -b: Pings to the broadcast\n\
  -d x: Set the destination.\n\
  -s x: Set the source.\n\
+ -u:   Set Urgent flag.\n\
  Valid source/destination addresses are:\n\
   [1]   Agent\n\
   [2]   Lobby\n\
@@ -91,6 +92,9 @@ public:
 	void setDestination(Byte d);
 	void setDestinationAddress(char * d,U16 port);
 	void setValidation(Byte val);
+	void setUrgent() {
+		urgent=true;
+	}
 private:
 	Byte listen;
 	tLog * out;
@@ -108,6 +112,7 @@ private:
 	double rcv;
 	double min,max,avg;
 	int rcvn;
+	bool urgent;
 };
 
 tUnetPing::tUnetPing(char * lhost,U16 lport,Byte listen,double time,int num,int flood) :tUnetBase(lhost,lport) {
@@ -130,6 +135,7 @@ tUnetPing::tUnetPing(char * lhost,U16 lport,Byte listen,double time,int num,int 
 	max=0;
 	avg=0;
 	rcvn=0;
+	urgent=false;
 }
 tUnetPing::~tUnetPing() {
 
@@ -191,6 +197,7 @@ int tUnetPing::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
 				alcGetStrIp(ev->sid.ip),ntohs(ev->sid.port),ping.x,ping.destination,\
 				alcUnetGetDestination(ping.destination),ping.mtime*1000);
 				ping.setReply();
+				if(urgent) ping.setUrgent();
 				u->send(ping);
 			}
 			ret=1;
@@ -231,6 +238,7 @@ void tUnetPing::onIdle(bool idle) {
 				ping.destination=destination;
 				ping.setDestination(u);
 				ping.setFlags(plNetTimestamp);
+				if(urgent) ping.setUrgent();
 
 				count++;
 				for(i=0; i<flood; i++) {
@@ -284,7 +292,7 @@ int main(int argc,char * argv[]) {
 	
 	//options
 	int num=5,flood=1; //num probes & flood multiplier
-	Byte bcast=0,listen=0,mrtg=0,nlogs=0;;
+	Byte bcast=0,listen=0,mrtg=0,nlogs=0,urgent=0;
 
 	//parse parameters
 	for (i=1; i<argc; i++) {
@@ -305,6 +313,7 @@ int main(int argc,char * argv[]) {
 		else if(!strcmp(argv[i],"-val") && argc>i+1) { i++; val=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-f") && argc>i+1) { i++; flood=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-one")) { mrtg=1; }
+		else if(!strcmp(argv[i],"-u")) { urgent=1; }
 		else if(!strcmp(argv[i],"-v") && argc>i+1) { i++; loglevel=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-lh") && argc>i+1) {
 			i++;
@@ -395,6 +404,7 @@ int main(int argc,char * argv[]) {
 		netcore->setDestination(destination);
 		netcore->setDestinationAddress(hostname,port);
 		netcore->setValidation(val);
+		if(urgent==1) netcore->setUrgent();
 		
 		netcore->run();
 	

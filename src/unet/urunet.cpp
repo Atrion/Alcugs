@@ -753,8 +753,16 @@ void tUnet::basesend(tNetSession * u,tmBase &msg) {
 		
 		pmsg->snd_timestamp=pmsg->timestamp;
 		
-		//put pmsg to the qeue
-		u->sndq->add(pmsg);
+		//Urgent!?
+		if(flags & UNetUrgent) {
+			rawsend(u,pmsg);
+			if(flags & 0x02) {
+				u->sndq->add(pmsg);
+			}
+		} else {
+			//put pmsg to the qeue
+			u->sndq->add(pmsg);
+		}
 	}
 	
 	u->doWork(); //send messages

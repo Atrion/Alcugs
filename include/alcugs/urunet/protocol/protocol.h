@@ -163,6 +163,8 @@ public:
 	virtual ~tmMsgBase() {};
 	void setFlags(U32 f);
 	void unsetFlags(U32 f);
+	void setUrgent();
+	void unsetUrgent();
 	U32 getFlags();
 	void setDestination(tNetSession *u);
 	void setSource(tNetSession *s);

@@ -494,6 +494,12 @@ void tmMsgBase::unsetFlags(U32 f) {
 U32 tmMsgBase::getFlags() {
 	return flags;
 }
+void tmMsgBase::setUrgent() {
+	bhflags |= UNetUrgent;
+}
+void tmMsgBase::unsetUrgent() {
+	bhflags &= ~UNetUrgent;
+}
 void tmMsgBase::setDestination(tNetSession *u) {
 	this->u=u;
 	if(this->s==NULL) this->s=u;
