@@ -91,7 +91,7 @@ public:
 	virtual void onConnectionFlood(tNetEvent * ev,tNetSession *u) {
 		ev->Veto();
 	}
-	virtual void onStart();
+	virtual void onIdle(bool idle);
 	void setDestinationAddress(char * d,U16 port);
 	void setValidation(Byte val);
 	void setUrgent() {
@@ -108,6 +108,7 @@ private:
 	Byte validation;
 	bool urgent;
 	char file[500];
+	bool sent;
 };
 
 tUnetSimpleFileServer::tUnetSimpleFileServer(char * lhost,U16 lport,Byte listen) :tUnetBase(lhost,lport) {
@@ -119,6 +120,7 @@ tUnetSimpleFileServer::tUnetSimpleFileServer(char * lhost,U16 lport,Byte listen)
 	d_port=5000;
 	validation=2;
 	urgent=false;
+	sent=false;
 }
 tUnetSimpleFileServer::~tUnetSimpleFileServer() {
 
@@ -132,25 +134,31 @@ void tUnetSimpleFileServer::setValidation(Byte val) {
 	validation=val;
 }
 
-void tUnetSimpleFileServer::onStart() {
+void tUnetSimpleFileServer::onIdle(bool idle) {
 	if(listen==0) {
-		tmData data;
-		tNetSessionIte dstite;
-		dstite=netConnect(d_host,d_port,validation,0);
-		tNetSession * u=NULL;
-		u=getSession(dstite);
-		if(u==NULL) {
-			stop();
-			return;
+		if(!sent) {
+			tmData data;
+			tNetSessionIte dstite;
+			dstite=netConnect(d_host,d_port,validation,0);
+			tNetSession * u=NULL;
+			u=getSession(dstite);
+			if(u==NULL) {
+				stop();
+				return;
+			}
+			data.setDestination(u);
+			if(urgent) data.setUrgent();
+			tFBuf f1;
+			f1.open(file);
+			data.data.clear();
+			data.data.put(f1);
+			f1.close();
+			u->send(data);
+			sent=true;
 		}
-		data.setDestination(u);
-		if(urgent) data.setUrgent();
-		tFBuf f1;
-		f1.open(file);
-		data.data.clear();
-		data.data.put(f1);
-		f1.close();
-		u->send(data);
+		if(sent && idle) {
+			//stop();
+		}
 	}
 }
 

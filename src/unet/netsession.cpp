@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETSESSION_ID "$Id$"
 
-//#define _DBG_LEVEL_ 7
+#define _DBG_LEVEL_ 7
 
 #include "alcugs.h"
 #include "urunet/unet.h"
@@ -453,9 +453,9 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	ack->B=msg.cps;
 	U32 tts=0;
 	if(msg.frt) {
-		tts=computetts(msg.frt * maxPacketSz * 1000000);
+		tts=computetts(msg.frt * maxPacketSz);
 	}
-	if(tts>rtt) tts=rtt;
+	if(tts>(rtt/2)) tts=rtt/2;
 	net->updatetimer(tts);
 	ack->timestamp=net->net_time + tts;
 	
@@ -484,6 +484,7 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 					break;
 				} else {
 					B=ack->B=(cack->B > B ? B : cack->B);
+					ack->timestamp=cack->timestamp;
 					ackq->deleteCurrent();
 					ackq->rewind();
 					continue;
@@ -500,6 +501,7 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 				net->log->log("D\n");
 				A=ack->A=cack->A;
 				B=ack->B=(cack->B > B ? B : cack->B);
+				ack->timestamp=cack->timestamp;
 				bool isNull=(cack->next==NULL);
 				ackq->deleteCurrent();
 				ackq->rewind();
@@ -594,19 +596,44 @@ void tNetSession::ackUpdate() {
 		pmsg->timestamp=net->net_time;
 		pmsg->dsize=i;
 
+		tts=0;
+		/*
 		if(!(pmsg->tf & UNetExt))
 			tts=computetts((i*16)+2+hsize+net->ip_overhead);
 		else
 			tts=computetts((i*8)+hsize+net->ip_overhead);
+		*/
 			
 		#ifdef _UNET_DBG_
 		tts+=net->latency;
 		#endif
+		//tts=0;
 		pmsg->timestamp+=tts;
 		net->updatetimer(tts);
 		
 		//put pmsg to the qeue
+#if 0
+		//ack are at the end of the qeue
 		sndq->add(pmsg);
+#else
+		//ensure acks to be present at the top of the qeue
+		if(sndq->isEmpty()) {
+			sndq->add(pmsg);
+			DBG(5,"Ack inserted into void msg qeue\n");
+		} else {
+			tUnetUruMsg * kiwi;
+			sndq->rewind();
+			kiwi=sndq->getNext();
+			DBG(5,"ack checking q...\n");
+			while(kiwi!=NULL && (kiwi->tf & 0x80)) {
+				kiwi=sndq->getNext();
+				DBG(5,"sndq->getNext()\n");
+			}
+			sndq->insertBefore(pmsg);
+			DBG(5,"inserBefore\n");
+		}
+		//abort();
+#endif
 	}
 	
 }

@@ -355,8 +355,9 @@ int tMBuf::stream(tBBuf &b) {
 	return msize;
 }
 void tMBuf::store(tBBuf &b) {
-	b.rewind();
-	this->write(b.read(),b.size());
+	//b.rewind();
+	U32 baal=b.tell();
+	this->write(b.read(),b.size()-baal);
 }
 U32 tMBuf::size() { return msize; }
 void tMBuf::clear() {
