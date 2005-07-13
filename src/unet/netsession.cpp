@@ -93,6 +93,7 @@ void tNetSession::init() {
 	max_cabal=0;
 	last_msg_time=0;
 	rtt=0; //net->timeout/2;
+	ack_rtt=0;
 	timeout=net->timeout;
 	conn_timeout=net->conn_timeout;
 	desviation=0;
@@ -133,7 +134,7 @@ U32 tNetSession::getMaxDataSize() {
 }
 void tNetSession::updateRTT(U32 newread) {
 	if(rtt==0) rtt=newread;
-	#if 1 //Original
+	#if 0 //Original
 		const U32 alpha=800;
 		rtt=((alpha*rtt)/1000) + (((1000-alpha)*newread)/1000);
 		timeout=2*rtt;
@@ -147,6 +148,7 @@ void tNetSession::updateRTT(U32 newread) {
 		desviation+=(alpha*(abs(diff)-desviation))/1000;
 		if(desviation!=0) timeout=u*rtt + delta*desviation;
 	#endif
+	ack_rtt=rtt/8;
 	DBG(5,"RTT update rtt:%i, timeout:%i\n",rtt,timeout);
 	net->log->log("RTT update rtt:%i, timeout:%i\n",rtt,timeout);
 }
@@ -164,16 +166,16 @@ void tNetSession::increaseCabal() {
 	cabal+=inc;
 	if(cabal>max_cabal) {
 		cabal=max_cabal;
-		max_cabal+=inc/2;
+		max_cabal+=inc/8;
 		if(max_cabal>(bandwidth/8)) max_cabal=(bandwidth/8);
 	}
 	DBG(5,"+Cabal is now %i (max:%i)\n",cabal,max_cabal);
 }
 void tNetSession::decreaseCabal(bool partial) {
 	if(!cabal) return;
-	U32 min_cabal=4096;
+	U32 min_cabal=maxPacketSz;
 	U32 delta=100;
-	U32 gamma=120;
+	U32 gamma=333;
 	if(partial) cabal-=(gamma*cabal)/1000;
 	else {
 		cabal=cabal/2;
@@ -186,8 +188,13 @@ void tNetSession::decreaseCabal(bool partial) {
 
 //psize cannot be > 4k
 U32 tNetSession::computetts(U32 psize) {
-	if (cabal) return((psize*1000000)/cabal);
-	return((psize*1000000)/4098);
+	if(psize<4000) {
+		if (cabal) return((psize*1000000)/cabal);
+		return((psize*1000000)/4098);
+	} else {
+		if (cabal) return(((psize*1000)/cabal)*1000);
+		return(((psize*1000)/4098)*1000);
+	}
 }
 
 tNetSessionIte tNetSession::getIte() {
@@ -240,8 +247,10 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		} else { //WAN
 			cabal=((net->nat_up > bandwidth) ? bandwidth : net->nat_up) / 8;
 		}
-		net->log->log("Cabal is now %i (%i bps)\n",cabal,cabal*8);
 		max_cabal=cabal;
+		cabal=(cabal * 250)/1000;
+		//cabal=maxPacketSz;
+		net->log->log("Cabal is now %i (%i bps) max: %i (%i bps)\n",cabal,cabal*8,max_cabal,max_cabal*8);
 		negotiating=false;
 	}
 	//How do you say "Cabal" in English?
@@ -361,6 +370,7 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 			msg->frt=t.frt;
 			msg->hsize=t.hSize();
 			rcvq->insertBefore(msg);
+			msg->data->setSize((t.frt +1) * frg_size);
 			break;
 		} else {
 			msg=rcvq->getNext();
@@ -372,6 +382,7 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 		msg->frt=t.frt;
 		msg->hsize=t.hSize();
 		rcvq->add(msg);
+		msg->data->setSize((t.frt +1) * frg_size);
 	}
 	msg->stamp=net->ntime_sec;
 	if(msg->frt!=t.frt || msg->hsize!=t.hSize()) throw(txProtocolError(_WHERE("Inconsistency on fragmented stream %i %i %i %i",msg->frt,t.frt,msg->hsize,t.hSize())));
@@ -380,10 +391,14 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 		//found missing fragment
 		msg->check[t.frn/8] |= (0x01<<(t.frn%8));
 		
+		if(t.frn==t.frt) { 
+			msg->data->setSize((t.frt * frg_size) + t.data.size());
+		}
+		
 		msg->data->set(t.frn * frg_size);
 		t.data.rewind();
 		msg->data->write(t.data.read(),t.data.size());
-		
+
 		if(msg->fr_count==t.frt) {
 			msg->completed=0x01;
 			msg->data->rewind();
@@ -419,6 +434,7 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 		i=msg.sn % (rcv_win*8);
 		if(((w[i/8] >> (i%8)) & 0x01) && msg.frn==0) {
 			net->err->log("%s INF: Dropped already parsed packet %i\n",str(),msg.sn);
+			ack_rtt=ack_rtt/4;
 			net->err->flush();
 			return 1;
 		} else {
@@ -464,13 +480,12 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	ack->A=msg.csn;
 	ack->B=msg.cps;
 	U32 tts=0;
-	/*if(msg.frt) {
-		tts=computetts(msg.frt * maxPacketSz);
-	}*/
-	tts=0; //computetts(2*maxPacketSz);
-	if(tts>(rtt/2)) tts=rtt/2;
+	tts=computetts((((U32)msg.frt-msg.frn)+1) * maxPacketSz);
+	//tts=computetts(2*maxPacketSz);
+	if(tts>ack_rtt) tts=ack_rtt;
 	net->updatetimer(tts);
 	ack->timestamp=net->net_time + tts;
+	net->log->log("tts: %i, %i, %i\n",msg.frt,tts,cabal);
 	
 	int i=0;
 
@@ -706,6 +721,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 					crtt+=net->latency;
 					#endif
 					updateRTT(crtt);
+					increaseCabal();
 				}
 				if(msg->tf & 0x02) {
 					sndq->deleteCurrent();
@@ -762,14 +778,14 @@ void tNetSession::doWork() {
 		sndq->rewind();
 		tUnetUruMsg * curmsg;
 		
-		U32 quota_max=1024;
+		U32 quota_max=maxPacketSz;
 		U32 cur_quota=0;
 		
 		U32 minTH=10;
 		U32 maxTH=150;
 		U32 tts;
 
-		while((curmsg=sndq->getNext())!=NULL && (cur_quota<=quota_max)) {
+		while((curmsg=sndq->getNext())!=NULL && (cur_quota<quota_max)) {
 			
 			if(curmsg->timestamp<=net->net_time) {
 				//we can send the message
@@ -780,7 +796,7 @@ void tNetSession::doWork() {
 					sndq->deleteCurrent();
 				} else if(curmsg->tf & 0x02) {
 					//send paquet
-					success++;
+					//success++;
 					if(curmsg->tryes!=0) {
 						//abort();
 						if(curmsg->tryes==1) {
@@ -788,11 +804,11 @@ void tNetSession::doWork() {
 						} else {
 							decreaseCabal(false);
 						}
-						success=0;
+						//success=0;
 						duplicateTimeout();
-					} else if(success>=20) {
+					} /*else if(success>=20) {
 						increaseCabal();
-					}
+					}*/
 					if(curmsg->tryes>=12) {
 						sndq->deleteCurrent();
 						//timeout event
@@ -800,6 +816,7 @@ void tNetSession::doWork() {
 						net->events->add(evt);
 					} else {
 						cur_quota+=curmsg->size();
+						curmsg->snd_timestamp=net->net_time;
 						net->rawsend(this,curmsg);
 						curmsg->timestamp=net->net_time+timeout;
 						curmsg->tryes++;

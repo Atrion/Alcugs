@@ -196,6 +196,9 @@ public:
 	virtual void clear();
 	virtual void copy(tMBuf &t);
 	virtual void operator=(tMBuf &t) { this->copy(t); }
+	virtual void setSize(U32 size) {
+		msize=size;
+	}
 public:
 	int id;
 protected:

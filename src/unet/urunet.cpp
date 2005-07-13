@@ -118,15 +118,15 @@ void tUnet::init() {
 	ip_overhead=20+8;
 
 	#ifdef _UNET_DBG_
-	lim_down_cap=2000; //8000; //in bytes
-	lim_up_cap=2000; //8000; //in bytes
+	lim_down_cap=0; //8000; //in bytes
+	lim_up_cap=0; //8000; //in bytes
 	in_noise=0; //25; //25; //(0-100)
 	out_noise=0; //25; //25; //(0-100)
 	latency=0; //200000; //200000; //500000; //(in usecs)
 	cur_down_quota=0;
 	cur_up_quota=0;
 	quota_check_sec=0;
-	quota_check_usec=500000;
+	quota_check_usec=250000;
 	time_quota_check_sec=ntime_sec;
 	time_quota_check_usec=ntime_usec;
 	#endif
@@ -149,7 +149,7 @@ void tUnet::updateNetTime() {
 
 void tUnet::updatetimer(U32 usec) {
 	U32 xmin_th=500;
-	if(usec>=1000000) { throw(txBase(_WHERE(""),true,true)); return; }
+	if(usec>=1000000) { return; /*throw(txBase(_WHERE("%i too high",usec),true,true)); return;*/ }
 	if(unet_sec) {
 		unet_sec=0;
 		unet_usec=usec;
@@ -525,7 +525,7 @@ int tUnet::Recv() {
 			n=0;
 		}
 		//check quotas
-		if(ntime_sec-time_quota_check_sec>=quota_check_sec && ntime_usec-time_quota_check_usec>=quota_check_usec) {
+		if(ntime_sec-time_quota_check_sec>quota_check_sec || ntime_usec-time_quota_check_usec>=quota_check_usec) {
 			cur_up_quota=0;
 			cur_down_quota=0;
 			time_quota_check_sec=ntime_sec;
@@ -844,7 +844,7 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 		msize=0;
 	}
 	//check quotas
-	if(ntime_sec-time_quota_check_sec>=quota_check_sec && ntime_usec-time_quota_check_usec>=quota_check_usec) {
+	if(ntime_sec-time_quota_check_sec>quota_check_sec || ntime_usec-time_quota_check_usec>=quota_check_usec) {
 		cur_up_quota=0;
 		cur_down_quota=0;
 		time_quota_check_sec=ntime_sec;

@@ -339,7 +339,7 @@ void tMBuf::write(Byte * val,U32 n) {
 		buf->resize(newsize);
 	}
 	memcpy(buf->buf+oldoff,val,n);
-	if(off>=msize) msize+=n;
+	if(off>msize) msize+=n;
 }
 Byte * tMBuf::read(U32 n) {
 	U32 pos=off+mstart;
