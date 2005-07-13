@@ -277,7 +277,6 @@ public:
 	tStrBuf(tMBuf &k,U32 start=0,U32 len=0);
 	~tStrBuf();
 	Byte * getLine();
-	char * getLine() { return((char *)getLine()); }
 	void writeStr(const Byte * t);
 	void writeStr(const SByte * t) { writeStr((const Byte *)t); }
 	void printf(const char * msg, ...);
