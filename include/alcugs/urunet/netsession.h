@@ -58,6 +58,7 @@ public:
 	void send(tmMsgBase & t);
 	tNetSessionIte getIte();
 	U32 getRTT() { return rtt; }
+	bool isConnected() { return cabal!=0; }
 private:
 	void init();
 	void processMsg(Byte * buf,int size);
@@ -72,6 +73,7 @@ private:
 	void assembleMessage(tUnetUruMsg &msg);
 
 	void updateRTT(U32 newread);
+	void duplicateTimeout();
 	void increaseCabal();
 	void decreaseCabal(bool partial);
 	U32 computetts(U32 pkqsize);

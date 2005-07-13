@@ -31,7 +31,9 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETSESSION_ID "$Id$"
 
-#define _DBG_LEVEL_ 7
+//#define _DBG_LEVEL_ 7
+
+//#define _ACKSTACK_DBG_
 
 #include "alcugs.h"
 #include "urunet/unet.h"
@@ -131,9 +133,9 @@ U32 tNetSession::getMaxDataSize() {
 }
 void tNetSession::updateRTT(U32 newread) {
 	if(rtt==0) rtt=newread;
-	#if 0 //Original
+	#if 1 //Original
 		const U32 alpha=800;
-		rtt=((alpha*rtt)/1000) + ((1000-alpha)*newread);
+		rtt=((alpha*rtt)/1000) + (((1000-alpha)*newread)/1000);
 		timeout=2*rtt;
 	#else //Jacobson/Karels
 		S32 alpha=125;
@@ -143,9 +145,17 @@ void tNetSession::updateRTT(U32 newread) {
 		diff=(S32)newread - (S32)rtt;
 		rtt=(S32)rtt+((alpha*diff)/1000);
 		desviation+=(alpha*(abs(diff)-desviation))/1000;
-		timeout=u*rtt + delta*desviation;
+		if(desviation!=0) timeout=u*rtt + delta*desviation;
 	#endif
 	DBG(5,"RTT update rtt:%i, timeout:%i\n",rtt,timeout);
+	net->log->log("RTT update rtt:%i, timeout:%i\n",rtt,timeout);
+}
+void tNetSession::duplicateTimeout() {
+	U32 maxTH=4000000; //
+	timeout+=(timeout*666)/1000;
+	if(timeout>maxTH) timeout=maxTH;
+	net->log->log("Abort()\n");
+	//abort();
 }
 void tNetSession::increaseCabal() {
 	if(!cabal) return;
@@ -309,7 +319,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 			ackCheck(msg);
 			if(authenticated==2) authenticated=1;
 		} else {
-			if((msg.tf & 0x02) && (net->flags & UNET_NOFLOOD)) { //flood control
+			if((msg.tf & 0x02) && (msg.frn==0) && (net->flags & UNET_NOFLOOD)) { //flood control
 				if(net->ntime_sec - flood_last_check > net->flood_check_sec) {
 					flood_last_check=net->ntime_sec;
 					flood_npkts=0;
@@ -422,7 +432,7 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 			}
 			ck=(i < start ? i+(rcv_win*8) : i);
 			while((ck-start)>((rcv_win*8)/2)) {
-				DBG(5,"ck: %i,start:%i\n",ck,start);
+				DBG(9,"ck: %i,start:%i\n",ck,start);
 				w[start/8] &= ~(0x01<<(start%8)); //deactivate bit
 				start++;
 				wite++;
@@ -443,7 +453,9 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	tUnetAck * ack,* cack;
 	U32 A,B;
 	
+	#ifdef _ACKSTACK_DBG_
 	net->log->log("stacking ack %i,%i %i,%i\n",msg.sn,msg.frn,msg.ps,msg.pfr);
+	#endif
 	
 	A=msg.csn;
 	B=msg.cps;
@@ -452,9 +464,10 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	ack->A=msg.csn;
 	ack->B=msg.cps;
 	U32 tts=0;
-	if(msg.frt) {
+	/*if(msg.frt) {
 		tts=computetts(msg.frt * maxPacketSz);
-	}
+	}*/
+	tts=0; //computetts(2*maxPacketSz);
 	if(tts>(rtt/2)) tts=rtt/2;
 	net->updatetimer(tts);
 	ack->timestamp=net->net_time + tts;
@@ -472,12 +485,16 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	} else {
 		ackq->rewind();
 		while((cack=ackq->getNext())!=NULL) {
+			#ifdef _ACKSTACK_DBG_
 			net->log->log("2store[%i] %i,%i %i,%i\n",i,(ack->A & 0x000000FF),(ack->A >> 8),(ack->B & 0x000000FF),(ack->B >> 8));
 			net->log->log("2check[%i] %i,%i %i,%i\n",i,(cack->A & 0x000000FF),(cack->A >> 8),(cack->B & 0x000000FF),(cack->B >> 8));
+			#endif
 
 			i++;
 			if(A>=cack->A && B<=cack->A) {
+				#ifdef _ACKSTACK_DBG_
 				net->log->log("A\n");
+				#endif
 				if(cack->next==NULL) {
 					cack->A=A;
 					cack->B=(cack->B > B ? B : cack->B);
@@ -490,15 +507,21 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 					continue;
 				}
 			} else if(B>cack->A) {
+				#ifdef _ACKSTACK_DBG_
 				net->log->log("B\n");
+				#endif
 				if(cack->next==NULL) { ackq->add(ack); break; }
 				else continue;
 			} if(A<cack->B) {
+				#ifdef _ACKSTACK_DBG_
 				net->log->log("C\n");
+				#endif
 				ackq->insertBefore(ack);
 				break;
 			} else if(A<=cack->A && A>=cack->B) {
+				#ifdef _ACKSTACK_DBG_
 				net->log->log("D\n");
+				#endif
 				A=ack->A=cack->A;
 				B=ack->B=(cack->B > B ? B : cack->B);
 				ack->timestamp=cack->timestamp;
@@ -511,19 +534,23 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 		}
 	}
 	
+	#ifdef _ACKSTACK_DBG_
 	net->log->log("ack stack TAIL looks like:\n");
 	i=0;
 	while((cack=ackq->getNext())!=NULL) {
 		net->log->log("st-ack[%i] %i,%i %i,%i\n",i++,(cack->A & 0x000000FF),(cack->A >> 8),(cack->B & 0x000000FF),(cack->B >> 8));
 	}
+	#endif
 #endif
 
+	#ifdef _ACKSTACK_DBG_
 	net->log->log("ack stack looks like:\n");
 	ackq->rewind();
 	i=0;
 	while((cack=ackq->getNext())!=NULL) {
 		net->log->log("st-ack[%i] %i,%i %i,%i\n",i++,(cack->A & 0x000000FF),(cack->A >> 8),(cack->B & 0x000000FF),(cack->B >> 8));
 	}
+	#endif
 }
 
 
@@ -539,7 +566,15 @@ void tNetSession::ackUpdate() {
 	}
 
 	tUnetUruMsg * pmsg;
-	
+
+	if(server.tf & 0x02) {
+		server.ps=server.sn;
+		server.pfr=server.frn;
+		//the second field, only contains the seq number from the latest packet with
+		//the ack flag enabled.
+		DBG(8,"The previous sent packet had the ack flag on\n");
+	}
+
 	server.frn=0;
 	server.tf=0x80;
 	server.val=validation;
@@ -556,13 +591,6 @@ void tNetSession::ackUpdate() {
 	
 		pmsg=new tUnetUruMsg;
 
-		if(server.tf & 0x02) {
-			server.ps=server.sn;
-			server.pfr=server.frn;
-			//the second field, only contains the seq number from the latest packet with
-			//the ack flag enabled.
-			DBG(8,"The previous sent packet had the ack flag on\n");
-		}
 		//now update the other fields
 		server.sn++;
 		
@@ -688,7 +716,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 			} else {
 				//Force re-transmission
 				if((msg->tf & 0x02) && A3>=A2 && msg->tryes==1) {
-					msg->timestamp-=timeout/2;
+					////msg->timestamp-=timeout/2;
 				}
 				msg=sndq->getNext();
 			}
@@ -754,16 +782,18 @@ void tNetSession::doWork() {
 					//send paquet
 					success++;
 					if(curmsg->tryes!=0) {
+						//abort();
 						if(curmsg->tryes==1) {
 							decreaseCabal(true);
 						} else {
 							decreaseCabal(false);
 						}
 						success=0;
+						duplicateTimeout();
 					} else if(success>=20) {
 						increaseCabal();
 					}
-					if(curmsg->tryes>=6) {
+					if(curmsg->tryes>=12) {
 						sndq->deleteCurrent();
 						//timeout event
 						evt=new tNetEvent(ite,UNET_TIMEOUT);
@@ -771,7 +801,7 @@ void tNetSession::doWork() {
 					} else {
 						cur_quota+=curmsg->size();
 						net->rawsend(this,curmsg);
-						curmsg->timestamp+=timeout;
+						curmsg->timestamp=net->net_time+timeout;
 						curmsg->tryes++;
 					}
 				} else {
@@ -796,7 +826,7 @@ void tNetSession::doWork() {
 		DBG(8,"tts is now:%i quota:%i,cabal:%i\n",tts,cur_quota,cabal);
 		last_msg_time=net->net_time + tts;
 		net->updatetimer(tts);
-	} else { DBG(8,"Too soon to check sndq"); }
+	} else { DBG(8,"Too soon to check sndq\n"); }
 }
 
 void tNetSession::negotiate() {

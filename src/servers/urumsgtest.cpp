@@ -92,6 +92,7 @@ public:
 		ev->Veto();
 	}
 	virtual void onIdle(bool idle);
+	virtual void onStart();
 	void setDestinationAddress(char * d,U16 port);
 	void setValidation(Byte val);
 	void setUrgent() {
@@ -109,6 +110,7 @@ private:
 	bool urgent;
 	char file[500];
 	bool sent;
+	tNetSessionIte dstite;
 };
 
 tUnetSimpleFileServer::tUnetSimpleFileServer(char * lhost,U16 lport,Byte listen) :tUnetBase(lhost,lport) {
@@ -121,6 +123,9 @@ tUnetSimpleFileServer::tUnetSimpleFileServer(char * lhost,U16 lport,Byte listen)
 	validation=2;
 	urgent=false;
 	sent=false;
+	dstite.ip=0;
+	dstite.port=0;
+	dstite.sid=-1;
 }
 tUnetSimpleFileServer::~tUnetSimpleFileServer() {
 
@@ -134,18 +139,23 @@ void tUnetSimpleFileServer::setValidation(Byte val) {
 	validation=val;
 }
 
+void tUnetSimpleFileServer::onStart() {
+	if(listen==0) {
+		dstite=netConnect(d_host,d_port,validation,0);
+	}
+}
+
 void tUnetSimpleFileServer::onIdle(bool idle) {
 	if(listen==0) {
 		if(!sent) {
 			tmData data;
-			tNetSessionIte dstite;
-			dstite=netConnect(d_host,d_port,validation,0);
 			tNetSession * u=NULL;
 			u=getSession(dstite);
 			if(u==NULL) {
 				stop();
 				return;
 			}
+			if(!u->isConnected()) return;
 			data.setDestination(u);
 			if(urgent) data.setUrgent();
 			tFBuf f1;
@@ -155,9 +165,10 @@ void tUnetSimpleFileServer::onIdle(bool idle) {
 			f1.close();
 			u->send(data);
 			sent=true;
-		}
-		if(sent && idle) {
-			//stop();
+		} else {
+			if(idle) {
+				stop();
+			}
 		}
 	}
 }
