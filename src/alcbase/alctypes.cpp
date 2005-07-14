@@ -528,7 +528,16 @@ tStrBuf::tStrBuf(tMBuf &k,U32 start,U32 len) :tMBuf(k,start,len) { bufstr=NULL; 
 tStrBuf::~tStrBuf() {
 	if(bufstr!=NULL) free((void *)bufstr);
 }
-Byte * tStrBuf::getLine() {
+void tStrBuf::_pcopy(tStrBuf &t) {
+	DBG(5,"tStrBuf::_pcopy()\n");
+	tMBuf::_pcopy(t);
+	bufstr=NULL;
+}
+void tStrBuf::copy(tStrBuf &t) {
+	DBG(5,"tStrBuf::copy()\n");
+	this->_pcopy(t);
+}
+const Byte * tStrBuf::getLine(bool nl) {
 	DBG(5,"getLine()\n");
 	U32 x,s,ofi;
 	s=size();
@@ -539,19 +548,20 @@ Byte * tStrBuf::getLine() {
 		x++;
 	}
 	if(x==ofi) return (Byte *)"";
-	DBG(9,"free()\n");
 	if(bufstr!=NULL) free((void *)bufstr);
 	s=this->tell()-ofi;
-	DBG(9,"malloc()\n");
 	bufstr=(Byte *)malloc(sizeof(Byte) * (s+1));
 	if(bufstr==NULL) throw txNoMem(_WHERE(""));
-	DBG(9,"seek()\n");
 	this->set(ofi);
 	DBG(9,"strcpy(), s:%u\n",s);
 	strncpy((char *)bufstr,(char *)this->read(s),s);
 	DBG(9,"assing, s:%u\n",s);
-	bufstr[s]='\0';
-	DBG(9,"return\n");
+	if(!nl) {
+		if(bufstr[s-1]=='\n' || bufstr[s-1]=='\r') bufstr[s-1]='\0';
+		if(bufstr[s-2]=='\n' || bufstr[s-2]=='\r') bufstr[s-2]='\0';
+	} else {
+		bufstr[s]='\0';
+	}
 	return bufstr;
 }
 void tStrBuf::writeStr(const Byte * t) {
@@ -570,7 +580,10 @@ void tStrBuf::printf(const char * msg, ...) {
 	
 	va_end(ap);
 }
-
+U32 tStrBuf::asU32() {
+	rewind();
+	return atoi((char *)read());
+}
 
 void tTime::store(tBBuf &t) {
 	DBG(5,"Buffer status size:%i,offset:%i\n",t.size(),t.tell());

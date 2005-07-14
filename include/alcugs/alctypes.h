@@ -276,12 +276,27 @@ public:
 	tStrBuf();
 	tStrBuf(tMBuf &k,U32 start=0,U32 len=0);
 	~tStrBuf();
-	Byte * getLine();
+	const Byte * getLine(bool nl=false);
 	void writeStr(const Byte * t);
 	void writeStr(const SByte * t) { writeStr((const Byte *)t); }
+	void writeStr(Byte val) { printf("%u",val); }
+	void writeStr(SByte val) { printf("%i",val); }
+	void writeStr(U16 val) { printf("%u",val); }
+	void writeStr(S16 val) { printf("%i",val); }
+	void writeStr(U32 val) { printf("%u",val); }
+	void writeStr(S32 val) { printf("%i",val); }
 	void printf(const char * msg, ...);
 	void nl() { writeStr("\n"); }
+	U32 asU32();
+	S32 asS32() { return (S32)asU32(); }
+	U16 asU16() { return (U16)asU32(); }
+	S16 asS16() { return (S16)asU32(); }
+	Byte asByte() { return (Byte)asU32(); }
+	SByte asSByte() { return (SByte)asU32(); }
+	virtual void copy(tStrBuf &t);
+	virtual void operator=(tStrBuf &t) { this->copy(t); }
 private:
+	virtual void _pcopy(tStrBuf &t);
 	Byte * bufstr;
 };
 
