@@ -35,14 +35,17 @@
 
 namespace alc {
 
+class tConfigKey;
+class tConfig;
+
 class tConfigVal {
 public:
 	tConfigVal();
-	tConfigVal(Byte * name);
+	tConfigVal(const Byte * name);
 	~tConfigVal();
 	void init();
-	void setName(Byte * name);
-	void setVal(Byte * val,U16 x=0,U16 y=0);
+	void setName(const Byte * name);
+	void setVal(const Byte * val,U16 x=0,U16 y=0);
 	void setVal(tStrBuf & t,U16 x=0,U16 y=0);
 	Byte * getName();
 	tStrBuf * getVal(U16 x=0,U16 y=0);
@@ -55,16 +58,24 @@ private:
 	tStrBuf ** values;
 	U16 x; //columns
 	U16 y; //rows
+	friend class tConfigKey;
 };
 
 class tConfigKey {
 public:
 	tConfigKey();
 	~tConfigKey();
+	void setName(const Byte * name);
+	Byte * getName() { return name; }
+	tConfigVal * find(const Byte * what,bool create=false);
+	tConfigVal * find(const char * what,bool create=false) { return(find((Byte *)what,create)); }
+	void copy(tConfigKey & t);
+	void operator=(tConfigKey & t) { copy(t); }
 private:
-	Byte * key;
+	Byte * name;
 	U16 n;
-	tConfigVal ** vals;
+	tConfigVal ** values;
+	friend class tConfig;
 };
 
 
@@ -72,12 +83,12 @@ class tConfig {
 public:
 	tConfig();
 	~tConfig();
-	void setKey(Byte * val,Byte * what,Byte * where);
-	//void setKey(tConfigVal & t
-	tConfigVal * getKey(Byte * what,Byte * where);
+	tConfigKey * findKey(const Byte * where=(const Byte *)"global",bool create=false);
+	tConfigVal * findVar(const Byte * what,const Byte * where=(const Byte *)"global",bool create=false);
+	void setVar(const Byte * val,const Byte * what,const Byte * where);
 private:
 	int n;
-	tConfigKey ** keys;
+	tConfigKey ** values;
 };
 
 } //End alc namespace

@@ -40,7 +40,7 @@
 namespace alc {
 
 tConfigVal::tConfigVal() { init(); }
-tConfigVal::tConfigVal(Byte * name) {
+tConfigVal::tConfigVal(const Byte * name) {
 	init();
 	setName(name);
 }
@@ -61,7 +61,7 @@ tConfigVal::~tConfigVal() {
 		free((void *)values);
 	}
 }
-void tConfigVal::setName(Byte * name) {
+void tConfigVal::setName(const Byte * name) {
 	if(name!=NULL) free((void *)name);
 	name=(Byte *)malloc(sizeof(Byte) * (strlen((const char *)name)+1));
 	strcpy((char *)name,(char *)name);
@@ -108,7 +108,7 @@ void tConfigVal::setVal(tStrBuf & t,U16 x,U16 y) {
 		*myval = t;
 	}
 }
-void tConfigVal::setVal(Byte * val,U16 x,U16 y) {
+void tConfigVal::setVal(const Byte * val,U16 x,U16 y) {
 	tStrBuf w;
 	w.writeStr(val);
 	setVal(w,x,y);
@@ -142,6 +142,107 @@ void tConfigVal::copy(tConfigVal &t) {
 		}
 	}
 }
+
+tConfigKey::tConfigKey() {
+	name=NULL;
+	n=0;
+	values=NULL;
+}
+tConfigKey::~tConfigKey() {
+	U16 i;
+	if(name!=NULL) free((void *)name);
+	if(values!=NULL) {
+		for(i=0; i<n; i++) {
+			if(values[i]!=NULL) {
+				delete values[i];
+			}
+		}
+		free((void *)values);
+	}
+}
+void tConfigKey::setName(const Byte * name) {
+	if(name!=NULL) free((void *)name);
+	name=(Byte *)malloc(sizeof(Byte) * (strlen((const char *)name)+1));
+	strcpy((char *)name,(char *)name);
+}
+tConfigVal * tConfigKey::find(const Byte * what,bool create) {
+	U16 i;
+	for(i=0; i<n; i++) {
+		if(!strcmp((const char *)what,(const char *)values[i]->name)) {
+			return values[i];
+		}
+	}
+	if(!create) return NULL;
+	n++;
+	values=(tConfigVal **)realloc((void *)values,sizeof(tConfigVal *) * n);
+	values[n-1]=new tConfigVal(what);
+	return values[n-1];
+}
+void tConfigKey::copy(tConfigKey &t) {
+	U16 i;
+	setName(t.getName());
+	if(values!=NULL) {
+		for(i=0; i<n; i++) {
+			if(values[i]!=NULL) {
+				delete values[i];
+			}
+		}
+		free((void *)values);
+	}
+	n=t.n;
+	values=(tConfigVal **)malloc(sizeof(tConfigVal *) * (n));
+	memset(values,0,sizeof(tConfigVal *) * (n));
+	for(i=0; i<n; i++) {
+		if(t.values[i]!=NULL) {
+			values[i] = new tConfigVal();
+			*values[i] = *t.values[i];
+		}
+	}
+}
+
+
+tConfig::tConfig() {
+	n=0;
+	values=NULL;
+}
+tConfig::~tConfig() {
+	U16 i;
+	if(values!=NULL) {
+		for(i=0; i<n; i++) {
+			if(values[i]!=NULL) {
+				delete values[i];
+			}
+		}
+		free((void *)values);
+	}
+}
+tConfigKey * tConfig::findKey(const Byte * where,bool create) {
+	U16 i;
+	for(i=0; i<n; i++) {
+		if(!strcmp((const char *)where,(const char *)values[i]->name)) {
+			return values[i];
+		}
+	}
+	if(!create) return NULL;
+	n++;
+	values=(tConfigKey **)realloc((void *)values,sizeof(tConfigKey *) * n);
+	values[n-1]=new tConfigKey();
+	values[n-1]->setName(where);
+	return values[n-1];
+}
+tConfigVal * tConfig::findVar(const Byte * what,const Byte * where,bool create) {
+	tConfigKey * mykey;
+	mykey=findKey(where,create);
+	if(mykey==NULL) return NULL;
+	return(mykey->find(what,create));
+}
+void tConfig::setVar(const Byte * val,const Byte * what,const Byte * where) {
+	tConfigVal * myvar;
+	myvar=findVar(what,where,true);
+	myvar->setVal(val);
+}
+
+
 
 } //end namespace alc
 
