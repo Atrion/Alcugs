@@ -25,89 +25,60 @@
 *******************************************************************************/
 
 /**
-	You should include this file at the begginging of any program that uses the
-	Alcugs API.
-	
-	If you have plans to use the Alcugs debuging interface, you should include
-	alcdebug.h at the end of your include list.
-	
-	So, your code will look something like this.
-	
-	//other includes
-	
-	#include <alcugs.h>
-	
-	//Other alcugs includes
-	
-	//other includes
-	
-	#include <alcdebug.h>
-	
-	//You can't include nothing here - It may cause problems.
-	
-	Also, you should not include alcdebug.h inside any other header file.
-	
-	Note: If you are going to install these on your system, they must reside in their
-	own alcugs directory. For example: "/usr/include/alcugs/" or "/usr/local/include/alcugs".
-	Remember to pass the -I/usr/include/alcugs parameter to your compiler.
-	
+	Description:
+		This does this, and that.
+	ChangeLog:
+		Initial
+	Bugs:
+		Several
 */
 
-#ifndef __U_ALCUGS_H_
-#define __U_ALCUGS_H_
-#define __U_ALCUGS_H_ID "$Id$"
+/* CVS tag - DON'T TOUCH*/
+#define __U_ALCPARSER_ID "$Id$"
 
-#if defined(HAVE_CONFIG_H) and defined(HAVE_WINCONFIG_H)
-#error You can only use config.h, or winconfig.h, but not both
-#endif
+//#define _DBG_LEVEL_ 10
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "alcugs.h"
 
-#ifdef HAVE_WINCONFIG_H
-#include "winconfig.h"
-#endif
+////extra includes
 
-#include "alcconfig.h"
-#include "alcxversion.h"
+#include "alcdebug.h"
 
-#ifdef VERSION
-#undef VERSION
-#endif
-#define VERSION alcSTR_VER
+namespace alc {
 
-//std includes
-#include <iostream>
-#include <cstdio>
-
-//system includes
-
-#ifdef __WIN32__
-#include "alcutil/windoze.h"
-#endif
-
-namespace std {       
-#include <sys/types.h>
-#include <sys/time.h>
-#include <dirent.h>
-#include <signal.h>
+tSimpleParser::tSimpleParser() {
+	cfg=NULL;
+	sep=' ';
+}
+void tSimpleParser::store(tStrBuf &t) {
+	if(!cfg) return;
+	
+	
+}
+int tSimpleParser::stream(tStrBuf &t) {
+	U32 start=t.tell();
+	if(!cfg) return 0;
+	cfg->rewind();
+	tConfigKey * key;
+	while((key=cfg->getNext())) {
+		tConfigVal * val;
+		while((val=key->getNext())) {
+			t.writeStr(val->getName());
+			t.writeStr(" ");
+			t.putByte(sep);
+			t.writeStr(" ");
+			t.writeStr(val->getVal());
+			t.nl();
+		}
+	}
+	return (t.tell()-start);
+}
+void tSimpleParser::setConfig(tConfig * c) {
+	cfg=c;
+}
+tConfig * tSimpleParser::getConfig() {
+	return cfg;
 }
 
-//alcugs includes
-#include "alcexception.h"
-#include "alctypes.h"
-#include "alcmain.h"
-#include "alcversion.h"
-#include "alclicense.h"
+} //end namespace alc
 
-#include "urutypes/urubasetypes.h"
-
-#include "alcutil/alcos.h"
-#include "alcutil/conv_funs.h"
-#include "alcutil/useful.h"
-#include "alcutil/alclog.h"
-#include "alcutil/alccfgtypes.h"
-#include "alcutil/alcparser.h"
-
-#endif

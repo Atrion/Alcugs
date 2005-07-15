@@ -25,89 +25,65 @@
 *******************************************************************************/
 
 /**
-	You should include this file at the begginging of any program that uses the
-	Alcugs API.
-	
-	If you have plans to use the Alcugs debuging interface, you should include
-	alcdebug.h at the end of your include list.
-	
-	So, your code will look something like this.
-	
-	//other includes
-	
-	#include <alcugs.h>
-	
-	//Other alcugs includes
-	
-	//other includes
-	
-	#include <alcdebug.h>
-	
-	//You can't include nothing here - It may cause problems.
-	
-	Also, you should not include alcdebug.h inside any other header file.
-	
-	Note: If you are going to install these on your system, they must reside in their
-	own alcugs directory. For example: "/usr/include/alcugs/" or "/usr/local/include/alcugs".
-	Remember to pass the -I/usr/include/alcugs parameter to your compiler.
-	
+	Description:
+		This does this, and that.
+	ChangeLog:
+		Initial
+	Bugs:
+		Several
 */
 
-#ifndef __U_ALCUGS_H_
-#define __U_ALCUGS_H_
-#define __U_ALCUGS_H_ID "$Id$"
+#ifndef __U_ALCPARSER_H
+#define __U_ALCPARSER_H
+/* CVS tag - DON'T TOUCH*/
+#define __U_ALCPARSER_H_ID "$Id$"
 
-#if defined(HAVE_CONFIG_H) and defined(HAVE_WINCONFIG_H)
-#error You can only use config.h, or winconfig.h, but not both
-#endif
+namespace alc {
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+class tParserBase :public tBaseType {
+public:
+	virtual void store(tStrBuf &t)=0;
+	virtual int stream(tStrBuf &t)=0;
+};
 
-#ifdef HAVE_WINCONFIG_H
-#include "winconfig.h"
-#endif
+/**
+	Simple parser
+	key value
+	key = value
+	# comment
+	; comment
+*/
+class tSimpleParser :public tParserBase {
+public:
+	tSimpleParser();
+	virtual void store(tStrBuf &t);
+	virtual int stream(tStrBuf &t);
+	void setConfig(tConfig * c);
+	tConfig * getConfig();
+private:
+	tConfig * cfg;
+	char sep;
+};
 
-#include "alcconfig.h"
-#include "alcxversion.h"
+/**
+	Alcugs parser
+	[key]
+	key = value
+	key = "value"
+	key = "value1",value2
+	key[1] = "var1","var2"
+*/
+class tXParser :public tSimpleParser {
+public:
+	tXParser();
+	virtual ~tXParser();
+	virtual void store(tStrBuf &t);
+	virtual int stream(tStrBuf &t);
+	void setBasePath(char * uri);
+private:
+	char * path;
+};
 
-#ifdef VERSION
-#undef VERSION
-#endif
-#define VERSION alcSTR_VER
-
-//std includes
-#include <iostream>
-#include <cstdio>
-
-//system includes
-
-#ifdef __WIN32__
-#include "alcutil/windoze.h"
-#endif
-
-namespace std {       
-#include <sys/types.h>
-#include <sys/time.h>
-#include <dirent.h>
-#include <signal.h>
-}
-
-//alcugs includes
-#include "alcexception.h"
-#include "alctypes.h"
-#include "alcmain.h"
-#include "alcversion.h"
-#include "alclicense.h"
-
-#include "urutypes/urubasetypes.h"
-
-#include "alcutil/alcos.h"
-#include "alcutil/conv_funs.h"
-#include "alcutil/useful.h"
-#include "alcutil/alclog.h"
-#include "alcutil/alccfgtypes.h"
-#include "alcutil/alcparser.h"
+} //End alc namespace
 
 #endif

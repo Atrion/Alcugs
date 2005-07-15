@@ -199,10 +199,17 @@ void tConfigKey::copy(tConfigKey &t) {
 		}
 	}
 }
-
+void tConfigKey::rewind() {
+	off=0;
+}
+tConfigVal * tConfigKey::getNext() {
+	if(off>=n) { off=0; return NULL; }
+	off++;
+	return values[off-1];
+}
 
 tConfig::tConfig() {
-	n=0;
+	off=n=0;
 	values=NULL;
 }
 tConfig::~tConfig() {
@@ -241,7 +248,14 @@ void tConfig::setVar(const Byte * val,const Byte * what,const Byte * where) {
 	myvar=findVar(what,where,true);
 	myvar->setVal(val);
 }
-
+void tConfig::rewind() {
+	off=0;
+}
+tConfigKey * tConfig::getNext() {
+	if(off>=n) { off=0; return NULL; }
+	off++;
+	return values[off-1];
+}
 
 
 } //end namespace alc

@@ -523,28 +523,149 @@ void tMD5Buf::compute() {
 /* end md5 buf */
 
 /* String buffer */
-tStrBuf::tStrBuf() { bufstr=NULL; }
-tStrBuf::tStrBuf(tMBuf &k,U32 start,U32 len) :tMBuf(k,start,len) { bufstr=NULL; }
+tStrBuf::tStrBuf(U32 size) :tMBuf(size) { init(); }
+tStrBuf::tStrBuf(tMBuf &k,U32 start,U32 len) :tMBuf(k,start,len) { init(); }
+tStrBuf::tStrBuf(tStrBuf &k,U32 start,U32 len) :tMBuf(k,start,len) { init(); l=k.l; c=k.c; }
 tStrBuf::~tStrBuf() {
 	if(bufstr!=NULL) free((void *)bufstr);
+	if(shot!=NULL) delete shot;
+}
+void tStrBuf::init() {
+	bufstr=NULL;
+	l=c=0;
+	sep='=';
+	shot=NULL;
 }
 void tStrBuf::_pcopy(tStrBuf &t) {
 	DBG(5,"tStrBuf::_pcopy()\n");
 	tMBuf::_pcopy(t);
 	bufstr=NULL;
+	l=t.l;
+	c=t.c;
+	shot=NULL;
+	sep='=';
 }
 void tStrBuf::copy(tStrBuf &t) {
 	DBG(5,"tStrBuf::copy()\n");
 	this->_pcopy(t);
 }
-const Byte * tStrBuf::getLine(bool nl) {
+tStrBuf * tStrBuf::getWord(U32 * ssize,bool slashp) {
+	DBG(5,"tStrBuf::getWord()\n");
+	Byte c;
+	Byte slash=0;
+	Byte quote=0;
+	Byte mode=0;
+	Byte win=0;
+	U32 cur,len,x;
+	tStrBuf * out;
+	if(shot!=NULL) delete shot;
+	shot = new tStrBuf(200);
+	out = shot;
+	x=cur=tell();
+	len=size();
+	DBG(5,"while()\n");
+	while(x<len) {
+		c=getByte();
+		DBG(5,"char %c\n",c);
+		x++; this->c++;
+		
+		if(quote==0 && (c=='#' || c==';')) {
+			win=0;
+			out->putByte('#');
+			out->putByte(0);
+			return out;
+		} else if(slash==1) {
+			slash=0;
+			win=0;
+			if(c=='n' && quote==1) { out->putByte('\n'); }
+			else if(c=='\n' || c=='\r') { 
+				if(c=='\r') {
+					win=1;
+					l++;
+					this->c=0;
+				} else {
+					if(win==0) { l++; this->c=0; }
+					else win=0;
+				}
+			}
+			else {
+				if(quote==1) {
+					out->putByte(c);
+				} else {
+					throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected '\\'\n",l,this->c));
+				}
+			}
+		} else if(c=='\"') {
+			win=0;
+			if(quote==1) { 
+				out->putByte(c);
+				out->putByte(0);
+				return out;
+			} else {
+				quote=1;
+				out->putByte(c);
+			}
+		} else if(c=='\n' || c=='\r') {
+			if(mode==1) {
+				seek(-1);
+				out->putByte(0);
+				return out;
+			} else {
+				if(c=='\r') {
+					win=1;
+					l++;
+					this->c=0;
+				} else {
+					if(win==0) { l++; this->c=0; }
+					else win=0;
+				}
+				out->putByte('\n');
+				out->putByte(0);
+				return out;
+			}
+		} else if(c=='\\') {
+			slash=1; 
+		} else if(quote==0 && (c==' ' || c==sep || isblank(c))) {
+			if(mode==1) {
+				if(c==sep) seek(-1);
+				out->putByte(0);
+				return out;
+			} else {
+				if(c==sep) {
+					out->putByte(sep);
+					out->putByte(0);
+					return out;
+				}
+			}
+		} else if(isalpha(c) || isprint(c) || alcIsAlpha(c)) {
+			out->putByte(c);
+			mode=1;
+		} else {
+			throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected character '%c'\n",l,this->c,c));
+		}
+	}
+	out->putByte(0);
+	return out;
+}
+Byte * tStrBuf::getLine(U32 * ssize,bool nl,bool slash) {
 	DBG(5,"getLine()\n");
 	U32 x,s,ofi;
 	s=size();
 	x=ofi=tell();
-	DBG(5,"s:%u,ofi:%u\n",s,ofi);
+	Byte slashm=0;
+	Byte c;
 	while(x<s) {
-		if(this->getByte()=='\n') break;
+		if(!slash) {
+			c=this->getByte();
+			if(c=='\\') {
+				if(slashm) slashm=0;
+				else slashm=1;
+			}
+			if(c=='\n' && !slashm) break;
+			else this->l++;
+		} else {
+			if(this->getByte()=='\n') break;
+		}
 		x++;
 	}
 	if(x==ofi) return (Byte *)"";
@@ -553,15 +674,33 @@ const Byte * tStrBuf::getLine(bool nl) {
 	bufstr=(Byte *)malloc(sizeof(Byte) * (s+1));
 	if(bufstr==NULL) throw txNoMem(_WHERE(""));
 	this->set(ofi);
-	DBG(9,"strcpy(), s:%u\n",s);
-	strncpy((char *)bufstr,(char *)this->read(s),s);
-	DBG(9,"assing, s:%u\n",s);
+	if(slash) {
+		strncpy((char *)bufstr,(char *)this->read(s),s);
+	} else {
+		slashm=0;
+		for(x=0; x<s; x++) {
+			c=this->getByte();
+			if(c=='\\') {
+				if(slashm) slashm=0;
+				else slashm=1;
+			}
+			if(c=='\n' && slashm) {
+				x-=2; s-=2;
+			} else {
+				bufstr[x]=c;
+			}
+		}
+	}
 	if(!nl) {
 		if(bufstr[s-1]=='\n' || bufstr[s-1]=='\r') bufstr[s-1]='\0';
 		if(bufstr[s-2]=='\n' || bufstr[s-2]=='\r') bufstr[s-2]='\0';
 	} else {
 		bufstr[s]='\0';
 	}
+	if(ssize!=NULL) *ssize=s;
+	assert(s==strlen((char *)bufstr));
+	this->l++;
+	this->c=0;
 	return bufstr;
 }
 void tStrBuf::writeStr(const Byte * t) {

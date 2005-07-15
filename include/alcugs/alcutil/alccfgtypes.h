@@ -58,6 +58,8 @@ private:
 	tStrBuf ** values;
 	U16 x; //columns
 	U16 y; //rows
+	Byte flags; // 0x01 - with quotes
+							// 0x02 - without quotes
 	friend class tConfigKey;
 };
 
@@ -71,9 +73,11 @@ public:
 	tConfigVal * find(const char * what,bool create=false) { return(find((Byte *)what,create)); }
 	void copy(tConfigKey & t);
 	void operator=(tConfigKey & t) { copy(t); }
+	void rewind();
+	tConfigVal * getNext();
 private:
 	Byte * name;
-	U16 n;
+	U16 n,off;
 	tConfigVal ** values;
 	friend class tConfig;
 };
@@ -86,8 +90,10 @@ public:
 	tConfigKey * findKey(const Byte * where=(const Byte *)"global",bool create=false);
 	tConfigVal * findVar(const Byte * what,const Byte * where=(const Byte *)"global",bool create=false);
 	void setVar(const Byte * val,const Byte * what,const Byte * where);
+	void rewind();
+	tConfigKey * getNext();
 private:
-	int n;
+	U16 n,off;
 	tConfigKey ** values;
 };
 

@@ -273,10 +273,13 @@ public:
 /** String buffer */
 class tStrBuf :public tMBuf {
 public:
-	tStrBuf();
+	tStrBuf(U32 size=200);
 	tStrBuf(tMBuf &k,U32 start=0,U32 len=0);
+	tStrBuf(tStrBuf &k,U32 start=0,U32 len=0);
+	void init();
 	~tStrBuf();
-	const Byte * getLine(bool nl=false);
+	Byte * getLine(U32 * size=NULL,bool nl=false,bool slash=false);
+	tStrBuf * getWord(U32 * size=NULL,bool slash=true);
 	void writeStr(const Byte * t);
 	void writeStr(const SByte * t) { writeStr((const Byte *)t); }
 	void writeStr(Byte val) { printf("%u",val); }
@@ -285,6 +288,7 @@ public:
 	void writeStr(S16 val) { printf("%i",val); }
 	void writeStr(U32 val) { printf("%u",val); }
 	void writeStr(S32 val) { printf("%i",val); }
+	void writeStr(tStrBuf * val) { val->rewind(); writeStr(val->read()); }
 	void printf(const char * msg, ...);
 	void nl() { writeStr("\n"); }
 	U32 asU32();
@@ -295,9 +299,13 @@ public:
 	SByte asSByte() { return (SByte)asU32(); }
 	virtual void copy(tStrBuf &t);
 	virtual void operator=(tStrBuf &t) { this->copy(t); }
+	void setSeparator(char w) { sep=w; }
 private:
 	virtual void _pcopy(tStrBuf &t);
 	Byte * bufstr;
+	U16 l,c;
+	char sep;
+	tStrBuf * shot;
 };
 
 /** Time */

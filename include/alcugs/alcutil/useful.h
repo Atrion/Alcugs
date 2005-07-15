@@ -37,6 +37,7 @@ int alcGetLoginInfo(char * argv,char * hostname,char * username,U16 * port,char 
 U32 alcGetTime();
 U32 alcGetMicroseconds();
 double alcGetCurrentTime(const char format='s');
+char alcIsAlpha(int c);
 
 }
 

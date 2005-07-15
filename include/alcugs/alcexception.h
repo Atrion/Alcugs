@@ -124,6 +124,11 @@ public:
 	txNoAccess(char * msg="",bool abort=false,bool core=false) :txBase("NoAccess",msg,abort,core) {}
 };
 
+class txParseError : public txBase {
+public:
+	txParseError(char * msg="",bool abort=false,bool core=false) :txBase("txParseError",msg,abort,core) {}
+};
+
 
 } //End alc namespace
 

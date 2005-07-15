@@ -176,6 +176,23 @@ double alcGetCurrentTime(const char format) {
 	}
 }
 
+
+/** Handle nicely foreign languages. setlocale() is not sufficient on systems which didn't installed all locales,
+ so we better use our own function. Feel free to add other accents according to your language.
+ 
+ NOTE: I think that setlocale is going to be the way used in the future. The user will need to install
+	and set the prefered locales.
+*/
+char alcIsAlpha(int c) {
+#ifdef __WIN32__
+	return(IsCharAlpha(c));
+#else
+  return(index("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZáàâä\
+éèêëóòôöúùûüçÇñÑ", c)!=NULL); //<- Some characters are not visible on UTF systems, or under other codifications, so you may see garbage
+#endif
+}
+
+
 }
 
 #endif
