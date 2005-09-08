@@ -1,0 +1,31 @@
+
+Alcugs library naming schema.
+=============================
+
+On an attempt to re-structure everything, several functions
+and structures are going to be renamed.
+
+Proposed:
+
+* Several code is going to be moved to the "alc" namespace.
+
+* "anythingwiththatname" will be now "AnythingWithThatName", or "anyThingWithThatName".
+
+* All function names, now will start with "alcMyFuncName()"
+* Structs and classes will start with prefix "t". (tBBuf, tAgeLinkStruct, tUnet, tUstr, tStr, tBuf, tFBuf, tZBuf)
+* Underscores "_" are going to be removed, and "this_name" will be replaced with "ThisName"
+* Exceptions will start with "tx". (txNoFile, txTooLong, txTooBig, txNoName, ...)
+* Messages will start with "tm". (tmNetMsgPing, tmNetMsgVoice, tmNetCustomMsgXX, ...)
+* Private vars in a module will be tvVarName or txvVarName
+* Class methods will start with the first letter in lowercase.
+
+* Python docs suggests to don't use the "py" prefix anywhere.
+* All exposed functions to python, will start with the "Pt" prefix
+* Python classes will start with "pt"
+* Methods of python classes will start in lowercase.
+
+* All source files, will contain the SVN tag $Id$.
+* On header files, this tag is __U_FILENAME_H_ID
+* On source files, thiw tag is __U_FILENAME_ID
+
+

@@ -1,42 +1,61 @@
-Alcugs H'uru server emulator project.
+Alcugs Uru server project.
 
-Status
-------
+==========
+= Status =
+==========
+
+The software is still in Alpha stage.
+
 Check the file TODO to see what is still not implented.
 
 Read the file COPYING and DISCLAIMER to check the license.
 
 Read the ChangeLog, to see, how is going all.
 
-
-For the impatient
------------------
+=====================
+= For the impatient =
+=====================
 Congratulations, you have arribed here, now continue reading! :)
 
-
-Requirements for Building the servers, tools and API
-----------------------------------------------------
+========================================================
+= Requirements for Building the servers, tools and API =
+========================================================
 
 You need to have installed the development headers and libraries of:
 * openssl
 * mysql
 * zlib
 * python
+* wxwidgets (for gui based apps)
+* And anything else that I forgot
+
+========================
+= Building the servers =
+========================
+
+(A) If you are on Linux or a similar *nix system
+------------------------------------------------
+
+1) If you are building from SVN, or a snapshot, you need to have:
+ autconf and automake tools.
+ Then you need to run the reconf.sh script by typing
+
+$ ./reconf.sh
 
 
-Compiling
----------
+2) Run configure
 
-Simple, like others:
-if you are using linux type in your command prompt:
+$ ./configure
+
+3) Run make
 
 $ make all
 
-(There could be some minor problems on other *nix systems)
 
-If you are using 'windows'.
+(B) If you are using 'windows'
+------------------------------
 
-A) Upgrade your OS to Linux
+A) Upgrade your OS to Linux (recomended)
 
 or
 
@@ -47,6 +66,7 @@ B) Build with Cygwin
 3) download python 2.2 with the dev headers
 4) Fix the Makefiles
 5) Compile by the same way
+(I wish you luck ;) )
 
 or
 
@@ -62,25 +82,25 @@ D) Build with MSVC
 1) There are some files that should allow you to compile with MSVC.
 
 
+==============
+= Installing =
+==============
 
-Installing
-----------
+A) Automated installation (*UNTESTED* and BROKEN!!!)
 
-NOTE AUTOMATED INSTALLATION IS BROKEN, PLEASE USE MANUAL INSTALLATION!
-A) Automated installation:
+1) Run make install
 
-Type
-./install.sh [destination]
-or
-make install
+$ make install
 
-then,
-copy the client sdl and age files inside the lobby/sdl and lobby/age folders.
+2) Copy the client sdl and age files inside the lobby/sdl and lobby/age folders.
 
 --
 
-B) Manual installation:
-1) If everything when well, you only need to understand the uru.conf file, and you need
+B) Manual installation (recomended)
+
+1) Search for the server binaries, and copy them to the place that you wish.
+
+2) If everything when well, you only need to understand the uru.conf file, and you need
 to configure it for your purposes.
 Then you can start the servers. There is a script somewhere that should allow you to start
 them.
@@ -95,11 +115,14 @@ NOTE FOR UNET3 BRANCH: The unet3 Game server is not finished, and not useful for
 you will need to replace the binary uru_game with an older one, and use the game.config option
 pointing to an old configuration file.
 
+NOTE FOR UNET3+ BRANCH: The unet3+ branch servers are broken and not working, I suggest you
+waiting a little, sometimes you may be able to compile working experimental versions.
+
 
 Configuring
 -----------
 
-Read the uru.conf file for more info. It explains each variable, and how to configure it.
+Read the uru.conf.dist file for more info. It explains each variable, and how to configure it.
 
 For admin access:
  1) Log into the game.
@@ -124,8 +147,7 @@ What is required?
 * Well, mainly C/C++ programers to code the server.
 * Write documentation. This is basic, the programers do the code, and then the user write the
  documentation, you can rewrite this README and make it more clear for some people.
-* Dedicated servers: Yes, we need dedicated servers (you must have root access), then we can test
- upcoming builds of the server, and P2P technology.
+ I REALLY NEED SOMEONE TO WRITE DOCUMENTATION. DO YOU KNOW HOW MANY TIME CONSUMES TO WRITE THESE DOCS?
 * Porting to other OSes.
 
 
@@ -135,12 +157,10 @@ What To Do if It don't works?
 If you are reading this, then is because it is not working.
 Is expected to have several problems. I'm sure that it compiles without
 problems on Debian Sarge where it is being developed.
-You will need to send me, or post to the forums the output of the
-compilation results.
 
-If you have a problem related with the compiled servers, then you will need
-to send me the log files, and or copy the last lines from the stdout
-of the server that crashed.
+Please go to the forums at http://alcugs.almlys.dyns.net/forum and ask
+for help.
+
 
 Contact
 -------

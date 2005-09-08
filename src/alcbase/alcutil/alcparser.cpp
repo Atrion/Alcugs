@@ -52,7 +52,17 @@ tSimpleParser::tSimpleParser() {
 }
 void tSimpleParser::store(tStrBuf &t) {
 	if(!cfg) return;
-	
+	Byte mode=0; // 0 none, 1 left, 2 mid, 3 right, 4 end
+	tStrBuf * key;
+	tStrBuf * val;
+	key = t.getWord();
+	val = t.getWord();
+	tStrBuf sep;
+	tStrBuf k;
+	sep = k;
+	if(*val != sep) {
+		printf("hi");
+	}
 	
 }
 int tSimpleParser::stream(tStrBuf &t) {

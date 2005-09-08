@@ -427,6 +427,14 @@ kkkk\\\n\
 		res->rewind();
 		printf("[b:%i] %s\n",i++,res->read());
 	}
+	
+	//Ok, If we are here then seems that it worked - everybody is ok?
+	
+	// e = m * c^2
+	// Now we should apply this formula everywhere, and we will be able to get flying cows in Relto as a  bonus relto page
+	
+	
+	
 
 }
 

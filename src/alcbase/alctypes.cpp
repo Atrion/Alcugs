@@ -523,6 +523,10 @@ void tMD5Buf::compute() {
 /* end md5 buf */
 
 /* String buffer */
+tStrBuf::tStrBuf(char * k) :tMBuf(200) {
+	init();
+	writeStr(k);
+}
 tStrBuf::tStrBuf(U32 size) :tMBuf(size) { init(); }
 tStrBuf::tStrBuf(tMBuf &k,U32 start,U32 len) :tMBuf(k,start,len) { init(); }
 tStrBuf::tStrBuf(tStrBuf &k,U32 start,U32 len) :tMBuf(k,start,len) { init(); l=k.l; c=k.c; }
@@ -548,6 +552,14 @@ void tStrBuf::_pcopy(tStrBuf &t) {
 void tStrBuf::copy(tStrBuf &t) {
 	DBG(5,"tStrBuf::copy()\n");
 	this->_pcopy(t);
+}
+SByte tStrBuf::compare(tStrBuf &t) {
+	rewind();
+	t.rewind();
+	U32 s = size();
+	U32 s2 = t.size();
+	if(s>s2) s=s2;
+	return((SByte)strncmp((char *)read(),(char *)t.read(),s));
 }
 tStrBuf * tStrBuf::getWord(U32 * ssize,bool slashp) {
 	DBG(5,"tStrBuf::getWord()\n");
@@ -606,11 +618,8 @@ tStrBuf * tStrBuf::getWord(U32 * ssize,bool slashp) {
 				out->putByte(c);
 			}
 		} else if(c=='\n' || c=='\r') {
-			if(mode==1) {
-				seek(-1);
-				out->putByte(0);
-				return out;
-			} else {
+			if(quote==1) {
+				out->putByte(c);
 				if(c=='\r') {
 					win=1;
 					l++;
@@ -619,9 +628,24 @@ tStrBuf * tStrBuf::getWord(U32 * ssize,bool slashp) {
 					if(win==0) { l++; this->c=0; }
 					else win=0;
 				}
-				out->putByte('\n');
-				out->putByte(0);
-				return out;
+			} else {
+				if(mode==1) {
+					seek(-1);
+					out->putByte(0);
+					return out;
+				} else {
+					if(c=='\r') {
+						win=1;
+						l++;
+						this->c=0;
+					} else {
+						if(win==0) { l++; this->c=0; }
+						else win=0;
+					}
+					out->putByte('\n');
+					out->putByte(0);
+					return out;
+				}
 			}
 		} else if(c=='\\') {
 			slash=1; 

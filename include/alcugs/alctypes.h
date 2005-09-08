@@ -273,6 +273,7 @@ public:
 /** String buffer */
 class tStrBuf :public tMBuf {
 public:
+	tStrBuf(char * k);
 	tStrBuf(U32 size=200);
 	tStrBuf(tMBuf &k,U32 start=0,U32 len=0);
 	tStrBuf(tStrBuf &k,U32 start=0,U32 len=0);
@@ -300,6 +301,13 @@ public:
 	virtual void copy(tStrBuf &t);
 	virtual void operator=(tStrBuf &t) { this->copy(t); }
 	void setSeparator(char w) { sep=w; }
+	virtual SByte compare(tStrBuf &t);
+	virtual bool operator==(tStrBuf &t) { return(!this->compare(t)); }
+	virtual bool operator!=(tStrBuf &t) { return(this->compare(t)); }
+	virtual bool operator>(tStrBuf &t) { return(this->compare(t)<0); }
+	virtual bool operator<(tStrBuf &t) { return(this->compare(t)>0); }
+	virtual bool operator>=(tStrBuf &t) { return(this->compare(t)<=0); }
+	virtual bool operator<=(tStrBuf &t) { return(this->compare(t)>=0); }
 private:
 	virtual void _pcopy(tStrBuf &t);
 	Byte * bufstr;
