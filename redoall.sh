@@ -1,6 +1,9 @@
 #!/bin/bash
 
-make clean
-make distclean
-./reconf.sh && ./configure && make
+dest="/home/alcugs"
+
+#make clean
+#make distclean
+./tclean.sh
+./reconf.sh && ./configure --prefix=$dest $@ && make && make check && make install
 

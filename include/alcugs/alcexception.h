@@ -35,12 +35,18 @@
 
 namespace alc {
 
-/** Dumps core to coredumps directory. TODO: implement a Mutex here */
-void alcWriteCoreDump();
-//0x00 - dissabled, 0x01 - enabled, 0x02 -always
+/** Dumps core to coredumps directory. TODO: implement a Mutex here
+	\param name Mr. core name */
+void alcWriteCoreDump(char * name="");
+/** Set coredump flags
+	\param flags 0x00 - dissabled, 0x01 - enabled, 0x02 -always
+*/
 void alcSetCoreDumpFlags(char f);
+/** Set if you want to abort always when an exception is raised */
 void alcSetAbort(bool c);
+/** Sets the coredumper path */
 void alcSetCoreDumpPath(char * p);
+/** Get the coredumper path */
 char * alcGetCoreDumpPath();
 
 #define txExcLevels 20
@@ -123,10 +129,10 @@ class txNoAccess : public txBase {
 public:
 	txNoAccess(char * msg="",bool abort=false,bool core=false) :txBase("NoAccess",msg,abort,core) {}
 };
-
+/** Parse error */
 class txParseError : public txBase {
 public:
-	txParseError(char * msg="",bool abort=false,bool core=false) :txBase("txParseError",msg,abort,core) {}
+	txParseError(char * msg="",bool abort=false,bool core=false) :txBase("ParseError",msg,abort,core) {}
 };
 
 

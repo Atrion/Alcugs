@@ -421,9 +421,11 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 */
 Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 	//drop already parsed messages
-	//nlog(f_err,net,sid,"INF: (Before) window is:\n");
-	//dumpbuf(f_err,(Byte *)s->w,rcv_win);
-	//lognl(f_err);
+	net->err->log("%s INF: SN %i (Before) window is:\n",str(),msg.sn);
+	net->err->dumpbuf((Byte *)w,rcv_win);
+	net->err->nl();
+	net->err->flush();
+	
 	if(!(msg.sn > wite || msg.sn <= (wite+rcv_win))) {
 		net->err->log("%s INF: Dropped packet %i out of the window by sn\n",str(),msg.sn);
 		net->err->flush();
@@ -444,7 +446,7 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 				i++; start++;
 				wite++;
 				if(i>=rcv_win*8) { i=0; start=0; }
-				//nlog(f_err,net,sid,"INF: A bit was deactivated (1)\n");
+				net->err->log("%s INF: A bit was deactivated (1)\n",str());
 			}
 			ck=(i < start ? i+(rcv_win*8) : i);
 			while((ck-start)>((rcv_win*8)/2)) {
@@ -453,14 +455,15 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 				start++;
 				wite++;
 				if(start>=rcv_win*8) { start=0; ck=i; }
-				//nlog(f_err,net,sid,"INF: A bit was deactivated (2)\n");
+				net->err->log("%s INF: A bit was deactivated (2)\n",str());
 			}
-			//nlog(f_err,net,sid,"INF: Packet %i accepted to be parsed\n",s->client.sn);
+			net->err->log("%s INF: Packet %i accepted to be parsed\n",str(),msg.sn);
 		}
 	}
-	//nlog(f_err,net,sid,"INF: (After) window is:\n");
-	//dumpbuf(f_err,(Byte *)s->w,rcv_win);
-	//lognl(f_err);
+	net->err->log("%s INF: SN %i (after) window is:\n",str(),msg.sn);
+	net->err->dumpbuf((Byte *)w,rcv_win);
+	net->err->nl();
+	net->err->flush();
 	return 0;
 }
 

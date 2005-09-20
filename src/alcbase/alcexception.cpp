@@ -69,7 +69,7 @@ static bool txvAbort=0;
 static char txvCore=0x01; //0x00 - dissabled, 0x01 - enabled, 0x02 -always
 static char * txvCorePath=NULL;
 
-void alcWriteCoreDump() {
+void alcWriteCoreDump(char * name) {
 	DBG(5,"alcWriteCoreDump ");
 	#if !defined(__WIN32__) and defined(HAVE_GOOGLE_COREDUMPER_H)
 	DBG(5,"is enabled\n");
@@ -82,8 +82,8 @@ void alcWriteCoreDump() {
 	char * where=(char *)malloc(sizeof(char) * strsize+1);
 	if(where) {
 		memset(where,0,strsize+1);
-		if(txvCorePath!=NULL) sprintf(where,"%s/core-%06i-%08X.core",txvCorePath,pid,t);
-		else sprintf(where,"core-%06i-%08X.core",pid,t);
+		if(txvCorePath!=NULL) sprintf(where,"%s/core-%06i-%08X-%s.core",txvCorePath,pid,t,name);
+		else sprintf(where,"core-%06i-%08X-%s.core",pid,t,name);
 	
 		if(txvCore & 0x01) google::WriteCoreDump((const char *)where);
 		free((void *)where);

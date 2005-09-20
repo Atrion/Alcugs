@@ -1,5 +1,8 @@
 #!/bin/bash
 #cleans the tree
+
+make distclean
+
 rm log -rf
 rm dumps -rf
 rm *.raw -f
@@ -27,3 +30,12 @@ rm tracking/*.raw -f
 rm meta/log -rf
 rm meta/dumps -rf
 rm meta/*.raw -f
+rm *.core
+rm core
+rm configure
+rm config.guess
+rm Makefile.in
+rm config.h.in
+
+./tclean.py
+
