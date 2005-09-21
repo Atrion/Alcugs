@@ -12,6 +12,7 @@ libalcugsbase_a_SOURCES = alcexception.cpp alcmain.cpp alctypes.cpp alcdebug.cpp
  alcutil/alclog.cpp alcutil/alcos.cpp alcutil/md5.cpp \
  alcutil/conv_funs.cpp alcutil/useful.cpp alcutil/alccfgtypes.cpp\
  alcutil/alcparser.cpp\
+ alcutil/rijndael.cpp\
  urutypes/whatdoyousee.cpp urutypes/urubasetypes.cpp
 #libalcugsbase_a_LIBADD = alcexcpetion.o
 

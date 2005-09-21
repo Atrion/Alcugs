@@ -43,10 +43,27 @@ public:
 	void decrypt();
 };
 
+/** AES buffer */
+class tAESBuf :public tMBuf {
+public:
+	tAESBuf() :tMBuf() {}
+	void encrypt();
+	void decrypt();
+private:
+	Byte key[32];
+};
+
 /** Urustring */
 class tUStr :public tBaseType {
 public:
-	tUStr();
+	/**
+		\param mode
+		0 - normal
+		1 - auto (normal/inverted) Uru (plasma 2.0) [Please avoid using this mode]
+		5 - inverted
+		6 - myst5 (plasma 2.1)
+	*/
+	tUStr(Byte mode=1);
 	virtual int stream(tBBuf &buf);
 	virtual int stream(tBBuf &buf,bool inv);
 	virtual void store(tBBuf &buf);
@@ -57,6 +74,7 @@ public:
 	U32 len();
 	virtual ~tUStr();
 private:
+	Byte version;
 	Byte * name;
 	U16 msize;
 };
