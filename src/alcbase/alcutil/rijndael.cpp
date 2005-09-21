@@ -1194,6 +1194,7 @@ int Rijndael::blockDecrypt(const UINT8 *input, int inputLen, UINT8 *outBuffer)
 
 	numBlocks = inputLen/128;
 
+	
 	switch(m_mode)
 	{
 		case ECB: 
@@ -1284,16 +1285,18 @@ int Rijndael::padDecrypt(const UINT8 *input, int inputOctets, UINT8 *outBuffer)
 	int i, numBlocks, padLen;
 	UINT8 block[16];
 	UINT32 iv[4];
-
+	
 	if(m_state != Valid)return RIJNDAEL_NOT_INITIALIZED;
 	if(m_direction != Decrypt)return RIJNDAEL_BAD_DIRECTION;
 
 	if(input == 0 || inputOctets <= 0)return 0;
 
+	
 	if((inputOctets % 16) != 0)return RIJNDAEL_CORRUPTED_DATA;
 
 	numBlocks = inputOctets/16;
 
+	
 	switch(m_mode){
 		case ECB:
 			for (i = numBlocks - 1; i > 0; i--)
@@ -1304,12 +1307,13 @@ int Rijndael::padDecrypt(const UINT8 *input, int inputOctets, UINT8 *outBuffer)
 			}
 
 			decrypt(input, block);
-			padLen = block[15];
+			/*padLen = block[15];
 			if (padLen >= 16)return RIJNDAEL_CORRUPTED_DATA;
 			for(i = 16 - padLen; i < 16; i++)
 			{
 				if(block[i] != padLen)return RIJNDAEL_CORRUPTED_DATA;
-			}
+			}*/
+			padLen=0;
 			memcpy(outBuffer, block, 16 - padLen);
 		break;	
 		case CBC:

@@ -39,18 +39,27 @@ const char * alcXVERSION = "2.0";
 using namespace alc;
 
 void usage() {
+#ifdef M5CRYPT
+	char * p="m5crypt";
+#else
+	char * p="urucrypt";
+#endif
 	printf("Usage:\nFor decrypt: \n\
- urucrypt d source.sdl destination.sdl.dec\n\
+ %s d source.sdl destination.sdl.dec\n\
 For encrypt:\n\
- urucrypt e source.sdl.dec destination.sdl\n\
--l Shows license text\n");
+ %s e source.sdl.dec destination.sdl\n\
+-l Shows license text\n",p,p);
 	fflush(0);
 }
 
 //main
 int main(int argc, char * argv[]) {
 
+#ifdef M5CRYPT
+	printf("This is the Myst 5 Rijndael encoder/decoder\n\n");
+#else
 	printf("This is the Uru \"whatdoyousee\" encoder/decoder\n\n");
+#endif
 	
 	try {
 	
@@ -65,7 +74,12 @@ int main(int argc, char * argv[]) {
 	}
 
 	tFBuf f1;
+#ifdef M5CRYPT
+	tAESBuf w1;
+	w1.setM5Key();
+#else
 	tWDYSBuf w1;
+#endif
 	
 	char xap[1024];
 	

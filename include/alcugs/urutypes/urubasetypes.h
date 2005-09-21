@@ -49,8 +49,10 @@ public:
 	tAESBuf() :tMBuf() {}
 	void encrypt();
 	void decrypt();
+	void setKey(Byte * key);
+	void setM5Key();
 private:
-	Byte key[32];
+	Byte key[16];
 };
 
 /** Urustring */

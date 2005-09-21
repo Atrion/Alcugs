@@ -39,3 +39,7 @@ rm config.h.in
 
 ./tclean.py
 
+##
+rm src/alcbase/test/*.raw -rf
+rm src/alcbase/test/log -rf
+

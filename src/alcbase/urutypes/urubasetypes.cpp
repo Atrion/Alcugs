@@ -105,6 +105,18 @@ void tWDYSBuf::decrypt() {
 
 
 /* AES buff */
+void tAESBuf::setKey(Byte * key) {
+	memcpy(this->key,key,16);
+}
+void tAESBuf::setM5Key() {
+	Byte key[16];
+	U32 xorkey=0xCF092676;
+	*(U32 *)(key)    = 0xFC2C6B86 ^ xorkey;
+	*(U32 *)(key+4)  = 0x952E7BDA ^ xorkey;
+	*(U32 *)(key+8)  = 0xF1713EE8 ^ xorkey;
+	*(U32 *)(key+12) = 0xC7410A13 ^ xorkey;
+	memcpy(this->key,key,16);
+}
 void tAESBuf::encrypt() {
 	tRefBuf * aux=this->buf;
 	aux->dec();
@@ -123,7 +135,7 @@ void tAESBuf::encrypt() {
 	msize=8;
 
 	Rijndael rin;
-	rin.init(Rijndael::CBC,Rijndael::Encrypt,key,Rijndael::Key32Bytes);
+	rin.init(Rijndael::ECB,Rijndael::Encrypt,key,Rijndael::Key16Bytes);
 	int res = rin.padEncrypt(aux->buf+xstart,xsize,this->buf->buf+off);
 	if(res<0) throw txUnkErr(_WHERE("Rijndael encrypt error"));
 	msize+=res;
@@ -148,10 +160,10 @@ void tAESBuf::decrypt() {
 	off=0;
 
 	Rijndael rin;
-	rin.init(Rijndael::CBC,Rijndael::Decrypt,key,Rijndael::Key32Bytes);
+	rin.init(Rijndael::ECB,Rijndael::Decrypt,key,Rijndael::Key16Bytes);
 
-	int res = rin.padDecrypt(aux->buf+xstart+8,msize,buf->buf+off);
-	if(res<0) throw txUnkErr(_WHERE("Rijndael decrypt error"));
+	int res = rin.padDecrypt(aux->buf+xstart+8,xsize-8,buf->buf+off);
+	if(res<0) throw txUnkErr(_WHERE("Rijndael decrypt error %i",res));
 
 	if(aux->getRefs()<1) delete aux;
 	off=0;
