@@ -110,3 +110,5 @@ mkinstalldirs
 config.sub
 *.layout
 config.guess
+uru.conf
+

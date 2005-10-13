@@ -36,6 +36,8 @@ rm configure
 rm config.guess
 rm Makefile.in
 rm config.h.in
+rm *.exe
+rm *.o
 
 ./tclean.py
 
