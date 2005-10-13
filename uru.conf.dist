@@ -31,7 +31,7 @@
 # 2-> print only informative and error messages
 # 1-> print only error messages
 # 0-> total silence, perfect for daemon mode
-;verbose_level = 3 #default 3
+verbose_level = 0 #default 3
 
 # set daemon mode (default 0) (parameter: [-D])
 ;daemon = 1 #default 1
@@ -41,14 +41,14 @@
 ;bandwidth = 128
 
 # sets the default global bind address (for all servers)
-bind = pegasus.aml.loc #default 0.0.0.0
+bind = localhost #default 0.0.0.0
 
 private_network = 172.26.0.0
 private_mask    = 255.255.255.0
-public_address  = uru2.almlys.dyns.net
+public_address  = localhost
 
 #Set the displayed website, when the user logs into your shard.
-website = "http://huru.almlys.dyns.net/"
+;website = "http://yoursite.tld/"
 
 #proposed for the future *Not implemented yet!*
 # websiste = "http://huru.almlys.dyns.net/?login=%u"
@@ -59,19 +59,14 @@ website = "http://huru.almlys.dyns.net/"
 ;bin = ./
 #for windoze
 ;bin = "Y:/disk2/b/ururelive/server/devel/urunet3/src/"
-sdl = share/sdl.uu/
-age = share/age.uu/
+sdl = share/sdl/
+age = share/age/
 # This are for server side python scripts, 
 # (client and/or plasma python scripts don't work here)
 python = python/
-# Not yet, implemented, but if you are going to run a data server node
-#  this will be where all new content will be cached/mirrored/stored.
-;data = ./data/
-;data.mirror = "7,8" # Set which content we want to mirror. 
-# (It's a coma separated list)
 
 #dataset
-dataset = 3
+dataset = 6
 #### datasets info ####
 # -1 = undefined
 #  0 = custom
@@ -89,15 +84,8 @@ dataset = 3
 #      use different datasets, must have a different
 #      separate installation for each dataset.
 
-# Enforce that the user is really using this dataset?
-#  UruSetup login will be dissabled, and user must use
-#  an authorized alcugs client for that dataset.
-#  Also you must be running a data server node to be
-#  able to perform the dataset verification.
-;dataset.enforce = 1 #(default 1)
-
 #dump raw messages to disk (vault imports also)
-net.dumps = 1
+net.dumps = 0
 
 #user defined port range (default and recomened 5000-6000)
 ;spawn.start = 5000
@@ -138,9 +126,9 @@ tracking.oldprotocol = 1
 #enable persistent connection to the database, default 1 (1=enabled/0=disabled)
 ;db.persistent = 1 #default 1
 # enable sql logging (default 1) requires "db.log = 1" to work
-;db.sql.log = 1 #default 1
+db.sql.log = 0 #default 1
 # enable logging of the database driver (default 1)
-;db.log = 1 #default 1
+db.log = 0 #default 1
 
 ## Metaserver settings
 meta = 0 # 1=metaserver enabled, 0=disabled (default 0)
@@ -148,40 +136,32 @@ meta = 0 # 1=metaserver enabled, 0=disabled (default 0)
 ## Information anounced to the metaserver global public list
 ## if metaserver is enabled
 # Your shard name
-shard.name = "My Alcugs shard"
+;shard.name = "My Alcugs shard"
 # Password, that is required to be able to manually delete
 #  your shard from the public list.
-shard.passwd = "123"
+;shard.passwd = "123"
 # Description of your shard.
 shard.desc = "An Alcugs shard, like any other one"
 # Your Shard Home Page
-shard.website = "http://alcugs.almlys.dyns.net"
+;shard.website = "http://alcugs.almlys.dyns.net"
 # Contact address (an E-mail address, or a URL to a place where
 #  the admin can be contacted)
-shard.contact = "foo@bar"
+;shard.contact = "foo@bar"
 # Note, your shard will be anounced with the specific datasets,
 #  it will be listed in the global list.
 #  Also, Alcugs clients will show only shards of the client
 #  configured datased.
 
-# quick cheaters out of the server?
-cheating = 1 # 0 dissables the anti-cheating code
-cheating.strikes = 3
-cheating.strikefactor = 1
-cheating.time = 3
-cheating.multiplier = 30
-# 1st strike 90 seconds, 2nd strike 45 minutes, 3rd strike banned forever.
-
 # The next ages, will be private. (Also, at current time personal, must be a 
 #  private age)
-;private_ages = "AvatarCustomization,Personal,Nexus,BahroCave"
+private_ages = "AvatarCustomization,Personal,Nexus,BahroCave"
 
 # Completely debbuging options, that should not be used in a production shard.
-;instance_mode = 0
+instance_mode = 1
 #Let's remember, 0,1,2, I don't remember what those values did. *looks sources*
 # hmmmm, hmmmmmm, ah!, I got it. 0=all ages are public, 1=only ages listed on 
 # private_ages will be private, and, aha, 2=old schema.
-load_on_demand = 0
+load_on_demand = 1
 #Let's remember, load_on_demand 1=spawn game server on demand, 0=ignore fork requests.
 # "./start.sh Personal myguid" may be useful.
 
@@ -191,28 +171,18 @@ load_on_demand = 0
 # Yep, it's in the TODO list an http service, so, you can request the status without trashing
 #  your hardrive.
 # UruVision
-track.xml = 1 # Enable UruVision compatible xml output (default 1)
+track.xml = 0 # Enable UruVision compatible xml output (default 1)
 track.xml.path = "/tmp/alcugs/test/status.xml"
 
 # Online Players Html files (old)
-track.html = 1 # Enable standard online players html output (default 1)
+track.html = 0 # Enable standard online players html output (default 1)
 track.html.path = "/tmp/alcugs/test/status.html"
 
-track.htmldbg = 1 # Enable the same file, but with all the available debug input (default 1)
+track.htmldbg = 0 # Enable the same file, but with all the available debug input (default 1)
 track.htmldbg.path = "/tmp/alcugs/test/statusdbg.html"
 
 # You can dissable the html files, and use an xml parser to show in your website, only the
 # information that you whan to display.
-
-# Experimental, when it's safe, I will update this.
-# It only works on Linux, there aren't any plans for Windoze support, and currently it's hardcoded to use
-# the sendmail bin. (I will work later in making it more customizable)
-admin.reports = 0
-admin.email = "root@localhost"
-
-# Python Interface - Modules
-#python.adminKI = "xAdmin"
-
 
 #There is a stop var for each server section, remove them to check that you
 # have already read and understood how this configuration file works.
@@ -220,7 +190,7 @@ admin.email = "root@localhost"
 
 ############# Auth Server Settings #############################################
 [auth]
-bind = 172.26.0.19
+;bind = localhost
 port = 2010
 log_files_path = log/auth/
 
@@ -231,75 +201,44 @@ db.name = "uru_auth_db"
 db.username = "uru"
 db.passwd = "auth_db_password"
 
-stop = 0
-
-#auth databes (on Matrix mysql server)
-# db.name = "uru_auth"
-# Main auth database
-# db.name = "uru_auth_test"
-# Auth database in unet2 format (keeping it for testing upgrade code)
- db.name = "uru_auth_testing22"
-# A database where my access level is 0
-
-#auth databases (on Pegasus mysql server)
-db.name = "uru_auth_tst"
+stop = 1
 
 ############# Tracking Server Settings #########################################
 [tracking]
-bind = 172.26.0.19
+;bind = localhost
 port = 2011
 log_files_path = log/tracking/
 
-stop = 0
+stop = 1
 
 ############# Vault Server Settings ############################################
 [vault]
-bind = 172.26.0.19
+;bind = localhost
 port = 2012
 log_files_path = log/vault/
 
 #database settings
-#db.host = "matrix"
+#db.host = "localhost"
 #note: set db.host to nothing to use the local unix socket
 db.name = "uru_vault_db"
 db.username = "uru"
 db.passwd = "vault_db_passwd"
 
-#vaults (on Matrix)
-# new tpots database
-# db_name = "uru_vault_test69"
-# tpots database 2 users admin & test
-# db_name = "uru_vault_test"
-# tpots database 2 users admin & test
-# db_name = "uru_vault_foo_test"
-# another tpots vault
-# db_name = "uru_vault_foo_test73"
-# GoE shard mirror vault (remember to change the folder!!!!)
-# db_name = "uru_vault_test_prod"
-# uu only vault
-# db_name = "uru_vault_testing"
-
-# New test vault - for pure UU clients
-db_name = "uru_vault_new_testA"
-
-# Vaults (on Pegasus)
-db_name = "uru_vault_tst"
-
 # Assigned name to new hoods
-vault.hood.name = "Foo"
-vault.hood.desc = "Foo's party hood"
+vault.hood.name = "My Neighborhood"
+vault.hood.desc = "My Neighborhood description"
 
-stop = 0
+stop = 1
 
 ############ Lobby Server Settings #############################################
 [lobby]
-bind = 172.26.0.19
+;bind = localhost
 port = 5000
 log_files_path = log/lobby/
 game.log = log/game/
-#game.config = olduru.conf
+;game.config = olduru.conf
 
-#stop = 1
+stop = 1
 
 ############ Game Server Settings ##############################################
 [game]
@@ -307,39 +246,4 @@ game.log = log/game/
 # to use the port configured here!!!!
 # The same applies with the log_files_path
 # best to don't put nothing here, only _netcore_ only related options.
-
-############ Data Server Settings #############################################
-[data]
-# Under extreme testing... and under extreme development...
-# This will be used to 
-# * Verify that everybody runs exactly the same client.
-# * Easy and automated way to distribute updates/patches and new content.
-# * And everything is cryptographically protected by public/private key pairs.
-stop = 1
-
-############ Meta Server Settings #############################################
-[meta]
-# I will explain later, basically I changed the metaserver architecture,
-#  and now, if you run a shard with a dataserver node, you can also run a
-#  metaserver. (well, I think that you must run a metaserver (you need to know
-#   where are the other peers, no?))
-stop = 1
-
-[testing]
-kk = "c:\kk\ns\what\the\?"
-kk2 = "c:\\kk\\ns\\what\\the\\?"
-
-tuple[0] = "yonel"
-soso[2]="arh"
-tuple[1] = "two"
-soso[1]="whatsup","h"
-tuple[2] = "one","two", "three" ,    "four"       ,                          "five"
-
-
-[kakis]
-
-kaki1 = "hola"
-kaki2 = 123k
-
-read_config ".private.conf"
 
