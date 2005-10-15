@@ -21,7 +21,7 @@ def clean_tree(path):
             else:
                 #if not ((a[-4:] in [".cpp",".sdl",".age"]) or (a[-2:] in [".h"])):
                 #    print a[-4:],a[-2:],a
-                if a[-4:] in [".exe",] or a[-2:] in [".o",] or a[-1:] in ["~",]:
+                if a[-5:] in [".core",] or a[-4:] in [".exe",".raw"] or a[-2:] in [".o",".a"] or a[-1:] in ["~",]:
                     print "Deleting %s" % (path + "/" + a)
                     os.remove(path + "/" + a)
                     

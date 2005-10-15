@@ -1,49 +1,45 @@
-If you want to be a developer, or you want to have
-write access to the CVS repository, you only
-need to send me an E-mail to:
-almol AT users.sourceforge.net
+1) If you think that you have time to contribute, and you have any ideas, patches,
+ new code, new features, etc..., then please:
 
-and PLEASE send me this information:
+A) Contact with Almlys using the forums located at:
+ http://alcugs.almlys.dyns.net/forum
 
-* Full Name: (OPTIONAL, You can send me your alias if 
-you want to remain as an anonymous user)
-* Alias: (If you have more than one, better to send them)
-* E-mail: (It's supposed that it will be the same as the
-originating address, supposing that you are not going
-to use a remailer). [We need to be in contact in some way]
-* Prefered CVS login: (Your prefered login for the CVS server.)
-* Prefered CVS passwd: (Your prefered CVS password, nothing
-if you want a hard random generated one.)
-* Your skills: (What skills do you have, For Example: C/C++ coder, Java coder,
-PHP coder, website designer, SQL expert, MAC OS programer...)
-* What do you want to do: (Write a list, of what type of contributions
-do you want to do, For Example: Translate to Fable, Port to Solaris,
-create a based Java/Python/Elsewhere langauge clinet/server GUI, work
-in the website layout, add X feature to the sources, fix X things.)
+OR
 
-If you don't want to have write CVS access, but you want
-to send patches, or other contributions, just send me the patches
-to:
+B) Send an E-mail to Almlys at:
+ almol AT users.sourceforge.net
 
-almol AT users.sourceforge.net
+Any contributions, patches, will be added to the tree ASAP, and you will be 
+ added to the Authors list.
 
-Them will be added to the tree ASAP, and you will be added to the
-Authors list.
+Please Note that any patches/bug-fixes to actual code will be licensed under
+ the License used under the scope of that specific module (library, etc,..).
 
-PLEASE, DO NOT SEND BUG REPORTS TO THAT ADDRESS.
-You can send exploits, and security holes, for bug reports
-please use the forums or the BugTracker available somewhere
-at alcugs.almlys.dyns.net.
+Please, Note that all contributions (plugins, new modules, new libraries), must
+ be Licensed under a GNU GPL compatible license. (LGPL, Public Domain, etc...).
+ If no license is stated, then it will be licensed under the GPL.
 
-you should also subscribe to this mailing list:
+Also, I suggest subscribing to this mailing list:
 http://sourceforge.net/mail/?group_id=122730
 
-Please, Note that all contributions will be Licensed under the
-GNU GPL license.
+There are two lists, one for SVN commits and the other one for discussion.
 
-Also, not all contributions will be immediatly added to the main tree,
-some of them will be added to the contrib directory, or the server
-plugins or scripts directoryes, depending of the type of contribution.
-Illicit contributions, like a patch to bypass the CGAS, will be immediatly
-rejected.
+----
+
+2) If you want to be an active developer with write access to the SVN
+ repository, then PLEASE send me this information:
+
+* Full Name: (OPTIONAL, You can send me your alias if you want to remain as an
+ anonymous user)
+* Alias: (nickname, alias, call-name, whatever)
+* E-mail: (It's supposed that it will be the same as the originating address,
+ supposing that you are not going to use a re-mailer). [We need to be in
+ contact in some way]
+* Your skills: (Which skills do you have, For Example: C/C++ coder, Java coder,
+ PHP coder, website designer, SQL expert, MAC OS programmer...)
+* What do you want to do: (Write a list, of what type of contributions do you
+ want to do, For Example: Translate to Fable, Port to Solaris, create a based
+ Java/Python/Elsewhere language client/server GUI, work in the website layout,
+ add X feature to the sources, fix X things.)
+
 
