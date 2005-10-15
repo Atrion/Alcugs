@@ -6,7 +6,7 @@ Alcugs Uru server project.
 
 The software is still in Alpha stage.
 
-Check the file TODO to see what is still not implented.
+Check the file TODO to see what is still not implemented.
 
 Read the file COPYING and DISCLAIMER to check the license.
 
@@ -15,7 +15,7 @@ Read the ChangeLog, to see, how is going all.
 =====================
 = For the impatient =
 =====================
-Congratulations, you have arribed here, now continue reading! :)
+Congratulations, you have arrived here, now continue reading! :)
 
 ========================================================
 = Requirements for Building the servers, tools and API =
@@ -26,7 +26,7 @@ You need to have installed the development headers and libraries of:
 * mysql
 * zlib
 * python
-* wxwidgets (for gui based apps)
+* wxwidgets (for GUI based apps)
 * And anything else that I forgot
 
 ========================
@@ -37,7 +37,7 @@ You need to have installed the development headers and libraries of:
 ------------------------------------------------
 
 1) If you are building from SVN, or a snapshot, you need to have:
- autconf and automake tools.
+ autoconf and automake tools.
  Then you need to run the reconf.sh script by typing
 
 $ ./reconf.sh
@@ -55,7 +55,7 @@ $ make all
 (B) If you are using 'windows'
 ------------------------------
 
-A) Upgrade your OS to Linux (recomended)
+A) Upgrade your OS to Linux (recommended)
 
 or
 
@@ -72,7 +72,7 @@ or
 
 C) Build with MinGW
 
-1) Download and intall MinGW or Dev-Cpp
+1) Download and install MinGW or Dev-Cpp
 2) And do the same as B).
 
 or
@@ -96,7 +96,7 @@ $ make install
 
 --
 
-B) Manual installation (recomended)
+B) Manual installation (recommended)
 
 1) Search for the server binaries, and copy them to the place that you wish.
 
@@ -132,7 +132,7 @@ Running
 -------
 
 Well, the best way is to run it as the nobody user, you can also create an user called Uru,
-and run it as this user. Never run it as the superuser, or with an user with some privilegues.
+and run it as this user. Never run it as the superuser, or with an user with some privileges.
 Also a chrooted jail will add more security.
 
 Helping
@@ -144,8 +144,8 @@ Then, is very simple, read the file HELPING.
 
 What is required?
 
-* Well, mainly C/C++ programers to code the server.
-* Write documentation. This is basic, the programers do the code, and then the user write the
+* Well, mainly C/C++ programmers to code the server.
+* Write documentation. This is basic, the programmers do the code, and then the user write the
  documentation, you can rewrite this README and make it more clear for some people.
  I REALLY NEED SOMEONE TO WRITE DOCUMENTATION. DO YOU KNOW HOW MANY TIME CONSUMES TO WRITE THESE DOCS?
 * Porting to other OSes.

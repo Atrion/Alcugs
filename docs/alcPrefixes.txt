@@ -26,6 +26,6 @@ Proposed:
 
 * All source files, will contain the SVN tag $Id$.
 * On header files, this tag is __U_FILENAME_H_ID
-* On source files, thiw tag is __U_FILENAME_ID
+* On source files, this tag is __U_FILENAME_ID
 
 

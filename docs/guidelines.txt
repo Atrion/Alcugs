@@ -4,14 +4,14 @@ These are the basic developer coding guidelines:
  any new code. The proposed schema is still not finished and it may change in
  the future.
 
-2) Identation: In order to make the code readable, everything should be idented
- with one TAB. (no spaces) [adjust your editor tab size to your prefered one]
- You are not allowed to re-ident or re-format any old code mainly because it's
- very anonying.
+2) Indentation: In order to make the code readable, everything should be indented
+ with one TAB. (no spaces) [adjust your editor tab size to your preferred one]
+ You are not allowed to re-indent or re-format any old code mainly because it's
+ very annoying.
 
 3) We are trying to have all the sources documented with Doxygen, please read
  their website for more info, and try to document the new pieces of code.
 
 4) Changes that will affect to the database format, or a changes in the format
- of the configuraion files, or changes in how the source tree is organized need
- to be discussed with the other devs.
+ of the configuration files, or changes in how the source tree is organized need
+ to be discussed with the other Dev's.

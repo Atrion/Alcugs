@@ -49,9 +49,9 @@
 11/Jun/2005 - Structural Changes in the source tree
 ===========================================================================0
 
- * Autoconf is now being added as the prefered system, to configure, and
+ * Autoconf is now being added as the preferred system, to configure, and
    compile the servers. Also, there several structural changes in the
-   development tree are beind done now.
+   development tree are being done now.
    Makefile, and config.h has been removed.
    Until autoconf is not fully integrated, you need two do these steps:
     $mv alcconfig.h config.h
@@ -80,7 +80,7 @@
    that have a coma ',' are between 2 '"', or the parser will put each
    value into different fields of the tuple.
  * Work on the Plasma Firewall is also progressing.
- * Also, you will need the development headers and libraryes of wxWidgets
+ * Also, you will need the development headers and libraries of wxWidgets
    to be able to compile the first extremely alpha versions of the
    Alcugs Client & Patcher.
 
@@ -109,7 +109,7 @@ SELECT * FROM `vault` WHERE age_guid!="0000000000000000"
    corruption from the GoE shard vault.
    After entering these queries, I should remember that you need to do a
    backup of the databases, so if you break something, you can just rollback.
-   It's also recomended to shutdown the shard while you are cleanning this
+   It's also recommended to shutdown the shard while you are cleaning this
    corruption.
    This query should clean almost all corrupted data, back to the normal value.
 
@@ -128,7 +128,7 @@ and  ((age_name="") or (type!=22 and type!=35
 and type!=32 and type!=26 and type!=25 and type!=27
 and type!=29 and type!=28))
 
-   And you need to manually analize the situation.
+   And you need to manually analyze the situation.
    A legal allowed age guid is: "", "0000000000000000", or
    "KIKIKIKI0000ID00" where KIKIKIKI is the player ki number
    in hexadecimal notation, and ID is the age unique id.
@@ -146,9 +146,9 @@ and type!=29 and type!=28))
 01/Dec/2004 - Release 1.1.15 (pre)
 ===========================================================================0
 
- * Small change in the vault format, wipe is recomened, but not required,
+ * Small change in the vault format, wipe is recommended, but not required,
    the vault will be automatically converted to the new format.
-   It's extremely recomended to do a backup of your vault if you apreciate
+   It's extremely recommended to do a backup of your vault if you appreciate
    it a lot.
  * Experimental Multiple instance mode is now enabled by default,
    AvatarCustomization, Personal & Nexus are now private ages.
@@ -163,7 +163,7 @@ and type!=29 and type!=28))
 
  * Some sdl stuff has been implemented that will allow you to do
    more things than the previous version. There are still some
-   known nasty bugs. You can succesfully solve Cleft now, also
+   known nasty bugs. You can successfully solve Cleft now, also
    other ages may be solvable, there are still problems with the
    camera and the cursor, that may be caused by some missing game
    messages. Be aware that the game servers are still not storing
