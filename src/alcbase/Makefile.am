@@ -16,3 +16,4 @@ libalcugsbase_a_SOURCES = alcexception.cpp alcmain.cpp alctypes.cpp alcdebug.cpp
  urutypes/whatdoyousee.cpp urutypes/urubasetypes.cpp
 #libalcugsbase_a_LIBADD = alcexcpetion.o
 
+libalcugsbase_a_CPPFLAGS = -DIN_ALC_LIBRARY

@@ -27,10 +27,13 @@
 //#define _DBG_LEVEL_ 10
 
 //Program vars
-const char * alcXID = "$Id$";
-const char * alcXBUILD =  __DATE__ " " __TIME__;
-const char * alcXSNAME = "UruCrypt";
-const char * alcXVERSION = "2.0";
+#define ALC_PROGRAM_ID "$Id$"
+#ifdef M5CRYPT
+#define ALC_PROGRAM_NAME "M5Crypt"
+#else
+#define ALC_PROGRAM_NAME "UruCrypt"
+#endif
+#define ALC_PROGRAM_VERSION "2.1"
 
 #include<alcugs.h>
 

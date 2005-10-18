@@ -77,6 +77,25 @@
 #endif
 #define VERSION alcSTR_VER
 
+#ifndef IN_ALC_LIBRARY
+#ifndef ALC_PROGRAM_VARS
+#define ALC_PROGRAM_VARS
+#ifndef ALC_PROGRAM_ID
+#define ALC_PROGRAM_ID __U_ALCUGS_H_ID
+#endif
+#ifndef ALC_PROGRAM_NAME
+#define ALC_PROGRAM_NAME "Alcugs"
+#endif
+#ifndef ALC_PROGRAM_VERSION
+#define ALC_PROGRAM_VERSION alcSTR_VER
+#endif
+const char * alcXID = ALC_PROGRAM_ID;
+const char * alcXBUILD =  alcBUILD_TIME;
+const char * alcXSNAME = ALC_PROGRAM_NAME;
+const char * alcXVERSION = ALC_PROGRAM_VERSION;
+#endif
+#endif
+
 //std includes
 #include <iostream>
 #include <cstdio>
@@ -97,8 +116,8 @@ namespace std {
 //alcugs includes
 #include "alcexception.h"
 #include "alctypes.h"
-#include "alcmain.h"
 #include "alcversion.h"
+#include "alcmain.h"
 #include "alclicense.h"
 
 #include "urutypes/urubasetypes.h"

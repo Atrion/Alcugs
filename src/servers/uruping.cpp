@@ -26,16 +26,13 @@
 
 #define _DBG_LEVEL_ 10
 
+//Program vars
+#define ALC_PROGRAM_ID "$Id$"
+#define ALC_PROGRAM_NAME "UruPing"
+
 #include<alcugs.h>
 
-//Program vars
-const char * alcXID = "$Id$";
-const char * alcXBUILD =  __DATE__ " " __TIME__;
-const char * alcXSNAME = "UruPing";
-const char * alcXVERSION = alcSTR_VER;
-
 #include<urunet/unet.h>
-
 
 #include<alcdebug.h>
 

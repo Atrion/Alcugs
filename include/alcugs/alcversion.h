@@ -31,10 +31,25 @@
 
 namespace alc {
 
+/** \brief Returns short version info
+*/
 const char * alcVersionTextShort();
+/** \brief Returns long version info
+*/
 const char * alcVersionText();
 
-}
+int alcGetMaxVersion();
+int alcGetMinVersion();
+int alcGetRelVersion();
+int alcGetBetVersion();
+int alcGetProtocolMaxVersion();
+int alcGetProtocolMinVersion();
+int alcGetProtocolVersion();
+
+char * alcGetPlatform();
+char * alcGetOS();
+
+}//end namespace
 
 #endif
 

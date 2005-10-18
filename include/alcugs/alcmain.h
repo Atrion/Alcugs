@@ -41,17 +41,38 @@ extern const char * alcXID;
 
 namespace alc {
 
-/** Start Alcugs library 
+/** 
+		\brief Start Alcugs library.
 		\param argc Number of args
 		\param argv args
+		\param shutup Enable logging subsystem?
 */
 void alcInit(int argc=0,char ** argv=NULL,bool shutup=false);
-/** Stop Alcugs library */
+/** \brief Stop Alcugs library */
 void alcShutdown();
-
+/** \brief Call this after a fork() call */
 void alcOnFork();
-
+/** \brief Interface for installing signals */
 void alcSignal(int signum, void (*handler)(int));
+
+#ifndef IN_ALC_LIBRARY
+#ifndef __ALC_VERIFY_VERSION_
+#define __ALC_VERIFY_VERSION_
+bool alcVerifyVersion() {
+	return(alcGetMaxVersion()==alcMAX_VER &&
+	alcGetMinVersion()==alcMIN_VER &&
+	alcGetRelVersion()==alcREL_VER &&
+	alcGetBetVersion()==alcBET_VER &&
+	alcGetProtocolVersion()==alcProtoVer);
+}
+char * alcVerifyVersionStr = alcSTR_VER;
+#endif
+
+#else
+extern bool alcVerifyVersion();
+extern char * alcVerifyVersionStr;
+#endif
+
 
 }
 

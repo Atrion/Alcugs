@@ -195,7 +195,7 @@ void alcLogOpenStdLogs(bool shutup) {
 	if(lstd==NULL) {
 		lstd=new tLog();
 		if(shutup) lstd->open(NULL,2,DF_STDOUT);
-		else lstd->open("uru.log",2,DF_STDOUT);
+		else lstd->open("alcugs.log",2,DF_STDOUT);
 	}
 	if(lnull==NULL) {
 		lnull=new tLog();

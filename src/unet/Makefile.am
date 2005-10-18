@@ -7,5 +7,4 @@ libalcugsurunet3_a_SOURCES = urunet.cpp netlog.cpp \
   protocol/protocol.cpp netcore.cpp \
   protocol/umsgbasic.cpp
 
-
-
+libalcugsurunet3_a_CPPFLAGS = -DIN_ALC_LIBRARY

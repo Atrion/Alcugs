@@ -46,8 +46,8 @@ void _alcVersionInitVars() {
 	char * p1=tvalcVerTextShort;
 	char * p2=tvalcVerText;
 	//short
-	sprintf(p1,"%s.  Build %s - Version %s\nId: %s\n",alcXSNAME,alcXBUILD,alcXVERSION,alcXID);
-	sprintf(p,"Alcugs %s - Version %s\n",alcXBUILDINFO,alcSTR_VER);
+	sprintf(p1,"%s. Build %s - Version %s\nId: %s\n",alcXSNAME,alcXBUILD,alcXVERSION,alcXID);
+	sprintf(p,"Alcugs %s %s - Version %s\n",alcXBUILDINFO,_PLATFORM_,alcSTR_VER);
 	strcat(p1,p);
 	//sprintf(p,"Supported Uru protocols 12.0-12.7\n");
 	//strcat(p1,p);
@@ -55,7 +55,7 @@ void _alcVersionInitVars() {
 	strcat(p1,p);
 	//long
 	sprintf(p2,"%s",alcLicenseTextShort());
-	sprintf(p,"%s","Alcugs H'uru server\n");
+	sprintf(p,"%s","Alcugs Project\n");
 	strcat(p2,p);
 	strcat(p2,p1);
 }
@@ -70,5 +70,34 @@ const char * alcVersionText() {
 	return (const char *)tvalcVerText;
 }
 
+int alcGetMaxVersion() {
+	return alcMAX_VER;
 }
+int alcGetMinVersion() {
+	return alcMIN_VER;
+}
+int alcGetRelVersion() {
+	return alcREL_VER;
+}
+int alcGetBetVersion() {
+	return alcBET_VER;
+}
+int alcGetProtocolMaxVersion() {
+	return alcProtoMAX_VER;
+}
+int alcGetProtocolMinVersion() {
+	return alcProtoMIN_VER;
+}
+int alcGetProtocolVersion() {
+	return alcProtoVer;
+}
+
+char * alcGetPlatform() {
+	return _PLATFORM_;
+}
+char * alcGetOS() {
+	return _OS_;
+}
+
+} //end namespace
 

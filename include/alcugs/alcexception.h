@@ -46,28 +46,34 @@ void alcWriteCoreDump(char * name="");
 	\param flags 0x00 - dissabled, 0x01 - enabled, 0x02 -always
 */
 void alcSetCoreDumpFlags(char f);
-/** Set if you want to abort always when an exception is raised. */
+/** 
+	\brief Set if you want to abort always when an exception is raised. 
+*/
 void alcSetAbort(bool c);
-/** Sets the coredumper path. */
+/** 
+	\brief Sets the coredumper path. 
+*/
 void alcSetCoreDumpPath(char * p);
-/** Gets the coredumper path. */
+/** 
+	\brief Gets the coredumper path. 
+*/
 char * alcGetCoreDumpPath();
 
 #define txExcLevels 20
 
-/** Exception, Base virtual class */
+/** \brief Exception, Base virtual class. */
 class txBase {
 public:
-	/** Constructor
+	/** \brief Constructor.
 			\param msg A description message
 			\param abort If true, this exception will always stop execution
 			\param core If true, it will try to generate a coredump (requires the google Coredumper library), and of course, only works on a real operating system.
 	*/
 	txBase(char * msg="",bool abort=false,bool core=false);
 	txBase(char * name,char * msg,bool abort,bool core);
-	/**	Returns the description message */
+	/** \brief Returns the description message */
 	virtual char * what();
-	/** Returns a backtrace (Only on Linux) */
+	/** \brief Returns a backtrace (Only on Linux) */
 	char * backtrace();
 	virtual ~txBase();
 private:

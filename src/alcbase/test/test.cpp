@@ -23,15 +23,30 @@
 *                                                                              *
 *                                                                              *
 *******************************************************************************/
-/* $Id$ */
 
 #define _DBG_LEVEL_ 10
+#define ALC_PROGRAM_ID "$Id$"
 
 #include <alcugs.h>
 
 #include <alcdebug.h>
 
 using namespace alc;
+
+void alcdebug_tests() {
+	std::cout << "alcdebug_tests" <<std::endl;
+	int i;
+	for(i=0; i<100; i++) {
+		DBG(i,"Debug Level %i\n",i);
+	}
+	std::cout << "where:" <<_WHERE("hello") <<std::endl;
+	
+	std::FILE * f;
+	f=std::fopen("this_file_does_not_exists_","rb");
+	assert(f==NULL);
+	ERR(0,"testing dbg ERR call\n");
+	//_DIE("testing die");
+}
 
 void and_another_one() {
 	throw txBase("ouch, that hurts");
@@ -45,7 +60,8 @@ void my_func() {
 	my_other_func();
 }
 
-void do_tests() {
+void alcexception_tests() {
+	std::cout << "alcexception_tests" <<std::endl;
 	DBG(1,"Generating an exception...\n");
 	try {
 		throw txBase("ooops");
@@ -69,10 +85,9 @@ void do_tests() {
 		std::cout<< "Cauth Exception " << t.what() << std::endl;
 		std::cout<< t.backtrace() << std::endl;
 	}
-
 }
 
-void ok_the_real_ones() {
+void alctypes_mbuf() {
 	//alctypes related tests
 	tMBuf buf1;
 
@@ -120,6 +135,13 @@ void ok_the_real_ones() {
 	assert(buf1.tell()==buf1.size());
 	buf1.seek(-(S32)buf1.size());
 	assert(buf1.tell()==0);
+	try {
+		buf1.seek(-100);
+		throw txBase("expected txOutOfRange",1);
+	} catch( txOutOfRange &t) {
+		std::cout<< "Cauth Exception " << t.what() << std::endl;
+		std::cout<< t.backtrace() << std::endl;
+	}
 	buf1.check(a,strlen((char *)a));
 	buf1.check(b,strlen(b));
 	buf1.check(&c,1);
@@ -198,6 +220,8 @@ void ok_the_real_ones() {
 	assert(*buf5==buf1);
 	assert(*buf5==buf3);
 	assert(*buf5!=*buf4);
+	assert(*buf5!=*buf6);
+	assert(*buf5!=*buf7);
 	assert(*buf4<*buf5);
 	assert(*buf6<*buf5);
 	assert(*buf7<*buf6);
@@ -239,7 +263,7 @@ void ok_the_real_ones() {
 	delete buf7;
 }
 
-void punto_y_aparte() {
+void alctypes_mbuf2() {
 	tMBuf k1,k2;
 	
 	if(k1==k2) std::cout<<"eq"<<std::endl;
@@ -248,14 +272,12 @@ void punto_y_aparte() {
 	assert(k2==k1);
 	
 	k1.putU32(123);
+	assert(k2!=k1);
 	k2=k1;
 	assert(k2==k1);
 }
 
-void filebuffer() {
-
-	dmalloc_verify(NULL);
-
+void alctypes_fbuf() {
 	tFBuf f1,f2;
 	
 	try {
@@ -307,10 +329,9 @@ void filebuffer() {
 	assert(b2==b3);
 	
 	f1.close();
-	
 }
 
-void part2() {
+void alctypes_part2() {
 	tMBuf b1;
 	
 	b1.putU32(5);
@@ -360,7 +381,7 @@ void part2() {
 	
 }
 
-void part3() {
+void alctypes_part3() {
 
 	DBG(5,"opening current directory...\n");
 	
@@ -372,6 +393,14 @@ void part3() {
 		printf("%s - %u\n",k->name,k->type);
 	}
 
+}
+
+void alctypes_tests() {
+	alctypes_mbuf();
+	alctypes_mbuf2();
+	alctypes_fbuf();
+	alctypes_part2();
+	alctypes_part3();
 }
 
 void sith() {
@@ -513,38 +542,22 @@ int log_test() {
 	return 0;
 }
 
-void alcdebug_tests() {
-	std::cout << "alcdebug_tests" <<std::endl;
-	int i;
-	for(i=0; i<100; i++) {
-		DBG(i,"Debug Level %i\n",i);
-	}
-	std::cout << "where:" <<_WHERE("hello") <<std::endl;
-	
-	std::FILE * f;
-	f=std::fopen("this_file_does_not_exists_","rb");
-	assert(f==NULL);
-	ERR(0,"testing dbg ERR call\n");
-	//_DIE("testing die");
-}
-
 int main(int argc, char * argv[]) {
 	std::cout << "Alcugs test suit" <<std::endl;
 	DBG(0,"Starting testing suit...\n");
+	
+	//int i;
+	//for (i=0; i<10; i++) {
+	
 	alcdebug_tests();
 
 	try {
-		alcInit();
-		do_tests();
-		ok_the_real_ones();
-		punto_y_aparte();
-		filebuffer();
-		part2();
-		part3();
-			dmalloc_verify(NULL);
+		alcInit(argc,argv);
+		alcexception_tests();
+		alctypes_tests();
 		log_test();
-			dmalloc_verify(NULL);
 		sith();
+		//alcShutdown();
 		std::cout<< "Success!!" << std::endl;
 	} catch (txBase &t) {
 		std::cout<< "Cauth Exception " << t.what() << std::endl;
@@ -554,6 +567,8 @@ int main(int argc, char * argv[]) {
 		std::cout<< "Cauth Unknown Exception" <<std::endl;
 		return -1;
 	}
+	
+	//}
 	
 	return 0;
 }
