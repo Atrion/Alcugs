@@ -37,19 +37,20 @@ namespace alc {
 
 /** 
 	\brief Dumps core to coredumps directory.
+	\param name Mr. core name
 	\todo implement a Mutex here
-	\param name Mr. core name */
+*/
 void alcWriteCoreDump(char * name="");
 /** 
-	\brief Set coredump flags
+	\brief Set coredump flags.
 	\param flags 0x00 - dissabled, 0x01 - enabled, 0x02 -always
 */
 void alcSetCoreDumpFlags(char f);
-/** Set if you want to abort always when an exception is raised */
+/** Set if you want to abort always when an exception is raised. */
 void alcSetAbort(bool c);
-/** Sets the coredumper path */
+/** Sets the coredumper path. */
 void alcSetCoreDumpPath(char * p);
-/** Get the coredumper path */
+/** Gets the coredumper path. */
 char * alcGetCoreDumpPath();
 
 #define txExcLevels 20
