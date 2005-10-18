@@ -242,8 +242,8 @@ void ok_the_real_ones() {
 void punto_y_aparte() {
 	tMBuf k1,k2;
 	
-	if(k1==k2) std::cout<<"eq"<<endl;
-	else std::cout<<"!eq"<<endl;
+	if(k1==k2) std::cout<<"eq"<<std::endl;
+	else std::cout<<"!eq"<<std::endl;
 	k2=k1;
 	assert(k2==k1);
 	
@@ -513,10 +513,25 @@ int log_test() {
 	return 0;
 }
 
+void alcdebug_tests() {
+	std::cout << "alcdebug_tests" <<std::endl;
+	int i;
+	for(i=0; i<100; i++) {
+		DBG(i,"Debug Level %i\n",i);
+	}
+	std::cout << "where:" <<_WHERE("hello") <<std::endl;
+	
+	std::FILE * f;
+	f=std::fopen("this_file_does_not_exists_","rb");
+	assert(f==NULL);
+	ERR(0,"testing dbg ERR call\n");
+	//_DIE("testing die");
+}
+
 int main(int argc, char * argv[]) {
 	std::cout << "Alcugs test suit" <<std::endl;
-
-	DBG(4,"Starting testing suit...\n");
+	DBG(0,"Starting testing suit...\n");
+	alcdebug_tests();
 
 	try {
 		alcInit();

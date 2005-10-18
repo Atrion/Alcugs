@@ -35,10 +35,13 @@
 
 namespace alc {
 
-/** Dumps core to coredumps directory. TODO: implement a Mutex here
+/** 
+	\brief Dumps core to coredumps directory.
+	\todo implement a Mutex here
 	\param name Mr. core name */
 void alcWriteCoreDump(char * name="");
-/** Set coredump flags
+/** 
+	\brief Set coredump flags
 	\param flags 0x00 - dissabled, 0x01 - enabled, 0x02 -always
 */
 void alcSetCoreDumpFlags(char f);

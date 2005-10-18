@@ -38,6 +38,7 @@ rm Makefile.in
 rm config.h.in
 rm *.exe
 rm *.o
+rm INSTALL
 
 ./tclean.py
 

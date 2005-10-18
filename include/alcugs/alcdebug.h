@@ -32,7 +32,6 @@
 	ERR(level,args...) error message, also calls perror()
 	_DIE(msg) shows a message, and aborts
 
-
 */
 
 #ifndef __U_ALCDEBUG_H
@@ -44,7 +43,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-using namespace std;
+//using namespace std;
 #endif
 
 #ifdef _DBG_LEVEL_
@@ -112,7 +111,7 @@ char * __dbg_where(const char * b,const char * c,int d,const char * a,...);
 
 #endif //__MSVC__
 
-#define _DIE(a) { DBG(0,"ABORT: %s",_WHERE(a)); abort(); }
+#define _DIE(a) { DBG(0,"ABORT: %s\n",_WHERE(a)); abort(); }
 
 #if defined(HAVE_DMALLOC_H)
 #include <dmalloc.h>
@@ -146,7 +145,7 @@ char * __dbg_where(const char * b,const char * c,int d,const char * a,...);
 
 char * __dbg_where(const char * b,const char * c,int d,const char * a,...);
 
-#define _DIE(a) { printf("ABORT: %s",a); abort(); }
+#define _DIE(a) { printf("ABORT: %s\n",_WHERE(a)); abort(); }
 //NOTE: _DIE must always stop the execution of the program, if not, unexpected results
 // that could end on massive data lost could happen.
 
