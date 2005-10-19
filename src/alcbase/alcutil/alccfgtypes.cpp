@@ -40,7 +40,7 @@
 namespace alc {
 
 tConfigVal::tConfigVal() { init(); }
-tConfigVal::tConfigVal(const Byte * name) {
+tConfigVal::tConfigVal(const void * name) {
 	init();
 	setName(name);
 }
@@ -61,10 +61,10 @@ tConfigVal::~tConfigVal() {
 		free((void *)values);
 	}
 }
-void tConfigVal::setName(const Byte * name) {
+void tConfigVal::setName(const void * name) {
 	if(name!=NULL) free((void *)name);
-	name=(Byte *)malloc(sizeof(Byte) * (strlen((const char *)name)+1));
-	strcpy((char *)name,(char *)name);
+	this->name=(Byte *)malloc(sizeof(Byte) * (strlen((const char *)name)+1));
+	strcpy((char *)this->name,(char *)name);
 }
 void tConfigVal::setVal(tStrBuf & t,U16 x,U16 y) {
 	U16 ox,oy,my,j,k;
@@ -108,9 +108,9 @@ void tConfigVal::setVal(tStrBuf & t,U16 x,U16 y) {
 		*myval = t;
 	}
 }
-void tConfigVal::setVal(const Byte * val,U16 x,U16 y) {
+void tConfigVal::setVal(const void * val,U16 x,U16 y) {
 	tStrBuf w;
-	w.writeStr(val);
+	w.writeStr((char *)val);
 	setVal(w,x,y);
 }
 Byte * tConfigVal::getName() {
@@ -165,7 +165,7 @@ void tConfigKey::setName(const Byte * name) {
 	name=(Byte *)malloc(sizeof(Byte) * (strlen((const char *)name)+1));
 	strcpy((char *)name,(char *)name);
 }
-tConfigVal * tConfigKey::find(const Byte * what,bool create) {
+tConfigVal * tConfigKey::find(const void * what,bool create) {
 	U16 i;
 	for(i=0; i<n; i++) {
 		if(!strcmp((const char *)what,(const char *)values[i]->name)) {
@@ -223,7 +223,7 @@ tConfig::~tConfig() {
 		free((void *)values);
 	}
 }
-tConfigKey * tConfig::findKey(const Byte * where,bool create) {
+tConfigKey * tConfig::findKey(const void * where,bool create) {
 	U16 i;
 	for(i=0; i<n; i++) {
 		if(!strcmp((const char *)where,(const char *)values[i]->name)) {
@@ -234,16 +234,16 @@ tConfigKey * tConfig::findKey(const Byte * where,bool create) {
 	n++;
 	values=(tConfigKey **)realloc((void *)values,sizeof(tConfigKey *) * n);
 	values[n-1]=new tConfigKey();
-	values[n-1]->setName(where);
+	values[n-1]->setName((const Byte *)where);
 	return values[n-1];
 }
-tConfigVal * tConfig::findVar(const Byte * what,const Byte * where,bool create) {
+tConfigVal * tConfig::findVar(const void * what,const void * where,bool create) {
 	tConfigKey * mykey;
 	mykey=findKey(where,create);
 	if(mykey==NULL) return NULL;
 	return(mykey->find(what,create));
 }
-void tConfig::setVar(const Byte * val,const Byte * what,const Byte * where) {
+void tConfig::setVar(const void * val,const void * what,const void * where) {
 	tConfigVal * myvar;
 	myvar=findVar(what,where,true);
 	myvar->setVal(val);

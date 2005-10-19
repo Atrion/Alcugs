@@ -38,14 +38,14 @@ namespace alc {
 class tConfigKey;
 class tConfig;
 
+/** \brief A configuration value, can be a tupple */
 class tConfigVal {
 public:
 	tConfigVal();
-	tConfigVal(const Byte * name);
+	tConfigVal(const void * name);
 	~tConfigVal();
-	void init();
-	void setName(const Byte * name);
-	void setVal(const Byte * val,U16 x=0,U16 y=0);
+	void setName(const void * name);
+	void setVal(const void * val,U16 x=0,U16 y=0);
 	void setVal(tStrBuf & t,U16 x=0,U16 y=0);
 	Byte * getName();
 	tStrBuf * getVal(U16 x=0,U16 y=0);
@@ -54,6 +54,7 @@ public:
 	void copy(tConfigVal & t);
 	void operator=(tConfigVal & t) { copy(t); }
 private:
+	void init();
 	Byte * name;
 	tStrBuf ** values;
 	U16 x; //columns
@@ -63,14 +64,14 @@ private:
 	friend class tConfigKey;
 };
 
+/** \brief A configuration key, a group of several configuration values */
 class tConfigKey {
 public:
 	tConfigKey();
 	~tConfigKey();
 	void setName(const Byte * name);
 	Byte * getName() { return name; }
-	tConfigVal * find(const Byte * what,bool create=false);
-	tConfigVal * find(const char * what,bool create=false) { return(find((Byte *)what,create)); }
+	tConfigVal * find(const void * what,bool create=false);
 	void copy(tConfigKey & t);
 	void operator=(tConfigKey & t) { copy(t); }
 	void rewind();
@@ -83,13 +84,14 @@ private:
 };
 
 
+/** \brief A group of config keys */
 class tConfig {
 public:
 	tConfig();
 	~tConfig();
-	tConfigKey * findKey(const Byte * where=(const Byte *)"global",bool create=false);
-	tConfigVal * findVar(const Byte * what,const Byte * where=(const Byte *)"global",bool create=false);
-	void setVar(const Byte * val,const Byte * what,const Byte * where);
+	tConfigKey * findKey(const void * where=(const void *)"global",bool create=false);
+	tConfigVal * findVar(const void * what,const void * where=(const void *)"global",bool create=false);
+	void setVar(const void * val,const void * what,const void * where=(const void *)"global");
 	void rewind();
 	tConfigKey * getNext();
 private:

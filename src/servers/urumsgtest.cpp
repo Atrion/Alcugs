@@ -25,12 +25,11 @@
 *******************************************************************************/
 #define _DBG_LEVEL_ 10
 
-#include<alcugs.h>
-
 //Program vars
 #define ALC_PROGRAM_ID "$Id$"
 #define ALC_PROGRAM_NAME "UruTestingSuit"
 
+#include<alcugs.h>
 #include<urunet/unet.h>
 
 

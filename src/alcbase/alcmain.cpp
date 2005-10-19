@@ -55,7 +55,8 @@ void alcInit(int argc,char ** argv,bool shutup) {
 	alcLogInit();
 	alcLogOpenStdLogs(shutup);
 	if(!alcVerifyVersion()) {
-		lerr->log("ERR: Alcugs Library version mismatch! %s-%s\n",alcSTR_VER,alcVerifyVersionStr);
+		lerr->log("ERR: Alcugs Library version mismatch! %s!=%s\n",alcSTR_VER,alcVerifyVersionStr);
+		_DIE("ERR: Alcugs Library version mismatch");
 	}
 
 	atexit(&alcShutdown);

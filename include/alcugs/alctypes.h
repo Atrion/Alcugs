@@ -279,6 +279,12 @@ public:
 	tStrBuf(tStrBuf &k,U32 start=0,U32 len=0);
 	void init();
 	~tStrBuf();
+	/** \brief returns a line
+			\param size If set, limits the line size
+			\param nl If true, it will also append the \n if it's present
+			\param slash If true, a \n followed by an slash will be ignored
+			\return a read only pointer to a container with the content
+	*/
 	Byte * getLine(U32 * size=NULL,bool nl=false,bool slash=false);
 	tStrBuf * getWord(U32 * size=NULL,bool slash=true);
 	void writeStr(const Byte * t);

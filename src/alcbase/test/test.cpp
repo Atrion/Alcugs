@@ -462,8 +462,43 @@ kkkk\\\n\
 	// e = m * c^2
 	// Now we should apply this formula everywhere, and we will be able to get flying cows in Relto as a  bonus relto page
 	
+	//config
+	tConfig cfg1;
+	tConfig * cfg2;
 	
+	cfg2 = new tConfig();
+	dmalloc_verify(NULL);
 	
+	tConfigKey * key1;
+	key1 = cfg1.findKey("global");
+		dmalloc_verify(NULL);
+		dmalloc_verify(NULL);
+
+	assert(key1==NULL);
+		dmalloc_verify(NULL);
+		dmalloc_verify(NULL);
+
+	key1 = cfg1.findKey("global",1); //<--BOUM
+		dmalloc_verify(NULL);
+
+	assert(key1!=NULL);
+	dmalloc_verify(NULL);
+		dmalloc_verify(NULL);
+
+	tConfigVal * val1;
+		dmalloc_verify(NULL);
+
+	val1 = cfg1.findVar("kaka");
+	assert(val1==NULL);
+		dmalloc_verify(NULL);
+
+	cfg1.setVar("1","kaka");
+		dmalloc_verify(NULL);
+
+	val1 = cfg1.findVar("kaka");
+	dmalloc_verify(NULL);
+	assert(!strcmp((const char *)val1->getName(),"kaka"));
+	delete cfg2;
 
 }
 
