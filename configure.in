@@ -39,6 +39,10 @@ AC_CHECK_HEADERS([unistd.h])
 AC_CHECK_HEADERS([zlib.h], , AC_MSG_FAILURE([zlib.h not found!]))
 AC_CHECK_LIB(z,compress, , AC_MSG_FAILURE([zlib not found!]))
 
+#expat
+AC_CHECK_HEADERS([expat.h], , AC_MSG_FAILURE([expat.h not found!]))
+AC_CHECK_LIB(expat,XML_ParserCreate, , AC_MSG_FAILURE([expat not found!]))
+
 #check for google/coredumper.h
 #AC_CHECK_HEADERS([google/coredumper.h], AC_SUBST(GOOGLE_LIBS,-lcoredumper), AC_MSG_RESULT([[ Support for Google coredumper dissabled, you may want to download coredumper from goog-coredumper.sf.net ]]))
 

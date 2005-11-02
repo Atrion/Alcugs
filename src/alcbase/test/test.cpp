@@ -468,36 +468,21 @@ kkkk\\\n\
 	
 	cfg2 = new tConfig();
 	dmalloc_verify(NULL);
-	
+
 	tConfigKey * key1;
 	key1 = cfg1.findKey("global");
-		dmalloc_verify(NULL);
-		dmalloc_verify(NULL);
-
 	assert(key1==NULL);
-		dmalloc_verify(NULL);
-		dmalloc_verify(NULL);
-
 	key1 = cfg1.findKey("global",1); //<--BOUM
-		dmalloc_verify(NULL);
-
 	assert(key1!=NULL);
-	dmalloc_verify(NULL);
-		dmalloc_verify(NULL);
-
+	
 	tConfigVal * val1;
-		dmalloc_verify(NULL);
-
 	val1 = cfg1.findVar("kaka");
 	assert(val1==NULL);
-		dmalloc_verify(NULL);
-
 	cfg1.setVar("1","kaka");
-		dmalloc_verify(NULL);
 
 	val1 = cfg1.findVar("kaka");
-	dmalloc_verify(NULL);
 	assert(!strcmp((const char *)val1->getName(),"kaka"));
+
 	delete cfg2;
 
 }
@@ -581,8 +566,8 @@ int main(int argc, char * argv[]) {
 	std::cout << "Alcugs test suit" <<std::endl;
 	DBG(0,"Starting testing suit...\n");
 	
-	//int i;
-	//for (i=0; i<10; i++) {
+	int i;
+	for (i=0; i<10; i++) {
 	
 	alcdebug_tests();
 
@@ -603,7 +588,7 @@ int main(int argc, char * argv[]) {
 		return -1;
 	}
 	
-	//}
+	}
 	
 	return 0;
 }

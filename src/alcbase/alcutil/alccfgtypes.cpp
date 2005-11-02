@@ -54,7 +54,9 @@ tConfigVal::~tConfigVal() {
 	if(name!=NULL) free((void *)name);
 	if(values!=NULL) {
 		for(i=0; i<x*y; i++) {
+			DBG(4,"i:%i\n",i);
 			if(values[i]!=NULL) {
+				DBG(6,"deleting...\n");
 				delete values[i];
 			}
 		}
@@ -67,6 +69,7 @@ void tConfigVal::setName(const void * name) {
 	strcpy((char *)this->name,(char *)name);
 }
 void tConfigVal::setVal(tStrBuf & t,U16 x,U16 y) {
+	DBG(4,"x: %i,y: %i\n",x,y);
 	U16 ox,oy,my,j,k;
 	tStrBuf ** ovalues=this->values;
 		dmalloc_verify(NULL);
@@ -108,13 +111,13 @@ void tConfigVal::setVal(tStrBuf & t,U16 x,U16 y) {
 		ovalues=values;
 	}
 		dmalloc_verify(NULL);
-	tStrBuf * myval=NULL;
-	myval = *(values+((ox*y)+x));
+	tStrBuf ** myval=NULL;
+	myval = (values+((ox*y)+x));
 		dmalloc_verify(NULL);
-	if(myval==NULL) {
-		myval = new tStrBuf(t);
+	if(*myval==NULL) {
+		*myval = new tStrBuf(t);
 	} else {
-		*myval = t;
+		**myval = t;
 	}
 		dmalloc_verify(NULL);
 }
