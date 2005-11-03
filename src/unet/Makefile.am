@@ -1,4 +1,4 @@
-INCLUDES = -I$(top_srcdir)/include/alcugs/
+INCLUDES = -I$(top_srcdir)/include/alcugs
 
 lib_LIBRARIES = libalcugsurunet3.a
 
