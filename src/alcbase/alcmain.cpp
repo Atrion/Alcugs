@@ -80,7 +80,11 @@ void alcOnFork() {
 }
 
 void alcSignal(int signum, void (*handler)(int)) {
+	#ifdef __CYGWIN__
+	signal(signum,handler);
+	#else
 	std::signal(signum,handler);
+	#endif
 }
 
 }

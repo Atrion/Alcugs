@@ -1,2 +1,11 @@
 #nobase_include_HEADERS = alcugs/alcugs.h alcugs/alcdebug.h alcugs/alcconfig.h
-nobase_include_HEADERS = $(srcdir)/alcugs/*.h $(srcdir)/alcugs/alcutil/*.h $(srcdir)/alcugs/urunet/*.h $(srcdir)/alcugs/urunet/protocol/*.h $(srcdir)/alcugs/urutypes/*.h
+include_alcugsdir = $(includedir)/alcugs
+include_alcugs_HEADERS = $(top_srcdir)/include/alcugs/*.h
+include_alcugs2dir = $(includedir)/alcugs/alcutil
+include_alcugs2_HEADERS = $(top_srcdir)/include/alcugs/alcutil/*.h 
+include_alcugs3dir = $(includedir)/alcugs/urunet
+include_alcugs3_HEADERS = $(top_srcdir)/include/alcugs/urunet/*.h
+include_alcugs4dir = $(includedir)/alcugs/urunet/protocol
+include_alcugs4_HEADERS = $(top_srcdir)/include/alcugs/urunet/protocol/*.h
+include_alcugs5dir = $(includedir)/alcugs/urutypes
+include_alcugs5_HEADERS = $(top_srcdir)/include/alcugs/urutypes/*.h

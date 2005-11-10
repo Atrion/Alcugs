@@ -41,6 +41,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <errno.h>
 
 #ifndef __WIN32__
 #include <syslog.h>

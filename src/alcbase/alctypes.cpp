@@ -38,7 +38,8 @@
 #include <cstdlib>
 #include <cstring>
 
-#include <stdarg.h>
+#include <cerrno>
+#include <cstdarg>
 
 
 namespace zlib {

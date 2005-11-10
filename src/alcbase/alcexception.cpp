@@ -35,7 +35,7 @@
 
 #include "alcugs.h"
 
-#ifndef __WIN32__
+#if ! (defined(__WIN32__) or defined(__CYGWIN__))
 namespace std {
 extern "C" {
 #include <execinfo.h>
@@ -71,7 +71,7 @@ static char * txvCorePath=NULL;
 
 void alcWriteCoreDump(char * name) {
 	DBG(5,"alcWriteCoreDump ");
-	#if !defined(__WIN32__) and defined(HAVE_GOOGLE_COREDUMPER_H)
+	#if !(defined(__WIN32__) or defined(__CYGWIN__)) and defined(HAVE_GOOGLE_COREDUMPER_H)
 	DBG(5,"is enabled\n");
 	unsigned int t,pid;
 	pid=getpid();
@@ -136,7 +136,7 @@ txBase::txBase(char * name,char * msg,bool abort,bool core) {
 }
 void txBase::_preparebacktrace() {
 //TODO: Porting - This code only works under Linux (it's part of the libc)
-#if !defined(__WIN32__)
+#if !(defined(__WIN32__) or defined(__CYGWIN__))
 	//get the backtrace
 	char **strings;
 	size=std::backtrace(btArray,txExcLevels);

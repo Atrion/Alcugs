@@ -1052,8 +1052,11 @@ char * alcUnetGetMsgCode(U16 code) {
 		case 0x1014:
 			ret="NetMsgCustomMetaPing";
 			break;
+		case 0x1313:
+			ret="NetMsgCustomTest";
+			break;
 		default:
-			ret="fix_me";
+			ret="UnimplementedMsg";
 			break;
 	}
 	return ret;

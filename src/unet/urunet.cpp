@@ -38,10 +38,15 @@
 
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <errno.h>
 
 #include "alcdebug.h"
 
 namespace alc {
+
+using namespace std;
 
 tUnet::tUnet(char * lhost,U16 lport) {
 	DBG(9,"tUnet()\n");

@@ -36,6 +36,7 @@
 #ifndef __WIN32__
 #include <netdb.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
 #endif
 
 #include "protocol/prot.h"

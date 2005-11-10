@@ -102,7 +102,7 @@ const char * alcXVERSION = ALC_PROGRAM_VERSION;
 
 //system includes
 
-#ifdef __WIN32__
+#if defined(__WIN32__) or defined(__CYGNUS__)
 #include "alcutil/windoze.h"
 #endif
 

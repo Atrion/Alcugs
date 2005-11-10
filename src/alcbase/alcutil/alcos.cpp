@@ -108,7 +108,7 @@ tDirEntry * tDirectory::getEntry() {
 	entry=readdir(dir);
 	if(entry==NULL) return NULL;
 	ent.name=entry->d_name;
-	#ifdef __WIN32__
+	#if defined(__WIN32__) or defined(__CYGWIN__)
 	//ent.type=0;
 	char * kpath=(char *)malloc(sizeof(char) * (strlen(entry->d_name) + strlen(this->path) + 4));
 	strcpy(kpath,this->path);
