@@ -56,8 +56,14 @@ public:
 class tSimpleParser :public tParserBase {
 public:
 	tSimpleParser();
+	virtual void store(tBBuf &t);
+	virtual int stream(tBBuf &t);
 	virtual void store(tStrBuf &t);
 	virtual int stream(tStrBuf &t);
+	/**
+		\brief Computes the size, runs the same code as stream
+	*/
+	virtual U32 size();
 	void setConfig(tConfig * c);
 	tConfig * getConfig();
 private:

@@ -161,7 +161,7 @@ void tConfigVal::copy(tConfigVal &t) {
 
 tConfigKey::tConfigKey() {
 	name=NULL;
-	n=0;
+	off=n=0;
 	values=NULL;
 }
 tConfigKey::~tConfigKey() {
@@ -225,6 +225,7 @@ void tConfigKey::rewind() {
 	off=0;
 }
 tConfigVal * tConfigKey::getNext() {
+	DBG(5,"n:%i,off:%i\n",n,off);
 	if(off>=n) { off=0; return NULL; }
 	off++;
 	return values[off-1];

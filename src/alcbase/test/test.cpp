@@ -395,12 +395,42 @@ void alctypes_part3() {
 
 }
 
+void alctypes_part4() {
+	DBG(5,"Helloooooo\n");
+	tStrBuf aa("hola");
+	DBG(4,"-%s-\n",aa.c_str());
+	assert(aa.eof());
+	tStrBuf bb(aa);
+	assert(bb.eof());
+	DBG(4,"aa-%s-\n",aa.c_str());
+	DBG(4,"bb-%s-\n",bb.c_str());
+	tStrBuf cc=aa;
+	assert(cc.eof());
+	DBG(4,"aa-%s-\n",aa.c_str());
+	DBG(4,"cc-%s-\n",cc.c_str());
+	cc.writeStr("hola mundo");
+	assert(cc.eof());
+	assert(aa.eof());
+	DBG(4,"aa-%s-\n",aa.c_str());
+	DBG(4,"cc-%s-\n",cc.c_str());
+	aa=cc;
+	DBG(4,"aa-%s-\n",aa.c_str());
+	DBG(4,"bb-%s-\n",bb.c_str());
+	DBG(4,"cc-%s-\n",cc.c_str());
+	aa=bb;
+	cc=aa;
+	DBG(4,"aa-%s-\n",aa.c_str());
+	DBG(4,"bb-%s-\n",bb.c_str());
+	DBG(4,"cc-%s-\n",cc.c_str());
+}
+
 void alctypes_tests() {
 	alctypes_mbuf();
 	alctypes_mbuf2();
 	alctypes_fbuf();
 	alctypes_part2();
 	alctypes_part3();
+	alctypes_part4();
 }
 
 void sith() {
@@ -441,22 +471,33 @@ kkkk\\\n\
 	a.rewind();
 	b.rewind();
 	
-	tStrBuf * res;
+	tStrBuf res;
 	
 	DBG(6,"kkkkk\n");
 	
 	int i=0;
 	while(!a.eof()) {
 		res=a.getWord();
-		res->rewind();
-		printf("[a:%i] %s\n",i++,res->read());
+		printf("[a:%i] %s\n",i++,res.c_str());
 	}
+	i=0;
 	while(!b.eof()) {
 		res=b.getWord();
-		res->rewind();
-		printf("[b:%i] %s\n",i++,res->read());
+		printf("[b:%i] %s\n",i++,res.c_str());
 	}
-	
+	printf("by lines now\n");
+	a.rewind();
+	b.rewind();
+	i=0;
+	while(!a.eof()) {
+		res=a.getLine();
+		printf("[a:%i] %s\n",i++,res.c_str());
+	}
+	i=0;
+	while(!b.eof()) {
+		res=b.getLine();
+		printf("[b:%i] %s\n",i++,res.c_str());
+	}
 	//Ok, If we are here then seems that it worked - everybody is ok?
 	
 	// e = m * c^2
@@ -485,6 +526,15 @@ kkkk\\\n\
 
 	delete cfg2;
 
+	//parser
+	tSimpleParser parser;
+	parser.setConfig(&cfg1);
+	parser.store(b);
+	tStrBuf out;
+	assert(parser.stream(out)!=0);
+	printf("original: ->%s<-\n",b.c_str());
+	printf("generated: ->%s<-\n",out.c_str());
+	
 }
 
 int log_test() {
@@ -567,7 +617,7 @@ int main(int argc, char * argv[]) {
 	DBG(0,"Starting testing suit...\n");
 	
 	int i;
-	for (i=0; i<10; i++) {
+	for (i=0; i<3; i++) {
 	
 	alcdebug_tests();
 

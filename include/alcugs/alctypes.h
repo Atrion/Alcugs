@@ -275,18 +275,19 @@ class tStrBuf :public tMBuf {
 public:
 	tStrBuf(char * k);
 	tStrBuf(U32 size=200);
+	tStrBuf(tBBuf &k,U32 start=0,U32 len=0);
 	tStrBuf(tMBuf &k,U32 start=0,U32 len=0);
 	tStrBuf(tStrBuf &k,U32 start=0,U32 len=0);
 	void init();
 	~tStrBuf();
 	/** \brief returns a line
 			\param size If set, limits the line size
-			\param nl If true, it will also append the \n if it's present
-			\param slash If true, a \n followed by an slash will be ignored
+			\param nl If true, it will also append the \\n if it's present
+			\param slash If false, a \\n followed by an slash will be ignored
 			\return a read only pointer to a container with the content
 	*/
-	Byte * getLine(U32 * size=NULL,bool nl=false,bool slash=false);
-	tStrBuf * getWord(U32 * size=NULL,bool slash=true);
+	tStrBuf & getLine(bool nl=false,bool slash=false);
+	tStrBuf & getWord();
 	void writeStr(const Byte * t);
 	void writeStr(const SByte * t) { writeStr((const Byte *)t); }
 	void writeStr(Byte val) { printf("%u",val); }
@@ -295,7 +296,7 @@ public:
 	void writeStr(S16 val) { printf("%i",val); }
 	void writeStr(U32 val) { printf("%u",val); }
 	void writeStr(S32 val) { printf("%i",val); }
-	void writeStr(tStrBuf * val) { val->rewind(); writeStr(val->read()); }
+	void writeStr(tStrBuf * val) { val->rewind(); write(val->read(),val->size()); }
 	void printf(const char * msg, ...);
 	void nl() { writeStr("\n"); }
 	U32 asU32();
@@ -304,6 +305,7 @@ public:
 	S16 asS16() { return (S16)asU32(); }
 	Byte asByte() { return (Byte)asU32(); }
 	SByte asSByte() { return (SByte)asU32(); }
+	Byte * c_str();
 	virtual void copy(tStrBuf &t);
 	virtual void operator=(tStrBuf &t) { this->copy(t); }
 	void setSeparator(char w) { sep=w; }
