@@ -134,9 +134,6 @@
 #define LOG_AUTHPRIV    (10<<3) /* security/authorization messages (private) */
 #define LOG_FTP         (11<<3) /* ftp daemon */
 
-//missing gettimeofday function
-int gettimeofday(struct timeval *tv, struct timezone *tz);
-
 //another very important missing function
 int getuid(void);
 int daemon(int a,int b);
@@ -146,6 +143,11 @@ char *getpass( const char * prompt );
 
 #define lstat stat
 
+#endif
+
+#if defined(__WIN32__) or defined(__CYGWIN__)
+//missing gettimeofday function (broken on Cygwin, well the cygwin implementation of gettimeofday sucks)
+int gettimeofday(struct timeval *tv, struct timezone *tz);
 #endif
 
 #endif

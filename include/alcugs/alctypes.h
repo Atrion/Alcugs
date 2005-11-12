@@ -315,6 +315,7 @@ public:
 	void writeStr(U32 val) { printf("%u",val); }
 	void writeStr(S32 val) { printf("%i",val); }
 	void writeStr(tStrBuf * val) { val->rewind(); write(val->read(),val->size()); }
+	void writeStr(tStrBuf & val) { val.rewind(); write(val.read(),val.size()); }
 	void printf(const char * msg, ...);
 	void nl() { writeStr("\n"); }
 	U32 asU32();

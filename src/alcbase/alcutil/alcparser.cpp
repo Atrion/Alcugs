@@ -36,7 +36,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCPARSER_ID "$Id$"
 
-#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
 
@@ -84,7 +84,10 @@ void tSimpleParser::store(tStrBuf &t) {
 			if(val=="\n") {
 				val=" ";
 			}
-			cfg->setVar(val.c_str(),key.c_str(),"global");
+			//cfg->setVar(val.c_str(),key.c_str(),"global");
+			//cfg->findVar(key.c_str(),"global",1);
+			tStrBuf section("global");
+			cfg->setVar(val,key,section);
 			val=t.getToken();
 			if(val!="\n") {
 				throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token '%s'\n",t.getLineNum(),t.getColumnNum(),val.c_str()));
@@ -102,13 +105,21 @@ int tSimpleParser::stream(tStrBuf &t) {
 	while((key=cfg->getNext())) {
 		DBG(5,"cfg->getNext()\n");
 		tConfigVal * val;
+		tStrBuf str;
 		while((val=key->getNext())) {
 			DBG(5,"key->getNext()\n");
 			t.writeStr(val->getName());
 			//t.writeStr(" ");
 			t.putByte(sep);
 			//t.writeStr(" ");
-			t.writeStr(val->getVal());
+			str=val->getVal();
+			if(str.hasQuotes()) {
+				t.writeStr("\"");
+			}
+			t.writeStr(str);
+			if(str.hasQuotes()) {
+				t.writeStr("\"");
+			}
 			t.nl();
 		}
 	}

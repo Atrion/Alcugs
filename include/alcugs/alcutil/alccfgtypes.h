@@ -45,17 +45,18 @@ public:
 	tConfigVal(const void * name);
 	~tConfigVal();
 	void setName(const void * name);
+	void setName(tStrBuf & name);
 	void setVal(const void * val,U16 x=0,U16 y=0);
 	void setVal(tStrBuf & t,U16 x=0,U16 y=0);
-	Byte * getName();
-	tStrBuf * getVal(U16 x=0,U16 y=0);
+	tStrBuf & getName();
+	tStrBuf & getVal(U16 x=0,U16 y=0);
 	U16 getRows() { return y; }
 	U16 getCols() { return x; }
 	void copy(tConfigVal & t);
 	void operator=(tConfigVal & t) { copy(t); }
 private:
 	void init();
-	Byte * name;
+	tStrBuf name;
 	tStrBuf ** values;
 	U16 x; //columns
 	U16 y; //rows
@@ -92,6 +93,7 @@ public:
 	tConfigKey * findKey(const void * where=(const void *)"global",bool create=false);
 	tConfigVal * findVar(const void * what,const void * where=(const void *)"global",bool create=false);
 	void setVar(const void * val,const void * what,const void * where=(const void *)"global");
+	void setVar(tStrBuf &val,tStrBuf &what,tStrBuf &where);
 	void rewind();
 	tConfigKey * getNext();
 private:

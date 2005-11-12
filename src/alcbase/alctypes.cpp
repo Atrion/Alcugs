@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCTYPES_ID "$Id$"
 
-//#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 4
 
 #include "alcugs.h"
 
@@ -62,16 +62,16 @@ using namespace std;
 	Abstract base type class
 */
 SByte tBaseType::compare(tBaseType &t) {
-	DBG(5,"tBaseType::compare()\n");
+	DBG(7,"tBaseType::compare()\n");
 	if(this->size()==t.size()) return 0;
 	else if(this->size()<t.size()) return 1;
 	else return -1;
 }
 void tBaseType::_pcopy(tBaseType &t) {
-	DBG(5,"tBaseType::_pcopy()\n");
+	DBG(7,"tBaseType::_pcopy()\n");
 }
 void tBaseType::copy(tBaseType &t) {
-	DBG(5,"tBaseType::copy()\n");
+	DBG(7,"tBaseType::copy()\n");
 	this->_pcopy(t);
 	tMBuf * aux=new tMBuf();
 	aux->put(t);
@@ -85,15 +85,15 @@ void tBaseType::copy(tBaseType &t) {
 	basicbuffer
 */
 tBBuf::tBBuf() {
-	DBG(5,"tBBuf::tBBuf()\n");
+	DBG(9,"tBBuf::tBBuf()\n");
 	this->init(); 
 }
 tBBuf::~tBBuf() {
-	DBG(5,"~tBBuf()\n");
+	DBG(9,"~tBBuf()\n");
 	if(gpbuf!=NULL) free((void *)gpbuf);
 }
 void tBBuf::init() {
-	DBG(5,"tBBuf::init()\n");
+	DBG(9,"tBBuf::init()\n");
 	gpbuf=NULL;
 }
 void tBBuf::putU16(U16 val) {
@@ -176,18 +176,18 @@ void tBBuf::check(Byte * what,U32 n) {
 	}
 }
 void tBBuf::_pcopy(tBBuf &t) {
-	DBG(5,"tBBuf::_pcopy()\n");
+	DBG(7,"tBBuf::_pcopy()\n");
 	tBaseType::_pcopy(t);
 }
 void tBBuf::copy(tBBuf &t) {
-	DBG(5,"tBBuf::copy()\n");
+	DBG(7,"tBBuf::copy()\n");
 	this->_pcopy(t);
 	this->rewind();
 	t.rewind();
 	this->write(t.read(),t.size());
 }
 char tBBuf::compare(tBBuf &t) {
-	DBG(5,"tBBuf::compare()\n");
+	DBG(7,"tBBuf::compare()\n");
 	char out;
 	rewind();
 	t.rewind();
@@ -258,11 +258,11 @@ U32 tRefBuf::size() { return msize; }
 	Memory Buffer
 */
 tMBuf::tMBuf() {
-	DBG(5,"tMBuf()\n");
+	DBG(7,"tMBuf()\n");
 	this->init();
 }
 tMBuf::tMBuf(tBBuf &t,U32 start,U32 len) {
-	DBG(5,"tMBuf(tBBuf,start:%u,len:%u)\n",start,len);
+	DBG(7,"tMBuf(tBBuf,start:%u,len:%u)\n",start,len);
 	this->init();
 	t.rewind();
 	if(start) t.read(start);
@@ -270,12 +270,12 @@ tMBuf::tMBuf(tBBuf &t,U32 start,U32 len) {
 	this->write(t.read(),len);
 }
 tMBuf::tMBuf(U32 size) {
-	DBG(5,"tMBuf(size:%i)\n",size);
+	DBG(7,"tMBuf(size:%i)\n",size);
 	buf = new tRefBuf(size);
 	mstart=msize=off=0;
 }
 tMBuf::tMBuf(tMBuf &t,U32 start,U32 len) {
-	DBG(5,"tMBuf(tMBuf,start:%u,len:%u)\n",start,len);
+	DBG(7,"tMBuf(tMBuf,start:%u,len:%u)\n",start,len);
 	if((S32)t.msize-(S32)start<0) throw txOutOfRange(_WHERE("start:%i,size:%i",start,t.msize));
 	buf = t.buf;
 	buf->inc();
@@ -288,7 +288,7 @@ tMBuf::tMBuf(tMBuf &t,U32 start,U32 len) {
 	off=t.off;
 }
 tMBuf::~tMBuf() {
-	DBG(5,"~tMBuf()\n");
+	DBG(9,"~tMBuf()\n");
 	if(buf!=NULL) {
 		buf->dec();
 		if(buf->getRefs()<=0) {
@@ -297,7 +297,7 @@ tMBuf::~tMBuf() {
 	}
 }
 void tMBuf::_pcopy(tMBuf &t) {
-	DBG(5,"tMBuf::_pcopy()\n");
+	DBG(7,"tMBuf::_pcopy()\n");
 	tBBuf::_pcopy(t);
 	if(buf!=NULL) {
 		buf->dec();
@@ -312,11 +312,11 @@ void tMBuf::_pcopy(tMBuf &t) {
 	mstart=t.mstart;
 }
 void tMBuf::copy(tMBuf &t) {
-	DBG(5,"tMBuf::copy()\n");
+	DBG(7,"tMBuf::copy()\n");
 	this->_pcopy(t);
 }
 void tMBuf::init() {
-	DBG(5,"tMBuf::init()\n");
+	DBG(7,"tMBuf::init()\n");
 	buf=NULL;
 	mstart=msize=off=0;
 }
@@ -347,15 +347,14 @@ void tMBuf::write(Byte * val,U32 n) {
 	if(off>msize) msize+=n;
 }
 Byte * tMBuf::read(U32 n) {
-	dmalloc_verify(NULL);
 	U32 pos=off+mstart;
 	if(n==0) n=msize-off;
 	if(n==0) return NULL;
 	off+=n;
 	if(off>msize || buf==NULL || buf->buf==NULL) { 
-		DBG(5,"off:%u,msize:%u\n",off,msize); off-=n; 
-		//throw txOutOfRange(_WHERE("OutOfRange %i>%i",off+n,msize)); 
-		return NULL;
+		DBG(8,"off:%u,msize:%u\n",off,msize); off-=n; 
+		throw txOutOfRange(_WHERE("OutOfRange %i>%i",off+n,msize)); 
+		//return NULL;
 	}
 	return buf->buf+pos;
 }
@@ -401,7 +400,7 @@ void tFBuf::set(U32 pos) {
 	}
 }
 void tFBuf::write(Byte * val,U32 n) {
-	DBG(5,"write(val:%s,n:%u)\n",val,n);
+	DBG(8,"write(val:%s,n:%u)\n",val,n);
 	if(val==NULL) return;
 	if(f==NULL) throw txNoFile(_WHERE("NoFile"));
 	U32 nn=fwrite(val,n,1,f);
@@ -541,18 +540,21 @@ tStrBuf::tStrBuf(const void * k) :tMBuf(200) {
 }
 tStrBuf::tStrBuf(U32 size) :tMBuf(size) { init(); }
 tStrBuf::tStrBuf(tBBuf &k,U32 start,U32 len) :tMBuf(k,start,len) {
-	DBG(5,"copy zero\n");
+	DBG(8,"copy zero\n");
 	init(); 
 }
 tStrBuf::tStrBuf(tMBuf &k,U32 start,U32 len) :tMBuf(k,start,len) { 
-	DBG(5,"copy one\n");
+	DBG(8,"copy one\n");
 	init(); 
 }
 tStrBuf::tStrBuf(tStrBuf &k,U32 start,U32 len) :tMBuf(k,start,len) { 
-	DBG(5,"copy two\n");
+	DBG(2,"copy two\n");
 	init(); 
 	l=k.l; 
-	c=k.c; 
+	c=k.c;
+	sep=k.sep;
+	flags=k.flags;
+	DBG(2,"flags are %02X\n",flags);
 }
 tStrBuf::~tStrBuf() {
 	if(bufstr!=NULL) free((void *)bufstr);
@@ -566,7 +568,7 @@ void tStrBuf::init() {
 	flags=0x00;
 }
 void tStrBuf::_pcopy(tStrBuf &t) {
-	DBG(5,"tStrBuf::_pcopy()\n");
+	DBG(2,"tStrBuf::_pcopy()\n");
 	tMBuf::_pcopy(t);
 	bufstr=NULL;
 	l=t.l;
@@ -574,10 +576,12 @@ void tStrBuf::_pcopy(tStrBuf &t) {
 	shot=NULL;
 	sep=t.sep;
 	flags=t.flags;
+	DBG(2,"flags are %02X\n",flags);
 }
 void tStrBuf::copy(tStrBuf &t) {
-	DBG(5,"tStrBuf::copy()\n");
+	DBG(8,"tStrBuf::copy()\n");
 	this->_pcopy(t);
+	DBG(2,"flags are %02X\n",flags);
 }
 void tStrBuf::copy(const void * str) {
 	tStrBuf pat(str);
@@ -607,6 +611,7 @@ void tStrBuf::rewind() {
 	c=l=0;
 }
 bool tStrBuf::hasQuotes() {
+	DBG(2,"hasQuotes %02X\n",flags);
 	return flags & 0x01;
 }
 void tStrBuf::hasQuotes(bool has) {
@@ -615,6 +620,7 @@ void tStrBuf::hasQuotes(bool has) {
 	} else {
 		flags &= ~0x01;
 	}
+	DBG(2,"hasQuotes enable %02X\n",flags);
 }
 U16 tStrBuf::getLineNum() {
 	return l;
@@ -623,7 +629,7 @@ U16 tStrBuf::getColumnNum() {
 	return c;
 }
 tStrBuf & tStrBuf::getLine(bool nl,bool slash) {
-	DBG(5,"getLine()\n");
+	DBG(8,"getLine()\n");
 	Byte c=0;
 	Byte slashm=0;
 	tStrBuf * out;
@@ -692,7 +698,7 @@ tStrBuf & tStrBuf::getLine(bool nl,bool slash) {
 }
 
 tStrBuf & tStrBuf::getWord(bool slash) {
-	DBG(5,"getWord()\n");
+	DBG(8,"getWord()\n");
 	Byte cc=0,c=0;
 	Byte slashm=0;
 	tStrBuf * out;
@@ -818,6 +824,8 @@ tStrBuf & tStrBuf::getToken() {
 	Byte mode=0;
 	tStrBuf * out;
 	out = new tStrBuf(200);
+	out->hasQuotes(true);
+	assert(out->hasQuotes());
 	while(!eof()) {
 		c=getByte();
 		this->c++;
@@ -848,7 +856,7 @@ tStrBuf & tStrBuf::getToken() {
 				}
 			}
 		} else if(c=='\"') {
-			out->hasQuotes(1);
+			out->hasQuotes(true);
 			if(quote==1) {
 				quote=0;
 				break;
@@ -923,7 +931,7 @@ U32 tStrBuf::asU32() {
 }
 
 void tTime::store(tBBuf &t) {
-	DBG(5,"Buffer status size:%i,offset:%i\n",t.size(),t.tell());
+	DBG(7,"Buffer status size:%i,offset:%i\n",t.size(),t.tell());
 	seconds=t.getU32();
 	microseconds=t.getU32();
 }

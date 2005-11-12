@@ -41,18 +41,27 @@ namespace alc {
 
 tConfigVal::tConfigVal() { init(); }
 tConfigVal::tConfigVal(const void * name) {
+	dmalloc_verify(NULL);
 	init();
+	dmalloc_verify(NULL);
 	setName(name);
+	dmalloc_verify(NULL);
 }
 void tConfigVal::init() {
-	name=NULL;
+	dmalloc_verify(NULL);
+	name="";
+	dmalloc_verify(NULL);
 	values=NULL;
+	dmalloc_verify(NULL);
 	x=y=0;
+	dmalloc_verify(NULL);
 }
 tConfigVal::~tConfigVal() {
 	int i;
-	if(name!=NULL) free((void *)name);
+	dmalloc_verify(NULL);
+	//if(name!=NULL) free((void *)name);
 	if(values!=NULL) {
+	dmalloc_verify(NULL);
 		for(i=0; i<x*y; i++) {
 			DBG(4,"i:%i\n",i);
 			if(values[i]!=NULL) {
@@ -64,9 +73,10 @@ tConfigVal::~tConfigVal() {
 	}
 }
 void tConfigVal::setName(const void * name) {
-	if(this->name!=NULL) free((void *)this->name);
-	this->name=(Byte *)malloc(sizeof(Byte) * (strlen((const char *)name)+1));
-	strcpy((char *)this->name,(char *)name);
+	this->name=name;
+}
+void tConfigVal::setName(tStrBuf & name) {
+	this->name=name;
 }
 void tConfigVal::setVal(tStrBuf & t,U16 x,U16 y) {
 	DBG(4,"x: %i,y: %i\n",x,y);
@@ -122,20 +132,19 @@ void tConfigVal::setVal(tStrBuf & t,U16 x,U16 y) {
 		dmalloc_verify(NULL);
 }
 void tConfigVal::setVal(const void * val,U16 x,U16 y) {
-	tStrBuf w;
-		dmalloc_verify(NULL);
-	w.writeStr((char *)val);
-		dmalloc_verify(NULL);
+	tStrBuf w(val);
 	setVal(w,x,y);
-		dmalloc_verify(NULL);
 }
-Byte * tConfigVal::getName() {
+tStrBuf & tConfigVal::getName() {
 	return name;
 }
-tStrBuf * tConfigVal::getVal(U16 x,U16 y) {
-	if(values==NULL || x>=this->x || y>=this->y) return NULL;
+tStrBuf & tConfigVal::getVal(U16 x,U16 y) {
+	if(values==NULL || x>=this->x || y>=this->y) {
+		static tStrBuf kk("");
+		return kk;
+	}
 	U16 nx=this->x;
-	return *(values+((nx*y)+x));
+	return **(values+((nx*y)+x));
 }
 void tConfigVal::copy(tConfigVal &t) {
 	U16 i;
@@ -185,7 +194,10 @@ tConfigVal * tConfigKey::find(const void * what,bool create) {
 	U16 i;
 		dmalloc_verify(NULL);
 	for(i=0; i<n; i++) {
-		if(!strcmp((const char *)what,(const char *)values[i]->name)) {
+/*		if(!strcmp((const char *)what,(const char *)values[i]->name)) {
+			return values[i];
+		}*/
+		if(values[i]->name==what) {
 			return values[i];
 		}
 	}
@@ -277,11 +289,13 @@ tConfigVal * tConfig::findVar(const void * what,const void * where,bool create) 
 }
 void tConfig::setVar(const void * val,const void * what,const void * where) {
 	tConfigVal * myvar;
-		dmalloc_verify(NULL);
 	myvar=findVar(what,where,true);
-		dmalloc_verify(NULL);
 	myvar->setVal(val);
-		dmalloc_verify(NULL);
+}
+void tConfig::setVar(tStrBuf &val, tStrBuf &what, tStrBuf &where) {
+	tConfigVal * myvar;
+	myvar=findVar(what.c_str(),where.c_str(),true);
+	myvar->setVal(val);
 }
 void tConfig::rewind() {
 	off=0;
