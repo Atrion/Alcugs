@@ -113,7 +113,9 @@ void tBBuf::putS32(S32 val) {
 	this->write((Byte *)&val,4);
 }
 void tBBuf::putByte(Byte val) {
+	dmalloc_verify(NULL);
 	this->write((Byte *)&val,1);
+	dmalloc_verify(NULL);
 }
 void tBBuf::putSByte(SByte val) {
 	this->write((Byte *)&val,1);
@@ -169,7 +171,7 @@ void tBBuf::seek(int n,Byte flags) {
 	this->set(res);
 }
 void tBBuf::check(Byte * what,U32 n) {
-	if(memcmp(what,this->read(n),n)) {
+	if(eof() || size()-tell()<n || memcmp(what,this->read(n),n)) {
 		throw txUnexpectedData(_WHERE("UnexpectedData"));
 	}
 }
@@ -324,6 +326,7 @@ void tMBuf::set(U32 pos) {
 	off=pos;
 }
 void tMBuf::write(Byte * val,U32 n) {
+	if(val==NULL) return;
 	if(buf==NULL) buf = new tRefBuf(1024 + n);
 	else if(buf->getRefs()>1) {
 		buf->dec();
@@ -344,11 +347,16 @@ void tMBuf::write(Byte * val,U32 n) {
 	if(off>msize) msize+=n;
 }
 Byte * tMBuf::read(U32 n) {
+	dmalloc_verify(NULL);
 	U32 pos=off+mstart;
 	if(n==0) n=msize-off;
 	if(n==0) return NULL;
 	off+=n;
-	if(off>msize || buf==NULL || buf->buf==NULL) { DBG(5,"off:%u,msize:%u\n",off,msize); off-=n; throw txOutOfRange(_WHERE("OutOfRange %i>%i",off+n,msize)); }
+	if(off>msize || buf==NULL || buf->buf==NULL) { 
+		DBG(5,"off:%u,msize:%u\n",off,msize); off-=n; 
+		//throw txOutOfRange(_WHERE("OutOfRange %i>%i",off+n,msize)); 
+		return NULL;
+	}
 	return buf->buf+pos;
 }
 int tMBuf::stream(tBBuf &b) {
@@ -394,6 +402,7 @@ void tFBuf::set(U32 pos) {
 }
 void tFBuf::write(Byte * val,U32 n) {
 	DBG(5,"write(val:%s,n:%u)\n",val,n);
+	if(val==NULL) return;
 	if(f==NULL) throw txNoFile(_WHERE("NoFile"));
 	U32 nn=fwrite(val,n,1,f);
 	if(nn!=1) throw txWriteErr(_WHERE("write error, only wrote %u of 1",nn));
@@ -525,9 +534,9 @@ void tMD5Buf::compute() {
 /* end md5 buf */
 
 /* String buffer */
-tStrBuf::tStrBuf(char * k) :tMBuf(200) {
+tStrBuf::tStrBuf(const void * k) :tMBuf(200) {
 	init();
-	writeStr(k);
+	writeStr((char *)k);
 	rewind();
 }
 tStrBuf::tStrBuf(U32 size) :tMBuf(size) { init(); }
@@ -554,6 +563,7 @@ void tStrBuf::init() {
 	l=c=0;
 	sep='=';
 	shot=NULL;
+	flags=0x00;
 }
 void tStrBuf::_pcopy(tStrBuf &t) {
 	DBG(5,"tStrBuf::_pcopy()\n");
@@ -562,11 +572,16 @@ void tStrBuf::_pcopy(tStrBuf &t) {
 	l=t.l;
 	c=t.c;
 	shot=NULL;
-	sep='=';
+	sep=t.sep;
+	flags=t.flags;
 }
 void tStrBuf::copy(tStrBuf &t) {
 	DBG(5,"tStrBuf::copy()\n");
 	this->_pcopy(t);
+}
+void tStrBuf::copy(const void * str) {
+	tStrBuf pat(str);
+	copy(pat);
 }
 SByte tStrBuf::compare(tStrBuf &t) {
 	rewind();
@@ -576,6 +591,10 @@ SByte tStrBuf::compare(tStrBuf &t) {
 	if(s>s2) s=s2;
 	return((SByte)strncmp((char *)read(),(char *)t.read(),s));
 }
+SByte tStrBuf::compare(const void * str) {
+	tStrBuf pat(str);
+	return(compare(pat));
+}
 Byte * tStrBuf::c_str() {
 	end();
 	putByte(0);
@@ -583,127 +602,34 @@ Byte * tStrBuf::c_str() {
 	rewind();
 	return read();
 }
-tStrBuf & tStrBuf::getWord() {
-	DBG(5,"tStrBuf::getWord()\n");
-	Byte c;
-	Byte slash=0;
-	Byte quote=0;
-	Byte mode=0;
-	Byte win=0;
-	U32 cur,len,x;
-	tStrBuf * out;
-	if(shot!=NULL) delete shot;
-	shot = new tStrBuf(200);
-	out = shot;
-	x=cur=tell();
-	len=size();
-	DBG(5,"while()\n");
-	while(x<len) {
-		c=getByte();
-		DBG(5,"char %c\n",c);
-		x++; this->c++;
-		
-		if(quote==0 && (c=='#' || c==';')) {
-			win=0;
-			out->putByte('#');
-			//out->putByte(0);
-			return *out;
-		} else if(slash==1) {
-			slash=0;
-			win=0;
-			if(c=='n' && quote==1) { out->putByte('\n'); }
-			else if(c=='\n' || c=='\r') { 
-				if(c=='\r') {
-					win=1;
-					l++;
-					this->c=0;
-				} else {
-					if(win==0) { l++; this->c=0; }
-					else win=0;
-				}
-			}
-			else {
-				if(quote==1) {
-					out->putByte(c);
-				} else {
-					throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected '\\'\n",l,this->c));
-				}
-			}
-		} else if(c=='\"') {
-			win=0;
-			if(quote==1) { 
-				out->putByte(c);
-				//out->putByte(0);
-				return *out;
-			} else {
-				quote=1;
-				out->putByte(c);
-			}
-		} else if(c=='\n' || c=='\r') {
-			if(quote==1) {
-				out->putByte(c);
-				if(c=='\r') {
-					win=1;
-					l++;
-					this->c=0;
-				} else {
-					if(win==0) { l++; this->c=0; }
-					else win=0;
-				}
-			} else {
-				if(mode==1) {
-					seek(-1);
-					//out->putByte(0);
-					return *out;
-				} else {
-					if(c=='\r') {
-						win=1;
-						l++;
-						this->c=0;
-					} else {
-						if(win==0) { l++; this->c=0; }
-						else win=0;
-					}
-					out->putByte('\n');
-					//out->putByte(0);
-					return *out;
-				}
-			}
-		} else if(c=='\\') {
-			slash=1; 
-		} else if(quote==0 && (c==' ' || c==sep || isblank(c))) {
-			if(mode==1) {
-				if(c==sep) seek(-1);
-				//out->putByte(0);
-				return *out;
-			} else {
-				if(c==sep) {
-					out->putByte(sep);
-					//out->putByte(0);
-					return *out;
-				}
-			}
-		} else if(isalpha(c) || isprint(c) || alcIsAlpha(c)) {
-			out->putByte(c);
-			mode=1;
-		} else {
-			throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected character '%c'\n",l,this->c,c));
-		}
+void tStrBuf::rewind() {
+	tMBuf::rewind();
+	c=l=0;
+}
+bool tStrBuf::hasQuotes() {
+	return flags & 0x01;
+}
+void tStrBuf::hasQuotes(bool has) {
+	if (has) {
+		flags |= 0x01;
+	} else {
+		flags &= ~0x01;
 	}
-	//out->putByte(0);
-	return *out;
+}
+U16 tStrBuf::getLineNum() {
+	return l;
+}
+U16 tStrBuf::getColumnNum() {
+	return c;
 }
 tStrBuf & tStrBuf::getLine(bool nl,bool slash) {
 	DBG(5,"getLine()\n");
-	U32 s=size();
-	Byte c;
+	Byte c=0;
 	Byte slashm=0;
 	tStrBuf * out;
-	if(shot!=NULL) delete shot;
-	shot = new tStrBuf(200);
-	out = shot;
+	out = new tStrBuf(200);
 
-	while(tell()<s) {
+	while(!eof()) {
 		c=getByte();
 		if(!slash) {
 			if(c=='\\') {
@@ -715,6 +641,18 @@ tStrBuf & tStrBuf::getLine(bool nl,bool slash) {
 					slashm=1;
 				}
 			} else if(c=='\n') {
+				if(!eof() && getByte()!='\r') seek(-1);
+				this->l++;
+				this->c=0;
+				if(!slashm) {
+					break;
+				}
+				slashm=0;
+				c=' ';
+			} else if(c=='\r') {
+				if(!eof() && getByte()!='\n') seek(-1);
+				this->l++;
+				this->c=0;
 				if(!slashm) {
 					break;
 				}
@@ -729,14 +667,237 @@ tStrBuf & tStrBuf::getLine(bool nl,bool slash) {
 			}
 		} else {
 			if(c=='\n') {
+				if(!eof() && getByte()!='\r') seek(-1);
+				this->l++;
+				this->c=0;
 				break;
+			} else if(c=='\r') {
+				if(!eof() && getByte()!='\n') seek(-1);
+				this->l++;
+				this->c=0;
+				break;
+			} else {
+				out->putByte(c);
 			}
-			out->putByte(c);
 		}
 	}
-	if(nl && c=='\n') {
-		out->putByte('\n');
+	if(nl) {
+		if(c=='\n' || c=='\r') {
+			out->putByte('\n');
+		}
 	}
+	if(shot!=NULL) delete shot;
+	shot=out;
+	return *out;
+}
+
+tStrBuf & tStrBuf::getWord(bool slash) {
+	DBG(5,"getWord()\n");
+	Byte cc=0,c=0;
+	Byte slashm=0;
+	tStrBuf * out;
+	out = new tStrBuf(200);
+
+	while(!eof()) {
+		c=getByte();
+		this->c++;
+		if(!slash) {
+			if(c=='\\') {
+				if(slashm) {
+					slashm=0;
+					out->putByte('\\');
+					out->putByte('\\');
+				} else {
+					slashm=1;
+				}
+			} else if(c=='\n') {
+				if(!eof() && getByte()!='\r') seek(-1);
+				this->l++;
+				this->c=0;
+				if(!slashm) {
+					if(out->size()!=0) {
+						seek(-1);
+					}
+					break;
+				}
+				slashm=0;
+				c=0;
+			} else if(c=='\r') {
+				if(!eof() && getByte()!='\n') seek(-1);
+				this->l++;
+				this->c=0;
+				if(!slashm) {
+					if(out->size()!=0) {
+						seek(-1);
+					}
+					break;
+				}
+				slashm=0;
+				c=0;
+			} else if(c==sep || c==' ' || isblank(c)) {
+				while(!eof()) {
+					cc=c;
+					c=getByte();
+					if(c==sep || c==' ' || isblank(c)) {
+						this->c++;
+					} else {
+						c=cc;
+						if(out->size()!=0) {
+							seek(-2);
+							this->c--;
+						} else {
+							seek(-1);
+						}
+						break;
+					}
+				}
+				break;
+			} else {
+				if(slashm) {
+					slashm=0;
+					out->putByte('\\');
+				}
+				out->putByte(c);
+			}
+		} else { //slash is true
+			if(c=='\n') {
+				if(!eof() && getByte()!='\r') seek(-1);
+				this->l++;
+				if(out->size()!=0) {
+					seek(-1);
+				}
+				break;
+			} else if(c=='\r') {
+				if(!eof() && getByte()!='\n') seek(-1);
+				this->l++;
+				if(out->size()!=0) {
+					seek(-1);
+				}
+				break;
+			} else if(c==sep || c==' ' || isblank(c)) {
+				while(!eof()) {
+					cc=c;
+					c=getByte();
+					if(c==sep || c==' ' || isblank(c)) {
+						this->c++;
+					} else {
+						c=cc;
+						if(out->size()!=0) {
+							seek(-2);
+							this->c--;
+						} else {
+							seek(-1);
+						}
+						break;
+					}
+				}
+				break;
+			} else {
+				out->putByte(c);
+			}
+		}
+	}
+	if (out->size()==0) {
+		if(c=='\n' || c=='\r') {
+			out->putByte('\n');
+		} else if(c==sep) {
+			out->putByte(sep);
+		} else if(c==' ' || isblank(c)) {
+			out->putByte(' ');
+		}
+	}
+	if(shot!=NULL) delete shot;
+	shot=out;
+	return *out;
+}
+tStrBuf & tStrBuf::getToken() {
+	DBG(5,"tStrBuf::getToken()\n");
+	Byte c;
+	Byte slash=0;
+	Byte quote=0;
+	Byte mode=0;
+	tStrBuf * out;
+	out = new tStrBuf(200);
+	while(!eof()) {
+		c=getByte();
+		this->c++;
+		if(quote==0 && (c=='#' || c==';')) {
+			getLine();
+			out->putByte('\n');
+			break;
+		} else if(slash==1) {
+			slash=0;
+			if(quote==1 && (c=='n' || c=='r')) {
+				if(c=='n') out->putByte('\n');
+				else out->putByte('\r');
+			} else if(c=='\n' || c=='\r') {
+				if(c=='\n') {
+					if(!eof() && getByte()!='\r') seek(-1);
+					this->l++;
+					this->c=0;
+				} else {
+					if(!eof() && getByte()!='\n') seek(-1);
+					this->l++;
+					this->c=0;
+				}
+			} else {
+				if(quote==1) {
+					out->putByte(c);
+				} else {
+					throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected '\\'\n",l,this->c));
+				}
+			}
+		} else if(c=='\"') {
+			out->hasQuotes(1);
+			if(quote==1) {
+				quote=0;
+				break;
+			} else {
+				quote=1;
+			}
+		} else if(c=='\n' || c=='\r') {
+			if(mode==1 && quote==0) {
+				seek(-1);
+				c=0;
+				break;
+			} else {
+				out->putByte(c);
+				if(c=='\n') {
+					if(!eof() && getByte()!='\r') seek(-1);
+					else out->putByte('\r');
+					this->l++;
+					this->c=0;
+				} else {
+					if(!eof() && getByte()!='\n') seek(-1);
+					else out->putByte('\n');
+					this->l++;
+					this->c=0;
+				}
+				if(quote==0) {
+					break;
+				}
+			}
+		} else if(c=='\\') {
+			slash=1; 
+		} else if(quote==0 && (c==' ' || c==sep || isblank(c))) {
+			if(mode==1) {
+				if(c==sep) seek(-1);
+				break;
+			} else {
+				if(c==sep) {
+					out->putByte(sep);
+					break;
+				}
+			}
+		} else if(isalpha(c) || isprint(c) || alcIsAlpha(c)) {
+			out->putByte(c);
+			mode=1;
+		} else {
+			throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected character '%c'\n",l,this->c,c));
+		}
+	}
+	if(shot!=NULL) delete shot;
+	shot=out;
 	return *out;
 }
 

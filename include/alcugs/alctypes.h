@@ -273,21 +273,39 @@ public:
 /** String buffer */
 class tStrBuf :public tMBuf {
 public:
-	tStrBuf(char * k);
+	tStrBuf(const void * k);
 	tStrBuf(U32 size=200);
 	tStrBuf(tBBuf &k,U32 start=0,U32 len=0);
 	tStrBuf(tMBuf &k,U32 start=0,U32 len=0);
 	tStrBuf(tStrBuf &k,U32 start=0,U32 len=0);
 	void init();
 	~tStrBuf();
+	virtual void rewind();
 	/** \brief returns a line
 			\param size If set, limits the line size
 			\param nl If true, it will also append the \\n if it's present
 			\param slash If false, a \\n followed by an slash will be ignored
-			\return a read only pointer to a container with the content
+			\return A tStrBuf object
 	*/
 	tStrBuf & getLine(bool nl=false,bool slash=false);
-	tStrBuf & getWord();
+	/** \brief returns a word, a newline, or a separator
+			\param slash If false, a \\n followed by an slash will be ignored
+			\return A tStrBuf object
+	*/
+	tStrBuf & getWord(bool slash=false);
+	/** \brief returns a token (newline, key, value, separator)
+			\return A tStBuf object
+	*/
+	tStrBuf & getToken();
+	/** \brief Enables quotes
+	*/
+	void hasQuotes(bool has);
+	/** \brief returs true if original source had quotes
+			\return bool
+	*/
+	bool hasQuotes();
+	U16 getLineNum();
+	U16 getColumnNum();
 	void writeStr(const Byte * t);
 	void writeStr(const SByte * t) { writeStr((const Byte *)t); }
 	void writeStr(Byte val) { printf("%u",val); }
@@ -307,21 +325,27 @@ public:
 	SByte asSByte() { return (SByte)asU32(); }
 	Byte * c_str();
 	virtual void copy(tStrBuf &t);
+	virtual void copy(const void * str);
 	virtual void operator=(tStrBuf &t) { this->copy(t); }
+	virtual void operator=(const void * str) { this->copy(str); }
 	void setSeparator(char w) { sep=w; }
 	virtual SByte compare(tStrBuf &t);
+	virtual SByte compare(const void * str);
 	virtual bool operator==(tStrBuf &t) { return(!this->compare(t)); }
 	virtual bool operator!=(tStrBuf &t) { return(this->compare(t)); }
 	virtual bool operator>(tStrBuf &t) { return(this->compare(t)<0); }
 	virtual bool operator<(tStrBuf &t) { return(this->compare(t)>0); }
 	virtual bool operator>=(tStrBuf &t) { return(this->compare(t)<=0); }
 	virtual bool operator<=(tStrBuf &t) { return(this->compare(t)>=0); }
+	virtual bool operator==(const void * str) { return(!this->compare(str)); }
+	virtual bool operator!=(const void * str) { return(this->compare(str)); }
 private:
 	virtual void _pcopy(tStrBuf &t);
 	Byte * bufstr;
 	U16 l,c;
 	char sep;
 	tStrBuf * shot;
+	Byte flags; //0x01 - original parsed string had quotes
 };
 
 /** Time */

@@ -155,7 +155,7 @@ void txBase::_preparebacktrace() {
 	for(i=0; i<size; i++) {
 		msize+=std::strlen(strings[i])+6;
 	}
-	msize+=30;
+	msize+=30+50;
 	bt=(char *)malloc(sizeof(char) * msize);
 	if(bt!=NULL) {
 		std::memset(bt,0,msize);
@@ -165,6 +165,7 @@ void txBase::_preparebacktrace() {
 			std::strcat(bt,strings[i]);
 			std::strcat(bt,"\n");
 		}
+		std::strcat(bt,"c++filt and addr2line may be useful\n");
 	}
 	if(strings!=NULL) free((void *)strings);
 #else

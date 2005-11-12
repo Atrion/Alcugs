@@ -67,18 +67,30 @@ int tSimpleParser::stream(tBBuf &t) {
 
 void tSimpleParser::store(tStrBuf &t) {
 	if(!cfg) return;
-	Byte mode=0; // 0 none, 1 left, 2 mid, 3 right, 4 end
-	tStrBuf key;
-	tStrBuf val;
-	key = t.getWord();
-	val = t.getWord();
-	tStrBuf sep;
-	tStrBuf k;
-	sep = k;
-	if(val != sep) {
-		printf("hi");
-	}
-	
+	tStrBuf key,val;
+	while(!t.eof()) {
+		key = t.getToken();
+		DBG(5,"Reading token %s\n",key.c_str());
+		if(key=="=") {
+			throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token '%s'\n",t.getLineNum(),t.getColumnNum(),key.c_str()));
+		} else if(key!="\n") {
+			val = t.getToken();
+			if(val=="=") {
+				val = t.getToken();
+			}
+			if(val=="=") {
+				throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token '%s'\n",t.getLineNum(),t.getColumnNum(),val.c_str()));
+			}
+			if(val=="\n") {
+				val=" ";
+			}
+			cfg->setVar(val.c_str(),key.c_str(),"global");
+			val=t.getToken();
+			if(val!="\n") {
+				throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token '%s'\n",t.getLineNum(),t.getColumnNum(),val.c_str()));
+			}
+		}
+	}	
 }
 int tSimpleParser::stream(tStrBuf &t) {
 	U32 start=t.tell();
@@ -93,9 +105,9 @@ int tSimpleParser::stream(tStrBuf &t) {
 		while((val=key->getNext())) {
 			DBG(5,"key->getNext()\n");
 			t.writeStr(val->getName());
-			t.writeStr(" ");
+			//t.writeStr(" ");
 			t.putByte(sep);
-			t.writeStr(" ");
+			//t.writeStr(" ");
 			t.writeStr(val->getVal());
 			t.nl();
 		}

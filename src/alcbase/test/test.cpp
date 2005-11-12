@@ -135,24 +135,42 @@ void alctypes_mbuf() {
 	assert(buf1.tell()==buf1.size());
 	buf1.seek(-(S32)buf1.size());
 	assert(buf1.tell()==0);
+	dmalloc_verify(NULL);
 	try {
 		buf1.seek(-100);
+		dmalloc_verify(NULL);
 		throw txBase("expected txOutOfRange",1);
 	} catch( txOutOfRange &t) {
+		dmalloc_verify(NULL);
 		std::cout<< "Cauth Exception " << t.what() << std::endl;
+		dmalloc_verify(NULL);
 		std::cout<< t.backtrace() << std::endl;
+		dmalloc_verify(NULL);
 	}
+	dmalloc_verify(NULL);
 	buf1.check(a,strlen((char *)a));
 	buf1.check(b,strlen(b));
 	buf1.check(&c,1);
+	dmalloc_verify(NULL);
 	try {
+		dmalloc_verify(NULL);
 		buf1.check(&c,1);
+		dmalloc_verify(NULL);
 		throw txBase("expected txOutOfRange",1);
-	} catch( txOutOfRange &t) {
+	} catch( txUnexpectedData &t) {
+		dmalloc_verify(NULL);
 		std::cout<< "Cauth Exception " << t.what() << std::endl;
+		dmalloc_verify(NULL);
+		std::cout<< t.backtrace() << std::endl;
+	} catch( txOutOfRange &t) {
+		dmalloc_verify(NULL);
+		std::cout<< "Cauth Exception " << t.what() << std::endl;
+		dmalloc_verify(NULL);
 		std::cout<< t.backtrace() << std::endl;
 	}
+	dmalloc_verify(NULL);
 	buf1.rewind();
+	dmalloc_verify(NULL);
 	try {
 		buf1.check(&c,1);
 		throw txBase("expected txUnexpectedData");
@@ -498,6 +516,19 @@ kkkk\\\n\
 		res=b.getLine();
 		printf("[b:%i] %s\n",i++,res.c_str());
 	}
+	printf("by tokens now\n");
+	a.rewind();
+	b.rewind();
+	i=0;
+	while(!a.eof()) {
+		res=a.getToken();
+		printf("[a:%i] %s\n",i++,res.c_str());
+	}
+	i=0;
+	while(!b.eof()) {
+		res=b.getToken();
+		printf("[b:%i] %s\n",i++,res.c_str());
+	}
 	//Ok, If we are here then seems that it worked - everybody is ok?
 	
 	// e = m * c^2
@@ -508,7 +539,6 @@ kkkk\\\n\
 	tConfig * cfg2;
 	
 	cfg2 = new tConfig();
-	dmalloc_verify(NULL);
 
 	tConfigKey * key1;
 	key1 = cfg1.findKey("global");
@@ -527,6 +557,7 @@ kkkk\\\n\
 	delete cfg2;
 
 	//parser
+	b.rewind();
 	tSimpleParser parser;
 	parser.setConfig(&cfg1);
 	parser.store(b);
