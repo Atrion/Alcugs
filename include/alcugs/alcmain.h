@@ -55,7 +55,13 @@ void alcOnFork();
 /** \brief Interface for installing signals */
 void alcSignal(int signum, void (*handler)(int));
 
-#ifndef IN_ALC_LIBRARY
+/** \brief Gets a pointer to the config object */
+tConfig * alcGetConfig();
+
+void alcIngoreConfigParseErrors(bool val);
+
+
+#if !defined(IN_ALC_LIBRARY) and defined(IN_ALC_PROGRAM)
 #ifndef __ALC_VERIFY_VERSION_
 #define __ALC_VERIFY_VERSION_
 bool alcVerifyVersion() {

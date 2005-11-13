@@ -25,6 +25,7 @@
 *******************************************************************************/
 
 #define _DBG_LEVEL_ 10
+#define IN_ALC_PROGRAM
 #define ALC_PROGRAM_ID "$Id$"
 
 #include <alcugs.h>

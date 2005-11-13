@@ -45,13 +45,14 @@
 
 #define __U_WINDOZE_ID $Id$
 
-#ifdef __WIN32__
 //#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
 
 #include "alcdebug.h"
 
+#if defined(__WIN32__) 
+//or defined(__CYGWIN__) - I'm not going to waste more time on this shit, if someone wants to fix it there are two options: A) Use Linux that is superior to Windows. B) Find the problem and fix it.
 int gettimeofday(struct timeval *tv, struct timezone *tz) {
 
 	static int firstrun=1;
@@ -100,6 +101,9 @@ int gettimeofday(struct timeval *tv, struct timezone *tz) {
 	tv->tv_usec=usec;
 	return 0;
 }
+#endif
+
+#ifdef __WIN32__
 
 //TODO, if you are a windows programer, please fill these functions with the missing code
 // i'm not going to waste more time searching for an equivalent. It's not my fault

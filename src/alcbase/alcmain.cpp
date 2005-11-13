@@ -35,16 +35,18 @@
 
 #include "alcugs.h"
 
+#include <cstdlib>
 namespace std {
 #include <signal.h>
 };
-
 
 #include "alcdebug.h"
 
 namespace alc {
 
 static volatile bool alcInitialized=false;
+tConfig * alcGlobalConfig=NULL;
+bool alcIngoreParseErrors=false;
 
 void alcInit(int argc,char ** argv,bool shutup) {
 	if(alcInitialized) return;
@@ -59,6 +61,15 @@ void alcInit(int argc,char ** argv,bool shutup) {
 		_DIE("ERR: Alcugs Library version mismatch");
 	}
 
+	//init entropy
+	srandom(alcGetMicroseconds() + (alcGetTime() % 10000));
+	
+	//init config system
+	if(alcGlobalConfig!=NULL) {
+		delete alcGlobalConfig;
+	}
+	alcGlobalConfig = new tConfig();
+	
 	atexit(&alcShutdown);
 }
 
@@ -69,7 +80,11 @@ void alcShutdown() {
 	
 	DBG(5,"Stopping log system...\n");
 	alcLogShutdown();
-	
+
+	if(alcGlobalConfig!=NULL) {
+		delete alcGlobalConfig;
+		alcGlobalConfig=NULL;
+	}
 }
 
 void alcOnFork() {
@@ -85,6 +100,14 @@ void alcSignal(int signum, void (*handler)(int)) {
 	#else
 	std::signal(signum,handler);
 	#endif
+}
+
+tConfig * alcGetConfig() {
+	return alcGlobalConfig;
+}
+
+void alcIngoreConfigParseErrors(bool val) {
+	alcIngoreParseErrors=val;
 }
 
 }

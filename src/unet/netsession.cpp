@@ -500,6 +500,7 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	ackq->rewind();
 	if(ackq->getNext()==NULL) {
 		ackq->add(ack);
+		ack=NULL;
 	} else {
 		ackq->rewind();
 		while((cack=ackq->getNext())!=NULL) {
@@ -528,13 +529,14 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 				#ifdef _ACKSTACK_DBG_
 				net->log->log("B\n");
 				#endif
-				if(cack->next==NULL) { ackq->add(ack); break; }
+				if(cack->next==NULL) { ackq->add(ack); ack=NULL; break; }
 				else continue;
 			} if(A<cack->B) {
 				#ifdef _ACKSTACK_DBG_
 				net->log->log("C\n");
 				#endif
 				ackq->insertBefore(ack);
+				ack=NULL;
 				break;
 			} else if(A<=cack->A && A>=cack->B) {
 				#ifdef _ACKSTACK_DBG_
@@ -546,10 +548,13 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 				bool isNull=(cack->next==NULL);
 				ackq->deleteCurrent();
 				ackq->rewind();
-				if(isNull) { ackq->add(ack); break; }
+				if(isNull) { ackq->add(ack); ack=NULL; break; }
 				else continue;
 			}
 		}
+	}
+	if(ack!=NULL) {
+		delete ack;
 	}
 	
 	#ifdef _ACKSTACK_DBG_

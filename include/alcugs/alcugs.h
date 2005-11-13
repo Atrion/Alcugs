@@ -78,6 +78,7 @@
 #define VERSION alcSTR_VER
 
 #ifndef IN_ALC_LIBRARY
+#ifdef IN_ALC_PROGRAM
 #ifndef ALC_PROGRAM_VARS
 #define ALC_PROGRAM_VARS
 #ifndef ALC_PROGRAM_ID
@@ -93,6 +94,7 @@ const char * alcXID = ALC_PROGRAM_ID;
 const char * alcXBUILD =  alcBUILD_TIME;
 const char * alcXSNAME = ALC_PROGRAM_NAME;
 const char * alcXVERSION = ALC_PROGRAM_VERSION;
+#endif
 #endif
 #endif
 
@@ -117,6 +119,7 @@ namespace std {
 #include "alcexception.h"
 #include "alctypes.h"
 #include "alcversion.h"
+#include "alcutil/alccfgtypes.h"
 #include "alcmain.h"
 #include "alclicense.h"
 
@@ -126,7 +129,6 @@ namespace std {
 #include "alcutil/conv_funs.h"
 #include "alcutil/useful.h"
 #include "alcutil/alclog.h"
-#include "alcutil/alccfgtypes.h"
 #include "alcutil/alcparser.h"
 
 #endif

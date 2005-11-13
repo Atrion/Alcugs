@@ -1,1 +1,1 @@
-SUBDIRS = alcbase unet servers client tools test
+###SUBDIRS = alcbase unet servers client tools test

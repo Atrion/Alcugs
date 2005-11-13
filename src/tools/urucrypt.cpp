@@ -27,6 +27,7 @@
 //#define _DBG_LEVEL_ 10
 
 //Program vars
+#define IN_ALC_PROGRAM
 #define ALC_PROGRAM_ID "$Id$"
 #ifdef M5CRYPT
 #define ALC_PROGRAM_NAME "M5Crypt"

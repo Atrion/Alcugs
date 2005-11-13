@@ -59,6 +59,6 @@
 // Check admin?
 #define __VTC 0
 // Enable dangerous testing options
-#define __WTC 0
+#define __WTC 1
 
 #endif

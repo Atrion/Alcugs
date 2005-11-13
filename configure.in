@@ -122,10 +122,6 @@ AM_CONDITIONAL(WIN32, test x$WIN32 = xtrue)
 
 #out
 AC_CONFIG_FILES([Makefile docs/Makefile include/Makefile \
- src/Makefile \
- src/alcbase/Makefile src/alcbase/test/Makefile \
- src/unet/Makefile src/servers/Makefile \
- src/client/Makefile src/tools/Makefile \
- src/test/Makefile])
+ src/Makefile ])
 AC_OUTPUT
 

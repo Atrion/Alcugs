@@ -1,4 +1,4 @@
-SUBDIRS = docs include src
+SUBDIRS = include docs src
 
 INCLUDES = -I$(top_srcdir)/include/alcugs
 
@@ -57,7 +57,7 @@ test_LDADD = libalcugsbase.a @ALC_LIBS@
 test_SOURCES = src/alcbase/test/test.cpp
 #End Test APPS
 
-bin_PROGRAMS = urucrypt m5crypt uruping urumsgtest
+bin_PROGRAMS = urucrypt m5crypt uruping urumsgtest urulobby
 
 #Tools
 urucrypt_LDADD = libalcugsbase.a @ALC_LIBS@
@@ -71,9 +71,18 @@ m5crypt_CPPFLAGS = -DM5CRYPT
 #Server programs
 uruping_LDADD = libalcugsurunet3.a libalcugsbase.a @ALC_LIBS@
 urumsgtest_LDADD = libalcugsurunet3.a libalcugsbase.a @ALC_LIBS@
+urulobby_LDADD = libalcugsurunet3.a libalcugsbase.a @ALC_LIBS@
 
 uruping_SOURCES = src/servers/uruping.cpp
 urumsgtest_SOURCES = src/servers/urumsgtest.cpp
-#End server programs
+urulobby_SOURCES = \
+ src/servers/uru.cpp \
+ src/servers/lobby.cpp
 
+urulobby_INCLUDES = \
+ src/servers/lobby.h
+
+urulobby_CPPFLAGS = -DI_AM_THE_LOBBY_SERVER
+
+#End server programs
 

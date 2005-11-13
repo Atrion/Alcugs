@@ -209,7 +209,7 @@ void tUnet::_openlogs() {
 		}
 		if(this->err==lnull) {
 			if(this->flags & UNET_LQUIET) {
-				this->err=new tLog;
+				this->err=new tLog; //Leaks
 				if(this->flags & UNET_FLOG) {
 					this->err->open("uneterr.log",2,0);
 				} else {

@@ -118,7 +118,7 @@ void alcLogSetDefaults() {
 	tvLogConfig->creation_mask=00750;
 	tvLogConfig->level=6;
 	tvLogConfig->log_flags= DF_DEFSTDOUT | DF_STAMP | DF_IP; // | DF_ANOY;
-	tvLogConfig->build="Alcugs H'uru server logging system";
+	tvLogConfig->build="Alcugs logging system";
 	//syslog
 	tvLogConfig->syslogname="alcugs";
 	tvLogConfig->syslog_enabled=0x00;

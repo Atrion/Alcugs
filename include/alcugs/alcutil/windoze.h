@@ -145,7 +145,8 @@ char *getpass( const char * prompt );
 
 #endif
 
-#if defined(__WIN32__) or defined(__CYGWIN__)
+#if defined(__WIN32__) 
+//or defined(__CYGWIN__)
 //missing gettimeofday function (broken on Cygwin, well the cygwin implementation of gettimeofday sucks)
 int gettimeofday(struct timeval *tv, struct timezone *tz);
 #endif

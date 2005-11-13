@@ -24,40 +24,27 @@
 *                                                                              *
 *******************************************************************************/
 
-/* NOTE:
-	This file is only for version numbers, windres is very sensible
-	to the syntax.
+/**
+	Description:
+		This does this, and that.
+	ChangeLog:
+		Initial
+	Bugs:
+		Several
 */
 
+#ifndef __U_FILENAME_H
+#define __U_FILENAME_H
 /* CVS tag - DON'T TOUCH*/
-#ifndef __U_XVERSION_H_
-#define __U_XVERSION_H_
-#define __U_XVERSION_H_ID "$Id$"
+#define __U_FILENAME_H_ID "$Id$"
 
-//Alcugs version numbers
-#define alcMAX_VER 1
-#define alcMIN_VER 3
-#define alcREL_VER 3
-#define alcBET_VER 5
-#define alcSTR_VER "1.3.3e"
-#define alcREVISION "$Revision$"
+namespace alc {
 
-#define alcDATE __DATE__
-#define alcTIME __TIME__
-#define alcBUILD_TIME alcDATE " " alcTIME
+	////DEFINITIONS
+	/**
+		If we want to do it well and nice, we should add pre and post conditions here.
+	*/
 
-#define alcXBUILDINFO "Rev: " alcREVISION " - Built:" alcBUILD_TIME
-
-//Protocol version numbers
-#define alcProtoMAX_VER 1
-#define alcProtoMIN_VER 3
-#define alcProtoVer 1003
-//alcProtoMIN_VER+(1000*alcProtoMAX_VER)
-
-/* NOTE:
-	* <= 1.1  - Unet2 and older versions of the servers
-	* 1.2     - Unet3 protocol messages
-	* 1.3     - Unet3+ protocol
-*/
+} //End alc namespace
 
 #endif
