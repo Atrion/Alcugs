@@ -57,7 +57,7 @@ test_LDADD = libalcugsbase.a @ALC_LIBS@
 test_SOURCES = src/alcbase/test/test.cpp
 #End Test APPS
 
-bin_PROGRAMS = urucrypt m5crypt uruping urumsgtest urulobby
+bin_PROGRAMS = urucrypt m5crypt uruping urumsgtest uru_lobby
 
 #Tools
 urucrypt_LDADD = libalcugsbase.a @ALC_LIBS@
@@ -71,18 +71,18 @@ m5crypt_CPPFLAGS = -DM5CRYPT
 #Server programs
 uruping_LDADD = libalcugsurunet3.a libalcugsbase.a @ALC_LIBS@
 urumsgtest_LDADD = libalcugsurunet3.a libalcugsbase.a @ALC_LIBS@
-urulobby_LDADD = libalcugsurunet3.a libalcugsbase.a @ALC_LIBS@
+uru_lobby_LDADD = libalcugsurunet3.a libalcugsbase.a @ALC_LIBS@
 
 uruping_SOURCES = src/servers/uruping.cpp
 urumsgtest_SOURCES = src/servers/urumsgtest.cpp
-urulobby_SOURCES = \
+uru_lobby_SOURCES = \
  src/servers/uru.cpp \
  src/servers/lobby.cpp
 
-urulobby_INCLUDES = \
+uru_lobby_INCLUDES = \
  src/servers/lobby.h
 
-urulobby_CPPFLAGS = -DI_AM_THE_LOBBY_SERVER
+uru_lobby_CPPFLAGS = -DI_AM_THE_LOBBY_SERVER
 
 #End server programs
 
