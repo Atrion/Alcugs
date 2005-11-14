@@ -71,6 +71,9 @@ public:
 	*/
 	txBase(const void * msg="",bool abort=false,bool core=false);
 	txBase(const void * name,const void * msg,bool abort,bool core);
+	txBase(const txBase &t);
+	void copy(txBase &t);
+	txBase & operator=(txBase &t) { this->copy(t); return *this; }
 	/** \brief Returns the description message */
 	virtual const char * what();
 	/** \brief Returns a backtrace (Only on Linux) */
@@ -93,56 +96,67 @@ private:
 class txOutOfRange : public txBase {
 public:
 	txOutOfRange(const void * msg="",bool abort=false,bool core=false) :txBase("OutOfRange",msg,abort,core) {}
+	txOutOfRange(const txOutOfRange &t) :txBase((txOutOfRange &)t) {}
 };
 /** unknown flags */
 class txUnkFlags : public txBase {
 public:
 	txUnkFlags(const void * msg="",bool abort=false,bool core=false) :txBase("UnkFlags",msg,abort,core) {}
+	txUnkFlags(const txUnkFlags &t) :txBase((txUnkFlags &)t) {}
 };
 /** unknown flags */
 class txUnexpectedData : public txBase {
 public:
 	txUnexpectedData(const void * msg="",bool abort=false,bool core=false) :txBase("UnexpectedData",msg,abort,core) {}
+	txUnexpectedData(const txUnexpectedData &t) :txBase((txUnexpectedData &)t) {}
 };
 /** No Mem */
 class txNoMem : public txBase {
 public:
 	txNoMem(const void * msg="",bool abort=false,bool core=false) :txBase("NoMem",msg,abort,core) {}
+	txNoMem(const txNoMem &t) :txBase((txNoMem &)t) {}
 };
 /** Ref Err */
 class txRefErr : public txBase {
 public:
 	txRefErr(const void * msg="",bool abort=false,bool core=false) :txBase("RefErr",msg,abort,core) {}
+	txRefErr(const txRefErr &t) :txBase((txRefErr &)t) {}
 };
 /** Write Err */
 class txWriteErr : public txBase {
 public:
 	txWriteErr(const void * msg="",bool abort=false,bool core=false) :txBase("WriteErr",msg,abort,core) {}
+	txWriteErr(const txWriteErr &t) :txBase((txWriteErr &)t) {}
 };
 /** No File */
 class txNoFile : public txBase {
 public:
 	txNoFile(const void * msg="",bool abort=false,bool core=false) :txBase("NoFile",msg,abort,core) {}
+	txNoFile(const txNoFile &t) :txBase((txNoFile &)t) {}
 };
 /** Unk Err */
 class txUnkErr : public txBase {
 public:
 	txUnkErr(const void * msg="",bool abort=false,bool core=false) :txBase("UnkErr",msg,abort,core) {}
+	txUnkErr(const txUnkErr &t) :txBase((txUnkErr &)t) {}
 };
 /** No File */
 class txNotFound : public txBase {
 public:
 	txNotFound(const void * msg="",bool abort=false,bool core=false) :txBase("NotFound",msg,abort,core) {}
+	txNotFound(const txNotFound &t) :txBase((txNotFound &)t) {}
 };
 /** No File */
 class txNoAccess : public txBase {
 public:
 	txNoAccess(const void * msg="",bool abort=false,bool core=false) :txBase("NoAccess",msg,abort,core) {}
+	txNoAccess(const txNoAccess &t) :txBase((txNoAccess &)t) {}
 };
 /** Parse error */
 class txParseError : public txBase {
 public:
 	txParseError(const void * msg="",bool abort=false,bool core=false) :txBase("ParseError",msg,abort,core) {}
+	txParseError(const txParseError &t) :txBase((txParseError &)t) {}
 };
 
 

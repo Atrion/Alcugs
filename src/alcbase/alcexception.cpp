@@ -134,6 +134,21 @@ txBase::txBase(const void * name,const void * msg,bool abort,bool core) {
 	this->bt=NULL;
 	this->_preparebacktrace();
 }
+txBase::txBase(const txBase &t) {
+	copy((txBase &)t);
+}
+void txBase::copy(txBase &t) {
+	DBG(5,"copy\n");
+	this->name=NULL;
+	this->abort=t.abort;
+	this->core=t.core;
+	this->msg=NULL;
+	this->size=t.size;
+	this->bt=(char *)malloc(sizeof(char) * (strlen((const char *)t.bt)+1));
+	strcpy(this->bt,t.bt);
+	this->imsg=(char *)malloc(sizeof(char) * (strlen((const char *)t.imsg)+1));
+	strcpy(this->imsg,t.imsg);
+}
 void txBase::_preparebacktrace() {
 //TODO: Porting - This code only works under Linux (it's part of the libc)
 #if !(defined(__WIN32__) or defined(__CYGWIN__))
@@ -188,8 +203,11 @@ void txBase::_preparebacktrace() {
 const char * txBase::what() { return (const char *)msg; }
 const char * txBase::backtrace() { return bt; }
 txBase::~txBase() {
+	dmalloc_verify(NULL);
 	if(bt!=NULL) free((void *)bt);
+	dmalloc_verify(NULL);
 	if(imsg!=NULL) free((void *)imsg);
+	dmalloc_verify(NULL);
 }
 //End base
 

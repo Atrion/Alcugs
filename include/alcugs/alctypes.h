@@ -282,7 +282,7 @@ public:
 	tStrBuf(U32 size=200);
 	tStrBuf(tBBuf &k,U32 start=0,U32 len=0);
 	tStrBuf(tMBuf &k,U32 start=0,U32 len=0);
-	tStrBuf(tStrBuf &k,U32 start=0,U32 len=0);
+	tStrBuf(const tStrBuf &k,U32 start=0,U32 len=0);
 	void init();
 	~tStrBuf();
 	virtual void rewind();
@@ -309,6 +309,8 @@ public:
 	void convertSlashesFromWinToUnix();
 	void convertSlashesFromUnixToWin();
 	tStrBuf & strip(Byte what,Byte how=0x03);
+	tStrBuf & escape();
+	tStrBuf & lower();
 	tStrBuf & tStrBuf::substring(U32 start,U32 len);
 	tStrBuf & dirname();
 	bool startsWith(const void * pat);

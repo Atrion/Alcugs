@@ -44,6 +44,10 @@ tConfigVal::tConfigVal(const void * name) {
 	init();
 	setName(name);
 }
+tConfigVal::tConfigVal(tStrBuf & name) {
+	init();
+	setName(name);
+}
 void tConfigVal::init() {
 	name="";
 	values=NULL;
@@ -173,27 +177,22 @@ void tConfigKey::setName(const void * name) {
 void tConfigKey::setName(tStrBuf & name) {
 	this->name=name;
 }
-tConfigVal * tConfigKey::find(const void * what,bool create) {
+tConfigVal * tConfigKey::find(tStrBuf & what,bool create) {
 	U16 i;
-		dmalloc_verify(NULL);
 	for(i=0; i<n; i++) {
-/*		if(!strcmp((const char *)what,(const char *)values[i]->name)) {
-			return values[i];
-		}*/
-		if(values[i]->name==what) {
+		if(values[i]->name.lower()==what.lower()) {
 			return values[i];
 		}
 	}
-		dmalloc_verify(NULL);
 	if(!create) return NULL;
-		dmalloc_verify(NULL);
 	n++;
-		dmalloc_verify(NULL);
 	values=(tConfigVal **)realloc((void *)values,sizeof(tConfigVal *) * n);
-		dmalloc_verify(NULL);
 	values[n-1]=new tConfigVal(what);
-		dmalloc_verify(NULL);
 	return values[n-1];
+}
+tConfigVal * tConfigKey::find(const void * what,bool create) {
+	tStrBuf name=what;
+	return find(name,create);
 }
 void tConfigKey::copy(tConfigKey &t) {
 	U16 i;
@@ -241,22 +240,29 @@ tConfig::~tConfig() {
 		free((void *)values);
 	}
 }
-tConfigKey * tConfig::findKey(const void * where,bool create) {
+tConfigKey * tConfig::findKey(tStrBuf & where,bool create) {
 	U16 i;
+	dmalloc_verify(NULL);
 	for(i=0; i<n; i++) {
-		/*if(!strcmp((const char *)where,(const char *)values[i]->name)) {
-			return values[i];
-		}*/
-		if(values[i]->name==where) {
+		dmalloc_verify(NULL);
+		DBG(5,"checking %s %s %s %s \n",values[i]->name.c_str(),where.c_str(),values[i]->name.lower().c_str(),where.lower().c_str());
+		dmalloc_verify(NULL);
+		if(values[i]->name.lower()==where.lower()) {
 			return values[i];
 		}
 	}
+	dmalloc_verify(NULL);
 	if(!create) return NULL;
+	dmalloc_verify(NULL);
 	n++;
 	values=(tConfigKey **)realloc((void *)values,sizeof(tConfigKey *) * n);
 	values[n-1]=new tConfigKey();
 	values[n-1]->setName(where);
 	return values[n-1];
+}
+tConfigKey * tConfig::findKey(const void * where,bool create) {
+	tStrBuf name=where;
+	return findKey(name,create);
 }
 tConfigVal * tConfig::findVar(const void * what,const void * where,bool create) {
 	tConfigKey * mykey;

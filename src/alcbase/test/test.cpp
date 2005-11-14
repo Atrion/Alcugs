@@ -454,19 +454,28 @@ void alctypes_part5() {
 	assert(test[1]=='p');
 	assert(test[3]=='t');
 	assert(test[0]=='/');
+	dmalloc_verify(NULL);
 	try {
+		dmalloc_verify(NULL);
 		mychar=test[1000];
+		dmalloc_verify(NULL);
 		throw txBase("Expected OutofRange");
+		dmalloc_verify(NULL);
 	} catch(txOutOfRange) {
+		dmalloc_verify(NULL);
 		printf("passed.\n");
+		dmalloc_verify(NULL);
 	}
+	dmalloc_verify(NULL);
+	dmalloc_verify(NULL);
 
 	assert(test=="/path/to/something.txt");
 	assert(test!="/path/to");
+	dmalloc_verify(NULL);
 	printf("%s\n",test.dirname().c_str());
 	assert(test.dirname()=="/path/to");
 	printf("-%s-\n",test.dirname().c_str());
-	
+	dmalloc_verify(NULL);
 	test="/usr/lib";
 	assert(test.dirname()=="/usr");
 	test="/usr/";
@@ -496,7 +505,7 @@ void alctypes_part5() {
 	test="/../../../usr/lib/kk/path/something";
 	printf("-%s-\n",test.dirname().c_str());
 	assert(test.dirname()=="/../../../usr/lib/kk/path");
-
+	dmalloc_verify(NULL);
 	
 	tStrBuf due("/////////");
 	due.strip('/');
@@ -529,6 +538,16 @@ void alctypes_part5() {
 	due.strip('/',0x02);
 	assert(due=="///////////////howhowhow ajfk ñfajf");
 	//abort();
+	dmalloc_verify(NULL);
+}
+
+void alctypes_part6() {
+
+	tStrBuf sth,sth2;
+	sth="something";
+	sth.strip('/');
+	sth2=sth.dirname();
+	sth=sth.dirname();
 }
 
 void alctypes_tests() {
@@ -539,6 +558,10 @@ void alctypes_tests() {
 	alctypes_part3();
 	alctypes_part4();
 	alctypes_part5();
+	int i;
+	for(i=0; i<10; i++) {
+		alctypes_part6();
+	}
 }
 
 void sith() {
@@ -640,8 +663,11 @@ mproblem = \"this ' contains \\\" \\\\ some speical chars\"\n\
 	tConfigKey * key1;
 	key1 = cfg1.findKey("global");
 	assert(key1==NULL);
+	dmalloc_verify(NULL);
 	key1 = cfg1.findKey("global",1); //<--BOUM
+	dmalloc_verify(NULL);
 	assert(key1!=NULL);
+	dmalloc_verify(NULL);
 
 	tConfigVal * val1;
 	val1 = cfg1.findVar("kaka");
@@ -750,7 +776,7 @@ int main(int argc, char * argv[]) {
 	DBG(0,"Starting testing suit...\n");
 	
 	int i;
-	for (i=0; i<3; i++) {
+	for (i=0; i<5; i++) {
 	
 	alcdebug_tests();
 

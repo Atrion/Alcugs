@@ -224,12 +224,17 @@ void tXParser::store(tStrBuf &t) {
 					val = t.getToken();
 					if(val==" ") val=t.getToken();
 					if(val==",") { x++; continue; }
-					if(val=="=" || val=="\n") {
+					if(val=="=") {
 						throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token '%s'. A valid variable value was expected.\n",t.getLineNum(),t.getColumnNum(),val.c_str()));
 					}
-					cfg->setVar(val,key,section,x++,y);
-					val=t.getToken();
-					if(val==" ") val=t.getToken();
+					if(val=="\n") {
+						val="";
+						cfg->setVar(val,key,section,x++,y);
+					} else {
+						cfg->setVar(val,key,section,x++,y);
+						val=t.getToken();
+						if(val==" ") val=t.getToken();
+					}
 				}
 				if(val!="\n") {
 					throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token '%s'. A newline was expected.\n",t.getLineNum(),t.getColumnNum(),val.c_str()));
@@ -253,19 +258,31 @@ int tXParser::stream(tStrBuf &t) {
 		t.writeStr("\n[" + key->getName() + "]\n");
 		while((val=key->getNext())) {
 			DBG(5,"key->getNext()\n");
-			t.writeStr(val->getName());
-			//t.writeStr(" ");
-			t.putByte(sep);
-			//t.writeStr(" ");
-			str=val->getVal();
-			if(str.hasQuotes()) {
-				t.writeStr("\"");
+			U16 x,y,mx,my;
+			mx=val->getCols();
+			my=val->getRows();
+
+			for(y=0; y<my; y++) {
+				t.writeStr(val->getName());
+				if(my!=1) {
+					t.writeStr("[");
+					t.writeStr(y);
+					t.writeStr("]");
+				}
+				t.writeStr(" = ");
+				for(x=0; x<mx; x++) {
+					if(x!=0) t.writeStr(",");
+					str=val->getVal(x,y);
+					if(str.hasQuotes()) {
+						t.writeStr("\"");
+					}
+					t.writeStr(str.escape());
+					if(str.hasQuotes()) {
+						t.writeStr("\"");
+					}
+				}
+				t.nl();
 			}
-			t.writeStr(str);
-			if(str.hasQuotes()) {
-				t.writeStr("\"");
-			}
-			t.nl();
 		}
 	}
 	return (t.tell()-start);

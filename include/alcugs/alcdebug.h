@@ -145,7 +145,7 @@ char * __dbg_where(const char * b,const char * c,int d,const char * a,...);
 
 char * __dbg_where(const char * b,const char * c,int d,const char * a,...);
 
-#define _DIE(a) { printf("ABORT: %s\n",_WHERE(a)); abort(); }
+#define _DIE(a) { fprintf(stderr,"ABORT: %s\n",_WHERE(a)); abort(); }
 //NOTE: _DIE must always stop the execution of the program, if not, unexpected results
 // that could end on massive data lost could happen.
 

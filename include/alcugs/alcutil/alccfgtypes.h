@@ -43,6 +43,7 @@ class tConfigVal {
 public:
 	tConfigVal();
 	tConfigVal(const void * name);
+	tConfigVal(tStrBuf & name);
 	~tConfigVal();
 	void setName(const void * name);
 	void setName(tStrBuf & name);
@@ -74,6 +75,7 @@ public:
 	void setName(tStrBuf & name);
 	tStrBuf & getName() { return name; }
 	tConfigVal * find(const void * what,bool create=false);
+	tConfigVal * find(tStrBuf & what,bool create=false);
 	void copy(tConfigKey & t);
 	void operator=(tConfigKey & t) { copy(t); }
 	void rewind();
@@ -92,6 +94,7 @@ public:
 	tConfig();
 	~tConfig();
 	tConfigKey * findKey(const void * where=(const void *)"global",bool create=false);
+	tConfigKey * findKey(tStrBuf & where,bool create=false);
 	tConfigVal * findVar(const void * what,const void * where=(const void *)"global",bool create=false);
 	tStrBuf & getVar(const void * what,const void * where=(const void *)"global",U16 x=0,U16 y=0);
 	void setVar(const void * val,const void * what,const void * where=(const void *)"global",U16 x=0,U16 y=0);

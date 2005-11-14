@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCTYPES_ID "$Id$"
 
-//#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 5
 
 #include "alcugs.h"
 
@@ -329,7 +329,10 @@ void tMBuf::set(U32 pos) {
 	off=pos;
 }
 Byte tMBuf::getAt(U32 pos) {
-	if(pos>msize) throw txOutOfRange(_WHERE("OutOfRange %i>%i",pos,msize));
+	if(pos>msize) {
+		//std::printf("getAt %i \n%s\n",pos,hexToAscii());
+		throw txOutOfRange(_WHERE("OutOfRange %i>%i",pos,msize));
+	}
 	return *(Byte *)(buf->buf+mstart+pos);
 }
 void tMBuf::setAt(U32 pos,const char what) {
@@ -563,8 +566,9 @@ tStrBuf::tStrBuf(tMBuf &k,U32 start,U32 len) :tMBuf(k,start,len) {
 	init(); 
 	if(size()) isNull(false);
 }
-tStrBuf::tStrBuf(tStrBuf &k,U32 start,U32 len) :tMBuf(k,start,len) { 
+tStrBuf::tStrBuf(const tStrBuf &k,U32 start,U32 len) :tMBuf((tStrBuf &)k,start,len) { 
 	DBG(2,"copy two\n");
+	if(this==&k) return;
 	init(); 
 	l=k.l; 
 	c=k.c;
@@ -586,19 +590,27 @@ void tStrBuf::init() {
 	flags=0x02; //Null true by default
 }
 void tStrBuf::_pcopy(tStrBuf &t) {
+	dmalloc_verify(NULL);
 	DBG(2,"tStrBuf::_pcopy()\n");
+	if(this==&t) return;
 	tMBuf::_pcopy(t);
+	if(bufstr!=NULL) free((void *)bufstr);
 	bufstr=NULL;
 	l=t.l;
 	c=t.c;
-	shot=NULL;
 	sep=t.sep;
 	flags=t.flags;
+	//last thing
+	if(shot!=NULL) delete shot;
+	shot=NULL;
 	DBG(2,"flags are %02X\n",flags);
 }
 void tStrBuf::copy(tStrBuf &t) {
 	DBG(2,"tStrBuf::copy()\n");
+	if(this==&t) return;
+	dmalloc_verify(NULL);
 	this->_pcopy(t);
+	dmalloc_verify(NULL);
 	DBG(2,"flags are %02X\n",flags);
 }
 void tStrBuf::copy(const void * str) {
@@ -607,6 +619,7 @@ void tStrBuf::copy(const void * str) {
 	copy(pat);
 }
 SByte tStrBuf::compare(tStrBuf &t) {
+	if(this==&t) return 0;
 	rewind();
 	t.rewind();
 	U32 s = size();
@@ -686,6 +699,7 @@ S32 tStrBuf::find(const char cat, bool reverse) {
 void tStrBuf::convertSlashesFromWinToUnix() {
 #if defined(__WIN32__) or defined(__CYGWIN__)
 	int i,max;
+	max=size();
 	for(i=0; i<max; i++) {
 		if(getAt(i)=='\\') {
 			setAt(i,'/');
@@ -697,6 +711,7 @@ void tStrBuf::convertSlashesFromWinToUnix() {
 void tStrBuf::convertSlashesFromUnixToWin() {
 #if defined(__WIN32__) or defined(__CYGWIN__)
 	int i,max;
+	max=size();
 	for(i=0; i<max; i++) {
 		if(getAt(i)=='/') {
 			setAt(i,'\\');
@@ -739,6 +754,52 @@ tStrBuf & tStrBuf::strip(Byte what,Byte how) {
 	copy(aux);
 	return *this;
 }
+tStrBuf & tStrBuf::escape() {
+	tStrBuf * out;
+	out = new tStrBuf(200);
+
+	int i,max;
+	Byte ctrl; 
+	max=size();
+	for(i=0; i<max; i++) {
+		ctrl=getAt(i);
+		if(ctrl=='\n') {
+			out->putByte('\\');
+			out->putByte('n');
+		} else if(ctrl=='\r') {
+			out->putByte('\\');
+			out->putByte('r');
+		} else if(ctrl=='"') {
+			out->putByte('\\');
+			out->putByte('"');
+		} else if(ctrl=='\\') {
+			out->putByte('\\');
+			out->putByte('\\');
+		} else {
+			out->putByte(ctrl);
+		}
+	}
+	
+	if(shot!=NULL) delete shot;
+	shot=out;
+	return *out;
+}
+
+tStrBuf & tStrBuf::lower() {
+	tStrBuf * out;
+	out = new tStrBuf(200);
+	
+	int i,max;
+	max=size();
+	for(i=0; i<max; i++) {
+		out->putByte(std::tolower(getAt(i)));
+	}
+	
+	if(shot!=NULL) delete shot;
+	shot=out;
+	return *out;
+}
+
 tStrBuf & tStrBuf::substring(U32 start,U32 len) {
 	tStrBuf * out;
 	out = new tStrBuf(200);
@@ -973,8 +1034,8 @@ tStrBuf & tStrBuf::getToken() {
 	Byte mode=0;
 	tStrBuf * out;
 	out = new tStrBuf(200);
-	out->hasQuotes(true);
-	assert(out->hasQuotes());
+	//out->hasQuotes(true);
+	//assert(out->hasQuotes());
 	while(!eof()) {
 		c=getByte();
 		this->c++;

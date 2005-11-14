@@ -130,8 +130,9 @@ int main(int argc, char * argv[]) {
 		cfgpath=cfg->getVar("read_config","cmdline");
 		if(cfgpath.isNull()) {
 			cfgpath="uru.conf";
-			cfg->setVar(cfgpath.c_str(),"read_config","global");
+			cfg->setVar(cfgpath.c_str(),"read_config","cmdline");
 		}
+		dmalloc_verify(NULL);
 		if(!alcParseConfig(cfgpath)) {
 			fprintf(stderr,"FATAL, reading configuration, please check the syntax\n");
 			return -1;
