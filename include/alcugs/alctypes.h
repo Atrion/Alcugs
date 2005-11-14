@@ -131,6 +131,7 @@ public:
 	virtual SByte compare(tBBuf &t);
 	/** \return True if the pointer is at the end of the stream */
 	virtual bool eof() {
+		//std::printf("%i>=%i?\n",this->tell(),this->size());
 		return(this->tell()>=this->size());
 	}
 	/** \return A pointer to a readonly location with the Ascii representation of the buffer */
@@ -196,6 +197,10 @@ public:
 	virtual void clear();
 	virtual void copy(tMBuf &t);
 	virtual void operator=(tMBuf &t) { this->copy(t); }
+	virtual Byte getAt(U32 pos);
+	virtual void setAt(U32 pos,const char what);
+	virtual Byte operator[](U32 pos) { return(this->getAt(pos)); }
+	//virtual void operator[](U32 pos,const char what) { setAt(pos,what); }
 	virtual void setSize(U32 size) {
 		msize=size;
 	}
@@ -222,7 +227,7 @@ public:
 	virtual void store(tBBuf &buf);
 	virtual U32 size();
 	virtual void close();
-	virtual void open(const char * path,const char * mode="rb");
+	virtual void open(const void * path,const void * mode="rb");
 	virtual void flush();
 	//virtual void copy(tFBuf &t);
 	//virtual void operator=(tFBuf &t) { this->copy(t); }
@@ -281,12 +286,14 @@ public:
 	void init();
 	~tStrBuf();
 	virtual void rewind();
+	S32 find(const char cat, bool reverse=false);
 	/** \brief returns a line
 			\param size If set, limits the line size
 			\param nl If true, it will also append the \\n if it's present
 			\param slash If false, a \\n followed by an slash will be ignored
 			\return A tStrBuf object
 	*/
+	void decreaseLineNum();
 	tStrBuf & getLine(bool nl=false,bool slash=false);
 	/** \brief returns a word, a newline, or a separator
 			\param slash If false, a \\n followed by an slash will be ignored
@@ -299,13 +306,26 @@ public:
 	tStrBuf & getToken();
 	/** \brief Enables quotes
 	*/
+	void convertSlashesFromWinToUnix();
+	void convertSlashesFromUnixToWin();
+	tStrBuf & strip(Byte what,Byte how=0x03);
+	tStrBuf & tStrBuf::substring(U32 start,U32 len);
+	tStrBuf & dirname();
+	bool startsWith(const void * pat);
+	bool endsWith(const void * pat);
 	void hasQuotes(bool has);
 	/** \brief returs true if original source had quotes
 			\return bool
 	*/
 	bool hasQuotes();
+	bool isNull();
+	void isNull(bool val);
 	U16 getLineNum();
 	U16 getColumnNum();
+	virtual void write(Byte * val,U32 n) {
+		tMBuf::write(val,n);
+		isNull(false);
+	}
 	void writeStr(const Byte * t);
 	void writeStr(const SByte * t) { writeStr((const Byte *)t); }
 	void writeStr(Byte val) { printf("%u",val); }
@@ -316,6 +336,7 @@ public:
 	void writeStr(S32 val) { printf("%i",val); }
 	void writeStr(tStrBuf * val) { val->rewind(); write(val->read(),val->size()); }
 	void writeStr(tStrBuf & val) { val.rewind(); write(val.read(),val.size()); }
+	void writeStr(const tStrBuf & val) { writeStr((tStrBuf &)val); }
 	void printf(const char * msg, ...);
 	void nl() { writeStr("\n"); }
 	U32 asU32();
@@ -324,11 +345,12 @@ public:
 	S16 asS16() { return (S16)asU32(); }
 	Byte asByte() { return (Byte)asU32(); }
 	SByte asSByte() { return (SByte)asU32(); }
-	Byte * c_str();
+	const Byte * c_str();
 	virtual void copy(tStrBuf &t);
 	virtual void copy(const void * str);
-	virtual void operator=(tStrBuf &t) { this->copy(t); }
-	virtual void operator=(const void * str) { this->copy(str); }
+	virtual tStrBuf & operator=(tStrBuf &t) { this->copy(t); return *this; }
+	virtual tStrBuf & operator=(const tStrBuf &t) { this->copy((tStrBuf &)t); return *this; }
+	virtual tStrBuf & operator=(const void * str) { this->copy(str); return *this; }
 	void setSeparator(char w) { sep=w; }
 	virtual SByte compare(tStrBuf &t);
 	virtual SByte compare(const void * str);
@@ -347,7 +369,12 @@ private:
 	char sep;
 	tStrBuf * shot;
 	Byte flags; //0x01 - original parsed string had quotes
+							//0x02 - string is NULL
 };
+
+tStrBuf operator+(const tStrBuf & str1, const tStrBuf & str2);
+tStrBuf operator+(const void * str1, const tStrBuf & str2);
+tStrBuf operator+(const tStrBuf & str1, const void * str2);
 
 /** Time */
 class tTime :public tBaseType {

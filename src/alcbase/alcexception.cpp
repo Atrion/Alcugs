@@ -113,20 +113,20 @@ void alcSetAbort(bool c) {
 //Exceptions
 
 //Base class
-txBase::txBase(char * msg,bool abort,bool core) {
+txBase::txBase(const void * msg,bool abort,bool core) {
 	this->name=NULL;
 	this->abort=abort;
 	this->core=core;
-	this->msg=msg;
+	this->msg=(const char *)msg;
 	this->size=0;
 	this->bt=NULL;
 	this->imsg=NULL;
 	this->_preparebacktrace();
 }
-txBase::txBase(char * name,char * msg,bool abort,bool core) {
-	this->name=name;
-	this->imsg=(char *)malloc(sizeof(char) * (strlen(name) + strlen(msg) + 2));
-	if(this->imsg!=NULL) { strcpy(this->imsg,name); strcat(this->imsg,":"); strcat(this->imsg,msg); }
+txBase::txBase(const void * name,const void * msg,bool abort,bool core) {
+	this->name=(const char *)name;
+	this->imsg=(char *)malloc(sizeof(char) * (strlen((const char *)name) + strlen((const char *)msg) + 2));
+	if(this->imsg!=NULL) { strcpy(this->imsg,(const char *)name); strcat(this->imsg,":"); strcat(this->imsg,(const char *)msg); }
 	this->abort=abort;
 	this->core=core;
 	this->msg=this->imsg;
@@ -185,8 +185,8 @@ void txBase::_preparebacktrace() {
 		std::abort();
 	}
 }
-char * txBase::what() { return msg; }
-char * txBase::backtrace() { return bt; }
+const char * txBase::what() { return (const char *)msg; }
+const char * txBase::backtrace() { return bt; }
 txBase::~txBase() {
 	if(bt!=NULL) free((void *)bt);
 	if(imsg!=NULL) free((void *)imsg);

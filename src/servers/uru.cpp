@@ -117,18 +117,46 @@ int u_parse_arguments(int argc, char * argv[]) {
 }
 
 int main(int argc, char * argv[]) {
-	//start Alcugs library
-	alcInit(argc,argv);
+	try {
+		//start Alcugs library
+		alcInit(argc,argv,true);
 	
-	//Parse command line
-	if (u_parse_arguments(argc,argv)!=0) return -1;
+		//Parse command line
+		if (u_parse_arguments(argc,argv)!=0) return -1;
 	
-	//Load and parse config files
-	lstd->print(alcVersionText());
+		//Load and parse config files
+		tStrBuf cfgpath;
+		tConfig * cfg=alcGetConfig();
+		cfgpath=cfg->getVar("read_config","cmdline");
+		if(cfgpath.isNull()) {
+			cfgpath="uru.conf";
+			cfg->setVar(cfgpath.c_str(),"read_config","global");
+		}
+		if(!alcParseConfig(cfgpath)) {
+			fprintf(stderr,"FATAL, reading configuration, please check the syntax\n");
+			return -1;
+		}
+	
+		lstd->print(alcVersionText());
 
-	//Create and Run the server
-	std::printf("ERROR: - WIP: Work In Progress\n");
-
+		//Create the server
+		std::printf("ERROR: - WIP: Work In Progress\n");
+		
+		#ifdef I_AM_THE_LOBBY_SERVER
+		//tUnetLobbyServer service;
+		#else
+		#error UNKNOWN SERVER
+		#endif
+	
+		//Install handlers and run the server
+		//service.run();
+		//throw txBase("Hello world");
+		
+	} catch(txBase &t) {
+		fprintf(stderr,"FATAL Server died: Exception %s\n%s\n",t.what(),t.backtrace());
+	} catch(...) {
+		fprintf(stderr,"FATAL Server died: Unknown Exception\n");
+	}
 }
 
 #if 0

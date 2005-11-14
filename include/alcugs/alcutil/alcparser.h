@@ -66,7 +66,7 @@ public:
 	virtual U32 size();
 	void setConfig(tConfig * c);
 	tConfig * getConfig();
-private:
+protected:
 	tConfig * cfg;
 	char sep;
 };
@@ -82,12 +82,13 @@ private:
 class tXParser :public tSimpleParser {
 public:
 	tXParser();
-	virtual ~tXParser();
+	virtual ~tXParser() {}
 	virtual void store(tStrBuf &t);
 	virtual int stream(tStrBuf &t);
-	void setBasePath(char * uri);
+	void setBasePath(tStrBuf & base);
 private:
-	char * path;
+	U16 parseKey(tStrBuf &t);
+	tStrBuf path;
 };
 
 } //End alc namespace

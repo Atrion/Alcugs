@@ -70,15 +70,16 @@ class tConfigKey {
 public:
 	tConfigKey();
 	~tConfigKey();
-	void setName(const Byte * name);
-	Byte * getName() { return name; }
+	void setName(const void * name);
+	void setName(tStrBuf & name);
+	tStrBuf & getName() { return name; }
 	tConfigVal * find(const void * what,bool create=false);
 	void copy(tConfigKey & t);
 	void operator=(tConfigKey & t) { copy(t); }
 	void rewind();
 	tConfigVal * getNext();
 private:
-	Byte * name;
+	tStrBuf name;
 	U16 n,off;
 	tConfigVal ** values;
 	friend class tConfig;
@@ -92,8 +93,9 @@ public:
 	~tConfig();
 	tConfigKey * findKey(const void * where=(const void *)"global",bool create=false);
 	tConfigVal * findVar(const void * what,const void * where=(const void *)"global",bool create=false);
-	void setVar(const void * val,const void * what,const void * where=(const void *)"global");
-	void setVar(tStrBuf &val,tStrBuf &what,tStrBuf &where);
+	tStrBuf & getVar(const void * what,const void * where=(const void *)"global",U16 x=0,U16 y=0);
+	void setVar(const void * val,const void * what,const void * where=(const void *)"global",U16 x=0,U16 y=0);
+	void setVar(tStrBuf &val,tStrBuf &what,tStrBuf &where,U16 x=0,U16 y=0);
 	void rewind();
 	tConfigKey * getNext();
 private:

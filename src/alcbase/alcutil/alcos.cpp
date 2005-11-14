@@ -78,8 +78,6 @@ void alcStripExt(char * addr) {
 	}
 }
 
-
-
 /* dir entry */
 tDirEntry::tDirEntry() {
 	name=NULL;

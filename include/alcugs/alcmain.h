@@ -60,6 +60,9 @@ tConfig * alcGetConfig();
 
 void alcIngoreConfigParseErrors(bool val);
 
+/** \brief Parses the given configuration file */
+bool alcParseConfig(tStrBuf & path);
+
 
 #if !defined(IN_ALC_LIBRARY) and defined(IN_ALC_PROGRAM)
 #ifndef __ALC_VERIFY_VERSION_

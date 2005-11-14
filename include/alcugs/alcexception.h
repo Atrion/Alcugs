@@ -69,80 +69,80 @@ public:
 			\param abort If true, this exception will always stop execution
 			\param core If true, it will try to generate a coredump (requires the google Coredumper library), and of course, only works on a real operating system.
 	*/
-	txBase(char * msg="",bool abort=false,bool core=false);
-	txBase(char * name,char * msg,bool abort,bool core);
+	txBase(const void * msg="",bool abort=false,bool core=false);
+	txBase(const void * name,const void * msg,bool abort,bool core);
 	/** \brief Returns the description message */
-	virtual char * what();
+	virtual const char * what();
 	/** \brief Returns a backtrace (Only on Linux) */
-	char * backtrace();
+	const char * backtrace();
 	virtual ~txBase();
 private:
 	void _preparebacktrace();
-	char * msg;
+	const char * msg;
 	void * btArray[txExcLevels];
 	unsigned int size;
 	char * bt;
 	bool abort;
 	bool core;
 	char * imsg;
-	char * name;
+	const char * name;
 };
 //End Exception
 
 /** Out Of Range */
 class txOutOfRange : public txBase {
 public:
-	txOutOfRange(char * msg="",bool abort=false,bool core=false) :txBase("OutOfRange",msg,abort,core) {}
+	txOutOfRange(const void * msg="",bool abort=false,bool core=false) :txBase("OutOfRange",msg,abort,core) {}
 };
 /** unknown flags */
 class txUnkFlags : public txBase {
 public:
-	txUnkFlags(char * msg="",bool abort=false,bool core=false) :txBase("UnkFlags",msg,abort,core) {}
+	txUnkFlags(const void * msg="",bool abort=false,bool core=false) :txBase("UnkFlags",msg,abort,core) {}
 };
 /** unknown flags */
 class txUnexpectedData : public txBase {
 public:
-	txUnexpectedData(char * msg="",bool abort=false,bool core=false) :txBase("UnexpectedData",msg,abort,core) {}
+	txUnexpectedData(const void * msg="",bool abort=false,bool core=false) :txBase("UnexpectedData",msg,abort,core) {}
 };
 /** No Mem */
 class txNoMem : public txBase {
 public:
-	txNoMem(char * msg="",bool abort=false,bool core=false) :txBase("NoMem",msg,abort,core) {}
+	txNoMem(const void * msg="",bool abort=false,bool core=false) :txBase("NoMem",msg,abort,core) {}
 };
 /** Ref Err */
 class txRefErr : public txBase {
 public:
-	txRefErr(char * msg="",bool abort=false,bool core=false) :txBase("RefErr",msg,abort,core) {}
+	txRefErr(const void * msg="",bool abort=false,bool core=false) :txBase("RefErr",msg,abort,core) {}
 };
 /** Write Err */
 class txWriteErr : public txBase {
 public:
-	txWriteErr(char * msg="",bool abort=false,bool core=false) :txBase("WriteErr",msg,abort,core) {}
+	txWriteErr(const void * msg="",bool abort=false,bool core=false) :txBase("WriteErr",msg,abort,core) {}
 };
 /** No File */
 class txNoFile : public txBase {
 public:
-	txNoFile(char * msg="",bool abort=false,bool core=false) :txBase("NoFile",msg,abort,core) {}
+	txNoFile(const void * msg="",bool abort=false,bool core=false) :txBase("NoFile",msg,abort,core) {}
 };
 /** Unk Err */
 class txUnkErr : public txBase {
 public:
-	txUnkErr(char * msg="",bool abort=false,bool core=false) :txBase("UnkErr",msg,abort,core) {}
+	txUnkErr(const void * msg="",bool abort=false,bool core=false) :txBase("UnkErr",msg,abort,core) {}
 };
 /** No File */
 class txNotFound : public txBase {
 public:
-	txNotFound(char * msg="",bool abort=false,bool core=false) :txBase("NotFound",msg,abort,core) {}
+	txNotFound(const void * msg="",bool abort=false,bool core=false) :txBase("NotFound",msg,abort,core) {}
 };
 /** No File */
 class txNoAccess : public txBase {
 public:
-	txNoAccess(char * msg="",bool abort=false,bool core=false) :txBase("NoAccess",msg,abort,core) {}
+	txNoAccess(const void * msg="",bool abort=false,bool core=false) :txBase("NoAccess",msg,abort,core) {}
 };
 /** Parse error */
 class txParseError : public txBase {
 public:
-	txParseError(char * msg="",bool abort=false,bool core=false) :txBase("ParseError",msg,abort,core) {}
+	txParseError(const void * msg="",bool abort=false,bool core=false) :txBase("ParseError",msg,abort,core) {}
 };
 
 

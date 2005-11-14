@@ -443,6 +443,94 @@ void alctypes_part4() {
 	DBG(4,"cc-%s-\n",cc.c_str());
 }
 
+void alctypes_part5() {
+
+	tStrBuf test("/path/to/something.txt");
+	printf("%s\n",test.c_str());
+
+	char mychar;
+	
+	assert(test[0]=='/');
+	assert(test[1]=='p');
+	assert(test[3]=='t');
+	assert(test[0]=='/');
+	try {
+		mychar=test[1000];
+		throw txBase("Expected OutofRange");
+	} catch(txOutOfRange) {
+		printf("passed.\n");
+	}
+
+	assert(test=="/path/to/something.txt");
+	assert(test!="/path/to");
+	printf("%s\n",test.dirname().c_str());
+	assert(test.dirname()=="/path/to");
+	printf("-%s-\n",test.dirname().c_str());
+	
+	test="/usr/lib";
+	assert(test.dirname()=="/usr");
+	test="/usr/";
+	printf("-%s-\n",test.dirname().c_str());
+	assert(test.dirname()=="/");
+	test="usr";
+	assert(test.dirname()==".");
+	test="/";
+	assert(test.dirname()=="/");
+	test=".";
+	assert(test.dirname()==".");
+	test="..";
+	assert(test.dirname()==".");
+	test="/usr/lib/";
+	assert(test.dirname()=="/usr");
+	test="usr/lib/";
+	printf("-%s-\n",test.dirname().c_str());
+	assert(test.dirname()=="usr");
+	test="usr/";
+	assert(test.dirname()==".");
+	test="usr/lib/kk/path/something";
+	printf("-%s-\n",test.dirname().c_str());
+	assert(test.dirname()=="usr/lib/kk/path");
+	test="../../../usr/lib/kk/path/something";
+	printf("-%s-\n",test.dirname().c_str());
+	assert(test.dirname()=="../../../usr/lib/kk/path");
+	test="/../../../usr/lib/kk/path/something";
+	printf("-%s-\n",test.dirname().c_str());
+	assert(test.dirname()=="/../../../usr/lib/kk/path");
+
+	
+	tStrBuf due("/////////");
+	due.strip('/');
+	printf("due:%s\n",due.c_str());
+	assert(due=="");
+	due="howhowhow ajfk ñfajf///////////////";
+	due.strip('/');
+	printf("due:%s\n",due.c_str());
+	assert(due=="howhowhow ajfk ñfajf");
+	due="///////////////howhowhow ajfk ñfajf///////////////";
+	due.strip('/');
+	assert(due=="howhowhow ajfk ñfajf");
+	due="///////////////howhowhow ajfk ñfajf";
+	due.strip('/');
+	assert(due=="howhowhow ajfk ñfajf");
+	due="// /////////////howh//////////owhow/////// aj////////fk ñfajf////// /////////";
+	due.strip('/');
+	assert(due==" /////////////howh//////////owhow/////// aj////////fk ñfajf////// ");
+	due="/ /";
+	due.strip('/');
+	assert(due==" ");
+	due=" / ";
+	due.strip('/');
+	assert(due==" / ");
+	due="///////////////howhowhow ajfk ñfajf///////////////";
+	due.strip('/',0x01);
+	printf("due:%s\n",due.c_str());
+	assert(due=="howhowhow ajfk ñfajf///////////////");
+	due="///////////////howhowhow ajfk ñfajf///////////////";
+	due.strip('/',0x02);
+	assert(due=="///////////////howhowhow ajfk ñfajf");
+	//abort();
+}
+
 void alctypes_tests() {
 	alctypes_mbuf();
 	alctypes_mbuf2();
@@ -450,6 +538,7 @@ void alctypes_tests() {
 	alctypes_part2();
 	alctypes_part3();
 	alctypes_part4();
+	alctypes_part5();
 }
 
 void sith() {
@@ -501,7 +590,6 @@ mproblem = \"this ' contains \\\" \\\\ some speical chars\"\n\
 	tStrBuf res;
 	
 	DBG(6,"kkkkk\n");
-	goto shit_test;
 	
 	i=0;
 	while(!a.eof()) {
@@ -543,10 +631,8 @@ mproblem = \"this ' contains \\\" \\\\ some speical chars\"\n\
 	
 	// e = m * c^2
 	// Now we should apply this formula everywhere, and we will be able to get flying cows in Relto as a  bonus relto page
-shit_test:
 	//config
 	tConfig cfg1;
-	goto shit_test2;
 	tConfig * cfg2;
 	
 	cfg2 = new tConfig();
@@ -570,7 +656,6 @@ shit_test:
 	assert(val1->getName()=="kaka");
 
 	delete cfg2;
-shit_test2:
 	dmalloc_verify(NULL);
 	
 	//parser
@@ -671,9 +756,9 @@ int main(int argc, char * argv[]) {
 
 	try {
 		alcInit(argc,argv);
-		/*alcexception_tests();
+		alcexception_tests();
 		alctypes_tests();
-		log_test();*/
+		log_test();
 		sith();
 		//alcShutdown();
 		std::cout<< "Success!!" << std::endl;

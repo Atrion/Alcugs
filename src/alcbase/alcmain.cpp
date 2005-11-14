@@ -110,4 +110,38 @@ void alcIngoreConfigParseErrors(bool val) {
 	alcIngoreParseErrors=val;
 }
 
+bool alcParseConfig(tStrBuf & path) {
+	std::printf("reading %s\n",path.c_str());
+
+	tXParser parser;
+	parser.setConfig(alcGetConfig());
+	#if defined(__WIN32__) or defined(__CYGWIN__)
+	path.convertSlashesFromWinToUnix();
+	#endif
+	parser.setBasePath(path.dirname());
+	tFBuf f1;
+	
+	bool ok=true;
+	
+	try {
+		f1.open(path.c_str());
+		f1.rewind();
+		f1.get(parser);
+		f1.close();
+		
+		tStrBuf out;
+		out.put(parser);
+		std::printf("result \n%s\n",out.c_str());
+	} catch(txNotFound &t) {
+		std::fprintf(stderr,"Error: %s\n",t.what());
+		ok=false;
+	}
+	
+	if(alcIngoreParseErrors) {
+		ok=true;
+	}
+	
+	return ok;
+}
+
 }

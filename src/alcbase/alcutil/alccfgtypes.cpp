@@ -41,27 +41,18 @@ namespace alc {
 
 tConfigVal::tConfigVal() { init(); }
 tConfigVal::tConfigVal(const void * name) {
-	dmalloc_verify(NULL);
 	init();
-	dmalloc_verify(NULL);
 	setName(name);
-	dmalloc_verify(NULL);
 }
 void tConfigVal::init() {
-	dmalloc_verify(NULL);
 	name="";
-	dmalloc_verify(NULL);
 	values=NULL;
-	dmalloc_verify(NULL);
 	x=y=0;
-	dmalloc_verify(NULL);
 }
 tConfigVal::~tConfigVal() {
 	int i;
-	dmalloc_verify(NULL);
 	//if(name!=NULL) free((void *)name);
 	if(values!=NULL) {
-	dmalloc_verify(NULL);
 		for(i=0; i<x*y; i++) {
 			DBG(4,"i:%i\n",i);
 			if(values[i]!=NULL) {
@@ -86,7 +77,6 @@ void tConfigVal::setVal(tStrBuf & t,U16 x,U16 y) {
 	ox = this->x;
 	oy = this->y;
 	my = ( oy > (y+1) ? oy : (y+1));
-	dmalloc_verify(NULL);
 	if(ox<(x+1)) {
 		//resize and copy
 		values=(tStrBuf **)malloc(sizeof(tStrBuf *) * ((my) * (x+1)));
@@ -96,23 +86,15 @@ void tConfigVal::setVal(tStrBuf & t,U16 x,U16 y) {
 				*(values+(((x+1)*j)+k))=*(ovalues+((ox*j)+k));
 			}
 		}
-			dmalloc_verify(NULL);
 		this->x = x+1;
-			dmalloc_verify(NULL);
 		this->y = my;
-			dmalloc_verify(NULL);
 		ox = x+1;
-			dmalloc_verify(NULL);
 		oy = my;
-			dmalloc_verify(NULL);
 		if((void *)ovalues!=NULL) {
 			free((void *)ovalues);
 		}
-			dmalloc_verify(NULL);
 		ovalues=values;
-		dmalloc_verify(NULL);
 	}
-		dmalloc_verify(NULL);
 	if(oy<(y+1)) {
 		values=(tStrBuf **)realloc((void *)values,sizeof(tStrBuf *) * ((y+1)*(ox)));
 		if(values==NULL) throw txNoMem(_WHERE("."));
@@ -120,16 +102,13 @@ void tConfigVal::setVal(tStrBuf & t,U16 x,U16 y) {
 		this->y = my;
 		ovalues=values;
 	}
-		dmalloc_verify(NULL);
 	tStrBuf ** myval=NULL;
 	myval = (values+((ox*y)+x));
-		dmalloc_verify(NULL);
 	if(*myval==NULL) {
 		*myval = new tStrBuf(t);
 	} else {
 		**myval = t;
 	}
-		dmalloc_verify(NULL);
 }
 void tConfigVal::setVal(const void * val,U16 x,U16 y) {
 	tStrBuf w(val);
@@ -139,11 +118,14 @@ tStrBuf & tConfigVal::getName() {
 	return name;
 }
 tStrBuf & tConfigVal::getVal(U16 x,U16 y) {
+	static tStrBuf nullstr;
 	if(values==NULL || x>=this->x || y>=this->y) {
-		static tStrBuf kk("");
-		return kk;
+		return nullstr;
 	}
 	U16 nx=this->x;
+	if(*(values+((nx*y)+x))==NULL) {
+		return nullstr;
+	}
 	return **(values+((nx*y)+x));
 }
 void tConfigVal::copy(tConfigVal &t) {
@@ -169,13 +151,13 @@ void tConfigVal::copy(tConfigVal &t) {
 }
 
 tConfigKey::tConfigKey() {
-	name=NULL;
+	//name=NULL;
 	off=n=0;
 	values=NULL;
 }
 tConfigKey::~tConfigKey() {
 	U16 i;
-	if(name!=NULL) free((void *)name);
+	//if(name!=NULL) free((void *)name);
 	if(values!=NULL) {
 		for(i=0; i<n; i++) {
 			if(values[i]!=NULL) {
@@ -185,10 +167,11 @@ tConfigKey::~tConfigKey() {
 		free((void *)values);
 	}
 }
-void tConfigKey::setName(const Byte * name) {
-	if(this->name!=NULL) free((void *)this->name);
-	this->name=(Byte *)malloc(sizeof(Byte) * (strlen((const char *)name)+1));
-	strcpy((char *)this->name,(char *)name);
+void tConfigKey::setName(const void * name) {
+	this->name=name;
+}
+void tConfigKey::setName(tStrBuf & name) {
+	this->name=name;
 }
 tConfigVal * tConfigKey::find(const void * what,bool create) {
 	U16 i;
@@ -261,41 +244,45 @@ tConfig::~tConfig() {
 tConfigKey * tConfig::findKey(const void * where,bool create) {
 	U16 i;
 	for(i=0; i<n; i++) {
-		if(!strcmp((const char *)where,(const char *)values[i]->name)) {
+		/*if(!strcmp((const char *)where,(const char *)values[i]->name)) {
+			return values[i];
+		}*/
+		if(values[i]->name==where) {
 			return values[i];
 		}
 	}
-	dmalloc_verify(NULL);
 	if(!create) return NULL;
-	dmalloc_verify(NULL);
 	n++;
-		dmalloc_verify(NULL);
 	values=(tConfigKey **)realloc((void *)values,sizeof(tConfigKey *) * n);
-		dmalloc_verify(NULL);
 	values[n-1]=new tConfigKey();
-		dmalloc_verify(NULL);
-	values[n-1]->setName((const Byte *)where);
-		dmalloc_verify(NULL);
+	values[n-1]->setName(where);
 	return values[n-1];
 }
 tConfigVal * tConfig::findVar(const void * what,const void * where,bool create) {
 	tConfigKey * mykey;
-		dmalloc_verify(NULL);
 	mykey=findKey(where,create);
-		dmalloc_verify(NULL);
 	if(mykey==NULL) return NULL;
-		dmalloc_verify(NULL);
 	return(mykey->find(what,create));
 }
-void tConfig::setVar(const void * val,const void * what,const void * where) {
+void tConfig::setVar(const void * val,const void * what,const void * where,U16 x,U16 y) {
 	tConfigVal * myvar;
 	myvar=findVar(what,where,true);
-	myvar->setVal(val);
+	myvar->setVal(val,x,y);
 }
-void tConfig::setVar(tStrBuf &val, tStrBuf &what, tStrBuf &where) {
+void tConfig::setVar(tStrBuf &val, tStrBuf &what, tStrBuf &where,U16 x,U16 y) {
 	tConfigVal * myvar;
 	myvar=findVar(what.c_str(),where.c_str(),true);
-	myvar->setVal(val);
+	myvar->setVal(val,x,y);
+}
+tStrBuf & tConfig::getVar(const void * what,const void * where,U16 x,U16 y) {
+	tConfigVal * myvar;
+	myvar=findVar(what,where,false);
+	if(myvar==NULL) {
+		static tStrBuf nullstr;
+		assert(nullstr.isNull());
+		return nullstr;
+	}
+	return(myvar->getVal(x,y));
 }
 void tConfig::rewind() {
 	off=0;
