@@ -115,6 +115,7 @@ void alcLogInit();
 void alcLogShutdown(bool silent=false);
 
 void alcLogSetDefaults();
+void alcLogSetLogPath(tStrBuf & path);
 
 void alcLogOpenStdLogs(bool shutup=false);
 

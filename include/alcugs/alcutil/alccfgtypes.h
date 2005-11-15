@@ -77,6 +77,8 @@ public:
 	tConfigVal * find(const void * what,bool create=false);
 	tConfigVal * find(tStrBuf & what,bool create=false);
 	void copy(tConfigKey & t);
+	void merge(tConfigKey & t);
+	void add(tConfigVal &t);
 	void operator=(tConfigKey & t) { copy(t); }
 	void rewind();
 	tConfigVal * getNext();
@@ -101,6 +103,8 @@ public:
 	void setVar(tStrBuf &val,tStrBuf &what,tStrBuf &where,U16 x=0,U16 y=0);
 	void rewind();
 	tConfigKey * getNext();
+	void copy(const void * to,const void * from);
+	void copyKey(const void * tok,const void * fromk,const void * to,const void * from);
 private:
 	U16 n,off;
 	tConfigKey ** values;

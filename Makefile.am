@@ -43,7 +43,8 @@ libalcugsurunet3_a_SOURCES = \
  src/unet/netmsgq.cpp \
  src/unet/protocol/protocol.cpp \
  src/unet/netcore.cpp \
- src/unet/protocol/umsgbasic.cpp
+ src/unet/protocol/umsgbasic.cpp \
+ src/unet/configalias.cpp
 
 libalcugsurunet3_a_CPPFLAGS = -DIN_ALC_LIBRARY
 #End LibAlcugsUruNet3 library
@@ -77,10 +78,10 @@ uruping_SOURCES = src/servers/uruping.cpp
 urumsgtest_SOURCES = src/servers/urumsgtest.cpp
 uru_lobby_SOURCES = \
  src/servers/uru.cpp \
- src/servers/lobby.cpp
+ src/servers/lobbyserver.cpp
 
 uru_lobby_INCLUDES = \
- src/servers/lobby.h
+ src/servers/lobbyserver.h
 
 uru_lobby_CPPFLAGS = -DI_AM_THE_LOBBY_SERVER
 

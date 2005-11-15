@@ -311,6 +311,7 @@ public:
 	tStrBuf & strip(Byte what,Byte how=0x03);
 	tStrBuf & escape();
 	tStrBuf & lower();
+	tStrBuf & upper();
 	tStrBuf & tStrBuf::substring(U32 start,U32 len);
 	tStrBuf & dirname();
 	bool startsWith(const void * pat);
@@ -395,10 +396,10 @@ public:
 		seconds=t.seconds;
 		microseconds=t.microseconds;
 	}
-
+	void now();
 	double asDouble(char how='s');
 	U32 asU32(char how='s');
-	const Byte * str();
+	const Byte * str(Byte type=0x00);
 	U32 seconds;
 	U32 microseconds;
 };

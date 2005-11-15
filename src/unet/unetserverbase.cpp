@@ -25,69 +25,29 @@
 *******************************************************************************/
 
 /**
-	Alcugs Lib Main code.
+	Description:
+		This does this, and that.
+	ChangeLog:
+		Initial
+	Bugs:
+		Several
 */
 
-#ifndef __U_ALCMAIN_H
-#define __U_ALCMAIN_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_ALCMAIN_H_ID "$Id$"
+#define __U_UNETSERVERBASE_ID "$Id$"
 
-/* You need to define these vars in your app's */
-extern const char * alcXSNAME;
-extern const char * alcXBUILD;
-extern const char * alcXVERSION;
-extern const char * alcXID;
+//#define _DBG_LEVEL_ 10
+
+#include "alcugs.h"
+#include "urunet/unet.h"
+
+////extra includes
+
+#include "alcdebug.h"
 
 namespace alc {
 
-/** 
-		\brief Start Alcugs library.
-		\param argc Number of args
-		\param argv args
-		\param shutup Enable logging subsystem?
-*/
-void alcInit(int argc=0,char ** argv=NULL,bool shutup=false);
-/** \brief Stop Alcugs library */
-void alcShutdown();
-/** \brief Call this after a fork() call */
-void alcOnFork();
-/** \brief Interface for installing signals */
-void alcSignal(int signum, void (*handler)(int));
+	////IMPLEMENTATION
 
-/** \brief Gets a pointer to the config object */
-tConfig * alcGetConfig();
+} //end namespace alc
 
-void alcDumpConfig();
-
-tTime alcGetUptime();
-tTime alcGetBornTime();
-
-void alcIngoreConfigParseErrors(bool val);
-
-/** \brief Parses the given configuration file */
-bool alcParseConfig(tStrBuf & path);
-void alcReApplyConfig();
-
-#if !defined(IN_ALC_LIBRARY) and defined(IN_ALC_PROGRAM)
-#ifndef __ALC_VERIFY_VERSION_
-#define __ALC_VERIFY_VERSION_
-bool alcVerifyVersion() {
-	return(alcGetMaxVersion()==alcMAX_VER &&
-	alcGetMinVersion()==alcMIN_VER &&
-	alcGetRelVersion()==alcREL_VER &&
-	alcGetBetVersion()==alcBET_VER &&
-	alcGetProtocolVersion()==alcProtoVer);
-}
-char * alcVerifyVersionStr = alcSTR_VER;
-#endif
-
-#else
-extern bool alcVerifyVersion();
-extern char * alcVerifyVersionStr;
-#endif
-
-
-}
-
-#endif

@@ -77,7 +77,7 @@ typedef struct {
 												   1 - one file (old behaviour)
 													 >2 - rotate logs
 												*/
-	char * path; //!<path to the log directory
+	tStrBuf * path; //!<path to the log directory
 	int rotate_size; //!< maxium size of a file, if reached, file will be rotated
 	mode_t creation_mask; //!< default permissions mask
 	char level; //!< current logging level (0 - disabled, 1 minimal, 6 huge)
@@ -110,10 +110,10 @@ void alcLogSetDefaults() {
 		tvLogConfig=(tLogConfig *)malloc(sizeof(tLogConfig) * 1);
 	}
 	if(tvLogConfig!=NULL) {
-	memset(tvLogConfig,0,sizeof(tvLogConfig));
+	//memset(tvLogConfig,0,sizeof(tvLogConfig));
 	tvLogConfig->silent=0;
 	tvLogConfig->n_files2rotate=5;
-	tvLogConfig->path="log/";
+	tvLogConfig->path=new tStrBuf("log/");
 	tvLogConfig->rotate_size=2*1024*1024;
 	tvLogConfig->creation_mask=00750;
 	tvLogConfig->level=6;
@@ -140,6 +140,10 @@ void alcLogSetDefaults() {
 	}
 }
 
+void alcLogSetLogPath(tStrBuf & path) {
+	*(tvLogConfig->path)=path;
+}
+
 void alcLogSetLogLevel(Byte level) {
 	if(tvLogConfig!=NULL) {
 		if(level>3) level=3;
@@ -163,6 +167,10 @@ void alcLogShutdown(bool silent) {
 		lnull->close(silent);
 		delete lnull;
 		lnull=NULL;
+	}
+	if(tvLogConfig->path!=NULL) {
+		delete tvLogConfig->path;
+		tvLogConfig->path=NULL;
 	}
 	for(i=0; i<tvLogConfig->n_logs; i++) {
 		if(tvLogConfig->logs[i]!=NULL) {
@@ -188,6 +196,16 @@ void alcLogInit() {
 }
 
 void alcLogOpenStdLogs(bool shutup) {
+	if(lerr!=NULL) {
+		lerr->close();
+		delete lerr;
+		lerr=NULL;
+	}
+	if(lstd!=NULL) {
+		lstd->close();
+		delete lstd;
+		lstd=NULL;
+	}
 	if(lerr==NULL) {
 		lerr=new tLog();
 		if(shutup) lerr->open(NULL,2,DF_STDERR);
@@ -275,7 +293,7 @@ void tLog::open(const char * name, char level, U16 flags) {
 		if(tvLogConfig->n_files2rotate<=0 || level==0) {
 			this->dsc=def;
 		} else {
-			size=strlen(name) + strlen((const char *)tvLogConfig->path);
+			size=strlen(name) + strlen((const char *)tvLogConfig->path->c_str());
 			DBG(6,"size is:%i\n",size);
 
 			croak=(char *)malloc(sizeof(char) * (size+1+5));
@@ -286,7 +304,7 @@ void tLog::open(const char * name, char level, U16 flags) {
 			DBG(7,"here too\n");
 
 			if(name[0]!='/') {
-				strcpy(path,tvLogConfig->path);
+				strcpy(path,(const char *)tvLogConfig->path->c_str());
 			} else {
 				strcpy(path,"");
 				size=strlen(name);
@@ -373,7 +391,7 @@ int tLog::rotate(bool force) {
 	
 	DBG(5,"3..\n");
 
-	size=strlen(this->name) + strlen((const char *)tvLogConfig->path);
+	size=strlen(this->name) + strlen((const char *)tvLogConfig->path->c_str());
 
 	croak=(char *)malloc(sizeof(char) * (size+1+5));
 	if(croak==NULL) return -1;
@@ -388,7 +406,7 @@ int tLog::rotate(bool force) {
 	DBG(5,"4..\n");
 
 	if(this->name[0]!='/') {
-		strcpy(path,tvLogConfig->path);
+		strcpy(path,(const char *)tvLogConfig->path->c_str());
 	} else {
 		strcpy(path,"");
 	}

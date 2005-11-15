@@ -47,12 +47,13 @@ namespace alc {
 static volatile bool alcInitialized=false;
 tConfig * alcGlobalConfig=NULL;
 bool alcIngoreParseErrors=false;
+tTime alcBorn;
 
 void alcInit(int argc,char ** argv,bool shutup) {
 	if(alcInitialized) return;
 	alcInitialized=true;
 	DBG(5,"alcInit()\n");
-	
+	alcBorn.now();
 	DBG(6,"Starting log system...\n");
 	alcLogInit();
 	alcLogOpenStdLogs(shutup);
@@ -77,10 +78,8 @@ void alcShutdown() {
 	if(!alcInitialized) return;
 	alcInitialized=false;
 	DBG(5,"alcShutdown()\n");
-	
 	DBG(5,"Stopping log system...\n");
 	alcLogShutdown();
-
 	if(alcGlobalConfig!=NULL) {
 		delete alcGlobalConfig;
 		alcGlobalConfig=NULL;
@@ -106,8 +105,46 @@ tConfig * alcGetConfig() {
 	return alcGlobalConfig;
 }
 
+tTime alcGetUptime() {
+	tTime now;
+	now.now();
+	return now-alcBorn;
+}
+
+tTime alcGetBornTime() {
+	return alcBorn;
+}
+
+void alcReApplyConfig() {
+	tStrBuf var;
+	tConfig * cfg=alcGetConfig();
+	var=cfg->getVar("verbose_level","global");
+	if(var.isNull()) {
+		var="3";
+	}
+	alcLogSetLogLevel(var.asByte());
+	var=cfg->getVar("log_files_path","global");
+	if(var.isNull()) {
+		var="log/";
+	}
+	alcLogSetLogPath(var);
+	var=cfg->getVar("log.enabled","global");
+	if(var.isNull()) {
+		var="1";
+	}
+	alcLogOpenStdLogs(!var.asByte());
+}
+
 void alcIngoreConfigParseErrors(bool val) {
 	alcIngoreParseErrors=val;
+}
+
+void alcDumpConfig() {
+	tXParser parser;
+	parser.setConfig(alcGetConfig());
+	tStrBuf out;
+	out.put(parser);
+	std::printf("Config Dump:\n%s\n",out.c_str());
 }
 
 bool alcParseConfig(tStrBuf & path) {

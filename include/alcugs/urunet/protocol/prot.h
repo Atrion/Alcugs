@@ -105,6 +105,8 @@
 #define KTracking 7
 #define KTest 10
 #define KData 11
+#define KProxy 12
+#define KPlFire 13
 
 #define KBcast 255
 

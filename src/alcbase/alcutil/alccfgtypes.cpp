@@ -215,6 +215,18 @@ void tConfigKey::copy(tConfigKey &t) {
 		}
 	}
 }
+void tConfigKey::add(tConfigVal &t) {
+	tConfigVal * val;
+	val=find(t.getName(),1);
+	*val=t;
+}
+void tConfigKey::merge(tConfigKey &t) {
+	tConfigVal * val;
+	t.rewind();
+	while((val=t.getNext())) {
+		add(*val);
+	}
+}
 void tConfigKey::rewind() {
 	off=0;
 }
@@ -297,6 +309,28 @@ tConfigKey * tConfig::getNext() {
 	if(off>=n) { off=0; return NULL; }
 	off++;
 	return values[off-1];
+}
+void tConfig::copy(const void * to, const void * from) {
+	tConfigKey * dst;
+	tConfigKey * src;
+	src=findKey(from,0);
+	if(src==NULL) return;
+	dst=findKey(to,1);
+	dst->merge(*src);
+}
+void tConfig::copyKey(const void * tok, const void * fromk,const void * to, const void * from) {
+	tConfigKey * dst;
+	tConfigKey * src;
+	src=findKey(from,0);
+	if(src==NULL) return;
+	dst=findKey(to,1);
+	tConfigVal * val;
+	val=src->find(fromk,0);
+	if(val==NULL) return;
+	tConfigVal myval;
+	myval=*val;
+	myval.setName(tok);
+	dst->add(myval);
 }
 
 

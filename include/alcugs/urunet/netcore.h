@@ -46,7 +46,7 @@ public:
 	void leave(tNetSessionIte & who,Byte reason=RQuitting);
 
 	virtual void onNewConnection(tNetEvent * ev,tNetSession * u) {}
-	virtual int onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u)=0;
+	virtual int onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) { return 0; };
 	virtual void onConnectionClossed(tNetEvent * ev,tNetSession * u) {}
 	virtual void onLeave(tNetEvent * ev,Byte reason,tNetSession * u) {}
 	virtual void onTerminated(tNetEvent * ev,Byte reason,tNetSession * u) {}

@@ -48,7 +48,9 @@
 #include "urunet.h"
 #include "netcore.h"
 #include "protocol/umsgbasic.h"
-
+#include "configalias.h"
+#include "unetserverbase.h"
+#include "unetlobbyserverbase.h"
 
 #endif
 

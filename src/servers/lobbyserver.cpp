@@ -33,18 +33,24 @@
 		Several
 */
 
-#ifndef __U_FILENAME_H
-#define __U_FILENAME_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_FILENAME_H_ID "$Id$"
+#define __U_LOBBYSERVER_ID "$Id$"
+
+//#define _DBG_LEVEL_ 10
+
+#include <alcugs.h>
+#include <urunet/unet.h>
+
+////extra includes
+
+#include <alcdebug.h>
 
 namespace alc {
 
-	////DEFINITIONS
-	/**
-		If we want to do it well and nice, we should add pre and post conditions here.
-	*/
+	////IMPLEMENTATION
+	
+	const char * alcNetName="Lobby";
+	Byte alcWhoami=KLobby;
 
-} //End alc namespace
+} //end namespace alc
 
-#endif

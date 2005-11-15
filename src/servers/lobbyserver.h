@@ -33,20 +33,25 @@
 		Several
 */
 
+#ifndef __U_LOBBYSERVER_H
+#define __U_LOBBYSERVER_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_FILENAME_ID "$Id$"
-
-//#define _DBG_LEVEL_ 10
-
-#include "alcugs.h"
-
-////extra includes
-
-#include "alcdebug.h"
+#define __U_LOBBYSERVER_H_ID "$Id$"
 
 namespace alc {
 
-	////IMPLEMENTATION
+	////DEFINITIONS
+	/**
+		If we want to do it well and nice, we should add pre and post conditions here.
+	*/
 
-} //end namespace alc
+	extern const char * alcNetName;
+	extern Byte alcWhoami;
 
+	class tUnetLobbyServer :public tUnetLobbyServerBase {
+	
+	};
+	
+} //End alc namespace
+
+#endif
