@@ -52,8 +52,6 @@ void alcInit(int argc=0,char ** argv=NULL,bool shutup=false);
 void alcShutdown();
 /** \brief Call this after a fork() call */
 void alcOnFork();
-/** \brief Interface for installing signals */
-void alcSignal(int signum, void (*handler)(int));
 
 /** \brief Gets a pointer to the config object */
 tConfig * alcGetConfig();
@@ -68,6 +66,18 @@ void alcIngoreConfigParseErrors(bool val);
 /** \brief Parses the given configuration file */
 bool alcParseConfig(tStrBuf & path);
 void alcReApplyConfig();
+
+/** \brief Interface for installing signals */
+void alcSignal(int signum);
+
+class tSignalHandler {
+public:
+	tSignalHandler() { this->install_handlers(); }
+	virtual void handle_signal(int s);
+	virtual void install_handlers() {}
+};
+
+void alcInstallSignalHandler(tSignalHandler * t);
 
 #if !defined(IN_ALC_LIBRARY) and defined(IN_ALC_PROGRAM)
 #ifndef __ALC_VERIFY_VERSION_

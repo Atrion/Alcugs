@@ -49,6 +49,7 @@
 #include "netcore.h"
 #include "protocol/umsgbasic.h"
 #include "configalias.h"
+#include "unetmain.h"
 #include "unetserverbase.h"
 #include "unetlobbyserverbase.h"
 

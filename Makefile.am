@@ -24,7 +24,9 @@ libalcugsbase_a_SOURCES = \
  src/alcbase/alcutil/alcparser.cpp \
  src/alcbase/alcutil/rijndael.cpp \
  src/alcbase/urutypes/whatdoyousee.cpp \
- src/alcbase/urutypes/urubasetypes.cpp
+ src/alcbase/urutypes/urubasetypes.cpp \
+ src/alcbase/alcutil/alcthread.cpp
+
 #libalcugsbase_a_LIBADD = alcexcpetion.o
 
 if WIN32
@@ -44,18 +46,23 @@ libalcugsurunet3_a_SOURCES = \
  src/unet/protocol/protocol.cpp \
  src/unet/netcore.cpp \
  src/unet/protocol/umsgbasic.cpp \
- src/unet/configalias.cpp
+ src/unet/configalias.cpp \
+ src/unet/unetmain.cpp \
+ src/unet/unetserverbase.cpp \
+ src/unet/unetlobbyserverbase.cpp
 
 libalcugsurunet3_a_CPPFLAGS = -DIN_ALC_LIBRARY
 #End LibAlcugsUruNet3 library
 
-check_PROGRAMS = test
-TESTS = test
+check_PROGRAMS = test test2
+TESTS = test test2
 
 #Test APPS
 test_LDADD = libalcugsbase.a @ALC_LIBS@
-
 test_SOURCES = src/alcbase/test/test.cpp
+
+test2_LDADD = libalcugsbase.a @ALC_LIBS@
+test2_SOURCES = src/alcbase/test/test2.cpp
 #End Test APPS
 
 bin_PROGRAMS = urucrypt m5crypt uruping urumsgtest uru_lobby

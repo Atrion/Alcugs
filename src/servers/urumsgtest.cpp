@@ -310,8 +310,8 @@ int main(int argc,char * argv[]) {
 			printf("Waiting for messages... CTR+C stops\n");
 		}
 
-		alcSignal(SIGTERM, s_handler);
-		alcSignal(SIGINT, s_handler);
+		//alcSignal(SIGTERM, s_handler);
+		//alcSignal(SIGINT, s_handler);
 
 		netcore->setValidation(val);
 		netcore->setDestinationAddress(hostname,port);

@@ -24,51 +24,34 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	URUNET 3+
-*/
+#define _DBG_LEVEL_ 10
+#define IN_ALC_PROGRAM
+#define ALC_PROGRAM_ID "$Id$"
 
-#ifndef __U_NETCORE_H
-#define __U_NETCORE_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_NETCORE_H_ID "$Id$"
+#include <alcugs.h>
 
-namespace alc {
+#include <alcdebug.h>
 
-extern const char * alcNetName;
-extern Byte alcWhoami;
+using namespace alc;
 
-/** Base abstract class, you need to derive your server/client app's from here */
-class tUnetBase :public tUnet {
-public:
-	tUnetBase(char * lhost="0.0.0.0",U16 lport=0);
-	~tUnetBase();
-	void run();
-	void stop(Byte timeout=5);
-	void forcestop() {}
-	void terminate(tNetSessionIte & who,bool silent=false,Byte reason=RKickedOff);
-	void terminateAll() {}
-	void leave(tNetSessionIte & who,Byte reason=RQuitting);
-	void reload() {}
+int main(int argc, char * argv[]) {
 
-	virtual void onNewConnection(tNetEvent * ev,tNetSession * u) {}
-	virtual int onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) { return 0; };
-	virtual void onConnectionClossed(tNetEvent * ev,tNetSession * u) {}
-	virtual void onLeave(tNetEvent * ev,Byte reason,tNetSession * u) {}
-	virtual void onTerminated(tNetEvent * ev,Byte reason,tNetSession * u) {}
-	virtual void onConnectionFlood(tNetEvent * ev,tNetSession * u) {}
-	virtual void onConnectionTimeout(tNetEvent * ev,tNetSession * u) {}
-	virtual void onIdle(bool idle=false) {}
-	virtual void onStop() {}
-	virtual void onStart() {}
-	//virtual void onConnectionClossing(tNetEvent * ev) {}
-private:
-	int parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u);
-	bool state_running;
-	Byte stop_timeout;
-};
+	try {
+		alcInit(argc,argv);
 
+		std::cout<<"Main thread: "<<alcGetSelfThreadId()<<std::endl;
+
+		//alcShutdown();
+		std::cout<< "Success!!" << std::endl;
+	} catch (txBase &t) {
+		std::cout<< "Cauth Exception " << t.what() << std::endl;
+		std::cout<< t.backtrace() << std::endl;
+		return -1;
+	} catch (...) {
+		std::cout<< "Cauth Unknown Exception" <<std::endl;
+		return -1;
+	}
+	return 0;
 
 }
 
-#endif

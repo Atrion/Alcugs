@@ -45,9 +45,6 @@ namespace alc {
 		If we want to do it well and nice, we should add pre and post conditions here.
 	*/
 
-	extern const char * alcNetName;
-	extern Byte alcWhoami;
-
 	class tUnetLobbyServer :public tUnetLobbyServerBase {
 	
 	};

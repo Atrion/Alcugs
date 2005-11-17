@@ -99,10 +99,10 @@ typedef void(*_DBGorERR_pointer)(int a, char *msg, ...);
 #else
 // !__MSVC__
 
-#define DBG(a,...)  if((a)<=_DBG_LEVEL_) { fprintf(stderr,"DBG%i:%s:%s:%i> ",a,__FILE__,__FUNCTION__,__LINE__);\
+#define DBG(a,...)  if((a)<=_DBG_LEVEL_) { fprintf(stderr,"DBG%i:%d:%s:%s:%i> ",a,alcGetSelfThreadId(),__FILE__,__FUNCTION__,__LINE__);\
 fprintf(stderr, __VA_ARGS__); fflush(stderr); }
 
-#define ERR(a,...) if((a)<=_DBG_LEVEL_) { fprintf(stderr,"DBG%i:%s:%s:%i> ",a,__FILE__,__FUNCTION__,__LINE__);\
+#define ERR(a,...) if((a)<=_DBG_LEVEL_) { fprintf(stderr,"DBG%i:%d:%s:%s:%i> ",a,alcGetSelfThreadId(),__FILE__,__FUNCTION__,__LINE__);\
 fprintf(stderr, __VA_ARGS__); perror(""); fflush(stderr); }
 
 #define _WHERE(...) __dbg_where(__FILE__,__FUNCTION__,__LINE__,__VA_ARGS__)

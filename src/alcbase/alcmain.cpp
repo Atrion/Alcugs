@@ -38,9 +38,15 @@
 #include <cstdlib>
 namespace std {
 #include <signal.h>
+#include <sys/types.h>
+#ifndef __WIN32__
+#include <sys/wait.h>
+#endif
 };
 
 #include "alcdebug.h"
+
+using namespace std;
 
 namespace alc {
 
@@ -48,6 +54,7 @@ static volatile bool alcInitialized=false;
 tConfig * alcGlobalConfig=NULL;
 bool alcIngoreParseErrors=false;
 tTime alcBorn;
+tSignalHandler * alcSignalHandler=NULL;
 
 void alcInit(int argc,char ** argv,bool shutup) {
 	if(alcInitialized) return;
@@ -70,6 +77,8 @@ void alcInit(int argc,char ** argv,bool shutup) {
 		delete alcGlobalConfig;
 	}
 	alcGlobalConfig = new tConfig();
+	tSignalHandler * h = new tSignalHandler();
+	alcInstallSignalHandler(h);
 	
 	atexit(&alcShutdown);
 }
@@ -87,18 +96,8 @@ void alcShutdown() {
 }
 
 void alcOnFork() {
-
 	DBG(5,"alcLogShutdown from a forked child...\n");
 	alcLogShutdown(true);
-
-}
-
-void alcSignal(int signum, void (*handler)(int)) {
-	#ifdef __CYGWIN__
-	signal(signum,handler);
-	#else
-	std::signal(signum,handler);
-	#endif
 }
 
 tConfig * alcGetConfig() {
@@ -144,7 +143,7 @@ void alcDumpConfig() {
 	parser.setConfig(alcGetConfig());
 	tStrBuf out;
 	out.put(parser);
-	std::printf("Config Dump:\n%s\n",out.c_str());
+	lstd->print("Config Dump:\n%s\n",out.c_str());
 }
 
 bool alcParseConfig(tStrBuf & path) {
@@ -182,4 +181,50 @@ bool alcParseConfig(tStrBuf & path) {
 	return ok;
 }
 
+void alcInstallSignalHandler(tSignalHandler * t) {
+	if(t==NULL) return;
+	if(alcSignalHandler!=NULL) {
+		delete alcSignalHandler;
+	}
+	alcSignalHandler= t;
 }
+
+void _alcHandleSignal(int s) {
+	if(alcSignalHandler!=NULL)
+		alcSignalHandler->handle_signal(s);
+}
+
+void alcSignal(int signum) {
+	#ifdef __CYGWIN__
+	signal(signum,_alcHandleSignal);
+	#else
+	std::signal(signum,_alcHandleSignal);
+	#endif
+}
+
+void tSignalHandler::handle_signal(int s) {
+	lstd->log("INF: Recieved signal %i\n",s);
+	try {
+		switch (s) {
+#ifndef __WIN32__
+			case SIGCHLD:
+				lstd->log("INF: RECIEVED SIGCHLD: a child has exited.\n\n");
+				alcSignal(SIGCHLD);
+				int status;
+				waitpid(-1, &status, WNOHANG);
+				break;
+#endif
+			case SIGSEGV:
+				lerr->log("\n PANIC!!!\n");
+				lerr->log("TERRIBLE FATAL ERROR: SIGSEGV recieved!!!\n\n");
+				//TODO: generate a Crash report here
+				throw txBase("Panic: Segmentation Fault - dumping core",1,1);
+		}
+	} catch(txBase &t) {
+		lerr->log("FATAL Exception %s\n%s\n",t.what(),t.backtrace());
+	} catch(...) {
+		lerr->log("FATAL Unknown Exception\n");
+	}
+}
+
+} //end namespace

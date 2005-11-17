@@ -118,6 +118,7 @@ namespace std {
 //alcugs includes
 #include "alcexception.h"
 #include "alctypes.h"
+#include "alcutil/alcthread.h"
 #include "alcversion.h"
 #include "alcutil/alccfgtypes.h"
 #include "alcmain.h"

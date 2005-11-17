@@ -89,6 +89,8 @@ void alcNetSetConfigAliases() {
 	cfg->copyKey("db.name","db_name","global","global");
 	cfg->copyKey("db.username","db_username","global","global");
 	cfg->copyKey("db.passwd","db_passwd","global","global");
+	cfg->copyKey("db.passwd","db_password","global","global");
+	cfg->copyKey("db.passwd","db.password","global","global");
 	cfg->copyKey("db.port","db_port","global","global");
 
 	//unet
@@ -118,6 +120,7 @@ void alcNetSetConfigAliases() {
 	cfg->copyKey("shard.website","shard_website","global","global");
 	cfg->copyKey("shard.desc","shard_description","global","global");
 	cfg->copyKey("shard.passwd","shard_password","global","global");
+	cfg->copyKey("shard.passwd","shard.password","global","global");
 	cfg->copyKey("shard.contact","shard_contact","global","global");
 
 	val=cfg->getVar("shard.name","global");

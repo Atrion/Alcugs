@@ -570,7 +570,7 @@ void tLog::stamp() {
 
 	strftime(c_time_aux,25,"(%Y:%m:%d:%H:%M:%S",tptr);
 
-	this->print("%s.%06d) ",c_time_aux,tv.tv_usec);
+	this->print("%s.%06d)[%d] ",c_time_aux,tv.tv_usec,alcGetSelfThreadId());
 }
 
 /**
