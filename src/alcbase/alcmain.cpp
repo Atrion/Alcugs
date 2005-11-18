@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCMAIN_ID "$Id$"
 
-//#define _DBG_LEVEL_ 10
+#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
 
@@ -93,6 +93,8 @@ void alcShutdown() {
 		delete alcGlobalConfig;
 		alcGlobalConfig=NULL;
 	}
+	//the last thing
+	alcInstallSignalHandler(NULL);
 }
 
 void alcOnFork() {
@@ -132,6 +134,15 @@ void alcReApplyConfig() {
 		var="1";
 	}
 	alcLogOpenStdLogs(!var.asByte());
+	var=cfg->getVar("system.segfault_handler","global");
+	if(!var.isNull() && !var.asByte()) {
+		alcSignal(SIGSEGV,0);
+	} else {
+		alcSignal(SIGSEGV,1);
+	}
+	#ifndef __WIN32__
+	alcSignal(SIGCHLD,1);
+	#endif
 }
 
 void alcIngoreConfigParseErrors(bool val) {
@@ -182,7 +193,7 @@ bool alcParseConfig(tStrBuf & path) {
 }
 
 void alcInstallSignalHandler(tSignalHandler * t) {
-	if(t==NULL) return;
+	//if(t==NULL) return;
 	if(alcSignalHandler!=NULL) {
 		delete alcSignalHandler;
 	}
@@ -194,12 +205,32 @@ void _alcHandleSignal(int s) {
 		alcSignalHandler->handle_signal(s);
 }
 
-void alcSignal(int signum) {
-	#ifdef __CYGWIN__
-	signal(signum,_alcHandleSignal);
-	#else
-	std::signal(signum,_alcHandleSignal);
-	#endif
+void alcSignal(int signum, bool install) {
+	DBG(5,"alcSignal()\n");
+	if(alcSignalHandler==NULL) return;
+	DBG(5,"%i - %i\n",signum,install);
+	if(install) {
+		#ifdef __CYGWIN__
+		signal(signum,_alcHandleSignal);
+		#else
+		std::signal(signum,_alcHandleSignal);
+		#endif
+	} else {
+		#ifdef __CYGWIN__
+		signal(signum,SIG_DFL);
+		#else
+		std::signal(signum,SIG_DFL);
+		#endif
+	}
+}
+
+void alcCrashAction() {
+	tStrBuf var;
+	tConfig * cfg=alcGetConfig();
+	var=cfg->getVar("crash.action","global");
+	if(!var.isNull()) {
+		system((const char *)var.c_str());
+	}
 }
 
 void tSignalHandler::handle_signal(int s) {

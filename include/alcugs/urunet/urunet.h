@@ -107,6 +107,8 @@ public:
 	void setTimer(Byte timer) {
 		if(timer!=0) this->timer=timer;
 	}
+	void setBindPort(U16 lport);
+	void setBindAddress(const void * lhost);
 private:
 	void init();
 	void _openlogs();

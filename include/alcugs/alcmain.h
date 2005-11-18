@@ -68,13 +68,17 @@ bool alcParseConfig(tStrBuf & path);
 void alcReApplyConfig();
 
 /** \brief Interface for installing signals */
-void alcSignal(int signum);
+void alcSignal(int signum,bool install=true);
+
+void alcCrashAction();
 
 class tSignalHandler {
 public:
 	tSignalHandler() { this->install_handlers(); }
+	virtual ~tSignalHandler() { this->unistall_handlers(); }
 	virtual void handle_signal(int s);
 	virtual void install_handlers() {}
+	virtual void unistall_handlers() {}
 };
 
 void alcInstallSignalHandler(tSignalHandler * t);

@@ -62,6 +62,13 @@ tUnet::~tUnet() {
 	stopOp();
 	delete events;
 }
+void tUnet::setBindPort(U16 lport) {
+	bindport=lport;
+}
+void tUnet::setBindAddress(const void * lhost) {
+	if(lhost==NULL) strcpy(bindaddr,"0.0.0.0");
+	else strcpy(bindaddr,(const char *)lhost);
+}
 /**
 	Fills the unet struct with the default values
 */

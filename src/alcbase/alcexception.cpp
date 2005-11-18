@@ -189,16 +189,34 @@ void txBase::_preparebacktrace() {
 #endif
 	if((txvCore & 0x02) || this->core) { alcWriteCoreDump(); }
 	if(txvAbort || this->abort) {
-		fprintf(stderr,"Exception %s:\n%s\n",this->what(),this->backtrace());
-		FILE * f;
-		f=fopen("BackTrace.txt","w");
-		if(f!=NULL) {
-			fprintf(f,"Exception %s:\n%s\n",this->what(),this->backtrace());
-			fclose(f);
-		}
+		dump();
+		alcCrashAction();
 		fprintf(stderr,"An exception requested to abort\n");
 		std::abort();
 	}
+}
+void txBase::dump() {
+		fprintf(stderr,"Exception %s:\n%s\n",this->what(),this->backtrace());
+
+		unsigned int t,pid;
+		pid=getpid();
+		t=(unsigned int)std::time(NULL);
+		int strsize=60;
+		if(txvCorePath!=NULL) strsize+=strlen(txvCorePath);
+		char * where=(char *)malloc(sizeof(char) * strsize+1);
+		if(where) {
+			memset(where,0,strsize+1);
+			if(txvCorePath!=NULL) sprintf(where,"%s/BackTrace-%06i-%08X.txt",txvCorePath,pid,t);
+			else sprintf(where,"BackTrace-%06i-%08X.txt",pid,t);
+			FILE * f=NULL;
+			f=fopen((const char *)where,"w");
+			if(f!=NULL) {
+				fprintf(f,"Exception %s:\n%s\n",this->what(),this->backtrace());
+				fclose(f);
+			}
+			free((void *)where);
+		}
+
 }
 const char * txBase::what() { return (const char *)msg; }
 const char * txBase::backtrace() { return bt; }

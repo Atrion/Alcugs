@@ -38,6 +38,9 @@
 
 using namespace alc;
 
+const char * alc::alcNetName="Client";
+Byte alc::alcWhoami=KClient;
+
 void parameters_usage() {
 	printf(alcVersionText());
 	printf("Usage: uruping server:port [options]\n\n\
@@ -290,7 +293,7 @@ int main(int argc,char * argv[]) {
 	//options
 	int num=5,flood=1; //num probes & flood multiplier
 	Byte bcast=0,listen=0,mrtg=0,nlogs=0,urgent=0;
-
+	
 	//parse parameters
 	for (i=1; i<argc; i++) {
 		if(!strcmp(argv[i],"-h")) { parameters_usage(); return -1; }

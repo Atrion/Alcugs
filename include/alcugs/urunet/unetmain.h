@@ -47,7 +47,19 @@ namespace alc {
 
 int alcUnetReloadConfig(bool firsttime=false);
 
-	
+class tUnetSignalHandler :public tSignalHandler {
+public:
+	tUnetSignalHandler(tUnetBase * netcore);
+	virtual ~tUnetSignalHandler();
+	virtual void handle_signal(int s);
+	virtual void install_handlers();
+	virtual void unistall_handlers();
+private:
+	int __state_running;
+	tUnetBase * net;
+	int st_alarm;
+};
+
 } //End alc namespace
 
 #endif

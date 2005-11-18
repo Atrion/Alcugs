@@ -42,14 +42,51 @@ namespace alc {
 
 tUnetBase::tUnetBase(char * lhost,U16 lport) :tUnet(lhost,lport) {
 	state_running=true;
-	setTimer(2);
+	tStrBuf var;
+	tConfig * cfg;
+	cfg=alcGetConfig();
+	var=cfg->getVar("port","global");
+	if(!var.isNull()) {
+		setBindPort(var.asU16());
+	}
+	var=cfg->getVar("bind","global");
+	if(!var.isNull()) {
+		setBindAddress(var.c_str());
+	}
+	_reconfigure();
 }
 
 tUnetBase::~tUnetBase() {
 	stop(5);
 }
 
-void tUnetBase::stop(Byte timeout) {
+void tUnetBase::_reconfigure() {
+	tUnetSignalHandler * h = new tUnetSignalHandler(this);
+	DBG(5,"tUnetBase - installing signal handler\n");
+	alcInstallSignalHandler(h);
+	tStrBuf var;
+	tConfig * cfg;
+	cfg=alcGetConfig();
+	//Setst the idle timer
+	var=cfg->getVar("net.timer","global");
+	if(var.isNull()) {
+		setTimer(120); //intentionally big
+	} else {
+		setTimer(var.asByte());
+	}
+}
+
+void tUnetBase::stop(SByte timeout) {
+	if(timeout==-1) {
+		tStrBuf var;
+		tConfig * cfg=alcGetConfig();
+		var=cfg->getVar("net.stop.timeout","global");
+		if(var.isNull()) {
+			stop_timeout=15;
+		} else {
+			stop_timeout=var.asU32();
+		}
+	}
 	stop_timeout=timeout;
 	state_running=false;
 }
@@ -287,7 +324,9 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
 	}
 	return ret;
 }
-
+void tUnetBase::installSignalHandler() {
+	
+}
 
 } //end namespace
 

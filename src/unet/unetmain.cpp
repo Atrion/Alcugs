@@ -36,7 +36,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_UNETMAIN_ID "$Id$"
 
-//#define _DBG_LEVEL_ 10
+#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
 #include "urunet/unet.h"
@@ -78,7 +78,91 @@ int alcUnetReloadConfig(bool firsttime) {
 	if(!var.isNull() && var.asByte()) {
 		alcDumpConfig();
 	}
+	return 1;
 }
+
+tUnetSignalHandler::tUnetSignalHandler(tUnetBase * netcore) :tSignalHandler() {
+	DBG(5,"tUnetSignalHandler()\n");
+	this->net=netcore;
+	__state_running=2;
+	st_alarm=0;
+	install_handlers();
+}
+tUnetSignalHandler::~tUnetSignalHandler() {
+
+}
+void tUnetSignalHandler::handle_signal(int s) {
+	tSignalHandler::handle_signal(s);
+	try {
+		switch (s) {
+			case SIGHUP: //reload configuration
+				alcSignal(SIGHUP,1);
+				lstd->log("INF: ReReading configuration\n\n");
+				alcUnetReloadConfig(false);
+				if(net!=NULL) { net->reload(); }
+				break;
+			case SIGALRM:
+			case SIGTERM:
+			case SIGINT:
+				switch(__state_running) {
+					case 2:
+						alcSignal(s,1);
+						net->stop(-1);
+						__state_running--;
+						break;
+					case 1:
+						alcSignal(s,1);
+						net->forcestop();
+						__state_running--;
+						lstd->log("INF: Warning another CTRL+C will kill the server permanently causing data loss\n");
+						break;
+					default:
+						lstd->log("INF: Killed\n");
+						printf("Killed!\n");
+						exit(0);
+				}
+				break;
+			case SIGUSR1:
+				if(st_alarm) {
+					lstd->log("INF: Automatic -Emergency- Shutdown CANCELLED\n\n");
+					//net->bcast("NOTICE: The Server Shutdown sequence has been cancelled");
+					st_alarm=0;
+					alarm(0);
+				} else {
+					lstd->log("INF: Automatic -Emergency- Shutdown In progress in 30 seconds\n\n");
+					//net->bcast("NOTICE: Server is going down in 30 seconds");
+					st_alarm=1;
+					alcSignal(SIGALRM,1);
+					alarm(30);
+				}
+				alcSignal(SIGUSR1,1);
+				break;
+			case SIGUSR2:
+				lstd->log("INF: TERMINATED message sent to all players.\n\n");
+				net->terminateAll();
+				alcSignal(SIGUSR2,1);
+				break;
+		}
+	} catch(txBase &t) {
+		lerr->log("FATAL Exception %s\n%s\n",t.what(),t.backtrace());
+	} catch(...) {
+		lerr->log("FATAL Unknown Exception\n");
+	}
+}
+void tUnetSignalHandler::install_handlers() {
+	DBG(5,"installing handlers\n");
+	alcSignal(SIGTERM,1);
+	alcSignal(SIGINT,1);
+#ifndef __WIN32__
+	alcSignal(SIGHUP,1);
+	alcSignal(SIGUSR1,1);
+	alcSignal(SIGUSR2,1);
+#endif
+}
+void tUnetSignalHandler::unistall_handlers() {
+
+}
+
 	
 } //end namespace alc
 

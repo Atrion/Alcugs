@@ -44,7 +44,7 @@ public:
 	tUnetBase(char * lhost="0.0.0.0",U16 lport=0);
 	~tUnetBase();
 	void run();
-	void stop(Byte timeout=5);
+	void stop(SByte timeout=5);
 	void forcestop() {}
 	void terminate(tNetSessionIte & who,bool silent=false,Byte reason=RKickedOff);
 	void terminateAll() {}
@@ -63,9 +63,11 @@ public:
 	virtual void onStart() {}
 	//virtual void onConnectionClossing(tNetEvent * ev) {}
 private:
+	void installSignalHandler();
 	int parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u);
 	bool state_running;
 	Byte stop_timeout;
+	void _reconfigure();
 };
 
 

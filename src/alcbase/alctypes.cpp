@@ -1233,7 +1233,7 @@ const Byte * tTime::str(Byte type) {
 		return alcGetStrTime(seconds,microseconds);
 	} else {
 		static tStrBuf sth;
-		double sseconds=(seconds % 60) + ((double)microseconds)/1000000;
+		double sseconds=(seconds % 60);// + (((double)microseconds)/1000000);
 		Byte minutes=(seconds/60)%60;
 		Byte hours=(seconds/3600)%24;
 		Byte days=(seconds/(3600*24))%30;

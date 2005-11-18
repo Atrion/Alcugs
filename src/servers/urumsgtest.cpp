@@ -38,6 +38,9 @@
 
 using namespace alc;
 
+const char * alc::alcNetName="Client";
+Byte alc::alcWhoami=KClient;
+
 void parameters_usage() {
 	printf(alcVersionText());
 	printf("Usage: urumsgtest peer:port [options]\n\n\

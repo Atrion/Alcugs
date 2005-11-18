@@ -23,7 +23,7 @@
 *                                                                              *
 *                                                                              *
 *******************************************************************************/
-#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 10
 
 //Program vars
 #define IN_ALC_PROGRAM
@@ -62,7 +62,7 @@
 using namespace alc;
 
 void parameters_usage() {
-	printf("Usage: uru_service [-VDhfl] [-v n] [-p 5000] [-c uru.conf] [-name AvatarCustomization] [-guid 0000000000000010] [-log logs] [-bcast 1] [-nokill] [-clean]\n\n\
+	printf("Usage: uru_service [-VDhfl] [-v n] [-p 5000] [-c uru.conf] [-name AvatarCustomization] [-guid 0000000000000010] [-log logs] [-bcast 1] [-nokill] [-clean] [-oOption1 value1] [-oOption2 value2] ...\n\n\
  -V: show version and end\n\
  -D: Daemon mode\n\
  -v 3: Set Verbose level\n\
@@ -141,124 +141,6 @@ int u_parse_arguments(int argc, char * argv[]) {
 	return 0;
 }
 
-/*
-class s_handler {
-public:
-	s_handler(tUnetBase * net) {
-		this->net=net;
-		__state_running=2;
-		st_alarm=0;
-	}
-	void handle_signal(int s) {
-		try {
-			switch (s) {
-				case SIGHUP: //reload configuration
-					lstd->log("INF: ReReading configuration\n\n");
-					alcSignal(SIGHUP, (void *)this->handle_signal);
-					//parse
-					tStrBuf var;
-					tConfig * cfg=alcGetConfig();
-					var=cfg->getVar("read_config","cmdline");
-					if(var.isNull()) { var="uru.conf"; }
-					if(!alcParseConfig(var)) {
-						lerr->log("FATAL, reading configuration, please check the syntax\n");
-					}
-					//Set config settings
-					cfg->copy("global",alcNetName);
-					cfg->copy("global","cmdline");
-					cfg->setVar(alcNetName,"internal.net.name","global");
-					var="";
-					var.printf("%i",alcWhoami);
-					cfg->setVar(var.c_str(),"whoami","global");
-					alcNetSetConfigAliases();
-					alcReApplyConfig();
-					var=cfg->getVar("cfg.dump","global");
-					if(!var.isNull() && var.asByte()) {
-						alcDumpConfig();
-					}
-					if(net!=NULL) { net->reload(); }
-					break;
-				case SIGALRM:
-				case SIGTERM:
-				case SIGINT:
-					switch(__state_running) {
-						case 2:
-							alcSignal(s, this->handle_signal);
-							net->stop(-1);
-							__state_running--;
-							break;
-						case 1:
-							alcSignal(s, this->handle_signal);
-							net->forcestop();
-							__state_running--;
-							lstd->log("INF: Warning another CTRL+C will kill the server permanently causing data loss\n");
-							break;
-						default:
-							lstd->log("INF: Killed\n");
-							printf("Killed!\n");
-							exit(0);
-					}
-				case SIGUSR1:
-					if(st_alarm) {
-						lstd->log("INF: Automatic -Emergency- Shutdown CANCELLED\n\n");
-						//net->bcast("NOTICE: The Server Shutdown sequence has been cancelled");
-						st_alarm=0;
-						alarm(0);
-					} else {
-						lstd->log("INF: Automatic -Emergency- Shutdown In progress in 30 seconds\n\n");
-						//net->bcast("NOTICE: Server is going down in 30 seconds");
-						st_alarm=1;
-						alcSignal(SIGALRM, this->handle_signal);
-						alarm(30);
-					}
-					alcSignal(SIGUSR1, this->handle_signal);
-					break;
-				case SIGUSR2:
-					lstd->log("INF: TERMINATED message sent to all players.\n\n");
-					net->terminateAll();
-					alcSignal(SIGUSR2, this->handle_signal);
-					break;
-				case SIGCHLD:
-					lstdl->log("INF: RECIEVED SIGCHLD: a child has exited.\n\n");
-					int status;
-					waitpid(-1, &status, WNOHANG);
-					alcSignal(SIGCHLD, this->handle_signal);
-					break;
-				case SIGSEGV:
-					lerr->log("\n PANIC!!!\n");
-					lerr->log("TERRIBLE FATAL ERROR: SIGSEGV recieved!!!\n\n");
-					//TODO: generate a Crash report here
-					throw txBase("Panic: Segmentation Fault - dumping core",1,1);
-			}
-		} catch(txBase &t) {
-			lerr->log("FATAL Exception %s\n%s\n",t.what(),t.backtrace());
-		} catch(...) {
-			lerr->log("FATAL Unknown Exception\n");
-		}
-	}
-	void install_handlers() {
-		alcSignal(SIGTERM, this->handle_signal);
-		alcSignal(SIGINT, this->handle_signal);
-#ifndef __WIN32__
-		alcSignal(SIGHUP, this->handle_signal);
-		alcSignal(SIGUSR1, this->handle_signal);
-		alcSignal(SIGUSR2, this->handle_signal);
-		alcSignal(SIGCHLD, this->handle_signal);
-		tStrBuf var;
-		tConfig * cfg=alcGetConfig();
-		var=cfg->getVar("system.segfault_handler","global");
-		if(!var.isNull() && var.asByte()) {
-			alcSignal(SIGSEGV, this->handle_signal);
-		}
-#endif
-	}
-private:
-	int __state_running;
-	tUnetBase * net;
-	int st_alarm;
-};
-*/
-
 int main(int argc, char * argv[]) {
 	try {
 		//start Alcugs library
@@ -267,7 +149,7 @@ int main(int argc, char * argv[]) {
 		if (u_parse_arguments(argc,argv)!=0) return -1;
 		
 		//Load and parse config files
-		if(!alcUnetReloadConfig(true)) return -1;
+		if(alcUnetReloadConfig(true)<0) return -1;
 		
 		//daemon?
 		tConfig * cfg=alcGetConfig();
@@ -280,13 +162,13 @@ int main(int argc, char * argv[]) {
 		if(var.asByte()) {
 			daemon(1,0);
 		}
-
+		
 		lstd->print(alcVersionText());
 		var=alcNetName;
 		lstd->print("<%s SERVER>\n",var.upper().c_str());
 		lstd->nl();
 		lstd->log("The Server is running...\nPresh CTRL+C to kill the server.\n\n");
-
+		
 		//Create the server
 		#if defined(I_AM_THE_LOBBY_SERVER)
 		tUnetLobbyServer * service;
@@ -334,7 +216,9 @@ int main(int argc, char * argv[]) {
 		lstd->print("Uptime:  %s\n",alcGetUptime().str(0x01));
 		lstd->print("========================================\n");
 	} catch(txBase &t) {
-		fprintf(stderr,"FATAL Server died: Exception %s\n%s\n",t.what(),t.backtrace());
+		//fprintf(stderr,"FATAL Server died: Exception %s\n%s\n",t.what(),t.backtrace());
+		fprintf(stderr,"FATAL Server died: ");
+		t.dump();
 		lerr->log("FATAL Server died: Exception %s\n%s\n",t.what(),t.backtrace());
 		lstd->log("The service has been unexpectely killed!!!\n");
 		lstd->print("Born:    %s\n",alcGetBornTime().str());
@@ -343,6 +227,7 @@ int main(int argc, char * argv[]) {
 		lstd->print("Defunct: %s\n",now.str());
 		lstd->print("Uptime:  %s\n",alcGetUptime().str(0x01));
 		lstd->print("========================================\n");
+		alcCrashAction();
 		return -1;
 	} catch(...) {
 		fprintf(stderr,"FATAL Server died: Unknown Exception\n");
@@ -354,6 +239,7 @@ int main(int argc, char * argv[]) {
 		lstd->print("Defunct: %s\n",now.str());
 		lstd->print("Uptime:  %s\n",alcGetUptime().str(0x01));
 		lstd->print("========================================\n");
+		alcCrashAction();
 		return -1;
 	}
 	return 0;
