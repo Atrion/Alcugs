@@ -36,7 +36,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_UNETMAIN_ID "$Id$"
 
-#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
 #include "urunet/unet.h"
@@ -96,6 +96,7 @@ void tUnetSignalHandler::handle_signal(int s) {
 	try {
 		switch (s) {
 			case SIGHUP: //reload configuration
+				if(alcGetSelfThreadId()!=alcGetMainThreadId()) return;
 				alcSignal(SIGHUP,1);
 				lstd->log("INF: ReReading configuration\n\n");
 				alcUnetReloadConfig(false);
@@ -107,11 +108,13 @@ void tUnetSignalHandler::handle_signal(int s) {
 				switch(__state_running) {
 					case 2:
 						alcSignal(s,1);
+						if(alcGetSelfThreadId()!=alcGetMainThreadId()) return;
 						net->stop(-1);
 						__state_running--;
 						break;
 					case 1:
 						alcSignal(s,1);
+						if(alcGetSelfThreadId()!=alcGetMainThreadId()) return;
 						net->forcestop();
 						__state_running--;
 						lstd->log("INF: Warning another CTRL+C will kill the server permanently causing data loss\n");
@@ -123,6 +126,7 @@ void tUnetSignalHandler::handle_signal(int s) {
 				}
 				break;
 			case SIGUSR1:
+				if(alcGetSelfThreadId()!=alcGetMainThreadId()) return;
 				if(st_alarm) {
 					lstd->log("INF: Automatic -Emergency- Shutdown CANCELLED\n\n");
 					//net->bcast("NOTICE: The Server Shutdown sequence has been cancelled");
@@ -138,6 +142,7 @@ void tUnetSignalHandler::handle_signal(int s) {
 				alcSignal(SIGUSR1,1);
 				break;
 			case SIGUSR2:
+				if(alcGetSelfThreadId()!=alcGetMainThreadId()) return;
 				lstd->log("INF: TERMINATED message sent to all players.\n\n");
 				net->terminateAll();
 				alcSignal(SIGUSR2,1);

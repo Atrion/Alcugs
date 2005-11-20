@@ -211,6 +211,15 @@ void txBase::dump() {
 			FILE * f=NULL;
 			f=fopen((const char *)where,"w");
 			if(f!=NULL) {
+				fprintf(f,"Servers Build info:\n%s\n",alcVersionTextShort());
+				fprintf(f,"System info: %s\n\n",alcSystemInfo());
+				fprintf(f,"Born:    %s\n",alcGetBornTime().str());
+				tTime now;
+				now.now();
+				fprintf(f,"Defunct: %s\n",now.str());
+				fprintf(f,"Uptime:  %s\n",alcGetUptime().str(0x01));
+				fprintf(f,"Main thread id: %d\n",alcGetMainThreadId());
+				fprintf(f,"This thread id: %d\n",alcGetSelfThreadId());
 				fprintf(f,"Exception %s:\n%s\n",this->what(),this->backtrace());
 				fclose(f);
 			}

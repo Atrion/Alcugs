@@ -1203,7 +1203,7 @@ tTime operator+(tTime &a,tTime &b) {
 tTime operator-(tTime &a,tTime &b) {
 	tTime r;
 	r.seconds=a.seconds - b.seconds;
-	r.microseconds=a.microseconds - b.microseconds;
+	r.microseconds=((a.microseconds+1000000) - b.microseconds) % 1000000;
 	return r;
 }
 double tTime::asDouble(char how) {
@@ -1233,7 +1233,7 @@ const Byte * tTime::str(Byte type) {
 		return alcGetStrTime(seconds,microseconds);
 	} else {
 		static tStrBuf sth;
-		double sseconds=(seconds % 60);// + (((double)microseconds)/1000000);
+		double sseconds=(seconds % 60) + (((double)microseconds)/1000000);
 		Byte minutes=(seconds/60)%60;
 		Byte hours=(seconds/3600)%24;
 		Byte days=(seconds/(3600*24))%30;

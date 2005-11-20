@@ -70,6 +70,8 @@ void alcReApplyConfig();
 /** \brief Interface for installing signals */
 void alcSignal(int signum,bool install=true);
 
+U32 alcGetMainThreadId();
+
 void alcCrashAction();
 
 class tSignalHandler {

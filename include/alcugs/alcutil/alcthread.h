@@ -44,7 +44,55 @@ namespace alc {
 	/**
 		If we want to do it well and nice, we should add pre and post conditions here.
 	*/
-	U32 alcGetSelfThreadId();
+
+#ifdef ENABLE_THREADS
+#define alcBeginCriticalSection(a) { static tMutex a; a.lock(); }
+#define alcEndCriticalSection(a)   a.unlock()
+#else
+#define alcBeginCriticalSection(a)
+#define alcEndCriticalSection(a)
+#endif
+
+U32 alcGetSelfThreadId();
+
+class tThread {
+public:
+	tThread();
+	virtual ~tThread();
+	void spawn();
+	void join();
+	virtual void main()=0;
+private:
+	bool spawned;
+	#ifdef ENABLE_THREADS
+	#ifndef __WIN32__
+	pthread_t id;
+	#else
+	HANDLE id;
+	#endif
+	#endif
+};
+
+class tMutex {
+public:
+	tMutex();
+	virtual ~tMutex();
+	void lock();
+	bool trylock();
+	void unlock();
+private:
+	bool islocked;
+	#ifdef ENABLE_THREADS
+	#ifndef __WIN32__
+	pthread_mutex_t id;
+	#else
+	HANDLE id;
+	#endif
+	#endif
+};
+
+
+
 
 } //End alc namespace
 

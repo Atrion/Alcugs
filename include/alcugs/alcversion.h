@@ -38,6 +38,8 @@ const char * alcVersionTextShort();
 */
 const char * alcVersionText();
 
+const char * alcSystemInfo();
+
 int alcGetMaxVersion();
 int alcGetMinVersion();
 int alcGetRelVersion();

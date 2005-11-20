@@ -154,6 +154,11 @@ int main(int argc, char * argv[]) {
 		//daemon?
 		tConfig * cfg=alcGetConfig();
 		tStrBuf var;
+		var=cfg->getVar("stop","global");
+		if(!var.isNull() && var.asByte()) {
+			lstd->log("INFO: Administratively dissabled! - Change the stop/dissabled configuration directive to false\n");
+			return -1;
+		}
 		var=cfg->getVar("daemon","global");
 		if(var.isNull()) {
 			var="0";

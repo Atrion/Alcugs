@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCMAIN_ID "$Id$"
 
-#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
 
@@ -55,9 +55,16 @@ tConfig * alcGlobalConfig=NULL;
 bool alcIngoreParseErrors=false;
 tTime alcBorn;
 tSignalHandler * alcSignalHandler=NULL;
+U32 alcMainThreadId=0;
+
+
+U32 alcGetMainThreadId() {
+	return alcMainThreadId;
+}
 
 void alcInit(int argc,char ** argv,bool shutup) {
 	if(alcInitialized) return;
+	alcMainThreadId=alcGetSelfThreadId();
 	alcInitialized=true;
 	DBG(5,"alcInit()\n");
 	alcBorn.now();
@@ -248,6 +255,7 @@ void tSignalHandler::handle_signal(int s) {
 			case SIGSEGV:
 				lerr->log("\n PANIC!!!\n");
 				lerr->log("TERRIBLE FATAL ERROR: SIGSEGV recieved!!!\n\n");
+				if(alcGetSelfThreadId()!=alcGetMainThreadId()) return;
 				//TODO: generate a Crash report here
 				throw txBase("Panic: Segmentation Fault - dumping core",1,1);
 		}

@@ -31,10 +31,16 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETCORE_ID "$Id$"
 
-#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
 #include "urunet/unet.h"
+
+#ifndef __WIN32__
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#endif
 
 #include "alcdebug.h"
 
@@ -67,13 +73,120 @@ void tUnetBase::_reconfigure() {
 	tStrBuf var;
 	tConfig * cfg;
 	cfg=alcGetConfig();
-	//Setst the idle timer
+	//Sets the idle timer
 	var=cfg->getVar("net.timer","global");
 	if(var.isNull()) {
 		setTimer(120); //intentionally big
 	} else {
 		setTimer(var.asByte());
 	}
+	//Set pool size
+	var=cfg->getVar("net.pool.size","global");
+	if(var.isNull()) {
+		pool_size=4;
+	} else {
+		pool_size=var.asByte();
+	}
+	#ifndef ENABLE_THREADS
+	pool_size=1;
+	#endif
+	if(pool_size==0) pool_size=1;
+	var=cfg->getVar("net.maxconnections","global");
+	if(!var.isNull()) {
+		max=var.getU32();
+	}
+	var=cfg->getVar("net.timeout","global");
+	if(!var.isNull()) {
+		conn_timeout=var.asU32();
+	}
+	var=cfg->getVar("net.up","global");
+	if(!var.isNull()) {
+		nat_up=var.asU32();
+	}
+	var=cfg->getVar("net.down","global");
+	if(!var.isNull()) {
+		nat_down=var.asU32();
+	}
+	var=cfg->getVar("net.lan.up","global");
+	if(!var.isNull()) {
+		lan_up=var.asU32();
+	}
+	var=cfg->getVar("net.lan.down","global");
+	if(!var.isNull()) {
+		lan_down=var.asU32();
+	}
+	//"public_address"
+	var=cfg->getVar("private_mask","global");
+	if(!var.isNull()) {
+		lan_mask=(U32)inet_addr((const char *)var.c_str());
+	}
+	var=cfg->getVar("private_network","global");
+	if(!var.isNull()) {
+		lan_addr=(U32)inet_addr((const char *)var.c_str());
+	} else {
+		struct hostent *host;
+		host=gethostbyname((const char *)bindaddr);
+		if(host!=NULL) {
+			lan_addr=*(U32 *)host->h_addr_list[0] & lan_mask;
+		} else {
+			lan_addr=0;
+		}
+	}
+	//"spawn.start"
+	//"spawn.stop"
+	var=cfg->getVar("net.noflood","global");
+	if(!var.isNull()) {
+		if(var.asByte()) {
+			setFlags(UNET_NOFLOOD);
+		} else {
+			unsetFlags(UNET_NOFLOOD);
+		}
+	}
+	//protocol (auth,vault,tracking)
+	//Other DEVEL vars (dangerous to touch)
+	var=cfg->getVar("net.flood_check_sec","global");
+	if(!var.isNull()) {
+		flood_check_sec=var.asU32();
+	}
+	var=cfg->getVar("net.max_flood_pkts","global");
+	if(!var.isNull()) {
+		max_flood_pkts=var.asU32();
+	}
+	var=cfg->getVar("net.snd_expire","global");
+	if(!var.isNull()) {
+		snd_expire=var.asU32();
+	}
+	#ifdef _UNET_DBG_
+	var=cfg->getVar("net.lim_down_cap","global");
+	if(!var.isNull()) {
+		lim_down_cap=var.asU32();
+	}
+	var=cfg->getVar("net.lim_up_cap","global");
+	if(!var.isNull()) {
+		lim_up_cap=var.asU32();
+	}
+	var=cfg->getVar("net.in_noise","global");
+	if(!var.isNull()) {
+		in_noise=var.asU32();
+	}
+	var=cfg->getVar("net.out_noise","global");
+	if(!var.isNull()) {
+		out_noise=var.asU32();
+	}
+	var=cfg->getVar("net.latency","global");
+	if(!var.isNull()) {
+		latency=var.asU32();
+	}
+	var=cfg->getVar("net.quota_check_sec","global");
+	if(!var.isNull()) {
+		quota_check_sec=var.asU32();
+	}
+	var=cfg->getVar("net.quota_check_usec","global");
+	if(!var.isNull()) {
+		quota_check_usec=var.asU32();
+	}
+	#endif
+
 }
 
 void tUnetBase::stop(SByte timeout) {
@@ -144,6 +257,7 @@ void tUnetBase::run() {
 				delete evt;
 				continue;
 			}
+			
 			
 			switch(evt->id) {
 				case UNET_NEWCONN:

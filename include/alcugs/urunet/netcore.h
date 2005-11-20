@@ -49,7 +49,7 @@ public:
 	void terminate(tNetSessionIte & who,bool silent=false,Byte reason=RKickedOff);
 	void terminateAll() {}
 	void leave(tNetSessionIte & who,Byte reason=RQuitting);
-	void reload() {}
+	void reload() { _reconfigure(); }
 
 	virtual void onNewConnection(tNetEvent * ev,tNetSession * u) {}
 	virtual int onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) { return 0; };
@@ -68,6 +68,7 @@ private:
 	bool state_running;
 	Byte stop_timeout;
 	void _reconfigure();
+	Byte pool_size;
 };
 
 

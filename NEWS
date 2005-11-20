@@ -1,12 +1,26 @@
                        /  "  '  "  '  `  "  '  \
                       /$%&$#$%#$&%&$&$&$$%&$%#$&\
                       #=========================#
-                      # ~ Alcugs H'uru Server ~ #
+                      # ~    Alcugs Server    ~ #
                       #-=======================-#
                      /--(     Latest news     )--\
 --------------------/|\-------------------------/|\--------------------------
-|Home: http://alcugs.almlys.dyns.net                                        |
+| Home: http://alcugs.sf.net                                                |
 -----------------------------------------------------------------------------
+
+20/Nov/2005 - Base code Finished - Adding multi-threaded support
+===========================================================================0
+
+ * The base skeleton code of the server is finished, and it only needs the
+ different subsystems to be plugged into it. These subsystems are like
+ plugins, them are currently statically linked, but perhaps in the
+ future them will be dinamically linked.
+ * Support for running multiple worker threads is now being added. Since 
+ Alcugs is not yet 100% thread-safe there could be problems until I can 
+ asure that it's thread safe. You can compile single-threaded server with 
+ the option "--dissable-threads" when you run configure.
+ * I expect to have ported the lobby server from unet3 to unet3+ this week,
+ and then I will upgrade the GoE shard to test it in multi-threaded mode.
 
 30/Jun/2005 - Urunet 3+ Development Finished - Starting to port the servers
 ===========================================================================0

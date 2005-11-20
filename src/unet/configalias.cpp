@@ -142,6 +142,30 @@ void alcNetSetConfigAliases() {
 	cfg->copyKey("vault.hood.name","neighborhood_name","global","global");
 	cfg->copyKey("vault.hood.desc","neighborhood_comment","global","global");
 
+	//protocol stuff
+	//0-latest
+	//1-unet2
+	//2-unet3
+	//3-unet3+
+	val=cfg->getVar("auth.oldprotocol","global");
+	if(!val.isNull()) {
+		if(val.asByte()) {
+			cfg->setVar("2","auth.protocol","global");
+		}
+	}
+	val=cfg->getVar("vault.oldprotocol","global");
+	if(!val.isNull()) {
+		if(val.asByte()) {
+			cfg->setVar("2","vault.protocol","global");
+		}
+	}
+	val=cfg->getVar("tracking.oldprotocol","global");
+	if(!val.isNull()) {
+		if(val.asByte()) {
+			cfg->setVar("2","tracking.protocol","global");
+		}
+	}
+
 	val=cfg->getVar("dataset","global");
 	if(val.isNull()) {
 		val="-1";

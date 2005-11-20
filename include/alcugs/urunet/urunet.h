@@ -183,22 +183,6 @@ protected:
 	U16 spawn_start; //first port to spawn
 	U16 spawn_stop; //last port to spawn (gameservers)
 
-#if 0
-	//peers
-	int auth; // (Game/Lobby)
-	int vault; // (Game/Lobby/Tracking)
-	int tracking; // (Game/Lobby)
-	int meta; // (Tracking(local meta)/Lobby(remote metas))
-	int data; // (Meta) [hmm]
-
-	//protocol versions (0=newest)
-	int pro_auth;
-	int pro_vault;
-	int pro_tracking;
-	int pro_meta;
-	int pro_data;
-#endif
-
 //protected:
 	//!logging subsystem
 	tLog * log; //stdout
@@ -212,6 +196,7 @@ private:
 	//event queue
 	tUnetMsgQ<tNetEvent> * events;
 
+public:
 	//flood control
 	U32 max_flood_pkts;
 	U32 flood_check_sec;

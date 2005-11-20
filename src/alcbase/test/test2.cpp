@@ -34,12 +34,60 @@
 
 using namespace alc;
 
+tMutex gmutex;
+
+
+class tmyfunc :public tThread {
+public:
+	tmyfunc(int num,int timer) {
+		this->num=num;
+		this->timer=timer;
+	}
+private:
+	int num;
+	int timer;
+	void main() {
+		int i;
+		for(i=0; i<num; i++) {
+			gmutex.lock();
+			lstd->log("I am a child thread  %i!\n",i);
+			usleep(timer/4);
+			lstd->log("I am a child thread  %i!\n",i);
+			gmutex.unlock();
+			usleep(timer);
+		}
+	}
+};
+
 int main(int argc, char * argv[]) {
 
 	try {
 		alcInit(argc,argv);
 
 		std::cout<<"Main thread: "<<alcGetSelfThreadId()<<std::endl;
+		lstd->log("Init...\n");
+		
+		tmyfunc * thread;
+		thread = new tmyfunc(50,20000);
+		thread->spawn();
+		
+		tmyfunc * thread2;
+		thread2 = new tmyfunc(10,10000);
+		thread2->spawn();
+
+		thread2->join();
+		int i;
+		for(i=0; i<100; i++) {
+			gmutex.lock();
+			lstd->log("I am the main thread %i!\n",i);
+			usleep(10000);
+			lstd->log("I am the main thread %i!\n",i);
+			gmutex.unlock();
+			usleep(50000);
+		}
+		thread->join();
+		delete thread;
+		delete thread2;
 
 		//alcShutdown();
 		std::cout<< "Success!!" << std::endl;

@@ -31,12 +31,17 @@
 
 #include "alcugs.h"
 
+#ifndef __WIN32__
+#include <sys/utsname.h>
+#endif
+
 #include "alcdebug.h"
 
 namespace alc {
 
 char tvalcVerTextShort[500];
 char tvalcVerText[1024];
+char tvalcSystemInfo[500];
 
 static bool tvalcVerInit=false;
 
@@ -45,6 +50,7 @@ void _alcVersionInitVars() {
 	char p[200];
 	char * p1=tvalcVerTextShort;
 	char * p2=tvalcVerText;
+	char * p3=tvalcSystemInfo;
 	//short
 	sprintf(p1,"%s. Build %s - Version %s\nId: %s\n",alcXSNAME,alcXBUILD,alcXVERSION,alcXID);
 	sprintf(p,"Alcugs %s %s - Version %s\n",alcXBUILDINFO,_PLATFORM_,alcSTR_VER);
@@ -58,6 +64,18 @@ void _alcVersionInitVars() {
 	sprintf(p,"%s","Alcugs Project\n");
 	strcat(p2,p);
 	strcat(p2,p1);
+	#ifndef __WIN32__
+	struct utsname buf;
+	uname(&buf);
+	sprintf(p3,"%s %s %s %s %s %s",buf.sysname,buf.nodename,buf.release,buf.version,buf.machine,buf.domainname);
+	#else
+	sprintf(p3,"Unable to determine system info");
+	#endif
+}
+
+const char * alcSystemInfo() {
+	_alcVersionInitVars();
+	return (const char *)tvalcSystemInfo;
 }
 
 const char * alcVersionTextShort() {
