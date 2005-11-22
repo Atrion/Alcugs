@@ -1198,12 +1198,21 @@ tTime operator+(tTime &a,tTime &b) {
 	tTime r;
 	r.seconds=a.seconds + b.seconds;
 	r.microseconds=a.microseconds + b.microseconds;
+	if(r.microseconds>=1000000) {
+		r.seconds++;
+		r.microseconds = r.microseconds % 1000000;
+	}
 	return r;
 }
 tTime operator-(tTime &a,tTime &b) {
 	tTime r;
 	r.seconds=a.seconds - b.seconds;
-	r.microseconds=((a.microseconds+1000000) - b.microseconds) % 1000000;
+	if(a.microseconds<b.microseconds) {
+		r.microseconds=((a.microseconds+1000000) - b.microseconds);
+		r.seconds--;
+	} else {
+		r.microseconds=a.microseconds - b.microseconds;
+	}
 	return r;
 }
 double tTime::asDouble(char how) {

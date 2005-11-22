@@ -1,6 +1,6 @@
-    Alcugs H'uru server
+    Alcugs Project
 
-    Copyright (C) 2004-2005  The Alcugs H'uru Server Team
+    Copyright (C) 2004-2005  The Alcugs Project Server Team
     See the file AUTHORS for more info about the team
 
     This program is free software; you can redistribute it and/or modify
@@ -35,13 +35,6 @@
     server, and It don't contains any source code of the plasma server.
     It's a completely different server software written from scratch.
 
-    About the Auth Server:
-    You MUST NEVER edit/change/modify any part of this project, or create a
-    derivative work with the purpose of bypassing the Cyan's Global Auth Server.
-    Hosting a server that bypasses the CGAS (Cyan's Global Auth Server), is an
-    illicit activity, and it clearly breaks the Uru client End User License
-    Agreement.
-
     About Cracking:
     You MUST NEVER edit/change/modify any part of this project, or create a
     derivative work with the purpose of: causing damage, exploiting,
@@ -50,23 +43,13 @@
     causing damage, exploiting, manipulating, destroying, causing a denegation
     of the service, intrusion, or anything else with illicit results to any
     client running any version of the Uru Clients.
-    You can ignore the above notice ONLY if YOU ARE THE ADMINISTRATOR/OWNER of
-    the shard or you have written permission from the shard owner and you are
-    the owner of any connected client/system or you have written permission from
-    the owners of all the connected clients/systems.
     All exploits, and security holes discovered must be immediately notified
-    to the Alcugs H'uru server team for the immediate creation of a fix for
+    to the Alcugs Project server team for the immediate creation of a fix for
     the specific hole.
 
-    Addendum:
-    You must remember that the GPL, obligates you to release the sources of
-    any project that is using or is based on the Alcugs H'uru server sources.
-    You must also credit to the original Authors of the work, and never claim
-    that you wrote the software.
-
-
-    ~The Alcugs H'uru Server Team.
+    ~The Alcugs Project Server Team.
     24th of October of 2004.
 
     Revised: 14th of December of 2004.
     Revised: 15th of October  of 2005.
+    Updated: 22th of November of 2005.

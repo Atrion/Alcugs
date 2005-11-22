@@ -108,7 +108,9 @@ void tUnetSignalHandler::handle_signal(int s) {
 				switch(__state_running) {
 					case 2:
 						alcSignal(s,1);
+						#ifndef __WIN32__
 						if(alcGetSelfThreadId()!=alcGetMainThreadId()) return;
+						#endif
 						net->stop(-1);
 						__state_running--;
 						break;

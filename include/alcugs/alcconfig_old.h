@@ -1,5 +1,5 @@
 /*******************************************************************************
-*    Alcugs server                                                             *
+*    Alcugs H'uru server                                                       *
 *                                                                              *
 *    Copyright (C) 2004-2005  The Alcugs H'uru Server Team                     *
 *    See the file AUTHORS for more info about the team                         *
@@ -25,26 +25,41 @@
 *******************************************************************************/
 
 /**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
+	Alcugs Configuration file.
+	This depreceated file is going to dissapear, when everything is correctly done by configure
 */
 
-#ifndef __U_FILENAME_H
-#define __U_FILENAME_H
+#ifndef __U_ALCCONFIG_OLD_H
+#define __U_ALCCONFIG_OLD_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_FILENAME_H_ID "$Id$"
+#define __U_ALCCONFIG_OLD_H_ID "$Id$"
 
-namespace alc {
+//! Enable debugging?
+#define _DEBUG_
 
-	////DEFINITIONS
-	/**
-		If we want to do it well and nice, we should add pre and post conditions here.
-	*/
+//! Allow to abort?
+#define _DBG_ABORT_
 
-} //End alc namespace
+//! Enable global debug level
+#ifndef _DBG_LEVEL_
+#define _DBG_LEVEL_ 0
+#endif
+
+/** Abort on Exception.
+		If you enable this, the program will automatically abort when it launches and
+		exception. Only useful to get Coredumps.
+*/
+//#define _TX_ABORT_
+
+// Noise and latency debbuging tests
+#define _UNET_DBG_
+
+// Debugging information attached to messages
+#define _UNET_MSGDBG_
+
+// Check admin?
+#define __VTC 0
+// Enable dangerous testing options
+#define __WTC 1
 
 #endif

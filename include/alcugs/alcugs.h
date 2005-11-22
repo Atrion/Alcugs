@@ -57,19 +57,8 @@
 #define __U_ALCUGS_H_
 #define __U_ALCUGS_H_ID "$Id$"
 
-#if defined(HAVE_CONFIG_H) and defined(HAVE_WINCONFIG_H)
-#error You can only use config.h, or winconfig.h, but not both
-#endif
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#ifdef HAVE_WINCONFIG_H
-#include "winconfig.h"
-#endif
-
 #include "alcconfig.h"
+#include "alcconfig_old.h" //TEMP FILE
 #include "alcxversion.h"
 
 #ifdef VERSION

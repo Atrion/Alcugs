@@ -24,41 +24,54 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Alcugs Configuration file.
-*/
+//#define _DBG_LEVEL_ 10
 
-#ifndef __U_ALCCONFIG_H
-#define __U_ALCCONFIG_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_ALCCONFIG_H_ID "$Id$"
+//Program vars
+#define IN_ALC_PROGRAM
+#define ALC_PROGRAM_ID "$Id$"
 
-//! Enable debugging?
-#define _DEBUG_
+#include<alcugs.h>
+#include<alcdebug.h>
 
-//! Allow to abort?
-#define _DBG_ABORT_
+using namespace alc;
 
-//! Enable global debug level
-#ifndef _DBG_LEVEL_
-#define _DBG_LEVEL_ 0
-#endif
+void usage() {
+	printf("Usage: [--version] [--cxxflags] [--cppflags] [--libs] [-l] [-V]\n");
+	fflush(0);
+}
 
-/** Abort on Exception.
-		If you enable this, the program will automatically abort when it launches and
-		exception. Only useful to get Coredumps.
-*/
-//#define _TX_ABORT_
-
-// Noise and latency debbuging tests
-#define _UNET_DBG_
-
-// Debugging information attached to messages
-#define _UNET_MSGDBG_
-
-// Check admin?
-#define __VTC 0
-// Enable dangerous testing options
-#define __WTC 1
-
-#endif
+//main
+int main(int argc, char * argv[]) {
+	alcInit(argc,argv,true);
+	int i;
+	if(argc<2) {
+		usage();
+		return -1;
+	}
+	for (i=1; i<argc; i++) {
+		if(!strcmp(argv[i],"-h")) {
+			usage(); return -1;
+		} else if(!strcmp(argv[i],"-V")) {
+			usage();
+			printf(alcVersionText());
+			return -1;
+		} else if(!strcmp(argv[i],"-l")) {
+			usage();
+			printf(alcVersionTextShort());
+			printf(alcLicenseText());
+			return -1;
+		} else if(!strcmp(argv[i],"--version")) {
+			printf("%i.%i.%i\n",alcGetMaxVersion(),alcGetMinVersion(),alcGetRelVersion());
+		} else if(!strcmp(argv[i],"--cxxflags")) {
+			printf("%s\n",ALC_CXXFLAGS);
+		} else if(!strcmp(argv[i],"--cppflags")) {
+			printf("-I%s %s\n",ALC_INCLUDEPATH,ALC_CPPFLAGS);
+		} else if(!strcmp(argv[i],"--libs")) {
+			printf("-L%s -lalcugsurunet3 -lalcugsbase %s\n",ALC_LIBSPATH,ALC_LIBS);
+		} else {
+			usage();
+			return -1;
+		}
+	}
+	return 0;
+}

@@ -58,28 +58,35 @@ check_PROGRAMS = test test2
 TESTS = test test2
 
 #Test APPS
-test_LDADD = libalcugsbase.a @ALC_LIBS@
+test_LDADD = libalcugsbase.a 
+#@ALC_LIBS@
 test_SOURCES = src/alcbase/test/test.cpp
 
-test2_LDADD = libalcugsbase.a @ALC_LIBS@
+test2_LDADD = libalcugsbase.a 
+#@ALC_LIBS@
 test2_SOURCES = src/alcbase/test/test2.cpp
 #End Test APPS
 
-bin_PROGRAMS = urucrypt m5crypt uruping urumsgtest uru_lobby
+bin_PROGRAMS = alcconfig urucrypt m5crypt uruping urumsgtest uru_lobby
 
 #Tools
-urucrypt_LDADD = libalcugsbase.a @ALC_LIBS@
-m5crypt_LDADD =  libalcugsbase.a @ALC_LIBS@
+urucrypt_LDADD = libalcugsbase.a 
+m5crypt_LDADD =  libalcugsbase.a 
+alcconfig_LDADD = libalcugsbase.a
 
 urucrypt_SOURCES = src/tools/urucrypt.cpp
 m5crypt_SOURCES = src/tools/urucrypt.cpp
 m5crypt_CPPFLAGS = -DM5CRYPT
+alcconfig_SOURCES = src/tools/alcconfig.cpp
 #End tools
 
 #Server programs
-uruping_LDADD = libalcugsurunet3.a libalcugsbase.a @ALC_LIBS@
-urumsgtest_LDADD = libalcugsurunet3.a libalcugsbase.a @ALC_LIBS@
-uru_lobby_LDADD = libalcugsurunet3.a libalcugsbase.a @ALC_LIBS@
+uruping_LDADD = libalcugsurunet3.a libalcugsbase.a 
+#@ALC_LIBS@
+urumsgtest_LDADD = libalcugsurunet3.a libalcugsbase.a 
+#@ALC_LIBS@
+uru_lobby_LDADD = libalcugsurunet3.a libalcugsbase.a 
+#@ALC_LIBS@
 
 uruping_SOURCES = src/servers/uruping.cpp
 urumsgtest_SOURCES = src/servers/urumsgtest.cpp

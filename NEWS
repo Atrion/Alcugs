@@ -8,6 +8,24 @@
 | Home: http://alcugs.sf.net                                                |
 -----------------------------------------------------------------------------
 
+22/Nov/2005 - Removed CGAS limitation
+===========================================================================0
+Seing that there isn't any way to purchase any new keys to play Uru, at the
+same time that it seems that the CGAS may be discontinued at any moment, I
+hame removed all the notices related with the CGAS, and now the legal
+responsability will reside on the hands of the shard admin. Well, I think
+that very soon running a shard is going to be illegal, but well these things
+happen.
+On the next version of the auth server you will be able to configure the
+authentication backend (a PHPBB forum database, etc..), currently you need
+to edit by hand the CGAS related files and change the url to your own 
+authentication server.
+Additional note: I suppose that Cyan have changed the encryption and the 
+the protocol of the new Uru live client. At current time Alcugs will
+only support clients up to the 12.7 network version. There is not going
+to be support for the new clients because you can play them on the official
+servers (after paying a monthly fee)
+
 20/Nov/2005 - Base code Finished - Adding multi-threaded support
 ===========================================================================0
 
