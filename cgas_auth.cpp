@@ -25,9 +25,6 @@
 *******************************************************************************/
 
 /* Plasma GATEWAY driver
-
-   Please, carefully read the DISCLAIMER and client EULA before doing changes
-   to this code.
 */
 
 #ifndef __U_CGAS_AUTH_
@@ -225,13 +222,10 @@ int CGAS_parse_response(char * msg,int size,char * hash,char * passwd,char * uid
 /** Querys the Auth credentials to the Cyan's Global Auth Server
 */
 int CGAS_query(char * login,char * challenge,char * client_ip,char * hash,char * passwd,char * uid,Byte log) {
-	//WARNING - YOU MUST NEVER EDIT THESE VARS
+	//Feel free to edit the path of the auth server
 	char * cgas_host="auth.plasma.corelands.com";
 	unsigned short int cgas_port=80;
 	char * cgas_path="/info";
-	//BYPASSING CYAN'S GLOBAL AUTH SERVER GOES AGAINST THE CLIENT EULA.
-	//HOSTING A SERVER THAT BYPASSES THE CYAN'S AUTH SERVER IS ILLEGAL.
-	//YOU MUST NEVER BYPASS CYAN'S GLOBAL AUTH SERVER FOR ANY PURPOSE
 	char * agent="H'uruHTTP";
 	int version=1; //put version information with the user agent?
 	// 0 -- mimic the plasma auth server query
