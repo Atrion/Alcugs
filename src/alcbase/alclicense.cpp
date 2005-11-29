@@ -42,7 +42,7 @@ namespace alc {
 --------------------------------*/
 
 const char * tvalcLicenseTextShort ="\n\
-    Alcugs H'uru Server, Copyright (C) 2004-2005 The Alcugs H'uru server team\n\
+    Alcugs Server, Copyright (C) 2004-2005 The Alcugs Project Server Team\n\
     This program comes with ABSOLUTELY NO WARRANTY;\n\
     This is free software, and you are welcome to redistribute it\n\
     under certain conditions; for details see the files: COPYING\n\
@@ -50,9 +50,9 @@ const char * tvalcLicenseTextShort ="\n\
     \n";
 
 const char * tvalcLicenseText = "\n\
-    Alcugs H'uru server\n\
+    Alcugs Server\n\
 \n\
-    Copyright (C) 2004-2005  The Alcugs H'uru Server Team\n\
+    Copyright (C) 2004-2005  The Alcugs Project Server Team\n\
     See the file AUTHORS for more info about the team\n\
 \n\
     This program is free software; you can redistribute it and/or modify\n\
@@ -431,13 +431,6 @@ Public License instead of this License.\n\
     server, and It don't contains any source code of the plasma server.\n\
     It's a completely different server software written from scratch.\n\
 \n\
-    About the Auth Server:\n\
-    You MUST NEVER edit/change/modify any part of this project, or create a\n\
-    derivative work with the purpose of bypassing the Cyan's Global Auth Server.\n\
-    Hosting a server that bypasses the CGAS (Cyan's Global Auth Server), is an\n\
-    illicit activity, and it clearly breaks the Uru client End User License\n\
-    Agreement.\n\
-\n\
     About Cracking:\n\
     You MUST NEVER edit/change/modify any part of this project, or create a\n\
     derivative work with the purpose of: causing damage, exploiting,\n\
@@ -446,26 +439,18 @@ Public License instead of this License.\n\
     causing damage, exploiting, manipulating, destroying, causing a denegation\n\
     of the service, intrussion, or anything else with illicit results to any\n\
     client running any version of the Uru Clients.\n\
-    You can ignore the above notice ONLY if YOU ARE THE ADMISTRATOR/OWNER of\n\
-    the shard or you have written permission from the shard owner and you are\n\
-    the owner of any connected client/system or you have written permission from\n\
-    the owners of all the connected clients/systems.\n\
     All exploits, and security holes discovered must be immediatly notificated\n\
     to the Alcugs H'uru server team for the immediate creation of a fix for\n\
     the especific hole.\n\
 \n\
-    Addemdum:\n\
-    You must remember that the GPL, obligates you to release the sources of\n\
-    any project that is using or is based on the Alcugs H'uru server sources.\n\
-    You must also credit to the original Authors of the work, and never claim\n\
-    that you wrote the software.\n\
 \n\
-\n\
-    ~The Alcugs H'uru Server Team.\n\
+    ~The Alcugs Project Server Team.\n\
     24th of October of 2004.\n\
 \n\
 \n\
-    Revised: 14th of Decemeber of 2004.\n\
+    Revised: 14th of December of 2004.\n\
+    Revised: 15th of October  of 2005.\n\
+    Updated: 22th of November of 2005.\n\
 \n\
     You may pass the output of license to \"more\" using a pipe \"./uru -l | more\"\n\
     \n";

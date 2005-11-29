@@ -65,7 +65,7 @@ int main(int argc, char * argv[]) {
 		} else if(!strcmp(argv[i],"--cxxflags")) {
 			printf("%s\n",ALC_CXXFLAGS);
 		} else if(!strcmp(argv[i],"--cppflags")) {
-			printf("-I%s %s\n",ALC_INCLUDEPATH,ALC_CPPFLAGS);
+			printf("-I%s/alcugs %s\n",ALC_INCLUDEPATH,ALC_CPPFLAGS);
 		} else if(!strcmp(argv[i],"--libs")) {
 			printf("-L%s -lalcugsurunet3 -lalcugsbase %s\n",ALC_LIBSPATH,ALC_LIBS);
 		} else {

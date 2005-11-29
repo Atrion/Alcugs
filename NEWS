@@ -8,6 +8,32 @@
 | Home: http://alcugs.sf.net                                                |
 -----------------------------------------------------------------------------
 
+30/Nov/2005 - The GPL - New alcugs authentication subsystem
+===========================================================================0
+It's pretty curious that nobody has said that not allowing users to modify
+the alcugs authentication code it's indeed a direct GPL violation.
+Forcing users to not being able to do something, goes against all that the
+GPL says. Users are free to do what they wish with the code.
+You are completely free to do anything that you want with the Alcugs code.
+The only think that I ask, is to don't remove the copyright and the authors
+list. You must always give merit to the creators of the software.
+I'm not going to tolerate any actions that go against the freedom of the
+Alcugs project. And I'm not going to tolerate any actions that go against
+the future of Alcugs.
+
+The other news, is that perhaps by the 1st of December or by the 1st of
+January, I will release the sources of the authentication subsystem that is
+being used by the GoE shard. This subsystem has a built-in cache that speeds 
+up a lot the linking times. It allows users to succesfully log in when the 
+CGAS is temporary (or permanently down), and it allows you to authenticate
+users against another database, like a phpbb forum.
+
+It has been now more than 61 days that the Global registration service has
+been discontinued, and due to the lack of official response, I think that
+now is time to decide for the future of our shards.
+
+The work on unet3+ continues, very slowly but continues.
+
 22/Nov/2005 - Removed CGAS limitation
 ===========================================================================0
 Seing that there isn't any way to purchase any new keys to play Uru, at the
