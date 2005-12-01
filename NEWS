@@ -8,6 +8,20 @@
 | Home: http://alcugs.sf.net                                                |
 -----------------------------------------------------------------------------
 
+01/Dec/2005 - New alcugs authentication subsystem
+===========================================================================0
+The new authentication server does not authenticate anymore using the
+Plasma auth gateway. In order to enable it, you need to set the "auth.cgas"
+configuration var to 1. (By default is 0).
+You may need to wipe your old auth database, since the new one if completely
+incompatible and there is no upgrade script inmplemented.
+Once you are using this new server, you need to create user accounts with
+different access levels and completely random GUID's into the auth database.
+If the Plasma gateway is enabled, plasma accounts are automatically created
+for you with the default configured access level.
+This server authenticates 70% more faster than the old one. Thanks to the
+usage of an authentication cache.
+
 30/Nov/2005 - The GPL - New alcugs authentication subsystem
 ===========================================================================0
 It's pretty curious that nobody has said that not allowing users to modify

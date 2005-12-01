@@ -187,9 +187,6 @@ void auth_idle_operation() {
 
 int authenticate_player(char * login,char * challenge,char * aux_hash,char release,\
 char * ip,char * passwd,char * guid,char * access_level) {
-	//WARNING!, THE MODIFICATION OF THIS CODE IN THE WHOLE OR PART WITH THE PURPOSE OF
-	//BYPASSING THE CYAN'S GLOBAL AUTH SERVER GOES AGAINST THE URU CLIENT LICENSE
-
 	U32 s_att; //timestamp of last attempt
 	U32 n_att=0; //Number of attempts
 	U32 current_t; //Current time
