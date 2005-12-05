@@ -2,6 +2,8 @@ SUBDIRS = include docs src
 
 INCLUDES = -I$(top_srcdir)/include/alcugs
 
+ACLOCAL_AMFLAGS = -I m4
+
 #AM_CXXFLAGS = -Wall -rdynamic -g3 -O0
 #CXXFLAGS=
 

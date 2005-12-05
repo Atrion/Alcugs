@@ -67,7 +67,13 @@ void _alcVersionInitVars() {
 	#ifndef __WIN32__
 	struct utsname buf;
 	uname(&buf);
-	sprintf(p3,"%s %s %s %s %s %s",buf.sysname,buf.nodename,buf.release,buf.version,buf.machine,buf.domainname);
+	char *domainname;
+	#ifdef _GNU_SOURCE // this from the linux uname(2) man page
+	domainname = buf.domainname;
+	#else
+	domainname = "";
+	#endif
+	sprintf(p3,"%s %s %s %s %s %s",buf.sysname,buf.nodename,buf.release,buf.version,buf.machine,domainname);
 	#else
 	sprintf(p3,"Unable to determine system info");
 	#endif

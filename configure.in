@@ -77,9 +77,10 @@ AC_CHECK_HEADERS([zlib.h], , AC_MSG_FAILURE([zlib.h not found!]))
 AC_CHECK_LIB(z,compress, , AC_MSG_FAILURE([zlib not found!]))
 
 #expat
-AC_CHECK_HEADERS([expat.h], , AC_MSG_FAILURE([expat.h not found!]))
-AC_CHECK_LIB(expat,XML_ParserCreate, , AC_MSG_FAILURE([expat not found!]))
+AC_ALC_WITHPATH([expat.h],expat,XML_ParserCreate)
 
+#MySQL
+AC_ALC_MYSQL
 
 AC_ARG_ENABLE(threads, [  --enable-threads Enables threads (default YES)],
      [case "${enableval}" in
@@ -106,6 +107,9 @@ AC_ARG_ENABLE(threads, [  --enable-threads Enables threads (default YES)],
 		AC_DEFINE([_REENTRANT],[],[Set reentrant def])
 	fi
 
+# Linux libc stack info
+AC_CHECK_HEADERS([execinfo.h])
+
 #check for google/coredumper.h
 #AC_CHECK_HEADERS([google/coredumper.h], AC_SUBST(GOOGLE_LIBS,-lcoredumper), AC_MSG_RESULT([[ Support for Google coredumper dissabled, you may want to download coredumper from goog-coredumper.sf.net ]]))
 
@@ -113,7 +117,7 @@ AC_ARG_WITH([coredumper],
  [AS_HELP_STRING(--with-coredumper,link against google coredumper (default YES))])
 
 	if test "${with_coredumper}" != "no" ; then
-		AC_CHECK_HEADERS([google/coredumper.h], [AC_CHECK_LIB(coredumper,WriteCoreDump, , AC_MSG_FAILURE([Google coredumper not found (but I have found the header !?)]))], AC_MSG_RESULT([[ Support for Google coredumper dissabled, you may want to download coredumper from goog-coredumper.sf.net ]]))
+		AC_CHECK_HEADERS([google/coredumper.h], [AC_CHECK_LIB(coredumper,WriteCoreDump, , AC_MSG_FAILURE([Google coredumper not found (but I have found the header !?)]))], AC_MSG_RESULT([[ Support for Google coredumper disabled, you may want to download coredumper from goog-coredumper.sf.net ]]))
 	fi
 
 #dmalloc

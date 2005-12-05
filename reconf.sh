@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 rm -f config.cache
 rm -f acconfig.h

@@ -56,7 +56,7 @@ U32 alcGetSelfThreadId() {
 		#ifdef __WIN32__
 			return GetCurrentThreadId();
 		#else
-			return pthread_self();
+			return (U32)pthread_self();
 		#endif
 	#else
 	return 0;

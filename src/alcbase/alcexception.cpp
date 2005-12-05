@@ -35,7 +35,7 @@
 
 #include "alcugs.h"
 
-#if ! (defined(__WIN32__) or defined(__CYGWIN__))
+#if ! (defined(__WIN32__) or defined(__CYGWIN__)) and defined(HAVE_EXECINFO_H)
 namespace std {
 extern "C" {
 #include <execinfo.h>
@@ -151,7 +151,7 @@ void txBase::copy(txBase &t) {
 }
 void txBase::_preparebacktrace() {
 //TODO: Porting - This code only works under Linux (it's part of the libc)
-#if !(defined(__WIN32__) or defined(__CYGWIN__))
+#if !(defined(__WIN32__) or defined(__CYGWIN__)) and defined(HAVE_EXECINFO_H)
 	//get the backtrace
 	char **strings;
 	size=std::backtrace(btArray,txExcLevels);
