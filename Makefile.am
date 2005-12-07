@@ -27,7 +27,9 @@ libalcugsbase_a_SOURCES = \
  src/alcbase/alcutil/rijndael.cpp \
  src/alcbase/urutypes/whatdoyousee.cpp \
  src/alcbase/urutypes/urubasetypes.cpp \
- src/alcbase/alcutil/alcthread.cpp
+ src/alcbase/alcutil/alcthread.cpp \
+ src/alcbase/alcutil/alcpkg.cpp \
+ src/alcbase/urutypes/pypkg.cpp
 
 #libalcugsbase_a_LIBADD = alcexcpetion.o
 

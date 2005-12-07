@@ -1,7 +1,7 @@
 /*******************************************************************************
-*    Alcugs H'uru server                                                       *
+*    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2005  The Alcugs H'uru Server Team                     *
+*    Copyright (C) 2004-2005  The Alcugs Project Server Team                   *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -25,67 +25,66 @@
 *******************************************************************************/
 
 /**
-	Alcugs Basic data types, and buffer classes.
+	Description:
+		This does this, and that.
+	ChangeLog:
+		Initial
+	Bugs:
+		Several
 */
 
-#ifndef __U_URUBASETYPES_H
-#define __U_URUBASETYPES_H
+#ifndef __U_ALCPKG_H
+#define __U_ALCPKG_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_URUBASETYPES_H_ID "$Id$"
+#define __U_ALCPKG_H_ID "$Id$"
 
 namespace alc {
 
-/** Wdys buffer */
-class tWDYSBuf :public tMBuf {
-public:
-	tWDYSBuf() :tMBuf() {}
-	void encrypt();
-	void decrypt();
-};
-
-/** AES buffer */
-class tAESBuf :public tMBuf {
-public:
-	tAESBuf() :tMBuf() {}
-	void encrypt();
-	void decrypt();
-	void setKey(Byte * key);
-	void setM5Key();
-private:
-	Byte key[16];
-};
-
-/** Urustring */
-class tUStr :public tStrBuf {
-public:
+	////DEFINITIONS
 	/**
-		\param mode
-		0 - normal
-		1 - auto (normal/inverted) Uru (plasma 2.0) [Please avoid using this mode]
-		5 - inverted
-		6 - myst5 (plasma 2.1)
+		If we want to do it well and nice, we should add pre and post conditions here.
 	*/
-	tUStr(Byte mode=1);
-	virtual int stream(tBBuf &buf);
-	virtual int stream(tBBuf &buf,bool inv);
-	virtual void store(tBBuf &buf);
-	virtual U32 size();
-	void setVersion(Byte version) { this->version=version; }
-	void set(Byte * val,U32 _s=0);
-	void set(char * val,U32 _s=0);
-	Byte * str();
-	U32 len();
-	virtual ~tUStr();
-	virtual tUStr & operator=(tStrBuf &t) { this->copy(t); return *this; }
-	virtual tUStr & operator=(const tStrBuf &t) { this->copy((tStrBuf &)t); return *this; }
-	virtual tUStr & operator=(const void * str) { this->copy(str); return *this; }
 
+class tPkgFile :public tBaseType {
+public:
+	tPkgFile();
+	virtual ~tPkgFile();
+	virtual void store(tBBuf &t);
+	virtual int stream(tBBuf &t);
+	virtual U32 size();
+	virtual U32 avgsize();
+	void setName(const void * name);
+	void setName(const tStrBuf & name);
+	tStrBuf & getName();
+	tMBuf pkg; //file contents
 private:
-	Byte version;
-	Byte * name;
-	U16 msize;
+	//format
+	tUStr name; //file name
+	U32 msize; //compressed file size
 };
 
+class tPkg :public tBaseType {
+public:
+	tPkg();
+	virtual ~tPkg();
+	virtual void store(tBBuf &t);
+	virtual int stream(tBBuf &t);
+	virtual U32 size();
+	virtual U32 avgsize();
+	void add(char * name,tBBuf &t);
+	tPkgFile * getNext();
+	tPkgFile * find(char * what);
+	void rewind();
+private:
+	//format
+	//Byte[6] = "Alcugs"
+	U32 version;
+	U32 n;
+	tPkgFile ** lpkgs;
+	U32 ite;
+};
+
+	
 } //End alc namespace
 
 #endif

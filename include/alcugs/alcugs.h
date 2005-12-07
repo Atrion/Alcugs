@@ -121,4 +121,7 @@ namespace std {
 #include "alcutil/alclog.h"
 #include "alcutil/alcparser.h"
 
+#include "alcutil/alcpkg.h"
+#include "urutypes/pypkg.h"
+
 #endif
