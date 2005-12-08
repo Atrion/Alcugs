@@ -174,11 +174,11 @@ all: ${ALL_PRGS}
 max: ${ALL_PRGS} uru_authp$(EXE) uruproxy$(EXE) urumsgtest$(EXE)
 
 #Server daemons
-uru_auth$(EXE): uru.cpp $(BASE) $(AUTHOBJ) $(AUTH1)
-	$(COMP) uru.cpp -o uru_auth$(EXE) -DI_AM_THE_AUTH_SERVER $(BASE) $(AUTHOBJ) $(AUTH1)\
+uru_authp$(EXE): uru.cpp $(BASE) $(AUTHOBJ) $(AUTH1)
+	$(COMP) uru.cpp -o uru_authp$(EXE) -DI_AM_THE_AUTH_SERVER $(BASE) $(AUTHOBJ) $(AUTH1)\
 	 $(BASELIBS) $(DBLIB)
-uru_auth0$(EXE): uru.cpp $(BASE) $(AUTHOBJ) $(AUTH2)
-	$(COMP) uru.cpp -o uru_auth0$(EXE) -DI_AM_THE_AUTH_SERVER $(BASE) $(AUTHOBJ) $(AUTH2)\
+uru_auth$(EXE): uru.cpp $(BASE) $(AUTHOBJ) $(AUTH2)
+	$(COMP) uru.cpp -o uru_auth$(EXE) -DI_AM_THE_AUTH_SERVER $(BASE) $(AUTHOBJ) $(AUTH2)\
 	 $(BASELIBS) $(DBLIB)
 uru_tracking$(EXE): uru.cpp $(BASE) $(TRACKINGOBJ)
 	$(COMP) uru.cpp -o uru_tracking$(EXE) -DI_AM_THE_TRACKING_SERVER $(BASE) $(TRACKINGOBJ) $(BASELIBS)
