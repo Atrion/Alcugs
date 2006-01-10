@@ -46,6 +46,8 @@
 #endif
 #endif
 
+#include <errno.h>
+
 #include "alcdebug.h"
 
 namespace alc {

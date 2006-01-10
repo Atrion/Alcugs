@@ -53,6 +53,7 @@ class tBaseType {
 protected:
 	virtual void _pcopy(tBaseType &t);
 public:
+	virtual ~tBaseType() {} //GCC 4 wants this?
 	//tBaseType() {}
 	//!stores from a buffer
 	virtual void store(tBBuf &t)=0;

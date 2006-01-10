@@ -26,7 +26,8 @@ You need to have installed the development headers and libraries of:
 * mysql
 * zlib
 * python
-* wxwidgets (for GUI based apps)
+* expat
+* wxwidgets (for GUI based apps only)
 * And anything else that I forgot
 
 ========================
@@ -156,7 +157,7 @@ What To Do if It don't works?
 
 If you are reading this, then is because it is not working.
 Is expected to have several problems. I'm sure that it compiles without
-problems on Debian Sarge where it is being developed.
+problems on Debian Etch where it is being developed.
 
 Please go to the forums at http://alcugs.almlys.dyns.net/forum and ask
 for help.
