@@ -85,7 +85,7 @@ public:
 	/** Get header size */
 	U32 hSize();
 	void dumpheader(tLog * f);
-	void htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port);
+	void htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port); //ip, port in network order
 	tUnetUruMsg * next;
 private:
 	void _update();
@@ -178,8 +178,8 @@ public:
 	U32 x;
 	U32 ki;
 	Byte guid[16];
-	U32 ip;
-	U32 port;
+	U32 ip; //network order
+	U32 port; //network order
 	U32 sid;
 protected:
 	tNetSession * u; //destination

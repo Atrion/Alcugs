@@ -671,7 +671,7 @@ void tUnet::basesend(tNetSession * u,tmBase &msg) {
 		as a rule, messages must be sent in order */
 	//assert(u->server.sn==0);
 
-	if(u->server.tf & 0x02) {
+	if(u->server.tf & UNetAckReq) {
 		u->server.ps=u->server.sn;
 		u->server.pfr=u->server.frn;
 		//the second field, only contains the seq number from the latest packet with
@@ -683,16 +683,16 @@ void tUnet::basesend(tNetSession * u,tmBase &msg) {
 	u->server.frn=0;
 	u->server.tf=0x00;
 
-	if(flags & 0x02) {
-		u->server.tf |= 0x02; //ack flag on
+	if(flags & UNetAckReq) {
+		u->server.tf |= UNetAckReq; //ack flag on
 		DBG(7,"ack flag on\n");
 	}
-	if(flags & 0x40) {
-		u->server.tf |= 0x40; //negotiation packet
+	if(flags & UNetNegotiation) {
+		u->server.tf |= UNetNegotiation; //negotiation packet
 		DBG(7,"It's a negotation packet\n");
 	}
-	if(flags & 0x80) {
-		u->server.tf |= 0x80; //ack packet
+	if(flags & UNetAckReply) {
+		u->server.tf |= UNetAckReply; //ack packet
 		DBG(7,"It's an ack packet\n");
 	}
 
@@ -715,7 +715,7 @@ void tUnet::basesend(tNetSession * u,tmBase &msg) {
 	/* I still don't understand wtf was thinking the network dessigner with doing a MD5 of each
 		packet? - 
 	*/
-	if((u->server.tf & (0x40 | 0x80)) && (u->server.val==0x01)) { u->server.val=0x00; }
+	if((u->server.tf & (UNetNegotiation | UNetAckReply)) && (u->server.val==0x01)) { u->server.val=0x00; }
 	DBG(6,"Sending a packet of validation level %i\n",u->server.val);
 
 	//fragment the messages and put them in to the send qeue
@@ -734,7 +734,7 @@ void tUnet::basesend(tNetSession * u,tmBase &msg) {
 	U32 i,tts=0;
 	
 	for(i=0; i<=n_pkts; i++) {
-		if(i!=0 && u->server.tf & 0x02) { //<- Troublemaker
+		if(i!=0 && u->server.tf & UNetAckReq) { //<- Troublemaker
 			u->server.ps=u->server.sn;
 			u->server.pfr=u->server.frn;
 		}
@@ -770,7 +770,7 @@ void tUnet::basesend(tNetSession * u,tmBase &msg) {
 		//Urgent!?
 		if(flags & UNetUrgent) {
 			rawsend(u,pmsg);
-			if(flags & 0x02) {
+			if(flags & UNetAckReq) {
 				pmsg->snd_timestamp=net_time;
 				pmsg->timestamp+=u->timeout;
 				u->sndq->add(pmsg);
@@ -824,7 +824,7 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 	buf=mbuf->read();
 
 	if(msg->val==2) {
-		DBG(8,"Enconding validation 2 packet of %i bytes...\n",msize);
+		DBG(8,"Encoding validation 2 packet of %i bytes...\n",msize);
 		buf2=(Byte *)malloc(sizeof(Byte) * msize);
 		if(buf2==NULL) { throw txNoMem(_WHERE("")); }
 		alcEncodePacket(buf2,buf,msize);

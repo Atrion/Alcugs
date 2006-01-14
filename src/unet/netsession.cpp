@@ -261,11 +261,11 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	}
 
 	/* //Avoid sending ack for messages out of the window
-	if(msg.tf & 0x02) {
+	if(msg.tf & UNetAckReq) {
 		//ack reply
 		createAckReply(msg);
 	}*/
-	if(msg.tf & 0x40) {
+	if(msg.tf & UNetNegotiation) {
 		tmNetClientComm comm;
 		msg.data.rewind();
 		msg.data.get(comm);
@@ -316,19 +316,19 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	//check duplicates
 	ret=checkDuplicate(msg);
 	
-	if(ret!=2 && (msg.tf & 0x02)) {
+	if(ret!=2 && (msg.tf & UNetAckReq)) {
 		//ack reply
 		createAckReply(msg);
 	}
 
 	if(ret==0) {
 	
-		if(msg.tf & 0x80) {
+		if(msg.tf & UNetAckReply) {
 			//ack update
 			ackCheck(msg);
 			if(authenticated==2) authenticated=1;
 		} else {
-			if((msg.tf & 0x02) && (msg.frn==0) && (net->flags & UNET_NOFLOOD)) { //flood control
+			if((msg.tf & UNetAckReq) && (msg.frn==0) && (net->flags & UNET_NOFLOOD)) { //flood control
 				if(net->ntime_sec - flood_last_check > net->flood_check_sec) {
 					flood_last_check=net->ntime_sec;
 					flood_npkts=0;
@@ -343,7 +343,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 				}
 			} //end flood control
 			
-			if(!(msg.tf & 0x40)) {
+			if(!(msg.tf & UNetNegotiation)) {
 				assembleMessage(msg);
 			}
 		}
@@ -590,7 +590,7 @@ void tNetSession::ackUpdate() {
 
 	tUnetUruMsg * pmsg;
 
-	if(server.tf & 0x02) {
+	if(server.tf & UNetAckReq) {
 		server.ps=server.sn;
 		server.pfr=server.frn;
 		//the second field, only contains the seq number from the latest packet with
@@ -599,10 +599,10 @@ void tNetSession::ackUpdate() {
 	}
 
 	server.frn=0;
-	server.tf=0x80;
+	server.tf=UNetAckReply;
 	server.val=validation;
 	if(cflags & UNetUpgraded) {
-		server.tf = 0x80 | UNetExt;
+		server.tf = UNetAckReply | UNetExt;
 		server.val = 0x00;
 	}
 	if(server.val==0x01) { server.val=0x00; }
@@ -731,7 +731,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 					updateRTT(crtt);
 					increaseCabal();
 				}
-				if(msg->tf & 0x02) {
+				if(msg->tf & UNetAckReq) {
 					sndq->deleteCurrent();
 					msg=sndq->getCurrent();
 				} else {
@@ -739,7 +739,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 				}
 			} else {
 				//Force re-transmission
-				if((msg->tf & 0x02) && A3>=A2 && msg->tryes==1) {
+				if((msg->tf & UNetAckReq) && A3>=A2 && msg->tryes==1) {
 					////msg->timestamp-=timeout/2;
 				}
 				msg=sndq->getNext();
@@ -797,12 +797,12 @@ void tNetSession::doWork() {
 			
 			if(curmsg->timestamp<=net->net_time) {
 				//we can send the message
-				if(curmsg->tf & 0x80) {
+				if(curmsg->tf & UNetAckReply) {
 					//send paquet
 					cur_quota+=curmsg->size();
 					net->rawsend(this,curmsg);
 					sndq->deleteCurrent();
-				} else if(curmsg->tf & 0x02) {
+				} else if(curmsg->tf & UNetAckReq) {
 					//send paquet
 					//success++;
 					if(curmsg->tryes!=0) {

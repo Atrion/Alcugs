@@ -41,7 +41,7 @@ extern Byte alcWhoami;
 /** Base abstract class, you need to derive your server/client app's from here */
 class tUnetBase :public tUnet {
 public:
-	tUnetBase(char * lhost="0.0.0.0",U16 lport=0);
+	tUnetBase(char * lhost="0.0.0.0",U16 lport=0); //lport in host order
 	~tUnetBase();
 	void run();
 	void stop(SByte timeout=5);

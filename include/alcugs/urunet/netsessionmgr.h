@@ -37,8 +37,8 @@ namespace alc {
 
 class tNetSessionIte {
 public:
-	U32 ip;
-	U16 port;
+	U32 ip; //network order
+	U16 port; //network order
 	int sid;
 	tNetSessionIte() {
 		ip=0; port=0; sid=-1;

@@ -86,7 +86,7 @@ typedef U16 tUnetFlags;
 
 class tUnet {
 public:
-	tUnet(char * lhost="0.0.0.0",U16 lport=0);
+	tUnet(char * lhost="0.0.0.0",U16 lport=0); //lport in host order
 	void setFlags(tUnetFlags flags);
 	void unsetFlags(tUnetFlags flags);
 	tUnetFlags getFlags();
@@ -107,7 +107,7 @@ public:
 	void setTimer(Byte timer) {
 		if(timer!=0) this->timer=timer;
 	}
-	void setBindPort(U16 lport);
+	void setBindPort(U16 lport); //lport in host order
 	void setBindAddress(const void * lhost);
 private:
 	void init();
@@ -178,7 +178,7 @@ protected:
 
 	char address[100]; //<! This system public address (in Ascii)
 	char bindaddr[100]; //<! Server bind address
-	U16 bindport; //<! Server bind port
+	U16 bindport; //<! Server bind port, in host order
 
 	U16 spawn_start; //first port to spawn
 	U16 spawn_stop; //last port to spawn (gameservers)

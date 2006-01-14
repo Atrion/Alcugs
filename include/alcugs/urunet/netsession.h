@@ -46,7 +46,7 @@ typedef Byte tNetSessionFlags;
 
 class tNetSession {
 public:
-	tNetSession(tUnet * net,U32 ip,U16 port,int sid);
+	tNetSession(tUnet * net,U32 ip,U16 port,int sid); //ip, port in network order
 	~tNetSession();
 	char * str(char how='s');
 	U32 getMaxFragmentSize();
@@ -81,8 +81,8 @@ private:
 	void negotiate();
 	
 	tUnet * net;
-	U32 ip;
-	U16 port;
+	U32 ip; //network order
+	U16 port; //network order
 	int sid;
 	char sock_array[sizeof(struct sockaddr_in)];
 	socklen_t a_client_size;
