@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs H'uru server                                                       *
 *                                                                              *
-*    Copyright (C) 2004-2005  The Alcugs H'uru Server Team                     *
+*    Copyright (C) 2004-2006  The Alcugs H'uru Server Team                     *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -179,6 +179,17 @@ void alctypes_mbuf() {
 		std::cout<< "Cauth Exception " << t.what() << std::endl;
 		std::cout<< t.backtrace() << std::endl;
 	}
+#if defined(WORDS_BIGENDIAN)
+	assert(letoh32(0x013478ab) == 0xab783401);
+	assert(htole32(0x013478ab) == 0xab783401);
+	assert(letoh16((U16)0xdef0) == (U16)0xf0de);
+	assert(htole16((U16)0xdef0) == (U16)0xf0de);
+#else
+	assert(letoh32(0x013478ab) == 0x013478ab);
+	assert(htole32(0x013478ab) == 0x013478ab);
+	assert(letoh16((U16)0xdef0) == (U16)0xdef0);
+	assert(htole16((U16)0xdef0) == (U16)0xdef0);
+#endif
 	U32 my=buf1.tell();
 	buf1.putU16(23);
 	buf1.putS16(-123);
@@ -187,6 +198,23 @@ void alctypes_mbuf() {
 	buf1.putByte(255);
 	buf1.putSByte(-2);
 	buf1.set(my);
+#if defined(WORDS_BIGENDIAN)
+	Byte * rawbuf=buf1.read();
+	U32 tmp;
+	memcpy(&tmp,rawbuf,2);
+	assert(*((U16 *)&tmp)==(U16)letoh16((U16)23));
+	memcpy(&tmp,rawbuf+2,2);
+	assert(*((S16 *)&tmp)==(S16)letoh16((S16)-123));
+	memcpy(&tmp,rawbuf+4,4);
+	assert(*((U32 *)&tmp)==(U32)letoh32((U32)789));
+	memcpy(&tmp,rawbuf+8,4);
+	assert(*((S32 *)&tmp)==(S32)letoh32((S32)-399));
+	rawbuf+=12;
+	assert(*((Byte *)rawbuf)==(Byte)255);
+	rawbuf+=1;
+	assert(*((SByte *)rawbuf)==(SByte)-2);
+	buf1.set(my);
+#endif
 	assert(buf1.getU16()==23);
 	assert(buf1.getS16()==-123);
 	assert(buf1.getU32()==789);
@@ -356,6 +384,10 @@ void alctypes_part2() {
 	b1.putU32(5);
 	char * a="Hello";
 	b1.write(a,strlen(a));
+	char md5hash[16]={0x78, 0x86, 0x70, 0xf9, 0x99, 0xaa, 0x0b, 0x0c,
+			  0xaf, 0x77, 0x89, 0x88, 0xbe, 0xfb, 0xe3, 0x1f};
+	char WDYS[24]={'w', 'h', 'a', 't', 'd', 'o', 'y', 'o', 'u', 's', 'e', 'e',
+		       0x09, 0x00, 0x00, 0x00, 0xaf, 0x1a, 0x9b, 0xd1, 0xe9, 0xf2, 0x6b, 0x5b}; // the remaining 8 bytes are OS-dependent
 
 	tFBuf f1,f2;
 	
@@ -366,6 +398,7 @@ void alctypes_part2() {
 	tMD5Buf m1;
 	m1.put(b1);
 	m1.compute();
+	assert(!memcmp(m1.read(16),md5hash,16));
 	
 	f1.open("outmd5.raw","wb");
 	f1.put(m1);
@@ -374,6 +407,8 @@ void alctypes_part2() {
 	tWDYSBuf w1;
 	w1.put(b1);
 	w1.encrypt();
+	assert(w1.size()==32);
+	assert(!memcmp(w1.read(24),WDYS,24));
 	
 	f2.open("outwdys.raw","wb");
 	f2.put(w1);

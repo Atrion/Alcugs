@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs H'uru server                                                       *
 *                                                                              *
-*    Copyright (C) 2004-2005  The Alcugs H'uru Server Team                     *
+*    Copyright (C) 2004-2006  The Alcugs H'uru Server Team                     *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -96,20 +96,26 @@ void tBBuf::init() {
 	DBG(9,"tBBuf::init()\n");
 	gpbuf=NULL;
 }
-void tBBuf::putU16(U16 val) {
-	this->write((Byte *)&val,2);
-	//TODO, fix endianess here.
-	//Uru is Little-Endian, so if we are on a Big-Ending machine, 
+	//Uru is Little-Endian, so if we are on a Big-Endian machine, 
 	// all writes and reads to any network/file buffer must be
-	// correctly swaped.
+	// correctly swapped.
+
+//For these put* functions DO NOT change val to a reference (though I don't
+// know why anyone would). If you do, the byte-swapping will hurt you!
+void tBBuf::putU16(U16 val) {
+	val = htole16(val);
+	this->write((Byte *)&val,2);
 }
 void tBBuf::putS16(S16 val) {
+	val = htole16(val);
 	this->write((Byte *)&val,2);
 }
 void tBBuf::putU32(U32 val) {
+	val = htole32(val);
 	this->write((Byte *)&val,4);
 }
 void tBBuf::putS32(S32 val) {
+	val = htole32(val);
 	this->write((Byte *)&val,4);
 }
 void tBBuf::putByte(Byte val) {
@@ -119,19 +125,53 @@ void tBBuf::putSByte(SByte val) {
 	this->write((Byte *)&val,1);
 }
 void tBBuf::putDouble(double val) {
+#if defined(WORDS_BIGENDIAN)
+	//ok for integers, but I don't trust it for doubles
+	//val = htole32(val >> 32) | ((htole32(val & 0xffffffff)) << 32);
+	//is there a less yucky way?
+	U32 *valAsArray = (U32 *)&val;
+	U32 lo = htole32(valAsArray[1]);
+	U32 hi = htole32(valAsArray[0]);
+	valAsArray[0] = lo;
+	valAsArray[1] = hi;
+#endif
 	this->write((Byte *)&val,8);
 }
 U16 tBBuf::getU16() {
-	return(*(U16 *)(this->read(2)));
+	U16 val;
+#if defined(NEED_STRICT_ALIGNMENT)
+	memcpy((void *)&val, this->read(2), 2);
+#else
+	val = *(U16 *)(this->read(2));
+#endif
+	return(letoh16(val));
 }
 S16 tBBuf::getS16() {
-	return(*(S16 *)(this->read(2)));
+	S16 val;
+#if defined(NEED_STRICT_ALIGNMENT)
+	memcpy((void *)&val, this->read(2), 2);
+#else
+	val = *(S16 *)(this->read(2));
+#endif
+	return(letoh16(val));
 }
 U32 tBBuf::getU32() {
-	return(*(U32 *)(this->read(4)));
+	U32 val;
+#if defined(NEED_STRICT_ALIGNMENT)
+	memcpy((void *)&val, this->read(4), 4);
+#else
+	val = *(U32 *)(this->read(4));
+#endif
+	return(letoh32(val));
 }
 S32 tBBuf::getS32() {
-	return(*(S32 *)(this->read(4)));
+	S32 val;
+#if defined(NEED_STRICT_ALIGNMENT)
+	memcpy((void *)&val, this->read(4), 4);
+#else
+	val = *(S32 *)(this->read(4));
+#endif
+	return(letoh32(val));
 }
 Byte tBBuf::getByte() {
 	return(*(Byte *)(this->read(1)));
@@ -140,7 +180,23 @@ SByte tBBuf::getSByte() {
 	return(*(SByte *)(this->read(1)));
 }
 double tBBuf::getDouble() {
-	return(*(double *)(this->read(8)));
+	double val;
+#if defined(NEED_STRICT_ALIGNMENT)
+	memcpy((void *)&val, this->read(8), 8);
+#else
+	val = *(double *)(this->read(8));
+#endif
+#if defined(WORDS_BIGENDIAN)
+	//ok for integers, but I don't trust it for doubles
+	//val = letoh32(val >> 32) | ((letoh32(val & 0xffffffff)) << 32);
+	//is there a less yucky way?
+	U32 *valAsArray = (U32 *)&val;
+	U32 lo = letoh32(valAsArray[1]);
+	U32 hi = letoh32(valAsArray[0]);
+	valAsArray[0] = lo;
+	valAsArray[1] = hi;
+#endif
+	return(val);
 }
 U32 tBBuf::put(tBaseType &t) {
 	return(t.stream(*this));

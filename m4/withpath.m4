@@ -1,7 +1,7 @@
 #
 #    Alcugs Server
 #
-#    Copyright (C) 2004-2005  The Alcugs Project Server Team
+#    Copyright (C) 2005-2006  The Alcugs Project Server Team
 #    See the file AUTHORS for more info about the team
 #
 #    This program is free software; you can redistribute it and/or modify
@@ -26,8 +26,10 @@
 # Macro for specifying where to search for an external utility.
 #  I can't believe there isn't something like this already?
 # Basically this wraps AC_CHECK_HEADERS and AC_CHECK_LIB with a
-#  --with-xxx-dir thrown in. It also automatically adds to CPPFLAGS and
-#  LDFLAGS, because I didn't need it to be more general.
+#  --with-xxx-dir thrown in. You need to supply an ACTION-IF-FOUND
+#  if you want this to do anything other than report success/failure.
+#  The ACTION-IF-FOUND and ACTION-IF-NOT-FOUND may refer to
+#  $ac_alc_withpath_CPPFLAGS and $ac_alc_withpath_LDFLAGS.
 #
 # Right now, this looks in the current CPPFLAGS and LDFLAGS before trying
 #  anything specified on the command line.
@@ -36,8 +38,9 @@
 #
 # AC_CHECK_HEADERS([expat.h], , AC_MSG_FAILURE([expat.h not found!]))
 # AC_CHECK_LIB(expat,XML_ParserCreate, , AC_MSG_FAILURE([expat not found!]))
-# would then be 
+# would then be exactly equivalent to
 # AC_ALC_WITHPATH([expat.h],expat,XML_ParserCreate, , AC_MSG_FAILURE([expat not found!]))
+
 
 AC_DEFUN([AC_ALC_WITHPATH], [
 
@@ -52,10 +55,13 @@ AC_DEFUN([AC_ALC_WITHPATH], [
   fi
   ac_alc_cached_CPPFLAGS="$CPPFLAGS"
   ac_alc_cached_LDFLAGS="$LDFLAGS"
+  ac_alc_withpath_CPPFLAGS=""
+  ac_alc_withpath_LDFLAGS=""
 
   AC_COMPILE_IFELSE([AC_LANG_SOURCE([[#include <$1>]])],[ac_alc_lib_found=yes],[])
   if test x$ac_alc_lib_found = xno -a ! x$ac_alc_lib_search = x; then
-	CPPFLAGS="$CPPFLAGS -I${ac_alc_lib_search}/include"
+	ac_alc_withpath_CPPFLAGS="-I${ac_alc_lib_search}/include"
+	CPPFLAGS="$CPPFLAGS $ac_alc_withpath_CPPFLAGS"
   fi
   AC_CHECK_HEADERS([$1],
 	[ac_alc_lib_found=yes],
@@ -65,10 +71,13 @@ AC_DEFUN([AC_ALC_WITHPATH], [
     ac_alc_lib_found=no
     AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <$1>]], [[${3}();]])],[ac_alc_lib_found=yes],[])
     if test x$ac_alc_lib_found = xno -a ! x$ac_alc_lib_search = x; then
-	LDFLAGS="$LDFLAGS -L${ac_alc_lib_search}/lib"
+	ac_alc_withpath_LDFLAGS="-L${ac_alc_lib_search}/lib"
+	LDFLAGS="$LDFLAGS $ac_alc_withpath_LDFLAGS"
     fi
     AC_CHECK_LIB([$2], [$3], 
-	m4_default([$4], []), 
+	[CPPFLAGS="$ac_alc_cached_CPPFLAGS"
+	 LDFLAGS="$ac_alc_cached_LDFLAGS"
+	 m4_default([$4], [])], 
 	[CPPFLAGS="$ac_alc_cached_CPPFLAGS"
 	 LDFLAGS="$ac_alc_cached_LDFLAGS"
 	 m4_default([$5], [AC_MSG_FAILURE([$2 not found!])])])

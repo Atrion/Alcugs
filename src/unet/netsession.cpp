@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs H'uru server                                                       *
 *                                                                              *
-*    Copyright (C) 2004-2005  The Alcugs H'uru Server Team                     *
+*    Copyright (C) 2004-2006  The Alcugs H'uru Server Team                     *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -240,7 +240,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	
 	//set avg cabal
 	if(cabal==0 && bandwidth!=0) {
-		if((ip & 0x00FFFFFF) == 0x0000007F) { //lo
+		if((ntohl(ip) & 0xFFFFFF00) == 0x7F000000) { //lo
 			cabal=100000000/8; //100Mbps
 		} else if((ip & net->lan_mask) == net->lan_addr) { //LAN
 			cabal=((net->lan_up > bandwidth) ? bandwidth : net->lan_up) / 8;
@@ -858,7 +858,7 @@ void tNetSession::negotiate() {
 	U32 sbw;
 	//server bandwidth
 	DBG(9,"%08X %08X %08X\n",ip,net->lan_mask,net->lan_addr);
-	if((ip & 0x00FFFFFF) == 0x0000007F) { //lo
+	if((ntohl(ip) & 0xFFFFFF00) == 0x7F000000) { //lo
 		sbw=100000000;
 	} else if((ip & net->lan_mask) == net->lan_addr) { //LAN
 		sbw=net->lan_down;

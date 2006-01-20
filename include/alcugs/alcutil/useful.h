@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs H'uru server                                                       *
 *                                                                              *
-*    Copyright (C) 2004-2005  The Alcugs H'uru Server Team                     *
+*    Copyright (C) 2004-2006  The Alcugs H'uru Server Team                     *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -38,6 +38,27 @@ U32 alcGetTime();
 U32 alcGetMicroseconds();
 double alcGetCurrentTime(const char format='s');
 char alcIsAlpha(int c);
+
+//These macros are the inverse of htonl() etc. They take little-endian
+// numbers and put them in host order or vice-versa. The htonl() macros
+// cannot be used because they are #defined to no-ops on big-endian machines.
+//Some OSes define htole macros.
+#if !defined(htole16)
+ #if defined(WORDS_BIGENDIAN)
+  #define htole16(x) \
+	(((x) >> 8 & 0x00ff) | ((x) << 8 & 0xff00))
+  #define htole32(x) \
+	(((x) >> 24 & 0x000000ff) | ((x) >> 8 & 0x0000ff00) | \
+	 ((x) << 8 & 0x00ff0000) | ((x) << 24 & 0xff000000))
+ #else
+  #define htole16(x) (x)
+  #define htole32(x) (x)
+ #endif
+#endif
+#if !defined(letoh16)
+ #define letoh16(x) htole16(x)
+ #define letoh32(x) htole32(x)
+#endif
 
 }
 

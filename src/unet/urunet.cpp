@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs H'uru server                                                       *
 *                                                                              *
-*    Copyright (C) 2004-2005  The Alcugs H'uru Server Team                     *
+*    Copyright (C) 2004-2006  The Alcugs H'uru Server Team                     *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -97,8 +97,8 @@ void tUnet::init() {
 	max=0; //<! Maxium number of connections (default 0, unlimited)
 	smgr=NULL;
 
-	lan_addr=0x00001AAC;
-	lan_mask=0x00FFFFFF; //<! LAN mask, in network byte order (default 255.255.255.0)
+	lan_addr=htonl(0xAC1A0000);
+	lan_mask=htonl(0xFFFFFF00); //<! LAN mask, in network byte order (default 255.255.255.0)
 	//! Bandwidth speed (lo interface -> maxium)
 	lan_up=100 * 1000 * 1000;
 	lan_down=100 * 1000 * 1000;
@@ -831,16 +831,31 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 		buf=buf2; //don't need to decode again
 		if(u->authenticated==1) {
 			DBG(8,"Client is authenticated, doing checksum...\n");
-			*((U32 *)(buf+2))=alcUruChecksum(buf,msize,2,u->passwd);
+			U32 val=alcUruChecksum(buf,msize,2,u->passwd);
+#if defined(NEED_STRICT_ALIGNMENT)
+			memcpy(buf+2,(void*)&val,4);
+#else
+			*((U32 *)(buf+2))=val;
+#endif
 			DBG(8,"Checksum done!...\n");
 		} else {
 			DBG(8,"Client is not authenticated, doing checksum...\n");
-			*((U32 *)(buf+2))=alcUruChecksum(buf,msize,1,NULL);
+			U32 val=alcUruChecksum(buf,msize,1,NULL);
+#if defined(NEED_STRICT_ALIGNMENT)
+			memcpy(buf+2,(void*)&val,4);
+#else
+			*((U32 *)(buf+2))=val;
+#endif
 			DBG(8,"Checksum done!...\n");
 		}
 		buf[1]=0x02;
 	} else if(msg->val==1) {
-		*((U32 *)(buf+2))=alcUruChecksum(buf,msize,0,NULL);
+		U32 val=alcUruChecksum(buf,msize,0,NULL);
+#if defined(NEED_STRICT_ALIGNMENT)
+		memcpy(buf+2,(void*)&val,4);
+#else
+		*((U32 *)(buf+2))=val;
+#endif
 		buf[1]=0x01;
 	} else {
 		buf[1]=0x00;
@@ -921,7 +936,7 @@ void tUnet::dump(tLog * sf,Byte flags) {
 	f->print("net->sock:%i\n",this->sock);
 	#endif
 	f->print("net->server.sin_family:%02X\n",this->server.sin_family);
-	f->print("net->server.sin_port:%02X (%i)\n",this->server.sin_port,htons(this->server.sin_port));
+	f->print("net->server.sin_port:%02X (%i)\n",this->server.sin_port,ntohs(this->server.sin_port));
 	f->print("net->server.sin_addr:%s\n",alcGetStrIp(this->server.sin_addr.s_addr));
 	f->print("net->flags:%i\n",this->flags);
 	f->print("net->unet_sec:%i\n",this->unet_sec);

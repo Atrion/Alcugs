@@ -77,7 +77,9 @@ AC_CHECK_HEADERS([zlib.h], , AC_MSG_FAILURE([zlib.h not found!]))
 AC_CHECK_LIB(z,compress, , AC_MSG_FAILURE([zlib not found!]))
 
 #expat
-AC_ALC_WITHPATH([expat.h],expat,XML_ParserCreate)
+AC_ALC_WITHPATH([expat.h],expat,XML_ParserCreate,
+	[AC_SUBST(EXPAT_CPPFLAGS,$ac_alc_withpath_CPPFLAGS)
+	 AC_SUBST(EXPAT_LDFLAGS,$ac_alc_withpath_LDFLAGS)])
 
 #MySQL
 AC_ALC_MYSQL
@@ -140,8 +142,9 @@ AC_ARG_WITH([dmalloc],
 #structures
 
 #compiler specific
-AC_C_BIGENDIAN
 AC_C_CONST
+AC_C_BIGENDIAN
+AC_ALC_ALIGN
 
 #library funs
 AC_PROG_GCC_TRADITIONAL

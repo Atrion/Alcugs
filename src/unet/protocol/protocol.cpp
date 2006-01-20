@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs H'uru server                                                       *
 *                                                                              *
-*    Copyright (C) 2004-2005  The Alcugs H'uru Server Team                     *
+*    Copyright (C) 2004-2006  The Alcugs H'uru Server Team                     *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -120,7 +120,7 @@ U32 alcUruChecksum1Trace(Byte * buf, int size) {
 */
 U32 alcUruChecksum(Byte* buf, int size, int alg, Byte * aux_hash) {
 	int i;
-	U32 aux=0;
+	U32 aux=0; //little-endian order when returned
 	//S32 saux=0;
 	Byte * md5buffer;
 	Byte hash[16];
@@ -131,14 +131,27 @@ U32 alcUruChecksum(Byte* buf, int size, int alg, Byte * aux_hash) {
 	switch(alg) {
 		case 0:
 			for(i=6; i<(size-4); i=i+4) {
-				aux = aux + *((U32 *)(buf+i)); //V1 - working Checksum algorithm
+				U32 val;
+#if defined(NEED_STRICT_ALIGNMENT)
+				memcpy((void *)&val, buf+i, 4);
+#else
+				val = *((U32 *)(buf+i));
+#endif
+				aux = aux + letoh32(val); //V1 - working Checksum algorithm
 			}
 			whoi=((size-6)%4);
 			if(whoi==1 || whoi==2) {
 				aux += *((Byte *)(buf+size-1));
 			} else if(whoi==0) {
-				aux += *((U32 *)(buf+size-4));
+				U32 val;
+#if defined(NEED_STRICT_ALIGNMENT)
+				memcpy((void *)&val, buf+size-4, 4);
+#else
+				val = *((U32 *)(buf+size-4));
+#endif
+				aux += letoh32(val);
 			} //else if whoi==3 Noop
+			aux = htole32(aux);
 			break;
 		case 1:
 		case 2:
@@ -174,7 +187,7 @@ U32 alcUruChecksum(Byte* buf, int size, int alg, Byte * aux_hash) {
 			free(md5buffer);
 			break;
 		default:
-			lerr->log("ERR: Uru Checksum V%i is currenlty not supported in this version of the server.\n\n",alg);
+			lerr->log("ERR: Uru Checksum V%i is currently not supported in this version of the server.\n\n",alg);
 			aux = 0xFFFFFFFF;
 	}
 	return aux;
@@ -207,7 +220,11 @@ int alcUruValidatePacket(Byte * buf,int n,Byte * validation,Byte authed,Byte * p
 			*validation=buf[1]; //store the validation level
 		}
 		if(buf[1]==0x00) { return 0; } //All went OK with validation level 0
+#if defined(NEED_STRICT_ALIGNMENT)
+		memcpy((void*)&checksum,buf+0x02,4); //store the checksum
+#else
 		checksum=*(U32 *)(buf+0x02); //store the checksum
+#endif
 #ifndef _NO_CHECKSUM
 		if(buf[1]==0x01) { //validation level 1
 			aux_checksum=alcUruChecksum(buf, n, 0, NULL);
@@ -396,31 +413,45 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
 
 	int i;
 	data.rewind();
-	Byte * buf;
-	buf=data.read();
-	
 
 	switch(tf) {
 		case UNetAckReply: //0x80
 			log->print("ack");
+			data.seek(2);
 			for(i=0; i<(int)dsize; i++) {
 				if(i!=0) { log->print(" |"); }
-				log->print(" %i,%i %i,%i",*(Byte *)((buf+2)+i*0x10),*(U32 *)((buf+3)+i*0x10),*(Byte *)((buf+2+8)+i*0x10),*(U32 *)((buf+3+8)+i*0x10));
+				//log->print(" %i,%i %i,%i",*(Byte *)((buf+2)+i*0x10),*(U32 *)((buf+3)+i*0x10),*(Byte *)((buf+2+8)+i*0x10),*(U32 *)((buf+3+8)+i*0x10));
+				Byte i1=data.getByte();
+				U32 i2=data.getU32();
+				data.seek(3);
+				Byte i3=data.getByte();
+				data.seek(-1);
+				U32 i4=data.getU32();
+				log->print(" %i,%i %i,%i",i2,i1,i4>>8,i3);
+				data.seek(3);
 			}
 			break;
 		case UNetAckReply | UNetExt: //0x80
 			log->print("aack");
 			for(i=0; i<(int)dsize; i++) {
 				if(i!=0) { log->print(" |"); }
-				log->print(" %i,%i %i,%i",*(Byte *)((buf)+i*0x08),(*(U32 *)((buf+1)+i*0x08)) & 0x00FFFFFF,*(Byte *)((buf+4)+i*0x08),(*(U32 *)((buf+1+4)+i*0x08)) & 0x00FFFFFF);
+				//log->print(" %i,%i %i,%i",(*(U32 *)((buf+1)+i*0x08)) & 0x00FFFFFF,*(Byte *)((buf)+i*0x08),(*(U32 *)((buf+1+4)+i*0x08)) & 0x00FFFFFF,*(Byte *)((buf+4)+i*0x08));
+				Byte i1=data.getByte();
+				data.seek(-1);
+				U32 i2=data.getU32();
+				Byte i3=data.getByte();
+				data.seek(-1);
+				U32 i4=data.getU32();
+				log->print(" %i,%i %i,%i",i2>>8,i1,i4>>8,i3);
 			}
 			break;
 		case UNetNegotiation | UNetAckReq: //0x42
 		case UNetNegotiation | UNetAckReq | UNetExt:
 			log->print("Negotiation ");
-			char * times;
-			times=ctime((const time_t *)(buf+4));
-			log->print("%i bps, %s",*(U32 *)(buf),alcGetStrTime(*(U32 *)(buf+4),*(U32 *)(buf+8)));
+			//char * times;
+			//times=ctime((const time_t *)(buf+4));
+			//log->print("%i bps, %s",*(U32 *)(buf),alcGetStrTime(*(U32 *)(buf+4),*(U32 *)(buf+8)));
+			log->print("%i bps, %s",data.getU32(),alcGetStrTime(data.getU32()),data.getU32());
 			break;
 		case 0x00: //0x00
 		case UNetExt:
@@ -437,9 +468,11 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
 
 	log->print("</font>");
 
-	if((tf==0x00 || tf==0x02 || tf==UNetExt || tf==(0x02 | UNetExt))) {
+	if((tf==0x00 || tf==UNetAckReq || tf==UNetExt || tf==(UNetAckReq | UNetExt))) {
 		if(frn==0) {
-			log->print("(%04X) %s %08X",*(U16 *)(buf),alcUnetGetMsgCode(*(U16 *)(buf)),*(U32 *)(buf+2));
+			U32 msgcode=data.getU16();
+			//log->print("(%04X) %s %08X",*(U16 *)(buf),alcUnetGetMsgCode(*(U16 *)(buf)),*(U32 *)(buf+2));
+			log->print("(%04X) %s %08X",msgcode,alcUnetGetMsgCode(msgcode),data.getU32());
 		} else {
 			log->print("frg..");
 		}
@@ -563,8 +596,15 @@ void tmMsgBase::store(tBBuf &t) {
 		memset(guid,0,16);
 	}
 	if(flags & plNetIP) {
-		ip=t.getU32();
-		port=t.getU16();
+		//Unfortunately it looks like the IP address is transmitted in
+		// network byte order. This means that if we just use getU32(),
+		// on little-endian systems ip will be in network order and on
+		// big-endian systems it will be byte-swapped from *both*
+		// network and host order (which are the same).
+		ip=letoh32(t.getU32());
+		//The port is transmitted in little-endian order, so is in host
+		// order after getU16().
+		port=htons(t.getU16());
 	} else {
 		ip=0;
 		port=0;
@@ -616,8 +656,12 @@ int tmMsgBase::stream(tBBuf &t) {
 		off+=16;
 	}
 	if(flags & plNetIP) {
-		t.putU32(ip);
-		t.putU16(port);
+		//We have to swap around again on big-endian systems to get
+		// the address back to little-endian order so that it's
+		// byte-swapped back to big-endian (network) by putU32().
+		t.putU32(htole32(ip));
+		//Also switch the port back from network to host order before writing.
+		t.putU16(ntohs(port));
 		off+=6;
 	}
 	if(flags & plNetSid) {
@@ -674,7 +718,7 @@ Byte * tmMsgBase::str() {
 	if(flags & plNetGUI)
 		dbg.printf(" guid:%s,",alcGetStrGuid(guid));
 	if(flags & plNetIP)
-		dbg.printf(" ip:%s:%i(%s:%i),",alcGetStrIp(ip),ntohs(port),alcGetStrIp(htonl(ip)),port);
+		dbg.printf(" ip:%s:%i(%s:%i),",alcGetStrIp(ip),ntohs(port),alcGetStrIp(ntohl(ip)),port);
 	if(flags & plNetSid)
 		dbg.printf(" sid:%i,",sid);
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs H'uru server                                                       *
 *                                                                              *
-*    Copyright (C) 2004-2005  The Alcugs H'uru Server Team                     *
+*    Copyright (C) 2004-2006  The Alcugs H'uru Server Team                     *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -80,6 +80,8 @@ void tWDYSBuf::encrypt() {
 }
 void tWDYSBuf::decrypt() {
 	if(memcmp(this->buf->buf+mstart,"whatdoyousee",12)) throw txUnexpectedData(_WHERE("NotAWDYSFile!")); 
+	set(12);
+	U32 dsize=getU32();
 	tRefBuf * aux=this->buf;
 	aux->dec();
 	this->buf = new tRefBuf(msize);
@@ -90,7 +92,7 @@ void tWDYSBuf::decrypt() {
 	off=0;
 	
 	write(aux->buf+xstart+16,xsize-16);
-	msize=*(U32 *)(aux->buf+xstart+12);
+	msize=dsize;
 	off=0;
 	
 	for (U32 i=0; i<msize; i+=8) {

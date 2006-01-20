@@ -37,7 +37,7 @@
   <ghost@aladdin.com>.  Other authors are noted in the change history
   that follows (in reverse chronological order):
 
-	2004-12-04 added a shortcut for the md5.
+  2004-12-04 added a shortcut for the md5.
   2002-04-13 lpd Clarified derivation from RFC 1321; now handles byte order
 	either statically or dynamically; added missing #include <string.h>
 	in library.
@@ -56,12 +56,13 @@
 		here http://sourceforge.net/projects/libmd5-rfc/
  */
 
+#include "alcconfig.h"
 #include "alcutil/md5.h"
 #include <string.h>
 
 #undef BYTE_ORDER	/* 1 = big-endian, -1 = little-endian, 0 = unknown */
-#ifdef ARCH_IS_BIG_ENDIAN
-#  define BYTE_ORDER (ARCH_IS_BIG_ENDIAN ? 1 : -1)
+#ifdef WORDS_BIGENDIAN
+#  define BYTE_ORDER (WORDS_BIGENDIAN ? 1 : -1)
 #else
 #  define BYTE_ORDER 0
 #endif

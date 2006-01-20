@@ -44,7 +44,7 @@ Byte alc::alcWhoami=KClient;
 void parameters_usage() {
 	printf(alcVersionText());
 	printf("Usage: urumsgtest peer:port [options]\n\n\
- -file x: Set the file to upload\n\
+ -f x: Set the file to upload\n\
  -val x: set validation level (0-3) (default 2)\n\
  -nl: enable netcore logs\n\
  -V: show version and end\n\
