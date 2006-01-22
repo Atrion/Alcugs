@@ -1,7 +1,7 @@
 /*******************************************************************************
-*    Alcugs H'uru server                                                       *
+*    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2005  The Alcugs H'uru Server Team                     *
+*    Copyright (C) 2004-2006  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -77,7 +77,6 @@ void tConfigVal::setVal(tStrBuf & t,U16 x,U16 y) {
 	DBG(4,"x: %i,y: %i\n",x,y);
 	U16 ox,oy,my,j,k;
 	tStrBuf ** ovalues=this->values;
-		dmalloc_verify(NULL);
 	ox = this->x;
 	oy = this->y;
 	my = ( oy > (y+1) ? oy : (y+1));
@@ -254,18 +253,13 @@ tConfig::~tConfig() {
 }
 tConfigKey * tConfig::findKey(tStrBuf & where,bool create) {
 	U16 i;
-	dmalloc_verify(NULL);
 	for(i=0; i<n; i++) {
-		dmalloc_verify(NULL);
 		DBG(5,"checking %s %s %s %s \n",values[i]->name.c_str(),where.c_str(),values[i]->name.lower().c_str(),where.lower().c_str());
-		dmalloc_verify(NULL);
 		if(values[i]->name.lower()==where.lower()) {
 			return values[i];
 		}
 	}
-	dmalloc_verify(NULL);
 	if(!create) return NULL;
-	dmalloc_verify(NULL);
 	n++;
 	values=(tConfigKey **)realloc((void *)values,sizeof(tConfigKey *) * n);
 	values[n-1]=new tConfigKey();

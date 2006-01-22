@@ -57,13 +57,14 @@ public_address  = localhost
 
 #paths
 ;bin = ./
-#for windoze
-;bin = "Y:/disk2/b/ururelive/server/devel/urunet3/src/"
-sdl = share/sdl/
-age = share/age/
+;sdl = share/sdl/
+;age = share/age/
 # This are for server side python scripts, 
 # (client and/or plasma python scripts don't work here)
-python = python/
+;python = python/
+#ds settings
+;data = ./data/
+;data.mirror = "7,8"
 
 #dataset
 dataset = 6
@@ -84,6 +85,9 @@ dataset = 6
 #      use different datasets, must have a different
 #      separate installation for each dataset.
 
+#Force usage
+;dataset.enforce = 1 #(default 1)
+
 #dump raw messages to disk (vault imports also)
 net.dumps = 0
 
@@ -98,12 +102,19 @@ net.auth = 0 #default 1
 # flooding protection
 net.noflood = 1 #default 1
 
+##### FOR UNET3 OLD SERVERS ONLY ##################################
 # oldprotocol, only for clients (depreceated)
 ;auth.oldprotocol = 1
 ;vault.oldprotocol = 1
 # arhg, I think that the tracking server will explode if you put
 # oldprotocol = 0, (you have been warned)
 tracking.oldprotocol = 1
+##### FOR UNET3+ SERVERS ##########################################
+#Peer Protocol version
+;auth.protocol = 2
+;vault.protocol = 2
+#unet2/unet3 tracking must be set to 1. (2=crash)
+;tracking.protocol = 1
 
 # ** auth settings **
 # Set minimal access level to be able to log into the servers.
@@ -194,6 +205,8 @@ track.htmldbg.path = "/tmp/alcugs/test/statusdbg.html"
 port = 2010
 log_files_path = log/auth/
 
+;crash.action = "python/xMailCrashReport.py name=uru_auth"
+
 #database settings
 #db.host = "localhost"
 #note: set db_server to nothing to use the local unix socket
@@ -209,6 +222,8 @@ stop = 1
 port = 2011
 log_files_path = log/tracking/
 
+;crash.action = "python/xMailCrashReport.py name=uru_tracking"
+
 stop = 1
 
 ############# Vault Server Settings ############################################
@@ -216,6 +231,8 @@ stop = 1
 ;bind = localhost
 port = 2012
 log_files_path = log/vault/
+
+;crash.action = "python/xMailCrashReport.py name=uru_vault"
 
 #database settings
 #db.host = "localhost"
@@ -238,6 +255,8 @@ log_files_path = log/lobby/
 game.log = log/game/
 ;game.config = olduru.conf
 
+;crash.action = "python/xMailCrashReport.py name=uru_lobby"
+
 stop = 1
 
 ############ Game Server Settings ##############################################
@@ -246,4 +265,14 @@ stop = 1
 # to use the port configured here!!!!
 # The same applies with the log_files_path
 # best to don't put nothing here, only _netcore_ only related options.
+
+;crash.action = "python/xMailCrashReport.py name=uru_game"
+
+stop = 1
+
+[data]
+stop = 1
+
+[meta]
+stop = 1
 

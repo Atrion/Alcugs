@@ -1,7 +1,7 @@
 /*******************************************************************************
-*    Alcugs H'uru server                                                       *
+*    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2005  The Alcugs H'uru Server Team                     *
+*    Copyright (C) 2004-2005  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -243,7 +243,6 @@ char * alcHtmlGenerateHead(char * title,char * powered) {
  \returns NULL if failed
 */
 tLog::tLog(const char * name, char level, U16 flags) {
-	dmalloc_verify(NULL);
 	this->name=NULL;
 	this->dsc=NULL;
 	this->bdsc=NULL;
@@ -256,9 +255,7 @@ tLog::tLog(const char * name, char level, U16 flags) {
 
 tLog::~tLog() {
 	DBG(5,"~tLog()\n");
-	dmalloc_verify(NULL);
 	this->close();
-	dmalloc_verify(NULL);
 }
 
 void tLog::open(const char * name, char level, U16 flags) {
@@ -488,7 +485,6 @@ int tLog::rotate(bool force) {
 	Close the log file
 */
 void tLog::close(bool silent) {
-	dmalloc_verify(NULL);
 	int f;
 	for(f=0; f<tvLogConfig->n_logs; f++) {
 		if(tvLogConfig->logs[f]==this) {
@@ -565,7 +561,7 @@ void tLog::stamp() {
 
 	time(&timestamp);
 	gettimeofday(&tv,NULL);
-
+	
 	tptr=gmtime((const time_t *)&timestamp);
 
 	strftime(c_time_aux,25,"(%Y:%m:%d:%H:%M:%S",tptr);
