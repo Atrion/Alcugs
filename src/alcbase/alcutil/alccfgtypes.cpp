@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCCFGTYPES_ID "$Id$"
 
-//#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 5
 
 #include "alcugs.h"
 
@@ -58,9 +58,9 @@ tConfigVal::~tConfigVal() {
 	//if(name!=NULL) free((void *)name);
 	if(values!=NULL) {
 		for(i=0; i<x*y; i++) {
-			DBG(4,"i:%i\n",i);
+			DBG(9,"i:%i\n",i);
 			if(values[i]!=NULL) {
-				DBG(6,"deleting...\n");
+				DBG(9,"deleting...\n");
 				delete values[i];
 			}
 		}
@@ -74,7 +74,7 @@ void tConfigVal::setName(tStrBuf & name) {
 	this->name=name;
 }
 void tConfigVal::setVal(tStrBuf & t,U16 x,U16 y) {
-	DBG(4,"x: %i,y: %i\n",x,y);
+	DBG(9,"x: %i,y: %i\n",x,y);
 	U16 ox,oy,my,j,k;
 	tStrBuf ** ovalues=this->values;
 	ox = this->x;
@@ -230,7 +230,7 @@ void tConfigKey::rewind() {
 	off=0;
 }
 tConfigVal * tConfigKey::getNext() {
-	DBG(5,"n:%i,off:%i\n",n,off);
+	DBG(9,"n:%i,off:%i\n",n,off);
 	if(off>=n) { off=0; return NULL; }
 	off++;
 	return values[off-1];
@@ -254,7 +254,7 @@ tConfig::~tConfig() {
 tConfigKey * tConfig::findKey(tStrBuf & where,bool create) {
 	U16 i;
 	for(i=0; i<n; i++) {
-		DBG(5,"checking %s %s %s %s \n",values[i]->name.c_str(),where.c_str(),values[i]->name.lower().c_str(),where.lower().c_str());
+		DBG(9,"checking %s %s %s %s \n",values[i]->name.c_str(),where.c_str(),values[i]->name.lower().c_str(),where.lower().c_str());
 		if(values[i]->name.lower()==where.lower()) {
 			return values[i];
 		}
@@ -279,12 +279,16 @@ tConfigVal * tConfig::findVar(const void * what,const void * where,bool create) 
 }
 void tConfig::setVar(const void * val,const void * what,const void * where,U16 x,U16 y) {
 	tConfigVal * myvar;
+	DBG(5,"findVar...");
 	myvar=findVar(what,where,true);
+	DBGM(5," done\n");
 	myvar->setVal(val,x,y);
 }
 void tConfig::setVar(tStrBuf &val, tStrBuf &what, tStrBuf &where,U16 x,U16 y) {
 	tConfigVal * myvar;
+	DBG(5,"findVar...");
 	myvar=findVar(what.c_str(),where.c_str(),true);
+	DBGM(5," done\n");
 	myvar->setVal(val,x,y);
 }
 tStrBuf & tConfig::getVar(const void * what,const void * where,U16 x,U16 y) {

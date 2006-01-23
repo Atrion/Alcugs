@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCTYPES_ID "$Id$"
 
-//#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 6
 
 #include "alcugs.h"
 
@@ -396,6 +396,15 @@ void tMBuf::setAt(U32 pos,const char what) {
 	*(char *)(buf->buf+mstart+pos)=what;
 	onmodify();
 }
+void tMBuf::zeroend() {
+	U32 bsize=buf->size();
+	end();
+	if(off+1>bsize) {
+		U32 newsize = (((off+1)-bsize)>1024 ? off+1025 : bsize+1024);
+		buf->resize(newsize);
+	}
+	*(Byte *)(buf->buf+off)=0x00;
+}
 void tMBuf::write(Byte * val,U32 n) {
 	if(val==NULL) return;
 	if(buf==NULL) buf = new tRefBuf(1024 + n);
@@ -650,6 +659,7 @@ void tStrBuf::init() {
 	flags=0x02; //Null true by default
 }
 void tStrBuf::onmodify() {
+	DBG(2,"tStrBuf::onmodify()\n");
 	tMBuf::onmodify();
 	if(cache_lower!=NULL) {
 		delete cache_lower;
@@ -657,7 +667,7 @@ void tStrBuf::onmodify() {
 	}
 }
 void tStrBuf::_pcopy(tStrBuf &t) {
-	DBG(9,"tStrBuf::_pcopy()\n");
+	DBG(2,"tStrBuf::_pcopy()\n");
 	if(this==&t) return;
 	tMBuf::_pcopy(t);
 	if(bufstr!=NULL) {
@@ -680,13 +690,13 @@ void tStrBuf::_pcopy(tStrBuf &t) {
 	DBG(9,"flags are %02X\n",flags);
 }
 void tStrBuf::copy(tStrBuf &t) {
-	DBG(9,"tStrBuf::copy()\n");
+	DBG(2,"tStrBuf::copy()\n");
 	if(this==&t) return;
 	this->_pcopy(t);
 	DBG(9,"flags are %02X\n",flags);
 }
 void tStrBuf::copy(const void * str) {
-	DBG(9,"cpy\n");
+	DBG(2,"cpy\n");
 	tStrBuf pat(str);
 	copy(pat);
 }
@@ -703,17 +713,19 @@ SByte tStrBuf::compare(tStrBuf &t) {
 	return((SByte)strncmp((char *)read(),(char *)t.read(),s));
 }
 SByte tStrBuf::compare(const void * str) {
-	DBG(9,"compare %s\n",str);
+	DBG(9,"compare %s\n",(const char *)str);
 	tStrBuf pat(str);
 	return(compare(pat));
 }
 const Byte * tStrBuf::c_str() {
+	DBG(2,"c_str()\n");
 	if(isNull()) {
 		return NULL;
 	}
-	end();
-	putByte(0);
-	setSize(tell()-1);
+	zeroend();
+	//end();
+	//putByte(0);
+	//setSize(tell()-1);
 	rewind();
 	return read();
 }
@@ -858,7 +870,11 @@ tStrBuf & tStrBuf::escape() {
 }
 
 tStrBuf & tStrBuf::lower() {
-	if(cache_lower!=NULL) return *cache_lower;
+	if(cache_lower!=NULL) {
+		DBG(2,"cached...\n");
+		return *cache_lower;
+	}
+	DBG(2,"non-cached %s...\n",c_str());
 	
 	int i,max;
 	max=size();
@@ -866,13 +882,22 @@ tStrBuf & tStrBuf::lower() {
 	tStrBuf * out;
 	out = new tStrBuf(max);
 
+	DBG(2,"##begin##%s\n",out->c_str());
+
 	for(i=0; i<max; i++) {
 		out->putByte(std::tolower(getAt(i)));
+		DBG(2,"%i:%c\n",i,getAt(i));
 	}
-	
+
+	DBG(2,"##end##%s\n",out->c_str());
+
 	//if(shot!=NULL) delete shot;
 	//shot=out;
+	DBG(2,"lower end %s - %s\n",c_str(),out->c_str());
+	DBG(2,"lower end %s - %s\n",c_str(),out->c_str());
+	DBG(2,"lower end %s - %s\n",c_str(),out->c_str());
 	cache_lower=out;
+	//DBG(2,"lower end %s - %s\n",c_str(),out->c_str());
 	return *out;
 }
 

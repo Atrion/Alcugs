@@ -191,6 +191,7 @@ public:
 	virtual void set(U32 pos);
 	virtual void write(Byte * val,U32 n);
 	virtual void write(SByte * val,U32 n) { this->write((Byte *)val,n); }
+	virtual void zeroend();
 	virtual Byte * read(U32 n=0);
 	virtual int stream(tBBuf &buf);
 	virtual void store(tBBuf &buf);
