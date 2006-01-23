@@ -1,7 +1,7 @@
 /*******************************************************************************
-*    Alcugs H'uru server                                                       *
+*    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2005  The Alcugs H'uru Server Team                     *
+*    Copyright (C) 2004-2006  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -144,13 +144,17 @@ int u_parse_arguments(int argc, char * argv[]) {
 int main(int argc, char * argv[]) {
 	try {
 		//start Alcugs library
+		DBG(5,"alcInit...");
 		alcInit(argc,argv,true);
+		DBGM(5," done\n");
 		//Parse command line
+		DBG(5,"parsing cmd...");
 		if (u_parse_arguments(argc,argv)!=0) return -1;
-		
+		DBGM(5," done\n");
+		DBG(5,"loading config...\n");
 		//Load and parse config files
 		if(alcUnetReloadConfig(true)<0) return -1;
-		
+		DBGM(5," done\n");
 		//daemon?
 		tConfig * cfg=alcGetConfig();
 		tStrBuf var;

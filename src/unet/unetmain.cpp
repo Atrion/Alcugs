@@ -1,7 +1,7 @@
 /*******************************************************************************
-*    Alcugs H'uru server                                                       *
+*    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2005  The Alcugs H'uru Server Team                     *
+*    Copyright (C) 2004-2006  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -72,8 +72,12 @@ int alcUnetReloadConfig(bool firsttime) {
 	var="";
 	var.printf("%i",alcWhoami);
 	cfg->setVar(var.c_str(),"whoami","global");
+	DBG(5,"setting config aliases...");
 	alcNetSetConfigAliases();
+	DBGM(5," done\n");
+	DBG(5,"applying config...");
 	alcReApplyConfig();
+	DBGM(5," done\n");
 	var=cfg->getVar("cfg.dump","global");
 	if(!var.isNull() && var.asByte()) {
 		alcDumpConfig();

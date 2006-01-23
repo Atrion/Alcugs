@@ -68,8 +68,9 @@ void alcInit(int argc,char ** argv,bool shutup) {
 	alcInitialized=true;
 	DBG(5,"alcInit()\n");
 	alcBorn.now();
-	DBG(6,"Starting log system...\n");
+	DBG(6,"Starting log system...");
 	alcLogInit();
+	DBGM(6," done\n");
 	alcLogOpenStdLogs(shutup);
 	if(!alcVerifyVersion()) {
 		lerr->log("ERR: Alcugs Library version mismatch! %s!=%s\n",alcSTR_VER,alcVerifyVersionStr);
@@ -85,7 +86,9 @@ void alcInit(int argc,char ** argv,bool shutup) {
 	}
 	alcGlobalConfig = new tConfig();
 	tSignalHandler * h = new tSignalHandler();
+	DBG(7,"Installing default signal handler...");
 	alcInstallSignalHandler(h);
+	DBGM(7," done\n");
 	
 	atexit(&alcShutdown);
 }
@@ -94,8 +97,9 @@ void alcShutdown() {
 	if(!alcInitialized) return;
 	alcInitialized=false;
 	DBG(5,"alcShutdown()\n");
-	DBG(5,"Stopping log system...\n");
+	DBG(5,"Stopping log system...");
 	alcLogShutdown();
+	DBGM(5," done\n");
 	if(alcGlobalConfig!=NULL) {
 		delete alcGlobalConfig;
 		alcGlobalConfig=NULL;
@@ -168,7 +172,9 @@ bool alcParseConfig(tStrBuf & path) {
 	std::printf("parsing %s...\n",path.c_str());
 
 	tXParser parser;
+	DBG(5,"setting config parser...");
 	parser.setConfig(alcGetConfig());
+	DBGM(5," done\n");
 	#if defined(__WIN32__) or defined(__CYGWIN__)
 	path.convertSlashesFromWinToUnix();
 	#endif
@@ -180,7 +186,9 @@ bool alcParseConfig(tStrBuf & path) {
 	try {
 		f1.open(path.c_str());
 		f1.rewind();
+		DBG(5,"f1.get(parser)...\n");
 		f1.get(parser);
+		DBGM(5," done\n");
 		f1.close();
 		
 		//tStrBuf out;

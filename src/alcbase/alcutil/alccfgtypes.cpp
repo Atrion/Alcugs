@@ -270,6 +270,7 @@ tConfigKey * tConfig::findKey(const void * where,bool create) {
 	tStrBuf name=where;
 	return findKey(name,create);
 }
+//This code needs to be optimized
 tConfigVal * tConfig::findVar(const void * what,const void * where,bool create) {
 	tConfigKey * mykey;
 	mykey=findKey(where,create);

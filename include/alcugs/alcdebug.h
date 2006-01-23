@@ -1,7 +1,7 @@
 /*******************************************************************************
-*    Alcugs H'uru server                                                       *
+*    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2005  The Alcugs H'uru Server Team                     *
+*    Copyright (C) 2004-2006  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -29,6 +29,7 @@
 	The next MACROS / functions are defined
 	_WHERE(msg) returns filename,function,line and a message
 	DBG(level,args...) debug message
+	DBGM(level,args...) debug message (without line number)
 	ERR(level,args...) error message, also calls perror()
 	_DIE(msg) shows a message, and aborts
 
@@ -102,6 +103,8 @@ typedef void(*_DBGorERR_pointer)(int a, char *msg, ...);
 #define DBG(a,...)  if((a)<=_DBG_LEVEL_) { fprintf(stderr,"DBG%i:%d:%s:%s:%i> ",a,alcGetSelfThreadId(),__FILE__,__FUNCTION__,__LINE__);\
 fprintf(stderr, __VA_ARGS__); fflush(stderr); }
 
+#define DBGM(a,...)  if((a)<=_DBG_LEVEL_) { fprintf(stderr, __VA_ARGS__); fflush(stderr); }
+
 #define ERR(a,...) if((a)<=_DBG_LEVEL_) { fprintf(stderr,"DBG%i:%d:%s:%s:%i> ",a,alcGetSelfThreadId(),__FILE__,__FUNCTION__,__LINE__);\
 fprintf(stderr, __VA_ARGS__); perror(""); fflush(stderr); }
 
@@ -130,14 +133,16 @@ char * __dbg_where(const char * b,const char * c,int d,const char * a,...);
 
 #ifndef __MSVC__
 #define DBG(a,...)
+#define DBGM(a,...)
 #define ERR(a,...)
-#else
-#  define DBG()
-#  define ERR()
-#  ifdef _MSC_VER
-#    pragma warning(disable:4002) //disable warning "too many actual parameters for macro 'identifier'"
-#  endif
-#endif //__WIN32__
+#else //__MSVC__
+#define DBG()
+#define DBGM()
+#define ERR()
+#ifdef _MSC_VER
+#pragma warning(disable:4002) //disable warning "too many actual parameters for macro 'identifier'"
+#endif //_MSC_VER
+#endif //__MSVC__
 
 //#define _WHERE(...) ""
 
