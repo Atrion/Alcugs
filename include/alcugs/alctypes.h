@@ -209,6 +209,7 @@ public:
 	int id;
 protected:
 	virtual void init();
+	virtual void onmodify();
 	virtual void _pcopy(tMBuf &t);
 	tRefBuf * buf;
 	U32 off,msize,mstart;
@@ -285,6 +286,7 @@ public:
 	tStrBuf(tMBuf &k,U32 start=0,U32 len=0);
 	tStrBuf(const tStrBuf &k,U32 start=0,U32 len=0);
 	void init();
+	void onmodify();
 	~tStrBuf();
 	virtual void rewind();
 	S32 find(const char cat, bool reverse=false);
@@ -372,6 +374,7 @@ private:
 	U16 l,c;
 	char sep;
 	tStrBuf * shot;
+	tStrBuf * cache_lower;
 	Byte flags; //0x01 - original parsed string had quotes
 							//0x02 - string is NULL
 };

@@ -353,6 +353,8 @@ tMBuf::~tMBuf() {
 		}
 	}
 }
+void tMBuf::onmodify() {
+}
 void tMBuf::_pcopy(tMBuf &t) {
 	DBG(9,"tMBuf::_pcopy()\n");
 	tBBuf::_pcopy(t);
@@ -392,6 +394,7 @@ Byte tMBuf::getAt(U32 pos) {
 void tMBuf::setAt(U32 pos,const char what) {
 	if(pos>msize) throw txOutOfRange(_WHERE("OutOfRange %i>%i",pos,msize));
 	*(char *)(buf->buf+mstart+pos)=what;
+	onmodify();
 }
 void tMBuf::write(Byte * val,U32 n) {
 	if(val==NULL) return;
@@ -413,6 +416,7 @@ void tMBuf::write(Byte * val,U32 n) {
 	}
 	memcpy(buf->buf+oldoff,val,n);
 	if(off>msize) msize+=n;
+	onmodify();
 }
 Byte * tMBuf::read(U32 n) {
 	U32 pos=off+mstart;
@@ -634,6 +638,7 @@ tStrBuf::~tStrBuf() {
 	DBG(9,"dtor\n");
 	if(bufstr!=NULL) free((void *)bufstr);
 	if(shot!=NULL) delete shot;
+	if(cache_lower!=NULL) delete cache_lower;
 }
 void tStrBuf::init() {
 	DBG(9,"init\n");
@@ -641,21 +646,37 @@ void tStrBuf::init() {
 	l=c=0;
 	sep='=';
 	shot=NULL;
+	cache_lower=NULL;
 	flags=0x02; //Null true by default
+}
+void tStrBuf::onmodify() {
+	tMBuf::onmodify();
+	if(cache_lower!=NULL) {
+		delete cache_lower;
+		cache_lower=NULL;
+	}
 }
 void tStrBuf::_pcopy(tStrBuf &t) {
 	DBG(9,"tStrBuf::_pcopy()\n");
 	if(this==&t) return;
 	tMBuf::_pcopy(t);
-	if(bufstr!=NULL) free((void *)bufstr);
-	bufstr=NULL;
+	if(bufstr!=NULL) {
+		free((void *)bufstr);
+		bufstr=NULL;
+	}
 	l=t.l;
 	c=t.c;
 	sep=t.sep;
 	flags=t.flags;
+	if(cache_lower!=NULL) {
+		delete cache_lower;
+		cache_lower=NULL;
+	}
 	//last thing
-	if(shot!=NULL) delete shot;
-	shot=NULL;
+	if(shot!=NULL) {
+		delete shot;
+		shot=NULL;
+	}
 	DBG(9,"flags are %02X\n",flags);
 }
 void tStrBuf::copy(tStrBuf &t) {
@@ -837,17 +858,21 @@ tStrBuf & tStrBuf::escape() {
 }
 
 tStrBuf & tStrBuf::lower() {
-	tStrBuf * out;
-	out = new tStrBuf(200);
+	if(cache_lower!=NULL) return *cache_lower;
 	
 	int i,max;
 	max=size();
+
+	tStrBuf * out;
+	out = new tStrBuf(max);
+
 	for(i=0; i<max; i++) {
 		out->putByte(std::tolower(getAt(i)));
 	}
 	
-	if(shot!=NULL) delete shot;
-	shot=out;
+	//if(shot!=NULL) delete shot;
+	//shot=out;
+	cache_lower=out;
 	return *out;
 }
 
