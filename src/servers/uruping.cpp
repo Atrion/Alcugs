@@ -115,7 +115,9 @@ private:
 	bool urgent;
 };
 
-tUnetPing::tUnetPing(char * lhost,U16 lport,Byte listen,double time,int num,int flood) :tUnetBase(lhost,lport) {
+tUnetPing::tUnetPing(char * lhost,U16 lport,Byte listen,double time,int num,int flood) :tUnetBase() {
+	this->setBindPort(lport);
+	this->setBindAddress(lhost);
 	this->listen=listen;
 	out=lstd;
 	setTimer(1);

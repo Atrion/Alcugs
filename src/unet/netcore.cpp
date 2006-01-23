@@ -46,7 +46,7 @@
 
 namespace alc {
 
-tUnetBase::tUnetBase(char * lhost,U16 lport) :tUnet(lhost,lport) {
+tUnetBase::tUnetBase() :tUnet() {
 	state_running=true;
 	tStrBuf var;
 	tConfig * cfg;
@@ -76,14 +76,14 @@ void tUnetBase::_reconfigure() {
 	//Sets the idle timer
 	var=cfg->getVar("net.timer","global");
 	if(var.isNull()) {
-		setTimer(120); //intentionally big
+		//setTimer(120); //intentionally big (no op) [it should be 10 seconds (default setting in the netcore, bigger timers have issues).
 	} else {
 		setTimer(var.asByte());
 	}
 	//Set pool size
 	var=cfg->getVar("net.pool.size","global");
 	if(var.isNull()) {
-		pool_size=4;
+		pool_size=4; //Set up 4 worker threads by default (may be changed)
 	} else {
 		pool_size=var.asByte();
 	}
@@ -190,7 +190,7 @@ void tUnetBase::_reconfigure() {
 }
 
 void tUnetBase::stop(SByte timeout) {
-	if(timeout==-1) {
+	if(timeout<0) {
 		tStrBuf var;
 		tConfig * cfg=alcGetConfig();
 		var=cfg->getVar("net.stop.timeout","global");

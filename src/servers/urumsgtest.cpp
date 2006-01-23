@@ -114,7 +114,9 @@ private:
 	tNetSessionIte dstite;
 };
 
-tUnetSimpleFileServer::tUnetSimpleFileServer(char * lhost,U16 lport,Byte listen) :tUnetBase(lhost,lport) {
+tUnetSimpleFileServer::tUnetSimpleFileServer(char * lhost,U16 lport,Byte listen) :tUnetBase() {
+	this->setBindPort(lport);
+	this->setBindAddress(lhost);
 	this->listen=listen;
 	out=lstd;
 	setTimer(1);
