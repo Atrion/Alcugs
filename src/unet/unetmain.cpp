@@ -120,7 +120,9 @@ void tUnetSignalHandler::handle_signal(int s) {
 						break;
 					case 1:
 						alcSignal(s,1);
+						#ifndef __WIN32__
 						if(alcGetSelfThreadId()!=alcGetMainThreadId()) return;
+						#endif
 						net->forcestop();
 						__state_running--;
 						lstd->log("INF: Warning another CTRL+C will kill the server permanently causing data loss\n");
@@ -132,7 +134,9 @@ void tUnetSignalHandler::handle_signal(int s) {
 				}
 				break;
 			case SIGUSR1:
+				#ifndef __WIN32__
 				if(alcGetSelfThreadId()!=alcGetMainThreadId()) return;
+				#endif
 				if(st_alarm) {
 					lstd->log("INF: Automatic -Emergency- Shutdown CANCELLED\n\n");
 					//net->bcast("NOTICE: The Server Shutdown sequence has been cancelled");
@@ -148,7 +152,9 @@ void tUnetSignalHandler::handle_signal(int s) {
 				alcSignal(SIGUSR1,1);
 				break;
 			case SIGUSR2:
+				#ifndef __WIN32__
 				if(alcGetSelfThreadId()!=alcGetMainThreadId()) return;
+				#endif
 				lstd->log("INF: TERMINATED message sent to all players.\n\n");
 				net->terminateAll();
 				alcSignal(SIGUSR2,1);

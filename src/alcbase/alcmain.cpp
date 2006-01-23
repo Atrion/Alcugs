@@ -262,7 +262,10 @@ void tSignalHandler::handle_signal(int s) {
 			case SIGSEGV:
 				lerr->log("\n PANIC!!!\n");
 				lerr->log("TERRIBLE FATAL ERROR: SIGSEGV recieved!!!\n\n");
+				//On windows, the signal handler runs on another thread
+				#ifndef __WIN32__
 				if(alcGetSelfThreadId()!=alcGetMainThreadId()) return;
+				#endif
 				//TODO: generate a Crash report here
 				throw txBase("Panic: Segmentation Fault - dumping core",1,1);
 		}
