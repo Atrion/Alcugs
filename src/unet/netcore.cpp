@@ -1,7 +1,7 @@
 /*******************************************************************************
-*    Alcugs H'uru server                                                       *
+*    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2005  The Alcugs H'uru Server Team                     *
+*    Copyright (C) 2004-2006  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -302,15 +302,15 @@ void tUnetBase::run() {
 					if(u->client==1) {
 						if(ret==0) {
 							err->log("%s Unexpected message %04X (%s)\n",u->str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
-							terminate(evt->sid,false,RKickedOff);
+							terminate(evt->sid,false,RUnimplemented);
 						}
 						else if(ret==-1) {
 							err->log("%s Kicked off due to a parse error in a previus message %04X (%s)\n",u->str());
-							terminate(evt->sid,false,RKickedOff);
+							terminate(evt->sid,false,RParseError);
 						}
 						if(ret==-2) {
 							sec->log("%s Kicked off due to cracking %04 (%s)\n",u->str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
-							terminate(evt->sid,false,RKickedOff);
+							terminate(evt->sid,false,RHackAttempt);
 						}
 					} else {
 						if(ret!=1) {

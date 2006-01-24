@@ -143,6 +143,44 @@
 #define RNotAuthenticated 0x05
 #define RUnprotectedCCR 0x06
 #define RIllegalCCRClient 0x07
+//custom (Uru will show them with the Terminated dialog, and Unknown reason)
+#define RHackAttempt 0x08
+#define RUnimplemented 0x09
+#define RParseError 0x10
+
+/* Full error table (does not match with above table)
+Generic 01
+//Terminated list
+LoggedInElsewhere 02
+TimedOut 03
+NotAuthenticated 04
+KickedOff 05
+Unknown 06
+UnprotectedCCR 07
+IllegalCCRClient 08
+Unknown 09
+//other
+ServerSilence 10
+BadVersion 11
+PlayerDisabled 12 (raised when ban flag is set on player vault)
+CantFindAge 13
+AuthResponseFailed 14 (typical error (when the remote game server is down, or authentication time outs)
+AuthTimeout 15
+SDLDescProblem 16 (it's raised when the user don't reads the instructions, well, if your client SDL descriptors are outdated)
+UnespecifedError 17 (hmm??)
+FailedToSendMessage 18 (when you try too send a big message)
+AuthTimeout2 19 (another one)
+PeerTimeout 20
+ServerSilence2 21
+ProtocolVersionMismatch 22 (when you are mixing different game versions, with different server versions)
+AuthFailed 23
+FailedToCreatePlayer 24
+InvalidErrorCode 25
+LinkingBanned 26
+LinkingRestored 27
+silenced 28
+unsilenced 29
+*/
 
 //CreateAvatar Result code
 #define AOK 0x00
