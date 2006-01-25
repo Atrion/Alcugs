@@ -38,8 +38,8 @@
 #define alcMAX_VER 1
 #define alcMIN_VER 3
 #define alcREL_VER 3
-#define alcBET_VER 6
-#define alcSTR_VER "1.3.3f"
+#define alcBET_VER 7
+#define alcSTR_VER "1.3.3g"
 #define alcREVISION "$Revision$"
 
 #define alcDATE __DATE__
