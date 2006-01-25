@@ -7,10 +7,10 @@ ACLOCAL_AMFLAGS = -I m4
 #AM_CXXFLAGS = -Wall -rdynamic -g3 -O0
 #CXXFLAGS=
 
-lib_LIBRARIES = libalcugsbase.a libalcugsurunet3.a
+lib_LIBRARIES = libalcugsbase1.a libalcugsnet1.a
 
 #LibAlcugsBase library
-libalcugsbase_a_SOURCES = \
+libalcugsbase1_a_SOURCES = \
  src/alcbase/alcexception.cpp \
  src/alcbase/alcmain.cpp \
  src/alcbase/alctypes.cpp \
@@ -34,15 +34,15 @@ libalcugsbase_a_SOURCES = \
 #libalcugsbase_a_LIBADD = alcexcpetion.o
 
 if WIN32
-libalcugsbase_a_SOURCES += src/alcbase/alcutil/windoze.cpp
+libalcugsbase1_a_SOURCES += src/alcbase/alcutil/windoze.cpp
 endif
 
-libalcugsbase_a_CPPFLAGS = -DIN_ALC_LIBRARY
+libalcugsbase1_a_CPPFLAGS = -DIN_ALC_LIBRARY
 #End LibAlcugsBase library
 
 #LibAlcugsUruNet3 library
-libalcugsurunet3_a_SOURCES = \
- src/unet/urunet.cpp \
+libalcugsnet1_a_SOURCES = \
+ src/unet/alcnet.cpp \
  src/unet/netlog.cpp \
  src/unet/netsession.cpp \
  src/unet/netsessionmgr.cpp \
@@ -55,28 +55,28 @@ libalcugsurunet3_a_SOURCES = \
  src/unet/unetserverbase.cpp \
  src/unet/unetlobbyserverbase.cpp
 
-libalcugsurunet3_a_CPPFLAGS = -DIN_ALC_LIBRARY
+libalcugsnet1_a_CPPFLAGS = -DIN_ALC_LIBRARY
 #End LibAlcugsUruNet3 library
 
 check_PROGRAMS = test test2
 TESTS = test test2
 
 #Test APPS
-test_LDADD = libalcugsbase.a 
+test_LDADD = libalcugsbase1.a 
 #@ALC_LIBS@
 test_SOURCES = src/alcbase/test/test.cpp
 
-test2_LDADD = libalcugsbase.a 
+test2_LDADD = libalcugsbase1.a 
 #@ALC_LIBS@
 test2_SOURCES = src/alcbase/test/test2.cpp
 #End Test APPS
 
-bin_PROGRAMS = alcconfig urucrypt m5crypt uruping urumsgtest uru_lobby
+bin_PROGRAMS = alcconfig urucrypt m5crypt alcping alcmsgtest alcugs_lobby
 
 #Tools
-urucrypt_LDADD = libalcugsbase.a 
-m5crypt_LDADD =  libalcugsbase.a 
-alcconfig_LDADD = libalcugsbase.a
+urucrypt_LDADD = libalcugsbase1.a 
+m5crypt_LDADD =  libalcugsbase1.a 
+alcconfig_LDADD = libalcugsbase1.a
 
 urucrypt_SOURCES = src/tools/urucrypt.cpp
 m5crypt_SOURCES = src/tools/urucrypt.cpp
@@ -85,23 +85,23 @@ alcconfig_SOURCES = src/tools/alcconfig.cpp
 #End tools
 
 #Server programs
-uruping_LDADD = libalcugsurunet3.a libalcugsbase.a 
+alcping_LDADD = libalcugsnet1.a libalcugsbase1.a 
 #@ALC_LIBS@
-urumsgtest_LDADD = libalcugsurunet3.a libalcugsbase.a 
+alcmsgtest_LDADD = libalcugsnet1.a libalcugsbase1.a 
 #@ALC_LIBS@
-uru_lobby_LDADD = libalcugsurunet3.a libalcugsbase.a 
+alcugs_lobby_LDADD = libalcugsnet1.a libalcugsbase1.a 
 #@ALC_LIBS@
 
-uruping_SOURCES = src/servers/uruping.cpp
-urumsgtest_SOURCES = src/servers/urumsgtest.cpp
-uru_lobby_SOURCES = \
- src/servers/uru.cpp \
+alcping_SOURCES = src/servers/alcping.cpp
+alcmsgtest_SOURCES = src/servers/alcmsgtest.cpp
+alcugs_lobby_SOURCES = \
+ src/servers/alcugs_main.cpp \
  src/servers/lobbyserver.cpp
 
-uru_lobby_INCLUDES = \
+alcugs_lobby_INCLUDES = \
  src/servers/lobbyserver.h
 
-uru_lobby_CPPFLAGS = -DI_AM_THE_LOBBY_SERVER
+alcugs_lobby_CPPFLAGS = -DI_AM_THE_LOBBY_SERVER
 
 #End server programs
 
