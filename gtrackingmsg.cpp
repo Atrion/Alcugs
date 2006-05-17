@@ -110,3 +110,27 @@ int plNetMsgCustomForkServer(st_unet * net,int port,Byte * guid,Byte * age_fname
 	return ret;
 }
 
+/**
+	-- DirectedFwd (tracking-->game)
+*/
+int plNetMsgCustomDirectedFwd(st_unet * net,Byte *buf,int size,int fromki,int sid) {
+	int ret;
+
+	if(net_check_address(net,sid)!=0) { return -1; }
+	st_uru_client * u=&net->s[sid];
+
+	u->hmsg.cmd=NetMsgCustomDirectedFwd;
+	u->hmsg.flags=(plNetAck | plNetKi | plNetCustom);
+	u->hmsg.ki=fromki;
+	if(!(net->flags & UNET_NETAUTH)) {
+		u->hmsg.flags |= plNetVersion;
+	}
+
+	//data
+	print2log(f_uru,"<SND> NetMsgCustomDirectedFwd\n");
+
+	ret=plNetSendMsg(net,buf,size,sid,0);
+
+	return ret;
+}
+

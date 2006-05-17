@@ -824,3 +824,61 @@ void xml_dump_players(st_unet * net,st_log * f_xml,int sid) {
 	}
 }
 
+int tracking_subsys_directed_fwd(st_unet * net,Byte *buf,int size,int fromki,int sid) {
+	// I sure dislike having the same code in multiple files, but alas unet3+
+	// is in suspended animation
+	
+	int offset=0;
+	if (size < 9) {
+		//messages from game servers shouldn't be mangled
+		print2log(f_err,"ERR: forwarded Directed message too short!\n");
+		return 1;
+	}
+	offset+=5;
+	S32 bodylen=*(S32 *)(buf+offset);
+	offset+=4;
+	if (size < offset+bodylen+2) {
+		print2log(f_err,"ERR: forwarded Directed message too short!\n");
+		return 1;
+	}
+	offset+=bodylen;
+	offset+=1;
+	Byte recips=*(Byte *)(buf+offset);
+	if (size < offset+(4*recips)) {
+		print2log(f_err,"ERR: forwarded Directed message too short!\n");
+		return 1;
+	}
+	offset+=1;
+
+	// if I didn't do it by server first I'd have the same chat "spam" bug
+	for(int i=0; i<(int)net->n; i++) {
+		if(i!=sid && net->s[i].ip!=0) {
+			// it's a server but let's not send messages to people in the lobby
+			if(strcmp(((char *)net->s[i].name),"Lobby")) {
+				// game server
+				int send=0;
+				for(int j=0; j<n_tracks; j++) {
+					if(tracks[j].ki!=0 && tracks[j].sid==i) {
+						// player in said age
+						int off=offset;
+						for (int k=0; k<recips; k++) {
+							S32 recip=*(S32 *)(buf+off);
+							off+=4;
+							if (recip==tracks[j].ki) {
+								send=1;
+								break;
+							}
+						}
+					}
+					if(send) {
+						break;
+					}
+				}
+				if(send) {
+					plNetMsgCustomDirectedFwd(net,buf,size,fromki,i);
+				}
+			}
+		}
+	} // end of servers
+	return 0;
+}

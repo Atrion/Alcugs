@@ -145,6 +145,11 @@ int process_ctracking_plNetMsg(st_unet * net,Byte * buf,int size,int sid) {
 			tracking_subsys_findserver(net,guid,name,cip,sid);
 			n=1;
 			break;
+		case NetMsgCustomDirectedFwd:
+			print2log(f_uru,"<RCV> NetMsgCustomDirectedFwd\n");
+			tracking_subsys_directed_fwd(net,buf,size,u->hmsg.ki,sid);
+			n=1;
+			break;
 		default:
 			n=UNET_OK;
 			break;

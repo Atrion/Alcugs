@@ -82,6 +82,7 @@ int tracking_subsys_addgame(st_unet * net,int sid);
 int tracking_notify_waiting_players(st_unet * net, int sid);
 int tracking_subsys_findserver(st_unet * net,char * guid,char * name,U32 cip,int sid);
 int tracking_subsys_serverfound(st_unet * net,int cli,int dsid,int sid);
+int tracking_subsys_directed_fwd(st_unet * net,Byte *buf,int size,int fromki,int sid);
 
 void tracking_dump_players_list(st_unet * net);
 

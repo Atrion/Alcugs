@@ -51,6 +51,7 @@
 #define plNetCustom     0x00020000 //¿*? Unknown purpose flag
 
 #define plNetStateReq   0x00000800 //(unknown, seen on the 1st plNetMsgStateRequest)
+#define plNetDirected   0x00008000 //Unknown, seen on plNetMsgGameMessageDirected
 #define plNetP2P        0x08000000 //p2p request? (seen on plNetMsgJoinReq)
 
 
@@ -195,6 +196,8 @@
 
 #define NetMsgSDLStateBCast            0x0324
 
+#define NetMsgGameMessageDirected      0x0329
+
 #define NetMsgRequestMyVaultPlayerList 0x034E
 
 #define NetMsgVaultPlayerList          0x0373
@@ -256,5 +259,6 @@
 #define NetMsgCustomSaveGame           0x1017
 #define NetMsgCustomLoadGame           0x1018
 #define NetMsgCustomCmd                0x1019
+#define NetMsgCustomDirectedFwd        0x101A
 
 #endif
