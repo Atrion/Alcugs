@@ -1714,7 +1714,7 @@ str1,str2,avie,uid,entry_value,entry2,data,data2\
 				char aux_guid[9];
 				memset(aux_guid,0,8);
 				if(strlen(row[10])==16) {
-					ascii2hex2((Byte *)aux_guid,(Byte *)row[10],strlen(row[10]));
+					ascii2hex2((Byte *)aux_guid,(Byte *)row[10],8);
 				}
 				memcpy((*node)[i].age_guid,aux_guid,8);
 				ret+=8;
