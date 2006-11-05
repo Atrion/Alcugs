@@ -236,6 +236,9 @@ int process_csbvault_plNetMsg(st_unet * net,Byte * buf,int size,int sid) {
 			break;
 		case NetMsgCustomVaultPlayerStatus:
 			print2log(f_uru,"<RCV> NetMsgCustomVaultPlayerStatus for %i\n",u->hmsg.ki);
+			//BEGIN a'moaca' - let's keep the KI number around, because it gets overwritten by plVaultUpdatePlayerStatus; it might work to move that to after the hack, but this is safer
+			U32 this_player_ki;
+			//END
 			Byte age[200];
 			Byte guid[20];
 			Byte state;
@@ -252,6 +255,9 @@ int process_csbvault_plNetMsg(st_unet * net,Byte * buf,int size,int sid) {
 			//level=*(Byte *)(buf+off);
 			//off++;
 			level=0;
+			//BEGIN
+			this_player_ki=u->hmsg.ki;
+			//END
 			plVaultUpdatePlayerStatus(net,u->hmsg.ki,age,guid,state,online_time,sid);
 			n=1;
 			
@@ -276,8 +282,6 @@ int process_csbvault_plNetMsg(st_unet * net,Byte * buf,int size,int sid) {
 				t_SpawnPoint spoint;
 				t_vault_manifest mfs; //a manifest
 
-				//memset(&node,0,sizeof(t_vault_node));
-				//Suggest usage of init_node, this will be enforced when we have the tVaultNode class implemented
 				init_node(&node);
 				node.type=KAgeInfoNode; // 33
 				strncpy((char *)&node.entry_name,(char *)age,sizeof(node.entry_name));
@@ -285,7 +289,7 @@ int process_csbvault_plNetMsg(st_unet * net,Byte * buf,int size,int sid) {
 				strcpy((char *)spoint.title,"Default");
 				strcpy((char *)spoint.name,"LinkInPointDefault");
 				age_id=plVaultFindNode(&node,&mfs,0,&db);
-				print2log(f_uru,"Want to add age link: KI %i age %s age_id %i\n",u->hmsg.ki,age,age_id);
+				print2log(f_uru,"Want to add age link: KI %i age %s age_id %i\n",this_player_ki,age,age_id);
 				if (age_id <= 0) {
 					// this is an error
 					//n=0; NOO!
@@ -296,11 +300,8 @@ int process_csbvault_plNetMsg(st_unet * net,Byte * buf,int size,int sid) {
 						Oh, and seems that this is going to change again.
 						AFAIK, this error codes are currently ignored by the vault server
 					*/
-					n=1;
 				} else {
-					plVaultAddLinkingPoint(net,u->hmsg.ki,age_id,&spoint,1);
-					//plVaultAddOwnerToAge(net,age_id,u->hmsg.ki); // ???
-					n=1;
+					plVaultAddLinkingPoint(net,this_player_ki,age_id,&spoint,1);
 				}
 				destroy_node(&node);
 			}
