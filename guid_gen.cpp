@@ -192,7 +192,7 @@ void generate_newguid(Byte * guid2,Byte * age_name,U32 ki) {
 	---------------------------------
 	| 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
 	--------------------------------
-	| 0 | ki here       | 0 | s | 0 |
+	| 0 | ki here       | 0 | s | s |
 	--------------------------------
 
 	Where s, is the sequence prefix.
@@ -202,20 +202,16 @@ void generate_newguid(Byte * guid2,Byte * age_name,U32 ki) {
 	The 5 byte is reserved for a random number for the hoods, and any other age (for the future)
 	And the 1st bit of the 4 byte, should be always 0 (since the Ki number is a signed value, this
 	Will happen always.
-	(7th byte is reserver for a possible expansion of the current sequence prefix, perhaps, some
-	day in the future we will have more than 256 ages, but I'm pretty sure that this code will
-	be completely different when this happens)
-
 	*/
 
 	if(global_muinstance_mode==1) { //multiple instance mode
-		guid[i]=(Byte)find_age_sequence_number(age_name); //current limitation, is that only 256 ages are allowed
+		*(U16 *)(guid+i)=find_age_sequence_number(age_name);
 
 		if(check_if_age_is_private(age_name)) {
 			*(U32 *)(guid+1)=ki; //nice eh!
 		}
 	} else if(global_muinstance_mode==0) { //single instance mode, new standard
-		guid[i]=(Byte)find_age_sequence_number(age_name); //current limitation, is that only 256 ages are allowed
+		*(U16 *)(guid+i)=find_age_sequence_number(age_name);
 	} else { //single instance mode, old standard #2
 
 		if(!strcmp((char *)age_name,"AvatarCustomization")) {

@@ -297,6 +297,8 @@ int parse_age_descriptor(st_log * dsc,char * buf,int size,t_age_def * age) {
 				} else {
 					age->SequencePrefix= (U16)atoi(right_buffer);
 				}
+			} else if(!strcmp(left_buffer,"agesdlhook")) {
+				// ignore it
 			} else if(!strcmp(left_buffer,"releaseversion")) {
 				if(!isdigit(right_buffer[0])) {
 					print2log(dsc,"ERR: Parse error at line %i, invalid type %s\n",l-1,right_buffer);
