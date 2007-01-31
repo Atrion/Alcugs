@@ -115,6 +115,7 @@ int process_tracking_plNetMsg(st_unet * net,Byte * buf,int size,int sid) {
 		case NetMsgCustomForkServer:
 			print2log(f_uru,"<RCV> NetMsgCustomForkServer ");
 			U16 f_port;
+			Byte loadstate;
 			char f_strport[7];
 			char f_guid[20];
 			char f_name[100];
@@ -131,6 +132,8 @@ int process_tracking_plNetMsg(st_unet * net,Byte * buf,int size,int sid) {
 			off+=2;
 			off+=decode_urustring((Byte *)f_name,buf+off,99);
 			off+=2;
+			loadstate = *(buf+off);
+			off++;
 			//Never trust the user input!!
 			str_filter((Byte *)f_guid);
 			str_filter((Byte *)f_name);
@@ -146,8 +149,8 @@ int process_tracking_plNetMsg(st_unet * net,Byte * buf,int size,int sid) {
 				int ret=0;
 				char wthatb[200],params[300];
 				sprintf(wthatb,"%suru_game.exe",globby_bin);
-				sprintf(params,"-p %s -guid %s -name %s -log %s -c %s",f_strport,f_guid,\
-				f_name,f_logs,globby_game_config);
+				sprintf(params,"-p %s -guid %s -name %s -log %s -c %s%s",f_strport,f_guid,\
+				f_name,f_logs,globby_game_config,loadstate?" -L":"");
 				ret=(int)ShellExecute(0,"open",wthatb,params,0,SW_SHOW);
 				plog(f_err,"ShellExecute %s %s with ret:%i\n",wthatb,params,ret);
 				//and (I hate windows)
@@ -162,8 +165,14 @@ int process_tracking_plNetMsg(st_unet * net,Byte * buf,int size,int sid) {
 					char wthatb[200];
 					//allow blank binary path
 					sprintf(wthatb,"%suru_game",globby_bin);
-					execlp(wthatb,f_name,"-p",f_strport,"-guid",f_guid,"-name",f_name,\
-						"-log",f_logs,"-c",globby_game_config,NULL);
+					if(loadstate) {
+						execlp(wthatb,f_name,"-p",f_strport,"-guid",f_guid,"-name",f_name,\
+									 "-log",f_logs,"-c",globby_game_config,"-L",NULL);
+					}
+					else {
+						execlp(wthatb,f_name,"-p",f_strport,"-guid",f_guid,"-name",f_name,\
+									 "-log",f_logs,"-c",globby_game_config,NULL);
+					}
 					//on error, dump an error message
 					log_init();
 					//warning here..

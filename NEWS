@@ -8,6 +8,75 @@
 | Home: http://alcugs.sf.net                                                |
 -----------------------------------------------------------------------------
 
+30/Jan/2007 - Semi-persistent SDL state
+===========================================================================0
+The fact that ages always reset each link has been the last *major*
+remaining Alcugs server annoyance for a while now, and due to the fact
+that the server is no longer under active development, I (a'moaca')
+broke down, got out the giant crowbar, and crammed SDL into the unet3
+and unet2 servers, since there will probably never be a unet3+ server
+to put it into. This will increase the usability of Alcugs servers and
+seemed better than the functionality never existing.
+
+I lifted the SDL parsing code from The.Modificator's proposedsdlstuff
+in the trunk and stuffed it into the unet2 branch, with a few bug
+fixes and additions. The game servers now retain state and send it to
+new arrivals. This includes age state and all state for avatars in the
+age. Despite this, synchronization of things like the ramps in
+Gahreesen is still not working well (I have not looked into
+why). There is also an extremely simple algorithm for filtering state
+messages so kickables and so forth behave better. The algorithm is not
+as good as we may be accustomed to from Plasma servers but it is a
+substantial improvement over before.
+
+Additionally, all age state is saved to files in the game server's log
+directory. (Not a preferred choice, but the most expedient.) However,
+this state is not loaded automatically by the game server. Instead,
+control over whether to load this state falls to the tracking
+server. It decides whether, when a new game server is started, the
+saved or default state should be used. If we wish to be able to use
+the PotS client and also visit ages with our friends, we cannot
+implement instances for all ages like in Plasma, yet with the
+introduction of persistent state, an age once solved is solved for
+everybody. Thus, as a compromise, a heretofore unseen (I think) set of
+global age "instancing" rules is introduced. I believe that they will
+be fairly natural in practice even if they seem complex here.
+
+If you link to an age with someone in it, of course you get the state
+that age already has. All the rest of the rules here apply only when a
+new game server is started. If you link to an age for which you have a
+book, the saved state is used. However, if you link to an age for
+which you do not have a book, the default state is always used
+instead. (Note this means that, given the current ways used to access
+new ages, all new ages will always use default state.) Thus if you are
+a new player and have never been to an age before, when you link to
+it, the age will be reset to the default state regardless of whether
+it was solved by someone else before. If you wish to replay an age,
+simply delete the book as usual and next time you link to the age the
+default state will be used. If you link to an age, don't complete it,
+and come back later after someone else has completed it, then, yes,
+you can avoid completing the age. But things like the presence of
+reward clothing are part of the age state so if you want to have all
+the rewards in the game you will probably need to solve all the ages
+yourself normally.
+
+Some ages can't be reset by normal in-game means, yet have state that
+needs to be default in some cases, e.g. the Watcher's Sanctuary and
+the spyroom, which have reward clothing. There is a configurable list
+of ages that will always use the default state, no matter what, to
+handle these few cases. I can think of "better" solutions but they
+would require a lot more changes than I have chosen to implement. To
+manually reset any age's state, delete the agestate.raw file from the
+appropriate age's log directory.
+
+NOTE: You cannot update the trunk/unet3 servers without also updating
+the game server from unet2 branch. It is okay to update the game
+server and not update the other servers but in that case default age
+state will always be used each time a game server is started.
+
+17/May/2006 - Regular (non-shouted) chat and inter-age chat
+===========================================================================0
+
 01/Dec/2005 - New alcugs authentication subsystem
 ===========================================================================0
 The new authentication server does not authenticate anymore using the

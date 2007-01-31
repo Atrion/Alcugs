@@ -34,7 +34,7 @@
 #define __U_URUGTRACKINGMSG_H_ID "$Id$"
 
 int plNetMsgCustomServerFound(st_unet * net,Byte * address,int port,Byte * guid,Byte * age_fname,int sid);
-int plNetMsgCustomForkServer(st_unet * net,int port,Byte * guid,Byte * age_fname,int sid);
+int plNetMsgCustomForkServer(st_unet * net,int port,Byte * guid,Byte * age_fname,Byte loadstate,int sid);
 int plNetMsgCustomDirectedFwd(st_unet * net,Byte *buf,int size,int fromki,int sid);
 
 #endif

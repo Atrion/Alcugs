@@ -74,6 +74,8 @@ st_log * f_track=NULL;
 
 char * global_private_ages=NULL;
 int global_muinstance_mode=1;
+char * global_resetting_ages=NULL;
+int global_use_agestate=1;
 
 Byte xml_e=1,status1_e=1,status2_e=1;
 char * xml=NULL;
@@ -136,6 +138,14 @@ int init_tracking_subsys() {
 	tmp = (char *)cnf_getString("AvatarCustomization,Personal,Nexus,BahroCave","private_ages","global",global_config);
 	global_private_ages=(char *)malloc((strlen(tmp)+1) * sizeof(char));
 	strcpy(global_private_ages,tmp);
+	global_use_agestate=cnf_getByte(global_use_agestate,"tracking.tmp.hacks.agestate","global",global_config);
+	// DniCityX2Finale,GreatZero,Kveer,Neighborhood02: for gameplay
+	// Myst,Personal02,RestorationGuild,spyroom: for reward clothing
+	// Cleft: for Relto book -- only required if someone doesn't finish Cleft on first try
+	// Garden???: for rain bug
+	tmp = (char *)cnf_getString("Cleft,DniCityX2Finale,GreatZero,Kveer,Myst,Neighborhood02,Personal02,RestorationGuild,spyroom","tracking.tmp.hacks.resetting_ages","global",global_config);
+	global_resetting_ages=(char*)malloc((strlen(tmp)+1) * sizeof(char));
+	strcpy(global_resetting_ages,tmp);
 
 	tmp = (char *)cnf_getString("log/status.xml","track.xml.path","global",global_config);
 	xml=(char *)malloc((strlen(tmp)+1) * sizeof(char));
@@ -174,11 +184,13 @@ void stop_tracking_subsys() {
 	if(tracking_initialitzed!=1) return;
 	plog(f_uru,"INF: Tracking subsystem stopped\n");
 	if(global_private_ages!=NULL) free((void *)global_private_ages);
+	if(global_resetting_ages!=NULL) free((void *)global_resetting_ages);
 	if(xml!=NULL) free((void *)xml);
 	if(status1!=NULL) free((void *)status1);
 	if(status2!=NULL) free((void *)status2);
 	if(system_addr!=NULL) free((void *)system_addr);
 	global_private_ages=NULL;
+	global_resetting_ages=NULL;
 	xml=NULL;
 	status1=NULL;
 	status2=NULL;
@@ -453,6 +465,29 @@ int tracking_notify_waiting_players(st_unet * net, int sid) {
 }
 
 
+int check_if_age_is_resetting(Byte * age_name) {
+
+	char bufeta[4096]; //grumblemumble
+	strncpy(bufeta,(const char *)global_resetting_ages,4096);
+	bufeta[4096]='\0';
+
+	char *buf=bufeta;
+	char *p=NULL;
+
+	p=strsep(&buf,",");
+
+	while(p!=NULL) {
+		DBG(5,"p:%s,an:%s,b:%s\n",p,age_name,buf);
+		print2log(f_track,"p:%s,an:%s,b:%s\n",p,age_name,buf);
+		if(p!=NULL && !strcmp(p,(const char *)age_name)) {
+			return 1;
+		}
+		p=strsep(&buf,",");
+	}
+	//abort();
+	return 0;
+}
+
 int tracking_subsys_findserver(st_unet * net,char * guid,char * name,U32 cip,int sid) {
 	st_uru_client * u=&net->s[sid]; //peer that requested the FindServer Message
 	int i;
@@ -462,6 +497,7 @@ int tracking_subsys_findserver(st_unet * net,char * guid,char * name,U32 cip,int
 	int game=-1; //iterator (with found game server sid)
 	int lobby=-1; //iterator (with found lobby server sid)
 	int load=10000;
+	int loadstate=global_use_agestate && !check_if_age_is_resetting((Byte*)name);
 
 	//Check the player
 	for(i=0; i<n_tracks; i++) {
@@ -482,6 +518,7 @@ int tracking_subsys_findserver(st_unet * net,char * guid,char * name,U32 cip,int
 	strcpy((char *)tracks[tut].age_name,name);
 	//Get the age GUID
 	if(!strcmp(guid,"") || strlen(guid)!=16 || !strcmp(guid,"0000000000000000")) {
+		loadstate=0;
 		generate_newguid((Byte *)guid,(Byte *)name,u->hmsg.ki);
 		strcpy((char *)tracks[tut].guid,guid);
 		if(!strcmp((char *)tracks[tut].guid,"0000000000000000")) {
@@ -567,7 +604,7 @@ int tracking_subsys_findserver(st_unet * net,char * guid,char * name,U32 cip,int
 			if(lowest<=lob->port_end) {
 				plog(f_uru,"Telling lobby to fork a server...\n");
 				plNetMsgCustomForkServer(net,lowest,tracks[tut].guid,\
-				tracks[tut].age_name,lobby);
+				tracks[tut].age_name,loadstate,lobby);
 			} else {
 				plog(f_uru,"Cannot fork server, port range full\n");
 			}

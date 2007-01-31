@@ -84,7 +84,7 @@ int plNetMsgCustomServerFound(st_unet * net,Byte * address,int port,Byte * guid,
 /**
 	-- Fork Server (tracking-->lobby)
 */
-int plNetMsgCustomForkServer(st_unet * net,int port,Byte * guid,Byte * age_fname,int sid) {
+int plNetMsgCustomForkServer(st_unet * net,int port,Byte * guid,Byte * age_fname,Byte loadstate,int sid) {
 	if(net_check_address(net,sid)!=0) { return -1; }
 	st_uru_client * u=&net->s[sid];
 	int off=0,ret=0;
@@ -102,8 +102,10 @@ int plNetMsgCustomForkServer(st_unet * net,int port,Byte * guid,Byte * age_fname
 	off+=2;
 	off+=encode_urustring(buf+off,guid,strlen((char *)guid),1);
 	off+=encode_urustring(buf+off,age_fname,strlen((char *)age_fname),0);
+	*(buf+off)=loadstate;
+	off++;
 
-	print2log(f_uru,"<SND> NetMsgCustomForkServer p:%i,g:%s,af:%s\n",port,guid,age_fname);
+	print2log(f_uru,"<SND> NetMsgCustomForkServer p:%i,g:%s,af:%s,ls:%i\n",port,guid,age_fname,loadstate);
 
 	ret=plNetSendMsg(net,buf,off,sid,0);
 

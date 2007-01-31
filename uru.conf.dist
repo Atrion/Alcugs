@@ -222,6 +222,12 @@ stop = 1
 port = 2011
 log_files_path = log/tracking/
 
+;tracking.tmp.hacks.agestate = 1	; on by default
+; The following list was carefully chosen, please think before removing any.
+; The Cleft *must* be listed either here or in private_ages or new players
+; will be unable to get a Relto book if they don't do so on the first visit!!
+;tracking.tmp.hacks.resetting_ages = "Cleft,DniCityX2Finale,GreatZero,Kveer,Myst,Neighborhood02,Personal02,RestorationGuild,spyroom"
+
 ;crash.action = "python/xMailCrashReport.py name=uru_tracking"
 
 stop = 1
@@ -244,6 +250,8 @@ db.passwd = "vault_db_passwd"
 # Assigned name to new hoods
 vault.hood.name = "My Neighborhood"
 vault.hood.desc = "My Neighborhood description"
+
+;vault.tmp.hacks.linkrules = 0		; disabled by default
 
 stop = 1
 
