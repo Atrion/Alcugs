@@ -114,7 +114,7 @@ SERVEROBJ=settings.o pbasicmsg.o pdefaultmsg.o pnetmsg.o
 
 CAUTHOBJ=pcauthmsg.o gauthmsg.o gscauthmsg.o psauthmsg.o
 SAUTHOBJ=gsauthmsg.o pscauthmsg.o cgas_auth.o
-AUTH1=auth_db_p.o auth_p.o
+AUTH1=auth_db_cags.o auth_cags.o
 AUTH2=auth_db.o auth.o
 CVAULTOBJ=psbvaultmsg.o gbvaultmsg.o pcbvaultmsg.o gcsbvaultmsg.o
 
@@ -171,11 +171,11 @@ gui: ${GUI_APP}
 
 all: ${ALL_PRGS}
 
-max: ${ALL_PRGS} uru_authp$(EXE) uruproxy$(EXE) urumsgtest$(EXE)
+max: ${ALL_PRGS} uru_authcags$(EXE) uruproxy$(EXE) urumsgtest$(EXE)
 
 #Server daemons
-uru_authp$(EXE): uru.cpp $(BASE) $(AUTHOBJ) $(AUTH1)
-	$(COMP) uru.cpp -o uru_authp$(EXE) -DI_AM_THE_AUTH_SERVER $(BASE) $(AUTHOBJ) $(AUTH1)\
+uru_authcags$(EXE): uru.cpp $(BASE) $(AUTHOBJ) $(AUTH1)
+	$(COMP) uru.cpp -o uru_authcags$(EXE) -DI_AM_THE_AUTH_SERVER $(BASE) $(AUTHOBJ) $(AUTH1)\
 	 $(BASELIBS) $(DBLIB)
 uru_auth$(EXE): uru.cpp $(BASE) $(AUTHOBJ) $(AUTH2)
 	$(COMP) uru.cpp -o uru_auth$(EXE) -DI_AM_THE_AUTH_SERVER $(BASE) $(AUTHOBJ) $(AUTH2)\

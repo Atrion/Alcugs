@@ -33,9 +33,10 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_AUTH_DB_H_ID "$Id$"
 
-int plVaultQueryUserName(Byte * login, U32 * attempt, U32 * att,st_sql * db);
-int plVaultAddUser(Byte * login,Byte * guid,Byte * ip,Byte a_level,st_sql * db);
-int plVaultUpdateUser(Byte * login,Byte * guid,Byte * ip,int n_tryes,st_sql * db);
+int plVaultQueryUserName(Byte * login,Byte * passwd,Byte * guid,Byte cgas_flag, U32 * attempt, U32 * cached, U32 * att,st_sql * db);
+int plVaultAddUser(Byte * login,Byte * passwd,Byte * guid,Byte cgas_flag,Byte * ip,Byte a_level,st_sql * db);
+int plVaultUpdateUserPasswd(Byte * login,Byte * passwd,Byte * guid,Byte cgas_flag,Byte * ip,st_sql * db);
+int plVaultUpdateUser(Byte * login,Byte * guid,Byte cgas_flag,Byte * ip,int n_tryes,st_sql * db);
 int plVaultInitializeAuthDB(st_sql * db,char force);
 
 #endif

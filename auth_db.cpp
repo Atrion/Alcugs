@@ -60,25 +60,41 @@ const int db_auth_version=1;
 
 const char * auth_table = "accounts";
 
-//auth table script
+//private auth table script
 const char * db_auth_table_init_script = "\
 CREATE TABLE `accounts` (\
   `uid` int(10) unsigned NOT NULL auto_increment,\
   `guid` varchar(50) NOT NULL default '',\
   `name` varchar(50) NOT NULL default '',\
-  `a_level` tinyint(1) unsigned NOT NULL default '15',\
+  `passwd` varchar(32) NOT NULL default '',\
+  `a_level` tinyint(1) unsigned NOT NULL default '25',\
+  `e-mail` varchar(100) NOT NULL default '',\
   `last_login` timestamp(14) NOT NULL,\
   `last_ip` varchar(30) NOT NULL default '',\
   `attempts` tinyint(1) unsigned NOT NULL default '0',\
   `last_attempt` timestamp(14) NOT NULL,\
+  `cgas` tinyint(4) NOT NULL default '0',\
+  `cgas_time` timestamp(14) NOT NULL,\
   PRIMARY KEY  (`uid`),\
   UNIQUE KEY `guid` (`guid`),\
-  UNIQUE KEY `name` (`name`)\
+  UNIQUE KEY `name` (`name`,`cgas`)\
 ) TYPE=MyISAM;";
 
 
-#if 0
+#if 0 //public script
+
+const char * db_auth_table_init_script = "\
+CREATE TABLE `accounts` (\
+  `uid` int(10) unsigned NOT NULL auto_increment,\
+  `name` varchar(50) NOT NULL default '',\
+  `a_level` tinyint(1) unsigned NOT NULL default '15',\
+	`last_login` DATETIME default '',\
+  PRIMARY KEY  (`uid`),\
+  UNIQUE KEY `name` (`name`)\
+) TYPE=MyISAM;";
+
 //not all versions of mysql allow that
+
 const char * db_auth_table_init_script_cont = "\
 CREATE TABLE lastlogs (\
   inc bigint NOT NULL auto_increment,\
@@ -89,6 +105,10 @@ CREATE TABLE lastlogs (\
 	UNIQUE KEY inc (inc)\
 ) TYPE=MyISAM;\
 ";
+
+//conversion script needs to drop the last_login DATETIME and create a timestamp one
+//ALTER TABLE `accounts` CHANGE `last_login` `last_login` TIMESTAMP
+
 #endif
 
 /**
@@ -96,8 +116,9 @@ CREATE TABLE lastlogs (\
 	get the passwd and
 	Then return the user access_level
 	returns -1 if it was no possible to find a user
+	( 1 for cgas cached account, elsewhere for local account)
 */
-int plVaultQueryUserName(Byte * login, U32 * attempt, U32 * att,st_sql * db) {
+int plVaultQueryUserName(Byte * login,Byte * passwd,Byte * guid,Byte cgas_flag, U32 * attempt, U32 * cached, U32 * att,st_sql * db) {
 
 	MYSQL_RES *result; //the results
 	MYSQL_ROW row; //a mysql row
@@ -108,17 +129,26 @@ int plVaultQueryUserName(Byte * login, U32 * attempt, U32 * att,st_sql * db) {
 	int ret; //for store result codes
 
 	ret=sql_begin(db);
-	if(ret!=SQL_OK) { return AcNotRes; }
+	DBG(5,"SQL begin ret:%i\n",ret);
+
+	if(ret!=SQL_OK) {
+		//if the database is dead, return the AcNotRes
+		return AcNotRes;
+	}
+
+	//query here the database
+	if(cgas_flag!=1) { cgas_flag=0; }
 
 	mysql_escape_string(en_query,(const char *)login,strlen((const char *)login));
 
-	sprintf(query,"Select a_level,UNIX_TIMESTAMP(last_attempt),attempts \
-from accounts where name='%s';",en_query);
+	sprintf(query,"Select UCASE(passwd),a_level,guid,\
+UNIX_TIMESTAMP(last_attempt),UNIX_TIMESTAMP(cgas_time),attempts \
+from accounts where name='%s' and cgas=%i;",en_query,cgas_flag);
 
 	ret=sql_query(db,query,_WHERE("QueryUserName"));
 
 	if(ret!=SQL_OK) {
-		if(mysql_errno(db->conn)==1146 || mysql_errno(db->conn)==1054) {
+		if(mysql_errno(db->conn)==1146) {
 			ret=plVaultInitializeAuthDB(db,1);
 		}
 		if(ret>=0) { //try again
@@ -139,36 +169,48 @@ from accounts where name='%s';",en_query);
 			if(row==NULL) {
 				ret=-1; //not found!
 			} else {
-				ret=atoi(row[0]); //the access_level
-				*attempt=atoi(row[1]);
-				*att=atoi(row[2]);
+				ret=atoi(row[1]); //the access_level
+				strcpy((char *)passwd,row[0]); //copy the passwd hash
+				strcpy((char *)guid,row[2]); //the guid
+				//printf("\npasswd %s, %s\n",passwd,row[0]);
+				*attempt=atoi(row[3]);
+				*cached=atoi(row[4]);
+				*att=atoi(row[5]);
 			}
 			mysql_free_result(result);
 		}
 	}
+
 	sql_end(db);
+
 	return ret;
 }
 
-/** A
+/** Add a cached account from the CGAS
 */
-int plVaultAddUser(Byte * login,Byte * guid,Byte * ip,Byte a_level,st_sql * db) {
+int plVaultAddUser(Byte * login,Byte * passwd,Byte * guid,Byte cgas_flag,Byte * ip,Byte a_level,st_sql * db) {
 	char query[1024];
 	char en_query[512];
+	char en_passwd[60];
 	char en_guid[60];
 
 	int ret; //for store result codes
 
 	ret=sql_begin(db);
+	DBG(5,"SQL begin ret:%i\n",ret);
 	if(ret!=SQL_OK) { return -1; }
 
+	//query here the database
+	if(cgas_flag!=1) { cgas_flag=0; }
+
 	mysql_escape_string(en_query,(const char *)login,strlen((const char *)login));
+	mysql_escape_string(en_passwd,(const char *)passwd,strlen((const char *)passwd));
 	mysql_escape_string(en_guid,(const char *)guid,strlen((const char *)guid));
 
-	sprintf(query,"INSERT INTO accounts(name,guid,last_ip,\
-attempts,last_login,last_attempt,a_level)\
-VALUES('%s','%s','%s',0,NOW(),NOW(),%i);",\
-en_query,en_guid,ip,a_level);
+	sprintf(query,"INSERT INTO accounts(name,passwd,guid,cgas,last_ip,\
+attempts,last_login,last_attempt,cgas_time,a_level)\
+VALUES('%s','%s','%s',%i,'%s',0,NOW(),NOW(),NOW(),%i);",\
+en_query,en_passwd,en_guid,cgas_flag,ip,a_level);
 
 	if(sql_query(db,query,_WHERE("AddUser"))!=SQL_OK) {
 		ret=-1;
@@ -181,9 +223,47 @@ en_query,en_guid,ip,a_level);
 }
 
 /**
+Update a password (cache miss), but, yes I now, there isn't any way to change the password,
+well, just in case.
+*/
+int plVaultUpdateUserPasswd(Byte * login,Byte * passwd,Byte * guid,Byte cgas_flag,Byte * ip,st_sql * db) {
+	char query[1024];
+	char en_query[512];
+	char en_passwd[60];
+	char en_guid[60];
+
+	int ret; //for store result codes
+
+	ret=sql_begin(db);
+	DBG(5,"SQL begin ret:%i\n",ret);
+	if(ret!=SQL_OK) { return -1; }
+
+	if(cgas_flag!=1) { cgas_flag=0; }
+
+	mysql_escape_string(en_query,(const char *)login,strlen((const char *)login));
+	mysql_escape_string(en_passwd,(const char *)passwd,strlen((const char *)passwd));
+	mysql_escape_string(en_guid,(const char *)guid,strlen((const char *)guid));
+
+	sprintf(query,"UPDATE accounts SET passwd='%s',last_ip='%s',\
+cgas_time=NOW()\
+WHERE guid='%s' and name='%s' and cgas='%i';",\
+en_passwd,ip,en_guid,en_query,cgas_flag);
+
+	if(sql_query(db,query,_WHERE("UpdateUserPasswd"))!=SQL_OK) {
+		ret=-1;
+	} else {
+		ret=mysql_affected_rows(db->conn);
+	}
+
+	sql_end(db);
+	return ret;
+}
+
+
+/**
  this one should update the user, ehmm.., ah, the number of tryes, I din't remember that
 */
-int plVaultUpdateUser(Byte * login,Byte * guid,Byte * ip,int n_tryes,st_sql * db) {
+int plVaultUpdateUser(Byte * login,Byte * guid,Byte cgas_flag,Byte * ip,int n_tryes,st_sql * db) {
 	char query[1024];
 	char en_query[512];
 	char en_guid[60];
@@ -193,13 +273,15 @@ int plVaultUpdateUser(Byte * login,Byte * guid,Byte * ip,int n_tryes,st_sql * db
 	ret=sql_begin(db);
 	if(ret!=SQL_OK) { return -1; }
 
+	if(cgas_flag!=1) { cgas_flag=0; }
+
 	mysql_escape_string(en_query,(const char *)login,strlen((const char *)login));
 	mysql_escape_string(en_guid,(const char *)guid,strlen((const char *)guid));
 
 	sprintf(query,"UPDATE accounts SET attempts='%i',last_ip='%s',\
-last_attempt=NOW(),guid='%s'\
-WHERE name='%s';",\
-n_tryes,ip,en_guid,en_query);
+last_attempt=NOW()\
+WHERE guid='%s' and name='%s' and cgas='%i';",\
+n_tryes,ip,en_guid,en_query,cgas_flag);
 
 	if(sql_query(db,query,_WHERE("UpdateUser"))!=SQL_OK) {
 		ret=-1;
@@ -223,22 +305,16 @@ int plVaultInitializeAuthDB(st_sql * db,char force) {
 
 	//check internal
 	key=plVaultSettingsGetKey("auth_db_internal",db);
-	if(key!=NULL) {
-		plog(db->err,"ERR: Database version mismatch!\n");
-		ret=-1;
-	} else {
-
-		key=plVaultSettingsGetKey("auth_db_version",db);
-		if(key==NULL) {
-			sprintf(work,"%i",db_auth_version);
-			ret=plVaultSettingsAddKey("auth_db_version",work,db);
-			if(ret<=0) {
-				plog(db->err,"ERR: Cannot add key \"auth_db_version\"!\n");
-				return -1;
-			}
-			key=work;
-			newone=1;
+	key=plVaultSettingsGetKey("auth_db_version",db);
+	if(key==NULL) {
+		sprintf(work,"%i",db_auth_version);
+		ret=plVaultSettingsAddKey("auth_db_version",work,db);
+		if(ret<=0) {
+			plog(db->err,"ERR: Cannot add key \"auth_db_version\"!\n");
+			return -1;
 		}
+		key=work;
+		newone=1;
 
 		ret=atoi(key);
 
@@ -254,21 +330,6 @@ int plVaultInitializeAuthDB(st_sql * db,char force) {
 			//then create it
 			if(sql_query(db,(char *)db_auth_table_init_script,_WHERE("InitAuthDB"))!=SQL_OK) {
 				ret=-1;
-				if(mysql_errno(db->conn)==1050) {
-					//OK, attempt to migrate the table from the current unstable and broken state,
-					//  to the normal state that *we* expect to find in future versions of the servers.
-					ret=sql_query(db,(char *)"ALTER TABLE `accounts` CHANGE `last_login` `last_login` TIMESTAMP(14);",_WHERE("migration from nothing to 1 step 1"));
-					if(ret!=SQL_OK && mysql_errno(db->conn)==1054) {
-						ret=sql_query(db,(char *)"ALTER TABLE `accounts` ADD `last_login` TIMESTAMP(14) NOT NULL;",_WHERE("migration from nothing to 1 step 1 bis"));
-					}
-					ret=sql_query(db,(char *)"ALTER TABLE `accounts` ADD `guid` VARCHAR(50) NOT NULL AFTER `uid`;",_WHERE("migration from nothing to 1 step 2"));
-					ret=sql_query(db,(char *)"ALTER TABLE `accounts` ADD `last_ip` VARCHAR(30) NOT NULL;",_WHERE("migration from nothing to 1 step 3"));
-					ret=sql_query(db,(char *)"ALTER TABLE `accounts` ADD `attempts` tinyint(1) unsigned NOT NULL default '0';",_WHERE("migration from nothing to 1 step 4"));
-					ret=sql_query(db,(char *)"ALTER TABLE `accounts` ADD `last_attempt` timestamp(14) NOT NULL;",_WHERE("migration from nothing to 1 step 5"));
-					ret=sql_query(db,(char *)"ALTER TABLE `accounts` ADD UNIQUE(`guid`);",_WHERE("migration from nothing to 1 step 6"));
-					//well we hope that everything worked well...
-					ret=0;
-				}
 				plog(db->err,"ERR: Cannot initialize the default database tables\n");
 			} else {
 				ret=mysql_affected_rows(db->conn);
