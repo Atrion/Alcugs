@@ -52,10 +52,10 @@
 //#define _TX_ABORT_
 
 // Noise and latency debbuging tests
-#define _UNET_DBG_
+//#define _UNET_DBG_
 
 // Debugging information attached to messages
-#define _UNET_MSGDBG_
+//#define _UNET_MSGDBG_
 
 // Check admin?
 #define __VTC 0

@@ -497,7 +497,7 @@ Byte * tmNetClientComm::str() {
 	sprintf((char *)cnt,"(Re)Negotation bandwidth: %i bps time: %s",bandwidth,(char *)timestamp.str());
 	return cnt;
 	#else
-	return "Negotiation";
+	return (Byte *)"Negotiation";
 	#endif
 }
 
@@ -727,7 +727,7 @@ Byte * tmMsgBase::str() {
 	dbg.rewind();
 	return dbg.read();
 	#else
-	return alcUnetGetMsgCode(cmd);
+	return (Byte *)alcUnetGetMsgCode(cmd);
 	#endif
 }
 

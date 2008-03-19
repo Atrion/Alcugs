@@ -364,7 +364,7 @@ void tUnet::startOp() {
 	// The next line of code was originally written in 10/Feb/2004,
 	// when the first listenning udp server named urud (uru daemon)
 	// was compiled on that day.
-	this->log->log("DBG: Listening to incoming datagrams on %s port udp %i\n\n",bindaddr,bindport);
+	this->log->log("DBG: Listening to incoming datagrams on %s port udp %i\n",bindaddr,bindport);
 
 	smgr=new tNetSessionMgr(this,this->max);
 
@@ -800,10 +800,12 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 	u->server.pn++;
 	msg->pn=u->server.pn;
 	
+	#if _DBG_LEVEL_ > 2
 	log->log("<SND> ");
 	msg->dumpheader(log);
 	log->nl();
 	msg->htmlDumpHeader(ack,1,u->ip,u->port);
+	#endif
 
 	//store message into buffer
 	tMBuf * mbuf;

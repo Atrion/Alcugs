@@ -61,7 +61,7 @@ Byte * tmTerminated::str() {
 	#ifdef _UNET_MSGDBG_
 	tmMsgBase::str();
 	dbg.end();
-	dbg.seek(-1);
+	dbg.seek(-2);
 	dbg.printf("Reason [%i] %s ",reason,alcUnetGetReasonCode(reason));
 	dbg.putByte(0);
 	dbg.rewind();
@@ -92,7 +92,7 @@ Byte * tmLeave::str() {
 	#ifdef _UNET_MSGDBG_
 	tmMsgBase::str();
 	dbg.end();
-	dbg.seek(-1);
+	dbg.seek(-2);
 	dbg.printf("Reason [%i] %s ",reason,alcUnetGetReasonCode(reason));
 	dbg.putByte(0);
 	dbg.rewind();
@@ -131,7 +131,7 @@ Byte * tmPlayerTerminated::str() {
 	#ifdef _UNET_MSGDBG_
 	tmMsgBase::str();
 	dbg.end();
-	dbg.seek(-1);
+	dbg.seek(-2);
 	dbg.printf("Reason [%i] %s ",reason,alcUnetGetReasonCode(reason));
 	dbg.putByte(0);
 	dbg.rewind();
@@ -183,7 +183,7 @@ Byte * tmPing::str() {
 	#ifdef _UNET_MSGDBG_
 	tmMsgBase::str();
 	dbg.end();
-	dbg.seek(-1);
+	dbg.seek(-2);
 	dbg.printf("t:%e,dst:%i %s ",mtime,destination,alcUnetGetDestination(destination));
 	dbg.putByte(0);
 	dbg.rewind();

@@ -64,10 +64,8 @@ namespace alc {
 			case NetMsgPing:
 				ping.setSource(u);
 				msg->data->get(ping);
+				log->log("<RCV> %s\n",ping.str());
 				if (ping.destination == whoami || ping.destination == KBcast) { // if it's for us or for everyone, answer
-					log->log("Ping from %s:%i x=%i dest=%i %s time=%0.3f ms .... pong....\n",\
-						alcGetStrIp(ev->sid.ip),ntohs(ev->sid.port),ping.x,ping.destination,\
-						alcUnetGetDestination(ping.destination),ping.mtime*1000);
 					ping.setReply();
 					u->send(ping);
 					ret=1;

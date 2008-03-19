@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETSESSION_ID "$Id$"
 
-//#define _DBG_LEVEL_ 7
+//#define _DBG_LEVEL_ 3
 
 //#define _ACKSTACK_DBG_
 
@@ -229,9 +229,11 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	
 	try {
 		mbuf.get(msg);
+		#if _DBG_LEVEL_ > 2
 		net->log->log("<RCV> ");
 		msg.dumpheader(net->log);
 		net->log->nl();
+		#endif
 		msg.htmlDumpHeader(net->ack,0,ip,port);
 	} catch(txUnexpectedData &t) {
 		net->unx->log("%s Unexpected Data %s\nBacktrace:%s\n",str(),t.what(),t.backtrace());
@@ -421,10 +423,12 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 */
 Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 	//drop already parsed messages
+	#if _DBG_LEVEL_ > 2
 	net->err->log("%s INF: SN %i (Before) window is:\n",str(),msg.sn);
 	net->err->dumpbuf((Byte *)w,rcv_win);
 	net->err->nl();
 	net->err->flush();
+	#endif
 	
 	if(!(msg.sn > wite || msg.sn <= (wite+rcv_win))) {
 		net->err->log("%s INF: Dropped packet %i out of the window by sn\n",str(),msg.sn);
@@ -446,7 +450,7 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 				i++; start++;
 				wite++;
 				if(i>=rcv_win*8) { i=0; start=0; }
-				net->err->log("%s INF: A bit was deactivated (1)\n",str());
+				DBG(3, "%s INF: A bit was deactivated (1)\n",str());
 			}
 			ck=(i < start ? i+(rcv_win*8) : i);
 			while((ck-start)>((rcv_win*8)/2)) {
@@ -455,15 +459,17 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 				start++;
 				wite++;
 				if(start>=rcv_win*8) { start=0; ck=i; }
-				net->err->log("%s INF: A bit was deactivated (2)\n",str());
+				DBG(3, "%s INF: A bit was deactivated (2)\n",str());
 			}
-			net->err->log("%s INF: Packet %i accepted to be parsed\n",str(),msg.sn);
+			DBG(3, "%s INF: Packet %i accepted to be parsed\n",str(),msg.sn);
 		}
 	}
+	#if _DBG_LEVEL_ > 2
 	net->err->log("%s INF: SN %i (after) window is:\n",str(),msg.sn);
 	net->err->dumpbuf((Byte *)w,rcv_win);
 	net->err->nl();
 	net->err->flush();
+	#endif
 	return 0;
 }
 
@@ -488,7 +494,7 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	if(tts>ack_rtt) tts=ack_rtt;
 	net->updatetimer(tts);
 	ack->timestamp=net->net_time + tts;
-	net->log->log("tts: %i, %i, %i\n",msg.frt,tts,cabal);
+	DBG(3, "tts: %i, %i, %i\n",msg.frt,tts,cabal);
 	
 	int i=0;
 
@@ -681,7 +687,7 @@ void tNetSession::ackUpdate() {
 				DBG(5,"sndq->getNext()\n");
 			}
 			sndq->insertBefore(pmsg);
-			DBG(5,"inserBefore\n");
+			DBG(5,"insertBefore\n");
 		}
 		//abort();
 #endif
@@ -695,7 +701,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 	U32 sn,ps;
 	Byte frn,pfr;
 
-	net->log->log("<RCV>");
+	DBG(3, "<RCV>");
 	t.data.rewind();
 	if(!(t.tf & UNetExt)) {
 		if(t.data.getU16()!=0) throw txUnexpectedData(_WHERE("ack unknown data"));
@@ -712,7 +718,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 		sn=A1 >> 8;
 		ps=A3 >> 8;
 		if(i!=0) net->log->print("    |");
-		net->log->print(" Ack %i,%i %i,%i\n",sn,frn,ps,pfr);
+		DBGM(3, " Ack %i,%i %i,%i\n",sn,frn,ps,pfr);
 		//well, do it
 		tUnetUruMsg * msg=NULL;
 		sndq->rewind();
@@ -722,7 +728,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 			
 			if(A1>=A2 && A2>A3) {
 				//then delete
-				net->log->log("Deleting packet %i,%i\n",msg->sn,msg->frn);
+				DBG(3, "Deleting packet %i,%i\n",msg->sn,msg->frn);
 				if(msg->tryes==1 && A1==A2) {
 					U32 crtt=net->net_time-msg->snd_timestamp;
 					#ifdef _UNET_DBG_

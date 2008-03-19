@@ -289,7 +289,7 @@ void tUnetBase::run() {
 					break;
 				case UNET_MSGRCV:
 					//dmalloc_verify(NULL);
-					log->log("%s New MSG Recieved\n",u->str());
+					DBG(3, "%s New MSG Recieved\n",u->str());
 					u->rcvq->rewind();
 					msg=u->rcvq->getNext();
 					while(msg!=NULL && msg->completed!=1)
