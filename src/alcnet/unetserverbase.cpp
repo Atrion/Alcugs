@@ -48,6 +48,11 @@
 namespace alc {
 
 	////IMPLEMENTATION
+	tUnetServerBase::tUnetServerBase(void) : tUnetBase()
+	{
+		whoami = alcWhoami; // the server should know who it is
+	}
+	
 	int tUnetServerBase::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
 	{
 		int ret=0;
@@ -59,14 +64,17 @@ namespace alc {
 			case NetMsgPing:
 				ping.setSource(u);
 				msg->data->get(ping);
-				log->log("Ping from %s:%i x=%i dest=%i %s time=%0.3f ms .... pong....\n",\
-					alcGetStrIp(ev->sid.ip),ntohs(ev->sid.port),ping.x,ping.destination,\
-					alcUnetGetDestination(ping.destination),ping.mtime*1000);
-				ping.setReply();
-				u->send(ping);
-				ret=1;
-				break;
-			default:
+				if (ping.destination == whoami || ping.destination == KBcast) { // if it's for us or for everyone, answer
+					log->log("Ping from %s:%i x=%i dest=%i %s time=%0.3f ms .... pong....\n",\
+						alcGetStrIp(ev->sid.ip),ntohs(ev->sid.port),ping.x,ping.destination,\
+						alcUnetGetDestination(ping.destination),ping.mtime*1000);
+					ping.setReply();
+					u->send(ping);
+					ret=1;
+				}
+				else if (whoami == KLobby || whoami == KGame) { // TODO: lobby and game server should forward the pings to their destination
+				
+				}
 				break;
 		}
 		return ret;

@@ -42,15 +42,32 @@
 #include <unet.h>
 
 ////extra includes
+#include "authserver.h"
 
 #include <alcdebug.h>
 
 namespace alc {
 
 	////IMPLEMENTATION
-	
 	const char * alcNetName="Auth";
 	Byte alcWhoami=KAuth;
+	
+	int tUnetAuthServer::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
+	{
+		int ret = tUnetServerBase::onMsgRecieved(ev, msg, u); // first let tUnetServerBase process the message
+		if (ret != 0) return ret; // cancel if it was processed, otherwise it's our turn
+		
+		tmMsgBase auth(NetMsgCustomAuthAsk,plNetKi | plNetX | plNetCustom); // TODO: get the correct flags
+		
+		switch(msg->cmd) {
+			case NetMsgCustomAuthAsk:
+				log->log("<RCV> NetMsgCustomAuthAsk\n");
+				msg->data->get(test);
+				// here we can now parse the additional stuff for this type of package, with e.g. msg->data->getByte()
+				break;
+		}
+		return ret;
+	}
 
 } //end namespace alc
 
