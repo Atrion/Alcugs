@@ -1,4 +1,4 @@
-SUBDIRS = include docs src
+SUBDIRS = include docs
 
 INCLUDES = -I$(top_srcdir)/include/alcugs
 
@@ -31,14 +31,13 @@ libalcugsbase1_a_SOURCES = \
  src/alcbase/alcutil/alcpkg.cpp \
  src/alcbase/urutypes/pypkg.cpp
 
-#libalcugsbase_a_LIBADD = alcexcpetion.o
-
 if WIN32
 libalcugsbase1_a_SOURCES += src/alcbase/alcutil/windoze.cpp
 endif
 
 libalcugsbase1_a_CPPFLAGS = -DIN_ALC_LIBRARY
 #End LibAlcugsBase library
+
 
 #LibAlcugsUruNet3 library
 libalcugsnet1_a_SOURCES = \
@@ -58,24 +57,22 @@ libalcugsnet1_a_SOURCES = \
 libalcugsnet1_a_CPPFLAGS = -DIN_ALC_LIBRARY
 #End LibAlcugsUruNet3 library
 
+#Test APPS
 check_PROGRAMS = test test2
 TESTS = test test2
 
-#Test APPS
 test_LDADD = libalcugsbase1.a 
-#@ALC_LIBS@
 test_SOURCES = src/alcbase/test/test.cpp
 
 test2_LDADD = libalcugsbase1.a 
-#@ALC_LIBS@
 test2_SOURCES = src/alcbase/test/test2.cpp
 #End Test APPS
 
 bin_PROGRAMS = alcconfig urucrypt m5crypt alcping alcmsgtest alcugs_lobby
 
 #Tools
-urucrypt_LDADD = libalcugsbase1.a 
-m5crypt_LDADD =  libalcugsbase1.a 
+urucrypt_LDADD = libalcugsbase1.a
+m5crypt_LDADD =  libalcugsbase1.a
 alcconfig_LDADD = libalcugsbase1.a
 
 urucrypt_SOURCES = src/tools/urucrypt.cpp
@@ -85,23 +82,18 @@ alcconfig_SOURCES = src/tools/alcconfig.cpp
 #End tools
 
 #Server programs
-alcping_LDADD = libalcugsnet1.a libalcugsbase1.a 
-#@ALC_LIBS@
-alcmsgtest_LDADD = libalcugsnet1.a libalcugsbase1.a 
-#@ALC_LIBS@
-alcugs_lobby_LDADD = libalcugsnet1.a libalcugsbase1.a 
-#@ALC_LIBS@
+alcping_LDADD = libalcugsnet1.a libalcugsbase1.a
+alcmsgtest_LDADD = libalcugsnet1.a libalcugsbase1.a
+alcugs_lobby_LDADD = libalcugsnet1.a libalcugsbase1.a
 
 alcping_SOURCES = src/servers/alcping.cpp
 alcmsgtest_SOURCES = src/servers/alcmsgtest.cpp
+
 alcugs_lobby_SOURCES = \
  src/servers/alcugs_main.cpp \
  src/servers/lobbyserver.cpp
-
 alcugs_lobby_INCLUDES = \
  src/servers/lobbyserver.h
-
 alcugs_lobby_CPPFLAGS = -DI_AM_THE_LOBBY_SERVER
 
 #End server programs
-

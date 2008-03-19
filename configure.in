@@ -177,7 +177,6 @@ if test "x$restoreme" == "x1" ; then
 fi
 
 #out
-AC_CONFIG_FILES([Makefile docs/Makefile include/Makefile \
- src/Makefile ])
+AC_CONFIG_FILES([Makefile docs/Makefile include/Makefile])
 AC_OUTPUT
 
