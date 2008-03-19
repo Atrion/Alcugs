@@ -34,7 +34,7 @@
 //#define _DBG_LEVEL_ 3
 
 #include "alcugs.h"
-#include "urunet/unet.h"
+#include "unet.h"
 
 #include <unistd.h>
 #include <fcntl.h>

@@ -1,16 +1,16 @@
 SUBDIRS = include docs
 
-INCLUDES = -I$(top_srcdir)/include/alcugs
+INCLUDES = -I$(top_srcdir)/include/alcbase -I$(top_srcdir)/include/alcnet
 
 ACLOCAL_AMFLAGS = -I m4
 
 #AM_CXXFLAGS = -Wall -rdynamic -g3 -O0
 #CXXFLAGS=
 
-lib_LIBRARIES = libalcugsbase1.a libalcugsnet1.a
+lib_LIBRARIES = libalcbase1.a libalcnet1.a
 
-#LibAlcugsBase library
-libalcugsbase1_a_SOURCES = \
+#LibAlcBase library
+libalcbase1_a_SOURCES = \
  src/alcbase/alcexception.cpp \
  src/alcbase/alcmain.cpp \
  src/alcbase/alctypes.cpp \
@@ -32,48 +32,48 @@ libalcugsbase1_a_SOURCES = \
  src/alcbase/urutypes/pypkg.cpp
 
 if WIN32
-libalcugsbase1_a_SOURCES += src/alcbase/alcutil/windoze.cpp
+libalcbase1_a_SOURCES += src/alcbase/alcutil/windoze.cpp
 endif
 
-libalcugsbase1_a_CPPFLAGS = -DIN_ALC_LIBRARY
-#End LibAlcugsBase library
+libalcbase1_a_CPPFLAGS = -DIN_ALC_LIBRARY
+#End LibAlcBase library
 
 
-#LibAlcugsUruNet3 library
-libalcugsnet1_a_SOURCES = \
- src/unet/alcnet.cpp \
- src/unet/netlog.cpp \
- src/unet/netsession.cpp \
- src/unet/netsessionmgr.cpp \
- src/unet/netmsgq.cpp \
- src/unet/protocol/protocol.cpp \
- src/unet/netcore.cpp \
- src/unet/protocol/umsgbasic.cpp \
- src/unet/configalias.cpp \
- src/unet/unetmain.cpp \
- src/unet/unetserverbase.cpp \
- src/unet/unetlobbyserverbase.cpp
+#LibAlcUruNet3 library
+libalcnet1_a_SOURCES = \
+ src/alcnet/alcnet.cpp \
+ src/alcnet/netlog.cpp \
+ src/alcnet/netsession.cpp \
+ src/alcnet/netsessionmgr.cpp \
+ src/alcnet/netmsgq.cpp \
+ src/alcnet/protocol/protocol.cpp \
+ src/alcnet/netcore.cpp \
+ src/alcnet/protocol/umsgbasic.cpp \
+ src/alcnet/configalias.cpp \
+ src/alcnet/unetmain.cpp \
+ src/alcnet/unetserverbase.cpp \
+ src/alcnet/unetlobbyserverbase.cpp
 
-libalcugsnet1_a_CPPFLAGS = -DIN_ALC_LIBRARY
-#End LibAlcugsUruNet3 library
+libalcnet1_a_CPPFLAGS = -DIN_ALC_LIBRARY
+#End LibAlcUruNet3 library
 
 #Test APPS
 check_PROGRAMS = test test2
 TESTS = test test2
 
-test_LDADD = libalcugsbase1.a 
+test_LDADD = libalcbase1.a 
 test_SOURCES = src/alcbase/test/test.cpp
 
-test2_LDADD = libalcugsbase1.a 
+test2_LDADD = libalcbase1.a 
 test2_SOURCES = src/alcbase/test/test2.cpp
 #End Test APPS
 
 bin_PROGRAMS = alcconfig urucrypt m5crypt alcping alcmsgtest alcugs_lobby
 
 #Tools
-urucrypt_LDADD = libalcugsbase1.a
-m5crypt_LDADD =  libalcugsbase1.a
-alcconfig_LDADD = libalcugsbase1.a
+urucrypt_LDADD = libalcbase1.a
+m5crypt_LDADD =  libalcbase1.a
+alcconfig_LDADD = libalcbase1.a
 
 urucrypt_SOURCES = src/tools/urucrypt.cpp
 m5crypt_SOURCES = src/tools/urucrypt.cpp
@@ -82,9 +82,9 @@ alcconfig_SOURCES = src/tools/alcconfig.cpp
 #End tools
 
 #Server programs
-alcping_LDADD = libalcugsnet1.a libalcugsbase1.a
-alcmsgtest_LDADD = libalcugsnet1.a libalcugsbase1.a
-alcugs_lobby_LDADD = libalcugsnet1.a libalcugsbase1.a
+alcping_LDADD = libalcnet1.a libalcbase1.a
+alcmsgtest_LDADD = libalcnet1.a libalcbase1.a
+alcugs_lobby_LDADD = libalcnet1.a libalcbase1.a
 
 alcping_SOURCES = src/servers/alcping.cpp
 alcmsgtest_SOURCES = src/servers/alcmsgtest.cpp

@@ -34,7 +34,7 @@
 //#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
-#include "urunet/unet.h"
+#include "unet.h"
 
 #ifndef __WIN32__
 #include <sys/socket.h>

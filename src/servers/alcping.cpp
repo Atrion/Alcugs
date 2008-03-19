@@ -32,7 +32,7 @@
 #define ALC_PROGRAM_NAME "UruPing"
 
 #include<alcugs.h>
-#include<urunet/unet.h>
+#include<unet.h>
 
 #include<alcdebug.h>
 

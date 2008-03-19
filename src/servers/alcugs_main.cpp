@@ -31,7 +31,7 @@
 #define ALC_PROGRAM_NAME "Alcugs server"
 
 #include<alcugs.h>
-#include<urunet/unet.h>
+#include<unet.h>
 
 #if defined(I_AM_THE_LOBBY_SERVER)
 #include "lobbyserver.h"

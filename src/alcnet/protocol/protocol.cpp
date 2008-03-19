@@ -39,7 +39,7 @@ No sockets please
 //#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
-#include "urunet/unet.h"
+#include "unet.h"
 
 namespace md5 {
 #include "alcutil/md5.h"

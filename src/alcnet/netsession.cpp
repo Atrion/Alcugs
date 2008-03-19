@@ -36,7 +36,7 @@
 //#define _ACKSTACK_DBG_
 
 #include "alcugs.h"
-#include "urunet/unet.h"
+#include "unet.h"
 
 #include "alcdebug.h"
 
