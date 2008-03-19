@@ -86,6 +86,7 @@ public:
 	virtual void onConnectionFlood(tNetEvent * ev,tNetSession *u) {
 		ev->Veto();
 	}
+	virtual void onLeave(tNetEvent * ev,Byte reason,tNetSession * u);
 	virtual void onIdle(bool idle);
 	virtual void onStop();
 	void setSource(Byte s);
@@ -213,6 +214,13 @@ int tUnetPing::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
 			break;
 	}
 	return ret;
+}
+
+void tUnetPing::onLeave(tNetEvent * ev,Byte reason,tNetSession * u)
+{
+	if(listen!=0) {
+		out->log("Leave from %s:%i reason=%i %s\n", alcGetStrIp(ev->sid.ip), ntohs(ev->sid.port), reason, alcUnetGetReasonCode(reason));
+	}
 }
 
 void tUnetPing::onIdle(bool idle) {

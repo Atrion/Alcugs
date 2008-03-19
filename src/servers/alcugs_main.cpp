@@ -155,7 +155,7 @@ int main(int argc, char * argv[]) {
 		//Load and parse config files
 		if(alcUnetReloadConfig(true)<0) return -1;
 		DBGM(5," done\n");
-		//daemon?
+		//stopped?
 		tConfig * cfg=alcGetConfig();
 		tStrBuf var;
 		var=cfg->getVar("stop","global");
@@ -163,6 +163,7 @@ int main(int argc, char * argv[]) {
 			lstd->log("INFO: Administratively dissabled! - Change the stop/dissabled configuration directive to false\n");
 			return -1;
 		}
+		//daemon?
 		var=cfg->getVar("daemon","global");
 		if(var.isNull()) {
 			var="0";
