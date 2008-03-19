@@ -316,7 +316,7 @@ public:
 	tStrBuf & escape();
 	tStrBuf & lower();
 	tStrBuf & upper();
-	tStrBuf & tStrBuf::substring(U32 start,U32 len);
+	tStrBuf & substring(U32 start,U32 len);
 	tStrBuf & dirname();
 	bool startsWith(const void * pat);
 	bool endsWith(const void * pat);

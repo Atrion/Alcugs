@@ -58,7 +58,7 @@ public:
 /** Alive */
 class tmAlive :public tmMsgBase {
 public:
-	tmAlive::tmAlive(tNetSession * u=NULL,U32 ki=0)
+	tmAlive(tNetSession * u=NULL,U32 ki=0)
  :tmMsgBase(NetMsgAlive,plNetKi | plNetAck | plNetCustom,u) {
 		this->ki=ki;
 	}
