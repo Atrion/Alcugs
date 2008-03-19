@@ -58,7 +58,7 @@ namespace alc {
 #define UNET_TIMEOUT 3 /* !< Connection to peer has ended the timer */
 #define UNET_TERMINATED 4 /* !< Connection to peer terminated */
 #define UNET_FLOOD 5 /* !< This event occurs when a player is flooding the server */
-#define UNET_CLOSSING 6
+#define UNET_CLOSING 6
 //note events UNET_FLOOD, UNET_TERMINATED, UNET_NEWCONN, and UNET_MSGRCV always contain
 // a new incoming message (from the affected peer), if the size of it is non-zero.
 //other events don't contain an incomming message, and the message size will be always zero
@@ -74,11 +74,11 @@ typedef U16 tUnetFlags;
 #define UNET_BCAST    0x0020 /* enable broadcast */
 #define UNET_FLOG     0x0040 /* enable file based logging, (also, 0x02 must be present) */
 #define UNET_NETAUTH  0x0080 /* Enable authentication through servers */
-#define UNET_DLACK    0x0100 /* Dissable ack trace */
-#define UNET_DLCHK    0x0200 /* Dissable chk log */
-#define UNET_DLUNE    0x0400 /* Dissable une log */
-#define UNET_DLSEC    0x0800 /* Dissable sec log */
-#define UNET_LQUIET   0x1000 /* Dissable dumping to the console */
+#define UNET_DLACK    0x0100 /* Disable ack trace */
+#define UNET_DLCHK    0x0200 /* Disable chk log */
+#define UNET_DLUNE    0x0400 /* Disable une log */
+#define UNET_DLSEC    0x0800 /* Disable sec log */
+#define UNET_LQUIET   0x1000 /* Disable dumping to the console */
 #define UNET_NOCONN   0x2000 /* Non connected server */
 
 #define UNET_DEFAULT_FLAGS UNET_NBLOCK | UNET_ELOG | UNET_ECRC | UNET_AUTOSP | UNET_NOFLOOD | UNET_FLOG | UNET_NETAUTH

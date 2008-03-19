@@ -26,7 +26,7 @@
 
 /**
 	Alcugs Configuration file.
-	This depreceated file is going to dissapear, when everything is correctly done by configure
+	This depreceated file is going to disapear, when everything is correctly done by configure
 */
 
 #ifndef __U_ALCCONFIG_OLD_H

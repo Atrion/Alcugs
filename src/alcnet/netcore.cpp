@@ -205,9 +205,9 @@ void tUnetBase::stop(SByte timeout) {
 }
 
 void tUnetBase::terminate(tNetSessionIte & who,bool silent,Byte reason) {
-	//tNetEvent * ev=new tNetEvent(who,UNET_CLOSSING);
+	//tNetEvent * ev=new tNetEvent(who,UNET_CLOSING);
 	tNetSession * u=getSession(who);
-	//onConnectionClossing(ev);
+	//onConnectionClosing(ev);
 	if(!silent && u->client==1) {
 		tmTerminated * terminated=new tmTerminated(u,u->ki,reason,true);
 		u->send(*terminated);
@@ -272,7 +272,7 @@ void tUnetBase::run() {
 						if(u->getPeerType()==0) {
 							sec->log("%s Ended\n",u->str());
 							evt->id=UNET_TERMINATED;
-							onConnectionClossed(evt,u);
+							onConnectionClosed(evt,u);
 							destroySession(evt->sid);
 						} else {
 							terminate(evt->sid,false,RTimedOut);
@@ -377,7 +377,7 @@ void tUnetBase::run() {
 				case UNET_TIMEOUT:
 					sec->log("%s Ended\n",u->str());
 					evt->id=UNET_TERMINATED;
-					onConnectionClossed(evt,u);
+					onConnectionClosed(evt,u);
 					destroySession(evt->sid);
 					break;
 				default:
@@ -393,7 +393,7 @@ void tUnetBase::run() {
 		smgr->rewind();
 		while((u=smgr->getNext())) {
 			evt=new tNetEvent(u->getIte(),UNET_TERMINATED);
-			onConnectionClossed(evt,u);
+			onConnectionClosed(evt,u);
 			destroySession(evt->sid);
 			delete evt;
 		}

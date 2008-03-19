@@ -94,7 +94,7 @@ private:
 	FILE * dsc;
 	tBBuf * bdsc;
 	U16 flags; //see above (DF_*)
-	Byte level;    /* 0 dissabled  (logging level)
+	Byte level;    /* 0 disabled  (logging level)
 										1 lowest
 										2 low
 										3 normal

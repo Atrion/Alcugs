@@ -160,7 +160,7 @@ int main(int argc, char * argv[]) {
 		tStrBuf var;
 		var=cfg->getVar("stop","global");
 		if(!var.isNull() && var.asByte()) {
-			lstd->log("INFO: Administratively dissabled! - Change the stop/dissabled configuration directive to false\n");
+			lstd->log("INFO: Administratively disabled! - Change the stop/disabled configuration directive to false\n");
 			return -1;
 		}
 		//daemon?

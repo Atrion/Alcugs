@@ -46,7 +46,7 @@ public:
 	/** Runs the netcore */
 	void run();
 	/** Stops the netcore
-			\param timeout Sets the timeout to wait for clossing the connection to all peers (<0 gets timeout from config file)
+			\param timeout Sets the timeout to wait for closing the connection to all peers (<0 gets timeout from config file)
 	*/
 	void stop(SByte timeout=-1);
 	void forcestop() {}
@@ -84,7 +84,7 @@ public:
 			\param ev The event object (cannot be vetoed)
 			\param u The peer session object
 	*/
-	virtual void onConnectionClossed(tNetEvent * ev,tNetSession * u) = 0;
+	virtual void onConnectionClosed(tNetEvent * ev,tNetSession * u) = 0;
 	/** This event is raised when a peer have left (disconnected)
 			You need to override it in your derived classes with your implementation.
 			\param ev The event object (cannot be vetoed)
@@ -104,7 +104,7 @@ public:
 	*/
 	virtual void onTerminated(tNetEvent * ev,Byte reason,tNetSession * u) = 0;
 	/** This event is raised when a peer is sending too many messages per second.
-			Dissabling this protection, your server will be vulnerable to DoS attacks.
+			Disabling this protection, your server will be vulnerable to DoS attacks.
 			You need to override it in your derived classes with your implementation.
 			If it is not vetoed, it will terminate the connection.
 			\param ev The event object (can be vetoed)
@@ -115,7 +115,7 @@ public:
 	virtual void onIdle(bool idle=false) = 0;
 	virtual void onStop() = 0;
 	virtual void onStart() = 0;
-	//virtual void onConnectionClossing(tNetEvent * ev) {}
+	//virtual void onConnectionClosing(tNetEvent * ev) {}
 private:
 	void installSignalHandler();
 	int parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u);

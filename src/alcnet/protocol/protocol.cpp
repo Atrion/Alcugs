@@ -867,7 +867,7 @@ char * alcUnetGetAuthCode(Byte code) {
 			ret="AccountExpired";
 			break;
 		case 0xFC:
-			ret="AccountDissabled";
+			ret="AccountDisabled";
 			break;
 		case 0xFD:
 			ret="InvalidPasswd";

@@ -110,9 +110,9 @@ void alcNetSetConfigAliases() {
 		}
 	}
 
-	val=cfg->getVar("dissabled","global");
+	val=cfg->getVar("disabled","global");
 	if(!val.isNull()) {
-		cfg->copyKey("stop","dissabled","global","global");
+		cfg->copyKey("stop","disabled","global","global");
 	}
 
 	//shard public info

@@ -421,7 +421,7 @@ int tLog::rotate(bool force) {
 		} else {
 
 			if(this->flags & DF_OPEN && this->dsc!=NULL && this->dsc!=stdout && this->dsc!=stderr) {
-				DBG(5,"clossing file %s...\n",path);
+				DBG(5,"closing file %s...\n",path);
 				if(this->flags & DF_HTML) {
 					fprintf(this->dsc,"</body></html>\n");
 				}
@@ -492,7 +492,7 @@ void tLog::close(bool silent) {
 			break;
 		}
 	}
-	if(this->name!=NULL) DBG(6,"clossing log %s...\n",this->name);
+	if(this->name!=NULL) DBG(6,"closing log %s...\n",this->name);
 	if(this->dsc!=NULL && this->dsc!=stdout && this->dsc!=stderr) {
 		if(this->flags & DF_HTML && !silent) {
 			fprintf(this->dsc,"</body></html>\n");

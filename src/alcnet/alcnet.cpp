@@ -392,7 +392,7 @@ void tUnet::stopOp() {
 #else
 	close(this->sock);
 #endif
-	this->log->log("DBG: Socket clossed\n");
+	this->log->log("DBG: Socket closed\n");
 	if(this->log!=lstd && this->log!=lnull) {
 		this->log->close();
 		delete this->log;

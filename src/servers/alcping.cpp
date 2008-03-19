@@ -98,7 +98,7 @@ public:
 	}
 	
 	// these are pure virtual but we don't need them
-	virtual void onConnectionClossed(tNetEvent * ev,tNetSession * u) {}
+	virtual void onConnectionClosed(tNetEvent * ev,tNetSession * u) {}
 	virtual void onTerminated(alc::tNetEvent*, alc::Byte, alc::tNetSession*) {}
 	virtual void onConnectionTimeout(alc::tNetEvent*, alc::tNetSession*) {}
 	virtual void onStart() {}
@@ -272,18 +272,6 @@ void tUnetPing::onIdle(bool idle) {
 
 
 tUnetPing * netcore=NULL;
-Byte __state_running=1;
-
-//handler
-void s_handler(int s) {
-	lstd->log("INF: Catch up signal %i\n",s);
-	if(__state_running==0) {
-		lerr->log("killed\n");
-		exit(-1);
-	}
-	__state_running=0;
-	netcore->stop(5);
-}
 
 int main(int argc,char * argv[]) {
 
@@ -381,9 +369,9 @@ int main(int argc,char * argv[]) {
 		
 		if(flood>1 && (admin==0 || __WTC==0)) {
 			if(__WTC) {
-				printf("\nOnly the administrator can perform stressing flood tests to the server.\n Dissabling flooding.\n");
+				printf("\nOnly the administrator can perform stressing flood tests to the server.\n Disabling flooding.\n");
 			} else {
-				printf("\nFlood dissabled.\n");
+				printf("\nFlood disabled.\n");
 			}
 			flood=1;
 		}

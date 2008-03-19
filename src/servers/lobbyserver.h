@@ -48,7 +48,7 @@ namespace alc {
 	class tUnetLobbyServer :public tUnetLobbyServerBase {
 	public:
 		// these are pure virtual but we don't need them
-		virtual void onConnectionClossed(tNetEvent * ev,tNetSession * u) {}
+		virtual void onConnectionClosed(tNetEvent * ev,tNetSession * u) {}
 		virtual void onLeave(tNetEvent * ev,Byte reason,tNetSession * u) {}
 		virtual void onTerminated(alc::tNetEvent*, alc::Byte, alc::tNetSession*) {}
 		virtual void onConnectionTimeout(alc::tNetEvent*, alc::tNetSession*) {}

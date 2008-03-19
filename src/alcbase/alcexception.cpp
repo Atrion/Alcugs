@@ -66,7 +66,7 @@ namespace google {
 namespace alc {
 
 static bool txvAbort=0;
-static char txvCore=0x01; //0x00 - dissabled, 0x01 - enabled, 0x02 -always
+static char txvCore=0x01; //0x00 - disabled, 0x01 - enabled, 0x02 -always
 static char * txvCorePath=NULL;
 
 void alcWriteCoreDump(char * name) {

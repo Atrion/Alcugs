@@ -103,8 +103,8 @@ public:
 		strcpy(this->file,file);
 	}
 	
-		// these are pure virtual but we don't need them
-	virtual void onConnectionClossed(tNetEvent * ev,tNetSession * u) {}
+	// these are pure virtual but we don't need them
+	virtual void onConnectionClosed(tNetEvent * ev,tNetSession * u) {}
 	virtual void onLeave(tNetEvent * ev,Byte reason,tNetSession * u) {}
 	virtual void onTerminated(alc::tNetEvent*, alc::Byte, alc::tNetSession*) {}
 	virtual void onConnectionTimeout(alc::tNetEvent*, alc::tNetSession*) {}
@@ -213,18 +213,6 @@ int tUnetSimpleFileServer::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSessi
 }
 
 tUnetSimpleFileServer * netcore=NULL;
-Byte __state_running=1;
-
-//handler
-void s_handler(int s) {
-	lstd->log("INF: Catch up signal %i\n",s);
-	if(__state_running==0) {
-		lerr->log("killed\n");
-		exit(-1);
-	}
-	__state_running=0;
-	netcore->stop(5);
-}
 
 int main(int argc,char * argv[]) {
 
