@@ -45,8 +45,10 @@ namespace alc {
 		If we want to do it well and nice, we should add pre and post conditions here.
 	*/
 
-class tUnetServerBase :public tUnetBase {
-	
+class tUnetServerBase : public tUnetBase {
+public:
+	// we're adding some default behaviour here and subclasses should call this one before doing their own processing
+	virtual int onMsgRecieved(alc::tNetEvent*, alc::tUnetMsg*, alc::tNetSession*);
 };
 
 } //End alc namespace

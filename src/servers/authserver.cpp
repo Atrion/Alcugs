@@ -34,43 +34,23 @@
 */
 
 /* CVS tag - DON'T TOUCH*/
-#define __U_UNETSERVERBASE_ID "$Id$"
+#define __U_AUTHSERVER_ID "$Id$"
 
 //#define _DBG_LEVEL_ 10
 
-#include "alcugs.h"
-#include "unet.h"
+#include <alcugs.h>
+#include <unet.h>
 
 ////extra includes
 
-#include "alcdebug.h"
+#include <alcdebug.h>
 
 namespace alc {
 
 	////IMPLEMENTATION
-	int tUnetServerBase::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
-	{
-		int ret=0;
-
-		tmPing ping;
 	
-		switch(msg->cmd) {
-			// answer to pings
-			case NetMsgPing:
-				ping.setSource(u);
-				msg->data->get(ping);
-				log->log("Ping from %s:%i x=%i dest=%i %s time=%0.3f ms .... pong....\n",\
-					alcGetStrIp(ev->sid.ip),ntohs(ev->sid.port),ping.x,ping.destination,\
-					alcUnetGetDestination(ping.destination),ping.mtime*1000);
-				ping.setReply();
-				u->send(ping);
-				ret=1;
-				break;
-			default:
-				break;
-		}
-		return ret;
-	}
+	const char * alcNetName="Auth";
+	Byte alcWhoami=KAuth;
 
 } //end namespace alc
 

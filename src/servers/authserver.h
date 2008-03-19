@@ -33,44 +33,34 @@
 		Several
 */
 
+#ifndef __U_AUTHSERVER_H
+#define __U_AUTHSERVER_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_UNETSERVERBASE_ID "$Id$"
-
-//#define _DBG_LEVEL_ 10
-
-#include "alcugs.h"
-#include "unet.h"
-
-////extra includes
-
-#include "alcdebug.h"
+#define __U_AUTHSERVER_H_ID "$Id$"
 
 namespace alc {
 
-	////IMPLEMENTATION
-	int tUnetServerBase::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
-	{
-		int ret=0;
+	////DEFINITIONS
+	/**
+		If we want to do it well and nice, we should add pre and post conditions here.
+	*/
 
-		tmPing ping;
+	class tUnetAuthServer :public tUnetServerBase {
+	public:
+		// these are pure virtual but we don't need them
+		virtual void onConnectionClosed(tNetEvent * ev,tNetSession * u) {}
+		virtual void onLeave(tNetEvent * ev,Byte reason,tNetSession * u) {}
+		virtual void onTerminated(alc::tNetEvent*, alc::Byte, alc::tNetSession*) {}
+		virtual void onConnectionTimeout(alc::tNetEvent*, alc::tNetSession*) {}
+		virtual void onStart() {}
+		virtual void onNewConnection(alc::tNetEvent*, alc::tNetSession*) {}
+		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
+			{ return tUnetServerBase::onMsgRecieved(ev, msg, u); }
+		virtual void onConnectionFlood(alc::tNetEvent*, alc::tNetSession*) {}
+		virtual void onIdle(bool) {}
+		virtual void onStop() {}
+	};
 	
-		switch(msg->cmd) {
-			// answer to pings
-			case NetMsgPing:
-				ping.setSource(u);
-				msg->data->get(ping);
-				log->log("Ping from %s:%i x=%i dest=%i %s time=%0.3f ms .... pong....\n",\
-					alcGetStrIp(ev->sid.ip),ntohs(ev->sid.port),ping.x,ping.destination,\
-					alcUnetGetDestination(ping.destination),ping.mtime*1000);
-				ping.setReply();
-				u->send(ping);
-				ret=1;
-				break;
-			default:
-				break;
-		}
-		return ret;
-	}
+} //End alc namespace
 
-} //end namespace alc
-
+#endif

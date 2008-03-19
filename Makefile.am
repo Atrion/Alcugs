@@ -68,32 +68,41 @@ test2_LDADD = libalcbase1.a
 test2_SOURCES = src/alcbase/test/test2.cpp
 #End Test APPS
 
-bin_PROGRAMS = alcconfig urucrypt m5crypt alcping alcmsgtest alcugs_lobby
+bin_PROGRAMS = alcconfig urucrypt m5crypt alcping alcmsgtest alcugs_lobby alcugs_auth
 
 #Tools
-urucrypt_LDADD = libalcbase1.a
-m5crypt_LDADD =  libalcbase1.a
-alcconfig_LDADD = libalcbase1.a
-
 urucrypt_SOURCES = src/tools/urucrypt.cpp
+urucrypt_LDADD = libalcbase1.a
+
 m5crypt_SOURCES = src/tools/urucrypt.cpp
+m5crypt_LDADD =  libalcbase1.a
 m5crypt_CPPFLAGS = -DM5CRYPT
+
 alcconfig_SOURCES = src/tools/alcconfig.cpp
+alcconfig_LDADD = libalcbase1.a
 #End tools
 
 #Server programs
-alcping_LDADD = libalcnet1.a libalcbase1.a
-alcmsgtest_LDADD = libalcnet1.a libalcbase1.a
-alcugs_lobby_LDADD = libalcnet1.a libalcbase1.a
-
 alcping_SOURCES = src/servers/alcping.cpp
+alcping_LDADD = libalcnet1.a libalcbase1.a
+
 alcmsgtest_SOURCES = src/servers/alcmsgtest.cpp
+alcmsgtest_LDADD = libalcnet1.a libalcbase1.a
 
 alcugs_lobby_SOURCES = \
  src/servers/alcugs_main.cpp \
  src/servers/lobbyserver.cpp
 alcugs_lobby_INCLUDES = \
  src/servers/lobbyserver.h
+alcugs_lobby_LDADD = libalcnet1.a libalcbase1.a
 alcugs_lobby_CPPFLAGS = -DI_AM_THE_LOBBY_SERVER
+
+alcugs_auth_SOURCES = \
+ src/servers/alcugs_main.cpp \
+ src/servers/authserver.cpp
+alcugs_auth_INCLUDES = \
+ src/servers/authserver.h
+alcugs_auth_LDADD = libalcnet1.a libalcbase1.a
+alcugs_auth_CPPFLAGS = -DI_AM_THE_AUTH_SERVER
 
 #End server programs

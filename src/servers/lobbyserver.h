@@ -54,7 +54,8 @@ namespace alc {
 		virtual void onConnectionTimeout(alc::tNetEvent*, alc::tNetSession*) {}
 		virtual void onStart() {}
 		virtual void onNewConnection(alc::tNetEvent*, alc::tNetSession*) {}
-		virtual int onMsgRecieved(alc::tNetEvent*, alc::tUnetMsg*, alc::tNetSession*) { return 0; }
+		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
+			{ return tUnetServerBase::onMsgRecieved(ev, msg, u); }
 		virtual void onConnectionFlood(alc::tNetEvent*, alc::tNetSession*) {}
 		virtual void onIdle(bool) {}
 		virtual void onStop() {}
