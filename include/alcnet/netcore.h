@@ -71,27 +71,27 @@ public:
 			\param ev The event object (cannot be vetoed)
 			\param u The peer session object
 	*/
-	virtual void onNewConnection(tNetEvent * ev,tNetSession * u) {}
+	virtual void onNewConnection(tNetEvent * ev,tNetSession * u) = 0;
 	/** This event is raised when we recieve a new message
 			You need to override it in your derived classes with your implementation.
 			\param ev The event object (cannot be vetoed)
 			\param msg The message object
 			\param u The peer session object
 	*/
-	virtual int onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) { return 0; };
+	virtual int onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) = 0;
 	/** This event is raised when a connection closes
 			You need to override it in your derived classes with your implementation.
 			\param ev The event object (cannot be vetoed)
 			\param u The peer session object
 	*/
-	virtual void onConnectionClossed(tNetEvent * ev,tNetSession * u) {}
+	virtual void onConnectionClossed(tNetEvent * ev,tNetSession * u) = 0;
 	/** This event is raised when a peer have left (disconnected)
 			You need to override it in your derived classes with your implementation.
 			\param ev The event object (cannot be vetoed)
 			\param reason The reason code
 			\param u The peer session object
 	*/
-	virtual void onLeave(tNetEvent * ev,Byte reason,tNetSession * u) {}
+	virtual void onLeave(tNetEvent * ev,Byte reason,tNetSession * u) = 0;
 	/** This event is raised when a peer have sent a terminated message
 			Note: Only servers can send terminated messages, a termintated message from a client
 			is illegal, and should be processed as a leave message.
@@ -102,7 +102,7 @@ public:
 			\param reason The reason code
 			\param u The peer session object
 	*/
-	virtual void onTerminated(tNetEvent * ev,Byte reason,tNetSession * u) {}
+	virtual void onTerminated(tNetEvent * ev,Byte reason,tNetSession * u) = 0;
 	/** This event is raised when a peer is sending too many messages per second.
 			Dissabling this protection, your server will be vulnerable to DoS attacks.
 			You need to override it in your derived classes with your implementation.
@@ -110,11 +110,11 @@ public:
 			\param ev The event object (can be vetoed)
 			\param u The peer session object
 	*/
-	virtual void onConnectionFlood(tNetEvent * ev,tNetSession * u) {}
-	virtual void onConnectionTimeout(tNetEvent * ev,tNetSession * u) {}
-	virtual void onIdle(bool idle=false) {}
-	virtual void onStop() {}
-	virtual void onStart() {}
+	virtual void onConnectionFlood(tNetEvent * ev,tNetSession * u) = 0;
+	virtual void onConnectionTimeout(tNetEvent * ev,tNetSession * u) = 0;
+	virtual void onIdle(bool idle=false) = 0;
+	virtual void onStop() = 0;
+	virtual void onStart() = 0;
 	//virtual void onConnectionClossing(tNetEvent * ev) {}
 private:
 	void installSignalHandler();

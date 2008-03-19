@@ -96,6 +96,12 @@ public:
 	void setUrgent() {
 		urgent=true;
 	}
+	
+	// these are pure virtual but we don't need them
+	virtual void onConnectionClossed(tNetEvent * ev,tNetSession * u) {}
+	virtual void onTerminated(alc::tNetEvent*, alc::Byte, alc::tNetSession*) {}
+	virtual void onConnectionTimeout(alc::tNetEvent*, alc::tNetSession*) {}
+	virtual void onStart() {}
 private:
 	Byte listen;
 	tLog * out;
