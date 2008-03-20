@@ -1,7 +1,7 @@
 /*******************************************************************************
-*    Alcugs H'uru server                                                       *
+*    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2005  The Alcugs H'uru Server Team                     *
+*    Copyright (C) 2004-2005  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -28,31 +28,40 @@
 	URUNET 3+
 */
 
-#ifndef __U_UNET_H
-#define __U_UNET_H
+#ifndef __U_SQL_H
+#define __U_SQL_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_UNET_H_ID "$Id$"
+#define __U_SQL_H_ID "$Id$"
 
-#ifndef __WIN32__
-#include <netdb.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
+//flags
+#define SQL_LOG      0x01   // Enable logging
+#define SQL_LOGQ     0x02   // Log sql querys
+#define SQL_CREATEDB 0x04   // Allow db creation if not exists?
+#define SQL_STAYCONN 0x08   // Always stay connected to the database (maintains a persistent link)
+#define SQL_CREATABL 0x10   // Allow to create tables if they don't exist
+
+namespace alc {
+
+class tSQL {
+public:
+	tSQL(Byte *host, U16 Port, Byte *username, Byte *password, Byte *dbname, Byte flags, U32 timeout = 15*60);
+	~tSQL(void)
+	{
+		_closelogs();
+		free(host); free(username); free(password);
+	}
+private:
+	Byte flags;
+	U32 timeout;
+	tLog *sql, *err, *log;
+	// connection info
+	Byte *host, *username, *password, *dbname;
+	U16 port;
+	
+	void _openlogs(void);
+	void _closelogs(void);
+};
+
+}
+
 #endif
-
-#include "protocol/prot.h"
-#include "netmsgq.h"
-#include "protocol/protocol.h"
-#include "netsession.h"
-#include "netsessionmgr.h"
-#include "netlog.h"
-#include "alcnet.h"
-#include "netcore.h"
-#include "protocol/umsgbasic.h"
-#include "configalias.h"
-#include "unetmain.h"
-#include "unetserverbase.h"
-#include "unetlobbyserverbase.h"
-#include "sql.h"
-
-#endif
-

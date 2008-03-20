@@ -52,7 +52,8 @@ libalcnet1_a_SOURCES = \
  src/alcnet/configalias.cpp \
  src/alcnet/unetmain.cpp \
  src/alcnet/unetserverbase.cpp \
- src/alcnet/unetlobbyserverbase.cpp
+ src/alcnet/unetlobbyserverbase.cpp \
+ src/alcnet/sql.cpp
 
 libalcnet1_a_CPPFLAGS = -DIN_ALC_LIBRARY
 #End LibAlcUruNet3 library

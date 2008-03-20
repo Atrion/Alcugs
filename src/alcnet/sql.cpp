@@ -28,31 +28,67 @@
 	URUNET 3+
 */
 
-#ifndef __U_UNET_H
-#define __U_UNET_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_UNET_H_ID "$Id$"
+#define __U_SQL_ID "$Id$"
 
-#ifndef __WIN32__
-#include <netdb.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#endif
+//#define _DBG_LEVEL_ 10
 
-#include "protocol/prot.h"
-#include "netmsgq.h"
-#include "protocol/protocol.h"
-#include "netsession.h"
-#include "netsessionmgr.h"
-#include "netlog.h"
-#include "alcnet.h"
-#include "netcore.h"
-#include "protocol/umsgbasic.h"
-#include "configalias.h"
-#include "unetmain.h"
-#include "unetserverbase.h"
-#include "unetlobbyserverbase.h"
-#include "sql.h"
+#include "alcugs.h"
+#include "unet.h"
 
-#endif
+#include <mysql/mysql.h>
+
+#include "alcdebug.h"
+
+namespace alc {
+
+tSQL::tSQL(Byte *host, U16 Port, Byte *username, Byte *password, Byte *dbname, Byte flags, U32 timeout)
+{
+	this->flags = flags;
+	this->timeout = timeout;
+	sql = err = log = lnull;
+	
+	this->host = (Byte *)malloc( (strlen((char *)host)+1) * sizeof(Byte) );
+	strcpy((char *)this->host, (char *)host);
+	this->port = port;
+	this->username = (Byte *)malloc( (strlen((char *)username)+1) * sizeof(Byte) );
+	strcpy((char *)this->username, (char *)username);
+	this->password = (Byte *)malloc( (strlen((char *)password)+1) * sizeof(Byte) );
+	strcpy((char *)this->password, (char *)password);
+	this->dbname = (Byte *)malloc( (strlen((char *)dbname)+1) * sizeof(Byte) );
+	strcpy((char *)this->dbname, (char *)dbname);
+	
+	_openlogs();
+	if (flags & SQL_LOGQ) { // write MySQL connection debug info
+		sql->log("MySQL driver: %s (warning: git doesn\'t update this so it might be outdated)\n", __U_SQL_ID);
+		sql->print(" flags: %04X, host: %s, port: %i, user: %s, dbname: %s, using password: ", flags, host, port, username, dbname);
+		if (*password != NULL) { sql->print("yes\n"); }
+		else { sql->print("no\n"); }
+		sql->print(" MySQL client: %s\n\n", mysql_get_client_info());
+	}
+}
+
+void tSQL::_openlogs(void)
+{
+	if(flags & SQL_LOG) {
+		log = lstd;
+		err = lerr;
+		if (sql == lnull && (flags & SQL_LOGQ)) {
+			sql = new tLog();
+			sql->open("sql.log", 4, 0);
+		}
+	}
+}
+
+void tSQL::_closelogs(void)
+{
+	if (sql != lnull) {
+		sql->close();
+		delete sql;
+		sql = lnull;
+	}
+}
+
+}
+
 

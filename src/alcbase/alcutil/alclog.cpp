@@ -194,7 +194,7 @@ void alcLogInit() {
 }
 
 void alcLogOpenStdLogs(bool shutup) {
-	// lerr and lstd must never be deleted here as tUnet instances might have a copy, so just close and re-open in case of a re-configure
+	// lerr and lstd must never be deleted here as tUnet or tSQL instances might have a copy, so just close and re-open in case of a re-configure
 	if(lerr!=NULL)
 		lerr->close();
 	else
