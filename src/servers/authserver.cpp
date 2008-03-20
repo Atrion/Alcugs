@@ -52,22 +52,69 @@ namespace alc {
 	const char * alcNetName="Auth";
 	Byte alcWhoami=KAuth;
 	
+	void tmAuthAsk::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		t.get(login);
+		alcHex2Ascii(challenge, t.read(16), 16);
+		alcHex2Ascii(hash, t.read(16), 16);
+		release = t.getByte();
+		if(!(flags & plNetIP)) {
+			ip = t.getU32();
+			oldProtocol = true;
+		}
+		else
+			oldProtocol = false;
+	}
+	
+	Byte *tmAuthAsk::str()
+	{
+		#ifdef _UNET_MSGDBG_
+		tmMsgBase::str();
+		dbg.end();
+		dbg.seek(-1);
+		dbg.printf(" login: %s,\n challenge: %s, hash: %s, build: %i (%s)", login.str(), challenge, hash, release, alcUnetGetRelease(release));
+		dbg.putByte(0);
+		dbg.rewind();
+		return dbg.read();
+		#else
+		return tmMsgBase::str();
+		#endif
+	}
+	
 	int tUnetAuthServer::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
 	{
 		int ret = tUnetServerBase::onMsgRecieved(ev, msg, u); // first let tUnetServerBase process the message
 		if (ret != 0) return ret; // cancel if it was processed, otherwise it's our turn
 		
-		tmMsgBase auth(NetMsgCustomAuthAsk, plNetKi | plNetX | plNetCustom); // TODO: get the correct flags
-		
 		switch(msg->cmd) {
 			case NetMsgCustomAuthAsk:
-				log->log("<RCV> NetMsgCustomAuthAsk\n");
-				msg->data->get(auth);
-				// here we can now parse the additional stuff for this type of package, with e.g. msg->data->getByte()
+				//ret = 1;
+				tmAuthAsk authAsk;
+				Byte str_guid[40], str_passwd[40], accessLevel;
+				int authResult;
+				
+				// get the data out of the packet
+				msg->data->get(authAsk);
+				log->log("<RCV> %s\n", authAsk.str());
+				
+				// authenticate player
+				DBG(7, "authenticating player");
+				authResult = authenticatePlayer(authAsk.login.read(), authAsk.challenge, authAsk.hash, authAsk.release, alcGetStrIp(ntohl(authAsk.ip)), (char *)str_passwd, (char *)str_guid, &accessLevel);
+				
 				break;
 		}
 		return ret;
 	}
+	
+	int tUnetAuthServer::authenticatePlayer(Byte *login, Byte *challenge, Byte *hash, Byte release, char *ip, char *passwd,
+			char *guid, Byte *accessLevel)
+	{
+		// TODO: query database instead of hardcoding values
+		strcpy(passwd, "passwd");
+		strcpy(guid, "7a9131b6-9dff-4103-b231-4887db6035b8");
+		*accessLevel = 15;
+		return 0;
+	}
 
 } //end namespace alc
-

@@ -57,7 +57,7 @@ public:
 	//tBaseType() {}
 	//!stores from a buffer
 	virtual void store(tBBuf &t)=0;
-	//!streams to a buffer
+	//!streams to a buffer \return the amount of written bytes
 	virtual int stream(tBBuf &t)=0;
 	//!gets buffer size
 	virtual U32 size()=0;
@@ -124,7 +124,7 @@ public:
 	virtual Byte getByte();
 	virtual SByte getSByte();
 	virtual double getDouble();
-	/** Puts an object into the buffer (streams the object) */
+	/** Puts an object into the buffer (streams the object) \return the amount of written bytes */
 	virtual U32 put(tBaseType &t);
 	/** Gets an object form the buffer (stores object from stream) */
 	virtual void get(tBaseType &t);

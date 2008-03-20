@@ -41,10 +41,19 @@
 namespace alc {
 
 	////DEFINITIONS
-	/**
-		If we want to do it well and nice, we should add pre and post conditions here.
-	*/
-
+	class tmAuthAsk : public tmMsgBase {
+	public:
+		tmAuthAsk() : tmMsgBase(NetMsgCustomAuthAsk, 0) { }
+		virtual void store(tBBuf &t);
+		Byte *str();
+		// format
+		tUStr login;
+		Byte challenge[16], hash[16];
+		Byte release;
+		U32 ip;
+		bool oldProtocol;
+	};
+	
 	class tUnetAuthServer : public tUnetServerBase {
 	public:
 		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
@@ -58,6 +67,9 @@ namespace alc {
 		virtual void onConnectionFlood(alc::tNetEvent*, alc::tNetSession*) {}
 		virtual void onIdle(bool) {}
 		virtual void onStop() {}
+	private:
+		int authenticatePlayer(Byte *login, Byte *challenge, Byte *hash, Byte release, char *ip, char *passwd,
+			char *guid, Byte *accessLevel); //!< authenticates the player
 	};
 	
 } //End alc namespace
