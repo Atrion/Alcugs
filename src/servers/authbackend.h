@@ -33,33 +33,21 @@
 		Several
 */
 
-#ifndef __U_AUTHSERVER_H
-#define __U_AUTHSERVER_H
+#ifndef __U_AUTHBACKEND_H
+#define __U_AUTHBACKEND_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_AUTHSERVER_H_ID "$Id$"
-
-#include "authbackend.h"
+#define __U_AUTHBACKEND_H_ID "$Id$"
 
 namespace alc {
 
 	////DEFINITIONS
-	class tUnetAuthServer : public tUnetServerBase {
+	class tAuthBackend {
 	public:
-		tUnetAuthServer() : tUnetServerBase() { authBackend = new tAuthBackend; }
-		~tUnetAuthServer() { delete authBackend; }
-
-		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
-		virtual void reload() {
-			delete authBackend;
- 			tUnetServerBase::reload();
-			authBackend = new tAuthBackend;
- 		}
-	private:
-		void calculateHash(Byte *login, Byte *passwd, Byte *challenge, Byte *hash); //!< calculate the hash needed to check the password
-		int authenticatePlayer(Byte *login, Byte *challenge, Byte *hash, Byte release, Byte *ip, Byte *passwd,
-			Byte *guid, Byte *accessLevel); //!< authenticates the player
+		tAuthBackend(void);
 		
-		tAuthBackend *authBackend;
+		int queryUser(Byte *login, Byte *passwd, Byte *guid);
+	private:
+		U16 defaultAccess, minAccess;
 	};
 	
 } //End alc namespace

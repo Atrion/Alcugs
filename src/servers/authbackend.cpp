@@ -33,35 +33,45 @@
 		Several
 */
 
-#ifndef __U_AUTHSERVER_H
-#define __U_AUTHSERVER_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_AUTHSERVER_H_ID "$Id$"
+#define __U_AUTHBACKEND_ID "$Id$"
 
+#define _DBG_LEVEL_ 10
+
+#include <alcugs.h>
+#include <unet.h>
+
+////extra includes
 #include "authbackend.h"
+
+#include <alcdebug.h>
 
 namespace alc {
 
-	////DEFINITIONS
-	class tUnetAuthServer : public tUnetServerBase {
-	public:
-		tUnetAuthServer() : tUnetServerBase() { authBackend = new tAuthBackend; }
-		~tUnetAuthServer() { delete authBackend; }
-
-		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
-		virtual void reload() {
-			delete authBackend;
- 			tUnetServerBase::reload();
-			authBackend = new tAuthBackend;
- 		}
-	private:
-		void calculateHash(Byte *login, Byte *passwd, Byte *challenge, Byte *hash); //!< calculate the hash needed to check the password
-		int authenticatePlayer(Byte *login, Byte *challenge, Byte *hash, Byte release, Byte *ip, Byte *passwd,
-			Byte *guid, Byte *accessLevel); //!< authenticates the player
+	tAuthBackend::tAuthBackend(void)
+	{
+		tConfig *cfg = alcGetConfig();
+		tStrBuf var = cfg->getVar("default_access_level","global");
+		if (var.isNull()) defaultAccess = 15;
+		else defaultAccess = var.asU16();
 		
-		tAuthBackend *authBackend;
-	};
+		var = cfg->getVar("auth.minalevel","global");
+		if (var.isNull()) minAccess = 25;
+		else minAccess = var.asU16();
+		
+		DBG(5, "default access: %d, min access: %d\n", defaultAccess, minAccess);
+	}
 	
-} //End alc namespace
+	int tAuthBackend::queryUser(Byte *login, Byte *passwd, Byte *guid)
+	{
+		passwd[0] = guid[0] = 0;
+		if (strcmp((char *)login, "dakizo") == 0) { // only accept this username with this password... TODO: query database
+			strcpy((char *)passwd, "76A2173BE6393254E72FFA4D6DF1030A"); // the md5sum of "passwd"
+			strcpy((char *)guid, "7a9131b6-9dff-4103-b231-4887db6035b8");
+			return 15;
+		}
+		else
+			return -1;
+	}
 
-#endif
+} //end namespace alc

@@ -36,7 +36,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_AUTHSERVER_ID "$Id$"
 
-#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 10
 
 #include <alcugs.h>
 #include <unet.h>
@@ -94,10 +94,12 @@ namespace alc {
 			Byte *guid, Byte *accessLevel)
 	{
 		Byte correctHash[50];
-		// TODO: query database instead of hardcoding values
-		strcpy((char *)passwd, "76A2173BE6393254E72FFA4D6DF1030A"); // the md5sum of "passwd"
-		strcpy((char *)guid, "7a9131b6-9dff-4103-b231-4887db6035b8");
-		*accessLevel = 15;
+		int result = authBackend->queryUser(login, passwd, guid); // query password, access level and guid of this user
+		if (result < 0) {
+			*accessLevel = AcNotActivated;
+			return AInvalidUser;
+		}
+		*accessLevel = (Byte)result;
 		
 		calculateHash(login, passwd, challenge, correctHash);
 		if(strcmp((char *)hash, (char *)correctHash)) {
