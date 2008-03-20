@@ -39,9 +39,10 @@ public:
 	virtual void store(tBBuf &t);
 	virtual int stream(tBBuf &t);
 	tmTerminated(tNetSession * u=NULL,U32 ki=0,Byte reason=RKickedOff,bool ack=false);
-	Byte * str();
 	//format
 	Byte reason;
+protected:
+	virtual void additionalFields();
 };
 
 /** Leave */
@@ -50,9 +51,10 @@ public:
 	virtual void store(tBBuf &t);
 	virtual int stream(tBBuf &t);
 	tmLeave(tNetSession * u=NULL,U32 ki=0,Byte reason=RQuitting);
-	Byte * str();
 	//format
 	Byte reason;
+protected:
+	virtual void additionalFields();
 };
 
 /** Alive */
@@ -72,9 +74,10 @@ public:
 	virtual int stream(tBBuf &t);
 	tmPlayerTerminated(tNetSession * u=NULL,U32 ki=0,Byte reason=RKickedOff);
 	tmPlayerTerminated(tNetSession * u,tNetSessionIte &ite,Byte reason=RKickedOff);
-	Byte * str();
 	//format
 	Byte reason;
+protected:
+	virtual void additionalFields();
 };
 
 /** Ping */
@@ -86,10 +89,11 @@ public:
 	void setReply();
 	void setRouteInfo(tNetSessionIte &ite);
 	void unsetRouteInfo();
-	Byte * str();
 	//format
 	double mtime;
 	Byte destination;
+protected:
+	virtual void additionalFields();
 };
 
 }

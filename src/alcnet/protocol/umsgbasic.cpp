@@ -57,18 +57,8 @@ int tmTerminated::stream(tBBuf &t) {
 	off++;
 	return off;
 }
-Byte * tmTerminated::str() {
-	#ifdef _UNET_MSGDBG_
-	tmMsgBase::str();
-	dbg.end();
-	dbg.seek(-1);
-	dbg.printf(" Reason [%i] %s ",reason,alcUnetGetReasonCode(reason));
-	dbg.putByte(0);
-	dbg.rewind();
-	return dbg.read();
-	#else
-	return tmMsgBase::str();
-	#endif
+void tmTerminated::additionalFields() {
+	dbg.printf("\n Reason [%i] %s ",reason,alcUnetGetReasonCode(reason));
 }
 
 
@@ -88,18 +78,8 @@ int tmLeave::stream(tBBuf &t) {
 	off++;
 	return off;
 }
-Byte * tmLeave::str() {
-	#ifdef _UNET_MSGDBG_
-	tmMsgBase::str();
-	dbg.end();
-	dbg.seek(-1);
-	dbg.printf(" Reason [%i] %s ",reason,alcUnetGetReasonCode(reason));
-	dbg.putByte(0);
-	dbg.rewind();
-	return dbg.read();
-	#else
-	return tmMsgBase::str();
-	#endif
+void tmLeave::additionalFields() {
+	dbg.printf("\n Reason [%i] %s ",reason,alcUnetGetReasonCode(reason));
 }
 
 
@@ -127,18 +107,8 @@ int tmPlayerTerminated::stream(tBBuf &t) {
 	off++;
 	return off;
 }
-Byte * tmPlayerTerminated::str() {
-	#ifdef _UNET_MSGDBG_
-	tmMsgBase::str();
-	dbg.end();
-	dbg.seek(-1);
-	dbg.printf(" Reason [%i] %s ",reason,alcUnetGetReasonCode(reason));
-	dbg.putByte(0);
-	dbg.rewind();
-	return dbg.read();
-	#else
-	return tmMsgBase::str();
-	#endif
+void tmPlayerTerminated::additionalFields() {
+	dbg.printf("\n Reason [%i] %s ",reason,alcUnetGetReasonCode(reason));
 }
 
 
@@ -179,18 +149,8 @@ int tmPing::stream(tBBuf &t) {
 	off+=9;
 	return off;
 }
-Byte * tmPing::str() {
-	#ifdef _UNET_MSGDBG_
-	tmMsgBase::str();
-	dbg.end();
-	dbg.seek(-1);
-	dbg.printf(" t:%e, dst:%i %s ",mtime,destination,alcUnetGetDestination(destination));
-	dbg.putByte(0);
-	dbg.rewind();
-	return dbg.read();
-	#else
-	return tmMsgBase::str();
-	#endif
+void tmPing::additionalFields() {
+	dbg.printf("\n t:%e, dst:%i %s ",mtime,destination,alcUnetGetDestination(destination));
 }
 
 

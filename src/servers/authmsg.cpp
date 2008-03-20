@@ -63,20 +63,11 @@ namespace alc {
 		}
 	}
 	
-	Byte *tmAuthAsk::str()
+	void tmAuthAsk::additionalFields()
 	{
-		#ifdef _UNET_MSGDBG_
-		tmMsgBase::str();
-		dbg.end();
-		dbg.seek(-1);
+		dbg.nl();
 		if (u && u->proto == 1) dbg.printf(" ip (unet2 protocol): %s,", alcGetStrIp(ip));
-		dbg.printf(" login: %s,\n challenge: %s, hash: %s, build: %i (%s)", login.str(), challenge, hash, release, alcUnetGetRelease(release));
-		dbg.putByte(0);
-		dbg.rewind();
-		return dbg.read();
-		#else
-		return tmMsgBase::str();
-		#endif
+		dbg.printf(" login: %s, challenge: %s, hash: %s, build: %i (%s)", login.str(), challenge, hash, release, alcUnetGetRelease(release));
 	}
 	
 	tmAuthResponse::tmAuthResponse(tNetSession *u, tmAuthAsk &authAsk, Byte *guid, Byte *passwd, Byte result, Byte accessLevel)
@@ -108,20 +99,11 @@ namespace alc {
 		return off;
 	}
 	
-	Byte *tmAuthResponse::str()
+	void tmAuthResponse::additionalFields()
 	{
-		#ifdef _UNET_MSGDBG_
-		tmMsgBase::str();
-		dbg.end();
-		dbg.seek(-1);
+		dbg.nl();
 		if (u && u->proto == 1) dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid));
 		dbg.printf(" login: %s, passwd: %s, result: %d (%s), accessLevel: %d", login.str(), passwd.str(), result, alcUnetGetAuthCode(result), accessLevel);
-		dbg.putByte(0);
-		dbg.rewind();
-		return dbg.read();
-		#else
-		return tmMsgBase::str();
-		#endif
 	}
 
 } //end namespace alc

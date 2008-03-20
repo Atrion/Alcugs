@@ -182,8 +182,9 @@ public:
 	U32 port; //network order
 	U32 sid;
 protected:
-	tNetSession * u; //destination
-	tNetSession * s; //source
+	virtual void additionalFields() {} //!< writes the additional fields of this message type to the dbg buffer (called by str() to print the package)
+	tNetSession * u; //!< destination
+	tNetSession * s; //!< source
 	tStrBuf dbg;
 };
 

@@ -45,21 +45,23 @@ namespace alc {
 	public:
 		tmAuthAsk(tNetSession *u) : tmMsgBase(NetMsgCustomAuthAsk, 0, u) { } // it's not capable of sending a package, so no flags are set
 		virtual void store(tBBuf &t);
-		Byte *str();
 		// format
 		tUStr login;
 		Byte challenge[33], hash[33]; // 2*16+1
 		Byte release;
+	protected:
+		virtual void additionalFields();
 	};
 	
 	class tmAuthResponse : public tmMsgBase {
 	public:
 		tmAuthResponse(tNetSession *u, tmAuthAsk &authAsk, Byte *guid, Byte *passwd, Byte result, Byte accessLevel);
 		virtual int stream(tBBuf &t);
-		Byte *str();
 		// format
 		tUStr login, passwd;
 		Byte result, accessLevel;
+	protected:
+		virtual void additionalFields();
 	};
 	
 } //End alc namespace
