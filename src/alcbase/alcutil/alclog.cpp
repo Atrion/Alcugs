@@ -194,26 +194,21 @@ void alcLogInit() {
 }
 
 void alcLogOpenStdLogs(bool shutup) {
-	if(lerr!=NULL) {
+	// lerr and lstd must never be deleted here as tUnet instances might have a copy, so just close and re-open in case of a re-configure
+	if(lerr!=NULL)
 		lerr->close();
-		delete lerr;
-		lerr=NULL;
-	}
-	if(lstd!=NULL) {
+	else
+		lerr = new tLog();
+	if(shutup) lerr->open(NULL,2,DF_STDERR);
+	else lerr->open("error.log",2,DF_STDERR);
+	
+	if(lstd!=NULL)
 		lstd->close();
-		delete lstd;
-		lstd=NULL;
-	}
-	if(lerr==NULL) {
-		lerr=new tLog();
-		if(shutup) lerr->open(NULL,2,DF_STDERR);
-		else lerr->open("error.log",2,DF_STDERR);
-	}
-	if(lstd==NULL) {
-		lstd=new tLog();
-		if(shutup) lstd->open(NULL,2,DF_STDOUT);
-		else lstd->open("alcugs.log",2,DF_STDOUT);
-	}
+	else
+		lstd = new tLog();
+	if(shutup) lstd->open(NULL,2,DF_STDOUT);
+	else lstd->open("alcugs.log",2,DF_STDOUT);
+	
 	if(lnull==NULL) {
 		lnull=new tLog();
 		lnull->open(NULL,0,0);

@@ -111,9 +111,10 @@ public:
 	void setBindAddress(const void * lhost);
 private:
 	void init();
-	void _openlogs();
 
 protected:
+	void _openlogs();
+	void _closelogs();
 	void updatetimer(U32 usecs);
 	tNetSessionIte netConnect(char * hostname,U16 port,Byte validation,Byte flags);
 

@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_URUNET_ID "$Id$"
 
-//#define _DBG_LEVEL_ 3
+//#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
 #include "unet.h"
@@ -259,6 +259,35 @@ void tUnet::_openlogs() {
 	}
 }
 
+void tUnet::_closelogs() {
+	if(this->log != lstd && this->log != lnull) {
+		DBG(9, "deleting standard log\n");
+		this->log->close();
+		delete this->log;
+		this->log=lnull;
+	}
+	if(this->err != lerr && this->err != lnull) {
+		DBG(9, "deleting error log\n");
+		this->err->close();
+		delete this->err;
+		this->err=lnull;
+	}
+	if(this->ack!=lnull) {
+		this->ack->close();
+		delete this->ack;
+		this->ack=lnull;
+	}
+	if(this->unx!=lnull) {
+		this->unx->close();
+		delete this->unx;
+		this->unx=lnull;
+	}
+	if(this->sec!=lnull) {
+		this->sec->close();
+		delete this->sec;
+		this->sec=lnull;
+	}
+}
 
 void tUnet::startOp() {
 	if(initialized) return;
@@ -393,31 +422,7 @@ void tUnet::stopOp() {
 	close(this->sock);
 #endif
 	this->log->log("DBG: Socket closed\n");
-	if(this->log!=lstd && this->log!=lnull) {
-		this->log->close();
-		delete this->log;
-		this->log=lnull;
-	}
-	if(this->err!=lerr && this->log!=lnull) {
-		this->err->close();
-		delete this->err;
-		this->err=lnull;
-	}
-	if(this->ack!=lnull) {
-		this->ack->close();
-		delete this->ack;
-		this->ack=lnull;
-	}
-	if(this->unx!=lnull) {
-		this->unx->close();
-		delete this->unx;
-		this->unx=lnull;
-	}
-	if(this->sec!=lnull) {
-		this->sec->close();
-		delete this->sec;
-		this->sec=lnull;
-	}
+	_closelogs();
 	initialized=false;
 }
 

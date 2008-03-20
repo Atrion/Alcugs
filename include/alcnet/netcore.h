@@ -64,7 +64,12 @@ public:
 	void leave(tNetSessionIte & who,Byte reason=RQuitting);
 	/** Force a reload of the netcore settings (after changing the configuration for example)
 	*/
-	virtual void reload() { _reconfigure(); }
+	virtual void reload() 
+	{
+		_closelogs();
+		_reconfigure();
+		_openlogs();
+	}
 
 	/** This event is raised when we have a new connection
 			You need to override it in your derived classes with your implementation.

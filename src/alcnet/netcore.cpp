@@ -70,6 +70,7 @@ void tUnetBase::_reconfigure() {
 	tUnetSignalHandler * h = new tUnetSignalHandler(this);
 	DBG(5,"tUnetBase - installing signal handler\n");
 	alcInstallSignalHandler(h);
+	// re-load configuration
 	tStrBuf var;
 	tConfig * cfg;
 	cfg=alcGetConfig();
