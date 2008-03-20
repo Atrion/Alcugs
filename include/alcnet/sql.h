@@ -44,12 +44,15 @@ namespace alc {
 
 class tSQL {
 public:
-	tSQL(Byte *host, U16 Port, Byte *username, Byte *password, Byte *dbname, Byte flags, U32 timeout = 15*60);
+	tSQL(const Byte *host, U16 port, const Byte *username, const Byte *password, const Byte *dbname, Byte flags, U32 timeout);
 	~tSQL(void)
 	{
 		_closelogs();
-		free(host); free(username); free(password);
+		free(host); free(username); free(password); free(dbname);
 	}
+	
+	static Byte allFlags(void) { return SQL_LOG | SQL_LOGQ | SQL_CREATEDB | SQL_STAYCONN | SQL_CREATABL; }
+	static tSQL *createFromConfig(void);
 private:
 	Byte flags;
 	U32 timeout;

@@ -51,15 +51,17 @@ namespace alc {
 	tAuthBackend::tAuthBackend(void)
 	{
 		tConfig *cfg = alcGetConfig();
-		tStrBuf var = cfg->getVar("default_access_level","global");
+		tStrBuf var = cfg->getVar("default_access_level");
 		if (var.isNull()) defaultAccess = 15;
 		else defaultAccess = var.asU16();
 		
-		var = cfg->getVar("auth.minalevel","global");
+		var = cfg->getVar("auth.minalevel");
 		if (var.isNull()) minAccess = 25;
 		else minAccess = var.asU16();
 		
 		DBG(5, "default access: %d, min access: %d\n", defaultAccess, minAccess);
+		
+		sql = tSQL::createFromConfig();
 	}
 	
 	int tAuthBackend::queryUser(Byte *login, Byte *passwd, Byte *guid)

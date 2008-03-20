@@ -42,7 +42,7 @@
 
 namespace alc {
 
-tSQL::tSQL(Byte *host, U16 Port, Byte *username, Byte *password, Byte *dbname, Byte flags, U32 timeout)
+tSQL::tSQL(const Byte *host, U16 port, const Byte *username, const Byte *password, const Byte *dbname, Byte flags, U32 timeout)
 {
 	this->flags = flags;
 	this->timeout = timeout;
@@ -60,9 +60,9 @@ tSQL::tSQL(Byte *host, U16 Port, Byte *username, Byte *password, Byte *dbname, B
 	
 	_openlogs();
 	if (flags & SQL_LOGQ) { // write MySQL connection debug info
-		sql->log("MySQL driver: %s (warning: git doesn\'t update this so it might be outdated)\n", __U_SQL_ID);
-		sql->print(" flags: %04X, host: %s, port: %i, user: %s, dbname: %s, using password: ", flags, host, port, username, dbname);
-		if (*password != NULL) { sql->print("yes\n"); }
+		sql->log("MySQL driver (%s)\n", __U_SQL_ID);
+		sql->print(" flags: %04X, host: %s, port: %d, user: %s, dbname: %s, using password: ", this->flags, this->host, this->port, this->username, this->dbname);
+		if (password != NULL) { sql->print("yes (%s)\n", this->password); }
 		else { sql->print("no\n"); }
 		sql->print(" MySQL client: %s\n\n", mysql_get_client_info());
 	}
@@ -87,6 +87,40 @@ void tSQL::_closelogs(void)
 		delete sql;
 		sql = lnull;
 	}
+}
+
+tSQL *tSQL::createFromConfig(void)
+{
+	tConfig *cfg = alcGetConfig();
+	tStrBuf var;
+	// read basic connection info
+	tStrBuf host = cfg->getVar("db.host");
+	if (host.isNull()) host.putByte(0); // there must be a final 0 so that the tSQL consutrctor can strcpy it
+	U16 port = cfg->getVar("db.port").asU16();
+	tStrBuf user = cfg->getVar("db.username");
+	if (user.isNull()) user.putByte(0);
+	tStrBuf password = cfg->getVar("db.passwd");
+	if (password.isNull()) password.putByte(0);
+	tStrBuf dbname = cfg->getVar("db.name");
+	if (dbname.isNull()) dbname.putByte(0);
+	
+	// additional options
+	U32 timeout = 15*60; // default is 15 minutes
+	Byte flags = allFlags();
+	var = cfg->getVar("db.log");
+	if (!var.isNull() && !var.asByte())
+		flags &= ~SQL_LOG; // disable logging
+	var = cfg->getVar("db.sql.log");
+	if (!var.isNull() && !var.asByte())
+		flags &= ~SQL_LOGQ; // disable logging sql statements
+	var = cfg->getVar("db.persinstent");
+	if (!var.isNull() && !var.asByte())
+		flags &= ~SQL_STAYCONN; // disable staying always connected
+	var = cfg->getVar("db.timeout");
+	if (!var.isNull())
+		timeout = var.asU32();
+	
+	return new tSQL(host.c_str(), port, user.c_str(), password.c_str(), dbname.c_str(), flags, timeout);
 }
 
 }
