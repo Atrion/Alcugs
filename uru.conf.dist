@@ -26,261 +26,47 @@
 # NOTE: Commented text starts with the characters '#' and/or ';'
 ############# Global Settings #################################################
 [global]
-# set the logging/verbose level (you can also set it as parameter [-v n])
+# set the logging/verbose level (you can also set it as parameter: [-v n])
 # 3-> print all messages to the stdout (default)
 # 2-> print only informative and error messages
 # 1-> print only error messages
 # 0-> total silence, perfect for daemon mode
-verbose_level = 0 #default 3
+;verbose_level = 0 # default 3
+# set daemon mode (parameter: [-D])
+;daemon = 1 # default 0
+# path top contain the log files (parameter: [-log path/])
+;log_files_path = log/ # default log/
 
-# set daemon mode (default 0) (parameter: [-D])
-;daemon = 1 #default 1
-
-# sets the bandwidth in kbps. This speed is anounced to the clients
-# and used to compute how fast the server sends the messages.
+# sets the bandwidth in kbit/s. This speed is anounced to the clients
+# and used to compute how fast the server sends the messages
 ;bandwidth = 128
 
-# sets the default global bind address (for all servers)
-bind = localhost #default 0.0.0.0
-
-private_network = 172.26.0.0
+# network and network mask of your LAN (to determine the connection speed)
+private_network = 192.168.0.0
 private_mask    = 255.255.255.0
+# the address others use to connect to your server (i.e. your external address)
 public_address  = localhost
 
-#Set the displayed website, when the user logs into your shard.
-;website = "http://yoursite.tld/"
+bind = 192.168.0.1 # default bind address for servers (the interface facing your router)
 
-#proposed for the future *Not implemented yet!*
-# websiste = "http://huru.almlys.dyns.net/?login=%u"
-# where %u will be replaced by the login, and then, you will
-# be able to make more customized the shard page.
-
-#paths
-;bin = ./
-;sdl = share/sdl/
-;age = share/age/
-# This are for server side python scripts, 
-# (client and/or plasma python scripts don't work here)
-;python = python/
-#ds settings
-;data = ./data/
-;data.mirror = "7,8"
-
-#dataset
-dataset = 6
-#### datasets info ####
-# -1 = undefined
-#  0 = custom
-#  1 = prime
-#  2 = prime+patch12
-#  3 = untìl uru/live (Build 37)
-#  4 = todni (Exp1 Branch)
-#  5 = tpots (Main Branch)
-#  6 = Alcugs stable Client patch distro for tpots
-#  7 = Alcugs testing Client patch distro for tpots
-#  8 = Open Hacking shard (any client can be used)
-# >9 = Send a mail to Almlys, and we can discuss about
-#      creating new worlds incompatible with the other
-#      datasets. Remember, that clients that wish to
-#      use different datasets, must have a different
-#      separate installation for each dataset.
-
-#Force usage
-;dataset.enforce = 1 #(default 1)
-
-#dump raw messages to disk (vault imports also)
-net.dumps = 0
-
-#user defined port range (default and recomened 5000-6000)
-;spawn.start = 5000
-;spawn.stop = 6000
-
-# dissable net.auth (net.auth implementation not finished,
-# so please, set always 0 for now...)
-net.auth = 0 #default 1
-
-# flooding protection
-net.noflood = 1 #default 1
-
-##### FOR UNET3 OLD SERVERS ONLY ##################################
-# oldprotocol, only for clients (depreceated)
-;auth.oldprotocol = 1
-;vault.oldprotocol = 1
-# arhg, I think that the tracking server will explode if you put
-# oldprotocol = 0, (you have been warned)
-tracking.oldprotocol = 1
-##### FOR UNET3+ SERVERS ##########################################
-#Peer Protocol version
-;auth.protocol = 2
-;vault.protocol = 2
-#unet2/unet3 tracking must be set to 1. (2=crash)
-;tracking.protocol = 1
-
-# ** auth settings **
-# Set minimal access level to be able to log into the servers.
-;auth.minalevel = 25 # default 25
-# Set default access level for new users, set it bigger than auth.minalevel
-# to deny the access to the shard. (for a private shard)
-;default_access_level = 15
-# More info about the Access Levels
-#
-#
-
-# Set number of failed login attempts after temporany dissabling an account.
-;auth.att = 6
-#Set the tmp time in seconds that the dissabled account will stay dissabled
-;auth.distime = 300
-
-# ** global database settings **
-# set the database tiemout (default 450 seconds)
-;db.timeout = 450 #default 450 seconds
-#enable persistent connection to the database, default 1 (1=enabled/0=disabled)
-;db.persistent = 1 #default 1
-# enable sql logging (default 1) requires "db.log = 1" to work
-db.sql.log = 0 #default 1
-# enable logging of the database driver (default 1)
-db.log = 0 #default 1
-
-## Metaserver settings
-meta = 0 # 1=metaserver enabled, 0=disabled (default 0)
-
-## Information anounced to the metaserver global public list
-## if metaserver is enabled
-# Your shard name
-;shard.name = "My Alcugs shard"
-# Password, that is required to be able to manually delete
-#  your shard from the public list.
-;shard.passwd = "123"
-# Description of your shard.
-shard.desc = "An Alcugs shard, like any other one"
-# Your Shard Home Page
-;shard.website = "http://alcugs.almlys.dyns.net"
-# Contact address (an E-mail address, or a URL to a place where
-#  the admin can be contacted)
-;shard.contact = "foo@bar"
-# Note, your shard will be anounced with the specific datasets,
-#  it will be listed in the global list.
-#  Also, Alcugs clients will show only shards of the client
-#  configured datased.
-
-# The next ages, will be private. (Also, at current time personal, must be a 
-#  private age)
-private_ages = "AvatarCustomization,Personal,Nexus,BahroCave"
-
-# Completely debbuging options, that should not be used in a production shard.
-instance_mode = 1
-#Let's remember, 0,1,2, I don't remember what those values did. *looks sources*
-# hmmmm, hmmmmmm, ah!, I got it. 0=all ages are public, 1=only ages listed on 
-# private_ages will be private, and, aha, 2=old schema.
-load_on_demand = 1
-#Let's remember, load_on_demand 1=spawn game server on demand, 0=ignore fork requests.
-# "./start.sh Personal myguid" may be useful.
-
-# If you don't want to burn your hardrive, please, be sure that your 
-#  /tmp mount point, is a RAM device. (shm, I think..)
-# If your are on windows, then it's time to trash your old OS and upgdrade to a better one.
-# Yep, it's in the TODO list an http service, so, you can request the status without trashing
-#  your hardrive.
-# UruVision
-track.xml = 0 # Enable UruVision compatible xml output (default 1)
-track.xml.path = "/tmp/alcugs/test/status.xml"
-
-# Online Players Html files (old)
-track.html = 0 # Enable standard online players html output (default 1)
-track.html.path = "/tmp/alcugs/test/status.html"
-
-track.htmldbg = 0 # Enable the same file, but with all the available debug input (default 1)
-track.htmldbg.path = "/tmp/alcugs/test/statusdbg.html"
-
-# You can dissable the html files, and use an xml parser to show in your website, only the
-# information that you whan to display.
-
-#There is a stop var for each server section, remove them to check that you
+# There is a stop var for each server section, remove them to check that you
 # have already read and understood how this configuration file works.
-# stop = 1
+stop = 1
 
-############# Auth Server Settings #############################################
+############# Auth Settings ###################################################
 [auth]
-;bind = localhost
+# this is the section containing options for the auth server. global options like bind, verbose_level or log_files_path can be overwritten here
+
+# bind and port are also used by lobby and game to know where to connect
+bind = 127.0.0.1 # the auth server doesn't have to be accessed from outside
 port = 2010
-log_files_path = log/auth/
-
-;crash.action = "python/xMailCrashReport.py name=uru_auth"
-
-#database settings
-#db.host = "localhost"
-#note: set db_server to nothing to use the local unix socket
-db.name = "uru_auth_db"
-db.username = "uru"
-db.passwd = "auth_db_password"
 
 stop = 1
 
-############# Tracking Server Settings #########################################
-[tracking]
-;bind = localhost
-port = 2011
-log_files_path = log/tracking/
-
-;tracking.tmp.hacks.agestate = 1	; on by default
-; The following list was carefully chosen, please think before removing any.
-; The Cleft *must* be listed either here or in private_ages or new players
-; will be unable to get a Relto book if they don't do so on the first visit!!
-;tracking.tmp.hacks.resetting_ages = "Cleft,DniCityX2Finale,GreatZero,Kveer,Myst,Neighborhood02,Personal02,RestorationGuild,spyroom"
-
-;crash.action = "python/xMailCrashReport.py name=uru_tracking"
-
-stop = 1
-
-############# Vault Server Settings ############################################
-[vault]
-;bind = localhost
-port = 2012
-log_files_path = log/vault/
-
-;crash.action = "python/xMailCrashReport.py name=uru_vault"
-
-#database settings
-#db.host = "localhost"
-#note: set db.host to nothing to use the local unix socket
-db.name = "uru_vault_db"
-db.username = "uru"
-db.passwd = "vault_db_passwd"
-
-# Assigned name to new hoods
-vault.hood.name = "My Neighborhood"
-vault.hood.desc = "My Neighborhood description"
-
-;vault.tmp.hacks.linkrules = 0		; disabled by default
-
-stop = 1
-
-############ Lobby Server Settings #############################################
+############# Lobby Settings ##################################################
 [lobby]
-;bind = localhost
+# this is the section containing options for the lobby server. global options like bind, verbose_level or log_files_path can be overwritten here
+
 port = 5000
-log_files_path = log/lobby/
-game.log = log/game/
-;game.config = olduru.conf
-
-;crash.action = "python/xMailCrashReport.py name=uru_lobby"
 
 stop = 1
-
-############ Game Server Settings ##############################################
-[game]
-#never use the port directive inside the game key, or all spawned game servers will attempt
-# to use the port configured here!!!!
-# The same applies with the log_files_path
-# best to don't put nothing here, only _netcore_ only related options.
-
-;crash.action = "python/xMailCrashReport.py name=uru_game"
-
-stop = 1
-
-[data]
-stop = 1
-
-[meta]
-stop = 1
-
