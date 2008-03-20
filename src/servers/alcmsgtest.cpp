@@ -102,14 +102,6 @@ public:
 	void setFile(char * file) {
 		strcpy(this->file,file);
 	}
-	
-	// these are pure virtual but we don't need them
-	virtual void onConnectionClosed(tNetEvent * ev,tNetSession * u) {}
-	virtual void onLeave(tNetEvent * ev,Byte reason,tNetSession * u) {}
-	virtual void onTerminated(alc::tNetEvent*, alc::Byte, alc::tNetSession*) {}
-	virtual void onConnectionTimeout(alc::tNetEvent*, alc::tNetSession*) {}
-	virtual void onNewConnection(alc::tNetEvent*, alc::tNetSession*) {}
-	virtual void onStop() {}
 private:
 	Byte listen;
 	tLog * out;

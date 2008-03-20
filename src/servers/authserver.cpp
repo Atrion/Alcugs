@@ -73,7 +73,6 @@ namespace alc {
 				authResult = authenticatePlayer(authAsk.login.read(), authAsk.challenge, authAsk.hash, authAsk.release, alcGetStrIp(ntohl(authAsk.ip)), (char *)str_passwd, (char *)str_guid, &accessLevel);
 				
 				// send answer to client
-				DBG(7, "creating answer\n");
 				tmAuthResponse authResponse(u, authAsk, str_guid, str_passwd, authResult, accessLevel);
 				u->send(authResponse);
 				

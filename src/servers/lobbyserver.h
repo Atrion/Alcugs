@@ -49,16 +49,6 @@ namespace alc {
 	public:
 		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
 			{ return tUnetServerBase::onMsgRecieved(ev, msg, u); }
-		// these are pure virtual but we don't need them
-		virtual void onConnectionClosed(tNetEvent * ev,tNetSession * u) {}
-		virtual void onLeave(tNetEvent * ev,Byte reason,tNetSession * u) {}
-		virtual void onTerminated(alc::tNetEvent*, alc::Byte, alc::tNetSession*) {}
-		virtual void onConnectionTimeout(alc::tNetEvent*, alc::tNetSession*) {}
-		virtual void onStart() {}
-		virtual void onNewConnection(alc::tNetEvent*, alc::tNetSession*) {}
-		virtual void onConnectionFlood(alc::tNetEvent*, alc::tNetSession*) {}
-		virtual void onIdle(bool) {}
-		virtual void onStop() {}
 	};
 	
 } //End alc namespace
