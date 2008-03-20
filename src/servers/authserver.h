@@ -41,19 +41,6 @@
 namespace alc {
 
 	////DEFINITIONS
-	class tmAuthAsk : public tmMsgBase {
-	public:
-		tmAuthAsk() : tmMsgBase(NetMsgCustomAuthAsk, 0) { }
-		virtual void store(tBBuf &t);
-		Byte *str();
-		// format
-		tUStr login;
-		Byte challenge[16], hash[16];
-		Byte release;
-		U32 ip;
-		bool oldProtocol;
-	};
-	
 	class tUnetAuthServer : public tUnetServerBase {
 	public:
 		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);

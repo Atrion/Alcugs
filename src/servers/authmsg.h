@@ -33,63 +33,37 @@
 		Several
 */
 
+#ifndef __U_AUTHMSG_H
+#define __U_AUTHMSG_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_AUTHSERVER_ID "$Id$"
-
-#define _DBG_LEVEL_ 10
-
-#include <alcugs.h>
-#include <unet.h>
-
-////extra includes
-#include "authserver.h"
-#include "authmsg.h"
-
-#include <alcdebug.h>
+#define __U_AUTHMSG_H_ID "$Id$"
 
 namespace alc {
 
-	////IMPLEMENTATION
-	const char * alcNetName="Auth";
-	Byte alcWhoami=KAuth;
+	////DEFINITIONS
+	class tmAuthAsk : public tmMsgBase {
+	public:
+		tmAuthAsk() : tmMsgBase(NetMsgCustomAuthAsk, 0) { } // it's not capable of sending a package, so no flags are set
+		virtual void store(tBBuf &t);
+		Byte *str();
+		// format
+		tUStr login;
+		Byte challenge[33], hash[33]; // 2*16+1
+		Byte release;
+		bool oldProtocol;
+	};
 	
-	int tUnetAuthServer::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
-	{
-		int ret = tUnetServerBase::onMsgRecieved(ev, msg, u); // first let tUnetServerBase process the message
-		if (ret != 0) return ret; // cancel if it was processed, otherwise it's our turn
-		
-		switch(msg->cmd) {
-			case NetMsgCustomAuthAsk:
-				ret = 1;
-				tmAuthAsk authAsk;
-				Byte str_guid[40], str_passwd[40], accessLevel;
-				int authResult;
-				
-				// get the data out of the packet
-				msg->data->get(authAsk);
-				log->log("<RCV> %s\n", authAsk.str());
-				
-				// authenticate player
-				authResult = authenticatePlayer(authAsk.login.read(), authAsk.challenge, authAsk.hash, authAsk.release, alcGetStrIp(ntohl(authAsk.ip)), (char *)str_passwd, (char *)str_guid, &accessLevel);
-				
-				// send answer to client
-				DBG(7, "creating answer\n");
-				tmAuthResponse authResponse(u, authAsk, str_guid, str_passwd, authResult, accessLevel);
-				u->send(authResponse);
-				
-				break;
-		}
-		return ret;
-	}
+	class tmAuthResponse : public tmMsgBase {
+	public:
+		tmAuthResponse(tNetSession *u, tmAuthAsk &authAsk, Byte *guid, Byte *passwd, Byte result, Byte accessLevel);
+		virtual int stream(tBBuf &t);
+		Byte *str();
+		// format
+		tUStr login, passwd;
+		Byte result, accessLevel;
+		bool oldProtocol;
+	};
 	
-	int tUnetAuthServer::authenticatePlayer(Byte *login, Byte *challenge, Byte *hash, Byte release, char *ip, char *passwd,
-			char *guid, Byte *accessLevel)
-	{
-		// TODO: query database instead of hardcoding values
-		strcpy(passwd, "76A2173BE6393254E72FFA4D6DF1030A"); // the md5sum of "passwd"
-		strcpy(guid, "7a9131b6-9dff-4103-b231-4887db6035b8");
-		*accessLevel = 15;
-		return 0;
-	}
+} //End alc namespace
 
-} //end namespace alc
+#endif

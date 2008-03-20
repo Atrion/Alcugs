@@ -99,8 +99,10 @@ alcugs_lobby_CPPFLAGS = -DI_AM_THE_LOBBY_SERVER
 
 alcugs_auth_SOURCES = \
  src/servers/alcugs_main.cpp \
+ src/servers/authmsg.cpp \
  src/servers/authserver.cpp
 alcugs_auth_INCLUDES = \
+ src/servers/authmsg.h \
  src/servers/authserver.h
 alcugs_auth_LDADD = libalcnet1.a libalcbase1.a
 alcugs_auth_CPPFLAGS = -DI_AM_THE_AUTH_SERVER

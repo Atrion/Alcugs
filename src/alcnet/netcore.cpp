@@ -301,6 +301,7 @@ void tUnetBase::run() {
 					if(ret==0) {
 						ret=onMsgRecieved(evt,msg,u);
 					}
+					log->flush(); // this way the message parsers don't have to do that all the time
 					if(u->client==1) {
 						if(ret==0) {
 							err->log("%s Unexpected message %04X (%s)\n",u->str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
