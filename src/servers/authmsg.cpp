@@ -59,10 +59,8 @@ namespace alc {
 		release = t.getByte();
 		if(!(flags & plNetIP)) {
 			ip = t.getU32();
-			oldProtocol = true;
+			if (u) u->proto = 1; // unet2 protocol
 		}
-		else
-			oldProtocol = false;
 	}
 	
 	Byte *tmAuthAsk::str()
@@ -71,8 +69,8 @@ namespace alc {
 		tmMsgBase::str();
 		dbg.end();
 		dbg.seek(-1);
+		if (u && u->proto == 1) dbg.printf(" ip (unet2 protocol): %s,", alcGetStrIp(ip));
 		dbg.printf(" login: %s,\n challenge: %s, hash: %s, build: %i (%s)", login.str(), challenge, hash, release, alcUnetGetRelease(release));
-		if (oldProtocol) dbg.printf(" [using old protocol]");
 		dbg.putByte(0);
 		dbg.rewind();
 		return dbg.read();
@@ -89,8 +87,7 @@ namespace alc {
 		max_version = authAsk.max_version;
 		ip = authAsk.ip;
 		port = authAsk.port;
-		oldProtocol = authAsk.oldProtocol;
-		if (oldProtocol)
+		if (u && u->proto == 1)
 			unsetFlags(plNetIP | plNetGUI);
 		login.set(authAsk.login.str());
 		
@@ -106,7 +103,7 @@ namespace alc {
 		off += t.put(login); // login
 		t.putByte(result); ++off; // result
 		off += t.put(passwd); // passwd
-		if (oldProtocol) { t.write(guid, 16); off += 16; } // GUID (only for old protocol)
+		if (u && u->proto == 1) { t.write(guid, 16); off += 16; } // GUID (only for old protocol)
 		t.putByte(accessLevel); ++off; // acess level
 		return off;
 	}
@@ -117,8 +114,8 @@ namespace alc {
 		tmMsgBase::str();
 		dbg.end();
 		dbg.seek(-1);
+		if (u && u->proto == 1) dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid));
 		dbg.printf(" login: %s, passwd: %s, result: %d, accessLevel: %d", login.str(), passwd.str(), result, accessLevel);
-		if (oldProtocol) dbg.printf(" [using old protocol]");
 		dbg.putByte(0);
 		dbg.rewind();
 		return dbg.read();

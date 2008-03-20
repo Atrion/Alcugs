@@ -61,7 +61,7 @@ namespace alc {
 		switch(msg->cmd) {
 			case NetMsgCustomAuthAsk:
 				ret = 1;
-				tmAuthAsk authAsk;
+				tmAuthAsk authAsk(u);
 				Byte str_guid[40], str_passwd[40], accessLevel;
 				int authResult;
 				

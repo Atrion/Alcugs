@@ -57,14 +57,13 @@ namespace alc {
 	{
 		int ret=0;
 
-		tmPing ping;
-		tmAlive alive;
+		tmPing ping(u);
+		tmAlive alive(u);
 	
 		switch(msg->cmd) {
 			// answer to pings
 			case NetMsgPing:
 				ret = 1;
-				ping.setSource(u);
 				msg->data->get(ping);
 				log->log("<RCV> %s\n",ping.str());
 				if (ping.destination == whoami || ping.destination == KBcast) { // if it's for us or for everyone, answer
