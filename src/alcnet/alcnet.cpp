@@ -800,19 +800,19 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 	u->server.pn++;
 	msg->pn=u->server.pn;
 	
-	#if _DBG_LEVEL_ > 2
+	#ifdef _DEBUG_PACKETS_
 	log->log("<SND> ");
 	msg->dumpheader(log);
 	log->nl();
-	msg->htmlDumpHeader(ack,1,u->ip,u->port);
 	#endif
+	msg->htmlDumpHeader(ack,1,u->ip,u->port);
 
 	//store message into buffer
 	tMBuf * mbuf;
 	mbuf = new tMBuf(msg->size());
 	mbuf->put(*msg);
 
-	#if _DBG_LEVEL_ > 2
+	#ifdef _DEBUG_PACKETS_
 	log->log("<SND> RAW Packet follows: \n");
 	log->dumpbuf(*mbuf);
 	log->nl();

@@ -32,8 +32,6 @@
 
 //#define _DBG_LEVEL_ 10
 
-#define _DEBUG_DUMP_PACKETS
-
 #include "alcugs.h"
 
 #include <sys/stat.h>
@@ -691,7 +689,6 @@ buf = The Buffer
 dsc = File descriptor where the packet will be dumped
  --------------------------------------------------------------*/
 void tLog::dumpbuf(Byte * buf, U32 n, U32 e, Byte how) {
-#ifdef _DEBUG_DUMP_PACKETS
 	unsigned int i=0,j=0,k=0;
 
 	if(!this->level) return;
@@ -791,7 +788,6 @@ void tLog::dumpbuf(Byte * buf, U32 n, U32 e, Byte how) {
 			}
 	}
 	this->flush();
-#endif
 }
 
 void tLog::nl() {

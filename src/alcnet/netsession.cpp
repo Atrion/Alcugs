@@ -33,8 +33,6 @@
 
 //#define _DBG_LEVEL_ 3
 
-//#define _ACKSTACK_DBG_
-
 #include "alcugs.h"
 #include "unet.h"
 
@@ -217,7 +215,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		return;
 	}
 	
-	#if _DBG_LEVEL_ > 2
+	#ifdef _DEBUG_PACKETS_
 	net->log->log("<RCV> RAW Packet follows: \n");
 	net->log->dumpbuf(buf,size);
 	net->log->nl();
@@ -229,7 +227,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	
 	try {
 		mbuf.get(msg);
-		#if _DBG_LEVEL_ > 2
+		#ifdef _DEBUG_PACKETS_
 		net->log->log("<RCV> ");
 		msg.dumpheader(net->log);
 		net->log->nl();
@@ -423,11 +421,11 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 */
 Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 	//drop already parsed messages
-	#if _DBG_LEVEL_ > 2
-	net->err->log("%s INF: SN %i (Before) window is:\n",str(),msg.sn);
-	net->err->dumpbuf((Byte *)w,rcv_win);
-	net->err->nl();
-	net->err->flush();
+	#ifdef _DEBUG_PACKETS_
+	net->log->log("%s INF: SN %i (Before) window is:\n",str(),msg.sn);
+	net->log->dumpbuf((Byte *)w,rcv_win);
+	net->log->nl();
+	net->log->flush();
 	#endif
 	
 	if(!(msg.sn > wite || msg.sn <= (wite+rcv_win))) {
@@ -450,7 +448,9 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 				i++; start++;
 				wite++;
 				if(i>=rcv_win*8) { i=0; start=0; }
-				DBG(3, "%s INF: A bit was deactivated (1)\n",str());
+				#ifdef _DEBUG_PACKETS_
+				net->log->log("%s INF: A bit was deactivated (1)\n",str());
+				#endif
 			}
 			ck=(i < start ? i+(rcv_win*8) : i);
 			while((ck-start)>((rcv_win*8)/2)) {
@@ -459,16 +459,20 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 				start++;
 				wite++;
 				if(start>=rcv_win*8) { start=0; ck=i; }
-				DBG(3, "%s INF: A bit was deactivated (2)\n",str());
+				#ifdef _DEBUG_PACKETS_
+				net->log->log("%s INF: A bit was deactivated (2)\n",str());
+				#endif
 			}
-			DBG(3, "%s INF: Packet %i accepted to be parsed\n",str(),msg.sn);
+			#ifdef _DEBUG_PACKETS_
+			net->log->log("%s INF: Packet %i accepted to be parsed\n",str(),msg.sn);
+			#endif
 		}
 	}
-	#if _DBG_LEVEL_ > 2
-	net->err->log("%s INF: SN %i (after) window is:\n",str(),msg.sn);
-	net->err->dumpbuf((Byte *)w,rcv_win);
-	net->err->nl();
-	net->err->flush();
+	#ifdef _DEBUG_PACKETS_
+	net->log->log("%s INF: SN %i (after) window is:\n",str(),msg.sn);
+	net->log->dumpbuf((Byte *)w,rcv_win);
+	net->log->nl();
+	net->log->flush();
 	#endif
 	return 0;
 }
@@ -494,7 +498,9 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	if(tts>ack_rtt) tts=ack_rtt;
 	net->updatetimer(tts);
 	ack->timestamp=net->net_time + tts;
-	DBG(3, "tts: %i, %i, %i\n",msg.frt,tts,cabal);
+	#ifdef _DEBUG_PACKETS_
+	net->log->log("tts: %i, %i, %i\n",msg.frt,tts,cabal);
+	#endif
 	
 	int i=0;
 
@@ -701,7 +707,9 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 	U32 sn,ps;
 	Byte frn,pfr;
 
-	DBG(3, "<RCV>");
+	#ifdef _DEBUG_PACKETS_
+	net->log->log("<RCV>");
+	#endif
 	t.data.rewind();
 	if(!(t.tf & UNetExt)) {
 		if(t.data.getU16()!=0) throw txUnexpectedData(_WHERE("ack unknown data"));
@@ -717,8 +725,10 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 		pfr=A3 & 0x000000FF;
 		sn=A1 >> 8;
 		ps=A3 >> 8;
+		#ifdef _DEBUG_PACKETS_
 		if(i!=0) net->log->print("    |");
-		DBGM(3, " Ack %i,%i %i,%i\n",sn,frn,ps,pfr);
+		net->log->print(" Ack %i,%i %i,%i\n",sn,frn,ps,pfr);
+		#endif
 		//well, do it
 		tUnetUruMsg * msg=NULL;
 		sndq->rewind();
@@ -728,7 +738,9 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 			
 			if(A1>=A2 && A2>A3) {
 				//then delete
-				DBG(3, "Deleting packet %i,%i\n",msg->sn,msg->frn);
+				#ifdef _DEBUG_PACKETS_
+				net->log->log("Deleting packet %i,%i\n",msg->sn,msg->frn);
+				#endif
 				if(msg->tryes==1 && A1==A2) {
 					U32 crtt=net->net_time-msg->snd_timestamp;
 					#ifdef _UNET_DBG_

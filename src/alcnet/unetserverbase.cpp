@@ -58,21 +58,27 @@ namespace alc {
 		int ret=0;
 
 		tmPing ping;
+		tmAlive alive;
 	
 		switch(msg->cmd) {
 			// answer to pings
 			case NetMsgPing:
+				ret = 1;
 				ping.setSource(u);
 				msg->data->get(ping);
 				log->log("<RCV> %s\n",ping.str());
 				if (ping.destination == whoami || ping.destination == KBcast) { // if it's for us or for everyone, answer
 					ping.setReply();
 					u->send(ping);
-					ret=1;
 				}
 				else if (whoami == KLobby || whoami == KGame) { // TODO: lobby and game server should forward the pings to their destination
 				
 				}
+				break;
+			case NetMsgAlive:
+				ret = 1;
+				msg->data->get(alive);
+				log->log("<RCV> %s\n",alive.str());
 				break;
 		}
 		return ret;

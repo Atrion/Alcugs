@@ -55,7 +55,13 @@
 //#define _UNET_DBG_
 
 // Debugging information attached to messages
-//#define _UNET_MSGDBG_
+#define _UNET_MSGDBG_
+
+// Dump incoming/outgoing packages
+//#define _DEBUG_PACKETS_
+
+// Debug the ack stack
+//#define _ACKSTACK_DBG_
 
 // Check admin?
 #define __VTC 0

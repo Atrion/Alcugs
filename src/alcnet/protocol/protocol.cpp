@@ -697,7 +697,7 @@ void tmMsgBase::copyProps(tmMsgBase &t) {
 }
 Byte * tmMsgBase::str() {
 	#ifdef _UNET_MSGDBG_
-	dbg.printf("%s %04X %08X\nFlags:",alcUnetGetMsgCode(cmd),cmd,flags);
+	dbg.printf("%s %04X %08X\n Flags:",alcUnetGetMsgCode(cmd),cmd,flags);
 	if(flags & plNetAck)
 		dbg.writeStr(" ack");
 	if(flags & plNetFirewalled)
@@ -722,7 +722,6 @@ Byte * tmMsgBase::str() {
 	if(flags & plNetSid)
 		dbg.printf(" sid:%i,",sid);
 
-	dbg.nl();
 	dbg.putByte(0);
 	dbg.rewind();
 	return dbg.read();
