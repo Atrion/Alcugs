@@ -45,8 +45,9 @@ namespace alc {
 	public:
 		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
 	private:
-		int authenticatePlayer(Byte *login, Byte *challenge, Byte *hash, Byte release, char *ip, char *passwd,
-			char *guid, Byte *accessLevel); //!< authenticates the player
+		void calculateHash(Byte *login, Byte *passwd, Byte *challenge, Byte *hash); //!< calculate the hash needed to check the password
+		int authenticatePlayer(Byte *login, Byte *challenge, Byte *hash, Byte release, Byte *ip, Byte *passwd,
+			Byte *guid, Byte *accessLevel); //!< authenticates the player
 	};
 	
 } //End alc namespace

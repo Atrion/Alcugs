@@ -62,7 +62,7 @@ namespace alc {
 			case NetMsgCustomAuthAsk:
 				ret = 1;
 				tmAuthAsk authAsk(u);
-				Byte str_guid[40], str_passwd[40], accessLevel;
+				Byte guid[40], passwd[40], accessLevel;
 				int authResult;
 				
 				// get the data out of the packet
@@ -70,10 +70,10 @@ namespace alc {
 				log->log("<RCV> %s\n", authAsk.str());
 				
 				// authenticate player
-				authResult = authenticatePlayer(authAsk.login.read(), authAsk.challenge, authAsk.hash, authAsk.release, alcGetStrIp(ntohl(authAsk.ip)), (char *)str_passwd, (char *)str_guid, &accessLevel);
+				authResult = authenticatePlayer(authAsk.login.str(), authAsk.challenge, authAsk.hash, authAsk.release, (Byte *)alcGetStrIp(ntohl(authAsk.ip)), passwd, guid, &accessLevel);
 				
 				// send answer to client
-				tmAuthResponse authResponse(u, authAsk, str_guid, str_passwd, authResult, accessLevel);
+				tmAuthResponse authResponse(u, authAsk, guid, passwd, authResult, accessLevel);
 				u->send(authResponse);
 				
 				break;
@@ -81,14 +81,30 @@ namespace alc {
 		return ret;
 	}
 	
-	int tUnetAuthServer::authenticatePlayer(Byte *login, Byte *challenge, Byte *hash, Byte release, char *ip, char *passwd,
-			char *guid, Byte *accessLevel)
+	void tUnetAuthServer::calculateHash(Byte *login, Byte *passwd, Byte *challenge, Byte *hash) {
+		tMD5Buf md5buffer;
+		md5buffer.write(challenge, strlen((char *)challenge));
+		md5buffer.write(login, strlen((char *)login));
+		md5buffer.write(passwd, strlen((char *)passwd));
+		md5buffer.compute();
+		alcHex2Ascii(hash, md5buffer.read(16), 16);
+	}
+	
+	int tUnetAuthServer::authenticatePlayer(Byte *login, Byte *challenge, Byte *hash, Byte release, Byte *ip, Byte *passwd,
+			Byte *guid, Byte *accessLevel)
 	{
+		Byte correctHash[50];
 		// TODO: query database instead of hardcoding values
-		strcpy(passwd, "76A2173BE6393254E72FFA4D6DF1030A"); // the md5sum of "passwd"
-		strcpy(guid, "7a9131b6-9dff-4103-b231-4887db6035b8");
+		strcpy((char *)passwd, "76A2173BE6393254E72FFA4D6DF1030A"); // the md5sum of "passwd"
+		strcpy((char *)guid, "7a9131b6-9dff-4103-b231-4887db6035b8");
 		*accessLevel = 15;
-		return 0;
+		
+		calculateHash(login, passwd, challenge, correctHash);
+		if(strcmp((char *)hash, (char *)correctHash)) {
+			return AInvalidPasswd;
+		}
+		
+		return AAuthSucceeded;
 	}
 
 } //end namespace alc

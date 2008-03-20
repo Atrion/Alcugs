@@ -189,6 +189,7 @@ void alcAscii2Hex(Byte * out, Byte * in, int size) {
 	}
 }
 
+#if 0
 /**
   \brief Decodes the specific UruString associated to a buffer.
   \note The result will be put on out, and it must have the required
@@ -241,6 +242,7 @@ int alcEncodeUStr(unsigned char* out, unsigned char* in, U16 size, Byte how) {
 
 	return size+2;
 }
+#endif
 
 /** \brief Check if the char X is present n bytes in the buffer
 	\return Returns true if is the case, false in any other case

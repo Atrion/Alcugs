@@ -115,7 +115,7 @@ namespace alc {
 		dbg.end();
 		dbg.seek(-1);
 		if (u && u->proto == 1) dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid));
-		dbg.printf(" login: %s, passwd: %s, result: %d, accessLevel: %d", login.str(), passwd.str(), result, accessLevel);
+		dbg.printf(" login: %s, passwd: %s, result: %d (%s), accessLevel: %d", login.str(), passwd.str(), result, alcUnetGetAuthCode(result), accessLevel);
 		dbg.putByte(0);
 		dbg.rewind();
 		return dbg.read();
