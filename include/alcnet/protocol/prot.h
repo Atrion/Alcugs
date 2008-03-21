@@ -62,7 +62,7 @@
 #define plNetIP         0x00000010 //* This message should contain client's ip address
 
 //Suppositions for unidentified flags.
-#define plNetCustom     0x00020000 //¿*? Unknown purpose flag
+#define plNetCustom     0x00020000 //*? Unknown purpose flag
 
 #define plNetStateReq   0x00000800 //(unknown, seen on the 1st plNetMsgStateRequest)
 #define plNetDirected   0x00008000 //Unknown, seen on plNetMsgGameMessageDirected
@@ -121,7 +121,7 @@
 #define AAccountDisabled 0xFC
 #define AInvalidPasswd 0xFD
 #define AInvalidUser 0xFE
-//#define AUnspecifiedServerError 0xFF
+#define AUnspecifiedServerError 0xFF
 //Custom
 #define AHacked 0xF6
 #define ABanned 0xF5

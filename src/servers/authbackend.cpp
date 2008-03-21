@@ -47,10 +47,28 @@
 #include <alcdebug.h>
 
 namespace alc {
+	
+	// this only contains the columns needed for this auth server
+	const char * authTableInitScript = "\
+	CREATE TABLE `accounts` (\
+		`uid` int(10) unsigned NOT NULL auto_increment,\
+		`guid` varchar(50) NOT NULL default '',\
+		`name` varchar(50) NOT NULL default '',\
+		`passwd` varchar(32) NOT NULL default '',\
+		`a_level` tinyint(1) unsigned NOT NULL default '25',\
+		`last_login` timestamp(14) NOT NULL,\
+		`last_ip` varchar(30) NOT NULL default '',\
+		`attempts` tinyint(1) unsigned NOT NULL default '0',\
+		`last_attempt` timestamp(14) NOT NULL,\
+		PRIMARY KEY  (`uid`),\
+		UNIQUE KEY `guid` (`guid`),\
+		UNIQUE KEY `name` (`name`)\
+	) TYPE=MyISAM;";
 
 	tAuthBackend::tAuthBackend(void)
 	{
 		log = lnull;
+		sql = NULL;
 	
 		tConfig *cfg = alcGetConfig();
 		tStrBuf var = cfg->getVar("auth.minalevel");
@@ -58,8 +76,8 @@ namespace alc {
 		else minAccess = var.asU16();
 		
 		var = cfg->getVar("auth.att");
-		if (var.isNull()) attempts = 6;
-		else attempts = var.asU16();
+		if (var.isNull()) maxAttempts = 6;
+		else maxAttempts = var.asU16();
 		
 		var = cfg->getVar("auth.distime");
 		if (var.isNull()) disTime = 5*60;
@@ -69,14 +87,44 @@ namespace alc {
 		if (var.isNull() || var.asByte()) { // logging enabled per default
 			log = new tLog("auth.log", 4, 0);
 		}
-		
-		sql = tSQL::createFromConfig();
-		if (!sql->prepare()) {
-			throw txUnetIniErr(_WHERE("Failed to connect to database. Please check username, password and permissions."));
+
+		if (prepare())
+			log->log("Auth driver successfully started (%s)\n minimal access level: %d, max attempts: %d, disabled time: %d\n\n",
+					__U_AUTHBACKEND_ID, minAccess, maxAttempts, disTime);
+		else { // initializing didn't work... will be tried again when actually needed
+			delete sql;
+			sql = NULL;
 		}
-		else
-			log->log("Auth driver successfully started\n minimal access level: %d, max attempts: %d, disabled time: %d\n\n",
-					minAccess, attempts, disTime);
+	}
+	
+	bool tAuthBackend::prepare(void)
+	{
+		// establish database connection
+		if (sql) {
+			lerr->log("ERR: Database already opened when calling tAuthBackend::prepare()\n");
+			delete sql;
+		}
+		sql = tSQL::createFromConfig();
+		if (!sql->prepare()) return false;
+		
+		// check if the auth table exists
+		char query[100];
+		sprintf(query, "SELECT * FROM `accounts`");
+		bool exists = sql->query(query, "Looking for accounts table");
+		mysql_free_result(sql->storeResult()); // that's necessary, otherwise we get a "2014 Commands out of sync; you can't run this command now" error
+		if (!exists) // it does not, so create it
+			if (!sql->query(authTableInitScript, "creating auth table")) return false;
+		
+		return true;
+	}
+
+	void tAuthBackend::calculateHash(Byte *login, Byte *passwd, Byte *challenge, Byte *hash) {
+		tMD5Buf md5buffer;
+		md5buffer.write(challenge, strlen((char *)challenge));
+		md5buffer.write(login, strlen((char *)login));
+		md5buffer.write(passwd, strlen((char *)passwd));
+		md5buffer.compute();
+		alcHex2Ascii(hash, md5buffer.read(16), 16);
 	}
 	
 	int tAuthBackend::queryUser(Byte *login, Byte *passwd, Byte *guid)
@@ -89,6 +137,25 @@ namespace alc {
 		}
 		else
 			return -1;
+	}
+
+	int tAuthBackend::authenticatePlayer(Byte *login, Byte *challenge, Byte *hash, Byte release, Byte *ip, Byte *passwd,
+			Byte *guid, Byte *accessLevel)
+	{
+		Byte correctHash[50];
+		int result = queryUser(login, passwd, guid); // query password, access level and guid of this user
+		if (result < 0) {
+			*accessLevel = AcNotActivated;
+			return AInvalidUser;
+		}
+		*accessLevel = (Byte)result;
+		
+		calculateHash(login, passwd, challenge, correctHash);
+		if(strcmp((char *)hash, (char *)correctHash)) {
+			return AInvalidPasswd;
+		}
+		
+		return AAuthSucceeded;
 	}
 
 } //end namespace alc

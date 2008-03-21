@@ -50,12 +50,14 @@ public:
 	~tSQL(void);
 	
 	bool prepare(void); //!< this must be called before each query. it establishes the connection and creates the database if necessary \return true on success, false on error
-	void printError(char *msg); //!< print the last MySQL error (with the given desctiption) to the error protocol
-	bool query(char *str, char *desc); //!< query the database \return true on success, false on error
+	void printError(const char *msg, tLog *out = NULL); //!< print the last MySQL error (with the given desctiption) to the error protocol
+	bool query(const char *str, const char *desc); //!< query the database \return true on success, false on error
 	void checkTimeout(void); //!< closes the connection on timeout
 	inline int affectedRows(void) {
 		return (connection == NULL) ? -1 : mysql_affected_rows(connection);
 	}
+	char *escape(char *str); //!< escapes the given string and returns the point to a static array. max string length is 511
+	MYSQL_RES *storeResult(void);
 	
 	static Byte allFlags(void) { return SQL_LOG | SQL_LOGQ | SQL_CREATEDB | SQL_STAYCONN | SQL_CREATABL; }
 	static tSQL *createFromConfig(void);

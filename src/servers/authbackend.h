@@ -50,12 +50,17 @@ namespace alc {
 			if (log != lnull) delete log;
 		}
 		
-		int queryUser(Byte *login, Byte *passwd, Byte *guid);
+		void calculateHash(Byte *login, Byte *passwd, Byte *challenge, Byte *hash); //!< calculate the hash needed to check the password
+		int authenticatePlayer(Byte *login, Byte *challenge, Byte *hash, Byte release, Byte *ip, Byte *passwd,
+			Byte *guid, Byte *accessLevel); //!< authenticates the player
 		void checkTimeout(void) { sql->checkTimeout(); }
 	private:
-		U16 minAccess, disTime, attempts;
+		U16 minAccess, disTime, maxAttempts;
 		tSQL *sql;
 		tLog *log;
+		
+		bool prepare(void);
+		int queryUser(Byte *login, Byte *passwd, Byte *guid);
 	};
 	
 } //End alc namespace

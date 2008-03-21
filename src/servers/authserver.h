@@ -55,11 +55,7 @@ namespace alc {
 			tUnetServerBase::reload();
 			authBackend = new tAuthBackend;
 		}
-	private:
-		void calculateHash(Byte *login, Byte *passwd, Byte *challenge, Byte *hash); //!< calculate the hash needed to check the password
-		int authenticatePlayer(Byte *login, Byte *challenge, Byte *hash, Byte release, Byte *ip, Byte *passwd,
-			Byte *guid, Byte *accessLevel); //!< authenticates the player
-		
+	private:		
 		tAuthBackend *authBackend;
 	};
 	

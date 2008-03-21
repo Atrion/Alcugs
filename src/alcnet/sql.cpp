@@ -64,7 +64,7 @@ tSQL::tSQL(const Byte *host, U16 port, const Byte *username, const Byte *passwor
 		err = lerr;
 		if (flags & SQL_LOGQ) {
 			sql = new tLog("sql.log", 4, 0);
-			sql->log("MySQL driver loaded\n");
+			sql->log("MySQL driver loaded (%s)\n", __U_SQL_ID);
 			sql->print(" flags: %04X, host: %s, port: %d, user: %s, dbname: %s, using password: ", this->flags, this->host, this->port, this->username, this->dbname);
 			if (password != NULL) { sql->print("yes (%s)\n", this->password); }
 			else { sql->print("no\n"); }
@@ -83,9 +83,10 @@ tSQL::~tSQL(void)
 	free(dbname);
 }
 
-void tSQL::printError(char *msg)
+void tSQL::printError(const char *msg, tLog *out)
 {
-	err->log("ERR (MySQL): %s: %u %s\n", msg, mysql_errno(connection), mysql_error(connection));
+	if (!out) err->log("ERR (MySQL): %s: %u %s\n", msg, mysql_errno(connection), mysql_error(connection));
+	else      out->log("INF (MySQL): %s: %u %s\n", msg, mysql_errno(connection), mysql_error(connection));
 }
 
 bool tSQL::connect(bool openDatabase)
@@ -120,7 +121,7 @@ bool tSQL::prepare(void)
 	if (connect(true)) return true;
 	
 	// if the problem is the missing database, establish the connection again (it was closed) and create it
-	if(mysql_errno(connection) == 1049 && (flags & SQL_CREATEDB)) {
+	if(mysql_errno(connection) == 1049 && (flags & SQL_CREATEDB)) { // 1049 = Unknown database '%s'
 		disconnect();
 		if (!connect(false)) return false; // not even that works, giving up
 		
@@ -134,20 +135,21 @@ bool tSQL::prepare(void)
 	return false;
 }
 
-bool tSQL::query(char *str, char *desc)
+bool tSQL::query(const char *str, const char *desc)
 {
 	if (connection == NULL) {
 		if (!prepare()) return false; // DANGER: possible endless loop (query calls prepare calls query...)
 	}
 	
 	if (flags & SQL_LOGQ)
-		sql->log("MySQL query (%s): %s\n", desc, str);
+		sql->log("SQL query (%s): %s\n", desc, str);
 	
 	stamp = time(NULL);
 	if (!mysql_query(connection, str)) return true; // if everything worked fine, we're done
 
 	// if there's an error, it might be necessary to reconnect
-	if (mysql_errno(connection) == 2013 || mysql_errno(connection) == 2006) { // reconnect and try again if the connection was lost
+	if (mysql_errno(connection) == 2013 || mysql_errno(connection) == 2006) { // 2013 = Lost connection to MySQL server during query, 2006 = MySQL server has gone away
+		// reconnect and try again if the connection was lost
 		sql->log("Reconnecting...\n");
 		disconnect();
 		connect(true);
@@ -155,6 +157,8 @@ bool tSQL::query(char *str, char *desc)
 		// failed again... print the error
 		printError(desc);
 	}
+	else
+		printError(desc, log);
 	return false;
 }
 
@@ -163,6 +167,20 @@ void tSQL::checkTimeout(void)
 	U32 now = time(NULL);
 	if (!(flags & SQL_STAYCONN) && timeout > 0 && (now-stamp) > timeout)
 		disconnect();
+}
+
+char *tSQL::escape(char *str)
+{
+	static char escaped_str[512];
+	if (connection == NULL) return NULL;
+	mysql_real_escape_string(connection, escaped_str, str, std::min<int>(strlen(str), 511));
+	return escaped_str;
+}
+
+MYSQL_RES *tSQL::storeResult(void)
+{
+	if (connection == NULL) return NULL;
+	return mysql_store_result(connection);
 }
 
 tSQL *tSQL::createFromConfig(void)

@@ -70,7 +70,7 @@ namespace alc {
 				log->log("<RCV> %s\n", authAsk.str());
 				
 				// authenticate player
-				authResult = authenticatePlayer(authAsk.login.str(), authAsk.challenge, authAsk.hash, authAsk.release, (Byte *)alcGetStrIp(ntohl(authAsk.ip)), passwd, guid, &accessLevel);
+				authResult = authBackend->authenticatePlayer(authAsk.login.str(), authAsk.challenge, authAsk.hash, authAsk.release, (Byte *)alcGetStrIp(ntohl(authAsk.ip)), passwd, guid, &accessLevel);
 				
 				// send answer to client
 				tmAuthResponse authResponse(u, authAsk, guid, passwd, authResult, accessLevel);
@@ -79,34 +79,6 @@ namespace alc {
 				break;
 		}
 		return ret;
-	}
-	
-	void tUnetAuthServer::calculateHash(Byte *login, Byte *passwd, Byte *challenge, Byte *hash) {
-		tMD5Buf md5buffer;
-		md5buffer.write(challenge, strlen((char *)challenge));
-		md5buffer.write(login, strlen((char *)login));
-		md5buffer.write(passwd, strlen((char *)passwd));
-		md5buffer.compute();
-		alcHex2Ascii(hash, md5buffer.read(16), 16);
-	}
-	
-	int tUnetAuthServer::authenticatePlayer(Byte *login, Byte *challenge, Byte *hash, Byte release, Byte *ip, Byte *passwd,
-			Byte *guid, Byte *accessLevel)
-	{
-		Byte correctHash[50];
-		int result = authBackend->queryUser(login, passwd, guid); // query password, access level and guid of this user
-		if (result < 0) {
-			*accessLevel = AcNotActivated;
-			return AInvalidUser;
-		}
-		*accessLevel = (Byte)result;
-		
-		calculateHash(login, passwd, challenge, correctHash);
-		if(strcmp((char *)hash, (char *)correctHash)) {
-			return AInvalidPasswd;
-		}
-		
-		return AAuthSucceeded;
 	}
 
 } //end namespace alc
