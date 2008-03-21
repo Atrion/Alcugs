@@ -51,6 +51,7 @@ namespace alc {
 		}
 		
 		int queryUser(Byte *login, Byte *passwd, Byte *guid);
+		void checkTimeout(void) { sql->checkTimeout(); }
 	private:
 		U16 minAccess, disTime, attempts;
 		tSQL *sql;

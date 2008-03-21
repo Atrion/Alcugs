@@ -71,9 +71,12 @@ namespace alc {
 		}
 		
 		sql = tSQL::createFromConfig();
-		
-		log->log("Auth driver successfully started\n minimal access level: %d, max attempts: %d, disabled time: %d\n\n",
-				minAccess, attempts, disTime);
+		if (!sql->prepare()) {
+			throw txUnetIniErr(_WHERE("Failed to connect to database. Please check username, password and permissions."));
+		}
+		else
+			log->log("Auth driver successfully started\n minimal access level: %d, max attempts: %d, disabled time: %d\n\n",
+					minAccess, attempts, disTime);
 	}
 	
 	int tAuthBackend::queryUser(Byte *login, Byte *passwd, Byte *guid)

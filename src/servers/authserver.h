@@ -49,11 +49,12 @@ namespace alc {
 		~tUnetAuthServer() { delete authBackend; }
 
 		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
+		virtual void onIdle(bool idle) { authBackend->checkTimeout(); }
 		virtual void reload() {
 			delete authBackend;
- 			tUnetServerBase::reload();
+			tUnetServerBase::reload();
 			authBackend = new tAuthBackend;
- 		}
+		}
 	private:
 		void calculateHash(Byte *login, Byte *passwd, Byte *challenge, Byte *hash); //!< calculate the hash needed to check the password
 		int authenticatePlayer(Byte *login, Byte *challenge, Byte *hash, Byte release, Byte *ip, Byte *passwd,

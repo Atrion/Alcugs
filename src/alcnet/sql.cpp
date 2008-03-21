@@ -36,8 +36,6 @@
 #include "alcugs.h"
 #include "unet.h"
 
-#include <mysql/mysql.h>
-
 #include "alcdebug.h"
 
 namespace alc {
@@ -47,6 +45,8 @@ tSQL::tSQL(const Byte *host, U16 port, const Byte *username, const Byte *passwor
 	this->flags = flags;
 	this->timeout = timeout;
 	sql = err = log = lnull;
+	connection = NULL;
+	stamp = 0;
 	
 	this->host = (Byte *)malloc( (strlen((char *)host)+1) * sizeof(Byte) );
 	strcpy((char *)this->host, (char *)host);
@@ -58,35 +58,110 @@ tSQL::tSQL(const Byte *host, U16 port, const Byte *username, const Byte *passwor
 	this->dbname = (Byte *)malloc( (strlen((char *)dbname)+1) * sizeof(Byte) );
 	strcpy((char *)this->dbname, (char *)dbname);
 	
-	_openlogs();
-	if (flags & SQL_LOGQ) { // write MySQL connection debug info
-		sql->log("MySQL driver (%s)\n", __U_SQL_ID);
-		sql->print(" flags: %04X, host: %s, port: %d, user: %s, dbname: %s, using password: ", this->flags, this->host, this->port, this->username, this->dbname);
-		if (password != NULL) { sql->print("yes (%s)\n", this->password); }
-		else { sql->print("no\n"); }
-		sql->print(" MySQL client: %s\n\n", mysql_get_client_info());
-	}
-}
-
-void tSQL::_openlogs(void)
-{
-	if(flags & SQL_LOG) {
+	// initialize logging
+	if (flags & SQL_LOG) {
 		log = lstd;
 		err = lerr;
-		if (sql == lnull && (flags & SQL_LOGQ)) {
-			sql = new tLog();
-			sql->open("sql.log", 4, 0);
+		if (flags & SQL_LOGQ) {
+			sql = new tLog("sql.log", 4, 0);
+			sql->log("MySQL driver loaded\n");
+			sql->print(" flags: %04X, host: %s, port: %d, user: %s, dbname: %s, using password: ", this->flags, this->host, this->port, this->username, this->dbname);
+			if (password != NULL) { sql->print("yes (%s)\n", this->password); }
+			else { sql->print("no\n"); }
+			sql->print(" MySQL client: %s\n\n", mysql_get_client_info());
 		}
 	}
 }
 
-void tSQL::_closelogs(void)
+tSQL::~tSQL(void)
 {
-	if (sql != lnull) {
-		sql->close();
-		delete sql;
-		sql = lnull;
+	disconnect();
+	if (sql != lnull) delete sql;
+	free(host);
+	free(username);
+	free(password);
+	free(dbname);
+}
+
+void tSQL::printError(char *msg)
+{
+	err->log("ERR (MySQL): %s: %u %s\n", msg, mysql_errno(connection), mysql_error(connection));
+}
+
+bool tSQL::connect(bool openDatabase)
+{
+	if (connection == NULL) {
+		// init the connection handle (if required)
+		connection = mysql_init(NULL);
+		if (connection == NULL)
+			throw txNoMem(_WHERE("not enough memory to create MySQL handle"));
 	}
+	
+	DBG(5, "connecting\n");
+	stamp = time(NULL);
+	return mysql_real_connect(connection, (const char *)host, (const char *)username,
+		(const char *)password, openDatabase ? (const char *)dbname : NULL, port, NULL, 0);
+}
+
+void tSQL::disconnect(void)
+{
+	if (connection != NULL) {
+		DBG(5, "disconnecting\n");
+		mysql_close(connection);
+		connection = NULL;
+	}
+}
+
+bool tSQL::prepare(void)
+{	// if the connection is already established or connecting works fine, do nothing
+	if (connection) return true;
+	if (connect(true)) return true;
+	
+	// if the problem is the missing database, establish the connection again (it was closed) and create it
+	if(mysql_errno(connection) == 1049 && (flags & SQL_CREATEDB)) {
+		disconnect();
+		if (!connect(false)) return false; // not even that works, giving up
+		
+		char str[400];
+		sprintf(str, "CREATE DATABASE %s", dbname);
+		if (!query(str, "create database")) // if we can't create it, stop
+			return false;
+		sprintf(str,"USE %s", dbname);
+		return query(str, "select database");
+	}
+	return false;
+}
+
+bool tSQL::query(char *str, char *desc)
+{
+	if (connection == NULL) {
+		if (!prepare()) return false; // DANGER: possible endless loop (query calls prepare calls query...)
+	}
+	
+	if (flags & SQL_LOGQ)
+		sql->log("MySQL query (%s): %s\n", desc, str);
+	
+	stamp = time(NULL);
+	if (!mysql_query(connection, str)) return true; // if everything worked fine, we're done
+
+	// if there's an error, print it
+	printError(desc);
+	if (mysql_errno(connection) == 2013 || mysql_errno(connection) == 2006) { // reconnect and try again if the connection was lost
+		sql->log("Reconnecting...\n");
+		disconnect();
+		connect(true);
+		if (!mysql_query(connection, str)) return true; // it worked on the 2nd try
+		// failed again...
+		printError(desc);
+	}
+	return false;
+}
+
+void tSQL::checkTimeout(void)
+{
+	U32 now = time(NULL);
+	if (!(flags & SQL_STAYCONN) && timeout > 0 && (now-stamp) > timeout)
+		disconnect();
 }
 
 tSQL *tSQL::createFromConfig(void)
