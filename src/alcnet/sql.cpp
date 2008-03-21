@@ -66,9 +66,10 @@ tSQL::tSQL(const Byte *host, U16 port, const Byte *username, const Byte *passwor
 			sql = new tLog("sql.log", 4, 0);
 			sql->log("MySQL driver loaded (%s)\n", __U_SQL_ID);
 			sql->print(" flags: %04X, host: %s, port: %d, user: %s, dbname: %s, using password: ", this->flags, this->host, this->port, this->username, this->dbname);
-			if (password != NULL) { sql->print("yes (%s)\n", this->password); }
+			if (password != NULL) { sql->print("yes\n"); }
 			else { sql->print("no\n"); }
 			sql->print(" MySQL client: %s\n\n", mysql_get_client_info());
+			sql->flush();
 		}
 	}
 }
@@ -141,8 +142,10 @@ bool tSQL::query(const char *str, const char *desc)
 		if (!prepare()) return false; // DANGER: possible endless loop (query calls prepare calls query...)
 	}
 	
-	if (flags & SQL_LOGQ)
+	if (flags & SQL_LOGQ) {
 		sql->log("SQL query (%s): %s\n", desc, str);
+		sql->flush();
+	}
 	
 	stamp = time(NULL);
 	if (!mysql_query(connection, str)) return true; // if everything worked fine, we're done
@@ -150,7 +153,7 @@ bool tSQL::query(const char *str, const char *desc)
 	// if there's an error, it might be necessary to reconnect
 	if (mysql_errno(connection) == 2013 || mysql_errno(connection) == 2006) { // 2013 = Lost connection to MySQL server during query, 2006 = MySQL server has gone away
 		// reconnect and try again if the connection was lost
-		sql->log("Reconnecting...\n");
+		sql->log("Reconnecting...\n"); sql->flush();
 		disconnect();
 		connect(true);
 		if (!mysql_query(connection, str)) return true; // it worked on the 2nd try

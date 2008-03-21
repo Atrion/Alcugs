@@ -88,10 +88,7 @@ namespace alc {
 			log = new tLog("auth.log", 4, 0);
 		}
 
-		if (prepare())
-			log->log("Auth driver successfully started (%s)\n minimal access level: %d, max attempts: %d, disabled time: %d\n\n",
-					__U_AUTHBACKEND_ID, minAccess, maxAttempts, disTime);
-		else { // initializing didn't work... will be tried again when actually needed
+		if (!prepare()) { // initializing didn't work... will be tried again when actually needed
 			delete sql;
 			sql = NULL;
 		}
@@ -115,6 +112,9 @@ namespace alc {
 		if (!exists) // it does not, so create it
 			if (!sql->query(authTableInitScript, "creating auth table")) return false;
 		
+		log->log("Auth driver successfully started (%s)\n minimal access level: %d, max attempts: %d, disabled time: %d\n\n",
+				__U_AUTHBACKEND_ID, minAccess, maxAttempts, disTime);
+		log->flush();
 		return true;
 	}
 
@@ -193,11 +193,13 @@ namespace alc {
 		if (queryResult < 0) { // that means: player not found
 			*accessLevel = AcNotActivated;
 			log->print("Player not found\n");
+			log->flush();
 			return AInvalidUser;
 		}
 		else if (queryResult >= AcNotRes) { // that means: there was an error
 			*accessLevel = AcNotRes;
 			log->print("unspecified server error\n");
+			log->flush();
 			return AUnspecifiedServerError;
 		}
 		else { // we found a player, let's process it
@@ -237,6 +239,7 @@ namespace alc {
 			
 			// ok, now all we have to do is updating the player's last login and attempts and return the result
 			updatePlayer(guid, ip, attempts, updateAttempt);
+			log->flush();
 			return authResult;
 		}
 	}

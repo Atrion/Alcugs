@@ -103,7 +103,7 @@ namespace alc {
 	{
 		dbg.nl();
 		if (u && u->proto == 1) dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid));
-		dbg.printf(" login: %s, passwd: %s, result: 0x%0X (%s), accessLevel: %d", login.str(), passwd.str(), result, alcUnetGetAuthCode(result), accessLevel);
+		dbg.printf(" login: %s, passwd: (hidden), result: 0x%0X (%s), accessLevel: %d", login.str(), result, alcUnetGetAuthCode(result), accessLevel);
 	}
 
 } //end namespace alc

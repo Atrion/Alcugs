@@ -302,7 +302,6 @@ void tUnetBase::run() {
 					if(ret==0) {
 						ret=onMsgRecieved(evt,msg,u);
 					}
-					log->flush(); // this way the message parsers don't have to do that all the time
 					if(u->client==1) {
 						if(ret==0) {
 							err->log("%s Unexpected message %04X (%s)\n",u->str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
@@ -327,7 +326,7 @@ void tUnetBase::run() {
 					err->log("%s Unknown Event id %i\n",u->str(),evt->id);
 					break;
 			}
-			
+			log->flush(); err->flush(); sec->flush(); unx->flush(); // I don't know how much perforcmance this costs, but without flushing it's not possible to follow the server logs using tail -f
 			delete evt;
 		}
 		onIdle(idle);
