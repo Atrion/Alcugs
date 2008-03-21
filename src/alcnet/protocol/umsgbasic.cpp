@@ -58,7 +58,7 @@ int tmTerminated::stream(tBBuf &t) {
 	return off;
 }
 void tmTerminated::additionalFields() {
-	dbg.printf("\n Reason [%i] %s ",reason,alcUnetGetReasonCode(reason));
+	dbg.printf("\n Reason [0x%0X] %s ",reason,alcUnetGetReasonCode(reason));
 }
 
 
@@ -79,7 +79,7 @@ int tmLeave::stream(tBBuf &t) {
 	return off;
 }
 void tmLeave::additionalFields() {
-	dbg.printf("\n Reason [%i] %s ",reason,alcUnetGetReasonCode(reason));
+	dbg.printf("\n Reason [0x%0X] %s ",reason,alcUnetGetReasonCode(reason));
 }
 
 
@@ -108,7 +108,7 @@ int tmPlayerTerminated::stream(tBBuf &t) {
 	return off;
 }
 void tmPlayerTerminated::additionalFields() {
-	dbg.printf("\n Reason [%i] %s ",reason,alcUnetGetReasonCode(reason));
+	dbg.printf("\n Reason [0x%0X] %s ",reason,alcUnetGetReasonCode(reason));
 }
 
 

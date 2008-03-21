@@ -76,7 +76,7 @@ port = 2010
 ;auth.log = 1 # default 1
 
 # authenticating options
-;auth.minalevel = 25 # minimal access level to be able to log into the servers (default 25)
+;auth.minalevel = 25 # the player's access level must be SMALLER than this one to be able to log into the servers - having the same level is not enough (default 25)
 ;auth.att = 6 # maximal number of attempts within auth.distime (default 6)
 ;auth.distime = 300 # time an account is disabled after too many wrong attempts (default 5 minutes = 300 seconds)
 

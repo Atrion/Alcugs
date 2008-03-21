@@ -127,35 +127,81 @@ namespace alc {
 		alcHex2Ascii(hash, md5buffer.read(16), 16);
 	}
 	
-	int tAuthBackend::queryUser(Byte *login, Byte *passwd, Byte *guid)
+	int tAuthBackend::queryPlayer(Byte *login, Byte *passwd, Byte *guid)
 	{
-		passwd[0] = guid[0] = 0;
-		if (strcmp((char *)login, "dakizo") == 0) { // only accept this username with this password... TODO: query database
-			strcpy((char *)passwd, "76A2173BE6393254E72FFA4D6DF1030A"); // the md5sum of "passwd"
-			strcpy((char *)guid, "7a9131b6-9dff-4103-b231-4887db6035b8");
-			return 15;
+		char query[1024];
+		passwd[0] = 0; // ensure there's a valid value in there
+		strcpy((char *)guid, "00000000-0000-0000-0000-000000000000");
+		
+		// only query if we are connected
+		bool connected = false;
+		if (sql == NULL) { // if the connection wasn't yet established, try to do that now
+			connected = prepare();
 		}
 		else
-			return -1;
+			connected = sql->prepare(); // otherwise, ensure the connection is re-established in case of a timeout
+		if (!connected) {
+			lerr->log("Can't start auth driver. All authenticate requests will be rejected.\n");
+			delete sql;
+			sql = NULL;
+			return AcNotRes;
+		}
+		
+		// query the database
+		sprintf(query,"SELECT UCASE(passwd), a_level, guid FROM `accounts` WHERE name='%s'", sql->escape((char *)login));
+		if (!sql->query(query, "Query user name")) return AcNotRes;
+		
+		// read the result
+		MYSQL_RES *result = sql->storeResult();
+		int ret = AcNotRes;
+		if (result != NULL) {
+			MYSQL_ROW row = mysql_fetch_row(result);
+			if (row == NULL) ret = -1;
+			else {
+				strcpy((char *)passwd, row[0]); // passwd
+				ret = atoi(row[1]); // a_level
+				strcpy((char *)guid, row[2]); // guid
+			}
+		}
+		mysql_free_result(result);
+		
+		return ret;
 	}
 
 	int tAuthBackend::authenticatePlayer(Byte *login, Byte *challenge, Byte *hash, Byte release, Byte *ip, Byte *passwd,
 			Byte *guid, Byte *accessLevel)
 	{
 		Byte correctHash[50];
-		int result = queryUser(login, passwd, guid); // query password, access level and guid of this user
-		if (result < 0) {
+		int queryResult = queryPlayer(login, passwd, guid); // query password, access level and guid of this user
+		
+		log->log("AUTH: result for player %s: ", login);
+		if (queryResult < 0) { // that means: player not found
 			*accessLevel = AcNotActivated;
+			log->print("Player not found\n");
 			return AInvalidUser;
 		}
-		*accessLevel = (Byte)result;
-		
-		calculateHash(login, passwd, challenge, correctHash);
-		if(strcmp((char *)hash, (char *)correctHash)) {
-			return AInvalidPasswd;
+		else if (queryResult >= AcNotRes) { // that means: there was an error
+			*accessLevel = AcNotRes;
+			log->print("unspecified server error\n");
+			return AUnspecifiedServerError;
 		}
-		
-		return AAuthSucceeded;
+		else { // we found a player, let's process it
+			*accessLevel = queryResult;
+			log->print("GUID = %s, access level = %d; ", guid, *accessLevel);
+			
+			if (*accessLevel >= minAccess) { // the account doesn't have enough access for this shard (accessLevel = minAccess is rejected as well, for backward compatability)
+				log->print("access level is too big (must be max. %d)\n", minAccess);
+				return AAccountDisabled;
+			}
+			
+			calculateHash(login, passwd, challenge, correctHash);
+			if(strcmp((char *)hash, (char *)correctHash) != 0) {
+				log->print("invalid password\n");
+				return AInvalidPasswd;
+			}
+			log->print("auth aucceeded\n");
+			return AAuthSucceeded;
+		}
 	}
 
 } //end namespace alc
