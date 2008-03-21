@@ -78,7 +78,7 @@ public:
 	virtual const char * what();
 	/** \brief Returns a backtrace (Only on Linux) */
 	const char * backtrace();
-	void dump();
+	void dump(bool toStderr = true);
 	virtual ~txBase();
 private:
 	void _preparebacktrace();

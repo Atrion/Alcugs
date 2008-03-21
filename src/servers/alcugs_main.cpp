@@ -226,10 +226,8 @@ int main(int argc, char * argv[]) {
 		lstd->print("Uptime:  %s\n",alcGetUptime().str(0x01));
 		lstd->print("========================================\n");
 	} catch(txBase &t) {
-		//fprintf(stderr,"FATAL Server died: Exception %s\n%s\n",t.what(),t.backtrace());
-		//fprintf(stderr,"FATAL Server died: ");
-		lerr->log("FATAL Server died: ");
-		t.dump();
+		t.dump(false); // don't dump to stderr, we would get the backtrace twice
+		lerr->log("FATAL Server died: Exception %s\n%s\n",t.what(),t.backtrace());
 		lstd->log("The service has been unexpectely killed!!!\n");
 		lstd->print("Born:    %s\n",alcGetBornTime().str());
 		tTime now;
