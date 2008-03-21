@@ -90,12 +90,14 @@ void tSQL::printError(char *msg)
 
 bool tSQL::connect(bool openDatabase)
 {
-	if (connection == NULL) {
-		// init the connection handle (if required)
-		connection = mysql_init(NULL);
-		if (connection == NULL)
-			throw txNoMem(_WHERE("not enough memory to create MySQL handle"));
+	if (connection != NULL) {
+		err->log("ERR: Connection already established when calling tSQL::connect\n");
+		disconnect();
 	}
+	// init the connection handle (if required)
+	connection = mysql_init(NULL);
+	if (connection == NULL)
+		throw txNoMem(_WHERE("not enough memory to create MySQL handle"));
 	
 	DBG(5, "connecting\n");
 	stamp = time(NULL);
@@ -144,14 +146,13 @@ bool tSQL::query(char *str, char *desc)
 	stamp = time(NULL);
 	if (!mysql_query(connection, str)) return true; // if everything worked fine, we're done
 
-	// if there's an error, print it
-	printError(desc);
+	// if there's an error, it might be necessary to reconnect
 	if (mysql_errno(connection) == 2013 || mysql_errno(connection) == 2006) { // reconnect and try again if the connection was lost
 		sql->log("Reconnecting...\n");
 		disconnect();
 		connect(true);
 		if (!mysql_query(connection, str)) return true; // it worked on the 2nd try
-		// failed again...
+		// failed again... print the error
 		printError(desc);
 	}
 	return false;

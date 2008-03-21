@@ -53,6 +53,9 @@ public:
 	void printError(char *msg); //!< print the last MySQL error (with the given desctiption) to the error protocol
 	bool query(char *str, char *desc); //!< query the database \return true on success, false on error
 	void checkTimeout(void); //!< closes the connection on timeout
+	inline int affectedRows(void) {
+		return (connection == NULL) ? -1 : mysql_affected_rows(connection);
+	}
 	
 	static Byte allFlags(void) { return SQL_LOG | SQL_LOGQ | SQL_CREATEDB | SQL_STAYCONN | SQL_CREATABL; }
 	static tSQL *createFromConfig(void);
