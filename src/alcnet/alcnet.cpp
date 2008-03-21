@@ -81,7 +81,7 @@ void tUnet::init() {
 	//netcore timeout < min(all RTT's), nope, it must be the min tts (stt)
 	unet_sec=1; //(seconds)
 	unet_usec=0; //(microseconds)
-	timer=10;
+	timer=5; // should be max. 10 seconds, is overwritten by tUnetBase
 
 	conn_timeout=5; //default timeout (seconds) (sensible to NetMsgSetTimeout (higher when connected)
 	/* set to 30 when authed (client should send alive every 10 seconds)*/

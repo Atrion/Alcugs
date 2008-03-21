@@ -77,7 +77,7 @@ void tUnetBase::_reconfigure() {
 	//Sets the idle timer
 	var=cfg->getVar("net.timer","global");
 	if(var.isNull()) {
-		//setTimer(120); //intentionally big (no op) [it should be 10 seconds (default setting in the netcore, bigger timers have issues).
+		setTimer(5); // it should be max. 10 seconds (default setting in the netcore, bigger timers have issues)
 	} else {
 		setTimer(var.asByte());
 	}
