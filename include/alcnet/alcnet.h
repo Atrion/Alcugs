@@ -158,7 +158,7 @@ protected:
 	U32 ntime_usec; //(in usecs)
 	U32 net_time; //(in usecs) [resolution of 15 minutes] (relative)
 
-	U32 conn_timeout; //default timeout (to disconnect a session) (seconds) [3 secs]
+	U32 conn_timeout; //default timeout (to disconnect a session) (seconds) [5 secs]
 	U32 timeout; //default timeout when the send clock expires (re-transmission) (microseconds)
 
 	U32 max; //<! Maxium number of connections (default 0, unlimited)

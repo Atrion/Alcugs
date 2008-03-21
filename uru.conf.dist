@@ -56,7 +56,7 @@ bind = 127.0.0.1 # default bind address for servers (the interface facing your r
 ;db.sql.log = 1 # enable sql logging (default 1), doesn't work when db.log is disabled
 # global database connection data
 db.host = "127.0.0.1" # note: set db.host to nothing to use the local unix socket (untested with unet3+)
-; db.port = 0 # sets the MySQL port (default 0 = let mysql decide which port to use)
+;db.port = 0 # sets the MySQL port (default 0 = let mysql decide which port to use)
 db.username = "alcugs"
 db.passwd = "yourpassword"
 
@@ -83,7 +83,7 @@ port = 2010
 # database settings
 db.name = "alcugs_auth"
 # you can overwrite the global settings here if host, username and/or password aren't the same for all servers
-;db.host = "localhost"
+;db.host = "127.0.0.1"
 ;db.username = "alcugs"
 ;db.passwd = "yourpassword"
 

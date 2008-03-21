@@ -629,7 +629,7 @@ void tUnet::doWork() {
 	tNetSession * cur;
 	smgr->rewind();
 	while((cur=smgr->getNext())) {
-		if(ntime_sec-cur->timestamp.seconds>cur->conn_timeout) {
+		if(ntime_sec - cur->timestamp.seconds > cur->conn_timeout) {
 			//timeout event
 			tNetSessionIte ite(cur->ip,cur->port,cur->sid);
 			tNetEvent * evt=new tNetEvent(ite,UNET_TIMEOUT);

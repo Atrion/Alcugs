@@ -198,7 +198,7 @@ namespace alc {
 		U32 attempts, lastAttempt;
 		int queryResult = queryPlayer(login, passwd, guid, &attempts, &lastAttempt); // query password, access level and guid of this user
 		
-		log->log("AUTH: result for player %s (IP: %s): ", login, ip);
+		log->log("AUTH: player %s (IP: %s): ", login, ip);
 		if (queryResult < 0) { // that means: player not found
 			*accessLevel = AcNotActivated;
 			log->print("Player not found\n");
@@ -215,7 +215,7 @@ namespace alc {
 			int authResult;
 			bool updateAttempt = true;
 			*accessLevel = queryResult;
-			log->print("GUID = %s, attempt %d/%d, access level = %d; ", guid, attempts+1, maxAttempts, *accessLevel);
+			log->print("GUID = %s, attempt %d/%d, access level = %d;\n ", guid, attempts+1, maxAttempts, *accessLevel);
 			
 			if (*accessLevel >= minAccess) { // the account doesn't have enough access for this shard (accessLevel = minAccess is rejected as well, for backward compatability)
 				log->print("access level is too big (must be lower than %d)\n", minAccess);
