@@ -115,16 +115,19 @@ namespace alc {
 		if (sql->prepare()) {
 			// check if the auth table exists
 			char query[100];
-			sprintf(query, "SELECT * FROM `accounts`");
-			bool exists = true;//sql->query(query, "Looking for accounts table");
-			//mysql_free_result(sql->storeResult()); // that's necessary, otherwise we get a "2014 Commands out of sync; you can't run this command now" error
-			if (exists || sql->query(authTableInitScript, "creating auth table")) { // either it already exists or we create it
+			sprintf(query, "SHOW TABLES LIKE 'accounts'");
+			sql->query(query, "Looking for accounts table");
+			MYSQL_RES *result = sql->storeResult();
+			bool exists = mysql_num_rows(result);
+			mysql_free_result(result);
+			// if it doesn't exist, create it
+			if (exists || sql->query(authTableInitScript, "Creating auth table")) {
 				log->log("Auth driver successfully started (%s)\n minimal access level: %d, max attempts: %d, disabled time: %d\n\n",
 						__U_AUTHBACKEND_ID, minAccess, maxAttempts, disTime);
 				log->flush();
 				return true;
 			}
-				lerr->log("ERR: Creating auth table failed\n");
+			lerr->log("ERR: Creating auth table failed\n");
 		}
 		else
 			lerr->log("ERR: Connecting to the database failed\n");
@@ -135,7 +138,8 @@ namespace alc {
 		return false;
 	}
 
-	void tAuthBackend::calculateHash(Byte *login, Byte *passwd, Byte *challenge, Byte *hash) {
+	void tAuthBackend::calculateHash(Byte *login, Byte *passwd, Byte *challenge, Byte *hash)
+	{
 		tMD5Buf md5buffer;
 		md5buffer.write(challenge, strlen((char *)challenge));
 		md5buffer.write(login, strlen((char *)login));
@@ -157,7 +161,7 @@ namespace alc {
 		}
 		
 		// query the database
-		sprintf(query,"SELECT UCASE(passwd), a_level, guid, attempts, UNIX_TIMESTAMP(last_attempt) FROM `accounts` WHERE name='%s'", sql->escape((char *)login));
+		sprintf(query,"SELECT UCASE(passwd), a_level, guid, attempts, UNIX_TIMESTAMP(last_attempt) FROM accounts WHERE name='%s'", sql->escape((char *)login));
 		if (!sql->query(query, "Query player")) return AcNotRes;
 		
 		// read the result
@@ -165,7 +169,7 @@ namespace alc {
 		int ret = AcNotRes;
 		if (result != NULL) {
 			MYSQL_ROW row = mysql_fetch_row(result);
-			if (row == NULL) ret = -1;
+			if (row == NULL) ret = -1; // player doesn't exist
 			else { // read the columns
 				strcpy((char *)passwd, row[0]); // passwd
 				ret = atoi(row[1]); // a_level
@@ -185,9 +189,9 @@ namespace alc {
 		strcpy(ip_escaped, sql->escape((char *)ip));
 		strcpy(guid_escaped, sql->escape((char *)guid));
 		if (updateAttempt)
-			sprintf(query, "UPDATE `accounts` SET attempts='%d', last_ip='%s', last_attempt=NOW() WHERE guid='%s'", attempts, ip_escaped, guid_escaped);
+			sprintf(query, "UPDATE accounts SET attempts='%d', last_ip='%s', last_attempt=NOW() WHERE guid='%s'", attempts, ip_escaped, guid_escaped);
 		else
-			sprintf(query, "UPDATE `accounts` SET attempts='%d', last_ip='%s' WHERE guid='%s'", attempts, ip_escaped, guid_escaped);
+			sprintf(query, "UPDATE accounts SET attempts='%d', last_ip='%s' WHERE guid='%s'", attempts, ip_escaped, guid_escaped);
 		sql->query(query, "Update player");
 	}
 

@@ -44,7 +44,7 @@ tSQL::tSQL(const Byte *host, U16 port, const Byte *username, const Byte *passwor
 {
 	this->flags = flags;
 	this->timeout = timeout;
-	sql = err = log = lnull;
+	sql = err = lnull;
 	connection = NULL;
 	stamp = 0;
 	
@@ -60,7 +60,6 @@ tSQL::tSQL(const Byte *host, U16 port, const Byte *username, const Byte *passwor
 	
 	// initialize logging
 	if (flags & SQL_LOG) {
-		log = lstd;
 		err = lerr;
 		if (flags & SQL_LOGQ) {
 			sql = new tLog("sql.log", 4, 0);
@@ -84,10 +83,9 @@ tSQL::~tSQL(void)
 	free(dbname);
 }
 
-void tSQL::printError(const char *msg, tLog *out)
+void tSQL::printError(const char *msg)
 {
-	if (!out) err->log("ERR (MySQL): %s: %u %s\n", msg, mysql_errno(connection), mysql_error(connection));
-	else      out->log("INF (MySQL): %s: %u %s\n", msg, mysql_errno(connection), mysql_error(connection));
+	err->log("ERR (MySQL): %s: %u %s\n", msg, mysql_errno(connection), mysql_error(connection));
 }
 
 bool tSQL::connect(bool openDatabase)
@@ -150,6 +148,8 @@ bool tSQL::query(const char *str, const char *desc)
 	stamp = time(NULL);
 	if (!mysql_query(connection, str)) return true; // if everything worked fine, we're done
 
+	// there was an error - print it
+	printError(desc);
 	// if there's an error, it might be necessary to reconnect
 	if (mysql_errno(connection) == 2013 || mysql_errno(connection) == 2006) { // 2013 = Lost connection to MySQL server during query, 2006 = MySQL server has gone away
 		// reconnect and try again if the connection was lost
@@ -160,8 +160,6 @@ bool tSQL::query(const char *str, const char *desc)
 		// failed again... print the error
 		printError(desc);
 	}
-	else
-		printError(desc, log);
 	return false;
 }
 

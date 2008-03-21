@@ -50,7 +50,7 @@ public:
 	~tSQL(void);
 	
 	bool prepare(void); //!< this must be called before each query. it establishes the connection and creates the database if necessary \return true on success, false on error
-	void printError(const char *msg, tLog *out = NULL); //!< print the last MySQL error (with the given desctiption) to the error protocol
+	void printError(const char *msg); //!< print the last MySQL error (with the given desctiption) to the error protocol
 	bool query(const char *str, const char *desc); //!< query the database \return true on success, false on error
 	void checkTimeout(void); //!< closes the connection on timeout
 	inline int affectedRows(void) {
@@ -64,7 +64,7 @@ public:
 private:
 	Byte flags;
 	U32 timeout, stamp;
-	tLog *sql, *err, *log;
+	tLog *sql, *err;
 	// connection info
 	Byte *host, *username, *password, *dbname;
 	U16 port;
