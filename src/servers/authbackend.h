@@ -60,7 +60,8 @@ namespace alc {
 		tLog *log;
 		
 		bool prepare(void);
-		int queryPlayer(Byte *login, Byte *passwd, Byte *guid);
+		int queryPlayer(Byte *login, Byte *passwd, Byte *guid, U32 *attempts, U32 *lastAttempt);
+		void updatePlayer(Byte *guid, Byte *ip, U32 attempts, bool updateAttempt);
 	};
 	
 } //End alc namespace

@@ -70,7 +70,7 @@ namespace alc {
 				log->log("<RCV> %s\n", authAsk.str());
 				
 				// authenticate player
-				authResult = authBackend->authenticatePlayer(authAsk.login.str(), authAsk.challenge, authAsk.hash, authAsk.release, (Byte *)alcGetStrIp(ntohl(authAsk.ip)), passwd, guid, &accessLevel);
+				authResult = authBackend->authenticatePlayer(authAsk.login.str(), authAsk.challenge, authAsk.hash, authAsk.release, (Byte *)alcGetStrIp(authAsk.ip), passwd, guid, &accessLevel);
 				
 				// send answer to client
 				tmAuthResponse authResponse(u, authAsk, guid, passwd, authResult, accessLevel);

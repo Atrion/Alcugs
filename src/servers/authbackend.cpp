@@ -76,7 +76,7 @@ namespace alc {
 		else minAccess = var.asU16();
 		
 		var = cfg->getVar("auth.att");
-		if (var.isNull()) maxAttempts = 6;
+		if (var.isNull()) maxAttempts = 10;
 		else maxAttempts = var.asU16();
 		
 		var = cfg->getVar("auth.distime");
@@ -127,10 +127,10 @@ namespace alc {
 		alcHex2Ascii(hash, md5buffer.read(16), 16);
 	}
 	
-	int tAuthBackend::queryPlayer(Byte *login, Byte *passwd, Byte *guid)
+	int tAuthBackend::queryPlayer(Byte *login, Byte *passwd, Byte *guid, U32 *attempts, U32 *lastAttempt)
 	{
 		char query[1024];
-		passwd[0] = 0; // ensure there's a valid value in there
+		*attempts = *lastAttempt = passwd[0] = 0; // ensure there's a valid value in there
 		strcpy((char *)guid, "00000000-0000-0000-0000-000000000000");
 		
 		// only query if we are connected
@@ -148,8 +148,8 @@ namespace alc {
 		}
 		
 		// query the database
-		sprintf(query,"SELECT UCASE(passwd), a_level, guid FROM `accounts` WHERE name='%s'", sql->escape((char *)login));
-		if (!sql->query(query, "Query user name")) return AcNotRes;
+		sprintf(query,"SELECT UCASE(passwd), a_level, guid, attempts, UNIX_TIMESTAMP(last_attempt) FROM `accounts` WHERE name='%s'", sql->escape((char *)login));
+		if (!sql->query(query, "Query player")) return AcNotRes;
 		
 		// read the result
 		MYSQL_RES *result = sql->storeResult();
@@ -157,10 +157,12 @@ namespace alc {
 		if (result != NULL) {
 			MYSQL_ROW row = mysql_fetch_row(result);
 			if (row == NULL) ret = -1;
-			else {
+			else { // read the columns
 				strcpy((char *)passwd, row[0]); // passwd
 				ret = atoi(row[1]); // a_level
 				strcpy((char *)guid, row[2]); // guid
+				*attempts = atoi(row[3]); // attempts
+				*lastAttempt = atoi(row[4]);
 			}
 		}
 		mysql_free_result(result);
@@ -168,13 +170,26 @@ namespace alc {
 		return ret;
 	}
 
+	void tAuthBackend::updatePlayer(Byte *guid, Byte *ip, U32 attempts, bool updateAttempt)
+	{
+		char query[2048], ip_escaped[512], guid_escaped[512];
+		strcpy(ip_escaped, sql->escape((char *)ip));
+		strcpy(guid_escaped, sql->escape((char *)guid));
+		if (updateAttempt)
+			sprintf(query, "UPDATE `accounts` SET attempts='%d', last_ip='%s', last_attempt=NOW() WHERE guid='%s'", attempts, ip_escaped, guid_escaped);
+		else
+			sprintf(query, "UPDATE `accounts` SET attempts='%d', last_ip='%s' WHERE guid='%s'", attempts, ip_escaped, guid_escaped);
+		sql->query(query, "Update player");
+	}
+
 	int tAuthBackend::authenticatePlayer(Byte *login, Byte *challenge, Byte *hash, Byte release, Byte *ip, Byte *passwd,
 			Byte *guid, Byte *accessLevel)
 	{
 		Byte correctHash[50];
-		int queryResult = queryPlayer(login, passwd, guid); // query password, access level and guid of this user
+		U32 attempts, lastAttempt;
+		int queryResult = queryPlayer(login, passwd, guid, &attempts, &lastAttempt); // query password, access level and guid of this user
 		
-		log->log("AUTH: result for player %s: ", login);
+		log->log("AUTH: result for player %s (IP: %s): ", login, ip);
 		if (queryResult < 0) { // that means: player not found
 			*accessLevel = AcNotActivated;
 			log->print("Player not found\n");
@@ -186,21 +201,43 @@ namespace alc {
 			return AUnspecifiedServerError;
 		}
 		else { // we found a player, let's process it
+			int authResult;
+			bool updateAttempt = true;
 			*accessLevel = queryResult;
-			log->print("GUID = %s, access level = %d; ", guid, *accessLevel);
+			log->print("GUID = %s, attempt %d/%d, access level = %d; ", guid, attempts+1, maxAttempts, *accessLevel);
 			
 			if (*accessLevel >= minAccess) { // the account doesn't have enough access for this shard (accessLevel = minAccess is rejected as well, for backward compatability)
-				log->print("access level is too big (must be max. %d)\n", minAccess);
-				return AAccountDisabled;
+				log->print("access level is too big (must be lower than %d)\n", minAccess);
+				authResult = AAccountDisabled;
+			}
+			// check number of attempts
+			else if (attempts+1 >= maxAttempts && time(NULL)-lastAttempt < disTime) {
+				log->print("too many attempts, login disabled for %d seconds (till %s)\n", disTime, alcGetStrTime(lastAttempt+disTime, 0));
+				updateAttempt = false; // don't update the last attempt time when we're already dissing
+				authResult = AAccountDisabled;
+			}
+			// check internal client
+			else if (release == TIntRel && *accessLevel > AcCCR) {
+				log->print("unauthorized client\n");
+				authResult = AAccountDisabled;
+				++attempts;
+			}
+			else { // everythign seems fine... let's compare the password
+				calculateHash(login, passwd, challenge, correctHash);
+				if(strcmp((char *)hash, (char *)correctHash) != 0) { // wrong password :(
+					log->print("invalid password\n");
+					++attempts;
+				}
+				else { // it's correct, the player is authenticated
+					log->print("auth aucceeded\n");
+					authResult = AAuthSucceeded;
+					attempts = 0;
+				}
 			}
 			
-			calculateHash(login, passwd, challenge, correctHash);
-			if(strcmp((char *)hash, (char *)correctHash) != 0) {
-				log->print("invalid password\n");
-				return AInvalidPasswd;
-			}
-			log->print("auth aucceeded\n");
-			return AAuthSucceeded;
+			// ok, now all we have to do is updating the player's last login and attempts and return the result
+			updatePlayer(guid, ip, attempts, updateAttempt);
+			return authResult;
 		}
 	}
 
