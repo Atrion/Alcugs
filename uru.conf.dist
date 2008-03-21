@@ -71,6 +71,14 @@ stop = 1
 bind = localhost # the auth server doesn't have to be accessed from outside
 port = 2010
 
+# enable/disable auth logging
+;auth.log = 1 # default 1
+
+# authenticating options
+;auth.minalevel = 25 # minimal access level to be able to log into the servers (default 25)
+;auth.att = 6 # maximal number of attempts within auth.distime (default 6)
+;auth.distime = 300 # time an account is disabled after too many wrong attempts (default 5 minutes = 300 seconds)
+
 # database settings
 db.name = "alcugs_auth"
 # you can overwrite the global settings here if host, username and/or password aren't the same for all servers

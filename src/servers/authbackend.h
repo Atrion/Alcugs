@@ -44,12 +44,17 @@ namespace alc {
 	class tAuthBackend {
 	public:
 		tAuthBackend(void);
-		~tAuthBackend(void) { delete sql; }
+		~tAuthBackend(void)
+		{
+			delete sql;
+			if (log != lnull) delete log;
+		}
 		
 		int queryUser(Byte *login, Byte *passwd, Byte *guid);
 	private:
-		U16 defaultAccess, minAccess;
+		U16 minAccess, disTime, attempts;
 		tSQL *sql;
+		tLog *log;
 	};
 	
 } //End alc namespace

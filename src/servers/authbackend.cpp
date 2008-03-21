@@ -50,18 +50,30 @@ namespace alc {
 
 	tAuthBackend::tAuthBackend(void)
 	{
+		log = lnull;
+	
 		tConfig *cfg = alcGetConfig();
-		tStrBuf var = cfg->getVar("default_access_level");
-		if (var.isNull()) defaultAccess = 15;
-		else defaultAccess = var.asU16();
-		
-		var = cfg->getVar("auth.minalevel");
+		tStrBuf var = cfg->getVar("auth.minalevel");
 		if (var.isNull()) minAccess = 25;
 		else minAccess = var.asU16();
 		
-		DBG(5, "default access: %d, min access: %d\n", defaultAccess, minAccess);
+		var = cfg->getVar("auth.att");
+		if (var.isNull()) attempts = 6;
+		else attempts = var.asU16();
+		
+		var = cfg->getVar("auth.distime");
+		if (var.isNull()) disTime = 5*60;
+		else disTime = var.asU16();
+		
+		var = cfg->getVar("auth.log");
+		if (var.isNull() || var.asByte()) { // logging enabled per default
+			log = new tLog("auth.log", 4, 0);
+		}
 		
 		sql = tSQL::createFromConfig();
+		
+		log->log("Auth driver successfully started\n minimal access level: %d, max attempts: %d, disabled time: %d\n\n",
+				minAccess, attempts, disTime);
 	}
 	
 	int tAuthBackend::queryUser(Byte *login, Byte *passwd, Byte *guid)
