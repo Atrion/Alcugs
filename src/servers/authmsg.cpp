@@ -67,7 +67,7 @@ namespace alc {
 	{
 		dbg.nl();
 		if (u && u->proto == 1) dbg.printf(" ip (unet2 protocol): %s,", alcGetStrIp(ip));
-		dbg.printf(" login: %s, challenge: %s, hash: %s, build: 0x%0X (%s)", login.str(), challenge, hash, release, alcUnetGetRelease(release));
+		dbg.printf(" login: %s, challenge: %s, hash: %s, build: 0x%02X (%s)", login.str(), challenge, hash, release, alcUnetGetRelease(release));
 	}
 	
 	tmAuthResponse::tmAuthResponse(tNetSession *u, tmAuthAsk &authAsk, Byte *guid, Byte *passwd, Byte result, Byte accessLevel)
@@ -103,7 +103,7 @@ namespace alc {
 	{
 		dbg.nl();
 		if (u && u->proto == 1) dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid));
-		dbg.printf(" login: %s, passwd: (hidden), result: 0x%0X (%s), accessLevel: %d", login.str(), result, alcUnetGetAuthCode(result), accessLevel);
+		dbg.printf(" login: %s, passwd: (hidden), result: 0x%02X (%s), accessLevel: %d", login.str(), result, alcUnetGetAuthCode(result), accessLevel);
 	}
 
 } //end namespace alc
