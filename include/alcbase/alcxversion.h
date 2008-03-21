@@ -46,7 +46,7 @@
 #define alcTIME __TIME__
 #define alcBUILD_TIME alcDATE " " alcTIME
 
-#define alcXBUILDINFO "Rev: " alcREVISION " - Built:" alcBUILD_TIME
+#define alcXBUILDINFO "Rev: " alcREVISION " - Built: " alcBUILD_TIME
 
 //Protocol version numbers
 #define alcProtoMAX_VER 1

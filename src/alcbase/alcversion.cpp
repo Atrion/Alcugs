@@ -52,7 +52,7 @@ void _alcVersionInitVars() {
 	char * p2=tvalcVerText;
 	char * p3=tvalcSystemInfo;
 	//short
-	sprintf(p1,"%s. Build %s - Version %s\nId: %s\n",alcXSNAME,alcXBUILD,alcXVERSION,alcXID);
+	sprintf(p1,"%s\nId: %s\n",alcXSNAME,alcXID);
 	sprintf(p,"Alcugs %s %s - Version %s\n",alcXBUILDINFO,_PLATFORM_,alcSTR_VER);
 	strcat(p1,p);
 	//sprintf(p,"Supported Uru protocols 12.0-12.7\n");
@@ -61,7 +61,7 @@ void _alcVersionInitVars() {
 	strcat(p1,p);
 	//long
 	sprintf(p2,"%s",alcLicenseTextShort());
-	sprintf(p,"%s","Alcugs Project\n");
+	sprintf(p,"%s","Alcugs Project - ");
 	strcat(p2,p);
 	strcat(p2,p1);
 	#ifndef __WIN32__

@@ -237,6 +237,7 @@ namespace alc {
 				calculateHash(login, passwd, challenge, correctHash);
 				if(strcmp((char *)hash, (char *)correctHash) != 0) { // wrong password :(
 					log->print("invalid password\n");
+					authResult = AInvalidPasswd;
 					++attempts;
 				}
 				else { // it's correct, the player is authenticated

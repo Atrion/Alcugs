@@ -28,7 +28,7 @@
 //Program vars
 #define IN_ALC_PROGRAM
 #define ALC_PROGRAM_ID "$Id$"
-#define ALC_PROGRAM_NAME "Alcugs server"
+#define ALC_PROGRAM_NAME "Alcugs Server"
 
 #include<alcugs.h>
 #include<unet.h>
