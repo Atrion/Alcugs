@@ -364,7 +364,6 @@ void tUnet::startOp() {
 	}
 	
 	//chk?
-
 	//set network specific options
 	this->server.sin_family=AF_INET; //UDP IP
 
@@ -372,7 +371,7 @@ void tUnet::startOp() {
 		this->server.sin_addr.s_addr=htonl(INADDR_ANY); //any address
 	} else {
 		struct hostent *host;
-		host=gethostbyname(bindaddr); //<- non-freed structure reported by dmalloc, huh :/ ?
+		host=gethostbyname(bindaddr); // there's a bug in ubuntu's glibc or valgrind which results in an valgrind error here if a hostname is given instead of an IP
 		if(host==NULL) {
 			this->err->log("ERR: Fatal cannot resolve address %s:%i\n",bindaddr,bindport);
 			throw txUnetIniErr(_WHERE("Cannot resolve address %s:%i",bindaddr,bindport));

@@ -508,6 +508,7 @@ tmMsgBase::tmMsgBase(U16 cmd,U32 flags,tNetSession * u,tNetSession * s) {
 	this->flags=flags;
 	this->u=u;
 	this->s=s;
+	this->timestamp.seconds=0; // the timestamp is unitialized per default (this removes a valgrind error)
 	if(s==NULL) this->s=u;
 	//set bhflags
 	bhflags=0;
@@ -708,8 +709,12 @@ Byte * tmMsgBase::str() {
 		dbg.writeStr(" UCPNPI");
 	if(flags & plNetVersion)
 		dbg.printf(" version(%i,%i)",max_version,min_version);
-	if(flags & plNetTimestamp)
-		dbg.writeStr(timestamp.str());
+	if(flags & plNetTimestamp) {
+		if (timestamp.seconds == 0) // the timestamp will be set on sending, so we can't print it now
+			dbg.writeStr("now");
+		else
+			dbg.writeStr(timestamp.str());
+	}
 	dbg.nl();
 	if(flags & plNetX)
 		dbg.printf(" x:%i,",x);

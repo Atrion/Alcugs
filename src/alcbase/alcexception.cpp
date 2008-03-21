@@ -196,7 +196,7 @@ void txBase::_preparebacktrace() {
 	}
 }
 void txBase::dump() {
-		fprintf(stderr,"Exception %s:\n%s\n",this->what(),this->backtrace());
+		//fprintf(stderr,"Exception %s:\n%s\n",this->what(),this->backtrace());
 
 		unsigned int t,pid;
 		pid=getpid();

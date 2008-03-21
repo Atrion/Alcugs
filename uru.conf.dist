@@ -45,9 +45,9 @@
 private_network = 192.168.0.0
 private_mask    = 255.255.255.0
 # the address others use to connect to your server (i.e. your external address)
-public_address  = localhost
+public_address  = 127.0.0.1
 
-bind = localhost # default bind address for servers (the interface facing your router)
+bind = 127.0.0.1 # default bind address for servers (the interface facing your router)
 
 # global database settings
 ;db.timeout = 950 # set the database tiemout (default 15 minutes = 950 seconds)
@@ -55,7 +55,7 @@ bind = localhost # default bind address for servers (the interface facing your r
 ;db.log = 1 # enable logging of the database driver (default 1)
 ;db.sql.log = 1 # enable sql logging (default 1), doesn't work when db.log is disabled
 # global database connection data
-db.host = "localhost" # note: set db.host to nothing to use the local unix socket (untested with unet3+)
+db.host = "127.0.0.1" # note: set db.host to nothing to use the local unix socket (untested with unet3+)
 db.username = "alcugs"
 db.passwd = "yourpassword"
 
@@ -68,7 +68,7 @@ stop = 1
 # this is the section containing options for the auth server. global options like bind, verbose_level or log_files_path can be overwritten here
 
 # bind and port are also used by lobby and game to know where to connect
-bind = localhost # the auth server doesn't have to be accessed from outside
+bind = 127.0.0.1 # the auth server doesn't have to be accessed from outside
 port = 2010
 
 # enable/disable auth logging

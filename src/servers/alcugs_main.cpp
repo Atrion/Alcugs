@@ -227,7 +227,7 @@ int main(int argc, char * argv[]) {
 		lstd->print("========================================\n");
 	} catch(txBase &t) {
 		//fprintf(stderr,"FATAL Server died: Exception %s\n%s\n",t.what(),t.backtrace());
-		fprintf(stderr,"FATAL Server died: ");
+		//fprintf(stderr,"FATAL Server died: ");
 		t.dump();
 		lerr->log("FATAL Server died: Exception %s\n%s\n",t.what(),t.backtrace());
 		lstd->log("The service has been unexpectely killed!!!\n");
