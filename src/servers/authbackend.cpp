@@ -88,34 +88,51 @@ namespace alc {
 			log = new tLog("auth.log", 4, 0);
 		}
 
-		if (!prepare()) { // initializing didn't work... will be tried again when actually needed
+		prepare(); // initialize the database
+	}
+	
+	tAuthBackend::~tAuthBackend(void)
+	{
+		if (sql) {
+			DBG(5, "deleting SQL\n");
 			delete sql;
-			sql = NULL;
 		}
+		if (log != lnull) delete log;
 	}
 	
 	bool tAuthBackend::prepare(void)
 	{
 		// establish database connection
-		if (sql) {
-			lerr->log("ERR: Database already opened when calling tAuthBackend::prepare()\n");
+		if (sql) { // the connection is already established?
+			if (sql->prepare()) // when we're still connected or recoonnection works, everything is fine
+				return true;
+			// otherwise, delete the connection and try again
+			DBG(6, "deleting sql\n");
 			delete sql;
 		}
+		DBG(6, "creating sql\n");
 		sql = tSQL::createFromConfig();
-		if (!sql->prepare()) return false;
-		
-		// check if the auth table exists
-		char query[100];
-		sprintf(query, "SELECT * FROM `accounts`");
-		bool exists = sql->query(query, "Looking for accounts table");
-		mysql_free_result(sql->storeResult()); // that's necessary, otherwise we get a "2014 Commands out of sync; you can't run this command now" error
-		if (!exists) // it does not, so create it
-			if (!sql->query(authTableInitScript, "creating auth table")) return false;
-		
-		log->log("Auth driver successfully started (%s)\n minimal access level: %d, max attempts: %d, disabled time: %d\n\n",
-				__U_AUTHBACKEND_ID, minAccess, maxAttempts, disTime);
-		log->flush();
-		return true;
+		if (sql->prepare()) {
+			// check if the auth table exists
+			char query[100];
+			sprintf(query, "SELECT * FROM `accounts`");
+			bool exists = true;//sql->query(query, "Looking for accounts table");
+			//mysql_free_result(sql->storeResult()); // that's necessary, otherwise we get a "2014 Commands out of sync; you can't run this command now" error
+			if (exists || sql->query(authTableInitScript, "creating auth table")) { // either it already exists or we create it
+				log->log("Auth driver successfully started (%s)\n minimal access level: %d, max attempts: %d, disabled time: %d\n\n",
+						__U_AUTHBACKEND_ID, minAccess, maxAttempts, disTime);
+				log->flush();
+				return true;
+			}
+				lerr->log("ERR: Creating auth table failed\n");
+		}
+		else
+			lerr->log("ERR: Connecting to the database failed\n");
+		// when we come here, it didn't work, so delete everything
+		DBG(6, "deleting sql\n");
+		delete sql;
+		sql = NULL;
+		return false;
 	}
 
 	void tAuthBackend::calculateHash(Byte *login, Byte *passwd, Byte *challenge, Byte *hash) {
@@ -133,17 +150,9 @@ namespace alc {
 		*attempts = *lastAttempt = passwd[0] = 0; // ensure there's a valid value in there
 		strcpy((char *)guid, "00000000-0000-0000-0000-000000000000");
 		
-		// only query if we are connected
-		bool connected = false;
-		if (sql == NULL) { // if the connection wasn't yet established, try to do that now
-			connected = prepare();
-		}
-		else
-			connected = sql->prepare(); // otherwise, ensure the connection is re-established in case of a timeout
-		if (!connected) {
-			lerr->log("Can't start auth driver. All authenticate requests will be rejected.\n");
-			delete sql;
-			sql = NULL;
+		// only query if we are connected properly
+		if (!prepare()) {
+			lerr->log("ERR: Can't start auth driver. Authenticate request will be rejected.\n");
 			return AcNotRes;
 		}
 		

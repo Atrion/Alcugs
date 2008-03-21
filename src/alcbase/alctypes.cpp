@@ -659,7 +659,7 @@ void tStrBuf::init() {
 	flags=0x02; //Null true by default
 }
 void tStrBuf::onmodify() {
-	DBG(2,"tStrBuf::onmodify()\n");
+	DBG(7,"tStrBuf::onmodify()\n");
 	tMBuf::onmodify();
 	if(cache_lower!=NULL) {
 		delete cache_lower;
@@ -718,9 +718,10 @@ SByte tStrBuf::compare(const void * str) {
 	return(compare(pat));
 }
 const Byte * tStrBuf::c_str() {
-	DBG(2,"c_str()\n");
+	DBG(2,"tStrBuf::c_str()\n");
 	if(isNull()) {
-		return NULL;
+		DBG(2,"is null\n");
+		return (Byte *)"";
 	}
 	zeroend();
 	//end();
@@ -871,10 +872,10 @@ tStrBuf & tStrBuf::escape() {
 
 tStrBuf & tStrBuf::lower() {
 	if(cache_lower!=NULL) {
-		DBG(2,"cached...\n");
+		DBG(7,"cached...\n");
 		return *cache_lower;
 	}
-	DBG(2,"non-cached %s...\n",c_str());
+	DBG(7,"non-cached %s...\n",c_str());
 	
 	int i,max;
 	max=size();
@@ -882,20 +883,20 @@ tStrBuf & tStrBuf::lower() {
 	tStrBuf * out;
 	out = new tStrBuf(max);
 
-	DBG(2,"##begin##%s\n",out->c_str());
+	DBG(7,"##begin##%s\n",out->c_str());
 
 	for(i=0; i<max; i++) {
 		out->putByte(std::tolower(getAt(i)));
-		DBG(2,"%i:%c\n",i,getAt(i));
+		DBG(7,"%i:%c\n",i,getAt(i));
 	}
 
-	DBG(2,"##end##%s\n",out->c_str());
+	DBG(7,"##end##%s\n",out->c_str());
 
 	//if(shot!=NULL) delete shot;
 	//shot=out;
-	DBG(2,"lower end %s - %s\n",c_str(),out->c_str());
-	DBG(2,"lower end %s - %s\n",c_str(),out->c_str());
-	DBG(2,"lower end %s - %s\n",c_str(),out->c_str());
+	DBG(7,"lower end %s - %s\n",c_str(),out->c_str());
+	DBG(7,"lower end %s - %s\n",c_str(),out->c_str());
+	DBG(7,"lower end %s - %s\n",c_str(),out->c_str());
 	cache_lower=out;
 	//DBG(2,"lower end %s - %s\n",c_str(),out->c_str());
 	return *out;

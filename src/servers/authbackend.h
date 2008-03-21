@@ -44,22 +44,18 @@ namespace alc {
 	class tAuthBackend {
 	public:
 		tAuthBackend(void);
-		~tAuthBackend(void)
-		{
-			delete sql;
-			if (log != lnull) delete log;
-		}
+		~tAuthBackend(void);
 		
 		void calculateHash(Byte *login, Byte *passwd, Byte *challenge, Byte *hash); //!< calculate the hash needed to check the password
 		int authenticatePlayer(Byte *login, Byte *challenge, Byte *hash, Byte release, Byte *ip, Byte *passwd,
 			Byte *guid, Byte *accessLevel); //!< authenticates the player
-		void checkTimeout(void) { sql->checkTimeout(); }
+		void checkTimeout(void) { if (sql) sql->checkTimeout(); }
 	private:
 		U16 minAccess, disTime, maxAttempts;
 		tSQL *sql;
 		tLog *log;
 		
-		bool prepare(void);
+		bool prepare(void); //!< prepares the connection \returns true when the connection is established, false when there was an error (the sql object will be deleted in that case)
 		int queryPlayer(Byte *login, Byte *passwd, Byte *guid, U32 *attempts, U32 *lastAttempt);
 		void updatePlayer(Byte *guid, Byte *ip, U32 attempts, bool updateAttempt);
 	};

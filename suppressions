@@ -4,27 +4,6 @@
    fun:malloc
    fun:inet_ntoa
    fun:_ZN3alc11alcGetStrIpEj
-   fun:_ZN3alc11tUnetUruMsg14htmlDumpHeaderEPNS_4tLogEhjt
-   fun:_ZN3alc11tNetSession10processMsgEPhi
-   fun:_ZN3alc5tUnet4RecvEv
-   fun:_ZN3alc9tUnetBase3runEv
-   fun:main
-}
-{
-   inet_ntoa bug (?)
-   Memcheck:Leak
-   fun:malloc
-   fun:inet_ntoa
-   fun:_ZN3alc11alcGetStrIpEj
-   fun:_ZN3alc11tUnetUruMsg14htmlDumpHeaderEPNS_4tLogEhjt
-   fun:_ZN3alc5tUnet7rawsendEPNS_11tNetSessionEPNS_11tUnetUruMsgE
-   fun:_ZN3alc11tNetSession6doWorkEv
-   fun:_ZN3alc5tUnet8basesendEPNS_11tNetSessionERNS_6tmBaseE
-   fun:_ZN3alc11tNetSession9negotiateEv
-   fun:_ZN3alc5tUnet10netConnectEPcthh
-   fun:_ZN9tUnetPing6onIdleEb
-   fun:_ZN3alc9tUnetBase3runEv
-   fun:main
 }
 
 {
@@ -58,56 +37,10 @@
    fun:getservbyname
    fun:mysql_server_init
    fun:mysql_init
+   fun:_ZN3alc4tSQL7connectEb
 }
 {
    mysql_init bug (?)
-   Memcheck:Cond
-   obj:/lib/ld-2.6.1.so
-   obj:/lib/ld-2.6.1.so
-   obj:/lib/tls/i686/cmov/libc-2.6.1.so
-   obj:/lib/ld-2.6.1.so
-   fun:__libc_dlopen_mode
-   fun:__nss_lookup_function
-   obj:/lib/tls/i686/cmov/libc-2.6.1.so
-   fun:__nss_services_lookup
-   fun:getservbyname_r
-   fun:getservbyname
-   fun:mysql_server_init
-   fun:mysql_init
-}
-{
-   not freed by msql_free for some reason (bug ?)
-   Memcheck:Leak
-   fun:malloc
-   fun:my_malloc
-   fun:my_error_register
-   fun:init_client_errs
-   fun:mysql_server_init
-   fun:mysql_init
-   fun:_ZN3alc4tSQL7connectEb
-   fun:_ZN3alc4tSQL7prepareEv
-   fun:_ZN3alc12tAuthBackendC1Ev
-   fun:_ZN3alc15tUnetAuthServerC1Ev
-   fun:main
-}
-{
-   not freed by msql_free for some reason (bug ?)
-   Memcheck:Leak
-   fun:malloc
-   fun:my_once_alloc
-   obj:/usr/lib/libmysqlclient.so.15.0.0
-   obj:/usr/lib/libmysqlclient.so.15.0.0
-   fun:get_charset_by_csname
-   fun:mysql_init_character_set
-   fun:mysql_real_connect
-   fun:_ZN3alc4tSQL7connectEb
-   fun:_ZN3alc4tSQL7prepareEv
-   fun:_ZN3alc12tAuthBackendC1Ev
-   fun:_ZN3alc15tUnetAuthServerC1Ev
-   fun:main
-}
-{
-   unkown
    Memcheck:Addr4
    obj:/lib/ld-2.6.1.so
    obj:/lib/ld-2.6.1.so
@@ -121,7 +54,37 @@
    fun:__nss_lookup_function
    obj:/lib/tls/i686/cmov/libc-2.6.1.so
    fun:__nss_services_lookup
+   fun:getservbyname_r
+   fun:getservbyname
+   fun:mysql_server_init
+   fun:mysql_init
+   fun:_ZN3alc4tSQL7connectEb
 }
+
+{
+   not freed by msql_free for some reason (bug ?)
+   Memcheck:Leak
+   fun:malloc
+   fun:my_malloc
+   fun:my_error_register
+   fun:init_client_errs
+   fun:mysql_server_init
+   fun:mysql_init
+   fun:_ZN3alc4tSQL7connectEb
+}
+{
+   not freed by msql_free for some reason (bug ?)
+   Memcheck:Leak
+   fun:malloc
+   fun:my_once_alloc
+   obj:/usr/lib/libmysqlclient.so.15.0.0
+   obj:/usr/lib/libmysqlclient.so.15.0.0
+   fun:get_charset_by_csname
+   fun:mysql_init_character_set
+   fun:mysql_real_connect
+   fun:_ZN3alc4tSQL7connectEb
+}
+
 {
    gethostbyname bug (?)
    Memcheck:Addr4
@@ -137,4 +100,7 @@
    fun:__nss_lookup_function
    obj:/lib/tls/i686/cmov/libc-2.6.1.so
    fun:__nss_hosts_lookup
+   fun:gethostbyname_r
+   fun:gethostbyname
+   fun:_ZN3alc5tUnet7startOpEv
 }

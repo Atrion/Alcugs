@@ -242,7 +242,6 @@ int alcEncodeUStr(unsigned char* out, unsigned char* in, U16 size, Byte how) {
 
 	return size+2;
 }
-#endif
 
 /** \brief Check if the char X is present n bytes in the buffer
 	\return Returns true if is the case, false in any other case
@@ -270,5 +269,6 @@ void alcStrFilter(Byte * what) {
 	}
 	what[e]='\0';
 }
+#endif
 
 }

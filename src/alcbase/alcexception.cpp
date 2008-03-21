@@ -196,7 +196,7 @@ void txBase::_preparebacktrace() {
 	}
 }
 void txBase::dump() {
-		//fprintf(stderr,"Exception %s:\n%s\n",this->what(),this->backtrace());
+		fprintf(stderr,"Exception %s:\n%s\n",this->what(),this->backtrace());
 
 		unsigned int t,pid;
 		pid=getpid();
@@ -230,11 +230,11 @@ void txBase::dump() {
 const char * txBase::what() { return (const char *)msg; }
 const char * txBase::backtrace() { return bt; }
 txBase::~txBase() {
-	dmalloc_verify(NULL);
+	//dmalloc_verify(NULL);
 	if(bt!=NULL) free((void *)bt);
-	dmalloc_verify(NULL);
+	//dmalloc_verify(NULL);
 	if(imsg!=NULL) free((void *)imsg);
-	dmalloc_verify(NULL);
+	//dmalloc_verify(NULL);
 }
 //End base
 

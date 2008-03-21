@@ -97,11 +97,11 @@ bool tSQL::connect(bool openDatabase)
 		disconnect();
 	}
 	// init the connection handle (if required)
+	DBG(6, "creating connection\n");
 	connection = mysql_init(NULL);
 	if (connection == NULL)
 		throw txNoMem(_WHERE("not enough memory to create MySQL handle"));
 	
-	DBG(5, "connecting\n");
 	stamp = time(NULL);
 	return mysql_real_connect(connection, (const char *)host, (const char *)username,
 		(const char *)password, openDatabase ? (const char *)dbname : NULL, port, NULL, 0);
@@ -110,7 +110,7 @@ bool tSQL::connect(bool openDatabase)
 void tSQL::disconnect(void)
 {
 	if (connection != NULL) {
-		DBG(5, "disconnecting\n");
+		DBG(6, "deleting connection\n");
 		mysql_close(connection);
 		connection = NULL;
 	}
@@ -192,14 +192,10 @@ tSQL *tSQL::createFromConfig(void)
 	tStrBuf var;
 	// read basic connection info
 	tStrBuf host = cfg->getVar("db.host");
-	if (host.isNull()) host.putByte(0); // there must be a final 0 so that the tSQL consutrctor can strcpy it
 	U16 port = cfg->getVar("db.port").asU16();
 	tStrBuf user = cfg->getVar("db.username");
-	if (user.isNull()) user.putByte(0);
 	tStrBuf password = cfg->getVar("db.passwd");
-	if (password.isNull()) password.putByte(0);
 	tStrBuf dbname = cfg->getVar("db.name");
-	if (dbname.isNull()) dbname.putByte(0);
 	
 	// additional options
 	U32 timeout = 15*60; // default is 15 minutes
