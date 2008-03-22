@@ -319,7 +319,7 @@ void tUnet::startOp() {
 		neterror("ERR: Fatal - Failed Creating socket ");
 		throw txUnetIniErr(_WHERE("cannot create socket"));
 	}
-	this->log->log("DBG: Socket created\n");
+	DBG(1, "Socket created\n");
 
 	if(this->flags & UNET_NBLOCK) {
 
@@ -344,9 +344,9 @@ void tUnet::startOp() {
 			throw txUnetIniErr(_WHERE("Failed setting a non-blocking socket"));
 		}
 #endif
-		this->log->log("DBG: Non-blocking socket set\n");
+		DBG(1, "Non-blocking socket set\n");
 	} else {
-		this->log->log("DBG: blocking socket set\n");
+		DBG(1, "blocking socket set\n");
 	}
 
 	//broadcast ?
@@ -392,14 +392,14 @@ void tUnet::startOp() {
 	// The next line of code was originally written in 10/Feb/2004,
 	// when the first listenning udp server named urud (uru daemon)
 	// was compiled on that day.
-	this->log->log("DBG: Listening to incoming datagrams on %s port udp %i\n",bindaddr,bindport);
+	this->log->log("INF: Listening to incoming datagrams on %s port udp %i\n",bindaddr,bindport);
 
 	smgr=new tNetSessionMgr(this,this->max);
 
 	if(this->max!=0) {
-		this->log->log("DBG: Accepting up to %i connections\n",this->max);
+		this->log->log("INF: Accepting up to %i connections\n",this->max);
 	} else {
-		this->log->log("DBG: Accepting unlimited connections\n",this->max);
+		this->log->log("INF: Accepting unlimited connections\n",this->max);
 	}
 	this->log->flush();
 	initialized=true;
@@ -420,7 +420,7 @@ void tUnet::stopOp() {
 #else
 	close(this->sock);
 #endif
-	this->log->log("DBG: Socket closed\n");
+	DBG(1, "Socket closed\n");
 	_closelogs();
 	initialized=false;
 }
@@ -629,7 +629,11 @@ void tUnet::doWork() {
 	tNetSession * cur;
 	smgr->rewind();
 	while((cur=smgr->getNext())) {
-		if(ntime_sec - cur->timestamp.seconds > cur->conn_timeout) {
+		if(ntime_sec - cur->timestamp.seconds >= cur->conn_timeout) { // also create the timeout when it's exactly the same time
+		/*  that is needed for cleanup to work for existing connections: 
+		first, a loop terminates/leaves every existing connection and sets their timeout to 0
+		then, all pending events are processed. however, even though the timeout is 0, it's not yet over if
+		the ">=" in the above line is changed to ">" */
 			//timeout event
 			tNetSessionIte ite(cur->ip,cur->port,cur->sid);
 			tNetEvent * evt=new tNetEvent(ite,UNET_TIMEOUT);

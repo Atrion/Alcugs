@@ -152,6 +152,7 @@ public:
 	
 	U32 ki; //player set and valid id
 
+	bool terminated; // set to true when a Leave or Terminate was sent (to distinguish sane connection quits and "real" timeouts)
 };
 
 #if 0

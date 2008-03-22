@@ -700,32 +700,35 @@ Byte * tmMsgBase::str() {
 	#ifdef _UNET_MSGDBG_
 	dbg.printf("%s %04X %08X\n Flags:",alcUnetGetMsgCode(cmd),cmd,flags);
 	if(flags & plNetAck)
-		dbg.writeStr(" ack");
+		dbg.writeStr(" ack,");
 	if(flags & plNetFirewalled)
-		dbg.writeStr(" firewalled");
+		dbg.writeStr(" firewalled,");
 	if(flags & plNetBcast)
-		dbg.writeStr(" bcast");
+		dbg.writeStr(" bcast,");
 	if(flags & plNetCustom)
-		dbg.writeStr(" UCPNPI");
+		dbg.writeStr(" UCPNPI,");
 	if(flags & plNetVersion)
-		dbg.printf(" version(%i,%i)",max_version,min_version);
+		dbg.printf(" version (%i,%i),",max_version,min_version);
 	if(flags & plNetTimestamp) {
+		dbg.writeStr(" timestamp ");
 		if (timestamp.seconds == 0) // the timestamp will be set on sending, so we can't print it now
-			dbg.writeStr("now");
+			dbg.writeStr("(now)");
 		else
 			dbg.writeStr(timestamp.str());
+		dbg.writeStr(",");
 	}
+	dbg.seek(-1); // remove the last comma
 	dbg.nl();
 	if(flags & plNetX)
-		dbg.printf(" x:%i,",x);
+		dbg.printf(" x: %i,",x);
 	if(flags & plNetKi)
-		dbg.printf(" ki:%i,",ki);
+		dbg.printf(" ki: %i,",ki);
 	if(flags & plNetGUI)
-		dbg.printf(" guid:%s,",alcGetStrGuid(guid));
+		dbg.printf(" guid: %s,",alcGetStrGuid(guid));
 	if(flags & plNetIP)
-		dbg.printf(" ip:%s:%i(%s:%i),",alcGetStrIp(ip),ntohs(port),alcGetStrIp(ntohl(ip)),port);
+		dbg.printf(" ip: %s:%i (%s:%i),",alcGetStrIp(ip),ntohs(port),alcGetStrIp(ntohl(ip)),port);
 	if(flags & plNetSid)
-		dbg.printf(" sid:%i,",sid);
+		dbg.printf(" sid: %i,",sid);
 	dbg.seek(-1); // remove the last comma
 	additionalFields();
 

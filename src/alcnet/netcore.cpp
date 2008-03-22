@@ -216,6 +216,7 @@ void tUnetBase::terminate(tNetSessionIte & who,bool silent,Byte reason) {
 	}
 
 	u->setPeerType(0);
+	u->terminated=true;
 	u->setTimeout(3);
 	u->timestamp.seconds=alcGetTime();
 	//delete ev;
@@ -267,11 +268,15 @@ void tUnetBase::run() {
 					//u->setPeerType(1);
 					break;
 				case UNET_TIMEOUT:
-					sec->log("%s Timeout\n",u->str());
+					if (!u->terminated)
+						sec->log("%s Timeout\n",u->str());
 					onConnectionTimeout(evt,u);
 					if(!evt->veto) {
 						if(u->getPeerType()==0) {
-							sec->log("%s Ended\n",u->str());
+							if (u->terminated)
+								sec->log("%s Sanely ended\n",u->str());
+							else
+								sec->log("%s Unexpectedly ended\n",u->str());
 							evt->id=UNET_TERMINATED;
 							onConnectionClosed(evt,u);
 							destroySession(evt->sid);
@@ -279,6 +284,8 @@ void tUnetBase::run() {
 							terminate(evt->sid,false,RTimedOut);
 						}
 					}
+					else // I don't know if a veto makes sense here when the peer closed the connection, but perhaps it does ;-) so let's respect it
+						u->terminated = false;
 					break;
 				case UNET_FLOOD:
 					sec->log("%s Flood Attack\n",u->str());
@@ -338,11 +345,14 @@ void tUnetBase::run() {
 	smgr->rewind();
 	while((u=smgr->getNext())) {
 		ite=u->getIte();
-		if(u->client) {
-			terminate(ite,false,RKickedOff);
-		} else {
-			leave(ite,RQuitting);
+		if (!u->terminated) { // avoid sending a NetMsgLeave or NetMsgTerminate to terminated peers
+			if(u->client) {
+				terminate(ite,false,RKickedOff);
+			} else {
+				leave(ite,RQuitting);
+			}
 		}
+		u->setTimeout(0); // don't wait for the timeout, we don't have that much time
 	}
 	
 	U32 startup=getTime();
@@ -378,7 +388,10 @@ void tUnetBase::run() {
 					terminate(evt->sid,false,RKickedOff);
 					break;
 				case UNET_TIMEOUT:
-					sec->log("%s Ended\n",u->str());
+					if (u->terminated)
+						sec->log("%s Sanely ended\n",u->str());
+					else
+						sec->log("%s Unexpectedly ended\n",u->str());
 					evt->id=UNET_TERMINATED;
 					onConnectionClosed(evt,u);
 					destroySession(evt->sid);
@@ -392,7 +405,7 @@ void tUnetBase::run() {
 	}
 	
 	if(!smgr->empty()) {
-		err->log("Fatal, smgr is not empty!\n");
+		err->log("ERR: Session manager is not empty!\n");
 		smgr->rewind();
 		while((u=smgr->getNext())) {
 			evt=new tNetEvent(u->getIte(),UNET_TERMINATED);

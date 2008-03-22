@@ -111,6 +111,7 @@ void tNetSession::init() {
 	proto=0; //alcProtoMIN_VER
 	ki=0;
 	client=1;
+	terminated = false;
 }
 char * tNetSession::str(char how) {
 	static char cnt[1024];
@@ -148,13 +149,12 @@ void tNetSession::updateRTT(U32 newread) {
 	#endif
 	ack_rtt=rtt/8;
 	DBG(5,"RTT update rtt:%i, timeout:%i\n",rtt,timeout);
-	net->log->log("RTT update rtt:%i, timeout:%i\n",rtt,timeout);
 }
 void tNetSession::duplicateTimeout() {
 	U32 maxTH=4000000; //
 	timeout+=(timeout*666)/1000;
 	if(timeout>maxTH) timeout=maxTH;
-	net->log->log("Abort()\n");
+	//net->log->log("Abort()\n");
 	//abort();
 }
 void tNetSession::increaseCabal() {
@@ -250,7 +250,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		max_cabal=cabal;
 		cabal=(cabal * 250)/1000;
 		//cabal=maxPacketSz;
-		net->log->log("Cabal is now %i (%i bps) max: %i (%i bps)\n",cabal,cabal*8,max_cabal,max_cabal*8);
+		net->log->log("INF: Cabal is now %i (%i bps) max: %i (%i bps)\n",cabal,cabal*8,max_cabal,max_cabal*8);
 		negotiating=false;
 	}
 	//How do you say "Cabal" in English?

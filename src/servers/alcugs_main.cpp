@@ -218,7 +218,7 @@ int main(int argc, char * argv[]) {
 		service->run();
 		
 		delete service;
-		lstd->log("The service has succesfully terminated\n");
+		lstd->print("The service has succesfully terminated\n");
 		lstd->print("Born:    %s\n",alcGetBornTime().str());
 		tTime now;
 		now.now();
@@ -228,7 +228,7 @@ int main(int argc, char * argv[]) {
 	} catch(txBase &t) {
 		t.dump(false); // don't dump to stderr, we would get the backtrace twice
 		lerr->log("FATAL Server died: Exception %s\n%s\n",t.what(),t.backtrace());
-		lstd->log("The service has been unexpectely killed!!!\n");
+		lstd->print("The service has been unexpectely killed!!!\n");
 		lstd->print("Born:    %s\n",alcGetBornTime().str());
 		tTime now;
 		now.now();
@@ -240,7 +240,7 @@ int main(int argc, char * argv[]) {
 	} catch(...) {
 		fprintf(stderr,"FATAL Server died: Unknown Exception\n");
 		lerr->log("FATAL Server died: Unknown Exception\n");
-		lstd->log("The service has been unexpectely killed!!!\n");
+		lstd->print("The service has been unexpectely killed!!!\n");
 		lstd->print("Born:    %s\n",alcGetBornTime().str());
 		tTime now;
 		now.now();
