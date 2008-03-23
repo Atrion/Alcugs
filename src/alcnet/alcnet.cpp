@@ -300,13 +300,13 @@ void tUnet::startOp() {
 		neterror("ERR: Cannot start up winsock ");
 		throw txUnetIniErr(_WHERE("cannot start winsock"));
 	}
-	this->log->print("Winsock Version %d, %d\n",this->ws.wHighVersion,this->ws.wVersion);
+	this->log->print(" Winsock Version %d, %d\n",this->ws.wHighVersion,this->ws.wVersion);
 	this->log->print(" %s - %s\n",this->ws.szDescription,this->ws.szSystemStatus);
 	this->log->print(" maxsockets:%i, maxUdpDg:%i\n",this->ws.iMaxSockets,\
 	this->ws.iMaxUdpDg);
 	this->log->print(" vendor: %s\n",this->ws.lpVendorInfo);
 #else
-	this->log->print("INF: Linux sockets...\n");
+	DBG(1, "DBG: Linux sockets...\n");
 #endif
 	this->sock=socket(AF_INET,SOCK_DGRAM,0);
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2006  The Alcugs Server Team                           *
+*    Copyright (C) 2004-2008  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -33,10 +33,10 @@
 		Several
 */
 
-#ifndef __U_LOBBYSERVER_H
-#define __U_LOBBYSERVER_H
+#ifndef __U_TRACKINGSERVER_H
+#define __U_TRACKINGSERVER_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_LOBBYSERVER_H_ID "$Id$"
+#define __U_TRACKINGSERVER_H_ID "$Id$"
 
 namespace alc {
 
@@ -45,10 +45,10 @@ namespace alc {
 		If we want to do it well and nice, we should add pre and post conditions here.
 	*/
 
-	class tUnetLobbyServer :public tUnetLobbyServerBase {
+	class tUnetTrackingServer :public tUnetServerBase {
 	public:
-		tUnetLobbyServer(void) : tUnetLobbyServerBase()
-			{ lstd->log("WARNING: The lobby server is not finished yet. So if it doesn\'t work, that's not even a bug.\n"); }
+		tUnetTrackingServer(void) : tUnetServerBase()
+			{ lstd->log("WARNING: The tracking server is not finished yet. So if it doesn\'t work, that's not even a bug.\n"); }
 	
 		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
 			{ return tUnetServerBase::onMsgRecieved(ev, msg, u); }

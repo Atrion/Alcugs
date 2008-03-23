@@ -69,7 +69,7 @@ test2_LDADD = libalcbase1.a
 test2_SOURCES = src/alcbase/test/test2.cpp
 #End Test APPS
 
-bin_PROGRAMS = alcconfig urucrypt m5crypt alcping alcmsgtest alcugs_lobby alcugs_auth
+bin_PROGRAMS = alcconfig urucrypt m5crypt alcping alcmsgtest alcugs_lobby alcugs_auth alcugs_tracking
 
 #Tools
 urucrypt_SOURCES = src/tools/urucrypt.cpp
@@ -90,6 +90,7 @@ alcping_LDADD = libalcnet1.a libalcbase1.a
 alcmsgtest_SOURCES = src/servers/alcmsgtest.cpp
 alcmsgtest_LDADD = libalcnet1.a libalcbase1.a
 
+# lobby server
 alcugs_lobby_SOURCES = \
  src/servers/alcugs_main.cpp \
  src/servers/lobbyserver.cpp
@@ -98,6 +99,16 @@ alcugs_lobby_INCLUDES = \
 alcugs_lobby_LDADD = libalcnet1.a libalcbase1.a
 alcugs_lobby_CPPFLAGS = -DI_AM_THE_LOBBY_SERVER
 
+# tracking server
+alcugs_tracking_SOURCES = \
+ src/servers/alcugs_main.cpp \
+ src/servers/trackingserver.cpp
+alcugs_tracking_INCLUDES = \
+ src/servers/trackingserver.h
+alcugs_tracking_LDADD = libalcnet1.a libalcbase1.a
+alcugs_tracking_CPPFLAGS = -DI_AM_THE_TRACKING_SERVER
+
+# auth server
 alcugs_auth_SOURCES = \
  src/servers/alcugs_main.cpp \
  src/servers/authmsg.cpp \
