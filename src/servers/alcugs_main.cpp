@@ -177,7 +177,7 @@ int main(int argc, char * argv[]) {
 		var=alcNetName;
 		lstd->print("<%s SERVER>\n",var.upper().c_str());
 		lstd->nl();
-		lstd->log("The Server is running...\nPresh CTRL+C to kill the server.\n\n");
+		lstd->log("The Server is running...\n Press CTRL+C to kill the server.\n\n");
 		
 		//Create the server
 		#if defined(I_AM_THE_LOBBY_SERVER)

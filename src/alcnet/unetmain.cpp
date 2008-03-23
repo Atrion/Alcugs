@@ -68,10 +68,6 @@ int alcUnetReloadConfig(bool firsttime) {
 	//Set config settings
 	cfg->copy("global",alcNetName);
 	cfg->copy("global","cmdline");
-	cfg->setVar(alcNetName,"internal.net.name","global");
-	var="";
-	var.printf("%i",alcWhoami);
-	cfg->setVar(var.c_str(),"whoami","global");
 	DBG(5,"setting config aliases...");
 	alcNetSetConfigAliases();
 	DBGM(5," done\n");

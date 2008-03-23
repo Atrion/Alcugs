@@ -66,7 +66,9 @@ void alcNetSetConfigAliases() {
 	cfg->copyKey("vault.port","vault_server_port","global","global");
 	cfg->copyKey("tracking.port","tracking_server_port","global","global");
 
+#if 0
 	//check some things
+	// unused (no CGAS support implemented or planned):
 	val=cfg->getVar("allow_unknown_accounts","global");
 	if(!val.isNull() && val.asByte()==0) {
 		val="";
@@ -83,6 +85,7 @@ void alcNetSetConfigAliases() {
 		val.printf("%i",AcPlayer);
 		cfg->setVar(val.c_str(),"default_access_level","global");
 	}
+#endif
 
 	//database
 	cfg->copyKey("db.host","db_server","global","global");
@@ -166,6 +169,7 @@ void alcNetSetConfigAliases() {
 		}
 	}
 
+#if 0
 	val=cfg->getVar("dataset","global");
 	if(val.isNull()) {
 		val="-1";
@@ -210,6 +214,7 @@ void alcNetSetConfigAliases() {
 			cfg->copyKey("dataset.tag","dataset","global","global");
 			break;
 	}
+#endif
 }
 
 } //end namespace alc
