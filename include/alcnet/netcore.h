@@ -52,16 +52,15 @@ public:
 	void forcestop() {}
 	/** Terminates the connection of the specified peer
 			\param who A session iterator that points to the desired peer
-			\param silent false=sends a terminated message, true=silently closes the connection
 			\param reason The reason code (error code)
+			\param silent false=sends a terminated/leave message, true=silently closes the connection
 	*/
-	void terminate(tNetSessionIte & who,bool silent=false,Byte reason=RKickedOff);
+	void terminate(tNetSessionIte & who,Byte reason=RKickedOff,bool silent=false);
+	/** destroy that session and do an onConnectionClosed */
+	void closeConnection(tNetSession *u);
 	/** Terminates all connections, only client peers will recieve terminated messages.
 	*/
 	void terminateAll() {}
-	/** Disconnects the client from the server
-	*/
-	void leave(tNetSessionIte & who,Byte reason=RQuitting);
 	/** Force a reload of the netcore settings (after changing the configuration for example)
 	*/
 	virtual void reload() 
