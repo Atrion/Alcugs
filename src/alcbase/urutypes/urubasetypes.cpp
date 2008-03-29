@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_URUBASICTYPES_ID "$Id$"
 
-#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
 
@@ -219,21 +219,24 @@ void tUStr::store(tBBuf &buf) {
 	name=(Byte *)malloc(sizeof(Byte) * (msize+1));
 	if(name==NULL) throw txNoMem(_WHERE("NoMem"));
 
-	if(how==0x00) {
-		if(this->version==0x06) {
-			Byte key[9]="mystnerd";
-			for(int i=0; i<msize; i++) {
-				name[i]=buf.getByte() ^ key[i%8];
+	if (msize > 0) { // only read if there's something to read
+		if(how==0x00) {
+			if(this->version==0x06) {
+				Byte key[9]="mystnerd";
+				for(int i=0; i<msize; i++) {
+					name[i]=buf.getByte() ^ key[i%8];
+				}
+			} else { // make sure msize is > 0 here, otherwise read(0) will read the rtest of the buffer
+				memcpy(name,buf.read(msize),msize);
 			}
 		} else {
-			memcpy(name,buf.read(msize),msize);
-		}
-	} else {
-		if(this->version==0x06) {
-			throw txUnexpectedData(_WHERE("how should be 0x00 for version 0x06"));
-		}
-		for(int i=0; i<msize; i++) {
-			name[i]=~buf.getByte();
+			if(this->version==0x06) {
+				throw txUnexpectedData(_WHERE("how should be 0x00 for version 0x06"));
+			}
+			for(int i=0; i<msize; i++) {
+				DBG(2, "reading a byte\n");
+				name[i]=~buf.getByte();
+			}
 		}
 	}
 	name[msize]=0;

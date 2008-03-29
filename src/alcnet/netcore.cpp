@@ -307,7 +307,17 @@ void tUnetBase::run() {
 					if(msg==NULL) break;
 					ret=parseBasicMsg(evt,msg,u);
 					if(ret==0) {
-						ret=onMsgRecieved(evt,msg,u);
+						try {
+							ret=onMsgRecieved(evt,msg,u);
+							if (ret > 0 && msg->data->remaining() > 0) {
+								err->log("%s Sent a message %04X (%s) which was too long (%d Bytes remaining after parsing)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data->remaining());
+								ret=-2;
+							}
+						}
+						catch (txOutOfRange &t) { // when there was an out of range error, don't crash the whole server (it would be easy to crash then...) but kick the responsible client
+							err->log("%s Sent a message %04X (%s) which was too short (error txOutOfRange)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+							ret=-2;
+						}
 					}
 					if(u->client==1) {
 						if(ret==0) {
@@ -315,11 +325,11 @@ void tUnetBase::run() {
 							terminate(evt->sid,false,RUnimplemented);
 						}
 						else if(ret==-1) {
-							err->log("%s Kicked off due to a parse error in a previus message %04X (%s)\n",u->str());
+							err->log("%s Kicked off due to a parse error in a previus message %04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
 							terminate(evt->sid,false,RParseError);
 						}
-						if(ret==-2) {
-							sec->log("%s Kicked off due to cracking %04 (%s)\n",u->str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
+						else if(ret==-2) {
+							sec->log("%s Kicked off due to cracking %04X (%s)\n",u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
 							terminate(evt->sid,false,RHackAttempt);
 						}
 					} else {

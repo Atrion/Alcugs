@@ -169,7 +169,7 @@ void alcDumpConfig() {
 }
 
 bool alcParseConfig(tStrBuf & path) {
-	std::printf("parsing %s...\n",path.c_str());
+	//std::printf("parsing %s...\n",path.c_str());
 
 	tXParser parser;
 	DBG(5,"setting config parser...");

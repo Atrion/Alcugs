@@ -135,6 +135,10 @@ public:
 		//std::printf("%i>=%i?\n",this->tell(),this->size());
 		return(this->tell()>=this->size());
 	}
+	/** \return the number of bytes remaining to the end of the stream */
+	virtual int remaining() {
+		return (this->size()-this->tell());
+	}
 	/** \return A pointer to a readonly location with the Ascii representation of the buffer */
 	virtual Byte * hexToAscii();
 	//Overlaoded Operators
