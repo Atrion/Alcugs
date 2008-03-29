@@ -24,67 +24,56 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
-*/
-
 /* CVS tag - DON'T TOUCH*/
-#define __U_UNETSERVERBASE_ID "$Id$"
+#define __U_TRACKINGMSG_ID "$Id$"
 
 //#define _DBG_LEVEL_ 10
 
-#include "alcugs.h"
-#include "unet.h"
+#include <alcugs.h>
+#include <unet.h>
 
 ////extra includes
+#include "trackingmsg.h"
 
-#include "alcdebug.h"
+#include <alcdebug.h>
 
 namespace alc {
 
 	////IMPLEMENTATION
-	tUnetServerBase::tUnetServerBase(void) : tUnetBase()
+	
+	void tmSetGuid::store(tBBuf &t)
 	{
-		whoami = alcWhoami; // the server should know who it is
+		tmMsgBase::store(t);
+		// there's already a guid member in tmMsgBase, so let's use that
+		tUStr u_guid;
+		t.get(u_guid);
+		strcpy((char *)guid, (char *)u_guid.str());
 		
-		// 5 minutes is the timeout unet3 sets for it's peers, so it makes sense to re-use it
-		// the unet2 lobby sends an alive message every 2min30sec (timeout/2), so that's the minimal value to avoid useless reconnects
-		conn_timeout = 5*60;
+		t.get(age);
+		t.get(netmask);
+		t.get(ip);
 	}
 	
-	int tUnetServerBase::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
+	void tmSetGuid::additionalFields()
 	{
-		switch(msg->cmd) {
-			// answer to pings
-			case NetMsgPing:
-			{
-				tmPing ping(u);
-				msg->data->get(ping);
-				log->log("<RCV> %s\n",ping.str());
-				if (ping.destination == whoami || ping.destination == KBcast) { // if it's for us or for everyone, answer
-					ping.setReply();
-					u->send(ping);
-				}
-				else if (whoami == KLobby || whoami == KGame) { // TODO: lobby and game server should forward the pings to their destination
-				
-				}
-				return 1;
-			}
-			case NetMsgAlive:
-			{
-				tmAlive alive(u);
-				msg->data->get(alive);
-				log->log("<RCV> %s\n",alive.str());
-				return 1;
-			}
-		}
-		return 0;
+		dbg.nl();
+		dbg.printf(" GUID: %s, Age filename: %s, Netmask: %s, IP: %s", guid, age.str(), netmask.str(), ip.str());
+	}
+	
+	void tmPlayerStatus::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		alcHex2Ascii(guid, t.read(16), 16);
+		t.get(account);
+		t.get(avatar);
+		playerFlag = t.getByte();
+		playerStatus = t.getByte();
+	}
+	
+	void tmPlayerStatus::additionalFields()
+	{
+		dbg.nl();
+		dbg.printf(" GUID: %s, Account: %s, Avatar: %s, Flag: 0x%02X, Status: 0x%02X (%s)", guid, account.str(), avatar.str(), playerFlag, playerStatus, alcUnetGetReasonCode(playerStatus));
 	}
 
 } //end namespace alc
-

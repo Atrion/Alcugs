@@ -60,7 +60,7 @@ namespace alc {
 		
 		switch(msg->cmd) {
 			case NetMsgCustomAuthAsk:
-				ret = 1;
+			{
 				tmAuthAsk authAsk(u);
 				Byte guid[40], passwd[40], accessLevel;
 				int authResult;
@@ -76,7 +76,8 @@ namespace alc {
 				tmAuthResponse authResponse(u, authAsk, guid, passwd, authResult, accessLevel);
 				u->send(authResponse);
 				
-				break;
+				return 1;
+			}
 		}
 		return ret;
 	}

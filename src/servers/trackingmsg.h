@@ -24,67 +24,36 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
-*/
-
+#ifndef __U_TRACKINGMSG_H
+#define __U_TRACKINGMSG_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_UNETSERVERBASE_ID "$Id$"
-
-//#define _DBG_LEVEL_ 10
-
-#include "alcugs.h"
-#include "unet.h"
-
-////extra includes
-
-#include "alcdebug.h"
+#define __U_TRACKINGMSG_H_ID "$Id$"
 
 namespace alc {
 
-	////IMPLEMENTATION
-	tUnetServerBase::tUnetServerBase(void) : tUnetBase()
-	{
-		whoami = alcWhoami; // the server should know who it is
-		
-		// 5 minutes is the timeout unet3 sets for it's peers, so it makes sense to re-use it
-		// the unet2 lobby sends an alive message every 2min30sec (timeout/2), so that's the minimal value to avoid useless reconnects
-		conn_timeout = 5*60;
-	}
+	////DEFINITIONS
+	class tmSetGuid : public tmMsgBase {
+	public:
+		tmSetGuid(tNetSession *u) : tmMsgBase(NetMsgCustomSetGuid, 0, u) { } // it's not capable of sending a package, so no flags are set
+		virtual void store(tBBuf &t);
+		// format
+		tUStr age, netmask, ip;
+	protected:
+		virtual void additionalFields();
+	};
 	
-	int tUnetServerBase::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
-	{
-		switch(msg->cmd) {
-			// answer to pings
-			case NetMsgPing:
-			{
-				tmPing ping(u);
-				msg->data->get(ping);
-				log->log("<RCV> %s\n",ping.str());
-				if (ping.destination == whoami || ping.destination == KBcast) { // if it's for us or for everyone, answer
-					ping.setReply();
-					u->send(ping);
-				}
-				else if (whoami == KLobby || whoami == KGame) { // TODO: lobby and game server should forward the pings to their destination
-				
-				}
-				return 1;
-			}
-			case NetMsgAlive:
-			{
-				tmAlive alive(u);
-				msg->data->get(alive);
-				log->log("<RCV> %s\n",alive.str());
-				return 1;
-			}
-		}
-		return 0;
-	}
+	////DEFINITIONS
+	class tmPlayerStatus : public tmMsgBase {
+	public:
+		tmPlayerStatus(tNetSession *u) : tmMsgBase(NetMsgCustomPlayerStatus, 0, u) { } // it's not capable of sending a package, so no flags are set
+		virtual void store(tBBuf &t);
+		// format
+		tUStr account, avatar;
+		Byte playerFlag, playerStatus;
+	protected:
+		virtual void additionalFields();
+	};
+	
+} //End alc namespace
 
-} //end namespace alc
-
+#endif

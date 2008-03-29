@@ -42,6 +42,8 @@
 #include <unet.h>
 
 ////extra includes
+#include "trackingserver.h"
+#include "trackingmsg.h"
 
 #include <alcdebug.h>
 
@@ -51,6 +53,34 @@ namespace alc {
 	
 	const char * alcNetName="Tracking";
 	Byte alcWhoami=KTracking;
+	
+	int tUnetTrackingServer::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
+	{
+		int ret = tUnetServerBase::onMsgRecieved(ev, msg, u); // first let tUnetServerBase process the message
+		if (ret != 0) return ret; // cancel if it was processed, otherwise it's our turn
+		
+		switch(msg->cmd) {
+			case NetMsgCustomSetGuid:
+			{
+				// get the data out of the packet
+				tmSetGuid setGuid(u);
+				msg->data->get(setGuid);
+				log->log("<RCV> %s\n", setGuid.str());
+				
+				return 1;
+			}
+			case NetMsgCustomPlayerStatus:
+			{
+				// get the data out of the packet
+				tmPlayerStatus playerStatus(u);
+				msg->data->get(playerStatus);
+				log->log("<RCV> %s\n", playerStatus.str());
+				
+				return 1;
+			}
+		}
+		return ret;
+	}
 
 } //end namespace alc
 
