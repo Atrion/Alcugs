@@ -502,14 +502,12 @@ Byte * tmNetClientComm::str() {
 }
 
 //Base message
-tmMsgBase::tmMsgBase(U16 cmd,U32 flags,tNetSession * u,tNetSession * s) {
+tmMsgBase::tmMsgBase(U16 cmd,U32 flags,tNetSession * s) {
 	DBG(5,"tmMsgBase()\n");
 	this->cmd=cmd;
 	this->flags=flags;
-	this->u=u;
 	this->s=s;
 	this->timestamp.seconds=0; // the timestamp is unitialized per default (this removes a valgrind error)
-	if(s==NULL) this->s=u;
 	//set bhflags
 	bhflags=0;
 	if(this->flags & plNetAck)
@@ -534,13 +532,8 @@ void tmMsgBase::setUrgent() {
 void tmMsgBase::unsetUrgent() {
 	bhflags &= ~UNetUrgent;
 }
-void tmMsgBase::setDestination(tNetSession *u) {
-	this->u=u;
-	if(this->s==NULL) this->s=u;
-}
-void tmMsgBase::setSource(tNetSession *s) {
+void tmMsgBase::setSession(tNetSession *s) {
 	this->s=s;
-	if(this->u==NULL) this->u=s;
 }
 void tmMsgBase::store(tBBuf &t) {
 	//base
@@ -636,7 +629,7 @@ int tmMsgBase::stream(tBBuf &t) {
 		t.putByte(min_version);
 		off+=2;
 	}
-	if(flags & plNetTimestamp || (u && (u->min_version<6 && u->max_version==12))) {
+	if(flags & plNetTimestamp || (s && (s->min_version<6 && s->max_version==12))) {
 		if(timestamp.seconds==0) {
 			timestamp.seconds=alcGetTime();
 			timestamp.microseconds=alcGetMicroseconds();

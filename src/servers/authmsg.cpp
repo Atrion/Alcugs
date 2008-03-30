@@ -59,26 +59,26 @@ namespace alc {
 		release = t.getByte();
 		if(!(flags & plNetIP)) {
 			ip = t.getU32();
-			if (u) u->proto = 1; // unet2 protocol
+			if (s) s->proto = 1; // unet2 protocol
 		}
 	}
 	
 	void tmAuthAsk::additionalFields()
 	{
 		dbg.nl();
-		if (u && u->proto == 1) dbg.printf(" ip (unet2 protocol): %s,", alcGetStrIp(ip));
+		if (s && s->proto == 1) dbg.printf(" ip (unet2 protocol): %s,", alcGetStrIp(ip));
 		dbg.printf(" login: %s, challenge: %s, hash: %s, build: 0x%02X (%s)", login.str(), challenge, hash, release, alcUnetGetRelease(release));
 	}
 	
-	tmAuthResponse::tmAuthResponse(tNetSession *u, tmAuthAsk &authAsk, Byte *guid, Byte *passwd, Byte result, Byte accessLevel)
-	 : tmMsgBase(NetMsgCustomAuthResponse, plNetAck | plNetCustom | plNetX | plNetVersion | plNetIP | plNetGUI, u) {
+	tmAuthResponse::tmAuthResponse(tNetSession *s, tmAuthAsk &authAsk, Byte *guid, Byte *passwd, Byte result, Byte accessLevel)
+	 : tmMsgBase(NetMsgCustomAuthResponse, plNetAck | plNetCustom | plNetX | plNetVersion | plNetIP | plNetGUI, s) {
 		// copy stuff from the authAsk
 		x = authAsk.x;
 		min_version = authAsk.min_version;
 		max_version = authAsk.max_version;
 		ip = authAsk.ip;
 		port = authAsk.port;
-		if (u && u->proto == 1)
+		if (s && s->proto == 1)
 			unsetFlags(plNetIP | plNetGUI);
 		login.set(authAsk.login.str());
 		
@@ -94,7 +94,7 @@ namespace alc {
 		off += t.put(login); // login
 		t.putByte(result); ++off; // result
 		off += t.put(passwd); // passwd
-		if (u && u->proto == 1) { t.write(guid, 16); off += 16; } // GUID (only for old protocol)
+		if (s && s->proto == 1) { t.write(guid, 16); off += 16; } // GUID (only for old protocol)
 		t.putByte(accessLevel); ++off; // acess level
 		return off;
 	}
@@ -102,7 +102,7 @@ namespace alc {
 	void tmAuthResponse::additionalFields()
 	{
 		dbg.nl();
-		if (u && u->proto == 1) dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid));
+		if (s && s->proto == 1) dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid));
 		dbg.printf(" login: %s, passwd: (hidden), result: 0x%02X (%s), accessLevel: %d", login.str(), result, alcUnetGetAuthCode(result), accessLevel);
 	}
 

@@ -159,7 +159,7 @@ void tUnetSimpleFileServer::onIdle(bool idle) {
 				return;
 			}
 			if(!u->isConnected()) return;
-			data.setDestination(u);
+			data.setSession(u);
 			if(urgent) data.setUrgent();
 			tFBuf f1;
 			f1.open(file);

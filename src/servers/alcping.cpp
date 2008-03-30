@@ -177,11 +177,10 @@ void tUnetPing::onNewConnection(tNetEvent * ev,tNetSession * u) {
 int tUnetPing::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
 	int ret=0;
 
-	tmPing ping;
+	tmPing ping(u);
 
 	switch(msg->cmd) {
 		case NetMsgPing:
-			ping.setSource(u);
 			msg->data->get(ping);
 			if(listen==0) {
 				if(dstite==ev->sid) {
@@ -244,9 +243,8 @@ void tUnetPing::onIdle(bool idle) {
 		if((rcv-current)>time || count==0) {
 			if(count<num || num==0 || count==0) {
 				//snd ping message
-				tmPing ping;
+				tmPing ping(u);
 				ping.destination=destination;
-				ping.setDestination(u);
 				ping.setFlags(plNetTimestamp);
 				if(urgent) ping.setUrgent();
 
