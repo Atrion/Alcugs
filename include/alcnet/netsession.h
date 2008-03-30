@@ -1,7 +1,7 @@
 /*******************************************************************************
-*    Alcugs H'uru server                                                       *
+*    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2005  The Alcugs H'uru Server Team                     *
+*    Copyright (C) 2004-2008  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -59,7 +59,7 @@ public:
 	tNetSessionIte getIte();
 	U32 getRTT() { return rtt; }
 	bool isConnected() { return cabal!=0; }
-	bool aliveNecessary(void) { return (alcGetTime() - timestamp.seconds) > conn_timeout/2; }
+	void checkAlive(void);
 private:
 	void init();
 	void processMsg(Byte * buf,int size);

@@ -66,9 +66,9 @@ stop = 1
 
 ############# Auth Settings ###################################################
 [auth]
-# this is the section containing options for the auth server. global options like bind, verbose_level or log_files_path can be overwritten here
+# this is the section containing options for the auth server. global options like verbose_level or log_files_path can be overwritten here
 
-# bind and port are also used by lobby and game to know where to connect
+# bind and port are also used by lobby and game to know where to connect, so they are both mandatory
 bind = 127.0.0.1 # the auth server doesn't have to be accessed from outside
 port = 2010
 
@@ -91,9 +91,9 @@ stop = 1
 
 ############# Tracking Settings ##################################################
 [tracking]
-# this is the section containing options for the tracking server. global options like bind, verbose_level or log_files_path can be overwritten here
+# this is the section containing options for the tracking server. global options like verbose_level or log_files_path can be overwritten here
 
-# bind and port are also used by lobby and game to know where to connect
+# bind and port are also used by lobby and game to know where to connect, so they are both mandatory
 bind = 127.0.0.1 # the tracking server doesn't have to be accessed from outside
 port = 2011
 
@@ -101,7 +101,7 @@ stop = 1
 
 ############# Lobby Settings ##################################################
 [lobby]
-# this is the section containing options for the lobby server. global options like bind, verbose_level or log_files_path can be overwritten here
+# this is the section containing options for the lobby server. global options like verbose_level or log_files_path can be overwritten here
 
 port = 5000
 

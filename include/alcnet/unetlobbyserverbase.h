@@ -45,8 +45,13 @@ namespace alc {
 		If we want to do it well and nice, we should add pre and post conditions here.
 	*/
 
-class tUnetLobbyServerBase :public tUnetServerBase {
-	
+class tUnetLobbyServerBase : public tUnetServerBase {
+public:
+	void onStart(void);
+private:
+	tNetSessionIte reconnectPeer(Byte dst);
+
+	tNetSessionIte auth;
 };
 	
 } //End alc namespace

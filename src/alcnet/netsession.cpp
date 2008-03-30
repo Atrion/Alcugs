@@ -1,7 +1,7 @@
 /*******************************************************************************
-*    Alcugs H'uru server                                                       *
+*    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2006  The Alcugs H'uru Server Team                     *
+*    Copyright (C) 2004-2008  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -890,6 +890,15 @@ void tNetSession::negotiate() {
 
 void tNetSession::send(tmMsgBase & t) {
 	net->basesend(this,t);
+}
+
+void tNetSession::checkAlive(void)
+{
+	if (!client && (alcGetTime() - timestamp.seconds) > conn_timeout/2) { // when we are talking to a server, send alive messages
+		tmAlive alive(this);
+		send(alive);
+		timestamp.seconds = alcGetTime();
+	}
 }
 
 /* End session */

@@ -52,13 +52,16 @@ void alcNetSetConfigAliases() {
 	tConfig * cfg;
 	tStrBuf val;
 	cfg=alcGetConfig();
+	
+	// save the auth, tracking and vault host and port in global: [auth/tracking/vault] and global: [auth/tracking/vault].port
+	// use bind and port in the corresponding section
 	cfg->copyKey("auth","bind","global","auth");
 	cfg->copyKey("vault","bind","global","vault");
 	cfg->copyKey("tracking","bind","global","tracking");
 	cfg->copyKey("auth.port","port","global","auth");
 	cfg->copyKey("vault.port","port","global","vault");
 	cfg->copyKey("tracking.port","port","global","tracking");
-
+	// if available, prefer global: [auth/tracking/vault]_server and global: [auth/tracking/vault]_server_port
 	cfg->copyKey("auth","auth_server","global","global");
 	cfg->copyKey("vault","vault_server","global","global");
 	cfg->copyKey("tracking","tracking_server","global","global");

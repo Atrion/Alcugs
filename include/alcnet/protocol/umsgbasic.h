@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2005  The Alcugs Server Team                           *
+*    Copyright (C) 2004-2008  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -61,7 +61,7 @@ protected:
 class tmAlive :public tmMsgBase {
 public:
 	tmAlive(tNetSession * u=NULL,U32 ki=0)
- :tmMsgBase(NetMsgAlive,plNetKi | plNetAck | plNetCustom,u) {
+ :tmMsgBase(NetMsgAlive,plNetKi | plNetAck | plNetCustom | plNetTimestamp,u) {
 		this->ki=ki;
 	}
 	//format

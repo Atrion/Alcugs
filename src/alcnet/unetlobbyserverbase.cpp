@@ -48,6 +48,39 @@
 namespace alc {
 
 	////IMPLEMENTATION
+	void tUnetLobbyServerBase::onStart(void)
+	{
+		auth = reconnectPeer(KAuth);
+	}
+	
+	tNetSessionIte tUnetLobbyServerBase::reconnectPeer(Byte dst)
+	{
+		tStrBuf host, port;
+		tConfig *cfg = alcGetConfig();
+		
+		switch (dst) {
+			case KAuth:
+				host = cfg->getVar("auth","global");
+				port = cfg->getVar("auth.port","global");
+				break;
+			default:
+				err->log("ERR: Connection to unknown service %d requested\n", dst);
+				return tNetSessionIte();
+		}
+		if (host.isNull() || port.isNull()) {
+			err->log("ERR: Hostname or port for service %d (%s) is missing\n", dst, alcUnetGetDestination(dst));
+			return tNetSessionIte();
+		}
+		
+		tNetSessionIte ite = netConnect((char *)host.c_str(), port.asU16(), 2, 0);
+		
+		// send hello
+		tNetSession *session = getSession(ite);
+		tmAlive alive(session);
+		session->send(alive);
+		
+		return ite;
+	}
 
 } //end namespace alc
 

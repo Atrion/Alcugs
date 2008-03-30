@@ -101,12 +101,12 @@ private:
 	//U32 unkA
 	Byte frn; //num fragment(1 byte)
 	U32 sn; //seq num (3 bytes)
-		U32 csn; // -
+	U32 csn; // -
 	Byte frt; //total fragments (1 Byte)
 	//U32 unkB
 	Byte pfr;
 	U32 ps;
-		U32 cps; // -
+	U32 cps; // -
 	U32 dsize;
 	tMBuf data;
 	friend class tUnet;
