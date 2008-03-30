@@ -456,7 +456,7 @@ tNetSessionIte tUnet::netConnect(char * hostname,U16 port,Byte validation,Byte f
 	
 	u->timestamp.seconds=alcGetTime();
 	u->timestamp.microseconds=alcGetMicroseconds();
-	u->client=0;
+	u->client=false;
 	
 	u->max_version=max_version;
 	u->min_version=min_version;

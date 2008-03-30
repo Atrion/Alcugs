@@ -55,7 +55,7 @@ public:
 			\param reason The reason code (error code)
 			\param silent false=sends a terminated/leave message, true=silently closes the connection
 	*/
-	void terminate(tNetSessionIte & who,Byte reason=RKickedOff,bool silent=false);
+	void terminate(tNetSessionIte & who,Byte reason=RKickedOff);
 	/** destroy that session and do an onConnectionClosed */
 	void closeConnection(tNetSession *u);
 	/** Terminates all connections, only client peers will recieve terminated messages.
@@ -82,7 +82,7 @@ public:
 			\param msg The message object
 			\param u The peer session object
 	*/
-	virtual int onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) = 0;
+	virtual int onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) { return 0; }
 	/** This event is raised when a connection closes
 			You need to override it in your derived classes with your implementation.
 			\param ev The event object (cannot be vetoed)

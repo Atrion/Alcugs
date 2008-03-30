@@ -53,12 +53,13 @@ public:
 	U32 getMaxDataSize();
 	U32 getHeaderSize();
 	void setTimeout(U32 tout) { conn_timeout=tout; }
-	void setPeerType(Byte wtf) { whoami=wtf; }
-	Byte getPeerType() { return whoami; }
+	//void setPeerType(Byte wtf) { whoami=wtf; }
+	//Byte getPeerType() { return whoami; }
 	void send(tmMsgBase & t);
 	tNetSessionIte getIte();
 	U32 getRTT() { return rtt; }
 	bool isConnected() { return cabal!=0; }
+	bool aliveNecessary(void) { return (alcGetTime() - timestamp.seconds) > conn_timeout/2; }
 private:
 	void init();
 	void processMsg(Byte * buf,int size);
@@ -141,7 +142,7 @@ private:
 	friend class tUnetBase;
 
 public:
-	Byte whoami; //peer type
+	//Byte whoami; //peer type
 	bool client; //it's a client or a server?
 
 	Byte bussy; //bussy flag (0,1) If this flag is activated, messages are keept in the rcv buffer
@@ -152,7 +153,7 @@ public:
 	
 	U32 ki; //player set and valid id
 
-	bool terminated; // set to true when a Leave or Terminate was sent (to distinguish sane connection quits and "real" timeouts)
+	bool terminated; //!< false: connection is established; true: a NetMsgTerminated was sent (and we expect a NetMsgLeave)
 };
 
 #if 0
