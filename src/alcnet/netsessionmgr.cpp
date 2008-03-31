@@ -100,6 +100,7 @@ tNetSession * tNetSessionMgr::search(tNetSessionIte &ite,bool create) {
 	i=n;
 	n++;
 	table[i] = new tNetSession(net,ite.ip,ite.port,ite.sid);
+	DBG(4, "Growing to %d\n", n);
 	/*table[i]->ip=ite.ip;
 	table[i]->port=ite.port;
 	table[i]->sid=ite.sid;*/
@@ -126,12 +127,16 @@ void tNetSessionMgr::destroy(tNetSessionIte &ite) {
 	if(found!=-1) {
 		delete table[found];
 		table[found]=NULL;
+		// perhaps session before this one have been destroyed as well?
+		while (found > 0 && table[found-1] == NULL) --found;
+		// look if all session after the found one have been destroyed
 		for(i=found; i<n; i++) {
 			if(table[i]!=NULL) { found=-1; break; }
 		}
-		if(found!=-1) { //then resize
+		if(found!=-1) { // if that's the case, resize
 			table=(tNetSession **)realloc(table,sizeof(tNetSession) * found);
 			n=found;
+			DBG(4, "Shrinking to %d\n", n);
 		}
 	}
 }
