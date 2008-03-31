@@ -893,7 +893,7 @@ void tNetSession::send(tmMsgBase & t) {
 }
 
 void tNetSession::checkAlive(void)
-{	// when we are talking to a not-terminatedserver, send alive messages
+{	// when we are talking to a non-terminated server, send alive messages
 	if (!client && !terminated && (alcGetTime() - timestamp.seconds) > conn_timeout/2) {
 		tmAlive alive(this);
 		send(alive);

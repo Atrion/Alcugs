@@ -40,6 +40,7 @@
 
 #include "alcugs.h"
 #include "unet.h"
+#include "unetlobbyserverbase.h"
 
 ////extra includes
 

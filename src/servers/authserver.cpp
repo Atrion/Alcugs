@@ -42,8 +42,8 @@
 #include <unet.h>
 
 ////extra includes
+#include <protocol/authmsg.h>
 #include "authserver.h"
-#include "authmsg.h"
 
 #include <alcdebug.h>
 

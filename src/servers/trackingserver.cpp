@@ -42,8 +42,8 @@
 #include <unet.h>
 
 ////extra includes
+#include <protocol/trackingmsg.h>
 #include "trackingserver.h"
-#include "trackingmsg.h"
 
 #include <alcdebug.h>
 

@@ -53,7 +53,9 @@ libalcnet1_a_SOURCES = \
  src/alcnet/unetmain.cpp \
  src/alcnet/unetserverbase.cpp \
  src/alcnet/unetlobbyserverbase.cpp \
- src/alcnet/sql.cpp
+ src/alcnet/sql.cpp \
+ src/alcnet/protocol/authmsg.cpp \
+ src/alcnet/protocol/trackingmsg.cpp
 
 libalcnet1_a_CPPFLAGS = -DIN_ALC_LIBRARY
 #End LibAlcUruNet3 library
@@ -102,10 +104,8 @@ alcugs_lobby_CPPFLAGS = -DI_AM_THE_LOBBY_SERVER
 # tracking server
 alcugs_tracking_SOURCES = \
  src/servers/alcugs_main.cpp \
- src/servers/trackingmsg.cpp \
  src/servers/trackingserver.cpp
 alcugs_tracking_INCLUDES = \
- src/servers/trackingmsg.h \
  src/servers/trackingserver.h
 alcugs_tracking_LDADD = libalcnet1.a libalcbase1.a
 alcugs_tracking_CPPFLAGS = -DI_AM_THE_TRACKING_SERVER
@@ -113,11 +113,9 @@ alcugs_tracking_CPPFLAGS = -DI_AM_THE_TRACKING_SERVER
 # auth server
 alcugs_auth_SOURCES = \
  src/servers/alcugs_main.cpp \
- src/servers/authmsg.cpp \
  src/servers/authbackend.cpp \
  src/servers/authserver.cpp
 alcugs_auth_INCLUDES = \
- src/servers/authmsg.h \
  src/servers/authbackend.h \
  src/servers/authserver.h
 alcugs_auth_LDADD = libalcnet1.a libalcbase1.a

@@ -237,7 +237,7 @@ void tUnetBase::terminateAll(void)
 	tNetSessionIte ite;
 	tNetSession *u;
 	smgr->rewind();
-	while (u=smgr->getNext()) {
+	while ((u=smgr->getNext())) { // double brackets to suppress gcc warning
 		ite=u->getIte();
 		if (!u->terminated) { // avoid sending a NetMsgLeave or NetMsgTerminate to terminated peers
 			terminate(ite, u->client ? RKickedOff : RQuitting);

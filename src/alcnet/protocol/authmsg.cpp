@@ -38,11 +38,9 @@
 
 //#define _DBG_LEVEL_ 10
 
-#include <alcugs.h>
-#include <unet.h>
-
-////extra includes
-#include "authmsg.h"
+#include "alcugs.h"
+#include "unet.h"
+#include "protocol/authmsg.h"
 
 #include <alcdebug.h>
 
