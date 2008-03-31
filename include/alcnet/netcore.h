@@ -55,7 +55,7 @@ public:
 			\param reason The reason code (error code)
 			\param silent false=sends a terminated/leave message, true=silently closes the connection
 	*/
-	void terminate(tNetSessionIte & who,Byte reason=RKickedOff);
+	void terminate(tNetSessionIte & who, Byte reason=RKickedOff, bool silent = false);
 	/** destroy that session and do an onConnectionClosed */
 	void closeConnection(tNetSession *u);
 	/** Terminates all connections, only client peers will recieve terminated messages.
@@ -119,7 +119,6 @@ public:
 	virtual void onIdle(bool idle=false) {}
 	virtual void onStop() {}
 	virtual void onStart() {}
-	//virtual void onConnectionClosing(tNetEvent * ev) {}
 private:
 	void installSignalHandler();
 	int parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u);

@@ -153,7 +153,7 @@ public:
 	
 	U32 ki; //player set and valid id
 
-	bool terminated; //!< false: connection is established; true: a NetMsgTerminated was sent (and we expect a NetMsgLeave)
+	bool terminated; //!< false: connection is established; true: a NetMsgTerminated was sent (and we expect a NetMsgLeave), or a NetMsgLeave was sent
 };
 
 #if 0

@@ -205,11 +205,9 @@ void tUnetBase::stop(SByte timeout) {
 	state_running=false;
 }
 
-void tUnetBase::terminate(tNetSessionIte & who,Byte reason) {
-	//tNetEvent * ev=new tNetEvent(who,UNET_CLOSING);
+void tUnetBase::terminate(tNetSessionIte & who,Byte reason, bool silent) {
 	tNetSession * u=getSession(who);
-	//onConnectionClosing(ev);
-	if (u->client) {
+	if (!silent && u->client) {
 		tmTerminated * terminated=new tmTerminated(u,u->ki,reason,true);
 		u->send(*terminated);
 		delete terminated;
@@ -218,16 +216,18 @@ void tUnetBase::terminate(tNetSessionIte & who,Byte reason) {
 		However, the unet3 lobby doesn't do that. it sends a NetMsgAlive instead. To cope with that, this session will be remembered as
 		terminated and if a message different than NetMsgLeave is recieved, it will be deleted ASAP. The same happens if there's a
 		timeout, i.e. the peer sends nothing within 3 seconds. */
-		u->terminated = true;
-		u->setTimeout(3); // this creates a timeout event on which the session will be deleted
-		u->timestamp.seconds = alcGetTime();
 	}
-	else {
-		tmLeave * leave=new tmLeave(u,u->ki,reason);
-		u->send(*leave);
-		delete leave;
-		closeConnection(u);
+	else if (!silent && !u->client) {
+		tmLeave leave(u,u->ki,reason);
+		u->send(leave);
 	}
+	
+	if (u->client && !u->terminated) // give clients 3 seconds time to send their NetMsgLeave, but only if they haven't already got a NetMsgTerminated before
+		u->setTimeout(3);
+	else // otherwise, there's time to send remaining messages
+		u->setTimeout(2);
+	u->terminated = true;
+	u->timestamp.seconds = alcGetTime();
 }
 
 void tUnetBase::closeConnection(tNetSession *u)
@@ -259,8 +259,6 @@ void tUnetBase::run() {
 		Recv();
 		
 		while((evt=getEvent())) {
-			//lstd->log("Event id %i from host [%i]%s:%i\n",evt->id,evt->sid.sid,alcGetStrIp(evt->sid.ip),ntohs(evt->sid.port));+
-			
 			u=getSession(evt->sid);
 			if(u==NULL) {
 				delete evt;
@@ -280,7 +278,7 @@ void tUnetBase::run() {
 							terminate(evt->sid,RTimedOut);
 					}
 					else {
-						err->log("ERR: NetMsgLeave not sent by peer %s\n", u->str());
+						if (u->client) err->log("ERR: NetMsgLeave not sent by peer %s\n", u->str());
 						closeConnection(u);
 					}
 					break;
@@ -303,15 +301,15 @@ void tUnetBase::run() {
 						msg=u->rcvq->getNext();
 					if(msg==NULL) break;
 					
-					// terminated sessions accept only NetMsgLeaves
-					if (u->terminated && msg->cmd != NetMsgLeave) {
-						err->log("ERR: Peer %s is terminated and sent a non-NetMsgLeave message\n", u->str());
-						closeConnection(u);
-						u->rcvq->deleteCurrent();
+					ret=parseBasicMsg(evt,msg,u);
+					// terminated sessions can be deleted here - either it was a NetMsgLeave and everything is fine, or it was an invalid message
+					if (u->terminated) {
+						if (ret == 0) err->log("ERR: Peer %s is terminated and sent a non-NetMsgLeave message %04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+						u->rcvq->clear();
+						if (u->sndq->isEmpty()) // delete only if send queue isn't empty
+							closeConnection(u);
 						break;
 					}
-					
-					ret=parseBasicMsg(evt,msg,u);
 					if(ret==0) {
 						try {
 							ret=onMsgRecieved(evt,msg,u);
@@ -385,17 +383,12 @@ void tUnetBase::run() {
 						tmLeave msgleave;
 						msg->data->get(msgleave);
 						log->log("<RCV> %s\n",msgleave.str());
-						closeConnection(u); // this will immediatly delete the session
-						u->rcvq->deleteCurrent();
-					} else {
-						if (u->terminated) { // if the connection was already terminated and we got a message anyway, delete it
-							err->log("ERR: Peer %s is terminated and sent non-NetMsgLeave message\n", u->str());
-							closeConnection(u); // this will immediatly delete the session
-						}
-						else
-							terminate(evt->sid,RKickedOff);
-						u->rcvq->clear();
 					}
+					else if (msg!=NULL && u->terminated) // if the connection was already terminated and we got a message anyway, delete it
+						err->log("ERR: Peer %s is terminated and sent non-NetMsgLeave message\n", u->str());
+					u->rcvq->clear();
+					if (u->sndq->isEmpty()) // delete only if send queue isn't empty
+						closeConnection(u);
 					break;
 				case UNET_NEWCONN:
 				case UNET_FLOOD:
@@ -407,7 +400,7 @@ void tUnetBase::run() {
 						terminate(evt->sid,RTimedOut);
 					}
 					else {
-						err->log("ERR: NetMsgLeave not sent by peer %s\n", u->str());
+						if (u->client) err->log("ERR: NetMsgLeave not sent by peer %s\n", u->str());
 						closeConnection(u);
 					}
 					break;
@@ -445,7 +438,7 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u)
 			log->log("<RCV> %s\n",msgleave.str());
 			ev->id=UNET_TERMINATED;
 			onLeave(ev,msgleave.reason,u);
-			closeConnection(u); // this will immediatly delete the session
+			terminate(ev->sid, msgleave.reason, true);
 			return 1;
 		}
 		case NetMsgTerminated:
@@ -456,7 +449,7 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u)
 			log->log("<RCV> %s\n",msgterminated.str());
 			ev->id=UNET_TERMINATED;
 			onTerminated(ev,msgterminated.reason,u);
-			terminate(ev->sid,msgterminated.reason); // this will send a NetMsgLeave and delete the session
+			terminate(ev->sid,msgterminated.reason);
 			return 1;
 		}
 	}
