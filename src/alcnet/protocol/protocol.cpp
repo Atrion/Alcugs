@@ -495,6 +495,7 @@ Byte * tmNetClientComm::str() {
 	#ifdef _UNET_MSGDBG_
 	static Byte cnt[1024];
 	sprintf((char *)cnt,"(Re)Negotation bandwidth: %i bps time: %s",bandwidth,(char *)timestamp.str());
+	if (s) sprintf((char *)cnt, "%s on %s", cnt, s->str());
 	return cnt;
 	#else
 	return (Byte *)"Negotiation";
@@ -691,7 +692,9 @@ void tmMsgBase::copyProps(tmMsgBase &t) {
 }
 Byte * tmMsgBase::str() {
 	#ifdef _UNET_MSGDBG_
-	dbg.printf("%s %04X %08X\n Flags:",alcUnetGetMsgCode(cmd),cmd,flags);
+	dbg.printf("%s %04X %08X",alcUnetGetMsgCode(cmd),cmd,flags);
+	if (s) dbg.printf(" on %s", s->str());
+	dbg.printf("\n Flags:");
 	if(flags & plNetAck)
 		dbg.writeStr(" ack,");
 	if(flags & plNetFirewalled)

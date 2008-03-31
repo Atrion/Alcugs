@@ -201,7 +201,8 @@ void tUnetBase::stop(SByte timeout) {
 			stop_timeout=var.asU32();
 		}
 	}
-	stop_timeout=timeout;
+	else
+		stop_timeout=timeout;
 	state_running=false;
 }
 
@@ -403,7 +404,7 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool 
 		case NetMsgLeave:
 		{
 			if (!u->client) return 1;
-			tmLeave msgleave;
+			tmLeave msgleave(u);
 			msg->data->get(msgleave);
 			log->log("<RCV> %s\n",msgleave.str());
 			ev->id=UNET_TERMINATED;
@@ -416,7 +417,7 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool 
 		{
 			if (u->terminated || shutdown) return 0; // don't accept a NetMsgTerminated on already terminated sessions
 			if (u->client) return 1;
-			tmTerminated msgterminated;
+			tmTerminated msgterminated(u);
 			msg->data->get(msgterminated);
 			log->log("<RCV> %s\n",msgterminated.str());
 			ev->id=UNET_TERMINATED;

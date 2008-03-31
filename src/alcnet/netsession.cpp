@@ -95,7 +95,6 @@ void tNetSession::init() {
 	timeout=net->timeout;
 	conn_timeout=net->conn_timeout;
 	desviation=0;
-	success=0;
 	nego_stamp.seconds=0;
 	nego_stamp.microseconds=0;
 	renego_stamp=nego_stamp;
@@ -250,7 +249,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		max_cabal=cabal;
 		cabal=(cabal * 250)/1000;
 		//cabal=maxPacketSz;
-		net->log->log("INF: Cabal is now %i (%i bps) max: %i (%i bps)\n",cabal,cabal*8,max_cabal,max_cabal*8);
+		DBG(5, "INF: Cabal is now %i (%i bps) max: %i (%i bps)\n",cabal,cabal*8,max_cabal,max_cabal*8);
 		negotiating=false;
 	}
 	//How do you say "Cabal" in English?
@@ -266,7 +265,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		createAckReply(msg);
 	}*/
 	if(msg.tf & UNetNegotiation) {
-		tmNetClientComm comm;
+		tmNetClientComm comm(this);
 		msg.data.rewind();
 		msg.data.get(comm);
 		net->log->log("<RCV> ");
@@ -822,7 +821,8 @@ void tNetSession::doWork() {
 					sndq->deleteCurrent();
 				} else if(curmsg->tf & UNetAckReq) {
 					//send paquet
-					//success++;
+					
+					// check if we need to resend
 					if(curmsg->tryes!=0) {
 						//abort();
 						if(curmsg->tryes==1) {
@@ -830,12 +830,10 @@ void tNetSession::doWork() {
 						} else {
 							decreaseCabal(false);
 						}
-						//success=0;
 						duplicateTimeout();
-					} /*else if(success>=20) {
-						increaseCabal();
-					}*/
-					if(curmsg->tryes>=12) {
+					}
+					
+					if(curmsg->tryes>=12 || (curmsg->tryes>=2 && terminated)) { // only 1 resend on terminated connections
 						sndq->deleteCurrent();
 						//timeout event
 						evt=new tNetEvent(ite,UNET_TIMEOUT);
@@ -884,7 +882,7 @@ void tNetSession::negotiate() {
 		sbw=net->nat_down; //WAN
 	}
 
-	tmNetClientComm comm(nego_stamp,sbw);
+	tmNetClientComm comm(nego_stamp,sbw,this);
 	net->basesend(this,comm);
 }
 

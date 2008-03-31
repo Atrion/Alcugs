@@ -121,7 +121,6 @@ private:
 	U32 bandwidth; //client reported bandwidth (negotiated technology) (in bps)
 	U32 cabal; //cur avg bw (in bytes per second)
 	U32 max_cabal;
-	U32 success;
 	
 	U32 last_msg_time; //last snd msg time in usecs
 	U32 rtt;
