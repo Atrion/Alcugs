@@ -49,7 +49,7 @@ public:
 			\param timeout Sets the timeout to wait for closing the connection to all peers (<0 gets timeout from config file)
 	*/
 	void stop(SByte timeout=-1);
-	void forcestop() {}
+	void forcestop() { stop(0); /* stop with a timeout of 0 */ }
 	/** Terminates the connection of the specified peer
 			\param who A session iterator that points to the desired peer
 			\param reason The reason code (error code)
@@ -58,9 +58,9 @@ public:
 	void terminate(tNetSessionIte & who, Byte reason=RKickedOff, bool destroyOnly = false);
 	/** destroy that session and do an onConnectionClosed */
 	void closeConnection(tNetSession *u);
-	/** Terminates all connections, only client peers will recieve terminated messages.
+	/** Terminates all connections
 	*/
-	void terminateAll() {}
+	void terminateAll();
 	/** Force a reload of the netcore settings (after changing the configuration for example)
 	*/
 	virtual void reload() 

@@ -232,6 +232,19 @@ void tUnetBase::terminate(tNetSessionIte & who,Byte reason, bool destroyOnly) {
 	u->timestamp.seconds = alcGetTime();
 }
 
+void tUnetBase::terminateAll(void)
+{
+	tNetSessionIte ite;
+	tNetSession *u;
+	smgr->rewind();
+	while (u=smgr->getNext()) {
+		ite=u->getIte();
+		if (!u->terminated) { // avoid sending a NetMsgLeave or NetMsgTerminate to terminated peers
+			terminate(ite, u->client ? RKickedOff : RQuitting);
+		}
+	}
+}
+
 void tUnetBase::closeConnection(tNetSession *u)
 {
 	sec->log("%s Ended\n",u->str());
@@ -336,7 +349,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 	log->flush(); err->flush(); sec->flush(); unx->flush(); // I don't know how much perforcmance this costs, but without flushing it's not possible to follow the server logs using tail -F
 }
 
-//Blocks
+// main event processing loop - blocks
 void tUnetBase::run() {
 	startOp();
 	
@@ -354,16 +367,9 @@ void tUnetBase::run() {
 		}
 		onIdle(idle);
 	}
+	
 	//terminating the service
-	//U32 i;
-	tNetSessionIte ite;
-	smgr->rewind();
-	while((u=smgr->getNext())) {
-		ite=u->getIte();
-		if (!u->terminated) { // avoid sending a NetMsgLeave or NetMsgTerminate to terminated peers
-			terminate(ite, u->client ? RKickedOff : RQuitting);
-		}
-	}
+	terminateAll();
 	
 	U32 startup=getTime();
 	while(!smgr->empty() && (getTime()-startup)<stop_timeout) {

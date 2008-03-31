@@ -24,6 +24,8 @@
 #
 # The syntax, is very simple: variable = "string text" or variable = 1284
 # NOTE: Commented text starts with the characters '#' and/or ';'
+#
+#
 ############# Global Settings #################################################
 [global]
 # set the logging/verbose level (you can also set it as parameter: [-v n])
@@ -46,8 +48,6 @@ private_network = 192.168.0.0
 private_mask    = 255.255.255.0
 # the address others use to connect to your server (i.e. your external address)
 public_address  = 127.0.0.1
-
-bind = 127.0.0.1 # default bind address for servers (the interface facing your router)
 
 # global database settings
 ;db.timeout = 950 # set the database tiemout if the connection is not persistent (default 15 minutes = 950 seconds)
@@ -89,7 +89,7 @@ db.name = "alcugs_auth"
 
 stop = 1
 
-############# Tracking Settings ##################################################
+############# Tracking Settings ###############################################
 [tracking]
 # this is the section containing options for the tracking server. global options like verbose_level or log_files_path can be overwritten here
 
@@ -103,6 +103,7 @@ stop = 1
 [lobby]
 # this is the section containing options for the lobby server. global options like verbose_level or log_files_path can be overwritten here
 
+bind = 127.0.0.1 # bind address for lobby (the interface facing your router)
 port = 5000
 
 stop = 1
