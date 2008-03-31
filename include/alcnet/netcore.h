@@ -69,6 +69,7 @@ public:
 		_reconfigure();
 		_openlogs();
 	}
+	inline bool isRunning(void) { return state_running; }
 
 	/** This event is raised when we have a new connection
 			You need to override it in your derived classes with your implementation.

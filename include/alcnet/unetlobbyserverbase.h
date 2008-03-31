@@ -48,10 +48,14 @@ namespace alc {
 class tUnetLobbyServerBase : public tUnetServerBase {
 public:
 	void onStart(void);
+	void onIdle(bool idle);
+	void onConnectionClosed(tNetEvent *ev, tNetSession *u);
 private:
-	tNetSessionIte reconnectPeer(Byte dst);
+	tNetSession *getPeer(Byte dst); //!< returns the session for that service
+	tNetSessionIte reconnectPeer(Byte dst); //!< establishes a connection to that service (remember to set the corresponding gone variable to 0)
 
-	tNetSessionIte auth;
+	tNetSessionIte auth, tracking, vault;
+	U32 auth_gone, tracking_gone, vault_gone; // saves when this server got disconnected. wait 10sec before trying to connect again
 };
 	
 } //End alc namespace

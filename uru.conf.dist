@@ -99,6 +99,16 @@ port = 2011
 
 stop = 1
 
+############# Vault Settings ##################################################
+[vault]
+# this is the section containing options for the vault server. global options like verbose_level or log_files_path can be overwritten here
+
+# bind and port are also used by lobby and game to know where to connect, so they are both mandatory
+bind = 127.0.0.1 # the vault server doesn't have to be accessed from outside
+port = 2012
+
+stop = 1
+
 ############# Lobby Settings ##################################################
 [lobby]
 # this is the section containing options for the lobby server. global options like verbose_level or log_files_path can be overwritten here
