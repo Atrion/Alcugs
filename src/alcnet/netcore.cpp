@@ -205,9 +205,9 @@ void tUnetBase::stop(SByte timeout) {
 	state_running=false;
 }
 
-void tUnetBase::terminate(tNetSessionIte & who,Byte reason, bool silent) {
+void tUnetBase::terminate(tNetSessionIte & who,Byte reason, bool destroyOnly) {
 	tNetSession * u=getSession(who);
-	if (!silent && u->client) {
+	if (!destroyOnly && u->client) {
 		tmTerminated * terminated=new tmTerminated(u,u->ki,reason,true);
 		u->send(*terminated);
 		delete terminated;
@@ -217,15 +217,17 @@ void tUnetBase::terminate(tNetSessionIte & who,Byte reason, bool silent) {
 		terminated and if a message different than NetMsgLeave is recieved, it will be deleted ASAP. The same happens if there's a
 		timeout, i.e. the peer sends nothing within 3 seconds. */
 	}
-	else if (!silent && !u->client) {
+	else if (!destroyOnly && !u->client) {
 		tmLeave leave(u,u->ki,reason);
 		u->send(leave);
 	}
 	
-	if (u->client && !u->terminated) // give clients 3 seconds time to send their NetMsgLeave, but only if they haven't already got a NetMsgTerminated before
+	if (destroyOnly) // if the session should be destroyed, do that ASAP
+		u->setTimeout(0);
+	else if (u->client && !u->terminated) // give clients 3 seconds time to send their NetMsgLeave, but only if they haven't already got a NetMsgTerminated before
 		u->setTimeout(3);
-	else // otherwise, there's time to send remaining messages
-		u->setTimeout(2);
+	else // otherwise, give the session one second to send remaining messages
+		u->setTimeout(1);
 	u->terminated = true;
 	u->timestamp.seconds = alcGetTime();
 }
@@ -239,115 +241,115 @@ void tUnetBase::closeConnection(tNetSession *u)
 	delete ev;
 }
 
+void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
+{
+	switch(evt->id) {
+		case UNET_NEWCONN:
+			if (shutdown)
+				terminate(evt->sid, RKickedOff);
+			else
+				onNewConnection(evt, u);
+			sec->log("%s New Connection\n",u->str());
+			break;
+		case UNET_TIMEOUT:
+			if (!u->terminated && !shutdown) {
+				sec->log("%s Timeout\n",u->str());
+				onConnectionTimeout(evt,u);
+				if(!evt->veto)
+					terminate(evt->sid,RTimedOut);
+			}
+			else { // a destroyed session, close it ASAP
+				if (u->sndq->isEmpty() && u->ackq->isEmpty())
+					closeConnection(u);
+				else // if the send or ack queue isn't empty, send remaining messages
+					u->doWork();
+			}
+			break;
+		case UNET_FLOOD:
+			sec->log("%s Flood Attack\n",u->str());
+			if (!shutdown)
+				onConnectionFlood(evt,u);
+			if (shutdown || !evt->veto) {
+				terminate(evt->sid,RKickedOff);
+			}
+			break;
+		case UNET_MSGRCV:
+		{
+			tUnetMsg * msg;
+			int ret = 0; // 0 - non parsed; 1 - parsed; -1 - hack attempt; -2 - parse error
+			#ifdef _DEBUG_PACKETS_
+			log->log("%s New MSG Recieved\n",u->str());
+			#endif
+			u->rcvq->rewind();
+			msg=u->rcvq->getNext();
+			while(msg!=NULL && msg->completed!=1)
+				msg=u->rcvq->getNext();
+			if(msg==NULL) break;
+			
+			ret=parseBasicMsg(evt,msg,u,shutdown);
+			// terminated sessions can be deleted here - either it was a NetMsgLeave and everything is fine, or it was an invalid message
+			if (u->terminated || shutdown) {
+				if (ret == 0) err->log("ERR: Peer %s is terminated and sent a non-NetMsgLeave message %04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+				u->rcvq->deleteCurrent();
+				terminate(evt->sid, RKickedOff, true); // delete the session ASAP
+				break;
+			}
+			// this part can never be reached on shutdown, so messages are only processed when the server is still fully running
+			if(ret==0) {
+				try {
+					ret=onMsgRecieved(evt,msg,u);
+					if (ret > 0 && msg->data->remaining() > 0) {
+						err->log("%s Recieved a message %04X (%s) which was too long (%d Bytes remaining after parsing)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data->remaining());
+						ret=-2;
+					}
+				}
+				catch (txOutOfRange &t) { // when there was an out of range error, don't crash the whole server (it would be easy to crash then...) but kick the responsible client
+					err->log("%s Recieved a message %04X (%s) which was too short (error txOutOfRange)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+					ret=-2;
+				}
+			}
+			if(u->client==1) {
+				if(ret==0) {
+					err->log("%s Unexpected message %04X (%s)\n",u->str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
+					terminate(evt->sid,RUnimplemented);
+				}
+				else if(ret==-1) {
+					err->log("%s Kicked off due to a parse error in a previus message %04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+					terminate(evt->sid,RParseError);
+				}
+				else if(ret==-2) {
+					sec->log("%s Kicked off due to cracking %04X (%s)\n",u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+					terminate(evt->sid,RHackAttempt);
+				}
+			} else {
+				if(ret!=1) {
+					err->log("%s Error code %i parsing message %04X (%s)\n",u->str(),ret,msg->cmd,alcUnetGetMsgCode(msg->cmd));
+				}
+			}
+			u->rcvq->deleteCurrent();
+			break;
+		}
+		default:
+			err->log("%s Unknown Event id %i\n",u->str(),evt->id);
+			break;
+	}
+	log->flush(); err->flush(); sec->flush(); unx->flush(); // I don't know how much perforcmance this costs, but without flushing it's not possible to follow the server logs using tail -F
+}
+
 //Blocks
 void tUnetBase::run() {
 	startOp();
 	
 	tNetEvent * evt;
 	tNetSession * u;
-	tUnetMsg * msg;
-	int ret=0;
-	/*
-		0 - non parsed
-		1 - parsed
-		-1 - hack attempt
-		-2 - parse error
-	*/
 
 	onStart();
 	while(state_running) {
 		Recv();
-		
 		while((evt=getEvent())) {
 			u=getSession(evt->sid);
-			if(u==NULL) {
-				delete evt;
-				continue;
-			}
-			
-			switch(evt->id) {
-				case UNET_NEWCONN:
-					sec->log("%s New Connection\n",u->str());
-					onNewConnection(evt,u);
-					break;
-				case UNET_TIMEOUT:
-					if (!u->terminated) {
-						sec->log("%s Timeout\n",u->str());
-						onConnectionTimeout(evt,u);
-						if(!evt->veto)
-							terminate(evt->sid,RTimedOut);
-					}
-					else {
-						if (u->client) err->log("ERR: NetMsgLeave not sent by peer %s\n", u->str());
-						closeConnection(u);
-					}
-					break;
-				case UNET_FLOOD:
-					sec->log("%s Flood Attack\n",u->str());
-					onConnectionFlood(evt,u);
-					if(!evt->veto) {
-						//SND terminated
-						terminate(evt->sid,RKickedOff);
-					}
-					break;
-				case UNET_MSGRCV:
-					//dmalloc_verify(NULL);
-					#ifdef _DEBUG_PACKETS_
-					log->log("%s New MSG Recieved\n",u->str());
-					#endif
-					u->rcvq->rewind();
-					msg=u->rcvq->getNext();
-					while(msg!=NULL && msg->completed!=1)
-						msg=u->rcvq->getNext();
-					if(msg==NULL) break;
-					
-					ret=parseBasicMsg(evt,msg,u);
-					// terminated sessions can be deleted here - either it was a NetMsgLeave and everything is fine, or it was an invalid message
-					if (u->terminated) {
-						if (ret == 0) err->log("ERR: Peer %s is terminated and sent a non-NetMsgLeave message %04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-						u->rcvq->clear();
-						if (u->sndq->isEmpty()) // delete only if send queue isn't empty
-							closeConnection(u);
-						break;
-					}
-					if(ret==0) {
-						try {
-							ret=onMsgRecieved(evt,msg,u);
-							if (ret > 0 && msg->data->remaining() > 0) {
-								err->log("%s Recieved a message %04X (%s) which was too long (%d Bytes remaining after parsing)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data->remaining());
-								ret=-2;
-							}
-						}
-						catch (txOutOfRange &t) { // when there was an out of range error, don't crash the whole server (it would be easy to crash then...) but kick the responsible client
-							err->log("%s Recieved a message %04X (%s) which was too short (error txOutOfRange)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-							ret=-2;
-						}
-					}
-					if(u->client==1) {
-						if(ret==0) {
-							err->log("%s Unexpected message %04X (%s)\n",u->str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
-							terminate(evt->sid,RUnimplemented);
-						}
-						else if(ret==-1) {
-							err->log("%s Kicked off due to a parse error in a previus message %04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-							terminate(evt->sid,RParseError);
-						}
-						else if(ret==-2) {
-							sec->log("%s Kicked off due to cracking %04X (%s)\n",u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-							terminate(evt->sid,RHackAttempt);
-						}
-					} else {
-						if(ret!=1) {
-							err->log("%s Error code %i parsing message %04X (%s)\n",u->str(),ret,msg->cmd,alcUnetGetMsgCode(msg->cmd));
-						}
-					}
-					u->rcvq->deleteCurrent();
-					break;
-				default:
-					err->log("%s Unknown Event id %i\n",u->str(),evt->id);
-					break;
-			}
-			log->flush(); err->flush(); sec->flush(); unx->flush(); // I don't know how much perforcmance this costs, but without flushing it's not possible to follow the server logs using tail -f
+			if (u != NULL)
+				processEvent(evt, u);
 			delete evt;
 		}
 		onIdle(idle);
@@ -369,45 +371,8 @@ void tUnetBase::run() {
 		Recv();
 		while((evt=getEvent())) {
 			u=getSession(evt->sid);
-			if(u==NULL) {
-				delete evt;
-				continue;
-			}
-			switch(evt->id) {
-				case UNET_MSGRCV:
-					u->rcvq->rewind();
-					msg=u->rcvq->getNext();
-					while(msg!=NULL && msg->completed!=1)
-						msg=u->rcvq->getNext();
-					if(msg!=NULL && msg->cmd==NetMsgLeave) {
-						tmLeave msgleave;
-						msg->data->get(msgleave);
-						log->log("<RCV> %s\n",msgleave.str());
-					}
-					else if (msg!=NULL && u->terminated) // if the connection was already terminated and we got a message anyway, delete it
-						err->log("ERR: Peer %s is terminated and sent non-NetMsgLeave message\n", u->str());
-					u->rcvq->clear();
-					if (u->sndq->isEmpty()) // delete only if send queue isn't empty
-						closeConnection(u);
-					break;
-				case UNET_NEWCONN:
-				case UNET_FLOOD:
-					terminate(evt->sid,RKickedOff);
-					break;
-				case UNET_TIMEOUT:
-					if (!u->terminated) {
-						sec->log("%s Timeout\n",u->str());
-						terminate(evt->sid,RTimedOut);
-					}
-					else {
-						if (u->client) err->log("ERR: NetMsgLeave not sent by peer %s\n", u->str());
-						closeConnection(u);
-					}
-					break;
-				default:
-					err->log("%s Unknown Event id %i\n",u->str(),evt->id);
-					break;
-			}
+			if (u != NULL)
+				processEvent(evt, u, true);
 			delete evt;
 		}
 	}
@@ -424,10 +389,9 @@ void tUnetBase::run() {
 	
 	log->log("INF: Service sanely terminated\n");
 	stopOp();
-
 }
 
-int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u)
+int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool shutdown)
 {
 	switch(msg->cmd) {
 		case NetMsgLeave:
@@ -437,12 +401,14 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u)
 			msg->data->get(msgleave);
 			log->log("<RCV> %s\n",msgleave.str());
 			ev->id=UNET_TERMINATED;
-			onLeave(ev,msgleave.reason,u);
-			terminate(ev->sid, msgleave.reason, true);
+			if (!shutdown && !u->terminated)
+				onLeave(ev,msgleave.reason,u);
+			terminate(ev->sid, msgleave.reason, true); // delete the session ASAP
 			return 1;
 		}
 		case NetMsgTerminated:
 		{
+			if (u->terminated || shutdown) return 0; // don't accept a NetMsgTerminated on already terminated sessions
 			if (u->client) return 1;
 			tmTerminated msgterminated;
 			msg->data->get(msgterminated);
@@ -454,9 +420,6 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u)
 		}
 	}
 	return 0;
-}
-void tUnetBase::installSignalHandler() {
-	
 }
 
 } //end namespace

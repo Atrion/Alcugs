@@ -630,10 +630,7 @@ void tUnet::doWork() {
 	smgr->rewind();
 	while((cur=smgr->getNext())) {
 		if(ntime_sec - cur->timestamp.seconds >= cur->conn_timeout) { // also create the timeout when it's exactly the same time
-		/*  that is needed for cleanup to work for existing connections: 
-		first, a loop terminates/leaves every existing connection and sets their timeout to 0
-		then, all pending events are processed. however, even though the timeout is 0, it's not yet over if
-		the ">=" in the above line is changed to ">" */
+		/*  this way the time from a session being marked as deleteable till it is deleted is kept short */
 			//timeout event
 			tNetSessionIte ite(cur->ip,cur->port,cur->sid);
 			tNetEvent * evt=new tNetEvent(ite,UNET_TIMEOUT);

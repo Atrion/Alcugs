@@ -53,9 +53,9 @@ public:
 	/** Terminates the connection of the specified peer
 			\param who A session iterator that points to the desired peer
 			\param reason The reason code (error code)
-			\param silent false=sends a terminated/leave message, true=silently closes the connection
+			\param destroyOnly false=sends a terminated/leave message, true=silently closes the connection and destroys it ASAP
 	*/
-	void terminate(tNetSessionIte & who, Byte reason=RKickedOff, bool silent = false);
+	void terminate(tNetSessionIte & who, Byte reason=RKickedOff, bool destroyOnly = false);
 	/** destroy that session and do an onConnectionClosed */
 	void closeConnection(tNetSession *u);
 	/** Terminates all connections, only client peers will recieve terminated messages.
@@ -120,8 +120,8 @@ public:
 	virtual void onStop() {}
 	virtual void onStart() {}
 private:
-	void installSignalHandler();
-	int parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u);
+	void processEvent(tNetEvent *evt, tNetSession *u, bool shutdown = false);
+	int parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool shutdown);
 	bool state_running;
 	Byte stop_timeout;
 	void _reconfigure();
