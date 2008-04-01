@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2006  The Alcugs Server Team                           *
+*    Copyright (C) 2004-2008  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -47,13 +47,10 @@ namespace alc {
 		If we want to do it well and nice, we should add pre and post conditions here.
 	*/
 
-	class tUnetLobbyServer :public tUnetLobbyServerBase {
+	class tUnetLobbyServer : public tUnetLobbyServerBase {
 	public:
 		tUnetLobbyServer(void) : tUnetLobbyServerBase()
 			{ lstd->log("WARNING: The lobby server is not finished yet. So if it doesn\'t work, that's not even a bug.\n"); }
-	
-		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
-			{ return tUnetLobbyServerBase::onMsgRecieved(ev, msg, u); }
 	};
 	
 } //End alc namespace

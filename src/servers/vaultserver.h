@@ -33,24 +33,24 @@
 		Several
 */
 
+#ifndef __U_VAULTSERVER_H
+#define __U_VAULTSERVER_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_LOBBYSERVER_ID "$Id$"
-
-//#define _DBG_LEVEL_ 10
-
-#include <alcugs.h>
-#include <unet.h>
-
-////extra includes
-
-#include <alcdebug.h>
+#define __U_VAULTSERVER_H_ID "$Id$"
 
 namespace alc {
 
-	////IMPLEMENTATION
+	////DEFINITIONS
+	/**
+		If we want to do it well and nice, we should add pre and post conditions here.
+	*/
+
+	class tUnetVaultServer : public tUnetServerBase {
+	public:
+		tUnetVaultServer(void) : tUnetServerBase()
+			{ lstd->log("WARNING: The vault server is not finished yet. So if it doesn\'t work, that's not even a bug.\n"); }
+	};
 	
-	const char * alcNetName="Lobby";
-	Byte alcWhoami=KLobby;
+} //End alc namespace
 
-} //end namespace alc
-
+#endif

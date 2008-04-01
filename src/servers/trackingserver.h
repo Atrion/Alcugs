@@ -45,7 +45,7 @@ namespace alc {
 		If we want to do it well and nice, we should add pre and post conditions here.
 	*/
 
-	class tUnetTrackingServer :public tUnetServerBase {
+	class tUnetTrackingServer : public tUnetServerBase {
 	public:
 		tUnetTrackingServer(void) : tUnetServerBase()
 			{ lstd->log("WARNING: The tracking server is not finished yet. So if it doesn\'t work, that's not even a bug.\n"); }

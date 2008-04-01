@@ -72,7 +72,7 @@ test2_LDADD = libalcbase1.a
 test2_SOURCES = src/alcbase/test/test2.cpp
 #End Test APPS
 
-bin_PROGRAMS = alcconfig urucrypt m5crypt alcping alcmsgtest alcugs_lobby alcugs_auth alcugs_tracking
+bin_PROGRAMS = alcconfig urucrypt m5crypt alcping alcmsgtest alcugs_lobby alcugs_auth alcugs_tracking alcugs_vault alcugs_game
 
 #Tools
 urucrypt_SOURCES = src/tools/urucrypt.cpp
@@ -121,5 +121,23 @@ alcugs_auth_INCLUDES = \
  src/servers/authserver.h
 alcugs_auth_LDADD = libalcnet1.a libalcbase1.a
 alcugs_auth_CPPFLAGS = -DI_AM_THE_AUTH_SERVER
+
+# vault server
+alcugs_vault_SOURCES = \
+ src/servers/alcugs_main.cpp \
+ src/servers/vaultserver.cpp
+alcugs_vault_INCLUDES = \
+ src/servers/vaultserver.h
+alcugs_vault_LDADD = libalcnet1.a libalcbase1.a
+alcugs_vault_CPPFLAGS = -DI_AM_THE_VAULT_SERVER
+
+# game server
+alcugs_game_SOURCES = \
+ src/servers/alcugs_main.cpp \
+ src/servers/gameserver.cpp
+alcugs_game_INCLUDES = \
+ src/servers/gameserver.h
+alcugs_game_LDADD = libalcnet1.a libalcbase1.a
+alcugs_game_CPPFLAGS = -DI_AM_THE_GAME_SERVER
 
 #End server programs

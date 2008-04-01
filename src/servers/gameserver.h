@@ -33,24 +33,26 @@
 		Several
 */
 
+#ifndef __U_GAMESERVER_H
+#define __U_GAMESERVER_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_LOBBYSERVER_ID "$Id$"
+#define __U_GAMESERVER_H_ID "$Id$"
 
-//#define _DBG_LEVEL_ 10
-
-#include <alcugs.h>
-#include <unet.h>
-
-////extra includes
-
-#include <alcdebug.h>
+#include <unetlobbyserverbase.h>
 
 namespace alc {
 
-	////IMPLEMENTATION
+	////DEFINITIONS
+	/**
+		If we want to do it well and nice, we should add pre and post conditions here.
+	*/
+
+	class tUnetGameServer : public tUnetLobbyServerBase {
+	public:
+		tUnetGameServer(void) : tUnetLobbyServerBase()
+			{ lstd->log("WARNING: The game server is not finished yet. So if it doesn\'t work, that's not even a bug.\n"); }
+	};
 	
-	const char * alcNetName="Lobby";
-	Byte alcWhoami=KLobby;
+} //End alc namespace
 
-} //end namespace alc
-
+#endif

@@ -34,7 +34,7 @@
 */
 
 /* CVS tag - DON'T TOUCH*/
-#define __U_LOBBYSERVER_ID "$Id$"
+#define __U_VAULTSERVER_ID "$Id$"
 
 //#define _DBG_LEVEL_ 10
 
@@ -49,8 +49,8 @@ namespace alc {
 
 	////IMPLEMENTATION
 	
-	const char * alcNetName="Lobby";
-	Byte alcWhoami=KLobby;
+	const char * alcNetName="Vault";
+	Byte alcWhoami=KVault;
 
 } //end namespace alc
 

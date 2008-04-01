@@ -43,7 +43,7 @@
 #include "vaultserver.h"
 #elif defined(I_AM_THE_TRACKING_SERVER)
 #include "trackingserver.h"
-#elif defined(I_AM_THE_META_SERVER)
+/*#elif defined(I_AM_THE_META_SERVER)
 #include "metaserver.h"
 #elif defined(I_AM_THE_DATA_SERVER)
 #include "dataserver.h"
@@ -52,7 +52,7 @@
 #elif defined(I_AM_THE_PROXY_SERVER)
 #include "proxyserver.h"
 #elif defined(I_AM_THE_PLFIRE_SERVER)
-#include "plfireserver.h"
+#include "plfireserver.h"*/
 #else
 #error UNKNOWN SERVER
 #endif
@@ -195,7 +195,7 @@ int main(int argc, char * argv[]) {
 		#elif defined(I_AM_THE_TRACKING_SERVER)
 		tUnetTrackingServer * service;
 		service = new tUnetTrackingServer();
-		#elif defined(I_AM_THE_META_SERVER)
+		/*#elif defined(I_AM_THE_META_SERVER)
 		tUnetMetaServer * service;
 		service = new tUnetMetaServer();
 		#elif defined(I_AM_THE_DATA_SERVER)
@@ -209,7 +209,7 @@ int main(int argc, char * argv[]) {
 		service = new tUnetProxyServer();
 		#elif defined(I_AM_THE_PLFIRE_SERVER)
 		tUnetPlFireServer * service;
-		service = new tUnetPlFireServer();
+		service = new tUnetPlFireServer();*/
 		#else
 		#error UNKNOWN SERVER
 		#endif
