@@ -170,7 +170,7 @@ namespace alc {
 				}
 				
 				// get the data out of the packet
-				tmAuthHello authHello(u);
+				tmAuthenticateHello authHello(u);
 				msg->data->get(authHello);
 				log->log("<RCV> %s\n", authHello.str());
 				
@@ -186,10 +186,10 @@ namespace alc {
 				else if (u->min_version > 7) result = AProtocolOlder; // servers are newer
 				else if (u->min_version != 6) u->tpots = 2; // it's not TPOTS
 				
-				// reply with AuthChallenge
-				tmAuthChallenge authChallenge(u, result, authHello);
+				// reply with AuthenticateChallenge
+				tmAuthenticateChallenge authChallenge(u, result, authHello);
 				u->send(authChallenge);
-				u->authenticated = 10; // the challenge was sent
+				//u->authenticated = 10; // the challenge was sent
 				
 				return 1;
 			}

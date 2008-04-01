@@ -495,7 +495,10 @@ Byte * tmNetClientComm::str() {
 	#ifdef _UNET_MSGDBG_
 	static Byte cnt[1024];
 	sprintf((char *)cnt,"(Re)Negotation bandwidth: %i bps time: %s",bandwidth,(char *)timestamp.str());
-	if (s) sprintf((char *)cnt, "%s on %s", cnt, s->str());
+	if (s) { // don't use sprintf(cnt, "%s", cnt), valgrind shows a "Source and destination overlap in mempcpy"
+		strcat((char *)cnt, "on ");
+		strcat((char *)cnt, s->str());
+	}
 	return cnt;
 	#else
 	return (Byte *)"Negotiation";
@@ -567,7 +570,16 @@ void tmMsgBase::store(tBBuf &t) {
 	
 	//NetMsgPing should have always the timestamp enabled in new versions.
 	if(flags & plNetTimestamp || (s && (s->min_version<6 && s->max_version==12))) {
-		t.get(timestamp);
+		try {
+			t.get(timestamp);
+		}
+		catch (txOutOfRange &t) {
+			if (!(flags & plNetTimestamp)) { // there's no timestamp in the header and we tried to read it anyway. then we got an error, so there really is no timestamp, the version must be at least 12.6
+				s->min_version = 6;
+				timestamp.seconds=0;
+				timestamp.microseconds=0;
+			}
+		}
 	} else {
 		timestamp.seconds=0;
 		timestamp.microseconds=0;
@@ -720,7 +732,7 @@ Byte * tmMsgBase::str() {
 	if(flags & plNetKi)
 		dbg.printf(" ki: %i,",ki);
 	if(flags & plNetGUI)
-		dbg.printf(" guid: %s,",alcGetStrGuid(guid));
+		dbg.printf(" guid: %s,",alcGetStrGuid(guid, 16));
 	if(flags & plNetIP)
 		dbg.printf(" ip: %s:%i (%s:%i),",alcGetStrIp(ip),ntohs(port),alcGetStrIp(ntohl(ip)),port);
 	if(flags & plNetSid)

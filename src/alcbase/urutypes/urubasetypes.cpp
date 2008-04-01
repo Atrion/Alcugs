@@ -259,6 +259,10 @@ void tUStr::set(Byte * val,U32 _n) {
 void tUStr::set(char * val,U32 _n) {
 	this->set((Byte *)val,_n);
 }
+void tUStr::set(tUStr &str)
+{
+	set(str.name, str.msize);
+}
 Byte * tUStr::str() {
 	return name;
 }

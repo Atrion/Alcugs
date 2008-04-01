@@ -32,9 +32,9 @@
 namespace alc {
 
 	////DEFINITIONS
-	class tmAuthHello : public tmMsgBase {
+	class tmAuthenticateHello : public tmMsgBase {
 	public:
-		tmAuthHello(tNetSession *u) : tmMsgBase(NetMsgAuthenticateHello, 0, u) { } // it's not capable of sending a package, so no flags are set
+		tmAuthenticateHello(tNetSession *u) : tmMsgBase(NetMsgAuthenticateHello, 0, u) { } // it's not capable of sending a package, so no flags are set
 		virtual void store(tBBuf &t);
 		// format
 		tUStr account;
@@ -44,9 +44,9 @@ namespace alc {
 		virtual void additionalFields();
 	};
 	
-	class tmAuthChallenge : public tmMsgBase {
+	class tmAuthenticateChallenge : public tmMsgBase {
 	public:
-		tmAuthChallenge(tNetSession *u, Byte authresult, tmAuthHello &msg);
+		tmAuthenticateChallenge(tNetSession *u, Byte authresult, tmAuthenticateHello &msg);
 		virtual int stream(tBBuf &t);
 		// format
 		Byte authresult;

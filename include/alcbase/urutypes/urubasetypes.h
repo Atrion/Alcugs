@@ -73,6 +73,7 @@ public:
 	void setVersion(Byte version) { this->version=version; }
 	void set(Byte * val,U32 _s=0);
 	void set(char * val,U32 _s=0);
+	void set(tUStr &str);
 	Byte * str();
 	U32 len();
 	virtual ~tUStr();

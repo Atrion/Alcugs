@@ -38,7 +38,7 @@
 namespace alc {
 
 	////IMPLEMENTATION
-	void tmAuthHello::store(tBBuf &t)
+	void tmAuthenticateHello::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
 		t.get(account);
@@ -46,13 +46,13 @@ namespace alc {
 		release = t.getByte();
 	}
 	
-	void tmAuthHello::additionalFields(void)
+	void tmAuthenticateHello::additionalFields(void)
 	{
 		dbg.nl();
 		dbg.printf(" account: %s, max packet size: %d, release: %02X (%s)", account.str(), maxPacketSize, release, alcUnetGetRelease(release));
 	}
 	
-	tmAuthChallenge::tmAuthChallenge(tNetSession *u, Byte authresult, tmAuthHello &msg)
+	tmAuthenticateChallenge::tmAuthenticateChallenge(tNetSession *u, Byte authresult, tmAuthenticateHello &msg)
 	: tmMsgBase(NetMsgAuthenticateChallenge, plNetKi | plNetAck | plNetX | plNetVersion | plNetCustom, u)
 	{
 		// copy stuff from the packet we're answering to
@@ -75,7 +75,7 @@ namespace alc {
 		memcpy(challenge, md5buffer.read(16), 16);
 	}
 	
-	int tmAuthChallenge::stream(tBBuf &t)
+	int tmAuthenticateChallenge::stream(tBBuf &t)
 	{
 		int off = tmMsgBase::stream(t);
 		t.putByte(authresult); ++off; // authresult
@@ -83,12 +83,10 @@ namespace alc {
 		return off;
 	}
 	
-	void tmAuthChallenge::additionalFields()
+	void tmAuthenticateChallenge::additionalFields()
 	{
-		Byte challenge_str[33];
-		alcHex2Ascii(challenge_str, challenge, 16);
 		dbg.nl();
-		dbg.printf(" auth result: %02X (%s), challenge: %s", authresult, alcUnetGetAuthCode(authresult), challenge_str);
+		dbg.printf(" auth result: %02X (%s), challenge: %s", authresult, alcUnetGetAuthCode(authresult), alcGetStrGuid(challenge, 16));
 	}
 
 } //end namespace alc

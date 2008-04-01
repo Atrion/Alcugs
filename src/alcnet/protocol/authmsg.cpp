@@ -48,12 +48,12 @@ namespace alc {
 
 	////IMPLEMENTATION
 	
-	void tmAuthAsk::store(tBBuf &t)
+	void tmCustomAuthAsk::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
 		t.get(login);
-		alcHex2Ascii(challenge, t.read(16), 16);
-		alcHex2Ascii(hash, t.read(16), 16);
+		memcpy(challenge, t.read(16), 16);
+		memcpy(hash, t.read(16), 16);
 		release = t.getByte();
 		if(!(flags & plNetIP)) {
 			ip = t.getU32();
@@ -61,14 +61,14 @@ namespace alc {
 		}
 	}
 	
-	void tmAuthAsk::additionalFields()
+	void tmCustomAuthAsk::additionalFields()
 	{
 		dbg.nl();
 		if (s && s->proto == 1) dbg.printf(" ip (unet2 protocol): %s,", alcGetStrIp(ip));
-		dbg.printf(" login: %s, challenge: %s, hash: %s, build: 0x%02X (%s)", login.str(), challenge, hash, release, alcUnetGetRelease(release));
+		dbg.printf(" login: %s, challenge: %s, hash: %s, build: 0x%02X (%s)", login.str(), alcGetStrGuid(challenge, 16), alcGetStrGuid(hash, 16), release, alcUnetGetRelease(release));
 	}
 	
-	tmAuthResponse::tmAuthResponse(tNetSession *s, tmAuthAsk &authAsk, Byte *guid, Byte *passwd, Byte result, Byte accessLevel)
+	tmCustomAuthResponse::tmCustomAuthResponse(tNetSession *s, tmCustomAuthAsk &authAsk, const Byte *guid, Byte *passwd, Byte result, Byte accessLevel)
 	 : tmMsgBase(NetMsgCustomAuthResponse, plNetAck | plNetCustom | plNetX | plNetVersion | plNetIP | plNetGUI, s)
 	 {
 		// copy stuff from the authAsk
@@ -79,29 +79,29 @@ namespace alc {
 		port = authAsk.port;
 		if (s && s->proto == 1)
 			unsetFlags(plNetIP | plNetGUI);
-		login.set(authAsk.login.str());
+		login.set(authAsk.login);
 		
-		memcpy(this->guid, alcGetHexUid(guid), 16);
+		memcpy(this->guid, guid, 16);
 		this->passwd.set(passwd);
 		this->result = result;
 		this->accessLevel = accessLevel;
 	}
 	
-	int tmAuthResponse::stream(tBBuf &t)
+	int tmCustomAuthResponse::stream(tBBuf &t)
 	{
 		int off = tmMsgBase::stream(t);
 		off += t.put(login); // login
 		t.putByte(result); ++off; // result
 		off += t.put(passwd); // passwd
-		if (s && s->proto == 1) { t.write(guid, 16); off += 16; } // GUID (only for old protocol)
+		if (s && s->proto == 1) { t.write(guid, 16); off += 16; } // GUID (only for old protocol, the new one sends it in the header)
 		t.putByte(accessLevel); ++off; // acess level
 		return off;
 	}
 	
-	void tmAuthResponse::additionalFields()
+	void tmCustomAuthResponse::additionalFields()
 	{
 		dbg.nl();
-		if (s && s->proto == 1) dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid));
+		if (s && s->proto == 1) dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid, 16));
 		dbg.printf(" login: %s, passwd: (hidden), result: 0x%02X (%s), accessLevel: %d", login.str(), result, alcUnetGetAuthCode(result), accessLevel);
 	}
 

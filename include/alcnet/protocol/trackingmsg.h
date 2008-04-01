@@ -32,9 +32,9 @@
 namespace alc {
 
 	////DEFINITIONS
-	class tmSetGuid : public tmMsgBase {
+	class tmCustomSetGuid : public tmMsgBase {
 	public:
-		tmSetGuid(tNetSession *u) : tmMsgBase(NetMsgCustomSetGuid, 0, u) { } // it's not capable of sending a package, so no flags are set
+		tmCustomSetGuid(tNetSession *u) : tmMsgBase(NetMsgCustomSetGuid, 0, u) { } // it's not capable of sending a package, so no flags are set
 		virtual void store(tBBuf &t);
 		// format
 		tUStr age, netmask, ip;
@@ -42,9 +42,9 @@ namespace alc {
 		virtual void additionalFields();
 	};
 	
-	class tmPlayerStatus : public tmMsgBase {
+	class tmCustomPlayerStatus : public tmMsgBase {
 	public:
-		tmPlayerStatus(tNetSession *u) : tmMsgBase(NetMsgCustomPlayerStatus, 0, u) { } // it's not capable of sending a package, so no flags are set
+		tmCustomPlayerStatus(tNetSession *u) : tmMsgBase(NetMsgCustomPlayerStatus, 0, u) { } // it's not capable of sending a package, so no flags are set
 		virtual void store(tBBuf &t);
 		// format
 		tUStr account, avatar;

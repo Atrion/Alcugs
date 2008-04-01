@@ -63,7 +63,7 @@ namespace alc {
 			case NetMsgCustomSetGuid:
 			{
 				// get the data out of the packet
-				tmSetGuid setGuid(u);
+				tmCustomSetGuid setGuid(u);
 				msg->data->get(setGuid);
 				log->log("<RCV> %s\n", setGuid.str());
 				
@@ -72,7 +72,7 @@ namespace alc {
 			case NetMsgCustomPlayerStatus:
 			{
 				// get the data out of the packet
-				tmPlayerStatus playerStatus(u);
+				tmCustomPlayerStatus playerStatus(u);
 				msg->data->get(playerStatus);
 				log->log("<RCV> %s\n", playerStatus.str());
 				
