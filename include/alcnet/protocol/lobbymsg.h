@@ -44,6 +44,17 @@ namespace alc {
 		virtual void additionalFields();
 	};
 	
+	class tmAuthChallenge : public tmMsgBase {
+	public:
+		tmAuthChallenge(tNetSession *u, Byte authresult, tmAuthHello &msg);
+		virtual int stream(tBBuf &t);
+		// format
+		Byte authresult;
+		Byte challenge[16];
+	protected:
+		virtual void additionalFields();
+	};
+	
 } //End alc namespace
 
 #endif

@@ -38,6 +38,7 @@ namespace alc {
 class tNetSessionIte;
 class tNetSessionMgr;
 class tUnet;
+class tUnetLobbyServerBase;
 
 typedef Byte tNetSessionFlags;
 
@@ -140,6 +141,7 @@ private:
 	//friend class tUnetUruMsg;
 	friend class tmMsgBase;
 	friend class tUnetBase;
+	friend class tUnetLobbyServerBase; // it has to do the authenticate stuff
 
 public:
 	//Byte whoami; //peer type

@@ -164,7 +164,7 @@ namespace alc {
 		switch(msg->cmd) {
 			case NetMsgAuthenticateHello:
 			{
-				if (u->isAuthed()) {
+				if (u->authenticated != 0) {
 					err->log("ERR: %s player is already authend and sent another AuthenticateHello, ignoring\n", u->str());
 					return 1;
 				}
@@ -178,6 +178,18 @@ namespace alc {
 					unx->log("UNEXPECTED: Max packet size of %s is not 1024, but %d, ignoring\n", u->str(), authHello.maxPacketSize);
 					return 1;
 				}
+				
+				// determine auth result
+				int result = AAuthHello;
+				if (u->max_version < 12) result = AProtocolNewer; // servers are newer
+				else if (u->max_version > 12) result = AProtocolOlder; // servers are newer
+				else if (u->min_version > 7) result = AProtocolOlder; // servers are newer
+				else if (u->min_version != 6) u->tpots = 2; // it's not TPOTS
+				
+				// reply with AuthChallenge
+				tmAuthChallenge authChallenge(u, result, authHello);
+				u->send(authChallenge);
+				u->authenticated = 10; // the challenge was sent
 				
 				return 1;
 			}

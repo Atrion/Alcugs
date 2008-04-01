@@ -69,7 +69,8 @@ namespace alc {
 	}
 	
 	tmAuthResponse::tmAuthResponse(tNetSession *s, tmAuthAsk &authAsk, Byte *guid, Byte *passwd, Byte result, Byte accessLevel)
-	 : tmMsgBase(NetMsgCustomAuthResponse, plNetAck | plNetCustom | plNetX | plNetVersion | plNetIP | plNetGUI, s) {
+	 : tmMsgBase(NetMsgCustomAuthResponse, plNetAck | plNetCustom | plNetX | plNetVersion | plNetIP | plNetGUI, s)
+	 {
 		// copy stuff from the authAsk
 		x = authAsk.x;
 		min_version = authAsk.min_version;
@@ -86,9 +87,9 @@ namespace alc {
 		this->accessLevel = accessLevel;
 	}
 	
-	int tmAuthResponse::stream(tBBuf &t) {
-		int off;
-		off = tmMsgBase::stream(t);
+	int tmAuthResponse::stream(tBBuf &t)
+	{
+		int off = tmMsgBase::stream(t);
 		off += t.put(login); // login
 		t.putByte(result); ++off; // result
 		off += t.put(passwd); // passwd
