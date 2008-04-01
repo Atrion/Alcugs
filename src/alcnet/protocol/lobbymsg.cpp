@@ -24,41 +24,32 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
-*/
-
-#ifndef __U_AUTHSERVER_H
-#define __U_AUTHSERVER_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_AUTHSERVER_H_ID "$Id$"
+#define __U_LOBBYMSG_ID "$Id$"
 
-#include "authbackend.h"
+//#define _DBG_LEVEL_ 10
+
+#include "alcugs.h"
+#include "unet.h"
+#include "protocol/lobbymsg.h"
+
+#include <alcdebug.h>
 
 namespace alc {
 
-	////DEFINITIONS
-	class tUnetAuthServer : public tUnetServerBase {
-	public:
-		tUnetAuthServer() : tUnetServerBase() { authBackend = new tAuthBackend; }
-		virtual ~tUnetAuthServer() { delete authBackend; }
-
-		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
-		virtual void onIdle(bool idle) { authBackend->checkTimeout(); }
-		virtual void reload() {
-			delete authBackend;
-			tUnetServerBase::reload();
-			authBackend = new tAuthBackend;
-		}
-	private:		
-		tAuthBackend *authBackend;
-	};
+	////IMPLEMENTATION
+	void tmAuthHello::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		t.get(account);
+		maxPacketSize = t.getU16();
+		release = t.getByte();
+	}
 	
-} //End alc namespace
+	void tmAuthHello::additionalFields()
+	{
+		dbg.nl();
+		dbg.printf(" account: %s, max packet size: %d, release: %02X (%s)", account.str(), maxPacketSize, release, alcUnetGetRelease(release));
+	}
 
-#endif
+} //end namespace alc

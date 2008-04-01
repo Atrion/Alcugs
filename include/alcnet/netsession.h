@@ -52,14 +52,15 @@ public:
 	U32 getMaxFragmentSize();
 	U32 getMaxDataSize();
 	U32 getHeaderSize();
-	void setTimeout(U32 tout) { conn_timeout=tout; }
+	inline void setTimeout(U32 tout) { conn_timeout=tout; }
 	//void setPeerType(Byte wtf) { whoami=wtf; }
 	//Byte getPeerType() { return whoami; }
 	void send(tmMsgBase & t);
 	tNetSessionIte getIte();
 	U32 getRTT() { return rtt; }
-	bool isConnected() { return cabal!=0; }
+	inline bool isConnected() { return cabal!=0; }
 	void checkAlive(void);
+	inline bool isAuthed(void) { return authenticated; }
 private:
 	void init();
 	void processMsg(Byte * buf,int size);
@@ -98,7 +99,7 @@ private:
 		U32 ps;
 	} server;
 	Byte validation; //store the validation level (0,1,2)
-	Byte authenticated; //it's the peer authed? (0,1,2)
+	Byte authenticated; //it's the peer authed? 0 = no, 1 = yes, 2 = it just got authed, 10 = the client got an auth challenge
 	tNetSessionFlags cflags; //Session flags
 	U16 maxPacketSz; //Maxium size of the packets. Must be 1024 (always)
 

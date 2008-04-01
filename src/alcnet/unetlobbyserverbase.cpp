@@ -41,6 +41,7 @@
 #include "alcugs.h"
 #include "unet.h"
 #include "unetlobbyserverbase.h"
+#include "protocol/lobbymsg.h"
 
 ////extra includes
 
@@ -153,6 +154,35 @@ namespace alc {
 			vault_gone = 0;
 			DBG(5, "reconnecting vault\n");
 		}
+	}
+	
+	int tUnetLobbyServerBase::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
+	{
+		int ret = tUnetServerBase::onMsgRecieved(ev, msg, u); // first let tUnetServerBase process the message
+		if (ret != 0) return ret; // cancel if it was processed, otherwise it's our turn
+		
+		switch(msg->cmd) {
+			case NetMsgAuthenticateHello:
+			{
+				if (u->isAuthed()) {
+					err->log("ERR: %s player is already authend and sent another AuthenticateHello, ignoring\n", u->str());
+					return 1;
+				}
+				
+				// get the data out of the packet
+				tmAuthHello authHello(u);
+				msg->data->get(authHello);
+				log->log("<RCV> %s\n", authHello.str());
+				
+				if (authHello.maxPacketSize != 1024) {
+					unx->log("UNX: Max packet size of %s is not 1024, but %d, ignoring\n", u->str(), authHello.maxPacketSize);
+					return 1;
+				}
+				
+				return 1;
+			}
+		}
+		return ret;
 	}
 
 } //end namespace alc

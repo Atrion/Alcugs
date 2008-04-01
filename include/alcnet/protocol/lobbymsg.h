@@ -24,39 +24,24 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
-*/
-
-#ifndef __U_AUTHSERVER_H
-#define __U_AUTHSERVER_H
+#ifndef __U_LOBBYMSG_H
+#define __U_LOBBYMSG_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_AUTHSERVER_H_ID "$Id$"
-
-#include "authbackend.h"
+#define __U_LOBBYMSG_H_ID "$Id$"
 
 namespace alc {
 
 	////DEFINITIONS
-	class tUnetAuthServer : public tUnetServerBase {
+	class tmAuthHello : public tmMsgBase {
 	public:
-		tUnetAuthServer() : tUnetServerBase() { authBackend = new tAuthBackend; }
-		virtual ~tUnetAuthServer() { delete authBackend; }
-
-		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
-		virtual void onIdle(bool idle) { authBackend->checkTimeout(); }
-		virtual void reload() {
-			delete authBackend;
-			tUnetServerBase::reload();
-			authBackend = new tAuthBackend;
-		}
-	private:		
-		tAuthBackend *authBackend;
+		tmAuthHello(tNetSession *u) : tmMsgBase(NetMsgAuthenticateHello, 0, u) { } // it's not capable of sending a package, so no flags are set
+		virtual void store(tBBuf &t);
+		// format
+		tUStr account;
+		U16 maxPacketSize;
+		Byte release;
+	protected:
+		virtual void additionalFields();
 	};
 	
 } //End alc namespace
