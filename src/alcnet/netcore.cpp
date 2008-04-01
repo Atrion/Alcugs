@@ -300,27 +300,26 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 				msg=u->rcvq->getNext();
 			if(msg==NULL) break;
 			
-			ret=parseBasicMsg(evt,msg,u,shutdown);
-			// terminated sessions can be deleted here - either it was a NetMsgLeave and everything is fine, or it was an invalid message
-			if (u->terminated || shutdown) {
-				if (ret == 0) err->log("ERR: Peer %s is terminated and sent a non-NetMsgLeave message %04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-				u->rcvq->deleteCurrent();
-				terminate(evt->sid, RKickedOff, true); // delete the session ASAP
-				break;
-			}
-			// this part can never be reached on shutdown, so messages are only processed when the server is still fully running
-			if(ret==0) {
-				try {
-					ret=onMsgRecieved(evt,msg,u);
-					if (ret > 0 && msg->data->remaining() > 0) {
-						err->log("%s Recieved a message %04X (%s) which was too long (%d Bytes remaining after parsing)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data->remaining());
-						ret=-2;
-					}
+			try {
+				ret=parseBasicMsg(evt,msg,u,shutdown);
+				// terminated sessions can be deleted here - either it was a NetMsgLeave and everything is fine, or it was an invalid message
+				if (u->terminated || shutdown) {
+					if (ret == 0) err->log("ERR: Peer %s is terminated and sent a non-NetMsgLeave message %04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+					u->rcvq->deleteCurrent();
+					terminate(evt->sid, RKickedOff, true); // delete the session ASAP
+					break;
 				}
-				catch (txOutOfRange &t) { // when there was an out of range error, don't crash the whole server (it would be easy to crash then...) but kick the responsible client
-					err->log("%s Recieved a message %04X (%s) which was too short (error txOutOfRange)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+				// this part can never be reached on shutdown, so messages are only processed when the server is still fully running
+				if (ret == 0) ret=onMsgRecieved(evt,msg,u);
+				if (ret > 0 && msg->data->remaining() > 0) {
+					err->log("%s Recieved a message %04X (%s) which was too long (%d Bytes remaining after parsing)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data->remaining());
 					ret=-2;
 				}
+			}
+			catch (txOutOfRange &t) { // when there was an out of range error, don't crash the whole server (it would be easy to crash then...) but kick the responsible client
+				err->log("%s Recieved a message %04X (%s) which was too short (error txOutOfRange)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+				ret=-2;
+			}
 			}
 			if(u->client==1) {
 				if(ret==0) {

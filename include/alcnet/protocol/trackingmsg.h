@@ -42,7 +42,6 @@ namespace alc {
 		virtual void additionalFields();
 	};
 	
-	////DEFINITIONS
 	class tmPlayerStatus : public tmMsgBase {
 	public:
 		tmPlayerStatus(tNetSession *u) : tmMsgBase(NetMsgCustomPlayerStatus, 0, u) { } // it's not capable of sending a package, so no flags are set

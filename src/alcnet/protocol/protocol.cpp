@@ -566,7 +566,7 @@ void tmMsgBase::store(tBBuf &t) {
 	//END guess protocol version
 	
 	//NetMsgPing should have always the timestamp enabled in new versions.
-	if(flags & plNetTimestamp || (s && s->min_version<0x06)) {
+	if(flags & plNetTimestamp || (s && (s->min_version<6 && s->max_version==12))) {
 		t.get(timestamp);
 	} else {
 		timestamp.seconds=0;
@@ -704,7 +704,7 @@ Byte * tmMsgBase::str() {
 	if(flags & plNetCustom)
 		dbg.writeStr(" UCPNPI,");
 	if(flags & plNetVersion)
-		dbg.printf(" version (%i,%i),",max_version,min_version);
+		dbg.printf(" version (%i.%i),",max_version,min_version);
 	if(flags & plNetTimestamp) {
 		dbg.writeStr(" timestamp ");
 		if (timestamp.seconds == 0) // the timestamp will be set on sending, so we can't print it now
