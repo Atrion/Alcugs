@@ -136,6 +136,12 @@ private:
 	tUnetMsgQ<tUnetMsg> * rcvq; //incomming message queue
 	
 	bool idle;
+	Byte bussy; //bussy flag (0,1) If this flag is activated, messages are keept in the rcv buffer
+	
+	bool terminated; //!< false: connection is established; true: a NetMsgTerminated was sent (and we expect a NetMsgLeave), or a NetMsgLeave was sent
+	
+	Byte whoami; //peer type
+	bool client; //it's a client or a server?
 	
 	// used by lobby and game for authenticating
 	Byte account[201]; //peer account name (string)
@@ -144,24 +150,16 @@ private:
 
 	friend class tNetSessionMgr;
 	friend class tUnet;
-	//friend class tUnetUruMsg;
 	friend class tmMsgBase;
 	friend class tUnetBase;
 	friend class tUnetLobbyServerBase; // it has to do the authenticate stuff
 
 public:
-	Byte whoami; //peer type
-	bool client; //it's a client or a server?
-
-	Byte bussy; //bussy flag (0,1) If this flag is activated, messages are keept in the rcv buffer
 	Byte max_version; //peer major version
 	Byte min_version; //peer minor version
 	Byte tpots; //tpots version 0=undefined, 1=tpots client, 2=non-tpots client
 	U32 proto; //peer unet protocol version
-	
 	U32 ki; //player set and valid id
-
-	bool terminated; //!< false: connection is established; true: a NetMsgTerminated was sent (and we expect a NetMsgLeave), or a NetMsgLeave was sent
 };
 
 #if 0

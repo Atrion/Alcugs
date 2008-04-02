@@ -75,6 +75,7 @@ namespace alc {
 		release = t.getByte();
 		if(!(flags & plNetIP)) {
 			ip = t.getU32();
+			port = 0;
 			if (s) s->proto = 1; // unet2 protocol
 		}
 	}

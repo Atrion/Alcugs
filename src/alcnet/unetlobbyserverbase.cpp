@@ -61,21 +61,24 @@ namespace alc {
 	
 	tNetSessionIte tUnetLobbyServerBase::reconnectPeer(Byte dst)
 	{
-		tStrBuf host, port;
+		tStrBuf host, port, protocol;
 		tConfig *cfg = alcGetConfig();
 		
 		switch (dst) {
 			case KAuth:
 				host = cfg->getVar("auth","global");
 				port = cfg->getVar("auth.port","global");
+				protocol = cfg->getVar("auth.protocol","global");
 				break;
 			case KTracking:
 				host = cfg->getVar("tracking","global");
 				port = cfg->getVar("tracking.port","global");
+				protocol = cfg->getVar("tracking.protocol","global");
 				break;
 			case KVault:
 				host = cfg->getVar("vault","global");
 				port = cfg->getVar("vault.port","global");
+				protocol = cfg->getVar("vault.protocol","global");
 				break;
 			default:
 				err->log("ERR: Connection to unknown service %d requested\n", dst);
@@ -87,9 +90,11 @@ namespace alc {
 		}
 		
 		tNetSessionIte ite = netConnect((char *)host.c_str(), port.asU16(), 2, 0);
+		tNetSession *session = getSession(ite);
+		if (!protocol.isNull())
+			session->proto = protocol.asU32();
 		
 		// send hello
-		tNetSession *session = getSession(ite);
 		tmAlive alive(session);
 		session->send(alive);
 		

@@ -116,4 +116,10 @@ stop = 1
 bind = 127.0.0.1 # bind address for lobby (the interface facing your router)
 port = 5000
 
+# compatability for old servers
+# 0 = latest (default), 1 = unet2, 2 = unet3, 3 = unet3+
+;auth.protocol = 0
+;tracking.protocol = 0
+;vault.protocol = 0
+
 stop = 1
