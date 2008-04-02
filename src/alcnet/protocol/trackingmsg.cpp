@@ -37,13 +37,19 @@
 
 namespace alc {
 
-	////IMPLEMENTATION
+	//// tmCustomSetGuid
+	tmCustomSetGuid::tmCustomSetGuid(tNetSession *s) : tmMsgBase(NetMsgCustomSetGuid, 0, s) // it's not capable of sending a package, so no flags are set
+	{
+		age.setVersion(0); // normal UrurString
+		netmask.setVersion(0); // normal UrurString
+		ip.setVersion(0); // normal UrurString
+	}
 	
 	void tmCustomSetGuid::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
 		// there's already a guid member in tmMsgBase, so let's use that (though we need only 8 bytes)
-		tUStr guid_str;
+		tUStr guid_str(5); // inverted UruString
 		t.get(guid_str);
 		alcAscii2Hex(guid, (Byte *)guid_str.c_str(), 8);
 		
@@ -56,6 +62,13 @@ namespace alc {
 	{
 		dbg.nl();
 		dbg.printf(" GUID: %s, Age filename: %s, Netmask: %s, IP: %s", alcGetStrGuid(guid, 8), age.c_str(), netmask.c_str(), ip.c_str());
+	}
+	
+	//// tmCustomPlayerStatus
+	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *s) : tmMsgBase(NetMsgCustomPlayerStatus, 0, s) // it's not capable of sending a package, so no flags are set
+	{
+		account.setVersion(0); // normal UrurString
+		avatar.setVersion(0); // normal UrurString
 	}
 	
 	void tmCustomPlayerStatus::store(tBBuf &t)

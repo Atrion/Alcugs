@@ -37,7 +37,12 @@
 
 namespace alc {
 
-	////IMPLEMENTATION
+	//// tmAuthenticateHello
+	tmAuthenticateHello::tmAuthenticateHello(tNetSession *s) : tmMsgBase(NetMsgAuthenticateHello, 0, s) // it's not capable of sending a package, so no flags are set
+	{
+		account.setVersion(0); // normal UruString
+	}
+	
 	void tmAuthenticateHello::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
@@ -52,6 +57,7 @@ namespace alc {
 		dbg.printf(" account: %s, max packet size: %d, release: %02X (%s)", account.c_str(), maxPacketSize, release, alcUnetGetRelease(release));
 	}
 	
+	//// tmAuthenticateChallenge	
 	tmAuthenticateChallenge::tmAuthenticateChallenge(tNetSession *u, Byte authresult, tmAuthenticateHello &msg)
 	: tmMsgBase(NetMsgAuthenticateChallenge, plNetKi | plNetAck | plNetX | plNetVersion | plNetCustom, u)
 	{
@@ -87,6 +93,24 @@ namespace alc {
 	{
 		dbg.nl();
 		dbg.printf(" auth result: %02X (%s), challenge: %s", authresult, alcUnetGetAuthCode(authresult), alcGetStrGuid(challenge, 16));
+	}
+	
+	//// tmAuthenticateResponse
+	tmAuthenticateResponse::tmAuthenticateResponse(tNetSession *s) : tmMsgBase(NetMsgAuthenticateResponse, 0, s) // it's not capable of sending a package, so no flags are set
+	{
+		hash.setVersion(4); // normal UruString, but in Hex, not Ascii
+	}
+	
+	void tmAuthenticateResponse::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		t.get(hash);
+	}
+	
+	void tmAuthenticateResponse::additionalFields(void)
+	{
+		dbg.nl();
+		dbg.printf(" hash: %s", hash.c_str());
 	}
 
 } //end namespace alc

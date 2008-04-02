@@ -164,8 +164,8 @@ namespace alc {
 		switch(msg->cmd) {
 			case NetMsgAuthenticateHello:
 			{
-				if (u->authenticated != 0) {
-					err->log("ERR: %s player is already authend and sent another AuthenticateHello, ignoring\n", u->str());
+				if (u->authenticated != 0) { // this is impossible
+					err->log("ERR: %s player is already being authend and sent another AuthenticateHello, ignoring\n", u->str());
 					return 1;
 				}
 				
@@ -189,12 +189,25 @@ namespace alc {
 				// reply with AuthenticateChallenge
 				tmAuthenticateChallenge authChallenge(u, result, authHello);
 				u->send(authChallenge);
-				//u->authenticated = 10; // the challenge was sent
+				u->authenticated = 10; // the challenge was sent
 				
 				return 1;
 			}
+			case NetMsgAuthenticateResponse:
+			{
+				if (u->authenticated != 10) { // this is impossible
+					err->log("ERR: %s player sent an AuthenticateResponse and he is already being authend or he didn\'t yet send an AuthenticateHello, ignoring\n", u->str());
+					return 1;
+				}
+				
+				// get the data out of the packet
+				tmAuthenticateResponse authResponse(u);
+				msg->data->get(authResponse);
+				log->log("<RCV> %s\n", authResponse.str());
+				return 1;
+			}
 		}
-		return ret;
+		return 0;
 	}
 
 } //end namespace alc

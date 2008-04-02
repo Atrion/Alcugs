@@ -206,7 +206,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	
 	int ret; //,ret2;
 	
-	ret=alcUruValidatePacket(buf,size,&validation,authenticated,passwd);
+	ret=alcUruValidatePacket(buf,size,&validation,authenticated==1,passwd); // authenticated != 0 is not enough, the passwd is only set when authenticated == 1
 	
 	if(ret!=0 && (ret!=1 || net->flags & UNET_ECRC)) {
 		if(ret==1) net->err->log("ERR: Failed Validating a message!\n");

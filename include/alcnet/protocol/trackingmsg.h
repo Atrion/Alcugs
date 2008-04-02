@@ -34,7 +34,7 @@ namespace alc {
 	////DEFINITIONS
 	class tmCustomSetGuid : public tmMsgBase {
 	public:
-		tmCustomSetGuid(tNetSession *u) : tmMsgBase(NetMsgCustomSetGuid, 0, u) { } // it's not capable of sending a package, so no flags are set
+		tmCustomSetGuid(tNetSession *u);
 		virtual void store(tBBuf &t);
 		// format
 		tUStr age, netmask, ip;
@@ -44,7 +44,7 @@ namespace alc {
 	
 	class tmCustomPlayerStatus : public tmMsgBase {
 	public:
-		tmCustomPlayerStatus(tNetSession *u) : tmMsgBase(NetMsgCustomPlayerStatus, 0, u) { } // it's not capable of sending a package, so no flags are set
+		tmCustomPlayerStatus(tNetSession *u);
 		virtual void store(tBBuf &t);
 		// format
 		tUStr account, avatar;

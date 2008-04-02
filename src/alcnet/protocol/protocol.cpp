@@ -210,7 +210,7 @@ U32 alcUruChecksum(Byte* buf, int size, int alg, Byte * aux_hash) {
 	 2 -> Validation level too high
 	 3 -> Bogus packet!!
 */
-int alcUruValidatePacket(Byte * buf,int n,Byte * validation,Byte authed,Byte * phash) {
+int alcUruValidatePacket(Byte * buf,int n,Byte * validation,bool authed,Byte * phash) {
 	U32 checksum;
 #ifndef _NO_CHECKSUM
 	U32 aux_checksum;

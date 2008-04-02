@@ -34,7 +34,7 @@ namespace alc {
 	////DEFINITIONS
 	class tmAuthenticateHello : public tmMsgBase {
 	public:
-		tmAuthenticateHello(tNetSession *u) : tmMsgBase(NetMsgAuthenticateHello, 0, u) { } // it's not capable of sending a package, so no flags are set
+		tmAuthenticateHello(tNetSession *u);
 		virtual void store(tBBuf &t);
 		// format
 		tUStr account;
@@ -51,6 +51,16 @@ namespace alc {
 		// format
 		Byte authresult;
 		Byte challenge[16];
+	protected:
+		virtual void additionalFields();
+	};
+	
+	class tmAuthenticateResponse : public tmMsgBase {
+	public:
+		tmAuthenticateResponse(tNetSession *u);
+		virtual void store(tBBuf &t);
+		// format
+		tUStr hash;
 	protected:
 		virtual void additionalFields();
 	};

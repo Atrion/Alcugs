@@ -43,7 +43,7 @@ namespace alc {
 	////DEFINITIONS
 	class tmCustomAuthAsk : public tmMsgBase {
 	public:
-		tmCustomAuthAsk(tNetSession *s) : tmMsgBase(NetMsgCustomAuthAsk, 0, s) { } // it's not capable of sending a package, so no flags are set
+		tmCustomAuthAsk(tNetSession *s);
 		virtual void store(tBBuf &t);
 		// format
 		tUStr login;

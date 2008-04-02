@@ -46,7 +46,11 @@
 
 namespace alc {
 
-	////IMPLEMENTATION
+	//// tmCustomAuthAsk
+	tmCustomAuthAsk::tmCustomAuthAsk(tNetSession *s) : tmMsgBase(NetMsgCustomAuthAsk, 0, s) // it's not capable of sending a package, so no flags are set
+	{
+		login.setVersion(0); // normal UrurString
+	}
 	
 	void tmCustomAuthAsk::store(tBBuf &t)
 	{
@@ -68,6 +72,7 @@ namespace alc {
 		dbg.printf(" login: %s, challenge: %s, hash: %s, build: 0x%02X (%s)", login.c_str(), alcGetStrGuid(challenge, 16), alcGetStrGuid(hash, 16), release, alcUnetGetRelease(release));
 	}
 	
+	//// tmCustomAuthResponse
 	tmCustomAuthResponse::tmCustomAuthResponse(tNetSession *s, tmCustomAuthAsk &authAsk, const Byte *guid, Byte *passwd, Byte result, Byte accessLevel)
 	 : tmMsgBase(NetMsgCustomAuthResponse, plNetAck | plNetCustom | plNetX | plNetVersion | plNetIP | plNetGUI, s)
 	 {
@@ -80,9 +85,11 @@ namespace alc {
 		if (s && s->proto == 1)
 			unsetFlags(plNetIP | plNetGUI);
 		login = authAsk.login;
+		login.setVersion(0); // normal UrurString
 		
 		memcpy(this->guid, guid, 16);
 		this->passwd = passwd;
+		this->passwd.setVersion(0); // normal UrurString
 		this->result = result;
 		this->accessLevel = accessLevel;
 	}

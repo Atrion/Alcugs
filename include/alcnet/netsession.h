@@ -61,7 +61,7 @@ public:
 	U32 getRTT() { return rtt; }
 	inline bool isConnected() { return cabal!=0; }
 	void checkAlive(void);
-	inline bool isAuthed(void) { return authenticated; }
+	inline bool isAuthed(void) { return authenticated == 1; }
 private:
 	void init();
 	void processMsg(Byte * buf,int size);

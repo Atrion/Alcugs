@@ -44,7 +44,7 @@ namespace alc {
 void alcEncodePacket(unsigned char* buf2,unsigned char* buf, int n);
 void alcDecodePacket(unsigned char* buf, int n);
 
-int alcUruValidatePacket(Byte * buf,int n,Byte * validation,Byte authed=0,Byte * phash=NULL);
+int alcUruValidatePacket(Byte * buf,int n,Byte * validation,bool authed=false,Byte * phash=NULL);
 U32 alcUruChecksum(Byte* buf, int size, int alg, Byte * aux_hash);
 
 char * alcUnetGetRelease(Byte rel);

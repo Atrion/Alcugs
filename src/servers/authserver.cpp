@@ -81,7 +81,7 @@ namespace alc {
 				return 1;
 			}
 		}
-		return ret;
+		return 0;
 	}
 
 } //end namespace alc
