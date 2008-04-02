@@ -231,7 +231,7 @@ void tUStr::store(tBBuf &b) {
 					alcHex2Ascii(ascii, buf->buf+mstart, nsize);
 					clear();
 					writeStr(ascii);
-					delete ascii;
+					delete []ascii;
 				}
 			}
 		} else {
