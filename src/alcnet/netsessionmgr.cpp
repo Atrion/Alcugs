@@ -61,7 +61,7 @@ tNetSessionMgr::~tNetSessionMgr() {
 }
 tNetSession * tNetSessionMgr::search(tNetSessionIte &ite,bool create) {
 	if(ite.sid!=-1 && ite.sid<n && table[ite.sid]!=NULL) {
-		if(table[ite.sid]->ip==ite.ip && table[ite.sid]->port==ite.port) {
+		if(table[ite.sid]->getIP()==ite.ip && table[ite.sid]->getPort()==ite.port) {
 			return table[ite.sid];
 		}
 	}
@@ -72,7 +72,7 @@ tNetSession * tNetSessionMgr::search(tNetSessionIte &ite,bool create) {
 		if(table[i]==NULL) {
 			if(lsid==-1) lsid=i;
 		} else {
-			if(table[i]->ip==ite.ip && table[i]->port==ite.port) {
+			if(table[i]->getIP()==ite.ip && table[i]->getPort()==ite.port) {
 				ite.sid=i;
 				return table[i];
 			}
@@ -110,14 +110,14 @@ void tNetSessionMgr::destroy(tNetSessionIte &ite) {
 	int found=-1;
 	int i;
 	if(ite.sid!=-1 && ite.sid<n && table[ite.sid]!=NULL) {
-		if(table[ite.sid]->ip==ite.ip && table[ite.sid]->port==ite.port) {
+		if(table[ite.sid]->getIP()==ite.ip && table[ite.sid]->getPort()==ite.port) {
 			found=ite.sid;
 		}
 	}
 	if(found==-1) {
 		//then search
 		for(i=0; i<n; i++) {
-			if(table[i]!=NULL && table[i]->ip==ite.ip && table[i]->port==ite.port) {
+			if(table[i]!=NULL && table[i]->getIP()==ite.ip && table[i]->getPort()==ite.port) {
 				ite.sid=i;
 				found=i;
 				break;

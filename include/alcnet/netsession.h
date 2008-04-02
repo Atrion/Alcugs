@@ -63,6 +63,8 @@ public:
 	inline bool isConnected() { return cabal!=0; }
 	void checkAlive(void);
 	inline bool isAuthed(void) { return authenticated == 1; }
+	inline U32 getIP(void) { return ip; }
+	inline U16 getPort(void) { return port; }
 private:
 	void init();
 	void processMsg(Byte * buf,int size);
@@ -148,9 +150,7 @@ private:
 	Byte challenge[16]; //peer challenge (hex)
 	Byte release; //type of client
 
-	friend class tNetSessionMgr;
 	friend class tUnet;
-	//friend class tmMsgBase;
 	friend class tUnetBase;
 	friend class tUnetLobbyServerBase; // it has to do the authenticate stuff
 

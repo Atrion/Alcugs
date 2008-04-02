@@ -110,7 +110,6 @@ private:
 	U32 dsize;
 	tMBuf data;
 	friend class tUnet;
-	//friend class tUnetMsgQ;
 	friend class tNetSession;
 };
 

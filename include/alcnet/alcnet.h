@@ -127,7 +127,6 @@ private:
 	void rawsend(tNetSession * u,tUnetUruMsg * m);
 	
 	friend class tNetSession;
-	//friend class tmMsgBase;
 	
 	bool initialized;
 
