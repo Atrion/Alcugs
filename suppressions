@@ -104,3 +104,19 @@
    fun:gethostbyname
    fun:_ZN3alc5tUnet7startOpEv
 }
+
+{
+   std::backtrace bug (?)
+   Memcheck:Leak
+   fun:malloc
+   obj:/lib/ld-2.6.1.so
+   obj:/lib/ld-2.6.1.so
+   obj:/lib/ld-2.6.1.so
+   obj:/lib/ld-2.6.1.so
+   obj:/lib/tls/i686/cmov/libc-2.6.1.so
+   obj:/lib/ld-2.6.1.so
+   fun:__libc_dlopen_mode
+   obj:/lib/tls/i686/cmov/libc-2.6.1.so
+   fun:pthread_once
+   fun:_ZN3alc6txBase17_preparebacktraceEv
+}

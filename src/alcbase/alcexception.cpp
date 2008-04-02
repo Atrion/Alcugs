@@ -182,7 +182,7 @@ void txBase::_preparebacktrace() {
 		}
 		std::strcat(bt,"c++filt and addr2line may be useful\n");
 	}
-	if(strings!=NULL) free((void *)strings);
+	free((void *)strings);
 #else
 	bt=(char *)std::malloc(sizeof(char) * 50);
 	std::sprintf(bt,"Backtrace not implemented in your OS\n");

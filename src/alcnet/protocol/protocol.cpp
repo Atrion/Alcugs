@@ -557,7 +557,7 @@ void tmMsgBase::store(tBBuf &t) {
 	//BEGIN ** guess the protocol version from behaviours
 	// The first message is always an auth hello that contains the version numbers
 	if(s && s->max_version==0) {
-		if(flags & plNetTimestamp) {
+		if(flags & plNetTimestamp || t.remaining() < 8) { // when there are less than 8 bytes remaining, no timestamp can be contained
 			s->max_version=12; //sure (normally on ping proves)
 			s->min_version=6;
 		} else {
@@ -570,16 +570,7 @@ void tmMsgBase::store(tBBuf &t) {
 	
 	//NetMsgPing should have always the timestamp enabled in new versions.
 	if(flags & plNetTimestamp || (s && (s->min_version<6 && s->max_version==12))) {
-		try {
-			t.get(timestamp);
-		}
-		catch (txOutOfRange &t) {
-			if (!(flags & plNetTimestamp)) { // there's no timestamp in the header and we tried to read it anyway. then we got an error, so there really is no timestamp, the version must be at least 12.6
-				s->min_version = 6;
-				timestamp.seconds=0;
-				timestamp.microseconds=0;
-			}
-		}
+		t.get(timestamp);
 	} else {
 		timestamp.seconds=0;
 		timestamp.microseconds=0;

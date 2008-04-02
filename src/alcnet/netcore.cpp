@@ -318,6 +318,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 			}
 			catch (txOutOfRange &t) { // when there was an out of range error, don't crash the whole server (it would be easy to crash then...) but kick the responsible client
 				err->log("%s Recieved a message %04X (%s) which was too short (error txOutOfRange)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+				err->log(" Exception details: %s\n%s\n",t.what(),t.backtrace());
 				ret=-2;
 			}
 			if(u->client==1) {
