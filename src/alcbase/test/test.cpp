@@ -589,19 +589,31 @@ void alctypes_part7()
 {
 	// read ustr tests
 	tUStr str;
+	str.setVersion(1); // auto-detect
 	Byte ustr1[10] = {0x08, 0x00, 'H', 'i', ' ', 'W', 'o', 'r', 'l', 'd'};
 	tMBuf b;
 	b.write(ustr1, 10);
 	b.rewind();
 	b.get(str);
 	assert(strcmp((char *)str.c_str(), "Hi World") == 0);
+	assert(str.getVersion() == 0);
 	
+	str.setVersion(1); // auto-detect
 	Byte ustr2[17] = {0x0F, 0xF0, 0x8B, 0x97, 0x96, 0x8C, 0xDF, 0x96, 0x8C, 0xDF, 0x9E, 0xDF, 0x8B, 0x9A, 0x87, 0x8B, 0xDA};
 	b.clear();
 	b.write(ustr2, 17);
 	b.rewind();
 	b.get(str);
 	assert(strcmp((char *)str.c_str(), "this is a text%") == 0);
+	assert(str.getVersion() == 5);
+	
+	str.setVersion(4); // normal+hex
+	Byte ustr5[5] = {0x03, 0x00, 0x8B, 0x97, 0x16};
+	b.clear();
+	b.write(ustr5, 5);
+	b.rewind();
+	b.get(str);
+	assert(strcmp((char *)str.c_str(), "8B9716") == 0);
 	
 	// write ustr tests
 	str.setVersion(0);

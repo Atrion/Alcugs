@@ -178,6 +178,9 @@ tUStr::tUStr(Byte mode) : tStrBuf() {
 	this->version=mode;
 }
 int tUStr::stream(tBBuf &b) {
+	if (version == 0x04)
+		throw txBase(_WHERE("Can't send version 0x04 (normal+hex)")); 
+
 	int spos = b.tell();
 	U16 ize = msize;
 	bool inv=false;
@@ -217,14 +220,28 @@ void tUStr::store(tBBuf &b) {
 					putByte(b.getByte() ^ key[i%8]);
 				}
 			} else { // make sure nsize is > 0 here, otherwise read(0) will read the rtest of the buffer
-				version = 0x00; // it is normal
+				if (version != 0x00 && version != 0x01 && version != 0x04) { // the given version is neither normal nor normal+hex nor auto, so it's WRONG
+					throw txUnexpectedData(_WHERE("Version is 0x00, but expected 0x%02X", version));
+				}
+				if (version == 0x01) version = 0x00; // when we are auto-detecting, save the realy version (normal)
 				write(b.read(nsize), nsize);
+				if (version == 0x04) {
+					// it is in hex, let's convert to Ascii
+					Byte *ascii = new Byte[2*nsize+1];
+					alcHex2Ascii(ascii, buf->buf+mstart, nsize);
+					clear();
+					writeStr(ascii);
+					delete ascii;
+				}
 			}
 		} else {
 			if(this->version==0x06) {
 				throw txUnexpectedData(_WHERE("how should be 0x00 for version 0x06"));
 			}
-			version = 0x05; // it is inverted
+			else if (version != 0x05 && version != 0x01) { // the given version is neither inverted nor auto, so it's WRONG
+				throw txUnexpectedData(_WHERE("Version is 0x05, but expected 0x%02X", version));
+			}
+			if (version == 0x01) version = 0x05; // when we are auto-detecting, save the realy version (inverted)
 			for(U32 i=0; i<nsize; i++) {
 				putByte(~b.getByte());
 			}
