@@ -607,13 +607,13 @@ void alctypes_part7()
 	assert(strcmp((char *)str.c_str(), "this is a text%") == 0);
 	assert(str.getVersion() == 5);
 	
-	str.setVersion(4); // normal+hex
-	Byte ustr5[5] = {0x03, 0x00, 0x8B, 0x97, 0x16};
+	str.setVersion(0); // normal, but we don't use ASCII characters this time (check if a 0 in the string is a problem)
+	Byte ustr5[5] = {0x03, 0x00, 0x8B, 0x00, 0x16};
 	b.clear();
 	b.write(ustr5, 5);
 	b.rewind();
 	b.get(str);
-	assert(strcmp((char *)str.c_str(), "8B9716") == 0);
+	assert(strcmp((char *)alcGetStrGuid(str.readAll(), 3), "8B0016") == 0);
 	
 	// write ustr tests
 	str.setVersion(0);

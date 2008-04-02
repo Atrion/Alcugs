@@ -60,13 +60,13 @@ const Byte * alcGetStrTime(double stamp=0, const char format='s');
 	\param in Input buffer
 	\param size size of the input buffer
 */
-void alcHex2Ascii(Byte * out, Byte * in, int size);
+void alcHex2Ascii(Byte * out, const Byte * in, int size);
 /** Encodes in Hex, an hex string
 	\param out Output buffer of at least sizeof(in)/2 bytes
 	\param in Input buffer, must be 2*sizeof(out)
 	\param size size of the output buffer
 */
-void alcAscii2Hex(Byte * out, Byte * in, int size);
+void alcAscii2Hex(Byte * out, const Byte * in, int size);
 
 /*------------------------------------------------------------
   De/Encodes the specific UruString associated to a buffer.

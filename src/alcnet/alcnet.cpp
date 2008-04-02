@@ -109,13 +109,6 @@ void tUnet::init() {
 	max_flood_pkts=85;
 
 	snd_expire=30; //should be enough
-	
-	//peers
-	/*
-	auth=-1;
-	vault=-1;
-	tracking=-1;
-	meta=-1;*/
 
 	//logs
 	log=lnull;
@@ -378,7 +371,6 @@ void tUnet::startOp() {
 		}
 		this->server.sin_addr.s_addr=*(U32 *)host->h_addr_list[0];
 	}
-
 	this->server.sin_port=htons(bindport); //port 5000 default
 
 	//binding port

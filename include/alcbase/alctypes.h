@@ -210,6 +210,10 @@ public:
 	virtual void setSize(U32 size) {
 		msize=size;
 	}
+	inline virtual Byte *readAll(void) {
+		rewind();
+		return read();
+	}
 public:
 	int id;
 protected:

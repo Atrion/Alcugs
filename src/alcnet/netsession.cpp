@@ -102,7 +102,7 @@ void tNetSession::init() {
 	memset((void *)&server,0,sizeof(server));
 	assert(server.pn==0);
 	idle=false;
-	//whoami=0;
+	whoami=0;
 	bussy=0;
 	max_version=0;
 	min_version=0;

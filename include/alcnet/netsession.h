@@ -54,8 +54,9 @@ public:
 	U32 getMaxDataSize();
 	U32 getHeaderSize();
 	inline void setTimeout(U32 tout) { conn_timeout=tout; }
-	//void setPeerType(Byte wtf) { whoami=wtf; }
-	//Byte getPeerType() { return whoami; }
+	inline int getSid(void) { return sid; }
+	void setPeerType(Byte wtf) { whoami=wtf; }
+	Byte getPeerType() { return whoami; }
 	void send(tmMsgBase & t);
 	tNetSessionIte getIte();
 	U32 getRTT() { return rtt; }
@@ -135,6 +136,11 @@ private:
 	tUnetMsgQ<tUnetMsg> * rcvq; //incomming message queue
 	
 	bool idle;
+	
+	// used by lobby and game for authenticating
+	Byte account[201]; //peer account name (string)
+	Byte challenge[16]; //peer challenge (hex)
+	Byte release; //type of client
 
 	friend class tNetSessionMgr;
 	friend class tUnet;
@@ -144,7 +150,7 @@ private:
 	friend class tUnetLobbyServerBase; // it has to do the authenticate stuff
 
 public:
-	//Byte whoami; //peer type
+	Byte whoami; //peer type
 	bool client; //it's a client or a server?
 
 	Byte bussy; //bussy flag (0,1) If this flag is activated, messages are keept in the rcv buffer
@@ -162,14 +168,12 @@ public:
 	U32 alive_stamp; //last time that we send the NetMsgAlive
 	st_unet_hmsg hmsg; //the message header
 	char name[201]; //peer name (vault, lobby, AvatarCustomization) or player name (string)
-	char acct[201]; //peer account name (string)
 	char uid[41]; //peer uid (client) (in hex)
 	char guid[20]; //peer guid (server) (string)
 	
-	Byte challenge[16]; //peer challenge (used in auth) (hex)
+	
 	int x; //x value
 	Byte reason; //reason code
-	Byte release; //type of client
 	Byte access_level; //the access level of the peer
 	Byte status; //the player status, defined inside a states machine (see the states machine doc)
 	Byte paged; //0x00 non-paged player, 0x01 player is paged

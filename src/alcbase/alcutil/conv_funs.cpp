@@ -165,7 +165,7 @@ const Byte * alcGetStrTime(double stamp, const char format) {
   \param in pointer to the input data
   \param size size of the input data
 */
-void alcHex2Ascii(Byte * out, Byte * in, int size) {
+void alcHex2Ascii(Byte * out, const Byte * in, int size) {
 	int i;
 	for(i=0; i<size; i++) {
 		out[2*i]=  ((in[i] & 0xF0)>>4);
@@ -181,7 +181,7 @@ void alcHex2Ascii(Byte * out, Byte * in, int size) {
   \param in pointer to the input data
   \param size size of the input data (must be 2*size)
 */
-void alcAscii2Hex(Byte * out, Byte * in, int size) {
+void alcAscii2Hex(Byte * out, const Byte * in, int size) {
 	//humm I will write it if i need it :D
 	int i;
 	for(i=0; i<size; i++) {

@@ -176,7 +176,7 @@ protected:
 	char name[200]; //<! The system/server name, normally the age filename
 	char guid[18]; //<! This system guid (age guid) (in Ascii)
 
-	char address[100]; //<! This system public address (in Ascii)
+	//char address[100]; //<! This system public address (in Ascii)
 	char bindaddr[100]; //<! Server bind address
 	U16 bindport; //<! Server bind port, in host order
 

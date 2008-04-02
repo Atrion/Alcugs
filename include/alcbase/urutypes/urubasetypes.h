@@ -62,7 +62,6 @@ public:
 		\param mode
 		0 - normal
 		1 - auto (normal/inverted) Uru (plasma 2.0) [Please avoid using this mode]
-		4 - like normal, but the content is saved in Hex, not Ascii (this version can't be sent, only recieved)
 		5 - inverted
 		6 - myst5 (plasma 2.1)
 	*/
