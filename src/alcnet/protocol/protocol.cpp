@@ -616,10 +616,10 @@ void tmMsgBase::store(tBBuf &t) {
 	
 	//now catch undocumented protocol flags
 	if((flags & ~(check)) && s) {
-		s->net->unx->log("%s Problem parsing a plNetMsg header format mask %08X\n",s->str(),flags & ~(check));
-		s->net->unx->dumpbuf(t);
-		s->net->unx->nl();
-		s->net->unx->nl();
+		lerr->log("%s Problem parsing a plNetMsg header format mask %08X\n",s->str(),flags & ~(check));
+		lerr->dumpbuf(t);
+		lerr->nl();
+		lerr->nl();
 	}
 }
 int tmMsgBase::stream(tBBuf &t) {

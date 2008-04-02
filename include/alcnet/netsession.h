@@ -150,7 +150,7 @@ private:
 
 	friend class tNetSessionMgr;
 	friend class tUnet;
-	friend class tmMsgBase;
+	//friend class tmMsgBase;
 	friend class tUnetBase;
 	friend class tUnetLobbyServerBase; // it has to do the authenticate stuff
 

@@ -127,7 +127,7 @@ private:
 	void rawsend(tNetSession * u,tUnetUruMsg * m);
 	
 	friend class tNetSession;
-	friend class tmMsgBase;
+	//friend class tmMsgBase;
 	
 	bool initialized;
 
@@ -187,7 +187,7 @@ protected:
 	//!logging subsystem
 	tLog * log; //stdout
 	tLog * err; //stderr
-	tLog * unx; //unexpected
+	//tLog * unx; //unexpected
 	tLog * ack; //ack drawing
 	//tLog * chk; //checksum results
 	tLog * sec; //security log

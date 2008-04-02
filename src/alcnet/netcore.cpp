@@ -346,7 +346,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 			err->log("%s Unknown Event id %i\n",u->str(),evt->id);
 			break;
 	}
-	log->flush(); err->flush(); sec->flush(); unx->flush(); // I don't know how much perforcmance this costs, but without flushing it's not possible to follow the server logs using tail -F
+	log->flush(); err->flush(); sec->flush(); // I don't know how much perforcmance this costs, but without flushing it's not possible to follow the server logs using tail -F
 }
 
 // main event processing loop - blocks

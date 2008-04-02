@@ -181,7 +181,7 @@ namespace alc {
 				log->log("<RCV> %s\n", authHello.str());
 				
 				if (authHello.maxPacketSize != 1024) {
-					unx->log("UNEXPECTED: Max packet size of %s is not 1024, but %d, ignoring\n", u->str(), authHello.maxPacketSize);
+					err->log("UNEXPECTED: Max packet size of %s is not 1024, but %d, ignoring\n", u->str(), authHello.maxPacketSize);
 					return 1;
 				}
 				

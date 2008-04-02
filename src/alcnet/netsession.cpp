@@ -233,7 +233,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		#endif
 		msg.htmlDumpHeader(net->ack,0,ip,port);
 	} catch(txUnexpectedData &t) {
-		net->unx->log("%s Unexpected Data %s\nBacktrace:%s\n",str(),t.what(),t.backtrace());
+		net->err->log("%s Unexpected Data %s\nBacktrace:%s\n",str(),t.what(),t.backtrace());
 		throw txProtocolError(_WHERE("Cannot parse a message"));
 	}
 	

@@ -113,7 +113,7 @@ void tUnet::init() {
 	//logs
 	log=lnull;
 	err=lnull;
-	unx=lnull;
+	//unx=lnull;
 	ack=lnull;
 	//chk=lnull;
 	sec=lnull;
@@ -219,13 +219,13 @@ void tUnet::_openlogs() {
 				this->err=lerr;
 			}
 		}
-		if(this->unx==lnull && (this->flags & UNET_FLOG) && !(this->flags & UNET_DLUNE)) {
+		/*if(this->unx==lnull && (this->flags & UNET_FLOG) && !(this->flags & UNET_DLUNE)) {
 			this->unx=new tLog;
 			this->unx->open("unexpected.log",4,0);
 		} else {
 			this->unx=new tLog;
 			this->unx->open(NULL,4,0);
-		}
+		}*/
 		if(this->ack==lnull && (this->flags & UNET_FLOG) && !(this->flags & UNET_DLACK)) {
 			this->ack=new tLog;
 			this->ack->open("ack.html",4,DF_HTML);
@@ -270,11 +270,11 @@ void tUnet::_closelogs() {
 		delete this->ack;
 		this->ack=lnull;
 	}
-	if(this->unx!=lnull) {
+	/*if(this->unx!=lnull) {
 		this->unx->close();
 		delete this->unx;
 		this->unx=lnull;
-	}
+	}*/
 	if(this->sec!=lnull) {
 		this->sec->close();
 		delete this->sec;
@@ -567,9 +567,9 @@ int tUnet::Recv() {
 		} //catch up impossible big messages
 		/* Uru protocol check */
 		if(n<=20 || buf[0]!=0x03) { //not an Uru protocol packet don't waste an slot for it
-			this->unx->log("[ip:%s:%i] ERR: Unexpected Non-Uru protocol packet found\n",alcGetStrIp(client.sin_addr.s_addr),ntohs(client.sin_port));
-			this->unx->dumpbuf(buf,n);
-			this->unx->nl();
+			this->err->log("[ip:%s:%i] ERR: Unexpected Non-Uru protocol packet found\n",alcGetStrIp(client.sin_addr.s_addr),ntohs(client.sin_port));
+			this->err->dumpbuf(buf,n);
+			this->err->nl();
 			return UNET_NONURU;
 		}
 
@@ -590,7 +590,7 @@ int tUnet::Recv() {
 		try {
 			session->processMsg(buf,n);
 		} catch(txProtocolError &t) {
-			this->unx->log("%s Protocol Error %s\nBacktrace:%s\n",session->str(),t.what(),t.backtrace());
+			this->err->log("%s Protocol Error %s\nBacktrace:%s\n",session->str(),t.what(),t.backtrace());
 			return UNET_ERR;
 		} catch(txBase &t) {
 			this->err->log("%s FATAL ERROR (perhaps someone is attempting something nasty, or you have found a bug)\n\
