@@ -118,7 +118,7 @@ void tPyPkg::store(tBBuf &t) {
 		//printf("size:%u,off:%u\n",t.size(),t.tell());
 		t.get(name);
 		Byte xxxname[300];
-		strcpy((char *)xxxname,(char *)name.str());
+		strcpy((char *)xxxname,(char *)name.c_str());
 		strcat((char *)xxxname,"c");
 		lpkgs[i]->setName(xxxname);
 		poff=t.getU32();
@@ -155,7 +155,7 @@ int tPyPkg::stream(tBBuf &t) {
 		//work.assing(lpkgs[i]->getName(),strlen((char *)lpkgs[i]->getName())-1);
 		work=lpkgs[i]->getName();
 		t.set(wtf);
-		s+=work.stream(t,0x01);
+		s+=work.stream(t);
 		//printf("size-work: %u\n",t.size());
 		t.putU32(hsize);
 		//printf("size-hsize: %u\n",t.size());

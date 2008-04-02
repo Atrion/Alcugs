@@ -373,8 +373,9 @@ public:
 	virtual bool operator<=(tStrBuf &t) { return(this->compare(t)>=0); }
 	virtual bool operator==(const void * str) { return(!this->compare(str)); }
 	virtual bool operator!=(const void * str) { return(this->compare(str)); }
-private:
+protected:
 	virtual void _pcopy(tStrBuf &t);
+private:
 	U16 l,c;
 	char sep;
 	tStrBuf * shot;

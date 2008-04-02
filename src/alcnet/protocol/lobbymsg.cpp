@@ -49,7 +49,7 @@ namespace alc {
 	void tmAuthenticateHello::additionalFields(void)
 	{
 		dbg.nl();
-		dbg.printf(" account: %s, max packet size: %d, release: %02X (%s)", account.str(), maxPacketSize, release, alcUnetGetRelease(release));
+		dbg.printf(" account: %s, max packet size: %d, release: %02X (%s)", account.c_str(), maxPacketSize, release, alcUnetGetRelease(release));
 	}
 	
 	tmAuthenticateChallenge::tmAuthenticateChallenge(tNetSession *u, Byte authresult, tmAuthenticateHello &msg)

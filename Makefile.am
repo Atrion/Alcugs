@@ -65,10 +65,10 @@ libalcnet1_a_CPPFLAGS = -DIN_ALC_LIBRARY
 check_PROGRAMS = test test2
 TESTS = test test2
 
-test_LDADD = libalcbase1.a 
+test_LDADD = libalcbase1.a
 test_SOURCES = src/alcbase/test/test.cpp
 
-test2_LDADD = libalcbase1.a 
+test2_LDADD = libalcbase1.a
 test2_SOURCES = src/alcbase/test/test2.cpp
 #End Test APPS
 

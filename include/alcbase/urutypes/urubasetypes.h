@@ -66,25 +66,21 @@ public:
 		6 - myst5 (plasma 2.1)
 	*/
 	tUStr(Byte mode=1);
-	virtual int stream(tBBuf &buf);
-	virtual int stream(tBBuf &buf,bool inv);
-	virtual void store(tBBuf &buf);
-	virtual U32 size();
+	tUStr(tUStr &t) { this->copy(t); }
+	virtual int stream(tBBuf &b);
+	virtual void store(tBBuf &b);
+	virtual void copy(tUStr &t);
 	void setVersion(Byte version) { this->version=version; }
-	void set(Byte * val,U32 _s=0);
-	void set(char * val,U32 _s=0);
-	void set(tUStr &str);
-	Byte * str();
-	U32 len();
-	virtual ~tUStr();
-	virtual tUStr & operator=(tStrBuf &t) { this->copy(t); return *this; }
-	virtual tUStr & operator=(const tStrBuf &t) { this->copy((tStrBuf &)t); return *this; }
-	virtual tUStr & operator=(const void * str) { this->copy(str); return *this; }
+	Byte getVersion(void) { return version; }
+	
+	virtual tUStr & operator=(tUStr &t) { this->copy(t); return *this; }
+	virtual tUStr & operator=(tStrBuf &t) { tStrBuf::copy(t); return *this; }
+	virtual tUStr & operator=(const tStrBuf &t) { tStrBuf::copy((tStrBuf &)t); return *this; }
+	virtual tUStr & operator=(const void * str) { tStrBuf::copy(str); return *this; }
 
 private:
+	virtual void _pcopy(tUStr &t);
 	Byte version;
-	Byte * name;
-	U16 msize;
 };
 
 } //End alc namespace

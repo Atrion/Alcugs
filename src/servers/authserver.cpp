@@ -72,7 +72,7 @@ namespace alc {
 				// authenticate player
 				alcHex2Ascii(challenge, authAsk.challenge, 16);
 				alcHex2Ascii(hash, authAsk.hash, 16);
-				authResult = authBackend->authenticatePlayer((Byte *)authAsk.login.str(), challenge, hash, authAsk.release, (Byte *)alcGetStrIp(authAsk.ip), passwd, guid, &accessLevel);
+				authResult = authBackend->authenticatePlayer((Byte *)authAsk.login.c_str(), challenge, hash, authAsk.release, (Byte *)alcGetStrIp(authAsk.ip), passwd, guid, &accessLevel);
 				
 				// send answer to client
 				tmCustomAuthResponse authResponse(u, authAsk, alcGetHexUid(guid), passwd, authResult, accessLevel);

@@ -45,7 +45,7 @@ namespace alc {
 		// there's already a guid member in tmMsgBase, so let's use that (though we need only 8 bytes)
 		tUStr guid_str;
 		t.get(guid_str);
-		alcAscii2Hex(guid, (Byte *)guid_str.str(), 8);
+		alcAscii2Hex(guid, (Byte *)guid_str.c_str(), 8);
 		
 		t.get(age);
 		t.get(netmask);
@@ -55,7 +55,7 @@ namespace alc {
 	void tmCustomSetGuid::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" GUID: %s, Age filename: %s, Netmask: %s, IP: %s", alcGetStrGuid(guid, 8), age.str(), netmask.str(), ip.str());
+		dbg.printf(" GUID: %s, Age filename: %s, Netmask: %s, IP: %s", alcGetStrGuid(guid, 8), age.c_str(), netmask.c_str(), ip.c_str());
 	}
 	
 	void tmCustomPlayerStatus::store(tBBuf &t)
@@ -71,7 +71,7 @@ namespace alc {
 	void tmCustomPlayerStatus::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" GUID: %s, Account: %s, Avatar: %s, Flag: 0x%02X, Status: 0x%02X (%s)", alcGetStrGuid(guid, 16), account.str(), avatar.str(), playerFlag, playerStatus, alcUnetGetReasonCode(playerStatus));
+		dbg.printf(" GUID: %s, Account: %s, Avatar: %s, Flag: 0x%02X, Status: 0x%02X (%s)", alcGetStrGuid(guid, 16), account.c_str(), avatar.c_str(), playerFlag, playerStatus, alcUnetGetReasonCode(playerStatus));
 	}
 
 } //end namespace alc

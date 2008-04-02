@@ -65,7 +65,7 @@ namespace alc {
 	{
 		dbg.nl();
 		if (s && s->proto == 1) dbg.printf(" ip (unet2 protocol): %s,", alcGetStrIp(ip));
-		dbg.printf(" login: %s, challenge: %s, hash: %s, build: 0x%02X (%s)", login.str(), alcGetStrGuid(challenge, 16), alcGetStrGuid(hash, 16), release, alcUnetGetRelease(release));
+		dbg.printf(" login: %s, challenge: %s, hash: %s, build: 0x%02X (%s)", login.c_str(), alcGetStrGuid(challenge, 16), alcGetStrGuid(hash, 16), release, alcUnetGetRelease(release));
 	}
 	
 	tmCustomAuthResponse::tmCustomAuthResponse(tNetSession *s, tmCustomAuthAsk &authAsk, const Byte *guid, Byte *passwd, Byte result, Byte accessLevel)
@@ -79,10 +79,10 @@ namespace alc {
 		port = authAsk.port;
 		if (s && s->proto == 1)
 			unsetFlags(plNetIP | plNetGUI);
-		login.set(authAsk.login);
+		login = authAsk.login;
 		
 		memcpy(this->guid, guid, 16);
-		this->passwd.set(passwd);
+		this->passwd = passwd;
 		this->result = result;
 		this->accessLevel = accessLevel;
 	}
@@ -102,7 +102,7 @@ namespace alc {
 	{
 		dbg.nl();
 		if (s && s->proto == 1) dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid, 16));
-		dbg.printf(" login: %s, passwd: (hidden), result: 0x%02X (%s), accessLevel: %d", login.str(), result, alcUnetGetAuthCode(result), accessLevel);
+		dbg.printf(" login: %s, passwd: (hidden), result: 0x%02X (%s), accessLevel: %d", login.c_str(), result, alcUnetGetAuthCode(result), accessLevel);
 	}
 
 } //end namespace alc
