@@ -58,7 +58,7 @@ namespace alc {
 	}
 	
 	//// tmAuthenticateChallenge	
-	tmAuthenticateChallenge::tmAuthenticateChallenge(tNetSession *u, Byte authresult, tmAuthenticateHello &msg)
+	tmAuthenticateChallenge::tmAuthenticateChallenge(tNetSession *u, Byte authresult, Byte *challenge, tmAuthenticateHello &msg)
 	: tmMsgBase(NetMsgAuthenticateChallenge, plNetKi | plNetAck | plNetX | plNetVersion | plNetCustom, u)
 	{
 		// copy stuff from the packet we're answering to
@@ -68,37 +68,28 @@ namespace alc {
 		min_version = msg.min_version;
 		
 		this->authresult = authresult;
-		// init the challenge to the MD5 of the current system time and other garbage
-		tMD5Buf md5buffer;
-		md5buffer.putU32(alcGetTime());
-		md5buffer.putU32(alcGetMicroseconds());
-		srandom(alcGetTime());
-		md5buffer.putU32(random());
-		md5buffer.putU32(alcGetUptime().seconds);
-		md5buffer.put(msg.account);
-		md5buffer.putU32(alcGetBornTime().seconds);
-		md5buffer.compute();
-		memcpy(challenge, md5buffer.read(16), 16);
+		this->challenge.write(challenge, 16);
+		this->challenge.setVersion(0); // normal UruString, but in Hex, not Ascii
 	}
 	
 	int tmAuthenticateChallenge::stream(tBBuf &t)
 	{
 		int off = tmMsgBase::stream(t);
 		t.putByte(authresult); ++off; // authresult
-		t.write(challenge, 16); off += 16; // challenge
+		off += t.put(challenge); // challenge
 		return off;
 	}
 	
 	void tmAuthenticateChallenge::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" auth result: %02X (%s), challenge: %s", authresult, alcUnetGetAuthCode(authresult), alcGetStrGuid(challenge, 16));
+		dbg.printf(" auth result: %02X (%s), challenge: %s", authresult, alcUnetGetAuthCode(authresult), alcGetStrGuid(challenge.readAll(), 16));
 	}
 	
 	//// tmAuthenticateResponse
 	tmAuthenticateResponse::tmAuthenticateResponse(tNetSession *s) : tmMsgBase(NetMsgAuthenticateResponse, 0, s) // it's not capable of sending a package, so no flags are set
 	{
-		hash.setVersion(4); // normal UruString, but in Hex, not Ascii
+		hash.setVersion(0); // normal UruString, but in Hex, not Ascii
 	}
 	
 	void tmAuthenticateResponse::store(tBBuf &t)
@@ -110,7 +101,7 @@ namespace alc {
 	void tmAuthenticateResponse::additionalFields(void)
 	{
 		dbg.nl();
-		dbg.printf(" hash: %s", hash.c_str());
+		dbg.printf(" hash: %s", alcGetStrGuid(hash.readAll(), hash.size()));
 	}
 
 } //end namespace alc

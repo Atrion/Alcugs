@@ -46,11 +46,11 @@ namespace alc {
 	
 	class tmAuthenticateChallenge : public tmMsgBase {
 	public:
-		tmAuthenticateChallenge(tNetSession *u, Byte authresult, tmAuthenticateHello &msg);
+		tmAuthenticateChallenge(tNetSession *u, Byte authresult, Byte *challenge, tmAuthenticateHello &msg);
 		virtual int stream(tBBuf &t);
 		// format
 		Byte authresult;
-		Byte challenge[16];
+		tUStr challenge;
 	protected:
 		virtual void additionalFields();
 	};

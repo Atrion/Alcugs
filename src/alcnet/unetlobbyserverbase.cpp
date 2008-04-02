@@ -42,6 +42,7 @@
 #include "unet.h"
 #include "unetlobbyserverbase.h"
 #include "protocol/lobbymsg.h"
+#include "protocol/authmsg.h"
 
 ////extra includes
 
@@ -164,7 +165,7 @@ namespace alc {
 		switch(msg->cmd) {
 			case NetMsgAuthenticateHello:
 			{
-				if (u->authenticated != 0) { // this is impossible
+				if (u->whoami != 0 || u->authenticated != 0) { // this is impossible
 					err->log("ERR: %s player is already being authend and sent another AuthenticateHello, ignoring\n", u->str());
 					return 1;
 				}
@@ -186,8 +187,24 @@ namespace alc {
 				else if (u->min_version > 7) result = AProtocolOlder; // servers are newer
 				else if (u->min_version != 6) u->tpots = 2; // it's not TPOTS
 				
+				// init the challenge to the MD5 of the current system time and other garbage
+				tMD5Buf md5buffer;
+				md5buffer.putU32(alcGetTime());
+				md5buffer.putU32(alcGetMicroseconds());
+				srandom(alcGetTime());
+				md5buffer.putU32(random());
+				md5buffer.putU32(alcGetUptime().seconds);
+				md5buffer.put(authHello.account);
+				md5buffer.putU32(alcGetBornTime().seconds);
+				md5buffer.compute();
+		
+				// save data in session
+				strcpy((char *)u->account, (char *)authHello.account.c_str());
+				memcpy(u->challenge, md5buffer.read(16), 16);
+				u->release = authHello.release;
+				
 				// reply with AuthenticateChallenge
-				tmAuthenticateChallenge authChallenge(u, result, authHello);
+				tmAuthenticateChallenge authChallenge(u, result, u->challenge, authHello);
 				u->send(authChallenge);
 				u->authenticated = 10; // the challenge was sent
 				
@@ -195,7 +212,7 @@ namespace alc {
 			}
 			case NetMsgAuthenticateResponse:
 			{
-				if (u->authenticated != 10) { // this is impossible
+				if (u->whoami != 0 || u->authenticated != 10) { // this is impossible
 					err->log("ERR: %s player sent an AuthenticateResponse and he is already being authend or he didn\'t yet send an AuthenticateHello, ignoring\n", u->str());
 					return 1;
 				}
@@ -204,6 +221,14 @@ namespace alc {
 				tmAuthenticateResponse authResponse(u);
 				msg->data->get(authResponse);
 				log->log("<RCV> %s\n", authResponse.str());
+				
+				// send authAsk to auth server
+				tNetSession *s = getPeer(KAuth);
+				if (!s) return 1;
+				DBG(1, "%s %s\n", alcGetStrGuid(u->challenge, 16), alcGetStrGuid(authResponse.hash.readAll(), 16));
+				tmCustomAuthAsk authAsk(s, u->ip, u->port, u->account, u->challenge, authResponse.hash.readAll(), u->release);
+				s->send(authAsk);
+				
 				return 1;
 			}
 		}

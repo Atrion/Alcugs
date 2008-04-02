@@ -47,9 +47,23 @@
 namespace alc {
 
 	//// tmCustomAuthAsk
-	tmCustomAuthAsk::tmCustomAuthAsk(tNetSession *s) : tmMsgBase(NetMsgCustomAuthAsk, 0, s) // it's not capable of sending a package, so no flags are set
+	tmCustomAuthAsk::tmCustomAuthAsk(tNetSession *s, U32 ip, U16 port, Byte *login, Byte *challenge, Byte *hash, Byte release)
+	: tmMsgBase(NetMsgCustomAuthAsk, plNetAck | plNetCustom | plNetX | plNetVersion | plNetIP, s)
 	{
-		login.setVersion(0); // normal UrurString
+		if (s && s->proto == 1)
+			unsetFlags(plNetIP);
+		
+		max_version = 12;
+		min_version = 6;
+		x = s->getSid();
+		this->ip = ip;
+		this->port = port;
+		
+		this->login.setVersion(0); // normal UrurString
+		if (login != NULL) this->login.writeStr(login);
+		if (challenge != 0) memcpy(this->challenge, challenge, 16);
+		if (hash != 0) memcpy(this->hash, hash, 16);
+		this->release = release;
 	}
 	
 	void tmCustomAuthAsk::store(tBBuf &t)
@@ -65,25 +79,40 @@ namespace alc {
 		}
 	}
 	
+	int tmCustomAuthAsk::stream(tBBuf &t)
+	{
+		int off = tmMsgBase::stream(t);
+		off += t.put(login);
+		t.write(challenge, 16); off += 16;
+		t.write(hash, 16); off += 16;
+		t.putByte(release); ++off;
+		if (s && s->proto == 1) {
+			t.putU32(ip); off += 4;
+		}
+		return off;
+	}
+	
 	void tmCustomAuthAsk::additionalFields()
 	{
 		dbg.nl();
 		if (s && s->proto == 1) dbg.printf(" ip (unet2 protocol): %s,", alcGetStrIp(ip));
-		dbg.printf(" login: %s, challenge: %s, hash: %s, build: 0x%02X (%s)", login.c_str(), alcGetStrGuid(challenge, 16), alcGetStrGuid(hash, 16), release, alcUnetGetRelease(release));
+		// use two printf commands as alcGetStrGuid uses a static array and when using one command it would seems as if challenge and hash would be the same
+		dbg.printf(" login: %s, challenge: %s, ", login.c_str(), alcGetStrGuid(challenge, 16));
+		dbg.printf("hash: %s, build: 0x%02X (%s)", alcGetStrGuid(hash, 16), release, alcUnetGetRelease(release));
 	}
 	
 	//// tmCustomAuthResponse
 	tmCustomAuthResponse::tmCustomAuthResponse(tNetSession *s, tmCustomAuthAsk &authAsk, const Byte *guid, Byte *passwd, Byte result, Byte accessLevel)
 	 : tmMsgBase(NetMsgCustomAuthResponse, plNetAck | plNetCustom | plNetX | plNetVersion | plNetIP | plNetGUI, s)
 	 {
+	 	if (s && s->proto == 1)
+			unsetFlags(plNetIP | plNetGUI);
 		// copy stuff from the authAsk
 		x = authAsk.x;
 		min_version = authAsk.min_version;
 		max_version = authAsk.max_version;
-		ip = authAsk.ip;
+		ip = authAsk.ip; // the client's IP and Port (for logging)
 		port = authAsk.port;
-		if (s && s->proto == 1)
-			unsetFlags(plNetIP | plNetGUI);
 		login = authAsk.login;
 		login.setVersion(0); // normal UrurString
 		

@@ -43,8 +43,9 @@ namespace alc {
 	////DEFINITIONS
 	class tmCustomAuthAsk : public tmMsgBase {
 	public:
-		tmCustomAuthAsk(tNetSession *s);
+		tmCustomAuthAsk(tNetSession *s, U32 ip = 0, U16 port = 0, Byte *login = NULL, Byte *challenge = NULL, Byte *hash = NULL, Byte release = 0);
 		virtual void store(tBBuf &t);
+		virtual int stream(tBBuf &t);
 		// format
 		tUStr login;
 		Byte challenge[16], hash[16];
