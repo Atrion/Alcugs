@@ -68,11 +68,11 @@ int main(int argc, char * argv[]) {
 		lstd->log("Init...\n");
 		
 		tmyfunc * thread;
-		thread = new tmyfunc(50,20000);
+		thread = new tmyfunc(50,2000);
 		thread->spawn();
 		
 		tmyfunc * thread2;
-		thread2 = new tmyfunc(10,10000);
+		thread2 = new tmyfunc(10,1000);
 		thread2->spawn();
 
 		thread2->join();
@@ -80,10 +80,10 @@ int main(int argc, char * argv[]) {
 		for(i=0; i<100; i++) {
 			gmutex.lock();
 			lstd->log("I am the main thread %i!\n",i);
-			usleep(10000);
+			usleep(1000);
 			lstd->log("I am the main thread %i!\n",i);
 			gmutex.unlock();
-			usleep(50000);
+			usleep(5000);
 		}
 		thread->join();
 		delete thread;

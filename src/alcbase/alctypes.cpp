@@ -645,13 +645,11 @@ tStrBuf::tStrBuf(const tStrBuf &k,U32 start,U32 len) :tMBuf((tStrBuf &)k,start,l
 }
 tStrBuf::~tStrBuf() {
 	DBG(9,"dtor\n");
-	if(bufstr!=NULL) free((void *)bufstr);
 	if(shot!=NULL) delete shot;
 	if(cache_lower!=NULL) delete cache_lower;
 }
 void tStrBuf::init() {
 	DBG(9,"init\n");
-	bufstr=NULL;
 	l=c=0;
 	sep='=';
 	shot=NULL;
@@ -670,10 +668,6 @@ void tStrBuf::_pcopy(tStrBuf &t) {
 	DBG(2,"tStrBuf::_pcopy()\n");
 	if(this==&t) return;
 	tMBuf::_pcopy(t);
-	if(bufstr!=NULL) {
-		free((void *)bufstr);
-		bufstr=NULL;
-	}
 	l=t.l;
 	c=t.c;
 	sep=t.sep;

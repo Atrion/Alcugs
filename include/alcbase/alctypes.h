@@ -375,7 +375,6 @@ public:
 	virtual bool operator!=(const void * str) { return(this->compare(str)); }
 private:
 	virtual void _pcopy(tStrBuf &t);
-	Byte * bufstr;
 	U16 l,c;
 	char sep;
 	tStrBuf * shot;

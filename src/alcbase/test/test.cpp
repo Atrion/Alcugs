@@ -585,6 +585,25 @@ void alctypes_part6() {
 	sth=sth.dirname();
 }
 
+void alctypes_part7()
+{
+	tUStr str;
+	Byte ustr1[6] = {0x04, 0x00, 0x67, 0x68, 0x64, 0x70};
+	tMBuf b;
+	b.write(ustr1, 6);
+	b.rewind();
+	b.get(str);
+	assert(strcmp((char *)str.str(), "ghdp") == 0);
+	
+	Byte ustr2[17] = {0x0F, 0xF0, 0x8B, 0x97, 0x96, 0x8C, 0xDF, 0x96, 0x8C, 0xDF, 0x9E, 0xDF, 0x8B, 0x9A, 0x87, 0x8B, 0xDA};
+	b.rewind();
+	b.write(ustr2, 17);
+	b.rewind();
+	b.get(str);
+	DBG(4, "%s\n", str.str());
+	assert(strcmp((char *)str.str(), "this is a text%") == 0);
+}
+
 void alctypes_tests() {
 	alctypes_mbuf();
 	alctypes_mbuf2();
@@ -597,6 +616,7 @@ void alctypes_tests() {
 	for(i=0; i<10; i++) {
 		alctypes_part6();
 	}
+	alctypes_part7();
 }
 
 void sith() {
@@ -812,10 +832,9 @@ int main(int argc, char * argv[]) {
 	
 	int i;
 	for (i=0; i<5; i++) {
-	
-	alcdebug_tests();
 
 	try {
+		alcdebug_tests();
 		alcInit(argc,argv);
 		alcexception_tests();
 		alctypes_tests();
