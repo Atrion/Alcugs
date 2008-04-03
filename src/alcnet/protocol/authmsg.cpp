@@ -47,7 +47,7 @@
 namespace alc {
 
 	//// tmCustomAuthAsk
-	tmCustomAuthAsk::tmCustomAuthAsk(tNetSession *s, U32 ip, U16 port, Byte *login, Byte *challenge, Byte *hash, Byte release)
+	tmCustomAuthAsk::tmCustomAuthAsk(tNetSession *s, U32 x, U32 ip, U16 port, Byte *login, Byte *challenge, Byte *hash, Byte release)
 	: tmMsgBase(NetMsgCustomAuthAsk, plNetAck | plNetCustom | plNetX | plNetVersion | plNetIP, s)
 	{
 		if (s && s->proto == 1)
@@ -55,15 +55,21 @@ namespace alc {
 		
 		this->max_version = s->max_version;
 		this->min_version = s->min_version;
-		x = s->getSid();
+		this->x = x;
 		this->ip = ip;
 		this->port = port;
 		
 		this->login.setVersion(0); // normal UrurString
-		if (login != NULL) this->login.writeStr(login);
-		if (challenge != 0) memcpy(this->challenge, challenge, 16);
-		if (hash != 0) memcpy(this->hash, hash, 16);
+		this->login.writeStr(login);
+		memcpy(this->challenge, challenge, 16);
+		memcpy(this->hash, hash, 16);
 		this->release = release;
+	}
+	
+	tmCustomAuthAsk::tmCustomAuthAsk(tNetSession *s)
+	: tmMsgBase(NetMsgCustomAuthAsk, plNetAck | plNetCustom | plNetX | plNetVersion | plNetIP, s)
+	{
+		login.setVersion(0); // normal UrurString
 	}
 	
 	void tmCustomAuthAsk::store(tBBuf &t)
@@ -122,6 +128,26 @@ namespace alc {
 		this->passwd.setVersion(0); // normal UrurString
 		this->result = result;
 		this->accessLevel = accessLevel;
+	}
+	
+	tmCustomAuthResponse::tmCustomAuthResponse(tNetSession *s)
+	: tmMsgBase(NetMsgCustomAuthResponse, plNetAck | plNetCustom | plNetX | plNetVersion | plNetIP | plNetGUI, s)
+	{
+		login.setVersion(0); // normal UrurString
+		passwd.setVersion(0); // normal UrurString
+	}
+	
+	void tmCustomAuthResponse::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		t.get(login);
+		result = t.getByte();
+		t.get(passwd);
+		if(!(flags & plNetGUI)) {
+			memcpy(guid, t.read(16), 16);
+			if (s) s->proto = 1; // unet2 protocol
+		}
+		accessLevel = t.getByte();
 	}
 	
 	int tmCustomAuthResponse::stream(tBBuf &t)

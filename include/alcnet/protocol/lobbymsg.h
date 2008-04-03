@@ -46,10 +46,10 @@ namespace alc {
 	
 	class tmAuthenticateChallenge : public tmMsgBase {
 	public:
-		tmAuthenticateChallenge(tNetSession *u, Byte authresult, Byte *challenge, tmAuthenticateHello &msg);
+		tmAuthenticateChallenge(tNetSession *u, Byte authResult, Byte *challenge, tmAuthenticateHello &msg);
 		virtual int stream(tBBuf &t);
 		// format
-		Byte authresult;
+		Byte authResult;
 		tUStr challenge;
 	protected:
 		virtual void additionalFields();
@@ -61,6 +61,17 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		// format
 		tUStr hash;
+	protected:
+		virtual void additionalFields();
+	};
+	
+	class tmAccountAutheticated : public tmMsgBase {
+	public:
+		tmAccountAutheticated(tNetSession *u, Byte *playerGuid, Byte authResult, Byte *serverGuid);
+		virtual int stream(tBBuf &t);
+		// format
+		Byte authResult;
+		Byte serverGuid[8];
 	protected:
 		virtual void additionalFields();
 	};

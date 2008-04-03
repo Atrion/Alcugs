@@ -38,7 +38,7 @@
 namespace alc {
 
 	//// tmAuthenticateHello
-	tmAuthenticateHello::tmAuthenticateHello(tNetSession *s) : tmMsgBase(NetMsgAuthenticateHello, 0, s) // it's not capable of sending a package, so no flags are set
+	tmAuthenticateHello::tmAuthenticateHello(tNetSession *u) : tmMsgBase(NetMsgAuthenticateHello, 0, u) // it's not capable of sending a package, so no flags are set
 	{
 		account.setVersion(0); // normal UruString
 	}
@@ -58,7 +58,7 @@ namespace alc {
 	}
 	
 	//// tmAuthenticateChallenge	
-	tmAuthenticateChallenge::tmAuthenticateChallenge(tNetSession *u, Byte authresult, Byte *challenge, tmAuthenticateHello &msg)
+	tmAuthenticateChallenge::tmAuthenticateChallenge(tNetSession *u, Byte authResult, Byte *challenge, tmAuthenticateHello &msg)
 	: tmMsgBase(NetMsgAuthenticateChallenge, plNetKi | plNetAck | plNetX | plNetVersion | plNetCustom, u)
 	{
 		// copy stuff from the packet we're answering to
@@ -67,7 +67,7 @@ namespace alc {
 		max_version = msg.max_version;
 		min_version = msg.min_version;
 		
-		this->authresult = authresult;
+		this->authResult = authResult;
 		this->challenge.write(challenge, 16);
 		this->challenge.setVersion(0); // normal UruString, but in Hex, not Ascii
 	}
@@ -75,7 +75,7 @@ namespace alc {
 	int tmAuthenticateChallenge::stream(tBBuf &t)
 	{
 		int off = tmMsgBase::stream(t);
-		t.putByte(authresult); ++off; // authresult
+		t.putByte(authResult); ++off; // auth result
 		off += t.put(challenge); // challenge
 		return off;
 	}
@@ -83,11 +83,11 @@ namespace alc {
 	void tmAuthenticateChallenge::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" auth result: %02X (%s), challenge: %s", authresult, alcUnetGetAuthCode(authresult), alcGetStrGuid(challenge.readAll(), 16));
+		dbg.printf(" auth result: %02X (%s), challenge: %s", authResult, alcUnetGetAuthCode(authResult), alcGetStrGuid(challenge.readAll(), 16));
 	}
 	
 	//// tmAuthenticateResponse
-	tmAuthenticateResponse::tmAuthenticateResponse(tNetSession *s) : tmMsgBase(NetMsgAuthenticateResponse, 0, s) // it's not capable of sending a package, so no flags are set
+	tmAuthenticateResponse::tmAuthenticateResponse(tNetSession *u) : tmMsgBase(NetMsgAuthenticateResponse, 0, u) // it's not capable of sending a package, so no flags are set
 	{
 		hash.setVersion(0); // normal UruString, but in Hex, not Ascii
 	}
@@ -102,6 +102,32 @@ namespace alc {
 	{
 		dbg.nl();
 		dbg.printf(" hash: %s", alcGetStrGuid(hash.readAll(), hash.size()));
+	}
+	
+	//// tmAccountAutheticated	
+	tmAccountAutheticated::tmAccountAutheticated(tNetSession *u, Byte *playerGuid, Byte authResult, Byte *serverGuid)
+	: tmMsgBase(NetMsgAccountAuthenticated, plNetKi | plNetAck | plNetX | plNetGUI | plNetCustom, u)
+	{
+		memcpy(guid, playerGuid, 16);
+		this->x = u->getX();
+		this->ki = u->getKI();
+		
+		this->authResult = authResult;
+		memcpy(this->serverGuid, serverGuid, 8);
+	}
+	
+	int tmAccountAutheticated::stream(tBBuf &t)
+	{
+		int off = tmMsgBase::stream(t);
+		t.putByte(authResult); ++off; // auth result
+		t.write(serverGuid, 8); off += 8; // server guid
+		return off;
+	}
+	
+	void tmAccountAutheticated::additionalFields()
+	{
+		dbg.nl();
+		dbg.printf(" auth result: %02X (%s), server guid: %s", authResult, alcUnetGetAuthCode(authResult), alcGetStrGuid(serverGuid, 8));
 	}
 
 } //end namespace alc

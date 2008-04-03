@@ -51,9 +51,14 @@
 namespace alc {
 
 	////IMPLEMENTATION
+	tUnetLobbyServerBase::tUnetLobbyServerBase(void) : tUnetServerBase()
+	{
+		memset(guid, 0, 8);
+		auth_gone = tracking_gone = vault_gone = 0;
+	}
+	
 	void tUnetLobbyServerBase::onStart(void)
 	{
-		auth_gone = tracking_gone = vault_gone = 0;
 		auth = reconnectPeer(KAuth);
 		tracking = reconnectPeer(KTracking);
 		vault = reconnectPeer(KVault);
@@ -91,6 +96,8 @@ namespace alc {
 		
 		tNetSessionIte ite = netConnect((char *)host.c_str(), port.asU16(), 2, 0);
 		tNetSession *session = getSession(ite);
+		session->whoami = dst;
+		session->conn_timeout = 5*60; // 5minutes timeout for server. must be set there as well!
 		if (!protocol.isNull())
 			session->proto = protocol.asU32();
 		
@@ -207,6 +214,7 @@ namespace alc {
 				strcpy((char *)u->account, (char *)authHello.account.c_str());
 				memcpy(u->challenge, md5buffer.read(16), 16);
 				u->release = authHello.release;
+				u->x = authHello.x;
 				
 				// reply with AuthenticateChallenge
 				tmAuthenticateChallenge authChallenge(u, result, u->challenge, authHello);
@@ -227,15 +235,74 @@ namespace alc {
 				msg->data->get(authResponse);
 				log->log("<RCV> %s\n", authResponse.str());
 				
+				// verifiy if we're still talking about the same player
+				if (authResponse.x != u->x) {
+					err->log("ERR: %s X values of message and session don't match.\n", u->str());
+					return 1;
+				}
+				
 				// send authAsk to auth server
 				tNetSession *s = getPeer(KAuth);
-				if (!s) return 1;
-				DBG(1, "%s %s\n", alcGetStrGuid(u->challenge, 16), alcGetStrGuid(authResponse.hash.readAll(), 16));
-				tmCustomAuthAsk authAsk(s, u->ip, u->port, u->account, u->challenge, authResponse.hash.readAll(), u->release);
+				if (!s) {
+					err->log("ERR: I've got to ask the auth server about player %s, but it's unavailable.\n", u->account);
+					return 1;
+				}
+				tmCustomAuthAsk authAsk(s, u->sid, u->ip, u->port, u->account, u->challenge, authResponse.hash.readAll(), u->release);
 				s->send(authAsk);
 				
 				return 1;
 			}
+			case NetMsgCustomAuthResponse:
+			{
+				if (u->whoami != KAuth) {
+					err->log("ERR: %s sent a NetMsgCustomAuthResponse but is not the auth server\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmCustomAuthResponse authResponse(u);
+				msg->data->get(authResponse);
+				log->log("<RCV> %s\n", authResponse.str());
+				
+				// find the client's session
+				tNetSession *s = NULL;
+				tNetSessionIte ite(authResponse.ip, authResponse.port, authResponse.x);
+				if (u->proto != 1) { // when we're using the new protocol, we're getting IP and Port, not only the sid
+					s = getSession(ite);
+				}
+				else { // for the old protocol, we get only the sid, so let's hope it's still the right one
+					s = smgr->getSession(authResponse.x);
+					ite = s->getIte();
+				}
+				// verify account name and session state
+				if (!s || s->authenticated != 10 || s->whoami != 0 || strcmp((char *)s->account, (char *)authResponse.login.c_str()) != 0) {
+					err->log("ERR: Got CustomAuthResponse for player %s but can't find his session.\n", authResponse.login.c_str());
+					return 1;
+				}
+				
+				// send NetMsgAccountAuthenticated to client
+				if (authResponse.result == AAuthSucceeded) {
+					tmAccountAutheticated accountAuth(s, authResponse.guid, authResponse.result, guid);
+					s->send(accountAuth);
+					s->whoami = KClient; // it's a real client now
+					s->authenticated = 2; // the player is authenticated!
+					strcpy((char *)s->passwd, (char *)authResponse.passwd.c_str()); // passwd is needed for validating packets
+					s->timeout = 30; // 30sec, client should send an alive every 10sec
+				}
+				else {
+					Byte zeroGuid[16]; // only send zero-filled GUIDs to non-authed players
+					memset(zeroGuid, 0, 16);
+					tmAccountAutheticated accountAuth(s, zeroGuid, authResponse.result, zeroGuid);
+					s->send(accountAuth);
+					terminate(ite, RNotAuthenticated);
+				}
+				return 1;
+			}
+			case NetMsgRequestMyVaultPlayerList:
+				// we don't really parse them, that's TODO for later
+				msg->data->end();
+				log->log("<RCV> NetMsgRequestMyVaultPlayerList, ignoring\n");
+				return 1;
 		}
 		return 0;
 	}

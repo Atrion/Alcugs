@@ -43,7 +43,8 @@ namespace alc {
 	////DEFINITIONS
 	class tmCustomAuthAsk : public tmMsgBase {
 	public:
-		tmCustomAuthAsk(tNetSession *s, U32 ip = 0, U16 port = 0, Byte *login = NULL, Byte *challenge = NULL, Byte *hash = NULL, Byte release = 0);
+		tmCustomAuthAsk(tNetSession *s);
+		tmCustomAuthAsk(tNetSession *s, U32 x, U32 ip, U16 port, Byte *login, Byte *challenge, Byte *hash, Byte release);
 		virtual void store(tBBuf &t);
 		virtual int stream(tBBuf &t);
 		// format
@@ -56,7 +57,9 @@ namespace alc {
 	
 	class tmCustomAuthResponse : public tmMsgBase {
 	public:
+		tmCustomAuthResponse(tNetSession *s);
 		tmCustomAuthResponse(tNetSession *s, tmCustomAuthAsk &authAsk, const Byte *guid, Byte *passwd, Byte result, Byte accessLevel);
+		virtual void store(tBBuf &t);
 		virtual int stream(tBBuf &t);
 		// format
 		tUStr login, passwd;
