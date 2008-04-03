@@ -48,7 +48,10 @@ namespace alc {
 	class tUnetVaultServer : public tUnetServerBase {
 	public:
 		tUnetVaultServer(void) : tUnetServerBase()
-			{ lstd->log("WARNING: The vault server is not finished yet. So if it doesn\'t work, that's not even a bug.\n"); }
+		{
+			conn_timeout = 5*60;
+			lstd->log("WARNING: The vault server is not finished yet. So if it doesn\'t work, that's not even a bug.\n");
+		}
 	};
 	
 } //End alc namespace

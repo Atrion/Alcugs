@@ -54,7 +54,7 @@ namespace alc {
 		
 		// 5 minutes is the timeout unet3 sets for it's peers, so it makes sense to re-use it
 		// the unet2 lobby sends an alive message every 2min30sec (timeout/2), so that's the minimal value to avoid useless reconnects
-		conn_timeout = 5*60;
+		//conn_timeout = 5*60;
 	}
 	
 	int tUnetServerBase::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
