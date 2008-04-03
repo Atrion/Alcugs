@@ -53,8 +53,8 @@ namespace alc {
 		if (s && s->proto == 1)
 			unsetFlags(plNetIP);
 		
-		max_version = 12;
-		min_version = 6;
+		this->max_version = s->max_version;
+		this->min_version = s->min_version;
 		x = s->getSid();
 		this->ip = ip;
 		this->port = port;

@@ -103,7 +103,7 @@ void tNetSession::init() {
 	assert(server.pn==0);
 	idle=false;
 	whoami=0;
-	bussy=0;
+	bussy=false;
 	max_version=0;
 	min_version=0;
 	tpots=0;

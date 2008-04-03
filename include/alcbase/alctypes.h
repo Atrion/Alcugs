@@ -214,8 +214,6 @@ public:
 		rewind();
 		return read();
 	}
-public:
-	int id;
 protected:
 	virtual void init();
 	virtual void onmodify();

@@ -84,6 +84,9 @@ typedef U16 tUnetFlags;
 
 
 class tUnet {
+	friend class tNetSession;
+
+// methods
 public:
 	tUnet(char * lhost="0.0.0.0",U16 lport=0); //lport in host order
 	void setFlags(tUnetFlags flags);
@@ -108,8 +111,6 @@ public:
 	}
 	void setBindPort(U16 lport); //lport in host order
 	void setBindAddress(const void * lhost);
-private:
-	void init();
 
 protected:
 	void _openlogs();
@@ -118,6 +119,8 @@ protected:
 	tNetSessionIte netConnect(char * hostname,U16 port,Byte validation,Byte flags);
 
 private:
+	void init();
+	
 	void doWork();
 	
 	void neterror(char * msg);
@@ -125,36 +128,10 @@ private:
 	//void send();
 	void basesend(tNetSession * u,tmBase & m);
 	void rawsend(tNetSession * u,tUnetUruMsg * m);
-	
-	friend class tNetSession;
-	
-	bool initialized;
 
+// properties
 protected:
 	bool idle;
-private:
-	Byte timer;
-#ifdef __WIN32__
-	WSADATA ws; //<! The winsock stack
-	SOCKET sock; //<! The socket
-	u_long nNoBlock; //<! non-blocking (private)
-#else
-	int sock; //<! The socket
-#endif
-	int opt;
-	struct sockaddr_in server; //<! Server sockaddr
-	//!blocking socket
-	tUnetFlags flags; //explained -^
-	U16 unet_sec; //netcore timeout to do another loop (seconds)
-	U32 unet_usec; //netcore timeout to do another loop (microseconds)
-
-protected:
-	Byte max_version; //Default protocol version
-	Byte min_version;
-
-	U32 ntime_sec; //current time (in secs)
-	U32 ntime_usec; //(in usecs)
-	U32 net_time; //(in usecs) [resolution of 15 minutes] (relative)
 
 	U32 conn_timeout; //default timeout (to disconnect a session) (seconds) [5 secs]
 	U32 timeout; //default timeout when the send clock expires (re-transmission) (microseconds)
@@ -172,17 +149,10 @@ protected:
 	U32 nat_up;
 	U32 nat_down;
 
-	char name[200]; //<! The system/server name, normally the age filename
-	char guid[18]; //<! This system guid (age guid) (in Ascii)
-
 	//char address[100]; //<! This system public address (in Ascii)
 	char bindaddr[100]; //<! Server bind address
 	U16 bindport; //<! Server bind port, in host order
 
-	U16 spawn_start; //first port to spawn
-	U16 spawn_stop; //last port to spawn (gameservers)
-
-//protected:
 	//!logging subsystem
 	tLog * log; //stdout
 	tLog * err; //stderr
@@ -190,12 +160,7 @@ protected:
 	tLog * ack; //ack drawing
 	//tLog * chk; //checksum results
 	tLog * sec; //security log
-private:
 	
-	//event queue
-	tUnetMsgQ<tNetEvent> * events;
-
-public:
 	//flood control
 	U32 max_flood_pkts;
 	U32 flood_check_sec;
@@ -217,6 +182,34 @@ public:
 	U32 time_quota_check_sec; //last quota check (in seconds)
 	U32 time_quota_check_usec;
 	#endif
+
+private:	
+	bool initialized;
+	
+	Byte max_version; //Default protocol version
+	Byte min_version;
+
+	U32 ntime_sec; //current time (in secs)
+	U32 ntime_usec; //(in usecs)
+	U32 net_time; //(in usecs) [resolution of 15 minutes] (relative)
+	Byte timer;
+	
+#ifdef __WIN32__
+	WSADATA ws; //<! The winsock stack
+	SOCKET sock; //<! The socket
+	u_long nNoBlock; //<! non-blocking (private)
+#else
+	int sock; //<! The socket
+#endif
+	int opt;
+	struct sockaddr_in server; //<! Server sockaddr
+	
+	tUnetFlags flags; //explained -^
+	U16 unet_sec; //netcore timeout to do another loop (seconds)
+	U32 unet_usec; //netcore timeout to do another loop (microseconds)
+	
+	//event queue
+	tUnetMsgQ<tNetEvent> * events;
 };
 
 }

@@ -46,6 +46,11 @@ typedef Byte tNetSessionFlags;
 #define UNetNoConn   0x02
 
 class tNetSession {
+	friend class tUnet;
+	friend class tUnetBase;
+	friend class tUnetLobbyServerBase; // it has to do the authenticate stuff
+
+// methods
 public:
 	tNetSession(tUnet * net,U32 ip,U16 port,int sid); //ip, port in network order
 	~tNetSession();
@@ -55,7 +60,6 @@ public:
 	U32 getHeaderSize();
 	inline void setTimeout(U32 tout) { conn_timeout=tout; }
 	inline int getSid(void) { return sid; }
-	void setPeerType(Byte wtf) { whoami=wtf; }
 	Byte getPeerType() { return whoami; }
 	void send(tmMsgBase & t);
 	tNetSessionIte getIte();
@@ -65,6 +69,7 @@ public:
 	inline bool isAuthed(void) { return authenticated == 1; }
 	inline U32 getIP(void) { return ip; }
 	inline U16 getPort(void) { return port; }
+
 private:
 	void init();
 	void processMsg(Byte * buf,int size);
@@ -85,7 +90,14 @@ private:
 	U32 computetts(U32 pkqsize);
 	
 	void negotiate();
-	
+
+// properties
+public:
+	Byte max_version; //peer major version
+	Byte min_version; //peer minor version
+	U32 proto; //peer unet protocol version
+
+private:
 	tUnet * net;
 	U32 ip; //network order
 	U16 port; //network order
@@ -138,27 +150,18 @@ private:
 	tUnetMsgQ<tUnetMsg> * rcvq; //incomming message queue
 	
 	bool idle;
-	Byte bussy; //bussy flag (0,1) If this flag is activated, messages are keept in the rcv buffer
+	bool bussy; //bussy flag (0,1) If this flag is activated, messages are keept in the rcv buffer
 	
 	bool terminated; //!< false: connection is established; true: a NetMsgTerminated was sent (and we expect a NetMsgLeave), or a NetMsgLeave was sent
 	
 	Byte whoami; //peer type
 	bool client; //it's a client or a server?
+	Byte tpots; //tpots version 0=undefined, 1=tpots client, 2=non-tpots client
 	
 	// used by lobby and game for authenticating
 	Byte account[201]; //peer account name (string)
 	Byte challenge[16]; //peer challenge (hex)
 	Byte release; //type of client
-
-	friend class tUnet;
-	friend class tUnetBase;
-	friend class tUnetLobbyServerBase; // it has to do the authenticate stuff
-
-public:
-	Byte max_version; //peer major version
-	Byte min_version; //peer minor version
-	Byte tpots; //tpots version 0=undefined, 1=tpots client, 2=non-tpots client
-	U32 proto; //peer unet protocol version
 	U32 ki; //player set and valid id
 };
 
