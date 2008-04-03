@@ -517,6 +517,14 @@ tmMsgBase::tmMsgBase(U16 cmd,U32 flags,tNetSession * s) {
 	if(this->flags & plNetAck)
 		bhflags |= UNetAckReq;
 }
+tmMsgBase::tmMsgBase(tNetSession *s)
+{
+	flags = cmd = 0;
+	this->s = s;
+	timestamp.seconds=0; // the timestamp is unitialized per default (this removes a valgrind error)
+	//set bhflags
+	bhflags=0;
+}
 void tmMsgBase::setFlags(U32 f) {
 	this->flags |= f;
 	if(f & plNetAck)

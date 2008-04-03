@@ -55,7 +55,7 @@ namespace alc {
 		
 		this->max_version = s->max_version;
 		this->min_version = s->min_version;
-		this->x = x;
+		this->x = x; // this is the SID the lobby uses for the connection to the client to be authed
 		this->ip = ip;
 		this->port = port;
 		
@@ -115,7 +115,7 @@ namespace alc {
 	 	if (s && s->proto == 1)
 			unsetFlags(plNetIP | plNetGUI);
 		// copy stuff from the authAsk
-		x = authAsk.x;
+		x = authAsk.x; // this is the SID the lobby uses for the connection to the client to be authed
 		min_version = authAsk.min_version;
 		max_version = authAsk.max_version;
 		ip = authAsk.ip; // the client's IP and Port (for logging)

@@ -63,7 +63,7 @@ namespace alc {
 	{
 		// copy stuff from the packet we're answering to
 		ki = msg.ki;
-		x = msg.x;
+		x = msg.x; // this is the SID the client uses for our connection
 		max_version = msg.max_version;
 		min_version = msg.min_version;
 		
@@ -109,7 +109,7 @@ namespace alc {
 	: tmMsgBase(NetMsgAccountAuthenticated, plNetKi | plNetAck | plNetX | plNetGUI | plNetCustom, u)
 	{
 		memcpy(guid, playerGuid, 16);
-		this->x = u->getX();
+		this->x = u->getX(); // this is the SID the client uses for our connection
 		this->ki = u->getKI();
 		
 		this->authResult = authResult;

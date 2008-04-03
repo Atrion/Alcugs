@@ -242,13 +242,13 @@ namespace alc {
 				}
 				
 				// send authAsk to auth server
-				tNetSession *s = getPeer(KAuth);
-				if (!s) {
+				tNetSession *authServer = getPeer(KAuth);
+				if (!authServer) {
 					err->log("ERR: I've got to ask the auth server about player %s, but it's unavailable.\n", u->account);
 					return 1;
 				}
-				tmCustomAuthAsk authAsk(s, u->sid, u->ip, u->port, u->account, u->challenge, authResponse.hash.readAll(), u->release);
-				s->send(authAsk);
+				tmCustomAuthAsk authAsk(authServer, u->sid, u->ip, u->port, u->account, u->challenge, authResponse.hash.readAll(), u->release);
+				authServer->send(authAsk);
 				
 				return 1;
 			}
@@ -265,43 +265,43 @@ namespace alc {
 				log->log("<RCV> %s\n", authResponse.str());
 				
 				// find the client's session
-				tNetSession *s = NULL;
+				tNetSession *client = NULL;
 				tNetSessionIte ite(authResponse.ip, authResponse.port, authResponse.x);
 				if (u->proto != 1) { // when we're using the new protocol, we're getting IP and Port, not only the sid
-					s = getSession(ite);
+					client = getSession(ite);
 				}
 				else { // for the old protocol, we get only the sid, so let's hope it's still the right one
-					s = smgr->getSession(authResponse.x);
-					ite = s->getIte();
+					client = smgr->getSession(authResponse.x);
+					ite = client->getIte();
 				}
 				// verify account name and session state
-				if (!s || s->authenticated != 10 || s->whoami != 0 || strcmp((char *)s->account, (char *)authResponse.login.c_str()) != 0) {
+				if (!client || client->authenticated != 10 || client->whoami != 0 || strcmp((char *)client->account, (char *)authResponse.login.c_str()) != 0) {
 					err->log("ERR: Got CustomAuthResponse for player %s but can't find his session.\n", authResponse.login.c_str());
 					return 1;
 				}
 				
 				// send NetMsgAccountAuthenticated to client
 				if (authResponse.result == AAuthSucceeded) {
-					tmAccountAutheticated accountAuth(s, authResponse.guid, authResponse.result, guid);
-					s->send(accountAuth);
-					s->whoami = KClient; // it's a real client now
-					s->authenticated = 2; // the player is authenticated!
-					strcpy((char *)s->passwd, (char *)authResponse.passwd.c_str()); // passwd is needed for validating packets
-					s->timeout = 30; // 30sec, client should send an alive every 10sec
+					tmAccountAutheticated accountAuth(client, authResponse.guid, authResponse.result, guid);
+					client->send(accountAuth);
+					client->whoami = KClient; // it's a real client now
+					client->authenticated = 2; // the player is authenticated!
+					strcpy((char *)client->passwd, (char *)authResponse.passwd.c_str()); // passwd is needed for validating packets
+					client->timeout = 30; // 30sec, client should send an alive every 10sec
 				}
 				else {
 					Byte zeroGuid[16]; // only send zero-filled GUIDs to non-authed players
 					memset(zeroGuid, 0, 16);
-					tmAccountAutheticated accountAuth(s, zeroGuid, authResponse.result, zeroGuid);
-					s->send(accountAuth);
+					tmAccountAutheticated accountAuth(client, zeroGuid, authResponse.result, zeroGuid);
+					client->send(accountAuth);
 					terminate(ite, RNotAuthenticated);
 				}
 				return 1;
 			}
 			case NetMsgRequestMyVaultPlayerList:
-				// we don't really parse them, that's TODO for later
-				msg->data->end();
-				log->log("<RCV> NetMsgRequestMyVaultPlayerList, ignoring\n");
+				tmMsgBase requestList(u);
+				msg->data->get(requestList);
+				log->log("<RCV> %s\n", requestList.str());
 				return 1;
 		}
 		return 0;
