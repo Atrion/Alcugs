@@ -76,9 +76,7 @@ void tUnetBase::_reconfigure() {
 	cfg=alcGetConfig();
 	//Sets the idle timer
 	var=cfg->getVar("net.timer","global");
-	if(var.isNull()) {
-		setTimer(5); // it should be max. 10 seconds (default setting in the netcore, bigger timers have issues)
-	} else {
+	if(!var.isNull()) {
 		setTimer(var.asByte());
 	}
 	//Set pool size

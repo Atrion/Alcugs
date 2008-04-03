@@ -69,6 +69,8 @@ public:
 	inline bool isAuthed(void) { return authenticated == 1; }
 	inline U32 getIP(void) { return ip; }
 	inline U16 getPort(void) { return port; }
+	inline U32 getKI(void) { return ki; }
+	inline U32 getX(void) { return x; }
 
 private:
 	void init();
@@ -163,6 +165,7 @@ private:
 	Byte challenge[16]; //peer challenge (hex)
 	Byte release; //type of client
 	U32 ki; //player set and valid id
+	U32 x; //x value
 };
 
 #if 0
@@ -172,8 +175,6 @@ private:
 	char uid[41]; //peer uid (client) (in hex)
 	char guid[20]; //peer guid (server) (string)
 	
-	
-	int x; //x value
 	Byte reason; //reason code
 	Byte access_level; //the access level of the peer
 	Byte status; //the player status, defined inside a states machine (see the states machine doc)

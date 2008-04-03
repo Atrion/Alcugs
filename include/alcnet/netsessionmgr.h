@@ -58,6 +58,10 @@ public:
 	tNetSessionMgr(tUnet * net,int limit=0);
 	~tNetSessionMgr();
 	tNetSession * search(tNetSessionIte &ite,bool create=true);
+	tNetSession *getSession(int sid) {
+		if (sid < n) return table[sid];
+		return NULL;
+	}
 	void rewind();
 	void end();
 	void destroy(tNetSessionIte &ite);

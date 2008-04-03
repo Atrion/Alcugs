@@ -81,10 +81,9 @@ void tUnet::init() {
 	//netcore timeout < min(all RTT's), nope, it must be the min tts (stt)
 	unet_sec=1; //(seconds)
 	unet_usec=0; //(microseconds)
-	timer=5; // should be max. 10 seconds, is overwritten by tUnetBase
+	timer=5; // should be max. 10 seconds, may be overwritten by tUnetBase
 
-	conn_timeout=5; //default timeout (seconds) (sensible to NetMsgSetTimeout (higher when connected)
-	/* set to 30 when authed (client should send alive every 10 seconds)*/
+	conn_timeout=5; //default timeout for new sessions (seconds) (TODO: sensible to NetMsgSetTimeout) (higher when authed)
 	timeout=2000000; //2 seconds (re-transmission) [initial RTT]
 
 	//initial server timestamp
@@ -599,6 +598,8 @@ int tUnet::Recv() {
 		}
 
 	}
+	
+	//END CRITICAL REGION
 	
 	#if _DBG_LEVEL_ >= 1
 	U32 old_net_time=net_time;

@@ -248,20 +248,20 @@ int alcUruValidatePacket(Byte * buf,int n,Byte * validation,bool authed,Byte * p
 		if(aux_checksum==checksum) { return 0; } //All went ok with v1/v2
 		else {
 			//work around (swap the checksum algorithms)
-			if(buf[1]==0x02) { //validation level 2
+			// however if authed is false, phash is not initialized, so we can't swap algorithms
+			if(buf[1]==0x02 && authed) { //validation level 2
 				alcEncodePacket(buf,buf,n);
 				buf[1]=0x02;
-				if(authed) { //authenticated?
-					aux_checksum=alcUruChecksum(buf, n, 1, NULL);
-				} else {
-					aux_checksum=alcUruChecksum(buf, n, 2, phash);
-				}
+				aux_checksum=alcUruChecksum(buf, n, 1, NULL);
 				alcDecodePacket(buf,n); //Now the packet will be readable
 				//be sure to take bak the 0x02 byte to the header
 				buf[1]=0x02;
 				if(aux_checksum==checksum) { return 0; } //All went ok with v1
 			}
-			lerr->log("ERR: Validation level %i, got: %08X exp: %08X\n",*validation,checksum,aux_checksum);
+			if (authed)
+				lerr->log("ERR: Validation level %i (authed), got: %08X exp: %08X\n",*validation,checksum,aux_checksum);
+			else
+				lerr->log("ERR: Validation level %i (not authed), got: %08X exp: %08X\n",*validation,checksum,aux_checksum);
 			/*if(u->validation==1) {
 				uru_checksum1trace(buf, n);
 			}
@@ -555,7 +555,7 @@ void tmMsgBase::store(tBBuf &t) {
 		min_version=0;
 	}
 	//BEGIN ** guess the protocol version from behaviours
-	// The first message is always an auth hello that contains the version numbers
+	// The first message from Plasma clients is always an auth hello that contains the version numbers
 	if(s && s->max_version==0) {
 		if(flags & plNetTimestamp || t.remaining() < 8) { // when there are less than 8 bytes remaining, no timestamp can be contained
 			s->max_version=12; //sure (normally on ping proves)
