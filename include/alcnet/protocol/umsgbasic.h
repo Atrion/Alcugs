@@ -87,7 +87,7 @@ public:
 	virtual int stream(tBBuf &t);
 	tmPing(tNetSession * u=NULL,double mtime=0,U32 ki=0,U32 x=0,Byte dst=KLobby,bool ack=true);
 	void setReply();
-	void setRouteInfo(tNetSessionIte &ite);
+	void setRouteInfo(const tNetSessionIte &ite);
 	void unsetRouteInfo();
 	//format
 	double mtime;

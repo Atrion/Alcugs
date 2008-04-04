@@ -131,14 +131,14 @@ void tmPing::store(tBBuf &t) {
 void tmPing::setReply() {
 	unsetFlags(plNetAck);
 }
-void tmPing::setRouteInfo(tNetSessionIte &ite) {
+void tmPing::setRouteInfo(const tNetSessionIte &ite) {
 	ip=ite.ip;
 	port=ite.port;
 	sid=ite.sid;
-	setFlags(plNetIP || plNetSid);
+	setFlags(plNetIP | plNetSid);
 }
 void tmPing::unsetRouteInfo() {
-	unsetFlags(plNetIP || plNetSid);
+	unsetFlags(plNetIP | plNetSid);
 }
 int tmPing::stream(tBBuf &t) {
 	int off;

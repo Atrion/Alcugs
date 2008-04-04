@@ -121,6 +121,11 @@ char * tNetSession::str(char how) {
 		if (authenticated == 10) strcat(cnt, "?"); // if the auth server didn't yet confirm that, add a question mark
 		strcat(cnt, "]");
 	}
+	else if (whoami != 0) {
+		strcat(cnt, "[");
+		strcat(cnt, alcUnetGetDestination(whoami));
+		strcat(cnt, "]");
+	}
 	return cnt;
 }
 

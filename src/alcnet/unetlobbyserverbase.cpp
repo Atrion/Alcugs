@@ -57,6 +57,21 @@ namespace alc {
 		auth_gone = tracking_gone = vault_gone = 0;
 	}
 	
+	void tUnetLobbyServerBase::forwardPing(tmPing &ping, tNetSession *u)
+	{
+		if (u->whoami == KAuth || u->whoami == KTracking || u->whoami == KVault) { // we got a ping from one of our servers, let's forward it to the client it came from
+			tNetSessionIte ite(ping.ip, ping.port);
+			tNetSession *client = getSession(ite);
+			ping.unsetRouteInfo();
+			if (client) client->send(ping);
+		}
+		else { // ok, let's forward the ping to the right server
+			tNetSession *server = getPeer(ping.destination);
+			ping.setRouteInfo(u->getIte());
+			if (server) server->send(ping);
+		}
+	}
+	
 	void tUnetLobbyServerBase::onStart(void)
 	{
 		auth = reconnectPeer(KAuth);

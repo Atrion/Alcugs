@@ -612,7 +612,7 @@ void tmMsgBase::store(tBBuf &t) {
 	}
 
 	U32 check=plNetAck | plNetBcast | plNetVersion | plNetTimestamp | \
-	plNetX | plNetKi | plNetGUI | plNetIP | plNetCustom;
+	plNetX | plNetKi | plNetGUI | plNetIP | plNetCustom | plNetSid;
 	
 	//now catch undocumented protocol flags
 	if((flags & ~(check)) && u) {

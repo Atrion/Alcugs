@@ -66,9 +66,7 @@ namespace alc {
 					ping.setReply();
 					u->send(ping);
 				}
-				else if (whoami == KLobby || whoami == KGame) { // TODO: lobby and game server should forward the pings to their destination
-				
-				}
+				else forwardPing(ping, u); // if not, forward it (only implemented by lobby and game)
 				return 1;
 			}
 			case NetMsgAlive:

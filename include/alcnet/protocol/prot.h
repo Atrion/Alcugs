@@ -69,7 +69,7 @@
 #define plNetP2P        0x08000000 //p2p request? (seen on plNetMsgJoinReq)
 
 //CUSTOM plNetFlags
-#define plNetSid        0x00800000
+#define plNetSid        0x00800000 //* this message contains a sid (used when X is already used otherwise)
 
 //An '*' means that the flag adds a new data field in the unet header.
 // elsewhere there are only flags...
