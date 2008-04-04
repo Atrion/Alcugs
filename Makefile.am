@@ -56,7 +56,7 @@ libalcnet1_a_SOURCES = \
  src/alcnet/sql.cpp \
  src/alcnet/protocol/authmsg.cpp \
  src/alcnet/protocol/trackingmsg.cpp \
- src/alcnet/protocol/lobbymsg.cpp
+ src/alcnet/protocol/lobbybasemsg.cpp
 
 libalcnet1_a_CPPFLAGS = -DIN_ALC_LIBRARY
 #End LibAlcUruNet3 library

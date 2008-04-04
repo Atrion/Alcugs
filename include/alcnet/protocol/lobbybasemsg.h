@@ -24,10 +24,10 @@
 *                                                                              *
 *******************************************************************************/
 
-#ifndef __U_LOBBYMSG_H
-#define __U_LOBBYMSG_H
+#ifndef __U_LOBBYBASEMSG_H
+#define __U_LOBBYBASEMSG_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_LOBBYMSG_H_ID "$Id$"
+#define __U_LOBBYBASEMSG_H_ID "$Id$"
 
 namespace alc {
 

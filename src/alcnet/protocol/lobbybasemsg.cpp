@@ -25,13 +25,13 @@
 *******************************************************************************/
 
 /* CVS tag - DON'T TOUCH*/
-#define __U_LOBBYMSG_ID "$Id$"
+#define __U_LOBBYBASEMSG_ID "$Id$"
 
 //#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
 #include "unet.h"
-#include "protocol/lobbymsg.h"
+#include "protocol/lobbybasemsg.h"
 
 #include <alcdebug.h>
 

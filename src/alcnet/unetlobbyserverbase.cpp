@@ -41,7 +41,7 @@
 #include "alcugs.h"
 #include "unet.h"
 #include "unetlobbyserverbase.h"
-#include "protocol/lobbymsg.h"
+#include "protocol/lobbybasemsg.h"
 #include "protocol/authmsg.h"
 
 ////extra includes
@@ -298,11 +298,6 @@ namespace alc {
 				}
 				return 1;
 			}
-			case NetMsgRequestMyVaultPlayerList:
-				tmMsgBase requestList(u);
-				msg->data->get(requestList);
-				log->log("<RCV> %s\n", requestList.str());
-				return 1;
 		}
 		return 0;
 	}
