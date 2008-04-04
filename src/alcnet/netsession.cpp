@@ -115,6 +115,12 @@ void tNetSession::init() {
 char * tNetSession::str(char how) {
 	static char cnt[1024];
 	sprintf(cnt,"[%i][%s:%i]",sid,alcGetStrIp(ip),ntohs(port));
+	if (authenticated != 0) {
+		strcat(cnt, "[");
+		strcat(cnt, (char *)account);
+		if (authenticated == 10) strcat(cnt, "?"); // if the auth server didn't yet confirm that, add a question mark
+		strcat(cnt, "]");
+	}
 	return cnt;
 }
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2006  The Alcugs Server Team                           *
+*    Copyright (C) 2004-2008  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -24,50 +24,49 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
-*/
-
-#ifndef __U_UNETLOBBYSERVERBASE_H
-#define __U_UNETLOBBYSERVERBASE_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_UNETLOBBYSERVERBASE_H_ID "$Id$"
+#define __U_LOBBYMSG_ID "$Id$"
+
+//#define _DBG_LEVEL_ 10
+
+#include "alcugs.h"
+#include "unet.h"
+#include "protocol/lobbymsg.h"
+
+#include <alcdebug.h>
 
 namespace alc {
 
-	////DEFINITIONS
-	/**
-		If we want to do it well and nice, we should add pre and post conditions here.
-	*/
-
-class tUnetLobbyServerBase : public tUnetServerBase {
-public:
-	tUnetLobbyServerBase(void);
-	virtual void onStart(void);
-	virtual void onIdle(bool idle);
-	virtual void onConnectionClosed(tNetEvent *ev, tNetSession *u);
-	virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
-protected:
-	tNetSession *getPeer(Byte dst); //!< returns the session for that service
-	tNetSessionIte reconnectPeer(Byte dst); //!< establishes a connection to that service (remember to set the corresponding gone variable to 0)
-
-	tNetSessionIte auth, tracking, vault;
-	U32 auth_gone, tracking_gone, vault_gone; // saves when this server got disconnected. wait 10sec before trying to connect again
-
-	Byte guid[8]; //<! This system guid (age guid) (in Hex)
-};
-
-#if 0
-	char name[200]; //<! The system/server name, normally the age filename
-	U16 spawn_start; //first port to spawn
-	U16 spawn_stop; //last port to spawn (gameservers)
-#endif
+	//// tmRequestMyVaultPlayerList
+	tmRequestMyVaultPlayerList::tmRequestMyVaultPlayerList(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
+	{ }
 	
-} //End alc namespace
+	//// tmVaultPlayerList
+	tmVaultPlayerList::tmVaultPlayerList(tNetSession *u, U16 numberPlayers, tMBuf players, Byte *url)
+	: tmMsgBase(NetMsgVaultPlayerList, plNetAck | plNetCustom | plNetX | plNetKi, u)
+	{
+		x = u->getX();
+		ki = u->getKI();
+		
+		this->numberPlayers = numberPlayers;
+		this->players = players;
+		this->url.setVersion(0); // normal UrurString
+		this->url.writeStr(url);
+	}
+	
+	int tmVaultPlayerList::stream(tBBuf &t)
+	{
+		int off = tmMsgBase::stream(t);
+		t.putU16(numberPlayers); off += 2;
+		off += t.put(players);
+		off += t.put(url);
+		return off;
+	}
+	
+	void tmVaultPlayerList::additionalFields()
+	{
+		dbg.nl();
+		dbg.printf(" number of players: %d, URL: %s", numberPlayers, url.c_str());
+	}
 
-#endif
+} //end namespace alc

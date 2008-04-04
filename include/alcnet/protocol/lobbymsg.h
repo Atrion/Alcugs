@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2006  The Alcugs Server Team                           *
+*    Copyright (C) 2004-2008  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -24,49 +24,30 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
-*/
-
-#ifndef __U_UNETLOBBYSERVERBASE_H
-#define __U_UNETLOBBYSERVERBASE_H
+#ifndef __U_LOBBYMSG_H
+#define __U_LOBBYMSG_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_UNETLOBBYSERVERBASE_H_ID "$Id$"
+#define __U_LOBBYMSG_H_ID "$Id$"
 
 namespace alc {
 
 	////DEFINITIONS
-	/**
-		If we want to do it well and nice, we should add pre and post conditions here.
-	*/
-
-class tUnetLobbyServerBase : public tUnetServerBase {
-public:
-	tUnetLobbyServerBase(void);
-	virtual void onStart(void);
-	virtual void onIdle(bool idle);
-	virtual void onConnectionClosed(tNetEvent *ev, tNetSession *u);
-	virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
-protected:
-	tNetSession *getPeer(Byte dst); //!< returns the session for that service
-	tNetSessionIte reconnectPeer(Byte dst); //!< establishes a connection to that service (remember to set the corresponding gone variable to 0)
-
-	tNetSessionIte auth, tracking, vault;
-	U32 auth_gone, tracking_gone, vault_gone; // saves when this server got disconnected. wait 10sec before trying to connect again
-
-	Byte guid[8]; //<! This system guid (age guid) (in Hex)
-};
-
-#if 0
-	char name[200]; //<! The system/server name, normally the age filename
-	U16 spawn_start; //first port to spawn
-	U16 spawn_stop; //last port to spawn (gameservers)
-#endif
+	class tmRequestMyVaultPlayerList : public tmMsgBase {
+	public:
+		tmRequestMyVaultPlayerList(tNetSession *u);
+	};
+	
+	class tmVaultPlayerList : public tmMsgBase {
+	public:
+		tmVaultPlayerList(tNetSession *u, U16 numberPlayers, tMBuf players, Byte *url);
+		virtual int stream(tBBuf &t);
+		// format
+		U16 numberPlayers;
+		tMBuf players;
+		tUStr url;
+	protected:
+		virtual void additionalFields();
+	};
 	
 } //End alc namespace
 

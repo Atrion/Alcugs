@@ -546,7 +546,7 @@ void tmMsgBase::store(tBBuf &t) {
 	if(flags & plNetVersion) {
 		max_version=t.getByte();
 		min_version=t.getByte();
-		if(u && u->max_version==0) {
+		if(u) { // this overrides existing values, which might be guessed
 			u->max_version=max_version;
 			u->min_version=min_version;
 		}

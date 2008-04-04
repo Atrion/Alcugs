@@ -40,8 +40,11 @@
 
 #include <alcugs.h>
 #include <unet.h>
+#include <protocol/lobbymsg.h>
+#include <protocol/vaultmsg.h>
 
 ////extra includes
+#include "lobbyserver.h"
 
 #include <alcdebug.h>
 
@@ -51,6 +54,63 @@ namespace alc {
 	
 	const char * alcNetName="Lobby";
 	Byte alcWhoami=KLobby;
+	
+	int tUnetLobbyServer::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
+	{
+		int ret = tUnetLobbyServerBase::onMsgRecieved(ev, msg, u); // first let tUnetLobbyServerBase process the message
+		if (ret != 0) return ret; // cancel if it was processed, otherwise it's our turn
+		
+		switch(msg->cmd) {
+			case NetMsgRequestMyVaultPlayerList:
+			{
+				// get the packet
+				tmRequestMyVaultPlayerList requestList(u);
+				msg->data->get(requestList);
+				log->log("<RCV> %s\n", requestList.str());
+				u->x = requestList.x; // save the X to reuse it when answering
+				u->ki = requestList.ki;
+				
+				// forward it to the vault server
+				// send authAsk to auth server
+				tNetSession *vaultServer = getPeer(KVault);
+				if (!vaultServer) {
+					err->log("ERR: I've got to ask the vault server about player %s, but it's unavailable.\n", u->str());
+					return 1;
+				}
+				tmCustomVaultAskPlayerList askList(vaultServer, u->getSid(), u->guid);
+				vaultServer->send(askList);
+				return 1;
+			}
+			case NetMsgCustomVaultPlayerList:
+			{
+				if (u->getPeerType() != KVault) {
+					err->log("ERR: %s sent a NetMsgCustomVaultPlayerList but is not the vault server\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the packet
+				tmCustomVaultPlayerList playerList(u);
+				msg->data->get(playerList);
+				log->log("<RCV> %s\n", playerList.str());
+				
+				// find the client's session
+				tNetSession *client = smgr->getSession(playerList.x);
+				// verify GUID and session state
+				if (!client || client->getPeerType() != KClient || memcmp(client->guid, playerList.guid, 16) != 0) {
+					err->log("ERR: Got CustomVaultPlayerList for player with GUID %s but can't find his session.\n", alcGetStrGuid(playerList.guid, 16));
+					return 1;
+				}
+				
+				// forward player list to client
+				Byte url = 0; // TODO: load URL from settings
+				tmVaultPlayerList playerListClient(client, playerList.numberPlayers, playerList.players, &url);
+				client->send(playerListClient);
+				
+				return 1;
+			}
+		}
+		return 0;
+	}
 
 } //end namespace alc
 

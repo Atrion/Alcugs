@@ -56,7 +56,7 @@ namespace alc {
 		this->max_version = u->max_version;
 		this->min_version = u->min_version;
 		this->x = x; // this is the SID the lobby uses for the connection to the client to be authed
-		this->ip = ip;
+		this->ip = ip; // the client's IP and Port (for logging)
 		this->port = port;
 		
 		this->login.setVersion(0); // normal UrurString
@@ -116,9 +116,9 @@ namespace alc {
 			unsetFlags(plNetIP | plNetGUI);
 		// copy stuff from the authAsk
 		x = authAsk.x; // this is the SID the lobby uses for the connection to the client to be authed
-		min_version = u->min_version;
 		max_version = u->max_version;
-		ip = authAsk.ip; // the client's IP and Port (for logging)
+		min_version = u->min_version;
+		ip = authAsk.ip; // the client's IP and Port (for fining the correct session)
 		port = authAsk.port;
 		login = authAsk.login;
 		login.setVersion(0); // normal UrurString

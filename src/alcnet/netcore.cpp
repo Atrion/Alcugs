@@ -275,6 +275,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 					closeConnection(u);
 				else // if the send or ack queue isn't empty, send remaining messages
 					u->doWork();
+					// I know it's ugly to call this here, but I found no other way: tUnet::doWork will create another timeout event instead of sending the messages
 			}
 			break;
 		case UNET_FLOOD:

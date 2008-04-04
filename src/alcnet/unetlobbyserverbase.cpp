@@ -215,9 +215,10 @@ namespace alc {
 				memcpy(u->challenge, md5buffer.read(16), 16);
 				u->release = authHello.release;
 				u->x = authHello.x;
+				u->ki = authHello.ki;
 				
 				// reply with AuthenticateChallenge
-				tmAuthenticateChallenge authChallenge(u, result, u->challenge, authHello);
+				tmAuthenticateChallenge authChallenge(u, result, u->challenge);
 				u->send(authChallenge);
 				u->authenticated = 10; // the challenge was sent
 				
@@ -234,17 +235,13 @@ namespace alc {
 				tmAuthenticateResponse authResponse(u);
 				msg->data->get(authResponse);
 				log->log("<RCV> %s\n", authResponse.str());
-				
-				// verifiy if we're still talking about the same player
-				if (authResponse.x != u->x) {
-					err->log("ERR: %s X values of message and session don't match.\n", u->str());
-					return 1;
-				}
+				u->x = authResponse.x;
+				u->ki = authResponse.ki;
 				
 				// send authAsk to auth server
 				tNetSession *authServer = getPeer(KAuth);
 				if (!authServer) {
-					err->log("ERR: I've got to ask the auth server about player %s, but it's unavailable.\n", u->account);
+					err->log("ERR: I've got to ask the auth server about player %s, but it's unavailable.\n", u->str());
 					return 1;
 				}
 				tmCustomAuthAsk authAsk(authServer, u->sid, u->ip, u->port, u->account, u->challenge, authResponse.hash.readAll(), u->release);
@@ -282,17 +279,19 @@ namespace alc {
 				
 				// send NetMsgAccountAuthenticated to client
 				if (authResponse.result == AAuthSucceeded) {
-					tmAccountAutheticated accountAuth(client, authResponse.guid, authResponse.result, guid);
-					client->send(accountAuth);
+					memcpy(client->guid, authResponse.guid, 16);
 					client->whoami = KClient; // it's a real client now
 					client->authenticated = 2; // the player is authenticated!
 					strcpy((char *)client->passwd, (char *)authResponse.passwd.c_str()); // passwd is needed for validating packets
-					client->timeout = 30; // 30sec, client should send an alive every 10sec
+					client->conn_timeout = 30; // 30sec, client should send an alive every 10sec
+					tmAccountAutheticated accountAuth(client, authResponse.result, guid);
+					client->send(accountAuth);
 				}
 				else {
-					Byte zeroGuid[16]; // only send zero-filled GUIDs to non-authed players
-					memset(zeroGuid, 0, 16);
-					tmAccountAutheticated accountAuth(client, zeroGuid, authResponse.result, zeroGuid);
+					Byte zeroGuid[8]; // only send zero-filled GUIDs to non-authed players
+					memset(zeroGuid, 0, 8);
+					memset(client->guid, 0, 16);
+					tmAccountAutheticated accountAuth(client, authResponse.result, zeroGuid);
 					client->send(accountAuth);
 					terminate(ite, RNotAuthenticated);
 				}

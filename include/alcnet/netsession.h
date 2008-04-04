@@ -98,6 +98,10 @@ public:
 	Byte max_version; //peer major version
 	Byte min_version; //peer minor version
 	U32 proto; //peer unet protocol version
+	
+	U32 ki; //player set and valid id
+	U32 x; //x value
+	Byte guid[16]; //peer guid (hex)
 
 private:
 	tUnet * net;
@@ -164,8 +168,6 @@ private:
 	Byte account[201]; //peer account name (string)
 	Byte challenge[16]; //peer challenge (hex)
 	Byte release; //type of client
-	U32 ki; //player set and valid id
-	U32 x; //x value
 };
 
 #if 0
@@ -173,7 +175,6 @@ private:
 	st_unet_hmsg hmsg; //the message header
 	char name[201]; //peer name (vault, lobby, AvatarCustomization) or player name (string)
 	char uid[41]; //peer uid (client) (in hex)
-	char guid[20]; //peer guid (server) (string)
 	
 	Byte reason; //reason code
 	Byte access_level; //the access level of the peer

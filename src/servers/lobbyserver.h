@@ -51,6 +51,8 @@ namespace alc {
 	public:
 		tUnetLobbyServer(void) : tUnetLobbyServerBase()
 			{ lstd->log("WARNING: The lobby server is not finished yet. So if it doesn\'t work, that's not even a bug.\n"); }
+		
+		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
 	};
 	
 } //End alc namespace
