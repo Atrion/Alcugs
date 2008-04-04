@@ -46,7 +46,7 @@ namespace alc {
 	
 	class tmAuthenticateChallenge : public tmMsgBase {
 	public:
-		tmAuthenticateChallenge(tNetSession *u, Byte authResult, Byte *challenge, tmAuthenticateHello &msg);
+		tmAuthenticateChallenge(tNetSession *u, Byte authResult, Byte *challenge);
 		virtual int stream(tBBuf &t);
 		// format
 		Byte authResult;
@@ -67,7 +67,7 @@ namespace alc {
 	
 	class tmAccountAutheticated : public tmMsgBase {
 	public:
-		tmAccountAutheticated(tNetSession *u, Byte *playerGuid, Byte authResult, Byte *serverGuid);
+		tmAccountAutheticated(tNetSession *u, Byte authResult, Byte *serverGuid);
 		virtual int stream(tBBuf &t);
 		// format
 		Byte authResult;

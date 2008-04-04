@@ -38,7 +38,7 @@
 namespace alc {
 
 	//// tmAuthenticateHello
-	tmAuthenticateHello::tmAuthenticateHello(tNetSession *u) : tmMsgBase(NetMsgAuthenticateHello, 0, u) // it's not capable of sending a package, so no flags are set
+	tmAuthenticateHello::tmAuthenticateHello(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
 	{
 		account.setVersion(0); // normal UruString
 	}
@@ -58,14 +58,14 @@ namespace alc {
 	}
 	
 	//// tmAuthenticateChallenge	
-	tmAuthenticateChallenge::tmAuthenticateChallenge(tNetSession *u, Byte authResult, Byte *challenge, tmAuthenticateHello &msg)
+	tmAuthenticateChallenge::tmAuthenticateChallenge(tNetSession *u, Byte authResult, Byte *challenge)
 	: tmMsgBase(NetMsgAuthenticateChallenge, plNetKi | plNetAck | plNetX | plNetVersion | plNetCustom, u)
 	{
 		// copy stuff from the packet we're answering to
-		ki = msg.ki;
-		x = msg.x; // this is the SID the client uses for our connection
-		max_version = msg.max_version;
-		min_version = msg.min_version;
+		ki = u->ki;
+		x = u->x;
+		max_version = u->max_version;
+		min_version = u->min_version;
 		
 		this->authResult = authResult;
 		this->challenge.write(challenge, 16);
@@ -87,7 +87,7 @@ namespace alc {
 	}
 	
 	//// tmAuthenticateResponse
-	tmAuthenticateResponse::tmAuthenticateResponse(tNetSession *u) : tmMsgBase(NetMsgAuthenticateResponse, 0, u) // it's not capable of sending a package, so no flags are set
+	tmAuthenticateResponse::tmAuthenticateResponse(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending are set
 	{
 		hash.setVersion(0); // normal UruString, but in Hex, not Ascii
 	}
@@ -105,11 +105,11 @@ namespace alc {
 	}
 	
 	//// tmAccountAutheticated	
-	tmAccountAutheticated::tmAccountAutheticated(tNetSession *u, Byte *playerGuid, Byte authResult, Byte *serverGuid)
+	tmAccountAutheticated::tmAccountAutheticated(tNetSession *u, Byte authResult, Byte *serverGuid)
 	: tmMsgBase(NetMsgAccountAuthenticated, plNetKi | plNetAck | plNetX | plNetGUI | plNetCustom, u)
 	{
-		memcpy(guid, playerGuid, 16);
-		this->x = u->getX(); // this is the SID the client uses for our connection
+		memcpy(guid, u->guid, 16);
+		this->x = u->getX();
 		this->ki = u->getKI();
 		
 		this->authResult = authResult;

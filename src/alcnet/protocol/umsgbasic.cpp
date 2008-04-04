@@ -38,8 +38,8 @@
 
 namespace alc {
 
-tmTerminated::tmTerminated(tNetSession * s,U32 who,Byte what,bool ack)
- :tmMsgBase(NetMsgTerminated,plNetKi | plNetCustom,s) {
+tmTerminated::tmTerminated(tNetSession * u,U32 who,Byte what,bool ack)
+ :tmMsgBase(NetMsgTerminated,plNetKi | plNetCustom,u) {
 	DBG(5,"tmTerminated() who:%i,what:%i,ack:%i\n",who,what,ack);
 	if(ack)
 		setFlags(plNetAck);
@@ -62,8 +62,8 @@ void tmTerminated::additionalFields() {
 }
 
 
-tmLeave::tmLeave(tNetSession * s,U32 ki,Byte reason)
- :tmMsgBase(NetMsgLeave,plNetKi | plNetAck | plNetCustom,s) {
+tmLeave::tmLeave(tNetSession * u,U32 ki,Byte reason)
+ :tmMsgBase(NetMsgLeave,plNetKi | plNetAck | plNetCustom,u) {
 	this->ki=ki;
 	this->reason=reason;
 }
@@ -83,13 +83,13 @@ void tmLeave::additionalFields() {
 }
 
 
-tmPlayerTerminated::tmPlayerTerminated(tNetSession * s,U32 ki,Byte reason)
- :tmMsgBase(NetMsgPlayerTerminated,plNetKi | plNetCustom,s) {
+tmPlayerTerminated::tmPlayerTerminated(tNetSession * u,U32 ki,Byte reason)
+ :tmMsgBase(NetMsgPlayerTerminated,plNetKi | plNetCustom,u) {
 	this->ki=ki;
 	this->reason=reason;
 }
-tmPlayerTerminated::tmPlayerTerminated(tNetSession * s,tNetSessionIte &ite,Byte reason)
- :tmMsgBase(NetMsgPlayerTerminated,plNetIP | plNetSid | plNetCustom,s) {
+tmPlayerTerminated::tmPlayerTerminated(tNetSession * u,tNetSessionIte &ite,Byte reason)
+ :tmMsgBase(NetMsgPlayerTerminated,plNetIP | plNetSid | plNetCustom,u) {
 	ip=ite.ip;
 	port=ite.port;
 	sid=ite.sid;
@@ -101,7 +101,7 @@ void tmPlayerTerminated::store(tBBuf &t) {
 }
 int tmPlayerTerminated::stream(tBBuf &t) {
 	int off;
-	if((flags & plNetIP) && s && s->proto!=0 && s->proto<3) throw txProtocolError(_WHERE("Unsuported message in Alcugs protocol <3"));
+	if((flags & plNetIP) && u && u->proto!=0 && u->proto<3) throw txProtocolError(_WHERE("Unsuported message in Alcugs protocol <3"));
 	off=tmMsgBase::stream(t);
 	t.putByte(reason);
 	off++;
@@ -112,13 +112,13 @@ void tmPlayerTerminated::additionalFields() {
 }
 
 
-tmPing::tmPing(tNetSession * s,double mtime,U32 ki,U32 x,Byte dst,bool ack)
- :tmMsgBase(NetMsgPing,plNetKi | plNetX | plNetCustom,s) {
+tmPing::tmPing(tNetSession * u,double mtime,U32 ki,U32 x,Byte dst,bool ack)
+ :tmMsgBase(NetMsgPing,plNetKi | plNetX | plNetCustom,u) {
 	this->ki=ki;
 	this->x=x;
 	this->mtime=mtime;
 	this->destination=dst;
-	if(s && s->min_version>=6) {
+	if(u && u->min_version>=6) {
 		setFlags(plNetTimestamp);
 	}
 	if(ack) setFlags(plNetAck);
@@ -142,7 +142,7 @@ void tmPing::unsetRouteInfo() {
 }
 int tmPing::stream(tBBuf &t) {
 	int off;
-	if((flags & plNetSid) && s && s->proto!=0 && s->proto<3) unsetFlags(plNetSid);
+	if((flags & plNetSid) && u && u->proto!=0 && u->proto<3) unsetFlags(plNetSid);
 	off=tmMsgBase::stream(t);
 	t.putDouble(mtime);
 	t.putByte(destination);

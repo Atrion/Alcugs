@@ -38,7 +38,7 @@
 namespace alc {
 
 	//// tmCustomSetGuid
-	tmCustomSetGuid::tmCustomSetGuid(tNetSession *s) : tmMsgBase(NetMsgCustomSetGuid, 0, s) // it's not capable of sending a package, so no flags are set
+	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
 	{
 		age.setVersion(0); // normal UrurString
 		netmask.setVersion(0); // normal UrurString
@@ -65,7 +65,7 @@ namespace alc {
 	}
 	
 	//// tmCustomPlayerStatus
-	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *s) : tmMsgBase(NetMsgCustomPlayerStatus, 0, s) // it's not capable of sending a package, so no flags are set
+	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
 	{
 		account.setVersion(0); // normal UrurString
 		avatar.setVersion(0); // normal UrurString

@@ -159,15 +159,14 @@ class tmMsgBase :public tmBase {
 public:
 	virtual void store(tBBuf &t);
 	virtual int stream(tBBuf &t);
-	tmMsgBase(U16 cmd,U32 flags,tNetSession * s=NULL);
-	tmMsgBase(tNetSession *s);
+	tmMsgBase(U16 cmd,U32 flags,tNetSession * u=NULL);
 	virtual ~tmMsgBase() {};
 	void setFlags(U32 f);
 	void unsetFlags(U32 f);
 	void setUrgent();
 	void unsetUrgent();
 	U32 getFlags();
-	void setSession(tNetSession *s);
+	void setSession(tNetSession *u);
 	void copyProps(tmMsgBase &t);
 	Byte * str();
 	U16 cmd;
@@ -183,7 +182,7 @@ public:
 	U32 sid;
 protected:
 	virtual void additionalFields() {} //!< writes the additional fields of this message type to the dbg buffer (called by str() to print the package)
-	tNetSession * s; //!< associatedsession (source for incoming, destination for outgoing)
+	tNetSession * u; //!< associated session (source for incoming, destination for outgoing)
 	tStrBuf dbg;
 };
 

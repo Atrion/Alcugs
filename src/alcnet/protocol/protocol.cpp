@@ -506,24 +506,16 @@ Byte * tmNetClientComm::str() {
 }
 
 //Base message
-tmMsgBase::tmMsgBase(U16 cmd,U32 flags,tNetSession * s) {
+tmMsgBase::tmMsgBase(U16 cmd,U32 flags,tNetSession * u) {
 	DBG(5,"tmMsgBase()\n");
 	this->cmd=cmd;
 	this->flags=flags;
-	this->s=s;
+	this->u=u;
 	this->timestamp.seconds=0; // the timestamp is unitialized per default (this removes a valgrind error)
 	//set bhflags
 	bhflags=0;
 	if(this->flags & plNetAck)
 		bhflags |= UNetAckReq;
-}
-tmMsgBase::tmMsgBase(tNetSession *s)
-{
-	flags = cmd = 0;
-	this->s = s;
-	timestamp.seconds=0; // the timestamp is unitialized per default (this removes a valgrind error)
-	//set bhflags
-	bhflags=0;
 }
 void tmMsgBase::setFlags(U32 f) {
 	this->flags |= f;
@@ -544,8 +536,8 @@ void tmMsgBase::setUrgent() {
 void tmMsgBase::unsetUrgent() {
 	bhflags &= ~UNetUrgent;
 }
-void tmMsgBase::setSession(tNetSession *s) {
-	this->s=s;
+void tmMsgBase::setSession(tNetSession *u) {
+	this->u=u;
 }
 void tmMsgBase::store(tBBuf &t) {
 	//base
@@ -554,9 +546,9 @@ void tmMsgBase::store(tBBuf &t) {
 	if(flags & plNetVersion) {
 		max_version=t.getByte();
 		min_version=t.getByte();
-		if(s && s->max_version==0) {
-			s->max_version=max_version;
-			s->min_version=min_version;
+		if(u && u->max_version==0) {
+			u->max_version=max_version;
+			u->min_version=min_version;
 		}
 	} else {
 		max_version=0;
@@ -564,20 +556,20 @@ void tmMsgBase::store(tBBuf &t) {
 	}
 	//BEGIN ** guess the protocol version from behaviours
 	// The first message from Plasma clients is always an auth hello that contains the version numbers
-	if(s && s->max_version==0) {
+	if(u && u->max_version==0) {
 		if(flags & plNetTimestamp || t.remaining() < 8) { // when there are less than 8 bytes remaining, no timestamp can be contained
-			s->max_version=12; //sure (normally on ping proves)
-			s->min_version=6;
+			u->max_version=12; //sure (normally on ping proves)
+			u->min_version=6;
 		} else {
-			s->max_version=12;
-			s->min_version=0;
+			u->max_version=12;
+			u->min_version=0;
 		}
 		DBG(5,"Detected version is %i.%i\n",s->max_version,s->min_version);
 	}
 	//END guess protocol version
 	
 	//NetMsgPing should have always the timestamp enabled in new versions.
-	if(flags & plNetTimestamp || (s && (s->min_version<6 && s->max_version==12))) {
+	if(flags & plNetTimestamp || (u && (u->min_version<6 && u->max_version==12))) {
 		t.get(timestamp);
 	} else {
 		timestamp.seconds=0;
@@ -623,8 +615,8 @@ void tmMsgBase::store(tBBuf &t) {
 	plNetX | plNetKi | plNetGUI | plNetIP | plNetCustom;
 	
 	//now catch undocumented protocol flags
-	if((flags & ~(check)) && s) {
-		lerr->log("%s Problem parsing a plNetMsg header format mask %08X\n",s->str(),flags & ~(check));
+	if((flags & ~(check)) && u) {
+		lerr->log("%s Problem parsing a plNetMsg header format mask %08X\n",u->str(),flags & ~(check));
 		lerr->dumpbuf(t);
 		lerr->nl();
 		lerr->nl();
@@ -641,7 +633,7 @@ int tmMsgBase::stream(tBBuf &t) {
 		t.putByte(min_version);
 		off+=2;
 	}
-	if(flags & plNetTimestamp || (s && (s->min_version<6 && s->max_version==12))) {
+	if(flags & plNetTimestamp || (u && (u->min_version<6 && u->max_version==12))) {
 		if(timestamp.seconds==0) {
 			timestamp.seconds=alcGetTime();
 			timestamp.microseconds=alcGetMicroseconds();
@@ -704,7 +696,7 @@ void tmMsgBase::copyProps(tmMsgBase &t) {
 Byte * tmMsgBase::str() {
 	#ifdef _UNET_MSGDBG_
 	dbg.printf("%s %04X %08X",alcUnetGetMsgCode(cmd),cmd,flags);
-	if (s) dbg.printf(" on %s", s->str());
+	if (u) dbg.printf(" on %s", u->str());
 	dbg.printf("\n Flags:");
 	if(flags & plNetAck)
 		dbg.writeStr(" ack,");
