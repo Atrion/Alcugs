@@ -530,6 +530,9 @@ void tmMsgBase::unsetFlags(U32 f) {
 U32 tmMsgBase::getFlags() {
 	return flags;
 }
+bool tmMsgBase::hasFlags(U32 f) {
+	return (flags & f);
+}
 void tmMsgBase::setUrgent() {
 	bhflags |= UNetUrgent;
 }
