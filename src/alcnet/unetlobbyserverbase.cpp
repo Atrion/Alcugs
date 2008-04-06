@@ -60,16 +60,15 @@ namespace alc {
 	void tUnetLobbyServerBase::forwardPing(tmPing &ping, tNetSession *u)
 	{
 		if (u->whoami == KAuth || u->whoami == KTracking || u->whoami == KVault) { // we got a ping from one of our servers, let's forward it to the client it came from
+			if (!ping.hasFlags(plNetIP)) throw txProtocolError(_WHERE("IP flag missing"));
 			tNetSessionIte ite(ping.ip, ping.port, ping.hasFlags(plNetSid) ? ping.sid : -1);
 			tNetSession *client = getSession(ite);
 			ping.unsetRouteInfo();
-			ping.setSession(client); // that's necessary for the ping to know which protocol to use
 			if (client) client->send(ping);
 		}
 		else { // ok, let's forward the ping to the right server
 			tNetSession *server = getPeer(ping.destination);
 			ping.setRouteInfo(u->getIte());
-			ping.setSession(server); // that's necessary for the ping to know which protocol to use
 			if (server) server->send(ping);
 		}
 	}
@@ -121,7 +120,6 @@ namespace alc {
 		tNetSessionIte ite = netConnect((char *)host.c_str(), port.asU16(), 2, 0);
 		tNetSession *session = getSession(ite);
 		session->whoami = dst;
-		session->conn_timeout = 5*60; // 5minutes timeout for server. must be set there as well!
 		if (!protocol.isNull())
 			session->proto = protocol.asU32();
 		

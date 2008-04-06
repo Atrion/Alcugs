@@ -898,6 +898,7 @@ void tNetSession::negotiate() {
 }
 
 void tNetSession::send(tmMsgBase & t) {
+	t.setSession(this); // make sure the right session is set
 	net->basesend(this,t);
 }
 

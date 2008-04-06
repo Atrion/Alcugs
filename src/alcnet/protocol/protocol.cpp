@@ -852,6 +852,15 @@ char * alcUnetGetReasonCode(Byte code) {
 		case 0x07:
 			ret="IllegalCCRClient";
 			break;
+		case 0x08:
+			ret="HackAttempt";
+			break;
+		case 0x09:
+			ret="Unimplemented";
+			break;
+		case 0x10:
+			ret="ParseError";
+			break;
 		default:
 			ret="Unknown";
 			break;

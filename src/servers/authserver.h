@@ -45,7 +45,7 @@ namespace alc {
 	////DEFINITIONS
 	class tUnetAuthServer : public tUnetServerBase {
 	public:
-		tUnetAuthServer() : tUnetServerBase() { conn_timeout = 5*60; authBackend = new tAuthBackend; }
+		tUnetAuthServer() : tUnetServerBase() { authBackend = new tAuthBackend; }
 		virtual ~tUnetAuthServer() { delete authBackend; }
 
 		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);

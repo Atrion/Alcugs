@@ -76,6 +76,10 @@ namespace alc {
 	void tmCustomAuthAsk::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
+		if (!hasFlags(plNetX | plNetVersion)) throw txProtocolError(_WHERE("X or Version flag missing"));
+#ifndef _UNET2_SUPPORT
+		if (!hasFlags(plNetIP)) throw txProtocolError(_WHERE("IP flag missing"));
+#endif
 		t.get(login);
 		memcpy(challenge, t.read(16), 16);
 		memcpy(hash, t.read(16), 16);
@@ -149,12 +153,17 @@ namespace alc {
 	void tmCustomAuthResponse::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
+		if (!hasFlags(plNetX | plNetVersion)) throw txProtocolError(_WHERE("X or Version flag missing"));
+#ifndef _UNET2_SUPPORT
+		if (!hasFlags(plNetIP | plNetGUI)) throw txProtocolError(_WHERE("IP or GUID flag missing"));
+#endif
 		t.get(login);
 		result = t.getByte();
 		t.get(passwd);
 #ifdef _UNET2_SUPPORT
 		if(!(flags & plNetGUI)) {
 			memcpy(guid, t.read(16), 16);
+			ip = port = 0; // they should be initialized
 			if (u) u->proto = 1; // unet2 protocol
 		}
 #endif

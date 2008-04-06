@@ -49,7 +49,6 @@ namespace alc {
 	public:
 		tUnetTrackingServer(void) : tUnetServerBase()
 		{
-			conn_timeout = 5*60;
 			lstd->log("WARNING: The tracking server is not finished yet. So if it doesn\'t work, that's not even a bug.\n");
 		}
 	

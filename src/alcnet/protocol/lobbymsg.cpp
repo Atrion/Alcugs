@@ -41,6 +41,12 @@ namespace alc {
 	tmRequestMyVaultPlayerList::tmRequestMyVaultPlayerList(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
 	{ }
 	
+	void tmRequestMyVaultPlayerList::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
+	}
+	
 	//// tmVaultPlayerList
 	tmVaultPlayerList::tmVaultPlayerList(tNetSession *u, U16 numberPlayers, tMBuf players, Byte *url)
 	: tmMsgBase(NetMsgVaultPlayerList, plNetAck | plNetCustom | plNetX | plNetKi, u)

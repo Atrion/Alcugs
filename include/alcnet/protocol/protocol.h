@@ -170,6 +170,7 @@ public:
 	void setSession(tNetSession *u);
 	void copyProps(tmMsgBase &t);
 	Byte * str();
+	
 	U16 cmd;
 	U32 flags;
 	Byte max_version;
@@ -183,6 +184,7 @@ public:
 	U32 sid;
 protected:
 	virtual void additionalFields() {} //!< writes the additional fields of this message type to the dbg buffer (called by str() to print the package)
+	
 	tNetSession * u; //!< associated session (source for incoming, destination for outgoing)
 	tStrBuf dbg;
 };

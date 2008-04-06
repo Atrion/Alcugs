@@ -46,6 +46,7 @@ namespace alc {
 	void tmAuthenticateHello::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
+		if (!hasFlags(plNetX | plNetKi | plNetVersion)) throw txProtocolError(_WHERE("X, KI or Version flag missing"));
 		t.get(account);
 		maxPacketSize = t.getU16();
 		release = t.getByte();
@@ -95,6 +96,7 @@ namespace alc {
 	void tmAuthenticateResponse::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
+		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
 		t.get(hash);
 	}
 	
