@@ -45,6 +45,7 @@ void parameters_usage() {
 	printf(alcVersionText());
 	printf("Usage: urumsgtest peer:port [options]\n\n\
  -f x: Set the file to upload\n\
+ -z: Compress the file\n\
  -val x: set validation level (0-3) (default 2)\n\
  -nl: enable netcore logs\n\
  -V: show version and end\n\
@@ -63,22 +64,47 @@ public:
 	virtual void store(tBBuf &t);
 	virtual int stream(tBBuf &t);
 	tmData(tNetSession * u=NULL);
+	void setCompressed(void) {
+		compressed=true;
+	}
+	bool compressed;
 	//format
 	tMBuf data;
 };
 
 tmData::tmData(tNetSession * u)
- :tmMsgBase(0x1313,plNetTimestamp | plNetAck,u) {}
+ :tmMsgBase(0x1313,plNetTimestamp | plNetAck,u) { compressed = false; }
 void tmData::store(tBBuf &t) {
 	tmMsgBase::store(t);
 	data.clear();
-	t.get(data);
+	compressed = hasFlags(plNetX);
+	if (compressed) {
+		tZBuf zdata;
+		t.get(zdata);
+		zdata.uncompress();
+		zdata.get(data);
+	}
+	else
+		t.get(data);
 }
 int tmData::stream(tBBuf &t) {
 	int off;
+	if (compressed) {
+		setFlags(plNetX);
+		x = 0;
+	}
 	off=tmMsgBase::stream(t);
-	t.put(data);
-	off+=data.size();
+	if (compressed) {
+		tZBuf zdata;
+		zdata.put(data);
+		zdata.compress();
+		t.put(zdata);
+		off += zdata.size();
+	}
+	else {
+		t.put(data);
+		off+=data.size();
+	}
 	return off;
 }
 
@@ -102,6 +128,9 @@ public:
 	void setFile(char * file) {
 		strcpy(this->file,file);
 	}
+	void setCompressed(void) {
+		compressed=true;
+	}
 private:
 	Byte listen;
 	tLog * out;
@@ -109,6 +138,7 @@ private:
 	U16 d_port;
 	Byte validation;
 	bool urgent;
+	bool compressed;
 	char file[500];
 	bool sent;
 	tNetSessionIte dstite;
@@ -126,6 +156,7 @@ tUnetSimpleFileServer::tUnetSimpleFileServer(char * lhost,U16 lport,Byte listen)
 	validation=2;
 	urgent=false;
 	sent=false;
+	compressed=false;
 	dstite.ip=0;
 	dstite.port=0;
 	dstite.sid=-1;
@@ -161,6 +192,7 @@ void tUnetSimpleFileServer::onIdle(bool idle) {
 			if(!u->isConnected()) return;
 			data.setSession(u);
 			if(urgent) data.setUrgent();
+			if (compressed) data.setCompressed();
 			tFBuf f1;
 			f1.open(file);
 			data.data.clear();
@@ -226,7 +258,7 @@ int main(int argc,char * argv[]) {
 	Byte val=2; //validation level
 	
 	//options
-	Byte listen=0,nlogs=0,urgent=0;
+	Byte listen=0,nlogs=0,urgent=0,compress=0;
 
 	//parse parameters
 	for (i=1; i<argc; i++) {
@@ -241,6 +273,7 @@ int main(int argc,char * argv[]) {
 		else if(!strcmp(argv[i],"-nl")) { nlogs=1; }
 		else if(!strcmp(argv[i],"-val") && argc>i+1) { i++; val=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-u")) { urgent=1; }
+		else if(!strcmp(argv[i],"-z")) { compress=1; }
 		else if(!strcmp(argv[i],"-v") && argc>i+1) { i++; loglevel=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-lh") && argc>i+1) {
 			i++;
@@ -309,6 +342,7 @@ int main(int argc,char * argv[]) {
 		netcore->setValidation(val);
 		netcore->setDestinationAddress(hostname,port);
 		if(urgent==1) netcore->setUrgent();
+		if(compress==1) netcore->setCompressed();
 		netcore->setFile(file);
 		
 		netcore->run();
