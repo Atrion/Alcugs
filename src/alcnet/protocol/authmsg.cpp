@@ -50,9 +50,10 @@ namespace alc {
 	tmCustomAuthAsk::tmCustomAuthAsk(tNetSession *u, U32 x, U32 ip, U16 port, Byte *login, Byte *challenge, Byte *hash, Byte release)
 	: tmMsgBase(NetMsgCustomAuthAsk, plNetAck | plNetCustom | plNetX | plNetVersion | plNetIP, u)
 	{
+#ifdef _UNET2_SUPPORT
 		if (u && u->proto == 1)
 			unsetFlags(plNetIP);
-		
+#endif
 		this->max_version = u->max_version;
 		this->min_version = u->min_version;
 		this->x = x; // this is the SID the lobby uses for the connection to the client to be authed
@@ -79,11 +80,13 @@ namespace alc {
 		memcpy(challenge, t.read(16), 16);
 		memcpy(hash, t.read(16), 16);
 		release = t.getByte();
+#ifdef _UNET2_SUPPORT
 		if(!(flags & plNetIP)) {
 			ip = t.getU32();
 			port = 0;
 			if (u) u->proto = 1; // unet2 protocol
 		}
+#endif
 	}
 	
 	int tmCustomAuthAsk::stream(tBBuf &t)
@@ -93,16 +96,20 @@ namespace alc {
 		t.write(challenge, 16); off += 16;
 		t.write(hash, 16); off += 16;
 		t.putByte(release); ++off;
+#ifdef _UNET2_SUPPORT
 		if (u && u->proto == 1) {
 			t.putU32(ip); off += 4;
 		}
+#endif
 		return off;
 	}
 	
 	void tmCustomAuthAsk::additionalFields()
 	{
 		dbg.nl();
+#ifdef _UNET2_SUPPORT
 		if (u && u->proto == 1) dbg.printf(" ip (unet2 protocol): %s,", alcGetStrIp(ip));
+#endif
 		// use two printf commands as alcGetStrGuid uses a static array and when using one command it would seems as if challenge and hash would be the same
 		dbg.printf(" login: %s, challenge: %s, ", login.c_str(), alcGetStrGuid(challenge, 16));
 		dbg.printf("hash: %s, build: 0x%02X (%s)", alcGetStrGuid(hash, 16), release, alcUnetGetRelease(release));
@@ -112,8 +119,10 @@ namespace alc {
 	tmCustomAuthResponse::tmCustomAuthResponse(tNetSession *u, tmCustomAuthAsk &authAsk, const Byte *guid, Byte *passwd, Byte result, Byte accessLevel)
 	 : tmMsgBase(NetMsgCustomAuthResponse, plNetAck | plNetCustom | plNetX | plNetVersion | plNetIP | plNetGUI, u)
 	 {
-	 	if (u && u->proto == 1)
+#ifdef _UNET2_SUPPORT
+		if (u && u->proto == 1)
 			unsetFlags(plNetIP | plNetGUI);
+#endif
 		// copy stuff from the authAsk
 		x = authAsk.x; // this is the SID the lobby uses for the connection to the client to be authed
 		max_version = u->max_version;
@@ -143,10 +152,12 @@ namespace alc {
 		t.get(login);
 		result = t.getByte();
 		t.get(passwd);
+#ifdef _UNET2_SUPPORT
 		if(!(flags & plNetGUI)) {
 			memcpy(guid, t.read(16), 16);
 			if (u) u->proto = 1; // unet2 protocol
 		}
+#endif
 		accessLevel = t.getByte();
 	}
 	
@@ -156,7 +167,9 @@ namespace alc {
 		off += t.put(login); // login
 		t.putByte(result); ++off; // result
 		off += t.put(passwd); // passwd
+#ifdef _UNET2_SUPPORT
 		if (u && u->proto == 1) { t.write(guid, 16); off += 16; } // GUID (only for old protocol, the new one sends it in the header)
+#endif
 		t.putByte(accessLevel); ++off; // acess level
 		return off;
 	}
@@ -164,7 +177,9 @@ namespace alc {
 	void tmCustomAuthResponse::additionalFields()
 	{
 		dbg.nl();
+#ifdef _UNET2_SUPPORT
 		if (u && u->proto == 1) dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid, 16));
+#endif
 		dbg.printf(" login: %s, passwd: (hidden), result: 0x%02X (%s), accessLevel: %d", login.c_str(), result, alcUnetGetAuthCode(result), accessLevel);
 	}
 

@@ -111,6 +111,13 @@ namespace alc {
 			return tNetSessionIte();
 		}
 		
+#ifndef _UNET2_SUPPORT
+		if (!protocol.isNull() && protocol.asU32() == 1) {
+			err->log("ERR: Unet2 protocol is requested for service %d (%s) but it is no longer supported\n", dst, alcUnetGetDestination(dst));
+			return tNetSessionIte();
+		}
+#endif
+		
 		tNetSessionIte ite = netConnect((char *)host.c_str(), port.asU16(), 2, 0);
 		tNetSession *session = getSession(ite);
 		session->whoami = dst;
@@ -279,8 +286,9 @@ namespace alc {
 				log->log("<RCV> %s\n", authResponse.str());
 				
 				// find the client's session
-				tNetSession *client = NULL;
 				tNetSessionIte ite(authResponse.ip, authResponse.port, authResponse.x);
+#ifdef _UNET2_SUPPORT
+				tNetSession *client = NULL;
 				if (u->proto != 1) { // when we're using the new protocol, we're getting IP and Port, not only the sid
 					client = getSession(ite);
 				}
@@ -288,6 +296,9 @@ namespace alc {
 					client = smgr->getSession(authResponse.x);
 					ite = client->getIte();
 				}
+#else
+				tNetSession *client = getSession(ite);
+#endif
 				// verify account name and session state
 				if (!client || client->authenticated != 10 || client->whoami != 0 || strcmp((char *)client->account, (char *)authResponse.login.c_str()) != 0) {
 					err->log("ERR: Got CustomAuthResponse for player %s but can't find his session.\n", authResponse.login.c_str());
