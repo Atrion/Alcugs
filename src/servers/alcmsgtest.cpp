@@ -28,7 +28,7 @@
 //Program vars
 #define IN_ALC_PROGRAM
 #define ALC_PROGRAM_ID "$Id$"
-#define ALC_PROGRAM_NAME "UruTestingSuit"
+#define ALC_PROGRAM_NAME "UruTestingSuite"
 
 #include<alcugs.h>
 #include<unet.h>
@@ -81,8 +81,9 @@ void tmData::store(tBBuf &t) {
 	if (compressed) {
 		tZBuf zdata;
 		t.get(zdata);
-		zdata.uncompress();
+		zdata.uncompress(x);
 		zdata.get(data);
+		assert(data.size() == x);
 	}
 	else
 		t.get(data);
@@ -91,7 +92,7 @@ int tmData::stream(tBBuf &t) {
 	int off;
 	if (compressed) {
 		setFlags(plNetX);
-		x = 0;
+		x = data.size(); // the X value saves the uncompressed size
 	}
 	off=tmMsgBase::stream(t);
 	if (compressed) {

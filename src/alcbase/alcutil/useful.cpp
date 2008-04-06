@@ -194,7 +194,7 @@ char alcIsAlpha(int c) {
 	return(IsCharAlpha(c));
 #else
   return(index("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZáàâä\
-éèêëóòôöúùûüçÇñÑ", c)!=NULL); //<- Some characters are not visible on UTF systems, or under other codifications, so you may see garbage
+éèêëíìîïóòôöúùûüçÇñÑß", c)!=NULL); //<- Some characters are not visible on UTF systems, or under other codifications, so you may see garbage
 #endif
 }
 
