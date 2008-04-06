@@ -275,16 +275,12 @@ int main(int argc,char * argv[]) {
 	U16 l_port=0;
 	//remote settings
 	char hostname[100]="";
-	char username[100]="";
-	char avie[100]="";
 	U16 port=5000;
 	
 	Byte val=2; //validation level
 	
 	double time=1; //time
 	Byte destination=KLobby,source=0,admin=0;
-	
-	if (__VTC) admin=1;
 	
 	//options
 	int num=5,flood=1; //num probes & flood multiplier
@@ -326,7 +322,7 @@ int main(int argc,char * argv[]) {
 		}
 		else {
 			if(i==1) {
-				if(alcGetLoginInfo(argv[1],hostname,username,((U16 *)&port),avie)!=1) {
+				if(alcGetLoginInfo(argv[1],hostname,NULL,((U16 *)&port),NULL)!=1) {
 					parameters_usage();
 					return -1;
 				}
@@ -348,8 +344,8 @@ int main(int argc,char * argv[]) {
 			lstd->print(alcVersionText());
 		}
 		
-		if(time<0.2 && (admin==0 || __WTC==0)) {
-			if(__WTC) {
+		if(time<0.2 && (admin==0 || _DANGEROUS_TESTING==0)) {
+			if(_DANGEROUS_TESTING) {
 				printf("\nOnly the administrator can set less than 0.2 seconds\n Setting up to 1 second. (enable admin mode with -i_know_what_i_am_doing)\n");
 			} else {
 				printf("\nTime must be bigger than 0.2 seconds\n Setting up to 1 second.\n");
@@ -359,9 +355,9 @@ int main(int argc,char * argv[]) {
 		
 		if(flood<=0) flood=1;
 		
-		if(flood>1 && (admin==0 || __WTC==0)) {
-			if(__WTC) {
-				printf("\nOnly the administrator can perform stressing flood tests to the server.\n Disabling flooding.\n");
+		if(flood>1 && (admin==0 || _DANGEROUS_TESTING==0)) {
+			if(_DANGEROUS_TESTING) {
+				printf("\nOnly the administrator can perform stressing flood tests to the server.\n Disabling flooding. (enable admin mode with -i_know_what_i_am_doing)\n");
 			} else {
 				printf("\nFlood disabled.\n");
 			}
@@ -389,7 +385,7 @@ int main(int argc,char * argv[]) {
 		}
 
 		if(listen==0 && mrtg==0) {
-			printf("Connecting to %s#%s@%s:%i...\n",username,avie,hostname,port);
+			printf("Connecting to %s:%i...\n",hostname,port);
 			printf("Sending ping probe to %i %s...\n",destination,alcUnetGetDestination(destination));
 		}
 		if(listen!=0) {

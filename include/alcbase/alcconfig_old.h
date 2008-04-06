@@ -63,9 +63,7 @@
 // Debug the ack stack
 //#define _ACKSTACK_DBG_
 
-// Check admin?
-#define __VTC 0
-// Enable dangerous testing options
-#define __WTC 1
+// Enable dangerous testing options (must be defined, as 0 or as 1)
+#define _DANGEROUS_TESTING 1
 
 #endif

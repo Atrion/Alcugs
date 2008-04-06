@@ -186,6 +186,8 @@ int tUnetSimpleFileServer::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSessi
 			if(listen!=0) {
 				tmData data;
 				msg->data->get(data);
+				log->log("<RCV> %s\n", data.str());
+				printf("Saving file to rcvmsg.raw...\n");
 				tFBuf f1;
 				f1.open("rcvmsg.raw","wb");
 				f1.put(data.data);
@@ -216,8 +218,6 @@ int main(int argc,char * argv[]) {
 	U16 l_port=0;
 	//remote settings
 	char hostname[100]="";
-	char username[100]="";
-	char avie[100]="";
 	U16 port=5000;
 	
 	char file[500];
@@ -257,7 +257,7 @@ int main(int argc,char * argv[]) {
 		}
 		else {
 			if(i==1) {
-				if(alcGetLoginInfo(argv[1],hostname,username,((U16 *)&port),avie)!=1) {
+				if(alcGetLoginInfo(argv[1],hostname,NULL,((U16 *)&port),NULL)!=1) {
 					parameters_usage();
 					return -1;
 				}
@@ -297,7 +297,7 @@ int main(int argc,char * argv[]) {
 		}
 		
 		if(listen==0) {
-			printf("Connecting to %s#%s@%s:%i...\n",username,avie,hostname,port);
+			printf("Connecting to %s:%i...\n",hostname,port);
 			printf("Sending file...\n");
 		} else {
 			printf("Waiting for messages... CTR+C stops\n");

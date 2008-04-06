@@ -102,7 +102,6 @@
    fun:__nss_hosts_lookup
    fun:gethostbyname_r
    fun:gethostbyname
-   fun:_ZN3alc5tUnet7startOpEv
 }
 
 {
