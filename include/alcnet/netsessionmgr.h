@@ -66,21 +66,22 @@ public:
 	//! removes the given session from the table and shrinks if possible
 	void remove(tNetSession *u);
 	//! return the nth session of our table
-	tNetSession *get(int nr) {
-		if (nr < n) return table[nr];
+	tNetSession *get(int n) {
+		if (n < size) return table[n];
 		return NULL;
 	}
 	void rewind();
 	void end();
 	tNetSession * getNext();
-	bool empty() {
-		return n==0;
-	}
+	bool empty() { return count==0; }
+	inline int getSize() { return size; }
+	inline int getCount() { return count; }
 protected:
 	int findFreeSlot(void);
 
 	int off;
-	int n;
+	int size; //!< the size of the table
+	int count; //!< the number of session stored in the table (there can be holes, so it can be smaller than size)
 	tNetSession ** table;
 };
 

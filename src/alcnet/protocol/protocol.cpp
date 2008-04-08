@@ -559,7 +559,7 @@ void tmMsgBase::store(tBBuf &t) {
 	}
 	//BEGIN ** guess the protocol version from behaviours
 	// The first message from Plasma clients is always an auth hello that contains the version numbers
-	if(u && u->max_version==0) {
+	if(u && u->max_version==0 && !(flags & plNetVersion)) { // don't auto-guess when we got a version number (it could have been a version 0.0)
 		if(flags & plNetTimestamp || t.remaining() < 8) { // when there are less than 8 bytes remaining, no timestamp can be contained
 			u->max_version=12; //sure (normally on ping proves)
 			u->min_version=6;
