@@ -435,7 +435,7 @@ tNetSessionIte tUnet::netConnect(char * hostname,U16 port,Byte validation,Byte f
 	ite.port=htons(port);
 	ite.sid=-1;
 	
-	tNetSession * u=smgr->search(ite);
+	tNetSession * u=smgr->search(ite, true);
 	
 	u->validation=validation;
 	u->cflags |= flags;
@@ -584,7 +584,7 @@ int tUnet::Recv() {
 		ite.sid=-1;
 		
 		try {
-			session=smgr->search(ite);
+			session=smgr->search(ite, true);
 		} catch(txToMCons) {
 			return UNET_TOMCONS;
 		}

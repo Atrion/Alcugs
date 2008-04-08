@@ -53,27 +53,48 @@ public:
 	}
 };
 
-class tNetSessionMgr {
+/** tNetSessionList saves a list of sessions. it can search for a session using a tNetSessionIte. also see tNetSessionMgr. */
+class tNetSessionList {
 public:
-	tNetSessionMgr(tUnet * net,int limit=0);
-	~tNetSessionMgr();
-	tNetSession * search(tNetSessionIte &ite,bool create=true);
-	tNetSession *getSession(int sid) {
-		if (sid < n) return table[sid];
+	tNetSessionList(void);
+	virtual ~tNetSessionList();
+	
+	//! find the session with the given ip and port (ignore the sid) and return it
+	tNetSession *findSession(tNetSessionIte &ite);
+	//! add that session and return the place where it's saved (to be used by tNetSessionMgr::search)
+	int addSession(tNetSession *u);
+	//! removes the given session from the table and shrinks if possible
+	void removeSession(tNetSession *u);
+	//! return the nth session of our table
+	tNetSession *getSession(int nr) {
+		if (nr < n) return table[nr];
 		return NULL;
 	}
 	void rewind();
 	void end();
-	void destroy(tNetSessionIte &ite);
 	tNetSession * getNext();
 	bool empty() {
 		return n==0;
 	}
-private:
+protected:
+	int findFreeSlot(void);
+
 	int off;
 	int n;
-	int max;
 	tNetSession ** table;
+};
+
+/** tNetSessionMgr is meant to be the one and only session manager of a server. The number of a session in it's table defines
+it's global sid. It will use the sid of a tNetSessionIte for faster searching. It can also create new and delete existing sessions
+(in fact, it's the only part of alcugs which does that) and it implements a limit for a max. number of sessions */
+class tNetSessionMgr : public tNetSessionList {
+public:
+	tNetSessionMgr(tUnet * net,int limit=0);
+	virtual ~tNetSessionMgr();
+	tNetSession * search(tNetSessionIte &ite,bool create);
+	void destroy(tNetSessionIte &ite);
+private:
+	int max;
 	tUnet * net;
 };
 
