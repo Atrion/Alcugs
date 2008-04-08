@@ -36,7 +36,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_TRACKINGSERVER_ID "$Id$"
 
-//#define _DBG_LEVEL_ 10
+#define _DBG_LEVEL_ 10
 
 #include <alcugs.h>
 #include <unet.h>
@@ -67,6 +67,12 @@ namespace alc {
 				msg->data->get(setGuid);
 				log->log("<RCV> %s\n", setGuid.str());
 				
+				// save the data for the session
+				memcpy(u->guid, setGuid.guid, 8);
+				strcpy((char *)u->name, (char *)setGuid.age.c_str());
+				u->data = (void *)(new tTrackingData(u->getPort() == 5000)); // the peer is initialized, it will be regarded when searching for servers
+				// FIXME: the criteria to determine whether it's a lobby or a game server is BAD
+				
 				return 1;
 			}
 			case NetMsgCustomPlayerStatus:
@@ -75,6 +81,26 @@ namespace alc {
 				tmCustomPlayerStatus playerStatus(u);
 				msg->data->get(playerStatus);
 				log->log("<RCV> %s\n", playerStatus.str());
+				
+				// update the player's data
+				players->updatePlayer(playerStatus.ki, playerStatus.x);
+				
+				return 1;
+			}
+			case NetMsgCustomFindServer:
+			{
+				// get the data out of the packet
+				tmCustomFindServer findServer(u);
+				msg->data->get(findServer);
+				log->log("<RCV> %s\n", findServer.str());
+				
+				tPlayer *player = players->getPlayer(findServer.ki);
+				if (!player) {
+					err->log("ERR: Ignoring a NetMsgCustomFindServer for player with KI %d since I can't find that player\n", findServer.ki);
+					return 1;
+				}
+				player->x = findServer.x;
+				players->findServer(player, findServer.guid, findServer.age.c_str(), smgr);
 				
 				return 1;
 			}

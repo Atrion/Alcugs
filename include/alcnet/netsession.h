@@ -101,7 +101,9 @@ public:
 	
 	U32 ki; //player set and valid id
 	U32 x; //x value
-	Byte guid[16]; //peer guid (hex)
+	Byte guid[16]; // hex; player guid in lobby server, age guid in tracking server
+	Byte name[201]; // age name in tracking server
+	void *data; // save additional data (i.e. tracking information)
 
 private:
 	tUnet * net;

@@ -37,7 +37,7 @@ namespace alc {
 		tmCustomSetGuid(tNetSession *u);
 		virtual void store(tBBuf &t);
 		// format
-		tUStr age, netmask, ip;
+		tUStr age, netmask, ip_str;
 	protected:
 		virtual void additionalFields();
 	};
@@ -49,6 +49,27 @@ namespace alc {
 		// format
 		tUStr account, avatar;
 		Byte playerFlag, playerStatus;
+	protected:
+		virtual void additionalFields();
+	};
+	
+	class tmCustomFindServer : public tmMsgBase {
+	public:
+		tmCustomFindServer(tNetSession *u);
+		virtual void store(tBBuf &t);
+		// format
+		tUStr age;
+	protected:
+		virtual void additionalFields();
+	};
+	
+	class tmCustomForkServer : public tmMsgBase {
+	public:
+		tmCustomForkServer(tNetSession *u, U32 ki, U32 x, U16 port, const Byte *guid, const Byte *name, bool loadSDL);
+		virtual int stream(tBBuf &t);
+		// format
+		tUStr age;
+		Byte loadSDL;
 	protected:
 		virtual void additionalFields();
 	};

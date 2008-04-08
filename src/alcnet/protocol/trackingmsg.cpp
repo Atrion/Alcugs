@@ -42,12 +42,13 @@ namespace alc {
 	{
 		age.setVersion(0); // normal UrurString
 		netmask.setVersion(0); // normal UrurString
-		ip.setVersion(0); // normal UrurString
+		ip_str.setVersion(0); // normal UrurString
 	}
 	
 	void tmCustomSetGuid::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
+		if (!hasFlags(plNetVersion)) throw txProtocolError(_WHERE("Version flag missing"));
 		// there's already a guid member in tmMsgBase, so let's use that (though we need only 8 bytes)
 		tUStr guid_str(5); // inverted UruString
 		t.get(guid_str);
@@ -55,13 +56,13 @@ namespace alc {
 		
 		t.get(age);
 		t.get(netmask);
-		t.get(ip);
+		t.get(ip_str);
 	}
 	
 	void tmCustomSetGuid::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" GUID: %s, Age filename: %s, Netmask: %s, IP: %s", alcGetStrGuid(guid, 8), age.c_str(), netmask.c_str(), ip.c_str());
+		dbg.printf(" GUID: %s, Age filename: %s, Netmask: %s, IP: %s", alcGetStrGuid(guid, 8), age.c_str(), netmask.c_str(), ip_str.c_str());
 	}
 	
 	//// tmCustomPlayerStatus
@@ -74,6 +75,7 @@ namespace alc {
 	void tmCustomPlayerStatus::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
+		if (!hasFlags(plNetX | plNetKi | plNetVersion)) throw txProtocolError(_WHERE("X, KI or Version flag missing"));
 		memcpy(guid, t.read(16), 16);
 		t.get(account);
 		t.get(avatar);
@@ -85,6 +87,69 @@ namespace alc {
 	{
 		dbg.nl();
 		dbg.printf(" GUID: %s, Account: %s, Avatar: %s, Flag: 0x%02X, Status: 0x%02X (%s)", alcGetStrGuid(guid, 16), account.c_str(), avatar.c_str(), playerFlag, playerStatus, alcUnetGetReasonCode(playerStatus));
+	}
+	
+	//// tmCustomFindServer
+	tmCustomFindServer::tmCustomFindServer(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
+	{
+		age.setVersion(0); // normal UrurString
+	}
+	
+	void tmCustomFindServer::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		if (!hasFlags(plNetX | plNetKi | plNetVersion)) throw txProtocolError(_WHERE("X, KI or Version flag missing"));
+		// there's already a guid member in tmMsgBase, so let's use that (though we need only 8 bytes)
+		tUStr guid_str(5); // inverted UruString
+		t.get(guid_str);
+		alcAscii2Hex(guid, (Byte *)guid_str.c_str(), 8);
+		
+		t.get(age);
+		ip = t.getU32(); // use the tmMsgBase property
+	}
+	
+	void tmCustomFindServer::additionalFields()
+	{
+		dbg.nl();
+		dbg.printf(" GUID: %s, Age filename: %s, IP: %s", alcGetStrGuid(guid, 8), age.c_str(), alcGetStrIp(ip));
+	}
+	
+	//// tmCustomForkServer
+	tmCustomForkServer::tmCustomForkServer(tNetSession *u, U32 ki, U32 x, U16 port, const Byte *guid, const Byte *name, bool loadSDL)
+	: tmMsgBase(NetMsgCustomForkServer, plNetAck | plNetCustom | plNetX | plNetKi | plNetVersion, u)
+	{
+		this->x = x;
+		this->ki = ki;
+		max_version = u->max_version;
+		min_version = u->min_version;
+		
+		this->port = port;
+		memcpy(this->guid, guid, 8);
+		age.writeStr(name);
+		age.setVersion(0); // normal UruString
+		this->loadSDL = loadSDL;
+	}
+	
+	int tmCustomForkServer::stream(tBBuf &t)
+	{
+		int off = tmMsgBase::stream(t);
+		t.putU16(port); off += 2;
+		
+		tUStr guid_str(5);
+		guid_str.writeStr(alcGetStrGuid(guid, 8));
+		t.put(guid_str); off += 8;
+		
+		off += t.put(age);
+		t.putByte(loadSDL); ++off;
+		return off;
+	}
+	
+	void tmCustomForkServer::additionalFields()
+	{
+		dbg.nl();
+		dbg.printf(" Port: %d, GUID: %s, Age filename: %s, Load SDL state: ", port, alcGetStrGuid(guid, 8), age.c_str());
+		if (loadSDL) dbg.printf("yes");
+		else         dbg.printf("no");
 	}
 
 } //end namespace alc

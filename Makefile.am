@@ -107,8 +107,10 @@ alcugs_lobby_CPPFLAGS = -DI_AM_THE_LOBBY_SERVER
 # tracking server
 alcugs_tracking_SOURCES = \
  src/servers/alcugs_main.cpp \
+ src/servers/trackingbackend.cpp \
  src/servers/trackingserver.cpp
 alcugs_tracking_INCLUDES = \
+ src/servers/trackingbackend.h \
  src/servers/trackingserver.h
 alcugs_tracking_LDADD = libalcnet1.a libalcbase1.a
 alcugs_tracking_CPPFLAGS = -DI_AM_THE_TRACKING_SERVER
