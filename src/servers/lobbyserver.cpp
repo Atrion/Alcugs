@@ -94,7 +94,7 @@ namespace alc {
 				log->log("<RCV> %s\n", playerList.str());
 				
 				// find the client's session
-				tNetSession *client = smgr->getSession(playerList.x);
+				tNetSession *client = smgr->get(playerList.x);
 				// verify GUID and session state
 				if (!client || client->getPeerType() != KClient || memcmp(client->guid, playerList.guid, 16) != 0) {
 					err->log("ERR: Got CustomVaultPlayerList for player with GUID %s but can't find his session.\n", alcGetStrGuid(playerList.guid, 16));

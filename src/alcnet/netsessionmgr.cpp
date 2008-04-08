@@ -1,7 +1,7 @@
 /*******************************************************************************
-*    Alcugs H'uru server                                                       *
+*    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2005  The Alcugs H'uru Server Team                     *
+*    Copyright (C) 2004-2008  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -52,15 +52,15 @@ tNetSessionList::~tNetSessionList()
 	if(table!=NULL)
 		free((void *)table);
 }
-tNetSession *tNetSessionList::findSession(tNetSessionIte &ite)
+tNetSession *tNetSessionList::search(U32 ip, U16 port)
 {
 	for(int i=0; i<n; i++) {
-		if(table[i]!=NULL && table[i]->getIP()==ite.ip && table[i]->getPort()==ite.port)
+		if(table[i]!=NULL && table[i]->getIP()==ip && table[i]->getPort()==port)
 			return table[i];
 	}
 	return NULL; // not found
 }
-int tNetSessionList::addSession(tNetSession *u)
+int tNetSessionList::add(tNetSession *u)
 {
 	int empty = findFreeSlot();
 	if (empty >= 0) {
@@ -83,7 +83,7 @@ int tNetSessionList::findFreeSlot(void)
 	}
 	return -1;
 }
-void tNetSessionList::removeSession(tNetSession *u)
+void tNetSessionList::remove(tNetSession *u)
 {
 	int found = -1;
 	for (int i = 0; i < n; ++i) {
@@ -144,7 +144,7 @@ tNetSession * tNetSessionMgr::search(tNetSessionIte &ite,bool create) {
 		}
 	}
 	//then search
-	tNetSession *u = findSession(ite);
+	tNetSession *u = tNetSessionList::search(ite.ip, ite.port);
 	if (u) {
 		ite.sid=u->getSid();
 		return u;
@@ -164,7 +164,7 @@ tNetSession * tNetSessionMgr::search(tNetSessionIte &ite,bool create) {
 		throw txToMCons(_WHERE("Too many connections (already having the maximum of %i)",max));
 	// use addSession, it'll resize the table for us
 	ite.sid = n;
-	int i = addSession(new tNetSession(net,ite.ip,ite.port,ite.sid));
+	int i = add(new tNetSession(net,ite.ip,ite.port,ite.sid));
 	assert(i == n-1); // if it wasn't added at the end... something went terribly wrong
 	return table[n-1]; // it's the last one
 }
@@ -173,7 +173,7 @@ void tNetSessionMgr::destroy(tNetSessionIte &ite) {
 	tNetSession *u = search(ite, false);
 	if (!u) return;
 	delete u;
-	removeSession(u);
+	remove(u);
 }
 /* End session mgr */
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
-*    Alcugs H'uru server                                                       *
+*    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2005  The Alcugs H'uru Server Team                     *
+*    Copyright (C) 2004-2008  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -53,20 +53,20 @@ public:
 	}
 };
 
-/** tNetSessionList saves a list of sessions. it can search for a session using a tNetSessionIte. also see tNetSessionMgr. */
+/** tNetSessionList saves a list of sessions */
 class tNetSessionList {
 public:
 	tNetSessionList(void);
 	virtual ~tNetSessionList();
 	
 	//! find the session with the given ip and port (ignore the sid) and return it
-	tNetSession *findSession(tNetSessionIte &ite);
+	tNetSession *search(U32 ip, U16 port);
 	//! add that session and return the place where it's saved (to be used by tNetSessionMgr::search)
-	int addSession(tNetSession *u);
+	int add(tNetSession *u);
 	//! removes the given session from the table and shrinks if possible
-	void removeSession(tNetSession *u);
+	void remove(tNetSession *u);
 	//! return the nth session of our table
-	tNetSession *getSession(int nr) {
+	tNetSession *get(int nr) {
 		if (nr < n) return table[nr];
 		return NULL;
 	}
@@ -85,7 +85,7 @@ protected:
 };
 
 /** tNetSessionMgr is meant to be the one and only session manager of a server. The number of a session in it's table defines
-it's global sid. It will use the sid of a tNetSessionIte for faster searching. It can also create new and delete existing sessions
+it's global sid. It uses tNetSessionIte for searching and for "caching" the sid. It can also create new and delete existing sessions
 (in fact, it's the only part of alcugs which does that) and it implements a limit for a max. number of sessions */
 class tNetSessionMgr : public tNetSessionList {
 public:

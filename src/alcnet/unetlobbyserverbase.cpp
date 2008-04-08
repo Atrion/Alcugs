@@ -291,7 +291,7 @@ namespace alc {
 					client = getSession(ite);
 				}
 				else { // for the old protocol, we get only the sid, so let's hope it's still the right one
-					client = smgr->getSession(authResponse.x);
+					client = smgr->get(authResponse.x);
 					ite = client->getIte();
 				}
 #else
