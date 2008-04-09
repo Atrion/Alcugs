@@ -38,6 +38,8 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_TRACKINGBACKEND_H_ID "$Id$"
 
+#include <protocol/trackingmsg.h>
+
 namespace alc {
 
 	////DEFINITIONS
@@ -46,23 +48,28 @@ namespace alc {
 	*/
 	
 		
-	class tTrackingData {
+	class tTrackingData : public tNetSessionData {
 	public:
-		tTrackingData(bool lobby) { this->lobby = lobby; port_start = 5001; port_end = 6000; childs = new tNetSessionList; }
-		~tTrackingData(void) { delete childs; }
-		bool lobby;
+		tTrackingData(void);
+		virtual ~tTrackingData(void) { delete childs; }
+		bool isLobby;
+		tNetSession *parent; //!< saves the lobby of a game server, is NULL for lobbys
 		tNetSessionList *childs;
 		U16 port_start, port_end;
+		Byte ip[51]; //!< the external IP (the ones palyers should use to connect to this server)
 	};
 	
 	class tPlayer {
 	public:
-		tPlayer(U32 ki, U32 x) { this->ki = ki; this->x = x; }
-		U32 ki; // player's ki number
-		U32 x; // player's X value
+		tPlayer(U32 ki, U32 x) { this->ki = ki; this->x = x; memset(guid, 0, 8); age_name[0] = 0; u = NULL; waiting = false; }
+		U32 ki; //!< player's ki number
+		U32 x; //!< player's X value
+		Byte guid[8]; //!< Age guid where the player is / wants to go (hex)
+		Byte age_name[201]; //!< Age name where the player is / wants to go
+		bool waiting; //!< true if the player is waiting for ServerFound, false if it isn't
+		tNetSession *u; //!< the lobby or game server the player is connected to
 #if 0
 		Byte uid[17];
-	int x; //client X
 	//link with _home_ server peer
 	int sid; //the unique session identifier
 	U32 ip; //the server session, where this player is
@@ -72,24 +79,30 @@ namespace alc {
 	Byte status; //RStopResponding 0x00, 0x01 ok, RInroute 0x16, RArriving 0x17, RJoining 0x18, RLeaving 0x19, RQuitting 0x1A
 	Byte avie[200];
 	Byte login[200];
-	Byte guid[31]; //Age guid where the player is
-	Byte age_name[101]; //Age name where the player is
-	Byte waiting; //Waiting var (1 if is waiting to the FindAgeReply, elsewhere nothing...)
 	U32 client_ip; //clients ip address
 	U16 client_port; //clients port address
 #endif
 	};
 	
-	class tPlayerList {
+	class tTrackingBackend {
 	public:
-		tPlayerList(void) { size = 0; players = NULL; }
-		~tPlayerList(void);
-		void updatePlayer(U32 ki, U32 x);
+		tTrackingBackend(tNetSessionList *servers);
+		~tTrackingBackend(void);
+		
+		void updatePlayer(U32 ki, U32 x, tNetSession *u);
+		void removePlayer(tPlayer *player);
 		tPlayer *getPlayer(U32 ki);
-		void findServer(tPlayer *player, const Byte *guid, const Byte *name, tNetSessionMgr *smgr);
+		
+		void updateServer(tNetSession *game, tmCustomSetGuid &setGuid);
+		void removeServer(tNetSession *game);
+		void findServer(tPlayer *player, const Byte *guid, const Byte *name);
 	private:
+		void notifyWaiting(tNetSession *server);
+		void serverFound(tPlayer *player, tNetSession *server);
+	
 		int size;
 		tPlayer **players;
+		tNetSessionList *servers;
 	};
 
 } //End alc namespace

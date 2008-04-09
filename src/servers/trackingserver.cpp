@@ -68,10 +68,7 @@ namespace alc {
 				log->log("<RCV> %s\n", setGuid.str());
 				
 				// save the data for the session
-				memcpy(u->guid, setGuid.guid, 8);
-				strcpy((char *)u->name, (char *)setGuid.age.c_str());
-				u->data = (void *)(new tTrackingData(u->getPort() == 5000)); // the peer is initialized, it will be regarded when searching for servers
-				// FIXME: the criteria to determine whether it's a lobby or a game server is BAD
+				trackingBackend->updateServer(u, setGuid);
 				
 				return 1;
 			}
@@ -83,7 +80,7 @@ namespace alc {
 				log->log("<RCV> %s\n", playerStatus.str());
 				
 				// update the player's data
-				players->updatePlayer(playerStatus.ki, playerStatus.x);
+				trackingBackend->updatePlayer(playerStatus.ki, playerStatus.x, u);
 				
 				return 1;
 			}
@@ -94,13 +91,13 @@ namespace alc {
 				msg->data->get(findServer);
 				log->log("<RCV> %s\n", findServer.str());
 				
-				tPlayer *player = players->getPlayer(findServer.ki);
+				tPlayer *player = trackingBackend->getPlayer(findServer.ki);
 				if (!player) {
 					err->log("ERR: Ignoring a NetMsgCustomFindServer for player with KI %d since I can't find that player\n", findServer.ki);
 					return 1;
 				}
 				player->x = findServer.x;
-				players->findServer(player, findServer.guid, findServer.age.c_str(), smgr);
+				trackingBackend->findServer(player, findServer.guid, findServer.age.c_str());
 				
 				return 1;
 			}

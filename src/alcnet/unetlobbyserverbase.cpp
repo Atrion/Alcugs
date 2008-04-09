@@ -233,7 +233,7 @@ namespace alc {
 				md5buffer.compute();
 		
 				// save data in session
-				strcpy((char *)u->account, (char *)authHello.account.c_str());
+				strcpy((char *)u->name, (char *)authHello.account.c_str());
 				memcpy(u->challenge, md5buffer.read(16), 16);
 				u->release = authHello.release;
 				u->x = authHello.x;
@@ -266,7 +266,7 @@ namespace alc {
 					err->log("ERR: I've got to ask the auth server about player %s, but it's unavailable.\n", u->str());
 					return 1;
 				}
-				tmCustomAuthAsk authAsk(authServer, u->sid, u->ip, u->port, u->account, u->challenge, authResponse.hash.readAll(), u->release);
+				tmCustomAuthAsk authAsk(authServer, u->sid, u->ip, u->port, u->name, u->challenge, authResponse.hash.readAll(), u->release);
 				authServer->send(authAsk);
 				
 				return 1;
@@ -298,7 +298,7 @@ namespace alc {
 				tNetSession *client = getSession(ite);
 #endif
 				// verify account name and session state
-				if (!client || client->authenticated != 10 || client->whoami != 0 || strcmp((char *)client->account, (char *)authResponse.login.c_str()) != 0) {
+				if (!client || client->authenticated != 10 || client->whoami != 0 || strcmp((char *)client->name, (char *)authResponse.login.c_str()) != 0) {
 					err->log("ERR: Got CustomAuthResponse for player %s but can't find his session.\n", authResponse.login.c_str());
 					return 1;
 				}

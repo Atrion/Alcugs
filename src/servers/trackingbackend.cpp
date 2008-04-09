@@ -40,7 +40,6 @@
 
 #include <alcugs.h>
 #include <unet.h>
-#include <protocol/trackingmsg.h>
 
 ////extra includes
 #include "trackingbackend.h"
@@ -50,13 +49,43 @@
 namespace alc {
 
 	////IMPLEMENTATION
-	void tPlayerList::findServer(tPlayer *player, const Byte *guid, const Byte *name, tNetSessionMgr *smgr)
+	//// tTrackingData
+	tTrackingData::tTrackingData()
 	{
-		
+		isLobby = false;
+		parent = NULL;
+		ip[0] = 0;
+		port_start = 5001;
+		port_end = 6000;
+		childs = new tNetSessionList;
+	}
+	
+	//// tTrackingBackend
+	tTrackingBackend::tTrackingBackend(tNetSessionList *servers)
+	{
+		this->servers = servers;
+		size = 0;
+		players = NULL;
+	}
+	
+	tTrackingBackend::~tTrackingBackend(void)
+	{
+		if (players != NULL) {
+			for (int i = 0; i < size; ++i) {
+				if (players[i]) delete players[i];
+			}
+			free((void *)players);
+		}
+	}
+	
+	void tTrackingBackend::findServer(tPlayer *player, const Byte *guid, const Byte *name)
+	{
+		memcpy(player->guid, guid, 8);
+		strncpy((char *)player->age_name, (char *)name, 200);
 		DBG(5, "searching for age %s for client with KI %d\n", name, player->ki);
 		tNetSession *server = NULL, *game = NULL;
-		smgr->rewind();
-		while ((server = smgr->getNext())) {
+		servers->rewind();
+		while ((server = servers->getNext())) {
 			if (server->data && memcmp(server->guid, guid, 8) == 0 && strcmp((char *)server->name, (char *)name) == 0) {
 				game = server; // we found it
 				break;
@@ -67,8 +96,8 @@ namespace alc {
 			// search for the lobby with the least load
 			tNetSession *lobby = NULL;
 			int load = -1;
-			smgr->rewind();
-			while ((server = smgr->getNext())) {
+			servers->rewind();
+			while ((server = servers->getNext())) {
 				if (server->data && (load < 0 || ((tTrackingData*)server->data)->childs->getCount() < load)) {
 					lobby = server;
 					load = ((tTrackingData*)server->data)->childs->getCount();
@@ -100,24 +129,39 @@ namespace alc {
 			// ok, telling the lobby to fork
 			tmCustomForkServer forkServer(lobby, player->ki, player->x, lowest, guid, name, false); // FIXME: atm it never loads the SDL state
 			lobby->send(forkServer);
+			player->waiting = true;
 		}
 		else {
 			DBG(5, "found age (server: %s), telling the client about it\n", game->str());
-			// TODO: send this one to the client
+			// ok, we got it, let's tell the player about it
+			serverFound(player, game);
 		}
 	}
 	
-	tPlayerList::~tPlayerList(void)
+	void tTrackingBackend::notifyWaiting(tNetSession *server)
 	{
-		if (players != NULL) {
-			for (int i = 0; i < size; ++i) {
-				if (players[i]) delete players[i];
-			}
-			free((void *)players);
+		for (int i = 0; i < size; ++i) {
+			if (!players[i] || !players[i]->waiting) continue;
+			if (memcmp(players[i]->guid, server->guid, 8) != 0 || strncmp((char *)players[i]->age_name, (char *)server->name, 200)) continue;
+			// ok, this player is waiting for this age, let's tell him about it
+			serverFound(players[i], server);
 		}
 	}
 	
-	tPlayer *tPlayerList::getPlayer(U32 ki)
+	void tTrackingBackend::serverFound(tPlayer *player, tNetSession *server)
+	{
+		assert(server->data != 0);
+		if (!player->u) {
+			lerr->log("ERR: Found age for player with KI %d, but I don't know how to contact him\n", player->ki);
+			return;
+		}
+		tTrackingData *data = (tTrackingData *)server->data;
+		tmCustomServerFound found(player->u, player->ki, player->x, ntohs(server->getPort()), data->ip, server->guid, server->name);
+		player->u->send(found);
+		player->waiting = false;
+	}
+	
+	tPlayer *tTrackingBackend::getPlayer(U32 ki)
 	{
 		for (int i = 0; i < size; ++i) {
 			if (players[i] && players[i]->ki == ki) return players[i];
@@ -125,7 +169,43 @@ namespace alc {
 		return NULL;
 	}
 	
-	void tPlayerList::updatePlayer(U32 ki, U32 x)
+	void tTrackingBackend::updateServer(tNetSession *game, tmCustomSetGuid &setGuid)
+	{
+		Byte zeroguid[8];
+		memset(zeroguid, 0, 8);
+		if (memcmp(setGuid.guid, zeroguid, 8) == 0) {
+			// TODO: generate a GUID
+		}
+	
+		memcpy(game->guid, setGuid.guid, 8);
+		strcpy((char *)game->name, (char *)setGuid.age.c_str());
+		
+		tTrackingData *data = (tTrackingData *)game->data;
+		if (!data) data = new tTrackingData;
+		data->isLobby = (ntohs(game->getPort()) == 5000); // FIXME: the criteria to determine whether it's a lobby or a game server is BAD
+		strncpy((char *)data->ip, (char *)setGuid.ip_str.c_str(), 50);
+		if (!data->isLobby) { // let's look to which lobby this server belongs
+			tNetSession *server = NULL, *lobby = NULL;
+			servers->rewind();
+			while ((server = servers->getNext())) {
+				if (server->data && server->getIP() == game->getIP() && ((tTrackingData *)server->data)->isLobby) {
+					lobby = server;
+					break;
+				}
+			}
+			if (lobby) {
+				((tTrackingData *)server->data)->childs->add(game); // add the game server to the list of children of that lobby
+				data->parent = lobby;
+			}
+			else
+				lerr->log("ERR: Found peer at %s without a Lobby belonging to it\n", game->str());
+		}
+		game->data = data;
+		
+		notifyWaiting(game);
+	}
+	
+	void tTrackingBackend::updatePlayer(U32 ki, U32 x, tNetSession *u)
 	{
 		tPlayer *player = getPlayer(ki);
 		if (!player) { // it doesn't exist, create it
@@ -136,6 +216,37 @@ namespace alc {
 		}
 		else
 			player->x = x;
+		player->u = u;
+	}
+	
+	void tTrackingBackend::removePlayer(tPlayer *player)
+	{
+	
+	}
+	
+	void tTrackingBackend::removeServer(tNetSession *game)
+	{
+		// remove all players which were still on this server
+		for (int i = 0; i < size; ++i) {
+			if (players[i] && players[i]->u == game) removePlayer(players[i]);
+		}
+		// remove this server from the list of childs of its lobby
+		if (!game->data) return;
+		tTrackingData *data = (tTrackingData *)game->data;
+		if (data->isLobby) {
+			// it's childs are lobbyless now
+			tNetSession *server;
+			data->childs->rewind();
+			while ((server = data->childs->getNext())) {
+				assert(server->data != 0); // all childs must have data
+				((tTrackingData *)server->data)->parent = NULL;
+			}
+		}
+		else if (data->parent) {
+			assert(data->parent->data != 0); // the parent must have data
+			tTrackingData *parent_data = (tTrackingData *)data->parent->data;
+			parent_data->childs->remove(game);
+		}
 	}
 
 } //end namespace alc

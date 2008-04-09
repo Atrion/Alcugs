@@ -46,27 +46,24 @@ namespace alc {
 	/**
 		If we want to do it well and nice, we should add pre and post conditions here.
 	*/
-	
-	class tPlayerList;
 
 	class tUnetTrackingServer : public tUnetServerBase {
 	public:
 		tUnetTrackingServer(void) : tUnetServerBase()
 		{
 			lstd->log("WARNING: The tracking server is not finished yet. So if it doesn\'t work, that's not even a bug.\n");
-			players = new tPlayerList;
 		}
-		~tUnetTrackingServer(void) { delete players; }
+		~tUnetTrackingServer(void) { delete trackingBackend; }
 		
-		virtual void onNewConnection(tNetEvent * ev,tNetSession * u) {
-			u->data = 0;
+		virtual void onStart(void) {
+			trackingBackend = new tTrackingBackend(smgr);
 		}
 		virtual void onConnectionClosed(tNetEvent * ev,tNetSession * u) {
-			if (u->data) delete (tTrackingData *)u->data;
+			trackingBackend->removeServer(u);
 		}
 		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
-	private:		
-		tPlayerList *players;
+	private:
+		tTrackingBackend *trackingBackend;
 	};
 	
 } //End alc namespace

@@ -123,7 +123,7 @@ namespace alc {
 		max_version = u->max_version;
 		min_version = u->min_version;
 		
-		this->port = port;
+		fork_port = port;
 		memcpy(this->guid, guid, 8);
 		age.writeStr(name);
 		age.setVersion(0); // normal UruString
@@ -133,7 +133,7 @@ namespace alc {
 	int tmCustomForkServer::stream(tBBuf &t)
 	{
 		int off = tmMsgBase::stream(t);
-		t.putU16(port); off += 2;
+		t.putU16(fork_port); off += 2;
 		
 		tUStr guid_str(5);
 		guid_str.writeStr(alcGetStrGuid(guid, 8));
@@ -147,9 +147,46 @@ namespace alc {
 	void tmCustomForkServer::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" Port: %d, GUID: %s, Age filename: %s, Load SDL state: ", port, alcGetStrGuid(guid, 8), age.c_str());
+		dbg.printf(" Port: %d, GUID: %s, Age filename: %s, Load SDL state: ", fork_port, alcGetStrGuid(guid, 8), age.c_str());
 		if (loadSDL) dbg.printf("yes");
 		else         dbg.printf("no");
+	}
+	
+	//// tmCustomServerFound
+	tmCustomServerFound::tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U16 port, const Byte *ip_str, const Byte *guid, const Byte *name)
+	: tmMsgBase(NetMsgCustomServerFound, plNetAck | plNetCustom | plNetX | plNetKi | plNetVersion, u)
+	{
+		this->x = x;
+		this->ki = ki;
+		max_version = u->max_version;
+		min_version = u->min_version;
+		
+		server_port = port;
+		this->ip_str.writeStr(ip_str);
+		this->ip_str.setVersion(0); // normal UruString
+		memcpy(this->guid, guid, 8);
+		age.writeStr(name);
+		age.setVersion(0); // normal UruString
+	}
+	
+	int tmCustomServerFound::stream(tBBuf &t)
+	{
+		int off = tmMsgBase::stream(t);
+		t.putU16(server_port); off += 2;
+		off += t.put(ip_str);
+		
+		tUStr guid_str(5);
+		guid_str.writeStr(alcGetStrGuid(guid, 8));
+		t.put(guid_str); off += 8;
+		
+		off += t.put(age);
+		return off;
+	}
+	
+	void tmCustomServerFound::additionalFields()
+	{
+		dbg.nl();
+		dbg.printf(" Port: %d, IP: %s, GUID: %s, Age filename: %s", server_port, ip_str.c_str(), alcGetStrGuid(guid, 8), age.c_str());
 	}
 
 } //end namespace alc

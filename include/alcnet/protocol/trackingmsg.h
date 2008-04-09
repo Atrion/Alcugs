@@ -68,8 +68,20 @@ namespace alc {
 		tmCustomForkServer(tNetSession *u, U32 ki, U32 x, U16 port, const Byte *guid, const Byte *name, bool loadSDL);
 		virtual int stream(tBBuf &t);
 		// format
+		U16 fork_port;
 		tUStr age;
 		Byte loadSDL;
+	protected:
+		virtual void additionalFields();
+	};
+	
+	class tmCustomServerFound : public tmMsgBase {
+	public:
+		tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U16 port, const Byte *ip_str, const Byte *guid, const Byte *name);
+		virtual int stream(tBBuf &t);
+		// format
+		U16 server_port;
+		tUStr ip_str, age;
 	protected:
 		virtual void additionalFields();
 	};

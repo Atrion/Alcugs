@@ -45,6 +45,13 @@ typedef Byte tNetSessionFlags;
 #define UNetUpgraded 0x01
 #define UNetNoConn   0x02
 
+/** base class for data associated to a session */
+class tNetSessionData {
+public:
+	tNetSessionData() {}
+	virtual ~tNetSessionData() {}
+};
+
 class tNetSession {
 	friend class tUnet;
 	friend class tUnetBase;
@@ -102,8 +109,8 @@ public:
 	U32 ki; //player set and valid id
 	U32 x; //x value
 	Byte guid[16]; // hex; player guid in lobby server, age guid in tracking server
-	Byte name[201]; // age name in tracking server
-	void *data; // save additional data (i.e. tracking information)
+	Byte name[201]; // peer age name in tracking server, peer account name in lobby and game
+	tNetSessionData *data; // save additional data (i.e. tracking information)
 
 private:
 	tUnet * net;
@@ -167,7 +174,6 @@ private:
 	Byte tpots; //tpots version 0=undefined, 1=tpots client, 2=non-tpots client
 	
 	// used by lobby and game for authenticating
-	Byte account[201]; //peer account name (string)
 	Byte challenge[16]; //peer challenge (hex)
 	Byte release; //type of client
 };
