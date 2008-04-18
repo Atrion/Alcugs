@@ -241,8 +241,8 @@ namespace alc {
 				
 				// reply with AuthenticateChallenge
 				tmAuthenticateChallenge authChallenge(u, result, u->challenge);
-				u->send(authChallenge);
 				u->authenticated = 10; // the challenge was sent
+				u->send(authChallenge);
 				
 				return 1;
 			}

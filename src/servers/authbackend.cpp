@@ -195,14 +195,14 @@ namespace alc {
 		sql->query(query, "Update player");
 	}
 
-	int tAuthBackend::authenticatePlayer(Byte *login, Byte *challenge, Byte *hash, Byte release, Byte *ip, Byte *passwd,
+	int tAuthBackend::authenticatePlayer(tNetSession *u, Byte *login, Byte *challenge, Byte *hash, Byte release, Byte *ip, Byte *passwd,
 			Byte *guid, Byte *accessLevel)
 	{
 		Byte correctHash[50];
 		U32 attempts, lastAttempt;
 		int queryResult = queryPlayer(login, passwd, guid, &attempts, &lastAttempt); // query password, access level and guid of this user
 		
-		log->log("AUTH: player %s (IP: %s): ", login, ip);
+		log->log("AUTH: player %s (IP: %s, game server %s):\n ", login, ip, u->str());
 		if (queryResult < 0) { // that means: player not found
 			*accessLevel = AcNotActivated;
 			log->print("Player not found\n");
@@ -219,7 +219,7 @@ namespace alc {
 			int authResult;
 			bool updateAttempt = true;
 			*accessLevel = queryResult;
-			log->print("GUID = %s, attempt %d/%d, access level = %d;\n ", guid, attempts+1, maxAttempts, *accessLevel);
+			log->print("GUID = %s, attempt %d/%d, access level = %d\n ", guid, attempts+1, maxAttempts, *accessLevel);
 			
 			if (*accessLevel >= minAccess) { // the account doesn't have enough access for this shard (accessLevel = minAccess is rejected as well, for backward compatability)
 				log->print("access level is too big (must be lower than %d)\n", minAccess);
@@ -245,7 +245,7 @@ namespace alc {
 					++attempts;
 				}
 				else { // it's correct, the player is authenticated
-					log->print("auth aucceeded\n");
+					log->print("auth succeeded\n");
 					authResult = AAuthSucceeded;
 					attempts = 0;
 				}

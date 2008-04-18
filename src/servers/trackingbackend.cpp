@@ -150,6 +150,7 @@ namespace alc {
 			// ok, we got it, let's tell the player about it
 			serverFound(player, game);
 		}
+		log->flush();
 	}
 	
 	void tTrackingBackend::notifyWaiting(tNetSession *server)
@@ -219,6 +220,7 @@ namespace alc {
 		log->log("Found server at %s\n", game->str());
 		
 		notifyWaiting(game);
+		log->flush();
 	}
 	
 	void tTrackingBackend::updatePlayer(U32 ki, U32 x, tNetSession *u)
@@ -274,6 +276,7 @@ namespace alc {
 		if (log == lnull && (var.isNull() || var.asByte())) { // logging enabled per default
 			log = new tLog("tracking.log", 4, 0);
 			log->log("Tracking driver started (%s)\n\n", __U_TRACKINGBACKEND_ID);
+			log->flush();
 		}
 	}
 
