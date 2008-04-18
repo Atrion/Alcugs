@@ -55,7 +55,7 @@ namespace alc {
 			tUnetServerBase::reload();
 			authBackend = new tAuthBackend;
 		}
-	private:		
+	private:
 		tAuthBackend *authBackend;
 	};
 	

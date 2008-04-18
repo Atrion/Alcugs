@@ -55,7 +55,6 @@ tNetSession::tNetSession(tUnet * net,U32 ip,U16 port,int sid) {
 	tNetSessionIte ite(ip,port,sid);
 	tNetEvent * evt=new tNetEvent(ite,UNET_NEWCONN);
 	net->events->add(evt);
-	data = NULL;
 }
 tNetSession::~tNetSession() {
 	DBG(5,"~tNetSession()\n");
@@ -113,11 +112,19 @@ void tNetSession::init() {
 	ki=0;
 	client = true;
 	terminated = false;
+	data = NULL;
+	name[0] = 0;
 }
-char * tNetSession::str(char how) {
+char * tNetSession::str(bool detail) {
 	static char cnt[1024];
+	if (!detail) {
+		// short string
+		sprintf(cnt,"[%s:%i]",alcGetStrIp(ip),ntohs(port));
+		return cnt;
+	}
+	// detailed string
 	sprintf(cnt,"[%i][%s:%i]",sid,alcGetStrIp(ip),ntohs(port));
-	if (authenticated != 0) {
+	if (name[0] != 0) {
 		strcat(cnt, "[");
 		strcat(cnt, (char *)name);
 		if (authenticated == 10) strcat(cnt, "?"); // if the auth server didn't yet confirm that, add a question mark

@@ -1,11 +1,12 @@
 #!/bin/bash
 FILE="src/alcnet/sql.cpp"
+PORT=3173
 # start server
-./alcmsgtest -lm -lh localhost -lp 5000 -nl &
+./alcmsgtest -lm -lh localhost -lp $PORT -nl &
 PID=`pidof alcmsgtest`
 sleep 1
 # send file
-./alcmsgtest localhost:5000 -f $FILE -z > /dev/null
+./alcmsgtest localhost:$PORT -f $FILE -z > /dev/null
 sleep 1
 # kill server
 killall -s INT alcmsgtest

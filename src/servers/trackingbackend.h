@@ -62,6 +62,7 @@ namespace alc {
 	class tPlayer {
 	public:
 		tPlayer(U32 ki, U32 x) { this->ki = ki; this->x = x; memset(guid, 0, 8); age_name[0] = 0; u = NULL; waiting = false; }
+		char *str(void);
 		U32 ki; //!< player's ki number
 		U32 x; //!< player's X value
 		Byte guid[8]; //!< Age guid where the player is / wants to go (hex)
@@ -99,10 +100,12 @@ namespace alc {
 	private:
 		void notifyWaiting(tNetSession *server);
 		void serverFound(tPlayer *player, tNetSession *server);
+		void loadSettings(void);
 	
 		int size;
 		tPlayer **players;
 		tNetSessionList *servers;
+		tLog *log;
 	};
 
 } //End alc namespace

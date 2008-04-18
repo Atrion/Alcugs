@@ -60,12 +60,25 @@ namespace alc {
 		childs = new tNetSessionList;
 	}
 	
+	//// tPlayer
+	char *tPlayer::str(void)
+	{
+		static char cnt[1024];
+		if (age_name[0] != 0)
+			sprintf(cnt, "[%d@%s]", ki, age_name);
+		else
+			sprintf(cnt, "[%d]", ki);
+		return cnt;
+	}
+	
 	//// tTrackingBackend
 	tTrackingBackend::tTrackingBackend(tNetSessionList *servers)
 	{
+		log = lnull;
 		this->servers = servers;
 		size = 0;
 		players = NULL;
+		loadSettings();
 	}
 	
 	tTrackingBackend::~tTrackingBackend(void)
@@ -76,13 +89,14 @@ namespace alc {
 			}
 			free((void *)players);
 		}
+		if (log != lnull) delete log;
 	}
 	
 	void tTrackingBackend::findServer(tPlayer *player, const Byte *guid, const Byte *name)
 	{
+		log->log("Player %s wants to link to %s (%s)\n", player->str(), name, alcGetStrGuid(guid, 8));
 		memcpy(player->guid, guid, 8);
 		strncpy((char *)player->age_name, (char *)name, 200);
-		DBG(5, "searching for age %s for client with KI %d\n", name, player->ki);
 		tNetSession *server = NULL, *game = NULL;
 		servers->rewind();
 		while ((server = servers->getNext())) {
@@ -130,9 +144,9 @@ namespace alc {
 			tmCustomForkServer forkServer(lobby, player->ki, player->x, lowest, guid, name, false); // FIXME: atm it never loads the SDL state
 			lobby->send(forkServer);
 			player->waiting = true;
+			log->log("Spawning new game server %s (GUID: %s, port: %d) on lobby %s\n", name, alcGetStrGuid(guid, 8), lowest, lobby->str());
 		}
 		else {
-			DBG(5, "found age (server: %s), telling the client about it\n", game->str());
 			// ok, we got it, let's tell the player about it
 			serverFound(player, game);
 		}
@@ -152,13 +166,14 @@ namespace alc {
 	{
 		assert(server->data != 0);
 		if (!player->u) {
-			lerr->log("ERR: Found age for player with KI %d, but I don't know how to contact him\n", player->ki);
+			lerr->log("ERR: Found age for player %s, but I don't know how to contact him\n", player->str());
 			return;
 		}
 		tTrackingData *data = (tTrackingData *)server->data;
 		tmCustomServerFound found(player->u, player->ki, player->x, ntohs(server->getPort()), data->ip, server->guid, server->name);
 		player->u->send(found);
 		player->waiting = false;
+		log->log("Found age for player %s\n", player->str());
 	}
 	
 	tPlayer *tTrackingBackend::getPlayer(U32 ki)
@@ -198,9 +213,10 @@ namespace alc {
 				data->parent = lobby;
 			}
 			else
-				lerr->log("ERR: Found peer at %s without a Lobby belonging to it\n", game->str());
+				lerr->log("ERR: Found game server %s without a Lobby belonging to it\n", game->str());
 		}
 		game->data = data;
+		log->log("Found server at %s\n", game->str());
 		
 		notifyWaiting(game);
 	}
@@ -217,6 +233,7 @@ namespace alc {
 		else
 			player->x = x;
 		player->u = u;
+		// TODO: log something useful here
 	}
 	
 	void tTrackingBackend::removePlayer(tPlayer *player)
@@ -246,6 +263,17 @@ namespace alc {
 			assert(data->parent->data != 0); // the parent must have data
 			tTrackingData *parent_data = (tTrackingData *)data->parent->data;
 			parent_data->childs->remove(game);
+		}
+	}
+	
+	void tTrackingBackend::loadSettings(void)
+	{
+		tConfig *cfg = alcGetConfig();
+		
+		tStrBuf var = cfg->getVar("tracking.log");
+		if (log == lnull && (var.isNull() || var.asByte())) { // logging enabled per default
+			log = new tLog("tracking.log", 4, 0);
+			log->log("Tracking driver started (%s)\n\n", __U_TRACKINGBACKEND_ID);
 		}
 	}
 

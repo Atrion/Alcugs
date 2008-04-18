@@ -97,6 +97,9 @@ stop = 1
 bind = 127.0.0.1 # the tracking server doesn't have to be accessed from outside
 port = 2011
 
+# enable/disable tracking logging
+;tracking.log = 1 # default 1
+
 stop = 1
 
 ############# Vault Settings ##################################################
