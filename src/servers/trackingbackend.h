@@ -89,6 +89,7 @@ namespace alc {
 	public:
 		tTrackingBackend(tNetSessionList *servers);
 		~tTrackingBackend(void);
+		void reload(void);
 		
 		void updatePlayer(U32 ki, U32 x, tNetSession *u);
 		void removePlayer(tPlayer *player);

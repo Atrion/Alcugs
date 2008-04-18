@@ -1,6 +1,6 @@
 #!/bin/bash
 FILE="src/alcnet/sql.cpp"
-PORT=3173
+PORT=31732
 # start server
 ./alcmsgtest -lm -lh localhost -lp $PORT -nl &
 PID=`pidof alcmsgtest`

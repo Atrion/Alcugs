@@ -92,6 +92,15 @@ namespace alc {
 		if (log != lnull) delete log;
 	}
 	
+	void tTrackingBackend::reload(void)
+	{
+		if (log != lnull) {
+			delete log;
+			log = lnull;
+		}
+		loadSettings();
+	}
+	
 	void tTrackingBackend::findServer(tPlayer *player, const Byte *guid, const Byte *name)
 	{
 		log->log("Player %s wants to link to %s (%s)\n", player->str(), name, alcGetStrGuid(guid, 8));
