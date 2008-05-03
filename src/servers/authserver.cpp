@@ -62,7 +62,7 @@ namespace alc {
 			case NetMsgCustomAuthAsk:
 			{
 				tmCustomAuthAsk authAsk(u);
-				Byte guid[40], passwd[40], challenge[40], hash[40], accessLevel;
+				Byte guid[50], passwd[50], challenge[50], hash[50], accessLevel;
 				int authResult;
 				
 				// get the data out of the packet

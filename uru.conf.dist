@@ -55,10 +55,10 @@ public_address  = 127.0.0.1
 ;db.log = 1 # enable logging of the database driver (default 1)
 ;db.sql.log = 1 # enable sql logging (default 1), doesn't work when db.log is disabled
 # global database connection data
-db.host = "127.0.0.1" # note: set db.host to nothing to use the local unix socket (untested with unet3+)
+db.host = 127.0.0.1 # note: set db.host to nothing to use the local unix socket (untested with unet3+)
 ;db.port = 0 # sets the MySQL port (default 0 = let mysql decide which port to use)
-db.username = "alcugs"
-db.passwd = "yourpassword"
+db.username = alcugs
+db.passwd = yourpassword
 
 # There is a stop var for each server section, remove them to check that you
 # have already read and understood how this configuration file works.
@@ -83,9 +83,9 @@ port = 2010
 # database settings
 db.name = "alcugs_auth"
 # you can overwrite the global settings here if host, username and/or password aren't the same for all servers
-;db.host = "127.0.0.1"
-;db.username = "alcugs"
-;db.passwd = "yourpassword"
+;db.host = 127.0.0.1
+;db.username = alcugs
+;db.passwd = yourpassword
 
 stop = 1
 

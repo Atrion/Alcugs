@@ -56,7 +56,7 @@ namespace alc {
 		tNetSession *parent; //!< saves the lobby of a game server, is NULL for lobbys
 		tNetSessionList *childs;
 		U16 port_start, port_end;
-		Byte ip[51]; //!< the external IP (the ones palyers should use to connect to this server)
+		Byte ip[50]; //!< the external IP (the ones palyers should use to connect to this server)
 	};
 	
 	class tPlayer {
@@ -66,7 +66,7 @@ namespace alc {
 		U32 ki; //!< player's ki number
 		U32 x; //!< player's X value
 		Byte guid[8]; //!< Age guid where the player is / wants to go (hex)
-		Byte age_name[201]; //!< Age name where the player is / wants to go
+		Byte age_name[200]; //!< Age name where the player is / wants to go
 		bool waiting; //!< true if the player is waiting for ServerFound, false if it isn't
 		tNetSession *u; //!< the lobby or game server the player is connected to
 #if 0

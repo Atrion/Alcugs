@@ -110,11 +110,11 @@ namespace alc {
 	{
 		log->log("Player %s wants to link to %s (%s)\n", player->str(), name, alcGetStrGuid(guid, 8));
 		memcpy(player->guid, guid, 8);
-		strncpy((char *)player->age_name, (char *)name, 200);
+		strncpy((char *)player->age_name, (char *)name, 199);
 		tNetSession *server = NULL, *game = NULL;
 		servers->rewind();
 		while ((server = servers->getNext())) {
-			if (server->data && memcmp(server->guid, guid, 8) == 0 && strcmp((char *)server->name, (char *)name) == 0) {
+			if (server->data && memcmp(server->guid, guid, 8) == 0 && strncmp((char *)server->name, (char *)name, 199) == 0) {
 				game = server; // we found it
 				break;
 			}
@@ -171,7 +171,7 @@ namespace alc {
 	{
 		for (int i = 0; i < size; ++i) {
 			if (!players[i] || !players[i]->waiting) continue;
-			if (memcmp(players[i]->guid, server->guid, 8) != 0 || strncmp((char *)players[i]->age_name, (char *)server->name, 200)) continue;
+			if (memcmp(players[i]->guid, server->guid, 8) != 0 || strncmp((char *)players[i]->age_name, (char *)server->name, 199)) continue;
 			// ok, this player is waiting for this age, let's tell him about it
 			serverFound(players[i], server);
 		}
@@ -208,12 +208,12 @@ namespace alc {
 		}
 	
 		memcpy(game->guid, setGuid.guid, 8);
-		strcpy((char *)game->name, (char *)setGuid.age.c_str());
+		strncpy((char *)game->name, (char *)setGuid.age.c_str(), 199);
 		
 		tTrackingData *data = (tTrackingData *)game->data;
 		if (!data) data = new tTrackingData;
 		data->isLobby = (ntohs(game->getPort()) == 5000); // FIXME: the criteria to determine whether it's a lobby or a game server is BAD
-		strncpy((char *)data->ip, (char *)setGuid.ip_str.c_str(), 50);
+		strncpy((char *)data->ip, (char *)setGuid.ip_str.c_str(), 49);
 		if (!data->isLobby) { // let's look to which lobby this server belongs
 			tNetSession *server = NULL, *lobby = NULL;
 			servers->rewind();

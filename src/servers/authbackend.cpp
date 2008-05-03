@@ -171,9 +171,9 @@ namespace alc {
 			MYSQL_ROW row = mysql_fetch_row(result);
 			if (row == NULL) ret = -1; // player doesn't exist
 			else { // read the columns
-				strcpy((char *)passwd, row[0]); // passwd
+				strncpy((char *)passwd, row[0], 49); // passwd
 				ret = atoi(row[1]); // a_level
-				strcpy((char *)guid, row[2]); // guid
+				strncpy((char *)guid, row[2], 49); // guid
 				*attempts = atoi(row[3]); // attempts
 				*lastAttempt = atoi(row[4]);
 			}
@@ -185,9 +185,9 @@ namespace alc {
 
 	void tAuthBackend::updatePlayer(Byte *guid, Byte *ip, U32 attempts, bool updateAttempt)
 	{
-		char query[2048], ip_escaped[512], guid_escaped[512];
-		strcpy(ip_escaped, sql->escape((char *)ip));
-		strcpy(guid_escaped, sql->escape((char *)guid));
+		char query[2048], ip_escaped[50], guid_escaped[50];
+		strncpy(ip_escaped, sql->escape((char *)ip), 49);
+		strncpy(guid_escaped, sql->escape((char *)guid), 49);
 		if (updateAttempt)
 			sprintf(query, "UPDATE accounts SET attempts='%d', last_ip='%s', last_attempt=NOW() WHERE guid='%s'", attempts, ip_escaped, guid_escaped);
 		else
@@ -239,7 +239,7 @@ namespace alc {
 			}
 			else { // everythign seems fine... let's compare the password
 				calculateHash(login, passwd, challenge, correctHash);
-				if(strcmp((char *)hash, (char *)correctHash) != 0) { // wrong password :(
+				if(strncmp((char *)hash, (char *)correctHash, 49) != 0) { // wrong password :(
 					log->print("invalid password\n");
 					authResult = AInvalidPasswd;
 					++attempts;

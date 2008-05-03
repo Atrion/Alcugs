@@ -109,7 +109,7 @@ public:
 	U32 ki; //player set and valid id
 	U32 x; //x value
 	Byte guid[16]; // hex; player guid in lobby server, age guid in tracking server
-	Byte name[201]; // peer age name in tracking server, peer account name in lobby and game
+	Byte name[200]; // peer age name in tracking server, peer account name in lobby and game
 	tNetSessionData *data; // save additional data (i.e. tracking information)
 
 private:
@@ -147,7 +147,7 @@ private:
 	U32 conn_timeout; //In secs
 	bool negotiating;
 	
-	Byte passwd[34]; //peer passwd hash (used in V2) (string)
+	Byte passwd[33]; //peer passwd hash (used in V2) (string)
 
 	//flux control
 	U32 bandwidth; //client reported bandwidth (negotiated technology) (in bps)

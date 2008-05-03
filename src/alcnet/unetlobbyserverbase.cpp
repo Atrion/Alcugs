@@ -298,7 +298,7 @@ namespace alc {
 				tNetSession *client = getSession(ite);
 #endif
 				// verify account name and session state
-				if (!client || client->authenticated != 10 || client->whoami != 0 || strcmp((char *)client->name, (char *)authResponse.login.c_str()) != 0) {
+				if (!client || client->authenticated != 10 || client->whoami != 0 || strncmp((char *)client->name, (char *)authResponse.login.c_str(), 199) != 0) {
 					err->log("ERR: Got CustomAuthResponse for player %s but can't find his session.\n", authResponse.login.c_str());
 					return 1;
 				}
