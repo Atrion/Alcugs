@@ -92,7 +92,6 @@ namespace alc {
 		void reload(void);
 		
 		void updatePlayer(U32 ki, U32 x, tNetSession *u);
-		void removePlayer(tPlayer *player);
 		tPlayer *getPlayer(U32 ki);
 		
 		void updateServer(tNetSession *game, tmCustomSetGuid &setGuid);
@@ -102,6 +101,7 @@ namespace alc {
 		void notifyWaiting(tNetSession *server);
 		void serverFound(tPlayer *player, tNetSession *server);
 		void loadSettings(void);
+		void removePlayer(int player);
 	
 		int size;
 		tPlayer **players;

@@ -84,9 +84,14 @@ namespace alc {
 	tTrackingBackend::~tTrackingBackend(void)
 	{
 		if (players != NULL) {
+			int num_deleted = 0;
 			for (int i = 0; i < size; ++i) {
-				if (players[i]) delete players[i];
+				if (players[i]) {
+					delete players[i];
+					++num_deleted;
+				}
 			}
+			if (num_deleted > 0) lerr->log("ERR: The backend is quitting, and there were still %d players online\n", num_deleted);
 			free((void *)players);
 		}
 		if (log != lnull) delete log;
@@ -153,7 +158,7 @@ namespace alc {
 			tmCustomForkServer forkServer(lobby, player->ki, player->x, lowest, guid, name, false); // FIXME: atm it never loads the SDL state
 			lobby->send(forkServer);
 			player->waiting = true;
-			log->log("Spawning new game server %s (GUID: %s, port: %d) on lobby %s\n", name, alcGetStrGuid(guid, 8), lowest, lobby->str());
+			log->log("Spawning new game server %s (GUID: %s, port: %d) on %s\n", name, alcGetStrGuid(guid, 8), lowest, lobby->str());
 		}
 		else {
 			// ok, we got it, let's tell the player about it
@@ -236,10 +241,21 @@ namespace alc {
 	{
 		tPlayer *player = getPlayer(ki);
 		if (!player) { // it doesn't exist, create it
-			++size;
-			if (!players) players = (tPlayer **)malloc(size*sizeof(tPlayer));
-			else players = (tPlayer **)realloc((void *)players, size*sizeof(tPlayer));
-			player = players[size-1] = new tPlayer(ki, x);
+			int slot = -1;
+			for (int i = 0; i < size; ++i) {
+				if (players[i] == NULL) {
+					slot = i;
+					break;
+				}
+			}
+			if (slot < 0) {
+				++size;
+				DBG(5, "growing to %d\n", size);
+				if (!players) players = (tPlayer **)malloc(size*sizeof(tPlayer));
+				else players = (tPlayer **)realloc((void *)players, size*sizeof(tPlayer));
+				slot = size-1;
+			}
+			player = players[slot] = new tPlayer(ki, x);
 		}
 		else
 			player->x = x;
@@ -247,17 +263,33 @@ namespace alc {
 		// TODO: log something useful here
 	}
 	
-	void tTrackingBackend::removePlayer(tPlayer *player)
+	void tTrackingBackend::removePlayer(int player)
 	{
-	
+		if (players[player] != NULL) {
+			delete players[player];
+			players[player] = NULL;
+		}
+		
+		int last = size-1; // find the last player
+		while (last >= 0 && players[last] == NULL) --last;
+		if (last < size-1) { // there are some NULLs at the end, srhink the array
+			size=last+1;
+			DBG(5, "shrinking to %d\n", size);
+			players=(tPlayer **)realloc(players, sizeof(tPlayer) * size); // it's not a bug if we get NULL here - the size might be 0
+		}
 	}
 	
 	void tTrackingBackend::removeServer(tNetSession *game)
 	{
 		// remove all players which were still on this server
+		int num_removed = 0;
 		for (int i = 0; i < size; ++i) {
-			if (players[i] && players[i]->u == game) removePlayer(players[i]);
+			if (players[i] && players[i]->u == game) {
+				removePlayer(i);
+				++num_removed;
+			}
 		}
+		if (num_removed > 0) log->log("WARN: Server %s is quitting though it still had %d players\n", game->str(), num_removed);
 		// remove this server from the list of childs of its lobby
 		if (!game->data) return;
 		tTrackingData *data = (tTrackingData *)game->data;

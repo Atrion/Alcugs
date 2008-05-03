@@ -83,7 +83,7 @@ int tNetSessionList::findFreeSlot(void)
 	for (int i = 0; i < size; ++i) {
 		if (!table[i]) return i;
 	}
-	assert(size == count); // when we get here, size and count must be the same
+	assert(size == count); // when we get here (i.e. there's no free slot), size and count must be the same
 	return -1;
 }
 void tNetSessionList::remove(tNetSession *u)
