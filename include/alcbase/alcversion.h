@@ -48,8 +48,8 @@ int alcGetProtocolMaxVersion();
 int alcGetProtocolMinVersion();
 int alcGetProtocolVersion();
 
-char * alcGetPlatform();
-char * alcGetOS();
+const char * alcGetPlatform();
+const char * alcGetOS();
 
 }//end namespace
 

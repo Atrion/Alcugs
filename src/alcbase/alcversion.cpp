@@ -116,10 +116,10 @@ int alcGetProtocolVersion() {
 	return alcProtoVer;
 }
 
-char * alcGetPlatform() {
+const char * alcGetPlatform() {
 	return _PLATFORM_;
 }
-char * alcGetOS() {
+const char * alcGetOS() {
 	return _OS_;
 }
 

@@ -48,7 +48,7 @@ namespace alc {
 
 using namespace std;
 
-tUnet::tUnet(char * lhost,U16 lport) {
+tUnet::tUnet(const char * lhost,U16 lport) {
 	DBG(9,"tUnet()\n");
 	initialized=false;
 	this->init();
@@ -188,7 +188,7 @@ void tUnet::destroySession(tNetSessionIte &t) {
 	smgr->destroy(t);
 }
 
-void tUnet::neterror(char * msg) {
+void tUnet::neterror(const char * msg) {
 	if(!initialized) return;
 #ifdef __WIN32__
 	this->err->log("%s: winsock error code:%i\n",msg,WSAGetLastError());

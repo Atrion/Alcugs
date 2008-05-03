@@ -69,7 +69,7 @@ static bool txvAbort=0;
 static char txvCore=0x01; //0x00 - disabled, 0x01 - enabled, 0x02 -always
 static char * txvCorePath=NULL;
 
-void alcWriteCoreDump(char * name) {
+void alcWriteCoreDump(const char * name) {
 	DBG(5,"alcWriteCoreDump ");
 	#if !(defined(__WIN32__) or defined(__CYGWIN__)) and defined(HAVE_GOOGLE_COREDUMPER_H)
 	DBG(5,"is enabled\n");

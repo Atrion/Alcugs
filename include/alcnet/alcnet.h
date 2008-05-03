@@ -88,7 +88,7 @@ class tUnet {
 
 // methods
 public:
-	tUnet(char * lhost="0.0.0.0",U16 lport=0); //lport in host order
+	tUnet(const char * lhost="0.0.0.0",U16 lport=0); //lport in host order
 	void setFlags(tUnetFlags flags);
 	void unsetFlags(tUnetFlags flags);
 	tUnetFlags getFlags();
@@ -123,7 +123,7 @@ private:
 	
 	void doWork();
 	
-	void neterror(char * msg);
+	void neterror(const char * msg);
 	
 	//void send();
 	void basesend(tNetSession * u,tmBase & m);

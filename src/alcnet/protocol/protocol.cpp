@@ -742,8 +742,8 @@ Byte * tmMsgBase::str() {
 	#endif
 }
 
-char * alcUnetGetRelease(Byte rel) {
-	static char * ret;
+const char * alcUnetGetRelease(Byte rel) {
+	static const char * ret;
 	switch(rel) {
 		case 0x03:
 			ret="ExtRel";
@@ -761,8 +761,8 @@ char * alcUnetGetRelease(Byte rel) {
 	return ret;
 }
 
-char * alcUnetGetDestination(Byte dest) {
-	static char * ret;
+const char * alcUnetGetDestination(Byte dest) {
+	static const char * ret;
 	switch(dest) {
 		case 0x01:
 			ret="kAgent";
@@ -807,8 +807,8 @@ char * alcUnetGetDestination(Byte dest) {
 	return ret;
 }
 
-char * alcUnetGetReasonCode(Byte code) {
-	static char * ret;
+const char * alcUnetGetReasonCode(Byte code) {
+	static const char * ret;
 	switch(code) {
 		case 0x00:
 			ret="StopResponding";
@@ -868,8 +868,8 @@ char * alcUnetGetReasonCode(Byte code) {
 	return ret;
 }
 
-char * alcUnetGetAuthCode(Byte code) {
-	static char * ret;
+const char * alcUnetGetAuthCode(Byte code) {
+	static const char * ret;
 	switch(code) {
 		case 0x00:
 			ret="AuthSucceeded";
@@ -902,8 +902,8 @@ char * alcUnetGetAuthCode(Byte code) {
 	return ret;
 }
 
-char * alcUnetGetAvatarCode(Byte code) {
-	static char * ret;
+const char * alcUnetGetAvatarCode(Byte code) {
+	static const char * ret;
 	switch(code) {
 		case 0x00:
 			ret="Ok";
@@ -939,8 +939,8 @@ char * alcUnetGetAvatarCode(Byte code) {
 	return ret;
 }
 
-char * alcUnetGetMsgCode(U16 code) {
-	static char * ret;
+const char * alcUnetGetMsgCode(U16 code) {
+	static const char * ret;
 	switch(code) {
 		case 0x0218:
 			ret="NetMsgPagingRoom";

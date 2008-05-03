@@ -224,7 +224,7 @@ void tBBuf::seek(int n,Byte flags) {
 	if(res<0) throw txOutOfRange(_WHERE("range is %i<0",res));
 	this->set(res);
 }
-void tBBuf::check(Byte * what,U32 n) {
+void tBBuf::check(const Byte * what,U32 n) {
 	if(eof() || size()-tell()<n || memcmp(what,this->read(n),n)) {
 		throw txUnexpectedData(_WHERE("UnexpectedData"));
 	}

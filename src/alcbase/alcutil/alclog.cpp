@@ -81,20 +81,20 @@ typedef struct {
 	char level; //!< current logging level (0 - disabled, 1 minimal, 6 huge)
 	U16 log_flags; //!< default flags assigned to a log file on creation
 	//build vars
-	char * build; //!< build
+	char build[100]; //!< build
 	//syslog
-	char * syslogname; //<! the syslog name
+	char syslogname[100]; //<! the syslog name
 	char syslog_enabled; //<! enable syslog logging? (0x01 yes, 0x0 no)
 	//db
-	char * dbhost; //<!database params
+	char dbhost[100]; //<!database params
 	U16 dbport;
-	char * dbname;
-	char * dbuser;
-	char * dbpasswd;
-	char * dbeventtable;
+	char dbname[100];
+	char dbuser[100];
+	char dbpasswd[100];
+	char dbeventtable[100];
 	char db_enabled; //<! 0x01 enabled, 0x00 disabled
 	//unet
-	char * host; //<! udp/tcp listener
+	char host[100]; //<! udp/tcp listener
 	U16 port;
 	char protocol; //UDP, TCP <! 0x00 disabled, 0x01 udp, 0x02 tcp
 	int n_logs; //How many log files are open
@@ -116,20 +116,20 @@ void alcLogSetDefaults() {
 	tvLogConfig->creation_mask=00750;
 	tvLogConfig->level=6;
 	tvLogConfig->log_flags= DF_DEFSTDOUT | DF_STAMP | DF_IP; // | DF_ANOY;
-	tvLogConfig->build="Alcugs logging system";
+	strncpy(tvLogConfig->build, "Alcugs logging system", 99);
 	//syslog
-	tvLogConfig->syslogname="alcugs";
+	strncpy(tvLogConfig->syslogname, "alcugs", 99);
 	tvLogConfig->syslog_enabled=0x00;
 	//db
-	tvLogConfig->dbhost=NULL;
+	strncpy(tvLogConfig->dbhost, "", 99);
 	tvLogConfig->dbport=0;
-	tvLogConfig->dbname="uru_events";
-	tvLogConfig->dbuser="uru";
-	tvLogConfig->dbpasswd="";
-	tvLogConfig->dbeventtable="events";
+	strncpy(tvLogConfig->dbname, "uru_events", 99);
+	strncpy(tvLogConfig->dbuser, "uru", 99);
+	strncpy(tvLogConfig->dbpasswd, "", 99);
+	strncpy(tvLogConfig->dbeventtable, "events", 99);
 	tvLogConfig->db_enabled=0x00;
 	//unet
-	tvLogConfig->host="localhost";
+	strncpy(tvLogConfig->host, "localhost", 99);
 	tvLogConfig->port=9000;
 	tvLogConfig->protocol=0x00;
 	//track logs
@@ -792,7 +792,7 @@ void tLog::nl() {
 /**
 error logging
 */
-void tLog::logerr(char *msg) {
+void tLog::logerr(const char *msg) {
 	this->log("%s\n",msg);
 	this->log(" errno %i: %s\n",errno,strerror(errno));
 }

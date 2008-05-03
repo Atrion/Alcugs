@@ -87,7 +87,7 @@ public:
 	/** New Line */
 	void nl();
 	/** logs an std error */
-	void logerr(char *msg);
+	void logerr(const char *msg);
 
 private:
 	char * name;

@@ -40,7 +40,7 @@ namespace alc {
 	\param name Mr. core name
 	\todo implement a Mutex here
 */
-void alcWriteCoreDump(char * name="");
+void alcWriteCoreDump(const char * name="");
 /** 
 	\brief Set coredump flags.
 	\param flags 0x00 - disabled, 0x01 - enabled, 0x02 -always

@@ -47,12 +47,12 @@ void alcDecodePacket(unsigned char* buf, int n);
 int alcUruValidatePacket(Byte * buf,int n,Byte * validation,bool authed=false,Byte * phash=NULL);
 U32 alcUruChecksum(Byte* buf, int size, int alg, Byte * aux_hash);
 
-char * alcUnetGetRelease(Byte rel);
-char * alcUnetGetDestination(Byte dest);
-char * alcUnetGetReasonCode(Byte code);
-char * alcUnetGetAuthCode(Byte code);
-char * alcUnetGetAvatarCode(Byte code);
-char * alcUnetGetMsgCode(U16 code);
+const char * alcUnetGetRelease(Byte rel);
+const char * alcUnetGetDestination(Byte dest);
+const char * alcUnetGetReasonCode(Byte code);
+const char * alcUnetGetAuthCode(Byte code);
+const char * alcUnetGetAvatarCode(Byte code);
+const char * alcUnetGetMsgCode(U16 code);
 
 class tUnet;
 class tUnetOutMsgQ;

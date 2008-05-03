@@ -104,8 +104,8 @@ public:
 	virtual void seek(int n,Byte flags=SEEK_CUR);
 	/** \throws txUnexpectedData if pattern don't matches buffer contents
 	*/
-	virtual void check(Byte * what,U32 n);
-	virtual void check(char * what,U32 n) {
+	virtual void check(const Byte * what,U32 n);
+	virtual void check(const char * what,U32 n) {
 		this->check((Byte *)what,n);
 	}
 	virtual void putU16(U16 val);

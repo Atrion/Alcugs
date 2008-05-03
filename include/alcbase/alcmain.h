@@ -95,7 +95,7 @@ bool alcVerifyVersion() {
 	alcGetBetVersion()==alcBET_VER &&
 	alcGetProtocolVersion()==alcProtoVer);
 }
-char * alcVerifyVersionStr = alcSTR_VER;
+const char * alcVerifyVersionStr = alcSTR_VER;
 #endif
 
 #else
