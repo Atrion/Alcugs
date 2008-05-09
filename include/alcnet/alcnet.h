@@ -72,7 +72,8 @@ typedef U16 tUnetFlags;
 #define UNET_NOFLOOD  0x0010 /* enable flooding control */
 #define UNET_BCAST    0x0020 /* enable broadcast */
 #define UNET_FLOG     0x0040 /* enable file based logging, (also, 0x02 must be present) */
-#define UNET_NETAUTH  0x0080 /* Enable authentication through servers */
+//#define UNET_NETAUTH  0x0080 /* Enable authentication through servers */
+// UNET_NETAUTH was meant to enable an authentication for auth, tracking and vault against lobby and game and vice versa. it was never implemented though.
 #define UNET_DLACK    0x0100 /* Disable ack trace */
 #define UNET_DLCHK    0x0200 /* Disable chk log */
 #define UNET_DLUNE    0x0400 /* Disable une log */
@@ -80,7 +81,7 @@ typedef U16 tUnetFlags;
 #define UNET_LQUIET   0x1000 /* Disable dumping to the console */
 #define UNET_NOCONN   0x2000 /* Non connected server */
 
-#define UNET_DEFAULT_FLAGS UNET_NBLOCK | UNET_ELOG | UNET_ECRC | UNET_AUTOSP | UNET_NOFLOOD | UNET_FLOG | UNET_NETAUTH
+#define UNET_DEFAULT_FLAGS UNET_NBLOCK | UNET_ELOG | UNET_ECRC | UNET_AUTOSP | UNET_NOFLOOD | UNET_FLOG
 
 
 class tUnet {
