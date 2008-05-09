@@ -61,7 +61,7 @@ namespace alc {
 	
 	class tPlayer {
 	public:
-		tPlayer(U32 ki, U32 x) { this->ki = ki; this->x = x; memset(guid, 0, 8); age_name[0] = 0; u = NULL; waiting = false; }
+		tPlayer(U32 ki) { this->ki = ki; this->x = 0; memset(guid, 0, 8); age_name[0] = 0; u = NULL; waiting = false; }
 		char *str(void);
 		U32 ki; //!< player's ki number
 		U32 x; //!< player's X value
@@ -91,7 +91,7 @@ namespace alc {
 		~tTrackingBackend(void);
 		void reload(void);
 		
-		void updatePlayer(U32 ki, U32 x, tNetSession *u);
+		void updatePlayer(tNetSession *game, tmCustomPlayerStatus &playerStatus);
 		tPlayer *getPlayer(U32 ki);
 		
 		void updateServer(tNetSession *game, tmCustomSetGuid &setGuid);

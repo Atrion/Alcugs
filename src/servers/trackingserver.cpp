@@ -80,7 +80,7 @@ namespace alc {
 				log->log("<RCV> %s\n", playerStatus.str());
 				
 				// update the player's data
-				trackingBackend->updatePlayer(playerStatus.ki, playerStatus.x, u);
+				trackingBackend->updatePlayer(u, playerStatus);
 				
 				return 1;
 			}

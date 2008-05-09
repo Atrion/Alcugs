@@ -237,9 +237,9 @@ namespace alc {
 		log->flush();
 	}
 	
-	void tTrackingBackend::updatePlayer(U32 ki, U32 x, tNetSession *u)
+	void tTrackingBackend::updatePlayer(tNetSession *game, tmCustomPlayerStatus &playerStatus)
 	{
-		tPlayer *player = getPlayer(ki);
+		tPlayer *player = getPlayer(playerStatus.ki);
 		if (!player) { // it doesn't exist, create it
 			int slot = -1;
 			for (int i = 0; i < size; ++i) {
@@ -255,16 +255,16 @@ namespace alc {
 				else players = (tPlayer **)realloc((void *)players, size*sizeof(tPlayer));
 				slot = size-1;
 			}
-			player = players[slot] = new tPlayer(ki, x);
+			player = players[slot] = new tPlayer(playerStatus.ki);
 		}
-		else
-			player->x = x;
-		player->u = u;
+		player->x = playerStatus.x;
+		player->u = game;
 		// TODO: log something useful here
 	}
 	
 	void tTrackingBackend::removePlayer(int player)
 	{
+		if (player >= size) return;
 		if (players[player] != NULL) {
 			delete players[player];
 			players[player] = NULL;
@@ -272,7 +272,7 @@ namespace alc {
 		
 		int last = size-1; // find the last player
 		while (last >= 0 && players[last] == NULL) --last;
-		if (last < size-1) { // there are some NULLs at the end, srhink the array
+		if (last < size-1) { // there are some NULLs at the end, shrink the array
 			size=last+1;
 			DBG(5, "shrinking to %d\n", size);
 			players=(tPlayer **)realloc(players, sizeof(tPlayer) * size); // it's not a bug if we get NULL here - the size might be 0
