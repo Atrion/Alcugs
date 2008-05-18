@@ -39,6 +39,7 @@
 #define __U_TRACKINGBACKEND_H_ID "$Id$"
 
 #include <protocol/trackingmsg.h>
+#include "guidgen.h"
 
 namespace alc {
 
@@ -107,6 +108,7 @@ namespace alc {
 		tPlayer **players;
 		tNetSessionList *servers;
 		tLog *log;
+		tGuidGen *guidGen;
 	};
 
 } //End alc namespace

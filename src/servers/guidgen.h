@@ -33,17 +33,28 @@
 		Several
 */
 
-#ifndef __U_FILENAME_H
-#define __U_FILENAME_H
+#ifndef __U_GUIDGEN_H
+#define __U_GUIDGEN_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_FILENAME_H_ID "$Id$"
+#define __U_GUIDGEN_H_ID "$Id$"
 
 namespace alc {
 
 	////DEFINITIONS
-	/**
-		If we want to do it well and nice, we should add pre and post conditions here.
-	*/
+	class tAgeParser
+	{
+	public:
+		tAgeParser(const Byte *dir);
+	};
+	
+	class tGuidGen
+	{
+	public:
+		tGuidGen(void);
+		~tGuidGen(void) { delete ageParser; }
+		
+		tAgeParser *ageParser;
+	};
 
 } //End alc namespace
 

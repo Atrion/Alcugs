@@ -44,10 +44,10 @@
 ;bandwidth = 128
 
 # network and network mask of your LAN (to determine the connection speed)
-private_network = 192.168.0.0
-private_mask    = 255.255.255.0
+private_network = "192.168.0.0"
+private_mask    = "255.255.255.0"
 # the address others use to connect to your server (i.e. your external address)
-public_address  = 127.0.0.1
+public_address  = "127.0.0.1"
 
 # global database settings
 ;db.timeout = 950 # set the database tiemout if the connection is not persistent (default 15 minutes = 950 seconds)
@@ -55,10 +55,13 @@ public_address  = 127.0.0.1
 ;db.log = 1 # enable logging of the database driver (default 1)
 ;db.sql.log = 1 # enable sql logging (default 1), doesn't work when db.log is disabled
 # global database connection data
-db.host = 127.0.0.1 # note: set db.host to nothing to use the local unix socket (untested with unet3+)
+db.host = "127.0.0.1" # note: set db.host to nothing to use the local unix socket (untested with unet3+)
 ;db.port = 0 # sets the MySQL port (default 0 = let mysql decide which port to use)
-db.username = alcugs
-db.passwd = yourpassword
+db.username = "alcugs"
+db.passwd = "yourpassword"
+
+# paths
+age = ~/age/
 
 # There is a stop var for each server section, remove them to check that you
 # have already read and understood how this configuration file works.
@@ -69,7 +72,7 @@ stop = 1
 # this is the section containing options for the auth server. global options like verbose_level or log_files_path can be overwritten here
 
 # bind and port are also used by lobby and game to know where to connect, so they are both mandatory
-bind = 127.0.0.1 # the auth server doesn't have to be accessed from outside
+bind = "127.0.0.1" # the auth server doesn't have to be accessed from outside
 port = 2010
 
 # enable/disable auth logging
@@ -83,9 +86,9 @@ port = 2010
 # database settings
 db.name = "alcugs_auth"
 # you can overwrite the global settings here if host, username and/or password aren't the same for all servers
-;db.host = 127.0.0.1
-;db.username = alcugs
-;db.passwd = yourpassword
+;db.host = "127.0.0.1"
+;db.username = "alcugs"
+;db.passwd = "yourpassword"
 
 stop = 1
 
@@ -94,7 +97,7 @@ stop = 1
 # this is the section containing options for the tracking server. global options like verbose_level or log_files_path can be overwritten here
 
 # bind and port are also used by lobby and game to know where to connect, so they are both mandatory
-bind = 127.0.0.1 # the tracking server doesn't have to be accessed from outside
+bind = "127.0.0.1" # the tracking server doesn't have to be accessed from outside
 port = 2011
 
 # enable/disable tracking logging
@@ -107,7 +110,7 @@ stop = 1
 # this is the section containing options for the vault server. global options like verbose_level or log_files_path can be overwritten here
 
 # bind and port are also used by lobby and game to know where to connect, so they are both mandatory
-bind = 127.0.0.1 # the vault server doesn't have to be accessed from outside
+bind = "127.0.0.1" # the vault server doesn't have to be accessed from outside
 port = 2012
 
 stop = 1
@@ -116,7 +119,7 @@ stop = 1
 [lobby]
 # this is the section containing options for the lobby server. global options like verbose_level or log_files_path can be overwritten here
 
-bind = 127.0.0.1 # bind address for lobby (the interface facing your router)
+bind = "127.0.0.1" # bind address for lobby (the interface facing your router)
 port = 5000
 
 # compatability for old servers

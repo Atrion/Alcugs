@@ -79,10 +79,12 @@ namespace alc {
 		size = 0;
 		players = NULL;
 		loadSettings();
+		guidGen = new tGuidGen();
 	}
 	
 	tTrackingBackend::~tTrackingBackend(void)
 	{
+		delete guidGen;
 		if (players != NULL) {
 			int num_deleted = 0;
 			for (int i = 0; i < size; ++i) {

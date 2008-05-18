@@ -33,18 +33,33 @@
 		Several
 */
 
-#ifndef __U_FILENAME_H
-#define __U_FILENAME_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_FILENAME_H_ID "$Id$"
+#define __U_GUIDGEN_ID "$Id$"
+
+//#define _DBG_LEVEL_ 10
+
+#include <alcugs.h>
+
+////extra includes
+#include "guidgen.h"
+
+#include "alcdebug.h"
 
 namespace alc {
 
-	////DEFINITIONS
-	/**
-		If we want to do it well and nice, we should add pre and post conditions here.
-	*/
+	////IMPLEMENTATION
+	tAgeParser::tAgeParser(const Byte *dir)
+	{
+		lstd->log("(not) reading age files from %s\n", dir);
+		lstd->flush();
+	}
+	
+	tGuidGen::tGuidGen(void)
+	{
+		tConfig *cfg = alcGetConfig();
+		tStrBuf var = cfg->getVar("age");
+		ageParser = new tAgeParser(var.c_str());
+	}
 
-} //End alc namespace
+} //end namespace alc
 
-#endif
