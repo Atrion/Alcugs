@@ -105,7 +105,9 @@ namespace alc {
 			delete log;
 			log = lnull;
 		}
+		delete guidGen;
 		loadSettings();
+		guidGen = new tGuidGen();
 	}
 	
 	void tTrackingBackend::findServer(tPlayer *player, const Byte *guid, const Byte *name)

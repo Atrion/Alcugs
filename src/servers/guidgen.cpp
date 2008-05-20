@@ -36,7 +36,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_GUIDGEN_ID "$Id$"
 
-//#define _DBG_LEVEL_ 10
+#define _DBG_LEVEL_ 10
 
 #include <alcugs.h>
 
@@ -48,17 +48,51 @@
 namespace alc {
 
 	////IMPLEMENTATION
-	tAgeParser::tAgeParser(const Byte *dir)
+	tAgeParser::tAgeFile::tAgeFile(const char *dir, const char *file)
 	{
-		lstd->log("(not) reading age files from %s\n", dir);
+		char filename[1024];
+		strncpy(filename, dir, 512);
+		strncat(filename, file, 511);
+		DBG(9, "opening %s\n", filename);
+	}
+	
+	tAgeParser::tAgeParser(const char *dir)
+	{
+		lstd->log("reading age files from %s\n", dir);
 		lstd->flush();
+		
+		size = 0;
+		ages = NULL;
+		
+		tDirectory ageDir;
+		tDirEntry *file;
+		ageDir.open(dir);
+		while( (file = ageDir.getEntry()) != NULL) {
+			if (file->type != 8 || strcasecmp(alcGetExt(file->name), "age") != 0) continue;
+			
+			// grow the array
+			++size;
+			ages = (tAgeFile **)realloc(ages, size*sizeof(tAgeFile*));
+			ages[size-1] = new tAgeFile(dir, file->name);
+		}
+	}
+	
+	tAgeParser::~tAgeParser(void)
+	{
+		if (ages != NULL) {
+			for (int i = 0; i < size; ++i) {
+				if (ages[i]) delete ages[i];
+			}
+			free(ages);
+		}
 	}
 	
 	tGuidGen::tGuidGen(void)
 	{
 		tConfig *cfg = alcGetConfig();
 		tStrBuf var = cfg->getVar("age");
-		ageParser = new tAgeParser(var.c_str());
+		if (!var.endsWith("/")) var.writeStr("/");
+		ageParser = new tAgeParser((char *)var.c_str());
 	}
 
 } //end namespace alc

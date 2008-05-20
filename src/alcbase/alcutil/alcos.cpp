@@ -94,10 +94,10 @@ tDirectory::tDirectory() {
 tDirectory::~tDirectory() {
 	this->close();
 }
-void tDirectory::open(char * path) {
+void tDirectory::open(const char * path) {
 	dir=opendir((const char *)path);
 	if(dir==NULL) throw txBase(_WHERE("OpenDirFailed"));
-	this->path=path;
+	strncpy(this->path, path, 511);
 }
 void tDirectory::close() {
 	if(dir!=NULL) closedir(dir);

@@ -59,7 +59,7 @@ class tDirectory {
 public:
 	tDirectory();
 	~tDirectory();
-	void open(char * path);
+	void open(const char * path);
 	void close();
 	tDirEntry * getEntry();
 	void rewind();
@@ -67,7 +67,7 @@ private:
 	std::DIR *dir;
 	struct std::dirent *entry;
 	tDirEntry ent;
-	char * path;
+	char path[512];
 };
 
 } //End alc namespace

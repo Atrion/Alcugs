@@ -44,7 +44,16 @@ namespace alc {
 	class tAgeParser
 	{
 	public:
-		tAgeParser(const Byte *dir);
+		tAgeParser(const char *dir);
+		~tAgeParser(void);
+	private:
+		class tAgeFile
+		{
+		public:
+			tAgeFile(const char *dir, const char *file);
+		};
+		int size;
+		tAgeFile **ages;
 	};
 	
 	class tGuidGen
