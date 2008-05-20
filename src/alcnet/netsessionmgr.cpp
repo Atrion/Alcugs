@@ -70,7 +70,7 @@ int tNetSessionList::add(tNetSession *u)
 	}
 	// we have to resize the table
 	DBG(5, "growing to %d\n", size+1);
-	tNetSession **ntable=(tNetSession **)realloc((void *)table,sizeof(tNetSession) * (size+1));
+	tNetSession **ntable=(tNetSession **)realloc((void *)table,sizeof(tNetSession*) * (size+1));
 	if(ntable==NULL) throw txNoMem(_WHERE(""));
 	table=ntable;
 	++size;
@@ -106,7 +106,7 @@ void tNetSessionList::remove(tNetSession *u)
 	}
 	if(found!=-1) { // if that's the case, shrink
 		DBG(5, "shrinking to %d\n", found);
-		table=(tNetSession **)realloc(table,sizeof(tNetSession) * found); // it's not a bug if we get NULL here - the size might be 0
+		table=(tNetSession **)realloc(table,sizeof(tNetSession*) * found); // it's not a bug if we get NULL here - the size might be 0
 		size=found;
 	}
 	if (count == 0) { assert(size == 0); }

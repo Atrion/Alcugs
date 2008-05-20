@@ -253,8 +253,7 @@ namespace alc {
 			if (slot < 0) {
 				++size;
 				DBG(5, "growing to %d\n", size);
-				if (!players) players = (tPlayer **)malloc(size*sizeof(tPlayer));
-				else players = (tPlayer **)realloc((void *)players, size*sizeof(tPlayer));
+				players = (tPlayer **)realloc((void *)players, size*sizeof(tPlayer*));
 				slot = size-1;
 			}
 			player = players[slot] = new tPlayer(playerStatus.ki);
@@ -277,7 +276,7 @@ namespace alc {
 		if (last < size-1) { // there are some NULLs at the end, shrink the array
 			size=last+1;
 			DBG(5, "shrinking to %d\n", size);
-			players=(tPlayer **)realloc(players, sizeof(tPlayer) * size); // it's not a bug if we get NULL here - the size might be 0
+			players=(tPlayer **)realloc(players, sizeof(tPlayer*) * size); // it's not a bug if we get NULL here - the size might be 0
 		}
 	}
 	
