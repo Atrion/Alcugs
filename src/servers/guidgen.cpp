@@ -48,7 +48,7 @@
 namespace alc {
 
 	////IMPLEMENTATION
-	tAgeFile::tAgeFile(const char *dir, const char *file)
+	tAgeInfo::tAgeInfo(const char *dir, const char *file)
 	{
 		// get age name from file name
 		strncpy((char *)name, file, 199);
@@ -94,8 +94,8 @@ namespace alc {
 			
 			// grow the array
 			++size;
-			ages = (tAgeFile **)realloc(ages, size*sizeof(tAgeFile*));
-			ages[size-1] = new tAgeFile(dir, file->name);
+			ages = (tAgeInfo **)realloc(ages, size*sizeof(tAgeInfo*));
+			ages[size-1] = new tAgeInfo(dir, file->name);
 		}
 	}
 	
@@ -109,7 +109,7 @@ namespace alc {
 		}
 	}
 	
-	tAgeFile *tAgeParser::getAge(Byte *name)
+	tAgeInfo *tAgeParser::getAge(const Byte *name)
 	{
 		for (int i = 0; i < size; ++i) {
 			if (!ages[i]) continue;
@@ -124,6 +124,58 @@ namespace alc {
 		tStrBuf var = cfg->getVar("age");
 		if (!var.endsWith("/")) var.writeStr("/");
 		ageParser = new tAgeParser((char *)var.c_str());
+		// load the list of private ages
+		var = cfg->getVar("private_ages");
+		if (var.isNull()) privateAges[0] = 0;
+		else strncpy((char *)privateAges, (char *)var.c_str(), 1023);
+		// load instance mode setting
+		var = cfg->getVar("instance_mode");
+		if (var.isNull()) instanceMode = 1;
+		else instanceMode = var.asByte();
+		if (instanceMode != 0 && instanceMode != 1) throw txBase(_WHERE("instance_mode must be 0 or 1"));
+	}
+	
+	bool tGuidGen::isAgePrivate(const Byte *age)
+	{
+		// local copy of private age list as strsep modifies it
+		char ages[1024];
+		strcpy(ages, (char *)privateAges);
+		
+		char *buf = ages;
+		char *p = strsep(&buf, ",");
+		while (p != 0) {
+			if (strcmp(p, (char *)age) == 0) return true;
+			p = strsep(&buf, ",");
+		}
+		return false;
+	}
+	
+	bool tGuidGen::generateGuid(Byte *guid, const Byte *age, U32 ki)
+	{
+		tAgeInfo *ageInfo = ageParser->getAge(age);
+		if (!ageInfo) return false;
+		bool isPrivate = (instanceMode == 1) ? isAgePrivate(age) : false;
+		
+		/*
+		so we have " The server GUID, aka age guid"
+		---------------------------------
+		| 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+		--------------------------------
+		| 0 | ki here       | 0 | s | s |
+		--------------------------------
+	
+		Where s is the sequence prefix.
+		This is only a preliminar usage of the age guid. Using the player id, as part of the age,
+		we will be completely sure, that all players, at least will have only one instance for his
+		own age.
+		The 5 byte is reserved for a random number for the hoods, and any other age (for the future)
+		And the 1st bit of the 4 byte, should be always 0 (since the Ki number is a signed value, this
+		Will happen always.
+		*/
+		memset(guid, 8, 0);
+		if (isPrivate) *(U32 *)(guid+1) = ki;
+		*(U16 *)(guid+6) = ageInfo->seqPrefix;
+		return true;
 	}
 
 } //end namespace alc

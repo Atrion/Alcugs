@@ -36,7 +36,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_TRACKINGBACKEND_ID "$Id$"
 
-#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 10
 
 #include <alcugs.h>
 #include <unet.h>
@@ -110,9 +110,20 @@ namespace alc {
 		guidGen = new tGuidGen();
 	}
 	
-	void tTrackingBackend::findServer(tPlayer *player, const Byte *guid, const Byte *name)
+	void tTrackingBackend::findServer(tPlayer *player, Byte *guid, const Byte *name)
 	{
 		log->log("Player %s wants to link to %s (%s)\n", player->str(), name, alcGetStrGuid(guid, 8));
+		Byte zeroguid[8];
+		memset(zeroguid, 0, 8);
+		if (memcmp(guid, zeroguid, 8) == 0) {
+			if (!guidGen->generateGuid(guid, name, player->ki)) {
+				// TODO: kick the player?
+				log->log(" Can\'t generate a GUID for this unknown age, ignoring\n");
+				lerr->log("Unable to generate GUID for age %s\n", name);
+				return;
+			}
+			log->log(" Generated GUID: %s\n", alcGetStrGuid(guid, 8));
+		}
 		memcpy(player->guid, guid, 8);
 		strncpy((char *)player->age_name, (char *)name, 199);
 		tNetSession *server = NULL, *game = NULL;
@@ -124,13 +135,14 @@ namespace alc {
 			}
 		}
 		if (!game) {
-			DBG(5, "can't find age, spawning a new server\n");
 			// search for the lobby with the least load
 			tNetSession *lobby = NULL;
 			int load = -1;
 			servers->rewind();
 			while ((server = servers->getNext())) {
-				if (server->data && (load < 0 || ((tTrackingData*)server->data)->childs->getCount() < load)) {
+				if (!server->data) continue;
+				tTrackingData *data = (tTrackingData*)server->data;
+				if (data->isLobby && (load < 0 || ((tTrackingData*)server->data)->childs->getCount() < load)) {
 					lobby = server;
 					load = ((tTrackingData*)server->data)->childs->getCount();
 				}
@@ -145,9 +157,8 @@ namespace alc {
 			bool *freePorts = new bool[nPorts];
 			for (int i = 0; i < nPorts; ++i) freePorts[i] = true;
 			data->childs->rewind();
-			while ((server = data->childs->getNext())) {
-				freePorts[server->getPort() - data->port_start] = false;
-			}
+			while ((server = data->childs->getNext()))
+				freePorts[ntohs(server->getPort()) - data->port_start] = false;
 			int lowest;
 			for (lowest = 0; lowest < nPorts; ++lowest) {
 				if (freePorts[lowest]) break; // we found a free one
@@ -205,17 +216,12 @@ namespace alc {
 	
 	void tTrackingBackend::updateServer(tNetSession *game, tmCustomSetGuid &setGuid)
 	{
-		Byte zeroguid[8];
-		memset(zeroguid, 0, 8);
-		if (memcmp(setGuid.guid, zeroguid, 8) == 0) {
-			// TODO: generate a GUID
-		}
-	
 		memcpy(game->guid, setGuid.guid, 8);
 		strncpy((char *)game->name, (char *)setGuid.age.c_str(), 199);
 		
 		tTrackingData *data = (tTrackingData *)game->data;
-		if (!data) data = new tTrackingData;
+		if (data) return; // ignore the rest if the info if we already got it. IP and Port can't change.
+		data = new tTrackingData;
 		data->isLobby = (ntohs(game->getPort()) == 5000); // FIXME: the criteria to determine whether it's a lobby or a game server is BAD
 		strncpy((char *)data->ip, (char *)setGuid.ip_str.c_str(), 49);
 		if (!data->isLobby) { // let's look to which lobby this server belongs
@@ -254,7 +260,6 @@ namespace alc {
 			}
 			if (slot < 0) {
 				++size;
-				DBG(5, "growing to %d\n", size);
 				players = (tPlayer **)realloc((void *)players, size*sizeof(tPlayer*));
 				slot = size-1;
 			}
@@ -277,7 +282,6 @@ namespace alc {
 		while (last >= 0 && players[last] == NULL) --last;
 		if (last < size-1) { // there are some NULLs at the end, shrink the array
 			size=last+1;
-			DBG(5, "shrinking to %d\n", size);
 			players=(tPlayer **)realloc(players, sizeof(tPlayer*) * size); // it's not a bug if we get NULL here - the size might be 0
 		}
 	}

@@ -41,10 +41,10 @@
 namespace alc {
 
 	////DEFINITIONS
-	class tAgeFile
+	class tAgeInfo
 	{
 	public:
-		tAgeFile(const char *dir, const char *file);
+		tAgeInfo(const char *dir, const char *file);
 		int seqPrefix;
 		Byte name[200];
 	};
@@ -54,10 +54,10 @@ namespace alc {
 	public:
 		tAgeParser(const char *dir);
 		~tAgeParser(void);
-		tAgeFile *getAge(Byte *name);
+		tAgeInfo *getAge(const Byte *name);
 	private:
 		int size;
-		tAgeFile **ages;
+		tAgeInfo **ages;
 	};
 	
 	class tGuidGen
@@ -65,8 +65,13 @@ namespace alc {
 	public:
 		tGuidGen(void);
 		~tGuidGen(void) { delete ageParser; }
-		
+		bool generateGuid(Byte *guid, const Byte *age, U32 ki);
+	private:
+		bool isAgePrivate(const Byte *age);
+	
+		int instanceMode;
 		tAgeParser *ageParser;
+		Byte privateAges[1024];
 	};
 
 } //End alc namespace
