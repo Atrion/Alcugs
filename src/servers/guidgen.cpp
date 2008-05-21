@@ -48,12 +48,34 @@
 namespace alc {
 
 	////IMPLEMENTATION
-	tAgeParser::tAgeFile::tAgeFile(const char *dir, const char *file)
+	tAgeFile::tAgeFile(const char *dir, const char *file)
 	{
+		// get age name from file name
+		strncpy((char *)name, file, 199);
+		alcStripExt((char *)name);
+		// assemble file name
 		char filename[1024];
 		strncpy(filename, dir, 512);
 		strncat(filename, file, 511);
-		DBG(9, "opening %s\n", filename);
+		DBG(9, "opening %s... ", filename);
+		// open and decrypt file
+		tFBuf ageFile;
+		ageFile.open(filename, "r");
+		tWDYSBuf ageContent;
+		ageFile.get(ageContent);
+		ageContent.decrypt();
+		// parse file
+		tConfig *cfg = new tConfig;
+		tXParser parser;
+		parser.setConfig(cfg);
+		ageContent.get(parser);
+		// get sequence prefix
+		tStrBuf prefix = cfg->getVar("SequencePrefix");
+		if (prefix.isNull()) throw txParseError(_WHERE("can\'t find the ages SequencePrefix"));
+		seqPrefix = prefix.asU16();
+		// done!
+		DBGM(9, "found sequence prefix %d for age %s\n", seqPrefix, name);
+		delete cfg;
 	}
 	
 	tAgeParser::tAgeParser(const char *dir)
@@ -85,6 +107,15 @@ namespace alc {
 			}
 			free(ages);
 		}
+	}
+	
+	tAgeFile *tAgeParser::getAge(Byte *name)
+	{
+		for (int i = 0; i < size; ++i) {
+			if (!ages[i]) continue;
+			if (strcmp((char *)ages[i]->name, (char *)name) == 0) return ages[i];
+		}
+		return NULL;
 	}
 	
 	tGuidGen::tGuidGen(void)

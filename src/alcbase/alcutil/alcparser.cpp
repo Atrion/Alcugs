@@ -236,7 +236,7 @@ void tXParser::store(tStrBuf &t) {
 						if(val==" ") val=t.getToken();
 					}
 				}
-				if(val!="\n") {
+				if(!t.eof() && val!="\n") {
 					throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token '%s'. A newline was expected.\n",t.getLineNum(),t.getColumnNum(),val.c_str()));
 				}
 			}

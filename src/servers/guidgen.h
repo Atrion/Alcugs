@@ -41,17 +41,21 @@
 namespace alc {
 
 	////DEFINITIONS
+	class tAgeFile
+	{
+	public:
+		tAgeFile(const char *dir, const char *file);
+		int seqPrefix;
+		Byte name[200];
+	};
+	
 	class tAgeParser
 	{
 	public:
 		tAgeParser(const char *dir);
 		~tAgeParser(void);
+		tAgeFile *getAge(Byte *name);
 	private:
-		class tAgeFile
-		{
-		public:
-			tAgeFile(const char *dir, const char *file);
-		};
 		int size;
 		tAgeFile **ages;
 	};
