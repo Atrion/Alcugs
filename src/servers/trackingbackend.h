@@ -103,12 +103,16 @@ namespace alc {
 		void serverFound(tPlayer *player, tNetSession *server);
 		void loadSettings(void);
 		void removePlayer(int player);
+		bool doesAgeLoadState(const Byte *age);
 	
 		int size;
 		tPlayer **players;
 		tNetSessionList *servers;
 		tLog *log;
 		tGuidGen *guidGen;
+		
+		Byte resettingAges[1024];
+		bool loadAgeState;
 	};
 
 } //End alc namespace

@@ -124,8 +124,10 @@ namespace alc {
 			}
 			log->log(" Generated GUID: %s\n", alcGetStrGuid(guid, 8));
 		}
+		// copy data to player
 		memcpy(player->guid, guid, 8);
 		strncpy((char *)player->age_name, (char *)name, 199);
+		// search for the game server the player needs
 		tNetSession *server = NULL, *game = NULL;
 		servers->rewind();
 		while ((server = servers->getNext())) {
@@ -158,7 +160,7 @@ namespace alc {
 			for (int i = 0; i < nPorts; ++i) freePorts[i] = true;
 			data->childs->rewind();
 			while ((server = data->childs->getNext()))
-				freePorts[ntohs(server->getPort()) - data->port_start] = false;
+				freePorts[ntohs(server->getPort()) - data->port_start] = false; // this port is occupied
 			int lowest;
 			for (lowest = 0; lowest < nPorts; ++lowest) {
 				if (freePorts[lowest]) break; // we found a free one
@@ -170,10 +172,13 @@ namespace alc {
 				return;
 			}
 			// ok, telling the lobby to fork
-			tmCustomForkServer forkServer(lobby, player->ki, player->x, lowest, guid, name, false); // FIXME: atm it never loads the SDL state
+			bool loadState = doesAgeLoadState(name);
+			tmCustomForkServer forkServer(lobby, player->ki, player->x, lowest, guid, name, loadState);
 			lobby->send(forkServer);
 			player->waiting = true;
-			log->log("Spawning new game server %s (GUID: %s, port: %d) on %s\n", name, alcGetStrGuid(guid, 8), lowest, lobby->str());
+			log->log("Spawning new game server %s (GUID: %s, port: %d) on %s ", name, alcGetStrGuid(guid, 8), lowest, lobby->str());
+			if (loadState) log->print("(loading age state)\n");
+			else log->print("(not loading age state)\n");
 		}
 		else {
 			// ok, we got it, let's tell the player about it
@@ -199,6 +204,7 @@ namespace alc {
 			lerr->log("ERR: Found age for player %s, but I don't know how to contact him\n", player->str());
 			return;
 		}
+		// notifiy the player that it's server is available
 		tTrackingData *data = (tTrackingData *)server->data;
 		tmCustomServerFound found(player->u, player->ki, player->x, ntohs(server->getPort()), data->ip, server->guid, server->name);
 		player->u->send(found);
@@ -228,12 +234,12 @@ namespace alc {
 			tNetSession *server = NULL, *lobby = NULL;
 			servers->rewind();
 			while ((server = servers->getNext())) {
-				if (server->data && server->getIP() == game->getIP() && ((tTrackingData *)server->data)->isLobby) {
+				if (server->data && ((tTrackingData *)server->data)->isLobby && server->getIP() == game->getIP()) {
 					lobby = server;
 					break;
 				}
 			}
-			if (lobby) {
+			if (lobby) { // we found the server's lobby
 				((tTrackingData *)server->data)->childs->add(game); // add the game server to the list of children of that lobby
 				data->parent = lobby;
 			}
@@ -326,6 +332,29 @@ namespace alc {
 			log->log("Tracking driver started (%s)\n\n", __U_TRACKINGBACKEND_ID);
 			log->flush();
 		}
+		
+		var = cfg->getVar("tracking.tmp.hacks.agestate");
+		loadAgeState = (var.isNull() || var.asByte());
+		var = cfg->getVar("tracking.tmp.hacks.resetting_ages");
+		if (var.isNull()) strcpy((char *)resettingAges, "Cleft,DniCityX2Finale,GreatZero,Kveer,Myst,Neighborhood02,Personal02,RestorationGuild,spyroom");
+		else strncpy((char *)resettingAges, (char *)var.c_str(), 1023);
+	}
+	
+	bool tTrackingBackend::doesAgeLoadState(const Byte *age)
+	{
+		if (!loadAgeState) return false;
+		
+		// local copy of resetting age list as strsep modifies it
+		char ages[1024];
+		strcpy(ages, (char *)resettingAges);
+		
+		char *buf = ages;
+		char *p = strsep(&buf, ",");
+		while (p != 0) {
+			if (strcmp(p, (char *)age) == 0) return false;
+			p = strsep(&buf, ",");
+		}
+		return true;
 	}
 
 } //end namespace alc

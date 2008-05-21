@@ -126,7 +126,7 @@ namespace alc {
 		ageParser = new tAgeParser((char *)var.c_str());
 		// load the list of private ages
 		var = cfg->getVar("private_ages");
-		if (var.isNull()) privateAges[0] = 0;
+		if (var.isNull()) strcpy((char *)privateAges, "AvatarCustomization,Personal,Nexus,BahroCave");
 		else strncpy((char *)privateAges, (char *)var.c_str(), 1023);
 		// load instance mode setting
 		var = cfg->getVar("instance_mode");
