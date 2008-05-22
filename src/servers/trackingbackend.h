@@ -58,6 +58,7 @@ namespace alc {
 		tNetSessionList *childs;
 		U16 port_start, port_end;
 		Byte ip[50]; //!< the external IP (the ones palyers should use to connect to this server)
+		Byte agentGuid[7]; //!< set when isLobby = true, saves the fake guid for UruVision
 	};
 	
 	class tPlayer {
@@ -79,7 +80,7 @@ namespace alc {
 	
 	class tTrackingBackend {
 	public:
-		tTrackingBackend(tNetSessionList *servers);
+		tTrackingBackend(tNetSessionList *servers, char *host, U16 port);
 		~tTrackingBackend(void);
 		void reload(void);
 		void updateStatusFile(void);
@@ -96,19 +97,28 @@ namespace alc {
 		void loadSettings(void);
 		void removePlayer(int player);
 		bool doesAgeLoadState(const Byte *age);
+		void printStatusHTML(void);
+		void printStatusXML(void);
+		void printLobbyXML(FILE *f, tNetSession *lobby);
+		void printPlayersXML(FILE *f, tNetSession *server);
+		void printGameXML(FILE *f, tNetSession *game);
+		void generateFakeGuid(Byte *guid); //!< generates a random 7 bytes fake guid for UruVision
 	
 		int size, count;
 		tPlayer **players;
 		tNetSessionList *servers;
 		tLog *log;
+		char *host;
+		U16 port;
 		tGuidGen *guidGen;
+		Byte fakeLobbyGuid[7]; //!< saves the GUID for the fake lobby (for UruVision)
 		
 		Byte resettingAges[1024];
 		bool loadAgeState;
 		
 		bool statusFileUpdate;
-		bool statusHTML;
-		Byte statusHTMLFile[256];
+		bool statusHTML, statusXML;
+		Byte statusHTMLFile[256], statusXMLFile[256];
 	};
 
 } //End alc namespace

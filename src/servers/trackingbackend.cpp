@@ -84,14 +84,17 @@ namespace alc {
 	}
 	
 	//// tTrackingBackend
-	tTrackingBackend::tTrackingBackend(tNetSessionList *servers)
+	tTrackingBackend::tTrackingBackend(tNetSessionList *servers, char *host, U16 port)
 	{
 		log = lnull;
 		this->servers = servers;
+		this->host = host;
+		this->port = port;
 		size = count = 0;
 		players = NULL;
 		loadSettings();
 		guidGen = new tGuidGen();
+		generateFakeGuid(fakeLobbyGuid);
 	}
 	
 	tTrackingBackend::~tTrackingBackend(void)
@@ -273,8 +276,10 @@ namespace alc {
 				data->parent = lobby;
 			}
 			else
-				lerr->log("ERR: Found game server %s without a Lobby belonging to it\n", game->str());
+				log->log("WARN: Found game server %s without a Lobby belonging to it\n", game->str());
 		}
+		else
+			generateFakeGuid(data->agentGuid); // create guid for UruVision
 		game->data = data;
 		log->log("Found server at %s\n", game->str());
 		
@@ -415,6 +420,11 @@ namespace alc {
 		var = cfg->getVar("track.html.path");
 		if (var.isNull()) statusHTML = false;
 		else strncpy((char *)statusHTMLFile, (char *)var.c_str(), 255);
+		var = cfg->getVar("track.xml");
+		statusXML = (!var.isNull() && var.asByte());
+		var = cfg->getVar("track.xml.path");
+		if (var.isNull()) statusXML = false;
+		else strncpy((char *)statusXMLFile, (char *)var.c_str(), 255);
 		statusFileUpdate = true;
 	}
 	
@@ -435,11 +445,25 @@ namespace alc {
 		return true;
 	}
 	
+	void tTrackingBackend::generateFakeGuid(Byte *guid)
+	{
+		*(U16 *)(guid)=0xFFFF;
+		*(U32 *)(guid+2)=(U32)random();
+		*(Byte *)(guid+6)=(Byte)alcGetMicroseconds();
+	}
+	
 	void tTrackingBackend::updateStatusFile(void)
 	{
-		if (!statusFileUpdate || !statusHTML) return;
+		if (!statusFileUpdate) return;
 		DBG(5, "Printing the online list to %s\n", statusHTMLFile);
 		
+		if (statusHTML) printStatusHTML();
+		if (statusXML) printStatusXML();
+		statusFileUpdate = false;
+	}
+	
+	void tTrackingBackend::printStatusHTML(void)
+	{
 		FILE *f = fopen((char *)statusHTMLFile, "w");
 		// header
 		fprintf(f, "<html><head><title>Shard Status</title></head><body>\n");
@@ -473,8 +497,145 @@ namespace alc {
 		// footer
 		fprintf(f, "</html>\n");
 		fclose(f);
+	}
+	
+	void tTrackingBackend::printStatusXML(void)
+	{
+		tNetSession *server;
+		bool needFake = false;
+		FILE *f = fopen((char *)statusXMLFile, "w");
 		
-		statusFileUpdate = false;
+		fprintf(f, "<?xml version='1.0'?>\n");
+		fprintf(f, "<SystemView>\n");
+			fprintf(f, "<Version>2.0</Version>\n");
+			fprintf(f, "<Lookup>\n");
+				fprintf(f, "<Server>\n");
+					fprintf(f, "<ServerInfo>\n");
+						fprintf(f, "<Name>Tracking</Name>\n");
+						fprintf(f, "<Type>7</Type>\n");
+						fprintf(f, "<Addr>%s</Addr>\n", host);
+						fprintf(f, "<Port>%i</Port>\n", port);
+						fprintf(f, "<Guid>0000000000000000</Guid>\n");
+					fprintf(f, "</ServerInfo>\n");
+				fprintf(f, "</Server>\n");
+				fprintf(f, "<Agents>\n");
+				servers->rewind();
+				while ((server = servers->getNext())) {
+					if (!server->data) continue;
+					tTrackingData *data = (tTrackingData *)server->data;
+					if (!data->isLobby && !data->parent) needFake = true;
+					else if (data->isLobby) printLobbyXML(f, server);
+				}
+				if (needFake) printLobbyXML(f, NULL);
+				fprintf(f, "</Agents>\n");
+			fprintf(f, "</Lookup>\n");
+		fprintf(f, "</SystemView>\n");
+		fclose(f);
+	}
+	
+	void tTrackingBackend::printLobbyXML(FILE *f, tNetSession *lobby)
+	{	// when lobby is NULL, we're printing the fake lobby
+		tTrackingData *data = lobby ? (tTrackingData *)lobby->data : NULL;
+		fprintf(f, "<Agent>\n");
+			// Agent
+			fprintf(f, "<ServerInfo>\n");
+				fprintf(f, "<Name>Node</Name>\n");
+				fprintf(f, "<Type>1</Type>\n");
+				if (lobby) {
+					fprintf(f, "<Addr>%s</Addr>\n", alcGetStrIp(lobby->getIP()));
+					fprintf(f, "<Port>%d</Port>\n", ntohs(lobby->getPort()));
+					fprintf(f, "<Guid>%s00</Guid>\n", alcGetStrGuid(data->agentGuid, 7));
+				}
+				else {
+					fprintf(f, "<Addr>Fake Agent</Addr>\n");
+					fprintf(f, "<Port>0</Port>\n");
+					fprintf(f, "<Guid>%s00</Guid>\n", alcGetStrGuid(fakeLobbyGuid, 7));
+				}
+			fprintf(f, "</ServerInfo>\n");
+			if (lobby) fprintf(f, "<ExternalAddr>%s</ExternalAddr>\n", data->ip);
+			else       fprintf(f, "<ExternalAddr>Fake Agent</ExternalAddr>\n");
+			fprintf(f, "<PlayerLimit>-1</PlayerLimit>\n");
+			fprintf(f, "<GameLimit>-1</GameLimit>\n");
+			// Lobby
+			fprintf(f, "<Lobby><Process>\n");
+				fprintf(f, "<Server>\n");
+					fprintf(f, "<ServerInfo>\n");
+						fprintf(f, "<Name>Lobby</Name>\n");
+						fprintf(f, "<Type>2</Type>\n");
+						if (lobby) {
+							fprintf(f, "<Addr>%s</Addr>\n", alcGetStrIp(lobby->getIP()));
+							fprintf(f, "<Port>%d</Port>\n", ntohs(lobby->getPort()));
+							fprintf(f, "<Guid>%s02</Guid>\n", alcGetStrGuid(data->agentGuid, 7));
+						}
+						else {
+							fprintf(f, "<Addr>Fake Agent</Addr>\n");
+							fprintf(f, "<Port>0</Port>\n");
+							fprintf(f, "<Guid>%s02</Guid>\n", alcGetStrGuid(fakeLobbyGuid, 7));
+						}
+					fprintf(f, "</ServerInfo>\n");
+				fprintf(f, "</Server>\n");
+				fprintf(f, "<Players>\n");
+					if (lobby) printPlayersXML(f, lobby);
+				fprintf(f, "</Players>\n");
+			fprintf(f, "</Process></Lobby>\n");
+			// Game Servers
+			fprintf(f, "<Games>\n");
+				tNetSession *server;
+				if (data) { // the lobby's children
+					data->childs->rewind();
+					while ((server = data->childs->getNext())) printGameXML(f, server);
+				}
+				else { // all game server without lobby
+					servers->rewind();
+					while ((server = servers->getNext())) {
+						if (!server->data) continue;
+						tTrackingData *data = (tTrackingData *)server->data;
+						if (!data->isLobby && !data->parent) printGameXML(f, server);
+					}
+				}
+			fprintf(f, "</Games>\n");
+		fprintf(f, "</Agent>\n");
+	}
+	
+	void tTrackingBackend::printPlayersXML(FILE *f, tNetSession *server)
+	{
+		for (int i = 0; i < size; ++i) {
+			if (!players[i] || players[i]->u != server) continue;
+			fprintf(f, "<Player>\n");
+				fprintf(f, "<AcctName>%s</AcctName>\n", players[i]->account);
+				fprintf(f, "<PlayerID>%i</PlayerID>\n", players[i]->ki);
+				fprintf(f, "<PlayerName>%s</PlayerName>\n", players[i]->avatar);
+				fprintf(f, "<AccountUUID>%s</AccountUUID>\n", alcGetStrGuid(players[i]->uid, 16));
+				fprintf(f, "<State>%s</State>\n", alcUnetGetReasonCode(players[i]->status));
+			fprintf(f, "</Player>\n");
+		}
+	}
+	
+	void tTrackingBackend::printGameXML(FILE *f, tNetSession *game)
+	{
+		fprintf(f, "<Game>\n");
+			fprintf(f, "<Process>\n");
+				fprintf(f, "<Server>\n");
+					fprintf(f, "<ServerInfo>\n");
+						fprintf(f, "<Name>%s</Name>\n", game->name);
+						fprintf(f, "<Type>3</Type>\n");
+						fprintf(f, "<Addr>%s</Addr>\n", alcGetStrIp(game->getIP()));
+						fprintf(f, "<Port>%i</Port>\n", ntohs(game->getPort()));
+						fprintf(f, "<Guid>%s</Guid>\n", alcGetStrGuid(game->guid, 8));
+					fprintf(f, "</ServerInfo>\n");
+				fprintf(f, "</Server>\n");
+				fprintf(f, "<Players>\n");
+					printPlayersXML(f, game);
+				fprintf(f, "</Players>\n");
+			fprintf(f, "</Process>\n");
+			fprintf(f, "<AgeLink>\n");
+				fprintf(f, "<AgeInfo>\n");
+					fprintf(f, "<AgeInstanceName>%s</AgeInstanceName>\n", game->name);
+					fprintf(f, "<AgeInstanceGuid>%s</AgeInstanceGuid>\n", alcGetStrGuid(game->guid, 8));
+					fprintf(f, "<AgeSequenceNumber>0</AgeSequenceNumber>\n");
+				fprintf(f, "</AgeInfo>\n");
+			fprintf(f, "</AgeLink>\n");
+		fprintf(f, "</Game>\n");
 	}
 
 } //end namespace alc
