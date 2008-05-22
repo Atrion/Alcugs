@@ -188,5 +188,49 @@ namespace alc {
 		dbg.nl();
 		dbg.printf(" Port: %d, IP: %s, GUID: %s, Age filename: %s", server_port, ip_str.c_str(), alcGetStrGuid(guid, 8), age.c_str());
 	}
+	
+	////tmCustomDirectedFwd
+	tmCustomDirectedFwd::tmCustomDirectedFwd(tNetSession *u)
+	: tmMsgBase(NetMsgCustomDirectedFwd, plNetAck | plNetKi | plNetCustom | plNetVersion, u)
+	{
+		ki = 0;
+		max_version = u->max_version;
+		min_version = u->min_version;
+	}
+	
+	tmCustomDirectedFwd::tmCustomDirectedFwd(tNetSession *u, tmCustomDirectedFwd &directedFwd)
+	 : tmMsgBase(NetMsgCustomDirectedFwd, plNetAck | plNetKi | plNetCustom | plNetVersion, u), gameMessage(directedFwd.gameMessage),
+	   recipients(directedFwd.recipients)
+	{
+		ki = directedFwd.ki;
+		max_version = u->max_version;
+		min_version = u->min_version;
+	}
+	
+	void tmCustomDirectedFwd::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
+		t.read(5); // ignore the first bytes
+		U32 gameMsgSize = t.getU32();
+		gameMessage.write(t.read(gameMsgSize), gameMsgSize);
+		t.read(1); // ignore 1 byte
+		Byte n_recipients = t.getByte();
+		recipients.write(t.read(n_recipients*4), n_recipients*4);
+	}
+	
+	int tmCustomDirectedFwd::stream(tBBuf &t)
+	{
+		int off = tmMsgBase::stream(t);
+		Byte zeros[5];
+		memset(zeros, 0, 5);
+		t.write(zeros, 5); off += 5; // 5 zero bytes
+		t.putU32(gameMessage.size()); off += 4;
+		off += t.put(gameMessage);
+		t.write(zeros, 1); ++off; // 1 zero byte
+		t.putByte(recipients.size()/4); ++off;
+		off += t.put(recipients);
+		return off;
+	}
 
 } //end namespace alc

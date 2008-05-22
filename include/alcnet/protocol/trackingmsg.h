@@ -86,6 +86,17 @@ namespace alc {
 		virtual void additionalFields();
 	};
 	
+	class tmCustomDirectedFwd : public tmMsgBase {
+	public:
+		tmCustomDirectedFwd(tNetSession *u);
+		tmCustomDirectedFwd(tNetSession *u, tmCustomDirectedFwd &directedFwd);
+		virtual void store(tBBuf &t);
+		virtual int stream(tBBuf &t);
+		// format
+		tMBuf gameMessage;
+		tMBuf recipients;
+	};
+	
 } //End alc namespace
 
 #endif

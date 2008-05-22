@@ -101,6 +101,17 @@ namespace alc {
 				
 				return 1;
 			}
+			case NetMsgCustomDirectedFwd:
+			{
+				// get the data out of the packet
+				tmCustomDirectedFwd directedFwd(u);
+				msg->data->get(directedFwd);
+				log->log("<RCV> %s\n", directedFwd.str());
+				
+				trackingBackend->forwardMessage(directedFwd);
+				
+				return 1;
+			}
 		}
 		return 0;
 	}

@@ -225,7 +225,7 @@ namespace alc {
 		// no longer waiting
 		player->waiting = false;
 		player->awaiting_age[0] = 0;
-		memset(player->awaiting_guid, 8, 0);
+		memset(player->awaiting_guid, 0, 8);
 	}
 	
 	tPlayer *tTrackingBackend::getPlayer(U32 ki, int *nr)
@@ -337,7 +337,7 @@ namespace alc {
 			// no longer waiting
 			player->waiting = false;
 			player->awaiting_age[0] = 0;
-			memset(player->awaiting_guid, 8, 0);
+			memset(player->awaiting_guid, 0, 8);
 			log->log("Got status update for player %s: 0x%02X (%s)\n", player->str(), playerStatus.playerStatus,
 					alcUnetGetReasonCode(playerStatus.playerStatus));
 		}
@@ -445,6 +445,37 @@ namespace alc {
 		return true;
 	}
 	
+	void tTrackingBackend::forwardMessage(tmCustomDirectedFwd &directedFwd)
+	{
+		// for each game server, look which clients of that server need this message. This way, only one message is sent per server.
+		tNetSession *server;
+		tTrackingData *data;
+		U32 ki;
+		bool sent;
+		servers->rewind();
+		while ((server = servers->getNext())) {
+			if (server == directedFwd.getSession() || !server->data) continue; // don't send the message back to the server which sent it
+			data = (tTrackingData *)server->data;
+			if (data->isLobby) continue; // don't send messages to players in a lobby
+			sent = false; // so far, the message was not sent to this server
+			DBG(5, "looking for players on %s\n", server->str());
+			for (int i = 0; i < size; ++i) {
+				if (!players[i] || players[i]->u != server) continue; // search only for players on this server
+				directedFwd.recipients.rewind();
+				while (!directedFwd.recipients.eof()) { // search for this player in the list of recipients
+					ki = directedFwd.recipients.getU32();
+					if (ki == players[i]->ki) { // one of the recipients is on this server, so send the message
+						tmCustomDirectedFwd forwardedMsg(server, directedFwd);
+						server->send(forwardedMsg);
+						sent = true;
+						break;
+					}
+				}
+				if (sent) break; // if we already sent the message here, its not necessary to go on searching for players
+			}
+		}
+	}
+	
 	void tTrackingBackend::generateFakeGuid(Byte *guid)
 	{
 		*(U16 *)(guid)=0xFFFF;
@@ -455,7 +486,7 @@ namespace alc {
 	void tTrackingBackend::updateStatusFile(void)
 	{
 		if (!statusFileUpdate) return;
-		DBG(5, "Printing the online list to %s\n", statusHTMLFile);
+		DBG(9, "Printing the online list to %s\n", statusHTMLFile);
 		
 		if (statusHTML) printStatusHTML();
 		if (statusXML) printStatusXML();
@@ -539,7 +570,7 @@ namespace alc {
 		fprintf(f, "<Agent>\n");
 			// Agent
 			fprintf(f, "<ServerInfo>\n");
-				fprintf(f, "<Name>Node</Name>\n");
+				fprintf(f, "<Name>Agent</Name>\n");
 				fprintf(f, "<Type>1</Type>\n");
 				if (lobby) {
 					fprintf(f, "<Addr>%s</Addr>\n", alcGetStrIp(lobby->getIP()));

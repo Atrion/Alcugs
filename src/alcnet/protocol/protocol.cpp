@@ -1116,6 +1116,24 @@ const char * alcUnetGetMsgCode(U16 code) {
 		case 0x1014:
 			ret="NetMsgCustomMetaPing";
 			break;
+		case 0x1015:
+			ret="NetMsgCustomServerVault";
+			break;
+		case 0x1016:
+			ret="NetMsgCustomServerVaultTask";
+			break;
+		case 0x1017:
+			ret="NetMsgCustomSaveGame";
+			break;
+		case 0x1018:
+			ret="NetMsgCustomLoadGame";
+			break;
+		case 0x1019:
+			ret="NetMsgCustomCmd";
+			break;
+		case 0x101A:
+			ret="NetMsgCustomDirectedFwd";
+			break;
 		case 0x1313:
 			ret="NetMsgCustomTest";
 			break;

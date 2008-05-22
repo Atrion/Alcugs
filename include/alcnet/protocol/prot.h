@@ -307,5 +307,7 @@ unsilenced 29
 #define NetMsgCustomSaveGame           0x1017
 #define NetMsgCustomLoadGame           0x1018
 #define NetMsgCustomCmd                0x1019
+#define NetMsgCustomDirectedFwd        0x101A
+#define NetMsgCustomTest               0x1313
 
 #endif

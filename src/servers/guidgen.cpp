@@ -170,7 +170,7 @@ namespace alc {
 		The 5 byte is reserved for a random number for the hoods, and any other age (for the future)
 		And the 1st bit of the 4 byte, should be always 0 (since the Ki number is a signed value, this
 		Will happen always. */
-		memset(guid, 8, 0);
+		memset(guid, 0, 8);
 		if (isPrivate) *(U32 *)(guid+1) = ki;
 		*(U16 *)(guid+6) = ageInfo->seqPrefix;
 		return true;

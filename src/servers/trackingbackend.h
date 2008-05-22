@@ -91,6 +91,7 @@ namespace alc {
 		void updateServer(tNetSession *game, tmCustomSetGuid &setGuid);
 		void removeServer(tNetSession *game);
 		void findServer(tPlayer *player, Byte *guid, const Byte *name);
+		void forwardMessage(tmCustomDirectedFwd &directedFwd);
 	private:
 		void notifyWaiting(tNetSession *server);
 		void serverFound(tPlayer *player, tNetSession *server);
