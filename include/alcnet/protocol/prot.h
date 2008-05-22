@@ -128,7 +128,7 @@
 
 //Reasons (Leave)
 #define RStopResponding 0x00
-#define RInroute 0x16
+#define RInRoute 0x16
 #define RArriving 0x17
 #define RJoining 0x18
 #define RLeaving 0x19

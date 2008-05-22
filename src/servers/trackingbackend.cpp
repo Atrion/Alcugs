@@ -61,13 +61,25 @@ namespace alc {
 	}
 	
 	//// tPlayer
+	tPlayer::tPlayer(U32 ki)
+	{
+		this->ki = ki;
+		this->x = 0;
+		account[0] = avatar[0] = 0;
+		flag = status = 0;
+		u = NULL;
+		waiting = false;
+	}
+	
 	char *tPlayer::str(void)
 	{
 		static char cnt[1024];
-		if (age_name[0] != 0)
-			sprintf(cnt, "[%d@%s]", ki, age_name);
+		if (waiting)
+			sprintf(cnt, "[%s@%s][%d@@%s]", avatar, account, ki, awaiting_age);
+		else if (u)
+			sprintf(cnt, "[%s@%s][%d@%s]", avatar, account, ki, u->name);
 		else
-			sprintf(cnt, "[%d]", ki);
+			sprintf(cnt, "[%s@%s][%d]", avatar, account, ki);
 		return cnt;
 	}
 	
@@ -112,6 +124,7 @@ namespace alc {
 	
 	void tTrackingBackend::findServer(tPlayer *player, Byte *guid, const Byte *name)
 	{
+		statusFileUpdate = true;
 		log->log("Player %s wants to link to %s (%s)\n", player->str(), name, alcGetStrGuid(guid, 8));
 		Byte zeroguid[8];
 		memset(zeroguid, 0, 8);
@@ -125,8 +138,10 @@ namespace alc {
 			log->log(" Generated GUID: %s\n", alcGetStrGuid(guid, 8));
 		}
 		// copy data to player
-		memcpy(player->guid, guid, 8);
-		strncpy((char *)player->age_name, (char *)name, 199);
+		player->status = RInRoute;
+		memcpy(player->awaiting_guid, guid, 8);
+		strncpy((char *)player->awaiting_age, (char *)name, 199);
+		player->waiting = true;
 		// search for the game server the player needs
 		tNetSession *server = NULL, *game = NULL;
 		servers->rewind();
@@ -175,7 +190,6 @@ namespace alc {
 			bool loadState = doesAgeLoadState(name);
 			tmCustomForkServer forkServer(lobby, player->ki, player->x, lowest, guid, name, loadState);
 			lobby->send(forkServer);
-			player->waiting = true;
 			log->log("Spawning new game server %s (GUID: %s, port: %d) on %s ", name, alcGetStrGuid(guid, 8), lowest, lobby->str());
 			if (loadState) log->print("(loading age state)\n");
 			else log->print("(not loading age state)\n");
@@ -191,7 +205,7 @@ namespace alc {
 	{
 		for (int i = 0; i < size; ++i) {
 			if (!players[i] || !players[i]->waiting) continue;
-			if (memcmp(players[i]->guid, server->guid, 8) != 0 || strncmp((char *)players[i]->age_name, (char *)server->name, 199)) continue;
+			if (memcmp(players[i]->awaiting_guid, server->guid, 8) != 0 || strncmp((char *)players[i]->awaiting_age, (char *)server->name, 199)) continue;
 			// ok, this player is waiting for this age, let's tell him about it
 			serverFound(players[i], server);
 		}
@@ -208,20 +222,38 @@ namespace alc {
 		tTrackingData *data = (tTrackingData *)server->data;
 		tmCustomServerFound found(player->u, player->ki, player->x, ntohs(server->getPort()), data->ip, server->guid, server->name);
 		player->u->send(found);
-		player->waiting = false;
 		log->log("Found age for player %s\n", player->str());
+		// no longer waiting
+		player->waiting = false;
+		player->awaiting_age[0] = 0;
+		memset(player->awaiting_guid, 8, 0);
 	}
 	
-	tPlayer *tTrackingBackend::getPlayer(U32 ki)
+	tPlayer *tTrackingBackend::getPlayer(U32 ki, int *nr)
 	{
 		for (int i = 0; i < size; ++i) {
-			if (players[i] && players[i]->ki == ki) return players[i];
+			if (players[i] && players[i]->ki == ki) {
+				if (nr) *nr = i;
+				return players[i];
+			}
 		}
+		if (nr) *nr = -1;
 		return NULL;
 	}
 	
 	void tTrackingBackend::updateServer(tNetSession *game, tmCustomSetGuid &setGuid)
 	{
+		statusFileUpdate = true;
+		// search if another game server for that guid is already running. in that case, ignore this one
+		tNetSession *server;
+		while ((server = servers->getNext())) {
+			if (server == game || !server->data) continue;
+			if (memcmp(server->guid, setGuid.guid, 8) == 0) {
+				lerr->log("There already is a server for guid %s, ignoring the new one %s\n", alcGetStrGuid(setGuid.guid, 8), game->str());
+				return;
+			}
+		}
+		
 		memcpy(game->guid, setGuid.guid, 8);
 		strncpy((char *)game->name, (char *)setGuid.age.c_str(), 199);
 		
@@ -231,7 +263,8 @@ namespace alc {
 		data->isLobby = (ntohs(game->getPort()) == 5000); // FIXME: the criteria to determine whether it's a lobby or a game server is BAD
 		strncpy((char *)data->ip, (char *)setGuid.ip_str.c_str(), 49);
 		if (!data->isLobby) { // let's look to which lobby this server belongs
-			tNetSession *server = NULL, *lobby = NULL;
+			tNetSession *lobby = NULL;
+			server = NULL;
 			servers->rewind();
 			while ((server = servers->getNext())) {
 				if (server->data && ((tTrackingData *)server->data)->isLobby && server->getIP() == game->getIP()) {
@@ -255,30 +288,62 @@ namespace alc {
 	
 	void tTrackingBackend::updatePlayer(tNetSession *game, tmCustomPlayerStatus &playerStatus)
 	{
-		tPlayer *player = getPlayer(playerStatus.ki);
-		if (!player) { // it doesn't exist, create it
-			int slot = -1;
-			for (int i = 0; i < size; ++i) {
-				if (players[i] == NULL) {
-					slot = i;
-					break;
-				}
-			}
-			if (slot < 0) {
-				++size;
-				players = (tPlayer **)realloc((void *)players, size*sizeof(tPlayer*));
-				slot = size-1;
-			}
-			player = players[slot] = new tPlayer(playerStatus.ki);
+		statusFileUpdate = true;
+		/* Flags:
+		0: delete
+		1: set invisible
+		2: set visible
+		3: set only buddies */
+		int nr;
+		tPlayer *player = getPlayer(playerStatus.ki, &nr);
+		if (playerStatus.playerFlag == 0) {
+			if (!player) return;
+			log->log("Player %s quit\n", player->str());
+			removePlayer(nr);
 		}
-		player->x = playerStatus.x;
-		player->u = game;
-		// TODO: log something useful here
+		else if (playerStatus.playerFlag >= 1 && playerStatus.playerFlag <= 3) {
+			// TODO: unet3 does some check here which may result in a LogginInElsewhere
+			if (!player) { // it doesn't exist, create it
+				int slot = -1;
+				for (int i = 0; i < size; ++i) {
+					if (players[i] == NULL) {
+						slot = i;
+						break;
+					}
+				}
+				if (slot < 0) {
+					++size;
+					players = (tPlayer **)realloc((void *)players, size*sizeof(tPlayer*));
+					slot = size-1;
+				}
+				player = players[slot] = new tPlayer(playerStatus.ki);
+			}
+			// update the player's data
+			player->x = playerStatus.x;
+			player->u = game;
+			player->flag = playerStatus.playerFlag;
+			player->status = playerStatus.playerStatus;
+			strcpy((char *)player->avatar, (char *)playerStatus.avatar.c_str());
+			strcpy((char *)player->account, (char *)playerStatus.account.c_str());
+			memcpy(player->uid, playerStatus.guid, 16);
+			// no longer waiting
+			player->waiting = false;
+			player->awaiting_age[0] = 0;
+			memset(player->awaiting_guid, 8, 0);
+			log->log("Got status update for player %s: 0x%02X (%s)\n", player->str(), playerStatus.playerStatus,
+					alcUnetGetReasonCode(playerStatus.playerStatus));
+		}
+		else {
+			lerr->log("Got unknown flag 0x%02X from player with KI %d\n", playerStatus.playerFlag, playerStatus.ki);
+			lerr->flush();
+		}
+		log->flush();
 	}
 	
 	void tTrackingBackend::removePlayer(int player)
 	{
 		if (player >= size) return;
+		statusFileUpdate = true;
 		if (players[player] != NULL) {
 			delete players[player];
 			players[player] = NULL;
@@ -294,15 +359,17 @@ namespace alc {
 	
 	void tTrackingBackend::removeServer(tNetSession *game)
 	{
+		statusFileUpdate = true;
 		// remove all players which were still on this server
-		int num_removed = 0;
 		for (int i = 0; i < size; ++i) {
 			if (players[i] && players[i]->u == game) {
+				log->log("WARN: Removing player %s as it was on a terminating server\n", players[i]->str());
 				removePlayer(i);
-				++num_removed;
 			}
 		}
-		if (num_removed > 0) log->log("WARN: Server %s is quitting though it still had %d players\n", game->str(), num_removed);
+		if (game->data)
+			log->log("Server %s is leaving us\n", game->str());
+		log->flush();
 		// remove this server from the list of childs of its lobby
 		if (!game->data) return;
 		tTrackingData *data = (tTrackingData *)game->data;
@@ -338,6 +405,13 @@ namespace alc {
 		var = cfg->getVar("tracking.tmp.hacks.resetting_ages");
 		if (var.isNull()) strcpy((char *)resettingAges, "Cleft,DniCityX2Finale,GreatZero,Kveer,Myst,Neighborhood02,Personal02,RestorationGuild,spyroom");
 		else strncpy((char *)resettingAges, (char *)var.c_str(), 1023);
+		
+		var = cfg->getVar("track.html");
+		statusHTML = (!var.isNull() && var.asByte());
+		var = cfg->getVar("track.html.path");
+		if (var.isNull()) statusHTML = false;
+		else strncpy((char *)statusHTMLFile, (char *)var.c_str(), 255);
+		statusFileUpdate = true;
 	}
 	
 	bool tTrackingBackend::doesAgeLoadState(const Byte *age)
@@ -355,6 +429,49 @@ namespace alc {
 			p = strsep(&buf, ",");
 		}
 		return true;
+	}
+	
+	void tTrackingBackend::updateStatusFile(void)
+	{
+		if (!statusFileUpdate || !statusHTML) return;
+		DBG(5, "Printing the online list to %s\n", statusHTMLFile);
+		
+		FILE *f = fopen((char *)statusHTMLFile, "w");
+		// header
+		fprintf(f, "<html><head><title>Shard Status</title></head><body>\n");
+		fprintf(f, "Last Update: %s<br />\n", alcGetStrTime());
+		// player list
+		fprintf(f, "<h2>Current Online Players</h2>\n");
+		fprintf(f, "<b>Total population: %d</b><br /><br />\n", 0); // TODO: add total poulation
+		fprintf(f, "<table border=\"1\"><tr><th>Avie (Account)</th><th>KI</th><th>Age</th><th>GUID</th><th>Status</th></tr>\n");
+		for (int i = 0; i < size; ++i) {
+			if (!players[i]) continue;
+			fprintf(f, "<tr><td>%s (%s)</td><td>%d</td>", players[i]->avatar, players[i]->account, players[i]->ki);
+			if (players[i]->u) fprintf(f, "<td>%s</td><td>%s</td>\n", players[i]->u->name, alcGetStrGuid(players[i]->u->guid, 8));
+			else fprintf(f, "<td colspan=\"2\">unknown</td>");
+			if (players[i]->waiting && players[i]->status == RInRoute) fprintf(f, "<td>InRoute to %s</td></tr>\n", players[i]->awaiting_age);
+			else fprintf(f, "<td>%s</td></tr>\n", alcUnetGetReasonCode(players[i]->status));
+		}
+		fprintf(f, "</table><br /><br />\n");
+		// server list
+		tNetSession *server;
+		fprintf(f,"<h2>Current Server Instances</h2>");
+		fprintf(f, "<table border=\"1\"><tr><th>Age</th><th>GUID</th><th>IP and Port</th></tr>\n");
+		servers->rewind();
+		while ((server = servers->getNext())) {
+			if (!server->data) {
+				fprintf(f, "<tr><td colspan=\"2\" style=\"color:red\">Unknown (not a game or lobby server)</td><td>%s:%d</td><tr>\n",
+					alcGetStrIp(server->getIP()), ntohs(server->getPort()));
+				continue;
+			}
+			fprintf(f, "<tr><td>%s</td><td>%s</td><td>%s:%d</td><tr>\n", server->name, alcGetStrGuid(server->guid, 8), alcGetStrIp(server->getIP()), ntohs(server->getPort()));
+		}
+		fprintf(f, "</table>\n");
+		// footer
+		fprintf(f, "</html>\n");
+		fclose(f);
+		
+		statusFileUpdate = false;
 	}
 
 } //end namespace alc

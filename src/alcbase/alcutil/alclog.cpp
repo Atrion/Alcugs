@@ -546,20 +546,7 @@ void tLog::stamp() {
 
 	if(!(this->flags & DF_STAMP)) { return; }
 
-	char c_time_aux[26];
-	struct tm * tptr;
-	time_t timestamp;
-
-	struct timeval tv;
-
-	time(&timestamp);
-	gettimeofday(&tv,NULL);
-	
-	tptr=gmtime((const time_t *)&timestamp);
-
-	strftime(c_time_aux,25,"(%Y:%m:%d-%H:%M:%S",tptr);
-
-	this->print("%s.%06d)[%d] ",c_time_aux,tv.tv_usec,alcGetSelfThreadId());
+	this->print("(%s)[%d] ",alcGetStrTime(),alcGetSelfThreadId());
 }
 
 /**

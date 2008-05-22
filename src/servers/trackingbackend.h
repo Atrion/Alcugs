@@ -62,28 +62,19 @@ namespace alc {
 	
 	class tPlayer {
 	public:
-		tPlayer(U32 ki) { this->ki = ki; this->x = 0; memset(guid, 0, 8); age_name[0] = 0; u = NULL; waiting = false; }
+		tPlayer(U32 ki);
 		char *str(void);
 		U32 ki; //!< player's ki number
 		U32 x; //!< player's X value
-		Byte guid[8]; //!< Age guid where the player is / wants to go (hex)
-		Byte age_name[200]; //!< Age name where the player is / wants to go
-		bool waiting; //!< true if the player is waiting for ServerFound, false if it isn't
+		Byte uid[16]; //!< the player's account uid
+		Byte avatar[200]; //!< the avatar's name
+		Byte account[200]; //!< the account the player is logged in with
+		U16 flag; //!< the player's flag (see tTrackingBackend::updatePlayer)
+		U16 status; //!< the player's status
+		bool waiting; //!< true if the player is waiting for ServerFound, false if it isn't [only defined when waiting=true]
+		Byte awaiting_guid[8]; //!< Age guid where the player wants to go (hex) [only defined when waiting=true]
+		Byte awaiting_age[200]; //!< Age name where the player wants to go
 		tNetSession *u; //!< the lobby or game server the player is connected to
-#if 0
-		Byte uid[17];
-	//link with _home_ server peer
-	int sid; //the unique session identifier
-	U32 ip; //the server session, where this player is
-	U16 port; //the server session, where this player is
-	//end link
-	Byte flag; // 0-> delete, 1-> set invisible, 2-> set visible, 3-> set only buddies
-	Byte status; //RStopResponding 0x00, 0x01 ok, RInroute 0x16, RArriving 0x17, RJoining 0x18, RLeaving 0x19, RQuitting 0x1A
-	Byte avie[200];
-	Byte login[200];
-	U32 client_ip; //clients ip address
-	U16 client_port; //clients port address
-#endif
 	};
 	
 	class tTrackingBackend {
@@ -91,9 +82,10 @@ namespace alc {
 		tTrackingBackend(tNetSessionList *servers);
 		~tTrackingBackend(void);
 		void reload(void);
+		void updateStatusFile(void);
 		
 		void updatePlayer(tNetSession *game, tmCustomPlayerStatus &playerStatus);
-		tPlayer *getPlayer(U32 ki);
+		tPlayer *getPlayer(U32 ki, int *nr = NULL);
 		
 		void updateServer(tNetSession *game, tmCustomSetGuid &setGuid);
 		void removeServer(tNetSession *game);
@@ -113,6 +105,10 @@ namespace alc {
 		
 		Byte resettingAges[1024];
 		bool loadAgeState;
+		
+		bool statusFileUpdate;
+		bool statusHTML;
+		Byte statusHTMLFile[256];
 	};
 
 } //End alc namespace

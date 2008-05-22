@@ -66,6 +66,9 @@ namespace alc {
 			tUnetServerBase::reload();
 			trackingBackend->reload();
 		}
+		virtual void onIdle(bool idle) {
+			trackingBackend->updateStatusFile();
+		}
 	private:
 		tTrackingBackend *trackingBackend;
 	};

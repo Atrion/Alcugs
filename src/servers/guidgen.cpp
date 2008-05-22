@@ -156,8 +156,7 @@ namespace alc {
 		if (!ageInfo) return false;
 		bool isPrivate = (instanceMode == 1) ? isAgePrivate(age) : false;
 		
-		/*
-		so we have " The server GUID, aka age guid"
+		/* so we have "The server GUID, aka age guid"
 		---------------------------------
 		| 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
 		--------------------------------
@@ -170,8 +169,7 @@ namespace alc {
 		own age.
 		The 5 byte is reserved for a random number for the hoods, and any other age (for the future)
 		And the 1st bit of the 4 byte, should be always 0 (since the Ki number is a signed value, this
-		Will happen always.
-		*/
+		Will happen always. */
 		memset(guid, 8, 0);
 		if (isPrivate) *(U32 *)(guid+1) = ki;
 		*(U16 *)(guid+6) = ageInfo->seqPrefix;
