@@ -496,7 +496,7 @@ Byte * tmNetClientComm::str() {
 	static Byte cnt[1024];
 	sprintf((char *)cnt,"(Re)Negotation bandwidth: %i bps time: %s",bandwidth,(char *)timestamp.str());
 	if (s) { // don't use sprintf(cnt, "%s", cnt), valgrind shows a "Source and destination overlap in mempcpy"
-		strcat((char *)cnt, "on ");
+		strcat((char *)cnt, " on ");
 		strcat((char *)cnt, s->str());
 	}
 	return cnt;

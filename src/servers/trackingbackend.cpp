@@ -88,7 +88,7 @@ namespace alc {
 	{
 		log = lnull;
 		this->servers = servers;
-		size = 0;
+		size = count = 0;
 		players = NULL;
 		loadSettings();
 		guidGen = new tGuidGen();
@@ -130,9 +130,9 @@ namespace alc {
 		memset(zeroguid, 0, 8);
 		if (memcmp(guid, zeroguid, 8) == 0) {
 			if (!guidGen->generateGuid(guid, name, player->ki)) {
-				// TODO: kick the player?
-				log->log(" Can\'t generate a GUID for this unknown age, ignoring\n");
-				lerr->log("Unable to generate GUID for age %s\n", name);
+				log->log("WARN: Request to link to unknown age %s - kicking player %s\n", name, player->str());
+				tmPlayerTerminated term(player->u, player->ki, RKickedOff);
+				player->u->send(term);
 				return;
 			}
 			log->log(" Generated GUID: %s\n", alcGetStrGuid(guid, 8));
@@ -214,10 +214,6 @@ namespace alc {
 	void tTrackingBackend::serverFound(tPlayer *player, tNetSession *server)
 	{
 		assert(server->data != 0);
-		if (!player->u) {
-			lerr->log("ERR: Found age for player %s, but I don't know how to contact him\n", player->str());
-			return;
-		}
 		// notifiy the player that it's server is available
 		tTrackingData *data = (tTrackingData *)server->data;
 		tmCustomServerFound found(player->u, player->ki, player->x, ntohs(server->getPort()), data->ip, server->guid, server->name);
@@ -302,7 +298,6 @@ namespace alc {
 			removePlayer(nr);
 		}
 		else if (playerStatus.playerFlag >= 1 && playerStatus.playerFlag <= 3) {
-			// TODO: unet3 does some check here which may result in a LogginInElsewhere
 			if (!player) { // it doesn't exist, create it
 				int slot = -1;
 				for (int i = 0; i < size; ++i) {
@@ -317,6 +312,14 @@ namespace alc {
 					slot = size-1;
 				}
 				player = players[slot] = new tPlayer(playerStatus.ki);
+				++count;
+			}
+			else { // if it already exists, check if the avi is already logged in elsewhere
+				// to do so, we first check if the game server the players uses changed. if that's the case, and the player did not request to link, kick the old player
+				if (player->u != game && player->status != RInRoute && player->status != RLeaving) {
+					tmPlayerTerminated term(player->u, player->ki, RLoggedInElsewhere);
+					player->u->send(term);
+				}
 			}
 			// update the player's data
 			player->x = playerStatus.x;
@@ -347,6 +350,7 @@ namespace alc {
 		if (players[player] != NULL) {
 			delete players[player];
 			players[player] = NULL;
+			--count;
 		}
 		
 		int last = size-1; // find the last player
@@ -442,13 +446,12 @@ namespace alc {
 		fprintf(f, "Last Update: %s<br />\n", alcGetStrTime());
 		// player list
 		fprintf(f, "<h2>Current Online Players</h2>\n");
-		fprintf(f, "<b>Total population: %d</b><br /><br />\n", 0); // TODO: add total poulation
+		fprintf(f, "<b>Total population: %d</b><br /><br />\n", count);
 		fprintf(f, "<table border=\"1\"><tr><th>Avie (Account)</th><th>KI</th><th>Age</th><th>GUID</th><th>Status</th></tr>\n");
 		for (int i = 0; i < size; ++i) {
 			if (!players[i]) continue;
-			fprintf(f, "<tr><td>%s (%s)</td><td>%d</td>", players[i]->avatar, players[i]->account, players[i]->ki);
-			if (players[i]->u) fprintf(f, "<td>%s</td><td>%s</td>\n", players[i]->u->name, alcGetStrGuid(players[i]->u->guid, 8));
-			else fprintf(f, "<td colspan=\"2\">unknown</td>");
+			fprintf(f, "<tr><td>%s (%s)</td><td>%d</td><td>%s</td><td>%s</td>", players[i]->avatar, players[i]->account, players[i]->ki,
+					players[i]->u->name, alcGetStrGuid(players[i]->u->guid, 8));
 			if (players[i]->waiting && players[i]->status == RInRoute) fprintf(f, "<td>InRoute to %s</td></tr>\n", players[i]->awaiting_age);
 			else fprintf(f, "<td>%s</td></tr>\n", alcUnetGetReasonCode(players[i]->status));
 		}

@@ -97,7 +97,7 @@ namespace alc {
 		void removePlayer(int player);
 		bool doesAgeLoadState(const Byte *age);
 	
-		int size;
+		int size, count;
 		tPlayer **players;
 		tNetSessionList *servers;
 		tLog *log;

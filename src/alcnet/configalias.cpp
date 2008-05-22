@@ -102,7 +102,7 @@ void alcNetSetConfigAliases() {
 	//unet
 	cfg->copyKey("net.timeout","connection_timeout","global","global");
 	cfg->copyKey("net.maxconnections","max_clients","global","global");
-	cfg->copyKey("max_population","max_players","global","global");
+	//cfg->copyKey("max_population","max_players","global","global");
 
 	val=cfg->getVar("bandwidth","global");
 	if(!val.isNull()) {
