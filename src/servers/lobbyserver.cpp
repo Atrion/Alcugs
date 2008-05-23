@@ -93,7 +93,7 @@ namespace alc {
 			case NetMsgCustomVaultPlayerList:
 			{
 				if (u->getPeerType() != KVault) {
-					err->log("ERR: %s sent a NetMsgCustomVaultPlayerList but is not the vault server\n", u->str());
+					err->log("ERR: %s sent a NetMsgCustomVaultPlayerList but is not the vault server. I\'ll kick him.\n", u->str());
 					return -2; // hack attempt
 				}
 				

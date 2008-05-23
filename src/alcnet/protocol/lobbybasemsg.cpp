@@ -133,5 +133,29 @@ namespace alc {
 		dbg.nl();
 		dbg.printf(" auth result: %02X (%s), server guid: %s", authResult, alcUnetGetAuthCode(authResult), alcGetStrGuid(serverGuid, 8));
 	}
+	
+	//// tmSetMyActivePlayer
+	tmSetMyActivePlayer::tmSetMyActivePlayer(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
+	{
+		avatar.setVersion(0); // normal UruString
+	}
+	
+	void tmSetMyActivePlayer::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
+		t.get(avatar);
+		Byte lastByte = t.getByte();
+		if (lastByte != 0) {
+			lerr->log("ERR: Got a NetMsgSetMyActivePlayer where the last byte was not 0x00. Kicking the player.");
+			throw txProtocolError(_WHERE("Last Byte of NetMsgSetMyActivePlayer was not 0x00"));
+		}
+	}
+	
+	void tmSetMyActivePlayer::additionalFields(void)
+	{
+		dbg.nl();
+		dbg.printf(" avatar: %s", avatar.c_str());
+	}
 
 } //end namespace alc

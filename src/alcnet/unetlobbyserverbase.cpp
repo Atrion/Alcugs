@@ -43,6 +43,7 @@
 #include "unetlobbyserverbase.h"
 #include "protocol/lobbybasemsg.h"
 #include "protocol/authmsg.h"
+#include "protocol/trackingmsg.h"
 
 ////extra includes
 
@@ -128,6 +129,8 @@ namespace alc {
 		tmAlive alive(session);
 		session->send(alive);
 		
+		// TODO: if it's the tracking server, send CustomSetGuid
+		
 		return ite;
 	}
 	
@@ -198,6 +201,7 @@ namespace alc {
 		if (ret != 0) return ret; // cancel if it was processed, otherwise it's our turn
 		
 		switch(msg->cmd) {
+			//// messages regarding authentication
 			case NetMsgAuthenticateHello:
 			{
 				if (u->whoami != 0 || u->authenticated != 0) { // this is impossible
@@ -275,7 +279,7 @@ namespace alc {
 			case NetMsgCustomAuthResponse:
 			{
 				if (u->whoami != KAuth) {
-					err->log("ERR: %s sent a NetMsgCustomAuthResponse but is not the auth server\n", u->str());
+					err->log("ERR: %s sent a NetMsgCustomAuthResponse but is not the auth server. I\'ll kick him.\n", u->str());
 					return -2; // hack attempt
 				}
 				
@@ -322,6 +326,24 @@ namespace alc {
 					client->send(accountAuth);
 					terminate(ite, RNotAuthenticated);
 				}
+				return 1;
+			}
+			
+			//// messages regarding setting the avatar
+			case NetMsgSetMyActivePlayer:
+			{
+				if (u->authenticated != 1) {
+					err->log("ERR: %s sent a NetMsgSetMyActivePlayer but is not yet authed. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmSetMyActivePlayer setPlayer(u);
+				msg->data->get(setPlayer);
+				log->log("<RCV> %s\n", setPlayer.str());
+				
+				// TODO: do something here
+				
 				return 1;
 			}
 		}
