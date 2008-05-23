@@ -64,6 +64,6 @@
 //#define _ACKSTACK_DBG_
 
 // Enable dangerous testing options (must be defined, as 0 or as 1)
-#define _DANGEROUS_TESTING 1
+#define _DANGEROUS_TESTING 0
 
 #endif

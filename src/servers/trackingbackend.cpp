@@ -511,7 +511,7 @@ namespace alc {
 		// player list
 		fprintf(f, "<h2>Current Online Players</h2>\n");
 		fprintf(f, "<b>Total population: %d</b><br /><br />\n", count);
-		fprintf(f, "<table border=\"1\"><tr><th>Avie (Account)</th><th>KI</th><th>Age</th><th>GUID</th><th>Status</th></tr>\n");
+		fprintf(f, "<table border=\"1\"><tr><th>Avatar (Account)</th><th>KI</th><th>Age</th><th>GUID</th><th>Status</th></tr>\n");
 		for (int i = 0; i < size; ++i) {
 			if (!players[i]) continue;
 			fprintf(f, "<tr><td>%s (%s)</td><td>%d</td><td>%s</td><td>%s</td>", players[i]->avatar, players[i]->account, players[i]->ki,
