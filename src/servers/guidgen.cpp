@@ -122,7 +122,7 @@ namespace alc {
 	{
 		this->ageParser = ageParser;
 		// load the list of private ages
-		tConfig *cfg = new tConfig();
+		tConfig *cfg = alcGetConfig();
 		tStrBuf var = cfg->getVar("private_ages");
 		if (var.isNull()) strcpy((char *)privateAges, "AvatarCustomization,Personal,Nexus,BahroCave");
 		else strncpy((char *)privateAges, (char *)var.c_str(), 1023);
