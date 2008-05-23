@@ -310,7 +310,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 				}
 				// this part can never be reached on shutdown, so messages are only processed when the server is still fully running
 				if (ret == 0) ret=onMsgRecieved(evt,msg,u);
-				if (ret > 0 && msg->data->remaining() > 0) { // when the packet was processed and there are bytes left, it is obiously invalid, terminate the client (ret = -2, hack attempt, processed below)
+				if (ret > 0 && !msg->data->eof() > 0) { // when the packet was processed and there are bytes left, it is obiously invalid, terminate the client (ret = -2, hack attempt, processed below)
 					err->log("%s Recieved a message %04X (%s) which was too long (%d Bytes remaining after parsing)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data->remaining());
 					ret=-2;
 				}

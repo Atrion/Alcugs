@@ -91,13 +91,7 @@ namespace alc {
 				msg->data->get(findServer);
 				log->log("<RCV> %s\n", findServer.str());
 				
-				tPlayer *player = trackingBackend->getPlayer(findServer.ki);
-				if (!player) {
-					err->log("ERR: Ignoring a NetMsgCustomFindServer for player with KI %d since I can't find that player\n", findServer.ki);
-					return 1;
-				}
-				player->x = findServer.x;
-				trackingBackend->findServer(player, findServer.guid, findServer.age.c_str());
+				trackingBackend->findServer(findServer);
 				
 				return 1;
 			}

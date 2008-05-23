@@ -37,7 +37,7 @@ namespace alc {
 		tmCustomSetGuid(tNetSession *u);
 		virtual void store(tBBuf &t);
 		// format
-		tUStr age;
+		tUStr age, externalIp;
 	protected:
 		virtual void additionalFields();
 	};
@@ -90,11 +90,13 @@ namespace alc {
 	public:
 		tmCustomDirectedFwd(tNetSession *u);
 		tmCustomDirectedFwd(tNetSession *u, tmCustomDirectedFwd &directedFwd);
+		~tmCustomDirectedFwd(void);
 		virtual void store(tBBuf &t);
 		virtual int stream(tBBuf &t);
 		// format
-		tMBuf gameMessage;
-		tMBuf recipients;
+		tMBuf gameMessage; // saves the complete message
+		Byte nRecipients;
+		U32 *recipients;
 	};
 	
 } //End alc namespace

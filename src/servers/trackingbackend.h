@@ -57,7 +57,7 @@ namespace alc {
 		tNetSession *parent; //!< saves the lobby of a game server, is NULL for lobbys
 		tNetSessionList *childs;
 		U16 port_start, port_end;
-		Byte ip[100]; //!< the external IP (the ones palyers should use to connect to this server)
+		Byte externalIp[100]; //!< the external IP (the ones palyers should use to connect to this server)
 		Byte agentGuid[7]; //!< set when isLobby = true, saves the fake guid for UruVision
 	};
 	
@@ -76,6 +76,8 @@ namespace alc {
 		Byte awaiting_guid[8]; //!< Age guid where the player wants to go (hex) [only defined when waiting=true]
 		Byte awaiting_age[200]; //!< Age name where the player wants to go
 		tNetSession *u; //!< the lobby or game server the player is connected to
+		U32 ip;
+		U16 port;
 	};
 	
 	class tTrackingBackend {
@@ -86,13 +88,13 @@ namespace alc {
 		void updateStatusFile(void);
 		
 		void updatePlayer(tNetSession *game, tmCustomPlayerStatus &playerStatus);
-		tPlayer *getPlayer(U32 ki, int *nr = NULL);
 		
 		void updateServer(tNetSession *game, tmCustomSetGuid &setGuid);
 		void removeServer(tNetSession *game);
-		void findServer(tPlayer *player, Byte *guid, const Byte *name);
+		void findServer(tmCustomFindServer &findServer);
 		void forwardMessage(tmCustomDirectedFwd &directedFwd);
 	private:
+		tPlayer *getPlayer(U32 ki, int *nr = NULL);
 		void notifyWaiting(tNetSession *server);
 		void serverFound(tPlayer *player, tNetSession *server);
 		void loadSettings(void);

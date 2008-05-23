@@ -54,7 +54,7 @@ namespace alc {
 	{
 		isLobby = false;
 		parent = NULL;
-		ip[0] = 0;
+		externalIp[0] = 0;
 		port_start = 5001;
 		port_end = 6000;
 		childs = new tNetSessionList;
@@ -67,6 +67,7 @@ namespace alc {
 		this->x = 0;
 		account[0] = avatar[0] = 0;
 		flag = status = 0;
+		ip = port = 0;
 		u = NULL;
 		waiting = false;
 	}
@@ -125,31 +126,41 @@ namespace alc {
 		guidGen = new tGuidGen();
 	}
 	
-	void tTrackingBackend::findServer(tPlayer *player, Byte *guid, const Byte *name)
+	void tTrackingBackend::findServer(tmCustomFindServer &findServer)
 	{
 		statusFileUpdate = true;
-		log->log("Player %s wants to link to %s (%s)\n", player->str(), name, alcGetStrGuid(guid, 8));
+		
+		tPlayer *player = getPlayer(findServer.ki);
+		if (!player) {
+			lerr->log("ERR: Ignoring a NetMsgCustomFindServer for player with KI %d since I can't find that player\n", findServer.ki);
+			return;
+		}
+		player->x = findServer.x;
+		player->ip = findServer.ip;
+		player->port = findServer.port;
+		log->log("Player %s[%s:%d] wants to link to %s (%s)\n", player->str(), alcGetStrIp(player->ip), player->port, findServer.age.c_str(), alcGetStrGuid(findServer.guid, 8));
 		Byte zeroguid[8];
 		memset(zeroguid, 0, 8);
-		if (memcmp(guid, zeroguid, 8) == 0) {
-			if (!guidGen->generateGuid(guid, name, player->ki)) {
-				log->log("WARN: Request to link to unknown age %s - kicking player %s\n", name, player->str());
+		if (memcmp(findServer.guid, zeroguid, 8) == 0) {
+			if (!guidGen->generateGuid(player->awaiting_guid, findServer.age.c_str(), player->ki)) {
+				log->log("WARN: Request to link to unknown age %s - kicking player %s\n", findServer.age.c_str(), player->str());
 				tmPlayerTerminated term(player->u, player->ki, RKickedOff);
 				player->u->send(term);
 				return;
 			}
-			log->log(" Generated GUID: %s\n", alcGetStrGuid(guid, 8));
+			log->log(" Generated GUID: %s\n", alcGetStrGuid(player->awaiting_guid, 8));
 		}
+		else
+			memcpy(player->awaiting_guid, findServer.guid, 8);
 		// copy data to player
 		player->status = RInRoute;
-		memcpy(player->awaiting_guid, guid, 8);
-		strncpy((char *)player->awaiting_age, (char *)name, 199);
+		strncpy((char *)player->awaiting_age, (char *)findServer.age.c_str(), 199);
 		player->waiting = true;
 		// search for the game server the player needs
 		tNetSession *server = NULL, *game = NULL;
 		servers->rewind();
 		while ((server = servers->getNext())) {
-			if (server->data && memcmp(server->guid, guid, 8) == 0 && strncmp((char *)server->name, (char *)name, 199) == 0) {
+			if (server->data && memcmp(server->guid, player->awaiting_guid, 8) == 0 && strncmp((char *)server->name, (char *)player->awaiting_age, 199) == 0) {
 				game = server; // we found it
 				break;
 			}
@@ -190,10 +201,10 @@ namespace alc {
 				return;
 			}
 			// ok, telling the lobby to fork
-			bool loadState = doesAgeLoadState(name);
-			tmCustomForkServer forkServer(lobby, player->ki, player->x, lowest, guid, name, loadState);
+			bool loadState = doesAgeLoadState(player->awaiting_age);
+			tmCustomForkServer forkServer(lobby, player->ki, player->x, lowest, player->awaiting_guid, player->awaiting_age, loadState);
 			lobby->send(forkServer);
-			log->log("Spawning new game server %s (GUID: %s, port: %d) on %s ", name, alcGetStrGuid(guid, 8), lowest, lobby->str());
+			log->log("Spawning new game server %s (GUID: %s, port: %d) on %s ", player->awaiting_age, alcGetStrGuid(player->awaiting_guid, 8), lowest, lobby->str());
 			if (loadState) log->print("(loading age state)\n");
 			else log->print("(not loading age state)\n");
 		}
@@ -219,7 +230,7 @@ namespace alc {
 		assert(server->data != 0);
 		// notifiy the player that it's server is available
 		tTrackingData *data = (tTrackingData *)server->data;
-		tmCustomServerFound found(player->u, player->ki, player->x, ntohs(server->getPort()), data->ip, server->guid, server->name);
+		tmCustomServerFound found(player->u, player->ki, player->x, ntohs(server->getPort()), data->externalIp, server->guid, server->name);
 		player->u->send(found);
 		log->log("Found age for player %s\n", player->str());
 		// no longer waiting
@@ -260,7 +271,7 @@ namespace alc {
 		if (data) return; // ignore the rest if the info if we already got it. IP and Port can't change.
 		data = new tTrackingData;
 		data->isLobby = (ntohs(game->getPort()) == 5000); // FIXME: the criteria to determine whether it's a lobby or a game server is BAD
-		strncpy((char *)data->ip, alcGetStrIp(game->getIp()), 99);
+		strncpy((char *)data->externalIp, (char *)setGuid.externalIp.c_str(), 99);
 		if (!data->isLobby) { // let's look to which lobby this server belongs
 			tNetSession *lobby = NULL;
 			server = NULL;
@@ -450,7 +461,6 @@ namespace alc {
 		// for each game server, look which clients of that server need this message. This way, only one message is sent per server.
 		tNetSession *server;
 		tTrackingData *data;
-		U32 ki;
 		bool sent;
 		servers->rewind();
 		while ((server = servers->getNext())) {
@@ -461,10 +471,8 @@ namespace alc {
 			DBG(5, "looking for players on %s\n", server->str());
 			for (int i = 0; i < size; ++i) {
 				if (!players[i] || players[i]->u != server) continue; // search only for players on this server
-				directedFwd.recipients.rewind();
-				while (!directedFwd.recipients.eof()) { // search for this player in the list of recipients
-					ki = directedFwd.recipients.getU32();
-					if (ki == players[i]->ki) { // one of the recipients is on this server, so send the message
+				for (int j = 0; j < directedFwd.nRecipients; ++j) {
+					if (directedFwd.recipients[j] == players[i]->ki) { // one of the recipients is on this server, so send the message
 						tmCustomDirectedFwd forwardedMsg(server, directedFwd);
 						server->send(forwardedMsg);
 						sent = true;
@@ -584,7 +592,7 @@ namespace alc {
 					fprintf(f, "<Guid>%s00</Guid>\n", alcGetStrGuid(fakeLobbyGuid, 7));
 				}
 			fprintf(f, "</ServerInfo>\n");
-			if (lobby) fprintf(f, "<ExternalAddr>%s</ExternalAddr>\n", data->ip);
+			if (lobby) fprintf(f, "<ExternalAddr>%s</ExternalAddr>\n", data->externalIp);
 			else       fprintf(f, "<ExternalAddr>Fake Agent</ExternalAddr>\n");
 			fprintf(f, "<PlayerLimit>-1</PlayerLimit>\n");
 			fprintf(f, "<GameLimit>-1</GameLimit>\n");

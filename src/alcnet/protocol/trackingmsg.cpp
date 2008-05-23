@@ -41,6 +41,7 @@ namespace alc {
 	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
 	{
 		age.setVersion(0); // normal UrurString
+		externalIp.setVersion(0); // normal UrurString
 	}
 	
 	void tmCustomSetGuid::store(tBBuf &t)
@@ -53,11 +54,10 @@ namespace alc {
 		alcAscii2Hex(guid, (Byte *)guid_str.c_str(), 8);
 		
 		t.get(age);
+		t.get(externalIp);
 #ifdef _UNET2_SUPPORT
-		if (!t.eof()) {
-			tUStr tmp;
-			t.get(tmp); // these are both ignored (the first is netmask, the 2nd IP)
-			t.get(tmp);
+		if (!t.eof()) { // if there's still something to read, there's a netmask before the external IP (unet2 protocol)
+			t.get(externalIp);
 			if (u) u->proto = 1; // unet2 protocol
 		}
 #endif
@@ -66,8 +66,10 @@ namespace alc {
 	void tmCustomSetGuid::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" GUID: %s, Age filename: %s", alcGetStrGuid(guid, 8), age.c_str());
+		dbg.printf(" GUID: %s, Age filename: %s, external IP: %s", alcGetStrGuid(guid, 8), age.c_str(), externalIp.c_str());
+#ifdef _UNET2_SUPPORT
 		if (u && u->proto == 1) dbg.printf(" (unet2 protocol)");
+#endif
 	}
 	
 	//// tmCustomPlayerStatus
@@ -81,7 +83,11 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX | plNetKi | plNetVersion)) throw txProtocolError(_WHERE("X, KI or Version flag missing"));
-		memcpy(guid, t.read(16), 16);
+#ifndef _UNET2_SUPPORT
+		if (!hasFlags(plNetGUI)) throw txProtocolError(_WHERE("GUID flag missing"));
+#else
+		if (!hasFlags(plNetGUI)) memcpy(guid, t.read(16), 16);
+#endif
 		t.get(account);
 		t.get(avatar);
 		playerFlag = t.getByte();
@@ -91,7 +97,10 @@ namespace alc {
 	void tmCustomPlayerStatus::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" GUID: %s, Account: %s, Avatar: %s, Flag: 0x%02X, Status: 0x%02X (%s)", alcGetStrGuid(guid, 16), account.c_str(), avatar.c_str(), playerFlag, playerStatus, alcUnetGetReasonCode(playerStatus));
+#ifdef _UNET2_SUPPORT
+		if (u && u->proto == 1) dbg.printf(" GUID (unet2 protocol): %s,", alcGetStrGuid(guid, 16));
+#endif
+		dbg.printf(" Account: %s, Avatar: %s, Flag: 0x%02X, Status: 0x%02X (%s)", account.c_str(), avatar.c_str(), playerFlag, playerStatus, alcUnetGetReasonCode(playerStatus));
 	}
 	
 	//// tmCustomFindServer
@@ -104,19 +113,30 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX | plNetKi | plNetVersion)) throw txProtocolError(_WHERE("X, KI or Version flag missing"));
+#ifndef _UNET2_SUPPORT
+		if (!hasFlags(plNetIP)) throw txProtocolError(_WHERE("IP flag missing"));
+#endif
 		// there's already a guid member in tmMsgBase, so let's use that (though we need only 8 bytes)
 		tUStr guid_str(5); // inverted UruString
 		t.get(guid_str);
 		alcAscii2Hex(guid, (Byte *)guid_str.c_str(), 8);
 		
 		t.get(age);
-		ip = t.getU32(); // use the tmMsgBase property
+#ifdef _UNET2_SUPPORT
+		if (!hasFlags(plNetIP)) {
+			ip = t.getU32(); // use the tmMsgBase property
+			port = 0;
+		}
+#endif
 	}
 	
 	void tmCustomFindServer::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" GUID: %s, Age filename: %s, IP: %s", alcGetStrGuid(guid, 8), age.c_str(), alcGetStrIp(ip));
+		dbg.printf(" GUID: %s, Age filename: %s", alcGetStrGuid(guid, 8), age.c_str());
+#ifdef _UNET2_SUPPORT
+		if (u && u->proto == 1) dbg.printf(", IP (unet2 protocol): %s,", alcGetStrIp(ip));
+#endif
 	}
 	
 	//// tmCustomForkServer
@@ -198,43 +218,52 @@ namespace alc {
 	tmCustomDirectedFwd::tmCustomDirectedFwd(tNetSession *u)
 	: tmMsgBase(NetMsgCustomDirectedFwd, plNetAck | plNetKi | plNetCustom | plNetVersion, u)
 	{
+		recipients = NULL;
 		ki = 0;
 		max_version = u->max_version;
 		min_version = u->min_version;
 	}
 	
 	tmCustomDirectedFwd::tmCustomDirectedFwd(tNetSession *u, tmCustomDirectedFwd &directedFwd)
-	 : tmMsgBase(NetMsgCustomDirectedFwd, plNetAck | plNetKi | plNetCustom | plNetVersion, u), gameMessage(directedFwd.gameMessage),
-	   recipients(directedFwd.recipients)
+	 : tmMsgBase(NetMsgCustomDirectedFwd, plNetAck | plNetKi | plNetCustom | plNetVersion, u), gameMessage(directedFwd.gameMessage)
 	{
+		recipients = NULL;
 		ki = directedFwd.ki;
 		max_version = u->max_version;
 		min_version = u->min_version;
+	}
+	
+	tmCustomDirectedFwd::~tmCustomDirectedFwd(void)
+	{
+		if (recipients) free(recipients);
 	}
 	
 	void tmCustomDirectedFwd::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
-		t.read(5); // ignore the first bytes
-		U32 gameMsgSize = t.getU32();
-		gameMessage.write(t.read(gameMsgSize), gameMsgSize);
-		t.read(1); // ignore 1 byte
-		Byte n_recipients = t.getByte();
-		recipients.write(t.read(n_recipients*4), n_recipients*4);
+		// store the whole message
+		gameMessage.clear();
+		t.get(gameMessage);
+		// now, verify (will throw a txOutOfRange when too small)
+		gameMessage.rewind();
+		gameMessage.read(5); // ignore the first bytes
+		U32 gameMsgSize = gameMessage.getU32();
+		gameMessage.read(gameMsgSize); // this is the message itself
+		gameMessage.read(1); // ignore 1 byte
+		// get list of recipients
+		nRecipients = gameMessage.getByte();
+		if (recipients) free(recipients);
+		recipients = (U32 *)malloc(nRecipients*sizeof(U32));
+		for (int i = 0; i < nRecipients; ++i) recipients[i] = gameMessage.getU32();
+		if (!gameMessage.eof()) throw txProtocolError(_WHERE("Message is too long")); // there must not be any byte after the recipient list
 	}
 	
 	int tmCustomDirectedFwd::stream(tBBuf &t)
 	{
 		int off = tmMsgBase::stream(t);
-		Byte zeros[5];
-		memset(zeros, 0, 5);
-		t.write(zeros, 5); off += 5; // 5 zero bytes
-		t.putU32(gameMessage.size()); off += 4;
+		gameMessage.rewind();
 		off += t.put(gameMessage);
-		t.write(zeros, 1); ++off; // 1 zero byte
-		t.putByte(recipients.size()/4); ++off;
-		off += t.put(recipients);
 		return off;
 	}
 
