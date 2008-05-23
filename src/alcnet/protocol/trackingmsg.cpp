@@ -41,8 +41,6 @@ namespace alc {
 	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
 	{
 		age.setVersion(0); // normal UrurString
-		netmask.setVersion(0); // normal UrurString
-		ip_str.setVersion(0); // normal UrurString
 	}
 	
 	void tmCustomSetGuid::store(tBBuf &t)
@@ -55,14 +53,21 @@ namespace alc {
 		alcAscii2Hex(guid, (Byte *)guid_str.c_str(), 8);
 		
 		t.get(age);
-		t.get(netmask);
-		t.get(ip_str);
+#ifdef _UNET2_SUPPORT
+		if (!t.eof()) {
+			tUStr tmp;
+			t.get(tmp); // these are both ignored (the first is netmask, the 2nd IP)
+			t.get(tmp);
+			if (u) u->proto = 1; // unet2 protocol
+		}
+#endif
 	}
 	
 	void tmCustomSetGuid::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" GUID: %s, Age filename: %s, Netmask: %s, IP: %s", alcGetStrGuid(guid, 8), age.c_str(), netmask.c_str(), ip_str.c_str());
+		dbg.printf(" GUID: %s, Age filename: %s", alcGetStrGuid(guid, 8), age.c_str());
+		if (u && u->proto == 1) dbg.printf(" (unet2 protocol)");
 	}
 	
 	//// tmCustomPlayerStatus

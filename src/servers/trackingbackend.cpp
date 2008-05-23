@@ -260,13 +260,13 @@ namespace alc {
 		if (data) return; // ignore the rest if the info if we already got it. IP and Port can't change.
 		data = new tTrackingData;
 		data->isLobby = (ntohs(game->getPort()) == 5000); // FIXME: the criteria to determine whether it's a lobby or a game server is BAD
-		strncpy((char *)data->ip, (char *)setGuid.ip_str.c_str(), 49);
+		strncpy((char *)data->ip, alcGetStrIp(game->getIp()), 99);
 		if (!data->isLobby) { // let's look to which lobby this server belongs
 			tNetSession *lobby = NULL;
 			server = NULL;
 			servers->rewind();
 			while ((server = servers->getNext())) {
-				if (server->data && ((tTrackingData *)server->data)->isLobby && server->getIP() == game->getIP()) {
+				if (server->data && ((tTrackingData *)server->data)->isLobby && server->getIp() == game->getIp()) {
 					lobby = server;
 					break;
 				}
@@ -520,10 +520,10 @@ namespace alc {
 		while ((server = servers->getNext())) {
 			if (!server->data) {
 				fprintf(f, "<tr><td colspan=\"2\" style=\"color:red\">Unknown (not a game or lobby server)</td><td>%s:%d</td><tr>\n",
-					alcGetStrIp(server->getIP()), ntohs(server->getPort()));
+					alcGetStrIp(server->getIp()), ntohs(server->getPort()));
 				continue;
 			}
-			fprintf(f, "<tr><td>%s</td><td>%s</td><td>%s:%d</td><tr>\n", server->name, alcGetStrGuid(server->guid, 8), alcGetStrIp(server->getIP()), ntohs(server->getPort()));
+			fprintf(f, "<tr><td>%s</td><td>%s</td><td>%s:%d</td><tr>\n", server->name, alcGetStrGuid(server->guid, 8), alcGetStrIp(server->getIp()), ntohs(server->getPort()));
 		}
 		fprintf(f, "</table>\n");
 		// footer
@@ -574,7 +574,7 @@ namespace alc {
 				fprintf(f, "<Name>Agent</Name>\n");
 				fprintf(f, "<Type>1</Type>\n");
 				if (lobby) {
-					fprintf(f, "<Addr>%s</Addr>\n", alcGetStrIp(lobby->getIP()));
+					fprintf(f, "<Addr>%s</Addr>\n", alcGetStrIp(lobby->getIp()));
 					fprintf(f, "<Port>%d</Port>\n", ntohs(lobby->getPort()));
 					fprintf(f, "<Guid>%s00</Guid>\n", alcGetStrGuid(data->agentGuid, 7));
 				}
@@ -595,7 +595,7 @@ namespace alc {
 						fprintf(f, "<Name>Lobby</Name>\n");
 						fprintf(f, "<Type>2</Type>\n");
 						if (lobby) {
-							fprintf(f, "<Addr>%s</Addr>\n", alcGetStrIp(lobby->getIP()));
+							fprintf(f, "<Addr>%s</Addr>\n", alcGetStrIp(lobby->getIp()));
 							fprintf(f, "<Port>%d</Port>\n", ntohs(lobby->getPort()));
 							fprintf(f, "<Guid>%s02</Guid>\n", alcGetStrGuid(data->agentGuid, 7));
 						}
@@ -651,7 +651,7 @@ namespace alc {
 					fprintf(f, "<ServerInfo>\n");
 						fprintf(f, "<Name>%s</Name>\n", game->name);
 						fprintf(f, "<Type>3</Type>\n");
-						fprintf(f, "<Addr>%s</Addr>\n", alcGetStrIp(game->getIP()));
+						fprintf(f, "<Addr>%s</Addr>\n", alcGetStrIp(game->getIp()));
 						fprintf(f, "<Port>%i</Port>\n", ntohs(game->getPort()));
 						fprintf(f, "<Guid>%s</Guid>\n", alcGetStrGuid(game->guid, 8));
 					fprintf(f, "</ServerInfo>\n");

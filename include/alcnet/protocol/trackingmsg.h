@@ -37,7 +37,7 @@ namespace alc {
 		tmCustomSetGuid(tNetSession *u);
 		virtual void store(tBBuf &t);
 		// format
-		tUStr age, netmask, ip_str;
+		tUStr age;
 	protected:
 		virtual void additionalFields();
 	};

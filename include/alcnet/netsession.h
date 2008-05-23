@@ -74,7 +74,7 @@ public:
 	inline bool isConnected() { return cabal!=0; }
 	void checkAlive(void);
 	inline bool isAuthed(void) { return authenticated == 1; }
-	inline U32 getIP(void) { return ip; }
+	inline U32 getIp(void) { return ip; }
 	inline U16 getPort(void) { return port; }
 	inline U32 getKI(void) { return ki; }
 	inline U32 getX(void) { return x; }

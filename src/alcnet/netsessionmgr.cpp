@@ -55,7 +55,7 @@ tNetSessionList::~tNetSessionList()
 tNetSession *tNetSessionList::search(U32 ip, U16 port)
 {
 	for(int i=0; i<size; i++) {
-		if(table[i]!=NULL && table[i]->getIP()==ip && table[i]->getPort()==port)
+		if(table[i]!=NULL && table[i]->getIp()==ip && table[i]->getPort()==port)
 			return table[i];
 	}
 	return NULL; // not found
@@ -144,7 +144,7 @@ tNetSessionMgr::~tNetSessionMgr()
 }
 tNetSession * tNetSessionMgr::search(tNetSessionIte &ite,bool create) {
 	if(ite.sid!=-1 && ite.sid<size && table[ite.sid]!=NULL) {
-		if(table[ite.sid]->getIP()==ite.ip && table[ite.sid]->getPort()==ite.port) {
+		if(table[ite.sid]->getIp()==ite.ip && table[ite.sid]->getPort()==ite.port) {
 			return table[ite.sid];
 		}
 	}
