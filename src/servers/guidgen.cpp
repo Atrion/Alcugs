@@ -118,14 +118,12 @@ namespace alc {
 		return NULL;
 	}
 	
-	tGuidGen::tGuidGen(void)
+	tGuidGen::tGuidGen(tAgeParser *ageParser)
 	{
-		tConfig *cfg = alcGetConfig();
-		tStrBuf var = cfg->getVar("age");
-		if (!var.endsWith("/")) var.writeStr("/");
-		ageParser = new tAgeParser((char *)var.c_str());
+		this->ageParser = ageParser;
 		// load the list of private ages
-		var = cfg->getVar("private_ages");
+		tConfig *cfg = new tConfig();
+		tStrBuf var = cfg->getVar("private_ages");
 		if (var.isNull()) strcpy((char *)privateAges, "AvatarCustomization,Personal,Nexus,BahroCave");
 		else strncpy((char *)privateAges, (char *)var.c_str(), 1023);
 		// load instance mode setting

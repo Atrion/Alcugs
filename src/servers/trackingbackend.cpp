@@ -57,6 +57,7 @@ namespace alc {
 		externalIp[0] = 0;
 		port_start = 5001;
 		port_end = 6000;
+		seqPrefix = 0;
 		childs = new tNetSessionList;
 	}
 	
@@ -94,13 +95,15 @@ namespace alc {
 		size = count = lastUpdate = 0;
 		players = NULL;
 		loadSettings();
-		guidGen = new tGuidGen();
+		ageParser = new tAgeParser((char *)ageDir);
+		guidGen = new tGuidGen(ageParser);
 		generateFakeGuid(fakeLobbyGuid);
 	}
 	
 	tTrackingBackend::~tTrackingBackend(void)
 	{
 		delete guidGen;
+		delete ageParser;
 		if (players != NULL) {
 			int num_deleted = 0;
 			for (int i = 0; i < size; ++i) {
@@ -122,8 +125,10 @@ namespace alc {
 			log = lnull;
 		}
 		delete guidGen;
+		delete ageParser;
 		loadSettings();
-		guidGen = new tGuidGen();
+		ageParser = new tAgeParser((char *)ageDir);
+		guidGen = new tGuidGen(ageParser);
 	}
 	
 	void tTrackingBackend::findServer(tmCustomFindServer &findServer)
@@ -235,8 +240,6 @@ namespace alc {
 		log->log("Found age for player %s\n", player->str());
 		// no longer waiting
 		player->waiting = false;
-		player->awaiting_age[0] = 0;
-		memset(player->awaiting_guid, 0, 8);
 	}
 	
 	tPlayer *tTrackingBackend::getPlayer(U32 ki, int *nr)
@@ -288,6 +291,11 @@ namespace alc {
 			}
 			else
 				log->log("WARN: Found game server %s without a Lobby belonging to it\n", game->str());
+			
+			// get the age's sequence prefix
+			tAgeInfo *age = ageParser->getAge(game->name);
+			if (!age) log->log("WARN: Strange, I can\'t find the age file for game server %s\n", game->str());
+			else data->seqPrefix = age->seqPrefix;
 		}
 		else
 			generateFakeGuid(data->agentGuid); // create guid for UruVision
@@ -347,8 +355,11 @@ namespace alc {
 			memcpy(player->uid, playerStatus.guid, 16);
 			// no longer waiting
 			player->waiting = false;
-			player->awaiting_age[0] = 0;
-			memset(player->awaiting_guid, 0, 8);
+			if (player->status != RInRoute && player->status != RLeaving) {
+				// when we're still in route/leaving, keep this info (to be shown on status page)
+				player->awaiting_age[0] = 0;
+				memset(player->awaiting_guid, 0, 8);
+			}
 			log->log("Got status update for player %s: 0x%02X (%s)\n", player->str(), playerStatus.playerStatus,
 					alcUnetGetReasonCode(playerStatus.playerStatus));
 		}
@@ -418,6 +429,12 @@ namespace alc {
 			log = new tLog("tracking.log", 4, 0);
 			log->log("Tracking driver started (%s)\n\n", __U_TRACKINGBACKEND_ID);
 			log->flush();
+		}
+		var = cfg->getVar("age");
+		if (var.isNull()) ageDir[0] = 0;
+		else {
+			if (!var.endsWith("/")) var.writeStr("/");
+			strncpy((char *)ageDir, (char *)var.c_str(), 255);
 		}
 		
 		var = cfg->getVar("tracking.tmp.hacks.agestate");
@@ -516,7 +533,8 @@ namespace alc {
 			if (!players[i]) continue;
 			fprintf(f, "<tr><td>%s (%s)</td><td>%d</td><td>%s</td><td>%s</td>", players[i]->avatar, players[i]->account, players[i]->ki,
 					players[i]->u->name, alcGetStrGuid(players[i]->u->guid, 8));
-			if (players[i]->waiting && players[i]->status == RInRoute) fprintf(f, "<td>InRoute to %s</td></tr>\n", players[i]->awaiting_age);
+			if (players[i]->awaiting_age[0] != 0 && (players[i]->status == RInRoute || players[i]->status == RLeaving)) // when the age he wants to is saved, print it
+				fprintf(f, "<td>%s to %s</td></tr>\n", alcUnetGetReasonCode(players[i]->status), players[i]->awaiting_age);
 			else fprintf(f, "<td>%s</td></tr>\n", alcUnetGetReasonCode(players[i]->status));
 		}
 		fprintf(f, "</table><br /><br />\n");
@@ -653,6 +671,7 @@ namespace alc {
 	
 	void tTrackingBackend::printGameXML(FILE *f, tNetSession *game)
 	{
+		tTrackingData *data = (tTrackingData *)game->data;
 		fprintf(f, "<Game>\n");
 			fprintf(f, "<Process>\n");
 				fprintf(f, "<Server>\n");
@@ -672,7 +691,7 @@ namespace alc {
 				fprintf(f, "<AgeInfo>\n");
 					fprintf(f, "<AgeInstanceName>%s</AgeInstanceName>\n", game->name);
 					fprintf(f, "<AgeInstanceGuid>%s</AgeInstanceGuid>\n", alcGetStrGuid(game->guid, 8));
-					fprintf(f, "<AgeSequenceNumber>0</AgeSequenceNumber>\n");
+					fprintf(f, "<AgeSequenceNumber>%d</AgeSequenceNumber>\n", data->seqPrefix);
 				fprintf(f, "</AgeInfo>\n");
 			fprintf(f, "</AgeLink>\n");
 		fprintf(f, "</Game>\n");

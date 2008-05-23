@@ -59,6 +59,7 @@ namespace alc {
 		U16 port_start, port_end;
 		Byte externalIp[100]; //!< the external IP (the ones palyers should use to connect to this server)
 		Byte agentGuid[7]; //!< set when isLobby = true, saves the fake guid for UruVision
+		U16 seqPrefix;
 	};
 	
 	class tPlayer {
@@ -113,10 +114,11 @@ namespace alc {
 		tLog *log;
 		char *host;
 		U16 port;
-		tGuidGen *guidGen;
 		Byte fakeLobbyGuid[7]; //!< saves the GUID for the fake lobby (for UruVision)
 		
-		Byte resettingAges[1024];
+		tGuidGen *guidGen;
+		tAgeParser *ageParser;
+		Byte ageDir[256], resettingAges[1024];
 		bool loadAgeState;
 		
 		bool statusFileUpdate;
