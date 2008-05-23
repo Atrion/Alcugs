@@ -90,7 +90,7 @@ namespace alc {
 		this->servers = servers;
 		this->host = host;
 		this->port = port;
-		size = count = 0;
+		size = count = lastUpdate = 0;
 		players = NULL;
 		loadSettings();
 		guidGen = new tGuidGen();
@@ -485,12 +485,13 @@ namespace alc {
 	
 	void tTrackingBackend::updateStatusFile(void)
 	{
-		if (!statusFileUpdate) return;
+		if (!statusFileUpdate && lastUpdate > alcGetTime()-5*60) return; // update at least every 5 minutes
 		DBG(9, "Printing the online list to %s\n", statusHTMLFile);
 		
 		if (statusHTML) printStatusHTML();
 		if (statusXML) printStatusXML();
 		statusFileUpdate = false;
+		lastUpdate = alcGetTime();
 	}
 	
 	void tTrackingBackend::printStatusHTML(void)

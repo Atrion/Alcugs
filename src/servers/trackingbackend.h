@@ -120,6 +120,7 @@ namespace alc {
 		bool statusFileUpdate;
 		bool statusHTML, statusXML;
 		Byte statusHTMLFile[256], statusXMLFile[256];
+		U32 lastUpdate;
 	};
 
 } //End alc namespace
