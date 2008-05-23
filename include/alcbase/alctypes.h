@@ -86,7 +86,7 @@ public:
 	//! Sets absolute offset
 	virtual void set(U32 pos)=0;
 	//! Write a buffer of size n
-	virtual void write(Byte * val,U32 n)=0;
+	virtual void write(const Byte * val,U32 n)=0;
 	//virtual void write(SByte * val,U32 n) { this->write((Byte *)val,n); }
 	//! Reads n bytes, if n=0 reads the entire buffer
 	virtual Byte * read(U32 n=0)=0;
@@ -193,8 +193,8 @@ public:
 	virtual ~tMBuf();
 	virtual U32 tell();
 	virtual void set(U32 pos);
-	virtual void write(Byte * val,U32 n);
-	virtual void write(SByte * val,U32 n) { this->write((Byte *)val,n); }
+	virtual void write(const Byte * val,U32 n);
+	virtual void write(const SByte * val,U32 n) { this->write((Byte *)val,n); }
 	virtual void zeroend();
 	virtual Byte * read(U32 n=0);
 	virtual int stream(tBBuf &buf);
@@ -229,8 +229,8 @@ public:
 	virtual ~tFBuf();
 	virtual U32 tell();
 	virtual void set(U32 pos);
-	virtual void write(Byte * val,U32 n);
-	virtual void write(SByte * val,U32 n) { this->write((Byte *)val,n); }
+	virtual void write(const Byte * val,U32 n);
+	virtual void write(const SByte * val,U32 n) { this->write((Byte *)val,n); }
 	virtual Byte * read(U32 n=0);
 	virtual int stream(tBBuf &buf);
 	virtual void store(tBBuf &buf);
@@ -255,8 +255,8 @@ public:
 	tSBuf(Byte * buf,U32 msize);
 	virtual U32 tell();
 	virtual void set(U32 pos);
-	virtual void write(Byte * val,U32 n) {}
-	virtual void write(SByte * val,U32 n) {}
+	virtual void write(const Byte * val,U32 n) {}
+	virtual void write(const SByte * val,U32 n) {}
 	virtual Byte * read(U32 n=0);
 	virtual int stream(tBBuf &buf);
 	virtual void store(tBBuf &buf) {}
@@ -335,7 +335,7 @@ public:
 	void isNull(bool val);
 	U16 getLineNum();
 	U16 getColumnNum();
-	virtual void write(Byte * val,U32 n) {
+	virtual void write(const Byte * val,U32 n) {
 		tMBuf::write(val,n);
 		isNull(false);
 	}

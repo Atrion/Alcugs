@@ -59,7 +59,7 @@ namespace alc {
 	}
 	
 	//// tmAuthenticateChallenge	
-	tmAuthenticateChallenge::tmAuthenticateChallenge(tNetSession *u, Byte authResult, Byte *challenge)
+	tmAuthenticateChallenge::tmAuthenticateChallenge(tNetSession *u, Byte authResult, const Byte *challenge)
 	: tmMsgBase(NetMsgAuthenticateChallenge, plNetKi | plNetAck | plNetX | plNetVersion | plNetCustom, u)
 	{
 		// copy stuff from the packet we're answering to
@@ -96,7 +96,9 @@ namespace alc {
 	void tmAuthenticateResponse::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
+		if (!hasFlags(plNetX | plNetKi)) {
+			x = ki = 0; // the vault manager sends these without X and KI
+		}
 		t.get(hash);
 	}
 	
@@ -107,7 +109,7 @@ namespace alc {
 	}
 	
 	//// tmAccountAutheticated	
-	tmAccountAutheticated::tmAccountAutheticated(tNetSession *u, Byte authResult, Byte *serverGuid)
+	tmAccountAutheticated::tmAccountAutheticated(tNetSession *u, Byte authResult, const Byte *serverGuid)
 	: tmMsgBase(NetMsgAccountAuthenticated, plNetKi | plNetAck | plNetX | plNetGUI | plNetCustom, u)
 	{
 		memcpy(guid, u->guid, 16);

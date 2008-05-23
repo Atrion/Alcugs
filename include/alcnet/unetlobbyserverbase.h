@@ -60,11 +60,11 @@ protected:
 	tNetSessionIte auth, tracking, vault;
 	U32 auth_gone, tracking_gone, vault_gone; // saves when this server got disconnected. wait 10sec before trying to connect again
 
-	Byte guid[8]; //<! This system guid (age guid) (in Hex)
+	Byte guid[8]; //!< This system's guid (age guid) (in Hex)
+	Byte name[200]; //!< The system/server name, normally the age filename
 };
 
 #if 0
-	char name[200]; //<! The system/server name, normally the age filename
 	U16 spawn_start; //first port to spawn
 	U16 spawn_stop; //last port to spawn (gameservers)
 #endif

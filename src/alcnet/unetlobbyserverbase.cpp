@@ -54,6 +54,7 @@ namespace alc {
 	tUnetLobbyServerBase::tUnetLobbyServerBase(void) : tUnetServerBase()
 	{
 		memset(guid, 0, 8);
+		name[0] = 0;
 		auth_gone = tracking_gone = vault_gone = 0;
 	}
 	

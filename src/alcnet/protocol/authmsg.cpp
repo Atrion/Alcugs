@@ -47,7 +47,7 @@
 namespace alc {
 
 	//// tmCustomAuthAsk
-	tmCustomAuthAsk::tmCustomAuthAsk(tNetSession *u, U32 x, U32 ip, U16 port, Byte *login, Byte *challenge, Byte *hash, Byte release)
+	tmCustomAuthAsk::tmCustomAuthAsk(tNetSession *u, U32 x, U32 ip, U16 port, const Byte *login, const Byte *challenge, const Byte *hash, Byte release)
 	: tmMsgBase(NetMsgCustomAuthAsk, plNetAck | plNetCustom | plNetX | plNetVersion | plNetIP, u)
 	{
 #ifdef _UNET2_SUPPORT
@@ -120,7 +120,7 @@ namespace alc {
 	}
 	
 	//// tmCustomAuthResponse
-	tmCustomAuthResponse::tmCustomAuthResponse(tNetSession *u, tmCustomAuthAsk &authAsk, const Byte *guid, Byte *passwd, Byte result, Byte accessLevel)
+	tmCustomAuthResponse::tmCustomAuthResponse(tNetSession *u, tmCustomAuthAsk &authAsk, const Byte *guid, const Byte *passwd, Byte result, Byte accessLevel)
 	 : tmMsgBase(NetMsgCustomAuthResponse, plNetAck | plNetCustom | plNetX | plNetVersion | plNetIP | plNetGUI, u)
 	 {
 #ifdef _UNET2_SUPPORT

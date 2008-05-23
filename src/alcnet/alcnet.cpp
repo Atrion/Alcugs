@@ -99,11 +99,11 @@ void tUnet::init() {
 	max_version=12;
 	min_version=7;
 
-	max=0; //<! Maxium number of connections (default 0, unlimited)
+	max=0; // Maxium number of connections (default 0, unlimited)
 	smgr=NULL;
 
 	lan_addr=htonl(0xAC1A0000);
-	lan_mask=htonl(0xFFFFFF00); //<! LAN mask, in network byte order (default 255.255.255.0)
+	lan_mask=htonl(0xFFFFFF00); // LAN mask, in network byte order (default 255.255.255.0)
 	//! Bandwidth speed (lo interface -> maxium)
 	lan_up=100 * 1000 * 1000;
 	lan_down=100 * 1000 * 1000;

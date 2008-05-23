@@ -137,22 +137,22 @@ protected:
 	U32 conn_timeout; //default timeout (to disconnect a session) (seconds) [5 secs]
 	U32 timeout; //default timeout when the send clock expires (re-transmission) (microseconds)
 
-	U32 max; //<! Maxium number of connections (default 0, unlimited)
+	U32 max; //!< Maxium number of connections (default 0, unlimited)
 	tNetSessionMgr * smgr; //Session MGR
 
 	int whoami; //type of _this_ server
 
-	U32 lan_addr; //<! LAN address, in network byte order
-	U32 lan_mask; //<! LAN mask, in network byte order (default 255.255.255.0)
+	U32 lan_addr; //!< LAN address, in network byte order
+	U32 lan_mask; //!< LAN mask, in network byte order (default 255.255.255.0)
 	//! Bandwidth speed (lo interface -> maxium)
 	U32 lan_up;
 	U32 lan_down;
 	U32 nat_up;
 	U32 nat_down;
 
-	//char address[100]; //<! This system public address (in Ascii)
-	char bindaddr[100]; //<! Server bind address
-	U16 bindport; //<! Server bind port, in host order
+	//char address[100]; //!< This system public address (in Ascii)
+	char bindaddr[100]; //!< Server bind address
+	U16 bindport; //!< Server bind port, in host order
 
 	//!logging subsystem
 	tLog * log; //stdout
@@ -196,14 +196,14 @@ private:
 	Byte timer;
 	
 #ifdef __WIN32__
-	WSADATA ws; //<! The winsock stack
-	SOCKET sock; //<! The socket
-	u_long nNoBlock; //<! non-blocking (private)
+	WSADATA ws; //!< The winsock stack
+	SOCKET sock; //!< The socket
+	u_long nNoBlock; //!< non-blocking (private)
 #else
-	int sock; //<! The socket
+	int sock; //!< The socket
 #endif
 	int opt;
-	struct sockaddr_in server; //<! Server sockaddr
+	struct sockaddr_in server; //!< Server sockaddr
 	
 	tUnetFlags flags; //explained -^
 	U16 unet_sec; //netcore timeout to do another loop (seconds)

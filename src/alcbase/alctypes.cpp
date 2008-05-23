@@ -405,7 +405,7 @@ void tMBuf::zeroend() {
 	}
 	*(Byte *)(buf->buf+off)=0x00;
 }
-void tMBuf::write(Byte * val,U32 n) {
+void tMBuf::write(const Byte * val,U32 n) {
 	if(val==NULL) return;
 	if(buf==NULL) buf = new tRefBuf(1024 + n);
 	else if(buf->getRefs()>1) {
@@ -481,7 +481,7 @@ void tFBuf::set(U32 pos) {
 		throw txOutOfRange(_WHERE("OutOfRange"));
 	}
 }
-void tFBuf::write(Byte * val,U32 n) {
+void tFBuf::write(const Byte * val,U32 n) {
 	DBG(9,"write(val:%s,n:%u)\n",val,n);
 	if(val==NULL) return;
 	if(f==NULL) throw txNoFile(_WHERE("NoFile"));

@@ -49,10 +49,11 @@ namespace alc {
 
 	class tUnetLobbyServer : public tUnetLobbyServerBase {
 	public:
-		tUnetLobbyServer(void) : tUnetLobbyServerBase()
-			{ lstd->log("WARNING: The lobby server is not finished yet. So if it doesn\'t work, that's not even a bug.\n"); }
+		tUnetLobbyServer(void);
 		
 		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
+	private:
+		Byte website[256];
 	};
 	
 } //End alc namespace

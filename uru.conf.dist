@@ -139,6 +139,9 @@ stop = 1
 bind = "127.0.0.1" # bind address for lobby (the interface facing your router)
 port = 5000
 
+# Set the website which is displayed when the user logs into your shard
+website = "http://server/info.html"
+
 # compatability for old servers
 # 0 = latest (default), 1 = unet2, 2 = unet3, 3 = unet3+
 ;auth.protocol = 0

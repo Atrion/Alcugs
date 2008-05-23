@@ -44,11 +44,13 @@ namespace alc {
 	void tmRequestMyVaultPlayerList::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
+		if (!hasFlags(plNetX | plNetKi)) {
+			x = ki = 0; // the vault manager sends these without X and KI
+		}
 	}
 	
 	//// tmVaultPlayerList
-	tmVaultPlayerList::tmVaultPlayerList(tNetSession *u, U16 numberPlayers, tMBuf players, Byte *url)
+	tmVaultPlayerList::tmVaultPlayerList(tNetSession *u, U16 numberPlayers, tMBuf players, const Byte *url)
 	: tmMsgBase(NetMsgVaultPlayerList, plNetAck | plNetCustom | plNetX | plNetKi, u)
 	{
 		x = u->getX();
@@ -72,7 +74,7 @@ namespace alc {
 	void tmVaultPlayerList::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" number of players: %d, URL: %s", numberPlayers, url.c_str());
+		dbg.printf(" number of avatars: %d, URL: %s", numberPlayers, url.c_str());
 	}
 
 } //end namespace alc

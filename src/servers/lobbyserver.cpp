@@ -55,6 +55,15 @@ namespace alc {
 	const char * alcNetName="Lobby";
 	Byte alcWhoami=KLobby;
 	
+	tUnetLobbyServer::tUnetLobbyServer(void) : tUnetLobbyServerBase()
+	{
+		strcpy((char*)name, alcNetName);
+		tConfig *cfg = alcGetConfig();
+		tStrBuf var = cfg->getVar("website");
+		strncpy((char *)website, (char *)var.c_str(), 255);
+		lstd->log("WARNING: The lobby server is not finished yet. So if it doesn\'t work, that's not even a bug.\n");
+	}
+	
 	int tUnetLobbyServer::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
 	{
 		int ret = tUnetLobbyServerBase::onMsgRecieved(ev, msg, u); // first let tUnetLobbyServerBase process the message
@@ -102,8 +111,7 @@ namespace alc {
 				}
 				
 				// forward player list to client
-				Byte url = 0; // TODO: load URL from settings
-				tmVaultPlayerList playerListClient(client, playerList.numberPlayers, playerList.players, &url);
+				tmVaultPlayerList playerListClient(client, playerList.numberPlayers, playerList.players, website);
 				client->send(playerListClient);
 				
 				return 1;
