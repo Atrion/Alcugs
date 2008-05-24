@@ -516,6 +516,11 @@ tmMsgBase::tmMsgBase(U16 cmd,U32 flags,tNetSession * u) {
 	bhflags=0;
 	if(this->flags & plNetAck)
 		bhflags |= UNetAckReq;
+	// get version froms session
+	if ((this->flags & plNetVersion) && u) {
+		max_version = u->max_version;
+		min_version = u->min_version;
+	}
 }
 void tmMsgBase::setFlags(U32 f) {
 	this->flags |= f;

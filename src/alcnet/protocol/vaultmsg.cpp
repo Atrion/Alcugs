@@ -41,8 +41,6 @@ namespace alc {
 	tmCustomVaultAskPlayerList::tmCustomVaultAskPlayerList(tNetSession *u, Byte x, Byte *guid)
 	: tmMsgBase(NetMsgCustomVaultAskPlayerList, plNetAck | plNetCustom | plNetX | plNetVersion | plNetGUI, u)
 	{
-		this->max_version = u->max_version;
-		this->min_version = u->min_version;
 		this->x = x;
 		memcpy(this->guid, guid, 16);
 	}

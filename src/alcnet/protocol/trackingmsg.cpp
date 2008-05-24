@@ -179,8 +179,6 @@ namespace alc {
 	{
 		this->x = x;
 		this->ki = ki;
-		max_version = u->max_version;
-		min_version = u->min_version;
 		
 		fork_port = port;
 		memcpy(this->guid, guid, 8);
@@ -217,8 +215,6 @@ namespace alc {
 	{
 		this->x = x;
 		this->ki = ki;
-		max_version = u->max_version;
-		min_version = u->min_version;
 		
 		server_port = port;
 		this->ip_str.writeStr(ip_str);
@@ -254,8 +250,6 @@ namespace alc {
 	{
 		recipients = NULL;
 		ki = 0;
-		max_version = u->max_version;
-		min_version = u->min_version;
 	}
 	
 	tmCustomDirectedFwd::tmCustomDirectedFwd(tNetSession *u, tmCustomDirectedFwd &directedFwd)
@@ -263,8 +257,6 @@ namespace alc {
 	{
 		recipients = NULL;
 		ki = directedFwd.ki;
-		max_version = u->max_version;
-		min_version = u->min_version;
 	}
 	
 	tmCustomDirectedFwd::~tmCustomDirectedFwd(void)

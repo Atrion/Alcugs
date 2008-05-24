@@ -65,8 +65,6 @@ namespace alc {
 		// copy stuff from the packet we're answering to
 		ki = u->ki;
 		x = u->x;
-		max_version = u->max_version;
-		min_version = u->min_version;
 		
 		this->authResult = authResult;
 		this->challenge.write(challenge, 16);
