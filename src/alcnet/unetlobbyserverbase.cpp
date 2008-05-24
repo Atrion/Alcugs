@@ -129,7 +129,12 @@ namespace alc {
 		tmAlive alive(session);
 		session->send(alive);
 		
-		// TODO: if it's the tracking server, send CustomSetGuid
+		if (dst == KTracking) {
+			tStrBuf var = cfg->getVar("public_address");
+			if (var.isNull()) log->log("WARNING: No public address set, using bind address %s\n", bindaddr);
+			tmCustomSetGuid setGuid(session, guid, name, var.c_str());
+			session->send(setGuid);
+		}
 		
 		return ite;
 	}

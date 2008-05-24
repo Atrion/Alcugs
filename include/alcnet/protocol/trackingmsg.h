@@ -35,7 +35,9 @@ namespace alc {
 	class tmCustomSetGuid : public tmMsgBase {
 	public:
 		tmCustomSetGuid(tNetSession *u);
+		tmCustomSetGuid(tNetSession *u, const Byte *guid, const Byte *age, const Byte *externalIp);
 		virtual void store(tBBuf &t);
+		virtual int stream(tBBuf &t);
 		// format
 		tUStr age, externalIp;
 	protected:

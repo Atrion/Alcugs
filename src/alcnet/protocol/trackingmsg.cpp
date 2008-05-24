@@ -38,10 +38,20 @@
 namespace alc {
 
 	//// tmCustomSetGuid
-	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
+	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u) : tmMsgBase(NetMsgCustomSetGuid, plNetAck | plNetVersion | plNetCustom, u)
 	{
 		age.setVersion(0); // normal UrurString
 		externalIp.setVersion(0); // normal UrurString
+	}
+	
+	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u, const Byte *guid, const Byte *age, const Byte *externalIp)
+	 : tmMsgBase(NetMsgCustomSetGuid, plNetAck | plNetVersion | plNetCustom, u)
+	{
+		memcpy(this->guid, guid, 8);
+		this->age.setVersion(0); // normal UrurString
+		this->age.writeStr(age);
+		this->externalIp.setVersion(0); // normal UrurString
+		this->externalIp.writeStr(externalIp);
 	}
 	
 	void tmCustomSetGuid::store(tBBuf &t)
@@ -61,6 +71,30 @@ namespace alc {
 			if (u) u->proto = 1; // unet2 protocol
 		}
 #endif
+	}
+	
+	int tmCustomSetGuid::stream(tBBuf &t)
+	{
+		if (u && (u->proto == 1 || u->proto == 2)) { // I don't know why, but old servers have this set
+			setFlags(plNetX | plNetKi);
+			x = ki = 0;
+		}
+		
+		int off = tmMsgBase::stream(t);
+		tUStr guid_str(5); // inverted UruString
+		guid_str.writeStr(alcGetStrGuid(guid, 8));
+		off += t.put(guid_str);
+		
+		off += t.put(age);
+#ifdef _UNET2_SUPPORT
+		if (u && u->proto == 1) {
+			tUStr netmask(0); // normal UruString
+			netmask.writeStr("255.255.255.0");
+			off += t.put(netmask);
+		}
+#endif
+		off += t.put(externalIp);
+		return off;
 	}
 	
 	void tmCustomSetGuid::additionalFields()

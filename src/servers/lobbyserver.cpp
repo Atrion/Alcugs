@@ -58,10 +58,15 @@ namespace alc {
 	tUnetLobbyServer::tUnetLobbyServer(void) : tUnetLobbyServerBase()
 	{
 		strcpy((char*)name, alcNetName);
+		loadSettings();
+		lstd->log("WARNING: The lobby server is not finished yet. So if it doesn\'t work, that's not even a bug.\n");
+	}
+	
+	void tUnetLobbyServer::loadSettings(void)
+	{
 		tConfig *cfg = alcGetConfig();
 		tStrBuf var = cfg->getVar("website");
 		strncpy((char *)website, (char *)var.c_str(), 255);
-		lstd->log("WARNING: The lobby server is not finished yet. So if it doesn\'t work, that's not even a bug.\n");
 	}
 	
 	int tUnetLobbyServer::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
