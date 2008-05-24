@@ -523,7 +523,12 @@ namespace alc {
 	{
 		FILE *f = fopen((char *)statusHTMLFile, "w");
 		// header
-		fprintf(f, "<html><head><title>Shard Status</title></head><body>\n");
+		fprintf(f, "<html><head><title>Shard Status</title>\n");
+		char *file = strrchr((char*)statusHTMLFile, '/'); // get only the filename (for automatic reload)
+		if (file) ++file; // it points to the slash, but we want to start after it
+		else file = (char *)statusHTMLFile; // no slash... it must be a relative filename then, containing no directory, so let's use that
+		fprintf(f, "<meta http-equiv=\"refresh\" content=\"30;url=%s\" />\n", file);
+		fprintf(f, "</head><body>\n");
 		fprintf(f, "Last Update: %s<br />\n", alcGetStrTime());
 		// player list
 		fprintf(f, "<h2>Current Online Players</h2>\n");
