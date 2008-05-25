@@ -50,9 +50,7 @@ namespace alc {
 	class tUnetTrackingServer : public tUnetServerBase {
 	public:
 		tUnetTrackingServer(void) : tUnetServerBase()
-		{
-			lstd->log("WARNING: The tracking server is not finished yet. So if it doesn\'t work, that's not even a bug.\n");
-		}
+		{ }
 		~tUnetTrackingServer(void) { delete trackingBackend; }
 		
 		virtual void onStart(void) {

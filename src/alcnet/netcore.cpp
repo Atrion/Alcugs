@@ -303,7 +303,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 				ret=parseBasicMsg(evt,msg,u,shutdown);
 				// terminated sessions can be deleted here - either it was a NetMsgLeave and everything is fine, or it was an invalid message
 				if (u->terminated || shutdown) {
-					if (ret == 0) err->log("ERR: Peer %s is terminated and sent a non-NetMsgLeave message %04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+					if (ret == 0) err->log("%s is terminated and sent a non-NetMsgLeave message %04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
 					u->rcvq->deleteCurrent();
 					terminate(evt->sid, RKickedOff, true); // delete the session ASAP
 					break;

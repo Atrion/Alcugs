@@ -112,7 +112,7 @@ namespace alc {
 					++num_deleted;
 				}
 			}
-			if (num_deleted > 0) lerr->log("ERR: The backend is quitting, and there were still %d players online\n", num_deleted);
+			if (num_deleted > 0) log->log("ERR: The backend is quitting, and there were still %d players online\n", num_deleted);
 			free((void *)players);
 		}
 		if (log != lnull) delete log;
@@ -137,7 +137,7 @@ namespace alc {
 		
 		tPlayer *player = getPlayer(findServer.ki);
 		if (!player) {
-			lerr->log("ERR: Ignoring a NetMsgCustomFindServer for player with KI %d since I can't find that player\n", findServer.ki);
+			log->log("ERR: Ignoring a NetMsgCustomFindServer for player with KI %d since I can't find that player\n", findServer.ki);
 			return;
 		}
 		player->x = findServer.x;
@@ -184,7 +184,7 @@ namespace alc {
 				}
 			}
 			if (!lobby) {
-				lerr->log("ERR: There's no lobby I could use to spawn the server\n");
+				log->log("ERR: There's no lobby I could use to spawn the server\n");
 				return;
 			}
 			// search for free ports
@@ -202,7 +202,7 @@ namespace alc {
 			lowest += data->port_start;
 			delete[] freePorts;
 			if (lowest == nPorts) { // no free port on the lobby with the least childs
-				lerr->log("ERR: No free port on lobby %s, can't spawn game server\n", lobby->str());
+				log->log("ERR: No free port on lobby %s, can't spawn game server\n", lobby->str());
 				return;
 			}
 			// ok, telling the lobby to fork
@@ -262,7 +262,7 @@ namespace alc {
 		while ((server = servers->getNext())) {
 			if (server == game || !server->data) continue;
 			if (memcmp(server->guid, setGuid.guid, 8) == 0) {
-				lerr->log("There already is a server for guid %s, ignoring the new one %s\n", alcGetStrGuid(setGuid.guid, 8), game->str());
+				log->log("ERR: There already is a server for guid %s, ignoring the new one %s\n", alcGetStrGuid(setGuid.guid, 8), game->str());
 				return;
 			}
 		}
@@ -290,7 +290,7 @@ namespace alc {
 				data->parent = lobby;
 			}
 			else
-				log->log("WARN: Found game server %s without a Lobby belonging to it\n", game->str());
+				log->log("ERR: Found game server %s without a Lobby belonging to it\n", game->str());
 			
 			// get the age's sequence prefix
 			tAgeInfo *age = ageParser->getAge(game->name);
@@ -364,8 +364,7 @@ namespace alc {
 					alcUnetGetReasonCode(playerStatus.playerStatus));
 		}
 		else {
-			lerr->log("Got unknown flag 0x%02X from player with KI %d\n", playerStatus.playerFlag, playerStatus.ki);
-			lerr->flush();
+			log->log("ERR: Got unknown flag 0x%02X from player with KI %d\n", playerStatus.playerFlag, playerStatus.ki);
 		}
 		log->flush();
 	}
