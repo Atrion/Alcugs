@@ -521,6 +521,11 @@ namespace alc {
 	void tTrackingBackend::printStatusHTML(void)
 	{
 		FILE *f = fopen((char *)statusHTMLFile, "w");
+		if (!f) {
+		  lerr->log("Can\'t open %s for writing - disabling HTML status page\n", statusHTMLFile);
+		  statusHTML = false;
+		  return;
+		}
 		// header
 		fprintf(f, "<html><head><title>Shard Status</title>\n");
 		char *file = strrchr((char*)statusHTMLFile, '/'); // get only the filename (for automatic reload)
@@ -566,6 +571,11 @@ namespace alc {
 		tNetSession *server;
 		bool needFake = false;
 		FILE *f = fopen((char *)statusXMLFile, "w");
+		if (!f) {
+		  lerr->log("Can\'t open %s for writing - disabling XML status page\n", statusXMLFile);
+		  statusXML = false;
+		  return;
+		}
 		
 		fprintf(f, "<?xml version='1.0'?>\n");
 		fprintf(f, "<SystemView>\n");

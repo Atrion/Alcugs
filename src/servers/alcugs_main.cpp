@@ -238,7 +238,6 @@ int main(int argc, char * argv[]) {
 		alcCrashAction();
 		return -1;
 	} catch(...) {
-		fprintf(stderr,"FATAL Server died: Unknown Exception\n");
 		lerr->log("FATAL Server died: Unknown Exception\n");
 		lstd->print("The service has been unexpectely killed!!!\n");
 		lstd->print("Born:    %s\n",alcGetBornTime().str());
