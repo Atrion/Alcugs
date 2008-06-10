@@ -84,6 +84,7 @@ private:
 	void processMsg(Byte * buf,int size);
 	void doWork();
 	
+	inline bool isBusy();
 	Byte checkDuplicate(tUnetUruMsg &msg);
 
 	void createAckReply(tUnetUruMsg &msg);
@@ -165,7 +166,6 @@ private:
 	tUnetMsgQ<tUnetMsg> * rcvq; //incomming message queue
 	
 	bool idle;
-	bool bussy; //bussy flag (0,1) If this flag is activated, messages are keept in the rcv buffer
 	
 	bool terminated; //!< false: connection is established; true: a NetMsgTerminated was sent (and we expect a NetMsgLeave), or a NetMsgLeave was sent
 	

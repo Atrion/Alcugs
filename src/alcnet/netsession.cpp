@@ -104,7 +104,6 @@ void tNetSession::init() {
 	assert(server.pn==0);
 	idle=false;
 	whoami=0;
-	bussy=false;
 	max_version=0;
 	min_version=0;
 	tpots=0;
@@ -167,12 +166,13 @@ void tNetSession::updateRTT(U32 newread) {
 		if(desviation!=0) timeout=u*rtt + delta*desviation;
 	#endif
 	ack_rtt=rtt/8;
-	DBG(5,"RTT update rtt:%i, timeout:%i\n",rtt,timeout);
+	DBG(5,"%s RTT update rtt:%i, timeout:%i\n",str(),rtt,timeout);
 }
 void tNetSession::duplicateTimeout() {
 	U32 maxTH=4000000; //
 	timeout+=(timeout*666)/1000;
 	if(timeout>maxTH) timeout=maxTH;
+	DBG(5,"%s timeout update:%i\n",str(),timeout);
 	//net->log->log("Abort()\n");
 	//abort();
 }
@@ -216,6 +216,9 @@ U32 tNetSession::computetts(U32 psize) {
 
 tNetSessionIte tNetSession::getIte() {
 	return(tNetSessionIte(ip,port,sid));
+}
+bool tNetSession::isBusy() {
+	return (ackq->len());
 }
 
 void tNetSession::processMsg(Byte * buf,int size) {
@@ -292,7 +295,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		net->log->print("%s",(const char *)comm.str());
 		bandwidth=comm.bandwidth;
 		if(renego_stamp==comm.timestamp) {
-			net->log->print(" Ignored\n");
+			net->log->print(" (ignored)\n");
 			negotiating=false;
 		} else {
 			net->log->nl();
@@ -659,17 +662,17 @@ void tNetSession::ackUpdate() {
 
 		//pmsg->data.write(buf.read(csize),csize);
 		if(!(pmsg->tf & UNetExt))
-		pmsg->data.putU16(0);
+			pmsg->data.putU16(0);
 		
 		ackq->rewind();
 		i=0;
 		while((ack=ackq->getNext()) && i<maxacks) {
 			pmsg->data.putU32(ack->A);
 			if(!(pmsg->tf & UNetExt))
-			pmsg->data.putU32(0);
+				pmsg->data.putU32(0);
 			pmsg->data.putU32(ack->B);
 			if(!(pmsg->tf & UNetExt))
-			pmsg->data.putU32(0);
+				pmsg->data.putU32(0);
 			ackq->deleteCurrent();
 			i++;
 		}
@@ -794,10 +797,10 @@ void tNetSession::doWork() {
 
 	idle=false;
 
-	ackUpdate(); //get ack messages
+	ackUpdate(); //generate ack messages
 	
 	//check rcvq
-	if(!bussy) {
+	if(!isBusy()) {
 		rcvq->rewind();
 		tUnetMsg * g;
 		while((g=rcvq->getNext())) {
