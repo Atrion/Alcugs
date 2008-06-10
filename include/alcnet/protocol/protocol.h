@@ -96,8 +96,8 @@ private:
 	//Byte vid 0x03
 	Byte val; // 0x00,0x01,0x02
 	//U32 cs (only if val>0)
-	U32 pn; //pck num
-	Byte tf; //type/flags
+	U32 pn; //!< packet number
+	Byte tf; //!< message type/flags
 	//U32 unkA
 	Byte frn; //num fragment(1 byte)
 	U32 sn; //seq num (3 bytes)

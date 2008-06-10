@@ -90,20 +90,13 @@ class tUnet {
 // methods
 public:
 	tUnet(const char * lhost="0.0.0.0",U16 lport=0); //lport in host order
+	virtual ~tUnet();
 	void setFlags(tUnetFlags flags);
 	void unsetFlags(tUnetFlags flags);
 	tUnetFlags getFlags();
 	void startOp();
 	void stopOp();
-	virtual ~tUnet();
 	void dump(tLog * f=NULL,Byte flags=0x01);
-	int Recv();
-	U32 getTime() { return ntime_sec; }
-	U32 getMicroseconds() { return ntime_usec; }
-	//max resolution 15 minutes
-	U32 getNetTime() { return net_time; }
-	void updateNetTime();
-	tNetEvent * getEvent();
 	tNetSession * getSession(tNetSessionIte &t);
 	void destroySession(tNetSessionIte &t);
 	//
@@ -118,13 +111,20 @@ protected:
 	void _closelogs();
 	void updatetimer(U32 usecs);
 	tNetSessionIte netConnect(char * hostname,U16 port,Byte validation,Byte flags);
+	int Recv();
+	U32 getTime() { return ntime_sec; }
+	U32 getMicroseconds() { return ntime_usec; }
+	//max resolution 15 minutes
+	U32 getNetTime() { return net_time; }
+	tNetEvent * getEvent();
 
 private:
 	void init();
-	
 	void doWork();
 	
 	void neterror(const char * msg);
+	
+	void updateNetTime();
 	
 	//void send();
 	void basesend(tNetSession * u,tmBase & m);
