@@ -25,7 +25,7 @@ AC_DEFINE_UNQUOTED(_VENDOR_,"${host_vendor}",
 AC_DEFINE_UNQUOTED(_OS_, "${host_os}",
 [Define this to be the name of the OS of your system.])
 
-AC_ARG_ENABLE(release, [  --enable-release Enables release params (default NO)],
+AC_ARG_ENABLE(release, [  --enable-release        Enables release params (default NO)],
      [case "${enableval}" in
        yes) RELEASE=true ;;
        no)  RELEASE=false ;;
@@ -60,6 +60,32 @@ fi
 
 CXXFLAGS="$CXXFLAGS $EXTRAFLAGS"
 
+#threads
+AC_ARG_ENABLE(threads, [  --enable-threads        Enables threads (default YES)],
+     [case "${enableval}" in
+       yes) THREADS=true ;;
+       no)  THREADS=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-threads) ;;
+     esac],[THREADS=true])
+
+	if test x$THREADS = xtrue ; then
+		THREADSWORK=false
+		AC_CHECK_HEADERS([pthread.h], [AC_CHECK_LIB(pthread,pthread_create, [THREADSWORK=true] , AC_MSG_FAILURE([pthreads not found in your system (but I saw the header)]))], AC_MSG_RESULT([[ pthreads not found in your system!]]))
+	fi
+	if test x$THREADSWORK = xtrue; then
+		AC_DEFINE([ENABLE_THREADS],[],[Enable threads])
+		LIBS="$LIBS -lpthread"
+	fi
+	if test x$WIN32 = xtrue && test x$THREADS = xtrue ; then
+		THREADSWORK=true
+		AC_DEFINE([ENABLE_THREADS],[],[Enable threads])
+	fi
+	if test x$THREADSWORK = xtrue ; then
+		#I'm not sure about these ones (If them should, or not be defined)
+		AC_DEFINE([THREAD_SAFE],[],[Set thread safe def])
+		AC_DEFINE([_REENTRANT],[],[Set reentrant def])
+	fi
+
 #progs
 AC_PROG_CC
 AC_PROG_CXX
@@ -84,30 +110,6 @@ AC_ALC_WITHPATH([expat.h],expat,XML_ParserCreate,
 #MySQL
 AC_ALC_MYSQL
 
-AC_ARG_ENABLE(threads, [  --enable-threads Enables threads (default YES)],
-     [case "${enableval}" in
-       yes) THREADS=true ;;
-       no)  THREADS=false ;;
-       *) AC_MSG_ERROR(bad value ${enableval} for --enable-threads) ;;
-     esac],[THREADS=true])
-
-	if test x$THREADS = xtrue ; then
-		THREADSWORK=false
-		AC_CHECK_HEADERS([pthread.h], [AC_CHECK_LIB(pthread,pthread_create, [THREADSWORK=true] , AC_MSG_FAILURE([pthreads not found in your system (but I saw the header)]))], AC_MSG_RESULT([[ pthreads not found in your system!]]))
-	fi
-	if test x$THREADSWORK = xtrue; then
-		AC_DEFINE([ENABLE_THREADS],[],[Enable threads])
-		LIBS="$LIBS -lpthread"
-	fi
-	if test x$WIN32 = xtrue && test x$THREADS = xtrue ; then
-		THREADSWORK=true
-		AC_DEFINE([ENABLE_THREADS],[],[Enable threads])
-	fi
-	if test x$THREADSWORK = xtrue ; then
-		#I'm not sure about these ones (If them should, or not be defined)
-		AC_DEFINE([THREAD_SAFE],[],[Set thread safe def])
-		AC_DEFINE([_REENTRANT],[],[Set reentrant def])
-	fi
 
 # Linux libc stack info
 AC_CHECK_HEADERS([execinfo.h])
@@ -152,8 +154,8 @@ AC_PROG_GCC_TRADITIONAL
 
 
 # vars
-AC_ARG_VAR([ALC_DBG_LEVEL],
-[Debug Level])
+#AC_ARG_VAR([ALC_DBG_LEVEL],
+#[Debug Level])
 
 
 #AC_SUBST(ALC_LIBS,[${ALC_LIBS}])

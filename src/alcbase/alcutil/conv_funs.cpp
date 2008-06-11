@@ -126,8 +126,9 @@ const Byte * alcGetStrTime(U32 timestamp, U32 microseconds) {
 	static Byte btime[50];
 	Byte tmptime[25];
 	struct tm * tptr;
+	time_t stamp = (time_t)timestamp;
 
-	tptr=gmtime((const time_t *)&timestamp);
+	tptr=gmtime(&stamp);
 	strftime((char *)tmptime,25,"%Y:%m:%d-%H:%M:%S",tptr);
 	sprintf((char *)btime,"%s.%06d",(char *)tmptime,microseconds);
 

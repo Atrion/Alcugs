@@ -358,14 +358,13 @@ void tLog::open(const char * name, char level, U16 flags) {
 	}
 }
 
-int tLog::rotate(bool force) {
+void tLog::rotate(bool force) {
 
 	char * path=NULL;
 	char * croak=NULL;
 	char * croak2=NULL;
 	char * gustavo=NULL;
 	int i,size;
-	int ret;
 
 	struct stat file_stats;
 	
@@ -376,7 +375,7 @@ int tLog::rotate(bool force) {
 	DBG(5,"2..\n");
 	
 	if(this->name==NULL || tvLogConfig->n_files2rotate<=0 || this->level==0) {
-		return 0;
+		return;
 	}
 	
 	DBG(5,"3..\n");
@@ -384,14 +383,14 @@ int tLog::rotate(bool force) {
 	size=strlen(this->name) + strlen((const char *)tvLogConfig->path->c_str());
 
 	croak=(char *)malloc(sizeof(char) * (size+1+5));
-	if(croak==NULL) return -1;
+	if(croak==NULL) return;
 	path=(char *)malloc(sizeof(char) * (size+1));
-	if(path==NULL) { free((void *)croak); return -1; }
+	if(path==NULL) { free((void *)croak); return; }
 	croak2=(char *)malloc(sizeof(char) * (size+1+5));
-	if(croak2==NULL) { free((void *)path); free((void *)croak); return -1; }
+	if(croak2==NULL) { free((void *)path); free((void *)croak); return; }
 	gustavo=(char *)malloc(sizeof(char) * (size+1+5));
 	if(gustavo==NULL) { free((void *)path); free((void *)croak);
-		free((void *)croak2); return -1; }
+		free((void *)croak2); return; }
 
 	DBG(5,"4..\n");
 
@@ -406,11 +405,10 @@ int tLog::rotate(bool force) {
 
 	if(stat(path,&file_stats)!=0) {
 		DBG(6,"file not found, cannot rotate!\n");
-		ret=-1;
 	} else {
 
 		if((int)file_stats.st_size<tvLogConfig->rotate_size && !force) {
-			ret=0;
+			;
 		} else {
 
 			if(this->flags & DF_OPEN && this->dsc!=NULL && this->dsc!=stdout && this->dsc!=stderr) {
@@ -455,7 +453,6 @@ int tLog::rotate(bool force) {
 				this->dsc=fopen(path,"w");
 				if(this->dsc==NULL) {
 					this->flags=this->flags & ~DF_OPEN;
-					ret=-1;
 					throw txBase(_WHERE("fopen error"));
 				} else {
 					if(this->flags & DF_HTML) {
@@ -471,7 +468,7 @@ int tLog::rotate(bool force) {
 	if(croak2!=NULL) free((void *)croak2);
 	if(gustavo!=NULL) free((void *)gustavo);
 
-	return ret;
+	//return ret;
 }
 
 /**

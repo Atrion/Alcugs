@@ -574,10 +574,10 @@ U32 tSBuf::size() { return msize; }
 void tZBuf::compress() {
 	tRefBuf * aux=this->buf;
 	aux->dec();
-	int comp_size;
+	zlib::uLongf comp_size;
 	comp_size=msize+(msize/10)+12;
 	this->buf = new tRefBuf(comp_size);
-	int ret=zlib::compress(this->buf->buf,(zlib::uLongf *)&comp_size,aux->buf+mstart,msize);
+	int ret=zlib::compress(this->buf->buf,&comp_size,aux->buf+mstart,msize);
 	if(ret!=0) throw txBase(_WHERE("Something terrible happenened compressing the buffer"));
 	mstart=0;
 	msize=comp_size;
@@ -588,11 +588,11 @@ void tZBuf::compress() {
 void tZBuf::uncompress(int iosize) {
 	tRefBuf * aux=this->buf;
 	aux->dec();
-	int comp_size;
+	zlib::uLongf comp_size;
 	if(iosize<=0) { comp_size=10*msize; } //yes, is very dirty
 	else comp_size=iosize;
 	this->buf = new tRefBuf(comp_size);
-	int ret=zlib::uncompress(this->buf->buf,(zlib::uLongf *)&comp_size,aux->buf+mstart,msize);
+	int ret=zlib::uncompress(this->buf->buf,&comp_size,aux->buf+mstart,msize);
 	if(ret!=0) throw txBase(_WHERE("Something terrible happenened uncompressing the buffer"));
 	mstart=0;
 	msize=comp_size;

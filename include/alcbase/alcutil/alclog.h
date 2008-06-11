@@ -72,7 +72,7 @@ public:
 	tLog(const char * name=NULL,char level=2,U16 flags=0);
 	~tLog();
 	void open(const char * name=NULL, char level=2, U16 flags=0);
-	int rotate(bool force=false);
+	void rotate(bool force=false);
 	void close(bool silent=false);
 
 	void print(const char * msg, ...);
