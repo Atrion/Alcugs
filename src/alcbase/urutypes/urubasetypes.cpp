@@ -239,7 +239,6 @@ void tUStr::store(tBBuf &b) {
 			}
 		}
 	}
-	putByte(0);
 }
 void tUStr::copy(tUStr &t)
 {

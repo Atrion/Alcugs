@@ -149,6 +149,7 @@ private:
 	bool negotiating;
 	
 	Byte passwd[33]; //peer passwd hash (used in V2) (string)
+	Byte accessLevel;
 
 	//flux control
 	U32 bandwidth; //client reported bandwidth (negotiated technology) (in bps)
@@ -185,7 +186,6 @@ private:
 	char uid[41]; //peer uid (client) (in hex)
 	
 	Byte reason; //reason code
-	Byte access_level; //the access level of the peer
 	Byte status; //the player status, defined inside a states machine (see the states machine doc)
 	Byte paged; //0x00 non-paged player, 0x01 player is paged
 #endif

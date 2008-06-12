@@ -62,12 +62,34 @@ namespace alc {
 				integer = t.getS32();
 				DBGM(5, ", value: %d\n", integer);
 				break;
-			// FIXME: add more formats
+			case 0x03: // uru string (inverted)
+				t.get(str);
+				DBGM(5, ", value: %s (length: %d)\n", str.c_str(), str.size());
+				break;
+			// FIXME: add 0x07 (timestamp)
 			default:
 				DBGM(5, "\n");
 				lerr->log("got creatable generic value with unknown format 0x%02X\n", format);
 				throw txProtocolError(_WHERE("unknown creatable generic value format"));
 		}
+	}
+	
+	int tvCreatableGenericValue::stream(tBBuf &t)
+	{
+		int off = 0;
+		t.putByte(format); ++off;
+		switch (format) {
+			case 0x00:
+				t.putS32(integer); off += 4;
+				break;
+			case 0x03:
+				off += t.put(str);
+				break;
+			// FIXME: add 0x07 (timestamp)
+			default:
+				throw txProtocolError(_WHERE("unknown creatable generic value format"));
+		}
+		return off;
 	}
 	
 	//// tVaultItem
@@ -95,6 +117,17 @@ namespace alc {
 		}
 	}
 	
+	int tvItem::stream(tBBuf &t)
+	{
+		if (!data) throw txProtocolError(_WHERE("don\'t have any data to write"));
+		int off = 0;
+		t.putByte(id); ++off;
+		t.putByte(0); ++off; // unknown
+		t.putU16(type); off += 2;
+		off += t.put(*data);
+		return off;
+	}
+	
 	//// tVaultMessage
 	tvMessage::~tvMessage(void)
 	{
@@ -118,7 +151,6 @@ namespace alc {
 		compressed = t.getByte();
 		realSize = t.getU32();
 		DBG(5, "vault message: command: 0x%02X, compressed: 0x%02X, real size: %d\n", cmd, compressed, realSize);
-		
 		if (compressed == 0x03) {
 			// FIXME: uncompress
 			throw txProtocolError(_WHERE("compressed vault message"));
@@ -161,6 +193,42 @@ namespace alc {
 		DBG(5, "remaining info: context: %d, vmgr: %d, vn: %d\n", context, vmgr, vn);
 		
 		if (!t.eof()) throw txProtocolError(_WHERE("Message is too long")); // there must not be any byte after what we parsed above
+	}
+	
+	int tvMessage::stream(tBBuf &t)
+	{
+		if (!items) throw txProtocolError(_WHERE("don\'t have any items to write"));
+		int off = 0;
+		t.putByte(cmd); ++off;
+		t.putU16(0); off += 2; // result
+		t.putByte(compressed); ++off;
+		t.putU32(realSize); off += 4;
+		if (compressed == 0x03) {
+			// FIXME: compress
+			throw txProtocolError(_WHERE("compressed vault message"));
+		}
+		else if (compressed != 0x01) {
+			lerr->log("Unknown compression format 0x%02X\n", compressed);
+			throw txProtocolError(_WHERE("unknown compression format"));
+		}
+		
+		// put the items
+		t.putU16(numItems); off += 2;
+		for (int i = 0; i < numItems; ++i)
+			off += t.put(*items[i]);
+		
+		// put remaining info
+		if (task) {
+			t.putU16(context); off += 2;
+			t.putU32(vmgr); off += 4;
+		}
+		else {
+			t.putU16(context); off += 2;
+			t.putU16(0); off += 2; // result
+			t.putU32(vmgr); off += 4;
+			t.putU16(vn); off += 2;
+		}
+		return off;
 	}
 
 } //end namespace alc

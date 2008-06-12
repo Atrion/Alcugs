@@ -316,6 +316,7 @@ namespace alc {
 					memcpy(client->guid, authResponse.guid, 16);
 					client->whoami = KClient; // it's a real client now
 					client->authenticated = 2; // the player is authenticated!
+					client->accessLevel = authResponse.accessLevel;
 					strcpy((char *)client->passwd, (char *)authResponse.passwd.c_str()); // passwd is needed for validating packets
 					client->conn_timeout = 30; // 30sec, client should send an alive every 10sec
 					tmAccountAutheticated accountAuth(client, authResponse.result, guid);
@@ -345,7 +346,9 @@ namespace alc {
 				msg->data->get(setPlayer);
 				log->log("<RCV> %s\n", setPlayer.str());
 				
-				// FIXME: do something here
+				if (u->accessLevel <= AcAdmin)
+					u->ki = setPlayer.ki;
+				// FIXME: do more here
 				
 				return 1;
 			}
@@ -353,20 +356,40 @@ namespace alc {
 			//// vault messages
 			case NetMsgVault:
 			{
-				if (u->authenticated != 1) {
-					err->log("ERR: %s sent a NetMsgVault but is not yet authed. I\'ll kick him.\n", u->str());
-					return -2; // hack attempt
-				}
-				
 				// get the data out of the packet
 				tmVault vaultMsg(u);
 				msg->data->get(vaultMsg);
 				log->log("<RCV> %s\n", vaultMsg.str());
 				
-				// FIXME: do more here
+				// parse the message
 				tvMessage parsedMsg(/*isTask:*/false);
 				vaultMsg.message.rewind();
 				vaultMsg.message.get(parsedMsg);
+				
+				if (u->whoami == KVault) { // got it from the vault - send it to the client
+					if (!vaultMsg.hasFlags(plNetKi) || vaultMsg.ki == 0) throw txProtocolError(_WHERE("KI missing"));
+					tNetSession *client = smgr->find(vaultMsg.ki);
+					if (!client) {
+						err->log("ERR: I've got a vault message to forward to player with KI %d but can\'t find it\'s session.\n", vaultMsg.ki);
+						return 1;
+					}
+					tmVault vaultMsgFwd(client, vaultMsg.ki, &parsedMsg);
+					client->send(vaultMsgFwd);
+				}
+				else { // got it from a client
+					if (u->authenticated != 1 || u->ki == 0) {
+						err->log("ERR: %s sent a NetMsgVault but is not yet authed or did not set his ki. I\'ll kick him.\n", u->str());
+						return -2; // hack attempt
+					}
+					// forward it to the vault server
+					tNetSession *vaultServer = getPeer(KVault);
+					if (!vaultServer) {
+						err->log("ERR: I've got a vault message to forward to the vault server, but it's unavailable.\n", u->str());
+						return 1;
+					}
+					tmVault vaultMsgFwd(NULL, u->ki, &parsedMsg);
+					vaultServer->send(vaultMsgFwd);
+				}
 				
 				return 1;
 			}

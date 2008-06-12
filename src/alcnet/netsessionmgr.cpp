@@ -126,6 +126,13 @@ tNetSession * tNetSessionList::getNext() {
 	
 	return k;
 }
+tNetSession *tNetSessionList::find(U32 ki)
+{
+	for (int i = 0; i < size; ++i) {
+		if (table[i] && table[i]->ki == ki) return table[i];
+	}
+	return NULL;
+}
 
 /* Sesion Mgr */
 tNetSessionMgr::tNetSessionMgr(tUnet * net,int limit) : tNetSessionList()

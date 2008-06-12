@@ -47,17 +47,17 @@ namespace alc {
 	class tvBase : public tBaseType {
 	public:
 		tvBase(void) : tBaseType() {}
-		virtual void store(tBBuf &t) { }
-		virtual int stream(tBBuf &t) { return 0; }
 	};
 	
 	class tvCreatableGenericValue : public tvBase {
 	public:
-		tvCreatableGenericValue(void) : tvBase() {}
+		tvCreatableGenericValue(void) : tvBase() { str.setVersion(5); /* inverted */ }
 		virtual void store(tBBuf &t);
+		virtual int stream(tBBuf &t);
 	private:
 		Byte format;
 		S32 integer;
+		tUStr str;
 	};
 	
 	class tvItem : public tvBase {
@@ -65,6 +65,7 @@ namespace alc {
 		tvItem(void) : tvBase() { data = NULL; }
 		virtual ~tvItem(void) { if (data) delete data; }
 		virtual void store(tBBuf &t);
+		virtual int stream(tBBuf &t);
 	private:
 		Byte id;
 		U16 type;
@@ -76,6 +77,7 @@ namespace alc {
 		tvMessage(bool isTask) : tvBase() { task = isTask; items = NULL; }
 		virtual ~tvMessage(void);
 		virtual void store(tBBuf &t); //!< unpacks the message
+		virtual int stream(tBBuf &t);
 	private:
 		bool task;
 		Byte cmd; //!< the vault command

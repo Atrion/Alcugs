@@ -70,6 +70,8 @@ public:
 		if (n < size) return table[n];
 		return NULL;
 	}
+	//! find a session by it's ki
+	tNetSession *find(U32 ki);
 	void rewind();
 	void end();
 	tNetSession * getNext();

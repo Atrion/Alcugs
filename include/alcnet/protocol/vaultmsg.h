@@ -51,7 +51,9 @@ namespace alc {
 	class tmVault : public tmMsgBase {
 	public:
 		tmVault(tNetSession *u);
+		tmVault(tNetSession *u, U32 ki, tBaseType *vaultMessage);
 		virtual void store(tBBuf &t);
+		virtual int stream(tBBuf &t);
 		// format
 		tMBuf message;
 	};

@@ -84,7 +84,6 @@ namespace alc {
 				u->ki = requestList.ki;
 				
 				// forward it to the vault server
-				// send authAsk to auth server
 				tNetSession *vaultServer = getPeer(KVault);
 				if (!vaultServer) {
 					err->log("ERR: I've got to ask the vault server about player %s, but it's unavailable.\n", u->str());

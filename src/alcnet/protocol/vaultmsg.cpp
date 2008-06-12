@@ -65,9 +65,14 @@ namespace alc {
 	}
 	
 	////tmVault
-	tmVault::tmVault(tNetSession *u) // it's not capable of sending
-	: tmMsgBase(0, 0, u)
-	{ }
+	tmVault::tmVault(tNetSession *u) : tmMsgBase(NetMsgVault, plNetAck | plNetKi, u)
+	{ ki = 0; }
+	
+	tmVault::tmVault(tNetSession *u, U32 ki, tBaseType *vaultMessage) : tmMsgBase(NetMsgVault, plNetAck | plNetKi, u)
+	{
+		message.put(*vaultMessage);
+		this->ki = ki;
+	}
 	
 	void tmVault::store(tBBuf &t)
 	{
@@ -75,6 +80,13 @@ namespace alc {
 		// store the whole message
 		message.clear();
 		t.get(message);
+	}
+	
+	int tmVault::stream(tBBuf &t)
+	{
+		int off = tmMsgBase::stream(t);
+		off += t.put(message);
+		return off;
 	}
 	
 } //end namespace alc

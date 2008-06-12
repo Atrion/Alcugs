@@ -71,6 +71,7 @@ void tNetSession::init() {
 	sid=-1;*/
 	validation=0;
 	authenticated=0;
+	accessLevel=0;
 	cflags=0; //default flags
 	if(net->flags & UNET_NOCONN) {
 		cflags |= UNetNoConn;
