@@ -73,15 +73,20 @@ namespace alc {
 	
 	class tvMessage : public tvBase {
 	public:
-		tvMessage(void) : tvBase() { items = NULL; }
+		tvMessage(bool isTask) : tvBase() { task = isTask; items = NULL; }
 		virtual ~tvMessage(void);
 		virtual void store(tBBuf &t); //!< unpacks the message
 	private:
-		Byte cmd;
+		bool task;
+		Byte cmd; //!< the vault command
 		Byte compressed; //!< 1 when uncompressed, 3 when compressed
-		U32 realSize;
-		U16 numItems;
+		U32 realSize; //!< the real size of the message
+		U16 numItems; //!< number of items
 		tvItem **items;
+		U16 context;
+		U32 vmgr;
+		U16 vn; //!< what is that?
+		
 	};
 	
 	

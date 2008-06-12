@@ -112,12 +112,12 @@ namespace alc {
 		cmd = t.getByte();
 		U16 result = t.getU16();
 		if (result != 0) {
-			lerr->log("got vault message with bad result 0x%04X\n", result);
-			throw txProtocolError(_WHERE("bad result code"));
+			lerr->log("got vault message with bad 1st result 0x%04X\n", result);
+			throw txProtocolError(_WHERE("bad 1st result code"));
 		}
 		compressed = t.getByte();
 		realSize = t.getU32();
-		DBG(5, "command: 0x%02X, compressed: 0x%02X, real size: %d\n", cmd, compressed, realSize);
+		DBG(5, "vault message: command: 0x%02X, compressed: 0x%02X, real size: %d\n", cmd, compressed, realSize);
 		
 		if (compressed == 0x03) {
 			// FIXME: uncompress
@@ -142,7 +142,25 @@ namespace alc {
 			t.get(*items[i]);
 		}
 		
-		// FIXME: there's still more to be parsed
+		// get remaining info
+		if (task) {
+			context = t.getU16(); // in vtask, this is "sub" (?)
+			vmgr = t.getU32(); // in vtask, this is the client
+			vn = 0; // not existant in vtask
+		}
+		else {
+			context = t.getU16();
+			result = t.getU16();
+			if (result != 0) {
+				lerr->log("got vault message with bad 2nd result 0x%04X\n", result);
+				throw txProtocolError(_WHERE("bad 2nd result code"));
+			}
+			vmgr = t.getU32();
+			vn = t.getU16();
+		}
+		DBG(5, "remaining info: context: %d, vmgr: %d, vn: %d\n", context, vmgr, vn);
+		
+		if (!t.eof()) throw txProtocolError(_WHERE("Message is too long")); // there must not be any byte after what we parsed above
 	}
 
 } //end namespace alc

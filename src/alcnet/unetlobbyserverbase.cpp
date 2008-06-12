@@ -364,7 +364,7 @@ namespace alc {
 				log->log("<RCV> %s\n", vaultMsg.str());
 				
 				// FIXME: do more here
-				tvMessage parsedMsg;
+				tvMessage parsedMsg(/*isTask:*/false);
 				vaultMsg.message.rewind();
 				vaultMsg.message.get(parsedMsg);
 				
