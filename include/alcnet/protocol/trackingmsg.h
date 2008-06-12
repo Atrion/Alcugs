@@ -92,7 +92,7 @@ namespace alc {
 	public:
 		tmCustomDirectedFwd(tNetSession *u);
 		tmCustomDirectedFwd(tNetSession *u, tmCustomDirectedFwd &directedFwd);
-		~tmCustomDirectedFwd(void);
+		virtual ~tmCustomDirectedFwd(void);
 		virtual void store(tBBuf &t);
 		virtual int stream(tBBuf &t);
 		// format

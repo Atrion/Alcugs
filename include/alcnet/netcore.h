@@ -42,7 +42,7 @@ extern Byte alcWhoami;
 class tUnetBase :public tUnet {
 public:
 	tUnetBase(); //port & host read from config (or by setBindPort(port) and setBindAddress(addr))
-	~tUnetBase();
+	virtual ~tUnetBase();
 	/** Runs the netcore */
 	void run();
 	/** Stops the netcore

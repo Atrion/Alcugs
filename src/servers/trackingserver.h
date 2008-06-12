@@ -51,7 +51,7 @@ namespace alc {
 	public:
 		tUnetTrackingServer(void) : tUnetServerBase()
 		{ }
-		~tUnetTrackingServer(void) { delete trackingBackend; }
+		virtual ~tUnetTrackingServer(void) { delete trackingBackend; }
 		
 		virtual void onStart(void) {
 			trackingBackend = new tTrackingBackend(smgr, bindaddr, bindport);

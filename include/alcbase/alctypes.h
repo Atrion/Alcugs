@@ -286,7 +286,7 @@ public:
 	tStrBuf(const tStrBuf &k,U32 start=0,U32 len=0);
 	void init();
 	void onmodify();
-	~tStrBuf();
+	virtual ~tStrBuf();
 	virtual void rewind();
 	S32 find(const char cat, bool reverse=false);
 	/** \brief returns a line

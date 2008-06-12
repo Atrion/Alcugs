@@ -51,19 +51,30 @@ namespace alc {
 		virtual int stream(tBBuf &t) { return 0; }
 	};
 	
+	class tvCreatableGenericValue : public tvBase {
+	public:
+		tvCreatableGenericValue(void) : tvBase() {}
+		virtual void store(tBBuf &t);
+	private:
+		Byte format;
+		S32 integer;
+	};
+	
 	class tvItem : public tvBase {
 	public:
-		tvItem(void) : tvBase() {}
+		tvItem(void) : tvBase() { data = NULL; }
+		virtual ~tvItem(void) { if (data) delete data; }
 		virtual void store(tBBuf &t);
 	private:
 		Byte id;
 		U16 type;
+		tvBase *data;
 	};
 	
 	class tvMessage : public tvBase {
 	public:
 		tvMessage(void) : tvBase() { items = NULL; }
-		~tvMessage(void);
+		virtual ~tvMessage(void);
 		virtual void store(tBBuf &t); //!< unpacks the message
 	private:
 		Byte cmd;

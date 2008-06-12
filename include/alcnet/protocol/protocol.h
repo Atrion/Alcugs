@@ -61,7 +61,7 @@ class tNetSession;
 class tUnetMsg {
 public:
 	tUnetMsg(U32 size=1024) { next=NULL; completed=0; fr_count=0; data=new tMBuf(size); memset(check,0,32); }
-	~tUnetMsg() { delete data; }
+	virtual ~tUnetMsg() { delete data; }
 	tUnetMsg * next;
 	U16 cmd;
 	U32 sn;

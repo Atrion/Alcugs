@@ -51,6 +51,25 @@ namespace alc {
 
 	////IMPLEMENTATION
 	
+	//// tvCreatableGenericValue
+	void tvCreatableGenericValue::store(tBBuf &t)
+	{
+		format = t.getByte();
+		DBG(5, "creatable generic value: format: 0x%02X", format);
+		
+		switch (format) {
+			case 0x00: // integer (signed, 4 bytes)
+				integer = t.getS32();
+				DBGM(5, ", value: %d\n", integer);
+				break;
+			// FIXME: add more formats
+			default:
+				DBGM(5, "\n");
+				lerr->log("got creatable generic value with unknown format 0x%02X\n", format);
+				throw txProtocolError(_WHERE("unknown creatable generic value format"));
+		}
+	}
+	
 	//// tVaultItem
 	void tvItem::store(tBBuf &t)
 	{
@@ -63,14 +82,16 @@ namespace alc {
 		type = t.getU16();
 		DBG(5, "vault item: id 0x%02X, type: 0x%04X\n", id, type);
 		
+		if (data) delete data;
 		switch (type) {
 			case DCreatableGenericValue:
-				// FIXME: parse it
+				data = new tvCreatableGenericValue;
+				t.get(*data);
 				break;
 			// FIXME: add more types
 			default:
 				lerr->log("got vault message with unknown data type 0x%04X\n", type);
-				throw txProtocolError(_WHERE("unknown data type"));
+				throw txProtocolError(_WHERE("unknown vault data type"));
 		}
 	}
 	
@@ -119,7 +140,6 @@ namespace alc {
 		for (int i = 0; i < numItems; ++i) {
 			items[i] = new tvItem;
 			t.get(*items[i]);
-			break; // FIXME: only one item is parsed ATM as it's not completely parsed so the beginning of the next one is unknown
 		}
 		
 		// FIXME: there's still more to be parsed
