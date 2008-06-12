@@ -114,3 +114,34 @@
    fun:pthread_once
    fun:_ZN3alc6txBase17_preparebacktraceEv
 }
+
+{
+   zlib bug (?)
+   Memcheck:Cond
+   obj:/usr/lib/libz.so.1.2.3.3
+   fun:deflate
+   fun:compress2
+   fun:compress
+   fun:_ZN3alc5tZBuf8compressEv
+}
+{
+   zlib bug (?)
+   Memcheck:Value4
+   obj:/usr/lib/libz.so.1.2.3.3
+   fun:deflate
+   fun:compress2
+   fun:compress
+   fun:_ZN3alc5tZBuf8compressEv
+}
+{
+   zlib bug (?)
+   Memcheck:Value4
+   obj:/usr/lib/libz.so.1.2.3.3
+   obj:/usr/lib/libz.so.1.2.3.3
+   obj:/usr/lib/libz.so.1.2.3.3
+   fun:deflate
+   fun:compress2
+   fun:compress
+   fun:_ZN3alc5tZBuf8compressEv
+}
+

@@ -63,11 +63,13 @@ namespace alc {
 	
 	class tvCreatableStream : public tvBase {
 	public:
-		tvCreatableStream(void) : tvBase() {  }
+		tvCreatableStream(void) : tvBase() { data = NULL; }
+		virtual ~tvCreatableStream(void) { if (data) free(data); }
 		virtual void store(tBBuf &t);
 		virtual int stream(tBBuf &t);
 	private:
-		tMBuf data;
+		U32 size;
+		Byte *data;
 	};
 	
 	class tvItem : public tvBase {

@@ -99,12 +99,10 @@ int tmData::stream(tBBuf &t) {
 		tZBuf zdata;
 		zdata.put(data);
 		zdata.compress();
-		t.put(zdata);
-		off += zdata.size();
+		off += t.put(zdata);
 	}
 	else {
-		t.put(data);
-		off+=data.size();
+		off += t.put(data);
 	}
 	return off;
 }

@@ -95,22 +95,23 @@ namespace alc {
 	//// tvCreatableStream
 	void tvCreatableStream::store(tBBuf &t)
 	{
-		data.clear();
-		U32 size = t.getU32();
+		size = t.getU32();
 		DBG(5, "creatable stream: size: %d\n", size);
-		data.write(t.read(size), size);
+		if (data) free(data);
+		data = (Byte *)malloc(size);
+		memcpy(data, t.read(size), size);
 	}
 	
 	int tvCreatableStream::stream(tBBuf &t)
 	{
+		if (!data) throw txProtocolError(_WHERE("don\'t have any data to write"));
 		int off = 0;
-		data.rewind();
-		t.putU32(data.size()); off += 4;
-		off += t.put(data);
+		t.putU32(size); off += 4;
+		t.write(data, size); off += size;
 		return off;
 	}
 	
-	//// tVaultItem
+	//// tvItem
 	void tvItem::store(tBBuf &t)
 	{
 		id = t.getByte();
@@ -149,7 +150,7 @@ namespace alc {
 		return off;
 	}
 	
-	//// tVaultMessage
+	//// tvMessage
 	tvMessage::~tvMessage(void)
 	{
 		if (items) {
@@ -172,9 +173,15 @@ namespace alc {
 		compressed = t.getByte();
 		realSize = t.getU32();
 		DBG(5, "vault message: command: 0x%02X, compressed: 0x%02X, real size: %d\n", cmd, compressed, realSize);
-		if (compressed == 0x03) {
-			// FIXME: uncompress
-			throw txProtocolError(_WHERE("compressed vault message"));
+		
+		tBBuf *buf = &t;
+		if (compressed == 0x03) { // it's compressed, so decompress it
+			U32 compressedSize = t.getU32();
+			DBG(5, "    compressed size: %d\n", compressedSize);
+			tZBuf *content = new tZBuf;
+			content->write(t.read(compressedSize), compressedSize);
+			content->uncompress(realSize);
+			buf = content;
 		}
 		else if (compressed != 0x01) {
 			lerr->log("Unknown compression format 0x%02X\n", compressed);
@@ -182,7 +189,7 @@ namespace alc {
 		}
 		
 		// get the items
-		numItems = t.getU16();
+		numItems = buf->getU16();
 		DBG(5, "number of items: %d\n", numItems);
 		if (items) {
 			for (int i = 0; i < numItems; ++i) delete items[i];
@@ -192,10 +199,15 @@ namespace alc {
 		memset(items, 0, numItems * sizeof(tvItem *));
 		for (int i = 0; i < numItems; ++i) {
 			items[i] = new tvItem;
-			t.get(*items[i]);
+			buf->get(*items[i]);
 		}
 		
-		// get remaining info
+		if (compressed == 0x03) { // we have to clean up
+			if (!buf->eof()) throw txProtocolError(_WHERE("Message is too long")); // there must not be any byte after what we parsed above
+			delete buf;
+		}
+		
+		// get remaining info (which is always uncompressed)
 		if (task) {
 			context = t.getU16(); // in vtask, this is "sub" (?)
 			vmgr = t.getU32(); // in vtask, this is the client
@@ -224,19 +236,27 @@ namespace alc {
 		t.putU16(0); off += 2; // result
 		t.putByte(compressed); ++off;
 		t.putU32(realSize); off += 4;
-		if (compressed == 0x03) {
-			// FIXME: compress
-			throw txProtocolError(_WHERE("compressed vault message"));
-		}
-		else if (compressed != 0x01) {
-			lerr->log("Unknown compression format 0x%02X\n", compressed);
-			throw txProtocolError(_WHERE("unknown compression format"));
-		}
 		
-		// put the items
-		t.putU16(numItems); off += 2;
+		// put the items into a temporary buffer which might be compressed
+		tMBuf *buf = new tMBuf;
+		buf->putU16(numItems);
 		for (int i = 0; i < numItems; ++i)
-			off += t.put(*items[i]);
+			buf->put(*items[i]);
+		
+		if (compressed == 0x03) {
+			tZBuf content;
+			content.put(*buf);
+			content.compress();
+			t.putU32(content.size()); off += 4;
+			off += t.put(content);
+			delete buf;
+		}
+		else if (compressed == 0x01) {
+			off += t.put(*buf);
+			delete buf;
+		}
+		else
+			throw txProtocolError(_WHERE("unknown compression format"));
 		
 		// put remaining info
 		if (task) {
@@ -249,6 +269,7 @@ namespace alc {
 			t.putU32(vmgr); off += 4;
 			t.putU16(vn); off += 2;
 		}
+		
 		return off;
 	}
 
