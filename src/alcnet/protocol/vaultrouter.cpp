@@ -60,11 +60,11 @@ namespace alc {
 		switch (format) {
 			case 0x00: // integer (signed, 4 bytes)
 				integer = t.getS32();
-				DBGM(5, ", value: %d\n", integer);
+				DBGM(5, ", integer value: %d\n", integer);
 				break;
 			case 0x03: // uru string (inverted)
 				t.get(str);
-				DBGM(5, ", value: %s (length: %d)\n", str.c_str(), str.size());
+				DBGM(5, ", string value: %s\n", str.c_str());
 				break;
 			// FIXME: add 0x07 (timestamp)
 			default:
@@ -92,6 +92,24 @@ namespace alc {
 		return off;
 	}
 	
+	//// tvCreatableStream
+	void tvCreatableStream::store(tBBuf &t)
+	{
+		data.clear();
+		U32 size = t.getU32();
+		DBG(5, "creatable stream: size: %d\n", size);
+		data.write(t.read(size), size);
+	}
+	
+	int tvCreatableStream::stream(tBBuf &t)
+	{
+		int off = 0;
+		data.rewind();
+		t.putU32(data.size()); off += 4;
+		off += t.put(data);
+		return off;
+	}
+	
 	//// tVaultItem
 	void tvItem::store(tBBuf &t)
 	{
@@ -108,13 +126,16 @@ namespace alc {
 		switch (type) {
 			case DCreatableGenericValue:
 				data = new tvCreatableGenericValue;
-				t.get(*data);
+				break;
+			case DCreatableStream:
+				data = new tvCreatableStream;
 				break;
 			// FIXME: add more types
 			default:
 				lerr->log("got vault message with unknown data type 0x%04X\n", type);
 				throw txProtocolError(_WHERE("unknown vault data type"));
 		}
+		t.get(*data);
 	}
 	
 	int tvItem::stream(tBBuf &t)

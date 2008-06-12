@@ -42,6 +42,7 @@ namespace alc {
 
 //data types
 #define DCreatableGenericValue 0x0387
+#define DCreatableStream       0x0389
 
 	////DEFINITIONS
 	class tvBase : public tBaseType {
@@ -58,6 +59,15 @@ namespace alc {
 		Byte format;
 		S32 integer;
 		tUStr str;
+	};
+	
+	class tvCreatableStream : public tvBase {
+	public:
+		tvCreatableStream(void) : tvBase() {  }
+		virtual void store(tBBuf &t);
+		virtual int stream(tBBuf &t);
+	private:
+		tMBuf data;
 	};
 	
 	class tvItem : public tvBase {
