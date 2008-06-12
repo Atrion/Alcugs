@@ -33,15 +33,44 @@
 		Several
 */
 
-#ifndef __U_MSGPARSERS_H
-#define __U_MSGPARSERS_H
+#ifndef __U_VAULTROUTER_H
+#define __U_VAULTROUTER_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_MSGPARSERS_H_ID "$Id$"
+#define __U_VAULTROUTER_H_ID "$Id$"
 
-#include "protocol/lobbybasemsg.h"
-#include "protocol/lobbymsg.h"
-#include "protocol/authmsg.h"
-#include "protocol/trackingmsg.h"
-#include "protocol/vaultmsg.h"
+namespace alc {
+
+//data types
+#define DCreatableGenericValue 0x0387
+
+	////DEFINITIONS	
+	class tVaultItem : public tBaseType {
+	public:
+		tVaultItem(void) : tBaseType() {}
+		virtual void store(tBBuf &t);
+		inline virtual U32 size(void) { return 0; }
+		inline virtual int stream(tBBuf &t) { return 0; }
+	private:
+		Byte id;
+		U16 type;
+	};
+	
+	class tVaultMessage : public tBaseType {
+	public:
+		tVaultMessage(void) : tBaseType() { items = NULL; }
+		~tVaultMessage(void);
+		virtual void store(tBBuf &t); //!< unpacks the message
+		inline virtual U32 size(void) { return 0; }
+		inline virtual int stream(tBBuf &t) { return 0; }
+	private:
+		Byte cmd;
+		Byte compressed; //!< 1 when uncompressed, 3 when compressed
+		U32 realSize;
+		U16 numItems;
+		tVaultItem **items;
+	};
+	
+	
+} //End alc namespace
 
 #endif

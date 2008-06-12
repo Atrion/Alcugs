@@ -187,7 +187,7 @@ private:
 class tMBuf :public tBBuf {
 public:
 	tMBuf();
-	tMBuf(tMBuf &t,U32 start=0,U32 len=0);
+	tMBuf(const tMBuf &t,U32 start=0,U32 len=0);
 	tMBuf(tBBuf &t,U32 start=0,U32 len=0);
 	tMBuf(U32 size);
 	virtual ~tMBuf();

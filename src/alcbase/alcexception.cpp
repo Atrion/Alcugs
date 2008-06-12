@@ -43,7 +43,7 @@ extern "C" {
 }
 #endif
 
-//FIXME
+// change this
 namespace std {
 extern "C" {
 #include <sys/types.h>

@@ -41,6 +41,7 @@
 #include "alcugs.h"
 #include "unet.h"
 #include "protocol/msgparsers.h"
+#include "protocol/vaultrouter.h"
 
 ////extra includes
 
@@ -344,7 +345,7 @@ namespace alc {
 				msg->data->get(setPlayer);
 				log->log("<RCV> %s\n", setPlayer.str());
 				
-				// TODO: do something here
+				// FIXME: do something here
 				
 				return 1;
 			}
@@ -362,7 +363,10 @@ namespace alc {
 				msg->data->get(vaultMsg);
 				log->log("<RCV> %s\n", vaultMsg.str());
 				
-				// TODO: do something here
+				// FIXME: do more here
+				tVaultMessage parsedMsg;
+				vaultMsg.message.rewind();
+				vaultMsg.message.get(parsedMsg);
 				
 				return 1;
 			}

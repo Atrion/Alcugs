@@ -331,7 +331,7 @@ tMBuf::tMBuf(U32 size) {
 	buf = new tRefBuf(size);
 	mstart=msize=off=0;
 }
-tMBuf::tMBuf(tMBuf &t,U32 start,U32 len) {
+tMBuf::tMBuf(const tMBuf &t,U32 start,U32 len) {
 	DBG(9,"tMBuf(tMBuf,start:%u,len:%u)\n",start,len);
 	if((S32)t.msize-(S32)(start+t.mstart)<0) throw txOutOfRange(_WHERE("start:%i,size:%i",start,t.msize));
 	buf = t.buf;
