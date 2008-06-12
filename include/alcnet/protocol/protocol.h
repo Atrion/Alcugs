@@ -126,7 +126,6 @@ class tmBase :public tBaseType {
 public:
 	virtual void store(tBBuf &t)=0;
 	virtual int stream(tBBuf &t)=0;
-	virtual U32 size() { return 0; }
 	virtual Byte * str()=0;
 	Byte bhflags;
 };

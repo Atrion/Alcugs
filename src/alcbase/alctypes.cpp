@@ -61,12 +61,6 @@ using namespace std;
 /*
 	Abstract base type class
 */
-SByte tBaseType::compare(tBaseType &t) {
-	DBG(9,"tBaseType::compare()\n");
-	if(this->size()==t.size()) return 0;
-	else if(this->size()<t.size()) return 1;
-	else return -1;
-}
 void tBaseType::_pcopy(tBaseType &t) {
 	DBG(9,"tBaseType::_pcopy()\n");
 }

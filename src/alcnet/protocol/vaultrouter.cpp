@@ -52,12 +52,12 @@ namespace alc {
 	////IMPLEMENTATION
 	
 	//// tVaultItem
-	void tVaultItem::store(tBBuf &t)
+	void tvItem::store(tBBuf &t)
 	{
 		id = t.getByte();
 		Byte unk = t.getByte();
 		if (unk != 0) {
-			lerr->log("got vault message with bad item.unk value 0x%04X\n", unk);
+			lerr->log("got vault message with bad item.unk value 0x%02X\n", unk);
 			throw txProtocolError(_WHERE("bad item.unk value"));
 		}
 		type = t.getU16();
@@ -75,7 +75,7 @@ namespace alc {
 	}
 	
 	//// tVaultMessage
-	tVaultMessage::~tVaultMessage(void)
+	tvMessage::~tvMessage(void)
 	{
 		if (items) {
 			for (int i = 0; i < numItems; ++i) {
@@ -85,7 +85,7 @@ namespace alc {
 		}
 	}
 	
-	void tVaultMessage::store(tBBuf &t)
+	void tvMessage::store(tBBuf &t)
 	{
 		// parse the header
 		cmd = t.getByte();
@@ -114,10 +114,10 @@ namespace alc {
 			for (int i = 0; i < numItems; ++i) delete items[i];
 			free(items);
 		}
-		items = (tVaultItem **)malloc(numItems * sizeof(tVaultItem *));
-		memset(items, 0, numItems * sizeof(tVaultItem *));
+		items = (tvItem **)malloc(numItems * sizeof(tvItem *));
+		memset(items, 0, numItems * sizeof(tvItem *));
 		for (int i = 0; i < numItems; ++i) {
-			items[i] = new tVaultItem;
+			items[i] = new tvItem;
 			t.get(*items[i]);
 			break; // FIXME: only one item is parsed ATM as it's not completely parsed so the beginning of the next one is unknown
 		}

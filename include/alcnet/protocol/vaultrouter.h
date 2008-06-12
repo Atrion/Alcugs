@@ -43,31 +43,34 @@ namespace alc {
 //data types
 #define DCreatableGenericValue 0x0387
 
-	////DEFINITIONS	
-	class tVaultItem : public tBaseType {
+	////DEFINITIONS
+	class tvBase : public tBaseType {
 	public:
-		tVaultItem(void) : tBaseType() {}
+		tvBase(void) : tBaseType() {}
+		virtual void store(tBBuf &t) { }
+		virtual int stream(tBBuf &t) { return 0; }
+	};
+	
+	class tvItem : public tvBase {
+	public:
+		tvItem(void) : tvBase() {}
 		virtual void store(tBBuf &t);
-		inline virtual U32 size(void) { return 0; }
-		inline virtual int stream(tBBuf &t) { return 0; }
 	private:
 		Byte id;
 		U16 type;
 	};
 	
-	class tVaultMessage : public tBaseType {
+	class tvMessage : public tvBase {
 	public:
-		tVaultMessage(void) : tBaseType() { items = NULL; }
-		~tVaultMessage(void);
+		tvMessage(void) : tvBase() { items = NULL; }
+		~tvMessage(void);
 		virtual void store(tBBuf &t); //!< unpacks the message
-		inline virtual U32 size(void) { return 0; }
-		inline virtual int stream(tBBuf &t) { return 0; }
 	private:
 		Byte cmd;
 		Byte compressed; //!< 1 when uncompressed, 3 when compressed
 		U32 realSize;
 		U16 numItems;
-		tVaultItem **items;
+		tvItem **items;
 	};
 	
 	

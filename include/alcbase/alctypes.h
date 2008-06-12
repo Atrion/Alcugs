@@ -59,20 +59,7 @@ public:
 	virtual void store(tBBuf &t)=0;
 	//!streams to a buffer \return the amount of written bytes
 	virtual int stream(tBBuf &t)=0;
-	//!gets buffer size
-	virtual U32 size()=0;
-	//!gets average buffer size (faster than size())
-	virtual U32 avgSize() { return this->size(); }
-	/** Compares two types
-			\return 0: equal >0 bigger <0 smaller */
-	virtual SByte compare(tBaseType &t);
 	virtual void copy(tBaseType &t);
-	virtual bool operator==(tBaseType &t) { return(!this->compare(t)); }
-	virtual bool operator!=(tBaseType &t) { return(this->compare(t)); }
-	virtual bool operator>(tBaseType &t) { return(this->compare(t)<0); }
-	virtual bool operator<(tBaseType &t) { return(this->compare(t)>0); }
-	virtual bool operator>=(tBaseType &t) { return(this->compare(t)<=0); }
-	virtual bool operator<=(tBaseType &t) { return(this->compare(t)>=0); }
 	virtual void operator=(tBaseType &t) { this->copy(t); }
 };
 //end base type
@@ -90,6 +77,11 @@ public:
 	//virtual void write(SByte * val,U32 n) { this->write((Byte *)val,n); }
 	//! Reads n bytes, if n=0 reads the entire buffer
 	virtual Byte * read(U32 n=0)=0;
+	//!gets buffer size
+	virtual U32 size()=0;
+	//!gets average buffer size (faster than size())
+	virtual U32 avgSize() { return this->size(); }
+	
 	tBBuf();
 	virtual ~tBBuf();
 	//! Sets offset to 0

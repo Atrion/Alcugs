@@ -364,7 +364,7 @@ namespace alc {
 				log->log("<RCV> %s\n", vaultMsg.str());
 				
 				// FIXME: do more here
-				tVaultMessage parsedMsg;
+				tvMessage parsedMsg;
 				vaultMsg.message.rewind();
 				vaultMsg.message.get(parsedMsg);
 				
