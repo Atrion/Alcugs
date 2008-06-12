@@ -40,10 +40,7 @@
 
 #include "alcugs.h"
 #include "unet.h"
-#include "unetlobbyserverbase.h"
-#include "protocol/lobbybasemsg.h"
-#include "protocol/authmsg.h"
-#include "protocol/trackingmsg.h"
+#include "protocol/msgparsers.h"
 
 ////extra includes
 
@@ -346,6 +343,24 @@ namespace alc {
 				tmSetMyActivePlayer setPlayer(u);
 				msg->data->get(setPlayer);
 				log->log("<RCV> %s\n", setPlayer.str());
+				
+				// TODO: do something here
+				
+				return 1;
+			}
+			
+			//// vault messages
+			case NetMsgVault:
+			{
+				if (u->authenticated != 1) {
+					err->log("ERR: %s sent a NetMsgVault but is not yet authed. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmVault vaultMsg(u);
+				msg->data->get(vaultMsg);
+				log->log("<RCV> %s\n", vaultMsg.str());
 				
 				// TODO: do something here
 				

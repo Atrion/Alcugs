@@ -31,10 +31,10 @@
 #define ALC_PROGRAM_ID "$Id$"
 #define ALC_PROGRAM_NAME "UruPing"
 
-#include<alcugs.h>
-#include<unet.h>
+#include <alcugs.h>
+#include <unet.h>
 
-#include<alcdebug.h>
+#include <alcdebug.h>
 
 using namespace alc;
 

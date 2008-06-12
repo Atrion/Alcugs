@@ -64,4 +64,17 @@ namespace alc {
 		dbg.printf(" number of players: %d", numberPlayers);
 	}
 	
+	////tmVault
+	tmVault::tmVault(tNetSession *u) // it's not capable of sending
+	: tmMsgBase(0, 0, u)
+	{ }
+	
+	void tmVault::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		// store the whole message
+		message.clear();
+		t.get(message);
+	}
+	
 } //end namespace alc

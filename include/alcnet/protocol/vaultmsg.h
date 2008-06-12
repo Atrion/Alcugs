@@ -48,6 +48,14 @@ namespace alc {
 		virtual void additionalFields();
 	};
 	
+	class tmVault : public tmMsgBase {
+	public:
+		tmVault(tNetSession *u);
+		virtual void store(tBBuf &t);
+		// format
+		tMBuf message;
+	};
+	
 } //End alc namespace
 
 #endif

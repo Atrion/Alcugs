@@ -30,8 +30,8 @@
 #define ALC_PROGRAM_ID "$Id$"
 #define ALC_PROGRAM_NAME "Alcugs Server"
 
-#include<alcugs.h>
-#include<unet.h>
+#include <alcugs.h>
+#include <unet.h>
 
 #if defined(I_AM_THE_LOBBY_SERVER)
 #include "lobbyserver.h"
@@ -57,7 +57,7 @@
 #error UNKNOWN SERVER
 #endif
 
-#include<alcdebug.h>
+#include <alcdebug.h>
 
 using namespace alc;
 

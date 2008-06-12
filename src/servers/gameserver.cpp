@@ -40,8 +40,10 @@
 
 #include <alcugs.h>
 #include <unet.h>
+#include <protocol/msgparsers.h>
 
 ////extra includes
+#include "gameserver.h"
 
 #include <alcdebug.h>
 

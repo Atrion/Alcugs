@@ -40,8 +40,7 @@
 
 #include <alcugs.h>
 #include <unet.h>
-#include <protocol/lobbymsg.h>
-#include <protocol/vaultmsg.h>
+#include <protocol/msgparsers.h>
 
 ////extra includes
 #include "lobbyserver.h"
