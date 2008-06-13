@@ -336,7 +336,7 @@ namespace alc {
 			//// messages regarding setting the avatar
 			case NetMsgSetMyActivePlayer:
 			{
-				if (u->authenticated != 1) {
+				if (u->whoami != KClient) {
 					err->log("ERR: %s sent a NetMsgSetMyActivePlayer but is not yet authed. I\'ll kick him.\n", u->str());
 					return -2; // hack attempt
 				}
@@ -377,7 +377,7 @@ namespace alc {
 					client->send(vaultMsgFwd);
 				}
 				else { // got it from a client
-					if (u->authenticated != 1 || u->ki == 0) {
+					if (u->whoami != KClient || u->ki == 0) {
 						err->log("ERR: %s sent a NetMsgVault but is not yet authed or did not set his ki. I\'ll kick him.\n", u->str());
 						return -2; // hack attempt
 					}

@@ -76,5 +76,44 @@ namespace alc {
 		dbg.nl();
 		dbg.printf(" number of avatars: %d, URL: %s", numberPlayers, url.c_str());
 	}
+	
+	//// tmCreatePlayer
+	tmCreatePlayer::tmCreatePlayer(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
+	{
+		avatar.setVersion(0); // normal UruString
+		gender.setVersion(0); // normal UruString
+		friendName.setVersion(0); // normal UruString
+		key.setVersion(0); // normal UruString
+	}
+	
+	tmCreatePlayer::tmCreatePlayer(U16 cmd, U32 flags, tNetSession *u, tmCreatePlayer &createPlayer)
+	 : tmMsgBase(cmd, flags, u), avatar(createPlayer.avatar), gender(createPlayer.gender),
+	   friendName(createPlayer.friendName), key(createPlayer.key)
+	{
+		avatar.setVersion(0); // normal UruString
+		gender.setVersion(0); // normal UruString
+		friendName.setVersion(0); // normal UruString
+		key.setVersion(0); // normal UruString
+	}
+	
+	void tmCreatePlayer::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		t.get(avatar);
+		t.get(gender);
+		t.get(friendName);
+		t.get(key);
+		U32 unk = t.getU32();
+		if (unk != 0) {
+			lerr->log("NetMsgCreatePlayer.unk is not null but %d\n", unk);
+			throw txProtocolError(_WHERE("NetMsgCreatePlayer.unk is not 0"));
+		}
+	}
+	
+	void tmCreatePlayer::additionalFields(void)
+	{
+		dbg.nl();
+		dbg.printf(" avatar: %s, gender: %s, friend: %s, key: %s", avatar.c_str(), gender.c_str(), friendName.c_str(), key.c_str());
+	}
 
 } //end namespace alc

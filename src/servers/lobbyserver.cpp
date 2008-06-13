@@ -74,8 +74,14 @@ namespace alc {
 		if (ret != 0) return ret; // cancel if it was processed, otherwise it's our turn
 		
 		switch(msg->cmd) {
+			//// message regarding the player list
 			case NetMsgRequestMyVaultPlayerList:
 			{
+				if (u->getPeerType() != KClient) {
+					err->log("ERR: %s sent a NetMsgRequestMyVaultPlayerList but is not yet authed. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+			
 				// get the packet
 				tmRequestMyVaultPlayerList requestList(u);
 				msg->data->get(requestList);
@@ -116,6 +122,32 @@ namespace alc {
 				// forward player list to client
 				tmVaultPlayerList playerListClient(client, playerList.numberPlayers, playerList.players, website);
 				client->send(playerListClient);
+				
+				return 1;
+			}
+			
+			//// messages regarding creating and deleting avatars
+			case NetMsgCreatePlayer:
+			{
+				if (u->getPeerType() != KClient) {
+					err->log("ERR: %s sent a NetMsgCreatePlayer but is not yet authed. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the packet
+				tmCreatePlayer createPlayer(u);
+				msg->data->get(createPlayer);
+				log->log("<RCV> %s\n", createPlayer.str());
+				
+				// forward it to the vault server
+				tNetSession *vaultServer = getPeer(KVault);
+				if (!vaultServer) {
+					err->log("ERR: I've got to ask the vault server to create a player, but it's unavailable.\n", u->str());
+					return 1;
+				}
+				tmCustomVaultCreatePlayer vaultCreatePlayer(vaultServer, createPlayer, u->getSid(), u->guid);
+				log->log("<WANT TO SND> %s\n", vaultCreatePlayer.str());
+				
 				
 				return 1;
 			}

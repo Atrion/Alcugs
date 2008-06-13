@@ -89,4 +89,12 @@ namespace alc {
 		return off;
 	}
 	
+	//// tmCustomVaultCreatePlayer
+	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u, tmCreatePlayer &createPlayer, Byte x, Byte *guid)
+	 : tmCreatePlayer(NetMsgCustomVaultCreatePlayer, plNetX | plNetGUI | plNetVersion | plNetAck | plNetCustom, u, createPlayer)
+	{
+		this->x = x;
+		memcpy(this->guid, guid, 16);
+	}
+	
 } //end namespace alc

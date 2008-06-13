@@ -50,6 +50,17 @@ namespace alc {
 		virtual void additionalFields();
 	};
 	
+	class tmCreatePlayer : public tmMsgBase {
+	public:
+		tmCreatePlayer(tNetSession *u);
+		virtual void store(tBBuf &t);
+		// format
+		tUStr avatar, gender, friendName, key;
+	protected:
+		tmCreatePlayer(U16 cmd, U32 flags, tNetSession *u, tmCreatePlayer &createPlayer);
+		virtual void additionalFields();
+	};
+	
 } //End alc namespace
 
 #endif

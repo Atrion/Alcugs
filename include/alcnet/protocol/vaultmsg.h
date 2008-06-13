@@ -29,6 +29,8 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_VAULTMSG_H_H_ID "$Id$"
 
+#include "lobbymsg.h"
+
 namespace alc {
 
 	////DEFINITIONS
@@ -56,6 +58,11 @@ namespace alc {
 		virtual int stream(tBBuf &t);
 		// format
 		tMBuf message;
+	};
+	
+	class tmCustomVaultCreatePlayer : public tmCreatePlayer {
+	public:
+		tmCustomVaultCreatePlayer(tNetSession *u, tmCreatePlayer &createPlayer, Byte x, Byte *guid);
 	};
 	
 } //End alc namespace
