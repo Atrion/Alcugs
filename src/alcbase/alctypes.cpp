@@ -329,7 +329,7 @@ tMBuf::tMBuf(const tMBuf &t,U32 start,U32 len) {
 	DBG(9,"tMBuf(tMBuf,start:%u,len:%u)\n",start,len);
 	if((S32)t.msize-(S32)(start+t.mstart)<0) throw txOutOfRange(_WHERE("start:%i,size:%i",start,t.msize));
 	buf = t.buf;
-	buf->inc();
+	if (buf != NULL) buf->inc();
 	if(len==0) {
 		msize = t.msize-(t.mstart+start);
 	} else {

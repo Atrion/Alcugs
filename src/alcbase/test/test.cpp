@@ -100,8 +100,8 @@ void alctypes_mbuf() {
 		std::cout<< "Cauth Exception " << t.what() << std::endl;
 		std::cout<< t.backtrace() << std::endl;
 	}
-	Byte * a=(Byte *)"Hello World";
-	SByte * b="Bye cruel world";
+	const Byte * a=(Byte *)"Hello World";
+	const SByte * b="Bye cruel world";
 	buf1.write(a,(U32)strlen((char *)a));
 	buf1.write(b,(U32)strlen(b));
 	std::cout<< "tell():" << buf1.tell() << ",len:" << strlen((char *)a) + strlen(b) << std::endl;
@@ -308,6 +308,10 @@ void alctypes_mbuf() {
 	delete buf5;
 	delete buf6;
 	delete buf7;
+	
+	// check for copying an empty mbuf
+	tMBuf emptyBuf;
+	tMBuf emptyBuf2(emptyBuf);
 }
 
 void alctypes_mbuf2() {
@@ -340,7 +344,7 @@ void alctypes_fbuf() {
 	f1.write("b",1);
 	
 	tMBuf b1;
-	char * a="Hello world";
+	const char * a="Hello world";
 	b1.write(a,strlen(a));
 	b1.putByte(0);
 	f1.put(b1);
@@ -382,7 +386,7 @@ void alctypes_part2() {
 	tMBuf b1;
 	
 	b1.putU32(5);
-	char * a="Hello";
+	const char * a="Hello";
 	b1.write(a,strlen(a));
 	char md5hash[16]={0x78, 0x86, 0x70, 0xf9, 0x99, 0xaa, 0x0b, 0x0c,
 			  0xaf, 0x77, 0x89, 0x88, 0xbe, 0xfb, 0xe3, 0x1f};
@@ -846,13 +850,13 @@ int log_test() {
 
 	log1.rotate();
 
-	char * kk="afjsakflñjasfdñalsdkfjskdlfñjasdfjj3\
+	const char * kk="afjsakflñjasfdñalsdkfjskdlfñjasdfjj3\
 	8p94r37u9jujujoiasdfujasdofuasdfuñjlkasfdhasjfkl\
 	8p94r37u9jujujoiasdfujasdofuasdfuñjlkasfdhasjfkl\
 	8p94r37u9jujujoiasdfujasdofuasdfuñjlkasfdhasjfkl\
 	ñasdfhasfpiuoeñawhfe43w89piyehyhfwe";
 
-	char * kk3="hola whola ";
+	const char * kk3="hola whola ";
 
 	log1.dumpbuf((Byte *)kk,strlen(kk));
 	log1.nl();
