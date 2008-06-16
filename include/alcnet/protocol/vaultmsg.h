@@ -29,9 +29,9 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_VAULTMSG_H_H_ID "$Id$"
 
-#include "lobbymsg.h"
-
 namespace alc {
+
+	class tmCreatePlayer;
 
 	////DEFINITIONS
 	class tmCustomVaultAskPlayerList : public tmMsgBase {
@@ -60,9 +60,25 @@ namespace alc {
 		tMBuf message;
 	};
 	
-	class tmCustomVaultCreatePlayer : public tmCreatePlayer {
+	class tmCustomVaultCreatePlayer : public tmMsgBase {
 	public:
-		tmCustomVaultCreatePlayer(tNetSession *u, tmCreatePlayer &createPlayer, Byte x, Byte *guid);
+		tmCustomVaultCreatePlayer(tNetSession *u, tmCreatePlayer &createPlayer, Byte x, Byte *guid, Byte accessLevel, const Byte *login);
+		virtual int stream(tBBuf &t);
+		// format
+		tUStr login, avatar, gender, friendName, key;
+		Byte accessLevel;
+	protected:
+		virtual void additionalFields();
+	};
+	
+	class tmCustomVaultPlayerCreated : public tmMsgBase {
+	public:
+		tmCustomVaultPlayerCreated(tNetSession *u);
+		virtual void store(tBBuf &t);
+		// format
+		Byte result;
+	protected:
+		virtual void additionalFields();
 	};
 	
 } //End alc namespace

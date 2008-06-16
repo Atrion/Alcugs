@@ -86,19 +86,10 @@ namespace alc {
 		key.setVersion(0); // normal UruString
 	}
 	
-	tmCreatePlayer::tmCreatePlayer(U16 cmd, U32 flags, tNetSession *u, tmCreatePlayer &createPlayer)
-	 : tmMsgBase(cmd, flags, u), avatar(createPlayer.avatar), gender(createPlayer.gender),
-	   friendName(createPlayer.friendName), key(createPlayer.key)
-	{
-		avatar.setVersion(0); // normal UruString
-		gender.setVersion(0); // normal UruString
-		friendName.setVersion(0); // normal UruString
-		key.setVersion(0); // normal UruString
-	}
-	
 	void tmCreatePlayer::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
+		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
 		t.get(avatar);
 		t.get(gender);
 		t.get(friendName);
@@ -114,6 +105,28 @@ namespace alc {
 	{
 		dbg.nl();
 		dbg.printf(" avatar: %s, gender: %s, friend: %s, key: %s", avatar.c_str(), gender.c_str(), friendName.c_str(), key.c_str());
+	}
+	
+	//// tmPlayerCreated
+	tmPlayerCreated::tmPlayerCreated(tNetSession *u, U32 x, U32 ki, Byte result)
+	 : tmMsgBase(NetMsgPlayerCreated, plNetX | plNetKi | plNetAck | plNetCustom, u)
+	{
+		this->x = x;
+		this->ki = ki;
+		this->result = result;
+	}
+	
+	int tmPlayerCreated::stream(tBBuf &t)
+	{
+		int off = tmMsgBase::stream(t);
+		t.putByte(result); ++off;
+		return off;
+	}
+	
+	void tmPlayerCreated::additionalFields()
+	{
+		dbg.nl();
+		dbg.printf(" result: 0x%02X (%s)", result, alcUnetGetAvatarCode(result));
 	}
 
 } //end namespace alc

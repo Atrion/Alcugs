@@ -83,7 +83,7 @@ namespace alc {
 		memcpy(hash, t.read(16), 16);
 		release = t.getByte();
 #ifdef _UNET2_SUPPORT
-		if(!(flags & plNetIP)) {
+		if(!hasFlags(plNetIP)) {
 			ip = t.getU32();
 			port = 0;
 			if (u) u->proto = 1; // unet2 protocol
@@ -157,7 +157,7 @@ namespace alc {
 		result = t.getByte();
 		t.get(passwd);
 #ifdef _UNET2_SUPPORT
-		if(!(flags & plNetGUI)) {
+		if (!hasFlags(plNetGUI)) {
 			memcpy(guid, t.read(16), 16);
 			ip = port = 0; // they should be initialized
 			if (u) u->proto = 1; // unet2 protocol

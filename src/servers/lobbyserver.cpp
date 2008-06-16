@@ -74,7 +74,7 @@ namespace alc {
 		if (ret != 0) return ret; // cancel if it was processed, otherwise it's our turn
 		
 		switch(msg->cmd) {
-			//// message regarding the player list
+			//// messages regarding the player list
 			case NetMsgRequestMyVaultPlayerList:
 			{
 				if (u->getPeerType() != KClient) {
@@ -86,7 +86,7 @@ namespace alc {
 				tmRequestMyVaultPlayerList requestList(u);
 				msg->data->get(requestList);
 				log->log("<RCV> %s\n", requestList.str());
-				u->x = requestList.x; // save the X to reuse it when answering
+				u->x = requestList.x; // save these values to reuse them when answering
 				u->ki = requestList.ki;
 				
 				// forward it to the vault server
@@ -115,7 +115,7 @@ namespace alc {
 				tNetSession *client = smgr->get(playerList.x);
 				// verify GUID and session state
 				if (!client || client->getPeerType() != KClient || memcmp(client->guid, playerList.guid, 16) != 0) {
-					err->log("ERR: Got CustomVaultPlayerList for player with GUID %s but can't find his session.\n", alcGetStrGuid(playerList.guid, 16));
+					err->log("ERR: Got NetMsgCustomVaultPlayerList for player with GUID %s but can't find his session.\n", alcGetStrGuid(playerList.guid, 16));
 					return 1;
 				}
 				
@@ -138,6 +138,8 @@ namespace alc {
 				tmCreatePlayer createPlayer(u);
 				msg->data->get(createPlayer);
 				log->log("<RCV> %s\n", createPlayer.str());
+				u->x = createPlayer.x; // save these values to reuse them when answering
+				u->ki = createPlayer.ki;
 				
 				// forward it to the vault server
 				tNetSession *vaultServer = getPeer(KVault);
@@ -145,9 +147,35 @@ namespace alc {
 					err->log("ERR: I've got to ask the vault server to create a player, but it's unavailable.\n", u->str());
 					return 1;
 				}
-				tmCustomVaultCreatePlayer vaultCreatePlayer(vaultServer, createPlayer, u->getSid(), u->guid);
-				log->log("<WANT TO SND> %s\n", vaultCreatePlayer.str());
+				tmCustomVaultCreatePlayer vaultCreatePlayer(vaultServer, createPlayer, u->getSid(), u->guid, u->getAccessLevel(), u->name);
+				vaultServer->send(vaultCreatePlayer);
 				
+				return 1;
+			}
+			case NetMsgCustomVaultPlayerCreated:
+			{
+				if (u->getPeerType() != KVault) {
+					err->log("ERR: %s sent a NetMsgCustomVaultPlayerList but is not the vault server. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the packet
+				tmCustomVaultPlayerCreated playerCreated(u);
+				msg->data->get(playerCreated);
+				log->log("<RCV> %s\n", playerCreated.str());
+				
+				// find the client's session
+				tNetSession *client = smgr->get(playerCreated.x);
+				// verify GUID and session state
+				if (!client || client->getPeerType() != KClient || memcmp(client->guid, playerCreated.guid, 16) != 0) {
+					err->log("ERR: Got NetMsgCustomVaultPlayerCreated for player with GUID %s but can't find his session.\n", alcGetStrGuid(playerCreated.guid, 16));
+					return 1;
+				}
+				
+				// forward answer to client
+				client->ki = playerCreated.ki;
+				tmPlayerCreated playerCreatedClient(client, client->x, client->ki, playerCreated.result);
+				client->send(playerCreatedClient);
 				
 				return 1;
 			}

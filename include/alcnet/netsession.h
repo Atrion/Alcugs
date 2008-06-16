@@ -78,6 +78,7 @@ public:
 	inline U16 getPort(void) { return port; }
 	inline U32 getKI(void) { return ki; }
 	inline U32 getX(void) { return x; }
+	inline Byte getAccessLevel(void) { return accessLevel; }
 
 private:
 	void init();

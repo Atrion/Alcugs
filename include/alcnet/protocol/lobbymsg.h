@@ -57,7 +57,16 @@ namespace alc {
 		// format
 		tUStr avatar, gender, friendName, key;
 	protected:
-		tmCreatePlayer(U16 cmd, U32 flags, tNetSession *u, tmCreatePlayer &createPlayer);
+		virtual void additionalFields();
+	};
+	
+	class tmPlayerCreated : public tmMsgBase {
+	public:
+		tmPlayerCreated(tNetSession *u, U32 x, U32 ki, Byte result);
+		virtual int stream(tBBuf &t);
+		// format
+		Byte result;
+	protected:
 		virtual void additionalFields();
 	};
 	

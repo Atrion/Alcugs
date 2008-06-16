@@ -32,6 +32,7 @@
 #include "alcugs.h"
 #include "unet.h"
 #include "protocol/vaultmsg.h"
+#include "protocol/lobbymsg.h"
 
 #include <alcdebug.h>
 
@@ -90,11 +91,78 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultCreatePlayer
-	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u, tmCreatePlayer &createPlayer, Byte x, Byte *guid)
-	 : tmCreatePlayer(NetMsgCustomVaultCreatePlayer, plNetX | plNetGUI | plNetVersion | plNetAck | plNetCustom, u, createPlayer)
+	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u, tmCreatePlayer &createPlayer, Byte x, Byte *guid,
+	  Byte accessLevel, const Byte *login)
+	 : tmMsgBase(NetMsgCustomVaultCreatePlayer, plNetX | plNetGUI | plNetVersion | plNetAck | plNetCustom, u),
+	   avatar(createPlayer.avatar), gender(createPlayer.gender), friendName(createPlayer.friendName), key(createPlayer.key)
 	{
 		this->x = x;
 		memcpy(this->guid, guid, 16);
+#ifdef _UNET2_SUPPORT
+		if (u && u->proto == 1) unsetFlags(plNetGUI);
+#endif
+		
+		this->accessLevel = accessLevel;
+		this->login.setVersion(5); // inverted
+		this->login.writeStr(login);
+		avatar.setVersion(0); // normal UruString
+		gender.setVersion(0); // normal UruString
+		friendName.setVersion(0); // normal UruString
+		key.setVersion(0); // normal UruString
+	}
+	
+	int tmCustomVaultCreatePlayer::stream(tBBuf &t)
+	{
+		int off = tmMsgBase::stream(t);
+		off += t.put(login);
+#ifdef _UNET2_SUPPORT
+		if (u && u->proto == 1) { t.write(guid, 16); off += 16; } // GUID (only for old protocol, the new one sends it in the header)
+#endif
+		t.putByte(accessLevel); ++off;
+		off += t.put(avatar);
+		off += t.put(gender);
+		off += t.put(friendName);
+		off += t.put(key);
+		t.putU32(0); off += 4;
+		return off;
+	}
+	
+	void tmCustomVaultCreatePlayer::additionalFields()
+	{
+		dbg.nl();
+		dbg.printf(" login: %s, ", login.c_str());
+#ifdef _UNET2_SUPPORT
+		if (u && u->proto == 1) dbg.printf("guid (unet2 protocol): %s, ", alcGetStrGuid(guid, 16));
+#endif
+		dbg.printf("accessLevel: %d, avatar: %s, gender: %s, friend: %s, key: %s", accessLevel, avatar.c_str(), gender.c_str(), friendName.c_str(), key.c_str());
+	}
+	
+	//// tmCustomVaultPlayerCreated
+	tmCustomVaultPlayerCreated::tmCustomVaultPlayerCreated(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
+	{ }
+	
+	void tmCustomVaultPlayerCreated::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
+#ifndef _UNET2_SUPPORT
+		if (!hasFlags(plNetGUI)) throw txProtocolError(_WHERE("GUID flag missing"));
+#else
+		if (!hasFlags(plNetGUI)) {
+			memcpy(guid, t.read(16), 16);
+			if (u) u->proto = 1; // unet2 protocol
+		}
+# endif
+		result = t.getByte();
+	}
+	
+	void tmCustomVaultPlayerCreated::additionalFields()
+	{
+		dbg.nl();
+#ifdef _UNET2_SUPPORT
+		if (u && u->proto == 1) dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid, 16));
+#endif
+		dbg.printf(" result: 0x%02X (%s)", result, alcUnetGetAvatarCode(result));
 	}
 	
 } //end namespace alc
