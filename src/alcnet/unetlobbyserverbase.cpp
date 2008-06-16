@@ -387,7 +387,7 @@ namespace alc {
 						err->log("ERR: I've got a vault message to forward to the vault server, but it's unavailable.\n", u->str());
 						return 1;
 					}
-					tmVault vaultMsgFwd(NULL, u->ki, &parsedMsg);
+					tmVault vaultMsgFwd(vaultServer, u->ki, &parsedMsg);
 					vaultServer->send(vaultMsgFwd);
 				}
 				

@@ -158,7 +158,7 @@ class tmMsgBase :public tmBase {
 public:
 	virtual void store(tBBuf &t);
 	virtual int stream(tBBuf &t);
-	tmMsgBase(U16 cmd,U32 flags,tNetSession * u=NULL);
+	tmMsgBase(U16 cmd,U32 flags,tNetSession * u);
 	virtual ~tmMsgBase() {};
 	void setFlags(U32 f);
 	void unsetFlags(U32 f);

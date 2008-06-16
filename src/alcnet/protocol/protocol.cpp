@@ -508,6 +508,7 @@ Byte * tmNetClientComm::str() {
 //Base message
 tmMsgBase::tmMsgBase(U16 cmd,U32 flags,tNetSession * u) {
 	DBG(5,"tmMsgBase()\n");
+	if (u == NULL) throw txUnet(_WHERE("Session must not be NULL in tmMsgBase constructor"));
 	this->cmd=cmd;
 	this->flags=flags;
 	this->u=u;
@@ -517,7 +518,7 @@ tmMsgBase::tmMsgBase(U16 cmd,U32 flags,tNetSession * u) {
 	if(this->flags & plNetAck)
 		bhflags |= UNetAckReq;
 	// get version froms session
-	if ((this->flags & plNetVersion) && u) {
+	if (this->flags & plNetVersion) {
 		max_version = u->max_version;
 		min_version = u->min_version;
 	}

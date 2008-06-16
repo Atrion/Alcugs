@@ -51,7 +51,7 @@ namespace alc {
 	: tmMsgBase(NetMsgCustomAuthAsk, plNetAck | plNetCustom | plNetX | plNetVersion | plNetIP, u)
 	{
 #ifdef _UNET2_SUPPORT
-		if (u && u->proto == 1)
+		if (u->proto == 1)
 			unsetFlags(plNetIP);
 #endif
 		this->x = x; // this is the SID the lobby uses for the connection to the client to be authed
@@ -99,7 +99,7 @@ namespace alc {
 		t.write(hash, 16); off += 16;
 		t.putByte(release); ++off;
 #ifdef _UNET2_SUPPORT
-		if (u && u->proto == 1) {
+		if (u->proto == 1) {
 			t.putU32(ip); off += 4;
 		}
 #endif
@@ -110,7 +110,7 @@ namespace alc {
 	{
 		dbg.nl();
 #ifdef _UNET2_SUPPORT
-		if (u && u->proto == 1) dbg.printf(" ip (unet2 protocol): %s,", alcGetStrIp(ip));
+		if (u->proto == 1) dbg.printf(" ip (unet2 protocol): %s,", alcGetStrIp(ip));
 #endif
 		// use two printf commands as alcGetStrGuid uses a static array and when using one command it would seems as if challenge and hash would be the same
 		dbg.printf(" login: %s, challenge: %s, ", login.c_str(), alcGetStrGuid(challenge, 16));
@@ -122,7 +122,7 @@ namespace alc {
 	 : tmMsgBase(NetMsgCustomAuthResponse, plNetAck | plNetCustom | plNetX | plNetVersion | plNetIP | plNetGUI, u)
 	 {
 #ifdef _UNET2_SUPPORT
-		if (u && u->proto == 1)
+		if (u->proto == 1)
 			unsetFlags(plNetIP | plNetGUI);
 #endif
 		// copy stuff from the authAsk
@@ -173,7 +173,7 @@ namespace alc {
 		t.putByte(result); ++off; // result
 		off += t.put(passwd); // passwd
 #ifdef _UNET2_SUPPORT
-		if (u && u->proto == 1) { t.write(guid, 16); off += 16; } // GUID (only for old protocol, the new one sends it in the header)
+		if (u->proto == 1) { t.write(guid, 16); off += 16; } // GUID (only for old protocol, the new one sends it in the header)
 #endif
 		t.putByte(accessLevel); ++off; // acess level
 		return off;
@@ -183,7 +183,7 @@ namespace alc {
 	{
 		dbg.nl();
 #ifdef _UNET2_SUPPORT
-		if (u && u->proto == 1) dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid, 16));
+		if (u->proto == 1) dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid, 16));
 #endif
 		dbg.printf(" login: %s, passwd: (hidden), result: 0x%02X (%s), accessLevel: %d", login.c_str(), result, alcUnetGetAuthCode(result), accessLevel);
 	}

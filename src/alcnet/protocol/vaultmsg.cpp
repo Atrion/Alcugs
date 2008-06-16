@@ -99,7 +99,7 @@ namespace alc {
 		this->x = x;
 		memcpy(this->guid, guid, 16);
 #ifdef _UNET2_SUPPORT
-		if (u && u->proto == 1) unsetFlags(plNetGUI);
+		if (u->proto == 1) unsetFlags(plNetGUI);
 #endif
 		
 		this->accessLevel = accessLevel;
@@ -116,7 +116,7 @@ namespace alc {
 		int off = tmMsgBase::stream(t);
 		off += t.put(login);
 #ifdef _UNET2_SUPPORT
-		if (u && u->proto == 1) { t.write(guid, 16); off += 16; } // GUID (only for old protocol, the new one sends it in the header)
+		if (u->proto == 1) { t.write(guid, 16); off += 16; } // GUID (only for old protocol, the new one sends it in the header)
 #endif
 		t.putByte(accessLevel); ++off;
 		off += t.put(avatar);
@@ -150,7 +150,7 @@ namespace alc {
 #else
 		if (!hasFlags(plNetGUI)) {
 			memcpy(guid, t.read(16), 16);
-			if (u) u->proto = 1; // unet2 protocol
+			u->proto = 1; // unet2 protocol
 		}
 # endif
 		result = t.getByte();
@@ -160,7 +160,7 @@ namespace alc {
 	{
 		dbg.nl();
 #ifdef _UNET2_SUPPORT
-		if (u && u->proto == 1) dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid, 16));
+		if (u->proto == 1) dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid, 16));
 #endif
 		dbg.printf(" result: 0x%02X (%s)", result, alcUnetGetAvatarCode(result));
 	}
@@ -173,7 +173,7 @@ namespace alc {
 		this->ki = ki;
 		memcpy(this->guid, guid, 16);
 #ifdef _UNET2_SUPPORT
-		if (u && u->proto == 1) unsetFlags(plNetGUI);
+		if (u->proto == 1) unsetFlags(plNetGUI);
 #endif
 		this->accessLevel = accessLevel;
 	}
@@ -182,7 +182,7 @@ namespace alc {
 	{
 		int off = tmMsgBase::stream(t);
 #ifdef _UNET2_SUPPORT
-		if (u && u->proto == 1) { t.write(guid, 16); off += 16; } // GUID (only for old protocol, the new one sends it in the header)
+		if (u->proto == 1) { t.write(guid, 16); off += 16; } // GUID (only for old protocol, the new one sends it in the header)
 #endif
 		t.putByte(accessLevel); ++off;
 		return off;

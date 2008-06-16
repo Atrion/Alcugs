@@ -63,7 +63,7 @@ class tmData :public tmMsgBase {
 public:
 	virtual void store(tBBuf &t);
 	virtual int stream(tBBuf &t);
-	tmData(tNetSession * u=NULL);
+	tmData(tNetSession * u);
 	void setCompressed(void) {
 		compressed=true;
 	}
@@ -73,7 +73,7 @@ public:
 };
 
 tmData::tmData(tNetSession * u)
- :tmMsgBase(0x1313,plNetTimestamp | plNetAck,u) { compressed = false; }
+ :tmMsgBase(NetMsgCustomTest,plNetTimestamp | plNetAck,u) { compressed = false; }
 void tmData::store(tBBuf &t) {
 	tmMsgBase::store(t);
 	data.clear();
@@ -181,7 +181,6 @@ void tUnetSimpleFileServer::onStart() {
 void tUnetSimpleFileServer::onIdle(bool idle) {
 	if(listen==0) {
 		if(!sent) {
-			tmData data;
 			tNetSession * u=NULL;
 			u=getSession(dstite);
 			if(u==NULL) {
@@ -189,7 +188,7 @@ void tUnetSimpleFileServer::onIdle(bool idle) {
 				return;
 			}
 			if(!u->isConnected()) return;
-			data.setSession(u);
+			tmData data(u);
 			if(urgent) data.setUrgent();
 			if (compressed) data.setCompressed();
 			tFBuf f1;
@@ -210,12 +209,10 @@ void tUnetSimpleFileServer::onIdle(bool idle) {
 int tUnetSimpleFileServer::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
 	int ret=0;
 
-	tmData data;
-
 	switch(msg->cmd) {
-		case 0x1313:
+		case NetMsgCustomTest:
 			if(listen!=0) {
-				tmData data;
+				tmData data(u);
 				msg->data->get(data);
 				log->log("<RCV> %s\n", data.str());
 				printf("Saving file to rcvmsg.raw...\n");
