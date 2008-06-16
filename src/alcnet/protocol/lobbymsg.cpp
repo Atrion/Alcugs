@@ -128,5 +128,20 @@ namespace alc {
 		dbg.nl();
 		dbg.printf(" result: 0x%02X (%s)", result, alcUnetGetAvatarCode(result));
 	}
+	
+	//// tmDeletePlayer
+	tmDeletePlayer::tmDeletePlayer(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
+	{ }
+	
+	void tmDeletePlayer::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
+		U16 unk = t.getU16();
+		if (unk != 0) {
+			lerr->log("NetMsgDeletePlayer.unk is not null but %d\n", unk);
+			throw txProtocolError(_WHERE("NetMsgDeletePlayer.unk is not 0"));
+		}
+	}
 
 } //end namespace alc

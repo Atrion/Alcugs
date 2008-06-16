@@ -179,6 +179,31 @@ namespace alc {
 				
 				return 1;
 			}
+			case NetMsgDeletePlayer:
+			{
+				if (u->getPeerType() != KClient) {
+					err->log("ERR: %s sent a NetMsgDeletePlayer but is not yet authed. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the packet
+				tmDeletePlayer deletePlayer(u);
+				msg->data->get(deletePlayer);
+				log->log("<RCV> %s\n", deletePlayer.str());
+				u->x = deletePlayer.x; // save these values to reuse them when answering
+				u->ki = deletePlayer.ki;
+				
+				// forward it to the vault server
+				tNetSession *vaultServer = getPeer(KVault);
+				if (!vaultServer) {
+					err->log("ERR: I've got to ask the vault server to delete a player, but it's unavailable.\n", u->str());
+					return 1;
+				}
+				tmCustomVaultDeletePlayer vaultDeletePlayer(vaultServer, u->getSid(), u->ki, u->guid, u->getAccessLevel());
+				vaultServer->send(vaultDeletePlayer);
+				
+				return 1;
+			}
 		}
 		return 0;
 	}

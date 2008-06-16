@@ -62,7 +62,7 @@ namespace alc {
 	
 	class tmCustomVaultCreatePlayer : public tmMsgBase {
 	public:
-		tmCustomVaultCreatePlayer(tNetSession *u, tmCreatePlayer &createPlayer, Byte x, Byte *guid, Byte accessLevel, const Byte *login);
+		tmCustomVaultCreatePlayer(tNetSession *u, tmCreatePlayer &createPlayer, U32 x, Byte *guid, Byte accessLevel, const Byte *login);
 		virtual int stream(tBBuf &t);
 		// format
 		tUStr login, avatar, gender, friendName, key;
@@ -77,6 +77,16 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		// format
 		Byte result;
+	protected:
+		virtual void additionalFields();
+	};
+	
+	class tmCustomVaultDeletePlayer : public tmMsgBase {
+	public:
+		tmCustomVaultDeletePlayer(tNetSession *u, U32 x, U32 ki, Byte *guid, Byte accessLevel);
+		virtual int stream(tBBuf &t);
+		// format
+		Byte accessLevel;
 	protected:
 		virtual void additionalFields();
 	};

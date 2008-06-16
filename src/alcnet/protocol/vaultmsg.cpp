@@ -91,7 +91,7 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultCreatePlayer
-	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u, tmCreatePlayer &createPlayer, Byte x, Byte *guid,
+	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u, tmCreatePlayer &createPlayer, U32 x, Byte *guid,
 	  Byte accessLevel, const Byte *login)
 	 : tmMsgBase(NetMsgCustomVaultCreatePlayer, plNetX | plNetGUI | plNetVersion | plNetAck | plNetCustom, u),
 	   avatar(createPlayer.avatar), gender(createPlayer.gender), friendName(createPlayer.friendName), key(createPlayer.key)
@@ -163,6 +163,38 @@ namespace alc {
 		if (u && u->proto == 1) dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid, 16));
 #endif
 		dbg.printf(" result: 0x%02X (%s)", result, alcUnetGetAvatarCode(result));
+	}
+	
+	//// tmCustomVaultDeletePlayer
+	tmCustomVaultDeletePlayer::tmCustomVaultDeletePlayer(tNetSession *u, U32 x, U32 ki, Byte *guid, Byte accessLevel)
+	 : tmMsgBase(NetMsgCustomVaultDeletePlayer, plNetX | plNetKi | plNetGUI | plNetAck | plNetCustom | plNetVersion, u)
+	{
+		this->x = x;
+		this->ki = ki;
+		memcpy(this->guid, guid, 16);
+#ifdef _UNET2_SUPPORT
+		if (u && u->proto == 1) unsetFlags(plNetGUI);
+#endif
+		this->accessLevel = accessLevel;
+	}
+	
+	int tmCustomVaultDeletePlayer::stream(tBBuf &t)
+	{
+		int off = tmMsgBase::stream(t);
+#ifdef _UNET2_SUPPORT
+		if (u && u->proto == 1) { t.write(guid, 16); off += 16; } // GUID (only for old protocol, the new one sends it in the header)
+#endif
+		t.putByte(accessLevel); ++off;
+		return off;
+	}
+	
+	void tmCustomVaultDeletePlayer::additionalFields()
+	{
+		dbg.nl();
+#ifdef _UNET2_SUPPORT
+		if (u && u->proto == 1) dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid, 16));
+#endif
+		dbg.printf(" access level: %d", accessLevel);
 	}
 	
 } //end namespace alc

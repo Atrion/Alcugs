@@ -70,6 +70,12 @@ namespace alc {
 		virtual void additionalFields();
 	};
 	
+	class tmDeletePlayer : public tmMsgBase {
+	public:
+		tmDeletePlayer(tNetSession *u);
+		virtual void store(tBBuf &t);
+	};
+	
 } //End alc namespace
 
 #endif
