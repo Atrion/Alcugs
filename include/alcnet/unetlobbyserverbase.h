@@ -54,7 +54,6 @@ public:
 	virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
 	virtual void forwardPing(tmPing &ping, tNetSession *u);
 protected:
-	tNetSession *getPeer(Byte dst); //!< returns the session for that service
 	tNetSessionIte reconnectPeer(Byte dst); //!< establishes a connection to that service (remember to set the corresponding gone variable to 0)
 
 	tNetSessionIte auth, tracking, vault;

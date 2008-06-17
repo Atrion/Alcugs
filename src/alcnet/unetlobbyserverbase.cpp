@@ -70,7 +70,14 @@ namespace alc {
 			}
 		}
 		else { // ok, let's forward the ping to the right server
-			tNetSession *server = getPeer(ping.destination);
+			tNetSession *server = 0;
+			switch (ping.destination) {
+				case KAuth: server = getSession(auth); break;
+				case KTracking: server = getSession(tracking); break;
+				case KVault: server = getSession(vault); break;
+				default:
+					err->log("ERR: Connection to unknown service %d requested by ping\n", ping.destination);
+			}
 			if (server) {
 				tmPing pingFwd(server, ping);
 				pingFwd.setRouteInfo(u->getIte());
@@ -143,42 +150,11 @@ namespace alc {
 		return ite;
 	}
 	
-	tNetSession *tUnetLobbyServerBase::getPeer(Byte dst)
-	{
-		tNetSession *s = NULL;
-		switch (dst) {
-			case KAuth:
-				s = getSession(auth);
-				if (s) return s;
-				auth = reconnectPeer(KAuth);
-				auth_gone = 0;
-				return getSession(auth);
-				break;
-			case KTracking:
-				s = getSession(tracking);
-				if (s) return s;
-				tracking = reconnectPeer(KTracking);
-				tracking_gone = 0;
-				return getSession(tracking);
-				break;
-			case KVault:
-				s = getSession(vault);
-				if (s) return s;
-				vault = reconnectPeer(KVault);
-				vault_gone = 0;
-				return getSession(vault);
-				break;
-			default:
-				err->log("ERR: Connection to unknown service %d requested\n", dst);
-				return NULL;
-		}
-	}
-	
 	void tUnetLobbyServerBase::onConnectionClosed(tNetEvent *ev, tNetSession */*u*/)
 	{	// if it was one of the servers, save the time it went (it will be reconnected 10sec later)
-		if (ev->sid == auth) auth_gone = alcGetTime();
-		else if (ev->sid == tracking) tracking_gone = alcGetTime();
-		else if (ev->sid == vault) vault_gone = alcGetTime();
+		if (ev->sid == auth) { auth_gone = alcGetTime(); auth = tNetSessionIte(); }
+		else if (ev->sid == tracking) { tracking_gone = alcGetTime(); tracking = tNetSessionIte(); }
+		else if (ev->sid == vault) { vault_gone = alcGetTime(); vault = tNetSessionIte(); }
 	}
 	
 	void tUnetLobbyServerBase::onIdle(bool idle)
@@ -188,19 +164,16 @@ namespace alc {
 		if (auth_gone && auth_gone+10 < alcGetTime()) { // if it went more than 10sec ago, reconnect
 			auth = reconnectPeer(KAuth);
 			auth_gone = 0;
-			DBG(5, "reconnecting auth\n");
 		}
 		
 		if (tracking_gone && tracking_gone+10 < alcGetTime()) { // if it went more than 10sec ago, reconnect
 			tracking = reconnectPeer(KTracking);
 			tracking_gone = 0;
-			DBG(5, "reconnecting tracking\n");
 		}
 		
 		if (vault_gone && vault_gone+10 < alcGetTime()) { // if it went more than 10sec ago, reconnect
 			vault = reconnectPeer(KVault);
 			vault_gone = 0;
-			DBG(5, "reconnecting vault\n");
 		}
 	}
 	
@@ -275,7 +248,7 @@ namespace alc {
 				u->ki = authResponse.ki;
 				
 				// send authAsk to auth server
-				tNetSession *authServer = getPeer(KAuth);
+				tNetSession *authServer = getSession(auth);
 				if (!authServer) {
 					err->log("ERR: I've got to ask the auth server about player %s, but it's unavailable.\n", u->str());
 					return 1;
@@ -388,7 +361,7 @@ namespace alc {
 						return -2; // hack attempt
 					}
 					// forward it to the vault server
-					tNetSession *vaultServer = getPeer(KVault);
+					tNetSession *vaultServer = getSession(vault);
 					if (!vaultServer) {
 						err->log("ERR: I've got a vault message to forward to the vault server, but it's unavailable.\n", u->str());
 						return 1;

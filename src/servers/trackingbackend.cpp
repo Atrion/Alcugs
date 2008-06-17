@@ -309,6 +309,7 @@ namespace alc {
 	
 	void tTrackingBackend::updatePlayer(tNetSession *game, tmCustomPlayerStatus &playerStatus)
 	{
+		assert(game->data != 0); // never add a player to a server without data
 		statusFileUpdate = true;
 		/* Flags:
 		0: delete
@@ -390,6 +391,7 @@ namespace alc {
 	
 	void tTrackingBackend::removeServer(tNetSession *game)
 	{
+		if (!game->data) return;
 		statusFileUpdate = true;
 		// remove all players which were still on this server
 		for (int i = 0; i < size; ++i) {
@@ -398,11 +400,9 @@ namespace alc {
 				removePlayer(i);
 			}
 		}
-		if (game->data)
-			log->log("Server %s is leaving us\n", game->str());
+		log->log("Server %s is leaving us\n", game->str());
 		log->flush();
-		// remove this server from the list of childs of its lobby
-		if (!game->data) return;
+		// remove this server from the list of childs of its lobby/from the game server it is the lobby for
 		tTrackingData *data = (tTrackingData *)game->data;
 		if (data->isLobby) {
 			// it's childs are lobbyless now

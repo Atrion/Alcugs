@@ -90,7 +90,7 @@ namespace alc {
 				u->ki = requestList.ki;
 				
 				// forward it to the vault server
-				tNetSession *vaultServer = getPeer(KVault);
+				tNetSession *vaultServer = getSession(vault);
 				if (!vaultServer) {
 					err->log("ERR: I've got to ask the vault server about player %s, but it's unavailable.\n", u->str());
 					return 1;
@@ -142,7 +142,7 @@ namespace alc {
 				u->ki = createPlayer.ki;
 				
 				// forward it to the vault server
-				tNetSession *vaultServer = getPeer(KVault);
+				tNetSession *vaultServer = getSession(vault);
 				if (!vaultServer) {
 					err->log("ERR: I've got to ask the vault server to create a player, but it's unavailable.\n", u->str());
 					return 1;
@@ -194,7 +194,7 @@ namespace alc {
 				u->ki = deletePlayer.ki;
 				
 				// forward it to the vault server
-				tNetSession *vaultServer = getPeer(KVault);
+				tNetSession *vaultServer = getSession(vault);
 				if (!vaultServer) {
 					err->log("ERR: I've got to ask the vault server to delete a player, but it's unavailable.\n", u->str());
 					return 1;
