@@ -68,7 +68,6 @@ public:
 	inline void setTimeout(U32 tout) { conn_timeout=tout; }
 	inline int getSid(void) { return sid; }
 	Byte getPeerType() { return whoami; }
-	void send(tmMsgBase & t);
 	tNetSessionIte getIte();
 	U32 getRTT() { return rtt; }
 	inline bool isConnected() { return cabal!=0; }

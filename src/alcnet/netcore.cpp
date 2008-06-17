@@ -208,7 +208,7 @@ void tUnetBase::terminate(tNetSessionIte & who,Byte reason, bool destroyOnly) {
 	tNetSession * u=getSession(who);
 	if (!destroyOnly && u->client) {
 		tmTerminated * terminated=new tmTerminated(u,u->ki,reason,true);
-		u->send(*terminated);
+		send(*terminated);
 		delete terminated;
 		
 		/* We sent a NetMsgTerminated, the peer should answer with a NetMsgLeave which will trigger below if block.
@@ -218,7 +218,7 @@ void tUnetBase::terminate(tNetSessionIte & who,Byte reason, bool destroyOnly) {
 	}
 	else if (!destroyOnly && !u->client) {
 		tmLeave leave(u,u->ki,reason);
-		u->send(leave);
+		send(leave);
 	}
 	
 	if (destroyOnly) // if the session should be destroyed, do that ASAP

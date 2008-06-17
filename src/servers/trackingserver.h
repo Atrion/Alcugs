@@ -54,7 +54,7 @@ namespace alc {
 		virtual ~tUnetTrackingServer(void) { delete trackingBackend; }
 		
 		virtual void onStart(void) {
-			trackingBackend = new tTrackingBackend(smgr, bindaddr, bindport);
+			trackingBackend = new tTrackingBackend(this, smgr, bindaddr, bindport);
 		}
 		virtual void onConnectionClosed(tNetEvent * ev,tNetSession * u) {
 			trackingBackend->removeServer(u);

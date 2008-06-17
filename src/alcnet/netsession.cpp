@@ -910,16 +910,11 @@ void tNetSession::negotiate() {
 	net->basesend(this,comm);
 }
 
-void tNetSession::send(tmMsgBase & t) {
-	t.setSession(this); // make sure the right session is set
-	net->basesend(this,t);
-}
-
 void tNetSession::checkAlive(void)
 {	// when we are talking to a non-terminated server, send alive messages
 	if (!client && !terminated && (alcGetTime() - timestamp.seconds) > conn_timeout/2) {
 		tmAlive alive(this);
-		send(alive);
+		net->send(alive);
 		timestamp.seconds = alcGetTime();
 	}
 }

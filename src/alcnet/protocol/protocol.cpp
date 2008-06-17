@@ -508,7 +508,6 @@ Byte * tmNetClientComm::str() {
 //Base message
 tmMsgBase::tmMsgBase(U16 cmd,U32 flags,tNetSession * u) {
 	DBG(5,"tmMsgBase()\n");
-	if (u == NULL) throw txUnet(_WHERE("Session must not be NULL in tmMsgBase constructor"));
 	this->cmd=cmd;
 	this->flags=flags;
 	this->u=u;
@@ -544,9 +543,6 @@ void tmMsgBase::setUrgent() {
 }
 void tmMsgBase::unsetUrgent() {
 	bhflags &= ~UNetUrgent;
-}
-void tmMsgBase::setSession(tNetSession *u) {
-	this->u=u;
 }
 void tmMsgBase::store(tBBuf &t) {
 	//base

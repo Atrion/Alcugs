@@ -96,7 +96,7 @@ namespace alc {
 					return 1;
 				}
 				tmCustomVaultAskPlayerList askList(vaultServer, u->getSid(), u->guid);
-				vaultServer->send(askList);
+				send(askList);
 				return 1;
 			}
 			case NetMsgCustomVaultPlayerList:
@@ -121,7 +121,7 @@ namespace alc {
 				
 				// forward player list to client
 				tmVaultPlayerList playerListClient(client, playerList.numberPlayers, playerList.players, website);
-				client->send(playerListClient);
+				send(playerListClient);
 				
 				return 1;
 			}
@@ -148,7 +148,7 @@ namespace alc {
 					return 1;
 				}
 				tmCustomVaultCreatePlayer vaultCreatePlayer(vaultServer, createPlayer, u->getSid(), u->guid, u->getAccessLevel(), u->name);
-				vaultServer->send(vaultCreatePlayer);
+				send(vaultCreatePlayer);
 				
 				return 1;
 			}
@@ -175,7 +175,7 @@ namespace alc {
 				// forward answer to client
 				client->ki = playerCreated.ki;
 				tmPlayerCreated playerCreatedClient(client, client->x, client->ki, playerCreated.result);
-				client->send(playerCreatedClient);
+				send(playerCreatedClient);
 				
 				return 1;
 			}
@@ -200,7 +200,7 @@ namespace alc {
 					return 1;
 				}
 				tmCustomVaultDeletePlayer vaultDeletePlayer(vaultServer, u->getSid(), u->ki, u->guid, u->getAccessLevel());
-				vaultServer->send(vaultDeletePlayer);
+				send(vaultDeletePlayer);
 				
 				return 1;
 			}

@@ -59,17 +59,23 @@ namespace alc {
 	
 	void tUnetLobbyServerBase::forwardPing(tmPing &ping, tNetSession *u)
 	{
-		if (u->whoami == KAuth || u->whoami == KTracking || u->whoami == KVault) { // we got a ping from one of our servers, let's forward it to the client it came from
+		if (u->whoami == KAuth || u->whoami == KTracking || u->whoami == KVault) { // we got a ping reply from one of our servers, let's forward it to the client it came from
 			if (!ping.hasFlags(plNetIP)) throw txProtocolError(_WHERE("IP flag missing"));
 			tNetSessionIte ite(ping.ip, ping.port, ping.hasFlags(plNetSid) ? ping.sid : -1);
 			tNetSession *client = getSession(ite);
-			ping.unsetRouteInfo();
-			if (client) client->send(ping);
+			if (client) {
+				tmPing pingFwd(client, ping);
+				pingFwd.unsetRouteInfo();
+				send(pingFwd);
+			}
 		}
 		else { // ok, let's forward the ping to the right server
 			tNetSession *server = getPeer(ping.destination);
-			ping.setRouteInfo(u->getIte());
-			if (server) server->send(ping);
+			if (server) {
+				tmPing pingFwd(server, ping);
+				pingFwd.setRouteInfo(u->getIte());
+				send(pingFwd);
+			}
 		}
 	}
 	
@@ -125,13 +131,13 @@ namespace alc {
 		
 		// send hello
 		tmAlive alive(session);
-		session->send(alive);
+		send(alive);
 		
 		if (dst == KTracking) {
 			tStrBuf var = cfg->getVar("public_address");
 			if (var.isNull()) log->log("WARNING: No public address set, using bind address %s\n", bindaddr);
 			tmCustomSetGuid setGuid(session, guid, name, var.c_str());
-			session->send(setGuid);
+			send(setGuid);
 		}
 		
 		return ite;
@@ -250,7 +256,7 @@ namespace alc {
 				// reply with AuthenticateChallenge
 				tmAuthenticateChallenge authChallenge(u, result, u->challenge);
 				u->authenticated = 10; // the challenge was sent
-				u->send(authChallenge);
+				send(authChallenge);
 				
 				return 1;
 			}
@@ -275,7 +281,7 @@ namespace alc {
 					return 1;
 				}
 				tmCustomAuthAsk authAsk(authServer, u->sid, u->ip, u->port, u->name, u->challenge, authResponse.hash.readAll(), u->release);
-				authServer->send(authAsk);
+				send(authAsk);
 				
 				return 1;
 			}
@@ -320,14 +326,14 @@ namespace alc {
 					strcpy((char *)client->passwd, (char *)authResponse.passwd.c_str()); // passwd is needed for validating packets
 					client->conn_timeout = 30; // 30sec, client should send an alive every 10sec
 					tmAccountAutheticated accountAuth(client, authResponse.result, guid);
-					client->send(accountAuth);
+					send(accountAuth);
 				}
 				else {
 					Byte zeroGuid[8]; // only send zero-filled GUIDs to non-authed players
 					memset(zeroGuid, 0, 8);
 					memset(client->guid, 0, 16);
 					tmAccountAutheticated accountAuth(client, authResponse.result, zeroGuid);
-					client->send(accountAuth);
+					send(accountAuth);
 					terminate(ite, RNotAuthenticated);
 				}
 				return 1;
@@ -374,7 +380,7 @@ namespace alc {
 						return 1;
 					}
 					tmVault vaultMsgFwd(client, vaultMsg.ki, &parsedMsg);
-					client->send(vaultMsgFwd);
+					send(vaultMsgFwd);
 				}
 				else { // got it from a client
 					if (u->whoami != KClient || u->ki == 0) {
@@ -388,7 +394,7 @@ namespace alc {
 						return 1;
 					}
 					tmVault vaultMsgFwd(vaultServer, u->ki, &parsedMsg);
-					vaultServer->send(vaultMsgFwd);
+					send(vaultMsgFwd);
 				}
 				
 				return 1;

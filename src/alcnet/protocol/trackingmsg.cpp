@@ -57,7 +57,6 @@ namespace alc {
 	void tmCustomSetGuid::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		if (!hasFlags(plNetVersion)) throw txProtocolError(_WHERE("Version flag missing"));
 		// there's already a guid member in tmMsgBase, so let's use that (though we need only 8 bytes)
 		tUStr guid_str(5); // inverted UruString
 		t.get(guid_str);
@@ -116,7 +115,7 @@ namespace alc {
 	void tmCustomPlayerStatus::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		if (!hasFlags(plNetX | plNetKi | plNetVersion)) throw txProtocolError(_WHERE("X, KI or Version flag missing"));
+		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
 #ifndef _UNET2_SUPPORT
 		if (!hasFlags(plNetGUI)) throw txProtocolError(_WHERE("GUID flag missing"));
 #else
@@ -146,7 +145,7 @@ namespace alc {
 	void tmCustomFindServer::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		if (!hasFlags(plNetX | plNetKi | plNetVersion)) throw txProtocolError(_WHERE("X, KI or Version flag missing"));
+		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
 #ifndef _UNET2_SUPPORT
 		if (!hasFlags(plNetIP)) throw txProtocolError(_WHERE("IP flag missing"));
 #endif

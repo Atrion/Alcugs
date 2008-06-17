@@ -63,8 +63,9 @@ namespace alc {
 				msg->data->get(ping);
 				log->log("<RCV> %s\n",ping.str());
 				if (ping.destination == whoami || ping.destination == KBcast) { // if it's for us or for everyone, answer
-					ping.setReply();
-					u->send(ping);
+					tmPing pingReply(u, ping);
+					pingReply.setReply();
+					send(pingReply);
 				}
 				else forwardPing(ping, u); // if not, forward it (only implemented by lobby and game)
 				return 1;

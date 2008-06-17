@@ -53,7 +53,7 @@ namespace alc {
 	void tmCustomVaultPlayerList::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		if (!hasFlags(plNetX | plNetGUI | plNetVersion)) throw txProtocolError(_WHERE("X, GUID or Version flag missing"));
+		if (!hasFlags(plNetX | plNetGUI)) throw txProtocolError(_WHERE("X or GUID flag missing"));
 		numberPlayers = t.getU16();
 		players.clear();
 		t.get(players); // the rest is the data about the players

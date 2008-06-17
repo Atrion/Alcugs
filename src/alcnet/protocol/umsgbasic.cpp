@@ -112,16 +112,28 @@ void tmPlayerTerminated::additionalFields() {
 }
 
 
-tmPing::tmPing(tNetSession * u,double mtime,U32 ki,U32 x,Byte dst,bool ack)
- :tmMsgBase(NetMsgPing,plNetKi | plNetX | plNetCustom,u) {
-	this->ki=ki;
-	this->x=x;
-	this->mtime=mtime;
-	this->destination=dst;
-	if(u && u->min_version>=6) {
+tmPing::tmPing(tNetSession * u, Byte dst)
+ : tmMsgBase(NetMsgPing,plNetKi | plNetX | plNetCustom | plNetAck,u)
+{
+	ki = x = 0;
+	mtime = 0;
+	destination = dst;
+	if (u->max_version > 12 || (u->max_version == 12 && u->min_version >= 6)) {
 		setFlags(plNetTimestamp);
 	}
-	if(ack) setFlags(plNetAck);
+}
+tmPing::tmPing(tNetSession *u, tmPing &ping)
+ : tmMsgBase(NetMsgPing,ping.flags,u)
+{
+	ki = ping.ki;
+	x = ping.x;
+	destination = ping.destination;
+	mtime = ping.mtime;
+	if (hasFlags(plNetIP | plNetSid)) {
+		ip = ping.ip;
+		port = ping.port;
+		sid = ping.sid;
+	}
 }
 void tmPing::store(tBBuf &t) {
 	tmMsgBase::store(t);

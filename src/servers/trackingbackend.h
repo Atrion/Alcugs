@@ -83,7 +83,7 @@ namespace alc {
 	
 	class tTrackingBackend {
 	public:
-		tTrackingBackend(tNetSessionList *servers, char *host, U16 port);
+		tTrackingBackend(tUnet *net, tNetSessionList *servers, char *host, U16 port);
 		~tTrackingBackend(void);
 		void reload(void);
 		void updateStatusFile(void);
@@ -110,6 +110,7 @@ namespace alc {
 	
 		int size, count;
 		tPlayer **players;
+		tUnet *net;
 		tNetSessionList *servers;
 		tLog *log;
 		char *host;

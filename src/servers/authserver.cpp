@@ -76,7 +76,7 @@ namespace alc {
 				
 				// send answer to client
 				tmCustomAuthResponse authResponse(u, authAsk, alcGetHexUid(guid), passwd, authResult, accessLevel);
-				u->send(authResponse);
+				send(authResponse);
 				
 				return 1;
 			}

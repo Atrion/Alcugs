@@ -74,7 +74,7 @@ namespace alc {
 	void tmCustomAuthAsk::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		if (!hasFlags(plNetX | plNetVersion)) throw txProtocolError(_WHERE("X or Version flag missing"));
+		if (!hasFlags(plNetX)) throw txProtocolError(_WHERE("X flag missing"));
 #ifndef _UNET2_SUPPORT
 		if (!hasFlags(plNetIP)) throw txProtocolError(_WHERE("IP flag missing"));
 #endif
@@ -149,7 +149,7 @@ namespace alc {
 	void tmCustomAuthResponse::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		if (!hasFlags(plNetX | plNetVersion)) throw txProtocolError(_WHERE("X or Version flag missing"));
+		if (!hasFlags(plNetX)) throw txProtocolError(_WHERE("X flag missing"));
 #ifndef _UNET2_SUPPORT
 		if (!hasFlags(plNetIP | plNetGUI)) throw txProtocolError(_WHERE("IP or GUID flag missing"));
 #endif

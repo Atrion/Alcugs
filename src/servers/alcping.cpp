@@ -200,7 +200,7 @@ int tUnetPing::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
 				alcUnetGetDestination(ping.destination),ping.mtime*1000);
 				ping.setReply();
 				if(urgent) ping.setUrgent();
-				u->send(ping);
+				send(ping);
 			}
 			ret=1;
 			break;
@@ -243,17 +243,14 @@ void tUnetPing::onIdle(bool idle) {
 		if((rcv-current)>time || count==0) {
 			if(count<num || num==0 || count==0) {
 				//snd ping message
-				tmPing ping(u);
-				ping.destination=destination;
-				ping.setFlags(plNetTimestamp);
+				tmPing ping(u, destination);
 				if(urgent) ping.setUrgent();
 
 				count++;
 				for(i=0; i<flood; i++) {
 					ping.x = (flood * (count-1)) + i;
-					current = alcGetCurrentTime(),
-					ping.mtime = current;
-					u->send(ping);
+					ping.mtime = current = alcGetCurrentTime();
+					send(ping);
 				}
 			} else if((rcv-current) > (4*time) || (u && (rcv-current) > ((u->getRTT()+(u->getRTT()/2))/1000000))) {
 				stop();

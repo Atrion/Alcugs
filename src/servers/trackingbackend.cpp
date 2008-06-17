@@ -86,10 +86,11 @@ namespace alc {
 	}
 	
 	//// tTrackingBackend
-	tTrackingBackend::tTrackingBackend(tNetSessionList *servers, char *host, U16 port)
+	tTrackingBackend::tTrackingBackend(tUnet *net, tNetSessionList *servers, char *host, U16 port)
 	{
 		log = lnull;
 		this->servers = servers;
+		this->net = net;
 		this->host = host;
 		this->port = port;
 		size = count = lastUpdate = 0;
@@ -150,7 +151,7 @@ namespace alc {
 			if (!guidGen->generateGuid(player->awaiting_guid, findServer.age.c_str(), player->ki)) {
 				log->log("WARN: Request to link to unknown age %s - kicking player %s\n", findServer.age.c_str(), player->str());
 				tmPlayerTerminated term(player->u, player->ki, RKickedOff);
-				player->u->send(term);
+				net->send(term);
 				return;
 			}
 			log->log(" Generated GUID: %s\n", alcGetStrGuid(player->awaiting_guid, 8));
@@ -208,7 +209,7 @@ namespace alc {
 			// ok, telling the lobby to fork
 			bool loadState = doesAgeLoadState(player->awaiting_age);
 			tmCustomForkServer forkServer(lobby, player->ki, player->x, lowest, player->awaiting_guid, player->awaiting_age, loadState);
-			lobby->send(forkServer);
+			net->send(forkServer);
 			log->log("Spawning new game server %s (GUID: %s, port: %d) on %s ", player->awaiting_age, alcGetStrGuid(player->awaiting_guid, 8), lowest, lobby->str());
 			if (loadState) log->print("(loading age state)\n");
 			else log->print("(not loading age state)\n");
@@ -236,7 +237,7 @@ namespace alc {
 		// notifiy the player that it's server is available
 		tTrackingData *data = (tTrackingData *)server->data;
 		tmCustomServerFound found(player->u, player->ki, player->x, ntohs(server->getPort()), data->externalIp, server->guid, server->name);
-		player->u->send(found);
+		net->send(found);
 		log->log("Found age for player %s\n", player->str());
 		// no longer waiting
 		player->waiting = false;
@@ -342,7 +343,7 @@ namespace alc {
 				// to do so, we first check if the game server the players uses changed. if that's the case, and the player did not request to link, kick the old player
 				if (player->u != game && player->status != RInRoute && player->status != RLeaving) {
 					tmPlayerTerminated term(player->u, player->ki, RLoggedInElsewhere);
-					player->u->send(term);
+					net->send(term);
 				}
 			}
 			// update the player's data
@@ -490,7 +491,7 @@ namespace alc {
 				for (int j = 0; j < directedFwd.nRecipients; ++j) {
 					if (directedFwd.recipients[j] == players[i]->ki) { // one of the recipients is on this server, so send the message
 						tmCustomDirectedFwd forwardedMsg(server, directedFwd);
-						server->send(forwardedMsg);
+						net->send(forwardedMsg);
 						sent = true;
 						break;
 					}

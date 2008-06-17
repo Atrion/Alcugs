@@ -196,7 +196,7 @@ void tUnetSimpleFileServer::onIdle(bool idle) {
 			data.data.clear();
 			data.data.put(f1);
 			f1.close();
-			u->send(data);
+			send(data);
 			sent=true;
 		} else {
 			if(idle) {

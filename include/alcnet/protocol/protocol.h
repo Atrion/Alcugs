@@ -166,7 +166,6 @@ public:
 	void unsetUrgent();
 	U32 getFlags();
 	bool hasFlags(U32 f);
-	void setSession(tNetSession *u);
 	inline tNetSession *getSession(void) { return u; }
 	void copyProps(tmMsgBase &t);
 	Byte * str();
