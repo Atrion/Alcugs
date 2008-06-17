@@ -83,7 +83,7 @@ void tmData::store(tBBuf &t) {
 		t.get(zdata);
 		zdata.uncompress(x);
 		zdata.get(data);
-		assert(data.size() == x);
+		if (data.size() != x) throw txBase(_WHERE("size mismatch"));
 	}
 	else
 		t.get(data);

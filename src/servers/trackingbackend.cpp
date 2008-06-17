@@ -233,7 +233,7 @@ namespace alc {
 	
 	void tTrackingBackend::serverFound(tPlayer *player, tNetSession *server)
 	{
-		assert(server->data != 0);
+		if (!server->data) throw txUnet(_WHERE("server passed in tTrackingBackend::serverFound is not a game/lobby server"));
 		// notifiy the player that it's server is available
 		tTrackingData *data = (tTrackingData *)server->data;
 		tmCustomServerFound found(player->u, player->ki, player->x, ntohs(server->getPort()), data->externalIp, server->guid, server->name);
@@ -309,7 +309,7 @@ namespace alc {
 	
 	void tTrackingBackend::updatePlayer(tNetSession *game, tmCustomPlayerStatus &playerStatus)
 	{
-		assert(game->data != 0); // never add a player to a server without data
+		if (!game->data) throw txUnet(_WHERE("server passed in tTrackingBackend::updatePlayer is not a game/lobby server"));
 		statusFileUpdate = true;
 		/* Flags:
 		0: delete
@@ -409,12 +409,12 @@ namespace alc {
 			tNetSession *server;
 			data->childs->rewind();
 			while ((server = data->childs->getNext())) {
-				assert(server->data != 0); // all childs must have data
+				if (!server->data) throw txUnet(_WHERE("One child of the lobby I'm just deteting is not a game/lobby server"));
 				((tTrackingData *)server->data)->parent = NULL;
 			}
 		}
 		else if (data->parent) {
-			assert(data->parent->data != 0); // the parent must have data
+			if (!data->parent->data) throw txUnet(_WHERE("The parent of the game server I'm just deleting is not a game/lobby server"));
 			tTrackingData *parent_data = (tTrackingData *)data->parent->data;
 			parent_data->childs->remove(game);
 		}

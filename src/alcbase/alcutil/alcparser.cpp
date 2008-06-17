@@ -69,7 +69,6 @@ void tSimpleParser::store(tStrBuf &t) {
 	if(!cfg) return;
 	tStrBuf key,val;
 	DBG(4,"Store\n");
-	//assert(!t.eof());
 	while(!t.eof()) {
 		key = t.getToken();
 		DBG(5,"Reading token %s\n",key.c_str());

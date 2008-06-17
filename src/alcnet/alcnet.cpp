@@ -674,8 +674,6 @@ void tUnet::basesend(tNetSession * u,tmBase &msg) {
 
 	/* Check if the last message sent, had the ack flag on
 		as a rule, messages must be sent in order */
-	//assert(u->server.sn==0);
-
 	if(u->server.tf & UNetAckReq) {
 		u->server.ps=u->server.sn;
 		u->server.pfr=u->server.frn;
@@ -800,8 +798,6 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 
 	DBG(9,"Server pn is %08X\n",u->server.pn);
 	DBG(9,"Server sn is %08X,%08X\n",u->server.sn,msg->sn);
-	//assert(u->server.sn==0);
-	//assert(u->server.pn==0);
 	u->server.pn++;
 	msg->pn=u->server.pn;
 	
