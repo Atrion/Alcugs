@@ -47,14 +47,17 @@ namespace alc {
 		if (!hasFlags(plNetX | plNetKi)) {
 			x = ki = 0; // the vault manager sends these without X and KI
 		}
+		else if (ki != 0) throw txProtocolError(_WHERE("KI must be 0 in NetMsgRequestMyVaultPlayerList"));
+		
+		u->x = x;
 	}
 	
 	//// tmVaultPlayerList
 	tmVaultPlayerList::tmVaultPlayerList(tNetSession *u, U16 numberPlayers, tMBuf players, const Byte *url)
 	: tmMsgBase(NetMsgVaultPlayerList, plNetAck | plNetCustom | plNetX | plNetKi, u)
 	{
-		x = u->getX();
-		ki = u->getKI();
+		x = u->x;
+		ki = 0; // we're not yet logged in, so no KI can be set
 		
 		this->numberPlayers = numberPlayers;
 		this->players = players;
@@ -90,6 +93,7 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
+		// a KI value might be set here, but it should be ignored
 		t.get(avatar);
 		t.get(gender);
 		t.get(friendName);
@@ -99,6 +103,8 @@ namespace alc {
 			lerr->log("NetMsgCreatePlayer.unk is not null but %d\n", unk);
 			throw txProtocolError(_WHERE("NetMsgCreatePlayer.unk is not 0"));
 		}
+		
+		u->x = x;
 	}
 	
 	void tmCreatePlayer::additionalFields(void)
@@ -108,11 +114,11 @@ namespace alc {
 	}
 	
 	//// tmPlayerCreated
-	tmPlayerCreated::tmPlayerCreated(tNetSession *u, U32 x, U32 ki, Byte result)
+	tmPlayerCreated::tmPlayerCreated(tNetSession *u, U32 ki, Byte result)
 	 : tmMsgBase(NetMsgPlayerCreated, plNetX | plNetKi | plNetAck | plNetCustom, u)
 	{
-		this->x = x;
-		this->ki = ki;
+		x = u->x;
+		this->ki = ki; // the KI of the newly created player, not the one set for the session
 		this->result = result;
 	}
 	
@@ -142,6 +148,8 @@ namespace alc {
 			lerr->log("NetMsgDeletePlayer.unk is not null but %d\n", unk);
 			throw txProtocolError(_WHERE("NetMsgDeletePlayer.unk is not 0"));
 		}
+		
+		u->x = x;
 	}
 
 } //end namespace alc

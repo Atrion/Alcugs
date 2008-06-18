@@ -366,7 +366,7 @@ namespace alc {
 					alcUnetGetReasonCode(playerStatus.playerStatus));
 		}
 		else {
-			log->log("ERR: Got unknown flag 0x%02X from player with KI %d\n", playerStatus.playerFlag, playerStatus.ki);
+			log->log("ERR: Got unknown flag 0x%02X for player with KI %d\n", playerStatus.playerFlag, playerStatus.ki);
 		}
 		log->flush();
 	}

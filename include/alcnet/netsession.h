@@ -75,8 +75,6 @@ public:
 	inline bool isAuthed(void) { return authenticated == 1; }
 	inline U32 getIp(void) { return ip; }
 	inline U16 getPort(void) { return port; }
-	inline U32 getKI(void) { return ki; }
-	inline U32 getX(void) { return x; }
 	inline Byte getAccessLevel(void) { return accessLevel; }
 
 private:
@@ -107,8 +105,8 @@ public:
 	Byte min_version; //peer minor version
 	U32 proto; //peer unet protocol version
 	
-	U32 ki; //player set and valid id
-	U32 x; //x value
+	U32 ki; // player set and valid id, otherwise 0
+	U32 x; // x value
 	Byte guid[16]; // hex; player guid in lobby server, age guid in tracking server
 	Byte name[200]; // peer age name in tracking server, peer account name in lobby and game
 	tNetSessionData *data; // save additional data (i.e. tracking information)

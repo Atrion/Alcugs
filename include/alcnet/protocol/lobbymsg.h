@@ -62,7 +62,7 @@ namespace alc {
 	
 	class tmPlayerCreated : public tmMsgBase {
 	public:
-		tmPlayerCreated(tNetSession *u, U32 x, U32 ki, Byte result);
+		tmPlayerCreated(tNetSession *u, U32 ki, Byte result);
 		virtual int stream(tBBuf &t);
 		// format
 		Byte result;

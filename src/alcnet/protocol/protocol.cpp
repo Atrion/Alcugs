@@ -536,7 +536,7 @@ U32 tmMsgBase::getFlags() {
 	return flags;
 }
 bool tmMsgBase::hasFlags(U32 f) {
-	return (flags & f);
+	return (flags | f) == flags; // there can be several flags enabled in f, so a simple & is not enough
 }
 void tmMsgBase::setUrgent() {
 	bhflags |= UNetUrgent;

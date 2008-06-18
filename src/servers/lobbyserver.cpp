@@ -86,8 +86,6 @@ namespace alc {
 				tmRequestMyVaultPlayerList requestList(u);
 				msg->data->get(requestList);
 				log->log("<RCV> %s\n", requestList.str());
-				u->x = requestList.x; // save these values to reuse them when answering
-				u->ki = requestList.ki;
 				
 				// forward it to the vault server
 				tNetSession *vaultServer = getSession(vault);
@@ -138,8 +136,6 @@ namespace alc {
 				tmCreatePlayer createPlayer(u);
 				msg->data->get(createPlayer);
 				log->log("<RCV> %s\n", createPlayer.str());
-				u->x = createPlayer.x; // save these values to reuse them when answering
-				u->ki = createPlayer.ki;
 				
 				// forward it to the vault server
 				tNetSession *vaultServer = getSession(vault);
@@ -173,8 +169,7 @@ namespace alc {
 				}
 				
 				// forward answer to client
-				client->ki = playerCreated.ki;
-				tmPlayerCreated playerCreatedClient(client, client->x, client->ki, playerCreated.result);
+				tmPlayerCreated playerCreatedClient(client, playerCreated.ki, playerCreated.result);
 				send(playerCreatedClient);
 				
 				return 1;
@@ -190,8 +185,6 @@ namespace alc {
 				tmDeletePlayer deletePlayer(u);
 				msg->data->get(deletePlayer);
 				log->log("<RCV> %s\n", deletePlayer.str());
-				u->x = deletePlayer.x; // save these values to reuse them when answering
-				u->ki = deletePlayer.ki;
 				
 				// forward it to the vault server
 				tNetSession *vaultServer = getSession(vault);
@@ -199,7 +192,7 @@ namespace alc {
 					err->log("ERR: I've got to ask the vault server to delete a player, but it's unavailable.\n", u->str());
 					return 1;
 				}
-				tmCustomVaultDeletePlayer vaultDeletePlayer(vaultServer, u->getSid(), u->ki, u->guid, u->getAccessLevel());
+				tmCustomVaultDeletePlayer vaultDeletePlayer(vaultServer, u->getSid(), deletePlayer.ki, u->guid, u->getAccessLevel());
 				send(vaultDeletePlayer);
 				
 				return 1;

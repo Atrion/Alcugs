@@ -223,8 +223,6 @@ namespace alc {
 				strcpy((char *)u->name, (char *)authHello.account.c_str());
 				memcpy(u->challenge, md5buffer.read(16), 16);
 				u->release = authHello.release;
-				u->x = authHello.x;
-				u->ki = authHello.ki;
 				
 				// reply with AuthenticateChallenge
 				tmAuthenticateChallenge authChallenge(u, result, u->challenge);
@@ -244,8 +242,6 @@ namespace alc {
 				tmAuthenticateResponse authResponse(u);
 				msg->data->get(authResponse);
 				log->log("<RCV> %s\n", authResponse.str());
-				u->x = authResponse.x;
-				u->ki = authResponse.ki;
 				
 				// send authAsk to auth server
 				tNetSession *authServer = getSession(auth);
@@ -325,9 +321,13 @@ namespace alc {
 				msg->data->get(setPlayer);
 				log->log("<RCV> %s\n", setPlayer.str());
 				
-				if (u->accessLevel <= AcAdmin)
+				if (u->accessLevel <= AcAdmin) {
 					u->ki = setPlayer.ki;
-				// FIXME: do more here
+				    // FIXME: do more here
+				}
+				else {
+					// FIXME: ask the vault server about this KI
+				}
 				
 				return 1;
 			}
@@ -357,7 +357,7 @@ namespace alc {
 				}
 				else { // got it from a client
 					if (u->whoami != KClient || u->ki == 0) {
-						err->log("ERR: %s sent a NetMsgVault but is not yet authed or did not set his ki. I\'ll kick him.\n", u->str());
+						err->log("ERR: %s sent a NetMsgVault but is not yet authed or did not set his KI. I\'ll kick him.\n", u->str());
 						return -2; // hack attempt
 					}
 					// forward it to the vault server

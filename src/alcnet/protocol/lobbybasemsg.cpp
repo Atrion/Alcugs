@@ -46,10 +46,15 @@ namespace alc {
 	void tmAuthenticateHello::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		if (!hasFlags(plNetX | plNetKi | plNetVersion)) throw txProtocolError(_WHERE("X, KI or Version flag missing"));
+		if (!hasFlags(plNetX | plNetKi)) {
+			x = ki = 0; // the vault manager sends these without X and KI
+		}
+		else if (ki != 0) throw txProtocolError(_WHERE("KI must be 0 in NetMsgAuthenticateHello"));
 		t.get(account);
 		maxPacketSize = t.getU16();
 		release = t.getByte();
+		
+		u->x = x;
 	}
 	
 	void tmAuthenticateHello::additionalFields(void)
@@ -62,8 +67,7 @@ namespace alc {
 	tmAuthenticateChallenge::tmAuthenticateChallenge(tNetSession *u, Byte authResult, const Byte *challenge)
 	: tmMsgBase(NetMsgAuthenticateChallenge, plNetKi | plNetAck | plNetX | plNetVersion | plNetCustom, u)
 	{
-		// copy stuff from the packet we're answering to
-		ki = u->ki;
+		ki = 0; // we're not yet logged in, so no KI can be set
 		x = u->x;
 		
 		this->authResult = authResult;
@@ -97,7 +101,10 @@ namespace alc {
 		if (!hasFlags(plNetX | plNetKi)) {
 			x = ki = 0; // the vault manager sends these without X and KI
 		}
+		else if (ki != 0) throw txProtocolError(_WHERE("KI must be 0 in NetMsgAuthenticateResponse"));
 		t.get(hash);
+		
+		u->x = x;
 	}
 	
 	void tmAuthenticateResponse::additionalFields(void)
@@ -111,8 +118,8 @@ namespace alc {
 	: tmMsgBase(NetMsgAccountAuthenticated, plNetKi | plNetAck | plNetX | plNetGUI | plNetCustom, u)
 	{
 		memcpy(guid, u->guid, 16);
-		this->x = u->getX();
-		this->ki = u->getKI();
+		x = u->x;
+		ki = 0; // we're not yet logged in, so no KI can be set
 		
 		this->authResult = authResult;
 		memcpy(this->serverGuid, serverGuid, 8);
@@ -148,6 +155,8 @@ namespace alc {
 			lerr->log("ERR: Got a NetMsgSetMyActivePlayer where the last byte was not 0x00. Kicking the player.");
 			throw txProtocolError(_WHERE("Last Byte of NetMsgSetMyActivePlayer was not 0x00"));
 		}
+		
+		u->x = x;
 	}
 	
 	void tmSetMyActivePlayer::additionalFields(void)
