@@ -55,7 +55,9 @@ public:
 			\param reason The reason code (error code)
 			\param destroyOnly false=sends a terminated/leave message, true=silently closes the connection and destroys it ASAP
 	*/
-	void terminate(tNetSessionIte & who, Byte reason=RKickedOff, bool destroyOnly = false);
+	void terminate(tNetSession *u, Byte reason = RKickedOff, bool destroyOnly = false);
+	/*inline void terminate(tNetSessionIte &who, Byte reason = RKickedOff, bool destroyOnly = false)
+	{ terminate(getSession(who), reason, destroyOnly); }*/
 	/** destroy that session and do an onConnectionClosed */
 	void closeConnection(tNetSession *u);
 	/** Terminates all connections

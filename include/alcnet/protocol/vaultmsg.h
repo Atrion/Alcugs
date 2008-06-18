@@ -91,6 +91,14 @@ namespace alc {
 		virtual void additionalFields();
 	};
 	
+	class tmCustomVaultCheckKi : public tmMsgBase {
+	public:
+		tmCustomVaultCheckKi(tNetSession *u, U32 x, U32 ki, Byte *guid);
+		virtual int stream(tBBuf &t);
+	protected:
+		virtual void additionalFields();
+	};
+	
 } //End alc namespace
 
 #endif

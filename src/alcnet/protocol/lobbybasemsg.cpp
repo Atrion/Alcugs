@@ -46,10 +46,8 @@ namespace alc {
 	void tmAuthenticateHello::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		if (!hasFlags(plNetX | plNetKi)) {
-			x = ki = 0; // the vault manager sends these without X and KI
-		}
-		else if (ki != 0) throw txProtocolError(_WHERE("KI must be 0 in NetMsgAuthenticateHello"));
+		// the vault manager sends these without X and KI
+		if (ki != 0) throw txProtocolError(_WHERE("KI must be 0 in NetMsgAuthenticateHello"));
 		t.get(account);
 		maxPacketSize = t.getU16();
 		release = t.getByte();
@@ -98,10 +96,8 @@ namespace alc {
 	void tmAuthenticateResponse::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		if (!hasFlags(plNetX | plNetKi)) {
-			x = ki = 0; // the vault manager sends these without X and KI
-		}
-		else if (ki != 0) throw txProtocolError(_WHERE("KI must be 0 in NetMsgAuthenticateResponse"));
+		// the vault manager sends these without X and KI
+		if (ki != 0) throw txProtocolError(_WHERE("KI must be 0 in NetMsgAuthenticateResponse"));
 		t.get(hash);
 		
 		u->x = x;

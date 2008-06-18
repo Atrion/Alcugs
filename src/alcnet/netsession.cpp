@@ -104,6 +104,7 @@ void tNetSession::init() {
 	memset((void *)&server,0,sizeof(server));
 	assert(server.pn==0);
 	idle=false;
+	blockMessages=false;
 	whoami=0;
 	max_version=0;
 	min_version=0;
@@ -218,8 +219,8 @@ U32 tNetSession::computetts(U32 psize) {
 tNetSessionIte tNetSession::getIte() {
 	return(tNetSessionIte(ip,port,sid));
 }
-bool tNetSession::isBusy() {
-	return (ackq->len());
+bool tNetSession::blockMsg() {
+	return blockMessages || (ackq->len() > 0);
 }
 
 void tNetSession::processMsg(Byte * buf,int size) {
@@ -801,7 +802,7 @@ void tNetSession::doWork() {
 	ackUpdate(); //generate ack messages
 	
 	//check rcvq
-	if(!isBusy()) {
+	if(!blockMsg()) {
 		rcvq->rewind();
 		tUnetMsg * g;
 		while((g=rcvq->getNext())) {

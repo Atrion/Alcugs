@@ -44,10 +44,8 @@ namespace alc {
 	void tmRequestMyVaultPlayerList::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		if (!hasFlags(plNetX | plNetKi)) {
-			x = ki = 0; // the vault manager sends these without X and KI
-		}
-		else if (ki != 0) throw txProtocolError(_WHERE("KI must be 0 in NetMsgRequestMyVaultPlayerList"));
+		// the vault manager sends these without X and KI
+		if (ki != 0) throw txProtocolError(_WHERE("KI must be 0 in NetMsgRequestMyVaultPlayerList"));
 		
 		u->x = x;
 	}

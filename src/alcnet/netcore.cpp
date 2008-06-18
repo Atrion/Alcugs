@@ -204,12 +204,11 @@ void tUnetBase::stop(SByte timeout) {
 	state_running=false;
 }
 
-void tUnetBase::terminate(tNetSessionIte & who,Byte reason, bool destroyOnly) {
-	tNetSession * u=getSession(who);
+void tUnetBase::terminate(tNetSession *u,Byte reason, bool destroyOnly)
+{
 	if (!destroyOnly && u->client) {
-		tmTerminated * terminated=new tmTerminated(u,u->ki,reason,true);
-		send(*terminated);
-		delete terminated;
+		tmTerminated terminated(u,u->ki,reason);
+		send(terminated);
 		
 		/* We sent a NetMsgTerminated, the peer should answer with a NetMsgLeave which will trigger below if block.
 		However, the unet3 lobby doesn't do that. it sends a NetMsgAlive instead. To cope with that, this session will be remembered as
@@ -237,10 +236,8 @@ void tUnetBase::terminateAll(void)
 	tNetSession *u;
 	smgr->rewind();
 	while ((u=smgr->getNext())) { // double brackets to suppress gcc warning
-		ite=u->getIte();
-		if (!u->terminated) { // avoid sending a NetMsgLeave or NetMsgTerminate to terminated peers
-			terminate(ite, u->client ? RKickedOff : RQuitting);
-		}
+		if (!u->terminated) // avoid sending a NetMsgLeave or NetMsgTerminate to terminated peers
+			terminate(u, u->client ? RKickedOff : RQuitting);
 	}
 }
 
@@ -258,7 +255,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 	switch(evt->id) {
 		case UNET_NEWCONN:
 			if (shutdown)
-				terminate(evt->sid, RKickedOff);
+				terminate(u, RKickedOff);
 			else
 				onNewConnection(evt, u);
 			sec->log("%s New Connection\n",u->str());
@@ -268,7 +265,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 				sec->log("%s Timeout\n",u->str());
 				onConnectionTimeout(evt,u);
 				if(!evt->veto)
-					terminate(evt->sid,RTimedOut);
+					terminate(u, RTimedOut);
 			}
 			else { // a destroyed session, close it ASAP
 				if (u->sndq->isEmpty() && u->ackq->isEmpty())
@@ -283,7 +280,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 			if (!shutdown)
 				onConnectionFlood(evt,u);
 			if (shutdown || !evt->veto) {
-				terminate(evt->sid,RKickedOff);
+				terminate(u, RKickedOff);
 			}
 			break;
 		case UNET_MSGRCV:
@@ -305,7 +302,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 				if (u->terminated || shutdown) {
 					if (ret == 0) err->log("%s is terminated and sent a non-NetMsgLeave message %04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
 					u->rcvq->deleteCurrent();
-					terminate(evt->sid, RKickedOff, true); // delete the session ASAP
+					terminate(u, RKickedOff, true); // delete the session ASAP
 					break;
 				}
 				// this part can never be reached on shutdown, so messages are only processed when the server is still fully running
@@ -328,15 +325,15 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 			if(u->client==1) {
 				if(ret==0) {
 					err->log("%s Unexpected message %04X (%s)\n",u->str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
-					terminate(evt->sid,RUnimplemented);
+					terminate(u, RUnimplemented);
 				}
 				else if(ret==-1) {
 					err->log("%s Kicked off due to a parse error in a previus message %04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-					terminate(evt->sid,RParseError);
+					terminate(u, RParseError);
 				}
 				else if(ret==-2) {
 					sec->log("%s Kicked off due to cracking %04X (%s)\n",u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-					terminate(evt->sid,RHackAttempt);
+					terminate(u, RHackAttempt);
 				}
 			} else {
 				if(ret!=1) {
@@ -413,7 +410,7 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool 
 			ev->id=UNET_TERMINATED;
 			if (!shutdown && !u->terminated)
 				onLeave(ev,msgleave.reason,u);
-			terminate(ev->sid, msgleave.reason, true); // delete the session ASAP
+			terminate(u, msgleave.reason, true); // delete the session ASAP
 			return 1;
 		}
 		case NetMsgTerminated:
@@ -425,7 +422,7 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool 
 			log->log("<RCV> %s\n",msgterminated.str());
 			ev->id=UNET_TERMINATED;
 			onTerminated(ev,msgterminated.reason,u);
-			terminate(ev->sid,msgterminated.reason);
+			terminate(u,msgterminated.reason);
 			return 1;
 		}
 	}

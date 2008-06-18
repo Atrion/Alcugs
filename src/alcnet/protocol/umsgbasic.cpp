@@ -38,11 +38,9 @@
 
 namespace alc {
 
-tmTerminated::tmTerminated(tNetSession * u,U32 who,Byte what,bool ack)
- :tmMsgBase(NetMsgTerminated,plNetKi | plNetCustom,u) {
+tmTerminated::tmTerminated(tNetSession * u,U32 who,Byte what)
+ :tmMsgBase(NetMsgTerminated,plNetKi | plNetCustom | plNetAck,u) {
 	DBG(5,"tmTerminated() who:%i,what:%i,ack:%i\n",who,what,ack);
-	if(ack)
-		setFlags(plNetAck);
 	ki=who;
 	reason=what;
 }

@@ -38,7 +38,7 @@ class tmTerminated :public tmMsgBase {
 public:
 	virtual void store(tBBuf &t);
 	virtual int stream(tBBuf &t);
-	tmTerminated(tNetSession * u,U32 ki=0,Byte reason=RKickedOff,bool ack=false);
+	tmTerminated(tNetSession * u,U32 ki=0,Byte reason=RKickedOff);
 	//format
 	Byte reason;
 protected:

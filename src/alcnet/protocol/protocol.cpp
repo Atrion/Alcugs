@@ -551,7 +551,7 @@ void tmMsgBase::store(tBBuf &t) {
 	if(flags & plNetVersion) {
 		max_version=t.getByte();
 		min_version=t.getByte();
-		if(u) { // this overrides existing values, which might be guessed
+		if (u) { // this overrides existing values, which might be guessed
 			u->max_version=max_version;
 			u->min_version=min_version;
 		}
@@ -562,6 +562,7 @@ void tmMsgBase::store(tBBuf &t) {
 	//BEGIN ** guess the protocol version from behaviours
 	// The first message from Plasma clients is always an auth hello that contains the version numbers
 	if(u && u->max_version==0 && !(flags & plNetVersion)) { // don't auto-guess when we got a version number (it could have been a version 0.0)
+		// old versions always include the timestamp, newer ones have a flag for that and sometimes dont contain it
 		if(flags & plNetTimestamp || t.remaining() < 8) { // when there are less than 8 bytes remaining, no timestamp can be contained
 			u->max_version=12; //sure (normally on ping proves)
 			u->min_version=6;
@@ -571,9 +572,9 @@ void tmMsgBase::store(tBBuf &t) {
 		}
 		DBG(5,"Detected version is %i.%i\n",s->max_version,s->min_version);
 	}
-	//END guess protocol version
+	//END ** guess protocol version
 	
-	//NetMsgPing should have always the timestamp enabled in new versions.
+	//NetMsgPing should have always the timestamp enabled in new versions
 	if(flags & plNetTimestamp || (u && (u->min_version<6 && u->max_version==12))) {
 		t.get(timestamp);
 	} else {
@@ -592,7 +593,6 @@ void tmMsgBase::store(tBBuf &t) {
 		ki=0;
 	}
 	
-	//**
 	if(flags & plNetGUI) {
 		memcpy(guid,t.read(16),16);
 	} else {
@@ -615,6 +615,7 @@ void tmMsgBase::store(tBBuf &t) {
 	if(flags & plNetSid) {
 		sid=t.getU32();
 	}
+	else sid = 0;
 
 	U32 check=plNetAck | plNetBcast | plNetVersion | plNetTimestamp | \
 	plNetX | plNetKi | plNetGUI | plNetIP | plNetCustom | plNetSid;

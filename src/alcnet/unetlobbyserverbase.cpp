@@ -303,7 +303,7 @@ namespace alc {
 					memset(client->guid, 0, 16);
 					tmAccountAutheticated accountAuth(client, authResponse.result, zeroGuid);
 					send(accountAuth);
-					terminate(ite, RNotAuthenticated);
+					terminate(client, RNotAuthenticated);
 				}
 				return 1;
 			}
@@ -311,8 +311,8 @@ namespace alc {
 			//// messages regarding setting the avatar
 			case NetMsgSetMyActivePlayer:
 			{
-				if (u->whoami != KClient) {
-					err->log("ERR: %s sent a NetMsgSetMyActivePlayer but is not yet authed. I\'ll kick him.\n", u->str());
+				if (u->whoami != KClient || u->ki != 0) {
+					err->log("ERR: %s sent a NetMsgSetMyActivePlayer but is not yet authed or already set his KI. I\'ll kick him.\n", u->str());
 					return -2; // hack attempt
 				}
 				
@@ -326,9 +326,23 @@ namespace alc {
 				    // FIXME: do more here
 				}
 				else {
-					// FIXME: ask the vault server about this KI
+					// ask the vault server about this KI
+					tNetSession *vaultServer = getSession(vault);
+					if (!vaultServer) {
+						err->log("ERR: I've got the ask the vault to verify a KI, but it's unavailable. I'll have to kick the player.\n", u->str());
+						terminate(u); // kick the player since we cant be sure he doesnt lie about the KI
+						return 1;
+					}
+					u->blockMessages = true; // dont process any furhter messages till we verified the KI
+					tmCustomVaultCheckKi checkKi(vaultServer, u->getSid(), setPlayer.ki+1, u->guid);
+					send(checkKi);
 				}
 				
+				return 1;
+			}
+			case NetMsgCustomVaultKiChecked:
+			{
+				// FIXME: do more here
 				return 1;
 			}
 			

@@ -65,7 +65,7 @@ namespace alc {
 		dbg.printf(" number of players: %d", numberPlayers);
 	}
 	
-	////tmVault
+	//// tmVault
 	tmVault::tmVault(tNetSession *u) : tmMsgBase(NetMsgVault, plNetAck | plNetKi, u)
 	{ ki = 0; }
 	
@@ -195,6 +195,37 @@ namespace alc {
 		if (u && u->proto == 1) dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid, 16));
 #endif
 		dbg.printf(" access level: %d", accessLevel);
+	}
+	
+	//// tmCustomVaultCheckKi
+	tmCustomVaultCheckKi::tmCustomVaultCheckKi(tNetSession *u, U32 x, U32 ki, Byte *guid)
+	 : tmMsgBase(NetMsgCustomVaultCheckKi, plNetX | plNetKi | plNetGUI | plNetAck | plNetCustom | plNetVersion, u)
+	{
+		this->x = x;
+		this->ki = ki;
+		memcpy(this->guid, guid, 16);
+#ifdef _UNET2_SUPPORT
+		if (u->proto == 1) unsetFlags(plNetGUI);
+#endif
+	}
+	
+	int tmCustomVaultCheckKi::stream(tBBuf &t)
+	{
+		int off = tmMsgBase::stream(t);
+#ifdef _UNET2_SUPPORT
+		if (u->proto == 1) { t.write(guid, 16); off += 16; } // GUID (only for old protocol, the new one sends it in the header)
+#endif
+		return off;
+	}
+	
+	void tmCustomVaultCheckKi::additionalFields()
+	{
+#ifdef _UNET2_SUPPORT
+		if (u && u->proto == 1) {
+			dbg.nl();
+			dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid, 16));
+		}
+#endif
 	}
 	
 } //end namespace alc
