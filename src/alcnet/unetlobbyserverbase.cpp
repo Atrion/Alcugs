@@ -333,7 +333,7 @@ namespace alc {
 						terminate(u); // kick the player since we cant be sure he doesnt lie about the KI
 						return 1;
 					}
-					u->blockMessages = true; // dont process any furhter messages till we verified the KI
+					u->blockMessages = true; // dont process any further messages till we verified the KI
 					tmCustomVaultCheckKi checkKi(vaultServer, u->getSid(), setPlayer.ki+1, u->guid);
 					send(checkKi);
 				}
@@ -342,6 +342,11 @@ namespace alc {
 			}
 			case NetMsgCustomVaultKiChecked:
 			{
+				if (u->whoami != KVault) {
+					err->log("ERR: %s sent a NetMsgCustomVaultKiChecked but is not the vault server. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
 				// FIXME: do more here
 				return 1;
 			}
