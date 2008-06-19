@@ -152,7 +152,6 @@ void tmPing::unsetRouteInfo() {
 }
 int tmPing::stream(tBBuf &t) {
 	int off;
-	if((flags & plNetSid) && u && u->proto!=0 && u->proto<3) unsetFlags(plNetSid);
 	off=tmMsgBase::stream(t);
 	t.putDouble(mtime);
 	t.putByte(destination);

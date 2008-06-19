@@ -41,7 +41,7 @@
 #include "alcugs.h"
 #include "unet.h"
 #include "protocol/msgparsers.h"
-#include "protocol/vaultrouter.h"
+#include "protocol/vaultproto.h"
 
 ////extra includes
 

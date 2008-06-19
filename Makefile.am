@@ -59,7 +59,7 @@ libalcnet1_a_SOURCES = \
  src/alcnet/protocol/lobbybasemsg.cpp \
  src/alcnet/protocol/lobbymsg.cpp \
  src/alcnet/protocol/vaultmsg.cpp \
- src/alcnet/protocol/vaultrouter.cpp
+ src/alcnet/protocol/vaultproto.cpp
 
 libalcnet1_a_CPPFLAGS = -DIN_ALC_LIBRARY
 #End LibAlcUruNet3 library

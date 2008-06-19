@@ -125,7 +125,7 @@ char * tNetSession::str(bool detail) {
 	}
 	// detailed string
 	sprintf(cnt,"[%i][%s:%i]",sid,alcGetStrIp(ip),ntohs(port));
-	if (name[0] != 0) {
+	if (name[0] != 0 && authenticated != 0) {
 		strcat(cnt, "[");
 		strcat(cnt, (char *)name);
 		if (authenticated == 10) strcat(cnt, "?"); // if the auth server didn't yet confirm that, add a question mark

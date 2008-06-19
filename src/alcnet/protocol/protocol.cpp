@@ -629,6 +629,7 @@ void tmMsgBase::store(tBBuf &t) {
 	}
 }
 int tmMsgBase::stream(tBBuf &t) {
+	if((flags & plNetSid) && u->proto!=0 && u->proto<3) unsetFlags(plNetSid); // dont send this flag to old peers
 	int off=0;
 	t.putU16(cmd);
 	off+=2;
@@ -731,8 +732,8 @@ Byte * tmMsgBase::str() {
 	if(flags & plNetGUI)
 		dbg.printf(" guid: %s,",alcGetStrGuid(guid, 16));
 	if(flags & plNetIP)
-		dbg.printf(" ip: %s:%i (%s:%i),",alcGetStrIp(ip),ntohs(port),alcGetStrIp(ntohl(ip)),port);
-	if(flags & plNetSid)
+		dbg.printf(" ip: %s:%i,",alcGetStrIp(ip),ntohs(port));
+	if((flags & plNetSid) && (u->proto == 0 || u->proto >= 3)) // it will not be sent to unet2 or unet3 peers
 		dbg.printf(" sid: %i,",sid);
 	dbg.seek(-1); // remove the last comma
 	additionalFields();
