@@ -98,7 +98,7 @@ namespace alc {
 	{
 		this->x = x;
 		memcpy(this->guid, guid, 16);
-#ifdef _UNET2_SUPPORT
+#ifdef ENABLE_UNET2
 		if (u->proto == 1) unsetFlags(plNetGUI);
 #endif
 		
@@ -115,7 +115,7 @@ namespace alc {
 	{
 		int off = tmMsgBase::stream(t);
 		off += t.put(login);
-#ifdef _UNET2_SUPPORT
+#ifdef ENABLE_UNET2
 		if (u->proto == 1) { t.write(guid, 16); off += 16; } // GUID (only for old protocol, the new one sends it in the header)
 #endif
 		t.putByte(accessLevel); ++off;
@@ -131,7 +131,7 @@ namespace alc {
 	{
 		dbg.nl();
 		dbg.printf(" login: %s, ", login.c_str());
-#ifdef _UNET2_SUPPORT
+#ifdef ENABLE_UNET2
 		if (u && u->proto == 1) dbg.printf("guid (unet2 protocol): %s, ", alcGetStrGuid(guid, 16));
 #endif
 		dbg.printf("accessLevel: %d, avatar: %s, gender: %s, friend: %s, key: %s", accessLevel, avatar.c_str(), gender.c_str(), friendName.c_str(), key.c_str());
@@ -145,7 +145,7 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
-#ifndef _UNET2_SUPPORT
+#ifndef ENABLE_UNET2
 		if (!hasFlags(plNetGUI)) throw txProtocolError(_WHERE("GUID flag missing"));
 #else
 		if (!hasFlags(plNetGUI)) {
@@ -159,7 +159,7 @@ namespace alc {
 	void tmCustomVaultPlayerCreated::additionalFields()
 	{
 		dbg.nl();
-#ifdef _UNET2_SUPPORT
+#ifdef ENABLE_UNET2
 		if (u->proto == 1) dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid, 16));
 #endif
 		dbg.printf(" result: 0x%02X (%s)", result, alcUnetGetAvatarCode(result));
@@ -172,7 +172,7 @@ namespace alc {
 		this->x = x;
 		this->ki = ki;
 		memcpy(this->guid, guid, 16);
-#ifdef _UNET2_SUPPORT
+#ifdef ENABLE_UNET2
 		if (u->proto == 1) unsetFlags(plNetGUI);
 #endif
 		this->accessLevel = accessLevel;
@@ -181,7 +181,7 @@ namespace alc {
 	int tmCustomVaultDeletePlayer::stream(tBBuf &t)
 	{
 		int off = tmMsgBase::stream(t);
-#ifdef _UNET2_SUPPORT
+#ifdef ENABLE_UNET2
 		if (u->proto == 1) { t.write(guid, 16); off += 16; } // GUID (only for old protocol, the new one sends it in the header)
 #endif
 		t.putByte(accessLevel); ++off;
@@ -191,7 +191,7 @@ namespace alc {
 	void tmCustomVaultDeletePlayer::additionalFields()
 	{
 		dbg.nl();
-#ifdef _UNET2_SUPPORT
+#ifdef ENABLE_UNET2
 		if (u && u->proto == 1) dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid, 16));
 #endif
 		dbg.printf(" access level: %d", accessLevel);
@@ -204,7 +204,7 @@ namespace alc {
 		this->x = x;
 		this->ki = ki;
 		memcpy(this->guid, guid, 16);
-#ifdef _UNET2_SUPPORT
+#ifdef ENABLE_UNET2
 		if (u->proto == 1) unsetFlags(plNetGUI);
 #endif
 	}
@@ -212,7 +212,7 @@ namespace alc {
 	int tmCustomVaultCheckKi::stream(tBBuf &t)
 	{
 		int off = tmMsgBase::stream(t);
-#ifdef _UNET2_SUPPORT
+#ifdef ENABLE_UNET2
 		if (u->proto == 1) { t.write(guid, 16); off += 16; } // GUID (only for old protocol, the new one sends it in the header)
 #endif
 		return off;
@@ -220,7 +220,7 @@ namespace alc {
 	
 	void tmCustomVaultCheckKi::additionalFields()
 	{
-#ifdef _UNET2_SUPPORT
+#ifdef ENABLE_UNET2
 		if (u && u->proto == 1) {
 			dbg.nl();
 			dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid, 16));

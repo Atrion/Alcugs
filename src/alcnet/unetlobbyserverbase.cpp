@@ -123,7 +123,7 @@ namespace alc {
 			return tNetSessionIte();
 		}
 		
-#ifndef _UNET2_SUPPORT
+#ifndef ENABLE_UNET2
 		if (!protocol.isNull() && protocol.asU32() == 1) {
 			err->log("ERR: Unet2 protocol is requested for service %d (%s) but it is no longer supported\n", dst, alcUnetGetDestination(dst));
 			return tNetSessionIte();
@@ -268,7 +268,7 @@ namespace alc {
 				
 				// find the client's session
 				tNetSessionIte ite(authResponse.ip, authResponse.port, authResponse.x);
-#ifdef _UNET2_SUPPORT
+#ifdef ENABLE_UNET2
 				tNetSession *client = NULL;
 				if (u->proto != 1) { // when we're using the new protocol, we're getting IP and Port, not only the sid
 					client = getSession(ite);

@@ -48,9 +48,6 @@
 */
 //#define _TX_ABORT_
 
-// enable/disblae support for unet2 protocol
-#define _UNET2_SUPPORT
-
 // Noise and latency debbuging tests
 //#define _UNET_DBG_
 

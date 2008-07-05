@@ -143,6 +143,14 @@ AC_ARG_WITH([dmalloc],
 #types
 #structures
 
+# program config
+AC_ARG_ENABLE(unet2, [  --enable-unet2          Enables the unet2 protocol (default YES)],
+ [case "${enableval}" in
+       yes) AC_DEFINE([ENABLE_UNET2],[],[Enable unet2 protocol]) ;;
+       no) ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-unet2) ;;
+     esac],[AC_DEFINE([ENABLE_UNET2],[],[Enable unet2 protocol])])
+
 #compiler specific
 AC_C_CONST
 AC_C_BIGENDIAN

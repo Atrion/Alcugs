@@ -64,7 +64,7 @@ namespace alc {
 		
 		t.get(age);
 		t.get(externalIp);
-#ifdef _UNET2_SUPPORT
+#ifdef ENABLE_UNET2
 		if (!t.eof()) { // if there's still something to read, there's a netmask before the external IP (unet2 protocol)
 			t.get(externalIp);
 			if (u) u->proto = 1; // unet2 protocol
@@ -85,7 +85,7 @@ namespace alc {
 		off += t.put(guid_str);
 		
 		off += t.put(age);
-#ifdef _UNET2_SUPPORT
+#ifdef ENABLE_UNET2
 		if (u->proto == 1) {
 			tUStr netmask(0); // normal UruString
 			netmask.writeStr("255.255.255.0");
@@ -100,7 +100,7 @@ namespace alc {
 	{
 		dbg.nl();
 		dbg.printf(" GUID: %s, Age filename: %s, external IP: %s", alcGetStrGuid(guid, 8), age.c_str(), externalIp.c_str());
-#ifdef _UNET2_SUPPORT
+#ifdef ENABLE_UNET2
 		if (u && u->proto == 1) dbg.printf(" (unet2 protocol)");
 #endif
 	}
@@ -116,7 +116,7 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
-#ifndef _UNET2_SUPPORT
+#ifndef ENABLE_UNET2
 		if (!hasFlags(plNetGUI)) throw txProtocolError(_WHERE("GUID flag missing"));
 #else
 		if (!hasFlags(plNetGUI)) memcpy(guid, t.read(16), 16);
@@ -130,7 +130,7 @@ namespace alc {
 	void tmCustomPlayerStatus::additionalFields()
 	{
 		dbg.nl();
-#ifdef _UNET2_SUPPORT
+#ifdef ENABLE_UNET2
 		if (u && u->proto == 1) dbg.printf(" GUID (unet2 protocol): %s,", alcGetStrGuid(guid, 16));
 #endif
 		dbg.printf(" Account: %s, Avatar: %s, Flag: 0x%02X, Status: 0x%02X (%s)", account.c_str(), avatar.c_str(), playerFlag, playerStatus, alcUnetGetReasonCode(playerStatus));
@@ -146,7 +146,7 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
-#ifndef _UNET2_SUPPORT
+#ifndef ENABLE_UNET2
 		if (!hasFlags(plNetIP)) throw txProtocolError(_WHERE("IP flag missing"));
 #endif
 		// there's already a guid member in tmMsgBase, so let's use that (though we need only 8 bytes)
@@ -155,7 +155,7 @@ namespace alc {
 		alcAscii2Hex(guid, (Byte *)guid_str.c_str(), 8);
 		
 		t.get(age);
-#ifdef _UNET2_SUPPORT
+#ifdef ENABLE_UNET2
 		if (!hasFlags(plNetIP)) {
 			ip = t.getU32(); // use the tmMsgBase property
 			port = 0;
@@ -167,7 +167,7 @@ namespace alc {
 	{
 		dbg.nl();
 		dbg.printf(" GUID: %s, Age filename: %s", alcGetStrGuid(guid, 8), age.c_str());
-#ifdef _UNET2_SUPPORT
+#ifdef ENABLE_UNET2
 		if (u && u->proto == 1) dbg.printf(", IP (unet2 protocol): %s,", alcGetStrIp(ip));
 #endif
 	}

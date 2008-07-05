@@ -146,10 +146,10 @@ namespace alc {
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
 		t.get(avatar);
-		Byte lastByte = t.getByte();
-		if (lastByte != 0) {
-			lerr->log("ERR: Got a NetMsgSetMyActivePlayer where the last byte was not 0x00. Kicking the player.");
-			throw txProtocolError(_WHERE("Last Byte of NetMsgSetMyActivePlayer was not 0x00"));
+		Byte unk = t.getByte();
+		if (unk != 0) {
+			lerr->log("NetMsgSetMyActivePlayer.unk is not null but %d\n", unk);
+			throw txProtocolError(_WHERE("NetMsgSetMyActivePlayer.unk is not 0"));
 		}
 		
 		u->x = x;
