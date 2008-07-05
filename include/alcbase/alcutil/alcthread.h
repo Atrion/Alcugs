@@ -38,6 +38,10 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCTHREAD_H_ID "$Id$"
 
+#ifdef ENABLE_THREADS
+#error Threads are not supported yet, please re-run ./reconf.sh and ./configure
+#endif
+
 namespace alc {
 
 	////DEFINITIONS

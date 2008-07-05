@@ -46,7 +46,7 @@ public:
 private:
 	int num;
 	int timer;
-	void main() {
+	virtual void main() {
 		int i;
 		for(i=0; i<num; i++) {
 			gmutex.lock();
