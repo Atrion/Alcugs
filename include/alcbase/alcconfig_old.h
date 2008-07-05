@@ -34,14 +34,6 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCCONFIG_OLD_H_ID "$Id$"
 
-//! Enable debugging?
-#define _DEBUG_
-
-//! Enable global debug level
-#ifndef _DBG_LEVEL_
-#define _DBG_LEVEL_ 0
-#endif
-
 /** Abort on Exception.
 		If you enable this, the program will automatically abort when it launches and
 		exception. Only useful to get Coredumps.

@@ -47,16 +47,19 @@ extern "C" {
 //using namespace std;
 #endif
 
-#ifdef _DBG_LEVEL_
+// make sure ENABLE_DEBUG is unset if _DBG_LEVEL_ is unset or set to 0
+#ifndef _DBG_LEVEL_
+  #undef ENABLE_DEBUG
+#else //_DBG_LEVEL_
  #if (_DBG_LEVEL_ == 0)
-  #ifdef _DEBUG_
-   #undef _DEBUG_
+  #ifdef ENABLE_DEBUG
+   #undef ENABLE_DEBUG
   #endif
  #endif
 #endif //_DBG_LEVEL_
 
 
-#ifdef _DEBUG_
+#ifdef ENABLE_DEBUG
 
 #ifndef _DBG_LEVEL_
 #define _DBG_LEVEL_ 0
@@ -123,7 +126,7 @@ char * __dbg_where(const char * b,const char * c,int d,const char * a,...);
 #define dmalloc_verify(a)
 #endif //_DMALLOC_DBG_
 
-#else //_DEBUG_
+#else //ENABLE_DEBUG
 //NO DEBUG
 
 #ifdef _DBG_LEVEL_
@@ -156,11 +159,11 @@ char * __dbg_where(const char * b,const char * c,int d,const char * a,...);
 
 #define dmalloc_verify(a)
 
-#endif //_DEBUG_
+#endif //ENABLE_DEBUG
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //__U_DEBUG_A_
+#endif //__U_ALCDEBUG_H
 
