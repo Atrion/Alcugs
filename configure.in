@@ -161,6 +161,24 @@ AC_ARG_ENABLE(msgdebug, [  --enable-msgdebug       Enables detailed logs about i
        no) ;;
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-msgdebug) ;;
      esac])
+AC_ARG_ENABLE(ackdebug, [  --enable-ackdebug       Enables detailed logs about the ack stack (default NO)],
+ [case "${enableval}" in
+       yes) AC_DEFINE([ENABLE_ACKDEBUG],[],[Enables detailed logs about the ack stack]) ;;
+       no) ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-ackdebug) ;;
+     esac])
+AC_ARG_ENABLE(netdebug, [  --enable-netdebug       Enables noise and latency debuging tests (default NO)],
+ [case "${enableval}" in
+       yes) AC_DEFINE([ENABLE_NETDEBUG],[],[Enables noise and latency debuging tests]) ;;
+       no) ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-netdebug) ;;
+     esac])
+AC_ARG_ENABLE(msgdump, [  --enable-msgdump        Enables (byte-level) dumping of messages (default NO)],
+ [case "${enableval}" in
+       yes) AC_DEFINE([ENABLE_MSGDUMP],[],[Enables (byte-level) dumping of messages]) ;;
+       no) ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-msgdump) ;;
+     esac])
 
 #compiler specific
 AC_C_CONST

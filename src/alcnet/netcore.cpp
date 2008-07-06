@@ -155,7 +155,7 @@ void tUnetBase::_reconfigure() {
 	if(!var.isNull()) {
 		snd_expire=var.asU32();
 	}
-	#ifdef _UNET_DBG_
+	#ifdef ENABLE_NETDEBUG
 	var=cfg->getVar("net.lim_down_cap","global");
 	if(!var.isNull()) {
 		lim_down_cap=var.asU32();
@@ -287,7 +287,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 		{
 			tUnetMsg * msg;
 			int ret = 0; // 0 - non parsed; 1 - parsed; -1 - hack attempt; -2 - parse error
-			#ifdef _DEBUG_PACKETS_
+			#ifdef ENABLE_MSGDUMP
 			log->log("%s New MSG Recieved\n",u->str());
 			#endif
 			u->rcvq->rewind();

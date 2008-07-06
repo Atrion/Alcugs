@@ -171,7 +171,7 @@ protected:
 	
 	U32 ip_overhead;
 	//debugging stuff
-	#ifdef _UNET_DBG_
+	#ifdef ENABLE_NETDEBUG
 	U32 lim_down_cap; //in bytes
 	U32 lim_up_cap; //in bytes
 	Byte in_noise; //(0-100)

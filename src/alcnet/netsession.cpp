@@ -239,7 +239,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		return;
 	}
 	
-	#ifdef _DEBUG_PACKETS_
+	#ifdef ENABLE_MSGDUMP
 	net->log->log("<RCV> RAW Packet follows: \n");
 	net->log->dumpbuf(buf,size);
 	net->log->nl();
@@ -251,7 +251,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	
 	try {
 		mbuf.get(msg);
-		#ifdef _DEBUG_PACKETS_
+		#ifdef ENABLE_MSGDUMP
 		net->log->log("<RCV> ");
 		msg.dumpheader(net->log);
 		net->log->nl();
@@ -445,7 +445,7 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 */
 Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 	//drop already parsed messages
-	#ifdef _DEBUG_PACKETS_
+	#ifdef ENABLE_MSGDUMP
 	net->log->log("%s INF: SN %i (Before) window is:\n",str(),msg.sn);
 	net->log->dumpbuf((Byte *)w,rcv_win);
 	net->log->nl();
@@ -472,7 +472,7 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 				i++; start++;
 				wite++;
 				if(i>=rcv_win*8) { i=0; start=0; }
-				#ifdef _DEBUG_PACKETS_
+				#ifdef ENABLE_MSGDUMP
 				net->log->log("%s INF: A bit was deactivated (1)\n",str());
 				#endif
 			}
@@ -483,16 +483,16 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 				start++;
 				wite++;
 				if(start>=rcv_win*8) { start=0; ck=i; }
-				#ifdef _DEBUG_PACKETS_
+				#ifdef ENABLE_MSGDUMP
 				net->log->log("%s INF: A bit was deactivated (2)\n",str());
 				#endif
 			}
-			#ifdef _DEBUG_PACKETS_
+			#ifdef ENABLE_MSGDUMP
 			net->log->log("%s INF: Packet %i accepted to be parsed\n",str(),msg.sn);
 			#endif
 		}
 	}
-	#ifdef _DEBUG_PACKETS_
+	#ifdef ENABLE_MSGDUMP
 	net->log->log("%s INF: SN %i (after) window is:\n",str(),msg.sn);
 	net->log->dumpbuf((Byte *)w,rcv_win);
 	net->log->nl();
@@ -506,7 +506,7 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	tUnetAck * ack,* cack;
 	U32 A,B;
 	
-	#ifdef _ACKSTACK_DBG_
+	#ifdef ENABLE_ACKDEBUG
 	net->log->log("stacking ack %i,%i %i,%i\n",msg.sn,msg.frn,msg.ps,msg.pfr);
 	#endif
 	
@@ -522,7 +522,7 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	if(tts>ack_rtt) tts=ack_rtt;
 	net->updatetimer(tts);
 	ack->timestamp=net->net_time + tts;
-	#ifdef _DEBUG_PACKETS_
+	#ifdef ENABLE_MSGDUMP
 	net->log->log("tts: %i, %i, %i\n",msg.frt,tts,cabal);
 	#endif
 	
@@ -540,14 +540,14 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	} else {
 		ackq->rewind();
 		while((cack=ackq->getNext())!=NULL) {
-			#ifdef _ACKSTACK_DBG_
+			#ifdef ENABLE_ACKDEBUG
 			net->log->log("2store[%i] %i,%i %i,%i\n",i,(ack->A & 0x000000FF),(ack->A >> 8),(ack->B & 0x000000FF),(ack->B >> 8));
 			net->log->log("2check[%i] %i,%i %i,%i\n",i,(cack->A & 0x000000FF),(cack->A >> 8),(cack->B & 0x000000FF),(cack->B >> 8));
 			#endif
 
 			i++;
 			if(A>=cack->A && B<=cack->A) {
-				#ifdef _ACKSTACK_DBG_
+				#ifdef ENABLE_ACKDEBUG
 				net->log->log("A\n");
 				#endif
 				if(cack->next==NULL) {
@@ -562,20 +562,20 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 					continue;
 				}
 			} else if(B>cack->A) {
-				#ifdef _ACKSTACK_DBG_
+				#ifdef ENABLE_ACKDEBUG
 				net->log->log("B\n");
 				#endif
 				if(cack->next==NULL) { ackq->add(ack); ack=NULL; break; }
 				else continue;
 			} if(A<cack->B) {
-				#ifdef _ACKSTACK_DBG_
+				#ifdef ENABLE_ACKDEBUG
 				net->log->log("C\n");
 				#endif
 				ackq->insertBefore(ack);
 				ack=NULL;
 				break;
 			} else if(A<=cack->A && A>=cack->B) {
-				#ifdef _ACKSTACK_DBG_
+				#ifdef ENABLE_ACKDEBUG
 				net->log->log("D\n");
 				#endif
 				A=ack->A=cack->A;
@@ -593,7 +593,7 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 		delete ack;
 	}
 	
-	#ifdef _ACKSTACK_DBG_
+	#ifdef ENABLE_ACKDEBUG
 	net->log->log("ack stack TAIL looks like:\n");
 	i=0;
 	while((cack=ackq->getNext())!=NULL) {
@@ -602,7 +602,7 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	#endif
 #endif
 
-	#ifdef _ACKSTACK_DBG_
+	#ifdef ENABLE_ACKDEBUG
 	net->log->log("ack stack looks like:\n");
 	ackq->rewind();
 	i=0;
@@ -691,7 +691,7 @@ void tNetSession::ackUpdate() {
 			tts=computetts((i*8)+hsize+net->ip_overhead);
 		*/
 			
-		#ifdef _UNET_DBG_
+		#ifdef ENABLE_NETDEBUG
 		tts+=net->latency;
 		#endif
 		//tts=0;
@@ -731,7 +731,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 	U32 sn,ps;
 	Byte frn,pfr;
 
-	#ifdef _DEBUG_PACKETS_
+	#ifdef ENABLE_MSGDUMP
 	net->log->log("<RCV>");
 	#endif
 	t.data.rewind();
@@ -749,7 +749,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 		pfr=A3 & 0x000000FF;
 		sn=A1 >> 8;
 		ps=A3 >> 8;
-		#ifdef _DEBUG_PACKETS_
+		#ifdef ENABLE_MSGDUMP
 		if(i!=0) net->log->print("    |");
 		net->log->print(" Ack %i,%i %i,%i\n",sn,frn,ps,pfr);
 		#endif
@@ -762,12 +762,12 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 			
 			if(A1>=A2 && A2>A3) {
 				//then delete
-				#ifdef _DEBUG_PACKETS_
+				#ifdef ENABLE_MSGDUMP
 				net->log->log("Deleting packet %i,%i\n",msg->sn,msg->frn);
 				#endif
 				if(msg->tryes==1 && A1==A2) {
 					U32 crtt=net->net_time-msg->snd_timestamp;
-					#ifdef _UNET_DBG_
+					#ifdef ENABLE_NETDEBUG
 					crtt+=net->latency;
 					#endif
 					updateRTT(crtt);

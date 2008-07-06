@@ -127,7 +127,7 @@ void tUnet::init() {
 
 	ip_overhead=20+8;
 
-	#ifdef _UNET_DBG_
+	#ifdef ENABLE_NETDEBUG
 	lim_down_cap=0; //8000; //in bytes
 	lim_up_cap=0; //8000; //in bytes
 	in_noise=0; //25; //25; //(0-100)
@@ -529,7 +529,7 @@ int tUnet::Recv() {
 #endif
 	DBG(9,"After recvfrom\n");
 
-#ifdef _UNET_DBG_
+#ifdef ENABLE_NETDEBUG
 	if(n>0) {
 		if(!in_noise || (random() % 100) >= in_noise) {
 			DBG(8,"Incomming Packet accepted\n");
@@ -764,7 +764,7 @@ void tUnet::basesend(tNetSession * u,tmBase &msg) {
 		pmsg->timestamp+=tts;
 		tts+=u->computetts(csize+hsize+ip_overhead);
 		
-		#ifdef _UNET_DBG_
+		#ifdef ENABLE_NETDEBUG
 		pmsg->timestamp+=latency;
 		#endif
 		
@@ -801,7 +801,7 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 	u->server.pn++;
 	msg->pn=u->server.pn;
 	
-	#ifdef _DEBUG_PACKETS_
+	#ifdef ENABLE_MSGDUMP
 	log->log("<SND> ");
 	msg->dumpheader(log);
 	log->nl();
@@ -813,7 +813,7 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 	mbuf = new tMBuf(msg->size());
 	mbuf->put(*msg);
 
-	#ifdef _DEBUG_PACKETS_
+	#ifdef ENABLE_MSGDUMP
 	log->log("<SND> RAW Packet follows: \n");
 	log->dumpbuf(*mbuf);
 	log->nl();
@@ -866,7 +866,7 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 	buf[0]=0x03; //magic number
 	DBG(9,"Before the Sendto call...\n");
 	//
-#ifdef _UNET_DBG_
+#ifdef ENABLE_NETDEBUG
 	if(!out_noise || (random() % 100) >= out_noise) {
 		DBG(8,"Outcomming Packet accepted\n");
 	} else {

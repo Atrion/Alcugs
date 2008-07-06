@@ -58,7 +58,6 @@
 #define __U_ALCUGS_H_ID "$Id$"
 
 #include "alcconfig.h"
-#include "alcconfig_old.h" //TEMP FILE
 #include "alcxversion.h"
 
 #ifdef VERSION
