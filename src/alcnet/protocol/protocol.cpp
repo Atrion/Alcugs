@@ -492,7 +492,7 @@ int tmNetClientComm::stream(tBBuf &t) {
 	return 12;
 }
 Byte * tmNetClientComm::str() {
-	#ifdef _UNET_MSGDBG_
+	#ifdef ENABLE_MSGDEBUG
 	static Byte cnt[1024];
 	sprintf((char *)cnt,"(Re)Negotation bandwidth: %i bps time: %s",bandwidth,(char *)timestamp.str());
 	if (s) { // don't use sprintf(cnt, "%s", cnt), valgrind shows a "Source and destination overlap in mempcpy"
@@ -701,7 +701,7 @@ void tmMsgBase::copyProps(tmMsgBase &t) {
 	}
 }
 Byte * tmMsgBase::str() {
-	#ifdef _UNET_MSGDBG_
+	#ifdef ENABLE_MSGDEBUG
 	dbg.printf("%s %04X %08X",alcUnetGetMsgCode(cmd),cmd,flags);
 	if (u) dbg.printf(" on %s", u->str());
 	dbg.printf("\n Flags:");

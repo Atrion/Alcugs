@@ -37,9 +37,6 @@
 // Noise and latency debbuging tests
 //#define _UNET_DBG_
 
-// Debugging information attached to messages
-#define _UNET_MSGDBG_
-
 // Dump incoming/outgoing packages
 //#define _DEBUG_PACKETS_
 
