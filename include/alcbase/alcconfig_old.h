@@ -34,12 +34,6 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCCONFIG_OLD_H_ID "$Id$"
 
-/** Abort on Exception.
-		If you enable this, the program will automatically abort when it launches and
-		exception. Only useful to get Coredumps.
-*/
-//#define _TX_ABORT_
-
 // Noise and latency debbuging tests
 //#define _UNET_DBG_
 
@@ -51,8 +45,5 @@
 
 // Debug the ack stack
 //#define _ACKSTACK_DBG_
-
-// Enable dangerous testing options (must be defined, as 0 or as 1)
-#define _DANGEROUS_TESTING 0
 
 #endif

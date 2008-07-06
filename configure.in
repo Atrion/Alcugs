@@ -149,6 +149,12 @@ AC_ARG_ENABLE(unet2, [  --enable-unet2          Enables the unet2 protocol (defa
        no) ;;
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-unet2) ;;
      esac],[AC_DEFINE([ENABLE_UNET2],[],[Enable unet2 protocol])])
+AC_ARG_ENABLE(admin, [  --enable-admin          Enables possibly dangerous admin options in alcping (default NO)],
+ [case "${enableval}" in
+       yes) AC_DEFINE([ENABLE_ADMIN],[],[Enable possibly dangerous admin options]) ;;
+       no) ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-admin) ;;
+     esac])
 
 #compiler specific
 AC_C_CONST
