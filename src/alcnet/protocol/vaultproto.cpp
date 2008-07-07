@@ -55,18 +55,17 @@ namespace alc {
 	void tvCreatableGenericValue::store(tBBuf &t)
 	{
 		format = t.getByte();
-		DBG(5, "creatable generic value: format: 0x%02X", format);
 		
 		switch (format) {
 			case 0x00: // integer (signed, 4 bytes)
 				integer = t.getS32();
-				DBGM(5, ", integer value: %d\n", integer);
 				break;
 			case 0x03: // uru string (inverted)
 				t.get(str);
-				DBGM(5, ", string value: %s\n", str.c_str());
 				break;
-			// FIXME: add 0x07 (timestamp)
+			case 0x07:
+				time = t.getDouble();
+				break;
 			default:
 				DBGM(5, "\n");
 				lerr->log("got creatable generic value with unknown format 0x%02X\n", format);
@@ -85,7 +84,9 @@ namespace alc {
 			case 0x03:
 				off += t.put(str);
 				break;
-			// FIXME: add 0x07 (timestamp)
+			case 0x07:
+				t.putDouble(time); off += 8;
+				break;
 			default:
 				throw txProtocolError(_WHERE("unknown creatable generic value format"));
 		}
@@ -96,7 +97,6 @@ namespace alc {
 	void tvCreatableStream::store(tBBuf &t)
 	{
 		size = t.getU32();
-		DBG(5, "creatable stream: size: %d\n", size);
 		if (data) free(data);
 		data = (Byte *)malloc(size);
 		memcpy(data, t.read(size), size);
@@ -202,7 +202,7 @@ namespace alc {
 			buf->get(*items[i]);
 		}
 		
-		if (compressed == 0x03) { // we have to clean up
+		if (compressed == 0x03) { // it was compressed, so we have to clean up
 			if (!buf->eof()) throw txProtocolError(_WHERE("Message is too long")); // there must not be any byte after what we parsed above
 			delete buf;
 		}

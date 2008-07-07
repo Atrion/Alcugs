@@ -59,6 +59,7 @@ namespace alc {
 		Byte format;
 		S32 integer;
 		tUStr str;
+		double time;
 	};
 	
 	class tvCreatableStream : public tvBase {
