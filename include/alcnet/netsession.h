@@ -76,6 +76,8 @@ public:
 	inline U32 getIp(void) { return ip; }
 	inline U16 getPort(void) { return port; }
 	inline Byte getAccessLevel(void) { return accessLevel; }
+	inline Byte getTpots(void) { return tpots; }
+	U32 onlineTime(void);
 
 private:
 	void init();

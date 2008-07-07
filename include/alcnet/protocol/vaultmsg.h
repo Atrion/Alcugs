@@ -50,6 +50,18 @@ namespace alc {
 		virtual void additionalFields();
 	};
 	
+	class tmCustomVaultPlayerStatus : public tmMsgBase {
+	public:
+		tmCustomVaultPlayerStatus(tNetSession *u, U32 ki, U32 x, const Byte *guid, const Byte *age, Byte state, U32 onlineTime);
+		virtual int stream(tBBuf &t);
+		// format
+		tUStr age;
+		Byte state;
+		U32 onlineTime;
+	protected:
+		virtual void additionalFields();
+	};
+	
 	class tmVault : public tmMsgBase { // this is both a vault and a lobbybasemsg, but the vault server includes only this file so the class is defined here
 	public:
 		tmVault(tNetSession *u);

@@ -160,5 +160,14 @@ namespace alc {
 		dbg.nl();
 		dbg.printf(" avatar: %s", avatar.c_str());
 	}
+	
+	//// tmActivePlayerSet
+	tmActivePlayerSet::tmActivePlayerSet(tNetSession *u) : tmMsgBase(NetMsgActivePlayerSet, plNetAck | plNetCustom | plNetKi | plNetX, u)
+	{
+		x = u->x;
+		ki = u->ki;
+		if (u->getTpots() != 2) // if it is TPOTS or we are unsure, use TPOTS mod
+			cmd = NetMsgActivePlayerSet2;
+	}
 
 } //end namespace alc

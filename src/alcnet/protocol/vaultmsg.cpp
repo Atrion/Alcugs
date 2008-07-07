@@ -65,6 +65,38 @@ namespace alc {
 		dbg.printf(" number of players: %d", numberPlayers);
 	}
 	
+	//// tmCustomVaultPlayerStatus
+	tmCustomVaultPlayerStatus::tmCustomVaultPlayerStatus(tNetSession *u, U32 ki, U32 x, const Byte *guid, const Byte *age, Byte state, U32 onlineTime)
+	 : tmMsgBase(NetMsgCustomVaultPlayerStatus, plNetAck | plNetCustom | plNetVersion | plNetX | plNetKi, u)
+	{
+		this->ki = ki;
+		this->x = x;
+		
+		memcpy(this->guid, guid, 8);
+		this->age.setVersion(0); // normal UruString
+		this->age.writeStr(age);
+		this->state = state;
+		this->onlineTime = onlineTime;
+	}
+	
+	int tmCustomVaultPlayerStatus::stream(tBBuf &t)
+	{
+		int off = tmMsgBase::stream(t);
+		off += t.put(age);
+		tUStr guid_str(0); // normal UruString
+		guid_str.writeStr(alcGetStrGuid(guid, 8));
+		off += t.put(guid_str);
+		t.putByte(state); ++off;
+		t.putU32(onlineTime); off += 4;
+		return off;
+	}
+	
+	void tmCustomVaultPlayerStatus::additionalFields()
+	{
+		dbg.nl();
+		dbg.printf(" GUID: %s, Age filename: %s, State: 0x%02X, online time: %d", alcGetStrGuid(guid, 8), age.c_str(), state, onlineTime);
+	}
+	
 	//// tmVault
 	tmVault::tmVault(tNetSession *u) : tmMsgBase(NetMsgVault, plNetAck | plNetKi, u)
 	{ ki = 0; }
@@ -73,6 +105,8 @@ namespace alc {
 	{
 		message.put(*vaultMessage);
 		this->ki = ki;
+		if (u->getTpots() == 1) // if were sure it is TPOTS, use TPOTS mod
+			cmd = NetMsgVault2;
 	}
 	
 	void tmVault::store(tBBuf &t)

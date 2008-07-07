@@ -920,6 +920,11 @@ void tNetSession::checkAlive(void)
 	}
 }
 
+U32 tNetSession::onlineTime(void)
+{
+	return alcGetTime()-nego_stamp.seconds;
+}
+
 /* End session */
 
 }

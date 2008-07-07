@@ -100,12 +100,16 @@ namespace alc {
 			return;
 		}
 		
-		u->ki = ki;
-		tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->sid, u->guid, u->name, avatar, 2 /* visible */, RJoining);
+		// tell vault and taracking
+		tmCustomPlayerStatus trackingStatus(trackingServer, ki, u->sid, u->guid, u->name, avatar, 2 /* visible */, RJoining);
 		send(trackingStatus);
+		tmCustomVaultPlayerStatus vaultStatus(vaultServer, ki, u->sid, guid, name, 1 /* what does this mean? */, u->onlineTime());
+		send(vaultStatus);
 		
-		// FIXME: send the status to the vault as well
-		// FIXME: tell the client that the status has been set
+		// now, tell the client
+		u->ki = ki;
+		tmActivePlayerSet playerSet(u);
+		send(playerSet);
 	}
 	
 	void tUnetLobbyServerBase::onStart(void)
@@ -374,7 +378,11 @@ namespace alc {
 			
 			//// vault messages
 			case NetMsgVault:
+			case NetMsgVault2: // TPOTS
 			{
+				if (msg->cmd == NetMsgVault) u->tpots = 2; // it's not TPOTS
+				else                         u->tpots = 1; // it is TPOTS
+				
 				// get the data out of the packet
 				tmVault vaultMsg(u);
 				msg->data->get(vaultMsg);

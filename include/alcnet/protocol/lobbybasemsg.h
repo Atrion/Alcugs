@@ -86,6 +86,11 @@ namespace alc {
 		virtual void additionalFields();
 	};
 	
+	class tmActivePlayerSet : public tmMsgBase {
+	public:
+		tmActivePlayerSet(tNetSession *u);
+	};
+	
 } //End alc namespace
 
 #endif
