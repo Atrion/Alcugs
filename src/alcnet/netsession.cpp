@@ -117,7 +117,7 @@ void tNetSession::init() {
 	name[0] = 0;
 }
 char * tNetSession::str(bool detail) {
-	static char cnt[1024];
+	static char cnt[1024], tmp[1024];
 	if (!detail) {
 		// short string
 		sprintf(cnt,"[%s:%i]",alcGetStrIp(ip),ntohs(port));
@@ -126,15 +126,14 @@ char * tNetSession::str(bool detail) {
 	// detailed string
 	sprintf(cnt,"[%i][%s:%i]",sid,alcGetStrIp(ip),ntohs(port));
 	if (name[0] != 0 && authenticated != 0) {
-		strcat(cnt, "[");
-		strcat(cnt, (char *)name);
-		if (authenticated == 10) strcat(cnt, "?"); // if the auth server didn't yet confirm that, add a question mark
-		strcat(cnt, "]");
+		if (authenticated == 10) sprintf(tmp, "[%s?]", name); // if the auth server didn't yet confirm that, add a question mark
+		else if (ki != 0) sprintf(tmp, "[%s:%d]", name, ki);
+		else sprintf(tmp, "[%s]", name);
+		strcat(cnt, tmp);
 	}
 	else if (whoami != 0) {
-		strcat(cnt, "[");
-		strcat(cnt, alcUnetGetDestination(whoami));
-		strcat(cnt, "]");
+		sprintf(tmp, "[%s]", alcUnetGetDestination(whoami));
+		strcat(cnt, tmp);
 	}
 	return cnt;
 }

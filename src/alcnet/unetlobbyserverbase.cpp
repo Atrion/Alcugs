@@ -88,14 +88,19 @@ namespace alc {
 	
 	void tUnetLobbyServerBase::setActivePlayer(tNetSession *u, U32 ki, const Byte *avatar)
 	{
-		// FIXME: do multi-login check
+		tNetSession *client;
+		smgr->rewind();
+		while ((client = smgr->getNext())) {
+			if (client->authenticated == 1 && client->ki == ki) // an age cannot host the same avatar multiple times
+				killPlayer(client, RLoggedInElsewhere);
+		}
 		
 		if (whoami == KGame && avatar[0] == 0) // empty avatar names are not allowed in game server
 			throw txProtocolError(_WHERE("Someone is trying to set an empty avatar name, but I\'m a game server. Kick him."));
 	
 		tNetSession *trackingServer = getSession(tracking), *vaultServer = getSession(vault);
 		if (!trackingServer || !vaultServer) {
-			err->log("ERR: I've got to update a player\'s (%s) status for the tracking and vault server, but one of them is unavailable.\n",
+			err->log("ERR: I've got to set player %s active, but tracking or vault is unavailable.\n",
 					u->str());
 			return;
 		}
@@ -110,6 +115,32 @@ namespace alc {
 		u->ki = ki;
 		tmActivePlayerSet playerSet(u);
 		send(playerSet);
+	}
+	
+	void tUnetLobbyServerBase::killPlayer(tNetSession *u, Byte reason)
+	{
+		if (u->whoami != 0 && u->whoami != KClient) {
+			err->log("kill player request for %s rejected as it is not a player", u->str());
+			return;
+		}
+		
+		terminate(u, reason); // kick it
+		
+		// tell the others about it
+		tNetSession *trackingServer = getSession(tracking), *vaultServer = getSession(vault);
+		if (!trackingServer || !vaultServer) {
+			err->log("ERR: I've got to update a player\'s (%s) status for the tracking and vault server, but one of them is unavailable.\n",
+					u->str());
+			return;
+		}
+		
+		tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->sid, u->guid, u->name, (Byte *)"", 0 /* delete */, RStopResponding);
+		send(trackingStatus);
+		
+		Byte emptyGuid[8];
+		memset(emptyGuid, 0, 8);
+		tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->sid, emptyGuid, (Byte *)"", 0 /* what does this mean? */, u->onlineTime());
+		send(vaultStatus);
 	}
 	
 	void tUnetLobbyServerBase::onStart(void)

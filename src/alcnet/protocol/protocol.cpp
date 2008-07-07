@@ -1055,7 +1055,7 @@ const char * alcUnetGetMsgCode(U16 code) {
 			ret="NetMsgSetTimeout";
 			break;
 		case 0x0465:
-			ret="NetMsgActivePlayerSet_NetMsgSetTimeout2";
+			ret="NetMsgActivePlayerSet|NetMsgSetTimeout2";
 			break;
 		case 0x0466:
 			ret="NetMsgActivePlayerSet2";
