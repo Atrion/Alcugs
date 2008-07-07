@@ -91,7 +91,7 @@ namespace alc {
 		tNetSession *client;
 		smgr->rewind();
 		while ((client = smgr->getNext())) {
-			if (client->authenticated == 1 && client->ki == ki) // an age cannot host the same avatar multiple times
+			if (client->whoami == KClient && client->ki == ki) // an age cannot host the same avatar multiple times
 				killPlayer(client, RLoggedInElsewhere);
 		}
 		
@@ -126,15 +126,14 @@ namespace alc {
 		
 		terminate(u, reason); // kick it
 		
-		// tell the others about it
-		tNetSession *trackingServer = getSession(tracking), *vaultServer = getSession(vault);
-		if (!trackingServer || !vaultServer) {
-			err->log("ERR: I've got to update a player\'s (%s) status for the tracking and vault server, but one of them is unavailable.\n",
-					u->str());
-			return;
-		}
-		
 		if (u->ki != 0) {
+			// tell the others about it
+			tNetSession *trackingServer = getSession(tracking), *vaultServer = getSession(vault);
+			if (!trackingServer || !vaultServer) {
+				err->log("ERR: I've got to update a player\'s (%s) status for the tracking and vault server, but one of them is unavailable.\n", u->str());
+				return;
+			}
+			
 			tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->sid, u->guid, u->name, (Byte *)"", 0 /* delete */, RStopResponding);
 			send(trackingStatus);
 			
@@ -450,7 +449,7 @@ namespace alc {
 				if (u->whoami == KVault) { // got it from the vault - send it to the client
 					if (!vaultMsg.hasFlags(plNetKi) || vaultMsg.ki == 0) throw txProtocolError(_WHERE("KI missing"));
 					tNetSession *client = smgr->find(vaultMsg.ki);
-					if (!client) {
+					if (!client || client->whoami != KClient) {
 						err->log("ERR: I've got a vault message to forward to player with KI %d but can\'t find it\'s session.\n", vaultMsg.ki);
 						return 1;
 					}
@@ -471,6 +470,30 @@ namespace alc {
 					tmVault vaultMsgFwd(vaultServer, u->ki, &parsedMsg);
 					send(vaultMsgFwd);
 				}
+				
+				return 1;
+			}
+			
+			// terminating a player
+			case NetMsgPlayerTerminated:
+			{
+				if (u->whoami != KTracking && u->whoami != KVault) {
+					err->log("ERR: %s sent a NetMsgPlayerTerminated but is neither tracking nor vault server. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmPlayerTerminated playerTerminated(u);
+				msg->data->get(playerTerminated);
+				log->log("<RCV> %s\n", playerTerminated.str());
+				
+				tNetSession *client = smgr->find(playerTerminated.ki);
+				if (!client || (client->whoami != KClient && client->whoami != 0)) {
+					err->log("ERR: I've got to kick the player with KI %d but can\'t find it\'s session.\n", playerTerminated.ki);
+					return 1;
+				}
+				
+				terminate(client, playerTerminated.reason);
 				
 				return 1;
 			}

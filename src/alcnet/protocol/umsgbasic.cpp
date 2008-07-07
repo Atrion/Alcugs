@@ -95,6 +95,7 @@ tmPlayerTerminated::tmPlayerTerminated(tNetSession * u,tNetSessionIte &ite,Byte 
 }
 void tmPlayerTerminated::store(tBBuf &t) {
 	tmMsgBase::store(t);
+	if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
 	reason=t.getByte();
 }
 int tmPlayerTerminated::stream(tBBuf &t) {

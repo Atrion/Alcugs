@@ -227,6 +227,7 @@ void tUnetBase::terminate(tNetSession *u,Byte reason, bool destroyOnly)
 	else // otherwise, give the session one second to send remaining messages
 		u->setTimeout(1);
 	u->terminated = true;
+	u->whoami = 0; // it's terminated, so it's no one special anymore
 	u->timestamp.seconds = alcGetTime();
 }
 

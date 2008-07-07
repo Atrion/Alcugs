@@ -127,7 +127,6 @@ private:
 	
 	void updateNetTime();
 	
-	//void send();
 	void basesend(tNetSession * u,tmBase & m);
 	void rawsend(tNetSession * u,tUnetUruMsg * m);
 
