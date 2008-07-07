@@ -50,7 +50,7 @@ namespace alc {
 		virtual void additionalFields();
 	};
 	
-	class tmVault : public tmMsgBase {
+	class tmVault : public tmMsgBase { // this is both a vault and a lobbybasemsg, but the vault server includes only this file so the class is defined here
 	public:
 		tmVault(tNetSession *u);
 		tmVault(tNetSession *u, U32 ki, tBaseType *vaultMessage);

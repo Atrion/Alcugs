@@ -47,7 +47,9 @@ namespace alc {
 	class tmCustomPlayerStatus : public tmMsgBase {
 	public:
 		tmCustomPlayerStatus(tNetSession *u);
+		tmCustomPlayerStatus(tNetSession *u, U32 ki, U32 x, const Byte *guid, const Byte *account, const Byte *avatar, Byte playerFlag, Byte playerStatus);
 		virtual void store(tBBuf &t);
+		virtual int stream(tBBuf &t);
 		// format
 		tUStr account, avatar;
 		Byte playerFlag, playerStatus;

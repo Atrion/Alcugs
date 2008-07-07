@@ -707,7 +707,7 @@ SByte tStrBuf::compare(const void * str) {
 }
 const Byte * tStrBuf::c_str() {
 	DBG(2,"tStrBuf::c_str()\n");
-	if(isNull()) {
+	if(isNull() || msize == 0) {
 		DBG(2,"is null\n");
 		return (Byte *)"";
 	}
@@ -1235,7 +1235,7 @@ void tStrBuf::printf(const char * msg, ...) {
 	char buffer[1024];
 
 	va_start(ap,msg);
-	       
+	
 	vsnprintf(buffer,1023,msg,ap);
 	buffer[1023]='\0';
 	this->write((Byte *)buffer,strlen(buffer));

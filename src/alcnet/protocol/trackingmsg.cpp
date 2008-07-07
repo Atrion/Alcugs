@@ -106,10 +106,34 @@ namespace alc {
 	}
 	
 	//// tmCustomPlayerStatus
-	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
+	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *u)
+	 : tmMsgBase(NetMsgCustomPlayerStatus, plNetAck | plNetVersion | plNetCustom | plNetX | plNetKi | plNetGUI, u)
 	{
+#ifdef ENABLE_UNET2
+		if (u->proto == 1)
+			unsetFlags(plNetGUI);
+#endif
 		account.setVersion(0); // normal UrurString
 		avatar.setVersion(0); // normal UrurString
+	}
+	
+	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *u, U32 ki, U32 x, const Byte *guid, const Byte *account, const Byte *avatar, Byte playerFlag, Byte playerStatus)
+	 : tmMsgBase(NetMsgCustomPlayerStatus, plNetAck | plNetVersion | plNetCustom | plNetX | plNetKi | plNetGUI, u)
+	{
+#ifdef ENABLE_UNET2
+		if (u->proto == 1)
+			unsetFlags(plNetGUI);
+#endif
+		this->x = x;
+		this->ki = ki;
+		memcpy(this->guid, guid, 16);
+		
+		this->account.setVersion(0); // normal UrurString
+		this->account.writeStr(account);
+		this->avatar.setVersion(0); // normal UrurString
+		this->avatar.writeStr(avatar);
+		this->playerFlag = playerFlag;
+		this->playerStatus = playerStatus;
 	}
 	
 	void tmCustomPlayerStatus::store(tBBuf &t)
@@ -127,13 +151,26 @@ namespace alc {
 		playerStatus = t.getByte();
 	}
 	
+	int tmCustomPlayerStatus::stream(tBBuf &t)
+	{
+		int off = tmMsgBase::stream(t);
+#ifdef ENABLE_UNET2
+		if (u->proto == 1) { t.write(guid, 16); off += 16; } // GUID (only for old protocol, the new one sends it in the header)
+#endif
+		off += t.put(account);
+		off += t.put(avatar);
+		t.putByte(playerFlag); ++off;
+		t.putByte(playerStatus); ++off;
+		return off;
+	}
+	
 	void tmCustomPlayerStatus::additionalFields()
 	{
 		dbg.nl();
 #ifdef ENABLE_UNET2
 		if (u && u->proto == 1) dbg.printf(" GUID (unet2 protocol): %s,", alcGetStrGuid(guid, 16));
 #endif
-		dbg.printf(" Account: %s, Avatar: %s, Flag: 0x%02X, Status: 0x%02X (%s)", account.c_str(), avatar.c_str(), playerFlag, playerStatus, alcUnetGetReasonCode(playerStatus));
+		dbg.printf(" Account: %s, Avatar: %s (%d), Flag: 0x%02X, Status: 0x%02X (%s)", account.c_str(), avatar.c_str(), avatar.isNull(), playerFlag, playerStatus, alcUnetGetReasonCode(playerStatus));
 	}
 	
 	//// tmCustomFindServer

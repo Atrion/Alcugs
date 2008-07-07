@@ -277,7 +277,10 @@ int main(int argc,char * argv[]) {
 	Byte val=2; //validation level
 	
 	double time=1; //time
-	Byte destination=KLobby,source=0,admin=0;
+	Byte destination=KLobby,source=0;
+#ifdef ENABLE_ADMIN
+	Byte admin=0;
+#endif
 	
 	//options
 	int num=5,flood=1; //num probes & flood multiplier
@@ -360,7 +363,7 @@ int main(int argc,char * argv[]) {
 			time=1;
 		}
 		if(flood>1) {
-			printf("\nOnly the administrator can perform stressing flood tests to the server.\n Disabling flooding\n");
+			printf("\nCannot perform stressing flood tests to the server.\n Disabling flooding\n");
 			flood=1;
 		}
 #endif

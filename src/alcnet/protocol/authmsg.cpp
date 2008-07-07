@@ -68,6 +68,10 @@ namespace alc {
 	tmCustomAuthAsk::tmCustomAuthAsk(tNetSession *u)
 	: tmMsgBase(NetMsgCustomAuthAsk, plNetAck | plNetCustom | plNetX | plNetVersion | plNetIP, u)
 	{
+#ifdef ENABLE_UNET2
+		if (u->proto == 1)
+			unsetFlags(plNetIP);
+#endif
 		login.setVersion(0); // normal UrurString
 	}
 	
@@ -142,6 +146,10 @@ namespace alc {
 	tmCustomAuthResponse::tmCustomAuthResponse(tNetSession *u)
 	: tmMsgBase(NetMsgCustomAuthResponse, plNetAck | plNetCustom | plNetX | plNetVersion | plNetIP | plNetGUI, u)
 	{
+#ifdef ENABLE_UNET2
+		if (u->proto == 1)
+			unsetFlags(plNetIP | plNetGUI);
+#endif
 		login.setVersion(0); // normal UrurString
 		passwd.setVersion(0); // normal UrurString
 	}

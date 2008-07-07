@@ -109,7 +109,7 @@ public:
 	U32 x; // x value
 	Byte guid[16]; // hex; player guid in lobby server, age guid in tracking server
 	Byte name[200]; // peer age name in tracking server, peer account name in lobby and game
-	tNetSessionData *data; // save additional data (i.e. tracking information)
+	tNetSessionData *data; // save additional data (e.g. tracking information)
 
 private:
 	tUnet * net;
@@ -179,11 +179,6 @@ private:
 };
 
 #if 0
-	U32 alive_stamp; //last time that we send the NetMsgAlive
-	st_unet_hmsg hmsg; //the message header
-	char name[201]; //peer name (vault, lobby, AvatarCustomization) or player name (string)
-	char uid[41]; //peer uid (client) (in hex)
-	
 	Byte reason; //reason code
 	Byte status; //the player status, defined inside a states machine (see the states machine doc)
 	Byte paged; //0x00 non-paged player, 0x01 player is paged

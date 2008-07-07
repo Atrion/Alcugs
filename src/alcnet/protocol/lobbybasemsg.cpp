@@ -58,7 +58,7 @@ namespace alc {
 	void tmAuthenticateHello::additionalFields(void)
 	{
 		dbg.nl();
-		dbg.printf(" account: %s, max packet size: %d, release: %02X (%s)", account.c_str(), maxPacketSize, release, alcUnetGetRelease(release));
+		dbg.printf(" account: %s, max packet size: %d, release: 0x%02X (%s)", account.c_str(), maxPacketSize, release, alcUnetGetRelease(release));
 	}
 	
 	//// tmAuthenticateChallenge	
@@ -84,7 +84,7 @@ namespace alc {
 	void tmAuthenticateChallenge::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" auth result: %02X (%s), challenge: %s", authResult, alcUnetGetAuthCode(authResult), alcGetStrGuid(challenge.readAll(), 16));
+		dbg.printf(" auth result: 0x%02X (%s), challenge: %s", authResult, alcUnetGetAuthCode(authResult), alcGetStrGuid(challenge.readAll(), 16));
 	}
 	
 	//// tmAuthenticateResponse
@@ -132,7 +132,7 @@ namespace alc {
 	void tmAccountAutheticated::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" auth result: %02X (%s), server guid: %s", authResult, alcUnetGetAuthCode(authResult), alcGetStrGuid(serverGuid, 8));
+		dbg.printf(" auth result: 0x%02X (%s), server guid: %s", authResult, alcUnetGetAuthCode(authResult), alcGetStrGuid(serverGuid, 8));
 	}
 	
 	//// tmSetMyActivePlayer

@@ -55,6 +55,7 @@ public:
 	virtual void forwardPing(tmPing &ping, tNetSession *u);
 protected:
 	tNetSessionIte reconnectPeer(Byte dst); //!< establishes a connection to that service (remember to set the corresponding gone variable to 0)
+	void setActivePlayer(tNetSession *u, U32 ki, const Byte *avatar);
 
 	tNetSessionIte auth, tracking, vault;
 	U32 auth_gone, tracking_gone, vault_gone; // saves when this server got disconnected. wait 10sec before trying to connect again

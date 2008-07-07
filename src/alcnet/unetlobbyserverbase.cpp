@@ -86,6 +86,28 @@ namespace alc {
 		}
 	}
 	
+	void tUnetLobbyServerBase::setActivePlayer(tNetSession *u, U32 ki, const Byte *avatar)
+	{
+		// FIXME: do multi-login check
+		
+		if (whoami == KGame && avatar[0] == 0) // empty avatar names are not allowed in game server
+			throw txProtocolError(_WHERE("Someone is trying to set an empty avatar name, but I\'m a game server. Kick him."));
+	
+		tNetSession *trackingServer = getSession(tracking), *vaultServer = getSession(vault);
+		if (!trackingServer || !vaultServer) {
+			err->log("ERR: I've got to update a player\'s (%s) status for the tracking and vault server, but one of them is unavailable.\n",
+					u->str());
+			return;
+		}
+		
+		u->ki = ki;
+		tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->sid, u->guid, u->name, avatar, 2 /* visible */, RJoining);
+		send(trackingStatus);
+		
+		// FIXME: send the status to the vault as well
+		// FIXME: tell the client that the status has been set
+	}
+	
 	void tUnetLobbyServerBase::onStart(void)
 	{
 		auth = reconnectPeer(KAuth);
@@ -322,8 +344,7 @@ namespace alc {
 				log->log("<RCV> %s\n", setPlayer.str());
 				
 				if (u->accessLevel <= AcAdmin) {
-					u->ki = setPlayer.ki;
-				    // FIXME: do more here
+					setActivePlayer(u, setPlayer.ki, setPlayer.avatar.c_str());
 				}
 				else {
 					// ask the vault server about this KI
