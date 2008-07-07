@@ -53,10 +53,11 @@ public:
 	virtual void onConnectionClosed(tNetEvent *ev, tNetSession *u);
 	virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
 	virtual void forwardPing(tmPing &ping, tNetSession *u);
+	virtual void terminate(tNetSession *u, Byte reason = RKickedOff, bool destroyOnly = false);
 protected:
 	tNetSessionIte reconnectPeer(Byte dst); //!< establishes a connection to that service (remember to set the corresponding gone variable to 0)
 	void setActivePlayer(tNetSession *u, U32 ki, const Byte *avatar);
-	void killPlayer(tNetSession *u, Byte reason);
+	void killPlayer(tNetSession *u, Byte reason, bool dontTerminate = false);
 
 	tNetSessionIte auth, tracking, vault;
 	U32 auth_gone, tracking_gone, vault_gone; // saves when this server got disconnected. wait 10sec before trying to connect again

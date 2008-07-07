@@ -104,7 +104,7 @@ void tNetSession::init() {
 	memset((void *)&server,0,sizeof(server));
 	assert(server.pn==0);
 	idle=false;
-	blockMessages=false;
+	delayMessages=false;
 	whoami=0;
 	max_version=0;
 	min_version=0;
@@ -219,7 +219,7 @@ tNetSessionIte tNetSession::getIte() {
 	return(tNetSessionIte(ip,port,sid));
 }
 bool tNetSession::blockMsg() {
-	return blockMessages || (ackq->len() > 0);
+	return delayMessages || (ackq->len() > 0);
 }
 
 void tNetSession::processMsg(Byte * buf,int size) {

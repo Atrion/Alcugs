@@ -167,7 +167,7 @@ private:
 	tUnetMsgQ<tUnetMsg> * rcvq; //incomming message queue
 	
 	bool idle;
-	bool blockMessages; // when set to true, messages are kept in the recieve buffer
+	bool delayMessages; // when set to true, messages are kept in the recieve buffer
 	
 	bool terminated; //!< false: connection is established; true: a NetMsgTerminated was sent (and we expect a NetMsgLeave), or a NetMsgLeave was sent
 	

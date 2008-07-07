@@ -170,7 +170,7 @@ namespace alc {
 #ifdef ENABLE_UNET2
 		if (u && u->proto == 1) dbg.printf(" GUID (unet2 protocol): %s,", alcGetStrGuid(guid, 16));
 #endif
-		dbg.printf(" Account: %s, Avatar: %s (%d), Flag: 0x%02X, Status: 0x%02X (%s)", account.c_str(), avatar.c_str(), avatar.isNull(), playerFlag, playerStatus, alcUnetGetReasonCode(playerStatus));
+		dbg.printf(" Account: %s, Avatar: %s, Flag: 0x%02X, Status: 0x%02X (%s)", account.c_str(), avatar.c_str(), playerFlag, playerStatus, alcUnetGetReasonCode(playerStatus));
 	}
 	
 	//// tmCustomFindServer

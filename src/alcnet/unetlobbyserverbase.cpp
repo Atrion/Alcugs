@@ -92,7 +92,7 @@ namespace alc {
 		smgr->rewind();
 		while ((client = smgr->getNext())) {
 			if (client->whoami == KClient && client->ki == ki) // an age cannot host the same avatar multiple times
-				killPlayer(client, RLoggedInElsewhere);
+				terminate(client, RLoggedInElsewhere);
 		}
 		
 		if (whoami == KGame && avatar[0] == 0) // empty avatar names are not allowed in game server
@@ -117,17 +117,9 @@ namespace alc {
 		send(playerSet);
 	}
 	
-	void tUnetLobbyServerBase::killPlayer(tNetSession *u, Byte reason)
+	void tUnetLobbyServerBase::terminate(tNetSession *u, Byte reason, bool destroyOnly)
 	{
-		if (u->whoami != 0 && u->whoami != KClient) {
-			err->log("kill player request for %s rejected as it is not a player", u->str());
-			return;
-		}
-		
-		terminate(u, reason); // kick it
-		
-		if (u->ki != 0) {
-			// tell the others about it
+		if (u->whoami == KClient && u->ki != 0 && !destroyOnly) { // if necessary, tell the others about it
 			tNetSession *trackingServer = getSession(tracking), *vaultServer = getSession(vault);
 			if (!trackingServer || !vaultServer) {
 				err->log("ERR: I've got to update a player\'s (%s) status for the tracking and vault server, but one of them is unavailable.\n", u->str());
@@ -142,6 +134,8 @@ namespace alc {
 			tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->sid, emptyGuid, (Byte *)"", 0 /* what does this mean? */, u->onlineTime());
 			send(vaultStatus);
 		}
+	
+		tUnetServerBase::terminate(u, reason, destroyOnly); // do the common terminate procedure
 	}
 	
 	void tUnetLobbyServerBase::onStart(void)
@@ -209,7 +203,8 @@ namespace alc {
 	}
 	
 	void tUnetLobbyServerBase::onConnectionClosed(tNetEvent *ev, tNetSession */*u*/)
-	{	// if it was one of the servers, save the time it went (it will be reconnected 10sec later)
+	{
+		// if it was one of the servers, save the time it went (it will be reconnected 10sec later)
 		if (ev->sid == auth) { auth_gone = alcGetTime(); auth = tNetSessionIte(); }
 		else if (ev->sid == tracking) { tracking_gone = alcGetTime(); tracking = tNetSessionIte(); }
 		else if (ev->sid == vault) { vault_gone = alcGetTime(); vault = tNetSessionIte(); }
@@ -390,7 +385,7 @@ namespace alc {
 						terminate(u); // kick the player since we cant be sure he doesnt lie about the KI
 						return 1;
 					}
-					u->blockMessages = true; // dont process any further messages till we verified the KI
+					u->delayMessages = true; // dont process any further messages till we verified the KI
 					tmCustomVaultCheckKi checkKi(vaultServer, u->getSid(), setPlayer.ki, u->guid);
 					send(checkKi);
 				}
@@ -417,7 +412,7 @@ namespace alc {
 					return 1;
 				}
 				
-				client->blockMessages = false; // KI is checked, so we can process messages
+				client->delayMessages = false; // KI is checked, so we can process messages
 				if (kiChecked.status != 1) { // the avatar is NOT correct - kick the player
 					terminate(client, RNotAuthenticated);
 					return 1;
