@@ -262,4 +262,35 @@ namespace alc {
 #endif
 	}
 	
+	//// tmCustomVaultKiChecked
+	tmCustomVaultKiChecked::tmCustomVaultKiChecked(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
+	{
+		avatar.setVersion(0); // normal UruString
+	}
+	
+	void tmCustomVaultKiChecked::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
+#ifndef ENABLE_UNET2
+		if (!hasFlags(plNetGUI)) throw txProtocolError(_WHERE("GUID flag missing"));
+#else
+		if (!hasFlags(plNetGUI)) {
+			memcpy(guid, t.read(16), 16);
+			u->proto = 1; // unet2 protocol
+		}
+# endif
+		status = t.getByte();
+		t.get(avatar);
+	}
+	
+	void tmCustomVaultKiChecked::additionalFields()
+	{
+		dbg.nl();
+#ifdef ENABLE_UNET2
+		if (u && u->proto == 1) dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid, 16));
+#endif
+		dbg.printf(" status: 0x%02X, avatar: %s", status, avatar.c_str());	
+	}
+	
 } //end namespace alc

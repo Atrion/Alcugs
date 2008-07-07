@@ -134,13 +134,15 @@ namespace alc {
 			return;
 		}
 		
-		tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->sid, u->guid, u->name, (Byte *)"", 0 /* delete */, RStopResponding);
-		send(trackingStatus);
-		
-		Byte emptyGuid[8];
-		memset(emptyGuid, 0, 8);
-		tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->sid, emptyGuid, (Byte *)"", 0 /* what does this mean? */, u->onlineTime());
-		send(vaultStatus);
+		if (u->ki != 0) {
+			tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->sid, u->guid, u->name, (Byte *)"", 0 /* delete */, RStopResponding);
+			send(trackingStatus);
+			
+			Byte emptyGuid[8];
+			memset(emptyGuid, 0, 8);
+			tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->sid, emptyGuid, (Byte *)"", 0 /* what does this mean? */, u->onlineTime());
+			send(vaultStatus);
+		}
 	}
 	
 	void tUnetLobbyServerBase::onStart(void)
@@ -390,7 +392,7 @@ namespace alc {
 						return 1;
 					}
 					u->blockMessages = true; // dont process any further messages till we verified the KI
-					tmCustomVaultCheckKi checkKi(vaultServer, u->getSid(), setPlayer.ki+1, u->guid);
+					tmCustomVaultCheckKi checkKi(vaultServer, u->getSid(), setPlayer.ki, u->guid);
 					send(checkKi);
 				}
 				
@@ -403,7 +405,28 @@ namespace alc {
 					return -2; // hack attempt
 				}
 				
-				// FIXME: do more here
+				// get the data out of the packet
+				tmCustomVaultKiChecked kiChecked(u);
+				msg->data->get(kiChecked);
+				log->log("<RCV> %s\n", kiChecked.str());
+				
+				// find the client's session
+				tNetSession *client = smgr->get(kiChecked.x);
+				// verify GUID and session state
+				if (!client || client->getPeerType() != KClient || u->ki != 0 || memcmp(client->guid, kiChecked.guid, 16) != 0) {
+					err->log("ERR: Got NetMsgCustomVaultKiChecked for player with GUID %s but can't find his session.\n", alcGetStrGuid(kiChecked.guid, 16));
+					return 1;
+				}
+				
+				client->blockMessages = false; // KI is checked, so we can process messages
+				if (kiChecked.status != 1) { // the avatar is NOT correct - kick the player
+					terminate(client, RNotAuthenticated);
+					return 1;
+				}
+				
+				// it is correct, so tell everyone about it
+				setActivePlayer(client, kiChecked.ki, kiChecked.avatar.c_str());
+				
 				return 1;
 			}
 			

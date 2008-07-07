@@ -111,6 +111,17 @@ namespace alc {
 		virtual void additionalFields();
 	};
 	
+	class tmCustomVaultKiChecked : public tmMsgBase {
+	public:
+		tmCustomVaultKiChecked(tNetSession *u);
+		virtual void store(tBBuf &t);
+		// format
+		Byte status;
+		tUStr avatar;
+	protected:
+		virtual void additionalFields();
+	};
+	
 } //End alc namespace
 
 #endif
