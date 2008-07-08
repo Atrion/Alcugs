@@ -93,7 +93,7 @@ namespace alc {
 					err->log("ERR: I've got to ask the vault server about player %s, but it's unavailable.\n", u->str());
 					return 1;
 				}
-				tmCustomVaultAskPlayerList askList(vaultServer, u->getSid(), u->guid);
+				tmCustomVaultAskPlayerList askList(vaultServer, u->getSid(), u->uid);
 				send(askList);
 				return 1;
 			}
@@ -112,7 +112,7 @@ namespace alc {
 				// find the client's session
 				tNetSession *client = smgr->get(playerList.x);
 				// verify UID and session state
-				if (!client || client->getPeerType() != KClient || memcmp(client->guid, playerList.uid, 16) != 0) {
+				if (!client || client->getPeerType() != KClient || memcmp(client->uid, playerList.uid, 16) != 0) {
 					err->log("ERR: Got NetMsgCustomVaultPlayerList for player with UID %s but can't find his session.\n", alcGetStrUid(playerList.uid));
 					return 1;
 				}
@@ -143,7 +143,7 @@ namespace alc {
 					err->log("ERR: I've got to ask the vault server to create a player, but it's unavailable.\n", u->str());
 					return 1;
 				}
-				tmCustomVaultCreatePlayer vaultCreatePlayer(vaultServer, createPlayer, u->getSid(), u->guid, u->getAccessLevel(), u->name);
+				tmCustomVaultCreatePlayer vaultCreatePlayer(vaultServer, createPlayer, u->getSid(), u->uid, u->getAccessLevel(), u->name);
 				send(vaultCreatePlayer);
 				
 				return 1;
@@ -163,7 +163,7 @@ namespace alc {
 				// find the client's session
 				tNetSession *client = smgr->get(playerCreated.x);
 				// verify UID and session state
-				if (!client || client->getPeerType() != KClient || memcmp(client->guid, playerCreated.uid, 16) != 0) {
+				if (!client || client->getPeerType() != KClient || memcmp(client->uid, playerCreated.uid, 16) != 0) {
 					err->log("ERR: Got NetMsgCustomVaultPlayerCreated for player with UID %s but can't find his session.\n", alcGetStrUid(playerCreated.uid));
 					return 1;
 				}
@@ -192,7 +192,7 @@ namespace alc {
 					err->log("ERR: I've got to ask the vault server to delete a player, but it's unavailable.\n", u->str());
 					return 1;
 				}
-				tmCustomVaultDeletePlayer vaultDeletePlayer(vaultServer, u->getSid(), deletePlayer.ki, u->guid, u->getAccessLevel());
+				tmCustomVaultDeletePlayer vaultDeletePlayer(vaultServer, u->getSid(), deletePlayer.ki, u->uid, u->getAccessLevel());
 				send(vaultDeletePlayer);
 				
 				return 1;

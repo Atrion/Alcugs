@@ -109,8 +109,9 @@ public:
 	
 	U32 ki; // player set and valid id, otherwise 0
 	U32 x; // x value
-	Byte guid[16]; // hex; player guid in lobby server, age guid in tracking server
+	Byte uid[16]; // hex; player uid in lobby/game server
 	Byte name[200]; // peer age name in tracking server, peer account name in lobby and game
+	Byte serverGuid[8]; // hex; server guid in tracking server
 	tNetSessionData *data; // save additional data (e.g. tracking information)
 
 private:

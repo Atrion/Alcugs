@@ -106,7 +106,7 @@ namespace alc {
 		}
 		
 		// tell vault and taracking
-		tmCustomPlayerStatus trackingStatus(trackingServer, ki, u->sid, u->guid, u->name, avatar, 2 /* visible */, RJoining);
+		tmCustomPlayerStatus trackingStatus(trackingServer, ki, u->sid, u->uid, u->name, avatar, 2 /* visible */, RJoining);
 		send(trackingStatus);
 		tmCustomVaultPlayerStatus vaultStatus(vaultServer, ki, u->sid, alcGetStrGuid(serverGuid), serverName, 1 /* what does this mean? */, u->onlineTime());
 		send(vaultStatus);
@@ -126,7 +126,7 @@ namespace alc {
 				return;
 			}
 			
-			tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->sid, u->guid, u->name, (Byte *)"", 0 /* delete */, RStopResponding);
+			tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->sid, u->uid, u->name, (Byte *)"", 0 /* delete */, RStopResponding);
 			send(trackingStatus);
 			
 			tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->sid, (Byte *)"0000000000000000" /* these are 16 zeroes */, (Byte *)"", 0 /* what does this mean? */, u->onlineTime());
@@ -341,7 +341,7 @@ namespace alc {
 				
 				// send NetMsgAccountAuthenticated to client
 				if (authResponse.result == AAuthSucceeded) {
-					memcpy(client->guid, authResponse.uid, 16);
+					memcpy(client->uid, authResponse.uid, 16);
 					client->whoami = KClient; // it's a real client now
 					client->authenticated = 2; // the player is authenticated!
 					client->accessLevel = authResponse.accessLevel;
@@ -353,7 +353,7 @@ namespace alc {
 				else {
 					Byte zeroGuid[8]; // only send zero-filled GUIDs to non-authed players
 					memset(zeroGuid, 0, 8);
-					memset(client->guid, 0, 16);
+					memset(client->uid, 0, 16);
 					tmAccountAutheticated accountAuth(client, authResponse.result, zeroGuid);
 					send(accountAuth);
 					terminate(client, RNotAuthenticated);
@@ -386,7 +386,7 @@ namespace alc {
 						return 1;
 					}
 					u->delayMessages = true; // dont process any further messages till we verified the KI
-					tmCustomVaultCheckKi checkKi(vaultServer, u->getSid(), setPlayer.ki, u->guid);
+					tmCustomVaultCheckKi checkKi(vaultServer, u->getSid(), setPlayer.ki, u->uid);
 					send(checkKi);
 				}
 				
@@ -407,7 +407,7 @@ namespace alc {
 				// find the client's session
 				tNetSession *client = smgr->get(kiChecked.x);
 				// verify GUID and session state
-				if (!client || client->getPeerType() != KClient || u->ki != 0 || memcmp(client->guid, kiChecked.uid, 16) != 0) {
+				if (!client || client->getPeerType() != KClient || u->ki != 0 || memcmp(client->uid, kiChecked.uid, 16) != 0) {
 					err->log("ERR: Got NetMsgCustomVaultKiChecked for player with UID %s but can't find his session.\n", alcGetStrUid(kiChecked.uid));
 					return 1;
 				}

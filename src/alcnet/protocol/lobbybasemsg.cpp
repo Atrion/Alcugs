@@ -114,7 +114,7 @@ namespace alc {
 	tmAccountAutheticated::tmAccountAutheticated(tNetSession *u, Byte authResult, const Byte *serverGuid)
 	: tmMsgBase(NetMsgAccountAuthenticated, plNetKi | plNetAck | plNetX | plNetUID | plNetCustom, u)
 	{
-		memcpy(uid, u->guid, 16);
+		memcpy(uid, u->uid, 16);
 		x = u->x;
 		ki = 0; // we're not yet logged in, so no KI can be set
 		
