@@ -36,8 +36,10 @@
 ;verbose_level = 0 # default 3
 # set daemon mode (parameter: [-D])
 ;daemon = 1 # default 0
-# path top contain the log files (parameter: [-log path/])
-;log_files_path = log/ # default log/
+
+# logging
+;log_files_path = log/ # path top contain the log files (parameter: [-log path/]) (default log/)
+;vault.html.log = 1 # enables/disables logging of vault objects to a HTML file in lobby, game and vault server (default 1)
 
 # sets the bandwidth in kbit/s. This speed is anounced to the clients
 # and used to compute how fast the server sends the messages
@@ -55,6 +57,7 @@ public_address  = "127.0.0.1"
 ;db.log = 1 # enable logging of the database driver (default 1)
 ;db.sql.log = 1 # enable sql logging (default 1), doesn't work when db.log is disabled
 # global database connection data
+# (the vault database should be local because otherwise the latency is too big and lobby/game might get confused)
 db.host = "127.0.0.1" # note: set db.host to nothing to use the local unix socket (untested with unet3+)
 ;db.port = 0 # sets the MySQL port (default 0 = let mysql decide which port to use)
 db.username = "alcugs"

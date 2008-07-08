@@ -40,14 +40,37 @@
 
 namespace alc {
 
+//vault operations
+#define VConnect 0x01
+#define VDisconnect 0x02
+#define VAddNodeRef 0x03
+#define VRemoveNodeRef 0x04
+#define VNegotiateManifest 0x05
+#define VSaveNode 0x06
+#define VFindNode 0x07
+#define VFetchNode 0x08
+#define VSendNode 0x09
+#define VSetSeen 0x0A
+#define VOnlineState 0x0B
+
 //data types
 #define DCreatableGenericValue 0x0387
 #define DCreatableStream       0x0389
+
+//sub data types
+#define DInteger 0x00 // (4 bytes) integer
+#define DUruString 0x03 // string
+#define DTimestamp 0x07 // (8 bytes) timestamp as double
+
+	const char *alcVaultGetCmd(Byte cmd);
+	const char *alcVaultGetTaskCmd(Byte cmd);
+	const char *alcVaultGetDataType(U16 type);
 
 	////DEFINITIONS
 	class tvBase : public tBaseType {
 	public:
 		tvBase(void) : tBaseType() {}
+		virtual void asHtml(tLog *log) = 0;
 	};
 	
 	class tvCreatableGenericValue : public tvBase {
@@ -55,6 +78,7 @@ namespace alc {
 		tvCreatableGenericValue(void) : tvBase() { str.setVersion(5); /* inverted */ }
 		virtual void store(tBBuf &t);
 		virtual int stream(tBBuf &t);
+		virtual void asHtml(tLog *log);
 	private:
 		Byte format;
 		S32 integer;
@@ -68,6 +92,7 @@ namespace alc {
 		virtual ~tvCreatableStream(void) { if (data) free(data); }
 		virtual void store(tBBuf &t);
 		virtual int stream(tBBuf &t);
+		virtual void asHtml(tLog *log);
 	private:
 		U32 size;
 		Byte *data;
@@ -79,6 +104,7 @@ namespace alc {
 		virtual ~tvItem(void) { if (data) delete data; }
 		virtual void store(tBBuf &t);
 		virtual int stream(tBBuf &t);
+		virtual void asHtml(tLog *log);
 	private:
 		Byte id;
 		U16 type;
@@ -91,6 +117,8 @@ namespace alc {
 		virtual ~tvMessage(void);
 		virtual void store(tBBuf &t); //!< unpacks the message
 		virtual int stream(tBBuf &t);
+		virtual void asHtml(tLog *log);
+		void print(tLog *log, bool clientToServer, tNetSession *client);
 	private:
 		bool task;
 		Byte cmd; //!< the vault command
@@ -98,9 +126,9 @@ namespace alc {
 		U32 realSize; //!< the real size of the message
 		U16 numItems; //!< number of items
 		tvItem **items;
-		U16 context;
-		U32 vmgr;
-		U16 vn; //!< what is that?
+		U16 context; // sub in VaultTask
+		U32 vmgr; // client in VaultTask
+		U16 vn; // what is that?
 		
 	};
 	

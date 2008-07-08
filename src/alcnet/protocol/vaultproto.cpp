@@ -36,7 +36,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_VAULTROUTER_ID "$Id$"
 
-#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
 #include "unet.h"
@@ -57,17 +57,16 @@ namespace alc {
 		format = t.getByte();
 		
 		switch (format) {
-			case 0x00: // integer (signed, 4 bytes)
+			case DInteger:
 				integer = t.getS32();
 				break;
-			case 0x03: // uru string (inverted)
+			case DUruString:
 				t.get(str);
 				break;
-			case 0x07:
+			case DTimestamp:
 				time = t.getDouble();
 				break;
 			default:
-				DBGM(5, "\n");
 				lerr->log("got creatable generic value with unknown format 0x%02X\n", format);
 				throw txProtocolError(_WHERE("unknown creatable generic value format"));
 		}
@@ -78,19 +77,36 @@ namespace alc {
 		int off = 0;
 		t.putByte(format); ++off;
 		switch (format) {
-			case 0x00:
+			case DInteger:
 				t.putS32(integer); off += 4;
 				break;
-			case 0x03:
+			case DUruString:
 				off += t.put(str);
 				break;
-			case 0x07:
+			case DTimestamp:
 				t.putDouble(time); off += 8;
 				break;
 			default:
 				throw txProtocolError(_WHERE("unknown creatable generic value format"));
 		}
 		return off;
+	}
+	
+	void tvCreatableGenericValue::asHtml(tLog *log)
+	{
+		switch (format) {
+			case DInteger:
+				log->print("DInteger: 0x%08X (%d)<br />\n", integer, integer);
+				break;
+			case DUruString:
+				log->print("DUruString: %s<br />\n", str.c_str());
+				break;
+			case DTimestamp:
+				log->print("DTimestamp: %f<br />\n", time);
+				break;
+			default:
+				throw txProtocolError(_WHERE("unknown creatable generic value format"));
+		}
 	}
 	
 	//// tvCreatableStream
@@ -111,6 +127,11 @@ namespace alc {
 		return off;
 	}
 	
+	void tvCreatableStream::asHtml(tLog *log)
+	{
+		log->print("Size: %d<br />\n", size);
+	}
+	
 	//// tvItem
 	void tvItem::store(tBBuf &t)
 	{
@@ -121,7 +142,6 @@ namespace alc {
 			throw txProtocolError(_WHERE("bad item.unk value"));
 		}
 		type = t.getU16();
-		DBG(5, "vault item: id 0x%02X, type: 0x%04X\n", id, type);
 		
 		if (data) delete data;
 		switch (type) {
@@ -150,6 +170,12 @@ namespace alc {
 		return off;
 	}
 	
+	void tvItem::asHtml(tLog *log)
+	{
+		log->print("<span style='color:red'>Id: <b>0x%02X (%d)</b></span>, type: 0x%04X (%s)<br />\n", id, id, type, alcVaultGetDataType(type));
+		data->asHtml(log);
+	}
+	
 	//// tvMessage
 	tvMessage::~tvMessage(void)
 	{
@@ -172,12 +198,12 @@ namespace alc {
 		}
 		compressed = t.getByte();
 		realSize = t.getU32();
-		DBG(5, "vault message: command: 0x%02X, compressed: 0x%02X, real size: %d\n", cmd, compressed, realSize);
+		DBG(5, "vault message: command: 0x%02X, compressed: 0x%02X, real size: %d", cmd, compressed, realSize);
 		
 		tBBuf *buf = &t;
 		if (compressed == 0x03) { // it's compressed, so decompress it
 			U32 compressedSize = t.getU32();
-			DBG(5, "    compressed size: %d\n", compressedSize);
+			DBGM(5, ", compressed size: %d", compressedSize);
 			tZBuf *content = new tZBuf;
 			content->write(t.read(compressedSize), compressedSize);
 			content->uncompress(realSize);
@@ -190,7 +216,7 @@ namespace alc {
 		
 		// get the items
 		numItems = buf->getU16();
-		DBG(5, "number of items: %d\n", numItems);
+		DBGM(5, ", number of items: %d\n", numItems);
 		if (items) {
 			for (int i = 0; i < numItems; ++i) delete items[i];
 			free(items);
@@ -271,6 +297,115 @@ namespace alc {
 		}
 		
 		return off;
+	}
+	
+	void tvMessage::print(tLog *log, bool clientToServer, tNetSession *client)
+	{
+		if (log == lnull) return; // don't do anything if log is disabled
+		if (clientToServer)
+			log->print("<h2 style='color:blue'>From client (%s) to vault</h2>\n", client->str());
+		else
+			log->print("<h2 style='color:red'>From vault to client (%s)</h2>\n", client->str());
+		asHtml(log);
+		log->print("<hr>\n\n");
+		log->flush();
+	}
+	
+	void tvMessage::asHtml(tLog *log)
+	{
+		// the header
+		if (task) log->print("<b>NetMsgVaultTask ");
+		else      log->print("<b>NetMsgVault ");
+		log->print("CMD: 0x%02X ", cmd);
+		if (task) log->print("(%s)</b><br />\n", alcVaultGetTaskCmd(cmd));
+		else      log->print("(%s)</b><br />\n", alcVaultGetCmd(cmd));
+		log->print("compressed: %d, real size: %d<br />\n", compressed, realSize);
+		if (task) log->print("sub: %d, <b>client: %d</b><br />\n", context, vmgr);
+		else      log->print("context: %d, <b>vmgr: %d</b>, vn: %d<br />\n", context, vmgr, vn);
+		
+		// the items
+		if (numItems > 0) {
+			log->print("<table border='1'>\n");
+			for (int i = 0; i < numItems; ++i) {
+				log->print("<tr><th style='background-color:cyan;'>Item %d</th></tr>\n", i+1);
+				log->print("<tr><td>\n");
+				items[i]->asHtml(log);
+				log->print("</td></tr>\n");
+			}
+			log->print("</table>");
+		}
+	}
+	
+	const char *alcVaultGetDataType(U16 type)
+	{
+		static const char *ret;
+		switch (type) {
+			case 0x0387:
+				ret = "DCreatableGenericValue";
+				break;
+			case 0x0389:
+				ret = "DCreatableStream";
+				break;
+			default:
+				ret = "DUnknown";
+				break;
+		}
+		return ret;
+	}
+	
+	const char *alcVaultGetCmd(Byte cmd)
+	{
+		static const char *ret;
+		switch (cmd) {
+			case 0x01:
+				ret = "VConnect";
+				break;
+			case 0x02:
+				ret = "VDisconnect";
+				break;
+			case 0x03:
+				ret = "VAddNodeRef";
+				break;
+			case 0x04:
+				ret = "VRemoveNodeRef";
+				break;
+			case 0x05:
+				ret = "VNegotiateManifest";
+				break;
+			case 0x06:
+				ret = "VSaveNode";
+				break;
+			case 0x07:
+				ret = "VFindNode";
+				break;
+			case 0x08:
+				ret = "VFetchNode";
+				break;
+			case 0x09:
+				ret = "VSendNode";
+				break;
+			case 0x0A:
+				ret = "VSetSeen";
+				break;
+			case 0x0B:
+				ret = "VOnlineState";
+				break;
+			default:
+				ret = "VUnknown";
+				break;
+		}
+		return ret;
+	}
+	
+	const char *alcVaultGetTaskCmd(Byte cmd)
+	{
+		static const char *ret;
+		switch (cmd) {
+			default:
+				ret = "TUnknown";
+				break;
+		}
+		return ret;
 	}
 
 } //end namespace alc

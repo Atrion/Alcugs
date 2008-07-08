@@ -615,15 +615,16 @@ namespace alc {
 			fprintf(f, "<ServerInfo>\n");
 				fprintf(f, "<Name>Agent</Name>\n");
 				fprintf(f, "<Type>1</Type>\n");
-				data->agentGuid[7] = 0x00; // set last byte to 00
 				if (lobby) {
 					fprintf(f, "<Addr>%s</Addr>\n", alcGetStrIp(lobby->getIp()));
 					fprintf(f, "<Port>%d</Port>\n", ntohs(lobby->getPort()));
+					data->agentGuid[7] = 0x00; // set last byte to 00
 					fprintf(f, "<Guid>%s00</Guid>\n", alcGetStrGuid(data->agentGuid));
 				}
 				else {
 					fprintf(f, "<Addr>Fake Agent</Addr>\n");
 					fprintf(f, "<Port>0</Port>\n");
+					fakeLobbyGuid[7] = 0x00; // set last byte to 00
 					fprintf(f, "<Guid>%s00</Guid>\n", alcGetStrGuid(fakeLobbyGuid));
 				}
 			fprintf(f, "</ServerInfo>\n");
@@ -637,15 +638,16 @@ namespace alc {
 					fprintf(f, "<ServerInfo>\n");
 						fprintf(f, "<Name>Lobby</Name>\n");
 						fprintf(f, "<Type>2</Type>\n");
-						data->agentGuid[7] = 0x02; // set last byte to 02 (to distinguish from above)
 						if (lobby) {
 							fprintf(f, "<Addr>%s</Addr>\n", alcGetStrIp(lobby->getIp()));
 							fprintf(f, "<Port>%d</Port>\n", ntohs(lobby->getPort()));
+							data->agentGuid[7] = 0x02; // set last byte to 02 (to distinguish from above)
 							fprintf(f, "<Guid>%s02</Guid>\n", alcGetStrGuid(data->agentGuid));
 						}
 						else {
 							fprintf(f, "<Addr>Fake Agent</Addr>\n");
 							fprintf(f, "<Port>0</Port>\n");
+							fakeLobbyGuid[7] = 0x02; // set last byte to 02 (to distinguish from above)
 							fprintf(f, "<Guid>%s02</Guid>\n", alcGetStrGuid(fakeLobbyGuid));
 						}
 					fprintf(f, "</ServerInfo>\n");

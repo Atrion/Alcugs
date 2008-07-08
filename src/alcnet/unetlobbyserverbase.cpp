@@ -55,6 +55,17 @@ namespace alc {
 		memset(serverGuid, 0, 8);
 		serverName[0] = 0;
 		auth_gone = tracking_gone = vault_gone = 0;
+		lvault = lnull;
+		loadVaultLog();
+	}
+	
+	void tUnetLobbyServerBase::loadVaultLog(void)
+	{
+		tConfig *cfg = alcGetConfig();
+		tStrBuf var = cfg->getVar("vault.html.log");
+		if (var.isNull() || var.asByte()) { // logging enabled per default
+			lvault = new tLog("vault.html", 2, DF_HTML);
+		}
 	}
 	
 	void tUnetLobbyServerBase::forwardPing(tmPing &ping, tNetSession *u)
@@ -448,6 +459,7 @@ namespace alc {
 						err->log("ERR: I've got a vault message to forward to player with KI %d but can\'t find it\'s session.\n", vaultMsg.ki);
 						return 1;
 					}
+					parsedMsg.print(lvault, /*clientToServer:*/false, client);
 					tmVault vaultMsgFwd(client, vaultMsg.ki, &parsedMsg);
 					send(vaultMsgFwd);
 				}
@@ -462,6 +474,7 @@ namespace alc {
 						err->log("ERR: I've got a vault message to forward to the vault server, but it's unavailable.\n", u->str());
 						return 1;
 					}
+					parsedMsg.print(lvault, /*clientToServer:*/true, u);
 					tmVault vaultMsgFwd(vaultServer, u->ki, &parsedMsg);
 					send(vaultMsgFwd);
 				}
