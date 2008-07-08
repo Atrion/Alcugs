@@ -36,10 +36,9 @@ namespace alc {
 
 /** creates a 0000000000000000 valid guid
 		\param guid A hex guid
-		\param length length of the hex guid
 		\return A str guid, twice as long as the hex guid
 */
-const Byte * alcGetStrGuid(const Byte * guid, int length);
+const Byte * alcGetStrGuid(const Byte * guid);
 /** creates a 00000000-0000-0000-0000-000000000000 valid guid
 		\param uid A 16 bytes user id
 		\return A 36 bytes str formated id

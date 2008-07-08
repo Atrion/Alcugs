@@ -39,11 +39,11 @@
 namespace alc {
 
 	//// tmCustomVaultAskPlayerList
-	tmCustomVaultAskPlayerList::tmCustomVaultAskPlayerList(tNetSession *u, Byte x, Byte *guid)
-	: tmMsgBase(NetMsgCustomVaultAskPlayerList, plNetAck | plNetCustom | plNetX | plNetVersion | plNetGUI, u)
+	tmCustomVaultAskPlayerList::tmCustomVaultAskPlayerList(tNetSession *u, Byte x, Byte *uid)
+	: tmMsgBase(NetMsgCustomVaultAskPlayerList, plNetAck | plNetCustom | plNetX | plNetVersion | plNetUID, u)
 	{
 		this->x = x;
-		memcpy(this->guid, guid, 16);
+		memcpy(this->uid, uid, 16);
 	}
 	
 	//// tmCustomVaultPlayerList
@@ -53,7 +53,7 @@ namespace alc {
 	void tmCustomVaultPlayerList::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		if (!hasFlags(plNetX | plNetGUI)) throw txProtocolError(_WHERE("X or GUID flag missing"));
+		if (!hasFlags(plNetX | plNetUID)) throw txProtocolError(_WHERE("X or UID flag missing"));
 		numberPlayers = t.getU16();
 		players.clear();
 		t.get(players); // the rest is the data about the players
@@ -66,13 +66,14 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultPlayerStatus
-	tmCustomVaultPlayerStatus::tmCustomVaultPlayerStatus(tNetSession *u, U32 ki, U32 x, const Byte *guid, const Byte *age, Byte state, U32 onlineTime)
+	tmCustomVaultPlayerStatus::tmCustomVaultPlayerStatus(tNetSession *u, U32 ki, U32 x, const Byte *serverGuid, const Byte *age, Byte state, U32 onlineTime)
 	 : tmMsgBase(NetMsgCustomVaultPlayerStatus, plNetAck | plNetCustom | plNetVersion | plNetX | plNetKi, u)
 	{
 		this->ki = ki;
 		this->x = x;
 		
-		memcpy(this->guid, guid, 8);
+		this->serverGuid.setVersion(0); // normal UruString
+		this->serverGuid.writeStr(serverGuid);
 		this->age.setVersion(0); // normal UruString
 		this->age.writeStr(age);
 		this->state = state;
@@ -83,9 +84,7 @@ namespace alc {
 	{
 		int off = tmMsgBase::stream(t);
 		off += t.put(age);
-		tUStr guid_str(0); // normal UruString
-		guid_str.writeStr(alcGetStrGuid(guid, 8));
-		off += t.put(guid_str);
+		off += t.put(serverGuid);
 		t.putByte(state); ++off;
 		t.putU32(onlineTime); off += 4;
 		return off;
@@ -94,7 +93,7 @@ namespace alc {
 	void tmCustomVaultPlayerStatus::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" GUID: %s, Age filename: %s, State: 0x%02X, online time: %d", alcGetStrGuid(guid, 8), age.c_str(), state, onlineTime);
+		dbg.printf(" Server GUID: %s, Age filename: %s, State: 0x%02X, online time: %d", serverGuid.c_str(), age.c_str(), state, onlineTime);
 	}
 	
 	//// tmVault
@@ -125,15 +124,15 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultCreatePlayer
-	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u, tmCreatePlayer &createPlayer, U32 x, Byte *guid,
+	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u, tmCreatePlayer &createPlayer, U32 x, Byte *uid,
 	  Byte accessLevel, const Byte *login)
-	 : tmMsgBase(NetMsgCustomVaultCreatePlayer, plNetX | plNetGUI | plNetVersion | plNetAck | plNetCustom, u),
+	 : tmMsgBase(NetMsgCustomVaultCreatePlayer, plNetX | plNetUID | plNetVersion | plNetAck | plNetCustom, u),
 	   avatar(createPlayer.avatar), gender(createPlayer.gender), friendName(createPlayer.friendName), key(createPlayer.key)
 	{
 		this->x = x;
-		memcpy(this->guid, guid, 16);
+		memcpy(this->uid, uid, 16);
 #ifdef ENABLE_UNET2
-		if (u->proto == 1) unsetFlags(plNetGUI);
+		if (u->proto == 1) unsetFlags(plNetUID);
 #endif
 		
 		this->accessLevel = accessLevel;
@@ -150,7 +149,7 @@ namespace alc {
 		int off = tmMsgBase::stream(t);
 		off += t.put(login);
 #ifdef ENABLE_UNET2
-		if (u->proto == 1) { t.write(guid, 16); off += 16; } // GUID (only for old protocol, the new one sends it in the header)
+		if (u->proto == 1) { t.write(uid, 16); off += 16; } // UID (only for old protocol, the new one sends it in the header)
 #endif
 		t.putByte(accessLevel); ++off;
 		off += t.put(avatar);
@@ -166,7 +165,7 @@ namespace alc {
 		dbg.nl();
 		dbg.printf(" login: %s, ", login.c_str());
 #ifdef ENABLE_UNET2
-		if (u && u->proto == 1) dbg.printf("guid (unet2 protocol): %s, ", alcGetStrGuid(guid, 16));
+		if (u && u->proto == 1) dbg.printf("uid (unet2 protocol): %s, ", alcGetStrUid(uid));
 #endif
 		dbg.printf("accessLevel: %d, avatar: %s, gender: %s, friend: %s, key: %s", accessLevel, avatar.c_str(), gender.c_str(), friendName.c_str(), key.c_str());
 	}
@@ -180,10 +179,10 @@ namespace alc {
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
 #ifndef ENABLE_UNET2
-		if (!hasFlags(plNetGUI)) throw txProtocolError(_WHERE("GUID flag missing"));
+		if (!hasFlags(plNetUID)) throw txProtocolError(_WHERE("UID flag missing"));
 #else
-		if (!hasFlags(plNetGUI)) {
-			memcpy(guid, t.read(16), 16);
+		if (!hasFlags(plNetUID)) {
+			memcpy(uid, t.read(16), 16);
 			u->proto = 1; // unet2 protocol
 		}
 # endif
@@ -194,20 +193,20 @@ namespace alc {
 	{
 		dbg.nl();
 #ifdef ENABLE_UNET2
-		if (u->proto == 1) dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid, 16));
+		if (u->proto == 1) dbg.printf(" uid (unet2 protocol): %s,", alcGetStrUid(uid));
 #endif
 		dbg.printf(" result: 0x%02X (%s)", result, alcUnetGetAvatarCode(result));
 	}
 	
 	//// tmCustomVaultDeletePlayer
-	tmCustomVaultDeletePlayer::tmCustomVaultDeletePlayer(tNetSession *u, U32 x, U32 ki, Byte *guid, Byte accessLevel)
-	 : tmMsgBase(NetMsgCustomVaultDeletePlayer, plNetX | plNetKi | plNetGUI | plNetAck | plNetCustom | plNetVersion, u)
+	tmCustomVaultDeletePlayer::tmCustomVaultDeletePlayer(tNetSession *u, U32 x, U32 ki, Byte *uid, Byte accessLevel)
+	 : tmMsgBase(NetMsgCustomVaultDeletePlayer, plNetX | plNetKi | plNetUID | plNetAck | plNetCustom | plNetVersion, u)
 	{
 		this->x = x;
 		this->ki = ki;
-		memcpy(this->guid, guid, 16);
+		memcpy(this->uid, uid, 16);
 #ifdef ENABLE_UNET2
-		if (u->proto == 1) unsetFlags(plNetGUI);
+		if (u->proto == 1) unsetFlags(plNetUID);
 #endif
 		this->accessLevel = accessLevel;
 	}
@@ -216,7 +215,7 @@ namespace alc {
 	{
 		int off = tmMsgBase::stream(t);
 #ifdef ENABLE_UNET2
-		if (u->proto == 1) { t.write(guid, 16); off += 16; } // GUID (only for old protocol, the new one sends it in the header)
+		if (u->proto == 1) { t.write(uid, 16); off += 16; } // UID (only for old protocol, the new one sends it in the header)
 #endif
 		t.putByte(accessLevel); ++off;
 		return off;
@@ -226,20 +225,20 @@ namespace alc {
 	{
 		dbg.nl();
 #ifdef ENABLE_UNET2
-		if (u && u->proto == 1) dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid, 16));
+		if (u && u->proto == 1) dbg.printf(" uid (unet2 protocol): %s,", alcGetStrUid(uid));
 #endif
 		dbg.printf(" access level: %d", accessLevel);
 	}
 	
 	//// tmCustomVaultCheckKi
-	tmCustomVaultCheckKi::tmCustomVaultCheckKi(tNetSession *u, U32 x, U32 ki, Byte *guid)
-	 : tmMsgBase(NetMsgCustomVaultCheckKi, plNetX | plNetKi | plNetGUI | plNetAck | plNetCustom | plNetVersion, u)
+	tmCustomVaultCheckKi::tmCustomVaultCheckKi(tNetSession *u, U32 x, U32 ki, Byte *uid)
+	 : tmMsgBase(NetMsgCustomVaultCheckKi, plNetX | plNetKi | plNetUID | plNetAck | plNetCustom | plNetVersion, u)
 	{
 		this->x = x;
 		this->ki = ki;
-		memcpy(this->guid, guid, 16);
+		memcpy(this->uid, uid, 16);
 #ifdef ENABLE_UNET2
-		if (u->proto == 1) unsetFlags(plNetGUI);
+		if (u->proto == 1) unsetFlags(plNetUID);
 #endif
 	}
 	
@@ -247,7 +246,7 @@ namespace alc {
 	{
 		int off = tmMsgBase::stream(t);
 #ifdef ENABLE_UNET2
-		if (u->proto == 1) { t.write(guid, 16); off += 16; } // GUID (only for old protocol, the new one sends it in the header)
+		if (u->proto == 1) { t.write(uid, 16); off += 16; } // UID (only for old protocol, the new one sends it in the header)
 #endif
 		return off;
 	}
@@ -257,7 +256,7 @@ namespace alc {
 #ifdef ENABLE_UNET2
 		if (u && u->proto == 1) {
 			dbg.nl();
-			dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid, 16));
+			dbg.printf(" uid (unet2 protocol): %s,", alcGetStrUid(uid));
 		}
 #endif
 	}
@@ -273,10 +272,10 @@ namespace alc {
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
 #ifndef ENABLE_UNET2
-		if (!hasFlags(plNetGUI)) throw txProtocolError(_WHERE("GUID flag missing"));
+		if (!hasFlags(plNetUID)) throw txProtocolError(_WHERE("UID flag missing"));
 #else
-		if (!hasFlags(plNetGUI)) {
-			memcpy(guid, t.read(16), 16);
+		if (!hasFlags(plNetUID)) {
+			memcpy(uid, t.read(16), 16);
 			u->proto = 1; // unet2 protocol
 		}
 # endif
@@ -288,7 +287,7 @@ namespace alc {
 	{
 		dbg.nl();
 #ifdef ENABLE_UNET2
-		if (u && u->proto == 1) dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid, 16));
+		if (u && u->proto == 1) dbg.printf(" uid (unet2 protocol): %s,", alcGetStrUid(uid));
 #endif
 		dbg.printf(" status: 0x%02X, avatar: %s", status, avatar.c_str());	
 	}

@@ -56,7 +56,7 @@ namespace alc {
 	
 	tUnetLobbyServer::tUnetLobbyServer(void) : tUnetLobbyServerBase()
 	{
-		strcpy((char*)name, alcNetName);
+		strcpy((char*)serverName, alcNetName);
 		loadSettings();
 		lstd->log("WARNING: The lobby server is not finished yet. So if it doesn\'t work, that's not even a bug.\n");
 	}
@@ -111,9 +111,9 @@ namespace alc {
 				
 				// find the client's session
 				tNetSession *client = smgr->get(playerList.x);
-				// verify GUID and session state
-				if (!client || client->getPeerType() != KClient || memcmp(client->guid, playerList.guid, 16) != 0) {
-					err->log("ERR: Got NetMsgCustomVaultPlayerList for player with GUID %s but can't find his session.\n", alcGetStrGuid(playerList.guid, 16));
+				// verify UID and session state
+				if (!client || client->getPeerType() != KClient || memcmp(client->guid, playerList.uid, 16) != 0) {
+					err->log("ERR: Got NetMsgCustomVaultPlayerList for player with UID %s but can't find his session.\n", alcGetStrUid(playerList.uid));
 					return 1;
 				}
 				
@@ -162,9 +162,9 @@ namespace alc {
 				
 				// find the client's session
 				tNetSession *client = smgr->get(playerCreated.x);
-				// verify GUID and session state
-				if (!client || client->getPeerType() != KClient || memcmp(client->guid, playerCreated.guid, 16) != 0) {
-					err->log("ERR: Got NetMsgCustomVaultPlayerCreated for player with GUID %s but can't find his session.\n", alcGetStrGuid(playerCreated.guid, 16));
+				// verify UID and session state
+				if (!client || client->getPeerType() != KClient || memcmp(client->guid, playerCreated.uid, 16) != 0) {
+					err->log("ERR: Got NetMsgCustomVaultPlayerCreated for player with UID %s but can't find his session.\n", alcGetStrUid(playerCreated.uid));
 					return 1;
 				}
 				

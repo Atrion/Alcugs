@@ -219,7 +219,7 @@ namespace alc {
 			int authResult;
 			bool updateAttempt = true;
 			*accessLevel = queryResult;
-			log->print("GUID = %s, attempt %d/%d, access level = %d\n ", guid, attempts+1, maxAttempts, *accessLevel);
+			log->print("UID = %s, attempt %d/%d, access level = %d\n ", guid, attempts+1, maxAttempts, *accessLevel);
 			
 			if (*accessLevel >= minAccess) { // the account doesn't have enough access for this shard (accessLevel = minAccess is rejected as well, for backward compatability)
 				log->print("access level is too big (must be lower than %d)\n", minAccess);

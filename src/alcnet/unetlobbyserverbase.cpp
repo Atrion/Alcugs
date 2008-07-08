@@ -52,8 +52,8 @@ namespace alc {
 	////IMPLEMENTATION
 	tUnetLobbyServerBase::tUnetLobbyServerBase(void) : tUnetServerBase()
 	{
-		memset(guid, 0, 8);
-		name[0] = 0;
+		memset(serverGuid, 0, 8);
+		serverName[0] = 0;
 		auth_gone = tracking_gone = vault_gone = 0;
 	}
 	
@@ -108,7 +108,7 @@ namespace alc {
 		// tell vault and taracking
 		tmCustomPlayerStatus trackingStatus(trackingServer, ki, u->sid, u->guid, u->name, avatar, 2 /* visible */, RJoining);
 		send(trackingStatus);
-		tmCustomVaultPlayerStatus vaultStatus(vaultServer, ki, u->sid, guid, name, 1 /* what does this mean? */, u->onlineTime());
+		tmCustomVaultPlayerStatus vaultStatus(vaultServer, ki, u->sid, alcGetStrGuid(serverGuid), serverName, 1 /* what does this mean? */, u->onlineTime());
 		send(vaultStatus);
 		
 		// now, tell the client
@@ -119,7 +119,7 @@ namespace alc {
 	
 	void tUnetLobbyServerBase::terminate(tNetSession *u, Byte reason, bool destroyOnly)
 	{
-		if (u->whoami == KClient && u->ki != 0 && !destroyOnly) { // if necessary, tell the others about it
+		if (u->whoami == KClient && u->ki != 0) { // if necessary, tell the others about it
 			tNetSession *trackingServer = getSession(tracking), *vaultServer = getSession(vault);
 			if (!trackingServer || !vaultServer) {
 				err->log("ERR: I've got to update a player\'s (%s) status for the tracking and vault server, but one of them is unavailable.\n", u->str());
@@ -129,10 +129,10 @@ namespace alc {
 			tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->sid, u->guid, u->name, (Byte *)"", 0 /* delete */, RStopResponding);
 			send(trackingStatus);
 			
-			Byte emptyGuid[8];
-			memset(emptyGuid, 0, 8);
-			tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->sid, emptyGuid, (Byte *)"", 0 /* what does this mean? */, u->onlineTime());
+			tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->sid, (Byte *)"0000000000000000" /* these are 16 zeroes */, (Byte *)"", 0 /* what does this mean? */, u->onlineTime());
 			send(vaultStatus);
+			
+			u->ki = 0; // this avoids sending the messages twice
 		}
 	
 		tUnetServerBase::terminate(u, reason, destroyOnly); // do the common terminate procedure
@@ -195,7 +195,7 @@ namespace alc {
 		if (dst == KTracking) {
 			tStrBuf var = cfg->getVar("public_address");
 			if (var.isNull()) log->log("WARNING: No public address set, using bind address %s\n", bindaddr);
-			tmCustomSetGuid setGuid(session, guid, name, var.c_str());
+			tmCustomSetGuid setGuid(session, serverGuid, serverName, var.c_str());
 			send(setGuid);
 		}
 		
@@ -341,13 +341,13 @@ namespace alc {
 				
 				// send NetMsgAccountAuthenticated to client
 				if (authResponse.result == AAuthSucceeded) {
-					memcpy(client->guid, authResponse.guid, 16);
+					memcpy(client->guid, authResponse.uid, 16);
 					client->whoami = KClient; // it's a real client now
 					client->authenticated = 2; // the player is authenticated!
 					client->accessLevel = authResponse.accessLevel;
 					strcpy((char *)client->passwd, (char *)authResponse.passwd.c_str()); // passwd is needed for validating packets
 					client->conn_timeout = 30; // 30sec, client should send an alive every 10sec
-					tmAccountAutheticated accountAuth(client, authResponse.result, guid);
+					tmAccountAutheticated accountAuth(client, authResponse.result, serverGuid);
 					send(accountAuth);
 				}
 				else {
@@ -407,8 +407,8 @@ namespace alc {
 				// find the client's session
 				tNetSession *client = smgr->get(kiChecked.x);
 				// verify GUID and session state
-				if (!client || client->getPeerType() != KClient || u->ki != 0 || memcmp(client->guid, kiChecked.guid, 16) != 0) {
-					err->log("ERR: Got NetMsgCustomVaultKiChecked for player with GUID %s but can't find his session.\n", alcGetStrGuid(kiChecked.guid, 16));
+				if (!client || client->getPeerType() != KClient || u->ki != 0 || memcmp(client->guid, kiChecked.uid, 16) != 0) {
+					err->log("ERR: Got NetMsgCustomVaultKiChecked for player with UID %s but can't find his session.\n", alcGetStrUid(kiChecked.uid));
 					return 1;
 				}
 				

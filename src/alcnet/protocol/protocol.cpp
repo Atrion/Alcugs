@@ -593,10 +593,10 @@ void tmMsgBase::store(tBBuf &t) {
 		ki=0;
 	}
 	
-	if(flags & plNetGUI) {
-		memcpy(guid,t.read(16),16);
+	if(flags & plNetUID) {
+		memcpy(uid,t.read(16),16);
 	} else {
-		memset(guid,0,16);
+		memset(uid,0,16);
 	}
 	if(flags & plNetIP) {
 		//Unfortunately it looks like the IP address is transmitted in
@@ -618,7 +618,7 @@ void tmMsgBase::store(tBBuf &t) {
 	else sid = 0;
 
 	U32 check=plNetAck | plNetBcast | plNetVersion | plNetTimestamp | \
-	plNetX | plNetKi | plNetGUI | plNetIP | plNetCustom | plNetSid;
+	plNetX | plNetKi | plNetUID | plNetIP | plNetCustom | plNetSid;
 	
 	//now catch undocumented protocol flags
 	if((flags & ~(check)) && u) {
@@ -656,8 +656,8 @@ int tmMsgBase::stream(tBBuf &t) {
 		t.putU32(ki);
 		off+=4;
 	}
-	if(flags & plNetGUI) {
-		t.write(guid,16);
+	if(flags & plNetUID) {
+		t.write(uid,16);
 		off+=16;
 	}
 	if(flags & plNetIP) {
@@ -689,8 +689,8 @@ void tmMsgBase::copyProps(tmMsgBase &t) {
 	if(flags & plNetKi) {
 		ki=t.ki;
 	}
-	if(flags & plNetGUI) {
-		memcpy(guid,t.guid,16);
+	if(flags & plNetUID) {
+		memcpy(uid,t.uid,16);
 	}
 	if(flags & plNetIP) {
 		ip=t.ip;
@@ -729,8 +729,8 @@ Byte * tmMsgBase::str() {
 		dbg.printf(" x: %i,",x);
 	if(flags & plNetKi)
 		dbg.printf(" ki: %i,",ki);
-	if(flags & plNetGUI)
-		dbg.printf(" guid: %s,",alcGetStrGuid(guid, 16));
+	if(flags & plNetUID)
+		dbg.printf(" uid: %s,",alcGetStrUid(uid));
 	if(flags & plNetIP)
 		dbg.printf(" ip: %s:%i,",alcGetStrIp(ip),ntohs(port));
 	if((flags & plNetSid) && (u->proto == 0 || u->proto >= 3)) // it will not be sent to unet2 or unet3 peers

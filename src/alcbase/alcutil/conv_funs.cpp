@@ -37,11 +37,10 @@ namespace alc {
 /**
   \brief Converts an hex guid to ascii
 */
-const Byte * alcGetStrGuid(const Byte * guid, int length) {
+const Byte * alcGetStrGuid(const Byte * guid) {
 	if(guid==NULL) return (const Byte *)"null";
-	static Byte str_guid[33];
-	if (length > 16) length = 16;
-	alcHex2Ascii(str_guid,guid,length);
+	static Byte str_guid[17];
+	alcHex2Ascii(str_guid,guid,8);
 	return str_guid;
 }
 

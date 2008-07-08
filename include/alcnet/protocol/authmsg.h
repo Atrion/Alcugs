@@ -58,7 +58,7 @@ namespace alc {
 	class tmCustomAuthResponse : public tmMsgBase {
 	public:
 		tmCustomAuthResponse(tNetSession *u);
-		tmCustomAuthResponse(tNetSession *u, tmCustomAuthAsk &authAsk, const Byte *guid, const Byte *passwd, Byte result, Byte accessLevel);
+		tmCustomAuthResponse(tNetSession *u, tmCustomAuthAsk &authAsk, const Byte *uid, const Byte *passwd, Byte result, Byte accessLevel);
 		virtual void store(tBBuf &t);
 		virtual int stream(tBBuf &t);
 		// format

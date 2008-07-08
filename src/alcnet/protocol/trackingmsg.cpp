@@ -40,14 +40,16 @@ namespace alc {
 	//// tmCustomSetGuid
 	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u) : tmMsgBase(NetMsgCustomSetGuid, plNetAck | plNetVersion | plNetCustom, u)
 	{
+		serverGuid.setVersion(5); // inverted UruString
 		age.setVersion(0); // normal UrurString
 		externalIp.setVersion(0); // normal UrurString
 	}
 	
-	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u, const Byte *guid, const Byte *age, const Byte *externalIp)
+	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u, const Byte *serverGuid, const Byte *age, const Byte *externalIp)
 	 : tmMsgBase(NetMsgCustomSetGuid, plNetAck | plNetVersion | plNetCustom, u)
 	{
-		memcpy(this->guid, guid, 8);
+		this->serverGuid.setVersion(5); // inverted UrurString
+		this->serverGuid.writeStr(serverGuid);
 		this->age.setVersion(0); // normal UrurString
 		this->age.writeStr(age);
 		this->externalIp.setVersion(0); // normal UrurString
@@ -57,11 +59,7 @@ namespace alc {
 	void tmCustomSetGuid::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		// there's already a guid member in tmMsgBase, so let's use that (though we need only 8 bytes)
-		tUStr guid_str(5); // inverted UruString
-		t.get(guid_str);
-		alcAscii2Hex(guid, (Byte *)guid_str.c_str(), 8);
-		
+		t.get(serverGuid);
 		t.get(age);
 		t.get(externalIp);
 #ifdef ENABLE_UNET2
@@ -80,10 +78,7 @@ namespace alc {
 		}
 		
 		int off = tmMsgBase::stream(t);
-		tUStr guid_str(5); // inverted UruString
-		guid_str.writeStr(alcGetStrGuid(guid, 8));
-		off += t.put(guid_str);
-		
+		off += t.put(serverGuid);
 		off += t.put(age);
 #ifdef ENABLE_UNET2
 		if (u->proto == 1) {
@@ -99,7 +94,7 @@ namespace alc {
 	void tmCustomSetGuid::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" GUID: %s, Age filename: %s, external IP: %s", alcGetStrGuid(guid, 8), age.c_str(), externalIp.c_str());
+		dbg.printf(" Server GUID: %s, Age filename: %s, external IP: %s", serverGuid.c_str(), age.c_str(), externalIp.c_str());
 #ifdef ENABLE_UNET2
 		if (u && u->proto == 1) dbg.printf(" (unet2 protocol)");
 #endif
@@ -107,26 +102,26 @@ namespace alc {
 	
 	//// tmCustomPlayerStatus
 	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *u)
-	 : tmMsgBase(NetMsgCustomPlayerStatus, plNetAck | plNetVersion | plNetCustom | plNetX | plNetKi | plNetGUI, u)
+	 : tmMsgBase(NetMsgCustomPlayerStatus, plNetAck | plNetVersion | plNetCustom | plNetX | plNetKi | plNetUID, u)
 	{
 #ifdef ENABLE_UNET2
 		if (u->proto == 1)
-			unsetFlags(plNetGUI);
+			unsetFlags(plNetUID);
 #endif
 		account.setVersion(0); // normal UrurString
 		avatar.setVersion(0); // normal UrurString
 	}
 	
-	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *u, U32 ki, U32 x, const Byte *guid, const Byte *account, const Byte *avatar, Byte playerFlag, Byte playerStatus)
-	 : tmMsgBase(NetMsgCustomPlayerStatus, plNetAck | plNetVersion | plNetCustom | plNetX | plNetKi | plNetGUI, u)
+	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *u, U32 ki, U32 x, const Byte *uid, const Byte *account, const Byte *avatar, Byte playerFlag, Byte playerStatus)
+	 : tmMsgBase(NetMsgCustomPlayerStatus, plNetAck | plNetVersion | plNetCustom | plNetX | plNetKi | plNetUID, u)
 	{
 #ifdef ENABLE_UNET2
 		if (u->proto == 1)
-			unsetFlags(plNetGUI);
+			unsetFlags(plNetUID);
 #endif
 		this->x = x;
 		this->ki = ki;
-		memcpy(this->guid, guid, 16);
+		memcpy(this->uid, uid, 16);
 		
 		this->account.setVersion(0); // normal UrurString
 		this->account.writeStr(account);
@@ -141,9 +136,9 @@ namespace alc {
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
 #ifndef ENABLE_UNET2
-		if (!hasFlags(plNetGUI)) throw txProtocolError(_WHERE("GUID flag missing"));
+		if (!hasFlags(plNetUID)) throw txProtocolError(_WHERE("UID flag missing"));
 #else
-		if (!hasFlags(plNetGUI)) memcpy(guid, t.read(16), 16);
+		if (!hasFlags(plNetUID)) memcpy(uid, t.read(16), 16);
 #endif
 		t.get(account);
 		t.get(avatar);
@@ -155,7 +150,7 @@ namespace alc {
 	{
 		int off = tmMsgBase::stream(t);
 #ifdef ENABLE_UNET2
-		if (u->proto == 1) { t.write(guid, 16); off += 16; } // GUID (only for old protocol, the new one sends it in the header)
+		if (u->proto == 1) { t.write(uid, 16); off += 16; } // UID (only for old protocol, the new one sends it in the header)
 #endif
 		off += t.put(account);
 		off += t.put(avatar);
@@ -168,7 +163,7 @@ namespace alc {
 	{
 		dbg.nl();
 #ifdef ENABLE_UNET2
-		if (u && u->proto == 1) dbg.printf(" GUID (unet2 protocol): %s,", alcGetStrGuid(guid, 16));
+		if (u && u->proto == 1) dbg.printf(" UID (unet2 protocol): %s,", alcGetStrUid(uid));
 #endif
 		dbg.printf(" Account: %s, Avatar: %s, Flag: 0x%02X, Status: 0x%02X (%s)", account.c_str(), avatar.c_str(), playerFlag, playerStatus, alcUnetGetReasonCode(playerStatus));
 	}
@@ -176,6 +171,7 @@ namespace alc {
 	//// tmCustomFindServer
 	tmCustomFindServer::tmCustomFindServer(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
 	{
+		serverGuid.setVersion(5); // inverted UruString
 		age.setVersion(0); // normal UrurString
 	}
 	
@@ -186,11 +182,7 @@ namespace alc {
 #ifndef ENABLE_UNET2
 		if (!hasFlags(plNetIP)) throw txProtocolError(_WHERE("IP flag missing"));
 #endif
-		// there's already a guid member in tmMsgBase, so let's use that (though we need only 8 bytes)
-		tUStr guid_str(5); // inverted UruString
-		t.get(guid_str);
-		alcAscii2Hex(guid, (Byte *)guid_str.c_str(), 8);
-		
+		t.get(serverGuid);
 		t.get(age);
 #ifdef ENABLE_UNET2
 		if (!hasFlags(plNetIP)) {
@@ -203,21 +195,22 @@ namespace alc {
 	void tmCustomFindServer::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" GUID: %s, Age filename: %s", alcGetStrGuid(guid, 8), age.c_str());
+		dbg.printf(" Server GUID: %s, Age filename: %s", serverGuid.c_str(), age.c_str());
 #ifdef ENABLE_UNET2
 		if (u && u->proto == 1) dbg.printf(", IP (unet2 protocol): %s,", alcGetStrIp(ip));
 #endif
 	}
 	
 	//// tmCustomForkServer
-	tmCustomForkServer::tmCustomForkServer(tNetSession *u, U32 ki, U32 x, U16 port, const Byte *guid, const Byte *name, bool loadSDL)
+	tmCustomForkServer::tmCustomForkServer(tNetSession *u, U32 ki, U32 x, U16 port, const Byte *serverGuid, const Byte *name, bool loadSDL)
 	: tmMsgBase(NetMsgCustomForkServer, plNetAck | plNetCustom | plNetX | plNetKi | plNetVersion, u)
 	{
 		this->x = x;
 		this->ki = ki;
 		
 		fork_port = port;
-		memcpy(this->guid, guid, 8);
+		this->serverGuid.setVersion(5); // inverted UruString
+		this->serverGuid.writeStr(serverGuid);
 		age.writeStr(name);
 		age.setVersion(0); // normal UruString
 		this->loadSDL = loadSDL;
@@ -227,11 +220,7 @@ namespace alc {
 	{
 		int off = tmMsgBase::stream(t);
 		t.putU16(fork_port); off += 2;
-		
-		tUStr guid_str(5);
-		guid_str.writeStr(alcGetStrGuid(guid, 8));
-		t.put(guid_str); off += 8;
-		
+		off += t.put(serverGuid);
 		off += t.put(age);
 		t.putByte(loadSDL); ++off;
 		return off;
@@ -240,13 +229,13 @@ namespace alc {
 	void tmCustomForkServer::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" Port: %d, GUID: %s, Age filename: %s, Load SDL state: ", fork_port, alcGetStrGuid(guid, 8), age.c_str());
+		dbg.printf(" Port: %d, Server GUID: %s, Age filename: %s, Load SDL state: ", fork_port, serverGuid.c_str(), age.c_str());
 		if (loadSDL) dbg.printf("yes");
 		else         dbg.printf("no");
 	}
 	
 	//// tmCustomServerFound
-	tmCustomServerFound::tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U16 port, const Byte *ip_str, const Byte *guid, const Byte *name)
+	tmCustomServerFound::tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U16 port, const Byte *ip_str, const Byte *serverGuid, const Byte *name)
 	: tmMsgBase(NetMsgCustomServerFound, plNetAck | plNetCustom | plNetX | plNetKi | plNetVersion, u)
 	{
 		this->x = x;
@@ -255,7 +244,8 @@ namespace alc {
 		server_port = port;
 		this->ip_str.writeStr(ip_str);
 		this->ip_str.setVersion(0); // normal UruString
-		memcpy(this->guid, guid, 8);
+		this->serverGuid.setVersion(5); // inverted UruString
+		this->serverGuid.writeStr(serverGuid);
 		age.writeStr(name);
 		age.setVersion(0); // normal UruString
 	}
@@ -265,11 +255,7 @@ namespace alc {
 		int off = tmMsgBase::stream(t);
 		t.putU16(server_port); off += 2;
 		off += t.put(ip_str);
-		
-		tUStr guid_str(5);
-		guid_str.writeStr(alcGetStrGuid(guid, 8));
-		t.put(guid_str); off += 8;
-		
+		off += t.put(serverGuid);
 		off += t.put(age);
 		return off;
 	}
@@ -277,7 +263,7 @@ namespace alc {
 	void tmCustomServerFound::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" Port: %d, IP: %s, GUID: %s, Age filename: %s", server_port, ip_str.c_str(), alcGetStrGuid(guid, 8), age.c_str());
+		dbg.printf(" Port: %d, IP: %s, Server GUID: %s, Age filename: %s", server_port, ip_str.c_str(), serverGuid.c_str(), age.c_str());
 	}
 	
 	////tmCustomDirectedFwd

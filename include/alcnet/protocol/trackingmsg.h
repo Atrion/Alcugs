@@ -35,11 +35,11 @@ namespace alc {
 	class tmCustomSetGuid : public tmMsgBase {
 	public:
 		tmCustomSetGuid(tNetSession *u);
-		tmCustomSetGuid(tNetSession *u, const Byte *guid, const Byte *age, const Byte *externalIp);
+		tmCustomSetGuid(tNetSession *u, const Byte *serverGuid, const Byte *age, const Byte *externalIp);
 		virtual void store(tBBuf &t);
 		virtual int stream(tBBuf &t);
 		// format
-		tUStr age, externalIp;
+		tUStr serverGuid, age, externalIp;
 	protected:
 		virtual void additionalFields();
 	};
@@ -47,7 +47,7 @@ namespace alc {
 	class tmCustomPlayerStatus : public tmMsgBase {
 	public:
 		tmCustomPlayerStatus(tNetSession *u);
-		tmCustomPlayerStatus(tNetSession *u, U32 ki, U32 x, const Byte *guid, const Byte *account, const Byte *avatar, Byte playerFlag, Byte playerStatus);
+		tmCustomPlayerStatus(tNetSession *u, U32 ki, U32 x, const Byte *uid, const Byte *account, const Byte *avatar, Byte playerFlag, Byte playerStatus);
 		virtual void store(tBBuf &t);
 		virtual int stream(tBBuf &t);
 		// format
@@ -62,18 +62,18 @@ namespace alc {
 		tmCustomFindServer(tNetSession *u);
 		virtual void store(tBBuf &t);
 		// format
-		tUStr age;
+		tUStr serverGuid, age;
 	protected:
 		virtual void additionalFields();
 	};
 	
 	class tmCustomForkServer : public tmMsgBase {
 	public:
-		tmCustomForkServer(tNetSession *u, U32 ki, U32 x, U16 port, const Byte *guid, const Byte *name, bool loadSDL);
+		tmCustomForkServer(tNetSession *u, U32 ki, U32 x, U16 port, const Byte *serverGuid, const Byte *name, bool loadSDL);
 		virtual int stream(tBBuf &t);
 		// format
 		U16 fork_port;
-		tUStr age;
+		tUStr serverGuid, age;
 		Byte loadSDL;
 	protected:
 		virtual void additionalFields();
@@ -81,11 +81,11 @@ namespace alc {
 	
 	class tmCustomServerFound : public tmMsgBase {
 	public:
-		tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U16 port, const Byte *ip_str, const Byte *guid, const Byte *name);
+		tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U16 port, const Byte *ip_str, const Byte *serverGuid, const Byte *name);
 		virtual int stream(tBBuf &t);
 		// format
 		U16 server_port;
-		tUStr ip_str, age;
+		tUStr ip_str, serverGuid, age;
 	protected:
 		virtual void additionalFields();
 	};

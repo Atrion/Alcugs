@@ -56,7 +56,7 @@
 #define plNetX          0x00000200 //* contains the X
 #define plNetKi         0x00001000 //* contains the ki
 //but we don't know the exact place, so we placed them anywhere.
-#define plNetGUI        0x00004000 //* contains a player guid
+#define plNetUID        0x00004000 //* contains a player uid
 //#define plNetIP        0x10000000 //wrong plNetIP
 //Mental Note: The current GoE shard build is still using the wrong plNetIP, all servers must be updated at the same time.
 #define plNetIP         0x00000010 //* This message should contain client's ip address

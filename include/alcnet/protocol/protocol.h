@@ -177,7 +177,7 @@ public:
 	tTime timestamp;
 	U32 x;
 	U32 ki;
-	Byte guid[16];
+	Byte uid[16];
 	U32 ip; //network order
 	U32 port; //network order
 	U32 sid;

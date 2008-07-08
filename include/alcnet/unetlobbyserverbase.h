@@ -62,8 +62,8 @@ protected:
 	tNetSessionIte auth, tracking, vault;
 	U32 auth_gone, tracking_gone, vault_gone; // saves when this server got disconnected. wait 10sec before trying to connect again
 
-	Byte guid[8]; //!< This system's guid (age guid) (in Hex)
-	Byte name[200]; //!< The system/server name, normally the age filename
+	Byte serverGuid[8]; //!< This system's guid (age guid) (in Hex)
+	Byte serverName[200]; //!< The system/server name, normally the age filename
 };
 
 #if 0

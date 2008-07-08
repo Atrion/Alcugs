@@ -84,7 +84,7 @@ namespace alc {
 	void tmAuthenticateChallenge::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" auth result: 0x%02X (%s), challenge: %s", authResult, alcUnetGetAuthCode(authResult), alcGetStrGuid(challenge.readAll(), 16));
+		dbg.printf(" auth result: 0x%02X (%s), challenge: %s", authResult, alcUnetGetAuthCode(authResult), alcGetStrUid(challenge.readAll()));
 	}
 	
 	//// tmAuthenticateResponse
@@ -99,6 +99,7 @@ namespace alc {
 		// the vault manager sends these without X and KI
 		if (ki != 0) throw txProtocolError(_WHERE("KI must be 0 in NetMsgAuthenticateResponse"));
 		t.get(hash);
+		if (hash.size() != 16) throw txProtocolError(_WHERE("tmAuthenticateResponse.hash must be 16 byte long"));
 		
 		u->x = x;
 	}
@@ -106,14 +107,14 @@ namespace alc {
 	void tmAuthenticateResponse::additionalFields(void)
 	{
 		dbg.nl();
-		dbg.printf(" hash: %s", alcGetStrGuid(hash.readAll(), hash.size()));
+		dbg.printf(" hash: %s", alcGetStrUid(hash.readAll()));
 	}
 	
 	//// tmAccountAutheticated	
 	tmAccountAutheticated::tmAccountAutheticated(tNetSession *u, Byte authResult, const Byte *serverGuid)
-	: tmMsgBase(NetMsgAccountAuthenticated, plNetKi | plNetAck | plNetX | plNetGUI | plNetCustom, u)
+	: tmMsgBase(NetMsgAccountAuthenticated, plNetKi | plNetAck | plNetX | plNetUID | plNetCustom, u)
 	{
-		memcpy(guid, u->guid, 16);
+		memcpy(uid, u->guid, 16);
 		x = u->x;
 		ki = 0; // we're not yet logged in, so no KI can be set
 		
@@ -132,7 +133,7 @@ namespace alc {
 	void tmAccountAutheticated::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" auth result: 0x%02X (%s), server guid: %s", authResult, alcUnetGetAuthCode(authResult), alcGetStrGuid(serverGuid, 8));
+		dbg.printf(" auth result: 0x%02X (%s), server guid: %s", authResult, alcUnetGetAuthCode(authResult), alcGetStrGuid(serverGuid));
 	}
 	
 	//// tmSetMyActivePlayer

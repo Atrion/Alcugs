@@ -117,17 +117,17 @@ namespace alc {
 		if (u->proto == 1) dbg.printf(" ip (unet2 protocol): %s,", alcGetStrIp(ip));
 #endif
 		// use two printf commands as alcGetStrGuid uses a static array and when using one command it would seems as if challenge and hash would be the same
-		dbg.printf(" login: %s, challenge: %s, ", login.c_str(), alcGetStrGuid(challenge, 16));
-		dbg.printf("hash: %s, build: 0x%02X (%s)", alcGetStrGuid(hash, 16), release, alcUnetGetRelease(release));
+		dbg.printf(" login: %s, challenge: %s, ", login.c_str(), alcGetStrUid(challenge));
+		dbg.printf("hash: %s, build: 0x%02X (%s)", alcGetStrUid(hash), release, alcUnetGetRelease(release));
 	}
 	
 	//// tmCustomAuthResponse
-	tmCustomAuthResponse::tmCustomAuthResponse(tNetSession *u, tmCustomAuthAsk &authAsk, const Byte *guid, const Byte *passwd, Byte result, Byte accessLevel)
-	 : tmMsgBase(NetMsgCustomAuthResponse, plNetAck | plNetCustom | plNetX | plNetVersion | plNetIP | plNetGUI, u)
+	tmCustomAuthResponse::tmCustomAuthResponse(tNetSession *u, tmCustomAuthAsk &authAsk, const Byte *uid, const Byte *passwd, Byte result, Byte accessLevel)
+	 : tmMsgBase(NetMsgCustomAuthResponse, plNetAck | plNetCustom | plNetX | plNetVersion | plNetIP | plNetUID, u)
 	 {
 #ifdef ENABLE_UNET2
 		if (u->proto == 1)
-			unsetFlags(plNetIP | plNetGUI);
+			unsetFlags(plNetIP | plNetUID);
 #endif
 		// copy stuff from the authAsk
 		x = authAsk.x; // this is the SID the lobby uses for the connection to the client to be authed
@@ -136,7 +136,7 @@ namespace alc {
 		login = authAsk.login;
 		login.setVersion(0); // normal UrurString
 		
-		memcpy(this->guid, guid, 16);
+		memcpy(this->uid, uid, 16);
 		this->passwd = passwd;
 		this->passwd.setVersion(0); // normal UrurString
 		this->result = result;
@@ -144,11 +144,11 @@ namespace alc {
 	}
 	
 	tmCustomAuthResponse::tmCustomAuthResponse(tNetSession *u)
-	: tmMsgBase(NetMsgCustomAuthResponse, plNetAck | plNetCustom | plNetX | plNetVersion | plNetIP | plNetGUI, u)
+	: tmMsgBase(NetMsgCustomAuthResponse, plNetAck | plNetCustom | plNetX | plNetVersion | plNetIP | plNetUID, u)
 	{
 #ifdef ENABLE_UNET2
 		if (u->proto == 1)
-			unsetFlags(plNetIP | plNetGUI);
+			unsetFlags(plNetIP | plNetUID);
 #endif
 		login.setVersion(0); // normal UrurString
 		passwd.setVersion(0); // normal UrurString
@@ -159,14 +159,14 @@ namespace alc {
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX)) throw txProtocolError(_WHERE("X flag missing"));
 #ifndef ENABLE_UNET2
-		if (!hasFlags(plNetIP | plNetGUI)) throw txProtocolError(_WHERE("IP or GUID flag missing"));
+		if (!hasFlags(plNetIP | plNetUID)) throw txProtocolError(_WHERE("IP or UID flag missing"));
 #endif
 		t.get(login);
 		result = t.getByte();
 		t.get(passwd);
 #ifdef ENABLE_UNET2
-		if (!hasFlags(plNetGUI)) {
-			memcpy(guid, t.read(16), 16);
+		if (!hasFlags(plNetUID)) {
+			memcpy(uid, t.read(16), 16);
 			ip = port = 0; // they should be initialized
 			if (u) u->proto = 1; // unet2 protocol
 		}
@@ -181,7 +181,7 @@ namespace alc {
 		t.putByte(result); ++off; // result
 		off += t.put(passwd); // passwd
 #ifdef ENABLE_UNET2
-		if (u->proto == 1) { t.write(guid, 16); off += 16; } // GUID (only for old protocol, the new one sends it in the header)
+		if (u->proto == 1) { t.write(uid, 16); off += 16; } // UID (only for old protocol, the new one sends it in the header)
 #endif
 		t.putByte(accessLevel); ++off; // acess level
 		return off;
@@ -191,7 +191,7 @@ namespace alc {
 	{
 		dbg.nl();
 #ifdef ENABLE_UNET2
-		if (u->proto == 1) dbg.printf(" guid (unet2 protocol): %s,", alcGetStrGuid(guid, 16));
+		if (u->proto == 1) dbg.printf(" uid (unet2 protocol): %s,", alcGetStrUid(uid));
 #endif
 		dbg.printf(" login: %s, passwd: (hidden), result: 0x%02X (%s), accessLevel: %d", login.c_str(), result, alcUnetGetAuthCode(result), accessLevel);
 	}
