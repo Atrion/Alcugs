@@ -801,7 +801,7 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 	u->server.pn++;
 	msg->pn=u->server.pn;
 	
-	#ifdef ENABLE_MSGDUMP
+	#ifdef ENABLE_MSGDEBUG
 	log->log("<SND> ");
 	msg->dumpheader(log);
 	log->nl();
@@ -813,7 +813,7 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 	mbuf = new tMBuf(msg->size());
 	mbuf->put(*msg);
 
-	#ifdef ENABLE_MSGDUMP
+	#ifdef ENABLE_MSGDEBUG
 	log->log("<SND> RAW Packet follows: \n");
 	log->dumpbuf(*mbuf);
 	log->nl();

@@ -288,7 +288,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 		{
 			tUnetMsg * msg;
 			int ret = 0; // 0 - non parsed; 1 - parsed; -1 - hack attempt; -2 - parse error
-			#ifdef ENABLE_MSGDUMP
+			#ifdef ENABLE_MSGDEBUG
 			log->log("%s New MSG Recieved\n",u->str());
 			#endif
 			u->rcvq->rewind();

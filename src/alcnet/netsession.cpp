@@ -238,7 +238,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		return;
 	}
 	
-	#ifdef ENABLE_MSGDUMP
+	#ifdef ENABLE_MSGDEBUG
 	net->log->log("<RCV> RAW Packet follows: \n");
 	net->log->dumpbuf(buf,size);
 	net->log->nl();
@@ -250,7 +250,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	
 	try {
 		mbuf.get(msg);
-		#ifdef ENABLE_MSGDUMP
+		#ifdef ENABLE_MSGDEBUG
 		net->log->log("<RCV> ");
 		msg.dumpheader(net->log);
 		net->log->nl();
@@ -444,7 +444,7 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 */
 Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 	//drop already parsed messages
-	#ifdef ENABLE_MSGDUMP
+	#ifdef ENABLE_MSGDEBUG
 	net->log->log("%s INF: SN %i (Before) window is:\n",str(),msg.sn);
 	net->log->dumpbuf((Byte *)w,rcv_win);
 	net->log->nl();
@@ -471,7 +471,7 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 				i++; start++;
 				wite++;
 				if(i>=rcv_win*8) { i=0; start=0; }
-				#ifdef ENABLE_MSGDUMP
+				#ifdef ENABLE_MSGDEBUG
 				net->log->log("%s INF: A bit was deactivated (1)\n",str());
 				#endif
 			}
@@ -482,16 +482,16 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 				start++;
 				wite++;
 				if(start>=rcv_win*8) { start=0; ck=i; }
-				#ifdef ENABLE_MSGDUMP
+				#ifdef ENABLE_MSGDEBUG
 				net->log->log("%s INF: A bit was deactivated (2)\n",str());
 				#endif
 			}
-			#ifdef ENABLE_MSGDUMP
+			#ifdef ENABLE_MSGDEBUG
 			net->log->log("%s INF: Packet %i accepted to be parsed\n",str(),msg.sn);
 			#endif
 		}
 	}
-	#ifdef ENABLE_MSGDUMP
+	#ifdef ENABLE_MSGDEBUG
 	net->log->log("%s INF: SN %i (after) window is:\n",str(),msg.sn);
 	net->log->dumpbuf((Byte *)w,rcv_win);
 	net->log->nl();
@@ -521,7 +521,7 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	if(tts>ack_rtt) tts=ack_rtt;
 	net->updatetimer(tts);
 	ack->timestamp=net->net_time + tts;
-	#ifdef ENABLE_MSGDUMP
+	#ifdef ENABLE_MSGDEBUG
 	net->log->log("tts: %i, %i, %i\n",msg.frt,tts,cabal);
 	#endif
 	
@@ -730,7 +730,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 	U32 sn,ps;
 	Byte frn,pfr;
 
-	#ifdef ENABLE_MSGDUMP
+	#ifdef ENABLE_MSGDEBUG
 	net->log->log("<RCV>");
 	#endif
 	t.data.rewind();
@@ -748,7 +748,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 		pfr=A3 & 0x000000FF;
 		sn=A1 >> 8;
 		ps=A3 >> 8;
-		#ifdef ENABLE_MSGDUMP
+		#ifdef ENABLE_MSGDEBUG
 		if(i!=0) net->log->print("    |");
 		net->log->print(" Ack %i,%i %i,%i\n",sn,frn,ps,pfr);
 		#endif
@@ -761,7 +761,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 			
 			if(A1>=A2 && A2>A3) {
 				//then delete
-				#ifdef ENABLE_MSGDUMP
+				#ifdef ENABLE_MSGDEBUG
 				net->log->log("Deleting packet %i,%i\n",msg->sn,msg->frn);
 				#endif
 				if(msg->tryes==1 && A1==A2) {

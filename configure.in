@@ -155,11 +155,11 @@ AC_ARG_ENABLE(admin, [  --enable-admin          Enables possibly dangerous admin
        no) ;;
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-admin) ;;
      esac])
-AC_ARG_ENABLE(msgdebug, [  --enable-msgdebug       Enables detailed logs about incoming and outgoing messages (default NO)],
+AC_ARG_ENABLE(msglog, [  --enable-msglog         Enables detailed logs about incoming and outgoing messages (default NO)],
  [case "${enableval}" in
-       yes) AC_DEFINE([ENABLE_MSGDEBUG],[],[Enables detailed logs about incoming and outgoing messages]) ;;
+       yes) AC_DEFINE([ENABLE_MSGLOG],[],[Enables detailed logs about incoming and outgoing messages]) ;;
        no) ;;
-       *) AC_MSG_ERROR(bad value ${enableval} for --enable-msgdebug) ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-msglog) ;;
      esac])
 AC_ARG_ENABLE(ackdebug, [  --enable-ackdebug       Enables detailed logs about the ack stack (default NO)],
  [case "${enableval}" in
@@ -173,11 +173,11 @@ AC_ARG_ENABLE(netdebug, [  --enable-netdebug       Enables noise and latency deb
        no) ;;
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-netdebug) ;;
      esac])
-AC_ARG_ENABLE(msgdump, [  --enable-msgdump        Enables (byte-level) dumping of messages (default NO)],
+AC_ARG_ENABLE(msgdebug, [  --enable-msgdebug       Enables (byte-level) logging of message content (default NO)],
  [case "${enableval}" in
-       yes) AC_DEFINE([ENABLE_MSGDUMP],[],[Enables (byte-level) dumping of messages]) ;;
+       yes) AC_DEFINE([ENABLE_MSGDEBUG],[],[Enables (byte-level) logging of message content]) ;;
        no) ;;
-       *) AC_MSG_ERROR(bad value ${enableval} for --enable-msgdump) ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-msgdebug) ;;
      esac])
 
 #compiler specific
