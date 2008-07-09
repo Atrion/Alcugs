@@ -130,6 +130,66 @@ namespace alc {
 	void tvCreatableStream::asHtml(tLog *log)
 	{
 		log->print("Size: %d<br />\n", size);
+		tMBuf buf;
+		buf.write(data, size);
+		buf.rewind();
+		// the format of the content depends on the ID
+		switch (id) {
+			case 0x06:
+				log->print("<span style='color:red'>FIXME: there are some vault nodes here</span><br />\n");
+				buf.end();
+				break;
+			case 0x0A:
+			{
+				U16 num = buf.getU16();
+				log->print("number of values: %d<br />\n", num);
+				if (num == 0) break;
+				log->print("Value(s):");
+				for (U16 i = 0; i < num; ++i) {
+					U32 val = buf.getU32();
+					if (i > 0) log->print(",");
+					log->print(" 0x%08X (%d)", val, val);
+				}
+				log->print("<br />\n");
+				break;
+			}
+			case 0x0E:
+			{
+				U32 num = buf.getU32();
+				log->print("number of values: %d<br />\n", num);
+				for (U32 i = 0; i < num; ++i) {
+					U32 val = buf.getU32();
+					double time = buf.getDouble();
+					log->print("[%d] ID: 0x%08X (%d), Stamp: %f<br />\n", i+1, val, val, time);
+				}
+				break;
+			}
+			case 0x0F:
+			{
+				U32 num = buf.getU32();
+				log->print("number of values: %d<br />\n", num);
+				for (U32 i = 0; i < num; ++i) {
+					U32 val = buf.getU32();
+					log->print("[%d] ID1: 0x%08X (%d), ", i+1, val, val);
+					val = buf.getU32();
+					log->print("ID2: 0x%08X (%d), ", val, val);
+					val = buf.getU32();
+					log->print("ID3: 0x%08X (%d), ", val, val);
+					time_t stamp = buf.getU32();
+					val = buf.getU32();
+					log->print("Stamp: %s %d, ", alcGetStrTime(stamp), val);
+					val = buf.getByte();
+					log->print("Flag: %d<br />\n", val);
+				}
+				break;
+			}
+			default:
+				log->print("<span style='color:red'>Unknown strange stream data type!</span><br />\n");
+				buf.end();
+				break;
+		}
+		if (!buf.eof())
+			log->print("<span style='color:red'>Strange, this stream has some bytes left where none are expected!</span><br />\n");
 	}
 	
 	//// tvItem
@@ -149,7 +209,7 @@ namespace alc {
 				data = new tvCreatableGenericValue;
 				break;
 			case DCreatableStream:
-				data = new tvCreatableStream;
+				data = new tvCreatableStream(id);
 				break;
 			// FIXME: add more types
 			default:
@@ -172,7 +232,7 @@ namespace alc {
 	
 	void tvItem::asHtml(tLog *log)
 	{
-		log->print("<span style='color:red'>Id: <b>0x%02X (%d)</b></span>, type: 0x%04X (%s)<br />\n", id, id, type, alcVaultGetDataType(type));
+		log->print("Id: <b>0x%02X (%d)</b>, type: 0x%04X (%s)<br />\n", id, id, type, alcVaultGetDataType(type));
 		data->asHtml(log);
 	}
 	
@@ -305,7 +365,7 @@ namespace alc {
 		if (clientToServer)
 			log->print("<h2 style='color:blue'>From client (%s) to vault</h2>\n", client->str());
 		else
-			log->print("<h2 style='color:red'>From vault to client (%s)</h2>\n", client->str());
+			log->print("<h2 style='color:green'>From vault to client (%s)</h2>\n", client->str());
 		asHtml(log);
 		log->print("<hr>\n\n");
 		log->flush();
@@ -347,7 +407,7 @@ namespace alc {
 				ret = "DCreatableStream";
 				break;
 			default:
-				ret = "DUnknown";
+				ret = "<span style='color:red'>DUnknown</span>";
 				break;
 		}
 		return ret;
@@ -391,7 +451,7 @@ namespace alc {
 				ret = "VOnlineState";
 				break;
 			default:
-				ret = "VUnknown";
+				ret = "<span style='color:red'>VUnknown</span>";
 				break;
 		}
 		return ret;
@@ -402,7 +462,7 @@ namespace alc {
 		static const char *ret;
 		switch (cmd) {
 			default:
-				ret = "TUnknown";
+				ret = "<span style='color:red'>TUnknown</span>";
 				break;
 		}
 		return ret;

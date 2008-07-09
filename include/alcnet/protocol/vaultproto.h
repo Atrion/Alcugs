@@ -88,13 +88,14 @@ namespace alc {
 	
 	class tvCreatableStream : public tvBase {
 	public:
-		tvCreatableStream(void) : tvBase() { data = NULL; }
+		tvCreatableStream(Byte id) : tvBase() { this->id = id; data = NULL; }
 		virtual ~tvCreatableStream(void) { if (data) free(data); }
 		virtual void store(tBBuf &t);
 		virtual int stream(tBBuf &t);
 		virtual void asHtml(tLog *log);
 	private:
-		U32 size;
+		U32 size; // only defined when data != NULL
+		Byte id;
 		Byte *data;
 	};
 	
