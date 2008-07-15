@@ -119,7 +119,7 @@ namespace alc {
 		// tell vault and taracking
 		tmCustomPlayerStatus trackingStatus(trackingServer, ki, u->sid, u->uid, u->name, avatar, 2 /* visible */, RJoining);
 		send(trackingStatus);
-		tmCustomVaultPlayerStatus vaultStatus(vaultServer, ki, u->sid, alcGetStrGuid(serverGuid), serverName, 1 /* what does this mean? */, u->onlineTime());
+		tmCustomVaultPlayerStatus vaultStatus(vaultServer, ki, u->sid, alcGetStrGuid(serverGuid), serverName, 1 /* is online */, u->onlineTime());
 		send(vaultStatus);
 		
 		// now, tell the client
@@ -140,7 +140,7 @@ namespace alc {
 			tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->sid, u->uid, u->name, (Byte *)"", 0 /* delete */, RStopResponding);
 			send(trackingStatus);
 			
-			tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->sid, (Byte *)"0000000000000000" /* these are 16 zeroes */, (Byte *)"", 0 /* what does this mean? */, u->onlineTime());
+			tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->sid, (Byte *)"0000000000000000" /* these are 16 zeroes */, (Byte *)"", 0 /* is offline */, u->onlineTime());
 			send(vaultStatus);
 			
 			u->ki = 0; // this avoids sending the messages twice
@@ -448,7 +448,7 @@ namespace alc {
 				log->log("<RCV> %s\n", vaultMsg.str());
 				
 				// parse the message
-				tvMessage parsedMsg(/*isTask:*/false);
+				tvMessage parsedMsg(/*isTask:*/false, u->tpots);
 				vaultMsg.message.rewind();
 				vaultMsg.message.get(parsedMsg);
 				
@@ -460,6 +460,7 @@ namespace alc {
 						return 1;
 					}
 					parsedMsg.print(lvault, /*clientToServer:*/false, client);
+					parsedMsg.tpots = client->tpots;
 					tmVault vaultMsgFwd(client, vaultMsg.ki, &parsedMsg);
 					send(vaultMsgFwd);
 				}
@@ -475,6 +476,7 @@ namespace alc {
 						return 1;
 					}
 					parsedMsg.print(lvault, /*clientToServer:*/true, u);
+					parsedMsg.tpots = vaultServer->tpots;
 					tmVault vaultMsgFwd(vaultServer, u->ki, &parsedMsg);
 					send(vaultMsgFwd);
 				}

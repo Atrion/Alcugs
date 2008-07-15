@@ -193,7 +193,7 @@ namespace alc {
 		else if (updateStamps == 2) // update last attempt and last login
 			sprintf(stamps, ", last_attempt=NOW(), last_login=NOW()");
 		else // don't update any stamp
-			sprintf(stamps, "");
+			stamps[0] = 0; // an empty string
 		sprintf(query, "UPDATE accounts SET attempts='%d', last_ip='%s'%s WHERE guid='%s'", attempts, ip_escaped, stamps, guid_escaped);
 		sql->query(query, "Update player");
 	}

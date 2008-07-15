@@ -321,7 +321,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 			catch (txProtocolError &t) { // the same for a protocol error
 				err->log("%s Recieved invalid %04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
 				err->log(" Exception details: %s\n%s\n",t.what(),t.backtrace());
-				ret=-2;
+				ret=-1;
 			}
 			if(u->client==1) {
 				if(ret==0) {

@@ -192,6 +192,22 @@ namespace alc {
 			log->print("<span style='color:red'>Strange, this stream has some bytes left where none are expected!</span><br />\n");
 	}
 	
+	//// tvNode
+	void tvNode::store(tBBuf &t)
+	{
+		
+	}
+	
+	int tvNode::stream(tBBuf &t)
+	{
+		return 0;
+	}
+	
+	void tvNode::asHtml(tLog *log)
+	{
+		
+	}
+	
 	//// tvItem
 	void tvItem::store(tBBuf &t)
 	{
@@ -202,6 +218,7 @@ namespace alc {
 			throw txProtocolError(_WHERE("bad item.unk value"));
 		}
 		type = t.getU16();
+		if (tpots == 1 && type == DVaultNode2) type = DVaultNode; // a DVaultNode is called DVaultNode2 in TPOTS
 		
 		if (data) delete data;
 		switch (type) {
@@ -211,8 +228,11 @@ namespace alc {
 			case DCreatableStream:
 				data = new tvCreatableStream(id);
 				break;
-			// FIXME: add more types
+			case DVaultNode:
+				data = new tvNode;
+				break;
 			default:
+				// FIXME: add more types
 				lerr->log("got vault message with unknown data type 0x%04X\n", type);
 				throw txProtocolError(_WHERE("unknown vault data type"));
 		}
@@ -284,7 +304,7 @@ namespace alc {
 		items = (tvItem **)malloc(numItems * sizeof(tvItem *));
 		memset(items, 0, numItems * sizeof(tvItem *));
 		for (int i = 0; i < numItems; ++i) {
-			items[i] = new tvItem;
+			items[i] = new tvItem(tpots);
 			buf->get(*items[i]);
 		}
 		
@@ -326,8 +346,10 @@ namespace alc {
 		// put the items into a temporary buffer which might be compressed
 		tMBuf *buf = new tMBuf;
 		buf->putU16(numItems);
-		for (int i = 0; i < numItems; ++i)
+		for (int i = 0; i < numItems; ++i) {
+			items[i]->tpots = tpots; // make sure the right TPOTS value is used
 			buf->put(*items[i]);
+		}
 		
 		if (compressed == 0x03) {
 			tZBuf content;
