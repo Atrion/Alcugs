@@ -131,7 +131,7 @@ namespace alc {
 #endif
 		// copy stuff from the authAsk
 		x = authAsk.x; // this is the SID the lobby uses for the connection to the client to be authed
-		ip = authAsk.ip; // the client's IP and Port (for fining the correct session)
+		ip = authAsk.ip; // the client's IP and Port (for finding the correct session)
 		port = authAsk.port;
 		login = authAsk.login;
 		login.setVersion(0); // normal UrurString

@@ -51,15 +51,15 @@ namespace alc {
 	// this only contains the columns needed for this auth server
 	const char * authTableInitScript = "\
 	CREATE TABLE `accounts` (\
-		`uid` int(10) unsigned NOT NULL auto_increment,\
+		`uid` int unsigned NOT NULL auto_increment,\
 		`guid` varchar(50) NOT NULL default '',\
 		`name` varchar(50) NOT NULL default '',\
 		`passwd` varchar(32) NOT NULL default '',\
-		`a_level` tinyint(1) unsigned NOT NULL default '25',\
-		`last_login` timestamp(14) NOT NULL,\
+		`a_level` tinyint unsigned NOT NULL default '25',\
+		`last_login` timestamp NOT NULL,\
 		`last_ip` varchar(30) NOT NULL default '',\
-		`attempts` tinyint(1) unsigned NOT NULL default '0',\
-		`last_attempt` timestamp(14) NOT NULL,\
+		`attempts` tinyint unsigned NOT NULL default '0',\
+		`last_attempt` timestamp NOT NULL,\
 		PRIMARY KEY  (`uid`),\
 		UNIQUE KEY `guid` (`guid`),\
 		UNIQUE KEY `name` (`name`)\
@@ -183,15 +183,18 @@ namespace alc {
 		return ret;
 	}
 
-	void tAuthBackend::updatePlayer(Byte *guid, Byte *ip, U32 attempts, bool updateAttempt)
+	void tAuthBackend::updatePlayer(Byte *guid, Byte *ip, U32 attempts, Byte updateStamps)
 	{
-		char query[2048], ip_escaped[50], guid_escaped[50];
+		char query[2048], stamps[256], ip_escaped[50], guid_escaped[50];
 		strncpy(ip_escaped, sql->escape((char *)ip), 49);
 		strncpy(guid_escaped, sql->escape((char *)guid), 49);
-		if (updateAttempt)
-			sprintf(query, "UPDATE accounts SET attempts='%d', last_ip='%s', last_attempt=NOW() WHERE guid='%s'", attempts, ip_escaped, guid_escaped);
-		else
-			sprintf(query, "UPDATE accounts SET attempts='%d', last_ip='%s' WHERE guid='%s'", attempts, ip_escaped, guid_escaped);
+		if (updateStamps == 1) // update only last attempt
+			sprintf(stamps, ", last_attempt=NOW()");
+		else if (updateStamps == 2) // update last attempt and last login
+			sprintf(stamps, ", last_attempt=NOW(), last_login=NOW()");
+		else // don't update any stamp
+			sprintf(stamps, "");
+		sprintf(query, "UPDATE accounts SET attempts='%d', last_ip='%s'%s WHERE guid='%s'", attempts, ip_escaped, stamps, guid_escaped);
 		sql->query(query, "Update player");
 	}
 
@@ -217,7 +220,7 @@ namespace alc {
 		}
 		else { // we found a player, let's process it
 			int authResult;
-			bool updateAttempt = true;
+			Byte updateStamps = 1; // update only last attempt
 			*accessLevel = queryResult;
 			log->print("UID = %s, attempt %d/%d, access level = %d\n ", guid, attempts+1, maxAttempts, *accessLevel);
 			
@@ -228,7 +231,7 @@ namespace alc {
 			// check number of attempts
 			else if (attempts+1 >= maxAttempts && time(NULL)-lastAttempt < disTime) {
 				log->print("too many attempts, login disabled for %d seconds (till %s)\n", disTime, alcGetStrTime(lastAttempt+disTime, 0));
-				updateAttempt = false; // don't update the last attempt time when we're already dissing
+				updateStamps = 0; // don't update the last attempt time when we're already dissing
 				authResult = AAccountDisabled;
 			}
 			// check internal client
@@ -247,12 +250,14 @@ namespace alc {
 				else { // it's correct, the player is authenticated
 					log->print("auth succeeded\n");
 					authResult = AAuthSucceeded;
+					updateStamps = 2; // both last attempt and last login should be updated
 					attempts = 0;
+					
 				}
 			}
 			
 			// ok, now all we have to do is updating the player's last login and attempts and return the result
-			updatePlayer(guid, ip, attempts, updateAttempt);
+			updatePlayer(guid, ip, attempts, updateStamps);
 			log->flush();
 			return authResult;
 		}
