@@ -191,8 +191,8 @@ namespace alc {
 	//// tvNode
 	tvNode::~tvNode(void)
 	{
-		if (data1) free(data1);
-		if (data2) free(data2);
+		if (blob1) free(blob1);
+		if (blob2) free(blob2);
 	}
 	
 	void tvNode::store(tBBuf &t)
@@ -258,44 +258,44 @@ namespace alc {
 			memset(ageGuid, 0, 8);
 		
 		if (flagB & MInt32_1)
-			int_1 = t.getU32();
+			int1 = t.getU32();
 		else
-			int_1 = 0;
+			int1 = 0;
 		
 		if (flagB & MInt32_2)
-			int_2 = t.getU32();
+			int2 = t.getU32();
 		else
-			int_2 = 0;
+			int2 = 0;
 		
 		if (flagB & MInt32_3)
-			int_3 = t.getU32();
+			int3 = t.getU32();
 		else
-			int_3 = 0;
+			int3 = 0;
 		
 		if (flagB & MInt32_4)
-			int_4 = t.getU32();
+			int4 = t.getU32();
 		else
-			int_4 = 0;
+			int4 = 0;
 		
 		if (flagB & MUInt32_1)
-			uInt_1 = t.getU32();
+			uInt1 = t.getU32();
 		else
-			uInt_1 = 0;
+			uInt1 = 0;
 		
 		if (flagB & MUInt32_2)
-			uInt_2 = t.getU32();
+			uInt2 = t.getU32();
 		else
-			uInt_2 = 0;
+			uInt2 = 0;
 		
 		if (flagB & MUInt32_3)
-			uInt_3 = t.getU32();
+			uInt3 = t.getU32();
 		else
-			uInt_3 = 0;
+			uInt3 = 0;
 		
 		if (flagB & MUInt32_4)
-			uInt_4 = t.getU32();
+			uInt4 = t.getU32();
 		else
-			uInt_4 = 0;
+			uInt4 = 0;
 		
 		if (flagB & MStr64_1)
 			t.get(str1);
@@ -327,23 +327,23 @@ namespace alc {
 		if (flagB & MText_2)
 			t.get(text2);
 		
-		if (data1) free(data1);
+		if (blob1) free(blob1);
 		if (flagB & MBlob1) {
-			data1Size = t.getU32();
-			data1 = (Byte *)malloc(sizeof(Byte) * data1Size);
-			memcpy(data1, t.read(data1Size), data1Size);
+			blob1Size = t.getU32();
+			blob1 = (Byte *)malloc(sizeof(Byte) * blob1Size);
+			memcpy(blob1, t.read(blob1Size), blob1Size);
 		}
 		else
-			data1 = NULL;
+			blob1 = NULL;
 		
-		if (data2) free(data2);
+		if (blob2) free(blob2);
 		if (flagB & MBlob2) {
-			data2Size = t.getU32();
-			data2 = (Byte *)malloc(sizeof(Byte) * data2Size);
-			memcpy(data2, t.read(data2Size), data2Size);
+			blob2Size = t.getU32();
+			blob2 = (Byte *)malloc(sizeof(Byte) * blob2Size);
+			memcpy(blob2, t.read(blob2Size), blob2Size);
 		}
 		else
-			data2 = NULL;
+			blob2 = NULL;
 		
 		// the two blob guids must always be 0
 		Byte blobGuid[8], zeroGuid[8];
@@ -361,8 +361,77 @@ namespace alc {
 	}
 	
 	void tvNode::stream(tBBuf &t)
-	{	
-		throw txProtocolError(_WHERE("cant stream vault node, so I cant go on")); // FIXME: remove this when above function is completed
+	{
+		// write flags
+		t.putU32(flagA);
+		if (flagA != 0x00000001 && flagA != 0x00000002) { // check for unknown values
+			lerr->log("UNX: vault node with flagA 0x%08X\n", flagA);
+		}
+		t.putU32(flagB);
+		if (flagA == 0x00000002) {
+			t.putU32(flagC);
+			U32 check = MBlob1Guid | MBlob2Guid;
+			if (flagC & ~(check)) { // check for unknown values
+				lerr->log("UNX: vault node with flagC 0x%08X\n", flagC);
+			}
+		}
+		
+		// write mandatory data
+		t.putU32(index);
+		t.putByte(type);
+		t.putU32(permissions);
+		if ((permissions & 0xFFFFFF00) != 0)
+			throw txProtocolError(_WHERE("invalid permissions mask"));
+		t.putS32(owner);
+		t.putU32(group);
+		t.putU32(modTime);
+		t.putU32(modMicrosec);
+		
+		// write optional data
+		if (flagB & MCreator) t.putU32(creator);
+		if (flagB & MCrtTime) {
+			t.putU32(crtTime);
+			t.putU32(crtMicrosec);
+		}
+		if (flagB & MAgeTime) {
+			t.putU32(ageTime);
+			t.putU32(ageMicrosec);
+		}
+		if (flagB & MAgeCoords) // unused
+			throw txProtocolError(_WHERE("Flag MAgeCoords must never be set"));
+		if (flagB & MAgeName) t.put(ageName);
+		if (flagB & MAgeGuid) t.write(ageGuid, 8);
+		if (flagB & MInt32_1) t.putU32(int1);
+		if (flagB & MInt32_2) t.putU32(int2);
+		if (flagB & MInt32_3) t.putU32(int3);
+		if (flagB & MInt32_4) t.putU32(int4);
+		if (flagB & MUInt32_1) t.putU32(uInt1);
+		if (flagB & MUInt32_2) t.putU32(uInt2);
+		if (flagB & MUInt32_3) t.putU32(uInt3);
+		if (flagB & MUInt32_4) t.putU32(uInt4);
+		if (flagB & MStr64_1) t.put(str1);
+		if (flagB & MStr64_2) t.put(str2);
+		if (flagB & MStr64_3) t.put(str3);
+		if (flagB & MStr64_4) t.put(str4);
+		if (flagB & MStr64_5) t.put(str5);
+		if (flagB & MStr64_6) t.put(str6);
+		if (flagB & MlStr64_1) t.put(lStr1);
+		if (flagB & MlStr64_2) t.put(lStr2);
+		if (flagB & MText_1) t.put(text1);
+		if (flagB & MText_2) t.put(text2);
+		if (flagB & MBlob1) {
+			t.putU32(blob1Size);
+			t.write(blob1, blob1Size);
+		}
+		if (flagB & MBlob2) {
+			t.putU32(blob2Size);
+			t.write(blob2, blob2Size);
+		}
+		// the two blob guids are always zero
+		Byte zeroGuid[8];
+		memset(zeroGuid, 0, 8);
+		if (flagC & MBlob1Guid) t.write(zeroGuid, 8);
+		if (flagC & MBlob2Guid) t.write(zeroGuid, 8);
 	}
 	
 	void tvNode::asHtml(tLog *log)

@@ -139,7 +139,7 @@ namespace alc {
 	
 	class tvNode : public tvBase {
 	public:
-		tvNode(void) : tvBase() { data1 = data2 = NULL; }
+		tvNode(void) : tvBase() { blob1 = blob2 = NULL; }
 		virtual ~tvNode(void);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
@@ -157,13 +157,13 @@ namespace alc {
 		U32 ageTime, ageMicrosec;
 		tUStr ageName;
 		Byte ageGuid[8];
-		U32 int_1, int_2, int_3, int_4;
-		U32 uInt_1, uInt_2, uInt_3, uInt_4;
+		U32 int1, int2, int3, int4;
+		U32 uInt1, uInt2, uInt3, uInt4;
 		tUStr str1, str2, str3, str4, str5, str6;
 		tUStr lStr1, lStr2;
 		tUStr text1, text2;
-		U32 data1Size, data2Size; // only defined if the corresponding array is not NULL
-		Byte *data1, *data2;
+		U32 blob1Size, blob2Size; // only defined if the corresponding array is not NULL
+		Byte *blob1, *blob2;
 	};
 	
 	class tvItem : public tvBase {
