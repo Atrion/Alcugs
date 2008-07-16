@@ -621,7 +621,7 @@ void tmMsgBase::store(tBBuf &t) {
 	plNetX | plNetKi | plNetUID | plNetIP | plNetCustom | plNetSid;
 	
 	//now catch undocumented protocol flags
-	if((flags & ~(check)) && u) {
+	if (flags & ~(check)) {
 		lerr->log("%s Problem parsing a plNetMsg header format mask %08X\n",u->str(),flags & ~(check));
 		lerr->dumpbuf(t);
 		lerr->nl();

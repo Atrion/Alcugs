@@ -261,7 +261,7 @@ namespace alc {
 				log->log("<RCV> %s\n", authHello.str());
 				
 				if (authHello.maxPacketSize != 1024) {
-					err->log("UNEXPECTED: Max packet size of %s is not 1024, but %d, ignoring\n", u->str(), authHello.maxPacketSize);
+					err->log("UNX: Max packet size of %s is not 1024, but %d, ignoring\n", u->str(), authHello.maxPacketSize);
 					return 1;
 				}
 				
@@ -360,6 +360,7 @@ namespace alc {
 					client->conn_timeout = 30; // 30sec, client should send an alive every 10sec
 					tmAccountAutheticated accountAuth(client, authResponse.result, serverGuid);
 					send(accountAuth);
+					sec->log("%s successful login\n", client->str());
 				}
 				else {
 					Byte zeroGuid[8]; // only send zero-filled GUIDs to non-authed players
@@ -367,6 +368,7 @@ namespace alc {
 					memset(client->uid, 0, 16);
 					tmAccountAutheticated accountAuth(client, authResponse.result, zeroGuid);
 					send(accountAuth);
+					sec->log("%s failed login\n", client->str());
 					terminate(client, RNotAuthenticated);
 				}
 				return 1;

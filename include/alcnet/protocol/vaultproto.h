@@ -40,6 +40,42 @@
 
 namespace alc {
 
+//vault node flag masks                             (Vault Manager names)
+#define MIndex     0x00000001 //00000001 (flagB 1) [Index]
+#define MType      0x00000002 //00000010 (flagB 1) [Type]
+#define MPerms     0x00000004 //00000100 (flagB 1) [Permissions]
+#define MOwner     0x00000008 //00001000 (flagB 1) [Owner ID]
+#define MGroup     0x00000010 //00010000 (flagB 1) [Group ID]
+#define MModTime   0x00000020 //00100000 (flagB 1) [Modify Time]
+#define MCreator   0x00000040 //01000000 (flagB 1) [Creator ID]
+#define MCrtTime   0x00000080 //10000000 (flagB 1) [Create Time]
+#define MAgeTime   0x00000100 //00000001 (flagB 2) [Create Age Time]
+#define MAgeCoords 0x00000200 //00000010 (flagB 2) [Create Age Coords]
+#define MAgeName   0x00000400 //00000100 (flagB 2) [Create Age Name]
+#define MAgeGuid   0x00000800 //00001000 (flagB 2) [Create Age Guid]
+#define MInt32_1   0x00001000 //00010000 (flagB 2) [Int32_1]
+#define MInt32_2   0x00002000 //00100000 (flagB 2) [Int32_2]
+#define MInt32_3   0x00004000 //01000000 (flagB 2) [Int32_3]
+#define MInt32_4   0x00008000 //10000000 (flagB 2) [Int32_4]
+#define MUInt32_1  0x00010000 //00000001 (flagB 3) [UInt32_1]
+#define MUInt32_2  0x00020000 //00000010 (flagB 3) [UInt32_2]
+#define MUInt32_3  0x00040000 //00000100 (flagB 3) [UInt32_3]
+#define MUInt32_4  0x00080000 //00001000 (flagB 3) [UInt32_4]
+#define MStr64_1   0x00100000 //00010000 (flagB 3) [String64_1]
+#define MStr64_2   0x00200000 //00100000 (flagB 3) [String64_2]
+#define MStr64_3   0x00400000 //01000000 (flagB 3) [String64_3]
+#define MStr64_4   0x00800000 //10000000 (flagB 3) [String64_4]
+#define MStr64_5   0x01000000 //00000001 (flagB 4) [String64_5]
+#define MStr64_6   0x02000000 //00000010 (flagB 4) [String64_6]
+#define MlStr64_1  0x04000000 //00000100 (flagB 4) [lString64_1]
+#define MlStr64_2  0x08000000 //00001000 (flagB 4) [lString64_2]
+#define MText_1    0x10000000 //00010000 (flagB 4) [Text_1]
+#define MText_2    0x20000000 //00100000 (flagB 4) [Text_2]
+#define MBlob1     0x40000000 //01000000 (flagB 4) [Blob1]
+#define MBlob2     0x80000000 //10000000 (flagB 4) [Blob2]
+#define MBlob1Guid 0x00000001 //00000001 (flagC 1) [Blob1_guid]
+#define MBlob2Guid 0x00000002 //00000010 (flagC 1) [Blob2_guid]
+
 //vault operations
 #define VConnect 0x01
 #define VDisconnect 0x02
@@ -107,6 +143,8 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual int stream(tBBuf &t);
 		virtual void asHtml(tLog *log);
+	private:
+		U32 flagA, flagB, flagC;
 	};
 	
 	class tvItem : public tvBase {

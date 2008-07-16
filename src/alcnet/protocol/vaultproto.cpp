@@ -195,7 +195,26 @@ namespace alc {
 	//// tvNode
 	void tvNode::store(tBBuf &t)
 	{
+		// get flags
+		flagA = t.getU32(); // I think this is something like a version number. version 1 contains only flagB, version 2 also flagC
+		if (flagA != 0x00000001 && flagA != 0x00000002) { // check for unknown values
+			// FIXME: dump packet
+		}
+		flagB = t.getU32(); // this is the main flag, all 32 bits are known
+		if (flagA == 0x00000002) { // it contains flagC
+			flagC = t.getU32();
+			U32 check = MBlob1Guid | MBlob2Guid;
+			if (flagC & ~(check)) { // check for unknown values
+				// FIXME: dump packet
+			}
+		}
+		else
+			flagC = 0;
 		
+		// now read data according to flags
+		// FIXME: do that
+		
+		throw txProtocolError(_WHERE("cant parse vault node, so I cant go on")); // FIXME: remove this when above function is completed
 	}
 	
 	int tvNode::stream(tBBuf &t)
