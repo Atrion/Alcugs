@@ -114,7 +114,7 @@ namespace alc {
 	{
 		size = t.getU32();
 		if (data) free(data);
-		data = (Byte *)malloc(size);
+		data = (Byte *)malloc(sizeof(Byte) * size);
 		memcpy(data, t.read(size), size);
 	}
 	
@@ -193,6 +193,12 @@ namespace alc {
 	}
 	
 	//// tvNode
+	tvNode::~tvNode(void)
+	{
+		if (data1) free(data1);
+		if (data2) free(data2);
+	}
+	
 	void tvNode::store(tBBuf &t)
 	{
 		// get flags
@@ -211,14 +217,156 @@ namespace alc {
 		else
 			flagC = 0;
 		
-		// now read data according to flags
-		// FIXME: do that
+		DBG(5, "flags: 0x%08X 0x%08X 0x%08X\n", flagA, flagB, flagC);
+		// mandatory fields - it doesn't matter whether the flags are on or not
+		index = t.getU32();
+		type = t.getByte();
+		permissions = t.getU32();
+		if ((permissions & 0xFFFFFF00) != 0)
+			throw txProtocolError(_WHERE("invalid permissions mask"));
+		owner = t.getS32();
+		group = t.getU32();
+		modTime = t.getU32();
+		modMicrosec = t.getU32();
+		DBG(5, "vault node: index: %d, type: %d, perms: 0x%08X, owner: %d, group: %d, time: %s\n", index, type, permissions, owner, group, alcGetStrTime(modTime, modMicrosec));
 		
-		throw txProtocolError(_WHERE("cant parse vault node, so I cant go on")); // FIXME: remove this when above function is completed
+		// optional fields
+		if (flagB & MCreator)
+			creator = t.getU32();
+		else
+			creator = 0;
+		
+		if (flagB & MCrtTime) {
+			crtTime = t.getU32();
+			crtMicrosec = t.getU32();
+		}
+		else
+			crtTime = crtMicrosec = 0;
+		
+		if (flagB & MAgeTime) {
+			ageTime = t.getU32();
+			ageMicrosec = t.getU32();
+		}
+		else
+			ageTime = ageMicrosec = 0;
+		
+		if (flagB & MAgeCoords) // unused
+			throw txProtocolError(_WHERE("Flag MAgeCoords must never be set"));
+		
+		if (flagB & MAgeName)
+			t.get(ageName);
+		
+		if (flagB & MAgeGuid)
+			memcpy(ageGuid, t.read(8), 8);
+		else
+			memset(ageGuid, 0, 8);
+		
+		if (flagB & MInt32_1)
+			int_1 = t.getU32();
+		else
+			int_1 = 0;
+		
+		if (flagB & MInt32_2)
+			int_2 = t.getU32();
+		else
+			int_2 = 0;
+		
+		if (flagB & MInt32_3)
+			int_3 = t.getU32();
+		else
+			int_3 = 0;
+		
+		if (flagB & MInt32_4)
+			int_4 = t.getU32();
+		else
+			int_4 = 0;
+		
+		if (flagB & MUInt32_1)
+			uInt_1 = t.getU32();
+		else
+			uInt_1 = 0;
+		
+		if (flagB & MUInt32_2)
+			uInt_2 = t.getU32();
+		else
+			uInt_2 = 0;
+		
+		if (flagB & MUInt32_3)
+			uInt_3 = t.getU32();
+		else
+			uInt_3 = 0;
+		
+		if (flagB & MUInt32_4)
+			uInt_4 = t.getU32();
+		else
+			uInt_4 = 0;
+		
+		if (flagB & MStr64_1)
+			t.get(str1);
+		
+		if (flagB & MStr64_2)
+			t.get(str2);
+		
+		if (flagB & MStr64_3)
+			t.get(str3);
+		
+		if (flagB & MStr64_4)
+			t.get(str4);
+		
+		if (flagB & MStr64_5)
+			t.get(str5);
+		
+		if (flagB & MStr64_6)
+			t.get(str6);
+		
+		if (flagB & MlStr64_1)
+			t.get(lStr1);
+		
+		if (flagB & MlStr64_2)
+			t.get(lStr2);
+		
+		if (flagB & MText_1)
+			t.get(text1);
+		
+		if (flagB & MText_2)
+			t.get(text2);
+		
+		if (data1) free(data1);
+		if (flagB & MBlob1) {
+			data1Size = t.getU32();
+			data1 = (Byte *)malloc(sizeof(Byte) * data1Size);
+			memcpy(data1, t.read(data1Size), data1Size);
+		}
+		else
+			data1 = NULL;
+		
+		if (data2) free(data2);
+		if (flagB & MBlob2) {
+			data2Size = t.getU32();
+			data2 = (Byte *)malloc(sizeof(Byte) * data2Size);
+			memcpy(data2, t.read(data2Size), data2Size);
+		}
+		else
+			data2 = NULL;
+		
+		// the two blob guids must always be 0
+		Byte blobGuid[8], zeroGuid[8];
+		memset(zeroGuid, 0, 8);
+		if (flagC & MBlob1Guid) {
+			memcpy(blobGuid, t.read(8), 8);
+			if (memcmp(blobGuid, zeroGuid, 8) != 0)
+				throw txProtocolError(_WHERE("Blob1Guid must always be zero"));
+		}
+		if (flagC & MBlob2Guid) {
+			memcpy(blobGuid, t.read(8), 8);
+			if (memcmp(blobGuid, zeroGuid, 8) != 0)
+				throw txProtocolError(_WHERE("Blob2Guid must always be zero"));
+		}
 	}
 	
 	int tvNode::stream(tBBuf &t)
-	{
+	{	
+		throw txProtocolError(_WHERE("cant stream vault node, so I cant go on")); // FIXME: remove this when above function is completed
 		return 0;
 	}
 	
@@ -363,24 +511,22 @@ namespace alc {
 		t.putU32(realSize); off += 4;
 		
 		// put the items into a temporary buffer which might be compressed
-		tMBuf *buf = new tMBuf;
-		buf->putU16(numItems);
+		tMBuf buf; // this should be created on the stack to avoid leaks when there's an exception
+		buf.putU16(numItems);
 		for (int i = 0; i < numItems; ++i) {
 			items[i]->tpots = tpots; // make sure the right TPOTS value is used
-			buf->put(*items[i]);
+			buf.put(*items[i]);
 		}
 		
 		if (compressed == 0x03) {
 			tZBuf content;
-			content.put(*buf);
+			content.put(buf);
 			content.compress();
 			t.putU32(content.size()); off += 4;
 			off += t.put(content);
-			delete buf;
 		}
 		else if (compressed == 0x01) {
-			off += t.put(*buf);
-			delete buf;
+			off += t.put(buf);
 		}
 		else
 			throw txProtocolError(_WHERE("unknown compression format"));
