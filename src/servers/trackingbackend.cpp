@@ -440,7 +440,7 @@ namespace alc {
 		var = cfg->getVar("tracking.tmp.hacks.agestate");
 		loadAgeState = (var.isNull() || var.asByte());
 		var = cfg->getVar("tracking.tmp.hacks.resetting_ages");
-		if (var.isNull()) strcpy((char *)resettingAges, "Cleft,DniCityX2Finale,GreatZero,Kveer,Myst,Neighborhood02,Personal02,RestorationGuild,spyroom");
+		if (var.isNull()) strcpy((char *)resettingAges, "Cleft,DniCityX2Finale,GreatZero,Kveer,Myst,Neighborhood02,Personal02,RestorationGuild,spyroom"); // see uru.conf.dist for explanation
 		else strncpy((char *)resettingAges, (char *)var.c_str(), 1023);
 		
 		var = cfg->getVar("track.html");
