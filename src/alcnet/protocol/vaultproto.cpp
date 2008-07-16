@@ -185,6 +185,22 @@ namespace alc {
 			log->print("<span style='color:red'>Strange, this stream has some bytes left where none are expected!</span><br />\n");
 	}
 	
+	//// tvServerGuid
+	void tvServerGuid::store(tBBuf &t)
+	{
+		memcpy(guid, t.read(8), 8);
+	}
+	
+	void tvServerGuid::stream(tBBuf &t)
+	{
+		t.write(guid, 8);
+	}
+	
+	void tvServerGuid::asHtml(tLog *log)
+	{
+		log->log("%s<br />\n", alcGetStrGuid(guid));
+	}
+	
 	//// tvNodeRef
 	void tvNodeRef::store(tBBuf &t)
 	{
@@ -536,6 +552,9 @@ namespace alc {
 				break;
 			case DCreatableStream:
 				data = new tvCreatableStream(id);
+				break;
+			case DServerGuid:
+				data = new tvServerGuid;
 				break;
 			case DVaultNodeRef:
 				data = new tvNodeRef;
