@@ -92,6 +92,8 @@ namespace alc {
 //data types
 #define DCreatableGenericValue 0x0387
 #define DCreatableStream       0x0389
+#define DVaultNodeRef          0x0438
+#define DVaultNodeRef2         0x0439 // TPOTS
 #define DVaultNode             0x0439
 #define DVaultNode2            0x043A // TPOTS
 
@@ -135,6 +137,18 @@ namespace alc {
 		U32 size; // only defined when data != NULL
 		Byte id;
 		Byte *data;
+	};
+	
+	class tvNodeRef : public tvBase {
+	public:
+		tvNodeRef(void) : tvBase() { }
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
+		virtual void asHtml(tLog *log);
+	private:
+		U32 saver, parent, child;
+		U32 time, microsec;
+		Byte flags; // 0x00 not seen; 0x01 seen
 	};
 	
 	class tvNode : public tvBase {

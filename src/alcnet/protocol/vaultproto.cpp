@@ -161,26 +161,18 @@ namespace alc {
 				for (U32 i = 0; i < num; ++i) {
 					U32 val = buf.getU32();
 					double time = buf.getDouble();
-					log->print("[%d] ID: 0x%08X (%d), Stamp: %f<br />\n", i+1, val, val, time);
+					log->print("[%d] ID: 0x%08X (%d), Stamp: %s<br />\n", i+1, val, val, alcGetStrTime(time));
 				}
 				break;
 			}
 			case 0x0F:
 			{
 				U32 num = buf.getU32();
-				log->print("number of values: %d<br />\n", num);
+				log->print("number of VaultNodeRefs: %d<br />\n", num);
 				for (U32 i = 0; i < num; ++i) {
-					U32 val = buf.getU32();
-					log->print("[%d] ID1: 0x%08X (%d), ", i+1, val, val);
-					val = buf.getU32();
-					log->print("ID2: 0x%08X (%d), ", val, val);
-					val = buf.getU32();
-					log->print("ID3: 0x%08X (%d), ", val, val);
-					time_t stamp = buf.getU32();
-					val = buf.getU32();
-					log->print("Stamp: %s %d, ", alcGetStrTime(stamp), val);
-					val = buf.getByte();
-					log->print("Flag: %d<br />\n", val);
+					tvNodeRef nodeRef;
+					buf.get(nodeRef);
+					nodeRef.asHtml(log);
 				}
 				break;
 			}
@@ -191,6 +183,33 @@ namespace alc {
 		}
 		if (!buf.eof())
 			log->print("<span style='color:red'>Strange, this stream has some bytes left where none are expected!</span><br />\n");
+	}
+	
+	//// tvNodeRef
+	void tvNodeRef::store(tBBuf &t)
+	{
+		saver = t.getU32();
+		parent = t.getU32();
+		child = t.getU32();
+		time = t.getU32();
+		microsec = t.getU32();
+		flags = t.getByte();
+	}
+	
+	void tvNodeRef::stream(tBBuf &t)
+	{
+		t.putU32(saver);
+		t.putU32(parent);
+		t.putU32(child);
+		t.putU32(time);
+		t.putU32(microsec);
+		t.putByte(flags);
+	}
+	
+	void tvNodeRef::asHtml(tLog *log)
+	{
+		log->print("Saver: 0x%08X (%d), Parent:  0x%08X (%d), Child: 0x%08X (%d), ", saver, saver, parent, parent, child, child);
+		log->print("Stamp: %s, Flags: 0x%02X<br />\n", alcGetStrTime(time, microsec), flags);
 	}
 	
 	//// tvNode
@@ -496,7 +515,10 @@ namespace alc {
 			throw txProtocolError(_WHERE("bad item.unk value"));
 		}
 		type = t.getU16();
-		if (tpots == 1 && type == DVaultNode2) type = DVaultNode; // a DVaultNode is called DVaultNode2 in TPOTS
+		if (tpots == 1) {
+			if (type == DVaultNode2) type = DVaultNode; // a DVaultNode is called DVaultNode2 in TPOTS
+			else if (type == DVaultNodeRef2) type = DVaultNodeRef; // a DVaultNodeRef is called DVaultNodeRef2 in TPOTS
+		}
 		
 		if (data) delete data;
 		switch (type) {
@@ -505,6 +527,9 @@ namespace alc {
 				break;
 			case DCreatableStream:
 				data = new tvCreatableStream(id);
+				break;
+			case DVaultNodeRef:
+				data = new tvNodeRef;
 				break;
 			case DVaultNode:
 				data = new tvNode;
@@ -700,6 +725,9 @@ namespace alc {
 				break;
 			case 0x0389:
 				ret = "DCreatableStream";
+				break;
+			case 0x0438:
+				ret = "DVaultNodeRef";
 				break;
 			case 0x0439:
 				ret = "DVaultNode";
