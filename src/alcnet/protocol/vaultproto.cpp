@@ -240,7 +240,7 @@ namespace alc {
 		index = t.getU32();
 		type = t.getByte();
 		permissions = t.getU32();
-		if ((permissions & 0xFFFFFF00) != 0)
+		if ((permissions & ~(KAllPermissions)) != 0)
 			throw txProtocolError(_WHERE("invalid permissions mask"));
 		owner = t.getS32();
 		group = t.getU32();
@@ -402,7 +402,7 @@ namespace alc {
 		t.putU32(index);
 		t.putByte(type);
 		t.putU32(permissions);
-		if ((permissions & 0xFFFFFF00) != 0)
+		if ((permissions & ~(KAllPermissions)) != 0)
 			throw txProtocolError(_WHERE("invalid permissions mask"));
 		t.putS32(owner);
 		t.putU32(group);
@@ -455,14 +455,17 @@ namespace alc {
 		if (flagC & MBlob2Guid) t.write(zeroGuid, 8);
 	}
 	
-	void tvNode::flagsAsHtml(tLog *log)
-	{
-		log->print("<b>Flags:</b> 0x%08X (%d), 0x%08X (%d), 0x%08X (%d)<br />\n", flagA, flagA, flagB, flagB, flagC, flagC);
-	}
-	
 	void tvNode::permissionsAsHtml(tLog *log)
 	{
-		log->print("<b>Permissions:</b> 0x%08X (%d)<br />\n", permissions, permissions);
+		// make a permission stingas it's common on linux, i.e. rwr-r-r for the default permissions
+		Byte permStr[7] = "------"; // no permissions
+		if (permissions & KOwnerRead) permStr[0] = 'r';
+		if (permissions & KOwnerWrite) permStr[1] = 'w';
+		if (permissions & KGroupRead) permStr[2] = 'r';
+		if (permissions & KGroupWrite) permStr[3] = 'w';
+		if (permissions & KOtherRead) permStr[4] = 'r';
+		if (permissions & KOtherWrite) permStr[5] = 'w';
+		log->print("<b>Permissions:</b> 0x%08X (%s)<br />\n", permissions, permStr);
 	}
 	
 	void tvNode::asHtml(tLog *log)
@@ -470,7 +473,7 @@ namespace alc {
 		// mandatory flieds
 		log->print("<tr><th style='background-color:yellow'>Vault Node %d</th></tr>\n", index, index);
 		log->print("<tr><td>\n");
-		flagsAsHtml(log);
+		log->print("<b>Flags:</b> 0x%08X (%d), 0x%08X (%d), 0x%08X (%d)<br />\n", flagA, flagA, flagB, flagB, flagC, flagC);
 		log->print("<b>Type:</b> %s (0x%02X) (%d)<br />\n", alcVaultGetNodeType(type), type, type);
 		permissionsAsHtml(log);
 		log->print("<b>Owner:</b> 0x%08X (%d)<br />\n", owner, owner);
@@ -505,6 +508,9 @@ namespace alc {
 		if (flagB & MText_1) log->print("<b>Text_1:</b> %s<br />\n", text1.c_str());
 		if (flagB & MText_2) log->print("<b>Text_2:</b> %s<br />\n", text2.c_str());
 		// FIXME: do something with the data
+		// the blob guids are always zero
+		if (flagC & MBlob1Guid) log->print("<b>Blob1Guid:</b> 0000000000000000<br />\n");
+		if (flagC & MBlob2Guid) log->print("<b>Blob1Guid:</b> 0000000000000000<br />\n");
 		log->print("</td></tr>\n");
 	}
 	

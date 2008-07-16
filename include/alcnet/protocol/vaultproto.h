@@ -142,15 +142,8 @@ namespace alc {
 #define KGroupWrite 0x08
 #define KOtherRead 0x10
 #define KOtherWrite 0x20
-
-#define KDefaultPermissions 0x17 // KOwnerRead | KOwnerWrite | KGroupRead | KOtherRead
-  /* where persmissions are
-  -------------------------
-  | Other | Group | Owner |
-  -------------------------
-  | w | r | w | r | w | r |
-  -------------------------
-  */
+#define KDefaultPermissions  KOwnerRead | KOwnerWrite | KGroupRead | KOtherRead
+#define KAllPermissions KOwnerRead | KOwnerWrite | KGroupRead | KGroupWrite | KOtherRead | KOtherWrite
 
 //vault operations
 #define VConnect 0x01
@@ -254,7 +247,6 @@ namespace alc {
 		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log);
 	private:
-		void flagsAsHtml(tLog *log);
 		void permissionsAsHtml(tLog *log);
 	
 		U32 flagA, flagB, flagC;
