@@ -95,19 +95,18 @@ namespace alc {
 #endif
 	}
 	
-	int tmCustomAuthAsk::stream(tBBuf &t)
+	void tmCustomAuthAsk::stream(tBBuf &t)
 	{
-		int off = tmMsgBase::stream(t);
-		off += t.put(login);
-		t.write(challenge, 16); off += 16;
-		t.write(hash, 16); off += 16;
-		t.putByte(release); ++off;
+		tmMsgBase::stream(t);
+		t.put(login);
+		t.write(challenge, 16);
+		t.write(hash, 16);
+		t.putByte(release);
 #ifdef ENABLE_UNET2
 		if (u->proto == 1) {
-			t.putU32(ip); off += 4;
+			t.putU32(ip);
 		}
 #endif
-		return off;
 	}
 	
 	void tmCustomAuthAsk::additionalFields()
@@ -174,17 +173,16 @@ namespace alc {
 		accessLevel = t.getByte();
 	}
 	
-	int tmCustomAuthResponse::stream(tBBuf &t)
+	void tmCustomAuthResponse::stream(tBBuf &t)
 	{
-		int off = tmMsgBase::stream(t);
-		off += t.put(login); // login
-		t.putByte(result); ++off; // result
-		off += t.put(passwd); // passwd
+		tmMsgBase::stream(t);
+		t.put(login); // login
+		t.putByte(result); // result
+		t.put(passwd); // passwd
 #ifdef ENABLE_UNET2
-		if (u->proto == 1) { t.write(uid, 16); off += 16; } // UID (only for old protocol, the new one sends it in the header)
+		if (u->proto == 1) { t.write(uid, 16); } // UID (only for old protocol, the new one sends it in the header)
 #endif
-		t.putByte(accessLevel); ++off; // acess level
-		return off;
+		t.putByte(accessLevel); // acess level
 	}
 	
 	void tmCustomAuthResponse::additionalFields()

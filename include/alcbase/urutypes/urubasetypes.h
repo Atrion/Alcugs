@@ -67,7 +67,7 @@ public:
 	*/
 	tUStr(Byte mode=1);
 	tUStr(tUStr &t) { this->copy(t); }
-	virtual int stream(tBBuf &b);
+	virtual void stream(tBBuf &b);
 	virtual void store(tBBuf &b);
 	virtual void copy(tUStr &t);
 	void setVersion(Byte version) { this->version=version; }

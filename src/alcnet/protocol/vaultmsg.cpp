@@ -80,14 +80,13 @@ namespace alc {
 		this->onlineTime = onlineTime;
 	}
 	
-	int tmCustomVaultPlayerStatus::stream(tBBuf &t)
+	void tmCustomVaultPlayerStatus::stream(tBBuf &t)
 	{
-		int off = tmMsgBase::stream(t);
-		off += t.put(age);
-		off += t.put(serverGuid);
-		t.putByte(state); ++off;
-		t.putU32(onlineTime); off += 4;
-		return off;
+		tmMsgBase::stream(t);
+		t.put(age);
+		t.put(serverGuid);
+		t.putByte(state);
+		t.putU32(onlineTime);
 	}
 	
 	void tmCustomVaultPlayerStatus::additionalFields()
@@ -116,11 +115,10 @@ namespace alc {
 		t.get(message);
 	}
 	
-	int tmVault::stream(tBBuf &t)
+	void tmVault::stream(tBBuf &t)
 	{
-		int off = tmMsgBase::stream(t);
-		off += t.put(message);
-		return off;
+		tmMsgBase::stream(t);
+		t.put(message);
 	}
 	
 	//// tmCustomVaultCreatePlayer
@@ -144,20 +142,19 @@ namespace alc {
 		key.setVersion(0); // normal UruString
 	}
 	
-	int tmCustomVaultCreatePlayer::stream(tBBuf &t)
+	void tmCustomVaultCreatePlayer::stream(tBBuf &t)
 	{
-		int off = tmMsgBase::stream(t);
-		off += t.put(login);
+		tmMsgBase::stream(t);
+		t.put(login);
 #ifdef ENABLE_UNET2
-		if (u->proto == 1) { t.write(uid, 16); off += 16; } // UID (only for old protocol, the new one sends it in the header)
+		if (u->proto == 1) { t.write(uid, 16); } // UID (only for old protocol, the new one sends it in the header)
 #endif
-		t.putByte(accessLevel); ++off;
-		off += t.put(avatar);
-		off += t.put(gender);
-		off += t.put(friendName);
-		off += t.put(key);
-		t.putU32(0); off += 4;
-		return off;
+		t.putByte(accessLevel);
+		t.put(avatar);
+		t.put(gender);
+		t.put(friendName);
+		t.put(key);
+		t.putU32(0);
 	}
 	
 	void tmCustomVaultCreatePlayer::additionalFields()
@@ -211,14 +208,13 @@ namespace alc {
 		this->accessLevel = accessLevel;
 	}
 	
-	int tmCustomVaultDeletePlayer::stream(tBBuf &t)
+	void tmCustomVaultDeletePlayer::stream(tBBuf &t)
 	{
-		int off = tmMsgBase::stream(t);
+		tmMsgBase::stream(t);
 #ifdef ENABLE_UNET2
-		if (u->proto == 1) { t.write(uid, 16); off += 16; } // UID (only for old protocol, the new one sends it in the header)
+		if (u->proto == 1) { t.write(uid, 16); } // UID (only for old protocol, the new one sends it in the header)
 #endif
-		t.putByte(accessLevel); ++off;
-		return off;
+		t.putByte(accessLevel);
 	}
 	
 	void tmCustomVaultDeletePlayer::additionalFields()
@@ -242,13 +238,12 @@ namespace alc {
 #endif
 	}
 	
-	int tmCustomVaultCheckKi::stream(tBBuf &t)
+	void tmCustomVaultCheckKi::stream(tBBuf &t)
 	{
-		int off = tmMsgBase::stream(t);
+		tmMsgBase::stream(t);
 #ifdef ENABLE_UNET2
-		if (u->proto == 1) { t.write(uid, 16); off += 16; } // UID (only for old protocol, the new one sends it in the header)
+		if (u->proto == 1) { t.write(uid, 16); } // UID (only for old protocol, the new one sends it in the header)
 #endif
-		return off;
 	}
 	
 	void tmCustomVaultCheckKi::additionalFields()

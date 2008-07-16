@@ -57,8 +57,8 @@ public:
 	//tBaseType() {}
 	//!stores from a buffer
 	virtual void store(tBBuf &t)=0;
-	//!streams to a buffer \return the amount of written bytes
-	virtual int stream(tBBuf &t)=0;
+	//!streams to a buffer
+	virtual void stream(tBBuf &t)=0;
 	virtual void copy(tBaseType &t);
 	virtual void operator=(tBaseType &t) { this->copy(t); }
 };
@@ -116,10 +116,6 @@ public:
 	virtual Byte getByte();
 	virtual SByte getSByte();
 	virtual double getDouble();
-	/** Puts an object into the buffer (streams the object) \return the amount of written bytes */
-	virtual U32 put(tBaseType &t);
-	/** Gets an object form the buffer (stores object from stream) */
-	virtual void get(tBaseType &t);
 	virtual void copy(tBBuf &t);
 	virtual SByte compare(tBBuf &t);
 	/** \return True if the pointer is at the end of the stream */
@@ -147,7 +143,15 @@ public:
 	virtual bool operator>=(tBBuf &t) { return(this->compare(t)<=0); }
 	virtual bool operator<=(tBBuf &t) { return(this->compare(t)>=0); }
 	virtual void operator=(tBBuf &t) { this->copy(t); }
-
+	
+	/** Puts an object into the buffer (streams the object) \return the amount of written bytes */
+	inline void put(tBaseType &t) {
+		t.stream(*this);
+	}
+	/** Gets an object form the buffer (stores object from stream) */
+	inline void get(tBaseType &t) {
+		t.store(*this);
+	}
 protected:
 	//! Built-in initialization
 	virtual void init();
@@ -189,7 +193,7 @@ public:
 	virtual void write(const SByte * val,U32 n) { this->write((Byte *)val,n); }
 	virtual void zeroend();
 	virtual Byte * read(U32 n=0);
-	virtual int stream(tBBuf &buf);
+	virtual void stream(tBBuf &buf);
 	virtual void store(tBBuf &buf);
 	virtual U32 size();
 	virtual void clear();
@@ -224,7 +228,7 @@ public:
 	virtual void write(const Byte * val,U32 n);
 	virtual void write(const SByte * val,U32 n) { this->write((Byte *)val,n); }
 	virtual Byte * read(U32 n=0);
-	virtual int stream(tBBuf &buf);
+	virtual void stream(tBBuf &buf);
 	virtual void store(tBBuf &buf);
 	virtual U32 size();
 	virtual void close();
@@ -250,7 +254,7 @@ public:
 	virtual void write(const Byte * val,U32 n) {}
 	virtual void write(const SByte * val,U32 n) {}
 	virtual Byte * read(U32 n=0);
-	virtual int stream(tBBuf &buf);
+	virtual void stream(tBBuf &buf);
 	virtual void store(tBBuf &buf) {}
 	virtual U32 size();
 private:
@@ -386,7 +390,7 @@ tStrBuf operator+(const tStrBuf & str1, const void * str2);
 class tTime :public tBaseType {
 public:
 	virtual void store(tBBuf &t);
-	virtual int stream(tBBuf &t);
+	virtual void stream(tBBuf &t);
 	virtual U32 size();
 	virtual SByte compare(tTime &t);
 	virtual bool operator==(tTime &t) { return(seconds==t.seconds && microseconds==t.microseconds); }

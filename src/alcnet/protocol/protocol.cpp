@@ -324,7 +324,7 @@ void tUnetUruMsg::store(tBBuf &t) {
 	pfr=cps & 0x000000FF;
 	ps=cps >> 8;
 }
-int tUnetUruMsg::stream(tBBuf &t) {
+void tUnetUruMsg::stream(tBBuf &t) {
 	DBG(5,"[%i] ->%02X<- {%i,%i (%i) %i,%i} - %02X|%i bytes\n",pn,tf,sn,frn,frt,ps,pfr,dsize,dsize);
 	t.putByte(0x03); //already done by the sender ()
 	t.putByte(val);
@@ -345,7 +345,6 @@ int tUnetUruMsg::stream(tBBuf &t) {
 	t.putU32(dsize);
 	data.rewind();
 	t.put(data);
-	return this->size();
 }
 U32 tUnetUruMsg::size() {
 	return data.size() + hSize();
@@ -486,10 +485,9 @@ void tmNetClientComm::store(tBBuf &t) {
 	bandwidth=t.getU32();
 	t.get(timestamp);
 }
-int tmNetClientComm::stream(tBBuf &t) {
+void tmNetClientComm::stream(tBBuf &t) {
 	t.putU32(bandwidth);
 	t.put(timestamp);
-	return 12;
 }
 Byte * tmNetClientComm::str() {
 	#ifdef ENABLE_MSGLOG
@@ -628,17 +626,13 @@ void tmMsgBase::store(tBBuf &t) {
 		lerr->nl();
 	}
 }
-int tmMsgBase::stream(tBBuf &t) {
+void tmMsgBase::stream(tBBuf &t) {
 	if((flags & plNetSid) && u->proto!=0 && u->proto<3) unsetFlags(plNetSid); // dont send this flag to old peers
-	int off=0;
 	t.putU16(cmd);
-	off+=2;
 	t.putU32(flags);
-	off+=4;
 	if(flags & plNetVersion) {
 		t.putByte(max_version);
 		t.putByte(min_version);
-		off+=2;
 	}
 	if(flags & plNetTimestamp || (u && (u->min_version<6 && u->max_version==12))) {
 		if(timestamp.seconds==0) {
@@ -646,19 +640,15 @@ int tmMsgBase::stream(tBBuf &t) {
 			timestamp.microseconds=alcGetMicroseconds();
 		}
 		t.put(timestamp);
-		off+=8;
 	}
 	if(flags & plNetX) {
 		t.putU32(x);
-		off+=4;
 	}
 	if(flags & plNetKi) {
 		t.putU32(ki);
-		off+=4;
 	}
 	if(flags & plNetUID) {
 		t.write(uid,16);
-		off+=16;
 	}
 	if(flags & plNetIP) {
 		//We have to swap around again on big-endian systems to get
@@ -667,13 +657,10 @@ int tmMsgBase::stream(tBBuf &t) {
 		t.putU32(htole32(ip));
 		//Also switch the port back from network to host order before writing.
 		t.putU16(ntohs(port));
-		off+=6;
 	}
 	if(flags & plNetSid) {
 		t.putU32(sid);
-		off+=4;
 	}
-	return off;
 }
 void tmMsgBase::copyProps(tmMsgBase &t) {
 	if(flags & plNetVersion) {

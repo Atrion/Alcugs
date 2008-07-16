@@ -63,13 +63,12 @@ namespace alc {
 		this->url.writeStr(url);
 	}
 	
-	int tmVaultPlayerList::stream(tBBuf &t)
+	void tmVaultPlayerList::stream(tBBuf &t)
 	{
-		int off = tmMsgBase::stream(t);
-		t.putU16(numberPlayers); off += 2;
-		off += t.put(players);
-		off += t.put(url);
-		return off;
+		tmMsgBase::stream(t);
+		t.putU16(numberPlayers);
+		t.put(players);
+		t.put(url);
 	}
 	
 	void tmVaultPlayerList::additionalFields()
@@ -120,11 +119,10 @@ namespace alc {
 		this->result = result;
 	}
 	
-	int tmPlayerCreated::stream(tBBuf &t)
+	void tmPlayerCreated::stream(tBBuf &t)
 	{
-		int off = tmMsgBase::stream(t);
-		t.putByte(result); ++off;
-		return off;
+		tmMsgBase::stream(t);
+		t.putByte(result);
 	}
 	
 	void tmPlayerCreated::additionalFields()

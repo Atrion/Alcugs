@@ -115,7 +115,7 @@ namespace alc {
 	public:
 		tvCreatableGenericValue(void) : tvBase() { str.setVersion(5); /* inverted UruString */ }
 		virtual void store(tBBuf &t);
-		virtual int stream(tBBuf &t);
+		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log);
 	private:
 		Byte format;
@@ -129,7 +129,7 @@ namespace alc {
 		tvCreatableStream(Byte id) : tvBase() { this->id = id; data = NULL; }
 		virtual ~tvCreatableStream(void) { if (data) free(data); }
 		virtual void store(tBBuf &t);
-		virtual int stream(tBBuf &t);
+		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log);
 	private:
 		U32 size; // only defined when data != NULL
@@ -142,7 +142,7 @@ namespace alc {
 		tvNode(void) : tvBase() { data1 = data2 = NULL; }
 		virtual ~tvNode(void);
 		virtual void store(tBBuf &t);
-		virtual int stream(tBBuf &t);
+		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log);
 	private:
 		U32 flagA, flagB, flagC;
@@ -171,7 +171,7 @@ namespace alc {
 		tvItem(Byte tpots) : tvBase() { this->tpots = tpots; data = NULL; }
 		virtual ~tvItem(void) { if (data) delete data; }
 		virtual void store(tBBuf &t);
-		virtual int stream(tBBuf &t);
+		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log);
 		
 		Byte tpots; // 1: generate/parse for TPOTS client, everything else: for non-TPOTS client (or the vault server)
@@ -186,7 +186,7 @@ namespace alc {
 		tvMessage(bool isTask, Byte tpots) : tvBase() { task = isTask; this->tpots = tpots; items = NULL; }
 		virtual ~tvMessage(void);
 		virtual void store(tBBuf &t); //!< unpacks the message
-		virtual int stream(tBBuf &t);
+		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log);
 		void print(tLog *log, bool clientToServer, tNetSession *client);
 		

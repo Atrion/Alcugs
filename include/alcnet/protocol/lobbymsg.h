@@ -41,7 +41,7 @@ namespace alc {
 	class tmVaultPlayerList : public tmMsgBase {
 	public:
 		tmVaultPlayerList(tNetSession *u, U16 numberPlayers, tMBuf players, const Byte *url);
-		virtual int stream(tBBuf &t);
+		virtual void stream(tBBuf &t);
 		// format
 		U16 numberPlayers;
 		tMBuf players;
@@ -63,7 +63,7 @@ namespace alc {
 	class tmPlayerCreated : public tmMsgBase {
 	public:
 		tmPlayerCreated(tNetSession *u, U32 ki, Byte result);
-		virtual int stream(tBBuf &t);
+		virtual void stream(tBBuf &t);
 		// format
 		Byte result;
 	protected:

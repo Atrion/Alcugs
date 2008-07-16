@@ -50,7 +50,7 @@ public:
 	tPkgFile();
 	virtual ~tPkgFile();
 	virtual void store(tBBuf &t);
-	virtual int stream(tBBuf &t);
+	virtual void stream(tBBuf &t);
 	virtual U32 size();
 	virtual U32 avgsize();
 	void setName(const void * name);
@@ -68,7 +68,7 @@ public:
 	tPkg();
 	virtual ~tPkg();
 	virtual void store(tBBuf &t);
-	virtual int stream(tBBuf &t);
+	virtual void stream(tBBuf &t);
 	virtual U32 size();
 	virtual U32 avgsize();
 	void add(char * name,tBBuf &t);

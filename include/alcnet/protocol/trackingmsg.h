@@ -37,7 +37,7 @@ namespace alc {
 		tmCustomSetGuid(tNetSession *u);
 		tmCustomSetGuid(tNetSession *u, const Byte *serverGuid, const Byte *age, const Byte *externalIp);
 		virtual void store(tBBuf &t);
-		virtual int stream(tBBuf &t);
+		virtual void stream(tBBuf &t);
 		// format
 		tUStr serverGuid, age, externalIp;
 	protected:
@@ -49,7 +49,7 @@ namespace alc {
 		tmCustomPlayerStatus(tNetSession *u);
 		tmCustomPlayerStatus(tNetSession *u, U32 ki, U32 x, const Byte *uid, const Byte *account, const Byte *avatar, Byte playerFlag, Byte playerStatus);
 		virtual void store(tBBuf &t);
-		virtual int stream(tBBuf &t);
+		virtual void stream(tBBuf &t);
 		// format
 		tUStr account, avatar;
 		Byte playerFlag, playerStatus;
@@ -70,7 +70,7 @@ namespace alc {
 	class tmCustomForkServer : public tmMsgBase {
 	public:
 		tmCustomForkServer(tNetSession *u, U32 ki, U32 x, U16 port, const Byte *serverGuid, const Byte *name, bool loadSDL);
-		virtual int stream(tBBuf &t);
+		virtual void stream(tBBuf &t);
 		// format
 		U16 fork_port;
 		tUStr serverGuid, age;
@@ -82,7 +82,7 @@ namespace alc {
 	class tmCustomServerFound : public tmMsgBase {
 	public:
 		tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U16 port, const Byte *ip_str, const Byte *serverGuid, const Byte *name);
-		virtual int stream(tBBuf &t);
+		virtual void stream(tBBuf &t);
 		// format
 		U16 server_port;
 		tUStr ip_str, serverGuid, age;
@@ -96,7 +96,7 @@ namespace alc {
 		tmCustomDirectedFwd(tNetSession *u, tmCustomDirectedFwd &directedFwd);
 		virtual ~tmCustomDirectedFwd(void);
 		virtual void store(tBBuf &t);
-		virtual int stream(tBBuf &t);
+		virtual void stream(tBBuf &t);
 		// format
 		tMBuf gameMessage; // saves the complete message
 		Byte nRecipients;

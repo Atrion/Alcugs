@@ -80,7 +80,7 @@ public:
 	tUnetUruMsg() { next=NULL; tryes=0; }
 	virtual ~tUnetUruMsg() {}
 	virtual void store(tBBuf &t);
-	virtual int stream(tBBuf &t);
+	virtual void stream(tBBuf &t);
 	virtual U32 size();
 	/** Get header size */
 	U32 hSize();
@@ -125,7 +125,7 @@ public:
 class tmBase :public tBaseType {
 public:
 	virtual void store(tBBuf &t)=0;
-	virtual int stream(tBBuf &t)=0;
+	virtual void stream(tBBuf &t)=0;
 	virtual Byte * str()=0;
 	Byte bhflags;
 };
@@ -133,7 +133,7 @@ public:
 class tmNetClientComm :public tmBase {
 public:
 	virtual void store(tBBuf &t);
-	virtual int stream(tBBuf &t);
+	virtual void stream(tBBuf &t);
 	tmNetClientComm(tNetSession *s = NULL) { bhflags=0x42; this->s = s; }
 	tmNetClientComm(tTime &t,U32 bw, tNetSession *s = NULL) { timestamp=t; bandwidth=bw; bhflags=0x42; this->s = s; }
 	Byte * str();
@@ -145,7 +145,7 @@ public:
 class tmNetAck :public tmBase {
 public:
 	virtual void store(tBBuf &t);
-	virtual int stream(tBBuf &t);
+	virtual void stream(tBBuf &t);
 	tmNetAck() { bhflags=0x80; }
 	virtual ~tmNetAck();
 	void add(tUnetAck * a);
@@ -157,7 +157,7 @@ private:
 class tmMsgBase :public tmBase {
 public:
 	virtual void store(tBBuf &t);
-	virtual int stream(tBBuf &t);
+	virtual void stream(tBBuf &t);
 	tmMsgBase(U16 cmd,U32 flags,tNetSession * u);
 	virtual ~tmMsgBase() {};
 	void setFlags(U32 f);

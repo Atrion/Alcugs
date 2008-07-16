@@ -73,12 +73,11 @@ namespace alc {
 		this->challenge.setVersion(0); // normal UruString, but in Hex, not Ascii
 	}
 	
-	int tmAuthenticateChallenge::stream(tBBuf &t)
+	void tmAuthenticateChallenge::stream(tBBuf &t)
 	{
-		int off = tmMsgBase::stream(t);
-		t.putByte(authResult); ++off; // auth result
-		off += t.put(challenge); // challenge
-		return off;
+		tmMsgBase::stream(t);
+		t.putByte(authResult); // auth result
+		t.put(challenge); // challenge
 	}
 	
 	void tmAuthenticateChallenge::additionalFields()
@@ -122,12 +121,11 @@ namespace alc {
 		memcpy(this->serverGuid, serverGuid, 8);
 	}
 	
-	int tmAccountAutheticated::stream(tBBuf &t)
+	void tmAccountAutheticated::stream(tBBuf &t)
 	{
-		int off = tmMsgBase::stream(t);
-		t.putByte(authResult); ++off; // auth result
-		t.write(serverGuid, 8); off += 8; // server guid
-		return off;
+		tmMsgBase::stream(t);
+		t.putByte(authResult); // auth result
+		t.write(serverGuid, 8); // server guid
 	}
 	
 	void tmAccountAutheticated::additionalFields()

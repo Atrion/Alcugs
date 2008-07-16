@@ -62,7 +62,7 @@ void parameters_usage() {
 class tmData :public tmMsgBase {
 public:
 	virtual void store(tBBuf &t);
-	virtual int stream(tBBuf &t);
+	virtual void stream(tBBuf &t);
 	tmData(tNetSession * u);
 	void setCompressed(void) {
 		compressed=true;
@@ -88,23 +88,21 @@ void tmData::store(tBBuf &t) {
 	else
 		t.get(data);
 }
-int tmData::stream(tBBuf &t) {
-	int off;
+void tmData::stream(tBBuf &t) {
 	if (compressed) {
 		setFlags(plNetX);
 		x = data.size(); // the X value saves the uncompressed size
 	}
-	off=tmMsgBase::stream(t);
+	tmMsgBase::stream(t);
 	if (compressed) {
 		tZBuf zdata;
 		zdata.put(data);
 		zdata.compress();
-		off += t.put(zdata);
+		t.put(zdata);
 	}
 	else {
-		off += t.put(data);
+		t.put(data);
 	}
-	return off;
 }
 
 

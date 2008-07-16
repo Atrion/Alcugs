@@ -192,12 +192,6 @@ double tBBuf::getDouble() {
 #endif
 	return(val);
 }
-U32 tBBuf::put(tBaseType &t) {
-	return(t.stream(*this));
-}
-void tBBuf::get(tBaseType &t) {
-	t.store(*this);
-}
 void tBBuf::rewind() {
 	this->set(0);
 }
@@ -433,10 +427,10 @@ Byte * tMBuf::read(U32 n) {
 	}
 	return buf->buf+pos;
 }
-int tMBuf::stream(tBBuf &b) {
-	if(buf==NULL || buf->buf==NULL) return 0;
+void tMBuf::stream(tBBuf &b) {
+	if(buf==NULL || buf->buf==NULL) return;
 	b.write(buf->buf+mstart,msize);
-	return msize;
+	//return msize;
 }
 void tMBuf::store(tBBuf &b) {
 	//b.rewind();
@@ -498,10 +492,10 @@ Byte * tFBuf::read(U32 n) {
 	fread(xbuf,n,1,f);
 	return xbuf;
 }
-int tFBuf::stream(tBBuf &b) {
+void tFBuf::stream(tBBuf &b) {
 	this->size();
 	b.write(this->read(),msize);
-	return msize;
+	//return msize;
 }
 void tFBuf::store(tBBuf &b) {
 	b.rewind();
@@ -556,9 +550,9 @@ Byte * tSBuf::read(U32 n) {
 	else off=msize;
 	return auxbuf;
 }
-int tSBuf::stream(tBBuf &buf) {
+void tSBuf::stream(tBBuf &buf) {
 	buf.write(this->buf,msize);
-	return msize;
+	//return msize;
 }
 U32 tSBuf::size() { return msize; }
 
@@ -1274,10 +1268,10 @@ void tTime::store(tBBuf &t) {
 	seconds=t.getU32();
 	microseconds=t.getU32();
 }
-int tTime::stream(tBBuf &t) {
+void tTime::stream(tBBuf &t) {
 	t.putU32(seconds);
 	t.putU32(microseconds);
-	return 8;
+	//return 8;
 }
 U32 tTime::size() { return 8; }
 SByte tTime::compare(tTime &t) {

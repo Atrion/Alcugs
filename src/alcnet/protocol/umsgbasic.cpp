@@ -48,12 +48,9 @@ void tmTerminated::store(tBBuf &t) {
 	tmMsgBase::store(t);
 	reason=t.getByte();
 }
-int tmTerminated::stream(tBBuf &t) {
-	int off;
-	off=tmMsgBase::stream(t);
+void tmTerminated::stream(tBBuf &t) {
+	tmMsgBase::stream(t);
 	t.putByte(reason);
-	off++;
-	return off;
 }
 void tmTerminated::additionalFields() {
 	dbg.printf("\n Reason [0x%02X] %s ",reason,alcUnetGetReasonCode(reason));
@@ -69,12 +66,9 @@ void tmLeave::store(tBBuf &t) {
 	tmMsgBase::store(t);
 	reason=t.getByte();
 }
-int tmLeave::stream(tBBuf &t) {
-	int off;
-	off=tmMsgBase::stream(t);
+void tmLeave::stream(tBBuf &t) {
+	tmMsgBase::stream(t);
 	t.putByte(reason);
-	off++;
-	return off;
 }
 void tmLeave::additionalFields() {
 	dbg.printf("\n Reason [0x%02X] %s ",reason,alcUnetGetReasonCode(reason));
@@ -98,13 +92,10 @@ void tmPlayerTerminated::store(tBBuf &t) {
 	if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
 	reason=t.getByte();
 }
-int tmPlayerTerminated::stream(tBBuf &t) {
-	int off;
+void tmPlayerTerminated::stream(tBBuf &t) {
 	if((flags & plNetIP) && u && u->proto!=0 && u->proto<3) throw txProtocolError(_WHERE("Unsuported message in Alcugs protocol <3"));
-	off=tmMsgBase::stream(t);
+	tmMsgBase::stream(t);
 	t.putByte(reason);
-	off++;
-	return off;
 }
 void tmPlayerTerminated::additionalFields() {
 	dbg.printf("\n Reason [0x%02X] %s ",reason,alcUnetGetReasonCode(reason));
@@ -151,13 +142,10 @@ void tmPing::setRouteInfo(const tNetSessionIte &ite) {
 void tmPing::unsetRouteInfo() {
 	unsetFlags(plNetIP | plNetSid);
 }
-int tmPing::stream(tBBuf &t) {
-	int off;
-	off=tmMsgBase::stream(t);
+void tmPing::stream(tBBuf &t) {
+	tmMsgBase::stream(t);
 	t.putDouble(mtime);
 	t.putByte(destination);
-	off+=9;
-	return off;
 }
 void tmPing::additionalFields() {
 	dbg.printf("\n t:%e, dst:%i %s ",mtime,destination,alcUnetGetDestination(destination));

@@ -52,17 +52,19 @@ tSimpleParser::tSimpleParser() {
 }
 U32 tSimpleParser::size() {
 	tStrBuf s;
-	return stream(s);
+	stream(s);
+	return s.size();
 }
 void tSimpleParser::store(tBBuf &t) {
 	tStrBuf s(t);
 	store(s);
 }
-int tSimpleParser::stream(tBBuf &t) {
+void tSimpleParser::stream(tBBuf &t) {
 	tStrBuf s;
-	int ret=stream(s);
+	//int ret=
+	stream(s);
 	t.put(s);
-	return ret;
+	//return ret;
 }
 
 void tSimpleParser::store(tStrBuf &t) {
@@ -99,10 +101,10 @@ void tSimpleParser::store(tStrBuf &t) {
 		}
 	}	
 }
-int tSimpleParser::stream(tStrBuf &t) {
-	U32 start=t.tell();
+void tSimpleParser::stream(tStrBuf &t) {
+	//U32 start=t.tell();
 	DBG(4,"stream()\n");
-	if(!cfg) return 0;
+	if(!cfg) return;
 	DBG(5,"cfg->rewind()\n");
 	cfg->rewind();
 	tConfigKey * key;
@@ -127,7 +129,7 @@ int tSimpleParser::stream(tStrBuf &t) {
 			t.nl();
 		}
 	}
-	return (t.tell()-start);
+	//return (t.tell()-start);
 }
 void tSimpleParser::setConfig(tConfig * c) {
 	DBG(5,"setconfig()\n");
@@ -243,10 +245,9 @@ void tXParser::store(tStrBuf &t) {
 	}
 }
 
-int tXParser::stream(tStrBuf &t) {
-	U32 start=t.tell();
+void tXParser::stream(tStrBuf &t) {
 	DBG(4,"stream()\n");
-	if(!cfg) return 0;
+	if(!cfg) return;
 	DBG(5,"cfg->rewind()\n");
 	cfg->rewind();
 	tConfigKey * key;
@@ -284,7 +285,6 @@ int tXParser::stream(tStrBuf &t) {
 			}
 		}
 	}
-	return (t.tell()-start);
 }
 
 

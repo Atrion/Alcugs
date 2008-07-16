@@ -177,11 +177,11 @@ void tAESBuf::decrypt() {
 tUStr::tUStr(Byte mode) : tStrBuf() {
 	this->version=mode;
 }
-int tUStr::stream(tBBuf &b) {
+void tUStr::stream(tBBuf &b) {
 	if (version == 0x04)
 		throw txBase(_WHERE("Can't send version 0x04 (normal+hex)")); 
 
-	int spos = b.tell();
+	//int spos = b.tell();
 	U16 ize = msize;
 	bool inv=false;
 	if(version==0x05) inv=true;
@@ -202,7 +202,7 @@ int tUStr::stream(tBBuf &b) {
 			b.putByte(~buf->buf[mstart+i]);
 		}
 	}
-	return (b.tell() - spos);
+	//return (b.tell() - spos);
 }
 void tUStr::store(tBBuf &b) {
 	U16 ize = b.getU16();

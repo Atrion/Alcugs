@@ -617,7 +617,9 @@ void alctypes_part7()
 	b.write(ustr5, 5);
 	b.rewind();
 	b.get(str);
-	assert(strcmp((char *)alcGetStrGuid(str.readAll(), 3), "8B0016") == 0);
+	Byte check[7];
+	alcHex2Ascii(check, str.readAll(), 3);
+	assert(strcmp((char *)check, "8B0016") == 0);
 	
 	// write ustr tests
 	str.setVersion(0);
@@ -796,7 +798,9 @@ mproblem = \"this ' contains \\\" \\\\ some speical chars\"\n\
 	parser.setConfig(&cfg1);
 	parser.store(b);
 	tStrBuf out;
-	assert(parser.stream(out)!=0);
+	U32 oldPos = out.tell();
+	parser.stream(out);
+	assert(out.tell()>oldPos);
 	printf("original: ->%s<-\n",b.c_str());
 	printf("generated: ->%s<-\n",out.c_str());
 	

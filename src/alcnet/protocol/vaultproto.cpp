@@ -72,24 +72,22 @@ namespace alc {
 		}
 	}
 	
-	int tvCreatableGenericValue::stream(tBBuf &t)
+	void tvCreatableGenericValue::stream(tBBuf &t)
 	{
-		int off = 0;
-		t.putByte(format); ++off;
+		t.putByte(format);
 		switch (format) {
 			case DInteger:
-				t.putS32(integer); off += 4;
+				t.putS32(integer);
 				break;
 			case DUruString:
-				off += t.put(str);
+				t.put(str);
 				break;
 			case DTimestamp:
-				t.putDouble(time); off += 8;
+				t.putDouble(time);
 				break;
 			default:
 				throw txProtocolError(_WHERE("unknown creatable generic value format"));
 		}
-		return off;
 	}
 	
 	void tvCreatableGenericValue::asHtml(tLog *log)
@@ -118,13 +116,11 @@ namespace alc {
 		memcpy(data, t.read(size), size);
 	}
 	
-	int tvCreatableStream::stream(tBBuf &t)
+	void tvCreatableStream::stream(tBBuf &t)
 	{
 		if (!data) throw txProtocolError(_WHERE("don\'t have any data to write"));
-		int off = 0;
-		t.putU32(size); off += 4;
-		t.write(data, size); off += size;
-		return off;
+		t.putU32(size);
+		t.write(data, size);
 	}
 	
 	void tvCreatableStream::asHtml(tLog *log)
@@ -364,10 +360,9 @@ namespace alc {
 		}
 	}
 	
-	int tvNode::stream(tBBuf &t)
+	void tvNode::stream(tBBuf &t)
 	{	
 		throw txProtocolError(_WHERE("cant stream vault node, so I cant go on")); // FIXME: remove this when above function is completed
-		return 0;
 	}
 	
 	void tvNode::asHtml(tLog *log)
@@ -406,15 +401,13 @@ namespace alc {
 		t.get(*data);
 	}
 	
-	int tvItem::stream(tBBuf &t)
+	void tvItem::stream(tBBuf &t)
 	{
 		if (!data) throw txProtocolError(_WHERE("don\'t have any data to write"));
-		int off = 0;
-		t.putByte(id); ++off;
-		t.putByte(0); ++off; // unknown
-		t.putU16(type); off += 2;
-		off += t.put(*data);
-		return off;
+		t.putByte(id);
+		t.putByte(0); // unknown
+		t.putU16(type);
+		t.put(*data);
 	}
 	
 	void tvItem::asHtml(tLog *log)
@@ -501,14 +494,13 @@ namespace alc {
 		if (!t.eof()) throw txProtocolError(_WHERE("Message is too long")); // there must not be any byte after what we parsed above
 	}
 	
-	int tvMessage::stream(tBBuf &t)
+	void tvMessage::stream(tBBuf &t)
 	{
 		if (!items) throw txProtocolError(_WHERE("don\'t have any items to write"));
-		int off = 0;
-		t.putByte(cmd); ++off;
-		t.putU16(0); off += 2; // result
-		t.putByte(compressed); ++off;
-		t.putU32(realSize); off += 4;
+		t.putByte(cmd);
+		t.putU16(0);// result
+		t.putByte(compressed);
+		t.putU32(realSize);
 		
 		// put the items into a temporary buffer which might be compressed
 		tMBuf buf; // this should be created on the stack to avoid leaks when there's an exception
@@ -522,28 +514,26 @@ namespace alc {
 			tZBuf content;
 			content.put(buf);
 			content.compress();
-			t.putU32(content.size()); off += 4;
-			off += t.put(content);
+			t.putU32(content.size());
+			t.put(content);
 		}
 		else if (compressed == 0x01) {
-			off += t.put(buf);
+			t.put(buf);
 		}
 		else
 			throw txProtocolError(_WHERE("unknown compression format"));
 		
 		// put remaining info
 		if (task) {
-			t.putU16(context); off += 2;
-			t.putU32(vmgr); off += 4;
+			t.putU16(context);
+			t.putU32(vmgr);
 		}
 		else {
-			t.putU16(context); off += 2;
-			t.putU16(0); off += 2; // result
-			t.putU32(vmgr); off += 4;
-			t.putU16(vn); off += 2;
+			t.putU16(context);
+			t.putU16(0); // result
+			t.putU32(vmgr);
+			t.putU16(vn);
 		}
-		
-		return off;
 	}
 	
 	void tvMessage::print(tLog *log, bool clientToServer, tNetSession *client)

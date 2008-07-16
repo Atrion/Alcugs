@@ -70,25 +70,24 @@ namespace alc {
 #endif
 	}
 	
-	int tmCustomSetGuid::stream(tBBuf &t)
+	void tmCustomSetGuid::stream(tBBuf &t)
 	{
 		if (u->proto == 1 || u->proto == 2) { // I don't know why, but old servers have this set
 			setFlags(plNetX | plNetKi);
 			x = ki = 0;
 		}
 		
-		int off = tmMsgBase::stream(t);
-		off += t.put(serverGuid);
-		off += t.put(age);
+		tmMsgBase::stream(t);
+		t.put(serverGuid);
+		t.put(age);
 #ifdef ENABLE_UNET2
 		if (u->proto == 1) {
 			tUStr netmask(0); // normal UruString
 			netmask.writeStr("255.255.255.0");
-			off += t.put(netmask);
+			t.put(netmask);
 		}
 #endif
-		off += t.put(externalIp);
-		return off;
+		t.put(externalIp);
 	}
 	
 	void tmCustomSetGuid::additionalFields()
@@ -146,17 +145,16 @@ namespace alc {
 		playerStatus = t.getByte();
 	}
 	
-	int tmCustomPlayerStatus::stream(tBBuf &t)
+	void tmCustomPlayerStatus::stream(tBBuf &t)
 	{
-		int off = tmMsgBase::stream(t);
+		tmMsgBase::stream(t);
 #ifdef ENABLE_UNET2
-		if (u->proto == 1) { t.write(uid, 16); off += 16; } // UID (only for old protocol, the new one sends it in the header)
+		if (u->proto == 1) { t.write(uid, 16); } // UID (only for old protocol, the new one sends it in the header)
 #endif
-		off += t.put(account);
-		off += t.put(avatar);
-		t.putByte(playerFlag); ++off;
-		t.putByte(playerStatus); ++off;
-		return off;
+		t.put(account);
+		t.put(avatar);
+		t.putByte(playerFlag);
+		t.putByte(playerStatus);
 	}
 	
 	void tmCustomPlayerStatus::additionalFields()
@@ -216,14 +214,13 @@ namespace alc {
 		this->loadSDL = loadSDL;
 	}
 	
-	int tmCustomForkServer::stream(tBBuf &t)
+	void tmCustomForkServer::stream(tBBuf &t)
 	{
-		int off = tmMsgBase::stream(t);
-		t.putU16(fork_port); off += 2;
-		off += t.put(serverGuid);
-		off += t.put(age);
-		t.putByte(loadSDL); ++off;
-		return off;
+		tmMsgBase::stream(t);
+		t.putU16(fork_port);
+		t.put(serverGuid);
+		t.put(age);
+		t.putByte(loadSDL);
 	}
 	
 	void tmCustomForkServer::additionalFields()
@@ -250,14 +247,13 @@ namespace alc {
 		age.setVersion(0); // normal UruString
 	}
 	
-	int tmCustomServerFound::stream(tBBuf &t)
+	void tmCustomServerFound::stream(tBBuf &t)
 	{
-		int off = tmMsgBase::stream(t);
-		t.putU16(server_port); off += 2;
-		off += t.put(ip_str);
-		off += t.put(serverGuid);
-		off += t.put(age);
-		return off;
+		tmMsgBase::stream(t);
+		t.putU16(server_port);
+		t.put(ip_str);
+		t.put(serverGuid);
+		t.put(age);
 	}
 	
 	void tmCustomServerFound::additionalFields()
@@ -307,12 +303,11 @@ namespace alc {
 		if (!gameMessage.eof()) throw txProtocolError(_WHERE("Message is too long")); // there must not be any byte after the recipient list
 	}
 	
-	int tmCustomDirectedFwd::stream(tBBuf &t)
+	void tmCustomDirectedFwd::stream(tBBuf &t)
 	{
-		int off = tmMsgBase::stream(t);
+		tmMsgBase::stream(t);
 		gameMessage.rewind();
-		off += t.put(gameMessage);
-		return off;
+		t.put(gameMessage);
 	}
 
 } //end namespace alc
