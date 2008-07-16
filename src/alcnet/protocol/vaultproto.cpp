@@ -471,7 +471,7 @@ namespace alc {
 		log->print("<tr><th style='background-color:yellow'>Vault Node %d</th></tr>\n", index, index);
 		log->print("<tr><td>\n");
 		flagsAsHtml(log);
-		log->print("<b>Type:</b> 0x%02X (%d)<br />\n", type, type); // FIXME: print type as string
+		log->print("<b>Type:</b> %s (0x%02X) (%d)<br />\n", alcVaultGetNodeType(type), type, type);
 		permissionsAsHtml(log);
 		log->print("<b>Owner:</b> 0x%08X (%d)<br />\n", owner, owner);
 		log->print("<b>Group:</b> 0x%08X (%d)<br />\n", group, group);
@@ -483,7 +483,10 @@ namespace alc {
 		if (flagB & MAgeTime) log->print("<b>Age time:</b> %s<br />\n", alcGetStrTime(ageTime, ageMicrosec));
 		if (flagB & MAgeName) log->print("<b>Age name:</b> %s<br />\n", ageName.c_str());
 		if (flagB & MAgeGuid) log->print("<b>Age guid:</b> %s<br />\n", alcGetStrGuid(ageGuid));
-		if (flagB & MInt32_1) log->print("<b>Int32_1:</b> 0x%08X (%d)<br />\n", int1, int1); // FIXME: this is (among others) the folder type, print it as string
+		if (flagB & MInt32_1) {
+			if (type == KFolderNode) log->print("<b>Int32_1:</b> 0x%08X (%s)<br />\n", int1, alcVaultGetFolderType(int1));
+			else log->print("<b>Int32_1:</b> 0x%08X (%d)<br />\n", int1, int1);
+		}
 		if (flagB & MInt32_2) log->print("<b>Int32_2:</b> 0x%08X (%d)<br />\n", int2, int2);
 		if (flagB & MInt32_3) log->print("<b>Int32_3:</b> 0x%08X (%d)<br />\n", int3, int3);
 		if (flagB & MInt32_4) log->print("<b>Int32_4:</b> 0x%08X (%d)<br />\n", int4, int4);
@@ -697,7 +700,7 @@ namespace alc {
 		if (task) log->print("<b>NetMsgVaultTask ");
 		else      log->print("<b>NetMsgVault ");
 		log->print("CMD: 0x%02X ", cmd);
-		if (task) log->print("(%s)</b><br />\n", alcVaultGetTaskCmd(cmd));
+		if (task) log->print("(%s)</b><br />\n", alcVaultGetTask(cmd));
 		else      log->print("(%s)</b><br />\n", alcVaultGetCmd(cmd));
 		log->print("compressed: %d, real size: %d<br />\n", compressed, realSize);
 		if (task) log->print("sub: %d, <b>client: %d</b><br />\n", context, vmgr);
@@ -720,11 +723,17 @@ namespace alc {
 	{
 		static const char *ret;
 		switch (type) {
+			case 0x02BF:
+				ret = "DAgeLinkStruct";
+				break;
 			case 0x0387:
 				ret = "DCreatableGenericValue";
 				break;
 			case 0x0389:
 				ret = "DCreatableStream";
+				break;
+			case 0x034D:
+				ret = "DServerGuid";
 				break;
 			case 0x0438:
 				ret = "DVaultNodeRef";
@@ -783,16 +792,232 @@ namespace alc {
 		return ret;
 	}
 	
-	const char *alcVaultGetTaskCmd(Byte cmd)
+	const char *alcVaultGetTask(Byte cmd)
 	{
 		static const char *ret;
 		switch (cmd) {
+			case 0x01:
+				ret = "TCreatePlayer";
+				break;
+			case 0x02:
+				ret = "TDeletePlayer";
+				break;
+			case 0x03:
+				ret = "TGetPlayerList";
+				break;
+			case 0x04:
+				ret = "TCreateNeighborhood";
+				break;
+			case 0x05:
+				ret = "TJoinNeighborhood";
+				break;
+			case 0x06:
+				ret = "TSetAgePublic";
+				break;
+			case 0x07:
+				ret = "TIncPlayerOnlineTime";
+				break;
+			case 0x08:
+				ret = "TEnablePlayer";
+				break;
+			case 0x09:
+				ret = "TRegisterOwnedAge";
+				break;
+			case 0x0A:
+				ret = "TUnRegisterOwnedAge";
+				break;
+			case 0x0B:
+				ret = "TRegisterVisitAge";
+				break;
+			case 0x0C:
+				ret = "TUnRegisterVisitAge";
+				break;
+			case 0x0D:
+				ret = "TFriendInvite";
+				break;
 			default:
 				ret = "<span style='color:red'>TUnknown</span>";
 				break;
 		}
 		return ret;
 	}
+	
+	const char *alcVaultGetNodeType(Byte type)
+	{
+		static const char *ret;
+		switch (type) {
+			case 0x00:
+				ret = "KInvalidNode";
+				break;
+			case 0x02:
+				ret = "KVNodeMgrPlayerNode";
+				break;
+			case 0x03:
+				ret = "KVNodeMgrAgeNode";
+				break;
+			case 0x04:
+				ret = "KVNodeMgrGameServerNode";
+				break;
+			case 0x05:
+				ret = "KVNodeMgrAdminNode";
+				break;
+			case 0x06:
+				ret = "KVNodeMgrServerNode";
+				break;
+			case 0x07:
+				ret = "KVNodeMgrCCRNode";
+				break;
+			case 0x16:
+				ret = "KFolderNode";
+				break;
+			case 0x17:
+				ret = "KPlayerInfoNode";
+				break;
+			case 0x18:
+				ret = "KSystem";
+				break;
+			case 0x19:
+				ret = "KImageNode";
+				break;
+			case 0x1A:
+				ret = "KTextNoteNode";
+				break;
+			case 0x1B:
+				ret = "KSDLNode";
+				break;
+			case 0x1C:
+				ret = "KAgeLinkNode";
+				break;
+			case 0x1D:
+				ret = "KChronicleNode";
+				break;
+			case 0x1E:
+				ret = "KPlayerInfoListNode";
+				break;
+			case 0x20:
+				ret = "KMarkerNode";
+				break;
+			case 0x21:
+				ret = "KAgeInfoNode";
+				break;
+			case 0x22:
+				ret = "KAgeInfoListNode";
+				break;
+			case 0x23:
+				ret = "KMarkerListNode";
+				break;
+			default:
+				ret = "<span style='color:red'>KUnknown</span>";
+				break;
+		}
+		return ret;
+	}
+	
+	const char *alcVaultGetFolderType(U32 type)
+	{
+		static const char *ret;
+		switch (type) {
+			case 0:
+				ret = "KGeneric";
+				break;
+			case 1:
+				ret = "KInboxFolder";
+				break;
+			case 2:
+				ret = "KBuddyListFolder";
+				break;
+			case 3:
+				ret = "KIgnoreListFolder";
+				break;
+			case 4:
+				ret = "KPeopleIKnowAboutFolder";
+				break;
+			case 5:
+				ret = "KVaultMgrGlobalDataFolder";
+				break;
+			case 6:
+				ret = "KChronicleFolder";
+				break;
+			case 7:
+				ret = "KAvatarOutfitFolder";
+				break;
+			case 8:
+				ret = "KAgeTypeJournalFolder";
+				break;
+			case 9:
+				ret = "KSubAgesFolder";
+				break;
+			case 10:
+				ret = "KDeviceInboxFolder";
+				break;
+			case 11:
+				ret = "KHoodMembersFolder";
+				break;
+			case 12:
+				ret = "KAllPlayersFolder";
+				break;
+			case 13:
+				ret = "KAgeMembersFolder";
+				break;
+			case 14:
+				ret = "KAgeJournalsFolder";
+				break;
+			case 15:
+				ret = "KAgeDevicesFolder";
+				break;
+			case 16:
+				ret = "KAgeInstaceSDLNode";
+				break;
+			case 17:
+				ret = "KAgeGlobalSDLNode";
+				break;
+			case 18:
+				ret = "KCanVisitFolder";
+				break;
+			case 19:
+				ret = "KAgeOwnersFolder";
+				break;
+			case 20:
+				ret = "KAllAgeGlobalSDLNodesFolder";
+				break;
+			case 21:
+				ret = "KPlayerInfoNodeFolder";
+				break;
+			case 22:
+				ret = "KPublicAgesFolder";
+				break;
+			case 23:
+				ret = "KAgesIOwnFolder";
+				break;
+			case 24:
+				ret = "KAgesICanVisitFolder";
+				break;
+			case 25:
+				ret = "KAvatarClosetFolder";
+				break;
+			case 26:
+				ret = "KAgeInfoNodeFolder";
+				break;
+			case 27:
+				ret = "KSystemNode";
+				break;
+			case 28:
+				ret = "KPlayerInviteFolder";
+				break;
+			case 29:
+				ret = "KCCRPlayersFolder";
+				break;
+			case 30:
+				ret = "KGlobalInboxFolder";
+				break;
+			case 31:
+				ret = "KChildAgesFolder";
+				break;
+			default:
+				ret = "<span style='color:red'>KUnknown</span>";
+				break;
+		}
+		return ret;
+	}
 
 } //end namespace alc
-

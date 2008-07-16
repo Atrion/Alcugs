@@ -76,6 +76,82 @@ namespace alc {
 #define MBlob1Guid 0x00000001 //00000001 (flagC 1) [Blob1_guid]
 #define MBlob2Guid 0x00000002 //00000010 (flagC 1) [Blob2_guid]
 
+//node types
+#define KInvalidNode 0x00
+
+#define KVNodeMgrPlayerNode 0x02
+#define KVNodeMgrAgeNode 0x03
+#define KVNodeMgrGameServerNode 0x04
+#define KVNodeMgrAdminNode 0x05
+#define KVNodeMgrServerNode 0x06
+#define KVNodeMgrCCRNode 0x07
+
+#define KFolderNode 0x16
+#define KPlayerInfoNode 0x17
+#define KSystem 0x18
+#define KImageNode 0x19
+#define KTextNoteNode 0x1A
+#define KSDLNode 0x1B
+#define KAgeLinkNode 0x1C
+#define KChronicleNode 0x1D
+#define KPlayerInfoListNode 0x1E
+
+#define KMarkerNode 0x20
+#define KAgeInfoNode 0x21
+#define KAgeInfoListNode 0x22
+#define KMarkerListNode 0x23
+
+//folder types
+#define KGeneric 0
+#define KInboxFolder 1
+#define KBuddyListFolder 2
+#define KIgnoreListFolder 3
+#define KPeopleIKnowAboutFolder 4
+#define KVaultMgrGlobalDataFolder 5
+#define KChronicleFolder 6
+#define KAvatarOutfitFolder 7
+#define KAgeTypeJournalFolder 8
+#define KSubAgesFolder 9
+#define KDeviceInboxFolder 10
+#define KHoodMembersFolder 11
+#define KAllPlayersFolder 12
+#define KAgeMembersFolder 13
+#define KAgeJournalsFolder 14
+#define KAgeDevicesFolder 15
+#define KAgeInstaceSDLNode 16
+#define KAgeGlobalSDLNode 17
+#define KCanVisitFolder 18
+#define KAgeOwnersFolder 19
+#define KAllAgeGlobalSDLNodesFolder 20
+#define KPlayerInfoNodeFolder 21
+#define KPublicAgesFolder 22
+#define KAgesIOwnFolder 23
+#define KAgesICanVisitFolder 24
+#define KAvatarClosetFolder 25
+#define KAgeInfoNodeFolder 26
+#define KSystemNode 27
+#define KPlayerInviteFolder 28
+#define KCCRPlayersFolder 29
+#define KGlobalInboxFolder 30
+#define KChildAgesFolder 31
+
+//permissions
+#define KOwnerRead 0x01
+#define KOwnerWrite 0x02
+#define KGroupRead 0x04
+#define KGroupWrite 0x08
+#define KOtherRead 0x10
+#define KOtherWrite 0x20
+
+#define KDefaultPermissions 0x17 // KOwnerRead | KOwnerWrite | KGroupRead | KOtherRead
+  /* where persmissions are
+  -------------------------
+  | Other | Group | Owner |
+  -------------------------
+  | w | r | w | r | w | r |
+  -------------------------
+  */
+
 //vault operations
 #define VConnect 0x01
 #define VDisconnect 0x02
@@ -89,22 +165,41 @@ namespace alc {
 #define VSetSeen 0x0A
 #define VOnlineState 0x0B
 
+//vault tasks
+#define TCreatePlayer 0x01
+#define TDeletePlayer 0x02
+#define TGetPlayerList 0x03
+#define TCreateNeighborhood 0x04
+#define TJoinNeighborhood 0x05
+#define TSetAgePublic 0x06
+#define TIncPlayerOnlineTime 0x07
+#define TEnablePlayer 0x08
+#define TRegisterOwnedAge 0x09
+#define TUnRegisterOwnedAge 0x0A
+#define TRegisterVisitAge 0x0B
+#define TUnRegisterVisitAge 0x0C
+#define TFriendInvite 0x0D
+
 //data types
+#define DAgeLinkStruct         0x02BF
 #define DCreatableGenericValue 0x0387
 #define DCreatableStream       0x0389
+#define DServerGuid            0x034D
 #define DVaultNodeRef          0x0438
 #define DVaultNodeRef2         0x0439 // TPOTS
 #define DVaultNode             0x0439
 #define DVaultNode2            0x043A // TPOTS
 
-//sub data types
+//sub data types (FIXME: incomplete)
 #define DInteger 0x00 // (4 bytes) integer
 #define DUruString 0x03 // string
 #define DTimestamp 0x07 // (8 bytes) timestamp as double
 
 	const char *alcVaultGetCmd(Byte cmd);
-	const char *alcVaultGetTaskCmd(Byte cmd);
+	const char *alcVaultGetTask(Byte cmd);
 	const char *alcVaultGetDataType(U16 type);
+	const char *alcVaultGetNodeType(Byte type);
+	const char *alcVaultGetFolderType(U32 type);
 
 	////DEFINITIONS
 	class tvBase : public tBaseType {
