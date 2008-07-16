@@ -70,8 +70,8 @@ VaultManager Name  ||  Plasma DB field Name  ||   H'uru DB field Name
 [Modify Time]           ModifyTime                 timestamp & microseconds
 [Creator ID]            CreatorIdx                 id1
 [Create Time]           AutoTime                   timestamp2 & microseconds2
-[Create Age Time]       CreateAgeTime              timestamp3 & microseconds3
 [Create Age Coords]     CreateAgeCoordsBlobIdx     **unused** (Never found a example in more than 1GB of logs)
+[Create Age Time]       CreateAgeTime              timestamp3 & microseconds3
 [Create Age Name]       CreateAgeName              age_name
 [Create Age Guid]       CreateAgeGuid              age_guid
 [Int32_1]               Int32_1                    torans

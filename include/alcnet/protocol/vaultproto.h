@@ -49,8 +49,8 @@ namespace alc {
 #define MModTime   0x00000020 //00100000 (flagB 1) [Modify Time]
 #define MCreator   0x00000040 //01000000 (flagB 1) [Creator ID]
 #define MCrtTime   0x00000080 //10000000 (flagB 1) [Create Time]
-#define MAgeTime   0x00000100 //00000001 (flagB 2) [Create Age Time]
-#define MAgeCoords 0x00000200 //00000010 (flagB 2) [Create Age Coords]
+#define MAgeCoords 0x00000100 //00000001 (flagB 2) [Create Age Coords]
+#define MAgeTime   0x00000200 //00000010 (flagB 2) [Create Age Time]
 #define MAgeName   0x00000400 //00000100 (flagB 2) [Create Age Name]
 #define MAgeGuid   0x00000800 //00001000 (flagB 2) [Create Age Guid]
 #define MInt32_1   0x00001000 //00010000 (flagB 2) [Int32_1]
@@ -139,12 +139,15 @@ namespace alc {
 	
 	class tvNode : public tvBase {
 	public:
-		tvNode(void) : tvBase() { blob1 = blob2 = NULL; }
+		tvNode(void) : tvBase() { blob1Size = 0; blob1 = NULL; }
 		virtual ~tvNode(void);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log);
 	private:
+		void flagsAsHtml(tLog *log);
+		void permissionsAsHtml(tLog *log);
+	
 		U32 flagA, flagB, flagC;
 		U32 index;
 		Byte type;
@@ -162,8 +165,8 @@ namespace alc {
 		tUStr str1, str2, str3, str4, str5, str6;
 		tUStr lStr1, lStr2;
 		tUStr text1, text2;
-		U32 blob1Size, blob2Size; // only defined if the corresponding array is not NULL
-		Byte *blob1, *blob2;
+		U32 blob1Size;
+		Byte *blob1;
 	};
 	
 	class tvItem : public tvBase {

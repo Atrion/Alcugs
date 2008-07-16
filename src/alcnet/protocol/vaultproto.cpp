@@ -132,8 +132,13 @@ namespace alc {
 		// the format of the content depends on the ID
 		switch (id) {
 			case 0x06:
-				log->print("<span style='color:red'>FIXME: there are some vault nodes here</span><br />\n");
-				buf.end();
+				log->print("<table border='1'>\n");
+				while (!buf.eof()) {
+					tvNode node;
+					buf.get(node);
+					node.asHtml(log);
+				}
+				log->print("</table>\n");
 				break;
 			case 0x0A:
 			{
@@ -192,7 +197,6 @@ namespace alc {
 	tvNode::~tvNode(void)
 	{
 		if (blob1) free(blob1);
-		if (blob2) free(blob2);
 	}
 	
 	void tvNode::store(tBBuf &t)
@@ -200,20 +204,19 @@ namespace alc {
 		// get flags
 		flagA = t.getU32(); // I think this is something like a version number. version 1 contains only flagB, version 2 also flagC
 		if (flagA != 0x00000001 && flagA != 0x00000002) { // check for unknown values
-			// FIXME: dump packet
+			throw txProtocolError(_WHERE("invalid flagA"));
 		}
 		flagB = t.getU32(); // this is the main flag, all 32 bits are known
 		if (flagA == 0x00000002) { // it contains flagC
 			flagC = t.getU32();
-			U32 check = MBlob1Guid | MBlob2Guid;
+			U32 check = MBlob1Guid | MBlob2Guid | 0x00000004; // the latter is unknown and seems to be unused
 			if (flagC & ~(check)) { // check for unknown values
-				// FIXME: dump packet
+				throw txProtocolError(_WHERE("invalid flagC"));
 			}
 		}
 		else
 			flagC = 0;
 		
-		DBG(5, "flags: 0x%08X 0x%08X 0x%08X\n", flagA, flagB, flagC);
 		// mandatory fields - it doesn't matter whether the flags are on or not
 		index = t.getU32();
 		type = t.getByte();
@@ -224,7 +227,6 @@ namespace alc {
 		group = t.getU32();
 		modTime = t.getU32();
 		modMicrosec = t.getU32();
-		DBG(5, "vault node: index: %d, type: %d, perms: 0x%08X, owner: %d, group: %d, time: %s\n", index, type, permissions, owner, group, alcGetStrTime(modTime, modMicrosec));
 		
 		// optional fields
 		if (flagB & MCreator)
@@ -239,15 +241,15 @@ namespace alc {
 		else
 			crtTime = crtMicrosec = 0;
 		
+		if (flagB & MAgeCoords) // unused, do nothing
+			;
+		
 		if (flagB & MAgeTime) {
 			ageTime = t.getU32();
 			ageMicrosec = t.getU32();
 		}
 		else
 			ageTime = ageMicrosec = 0;
-		
-		if (flagB & MAgeCoords) // unused
-			throw txProtocolError(_WHERE("Flag MAgeCoords must never be set"));
 		
 		if (flagB & MAgeName)
 			t.get(ageName);
@@ -327,23 +329,23 @@ namespace alc {
 		if (flagB & MText_2)
 			t.get(text2);
 		
-		if (blob1) free(blob1);
+		if (blob1) {
+			free(blob1);
+			blob1 = NULL;
+		}
 		if (flagB & MBlob1) {
 			blob1Size = t.getU32();
-			blob1 = (Byte *)malloc(sizeof(Byte) * blob1Size);
-			memcpy(blob1, t.read(blob1Size), blob1Size);
+			if (blob1Size > 0) {
+				blob1 = (Byte *)malloc(sizeof(Byte) * blob1Size);
+				memcpy(blob1, t.read(blob1Size), blob1Size);
+			}
 		}
-		else
-			blob1 = NULL;
 		
-		if (blob2) free(blob2);
 		if (flagB & MBlob2) {
-			blob2Size = t.getU32();
-			blob2 = (Byte *)malloc(sizeof(Byte) * blob2Size);
-			memcpy(blob2, t.read(blob2Size), blob2Size);
+			U32 blob2Size = t.getU32();
+			if (blob2Size > 0)
+				throw txProtocolError(_WHERE("Blob2Size > 0 - unimplemented"));
 		}
-		else
-			blob2 = NULL;
 		
 		// the two blob guids must always be 0
 		Byte blobGuid[8], zeroGuid[8];
@@ -353,6 +355,7 @@ namespace alc {
 			if (memcmp(blobGuid, zeroGuid, 8) != 0)
 				throw txProtocolError(_WHERE("Blob1Guid must always be zero"));
 		}
+		DBG(6, "5: %d bytes remaining\n", t.remaining());
 		if (flagC & MBlob2Guid) {
 			memcpy(blobGuid, t.read(8), 8);
 			if (memcmp(blobGuid, zeroGuid, 8) != 0)
@@ -365,14 +368,14 @@ namespace alc {
 		// write flags
 		t.putU32(flagA);
 		if (flagA != 0x00000001 && flagA != 0x00000002) { // check for unknown values
-			lerr->log("UNX: vault node with flagA 0x%08X\n", flagA);
+			throw txProtocolError(_WHERE("invalid flagA"));
 		}
 		t.putU32(flagB);
 		if (flagA == 0x00000002) {
 			t.putU32(flagC);
-			U32 check = MBlob1Guid | MBlob2Guid;
+			U32 check = MBlob1Guid | MBlob2Guid | 0x00000004; // the latter is unknown and seems to be unused
 			if (flagC & ~(check)) { // check for unknown values
-				lerr->log("UNX: vault node with flagC 0x%08X\n", flagC);
+				throw txProtocolError(_WHERE("invalid flagC"));
 			}
 		}
 		
@@ -393,12 +396,12 @@ namespace alc {
 			t.putU32(crtTime);
 			t.putU32(crtMicrosec);
 		}
+		if (flagB & MAgeCoords) // unused, do nothing
+			;
 		if (flagB & MAgeTime) {
 			t.putU32(ageTime);
 			t.putU32(ageMicrosec);
 		}
-		if (flagB & MAgeCoords) // unused
-			throw txProtocolError(_WHERE("Flag MAgeCoords must never be set"));
 		if (flagB & MAgeName) t.put(ageName);
 		if (flagB & MAgeGuid) t.write(ageGuid, 8);
 		if (flagB & MInt32_1) t.putU32(int1);
@@ -421,11 +424,10 @@ namespace alc {
 		if (flagB & MText_2) t.put(text2);
 		if (flagB & MBlob1) {
 			t.putU32(blob1Size);
-			t.write(blob1, blob1Size);
+			if (blob1Size > 0) t.write(blob1, blob1Size);
 		}
 		if (flagB & MBlob2) {
-			t.putU32(blob2Size);
-			t.write(blob2, blob2Size);
+			t.putU32(0); // blob2 is always empty
 		}
 		// the two blob guids are always zero
 		Byte zeroGuid[8];
@@ -434,9 +436,54 @@ namespace alc {
 		if (flagC & MBlob2Guid) t.write(zeroGuid, 8);
 	}
 	
+	void tvNode::flagsAsHtml(tLog *log)
+	{
+		log->print("<b>Flags:</b> 0x%08X (%d), 0x%08X (%d), 0x%08X (%d)<br />\n", flagA, flagA, flagB, flagB, flagC, flagC);
+	}
+	
+	void tvNode::permissionsAsHtml(tLog *log)
+	{
+		log->print("<b>Permissions:</b> 0x%08X (%d)<br />\n", permissions, permissions);
+	}
+	
 	void tvNode::asHtml(tLog *log)
 	{
-		
+		// mandatory flieds
+		log->print("<tr><th style='background-color:yellow'>Vault Node %d</th></tr>\n", index, index);
+		log->print("<tr><td>\n");
+		flagsAsHtml(log);
+		log->print("<b>Type:</b> 0x%02X (%d)<br />\n", type, type); // FIXME: print type as string
+		permissionsAsHtml(log);
+		log->print("<b>Owner:</b> 0x%08X (%d)<br />\n", owner, owner);
+		log->print("<b>Group:</b> 0x%08X (%d)<br />\n", group, group);
+		log->print("<b>Modification time:</b> %s<br />\n", alcGetStrTime(modTime, modMicrosec));
+		// optional fields
+		if (flagB & MCreator) log->print("<b>Creator:</b> 0x%08X (%d)<br />\n", creator, creator);
+		if (flagB & MCrtTime) log->print("<b>Create time:</b> %s<br />\n", alcGetStrTime(crtTime, crtMicrosec));
+		if (flagB & MAgeCoords) log->print("<b>Age coords:</b> unused<br />\n");
+		if (flagB & MAgeTime) log->print("<b>Age time:</b> %s<br />\n", alcGetStrTime(ageTime, ageMicrosec));
+		if (flagB & MAgeName) log->print("<b>Age name:</b> %s<br />\n", ageName.c_str());
+		if (flagB & MAgeGuid) log->print("<b>Age guid:</b> %s<br />\n", alcGetStrGuid(ageGuid));
+		if (flagB & MInt32_1) log->print("<b>Int32_1:</b> 0x%08X (%d)<br />\n", int1, int1); // FIXME: this is (among others) the folder type, print it as string
+		if (flagB & MInt32_2) log->print("<b>Int32_2:</b> 0x%08X (%d)<br />\n", int2, int2);
+		if (flagB & MInt32_3) log->print("<b>Int32_3:</b> 0x%08X (%d)<br />\n", int3, int3);
+		if (flagB & MInt32_4) log->print("<b>Int32_4:</b> 0x%08X (%d)<br />\n", int4, int4);
+		if (flagB & MUInt32_1) log->print("<b>UInt32_1:</b> 0x%08X (%d)<br />\n", uInt1, uInt1);
+		if (flagB & MUInt32_2) log->print("<b>UInt32_2:</b> 0x%08X (%d)<br />\n", uInt2, uInt2);
+		if (flagB & MUInt32_3) log->print("<b>UInt32_3:</b> 0x%08X (%d)<br />\n", uInt3, uInt3);
+		if (flagB & MUInt32_4) log->print("<b>UInt32_4:</b> 0x%08X (%d)<br />\n", uInt4, uInt4);
+		if (flagB & MStr64_1) log->print("<b>Str64_1:</b> %s<br />\n", str1.c_str());
+		if (flagB & MStr64_2) log->print("<b>Str64_2:</b> %s<br />\n", str2.c_str());
+		if (flagB & MStr64_3) log->print("<b>Str64_3:</b> %s<br />\n", str3.c_str());
+		if (flagB & MStr64_4) log->print("<b>Str64_4:</b> %s<br />\n", str4.c_str());
+		if (flagB & MStr64_5) log->print("<b>Str64_5:</b> %s<br />\n", str5.c_str());
+		if (flagB & MStr64_6) log->print("<b>Str64_6:</b> %s<br />\n", str6.c_str());
+		if (flagB & MlStr64_1) log->print("<b>lStr64_1:</b> %s<br />\n", lStr1.c_str());
+		if (flagB & MlStr64_2) log->print("<b>lStr64_2:</b> %s<br />\n", lStr2.c_str());
+		if (flagB & MText_1) log->print("<b>Text_1:</b> %s<br />\n", text1.c_str());
+		if (flagB & MText_2) log->print("<b>Text_2:</b> %s<br />\n", text2.c_str());
+		// FIXME: do something with the data
+		log->print("</td></tr>\n");
 	}
 	
 	//// tvItem
@@ -482,7 +529,9 @@ namespace alc {
 	void tvItem::asHtml(tLog *log)
 	{
 		log->print("Id: <b>0x%02X (%d)</b>, type: 0x%04X (%s)<br />\n", id, id, type, alcVaultGetDataType(type));
+		if (type == DVaultNode) log->print("<table border='1'>\n");
 		data->asHtml(log);
+		if (type == DVaultNode) log->print("</table>\n");
 	}
 	
 	//// tvMessage
@@ -651,6 +700,9 @@ namespace alc {
 				break;
 			case 0x0389:
 				ret = "DCreatableStream";
+				break;
+			case 0x0439:
+				ret = "DVaultNode";
 				break;
 			default:
 				ret = "<span style='color:red'>DUnknown</span>";
