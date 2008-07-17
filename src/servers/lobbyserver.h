@@ -53,6 +53,9 @@ namespace alc {
 		virtual void onLoadConfig(bool reload);
 	private:	
 		Byte website[256];
+		Byte gameLogPath[256];
+		Byte gameConfig[256];
+		Byte gameBinPath[256];
 	};
 	
 } //End alc namespace

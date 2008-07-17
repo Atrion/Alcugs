@@ -229,13 +229,20 @@ namespace alc {
 	}
 	
 	//// tmCustomForkServer
+	tmCustomForkServer::tmCustomForkServer(tNetSession *u)
+	 : tmMsgBase(NetMsgCustomForkServer, plNetAck | plNetCustom | plNetX | plNetKi | plNetVersion, u)
+	{
+		serverGuid.setVersion(5); // inverted UruString
+		age.setVersion(0); // normal UruString
+	}
+	
 	tmCustomForkServer::tmCustomForkServer(tNetSession *u, U32 ki, U32 x, U16 port, const Byte *serverGuid, const Byte *name, bool loadSDL)
 	: tmMsgBase(NetMsgCustomForkServer, plNetAck | plNetCustom | plNetX | plNetKi | plNetVersion, u)
 	{
 		this->x = x;
 		this->ki = ki;
 		
-		fork_port = port;
+		forkPort = port;
 		this->serverGuid.setVersion(5); // inverted UruString
 		this->serverGuid.writeStr(serverGuid);
 		age.writeStr(name);
@@ -243,10 +250,19 @@ namespace alc {
 		this->loadSDL = loadSDL;
 	}
 	
+	void tmCustomForkServer::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		forkPort = t.getU16();
+		t.get(serverGuid);
+		t.get(age);
+		loadSDL = t.getByte();
+	}
+	
 	void tmCustomForkServer::stream(tBBuf &t)
 	{
 		tmMsgBase::stream(t);
-		t.putU16(fork_port);
+		t.putU16(forkPort);
 		t.put(serverGuid);
 		t.put(age);
 		t.putByte(loadSDL);
@@ -255,7 +271,7 @@ namespace alc {
 	void tmCustomForkServer::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" Port: %d, Server GUID: %s, Age filename: %s, Load SDL state: ", fork_port, serverGuid.c_str(), age.c_str());
+		dbg.printf(" Port: %d, Server GUID: %s, Age filename: %s, Load SDL state: ", forkPort, serverGuid.c_str(), age.c_str());
 		if (loadSDL) dbg.printf("yes");
 		else         dbg.printf("no");
 	}

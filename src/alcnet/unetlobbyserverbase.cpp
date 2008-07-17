@@ -405,8 +405,8 @@ namespace alc {
 					tNetSession *vaultServer = getSession(vault);
 					if (!vaultServer) {
 						err->log("ERR: I've got the ask the vault to verify a KI, but it's unavailable. I'll have to kick the player.\n", u->str());
-						terminate(u); // kick the player since we cant be sure he doesnt lie about the KI
-						return 1;
+						// kick the player since we cant be sure he doesnt lie about the KI
+						return -1; // parse error
 					}
 					u->delayMessages = true; // dont process any further messages till we verified the KI
 					tmCustomVaultCheckKi checkKi(vaultServer, setPlayer.ki, u->getSid(), u->uid);
@@ -504,6 +504,7 @@ namespace alc {
 					return -2; // hack attempt
 				}
 				
+				// get the data out of the packet
 				tmFindAge findAge(u);
 				msg->data->get(findAge);
 				log->log("<RCV> %s\n", findAge.str());

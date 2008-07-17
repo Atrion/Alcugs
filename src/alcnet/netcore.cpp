@@ -287,7 +287,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 		case UNET_MSGRCV:
 		{
 			tUnetMsg * msg;
-			int ret = 0; // 0 - non parsed; 1 - parsed; -1 - hack attempt; -2 - parse error
+			int ret = 0; // 0 - non parsed; 1 - parsed; -1 - parse error; -2 - hack attempt
 			#ifdef ENABLE_MSGDEBUG
 			log->log("%s New MSG Recieved\n",u->str());
 			#endif

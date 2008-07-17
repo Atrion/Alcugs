@@ -34,6 +34,16 @@ namespace alc {
 	class tmCreatePlayer;
 
 	////DEFINITIONS
+	class tmVault : public tmMsgBase { // this is both a vault and a lobbybasemsg, but the vault server includes only this file so the class is defined here
+	public:
+		tmVault(tNetSession *u);
+		tmVault(tNetSession *u, U32 ki, tBaseType *vaultMessage);
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
+		// format
+		tMBuf message;
+	};
+	
 	class tmCustomVaultAskPlayerList : public tmMsgBase {
 	public:
 		tmCustomVaultAskPlayerList(tNetSession *u, U32 x, Byte *uid);
@@ -60,16 +70,6 @@ namespace alc {
 		U32 onlineTime;
 	protected:
 		virtual void additionalFields();
-	};
-	
-	class tmVault : public tmMsgBase { // this is both a vault and a lobbybasemsg, but the vault server includes only this file so the class is defined here
-	public:
-		tmVault(tNetSession *u);
-		tmVault(tNetSession *u, U32 ki, tBaseType *vaultMessage);
-		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
-		// format
-		tMBuf message;
 	};
 	
 	class tmCustomVaultCreatePlayer : public tmMsgBase {

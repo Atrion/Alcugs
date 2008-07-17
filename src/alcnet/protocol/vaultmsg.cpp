@@ -38,6 +38,32 @@
 
 namespace alc {
 
+	//// tmVault
+	tmVault::tmVault(tNetSession *u) : tmMsgBase(NetMsgVault, plNetAck | plNetKi, u)
+	{ ki = 0; }
+	
+	tmVault::tmVault(tNetSession *u, U32 ki, tBaseType *vaultMessage) : tmMsgBase(NetMsgVault, plNetAck | plNetKi, u)
+	{
+		message.put(*vaultMessage);
+		this->ki = ki;
+		if (u->getTpots() == 1) // if were sure it is TPOTS, use TPOTS mod
+			cmd = NetMsgVault2;
+	}
+	
+	void tmVault::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		// store the whole message
+		message.clear();
+		t.get(message);
+	}
+	
+	void tmVault::stream(tBBuf &t)
+	{
+		tmMsgBase::stream(t);
+		t.put(message);
+	}
+	
 	//// tmCustomVaultAskPlayerList
 	tmCustomVaultAskPlayerList::tmCustomVaultAskPlayerList(tNetSession *u, U32 x, Byte *uid)
 	: tmMsgBase(NetMsgCustomVaultAskPlayerList, plNetAck | plNetCustom | plNetX | plNetVersion | plNetUID, u)
@@ -93,32 +119,6 @@ namespace alc {
 	{
 		dbg.nl();
 		dbg.printf(" Server GUID: %s, Age filename: %s, State: 0x%02X, online time: %d", serverGuid.c_str(), age.c_str(), state, onlineTime);
-	}
-	
-	//// tmVault
-	tmVault::tmVault(tNetSession *u) : tmMsgBase(NetMsgVault, plNetAck | plNetKi, u)
-	{ ki = 0; }
-	
-	tmVault::tmVault(tNetSession *u, U32 ki, tBaseType *vaultMessage) : tmMsgBase(NetMsgVault, plNetAck | plNetKi, u)
-	{
-		message.put(*vaultMessage);
-		this->ki = ki;
-		if (u->getTpots() == 1) // if were sure it is TPOTS, use TPOTS mod
-			cmd = NetMsgVault2;
-	}
-	
-	void tmVault::store(tBBuf &t)
-	{
-		tmMsgBase::store(t);
-		// store the whole message
-		message.clear();
-		t.get(message);
-	}
-	
-	void tmVault::stream(tBBuf &t)
-	{
-		tmMsgBase::stream(t);
-		t.put(message);
 	}
 	
 	//// tmCustomVaultCreatePlayer

@@ -65,6 +65,7 @@ db.username = "alcugs"
 db.passwd = "yourpassword"
 
 # paths
+bin = "~/bin/"
 age = "~/age/"
 
 # There is a stop var for each server section, remove them to check that you
@@ -147,6 +148,10 @@ port = 5000
 
 # Set the website which is displayed when the user logs into your shard
 website = "http://server/info.html"
+
+# game server settings
+game.log = "../game/" # the path where the game log files will be saved (there will be subdirs for each instance: /basis/agename/ageguid/)
+game.config = "~/etc/unet2.conf" # config file for game servers
 
 # compatability for old servers
 # 0 = latest (default), 1 = unet2, 2 = unet3, 3 = unet3+

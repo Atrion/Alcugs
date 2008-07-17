@@ -66,6 +66,12 @@ namespace alc {
 		tConfig *cfg = alcGetConfig();
 		tStrBuf var = cfg->getVar("website");
 		strncpy((char *)website, (char *)var.c_str(), 255);
+		var = cfg->getVar("game.log");
+		strncpy((char *)gameLogPath, (char *)var.c_str(), 255);
+		var = cfg->getVar("game.config");
+		strncpy((char *)gameConfig, (char *)var.c_str(), 255);
+		var = cfg->getVar("bin");
+		strncpy((char *)gameBinPath, (char *)var.c_str(), 255);
 	}
 	
 	int tUnetLobbyServer::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
@@ -194,6 +200,56 @@ namespace alc {
 				}
 				tmCustomVaultDeletePlayer vaultDeletePlayer(vaultServer, deletePlayer.ki, u->getSid(), u->uid, u->getAccessLevel());
 				send(vaultDeletePlayer);
+				
+				return 1;
+			}
+			
+			//// message for forking game servers
+			case NetMsgCustomForkServer:
+			{
+				if (u->getPeerType() != KTracking) {
+					err->log("ERR: %s sent a NetMsgCustomVaultPlayerList but is not the tracking server. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmCustomForkServer forkServer(u);
+				msg->data->get(forkServer);
+				log->log("<RCV> %s\n", forkServer.str());
+				
+				int pid = fork();
+				if (pid == 0) {
+					// this is the forked process. Since we're an exact copy of the lobby, we first have to properly shut down, then we can launch the game server
+					// TODO: There's a HUGE memory hole here as things many things are not freed. I've got no idea how to properly do so
+					alcOnFork();
+					forcestop();
+					
+					// get the arguments for starting the server
+					char gameName[128], gameGuid[32], gameLog[512], gameBin[512], gamePort[16];
+					strncpy(gameName, (char *)forkServer.age.c_str(), 127);
+					alcStrFilter(gameName);
+					strncpy(gameGuid, (char *)forkServer.serverGuid.c_str(), 31);
+					alcStrFilter(gameGuid);
+					sprintf(gameLog, "%s/%s/%s", gameLogPath, gameName, gameGuid);
+					sprintf(gameBin, "%s/uru_game", gameBinPath);
+					sprintf(gamePort, "%d", forkServer.forkPort);
+					
+					if (forkServer.loadSDL)
+						execlp(gameBin, gameBin,"-p",gamePort,"-guid",gameGuid,"-name",gameName,
+									 "-log",gameLog,"-c",gameConfig,"-L",NULL);
+					else
+						execlp(gameBin,gameBin,"-p",gamePort,"-guid",gameGuid,"-name",gameName,
+									 "-log",gameLog,"-c",gameConfig,NULL);
+					
+					exit(-1);
+				}
+				// this is the parent process
+				else if (pid < 0) {
+					lerr->log("Can't fork game server\n");
+				}
+				else if (pid > 0) {
+					log->log("Successfully forked game server (GUID: %s, Port: %d)\n", forkServer.serverGuid.c_str(), forkServer.forkPort);
+				}
 				
 				return 1;
 			}
