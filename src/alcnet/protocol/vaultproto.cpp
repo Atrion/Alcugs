@@ -248,7 +248,7 @@ namespace alc {
 		}
 	}
 	
-	void tvCreatableGenericValue::asHtml(tLog *log)
+	void tvCreatableGenericValue::asHtml(tLog *log, bool shortLog)
 	{
 		switch (format) {
 			case DInteger:
@@ -281,7 +281,7 @@ namespace alc {
 		t.write(data, size);
 	}
 	
-	void tvCreatableStream::asHtml(tLog *log)
+	void tvCreatableStream::asHtml(tLog *log, bool shortLog)
 	{
 		log->print("Size: %d<br />\n", size);
 		tMBuf buf;
@@ -294,7 +294,7 @@ namespace alc {
 				while (!buf.eof()) {
 					tvNode node;
 					buf.get(node);
-					node.asHtml(log);
+					node.asHtml(log, shortLog);
 				}
 				log->print("</table>\n");
 				break;
@@ -319,7 +319,9 @@ namespace alc {
 				for (U32 i = 0; i < num; ++i) {
 					U32 val = buf.getU32();
 					double time = buf.getDouble();
-					log->print("[%d] ID: 0x%08X (%d), Stamp: %s<br />\n", i+1, val, val, alcGetStrTime(time));
+					// this is not printed in short log
+					// it is read anyway to verify the data
+					if (!shortLog) log->print("[%d] ID: 0x%08X (%d), Stamp: %s<br />\n", i+1, val, val, alcGetStrTime(time));
 				}
 				break;
 			}
@@ -330,7 +332,9 @@ namespace alc {
 				for (U32 i = 0; i < num; ++i) {
 					tvNodeRef nodeRef;
 					buf.get(nodeRef);
-					nodeRef.asHtml(log);
+					// this is not printed in short log
+					// it is read anyway to verify the data
+					if (!shortLog) nodeRef.asHtml(log, shortLog);
 				}
 				break;
 			}
@@ -354,7 +358,7 @@ namespace alc {
 		t.write(guid, 8);
 	}
 	
-	void tvServerGuid::asHtml(tLog *log)
+	void tvServerGuid::asHtml(tLog *log, bool shortLog)
 	{
 		log->log("%s<br />\n", alcGetStrGuid(guid));
 	}
@@ -380,7 +384,7 @@ namespace alc {
 		t.putByte(flags);
 	}
 	
-	void tvNodeRef::asHtml(tLog *log)
+	void tvNodeRef::asHtml(tLog *log, bool shortLog)
 	{
 		log->print("Saver: 0x%08X (%d), Parent:  0x%08X (%d), Child: 0x%08X (%d), ", saver, saver, parent, parent, child, child);
 		log->print("Stamp: %s, Flags: 0x%02X<br />\n", alcGetStrTime(time, microsec), flags);
@@ -709,7 +713,7 @@ namespace alc {
 		}
 	}
 	
-	void tvNode::asHtml(tLog *log)
+	void tvNode::asHtml(tLog *log, bool shortLog)
 	{
 		// mandatory flieds
 		log->print("<tr><th style='background-color:yellow'>Vault Node %d</th></tr>\n", index, index);
@@ -721,41 +725,43 @@ namespace alc {
 		log->print("<b>Group:</b> 0x%08X (%d)<br />\n", group, group);
 		log->print("<b>Modification time:</b> %s<br />\n", alcGetStrTime(modTime, modMicrosec));
 		// optional fields
-		if (flagB & MCreator) log->print("<b>Creator:</b> 0x%08X (%d)<br />\n", creator, creator);
-		if (flagB & MCrtTime) log->print("<b>Create time:</b> %s<br />\n", alcGetStrTime(crtTime, crtMicrosec));
-		if (flagB & MAgeCoords) log->print("<b>Age coords:</b> unused<br />\n");
-		if (flagB & MAgeTime) log->print("<b>Age time:</b> %s<br />\n", alcGetStrTime(ageTime, ageMicrosec));
-		if (flagB & MAgeName) log->print("<b>Age name:</b> %s<br />\n", ageName.c_str());
-		if (flagB & MAgeGuid) log->print("<b>Age guid:</b> %s<br />\n", alcGetStrGuid(ageGuid));
-		if (flagB & MInt32_1) {
-			if (type == KFolderNode) log->print("<b>Int32_1:</b> 0x%08X (%s)<br />\n", int1, alcVaultGetFolderType(int1));
-			else log->print("<b>Int32_1:</b> 0x%08X (%d)<br />\n", int1, int1);
+		if (!shortLog) { // only print this in long logs
+			if (flagB & MCreator) log->print("<b>Creator:</b> 0x%08X (%d)<br />\n", creator, creator);
+			if (flagB & MCrtTime) log->print("<b>Create time:</b> %s<br />\n", alcGetStrTime(crtTime, crtMicrosec));
+			if (flagB & MAgeCoords) log->print("<b>Age coords:</b> unused<br />\n");
+			if (flagB & MAgeTime) log->print("<b>Age time:</b> %s<br />\n", alcGetStrTime(ageTime, ageMicrosec));
+			if (flagB & MAgeName) log->print("<b>Age name:</b> %s<br />\n", ageName.c_str());
+			if (flagB & MAgeGuid) log->print("<b>Age guid:</b> %s<br />\n", alcGetStrGuid(ageGuid));
+			if (flagB & MInt32_1) {
+				if (type == KFolderNode) log->print("<b>Int32_1:</b> 0x%08X (%s)<br />\n", int1, alcVaultGetFolderType(int1));
+				else log->print("<b>Int32_1:</b> 0x%08X (%d)<br />\n", int1, int1);
+			}
+			if (flagB & MInt32_2) log->print("<b>Int32_2:</b> 0x%08X (%d)<br />\n", int2, int2);
+			if (flagB & MInt32_3) log->print("<b>Int32_3:</b> 0x%08X (%d)<br />\n", int3, int3);
+			if (flagB & MInt32_4) log->print("<b>Int32_4:</b> 0x%08X (%d)<br />\n", int4, int4);
+			if (flagB & MUInt32_1) log->print("<b>UInt32_1:</b> 0x%08X (%d)<br />\n", uInt1, uInt1);
+			if (flagB & MUInt32_2) log->print("<b>UInt32_2:</b> 0x%08X (%d)<br />\n", uInt2, uInt2);
+			if (flagB & MUInt32_3) log->print("<b>UInt32_3:</b> 0x%08X (%d)<br />\n", uInt3, uInt3);
+			if (flagB & MUInt32_4) log->print("<b>UInt32_4:</b> 0x%08X (%d)<br />\n", uInt4, uInt4);
+			if (flagB & MStr64_1) log->print("<b>Str64_1:</b> %s<br />\n", str1.c_str());
+			if (flagB & MStr64_2) log->print("<b>Str64_2:</b> %s<br />\n", str2.c_str());
+			if (flagB & MStr64_3) log->print("<b>Str64_3:</b> %s<br />\n", str3.c_str());
+			if (flagB & MStr64_4) log->print("<b>Str64_4:</b> %s<br />\n", str4.c_str());
+			if (flagB & MStr64_5) log->print("<b>Str64_5:</b> %s<br />\n", str5.c_str());
+			if (flagB & MStr64_6) log->print("<b>Str64_6:</b> %s<br />\n", str6.c_str());
+			if (flagB & MlStr64_1) log->print("<b>lStr64_1:</b> %s<br />\n", lStr1.c_str());
+			if (flagB & MlStr64_2) log->print("<b>lStr64_2:</b> %s<br />\n", lStr2.c_str());
+			if (flagB & MText_1) log->print("<b>Text_1:</b> %s<br />\n", text1.c_str());
+			if (flagB & MText_2) log->print("<b>Text_2:</b> %s<br />\n", text2.c_str());
+			if (flagB & MBlob1) {
+				log->print("<b>Blob1:</b> Size: %d<br />\n", blob1Size);
+				if (blob1Size > 0) blobAsHtml(log, blob1, blob1Size);
+			}
+			if (flagB & MBlob2) log->print("<b>Blob2:</b> Size: 0<br />\n"); // blob2 is always empty
+			// the blob guids are always zero
+			if (flagC & MBlob1Guid) log->print("<b>Blob1Guid:</b> 0000000000000000<br />\n");
+			if (flagC & MBlob2Guid) log->print("<b>Blob1Guid:</b> 0000000000000000<br />\n");
 		}
-		if (flagB & MInt32_2) log->print("<b>Int32_2:</b> 0x%08X (%d)<br />\n", int2, int2);
-		if (flagB & MInt32_3) log->print("<b>Int32_3:</b> 0x%08X (%d)<br />\n", int3, int3);
-		if (flagB & MInt32_4) log->print("<b>Int32_4:</b> 0x%08X (%d)<br />\n", int4, int4);
-		if (flagB & MUInt32_1) log->print("<b>UInt32_1:</b> 0x%08X (%d)<br />\n", uInt1, uInt1);
-		if (flagB & MUInt32_2) log->print("<b>UInt32_2:</b> 0x%08X (%d)<br />\n", uInt2, uInt2);
-		if (flagB & MUInt32_3) log->print("<b>UInt32_3:</b> 0x%08X (%d)<br />\n", uInt3, uInt3);
-		if (flagB & MUInt32_4) log->print("<b>UInt32_4:</b> 0x%08X (%d)<br />\n", uInt4, uInt4);
-		if (flagB & MStr64_1) log->print("<b>Str64_1:</b> %s<br />\n", str1.c_str());
-		if (flagB & MStr64_2) log->print("<b>Str64_2:</b> %s<br />\n", str2.c_str());
-		if (flagB & MStr64_3) log->print("<b>Str64_3:</b> %s<br />\n", str3.c_str());
-		if (flagB & MStr64_4) log->print("<b>Str64_4:</b> %s<br />\n", str4.c_str());
-		if (flagB & MStr64_5) log->print("<b>Str64_5:</b> %s<br />\n", str5.c_str());
-		if (flagB & MStr64_6) log->print("<b>Str64_6:</b> %s<br />\n", str6.c_str());
-		if (flagB & MlStr64_1) log->print("<b>lStr64_1:</b> %s<br />\n", lStr1.c_str());
-		if (flagB & MlStr64_2) log->print("<b>lStr64_2:</b> %s<br />\n", lStr2.c_str());
-		if (flagB & MText_1) log->print("<b>Text_1:</b> %s<br />\n", text1.c_str());
-		if (flagB & MText_2) log->print("<b>Text_2:</b> %s<br />\n", text2.c_str());
-		if (flagB & MBlob1) {
-			log->print("<b>Blob1:</b> Size: %d<br />\n", blob1Size);
-			if (blob1Size > 0) blobAsHtml(log, blob1, blob1Size);
-		}
-		if (flagB & MBlob2) log->print("<b>Blob2:</b> Size: 0<br />\n"); // blob2 is always empty
-		// the blob guids are always zero
-		if (flagC & MBlob1Guid) log->print("<b>Blob1Guid:</b> 0000000000000000<br />\n");
-		if (flagC & MBlob2Guid) log->print("<b>Blob1Guid:</b> 0000000000000000<br />\n");
 		log->print("</td></tr>\n");
 	}
 	
@@ -815,11 +821,11 @@ namespace alc {
 		t.put(*data);
 	}
 	
-	void tvItem::asHtml(tLog *log)
+	void tvItem::asHtml(tLog *log, bool shortLog)
 	{
 		log->print("Id: <b>0x%02X (%d)</b>, type: 0x%04X (%s)<br />\n", id, id, type, alcVaultGetDataType(type));
 		if (type == DVaultNode) log->print("<table border='1'>\n");
-		data->asHtml(log);
+		data->asHtml(log, shortLog);
 		if (type == DVaultNode) log->print("</table>\n");
 	}
 	
@@ -943,19 +949,19 @@ namespace alc {
 		}
 	}
 	
-	void tvMessage::print(tLog *log, bool clientToServer, tNetSession *client)
+	void tvMessage::print(tLog *log, bool clientToServer, tNetSession *client, bool shortLog)
 	{
 		if (log == lnull) return; // don't do anything if log is disabled
 		if (clientToServer)
 			log->print("<h2 style='color:blue'>From client (%s) to vault</h2>\n", client->str());
 		else
 			log->print("<h2 style='color:green'>From vault to client (%s)</h2>\n", client->str());
-		asHtml(log);
+		asHtml(log, shortLog);
 		log->print("<hr>\n\n");
 		log->flush();
 	}
 	
-	void tvMessage::asHtml(tLog *log)
+	void tvMessage::asHtml(tLog *log, bool shortLog)
 	{
 		// the header
 		if (task) log->print("<b>NetMsgVaultTask ");
@@ -973,7 +979,7 @@ namespace alc {
 			for (int i = 0; i < numItems; ++i) {
 				log->print("<tr><th style='background-color:cyan;'>Item %d</th></tr>\n", i+1);
 				log->print("<tr><td>\n");
-				items[i]->asHtml(log);
+				items[i]->asHtml(log, shortLog);
 				log->print("</td></tr>\n");
 			}
 			log->print("</table>");

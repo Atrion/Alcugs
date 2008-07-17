@@ -82,6 +82,7 @@ protected:
 	Byte serverName[200]; //!< The system/server name, normally the age filename
 	
 	tLog *lvault;
+	bool vaultLogShort;
 };
 
 #if 0

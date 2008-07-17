@@ -40,6 +40,7 @@
 # logging
 ;log_files_path = log/ # path top contain the log files (parameter: [-log path/]) (default log/)
 ;vault.html.log = 1 # enables/disables logging of vault objects to a HTML file in lobby, game and vault server (default 1)
+;vault.html.log.short = 0 # makes the vault logging much shorter (saves up to 75%) and doesn't dump data to files (default 0)
 
 # sets the bandwidth in kbit/s. This speed is anounced to the clients
 # and used to compute how fast the server sends the messages

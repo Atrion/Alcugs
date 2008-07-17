@@ -56,6 +56,7 @@ namespace alc {
 		serverName[0] = 0;
 		auth_gone = tracking_gone = vault_gone = 0;
 		lvault = lnull;
+		vaultLogShort = false;
 		loadVaultLog();
 	}
 	
@@ -65,6 +66,8 @@ namespace alc {
 		tStrBuf var = cfg->getVar("vault.html.log");
 		if (var.isNull() || var.asByte()) { // logging enabled per default
 			lvault = new tLog("vault.html", 2, DF_HTML);
+			var = cfg->getVar("vault.html.log.short");
+			vaultLogShort = (!var.isNull() && var.asByte()); // per default, it's not short
 		}
 	}
 	
@@ -461,7 +464,7 @@ namespace alc {
 						err->log("ERR: I've got a vault message to forward to player with KI %d but can\'t find it\'s session.\n", vaultMsg.ki);
 						return 1;
 					}
-					parsedMsg.print(lvault, /*clientToServer:*/false, client);
+					parsedMsg.print(lvault, /*clientToServer:*/false, client, vaultLogShort);
 					parsedMsg.tpots = client->tpots;
 					tmVault vaultMsgFwd(client, vaultMsg.ki, &parsedMsg);
 					send(vaultMsgFwd);
@@ -477,7 +480,7 @@ namespace alc {
 						err->log("ERR: I've got a vault message to forward to the vault server, but it's unavailable.\n", u->str());
 						return 1;
 					}
-					parsedMsg.print(lvault, /*clientToServer:*/true, u);
+					parsedMsg.print(lvault, /*clientToServer:*/true, u, vaultLogShort);
 					parsedMsg.tpots = vaultServer->tpots;
 					tmVault vaultMsgFwd(vaultServer, u->ki, &parsedMsg);
 					send(vaultMsgFwd);

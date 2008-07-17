@@ -198,7 +198,7 @@ namespace alc {
 	class tvBase : public tBaseType {
 	public:
 		tvBase(void) : tBaseType() {}
-		virtual void asHtml(tLog *log) = 0;
+		virtual void asHtml(tLog *log, bool shortLog) = 0; //!< print the data as HTML. Also does further verification for some types.
 	};
 	
 	class tvAgeInfoStruct : public tvBase {
@@ -206,7 +206,7 @@ namespace alc {
 		tvAgeInfoStruct(void) : tvBase() { }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
-		virtual void asHtml(tLog *log) {}
+		virtual void asHtml(tLog *log, bool shortLog) {}
 	private:
 		Byte flags;
 		tUStr filename, instanceName;
@@ -220,7 +220,7 @@ namespace alc {
 		tvSpawnPoint(void) : tvBase() { }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
-		virtual void asHtml(tLog *log) {}
+		virtual void asHtml(tLog *log, bool shortLog) {}
 	private:
 		U32 flags;
 		tUStr title, name, cameraStack;
@@ -232,7 +232,7 @@ namespace alc {
 		tvAgeLinkStruct(void) : tvBase() { }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
-		virtual void asHtml(tLog *log) {}
+		virtual void asHtml(tLog *log, bool shortLog) {}
 	private:
 		U16 flags;
 		tvAgeInfoStruct ageInfo;
@@ -246,7 +246,7 @@ namespace alc {
 		tvCreatableGenericValue(void) : tvBase() { str.setVersion(5); /* inverted UruString */ }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
-		virtual void asHtml(tLog *log);
+		virtual void asHtml(tLog *log, bool shortLog);
 	private:
 		Byte format;
 		S32 integer;
@@ -260,7 +260,7 @@ namespace alc {
 		virtual ~tvCreatableStream(void) { if (data) free(data); }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
-		virtual void asHtml(tLog *log);
+		virtual void asHtml(tLog *log, bool shortLog);
 	private:
 		U32 size; // only defined when data != NULL
 		Byte id;
@@ -272,7 +272,7 @@ namespace alc {
 		tvServerGuid(void) : tvBase() { }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
-		virtual void asHtml(tLog *log);
+		virtual void asHtml(tLog *log, bool shortLog);
 	private:
 		Byte guid[8];
 	};
@@ -282,7 +282,7 @@ namespace alc {
 		tvNodeRef(void) : tvBase() { }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
-		virtual void asHtml(tLog *log);
+		virtual void asHtml(tLog *log, bool shortLog);
 	private:
 		U32 saver, parent, child;
 		U32 time, microsec;
@@ -295,7 +295,7 @@ namespace alc {
 		virtual ~tvNode(void);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
-		virtual void asHtml(tLog *log);
+		virtual void asHtml(tLog *log, bool shortLog);
 	private:
 		void permissionsAsHtml(tLog *log);
 		void blobAsHtml(tLog *log, Byte *blob, U32 size);
@@ -327,7 +327,7 @@ namespace alc {
 		virtual ~tvItem(void) { if (data) delete data; }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
-		virtual void asHtml(tLog *log);
+		virtual void asHtml(tLog *log, bool shortLog);
 		
 		Byte tpots; // 1: generate/parse for TPOTS client, everything else: for non-TPOTS client (or the vault server)
 	private:
@@ -342,8 +342,8 @@ namespace alc {
 		virtual ~tvMessage(void);
 		virtual void store(tBBuf &t); //!< unpacks the message
 		virtual void stream(tBBuf &t);
-		virtual void asHtml(tLog *log);
-		void print(tLog *log, bool clientToServer, tNetSession *client);
+		virtual void asHtml(tLog *log, bool shortLog);
+		void print(tLog *log, bool clientToServer, tNetSession *client, bool shortLog);
 		
 		Byte tpots; // 1: generate/parse for TPOTS client, everything else: for non-TPOTS client (or the vault server)
 	private:
