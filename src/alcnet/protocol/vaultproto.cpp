@@ -82,12 +82,15 @@ namespace alc {
 		if (flags & 0x01) // instance name
 			t.get(instanceName);
 		else { // enable instance name if it isn't
+			lerr->log("Enabling instance name flag in an AgeInfoStruct and setting it to the filename\n");
 			instanceName = filename;
 			flags |= 0x01;
 		}
 		
 		if (flags & 0x04) // GUID
 			memcpy(guid, t.read(8), 8);
+		else
+			memset(guid, 0, 8);
 		
 		if (flags & 0x08) // user defined name
 			t.get(userDefName);
@@ -95,8 +98,15 @@ namespace alc {
 		if (flags & 0x20) // display name
 			t.get(displayName);
 		
-		if (flags & 0x40) // language
+		if (flags & 0x40) { // language
+			// this is not the language of the client
 			language = t.getU32();
+			// always seen 0
+			if (language != 0)
+				lerr->log("Language value of an AgeInfoStruct is 0x%08X instead of 0\n", language);
+		}
+		else
+			language = 0;
 	}
 	
 	void tvAgeInfoStruct::stream(tBBuf &t)
@@ -127,6 +137,23 @@ namespace alc {
 			t.putU32(language);
 	}
 	
+	const Byte *tvAgeInfoStruct::str(void)
+	{
+		dbg.clear();
+		dbg.printf("Filename: %s", filename.c_str());
+		if (flags & 0x01) // instance name
+			dbg.printf(", Instance Name: %s", instanceName.c_str());
+		if (flags & 0x04) // GUID
+			dbg.printf(", GUID: %s", alcGetStrGuid(guid));
+		if (flags & 0x08) // user defined name
+			dbg.printf(", User defined name: %s", userDefName.c_str());
+		if (flags & 0x20) // display name
+			dbg.printf(", Display name: %s", displayName.c_str());
+		if (flags & 0x40) // language
+			dbg.printf(", Language: 0x%08X (%d)", language, language);
+		return dbg.c_str();
+	}
+	
 	//// tvSpawnPoint
 	void tvSpawnPoint::store(tBBuf &t)
 	{
@@ -152,6 +179,13 @@ namespace alc {
 		t.put(cameraStack);
 	}
 	
+	const Byte *tvSpawnPoint::str(void)
+	{
+		static Byte dbg[256];
+		sprintf((char *)dbg, "Title: %s, Name: %s, Camera Stack: %s", title.c_str(), name.c_str(), cameraStack.c_str());
+		return dbg;
+	}
+	
 	//// tvAgeLinkStruct
 	void tvAgeLinkStruct::store(tBBuf &t)
 	{
@@ -172,17 +206,20 @@ namespace alc {
 			throw txProtocolError(_WHERE("the 0x0023 flag must always be set in AgeLinkStruct"));
 		
 		t.get(ageInfo);
-		linkingRules = t.getByte();
+		linkingRule = t.getByte();
 		U32 unk = t.getU32(); // unknown, always seen 0x00000001
 		if (unk != 0x00000001)
-			throw txProtocolError(_WHERE("unknown unk value vor AgeLinkStruct, must always be 0x00000001"));
+			throw txProtocolError(_WHERE("unknown unk value for AgeLinkStruct, must always be 0x00000001"));
 		t.get(spawnPoint);
 		
 		// now come the optional fields
 		if (flags & 0x0010) // CCR
 			ccr = t.getByte();
+		else
+			ccr = 0;
 		
 		if (flags & 0x0040) { // age descripion?
+			lerr->log("Ignoring unsupported flag 0x0040 of an AgeLinkStruct\n");
 			// ignore and disable it
 			tUStr desc;
 			t.get(desc);
@@ -201,12 +238,22 @@ namespace alc {
 		t.putU16(flags);
 		
 		t.put(ageInfo);
-		t.putByte(linkingRules);
+		t.putByte(linkingRule);
 		t.putU32(0x00000001); // unknown
 		t.put(spawnPoint);
 		
 		// optional fields
-		if (flags & 0x0010) t.putByte(ccr);
+		if (flags & 0x0010) // CCR
+			t.putByte(ccr);
+	}
+	
+	const Byte *tvAgeLinkStruct::str(void)
+	{
+		dbg.clear();
+		dbg.printf("Age Info [%s], Linking Rule: 0x%02X (%s), Spawn Point [%s]", ageInfo.str(), linkingRule, alcUnetGetLinkingRule(linkingRule), spawnPoint.str());
+		if (flags & 0x0010) // CCR
+			dbg.printf(", CCR: 0x%02X", ccr);
+		return dbg.c_str();
 	}
 	
 	//// tvCreatableGenericValue
@@ -722,7 +769,7 @@ namespace alc {
 		log->print("<tr><th style='background-color:yellow'>Vault Node %d</th></tr>\n", index, index);
 		log->print("<tr><td>\n");
 		log->print("<b>Flags:</b> 0x%08X (%d), 0x%08X (%d), 0x%08X (%d)<br />\n", flagA, flagA, flagB, flagB, flagC, flagC);
-		log->print("<b>Type:</b> %s (0x%02X) (%d)<br />\n", alcVaultGetNodeType(type), type, type);
+		log->print("<b>Type:</b> 0x%02X (%s)<br />\n", type, alcVaultGetNodeType(type));
 		permissionsAsHtml(log);
 		log->print("<b>Owner:</b> 0x%08X (%d)<br />\n", owner, owner);
 		log->print("<b>Group:</b> 0x%08X (%d)<br />\n", group, group);

@@ -36,7 +36,7 @@ namespace alc {
 	////DEFINITIONS
 	class tmCustomVaultAskPlayerList : public tmMsgBase {
 	public:
-		tmCustomVaultAskPlayerList(tNetSession *u, Byte x, Byte *uid);
+		tmCustomVaultAskPlayerList(tNetSession *u, U32 x, Byte *uid);
 	};
 	
 	class tmCustomVaultPlayerList : public tmMsgBase {
@@ -95,7 +95,7 @@ namespace alc {
 	
 	class tmCustomVaultDeletePlayer : public tmMsgBase {
 	public:
-		tmCustomVaultDeletePlayer(tNetSession *u, U32 x, U32 ki, Byte *uid, Byte accessLevel);
+		tmCustomVaultDeletePlayer(tNetSession *u, U32 ki, U32 x, Byte *uid, Byte accessLevel);
 		virtual void stream(tBBuf &t);
 		// format
 		Byte accessLevel;
@@ -105,7 +105,7 @@ namespace alc {
 	
 	class tmCustomVaultCheckKi : public tmMsgBase {
 	public:
-		tmCustomVaultCheckKi(tNetSession *u, U32 x, U32 ki, Byte *uid);
+		tmCustomVaultCheckKi(tNetSession *u, U32 ki, U32 x, Byte *uid);
 		virtual void stream(tBBuf &t);
 	protected:
 		virtual void additionalFields();

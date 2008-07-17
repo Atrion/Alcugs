@@ -60,7 +60,9 @@ namespace alc {
 	class tmCustomFindServer : public tmMsgBase {
 	public:
 		tmCustomFindServer(tNetSession *u);
+		tmCustomFindServer(tNetSession *u, U32 ki, U32 x, U32 ip, U16 port, const Byte *serverGuid, const Byte *age);
 		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
 		// format
 		tUStr serverGuid, age;
 	protected:

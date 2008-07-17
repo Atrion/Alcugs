@@ -409,7 +409,7 @@ namespace alc {
 						return 1;
 					}
 					u->delayMessages = true; // dont process any further messages till we verified the KI
-					tmCustomVaultCheckKi checkKi(vaultServer, u->getSid(), setPlayer.ki, u->uid);
+					tmCustomVaultCheckKi checkKi(vaultServer, setPlayer.ki, u->getSid(), u->uid);
 					send(checkKi);
 				}
 				
@@ -492,6 +492,42 @@ namespace alc {
 					tmVault vaultMsgFwd(vaultServer, u->ki, &parsedMsg);
 					send(vaultMsgFwd);
 				}
+				
+				return 1;
+			}
+			
+			// messages for finding the server to link to
+			case NetMsgFindAge:
+			{
+				if (u->whoami != KClient || u->ki == 0) {
+					err->log("ERR: %s sent a NetMsgVault but is not yet authed or did not set his KI. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				tmFindAge findAge(u);
+				msg->data->get(findAge);
+				log->log("<RCV> %s\n", findAge.str());
+				
+				tvAgeLinkStruct ageLink;
+				findAge.message.rewind();
+				findAge.message.get(ageLink);
+				if (!findAge.message.eof()) throw txProtocolError(_WHERE("Got a NetMsgFindAge which is too long"));
+				log->print(" %s\n", ageLink.str());
+				
+				if (ageLink.linkingRule != KOriginalBook && ageLink.linkingRule != KOwnedBook)
+					throw txProtocolError(_WHERE("Linking rule must be KOriginalBook or KOwnedBook"));
+				if (ageLink.ccr)
+					throw txProtocolError(_WHERE("Linking as CCR is not allowed"));
+				
+				// let's ask the tracking server
+				tNetSession *trackingServer = getSession(tracking);
+				if (!trackingServer) {
+					err->log("ERR: I've got the ask the tracking server to find an age for me, but it's unavailable.\n");
+					return 1;
+				}
+				
+				tmCustomFindServer findServer(trackingServer, u->ki, u->getSid(), u->getIp(), u->getPort(), alcGetStrGuid(ageLink.ageInfo.guid), ageLink.ageInfo.filename.c_str());
+				send(findServer);
 				
 				return 1;
 			}

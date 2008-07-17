@@ -91,6 +91,14 @@ namespace alc {
 		tmActivePlayerSet(tNetSession *u);
 	};
 	
+	class tmFindAge : public tmMsgBase {
+	public:
+		tmFindAge(tNetSession *u);
+		virtual void store(tBBuf &t);
+		// format
+		tMBuf message;
+	};
+	
 } //End alc namespace
 
 #endif

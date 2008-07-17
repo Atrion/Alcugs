@@ -39,7 +39,7 @@
 namespace alc {
 
 	//// tmCustomVaultAskPlayerList
-	tmCustomVaultAskPlayerList::tmCustomVaultAskPlayerList(tNetSession *u, Byte x, Byte *uid)
+	tmCustomVaultAskPlayerList::tmCustomVaultAskPlayerList(tNetSession *u, U32 x, Byte *uid)
 	: tmMsgBase(NetMsgCustomVaultAskPlayerList, plNetAck | plNetCustom | plNetX | plNetVersion | plNetUID, u)
 	{
 		this->x = x;
@@ -196,7 +196,7 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultDeletePlayer
-	tmCustomVaultDeletePlayer::tmCustomVaultDeletePlayer(tNetSession *u, U32 x, U32 ki, Byte *uid, Byte accessLevel)
+	tmCustomVaultDeletePlayer::tmCustomVaultDeletePlayer(tNetSession *u, U32 ki, U32 x, Byte *uid, Byte accessLevel)
 	 : tmMsgBase(NetMsgCustomVaultDeletePlayer, plNetX | plNetKi | plNetUID | plNetAck | plNetCustom | plNetVersion, u)
 	{
 		this->x = x;
@@ -227,7 +227,7 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultCheckKi
-	tmCustomVaultCheckKi::tmCustomVaultCheckKi(tNetSession *u, U32 x, U32 ki, Byte *uid)
+	tmCustomVaultCheckKi::tmCustomVaultCheckKi(tNetSession *u, U32 ki, U32 x, Byte *uid)
 	 : tmMsgBase(NetMsgCustomVaultCheckKi, plNetX | plNetKi | plNetUID | plNetAck | plNetCustom | plNetVersion, u)
 	{
 		this->x = x;

@@ -207,12 +207,15 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log, bool shortLog) {}
-	private:
+		const Byte *str(void);
+		// format
 		Byte flags;
 		tUStr filename, instanceName;
 		Byte guid[8];
 		tUStr userDefName, displayName;
 		U32 language;
+	private:
+		tStrBuf dbg;
 	};
 	
 	class tvSpawnPoint : public tvBase {
@@ -221,10 +224,10 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log, bool shortLog) {}
+		const Byte *str(void);
 	private:
 		U32 flags;
 		tUStr title, name, cameraStack;
-		Byte ccr;
 	};
 	
 	class tvAgeLinkStruct : public tvBase {
@@ -233,12 +236,15 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log, bool shortLog) {}
-	private:
+		const Byte *str(void);
+		// format
 		U16 flags;
 		tvAgeInfoStruct ageInfo;
-		Byte linkingRules;
+		Byte linkingRule;
 		tvSpawnPoint spawnPoint;
 		Byte ccr;
+	private:
+		tStrBuf dbg;
 	};
 	
 	class tvCreatableGenericValue : public tvBase {

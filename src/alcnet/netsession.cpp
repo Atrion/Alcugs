@@ -116,7 +116,7 @@ void tNetSession::init() {
 	data = NULL;
 	name[0] = 0;
 }
-char * tNetSession::str(bool detail) {
+const char * tNetSession::str(bool detail) {
 	static char cnt[1024], tmp[1024];
 	if (!detail) {
 		// short string

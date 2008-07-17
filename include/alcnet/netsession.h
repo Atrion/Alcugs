@@ -61,7 +61,7 @@ class tNetSession {
 public:
 	tNetSession(tUnet * net,U32 ip,U16 port,int sid); //ip, port in network order
 	~tNetSession();
-	char * str(bool detail = true);
+	const char * str(bool detail = true);
 	U32 getMaxFragmentSize();
 	U32 getMaxDataSize();
 	U32 getHeaderSize();

@@ -168,5 +168,17 @@ namespace alc {
 		if (u->getTpots() != 2) // if it is TPOTS or we are unsure, use TPOTS mod
 			cmd = NetMsgActivePlayerSet2;
 	}
+	
+	//// tmFindAge
+	tmFindAge::tmFindAge(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
+	 { }
+	
+	void tmFindAge::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		// store the whole message
+		message.clear();
+		t.get(message);
+	}
 
 } //end namespace alc

@@ -52,6 +52,7 @@ const char * alcUnetGetDestination(Byte dest);
 const char * alcUnetGetReasonCode(Byte code);
 const char * alcUnetGetAuthCode(Byte code);
 const char * alcUnetGetAvatarCode(Byte code);
+const char * alcUnetGetLinkingRule(Byte rule);
 const char * alcUnetGetMsgCode(U16 code);
 
 class tUnet;
@@ -126,7 +127,7 @@ class tmBase :public tBaseType {
 public:
 	virtual void store(tBBuf &t)=0;
 	virtual void stream(tBBuf &t)=0;
-	virtual Byte * str()=0;
+	const virtual Byte * str()=0;
 	Byte bhflags;
 };
 
@@ -136,12 +137,13 @@ public:
 	virtual void stream(tBBuf &t);
 	tmNetClientComm(tNetSession *s = NULL) { bhflags=0x42; this->s = s; }
 	tmNetClientComm(tTime &t,U32 bw, tNetSession *s = NULL) { timestamp=t; bandwidth=bw; bhflags=0x42; this->s = s; }
-	Byte * str();
+	const Byte * str();
 	tNetSession *s;
 	tTime timestamp;
 	U32 bandwidth;
 };
 
+#if 0
 class tmNetAck :public tmBase {
 public:
 	virtual void store(tBBuf &t);
@@ -153,6 +155,7 @@ public:
 private:
 	tUnetMsgQ<tUnetAck> * ackq;
 };
+#endif
 
 class tmMsgBase :public tmBase {
 public:
@@ -168,7 +171,7 @@ public:
 	bool hasFlags(U32 f);
 	inline tNetSession *getSession(void) { return u; }
 	void copyProps(tmMsgBase &t);
-	Byte * str();
+	const Byte * str();
 	
 	U16 cmd;
 	U32 flags;
@@ -179,7 +182,7 @@ public:
 	U32 ki;
 	Byte uid[16];
 	U32 ip; //network order
-	U32 port; //network order
+	U16 port; //network order
 	U32 sid;
 protected:
 	virtual void additionalFields() {} //!< writes the additional fields of this message type to the dbg buffer (called by str() to print the package)

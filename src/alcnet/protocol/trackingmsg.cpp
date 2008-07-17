@@ -167,10 +167,29 @@ namespace alc {
 	}
 	
 	//// tmCustomFindServer
-	tmCustomFindServer::tmCustomFindServer(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
+	tmCustomFindServer::tmCustomFindServer(tNetSession *u)
+	 : tmMsgBase(NetMsgCustomFindServer, plNetX | plNetKi | plNetAck | plNetCustom | plNetIP, u)
 	{
 		serverGuid.setVersion(5); // inverted UruString
 		age.setVersion(0); // normal UrurString
+	}
+	
+	tmCustomFindServer::tmCustomFindServer(tNetSession *u, U32 ki, U32 x, U32 ip, U16 port, const Byte *serverGuid, const Byte *age)
+	 : tmMsgBase(NetMsgCustomFindServer, plNetX | plNetKi | plNetAck | plNetCustom | plNetIP, u)
+	{
+#ifdef ENABLE_UNET2
+		if (u->proto == 1)
+			unsetFlags(plNetIP);
+#endif
+		this->ki = ki;
+		this->x = x;
+		this->ip = ip;
+		this->port = port;
+		
+		this->serverGuid.setVersion(5); // inverted UruString
+		this->serverGuid.writeStr(serverGuid);
+		this->age.setVersion(0); // normal UrurString
+		this->age.writeStr(age);
 	}
 	
 	void tmCustomFindServer::store(tBBuf &t)
@@ -187,6 +206,16 @@ namespace alc {
 			ip = t.getU32(); // use the tmMsgBase property
 			port = 0;
 		}
+#endif
+	}
+	
+	void tmCustomFindServer::stream(tBBuf &t)
+	{
+		tmMsgBase::stream(t);
+		t.put(serverGuid);
+		t.put(age);
+#ifdef ENABLE_UNET2
+		if (u->proto == 1) t.putU32(ip);
 #endif
 	}
 	

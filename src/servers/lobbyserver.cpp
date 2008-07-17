@@ -192,7 +192,7 @@ namespace alc {
 					err->log("ERR: I've got to ask the vault server to delete a player, but it's unavailable.\n", u->str());
 					return 1;
 				}
-				tmCustomVaultDeletePlayer vaultDeletePlayer(vaultServer, u->getSid(), deletePlayer.ki, u->uid, u->getAccessLevel());
+				tmCustomVaultDeletePlayer vaultDeletePlayer(vaultServer, deletePlayer.ki, u->getSid(), u->uid, u->getAccessLevel());
 				send(vaultDeletePlayer);
 				
 				return 1;

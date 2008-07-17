@@ -489,7 +489,7 @@ void tmNetClientComm::stream(tBBuf &t) {
 	t.putU32(bandwidth);
 	t.put(timestamp);
 }
-Byte * tmNetClientComm::str() {
+const Byte * tmNetClientComm::str() {
 	#ifdef ENABLE_MSGLOG
 	static Byte cnt[1024];
 	sprintf((char *)cnt,"(Re)Negotation bandwidth: %i bps time: %s",bandwidth,(char *)timestamp.str());
@@ -687,7 +687,7 @@ void tmMsgBase::copyProps(tmMsgBase &t) {
 		sid=t.sid;
 	}
 }
-Byte * tmMsgBase::str() {
+const Byte * tmMsgBase::str() {
 	#ifdef ENABLE_MSGLOG
 	dbg.printf("%s %04X %08X",alcUnetGetMsgCode(cmd),cmd,flags);
 	dbg.printf(" on %s", u->str());
@@ -727,7 +727,7 @@ Byte * tmMsgBase::str() {
 
 	dbg.putByte(0);
 	dbg.rewind();
-	return dbg.read();
+	return dbg.c_str();
 	#else
 	return (Byte *)alcUnetGetMsgCode(cmd);
 	#endif
@@ -925,6 +925,35 @@ const char * alcUnetGetAvatarCode(Byte code) {
 			break;
 		default:
 			ret="Unknown";
+			break;
+	}
+	return ret;
+}
+
+const char * alcUnetGetLinkingRule(Byte rule)
+{
+	static const char * ret;
+	switch (rule) {
+		case 0:
+			ret="KBasicLink";
+			break;
+		case 1:
+			ret="KOriginalBook";
+			break;
+		case 2:
+			ret="KSubAgeBook";
+			break;
+		case 3:
+			ret="KOwnedBook";
+			break;
+		case 4:
+			ret="KVisitBook";
+			break;
+		case 5:
+			ret="KChildAgeBook";
+			break;
+		default:
+			ret="KUnknown";
 			break;
 	}
 	return ret;
