@@ -254,11 +254,11 @@ char alcCheckBuf(Byte * buf, Byte car, int n) {
 	}
 	return 1; //true
 }
-
+#endif
 /**
 	\brief Strips out some characters that win32 doesn't like in file names
 */
-void alcStrFilter(Byte * what) {
+void alcStrFilter(char * what) {
 	int i=0,e=0;
 	while(what[i]!=0) {
 		if(what[i]!='<' && what[i]!='>' && what[i]!=':' && what[i]!='#' && what[i]!='\\' && what[i]!='/' && what[i]!='*' && what[i]!='?' && what[i]!='"' && what[i]!='|') {
@@ -270,6 +270,6 @@ void alcStrFilter(Byte * what) {
 	}
 	what[e]='\0';
 }
-#endif
+
 
 }

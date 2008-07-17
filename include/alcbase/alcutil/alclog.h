@@ -88,9 +88,11 @@ public:
 	void nl();
 	/** logs an std error */
 	void logerr(const char *msg);
+	const char *getDir(void);
 
 private:
 	char * name;
+	char *fullpath;
 	FILE * dsc;
 	tBBuf * bdsc;
 	U16 flags; //see above (DF_*)

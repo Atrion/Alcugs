@@ -237,6 +237,7 @@ char * alcHtmlGenerateHead(char * title,char * powered) {
 */
 tLog::tLog(const char * name, char level, U16 flags) {
 	this->name=NULL;
+	this->fullpath=NULL;
 	this->dsc=NULL;
 	this->bdsc=NULL;
 	this->level=0;
@@ -323,14 +324,21 @@ void tLog::open(const char * name, char level, U16 flags) {
 			} else {
 				this->rotate();
 			}
+			
+			// preserve the path
+			if (fullpath != NULL) free(fullpath);
+			fullpath=(char *)malloc(sizeof(char) * (strlen(path)+1));
+			if (!fullpath) throw txNoMem(_WHERE(""));
+			strcpy(fullpath, path);
+			if(path!=NULL) { free((void *)path); }
 
-			this->dsc=fopen(path,"a");
+			this->dsc=fopen(fullpath,"a");
 			if(this->dsc==NULL) {
-				DBG(5,"ERR: Fatal - Cannot Open %s to write ",path);
+				DBG(5,"ERR: Fatal - Cannot Open %s to write ",fullpath);
 				ERR(6,"returned error");
 				this->dsc=def; //default standard output
 				if(def==stdout) {
-					DBG(6,"DBG: Sending debug messages to the stdout instead of %s\n",path);
+					DBG(6,"DBG: Sending debug messages to the stdout instead of %s\n",fullpath);
 				}
 			} else {
 				this->flags |= DF_OPEN;
@@ -338,7 +346,6 @@ void tLog::open(const char * name, char level, U16 flags) {
 					fprintf(this->dsc,"%s",alcHtmlGenerateHead(this->name,tvLogConfig->build));
 				}
 			}
-			if(path!=NULL) { free((void *)path); }
 		}
 	}
 
@@ -491,7 +498,9 @@ void tLog::close(bool silent) {
 		this->dsc=NULL;
 	}
 	if(this->name!=NULL) free((void *)this->name);
+	if(this->fullpath!=NULL) free((void *)this->fullpath);
 	this->name=NULL;
+	this->fullpath=NULL;
 	this->flags=0;
 }
 
@@ -779,6 +788,21 @@ error logging
 void tLog::logerr(const char *msg) {
 	this->log("%s\n",msg);
 	this->log(" errno %i: %s\n",errno,strerror(errno));
+}
+
+const char *tLog::getDir(void)
+{
+	static char dir[512];
+	strncpy(dir, fullpath, 510);
+	// find the last seperator
+	char *lastSep, *lastSep2;
+	lastSep = strrchr(dir, '/');
+	lastSep2 = strrchr(dir, '\\');
+	if (lastSep2 > lastSep) lastSep = lastSep2;
+	// cut the string after it
+	if (lastSep == NULL) strcpy(dir, "./"); // if no seperator was found, use working dir
+	else *(lastSep+1) = NULL; // let the String end after the seperator
+	return dir;
 }
 
 

@@ -67,6 +67,8 @@ void alcHex2Ascii(Byte * out, const Byte * in, int size);
 */
 void alcAscii2Hex(Byte * out, const Byte * in, int size);
 
+#if 0
+
 /*------------------------------------------------------------
   De/Encodes the specific UruString associated to a buffer.
 	The result will be put on out, and it must have the required
@@ -97,11 +99,12 @@ int alcEncodeUStr(unsigned char* out, unsigned char* in, U16 size, Byte how);
 		Checks buffer for Byte
 */
 char alcCheckBuf(Byte * buf, Byte car, int n);
+#endif
 /**
 	Strips out some characters that win32 doesn't like..
 	(Overwrittes what)
 */
-void alcStrFilter(Byte * what);
+void alcStrFilter(char * what);
 
 }
 
