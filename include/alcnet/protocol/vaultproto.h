@@ -201,6 +201,46 @@ namespace alc {
 		virtual void asHtml(tLog *log) = 0;
 	};
 	
+	class tvAgeInfoStruct : public tvBase {
+	public:
+		tvAgeInfoStruct(void) : tvBase() { }
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
+		virtual void asHtml(tLog *log) {}
+	private:
+		Byte flags;
+		tUStr filename, instanceName;
+		Byte guid[8];
+		tUStr userDefName, displayName;
+		U32 language;
+	};
+	
+	class tvSpawnPoint : public tvBase {
+	public:
+		tvSpawnPoint(void) : tvBase() { }
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
+		virtual void asHtml(tLog *log) {}
+	private:
+		U32 flags;
+		tUStr title, name, cameraStack;
+		Byte ccr;
+	};
+	
+	class tvAgeLinkStruct : public tvBase {
+	public:
+		tvAgeLinkStruct(void) : tvBase() { }
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
+		virtual void asHtml(tLog *log) {}
+	private:
+		U16 flags;
+		tvAgeInfoStruct ageInfo;
+		Byte linkRules;
+		tvSpawnPoint spawnPoint;
+		Byte ccr;
+	};
+	
 	class tvCreatableGenericValue : public tvBase {
 	public:
 		tvCreatableGenericValue(void) : tvBase() { str.setVersion(5); /* inverted UruString */ }

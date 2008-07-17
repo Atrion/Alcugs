@@ -51,6 +51,163 @@ namespace alc {
 
 	////IMPLEMENTATION
 	
+	//// tvAgeInfoStruct
+	void tvAgeInfoStruct::store(tBBuf &t)
+	{
+		//AgeInfoStruct flags
+		//Found:
+		// 0x02 filename
+		// 0x03 filename,instance name
+		// 0x0B filename,instance name,user name
+		// 0x0F filename,instance name,guid,user name
+		// 0x2F filename,instance name,guid,user name,display name
+		// 0x6F filename,instance name,guid,user name,display name,language
+		//Supposicions:
+		// 0x02: filename (must always be set)
+		// 0x01: instance name
+		// 0x04: The Age Guid
+		// 0x08: The user defined name
+		// 0x20: DisplayName (Desc's name)
+		// 0x40: Language
+		flags = t.getByte();
+		U16 check = 0x02 | 0x01 | 0x04 | 0x08 | 0x20 | 0x40;
+		if (flags & ~(check))
+			throw txProtocolError(_WHERE("unknown flag for AgeInfoStruct"));
+		if (!(flags & 0x02)) // this must always be set (filename)
+			throw txProtocolError(_WHERE("the 0x02 flag must always be set in AgeInfoStruct"));
+		
+		t.get(filename);
+		
+		if (flags & 0x01) // instance name
+			t.get(instanceName);
+		else { // enable instance name if it isn't
+			instanceName = filename;
+			flags |= 0x01;
+		}
+		
+		if (flags & 0x04) // GUID
+			memcpy(guid, t.read(8), 8);
+		
+		if (flags & 0x08) // user defined name
+			t.get(userDefName);
+		
+		if (flags & 0x20) // display name
+			t.get(displayName);
+		
+		if (flags & 0x40) // language
+			language = t.getU32();
+	}
+	
+	void tvAgeInfoStruct::stream(tBBuf &t)
+	{
+		// see store for description
+		U16 check = 0x02 | 0x01 | 0x04 | 0x08 | 0x20 | 0x40;
+		if (flags & ~(check))
+			throw txProtocolError(_WHERE("unknown flag for AgeInfoStruct"));
+		if (!(flags & 0x02)) // this must always be set (filename)
+			throw txProtocolError(_WHERE("the 0x02 flag must always be set in AgeInfoStruct"));
+		t.putByte(flags);
+		
+		t.put(filename);
+		
+		if (flags & 0x01) // instance name
+			t.put(instanceName);
+		
+		if (flags & 0x04) // GUID
+			t.write(guid, 8);
+		
+		if (flags & 0x08) // user defined name
+			t.put(userDefName);
+		
+		if (flags & 0x20) // display name
+			t.put(displayName);
+		
+		if (flags & 0x40) // language
+			t.putU32(language);
+	}
+	
+	//// tvSpawnPoint
+	void tvSpawnPoint::store(tBBuf &t)
+	{
+		//tvSpawnPoint flags
+		//Found:
+		// alaways 0x00000007
+		//Supposicions:
+		// 0x00000007: 3 bits for title, name and cameraStack
+		flags = t.getU32();
+		if (flags != 0x00000007) throw txProtocolError(_WHERE("The SpawnPoint flag must always be 0x00000007"));
+		t.get(title);
+		t.get(name);
+		t.get(cameraStack);
+	}
+	
+	void tvSpawnPoint::stream(tBBuf &t)
+	{
+		// see store for description
+		if (flags != 0x00000007) throw txProtocolError(_WHERE("The SpawnPoint flag must always be 0x00000007"));
+		t.putU32(flags);
+		t.put(title);
+		t.put(name);
+		t.put(cameraStack);
+	}
+	
+	//// tvAgeLinkStruct
+	void tvAgeLinkStruct::store(tBBuf &t)
+	{
+		//AgeLinkStruct flags
+		//Found:
+		// 0x0023 In VaultTasks
+		// 0x0033 In FindAge msg's
+		// 0x0073 Found when linking to Ahnonay (temple) from Restoration Guild
+		//Supposicions:
+		// 0x0023: 3 bits for AgeInfoStruct LinkingRules and SpawnPoint (must always be set)
+		// 0x0010: CCR flag
+		// 0x0040: May be the age description? (text1?)
+		flags = t.getU16();
+		U16 check = 0x0023 | 0x0010 | 0x0040;
+		if (flags & ~(check))
+			throw txProtocolError(_WHERE("unknown flag for AgeLinkStruct"));
+		if (!(flags & 0x0023)) // this must always be set (AgeInfoStruct LinkingRules and SpawnPoint)
+			throw txProtocolError(_WHERE("the 0x0023 flag must always be set in AgeLinkStruct"));
+		
+		t.get(ageInfo);
+		linkRules = t.getByte();
+		U32 unk = t.getU32(); // unknown, always seen 0x00000001
+		if (unk != 0x00000001)
+			throw txProtocolError(_WHERE("unknown unk value vor AgeLinkStruct, must always be 0x00000001"));
+		t.get(spawnPoint);
+		
+		// now come the optional fields
+		if (flags & 0x0010) // CCR
+			ccr = t.getByte();
+		
+		if (flags & 0x0040) { // age descripion?
+			// ignore and disable it
+			tUStr desc;
+			t.get(desc);
+			flags &= ~0x0040;
+		}
+	}
+	
+	void tvAgeLinkStruct::stream(tBBuf &t)
+	{
+		// see store for description
+		U16 check = 0x0023 | 0x0010; // age description is not available when sending
+		if (flags & ~(check))
+			throw txProtocolError(_WHERE("unknown flag for AgeLinkStruct"));
+		if (!(flags & 0x0023)) // this must always be set (AgeInfoStruct LinkingRules and SpawnPoint)
+			throw txProtocolError(_WHERE("the 0x0023 flag must always be set in AgeLinkStruct"));
+		t.putU16(flags);
+		
+		t.put(ageInfo);
+		t.putByte(linkRules);
+		t.putU32(0x00000001); // unknown
+		t.put(spawnPoint);
+		
+		// optional fields
+		if (flags & 0x0010) t.putByte(ccr);
+	}
+	
 	//// tvCreatableGenericValue
 	void tvCreatableGenericValue::store(tBBuf &t)
 	{
@@ -547,6 +704,9 @@ namespace alc {
 		
 		if (data) delete data;
 		switch (type) {
+			case DAgeLinkStruct:
+				data = new tvAgeLinkStruct;
+				break;
 			case DCreatableGenericValue:
 				data = new tvCreatableGenericValue;
 				break;
@@ -563,7 +723,6 @@ namespace alc {
 				data = new tvNode;
 				break;
 			default:
-				// FIXME: add more types
 				lerr->log("got vault message with unknown data type 0x%04X\n", type);
 				throw txProtocolError(_WHERE("unknown vault data type"));
 		}
@@ -575,7 +734,12 @@ namespace alc {
 		if (!data) throw txProtocolError(_WHERE("don\'t have any data to write"));
 		t.putByte(id);
 		t.putByte(0); // unknown
-		t.putU16(type);
+		U16 sentType = type;
+		if (tpots == 1) {
+			if (sentType == DVaultNode) sentType = DVaultNode2; // a DVaultNode is called DVaultNode2 in TPOTS
+			else if (sentType == DVaultNodeRef) sentType = DVaultNodeRef2; // a DVaultNodeRef is called DVaultNodeRef2 in TPOTS
+		}
+		t.putU16(sentType);
 		t.put(*data);
 	}
 	
