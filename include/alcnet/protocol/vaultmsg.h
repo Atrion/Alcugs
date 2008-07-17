@@ -31,8 +31,6 @@
 
 namespace alc {
 
-	class tmCreatePlayer;
-
 	////DEFINITIONS
 	class tmVault : public tmMsgBase { // this is both a vault and a lobbybasemsg, but the vault server includes only this file so the class is defined here
 	public:
@@ -74,7 +72,7 @@ namespace alc {
 	
 	class tmCustomVaultCreatePlayer : public tmMsgBase {
 	public:
-		tmCustomVaultCreatePlayer(tNetSession *u, tmCreatePlayer &createPlayer, U32 x, Byte *uid, Byte accessLevel, const Byte *login);
+		tmCustomVaultCreatePlayer(tNetSession *u, U32 x, Byte *uid, Byte accessLevel, const Byte *login, tUStr &avatar, tUStr &gender, tUStr &friendName, tUStr &key);
 		virtual void stream(tBBuf &t);
 		// format
 		tUStr login, avatar, gender, friendName, key;

@@ -57,7 +57,6 @@ namespace alc {
 	tUnetLobbyServer::tUnetLobbyServer(void) : tUnetLobbyServerBase()
 	{
 		strcpy((char*)serverName, alcNetName);
-		lstd->log("WARNING: The lobby server is not finished yet. So if it doesn\'t work, that's not even a bug.\n");
 	}
 	
 	void tUnetLobbyServer::onLoadConfig(bool reload)
@@ -149,7 +148,7 @@ namespace alc {
 					err->log("ERR: I've got to ask the vault server to create a player, but it's unavailable.\n", u->str());
 					return 1;
 				}
-				tmCustomVaultCreatePlayer vaultCreatePlayer(vaultServer, createPlayer, u->getSid(), u->uid, u->getAccessLevel(), u->name);
+				tmCustomVaultCreatePlayer vaultCreatePlayer(vaultServer, u->getSid(), u->uid, u->getAccessLevel(), u->name, createPlayer.avatar, createPlayer.gender, createPlayer.friendName, createPlayer.key);
 				send(vaultCreatePlayer);
 				
 				return 1;
@@ -230,17 +229,22 @@ namespace alc {
 					alcStrFilter(gameName);
 					strncpy(gameGuid, (char *)forkServer.serverGuid.c_str(), 31);
 					alcStrFilter(gameGuid);
-					sprintf(gameLog, "%s/%s/%s", gameLogPath, gameName, gameGuid);
+					sprintf(gameLog, "%s/%s/%s/", gameLogPath, gameName, gameGuid);
 					sprintf(gameBin, "%s/uru_game", gameBinPath);
 					sprintf(gamePort, "%d", forkServer.forkPort);
 					
 					if (forkServer.loadSDL)
 						execlp(gameBin, gameBin,"-p",gamePort,"-guid",gameGuid,"-name",gameName,
-									 "-log",gameLog,"-c",gameConfig,"-L",NULL);
+								"-log",gameLog,"-c",gameConfig,"-v","0","-L",NULL);
 					else
 						execlp(gameBin,gameBin,"-p",gamePort,"-guid",gameGuid,"-name",gameName,
-									 "-log",gameLog,"-c",gameConfig,NULL);
+								"-log",gameLog,"-c",gameConfig,"-v","0",NULL);
 					
+					// if we come here, there was an error... but weve already shut down the logs, so we have to get them up again
+					alcLogInit();
+					tLog *log = new tLog("fork_err.log", 2, DF_APPEND);
+					log->log("There was an error starting the game server %s (GUID: %s, Port: %s)\n", gameBin, gamePort, gamePort);
+					delete log;
 					exit(-1);
 				}
 				// this is the parent process

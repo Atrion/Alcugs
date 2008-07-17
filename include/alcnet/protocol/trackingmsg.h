@@ -85,11 +85,13 @@ namespace alc {
 	
 	class tmCustomServerFound : public tmMsgBase {
 	public:
-		tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U16 port, const Byte *ip_str, const Byte *serverGuid, const Byte *name);
+		tmCustomServerFound(tNetSession *u);
+		tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U16 port, const Byte *ipStr, const Byte *serverGuid, const Byte *name);
+		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format
-		U16 server_port;
-		tUStr ip_str, serverGuid, age;
+		U16 serverPort;
+		tUStr ipStr, serverGuid, age;
 	protected:
 		virtual void additionalFields();
 	};

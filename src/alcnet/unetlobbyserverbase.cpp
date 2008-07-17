@@ -532,6 +532,31 @@ namespace alc {
 				
 				return 1;
 			}
+			case NetMsgCustomServerFound:
+			{
+				if (u->whoami != KTracking) {
+					err->log("ERR: %s sent a NetMsgCustomServerFound but is not the tracking server. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmCustomServerFound serverFound(u);
+				msg->data->get(serverFound);
+				log->log("<RCV> %s\n", serverFound.str());
+				
+				// find the client
+				tNetSession *client = smgr->get(serverFound.x);
+				if (!client || client->whoami != KClient || client->ki != serverFound.ki) {
+					err->log("ERR: I've got to tell player with KI %d about his game server, but can't find his session.\n", serverFound.ki);
+					return 1;
+				}
+				Byte guid[8];
+				alcAscii2Hex(guid, serverFound.serverGuid.c_str(), 8);
+				tmFindAgeReply reply(client, serverFound.ipStr, serverFound.serverPort, serverFound.age, guid);
+				send(reply);
+				
+				return 1;
+			}
 			
 			// terminating a player
 			case NetMsgPlayerTerminated:

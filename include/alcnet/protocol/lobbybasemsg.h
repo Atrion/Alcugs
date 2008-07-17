@@ -99,6 +99,18 @@ namespace alc {
 		tMBuf message;
 	};
 	
+	class tmFindAgeReply : public tmMsgBase {
+	public:
+		tmFindAgeReply(tNetSession *u, tUStr &ipStr, U16 port, tUStr &age, const Byte *guid);
+		virtual void stream(tBBuf &t);
+		// format
+		tUStr age, ipStr;
+		U16 serverPort;
+		Byte serverGuid[8];
+	protected:
+		virtual void additionalFields();
+	};
+	
 } //End alc namespace
 
 #endif

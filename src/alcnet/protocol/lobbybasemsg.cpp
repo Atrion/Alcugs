@@ -179,6 +179,38 @@ namespace alc {
 		// store the whole message
 		message.clear();
 		t.get(message);
+		
+		u->x = x;
+	}
+	
+	//// tmFindAgeReply
+	tmFindAgeReply::tmFindAgeReply(tNetSession *u, tUStr &ipStr, U16 port, tUStr &age, const Byte *guid)
+	 : tmMsgBase(NetMsgFindAgeReply, plNetAck | plNetCustom | plNetKi | plNetX, u), age(age), ipStr(ipStr)
+	{
+		x = u->x;
+		ki = u->ki;
+	
+		this->ipStr.setVersion(0); // normal UruString
+		this->serverPort = port;
+		this->age.setVersion(0); // normal UruString
+		memcpy(serverGuid, guid, 8);
+	}
+	
+	void tmFindAgeReply::stream(tBBuf &t)
+	{
+		tmMsgBase::stream(t);
+		t.putByte(0x1F); // seems to be some response code
+		t.put(age);
+		t.putByte(KGame); // server type
+		t.put(ipStr);
+		t.putU16(serverPort);
+		t.write(serverGuid, 8);
+	}
+	
+	void tmFindAgeReply::additionalFields()
+	{
+		dbg.nl();
+		dbg.printf(" Age filename: %s, IP: %s, Port: %d, GUID: %s", age.c_str(), ipStr.c_str(), serverPort, alcGetStrGuid(serverGuid));
 	}
 
 } //end namespace alc

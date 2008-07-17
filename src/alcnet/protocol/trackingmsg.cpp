@@ -277,26 +277,43 @@ namespace alc {
 	}
 	
 	//// tmCustomServerFound
-	tmCustomServerFound::tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U16 port, const Byte *ip_str, const Byte *serverGuid, const Byte *name)
+	tmCustomServerFound::tmCustomServerFound(tNetSession *u)
+	: tmMsgBase(NetMsgCustomServerFound, plNetAck | plNetCustom | plNetX | plNetKi | plNetVersion, u)
+	{
+		ipStr.setVersion(0); // normal UruString
+		serverGuid.setVersion(5); // inverted UruString
+		age.setVersion(0); // normal UruString
+	}
+	
+	tmCustomServerFound::tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U16 port, const Byte *ipStr, const Byte *serverGuid, const Byte *name)
 	: tmMsgBase(NetMsgCustomServerFound, plNetAck | plNetCustom | plNetX | plNetKi | plNetVersion, u)
 	{
 		this->x = x;
 		this->ki = ki;
 		
-		server_port = port;
-		this->ip_str.writeStr(ip_str);
-		this->ip_str.setVersion(0); // normal UruString
+		serverPort = port;
+		this->ipStr.writeStr(ipStr);
+		this->ipStr.setVersion(0); // normal UruString
 		this->serverGuid.setVersion(5); // inverted UruString
 		this->serverGuid.writeStr(serverGuid);
 		age.writeStr(name);
 		age.setVersion(0); // normal UruString
 	}
 	
+	void tmCustomServerFound::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		serverPort = t.getU16();
+		t.get(ipStr);
+		t.get(serverGuid);
+		t.get(age);
+	}
+	
 	void tmCustomServerFound::stream(tBBuf &t)
 	{
 		tmMsgBase::stream(t);
-		t.putU16(server_port);
-		t.put(ip_str);
+		t.putU16(serverPort);
+		t.put(ipStr);
 		t.put(serverGuid);
 		t.put(age);
 	}
@@ -304,7 +321,7 @@ namespace alc {
 	void tmCustomServerFound::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" Port: %d, IP: %s, Server GUID: %s, Age filename: %s", server_port, ip_str.c_str(), serverGuid.c_str(), age.c_str());
+		dbg.printf(" Port: %d, IP: %s, Server GUID: %s, Age filename: %s", serverPort, ipStr.c_str(), serverGuid.c_str(), age.c_str());
 	}
 	
 	////tmCustomDirectedFwd

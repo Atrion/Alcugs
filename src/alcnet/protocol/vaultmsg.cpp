@@ -32,7 +32,6 @@
 #include "alcugs.h"
 #include "unet.h"
 #include "protocol/vaultmsg.h"
-#include "protocol/lobbymsg.h"
 
 #include <alcdebug.h>
 
@@ -122,10 +121,10 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultCreatePlayer
-	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u, tmCreatePlayer &createPlayer, U32 x, Byte *uid,
-	  Byte accessLevel, const Byte *login)
+	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u, U32 x, Byte *uid,
+	  Byte accessLevel, const Byte *login, tUStr &avatar, tUStr &gender, tUStr &friendName, tUStr &key)
 	 : tmMsgBase(NetMsgCustomVaultCreatePlayer, plNetX | plNetUID | plNetVersion | plNetAck | plNetCustom, u),
-	   avatar(createPlayer.avatar), gender(createPlayer.gender), friendName(createPlayer.friendName), key(createPlayer.key)
+	   avatar(avatar), gender(gender), friendName(friendName), key(key)
 	{
 		this->x = x;
 		memcpy(this->uid, uid, 16);
@@ -136,10 +135,10 @@ namespace alc {
 		this->accessLevel = accessLevel;
 		this->login.setVersion(5); // inverted
 		this->login.writeStr(login);
-		avatar.setVersion(0); // normal UruString
-		gender.setVersion(0); // normal UruString
-		friendName.setVersion(0); // normal UruString
-		key.setVersion(0); // normal UruString
+		this->avatar.setVersion(0); // normal UruString
+		this->gender.setVersion(0); // normal UruString
+		this->friendName.setVersion(0); // normal UruString
+		this->key.setVersion(0); // normal UruString
 	}
 	
 	void tmCustomVaultCreatePlayer::stream(tBBuf &t)
