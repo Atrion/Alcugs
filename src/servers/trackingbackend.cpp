@@ -96,8 +96,6 @@ namespace alc {
 		size = count = lastUpdate = 0;
 		players = NULL;
 		loadSettings();
-		ageParser = new tAgeParser((char *)ageDir);
-		guidGen = new tGuidGen(ageParser);
 		generateFakeGuid(fakeLobbyGuid);
 	}
 	
@@ -128,6 +126,44 @@ namespace alc {
 		delete guidGen;
 		delete ageParser;
 		loadSettings();
+	}
+	
+		
+	void tTrackingBackend::loadSettings(void)
+	{
+		tConfig *cfg = alcGetConfig();
+		
+		tStrBuf var = cfg->getVar("tracking.log");
+		if (log == lnull && (var.isNull() || var.asByte())) { // logging enabled per default
+			log = new tLog("tracking.log", 4, 0);
+			log->log("Tracking driver started (%s)\n\n", __U_TRACKINGBACKEND_ID);
+			log->flush();
+		}
+		var = cfg->getVar("age");
+		if (var.isNull()) ageDir[0] = 0;
+		else {
+			if (!var.endsWith("/")) var.writeStr("/");
+			strncpy((char *)ageDir, (char *)var.c_str(), 255);
+		}
+		
+		var = cfg->getVar("tracking.tmp.hacks.agestate");
+		loadAgeState = (var.isNull() || var.asByte());
+		var = cfg->getVar("tracking.tmp.hacks.resetting_ages");
+		if (var.isNull()) strcpy((char *)resettingAges, "Cleft,DniCityX2Finale,GreatZero,Kveer,Myst,Neighborhood02,Personal02,RestorationGuild,spyroom"); // see uru.conf.dist for explanation
+		else strncpy((char *)resettingAges, (char *)var.c_str(), 1023);
+		
+		var = cfg->getVar("track.html");
+		statusHTML = (!var.isNull() && var.asByte());
+		var = cfg->getVar("track.html.path");
+		if (var.isNull()) statusHTML = false;
+		else strncpy((char *)statusHTMLFile, (char *)var.c_str(), 255);
+		var = cfg->getVar("track.xml");
+		statusXML = (!var.isNull() && var.asByte());
+		var = cfg->getVar("track.xml.path");
+		if (var.isNull()) statusXML = false;
+		else strncpy((char *)statusXMLFile, (char *)var.c_str(), 255);
+		statusFileUpdate = true;
+		
 		ageParser = new tAgeParser((char *)ageDir);
 		guidGen = new tGuidGen(ageParser);
 	}
@@ -418,42 +454,6 @@ namespace alc {
 			tTrackingData *parent_data = (tTrackingData *)data->parent->data;
 			parent_data->childs->remove(game);
 		}
-	}
-	
-	void tTrackingBackend::loadSettings(void)
-	{
-		tConfig *cfg = alcGetConfig();
-		
-		tStrBuf var = cfg->getVar("tracking.log");
-		if (log == lnull && (var.isNull() || var.asByte())) { // logging enabled per default
-			log = new tLog("tracking.log", 4, 0);
-			log->log("Tracking driver started (%s)\n\n", __U_TRACKINGBACKEND_ID);
-			log->flush();
-		}
-		var = cfg->getVar("age");
-		if (var.isNull()) ageDir[0] = 0;
-		else {
-			if (!var.endsWith("/")) var.writeStr("/");
-			strncpy((char *)ageDir, (char *)var.c_str(), 255);
-		}
-		
-		var = cfg->getVar("tracking.tmp.hacks.agestate");
-		loadAgeState = (var.isNull() || var.asByte());
-		var = cfg->getVar("tracking.tmp.hacks.resetting_ages");
-		if (var.isNull()) strcpy((char *)resettingAges, "Cleft,DniCityX2Finale,GreatZero,Kveer,Myst,Neighborhood02,Personal02,RestorationGuild,spyroom"); // see uru.conf.dist for explanation
-		else strncpy((char *)resettingAges, (char *)var.c_str(), 1023);
-		
-		var = cfg->getVar("track.html");
-		statusHTML = (!var.isNull() && var.asByte());
-		var = cfg->getVar("track.html.path");
-		if (var.isNull()) statusHTML = false;
-		else strncpy((char *)statusHTMLFile, (char *)var.c_str(), 255);
-		var = cfg->getVar("track.xml");
-		statusXML = (!var.isNull() && var.asByte());
-		var = cfg->getVar("track.xml.path");
-		if (var.isNull()) statusXML = false;
-		else strncpy((char *)statusXMLFile, (char *)var.c_str(), 255);
-		statusFileUpdate = true;
 	}
 	
 	bool tTrackingBackend::doesAgeLoadState(const Byte *age)

@@ -108,8 +108,8 @@ public:
 	inline void send(tmMsgBase &m) { basesend(m.getSession(), m); }
 
 protected:
-	void _openlogs();
-	void _closelogs();
+	void openlogs();
+	void closelogs();
 	void updatetimer(U32 usecs);
 	tNetSessionIte netConnect(char * hostname,U16 port,Byte validation,Byte flags);
 	int Recv();

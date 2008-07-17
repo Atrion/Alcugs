@@ -57,10 +57,9 @@ namespace alc {
 		auth_gone = tracking_gone = vault_gone = 0;
 		lvault = lnull;
 		vaultLogShort = false;
-		loadVaultLog();
 	}
 	
-	void tUnetLobbyServerBase::loadVaultLog(void)
+	void tUnetLobbyServerBase::onLoadConfig(bool reload)
 	{
 		tConfig *cfg = alcGetConfig();
 		tStrBuf var = cfg->getVar("vault.html.log");
@@ -68,6 +67,14 @@ namespace alc {
 			lvault = new tLog("vault.html", 2, DF_HTML);
 			var = cfg->getVar("vault.html.log.short");
 			vaultLogShort = (!var.isNull() && var.asByte()); // per default, it's not short
+		}
+	}
+	
+	void tUnetLobbyServerBase::onUnloadConfig()
+	{
+		if (lvault != lnull) {
+			delete lvault;
+			lvault = lnull;
 		}
 	}
 	

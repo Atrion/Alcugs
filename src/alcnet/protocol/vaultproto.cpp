@@ -301,21 +301,24 @@ namespace alc {
 			case 0x0A:
 			{
 				U16 num = buf.getU16();
-				log->print("number of values: %d<br />\n", num);
+				log->print("number of IDs: %d<br />\n", num);
 				if (num == 0) break;
-				log->print("Value(s):");
+				// this is not printed in short log
+				// it is read anyway to verify the data
+				if (!shortLog) log->print("Value(s):");
 				for (U16 i = 0; i < num; ++i) {
 					U32 val = buf.getU32();
+					if (shortLog) continue;
 					if (i > 0) log->print(",");
 					log->print(" 0x%08X (%d)", val, val);
 				}
-				log->print("<br />\n");
+				if (!shortLog) log->print("<br />\n");
 				break;
 			}
 			case 0x0E:
 			{
 				U32 num = buf.getU32();
-				log->print("number of values: %d<br />\n", num);
+				log->print("number of ID-Timestamp pairs: %d<br />\n", num);
 				for (U32 i = 0; i < num; ++i) {
 					U32 val = buf.getU32();
 					double time = buf.getDouble();

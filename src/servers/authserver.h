@@ -45,15 +45,15 @@ namespace alc {
 	////DEFINITIONS
 	class tUnetAuthServer : public tUnetServerBase {
 	public:
-		tUnetAuthServer() : tUnetServerBase() { authBackend = new tAuthBackend; }
-		virtual ~tUnetAuthServer() { delete authBackend; }
+		tUnetAuthServer() : tUnetServerBase() {  }
 
 		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
 		virtual void onIdle(bool idle) { authBackend->checkTimeout(); }
-		virtual void reload() {
-			delete authBackend;
-			tUnetServerBase::reload();
+		virtual void onLoadConfig(bool reload) {
 			authBackend = new tAuthBackend;
+		}
+		virtual void onUnloadConfig() {
+			delete authBackend;
 		}
 	private:
 		tAuthBackend *authBackend;

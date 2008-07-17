@@ -57,12 +57,12 @@ namespace alc {
 	tUnetLobbyServer::tUnetLobbyServer(void) : tUnetLobbyServerBase()
 	{
 		strcpy((char*)serverName, alcNetName);
-		loadSettings();
 		lstd->log("WARNING: The lobby server is not finished yet. So if it doesn\'t work, that's not even a bug.\n");
 	}
 	
-	void tUnetLobbyServer::loadSettings(void)
+	void tUnetLobbyServer::onLoadConfig(bool reload)
 	{
+		tUnetLobbyServerBase::onLoadConfig(reload);
 		tConfig *cfg = alcGetConfig();
 		tStrBuf var = cfg->getVar("website");
 		strncpy((char *)website, (char *)var.c_str(), 255);

@@ -48,29 +48,15 @@ namespace alc {
 class tUnetLobbyServerBase : public tUnetServerBase {
 public:
 	tUnetLobbyServerBase(void);
-	virtual ~tUnetLobbyServerBase(void)
-	{
-		if (lvault != lnull) {
-			delete lvault;
-			lvault = lnull;
-		}
-	}
 	virtual void onStart(void);
 	virtual void onIdle(bool idle);
 	virtual void onConnectionClosed(tNetEvent *ev, tNetSession *u);
 	virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
 	virtual void forwardPing(tmPing &ping, tNetSession *u);
 	virtual void terminate(tNetSession *u, Byte reason = RKickedOff, bool destroyOnly = false);
-	virtual void reload(void) {
-		if (lvault != lnull) {
-			delete lvault;
-			lvault = lnull;
-		}
-		tUnetServerBase::reload();
-		loadVaultLog();
-	}
+	virtual void onUnloadConfig(void);
+	virtual void onLoadConfig(bool reload);
 protected:
-	void loadVaultLog(void);
 	tNetSessionIte reconnectPeer(Byte dst); //!< establishes a connection to that service (remember to set the corresponding gone variable to 0)
 	void setActivePlayer(tNetSession *u, U32 ki, const Byte *avatar);
 	void killPlayer(tNetSession *u, Byte reason, bool dontTerminate = false);

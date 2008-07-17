@@ -59,14 +59,14 @@ tUnetBase::tUnetBase() :tUnet() {
 	if(!var.isNull()) {
 		setBindAddress(var.c_str());
 	}
-	_reconfigure();
+	reconfigure();
 }
 
 tUnetBase::~tUnetBase() {
 	stop(5);
 }
 
-void tUnetBase::_reconfigure() {
+void tUnetBase::reconfigure() {
 	tUnetSignalHandler * h = new tUnetSignalHandler(this);
 	DBG(5,"tUnetBase - installing signal handler\n");
 	alcInstallSignalHandler(h);
@@ -359,6 +359,7 @@ void tUnetBase::run() {
 	tNetSession * u;
 
 	onStart();
+	onLoadConfig(false);
 	while(state_running) {
 		Recv();
 		while((evt=getEvent())) {
@@ -393,6 +394,7 @@ void tUnetBase::run() {
 		}
 	}
 	
+	onUnloadConfig();
 	onStop();
 	
 	log->log("INF: Service sanely terminated\n");

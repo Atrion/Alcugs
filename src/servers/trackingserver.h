@@ -49,20 +49,20 @@ namespace alc {
 
 	class tUnetTrackingServer : public tUnetServerBase {
 	public:
-		tUnetTrackingServer(void) : tUnetServerBase()
-		{ }
-		virtual ~tUnetTrackingServer(void) { delete trackingBackend; }
+		tUnetTrackingServer(void) : tUnetServerBase() { }
 		
 		virtual void onStart(void) {
 			trackingBackend = new tTrackingBackend(this, smgr, bindaddr, bindport);
+		}
+		virtual void onStop(void) {
+			delete trackingBackend;
 		}
 		virtual void onConnectionClosed(tNetEvent * ev,tNetSession * u) {
 			trackingBackend->removeServer(u);
 		}
 		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
-		virtual void reload() {
-			tUnetServerBase::reload();
-			trackingBackend->reload();
+		virtual void onLoadConfig(bool reload) {
+			if (reload) trackingBackend->reload();
 		}
 		virtual void onIdle(bool idle) {
 			trackingBackend->updateStatusFile();

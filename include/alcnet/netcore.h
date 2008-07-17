@@ -65,11 +65,13 @@ public:
 	void terminateAll();
 	/** Force a reload of the netcore settings (after changing the configuration for example)
 	*/
-	virtual void reload() 
+	void reload()
 	{
-		_closelogs();
-		_reconfigure();
-		_openlogs();
+		onUnloadConfig();
+		closelogs();
+		reconfigure();
+		openlogs();
+		onLoadConfig(true);
 	}
 	inline bool isRunning(void) { return state_running; }
 
@@ -79,6 +81,7 @@ public:
 			\param u The peer session object
 	*/
 	virtual void onNewConnection(tNetEvent * ev,tNetSession * u) {}
+	
 	/** This event is raised when we recieve a new message
 			You need to override it in your derived classes with your implementation.
 			\param ev The event object (cannot be vetoed)
@@ -86,12 +89,14 @@ public:
 			\param u The peer session object
 	*/
 	virtual int onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) { return 0; }
+	
 	/** This event is raised when a connection closes
 			You need to override it in your derived classes with your implementation.
 			\param ev The event object (cannot be vetoed)
 			\param u The peer session object
 	*/
 	virtual void onConnectionClosed(tNetEvent * ev,tNetSession * u) {}
+	
 	/** This event is raised when a peer have left (disconnected)
 			You need to override it in your derived classes with your implementation.
 			\param ev The event object (cannot be vetoed)
@@ -99,6 +104,7 @@ public:
 			\param u The peer session object
 	*/
 	virtual void onLeave(tNetEvent * ev,Byte reason,tNetSession * u) {}
+	
 	/** This event is raised when a peer have sent a terminated message
 			Note: Only servers can send terminated messages, a termintated message from a client
 			is illegal, and should be processed as a leave message.
@@ -110,6 +116,7 @@ public:
 			\param u The peer session object
 	*/
 	virtual void onTerminated(tNetEvent * ev,Byte reason,tNetSession * u) {}
+	
 	/** This event is raised when a peer is sending too many messages per second.
 			Disabling this protection, your server will be vulnerable to DoS attacks.
 			You need to override it in your derived classes with your implementation.
@@ -118,16 +125,24 @@ public:
 			\param u The peer session object
 	*/
 	virtual void onConnectionFlood(tNetEvent * ev,tNetSession * u) {}
+	
 	virtual void onConnectionTimeout(tNetEvent * ev,tNetSession * u) {}
 	virtual void onIdle(bool idle=false) {}
 	virtual void onStop() {}
 	virtual void onStart() {}
+	
+	/** this is called after loading and reloading the config */
+	virtual void onLoadConfig(bool reload) {}
+	
+	/** this is called before reloading the config and before quitting.
+			Everything created in onLoadConfig must be freed here */
+	virtual void onUnloadConfig() {}
 private:
 	void processEvent(tNetEvent *evt, tNetSession *u, bool shutdown = false);
 	int parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool shutdown);
+	void reconfigure();
 	bool state_running;
 	Byte stop_timeout;
-	void _reconfigure();
 	Byte pool_size;
 };
 

@@ -50,13 +50,8 @@ namespace alc {
 		tUnetLobbyServer(void);
 		
 		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
-		virtual void reload(void) {
-			tUnetLobbyServerBase::reload();
-			loadSettings();
-		}
-	private:
-		void loadSettings(void);
-	
+		virtual void onLoadConfig(bool reload);
+	private:	
 		Byte website[256];
 	};
 	

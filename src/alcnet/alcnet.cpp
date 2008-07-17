@@ -197,7 +197,7 @@ void tUnet::neterror(const char * msg) {
 #endif
 }
 
-void tUnet::_openlogs() {
+void tUnet::openlogs() {
 	//open unet log files
 	if(this->flags & UNET_ELOG) {
 		if(this->log==lnull) {
@@ -257,7 +257,7 @@ void tUnet::_openlogs() {
 	}
 }
 
-void tUnet::_closelogs() {
+void tUnet::closelogs() {
 	if(this->log != lstd && this->log != lnull) {
 		DBG(9, "deleting standard log\n");
 		this->log->close();
@@ -289,7 +289,7 @@ void tUnet::_closelogs() {
 
 void tUnet::startOp() {
 	if(initialized) return;
-	_openlogs();
+	openlogs();
 	//create an udp (17) socket
 #ifdef __WIN32__
 	memset(&this->ws,0,sizeof(this->ws));
@@ -418,7 +418,7 @@ void tUnet::stopOp() {
 	close(this->sock);
 #endif
 	DBG(1, "Socket closed\n");
-	_closelogs();
+	closelogs();
 	initialized=false;
 }
 
