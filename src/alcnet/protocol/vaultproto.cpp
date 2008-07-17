@@ -44,6 +44,7 @@
 #include "protocol/vaultproto.h"
 
 ////extra includes
+#include <sys/stat.h>
 
 #include "alcdebug.h"
 
@@ -171,7 +172,7 @@ namespace alc {
 			throw txProtocolError(_WHERE("the 0x0023 flag must always be set in AgeLinkStruct"));
 		
 		t.get(ageInfo);
-		linkRules = t.getByte();
+		linkingRules = t.getByte();
 		U32 unk = t.getU32(); // unknown, always seen 0x00000001
 		if (unk != 0x00000001)
 			throw txProtocolError(_WHERE("unknown unk value vor AgeLinkStruct, must always be 0x00000001"));
@@ -200,7 +201,7 @@ namespace alc {
 		t.putU16(flags);
 		
 		t.put(ageInfo);
-		t.putByte(linkRules);
+		t.putByte(linkingRules);
 		t.putU32(0x00000001); // unknown
 		t.put(spawnPoint);
 		
@@ -641,6 +642,73 @@ namespace alc {
 		log->print("<b>Permissions:</b> 0x%08X (%s)<br />\n", permissions, permStr);
 	}
 	
+	void tvNode::blobAsHtml(tLog *log, Byte *blob, U32 size)
+	{
+		char filename[512], path[1024];
+		if (type == KImageNode) { // the first 4 bytes are skipped so anything smaller than that would make problems
+			log->print("Image note:<br />\n");
+			if (size < 4) {
+				log->print("<span style='color:red'>Too small to be a picture!</span><br />\n");
+				return;
+			}
+			// get the file name
+			sprintf(filename, "%s.%s.%d.%s.jpg", ageName.c_str(), str1.c_str(), index, alcGetStrTime(modTime, modMicrosec));
+			alcStrFilter(filename); // don't trust user input
+			strncpy(path, log->getDir(), 511);
+			strncat(path, "data/", 511);
+			mkdir(path, 00750); // make sure the path exists
+			strncat(path, filename, 1023);
+			// save the file
+			tFBuf file;
+			file.open(path, "wb");
+			file.write(blob+4, size-4); // skip the first 4 bytes to make it a valid picture
+			file.close();
+			log->print("<img src='data/%s' /><br />\n", filename);
+		}
+		else {
+			const char *suffix = "raw";
+			// print the data
+			switch (type) {
+				case KAgeLinkNode:
+					log->print("List of linking points:<br />\n");
+					suffix = "links";
+					break;
+				case KTextNoteNode:
+					log->print("Text Note:<br />\n");
+					suffix = "txt";
+					break;
+				case KMarkerNode:
+					log->print("Marker byte code:<br />\n");
+					suffix = "marker";
+					break;
+				case KSDLNode:
+					log->print("SDL byte code:<br />\n");
+					suffix = "sdl_byte";
+					break;
+				default:
+					log->print("<span style='color:red'>Unknown byte code</span>:<br />\n");
+					break;
+			}
+			log->print("<pre>");
+			log->dumpbuf(blob, size);
+			log->print("</pre><br />\n");
+			// dump it to a file
+			// get the file name
+			sprintf(filename, "%s.%s.%d.%s.%s", ageName.c_str(), str1.c_str(), index, alcGetStrTime(modTime, modMicrosec), suffix);
+			alcStrFilter(filename); // don't trust user input
+			strncpy(path, log->getDir(), 511);
+			strncat(path, "data/", 511);
+			mkdir(path, 00750); // make sure the path exists
+			strncat(path, filename, 1023);
+			// save the file
+			tFBuf file;
+			file.open(path, "wb");
+			file.write(blob, size);
+			file.close();
+			log->print("<a href='data/%s'>%s</a><br />\n", filename, filename);
+		}
+	}
+	
 	void tvNode::asHtml(tLog *log)
 	{
 		// mandatory flieds
@@ -680,7 +748,11 @@ namespace alc {
 		if (flagB & MlStr64_2) log->print("<b>lStr64_2:</b> %s<br />\n", lStr2.c_str());
 		if (flagB & MText_1) log->print("<b>Text_1:</b> %s<br />\n", text1.c_str());
 		if (flagB & MText_2) log->print("<b>Text_2:</b> %s<br />\n", text2.c_str());
-		// FIXME: do something with the data
+		if (flagB & MBlob1) {
+			log->print("<b>Blob1:</b> Size: %d<br />\n", blob1Size);
+			if (blob1Size > 0) blobAsHtml(log, blob1, blob1Size);
+		}
+		if (flagB & MBlob2) log->print("<b>Blob2:</b> Size: 0<br />\n"); // blob2 is always empty
 		// the blob guids are always zero
 		if (flagC & MBlob1Guid) log->print("<b>Blob1Guid:</b> 0000000000000000<br />\n");
 		if (flagC & MBlob2Guid) log->print("<b>Blob1Guid:</b> 0000000000000000<br />\n");

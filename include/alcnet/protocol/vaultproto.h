@@ -236,7 +236,7 @@ namespace alc {
 	private:
 		U16 flags;
 		tvAgeInfoStruct ageInfo;
-		Byte linkRules;
+		Byte linkingRules;
 		tvSpawnPoint spawnPoint;
 		Byte ccr;
 	};
@@ -298,6 +298,7 @@ namespace alc {
 		virtual void asHtml(tLog *log);
 	private:
 		void permissionsAsHtml(tLog *log);
+		void blobAsHtml(tLog *log, Byte *blob, U32 size);
 	
 		U32 flagA, flagB, flagC;
 		U32 index;
