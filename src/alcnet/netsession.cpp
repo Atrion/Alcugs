@@ -388,12 +388,18 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 			msg=rcvq->getCurrent();
 		} else if(msg->sn==t.sn) {
 			break;
-		} else if(msg->sn<t.sn) {
+		} else if(t.sn<msg->sn) { // the rcvq is ordered by SN, so if the new message has an SN smaller than the current one
+								  // and bigger or equal to the last one (since the if wasn't executed then), this is the right place
+			//tUnetMsg *msgalt = msg;
 			msg=new tUnetMsg((t.frt+1) * frg_size);
 			msg->sn=t.sn;
 			msg->frt=t.frt;
 			msg->hsize=t.hSize();
 			rcvq->insertBefore(msg);
+			//t.data.rewind();
+			//DBG(7, "%s inserted a message %s (SN: %d) before an", str(), alcUnetGetMsgCode(t.data.getU16()), t.sn);
+			//DBGM(7, " %s (SN: %d)\n", alcUnetGetMsgCode(msgalt->cmd), msgalt->sn);
+			//t.data.rewind();
 			msg->data->setSize((t.frt +1) * frg_size);
 			break;
 		} else {

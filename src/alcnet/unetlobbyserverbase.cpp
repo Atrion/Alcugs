@@ -493,8 +493,8 @@ namespace alc {
 				}
 				else { // got it from a client
 					if (vaultMsg.hasFlags(plNetKi) && vaultMsg.ki != u->ki) throw txProtocolError(_WHERE("KI mismatch"));
-					if (u->whoami != KClient) {
-						err->log("ERR: %s sent a NetMsgVault but is not yet authed. I\'ll kick him.\n", u->str());
+					if (u->whoami != KClient || u->ki == 0) { // KI is necessary to know where to route it
+						err->log("ERR: %s sent a NetMsgVault but is not yet authed or did not set his KI. I\'ll kick him.\n", u->str());
 						return -2; // hack attempt
 					}
 					// forward it to the vault server
