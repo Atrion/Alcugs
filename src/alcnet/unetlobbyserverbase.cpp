@@ -221,7 +221,7 @@ namespace alc {
 		if (dst == KTracking) {
 			tStrBuf var = cfg->getVar("public_address");
 			if (var.isNull()) log->log("WARNING: No public address set, using bind address %s\n", bindaddr);
-			tmCustomSetGuid setGuid(session, serverGuid, serverName, var.c_str());
+			tmCustomSetGuid setGuid(session, alcGetStrGuid(serverGuid), serverName, var.c_str());
 			send(setGuid);
 		}
 		
@@ -493,8 +493,8 @@ namespace alc {
 				}
 				else { // got it from a client
 					if (vaultMsg.hasFlags(plNetKi) && vaultMsg.ki != u->ki) throw txProtocolError(_WHERE("KI mismatch"));
-					if (u->whoami != KClient || u->ki == 0) {
-						err->log("ERR: %s sent a NetMsgVault but is not yet authed or did not set his KI. I\'ll kick him.\n", u->str());
+					if (u->whoami != KClient) {
+						err->log("ERR: %s sent a NetMsgVault but is not yet authed. I\'ll kick him.\n", u->str());
 						return -2; // hack attempt
 					}
 					// forward it to the vault server

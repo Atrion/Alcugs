@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETSESSION_ID "$Id$"
 
-#define _DBG_LEVEL_ 3
+//#define _DBG_LEVEL_ 3
 
 #include "alcugs.h"
 #include "unet.h"
@@ -92,7 +92,7 @@ void tNetSession::init() {
 	cabal=0;
 	max_cabal=0;
 	last_msg_time=0;
-	rtt=net->timeout/2; //this prevents the rtt and thus the timeout from getting to small
+	rtt=net->timeout/2; //this prevents the rtt and thus the timeout from getting too small
 	ack_rtt=0;
 	timeout=net->timeout;
 	conn_timeout=net->conn_timeout;
