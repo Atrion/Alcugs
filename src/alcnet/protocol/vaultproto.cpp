@@ -1003,9 +1003,9 @@ namespace alc {
 	{
 		if (log == lnull) return; // don't do anything if log is disabled
 		if (clientToServer)
-			log->print("<h2 style='color:blue'>From client (%s) to vault</h2>\n", client->str());
+			log->print("<h2 style='color:blue'>From client (%s) to vault</h2>\n", client ? client->str() : "?");
 		else
-			log->print("<h2 style='color:green'>From vault to client (%s)</h2>\n", client->str());
+			log->print("<h2 style='color:green'>From vault to client (%s)</h2>\n", client ? client->str() : "?");
 		asHtml(log, shortLog);
 		log->print("<hr>\n\n");
 		log->flush();

@@ -464,16 +464,26 @@ namespace alc {
 				msg->data->get(vaultMsg);
 				log->log("<RCV> %s\n", vaultMsg.str());
 				
-				// parse the message
+				// prepare for parsing the message (actual parsing is only done when the packet is really forwarded
 				tvMessage parsedMsg(/*isTask:*/false, u->tpots);
 				vaultMsg.message.rewind();
-				vaultMsg.message.get(parsedMsg);
 				
 				if (u->whoami == KVault) { // got it from the vault - send it to the client
 					if (!vaultMsg.hasFlags(plNetKi) || vaultMsg.ki == 0) throw txProtocolError(_WHERE("KI missing"));
+					
+					vaultMsg.message.get(parsedMsg);
+					
 					tNetSession *client = smgr->find(vaultMsg.ki);
 					if (!client || client->whoami != KClient) {
-						log->log("WARN: I've got a vault message to forward to player with KI %d but can\'t find it\'s session.\n", vaultMsg.ki);
+						lvault->print("<h2 style='color:red'>Packet for unknown client</h2>\n");
+						parsedMsg.print(lvault, /*clientToServer:*/false, NULL, vaultLogShort);
+						if (parsedMsg.cmd == VOnlineState && parsedMsg.vmgr == vaultMsg.ki)
+							// this is most likely the message that this player went offline
+							// (vault sends one to lobby after the client already left to connect to the game server)
+							// so silently ignore it
+							;
+						else
+							err->log("ERR: I've got a vault message to forward to player with KI %d but can\'t find it\'s session.\n", vaultMsg.ki);
 						return 1;
 					}
 					parsedMsg.print(lvault, /*clientToServer:*/false, client, vaultLogShort);
@@ -482,8 +492,7 @@ namespace alc {
 					send(vaultMsgFwd);
 				}
 				else { // got it from a client
-					if (vaultMsg.hasFlags(plNetKi) && vaultMsg.ki != u->ki)
-						throw txProtocolError(_WHERE("KI mismatch"));
+					if (vaultMsg.hasFlags(plNetKi) && vaultMsg.ki != u->ki) throw txProtocolError(_WHERE("KI mismatch"));
 					if (u->whoami != KClient || u->ki == 0) {
 						err->log("ERR: %s sent a NetMsgVault but is not yet authed or did not set his KI. I\'ll kick him.\n", u->str());
 						return -2; // hack attempt
@@ -494,6 +503,7 @@ namespace alc {
 						err->log("ERR: I've got a vault message to forward to the vault server, but it's unavailable.\n", u->str());
 						return 1;
 					}
+					vaultMsg.message.get(parsedMsg);
 					parsedMsg.print(lvault, /*clientToServer:*/true, u, vaultLogShort);
 					parsedMsg.tpots = vaultServer->tpots;
 					tmVault vaultMsgFwd(vaultServer, u->ki, &parsedMsg);

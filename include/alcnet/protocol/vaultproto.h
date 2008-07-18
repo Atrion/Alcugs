@@ -352,7 +352,7 @@ namespace alc {
 		void print(tLog *log, bool clientToServer, tNetSession *client, bool shortLog);
 		
 		Byte tpots; // 1: generate/parse for TPOTS client, everything else: for non-TPOTS client (or the vault server)
-	private:
+		// format
 		bool task;
 		Byte cmd; //!< the vault command
 		Byte compressed; //!< 1 when uncompressed, 3 when compressed

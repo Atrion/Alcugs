@@ -1,14 +1,10 @@
-Ok, this list contains a list of known bugs and issues.
-We are working to fix them up.
+This list contains a list of known bugs and issues
 
 Game/Vault (vclient communications)
 * Vault task RegisterVisitAge is not working. This causes the issues related
  with books that don't work if you are not owner of the age. (see the Relto bookself)
 * Some ages are not sending the correct linking rules, and then they fail to send
 the RegisterOwnedAge vault task.
-* Client crashes on first logon for first avatar of a fresh vault. Reason seems to be that the vault
- needs too long to send the ack and the message is sent and parsed twice, resulting in some chaos
- and the client being kicked due to a flood
 
 General
 * Loadclone issues
