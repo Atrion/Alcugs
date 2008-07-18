@@ -60,6 +60,7 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		t.get(serverGuid);
+		if (serverGuid.size() != 16) throw txProtocolError(_WHERE("NetMsgCustomSetGuid.serverGuid must be 16 characters long"));
 		t.get(age);
 		t.get(externalIp);
 #ifdef ENABLE_UNET2
@@ -200,6 +201,7 @@ namespace alc {
 		if (!hasFlags(plNetIP)) throw txProtocolError(_WHERE("IP flag missing"));
 #endif
 		t.get(serverGuid);
+		if (serverGuid.size() != 16) throw txProtocolError(_WHERE("NetMsgCustomFindServer.serverGuid must be 16 characters long"));
 		t.get(age);
 #ifdef ENABLE_UNET2
 		if (!hasFlags(plNetIP)) {
@@ -255,6 +257,7 @@ namespace alc {
 		tmMsgBase::store(t);
 		forkPort = t.getU16();
 		t.get(serverGuid);
+		if (serverGuid.size() != 16) throw txProtocolError(_WHERE("NetMsgCustomForkServer.serverGuid must be 16 characters long"));
 		t.get(age);
 		loadSDL = t.getByte();
 	}
@@ -306,6 +309,7 @@ namespace alc {
 		serverPort = t.getU16();
 		t.get(ipStr);
 		t.get(serverGuid);
+		if (serverGuid.size() != 16) throw txProtocolError(_WHERE("NetMsgCustomServerFound.serverGuid must be 16 characters long"));
 		t.get(age);
 	}
 	
