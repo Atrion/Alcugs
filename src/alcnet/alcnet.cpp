@@ -90,7 +90,7 @@ void tUnet::init() {
 	to 30sec after the client got authed.
 	I put this here and not in tUnetServerBase as tUnetBase must be able to override it */
 	
-	timeout=2000000; //2 seconds (re-transmission) [initial RTT]
+	timeout=1000000; //1 second (time till re-transmission) [initial RTT = timeout/2]
 
 	//initial server timestamp
 	ntime_sec=alcGetTime();
@@ -111,7 +111,7 @@ void tUnet::init() {
 	nat_down=512 * 1000;
 	
 	flood_check_sec=5;
-	max_flood_pkts=85;
+	max_flood_pkts=110; // when first launching a client for an amtpy vault, this is almost reached (usually there are 99 packets within about 2.5 seconds)
 
 	snd_expire=30; //should be enough
 

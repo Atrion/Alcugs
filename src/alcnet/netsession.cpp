@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETSESSION_ID "$Id$"
 
-//#define _DBG_LEVEL_ 3
+#define _DBG_LEVEL_ 3
 
 #include "alcugs.h"
 #include "unet.h"
@@ -92,11 +92,10 @@ void tNetSession::init() {
 	cabal=0;
 	max_cabal=0;
 	last_msg_time=0;
-	rtt=0; //net->timeout/2;
+	rtt=net->timeout/2; //this prevents the rtt and thus the timeout from getting to small
 	ack_rtt=0;
 	timeout=net->timeout;
 	conn_timeout=net->conn_timeout;
-	desviation=0;
 	nego_stamp.seconds=0;
 	nego_stamp.microseconds=0;
 	renego_stamp=nego_stamp;
@@ -115,6 +114,8 @@ void tNetSession::init() {
 	terminated = false;
 	data = NULL;
 	name[0] = 0;
+	
+	DBG(3, "%s Initial timeout: %d\n", str(), timeout);
 }
 const char * tNetSession::str(bool detail) {
 	static char cnt[1024], tmp[1024];
@@ -151,29 +152,29 @@ U32 tNetSession::getMaxDataSize() {
 	return(getMaxFragmentSize() * 256);
 }
 void tNetSession::updateRTT(U32 newread) {
+	static S32 deviation=0;
 	if(rtt==0) rtt=newread;
 	#if 0 //Original
 		const U32 alpha=800;
 		rtt=((alpha*rtt)/1000) + (((1000-alpha)*newread)/1000);
 		timeout=2*rtt;
 	#else //Jacobson/Karels
-		S32 alpha=125;
+		S32 alpha=125; // this is effectively 0.125
 		S32 u=1;
 		S32 delta=4;
-		S32 diff;
-		diff=(S32)newread - (S32)rtt;
+		S32 diff=(S32)newread - (S32)rtt;
 		rtt=(S32)rtt+((alpha*diff)/1000);
-		desviation+=(alpha*(abs(diff)-desviation))/1000;
-		if(desviation!=0) timeout=u*rtt + delta*desviation;
+		deviation+=(alpha*(abs(diff)-deviation))/1000;
+		if(deviation!=0) timeout=u*rtt + delta*deviation;
 	#endif
 	ack_rtt=rtt/8;
-	DBG(5,"%s RTT update rtt:%i, timeout:%i\n",str(),rtt,timeout);
+	DBG(3,"%s RTT update (sample rtt: %i) new rtt:%i, timeout:%i\n",str(),newread,rtt,timeout);
 }
 void tNetSession::duplicateTimeout() {
 	U32 maxTH=4000000; //
 	timeout+=(timeout*666)/1000;
 	if(timeout>maxTH) timeout=maxTH;
-	DBG(5,"%s timeout update:%i\n",str(),timeout);
+	DBG(3,"%s timeout update:%i\n",str(),timeout);
 	//net->log->log("Abort()\n");
 	//abort();
 }

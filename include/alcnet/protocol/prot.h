@@ -273,7 +273,7 @@ unsilenced 29
 #define NetMsgActivePlayerSet2         0x0466
 //tpots
 
-//tpots NOTE
+//tpots note
 ///type 0x02BC is now 0x03BC
 ///All types that are >0x03BC are now incremented +1
 ///thx to ngilb120

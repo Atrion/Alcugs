@@ -160,7 +160,6 @@ private:
 	U32 last_msg_time; //last snd msg time in usecs
 	U32 rtt;
 	U32 timeout;
-	S32 desviation;
 	U32 ack_rtt; //ack rtt
 	
 	tUnetMsgQ<tUnetAck> * ackq; //Pig acks
