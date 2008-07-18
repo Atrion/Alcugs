@@ -176,6 +176,8 @@ namespace alc {
 	void tmFindAge::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
+		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
+		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch"));
 		// store the whole message
 		message.clear();
 		t.get(message);

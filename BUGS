@@ -6,12 +6,11 @@ Game/Vault (vclient communications)
  with books that don't work if you are not owner of the age. (see the Relto bookself)
 * Some ages are not sending the correct linking rules, and then they fail to send
 the RegisterOwnedAge vault task.
+* Client crashes on first logon for first avatar of a fresh vault. Reason seems to be that the vault
+ needs too long to send the ack and the message is sent and parsed twice, resulting in some chaos
+ and the client being kicked due to a flood
 
 General
-* Loadclone issues.
+* Loadclone issues
 
-* Member list bug.
-
-* Cannot bind 0.0.0.0 or 127.0.0.1, causes a lot of problems. All runs fine if you bind
-  to a fixed address.
-
+* Member list bug

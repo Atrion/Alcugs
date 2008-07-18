@@ -219,11 +219,11 @@ namespace alc {
 			ccr = 0;
 		
 		if (flags & 0x0040) { // age descripion?
-			lerr->log("Ignoring unsupported flag 0x0040 of an AgeLinkStruct\n");
 			// ignore and disable it
 			tUStr desc;
 			t.get(desc);
 			flags &= ~0x0040;
+			lerr->log("Ignoring unsupported flag 0x0040 of an AgeLinkStruct (Value: %s)\n", desc.c_str());
 		}
 	}
 	

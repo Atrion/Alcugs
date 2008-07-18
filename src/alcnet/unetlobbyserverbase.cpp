@@ -112,8 +112,13 @@ namespace alc {
 		tNetSession *client;
 		smgr->rewind();
 		while ((client = smgr->getNext())) {
-			if (client->whoami == KClient && client->ki == ki) // an age cannot host the same avatar multiple times
-				terminate(client, RLoggedInElsewhere);
+			if (client->whoami == KClient && client->ki == ki) { // an age cannot host the same avatar multiple times
+				if (u != client) // it could be the same session for which the active player is set twice for some reason
+					terminate(client, RLoggedInElsewhere);
+				else
+					lerr->log("Active player is set twice for %s\n", u->str());
+				return;
+			}
 		}
 		
 		if (whoami == KGame && avatar[0] == 0) // empty avatar names are not allowed in game server
@@ -468,7 +473,7 @@ namespace alc {
 					if (!vaultMsg.hasFlags(plNetKi) || vaultMsg.ki == 0) throw txProtocolError(_WHERE("KI missing"));
 					tNetSession *client = smgr->find(vaultMsg.ki);
 					if (!client || client->whoami != KClient) {
-						err->log("ERR: I've got a vault message to forward to player with KI %d but can\'t find it\'s session.\n", vaultMsg.ki);
+						log->log("WARN: I've got a vault message to forward to player with KI %d but can\'t find it\'s session.\n", vaultMsg.ki);
 						return 1;
 					}
 					parsedMsg.print(lvault, /*clientToServer:*/false, client, vaultLogShort);
@@ -477,6 +482,8 @@ namespace alc {
 					send(vaultMsgFwd);
 				}
 				else { // got it from a client
+					if (vaultMsg.hasFlags(plNetKi) && vaultMsg.ki != u->ki)
+						throw txProtocolError(_WHERE("KI mismatch"));
 					if (u->whoami != KClient || u->ki == 0) {
 						err->log("ERR: %s sent a NetMsgVault but is not yet authed or did not set his KI. I\'ll kick him.\n", u->str());
 						return -2; // hack attempt

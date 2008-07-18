@@ -282,6 +282,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 				onConnectionFlood(evt,u);
 			if (shutdown || !evt->veto) {
 				terminate(u, RKickedOff);
+				lerr->log("%s kicked due to a Flood Attack\n", u->str());
 			}
 			break;
 		case UNET_MSGRCV:
@@ -354,7 +355,6 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 // main event processing loop - blocks
 void tUnetBase::run() {
 	startOp();
-	
 	tNetEvent * evt;
 	tNetSession * u;
 
