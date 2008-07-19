@@ -134,7 +134,7 @@
 #define RLeaving 0x19
 #define RQuitting 0x1A
 //custom
-#define RInGame 0x14
+#define RActive 0x14
 
 //Reasons (Terminated)
 #define RUnknown 0x01
