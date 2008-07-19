@@ -63,7 +63,7 @@ tUnetBase::tUnetBase() :tUnet() {
 }
 
 tUnetBase::~tUnetBase() {
-	stop(5);
+	forcestop();
 }
 
 void tUnetBase::reconfigure() {

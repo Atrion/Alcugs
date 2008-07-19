@@ -445,28 +445,41 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 }
 
 /**
-	\return 2 - Out of the window
-	\return 1 - Marked
+	\return 2 - After the window
+	\return 1 - Marked or before the window
 	\return 0 - Non-Marked
 */
 Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 	//drop already parsed messages
 	#ifdef ENABLE_MSGDEBUG
-	net->log->log("%s INF: SN %i (Before) window is:\n",str(),msg.sn);
+	net->log->log("%s INF: SN %i (Before) window is (wite: %d):\n",str(),msg.sn,wite);
 	net->log->dumpbuf((Byte *)w,rcv_win);
 	net->log->nl();
 	net->log->flush();
 	#endif
 	
-	if(!(msg.sn > wite || msg.sn <= (wite+rcv_win))) {
-		net->err->log("%s INF: Dropped packet %i out of the window by sn\n",str(),msg.sn);
+	// Note: for fragmented messages, already parsed packets can not be dropped as all fragments have the same SN.
+	// As a result of this, a fragmented message will be parsed twice if it is recieved twice.
+	// A solution would be to only mark the packet as recieved after all fragments were recieved, but
+	//  that would have to be done in tNetSession::assembleMessage
+	
+	if(msg.sn >= (wite+rcv_win)) {
+		net->err->log("%s INF: Dropped packet %i after the window by sn (wite: %i)\n",str(),msg.sn,wite);
 		net->err->flush();
 		return 2;
+	} else if(msg.sn < wite) { // this means we already parsed it
+		if (msg.frn == 0) {
+			net->err->log("%s INF: Dropped packet %i before the window by sn (wite: %i)\n",str(),msg.sn,wite);
+			net->err->flush();
+			return 1;
+		} else { // it's fragmented but out of the window, so we can't do anything (see above)
+			return 0; 
+		}
 	} else { //then check if is already marked
 		U32 i,start,ck;
 		start=wite % (rcv_win*8);
 		i=msg.sn % (rcv_win*8);
-		if(((w[i/8] >> (i%8)) & 0x01) && msg.frn==0) {
+		if(((w[i/8] >> (i%8)) & 0x01) && msg.frn==0) { // don't drop fragmented messages, see above
 			net->err->log("%s INF: Dropped already parsed packet %i\n",str(),msg.sn);
 			ack_rtt=ack_rtt/4;
 			net->err->flush();
@@ -499,7 +512,7 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 		}
 	}
 	#ifdef ENABLE_MSGDEBUG
-	net->log->log("%s INF: SN %i (after) window is:\n",str(),msg.sn);
+	net->log->log("%s INF: SN %i (after) window is (wite: %d):\n",str(),msg.sn,wite);
 	net->log->dumpbuf((Byte *)w,rcv_win);
 	net->log->nl();
 	net->log->flush();

@@ -1,6 +1,8 @@
 #!/bin/bash
 FILE="src/alcnet/sql.cpp"
 PORT=31732
+# cleanup
+rm rcvmsg.raw -rf
 # start server
 ./alcmsgtest -lm -lh localhost -lp $PORT -nl &
 PID=`pidof alcmsgtest`
@@ -10,22 +12,20 @@ sleep 1
 sleep 1
 # kill server
 killall -s INT alcmsgtest
-sleep 1
+sleep 2
 TEST=`ps -cp $PID | grep alcmsgtest`
 if [ -n "$TEST" ]; then
-	echo "alcmsgtest did not exit within 1s"
+	echo "alcmsgtest did not exit within 2s"
 	exit
 fi
 # the error log files must be empty
 if [ -s log/error.log ]; then
-	echo "error.log is not empty"
-	exit
+	echo "WARN: error.log is not empty"
 fi
 if [ -s log/uneterr.log ]; then
-	echo "uneterr.log is not empty"
-	exit
+	echo "WARN: uneterr.log is not empty"
 fi
-# the recieved file msut exist
+# the recieved file must exist
 if [ ! -e rcvmsg.raw ] ; then
 	echo "recieved file doesn't exist"
 	exit
