@@ -68,6 +68,8 @@ namespace alc {
 			var = cfg->getVar("vault.html.log.short");
 			vaultLogShort = (!var.isNull() && var.asByte()); // per default, it's not short
 		}
+		var = cfg->getVar("allow_uu_clients");
+		allowUU = (var.isNull() || var.asByte()); // per default, UU clients are allowed
 	}
 	
 	void tUnetLobbyServerBase::onUnloadConfig()
@@ -283,9 +285,14 @@ namespace alc {
 				// determine auth result
 				int result = AAuthHello;
 				if (u->max_version < 12) result = AProtocolNewer; // servers are newer
-				else if (u->max_version > 12) result = AProtocolOlder; // servers are newer
-				else if (u->min_version > 7) result = AProtocolOlder; // servers are newer
-				else if (u->min_version != 6) u->tpots = 2; // it's not TPOTS
+				else if (u->max_version > 12) result = AProtocolOlder; // servers are older
+				else if (u->min_version > 7) result = AProtocolOlder; // servers are older
+				else if (u->min_version != 6) {
+					u->tpots = 2; // it's not TPOTS
+					// block UU if we're told to do so
+					if (!allowUU && u->min_version == 7) // it's UU, and we are told not to allow that, so tell him the servers are older
+						result = AProtocolOlder;
+				}
 				
 				// init the challenge to the MD5 of the current system time and other garbage
 				tMD5Buf md5buffer;

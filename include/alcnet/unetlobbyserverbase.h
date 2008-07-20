@@ -69,6 +69,8 @@ protected:
 	
 	tLog *lvault;
 	bool vaultLogShort;
+	
+	bool allowUU;
 };
 
 #if 0
