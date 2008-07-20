@@ -216,6 +216,9 @@ namespace alc {
 				msg->data->get(forkServer);
 				log->log("<RCV> %s\n", forkServer.str());
 				
+				// flush all log files before forking because otherwise they will be flushed by both parent and child and messages will be printed twice
+				log->flush(); err->flush(); sec->flush();
+				
 				int pid = fork();
 				if (pid == 0) {
 					// this is the forked process. Since we're an exact copy of the lobby, we first have to properly shut down, then we can launch the game server

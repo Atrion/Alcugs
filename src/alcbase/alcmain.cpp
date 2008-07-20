@@ -253,7 +253,8 @@ void tSignalHandler::handle_signal(int s) {
 		switch (s) {
 #ifndef __WIN32__
 			case SIGCHLD:
-				lstd->log("INF: RECIEVED SIGCHLD: a child has exited.\n\n");
+				lstd->log("INF: RECIEVED SIGCHLD: a child has exited.\n");
+				lstd->flush();
 				alcSignal(SIGCHLD);
 				int status;
 				waitpid(-1, &status, WNOHANG);
@@ -262,6 +263,7 @@ void tSignalHandler::handle_signal(int s) {
 			case SIGSEGV:
 				lerr->log("\n PANIC!!!\n");
 				lerr->log("TERRIBLE FATAL ERROR: SIGSEGV recieved!!!\n\n");
+				lerr->flush();
 				//On windows, the signal handler runs on another thread
 				#ifndef __WIN32__
 				if(alcGetSelfThreadId()!=alcGetMainThreadId()) return;
