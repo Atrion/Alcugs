@@ -562,9 +562,8 @@ int tUnet::Recv() {
 	}
 
 	if(n>0) { //we have a message
-		/*TODO: Do firewall checking here.
-			return UNET_REJECTED if the host is blacklisted
-		*/
+		/* TODO: Do firewall checking here.
+			return UNET_REJECTED if the host is blacklisted */
 
 		if(n>OUT_BUFFER_SIZE) {
 			this->err->log("[ip:%s:%i] ERR: Recieved a really big message of %i bytes\n",alcGetStrIp(client.sin_addr.s_addr),ntohs(client.sin_port),n);

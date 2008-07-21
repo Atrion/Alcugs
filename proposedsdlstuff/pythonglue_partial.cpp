@@ -373,7 +373,7 @@ static int ptSDL_setitem(PyObject *self, PyObject *args, PyObject *values)
 
 			if(!PyArg_VaParse(values,parsestr,(char *)tupleptrs))
 			{
-				//!TODO add frees
+				//!todo add frees
 				free(tupleptrs);
 				free(parsestr);
 				free(tuple);

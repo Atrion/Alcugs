@@ -105,7 +105,7 @@ int gettimeofday(struct timeval *tv, struct timezone *tz) {
 
 #ifdef __WIN32__
 
-//TODO, if you are a windows programer, please fill these functions with the missing code
+// if you are a windows programer, please fill these functions with the missing code
 // i'm not going to waste more time searching for an equivalent. It's not my fault
 // that windows sucks a lot.
 
@@ -113,7 +113,7 @@ int getuid(void) { return 10000; }
 int daemon(int a,int b) { return 0; }
 unsigned int alarm(unsigned int sec) { return 0; }
 
-///TODO porting: strsep has to be rewritten. sometimes it causes errors.
+//strsep has to be rewritten. sometimes it causes errors.
 
 char *strsep(char **pcadena, const char *delim)
 {
@@ -138,7 +138,7 @@ char *strsep(char **pcadena, const char *delim)
 }
 
 char *getpass( const char * prompt ) {
-	//TODO, I though that windows had something for asking passwords in the console.
+	// I though that windows had something for asking passwords in the console.
 	puts(prompt);
 	static char what[500];
 	int str_len;

@@ -574,7 +574,7 @@ void tLog::log(const char * msg, ...) {
 		this->print("%s",buf);
 
 #ifdef __WIN32__
-	//TODO, implement here, windoze based syslog logging, if it has something similar.
+	// implement here, windoze based syslog logging, if it has something similar.
 		if(this->flags & DF_ANOY) {
 			MessageBox(NULL,buf,tvLogConfig->syslogname,0);
 		}
@@ -629,18 +629,18 @@ void tLog::logl(char level,const char * msg, ...) {
 */
 void dblog(st_log * log, char * type, char * user, char * location, char * msg, ...) {
 #ifdef _DBLOGGING_
-		//TODO, implement here database based log system, that is optional.
+		//TODO: implement here database based log system, that is optional.
 		//will work only, if the user compiles this module with the _DBLOGGING_ option
 #endif
 }
 /**
-	TODO socket based logging, send all debugging messages to an udp listener, or spawn
+	TODO: socket based logging, send all debugging messages to an udp listener, or spawn
 	a new thread to listen to incoming tcp connections.
 */
 #endif
 
 /**
-	Fflush all the streams
+	flush all the streams
 */
 void tLog::flush() {
 	if(this->dsc!=NULL) {

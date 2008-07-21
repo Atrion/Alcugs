@@ -150,7 +150,7 @@ void txBase::copy(txBase &t) {
 	strcpy(this->imsg,t.imsg);
 }
 void txBase::_preparebacktrace() {
-//TODO: Porting - This code only works under Linux (it's part of the libc)
+// This needs porting - This code only works under Linux (it's part of the libc)
 #if !(defined(__WIN32__) or defined(__CYGWIN__)) and defined(HAVE_EXECINFO_H)
 	//get the backtrace
 	char **strings;
