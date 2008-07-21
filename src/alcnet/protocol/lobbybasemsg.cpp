@@ -47,7 +47,7 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		// the vault manager sends these without X and KI
-		if (ki != 0) throw txProtocolError(_WHERE("KI must be 0 in NetMsgAuthenticateHello"));
+		if (ki != 0) throw txProtocolError(_WHERE("KI must be 0 in NetMsgAuthenticateHello but is %d", ki));
 		t.get(account);
 		maxPacketSize = t.getU16();
 		release = t.getByte();
@@ -96,9 +96,9 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		// the vault manager sends these without X and KI
-		if (ki != 0) throw txProtocolError(_WHERE("KI must be 0 in NetMsgAuthenticateResponse"));
+		if (ki != 0) throw txProtocolError(_WHERE("KI must be 0 in NetMsgAuthenticateResponse but is %d", ki));
 		t.get(hash);
-		if (hash.size() != 16) throw txProtocolError(_WHERE("tmAuthenticateResponse.hash must be 16 byte long"));
+		if (hash.size() != 16) throw txProtocolError(_WHERE("tmAuthenticateResponse.hash must be 16 characters long"));
 		
 		u->x = x;
 	}
@@ -177,7 +177,7 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
-		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch"));
+		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		// store the whole message
 		message.clear();
 		t.get(message);

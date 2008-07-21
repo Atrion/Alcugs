@@ -71,9 +71,9 @@ namespace alc {
 		// 0x20: DisplayName (Desc's name)
 		// 0x40: Language
 		flags = t.getByte();
-		U16 check = 0x02 | 0x01 | 0x04 | 0x08 | 0x20 | 0x40;
+		Byte check = 0x02 | 0x01 | 0x04 | 0x08 | 0x20 | 0x40;
 		if (flags & ~(check))
-			throw txProtocolError(_WHERE("unknown flag for AgeInfoStruct"));
+			throw txProtocolError(_WHERE("unknown flag 0x%02X for AgeInfoStruct", flags));
 		if (!(flags & 0x02)) // this must always be set (filename)
 			throw txProtocolError(_WHERE("the 0x02 flag must always be set in AgeInfoStruct"));
 		
@@ -112,9 +112,9 @@ namespace alc {
 	void tvAgeInfoStruct::stream(tBBuf &t)
 	{
 		// see store for description
-		U16 check = 0x02 | 0x01 | 0x04 | 0x08 | 0x20 | 0x40;
+		Byte check = 0x02 | 0x01 | 0x04 | 0x08 | 0x20 | 0x40;
 		if (flags & ~(check))
-			throw txProtocolError(_WHERE("unknown flag for AgeInfoStruct"));
+			throw txProtocolError(_WHERE("unknown flag 0x%02X for AgeInfoStruct", flags));
 		if (!(flags & 0x02)) // this must always be set (filename)
 			throw txProtocolError(_WHERE("the 0x02 flag must always be set in AgeInfoStruct"));
 		t.putByte(flags);
@@ -163,7 +163,7 @@ namespace alc {
 		//Supposicions:
 		// 0x00000007: 3 bits for title, name and cameraStack
 		flags = t.getU32();
-		if (flags != 0x00000007) throw txProtocolError(_WHERE("The SpawnPoint flag must always be 0x00000007"));
+		if (flags != 0x00000007) throw txProtocolError(_WHERE("The SpawnPoint flag must always be 0x00000007 (it is 0x%08X)", flags));
 		t.get(title);
 		t.get(name);
 		t.get(cameraStack);
@@ -172,7 +172,7 @@ namespace alc {
 	void tvSpawnPoint::stream(tBBuf &t)
 	{
 		// see store for description
-		if (flags != 0x00000007) throw txProtocolError(_WHERE("The SpawnPoint flag must always be 0x00000007"));
+		if (flags != 0x00000007) throw txProtocolError(_WHERE("The SpawnPoint flag must always be 0x00000007 (it is 0x%08X)", flags));
 		t.putU32(flags);
 		t.put(title);
 		t.put(name);
@@ -201,7 +201,7 @@ namespace alc {
 		flags = t.getU16();
 		U16 check = 0x0023 | 0x0010 | 0x0040;
 		if (flags & ~(check))
-			throw txProtocolError(_WHERE("unknown flag for AgeLinkStruct"));
+			throw txProtocolError(_WHERE("unknown flag 0x%04X for AgeLinkStruct", flags));
 		if (!(flags & 0x0023)) // this must always be set (AgeInfoStruct LinkingRules and SpawnPoint)
 			throw txProtocolError(_WHERE("the 0x0023 flag must always be set in AgeLinkStruct"));
 		
@@ -209,7 +209,7 @@ namespace alc {
 		linkingRule = t.getByte();
 		U32 unk = t.getU32(); // unknown, always seen 0x00000001
 		if (unk != 0x00000001)
-			throw txProtocolError(_WHERE("unknown unk value for AgeLinkStruct, must always be 0x00000001"));
+			throw txProtocolError(_WHERE("unknown unk value for AgeLinkStruct, must always be 0x00000001 but is 0x%08X", unk));
 		t.get(spawnPoint);
 		
 		// now come the optional fields
@@ -232,7 +232,7 @@ namespace alc {
 		// see store for description
 		U16 check = 0x0023 | 0x0010; // age description is not available when sending
 		if (flags & ~(check))
-			throw txProtocolError(_WHERE("unknown flag for AgeLinkStruct"));
+			throw txProtocolError(_WHERE("unknown flag 0x%04X for AgeLinkStruct", flags));
 		if (!(flags & 0x0023)) // this must always be set (AgeInfoStruct LinkingRules and SpawnPoint)
 			throw txProtocolError(_WHERE("the 0x0023 flag must always be set in AgeLinkStruct"));
 		t.putU16(flags);
@@ -272,8 +272,7 @@ namespace alc {
 				time = t.getDouble();
 				break;
 			default:
-				lerr->log("got creatable generic value with unknown format 0x%02X\n", format);
-				throw txProtocolError(_WHERE("unknown creatable generic value format"));
+				throw txProtocolError(_WHERE("unknown creatable generic value format 0x%02X", format));
 		}
 	}
 	
@@ -291,7 +290,7 @@ namespace alc {
 				t.putDouble(time);
 				break;
 			default:
-				throw txProtocolError(_WHERE("unknown creatable generic value format"));
+				throw txProtocolError(_WHERE("unknown creatable generic value format 0x%02X", format));
 		}
 	}
 	
@@ -308,7 +307,7 @@ namespace alc {
 				log->print("DTimestamp: %f<br />\n", time);
 				break;
 			default:
-				throw txProtocolError(_WHERE("unknown creatable generic value format"));
+				throw txProtocolError(_WHERE("unknown creatable generic value format 0x%02X", format));
 		}
 	}
 	
@@ -451,14 +450,14 @@ namespace alc {
 		// get flags
 		flagA = t.getU32(); // I think this is something like a version number. version 1 contains only flagB, version 2 also flagC
 		if (flagA != 0x00000001 && flagA != 0x00000002) { // check for unknown values
-			throw txProtocolError(_WHERE("invalid flagA"));
+			throw txProtocolError(_WHERE("invalid flagA (0x%08X)", flagA));
 		}
 		flagB = t.getU32(); // this is the main flag, all 32 bits are known
 		if (flagA == 0x00000002) { // it contains flagC
 			flagC = t.getU32();
 			U32 check = MBlob1Guid | MBlob2Guid | 0x00000004; // the latter is unknown and seems to be unused
 			if (flagC & ~(check)) { // check for unknown values
-				throw txProtocolError(_WHERE("invalid flagC"));
+				throw txProtocolError(_WHERE("invalid flagC (0x%08X)", flagC));
 			}
 		}
 		else
@@ -469,7 +468,7 @@ namespace alc {
 		type = t.getByte();
 		permissions = t.getU32();
 		if ((permissions & ~(KAllPermissions)) != 0)
-			throw txProtocolError(_WHERE("invalid permissions mask"));
+			throw txProtocolError(_WHERE("invalid permissions mask (0x%08X)", permissions));
 		owner = t.getS32();
 		group = t.getU32();
 		modTime = t.getU32();
@@ -615,14 +614,14 @@ namespace alc {
 		// write flags
 		t.putU32(flagA);
 		if (flagA != 0x00000001 && flagA != 0x00000002) { // check for unknown values
-			throw txProtocolError(_WHERE("invalid flagA"));
+			throw txProtocolError(_WHERE("invalid flagA (0x%08X)", flagA));
 		}
 		t.putU32(flagB);
 		if (flagA == 0x00000002) {
 			t.putU32(flagC);
 			U32 check = MBlob1Guid | MBlob2Guid | 0x00000004; // the latter is unknown and seems to be unused
 			if (flagC & ~(check)) { // check for unknown values
-				throw txProtocolError(_WHERE("invalid flagC"));
+				throw txProtocolError(_WHERE("invalid flagC (0x%08X)", flagC));
 			}
 		}
 		
@@ -631,7 +630,7 @@ namespace alc {
 		t.putByte(type);
 		t.putU32(permissions);
 		if ((permissions & ~(KAllPermissions)) != 0)
-			throw txProtocolError(_WHERE("invalid permissions mask"));
+			throw txProtocolError(_WHERE("invalid permissions mask (0x%08X)", permissions));
 		t.putS32(owner);
 		t.putU32(group);
 		t.putU32(modTime);
@@ -821,8 +820,7 @@ namespace alc {
 		id = t.getByte();
 		Byte unk = t.getByte();
 		if (unk != 0) {
-			lerr->log("got vault message with bad item.unk value 0x%02X\n", unk);
-			throw txProtocolError(_WHERE("bad item.unk value"));
+			throw txProtocolError(_WHERE("bad item.unk value 0x%02X", unk));
 		}
 		type = t.getU16();
 		if (tpots == 1) {
@@ -851,8 +849,7 @@ namespace alc {
 				data = new tvNode;
 				break;
 			default:
-				lerr->log("got vault message with unknown data type 0x%04X\n", type);
-				throw txProtocolError(_WHERE("unknown vault data type"));
+				throw txProtocolError(_WHERE("unknown vault data type 0x%04X", type));
 		}
 		t.get(*data);
 	}
@@ -896,11 +893,11 @@ namespace alc {
 		cmd = t.getByte();
 		U16 result = t.getU16();
 		if (result != 0) {
-			lerr->log("got vault message with bad 1st result 0x%04X\n", result);
-			throw txProtocolError(_WHERE("bad 1st result code"));
+			throw txProtocolError(_WHERE("bad 1st result code 0x%04X", result));
 		}
 		compressed = t.getByte();
 		realSize = t.getU32();
+		U32 startPos = t.tell(); // remember the pos to verify the real size
 		DBG(5, "vault message: command: 0x%02X, compressed: 0x%02X, real size: %d", cmd, compressed, realSize);
 		
 		tBBuf *buf = &t;
@@ -913,8 +910,7 @@ namespace alc {
 			buf = content;
 		}
 		else if (compressed != 0x01) {
-			lerr->log("Unknown compression format 0x%02X\n", compressed);
-			throw txProtocolError(_WHERE("unknown compression format"));
+			throw txProtocolError(_WHERE("unknown compression format 0x%02X", compressed));
 		}
 		
 		// get the items
@@ -935,6 +931,8 @@ namespace alc {
 			if (!buf->eof()) throw txProtocolError(_WHERE("Message is too long")); // there must not be any byte after what we parsed above
 			delete buf;
 		}
+		else if (t.tell()-startPos != realSize)
+			throw txProtocolError(_WHERE("Size mismatch (the packet says %d but it is %d)",realSize,t.tell()-startPos));
 		
 		// get remaining info (which is always uncompressed)
 		if (task) {
@@ -946,8 +944,7 @@ namespace alc {
 			context = t.getU16();
 			result = t.getU16();
 			if (result != 0) {
-				lerr->log("got vault message with bad 2nd result 0x%04X\n", result);
-				throw txProtocolError(_WHERE("bad 2nd result code"));
+				throw txProtocolError(_WHERE("bad 2nd result code 0x%04X", result));
 			}
 			vmgr = t.getU32();
 			vn = t.getU16();
@@ -984,7 +981,7 @@ namespace alc {
 			t.put(buf);
 		}
 		else
-			throw txProtocolError(_WHERE("unknown compression format"));
+			throw txProtocolError(_WHERE("unknown compression format 0x%02X", compressed));
 		
 		// put remaining info
 		if (task) {

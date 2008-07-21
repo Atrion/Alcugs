@@ -130,7 +130,7 @@ namespace alc {
 		var = cfg->getVar("instance_mode");
 		if (var.isNull()) instanceMode = 1;
 		else instanceMode = var.asByte();
-		if (instanceMode != 0 && instanceMode != 1) throw txBase(_WHERE("instance_mode must be 0 or 1"));
+		if (instanceMode != 0 && instanceMode != 1) throw txBase(_WHERE("instance_mode must be 0 or 1 but is %d", instanceMode));
 	}
 	
 	bool tGuidGen::isAgePrivate(const Byte *age)

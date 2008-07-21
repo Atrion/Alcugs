@@ -45,7 +45,7 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		// the vault manager sends these without X and KI
-		if (ki != 0) throw txProtocolError(_WHERE("KI must be 0 in NetMsgRequestMyVaultPlayerList"));
+		if (ki != 0) throw txProtocolError(_WHERE("KI must be 0 in NetMsgRequestMyVaultPlayerList but is %d", ki));
 		
 		u->x = x;
 	}
@@ -97,8 +97,7 @@ namespace alc {
 		t.get(key);
 		U32 unk = t.getU32();
 		if (unk != 0) {
-			lerr->log("NetMsgCreatePlayer.unk is not null but %d\n", unk);
-			throw txProtocolError(_WHERE("NetMsgCreatePlayer.unk is not 0"));
+			throw txProtocolError(_WHERE("NetMsgCreatePlayer.unk is not 0 but 0x%08X", unk));
 		}
 		
 		u->x = x;
@@ -141,8 +140,7 @@ namespace alc {
 		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
 		U16 unk = t.getU16();
 		if (unk != 0) {
-			lerr->log("NetMsgDeletePlayer.unk is not null but %d\n", unk);
-			throw txProtocolError(_WHERE("NetMsgDeletePlayer.unk is not 0"));
+			throw txProtocolError(_WHERE("NetMsgDeletePlayer.unk is not 0 but 0x%08X", unk));
 		}
 		
 		u->x = x;

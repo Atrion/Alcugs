@@ -124,7 +124,7 @@ namespace alc {
 		}
 		
 		if (whoami == KGame && avatar[0] == 0) // empty avatar names are not allowed in game server
-			throw txProtocolError(_WHERE("Someone is trying to set an empty avatar name, but I\'m a game server. Kick him."));
+			throw txProtocolError(_WHERE("Someone with KI %d is trying to set an empty avatar name, but I\'m a game server. Kick him.", ki));
 	
 		tNetSession *trackingServer = getSession(tracking), *vaultServer = getSession(vault);
 		if (!trackingServer || !vaultServer) {
@@ -499,7 +499,8 @@ namespace alc {
 					send(vaultMsgFwd);
 				}
 				else { // got it from a client
-					if (vaultMsg.hasFlags(plNetKi) && vaultMsg.ki != u->ki) throw txProtocolError(_WHERE("KI mismatch"));
+					if (vaultMsg.hasFlags(plNetKi) && vaultMsg.ki != u->ki)
+						throw txProtocolError(_WHERE("KI mismatch (%d != %d)", vaultMsg.ki, u->ki));
 					if (u->whoami != KClient || u->ki == 0) { // KI is necessary to know where to route it
 						err->log("ERR: %s sent a NetMsgVault but is not yet authed or did not set his KI. I\'ll kick him.\n", u->str());
 						return -2; // hack attempt
@@ -540,7 +541,7 @@ namespace alc {
 				log->print(" %s\n", ageLink.str());
 				
 				if (ageLink.linkingRule != KOriginalBook && ageLink.linkingRule != KOwnedBook)
-					throw txProtocolError(_WHERE("Linking rule must be KOriginalBook or KOwnedBook"));
+					throw txProtocolError(_WHERE("Linking rule must be KOriginalBook or KOwnedBook but is 0x%02X", ageLink.linkingRule));
 				if (ageLink.ccr)
 					throw txProtocolError(_WHERE("Linking as CCR is not allowed"));
 				
