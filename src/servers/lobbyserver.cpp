@@ -221,10 +221,10 @@ namespace alc {
 				
 				int pid = fork();
 				if (pid == 0) {
-					// this is the forked process. Since we're an exact copy of the lobby, we first have to properly shut down, then we can launch the game server
-					// TODO: There's a HUGE memory hole here as things many things are not freed. I've got no idea how to properly do so
-					alcOnFork();
-					forcestop();
+					// This is the forked process. That means it is exactly the same as the lobby we just left.
+					// We don't have to properly free each variable as this process will soon be completely
+					//  replaced by the game server (this is was execlp does)
+					// BUT we have to close each file and socket as otherwise they will stay opened till the game server exits
 					
 					// get the arguments for starting the server
 					char gameName[128], gameGuid[32], gameLog[512], gameBin[512], gamePort[16];
@@ -236,6 +236,10 @@ namespace alc {
 					sprintf(gameBin, "%s/uru_game", gameBinPath);
 					sprintf(gamePort, "%d", forkServer.forkPort);
 					
+					onUnloadConfig(); // will close the lobbyserverbase logs
+					stopOp(); // will close the alcnet logs as well as the socket
+					alcOnFork(); // will close the global logs
+					
 					if (forkServer.loadSDL)
 						execlp(gameBin, gameBin,"-p",gamePort,"-guid",gameGuid,"-name",gameName,
 								"-log",gameLog,"-c",gameConfig,"-v","0","-L",NULL);
@@ -243,12 +247,13 @@ namespace alc {
 						execlp(gameBin,gameBin,"-p",gamePort,"-guid",gameGuid,"-name",gameName,
 								"-log",gameLog,"-c",gameConfig,"-v","0",NULL);
 					
-					// if we come here, there was an error... but weve already shut down the logs, so we have to get them up again
+					// if we come here, there was an error in the execlp call (but we're still in the game server process!)
+					// weve already shut down the logs, so we have to get them up again
 					alcLogInit();
 					tLog *log = new tLog("fork_err.log", 2, DF_APPEND);
 					log->log("There was an error starting the game server %s (GUID: %s, Port: %s)\n", gameBin, gamePort, gamePort);
 					delete log;
-					exit(-1);
+					exit(-1); // exit the game server process
 				}
 				// this is the parent process
 				else if (pid < 0) {

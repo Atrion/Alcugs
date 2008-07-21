@@ -147,8 +147,8 @@ tNetSessionMgr::~tNetSessionMgr()
 		for(int i=0; i<size; i++) {
 			if(table[i]!=NULL) delete table[i];
 		}
-		free((void *)table);
 	}
+	// the table itself will be freed in ~tNetSessionList
 }
 tNetSession * tNetSessionMgr::search(tNetSessionIte &ite,bool create) {
 	if(ite.sid!=-1 && ite.sid<size && table[ite.sid]!=NULL) {
