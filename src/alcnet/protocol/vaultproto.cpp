@@ -111,12 +111,7 @@ namespace alc {
 	
 	void tvAgeInfoStruct::stream(tBBuf &t)
 	{
-		// see store for description
-		Byte check = 0x02 | 0x01 | 0x04 | 0x08 | 0x20 | 0x40;
-		if (flags & ~(check))
-			throw txProtocolError(_WHERE("unknown flag 0x%02X for AgeInfoStruct", flags));
-		if (!(flags & 0x02)) // this must always be set (filename)
-			throw txProtocolError(_WHERE("the 0x02 flag must always be set in AgeInfoStruct"));
+		// see store for description of flags
 		t.putByte(flags);
 		
 		t.put(filename);
@@ -171,8 +166,7 @@ namespace alc {
 	
 	void tvSpawnPoint::stream(tBBuf &t)
 	{
-		// see store for description
-		if (flags != 0x00000007) throw txProtocolError(_WHERE("The SpawnPoint flag must always be 0x00000007 (it is 0x%08X)", flags));
+		// see store for description of flags
 		t.putU32(flags);
 		t.put(title);
 		t.put(name);
@@ -229,12 +223,7 @@ namespace alc {
 	
 	void tvAgeLinkStruct::stream(tBBuf &t)
 	{
-		// see store for description
-		U16 check = 0x0023 | 0x0010; // age description is not available when sending
-		if (flags & ~(check))
-			throw txProtocolError(_WHERE("unknown flag 0x%04X for AgeLinkStruct", flags));
-		if (!(flags & 0x0023)) // this must always be set (AgeInfoStruct LinkingRules and SpawnPoint)
-			throw txProtocolError(_WHERE("the 0x0023 flag must always be set in AgeLinkStruct"));
+		// see store for description of flags
 		t.putU16(flags);
 		
 		t.put(ageInfo);
@@ -613,24 +602,15 @@ namespace alc {
 	{
 		// write flags
 		t.putU32(flagA);
-		if (flagA != 0x00000001 && flagA != 0x00000002) { // check for unknown values
-			throw txProtocolError(_WHERE("invalid flagA (0x%08X)", flagA));
-		}
 		t.putU32(flagB);
 		if (flagA == 0x00000002) {
 			t.putU32(flagC);
-			U32 check = MBlob1Guid | MBlob2Guid | 0x00000004; // the latter is unknown and seems to be unused
-			if (flagC & ~(check)) { // check for unknown values
-				throw txProtocolError(_WHERE("invalid flagC (0x%08X)", flagC));
-			}
 		}
 		
 		// write mandatory data
 		t.putU32(index);
 		t.putByte(type);
 		t.putU32(permissions);
-		if ((permissions & ~(KAllPermissions)) != 0)
-			throw txProtocolError(_WHERE("invalid permissions mask (0x%08X)", permissions));
 		t.putS32(owner);
 		t.putU32(group);
 		t.putU32(modTime);
@@ -980,8 +960,6 @@ namespace alc {
 		else if (compressed == 0x01) {
 			t.put(buf);
 		}
-		else
-			throw txProtocolError(_WHERE("unknown compression format 0x%02X", compressed));
 		
 		// put remaining info
 		if (task) {
