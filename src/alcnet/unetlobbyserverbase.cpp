@@ -495,7 +495,7 @@ namespace alc {
 					if (!client || client->whoami != KClient) {
 						lvault->print("<h2 style='color:red'>Packet for unknown client</h2>\n");
 						parsedMsg.print(lvault, /*clientToServer:*/false, NULL, vaultLogShort);
-						if (parsedMsg.cmd == VOnlineState && parsedMsg.vmgr == vaultMsg.ki)
+						if ((parsedMsg.cmd == VOnlineState && parsedMsg.vmgr == vaultMsg.ki) || parsedMsg.cmd == VDisconnect)
 							// this is most likely the message that this player went offline
 							// (vault sends one to lobby after the client already left to connect to the game server)
 							// so silently ignore it
