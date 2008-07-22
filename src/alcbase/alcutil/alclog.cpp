@@ -801,7 +801,7 @@ const char *tLog::getDir(void)
 	if (lastSep2 > lastSep) lastSep = lastSep2;
 	// cut the string after it
 	if (lastSep == NULL) strcpy(dir, "./"); // if no seperator was found, use working dir
-	else *(lastSep+1) = NULL; // let the String end after the seperator
+	else *(lastSep+1) = 0; // let the String end after the seperator
 	return dir;
 }
 

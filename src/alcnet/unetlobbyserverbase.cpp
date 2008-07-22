@@ -399,8 +399,8 @@ namespace alc {
 			//// messages regarding setting the avatar
 			case NetMsgSetMyActivePlayer:
 			{
-				if (u->whoami != KClient || u->ki != 0) {
-					err->log("ERR: %s sent a NetMsgSetMyActivePlayer but is not yet authed or already set his KI. I\'ll kick him.\n", u->str());
+				if (u->whoami != KClient) {
+					err->log("ERR: %s sent a NetMsgSetMyActivePlayer but is not yet authed. I\'ll kick him.\n", u->str());
 					return -2; // hack attempt
 				}
 				
@@ -408,6 +408,17 @@ namespace alc {
 				tmSetMyActivePlayer setPlayer(u);
 				msg->data->get(setPlayer);
 				log->log("<RCV> %s\n", setPlayer.str());
+				
+				if (u->ki != 0) {
+					if (u->ki == setPlayer.ki) {
+						log->log("%s set the same KI twice, ignoring the second try\n", u->str());
+						return 1;
+					}
+					else {
+						err->log("ERR: %s sent a NetMsgSetMyActivePlayer but already set a different KI. I\'ll kick him.\n", u->str());
+						return -2; // hack attempt
+					}
+				}
 				
 				if (u->accessLevel <= AcAdmin) {
 					setActivePlayer(u, setPlayer.ki, setPlayer.avatar.c_str());
