@@ -76,7 +76,7 @@ public:
 	virtual tUStr & operator=(tUStr &t) { this->copy(t); return *this; }
 	virtual tUStr & operator=(tStrBuf &t) { tStrBuf::copy(t); return *this; }
 	virtual tUStr & operator=(const tStrBuf &t) { tStrBuf::copy((tStrBuf &)t); return *this; }
-	virtual tUStr & operator=(const void * str) { tStrBuf::copy(str); return *this; }
+	virtual tUStr & operator=(const char * str) { tStrBuf::copy(str); return *this; }
 
 private:
 	virtual void _pcopy(tUStr &t);

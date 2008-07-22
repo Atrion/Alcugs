@@ -677,7 +677,7 @@ void tStrBuf::copy(tStrBuf &t) {
 	this->_pcopy(t);
 	DBG(9,"flags are %02X\n",flags);
 }
-void tStrBuf::copy(const void * str) {
+void tStrBuf::copy(const char * str) {
 	DBG(2,"cpy\n");
 	tStrBuf pat(str);
 	copy(pat);
@@ -694,10 +694,17 @@ SByte tStrBuf::compare(tStrBuf &t) {
 	if(s>s2) return -1;
 	return((SByte)strncmp((char *)read(),(char *)t.read(),s));
 }
-SByte tStrBuf::compare(const void * str) {
+SByte tStrBuf::compare(const char * str) {
 	DBG(9,"compare %s\n",(const char *)str);
-	tStrBuf pat(str);
-	return(compare(pat));
+	//tStrBuf pat(str);
+	//return(compare(pat));
+	rewind();
+	U32 s = size();
+	U32 s2 = strlen(str);
+	DBG(9,"sizes %i,%i\n",s,s2);
+	if(s<s2) return 1;
+	if(s>s2) return -1;
+	return((SByte)strncmp((char *)read(),str,s));
 }
 const Byte * tStrBuf::c_str() {
 	DBG(2,"tStrBuf::c_str()\n");
@@ -912,10 +919,10 @@ tStrBuf & tStrBuf::substring(U32 start,U32 len) {
 	shot=out;
 	return *out;
 }
-bool tStrBuf::startsWith(const void * pat) {
+bool tStrBuf::startsWith(const char * pat) {
 	return(substring(0,strlen((const char *)pat))==pat);
 }
-bool tStrBuf::endsWith(const void * pat) {
+bool tStrBuf::endsWith(const char * pat) {
 	return(substring(size()-strlen((const char *)pat),strlen((const char *)pat))==pat);
 }
 tStrBuf & tStrBuf::dirname() {

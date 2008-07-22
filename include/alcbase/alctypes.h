@@ -320,8 +320,8 @@ public:
 	tStrBuf & upper();
 	tStrBuf & substring(U32 start,U32 len);
 	tStrBuf & dirname();
-	bool startsWith(const void * pat);
-	bool endsWith(const void * pat);
+	bool startsWith(const char * pat);
+	bool endsWith(const char * pat);
 	void hasQuotes(bool has);
 	/** \brief returs true if original source had quotes
 			\return bool
@@ -356,21 +356,21 @@ public:
 	SByte asSByte() { return (SByte)asU32(); }
 	const Byte * c_str();
 	virtual void copy(tStrBuf &t);
-	virtual void copy(const void * str);
+	virtual void copy(const char * str);
 	virtual tStrBuf & operator=(tStrBuf &t) { this->copy(t); return *this; }
 	virtual tStrBuf & operator=(const tStrBuf &t) { this->copy((tStrBuf &)t); return *this; }
-	virtual tStrBuf & operator=(const void * str) { this->copy(str); return *this; }
+	virtual tStrBuf & operator=(const char * str) { this->copy(str); return *this; }
 	void setSeparator(char w) { sep=w; }
 	virtual SByte compare(tStrBuf &t);
-	virtual SByte compare(const void * str);
+	virtual SByte compare(const char * str);
 	virtual bool operator==(tStrBuf &t) { return(!this->compare(t)); }
 	virtual bool operator!=(tStrBuf &t) { return(this->compare(t)); }
 	virtual bool operator>(tStrBuf &t) { return(this->compare(t)<0); }
 	virtual bool operator<(tStrBuf &t) { return(this->compare(t)>0); }
 	virtual bool operator>=(tStrBuf &t) { return(this->compare(t)<=0); }
 	virtual bool operator<=(tStrBuf &t) { return(this->compare(t)>=0); }
-	virtual bool operator==(const void * str) { return(!this->compare(str)); }
-	virtual bool operator!=(const void * str) { return(this->compare(str)); }
+	virtual bool operator==(const char * str) { return(!this->compare(str)); }
+	virtual bool operator!=(const char * str) { return(this->compare(str)); }
 protected:
 	virtual void _pcopy(tStrBuf &t);
 private:
