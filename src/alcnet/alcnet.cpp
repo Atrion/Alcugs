@@ -75,7 +75,7 @@ void tUnet::setBindAddress(const void * lhost) {
 void tUnet::init() {
 	DBG(9,"tUnet::init()\n");
 	if(initialized) return;
-	flags=UNET_NBLOCK | UNET_ELOG | UNET_ECRC | UNET_AUTOSP | UNET_NOFLOOD | UNET_FLOG;
+	flags=UNET_DEFAULT_FLAGS;
 	whoami=0; //None (new connection) //KClient; //default type of peer
 
 	//netcore timeout < min(all RTT's), nope, it must be the min tts (stt)

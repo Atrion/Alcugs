@@ -210,11 +210,11 @@ namespace alc {
 		}
 #endif
 		
-		tNetSessionIte ite = netConnect((char *)host.c_str(), port.asU16(), 2, 0);
+		U32 proto = protocol.isNull() ? 0 : protocol.asU32();
+		tNetSessionIte ite = netConnect((char *)host.c_str(), port.asU16(), (proto == 0 || proto >= 3) ? 3 : 2, 0);
 		tNetSession *session = getSession(ite);
 		session->whoami = dst;
-		if (!protocol.isNull())
-			session->proto = protocol.asU32();
+		session->proto = proto;
 		
 		// send hello
 		tmAlive alive(session);
