@@ -141,7 +141,14 @@ void tUnetBase::reconfigure() {
 			unsetFlags(UNET_NOFLOOD);
 		}
 	}
-	//protocol (auth,vault,tracking)
+	var=cfg->getVar("net.log.ack","global");
+	if(!var.isNull()) {
+		if(var.asByte()) {
+			unsetFlags(UNET_DLACK);
+		} else {
+			setFlags(UNET_DLACK);
+		}
+	}
 	//Other DEVEL vars (dangerous to touch)
 	var=cfg->getVar("net.flood_check_sec","global");
 	if(!var.isNull()) {
