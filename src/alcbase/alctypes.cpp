@@ -608,7 +608,7 @@ tStrBuf::tStrBuf(const void * k) :tMBuf(200) {
 	DBG(9,"ctor\n");
 	init();
 	writeStr((char *)k);
-	rewind();
+	end();
 }
 tStrBuf::tStrBuf(U32 size) :tMBuf(size) { init(); }
 tStrBuf::tStrBuf(tBBuf &k,U32 start,U32 len) :tMBuf(k,start,len) {
