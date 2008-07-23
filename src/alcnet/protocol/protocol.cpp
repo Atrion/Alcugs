@@ -369,6 +369,7 @@ void tUnetUruMsg::dumpheader(tLog * f) {
 }
 //flux 0 client -> server, 1 server -> client
 void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
+	if (!log->doesPrint()) return;
 	static int count=0;
 	count++;
 

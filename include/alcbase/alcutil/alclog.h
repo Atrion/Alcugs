@@ -88,6 +88,7 @@ public:
 	void nl();
 	/** logs an std error */
 	void logerr(const char *msg);
+	bool doesPrint(void);
 	const char *getDir(void);
 
 private:

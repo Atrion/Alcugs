@@ -976,7 +976,7 @@ namespace alc {
 	
 	void tvMessage::print(tLog *log, bool clientToServer, tNetSession *client, bool shortLog)
 	{
-		if (log == lnull) return; // don't do anything if log is disabled
+		if (!log->doesPrint()) return; // don't do anything if log is disabled
 		if (clientToServer)
 			log->print("<h2 style='color:blue'>From client (%s) to vault</h2>\n", client ? client->str() : "?");
 		else
