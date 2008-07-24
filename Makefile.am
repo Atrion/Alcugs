@@ -41,13 +41,13 @@ libalcbase1_a_CPPFLAGS = -DIN_ALC_LIBRARY
 
 #LibAlcUruNet3 library
 libalcnet1_a_SOURCES = \
- src/alcnet/alcnet.cpp \
+ src/alcnet/unet.cpp \
  src/alcnet/netlog.cpp \
  src/alcnet/netsession.cpp \
  src/alcnet/netsessionmgr.cpp \
  src/alcnet/netmsgq.cpp \
  src/alcnet/protocol/protocol.cpp \
- src/alcnet/netcore.cpp \
+ src/alcnet/unetbase.cpp \
  src/alcnet/protocol/umsgbasic.cpp \
  src/alcnet/configalias.cpp \
  src/alcnet/unetmain.cpp \

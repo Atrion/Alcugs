@@ -28,10 +28,10 @@
 	URUNET 3+
 */
 
-#ifndef __U_NETCORE_H
-#define __U_NETCORE_H
+#ifndef __U_UNETBASE_H
+#define __U_UNETBASE_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_NETCORE_H_ID "$Id$"
+#define __U_UNETBASE_H_ID "$Id$"
 
 namespace alc {
 

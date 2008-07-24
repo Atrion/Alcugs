@@ -29,7 +29,7 @@
 */
 
 /* CVS tag - DON'T TOUCH*/
-#define __U_NETCORE_ID "$Id$"
+#define __U_UNETBASE_ID "$Id$"
 
 //#define _DBG_LEVEL_ 10
 
