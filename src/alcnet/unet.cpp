@@ -29,7 +29,7 @@
 */
 
 /* CVS tag - DON'T TOUCH*/
-#define __U_URUNET_ID "$Id$"
+#define __U_UNET_ID "$Id$"
 
 //#define _DBG_LEVEL_ 10
 
