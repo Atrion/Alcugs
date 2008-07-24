@@ -275,12 +275,16 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 				if(!evt->veto)
 					terminate(u, RTimedOut);
 			}
-			else { // a destroyed session, close it ASAP
+			else { // a destroyed session, close it
+				/*
 				if (u->sndq->isEmpty() && u->ackq->isEmpty())
 					closeConnection(u);
 				else // if the send or ack queue isn't empty, send remaining messages
 					u->doWork();
 					// I know it's ugly to call this here, but I found no other way: tUnet::doWork will create another timeout event instead of sending the messages
+				*/
+				// above code seems to create the possiblity of a session being kept forever and blocking new incoming connections
+				closeConnection(u);
 			}
 			break;
 		case UNET_FLOOD:
@@ -417,9 +421,10 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool 
 			tmLeave msgleave(u);
 			msg->data->get(msgleave);
 			log->log("<RCV> %s\n",msgleave.str());
-			ev->id=UNET_TERMINATED;
-			if (!shutdown && !u->terminated)
+			if (!shutdown && !u->terminated) {
+				ev->id=UNET_TERMINATED;
 				onLeave(ev,msgleave.reason,u);
+			}
 			terminate(u, msgleave.reason, true); // delete the session ASAP
 			return 1;
 		}
