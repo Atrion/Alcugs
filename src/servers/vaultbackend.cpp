@@ -24,44 +24,22 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
-*/
-
-#ifndef __U_VAULTSERVER_H
-#define __U_VAULTSERVER_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_VAULTSERVER_H_ID "$Id$"
+#define __U_VAULTBACKEND_ID "$Id$"
 
+//#define _DBG_LEVEL_ 10
+
+#include <alcugs.h>
+#include <alcnet.h>
+
+////extra includes
 #include "vaultbackend.h"
+
+#include "alcdebug.h"
 
 namespace alc {
 
-	////DEFINITIONS
-	/**
-		If we want to do it well and nice, we should add pre and post conditions here.
-	*/
+	////IMPLEMENTATION
 
-	class tUnetVaultServer : public tUnetServerBase {
-	public:
-		tUnetVaultServer(void) : tUnetServerBase()
-		{
-			vaultBackend = new tVaultBackend;
-			lstd->log("WARNING: The vault server is not finished yet. So if it doesn\'t work, that's not even a bug.\n");
-		}
-		~tUnetVaultServer(void) { delete vaultBackend; }
-		virtual void onLoadConfig(bool reload) {
-			if (reload) vaultBackend->reload();
-		}
-	private:
-		tVaultBackend *vaultBackend;
-	};
-	
-} //End alc namespace
+} //end namespace alc
 
-#endif
