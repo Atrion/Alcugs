@@ -227,9 +227,9 @@ void tUnetBase::terminate(tNetSession *u,Byte reason, bool destroyOnly)
 		send(leave);
 	}
 	
-	if (destroyOnly) // if the session should be destroyed, do that ASAP
+	if (destroyOnly && u->terminated) // if the session should be destroyed, do that ASAP
 		u->setTimeout(0);
-	else if (u->client && !u->terminated) // give clients 3 seconds time to send their NetMsgLeave, but only if they haven't already got a NetMsgTerminated before
+	else if (u->client && !destroyOnly && !u->terminated) // give clients 3 seconds time to send their NetMsgLeave, but only if they haven't already got a NetMsgTerminated before
 		u->setTimeout(3);
 	else // otherwise, give the session one second to send remaining messages
 		u->setTimeout(1);
@@ -315,7 +315,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 				if (u->terminated || shutdown) {
 					if (ret == 0) err->log("%s is terminated and sent a non-NetMsgLeave message %04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
 					u->rcvq->deleteCurrent();
-					terminate(u, RKickedOff, true); // delete the session ASAP
+					if (ret != 1) terminate(u, RKickedOff, true); // delete the session ASAP
 					break;
 				}
 				// this part can never be reached on shutdown, so messages are only processed when the server is still fully running

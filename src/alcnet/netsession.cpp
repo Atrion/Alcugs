@@ -115,7 +115,7 @@ void tNetSession::init() {
 	data = NULL;
 	name[0] = 0;
 	
-	DBG(3, "%s Initial timeout: %d\n", str(), timeout);
+	DBG(5, "%s Initial timeout: %d\n", str(), timeout);
 }
 const char * tNetSession::str(bool detail) {
 	static char cnt[1024], tmp[1024];
@@ -168,13 +168,13 @@ void tNetSession::updateRTT(U32 newread) {
 		if(deviation!=0) timeout=u*rtt + delta*deviation;
 	#endif
 	ack_rtt=rtt/8;
-	DBG(3,"%s RTT update (sample rtt: %i) new rtt:%i, timeout:%i\n",str(),newread,rtt,timeout);
+	DBG(5,"%s RTT update (sample rtt: %i) new rtt:%i, timeout:%i\n",str(),newread,rtt,timeout);
 }
 void tNetSession::duplicateTimeout() {
 	U32 maxTH=4000000; //
 	timeout+=(timeout*666)/1000;
 	if(timeout>maxTH) timeout=maxTH;
-	DBG(3,"%s timeout update:%i\n",str(),timeout);
+	DBG(5,"%s timeout update:%i\n",str(),timeout);
 	//net->log->log("Abort()\n");
 	//abort();
 }
@@ -310,6 +310,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 				DBG(5,"Clearing send buffer\n");
 				sndq->clear();
 				if(nego_stamp.seconds==0) nego_stamp=timestamp;
+				DBG(5, "Negoiating because we got a negotiation\n");
 				negotiate();
 				negotiating=true;
 			}
@@ -318,6 +319,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	} else if(bandwidth==0 || cabal==0) {
 		if(!negotiating) {
 			nego_stamp=timestamp;
+			DBG(5, "Negoiating because we've got nothing so far\n");
 			negotiate();
 			negotiating=true;
 		}
@@ -333,6 +335,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		server.ps=0;
 		nego_stamp=timestamp;
 		renego_stamp.seconds=0;
+		DBG(5, "Negoiating because the numbders are too high\n");
 		negotiate();
 		negotiating=true;
 	}

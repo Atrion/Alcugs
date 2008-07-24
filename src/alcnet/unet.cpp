@@ -652,8 +652,8 @@ void tUnet::doWork() {
 
 /**
 	Sends the message (internal use only)
-	An uru message can only be 253952 bytes in V0x01 & V0x02 and 254976 in V0x00
 	(only Nego and normal messages, ack are handled by another function)
+	An uru message can only be 253952 bytes in V0x01 & V0x02 and 254976 in V0x00
 */
 void tUnet::basesend(tNetSession * u,tmBase &msg) {
 	DBG(9,"basesend\n");
