@@ -31,7 +31,7 @@
 #define ALC_PROGRAM_NAME "UruTestingSuite"
 
 #include <alcugs.h>
-#include <unet.h>
+#include <alcnet.h>
 
 
 #include <alcdebug.h>

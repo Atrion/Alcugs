@@ -28,10 +28,10 @@
 	URUNET 3+
 */
 
-#ifndef __U_UNET_H
-#define __U_UNET_H
+#ifndef __U_ALCNET_H
+#define __U_ALCNET_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_UNET_H_ID "$Id$"
+#define __U_ALCNET_H_ID "$Id$"
 
 #ifndef __WIN32__
 #include <netdb.h>
