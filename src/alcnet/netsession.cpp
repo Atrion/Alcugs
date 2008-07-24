@@ -469,8 +469,8 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 		return 2;
 	} else if(msg.sn < wite) { // this means we already parsed it
 		if (msg.frn == 0) {
-			net->log->log("%s INF: Dropped packet %i before the window by sn (wite: %i)\n",str(),msg.sn,wite);
-			net->log->flush();
+			net->err->log("%s INF: Dropped packet %i before the window by sn (wite: %i)\n",str(),msg.sn,wite);
+			net->err->flush();
 			return 1;
 		} else { // it's fragmented but out of the window, so we can't do anything (see above)
 			return 0; 
@@ -480,9 +480,9 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 		start=wite % (rcv_win*8);
 		i=msg.sn % (rcv_win*8);
 		if(((w[i/8] >> (i%8)) & 0x01) && msg.frn==0) { // don't drop fragmented messages, see above
-			net->log->log("%s INF: Dropped already parsed packet %i\n",str(),msg.sn);
+			net->err->log("%s INF: Dropped already parsed packet %i\n",str(),msg.sn);
 			ack_rtt=ack_rtt/4;
-			net->log->flush();
+			net->err->flush();
 			return 1;
 		} else {
 			w[i/8] |= (0x01<<(i%8)); //activate bit
