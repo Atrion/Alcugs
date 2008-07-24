@@ -49,6 +49,7 @@ namespace alc {
 	public:
 		tUnetGameServer(void) : tUnetLobbyServerBase()
 			{ lstd->log("WARNING: The game server is not finished yet. So if it doesn\'t work, that's not even a bug.\n"); }
+		virtual void onConnectionClosed(tNetEvent *ev, tNetSession *u);
 	};
 	
 } //End alc namespace

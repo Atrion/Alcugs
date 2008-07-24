@@ -54,5 +54,16 @@ namespace alc {
 	const char * alcNetName="Game";
 	Byte alcWhoami=KGame;
 
+	void tUnetGameServer::onConnectionClosed(tNetEvent *ev, tNetSession *u)
+	{
+		if (ev->sid == tracking) {
+			/* The game server should go down when it looses the connection to tracking. This way, you can easily
+			   shut down all game servers. In addition, it won't get any new peers anyway without the tracking server */
+			stop();
+		}
+		else
+			tUnetLobbyServerBase::onConnectionClosed(ev, u);
+	}
+
 } //end namespace alc
 
