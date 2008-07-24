@@ -40,6 +40,35 @@
 namespace alc {
 
 	////IMPLEMENTATION
+	tVaultDB::tVaultDB(void)
+	{
+		sql = NULL;
+	
+		prepare();
+	}
+	
+	bool tVaultDB::prepare(void)
+	{
+		// establish database connection
+		if (sql) { // the connection is already established?
+			if (sql->prepare()) // when we're still connected or recoonnection works, everything is fine
+				return true;
+			// otherwise, delete the connection and try again
+			DBG(6, "deleting sql\n");
+			delete sql;
+		}
+		DBG(6, "creating sql\n");
+		sql = tSQL::createFromConfig();
+		if (sql->prepare()) {
+			// FIXME: create vault db if necessary, upgrade it if necessary
+			return true;
+		}
+		// when we come here, it didn't work, so delete everything
+		DBG(6, "deleting sql\n");
+		delete sql;
+		sql = NULL;
+		return false;
+	}
 
 } //end namespace alc
 

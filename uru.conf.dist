@@ -143,6 +143,13 @@ stop = 1
 bind = "127.0.0.1" # the vault server doesn't have to be accessed from outside
 port = 2012
 
+# database settings
+db.name = "alcugs_vault"
+# you can overwrite the global settings here if host, username and/or password aren't the same for all servers
+;db.host = "127.0.0.1"
+;db.username = "alcugs"
+;db.passwd = "yourpassword"
+
 stop = 1
 
 ############# Lobby Settings ##################################################
