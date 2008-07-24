@@ -236,9 +236,8 @@ namespace alc {
 					sprintf(gameBin, "%s/uru_game", gameBinPath);
 					sprintf(gamePort, "%d", forkServer.forkPort);
 					
-					onUnloadConfig(); // will close the lobbyserverbase logs
 					stopOp(); // will close the alcnet logs as well as the socket
-					alcOnFork(); // will close the global logs
+					alcOnFork(); // will close all logs
 					
 					if (forkServer.loadSDL)
 						execlp(gameBin, gameBin,"-p",gamePort,"-guid",gameGuid,"-name",gameName,

@@ -489,7 +489,7 @@ void tLog::close(bool silent) {
 			break;
 		}
 	}
-	if(this->name!=NULL) DBG(6,"closing log %s...\n",this->name);
+	if(this->name!=NULL) { DBG(1,"closing log %s...\n",this->name); }
 	if(this->dsc!=NULL && this->dsc!=stdout && this->dsc!=stderr) {
 		if(this->flags & DF_HTML && !silent) {
 			fprintf(this->dsc,"</body></html>\n");
