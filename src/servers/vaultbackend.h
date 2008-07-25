@@ -36,14 +36,16 @@ namespace alc {
 	////DEFINITIONS
 	class tVaultBackend {
 	public:
-		tVaultBackend(void) { vaultDB = new tVaultDB; }
+		tVaultBackend(void);
 		~tVaultBackend(void) { delete vaultDB; }
 		void reload(void) {
 			delete vaultDB;
-			vaultDB = new tVaultDB;
+			vaultDB = new tVaultDB(log);
 		}
 	private:
 		tVaultDB *vaultDB;
+		
+		tLog *log;
 	};
 
 

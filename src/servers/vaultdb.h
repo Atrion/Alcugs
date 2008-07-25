@@ -34,11 +34,13 @@ namespace alc {
 	////DEFINITIONS
 	class tVaultDB {
 	public:
-		tVaultDB(void);
+		tVaultDB(tLog *log);
 	private:
 		bool prepare(void);
+		int getVersion(void);
 		
 		tSQL *sql;
+		tLog *log;
 	};
 
 

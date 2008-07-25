@@ -161,7 +161,7 @@ namespace alc {
 		}
 		
 		// query the database
-		sprintf(query,"SELECT UCASE(passwd), a_level, guid, attempts, UNIX_TIMESTAMP(last_attempt) FROM accounts WHERE name='%s'", sql->escape((char *)login));
+		sprintf(query,"SELECT UCASE(passwd), a_level, guid, attempts, UNIX_TIMESTAMP(last_attempt) FROM accounts WHERE name='%s' LIMIT 1", sql->escape((char *)login));
 		if (!sql->query(query, "Query player")) return AcNotRes;
 		
 		// read the result

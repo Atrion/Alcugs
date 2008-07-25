@@ -39,12 +39,18 @@
 
 namespace alc {
 
+	const char *vault_table = "vault";
+	const char *ref_vault_table = "ref_vault";
+
 	////IMPLEMENTATION
-	tVaultDB::tVaultDB(void)
+	tVaultDB::tVaultDB(tLog *log)
 	{
 		sql = NULL;
+		this->log = log;
 	
-		prepare();
+		int version = getVersion();
+		if (version < 2 || version > 3) throw txUnet(_WHERE("only vault DB version 2 and 3 are supported, not %d", version));
+		log->log("Started VaultDB driver (%s) on a vault DB version %d\n", __U_VAULTDB_ID, version);
 	}
 	
 	bool tVaultDB::prepare(void)
@@ -68,6 +74,32 @@ namespace alc {
 		delete sql;
 		sql = NULL;
 		return false;
+	}
+	
+	int tVaultDB::getVersion(void)
+	{
+		if (!prepare()) throw txUnet(_WHERE("no access to DB"));
+		
+		char query[512];
+		sprintf(query, "SHOW COLUMNS FROM vault LIKE 'torans'");
+		sql->query(query, "Checking for torans column");
+		MYSQL_RES *result = sql->storeResult();
+		bool exists = mysql_num_rows(result);
+		mysql_free_result(result);
+		if (!exists) // the torans column does not exist so it's already version 3
+			return 3;
+		else { // query the version from the database
+			int version = -1;
+			sprintf(query, "SELECT v.torans FROM %s v WHERE v.type=6 LIMIT 1", vault_table); // only the root node has type 6
+			sql->query(query, "Checking version number");
+			MYSQL_RES *result = sql->storeResult();
+			if (result == NULL) throw txUnet(_WHERE("couldnt check version number"));
+			MYSQL_ROW row = mysql_fetch_row(result);
+			if (row) version = atoi(row[0]);
+			mysql_free_result(result);
+			if (!row) throw txUnet("couldnt find root vault node");
+			return version;
+		}
 	}
 
 } //end namespace alc

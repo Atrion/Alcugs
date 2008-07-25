@@ -40,6 +40,19 @@
 namespace alc {
 
 	////IMPLEMENTATION
+	tVaultBackend::tVaultBackend(void)
+	{		
+		tConfig *cfg = alcGetConfig();
+		tStrBuf var = cfg->getVar("vault.log");
+		if (var.isNull() || var.asByte()) { // logging enabled per default
+			log = new tLog("vault.log", 4, 0);
+		}
+		
+		log->log("Started VaultBackend (%s)\n", __U_VAULTBACKEND_ID);
+		vaultDB = new tVaultDB(log);
+		log->nl();
+		log->flush();
+	}
 
 } //end namespace alc
 
