@@ -215,26 +215,4 @@ private:
 
 }
 
-#if 0
-
-int plNetConnect(st_unet * net,int * sid,char * address,U16 port,Byte flags);
-#define UNET_VAL0 0x02
-#define UNET_VAL1 0x01
-#define UNET_VAL2 0x00
-#define UNET_VAL3 0x03
-
-int plNetSendMsg(st_unet * net,Byte * msg,int size,int sid,Byte flags);
-
-int plNetGetMsg(st_unet * net,int sid,Byte ** msg);
-
-char plNetIsFini(st_unet * net,int sid);
-
-int plNetClientSearchByKI(st_unet * net,U32 ki);
-int plNetClientSearchByIp(st_unet * net,U32 ip,U16 port);
-int plNetServerSearch(st_unet * net,Byte type);
-
-void plNetEndConnection(st_unet * net,int sid);
-
-#endif
-
 #endif

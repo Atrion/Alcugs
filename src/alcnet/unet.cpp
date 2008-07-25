@@ -224,13 +224,15 @@ void tUnet::openlogs() {
 				this->err=lerr;
 			}
 		}
-		/*if(this->unx==lnull && (this->flags & UNET_FLOG) && !(this->flags & UNET_DLUNE)) {
+#if 0
+		if(this->unx==lnull && (this->flags & UNET_FLOG) && !(this->flags & UNET_DLUNE)) {
 			this->unx=new tLog;
 			this->unx->open("unexpected.log",4,0);
 		} else {
 			this->unx=new tLog;
 			this->unx->open(NULL,4,0);
-		}*/
+		}
+#endif
 		if(this->ack==lnull && (this->flags & UNET_FLOG) && !(this->flags & UNET_DLACK)) {
 			this->ack=new tLog;
 			this->ack->open("ack.html",4,DF_HTML);

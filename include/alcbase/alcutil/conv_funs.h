@@ -39,15 +39,18 @@ namespace alc {
 		\return A str guid, twice as long as the hex guid
 */
 const Byte * alcGetStrGuid(const Byte * guid);
+
 /** creates a 00000000-0000-0000-0000-000000000000 valid guid
 		\param uid A 16 bytes user id
 		\return A 36 bytes str formated id
 */
 const Byte * alcGetStrUid(Byte * guid);
+
 /** \param uid A 36 bytes str user id
 		\return A 16 bytes hex user id
 */
 const Byte * alcGetHexUid(Byte * guid);
+
 /**
 		\returns a pointer to a formated time string
 */
@@ -60,6 +63,7 @@ const Byte * alcGetStrTime(double stamp=0, const char format='s');
 	\param size size of the input buffer
 */
 void alcHex2Ascii(Byte * out, const Byte * in, int size);
+
 /** Encodes in Hex, an hex string
 	\param out Output buffer of at least sizeof(in)/2 bytes
 	\param in Input buffer, must be 2*sizeof(out)
@@ -67,39 +71,7 @@ void alcHex2Ascii(Byte * out, const Byte * in, int size);
 */
 void alcAscii2Hex(Byte * out, const Byte * in, int size);
 
-#if 0
 
-/*------------------------------------------------------------
-  De/Encodes the specific UruString associated to a buffer.
-	The result will be put on out, and it must have the required
-	size to host it!!!
-	The size of the string is returned, so be sure to add 2
-	to continue moving throught the buffer!!!
-	 how
-	  0x00 -> Normal string
-		0x01 -> Invert Bits string
--------------------------------------------------------------*/
-/** Decode an urutring
-		\param out A buffer, with a size of max_size
-		\param in Input buffer
-		\param max_size Maxium size that the output buffer can host
-		\return The string size (remember to add 2 bytes)
-*/
-int alcDecodeUStr(unsigned char* out, unsigned char* in, U16 max_size);
-/** Encode an urutring
-		\param out A buffer, with a size of size+2
-		\param in Input buffer
-		\param size Number of bytes to be coded
-		\param how 0x00 normal, 0x01 Inverted
-		\return The out buffer size, that it's size+2
-*/
-int alcEncodeUStr(unsigned char* out, unsigned char* in, U16 size, Byte how);
-
-/**
-		Checks buffer for Byte
-*/
-char alcCheckBuf(Byte * buf, Byte car, int n);
-#endif
 /**
 	Strips out some characters that win32 doesn't like..
 	(Overwrittes what)

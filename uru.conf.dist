@@ -121,7 +121,7 @@ port = 2011
 # Age state settings
 ;tracking.tmp.hacks.agestate = 1 # enable age state saving (on by default)
 # The following list was carefully chosen, please think before removing any.
-# Cleft: for Relto book -- required if someone doesn't finish Cleft on first try
+# Cleft: for Relto book -- required if someone doesn't finish Cleft on first try (but only if Cleft is not instanced)
 # DniCityX2Finale,GreatZero,Kveer,Neighborhood02: for gameplay
 # Myst,Personal02,RestorationGuild,spyroom: for reward clothing
 # you might want to add Garden because of the the rain bug

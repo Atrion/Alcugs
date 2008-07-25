@@ -276,13 +276,13 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 					terminate(u, RTimedOut);
 			}
 			else { // a destroyed session, close it
-				/*
+#if 0
 				if (u->sndq->isEmpty() && u->ackq->isEmpty())
 					closeConnection(u);
 				else // if the send or ack queue isn't empty, send remaining messages
 					u->doWork();
 					// I know it's ugly to call this here, but I found no other way: tUnet::doWork will create another timeout event instead of sending the messages
-				*/
+#endif
 				// above code seems to create the possiblity of a session being kept forever and blocking new incoming connections
 				closeConnection(u);
 			}

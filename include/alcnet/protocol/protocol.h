@@ -143,20 +143,6 @@ public:
 	U32 bandwidth;
 };
 
-#if 0
-class tmNetAck :public tmBase {
-public:
-	virtual void store(tBBuf &t);
-	virtual void stream(tBBuf &t);
-	tmNetAck() { bhflags=0x80; }
-	virtual ~tmNetAck();
-	void add(tUnetAck * a);
-	void clear();
-private:
-	tUnetMsgQ<tUnetAck> * ackq;
-};
-#endif
-
 class tmMsgBase :public tmBase {
 public:
 	virtual void store(tBBuf &t);
@@ -201,10 +187,6 @@ public:
 };
 
 */
-
-#if 0
-void htmlDumpHeaderRaw(st_unet * net,st_log * log,st_uru_client c,Byte * buf,int size,int flux);
-#endif
 
 }
 
