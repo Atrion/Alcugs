@@ -56,10 +56,10 @@ namespace alc {
 		`name` varchar(50) NOT NULL default '',\
 		`passwd` varchar(32) NOT NULL default '',\
 		`a_level` tinyint unsigned NOT NULL default '25',\
-		`last_login` timestamp NOT NULL,\
+		`last_login` timestamp NOT NULL default 0,\
 		`last_ip` varchar(30) NOT NULL default '',\
 		`attempts` tinyint unsigned NOT NULL default '0',\
-		`last_attempt` timestamp NOT NULL,\
+		`last_attempt` timestamp NOT NULL default 0,\
 		PRIMARY KEY  (`uid`),\
 		UNIQUE KEY `guid` (`guid`),\
 		UNIQUE KEY `name` (`name`)\
