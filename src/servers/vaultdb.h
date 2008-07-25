@@ -38,6 +38,8 @@ namespace alc {
 	private:
 		bool prepare(void);
 		int getVersion(void);
+		void migrateVersion2to3(void);
+		void convertIntToTimestamp(const char *table, const char *intColumn, const char *timestampColumn);
 		
 		tSQL *sql;
 		tLog *log;

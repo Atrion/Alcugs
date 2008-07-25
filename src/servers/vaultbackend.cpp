@@ -48,6 +48,12 @@ namespace alc {
 			log = new tLog("vault.log", 4, 0);
 		}
 		
+		var = cfg->getVar("vault.unstable");
+		if (var.isNull() || !var.asByte()) {
+			lerr->log("\n\nREALLY IMPORTANT WARNING:\n=========================\n\nThis vault sevrer uses a vault db layout which might CHANGE WITHOUT A POSSIBILITY TO MIGRATE since it's still in development.\nThis way, YOUR VAULT DATA WILL BE LOST.\nI hope you know what you are doing.\n\nIn that case, set vault.unstable=1 in your config file. But you'd better just use the old vault server.\n\n\n");
+			throw txBase(_WHERE("refusing to use unstable vault database"));
+		}
+		
 		log->log("Started VaultBackend (%s)\n", __U_VAULTBACKEND_ID);
 		vaultDB = new tVaultDB(log);
 		log->nl();

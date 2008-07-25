@@ -1,4 +1,4 @@
-#This will create the table where all nodes are stored.
+#This will create the table where all nodes are stored (for OLD VERSION 2)
 
 CREATE TABLE `vault` (\
   `idx` int(11) NOT NULL auto_increment,
@@ -55,54 +55,53 @@ CREATE TABLE `vault` (\
   KEY `uid` (`uid`)
 ) TYPE=MyISAM PACK_KEYS=0 AUTO_INCREMENT=20001;
 
-* This table will be useful for the conversion from the Nodes (plasma) to the Vault (H'uru) table.
-** About the names used, well, this names where set a lot of time ago, without having access to a Plasma server,
-and there are several number of code changes required to change only one field name. (But is in the ToDo list)
-** The structure is going to change, and perhaps in the next server build, there will be changes in the format of all
-the timestamp fields.
+This table will be useful for the conversion from the Nodes (plasma) to the Vault (H'uru) table.
+(the structure might change in future)
 
-VaultManager Name  ||  Plasma DB field Name  ||   H'uru DB field Name
-[Index]                 Idx                        idx
-[Type]                  NodeType/NodeTypeStr       type
-[Permissions]           Permissions                permissions
-[Owner ID]              OwnerIdx                   owner
-[Group ID]              GroupIdx                   unk1
-[Modify Time]           ModifyTime                 timestamp & microseconds
-[Creator ID]            CreatorIdx                 id1
-[Create Time]           AutoTime                   timestamp2 & microseconds2
-[Create Age Coords]     CreateAgeCoordsBlobIdx     **unused** (Never found a example in more than 1GB of logs)
-[Create Age Time]       CreateAgeTime              timestamp3 & microseconds3
-[Create Age Name]       CreateAgeName              age_name
-[Create Age Guid]       CreateAgeGuid              age_guid
-[Int32_1]               Int32_1                    torans
-[Int32_2]               Int32_2                    distance
-[Int32_3]               Int32_3                    elevation
-[Int32_4]               Int32_4                    unk5
-[UInt32_1]              UInt32_1                   id2
-[UInt32_2]              UInt32_2                   unk7
-[UInt32_3]              UInt32_3                   unk8
-[UInt32_4]              UInt32_4                   unk9
-[String64_1]            String64_1                 entry_name
-[String64_2]            String64_2                 sub_entry_name
-[String64_3]            String64_3                 owner_name
-[String64_4]            String64_4                 guid
-[String64_5]            String64_5                 str1
-[String64_6]            String64_6                 str2
-[lString64_1]           lString64_1                avie
-[lString64_2]           lString64_2                uid
-[Text_1]                Text_1                     entry_value
-[Text_2]                Text_2                     entry2
-[Blob1 data]            **not stored in db**       data_size (contains the size of the binary data)
-                                                   data (It's a longblob, and contains binary data, jpgs,sdls,journals...)
-[Blob2 data]            **not stored in db**       data2_size (contains the size of the binary data)
-                                                   data2 (It's a longblob, and contains binary data, jpgs,sdls,journals...)
-[Blob1_guid]            Blob1Guid                  **unused** They're the unk13 & unk14 and both must be zero always
-[Blob2_guid]            Blob2Guid                  **unused** They're the unk15 & unk16 and both must be zero always
+VaultManager Name  ||  Plasma DB field Name  ||  Alcugs DB field Name (v0-2)  || Alcugs DB field Name (v3)
+[Index]                 Idx                        idx                             idx
+[Type]                  NodeType/NodeTypeStr       type                            type
+[Permissions]           Permissions                permissions                     permissions
+[Owner ID]              OwnerIdx                   owner                           owner
+[Group ID]              GroupIdx                   unk1                            grp (group is a SQL keyword)
+[Modify Time]           ModifyTime                 timestamp, microseconds         mod_time, mod_microsec
+[Creator ID]            CreatorIdx                 id1                             creator
+[Create Time]           AutoTime                   timestamp2, microseconds2       crt_time (microseconds are always 0)
+[Create Age Coords]     CreateAgeCoordsBlobIdx     **unused**                      **unused**
+[Create Age Time]       CreateAgeTime              timestamp3, microseconds3       age_time (microseconds are always 0)
+[Create Age Name]       CreateAgeName              age_name                        age_name
+[Create Age Guid]       CreateAgeGuid              age_guid                        age_guid
+[Int32_1]               Int32_1                    torans                          int_1
+[Int32_2]               Int32_2                    distance                        int_2
+[Int32_3]               Int32_3                    elevation                       int_3
+[Int32_4]               Int32_4                    unk5                            int_4
+[UInt32_1]              UInt32_1                   id2                             uint_1
+[UInt32_2]              UInt32_2                   unk7                            uint_2
+[UInt32_3]              UInt32_3                   unk8                            uint_3
+[UInt32_4]              UInt32_4                   unk9                            uint_4
+[String64_1]            String64_1                 entry_name                      str_1
+[String64_2]            String64_2                 sub_entry_name                  str_2
+[String64_3]            String64_3                 owner_name                      str_3
+[String64_4]            String64_4                 guid                            str_4
+[String64_5]            String64_5                 str1                            str_5
+[String64_6]            String64_6                 str2                            str_6
+[lString64_1]           lString64_1                avie                            lstr_1
+[lString64_2]           lString64_2                uid                             lstr_2
+[Text_1]                Text_1                     entry_value                     text_1
+[Text_2]                Text_2                     entry2                          text_2
+[Blob1 data]            **not stored in db**       data                            blob_1
+[Blob2 data]            **not stored in db**       data2                           **unused**
+[Blob1_guid]            Blob1Guid                  **unused**                      **unused**
+[Blob2_guid]            Blob2Guid                  **unused**                      **unused**
+
+CreateAgeCoordsBlobIdx was never seen in more than 1GB of logs
+Blob1_guid and Blob2_guid must always be empty
 
 
-* All timestamp, and microseconds fields must contain an integer value.
-All timestamp fields contain Seconds since 1 January of 1970, all of them are mandatory!
-All microseconds fields can be zero without any problem.
+* v0-2:
+  -All timestamp, and microseconds fields must contain an integer value.
+  -All timestamp fields contain Seconds since 1 January of 1970, all of them are mandatory!
+* All microseconds fields can be zero without any problem.
 
 * The H'uru server has Access levels for the user account, and for each player.
 
@@ -130,9 +129,7 @@ Currently there aren't much checks in this value, since we can't trust it becaus
 field throught python. (But it will be used in the future, when the permissions code is finished and working)
 
 * All the binary data, that is stored in the filesystem, in the H'uru server is stored in the database as
-binary data. So all the blobs, need to be inserted into the adecuated data and data2 fields, updating the corresponding
-data_size and data2_size fields. (both fields are unused, but is used in some place to verify that the returned size by
-mysql matches the stored size.) (I think that both size fields will be deleted in the future).
+binary data. So all the blobs, need to be inserted into the adecuated data/blob1 field
 
 
 The vault database used by the plasma servers has two tables where node references
@@ -174,3 +171,4 @@ Well, I don't know if all the required necessary information is here,
 let me know any question(s) that you may have.
 
 ~Almlys
+(updated by diafero for later alcugs database versions)
