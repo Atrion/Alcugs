@@ -471,20 +471,22 @@ namespace alc {
 		
 		if (flagB & MCrtTime) {
 			crtTime = t.getU32();
-			crtMicrosec = t.getU32();
+			U32 microsec = t.getU32();
+			if (microsec != 0) throw txProtocolError(_WHERE("tvNode.crtMicrosec must be always 0 but is %d", microsec));
 		}
 		else
-			crtTime = crtMicrosec = 0;
+			crtTime = 0;
 		
 		if (flagB & MAgeCoords) // unused, do nothing
 			;
 		
 		if (flagB & MAgeTime) {
 			ageTime = t.getU32();
-			ageMicrosec = t.getU32();
+			U32 microsec = t.getU32();
+			if (microsec != 0) throw txProtocolError(_WHERE("tvNode.ageMicrosec must be always 0 but is %d", microsec));
 		}
 		else
-			ageTime = ageMicrosec = 0;
+			ageTime = 0;
 		
 		if (flagB & MAgeName)
 			t.get(ageName);
@@ -620,13 +622,13 @@ namespace alc {
 		if (flagB & MCreator) t.putU32(creator);
 		if (flagB & MCrtTime) {
 			t.putU32(crtTime);
-			t.putU32(crtMicrosec);
+			t.putU32(0);
 		}
 		if (flagB & MAgeCoords) // unused, do nothing
 			;
 		if (flagB & MAgeTime) {
 			t.putU32(ageTime);
-			t.putU32(ageMicrosec);
+			t.putU32(0);
 		}
 		if (flagB & MAgeName) t.put(ageName);
 		if (flagB & MAgeGuid) t.write(ageGuid, 8);
@@ -756,9 +758,9 @@ namespace alc {
 		// optional fields
 		if (!shortLog) { // only print this in long logs
 			if (flagB & MCreator) log->print("<b>Creator:</b> 0x%08X (%d)<br />\n", creator, creator);
-			if (flagB & MCrtTime) log->print("<b>Create time:</b> %s<br />\n", alcGetStrTime(crtTime, crtMicrosec));
+			if (flagB & MCrtTime) log->print("<b>Create time:</b> %s<br />\n", alcGetStrTime(crtTime));
 			if (flagB & MAgeCoords) log->print("<b>Age coords:</b> unused<br />\n");
-			if (flagB & MAgeTime) log->print("<b>Age time:</b> %s<br />\n", alcGetStrTime(ageTime, ageMicrosec));
+			if (flagB & MAgeTime) log->print("<b>Age time:</b> %s<br />\n", alcGetStrTime(ageTime));
 			if (flagB & MAgeName) log->print("<b>Age name:</b> %s<br />\n", ageName.c_str());
 			if (flagB & MAgeGuid) log->print("<b>Age guid:</b> %s<br />\n", alcGetStrGuid(ageGuid));
 			if (flagB & MInt32_1) {

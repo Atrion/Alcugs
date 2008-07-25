@@ -134,10 +134,13 @@ bool tSQL::prepare(void)
 	return false;
 }
 
-bool tSQL::query(const char *str, const char *desc)
+bool tSQL::query(const char *str, const char *desc, bool throwOnError)
 {
 	if (connection == NULL) {
-		if (!prepare()) return false; // DANGER: possible endless loop (query calls prepare calls query...)
+		if (!prepare()) {
+			if (throwOnError) throw txUnet(_WHERE("No connection to DB for \"%s\"", desc));
+			return false; // DANGER: possible endless loop (query calls prepare calls query...)
+		}
 	}
 	
 	if (flags & SQL_LOGQ) {
@@ -160,6 +163,7 @@ bool tSQL::query(const char *str, const char *desc)
 		// failed again... print the error
 		printError(desc);
 	}
+	if (throwOnError) throw txUnet(_WHERE("SQL error while \"%s\"", desc));
 	return false;
 }
 

@@ -55,10 +55,10 @@ namespace alc {
 		`guid` varchar(50) NOT NULL default '',\
 		`name` varchar(50) NOT NULL default '',\
 		`passwd` varchar(32) NOT NULL default '',\
-		`a_level` tinyint unsigned NOT NULL default '25',\
+		`a_level` tinyint unsigned NOT NULL default 25,\
 		`last_login` timestamp NOT NULL default 0,\
 		`last_ip` varchar(30) NOT NULL default '',\
-		`attempts` tinyint unsigned NOT NULL default '0',\
+		`attempts` tinyint unsigned NOT NULL default 0,\
 		`last_attempt` timestamp NOT NULL default 0,\
 		PRIMARY KEY  (`uid`),\
 		UNIQUE KEY `guid` (`guid`),\
@@ -195,7 +195,7 @@ namespace alc {
 		else // don't update any stamp
 			stamps[0] = 0; // an empty string
 		sprintf(query, "UPDATE accounts SET attempts='%d', last_ip='%s'%s WHERE guid='%s'", attempts, ip_escaped, stamps, guid_escaped);
-		sql->query(query, "Update player");
+		sql->query(query, "Update player", true);
 	}
 
 	int tAuthBackend::authenticatePlayer(tNetSession *u, Byte *login, Byte *challenge, Byte *hash, Byte release, Byte *ip, Byte *passwd,

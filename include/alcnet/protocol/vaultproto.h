@@ -314,8 +314,8 @@ namespace alc {
 		U32 group;
 		U32 modTime, modMicrosec;
 		U32 creator;
-		U32 crtTime, crtMicrosec;
-		U32 ageTime, ageMicrosec;
+		U32 crtTime;
+		U32 ageTime;
 		tUStr ageName;
 		Byte ageGuid[8];
 		U32 int1, int2, int3, int4;
