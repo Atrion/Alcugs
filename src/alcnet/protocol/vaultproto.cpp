@@ -978,7 +978,15 @@ namespace alc {
 	
 	void tvMessage::print(tLog *log, bool clientToServer, tNetSession *client, bool shortLog)
 	{
+		static int count = 0;
 		if (!log->doesPrint()) return; // don't do anything if log is disabled
+		// rotation check
+		++count;
+		if (count > 250) {
+			log->rotate(false); // rotate if file is too big
+			count = 0;
+		}
+		
 		if (clientToServer)
 			log->print("<h2 style='color:blue'>From client (%s) to vault</h2>\n", client ? client->str() : "?");
 		else
