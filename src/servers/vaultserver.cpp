@@ -40,8 +40,10 @@
 
 #include <alcugs.h>
 #include <alcnet.h>
+#include <protocol/vaultmsg.h>
 
 ////extra includes
+#include "vaultserver.h"
 
 #include <alcdebug.h>
 
@@ -51,6 +53,25 @@ namespace alc {
 	
 	const char * alcNetName="Vault";
 	Byte alcWhoami=KVault;
+	
+	int tUnetVaultServer::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
+	{
+		int ret = tUnetServerBase::onMsgRecieved(ev, msg, u); // first let tUnetServerBase process the message
+		if (ret != 0) return ret; // cancel if it was processed, otherwise it's our turn
+		
+		switch(msg->cmd) {
+			case NetMsgCustomVaultAskPlayerList:
+			{
+				tmCustomVaultAskPlayerList askPlayerList(u);
+				msg->data->get(askPlayerList);
+				log->log("<RCV> %s\n", askPlayerList.str());
+				
+				return 1;
+			}
+		}
+		
+		return 0;
+	}
 
 } //end namespace alc
 

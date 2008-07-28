@@ -71,6 +71,16 @@ namespace alc {
 		memcpy(this->uid, uid, 16);
 	}
 	
+	tmCustomVaultAskPlayerList::tmCustomVaultAskPlayerList(tNetSession *u)
+	: tmMsgBase(NetMsgCustomVaultAskPlayerList, plNetAck | plNetCustom | plNetX | plNetVersion | plNetUID, u)
+	{ }
+	
+	void tmCustomVaultAskPlayerList::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		if (!hasFlags(plNetX | plNetUID)) throw txProtocolError(_WHERE("X or UID flag missing"));
+	}
+	
 	//// tmCustomVaultPlayerList
 	tmCustomVaultPlayerList::tmCustomVaultPlayerList(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
 	{ }

@@ -36,7 +36,7 @@ namespace alc {
 	////DEFINITIONS
 	class tVaultBackend {
 	public:
-		tVaultBackend(void);
+		tVaultBackend(tUnet *net);
 		~tVaultBackend(void) { delete vaultDB; }
 		void reload(void) {
 			delete vaultDB;
@@ -46,6 +46,7 @@ namespace alc {
 		tVaultDB *vaultDB;
 		
 		tLog *log;
+		tUnet *net;
 	};
 
 

@@ -982,7 +982,7 @@ namespace alc {
 		if (!log->doesPrint()) return; // don't do anything if log is disabled
 		// rotation check
 		++count;
-		if (count > 250) {
+		if (count > 50) {
 			log->rotate(false); // rotate if file is too big
 			count = 0;
 		}

@@ -35,6 +35,7 @@ namespace alc {
 	class tVaultDB {
 	public:
 		tVaultDB(tLog *log);
+		~tVaultDB(void) { if (sql) delete sql; }
 	private:
 		bool prepare(void);
 		int getVersion(void);

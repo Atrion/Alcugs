@@ -40,8 +40,10 @@
 namespace alc {
 
 	////IMPLEMENTATION
-	tVaultBackend::tVaultBackend(void)
-	{		
+	tVaultBackend::tVaultBackend(tUnet *net)
+	{
+		this->net = net;
+	
 		tConfig *cfg = alcGetConfig();
 		tStrBuf var = cfg->getVar("vault.log");
 		if (var.isNull() || var.asByte()) { // logging enabled per default
