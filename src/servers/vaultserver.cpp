@@ -104,7 +104,15 @@ namespace alc {
 				vaultMsg.message.rewind();
 				vaultMsg.message.get(parsedMsg);
 				
-				vaultBackend->processVaultMsg(parsedMsg, u, vaultMsg.ki);
+				try {
+					vaultBackend->processVaultMsg(parsedMsg, u, vaultMsg.ki);
+				}
+				catch (txProtocolError &t) { // don't kick the lobby/game server we are talking to but let it kick the client
+					err->log("%s Recieved invalid vault message from player %d\n", u->str(), vaultMsg.ki);
+					err->log(" Exception details: %s\n%s\n",t.what(),t.backtrace());
+					tmPlayerTerminated term(u, vaultMsg.ki, RParseError);
+					send(term);
+				}
 				
 				return 1;
 			}

@@ -1065,7 +1065,7 @@ namespace alc {
 				ret = "DVaultNode";
 				break;
 			default:
-				ret = "<span style='color:red'>DUnknown</span>";
+				ret = "DUnknown";
 				break;
 		}
 		return ret;
@@ -1109,7 +1109,7 @@ namespace alc {
 				ret = "VOnlineState";
 				break;
 			default:
-				ret = "<span style='color:red'>VUnknown</span>";
+				ret = "VUnknown";
 				break;
 		}
 		return ret;
@@ -1159,7 +1159,7 @@ namespace alc {
 				ret = "TFriendInvite";
 				break;
 			default:
-				ret = "<span style='color:red'>TUnknown</span>";
+				ret = "TUnknown";
 				break;
 		}
 		return ret;
@@ -1230,7 +1230,7 @@ namespace alc {
 				ret = "KMarkerListNode";
 				break;
 			default:
-				ret = "<span style='color:red'>KUnknown</span>";
+				ret = "KUnknown";
 				break;
 		}
 		return ret;
@@ -1337,7 +1337,7 @@ namespace alc {
 				ret = "KChildAgesFolder";
 				break;
 			default:
-				ret = "<span style='color:red'>KUnknown</span>";
+				ret = "KUnknown";
 				break;
 		}
 		return ret;

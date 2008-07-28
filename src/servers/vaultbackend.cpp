@@ -124,6 +124,8 @@ namespace alc {
 				case 2: // GenericValue.Int: unique id [ki number]
 					id = itm->asInt();
 					break;
+				default:
+					throw txProtocolError(_WHERE("vault item has invalid id %d", itm->id));
 			}
 		}
 		
@@ -133,6 +135,7 @@ namespace alc {
 		}
 		// FIXME: only go on if player is logged in
 		// FIXME: do more
+		throw txProtocolError(_WHERE("got unknown vault command %s", alcVaultGetCmd(msg.cmd)));
 	}
 
 } //end namespace alc
