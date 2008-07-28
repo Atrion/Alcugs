@@ -51,7 +51,7 @@ public:
 	
 	bool prepare(void); //!< this must be called before each query. it establishes the connection and creates the database if necessary \return true on success, false on error
 	void printError(const char *msg); //!< print the last MySQL error (with the given desctiption) to the error protocol
-	bool query(const char *str, const char *desc, bool throwOnError = false); //!< query the database \return true on success, false on error
+	bool query(const char *str, const char *desc, bool throwOnError = true); //!< query the database \return true on success, false on error
 	void checkTimeout(void); //!< closes the connection on timeout
 	inline int affectedRows(void) {
 		return (connection == NULL) ? -1 : mysql_affected_rows(connection);

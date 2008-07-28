@@ -121,7 +121,7 @@ namespace alc {
 			bool exists = mysql_num_rows(result);
 			mysql_free_result(result);
 			// if it doesn't exist, create it
-			if (exists || sql->query(authTableInitScript, "Creating auth table")) {
+			if (exists || sql->query(authTableInitScript, "Creating auth table", false)) {
 				log->log("Auth driver successfully started (%s)\n minimal access level: %d, max attempts: %d, disabled time: %d\n\n",
 						__U_AUTHBACKEND_ID, minAccess, maxAttempts, disTime);
 				log->flush();
@@ -162,7 +162,7 @@ namespace alc {
 		
 		// query the database
 		sprintf(query,"SELECT UCASE(passwd), a_level, guid, attempts, UNIX_TIMESTAMP(last_attempt) FROM accounts WHERE name='%s' LIMIT 1", sql->escape((char *)login));
-		if (!sql->query(query, "Query player")) return AcNotRes;
+		sql->query(query, "Query player");
 		
 		// read the result
 		MYSQL_RES *result = sql->storeResult();
@@ -195,7 +195,7 @@ namespace alc {
 		else // don't update any stamp
 			stamps[0] = 0; // an empty string
 		sprintf(query, "UPDATE accounts SET attempts='%d', last_ip='%s'%s WHERE guid='%s'", attempts, ip_escaped, stamps, guid_escaped);
-		sql->query(query, "Update player", true);
+		sql->query(query, "Update player");
 	}
 
 	int tAuthBackend::authenticatePlayer(tNetSession *u, Byte *login, Byte *challenge, Byte *hash, Byte release, Byte *ip, Byte *passwd,

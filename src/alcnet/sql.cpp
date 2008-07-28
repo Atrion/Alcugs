@@ -126,10 +126,10 @@ bool tSQL::prepare(void)
 		
 		char str[400];
 		sprintf(str, "CREATE DATABASE %s", dbname);
-		if (!query(str, "create database")) // if we can't create it, stop
+		if (!query(str, "create database", false)) // if we can't create it, stop
 			return false;
 		sprintf(str,"USE %s", dbname);
-		return query(str, "select database");
+		return query(str, "select database", false);
 	}
 	return false;
 }
