@@ -29,6 +29,8 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_VAULTDB_H_ID "$Id$"
 
+#include <protocol/vaultproto.h>
+
 namespace alc {
 
 	////DEFINITIONS
@@ -43,6 +45,12 @@ namespace alc {
 		/** checks if this account (uid) owns that ki and saves the avatar name (array must be at least 256 Bytes)
 		    \returns 1 when the avatar belings to that account, 0 otherwise */
 		int checkKi(U32 ki, const Byte *uid, Byte *avatar);
+		
+		/** looks up a node in the database, using all fields which have their flag turned on (except for timestamps and blobs)
+		    \returns the ID of the found/created node, 0 if neither found nor created */
+		U32 findNode(tvNode &node, bool create);
+		
+		U32 createNode(tvNode &node);
 	private:
 		bool prepare(void);
 		int getVersion(void);

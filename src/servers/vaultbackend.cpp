@@ -27,7 +27,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_VAULTBACKEND_ID "$Id$"
 
-//#define _DBG_LEVEL_ 10
+#define _DBG_LEVEL_ 10
 
 #include <alcugs.h>
 #include <alcnet.h>
@@ -130,11 +130,19 @@ namespace alc {
 		}
 		
 		if (msg.cmd == VConnect) {
-			// FIXME: log the player in
+			log->log("Vault Connect request for %d (Type: %d)\n", ki, nodeType);
+			tvNode node;
+			node.flagB |= MType;
+			node.type = nodeType;
+			if (nodeType == 5) { // admin node
+				U32 adminNode = vaultDB->findNode(node, true);
+				DBG(5, "found admin node %d\n", adminNode);
+			}
+			else
+				throw txProtocolError(_WHERE("connect request for unknown node type %d", nodeType));
 			return;
 		}
 		// FIXME: only go on if player is logged in
-		// FIXME: do more
 		throw txProtocolError(_WHERE("got unknown vault command %s", alcVaultGetCmd(msg.cmd)));
 	}
 

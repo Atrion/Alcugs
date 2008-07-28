@@ -360,13 +360,16 @@ namespace alc {
 			case 0x0E:
 			{
 				U32 num = buf.getU32();
-				log->print("number of ID-Timestamp pairs: %d<br />\n", num);
+				log->print("number of manifests: %d<br />\n", num);
 				for (U32 i = 0; i < num; ++i) {
-					U32 val = buf.getU32();
-					double time = buf.getDouble();
+					tvManifest manifest;
+					buf.get(manifest);
 					// this is not printed in short log
 					// it is read anyway to verify the data
-					if (!shortLog) log->print("[%d] ID: 0x%08X (%d), Stamp: %s<br />\n", i+1, val, val, alcGetStrTime(time));
+					if (!shortLog) {
+						log->print("[%d] ", i+1);
+						manifest.asHtml(log, shortLog);
+					}
 				}
 				break;
 			}
@@ -405,7 +408,25 @@ namespace alc {
 	
 	void tvServerGuid::asHtml(tLog *log, bool shortLog)
 	{
-		log->log("%s<br />\n", alcGetStrGuid(guid));
+		log->print("%s<br />\n", alcGetStrGuid(guid));
+	}
+	
+	//// tvManifest
+	void tvManifest::store(tBBuf &t)
+	{
+		id = t.getU32();
+		time = t.getDouble();
+	}
+	
+	void tvManifest::stream(tBBuf &t)
+	{
+		t.putU32(id);
+		t.putDouble(time);
+	}
+	
+	void tvManifest::asHtml(tLog *log, bool shortLog)
+	{
+		log->print("ID: 0x%08X (%d), Stamp: %s<br />\n", id, id, alcGetStrTime(time));
 	}
 	
 	//// tvNodeRef
@@ -436,6 +457,17 @@ namespace alc {
 	}
 	
 	//// tvNode
+	tvNode::tvNode(void) : tvBase()
+	{
+		blob1Size = 0;
+		blob1 = NULL;
+		
+		// set flags to empty
+		flagA = 0x00000001; // this means that flagC is ignored
+		flagB = 0x00000000;
+		flagC = 0x00000000;
+	}
+	
 	tvNode::~tvNode(void)
 	{
 		if (blob1) free(blob1);

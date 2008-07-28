@@ -285,6 +285,17 @@ namespace alc {
 		Byte guid[8];
 	};
 	
+	class tvManifest : public tvBase {
+	public:
+		tvManifest(void) : tvBase() {}
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
+		virtual void asHtml(tLog *log, bool shortLog);
+		// format
+		U32 id;
+		double time;
+	};
+	
 	class tvNodeRef : public tvBase {
 	public:
 		tvNodeRef(void) : tvBase() { }
@@ -299,7 +310,10 @@ namespace alc {
 	
 	class tvNode : public tvBase {
 	public:
-		tvNode(void) : tvBase() { blob1Size = 0; blob1 = NULL; }
+		/** initializes a vault node. make sure you initialize the first fields (up to modMicrosec) before sending since they
+		    will also be sent when their flag is off */
+		tvNode(void);
+		
 		virtual ~tvNode(void);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
@@ -313,6 +327,7 @@ namespace alc {
 		S32 owner;
 		U32 group;
 		U32 modTime, modMicrosec;
+		// you can only rely on these being defined if the flag is set
 		U32 creator;
 		U32 crtTime;
 		U32 ageTime;
@@ -326,7 +341,7 @@ namespace alc {
 		U32 blob1Size;
 		Byte *blob1;
 
-private:
+	private:
 		void permissionsAsHtml(tLog *log);
 		void blobAsHtml(tLog *log, Byte *blob, U32 size);
 	};
