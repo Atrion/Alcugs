@@ -283,6 +283,13 @@ namespace alc {
 		}
 	}
 	
+	S32 tvCreatableGenericValue::asInt(void)
+	{
+		if (format != DInteger)
+			throw txProtocolError(_WHERE("expected a GenericValue.format of 0x%02X (DInteger) but got 0x%02X", DInteger, format));
+		return integer;
+	}
+	
 	void tvCreatableGenericValue::asHtml(tLog *log, bool shortLog)
 	{
 		switch (format) {
@@ -848,6 +855,13 @@ namespace alc {
 		}
 		t.putU16(sentType);
 		t.put(*data);
+	}
+	
+	S32 tvItem::asInt(void)
+	{
+		if (type != DCreatableGenericValue)
+			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a DCreatableGenericValue", id, alcVaultGetDataType(type)));
+		return ((tvCreatableGenericValue *)data)->asInt();
 	}
 	
 	void tvItem::asHtml(tLog *log, bool shortLog)

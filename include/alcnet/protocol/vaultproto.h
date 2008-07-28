@@ -225,7 +225,7 @@ namespace alc {
 		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log, bool shortLog) {}
 		const Byte *str(void);
-	private:
+		// format
 		U32 flags;
 		tUStr title, name, cameraStack;
 	};
@@ -253,7 +253,9 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log, bool shortLog);
-	private:
+		
+		S32 asInt(void);
+		// format
 		Byte format;
 		S32 integer;
 		tUStr str;
@@ -267,7 +269,7 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log, bool shortLog);
-	private:
+		// format
 		U32 size; // only defined when data != NULL
 		Byte id;
 		Byte *data;
@@ -279,7 +281,7 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log, bool shortLog);
-	private:
+		// format
 		Byte guid[8];
 	};
 	
@@ -289,7 +291,7 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log, bool shortLog);
-	private:
+		// format
 		U32 saver, parent, child;
 		U32 time, microsec;
 		Byte flags; // 0x00 not seen; 0x01 seen
@@ -302,10 +304,8 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log, bool shortLog);
-	private:
-		void permissionsAsHtml(tLog *log);
-		void blobAsHtml(tLog *log, Byte *blob, U32 size);
 	
+		// format
 		U32 flagA, flagB, flagC;
 		U32 index;
 		Byte type;
@@ -325,6 +325,10 @@ namespace alc {
 		tUStr text1, text2;
 		U32 blob1Size;
 		Byte *blob1;
+
+private:
+		void permissionsAsHtml(tLog *log);
+		void blobAsHtml(tLog *log, Byte *blob, U32 size);
 	};
 	
 	class tvItem : public tvBase {
@@ -335,8 +339,10 @@ namespace alc {
 		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log, bool shortLog);
 		
+		S32 asInt(void);
+		
 		Byte tpots; // 1: generate/parse for TPOTS client, everything else: for non-TPOTS client (or the vault server)
-	private:
+		// format
 		Byte id;
 		U16 type;
 		tvBase *data;

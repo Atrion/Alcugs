@@ -108,6 +108,25 @@ namespace alc {
 	{
 		msg.print(logHtml, /*clientToServer:*/true, u, shortHtml, ki);
 		
+		S32 nodeType = -1, id = -1;
+		
+		// read and verify the general vault items
+		for (int i = 0; i < msg.numItems; ++i) {
+			tvItem *itm = msg.items[i];
+			switch (itm->id) {
+				case 0: // GenericValue.Int: used in VaultManager, must always be the same
+					if (itm->asInt() != (S32)0xC0AB3041)
+						throw txProtocolError(_WHERE("a vault item with ID 0 must always have a value of 0xC0AB3041 but I got 0x%08X", itm->asInt()));
+					break;
+				case 1: // GenericValue.Int: node type
+					nodeType = itm->asInt();
+					break;
+				case 2: // GenericValue.Int: unique id [ki number]
+					id = itm->asInt();
+					break;
+			}
+		}
+		
 		if (msg.cmd == VConnect) {
 			// FIXME: log the player in
 			return;
