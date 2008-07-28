@@ -49,7 +49,7 @@ namespace alc {
 		this->log = log;
 	
 		int version = getVersion();
-		if (version < 2 || version > 3) throw txUnet(_WHERE("only vault DB version 2 and 3 are supported, not %d", version));
+		if (version < 2 || version > 3) throw txDatabaseError(_WHERE("only vault DB version 2 and 3 are supported, not %d", version));
 		log->log("Started VaultDB driver (%s) on a vault DB version %d\n", __U_VAULTDB_ID, version);
 		if (version == 2) {
 			log->log("Converting DB from version 2 to 3... \n");
@@ -83,7 +83,7 @@ namespace alc {
 	
 	int tVaultDB::getVersion(void)
 	{
-		if (!prepare()) throw txUnet(_WHERE("no access to DB"));
+		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
 		char query[512];
 		int version;
@@ -98,11 +98,11 @@ namespace alc {
 			sprintf(query, "SELECT int_1 FROM %s WHERE type=6 LIMIT 1", vaultTable); // only the root node has type 6
 		sql->query(query, "Checking version number");
 		result = sql->storeResult();
-		if (result == NULL) throw txUnet(_WHERE("couldnt check version number"));
+		if (result == NULL) throw txDatabaseError(_WHERE("couldnt check version number"));
 		MYSQL_ROW row = mysql_fetch_row(result);
 		if (row) version = atoi(row[0]);
 		mysql_free_result(result);
-		if (!row) throw txUnet("couldnt find root vault node");
+		if (!row) throw txDatabaseError("couldnt find root vault node");
 		return version;
 	}
 	
@@ -163,16 +163,16 @@ namespace alc {
 		sql->query(query, "setting version number", true);
 	}
 	
-	int tVaultDB::getPlayerList(tMBuf &t, Byte *uid)
+	int tVaultDB::getPlayerList(tMBuf &t, const Byte *uid)
 	{
 		char query[1024];
 		t.clear();
 		
-		sprintf(query, "SELECT idx, lstr_1, int_2 FROM %s WHERE lstr_2 = \"%s\"", vaultTable, alcGetStrUid(uid));
+		sprintf(query, "SELECT idx, lstr_1, int_2 FROM %s WHERE lstr_2 = '%s'", vaultTable, alcGetStrUid(uid));
 		sql->query(query, "getting player list", true);
 		
 		MYSQL_RES *result = sql->storeResult();
-		if (result == NULL) throw txUnet(_WHERE("couldnt query player list"));
+		if (result == NULL) throw txDatabaseError(_WHERE("couldnt query player list"));
 		int number = mysql_num_rows(result);
 		
 		for (int i = 0; i < number; ++i) {
@@ -185,6 +185,26 @@ namespace alc {
 		}
 		mysql_free_result(result);
 		return number;
+	}
+	
+	int tVaultDB::checkKi(U32 ki, const Byte *uid, Byte *avatar)
+	{
+		char query[1024];
+		avatar[0] = 0; // first emtpy the string
+		
+		sprintf(query, "SELECT lstr_1 FROM %s WHERE lstr_2 = '%s' AND idx='%d'", vaultTable, alcGetStrUid(uid), ki);
+		sql->query(query, "checking ki", true);
+		
+		MYSQL_RES *result = sql->storeResult();
+		if (result == NULL) throw txDatabaseError(_WHERE("couldnt check ki"));
+		int number = mysql_num_rows(result);
+		
+		if (number >= 1) {
+			MYSQL_ROW row = mysql_fetch_row(result);
+			strncpy((char*)avatar, row[0], 255);
+		}
+		mysql_free_result(result);
+		return (number >= 1) ? 1 : 0;
 	}
 
 } //end namespace alc

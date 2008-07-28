@@ -70,6 +70,16 @@ namespace alc {
 				
 				return 1;
 			}
+			case NetMsgCustomVaultCheckKi:
+			{
+				tmCustomVaultCheckKi checkKi(u);
+				msg->data->get(checkKi);
+				log->log("<RCV> %s\n", checkKi.str());
+				
+				vaultBackend->checkKi(checkKi);
+				
+				return 1;
+			}
 		}
 		
 		return 0;

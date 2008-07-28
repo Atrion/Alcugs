@@ -46,6 +46,7 @@ namespace alc {
 		}
 		
 		void sendPlayerList(tmCustomVaultAskPlayerList &askPlayerList);
+		void checkKi(tmCustomVaultCheckKi &checkKi);
 	private:
 		tVaultDB *vaultDB;
 		

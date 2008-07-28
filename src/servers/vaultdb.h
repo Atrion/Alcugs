@@ -37,7 +37,12 @@ namespace alc {
 		tVaultDB(tLog *log);
 		~tVaultDB(void) { if (sql) delete sql; }
 		
-		int getPlayerList(tMBuf &t, Byte *uid);
+		/** queries the player list and saves it in the buffer \returns the number of players */
+		int getPlayerList(tMBuf &t, const Byte *uid);
+		
+		/** checks if this account (uid) owns that ki and saves the avatar name (array must be at least 256 Bytes)
+		    \returns 1 when the avatar belings to that account, 0 otherwise */
+		int checkKi(U32 ki, const Byte *uid, Byte *avatar);
 	private:
 		bool prepare(void);
 		int getVersion(void);

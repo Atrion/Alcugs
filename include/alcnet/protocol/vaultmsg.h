@@ -108,6 +108,8 @@ namespace alc {
 	class tmCustomVaultCheckKi : public tmMsgBase {
 	public:
 		tmCustomVaultCheckKi(tNetSession *u, U32 ki, U32 x, Byte *uid);
+		tmCustomVaultCheckKi(tNetSession *u);
+		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 	protected:
 		virtual void additionalFields();
@@ -115,8 +117,10 @@ namespace alc {
 	
 	class tmCustomVaultKiChecked : public tmMsgBase {
 	public:
+		tmCustomVaultKiChecked(tNetSession *u, U32 ki, U32 x, const Byte *uid, Byte status, const Byte *avatar);
 		tmCustomVaultKiChecked(tNetSession *u);
 		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
 		// format
 		Byte status;
 		tUStr avatar;

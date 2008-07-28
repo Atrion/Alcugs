@@ -91,6 +91,7 @@ namespace alc {
 	{
 		this->x = x;
 		memcpy(this->uid, uid, 16);
+		numberPlayers = 0;
 	}
 	
 	void tmCustomVaultPlayerList::store(tBBuf &t)
@@ -263,6 +264,24 @@ namespace alc {
 #endif
 	}
 	
+	tmCustomVaultCheckKi::tmCustomVaultCheckKi(tNetSession *u)
+	 : tmMsgBase(NetMsgCustomVaultCheckKi, plNetX | plNetKi | plNetUID | plNetAck | plNetCustom | plNetVersion, u)
+	{ }
+
+	void tmCustomVaultCheckKi::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
+#ifndef ENABLE_UNET2
+		if (!hasFlags(plNetUID)) throw txProtocolError(_WHERE("UID flag missing"));
+#else
+		if (!hasFlags(plNetUID)) {
+			memcpy(uid, t.read(16), 16);
+			u->proto = 1; // unet2 protocol
+		}
+# endif
+	}
+	
 	void tmCustomVaultCheckKi::stream(tBBuf &t)
 	{
 		tmMsgBase::stream(t);
@@ -282,7 +301,23 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultKiChecked
-	tmCustomVaultKiChecked::tmCustomVaultKiChecked(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
+	tmCustomVaultKiChecked::tmCustomVaultKiChecked(tNetSession *u, U32 ki, U32 x, const Byte *uid, Byte status, const Byte *avatar)
+	: tmMsgBase(NetMsgCustomVaultKiChecked, plNetX | plNetKi | plNetUID | plNetAck | plNetCustom | plNetVersion, u)
+	{
+		this->ki = ki;
+		this->x = x;
+		memcpy(this->uid, uid, 16);
+#ifdef ENABLE_UNET2
+		if (u->proto == 1) unsetFlags(plNetUID);
+#endif
+	
+		this->status = status;
+		this->avatar.setVersion(0); // normal UruString
+		this->avatar.writeStr(avatar);
+	}
+	
+	tmCustomVaultKiChecked::tmCustomVaultKiChecked(tNetSession *u)
+	: tmMsgBase(NetMsgCustomVaultKiChecked, plNetX | plNetKi | plNetUID | plNetAck | plNetCustom | plNetVersion, u)
 	{
 		avatar.setVersion(0); // normal UruString
 	}
@@ -301,6 +336,16 @@ namespace alc {
 # endif
 		status = t.getByte();
 		t.get(avatar);
+	}
+	
+	void tmCustomVaultKiChecked::stream(tBBuf &t)
+	{
+		tmMsgBase::stream(t);
+#ifdef ENABLE_UNET2
+		if (u->proto == 1) { t.write(uid, 16); } // UID (only for old protocol, the new one sends it in the header)
+#endif
+		t.putByte(status);
+		t.put(avatar);
 	}
 	
 	void tmCustomVaultKiChecked::additionalFields()

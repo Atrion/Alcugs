@@ -68,6 +68,14 @@ namespace alc {
 		list.numberPlayers = vaultDB->getPlayerList(list.players, askPlayerList.uid);
 		net->send(list);
 	}
+	
+	void tVaultBackend::checkKi(tmCustomVaultCheckKi &checkKi)
+	{
+		Byte avatar[256], status;
+		status = vaultDB->checkKi(checkKi.ki, checkKi.uid, avatar);
+		tmCustomVaultKiChecked checked(checkKi.getSession(), checkKi.ki, checkKi.x, checkKi.uid, status, avatar);
+		net->send(checked);
+	}
 
 } //end namespace alc
 
