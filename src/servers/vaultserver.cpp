@@ -80,6 +80,16 @@ namespace alc {
 				
 				return 1;
 			}
+			case NetMsgCustomVaultPlayerStatus:
+			{
+				tmCustomVaultPlayerStatus status(u);
+				msg->data->get(status);
+				log->log("(ignored) <RCV> %s\n", status.str());
+				
+				// FIXME: do something
+				
+				return 1;
+			}
 		}
 		
 		return 0;

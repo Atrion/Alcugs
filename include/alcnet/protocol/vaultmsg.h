@@ -65,6 +65,8 @@ namespace alc {
 	class tmCustomVaultPlayerStatus : public tmMsgBase {
 	public:
 		tmCustomVaultPlayerStatus(tNetSession *u, U32 ki, U32 x, const Byte *serverGuid, const Byte *age, Byte state, U32 onlineTime);
+		tmCustomVaultPlayerStatus(tNetSession *u);
+		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format
 		tUStr age, serverGuid;

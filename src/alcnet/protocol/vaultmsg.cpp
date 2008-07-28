@@ -118,6 +118,13 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultPlayerStatus
+	tmCustomVaultPlayerStatus::tmCustomVaultPlayerStatus(tNetSession *u)
+	 : tmMsgBase(NetMsgCustomVaultPlayerStatus, plNetAck | plNetCustom | plNetVersion | plNetX | plNetKi, u)
+	{
+		serverGuid.setVersion(0); // normal UruString
+		age.setVersion(0); // normal UruString
+	}
+	
 	tmCustomVaultPlayerStatus::tmCustomVaultPlayerStatus(tNetSession *u, U32 ki, U32 x, const Byte *serverGuid, const Byte *age, Byte state, U32 onlineTime)
 	 : tmMsgBase(NetMsgCustomVaultPlayerStatus, plNetAck | plNetCustom | plNetVersion | plNetX | plNetKi, u)
 	{
@@ -130,6 +137,16 @@ namespace alc {
 		this->age.writeStr(age);
 		this->state = state;
 		this->onlineTime = onlineTime;
+	}
+	
+	void tmCustomVaultPlayerStatus::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		if (!hasFlags(plNetX | plNetKi))  throw txProtocolError(_WHERE("X or KI flag missing"));
+		t.get(age);
+		t.get(serverGuid);
+		state = t.getByte();
+		onlineTime = t.getU32();
 	}
 	
 	void tmCustomVaultPlayerStatus::stream(tBBuf &t)
