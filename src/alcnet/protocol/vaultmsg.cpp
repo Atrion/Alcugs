@@ -64,7 +64,7 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultAskPlayerList
-	tmCustomVaultAskPlayerList::tmCustomVaultAskPlayerList(tNetSession *u, U32 x, Byte *uid)
+	tmCustomVaultAskPlayerList::tmCustomVaultAskPlayerList(tNetSession *u, U32 x, const Byte *uid)
 	: tmMsgBase(NetMsgCustomVaultAskPlayerList, plNetAck | plNetCustom | plNetX | plNetVersion | plNetUID, u)
 	{
 		this->x = x;
@@ -82,8 +82,16 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultPlayerList
-	tmCustomVaultPlayerList::tmCustomVaultPlayerList(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
+	tmCustomVaultPlayerList::tmCustomVaultPlayerList(tNetSession *u)
+	: tmMsgBase(NetMsgCustomVaultPlayerList, plNetAck | plNetCustom | plNetX | plNetVersion | plNetUID, u)
 	{ }
+	
+	tmCustomVaultPlayerList::tmCustomVaultPlayerList(tNetSession *u, U32 x, const Byte *uid)
+	: tmMsgBase(NetMsgCustomVaultPlayerList, plNetAck | plNetCustom | plNetX | plNetVersion | plNetUID, u)
+	{
+		this->x = x;
+		memcpy(this->uid, uid, 16);
+	}
 	
 	void tmCustomVaultPlayerList::store(tBBuf &t)
 	{
@@ -92,6 +100,14 @@ namespace alc {
 		numberPlayers = t.getU16();
 		players.clear();
 		t.get(players); // the rest is the data about the players
+	}
+	
+	void tmCustomVaultPlayerList::stream(tBBuf &t)
+	{
+		tmMsgBase::stream(t);
+		t.putU16(numberPlayers);
+		players.rewind();
+		t.put(players);
 	}
 	
 	void tmCustomVaultPlayerList::additionalFields()

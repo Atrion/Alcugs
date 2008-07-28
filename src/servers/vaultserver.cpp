@@ -66,6 +66,8 @@ namespace alc {
 				msg->data->get(askPlayerList);
 				log->log("<RCV> %s\n", askPlayerList.str());
 				
+				vaultBackend->sendPlayerList(askPlayerList);
+				
 				return 1;
 			}
 		}

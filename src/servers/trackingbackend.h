@@ -39,6 +39,7 @@
 #define __U_TRACKINGBACKEND_H_ID "$Id$"
 
 #include <protocol/trackingmsg.h>
+
 #include "guidgen.h"
 
 namespace alc {

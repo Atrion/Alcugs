@@ -36,6 +36,8 @@ namespace alc {
 	public:
 		tVaultDB(tLog *log);
 		~tVaultDB(void) { if (sql) delete sql; }
+		
+		int getPlayerList(tMBuf &t, Byte *uid);
 	private:
 		bool prepare(void);
 		int getVersion(void);

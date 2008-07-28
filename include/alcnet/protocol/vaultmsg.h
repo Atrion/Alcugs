@@ -44,7 +44,7 @@ namespace alc {
 	
 	class tmCustomVaultAskPlayerList : public tmMsgBase {
 	public:
-		tmCustomVaultAskPlayerList(tNetSession *u, U32 x, Byte *uid);
+		tmCustomVaultAskPlayerList(tNetSession *u, U32 x, const Byte *uid);
 		tmCustomVaultAskPlayerList(tNetSession *u);
 		virtual void store(tBBuf &t);
 	};
@@ -52,7 +52,9 @@ namespace alc {
 	class tmCustomVaultPlayerList : public tmMsgBase {
 	public:
 		tmCustomVaultPlayerList(tNetSession *u);
+		tmCustomVaultPlayerList(tNetSession *u, U32 x, const Byte *uid);
 		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
 		// format
 		U16 numberPlayers;
 		tMBuf players;

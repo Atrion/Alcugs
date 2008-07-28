@@ -61,6 +61,13 @@ namespace alc {
 		log->nl();
 		log->flush();
 	}
+	
+	void tVaultBackend::sendPlayerList(tmCustomVaultAskPlayerList &askPlayerList)
+	{
+		tmCustomVaultPlayerList list(askPlayerList.getSession(), askPlayerList.x, askPlayerList.uid);
+		list.numberPlayers = vaultDB->getPlayerList(list.players, askPlayerList.uid);
+		net->send(list);
+	}
 
 } //end namespace alc
 

@@ -29,6 +29,8 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_VAULTBACKEND_H_ID "$Id$"
 
+#include <protocol/vaultmsg.h>
+
 #include "vaultdb.h"
 
 namespace alc {
@@ -42,6 +44,8 @@ namespace alc {
 			delete vaultDB;
 			vaultDB = new tVaultDB(log);
 		}
+		
+		void sendPlayerList(tmCustomVaultAskPlayerList &askPlayerList);
 	private:
 		tVaultDB *vaultDB;
 		

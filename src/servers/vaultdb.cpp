@@ -162,6 +162,30 @@ namespace alc {
 		sprintf(query, "UPDATE %s SET int_1=3 WHERE type=6", vaultTable); // only the root node has type 6
 		sql->query(query, "setting version number", true);
 	}
+	
+	int tVaultDB::getPlayerList(tMBuf &t, Byte *uid)
+	{
+		char query[1024];
+		t.clear();
+		
+		sprintf(query, "SELECT idx, lstr_1, int_2 FROM %s WHERE lstr_2 = \"%s\"", vaultTable, alcGetStrUid(uid));
+		sql->query(query, "getting player list", true);
+		
+		MYSQL_RES *result = sql->storeResult();
+		if (result == NULL) throw txUnet(_WHERE("couldnt query player list"));
+		int number = mysql_num_rows(result);
+		
+		for (int i = 0; i < number; ++i) {
+			MYSQL_ROW row = mysql_fetch_row(result);
+			t.putU32(atoi(row[0])); // KI
+			tUStr avatar(0); // normal UruString
+			avatar.writeStr(row[1]);
+			t.put(avatar);
+			t.putByte(atoi(row[2])); // flags
+		}
+		mysql_free_result(result);
+		return number;
+	}
 
 } //end namespace alc
 
