@@ -87,6 +87,15 @@ namespace alc {
 		vaultDB = new tVaultDB(log);
 		log->nl();
 		log->flush();
+		vaultDB->getVaultFolderName(vaultFolderName);
+		DBG(5, "global vault folder name is %s\n", vaultFolderName);
+	}
+	
+	void tVaultBackend::send(tvMessage &msg, tNetSession *u, U32 ki)
+	{
+		msg.print(logHtml, /*clientToServer:*/false, u, shortHtml, ki);
+		tmVault vaultMsg(u, ki, &msg);
+		net->send(vaultMsg);
 	}
 	
 	void tVaultBackend::sendPlayerList(tmCustomVaultAskPlayerList &askPlayerList)
@@ -124,6 +133,10 @@ namespace alc {
 				case 2: // GenericValue.Int: unique id [ki number]
 					id = itm->asInt();
 					break;
+				case 20: // GenericValue.Int: must always be the same
+					if (itm->asInt() != -1)
+						throw txProtocolError(_WHERE("a vault item with ID 0 must always have a value of -1 but I got %d", itm->asInt()));
+					break;
 				default:
 					throw txProtocolError(_WHERE("vault item has invalid id %d", itm->id));
 			}
@@ -136,9 +149,14 @@ namespace alc {
 			node.type = nodeType;
 			if (nodeType == 5) { // admin node
 				U32 adminNode = vaultDB->findNode(node, true);
-				DBG(5, "found admin node %d\n", adminNode);
+				// create and send the reply
+				tvMessage reply(msg, 3);
+				reply.items[0] = new tvItem(/*id:*/1, /*nodeType*/5);
+				reply.items[1] = new tvItem(/*id*/2, /*node id*/adminNode);
+				reply.items[2] = new tvItem(/*id*/23, /*folder name*/vaultFolderName);
+				send(reply, u, ki);
 			}
-			else
+			else // wrong or no node type at all
 				throw txProtocolError(_WHERE("connect request for unknown node type %d", nodeType));
 			return;
 		}

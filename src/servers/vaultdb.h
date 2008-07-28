@@ -51,6 +51,7 @@ namespace alc {
 		U32 findNode(tvNode &node, bool create);
 		
 		U32 createNode(tvNode &node);
+		void getVaultFolderName(Byte *folder);
 	private:
 		bool prepare(void);
 		int getVersion(void);

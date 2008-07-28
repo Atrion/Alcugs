@@ -89,6 +89,7 @@ namespace alc {
 		int version;
 		sprintf(query, "SHOW COLUMNS FROM %s LIKE 'torans'", vaultTable);
 		sql->query(query, "Checking for torans column");
+		
 		MYSQL_RES *result = sql->storeResult();
 		bool exists = mysql_num_rows(result);
 		mysql_free_result(result);
@@ -104,6 +105,26 @@ namespace alc {
 		mysql_free_result(result);
 		if (!row) throw txDatabaseError("couldnt find root vault node");
 		return version;
+	}
+	
+	void tVaultDB::getVaultFolderName(Byte *folder)
+	{
+		folder[0] = 0; // empty it
+		
+		char query[512];
+		sprintf(query, "SELECT idx, str_1 FROM %s WHERE type=6 LIMIT 1", vaultTable);
+		sql->query(query, "getting vault folder name");
+		
+		MYSQL_RES *result = sql->storeResult();
+		if (result == NULL) throw txDatabaseError(_WHERE("couldnt query player list"));
+		int number = mysql_num_rows(result);
+		
+		if (number == 0) throw txDatabaseError(_WHERE("creating the main vault folder is not yet supported"));
+		MYSQL_ROW row = mysql_fetch_row(result);
+		if (atoi(row[0]) != KVaultID || strlen(row[1]) != 16)
+			throw txDatabaseError(_WHERE("invalid main vault folder found (or there's none at all"));
+		strcpy((char *)folder, row[1]);
+		mysql_free_result(result);
 	}
 	
 	void tVaultDB::convertIntToTimestamp(const char *table, const char *intColumn, const char *timestampColumn)
@@ -192,13 +213,12 @@ namespace alc {
 		char query[1024];
 		avatar[0] = 0; // first emtpy the string
 		
-		sprintf(query, "SELECT lstr_1 FROM %s WHERE lstr_2 = '%s' and idx='%d'", vaultTable, alcGetStrUid(uid), ki);
+		sprintf(query, "SELECT lstr_1 FROM %s WHERE lstr_2 = '%s' and idx='%d' LIMIT 1", vaultTable, alcGetStrUid(uid), ki);
 		sql->query(query, "checking ki");
 		
 		MYSQL_RES *result = sql->storeResult();
 		if (result == NULL) throw txDatabaseError(_WHERE("couldnt check ki"));
 		int number = mysql_num_rows(result);
-		if (number > 1) throw txDatabaseError(_WHERE("Database inconsistency: KI %d exists more than once", ki));
 		
 		if (number == 1) {
 			MYSQL_ROW row = mysql_fetch_row(result);
@@ -371,8 +391,7 @@ namespace alc {
 			strcat(query, cond);
 			comma = true;
 		}
-		
-		strcat(query, " LIMIT 1");
+		// now, let's execute it
 		sql->query(query, "finding node");
 		
 		MYSQL_RES *result = sql->storeResult();

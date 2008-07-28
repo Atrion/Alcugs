@@ -48,7 +48,10 @@ namespace alc {
 		void checkKi(tmCustomVaultCheckKi &checkKi);
 		void processVaultMsg(tvMessage &msg, tNetSession *u, U32 ki);
 	private:
+		void send(tvMessage &msg, tNetSession *u, U32 ki);
+	
 		tVaultDB *vaultDB;
+		Byte vaultFolderName[17];
 		
 		tLog *log, *logHtml;
 		bool shortHtml;

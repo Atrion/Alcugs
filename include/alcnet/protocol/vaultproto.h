@@ -76,6 +76,9 @@ namespace alc {
 #define MBlob1Guid 0x00000001 //00000001 (flagC 1) [Blob1_guid]
 #define MBlob2Guid 0x00000002 //00000010 (flagC 1) [Blob2_guid]
 
+//define the base vault index
+#define KVaultID 20001
+
 //node types
 #define KInvalidNode 0x00
 
@@ -249,7 +252,9 @@ namespace alc {
 	
 	class tvCreatableGenericValue : public tvBase {
 	public:
-		tvCreatableGenericValue(void) : tvBase() { str.setVersion(5); /* inverted UruString */ }
+		tvCreatableGenericValue(S32 integer);
+		tvCreatableGenericValue(Byte *str);
+		tvCreatableGenericValue(void) : tvBase() { }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log, bool shortLog);
@@ -321,13 +326,13 @@ namespace alc {
 	
 		// format
 		U32 flagA, flagB, flagC;
+		// you can only rely on these being defined if the flag is set
 		U32 index;
 		Byte type;
 		U32 permissions;
 		S32 owner;
 		U32 group;
 		U32 modTime, modMicrosec;
-		// you can only rely on these being defined if the flag is set
 		U32 creator;
 		U32 crtTime;
 		U32 ageTime;
@@ -348,6 +353,8 @@ namespace alc {
 	
 	class tvItem : public tvBase {
 	public:
+		tvItem(Byte id, S32 integer);
+		tvItem(Byte id, Byte *str);
 		tvItem(Byte tpots) : tvBase() { this->tpots = tpots; data = NULL; }
 		virtual ~tvItem(void) { if (data) delete data; }
 		virtual void store(tBBuf &t);
@@ -365,6 +372,7 @@ namespace alc {
 	
 	class tvMessage : public tvBase {
 	public:
+		tvMessage(tvMessage &msg, int nItems);
 		tvMessage(bool isTask, Byte tpots) : tvBase() { task = isTask; this->tpots = tpots; items = NULL; }
 		virtual ~tvMessage(void);
 		virtual void store(tBBuf &t); //!< unpacks the message
@@ -377,7 +385,6 @@ namespace alc {
 		bool task;
 		Byte cmd; //!< the vault command
 		Byte compressed; //!< 1 when uncompressed, 3 when compressed
-		U32 realSize; //!< the real size of the message
 		U16 numItems; //!< number of items
 		tvItem **items;
 		U16 context; // sub in VaultTask

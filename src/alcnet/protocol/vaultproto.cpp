@@ -246,6 +246,18 @@ namespace alc {
 	}
 	
 	//// tvCreatableGenericValue
+	tvCreatableGenericValue::tvCreatableGenericValue(S32 integer) : tvBase()
+	{
+		format = DInteger;
+		this->integer = integer;
+	}
+	
+	tvCreatableGenericValue::tvCreatableGenericValue(Byte *str) : tvBase()
+	{
+		format = DUruString;
+		this->str.writeStr(str);
+	}
+	
 	void tvCreatableGenericValue::store(tBBuf &t)
 	{
 		format = t.getByte();
@@ -255,6 +267,7 @@ namespace alc {
 				integer = t.getS32();
 				break;
 			case DUruString:
+				str.setVersion(5); /* inverted UruString */
 				t.get(str);
 				break;
 			case DTimestamp:
@@ -273,6 +286,7 @@ namespace alc {
 				t.putS32(integer);
 				break;
 			case DUruString:
+				str.setVersion(5); /* inverted UruString */
 				t.put(str);
 				break;
 			case DTimestamp:
@@ -836,6 +850,20 @@ namespace alc {
 	}
 	
 	//// tvItem
+	tvItem::tvItem(Byte id, S32 integer) : tvBase()
+	{
+		this->id = id;
+		type = DCreatableGenericValue;
+		data = new tvCreatableGenericValue(integer);
+	}
+	
+	tvItem::tvItem(Byte id, Byte *str)
+	{
+		this->id = id;
+		type = DCreatableGenericValue;
+		data = new tvCreatableGenericValue(str);
+	}
+	
 	void tvItem::store(tBBuf &t)
 	{
 		id = t.getByte();
@@ -905,6 +933,20 @@ namespace alc {
 	}
 	
 	//// tvMessage
+	tvMessage::tvMessage(tvMessage &msg, int nItems) : tvBase()
+	{
+		tpots = 0;
+		task = false;
+		cmd = msg.cmd;
+		compressed = 1; // uncompressed
+		context = msg.context;
+		vmgr = msg.vmgr;
+		vn = msg.vn;
+		numItems = nItems;
+		items = (tvItem **)malloc(numItems * sizeof(tvItem *));
+		for (int i = 0; i < numItems; ++i) items[i] = NULL;
+	}
+	
 	tvMessage::~tvMessage(void)
 	{
 		if (items) {
@@ -924,7 +966,7 @@ namespace alc {
 			throw txProtocolError(_WHERE("bad 1st result code 0x%04X", result));
 		}
 		compressed = t.getByte();
-		realSize = t.getU32();
+		U32 realSize = t.getU32();
 		U32 startPos = t.tell(); // remember the pos to verify the real size
 		DBG(5, "vault message: command: 0x%02X, compressed: 0x%02X, real size: %d", cmd, compressed, realSize);
 		
@@ -988,15 +1030,18 @@ namespace alc {
 		t.putByte(cmd);
 		t.putU16(0);// result
 		t.putByte(compressed);
-		t.putU32(realSize);
 		
 		// put the items into a temporary buffer which might be compressed
 		tMBuf buf; // this should be created on the stack to avoid leaks when there's an exception
 		buf.putU16(numItems);
 		for (int i = 0; i < numItems; ++i) {
+			if (!items[i]) throw txProtocolError(_WHERE("vault item nr. %d has not been initialized", i));
 			items[i]->tpots = tpots; // make sure the right TPOTS value is used
 			buf.put(*items[i]);
 		}
+		
+		// save the real size of the buffer
+		t.putU32(buf.size());
 		
 		if (compressed == 0x03) {
 			tZBuf content;
@@ -1055,9 +1100,9 @@ namespace alc {
 		if (task) log->print("<b>NetMsgVaultTask ");
 		else      log->print("<b>NetMsgVault ");
 		log->print("CMD: 0x%02X ", cmd);
-		if (task) log->print("(%s)</b><br />\n", alcVaultGetTask(cmd));
-		else      log->print("(%s)</b><br />\n", alcVaultGetCmd(cmd));
-		log->print("compressed: %d, real size: %d<br />\n", compressed, realSize);
+		if (task) log->print("(%s)</b>, ", alcVaultGetTask(cmd));
+		else      log->print("(%s)</b>, ", alcVaultGetCmd(cmd));
+		log->print("compressed: %d<br />\n", compressed);
 		if (task) log->print("sub: %d, <b>client: %d</b><br />\n", context, vmgr);
 		else      log->print("context: %d, <b>vmgr: %d</b>, vn: %d<br />\n", context, vmgr, vn);
 		
@@ -1065,6 +1110,7 @@ namespace alc {
 		if (numItems > 0) {
 			log->print("<table border='1'>\n");
 			for (int i = 0; i < numItems; ++i) {
+				if (!items[i]) throw txProtocolError(_WHERE("vault item nr. %d has not been initialized", i));
 				log->print("<tr><th style='background-color:cyan;'>Item %d</th></tr>\n", i+1);
 				log->print("<tr><td>\n");
 				items[i]->asHtml(log, shortLog);
