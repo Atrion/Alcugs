@@ -63,6 +63,11 @@ public:
 	txProtocolError(const char * msg="",bool abort=false,bool core=false) :txUnet("txProtocolError",msg,abort,core) {}
 };
 
+class txDatabaseError : public txUnet {
+public:
+	txDatabaseError(const char * msg="",bool abort=false,bool core=false) :txUnet("txDatabaseError",msg,abort,core) {}
+};
+
 
 }
 

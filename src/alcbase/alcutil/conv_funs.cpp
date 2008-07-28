@@ -47,7 +47,7 @@ const Byte * alcGetStrGuid(const Byte * guid) {
 /**
   \brief Converts an hex uid to ascii.
 */
-const Byte * alcGetStrUid(Byte * guid) {
+const Byte * alcGetStrUid(const Byte * guid) {
 	int off1=0;
 	int off2=0;
 	if(guid==NULL) return (const Byte *)"null";

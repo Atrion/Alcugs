@@ -138,7 +138,7 @@ bool tSQL::query(const char *str, const char *desc, bool throwOnError)
 {
 	if (connection == NULL) {
 		if (!prepare()) {
-			if (throwOnError) throw txUnet(_WHERE("No connection to DB for \"%s\"", desc));
+			if (throwOnError) throw txDatabaseError(_WHERE("No connection to DB for \"%s\"", desc));
 			return false; // DANGER: possible endless loop (query calls prepare calls query...)
 		}
 	}
@@ -163,7 +163,7 @@ bool tSQL::query(const char *str, const char *desc, bool throwOnError)
 		// failed again... print the error
 		printError(desc);
 	}
-	if (throwOnError) throw txUnet(_WHERE("SQL error while \"%s\"", desc));
+	if (throwOnError) throw txDatabaseError(_WHERE("SQL error while \"%s\"", desc));
 	return false;
 }
 
