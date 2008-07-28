@@ -30,6 +30,7 @@
 #define __U_VAULTBACKEND_H_ID "$Id$"
 
 #include <protocol/vaultmsg.h>
+#include <protocol/vaultproto.h>
 
 #include "vaultdb.h"
 
@@ -39,18 +40,18 @@ namespace alc {
 	class tVaultBackend {
 	public:
 		tVaultBackend(tUnet *net);
-		~tVaultBackend(void) { delete vaultDB; }
-		void reload(void) {
-			delete vaultDB;
-			vaultDB = new tVaultDB(log);
-		}
+		~tVaultBackend(void) { unload(); }
+		void unload(void);
+		void load(void);
 		
 		void sendPlayerList(tmCustomVaultAskPlayerList &askPlayerList);
 		void checkKi(tmCustomVaultCheckKi &checkKi);
+		void processVaultMsg(tvMessage &msg, tNetSession *u, U32 ki);
 	private:
 		tVaultDB *vaultDB;
 		
-		tLog *log;
+		tLog *log, *logHtml;
+		bool shortHtml;
 		tUnet *net;
 	};
 

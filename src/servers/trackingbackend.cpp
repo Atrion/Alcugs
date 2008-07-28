@@ -89,20 +89,20 @@ namespace alc {
 	tTrackingBackend::tTrackingBackend(tUnet *net, tNetSessionList *servers, char *host, U16 port)
 	{
 		log = lnull;
+		guidGen = NULL;
+		ageParser = NULL;
 		this->servers = servers;
 		this->net = net;
 		this->host = host;
 		this->port = port;
 		size = count = lastUpdate = 0;
 		players = NULL;
-		loadSettings();
 		generateFakeGuid(fakeLobbyGuid);
 	}
 	
 	tTrackingBackend::~tTrackingBackend(void)
 	{
-		delete guidGen;
-		delete ageParser;
+		unload();
 		if (players != NULL) {
 			int num_deleted = 0;
 			for (int i = 0; i < size; ++i) {
@@ -111,25 +111,29 @@ namespace alc {
 					++num_deleted;
 				}
 			}
-			if (num_deleted > 0) log->log("ERR: The backend is quitting, and there were still %d players online\n", num_deleted);
+			if (num_deleted > 0) lerr->log("ERR: The backend is quitting, and there were still %d players online\n", num_deleted);
 			free((void *)players);
 		}
-		if (log != lnull) delete log;
 	}
 	
-	void tTrackingBackend::reload(void)
+	void tTrackingBackend::unload(void)
 	{
 		if (log != lnull) {
 			delete log;
 			log = lnull;
 		}
-		delete guidGen;
-		delete ageParser;
-		loadSettings();
+		if (guidGen != NULL) {
+			delete guidGen;
+			guidGen = NULL;
+		}
+		if (ageParser != NULL) {
+			delete ageParser;
+			ageParser = NULL;
+		}
 	}
 	
 		
-	void tTrackingBackend::loadSettings(void)
+	void tTrackingBackend::load(void)
 	{
 		tConfig *cfg = alcGetConfig();
 		

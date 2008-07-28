@@ -976,7 +976,7 @@ namespace alc {
 		}
 	}
 	
-	void tvMessage::print(tLog *log, bool clientToServer, tNetSession *client, bool shortLog)
+	void tvMessage::print(tLog *log, bool clientToServer, tNetSession *client, bool shortLog, U32 ki)
 	{
 		static int count = 0;
 		if (!log->doesPrint()) return; // don't do anything if log is disabled
@@ -987,10 +987,17 @@ namespace alc {
 			count = 0;
 		}
 		
-		if (clientToServer)
-			log->print("<h2 style='color:blue'>From client (%s) to vault</h2>\n", client ? client->str() : "?");
+		char clientDesc[512];
+		if (ki) // we're in the vault server and the "client" is only forwarding
+			sprintf(clientDesc, "KI %d, routed by %s", ki, client ? client->str() : "?");
+		else if (client)
+			strncpy(clientDesc, client->str(), 511);
 		else
-			log->print("<h2 style='color:green'>From vault to client (%s)</h2>\n", client ? client->str() : "?");
+			strcpy(clientDesc, "?");
+		if (clientToServer)
+			log->print("<h2 style='color:blue'>From client (%s) to vault</h2>\n", clientDesc);
+		else
+			log->print("<h2 style='color:green'>From vault to client (%s)</h2>\n", clientDesc);
 		asHtml(log, shortLog);
 		log->print("<hr>\n\n");
 		log->flush();

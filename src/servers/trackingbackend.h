@@ -86,7 +86,8 @@ namespace alc {
 	public:
 		tTrackingBackend(tUnet *net, tNetSessionList *servers, char *host, U16 port);
 		~tTrackingBackend(void);
-		void reload(void);
+		void load(void);
+		void unload(void);
 		void updateStatusFile(void);
 		
 		void updatePlayer(tNetSession *game, tmCustomPlayerStatus &playerStatus);
@@ -99,7 +100,6 @@ namespace alc {
 		tPlayer *getPlayer(U32 ki, int *nr = NULL);
 		void notifyWaiting(tNetSession *server);
 		void serverFound(tPlayer *player, tNetSession *server);
-		void loadSettings(void);
 		void removePlayer(int player);
 		bool doesAgeLoadState(const Byte *age);
 		void printStatusHTML(void);

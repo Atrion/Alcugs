@@ -41,6 +41,7 @@
 #include <alcugs.h>
 #include <alcnet.h>
 #include <protocol/vaultmsg.h>
+#include <protocol/vaultproto.h>
 
 ////extra includes
 #include "vaultserver.h"
@@ -87,6 +88,23 @@ namespace alc {
 				log->log("(ignored) <RCV> %s\n", status.str());
 				
 				// FIXME: do something
+				
+				return 1;
+			}
+			case NetMsgVault:
+			{
+				// get the data out of the packet
+				tmVault vaultMsg(u);
+				msg->data->get(vaultMsg);
+				log->log("<RCV> %s\n", vaultMsg.str());
+				if (!vaultMsg.hasFlags(plNetKi) || vaultMsg.ki == 0) throw txProtocolError(_WHERE("KI missing"));
+				
+				// prepare for parsing the message (actual parsing is only done when the packet is really forwarded
+				tvMessage parsedMsg(/*isTask:*/false, /* 0 = non-TPOTS */0);
+				vaultMsg.message.rewind();
+				vaultMsg.message.get(parsedMsg);
+				
+				vaultBackend->processVaultMsg(parsedMsg, u, vaultMsg.ki);
 				
 				return 1;
 			}

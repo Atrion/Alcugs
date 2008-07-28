@@ -349,7 +349,7 @@ namespace alc {
 		virtual void store(tBBuf &t); //!< unpacks the message
 		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log, bool shortLog);
-		void print(tLog *log, bool clientToServer, tNetSession *client, bool shortLog);
+		void print(tLog *log, bool clientToServer, tNetSession *client, bool shortLog, U32 ki = 0);
 		
 		Byte tpots; // 1: generate/parse for TPOTS client, everything else: for non-TPOTS client (or the vault server)
 		// format

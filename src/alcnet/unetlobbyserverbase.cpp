@@ -64,7 +64,7 @@ namespace alc {
 		tConfig *cfg = alcGetConfig();
 		tStrBuf var = cfg->getVar("vault.html.log");
 		if (var.isNull() || var.asByte()) { // logging enabled per default
-			lvault = new tLog("vault.html", 2, DF_HTML);
+			if (lvault == lnull) lvault = new tLog("vault.html", 2, DF_HTML);
 			var = cfg->getVar("vault.html.log.short");
 			vaultLogShort = (!var.isNull() && var.asByte()); // per default, it's not short
 		}

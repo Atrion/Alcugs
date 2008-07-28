@@ -43,11 +43,38 @@ namespace alc {
 	tVaultBackend::tVaultBackend(tUnet *net)
 	{
 		this->net = net;
+		log = logHtml = lnull;
+		vaultDB = NULL;
+	}
 	
+	void tVaultBackend::unload(void)
+	{
+		if (vaultDB != NULL) {
+			delete vaultDB;
+			vaultDB = NULL;
+		}
+		if (log != lnull) {
+			delete log;
+			log = lnull;
+		}
+		if (logHtml != lnull) {
+			delete logHtml;
+			logHtml = lnull;
+		}
+	}
+	
+	void tVaultBackend::load(void)
+	{
 		tConfig *cfg = alcGetConfig();
 		tStrBuf var = cfg->getVar("vault.log");
 		if (var.isNull() || var.asByte()) { // logging enabled per default
 			log = new tLog("vault.log", 4, 0);
+		}
+		var = cfg->getVar("vault.html.log");
+		if (var.isNull() || var.asByte()) { // logging enabled per default
+			logHtml = new tLog("vault.html", 2, DF_HTML);
+			var = cfg->getVar("vault.html.log.short");
+			shortHtml = (!var.isNull() && var.asByte()); // per default, it's not short
 		}
 		
 		var = cfg->getVar("vault.unstable");
@@ -75,6 +102,18 @@ namespace alc {
 		status = vaultDB->checkKi(checkKi.ki, checkKi.uid, avatar);
 		tmCustomVaultKiChecked checked(checkKi.getSession(), checkKi.ki, checkKi.x, checkKi.uid, status, avatar);
 		net->send(checked);
+	}
+	
+	void tVaultBackend::processVaultMsg(tvMessage &msg, tNetSession *u, U32 ki)
+	{
+		msg.print(logHtml, /*clientToServer:*/true, u, shortHtml, ki);
+		
+		if (msg.cmd == VConnect) {
+			// FIXME: log the player in
+			return;
+		}
+		// FIXME: only go on if player is logged in
+		// FIXME: do more
 	}
 
 } //end namespace alc

@@ -60,13 +60,17 @@ namespace alc {
 		virtual void onConnectionClosed(tNetEvent * ev,tNetSession * u) {
 			trackingBackend->removeServer(u);
 		}
-		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
 		virtual void onLoadConfig(bool reload) {
-			if (reload) trackingBackend->reload();
+			trackingBackend->load();
+		}
+		virtual void onUnloadConfig(void) {
+			trackingBackend->unload();
 		}
 		virtual void onIdle(bool idle) {
 			trackingBackend->updateStatusFile();
 		}
+		
+		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
 	private:
 		tTrackingBackend *trackingBackend;
 	};

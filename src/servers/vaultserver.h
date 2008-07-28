@@ -52,16 +52,19 @@ namespace alc {
 		tUnetVaultServer(void) : tUnetServerBase()
 		{
 			vaultBackend = new tVaultBackend(this);
+			lvault = lnull;
 			lstd->log("WARNING: The vault server is not finished yet. So if it doesn\'t work, that's not even a bug.\n");
 		}
 		~tUnetVaultServer(void) { delete vaultBackend; }
 		
-		virtual void onLoadConfig(bool reload) {
-			if (reload) vaultBackend->reload();
-		}
+		virtual void onLoadConfig(bool reload) { vaultBackend->load(); }
+		virtual void onUnloadConfig(void) { vaultBackend->unload(); }
 		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
 	private:
 		tVaultBackend *vaultBackend;
+		
+		tLog *lvault;
+		bool vaultLogShort;
 	};
 	
 } //End alc namespace
