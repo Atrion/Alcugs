@@ -340,30 +340,28 @@ namespace alc {
 	void tvCreatableStream::asHtml(tLog *log, bool shortLog)
 	{
 		log->print("Size: %d<br />\n", size);
-		tMBuf buf;
-		buf.write(data, size);
-		buf.rewind();
+		tMBuf *buf = getData();
 		// the format of the content depends on the ID
 		switch (id) {
 			case 0x06:
 				log->print("<table border='1'>\n");
-				while (!buf.eof()) {
+				while (!buf->eof()) {
 					tvNode node;
-					buf.get(node);
+					buf->get(node);
 					node.asHtml(log, shortLog);
 				}
 				log->print("</table>\n");
 				break;
 			case 0x0A:
 			{
-				U16 num = buf.getU16();
+				U16 num = buf->getU16();
 				log->print("number of IDs: %d<br />\n", num);
 				if (num == 0) break;
 				// this is not printed in short log
 				// it is read anyway to verify the data
 				if (!shortLog) log->print("Value(s):");
 				for (U16 i = 0; i < num; ++i) {
-					U32 val = buf.getU32();
+					U32 val = buf->getU32();
 					if (shortLog) continue;
 					if (i > 0) log->print(",");
 					log->print(" 0x%08X (%d)", val, val);
@@ -373,11 +371,11 @@ namespace alc {
 			}
 			case 0x0E:
 			{
-				U32 num = buf.getU32();
+				U32 num = buf->getU32();
 				log->print("number of manifests: %d<br />\n", num);
 				for (U32 i = 0; i < num; ++i) {
 					tvManifest manifest;
-					buf.get(manifest);
+					buf->get(manifest);
 					// this is not printed in short log
 					// it is read anyway to verify the data
 					if (!shortLog) {
@@ -389,11 +387,11 @@ namespace alc {
 			}
 			case 0x0F:
 			{
-				U32 num = buf.getU32();
+				U32 num = buf->getU32();
 				log->print("number of VaultNodeRefs: %d<br />\n", num);
 				for (U32 i = 0; i < num; ++i) {
 					tvNodeRef nodeRef;
-					buf.get(nodeRef);
+					buf->get(nodeRef);
 					// this is not printed in short log
 					// it is read anyway to verify the data
 					if (!shortLog) nodeRef.asHtml(log, shortLog);
@@ -402,11 +400,19 @@ namespace alc {
 			}
 			default:
 				log->print("<span style='color:red'>Unknown strange stream data type!</span><br />\n");
-				buf.end();
 				break;
 		}
-		if (!buf.eof())
+		if (!buf->eof())
 			log->print("<span style='color:red'>Strange, this stream has some bytes left where none are expected!</span><br />\n");
+		delete buf;
+	}
+	
+	tMBuf *tvCreatableStream::getData(void)
+	{
+		tMBuf *buf = new tMBuf;
+		buf->write(data, size);
+		buf->rewind();
+		return buf;
 	}
 	
 	//// tvServerGuid

@@ -40,7 +40,7 @@ namespace alc {
 	class tVaultBackend {
 	public:
 		tVaultBackend(tUnet *net);
-		~tVaultBackend(void) { unload(); }
+		~tVaultBackend(void);
 		void unload(void);
 		void load(void);
 		
@@ -49,6 +49,7 @@ namespace alc {
 		void processVaultMsg(tvMessage &msg, tNetSession *u, U32 ki);
 	private:
 		void send(tvMessage &msg, tNetSession *u, U32 ki);
+		int findVmgr(tNetSession *u, U32 ki, U32 node); //!< \returns the number of that vmgr or -1
 	
 		tVaultDB *vaultDB;
 		Byte vaultFolderName[17];
@@ -56,6 +57,20 @@ namespace alc {
 		tLog *log, *logHtml;
 		bool shortHtml;
 		tUnet *net;
+		
+		// the list of vmgrs
+		struct tVmgr {
+			tVmgr(U32 ki, U32 node, tNetSessionIte session) {
+				this->ki = ki;
+				this->node = node;
+				this->session = session;
+			}
+			U32 ki;
+			U32 node;
+			tNetSessionIte session;
+		};
+		int nVmgrs;
+		tVmgr **vmgrs;
 	};
 
 

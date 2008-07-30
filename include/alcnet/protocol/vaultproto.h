@@ -274,6 +274,7 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log, bool shortLog);
+		tMBuf *getData(void); //!< remember to delete the MBuf
 		// format
 		U32 size; // only defined when data != NULL
 		Byte id;
@@ -323,6 +324,11 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log, bool shortLog);
+		
+		void setType(Byte type) {
+			flagB |= MType;
+			this->type = type;
+		}
 	
 		// format
 		U32 flagA, flagB, flagC;
