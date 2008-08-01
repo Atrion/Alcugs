@@ -151,18 +151,18 @@ namespace alc {
 		   For the main vault table, the columns were renamed to the names tvNode uses (which are taked from Vault Manager) */
 		
 		// first, the ref_vault
-		// rename old timestamp column
-		sprintf(query, "ALTER TABLE %s CHANGE timestamp timestamp_old int NOT NULL default 0", refVaultTable);
+		// rename old timestamp column and delete microseconds
+		sprintf(query, "ALTER TABLE %s DROP microseconds, CHANGE timestamp timestamp_old int NOT NULL default 0", refVaultTable);
 		sql->query(query, "renaming old timestamp row");
 		// and create new one
 		convertIntToTimestamp(refVaultTable, "timestamp_old", "timestamp");
 		
 		// now, the main vault
 		// drop unused columns
-		sprintf(query, "ALTER TABLE %s DROP microseconds2, DROP microseconds3, DROP data2, DROP unk13, DROP unk14", vaultTable);
+		sprintf(query, "ALTER TABLE %s DROP microseconds, DROP microseconds2, DROP microseconds3, DROP data2, DROP unk13, DROP unk14", vaultTable);
 		sql->query(query, "remove unused columns");
 		// rename int columns (besides timestamps)
-		sprintf(query, "ALTER TABLE %s CHANGE unk1 grp int NOT NULL default 0, CHANGE microseconds mod_microsec int NOT NULL default 0,\n\
+		sprintf(query, "ALTER TABLE %s CHANGE unk1 grp int NOT NULL default 0,\n\
 			CHANGE id1 creator int NOT NULL default 0, CHANGE torans int_1 int NOT NULL default 0,\n\
 			CHANGE distance int_2 int NOT NULL default 0, CHANGE elevation int_3 int NOT NULL default 0,\n\
 			CHANGE unk5 int_4 int NOT NULL default 0, CHANGE id2 uint_1 int NOT NULL default 0,\n\
@@ -441,7 +441,7 @@ namespace alc {
 		int auxIndex, feedIndex;
 		
 		// get base node
-		sprintf(query, "SELECT idx, UNIX_TIMESTAMP(mod_time), mod_microsec FROM %s WHERE idx='%d'", vaultTable, baseNode);
+		sprintf(query, "SELECT idx, UNIX_TIMESTAMP(mod_time) FROM %s WHERE idx='%d'", vaultTable, baseNode);
 		sql->query(query, "getManifest: getting first node");
 		
 		result = sql->storeResult();
@@ -453,7 +453,7 @@ namespace alc {
 		// save it in the feed
 		row = mysql_fetch_row(result);
 		feed = (tvManifest **)malloc(sizeof(tvManifest *));
-		feed[0] = new tvManifest(atoi(row[0]), atoi(row[1]), atoi(row[2]));
+		feed[0] = new tvManifest(atoi(row[0]), atoi(row[1]));
 		nFeed = 1;
 		mysql_free_result(result);
 		
@@ -466,7 +466,7 @@ namespace alc {
 			final = (tvManifest **)malloc((nFinal+nFeed)*sizeof(tvManifest *));
 			nFinal = 0;
 			
-			sprintf(query, "SELECT n.idx, UNIX_TIMESTAMP(n.mod_time), n.mod_microsec, r.id1, r.id2, UNIX_TIMESTAMP(r.timestamp), r.microseconds, r.flag FROM %s n JOIN %s r ON r.id3=n.idx WHERE r.id2 IN(", vaultTable, refVaultTable);
+			sprintf(query, "SELECT n.idx, UNIX_TIMESTAMP(n.mod_time), r.id1, r.id2, UNIX_TIMESTAMP(r.timestamp), r.flag FROM %s n JOIN %s r ON r.id3=n.idx WHERE r.id2 IN(", vaultTable, refVaultTable);
 			comma = false;
 			
 			// our task is now to (a) merge the (both sorted) lists aux and feed into a (sorted) final list and (b) add all the node ids
@@ -553,10 +553,10 @@ namespace alc {
 			while (nFeed < number) {
 				row = mysql_fetch_row(result);
 				// save manifest
-				feed[nFeed] = new tvManifest(atoi(row[0]), atoi(row[1]), atoi(row[2]));
+				feed[nFeed] = new tvManifest(atoi(row[0]), atoi(row[1]));
 				++nFeed;
 				// and reference
-				(*ref)[*nRef] = new tvNodeRef(atoi(row[3]), atoi(row[4]), atoi(row[0]), atoi(row[5]), atoi(row[6]), (Byte)atoi(row[7]));
+				(*ref)[*nRef] = new tvNodeRef(atoi(row[2]), atoi(row[3]), atoi(row[0]), atoi(row[4]), (Byte)atoi(row[5]));
 				++(*nRef);
 			}
 			mysql_free_result(result);
@@ -586,7 +586,7 @@ namespace alc {
 		*nodes = NULL;
 		*nNodes = 0;
 		
-		sprintf(query, "SELECT idx, type, permissions, owner, grp, UNIX_TIMESTAMP(mod_time), mod_microsec, creator, UNIX_TIMESTAMP(crt_time), UNIX_TIMESTAMP(age_time), age_name, age_guid, int_1, int_2, int_3, int_4, uint_1, uint_2, uint_3, uint_4, str_1, str_2, str_3, str_4, str_5, str_6, lstr_1, lstr_2, text_1, text_2, blob_1 FROM %s WHERE idx IN(", vaultTable);
+		sprintf(query, "SELECT idx, type, permissions, owner, grp, UNIX_TIMESTAMP(mod_time), creator, UNIX_TIMESTAMP(crt_time), UNIX_TIMESTAMP(age_time), age_name, age_guid, int_1, int_2, int_3, int_4, uint_1, uint_2, uint_3, uint_4, str_1, str_2, str_3, str_4, str_5, str_6, lstr_1, lstr_2, text_1, text_2, blob_1 FROM %s WHERE idx IN(", vaultTable);
 		
 		for (int i = 0; i < tableSize; ++i) {
 			if (i > 0) strcat(query, ",");
@@ -618,34 +618,33 @@ namespace alc {
 			node->owner = atoi(row[3]);
 			node->group = atoi(row[4]);
 			node->modTime = atoi(row[5]);
-			node->modMicrosec = atoi(row[6]);
-			node->creator = atoi(row[7]);
-			node->crtTime = atoi(row[8]);
-			node->ageTime = atoi(row[9]);
-			node->ageName.writeStr(row[10]);
-			alcAscii2Hex(node->ageGuid, (Byte *)row[11], 8);
-			node->int1 = atoi(row[12]);
-			node->int2 = atoi(row[13]);
-			node->int3 = atoi(row[14]);
-			node->int4 = atoi(row[15]);
-			node->uInt1 = atoi(row[16]);
-			node->uInt2 = atoi(row[17]);
-			node->uInt3 = atoi(row[18]);
-			node->uInt4 = atoi(row[19]);
-			node->str1.writeStr(row[20]);
-			node->str2.writeStr(row[21]);
-			node->str3.writeStr(row[22]);
-			node->str4.writeStr(row[23]);
-			node->str5.writeStr(row[24]);
-			node->str6.writeStr(row[25]);
-			node->lStr1.writeStr(row[26]);
-			node->lStr2.writeStr(row[27]);
-			node->text1.writeStr(row[28]);
-			node->text2.writeStr(row[29]);
-			node->blob1Size = lengths[30];
+			node->creator = atoi(row[6]);
+			node->crtTime = atoi(row[7]);
+			node->ageTime = atoi(row[8]);
+			node->ageName.writeStr(row[9]);
+			alcAscii2Hex(node->ageGuid, (Byte *)row[10], 8);
+			node->int1 = atoi(row[11]);
+			node->int2 = atoi(row[12]);
+			node->int3 = atoi(row[13]);
+			node->int4 = atoi(row[14]);
+			node->uInt1 = atoi(row[15]);
+			node->uInt2 = atoi(row[16]);
+			node->uInt3 = atoi(row[17]);
+			node->uInt4 = atoi(row[18]);
+			node->str1.writeStr(row[19]);
+			node->str2.writeStr(row[20]);
+			node->str3.writeStr(row[21]);
+			node->str4.writeStr(row[22]);
+			node->str5.writeStr(row[23]);
+			node->str6.writeStr(row[24]);
+			node->lStr1.writeStr(row[25]);
+			node->lStr2.writeStr(row[26]);
+			node->text1.writeStr(row[27]);
+			node->text2.writeStr(row[28]);
+			node->blob1Size = lengths[29];
 			if (node->blob1Size > 0) {
 				node->blob1 = (Byte *)malloc(sizeof(Byte)*node->blob1Size);
-				memcpy(node->blob1, row[30], node->blob1Size);
+				memcpy(node->blob1, row[29], node->blob1Size);
 			}
 			
 			(*nodes)[i] = node;

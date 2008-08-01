@@ -252,7 +252,7 @@ namespace alc {
 	
 	class tvManifest : public tvBase {
 	public:
-		tvManifest(U32 id, U32 timestamp, U32 microsec);
+		tvManifest(U32 id, U32 timestamp);
 		tvManifest(void) : tvBase() {}
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
@@ -264,14 +264,14 @@ namespace alc {
 	
 	class tvNodeRef : public tvBase {
 	public:
-		tvNodeRef(U32 saver, U32 parent, U32 child, U32 time, U32 microsec, Byte flags);
+		tvNodeRef(U32 saver, U32 parent, U32 child, U32 time, Byte flags);
 		tvNodeRef(void) : tvBase() { }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log, bool shortLog);
 		// format
 		U32 saver, parent, child;
-		U32 time, microsec;
+		U32 time;
 		Byte flags; // 0x00 not seen; 0x01 seen
 	};
 	
@@ -348,7 +348,7 @@ namespace alc {
 		U32 permissions;
 		S32 owner;
 		U32 group;
-		U32 modTime, modMicrosec;
+		U32 modTime;
 		U32 creator;
 		U32 crtTime;
 		U32 ageTime;

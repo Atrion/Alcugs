@@ -246,10 +246,10 @@ namespace alc {
 	}
 	
 	//// tvManifest
-	tvManifest::tvManifest(U32 id, U32 timestamp, U32 microsec)
+	tvManifest::tvManifest(U32 id, U32 timestamp)
 	{
 		this->id = id;
-		this->time = ((double)timestamp) + (microsec/1000000.0);
+		this->time = ((double)timestamp);
 	}
 	
 	void tvManifest::store(tBBuf &t)
@@ -270,13 +270,12 @@ namespace alc {
 	}
 	
 	//// tvNodeRef
-	tvNodeRef::tvNodeRef(U32 saver, U32 parent, U32 child, U32 time, U32 microsec, Byte flags)
+	tvNodeRef::tvNodeRef(U32 saver, U32 parent, U32 child, U32 time, Byte flags)
 	{
 		this->saver = saver;
 		this->parent = parent;
 		this->child = child;
 		this->time = time;
-		this->microsec = microsec;
 		this->flags = flags;
 	}
 	
@@ -286,7 +285,7 @@ namespace alc {
 		parent = t.getU32();
 		child = t.getU32();
 		time = t.getU32();
-		microsec = t.getU32();
+		t.getU32(); // ignore the microseconds
 		flags = t.getByte();
 	}
 	
@@ -296,14 +295,14 @@ namespace alc {
 		t.putU32(parent);
 		t.putU32(child);
 		t.putU32(time);
-		t.putU32(microsec);
+		t.putU32(0);
 		t.putByte(flags);
 	}
 	
 	void tvNodeRef::asHtml(tLog *log, bool shortLog)
 	{
 		log->print("Saver: 0x%08X (%d), Parent:  0x%08X (%d), Child: 0x%08X (%d), ", saver, saver, parent, parent, child, child);
-		log->print("Stamp: %s, Flags: 0x%02X<br />\n", alcGetStrTime(time, microsec), flags);
+		log->print("Stamp: %s, Flags: 0x%02X<br />\n", alcGetStrTime(time), flags);
 	}
 	
 	//// tvCreatableGenericValue
@@ -563,7 +562,7 @@ namespace alc {
 		owner = t.getS32();
 		group = t.getU32();
 		modTime = t.getU32();
-		modMicrosec = t.getU32();
+		t.getU32(); // ignore the microseconds
 		
 		// optional fields
 		if (flagB & MCreator)
@@ -717,7 +716,7 @@ namespace alc {
 		t.putS32(owner);
 		t.putU32(group);
 		t.putU32(modTime);
-		t.putU32(modMicrosec);
+		t.putU32(0); // microsec
 		
 		// write optional data
 		if (flagB & MCreator) t.putU32(creator);
@@ -788,7 +787,7 @@ namespace alc {
 				return;
 			}
 			// get the file name
-			sprintf(filename, "%s.%s.%d.%s.jpg", ageName.c_str(), str1.c_str(), index, alcGetStrTime(modTime, modMicrosec));
+			sprintf(filename, "%s.%s.%d.%s.jpg", ageName.c_str(), str1.c_str(), index, alcGetStrTime(modTime));
 			alcStrFilter(filename); // don't trust user input
 			strncpy(path, log->getDir(), 511);
 			strncat(path, "data/", 511);
@@ -830,7 +829,7 @@ namespace alc {
 			log->print("</pre><br />\n");
 			// dump it to a file
 			// get the file name
-			sprintf(filename, "%s.%s.%d.%s.%s", ageName.c_str(), str1.c_str(), index, alcGetStrTime(modTime, modMicrosec), suffix);
+			sprintf(filename, "%s.%s.%d.%s.%s", ageName.c_str(), str1.c_str(), index, alcGetStrTime(modTime), suffix);
 			alcStrFilter(filename); // don't trust user input
 			strncpy(path, log->getDir(), 511);
 			strncat(path, "data/", 511);
@@ -855,7 +854,7 @@ namespace alc {
 		permissionsAsHtml(log);
 		log->print("<b>Owner:</b> 0x%08X (%d)<br />\n", owner, owner);
 		log->print("<b>Group:</b> 0x%08X (%d)<br />\n", group, group);
-		log->print("<b>Modification time:</b> %s<br />\n", alcGetStrTime(modTime, modMicrosec));
+		log->print("<b>Modification time:</b> %s<br />\n", alcGetStrTime(modTime));
 		// optional fields
 		if (!shortLog) { // only print this in long logs
 			if (flagB & MCreator) log->print("<b>Creator:</b> 0x%08X (%d)<br />\n", creator, creator);
