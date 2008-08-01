@@ -26,7 +26,7 @@
 
 #define __U_CONV_FUNS_ID $Id$
 
-//#define _DBG_LEVEL_ 10
+#define _DBG_LEVEL_ 5
 
 #include "alcugs.h"
 
@@ -148,8 +148,9 @@ const Byte * alcGetStrTime(double stamp, const char format) {
 				break;
 			case 's':
 			default:
-				micros = (U32)(stamp*1000000) % 1000000;
 				time = (U32)(stamp);
+				micros = (U32)((stamp-time)*1000000);
+				DBG(5, "%f = %d . %d\n", stamp, time, micros);
 				break;
 		}
 	} else {
@@ -196,7 +197,7 @@ void alcAscii2Hex(Byte * out, const Byte * in, int size) {
 void alcStrFilter(char * what) {
 	int i=0,e=0;
 	while(what[i]!=0) {
-		if(what[i]!='<' && what[i]!='>' && what[i]!=':' && what[i]!='#' && what[i]!='\\' && what[i]!='/' && what[i]!='*' && what[i]!='?' && what[i]!='"' && what[i]!='|') {
+		if(what[i]!='<' && what[i]!='>' && what[i]!=':' && what[i]!='#' && what[i]!='\\' && what[i]!='/' && what[i]!='*' && what[i]!='?' && what[i]!='"' && what[i]!='\'' && what[i]!='|') {
 			what[e]=what[i];
 			e++; i++;
 		} else {

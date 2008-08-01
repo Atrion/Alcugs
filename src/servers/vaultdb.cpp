@@ -576,6 +576,82 @@ namespace alc {
 		*mfs = final;
 		*nMfs = nFinal;
 	}
+	
+	void tVaultDB::fetchNodes(U32 *table, int tableSize, tvNode ***nodes, int *nNodes)
+	{
+		char query[1024], cond[32];
+		MYSQL_RES *result;
+		MYSQL_ROW row;
+		unsigned long *lengths; // the len of each column
+		*nodes = NULL;
+		*nNodes = 0;
+		
+		sprintf(query, "SELECT idx, type, permissions, owner, grp, UNIX_TIMESTAMP(mod_time), mod_microsec, creator, UNIX_TIMESTAMP(crt_time), UNIX_TIMESTAMP(age_time), age_name, age_guid, int_1, int_2, int_3, int_4, uint_1, uint_2, uint_3, uint_4, str_1, str_2, str_3, str_4, str_5, str_6, lstr_1, lstr_2, text_1, text_2, blob_1 FROM %s WHERE idx IN(", vaultTable);
+		
+		for (int i = 0; i < tableSize; ++i) {
+			if (i > 0) strcat(query, ",");
+			sprintf(cond, "%d", table[i]);
+			strcat(query, cond);
+		}
+		
+		strcat(query, ")");
+		sql->query(query, "getManifest: getting child nodes");
+		
+		result = sql->storeResult();
+		if (result == NULL) throw txDatabaseError(_WHERE("couldnt fetch nodes"));
+		*nNodes = mysql_num_rows(result);
+		
+		if (*nNodes == 0) return;
+		*nodes = (tvNode **)malloc((*nNodes)*sizeof(tvNode *));
+		for (int i = 0; i < *nNodes; ++i) {
+			row = mysql_fetch_row(result);
+			lengths = mysql_fetch_lengths(result); //get the size of each column
+			
+			tvNode *node = new tvNode;
+			node->flagA = 0x00000002;
+			node->flagB = 0xFFFFFFFF; // everything enabled
+			node->flagC = 0x00000007; // everything enabled
+			// fill in the row
+			node->index = atoi(row[0]);
+			node->type = atoi(row[1]);
+			node->permissions = atoi(row[2]);
+			node->owner = atoi(row[3]);
+			node->group = atoi(row[4]);
+			node->modTime = atoi(row[5]);
+			node->modMicrosec = atoi(row[6]);
+			node->creator = atoi(row[7]);
+			node->crtTime = atoi(row[8]);
+			node->ageTime = atoi(row[9]);
+			node->ageName.writeStr(row[10]);
+			alcAscii2Hex(node->ageGuid, (Byte *)row[11], 8);
+			node->int1 = atoi(row[12]);
+			node->int2 = atoi(row[13]);
+			node->int3 = atoi(row[14]);
+			node->int4 = atoi(row[15]);
+			node->uInt1 = atoi(row[16]);
+			node->uInt2 = atoi(row[17]);
+			node->uInt3 = atoi(row[18]);
+			node->uInt4 = atoi(row[19]);
+			node->str1.writeStr(row[20]);
+			node->str2.writeStr(row[21]);
+			node->str3.writeStr(row[22]);
+			node->str4.writeStr(row[23]);
+			node->str5.writeStr(row[24]);
+			node->str6.writeStr(row[25]);
+			node->lStr1.writeStr(row[26]);
+			node->lStr2.writeStr(row[27]);
+			node->text1.writeStr(row[28]);
+			node->text2.writeStr(row[29]);
+			node->blob1Size = lengths[30];
+			if (node->blob1Size > 0) {
+				node->blob1 = (Byte *)malloc(sizeof(Byte)*node->blob1Size);
+				memcpy(node->blob1, row[30], node->blob1Size);
+			}
+			
+			(*nodes)[i] = node;
+		}
+		mysql_free_result(result);
+	}
 
 } //end namespace alc
 

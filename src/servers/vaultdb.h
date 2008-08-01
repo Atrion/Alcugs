@@ -53,9 +53,13 @@ namespace alc {
 		U32 createNode(tvNode &node);
 		void getVaultFolderName(Byte *folder);
 		
-		/** queries all direct and indirect child nodes of the given base node and aves their manifest as well as the refs connecting them
-		    remember to free the tables and delete all their elements! */
+		/** queries all direct and indirect child nodes of the given base node and aves their manifest as well as the refs connecting them.
+		    Remember to free the tables and delete all their elements! */
 		void getManifest(U32 baseNode, tvManifest ***mfs, int *nMfs, tvNodeRef ***ref, int *nRef); // these are pointers to an array of pointers
+		
+		/** get all the nodes whose IDs are in the table and put them in the array.
+		    Remember to free the node table and delete all its elements! */
+		void fetchNodes(U32 *table, int tableSize, tvNode ***nodes, int *nNodes); // this is a pointer to an array of pointers
 	private:
 		bool prepare(void);
 		int getVersion(void);

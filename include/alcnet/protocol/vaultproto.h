@@ -294,7 +294,10 @@ namespace alc {
 	
 	class tvCreatableStream : public tvBase {
 	public:
+		 /** create a stream with a list of vault objects. These must be tvManifest or tvNodeRef, otherwise that's not a valid stream! */
 		tvCreatableStream(Byte id, tvBase **dataList, int nData);
+		tvCreatableStream(Byte id, tMBuf &buf);
+		
 		tvCreatableStream(Byte id) : tvBase() { this->id = id; size = 0; data = NULL; }
 		virtual ~tvCreatableStream(void) { if (data) free(data); }
 		virtual void store(tBBuf &t);

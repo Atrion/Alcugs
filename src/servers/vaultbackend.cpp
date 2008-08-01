@@ -224,9 +224,25 @@ namespace alc {
 					// FIXME: make sure the vmgrs are somehow cleaned up when they're inactive even when a player does not send a VDisconnect... the old vault server doesn't do that
 					break;
 				}
+				case VDisconnect:
+				{
+					log->log("Vault Disconnect request for %d (Type: %d)\n", ki, nodeType);
+					int nr = findVmgr(u, ki, msg.vmgr);
+					delete vmgrs[nr];
+					vmgrs[nr] = NULL;
+					// shrink if possible
+					int last = nVmgrs-1; // find the last vmgr
+					while (last >= 0 && vmgrs[last] == NULL) --last;
+					if (last < nVmgrs-1) { // there are some NULLs at the end, shrink the array
+						nVmgrs=last+1;
+						vmgrs=(tVmgr **)realloc(vmgrs, sizeof(tVmgr *) * nVmgrs); // it's not a bug if we get NULL here - the size might be 0
+						DBG(9, "shrinking vmgr array to %d\n", nVmgrs);
+					}
+				}
 				case VNegotiateManifest:
 				{
 					if (tableSize <= 0) break;
+					if (tableSize > 1) lerr->log("%s [KI: %d] Getting more than one manifest at once is not supported\n", u->str(), ki);
 					tvManifest **mfs;
 					tvNodeRef **ref;
 					int nMfs, nRef;
@@ -244,6 +260,38 @@ namespace alc {
 					free((void *)mfs);
 					for (int i = 0; i < nRef; ++i) delete ref[i];
 					free((void *)ref);
+					break;
+				}
+				case VFetchNode:
+				{
+					if (tableSize <= 0) break;
+					tvNode **nodes;
+					int nNodes;
+					vaultDB->fetchNodes(table, tableSize, &nodes, &nNodes);
+					
+					// split the message into several ones to avoid it getting too big
+					tMBuf buf;
+					int num = 0;
+					for (int i = 0; i < nNodes; ++i) {
+						buf.put(*nodes[i]);
+						++num;
+						if (buf.size() > 128000 || i == (nNodes-1)) { // if size is already big enough or this is the last one
+							// create reply
+							bool eof = (i == (nNodes-1));
+							tvMessage reply(msg, eof ? 3 : 2);
+							reply.compressed = 3; // compressed
+							reply.items[0] = new tvItem(new tvCreatableStream(/*id*/6, buf)); // tvMessage will delete it for us
+							reply.items[1] = new tvItem(/*id*/25, /*number of nodes*/num);
+							if (eof) reply.items[2] = new tvItem(/*id*/31, 0); // EOF mark (this is the last packet of nodes)
+							send(reply, u, ki);
+							buf.clear();
+							num = 0;
+						}
+					}
+					
+					// free stuff
+					for (int i = 0; i < nNodes; ++i) delete nodes[i];
+					free((void *)nodes);
 					break;
 				}
 				default:

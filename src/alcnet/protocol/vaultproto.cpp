@@ -36,7 +36,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_VAULTROUTER_ID "$Id$"
 
-//#define _DBG_LEVEL_ 10
+#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
 #include "alcnet.h"
@@ -391,8 +391,7 @@ namespace alc {
 		if (dataList && nData > 0) {
 			// put the data in here
 			tMBuf buf;
-			if (id == 0x0E || id == 0x0F) // list of manifests or node refs
-				buf.putU32(nData);
+			buf.putU32(nData);
 			for (int i = 0; i < nData; ++i)
 				buf.put(*dataList[i]);
 			buf.rewind();
@@ -400,6 +399,15 @@ namespace alc {
 			data = (Byte *)malloc(sizeof(Byte) * size);
 			memcpy(data, buf.read(size), size);
 		}
+	}
+	
+	tvCreatableStream::tvCreatableStream(Byte id, tMBuf &buf)
+	{
+		this->id = id;
+		size = buf.size();
+		data = (Byte *)malloc(sizeof(Byte) * size);
+		buf.rewind();
+		memcpy(data, buf.read(size), size);
 	}
 	
 	void tvCreatableStream::store(tBBuf &t)
@@ -686,7 +694,6 @@ namespace alc {
 			if (memcmp(blobGuid, zeroGuid, 8) != 0)
 				throw txProtocolError(_WHERE("Blob1Guid must always be zero"));
 		}
-		DBG(6, "5: %d bytes remaining\n", t.remaining());
 		if (flagC & MBlob2Guid) {
 			memcpy(blobGuid, t.read(8), 8);
 			if (memcmp(blobGuid, zeroGuid, 8) != 0)
