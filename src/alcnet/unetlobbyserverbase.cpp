@@ -232,7 +232,7 @@ namespace alc {
 	
 	void tUnetLobbyServerBase::onConnectionClosed(tNetEvent *ev, tNetSession */*u*/)
 	{
-		// if it was one of the servers, save the time it went (it will be reconnected 10sec later)
+		// if it was one of the servers, save the time it went (it will be reconnected later)
 		if (ev->sid == auth) { auth_gone = alcGetTime(); auth = tNetSessionIte(); }
 		else if (ev->sid == tracking) { tracking_gone = alcGetTime(); tracking = tNetSessionIte(); }
 		else if (ev->sid == vault) { vault_gone = alcGetTime(); vault = tNetSessionIte(); }
@@ -242,17 +242,17 @@ namespace alc {
 	{
 		if (!isRunning()) return;
 		
-		if (auth_gone && auth_gone+10 < alcGetTime()) { // if it went more than 10sec ago, reconnect
+		if (auth_gone && auth_gone+5 < alcGetTime()) { // if it went more than 5 sec ago, reconnect
 			auth = reconnectPeer(KAuth);
 			auth_gone = 0;
 		}
 		
-		if (tracking_gone && tracking_gone+10 < alcGetTime()) { // if it went more than 10sec ago, reconnect
+		if (tracking_gone && tracking_gone+5 < alcGetTime()) { // if it went more than 5 sec ago, reconnect
 			tracking = reconnectPeer(KTracking);
 			tracking_gone = 0;
 		}
 		
-		if (vault_gone && vault_gone+10 < alcGetTime()) { // if it went more than 10sec ago, reconnect
+		if (vault_gone && vault_gone+5 < alcGetTime()) { // if it went more than 5 sec ago, reconnect
 			vault = reconnectPeer(KVault);
 			vault_gone = 0;
 		}

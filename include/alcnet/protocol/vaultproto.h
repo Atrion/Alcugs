@@ -250,6 +250,31 @@ namespace alc {
 		tStrBuf dbg;
 	};
 	
+	class tvManifest : public tvBase {
+	public:
+		tvManifest(U32 id, U32 timestamp, U32 microsec);
+		tvManifest(void) : tvBase() {}
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
+		virtual void asHtml(tLog *log, bool shortLog);
+		// format
+		U32 id;
+		double time;
+	};
+	
+	class tvNodeRef : public tvBase {
+	public:
+		tvNodeRef(U32 saver, U32 parent, U32 child, U32 time, U32 microsec, Byte flags);
+		tvNodeRef(void) : tvBase() { }
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
+		virtual void asHtml(tLog *log, bool shortLog);
+		// format
+		U32 saver, parent, child;
+		U32 time, microsec;
+		Byte flags; // 0x00 not seen; 0x01 seen
+	};
+	
 	class tvCreatableGenericValue : public tvBase {
 	public:
 		tvCreatableGenericValue(S32 integer);
@@ -269,16 +294,21 @@ namespace alc {
 	
 	class tvCreatableStream : public tvBase {
 	public:
-		tvCreatableStream(Byte id) : tvBase() { this->id = id; data = NULL; }
+		tvCreatableStream(Byte id, tvBase **dataList, int nData);
+		tvCreatableStream(Byte id) : tvBase() { this->id = id; size = 0; data = NULL; }
 		virtual ~tvCreatableStream(void) { if (data) free(data); }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log, bool shortLog);
 		tMBuf *getData(void); //!< remember to delete the MBuf
 		// format
-		U32 size; // only defined when data != NULL
+		U32 size;
 		Byte id;
 		Byte *data;
+	private:
+		// avoid copying it
+		tvCreatableStream(const tvCreatableStream &);
+		tvCreatableStream &operator=(const tvCreatableStream &);
 	};
 	
 	class tvServerGuid : public tvBase {
@@ -289,29 +319,6 @@ namespace alc {
 		virtual void asHtml(tLog *log, bool shortLog);
 		// format
 		Byte guid[8];
-	};
-	
-	class tvManifest : public tvBase {
-	public:
-		tvManifest(void) : tvBase() {}
-		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
-		virtual void asHtml(tLog *log, bool shortLog);
-		// format
-		U32 id;
-		double time;
-	};
-	
-	class tvNodeRef : public tvBase {
-	public:
-		tvNodeRef(void) : tvBase() { }
-		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
-		virtual void asHtml(tLog *log, bool shortLog);
-		// format
-		U32 saver, parent, child;
-		U32 time, microsec;
-		Byte flags; // 0x00 not seen; 0x01 seen
 	};
 	
 	class tvNode : public tvBase {
@@ -361,6 +368,7 @@ namespace alc {
 	public:
 		tvItem(Byte id, S32 integer);
 		tvItem(Byte id, Byte *str);
+		tvItem(tvCreatableStream *stream);
 		tvItem(Byte tpots) : tvBase() { this->tpots = tpots; data = NULL; }
 		virtual ~tvItem(void) { if (data) delete data; }
 		virtual void store(tBBuf &t);

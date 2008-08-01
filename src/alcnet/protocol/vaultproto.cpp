@@ -245,6 +245,67 @@ namespace alc {
 		return dbg.c_str();
 	}
 	
+	//// tvManifest
+	tvManifest::tvManifest(U32 id, U32 timestamp, U32 microsec)
+	{
+		this->id = id;
+		this->time = ((double)timestamp) + (microsec/1000000.0);
+	}
+	
+	void tvManifest::store(tBBuf &t)
+	{
+		id = t.getU32();
+		time = t.getDouble();
+	}
+	
+	void tvManifest::stream(tBBuf &t)
+	{
+		t.putU32(id);
+		t.putDouble(time);
+	}
+	
+	void tvManifest::asHtml(tLog *log, bool shortLog)
+	{
+		log->print("ID: 0x%08X (%d), Stamp: %s<br />\n", id, id, alcGetStrTime(time));
+	}
+	
+	//// tvNodeRef
+	tvNodeRef::tvNodeRef(U32 saver, U32 parent, U32 child, U32 time, U32 microsec, Byte flags)
+	{
+		this->saver = saver;
+		this->parent = parent;
+		this->child = child;
+		this->time = time;
+		this->microsec = microsec;
+		this->flags = flags;
+	}
+	
+	void tvNodeRef::store(tBBuf &t)
+	{
+		saver = t.getU32();
+		parent = t.getU32();
+		child = t.getU32();
+		time = t.getU32();
+		microsec = t.getU32();
+		flags = t.getByte();
+	}
+	
+	void tvNodeRef::stream(tBBuf &t)
+	{
+		t.putU32(saver);
+		t.putU32(parent);
+		t.putU32(child);
+		t.putU32(time);
+		t.putU32(microsec);
+		t.putByte(flags);
+	}
+	
+	void tvNodeRef::asHtml(tLog *log, bool shortLog)
+	{
+		log->print("Saver: 0x%08X (%d), Parent:  0x%08X (%d), Child: 0x%08X (%d), ", saver, saver, parent, parent, child, child);
+		log->print("Stamp: %s, Flags: 0x%02X<br />\n", alcGetStrTime(time, microsec), flags);
+	}
+	
 	//// tvCreatableGenericValue
 	tvCreatableGenericValue::tvCreatableGenericValue(S32 integer) : tvBase()
 	{
@@ -322,6 +383,25 @@ namespace alc {
 	}
 	
 	//// tvCreatableStream
+	tvCreatableStream::tvCreatableStream(Byte id, tvBase **dataList, int nData)
+	{
+		this->id = id;
+		size = 0;
+		data = NULL;
+		if (dataList && nData > 0) {
+			// put the data in here
+			tMBuf buf;
+			if (id == 0x0E || id == 0x0f) // list of manifests or node refs
+				buf.putU32(nData);
+			for (int i = 0; i < nData; ++i)
+				buf.put(*dataList[i]);
+			buf.rewind();
+			size = buf.size();
+			data = (Byte *)malloc(sizeof(Byte) * size);
+			memcpy(data, buf.read(size), size);
+		}
+	}
+	
 	void tvCreatableStream::store(tBBuf &t)
 	{
 		size = t.getU32();
@@ -332,9 +412,9 @@ namespace alc {
 	
 	void tvCreatableStream::stream(tBBuf &t)
 	{
-		if (!data) throw txProtocolError(_WHERE("don\'t have any data to write"));
 		t.putU32(size);
-		t.write(data, size);
+		if (data)
+			t.write(data, size);
 	}
 	
 	void tvCreatableStream::asHtml(tLog *log, bool shortLog)
@@ -429,51 +509,6 @@ namespace alc {
 	void tvServerGuid::asHtml(tLog *log, bool shortLog)
 	{
 		log->print("%s<br />\n", alcGetStrGuid(guid));
-	}
-	
-	//// tvManifest
-	void tvManifest::store(tBBuf &t)
-	{
-		id = t.getU32();
-		time = t.getDouble();
-	}
-	
-	void tvManifest::stream(tBBuf &t)
-	{
-		t.putU32(id);
-		t.putDouble(time);
-	}
-	
-	void tvManifest::asHtml(tLog *log, bool shortLog)
-	{
-		log->print("ID: 0x%08X (%d), Stamp: %s<br />\n", id, id, alcGetStrTime(time));
-	}
-	
-	//// tvNodeRef
-	void tvNodeRef::store(tBBuf &t)
-	{
-		saver = t.getU32();
-		parent = t.getU32();
-		child = t.getU32();
-		time = t.getU32();
-		microsec = t.getU32();
-		flags = t.getByte();
-	}
-	
-	void tvNodeRef::stream(tBBuf &t)
-	{
-		t.putU32(saver);
-		t.putU32(parent);
-		t.putU32(child);
-		t.putU32(time);
-		t.putU32(microsec);
-		t.putByte(flags);
-	}
-	
-	void tvNodeRef::asHtml(tLog *log, bool shortLog)
-	{
-		log->print("Saver: 0x%08X (%d), Parent:  0x%08X (%d), Child: 0x%08X (%d), ", saver, saver, parent, parent, child, child);
-		log->print("Stamp: %s, Flags: 0x%02X<br />\n", alcGetStrTime(time, microsec), flags);
 	}
 	
 	//// tvNode
@@ -868,6 +903,13 @@ namespace alc {
 		this->id = id;
 		type = DCreatableGenericValue;
 		data = new tvCreatableGenericValue(str);
+	}
+	
+	tvItem::tvItem(tvCreatableStream *stream)
+	{
+		this->id = stream->id;
+		type = DCreatableStream;
+		data = stream;
 	}
 	
 	void tvItem::store(tBBuf &t)
