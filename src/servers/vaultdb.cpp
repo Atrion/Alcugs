@@ -143,6 +143,8 @@ namespace alc {
 	
 	void tVaultDB::migrateVersion2to3(void)
 	{
+		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+	
 		char query[2048];
 		/* From version 2 to 3, the layout of the tables changed, but the way the content is organized stayed the same.
 		   On both tables, the timestamp columns were converted to type TIMESTAMP.
@@ -186,6 +188,8 @@ namespace alc {
 	
 	int tVaultDB::getPlayerList(tMBuf &t, const Byte *uid)
 	{
+		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+	
 		char query[1024];
 		t.clear();
 		
@@ -210,6 +214,8 @@ namespace alc {
 	
 	int tVaultDB::checkKi(U32 ki, const Byte *uid, Byte *avatar)
 	{
+		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+	
 		char query[1024];
 		avatar[0] = 0; // first emtpy the string
 		
@@ -230,6 +236,8 @@ namespace alc {
 	
 	U32 tVaultDB::findNode(tvNode &node, bool create)
 	{
+		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+	
 		char query[4096], cond[1024];
 		bool comma = false;
 		// first, we have to create the query...
@@ -393,7 +401,6 @@ namespace alc {
 		}
 		// now, let's execute it
 		sql->query(query, "finding node");
-		
 		MYSQL_RES *result = sql->storeResult();
 		if (result == NULL) throw txDatabaseError(_WHERE("couldnt check ki"));
 		int number = mysql_num_rows(result);
@@ -414,6 +421,160 @@ namespace alc {
 	U32 tVaultDB::createNode(tvNode &node)
 	{
 		throw txUnet(_WHERE("FIXME: creating nodes not yet implemented"));
+	}
+	
+	void tVaultDB::getManifest(U32 baseNode, tvManifest ***mfs, int *nMfs, tvNodeRef ***ref, int *nRef)
+	{
+		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		
+		*mfs = NULL;
+		*nMfs = 0;
+		*ref = NULL;
+		*nRef = 0;
+	
+		tvManifest **feed = NULL, **aux = NULL, **final = NULL;
+		int          nFeed = 0,     nAux = 0,     nFinal = 0;
+		char query[2048], cond[32];
+		MYSQL_RES *result;
+		MYSQL_ROW row;
+		bool comma;
+		int auxIndex, feedIndex;
+		
+		// get base node
+		sprintf(query, "SELECT idx, UNIX_TIMESTAMP(mod_time), mod_microsec FROM %s WHERE idx='%d'", vaultTable, baseNode);
+		sql->query(query, "getManifest: getting first node");
+		
+		result = sql->storeResult();
+		if (result == NULL) throw txDatabaseError(_WHERE("couldnt get first node"));
+		int number = mysql_num_rows(result);
+		if (number > 1) throw txDatabaseError(_WHERE("strange, I should NEVER have several results when asking for a node"));
+		else if (number < 1) throw txDatabaseError(_WHERE("getManfiest: First node %d does not exist", baseNode));
+		
+		// save it in the feed
+		row = mysql_fetch_row(result);
+		feed = (tvManifest **)malloc(sizeof(tvManifest *));
+		feed[0] = new tvManifest(atoi(row[0]), atoi(row[1]), atoi(row[2]));
+		nFeed = 1;
+		mysql_free_result(result);
+		
+		// now, the big loop... as long as there is something in the feed, process it
+		while (nFeed > 0) {
+			// save the so-far final list
+			aux = final;
+			nAux = nFinal;
+			// get space for the new final list - it will contain all elements of the so-far final list and the feed
+			final = (tvManifest **)malloc((nFinal+nFeed)*sizeof(tvManifest *));
+			nFinal = 0;
+			
+			sprintf(query, "SELECT n.idx, UNIX_TIMESTAMP(n.mod_time), n.mod_microsec, r.id1, r.id2, UNIX_TIMESTAMP(r.timestamp), r.microseconds, r.flag FROM %s n JOIN %s r ON r.id3=n.idx WHERE r.id2 IN(", vaultTable, refVaultTable);
+			comma = false;
+			
+			// our task is now to (a) merge the (both sorted) lists aux and feed into a (sorted) final list and (b) add all the node ids
+			//  from the feed list to the query
+			feedIndex = 0;
+			auxIndex = 0;
+			while (auxIndex < nAux) {
+				while (feedIndex < nFeed) {
+					// if the current feed node is lower than the current aux one, it has to be inserted now
+					if (feed[feedIndex]->id < aux[auxIndex]->id) {
+						if (nFinal == 0 || final[nFinal-1]->id != feed[feedIndex]->id) { // avoid duplicates
+							final[nFinal] = feed[feedIndex];
+							++nFinal;
+							// add it to the query
+							if (comma) strcat(query, ",");
+							sprintf(cond, "%d", feed[feedIndex]->id);
+							strcat(query, cond);
+							comma = true;
+							++feedIndex; // got this one
+						}
+						else
+							lerr->log("this should never happen, should it?");
+					}
+					else if (feed[feedIndex]->id > aux[auxIndex]->id) {
+						// the current feed must be inserted into the final list after the current aux, so we can insert the current aux now
+						final[nFinal] = aux[auxIndex];
+						++nFinal;
+						++auxIndex;
+						break; // we have to check if this was the last aux node or there's something after it
+					}
+					// everything else would be a duplicate
+				}
+				if (feedIndex >= nFeed) {
+					// we got all the feed nodes, so the rest of the aux nodes comes now
+					while(auxIndex < nAux) {
+						final[nFinal] = aux[auxIndex];
+						++nFinal;
+						++auxIndex;
+					}
+					break; // got all of them
+				}
+			}
+			
+			// now we got all aux nodes, let's see if there are some feeds remaining
+			while (feedIndex < nFeed) {
+				if (nFinal == 0 || final[nFinal-1]->id != feed[feedIndex]->id) { // avoid duplicates
+					final[nFinal] = feed[feedIndex];
+					++nFinal;
+					// add it to the query
+					if (comma) strcat(query, ",");
+					sprintf(cond, "%d", feed[feedIndex]->id);
+					strcat(query, cond);
+					comma = true;
+					++feedIndex; // got this one
+				}
+				else
+					lerr->log("this should never happen, should it?");
+			}
+			
+			// now we can free the aux and feed tables
+			if (aux != NULL) {
+				free((void *)aux);
+				aux = NULL;
+			}
+			nAux = 0;
+			if (feed != NULL) {
+				free((void *)feed);
+				feed = NULL;
+			}
+			nFeed = 0;
+			
+			// ok... now we can query (if there's anything)
+			if (!comma) break;
+			strcat(query, ") ORDER BY n.idx ASC");
+			sql->query(query, "getManifest: getting child nodes");
+			
+			result = sql->storeResult();
+			if (result == NULL) throw txDatabaseError(_WHERE("couldnt get nodes"));
+			int number = mysql_num_rows(result);
+				
+			// the result goes into the feed table, and the refs are saved in their table as well
+			feed = (tvManifest **)malloc(number*sizeof(tvManifest *));
+			*ref = (tvNodeRef **)realloc((void *)*ref, (*nRef + number)*sizeof(tvNodeRef *));
+			while (nFeed < number) {
+				row = mysql_fetch_row(result);
+				// save manifest
+				feed[nFeed] = new tvManifest(atoi(row[0]), atoi(row[1]), atoi(row[2]));
+				++nFeed;
+				// and reference
+				(*ref)[*nRef] = new tvNodeRef(atoi(row[3]), atoi(row[4]), atoi(row[0]), atoi(row[5]), atoi(row[6]), (Byte)atoi(row[7]));
+				++(*nRef);
+			}
+			mysql_free_result(result);
+		}
+		
+		// now we can free the aux and feed tables
+		if (aux != NULL) {
+			free((void *)aux);
+			aux = NULL;
+		}
+		if (feed != NULL) {
+			free((void *)feed);
+			feed = NULL;
+		}
+		
+		// the final list is what the caller gets
+		*mfs = final;
+		*nMfs = nFinal;
 	}
 
 } //end namespace alc

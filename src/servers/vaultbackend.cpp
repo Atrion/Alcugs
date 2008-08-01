@@ -143,7 +143,7 @@ namespace alc {
 		msg.print(logHtml, /*clientToServer:*/true, u, shortHtml, ki);
 		
 		S32 nodeType = -1, id = -1;
-		U32 *table = NULL, tableSize; // make sure to free the table
+		U32 *table = NULL, tableSize = 0; // make sure to free the table
 		
 		// read and verify the general vault items
 		for (int i = 0; i < msg.numItems; ++i) {
@@ -199,18 +199,18 @@ namespace alc {
 					}
 					else { // wrong or no node type at all
 						lerr->log("%s [KI: %d] Connect request for unknown node type %d from KI %d\n", u->str(), ki, nodeType);
-						break; // the switch
+						break;
 					}
 					// now let's see where we save this... first look if we already have this one registered
 					int nr = findVmgr(u, ki, msg.vmgr);
 					if (nr >= 0) // it is already registered, and findVmgr updated the session, so we have nothing to do
-						break; // the switch
+						break;
 					// if that's not the case, search for a free slot
 					else {
 						for (int i = 0; i < nVmgrs; ++i) {
 							if (!vmgrs[i]) {
 								nr = i;
-								break; // the loop
+								break; // breaks the loop, not the switch
 							}
 						}
 					}
@@ -222,6 +222,28 @@ namespace alc {
 					}
 					vmgrs[nr] = new tVmgr(ki, nodeId, u->getIte());
 					// FIXME: make sure the vmgrs are somehow cleaned up when they're inactive even when a player does not send a VDisconnect... the old vault server doesn't do that
+					break;
+				}
+				case VNegotiateManifest:
+				{
+					if (tableSize <= 0) break;
+					tvManifest **mfs;
+					tvNodeRef **ref;
+					int nMfs, nRef;
+					vaultDB->getManifest(table[0], &mfs, &nMfs, &ref, &nRef);
+					
+					// create reply
+					tvMessage reply(msg, 2);
+					reply.compressed = 3; // compressed
+					reply.items[0] = new tvItem(new tvCreatableStream(/*id*/ 14, (tvBase **)mfs, nMfs)); // tvMessage will delete it for us
+					reply.items[1] = new tvItem(new tvCreatableStream(/*id*/ 15, (tvBase **)ref, nRef)); // tvMessage will delete it for us
+					send(reply, u, ki);
+					
+					// free stuff
+					for (int i = 0; i < nMfs; ++i) delete mfs[i];
+					free((void *)mfs);
+					for (int i = 0; i < nRef; ++i) delete ref[i];
+					free((void *)ref);
 					break;
 				}
 				default:

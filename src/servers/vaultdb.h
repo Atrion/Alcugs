@@ -43,7 +43,7 @@ namespace alc {
 		int getPlayerList(tMBuf &t, const Byte *uid);
 		
 		/** checks if this account (uid) owns that ki and saves the avatar name (array must be at least 256 Bytes)
-		    \returns 1 when the avatar belings to that account, 0 otherwise */
+		    \returns 1 when the avatar belongs to that account, 0 otherwise */
 		int checkKi(U32 ki, const Byte *uid, Byte *avatar);
 		
 		/** looks up a node in the database, using all fields which have their flag turned on (except for timestamps and blobs)
@@ -52,6 +52,10 @@ namespace alc {
 		
 		U32 createNode(tvNode &node);
 		void getVaultFolderName(Byte *folder);
+		
+		/** queries all direct and indirect child nodes of the given base node and aves their manifest as well as the refs connecting them
+		    remember to free the tables and delete all their elements! */
+		void getManifest(U32 baseNode, tvManifest ***mfs, int *nMfs, tvNodeRef ***ref, int *nRef); // these are pointers to an array of pointers
 	private:
 		bool prepare(void);
 		int getVersion(void);

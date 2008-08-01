@@ -391,7 +391,7 @@ namespace alc {
 		if (dataList && nData > 0) {
 			// put the data in here
 			tMBuf buf;
-			if (id == 0x0E || id == 0x0f) // list of manifests or node refs
+			if (id == 0x0E || id == 0x0F) // list of manifests or node refs
 				buf.putU32(nData);
 			for (int i = 0; i < nData; ++i)
 				buf.put(*dataList[i]);
