@@ -89,7 +89,7 @@ namespace alc {
 		char query[512];
 		int version;
 		sprintf(query, "SHOW COLUMNS FROM %s LIKE 'torans'", vaultTable);
-		sql->query(query, "Checking for torans column");
+		sql->query(query, "getVersion: Checking for torans column");
 		
 		MYSQL_RES *result = sql->storeResult();
 		bool exists = mysql_num_rows(result);
@@ -98,7 +98,7 @@ namespace alc {
 			sprintf(query, "SELECT torans FROM %s WHERE type=6 LIMIT 1", vaultTable); // only the root node has type 6
 		else
 			sprintf(query, "SELECT int_1 FROM %s WHERE type=6 LIMIT 1", vaultTable); // only the root node has type 6
-		sql->query(query, "Checking version number");
+		sql->query(query, "getVersion: Checking version number");
 		result = sql->storeResult();
 		if (result == NULL) throw txDatabaseError(_WHERE("couldnt check version number"));
 		MYSQL_ROW row = mysql_fetch_row(result);
@@ -114,7 +114,7 @@ namespace alc {
 		
 		char query[512];
 		sprintf(query, "SELECT idx, str_1 FROM %s WHERE type=6 LIMIT 1", vaultTable);
-		sql->query(query, "getting vault folder name");
+		sql->query(query, "Getting vault folder name");
 		
 		MYSQL_RES *result = sql->storeResult();
 		if (result == NULL) throw txDatabaseError(_WHERE("couldnt query player list"));
@@ -154,14 +154,14 @@ namespace alc {
 		// first, the ref_vault
 		// rename old timestamp column and delete microseconds
 		sprintf(query, "ALTER TABLE %s DROP microseconds, CHANGE timestamp timestamp_old int NOT NULL default 0", refVaultTable);
-		sql->query(query, "renaming old timestamp row");
+		sql->query(query, "migrateVersion2to3: renaming old timestamp row");
 		// and create new one
 		convertIntToTimestamp(refVaultTable, "timestamp_old", "timestamp");
 		
 		// now, the main vault
 		// drop unused columns
 		sprintf(query, "ALTER TABLE %s DROP microseconds, DROP microseconds2, DROP microseconds3, DROP data2, DROP unk13, DROP unk14", vaultTable);
-		sql->query(query, "remove unused columns");
+		sql->query(query, "migrateVersion2to3: remove unused columns");
 		// rename int columns (besides timestamps)
 		sprintf(query, "ALTER TABLE %s CHANGE unk1 grp int NOT NULL default 0,\n\
 			CHANGE id1 creator int NOT NULL default 0, CHANGE torans int_1 int NOT NULL default 0,\n\
@@ -169,7 +169,7 @@ namespace alc {
 			CHANGE unk5 int_4 int NOT NULL default 0, CHANGE id2 uint_1 int NOT NULL default 0,\n\
 			CHANGE unk7 uint_2 int NOT NULL default 0, CHANGE unk8 uint_3 int NOT NULL default 0,\n\
 			CHANGE unk9 uint_4 int NOT NULL default 0", vaultTable);
-		sql->query(query, "rename int columns");
+		sql->query(query, "migrateVersion2to3: rename int columns");
 		// rename string and blob columns
 		sprintf(query, "ALTER TABLE %s CHANGE entry_name str_1 varchar(255) NOT NULL default '',\n\
 			CHANGE sub_entry_name str_2 varchar(255) NOT NULL default '', CHANGE owner_name str_3 varchar(255) NOT NULL default '',\n\
@@ -177,14 +177,14 @@ namespace alc {
 			CHANGE str2 str_6 varchar(255) NOT NULL default '', CHANGE avie lstr_1 varchar(255) NOT NULL default '',\n\
 			CHANGE uid lstr_2 varchar(255) NOT NULL default '', CHANGE entry_value text_1 varchar(255) NOT NULL default '',\n\
 			CHANGE entry2 text_2 varchar(255) NOT NULL default '', CHANGE data blob_1 longblob NOT NULL", vaultTable);
-		sql->query(query, "rename string and blob columns");
+		sql->query(query, "migrateVersion2to3: rename string and blob columns");
 		// convert timestamp columns
 		convertIntToTimestamp(vaultTable, "timestamp", "mod_time");
 		convertIntToTimestamp(vaultTable, "timestamp2", "crt_time");
 		convertIntToTimestamp(vaultTable, "timestamp3", "age_time");
 		// update version number
 		sprintf(query, "UPDATE %s SET int_1=3 WHERE type=6", vaultTable); // only the root node has type 6
-		sql->query(query, "setting version number");
+		sql->query(query, "migrateVersion2to3: setting version number");
 	}
 	
 	int tVaultDB::getPlayerList(tMBuf &t, const Byte *uid)
@@ -232,7 +232,7 @@ namespace alc {
 			strncpy((char*)avatar, row[0], 255);
 		}
 		mysql_free_result(result);
-		return (number >= 1) ? 1 : 0;
+		return (number == 1) ? 1 : 0;
 	}
 	
 	void tVaultDB::createNodeQuery(char *query, tvNode &node, bool isUpdate)
@@ -472,9 +472,6 @@ namespace alc {
 	U32 tVaultDB::createNode(tvNode &node)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
-		
-		// FIXME: implement this
-		throw txUnet(_WHERE("creating nodes not yet implemented"));
 	}
 	
 	void tVaultDB::updateNode(tvNode &node)
@@ -805,6 +802,8 @@ namespace alc {
 	
 	void tVaultDB::fetchNodes(tMBuf &table, int tableSize, tvNode ***nodes, int *nNodes)
 	{
+		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+	
 		char query[1024], cond[32];
 		MYSQL_RES *result;
 		MYSQL_ROW row;
@@ -821,7 +820,7 @@ namespace alc {
 		}
 		
 		strcat(query, ")");
-		sql->query(query, "fetchNodes: getting node");
+		sql->query(query, "fetching nodes");
 		
 		result = sql->storeResult();
 		if (result == NULL) throw txDatabaseError(_WHERE("couldnt fetch nodes"));
@@ -876,6 +875,19 @@ namespace alc {
 			(*nodes)[i] = node;
 		}
 		mysql_free_result(result);
+	}
+	
+	void tVaultDB::removeNodeRef(U32 parent, U32 son)
+	{
+		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+	
+		char query[2048];
+		
+		// we can't delete the node and its subnodes, uru doesn't like that, so just delete the reference and let the vault grow...
+		// FIXME: implement a function which does exactly that (i.e. remove all references to this node, the node itself and the same
+		//  for all child nodes). This can be used when a player is deleted, but will of course also delete all the KI messages he sent
+		sprintf(query, "DELETE FROM %s WHERE id2='%d' AND id3='%d'", refVaultTable, parent, son);
+		sql->query(query, "removing a node reference");
 	}
 
 } //end namespace alc

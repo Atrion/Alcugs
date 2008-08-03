@@ -265,6 +265,7 @@ namespace alc {
 	class tvNodeRef : public tvBase {
 	public:
 		tvNodeRef(U32 saver, U32 parent, U32 child, U32 time, Byte flags);
+		tvNodeRef(U32 parent, U32 child);
 		tvNodeRef(void) : tvBase() { }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
@@ -374,6 +375,7 @@ namespace alc {
 		tvItem(Byte id, double time);
 		tvItem(Byte id, Byte *str);
 		tvItem(tvCreatableStream *stream);
+		tvItem(Byte id, tvNodeRef *ref);
 		tvItem(Byte tpots) : tvBase() { this->tpots = tpots; data = NULL; }
 		virtual ~tvItem(void) { if (data) delete data; }
 		virtual void store(tBBuf &t);

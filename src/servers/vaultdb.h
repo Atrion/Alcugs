@@ -65,6 +65,9 @@ namespace alc {
 		/** gets a list of all direct and indirect MGRS (parent nodes with a type <= 7) of this node
 		    Remember to free the table */
 		void getMGRs(U32 baseNode, U32 **table, U32 *tableSize);
+		
+		/** removes a node ref */
+		void removeNodeRef(U32 parent, U32 son);
 	private:
 		/** creates a query to SELECT (isUpdate = false) or UPDATE (isUpdate = true) that vault node
 		    the query is appended (using strcat) to out which must be big enough

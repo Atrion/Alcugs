@@ -279,6 +279,15 @@ namespace alc {
 		this->flags = flags;
 	}
 	
+	tvNodeRef::tvNodeRef(U32 parent, U32 child)
+	{
+		this->saver = 0;
+		this->parent = parent;
+		this->child = child;
+		this->time = 0;
+		this->flags = 0;
+	}
+	
 	void tvNodeRef::store(tBBuf &t)
 	{
 		saver = t.getU32();
@@ -931,6 +940,13 @@ namespace alc {
 		this->id = stream->id;
 		type = DCreatableStream;
 		data = stream;
+	}
+	
+	tvItem::tvItem(Byte id, tvNodeRef *ref)
+	{
+		this->id = id;
+		type = DVaultNodeRef;
+		data = ref;
 	}
 	
 	void tvItem::store(tBBuf &t)

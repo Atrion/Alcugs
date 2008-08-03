@@ -143,7 +143,7 @@ namespace alc {
 		msg.print(logHtml, /*clientToServer:*/true, u, shortHtml, ki);
 		
 		// have everything on the stack as we can safely throw exceptions then
-		S32 nodeType = -1, id = -1;
+		S32 nodeType = -1, id = -1, nodeSon = -1, nodeParent = -1;
 		U16 tableSize = 0;
 		tMBuf table;
 		tvNode *savedNode = NULL;
@@ -165,6 +165,9 @@ namespace alc {
 				case 5: // a single vault node
 					savedNode = itm->asNode(); // we don't have to free it, tvMessage does that
 					break;
+				case 9: // FoundNode Index / Son of a NodeRef / Old Node Index (saveNode)
+					nodeSon = itm->asInt();
+					break;
 				case 10: // Stream containing a table of ints
 				{
 					if (itm->type != DCreatableStream) throw txProtocolError(_WHERE("a vault item with id 10 must always have a creatable generic stream"));
@@ -177,6 +180,9 @@ namespace alc {
 					table.rewind();
 					break;
 				}
+				case 13: // Parent of a NodeRef
+					nodeParent = itm->asInt();
+					break;
 				case 16: // GenericValue.Int: must always be the same (seen in FindNode)
 					if (itm->asInt() != 0)
 						throw txProtocolError(_WHERE("a vault item with ID 16 must always have a value of 0 but I got %d", itm->asInt()));
@@ -185,6 +191,15 @@ namespace alc {
 					if (itm->asInt() != -1)
 						throw txProtocolError(_WHERE("a vault item with ID 20 must always have a value of -1 but I got %d", itm->asInt()));
 					break;
+				// these are not sent to servers
+				case 6: // a stream of Vault Nodes
+				case 11: // new Node Index (saveNode)
+				case 14: // stream of manifests
+				case 15: // stream of NodeRefs
+				case 23: // Vault folder
+				case 24: // Timestamp (double format)
+				case 25: // number of vault nodes
+				case 31: // EOF of a FetchNode
 				default:
 					throw txProtocolError(_WHERE("vault item has invalid id %d", itm->id));
 			}
@@ -259,6 +274,16 @@ namespace alc {
 				}
 				break;
 			}
+			case VRemoveNodeRef:
+			{
+				if (nodeSon < 0 || nodeParent < 0) throw txProtocolError(_WHERE("got a VRemoveNodeRef where parent or son have not been set"));
+				vaultDB->removeNodeRef(nodeParent, nodeSon);
+				
+				// broadcast the change
+				tvMessage bcast(VRemoveNodeRef, 1);
+				bcast.items[0] = new tvItem(/*id*/7, new tvNodeRef(nodeParent, nodeSon));
+				break;
+			}
 			case VNegotiateManifest:
 			{
 				if (tableSize != 1)
@@ -288,8 +313,14 @@ namespace alc {
 				if (savedNode->modTime == 0 || !(savedNode->flagB & MModTime)) throw txProtocolError(_WHERE("every saved node must have a timestamp"));
 				
 				if (savedNode->index < 19000) {
-					// FIXME: create the new node
-					throw txProtocolError(_WHERE("creating a new node is not yet implemented"));
+					U32 oldIndex = savedNode->index;
+					U32 newIndex = vaultDB->createNode(*savedNode);
+					
+					// reply to the sender
+					tvMessage reply(msg, 2);
+					reply.items[0] = new tvItem(/*id*/9, /*old node index*/(S32)oldIndex);
+					reply.items[1] = new tvItem(/*id*/11, /*old node index*/(S32)newIndex);
+					send(reply, u, ki);
 				}
 				else {
 					vaultDB->updateNode(*savedNode);
