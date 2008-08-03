@@ -379,6 +379,7 @@ namespace alc {
 		virtual void asHtml(tLog *log, bool shortLog);
 		
 		S32 asInt(void);
+		tvNode *asNode(void);
 		
 		Byte tpots; // 1: generate/parse for TPOTS client, everything else: for non-TPOTS client (or the vault server)
 		// format

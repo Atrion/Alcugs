@@ -978,6 +978,13 @@ namespace alc {
 		return ((tvCreatableGenericValue *)data)->asInt();
 	}
 	
+	tvNode *tvItem::asNode(void)
+	{
+		if (type != DVaultNode)
+			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a DVaultNode", id, alcVaultGetDataType(type)));
+		return (tvNode *)data;
+	}
+	
 	void tvItem::asHtml(tLog *log, bool shortLog)
 	{
 		log->print("Id: <b>0x%02X (%d)</b>, type: 0x%04X (%s)<br />\n", id, id, type, alcVaultGetDataType(type));

@@ -47,15 +47,8 @@ namespace alc {
 	{
 		sql = NULL;
 		this->log = log;
-	
-		int version = getVersion();
-		if (version < 2 || version > 3) throw txDatabaseError(_WHERE("only vault DB version 2 and 3 are supported, not %d", version));
-		log->log("Started VaultDB driver (%s) on a vault DB version %d\n", __U_VAULTDB_ID, version);
-		if (version == 2) {
-			log->log("Converting DB from version 2 to 3... \n");
-			migrateVersion2to3();
-			log->log("Done converting DB from version 2 to 3!\n");
-		}
+		
+		prepare();
 	}
 	
 	bool tVaultDB::prepare(void)
@@ -71,7 +64,15 @@ namespace alc {
 		DBG(6, "creating sql\n");
 		sql = tSQL::createFromConfig();
 		if (sql->prepare()) {
-			// FIXME: create vault db if necessary, upgrade it if necessary
+			// FIXME: create vault db if necessary
+			int version = getVersion();
+			if (version < 2 || version > 3) throw txDatabaseError(_WHERE("only vault DB version 2 and 3 are supported, not %d", version));
+			if (version == 2) {
+				log->log("Converting DB from version 2 to 3... \n");
+				migrateVersion2to3();
+				log->log("Done converting DB from version 2 to 3!\n");
+			}
+			log->log("Started VaultDB driver (%s) on a vault DB version %d\n", __U_VAULTDB_ID, version);
 			return true;
 		}
 		// when we come here, it didn't work, so delete everything
@@ -420,7 +421,8 @@ namespace alc {
 	
 	U32 tVaultDB::createNode(tvNode &node)
 	{
-		throw txUnet(_WHERE("FIXME: creating nodes not yet implemented"));
+		// FIXME: implement this
+		throw txUnet(_WHERE("creating nodes not yet implemented"));
 	}
 	
 	void tVaultDB::getManifest(U32 baseNode, tvManifest ***mfs, int *nMfs, tvNodeRef ***ref, int *nRef)
