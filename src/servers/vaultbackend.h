@@ -49,7 +49,8 @@ namespace alc {
 		void processVaultMsg(tvMessage &msg, tNetSession *u, U32 ki);
 	private:
 		void send(tvMessage &msg, tNetSession *u, U32 ki);
-		int findVmgr(tNetSession *u, U32 ki, U32 node); //!< \returns the number of that vmgr or -1
+		int findVmgr(tNetSession *u, U32 ki, U32 mgr); //!< \returns the number of that vmgr or -1
+		void broadcast(tvMessage &msg, U32 node, U32 origKi, U32 origMgr);
 	
 		tVaultDB *vaultDB;
 		Byte vaultFolderName[17];
@@ -60,13 +61,13 @@ namespace alc {
 		
 		// the list of vmgrs
 		struct tVmgr {
-			tVmgr(U32 ki, U32 node, tNetSessionIte session) {
+			tVmgr(U32 ki, U32 mgr, tNetSessionIte session) {
 				this->ki = ki;
-				this->node = node;
+				this->mgr = mgr;
 				this->session = session;
 			}
 			U32 ki;
-			U32 node;
+			U32 mgr;
 			tNetSessionIte session;
 		};
 		int nVmgrs;

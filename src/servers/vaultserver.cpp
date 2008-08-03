@@ -100,7 +100,7 @@ namespace alc {
 				if (!vaultMsg.hasFlags(plNetKi) || vaultMsg.ki == 0) throw txProtocolError(_WHERE("KI missing"));
 				
 				// prepare for parsing the message (actual parsing is only done when the packet is really forwarded
-				tvMessage parsedMsg(/*isTask:*/false, /* 0 = non-TPOTS */0);
+				tvMessage parsedMsg(/*isTask:*/false, /* 0 = non-TPOTS */(Byte)0);
 				vaultMsg.message.rewind();
 				vaultMsg.message.get(parsedMsg);
 				

@@ -278,6 +278,7 @@ namespace alc {
 	class tvCreatableGenericValue : public tvBase {
 	public:
 		tvCreatableGenericValue(S32 integer);
+		tvCreatableGenericValue(double time);
 		tvCreatableGenericValue(Byte *str);
 		tvCreatableGenericValue(void) : tvBase() { }
 		virtual void store(tBBuf &t);
@@ -370,6 +371,7 @@ namespace alc {
 	class tvItem : public tvBase {
 	public:
 		tvItem(Byte id, S32 integer);
+		tvItem(Byte id, double time);
 		tvItem(Byte id, Byte *str);
 		tvItem(tvCreatableStream *stream);
 		tvItem(Byte tpots) : tvBase() { this->tpots = tpots; data = NULL; }
@@ -391,6 +393,7 @@ namespace alc {
 	class tvMessage : public tvBase {
 	public:
 		tvMessage(tvMessage &msg, int nItems);
+		tvMessage(Byte cmd, int nItems);
 		tvMessage(bool isTask, Byte tpots) : tvBase() { task = isTask; this->tpots = tpots; items = NULL; }
 		virtual ~tvMessage(void);
 		virtual void store(tBBuf &t); //!< unpacks the message

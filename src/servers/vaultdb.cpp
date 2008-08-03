@@ -641,6 +641,161 @@ namespace alc {
 		*nMfs = nFinal;
 	}
 	
+	void tVaultDB::getMGRs(U32 baseNode, U32 **table, U32 *tableSize)
+	{
+		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		
+		*table = NULL;
+		*tableSize = 0;
+	
+		U32 *feed = NULL, *aux = NULL, *final = NULL;
+		U32  nFeed = 0,    nAux = 0,    nFinal = 0;
+		char query[2048], cond[32];
+		MYSQL_RES *result;
+		MYSQL_ROW row;
+		bool comma;
+		U32 auxIndex, feedIndex;
+		
+		// put base node in the feed
+		feed = (U32 *)malloc(sizeof(U32));
+		feed[0] = baseNode;
+		nFeed = 1;
+		
+		// now, the big loop... as long as there is something in the feed, process it
+		while (nFeed > 0) {
+			// save the so-far final list
+			aux = final;
+			nAux = nFinal;
+			// get space for the new final list - it will contain all elements of the so-far final list and the feed
+			final = (U32 *)malloc((nFinal+nFeed)*sizeof(U32));
+			nFinal = 0;
+			
+			sprintf(query, "SELECT n.idx,n.type FROM %s n JOIN %s r ON r.id2=n.idx WHERE r.id3 IN(", vaultTable, refVaultTable);
+			comma = false;
+			
+			// our task is now to (a) merge the (both sorted) lists aux and feed into a (sorted) final list and (b) add all the node ids
+			//  from the feed list to the query
+			feedIndex = 0;
+			auxIndex = 0;
+			while (auxIndex < nAux) {
+				while (feedIndex < nFeed) {
+					// if the current feed node is lower than the current aux one, it has to be inserted now
+					if (feed[feedIndex] < aux[auxIndex]) {
+						if (nFinal == 0 || final[nFinal-1] != feed[feedIndex]) { // avoid duplicates
+							final[nFinal] = feed[feedIndex];
+							++nFinal;
+							// add it to the query
+							if (comma) strcat(query, ",");
+							sprintf(cond, "%d", feed[feedIndex]);
+							strcat(query, cond);
+							comma = true;
+						}
+						else
+							; // duplicate
+					}
+					else if (feed[feedIndex] > aux[auxIndex]) {
+						// the current feed must be inserted into the final list after the current aux, so we can insert the current aux now
+						final[nFinal] = aux[auxIndex];
+						++nFinal;
+						++auxIndex;
+						break; // we have to check if this was the last aux node or there's something after it
+					}
+					else
+						; // duplicate
+					++feedIndex; // got this one
+				}
+				if (feedIndex >= nFeed) {
+					// we got all the feed nodes, so the rest of the aux nodes comes now
+					while(auxIndex < nAux) {
+						final[nFinal] = aux[auxIndex];
+						++nFinal;
+						++auxIndex;
+					}
+					break; // got all of them
+				}
+			}
+			
+			// now we got all aux nodes, let's see if there are some feeds remaining
+			while (feedIndex < nFeed) {
+				if (nFinal == 0 || final[nFinal-1] != feed[feedIndex]) { // avoid duplicates
+					final[nFinal] = feed[feedIndex];
+					++nFinal;
+					// add it to the query
+					if (comma) strcat(query, ",");
+					sprintf(cond, "%d", feed[feedIndex]);
+					strcat(query, cond);
+					comma = true;
+				}
+				else
+					; // duplicate
+				++feedIndex; // got this one
+			}
+			
+			// now we can free the aux and feed tables
+			if (aux != NULL) {
+				free((void *)aux);
+				aux = NULL;
+			}
+			nAux = 0;
+			if (feed != NULL) {
+				free((void *)feed);
+				feed = NULL;
+			}
+			nFeed = 0;
+			
+			// ok... now we can query (if there's anything)
+			if (!comma) break;
+			strcat(query, ") ORDER BY n.idx ASC");
+			sql->query(query, "getMGRs: getting child nodes");
+			
+			result = sql->storeResult();
+			if (result == NULL) throw txDatabaseError(_WHERE("couldnt get nodes"));
+			U32 number = mysql_num_rows(result);
+				
+			// the result goes into the feed table
+			feed = (U32 *)malloc(number*sizeof(U32));
+			while (nFeed < number) {
+				row = mysql_fetch_row(result);
+				// save ID
+				feed[nFeed] = atoi(row[0]);
+				++nFeed;
+				if (atoi(row[1]) <= 7) { // it's a MGR so lets save it - and keep the table in order!
+					DBG(7, "%d is a MGR (type: %d)\n", atoi(row[0]), atoi(row[1]));
+					U32 insertVal = atoi(row[0]), tmp;
+					for (U32 i = 0; i < *tableSize; ++i) {
+						if ((*table)[i] == insertVal) break;
+						if ((*table)[i] > insertVal) {
+							// put the insertVal in the current place and save the current one to be inserted later
+							tmp = insertVal;
+							insertVal = (*table)[i];
+							(*table)[i] = tmp;
+						}
+					}
+					if (*tableSize == 0 || (*table)[*tableSize-1] < insertVal) { // if a value still has to be inserted, grow the table
+						++(*tableSize);
+						*table = (U32 *)realloc((void *)(*table), (*tableSize)*sizeof(U32));
+						(*table)[*tableSize-1] = insertVal;
+					}
+				}
+			}
+			mysql_free_result(result);
+		}
+		
+		// now we can free the aux and feed tables
+		if (aux != NULL) {
+			free((void *)aux);
+			aux = NULL;
+		}
+		if (feed != NULL) {
+			free((void *)feed);
+			feed = NULL;
+		}
+		if (final != NULL) {
+			free((void *)final);
+			final = NULL;
+		}
+	}
+	
 	void tVaultDB::fetchNodes(tMBuf &table, int tableSize, tvNode ***nodes, int *nNodes)
 	{
 		char query[1024], cond[32];
@@ -659,7 +814,7 @@ namespace alc {
 		}
 		
 		strcat(query, ")");
-		sql->query(query, "getManifest: getting child nodes");
+		sql->query(query, "fetchNodes: getting node");
 		
 		result = sql->storeResult();
 		if (result == NULL) throw txDatabaseError(_WHERE("couldnt fetch nodes"));

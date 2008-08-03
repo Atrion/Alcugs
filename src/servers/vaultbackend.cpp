@@ -127,10 +127,10 @@ namespace alc {
 		net->send(checked);
 	}
 	
-	int tVaultBackend::findVmgr(tNetSession *u, U32 ki, U32 node)
+	int tVaultBackend::findVmgr(tNetSession *u, U32 ki, U32 mgr)
 	{
 		for (int i = 0; i < nVmgrs; ++i) {
-			if (vmgrs[i] && vmgrs[i]->ki == ki && vmgrs[i]->node == node) {
+			if (vmgrs[i] && vmgrs[i]->ki == ki && vmgrs[i]->mgr == mgr) {
 				vmgrs[i]->session = u->getIte();
 				return i;
 			}
@@ -192,25 +192,25 @@ namespace alc {
 			case VConnect:
 			{
 				log->log("Vault Connect request for %d (Type: %d)\n", ki, nodeType);
-				U32 nodeId;
+				U32 mgr;
 				if (nodeType == 2) { // player node
-					nodeId = id;
-					if (nodeId != ki)
-						throw txProtocolError(_WHERE("Player with KI %d wants to VConnect as %d\n", ki, nodeId));
+					mgr = id;
+					if (mgr != ki)
+						throw txProtocolError(_WHERE("Player with KI %d wants to VConnect as %d\n", ki, mgr));
 					// create reply
 					tvMessage reply(msg, 2);
-					reply.items[0] = new tvItem(/*id*/2, /*node id*/nodeId);
+					reply.items[0] = new tvItem(/*id*/2, /*mgr node id*/(S32)mgr);
 					reply.items[1] = new tvItem(/*id*/23, /*folder name*/vaultFolderName);
 					send(reply, u, ki);
 				}
 				else if (nodeType == 5) { // admin node
-					tvNode node;
-					node.setType(5);
-					nodeId = vaultDB->findNode(node, true);
+					tvNode mgrNode;
+					mgrNode.setType(5);
+					mgr = vaultDB->findNode(mgrNode, true);
 					// create and send the reply
 					tvMessage reply(msg, 3);
 					reply.items[0] = new tvItem(/*id:*/1, /*node type*/5);
-					reply.items[1] = new tvItem(/*id*/2, /*node id*/nodeId);
+					reply.items[1] = new tvItem(/*id*/2, /*mgr node id*/(S32)mgr);
 					reply.items[2] = new tvItem(/*id*/23, /*folder name*/vaultFolderName);
 					send(reply, u, ki);
 				}
@@ -235,7 +235,7 @@ namespace alc {
 					++nVmgrs;
 					vmgrs = (tVmgr **)realloc((void *)vmgrs, sizeof(tVmgr *)*nVmgrs);
 				}
-				vmgrs[nr] = new tVmgr(ki, nodeId, u->getIte());
+				vmgrs[nr] = new tVmgr(ki, mgr, u->getIte());
 				// FIXME: make sure the vmgrs are somehow cleaned up when they're inactive even when a player does not send a VDisconnect... the old vault server doesn't do that
 				break;
 			}
@@ -283,14 +283,23 @@ namespace alc {
 				if (!savedNode) throw txProtocolError(_WHERE("got a save node request without the node attached"));
 				if (savedNode->modTime == 0 || !(savedNode->flagB & MModTime)) throw txProtocolError(_WHERE("every saved node must have a timestamp"));
 				
-				if (savedNode->index < 1900) {
+				if (savedNode->index < 19000) {
 					// FIXME: create the new node
 					throw txProtocolError(_WHERE("creating a new node is not yet implemented"));
 				}
 				else {
 					vaultDB->updateNode(*savedNode);
 					
-					// FIXME: broadcast the update
+					// create the reply to the sender
+					tvMessage reply(msg, 1);
+					reply.items[0] = new tvItem(/*id*/9, /*old node index*/(S32)savedNode->index);
+					send(reply, u, ki);
+					// create the broadcast reply
+					tvMessage bcast(VSaveNode, 2);
+					bcast.items[0] = new tvItem(/*id*/9, /*old node index*/(S32)savedNode->index);
+					bcast.items[1] = new tvItem(/*id*/24, /*timestamp*/(double)savedNode->modTime);
+					// and broadcast it
+					broadcast(bcast, savedNode->index, ki, msg.vmgr);
 				}
 				
 				break;
@@ -330,6 +339,26 @@ namespace alc {
 			default:
 				throw txProtocolError(_WHERE("Unknown vault command 0x%02X (%s)\n", alcVaultGetCmd(msg.cmd)));
 		}
+	}
+	
+	void tVaultBackend::broadcast(tvMessage &msg, U32 node, U32 origKi, U32 origMgr)
+	{
+		U32 *table, tableSize;
+		tNetSession *session;
+		vaultDB->getMGRs(node, &table, &tableSize);
+		// now let's see who gets notified
+		for (int i = 0; i < nVmgrs; ++i) {
+			if (vmgrs[i]->mgr == 0 || (vmgrs[i]->ki == origKi && vmgrs[i]->mgr == origMgr)) continue;
+			session = net->getSession(vmgrs[i]->session);
+			if (!session) continue;
+			for (U32 j = 0; j < tableSize; ++j) {
+				if (table[j] != vmgrs[i]->mgr) continue;
+				msg.vmgr = vmgrs[i]->mgr;
+				send(msg, session, vmgrs[i]->ki);
+				break;
+			}
+		}
+		free((void *)table);
 	}
 
 } //end namespace alc

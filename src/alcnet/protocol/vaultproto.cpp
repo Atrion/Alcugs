@@ -312,6 +312,12 @@ namespace alc {
 		this->integer = integer;
 	}
 	
+	tvCreatableGenericValue::tvCreatableGenericValue(double time) : tvBase()
+	{
+		format = DTimestamp;
+		this->time = time;
+	}
+	
 	tvCreatableGenericValue::tvCreatableGenericValue(Byte *str) : tvBase()
 	{
 		format = DUruString;
@@ -906,6 +912,13 @@ namespace alc {
 		data = new tvCreatableGenericValue(integer);
 	}
 	
+	tvItem::tvItem(Byte id, double time) : tvBase()
+	{
+		this->id = id;
+		type = DCreatableGenericValue;
+		data = new tvCreatableGenericValue(time);
+	}
+	
 	tvItem::tvItem(Byte id, Byte *str)
 	{
 		this->id = id;
@@ -999,12 +1012,26 @@ namespace alc {
 	tvMessage::tvMessage(tvMessage &msg, int nItems) : tvBase()
 	{
 		tpots = 0;
-		task = false;
+		task = msg.task;
 		cmd = msg.cmd;
 		compressed = 1; // uncompressed
 		context = msg.context;
 		vmgr = msg.vmgr;
 		vn = msg.vn;
+		numItems = nItems;
+		items = (tvItem **)malloc(numItems * sizeof(tvItem *));
+		for (int i = 0; i < numItems; ++i) items[i] = NULL;
+	}
+	
+	tvMessage::tvMessage(Byte cmd, int nItems)
+	{
+		tpots = 0;
+		task = false;
+		this->cmd = cmd;
+		compressed = 1; // uncompressed
+		context = 0;
+		vmgr = 0;
+		vn = 0;
 		numItems = nItems;
 		items = (tvItem **)malloc(numItems * sizeof(tvItem *));
 		for (int i = 0; i < numItems; ++i) items[i] = NULL;
