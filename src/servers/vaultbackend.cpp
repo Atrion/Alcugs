@@ -215,6 +215,7 @@ namespace alc {
 			case VConnect:
 			{
 				log->log("Vault Connect request for %d (Type: %d)\n", ki, nodeType);
+				log->flush();
 				U32 mgr;
 				if (nodeType == 2) { // player node
 					mgr = id;
@@ -265,6 +266,7 @@ namespace alc {
 			case VDisconnect:
 			{
 				log->log("Vault Disconnect request for %d (Type: %d)\n", ki, nodeType);
+				log->flush();
 				int nr = findVmgr(u, ki, msg.vmgr);
 				delete vmgrs[nr];
 				vmgrs[nr] = NULL;
@@ -281,6 +283,8 @@ namespace alc {
 			case VAddNodeRef:
 			{
 				if (!savedNodeRef) throw txProtocolError(_WHERE("got a VAddNodeRef without a node ref attached"));
+				log->log("Vault Add Node Ref from %d to %d for %d\n", savedNodeRef->parent, savedNodeRef->child, ki);
+				log->flush();
 				if (!vaultDB->addNodeRef(*savedNodeRef)) return; // ignore duplicates
 				
 				// broadcast the change
@@ -291,7 +295,10 @@ namespace alc {
 			}
 			case VRemoveNodeRef:
 			{
-				if (nodeSon < 0 || nodeParent < 0) throw txProtocolError(_WHERE("got a VRemoveNodeRef where parent or son have not been set"));
+				if (nodeSon < 0 || nodeParent < 0)
+					throw txProtocolError(_WHERE("got a VRemoveNodeRef where parent or son have not been set"));
+				log->log("Vault Remove Node Ref from %d to %d for %d\n", nodeParent, nodeSon, ki);
+				log->flush();
 				vaultDB->removeNodeRef(nodeParent, nodeSon);
 				
 				// broadcast the change
@@ -304,10 +311,13 @@ namespace alc {
 			{
 				if (tableSize != 1)
 					throw txProtocolError(_WHERE("Getting %d manifests at once is not supported\n", tableSize));
+				U32 mgr = table.getU32();
+				log->log("Vault Negoiate Manifest (MGR: %d) for %d\n", mgr, ki);
+				log->flush();
 				tvManifest **mfs;
 				tvNodeRef **ref;
 				int nMfs, nRef;
-				vaultDB->getManifest(table.getU32(), &mfs, &nMfs, &ref, &nRef);
+				vaultDB->getManifest(mgr, &mfs, &nMfs, &ref, &nRef);
 				
 				// create reply
 				tvMessage reply(msg, 2);
@@ -331,6 +341,8 @@ namespace alc {
 				if (savedNode->index < 19000) {
 					U32 oldIndex = savedNode->index;
 					U32 newIndex = vaultDB->createNode(*savedNode);
+					log->log("Vault Save Node (created new node %d) for %d\n", newIndex, ki);
+					log->flush();
 					
 					// reply to the sender
 					tvMessage reply(msg, 2);
@@ -340,6 +352,8 @@ namespace alc {
 				}
 				else {
 					vaultDB->updateNode(*savedNode);
+					log->log("Vault Save Node (updated node %d) for %d\n", savedNode->index, ki);
+					log->flush();
 					
 					// create the reply to the sender
 					tvMessage reply(msg, 1);
@@ -352,11 +366,12 @@ namespace alc {
 					// and broadcast it
 					broadcast(bcast, savedNode->index, ki, msg.vmgr);
 				}
-				
 				break;
 			}
 			case VFindNode:
 			{
+				log->log("Vault Find Node (looking for node %d) for %d\n", savedNode->index, ki);
+				log->flush();
 				tvManifest mfs;
 				if (vaultDB->findNode(*savedNode, &mfs, /*create*/false)) {
 					// create and send the reply
@@ -369,6 +384,8 @@ namespace alc {
 			case VFetchNode:
 			{
 				if (tableSize <= 0) break;
+				log->log("Vault Fetch Node (fetching %d nodes) for %d\n", tableSize, ki);
+				log->flush();
 				tvNode **nodes;
 				int nNodes;
 				vaultDB->fetchNodes(table, tableSize, &nodes, &nNodes);
