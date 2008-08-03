@@ -1016,6 +1016,13 @@ namespace alc {
 		return (tvNode *)data;
 	}
 	
+	tvNodeRef *tvItem::asNodeRef(void)
+	{
+		if (type != DVaultNodeRef)
+			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a DVaultNodeRef", id, alcVaultGetDataType(type)));
+		return (tvNodeRef *)data;
+	}
+	
 	void tvItem::asHtml(tLog *log, bool shortLog)
 	{
 		log->print("Id: <b>0x%02X (%d)</b>, type: 0x%04X (%s)<br />\n", id, id, type, alcVaultGetDataType(type));

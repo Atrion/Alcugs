@@ -53,9 +53,8 @@ public:
 	void printError(const char *msg); //!< print the last MySQL error (with the given desctiption) to the error protocol
 	bool query(const char *str, const char *desc, bool throwOnError = true); //!< query the database \return true on success, false on error
 	void checkTimeout(void); //!< closes the connection on timeout
-	inline int affectedRows(void) {
-		return (connection == NULL) ? -1 : mysql_affected_rows(connection);
-	}
+	int insertId(void);
+	
 	char *escape(char *str); //!< escapes the given string and returns the point to a static array. max string length is 511
 	char *escape(char *out, char *data, int size); //!< escapes the given data into the out array and returns that array
 	MYSQL_RES *storeResult(void);

@@ -147,6 +147,7 @@ namespace alc {
 		U16 tableSize = 0;
 		tMBuf table;
 		tvNode *savedNode = NULL;
+		tvNodeRef *savedNodeRef;
 		
 		// read and verify the general vault items
 		for (int i = 0; i < msg.numItems; ++i) {
@@ -164,6 +165,9 @@ namespace alc {
 					break;
 				case 5: // a single vault node
 					savedNode = itm->asNode(); // we don't have to free it, tvMessage does that
+					break;
+				case 7: // a single vault node ref
+					savedNodeRef = itm->asNodeRef(); // we don't have to free it, tvMessage does that
 					break;
 				case 9: // FoundNode Index / Son of a NodeRef / Old Node Index (saveNode)
 					nodeSon = itm->asInt();

@@ -64,7 +64,7 @@ VaultManager Name  ||  Plasma DB field Name  ||  Alcugs DB field Name (v0-2)  ||
 [Permissions]           Permissions                permissions                     permissions
 [Owner ID]              OwnerIdx                   owner                           owner
 [Group ID]              GroupIdx                   unk1                            grp (group is a SQL keyword)
-[Modify Time]           ModifyTime                 timestamp, microseconds         mod_time, mod_microsec
+[Modify Time]           ModifyTime                 timestamp, microseconds         mod_time (microseconds are always 0)
 [Creator ID]            CreatorIdx                 id1                             creator
 [Create Time]           AutoTime                   timestamp2, microseconds2       crt_time (microseconds are always 0)
 [Create Age Coords]     CreateAgeCoordsBlobIdx     **unused**                      **unused**

@@ -189,6 +189,12 @@ char *tSQL::escape(char *out, char *data, int size)
 	return out;
 }
 
+int tSQL::insertId(void)
+{
+	if (connection == NULL) throw txDatabaseError(_WHERE("can't get the inserted ID"));	
+	return mysql_insert_id(connection);
+}
+
 MYSQL_RES *tSQL::storeResult(void)
 {
 	if (connection == NULL) return NULL;

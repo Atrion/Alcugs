@@ -384,6 +384,7 @@ namespace alc {
 		
 		S32 asInt(void);
 		tvNode *asNode(void);
+		tvNodeRef *asNodeRef(void);
 		
 		Byte tpots; // 1: generate/parse for TPOTS client, everything else: for non-TPOTS client (or the vault server)
 		// format

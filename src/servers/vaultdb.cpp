@@ -135,7 +135,7 @@ namespace alc {
 		sprintf(query, "ALTER TABLE %s ADD %s timestamp NOT NULL default 0 AFTER %s", table, timestampColumn, intColumn);
 		sql->query(query, "converting int to timestamp (1/3)");
 		
-		sprintf(query, "UPDATE %s SET %s = FROM_UNIXTIME(%s)+0", table, timestampColumn, intColumn);
+		sprintf(query, "UPDATE %s SET %s = FROM_UNIXTIME(%s)", table, timestampColumn, intColumn);
 		sql->query(query, "converting int to timestamp (2/3)");
 		
 		sprintf(query, "ALTER TABLE %s DROP %s", table, intColumn);
@@ -461,7 +461,10 @@ namespace alc {
 		}
 		else if (create) {
 			id = createNode(node);
-			// FIXME: fill the manifest
+			if (mfs) {
+				mfs->id = id;
+				mfs->time = node.modTime;
+			}
 		}
 		
 		mysql_free_result(result);
@@ -472,11 +475,182 @@ namespace alc {
 	U32 tVaultDB::createNode(tvNode &node)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		
+		if (!(node.flagB & MType)) throw txDatabaseError(_WHERE("type must be set for all new nodes"));
+		
+		int size = node.blob1Size*2 + 4096;
+		char *query = (char *)malloc((size+4096)*sizeof(char));
+		char *values = (char *)malloc(size*sizeof(char));
+		char helpStr[512];
+		
+		// time fix
+		node.flagB |= (MModTime | MCrtTime | MAgeTime);
+		node.crtTime = node.ageTime = node.modTime = alcGetTime();
+		
+		sprintf(query, "INSERT INTO %s (type", vaultTable);
+		sprintf(values, ") VALUES ('%d'", node.type);
+		
+		if (node.flagB & MPerms) {
+			strcat(query, ",permissions");
+			sprintf(helpStr, ",'%d'", node.permissions);
+			strcat(values, helpStr);
+		}
+		if (node.flagB & MOwner) {
+			strcat(query, ",owner");
+			sprintf(helpStr, ",'%d'", node.owner);
+			strcat(values, helpStr);
+		}
+		if (node.flagB & MGroup) {
+			strcat(query, ",grp");
+			sprintf(helpStr, ",'%d'", node.group);
+			strcat(values, helpStr);
+		}
+		if (node.flagB & MModTime) {
+			strcat(query, ",mod_time");
+			sprintf(helpStr, ",FROM_UNIXTIME('%d')", node.modTime);
+			strcat(values, helpStr);
+		}
+		if (node.flagB & MCreator) {
+			strcat(query, ",creator");
+			sprintf(helpStr, ",'%d'", node.creator);
+			strcat(values, helpStr);
+		}
+		if (node.flagB & MCrtTime) {
+			strcat(query, ",crt_time");
+			sprintf(helpStr, ",FROM_UNIXTIME('%d')", node.crtTime);
+			strcat(values, helpStr);
+		}
+		if (node.flagB & MAgeTime) {
+			strcat(query, ",age_time");
+			sprintf(helpStr, ",FROM_UNIXTIME('%d')", node.ageTime);
+			strcat(values, helpStr);
+		}
+		if (node.flagB & MAgeName) {
+			strcat(query, ",age_name");
+			sprintf(helpStr, ",'%s'", sql->escape((char *)node.ageName.c_str()));
+			strcat(values, helpStr);
+		}
+		if (node.flagB & MAgeGuid) {
+			strcat(query, ",age_guid");
+			sprintf(helpStr, ",'%s'", sql->escape((char *)alcGetStrGuid(node.ageGuid)));
+			strcat(values, helpStr);
+		}
+		if (node.flagB & MInt32_1) {
+			strcat(query, ",int_1");
+			sprintf(helpStr, ",'%d'", node.int1);
+			strcat(values, helpStr);
+		}
+		if (node.flagB & MInt32_2) {
+			strcat(query, ",int_2");
+			sprintf(helpStr, ",'%d'", node.int2);
+			strcat(values, helpStr);
+		}
+		if (node.flagB & MInt32_3) {
+			strcat(query, ",int_3");
+			sprintf(helpStr, ",'%d'", node.int3);
+			strcat(values, helpStr);
+		}
+		if (node.flagB & MInt32_4) {
+			strcat(query, ",int_4");
+			sprintf(helpStr, ",'%d'", node.int4);
+			strcat(values, helpStr);
+		}
+		if (node.flagB & MUInt32_1) {
+			strcat(query, ",uint_1");
+			sprintf(helpStr, ",'%d'", node.uInt1);
+			strcat(values, helpStr);
+		}
+		if (node.flagB & MUInt32_2) {
+			strcat(query, ",uint_2");
+			sprintf(helpStr, ",'%d'", node.uInt2);
+			strcat(values, helpStr);
+		}
+		if (node.flagB & MUInt32_3) {
+			strcat(query, ",uint_3");
+			sprintf(helpStr, ",'%d'", node.uInt3);
+			strcat(values, helpStr);
+		}
+		if (node.flagB & MUInt32_4) {
+			strcat(query, ",uint_4");
+			sprintf(helpStr, ",'%d'", node.uInt4);
+			strcat(values, helpStr);
+		}
+		if (node.flagB & MStr64_1) {
+			strcat(query, ",str_1");
+			sprintf(helpStr, ",'%s'", sql->escape((char *)node.str1.c_str()));
+			strcat(values, helpStr);
+		}
+		if (node.flagB & MStr64_2) {
+			strcat(query, ",str_2");
+			sprintf(helpStr, ",'%s'", sql->escape((char *)node.str2.c_str()));
+			strcat(values, helpStr);
+		}
+		if (node.flagB & MStr64_3) {
+			strcat(query, ",str_3");
+			sprintf(helpStr, ",'%s'", sql->escape((char *)node.str3.c_str()));
+			strcat(values, helpStr);
+		}
+		if (node.flagB & MStr64_4) {
+			strcat(query, ",str_4");
+			sprintf(helpStr, ",'%s'", sql->escape((char *)node.str4.c_str()));
+			strcat(values, helpStr);
+		}
+		if (node.flagB & MStr64_5) {
+			strcat(query, ",str_5");
+			sprintf(helpStr, ",'%s'", sql->escape((char *)node.str5.c_str()));
+			strcat(values, helpStr);
+		}
+		if (node.flagB & MStr64_6) {
+			strcat(query, ",str_6");
+			sprintf(helpStr, ",'%s'", sql->escape((char *)node.str6.c_str()));
+			strcat(values, helpStr);
+		}
+		if (node.flagB & MlStr64_1) {
+			strcat(query, ",lstr_1");
+			sprintf(helpStr, ",'%s'", sql->escape((char *)node.lStr1.c_str()));
+			strcat(values, helpStr);
+		}
+		if (node.flagB & MlStr64_2) {
+			strcat(query, ",lstr_2");
+			sprintf(helpStr, ",'%s'", sql->escape((char *)node.lStr2.c_str()));
+			strcat(values, helpStr);
+		}
+		if (node.flagB & MText_1) {
+			strcat(query, ",text_1");
+			sprintf(helpStr, ",'%s'", sql->escape((char *)node.text1.c_str()));
+			strcat(values, helpStr);
+		}
+		if (node.flagB & MText_2) {
+			strcat(query, ",text_2");
+			sprintf(helpStr, ",'%s'", sql->escape((char *)node.text2.c_str()));
+			strcat(values, helpStr);
+		}
+		if (node.flagB & MBlob1) {
+			strcat(query, ",blob_1'");
+			strcat(values, "'");
+			if (node.blob1Size) {
+				strcat(values, sql->escape(helpStr, (char *)node.blob1, node.blob1Size));
+			}
+			strcat(values, "'");
+		}
+		
+		strcat(query, values);
+		strcat(query, ")");
+		sql->query(query, "Inserting new node");
+		
+		free((void *)query);
+		free((void *)values);
+		
+		return sql->insertId();
 	}
 	
 	void tVaultDB::updateNode(tvNode &node)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		
+		// time fix
+		node.flagB |= MModTime;
+		node.modTime = alcGetTime();
 		
 		// create the query
 		char *query = (char *)malloc((node.blob1Size*2 + 4048)*sizeof(char)), cond[64];
