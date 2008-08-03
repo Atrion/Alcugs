@@ -38,6 +38,7 @@ namespace alc {
 	public:
 		tVaultDB(tLog *log);
 		~tVaultDB(void) { if (sql) delete sql; }
+		void getVaultFolderName(Byte *folder);
 		
 		/** queries the player list and saves it in the buffer \returns the number of players */
 		int getPlayerList(tMBuf &t, const Byte *uid);
@@ -50,9 +51,11 @@ namespace alc {
 		    \returns the ID of the found/created node, 0 if neither found nor created */
 		U32 findNode(tvNode &node, tvManifest *mfs, bool create);
 		
+		/** creates a new node and returns its ID */
 		U32 createNode(tvNode &node);
+		
+		/** updates a given vault node */
 		void updateNode(tvNode &node);
-		void getVaultFolderName(Byte *folder);
 		
 		/** queries all direct and indirect child nodes of the given base node and saves their manifest as well as the refs connecting them.
 		    Remember to free the tables and delete all their elements! */
@@ -68,6 +71,10 @@ namespace alc {
 		
 		/** removes a node ref */
 		void removeNodeRef(U32 parent, U32 son);
+		
+		/** creates a node ref
+		    \returns true if everything is ok, false on error (most likely a duplicate) */
+		bool addNodeRef(tvNodeRef &ref);
 	private:
 		/** creates a query to SELECT (isUpdate = false) or UPDATE (isUpdate = true) that vault node
 		    the query is appended (using strcat) to out which must be big enough

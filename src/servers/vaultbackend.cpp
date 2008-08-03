@@ -147,7 +147,7 @@ namespace alc {
 		U16 tableSize = 0;
 		tMBuf table;
 		tvNode *savedNode = NULL;
-		tvNodeRef *savedNodeRef;
+		tvNodeRef *savedNodeRef = NULL;
 		
 		// read and verify the general vault items
 		for (int i = 0; i < msg.numItems; ++i) {
@@ -278,6 +278,17 @@ namespace alc {
 				}
 				break;
 			}
+			case VAddNodeRef:
+			{
+				if (!savedNodeRef) throw txProtocolError(_WHERE("got a VAddNodeRef without a node ref attached"));
+				if (!vaultDB->addNodeRef(*savedNodeRef)) return; // ignore duplicates
+				
+				// broadcast the change
+				tvMessage bcast(VAddNodeRef, 1);
+				bcast.items[0] = new tvItem(/*id*/7, new tvNodeRef(*savedNodeRef)); // we have to create a copy of the node ref as it will be deleted twice if not
+				broadcast(bcast, savedNodeRef->parent, ki, msg.vmgr);
+				break;
+			}
 			case VRemoveNodeRef:
 			{
 				if (nodeSon < 0 || nodeParent < 0) throw txProtocolError(_WHERE("got a VRemoveNodeRef where parent or son have not been set"));
@@ -286,6 +297,7 @@ namespace alc {
 				// broadcast the change
 				tvMessage bcast(VRemoveNodeRef, 1);
 				bcast.items[0] = new tvItem(/*id*/7, new tvNodeRef(nodeParent, nodeSon));
+				broadcast(bcast, nodeParent, ki, msg.vmgr);
 				break;
 			}
 			case VNegotiateManifest:
@@ -398,7 +410,7 @@ namespace alc {
 		vaultDB->getMGRs(node, &table, &tableSize);
 		// now let's see who gets notified
 		for (int i = 0; i < nVmgrs; ++i) {
-			if (vmgrs[i]->mgr == 0 || (vmgrs[i]->ki == origKi && vmgrs[i]->mgr == origMgr)) continue;
+			if (!vmgrs[i] || vmgrs[i]->mgr == 0 || (vmgrs[i]->ki == origKi && vmgrs[i]->mgr == origMgr)) continue;
 			session = net->getSession(vmgrs[i]->session);
 			if (!session) continue;
 			for (U32 j = 0; j < tableSize; ++j) {

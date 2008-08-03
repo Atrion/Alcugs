@@ -266,7 +266,7 @@ namespace alc {
 	
 	void tvManifest::asHtml(tLog *log, bool shortLog)
 	{
-		log->print("ID: 0x%08X (%d), Stamp: %s<br />\n", id, id, alcGetStrTime(time));
+		log->print("ID: 0x%08X (%d), Stamp: %s<br />\n", id, id, time ? alcGetStrTime(time) : (Byte *)"0");
 	}
 	
 	//// tvNodeRef
@@ -311,7 +311,7 @@ namespace alc {
 	void tvNodeRef::asHtml(tLog *log, bool shortLog)
 	{
 		log->print("Saver: 0x%08X (%d), Parent:  0x%08X (%d), Child: 0x%08X (%d), ", saver, saver, parent, parent, child, child);
-		log->print("Stamp: %s, Flags: 0x%02X<br />\n", alcGetStrTime(time), flags);
+		log->print("Stamp: %s, Flags: 0x%02X<br />\n", time ? alcGetStrTime(time) : (Byte *)"0", flags);
 	}
 	
 	//// tvCreatableGenericValue
@@ -400,19 +400,15 @@ namespace alc {
 	tvCreatableStream::tvCreatableStream(Byte id, tvBase **dataList, int nData)
 	{
 		this->id = id;
-		size = 0;
-		data = NULL;
-		if (dataList && nData > 0) {
-			// put the data in here
-			tMBuf buf;
-			buf.putU32(nData);
-			for (int i = 0; i < nData; ++i)
-				buf.put(*dataList[i]);
-			buf.rewind();
-			size = buf.size();
-			data = (Byte *)malloc(sizeof(Byte) * size);
-			memcpy(data, buf.read(size), size);
-		}
+		// put the data in here
+		tMBuf buf;
+		buf.putU32(nData);
+		for (int i = 0; i < nData; ++i)
+			buf.put(*dataList[i]);
+		buf.rewind();
+		size = buf.size();
+		data = (Byte *)malloc(sizeof(Byte) * size);
+		memcpy(data, buf.read(size), size);
 	}
 	
 	tvCreatableStream::tvCreatableStream(Byte id, tMBuf &buf)
@@ -875,9 +871,9 @@ namespace alc {
 		// optional fields
 		if (!shortLog) { // only print this in long logs
 			if (flagB & MCreator) log->print("<b>Creator:</b> 0x%08X (%d)<br />\n", creator, creator);
-			if (flagB & MCrtTime) log->print("<b>Create time:</b> %s<br />\n", alcGetStrTime(crtTime));
+			if (flagB & MCrtTime) log->print("<b>Create time:</b> %s<br />\n", crtTime ? alcGetStrTime(crtTime) : (Byte *)"0");
 			if (flagB & MAgeCoords) log->print("<b>Age coords:</b> unused<br />\n");
-			if (flagB & MAgeTime) log->print("<b>Age time:</b> %s<br />\n", alcGetStrTime(ageTime));
+			if (flagB & MAgeTime) log->print("<b>Age time:</b> %s<br />\n", ageTime ? alcGetStrTime(ageTime) : (Byte *)"0");
 			if (flagB & MAgeName) log->print("<b>Age name:</b> %s<br />\n", ageName.c_str());
 			if (flagB & MAgeGuid) log->print("<b>Age guid:</b> %s<br />\n", alcGetStrGuid(ageGuid));
 			if (flagB & MInt32_1) {

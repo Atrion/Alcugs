@@ -1051,6 +1051,25 @@ namespace alc {
 		mysql_free_result(result);
 	}
 	
+	bool tVaultDB::addNodeRef(tvNodeRef &ref)
+	{
+		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+	
+		char query[1024];
+	
+		// time fix
+		ref.time = alcGetTime();
+		
+		sprintf(query, "INSERT INTO %s (id1, id2, id3, timestamp, flag) VALUES('%d', '%d', '%d', '%d', '%d')", refVaultTable, ref.saver, ref.parent, ref.child, ref.time, ref.flags);
+		try {
+			sql->query(query, "Creating new node ref");
+			return true;
+		}
+		catch (txDatabaseError &error) {
+			return false;
+		}
+	}
+	
 	void tVaultDB::removeNodeRef(U32 parent, U32 son)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
