@@ -177,6 +177,10 @@ namespace alc {
 					table.rewind();
 					break;
 				}
+				case 16: // GenericValue.Int: must always be the same (seen in FindNode)
+					if (itm->asInt() != 0)
+						throw txProtocolError(_WHERE("a vault item with ID 16 must always have a value of 0 but I got %d", itm->asInt()));
+					break;
 				case 20: // GenericValue.Int: must always be the same
 					if (itm->asInt() != -1)
 						throw txProtocolError(_WHERE("a vault item with ID 20 must always have a value of -1 but I got %d", itm->asInt()));
@@ -206,7 +210,7 @@ namespace alc {
 				else if (nodeType == 5) { // admin node
 					tvNode mgrNode;
 					mgrNode.setType(5);
-					mgr = vaultDB->findNode(mgrNode, true);
+					mgr = vaultDB->findNode(mgrNode, NULL, /*create*/true);
 					// create and send the reply
 					tvMessage reply(msg, 3);
 					reply.items[0] = new tvItem(/*id:*/1, /*node type*/5);
@@ -304,6 +308,17 @@ namespace alc {
 				
 				break;
 			}
+			case VFindNode:
+			{
+				tvManifest mfs;
+				if (vaultDB->findNode(*savedNode, &mfs, /*create*/false)) {
+					// create and send the reply
+					tvMessage reply(msg, 2);
+					reply.items[0] = new tvItem(/*id*/9, /*old node index*/(S32)mfs.id);
+					reply.items[1] = new tvItem(/*id*/24, /*timestamp*/(double)mfs.time);
+					send(reply, u, ki);
+				}
+			}
 			case VFetchNode:
 			{
 				if (tableSize <= 0) break;
@@ -337,7 +352,7 @@ namespace alc {
 				break;
 			}
 			default:
-				throw txProtocolError(_WHERE("Unknown vault command 0x%02X (%s)\n", alcVaultGetCmd(msg.cmd)));
+				throw txProtocolError(_WHERE("Unknown vault command 0x%02X (%s)\n", msg.cmd, alcVaultGetCmd(msg.cmd)));
 		}
 	}
 	

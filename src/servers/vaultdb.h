@@ -48,7 +48,7 @@ namespace alc {
 		
 		/** looks up a node in the database, using all fields which have their flag turned on (except for timestamps and blobs)
 		    \returns the ID of the found/created node, 0 if neither found nor created */
-		U32 findNode(tvNode &node, bool create);
+		U32 findNode(tvNode &node, tvManifest *mfs, bool create);
 		
 		U32 createNode(tvNode &node);
 		void updateNode(tvNode &node);

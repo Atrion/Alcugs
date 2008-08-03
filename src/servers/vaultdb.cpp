@@ -434,13 +434,13 @@ namespace alc {
 		if (escapedData) free(escapedData);
 	}
 	
-	U32 tVaultDB::findNode(tvNode &node, bool create)
+	U32 tVaultDB::findNode(tvNode &node, tvManifest *mfs, bool create)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
 		char query[4096];
 		// first, we have to create the query...
-		sprintf(query, "SELECT idx FROM %s WHERE ", vaultTable);
+		sprintf(query, "SELECT idx, UNIX_TIMESTAMP(mod_time) FROM %s WHERE ", vaultTable);
 		createNodeQuery(query, node, /*isUpdate*/false);
 		
 		// now, let's execute it
@@ -454,8 +454,15 @@ namespace alc {
 		if (number == 1) {
 			MYSQL_ROW row = mysql_fetch_row(result);
 			id = atoi(row[0]);
+			if (mfs) {
+				mfs->id = id;
+				mfs->time = atoi(row[1]);
+			}
 		}
-		else if (create) id = createNode(node);
+		else if (create) {
+			id = createNode(node);
+			// FIXME: fill the manifest
+		}
 		
 		mysql_free_result(result);
 		
