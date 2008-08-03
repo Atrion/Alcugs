@@ -485,10 +485,9 @@ namespace alc {
 							sprintf(cond, "%d", feed[feedIndex]->id);
 							strcat(query, cond);
 							comma = true;
-							++feedIndex; // got this one
 						}
 						else
-							lerr->log("this should never happen, should it?");
+							delete feed[feedIndex]; // duplicate
 					}
 					else if (feed[feedIndex]->id > aux[auxIndex]->id) {
 						// the current feed must be inserted into the final list after the current aux, so we can insert the current aux now
@@ -497,7 +496,9 @@ namespace alc {
 						++auxIndex;
 						break; // we have to check if this was the last aux node or there's something after it
 					}
-					// everything else would be a duplicate
+					else
+						delete feed[feedIndex]; // duplicate
+					++feedIndex; // got this one
 				}
 				if (feedIndex >= nFeed) {
 					// we got all the feed nodes, so the rest of the aux nodes comes now
@@ -520,10 +521,10 @@ namespace alc {
 					sprintf(cond, "%d", feed[feedIndex]->id);
 					strcat(query, cond);
 					comma = true;
-					++feedIndex; // got this one
 				}
 				else
-					lerr->log("this should never happen, should it?");
+					delete feed[feedIndex]; // duplicate
+				++feedIndex; // got this one
 			}
 			
 			// now we can free the aux and feed tables
@@ -577,7 +578,7 @@ namespace alc {
 		*nMfs = nFinal;
 	}
 	
-	void tVaultDB::fetchNodes(U32 *table, int tableSize, tvNode ***nodes, int *nNodes)
+	void tVaultDB::fetchNodes(tMBuf &table, int tableSize, tvNode ***nodes, int *nNodes)
 	{
 		char query[1024], cond[32];
 		MYSQL_RES *result;
@@ -590,7 +591,7 @@ namespace alc {
 		
 		for (int i = 0; i < tableSize; ++i) {
 			if (i > 0) strcat(query, ",");
-			sprintf(cond, "%d", table[i]);
+			sprintf(cond, "%d", table.getU32());
 			strcat(query, cond);
 		}
 		

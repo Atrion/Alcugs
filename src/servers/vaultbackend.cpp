@@ -142,8 +142,10 @@ namespace alc {
 	{
 		msg.print(logHtml, /*clientToServer:*/true, u, shortHtml, ki);
 		
+		// have everything on the stack as we can safely throw exceptions then
 		S32 nodeType = -1, id = -1;
-		U32 *table = NULL, tableSize = 0; // make sure to free the table
+		U16 tableSize = 0;
+		tMBuf table;
 		
 		// read and verify the general vault items
 		for (int i = 0; i < msg.numItems; ++i) {
@@ -164,11 +166,11 @@ namespace alc {
 					if (itm->type != DCreatableStream) throw txProtocolError(_WHERE("a vault item with id 10 must always have a creatable generic stream"));
 					tMBuf *buf = ((tvCreatableStream *)itm->data)->getData();
 					tableSize = buf->getU16();
-					table = (U32 *)malloc(tableSize*sizeof(int));
-					for (U32 i = 0; i < tableSize; ++i) table[i] = buf->getU32();
+					table.write(buf->read(tableSize*4), tableSize*4);
 					bool eof = buf->eof();
 					delete buf;
 					if (!eof) throw txProtocolError(_WHERE("the stream is too long"));
+					table.rewind();
 					break;
 				}
 				case 20: // GenericValue.Int: must always be the same
@@ -180,128 +182,133 @@ namespace alc {
 			}
 		}
 		
-		if (msg.cmd == VConnect || findVmgr(u, ki, msg.vmgr) >= 0) {
-			switch (msg.cmd) {
-				case VConnect:
-				{
-					log->log("Vault Connect request for %d (Type: %d)\n", ki, nodeType);
-					tvNode node;
-					node.setType(nodeType);
-					U32 nodeId;
-					if (nodeType == 5) { // admin node
-						nodeId = vaultDB->findNode(node, true);
-						// create and send the reply
-						tvMessage reply(msg, 3);
-						reply.items[0] = new tvItem(/*id:*/1, /*node type*/5);
-						reply.items[1] = new tvItem(/*id*/2, /*node id*/nodeId);
-						reply.items[2] = new tvItem(/*id*/23, /*folder name*/vaultFolderName);
-						send(reply, u, ki);
-					}
-					else { // wrong or no node type at all
-						lerr->log("%s [KI: %d] Connect request for unknown node type %d from KI %d\n", u->str(), ki, nodeType);
-						break;
-					}
-					// now let's see where we save this... first look if we already have this one registered
-					int nr = findVmgr(u, ki, msg.vmgr);
-					if (nr >= 0) // it is already registered, and findVmgr updated the session, so we have nothing to do
-						break;
-					// if that's not the case, search for a free slot
-					else {
-						for (int i = 0; i < nVmgrs; ++i) {
-							if (!vmgrs[i]) {
-								nr = i;
-								break; // breaks the loop, not the switch
-							}
-						}
-					}
-					// if there's none, we have to resize the table
-					if (nr < 0) {
-						nr = nVmgrs;
-						++nVmgrs;
-						vmgrs = (tVmgr **)realloc((void *)vmgrs, sizeof(tVmgr *)*nVmgrs);
-					}
-					vmgrs[nr] = new tVmgr(ki, nodeId, u->getIte());
-					// FIXME: make sure the vmgrs are somehow cleaned up when they're inactive even when a player does not send a VDisconnect... the old vault server doesn't do that
-					break;
-				}
-				case VDisconnect:
-				{
-					log->log("Vault Disconnect request for %d (Type: %d)\n", ki, nodeType);
-					int nr = findVmgr(u, ki, msg.vmgr);
-					delete vmgrs[nr];
-					vmgrs[nr] = NULL;
-					// shrink if possible
-					int last = nVmgrs-1; // find the last vmgr
-					while (last >= 0 && vmgrs[last] == NULL) --last;
-					if (last < nVmgrs-1) { // there are some NULLs at the end, shrink the array
-						nVmgrs=last+1;
-						vmgrs=(tVmgr **)realloc(vmgrs, sizeof(tVmgr *) * nVmgrs); // it's not a bug if we get NULL here - the size might be 0
-						DBG(9, "shrinking vmgr array to %d\n", nVmgrs);
-					}
-				}
-				case VNegotiateManifest:
-				{
-					if (tableSize <= 0) break;
-					if (tableSize > 1) lerr->log("%s [KI: %d] Getting more than one manifest at once is not supported\n", u->str(), ki);
-					tvManifest **mfs;
-					tvNodeRef **ref;
-					int nMfs, nRef;
-					vaultDB->getManifest(table[0], &mfs, &nMfs, &ref, &nRef);
-					
+		if (msg.cmd != VConnect && findVmgr(u, ki, msg.vmgr) < 0)
+			throw txProtocolError(_WHERE("%s [KI: %d] did not yet send his VConnect", u->str(), ki));
+		switch (msg.cmd) {
+			case VConnect:
+			{
+				log->log("Vault Connect request for %d (Type: %d)\n", ki, nodeType);
+				tvNode node;
+				node.setType(nodeType);
+				U32 nodeId;
+				if (nodeType == 2) { // player node
+					nodeId = id;
+					if (nodeId != ki)
+						throw txProtocolError(_WHERE("Player with KI %d wants to VConnect as %d\n", ki, nodeId));
 					// create reply
 					tvMessage reply(msg, 2);
-					reply.compressed = 3; // compressed
-					reply.items[0] = new tvItem(new tvCreatableStream(/*id*/ 14, (tvBase **)mfs, nMfs)); // tvMessage will delete it for us
-					reply.items[1] = new tvItem(new tvCreatableStream(/*id*/ 15, (tvBase **)ref, nRef)); // tvMessage will delete it for us
+					reply.items[0] = new tvItem(/*id*/2, /*node id*/nodeId);
+					reply.items[1] = new tvItem(/*id*/23, /*folder name*/vaultFolderName);
 					send(reply, u, ki);
-					
-					// free stuff
-					for (int i = 0; i < nMfs; ++i) delete mfs[i];
-					free((void *)mfs);
-					for (int i = 0; i < nRef; ++i) delete ref[i];
-					free((void *)ref);
-					break;
 				}
-				case VFetchNode:
-				{
-					if (tableSize <= 0) break;
-					tvNode **nodes;
-					int nNodes;
-					vaultDB->fetchNodes(table, tableSize, &nodes, &nNodes);
-					
-					// split the message into several ones to avoid it getting too big
-					tMBuf buf;
-					int num = 0;
-					for (int i = 0; i < nNodes; ++i) {
-						buf.put(*nodes[i]);
-						++num;
-						if (buf.size() > 128000 || i == (nNodes-1)) { // if size is already big enough or this is the last one
-							// create reply
-							bool eof = (i == (nNodes-1));
-							tvMessage reply(msg, eof ? 3 : 2);
-							reply.compressed = 3; // compressed
-							reply.items[0] = new tvItem(new tvCreatableStream(/*id*/6, buf)); // tvMessage will delete it for us
-							reply.items[1] = new tvItem(/*id*/25, /*number of nodes*/num);
-							if (eof) reply.items[2] = new tvItem(/*id*/31, 0); // EOF mark (this is the last packet of nodes)
-							send(reply, u, ki);
-							buf.clear();
-							num = 0;
+				else if (nodeType == 5) { // admin node
+					nodeId = vaultDB->findNode(node, true);
+					// create and send the reply
+					tvMessage reply(msg, 3);
+					reply.items[0] = new tvItem(/*id:*/1, /*node type*/5);
+					reply.items[1] = new tvItem(/*id*/2, /*node id*/nodeId);
+					reply.items[2] = new tvItem(/*id*/23, /*folder name*/vaultFolderName);
+					send(reply, u, ki);
+				}
+				else // wrong or no node type at all
+					throw txProtocolError(_WHERE("%s [KI: %d] Connect request for unknown node type %d from KI %d\n", u->str(), ki, nodeType));
+				// now let's see where we save this... first look if we already have this one registered
+				int nr = findVmgr(u, ki, msg.vmgr);
+				if (nr >= 0) // it is already registered, and findVmgr updated the session, so we have nothing to do
+					break;
+				// if that's not the case, search for a free slot
+				else {
+					for (int i = 0; i < nVmgrs; ++i) {
+						if (!vmgrs[i]) {
+							nr = i;
+							break; // breaks the loop, not the switch
 						}
 					}
-					
-					// free stuff
-					for (int i = 0; i < nNodes; ++i) delete nodes[i];
-					free((void *)nodes);
-					break;
 				}
-				default:
-					lerr->log("%s [KI: %d] Unknown vault command 0x%02X (%s)\n", u->str(), ki, msg.cmd, alcVaultGetCmd(msg.cmd));
-					break;
+				// if there's none, we have to resize the table
+				if (nr < 0) {
+					nr = nVmgrs;
+					++nVmgrs;
+					vmgrs = (tVmgr **)realloc((void *)vmgrs, sizeof(tVmgr *)*nVmgrs);
+				}
+				vmgrs[nr] = new tVmgr(ki, nodeId, u->getIte());
+				// FIXME: make sure the vmgrs are somehow cleaned up when they're inactive even when a player does not send a VDisconnect... the old vault server doesn't do that
+				break;
 			}
+			case VDisconnect:
+			{
+				log->log("Vault Disconnect request for %d (Type: %d)\n", ki, nodeType);
+				int nr = findVmgr(u, ki, msg.vmgr);
+				delete vmgrs[nr];
+				vmgrs[nr] = NULL;
+				// shrink if possible
+				int last = nVmgrs-1; // find the last vmgr
+				while (last >= 0 && vmgrs[last] == NULL) --last;
+				if (last < nVmgrs-1) { // there are some NULLs at the end, shrink the array
+					nVmgrs=last+1;
+					vmgrs=(tVmgr **)realloc(vmgrs, sizeof(tVmgr *) * nVmgrs); // it's not a bug if we get NULL here - the size might be 0
+					DBG(9, "shrinking vmgr array to %d\n", nVmgrs);
+				}
+				break;
+			}
+			case VNegotiateManifest:
+			{
+				if (tableSize != 1)
+					throw txProtocolError(_WHERE("%s [KI: %d] Getting %d manifests at once is not supported\n", u->str(), ki, tableSize));
+				tvManifest **mfs;
+				tvNodeRef **ref;
+				int nMfs, nRef;
+				vaultDB->getManifest(table.getU32(), &mfs, &nMfs, &ref, &nRef);
+				
+				// create reply
+				tvMessage reply(msg, 2);
+				reply.compressed = 3; // compressed
+				reply.items[0] = new tvItem(new tvCreatableStream(/*id*/14, (tvBase **)mfs, nMfs)); // tvMessage will delete it for us
+				reply.items[1] = new tvItem(new tvCreatableStream(/*id*/15, (tvBase **)ref, nRef)); // tvMessage will delete it for us
+				send(reply, u, ki);
+				
+				// free stuff
+				for (int i = 0; i < nMfs; ++i) delete mfs[i];
+				free((void *)mfs);
+				for (int i = 0; i < nRef; ++i) delete ref[i];
+				free((void *)ref);
+				break;
+			}
+			case VFetchNode:
+			{
+				if (tableSize <= 0) break;
+				tvNode **nodes;
+				int nNodes;
+				vaultDB->fetchNodes(table, tableSize, &nodes, &nNodes);
+				
+				// split the message into several ones to avoid it getting too big
+				tMBuf buf;
+				int num = 0;
+				for (int i = 0; i < nNodes; ++i) {
+					buf.put(*nodes[i]);
+					++num;
+					if (buf.size() > 128000 || i == (nNodes-1)) { // if size is already big enough or this is the last one
+						// create reply
+						bool eof = (i == (nNodes-1));
+						tvMessage reply(msg, eof ? 3 : 2);
+						reply.compressed = 3; // compressed
+						reply.items[0] = new tvItem(new tvCreatableStream(/*id*/6, buf)); // tvMessage will delete it for us
+						reply.items[1] = new tvItem(/*id*/25, /*number of nodes*/num);
+						if (eof) reply.items[2] = new tvItem(/*id*/31, 0); // EOF mark (this is the last packet of nodes)
+						send(reply, u, ki);
+						buf.clear();
+						num = 0;
+					}
+				}
+				
+				// free stuff
+				for (int i = 0; i < nNodes; ++i) delete nodes[i];
+				free((void *)nodes);
+				break;
+			}
+			default:
+				throw txProtocolError(_WHERE("%s [KI: %d] Unknown vault command 0x%02X (%s)\n", u->str(), ki, msg.cmd, alcVaultGetCmd(msg.cmd)));
 		}
-		else
-			lerr->log("%s [KI: %d] Player sent a 0x%02X (%s) but did not yet send the VConnect\n", u->str(), ki, msg.cmd, alcVaultGetCmd(msg.cmd));
-		if (table) free(table);
 	}
 
 } //end namespace alc
