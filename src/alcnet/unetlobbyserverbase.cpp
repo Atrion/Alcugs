@@ -119,7 +119,7 @@ namespace alc {
 					terminate(client, RLoggedInElsewhere);
 				else
 					lerr->log("Active player is set twice for %s\n", u->str());
-				return;
+				break;
 			}
 		}
 		
