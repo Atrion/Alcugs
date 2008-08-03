@@ -177,9 +177,16 @@ void tSQL::checkTimeout(void)
 char *tSQL::escape(char *str)
 {
 	static char escaped_str[512];
-	if (connection == NULL) return NULL;
+	if (connection == NULL) throw txDatabaseError(_WHERE("can't escape a string"));
 	mysql_real_escape_string(connection, escaped_str, str, std::min<int>(strlen(str), 511));
 	return escaped_str;
+}
+
+char *tSQL::escape(char *out, char *data, int size)
+{
+	if (connection == NULL) throw txDatabaseError(_WHERE("can't escape a string"));
+	mysql_real_escape_string(connection, out, data, size);
+	return out;
 }
 
 MYSQL_RES *tSQL::storeResult(void)

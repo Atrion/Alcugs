@@ -235,171 +235,214 @@ namespace alc {
 		return (number >= 1) ? 1 : 0;
 	}
 	
-	U32 tVaultDB::findNode(tvNode &node, bool create)
+	void tVaultDB::createNodeQuery(char *query, tvNode &node, bool isUpdate)
 	{
-		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
-	
-		char query[4096], cond[1024];
+		char *escapedData = NULL;
+		char cond[1024];
 		bool comma = false;
-		// first, we have to create the query...
-		sprintf(query, "SELECT idx FROM %s WHERE ", vaultTable);
+		const char *commaStr = isUpdate ? "," : " and ";
 		
-		if (node.flagB & MIndex) {
-			if (comma) strcat(query, " and ");
+		if (isUpdate) {
+			escapedData = (char *)malloc((node.blob1Size*2 + 2048)*sizeof(char));
+			escapedData[0] = 0; // empty it
+		}
+		
+		if (!isUpdate && node.flagB & MIndex) { // only insert this if it is a SELECT
+			if (comma) strcat(query, commaStr);
 			sprintf(cond, "idx='%d'", node.index);
 			strcat(query, cond);
 			comma = true;
 		}
 		if (node.flagB & MType) {
-			if (comma) strcat(query, " and ");
+			if (comma) strcat(query, commaStr);
 			sprintf(cond, "type='%d'", node.type);
 			strcat(query, cond);
 			comma = true;
 		}
 		if (node.flagB & MPerms) {
-			if (comma) strcat(query, " and ");
+			if (comma) strcat(query, commaStr);
 			sprintf(cond, "permissions='%d'", node.permissions);
 			strcat(query, cond);
 			comma = true;
 		}
 		if (node.flagB & MOwner) {
-			if (comma) strcat(query, " and ");
+			if (comma) strcat(query, commaStr);
 			sprintf(cond, "owner='%d'", node.owner);
 			strcat(query, cond);
 			comma = true;
 		}
 		if (node.flagB & MGroup) {
-			if (comma) strcat(query, " and ");
+			if (comma) strcat(query, commaStr);
 			sprintf(cond, "grp='%d'", node.group);
 			strcat(query, cond);
 			comma = true;
 		}
+		if (node.flagB & MModTime) {
+			if (comma) strcat(query, commaStr);
+			sprintf(cond, "mod_time=FROM_UNIXTIME(%d)", node.modTime);
+			strcat(query, cond);
+			comma = true;
+		}
 		if (node.flagB & MCreator) {
-			if (comma) strcat(query, " and ");
+			if (comma) strcat(query, commaStr);
 			sprintf(cond, "creator='%d'", node.creator);
 			strcat(query, cond);
 			comma = true;
 		}
+		if (node.flagB & MCrtTime) {
+			if (comma) strcat(query, commaStr);
+			sprintf(cond, "crt_time=FROM_UNIXTIME(%d)", node.crtTime);
+			strcat(query, cond);
+			comma = true;
+		}
+		if (node.flagB & MModTime) {
+			if (comma) strcat(query, commaStr);
+			sprintf(cond, "age_time=FROM_UNIXTIME(%d)", node.ageTime);
+			strcat(query, cond);
+			comma = true;
+		}
 		if (node.flagB & MAgeName) {
-			if (comma) strcat(query, " and ");
+			if (comma) strcat(query, commaStr);
 			sprintf(cond, "age_name='%s'", sql->escape((char *)node.ageName.c_str()));
 			strcat(query, cond);
 			comma = true;
 		}
 		if (node.flagB & MAgeGuid) {
-			if (comma) strcat(query, " and ");
+			if (comma) strcat(query, commaStr);
 			sprintf(cond, "age_guid='%s'", sql->escape((char *)alcGetStrGuid(node.ageGuid)));
 			strcat(query, cond);
 			comma = true;
 		}
 		if (node.flagB & MInt32_1) {
-			if (comma) strcat(query, " and ");
+			if (comma) strcat(query, commaStr);
 			sprintf(cond, "int_1='%d'", node.int1);
 			strcat(query, cond);
 			comma = true;
 		}
 		if (node.flagB & MInt32_2) {
-			if (comma) strcat(query, " and ");
+			if (comma) strcat(query, commaStr);
 			sprintf(cond, "int_2='%d'", node.int2);
 			strcat(query, cond);
 			comma = true;
 		}
 		if (node.flagB & MInt32_3) {
-			if (comma) strcat(query, " and ");
+			if (comma) strcat(query, commaStr);
 			sprintf(cond, "int_3='%d'", node.int3);
 			strcat(query, cond);
 			comma = true;
 		}
 		if (node.flagB & MInt32_4) {
-			if (comma) strcat(query, " and ");
+			if (comma) strcat(query, commaStr);
 			sprintf(cond, "int_4='%d'", node.int4);
 			strcat(query, cond);
 			comma = true;
 		}
 		if (node.flagB & MUInt32_1) {
-			if (comma) strcat(query, " and ");
+			if (comma) strcat(query, commaStr);
 			sprintf(cond, "uint_1='%d'", node.uInt1);
 			strcat(query, cond);
 			comma = true;
 		}
 		if (node.flagB & MUInt32_2) {
-			if (comma) strcat(query, " and ");
+			if (comma) strcat(query, commaStr);
 			sprintf(cond, "uint_2='%d'", node.uInt2);
 			strcat(query, cond);
 			comma = true;
 		}
 		if (node.flagB & MUInt32_3) {
-			if (comma) strcat(query, " and ");
+			if (comma) strcat(query, commaStr);
 			sprintf(cond, "uint_3='%d'", node.uInt3);
 			strcat(query, cond);
 			comma = true;
 		}
 		if (node.flagB & MUInt32_4) {
-			if (comma) strcat(query, " and ");
+			if (comma) strcat(query, commaStr);
 			sprintf(cond, "uint_4='%d'", node.uInt4);
 			strcat(query, cond);
 			comma = true;
 		}
 		if (node.flagB & MStr64_1) {
-			if (comma) strcat(query, " and ");
+			if (comma) strcat(query, commaStr);
 			sprintf(cond, "str_1='%s'", sql->escape((char *)node.str1.c_str()));
 			strcat(query, cond);
 			comma = true;
 		}
 		if (node.flagB & MStr64_2) {
-			if (comma) strcat(query, " and ");
+			if (comma) strcat(query, commaStr);
 			sprintf(cond, "str_2='%s'", sql->escape((char *)node.str2.c_str()));
 			strcat(query, cond);
 			comma = true;
 		}
 		if (node.flagB & MStr64_3) {
-			if (comma) strcat(query, " and ");
+			if (comma) strcat(query, commaStr);
 			sprintf(cond, "str_3='%s'", sql->escape((char *)node.str3.c_str()));
 			strcat(query, cond);
 			comma = true;
 		}
 		if (node.flagB & MStr64_4) {
-			if (comma) strcat(query, " and ");
+			if (comma) strcat(query, commaStr);
 			sprintf(cond, "str_4='%s'", sql->escape((char *)node.str4.c_str()));
 			strcat(query, cond);
 			comma = true;
 		}
 		if (node.flagB & MStr64_5) {
-			if (comma) strcat(query, " and ");
+			if (comma) strcat(query, commaStr);
 			sprintf(cond, "str_5='%s'", sql->escape((char *)node.str5.c_str()));
 			strcat(query, cond);
 			comma = true;
 		}
 		if (node.flagB & MStr64_6) {
-			if (comma) strcat(query, " and ");
+			if (comma) strcat(query, commaStr);
 			sprintf(cond, "str_6='%s'", sql->escape((char *)node.str6.c_str()));
 			strcat(query, cond);
 			comma = true;
 		}
 		if (node.flagB & MlStr64_1) {
-			if (comma) strcat(query, " and ");
+			if (comma) strcat(query, commaStr);
 			sprintf(cond, "lstr_1='%s'", sql->escape((char *)node.lStr1.c_str()));
 			strcat(query, cond);
 			comma = true;
 		}
 		if (node.flagB & MlStr64_2) {
-			if (comma) strcat(query, " and ");
+			if (comma) strcat(query, commaStr);
 			sprintf(cond, "lstr_2='%s'", sql->escape((char *)node.lStr2.c_str()));
 			strcat(query, cond);
 			comma = true;
 		}
 		if (node.flagB & MText_1) {
-			if (comma) strcat(query, " and ");
+			if (comma) strcat(query, commaStr);
 			sprintf(cond, "text_1='%s'", sql->escape((char *)node.text1.c_str()));
 			strcat(query, cond);
 			comma = true;
 		}
 		if (node.flagB & MText_2) {
-			if (comma) strcat(query, " and ");
+			if (comma) strcat(query, commaStr);
 			sprintf(cond, "text_2='%s'", sql->escape((char *)node.text2.c_str()));
 			strcat(query, cond);
 			comma = true;
 		}
+		if (isUpdate && node.flagB & MBlob1) { // only insert this if it is an UPDATE
+			if (comma) strcat(query, commaStr);
+			strcat(query, "blob_1='");
+			if (node.blob1Size) {
+				strcat(query, sql->escape(escapedData, (char *)node.blob1, node.blob1Size));
+			}
+			strcat(query, "'");
+			comma = true;
+		}
+		
+		if (escapedData) free(escapedData);
+	}
+	
+	U32 tVaultDB::findNode(tvNode &node, bool create)
+	{
+		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+	
+		char query[4096];
+		// first, we have to create the query...
+		sprintf(query, "SELECT idx FROM %s WHERE ", vaultTable);
+		createNodeQuery(query, node, /*isUpdate*/false);
+		
 		// now, let's execute it
 		sql->query(query, "finding node");
 		MYSQL_RES *result = sql->storeResult();
@@ -421,8 +464,26 @@ namespace alc {
 	
 	U32 tVaultDB::createNode(tvNode &node)
 	{
+		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		
 		// FIXME: implement this
 		throw txUnet(_WHERE("creating nodes not yet implemented"));
+	}
+	
+	void tVaultDB::updateNode(tvNode &node)
+	{
+		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		
+		// create the query
+		char *query = (char *)malloc((node.blob1Size*2 + 4048)*sizeof(char)), cond[64];
+		sprintf(query, "UPDATE %s SET ", vaultTable);
+		createNodeQuery(query, node, /*isUpdate*/true);
+		sprintf(cond, " WHERE idx='%d'", node.index);
+		strcat(query, cond);
+		
+		sql->query(query, "Updating vault node", true);
+		
+		free(query);
 	}
 	
 	void tVaultDB::getManifest(U32 baseNode, tvManifest ***mfs, int *nMfs, tvNodeRef ***ref, int *nRef)

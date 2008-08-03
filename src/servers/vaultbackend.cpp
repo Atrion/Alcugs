@@ -146,6 +146,7 @@ namespace alc {
 		S32 nodeType = -1, id = -1;
 		U16 tableSize = 0;
 		tMBuf table;
+		tvNode *savedNode = NULL;
 		
 		// read and verify the general vault items
 		for (int i = 0; i < msg.numItems; ++i) {
@@ -160,6 +161,9 @@ namespace alc {
 					break;
 				case 2: // GenericValue.Int: unique id [ki number]
 					id = itm->asInt();
+					break;
+				case 5: // a single vault node
+					savedNode = itm->asNode(); // we don't have to free it, tvMessage does that
 					break;
 				case 10: // Stream containing a table of ints
 				{
@@ -183,13 +187,11 @@ namespace alc {
 		}
 		
 		if (msg.cmd != VConnect && findVmgr(u, ki, msg.vmgr) < 0)
-			throw txProtocolError(_WHERE("%s [KI: %d] did not yet send his VConnect", u->str(), ki));
+			throw txProtocolError(_WHERE("player did not yet send his VConnect"));
 		switch (msg.cmd) {
 			case VConnect:
 			{
 				log->log("Vault Connect request for %d (Type: %d)\n", ki, nodeType);
-				tvNode node;
-				node.setType(nodeType);
 				U32 nodeId;
 				if (nodeType == 2) { // player node
 					nodeId = id;
@@ -202,6 +204,8 @@ namespace alc {
 					send(reply, u, ki);
 				}
 				else if (nodeType == 5) { // admin node
+					tvNode node;
+					node.setType(5);
 					nodeId = vaultDB->findNode(node, true);
 					// create and send the reply
 					tvMessage reply(msg, 3);
@@ -211,7 +215,7 @@ namespace alc {
 					send(reply, u, ki);
 				}
 				else // wrong or no node type at all
-					throw txProtocolError(_WHERE("%s [KI: %d] Connect request for unknown node type %d from KI %d\n", u->str(), ki, nodeType));
+					throw txProtocolError(_WHERE("Connect request for unknown node type %d from KI %d\n", nodeType));
 				// now let's see where we save this... first look if we already have this one registered
 				int nr = findVmgr(u, ki, msg.vmgr);
 				if (nr >= 0) // it is already registered, and findVmgr updated the session, so we have nothing to do
@@ -254,7 +258,7 @@ namespace alc {
 			case VNegotiateManifest:
 			{
 				if (tableSize != 1)
-					throw txProtocolError(_WHERE("%s [KI: %d] Getting %d manifests at once is not supported\n", u->str(), ki, tableSize));
+					throw txProtocolError(_WHERE("Getting %d manifests at once is not supported\n", tableSize));
 				tvManifest **mfs;
 				tvNodeRef **ref;
 				int nMfs, nRef;
@@ -272,6 +276,23 @@ namespace alc {
 				free((void *)mfs);
 				for (int i = 0; i < nRef; ++i) delete ref[i];
 				free((void *)ref);
+				break;
+			}
+			case VSaveNode:
+			{
+				if (!savedNode) throw txProtocolError(_WHERE("got a save node request without the node attached"));
+				if (savedNode->modTime == 0 || !(savedNode->flagB & MModTime)) throw txProtocolError(_WHERE("every saved node must have a timestamp"));
+				
+				if (savedNode->index < 1900) {
+					// FIXME: create the new node
+					throw txProtocolError(_WHERE("creating a new node is not yet implemented"));
+				}
+				else {
+					vaultDB->updateNode(*savedNode);
+					
+					// FIXME: broadcast the update
+				}
+				
 				break;
 			}
 			case VFetchNode:
@@ -307,7 +328,7 @@ namespace alc {
 				break;
 			}
 			default:
-				throw txProtocolError(_WHERE("%s [KI: %d] Unknown vault command 0x%02X (%s)\n", u->str(), ki, msg.cmd, alcVaultGetCmd(msg.cmd)));
+				throw txProtocolError(_WHERE("Unknown vault command 0x%02X (%s)\n", alcVaultGetCmd(msg.cmd)));
 		}
 	}
 

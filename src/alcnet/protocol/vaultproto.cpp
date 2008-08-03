@@ -678,6 +678,8 @@ namespace alc {
 				memcpy(blob1, t.read(blob1Size), blob1Size);
 			}
 		}
+		else
+			blob1Size = 0;
 		
 		if (flagB & MBlob2) {
 			U32 blob2Size = t.getU32();

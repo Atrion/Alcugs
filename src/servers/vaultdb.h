@@ -51,6 +51,7 @@ namespace alc {
 		U32 findNode(tvNode &node, bool create);
 		
 		U32 createNode(tvNode &node);
+		void updateNode(tvNode &node);
 		void getVaultFolderName(Byte *folder);
 		
 		/** queries all direct and indirect child nodes of the given base node and aves their manifest as well as the refs connecting them.
@@ -61,6 +62,11 @@ namespace alc {
 		    Remember to free the node table and delete all its elements! */
 		void fetchNodes(tMBuf &table, int tableSize, tvNode ***nodes, int *nNodes); // this is a pointer to an array of pointers
 	private:
+		/** creates a query to SELECT (isUpdate = false) or UPDATE (isUpdate = true) that vault node
+		    the query is appended (using strcat) to out which must be big enough
+		    \returns a pointer to the query which you have to free */
+		void createNodeQuery(char *query, tvNode &node, bool isUpdate);
+		
 		bool prepare(void);
 		int getVersion(void);
 		void migrateVersion2to3(void);
