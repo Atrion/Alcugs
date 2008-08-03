@@ -795,10 +795,11 @@ namespace alc {
 			while (nFeed < number) {
 				row = mysql_fetch_row(result);
 				// save manifest
-				feed[nFeed] = new tvManifest(atoi(row[0]), atoi(row[1]));
+				U32 idx = atoi(row[0]);
+				feed[nFeed] = new tvManifest(idx, atoi(row[1]));
 				++nFeed;
 				// and reference
-				(*ref)[*nRef] = new tvNodeRef(atoi(row[2]), atoi(row[3]), atoi(row[0]), atoi(row[4]), (Byte)atoi(row[5]));
+				(*ref)[*nRef] = new tvNodeRef(atoi(row[2]), atoi(row[3]), idx, atoi(row[4]), (Byte)atoi(row[5]));
 				++(*nRef);
 			}
 			mysql_free_result(result);
@@ -935,11 +936,11 @@ namespace alc {
 			while (nFeed < number) {
 				row = mysql_fetch_row(result);
 				// save ID
-				feed[nFeed] = atoi(row[0]);
+				U32 idx = atoi(row[0]);
+				feed[nFeed] = idx;
 				++nFeed;
 				if (atoi(row[1]) <= 7) { // it's a MGR so lets save it - and keep the table in order!
-					DBG(7, "%d is a MGR (type: %d)\n", atoi(row[0]), atoi(row[1]));
-					U32 insertVal = atoi(row[0]), tmp;
+					U32 insertVal = idx, tmp;
 					for (U32 i = 0; i < *tableSize; ++i) {
 						if ((*table)[i] == insertVal) break;
 						if ((*table)[i] > insertVal) {
