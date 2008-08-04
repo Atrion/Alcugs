@@ -351,6 +351,10 @@ namespace alc {
 			{
 				log->log("Vault Disconnect request for %d (Type: %d)\n", ki, nodeType);
 				log->flush();
+				// send reply
+				tvMessage reply(msg, 0);
+				send(reply, u, ki);
+				// remove vmgr
 				int nr = findVmgr(u, ki, msg.vmgr);
 				delete vmgrs[nr];
 				vmgrs[nr] = NULL;

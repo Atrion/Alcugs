@@ -157,7 +157,10 @@ namespace alc {
 			tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->sid, u->uid, u->name, (Byte *)"", 0 /* delete */, RStopResponding);
 			send(trackingStatus);
 			
-			tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->sid, (Byte *)"0000000000000000" /* these are 16 zeroes */, (Byte *)"", 0 /* is offline */, u->onlineTime());
+			Byte state = u->inRoute; // if he's in route, tell the vault he'd be online... this message just servers to update the online timer
+			// we only tell the vault he's offline if he leaves without asking for another age before
+			// this way, the vault can remove the vmgrs for this player when he crashes, without making problems when he just links
+			tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->sid, (Byte *)"0000000000000000" /* these are 16 zeroes */, (Byte *)"", state, u->onlineTime());
 			send(vaultStatus);
 			
 			u->ki = 0; // this avoids sending the messages twice
@@ -590,6 +593,8 @@ namespace alc {
 				alcAscii2Hex(guid, serverFound.serverGuid.c_str(), 8);
 				tmFindAgeReply reply(client, serverFound.ipStr, serverFound.serverPort, serverFound.age, guid);
 				send(reply);
+				
+				client->inRoute = true; // we told the palyer where to connect, now he'll leave... but don't tell vault and tracking, he'll soon come back!
 				
 				return 1;
 			}

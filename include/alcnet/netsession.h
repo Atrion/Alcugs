@@ -107,12 +107,13 @@ public:
 	Byte min_version; //peer minor version
 	U32 proto; //peer unet protocol version
 	
-	U32 ki; // player set and valid id, otherwise 0
-	U32 x; // x value
+	U32 ki; // player set and valid id, otherwise 0 (lobby/game)
+	U32 x; // x value (for lobby/game)
 	Byte uid[16]; // hex; player uid in lobby/game server
 	Byte name[200]; // peer age name in tracking server, peer account name in lobby and game
 	Byte serverGuid[8]; // hex; server guid in tracking server
 	tNetSessionData *data; // save additional data (e.g. tracking information)
+	bool inRoute; // saves if the oalyer is on his way to another server (lobby/game)
 
 private:
 	tUnet * net;
