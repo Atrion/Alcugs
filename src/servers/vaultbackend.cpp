@@ -167,14 +167,14 @@ namespace alc {
 			if (nNodes != 1) throw txProtocolError(_WHERE("KI %d doesn't have a player node (or several of them)?!?", status.ki));
 			(*nodes)->uInt2 += status.onlineTime;
 			vaultDB->updateNode(**nodes);
-			broadcastNodeUpdate(*nodes);
+			broadcastNodeUpdate(**nodes);
 			// free stuff
 			delete *nodes;
 			free((void *)nodes);
 		}
 		
 		// find and update the info node
-		node.flagB |= MType | MOwner;
+		node.flagB = MType | MOwner;
 		node.type = KPlayerInfoNode;
 		node.owner = status.ki;
 		U32 infoNode = vaultDB->findNode(node, NULL, false);
@@ -184,7 +184,7 @@ namespace alc {
 		(*nodes)->str2 = status.serverGuid;
 		(*nodes)->int1 = status.state;
 		vaultDB->updateNode(**nodes);
-		broadcastOnlineState(*nodes);
+		broadcastOnlineState(**nodes);
 		// free stuff
 		delete *nodes;
 		free((void *)nodes);
@@ -297,7 +297,7 @@ namespace alc {
 				U32 mgr;
 				
 				tvNode mgrNode;
-				mgrNode.flagB |= MType;
+				mgrNode.flagB = MType;
 				mgrNode.type = nodeType;
 				if (nodeType == 2) { // player node
 					if (playerKi < 0) throw txProtocolError(_WHERE("VConnect for node type 2 must have playerKi set"));
@@ -455,7 +455,7 @@ namespace alc {
 					reply.items[0] = new tvItem(/*id*/9, /*old node index*/(S32)savedNode->index);
 					send(reply, u, ki);
 					// and the broadcast
-					broadcastNodeUpdate(savedNode, ki, msg.vmgr);
+					broadcastNodeUpdate(*savedNode, ki, msg.vmgr);
 				}
 				break;
 			}
@@ -510,7 +510,33 @@ namespace alc {
 			case VSendNode:
 			{
 				if (rcvPlayer < 0 || !savedNode) throw txProtocolError(_WHERE("Got a VSendNode without the reciever or the node"));
-				// FIXME: send it
+				tvNode node;
+				// find the sender's info node
+				node.flagB = MType | MOwner;
+				node.type = KPlayerInfoNode;
+				node.owner = ki;
+				U32 infoNode = vaultDB->findNode(node);
+				if (!infoNode) throw txProtocolError(_WHERE("Couldn't find a players info node?!?"));
+				
+				// find and create the PeopleIKnowAboutFolder
+				node.flagB = MType | MOwner | MInt32_1;
+				node.type = KPlayerInfoListNode;
+				node.owner = rcvPlayer;
+				node.int1 = KPeopleIKnowAboutFolder;
+				U32 recentFolder = getNode(node, rcvPlayer);
+				
+				// find and create the InboxFolder
+				node.flagB = MType | MOwner | MInt32_1;
+				node.type = KFolderNode;
+				node.owner = rcvPlayer;
+				node.int1 = KInboxFolder;
+				U32 inbox = getNode(node, rcvPlayer);
+				
+				// add sender to recent folder
+				addRef(recentFolder, infoNode);
+				
+				// add what was sent to the inbox
+				addRef(inbox, savedNode->index);
 				break;
 			}
 			case VSetSeen:
@@ -527,14 +553,33 @@ namespace alc {
 		}
 	}
 	
-	void tVaultBackend::broadcastNodeUpdate(tvNode *node, U32 origKi, U32 origMgr)
+	U32 tVaultBackend::getNode(tvNode &node, U32 parent)
+	{
+		U32 nodeId = vaultDB->findNode(node);
+		if (nodeId) return nodeId;
+		// it doesn't exist, create it
+		nodeId = vaultDB->createNode(node);
+		addRef(parent, nodeId);
+		return nodeId;
+	}
+	
+	void tVaultBackend::addRef(U32 parent, U32 son)
+	{
+		tvNodeRef *ref = new tvNodeRef(parent, son); // will be deleted by broadcastNodeRefUpdate
+		if (vaultDB->addNodeRef(*ref))
+			broadcastNodeRefUpdate(ref);
+		else
+			delete ref;
+	}
+	
+	void tVaultBackend::broadcastNodeUpdate(tvNode &node, U32 origKi, U32 origMgr)
 	{
 		// create the broadcast message
 		tvMessage bcast(VSaveNode, 2);
-		bcast.items[0] = new tvItem(/*id*/9, /*old node index*/(S32)node->index);
-		bcast.items[1] = new tvItem(/*id*/24, /*timestamp*/(double)node->modTime);
+		bcast.items[0] = new tvItem(/*id*/9, /*old node index*/(S32)node.index);
+		bcast.items[1] = new tvItem(/*id*/24, /*timestamp*/(double)node.modTime);
 		// and send it
-		broadcast(bcast, node->index, origKi, origMgr);
+		broadcast(bcast, node.index, origKi, origMgr);
 	}
 	
 	void tVaultBackend::broadcastNodeRefUpdate(tvNodeRef *ref, U32 origKi, U32 origMgr)
@@ -546,22 +591,22 @@ namespace alc {
 		broadcast(bcast, ref->parent, origKi, origMgr);
 	}
 	
-	void tVaultBackend::broadcastOnlineState(tvNode *node)
+	void tVaultBackend::broadcastOnlineState(tvNode &node)
 	{
 		// create the broadcast message
-		tvMessage bcast(VOnlineState, node->int1 ? 5 : 3);
-		bcast.items[0] = new tvItem(/*id*/9, /*old node index*/(S32)node->index);
-		bcast.items[1] = new tvItem(/*id*/24, /*timestamp*/(double)node->modTime);
-		if (node->int1) { // if he's online
-			bcast.items[2] = new tvItem(/*id*/27, node->str1.c_str()); // age name
-			bcast.items[3] = new tvItem(/*id*/28, node->str2.c_str()); // age guid
-			bcast.items[4] = new tvItem(/*id*/29, (S32)node->int1); // online state
+		tvMessage bcast(VOnlineState, node.int1 ? 5 : 3);
+		bcast.items[0] = new tvItem(/*id*/9, /*old node index*/(S32)node.index);
+		bcast.items[1] = new tvItem(/*id*/24, /*timestamp*/(double)node.modTime);
+		if (node.int1) { // if he's online
+			bcast.items[2] = new tvItem(/*id*/27, node.str1.c_str()); // age name
+			bcast.items[3] = new tvItem(/*id*/28, node.str2.c_str()); // age guid
+			bcast.items[4] = new tvItem(/*id*/29, (S32)node.int1); // online state
 		}
 		else { // if he's not online
-			bcast.items[2] = new tvItem(/*id*/29, (S32)node->int1); // online state
+			bcast.items[2] = new tvItem(/*id*/29, (S32)node.int1); // online state
 		}
 		// and send it
-		broadcast(bcast, node->index);
+		broadcast(bcast, node.index);
 	}
 	
 	void tVaultBackend::broadcast(tvMessage &msg, U32 node, U32 origKi, U32 origMgr)

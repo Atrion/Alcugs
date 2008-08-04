@@ -882,7 +882,8 @@ namespace alc {
 			if (flagB & MAgeName) log->print("<b>Age name:</b> %s<br />\n", ageName.c_str());
 			if (flagB & MAgeGuid) log->print("<b>Age guid:</b> %s<br />\n", alcGetStrGuid(ageGuid));
 			if (flagB & MInt32_1) {
-				if (type == KFolderNode) log->print("<b>Int32_1:</b> 0x%08X (%s)<br />\n", int1, alcVaultGetFolderType(int1));
+				if (type == KFolderNode || type == KPlayerInfoListNode)
+					log->print("<b>Int32_1:</b> 0x%08X (%s)<br />\n", int1, alcVaultGetFolderType(int1));
 				else log->print("<b>Int32_1:</b> 0x%08X (%d)<br />\n", int1, int1);
 			}
 			if (flagB & MInt32_2) log->print("<b>Int32_2:</b> 0x%08X (%d)<br />\n", int2, int2);

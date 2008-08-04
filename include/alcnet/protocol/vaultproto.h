@@ -364,6 +364,10 @@ namespace alc {
 	private:
 		void permissionsAsHtml(tLog *log);
 		void blobAsHtml(tLog *log, Byte *blob, U32 size);
+	private:
+		// avoid copying it
+		tvNode(const tvNode &);
+		tvNode &operator=(const tvNode &);
 	};
 	
 	class tvItem : public tvBase {

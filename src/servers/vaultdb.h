@@ -47,9 +47,9 @@ namespace alc {
 		    \returns 1 when the avatar belongs to that account, 0 otherwise */
 		int checkKi(U32 ki, const Byte *uid, Byte *avatar);
 		
-		/** looks up a node in the database, using all fields which have their flag turned on (except for timestamps and blobs)
+		/** looks up a node in the database, using all fields which have their flag turned on (except for blobs)
 		    \returns the ID of the found/created node, 0 if neither found nor created */
-		U32 findNode(tvNode &node, tvManifest *mfs, bool create);
+		U32 findNode(tvNode &node, tvManifest *mfs = NULL, bool create = false);
 		
 		/** creates a new node and returns its ID */
 		U32 createNode(tvNode &node);

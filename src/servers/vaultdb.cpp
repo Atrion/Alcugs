@@ -1077,6 +1077,7 @@ namespace alc {
 			return true;
 		}
 		catch (txDatabaseError &error) {
+			// FIXME: find a better way to avoid an error when a duplicate is added
 			return false;
 		}
 	}
