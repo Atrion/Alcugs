@@ -63,6 +63,7 @@ namespace alc {
 		
 		/** get all the nodes whose IDs are in the table (saved as tableSize U32 values) and put them in the array.
 		    Remember to free the node table and delete all its elements! */
+		void fetchNodes(U32 *table, int tableSize, tvNode ***nodes, int *nNodes); // this is a pointer to an array of pointers
 		void fetchNodes(tMBuf &table, int tableSize, tvNode ***nodes, int *nNodes); // this is a pointer to an array of pointers
 		
 		/** gets a list of all direct and indirect MGRS (parent nodes with a type <= 7) of this node

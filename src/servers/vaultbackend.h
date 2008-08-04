@@ -46,11 +46,18 @@ namespace alc {
 		
 		void sendPlayerList(tmCustomVaultAskPlayerList &askPlayerList);
 		void checkKi(tmCustomVaultCheckKi &checkKi);
+		void updatePlayerStatus(tmCustomVaultPlayerStatus &status);
 		void processVaultMsg(tvMessage &msg, tNetSession *u, U32 ki);
 	private:
 		void send(tvMessage &msg, tNetSession *u, U32 ki);
-		int findVmgr(tNetSession *u, U32 ki, U32 mgr); //!< \returns the number of that vmgr or -1
-		void broadcast(tvMessage &msg, U32 node, U32 origKi, U32 origMgr);
+		int findVmgr(tNetSession *u, U32 ki, U32 mgr = 0); //!< \returns the number of that vmgr or -1
+		void broadcastNodeUpdate(tvNode *node, U32 origKi = 0, U32 origMgr = 0);
+		void broadcastNodeRefUpdate(tvNodeRef *ref, U32 origKi = 0, U32 origMgr = 0);
+		void broadcastOnlineState(tvNode *node);
+		
+		/** broadcast the message to all vmgrs interested in that node, except for the one with origKi and origMgr
+		    (i.e. the one who did the change) */
+		void broadcast(tvMessage &msg, U32 node, U32 origKi = 0, U32 origMgr = 0);
 	
 		tVaultDB *vaultDB;
 		Byte vaultFolderName[17];

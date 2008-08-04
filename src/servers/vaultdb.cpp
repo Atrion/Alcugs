@@ -975,7 +975,16 @@ namespace alc {
 		}
 	}
 	
-	void tVaultDB::fetchNodes(tMBuf &table, int tableSize, tvNode ***nodes, int *nNodes)
+	void tVaultDB::fetchNodes(tMBuf &buf, int tableSize, tvNode ***nodes, int *nNodes)
+	{
+		U32 *table = (U32 *)malloc(tableSize*sizeof(U32));
+		buf.rewind();
+		for (int i = 0; i < tableSize; ++i) table[i] = buf.getU32();
+		fetchNodes(table, tableSize, nodes, nNodes);
+		free((void *)table);
+	}
+	
+	void tVaultDB::fetchNodes(U32 *table, int tableSize, tvNode ***nodes, int *nNodes)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
@@ -990,7 +999,7 @@ namespace alc {
 		
 		for (int i = 0; i < tableSize; ++i) {
 			if (i > 0) strcat(query, ",");
-			sprintf(cond, "%d", table.getU32());
+			sprintf(cond, "%d", table[i]);
 			strcat(query, cond);
 		}
 		

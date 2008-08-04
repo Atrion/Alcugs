@@ -87,7 +87,7 @@ namespace alc {
 				msg->data->get(status);
 				log->log("(ignored) <RCV> %s\n", status.str());
 				
-				// FIXME: do something
+				vaultBackend->updatePlayerStatus(status);
 				
 				return 1;
 			}
