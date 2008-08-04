@@ -148,6 +148,7 @@ namespace alc {
 		tMBuf table;
 		tvNode *savedNode = NULL;
 		tvNodeRef *savedNodeRef = NULL;
+		const Byte *ageName = NULL, *ageGuid = NULL;
 		
 		// read and verify the general vault items
 		for (int i = 0; i < msg.numItems; ++i) {
@@ -195,6 +196,12 @@ namespace alc {
 					if (itm->asInt() != -1)
 						throw txProtocolError(_WHERE("a vault item with ID 20 must always have a value of -1 but I got %d", itm->asInt()));
 					break;
+				case 21: // GenericValue.UruString: age name
+					ageName = itm->asString();
+					break;
+				case 22:
+					ageGuid = itm->asGuid();
+					break;
 				// these are not sent to servers
 				case 6: // a stream of Vault Nodes
 				case 11: // new Node Index (saveNode)
@@ -217,6 +224,10 @@ namespace alc {
 				log->log("Vault Connect request for %d (Type: %d)\n", ki, nodeType);
 				log->flush();
 				U32 mgr;
+				
+				tvNode mgrNode;
+				mgrNode.flagB |= MType;
+				mgrNode.type = nodeType;
 				if (nodeType == 2) { // player node
 					mgr = id;
 					if (mgr != ki)
@@ -227,9 +238,19 @@ namespace alc {
 					reply.items[1] = new tvItem(/*id*/23, /*folder name*/vaultFolderName);
 					send(reply, u, ki);
 				}
+				else if (nodeType == 3) { // age node
+					if (!ageName || !ageGuid) throw txProtocolError(_WHERE("VConnect for node type 3 must have ageGuid and ageName set"));
+					mgrNode.flagB |= MStr64_1;
+					mgrNode.str1.writeStr(alcGetStrGuid(ageGuid));
+					mgr = vaultDB->findNode(mgrNode, NULL, /*create*/true);
+					// create and send the reply
+					tvMessage reply(msg, 3);
+					reply.items[0] = new tvItem(/*id:*/2, /*mgr node id*/(S32)mgr);
+					reply.items[1] = new tvItem(/*id*/21, /*age name*/ageName);
+					reply.items[2] = new tvItem(/*id*/23, /*folder name*/vaultFolderName);
+					send(reply, u, ki);
+				}
 				else if (nodeType == 5) { // admin node
-					tvNode mgrNode;
-					mgrNode.setType(5);
 					mgr = vaultDB->findNode(mgrNode, NULL, /*create*/true);
 					// create and send the reply
 					tvMessage reply(msg, 3);
@@ -415,6 +436,10 @@ namespace alc {
 				free((void *)nodes);
 				break;
 			}
+			// FIXME: implement these
+			case VSendNode:
+			case VSetSeen:
+			case VOnlineState:
 			default:
 				throw txProtocolError(_WHERE("Unknown vault command 0x%02X (%s)\n", msg.cmd, alcVaultGetCmd(msg.cmd)));
 		}

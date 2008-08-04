@@ -280,13 +280,15 @@ namespace alc {
 	public:
 		tvCreatableGenericValue(S32 integer);
 		tvCreatableGenericValue(double time);
-		tvCreatableGenericValue(Byte *str);
+		tvCreatableGenericValue(const Byte *str);
 		tvCreatableGenericValue(void) : tvBase() { }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log, bool shortLog);
 		
 		S32 asInt(void);
+		const Byte *asString(void);
+		
 		// format
 		Byte format;
 		S32 integer;
@@ -336,11 +338,6 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log, bool shortLog);
-		
-		void setType(Byte type) {
-			flagB |= MType;
-			this->type = type;
-		}
 	
 		// format
 		U32 flagA, flagB, flagC;
@@ -373,7 +370,7 @@ namespace alc {
 	public:
 		tvItem(Byte id, S32 integer);
 		tvItem(Byte id, double time);
-		tvItem(Byte id, Byte *str);
+		tvItem(Byte id, const Byte *str);
 		tvItem(tvCreatableStream *stream);
 		tvItem(Byte id, tvNodeRef *ref);
 		tvItem(Byte tpots) : tvBase() { this->tpots = tpots; data = NULL; }
@@ -383,6 +380,8 @@ namespace alc {
 		virtual void asHtml(tLog *log, bool shortLog);
 		
 		S32 asInt(void);
+		const Byte *asString(void);
+		const Byte *asGuid(void);
 		tvNode *asNode(void);
 		tvNodeRef *asNodeRef(void);
 		

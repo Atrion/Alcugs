@@ -327,7 +327,7 @@ namespace alc {
 		this->time = time;
 	}
 	
-	tvCreatableGenericValue::tvCreatableGenericValue(Byte *str) : tvBase()
+	tvCreatableGenericValue::tvCreatableGenericValue(const Byte *str) : tvBase()
 	{
 		format = DUruString;
 		this->str.writeStr(str);
@@ -377,6 +377,13 @@ namespace alc {
 		if (format != DInteger)
 			throw txProtocolError(_WHERE("expected a GenericValue.format of 0x%02X (DInteger) but got 0x%02X", DInteger, format));
 		return integer;
+	}
+	
+	const Byte *tvCreatableGenericValue::asString(void)
+	{
+		if (format != DUruString)
+			throw txProtocolError(_WHERE("expected a GenericValue.format of 0x%02X (DUruString) but got 0x%02X", DUruString, format));
+		return str.c_str();
 	}
 	
 	void tvCreatableGenericValue::asHtml(tLog *log, bool shortLog)
@@ -924,7 +931,7 @@ namespace alc {
 		data = new tvCreatableGenericValue(time);
 	}
 	
-	tvItem::tvItem(Byte id, Byte *str)
+	tvItem::tvItem(Byte id, const Byte *str)
 	{
 		this->id = id;
 		type = DCreatableGenericValue;
@@ -1003,6 +1010,20 @@ namespace alc {
 		if (type != DCreatableGenericValue)
 			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a DCreatableGenericValue", id, alcVaultGetDataType(type)));
 		return ((tvCreatableGenericValue *)data)->asInt();
+	}
+	
+	const Byte *tvItem::asString(void)
+	{
+		if (type != DCreatableGenericValue)
+			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a DCreatableGenericValue", id, alcVaultGetDataType(type)));
+		return ((tvCreatableGenericValue *)data)->asString();
+	}
+	
+	const Byte *tvItem::asGuid(void)
+	{
+		if (type != DServerGuid)
+			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a DServerGuid", id, alcVaultGetDataType(type)));
+		return ((tvServerGuid *)data)->guid;
 	}
 	
 	tvNode *tvItem::asNode(void)
