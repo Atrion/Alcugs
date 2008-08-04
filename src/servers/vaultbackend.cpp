@@ -204,7 +204,7 @@ namespace alc {
 		msg.print(logHtml, /*clientToServer:*/true, u, shortHtml, ki);
 		
 		// have everything on the stack as we can safely throw exceptions then
-		S32 nodeType = -1, id = -1, nodeSon = -1, nodeParent = -1, seenFlag = -1, rcvPlayer = -1;
+		S32 nodeType = -1, playerKi = -1, nodeSon = -1, nodeParent = -1, seenFlag = -1, rcvPlayer = -1;
 		U16 tableSize = 0;
 		tMBuf table;
 		tvNode *savedNode = NULL;
@@ -223,7 +223,7 @@ namespace alc {
 					nodeType = itm->asInt();
 					break;
 				case 2: // GenericValue.Int: unique id [ki number]
-					id = itm->asInt();
+					playerKi = itm->asInt();
 					break;
 				case 4: // GenericValue.Int: reciever of a VSendNode
 					rcvPlayer = itm->asInt();
@@ -288,6 +288,8 @@ namespace alc {
 		switch (msg.cmd) {
 			case VConnect:
 			{
+				if (nodeType < 0)
+					throw txProtocolError(_WHERE("got a VConnect where node type has not been set"));
 				log->log("Vault Connect request for %d (Type: %d)\n", ki, nodeType);
 				log->flush();
 				U32 mgr;
@@ -296,7 +298,8 @@ namespace alc {
 				mgrNode.flagB |= MType;
 				mgrNode.type = nodeType;
 				if (nodeType == 2) { // player node
-					mgr = id;
+					if (playerKi < 0) throw txProtocolError(_WHERE("VConnect for node type 2 must have playerKi set"));
+					mgr = playerKi;
 					if (mgr != ki)
 						throw txProtocolError(_WHERE("Player with KI %d wants to VConnect as %d\n", ki, mgr));
 					// create reply
@@ -353,6 +356,8 @@ namespace alc {
 			}
 			case VDisconnect:
 			{
+				if (nodeType < 0)
+					throw txProtocolError(_WHERE("got a VDisconnect where the node type has not been set"));
 				log->log("Vault Disconnect request for %d (Type: %d)\n", ki, nodeType);
 				log->flush();
 				// send reply
@@ -454,6 +459,7 @@ namespace alc {
 			}
 			case VFindNode:
 			{
+				if (!savedNode) throw txProtocolError(_WHERE("got a find node request without the node attached"));
 				log->log("Vault Find Node (looking for node %d) for %d\n", savedNode->index, ki);
 				log->flush();
 				tvManifest mfs;
@@ -499,14 +505,20 @@ namespace alc {
 				free((void *)nodes);
 				break;
 			}
+			case VSendNode:
+			{
+				if (rcvPlayer < 0 || !savedNode) throw txProtocolError(_WHERE("Got a VSendNode without the reciever or the node"));
+				// FIXME: send it
+				break;
+			}
 			case VSetSeen:
 			{
+				if (nodeParent < 0 || nodeSon < 0 || seenFlag < 0)
+					throw txProtocolError(_WHERE("parent, son and seen flag must be set for a VSetSeen"));
 				log->log("Vault Set Seen (parent: %d, son: %d, seen: %d) for %d\n", nodeParent, nodeSon, seenFlag, ki);
 				vaultDB->setSeen(nodeParent, nodeSon, seenFlag);
 				break;
 			}
-			
-			case VSendNode: // FIXME: implement this
 			case VOnlineState: // not sent to servers
 			default:
 				throw txProtocolError(_WHERE("Unknown vault command 0x%02X (%s)\n", msg.cmd, alcVaultGetCmd(msg.cmd)));
