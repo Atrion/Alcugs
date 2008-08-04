@@ -313,7 +313,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 				ret=parseBasicMsg(evt,msg,u,shutdown);
 				// terminated sessions can be deleted here - either it was a NetMsgLeave and everything is fine, or it was an invalid message
 				if (u->terminated || shutdown) {
-					if (ret == 0) err->log("%s is terminated and sent a non-NetMsgLeave message %04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+					if (ret == 0) err->log("%s is terminated and sent a non-NetMsgLeave message 0x%04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
 					u->rcvq->deleteCurrent();
 					if (ret != 1) terminate(u, RKickedOff, true); // delete the session ASAP
 					break;
@@ -321,17 +321,17 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 				// this part can never be reached on shutdown, so messages are only processed when the server is still fully running
 				if (ret == 0) ret=onMsgRecieved(evt,msg,u);
 				if (ret > 0 && !msg->data->eof() > 0) { // when the packet was processed and there are bytes left, it is obiously invalid, terminate the client (ret = -2, hack attempt, processed below)
-					err->log("%s Recieved a message %04X (%s) which was too long (%d Bytes remaining after parsing)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data->remaining());
+					err->log("%s Recieved a message 0x%04X (%s) which was too long (%d Bytes remaining after parsing)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data->remaining());
 					ret=-2;
 				}
 			}
 			catch (txOutOfRange &t) { // when there was an out of range error, don't crash the whole server (it would be easy to crash then...) but kick the responsible client
-				err->log("%s Recieved a message %04X (%s) which was too short (error txOutOfRange)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+				err->log("%s Recieved a message 0x%04X (%s) which was too short (error txOutOfRange)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
 				err->log(" Exception details: %s\n%s\n",t.what(),t.backtrace());
 				ret=-2;
 			}
 			catch (txProtocolError &t) { // the same for a protocol error
-				err->log("%s Recieved invalid %04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+				err->log("%s Recieved invalid 0x%04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
 				err->log(" Exception details: %s\n%s\n",t.what(),t.backtrace());
 				ret=-1;
 			}
@@ -341,16 +341,16 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 					terminate(u, RUnimplemented);
 				}
 				else if(ret==-1) {
-					err->log("%s Kicked off due to a parse error in a previus message %04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+					err->log("%s Kicked off due to a parse error in a previus message 0x%04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
 					terminate(u, RParseError);
 				}
 				else if(ret==-2) {
-					sec->log("%s Kicked off due to cracking %04X (%s)\n",u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+					sec->log("%s Kicked off due to cracking 0x%04X (%s)\n",u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
 					terminate(u, RHackAttempt);
 				}
 			} else {
 				if(ret!=1) {
-					err->log("%s Error code %i parsing message %04X (%s)\n",u->str(),ret,msg->cmd,alcUnetGetMsgCode(msg->cmd));
+					err->log("%s Error code %i parsing message 0x%04X (%s)\n",u->str(),ret,msg->cmd,alcUnetGetMsgCode(msg->cmd));
 				}
 			}
 			u->rcvq->deleteCurrent();
