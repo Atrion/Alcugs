@@ -52,12 +52,16 @@ namespace alc {
 	tVaultBackend::~tVaultBackend(void)
 	{
 		unload();
-		if (nVmgrs > 0) lerr->log("ERR: The vault server is quitting and I still have %d vmgrs left\n", nVmgrs);
+		int del = 0;
 		if (vmgrs) {
 			for (int i = 0; i < nVmgrs; ++i) {
-				if (vmgrs[i]) delete vmgrs[i];
+				if (vmgrs[i]) {
+					delete vmgrs[i];
+					++del;
+				}
 			}
 			free((void *)vmgrs);
+			lerr->log("ERR: The vault server is quitting and I still have %d vmgrs left\n", del);
 		}
 	}
 	
@@ -129,12 +133,34 @@ namespace alc {
 	
 	void tVaultBackend::updatePlayerStatus(tmCustomVaultPlayerStatus &status)
 	{
-		if (status.state == 1) findVmgr(status.getSession(), status.ki);
+		// update (when the palyer is online) or remove (when hes offline) all mgrs using this KI
+		bool checkShrink = false;
+		for (int i = 0; i < nVmgrs; ++i) {
+			if (vmgrs[i] && vmgrs[i]->ki == status.ki) {
+				if (status.state) vmgrs[i]->session = status.getSession()->getIte();
+				else {
+					delete vmgrs[i];
+					vmgrs[i] = NULL;
+					checkShrink = true; // check if the array can be srhunken
+					log->log("WARN: Player with KI %d just went offline but still had a vmgr registered... removing it\n", status.ki);
+				}
+			}
+		}
+		if (checkShrink) {
+			// shrink the array if possible
+			int last = nVmgrs-1; // find the last vmgr
+			while (last >= 0 && vmgrs[last] == NULL) --last;
+			if (last < nVmgrs-1) { // there are some NULLs at the end, shrink the array
+				nVmgrs=last+1;
+				vmgrs=(tVmgr **)realloc(vmgrs, sizeof(tVmgr *) * nVmgrs); // it's not a bug if we get NULL here - the size might be 0
+				DBG(9, "shrinking vmgr array to %d\n", nVmgrs);
+			}
+		}
 		
 		tvNode **nodes;
 		int nNodes;
 		vaultDB->fetchNodes(&status.ki, 1, &nodes, &nNodes);
-		if (nNodes != 1) throw txProtocolError(_WHERE("KI %d doesn't have a vault node?!?", status.ki));
+		if (nNodes != 1) throw txProtocolError(_WHERE("KI %d doesn't have a player node (or several of them)?!?", status.ki));
 		
 		// update online time
 		(*nodes)->uInt2 += status.onlineTime;
@@ -152,7 +178,6 @@ namespace alc {
 		U32 infoNode = vaultDB->findNode(node, NULL, false);
 		if (!infoNode) throw txProtocolError(_WHERE("KI %d doesn't have a info node?!?", status.ki));
 		vaultDB->fetchNodes(&infoNode, 1, &nodes, &nNodes);
-		if (nNodes != 1) throw txProtocolError(_WHERE("KI %d doesn't have a info node?!?", status.ki));
 		(*nodes)->str1 = status.age;
 		(*nodes)->str2 = status.serverGuid;
 		(*nodes)->int1 = status.state;
@@ -166,7 +191,7 @@ namespace alc {
 	int tVaultBackend::findVmgr(tNetSession *u, U32 ki, U32 mgr)
 	{
 		for (int i = 0; i < nVmgrs; ++i) {
-			if (vmgrs[i] && vmgrs[i]->ki == ki && (mgr == 0 || vmgrs[i]->mgr == mgr)) {
+			if (vmgrs[i] && vmgrs[i]->ki == ki && vmgrs[i]->mgr == mgr) {
 				vmgrs[i]->session = u->getIte();
 				return i;
 			}
@@ -238,6 +263,8 @@ namespace alc {
 				case 22:
 					ageGuid = itm->asGuid();
 					break;
+				case 4: // FIXME: implement this
+				case 19: // FIXME: implement this
 				// these are not sent to servers
 				case 6: // a stream of Vault Nodes
 				case 11: // new Node Index (saveNode)
@@ -464,10 +491,10 @@ namespace alc {
 				free((void *)nodes);
 				break;
 			}
-			// FIXME: implement these
-			case VSendNode:
-			case VSetSeen:
-			case VOnlineState:
+			case VSendNode: // FIXME: implement this
+			case VSetSeen: // FIXME: implement this
+			
+			case VOnlineState: // not sent to servers
 			default:
 				throw txProtocolError(_WHERE("Unknown vault command 0x%02X (%s)\n", msg.cmd, alcVaultGetCmd(msg.cmd)));
 		}

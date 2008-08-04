@@ -85,7 +85,7 @@ namespace alc {
 			{
 				tmCustomVaultPlayerStatus status(u);
 				msg->data->get(status);
-				log->log("(ignored) <RCV> %s\n", status.str());
+				log->log("<RCV> %s\n", status.str());
 				
 				vaultBackend->updatePlayerStatus(status);
 				

@@ -50,7 +50,7 @@ namespace alc {
 		void processVaultMsg(tvMessage &msg, tNetSession *u, U32 ki);
 	private:
 		void send(tvMessage &msg, tNetSession *u, U32 ki);
-		int findVmgr(tNetSession *u, U32 ki, U32 mgr = 0); //!< \returns the number of that vmgr or -1
+		int findVmgr(tNetSession *u, U32 ki, U32 mgr); //!< \returns the number of that vmgr or -1
 		void broadcastNodeUpdate(tvNode *node, U32 origKi = 0, U32 origMgr = 0);
 		void broadcastNodeRefUpdate(tvNodeRef *ref, U32 origKi = 0, U32 origMgr = 0);
 		void broadcastOnlineState(tvNode *node);
