@@ -481,7 +481,7 @@ namespace alc {
 		int size = node.blob1Size*2 + 4096;
 		char *query = (char *)malloc((size+4096)*sizeof(char));
 		char *values = (char *)malloc(size*sizeof(char));
-		char helpStr[512];
+		char *helpStr = (char *)malloc(size*sizeof(char));
 		
 		// time fix
 		node.flagB |= (MModTime | MCrtTime | MAgeTime);
@@ -626,8 +626,8 @@ namespace alc {
 			strcat(values, helpStr);
 		}
 		if (node.flagB & MBlob1) {
-			strcat(query, ",blob_1'");
-			strcat(values, "'");
+			strcat(query, ",blob_1");
+			strcat(values, ",'");
 			if (node.blob1Size) {
 				strcat(values, sql->escape(helpStr, (char *)node.blob1, node.blob1Size));
 			}
@@ -640,6 +640,7 @@ namespace alc {
 		
 		free((void *)query);
 		free((void *)values);
+		free((void *)helpStr);
 		
 		return sql->insertId();
 	}
@@ -1091,6 +1092,15 @@ namespace alc {
 		//  for all child nodes). This can be used when a player is deleted, but will of course also delete all the KI messages he sent
 		sprintf(query, "DELETE FROM %s WHERE id2='%d' AND id3='%d'", refVaultTable, parent, son);
 		sql->query(query, "removing a node reference");
+	}
+	
+	void tVaultDB::setSeen(U32 parent, U32 son, Byte seen)
+	{
+		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		
+		char query[512];
+		sprintf(query, "UPDATE %s SET flag='%d' WHERE id2='%d' AND id3='%d'", refVaultTable, seen, parent, seen);
+		sql->query(query, "Updating seen flag");
 	}
 
 } //end namespace alc

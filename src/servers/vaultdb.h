@@ -76,6 +76,9 @@ namespace alc {
 		/** creates a node ref
 		    \returns true if everything is ok, false on error (most likely a duplicate) */
 		bool addNodeRef(tvNodeRef &ref);
+		
+		/** updates the "seen" flag of that ref */
+		void setSeen(U32 parent, U32 son, Byte seen);
 	private:
 		/** creates a query to SELECT (isUpdate = false) or UPDATE (isUpdate = true) that vault node
 		    the query is appended (using strcat) to out which must be big enough

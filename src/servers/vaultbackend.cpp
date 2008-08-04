@@ -204,7 +204,7 @@ namespace alc {
 		msg.print(logHtml, /*clientToServer:*/true, u, shortHtml, ki);
 		
 		// have everything on the stack as we can safely throw exceptions then
-		S32 nodeType = -1, id = -1, nodeSon = -1, nodeParent = -1;
+		S32 nodeType = -1, id = -1, nodeSon = -1, nodeParent = -1, seenFlag = -1, rcvPlayer = -1;
 		U16 tableSize = 0;
 		tMBuf table;
 		tvNode *savedNode = NULL;
@@ -225,16 +225,19 @@ namespace alc {
 				case 2: // GenericValue.Int: unique id [ki number]
 					id = itm->asInt();
 					break;
-				case 5: // a single vault node
+				case 4: // GenericValue.Int: reciever of a VSendNode
+					rcvPlayer = itm->asInt();
+					break;
+				case 5: // VaultNode: a single vault node
 					savedNode = itm->asNode(); // we don't have to free it, tvMessage does that
 					break;
-				case 7: // a single vault node ref
+				case 7: // VaultNodeRef: a single vault node ref
 					savedNodeRef = itm->asNodeRef(); // we don't have to free it, tvMessage does that
 					break;
-				case 9: // FoundNode Index / Son of a NodeRef / Old Node Index (saveNode)
+				case 9: // GenericValue.Int: FoundNode Index / Son of a NodeRef / Old Node Index (saveNode)
 					nodeSon = itm->asInt();
 					break;
-				case 10: // Stream containing a table of ints
+				case 10: // GenericStream: Stream containing a table of ints
 				{
 					if (itm->type != DCreatableStream) throw txProtocolError(_WHERE("a vault item with id 10 must always have a creatable generic stream"));
 					tMBuf *buf = ((tvCreatableStream *)itm->data)->getData();
@@ -246,12 +249,15 @@ namespace alc {
 					table.rewind();
 					break;
 				}
-				case 13: // Parent of a NodeRef
+				case 13: // GenericValue.Int: Parent of a NodeRef
 					nodeParent = itm->asInt();
 					break;
 				case 16: // GenericValue.Int: must always be the same (seen in FindNode)
 					if (itm->asInt() != 0)
 						throw txProtocolError(_WHERE("a vault item with ID 16 must always have a value of 0 but I got %d", itm->asInt()));
+					break;
+				case 19: // GenericValue.Int: Set Seen flag
+					seenFlag = itm->asInt();
 					break;
 				case 20: // GenericValue.Int: must always be the same
 					if (itm->asInt() != -1)
@@ -260,20 +266,18 @@ namespace alc {
 				case 21: // GenericValue.UruString: age name
 					ageName = itm->asString();
 					break;
-				case 22:
+				case 22: // ServerGuid: age guid
 					ageGuid = itm->asGuid();
 					break;
-				case 4: // FIXME: implement this
-				case 19: // FIXME: implement this
 				// these are not sent to servers
-				case 6: // a stream of Vault Nodes
-				case 11: // new Node Index (saveNode)
-				case 14: // stream of manifests
-				case 15: // stream of NodeRefs
-				case 23: // Vault folder
-				case 24: // Timestamp (double format)
-				case 25: // number of vault nodes
-				case 31: // EOF of a FetchNode
+				case 6: // GenericStream: a stream of Vault Nodes
+				case 11: // GenericValue.Int: new Node Index (saveNode)
+				case 14: // GenericStream: stream of manifests
+				case 15: // GenericStream: stream of NodeRefs
+				case 23: // GenericValue.String: Vault folder
+				case 24: // GenericValue.Timestamp
+				case 25: // GenericValue.Int: number of vault nodes
+				case 31: // GenericValue.Int: EOF of a FetchNode
 				default:
 					throw txProtocolError(_WHERE("vault item has invalid id %d", itm->id));
 			}
@@ -495,9 +499,14 @@ namespace alc {
 				free((void *)nodes);
 				break;
 			}
-			case VSendNode: // FIXME: implement this
-			case VSetSeen: // FIXME: implement this
+			case VSetSeen:
+			{
+				log->log("Vault Set Seen (parent: %d, son: %d, seen: %d) for %d\n", nodeParent, nodeSon, seenFlag, ki);
+				vaultDB->setSeen(nodeParent, nodeSon, seenFlag);
+				break;
+			}
 			
+			case VSendNode: // FIXME: implement this
 			case VOnlineState: // not sent to servers
 			default:
 				throw txProtocolError(_WHERE("Unknown vault command 0x%02X (%s)\n", msg.cmd, alcVaultGetCmd(msg.cmd)));

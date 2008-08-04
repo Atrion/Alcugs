@@ -590,8 +590,7 @@ namespace alc {
 		
 		if (flagB & MCrtTime) {
 			crtTime = t.getU32();
-			U32 microsec = t.getU32();
-			if (microsec != 0) throw txProtocolError(_WHERE("tvNode.crtMicrosec must be always 0 but is %d", microsec));
+			t.getU32(); // ignore the microseconds
 		}
 		else
 			crtTime = 0;
@@ -601,8 +600,7 @@ namespace alc {
 		
 		if (flagB & MAgeTime) {
 			ageTime = t.getU32();
-			U32 microsec = t.getU32();
-			if (microsec != 0) throw txProtocolError(_WHERE("tvNode.ageMicrosec must be always 0 but is %d", microsec));
+			t.getU32(); // ignore the microseconds
 		}
 		else
 			ageTime = 0;
