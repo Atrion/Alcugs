@@ -136,7 +136,7 @@ namespace alc {
 		// tell vault and taracking
 		tmCustomPlayerStatus trackingStatus(trackingServer, ki, u->sid, u->uid, u->name, avatar, 2 /* visible */, whoami == KGame ? RJoining : RActive);
 		send(trackingStatus);
-		tmCustomVaultPlayerStatus vaultStatus(vaultServer, ki, u->sid, alcGetStrGuid(serverGuid), serverName, 1 /* is online */, u->onlineTime());
+		tmCustomVaultPlayerStatus vaultStatus(vaultServer, ki, u->sid, alcGetStrGuid(serverGuid), serverName, 1 /* is online */, 0 /* don't increase online time now, do that on disconnect */);
 		send(vaultStatus);
 		
 		// now, tell the client

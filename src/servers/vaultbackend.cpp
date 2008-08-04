@@ -159,19 +159,21 @@ namespace alc {
 		
 		tvNode **nodes;
 		int nNodes;
-		vaultDB->fetchNodes(&status.ki, 1, &nodes, &nNodes);
-		if (nNodes != 1) throw txProtocolError(_WHERE("KI %d doesn't have a player node (or several of them)?!?", status.ki));
+		tvNode node;
 		
 		// update online time
-		(*nodes)->uInt2 += status.onlineTime;
-		vaultDB->updateNode(**nodes);
-		broadcastNodeUpdate(*nodes);
-		// free stuff
-		delete *nodes;
-		free((void *)nodes);
+		if (status.onlineTime > 0) {
+			vaultDB->fetchNodes(&status.ki, 1, &nodes, &nNodes);
+			if (nNodes != 1) throw txProtocolError(_WHERE("KI %d doesn't have a player node (or several of them)?!?", status.ki));
+			(*nodes)->uInt2 += status.onlineTime;
+			vaultDB->updateNode(**nodes);
+			broadcastNodeUpdate(*nodes);
+			// free stuff
+			delete *nodes;
+			free((void *)nodes);
+		}
 		
 		// find and update the info node
-		tvNode node;
 		node.flagB |= MType | MOwner;
 		node.type = KPlayerInfoNode;
 		node.owner = status.ki;
