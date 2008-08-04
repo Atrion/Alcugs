@@ -1287,7 +1287,7 @@ SByte tTime::compare(tTime &t) {
 		if(microseconds<t.microseconds) return 1;
 		return -1;
 	}
-	if(seconds>t.seconds) return 1;
+	if(seconds<t.seconds) return 1;
 	return -1;
 }
 tTime operator+(tTime &a,tTime &b) {

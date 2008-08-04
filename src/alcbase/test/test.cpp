@@ -657,6 +657,27 @@ void alctypes_part7()
 	assert(memcmp(b.read(7), ustr3, 7) == 0);
 }
 
+void alctypes_part8()
+{
+	tTime t1, t2;
+	t1.microseconds = 423;
+	t2.microseconds = 511;
+	t1.seconds = t2.seconds = 0;
+	assert(t1 < t2);
+	assert(t1 <= t2);
+	assert(t2 > t1);
+	assert(t2 >= t1);
+	assert(t1 != t2);
+	t1.seconds = 1;
+	assert(t1 > t2);
+	t2 = t1;
+	assert(t2 == t1);
+	assert(t2 >= t1);
+	assert(t2 <= t1);
+	assert(!(t2 < t1));
+	assert(!(t2 > t1));
+}
+
 void alctypes_tests() {
 	alctypes_mbuf();
 	alctypes_mbuf2();
@@ -670,6 +691,7 @@ void alctypes_tests() {
 		alctypes_part6();
 	}
 	alctypes_part7();
+	alctypes_part8();
 }
 
 void sith() {

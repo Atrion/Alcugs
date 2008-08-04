@@ -310,7 +310,6 @@ void tNetSession::processMsg(Byte * buf,int size) {
 				DBG(5,"Clearing send buffer\n");
 				sndq->clear();
 				if(nego_stamp.seconds==0) nego_stamp=timestamp;
-				DBG(5, "Negoiating because we got a negotiation\n");
 				negotiate();
 				negotiating=true;
 			}
@@ -319,7 +318,6 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	} else if(bandwidth==0 || cabal==0) {
 		if(!negotiating) {
 			nego_stamp=timestamp;
-			DBG(5, "Negoiating because we've got nothing so far\n");
 			negotiate();
 			negotiating=true;
 		}
@@ -335,7 +333,6 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		server.ps=0;
 		nego_stamp=timestamp;
 		renego_stamp.seconds=0;
-		DBG(5, "Negoiating because the numbders are too high\n");
 		negotiate();
 		negotiating=true;
 	}
@@ -448,9 +445,9 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 }
 
 /**
-	\return 2 - After the window
-	\return 1 - Marked or before the window
-	\return 0 - Non-Marked
+	\return 2 - After the window (neither parse nor send ack)
+	\return 1 - Marked or before the window (send ack, but don't parse)
+	\return 0 - Non-Marked (parse and send ack)
 */
 Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 	//drop already parsed messages
@@ -867,6 +864,8 @@ void tNetSession::doWork() {
 					net->rawsend(this,curmsg);
 					sndq->deleteCurrent();
 				} else if(curmsg->tf & UNetAckReq) {
+					// if we did not yet get a nego, send only negos, as otherwise the peer might get a non-nego before the first nego... chaos!
+					 if (wite == 0 && !(curmsg->tf & UNetNegotiation)) continue;
 					//send paquet
 					
 					// check if we need to resend
