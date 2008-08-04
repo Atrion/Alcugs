@@ -265,7 +265,7 @@ namespace alc {
 	class tvNodeRef : public tvBase {
 	public:
 		tvNodeRef(U32 saver, U32 parent, U32 child, U32 time, Byte flags);
-		tvNodeRef(U32 parent, U32 child);
+		tvNodeRef(U32 saver, U32 parent, U32 child);
 		tvNodeRef(void) : tvBase() { }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);

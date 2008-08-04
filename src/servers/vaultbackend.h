@@ -51,7 +51,7 @@ namespace alc {
 	private:
 		void send(tvMessage &msg, tNetSession *u, U32 ki);
 		int findVmgr(tNetSession *u, U32 ki, U32 mgr); //!< \returns the number of that vmgr or -1
-		void addRef(U32 parent, U32 son);
+		void addRef(U32 saver, U32 parent, U32 son);
 		U32 getNode(tvNode &node, U32 parent);
 		void broadcastNodeUpdate(tvNode &node, U32 origKi = 0, U32 origMgr = 0);
 		void broadcastNodeRefUpdate(tvNodeRef *ref, U32 origKi = 0, U32 origMgr = 0);

@@ -254,9 +254,9 @@ namespace alc {
 				case 13: // GenericValue.Int: Parent of a NodeRef
 					nodeParent = itm->asInt();
 					break;
-				case 16: // GenericValue.Int: must always be the same (seen in FindNode)
-					if (itm->asInt() != 0)
-						throw txProtocolError(_WHERE("a vault item with ID 16 must always have a value of 0 but I got %d", itm->asInt()));
+				case 16: // GenericValue.Int: must always be 0 or 1 (seen in FindNode)
+					if (itm->asInt() != 0 && itm->asInt() != 1)
+						throw txProtocolError(_WHERE("a vault item with ID 16 must always have a value of 0 or 1 but I got %d", itm->asInt()));
 					break;
 				case 19: // GenericValue.Int: Set Seen flag
 					seenFlag = itm->asInt();
@@ -399,7 +399,7 @@ namespace alc {
 				vaultDB->removeNodeRef(nodeParent, nodeSon);
 				
 				// broadcast the change
-				broadcastNodeRefUpdate(new tvNodeRef(nodeParent, nodeSon), ki, msg.vmgr);
+				broadcastNodeRefUpdate(new tvNodeRef(0, nodeParent, nodeSon), ki, msg.vmgr);
 				break;
 			}
 			case VNegotiateManifest:
@@ -465,13 +465,13 @@ namespace alc {
 				log->log("Vault Find Node (looking for node %d) for %d\n", savedNode->index, ki);
 				log->flush();
 				tvManifest mfs;
-				if (vaultDB->findNode(*savedNode, &mfs, /*create*/false)) {
-					// create and send the reply
-					tvMessage reply(msg, 2);
-					reply.items[0] = new tvItem(/*id*/9, /*old node index*/(S32)mfs.id);
-					reply.items[1] = new tvItem(/*id*/24, /*timestamp*/(double)mfs.time);
-					send(reply, u, ki);
-				}
+				if (!vaultDB->findNode(*savedNode, &mfs, /*create*/false))
+					throw txProtocolError(_WHERE("got a VFindNode but can't find the node"));
+				// create and send the reply
+				tvMessage reply(msg, 2);
+				reply.items[0] = new tvItem(/*id*/9, /*old node index*/(S32)mfs.id);
+				reply.items[1] = new tvItem(/*id*/24, /*timestamp*/(double)mfs.time);
+				send(reply, u, ki);
 			}
 			case VFetchNode:
 			{
@@ -510,33 +510,39 @@ namespace alc {
 			case VSendNode:
 			{
 				if (rcvPlayer < 0 || !savedNode) throw txProtocolError(_WHERE("Got a VSendNode without the reciever or the node"));
-				tvNode node;
+				tvNode *node; // make sure it is reset after being used, vaultDB might change it
 				// find the sender's info node
-				node.flagB = MType | MOwner;
-				node.type = KPlayerInfoNode;
-				node.owner = ki;
-				U32 infoNode = vaultDB->findNode(node);
+				node = new tvNode;
+				node->flagB = MType | MOwner;
+				node->type = KPlayerInfoNode;
+				node->owner = ki;
+				U32 infoNode = vaultDB->findNode(*node);
+				delete node;
 				if (!infoNode) throw txProtocolError(_WHERE("Couldn't find a players info node?!?"));
 				
 				// find and create the PeopleIKnowAboutFolder
-				node.flagB = MType | MOwner | MInt32_1;
-				node.type = KPlayerInfoListNode;
-				node.owner = rcvPlayer;
-				node.int1 = KPeopleIKnowAboutFolder;
-				U32 recentFolder = getNode(node, rcvPlayer);
+				node = new tvNode;
+				node->flagB = MType | MOwner | MInt32_1;
+				node->type = KPlayerInfoListNode;
+				node->owner = rcvPlayer;
+				node->int1 = KPeopleIKnowAboutFolder;
+				U32 recentFolder = getNode(*node, rcvPlayer);
+				delete node;
 				
 				// find and create the InboxFolder
-				node.flagB = MType | MOwner | MInt32_1;
-				node.type = KFolderNode;
-				node.owner = rcvPlayer;
-				node.int1 = KInboxFolder;
-				U32 inbox = getNode(node, rcvPlayer);
+				node = new tvNode;
+				node->flagB = MType | MOwner | MInt32_1;
+				node->type = KFolderNode;
+				node->owner = rcvPlayer;
+				node->int1 = KInboxFolder;
+				U32 inbox = getNode(*node, rcvPlayer);
+				delete node;
 				
 				// add sender to recent folder
-				addRef(recentFolder, infoNode);
+				addRef(0, recentFolder, infoNode);
 				
 				// add what was sent to the inbox
-				addRef(inbox, savedNode->index);
+				addRef(ki, inbox, savedNode->index);
 				break;
 			}
 			case VSetSeen:
@@ -559,13 +565,13 @@ namespace alc {
 		if (nodeId) return nodeId;
 		// it doesn't exist, create it
 		nodeId = vaultDB->createNode(node);
-		addRef(parent, nodeId);
+		addRef(0, parent, nodeId);
 		return nodeId;
 	}
 	
-	void tVaultBackend::addRef(U32 parent, U32 son)
+	void tVaultBackend::addRef(U32 saver, U32 parent, U32 son)
 	{
-		tvNodeRef *ref = new tvNodeRef(parent, son); // will be deleted by broadcastNodeRefUpdate
+		tvNodeRef *ref = new tvNodeRef(saver, parent, son); // will be deleted by broadcastNodeRefUpdate
 		if (vaultDB->addNodeRef(*ref))
 			broadcastNodeRefUpdate(ref);
 		else

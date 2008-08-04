@@ -466,6 +466,10 @@ namespace alc {
 				mfs->time = node.modTime;
 			}
 		}
+		else if (mfs) {
+			mfs->id = 0;
+			mfs->time = 0;
+		}
 		
 		mysql_free_result(result);
 		
@@ -989,7 +993,7 @@ namespace alc {
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
-		char query[1024], cond[32];
+		char query[32*1024], cond[32];
 		MYSQL_RES *result;
 		MYSQL_ROW row;
 		unsigned long *lengths; // the len of each column
@@ -1071,7 +1075,7 @@ namespace alc {
 		// time fix
 		ref.time = alcGetTime();
 		
-		sprintf(query, "INSERT INTO %s (id1, id2, id3, timestamp, flag) VALUES('%d', '%d', '%d', '%d', '%d')", refVaultTable, ref.saver, ref.parent, ref.child, ref.time, ref.flags);
+		sprintf(query, "INSERT INTO %s (id1, id2, id3, timestamp, flag) VALUES('%d', '%d', '%d', FROM_UNIXTIME('%d'), '%d')", refVaultTable, ref.saver, ref.parent, ref.child, ref.time, ref.flags);
 		try {
 			sql->query(query, "Creating new node ref");
 			return true;

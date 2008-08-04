@@ -279,9 +279,9 @@ namespace alc {
 		this->flags = flags;
 	}
 	
-	tvNodeRef::tvNodeRef(U32 parent, U32 child)
+	tvNodeRef::tvNodeRef(U32 saver, U32 parent, U32 child)
 	{
-		this->saver = 0;
+		this->saver = saver;
 		this->parent = parent;
 		this->child = child;
 		this->time = 0;
