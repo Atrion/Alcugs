@@ -353,7 +353,6 @@ namespace alc {
 					vmgrs = (tVmgr **)realloc((void *)vmgrs, sizeof(tVmgr *)*nVmgrs);
 				}
 				vmgrs[nr] = new tVmgr(ki, mgr, u->getIte());
-				// FIXME: make sure the vmgrs are somehow cleaned up when they're inactive even when a player does not send a VDisconnect... the old vault server doesn't do that
 				break;
 			}
 			case VDisconnect:

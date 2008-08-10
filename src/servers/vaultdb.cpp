@@ -1091,12 +1091,46 @@ namespace alc {
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
 		char query[2048];
+		MYSQL_RES *result;
+		MYSQL_ROW row;
+		int numParent, type, num;
 		
-		// we can't delete the node and its subnodes, uru doesn't like that, so just delete the reference and let the vault grow...
-		// FIXME: implement a function which does exactly that (i.e. remove all references to this node, the node itself and the same
-		//  for all child nodes). This can be used when a player is deleted, but will of course also delete all the KI messages he sent
+		// get number of parent nodes
+		sprintf(query, "SELECT COUNT(*) FROM %s WHERE id3='%d'", refVaultTable, son);
+		sql->query(query, "removeNodeRef: number of parent nodes");
+		result = sql->storeResult();
+		
+		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get number of parent nodes"));
+		num = mysql_num_rows(result);
+		if (num != 1) throw txDatabaseError(_WHERE("couldn't get number of parent nodes"));
+		
+		row = mysql_fetch_row(result);
+		numParent = atoi(row[0]);
+		mysql_free_result(result);
+		
+		// get node type
+		sprintf(query, "SELECT type FROM %s WHERE idx='%d'", vaultTable, son);
+		sql->query(query, "removeNodeRef: node type");
+		result = sql->storeResult();
+		
+		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get node type"));
+		num = mysql_num_rows(result);
+		if (num != 1) throw txDatabaseError(_WHERE("couldn't get node type"));
+		
+		row = mysql_fetch_row(result);
+		type = atoi(row[0]);
+		mysql_free_result(result);
+		
 		sprintf(query, "DELETE FROM %s WHERE id2='%d' AND id3='%d'", refVaultTable, parent, son);
 		sql->query(query, "removing a node reference");
+		
+		if (numParent <= 1 && (type == KImageNode || type == KTextNoteNode || type == KChronicleNode)) {
+			// there are no more references to this node, and it's a message users can send or a chronicle, so it should be save removing it
+			sprintf(query, "DELETE FROM %s WHERE idx='%d'", vaultTable, son);
+			sql->query(query, "removing a message node without any references");
+			// FIXME: remove the whole tree
+			// FIXME: what about marker games?
+		}
 	}
 	
 	void tVaultDB::setSeen(U32 parent, U32 son, Byte seen)
