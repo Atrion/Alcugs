@@ -1015,7 +1015,6 @@ namespace alc {
 		if (result == NULL) throw txDatabaseError(_WHERE("couldnt fetch nodes"));
 		*nNodes = mysql_num_rows(result);
 		
-		if (*nNodes == 0) return;
 		*nodes = (tvNode **)malloc((*nNodes)*sizeof(tvNode *));
 		for (int i = 0; i < *nNodes; ++i) {
 			row = mysql_fetch_row(result);
@@ -1171,6 +1170,32 @@ namespace alc {
 		char query[512];
 		sprintf(query, "UPDATE %s SET flag='%d' WHERE id2='%d' AND id3='%d'", refVaultTable, seen, parent, seen);
 		sql->query(query, "Updating seen flag");
+	}
+	
+	void tVaultDB::getParentNodes(U32 node, int **table, int *tableSize)
+	{
+		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		
+		char query[2048];
+		MYSQL_RES *result;
+		MYSQL_ROW row;
+		
+		*table = NULL;
+		*tableSize = 0;
+		
+		sprintf(query, "SELECT id2 FROM %s WHERE id3='%d'", refVaultTable, node);
+		sql->query(query, "getting parent nodes");
+		result = sql->storeResult();
+		
+		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get parent nodes"));
+		*tableSize = mysql_num_rows(result);
+		
+		*table = (int *)malloc((*tableSize)*sizeof(int));
+		for (int i = 0; i < *tableSize; ++i) {
+			row = mysql_fetch_row(result);
+			(*table)[i] = atoi(row[0]);
+		}
+		mysql_free_result(result);
 	}
 
 } //end namespace alc

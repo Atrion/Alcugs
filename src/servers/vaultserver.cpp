@@ -71,6 +71,16 @@ namespace alc {
 				
 				return 1;
 			}
+			case NetMsgCustomVaultDeletePlayer:
+			{
+				tmCustomVaultDeletePlayer deletePlayer(u);
+				msg->data->get(deletePlayer);
+				log->log("<RCV> %s\n", deletePlayer.str());
+				
+				vaultBackend->deletePlayer(deletePlayer);
+				
+				return 1;
+			}
 			case NetMsgCustomVaultCheckKi:
 			{
 				tmCustomVaultCheckKi checkKi(u);

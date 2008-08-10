@@ -239,6 +239,14 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultDeletePlayer
+	tmCustomVaultDeletePlayer::tmCustomVaultDeletePlayer(tNetSession *u)
+	 : tmMsgBase(NetMsgCustomVaultDeletePlayer, plNetX | plNetKi | plNetUID | plNetAck | plNetCustom | plNetVersion, u)
+	{
+#ifdef ENABLE_UNET2
+		if (u->proto == 1) unsetFlags(plNetUID);
+#endif
+	}
+	
 	tmCustomVaultDeletePlayer::tmCustomVaultDeletePlayer(tNetSession *u, U32 ki, U32 x, Byte *uid, Byte accessLevel)
 	 : tmMsgBase(NetMsgCustomVaultDeletePlayer, plNetX | plNetKi | plNetUID | plNetAck | plNetCustom | plNetVersion, u)
 	{
@@ -249,6 +257,21 @@ namespace alc {
 		if (u->proto == 1) unsetFlags(plNetUID);
 #endif
 		this->accessLevel = accessLevel;
+	}
+	
+	void tmCustomVaultDeletePlayer::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
+#ifndef ENABLE_UNET2
+		if (!hasFlags(plNetUID)) throw txProtocolError(_WHERE("UID flag missing"));
+#else
+		if (!hasFlags(plNetUID)) {
+			memcpy(uid, t.read(16), 16);
+			u->proto = 1; // unet2 protocol
+		}
+# endif
+		accessLevel = t.getByte();
 	}
 	
 	void tmCustomVaultDeletePlayer::stream(tBBuf &t)

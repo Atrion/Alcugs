@@ -164,7 +164,7 @@ namespace alc {
 		// update online time
 		if (status.onlineTime > 0) {
 			vaultDB->fetchNodes(&status.ki, 1, &nodes, &nNodes);
-			if (nNodes != 1) throw txProtocolError(_WHERE("KI %d doesn't have a player node (or several of them)?!?", status.ki));
+			if (nNodes != 1) throw txProtocolError(_WHERE("update for non-existing player"));
 			(*nodes)->uInt2 += status.onlineTime;
 			vaultDB->updateNode(**nodes);
 			broadcastNodeUpdate(**nodes);
@@ -180,6 +180,7 @@ namespace alc {
 		U32 infoNode = vaultDB->findNode(node, NULL, false);
 		if (!infoNode) throw txProtocolError(_WHERE("KI %d doesn't have a info node?!?", status.ki));
 		vaultDB->fetchNodes(&infoNode, 1, &nodes, &nNodes);
+		assert(nNodes == 1);
 		(*nodes)->str1 = status.age;
 		(*nodes)->str2 = status.serverGuid;
 		(*nodes)->int1 = status.state;
@@ -386,7 +387,7 @@ namespace alc {
 				if (!vaultDB->addNodeRef(*savedNodeRef)) return; // ignore duplicates
 				
 				// broadcast the change
-				broadcastNodeRefUpdate(new tvNodeRef(*savedNodeRef), ki, msg.vmgr);
+				broadcastNodeRefUpdate(new tvNodeRef(*savedNodeRef), /*remove:*/false, ki, msg.vmgr);
 				break;
 			}
 			case VRemoveNodeRef:
@@ -398,7 +399,7 @@ namespace alc {
 				vaultDB->removeNodeRef(nodeParent, nodeSon);
 				
 				// broadcast the change
-				broadcastNodeRefUpdate(new tvNodeRef(0, nodeParent, nodeSon), ki, msg.vmgr);
+				broadcastNodeRefUpdate(new tvNodeRef(0, nodeParent, nodeSon), /*remove:*/true, ki, msg.vmgr);
 				break;
 			}
 			case VNegotiateManifest:
@@ -415,7 +416,7 @@ namespace alc {
 				
 				// create reply
 				tvMessage reply(msg, 2);
-				reply.compressed = 3; // compressed
+				reply.compress = true;
 				reply.items[0] = new tvItem(new tvCreatableStream(/*id*/14, (tvBase **)mfs, nMfs)); // tvMessage will delete it for us
 				reply.items[1] = new tvItem(new tvCreatableStream(/*id*/15, (tvBase **)ref, nRef)); // tvMessage will delete it for us
 				send(reply, u, ki);
@@ -491,7 +492,7 @@ namespace alc {
 						// create reply
 						bool eof = (i == (nNodes-1));
 						tvMessage reply(msg, eof ? 3 : 2);
-						reply.compressed = 3; // compressed
+						reply.compress = true;
 						reply.items[0] = new tvItem(new tvCreatableStream(/*id*/6, buf)); // tvMessage will delete it for us
 						reply.items[1] = new tvItem(/*id*/25, /*number of nodes*/num);
 						if (eof) reply.items[2] = new tvItem(/*id*/31, 0); // EOF mark (this is the last packet of nodes)
@@ -558,6 +559,54 @@ namespace alc {
 		}
 	}
 	
+	void tVaultBackend::deletePlayer(tmCustomVaultDeletePlayer &deletePlayer)
+	{
+		// FIXME: if the player is currently subscribed in the vault manager, it is not removed from there
+	
+		// check if the account owns that avatar
+		tvNode **nodes;
+		int nNodes;
+		vaultDB->fetchNodes(&deletePlayer.ki, 1, &nodes, &nNodes);
+		if (nNodes != 1) throw txProtocolError(_WHERE("asked to remvoe non-existing player"));
+		
+		if (deletePlayer.accessLevel <= AcAdmin || strcmp((char *)(*nodes)->lStr2.c_str(), (char *)alcGetStrUid(deletePlayer.uid)) == 0) {
+			int *table, tableSize;
+			// find the  info node
+			tvNode *node = new tvNode;
+			node->flagB = MType | MOwner;
+			node->type = KPlayerInfoNode;
+			node->owner = deletePlayer.ki;
+			U32 infoNode = vaultDB->findNode(*node);
+			delete node;
+			if (!infoNode) throw txProtocolError(_WHERE("Couldn't find a players info node?!?"));
+			
+			// remove player node and all sub-nodes
+			vaultDB->getParentNodes(deletePlayer.ki, &table, &tableSize);
+			// remove the node
+			vaultDB->removeNodeTree(deletePlayer.ki, false); // don't be cautious
+			// broadcast the removal
+			for (int i = 0; i < tableSize; ++i)
+				broadcastNodeRefUpdate(new tvNodeRef(0, table[i], deletePlayer.ki), /*remove:*/true);
+			// free stuff
+			free((void *)table);
+			
+			// remove all references to the info node
+			// however, do NOT remove the info node itself as the client will query for it if it still has a KI message from this player
+			vaultDB->getParentNodes(infoNode, &table, &tableSize);
+			// remove the refs and broadcast the removal
+			for (int i = 0; i < tableSize; ++i) {
+				vaultDB->removeNodeRef(table[i], infoNode);
+				broadcastNodeRefUpdate(new tvNodeRef(0, table[i], infoNode), /*remove:*/true);
+			}
+			// free stuff
+			free((void *)table);
+		}
+		
+		// free stuff
+		delete *nodes;
+		free((void *)nodes);
+	}
+	
 	U32 tVaultBackend::getNode(tvNode &node, U32 parent)
 	{
 		U32 nodeId = vaultDB->findNode(node);
@@ -572,7 +621,7 @@ namespace alc {
 	{
 		tvNodeRef *ref = new tvNodeRef(saver, parent, son); // will be deleted by broadcastNodeRefUpdate
 		if (vaultDB->addNodeRef(*ref))
-			broadcastNodeRefUpdate(ref);
+			broadcastNodeRefUpdate(ref, /*remove:*/false);
 		else
 			delete ref;
 	}
@@ -587,10 +636,10 @@ namespace alc {
 		broadcast(bcast, node.index, origKi, origMgr);
 	}
 	
-	void tVaultBackend::broadcastNodeRefUpdate(tvNodeRef *ref, U32 origKi, U32 origMgr)
+	void tVaultBackend::broadcastNodeRefUpdate(tvNodeRef *ref, bool remove, U32 origKi, U32 origMgr)
 	{
 		// create the broadcast message
-		tvMessage bcast(VAddNodeRef, 1);
+		tvMessage bcast(remove ? VRemoveNodeRef : VAddNodeRef, 1);
 		bcast.items[0] = new tvItem(/*id*/7, ref);
 		// and send it
 		broadcast(bcast, ref->parent, origKi, origMgr);

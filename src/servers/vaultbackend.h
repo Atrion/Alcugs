@@ -48,13 +48,29 @@ namespace alc {
 		void checkKi(tmCustomVaultCheckKi &checkKi);
 		void updatePlayerStatus(tmCustomVaultPlayerStatus &status);
 		void processVaultMsg(tvMessage &msg, tNetSession *u, U32 ki);
+		void deletePlayer(tmCustomVaultDeletePlayer &deletePlayer);
 	private:
+		/** send a vault message */
 		void send(tvMessage &msg, tNetSession *u, U32 ki);
-		int findVmgr(tNetSession *u, U32 ki, U32 mgr); //!< \returns the number of that vmgr or -1
+		
+		/** finds the vault mgr with that data and updates its session ite
+		    \returns the number of that vmgr or -1 */
+		int findVmgr(tNetSession *u, U32 ki, U32 mgr);
+		
+		/** add a ref and broadcast the update */
 		void addRef(U32 saver, U32 parent, U32 son);
+		
+		/** get the ID of that node. If it doesn't exist, create it (with the given parent) and broadcast the update */
 		U32 getNode(tvNode &node, U32 parent);
+		
+		/** broadcast that this node has been changed, ecxlude the vmgr with the given data */
 		void broadcastNodeUpdate(tvNode &node, U32 origKi = 0, U32 origMgr = 0);
-		void broadcastNodeRefUpdate(tvNodeRef *ref, U32 origKi = 0, U32 origMgr = 0);
+		
+		/** broadcast that this node ref has been changed (set remove=true if it has been removed),
+		    ecxlude the vmgr with the given data. The passed tvNodeRef will be deleted.  */
+		void broadcastNodeRefUpdate(tvNodeRef *ref, bool remove, U32 origKi = 0, U32 origMgr = 0);
+		
+		/** broadcast the online state of this player node */
 		void broadcastOnlineState(tvNode &node);
 		
 		/** broadcast the message to all vmgrs interested in that node, except for the one with origKi and origMgr

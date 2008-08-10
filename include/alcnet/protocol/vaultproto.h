@@ -411,7 +411,7 @@ namespace alc {
 		// format
 		bool task;
 		Byte cmd; //!< the vault command
-		Byte compressed; //!< 1 when uncompressed, 3 when compressed
+		bool compress;
 		U16 numItems; //!< number of items
 		tvItem **items;
 		U16 context; // sub in VaultTask

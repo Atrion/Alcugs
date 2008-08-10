@@ -99,7 +99,9 @@ namespace alc {
 	
 	class tmCustomVaultDeletePlayer : public tmMsgBase {
 	public:
+		tmCustomVaultDeletePlayer(tNetSession *u);
 		tmCustomVaultDeletePlayer(tNetSession *u, U32 ki, U32 x, Byte *uid, Byte accessLevel);
+		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format
 		Byte accessLevel;

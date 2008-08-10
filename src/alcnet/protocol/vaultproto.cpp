@@ -1053,7 +1053,7 @@ namespace alc {
 		tpots = 0;
 		task = msg.task;
 		cmd = msg.cmd;
-		compressed = 1; // uncompressed
+		compress = false;
 		context = msg.context;
 		vmgr = msg.vmgr;
 		vn = msg.vn;
@@ -1067,7 +1067,7 @@ namespace alc {
 		tpots = 0;
 		task = false;
 		this->cmd = cmd;
-		compressed = 1; // uncompressed
+		compress = false;
 		context = 0;
 		vmgr = 0;
 		vn = 0;
@@ -1094,13 +1094,14 @@ namespace alc {
 		if (result != 0) {
 			throw txProtocolError(_WHERE("bad 1st result code 0x%04X", result));
 		}
-		compressed = t.getByte();
+		Byte compressed = t.getByte();
 		U32 realSize = t.getU32();
 		U32 startPos = t.tell(); // remember the pos to verify the real size
 		DBG(5, "vault message: command: 0x%02X, compressed: 0x%02X, real size: %d", cmd, compressed, realSize);
 		
 		tBBuf *buf = &t;
 		if (compressed == 0x03) { // it's compressed, so decompress it
+			compress = true;
 			U32 compressedSize = t.getU32();
 			DBGM(5, ", compressed size: %d", compressedSize);
 			tZBuf *content = new tZBuf;
@@ -1108,9 +1109,11 @@ namespace alc {
 			content->uncompress(realSize);
 			buf = content;
 		}
-		else if (compressed != 0x01) {
-			throw txProtocolError(_WHERE("unknown compression format 0x%02X", compressed));
+		else if (compressed == 0x01) {
+			compress = false;
 		}
+		else
+			throw txProtocolError(_WHERE("unknown compression format 0x%02X", compressed));
 		
 		// get the items
 		numItems = buf->getU16();
@@ -1158,7 +1161,7 @@ namespace alc {
 		if (!items) throw txProtocolError(_WHERE("don\'t have any items to write"));
 		t.putByte(cmd);
 		t.putU16(0);// result
-		t.putByte(compressed);
+		t.putByte(compress ? 0x03 : 0x01);
 		
 		// put the items into a temporary buffer which might be compressed
 		tMBuf buf; // this should be created on the stack to avoid leaks when there's an exception
@@ -1172,14 +1175,14 @@ namespace alc {
 		// save the real size of the buffer
 		t.putU32(buf.size());
 		
-		if (compressed == 0x03) {
+		if (compress) {
 			tZBuf content;
 			content.put(buf);
 			content.compress();
 			t.putU32(content.size());
 			t.put(content);
 		}
-		else if (compressed == 0x01) {
+		else {
 			t.put(buf);
 		}
 		
@@ -1231,7 +1234,7 @@ namespace alc {
 		log->print("CMD: 0x%02X ", cmd);
 		if (task) log->print("(%s)</b>, ", alcVaultGetTask(cmd));
 		else      log->print("(%s)</b>, ", alcVaultGetCmd(cmd));
-		log->print("compressed: %d<br />\n", compressed);
+		log->print("compressed: %s<br />\n", compress ? "yes" : "no");
 		if (task) log->print("sub: %d, <b>client: %d</b><br />\n", context, vmgr);
 		else      log->print("context: %d, <b>vmgr: %d</b>, vn: %d<br />\n", context, vmgr, vn);
 		

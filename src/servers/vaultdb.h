@@ -82,6 +82,9 @@ namespace alc {
 		
 		/** updates the "seen" flag of that ref */
 		void setSeen(U32 parent, U32 son, Byte seen);
+		
+		/** saves a list of direct parent nodes */
+		void getParentNodes(U32 node, int **table, int *tableSize);
 	private:
 		/** creates a query to SELECT (isUpdate = false) or UPDATE (isUpdate = true) that vault node
 		    the query is appended (using strcat) to out which must be big enough
