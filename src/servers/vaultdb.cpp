@@ -1086,7 +1086,7 @@ namespace alc {
 		}
 	}
 	
-	void tVaultDB::removeNodeRef(U32 parent, U32 son)
+	void tVaultDB::removeNodeRef(U32 parent, U32 son, bool cautious)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
@@ -1121,16 +1121,47 @@ namespace alc {
 		type = atoi(row[0]);
 		mysql_free_result(result);
 		
-		sprintf(query, "DELETE FROM %s WHERE id2='%d' AND id3='%d'", refVaultTable, parent, son);
-		sql->query(query, "removing a node reference");
-		
-		if (numParent <= 1 && (type == KImageNode || type == KTextNoteNode || type == KChronicleNode)) {
-			// there are no more references to this node, and it's a message users can send or a chronicle, so it should be save removing it
-			sprintf(query, "DELETE FROM %s WHERE idx='%d'", vaultTable, son);
-			sql->query(query, "removing a message node without any references");
-			// FIXME: remove the whole tree
+		bool safeType = cautious ? (type == KImageNode || type == KTextNoteNode || type == KChronicleNode) : type > 7;
+		if (numParent <= 1 && safeType) {
+			// there are no more references to this node, and it's a safe node to remove
+			removeNodeTree(son, cautious);
 			// FIXME: what about marker games?
 		}
+		else { // only remove this ref
+			sprintf(query, "DELETE FROM %s WHERE id2='%d' AND id3='%d'", refVaultTable, parent, son);
+			sql->query(query, "removeNodeRef: removing a node reference");
+		}
+	}
+	
+	void tVaultDB::removeNodeTree(U32 node, bool cautious)
+	{
+		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		
+		char query[2048];
+		MYSQL_RES *result;
+		MYSQL_ROW row;
+		int num;
+		
+		// remove the node and all references to it
+		sprintf(query, "DELETE FROM %s WHERE idx='%d'", vaultTable, node);
+		sql->query(query, "removeNodeTree: removing a node");
+		sprintf(query, "DELETE FROM %s WHERE id3='%d'", refVaultTable, node);
+		sql->query(query, "removeNodeTree: removing all references to a node");
+		
+		// get all references from this node and remove them
+		// we do this using recursion since doing it with a loop would make thigns more complicated without saving database queries
+		sprintf(query, "SELECT id3 FROM %s WHERE id2='%d'", refVaultTable, node);
+		sql->query(query, "removeNodeTree: getting child nodes");
+		result = sql->storeResult();
+		
+		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get child nodes"));
+		num = mysql_num_rows(result);
+		
+		for (int i = 0; i < num; ++i) {
+			row = mysql_fetch_row(result);
+			removeNodeRef(node, atoi(row[0]), cautious);
+		}
+		mysql_free_result(result);
 	}
 	
 	void tVaultDB::setSeen(U32 parent, U32 son, Byte seen)

@@ -71,7 +71,10 @@ namespace alc {
 		void getMGRs(U32 baseNode, U32 **table, U32 *tableSize);
 		
 		/** removes a node ref */
-		void removeNodeRef(U32 parent, U32 son);
+		void removeNodeRef(U32 parent, U32 son, bool cautious = true);
+		
+		/** remove a node and all sub-nodes which are not used elsewhere */
+		void removeNodeTree(U32 node, bool cautious = true);
 		
 		/** creates a node ref
 		    \returns true if everything is ok, false on error (most likely a duplicate) */
