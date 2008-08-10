@@ -77,6 +77,7 @@ void _alcVersionInitVars() {
 	#else
 	sprintf(p3,"Unable to determine system info");
 	#endif
+	tvalcVerInit = true;
 }
 
 const char * alcSystemInfo() {

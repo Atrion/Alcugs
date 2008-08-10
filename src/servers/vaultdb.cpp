@@ -41,6 +41,73 @@ namespace alc {
 
 	const char *vaultTable = "vault";
 	const char *refVaultTable = "ref_vault";
+	
+	const char *vaultTableInitScript = "\
+	CREATE TABLE `%s` (\
+		`idx` int NOT NULL auto_increment ,\
+		`type` tinyint unsigned NOT NULL default 0,\
+		`permissions` int NOT NULL default 0,\
+		`owner` int NOT NULL default 0,\
+		`grp` int NOT NULL default 0,\
+		`mod_time` timestamp NOT NULL default 0,\
+		`creator` int NOT NULL default 0,\
+		`crt_time` timestamp NOT NULL default 0,\
+		`age_time` timestamp NOT NULL default 0,\
+		`age_name` varchar(255) NOT NULL default '',\
+		`age_guid` varchar(16) NOT NULL default '',\
+		`int_1` int NOT NULL default 0,\
+		`int_2` int NOT NULL default 0,\
+		`int_3` int NOT NULL default 0,\
+		`int_4` int NOT NULL default 0,\
+		`uint_1` int NOT NULL default 0,\
+		`uint_2` int NOT NULL default 0,\
+		`uint_3` int NOT NULL default 0,\
+		`uint_4` int NOT NULL default 0,\
+		`str_1` varchar(255) NOT NULL default '',\
+		`str_2` varchar(255) NOT NULL default '',\
+		`str_3` varchar(255) NOT NULL default '',\
+		`str_4` varchar(255) NOT NULL default '',\
+		`str_5` varchar(255) NOT NULL default '',\
+		`str_6` varchar(255) NOT NULL default '',\
+		`lstr_1` varchar(255) NOT NULL default '',\
+		`lstr_2` varchar(255) NOT NULL default '',\
+		`text_1` varchar(255) NOT NULL default '',\
+		`text_2` varchar(255) NOT NULL default '',\
+		`blob_1` longblob NOT NULL ,\
+		PRIMARY KEY ( `idx` ) ,\
+		KEY `type` ( `type` ) ,\
+		KEY `owner` ( `owner` ),\
+		KEY `creator` ( `creator` ) ,\
+		KEY `age_name` ( `age_name` ) ,\
+		KEY `age_guid` ( `age_guid` ) ,\
+		KEY `int_1` ( `int_1` ) ,\
+		KEY `str_4` ( `str_4` ) ,\
+		KEY `lstr_1` ( `lstr_1` ) ,\
+		KEY `lstr_2` ( `lstr_2` )\
+	) TYPE=MyISAM PACK_KEYS=0 AUTO_INCREMENT=20001;";
+	
+	const char *refVaultTableInitScript = "\
+	CREATE TABLE `%s` (\
+		`id1` int NOT NULL default 0,\
+		`id2` int NOT NULL default 0,\
+		`id3` int NOT NULL default 0,\
+		`timestamp` int NOT NULL default 0,\
+		`microseconds` int NOT NULL default 0,\
+		`flag` tinyint unsigned NOT NULL default 0,\
+		PRIMARY KEY  (`id2`,`id3`),\
+		KEY `id2` (`id2`),\
+		KEY `id3` (`id3`)\
+	) TYPE=MyISAM;";
+	
+	const int vaultVersion=3; // only change on major vault format changes, and be sure that there is a migration (see tVaultDB::prepare)
+		/* Version history:
+			0 -> old very old format
+			1 -> old unet3 format
+			2 -> new unet3 format, adds DniCityX2Finale to allow end game sequence play
+				NOTE THIS WILL HAVE UNEXPECTED AND UNWANTED RESULTS ON NON TPOTS CLIENTS!!!
+				The vault must have at least this version for the unet3+ vault to be able to migrate it
+			3 -> current version, removes unused columns and renames the rest to the vault manager names, uses timestamp columns
+		*/
 
 	////IMPLEMENTATION
 	tVaultDB::tVaultDB(tLog *log)
@@ -64,16 +131,46 @@ namespace alc {
 		DBG(6, "creating sql\n");
 		sql = tSQL::createFromConfig();
 		if (sql->prepare()) {
-			// FIXME: create vault db if necessary
-			int version = getVersion();
-			if (version < 2 || version > 3) throw txDatabaseError(_WHERE("only vault DB version 2 and 3 are supported, not %d", version));
-			if (version == 2) {
-				log->log("Converting DB from version 2 to 3... \n");
-				migrateVersion2to3();
-				log->log("Done converting DB from version 2 to 3!\n");
+			// check if table exists
+			char query[2048]; // has to be long enough for the main vault table init script
+			sprintf(query, "SHOW TABLES LIKE '%s'", vaultTable);
+			sql->query(query, "Prepare: Looking for vault table");
+			MYSQL_RES *result = sql->storeResult();
+			bool exists = mysql_num_rows(result);
+			mysql_free_result(result);
+			// if it doesn't exist, create it
+			if (!exists) {
+				sprintf(query, vaultTableInitScript, vaultTable);
+				sql->query(query, "Prepare: Creating vault table");
+				sprintf(query, refVaultTableInitScript, refVaultTable);
+				sql->query(query, "Prepare: Creating ref vault table");
+				// create the root folder
+				tMBuf folderName;
+				Byte asciiFolderName[17];
+				folderName.putByte(0x0F);
+				folderName.putByte(0x13);
+				folderName.putByte(0x37);
+				folderName.putU32(alcGetTime());
+				folderName.putByte(random());
+				folderName.rewind();
+				alcHex2Ascii(asciiFolderName, folderName.read(8), 8);
+				sprintf(query, "INSERT INTO %s (idx, type, int_1, str_1, str_2, text_1, text_2) VALUES ('%d', 6, '%d', '%s', '%s %s', 'You must never edit or delete this node!', '%s')", vaultTable, KVaultID, vaultVersion, asciiFolderName, alcXSNAME, alcSTR_VER, alcVersionTextShort());
+				sql->query(query, "Prepare: Creating vault folder");
+				// done!
+				log->log("Started VaultDB driver (%s)\n", __U_VAULTDB_ID);
+				return true;
 			}
-			log->log("Started VaultDB driver (%s) on a vault DB version %d\n", __U_VAULTDB_ID, version);
-			return true;
+			else {
+				int version = getVersion();
+				if (version < 2 || version > vaultVersion) throw txDatabaseError(_WHERE("only vault DB version 2 to %d are supported, not %d", vaultVersion, version));
+				if (version == 2) {
+					log->log("Converting DB from version 2 to 3... \n");
+					migrateVersion2to3();
+					log->log("Done converting DB from version 2 to 3!\n");
+				}
+				log->log("Started VaultDB driver (%s)\n", __U_VAULTDB_ID);
+				return true;
+			}
 		}
 		// when we come here, it didn't work, so delete everything
 		DBG(6, "deleting sql\n");
@@ -100,11 +197,11 @@ namespace alc {
 			sprintf(query, "SELECT int_1 FROM %s WHERE type=6 LIMIT 1", vaultTable); // only the root node has type 6
 		sql->query(query, "getVersion: Checking version number");
 		result = sql->storeResult();
-		if (result == NULL) throw txDatabaseError(_WHERE("couldnt check version number"));
+		if (result == NULL) throw txDatabaseError(_WHERE("couldn't check version number"));
 		MYSQL_ROW row = mysql_fetch_row(result);
 		if (row) version = atoi(row[0]);
 		mysql_free_result(result);
-		if (!row) throw txDatabaseError("couldnt find root vault node");
+		if (!row) throw txDatabaseError("couldn't find vault folder node");
 		return version;
 	}
 	
@@ -117,13 +214,13 @@ namespace alc {
 		sql->query(query, "Getting vault folder name");
 		
 		MYSQL_RES *result = sql->storeResult();
-		if (result == NULL) throw txDatabaseError(_WHERE("couldnt query player list"));
+		if (result == NULL) throw txDatabaseError(_WHERE("couldn't query vault folder name"));
 		int number = mysql_num_rows(result);
 		
-		if (number == 0) throw txDatabaseError(_WHERE("creating the main vault folder is not yet supported"));
+		if (number == 0) throw txDatabaseError(_WHERE("could not find main vault folder"));
 		MYSQL_ROW row = mysql_fetch_row(result);
 		if (atoi(row[0]) != KVaultID || strlen(row[1]) != 16)
-			throw txDatabaseError(_WHERE("invalid main vault folder found (or there's none at all"));
+			throw txDatabaseError(_WHERE("invalid main vault folder found"));
 		strcpy((char *)folder, row[1]);
 		mysql_free_result(result);
 	}
@@ -198,7 +295,7 @@ namespace alc {
 		sql->query(query, "getting player list");
 		
 		MYSQL_RES *result = sql->storeResult();
-		if (result == NULL) throw txDatabaseError(_WHERE("couldnt query player list"));
+		if (result == NULL) throw txDatabaseError(_WHERE("couldn't query player list"));
 		int number = mysql_num_rows(result);
 		
 		for (int i = 0; i < number; ++i) {
@@ -224,7 +321,7 @@ namespace alc {
 		sql->query(query, "checking ki");
 		
 		MYSQL_RES *result = sql->storeResult();
-		if (result == NULL) throw txDatabaseError(_WHERE("couldnt check ki"));
+		if (result == NULL) throw txDatabaseError(_WHERE("couldn't check ki"));
 		int number = mysql_num_rows(result);
 		
 		if (number == 1) {
@@ -446,7 +543,7 @@ namespace alc {
 		// now, let's execute it
 		sql->query(query, "finding node");
 		MYSQL_RES *result = sql->storeResult();
-		if (result == NULL) throw txDatabaseError(_WHERE("couldnt check ki"));
+		if (result == NULL) throw txDatabaseError(_WHERE("couldn't check ki"));
 		int number = mysql_num_rows(result);
 		if (number > 1) throw txDatabaseError(_WHERE("strange, I should NEVER have several results when asking for a node"));
 		
@@ -691,7 +788,7 @@ namespace alc {
 		sql->query(query, "getManifest: getting first node");
 		
 		result = sql->storeResult();
-		if (result == NULL) throw txDatabaseError(_WHERE("couldnt get first node"));
+		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get first node"));
 		int number = mysql_num_rows(result);
 		if (number > 1) throw txDatabaseError(_WHERE("strange, I should NEVER have several results when asking for a node"));
 		else if (number < 1) throw txDatabaseError(_WHERE("getManfiest: First node %d does not exist", baseNode));
@@ -791,7 +888,7 @@ namespace alc {
 			sql->query(query, "getManifest: getting child nodes");
 			
 			result = sql->storeResult();
-			if (result == NULL) throw txDatabaseError(_WHERE("couldnt get nodes"));
+			if (result == NULL) throw txDatabaseError(_WHERE("couldn't get nodes"));
 			int number = mysql_num_rows(result);
 				
 			// the result goes into the feed table, and the refs are saved in their table as well
@@ -933,7 +1030,7 @@ namespace alc {
 			sql->query(query, "getMGRs: getting child nodes");
 			
 			result = sql->storeResult();
-			if (result == NULL) throw txDatabaseError(_WHERE("couldnt get nodes"));
+			if (result == NULL) throw txDatabaseError(_WHERE("couldn't get nodes"));
 			U32 number = mysql_num_rows(result);
 				
 			// the result goes into the feed table
@@ -1012,7 +1109,7 @@ namespace alc {
 		sql->query(query, "fetching nodes");
 		
 		result = sql->storeResult();
-		if (result == NULL) throw txDatabaseError(_WHERE("couldnt fetch nodes"));
+		if (result == NULL) throw txDatabaseError(_WHERE("couldn't fetch nodes"));
 		*nNodes = mysql_num_rows(result);
 		
 		*nodes = (tvNode **)malloc((*nNodes)*sizeof(tvNode *));

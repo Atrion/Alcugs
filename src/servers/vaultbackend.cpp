@@ -297,6 +297,9 @@ namespace alc {
 				log->flush();
 				U32 mgr;
 				
+				// we can be sure that the vault has already been initialized (main folders and the welcome message are created) since
+				// a player has to be created to get here
+				
 				tvNode mgrNode;
 				mgrNode.flagB = MType;
 				mgrNode.type = nodeType;
@@ -585,8 +588,11 @@ namespace alc {
 			// remove the node
 			vaultDB->removeNodeTree(deletePlayer.ki, false); // don't be cautious
 			// broadcast the removal
-			for (int i = 0; i < tableSize; ++i)
+			DBG(1, "num child nodes: %d\n", tableSize);
+			for (int i = 0; i < tableSize; ++i) {
+				DBG(9, "child node: %d\n", table[i]);
 				broadcastNodeRefUpdate(new tvNodeRef(0, table[i], deletePlayer.ki), /*remove:*/true);
+			}
 			// free stuff
 			free((void *)table);
 			

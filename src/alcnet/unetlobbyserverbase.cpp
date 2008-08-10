@@ -301,7 +301,6 @@ namespace alc {
 				tMD5Buf md5buffer;
 				md5buffer.putU32(alcGetTime());
 				md5buffer.putU32(alcGetMicroseconds());
-				srandom(alcGetTime());
 				md5buffer.putU32(random());
 				md5buffer.putU32(alcGetUptime().seconds);
 				md5buffer.put(authHello.account);

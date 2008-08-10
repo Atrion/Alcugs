@@ -507,10 +507,13 @@ namespace alc {
 	
 	void tTrackingBackend::generateFakeGuid(Byte *guid)
 	{
-		*(U16 *)(guid)=0xFFFF;
-		*(U32 *)(guid+2)=(U32)random();
-		*(Byte *)(guid+6)=(Byte)alcGetMicroseconds();
-		*(Byte *)(guid+7)=0x00;
+		tMBuf buf;
+		buf.putU16(0xFFFF);
+		buf.putU32(random());
+		buf.putByte(alcGetMicroseconds());
+		buf.putByte(0x00);
+		buf.rewind();
+		memcpy(guid, buf.read(8), 8);
 	}
 	
 	void tTrackingBackend::updateStatusFile(void)

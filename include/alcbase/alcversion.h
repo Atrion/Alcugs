@@ -34,7 +34,7 @@ namespace alc {
 /** \brief Returns short version info
 */
 const char * alcVersionTextShort();
-/** \brief Returns long version info
+/** \brief Returns long version info (including a short license info)
 */
 const char * alcVersionText();
 
