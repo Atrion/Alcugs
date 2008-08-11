@@ -87,6 +87,8 @@ namespace alc {
 		tVaultDB *vaultDB;
 		Byte vaultFolderName[17];
 		
+		tGuidGen *guidGen;
+		
 		tLog *log, *logHtml;
 		bool shortHtml;
 		tUnet *net;

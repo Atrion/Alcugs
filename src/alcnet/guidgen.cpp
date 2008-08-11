@@ -118,12 +118,15 @@ namespace alc {
 		return NULL;
 	}
 	
-	tGuidGen::tGuidGen(tAgeParser *ageParser)
+	tGuidGen::tGuidGen(void)
 	{
-		this->ageParser = ageParser;
-		// load the list of private ages
+		// load age file dir and age files
 		tConfig *cfg = alcGetConfig();
-		tStrBuf var = cfg->getVar("private_ages");
+		tStrBuf var = cfg->getVar("age");
+		if (!var.endsWith("/")) var.writeStr("/");
+		ageParser = new tAgeParser((char *)var.c_str());
+		// load the list of private ages
+		var = cfg->getVar("private_ages");
 		if (var.isNull()) strcpy((char *)privateAges, "AvatarCustomization,Personal,Nexus,BahroCave");
 		else strncpy((char *)privateAges, (char *)var.c_str(), 1023);
 		// load instance mode setting
@@ -168,9 +171,13 @@ namespace alc {
 		The 5 byte is reserved for a random number for the hoods, and any other age (for the future)
 		And the 1st bit of the 4 byte, should be always 0 (since the Ki number is a signed value, this
 		Will happen always. */
-		memset(guid, 0, 8);
-		if (isPrivate) *(U32 *)(guid+1) = ki;
-		*(U16 *)(guid+6) = ageInfo->seqPrefix;
+		tMBuf buf;
+		buf.putByte(0);
+		buf.putU32(isPrivate ? ki : 0);
+		buf.putByte(0);
+		buf.putU16(ageInfo->seqPrefix);
+		buf.rewind();
+		memcpy(guid, buf.read(8), 8);
 		return true;
 	}
 

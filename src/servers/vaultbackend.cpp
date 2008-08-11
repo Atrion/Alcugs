@@ -49,6 +49,7 @@ namespace alc {
 		this->net = net;
 		log = logHtml = lnull;
 		vaultDB = NULL;
+		guidGen = NULL;
 		nVmgrs = 0;
 		vmgrs = NULL;
 	}
@@ -74,6 +75,10 @@ namespace alc {
 		if (vaultDB != NULL) {
 			delete vaultDB;
 			vaultDB = NULL;
+		}
+		if (guidGen != NULL) {
+			delete guidGen;
+			guidGen = NULL;
 		}
 		if (log != lnull) {
 			delete log;
@@ -111,6 +116,8 @@ namespace alc {
 		log->flush();
 		vaultDB->getVaultFolderName(vaultFolderName);
 		DBG(5, "global vault folder name is %s\n", vaultFolderName);
+		
+		guidGen = new tGuidGen();
 	}
 	
 	void tVaultBackend::createVault(void)

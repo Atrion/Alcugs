@@ -41,6 +41,7 @@
 ;log_files_path = log/ # path top contain the log files (parameter: [-log path/]) (default log/)
 ;vault.html.log = 1 # enables/disables logging of vault objects to a HTML file in lobby, game and vault server (default 1)
 ;vault.html.log.short = 0 # makes the vault logging much shorter (saves up to 75%) and doesn't dump data to files (default 0)
+;net.log.ack = 1 # enables/disables logging of acks (default 1)
 
 # sets the bandwidth in kbit/s. This speed is anounced to the clients
 # and used to compute how fast the server sends the messages
@@ -67,6 +68,10 @@ db.passwd = "yourpassword"
 # paths
 bin = "~/bin/"
 age = "~/age/"
+
+# Instancing settings (used by tracking and vault)
+;instance_mode = 1 # 0: all ages are global; 1 (default): the ages specified in private_ages are private
+;private_ages = "AvatarCustomization,Personal,Nexus,BahroCave"
 
 # compatability for old servers (used by lobby and game)
 # 0 = latest (default), 1 = unet2, 2 = unet3, 3 = unet3+
@@ -113,10 +118,6 @@ port = 2011
 
 # enable/disable tracking logging
 ;tracking.log = 1 # default 1
-
-# Instancing settings
-;instance_mode = 1 # 0: all ages are global; 1 (default): the ages specified in private_ages are private
-;private_ages = "AvatarCustomization,Personal,Nexus,BahroCave"
 
 # Age state settings
 ;tracking.tmp.hacks.agestate = 1 # enable age state saving (on by default)

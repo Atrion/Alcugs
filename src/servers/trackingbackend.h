@@ -117,8 +117,7 @@ namespace alc {
 		Byte fakeLobbyGuid[8]; //!< saves the GUID for the fake lobby (for UruVision)
 		
 		tGuidGen *guidGen;
-		tAgeParser *ageParser;
-		Byte ageDir[256], resettingAges[1024];
+		Byte resettingAges[1024];
 		bool loadAgeState;
 		
 		bool statusFileUpdate;

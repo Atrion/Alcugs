@@ -45,7 +45,7 @@ namespace alc {
 	{
 	public:
 		tAgeInfo(const char *dir, const char *file);
-		int seqPrefix;
+		U16 seqPrefix;
 		Byte name[200];
 	};
 	
@@ -63,8 +63,9 @@ namespace alc {
 	class tGuidGen
 	{
 	public:
-		tGuidGen(tAgeParser *ageParser);
+		tGuidGen(void);
 		bool generateGuid(Byte *guid, const Byte *age, U32 ki);
+		inline tAgeParser *getAgeParser() { return ageParser; }
 	private:
 		bool isAgePrivate(const Byte *age);
 	

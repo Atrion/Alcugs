@@ -90,7 +90,6 @@ namespace alc {
 	{
 		log = lnull;
 		guidGen = NULL;
-		ageParser = NULL;
 		this->servers = servers;
 		this->net = net;
 		this->host = host;
@@ -126,10 +125,6 @@ namespace alc {
 			delete guidGen;
 			guidGen = NULL;
 		}
-		if (ageParser != NULL) {
-			delete ageParser;
-			ageParser = NULL;
-		}
 	}
 	
 		
@@ -142,12 +137,6 @@ namespace alc {
 			log = new tLog("tracking.log", 4, 0);
 			log->log("Tracking driver started (%s)\n\n", __U_TRACKINGBACKEND_ID);
 			log->flush();
-		}
-		var = cfg->getVar("age");
-		if (var.isNull()) ageDir[0] = 0;
-		else {
-			if (!var.endsWith("/")) var.writeStr("/");
-			strncpy((char *)ageDir, (char *)var.c_str(), 255);
 		}
 		
 		var = cfg->getVar("tracking.tmp.hacks.agestate");
@@ -168,8 +157,7 @@ namespace alc {
 		else strncpy((char *)statusXMLFile, (char *)var.c_str(), 255);
 		statusFileUpdate = true;
 		
-		ageParser = new tAgeParser((char *)ageDir);
-		guidGen = new tGuidGen(ageParser);
+		guidGen = new tGuidGen();
 	}
 	
 	void tTrackingBackend::findServer(tmCustomFindServer &findServer)
@@ -334,7 +322,7 @@ namespace alc {
 				log->log("ERR: Found game server %s without a Lobby belonging to it\n", game->str());
 			
 			// get the age's sequence prefix
-			tAgeInfo *age = ageParser->getAge(game->name);
+			tAgeInfo *age = guidGen->getAgeParser()->getAge(game->name);
 			if (!age) log->log("WARN: Strange, I can\'t find the age file for game server %s\n", game->str());
 			else data->seqPrefix = age->seqPrefix;
 		}
