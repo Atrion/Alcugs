@@ -53,6 +53,7 @@
 #include "unetserverbase.h"
 #include "unetlobbyserverbase.h"
 #include "sql.h"
+#include "guidgen.h"
 
 #endif
 

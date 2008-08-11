@@ -40,8 +40,6 @@
 
 #include <protocol/trackingmsg.h>
 
-#include "guidgen.h"
-
 namespace alc {
 
 	////DEFINITIONS

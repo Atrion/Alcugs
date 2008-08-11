@@ -43,5 +43,6 @@
 #include "protocol/authmsg.h"
 #include "protocol/trackingmsg.h"
 #include "protocol/vaultmsg.h"
+#include "protocol/vaultproto.h"
 
 #endif

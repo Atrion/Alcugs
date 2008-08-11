@@ -54,6 +54,7 @@ libalcnet1_a_SOURCES = \
  src/alcnet/unetserverbase.cpp \
  src/alcnet/unetlobbyserverbase.cpp \
  src/alcnet/sql.cpp \
+ src/alcnet/guidgen.cpp \
  src/alcnet/protocol/authmsg.cpp \
  src/alcnet/protocol/trackingmsg.cpp \
  src/alcnet/protocol/lobbybasemsg.cpp \
@@ -108,11 +109,9 @@ alcugs_lobby_CPPFLAGS = -DI_AM_THE_LOBBY_SERVER
 # tracking server
 alcugs_tracking_SOURCES = \
  src/servers/alcugs_main.cpp \
- src/servers/guidgen.cpp \
  src/servers/trackingbackend.cpp \
  src/servers/trackingserver.cpp
 alcugs_tracking_INCLUDES = \
- src/servers/guidgen.h \
  src/servers/trackingbackend.h \
  src/servers/trackingserver.h
 alcugs_tracking_LDADD = libalcnet1.a libalcbase1.a

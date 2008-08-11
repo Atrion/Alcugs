@@ -41,7 +41,6 @@
 #include "alcugs.h"
 #include "alcnet.h"
 #include "protocol/msgparsers.h"
-#include "protocol/vaultproto.h"
 
 ////extra includes
 
