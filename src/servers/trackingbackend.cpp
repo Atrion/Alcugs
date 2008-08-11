@@ -311,9 +311,9 @@ namespace alc {
 		memcpy(game->serverGuid, serverGuid, 8);
 		strncpy((char *)game->name, (char *)setGuid.age.c_str(), 199);
 		
-		tTrackingData *data = (tTrackingData *)game->data;
-		if (data) return; // ignore the rest if the info if we already got it. IP and Port can't change.
-		data = new tTrackingData;
+		
+		if (game->data) return; // ignore the rest of the info if we already got it. IP and Port can't change.
+		tTrackingData *data = new tTrackingData;
 		data->isLobby = (ntohs(game->getPort()) == 5000); // FIXME: the criteria to determine whether it's a lobby or a game server is BAD
 		strncpy((char *)data->externalIp, (char *)setGuid.externalIp.c_str(), 99);
 		if (!data->isLobby) { // let's look to which lobby this server belongs
@@ -338,9 +338,9 @@ namespace alc {
 			if (!age) log->log("WARN: Strange, I can\'t find the age file for game server %s\n", game->str());
 			else data->seqPrefix = age->seqPrefix;
 		}
-		else
+		else // if it is a lobby
 			generateFakeGuid(data->agentGuid); // create guid for UruVision
-		game->data = data;
+		game->data = data; // save the data
 		log->log("Found server at %s: %s (%s)\n", game->str(), game->name, alcGetStrGuid(game->serverGuid));
 		
 		notifyWaiting(game);
@@ -349,7 +349,10 @@ namespace alc {
 	
 	void tTrackingBackend::updatePlayer(tNetSession *game, tmCustomPlayerStatus &playerStatus)
 	{
-		if (!game->data) throw txUnet(_WHERE("server passed in tTrackingBackend::updatePlayer is not a game/lobby server"));
+		if (!game->data)
+			// throwing this error will terminate the connection to this server, which in term should result in the server going down
+			//  (game servers should quit when they loose the connection to the tracking server)
+			throw txProtocolError(_WHERE("server passed in tTrackingBackend::updatePlayer is not a game/lobby server"));
 		statusFileUpdate = true;
 		/* Flags:
 		0: delete
@@ -381,7 +384,7 @@ namespace alc {
 				++count;
 			}
 			else { // if it already exists, check if the avi is already logged in elsewhere
-				// to do so, we first check if the game server the players uses changed. if that's the case, and the player did not request to link, kick the old player
+				// to do so, we first check if the game server the player uses changed. if that's the case, and the player did not request to link, kick the old player
 				if (player->u != game && player->status != RInRoute && player->status != RLeaving) {
 					tmPlayerTerminated term(player->u, player->ki, RLoggedInElsewhere);
 					net->send(term);
