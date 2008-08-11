@@ -61,14 +61,14 @@ namespace alc {
 		    \returns the number of that vmgr or -1 */
 		int findVmgr(tNetSession *u, U32 ki, U32 mgr);
 		
+		/** creates the main vault nodes like AllPlayers and GlobalInbox */
+		void createVault(void);
+		
 		/** add a ref and broadcast the update */
 		void addRef(U32 saver, U32 parent, U32 son);
 		
 		/** get the ID of that node. If it doesn't exist, create it (with the given parent) and broadcast the update */
 		U32 getNode(tvNode &node, U32 parent);
-		
-		/** creates the main vault nodes like AllPlayers and GlobalInbox */
-		void createVault(void);
 		
 		/** broadcast that this node has been changed, ecxlude the vmgr with the given data */
 		void broadcastNodeUpdate(tvNode &node, U32 origKi = 0, U32 origMgr = 0);

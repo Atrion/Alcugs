@@ -138,6 +138,14 @@ namespace alc {
 		vaultDB->createNode(*node);
 		delete node;
 		
+		// create Global Data folder
+		node = new tvNode(MType | MInt32_1 | MStr64_1);
+		node->type = KFolderNode;
+		node->int1 = KVaultMgrGlobalDataFolder;
+		node->str1 = "Global Data";
+		vaultDB->createNode(*node);
+		delete node;
+		
 		// create System node
 		node = new tvNode(MType);
 		node->type = KSystem;
@@ -627,6 +635,7 @@ namespace alc {
 	U32 tVaultBackend::createPlayer(tmCustomVaultCreatePlayer &createPlayer)
 	{
 		tvNode *node;
+		tvNodeRef *ref;
 		// check if the name is already in use
 		node = new tvNode(MType | MlStr64_1);
 		node->type = KVNodeMgrPlayerNode;
@@ -648,9 +657,38 @@ namespace alc {
 		}
 		delete node;
 		
-		// FIXME this is far from complete
+		// create player node
+		node = new tvNode(MType | MPerms | MStr64_1 | MlStr64_1 | MlStr64_2 | MText_1);
+		node->type = KVNodeMgrPlayerNode;
+		node->permissions = KDefaultPermissions;
+		node->str1 = createPlayer.gender;
+		node->lStr1 = createPlayer.avatar;
+		node->lStr2.writeStr(alcGetStrUid(createPlayer.uid));
+		node->text1 = createPlayer.login;
+		U32 ki = vaultDB->createNode(*node);
+		delete node;
 		
-		return 1;
+		// create player info node
+		node = new tvNode(MType | MPerms | MOwner | MUInt32_1 | MlStr64_1);
+		node->type = KPlayerInfoNode;
+		node->permissions = KDefaultPermissions;
+		node->owner = ki;
+		node->uInt1 = ki; // used by client to find e.g. sender of a KI message
+		node->lStr1 = createPlayer.avatar;
+		U32 infoNode = vaultDB->createNode(*node);
+		delete node;
+		
+		// create link player node -> info node
+		ref = new tvNodeRef(ki, ki, infoNode);
+		vaultDB->addNodeRef(*ref);
+		delete ref;
+		
+		// create link AllPlayersFolder -> info node (broadcasted)
+		addRef(ki, allPlayers, infoNode);
+		
+		// FIXME: link that player with Ae'gura, the hood and DniCityX2Final
+		
+		return ki;
 	}
 	
 	void tVaultBackend::deletePlayer(tmCustomVaultDeletePlayer &deletePlayer)
