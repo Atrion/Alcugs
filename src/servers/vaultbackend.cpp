@@ -39,6 +39,10 @@
 
 namespace alc {
 
+	// FIXME: make these configurable
+	const char *welcomeMsgTitle = "Shorah b'shehmtee";
+	const char *welcomeMsgText = "Shorah b'shehmtee, this Shard is running the Alcugs server software.\nThanks for your support!\n\nWelcome to the new adventure, feel free to explore Er'cana or any other age. Be careful if you see new books, some explorers have found some Kortee'nea and other ancient technology in a secret room in Kirel DRC neighborhood, and they are starting to learn the art of writting.\n";
+
 	////IMPLEMENTATION
 	tVaultBackend::tVaultBackend(tUnet *net)
 	{
@@ -111,7 +115,61 @@ namespace alc {
 	
 	void tVaultBackend::createVault(void)
 	{
+		tvNode *node;
+		tvNodeRef *ref;
+		// create AllPlayersFolder
+		node = new tvNode(MType | MInt32_1);
+		node->type = KFolderNode;
+		node->int1 = KAllPlayersFolder;
+		vaultDB->createNode(*node);
+		delete node;
 		
+		// create AllAgeGlobalSDLNodesFolder
+		node = new tvNode(MType | MInt32_1);
+		node->type = KFolderNode;
+		node->int1 = KAllAgeGlobalSDLNodesFolder;
+		vaultDB->createNode(*node);
+		delete node;
+		
+		// create PublicAgesFolder
+		node = new tvNode(MType | MInt32_1);
+		node->type = KFolderNode;
+		node->int1 = KPublicAgesFolder;
+		vaultDB->createNode(*node);
+		delete node;
+		
+		// create System node
+		node = new tvNode(MType);
+		node->type = KSystem;
+		U32 systemNode = vaultDB->createNode(*node);
+		delete node;
+		
+		// create GlobalInboxFolder
+		node = new tvNode(MType | MInt32_1);
+		node->type = KFolderNode;
+		node->int1 = KGlobalInboxFolder;
+		U32 globalInboxNode = vaultDB->createNode(*node);
+		delete node;
+		
+		// create link System > GlobalInboxFolder
+		ref = new tvNodeRef(KVaultID, systemNode, globalInboxNode);
+		vaultDB->addNodeRef(*ref);
+		delete ref;
+		
+		// create welcome message
+		node = new tvNode(MType | MStr64_1 | MBlob1);
+		node->type = KTextNoteNode;
+		node->str1.writeStr(welcomeMsgTitle);
+		node->blob1Size = strlen(welcomeMsgText)+1;
+		node->blob1 = (Byte *)malloc(node->blob1Size * sizeof(Byte));
+		strcpy((char *)node->blob1, welcomeMsgText);
+		U32 welcomeMsgNode = vaultDB->createNode(*node);
+		delete node;
+		
+		// create link GlobalInbox -> WelcomeMsg
+		ref = new tvNodeRef(KVaultID, globalInboxNode, welcomeMsgNode);
+		vaultDB->addNodeRef(*ref);
+		delete ref;
 	}
 	
 	void tVaultBackend::send(tvMessage &msg, tNetSession *u, U32 ki)
