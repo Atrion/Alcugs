@@ -109,6 +109,11 @@ namespace alc {
 		DBG(5, "global vault folder name is %s\n", vaultFolderName);
 	}
 	
+	void tVaultBackend::createVault(void)
+	{
+		
+	}
+	
 	void tVaultBackend::send(tvMessage &msg, tNetSession *u, U32 ki)
 	{
 		msg.print(logHtml, /*clientToServer:*/false, u, shortHtml, ki);
@@ -119,7 +124,7 @@ namespace alc {
 	void tVaultBackend::sendPlayerList(tmCustomVaultAskPlayerList &askPlayerList)
 	{
 		tmCustomVaultPlayerList list(askPlayerList.getSession(), askPlayerList.x, askPlayerList.uid);
-		list.numberPlayers = vaultDB->getPlayerList(list.players, askPlayerList.uid);
+		list.numberPlayers = vaultDB->getPlayerList(askPlayerList.uid, &list.players);
 		net->send(list);
 	}
 	
@@ -178,7 +183,7 @@ namespace alc {
 		node.type = KPlayerInfoNode;
 		node.owner = status.ki;
 		U32 infoNode = vaultDB->findNode(node, NULL, false);
-		if (!infoNode) throw txProtocolError(_WHERE("KI %d doesn't have a info node?!?", status.ki));
+		if (!infoNode) throw txUnet(_WHERE("KI %d doesn't have a info node?!?", status.ki));
 		vaultDB->fetchNodes(&infoNode, 1, &nodes, &nNodes);
 		assert(nNodes == 1);
 		(*nodes)->str1 = status.age;
@@ -189,6 +194,8 @@ namespace alc {
 		// free stuff
 		delete *nodes;
 		free((void *)nodes);
+		
+		// FIXME add linking rules hack
 	}
 	
 	int tVaultBackend::findVmgr(tNetSession *u, U32 ki, U32 mgr)
@@ -515,17 +522,15 @@ namespace alc {
 				if (rcvPlayer < 0 || !savedNode) throw txProtocolError(_WHERE("Got a VSendNode without the reciever or the node"));
 				tvNode *node; // make sure it is reset after being used, vaultDB might change it
 				// find the sender's info node
-				node = new tvNode;
-				node->flagB = MType | MOwner;
+				node = new tvNode(MType | MOwner);
 				node->type = KPlayerInfoNode;
 				node->owner = ki;
 				U32 infoNode = vaultDB->findNode(*node);
 				delete node;
-				if (!infoNode) throw txProtocolError(_WHERE("Couldn't find a players info node?!?"));
+				if (!infoNode) throw txUnet(_WHERE("Couldn't find a players info node?!?"));
 				
 				// find and create the PeopleIKnowAboutFolder
-				node = new tvNode;
-				node->flagB = MType | MOwner | MInt32_1;
+				node = new tvNode (MType | MOwner | MInt32_1);
 				node->type = KPlayerInfoListNode;
 				node->owner = rcvPlayer;
 				node->int1 = KPeopleIKnowAboutFolder;
@@ -533,8 +538,7 @@ namespace alc {
 				delete node;
 				
 				// find and create the InboxFolder
-				node = new tvNode;
-				node->flagB = MType | MOwner | MInt32_1;
+				node = new tvNode(MType | MOwner | MInt32_1);
 				node->type = KFolderNode;
 				node->owner = rcvPlayer;
 				node->int1 = KInboxFolder;
@@ -562,6 +566,35 @@ namespace alc {
 		}
 	}
 	
+	U32 tVaultBackend::createPlayer(tmCustomVaultCreatePlayer &createPlayer)
+	{
+		tvNode *node;
+		// check if the name is already in use
+		node = new tvNode(MType | MlStr64_1);
+		node->type = KVNodeMgrPlayerNode;
+		node->lStr1 = createPlayer.avatar;
+		U32 playerNode = vaultDB->findNode(*node);
+		delete node;
+		if (playerNode) return 0;
+		
+		// so now we have to create a new player
+		// first, find the AllPlayersFolder
+		node = new tvNode(MType | MInt32_1);
+		node->type = KFolderNode;
+		node->int1 = KAllPlayersFolder;
+		U32 allPlayers = vaultDB->findNode(*node);
+		if (!allPlayers) {
+			createVault();
+			allPlayers = vaultDB->findNode(*node);
+			if (!allPlayers) throw txUnet(_WHERE("could not find or create all players folder"));
+		}
+		delete node;
+		
+		// FIXME this is far from complete
+		
+		return 1;
+	}
+	
 	void tVaultBackend::deletePlayer(tmCustomVaultDeletePlayer &deletePlayer)
 	{
 		// FIXME: if the player is currently subscribed in the vault manager, it is not removed from there
@@ -575,13 +608,12 @@ namespace alc {
 		if (deletePlayer.accessLevel <= AcAdmin || strcmp((char *)(*nodes)->lStr2.c_str(), (char *)alcGetStrUid(deletePlayer.uid)) == 0) {
 			int *table, tableSize;
 			// find the  info node
-			tvNode *node = new tvNode;
-			node->flagB = MType | MOwner;
+			tvNode *node = new tvNode(MType | MOwner);
 			node->type = KPlayerInfoNode;
 			node->owner = deletePlayer.ki;
 			U32 infoNode = vaultDB->findNode(*node);
 			delete node;
-			if (!infoNode) throw txProtocolError(_WHERE("Couldn't find a players info node?!?"));
+			if (!infoNode) throw txUnet(_WHERE("Couldn't find a players info node?!?"));
 			
 			// remove player node and all sub-nodes
 			vaultDB->getParentNodes(deletePlayer.ki, &table, &tableSize);

@@ -537,15 +537,15 @@ namespace alc {
 	}
 	
 	//// tvNode
-	tvNode::tvNode(void) : tvBase()
+	tvNode::tvNode(U32 flagB) : tvBase()
 	{
 		blob1Size = 0;
 		blob1 = NULL;
 		
 		// set flags to empty
-		flagA = 0x00000001; // this means that flagC is ignored
-		flagB = 0x00000000;
-		flagC = 0x00000000;
+		this->flagA = 0x00000001; // this means that flagC is ignored
+		this->flagB = flagB;
+		this->flagC = 0x00000000;
 	}
 	
 	tvNode::~tvNode(void)

@@ -49,6 +49,10 @@ namespace alc {
 		void updatePlayerStatus(tmCustomVaultPlayerStatus &status);
 		void processVaultMsg(tvMessage &msg, tNetSession *u, U32 ki);
 		void deletePlayer(tmCustomVaultDeletePlayer &deletePlayer);
+		U32 createPlayer(tmCustomVaultCreatePlayer &createPlayer); //!< \returns KI number of created player or 0 if name already exists
+		inline int getNumberOfPlayers(Byte *uid) {
+			return vaultDB->getPlayerList(uid);
+		}
 	private:
 		/** send a vault message */
 		void send(tvMessage &msg, tNetSession *u, U32 ki);
@@ -62,6 +66,9 @@ namespace alc {
 		
 		/** get the ID of that node. If it doesn't exist, create it (with the given parent) and broadcast the update */
 		U32 getNode(tvNode &node, U32 parent);
+		
+		/** creates the main vault nodes like AllPlayers and GlobalInbox */
+		void createVault(void);
 		
 		/** broadcast that this node has been changed, ecxlude the vmgr with the given data */
 		void broadcastNodeUpdate(tvNode &node, U32 origKi = 0, U32 origMgr = 0);

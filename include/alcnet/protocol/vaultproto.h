@@ -332,7 +332,7 @@ namespace alc {
 	public:
 		/** initializes a vault node. make sure you initialize the first fields (up to modMicrosec) before sending since they
 		    will also be sent when their flag is off */
-		tvNode(void);
+		tvNode(U32 flagB = 0);
 		
 		virtual ~tvNode(void);
 		virtual void store(tBBuf &t);

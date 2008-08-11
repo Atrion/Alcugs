@@ -78,7 +78,9 @@ namespace alc {
 	
 	class tmCustomVaultCreatePlayer : public tmMsgBase {
 	public:
+		tmCustomVaultCreatePlayer(tNetSession *u);
 		tmCustomVaultCreatePlayer(tNetSession *u, U32 x, Byte *uid, Byte accessLevel, const Byte *login, tUStr &avatar, tUStr &gender, tUStr &friendName, tUStr &key);
+		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format
 		tUStr login, avatar, gender, friendName, key;
@@ -90,7 +92,9 @@ namespace alc {
 	class tmCustomVaultPlayerCreated : public tmMsgBase {
 	public:
 		tmCustomVaultPlayerCreated(tNetSession *u);
+		tmCustomVaultPlayerCreated(tNetSession *u, U32 ki, U32 x, const Byte *uid, Byte result);
 		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
 		// format
 		Byte result;
 	protected:

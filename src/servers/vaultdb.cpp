@@ -151,7 +151,7 @@ namespace alc {
 				folderName.putByte(0x13);
 				folderName.putByte(0x37);
 				folderName.putU32(alcGetTime());
-				folderName.putByte(random());
+				folderName.putByte(random()%250);
 				folderName.rewind();
 				alcHex2Ascii(asciiFolderName, folderName.read(8), 8);
 				sprintf(query, "INSERT INTO %s (idx, type, int_1, str_1, str_2, text_1, text_2) VALUES ('%d', 6, '%d', '%s', '%s %s', 'You must never edit or delete this node!', '%s')", vaultTable, KVaultID, vaultVersion, asciiFolderName, alcXSNAME, alcSTR_VER, alcVersionTextShort());
@@ -284,12 +284,12 @@ namespace alc {
 		sql->query(query, "migrateVersion2to3: setting version number");
 	}
 	
-	int tVaultDB::getPlayerList(tMBuf &t, const Byte *uid)
+	int tVaultDB::getPlayerList(const Byte *uid, tMBuf *t)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
 		char query[1024];
-		t.clear();
+		if (t) t->clear();
 		
 		sprintf(query, "SELECT idx, lstr_1, int_2 FROM %s WHERE lstr_2 = '%s'", vaultTable, alcGetStrUid(uid));
 		sql->query(query, "getting player list");
@@ -298,13 +298,15 @@ namespace alc {
 		if (result == NULL) throw txDatabaseError(_WHERE("couldn't query player list"));
 		int number = mysql_num_rows(result);
 		
-		for (int i = 0; i < number; ++i) {
-			MYSQL_ROW row = mysql_fetch_row(result);
-			t.putU32(atoi(row[0])); // KI
-			tUStr avatar(0); // normal UruString
-			avatar.writeStr(row[1]);
-			t.put(avatar);
-			t.putByte(atoi(row[2])); // flags
+		if (t) {
+			for (int i = 0; i < number; ++i) {
+				MYSQL_ROW row = mysql_fetch_row(result);
+				t->putU32(atoi(row[0])); // KI
+				tUStr avatar(0); // normal UruString
+				avatar.writeStr(row[1]);
+				t->put(avatar);
+				t->putByte(atoi(row[2])); // flags
+			}
 		}
 		mysql_free_result(result);
 		return number;

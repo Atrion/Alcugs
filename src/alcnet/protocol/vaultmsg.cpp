@@ -165,6 +165,20 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultCreatePlayer
+	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u)
+	 : tmMsgBase(NetMsgCustomVaultCreatePlayer, plNetX | plNetUID | plNetVersion | plNetAck | plNetCustom, u)
+	{
+#ifdef ENABLE_UNET2
+		if (u->proto == 1) unsetFlags(plNetUID);
+#endif
+
+		this->login.setVersion(5); // inverted
+		this->avatar.setVersion(0); // normal UruString
+		this->gender.setVersion(0); // normal UruString
+		this->friendName.setVersion(0); // normal UruString
+		this->key.setVersion(0); // normal UruString
+	}
+	
 	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u, U32 x, Byte *uid,
 	  Byte accessLevel, const Byte *login, tUStr &avatar, tUStr &gender, tUStr &friendName, tUStr &key)
 	 : tmMsgBase(NetMsgCustomVaultCreatePlayer, plNetX | plNetUID | plNetVersion | plNetAck | plNetCustom, u),
@@ -183,6 +197,29 @@ namespace alc {
 		this->gender.setVersion(0); // normal UruString
 		this->friendName.setVersion(0); // normal UruString
 		this->key.setVersion(0); // normal UruString
+	}
+	
+	void tmCustomVaultCreatePlayer::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		if (!hasFlags(plNetX)) throw txProtocolError(_WHERE("X flag missing"));
+#ifndef ENABLE_UNET2
+		if (!hasFlags(plNetUID)) throw txProtocolError(_WHERE("UID flag missing"));
+#endif
+		t.get(login);
+#ifdef ENABLE_UNET2
+		if (!hasFlags(plNetUID)) {
+			memcpy(uid, t.read(16), 16);
+			u->proto = 1; // unet2 protocol
+		}
+# endif
+		accessLevel = t.getByte();
+		t.get(avatar);
+		t.get(gender);
+		t.get(friendName);
+		t.get(key);
+		U32 unk = t.getU32();
+		if (unk != 0) throw txProtocolError(_WHERE("NetMsgCustomVaultCreatePlayer.unk must always be 0"));
 	}
 	
 	void tmCustomVaultCreatePlayer::stream(tBBuf &t)
@@ -211,8 +248,26 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultPlayerCreated
-	tmCustomVaultPlayerCreated::tmCustomVaultPlayerCreated(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
-	{ }
+	tmCustomVaultPlayerCreated::tmCustomVaultPlayerCreated(tNetSession *u)
+	 : tmMsgBase(NetMsgCustomVaultPlayerCreated, plNetKi | plNetX | plNetAck | plNetCustom | plNetUID, u)
+	{
+#ifdef ENABLE_UNET2
+		if (u->proto == 1) unsetFlags(plNetUID);
+#endif
+	}
+	
+	tmCustomVaultPlayerCreated::tmCustomVaultPlayerCreated(tNetSession *u, U32 ki, U32 x, const Byte *uid, Byte result)
+	 : tmMsgBase(NetMsgCustomVaultPlayerCreated, plNetKi | plNetX | plNetAck | plNetCustom | plNetUID, u)
+	{
+		this->ki = ki;
+		this->x = x;
+		memcpy(this->uid, uid, 16);
+#ifdef ENABLE_UNET2
+		if (u->proto == 1) unsetFlags(plNetUID);
+#endif
+
+		this->result = result;
+	}
 	
 	void tmCustomVaultPlayerCreated::store(tBBuf &t)
 	{
@@ -227,6 +282,15 @@ namespace alc {
 		}
 # endif
 		result = t.getByte();
+	}
+	
+	void tmCustomVaultPlayerCreated::stream(tBBuf &t)
+	{
+		tmMsgBase::stream(t);
+#ifdef ENABLE_UNET2
+		if (u->proto == 1) { t.write(uid, 16); } // UID (only for old protocol, the new one sends it in the header)
+#endif
+		t.putByte(result);
 	}
 	
 	void tmCustomVaultPlayerCreated::additionalFields()

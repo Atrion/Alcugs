@@ -40,8 +40,8 @@ namespace alc {
 		~tVaultDB(void) { if (sql) delete sql; }
 		void getVaultFolderName(Byte *folder);
 		
-		/** queries the player list and saves it in the buffer \returns the number of players */
-		int getPlayerList(tMBuf &t, const Byte *uid);
+		/** queries the player list and saves it in the buffer if the point is not NULL \returns the number of players */
+		int getPlayerList(const Byte *uid, tMBuf *t = NULL);
 		
 		/** checks if this account (uid) owns that ki and saves the avatar name (array must be at least 256 Bytes)
 		    \returns 1 when the avatar belongs to that account, 0 otherwise */
