@@ -1134,7 +1134,10 @@ namespace alc {
 			node->crtTime = atoi(row[7]);
 			node->ageTime = atoi(row[8]);
 			node->ageName.writeStr(row[9]);
-			alcAscii2Hex(node->ageGuid, (Byte *)row[10], 8);
+			if (strlen(row[10]) == 16)
+				alcAscii2Hex(node->ageGuid, (Byte *)row[10], 8);
+			else
+				memset(node->ageGuid, 0, 8);
 			node->int1 = atoi(row[11]);
 			node->int2 = atoi(row[12]);
 			node->int3 = atoi(row[13]);
@@ -1295,6 +1298,42 @@ namespace alc {
 			(*table)[i] = atoi(row[0]);
 		}
 		mysql_free_result(result);
+	}
+	
+	void tVaultDB::getReferences(U32 node, tvNodeRef ***ref, int *nRef)
+	{
+		// FIXME: add anti-loop protection
+		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		
+		char query[1024];
+		MYSQL_RES *result;
+		MYSQL_ROW row;
+		
+		*ref = NULL;
+		*nRef = 0;
+		
+		int i = -1;
+		while (i < *nRef) {
+			if (i >= 0) node = (*ref)[i]->child; // this is the next one
+			
+			sprintf(query, "SELECT id1, id2, id3, UNIX_TIMESTAMP(timestamp), flag FROM %s WHERE id2='%d'", refVaultTable, node);
+			sql->query(query, "getting references");
+			result = sql->storeResult();
+			
+			if (result == NULL) throw txDatabaseError(_WHERE("couldn't get references"));
+			int newSize = *nRef + mysql_num_rows(result);
+			
+			if (newSize > *nRef) {
+				*ref = (tvNodeRef **)realloc(*ref, newSize*sizeof(tvNodeRef *));
+				for (int j = *nRef; j < newSize; ++j) {
+					row = mysql_fetch_row(result);
+					(*ref)[j] = new tvNodeRef(atoi(row[0]), atoi(row[1]), atoi(row[2]), atoi(row[3]), (Byte)atoi(row[4]));
+				}
+				*nRef = newSize;
+			}
+			mysql_free_result(result);
+			++i;
+		}
 	}
 
 } //end namespace alc

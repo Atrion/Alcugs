@@ -64,11 +64,17 @@ namespace alc {
 		/** creates the main vault nodes like AllPlayers and GlobalInbox */
 		void createVault(void);
 		
+		/** searches the age by filename and creates it if necessary, returns the ID of the age node */
+		U32 getAge(const char *filenNme, const char *name, const char *userName, const char *displayName);
+		
+		/** gives the player a link to that age and adds the linking point */
+		void addAgeLinkToPlayer(U32 ki, U32 ageInfoNode, const char *spawnPointTitle, const char *spawnPointName);
+		
 		/** add a ref and broadcast the update */
 		void addRef(U32 saver, U32 parent, U32 son);
 		
 		/** get the ID of that node. If it doesn't exist, create it (with the given parent) and broadcast the update */
-		U32 getNode(tvNode &node, U32 parent);
+		U32 getNode(tvNode &node, U32 parent, U32 saver = 0);
 		
 		/** broadcast that this node has been changed, ecxlude the vmgr with the given data */
 		void broadcastNodeUpdate(tvNode &node, U32 origKi = 0, U32 origMgr = 0);
