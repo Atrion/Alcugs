@@ -27,7 +27,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_VAULTBACKEND_ID "$Id$"
 
-//#define _DBG_LEVEL_ 10
+#define _DBG_LEVEL_ 10
 
 #include <alcugs.h>
 #include <alcnet.h>
@@ -172,10 +172,10 @@ namespace alc {
 		delete ref;
 	}
 	
-	void tVaultBackend::send(tvMessage &msg, tNetSession *u, U32 ki)
+	void tVaultBackend::send(tvMessage &msg, tNetSession *u, U32 ki, U32 x)
 	{
 		msg.print(logHtml, /*clientToServer:*/false, u, shortHtml, ki);
-		tmVault vaultMsg(u, ki, &msg);
+		tmVault vaultMsg(u, ki, x, msg.task, &msg);
 		net->send(vaultMsg);
 	}
 	
@@ -631,10 +631,20 @@ namespace alc {
 		assert(msg.task);
 		msg.print(logHtml, /*clientToServer:*/true, u, shortHtml, ki);
 		
+		if (ki != msg.vmgr)
+			throw txProtocolError(_WHERE("the vmgr of a vault task must be the player's KI, but %d != %d", ki, msg.vmgr));
+		
+		tvAgeLinkStruct *ageLink = NULL;
+		
 		// read and verify the general vault items
 		for (int i = 0; i < msg.numItems; ++i) {
 			tvItem *itm = msg.items[i];
 			switch (itm->id) {
+				case 11: // an age link
+					ageLink = itm->asAgeLink(); // we don't have to free it, tvMessage does that
+					break;
+				// these are not sent to servers
+				case 1: // the ID of the created age link node
 				default:
 					throw txProtocolError(_WHERE("vault item has invalid id %d", itm->id));
 			}
@@ -642,32 +652,62 @@ namespace alc {
 		
 		// now process the task
 		switch (msg.cmd) {
+			case TRegisterOwnedAge:
+			{
+				if (!ageLink) throw txProtocolError(_WHERE("the age link must be set for a TRegisterOwnedAge"));
+				
+				// if necessary, generate the guid
+				Byte zeroGuid[8];
+				memset(zeroGuid, 0, 8);
+				if (memcmp(ageLink->ageInfo.guid, zeroGuid, 8) == 0)
+					if (!guidGen->generateGuid(ageLink->ageInfo.guid, ageLink->ageInfo.fileName.c_str(), ki))
+						throw txProtocolError(_WHERE("could not generate GUID"));
+				
+				// now find the age info node of the age we're looking for
+				U32 ageInfoNode = getAge(ageLink->ageInfo, /*create*/false);
+				
+				// we got it - now let's add it to the player
+				U32 linkNode = addAgeLinkToPlayer(ki, ageInfoNode, ageLink->spawnPoint);
+				
+				// FIXME: add owner to age
+				
+				tvMessage reply(msg, 1);
+				reply.items[0] = new tvItem(/*id*/1, (S32)linkNode);
+				send(reply, u, ki, x);
+				break;
+			}
 			default:
 				throw txProtocolError(_WHERE("Unknown vault task 0x%02X (%s)\n", msg.cmd, alcVaultGetTask(msg.cmd)));
 		}
 	}
 	
-	U32 tVaultBackend::getAge(const char *fileName, const char *name, const char *userName, const char *displayName)
+	U32 tVaultBackend::getAge(tvAgeInfoStruct &ageInfo, bool create)
 	{
 		tvNode *node;
-		tvNodeRef *ref;
 		// search for the age
-		node = new tvNode(MType | MStr64_1);
+		node = new tvNode(MType | MStr64_1 | MStr64_4);
 		node->type = KAgeInfoNode;
-		node->str1.writeStr(fileName);
+		node->str1 = ageInfo.fileName;
+		node->str4.writeStr(alcGetStrGuid(ageInfo.guid));
 		U32 ageInfoNode = vaultDB->findNode(*node);
 		delete node;
 		if (ageInfoNode) // we got it!
 			return ageInfoNode;
 		
-		// we have to create it - first generate the guid
-		Byte guid[8];
-		guidGen->generateGuid(guid, (Byte *)fileName, 0);
+		if (!create) throw txProtocolError(_WHERE("could not find age %s but I should", ageInfo.str()));
 		
+		// we have to create it
+		return createAge(ageInfo);
+	}
+	
+	U32 tVaultBackend::createAge(tvAgeInfoStruct &ageInfo)
+	{
+		tvNode *node;
+		tvNodeRef *ref;
 		// create the age mgr node
 		node = new tvNode(MType | MStr64_1);
 		node->type = KVNodeMgrAgeNode;
-		node->str1.writeStr(alcGetStrGuid(guid));
+		node->str1.writeStr(alcGetStrGuid(ageInfo.guid));
 		U32 ageMgrNode = vaultDB->createNode(*node);
 		delete node;
 		
@@ -675,12 +715,12 @@ namespace alc {
 		node = new tvNode(MType | MUInt32_1 | MStr64_1 | MStr64_2 | MStr64_3 | MStr64_4 | MText_1);
 		node->type = KAgeInfoNode;
 		node->uInt1 = ageMgrNode;
-		node->str1.writeStr(fileName);
-		node->str2.writeStr(name);
-		node->str3.writeStr(userName);
-		node->str4.writeStr(alcGetStrGuid(guid));
-		node->text1.writeStr(displayName);
-		ageInfoNode = vaultDB->createNode(*node);
+		node->str1 = ageInfo.fileName;
+		node->str2 = ageInfo.instanceName;
+		node->str3 = ageInfo.userDefName;
+		node->str4.writeStr(alcGetStrGuid(ageInfo.guid));
+		node->text1 = ageInfo.displayName;
+		U32 ageInfoNode = vaultDB->createNode(*node);
 		delete node;
 		
 		// create link age mgr -> age info
@@ -691,7 +731,7 @@ namespace alc {
 		return ageInfoNode;
 	}
 	
-	void tVaultBackend::addAgeLinkToPlayer(U32 ki, U32 ageInfoNode, const char *spawnPointTitle, const char *spawnPointName)
+	U32 tVaultBackend::addAgeLinkToPlayer(U32 ki, U32 ageInfoNode, tvSpawnPoint &spawnPoint)
 	{
 		tvNode *node;
 		// find (and create if necessary) AgesIOwnFolder
@@ -715,9 +755,9 @@ namespace alc {
 		
 		// new spawn point info
 		char spawnPnt[512];
-		sprintf(spawnPnt, "%s:%s:;", spawnPointTitle, spawnPointName);
+		sprintf(spawnPnt, "%s:%s:%s;", spawnPoint.title.c_str(), spawnPoint.name.c_str(), spawnPoint.cameraStack.c_str());
 		
-		// if the node exists, fetch and update it, otherwise, create it
+		// if the link node exists, fetch and update it, otherwise, create it
 		if (found) {
 			tvNode **nodes;
 			int nNodes;
@@ -760,6 +800,7 @@ namespace alc {
 			delete node;
 			delete ref;
 		}
+		return found;
 	}
 	
 	U32 tVaultBackend::createPlayer(tmCustomVaultCreatePlayer &createPlayer)
@@ -814,15 +855,30 @@ namespace alc {
 		delete ref;
 		
 		// link that player with Ae'gura, the hood and DniCityX2Final
-		U32 ageNode = getAge("city", "Ae'gura", "Ae'gura", "Ae'gura");
-		addAgeLinkToPlayer(ki, ageNode, "FerryTerminal", "LinkInPointFerry");
+		Byte guid[8];
+		{
+			if (!guidGen->generateGuid(guid, (Byte *)"city", 0)) throw txProtocolError(_WHERE("error creating GUID"));
+			tvAgeInfoStruct ageInfo("city", "Ae'gura", "Ae'gura", "Ae'gura", guid);
+			U32 ageNode = getAge(ageInfo, /*create*/true);
+			tvSpawnPoint spawnPoint("FerryTerminal", "LinkInPointFerry");
+			addAgeLinkToPlayer(ki, ageNode, spawnPoint);
+		}
 		
-		// FIXME: make age name and desc configurable
-		ageNode = getAge("Neighborhood", "Neighborhood", "Hood Name", "Hood Desc");
-		addAgeLinkToPlayer(ki, ageNode, "Default", "LinkInPointDefault");
+		{
+			if (!guidGen->generateGuid(guid, (Byte *)"Neighborhood", 0)) throw txProtocolError(_WHERE("error creating GUID"));
+			tvAgeInfoStruct ageInfo("Neighborhood", "Neighborhood", "Hood Name", "Hood Desc", guid); // FIXME: make age name and desc configurable
+			U32 ageNode = getAge(ageInfo, /*create*/true);
+			tvSpawnPoint spawnPoint("Default", "LinkInPointDefault");
+			addAgeLinkToPlayer(ki, ageNode, spawnPoint);
+		}
 		
-		ageNode = getAge("DniCityX2Finale", "DniCityX2Finale", "", "");
-		addAgeLinkToPlayer(ki, ageNode, "Default", "LinkInPointDefault");
+		{
+			if (!guidGen->generateGuid(guid, (Byte *)"DniCityX2Finale", 0)) throw txProtocolError(_WHERE("error creating GUID"));
+			tvAgeInfoStruct ageInfo("DniCityX2Finale", "DniCityX2Finale", "", "", guid);
+			U32 ageNode = getAge(ageInfo, /*create*/true);
+			tvSpawnPoint spawnPoint("Default", "LinkInPointDefault");
+			addAgeLinkToPlayer(ki, ageNode, spawnPoint);
+		}
 		
 		// create link AllPlayersFolder -> info node (broadcasted)
 		addRef(ki, allPlayers, infoNode);

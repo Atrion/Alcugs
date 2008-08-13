@@ -56,7 +56,7 @@ namespace alc {
 		}
 	private:
 		/** send a vault message */
-		void send(tvMessage &msg, tNetSession *u, U32 ki);
+		void send(tvMessage &msg, tNetSession *u, U32 ki, U32 x = 0);
 		
 		/** finds the vault mgr with that data and updates its session ite
 		    \returns the number of that vmgr or -1 */
@@ -65,11 +65,14 @@ namespace alc {
 		/** creates the main vault nodes like AllPlayers and GlobalInbox */
 		void createVault(void);
 		
-		/** searches the age by filename and creates it if necessary, returns the ID of the age node */
-		U32 getAge(const char *filenNme, const char *name, const char *userName, const char *displayName);
+		/** creates an age with that data */
+		U32 createAge(tvAgeInfoStruct &ageInfo);
 		
-		/** gives the player a link to that age and adds the linking point */
-		void addAgeLinkToPlayer(U32 ki, U32 ageInfoNode, const char *spawnPointTitle, const char *spawnPointName);
+		/** searches the age by filename and creates it if necessary, returns the ID of the age node */
+		U32 getAge(tvAgeInfoStruct &ageInfo, bool create);
+		
+		/** gives the player a link to that age and adds the linking point, returns the ID of the link node */
+		U32 addAgeLinkToPlayer(U32 ki, U32 ageInfoNode, tvSpawnPoint &spawnPoint);
 		
 		/** add a ref and broadcast the update */
 		void addRef(U32 saver, U32 parent, U32 son);

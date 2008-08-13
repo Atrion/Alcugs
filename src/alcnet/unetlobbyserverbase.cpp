@@ -507,7 +507,7 @@ namespace alc {
 					}
 					parsedMsg.print(lvault, /*clientToServer:*/false, client, vaultLogShort);
 					parsedMsg.tpots = client->tpots;
-					tmVault vaultMsgFwd(client, vaultMsg.ki, &parsedMsg);
+					tmVault vaultMsgFwd(client, vaultMsg.ki, /*x*/0, /*task*/false, &parsedMsg);
 					send(vaultMsgFwd);
 				}
 				else { // got it from a client
@@ -526,7 +526,7 @@ namespace alc {
 					vaultMsg.message.get(parsedMsg);
 					parsedMsg.print(lvault, /*clientToServer:*/true, u, vaultLogShort);
 					parsedMsg.tpots = vaultServer->tpots;
-					tmVault vaultMsgFwd(vaultServer, u->ki, &parsedMsg);
+					tmVault vaultMsgFwd(vaultServer, u->ki, /*x*/0, /*task*/false, &parsedMsg);
 					send(vaultMsgFwd);
 				}
 				
@@ -564,7 +564,7 @@ namespace alc {
 					return 1;
 				}
 				
-				tmCustomFindServer findServer(trackingServer, u->ki, u->getSid(), u->getIp(), u->getPort(), alcGetStrGuid(ageLink.ageInfo.guid), ageLink.ageInfo.filename.c_str());
+				tmCustomFindServer findServer(trackingServer, u->ki, u->getSid(), u->getIp(), u->getPort(), alcGetStrGuid(ageLink.ageInfo.guid), ageLink.ageInfo.fileName.c_str());
 				send(findServer);
 				
 				return 1;

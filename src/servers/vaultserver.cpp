@@ -136,40 +136,25 @@ namespace alc {
 			{
 				bool isTask = (msg->cmd == NetMsgVaultTask);
 				tvMessage parsedMsg(isTask, /* 0 = non-TPOTS */(Byte)0);
-				U32 ki, x;
 				
-				if (isTask) {
-					// get the data out of the packet
-					tmVaultTask vaultTask(u);
-					msg->data->get(vaultTask);
-					log->log("<RCV> %s\n", vaultTask.str());
-					if (!vaultTask.hasFlags(plNetKi) || vaultTask.ki == 0) throw txProtocolError(_WHERE("KI missing"));
-					ki = vaultTask.ki;
-					x = vaultTask.x;
-					// parse the vault stuff
-					vaultTask.message.rewind();
-					vaultTask.message.get(parsedMsg);
-				}
-				else {
-					// get the data out of the packet
-					tmVault vaultMsg(u);
-					msg->data->get(vaultMsg);
-					log->log("<RCV> %s\n", vaultMsg.str());
-					if (!vaultMsg.hasFlags(plNetKi) || vaultMsg.ki == 0) throw txProtocolError(_WHERE("KI missing"));
-					ki = vaultMsg.ki;
-					// parse the vault stuff
-					vaultMsg.message.rewind();
-					vaultMsg.message.get(parsedMsg);
-				}
+				// get the data out of the packet
+				tmVault vaultMsg(u);
+				msg->data->get(vaultMsg);
+				log->log("<RCV> %s\n", vaultMsg.str());
+				if (!vaultMsg.hasFlags(plNetKi) || vaultMsg.ki == 0) throw txProtocolError(_WHERE("KI missing"));
+				if (isTask && !vaultMsg.hasFlags(plNetX))  throw txProtocolError(_WHERE("X flag missing"));
+				// parse the vault stuff
+				vaultMsg.message.rewind();
+				vaultMsg.message.get(parsedMsg);
 				
 				try {
-					if (isTask) vaultBackend->processVaultTask(parsedMsg, u, ki, x);
-					else vaultBackend->processVaultMsg(parsedMsg, u, ki);
+					if (isTask) vaultBackend->processVaultTask(parsedMsg, u, vaultMsg.ki, vaultMsg.x);
+					else vaultBackend->processVaultMsg(parsedMsg, u, vaultMsg.ki);
 				}
 				catch (txProtocolError &t) { // don't kick the lobby/game server we are talking to but let it kick the client
-					err->log("%s Recieved invalid vault message from player %d\n", u->str(), ki);
+					err->log("%s Recieved invalid vault message from player %d\n", u->str(), vaultMsg.ki);
 					err->log(" Exception details: %s\n%s\n",t.what(),t.backtrace());
-					tmPlayerTerminated term(u, ki, RParseError);
+					tmPlayerTerminated term(u, vaultMsg.ki, RParseError);
 					send(term);
 				}
 				

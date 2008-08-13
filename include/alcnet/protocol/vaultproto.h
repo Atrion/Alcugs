@@ -206,6 +206,8 @@ namespace alc {
 	
 	class tvAgeInfoStruct : public tvBase {
 	public:
+		tvAgeInfoStruct(const char *fileName, const char *instanceName, const char *userDefName, const char *displayName, const Byte *guid);
+		tvAgeInfoStruct(const tvAgeInfoStruct &);
 		tvAgeInfoStruct(void) : tvBase() { }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
@@ -213,7 +215,7 @@ namespace alc {
 		const Byte *str(void);
 		// format
 		Byte flags;
-		tUStr filename, instanceName;
+		tUStr fileName, instanceName;
 		Byte guid[8];
 		tUStr userDefName, displayName;
 		U32 language;
@@ -223,6 +225,7 @@ namespace alc {
 	
 	class tvSpawnPoint : public tvBase {
 	public:
+		tvSpawnPoint(const char *title, const char *name, const char *cameraStack = "");
 		tvSpawnPoint(void) : tvBase() { }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
@@ -388,6 +391,7 @@ namespace alc {
 		const Byte *asGuid(void);
 		tvNode *asNode(void);
 		tvNodeRef *asNodeRef(void);
+		tvAgeLinkStruct *asAgeLink(void);
 		
 		Byte tpots; // 1: generate/parse for TPOTS client, everything else: for non-TPOTS client (or the vault server)
 		// format
@@ -399,7 +403,7 @@ namespace alc {
 	class tvMessage : public tvBase {
 	public:
 		tvMessage(tvMessage &msg, int nItems);
-		tvMessage(Byte cmd, int nItems);
+		tvMessage(Byte cmd, int nItem, bool task = false);
 		tvMessage(bool isTask, Byte tpots) : tvBase() { task = isTask; this->tpots = tpots; items = NULL; }
 		virtual ~tvMessage(void);
 		virtual void store(tBBuf &t); //!< unpacks the message

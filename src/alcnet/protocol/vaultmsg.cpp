@@ -41,11 +41,16 @@ namespace alc {
 	tmVault::tmVault(tNetSession *u) : tmMsgBase(NetMsgVault, plNetAck | plNetKi, u)
 	{ ki = 0; }
 	
-	tmVault::tmVault(tNetSession *u, U32 ki, tBaseType *vaultMessage) : tmMsgBase(NetMsgVault, plNetAck | plNetKi, u)
+	tmVault::tmVault(tNetSession *u, U32 ki, U32 x, bool task, tBaseType *vaultMessage) : tmMsgBase(NetMsgVault, plNetAck | plNetKi, u)
 	{
 		message.put(*vaultMessage);
 		this->ki = ki;
-		if (u->getTpots() == 1) // if were sure it is TPOTS, use TPOTS mod
+		this->x = x;
+		if (task) {
+			cmd = NetMsgVaultTask;
+			flags |= plNetX;
+		}
+		else if (u->getTpots() == 1) // if were sure it is TPOTS, use TPOTS mod
 			cmd = NetMsgVault2;
 	}
 	
@@ -58,24 +63,6 @@ namespace alc {
 	}
 	
 	void tmVault::stream(tBBuf &t)
-	{
-		tmMsgBase::stream(t);
-		t.put(message);
-	}
-	
-	//// tmVaultTask
-	tmVaultTask::tmVaultTask(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
-	{ ki = 0; }
-	
-	void tmVaultTask::store(tBBuf &t)
-	{
-		tmMsgBase::store(t);
-		// store the whole message
-		message.clear();
-		t.get(message);
-	}
-	
-	void tmVaultTask::stream(tBBuf &t)
 	{
 		tmMsgBase::stream(t);
 		t.put(message);

@@ -53,6 +53,16 @@ namespace alc {
 	////IMPLEMENTATION
 	
 	//// tvAgeInfoStruct
+	tvAgeInfoStruct::tvAgeInfoStruct(const char *fileName, const char *instanceName, const char *userDefName, const char *displayName, const Byte *guid) : tvBase()
+	{
+		flags = 0x01 | 0x02 | 0x04 | 0x08 | 0x20; // instanceName, fileName, GUID, user defined name, display name
+		this->fileName.writeStr(fileName);
+		this->instanceName.writeStr(instanceName);
+		this->userDefName.writeStr(userDefName);
+		this->displayName.writeStr(displayName);
+		memcpy(this->guid, guid, 8);
+	}
+	
 	void tvAgeInfoStruct::store(tBBuf &t)
 	{
 		//AgeInfoStruct flags
@@ -77,14 +87,14 @@ namespace alc {
 		if (!(flags & 0x02)) // this must always be set (filename)
 			throw txProtocolError(_WHERE("the 0x02 flag must always be set in AgeInfoStruct"));
 		
-		t.get(filename);
+		t.get(fileName);
 		
 		if (flags & 0x01) // instance name
 			t.get(instanceName);
 		else { // instance name disabled
 			throw txProtocolError(_WHERE("instance name flag not set... what to do?"));
 #if 0
-			instanceName = filename;
+			instanceName = fileName;
 			flags |= 0x01;
 #endif
 		}
@@ -116,7 +126,7 @@ namespace alc {
 		// see store for description of flags
 		t.putByte(flags);
 		
-		t.put(filename);
+		t.put(fileName);
 		
 		if (flags & 0x01) // instance name
 			t.put(instanceName);
@@ -137,7 +147,7 @@ namespace alc {
 	const Byte *tvAgeInfoStruct::str(void)
 	{
 		dbg.clear();
-		dbg.printf("Filename: %s", filename.c_str());
+		dbg.printf("Filename: %s", fileName.c_str());
 		if (flags & 0x01) // instance name
 			dbg.printf(", Instance Name: %s", instanceName.c_str());
 		if (flags & 0x04) // GUID
@@ -157,6 +167,14 @@ namespace alc {
 	}
 	
 	//// tvSpawnPoint
+	tvSpawnPoint::tvSpawnPoint(const char *title, const char *name, const char *cameraStack)
+	{
+		flags = 0x00000007;
+		this->title.writeStr(title);
+		this->name.writeStr(name);
+		this->cameraStack.writeStr(cameraStack);
+	}
+	
 	void tvSpawnPoint::store(tBBuf &t)
 	{
 		//tvSpawnPoint flags
@@ -1061,6 +1079,13 @@ namespace alc {
 		return (tvNodeRef *)data;
 	}
 	
+	tvAgeLinkStruct *tvItem::asAgeLink(void)
+	{
+		if (type != DAgeLinkStruct)
+			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a DAgeLinkStruct", id, alcVaultGetDataType(type)));
+		return (tvAgeLinkStruct *)data;
+	}
+	
 	void tvItem::asHtml(tLog *log, bool shortLog)
 	{
 		log->print("Id: <b>0x%02X (%d)</b>, type: 0x%04X (%s)<br />\n", id, id, type, alcVaultGetDataType(type));
@@ -1084,10 +1109,10 @@ namespace alc {
 		for (int i = 0; i < numItems; ++i) items[i] = NULL;
 	}
 	
-	tvMessage::tvMessage(Byte cmd, int nItems)
+	tvMessage::tvMessage(Byte cmd, int nItems, bool task)
 	{
 		tpots = 0;
-		task = false;
+		this->task = task;
 		this->cmd = cmd;
 		compress = false;
 		context = 0;
