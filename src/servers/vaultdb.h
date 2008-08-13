@@ -77,7 +77,7 @@ namespace alc {
 		void removeNodeTree(U32 node, bool cautious = true);
 		
 		/** creates a node ref
-		    \returns true if everything is ok, false on error (most likely a duplicate) */
+		    \returns true if everything is ok, false when this is a duplicate */
 		bool addNodeRef(tvNodeRef &ref);
 		
 		/** updates the "seen" flag of that ref */

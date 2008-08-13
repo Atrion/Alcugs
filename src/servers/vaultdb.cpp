@@ -1172,19 +1172,24 @@ namespace alc {
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
 		char query[1024];
-	
+		MYSQL_RES *result;
+		
+		// first check if this ref already exists
+		sprintf(query, "SELECT id1 FROM %s WHERE id2='%d' AND id3='%d'", refVaultTable, ref.parent, ref.child);
+		sql->query(query, "addNodeRef: checking for ref");
+		result = sql->storeResult();
+		if (!result) throw txDatabaseError(_WHERE("couldn't check for ref"));
+		bool exists = mysql_num_rows(result);
+		mysql_free_result(result);
+		
+		if (exists) return false;
+		
 		// time fix
 		ref.time = alcGetTime();
 		
 		sprintf(query, "INSERT INTO %s (id1, id2, id3, timestamp, flag) VALUES('%d', '%d', '%d', FROM_UNIXTIME('%d'), '%d')", refVaultTable, ref.saver, ref.parent, ref.child, ref.time, ref.flags);
-		try {
-			sql->query(query, "Creating new node ref");
-			return true;
-		}
-		catch (txDatabaseError &error) {
-			// FIXME: find a better way to avoid an error when a duplicate is added
-			return false;
-		}
+		sql->query(query, "Creating new node ref");
+		return true;
 	}
 	
 	void tVaultDB::removeNodeRef(U32 parent, U32 son, bool cautious)
@@ -1222,7 +1227,7 @@ namespace alc {
 		type = atoi(row[0]);
 		mysql_free_result(result);
 		
-		bool safeType = cautious ? (type == KImageNode || type == KTextNoteNode || type == KChronicleNode) : type > 7;
+		bool safeType = cautious ? (type == KImageNode || type == KTextNoteNode || type == KChronicleNode) : (type > 7 && type != KSystem);
 		if (numParent <= 1 && safeType) {
 			// there are no more references to this node, and it's a safe node to remove
 			removeNodeTree(son, cautious);
