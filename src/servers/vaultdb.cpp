@@ -1307,7 +1307,6 @@ namespace alc {
 	
 	void tVaultDB::getReferences(U32 node, tvNodeRef ***ref, int *nRef)
 	{
-		// FIXME: add anti-loop protection
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
 		char query[1024];
@@ -1332,7 +1331,17 @@ namespace alc {
 				*ref = (tvNodeRef **)realloc(*ref, newSize*sizeof(tvNodeRef *));
 				for (int j = *nRef; j < newSize; ++j) {
 					row = mysql_fetch_row(result);
-					(*ref)[j] = new tvNodeRef(atoi(row[0]), atoi(row[1]), atoi(row[2]), atoi(row[3]), (Byte)atoi(row[4]));
+					U32 parent = atoi(row[1]), child = atoi(row[2]);
+					// check for duplicate (i.e. anti-loop-protection)
+					bool found = false;
+					for (int k = 0; k < *nRef; ++k) { // searching the already existing nodes is enough
+						if ((*ref)[k]->parent == parent && ((*ref)[k]->child == child)) {
+							lerr->log("tVaultDB::getReferences: loop in vault structure detected, found referece %d->%d twice\n", parent, child);
+							found = true;
+						}
+					}
+					if (!found)
+						(*ref)[j] = new tvNodeRef(atoi(row[0]), parent, child, atoi(row[3]), (Byte)atoi(row[4]));
 				}
 				*nRef = newSize;
 			}
