@@ -32,10 +32,19 @@
 namespace alc {
 
 	////DEFINITIONS
-	class tmVault : public tmMsgBase { // this is both a vault and a lobbybasemsg, but the vault server includes only this file so the class is defined here
+	class tmVault : public tmMsgBase { // this is both a vault and a lobbybase msg, but the vault server includes only this file so the class is defined here
 	public:
 		tmVault(tNetSession *u);
 		tmVault(tNetSession *u, U32 ki, tBaseType *vaultMessage);
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
+		// format
+		tMBuf message;
+	};
+	
+	class tmVaultTask : public tmMsgBase { // this is both a vault and a game msg, but the vault server includes only this file so the class is defined here
+	public:
+		tmVaultTask(tNetSession *u);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format

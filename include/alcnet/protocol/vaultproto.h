@@ -209,7 +209,7 @@ namespace alc {
 		tvAgeInfoStruct(void) : tvBase() { }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
-		virtual void asHtml(tLog *log, bool shortLog) {}
+		virtual void asHtml(tLog *log, bool shortLog);
 		const Byte *str(void);
 		// format
 		Byte flags;
@@ -226,7 +226,7 @@ namespace alc {
 		tvSpawnPoint(void) : tvBase() { }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
-		virtual void asHtml(tLog *log, bool shortLog) {}
+		virtual void asHtml(tLog *log, bool shortLog);
 		const Byte *str(void);
 		// format
 		U32 flags;
@@ -238,7 +238,7 @@ namespace alc {
 		tvAgeLinkStruct(void) : tvBase() { }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
-		virtual void asHtml(tLog *log, bool shortLog) {}
+		virtual void asHtml(tLog *log, bool shortLog);
 		const Byte *str(void);
 		// format
 		U16 flags;

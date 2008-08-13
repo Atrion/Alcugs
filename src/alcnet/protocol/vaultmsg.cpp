@@ -63,6 +63,24 @@ namespace alc {
 		t.put(message);
 	}
 	
+	//// tmVaultTask
+	tmVaultTask::tmVaultTask(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
+	{ ki = 0; }
+	
+	void tmVaultTask::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		// store the whole message
+		message.clear();
+		t.get(message);
+	}
+	
+	void tmVaultTask::stream(tBBuf &t)
+	{
+		tmMsgBase::stream(t);
+		t.put(message);
+	}
+	
 	//// tmCustomVaultAskPlayerList
 	tmCustomVaultAskPlayerList::tmCustomVaultAskPlayerList(tNetSession *u, U32 x, const Byte *uid)
 	: tmMsgBase(NetMsgCustomVaultAskPlayerList, plNetAck | plNetCustom | plNetX | plNetVersion | plNetUID, u)

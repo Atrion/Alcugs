@@ -27,7 +27,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_VAULTBACKEND_ID "$Id$"
 
-#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 10
 
 #include <alcugs.h>
 #include <alcnet.h>
@@ -269,6 +269,7 @@ namespace alc {
 	
 	void tVaultBackend::processVaultMsg(tvMessage &msg, tNetSession *u, U32 ki)
 	{
+		assert(!msg.task);
 		msg.print(logHtml, /*clientToServer:*/true, u, shortHtml, ki);
 		
 		// have everything on the stack as we can safely throw exceptions then
@@ -622,6 +623,27 @@ namespace alc {
 			case VOnlineState: // not sent to servers
 			default:
 				throw txProtocolError(_WHERE("Unknown vault command 0x%02X (%s)\n", msg.cmd, alcVaultGetCmd(msg.cmd)));
+		}
+	}
+	
+	void tVaultBackend::processVaultTask(tvMessage &msg, tNetSession *u, U32 ki, U32 x)
+	{
+		assert(msg.task);
+		msg.print(logHtml, /*clientToServer:*/true, u, shortHtml, ki);
+		
+		// read and verify the general vault items
+		for (int i = 0; i < msg.numItems; ++i) {
+			tvItem *itm = msg.items[i];
+			switch (itm->id) {
+				default:
+					throw txProtocolError(_WHERE("vault item has invalid id %d", itm->id));
+			}
+		}
+		
+		// now process the task
+		switch (msg.cmd) {
+			default:
+				throw txProtocolError(_WHERE("Unknown vault task 0x%02X (%s)\n", msg.cmd, alcVaultGetTask(msg.cmd)));
 		}
 	}
 	

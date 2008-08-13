@@ -48,6 +48,7 @@ namespace alc {
 		void checkKi(tmCustomVaultCheckKi &checkKi);
 		void updatePlayerStatus(tmCustomVaultPlayerStatus &status);
 		void processVaultMsg(tvMessage &msg, tNetSession *u, U32 ki);
+		void processVaultTask(tvMessage &msg, tNetSession *u, U32 ki, U32 x);
 		void deletePlayer(tmCustomVaultDeletePlayer &deletePlayer);
 		U32 createPlayer(tmCustomVaultCreatePlayer &createPlayer); //!< \returns KI number of created player or 0 if name already exists
 		inline int getNumberOfPlayers(Byte *uid) {

@@ -81,10 +81,12 @@ namespace alc {
 		
 		if (flags & 0x01) // instance name
 			t.get(instanceName);
-		else { // enable instance name if it isn't
-			lerr->log("Enabling instance name flag in an AgeInfoStruct and setting it to the filename\n");
+		else { // instance name disabled
+			throw txProtocolError(_WHERE("instance name flag not set... what to do?"));
+#if 0
 			instanceName = filename;
 			flags |= 0x01;
+#endif
 		}
 		
 		if (flags & 0x04) // GUID
@@ -149,6 +151,11 @@ namespace alc {
 		return dbg.c_str();
 	}
 	
+	void tvAgeInfoStruct::asHtml(tLog *log, bool shortLog)
+	{
+		log->print("Age Info: %s<br />\n", str());
+	}
+	
 	//// tvSpawnPoint
 	void tvSpawnPoint::store(tBBuf &t)
 	{
@@ -178,6 +185,11 @@ namespace alc {
 		static Byte dbg[256];
 		sprintf((char *)dbg, "Title: %s, Name: %s, Camera Stack: %s", title.c_str(), name.c_str(), cameraStack.c_str());
 		return dbg;
+	}
+	
+	void tvSpawnPoint::asHtml(tLog *log, bool shortLog)
+	{
+		log->print("Spawn Point: %s<br />\n", str());
 	}
 	
 	//// tvAgeLinkStruct
@@ -243,6 +255,16 @@ namespace alc {
 		if (flags & 0x0010) // CCR
 			dbg.printf(", CCR: 0x%02X", ccr);
 		return dbg.c_str();
+	}
+	
+	void tvAgeLinkStruct::asHtml(tLog *log, bool shortLog)
+	{
+		log->print("Flags: 0x%04X<br />\n", flags);
+		ageInfo.asHtml(log, shortLog);
+		log->print("Linking rule: 0x%02X<br />\n", linkingRule);
+		spawnPoint.asHtml(log, shortLog);
+		if (flags & 0x0010) // CCR
+			log->print("CCR: 0x%02X<br />\n", ccr);
 	}
 	
 	//// tvManifest
@@ -1138,9 +1160,9 @@ namespace alc {
 		
 		// get remaining info (which is always uncompressed)
 		if (task) {
-			context = t.getU16(); // in vtask, this is "sub" (?)
+			context = t.getByte(); // in vtask, this is "sub" (?)
 			vmgr = t.getU32(); // in vtask, this is the client
-			vn = 0; // not existant in vtask
+			vn = 0; // not existing in vtask
 		}
 		else {
 			context = t.getU16();
@@ -1188,7 +1210,7 @@ namespace alc {
 		
 		// put remaining info
 		if (task) {
-			t.putU16(context);
+			t.putByte(context);
 			t.putU32(vmgr);
 		}
 		else {
