@@ -66,7 +66,7 @@ namespace alc {
 		void createVault(void);
 		
 		/** searches the age by filename and creates it if necessary, returns the ID of the age info node */
-		U32 getAge(tvAgeInfoStruct &ageInfo, bool create);
+		U32 getAge(tvAgeInfoStruct &ageInfo);
 		
 		/** creates an age, returns the ID of the age info node */
 		U32 createAge(tvAgeInfoStruct &ageInfo);
@@ -102,6 +102,7 @@ namespace alc {
 	
 		tVaultDB *vaultDB;
 		Byte vaultFolderName[17];
+		U32 adminNode;
 		
 		tGuidGen *guidGen;
 		

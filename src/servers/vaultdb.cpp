@@ -27,7 +27,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_VAULTDB_ID "$Id$"
 
-//#define _DBG_LEVEL_ 10
+#define _DBG_LEVEL_ 10
 
 #include <alcugs.h>
 #include <alcnet.h>
@@ -943,6 +943,25 @@ namespace alc {
 		feed = (U32 *)malloc(sizeof(U32));
 		feed[0] = baseNode;
 		nFeed = 1;
+		
+		// check if the node we're talking about is a MGR itself (it has to be added ti the list then)
+		sprintf(query, "SELECT type FROM %s WHERE idx='%d'", vaultTable, baseNode);
+		sql->query(query, "getMGRs: node type");
+		result = sql->storeResult();
+		
+		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get node type"));
+		int num = mysql_num_rows(result);
+		if (num != 1) throw txDatabaseError(_WHERE("couldn't find base node"));
+		
+		row = mysql_fetch_row(result);
+		int type = atoi(row[0]);
+		mysql_free_result(result);
+		if (type <= 7) {
+			// it's a MGR, add it to the list
+			*tableSize = 1;
+			*table = (U32 *)malloc(sizeof(U32));
+			(*table)[0] = baseNode;
+		}
 		
 		// now, the big loop... as long as there is something in the feed, process it
 		while (nFeed > 0) {
