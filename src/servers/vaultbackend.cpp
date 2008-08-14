@@ -123,7 +123,6 @@ namespace alc {
 	void tVaultBackend::createVault(void)
 	{
 		tvNode *node;
-		tvNodeRef *ref;
 		// create AllPlayersFolder
 		node = new tvNode(MType | MInt32_1);
 		node->type = KFolderNode;
@@ -144,32 +143,22 @@ namespace alc {
 		U32 systemNode = vaultDB->createNode(*node);
 		delete node;
 		
-		// create GlobalInboxFolder
+		// create GlobalInboxFolder as a child of the system node
 		node = new tvNode(MType | MInt32_1);
 		node->type = KFolderNode;
 		node->int1 = KGlobalInboxFolder;
-		U32 globalInboxNode = vaultDB->createNode(*node);
+		U32 globalInboxNode = createNode(KVaultID, systemNode, *node, /*bcast*/false);
 		delete node;
 		
-		// create link System > GlobalInboxFolder
-		ref = new tvNodeRef(KVaultID, systemNode, globalInboxNode);
-		vaultDB->addNodeRef(*ref);
-		delete ref;
-		
-		// create welcome message
+		// create welcome message as a child of the global inbox
 		node = new tvNode(MType | MStr64_1 | MBlob1);
 		node->type = KTextNoteNode;
 		node->str1.writeStr(welcomeMsgTitle);
 		node->blob1Size = strlen(welcomeMsgText)+1;
 		node->blob1 = (Byte *)malloc(node->blob1Size * sizeof(Byte));
 		strcpy((char *)node->blob1, welcomeMsgText);
-		U32 welcomeMsgNode = vaultDB->createNode(*node);
+		createNode(KVaultID, globalInboxNode, *node, /*bcast*/false);
 		delete node;
-		
-		// create link GlobalInbox -> WelcomeMsg
-		ref = new tvNodeRef(KVaultID, globalInboxNode, welcomeMsgNode);
-		vaultDB->addNodeRef(*ref);
-		delete ref;
 	}
 	
 	void tVaultBackend::send(tvMessage &msg, tNetSession *u, U32 ki, U32 x)
@@ -502,7 +491,7 @@ namespace alc {
 				if (!savedNode) throw txProtocolError(_WHERE("got a save node request without the node attached"));
 				if (savedNode->modTime == 0 || !(savedNode->flagB & MModTime)) throw txProtocolError(_WHERE("every saved node must have a timestamp"));
 				
-				if (savedNode->index < 19000) {
+				if (savedNode->index < KVaultID) {
 					U32 oldIndex = savedNode->index;
 					U32 newIndex = vaultDB->createNode(*savedNode);
 					log->log("Vault Save Node (created new node %d) for %d\n", newIndex, ki);
@@ -594,7 +583,7 @@ namespace alc {
 				node->type = KPlayerInfoListNode;
 				node->owner = rcvPlayer;
 				node->int1 = KPeopleIKnowAboutFolder;
-				U32 recentFolder = getNode(*node, rcvPlayer);
+				U32 recentFolder = getNode(rcvPlayer, rcvPlayer, *node, /*bcast*/true);
 				delete node;
 				
 				// find and create the InboxFolder
@@ -602,14 +591,14 @@ namespace alc {
 				node->type = KFolderNode;
 				node->owner = rcvPlayer;
 				node->int1 = KInboxFolder;
-				U32 inbox = getNode(*node, rcvPlayer);
+				U32 inbox = getNode(rcvPlayer, rcvPlayer, *node, /*bcast*/true);
 				delete node;
 				
 				// add sender to recent folder
-				addRef(0, recentFolder, infoNode);
+				addRef(0, recentFolder, infoNode, /*bcast*/true); // FIXME saver is 0?
 				
 				// add what was sent to the inbox
-				addRef(ki, inbox, savedNode->index);
+				addRef(ki, inbox, savedNode->index, /*bcast*/true);
 				break;
 			}
 			case VSetSeen:
@@ -640,7 +629,7 @@ namespace alc {
 		for (int i = 0; i < msg.numItems; ++i) {
 			tvItem *itm = msg.items[i];
 			switch (itm->id) {
-				case 11: // an age link
+				case 11: // AgeLinkStruct: an age link
 					ageLink = itm->asAgeLink(); // we don't have to free it, tvMessage does that
 					break;
 				// these are not sent to servers
@@ -665,11 +654,10 @@ namespace alc {
 				
 				// now find the age info node of the age we're looking for
 				U32 ageInfoNode = getAge(ageLink->ageInfo, /*create*/false);
-				
 				// we got it - now let's add it to the player
 				U32 linkNode = addAgeLinkToPlayer(ki, ageInfoNode, ageLink->spawnPoint);
-				
-				// FIXME: add owner to age
+				// and add that player to the age owner's list
+				addOwnerToAge(ageInfoNode, ki);
 				
 				tvMessage reply(msg, 1);
 				reply.items[0] = new tvItem(/*id*/1, (S32)linkNode);
@@ -695,23 +683,20 @@ namespace alc {
 			return ageInfoNode;
 		
 		if (!create) throw txProtocolError(_WHERE("could not find age %s but I should", ageInfo.str()));
-		
-		// we have to create it
 		return createAge(ageInfo);
 	}
 	
 	U32 tVaultBackend::createAge(tvAgeInfoStruct &ageInfo)
 	{
 		tvNode *node;
-		tvNodeRef *ref;
-		// create the age mgr node
+		// first create the age mgr node
 		node = new tvNode(MType | MStr64_1);
 		node->type = KVNodeMgrAgeNode;
 		node->str1.writeStr(alcGetStrGuid(ageInfo.guid));
 		U32 ageMgrNode = vaultDB->createNode(*node);
 		delete node;
 		
-		// now the age info node
+		// now the age info node as child of the age mgr
 		node = new tvNode(MType | MUInt32_1 | MStr64_1 | MStr64_2 | MStr64_3 | MStr64_4 | MText_1);
 		node->type = KAgeInfoNode;
 		node->uInt1 = ageMgrNode;
@@ -720,13 +705,8 @@ namespace alc {
 		node->str3 = ageInfo.userDefName;
 		node->str4.writeStr(alcGetStrGuid(ageInfo.guid));
 		node->text1 = ageInfo.displayName;
-		U32 ageInfoNode = vaultDB->createNode(*node);
+		U32 ageInfoNode = createNode(0, ageMgrNode, *node, /*bcast*/false); // FIXME saver is 0?
 		delete node;
-		
-		// create link age mgr -> age info
-		ref = new tvNodeRef(0, ageMgrNode, ageInfoNode);
-		vaultDB->addNodeRef(*ref);
-		delete ref;
 		
 		return ageInfoNode;
 	}
@@ -739,16 +719,16 @@ namespace alc {
 		node->type = KFolderNode;
 		node->owner = ki;
 		node->int1 = KAgesIOwnFolder;
-		U32 ownedAgesNode = getNode(*node, ki, ki);
+		U32 ownedAgesNode = getNode(ki, ki, *node, /*bcast*/true);
 		delete node;
 		
 		// now get all child nodes and look for our age
 		tvNodeRef **ref;
 		int nRef;
-		U32 found = 0;
+		U32 ageLinkNode = 0;
 		vaultDB->getReferences(ownedAgesNode, &ref, &nRef);
 		for (int i = 0; i < nRef; ++i) {
-			if (ref[i]->parent == ageInfoNode) found = ref[i]->child;
+			if (ref[i]->parent == ageInfoNode) ageLinkNode = ref[i]->child;
 			delete ref[i];
 		}
 		free(ref);
@@ -758,10 +738,10 @@ namespace alc {
 		sprintf(spawnPnt, "%s:%s:%s;", spawnPoint.title.c_str(), spawnPoint.name.c_str(), spawnPoint.cameraStack.c_str());
 		
 		// if the link node exists, fetch and update it, otherwise, create it
-		if (found) {
+		if (ageLinkNode) {
 			tvNode **nodes;
 			int nNodes;
-			vaultDB->fetchNodes(&found, 1, &nodes, &nNodes);
+			vaultDB->fetchNodes(&ageLinkNode, 1, &nodes, &nNodes);
 			if (nNodes != 1) throw txUnet(_WHERE("cant find age link even though I just found the reference?!?"));
 			node = *nodes; // saves some * ;-)
 			assert(node->type == KAgeLinkNode);
@@ -789,24 +769,27 @@ namespace alc {
 			node->blob1Size = strlen(spawnPnt)+1; // one for the terminator
 			node->blob1 = (Byte *)malloc(node->blob1Size*sizeof(Byte));
 			strcpy((char *)node->blob1, spawnPnt);
-			// insert the node
-			found = vaultDB->createNode(*node);
+			// insert the age link node
+			ageLinkNode = vaultDB->createNode(*node);
 			// create link age link node -> age info node
-			tvNodeRef *ref = new tvNodeRef(ki, found, ageInfoNode);
-			vaultDB->addNodeRef(*ref);
+			addRef(ki, ageLinkNode, ageInfoNode, /*bcast*/false);
 			// create link AgesIOwn -> age link node (broadcasted)
-			addRef(ki, ownedAgesNode, found);
+			addRef(ki, ownedAgesNode, ageLinkNode, /*bcast*/true);
 			// free stuff
 			delete node;
 			delete ref;
 		}
-		return found;
+		return ageLinkNode;
+	}
+	
+	void tVaultBackend::addOwnerToAge(U32 ageInfoNode, U32 ki)
+	{
+		// FIXME implement
 	}
 	
 	U32 tVaultBackend::createPlayer(tmCustomVaultCreatePlayer &createPlayer)
 	{
 		tvNode *node;
-		tvNodeRef *ref;
 		// check if the name is already in use
 		node = new tvNode(MType | MlStr64_1);
 		node->type = KVNodeMgrPlayerNode;
@@ -839,49 +822,49 @@ namespace alc {
 		U32 ki = vaultDB->createNode(*node);
 		delete node;
 		
-		// create player info node
+		// create player info node as a child of the player node
 		node = new tvNode(MType | MPerms | MOwner | MUInt32_1 | MlStr64_1);
 		node->type = KPlayerInfoNode;
 		node->permissions = KDefaultPermissions;
 		node->owner = ki;
 		node->uInt1 = ki; // used by client to find e.g. sender of a KI message
 		node->lStr1 = createPlayer.avatar;
-		U32 infoNode = vaultDB->createNode(*node);
+		U32 infoNode = createNode(ki, ki, *node, /*bcast*/false);
 		delete node;
-		
-		// create link player node -> info node
-		ref = new tvNodeRef(ki, ki, infoNode);
-		vaultDB->addNodeRef(*ref);
-		delete ref;
 		
 		// link that player with Ae'gura, the hood and DniCityX2Final
 		Byte guid[8];
 		{
-			if (!guidGen->generateGuid(guid, (Byte *)"city", 0)) throw txProtocolError(_WHERE("error creating GUID"));
+			if (!guidGen->generateGuid(guid, (Byte *)"city", ki)) throw txProtocolError(_WHERE("error creating GUID"));
 			tvAgeInfoStruct ageInfo("city", "Ae'gura", "Ae'gura", "Ae'gura", guid);
-			U32 ageNode = getAge(ageInfo, /*create*/true);
 			tvSpawnPoint spawnPoint("FerryTerminal", "LinkInPointFerry");
+			
+			U32 ageNode = getAge(ageInfo, /*create*/true);
 			addAgeLinkToPlayer(ki, ageNode, spawnPoint);
 		}
 		
 		{
-			if (!guidGen->generateGuid(guid, (Byte *)"Neighborhood", 0)) throw txProtocolError(_WHERE("error creating GUID"));
+			if (!guidGen->generateGuid(guid, (Byte *)"Neighborhood", ki)) throw txProtocolError(_WHERE("error creating GUID"));
 			tvAgeInfoStruct ageInfo("Neighborhood", "Neighborhood", "Hood Name", "Hood Desc", guid); // FIXME: make age name and desc configurable
-			U32 ageNode = getAge(ageInfo, /*create*/true);
 			tvSpawnPoint spawnPoint("Default", "LinkInPointDefault");
+			
+			U32 ageNode = getAge(ageInfo, /*create*/true);
 			addAgeLinkToPlayer(ki, ageNode, spawnPoint);
+			addOwnerToAge(ageNode, ki);
 		}
 		
 		{
-			if (!guidGen->generateGuid(guid, (Byte *)"DniCityX2Finale", 0)) throw txProtocolError(_WHERE("error creating GUID"));
+			if (!guidGen->generateGuid(guid, (Byte *)"DniCityX2Finale", ki)) throw txProtocolError(_WHERE("error creating GUID"));
 			tvAgeInfoStruct ageInfo("DniCityX2Finale", "DniCityX2Finale", "", "", guid);
-			U32 ageNode = getAge(ageInfo, /*create*/true);
 			tvSpawnPoint spawnPoint("Default", "LinkInPointDefault");
+			
+			U32 ageNode = getAge(ageInfo, /*create*/true);
 			addAgeLinkToPlayer(ki, ageNode, spawnPoint);
+			addOwnerToAge(ageNode, ki);
 		}
 		
 		// create link AllPlayersFolder -> info node (broadcasted)
-		addRef(ki, allPlayers, infoNode);
+		addRef(ki, allPlayers, infoNode, /*bcast*/true);
 		
 		return ki;
 	}
@@ -936,21 +919,27 @@ namespace alc {
 		free((void *)nodes);
 	}
 	
-	U32 tVaultBackend::getNode(tvNode &node, U32 parent, U32 saver)
+	U32 tVaultBackend::getNode(U32 saver, U32 parent, tvNode &node, bool bcast)
 	{
 		U32 nodeId = vaultDB->findNode(node);
 		if (nodeId) return nodeId;
 		// it doesn't exist, create it
-		nodeId = vaultDB->createNode(node);
-		addRef(saver, parent, nodeId);
+		return createNode(saver, parent, node, bcast);
+	}
+	
+	U32 tVaultBackend::createNode(U32 saver, U32 parent, tvNode &node, bool bcast)
+	{
+		U32 nodeId = vaultDB->createNode(node);
+		addRef(saver, parent, nodeId, bcast);
 		return nodeId;
 	}
 	
-	void tVaultBackend::addRef(U32 saver, U32 parent, U32 son)
+	void tVaultBackend::addRef(U32 saver, U32 parent, U32 son, bool bcast)
 	{
-		tvNodeRef *ref = new tvNodeRef(saver, parent, son); // will be deleted by broadcastNodeRefUpdate
-		if (vaultDB->addNodeRef(*ref))
-			broadcastNodeRefUpdate(ref, /*remove:*/false);
+		tvNodeRef *ref = new tvNodeRef(saver, parent, son);
+		bool newRef = vaultDB->addNodeRef(*ref);
+		if (newRef && bcast)
+			broadcastNodeRefUpdate(ref, /*remove:*/false); // will delete the ref
 		else
 			delete ref;
 	}

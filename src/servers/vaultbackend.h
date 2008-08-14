@@ -65,26 +65,32 @@ namespace alc {
 		/** creates the main vault nodes like AllPlayers and GlobalInbox */
 		void createVault(void);
 		
-		/** creates an age with that data */
-		U32 createAge(tvAgeInfoStruct &ageInfo);
-		
-		/** searches the age by filename and creates it if necessary, returns the ID of the age node */
+		/** searches the age by filename and creates it if necessary, returns the ID of the age info node */
 		U32 getAge(tvAgeInfoStruct &ageInfo, bool create);
+		
+		/** creates an age, returns the ID of the age info node */
+		U32 createAge(tvAgeInfoStruct &ageInfo);
 		
 		/** gives the player a link to that age and adds the linking point, returns the ID of the link node */
 		U32 addAgeLinkToPlayer(U32 ki, U32 ageInfoNode, tvSpawnPoint &spawnPoint);
 		
-		/** add a ref and broadcast the update */
-		void addRef(U32 saver, U32 parent, U32 son);
+		/** adds that player to the owners of this age */
+		void addOwnerToAge(U32 ageInfoNode, U32 ki);
 		
-		/** get the ID of that node. If it doesn't exist, create it (with the given parent) and broadcast the update */
-		U32 getNode(tvNode &node, U32 parent, U32 saver = 0);
+		/** get the ID of that node. If it doesn't exist, create it (with the given parent and saver) and broadcast the update */
+		U32 getNode(U32 saver, U32 parent, tvNode &node, bool bcast);
+		
+		/** create the node and add a ref to it. If told so, broadcast the update */
+		U32 createNode(U32 saver, U32 parent, tvNode &node, bool bcast);
+		
+		/** add a ref and perhaps broadcast the update */
+		void addRef(U32 saver, U32 parent, U32 son, bool bcast);
 		
 		/** broadcast that this node has been changed, ecxlude the vmgr with the given data */
 		void broadcastNodeUpdate(tvNode &node, U32 origKi = 0, U32 origMgr = 0);
 		
 		/** broadcast that this node ref has been changed (set remove=true if it has been removed),
-		    ecxlude the vmgr with the given data. The passed tvNodeRef will be deleted.  */
+		    ecxlude the vmgr with the given data. The passed tvNodeRef instance will be deleted.  */
 		void broadcastNodeRefUpdate(tvNodeRef *ref, bool remove, U32 origKi = 0, U32 origMgr = 0);
 		
 		/** broadcast the online state of this player node */

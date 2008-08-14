@@ -84,7 +84,7 @@ namespace alc {
 		KEY `str_4` ( `str_4` ) ,\
 		KEY `lstr_1` ( `lstr_1` ) ,\
 		KEY `lstr_2` ( `lstr_2` )\
-	) TYPE=MyISAM PACK_KEYS=0 AUTO_INCREMENT=20001;";
+	) TYPE=MyISAM PACK_KEYS=0 AUTO_INCREMENT=%d;";
 	
 	const char *refVaultTableInitScript = "\
 	CREATE TABLE `%s` (\
@@ -140,7 +140,7 @@ namespace alc {
 			mysql_free_result(result);
 			// if it doesn't exist, create it
 			if (!exists) {
-				sprintf(query, vaultTableInitScript, vaultTable);
+				sprintf(query, vaultTableInitScript, vaultTable, KVaultID);
 				sql->query(query, "Prepare: Creating vault table");
 				sprintf(query, refVaultTableInitScript, refVaultTable);
 				sql->query(query, "Prepare: Creating ref vault table");
