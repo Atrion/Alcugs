@@ -54,6 +54,7 @@ namespace alc {
 		inline int getNumberOfPlayers(Byte *uid) {
 			return vaultDB->getPlayerList(uid);
 		}
+		inline int getMaxPlayers(void) { return maxPlayers; }
 	private:
 		/** send a vault message */
 		void send(tvMessage &msg, tNetSession *u, U32 ki, U32 x = 0);
@@ -109,6 +110,11 @@ namespace alc {
 		tLog *log, *logHtml;
 		bool shortHtml;
 		tUnet *net;
+		
+		// settings
+		int maxPlayers;
+		char welcomeMsgTitle[512], welcomeMsgText[4096];
+		char hoodName[512], hoodDesc[512];
 		
 		// the list of vmgrs
 		struct tVmgr {

@@ -91,8 +91,7 @@ namespace alc {
 		`id1` int NOT NULL default 0,\
 		`id2` int NOT NULL default 0,\
 		`id3` int NOT NULL default 0,\
-		`timestamp` int NOT NULL default 0,\
-		`microseconds` int NOT NULL default 0,\
+		`timestamp` timestamp NOT NULL default 0,\
 		`flag` tinyint unsigned NOT NULL default 0,\
 		PRIMARY KEY  (`id2`,`id3`),\
 		KEY `id2` (`id2`),\

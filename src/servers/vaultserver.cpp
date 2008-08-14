@@ -81,8 +81,8 @@ namespace alc {
 				U32 ki = 0;
 				int num = 0;
 				if (createPlayer.accessLevel > AcCCR) num = vaultBackend->getNumberOfPlayers(createPlayer.uid);
-				// FIXME: check for max. number of players
-				if (createPlayer.avatar.len() < 3) result = ANameIsTooShort;
+				if (num >= vaultBackend->getMaxPlayers()) result = AMaxNumberPerAccountReached;
+				else if (createPlayer.avatar.len() < 3) result = ANameIsTooShort;
 				else if (createPlayer.avatar.len() > 20) result = ANameIsTooLong;
 				else if (createPlayer.friendName.len() > 0 || createPlayer.key.len() > 0) result = AInvitationNotFound;
 				else {

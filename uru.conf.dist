@@ -151,6 +151,11 @@ db.name = "alcugs_vault"
 ;db.username = "alcugs"
 ;db.passwd = "yourpassword"
 
+# settings controlling vault behaviour
+vault.hood.name = "Alcugs hood" # name of the default (and only) hood (will only be applied for a new, clean vault)
+vault.hood.desc = "This is a hood on an Alcugs server" # description of the default hood (will only be applied for a new, clean vault)
+;vault.maxplayers = 5 # maximum number of avatars per account
+
 stop = 1
 
 ############# Lobby Settings ##################################################

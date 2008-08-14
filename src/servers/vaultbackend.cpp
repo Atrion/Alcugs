@@ -39,9 +39,8 @@
 
 namespace alc {
 
-	// FIXME: make these configurable
-	const char *welcomeMsgTitle = "Shorah b'shehmtee";
-	const char *welcomeMsgText = "Shorah b'shehmtee, this Shard is running the Alcugs server software.\nThanks for your support!\n\nWelcome to the new adventure, feel free to explore Er'cana or any other age. Be careful if you see new books, some explorers have found some Kortee'nea and other ancient technology in a secret room in Kirel DRC neighborhood, and they are starting to learn the art of writting.\n";
+	const char *defaultWelcomeMsgTitle = "Shorah b'shehmtee";
+	const char *defaultWelcomeMsgText = "Shorah b'shehmtee, this Shard is running the Alcugs server software.\nThanks for your support!\n\nWelcome to the new adventure, feel free to explore Er'cana or any other age. Be careful if you see new books, some explorers have found some Kortee'nea and other ancient technology in a secret room in Kirel DRC neighborhood, and they are starting to learn the art of writting.\n";
 
 	////IMPLEMENTATION
 	tVaultBackend::tVaultBackend(tUnet *net)
@@ -103,6 +102,24 @@ namespace alc {
 			var = cfg->getVar("vault.html.log.short");
 			shortHtml = (!var.isNull() && var.asByte()); // per default, it's not short
 		}
+		
+		var = cfg->getVar("vault.maxplayers");
+		if (!var.isNull()) maxPlayers = var.asU32();
+		else maxPlayers = 5;
+		
+		var = cfg->getVar("vault.hood.name");
+		if (!var.isNull()) strncpy(hoodName, (char *)var.c_str(), 511);
+		else strncpy(hoodName, "Alcugs hood", 511);
+		var = cfg->getVar("vault.hood.desc");
+		if (!var.isNull()) strncpy(hoodDesc, (char *)var.c_str(), 511);
+		else strncpy(hoodDesc, "This is a hood on an Alcugs server", 511);
+		
+		var = cfg->getVar("vault.wipe.msg.title");
+		if (!var.isNull()) strncpy(welcomeMsgTitle, (char *)var.c_str(), 511);
+		else strncpy(welcomeMsgTitle, defaultWelcomeMsgTitle, 511);
+		var = cfg->getVar("vault.wipe.msg");
+		if (!var.isNull()) strncpy(welcomeMsgText, (char *)var.c_str(), 4095);
+		else strncpy(welcomeMsgText, defaultWelcomeMsgTitle, 4095);
 		
 		var = cfg->getVar("vault.unstable");
 		if (var.isNull() || !var.asByte()) {
@@ -865,7 +882,7 @@ namespace alc {
 		
 		{
 			if (!guidGen->generateGuid(guid, (Byte *)"Neighborhood", ki)) throw txProtocolError(_WHERE("error creating GUID"));
-			tvAgeInfoStruct ageInfo("Neighborhood", "Neighborhood", "Hood Name", "Hood Desc", guid); // FIXME: make age name and desc configurable
+			tvAgeInfoStruct ageInfo("Neighborhood", "Neighborhood", hoodName, hoodDesc, guid);
 			tvSpawnPoint spawnPoint("Default", "LinkInPointDefault");
 			
 			U32 ageNode = getAge(ageInfo);
