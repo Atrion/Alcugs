@@ -164,7 +164,7 @@ namespace alc {
 		node = new tvNode(MType | MInt32_1);
 		node->type = KFolderNode;
 		node->int1 = KGlobalInboxFolder;
-		U32 globalInboxNode = createNode(KVaultID, systemNode, *node, /*bcast*/false);
+		U32 globalInboxNode = vaultDB->createChildNode(KVaultID, systemNode, *node);
 		delete node;
 		
 		// create welcome message as a child of the global inbox
@@ -174,7 +174,7 @@ namespace alc {
 		node->blob1Size = strlen(welcomeMsgText)+1;
 		node->blob1 = (Byte *)malloc(node->blob1Size * sizeof(Byte));
 		strcpy((char *)node->blob1, welcomeMsgText);
-		createNode(KVaultID, globalInboxNode, *node, /*bcast*/false);
+		vaultDB->createChildNode(KVaultID, globalInboxNode, *node);
 		delete node;
 	}
 	
@@ -603,7 +603,7 @@ namespace alc {
 				node->type = KPlayerInfoListNode;
 				node->owner = rcvPlayer;
 				node->int1 = KPeopleIKnowAboutFolder;
-				U32 recentFolder = getNode(rcvPlayer, rcvPlayer, *node, /*bcast*/true);
+				U32 recentFolder = getChildNodeBCasted(rcvPlayer, rcvPlayer, *node);
 				delete node;
 				
 				// find and create the InboxFolder
@@ -611,14 +611,14 @@ namespace alc {
 				node->type = KFolderNode;
 				node->owner = rcvPlayer;
 				node->int1 = KInboxFolder;
-				U32 inbox = getNode(rcvPlayer, rcvPlayer, *node, /*bcast*/true);
+				U32 inbox = getChildNodeBCasted(rcvPlayer, rcvPlayer, *node);
 				delete node;
 				
 				// add sender to recent folder
-				addRef(rcvPlayer, recentFolder, infoNode, /*bcast*/true);
+				addRefBCasted(rcvPlayer, recentFolder, infoNode);
 				
 				// add what was sent to the inbox
-				addRef(ki, inbox, savedNode->index, /*bcast*/true);
+				addRefBCasted(ki, inbox, savedNode->index);
 				break;
 			}
 			case VSetSeen:
@@ -725,7 +725,7 @@ namespace alc {
 		node->str3 = ageInfo.userDefName;
 		node->str4.writeStr(alcGetStrGuid(ageInfo.guid));
 		node->text1 = ageInfo.displayName;
-		U32 ageInfoNode = createNode(0, ageMgrNode, *node, /*bcast*/false); // saver of 0 seems ok here
+		U32 ageInfoNode = vaultDB->createChildNode(ageMgrNode, ageMgrNode, *node);
 		delete node;
 		
 		return ageInfoNode;
@@ -739,7 +739,7 @@ namespace alc {
 		node->type = KFolderNode;
 		node->owner = ki;
 		node->int1 = KAgesIOwnFolder;
-		U32 ownedAgesNode = getNode(ki, ki, *node, /*bcast*/true);
+		U32 ownedAgesNode = getChildNodeBCasted(ki, ki, *node);
 		delete node;
 		
 		// now get all child nodes and look for our age
@@ -789,12 +789,10 @@ namespace alc {
 			node->blob1Size = strlen(spawnPnt)+1; // one for the terminator
 			node->blob1 = (Byte *)malloc(node->blob1Size*sizeof(Byte));
 			strcpy((char *)node->blob1, spawnPnt);
-			// insert the age link node
-			ageLinkNode = vaultDB->createNode(*node);
+			// insert the age link node as child of the AgesIOwnFolder
+			ageLinkNode = createChildNodeBCasted(ki, ownedAgesNode, *node);
 			// create link age link node -> age info node
-			addRef(ki, ageLinkNode, ageInfoNode, /*bcast*/false);
-			// create link AgesIOwn -> age link node (broadcasted)
-			addRef(ki, ownedAgesNode, ageLinkNode, /*bcast*/true);
+			addRefBCasted(ki, ageLinkNode, ageInfoNode);
 			// free stuff
 			delete node;
 		}
@@ -809,7 +807,7 @@ namespace alc {
 		node->type = KPlayerInfoListNode;
 		node->owner = ageInfoNode;
 		node->int1 = KAgeOwnersFolder;
-		U32 ageOwnersNode = getNode(ki, ageInfoNode, *node, /*bcast*/true);
+		U32 ageOwnersNode = getChildNodeBCasted(ki, ageInfoNode, *node);
 		delete node;
 		
 		// find player info node
@@ -821,7 +819,7 @@ namespace alc {
 		if (!infoNode) throw txUnet(_WHERE("couldn't find player info node for KI %d", ki));
 		
 		// add link age owners -> player info
-		addRef(ki, ageOwnersNode, infoNode, /*bcast*/true);
+		addRefBCasted(ki, ageOwnersNode, infoNode);
 	}
 	
 	U32 tVaultBackend::createPlayer(tmCustomVaultCreatePlayer &createPlayer)
@@ -866,7 +864,7 @@ namespace alc {
 		node->owner = ki;
 		node->uInt1 = ki; // used by client to find e.g. sender of a KI message
 		node->lStr1 = createPlayer.avatar;
-		U32 infoNode = createNode(ki, ki, *node, /*bcast*/false);
+		U32 infoNode = vaultDB->createChildNode(ki, ki, *node);
 		delete node;
 		
 		// link that player with Ae'gura, the hood and DniCityX2Final
@@ -901,7 +899,7 @@ namespace alc {
 		}
 		
 		// create link AllPlayersFolder -> info node (broadcasted)
-		addRef(ki, allPlayers, infoNode, /*bcast*/true);
+		addRefBCasted(ki, allPlayers, infoNode);
 		
 		return ki;
 	}
@@ -954,27 +952,27 @@ namespace alc {
 		free((void *)nodes);
 	}
 	
-	U32 tVaultBackend::getNode(U32 saver, U32 parent, tvNode &node, bool bcast)
+	U32 tVaultBackend::getChildNodeBCasted(U32 saver, U32 parent, tvNode &node)
 	{
 		U32 nodeId = vaultDB->findNode(node);
 		if (nodeId) return nodeId;
 		// it doesn't exist, create it
-		return createNode(saver, parent, node, bcast);
+		return createChildNodeBCasted(saver, parent, node);
 	}
 	
-	U32 tVaultBackend::createNode(U32 saver, U32 parent, tvNode &node, bool bcast)
+	U32 tVaultBackend::createChildNodeBCasted(U32 saver, U32 parent, tvNode &node)
 	{
-		U32 nodeId = vaultDB->createNode(node);
-		addRef(saver, parent, nodeId, bcast);
+		U32 nodeId = vaultDB->createChildNode(saver, parent, node);
+		broadcastNodeRefUpdate(new tvNodeRef(saver, parent, nodeId), /*removal*/false);
 		return nodeId;
 	}
 	
-	void tVaultBackend::addRef(U32 saver, U32 parent, U32 son, bool bcast)
+	void tVaultBackend::addRefBCasted(U32 saver, U32 parent, U32 son)
 	{
 		tvNodeRef *ref = new tvNodeRef(saver, parent, son);
 		bool newRef = vaultDB->addNodeRef(*ref);
-		if (newRef && bcast)
-			broadcastNodeRefUpdate(ref, /*remove:*/false); // will delete the ref
+		if (newRef)
+			broadcastNodeRefUpdate(ref, /*remove:*/false); // will delete the ref tvNodeRef instance
 		else
 			delete ref;
 	}

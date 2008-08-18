@@ -63,6 +63,8 @@ namespace alc {
 		    \returns the number of that vmgr or -1 */
 		int findVmgr(tNetSession *u, U32 ki, U32 mgr);
 		
+		// high-level vault tasks
+		
 		/** creates the main vault nodes like AllPlayers and GlobalInbox */
 		void createVault(void);
 		
@@ -78,14 +80,19 @@ namespace alc {
 		/** adds that player to the owners of this age */
 		void addOwnerToAge(U32 ageInfoNode, U32 ki);
 		
+		// mid-level vault functions (doing broadcasts)
+		//  the low-level functions are in tVaultDB
+		
 		/** get the ID of that node. If it doesn't exist, create it (with the given parent and saver) and broadcast the update */
-		U32 getNode(U32 saver, U32 parent, tvNode &node, bool bcast);
+		U32 getChildNodeBCasted(U32 saver, U32 parent, tvNode &node);
 		
-		/** create the node and add a ref to it. If told so, broadcast the update */
-		U32 createNode(U32 saver, U32 parent, tvNode &node, bool bcast);
+		/** create that node (with the given parent and saver) and broadcast the update */
+		U32 createChildNodeBCasted(U32 saver, U32 parent, tvNode &node);
 		
-		/** add a ref and perhaps broadcast the update */
-		void addRef(U32 saver, U32 parent, U32 son, bool bcast);
+		/** add a ref and broadcast the update */
+		void addRefBCasted(U32 saver, U32 parent, U32 son);
+		
+		// helper functions for broadcasting
 		
 		/** broadcast that this node has been changed, ecxlude the vmgr with the given data */
 		void broadcastNodeUpdate(tvNode &node, U32 origKi = 0, U32 origMgr = 0);

@@ -747,6 +747,14 @@ namespace alc {
 		return sql->insertId();
 	}
 	
+	U32 tVaultDB::createChildNode(U32 saver, U32 parent, tvNode &node)
+	{
+		U32 nodeId = createNode(node);
+		tvNodeRef ref(saver, parent, nodeId);
+		addNodeRef(ref);
+		return nodeId;
+	}
+	
 	void tVaultDB::updateNode(tvNode &node)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));

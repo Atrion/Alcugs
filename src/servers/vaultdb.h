@@ -54,6 +54,10 @@ namespace alc {
 		/** creates a new node and returns its ID */
 		U32 createNode(tvNode &node);
 		
+		/** creates a new node and a ref to it
+		    \returns the ID of the node */
+		U32 createChildNode(U32 saver, U32 parent, tvNode &node);
+		
 		/** updates a given vault node */
 		void updateNode(tvNode &node);
 		
@@ -77,7 +81,7 @@ namespace alc {
 		void removeNodeTree(U32 node, bool cautious = true);
 		
 		/** creates a node ref
-		    \returns true if everything is ok, false when this is a duplicate */
+		    \returns true if the ref was added, false when this is a duplicate */
 		bool addNodeRef(tvNodeRef &ref);
 		
 		/** updates the "seen" flag of that ref */

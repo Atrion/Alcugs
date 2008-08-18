@@ -89,20 +89,20 @@ namespace alc {
 #define KVNodeMgrServerNode 0x06
 #define KVNodeMgrCCRNode 0x07
 
-#define KFolderNode 0x16
-#define KPlayerInfoNode 0x17
-#define KSystem 0x18
-#define KImageNode 0x19
-#define KTextNoteNode 0x1A
-#define KSDLNode 0x1B
-#define KAgeLinkNode 0x1C
-#define KChronicleNode 0x1D
-#define KPlayerInfoListNode 0x1E
+#define KFolderNode 0x16 // 22
+#define KPlayerInfoNode 0x17 // 23
+#define KSystem 0x18 // 24
+#define KImageNode 0x19 // 25
+#define KTextNoteNode 0x1A // 26
+#define KSDLNode 0x1B // 27
+#define KAgeLinkNode 0x1C // 28
+#define KChronicleNode 0x1D // 29
+#define KPlayerInfoListNode 0x1E // 30
 
-#define KMarkerNode 0x20
-#define KAgeInfoNode 0x21
-#define KAgeInfoListNode 0x22
-#define KMarkerListNode 0x23
+#define KMarkerNode 0x20 // 32
+#define KAgeInfoNode 0x21 // 33
+#define KAgeInfoListNode 0x22 // 34
+#define KMarkerListNode 0x23 // 35
 
 //folder types
 #define KGeneric 0
