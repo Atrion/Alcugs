@@ -68,14 +68,16 @@ namespace alc {
 		/** creates the main vault nodes like AllPlayers and GlobalInbox */
 		void createVault(void);
 		
-		/** searches the age by filename and creates it if necessary, returns the ID of the age info node */
-		U32 getAge(tvAgeInfoStruct &ageInfo);
+		/** searches the age by filename and creates it if necessary and wished, returns the ID of the age info node.
+		    If the age should not be created and it is not found, returns 0 */
+		U32 getAge(tvAgeInfoStruct &ageInfo, bool create = true);
 		
 		/** creates an age, returns the ID of the age info node */
 		U32 createAge(tvAgeInfoStruct &ageInfo);
 		
-		/** gives the player a link to that age and adds the linking point, returns the ID of the link node */
-		U32 addAgeLinkToPlayer(U32 ki, U32 ageInfoNode, tvSpawnPoint &spawnPoint);
+		/** gives the player a link to that age and adds the linking point, returns the ID of the link node
+		    if noUpdate is true, the spawn point is only added if the link did not yet exist*/
+		U32 addAgeLinkToPlayer(U32 ki, U32 ageInfoNode, tvSpawnPoint &spawnPoint, bool noUpdate = false);
 		
 		/** adds that player to the owners of this age */
 		void addOwnerToAge(U32 ageInfoNode, U32 ki);
@@ -122,6 +124,7 @@ namespace alc {
 		int maxPlayers;
 		char welcomeMsgTitle[512], welcomeMsgText[4096];
 		char hoodName[512], hoodDesc[512];
+		bool linkingRulesHack;
 		
 		// the list of vmgrs
 		struct tVmgr {

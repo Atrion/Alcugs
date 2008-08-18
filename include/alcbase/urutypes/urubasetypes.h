@@ -65,7 +65,8 @@ public:
 		5 - inverted
 		6 - myst5 (plasma 2.1)
 	*/
-	tUStr(Byte mode=1);
+	tUStr(int mode=1);
+	tUStr(const void *k, int mode = 1);
 	tUStr(tUStr &t) { this->copy(t); }
 	virtual void stream(tBBuf &b);
 	virtual void store(tBBuf &b);

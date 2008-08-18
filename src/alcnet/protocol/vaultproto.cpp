@@ -63,6 +63,13 @@ namespace alc {
 		memcpy(this->guid, guid, 8);
 	}
 	
+	tvAgeInfoStruct::tvAgeInfoStruct(tUStr &fileName, tUStr &guid) : tvBase()
+	{
+		flags =  0x02 | 0x04; // fileName, GUID
+		this->fileName = fileName;
+		alcAscii2Hex(this->guid, guid.c_str(), 8);
+	}
+	
 	void tvAgeInfoStruct::store(tBBuf &t)
 	{
 		//AgeInfoStruct flags
@@ -74,8 +81,8 @@ namespace alc {
 		// 0x2F filename,instance name,guid,user name,display name
 		// 0x6F filename,instance name,guid,user name,display name,language
 		//Supposicions:
-		// 0x02: filename (must always be set)
 		// 0x01: instance name
+		// 0x02: filename (must always be set)
 		// 0x04: The Age Guid
 		// 0x08: The user defined name
 		// 0x20: DisplayName (Desc's name)

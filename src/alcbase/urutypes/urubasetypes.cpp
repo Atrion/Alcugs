@@ -174,7 +174,10 @@ void tAESBuf::decrypt() {
 
 
 /* tUStr */
-tUStr::tUStr(Byte mode) : tStrBuf() {
+tUStr::tUStr(int mode) : tStrBuf() {
+	this->version=mode;
+}
+tUStr::tUStr(const void *k, int mode) : tStrBuf(k) {
 	this->version=mode;
 }
 void tUStr::stream(tBBuf &b) {

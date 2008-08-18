@@ -119,7 +119,10 @@ namespace alc {
 		else strncpy(welcomeMsgTitle, defaultWelcomeMsgTitle, 511);
 		var = cfg->getVar("vault.wipe.msg");
 		if (!var.isNull()) strncpy(welcomeMsgText, (char *)var.c_str(), 4095);
-		else strncpy(welcomeMsgText, defaultWelcomeMsgTitle, 4095);
+		else strncpy(welcomeMsgText, defaultWelcomeMsgText, 4095);
+		
+		var = cfg->getVar("vault.tmp.hacks.linkrules");
+		linkingRulesHack = (!var.isNull() && var.asByte()); // disabled per default
 		
 		var = cfg->getVar("vault.unstable");
 		if (var.isNull() || !var.asByte()) {
@@ -262,7 +265,22 @@ namespace alc {
 		delete node;
 		free((void *)nodes);
 		
-		// FIXME add linking rules hack
+		if (!linkingRulesHack) return;
+		// linking rules hack
+		// this hack was originally written by a'moaca' for the unet3 vault server. I just ported it to unet3+. Unlike the original hack,
+		//  this one also creates the age if necessary as otherwise the first link there would be done without the hack
+		// Here's the original comment:
+			//NOTE I have not done enough testing to consider this hack safe,
+			//     also the problem should be solved on the unet3+ game servers
+			//     since the new game servers are years away, this hack can be a temporany
+			//     solution for some people.
+		if (status.age == "Ahnonay" || status.age == "Neighborhood02" || status.age == "Myst") {
+			tvAgeInfoStruct ageInfo(status.age, status.serverGuid);
+			tvSpawnPoint spawnPoint("Default", "LinkInPointDefault");
+			log->log("Linking rule hack: adding link to %s to player %d\n", ageInfo.fileName.c_str(), status.ki);
+			U32 ageInfoNode = getAge(ageInfo); // create if necessary
+			addAgeLinkToPlayer(status.ki, ageInfoNode, spawnPoint, /*noUpdate*/true);
+		}
 	}
 	
 	int tVaultBackend::findVmgr(tNetSession *u, U32 ki, U32 mgr)
@@ -664,6 +682,7 @@ namespace alc {
 			case TRegisterOwnedAge:
 			{
 				if (!ageLink) throw txProtocolError(_WHERE("the age link must be set for a TRegisterOwnedAge"));
+				log->log("TRegisterOwnedAge (age filename: %s) from %d\n", ageLink->ageInfo.fileName.c_str(), ki);
 				
 				// if necessary, generate the guid
 				Byte zeroGuid[8];
@@ -689,7 +708,7 @@ namespace alc {
 		}
 	}
 	
-	U32 tVaultBackend::getAge(tvAgeInfoStruct &ageInfo)
+	U32 tVaultBackend::getAge(tvAgeInfoStruct &ageInfo, bool create)
 	{
 		tvNode *node;
 		// search for the age
@@ -702,6 +721,7 @@ namespace alc {
 		if (ageInfoNode) // we got it!
 			return ageInfoNode;
 		
+		if (!create) return 0;
 		// we have to create it
 		return createAge(ageInfo);
 	}
@@ -731,7 +751,7 @@ namespace alc {
 		return ageInfoNode;
 	}
 	
-	U32 tVaultBackend::addAgeLinkToPlayer(U32 ki, U32 ageInfoNode, tvSpawnPoint &spawnPoint)
+	U32 tVaultBackend::addAgeLinkToPlayer(U32 ki, U32 ageInfoNode, tvSpawnPoint &spawnPoint, bool noUpdate)
 	{
 		tvNode *node;
 		// find (and create if necessary) AgesIOwnFolder
@@ -759,6 +779,8 @@ namespace alc {
 		
 		// if the link node exists, fetch and update it, otherwise, create it
 		if (ageLinkNode) {
+			if (noUpdate) // we're told not to update it, so let's go
+				return ageLinkNode;
 			tvNode **nodes;
 			int nNodes;
 			vaultDB->fetchNodes(&ageLinkNode, 1, &nodes, &nNodes);
