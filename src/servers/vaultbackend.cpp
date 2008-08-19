@@ -568,7 +568,12 @@ namespace alc {
 				log->log("Vault Find Node (looking for node %d) for %d\n", savedNode->index, ki);
 				log->flush();
 				tvManifest mfs;
-				bool create = (savedNode->type == KFolderNode || savedNode->type == KPlayerInfoListNode || savedNode->type == KSDLNode || savedNode->type == KAgeInfoNode); // it's necessary to allow creating these
+				bool create = (savedNode->type == KPlayerInfoNode || savedNode->type == KFolderNode || savedNode->type == KPlayerInfoListNode || savedNode->type == KSDLNode || savedNode->type == KAgeInfoNode);
+				// It's necessary to allow creating these
+				// FolderNode and PlayerInfoNode are requested when fetching a new player or an age
+				// SDLNode is requested when fetching an age
+				// AgeInfoNode is requested for the Watcher's Sanctuary when linking to Relto
+				// PlayerInfoNode is requested for the saver of a KI messages and must be recreated if the player was deleted
 				if (!vaultDB->findNode(*savedNode, create, &mfs))
 					throw txProtocolError(_WHERE("got a VFindNode but can't find the node"));
 				// create and send the reply
@@ -958,21 +963,18 @@ namespace alc {
 			// remove the node
 			vaultDB->removeNodeTree(deletePlayer.ki, false); // don't be cautious
 			// broadcast the removal
-			DBG(1, "num parent nodes: %d\n", tableSize);
 			for (int i = 0; i < tableSize; ++i) {
-				DBG(9, "parent node: %d\n", table[i]);
 				broadcastNodeRefUpdate(new tvNodeRef(0, table[i], deletePlayer.ki), /*remove:*/true);
 			}
 			// free stuff
 			free((void *)table);
 			
-			// remove all references to the info node
-			// however, do NOT remove the info node itself as the client will query for it if it still has a KI message from this player
-			// the clients who recieved a KI message will add it back to their PeopleIKnowAboutFolder
+			// remove info node and all sub-nodes
 			vaultDB->getParentNodes(infoNode, &table, &tableSize);
-			// remove the refs and broadcast the removal
+			// remove the node
+			vaultDB->removeNodeTree(infoNode, false); // don't be cautious
+			// broadcast the removal
 			for (int i = 0; i < tableSize; ++i) {
-				vaultDB->removeNodeRef(table[i], infoNode);
 				broadcastNodeRefUpdate(new tvNodeRef(0, table[i], infoNode), /*remove:*/true);
 			}
 			// free stuff
