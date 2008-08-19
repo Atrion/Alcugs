@@ -49,7 +49,7 @@ namespace alc {
 		
 		/** looks up a node in the database, using all fields which have their flag turned on (except for blobs)
 		    \returns the ID of the found/created node, 0 if neither found nor created */
-		U32 findNode(tvNode &node, tvManifest *mfs = NULL, bool create = false);
+		U32 findNode(tvNode &node, bool create = false, tvManifest *mfs = NULL);
 		
 		/** creates a new node and returns its ID */
 		U32 createNode(tvNode &node);

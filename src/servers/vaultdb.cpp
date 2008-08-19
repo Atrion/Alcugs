@@ -532,7 +532,7 @@ namespace alc {
 		if (escapedData) free(escapedData);
 	}
 	
-	U32 tVaultDB::findNode(tvNode &node, tvManifest *mfs, bool create)
+	U32 tVaultDB::findNode(tvNode &node, bool create, tvManifest *mfs)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
@@ -1253,11 +1253,10 @@ namespace alc {
 		type = atoi(row[0]);
 		mysql_free_result(result);
 		
-		bool safeType = cautious ? (type == KImageNode || type == KTextNoteNode || type == KChronicleNode) : (type > 7 && type != KSystem);
+		bool safeType = cautious ? (type == KImageNode || type == KTextNoteNode || type == KChronicleNode || type == KMarkerListNode || type == KMarkerNode) : (type > 7);
 		if (numParent <= 1 && safeType) {
 			// there are no more references to this node, and it's a safe node to remove
 			removeNodeTree(son, cautious);
-			// FIXME: what about marker games?
 		}
 		else { // only remove this ref
 			sprintf(query, "DELETE FROM %s WHERE id2='%d' AND id3='%d'", refVaultTable, parent, son);
@@ -1281,7 +1280,7 @@ namespace alc {
 		sql->query(query, "removeNodeTree: removing all references to a node");
 		
 		// get all references from this node and remove them
-		// we do this using recursion since doing it with a loop would make thigns more complicated without saving database queries
+		// we do this using recursion since doing it with a loop would make things more complicated without saving database queries
 		sprintf(query, "SELECT id3 FROM %s WHERE id2='%d'", refVaultTable, node);
 		sql->query(query, "removeNodeTree: getting child nodes");
 		result = sql->storeResult();

@@ -143,24 +143,31 @@ namespace alc {
 	void tVaultBackend::createVault(void)
 	{
 		tvNode *node;
+		// create admin mgr (the other nodes will be a child of this so that they are not lost). This is what the Vault Manager does
+		//  on first login
+		node = new tvNode(MType);
+		node->type = KVNodeMgrAdminNode;
+		U32 adminNode = vaultDB->createNode(*node);
+		delete node;
+		
 		// create AllPlayersFolder
 		node = new tvNode(MType | MInt32_1);
 		node->type = KFolderNode;
 		node->int1 = KAllPlayersFolder;
-		vaultDB->createNode(*node);
+		vaultDB->createChildNode(KVaultID, adminNode, *node);
 		delete node;
 		
 		// create PublicAgesFolder (what is this used for?)
 		node = new tvNode(MType | MInt32_1);
 		node->type = KFolderNode;
 		node->int1 = KPublicAgesFolder;
-		vaultDB->createNode(*node);
+		vaultDB->createChildNode(KVaultID, adminNode, *node);
 		delete node;
 		
 		// create System node
 		node = new tvNode(MType);
 		node->type = KSystem;
-		U32 systemNode = vaultDB->createNode(*node);
+		U32 systemNode = vaultDB->createChildNode(KVaultID, adminNode, *node);
 		delete node;
 		
 		// create GlobalInboxFolder as a child of the system node
@@ -250,7 +257,7 @@ namespace alc {
 		node = new tvNode(MType | MOwner);
 		node->type = KPlayerInfoNode;
 		node->owner = status.ki;
-		U32 infoNode = vaultDB->findNode(*node, NULL, false);
+		U32 infoNode = vaultDB->findNode(*node);
 		delete node;
 		if (!infoNode) throw txUnet(_WHERE("KI %d doesn't have a info node?!?", status.ki));
 		vaultDB->fetchNodes(&infoNode, 1, &nodes, &nNodes);
@@ -396,7 +403,7 @@ namespace alc {
 				tvNode mgrNode;
 				mgrNode.flagB = MType;
 				mgrNode.type = nodeType;
-				if (nodeType == 2) { // player node
+				if (nodeType == KVNodeMgrPlayerNode) { // player node
 					if (playerKi < 0) throw txProtocolError(_WHERE("VConnect for node type 2 must have playerKi set"));
 					mgr = playerKi;
 					if (mgr != ki)
@@ -407,11 +414,11 @@ namespace alc {
 					reply.items[1] = new tvItem(/*id*/23, /*folder name*/vaultFolderName);
 					send(reply, u, ki);
 				}
-				else if (nodeType == 3) { // age node
+				else if (nodeType == KVNodeMgrAgeNode) { // age node
 					if (!ageName || !ageGuid) throw txProtocolError(_WHERE("VConnect for node type 3 must have ageGuid and ageName set"));
 					mgrNode.flagB |= MStr64_1;
 					mgrNode.str1.writeStr(alcGetStrGuid(ageGuid));
-					mgr = vaultDB->findNode(mgrNode, NULL, /*create*/true);
+					mgr = vaultDB->findNode(mgrNode, /*create*/true);
 					// create and send the reply
 					tvMessage reply(msg, 3);
 					reply.items[0] = new tvItem(/*id:*/2, /*mgr node id*/(S32)mgr);
@@ -419,8 +426,8 @@ namespace alc {
 					reply.items[2] = new tvItem(/*id*/23, /*folder name*/vaultFolderName);
 					send(reply, u, ki);
 				}
-				else if (nodeType == 5) { // admin node
-					mgr = vaultDB->findNode(mgrNode, NULL, /*create*/true);
+				else if (nodeType == KVNodeMgrAdminNode) { // admin node
+					mgr = vaultDB->findNode(mgrNode, /*create*/false);
 					// create and send the reply
 					tvMessage reply(msg, 3);
 					reply.items[0] = new tvItem(/*id:*/1, /*node type*/5);
@@ -562,7 +569,7 @@ namespace alc {
 				log->flush();
 				tvManifest mfs;
 				bool create = (savedNode->type == KFolderNode || savedNode->type == KPlayerInfoListNode || savedNode->type == KSDLNode || savedNode->type == KAgeInfoNode); // it's necessary to allow creating these
-				if (!vaultDB->findNode(*savedNode, &mfs, create))
+				if (!vaultDB->findNode(*savedNode, create, &mfs))
 					throw txProtocolError(_WHERE("got a VFindNode but can't find the node"));
 				// create and send the reply
 				tvMessage reply(msg, 2);
@@ -607,7 +614,20 @@ namespace alc {
 			case VSendNode:
 			{
 				if (rcvPlayer < 0 || !savedNode) throw txProtocolError(_WHERE("Got a VSendNode without the reciever or the node"));
-				tvNode *node; // make sure it is reset after being used, vaultDB might change it
+				log->log("Sending node %d from player %d to %d\n", savedNode->index, ki, rcvPlayer);
+				tvNode *node;
+				tvNode **nodes;
+				int nNodes;
+				// check if reciever exists
+				U32 reciever = rcvPlayer;
+				vaultDB->fetchNodes(&reciever, 1, &nodes, &nNodes);
+				if (nNodes > 0) delete *nodes;
+				free(nodes);
+				if (nNodes == 0) {
+					log->log("ERR: I should send a message to the non-existing player %d\n", rcvPlayer);
+					break;
+				}
+				
 				// find the sender's info node
 				node = new tvNode(MType | MOwner);
 				node->type = KPlayerInfoNode;
