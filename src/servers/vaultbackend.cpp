@@ -1066,6 +1066,12 @@ namespace alc {
 		}
 		free((void *)table);
 	}
+	
+	void tVaultBackend::cleanVault(void)
+	{
+		// FIXME: actually clean it
+		log->log("I'm sorry but cleaing the vault is not yet implemented\n");
+	}
 
 } //end namespace alc
 

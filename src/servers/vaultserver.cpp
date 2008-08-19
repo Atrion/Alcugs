@@ -55,6 +55,27 @@ namespace alc {
 	const char * alcNetName="Vault";
 	Byte alcWhoami=KVault;
 	
+	void tUnetVaultServer::onLoadConfig(bool reload)
+	{
+		vaultBackend->load();
+		if (reload) return;
+		
+		// if this is the first configuration, check if we should clean the vault
+		tConfig *cfg = alcGetConfig();
+		tStrBuf var = cfg->getVar("daemon");
+		bool daemon = (!var.isNull() && var.asByte()); // disabled per default
+		var = cfg->getVar("vault.clean", "cmdline"); // this can only be enabled via cmdline
+		bool clean = (!var.isNull() && var.asByte()); // disabled per default
+		if (clean) {
+			if (daemon) {
+				lerr->log("I will only clean the vault in interactive mode to give you more feedback\n");
+				return;
+			}
+			vaultBackend->cleanVault();
+			forcestop(); // don't let the server run, we started just for cleaning
+		}
+	}
+	
 	int tUnetVaultServer::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
 	{
 		int ret = tUnetServerBase::onMsgRecieved(ev, msg, u); // first let tUnetServerBase process the message

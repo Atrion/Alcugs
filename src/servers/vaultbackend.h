@@ -51,6 +51,7 @@ namespace alc {
 		void processVaultTask(tvMessage &msg, tNetSession *u, U32 ki, U32 x);
 		void deletePlayer(tmCustomVaultDeletePlayer &deletePlayer);
 		U32 createPlayer(tmCustomVaultCreatePlayer &createPlayer); //!< \returns KI number of created player or 0 if name already exists
+		void cleanVault(void);
 		inline int getNumberOfPlayers(Byte *uid) {
 			return vaultDB->getPlayerList(uid);
 		}

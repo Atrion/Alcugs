@@ -141,6 +141,14 @@ void tUnetBase::reconfigure() {
 			unsetFlags(UNET_NOFLOOD);
 		}
 	}
+	var=cfg->getVar("broadcast","global");
+	if(!var.isNull()) {
+		if(var.asByte()) {
+			unsetFlags(UNET_BCAST);
+		} else {
+			setFlags(UNET_BCAST);
+		}
+	}
 	var=cfg->getVar("net.log.ack","global");
 	if(!var.isNull()) {
 		if(var.asByte()) {
