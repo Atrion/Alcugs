@@ -636,14 +636,6 @@ namespace alc {
 				delete node;
 				if (!infoNode) throw txUnet(_WHERE("Couldn't find a players info node?!?"));
 				
-				// find and create the PeopleIKnowAboutFolder
-				node = new tvNode (MType | MOwner | MInt32_1);
-				node->type = KPlayerInfoListNode;
-				node->owner = rcvPlayer;
-				node->int1 = KPeopleIKnowAboutFolder;
-				U32 recentFolder = getChildNodeBCasted(rcvPlayer, rcvPlayer, *node);
-				delete node;
-				
 				// find and create the InboxFolder
 				node = new tvNode(MType | MOwner | MInt32_1);
 				node->type = KFolderNode;
@@ -651,9 +643,6 @@ namespace alc {
 				node->int1 = KInboxFolder;
 				U32 inbox = getChildNodeBCasted(rcvPlayer, rcvPlayer, *node);
 				delete node;
-				
-				// add sender to recent folder
-				addRefBCasted(rcvPlayer, recentFolder, infoNode);
 				
 				// add what was sent to the inbox
 				addRefBCasted(ki, inbox, savedNode->index);
@@ -979,6 +968,7 @@ namespace alc {
 			
 			// remove all references to the info node
 			// however, do NOT remove the info node itself as the client will query for it if it still has a KI message from this player
+			// the clients who recieved a KI message will add it back to their PeopleIKnowAboutFolder
 			vaultDB->getParentNodes(infoNode, &table, &tableSize);
 			// remove the refs and broadcast the removal
 			for (int i = 0; i < tableSize; ++i) {
