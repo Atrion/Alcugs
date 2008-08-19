@@ -172,6 +172,7 @@ website = "http://server/info.html"
 # game server settings
 game.log = "../game/" # the path where the game log files will be saved (there will be subdirs for each instance: /basis/agename/ageguid/)
 game.config = "~/etc/unet2.conf" # config file for game servers
+;load_on_demand = 1 # enables/disables automaic game server forking (default 1)
 
 stop = 1
 

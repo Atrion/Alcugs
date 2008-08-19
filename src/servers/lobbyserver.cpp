@@ -71,6 +71,8 @@ namespace alc {
 		strncpy((char *)gameConfig, (char *)var.c_str(), 255);
 		var = cfg->getVar("bin");
 		strncpy((char *)gameBinPath, (char *)var.c_str(), 255);
+		var = cfg->getVar("load_on_demand");
+		loadOnDemand = (var.isNull() || var.asByte()); // on per default
 	}
 	
 	int tUnetLobbyServer::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
@@ -215,6 +217,11 @@ namespace alc {
 				tmCustomForkServer forkServer(u);
 				msg->data->get(forkServer);
 				log->log("<RCV> %s\n", forkServer.str());
+				
+				if (!loadOnDemand) {
+					log->log("Ignoring fork request since I'm in manual mode\n");
+					return 1;
+				}
 				
 				// flush all log files before forking because otherwise they will be flushed by both parent and child and messages will be printed twice
 				log->flush(); err->flush(); sec->flush();
