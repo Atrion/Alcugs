@@ -73,7 +73,6 @@ public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t);
 	tmPlayerTerminated(tNetSession * u,U32 ki=0,Byte reason=RKickedOff);
-	tmPlayerTerminated(tNetSession * u,tNetSessionIte &ite,Byte reason=RKickedOff);
 	//format
 	Byte reason;
 protected:

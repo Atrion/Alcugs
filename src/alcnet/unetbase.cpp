@@ -235,10 +235,8 @@ void tUnetBase::terminate(tNetSession *u,Byte reason, bool destroyOnly)
 		send(leave);
 	}
 	
-	if (destroyOnly && u->terminated) // if the session should be destroyed, do that ASAP
+	if (destroyOnly) // if the session should be destroyed, do that ASAP
 		u->setTimeout(0);
-	else if (u->client && !destroyOnly && !u->terminated) // give clients 3 seconds time to send their NetMsgLeave, but only if they haven't already got a NetMsgTerminated before
-		u->setTimeout(3);
 	else // otherwise, give the session one second to send remaining messages
 		u->setTimeout(1);
 	u->terminated = true;

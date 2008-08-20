@@ -58,7 +58,7 @@ void tmTerminated::additionalFields() {
 
 
 tmLeave::tmLeave(tNetSession * u,U32 ki,Byte reason)
- :tmMsgBase(NetMsgLeave,plNetKi | plNetAck | plNetCustom,u) {
+ :tmMsgBase(NetMsgLeave,plNetKi | plNetCustom,u) {
 	this->ki=ki;
 	this->reason=reason;
 }
@@ -76,15 +76,8 @@ void tmLeave::additionalFields() {
 
 
 tmPlayerTerminated::tmPlayerTerminated(tNetSession * u,U32 ki,Byte reason)
- :tmMsgBase(NetMsgPlayerTerminated,plNetKi | plNetCustom,u) {
+ :tmMsgBase(NetMsgPlayerTerminated,plNetKi | plNetCustom | plNetAck,u) {
 	this->ki=ki;
-	this->reason=reason;
-}
-tmPlayerTerminated::tmPlayerTerminated(tNetSession * u,tNetSessionIte &ite,Byte reason)
- :tmMsgBase(NetMsgPlayerTerminated,plNetIP | plNetSid | plNetCustom,u) {
-	ip=ite.ip;
-	port=ite.port;
-	sid=ite.sid;
 	this->reason=reason;
 }
 void tmPlayerTerminated::store(tBBuf &t) {
