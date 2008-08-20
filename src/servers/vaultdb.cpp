@@ -1374,6 +1374,39 @@ namespace alc {
 			++i;
 		}
 	}
+	
+	void tVaultDB::clean(void)
+	{
+		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		
+		char query[1024];
+		MYSQL_RES *result;
+		MYSQL_ROW row;
+		int num;
+		
+		// find lost nodes and remove them
+		// a lost node is a node without a parent and which is not a mgr
+		sprintf(query, "SELECT n.idx FROM %s n LEFT JOIN %s r ON n.idx = r.id3 "
+			"WHERE r.id2 IS NULL AND n.type > 7", vaultTable, refVaultTable);
+		sql->query(query, "Finding lost nodes");
+		result = sql->storeResult();
+		
+		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get lost nodes"));
+		num = mysql_num_rows(result);
+		
+		lstd->log("Cleaning up: Removing %d lost nodes...\n", num);
+		for (int i = 0; i < num; ++i) {
+			row = mysql_fetch_row(result);
+			removeNodeTree(atoi(row[0]), /*cautious*/false);
+		}
+		mysql_free_result(result);
+		
+		/* However, even after removing lost nodes, the vault is still not clean: there are still lost ages.
+		   Lost ages are ages of players who were deleted. The age info nodes and everything else for that age (for Relto even the
+		   AgesIOwnFOlder of the owner) are still referenced by the age mgr for this age, so the nodes are not lost.
+		   Lost ages can be found by searching for age info nodes which are not referenced by an age link. However, this might also find
+		   Global Ages as long as they don't get an age link somewhere - which will have to wait till there are unet3+ game servers. */
+	}
 
 } //end namespace alc
 

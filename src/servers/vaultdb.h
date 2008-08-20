@@ -92,6 +92,9 @@ namespace alc {
 		
 		/** get all references (direct and indirect) of this node */
 		void getReferences(U32 node, tvNodeRef ***ref, int *nRef); // this is a pointer to an array of pointers
+		
+		/** removes all lost nodes and their subnodes */
+		void clean(void);
 	private:
 		/** creates a query to SELECT (isUpdate = false) or UPDATE (isUpdate = true) that vault node
 		    the query is appended (using strcat) to out which must be big enough

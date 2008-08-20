@@ -1149,9 +1149,8 @@ namespace alc {
 	
 	void tVaultBackend::cleanVault(void)
 	{
-		log->log("Cleaning up the vault. I hope you did a backup first! Now it's too late though...");
-		// FIXME: actually clean it
-		log->log("I'm sorry but cleaing the vault is not yet implemented\n");
+		log->log("Cleaning up the vault. I hope you did a backup first! Now it's too late though...\n");
+		vaultDB->clean();
 	}
 
 } //end namespace alc
