@@ -69,6 +69,9 @@ namespace alc {
 		}
 		var = cfg->getVar("allow_uu_clients");
 		allowUU = (var.isNull() || var.asByte()); // per default, UU clients are allowed
+		var = cfg->getVar("tmp.link_log");
+		if (!var.isNull()) strncpy(linkLog, (char *)var.c_str(), 511);
+		else linkLog[0] = 0;
 	}
 	
 	void tUnetLobbyServerBase::onUnloadConfig()
@@ -552,10 +555,19 @@ namespace alc {
 				if (!findAge.message.eof()) throw txProtocolError(_WHERE("Got a NetMsgFindAge which is too long"));
 				log->print(" %s\n", ageLink.str());
 				
-				if (ageLink.linkingRule != KOriginalBook && ageLink.linkingRule != KOwnedBook)
-					throw txProtocolError(_WHERE("Linking rule must be KOriginalBook or KOwnedBook but is 0x%02X", ageLink.linkingRule));
+				if (ageLink.linkingRule != KOriginalBook && ageLink.linkingRule != KOwnedBook && ageLink.linkingRule != KBasicLink)
+					throw txProtocolError(_WHERE("Linking rule must be KOriginalBook, KOwnedBook or KBasicLink but is 0x%02X", ageLink.linkingRule));
 				if (ageLink.ccr)
 					throw txProtocolError(_WHERE("Linking as CCR is not allowed"));
+				
+				// if asked to do so, log the linking
+				if (linkLog[0]) {
+					FILE *f = fopen(linkLog, "a");
+					if (f) {
+						fprintf(f, "Player %s links from %s to: %s\n", u->name, serverName, ageLink.str());
+						fclose(f);
+					}
+				}
 				
 				// let's ask the tracking server
 				tNetSession *trackingServer = getSession(tracking);

@@ -42,10 +42,7 @@
 #define UNetUrgent      0x04 //Urgent message
 #define UNetExp         0x01 //Additional flags byte
 
-//Additional Flags (1Byte)
-//0x01 //Additional flags U32
-
-//known flags for plnetmsg's
+//known flags for plNetMsg's
 #define plNetFirewalled 0x00000020 //Firewalled flag only
 #define plNetBcast      0x00000400 //Bcast flag only (if that flag is enabled, do a bcast)
 #define plNetAck        0x00040000 //Ack flag only
@@ -55,15 +52,11 @@
 #define plNetTimestamp  0x00000001 //* contains a Timestamp
 #define plNetX          0x00000200 //* contains the X
 #define plNetKi         0x00001000 //* contains the ki
-//but we don't know the exact place, so we placed them anywhere.
 #define plNetUID        0x00004000 //* contains a player uid
-//#define plNetIP        0x10000000 //wrong plNetIP
-//Mental Note: The current GoE shard build is still using the wrong plNetIP, all servers must be updated at the same time.
 #define plNetIP         0x00000010 //* This message should contain client's ip address
 
 //Suppositions for unidentified flags.
 #define plNetCustom     0x00020000 //*? Unknown purpose flag
-
 #define plNetStateReq   0x00000800 //(unknown, seen on the 1st plNetMsgStateRequest)
 #define plNetDirected   0x00008000 //Unknown, seen on plNetMsgGameMessageDirected
 #define plNetP2P        0x08000000 //p2p request? (seen on plNetMsgJoinReq)
@@ -72,7 +65,7 @@
 #define plNetSid        0x00800000 //* this message contains a sid (used when X is already used otherwise)
 
 //An '*' means that the flag adds a new data field in the unet header.
-// elsewhere there are only flags...
+// the rest is only a flag...
 
 //account access levels
 #define AcRoot 0
@@ -265,21 +258,17 @@ unsilenced 29
 #define NetMsgPlayerPage               0x03AF
 
 #define NetMsgVault                    0x0428
-#define NetMsgVault2                   0x0429
+#define NetMsgVault2                   0x0429 // TPOTS
 
 #define NetMsgSetTimeout               0x0464
-#define NetMsgSetTimeout2              0x0465
+#define NetMsgSetTimeout2              0x0465 // TPOTS
 #define NetMsgActivePlayerSet          0x0465
-#define NetMsgActivePlayerSet2         0x0466
-//tpots
+#define NetMsgActivePlayerSet2         0x0466 // TPOTS
 
 //tpots note
-///type 0x02BC is now 0x03BC
-///All types that are >0x03BC are now incremented +1
-///thx to ngilb120
-
-//not implemented
-//hmm the list is empty :D
+//type 0x02BC is now 0x03BC
+//All types that are >0x03BC are now incremented +1
+//thx to ngilb120
 
 //custom
 #define NetMsgCustomAuthAsk            0x1001

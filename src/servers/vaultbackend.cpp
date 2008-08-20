@@ -778,7 +778,7 @@ namespace alc {
 				log->log("TUnRegisterVisitAge from %d\n", ki);
 				
 				// now find the age info node of the age we're looking for
-				tvAgeInfoStruct ageInfo("", ageGuid);// filename is unknown
+				tvAgeInfoStruct ageInfo("", ageGuid); // filename is unknown
 				U32 ageInfoNode = getAge(ageInfo, /*create*/false);
 				if (!ageInfoNode) throw txProtocolError(_WHERE("I should remove an invite for a non-existing age"));
 				// remove the link from the player

@@ -71,6 +71,7 @@ protected:
 	bool vaultLogShort;
 	
 	bool allowUU;
+	char linkLog[512];
 };
 
 #if 0

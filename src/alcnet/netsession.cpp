@@ -464,7 +464,7 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 	// A solution would be to only mark the packet as recieved after all fragments were recieved, but
 	//  that would have to be done in tNetSession::assembleMessage
 	
-	if(msg.sn >= (wite+rcv_win)) {
+	if (wite == 0 || msg.sn >= (wite+rcv_win)) {
 		net->err->log("%s INF: Dropped packet %i after the window by sn (wite: %i)\n",str(),msg.sn,wite);
 		net->err->flush();
 		return 2;
