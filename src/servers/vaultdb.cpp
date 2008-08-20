@@ -49,7 +49,7 @@ namespace alc {
 		`permissions` int NOT NULL default 0,\
 		`owner` int NOT NULL default 0,\
 		`grp` int NOT NULL default 0,\
-		`mod_time` timestamp NOT NULL default 0,\
+		`mod_time` double NOT NULL default 0,\
 		`creator` int NOT NULL default 0,\
 		`crt_time` timestamp NOT NULL default 0,\
 		`age_time` timestamp NOT NULL default 0,\
@@ -239,6 +239,20 @@ namespace alc {
 		sql->query(query, "converting int to timestamp (3/3)");
 	}
 	
+	void tVaultDB::convertIntToDouble(const char *table, const char *intColumn, const char *doubleColumn)
+	{
+		char query[512];
+		
+		sprintf(query, "ALTER TABLE %s ADD %s double NOT NULL default 0 AFTER %s", table, doubleColumn, intColumn);
+		sql->query(query, "converting int to double (1/3)");
+		
+		sprintf(query, "UPDATE %s SET %s = %s", table, doubleColumn, intColumn);
+		sql->query(query, "converting int to double (2/3)");
+		
+		sprintf(query, "ALTER TABLE %s DROP %s", table, intColumn);
+		sql->query(query, "converting int to double (3/3)");
+	}
+	
 	void tVaultDB::migrateVersion2to3(void)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
@@ -276,7 +290,7 @@ namespace alc {
 			CHANGE entry2 text_2 varchar(255) NOT NULL default '', CHANGE data blob_1 longblob NOT NULL", vaultTable);
 		sql->query(query, "migrateVersion2to3: rename string and blob columns");
 		// convert timestamp columns
-		convertIntToTimestamp(vaultTable, "timestamp", "mod_time");
+		convertIntToDouble(vaultTable, "timestamp", "mod_time");
 		convertIntToTimestamp(vaultTable, "timestamp2", "crt_time");
 		convertIntToTimestamp(vaultTable, "timestamp3", "age_time");
 		// update version number
@@ -378,7 +392,7 @@ namespace alc {
 		}
 		if (node.flagB & MModTime) {
 			if (comma) strcat(query, commaStr);
-			sprintf(cond, "mod_time=FROM_UNIXTIME(%d)", node.modTime);
+			sprintf(cond, "mod_time=%f", node.modTime);
 			strcat(query, cond);
 			comma = true;
 		}
@@ -394,7 +408,7 @@ namespace alc {
 			strcat(query, cond);
 			comma = true;
 		}
-		if (node.flagB & MModTime) {
+		if (node.flagB & MAgeTime) {
 			if (comma) strcat(query, commaStr);
 			sprintf(cond, "age_time=FROM_UNIXTIME(%d)", node.ageTime);
 			strcat(query, cond);
@@ -539,7 +553,7 @@ namespace alc {
 	
 		char query[4096];
 		// first, we have to create the query...
-		sprintf(query, "SELECT idx, UNIX_TIMESTAMP(mod_time) FROM %s WHERE ", vaultTable);
+		sprintf(query, "SELECT idx, mod_time FROM %s WHERE ", vaultTable);
 		createNodeQuery(query, node, /*isUpdate*/false);
 		
 		// now, let's execute it
@@ -586,9 +600,10 @@ namespace alc {
 		char *values = (char *)malloc(size*sizeof(char));
 		char *helpStr = (char *)malloc(size*sizeof(char));
 		
-		// time fix
+		// set current time
 		node.flagB |= (MModTime | MCrtTime | MAgeTime);
-		node.crtTime = node.ageTime = node.modTime = alcGetTime();
+		node.modTime = alcGetCurrentTime();
+		node.crtTime = node.ageTime = alcGetTime();
 		
 		sprintf(query, "INSERT INTO %s (type", vaultTable);
 		sprintf(values, ") VALUES ('%d'", node.type);
@@ -610,7 +625,7 @@ namespace alc {
 		}
 		if (node.flagB & MModTime) {
 			strcat(query, ",mod_time");
-			sprintf(helpStr, ",FROM_UNIXTIME('%d')", node.modTime);
+			sprintf(helpStr, ",'%f'", node.modTime);
 			strcat(values, helpStr);
 		}
 		if (node.flagB & MCreator) {
@@ -760,9 +775,9 @@ namespace alc {
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
-		// time fix
+		// set current time
 		node.flagB |= MModTime;
-		node.modTime = alcGetTime();
+		node.modTime = alcGetCurrentTime();
 		
 		// create the query
 		char *query = (char *)malloc((node.blob1Size*2 + 4048)*sizeof(char)), cond[64];
@@ -794,7 +809,7 @@ namespace alc {
 		int auxIndex, feedIndex;
 		
 		// get base node
-		sprintf(query, "SELECT idx, UNIX_TIMESTAMP(mod_time) FROM %s WHERE idx='%d'", vaultTable, baseNode);
+		sprintf(query, "SELECT idx, mod_time FROM %s WHERE idx='%d'", vaultTable, baseNode);
 		sql->query(query, "getManifest: getting first node");
 		
 		result = sql->storeResult();
@@ -806,7 +821,7 @@ namespace alc {
 		// save it in the feed
 		row = mysql_fetch_row(result);
 		feed = (tvManifest **)malloc(sizeof(tvManifest *));
-		feed[0] = new tvManifest(atoi(row[0]), atoi(row[1]));
+		feed[0] = new tvManifest(atoi(row[0]), atof(row[1]));
 		nFeed = 1;
 		mysql_free_result(result);
 		
@@ -819,7 +834,7 @@ namespace alc {
 			final = (tvManifest **)malloc((nFinal+nFeed)*sizeof(tvManifest *));
 			nFinal = 0;
 			
-			sprintf(query, "SELECT n.idx, UNIX_TIMESTAMP(n.mod_time), r.id1, r.id2, UNIX_TIMESTAMP(r.timestamp), r.microseconds, r.flag FROM %s n JOIN %s r ON r.id3=n.idx WHERE r.id2 IN(", vaultTable, refVaultTable);
+			sprintf(query, "SELECT n.idx, n.mod_time, r.id1, r.id2, UNIX_TIMESTAMP(r.timestamp), r.microseconds, r.flag FROM %s n JOIN %s r ON r.id3=n.idx WHERE r.id2 IN(", vaultTable, refVaultTable);
 			comma = false;
 			
 			// our task is now to (a) merge the (both sorted) lists aux and feed into a (sorted) final list and (b) add all the node ids
@@ -908,7 +923,7 @@ namespace alc {
 				row = mysql_fetch_row(result);
 				// save manifest
 				U32 idx = atoi(row[0]);
-				feed[nFeed] = new tvManifest(idx, atoi(row[1]));
+				feed[nFeed] = new tvManifest(idx, atof(row[1]));
 				++nFeed;
 				// and reference
 				(*ref)[*nRef] = new tvNodeRef(atoi(row[2]), atoi(row[3]), idx, atoi(row[4]), atoi(row[5]), (Byte)atoi(row[6]));
@@ -1126,7 +1141,7 @@ namespace alc {
 		*nodes = NULL;
 		*nNodes = 0;
 		
-		sprintf(query, "SELECT idx, type, permissions, owner, grp, UNIX_TIMESTAMP(mod_time), creator, UNIX_TIMESTAMP(crt_time), UNIX_TIMESTAMP(age_time), age_name, age_guid, int_1, int_2, int_3, int_4, uint_1, uint_2, uint_3, uint_4, str_1, str_2, str_3, str_4, str_5, str_6, lstr_1, lstr_2, text_1, text_2, blob_1 FROM %s WHERE idx IN(", vaultTable);
+		sprintf(query, "SELECT idx, type, permissions, owner, grp, mod_time, creator, UNIX_TIMESTAMP(crt_time), UNIX_TIMESTAMP(age_time), age_name, age_guid, int_1, int_2, int_3, int_4, uint_1, uint_2, uint_3, uint_4, str_1, str_2, str_3, str_4, str_5, str_6, lstr_1, lstr_2, text_1, text_2, blob_1 FROM %s WHERE idx IN(", vaultTable);
 		
 		for (int i = 0; i < tableSize; ++i) {
 			if (i > 0) strcat(query, ",");
@@ -1156,7 +1171,7 @@ namespace alc {
 			node->permissions = atoi(row[2]);
 			node->owner = atoi(row[3]);
 			node->group = atoi(row[4]);
-			node->modTime = atoi(row[5]);
+			node->modTime = atof(row[5]);
 			node->creator = atoi(row[6]);
 			node->crtTime = atoi(row[7]);
 			node->ageTime = atoi(row[8]);

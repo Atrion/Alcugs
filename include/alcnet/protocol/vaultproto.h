@@ -256,7 +256,7 @@ namespace alc {
 	
 	class tvManifest : public tvBase {
 	public:
-		tvManifest(U32 id, U32 timestamp);
+		tvManifest(U32 id, double timestamp);
 		tvManifest(void) : tvBase() {}
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
@@ -351,7 +351,7 @@ namespace alc {
 		U32 permissions;
 		S32 owner;
 		U32 group;
-		U32 modTime;
+		double modTime;
 		U32 creator;
 		U32 crtTime;
 		U32 ageTime;

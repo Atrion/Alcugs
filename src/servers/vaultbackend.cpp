@@ -536,7 +536,6 @@ namespace alc {
 			case VSaveNode:
 			{
 				if (!savedNode) throw txProtocolError(_WHERE("got a save node request without the node attached"));
-				if (savedNode->modTime == 0 || !(savedNode->flagB & MModTime)) throw txProtocolError(_WHERE("every saved node must have a timestamp"));
 				
 				if (savedNode->index < KVaultID) {
 					U32 oldIndex = savedNode->index;
@@ -1121,7 +1120,7 @@ namespace alc {
 		// create the broadcast message
 		tvMessage bcast(VSaveNode, 2);
 		bcast.items[0] = new tvItem(/*id*/9, /*old node index*/(S32)node.index);
-		bcast.items[1] = new tvItem(/*id*/24, /*timestamp*/(double)node.modTime);
+		bcast.items[1] = new tvItem(/*id*/24, /*timestamp*/node.modTime);
 		// and send it
 		broadcast(bcast, node.index, origKi, origMgr);
 	}
@@ -1140,7 +1139,7 @@ namespace alc {
 		// create the broadcast message
 		tvMessage bcast(VOnlineState, node.int1 ? 5 : 3);
 		bcast.items[0] = new tvItem(/*id*/9, /*old node index*/(S32)node.index);
-		bcast.items[1] = new tvItem(/*id*/24, /*timestamp*/(double)node.modTime);
+		bcast.items[1] = new tvItem(/*id*/24, /*timestamp*/node.modTime);
 		if (node.int1) { // if he's online
 			bcast.items[2] = new tvItem(/*id*/27, node.str1.c_str()); // age name
 			bcast.items[3] = new tvItem(/*id*/28, node.str2.c_str()); // age guid

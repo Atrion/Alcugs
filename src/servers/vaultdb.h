@@ -105,6 +105,7 @@ namespace alc {
 		int getVersion(void);
 		void migrateVersion2to3(void);
 		void convertIntToTimestamp(const char *table, const char *intColumn, const char *timestampColumn);
+		void convertIntToDouble(const char *table, const char *intColumn, const char *doubleColumn);
 		
 		tSQL *sql;
 		tLog *log;

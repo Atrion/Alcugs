@@ -293,10 +293,10 @@ namespace alc {
 	}
 	
 	//// tvManifest
-	tvManifest::tvManifest(U32 id, U32 timestamp)
+	tvManifest::tvManifest(U32 id, double timestamp)
 	{
 		this->id = id;
-		this->time = ((double)timestamp);
+		this->time = timestamp;
 	}
 	
 	void tvManifest::store(tBBuf &t)
@@ -628,7 +628,7 @@ namespace alc {
 		owner = t.getS32();
 		group = t.getU32();
 		modTime = t.getU32();
-		t.getU32(); // ignore the microseconds
+		modTime += t.getU32()/1000000.0; // these are the microseconds
 		
 		// optional fields
 		if (flagB & MCreator)
@@ -781,8 +781,9 @@ namespace alc {
 		t.putU32(permissions);
 		t.putS32(owner);
 		t.putU32(group);
-		t.putU32(modTime);
-		t.putU32(0); // microsec
+		U32 modTimeSec = modTime;
+		t.putU32(modTimeSec);
+		t.putU32((modTime-modTimeSec)*1000000); // microseconds
 		
 		// write optional data
 		if (flagB & MCreator) t.putU32(creator);
