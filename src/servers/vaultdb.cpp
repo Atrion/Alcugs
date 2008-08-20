@@ -92,6 +92,7 @@ namespace alc {
 		`id2` int NOT NULL default 0,\
 		`id3` int NOT NULL default 0,\
 		`timestamp` timestamp NOT NULL default 0,\
+		`microseconds` int NOT NULL default 0,\
 		`flag` tinyint unsigned NOT NULL default 0,\
 		PRIMARY KEY  (`id2`,`id3`),\
 		KEY `id2` (`id2`),\
@@ -249,7 +250,7 @@ namespace alc {
 		
 		// first, the ref_vault
 		// rename old timestamp column and delete microseconds
-		sprintf(query, "ALTER TABLE %s DROP microseconds, CHANGE timestamp timestamp_old int NOT NULL default 0", refVaultTable);
+		sprintf(query, "ALTER TABLE %s CHANGE timestamp timestamp_old int NOT NULL default 0", refVaultTable);
 		sql->query(query, "migrateVersion2to3: renaming old timestamp row");
 		// and create new one
 		convertIntToTimestamp(refVaultTable, "timestamp_old", "timestamp");
@@ -818,7 +819,7 @@ namespace alc {
 			final = (tvManifest **)malloc((nFinal+nFeed)*sizeof(tvManifest *));
 			nFinal = 0;
 			
-			sprintf(query, "SELECT n.idx, UNIX_TIMESTAMP(n.mod_time), r.id1, r.id2, UNIX_TIMESTAMP(r.timestamp), r.flag FROM %s n JOIN %s r ON r.id3=n.idx WHERE r.id2 IN(", vaultTable, refVaultTable);
+			sprintf(query, "SELECT n.idx, UNIX_TIMESTAMP(n.mod_time), r.id1, r.id2, UNIX_TIMESTAMP(r.timestamp), r.microseconds, r.flag FROM %s n JOIN %s r ON r.id3=n.idx WHERE r.id2 IN(", vaultTable, refVaultTable);
 			comma = false;
 			
 			// our task is now to (a) merge the (both sorted) lists aux and feed into a (sorted) final list and (b) add all the node ids
@@ -910,7 +911,7 @@ namespace alc {
 				feed[nFeed] = new tvManifest(idx, atoi(row[1]));
 				++nFeed;
 				// and reference
-				(*ref)[*nRef] = new tvNodeRef(atoi(row[2]), atoi(row[3]), idx, atoi(row[4]), (Byte)atoi(row[5]));
+				(*ref)[*nRef] = new tvNodeRef(atoi(row[2]), atoi(row[3]), idx, atoi(row[4]), atoi(row[5]), (Byte)atoi(row[6]));
 				++(*nRef);
 			}
 			mysql_free_result(result);
@@ -1210,10 +1211,11 @@ namespace alc {
 		
 		if (exists) return false;
 		
-		// time fix
+		// set current time
 		ref.time = alcGetTime();
+		ref.microsec = alcGetMicroseconds();
 		
-		sprintf(query, "INSERT INTO %s (id1, id2, id3, timestamp, flag) VALUES('%d', '%d', '%d', FROM_UNIXTIME('%d'), '%d')", refVaultTable, ref.saver, ref.parent, ref.child, ref.time, ref.flags);
+		sprintf(query, "INSERT INTO %s (id1, id2, id3, timestamp, microseconds, flag) VALUES('%d', '%d', '%d', FROM_UNIXTIME('%d'), '%d', '%d')", refVaultTable, ref.saver, ref.parent, ref.child, ref.time, ref.microsec, ref.flags);
 		sql->query(query, "Creating new node ref");
 		return true;
 	}
@@ -1347,7 +1349,7 @@ namespace alc {
 		while (i < *nRef) {
 			if (i >= 0) node = (*ref)[i]->child; // this is the next one
 			
-			sprintf(query, "SELECT id1, id2, id3, UNIX_TIMESTAMP(timestamp), flag FROM %s WHERE id2='%d'", refVaultTable, node);
+			sprintf(query, "SELECT id1, id2, id3, UNIX_TIMESTAMP(timestamp), microseconds, flag FROM %s WHERE id2='%d'", refVaultTable, node);
 			sql->query(query, "getting references");
 			result = sql->storeResult();
 			
@@ -1368,7 +1370,7 @@ namespace alc {
 						}
 					}
 					if (!found)
-						(*ref)[j] = new tvNodeRef(atoi(row[0]), parent, child, atoi(row[3]), (Byte)atoi(row[4]));
+						(*ref)[j] = new tvNodeRef(atoi(row[0]), parent, child, atoi(row[3]), atoi(row[4]), (Byte)atoi(row[5]));
 				}
 				*nRef = newSize;
 			}

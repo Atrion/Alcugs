@@ -317,12 +317,13 @@ namespace alc {
 	}
 	
 	//// tvNodeRef
-	tvNodeRef::tvNodeRef(U32 saver, U32 parent, U32 child, U32 time, Byte flags)
+	tvNodeRef::tvNodeRef(U32 saver, U32 parent, U32 child, U32 time, U32 microsec, Byte flags)
 	{
 		this->saver = saver;
 		this->parent = parent;
 		this->child = child;
 		this->time = time;
+		this->microsec = microsec;
 		this->flags = flags;
 	}
 	
@@ -331,7 +332,7 @@ namespace alc {
 		this->saver = saver;
 		this->parent = parent;
 		this->child = child;
-		this->time = 0;
+		this->time = this->microsec = 0;
 		this->flags = 0;
 	}
 	
@@ -341,7 +342,7 @@ namespace alc {
 		parent = t.getU32();
 		child = t.getU32();
 		time = t.getU32();
-		t.getU32(); // ignore the microseconds
+		microsec = t.getU32();
 		flags = t.getByte();
 	}
 	
@@ -351,14 +352,14 @@ namespace alc {
 		t.putU32(parent);
 		t.putU32(child);
 		t.putU32(time);
-		t.putU32(0);
+		t.putU32(microsec);
 		t.putByte(flags);
 	}
 	
 	void tvNodeRef::asHtml(tLog *log, bool shortLog)
 	{
 		log->print("Saver: 0x%08X (%d), Parent:  0x%08X (%d), Child: 0x%08X (%d), ", saver, saver, parent, parent, child, child);
-		log->print("Stamp: %s, Flags: 0x%02X<br />\n", time ? alcGetStrTime(time) : (Byte *)"0", flags);
+		log->print("Stamp: %s, Flags: 0x%02X<br />\n", time ? alcGetStrTime(time, microsec) : (Byte *)"0", flags);
 	}
 	
 	//// tvCreatableGenericValue

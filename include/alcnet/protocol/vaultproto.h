@@ -268,7 +268,7 @@ namespace alc {
 	
 	class tvNodeRef : public tvBase {
 	public:
-		tvNodeRef(U32 saver, U32 parent, U32 child, U32 time, Byte flags);
+		tvNodeRef(U32 saver, U32 parent, U32 child, U32 time, U32 microsec,  Byte flags);
 		tvNodeRef(U32 saver, U32 parent, U32 child);
 		tvNodeRef(void) : tvBase() { }
 		virtual void store(tBBuf &t);
@@ -276,7 +276,7 @@ namespace alc {
 		virtual void asHtml(tLog *log, bool shortLog);
 		// format
 		U32 saver, parent, child;
-		U32 time;
+		U32 time, microsec;
 		Byte flags; // 0x00 not seen; 0x01 seen
 	};
 	
