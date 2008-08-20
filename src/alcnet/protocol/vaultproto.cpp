@@ -63,11 +63,11 @@ namespace alc {
 		memcpy(this->guid, guid, 8);
 	}
 	
-	tvAgeInfoStruct::tvAgeInfoStruct(tUStr &fileName, tUStr &guid) : tvBase()
+	tvAgeInfoStruct::tvAgeInfoStruct(const char *fileName, const Byte *guid) : tvBase()
 	{
 		flags =  0x02 | 0x04; // fileName, GUID
-		this->fileName = fileName;
-		alcAscii2Hex(this->guid, guid.c_str(), 8);
+		this->fileName.writeStr(fileName);
+		memcpy(this->guid, guid, 8);
 	}
 	
 	void tvAgeInfoStruct::store(tBBuf &t)

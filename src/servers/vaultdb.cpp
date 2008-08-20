@@ -1247,14 +1247,16 @@ namespace alc {
 		
 		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get node type"));
 		num = mysql_num_rows(result);
-		if (num != 1) throw txDatabaseError(_WHERE("couldn't get node type"));
-		
-		row = mysql_fetch_row(result);
-		type = atoi(row[0]);
+		if (num == 1) {
+			row = mysql_fetch_row(result);
+			type = atoi(row[0]);
+		}
+		else
+			type = KInvalidNode; // the son node does not exist
 		mysql_free_result(result);
 		
 		bool safeType = cautious ? (type == KImageNode || type == KTextNoteNode || type == KChronicleNode || type == KMarkerListNode || type == KMarkerNode) : (type > 7);
-		if (numParent <= 1 && safeType) {
+		if (type != KInvalidNode && numParent <= 1 && safeType) {
 			// there are no more references to this node, and it's a safe node to remove
 			removeNodeTree(son, cautious);
 		}

@@ -207,7 +207,7 @@ namespace alc {
 	class tvAgeInfoStruct : public tvBase {
 	public:
 		tvAgeInfoStruct(const char *fileName, const char *instanceName, const char *userDefName, const char *displayName, const Byte *guid);
-		tvAgeInfoStruct(tUStr &fileName, tUStr &guid);
+		tvAgeInfoStruct(const char *fileName, const Byte *guid);
 		tvAgeInfoStruct(const tvAgeInfoStruct &);
 		tvAgeInfoStruct(void) : tvBase() { }
 		virtual void store(tBBuf &t);

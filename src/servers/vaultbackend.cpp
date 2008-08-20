@@ -282,7 +282,9 @@ namespace alc {
 			//     since the new game servers are years away, this hack can be a temporany
 			//     solution for some people.
 		if (status.age == "Ahnonay" || status.age == "Neighborhood02" || status.age == "Myst") {
-			tvAgeInfoStruct ageInfo(status.age, status.serverGuid);
+			Byte guid[8];
+			alcAscii2Hex(guid, status.serverGuid.c_str(), 8);
+			tvAgeInfoStruct ageInfo((char *)status.age.c_str(), guid);
 			tvSpawnPoint spawnPoint("Default", "LinkInPointDefault");
 			log->log("Linking rule hack: adding link to %s to player %d\n", ageInfo.fileName.c_str(), status.ki);
 			U32 ageInfoNode = getAge(ageInfo); // create if necessary
@@ -572,7 +574,7 @@ namespace alc {
 				// It's necessary to allow creating these
 				// FolderNode and PlayerInfoNode are requested when fetching a new player or an age
 				// SDLNode is requested when fetching an age
-				// AgeInfoNode is requested for the Watcher's Sanctuary when linking to Relto
+				// AgeInfoNode is requested for AvatarCustomization and the Cleft (and perhaps more) for new players
 				// PlayerInfoNode is requested for the saver of a KI messages and must be recreated if the player was deleted
 				if (!vaultDB->findNode(*savedNode, create, &mfs))
 					throw txProtocolError(_WHERE("got a VFindNode but can't find the node"));
@@ -673,7 +675,7 @@ namespace alc {
 		msg.print(logHtml, /*clientToServer:*/true, u, shortHtml, ki);
 		
 		tvAgeLinkStruct *ageLink = NULL;
-		const Byte *ageGuid = NULL;
+		const Byte *ageGuid = NULL, *ageName = NULL;
 		
 		// read and verify the general vault items
 		for (int i = 0; i < msg.numItems; ++i) {
@@ -681,6 +683,9 @@ namespace alc {
 			switch (itm->id) {
 				case 11: // AgeLinkStruct: an age link
 					ageLink = itm->asAgeLink(); // we don't have to free it, tvMessage does that
+					break;
+				case 12: // GenericValue.UruString: the filename of the age to remove
+					ageName = itm->asString();
 					break;
 				case 13: // ServerGuid: the GUID of the age the invite should be removed from
 					ageGuid = itm->asGuid();
@@ -722,6 +727,28 @@ namespace alc {
 				send(reply, u, ki, x);
 				break;
 			}
+			case TUnRegisterOwnedAge:
+			{
+				if (ki != msg.vmgr)
+					throw txProtocolError(_WHERE("the vmgr of a TRegisterOwnedAge task must be the player's KI, but %d != %d", ki, msg.vmgr));
+				if (!ageName) throw txProtocolError(_WHERE("the age name must be set for a TUnRegisterOwnedAge"));
+				log->log("TUnRegisterOwnedAge (age filename: %s) from %d\n", ageName, msg.vmgr);
+				
+				// generate the GUID
+				Byte guid[8];
+				if (!guidGen->generateGuid(guid, ageName, msg.vmgr))
+					throw txProtocolError(_WHERE("could not generate GUID"));
+				
+				// find age info node
+				tvAgeInfoStruct ageInfo((char *)ageName, guid);
+				U32 ageInfoNode = getAge(ageInfo, /*create*/false);
+				if (!ageInfoNode) throw txProtocolError(_WHERE("I should remove a non-existing owned age"));
+				// remove the link from the player
+				removeAgeLinkFromPlayer(msg.vmgr, ageInfoNode);
+				// remove the player from that age
+				addRemovePlayerToAge(ageInfoNode, msg.vmgr, /*visitor*/false, /*remove*/true);
+				break;
+			}
 			case TRegisterVisitAge:
 			{
 				if (!ageLink) throw txProtocolError(_WHERE("the age link must be set for a TRegisterVisitAge"));
@@ -745,13 +772,13 @@ namespace alc {
 			}
 			case TUnRegisterVisitAge:
 			{
-				if (!ageGuid) throw txProtocolError(_WHERE("the age link must be set for a TRegisterVisitAge"));
+				if (!ageGuid) throw txProtocolError(_WHERE("the age GUID must be set for a TRegisterVisitAge"));
 				if (ki != msg.vmgr)
 					throw txProtocolError(_WHERE("the vmgr of a TUnRegisterVisitAge task must be the player's KI, but %d != %d", ki, msg.vmgr));
 				log->log("TUnRegisterVisitAge from %d\n", ki);
 				
 				// now find the age info node of the age we're looking for
-				tvAgeInfoStruct ageInfo("", "", "", "", ageGuid);
+				tvAgeInfoStruct ageInfo("", ageGuid);// filename is unknown
 				U32 ageInfoNode = getAge(ageInfo, /*create*/false);
 				if (!ageInfoNode) throw txProtocolError(_WHERE("I should remove an invite for a non-existing age"));
 				// remove the link from the player
