@@ -76,7 +76,7 @@ void parameters_usage() {
  -bcast 1/0: Enable/disable server broadcasts\n\
  -l: Shows the servers license\n\
  -nokill: Don't kill the gameservers, let them running [kGame].\n\
- -clean: Performs vault cleanup on vault server startup [kVault].\n\
+ -clean: Performs vault cleanup on vault server startup (make a backup of your database first!) [kVault].\n\
  -oOption value: Sets addional configuration settings, for example -oPort 5000\n\n");
 }
 

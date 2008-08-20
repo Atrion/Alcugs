@@ -480,6 +480,17 @@ void alctypes_part4() {
 	DBG(4,"aa-%s-\n",aa.c_str());
 	DBG(4,"bb-%s-\n",bb.c_str());
 	DBG(4,"cc-%s-\n",cc.c_str());
+	
+	// check tStrBuf::len()
+	tStrBuf test1;
+	assert(test1.len() == 0);
+	tStrBuf test2("");
+	assert(test2.len() == 0);
+	test2.writeStr("huhu");
+	assert(test2.len() == 4);
+	test2.c_str();
+	test2.c_str();
+	assert(test2.len() == 4);
 }
 
 void alctypes_part5() {

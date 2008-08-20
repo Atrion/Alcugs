@@ -320,7 +320,7 @@ public:
 	tStrBuf & upper();
 	tStrBuf & substring(U32 start,U32 len);
 	tStrBuf & dirname();
-	int len(void) { return isNull() ? 0 : strlen((char *)buf->buf); }
+	int len(void) { return strlen((char *)c_str()); }
 	bool startsWith(const char * pat);
 	bool endsWith(const char * pat);
 	void hasQuotes(bool has);

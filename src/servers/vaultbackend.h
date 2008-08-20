@@ -76,12 +76,20 @@ namespace alc {
 		/** creates an age, returns the ID of the age info node */
 		U32 createAge(tvAgeInfoStruct &ageInfo);
 		
-		/** gives the player a link to that age and adds the linking point, returns the ID of the link node
-		    if noUpdate is true, the spawn point is only added if the link did not yet exist*/
-		U32 addAgeLinkToPlayer(U32 ki, U32 ageInfoNode, tvSpawnPoint &spawnPoint, bool noUpdate = false);
+		/** finds this age in the list of ages this player owns/can visit. The ID of the folder the link is in is saved in linkedAgesFolder
+		    \returns the ID of the link or 0 if not found */
+		U32 findAgeLink(U32 ki, U32 ageInfoNode, U32 *linkedAgesFolder, bool visitedAge = false);
 		
-		/** adds that player to the owners of this age */
-		void addOwnerToAge(U32 ageInfoNode, U32 ki);
+		/** gives the player a link to that age and adds the linking point
+		    if noUpdate is true, the spawn point is only added if the link did not yet exist
+		    \returns the ID of the link node or 0 if it's an invite and the player owns that age */
+		U32 addAgeLinkToPlayer(U32 ki, U32 ageInfoNode, tvSpawnPoint &spawnPoint, bool noUpdate = false, bool visitedAge = false);
+		
+		/** removes the link to that age from the given player */
+		void removeAgeLinkFromPlayer(U32 ki, U32 ageInfoNode, bool visitedAge = false);
+		
+		/** adds/removes that player to/from the owners/visitors of this age */
+		void addRemovePlayerToAge(U32 ageInfoNode, U32 ki, bool visitor = false, bool remove = false);
 		
 		// mid-level vault functions (doing broadcasts)
 		//  the low-level functions are in tVaultDB
