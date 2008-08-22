@@ -55,7 +55,7 @@ namespace alc {
 		Byte website[256];
 		Byte gameLogPath[256];
 		Byte gameConfig[256];
-		Byte gameBinPath[256];
+		Byte gameBin[256];
 		bool loadOnDemand;
 	};
 	

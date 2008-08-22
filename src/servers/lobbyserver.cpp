@@ -63,15 +63,25 @@ namespace alc {
 	{
 		tUnetLobbyServerBase::onLoadConfig(reload);
 		tConfig *cfg = alcGetConfig();
+		
 		tStrBuf var = cfg->getVar("website");
 		strncpy((char *)website, (char *)var.c_str(), 255);
+		
 		var = cfg->getVar("game.log");
 		strncpy((char *)gameLogPath, (char *)var.c_str(), 255);
+		
 		var = cfg->getVar("game.config");
 		if (var.isNull()) var = cfg->getVar("read_config", "cmdline");
 		strncpy((char *)gameConfig, (char *)var.c_str(), 255);
+		
 		var = cfg->getVar("bin");
-		strncpy((char *)gameBinPath, (char *)var.c_str(), 255);
+		strncpy((char *)gameBin, (char *)var.c_str(), 255);
+		strncat((char *)gameBin, "/uru_game", 255);
+		
+		var = cfg->getVar("game.bin");
+		if (!var.isNull()) // if set, overwrite global "bin" path
+			strncpy((char *)gameBin, (char *)var.c_str(), 255);
+		
 		var = cfg->getVar("load_on_demand");
 		loadOnDemand = (var.isNull() || var.asByte()); // on per default
 	}
@@ -235,23 +245,22 @@ namespace alc {
 					// BUT we have to close each file and socket as otherwise they will stay opened till the game server exits
 					
 					// get the arguments for starting the server
-					char gameName[128], gameGuid[32], gameLog[512], gameBin[512], gamePort[16];
+					char gameName[128], gameGuid[32], gameLog[512], gamePort[16];
 					strncpy(gameName, (char *)forkServer.age.c_str(), 127);
 					alcStrFilter(gameName);
 					strncpy(gameGuid, (char *)forkServer.serverGuid.c_str(), 31);
 					alcStrFilter(gameGuid);
 					sprintf(gameLog, "%s/%s/%s/", gameLogPath, gameName, gameGuid);
-					sprintf(gameBin, "%s/uru_game", gameBinPath);
 					sprintf(gamePort, "%d", forkServer.forkPort);
 					
 					stopOp(); // will close the alcnet logs as well as the socket
 					alcOnFork(); // will close all logs
 					
 					if (forkServer.loadSDL)
-						execlp(gameBin, gameBin,"-p",gamePort,"-guid",gameGuid,"-name",gameName,
+						execlp((char *)gameBin, (char *)gameBin,"-p",gamePort,"-guid",gameGuid,"-name",gameName,
 								"-log",gameLog,"-c",gameConfig,"-v","0","-L",NULL);
 					else
-						execlp(gameBin,gameBin,"-p",gamePort,"-guid",gameGuid,"-name",gameName,
+						execlp((char *)gameBin, (char *)gameBin,"-p",gamePort,"-guid",gameGuid,"-name",gameName,
 								"-log",gameLog,"-c",gameConfig,"-v","0",NULL);
 					
 					// if we come here, there was an error in the execlp call (but we're still in the game server process!)

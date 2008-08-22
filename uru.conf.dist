@@ -47,11 +47,13 @@
 # and used to compute how fast the server sends the messages
 ;bandwidth = 128
 
-# network and network mask of your LAN (to determine the connection speed)
-private_network = "192.168.0.0"
-private_mask    = "255.255.255.0"
+# the bind adress for lobby and game servers (i.e. the IP of the interface to the router)
+bind = "127.0.0.1"
 # the address others use to connect to your server (i.e. your external address)
 public_address  = "127.0.0.1"
+# recommended if you connect to the server via LAN: network and network mask of your LAN (to determine the connection speed)
+private_network = "192.168.0.0"
+private_mask    = "255.255.255.0"
 
 # global database settings
 ;db.timeout = 950 # set the database tiemout if the connection is not persistent (default 15 minutes = 950 seconds)
@@ -66,8 +68,8 @@ db.username = "alcugs"
 db.passwd = "yourpassword"
 
 # paths
-bin = "~/bin/"
-age = "~/age/"
+bin = "/home/user/bin/" # directory where uru_game is in (deprecated, use game.bin in lobby section instead)
+age = "/home/user/age/" # directory containing the age files (for tracking and vault)
 
 # Instancing settings (used by tracking and vault)
 ;instance_mode = 1 # 0: all ages are global; 1 (default): the ages specified in private_ages are private
@@ -163,7 +165,6 @@ stop = 1
 [lobby]
 # this is the section containing options for the lobby server. global options like verbose_level or log_files_path can be overwritten here
 
-bind = "127.0.0.1" # bind address for lobby (the interface facing your router)
 port = 5000
 
 # Set the website which is displayed when the user logs into your shard
@@ -171,7 +172,8 @@ website = "http://server/info.html"
 
 # game server settings
 game.log = "../game/" # the path where the game log files will be saved (there will be subdirs for each instance: /basis/agename/ageguid/)
-game.config = "~/etc/unet2.conf" # config file for game servers. If not set, game will use the same config file as lobby.
+game.config = "/home/user/etc/unet2.conf" # config file for game servers. If not set, game will use the same config file as lobby.
+;game.bin = "/home/user/bin/uru_game" # full path and name of game server binary, overwrites global "bin" path
 ;load_on_demand = 1 # enables/disables automaic game server forking (default 1)
 
 stop = 1
@@ -180,9 +182,7 @@ stop = 1
 [game]
 # this is the section containing options for the game server. global options like verbose_level or log_files_path can be overwritten here
 # NOTE: Some options like log_files_path and port are set by the lobby when it automatically spawns a game server, so these values will
-#  be overwritten (for configuring the log files path, see game.log in the [lobby] section)
-
-bind = "127.0.0.1" # bind address for game server (the interface facing your router)
+#  be overwritten (for configuring the log files used by the game server, see game.log in the [lobby] section)
 
 # client settings
 ;allow_uu_clients = 1 # (dis)allow UU clients to connect to this server (default: 1)
