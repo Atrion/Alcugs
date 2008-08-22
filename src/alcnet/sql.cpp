@@ -216,13 +216,13 @@ tSQL *tSQL::createFromConfig(void)
 	U32 timeout = 15*60; // default is 15 minutes
 	Byte flags = allFlags();
 	var = cfg->getVar("db.log");
-	if (!var.isNull() && !var.asByte())
+	if (!var.isNull() && !var.asByte()) // on per default
 		flags &= ~SQL_LOG; // disable logging
 	var = cfg->getVar("db.sql.log");
-	if (!var.isNull() && !var.asByte())
+	if (var.isNull() || !var.asByte()) // off per default
 		flags &= ~SQL_LOGQ; // disable logging sql statements
 	var = cfg->getVar("db.persinstent");
-	if (!var.isNull() && !var.asByte())
+	if (!var.isNull() && !var.asByte()) // on per default
 		flags &= ~SQL_STAYCONN; // disable staying always connected
 	var = cfg->getVar("db.timeout");
 	if (!var.isNull())

@@ -58,7 +58,7 @@ void tmTerminated::additionalFields() {
 
 
 tmLeave::tmLeave(tNetSession * u,U32 ki,Byte reason)
- :tmMsgBase(NetMsgLeave,plNetKi | plNetCustom,u) {
+ :tmMsgBase(NetMsgLeave,plNetKi | plNetCustom | plNetAck,u) {
 	this->ki=ki;
 	this->reason=reason;
 }

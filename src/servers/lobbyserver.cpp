@@ -68,6 +68,7 @@ namespace alc {
 		var = cfg->getVar("game.log");
 		strncpy((char *)gameLogPath, (char *)var.c_str(), 255);
 		var = cfg->getVar("game.config");
+		if (var.isNull()) var = cfg->getVar("read_config", "cmdline");
 		strncpy((char *)gameConfig, (char *)var.c_str(), 255);
 		var = cfg->getVar("bin");
 		strncpy((char *)gameBinPath, (char *)var.c_str(), 255);

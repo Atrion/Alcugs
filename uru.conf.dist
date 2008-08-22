@@ -57,7 +57,7 @@ public_address  = "127.0.0.1"
 ;db.timeout = 950 # set the database tiemout if the connection is not persistent (default 15 minutes = 950 seconds)
 ;db.persistent = 1 # enable persistent connection to the database (default 1)
 ;db.log = 1 # enable logging of the database driver (default 1)
-;db.sql.log = 1 # enable sql query logging (default 1), doesn't work when db.log is disabled
+;db.sql.log = 1 # enable sql query logging (default 0), doesn't work when db.log is disabled
 # global database connection data
 # (the vault database should be local because otherwise the latency is too big and lobby/game might get confused)
 db.host = "127.0.0.1" # note: set db.host to nothing to use the local unix socket (untested with unet3+)
@@ -171,7 +171,7 @@ website = "http://server/info.html"
 
 # game server settings
 game.log = "../game/" # the path where the game log files will be saved (there will be subdirs for each instance: /basis/agename/ageguid/)
-game.config = "~/etc/unet2.conf" # config file for game servers
+game.config = "~/etc/unet2.conf" # config file for game servers. If not set, game will use the same config file as lobby.
 ;load_on_demand = 1 # enables/disables automaic game server forking (default 1)
 
 stop = 1
