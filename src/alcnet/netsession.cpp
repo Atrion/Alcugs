@@ -232,11 +232,14 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	
 	int ret; //,ret2;
 	
-	ret=alcUruValidatePacket(buf,size,&validation,authenticated==1,passwd); // authenticated != 0 is not enough, the passwd is only set when authenticated == 1
+	// when authenticated == 2, we don't expect an encoded packet, but sometimes, we get one. Since alcUruValidatePacket will try to
+	// validate the packet both with and without passwd if possible, we tell it to use the passwd whenever we have one - as a result,
+	// even if the client for some reason decides to encode a packet while authenticated == 2, we don't care
+	ret=alcUruValidatePacket(buf,size,&validation,authenticated==1 || authenticated==2,passwd);
 	
 	if(ret!=0 && (ret!=1 || net->flags & UNET_ECRC)) {
-		if(ret==1) net->err->log("ERR: Failed Validating a message!\n");
-		else net->err->log("ERR: Non-Uru protocol packet recieved!\n");
+		if(ret==1) net->err->log("ERR: %s Failed Validating a message!\n", str());
+		else net->err->log("ERR: %s Non-Uru protocol packet recieved!\n", str());
 		return;
 	}
 	
