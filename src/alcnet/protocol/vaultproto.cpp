@@ -781,9 +781,9 @@ namespace alc {
 		t.putU32(permissions);
 		t.putS32(owner);
 		t.putU32(group);
-		U32 modTimeSec = modTime;
+		U32 modTimeSec = (U32)modTime;
 		t.putU32(modTimeSec);
-		t.putU32((modTime-modTimeSec)*1000000); // microseconds
+		t.putU32((U32)((modTime-modTimeSec)*1000000)); // microseconds
 		
 		// write optional data
 		if (flagB & MCreator) t.putU32(creator);

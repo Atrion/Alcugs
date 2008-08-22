@@ -52,7 +52,6 @@ namespace alc {
 		tUnetVaultServer(void) : tUnetServerBase()
 		{
 			vaultBackend = new tVaultBackend(this);
-			lerr->log("WARNING: The vault server is not finished yet. So if it doesn\'t work, that's not even a bug.\n");
 		}
 		~tUnetVaultServer(void) { delete vaultBackend; }
 		

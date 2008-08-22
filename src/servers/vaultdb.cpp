@@ -132,7 +132,7 @@ namespace alc {
 		sql = tSQL::createFromConfig();
 		if (sql->prepare()) {
 			// check if table exists
-			char query[2048]; // has to be long enough for the main vault table init script
+			char query[4*1024]; // has to be long enough for the main vault table init script
 			sprintf(query, "SHOW TABLES LIKE '%s'", vaultTable);
 			sql->query(query, "Prepare: Looking for vault table");
 			MYSQL_RES *result = sql->storeResult();
@@ -551,7 +551,7 @@ namespace alc {
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
-		char query[4096];
+		char query[8*1024];
 		// first, we have to create the query...
 		sprintf(query, "SELECT idx, mod_time FROM %s WHERE ", vaultTable);
 		createNodeQuery(query, node, /*isUpdate*/false);
@@ -802,7 +802,7 @@ namespace alc {
 	
 		tvManifest **feed = NULL, **aux = NULL, **final = NULL;
 		int          nFeed = 0,     nAux = 0,     nFinal = 0;
-		char query[2048], cond[32];
+		char query[8*1024], cond[32];
 		MYSQL_RES *result;
 		MYSQL_ROW row;
 		bool comma;
@@ -956,7 +956,7 @@ namespace alc {
 	
 		U32 *feed = NULL, *aux = NULL, *final = NULL;
 		U32  nFeed = 0,    nAux = 0,    nFinal = 0;
-		char query[2048], cond[32];
+		char query[8*1024], cond[32];
 		MYSQL_RES *result;
 		MYSQL_ROW row;
 		bool comma;
