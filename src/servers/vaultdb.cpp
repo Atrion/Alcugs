@@ -27,7 +27,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_VAULTDB_ID "$Id$"
 
-#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 10
 
 #include <alcugs.h>
 #include <alcnet.h>
@@ -1384,10 +1384,11 @@ namespace alc {
 							found = true;
 						}
 					}
-					if (!found)
-						(*ref)[j] = new tvNodeRef(atoi(row[0]), parent, child, atoi(row[3]), atoi(row[4]), (Byte)atoi(row[5]));
+					if (!found) {
+						(*ref)[*nRef] = new tvNodeRef(atoi(row[0]), parent, child, atoi(row[3]), atoi(row[4]), (Byte)atoi(row[5]));
+						++(*nRef);
+					}
 				}
-				*nRef = newSize;
 			}
 			mysql_free_result(result);
 			++i;
