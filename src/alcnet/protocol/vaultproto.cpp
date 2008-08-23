@@ -233,7 +233,7 @@ namespace alc {
 		U16 check = 0x0023 | 0x0010 | 0x0040;
 		if (flags & ~(check))
 			throw txProtocolError(_WHERE("unknown flag 0x%04X for AgeLinkStruct", flags));
-		if (!(flags & 0x0023)) // this must always be set (AgeInfoStruct LinkingRules and SpawnPoint)
+		if (!(flags & 0x0023)) // this must always be set (AgeInfoStruct, LinkingRules and SpawnPoint)
 			throw txProtocolError(_WHERE("the 0x0023 flag must always be set in AgeLinkStruct"));
 		
 		t.get(ageInfo);
@@ -496,7 +496,7 @@ namespace alc {
 		tMBuf *buf = getData();
 		// the format of the content depends on the ID
 		switch (id) {
-			case 0x06:
+			case 6:
 				log->print("<table border='1'>\n");
 				while (!buf->eof()) {
 					tvNode node;
@@ -505,7 +505,7 @@ namespace alc {
 				}
 				log->print("</table>\n");
 				break;
-			case 0x0A:
+			case 10:
 			{
 				U16 num = buf->getU16();
 				log->print("number of IDs: %d<br />\n", num);
@@ -522,7 +522,7 @@ namespace alc {
 				if (!shortLog) log->print("<br />\n");
 				break;
 			}
-			case 0x0E:
+			case 14:
 			{
 				U32 num = buf->getU32();
 				log->print("number of manifests: %d<br />\n", num);
@@ -538,7 +538,7 @@ namespace alc {
 				}
 				break;
 			}
-			case 0x0F:
+			case 15:
 			{
 				U32 num = buf->getU32();
 				log->print("number of VaultNodeRefs: %d<br />\n", num);
@@ -931,7 +931,7 @@ namespace alc {
 			if (flagB & MAgeName) log->print("<b>Age name:</b> %s<br />\n", ageName.c_str());
 			if (flagB & MAgeGuid) log->print("<b>Age guid:</b> %s<br />\n", alcGetStrGuid(ageGuid));
 			if (flagB & MInt32_1) {
-				if (type == KFolderNode || type == KPlayerInfoListNode)
+				if (type == KFolderNode || type == KPlayerInfoListNode || type == KAgeInfoListNode)
 					log->print("<b>Int32_1:</b> 0x%08X (%s)<br />\n", int1, alcVaultGetFolderType(int1));
 				else log->print("<b>Int32_1:</b> 0x%08X (%d)<br />\n", int1, int1);
 			}

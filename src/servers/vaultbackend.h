@@ -112,8 +112,8 @@ namespace alc {
 		    ecxlude the vmgr with the given data. The passed tvNodeRef instance will be deleted.  */
 		void broadcastNodeRefUpdate(tvNodeRef *ref, bool remove, U32 origKi = 0, U32 origMgr = 0);
 		
-		/** broadcast the online state of this player node */
-		void broadcastOnlineState(tvNode &node);
+		/** broadcast the online state of this player info node */
+		void broadcastOnlineState(tvNode &node, U32 origKi = 0, U32 origMgr = 0);
 		
 		/** broadcast the message to all vmgrs interested in that node, except for the one with origKi and origMgr
 		    (i.e. the one who did the change) */

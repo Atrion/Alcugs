@@ -234,6 +234,11 @@ namespace alc {
 		tvNode **nodes;
 		int nNodes;
 		
+		/* status.state can have three values:
+		0 => player is offline, remove his vmgrs, update both nodes and tell everyone
+		1 => player is online, update both nodes
+		2 => player just left, but he will come back so keep his vmgrs, update only the online time and don't send the bcast to this player */
+		
 		// update online time
 		if (status.onlineTime > 0) {
 			vaultDB->fetchNodes(&status.ki, 1, &nodes, &nNodes);
@@ -241,30 +246,35 @@ namespace alc {
 			node = *nodes; // save some *
 			node->uInt2 += status.onlineTime;
 			vaultDB->updateNode(*node);
-			broadcastNodeUpdate(*node);
+			if (status.state == 2) // exclude player from bcast revievers
+				broadcastNodeUpdate(*node, status.ki, status.ki);
+			else
+				broadcastNodeUpdate(*node);
 			// free stuff
 			delete node;
 			free((void *)nodes);
 		}
 		
 		// find and update the info node
-		node = new tvNode(MType | MOwner);
-		node->type = KPlayerInfoNode;
-		node->owner = status.ki;
-		U32 infoNode = vaultDB->findNode(*node);
-		delete node;
-		if (!infoNode) throw txUnet(_WHERE("KI %d doesn't have a info node?!?", status.ki));
-		vaultDB->fetchNodes(&infoNode, 1, &nodes, &nNodes);
-		assert(nNodes == 1);
-		node = *nodes; // same some *
-		node->str1 = status.age;
-		node->str2 = status.serverGuid;
-		node->int1 = status.state;
-		vaultDB->updateNode(*node);
-		broadcastOnlineState(*node);
-		// free stuff
-		delete node;
-		free((void *)nodes);
+		if (status.state == 0 || status.state == 1) { // don't update when status.state is 2
+			node = new tvNode(MType | MOwner);
+			node->type = KPlayerInfoNode;
+			node->owner = status.ki;
+			U32 infoNode = vaultDB->findNode(*node);
+			delete node;
+			if (!infoNode) throw txUnet(_WHERE("KI %d doesn't have a info node?!?", status.ki));
+			vaultDB->fetchNodes(&infoNode, 1, &nodes, &nNodes);
+			assert(nNodes == 1);
+			node = *nodes; // same some *
+			node->str1 = status.age;
+			node->str2 = status.serverGuid;
+			node->int1 = status.state;
+			vaultDB->updateNode(*node);
+			broadcastOnlineState(*node);
+			// free stuff
+			delete node;
+			free((void *)nodes);
+		}
 		
 		if (!linkingRulesHack) return;
 		// linking rules hack
@@ -333,7 +343,7 @@ namespace alc {
 				case 7: // VaultNodeRef: a single vault node ref
 					savedNodeRef = itm->asNodeRef(); // we don't have to free it, tvMessage does that
 					break;
-				case 9: // GenericValue.Int: FoundNode Index / Son of a NodeRef / Old Node Index (saveNode)
+				case 9: // GenericValue.Int: Node Index / Son of a NodeRef
 					nodeSon = itm->asInt();
 					break;
 				case 10: // GenericStream: Stream containing a table of ints
@@ -374,8 +384,11 @@ namespace alc {
 				case 14: // GenericStream: stream of manifests
 				case 15: // GenericStream: stream of NodeRefs
 				case 23: // GenericValue.String: Vault folder
-				case 24: // GenericValue.Timestamp
+				case 24: // GenericValue.Timestamp of found node
 				case 25: // GenericValue.Int: number of vault nodes
+				case 27: // GenericValue.String: current age of a player
+				case 28: // GenericValue.String: current age GUID of a player
+				case 29: // online status of a player
 				case 31: // GenericValue.Int: EOF of a FetchNode
 				default:
 					throw txProtocolError(_WHERE("vault item has invalid id %d", itm->id));
@@ -434,7 +447,7 @@ namespace alc {
 				else // wrong or no node type at all
 					throw txProtocolError(_WHERE("Connect request for unknown node type %d from KI %d\n", nodeType));
 				// now let's see where we save this... first look if we already have this one registered
-				int nr = findVmgr(u, ki, msg.vmgr);
+				int nr = findVmgr(u, ki, mgr);
 				if (nr >= 0) // it is already registered, and findVmgr updated the session, so we have nothing to do
 					break;
 				// if that's not the case, search for a free slot
@@ -461,9 +474,11 @@ namespace alc {
 					throw txProtocolError(_WHERE("got a VDisconnect where the node type has not been set"));
 				log->log("Vault Disconnect request for %d (Type: %d)\n", ki, nodeType);
 				log->flush();
-				// send reply
-				tvMessage reply(msg, 0);
-				send(reply, u, ki);
+				if (nodeType != KVNodeMgrAdminNode) { // VaultManager sometimes leaves too fast, and it doesn't need the VDisconnect reply
+					// send reply
+					tvMessage reply(msg, 0);
+					send(reply, u, ki);
+				}
 				// remove vmgr
 				int nr = findVmgr(u, ki, msg.vmgr);
 				delete vmgrs[nr];
@@ -1128,11 +1143,11 @@ namespace alc {
 		broadcast(bcast, ref->parent, origKi, origMgr);
 	}
 	
-	void tVaultBackend::broadcastOnlineState(tvNode &node)
+	void tVaultBackend::broadcastOnlineState(tvNode &node, U32 origKi, U32 origMgr)
 	{
 		// create the broadcast message
 		tvMessage bcast(VOnlineState, node.int1 ? 5 : 3);
-		bcast.items[0] = new tvItem(/*id*/9, /*old node index*/(S32)node.index);
+		bcast.items[0] = new tvItem(/*id*/9, /*node index*/(S32)node.index);
 		bcast.items[1] = new tvItem(/*id*/24, /*timestamp*/node.modTime);
 		if (node.int1) { // if he's online
 			bcast.items[2] = new tvItem(/*id*/27, node.str1.c_str()); // age name
@@ -1143,7 +1158,7 @@ namespace alc {
 			bcast.items[2] = new tvItem(/*id*/29, (S32)node.int1); // online state
 		}
 		// and send it
-		broadcast(bcast, node.index);
+		broadcast(bcast, node.index, origKi, origMgr);
 	}
 	
 	void tVaultBackend::broadcast(tvMessage &msg, U32 node, U32 origKi, U32 origMgr)

@@ -159,9 +159,11 @@ namespace alc {
 			tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->sid, u->uid, u->name, (Byte *)"", 0 /* delete */, RStopResponding);
 			send(trackingStatus);
 			
-			Byte state = u->inRoute; // if he's in route, tell the vault he'd be online... this message just servers to update the online timer
+			Byte state = u->inRoute ? 2 : 0;
+			// if he's in route, tell the vault he'd be online... state 2 means this message just servers to update the online timer
 			// we only tell the vault he's offline if he leaves without asking for another age before
 			// this way, the vault can remove the vmgrs for this player when he crashes, without making problems when he just links
+			if (u->proto && u->proto < 3) state = 0; // old vault servers would not understand a state of 2
 			tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->sid, (Byte *)"0000000000000000" /* these are 16 zeroes */, (Byte *)"", state, u->onlineTime());
 			send(vaultStatus);
 			
@@ -499,13 +501,7 @@ namespace alc {
 					if (!client || client->whoami != KClient) {
 						lvault->print("<h2 style='color:red'>Packet for unknown client</h2>\n");
 						parsedMsg.print(lvault, /*clientToServer:*/false, NULL, vaultLogShort);
-						if ((parsedMsg.cmd == VOnlineState && parsedMsg.vmgr == vaultMsg.ki) || parsedMsg.cmd == VDisconnect)
-							// this is most likely the message that this player went offline
-							// (vault sends one to lobby after the client already left to connect to the game server)
-							// so silently ignore it
-							;
-						else
-							err->log("ERR: I've got a vault message to forward to player with KI %d but can\'t find it\'s session.\n", vaultMsg.ki);
+						err->log("ERR: I've got a vault message to forward to player with KI %d but can\'t find it\'s session.\n", vaultMsg.ki);
 						return 1;
 					}
 					parsedMsg.print(lvault, /*clientToServer:*/false, client, vaultLogShort);
