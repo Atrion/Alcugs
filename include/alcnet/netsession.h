@@ -84,8 +84,10 @@ private:
 	void init();
 	void processMsg(Byte * buf,int size);
 	void doWork();
-	
+
+#ifndef ENABLE_NEWDROP
 	Byte checkDuplicate(tUnetUruMsg &msg);
+#endif
 
 	void createAckReply(tUnetUruMsg &msg);
 	void ackUpdate();
@@ -125,28 +127,34 @@ private:
 	//server Message counters
 	struct {
 		//Byte val;
-		U32 pn;
+		U32 pn; //!< the overall packet number
 		//Byte tf;
 		//Byte frn;
-		U32 sn;
-		Byte pfr;
-		U32 ps;
-	} server;
+		U32 sn; //!< the message number
+		Byte pfr; //!< the fragment number of the last packet I sent which required an ack
+		U32 ps; //!< the msg number of the last packet I sent which required an ack
+	} serverMsg;
+#ifdef ENABLE_NEWDROP
+	// client Message counter
+	U32 clientCps;
+#endif
 	Byte validation; //store the validation level (0,1,2)
 	Byte authenticated; //it's the peer authed? 0 = no, 1 = yes, 2 = it just got authed, 10 = the client got an auth challenge
 	tNetSessionFlags cflags; //Session flags
 	U16 maxPacketSz; //Maxium size of the packets. Must be 1024 (always)
 
+#ifndef ENABLE_NEWDROP
 	char * w; //rcv window
 	U32 wite;
 	U32 rcv_win;
+#endif
 	//flood control
 	U32 flood_last_check;
 	U32 flood_npkts;
 	
-	tTime timestamp; //current client time
-	tTime nego_stamp; //initial negotiation stamp
-	tTime renego_stamp; //remote nego stamp
+	tTime timestamp; //!< last time we got something from this client
+	tTime nego_stamp; //!< initial negotiation stamp
+	tTime renego_stamp; //!< remote nego stamp (stamp of last nego we got)
 	U32 conn_timeout; //In secs
 	bool negotiating;
 	

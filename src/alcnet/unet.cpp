@@ -83,8 +83,8 @@ void tUnet::init() {
 	unet_usec=0; //(microseconds)
 	idle_timer=5; // should be max. 10 seconds, may be overwritten by tUnetBase
 
-	conn_timeout=5*60; // default timeout for new sessions (seconds) (TODO: sensible to NetMsgSetTimeout)
-	/* This sets the timeout for unet servers from both sides, since it's also used for new sessions.
+	conn_timeout=1*60; // default timeout for new sessions (seconds) (TODO: sensible to NetMsgSetTimeout)
+	/* This sets the timeout for unet servers from both sides
 	It also sets the timeout for Uru clients, where a high timeout is necessary since the connection is already established when changing
 	the server in the shard list and when the timeout is only 5 seconds the client gets kicked off too fast. It will be changed
 	to 30sec after the client got authed.
@@ -130,9 +130,9 @@ void tUnet::init() {
 	#ifdef ENABLE_NETDEBUG
 	lim_down_cap=0; //8000; //in bytes
 	lim_up_cap=0; //8000; //in bytes
-	in_noise=0; //25; //25; //(0-100)
-	out_noise=0; //25; //25; //(0-100)
-	latency=0; //200000; //200000; //500000; //(in usecs)
+	in_noise=10; //25; //25; //(0-100)
+	out_noise=10; //25; //25; //(0-100)
+	latency=10000; //200000; //200000; //500000; //(in usecs)
 	cur_down_quota=0;
 	cur_up_quota=0;
 	quota_check_sec=0;
@@ -668,8 +668,8 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 
 	DBG(9,"Server pn is %08X\n",u->server.pn);
 	DBG(9,"Server sn is %08X,%08X\n",u->server.sn,msg->sn);
-	u->server.pn++;
-	msg->pn=u->server.pn;
+	u->serverMsg.pn++;
+	msg->pn=u->serverMsg.pn;
 	
 	#ifdef ENABLE_MSGDEBUG
 	log->log("<SND> ");

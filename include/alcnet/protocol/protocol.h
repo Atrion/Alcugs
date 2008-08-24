@@ -100,15 +100,15 @@ private:
 	U32 pn; //!< packet number
 	Byte tf; //!< message type/flags
 	//U32 unkA
-	Byte frn; //num fragment(1 byte)
-	U32 sn; //seq num (3 bytes)
-	U32 csn; // -
-	Byte frt; //total fragments (1 Byte)
+	Byte frn; //!< num fragment(1 byte)
+	U32 sn; //!< seq num (3 bytes)
+	U32 csn; //!< combined fragment and seq num
+	Byte frt; //!< total fragments (1 Byte)
 	//U32 unkB
-	Byte pfr;
-	U32 ps;
-	U32 cps; // -
-	U32 dsize;
+	Byte pfr; //!< last acked fragment
+	U32 ps; //!< last acked seq num
+	U32 cps; //!< combined last acked fragment and seq num
+	U32 dsize; //!< size of data
 	tMBuf data;
 	friend class tUnet;
 	friend class tNetSession;

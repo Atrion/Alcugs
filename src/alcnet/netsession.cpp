@@ -59,7 +59,9 @@ tNetSession::tNetSession(tUnet * net,U32 ip,U16 port,int sid) {
 tNetSession::~tNetSession() {
 	DBG(5,"~tNetSession()\n");
 	if (data) delete data;
+#ifndef ENABLE_NEWDROP
 	free((void *)w);
+#endif
 	delete sndq;
 	delete ackq;
 	delete rcvq;
@@ -80,11 +82,13 @@ void tNetSession::init() {
 		max_cabal=4096;
 	}
 	maxPacketSz=1024;
+#ifndef ENABLE_NEWDROP
 	//window settings
 	rcv_win=4*8;
 	wite=0;
 	w=(char *)malloc(sizeof(char) * rcv_win);
 	memset(w,0,sizeof(char) * rcv_win);
+#endif
 	//end window
 	flood_last_check=0;
 	flood_npkts=0;
@@ -100,8 +104,11 @@ void tNetSession::init() {
 	nego_stamp.microseconds=0;
 	renego_stamp=nego_stamp;
 	negotiating=false;
-	memset((void *)&server,0,sizeof(server));
-	assert(server.pn==0);
+	memset((void *)&serverMsg,0,sizeof(serverMsg));
+	assert(serverMsg.pn==0);
+#ifdef ENABLE_NEWDROP
+	clientCps = 0;
+#endif
 	idle=false;
 	delayMessages=false;
 	whoami=0;
@@ -239,10 +246,10 @@ void tNetSession::send(tmBase &msg) {
 	buf.put(msg);
 	psize=buf.size();
 	buf.rewind();
-	DBG(7,"Ok, I'm going to send a packet of %i bytes, for peer %i, with flags %02X\n",psize,u->sid,msg.bhflags);
+	DBG(7,"Ok, I'm going to send a packet of %i bytes, for peer %i, with flags %02X\n",psize,sid,msg.bhflags);
 
 	//now update the other fields
-	server.sn++;
+	serverMsg.sn++;
 	tf=0x00;
 
 	if(flags & UNetAckReq) {
@@ -263,7 +270,7 @@ void tNetSession::send(tmBase &msg) {
 		DBG(7,"forced validation 0\n");
 	} else {
 		val=validation;
-		DBG(7,"validation level is %i\n",server.val);
+		DBG(7,"validation level is %i\n",val);
 	}
 	
 	//check if we are using alcugs upgraded protocol
@@ -278,7 +285,7 @@ void tNetSession::send(tmBase &msg) {
 		packet?
 	*/
 	if((tf & (UNetNegotiation | UNetAckReply)) && (val==0x01)) { val=0x00; }
-	DBG(6,"Sending a packet of validation level %i\n",server.val);
+	DBG(6,"Sending a packet of validation level %i\n",val);
 
 	//fragment the messages and put them in to the send qeue
 	
@@ -303,12 +310,13 @@ void tNetSession::send(tmBase &msg) {
 		pmsg=new tUnetUruMsg();
 		pmsg->val=val;
 		//pmsg.pn NOT in this layer (done in the msg sender, tUnet::rawsend)
+		//since acks are put at the top of the sndq, the pn would be wrong if we did it differently
 		pmsg->tf=tf;
 		pmsg->frn=i;
-		pmsg->sn=server.sn;
+		pmsg->sn=serverMsg.sn;
 		pmsg->frt=n_pkts;
-		pmsg->pfr=server.pfr;
-		pmsg->ps=server.ps;
+		pmsg->pfr=serverMsg.pfr;
+		pmsg->ps=serverMsg.ps;
 		
 		pmsg->data.write(buf.read(csize),csize);
 		pmsg->_update();
@@ -317,7 +325,7 @@ void tNetSession::send(tmBase &msg) {
 		tts+=computetts(csize+hsize+net->ip_overhead);
 		
 		#ifdef ENABLE_NETDEBUG
-		pmsg->timestamp+=latency;
+		pmsg->timestamp+=net->latency;
 		#endif
 		
 		pmsg->snd_timestamp=pmsg->timestamp;
@@ -336,8 +344,8 @@ void tNetSession::send(tmBase &msg) {
 		}
 		
 		if(tf & UNetAckReq) { // if this packet has the ack flag on, save it's number
-			server.ps=server.sn;
-			server.pfr=i;
+			serverMsg.ps=serverMsg.sn;
+			serverMsg.pfr=i;
 		}
 	}
 	
@@ -351,7 +359,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	timestamp.seconds=alcGetTime();
 	timestamp.microseconds=alcGetMicroseconds();
 	
-	int ret; //,ret2;
+	int ret;
 	
 	// when authenticated == 2, we don't expect an encoded packet, but sometimes, we get one. Since alcUruValidatePacket will try to
 	// validate the packet both with and without passwd if possible, we tell it to use the passwd whenever we have one - as a result,
@@ -398,7 +406,6 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		}
 		max_cabal=cabal;
 		cabal=(cabal * 250)/1000;
-		//cabal=maxPacketSz;
 		DBG(5, "INF: Cabal is now %i (%i bps) max: %i (%i bps)\n",cabal,cabal*8,max_cabal,max_cabal*8);
 		negotiating=false;
 	}
@@ -409,11 +416,6 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		cflags |= UNetUpgraded;
 	}
 
-	/* //Avoid sending ack for messages out of the window
-	if(msg.tf & UNetAckReq) {
-		//ack reply
-		createAckReply(msg);
-	}*/
 	if(msg.tf & UNetNegotiation) {
 		tmNetClientComm comm(this);
 		msg.data.rewind();
@@ -421,19 +423,29 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		net->log->log("<RCV> ");
 		net->log->print("%s",(const char *)comm.str());
 		bandwidth=comm.bandwidth;
-		if(renego_stamp==comm.timestamp) {
+		if(renego_stamp==comm.timestamp) { // it's a duplicate, we already got this message
 			net->log->print(" (ignored)\n");
 			negotiating=false;
 		} else {
 			net->log->nl();
 			renego_stamp=comm.timestamp;
+#ifndef ENABLE_NEWDROP
 			//reset counters and window
 			wite=msg.sn; //reset win iterator
 			memset(w,0,sizeof(char) * rcv_win); //unset all
+#endif
 			if(!negotiating) {
+#ifdef ENABLE_NEWDROP
+				// reset "last ack" counters (server and client)
+				clientCps = 0;
+				serverMsg.pfr = 0;
+				serverMsg.ps = 0;
+#endif
 				//clear snd buffer
-				DBG(5,"Clearing send buffer\n");
+				DBG(5,"Clearing buffers\n");
 				sndq->clear();
+				ackq->clear();
+				rcvq->clear();
 				if(nego_stamp.seconds==0) nego_stamp=timestamp;
 				negotiate();
 				negotiating=true;
@@ -449,21 +461,50 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	}
 	
 	//fix the problem that happens every 15-30 days of server uptime
-	if(server.sn>=8388605 || msg.sn>=8388605) {
+	if(serverMsg.sn>=8388605 || msg.sn>=8388605) { // that's aproximately 2^23
 		net->err->log("INF: Congratulations!, you have reached the maxium allowed sequence number, don't worry, this is not an error\n");
-		server.pn=0;
-		server.sn=0;
-		server.pfr=0;
-		server.ps=0;
+		serverMsg.pn=0;
+		serverMsg.sn=0;
+		serverMsg.pfr=0;
+		serverMsg.ps=0;
 		nego_stamp=timestamp;
 		renego_stamp.seconds=0;
 		negotiate();
 		negotiating=true;
 	}
 
+	/* values for ret:
+	2 - neither parse nor send ack
+	1 - send ack, but don't parse
+	0 - parse and send ack */
+#ifndef ENABLE_NEWDROP
 	//check duplicates
 	ret=checkDuplicate(msg);
-	
+#else
+	if (msg.cps < clientCps) { // we already got that one - ack it, but don't parse again
+		ret = 1;
+		net->err->log("%s INF: Dropped already parsed packet 0x%08X (last ack is 0x%08X, expected 0x%08X)\n", str(), msg.csn, msg.cps, clientCps);
+	}
+	else if (msg.cps > clientCps) { // we missed something in between
+		
+		U32 clientPs = clientCps >> 8;
+		if (clientPs == msg.sn) {
+			// if the last acked packet we got and this new packet belong to the same message, we can parse it
+			// (fragments can be recieved out of order)
+			DBG(5, "Parsing packet 0x%08X because it belongs to packet 0x%08X\n", msg.csn, clientCps);
+			ret = 0;
+		}
+		else {
+			ret = 2; // we can not parse it, the peer has to send it again
+			net->err->log("%s INF: Dropped unexpected packet 0x%08X (last ack is 0x%08X, expected 0x%08X)\n", str(), msg.csn, msg.cps, clientCps);
+		}
+	} else {
+		ret = 0;
+		if (msg.tf & UNetAckReq)
+			clientCps = msg.csn;
+	}
+#endif
+
 	if(ret!=2 && (msg.tf & UNetAckReq)) {
 		//ack reply
 		createAckReply(msg);
@@ -569,6 +610,7 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 
 }
 
+#ifndef ENABLE_NEWDROP
 /**
 	\return 2 - After the window (neither parse nor send ack)
 	\return 1 - Marked or before the window (send ack, but don't parse)
@@ -644,6 +686,7 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 	#endif
 	return 0;
 }
+#endif
 
 /** creates an ack in the ackq */
 void tNetSession::createAckReply(tUnetUruMsg &msg) {
@@ -786,16 +829,17 @@ void tNetSession::ackUpdate() {
 		pmsg=new tUnetUruMsg;
 
 		//now update the other fields
-		server.sn++;
+		serverMsg.sn++;
 		
 		pmsg->val=val;
-		//pmsg.pn NOT in this layer (done in the msg sender)
+		//pmsg.pn NOT in this layer (done in the msg sender, tUnet::rawsend)
+		//since acks are put at the top of the sndq, the pn would be wrong if we did it differently
 		pmsg->tf=tf;
 		pmsg->frn=0;
-		pmsg->sn=server.sn;
+		pmsg->sn=serverMsg.sn;
 		pmsg->frt=0;
-		pmsg->pfr=server.pfr;
-		pmsg->ps=server.ps;
+		pmsg->pfr=serverMsg.pfr;
+		pmsg->ps=serverMsg.ps;
 
 		//pmsg->data.write(buf.read(csize),csize);
 		if(!(pmsg->tf & UNetExt))
@@ -980,8 +1024,10 @@ void tNetSession::doWork() {
 					net->rawsend(this,curmsg);
 					sndq->deleteCurrent();
 				} else if(curmsg->tf & UNetAckReq) {
+#ifndef ENABLE_NEWDROP
 					// if we did not yet get a nego, send only negos, as otherwise the peer might get a non-nego before the first nego... chaos!
 					 if (wite == 0 && !(curmsg->tf & UNetNegotiation)) continue;
+#endif
 					//send paquet
 					
 					// check if we need to resend
@@ -1054,10 +1100,9 @@ void tNetSession::negotiate() {
 
 void tNetSession::checkAlive(void)
 {	// when we are talking to a non-terminated server, send alive messages
-	if (!client && !terminated && (alcGetTime() - timestamp.seconds) > conn_timeout/2) {
+	if (!client && !terminated && (net->ntime_sec - timestamp.seconds) > conn_timeout/2) {
 		tmAlive alive(this);
 		send(alive);
-		timestamp.seconds = alcGetTime();
 	}
 }
 
