@@ -128,11 +128,11 @@ void tUnet::init() {
 	ip_overhead=20+8;
 
 	#ifdef ENABLE_NETDEBUG
-	lim_down_cap=0; //8000; //in bytes
-	lim_up_cap=0; //8000; //in bytes
-	in_noise=10; //25; //25; //(0-100)
-	out_noise=10; //25; //25; //(0-100)
-	latency=10000; //200000; //200000; //500000; //(in usecs)
+	lim_down_cap=0; //in bytes
+	lim_up_cap=0; //in bytes
+	in_noise=25; //(0-100)
+	out_noise=25; //(0-100)
+	latency=10000; //(in usecs)
 	cur_down_quota=0;
 	cur_up_quota=0;
 	quota_check_sec=0;

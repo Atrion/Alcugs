@@ -572,6 +572,14 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 			msg->data->rewind();
 			msg->cmd=msg->data->getU16();
 			msg->data->rewind();
+			// since the fragments could be out-of-order, we have to mark the last fragment of this message as last acked one
+			if (t.tf & UNetAckReq) {
+				U32 lastPcktCsn = t.frt | t.sn<<8;
+				if (lastPcktCsn != clientCps) {
+					DBG(5, "Last ack was 0x%08X, but I completed a message with last ack 0x%08X - changing it\n", clientCps, lastPcktCsn);
+					clientCps = lastPcktCsn;
+				}
+			}
 			//tNetSessionIte ite(ip,port,sid);
 			//tNetEvent * evt=new tNetEvent(ite,UNET_MSGRCV);
 			//net->events->add(evt);
@@ -583,9 +591,9 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 }
 
 /**
-	\return 2 - neither parse nor send ack
-	\return 1 - send ack, but don't parse
-	\return 0 - parse and send ack
+	\return 2 - neither parse nor send ack (the packet is after what we expected)
+	\return 1 - send ack, but don't parse (we already parsed the packet)
+	\return 0 - parse and send ack (it's exactly what we need)
 */
 Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 	Byte ret;
