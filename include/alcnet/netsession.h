@@ -85,9 +85,7 @@ private:
 	void processMsg(Byte * buf,int size);
 	void doWork();
 
-#ifndef ENABLE_NEWDROP
 	Byte checkDuplicate(tUnetUruMsg &msg);
-#endif
 
 	void createAckReply(tUnetUruMsg &msg);
 	void ackUpdate();

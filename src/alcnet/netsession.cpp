@@ -473,45 +473,17 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		negotiating=true;
 	}
 
-	/* values for ret:
-	2 - neither parse nor send ack
-	1 - send ack, but don't parse
-	0 - parse and send ack */
-#ifndef ENABLE_NEWDROP
 	//check duplicates
 	ret=checkDuplicate(msg);
-#else
-	if (msg.cps < clientCps) { // we already got that one - ack it, but don't parse again
-		ret = 1;
-		net->err->log("%s INF: Dropped already parsed packet 0x%08X (last ack is 0x%08X, expected 0x%08X)\n", str(), msg.csn, msg.cps, clientCps);
-	}
-	else if (msg.cps > clientCps) { // we missed something in between
-		
-		U32 clientPs = clientCps >> 8;
-		if (clientPs == msg.sn) {
-			// if the last acked packet we got and this new packet belong to the same message, we can parse it
-			// (fragments can be recieved out of order)
-			DBG(5, "Parsing packet 0x%08X because it belongs to packet 0x%08X\n", msg.csn, clientCps);
-			ret = 0;
-		}
-		else {
-			ret = 2; // we can not parse it, the peer has to send it again
-			net->err->log("%s INF: Dropped unexpected packet 0x%08X (last ack is 0x%08X, expected 0x%08X)\n", str(), msg.csn, msg.cps, clientCps);
-		}
-	} else {
-		ret = 0;
-		if (msg.tf & UNetAckReq)
-			clientCps = msg.csn;
-	}
-#endif
 
+	// if the packet requires it and the above chack told us that'd be ok, send an ack
 	if(ret!=2 && (msg.tf & UNetAckReq)) {
 		//ack reply
 		createAckReply(msg);
 	}
 
+	// if we did not yet parse the packet, do that
 	if(ret==0) {
-	
 		if(msg.tf & UNetAckReply) {
 			//ack update
 			ackCheck(msg);
@@ -610,13 +582,38 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 
 }
 
-#ifndef ENABLE_NEWDROP
 /**
-	\return 2 - After the window (neither parse nor send ack)
-	\return 1 - Marked or before the window (send ack, but don't parse)
-	\return 0 - Non-Marked (parse and send ack)
+	\return 2 - neither parse nor send ack
+	\return 1 - send ack, but don't parse
+	\return 0 - parse and send ack
 */
 Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
+	Byte ret;
+#ifdef ENABLE_NEWDROP
+	if (msg.cps < clientCps) { // we already got that one - ack it, but don't parse again
+		ret = 1;
+		net->err->log("%s INF: Dropped already parsed packet 0x%08X (last ack is 0x%08X, expected 0x%08X)\n", str(), msg.csn, msg.cps, clientCps);
+	}
+	else if (msg.cps > clientCps) { // we missed something in between
+		
+		U32 clientPs = clientCps >> 8;
+		if (clientPs == msg.sn) {
+			// if the last acked packet we got and this new packet belong to the same message, we can parse it
+			// (fragments can be recieved out of order)
+			DBG(5, "Parsing packet 0x%08X because it belongs to packet 0x%08X\n", msg.csn, clientCps);
+			ret = 0;
+		}
+		else {
+			ret = 2; // we can not parse it, the peer has to send it again
+			net->err->log("%s INF: Dropped unexpected packet 0x%08X (last ack is 0x%08X, expected 0x%08X)\n", str(), msg.csn, msg.cps, clientCps);
+		}
+	} else {
+		ret = 0;
+		if (msg.tf & UNetAckReq)
+			clientCps = msg.csn;
+	}
+	return ret;
+#else
 	//drop already parsed messages
 	#ifdef ENABLE_MSGDEBUG
 	net->log->log("%s INF: SN %i (Before) window is (wite: %d):\n",str(),msg.sn,wite);
@@ -685,8 +682,8 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 	net->log->flush();
 	#endif
 	return 0;
+#endif // ENABLE_NEWDROP
 }
-#endif
 
 /** creates an ack in the ackq */
 void tNetSession::createAckReply(tUnetUruMsg &msg) {
