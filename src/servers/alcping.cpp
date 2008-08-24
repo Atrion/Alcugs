@@ -121,7 +121,7 @@ tUnetPing::tUnetPing(char * lhost,U16 lport,Byte listen,double time,int num,int 
 	this->setBindAddress(lhost);
 	this->listen=listen;
 	out=lstd;
-	setTimer(1);
+	setIdleTimer(1);
 	updatetimer(1000);
 	this->time=time;
 	this->num=num;

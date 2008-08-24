@@ -77,7 +77,7 @@ void tUnetBase::reconfigure() {
 	//Sets the idle timer
 	var=cfg->getVar("net.timer","global");
 	if(!var.isNull()) {
-		setTimer(var.asByte());
+		setIdleTimer(var.asByte());
 	}
 	//Set pool size
 	var=cfg->getVar("net.pool.size","global");
@@ -451,6 +451,3 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool 
 }
 
 } //end namespace
-
-
-

@@ -51,9 +51,13 @@
 bind = "127.0.0.1"
 # the address others use to connect to your server (i.e. your external address)
 public_address  = "127.0.0.1"
+;net.up = 128000 # upstream to the internet (default: 128 kBits)
+;net.down = 512000 # downstram from the internet (default: 512 kBits)
 # recommended if you connect to the server via LAN: network and network mask of your LAN (to determine the connection speed)
 private_network = "192.168.0.0"
 private_mask    = "255.255.255.0"
+;net.lan.up = 100000000 # upstream to your LAN (default: 100 MBits)
+;net.lan.down = 100000000 # downstram from your LAN (default: 100 MBits)
 
 # global database settings
 ;db.timeout = 950 # set the database tiemout if the connection is not persistent (default 15 minutes = 950 seconds)

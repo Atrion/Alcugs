@@ -146,7 +146,7 @@ tUnetSimpleFileServer::tUnetSimpleFileServer(char * lhost,U16 lport,Byte listen)
 	this->setBindAddress(lhost);
 	this->listen=listen;
 	out=lstd;
-	setTimer(1);
+	setIdleTimer(1);
 	updatetimer(1000);
 	d_host=NULL;
 	d_port=5000;
@@ -305,11 +305,11 @@ int main(int argc,char * argv[]) {
 
 		netcore=new tUnetSimpleFileServer(l_hostname,l_port,listen);
 		
-		netcore->setFlags(UNET_LQUIET);
 		if(nlogs) {
 			netcore->setFlags(UNET_ELOG | UNET_FLOG);
 		} else {
 			netcore->unsetFlags(UNET_ELOG | UNET_FLOG);
+			netcore->setFlags(UNET_LQUIET);
 		}
 		if(loglevel!=0) netcore->setFlags(UNET_ELOG);
 

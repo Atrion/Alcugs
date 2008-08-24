@@ -91,7 +91,7 @@ void tNetSession::init() {
 	bandwidth=0;
 	cabal=0;
 	max_cabal=0;
-	last_msg_time=0;
+	next_msg_time=0;
 	rtt=net->timeout/2; //this prevents the rtt and thus the timeout from getting too small
 	ack_rtt=0;
 	timeout=net->timeout;
@@ -206,6 +206,7 @@ void tNetSession::decreaseCabal(bool partial) {
 	DBG(5,"-Cabal is now %i (max:%i)\n",cabal,max_cabal);
 }
 
+/** computes the time we have to wait after sending the given amount of bytes */
 //psize cannot be > 4k
 U32 tNetSession::computetts(U32 psize) {
 	if(psize<4000) {
@@ -266,7 +267,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		throw txProtocolError(_WHERE("Cannot parse a message"));
 	}
 	
-	//set avg cabal
+	// if we know the downstream of the peer, set avg cabal using what is smaller: our upstream or the peers downstream
 	if(cabal==0 && bandwidth!=0) {
 		if((ntohl(ip) & 0xFFFFFF00) == 0x7F000000) { //lo
 			cabal=100000000/8; //100Mbps
@@ -477,7 +478,7 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 			net->err->flush();
 			return 1;
 		} else { // it's fragmented but out of the window, so we can't do anything (see above)
-			return 0; 
+			return 0;
 		}
 	} else { //then check if is already marked
 		U32 i,start,ck;
@@ -814,7 +815,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 
 }
 
-//Send, and re-send messages
+/** Send, and re-send messages, update idle state and set netcore timeout */
 void tNetSession::doWork() {
 
 	tNetEvent * evt;
@@ -837,10 +838,10 @@ void tNetSession::doWork() {
 		}
 	}
 
-	if(net->net_time>=last_msg_time) {
+	if(net->net_time>=next_msg_time) {
 
 		if(sndq->isEmpty()) {
-			last_msg_time=0;
+			next_msg_time=0;
 			if(ackq->isEmpty() && rcvq->isEmpty()) {
 				idle=true;
 			} else {
@@ -861,6 +862,7 @@ void tNetSession::doWork() {
 		while((curmsg=sndq->getNext())!=NULL && (cur_quota<quota_max)) {
 			
 			if(curmsg->timestamp<=net->net_time) {
+				DBG(8, "%s ok to send a message\n",alcGetStrTime());
 				//we can send the message
 				if(curmsg->tf & UNetAckReply) {
 					//send paquet
@@ -911,18 +913,21 @@ void tNetSession::doWork() {
 					}
 				} //end prob drop
 			} //end time check
-			 else { DBG(8,"Too soon to send a message\n"); }
+			 else { DBG(8,"%s Too soon (%d) to send a message\n",alcGetStrTime(), curmsg->timestamp-net->net_time); }
 		} //end while
 		tts=computetts(cur_quota);
-		DBG(8,"tts is now:%i quota:%i,cabal:%i\n",tts,cur_quota,cabal);
-		last_msg_time=net->net_time + tts;
+		DBG(8,"%s tts is now:%i quota:%i,cabal:%i\n",alcGetStrTime(),tts,cur_quota,cabal);
+		next_msg_time=net->net_time + tts;
 		net->updatetimer(tts);
-	} else { DBG(8,"Too soon to check sndq\n"); }
+	} else {
+		net->updatetimer(next_msg_time-net->net_time);
+		DBG(8,"Too soon (%d) to check sndq\n", next_msg_time-net->net_time);
+	}
 }
 
 void tNetSession::negotiate() {
 	U32 sbw;
-	//server bandwidth
+	// send server downstream (for the peer to know how fast it can send packets)
 	DBG(9,"%08X %08X %08X\n",ip,net->lan_mask,net->lan_addr);
 	if((ntohl(ip) & 0xFFFFFF00) == 0x7F000000) { //lo
 		sbw=100000000;
@@ -953,5 +958,3 @@ U32 tNetSession::onlineTime(void)
 /* End session */
 
 }
-
-

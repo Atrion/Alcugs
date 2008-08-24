@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_UNET_ID "$Id$"
 
-//#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 3
 
 #include "alcugs.h"
 #include "alcnet.h"
@@ -81,7 +81,7 @@ void tUnet::init() {
 	//netcore timeout < min(all RTT's), nope, it must be the min tts (stt)
 	unet_sec=1; //(seconds)
 	unet_usec=0; //(microseconds)
-	timer=5; // should be max. 10 seconds, may be overwritten by tUnetBase
+	idle_timer=5; // should be max. 10 seconds, may be overwritten by tUnetBase
 
 	conn_timeout=5*60; // default timeout for new sessions (seconds) (TODO: sensible to NetMsgSetTimeout)
 	/* This sets the timeout for unet servers from both sides, since it's also used for new sessions.
@@ -158,15 +158,25 @@ void tUnet::updateNetTime() {
 }
 
 void tUnet::updatetimer(U32 usec) {
-	U32 xmin_th=500;
-	if(usec>=1000000) { return; /*throw(txBase(_WHERE("%i too high",usec),true,true)); return;*/ }
+	U32 min_timeout=100; // this makes the theoretical maximum transfer rate in kByte/s = 1000000/100 = 10000 = 10MByte/s
+	if(usec>=1000000) {
+		U32 sec = usec/1000000;
+		U32 oldusec = usec;
+		usec %= 1000000;
+		if (sec < unet_sec || (sec == unet_sec && usec < unet_usec)) {
+			unet_sec = sec;
+			unet_usec = usec;
+		}
+		lerr->log("%0 usec = %u.%06u sec, timer %u.%06u\n", oldusec, sec, usec, unet_sec, unet_usec);
+		return;
+	}
 	if(unet_sec) {
 		unet_sec=0;
 		unet_usec=usec;
 	} else {
 		if(usec<unet_usec) unet_usec=usec;
 	}
-	if(unet_usec<xmin_th) unet_usec=xmin_th;
+	if(unet_usec<min_timeout) unet_usec=min_timeout;
 	//DBG(5,"Timer is now %i usecs (%i)\n",unet_usec,usec);
 }
 
@@ -474,7 +484,10 @@ tNetSessionIte tUnet::netConnect(char * hostname,U16 port,Byte validation,Byte f
 	return ite;
 }
 
-/** Urunet the netcore, does all, it's the heart of the server */
+/** Urunet the netcore, it's the heart of the server 
+This function recieves new packets and passes them to the correct session, and
+it also is responsible for the timer: It will wait exactly unet_sec seconds and unet_usec microseconds
+before it asks each session to do what it has to do (tUnet::doWork) */
 int tUnet::Recv() {
 	int n;
 	Byte buf[INC_BUF_SIZE]; //internal rcv buffer
@@ -498,8 +511,8 @@ int tUnet::Recv() {
 	tv.tv_sec = this->unet_sec;
 	tv.tv_usec = this->unet_usec;
 
-	DBG(9,"waiting for incoming messages...\n");
-	valret = select(this->sock+1, &rfds, NULL, NULL, &tv);
+	DBG(9,"waiting for incoming messages (%u.%06u)...\n", unet_sec, unet_usec);
+	valret = select(this->sock+1, &rfds, NULL, NULL, &tv); // this is the command taking the time - now lets process what we got
 	/* Don't trust tv value after the call */
 	
 	//BEGIN ** CRITICIAL REGION STARTS HERE **
@@ -615,13 +628,12 @@ int tUnet::Recv() {
 	
 	DBG(7,"Loop time %i\n",net_time-old_net_time);
 	
-	//doWork();
-	
 	return UNET_OK;
 }
 
+/** give each session the possibility to do some stuff and to set the timeout and the idle state
+if all sessions are idle, the netcore is it as well and the timeout will be reset */
 void tUnet::doWork() {
-	smgr->rewind();
 	idle=true;
 	//unet_sec=10;
 	//unet_usec=0;
@@ -645,7 +657,7 @@ void tUnet::doWork() {
 	if(!events->isEmpty()) idle=false;
 	
 	if(idle) {
-		unet_sec=timer;
+		unet_sec=idle_timer;
 		unet_usec=0;
 	}
 
@@ -653,7 +665,7 @@ void tUnet::doWork() {
 
 
 /**
-	Sends the message (internal use only)
+	puts the message in the session's send queue
 	(only Nego and normal messages, ack are handled by another function)
 	An uru message can only be 253952 bytes in V0x01 & V0x02 and 254976 in V0x00
 */
@@ -788,6 +800,8 @@ void tUnet::basesend(tNetSession * u,tmBase &msg) {
 	u->doWork(); //send messages
 }
 
+/** sends the message (internal use only)
+An uru message can only be 253952 bytes in V0x01 & V0x02 and 254976 in V0x00 */
 void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 	struct sockaddr_in client; //client struct
 
@@ -973,6 +987,3 @@ void tUnet::dump(tLog * sf,Byte flags) {
 
 
 } //end namespace
-
-
-

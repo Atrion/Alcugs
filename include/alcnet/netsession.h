@@ -158,7 +158,7 @@ private:
 	U32 cabal; //cur avg bw (in bytes per second)
 	U32 max_cabal;
 	
-	U32 last_msg_time; //last snd msg time in usecs
+	U32 next_msg_time; // time to send next msg in usecs
 	U32 rtt;
 	U32 timeout;
 	U32 ack_rtt; //ack rtt

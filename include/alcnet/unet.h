@@ -100,8 +100,8 @@ public:
 	tNetSession * getSession(tNetSessionIte &t);
 	void destroySession(tNetSessionIte &t);
 	//
-	void setTimer(Byte timer) {
-		if(timer!=0) this->timer=timer;
+	void setIdleTimer(Byte timer) {
+		if(timer!=0) this->idle_timer=timer;
 	}
 	void setBindPort(U16 lport); //lport in host order
 	void setBindAddress(const void * lhost);
@@ -193,7 +193,7 @@ private:
 	U32 ntime_sec; //current time (in secs)
 	U32 ntime_usec; //(in usecs)
 	U32 net_time; //(in usecs) [resolution of 15 minutes] (relative)
-	Byte timer;
+	Byte idle_timer;
 	
 #ifdef __WIN32__
 	WSADATA ws; //!< The winsock stack
