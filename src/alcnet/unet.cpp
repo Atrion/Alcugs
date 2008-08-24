@@ -161,13 +161,11 @@ void tUnet::updatetimer(U32 usec) {
 	U32 min_timeout=100; // this makes the theoretical maximum transfer rate in kByte/s = 1000000/100 = 10000 = 10MByte/s
 	if(usec>=1000000) {
 		U32 sec = usec/1000000;
-		U32 oldusec = usec;
 		usec %= 1000000;
 		if (sec < unet_sec || (sec == unet_sec && usec < unet_usec)) {
 			unet_sec = sec;
 			unet_usec = usec;
 		}
-		lerr->log("%0 usec = %u.%06u sec, timer %u.%06u\n", oldusec, sec, usec, unet_sec, unet_usec);
 		return;
 	}
 	if(unet_sec) {
@@ -655,143 +653,6 @@ void tUnet::doWork() {
 	}
 	
 	if(!events->isEmpty()) idle=false;
-}
-
-
-/**
-	puts the message in the session's send queue
-	(only Nego and normal messages, ack are handled by another function)
-	An uru message can only be 253952 bytes in V0x01 & V0x02 and 254976 in V0x00
-*/
-void tUnet::basesend(tNetSession * u,tmBase &msg) {
-	DBG(9,"basesend\n");
-	log->log("<SND> %s\n",msg.str());
-	tMBuf buf;
-	U32 csize,psize,hsize,pkt_sz,n_pkts;
-	Byte flags=msg.bhflags;
-	
-	updateNetTime();
-	
-	tUnetUruMsg * pmsg=NULL;
-	
-	buf.put(msg);
-	psize=buf.size();
-	buf.rewind();
-	DBG(7,"Ok, I'm going to send a packet of %i bytes, for peer %i, with flags %02X\n",psize,u->sid,msg.bhflags);
-
-	/* Check if the last message sent, had the ack flag on
-		as a rule, messages must be sent in order */
-	if(u->server.tf & UNetAckReq) {
-		u->server.ps=u->server.sn;
-		u->server.pfr=u->server.frn;
-		//the second field, only contains the seq number from the latest packet with
-		//the ack flag enabled.
-		DBG(8,"The previous sent packet had the ack flag on\n");
-	}
-	//now update the other fields
-	u->server.sn++;
-	u->server.frn=0;
-	u->server.tf=0x00;
-
-	if(flags & UNetAckReq) {
-		u->server.tf |= UNetAckReq; //ack flag on
-		DBG(7,"ack flag on\n");
-	}
-	if(flags & UNetNegotiation) {
-		u->server.tf |= UNetNegotiation; //negotiation packet
-		DBG(7,"It's a negotation packet\n");
-	}
-	if(flags & UNetAckReply) {
-		u->server.tf |= UNetAckReply; //ack packet
-		DBG(7,"It's an ack packet\n");
-	}
-
-	if(flags & UNetForce0) {
-		u->server.val=0x00;
-		DBG(7,"forced validation 0\n");
-	} else {
-		u->server.val=u->validation;
-		DBG(7,"validation level is %i\n",u->server.val);
-	}
-	
-	//check if we are using alcugs upgraded protocol
-	if((u->cflags & UNetUpgraded) || (flags & UNetExt)) {
-		u->server.val=0x00;
-		u->server.tf |= UNetExt;
-		DBG(5,"Sending an Alcugs Extended paquet\n");
-	}
-
-	//On validation level 1 - ack and negotiations don't have checksum verification
-	/* I still don't understand wtf was thinking the network dessigner with doing a MD5 of each
-		packet? - 
-	*/
-	if((u->server.tf & (UNetNegotiation | UNetAckReply)) && (u->server.val==0x01)) { u->server.val=0x00; }
-	DBG(6,"Sending a packet of validation level %i\n",u->server.val);
-
-	//fragment the messages and put them in to the send qeue
-	
-	if(u->server.val==0x00) { hsize=28; } else { hsize=32; }
-	if(u->server.tf & UNetExt) { hsize-=8; }
-
-	pkt_sz=u->maxPacketSz - hsize; //get maxium message size
-	n_pkts=(psize-1)/pkt_sz; //get number of fragments
-	DBG(5,"pkt_sz:%i n_pkts:%i\n",pkt_sz,n_pkts);
-	if(n_pkts>=256) {
-		err->log("%s ERR: Attempted to send a packet of size %i bytes, that don't fits inside an uru message\n",u->str(),psize);
-		throw txTooBig(_WHERE("%s packet of %i bytes don't fits inside an uru message\n",u->str(),psize));
-	}
-	
-	U32 i,tts=0;
-	
-	for(i=0; i<=n_pkts; i++) {
-		if(i!=0 && u->server.tf & UNetAckReq) { //<- Troublemaker
-			u->server.ps=u->server.sn;
-			u->server.pfr=u->server.frn;
-		}
-		u->server.frn=i; //set fragment number
-		//get current paquet size
-		if(i==n_pkts) csize=psize - (i*pkt_sz);
-		else csize=pkt_sz;
-		
-		pmsg=new tUnetUruMsg();
-		pmsg->val=u->server.val;
-		//pmsg.pn NOT in this layer (done in the msg sender)
-		pmsg->tf=u->server.tf;
-		pmsg->frn=u->server.frn;
-		pmsg->sn=u->server.sn;
-		pmsg->frt=n_pkts;
-		pmsg->pfr=u->server.pfr;
-		pmsg->ps=u->server.ps;
-		
-		pmsg->data.write(buf.read(csize),csize);
-		
-		pmsg->_update();
-		pmsg->timestamp=net_time;
-
-		pmsg->timestamp+=tts;
-		tts+=u->computetts(csize+hsize+ip_overhead);
-		
-		#ifdef ENABLE_NETDEBUG
-		pmsg->timestamp+=latency;
-		#endif
-		
-		pmsg->snd_timestamp=pmsg->timestamp;
-		
-		//Urgent!?
-		if(flags & UNetUrgent) {
-			rawsend(u,pmsg);
-			if(flags & UNetAckReq) {
-				pmsg->snd_timestamp=net_time;
-				pmsg->timestamp+=u->timeout;
-				u->sndq->add(pmsg);
-			}
-		} else {
-			//put pmsg to the qeue
-			u->sndq->add(pmsg);
-		}
-	}
-	
-	u->doWork(); //send messages
 }
 
 /** sends the message (internal use only)

@@ -105,7 +105,7 @@ public:
 	}
 	void setBindPort(U16 lport); //lport in host order
 	void setBindAddress(const void * lhost);
-	inline void send(tmMsgBase &m) { basesend(m.getSession(), m); }
+	inline void send(tmMsgBase &m) { m.getSession()->send(m); }
 
 protected:
 	void openlogs();

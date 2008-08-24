@@ -222,6 +222,128 @@ tNetSessionIte tNetSession::getIte() {
 	return(tNetSessionIte(ip,port,sid));
 }
 
+/**
+	puts the message in the session's send queue
+	(only Nego and normal messages, ack are handled by another function)
+*/
+void tNetSession::send(tmBase &msg) {
+	net->log->log("<SND> %s\n",msg.str());
+	tMBuf buf;
+	U32 csize,psize,hsize,pkt_sz,n_pkts;
+	Byte flags=msg.bhflags, val, tf;
+	
+	net->updateNetTime();
+	
+	tUnetUruMsg * pmsg=NULL;
+	
+	buf.put(msg);
+	psize=buf.size();
+	buf.rewind();
+	DBG(7,"Ok, I'm going to send a packet of %i bytes, for peer %i, with flags %02X\n",psize,u->sid,msg.bhflags);
+
+	//now update the other fields
+	server.sn++;
+	tf=0x00;
+
+	if(flags & UNetAckReq) {
+		tf |= UNetAckReq; //ack flag on
+		DBG(7,"ack flag on\n");
+	}
+	if(flags & UNetNegotiation) {
+		tf |= UNetNegotiation; //negotiation packet
+		DBG(7,"It's a negotation packet\n");
+	}
+	if(flags & UNetAckReply) {
+		tf |= UNetAckReply; //ack packet
+		DBG(7,"It's an ack packet\n");
+	}
+
+	if(flags & UNetForce0) {
+		val=0x00;
+		DBG(7,"forced validation 0\n");
+	} else {
+		val=validation;
+		DBG(7,"validation level is %i\n",server.val);
+	}
+	
+	//check if we are using alcugs upgraded protocol
+	if((cflags & UNetUpgraded) || (flags & UNetExt)) {
+		val=0x00;
+		tf |= UNetExt;
+		DBG(5,"Sending an Alcugs Extended paquet\n");
+	}
+
+	//On validation level 1 - ack and negotiations don't have checksum verification
+	/* I still don't understand wtf was thinking the network dessigner with doing a MD5 of each
+		packet?
+	*/
+	if((tf & (UNetNegotiation | UNetAckReply)) && (val==0x01)) { val=0x00; }
+	DBG(6,"Sending a packet of validation level %i\n",server.val);
+
+	//fragment the messages and put them in to the send qeue
+	
+	if(val==0x00) { hsize=28; } else { hsize=32; }
+	if(tf & UNetExt) { hsize-=8; }
+
+	pkt_sz=maxPacketSz - hsize; //get maxium message size
+	n_pkts=(psize-1)/pkt_sz; //get number of fragments
+	DBG(5,"pkt_sz:%i n_pkts:%i\n",pkt_sz,n_pkts);
+	if(n_pkts>=256) {
+		net->err->log("%s ERR: Attempted to send a packet of size %i bytes, that don't fits inside an uru message\n",str(),psize);
+		throw txTooBig(_WHERE("%s packet of %i bytes don't fits inside an uru message\n",str(),psize));
+	}
+	
+	U32 i,tts=0;
+	
+	for(i=0; i<=n_pkts; i++) {
+		//get current paquet size
+		if(i==n_pkts) csize=psize - (i*pkt_sz);
+		else csize=pkt_sz;
+		
+		pmsg=new tUnetUruMsg();
+		pmsg->val=val;
+		//pmsg.pn NOT in this layer (done in the msg sender, tUnet::rawsend)
+		pmsg->tf=tf;
+		pmsg->frn=i;
+		pmsg->sn=server.sn;
+		pmsg->frt=n_pkts;
+		pmsg->pfr=server.pfr;
+		pmsg->ps=server.ps;
+		
+		pmsg->data.write(buf.read(csize),csize);
+		pmsg->_update();
+		
+		pmsg->timestamp=net->net_time+tts;
+		tts+=computetts(csize+hsize+net->ip_overhead);
+		
+		#ifdef ENABLE_NETDEBUG
+		pmsg->timestamp+=latency;
+		#endif
+		
+		pmsg->snd_timestamp=pmsg->timestamp;
+		
+		//Urgent!?
+		if(flags & UNetUrgent) {
+			net->rawsend(this,pmsg);
+			if(flags & UNetAckReq) {
+				pmsg->snd_timestamp=net->net_time;
+				pmsg->timestamp+=timeout;
+				sndq->add(pmsg);
+			}
+		} else {
+			//put pmsg to the qeue
+			sndq->add(pmsg);
+		}
+		
+		if(tf & UNetAckReq) { // if this packet has the ack flag on, save it's number
+			server.ps=server.sn;
+			server.pfr=i;
+		}
+	}
+	
+	doWork(); //send messages
+}
+
 /** process a recieved msg: put it in the rcvq, assemble fragments, create akcs */
 void tNetSession::processMsg(Byte * buf,int size) {
 	DBG(5,"Message of %i bytes\n",size);
@@ -330,7 +452,6 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	if(server.sn>=8388605 || msg.sn>=8388605) {
 		net->err->log("INF: Congratulations!, you have reached the maxium allowed sequence number, don't worry, this is not an error\n");
 		server.pn=0;
-		server.frn=0;
 		server.sn=0;
 		server.pfr=0;
 		server.ps=0;
@@ -641,28 +762,20 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 void tNetSession::ackUpdate() {
 	//return;
 	U32 i,maxacks=30,hsize,tts;
+	Byte val, tf;
 	if (ackq->len() == 0) return;
 
 	tUnetUruMsg * pmsg;
 
-	if(server.tf & UNetAckReq) {
-		server.ps=server.sn;
-		server.pfr=server.frn;
-		//the second field, only contains the seq number from the latest packet with
-		//the ack flag enabled.
-		DBG(8,"The previous sent packet had the ack flag on\n");
-	}
-
-	server.frn=0;
-	server.tf=UNetAckReply;
-	server.val=validation;
+	tf=UNetAckReply;
+	val=validation;
 	if(cflags & UNetUpgraded) {
-		server.tf = UNetAckReply | UNetExt;
-		server.val = 0x00;
+		tf = UNetAckReply | UNetExt;
+		val = 0x00;
 	}
-	if(server.val==0x01) { server.val=0x00; }
-	if(server.val==0x00) { hsize=28; } else { hsize=32; }
-	if(server.tf & UNetExt) { hsize-=8; }
+	if(val==0x01) { val=0x00; }
+	if(val==0x00) { hsize=28; } else { hsize=32; }
+	if(tf & UNetExt) { hsize-=8; }
 
 	ackq->rewind();
 	tUnetAck *ack;
@@ -675,10 +788,10 @@ void tNetSession::ackUpdate() {
 		//now update the other fields
 		server.sn++;
 		
-		pmsg->val=server.val;
+		pmsg->val=val;
 		//pmsg.pn NOT in this layer (done in the msg sender)
-		pmsg->tf=server.tf;
-		pmsg->frn=server.frn;
+		pmsg->tf=tf;
+		pmsg->frn=0;
 		pmsg->sn=server.sn;
 		pmsg->frt=0;
 		pmsg->pfr=server.pfr;
@@ -751,10 +864,10 @@ void tNetSession::ackUpdate() {
 void tNetSession::ackCheck(tUnetUruMsg &t) {
 
 	U32 i,A1,A2,A3;
+	#ifdef ENABLE_MSGDEBUG
 	U32 sn,ps;
 	Byte frn,pfr;
-
-	#ifdef ENABLE_MSGDEBUG
+	
 	net->log->log("<RCV>");
 	#endif
 	t.data.rewind();
@@ -768,11 +881,11 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 		A3=t.data.getU32();
 		if(!(t.tf & UNetExt))
 			if(t.data.getU32()!=0) throw txUnexpectedData(_WHERE("ack unknown data"));
+		#ifdef ENABLE_MSGDEBUG
 		frn=A1 & 0x000000FF;
 		pfr=A3 & 0x000000FF;
 		sn=A1 >> 8;
 		ps=A3 >> 8;
-		#ifdef ENABLE_MSGDEBUG
 		if(i!=0) net->log->print("    |");
 		net->log->print(" Ack %i,%i %i,%i\n",sn,frn,ps,pfr);
 		#endif
@@ -936,14 +1049,14 @@ void tNetSession::negotiate() {
 	}
 
 	tmNetClientComm comm(nego_stamp,sbw,this);
-	net->basesend(this,comm);
+	send(comm);
 }
 
 void tNetSession::checkAlive(void)
 {	// when we are talking to a non-terminated server, send alive messages
 	if (!client && !terminated && (alcGetTime() - timestamp.seconds) > conn_timeout/2) {
 		tmAlive alive(this);
-		net->send(alive);
+		send(alive);
 		timestamp.seconds = alcGetTime();
 	}
 }

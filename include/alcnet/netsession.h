@@ -78,6 +78,7 @@ public:
 	inline Byte getAccessLevel(void) { return accessLevel; }
 	inline Byte getTpots(void) { return tpots; }
 	U32 onlineTime(void);
+	void send(tmBase &msg);
 
 private:
 	void init();
@@ -123,10 +124,10 @@ private:
 	socklen_t a_client_size;
 	//server Message counters
 	struct {
-		Byte val;
+		//Byte val;
 		U32 pn;
-		Byte tf;
-		Byte frn;
+		//Byte tf;
+		//Byte frn;
 		U32 sn;
 		Byte pfr;
 		U32 ps;
