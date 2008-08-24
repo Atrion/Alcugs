@@ -534,7 +534,7 @@ int tUnet::Recv() {
 	updateNetTime();
 	
 	//Here, the old netcore performed some work (ack check, retransmission, timeout, pending paquets to send...)
-	doWork();
+	doWork(); // this will also set the idle state and the timeout for the next round
 
 	DBG(9,"Before recvfrom\n");
 #ifdef __WIN32__
@@ -635,8 +635,8 @@ int tUnet::Recv() {
 if all sessions are idle, the netcore is it as well and the timeout will be reset */
 void tUnet::doWork() {
 	idle=true;
-	//unet_sec=10;
-	//unet_usec=0;
+	unet_sec=idle_timer;
+	unet_usec=0;
 	
 	tNetSession * cur;
 	smgr->rewind();
@@ -655,12 +655,6 @@ void tUnet::doWork() {
 	}
 	
 	if(!events->isEmpty()) idle=false;
-	
-	if(idle) {
-		unet_sec=idle_timer;
-		unet_usec=0;
-	}
-
 }
 
 

@@ -84,7 +84,6 @@ private:
 	void processMsg(Byte * buf,int size);
 	void doWork();
 	
-	inline bool blockMsg();
 	Byte checkDuplicate(tUnetUruMsg &msg);
 
 	void createAckReply(tUnetUruMsg &msg);

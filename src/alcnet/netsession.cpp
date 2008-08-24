@@ -221,10 +221,8 @@ U32 tNetSession::computetts(U32 psize) {
 tNetSessionIte tNetSession::getIte() {
 	return(tNetSessionIte(ip,port,sid));
 }
-bool tNetSession::blockMsg() {
-	return delayMessages || (ackq->len() > 0);
-}
 
+/** process a recieved msg: put it in the rcvq, assemble fragments, create akcs */
 void tNetSession::processMsg(Byte * buf,int size) {
 	DBG(5,"Message of %i bytes\n",size);
 	//stamp
@@ -381,6 +379,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	doWork();
 }
 
+/** put this message in the rcvq and put fragments together */
 void tNetSession::assembleMessage(tUnetUruMsg &t) {
 	U32 frg_size=maxPacketSz - t.hSize();
 	tUnetMsg * msg;
@@ -525,7 +524,7 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 	return 0;
 }
 
-
+/** creates an ack in the ackq */
 void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	tUnetAck * ack,* cack;
 	U32 A,B;
@@ -541,9 +540,11 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	ack->A=msg.csn;
 	ack->B=msg.cps;
 	U32 tts=0;
-	tts=computetts((((U32)msg.frt-msg.frn)+1) * maxPacketSz);
-	//tts=computetts(2*maxPacketSz);
-	if(tts>ack_rtt) tts=ack_rtt;
+	if (msg.frn > 0) { // for fragmented messages, delay the ack a bit
+		tts=computetts((((U32)msg.frt-msg.frn)+1) * maxPacketSz); // this is how long transmitting the whole packet will approximately take
+		//tts=computetts(2*maxPacketSz);
+		if(tts>ack_rtt) tts=ack_rtt;
+	}
 	net->updatetimer(tts);
 	ack->timestamp=net->net_time + tts;
 	#ifdef ENABLE_MSGDEBUG
@@ -636,17 +637,11 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	#endif
 }
 
-
+/** puts acks from the ackq in the sndq */
 void tNetSession::ackUpdate() {
 	//return;
 	U32 i,maxacks=30,hsize,tts;
-
-	ackq->rewind();
-	tUnetAck * ack;
-	ack=ackq->getNext();
-	if(ack==NULL || ack->timestamp>net->net_time) {
-		return;
-	}
+	if (ackq->len() == 0) return;
 
 	tUnetUruMsg * pmsg;
 
@@ -670,8 +665,11 @@ void tNetSession::ackUpdate() {
 	if(server.tf & UNetExt) { hsize-=8; }
 
 	ackq->rewind();
+	tUnetAck *ack;
 	while((ack=ackq->getNext())) {
-	
+		if(ack->timestamp>net->net_time) {
+			continue;
+		}
 		pmsg=new tUnetUruMsg;
 
 		//now update the other fields
@@ -736,7 +734,7 @@ void tNetSession::ackUpdate() {
 			sndq->rewind();
 			kiwi=sndq->getNext();
 			DBG(5,"ack checking q...\n");
-			while(kiwi!=NULL && (kiwi->tf & 0x80)) {
+			while(kiwi!=NULL && (kiwi->tf & UNetAckReply)) {
 				kiwi=sndq->getNext();
 				DBG(5,"sndq->getNext()\n");
 			}
@@ -749,6 +747,7 @@ void tNetSession::ackUpdate() {
 	
 }
 
+/** parse the ack and remove the messages it acks from the sndq */
 void tNetSession::ackCheck(tUnetUruMsg &t) {
 
 	U32 i,A1,A2,A3;
@@ -823,10 +822,10 @@ void tNetSession::doWork() {
 
 	idle=false;
 
-	ackUpdate(); //generate ack messages
+	ackUpdate(); //generate ack messages (i.e. put them from the ackq to the sndq)
 	
 	//check rcvq
-	if(!blockMsg()) {
+	if(!delayMessages && (ackq->len() == 0)) {
 		rcvq->rewind();
 		tUnetMsg * g;
 		while((g=rcvq->getNext())) {
@@ -837,18 +836,16 @@ void tNetSession::doWork() {
 			}
 		}
 	}
+	
+	if(sndq->isEmpty()) {
+		next_msg_time=0;
+		if(ackq->isEmpty() && rcvq->isEmpty()) {
+			idle=true;
+		}
+		return;
+	}
 
 	if(net->net_time>=next_msg_time) {
-
-		if(sndq->isEmpty()) {
-			next_msg_time=0;
-			if(ackq->isEmpty() && rcvq->isEmpty()) {
-				idle=true;
-			} else {
-				idle=false;
-			}
-			return;
-		}
 		sndq->rewind();
 		tUnetUruMsg * curmsg;
 		
@@ -925,6 +922,7 @@ void tNetSession::doWork() {
 	}
 }
 
+/** send a negotiation to the peer */
 void tNetSession::negotiate() {
 	U32 sbw;
 	// send server downstream (for the peer to know how fast it can send packets)
