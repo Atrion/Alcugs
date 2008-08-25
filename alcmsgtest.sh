@@ -1,6 +1,9 @@
 #!/bin/bash
 FILE="src/alcnet/sql.cpp"
 PORT=31732
+if [ -n $1 ]; then
+	PORT=$1
+fi
 # cleanup
 rm rcvmsg.raw -rf
 # start server

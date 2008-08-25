@@ -83,7 +83,7 @@ void tUnet::init() {
 	unet_usec=0; //(microseconds)
 	idle_timer=5; // should be max. 10 seconds, may be overwritten by tUnetBase
 
-	conn_timeout=1*60; // default timeout for new sessions (seconds) (TODO: sensible to NetMsgSetTimeout)
+	conn_timeout=5*60; // default timeout for new sessions (seconds) (TODO: sensible to NetMsgSetTimeout)
 	/* This sets the timeout for unet servers from both sides
 	It also sets the timeout for Uru clients, where a high timeout is necessary since the connection is already established when changing
 	the server in the shard list and when the timeout is only 5 seconds the client gets kicked off too fast. It will be changed
@@ -130,8 +130,8 @@ void tUnet::init() {
 	#ifdef ENABLE_NETDEBUG
 	lim_down_cap=0; //in bytes
 	lim_up_cap=0; //in bytes
-	in_noise=25; //(0-100)
-	out_noise=25; //(0-100)
+	in_noise=12; //(0-100)
+	out_noise=12; //(0-100)
 	latency=10000; //(in usecs)
 	cur_down_quota=0;
 	cur_up_quota=0;

@@ -134,7 +134,8 @@ private:
 	} serverMsg;
 #ifdef ENABLE_NEWDROP
 	// client Message counter
-	U32 clientCps;
+	U32 clientPs;
+	bool lastMsgComplete;
 #endif
 	Byte validation; //store the validation level (0,1,2)
 	Byte authenticated; //it's the peer authed? 0 = no, 1 = yes, 2 = it just got authed, 10 = the client got an auth challenge

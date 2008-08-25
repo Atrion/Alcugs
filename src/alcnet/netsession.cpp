@@ -107,7 +107,8 @@ void tNetSession::init() {
 	memset((void *)&serverMsg,0,sizeof(serverMsg));
 	assert(serverMsg.pn==0);
 #ifdef ENABLE_NEWDROP
-	clientCps = 0;
+	clientPs = 0;
+	lastMsgComplete = true;
 #endif
 	idle=false;
 	delayMessages=false;
@@ -437,11 +438,12 @@ void tNetSession::processMsg(Byte * buf,int size) {
 			if(!negotiating) {
 #ifdef ENABLE_NEWDROP
 				// reset "last ack" counters (server and client)
-				clientCps = 0;
+				clientPs = 0;
+				lastMsgComplete = true;
 				serverMsg.pfr = 0;
 				serverMsg.ps = 0;
 #endif
-				//clear snd buffer
+				//clear buffers
 				DBG(5,"Clearing buffers\n");
 				sndq->clear();
 				ackq->clear();
@@ -482,31 +484,35 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		createAckReply(msg);
 	}
 
-	// if we did not yet parse the packet, do that
-	if(ret==0) {
-		if(msg.tf & UNetAckReply) {
-			//ack update
-			ackCheck(msg);
-			if(authenticated==2) authenticated=1;
-		} else {
-			if((msg.tf & UNetAckReq) && (msg.frn==0) && (net->flags & UNET_NOFLOOD)) { //flood control
-				if(net->ntime_sec - flood_last_check > net->flood_check_sec) {
-					flood_last_check=net->ntime_sec;
-					flood_npkts=0;
-				} else {
-					flood_npkts++;
-					if(flood_npkts>net->max_flood_pkts) {
-						//UNET_FLOOD event
-						tNetSessionIte ite(ip,port,sid);
-						tNetEvent * evt=new tNetEvent(ite,UNET_FLOOD);
-						net->events->add(evt);
-					}
+	if(isConnected() && (msg.tf & UNetAckReply)) { // if we are connected, we can parse acks out of order (if not, the ack sent in reply
+	                                               //  to the nego serves to set the cabal, so it has to be parsed in order)
+		if (ret != 0) {
+			DBG(3, "Parsing ack even though it is out of order\n");
+		}
+		//ack update
+		ackCheck(msg);
+		if(authenticated==2) authenticated=1;
+	}
+	// if it is ok parse the packet, do that
+	else if (ret == 0 && !(msg.tf & UNetAckReply)) {
+		//flood control
+		if((msg.tf & UNetAckReq) && (msg.frn==0) && (net->flags & UNET_NOFLOOD)) {
+			if(net->ntime_sec - flood_last_check > net->flood_check_sec) {
+				flood_last_check=net->ntime_sec;
+				flood_npkts=0;
+			} else {
+				flood_npkts++;
+				if(flood_npkts>net->max_flood_pkts) {
+					// send UNET_FLOOD event
+					tNetSessionIte ite(ip,port,sid);
+					tNetEvent * evt=new tNetEvent(ite,UNET_FLOOD);
+					net->events->add(evt);
 				}
-			} //end flood control
-			
-			if(!(msg.tf & UNetNegotiation)) {
-				assembleMessage(msg);
 			}
+		} // end flood control
+		
+		if(!(msg.tf & UNetNegotiation)) {
+			assembleMessage(msg);
 		}
 	}
 	
@@ -572,19 +578,18 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 			msg->data->rewind();
 			msg->cmd=msg->data->getU16();
 			msg->data->rewind();
-			// since the fragments could be out-of-order, we have to mark the last fragment of this message as last acked one
+#ifdef ENABLE_NEWDROP
 			if (t.tf & UNetAckReq) {
-				U32 lastPcktCsn = t.frt | t.sn<<8;
-				if (lastPcktCsn != clientCps) {
-					DBG(5, "Last ack was 0x%08X, but I completed a message with last ack 0x%08X - changing it\n", clientCps, lastPcktCsn);
-					clientCps = lastPcktCsn;
-				}
+				lastMsgComplete = true;
 			}
-			//tNetSessionIte ite(ip,port,sid);
-			//tNetEvent * evt=new tNetEvent(ite,UNET_MSGRCV);
-			//net->events->add(evt);
+#endif
 		} else {
 			msg->fr_count++;
+#ifdef ENABLE_NEWDROP
+			if (t.tf & UNetAckReq) {
+				lastMsgComplete = false;
+			}
+#endif
 		}
 	}
 
@@ -596,31 +601,38 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 	\return 0 - parse and send ack (it's exactly what we need)
 */
 Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
-	Byte ret;
 #ifdef ENABLE_NEWDROP
-	if (msg.cps < clientCps) { // we already got that one - ack it, but don't parse again
-		ret = 1;
-		net->err->log("%s INF: Dropped already parsed packet 0x%08X (last ack is 0x%08X, expected 0x%08X)\n", str(), msg.csn, msg.cps, clientCps);
+	#ifdef ENABLE_MSGDEBUG
+	net->log->log("%s INF: last acked packet was %d (lastMsgComplete: %d), checking new packet %d.%d\n", str(), clientPs, lastMsgComplete, msg-sn, msg.frn);
+	#endif
+	if (msg.ps < clientPs) { // we already got that one - ack it, but don't parse again
+		net->err->log("%s INF: Dropped already parsed packet %d.%d (last ack is %d, expected %d)\n", str(), msg.sn, msg.frn, msg.ps, clientPs);
+		return 1; // we already got it, send an ack
 	}
-	else if (msg.cps > clientCps) { // we missed something in between
-		
-		U32 clientPs = clientCps >> 8;
-		if (clientPs == msg.sn) {
-			// if the last acked packet we got and this new packet belong to the same message, we can parse it
-			// (fragments can be recieved out of order)
-			DBG(5, "Parsing packet 0x%08X because it belongs to packet 0x%08X\n", msg.csn, clientCps);
-			ret = 0;
-		}
-		else {
-			ret = 2; // we can not parse it, the peer has to send it again
-			net->err->log("%s INF: Dropped unexpected packet 0x%08X (last ack is 0x%08X, expected 0x%08X)\n", str(), msg.csn, msg.cps, clientCps);
-		}
-	} else {
-		ret = 0;
-		if (msg.tf & UNetAckReq)
-			clientCps = msg.csn;
+	else if (msg.ps > clientPs) { // we missed something in between
+		net->err->log("%s INF: Dropped unexpected packet %d.%d (last ack is %d, expected %d)\n", str(), msg.sn, msg.frn, msg.ps, clientPs);
+		return 2; // we can not parse it, the peer has to send it again
 	}
-	return ret;
+	else if (!lastMsgComplete && msg.sn != clientPs) { // we have a not-yet complete message and this packet does not belong to it
+		net->err->log("%s INF: Dropped unexpected packet %d.%d (%d is not yet complete)\n", str(), msg.sn, msg.frn, clientPs);
+		return 2; // we can not parse it, the peer has to send it again
+	}
+	else if (lastMsgComplete && msg.sn == clientPs) { // this message belongs to the one we already completed, so don't parse it again
+		net->err->log("%s INF: Dropped already parsed packet %d.%d (%d is already complete)\n", str(), msg.sn, msg.frn, clientPs);
+		return 1; // we already got it, send an ack
+	}
+	#ifdef ENABLE_MSGDEBUG
+	net->log->log("%s INF: accepted packet %d.%d\n", str(), msg.sn, msg.frn);
+	#else
+	DBG(5, "accepted packet %d.%d\n", msg.sn, msg.frn);
+	#endif
+	if (msg.tf & UNetAckReq) {
+		clientPs = msg.sn;
+		#ifdef ENABLE_MSGDEBUG
+		net->log->log("%s INF: last acked packet is now %d\n", str(), clientPs);
+		#endif
+	}
+	return 0;
 #else
 	//drop already parsed messages
 	#ifdef ENABLE_MSGDEBUG
