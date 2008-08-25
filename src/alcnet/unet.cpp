@@ -90,7 +90,7 @@ void tUnet::init() {
 	to 30sec after the client got authed.
 	I put this here and not in tUnetServerBase as tUnetBase must be able to override it */
 	
-	timeout=1000000; //1 second (time till re-transmission) [initial RTT = timeout/2]
+	timeout=1000000; //1 second (time till re-transmission)
 
 	//initial server timestamp
 	ntime_sec=alcGetTime();
@@ -541,7 +541,9 @@ int tUnet::Recv() {
 	n = recvfrom(this->sock,(void *)buf,INC_BUF_SIZE,0,(struct sockaddr *)&client,&client_len);
 #endif
 	DBG(9,"After recvfrom\n");
-
+	
+	//set stamp
+	updateNetTime();
 #ifdef ENABLE_NETDEBUG
 	if(n>0) {
 		if(!in_noise || (random() % 100) >= in_noise) {
@@ -618,13 +620,6 @@ int tUnet::Recv() {
 	}
 	
 	//END CRITICAL REGION
-	
-	#if _DBG_LEVEL_ >= 1
-	U32 old_net_time=net_time;
-	#endif
-	updateNetTime();
-	
-	DBG(7,"Loop time %i\n",net_time-old_net_time);
 	
 	return UNET_OK;
 }

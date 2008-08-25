@@ -11,7 +11,7 @@ rm rcvmsg.raw -rf
 PID=`pidof alcmsgtest`
 sleep 1
 # send file
-./alcmsgtest localhost:$PORT -f $FILE -z > /dev/null
+./alcmsgtest localhost:$PORT -f $FILE > /dev/null
 sleep 1
 # kill server
 killall -s INT alcmsgtest

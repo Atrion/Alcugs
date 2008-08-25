@@ -108,7 +108,7 @@ private:
 	Byte pfr; //!< last acked fragment
 	U32 ps; //!< last acked seq num
 	U32 cps; //!< combined last acked fragment and seq num
-	U32 dsize; //!< size of data
+	U32 dsize; //!< size of data / number of acks in the packet
 	tMBuf data;
 	friend class tUnet;
 	friend class tNetSession;

@@ -132,41 +132,40 @@ private:
 
 // properties
 protected:
-	bool idle;
+	bool idle; //!< true if all session are idle
 
-	U32 conn_timeout; //default timeout (to disconnect a session) (seconds) [5 secs]
-	U32 timeout; //default timeout when the send clock expires (re-transmission) (microseconds)
+	U32 conn_timeout; //!< default timeout (to disconnect a session) (seconds) [5 secs]
+	U32 timeout; //!< default timeout when the send clock expires (re-transmission) (microseconds)
 
 	U32 max; //!< Maxium number of connections (default 0, unlimited)
-	tNetSessionMgr * smgr; //Session MGR
+	tNetSessionMgr * smgr; //!< session MGR
 
-	int whoami; //type of _this_ server
+	int whoami; //!< type of _this_ server
 
 	U32 lan_addr; //!< LAN address, in network byte order
 	U32 lan_mask; //!< LAN mask, in network byte order (default 255.255.255.0)
-	//! Bandwidth speed (lo interface -> maxium)
-	U32 lan_up;
-	U32 lan_down;
-	U32 nat_up;
-	U32 nat_down;
+	// Bandwidth speed (lo interface -> maxium)
+	U32 lan_up; //!< upstream to the LAN
+	U32 lan_down; //!< downstream from the LAN
+	U32 nat_up; //!< upstream to the WAN
+	U32 nat_down; //!< downstream from the WAN
 
-	//char address[100]; //!< This system public address (in Ascii)
 	char bindaddr[100]; //!< Server bind address
 	U16 bindport; //!< Server bind port, in host order
 
 	//!logging subsystem
-	tLog * log; //stdout
-	tLog * err; //stderr
+	tLog * log; //!< stdout
+	tLog * err; //!< stderr
 	//tLog * unx; //unexpected
-	tLog * ack; //ack drawing
+	tLog * ack; //!< ack drawing
 	//tLog * chk; //checksum results
-	tLog * sec; //security log
+	tLog * sec; //!< security and access log
 	
 	//flood control
 	U32 max_flood_pkts;
 	U32 flood_check_sec;
 	
-	U32 snd_expire; //(seconds to expire a message in the rcv buffer)
+	U32 snd_expire; //!< time after which a message in the rcv buffer expires (in sec)
 	
 	U32 ip_overhead;
 	//debugging stuff
@@ -187,30 +186,29 @@ protected:
 private:	
 	bool initialized;
 	
-	Byte max_version; //Default protocol version
-	Byte min_version;
+	Byte max_version; //!< default protocol version
+	Byte min_version; //!< default protocol version
 
-	U32 ntime_sec; //current time (in secs)
-	U32 ntime_usec; //(in usecs)
-	U32 net_time; //(in usecs) [resolution of 15 minutes] (relative)
-	Byte idle_timer;
+	U32 ntime_sec; //!< current time (secs)
+	U32 ntime_usec; //!< current time (usecs)
+	U32 net_time; //!< current time (in usecs) [resolution of 15 minutes] (relative)
+	Byte idle_timer; //!< maximum time between two odle operations (sec)
 	
 #ifdef __WIN32__
 	WSADATA ws; //!< The winsock stack
 	SOCKET sock; //!< The socket
-	u_long nNoBlock; //!< non-blocking (private)
+	u_long nNoBlock; //!< non-blocking
 #else
 	int sock; //!< The socket
 #endif
 	int opt;
 	struct sockaddr_in server; //!< Server sockaddr
 	
-	tUnetFlags flags; //explained -^
-	U16 unet_sec; //netcore timeout to do another loop (seconds)
-	U32 unet_usec; //netcore timeout to do another loop (microseconds)
+	tUnetFlags flags; //!< unet flags, explained -^
+	U16 unet_sec; //!< netcore timeout to do another loop (seconds)
+	U32 unet_usec; //!< netcore timeout to do another loop (microseconds)
 	
-	//event queue
-	tUnetMsgQ<tNetEvent> * events;
+	tUnetMsgQ<tNetEvent> * events; //!< event queue
 };
 
 }

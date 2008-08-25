@@ -234,7 +234,7 @@ namespace alc {
 				updateStamps = 0; // don't update the last attempt time when we're already dissing
 				authResult = AAccountDisabled;
 			}
-			// check internal client
+			// check internal client (i.e. VaultManager)
 			else if (release == TIntRel && *accessLevel > AcCCR) {
 				log->print("unauthorized client\n");
 				authResult = AAccountDisabled;

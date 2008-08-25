@@ -62,6 +62,10 @@ public:
 		}
 		return current;
 	}
+	bool hasNext() {
+		if (current == NULL) return (first != NULL);
+		else return (current->next != NULL);
+	}
 	T* getCurrent() {
 		return current;
 	}
