@@ -94,34 +94,32 @@ private:
 	void assembleMessage(tUnetUruMsg &msg);
 
 	void updateRTT(U32 newread);
-	void duplicateTimeout();
 	void increaseCabal();
 	void decreaseCabal(bool partial);
-	U32 computetts(U32 pkqsize);
+	U32 timeToSend(U32 psize);
 	
 	void negotiate();
 
 // properties
 public:
-	Byte max_version; //peer major version
-	Byte min_version; //peer minor version
-	U32 proto; //peer unet protocol version
+	Byte max_version; //!< peer major version
+	Byte min_version; //!< peer minor version
+	U32 proto; //!< peer unet protocol version
 	
-	U32 ki; // player set and valid id, otherwise 0 (lobby/game)
-	U32 x; // x value (for lobby/game)
-	Byte uid[16]; // hex; player uid in lobby/game server
-	Byte name[200]; // peer age name in tracking server, peer account name in lobby and game
-	Byte serverGuid[8]; // hex; server guid in tracking server
-	tNetSessionData *data; // save additional data (e.g. tracking information)
-	bool inRoute; // saves if the oalyer is on his way to another server (lobby/game)
+	U32 ki; //!< player set and valid id, otherwise 0 (lobby/game)
+	U32 x; //!< x value (for lobby/game)
+	Byte uid[16]; //!< hex; player uid in lobby/game server
+	Byte name[200]; //!< peer age name in tracking server, peer account name in lobby and game
+	Byte serverGuid[8]; //!< hex; server guid in tracking server
+	tNetSessionData *data; //!< save additional data (e.g. tracking information)
 
 private:
 	tUnet * net;
 	U32 ip; //network order
 	U16 port; //network order
 	int sid;
-	char sock_array[sizeof(struct sockaddr_in)];
-	socklen_t a_client_size;
+	char sock_array[sizeof(struct sockaddr_in)]; // used by tUnet
+	socklen_t a_client_size; // used by tUnet
 	//server Message counters
 	struct {
 		//Byte val;
@@ -137,10 +135,10 @@ private:
 	U32 clientPs;
 	bool lastMsgComplete;
 #endif
-	Byte validation; //store the validation level (0,1,2)
-	Byte authenticated; //it's the peer authed? 0 = no, 1 = yes, 2 = it just got authed, 10 = the client got an auth challenge
-	tNetSessionFlags cflags; //Session flags
-	U16 maxPacketSz; //Maxium size of the packets. Must be 1024 (always)
+	Byte validation; //!< store the validation level (0,1,2)
+	Byte authenticated; //!< is the peer authed? 0 = no, 1 = yes, 2 = it just got authed, 10 = the client got an auth challenge
+	tNetSessionFlags cflags; //!< ession flags
+	U16 maxPacketSz; //!< maxium size of the packets. Must be 1024 (always)
 
 #ifndef ENABLE_NEWDROP
 	char * w; //rcv window
@@ -154,38 +152,39 @@ private:
 	tTime timestamp; //!< last time we got something from this client
 	tTime nego_stamp; //!< initial negotiation stamp
 	tTime renego_stamp; //!< remote nego stamp (stamp of last nego we got)
-	U32 conn_timeout; //In secs
-	bool negotiating;
+	U32 conn_timeout; //!< time after which the session will timeout (in secs)
+	bool negotiating; //!< set to true when we are waiting for the answer of a negotiate we sent
 	
-	Byte passwd[33]; //peer passwd hash (used in V2) (string)
-	Byte accessLevel;
+	Byte passwd[33]; //!< peer passwd hash (used in V2) (string)
+	Byte accessLevel; //!< peer access level
 
 	//flux control
-	U32 bandwidth; //client reported bandwidth (negotiated technology) (in bps)
-	U32 cabal; //cur avg bw (in bytes per second)
-	U32 max_cabal;
+	U32 bandwidth; //!< client reported bandwidth (in byte/s)
+	U32 cabal; //!< cur avg bandwidth (in bytes per second), can't be > max_cabal
+	U32 max_cabal; //!< min(client's upstream, our downstream), cabal will grow slower when it gets to this mark, will never be > bandwidth
 	
-	U32 next_msg_time; // time to send next msg in usecs
-	U32 rtt;
-	U32 timeout;
-	U32 ack_rtt; //ack rtt
+	U32 next_msg_time; //!< time to send next msg in usecs (referring to tUnet::net_time)
+	U32 rtt; //!< round trip time, used to caluclate timeout
+	S32 deviation; //!< used to calculate timeout
+	U32 timeout; //!< time after which a message is re-sent
 	
-	tUnetMsgQ<tUnetAck> * ackq; //Pig acks
-	tUnetMsgQ<tUnetUruMsg> * sndq; //outcomming message queue
-	tUnetMsgQ<tUnetMsg> * rcvq; //incomming message queue
+	tUnetMsgQ<tUnetAck> * ackq; //!< ack queue, saves acks to be packed
+	tUnetMsgQ<tUnetUruMsg> * sndq; //!<outcomming message queue
+	tUnetMsgQ<tUnetMsg> * rcvq; //!< incomming message queue
 	
-	bool idle;
-	bool delayMessages; // when set to true, messages are kept in the recieve buffer
+	bool idle; //!< true when the session has nothing to do (all queue emtpy)
+	bool delayMessages; //!< when set to true, messages are kept in the recieve buffer
 	
 	bool terminated; //!< false: connection is established; true: a NetMsgTerminated was sent (and we expect a NetMsgLeave), or a NetMsgLeave was sent
 	
-	Byte whoami; //peer type
-	bool client; //it's a client or a server?
-	Byte tpots; //tpots version 0=undefined, 1=tpots client, 2=non-tpots client
+	Byte whoami; //!< peer type
+	bool client; //!< it's a client or a server?
+	Byte tpots; //!< tpots version 0=undefined, 1=tpots client, 2=non-tpots client
 	
-	// used by lobby and game for authenticating
-	Byte challenge[16]; //peer challenge (hex)
-	Byte release; //type of client
+	// used by lobbybyse
+	Byte challenge[16]; //!< peer challenge (hex)
+	Byte release; //!< type of client (internal/external)
+	bool inRoute; //!< saves if the player is on his way to another server
 };
 
 #if 0
