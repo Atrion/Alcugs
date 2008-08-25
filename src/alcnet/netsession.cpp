@@ -109,6 +109,9 @@ void tNetSession::init() {
 #ifdef ENABLE_NEWDROP
 	clientPs = 0;
 	lastMsgComplete = true;
+	#ifdef ENABLE_UNET2
+	lastAckSn = 0;
+	#endif
 #endif
 	idle=false;
 	delayMessages=false;
@@ -175,8 +178,8 @@ void tNetSession::updateRTT(U32 newread) {
 		deviation+=(alpha*(abs(diff)-deviation))/1000;
 		timeout=u*rtt + delta*deviation;
 	#endif
-	if (timeout > 5000000) timeout = 5000000;
-	DBG(5,"%s RTT update (sample rtt: %i) new rtt:%i, timeout:%i, deviation:%i\n", str(),newread,rtt,timeout,deviation);
+	if (timeout > 4000000) timeout = 4000000;
+	DBG(3,"%s RTT update (sample rtt: %i) new rtt:%i, timeout:%i, deviation:%i\n", str(),newread,rtt,timeout,deviation);
 }
 void tNetSession::increaseCabal() {
 	if(!cabal) return;
@@ -429,7 +432,6 @@ void tNetSession::processMsg(Byte * buf,int size) {
 #endif
 			if(!negotiating) {
 #ifdef ENABLE_NEWDROP
-				// reset "last ack" counters (server and client)
 				clientPs = 0;
 				lastMsgComplete = true;
 				serverMsg.pfr = 0;
@@ -478,9 +480,9 @@ void tNetSession::processMsg(Byte * buf,int size) {
 
 	if(isConnected() && (msg.tf & UNetAckReply)) { // if we are connected, we can parse acks out of order (if not, the ack sent in reply
 	                                               //  to the nego serves to set the cabal, so it has to be parsed in order)
-		if (ret != 0) {
-			DBG(5, "Parsing ack even though it is out of order\n");
-		}
+		#ifdef ENABLE_UNET2
+		lastAckSn = msg.sn;
+		#endif
 		//ack update
 		ackCheck(msg);
 		if(authenticated==2) authenticated=1;
@@ -596,29 +598,43 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 #ifdef ENABLE_NEWDROP
 	#ifdef ENABLE_MSGDEBUG
 	net->log->log("%s INF: last acked packet was %d (lastMsgComplete: %d), checking new packet %d.%d\n", str(), clientPs, lastMsgComplete, msg-sn, msg.frn);
+	net->log->flush();
 	#endif
 	if (msg.ps < clientPs) { // we already got that one - ack it, but don't parse again
 		net->err->log("%s INF: Dropped already parsed packet %d.%d (last ack is %d, expected %d)\n", str(), msg.sn, msg.frn, msg.ps, clientPs);
+		net->err->flush();
 		return 1; // we already got it, send an ack
 	}
 	else if (msg.ps > clientPs) { // we missed something in between
 		net->err->log("%s INF: Dropped unexpected packet %d.%d (last ack is %d, expected %d)\n", str(), msg.sn, msg.frn, msg.ps, clientPs);
+		net->err->flush();
 		return 2; // we can not parse it, the peer has to send it again
 	}
 	else if (!lastMsgComplete && msg.sn != clientPs) { // we have a not-yet complete message and this packet does not belong to it
 		net->err->log("%s INF: Dropped unexpected packet %d.%d (%d is not yet complete)\n", str(), msg.sn, msg.frn, clientPs);
+		net->err->flush();
 		return 2; // we can not parse it, the peer has to send it again
 	}
 	else if (lastMsgComplete && msg.sn == clientPs) { // this message belongs to the one we already completed, so don't parse it again
 		net->err->log("%s INF: Dropped already parsed packet %d.%d (%d is already complete)\n", str(), msg.sn, msg.frn, clientPs);
+		net->err->flush();
 		return 1; // we already got it, send an ack
 	}
 	#ifdef ENABLE_MSGDEBUG
 	net->log->log("%s INF: accepted packet %d.%d\n", str(), msg.sn, msg.frn);
+	net->log->flush();
 	#else
 	DBG(5, "accepted packet %d.%d\n", msg.sn, msg.frn);
 	#endif
+	
+	#ifdef ENABLE_UNET2
+	if ((msg.tf & UNetAckReq) && msg.sn != lastAckSn) {
+		// if the current message has the same sn as the last ack packet we got (which usually can't happen - SNs are not used twice),
+		//  work around an unet2 bug: the packet we are just processing has a invalid sn as the server got another nego afterwards and
+		//  reset its sn
+	#else
 	if (msg.tf & UNetAckReq) {
+	#endif
 		clientPs = msg.sn;
 		#ifdef ENABLE_MSGDEBUG
 		net->log->log("%s INF: last acked packet is now %d\n", str(), clientPs);
@@ -824,7 +840,12 @@ void tNetSession::ackUpdate() {
 	if(val==0x01) { val=0x00; }
 
 	ackq->rewind();
-	while(ackq->hasNext()) {
+	tUnetAck *ack;
+	while((ack = ackq->getNext())) {
+		if (ack->timestamp > net->net_time) continue;
+		
+		// now we have at least one ack packet to send
+		
 		pmsg=new tUnetUruMsg;
 
 		//now update the other fields
@@ -844,13 +865,8 @@ void tNetSession::ackUpdate() {
 			pmsg->data.putU16(0);
 		
 		i=0;
-		tUnetAck *ack;
-		while(ackq->hasNext() && i<maxacks) {
-			ack = ackq->getNext();
-			if (ack->timestamp > net->net_time) {
-				net->updatetimer(ack->timestamp - net->net_time);
-				continue;
-			}
+		do {
+			if (ack->timestamp > net->net_time) continue;
 			pmsg->data.putU32(ack->A);
 			if(!(pmsg->tf & UNetExt))
 				pmsg->data.putU32(0);
@@ -859,8 +875,8 @@ void tNetSession::ackUpdate() {
 				pmsg->data.putU32(0);
 			ackq->deleteCurrent();
 			i++;
-		}
-		if (i == 0) break; // no acks which are ready to be sent
+		} while((ack = ackq->getNext()) && i<maxacks);
+		assert(i>0);
 		
 		pmsg->_update();
 		pmsg->timestamp=net->net_time;
@@ -942,6 +958,10 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 				net->log->log("Deleting packet %i,%i\n",msg->sn,msg->frn);
 				#endif
 				if(msg->tryes<=1 && A1==A2) {
+					/* possible problem: since this is the last packet which was acked with this ack message, it could be combined
+					   with other packets and the ack could be sent almost immediately after the packet went in, without the
+					   usual delay  so the rtt is much smaller than the average. But I don't expect this to happen often, so I don't
+					   consider that a real problem. */
 					U32 crtt=net->net_time-msg->snd_timestamp;
 					#ifdef ENABLE_NETDEBUG
 					crtt+=net->latency;
@@ -1076,7 +1096,6 @@ void tNetSession::doWork() {
 		next_msg_time=net->net_time + tts;
 		net->updatetimer(tts);
 	} else {
-		net->updatetimer(next_msg_time-net->net_time);
 		DBG(8,"Too soon (%d) to check sndq\n", next_msg_time-net->net_time);
 	}
 }

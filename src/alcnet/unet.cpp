@@ -628,8 +628,6 @@ int tUnet::Recv() {
 if all sessions are idle, the netcore is it as well and the timeout will be reset */
 void tUnet::doWork() {
 	idle=true;
-	unet_sec=idle_timer;
-	unet_usec=0;
 	
 	tNetSession * cur;
 	smgr->rewind();
@@ -648,6 +646,12 @@ void tUnet::doWork() {
 	}
 	
 	if(!events->isEmpty()) idle=false;
+	
+	if (idle) {
+		// if (and only if) we are idle, reset the timer
+		unet_sec=idle_timer;
+		unet_usec=0;
+	}
 }
 
 /** sends the message (internal use only)
