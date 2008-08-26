@@ -311,9 +311,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 			#endif
 			u->rcvq->rewind();
 			msg=u->rcvq->getNext();
-			while(msg!=NULL && msg->completed!=1)
-				msg=u->rcvq->getNext();
-			if(msg==NULL) break;
+			if(msg==NULL || !msg->completed) break; // if the first message is not completed, we can't parse what's after it - it would be out of order
 			
 			try {
 				ret=parseBasicMsg(evt,msg,u,shutdown);

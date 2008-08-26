@@ -1016,11 +1016,10 @@ void tNetSession::doWork() {
 		rcvq->rewind();
 		tUnetMsg * g;
 		while((g=rcvq->getNext())) {
-			if(g->completed==0x01) {
-				evt=new tNetEvent(ite,UNET_MSGRCV);
-				net->events->add(evt);
-				break;
-			}
+			if (!g->completed) break; // if this is a non-completed message, don't parse it or what comes after it - it would be out of order
+			evt=new tNetEvent(ite,UNET_MSGRCV);
+			net->events->add(evt);
+			break;
 		}
 	}
 	
