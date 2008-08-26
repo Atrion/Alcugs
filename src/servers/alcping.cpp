@@ -122,7 +122,6 @@ tUnetPing::tUnetPing(char * lhost,U16 lport,Byte listen,double time,int num,int 
 	this->listen=listen;
 	out=lstd;
 	setIdleTimer(1);
-	updatetimer(1000);
 	this->time=time;
 	this->num=num;
 	this->flood=flood;
@@ -226,7 +225,7 @@ void tUnetPing::onIdle(bool idle) {
 	int i;
 	if(listen==0) {
 
-		updatetimer(100);
+		updateTimerRelative(100);
 		if(count==0) {
 			dstite=netConnect(d_host,d_port,validation,0);
 			current=startup=alcGetCurrentTime();

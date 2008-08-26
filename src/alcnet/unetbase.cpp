@@ -393,7 +393,7 @@ void tUnetBase::run() {
 	
 	U32 startup=getTime();
 	while(!smgr->empty() && (getTime()-startup)<stop_timeout) {
-		updatetimer(100000);
+		updateTimerRelative(100000); // make sure we don't wait longer than this
 		Recv();
 		while((evt=getEvent())) {
 			u=getSession(evt->sid);

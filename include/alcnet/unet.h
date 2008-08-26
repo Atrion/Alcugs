@@ -98,7 +98,6 @@ public:
 	void stopOp();
 	void dump(tLog * f=NULL,Byte flags=0x01);
 	tNetSession * getSession(tNetSessionIte &t);
-	void destroySession(tNetSessionIte &t);
 	//
 	void setIdleTimer(Byte timer) {
 		if(timer!=0) this->idle_timer=timer;
@@ -110,7 +109,9 @@ public:
 protected:
 	void openlogs();
 	void closelogs();
-	void updatetimer(U32 usecs);
+	void destroySession(tNetSessionIte &t);
+	void updateTimerRelative(U32 usecs);
+	inline void updateTimerAbs(U32 usecs) { updateTimerRelative(usecs-net_time); }
 	tNetSessionIte netConnect(char * hostname,U16 port,Byte validation,Byte flags);
 	int Recv();
 	U32 getTime() { return ntime_sec; }

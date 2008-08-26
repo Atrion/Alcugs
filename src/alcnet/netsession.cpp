@@ -420,6 +420,8 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		net->log->print("%s",(const char *)comm.str());
 		bandwidth=comm.bandwidth;
 		if(renego_stamp==comm.timestamp) { // it's a duplicate, we already got this message
+		    // It is necessary to do the check this way since the usual check by SN would treat a nego on an existing connection as
+		    //  "already parsed" since the SN is started from the beginning
 			net->log->print(" (ignored)\n");
 			negotiating=false;
 		} else {
@@ -434,8 +436,10 @@ void tNetSession::processMsg(Byte * buf,int size) {
 #ifdef ENABLE_NEWDROP
 				clientPs = 0;
 				lastMsgComplete = true;
-				serverMsg.pfr = 0;
-				serverMsg.ps = 0;
+				serverMsg.pn=0;
+				serverMsg.sn=0;
+				serverMsg.pfr=0;
+				serverMsg.ps=0;
 #endif
 				//clear buffers
 				DBG(5,"Clearing buffers\n");
@@ -459,6 +463,10 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	//fix the problem that happens every 15-30 days of server uptime
 	if(serverMsg.sn>=8388605 || msg.sn>=8388605) { // that's aproximately 2^23
 		net->err->log("INF: Congratulations!, you have reached the maxium allowed sequence number, don't worry, this is not an error\n");
+#ifdef ENABLE_NEWDROP
+		clientPs = 0;
+		lastMsgComplete = true;
+#endif
 		serverMsg.pn=0;
 		serverMsg.sn=0;
 		serverMsg.pfr=0;
@@ -731,11 +739,9 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	//we must delay either none or all messages, otherwise the rtt will vary too much
 	U32 ackWaitTime=timeToSend((((U32)msg.frt-msg.frn)+1) * maxPacketSz); // this is how long transmitting the whole packet will approximately take
 	if(ackWaitTime > timeout/4) ackWaitTime=timeout/4; // don't use the rtt as basis, it is 0 at the beginning, resulting in a much too quick first answer, a much too low rtt on the other side and thus the packets being re-sent too early
-	net->updatetimer(ackWaitTime);
 	ack->timestamp=net->net_time + ackWaitTime;
-	#ifdef ENABLE_MSGDEBUG
-	net->log->log("ack tts: %i, %i, %i\n",msg.frt,ackWaitTime,cabal);
-	#endif
+	// the net timer will be updated when the ackq is checked (which is done since processMsg will call doWork after calling createAckReply)
+	DBG(3, "ack tts: %i, %i, %i\n",msg.frt,ackWaitTime,cabal);
 	
 	int i=0;
 
@@ -842,7 +848,10 @@ void tNetSession::ackUpdate() {
 	ackq->rewind();
 	tUnetAck *ack;
 	while((ack = ackq->getNext())) {
-		if (ack->timestamp > net->net_time) continue;
+		if (ack->timestamp > net->net_time) {
+			net->updateTimerAbs(ack->timestamp); // come back when we want to process this ack
+			continue;
+		}
 		
 		// now we have at least one ack packet to send
 		
@@ -866,7 +875,10 @@ void tNetSession::ackUpdate() {
 		
 		i=0;
 		do {
-			if (ack->timestamp > net->net_time) continue;
+			if (ack->timestamp > net->net_time) {
+				net->updateTimerAbs(ack->timestamp); // come back when we want to process this ack
+				continue;
+			}
 			pmsg->data.putU32(ack->A);
 			if(!(pmsg->tf & UNetExt))
 				pmsg->data.putU32(0);
@@ -888,7 +900,7 @@ void tNetSession::ackUpdate() {
 		#endif
 		//tts=0;
 		pmsg->timestamp+=tts;
-		net->updatetimer(tts);
+		net->updateTimerAbs(pmsg->timestamp); // come back when we want to send this ack
 		
 		//put pmsg to the qeue
 #if 0
@@ -989,7 +1001,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 
 }
 
-/** Send, and re-send messages, update idle state and set netcore timeout */
+/** Send, and re-send messages, update idle state and set netcore timeout (the last is NECESSARY - otherwise, the idle timer will be used) */
 void tNetSession::doWork() {
 
 	tNetEvent * evt;
@@ -1089,13 +1101,19 @@ void tNetSession::doWork() {
 					}
 				} //end prob drop
 			} //end time check
-			 else { DBG(8,"%s Too soon (%d) to send a message\n",alcGetStrTime(), curmsg->timestamp-net->net_time); }
+			 else {
+			 	net->updateTimerAbs(curmsg->timestamp); // come back when we want to send this message
+			 	DBG(8,"%s Too soon (%d) to send a message\n",alcGetStrTime(), curmsg->timestamp-net->net_time);
+			 }
 		} //end while
 		tts=timeToSend(cur_quota);
-		DBG(8,"%s tts is now:%i quota:%i,cabal:%i\n",alcGetStrTime(),tts,cur_quota,cabal);
+		if (cur_quota > 0) {
+			DBG(8,"%s tts is now:%i quota:%i,cabal:%i\n",alcGetStrTime(),tts,cur_quota,cabal);
+		}
 		next_msg_time=net->net_time + tts;
-		net->updatetimer(tts);
+		net->updateTimerAbs(next_msg_time); // come back when we want to send the next message
 	} else {
+		net->updateTimerAbs(next_msg_time); // come back when we want to send the next message
 		DBG(8,"Too soon (%d) to check sndq\n", next_msg_time-net->net_time);
 	}
 }

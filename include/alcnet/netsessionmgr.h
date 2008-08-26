@@ -111,7 +111,6 @@ public:
 	int id;
 	tNetEvent * next;
 	bool veto;
-	//U16 cmd;
 };
 
 }

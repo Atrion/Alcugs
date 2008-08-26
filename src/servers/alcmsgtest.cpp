@@ -147,7 +147,6 @@ tUnetSimpleFileServer::tUnetSimpleFileServer(char * lhost,U16 lport,Byte listen)
 	this->listen=listen;
 	out=lstd;
 	setIdleTimer(1);
-	updatetimer(1000);
 	d_host=NULL;
 	d_port=5000;
 	validation=2;
@@ -177,6 +176,7 @@ void tUnetSimpleFileServer::onStart() {
 }
 
 void tUnetSimpleFileServer::onIdle(bool idle) {
+	updateTimerRelative(1000);
 	if(listen==0) {
 		if(!sent) {
 			tNetSession * u=NULL;

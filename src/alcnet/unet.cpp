@@ -157,8 +157,8 @@ void tUnet::updateNetTime() {
 	net_time=(((ntime_sec % 1000)*1000000)+ntime_usec);
 }
 
-void tUnet::updatetimer(U32 usec) {
-	U32 min_timeout=100; // this makes the theoretical maximum transfer rate in kByte/s = 1000000/100 = 10000 = 10MByte/s
+void tUnet::updateTimerRelative(U32 usec) {
+	U32 min_timer=200; // minimum interval to be used
 	if(usec>=1000000) {
 		U32 sec = usec/1000000;
 		usec %= 1000000;
@@ -174,7 +174,7 @@ void tUnet::updatetimer(U32 usec) {
 	} else {
 		if(usec<unet_usec) unet_usec=usec;
 	}
-	if(unet_usec<min_timeout) unet_usec=min_timeout;
+	if(unet_usec<min_timer) unet_usec=min_timer;
 	//DBG(5,"Timer is now %i usecs (%i)\n",unet_usec,usec);
 }
 
@@ -625,9 +625,13 @@ int tUnet::Recv() {
 }
 
 /** give each session the possibility to do some stuff and to set the timeout and the idle state
-if all sessions are idle, the netcore is it as well and the timeout will be reset */
+Each session HAS to set the timeout it needs because it is reset prior to asking them.
+If all sessions are idle, the netcore is it as well */
 void tUnet::doWork() {
 	idle=true;
+	// reset the timer
+	unet_sec=idle_timer;
+	unet_usec=0;
 	
 	tNetSession * cur;
 	smgr->rewind();
@@ -646,12 +650,6 @@ void tUnet::doWork() {
 	}
 	
 	if(!events->isEmpty()) idle=false;
-	
-	if (idle) {
-		// if (and only if) we are idle, reset the timer
-		unet_sec=idle_timer;
-		unet_usec=0;
-	}
 }
 
 /** sends the message (internal use only)
@@ -665,8 +663,8 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 	client.sin_addr.s_addr=u->ip; //address
 	client.sin_port=u->port; //port
 
-	DBG(9,"Server pn is %08X\n",u->server.pn);
-	DBG(9,"Server sn is %08X,%08X\n",u->server.sn,msg->sn);
+	DBG(9,"Server pn is %08X\n",u->serverMsg.pn);
+	DBG(9,"Server sn is %08X,%08X\n",u->serverMsg.sn,msg->sn);
 	u->serverMsg.pn++;
 	msg->pn=u->serverMsg.pn;
 	
