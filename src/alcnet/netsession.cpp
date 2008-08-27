@@ -59,9 +59,6 @@ tNetSession::tNetSession(tUnet * net,U32 ip,U16 port,int sid) {
 tNetSession::~tNetSession() {
 	DBG(5,"~tNetSession()\n");
 	if (data) delete data;
-#ifndef ENABLE_NEWDROP
-	free((void *)w);
-#endif
 	delete sndq;
 	delete ackq;
 	delete rcvq;
@@ -82,14 +79,6 @@ void tNetSession::init() {
 		max_cabal=4096;
 	}
 	maxPacketSz=1024;
-#ifndef ENABLE_NEWDROP
-	//window settings
-	rcv_win=4*8;
-	wite=0;
-	w=(char *)malloc(sizeof(char) * rcv_win);
-	memset(w,0,sizeof(char) * rcv_win);
-#endif
-	//end window
 	flood_last_check=0;
 	flood_npkts=0;
 	bandwidth=0;
@@ -104,12 +93,8 @@ void tNetSession::init() {
 	nego_stamp.microseconds=0;
 	renego_stamp=nego_stamp;
 	negotiating=false;
-	memset((void *)&serverMsg,0,sizeof(serverMsg));
+	resetMsgCounters();
 	assert(serverMsg.pn==0);
-#ifdef ENABLE_NEWDROP
-	clientPs = 0;
-	waitingForFragments = false;
-#endif
 	idle=false;
 	delayMessages=false;
 	whoami=0;
@@ -125,6 +110,14 @@ void tNetSession::init() {
 	inRoute = false;
 	
 	DBG(5, "%s Initial timeout: %d\n", str(), timeout);
+}
+void tNetSession::resetMsgCounters(void) {
+	clientPs = 0;
+	waitingForFragments = false;
+	serverMsg.pn=0;
+	serverMsg.sn=0;
+	serverMsg.pfr=0;
+	serverMsg.ps=0;
 }
 const char * tNetSession::str(bool detail) {
 	static char cnt[1024], tmp[1024];
@@ -426,22 +419,10 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		} else {
 			net->log->nl();
 			renego_stamp=comm.timestamp;
-#ifndef ENABLE_NEWDROP
-			//reset counters and window
-			wite=msg.sn; //reset win iterator
-			memset(w,0,sizeof(char) * rcv_win); //unset all
-#endif
 			if(!negotiating) {
 				// if this nego came unexpectedly, reset everything and send a nego back (since the other peer expects our answer, this
 				//  will not result in an endless loop of negos being exchanged)
-#ifdef ENABLE_NEWDROP
-				clientPs = 0;
-				waitingForFragments = false;
-				serverMsg.pn=0;
-				serverMsg.sn=0;
-				serverMsg.pfr=0;
-				serverMsg.ps=0;
-#endif
+				resetMsgCounters();
 				//clear buffers
 				DBG(5,"Clearing buffers\n");
 				sndq->clear();
@@ -462,14 +443,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	if((sndq->len() == 0 && (serverMsg.sn>=8378605 || msg.sn>=8378605)) ||
 		(serverMsg.sn>=8388605 || msg.sn>=8388605) ) { // that's aproximately 2^23
 		net->err->log("INF: Congratulations!, you have reached the maxium allowed sequence number, don't worry, this is not an error\n");
-#ifdef ENABLE_NEWDROP
-		clientPs = 0;
-		waitingForFragments = false;
-#endif
-		serverMsg.pn=0;
-		serverMsg.sn=0;
-		serverMsg.pfr=0;
-		serverMsg.ps=0;
+		resetMsgCounters();
 		//clear buffers
 		DBG(5,"Clearing buffers\n");
 		sndq->clear();
@@ -579,18 +553,16 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 			msg->data->rewind();
 			msg->cmd=msg->data->getU16();
 			msg->data->rewind();
-#ifdef ENABLE_NEWDROP
+
 			if (t.sn == clientPs) {
 				waitingForFragments = false;
 			}
-#endif
 		} else {
 			msg->fr_count++;
-#ifdef ENABLE_NEWDROP
+
 			if (t.sn == clientPs) {
 				waitingForFragments = true;
 			}
-#endif
 		}
 	}
 
@@ -602,7 +574,6 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 	\return 0 - parse and send ack (it's exactly what we need)
 */
 Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
-#ifdef ENABLE_NEWDROP
 	/* There is one problem with this way of checking duplicates: If the first packet of a fragmented message is lost, the additional ones
 	   will be dropped. Since there is no sane way to work around that, we have to live with it. */
 	#ifdef ENABLE_MSGDEBUG
@@ -610,8 +581,8 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 	net->log->flush();
 	#endif
 	if (msg.ps < clientPs) { // we already got that one - ack it, but don't parse again
-		net->err->log("%s INF: Dropped already parsed packet %d.%d (last ack is %d, expected %d)\n", str(), msg.sn, msg.frn, msg.ps, clientPs);
-		net->err->flush();
+		net->log->log("%s INF: Dropped already parsed packet %d.%d (last ack is %d, expected %d)\n", str(), msg.sn, msg.frn, msg.ps, clientPs);
+		net->log->flush();
 		return 1; // we already got it, send an ack
 	}
 	else if (msg.ps > clientPs) { // we missed something in between
@@ -626,8 +597,8 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 		return 2; // we can not parse it, the peer has to send it again
 	}
 	else if (!waitingForFragments && msg.sn == clientPs) { // this message belongs to the one we already completed, so don't parse it again
-		net->err->log("%s INF: Dropped already parsed packet %d.%d (%d is already complete)\n", str(), msg.sn, msg.frn, clientPs);
-		net->err->flush();
+		net->log->log("%s INF: Dropped already parsed packet %d.%d (%d is already complete)\n", str(), msg.sn, msg.frn, clientPs);
+		net->log->flush();
 		return 1; // we already got it, send an ack
 	}
 	DBG(5, "accepted packet %d.%d\n", msg.sn, msg.frn);
@@ -639,7 +610,7 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 		#endif
 	}
 	return 0;
-#else
+#if 0
 	//drop already parsed messages
 	#ifdef ENABLE_MSGDEBUG
 	net->log->log("%s INF: SN %i (Before) window is (wite: %d):\n",str(),msg.sn,wite);
@@ -707,7 +678,7 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 	net->log->flush();
 	#endif
 	return 0;
-#endif // ENABLE_NEWDROP
+#endif
 }
 
 /** creates an ack in the ackq */
@@ -1043,10 +1014,6 @@ void tNetSession::doWork() {
 					net->rawsend(this,curmsg);
 					sndq->deleteCurrent();
 				} else if(curmsg->tf & UNetAckReq) {
-#ifndef ENABLE_NEWDROP
-					// if we did not yet get a nego, send only negos, as otherwise the peer might get a non-nego before the first nego... chaos!
-					 if (wite == 0 && !(curmsg->tf & UNetNegotiation)) continue;
-#endif
 					//send paquet
 					
 					// check if we need to resend

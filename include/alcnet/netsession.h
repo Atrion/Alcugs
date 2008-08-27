@@ -82,6 +82,7 @@ public:
 
 private:
 	void init();
+	inline void resetMsgCounters(void);
 	void processMsg(Byte * buf,int size);
 	void doWork();
 
@@ -122,29 +123,21 @@ private:
 	socklen_t a_client_size; // used by tUnet
 	//server Message counters
 	struct {
-		//Byte val;
 		U32 pn; //!< the overall packet number
-		//Byte tf;
-		//Byte frn;
 		U32 sn; //!< the message number
 		Byte pfr; //!< the fragment number of the last packet I sent which required an ack
 		U32 ps; //!< the msg number of the last packet I sent which required an ack
 	} serverMsg;
-#ifdef ENABLE_NEWDROP
+	
 	// avoid parsing messages twice or out-of-order
 	U32 clientPs; //!< sn of last acked packet we got
 	bool waitingForFragments; //!< true when we are waiting for remaining fragments of the last acked packet, false when not
-#endif
+	
 	Byte validation; //!< store the validation level (0,1,2)
 	Byte authenticated; //!< is the peer authed? 0 = no, 1 = yes, 2 = it just got authed, 10 = the client got an auth challenge
 	tNetSessionFlags cflags; //!< ession flags
 	U16 maxPacketSz; //!< maxium size of the packets. Must be 1024 (always)
 
-#ifndef ENABLE_NEWDROP
-	char * w; //rcv window
-	U32 wite;
-	U32 rcv_win;
-#endif
 	//flood control
 	U32 flood_last_check;
 	U32 flood_npkts;
