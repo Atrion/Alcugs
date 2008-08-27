@@ -191,7 +191,7 @@ public:
 	virtual void set(U32 pos);
 	virtual void write(const Byte * val,U32 n);
 	virtual void write(const SByte * val,U32 n) { this->write((Byte *)val,n); }
-	virtual void zeroend();
+	virtual void zeroend(); //!< makes sure there is a zero after the end of the buffer - this zero is NOT counted as part of the buffer!
 	virtual Byte * read(U32 n=0);
 	virtual void stream(tBBuf &buf);
 	virtual void store(tBBuf &buf);
@@ -320,7 +320,6 @@ public:
 	tStrBuf & upper();
 	tStrBuf & substring(U32 start,U32 len);
 	tStrBuf & dirname();
-	int len(void) { return strlen((char *)c_str()); }
 	bool startsWith(const char * pat);
 	bool endsWith(const char * pat);
 	void hasQuotes(bool has);

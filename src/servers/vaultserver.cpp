@@ -103,9 +103,9 @@ namespace alc {
 				int num = 0;
 				if (createPlayer.accessLevel > AcCCR) num = vaultBackend->getNumberOfPlayers(createPlayer.uid);
 				if (num >= vaultBackend->getMaxPlayers()) result = AMaxNumberPerAccountReached;
-				else if (createPlayer.avatar.len() < 3) result = ANameIsTooShort;
-				else if (createPlayer.avatar.len() > 20) result = ANameIsTooLong;
-				else if (createPlayer.friendName.len() > 0 || createPlayer.key.len() > 0) result = AInvitationNotFound;
+				else if (createPlayer.avatar.size() < 3) result = ANameIsTooShort;
+				else if (createPlayer.avatar.size() > 20) result = ANameIsTooLong;
+				else if (createPlayer.friendName.size() > 0 || createPlayer.key.size() > 0) result = AInvitationNotFound;
 				else {
 					tStrBuf gender = createPlayer.gender.lower();
 					if (gender != "male" && gender != "female" && createPlayer.accessLevel > AcCCR) {

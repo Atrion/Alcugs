@@ -483,14 +483,14 @@ void alctypes_part4() {
 	
 	// check tStrBuf::len()
 	tStrBuf test1;
-	assert(test1.len() == 0);
+	assert(test1.size() == 0);
 	tStrBuf test2("");
-	assert(test2.len() == 0);
+	assert(test2.size() == 0);
 	test2.writeStr("huhu");
-	assert(test2.len() == 4);
+	assert(test2.size() == 4);
 	test2.c_str();
 	test2.c_str();
-	assert(test2.len() == 4);
+	assert(test2.size() == 4);
 }
 
 void alctypes_part5() {

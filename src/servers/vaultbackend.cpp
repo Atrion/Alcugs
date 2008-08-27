@@ -806,7 +806,7 @@ namespace alc {
 		// search for the age
 		node = new tvNode(MType | MStr64_4);
 		node->type = KAgeInfoNode;
-		if (ageInfo.fileName.len() > 0) {
+		if (ageInfo.fileName.size() > 0) {
 			node->flagB |= MStr64_1;
 			node->str1 = ageInfo.fileName;
 		}
