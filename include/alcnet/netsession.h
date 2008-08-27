@@ -131,9 +131,9 @@ private:
 		U32 ps; //!< the msg number of the last packet I sent which required an ack
 	} serverMsg;
 #ifdef ENABLE_NEWDROP
-	// client Message counter
+	// avoid parsing messages twice or out-of-order
 	U32 clientPs; //!< sn of last acked packet we got
-	bool lastMsgComplete; //!< true when the last msg we got from that client is complete (i.e. all fragments are revieved)
+	bool waitingForFragments; //!< true when we are waiting for remaining fragments of the last acked packet, false when not
 #endif
 	Byte validation; //!< store the validation level (0,1,2)
 	Byte authenticated; //!< is the peer authed? 0 = no, 1 = yes, 2 = it just got authed, 10 = the client got an auth challenge

@@ -108,7 +108,7 @@ void tNetSession::init() {
 	assert(serverMsg.pn==0);
 #ifdef ENABLE_NEWDROP
 	clientPs = 0;
-	lastMsgComplete = true;
+	waitingForFragments = false;
 #endif
 	idle=false;
 	delayMessages=false;
@@ -178,7 +178,7 @@ void tNetSession::updateRTT(U32 newread) {
 		timeout=u*rtt + delta*deviation;
 	#endif
 	if (timeout > 4000000) timeout = 4000000;
-	DBG(3,"%s RTT update (sample rtt: %i) new rtt:%i, timeout:%i, deviation:%i\n", str(),newread,rtt,timeout,deviation);
+	DBG(5,"%s RTT update (sample rtt: %i) new rtt:%i, timeout:%i, deviation:%i\n", str(),newread,rtt,timeout,deviation);
 }
 void tNetSession::increaseCabal() {
 	if(!cabal) return;
@@ -436,7 +436,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 				//  will not result in an endless loop of negos being exchanged)
 #ifdef ENABLE_NEWDROP
 				clientPs = 0;
-				lastMsgComplete = true;
+				waitingForFragments = false;
 				serverMsg.pn=0;
 				serverMsg.sn=0;
 				serverMsg.pfr=0;
@@ -464,7 +464,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		net->err->log("INF: Congratulations!, you have reached the maxium allowed sequence number, don't worry, this is not an error\n");
 #ifdef ENABLE_NEWDROP
 		clientPs = 0;
-		lastMsgComplete = true;
+		waitingForFragments = false;
 #endif
 		serverMsg.pn=0;
 		serverMsg.sn=0;
@@ -580,15 +580,15 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 			msg->cmd=msg->data->getU16();
 			msg->data->rewind();
 #ifdef ENABLE_NEWDROP
-			if (t.tf & UNetAckReq) {
-				lastMsgComplete = true;
+			if (t.sn == clientPs) {
+				waitingForFragments = false;
 			}
 #endif
 		} else {
 			msg->fr_count++;
 #ifdef ENABLE_NEWDROP
-			if (t.tf & UNetAckReq) {
-				lastMsgComplete = false;
+			if (t.sn == clientPs) {
+				waitingForFragments = true;
 			}
 #endif
 		}
@@ -603,8 +603,10 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 */
 Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 #ifdef ENABLE_NEWDROP
+	/* There is one problem with this way of checking duplicates: If the first packet of a fragmented message is lost, the additional ones
+	   will be dropped. Since there is no sane way to work around that, we have to live with it. */
 	#ifdef ENABLE_MSGDEBUG
-	net->log->log("%s INF: last acked packet was %d (lastMsgComplete: %d), checking new packet %d.%d\n", str(), clientPs, lastMsgComplete, msg-sn, msg.frn);
+	net->log->log("%s INF: last acked packet was %d (waitingForFragments: %d), checking new packet %d.%d\n", str(), clientPs, waitingForFragments, msg.sn, msg.frn);
 	net->log->flush();
 	#endif
 	if (msg.ps < clientPs) { // we already got that one - ack it, but don't parse again
@@ -613,26 +615,22 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 		return 1; // we already got it, send an ack
 	}
 	else if (msg.ps > clientPs) { // we missed something in between
+		DBG(3, "clientLastSn:%d\n", clientLastSn);
 		net->err->log("%s INF: Dropped unexpected packet %d.%d (last ack is %d, expected %d)\n", str(), msg.sn, msg.frn, msg.ps, clientPs);
 		net->err->flush();
 		return 2; // we can not parse it, the peer has to send it again
 	}
-	else if (!lastMsgComplete && msg.sn != clientPs) { // we have a not-yet complete message and this packet does not belong to it
+	else if (waitingForFragments && msg.sn != clientPs) { // we have a not-yet complete message and this packet does not belong to it
 		net->err->log("%s INF: Dropped unexpected packet %d.%d (%d is not yet complete)\n", str(), msg.sn, msg.frn, clientPs);
 		net->err->flush();
 		return 2; // we can not parse it, the peer has to send it again
 	}
-	else if (lastMsgComplete && msg.sn == clientPs) { // this message belongs to the one we already completed, so don't parse it again
+	else if (!waitingForFragments && msg.sn == clientPs) { // this message belongs to the one we already completed, so don't parse it again
 		net->err->log("%s INF: Dropped already parsed packet %d.%d (%d is already complete)\n", str(), msg.sn, msg.frn, clientPs);
 		net->err->flush();
 		return 1; // we already got it, send an ack
 	}
-	#ifdef ENABLE_MSGDEBUG
-	net->log->log("%s INF: accepted packet %d.%d\n", str(), msg.sn, msg.frn);
-	net->log->flush();
-	#else
 	DBG(5, "accepted packet %d.%d\n", msg.sn, msg.frn);
-	#endif
 	
 	if (msg.tf & UNetAckReq) {
 		clientPs = msg.sn;

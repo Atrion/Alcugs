@@ -38,7 +38,6 @@
 //custom
 #define UNetForce0      0x20
 #define UNetExt         0x10 //Alcugs extension request - Validation 3 (reduced header)
-//0x08
 #define UNetUrgent      0x04 //Urgent message
 #define UNetExp         0x01 //Additional flags byte
 
