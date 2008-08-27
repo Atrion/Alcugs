@@ -256,6 +256,8 @@ namespace alc {
 					stopOp(); // will close the alcnet logs as well as the socket
 					alcOnFork(); // will close all logs
 					
+					// if the server was put in daemon mode, th lobby would get the SIGCHILD immediately after starting, so it'd
+					// be useless for debugging
 					if (forkServer.loadSDL)
 						execlp((char *)gameBin, (char *)gameBin,"-p",gamePort,"-guid",gameGuid,"-name",gameName,
 								"-log",gameLog,"-c",gameConfig,"-v","0","-L",NULL);

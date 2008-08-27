@@ -620,7 +620,7 @@ namespace alc {
 				
 				tNetSession *client = smgr->find(playerTerminated.ki);
 				if (!client || (client->whoami != KClient && client->whoami != 0)) {
-					err->log("ERR: I've got to kick the player with KI %d but can\'t find it\'s session.\n", playerTerminated.ki);
+					err->log("ERR: I've got to kick the player with KI %d but can\'t find his session.\n", playerTerminated.ki);
 					return 1;
 				}
 				

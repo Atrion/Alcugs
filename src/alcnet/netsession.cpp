@@ -109,9 +109,6 @@ void tNetSession::init() {
 #ifdef ENABLE_NEWDROP
 	clientPs = 0;
 	lastMsgComplete = true;
-	#ifdef ENABLE_UNET2
-	lastAckSn = 0;
-	#endif
 #endif
 	idle=false;
 	delayMessages=false;
@@ -163,6 +160,8 @@ U32 tNetSession::getMaxFragmentSize() {
 U32 tNetSession::getMaxDataSize() {
 	return(getMaxFragmentSize() * 256);
 }
+
+// functions to calculate cabal and rtt
 void tNetSession::updateRTT(U32 newread) {
 	if(rtt==0) rtt=newread;
 	#if 0 //Original
@@ -392,6 +391,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	}
 	
 	// if we know the downstream of the peer, set avg cabal using what is smaller: our upstream or the peers downstream
+	//  (this is the last part of the negotiationg process)
 	if(cabal==0 && bandwidth!=0) {
 		if((ntohl(ip) & 0xFFFFFF00) == 0x7F000000) { //lo
 			cabal=100000000/8; //100Mbps
@@ -423,7 +423,6 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		    // It is necessary to do the check this way since the usual check by SN would treat a nego on an existing connection as
 		    //  "already parsed" since the SN is started from the beginning
 			net->log->print(" (ignored)\n");
-			negotiating=false;
 		} else {
 			net->log->nl();
 			renego_stamp=comm.timestamp;
@@ -433,6 +432,8 @@ void tNetSession::processMsg(Byte * buf,int size) {
 			memset(w,0,sizeof(char) * rcv_win); //unset all
 #endif
 			if(!negotiating) {
+				// if this nego came unexpectedly, reset everything and send a nego back (since the other peer expects our answer, this
+				//  will not result in an endless loop of negos being exchanged)
 #ifdef ENABLE_NEWDROP
 				clientPs = 0;
 				lastMsgComplete = true;
@@ -445,23 +446,21 @@ void tNetSession::processMsg(Byte * buf,int size) {
 				DBG(5,"Clearing buffers\n");
 				sndq->clear();
 				ackq->clear();
-				rcvq->clear();
 				if(nego_stamp.seconds==0) nego_stamp=timestamp;
 				negotiate();
-				negotiating=true;
 			}
-			cabal=0;
+			cabal=0; // re-determine cabal with the new bandwidth
 		}
-	} else if(bandwidth==0 || cabal==0) {
-		if(!negotiating) {
+	} else if(bandwidth==0 || cabal==0) { // we did not yet negotiate
+		if(!negotiating) { // and we are not in the process of doing it - so start that process
 			nego_stamp=timestamp;
 			negotiate();
-			negotiating=true;
 		}
 	}
 	
-	//fix the problem that happens every 15-30 days of server uptime
-	if(serverMsg.sn>=8388605 || msg.sn>=8388605) { // that's aproximately 2^23
+	//fix the problem that happens every 15-30 days of server uptime (prefer doing that when the sndq is empty)
+	if((sndq->len() == 0 && (serverMsg.sn>=8378605 || msg.sn>=8378605)) ||
+		(serverMsg.sn>=8388605 || msg.sn>=8388605) ) { // that's aproximately 2^23
 		net->err->log("INF: Congratulations!, you have reached the maxium allowed sequence number, don't worry, this is not an error\n");
 #ifdef ENABLE_NEWDROP
 		clientPs = 0;
@@ -471,10 +470,13 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		serverMsg.sn=0;
 		serverMsg.pfr=0;
 		serverMsg.ps=0;
+		//clear buffers
+		DBG(5,"Clearing buffers\n");
+		sndq->clear();
+		ackq->clear();
 		nego_stamp=timestamp;
 		renego_stamp.seconds=0;
 		negotiate();
-		negotiating=true;
 	}
 
 	//check duplicates
@@ -488,9 +490,6 @@ void tNetSession::processMsg(Byte * buf,int size) {
 
 	if(isConnected() && (msg.tf & UNetAckReply)) { // if we are connected, we can parse acks out of order (if not, the ack sent in reply
 	                                               //  to the nego serves to set the cabal, so it has to be parsed in order)
-		#ifdef ENABLE_UNET2
-		lastAckSn = msg.sn;
-		#endif
 		//ack update
 		ackCheck(msg);
 		if(authenticated==2) authenticated=1;
@@ -635,14 +634,7 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 	DBG(5, "accepted packet %d.%d\n", msg.sn, msg.frn);
 	#endif
 	
-	#ifdef ENABLE_UNET2
-	if ((msg.tf & UNetAckReq) && msg.sn != lastAckSn) {
-		// if the current message has the same sn as the last ack packet we got (which usually can't happen - SNs are not used twice),
-		//  work around an unet2 bug: the packet we are just processing has a invalid sn as the server got another nego afterwards and
-		//  reset its sn
-	#else
 	if (msg.tf & UNetAckReq) {
-	#endif
 		clientPs = msg.sn;
 		#ifdef ENABLE_MSGDEBUG
 		net->log->log("%s INF: last acked packet is now %d\n", str(), clientPs);
@@ -1132,6 +1124,7 @@ void tNetSession::negotiate() {
 
 	tmNetClientComm comm(nego_stamp,sbw,this);
 	send(comm);
+	negotiating = true;
 }
 
 void tNetSession::checkAlive(void)

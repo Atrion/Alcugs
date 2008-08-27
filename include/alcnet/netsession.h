@@ -134,9 +134,6 @@ private:
 	// client Message counter
 	U32 clientPs; //!< sn of last acked packet we got
 	bool lastMsgComplete; //!< true when the last msg we got from that client is complete (i.e. all fragments are revieved)
-	#ifdef ENABLE_UNET2
-	U32 lastAckSn; //!< sn of the last ack packet we got (work-around for unet2 bug)
-	#endif
 #endif
 	Byte validation; //!< store the validation level (0,1,2)
 	Byte authenticated; //!< is the peer authed? 0 = no, 1 = yes, 2 = it just got authed, 10 = the client got an auth challenge
