@@ -151,7 +151,7 @@ namespace alc {
 	{
 		if (u->whoami == KClient && u->ki != 0) { // if necessary, tell the others about it
 			tNetSession *trackingServer = getSession(tracking), *vaultServer = getSession(vault);
-			if (trackingServer || !vaultServer) {
+			if (!trackingServer || !vaultServer) {
 				err->log("ERR: I've got to update a player\'s (%s) status for the tracking and vault server, but one of them is unavailable.\n", u->str());
 			}
 			else {
