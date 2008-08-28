@@ -151,23 +151,23 @@ namespace alc {
 	{
 		if (u->whoami == KClient && u->ki != 0) { // if necessary, tell the others about it
 			tNetSession *trackingServer = getSession(tracking), *vaultServer = getSession(vault);
-			if (!trackingServer || !vaultServer) {
+			if (trackingServer || !vaultServer) {
 				err->log("ERR: I've got to update a player\'s (%s) status for the tracking and vault server, but one of them is unavailable.\n", u->str());
-				return;
 			}
-			
-			tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->sid, u->uid, u->name, (Byte *)"", 0 /* delete */, RStopResponding);
-			send(trackingStatus);
-			
-			Byte state = u->inRoute ? 2 : 0;
-			// if he's in route, tell the vault he'd be online... state 2 means this message just servers to update the online timer
-			// we only tell the vault he's offline if he leaves without asking for another age before
-			// this way, the vault can remove the vmgrs for this player when he crashes, without making problems when he just links
-			if (u->proto && u->proto < 3) state = 0; // old vault servers would not understand a state of 2
-			tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->sid, (Byte *)"0000000000000000" /* these are 16 zeroes */, (Byte *)"", state, u->onlineTime());
-			send(vaultStatus);
-			
-			u->ki = 0; // this avoids sending the messages twice
+			else {
+				tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->sid, u->uid, u->name, (Byte *)"", 0 /* delete */, RStopResponding);
+				send(trackingStatus);
+				
+				Byte state = u->inRoute ? 2 : 0;
+				// if he's in route, tell the vault he'd be online... state 2 means this message just servers to update the online timer
+				// we only tell the vault he's offline if he leaves without asking for another age before
+				// this way, the vault can remove the vmgrs for this player when he crashes, without making problems when he just links
+				if (u->proto && u->proto < 3) state = 0; // old vault servers would not understand a state of 2
+				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->sid, (Byte *)"0000000000000000" /* these are 16 zeroes */, (Byte *)"", state, u->onlineTime());
+				send(vaultStatus);
+				
+				u->ki = 0; // this avoids sending the messages twice
+			}
 		}
 	
 		tUnetServerBase::terminate(u, reason, destroyOnly); // do the common terminate procedure

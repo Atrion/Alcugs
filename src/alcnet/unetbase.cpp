@@ -235,10 +235,13 @@ void tUnetBase::terminate(tNetSession *u,Byte reason, bool destroyOnly)
 		send(leave);
 	}
 	
-	if (destroyOnly) // if the session should be destroyed, do that ASAP
+	if (destroyOnly) { // if the session should be destroyed, do that ASAP
 		u->setTimeout(0);
-	else // otherwise, give the session one second to send remaining messages
+		updateTimerRelative(0); // come back and check ASAP
+	} else { // otherwise, give the session one second to send remaining messages
 		u->setTimeout(1);
+		updateTimerRelative(1500); // be sure to be back and check for the timeout
+	}
 	u->terminated = true;
 	u->whoami = 0; // it's terminated, so it's no one special anymore
 	u->timestamp.seconds = alcGetTime();
@@ -336,7 +339,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 			}
 			catch (txProtocolError &t) { // the same for a protocol error
 				err->log("%s Recieved invalid 0x%04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-				err->log(" Exception details: %s\n%s\n",t.what(),t.backtrace());
+				err->log(" Exception details: %s\n",t.what());
 				ret=-1;
 			}
 			if(u->client==1) {
