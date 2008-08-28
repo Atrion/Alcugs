@@ -344,8 +344,7 @@ void tNetSession::send(tmBase &msg) {
 void tNetSession::processMsg(Byte * buf,int size) {
 	DBG(5,"Message of %i bytes\n",size);
 	//stamp
-	timestamp.seconds=alcGetTime();
-	timestamp.microseconds=alcGetMicroseconds();
+	timestamp=net->ntime;
 	
 	int ret;
 	
@@ -442,7 +441,8 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	//fix the problem that happens every 15-30 days of server uptime (prefer doing that when the sndq is empty)
 	if((sndq->len() == 0 && (serverMsg.sn>=8378605 || msg.sn>=8378605)) ||
 		(serverMsg.sn>=8388605 || msg.sn>=8388605) ) { // that's aproximately 2^23
-		net->err->log("INF: Congratulations!, you have reached the maxium allowed sequence number, don't worry, this is not an error\n");
+		net->log->log("%s WARN: Congratulations! You have reached the maxium allowed sequence number, don't worry, this is not an error\n", str());
+		net->log->flush();
 		resetMsgCounters();
 		//clear buffers
 		DBG(5,"Clearing buffers\n");
@@ -472,8 +472,8 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	else if (ret == 0 && !(msg.tf & UNetAckReply)) {
 		//flood control
 		if((msg.tf & UNetAckReq) && (msg.frn==0) && (net->flags & UNET_NOFLOOD)) {
-			if(net->ntime_sec - flood_last_check > net->flood_check_sec) {
-				flood_last_check=net->ntime_sec;
+			if(net->ntime.seconds - flood_last_check > net->flood_check_sec) {
+				flood_last_check=net->ntime.seconds;
 				flood_npkts=0;
 			} else {
 				flood_npkts++;
@@ -501,7 +501,7 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 	rcvq->rewind();
 	msg=rcvq->getNext();
 	while(msg!=NULL) {
-		if(msg->completed==0 && (net->ntime_sec - msg->stamp) > net->snd_expire) {
+		if(msg->completed==0 && (net->ntime.seconds - msg->stamp) > net->snd_expire) {
 			net->err->log("%s INF: Message %i expired!\n",str(),msg->sn);
 			rcvq->deleteCurrent();
 			msg=rcvq->getCurrent();
@@ -533,7 +533,7 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 		rcvq->add(msg);
 		msg->data->setSize((t.frt +1) * frg_size);
 	}
-	msg->stamp=net->ntime_sec;
+	msg->stamp=net->ntime.seconds;
 	if(msg->frt!=t.frt || msg->hsize!=t.hSize()) throw(txProtocolError(_WHERE("Inconsistency on fragmented stream %i %i %i %i",msg->frt,t.frt,msg->hsize,t.hSize())));
 	
 	if(!((msg->check[t.frn/8] >> (t.frn%8)) & 0x01)) {
@@ -587,13 +587,13 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 	}
 	else if (msg.ps > clientPs) { // we missed something in between
 		DBG(3, "clientLastSn:%d\n", clientLastSn);
-		net->err->log("%s INF: Dropped unexpected packet %d.%d (last ack is %d, expected %d)\n", str(), msg.sn, msg.frn, msg.ps, clientPs);
-		net->err->flush();
+		net->log->log("%s WARN: Dropped unexpected packet %d.%d (last ack is %d, expected %d)\n", str(), msg.sn, msg.frn, msg.ps, clientPs);
+		net->log->flush();
 		return 2; // we can not parse it, the peer has to send it again
 	}
 	else if (waitingForFragments && msg.sn != clientPs) { // we have a not-yet complete message and this packet does not belong to it
-		net->err->log("%s INF: Dropped unexpected packet %d.%d (%d is not yet complete)\n", str(), msg.sn, msg.frn, clientPs);
-		net->err->flush();
+		net->log->log("%s WARN: Dropped unexpected packet %d.%d (%d is not yet complete)\n", str(), msg.sn, msg.frn, clientPs);
+		net->log->flush();
 		return 2; // we can not parse it, the peer has to send it again
 	}
 	else if (!waitingForFragments && msg.sn == clientPs) { // this message belongs to the one we already completed, so don't parse it again
@@ -1094,7 +1094,7 @@ void tNetSession::negotiate() {
 
 void tNetSession::checkAlive(void)
 {	// when we are talking to a non-terminated server, send alive messages
-	if (!client && !terminated && (net->ntime_sec - timestamp.seconds) > conn_timeout/2) {
+	if (!client && !terminated && (net->ntime.seconds - timestamp.seconds) > conn_timeout/2) {
 		tmAlive alive(this);
 		send(alive);
 	}

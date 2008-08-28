@@ -93,8 +93,7 @@ void tUnet::init() {
 	timeout=1000000; //1 second (time till re-transmission)
 
 	//initial server timestamp
-	ntime_sec=alcGetTime();
-	ntime_usec=alcGetMicroseconds();
+	updateNetTime();
 	
 	max_version=12;
 	min_version=7;
@@ -152,9 +151,8 @@ tUnetFlags tUnet::getFlags() { return this->flags; }
 
 void tUnet::updateNetTime() {
 	//set stamp
-	ntime_sec=alcGetTime();
-	ntime_usec=alcGetMicroseconds();
-	net_time=(((ntime_sec % 1000)*1000000)+ntime_usec);
+	ntime.now();
+	net_time=(((ntime.seconds % 1000)*1000000)+ntime.microseconds);
 }
 
 void tUnet::updateTimerRelative(U32 usec) {
@@ -636,7 +634,7 @@ void tUnet::doWork() {
 	tNetSession * cur;
 	smgr->rewind();
 	while((cur=smgr->getNext())) {
-		if(ntime_sec - cur->timestamp.seconds >= cur->conn_timeout) { // also create the timeout when it's exactly the same time
+		if(ntime.seconds - cur->timestamp.seconds >= cur->conn_timeout) { // also create the timeout when it's exactly the same time
 		/*  this way the time from a session being marked as deleteable till it is deleted is kept short */
 			//timeout event
 			tNetSessionIte ite(cur->ip,cur->port,cur->sid);

@@ -114,8 +114,7 @@ protected:
 	inline void updateTimerAbs(U32 usecs) { updateTimerRelative(usecs-net_time); }
 	tNetSessionIte netConnect(char * hostname,U16 port,Byte validation,Byte flags);
 	int Recv();
-	U32 getTime() { return ntime_sec; }
-	U32 getMicroseconds() { return ntime_usec; }
+	U32 getTime() { return ntime.seconds; }
 	//max resolution 15 minutes
 	U32 getNetTime() { return net_time; }
 	tNetEvent * getEvent();
@@ -190,8 +189,7 @@ private:
 	Byte max_version; //!< default protocol version
 	Byte min_version; //!< default protocol version
 
-	U32 ntime_sec; //!< current time (secs)
-	U32 ntime_usec; //!< current time (usecs)
+	tTime ntime; //!< current time
 	U32 net_time; //!< current time (in usecs) [resolution of 15 minutes] (relative)
 	Byte idle_timer; //!< maximum time between two odle operations (sec)
 	

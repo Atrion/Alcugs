@@ -389,6 +389,7 @@ tStrBuf operator+(const tStrBuf & str1, const void * str2);
 /** Time */
 class tTime :public tBaseType {
 public:
+	tTime(void) : tBaseType() { seconds = microseconds = 0; }
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t);
 	virtual U32 size();
