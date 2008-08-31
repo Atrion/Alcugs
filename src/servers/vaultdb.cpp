@@ -813,7 +813,7 @@ namespace alc {
 		sql->query(query, "getManifest: getting first node");
 		
 		result = sql->storeResult();
-		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get first node"));
+		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get first node %d", baseNode));
 		int number = mysql_num_rows(result);
 		if (number > 1) throw txDatabaseError(_WHERE("strange, I should NEVER have several results when asking for a node"));
 		else if (number < 1) throw txDatabaseError(_WHERE("getManfiest: First node %d does not exist", baseNode));
@@ -972,9 +972,9 @@ namespace alc {
 		sql->query(query, "getMGRs: node type");
 		result = sql->storeResult();
 		
-		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get node type"));
+		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get node type of %d", baseNode));
 		int num = mysql_num_rows(result);
-		if (num != 1) throw txDatabaseError(_WHERE("couldn't find base node"));
+		if (num != 1) throw txDatabaseError(_WHERE("couldn't find base node %d", baseNode));
 		
 		row = mysql_fetch_row(result);
 		int type = atoi(row[0]);
@@ -1249,9 +1249,9 @@ namespace alc {
 		sql->query(query, "removeNodeRef: number of parent nodes");
 		result = sql->storeResult();
 		
-		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get number of parent nodes"));
+		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get number of parent nodes of %d", son));
 		num = mysql_num_rows(result);
-		if (num != 1) throw txDatabaseError(_WHERE("couldn't get number of parent nodes"));
+		if (num != 1) throw txDatabaseError(_WHERE("couldn't get number of parent nodes of %d", son));
 		
 		row = mysql_fetch_row(result);
 		numParent = atoi(row[0]);
@@ -1262,7 +1262,7 @@ namespace alc {
 		sql->query(query, "removeNodeRef: node type");
 		result = sql->storeResult();
 		
-		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get node type"));
+		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get node type of %d", son));
 		num = mysql_num_rows(result);
 		if (num == 1) {
 			row = mysql_fetch_row(result);
@@ -1338,7 +1338,7 @@ namespace alc {
 		sql->query(query, "getting parent nodes");
 		result = sql->storeResult();
 		
-		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get parent nodes"));
+		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get parent nodes of %d", node));
 		*tableSize = mysql_num_rows(result);
 		
 		*table = (int *)malloc((*tableSize)*sizeof(int));
@@ -1368,7 +1368,7 @@ namespace alc {
 			sql->query(query, "getting references");
 			result = sql->storeResult();
 			
-			if (result == NULL) throw txDatabaseError(_WHERE("couldn't get references"));
+			if (result == NULL) throw txDatabaseError(_WHERE("couldn't get references from %d", node));
 			int newSize = *nRef + mysql_num_rows(result);
 			
 			if (newSize > *nRef) {
