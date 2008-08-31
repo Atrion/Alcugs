@@ -2,7 +2,7 @@
 set -e
 
 # configuration
-root="~/"
+root=/home/alcugs/
 basedir=$root/var/
 bindir=$root/bin/
 config=$root/etc/uru.conf
@@ -68,7 +68,7 @@ case $1 in
 			echo -n "Stopping $prog..."
 			if [[ -n $PID ]]; then
 				kill -INT $PID
-				sleep 0.5
+				sleep 1
 				i=0
 				while [[ `getPid $prog` ]]; do
 					echo -n "."
@@ -78,7 +78,7 @@ case $1 in
 						kill -KILL $PID
 					fi
 					i=$[$i+1]
-					sleep 0.5
+					sleep 1
 				done
 				echo -e $RESULT_OK
 			else
@@ -90,11 +90,12 @@ case $1 in
 	
 	status)
 		for prog in $start_servers; do
+			echo -n "Checking $prog..."
 			if [[ `getPid $prog` ]]; then
-				echo -n "$prog is running"
+				echo -n " running"
 				echo -e $RESULT_OK
 			else
-				echo -n "$prog is not running"
+				echo -n " NOT running"
 				echo -e $RESULT_WARN
 			fi
 		done

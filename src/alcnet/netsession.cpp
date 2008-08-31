@@ -431,7 +431,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 			}
 			cabal=0; // re-determine cabal with the new bandwidth
 		}
-	} else if(bandwidth==0 || cabal==0) { // we did not yet negotiate
+	} else if(bandwidth==0 || cabal==0 || (clientPs==0 && msg.ps != 0)) { // we did not yet negotiate, or there obviously was a problem negotiating
 		if(!negotiating) { // and we are not in the process of doing it - so start that process
 			nego_stamp=timestamp;
 			negotiate();
