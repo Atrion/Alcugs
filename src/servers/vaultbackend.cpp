@@ -1073,23 +1073,23 @@ namespace alc {
 			
 			// remove player node and all sub-nodes
 			vaultDB->getParentNodes(deletePlayer.ki, &table, &tableSize);
-			// remove the node
-			vaultDB->removeNodeTree(deletePlayer.ki, false); // don't be cautious
-			// broadcast the removal
+			// broadcast the removal (this must be done BEFORE removing the node because otherwise the references to it don't exist anymore)
 			for (int i = 0; i < tableSize; ++i) {
 				broadcastNodeRefUpdate(new tvNodeRef(0, table[i], deletePlayer.ki), /*remove:*/true);
 			}
+			// remove the node
+			vaultDB->removeNodeTree(deletePlayer.ki, false); // don't be cautious
 			// free stuff
 			free((void *)table);
 			
 			// remove info node and all sub-nodes
 			vaultDB->getParentNodes(infoNode, &table, &tableSize);
-			// remove the node
-			vaultDB->removeNodeTree(infoNode, false); // don't be cautious
-			// broadcast the removal
+			// broadcast the removal (this must be done BEFORE removing the node because otherwise the references to it don't exist anymore)
 			for (int i = 0; i < tableSize; ++i) {
 				broadcastNodeRefUpdate(new tvNodeRef(0, table[i], infoNode), /*remove:*/true);
 			}
+			// remove the node
+			vaultDB->removeNodeTree(infoNode, false); // don't be cautious
 			// free stuff
 			free((void *)table);
 		}
