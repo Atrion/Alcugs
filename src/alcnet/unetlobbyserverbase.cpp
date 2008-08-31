@@ -223,9 +223,7 @@ namespace alc {
 		session->whoami = dst;
 		session->proto = proto;
 		
-		// send hello
-		tmAlive alive(session);
-		send(alive);
+		// sending a NetMsgAlive is not necessary, the netConnect will already start the negotiation process
 		
 		if (dst == KTracking) {
 			tStrBuf var = cfg->getVar("public_address");
