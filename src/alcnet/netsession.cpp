@@ -112,6 +112,7 @@ void tNetSession::init() {
 	DBG(5, "%s Initial timeout: %d\n", str(), timeout);
 }
 void tNetSession::resetMsgCounters(void) {
+	DBG(3, "tNetSession::resetMsgCounters\n");
 	clientPs = 0;
 	waitingForFragments = false;
 	serverMsg.pn=0;
@@ -422,7 +423,10 @@ void tNetSession::processMsg(Byte * buf,int size) {
 				// if this nego came unexpectedly, reset everything and send a nego back (since the other peer expects our answer, this
 				//  will not result in an endless loop of negos being exchanged)
 				resetMsgCounters();
-				//clear buffers
+				if (msg.sn != 1 || msg.ps != 0) {
+					net->err->log("ERR: Got a nego with a sn of %d (expected 1) and a previous ack of %d (expected 0)\n", msg.sn, msg.ps);
+					clientPs = msg.ps; // the nego marks the beginning of a new connection, so accept everything from here on
+				}
 				DBG(5,"Clearing buffers\n");
 				sndq->clear();
 				ackq->clear();
@@ -431,10 +435,12 @@ void tNetSession::processMsg(Byte * buf,int size) {
 			}
 			cabal=0; // re-determine cabal with the new bandwidth
 		}
-	} else if(bandwidth==0 || cabal==0 || (clientPs==0 && msg.ps != 0)) { // we did not yet negotiate, or there obviously was a problem negotiating
+	} else if(bandwidth==0 || cabal==0 ) { // we did not yet negotiate
 		if(!negotiating) { // and we are not in the process of doing it - so start that process
+			net->log->log("%s WARN: Obviously a new connection was started with something different than a nego\n", str());
 			nego_stamp=timestamp;
 			negotiate();
+			clientPs = msg.ps; // this message is the beginning of a new connection, so accept everything from here on
 		}
 	}
 	
@@ -586,7 +592,6 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 		return 1; // we already got it, send an ack
 	}
 	else if (msg.ps > clientPs) { // we missed something in between
-		DBG(3, "clientLastSn:%d\n", clientLastSn);
 		net->log->log("%s WARN: Dropped unexpected packet %d.%d (last ack is %d, expected %d)\n", str(), msg.sn, msg.frn, msg.ps, clientPs);
 		net->log->flush();
 		return 2; // we can not parse it, the peer has to send it again

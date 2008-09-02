@@ -20,6 +20,7 @@ RESULT_WARN="${ESC}[\061;33m${ESC}[70G[\040\040WARN\040\040]${ESC}[m"
 RESULT_FAIL="${ESC}[\061;31m${ESC}[70G[\040FAILED\040]${ESC}[m"
 
 getPid(){
+	mkdir $basedir -p
 	if [[ -f $basedir/$1.pid  ]]; then
 		PID=`cat $basedir/$1.pid`
 		# check if the provess is still running with the same name
