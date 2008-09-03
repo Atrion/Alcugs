@@ -6,7 +6,7 @@ CREATE TABLE `vault` (
  `permissions` int NOT NULL default 0,
  `owner` int NOT NULL default 0,
  `grp` int NOT NULL default 0,
- `mod_time` timestamp NOT NULL default 0,
+ `mod_time` double NOT NULL default 0,
  `creator` int NOT NULL default 0,
  `crt_time` timestamp NOT NULL default 0,
  `age_time` timestamp NOT NULL default 0,
@@ -52,7 +52,7 @@ VaultManager Name  ||  Plasma DB field Name  ||  Alcugs DB field Name (v0-2)  ||
 [Permissions]           Permissions                permissions                     permissions
 [Owner ID]              OwnerIdx                   owner                           owner
 [Group ID]              GroupIdx                   unk1                            grp (group is a SQL keyword)
-[Modify Time]           ModifyTime                 timestamp, microseconds         mod_time (microseconds are always 0)
+[Modify Time]           ModifyTime                 timestamp, microseconds         mod_time
 [Creator ID]            CreatorIdx                 id1                             creator
 [Create Time]           AutoTime                   timestamp2, microseconds2       crt_time (microseconds are always 0)
 [Create Age Coords]     CreateAgeCoordsBlobIdx     **unused**                      **unused**

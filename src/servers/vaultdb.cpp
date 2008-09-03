@@ -1404,11 +1404,46 @@ namespace alc {
 		MYSQL_ROW row;
 		int num;
 		
+		// find invalid references and remove them
+		// first: invalid parent
+		sprintf(query, "SELECT r.id2, r.id3 FROM %s r LEFT JOIN %s n ON n.idx = r.id2 WHERE n.idx IS NULL", refVaultTable, vaultTable);
+		sql->query(query, "tVaultDB::clean: Finding references with invalid parent");
+		result = sql->storeResult();
+		
+		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get references with invalid parent"));
+		num = mysql_num_rows(result);
+		if (num > 0) {
+			lstd->log("WARNING: Found %d references with invalid parent - removing them...\n", num);
+			for (int i = 0; i < num; ++i) {
+				row = mysql_fetch_row(result);
+				sprintf(query, "DELETE FROM %s WHERE id2='%s' AND id3='%s'", refVaultTable, row[0], row[1]);
+				sql->query(query, "tVaultDB::clean: Removing reference with invalid parent");
+			}
+		}
+		mysql_free_result(result);
+		
+		// then: invalid son
+		sprintf(query, "SELECT r.id2, r.id3 FROM %s r LEFT JOIN %s n ON n.idx = r.id3 WHERE n.idx IS NULL", refVaultTable, vaultTable);
+		sql->query(query, "tVaultDB::clean: Finding references with invalid son");
+		result = sql->storeResult();
+		
+		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get references with invalid son"));
+		num = mysql_num_rows(result);
+		if (num > 0) {
+			lstd->log("WARNING: Found %d references with invalid son - removing them...\n", num);
+			for (int i = 0; i < num; ++i) {
+				row = mysql_fetch_row(result);
+				sprintf(query, "DELETE FROM %s WHERE id2='%s' AND id3='%s'", refVaultTable, row[0], row[1]);
+				sql->query(query, "tVaultDB::clean: Removing reference with invalid son");
+			}
+		}
+		mysql_free_result(result);
+		
 		// find lost nodes and remove them
 		// a lost node is a node without a parent and which is not a mgr
 		sprintf(query, "SELECT n.idx FROM %s n LEFT JOIN %s r ON n.idx = r.id3 "
 			"WHERE r.id2 IS NULL AND n.type > 7", vaultTable, refVaultTable);
-		sql->query(query, "Finding lost nodes");
+		sql->query(query, "tVaultDB::clean: Finding lost nodes");
 		result = sql->storeResult();
 		
 		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get lost nodes"));
@@ -1426,6 +1461,11 @@ namespace alc {
 		   AgesIOwnFOlder of the owner) are still referenced by the age mgr for this age, so the nodes are not lost.
 		   Lost ages can be found by searching for age info nodes which are not referenced by an age link. However, this might also find
 		   Global Ages as long as they don't get an age link somewhere - which will have to wait till there are unet3+ game servers. */
+		
+		// optimize the tables
+		lstd->log("Cleaning up: Optimizing tables...\n", num);
+		sprintf(query, "OPTIMIZE TABLE %s, %s", refVaultTable, vaultTable);
+		sql->query(query, "Optimizing tables");
 	}
 
 } //end namespace alc
