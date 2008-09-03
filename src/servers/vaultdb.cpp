@@ -296,6 +296,8 @@ namespace alc {
 		// update version number
 		sprintf(query, "UPDATE %s SET int_1=3 WHERE type=6", vaultTable); // only the root node has type 6
 		sql->query(query, "migrateVersion2to3: setting version number");
+		// remove invalid references
+		removeInvalidRefs();
 	}
 	
 	int tVaultDB::getPlayerList(const Byte *uid, tMBuf *t)
@@ -1395,7 +1397,7 @@ namespace alc {
 		}
 	}
 	
-	void tVaultDB::clean(void)
+	void tVaultDB::removeInvalidRefs(void)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
@@ -1407,37 +1409,49 @@ namespace alc {
 		// find invalid references and remove them
 		// first: invalid parent
 		sprintf(query, "SELECT r.id2, r.id3 FROM %s r LEFT JOIN %s n ON n.idx = r.id2 WHERE n.idx IS NULL", refVaultTable, vaultTable);
-		sql->query(query, "tVaultDB::clean: Finding references with invalid parent");
+		sql->query(query, "tVaultDB::removeInvalidRefs: Finding references with invalid parent");
 		result = sql->storeResult();
 		
 		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get references with invalid parent"));
 		num = mysql_num_rows(result);
 		if (num > 0) {
-			lstd->log("WARNING: Found %d references with invalid parent - removing them...\n", num);
+			lerr->log("WARNING: Found %d references with invalid parent - removing them...\n", num);
 			for (int i = 0; i < num; ++i) {
 				row = mysql_fetch_row(result);
 				sprintf(query, "DELETE FROM %s WHERE id2='%s' AND id3='%s'", refVaultTable, row[0], row[1]);
-				sql->query(query, "tVaultDB::clean: Removing reference with invalid parent");
+				sql->query(query, "tVaultDB::removeInvalidRefs: Removing reference with invalid parent");
 			}
 		}
 		mysql_free_result(result);
 		
 		// then: invalid son
 		sprintf(query, "SELECT r.id2, r.id3 FROM %s r LEFT JOIN %s n ON n.idx = r.id3 WHERE n.idx IS NULL", refVaultTable, vaultTable);
-		sql->query(query, "tVaultDB::clean: Finding references with invalid son");
+		sql->query(query, "tVaultDB::removeInvalidRefs: Finding references with invalid son");
 		result = sql->storeResult();
 		
 		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get references with invalid son"));
 		num = mysql_num_rows(result);
 		if (num > 0) {
-			lstd->log("WARNING: Found %d references with invalid son - removing them...\n", num);
+			lerr->log("WARNING: Found %d references with invalid son - removing them...\n", num);
 			for (int i = 0; i < num; ++i) {
 				row = mysql_fetch_row(result);
 				sprintf(query, "DELETE FROM %s WHERE id2='%s' AND id3='%s'", refVaultTable, row[0], row[1]);
-				sql->query(query, "tVaultDB::clean: Removing reference with invalid son");
+				sql->query(query, "tVaultDB::removeInvalidRefs: Removing reference with invalid son");
 			}
 		}
 		mysql_free_result(result);
+	}
+	
+	void tVaultDB::clean(void)
+	{
+		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		
+		char query[1024];
+		MYSQL_RES *result;
+		MYSQL_ROW row;
+		int num;
+		
+		removeInvalidRefs();
 		
 		// find lost nodes and remove them
 		// a lost node is a node without a parent and which is not a mgr
