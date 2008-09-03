@@ -8,8 +8,8 @@ bindir=$root/bin/
 config=$root/etc/uru.conf
 waittime=1 # time to wait after a server was started
 
-start_servers="vault tracking auth lobby"
-stop_servers="lobby vault tracking auth"
+start_servers="tracking vault auth lobby"
+stop_servers="lobby tracking vault auth"
 
 
 # Borrowed from LSB init-functions

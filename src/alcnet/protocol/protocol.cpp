@@ -215,7 +215,7 @@ int alcUruValidatePacket(Byte * buf,int n,Byte * validation,bool authed,Byte * p
 #ifndef _NO_CHECKSUM
 	U32 aux_checksum;
 #endif
-	if(n>=2 && buf[0]==0x03) { //magic uru number
+	if(n>=6 && buf[0]==0x03) { //magic uru number
 		if(buf[1]!=0) {
 			*validation=buf[1]; //store the validation level
 		}
@@ -290,6 +290,7 @@ void tUnetUruMsg::store(tBBuf &t) {
 	tf=t.getByte();
 	if(tf & UNetExp) throw txUnexpectedData(_WHERE("Expansion flag not supported on this server version"));
 	if((tf & UNetNegotiation) && (tf & UNetAckReply)) throw txUnexpectedData(_WHERE("That must be a maliciusly crafted paquet, flags UNetAckReply and UNetNegotiation cannot be set at the same time"));
+	if((tf & UNetAckReq) && (tf & UNetAckReply)) throw txUnexpectedData(_WHERE("That must be a maliciusly crafted paquet, flags UNetAckReply and UNetAckReq cannot be set at the same time"));
 	if(tf & (UNetForce0 | UNetUrgent)) throw txUnexpectedData(_WHERE("Illegal flags %02X",tf));
 	if(tf & UNetExt) {
 		hsize-=8; //20 - 24
@@ -324,7 +325,7 @@ void tUnetUruMsg::store(tBBuf &t) {
 	sn=csn >> 8;
 	pfr=cps & 0x000000FF;
 	ps=cps >> 8;
-	if (frn > frt) throw txProtocolError(_WHERE("A message must not have more fragments than it says id would have"));
+	if (frn > frt) throw txProtocolError(_WHERE("A message must not have more fragments than it says it would have"));
 }
 void tUnetUruMsg::stream(tBBuf &t) {
 	DBG(5,"[%i] ->%02X<- {%i,%i (%i) %i,%i} - %02X|%i bytes\n",pn,tf,sn,frn,frt,ps,pfr,dsize,dsize);
@@ -358,11 +359,16 @@ U32 tUnetUruMsg::hSize() {
 	return hsize;
 }
 void tUnetUruMsg::_update() {
-	dsize=data.size();
-	//frn=csn & 0x000000FF;
-	//sn=csn >> 8;
-	//pfr=cps & 0x000000FF;
-	//ps=cps >> 8;
+	// update dsize
+	if(tf & UNetAckReply) {
+		if(tf & UNetExt)
+			dsize=data.size()/8;
+		else
+			dsize=(data.size()-2)/16;
+	} else {
+		dsize=data.size();
+	}
+	// update combined message counters
 	csn=frn | sn<<8;
 	cps=pfr | ps<<8;
 }
@@ -433,7 +439,7 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
 				data.seek(3);
 			}
 			break;
-		case UNetAckReply | UNetExt: //0x80
+		case UNetAckReply | UNetExt:
 			log->print("aack");
 			for(i=0; i<(int)dsize; i++) {
 				if(i!=0) { log->print(" |"); }
@@ -504,6 +510,58 @@ const Byte * tmNetClientComm::str() {
 	#else
 	return (Byte *)"Negotiation";
 	#endif
+}
+
+// Ack
+void tmNetAck::store(tBBuf &t)
+{
+	ackq->clear();
+	if (!(bhflags & UNetExt)) {
+		if(t.getU16() != 0) throw txUnexpectedData(_WHERE("ack unknown data"));
+	}
+	while (!t.eof()) {
+		tUnetAck *ack = new tUnetAck;
+		ack->A=t.getU32();
+		if(!(bhflags & UNetExt))
+			if(t.getU32()!=0) throw txUnexpectedData(_WHERE("ack unknown data"));
+		ack->B=t.getU32();
+		if(!(bhflags & UNetExt))
+			if(t.getU32()!=0) throw txUnexpectedData(_WHERE("ack unknown data"));
+		ackq->add(ack);
+	}
+}
+void tmNetAck::stream(tBBuf &t)
+{
+	if (!(bhflags & UNetExt)) t.putU16(0);
+	ackq->rewind();
+	tUnetAck *ack;
+	while ((ack = ackq->getNext())) {
+		t.putU32(ack->A);
+		if(!(bhflags & UNetExt))
+			t.putU32(0);
+		t.putU32(ack->B);
+		if(!(bhflags & UNetExt))
+			t.putU32(0);
+	}
+}
+const Byte * tmNetAck::str() {
+	#ifdef ENABLE_MSGLOG
+	dbg.clear();
+	dbg.printf("Ack");
+	tUnetAck *ack;
+	bool firstOne = true;
+	while ((ack = ackq->getNext())) {
+		if (firstOne)
+			firstOne = false;
+		else
+			dbg.printf(" |");
+		dbg.printf(" %i,%i %i,%i", ack->A >> 8, ack->A & 0x000000FF, ack->B >> 8, ack->B & 0x000000FF);
+	}
+	return dbg.c_str();
+	#else
+	return (Byte *)"Ack";
+	#endif
+	
 }
 
 //Base message
@@ -692,6 +750,7 @@ void tmMsgBase::copyProps(tmMsgBase &t) {
 }
 const Byte * tmMsgBase::str() {
 	#ifdef ENABLE_MSGLOG
+	dbg.clear();
 	dbg.printf("%s %04X %08X",alcUnetGetMsgCode(cmd),cmd,flags);
 	dbg.printf(" on %s", u->str());
 	dbg.printf("\n Flags:");
@@ -727,9 +786,7 @@ const Byte * tmMsgBase::str() {
 		dbg.printf(" sid: %i,",sid);
 	dbg.seek(-1); // remove the last comma
 	additionalFields();
-
-	dbg.putByte(0);
-	dbg.rewind();
+	dbg.putByte(0); // this is necessary because of the seek() call
 	return dbg.c_str();
 	#else
 	return (Byte *)alcUnetGetMsgCode(cmd);

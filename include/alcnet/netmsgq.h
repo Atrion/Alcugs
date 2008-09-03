@@ -62,50 +62,27 @@ public:
 		}
 		return current;
 	}
-#if 0
-	bool hasNext() {
-		if (current == NULL) return (first != NULL);
-		else return (current->next != NULL);
-	}
-#endif
 	T* getCurrent() {
 		return current;
 	}
-	T* unstackNext() {
-		T* ret=NULL;
-		if(current==NULL) prev=current=first;
-		else {
-			prev=current;
-			current=current->next;
-		}
+	T* unstackCurrent() {
 		if(current) {
+			T* oldCurrent = current;
 			if(current==first) {
-				prev=first=first->next;
-				ret=current;
-				current=prev;
+				current=prev=first=first->next;
 			} else {
 				prev->next=current->next;
 				if(current==last) last=prev;
-				ret=current;
 				current=prev->next;
 			}
 			n--;
+			return oldCurrent;
 		}
-		return ret;
+		return NULL;
 	}
 	void deleteCurrent() {
 		if(current) {
-			if(current==first) {
-				prev=first=first->next;
-				delete current;
-				current=prev;
-			} else {
-				prev->next=current->next;
-				if(current==last) last=prev;
-				delete current;
-				current=prev->next;
-			}
-			n--;
+			delete unstackCurrent();
 		}
 	}
 	void add(T * msg) {

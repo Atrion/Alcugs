@@ -56,9 +56,9 @@ const char * alcUnetGetLinkingRule(Byte rule);
 const char * alcUnetGetMsgCode(U16 code);
 
 class tUnet;
-class tUnetOutMsgQ;
 class tNetSession;
 
+/** this class is used to save incoming NetMsgs and collect their fragments */
 class tUnetMsg {
 public:
 	tUnetMsg(U32 size=1024) { next=NULL; completed=0; fr_count=0; data=new tMBuf(size); memset(check,0,32); }
@@ -68,7 +68,7 @@ public:
 	U32 sn;
 	U32 stamp;
 	Byte completed;
-	Byte fr_count; //Number of fragments
+	Byte fr_count; //Number of fragments we already got
 	char check[32]; //bitmap
 	tMBuf * data;
 	//sanity check
@@ -76,7 +76,18 @@ public:
 	Byte hsize;
 };
 
-class tUnetUruMsg :public tBaseType {
+/** this class is used to save acks in an ackq */
+class tUnetAck {
+public:
+	tUnetAck() { next=NULL; timestamp=0; }
+	U32 timestamp;
+	U32 A;
+	U32 B;
+	tUnetAck * next;
+};
+
+/** this is the class responsible for the UruMsg header. The data must be filled with a class derived from tmBase. */
+class tUnetUruMsg : public tBaseType {
 public:
 	tUnetUruMsg() { next=NULL; tryes=0; }
 	virtual ~tUnetUruMsg() {}
@@ -114,20 +125,11 @@ private:
 	friend class tNetSession;
 };
 
-class tUnetAck {
-public:
-	tUnetAck() { next=NULL; }
-	U32 timestamp;
-	U32 A;
-	U32 B;
-	tUnetAck * next;
-};
-
 class tmBase :public tBaseType {
 public:
 	virtual void store(tBBuf &t)=0;
 	virtual void stream(tBBuf &t)=0;
-	const virtual Byte * str()=0;
+	virtual const Byte * str()=0;
 	Byte bhflags;
 };
 
@@ -137,10 +139,24 @@ public:
 	virtual void stream(tBBuf &t);
 	tmNetClientComm(tNetSession *s = NULL) { bhflags=(UNetNegotiation|UNetAckReq|UNetUrgent); this->s = s; }
 	tmNetClientComm(tTime &t,U32 bw, tNetSession *s = NULL) { timestamp=t; bandwidth=bw; bhflags=(UNetNegotiation|UNetAckReq|UNetUrgent); this->s = s; }
-	const Byte * str();
+	virtual const Byte * str();
 	tNetSession *s;
 	tTime timestamp;
 	U32 bandwidth;
+};
+
+class tmNetAck :public tmBase {
+public:
+	tmNetAck() { bhflags=UNetAckReply; ackq = new tUnetMsgQ<tUnetAck>; }
+	virtual ~tmNetAck() { delete ackq; }
+	
+	virtual void store(tBBuf &t);
+	virtual void stream(tBBuf &t);
+	virtual const Byte * str();
+	
+	tUnetMsgQ<tUnetAck> * ackq;
+private:
+	tStrBuf dbg;
 };
 
 class tmMsgBase :public tmBase {
@@ -157,7 +173,7 @@ public:
 	bool hasFlags(U32 f);
 	inline tNetSession *getSession(void) { return u; }
 	void copyProps(tmMsgBase &t);
-	const Byte * str();
+	virtual const Byte * str();
 	
 	U16 cmd;
 	U32 flags;

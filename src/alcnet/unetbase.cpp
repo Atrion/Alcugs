@@ -248,7 +248,7 @@ void tUnetBase::terminate(tNetSession *u,Byte reason, bool destroyOnly)
 	}
 	u->terminated = true;
 	u->whoami = 0; // it's terminated, so it's no one special anymore
-	u->timestamp.seconds = alcGetTime();
+	u->timestamp.now();
 }
 
 void tUnetBase::terminateAll(void)

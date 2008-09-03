@@ -78,12 +78,14 @@ void tNetSession::init() {
 		cabal=4096;
 		max_cabal=4096;
 	}
+	else {
+		bandwidth=0;
+		cabal=0;
+		max_cabal=0;
+	}
 	maxPacketSz=1024;
 	flood_last_check=0;
 	flood_npkts=0;
-	bandwidth=0;
-	cabal=0;
-	max_cabal=0;
 	next_msg_time=0;
 	rtt=0;
 	deviation=0;
@@ -217,10 +219,12 @@ tNetSessionIte tNetSession::getIte() {
 
 /**
 	puts the message in the session's send queue
-	(only Nego and normal messages, ack are handled by another function)
 */
 void tNetSession::send(tmBase &msg) {
-	net->log->log("<SND> %s\n",msg.str());
+#ifndef ENABLE_ACKDEBUG
+	if (!(msg.bhflags & UNetAckReply))
+#endif
+		net->log->log("<SND> %s\n",msg.str());
 	tMBuf buf;
 	U32 csize,psize,hsize,pkt_sz,n_pkts;
 	Byte flags=msg.bhflags, val, tf;
@@ -229,6 +233,7 @@ void tNetSession::send(tmBase &msg) {
 	
 	tUnetUruMsg * pmsg=NULL;
 	
+	if((cflags & UNetUpgraded)) msg.bhflags |= UNetExt; // tmNetAck has to know that it writes an extended packet
 	buf.put(msg);
 	psize=buf.size();
 	buf.rewind();
@@ -238,6 +243,10 @@ void tNetSession::send(tmBase &msg) {
 	serverMsg.sn++;
 	tf=0x00;
 
+	if((flags & UNetNegotiation) && (flags & UNetAckReply))
+		throw txUnexpectedData(_WHERE("Flags UNetAckReply and UNetNegotiation cannot be set at the same time"));
+	if((flags & UNetAckReq) && (flags & UNetAckReply))
+		throw txUnexpectedData(_WHERE("Flags UNetAckReply and UNetAckReq cannot be set at the same time"));
 	if(flags & UNetAckReq) {
 		tf |= UNetAckReq; //ack flag on
 		DBG(7,"ack flag on\n");
@@ -285,6 +294,8 @@ void tNetSession::send(tmBase &msg) {
 		net->err->log("%s ERR: Attempted to send a packet of size %i bytes, that don't fits inside an uru message\n",str(),psize);
 		throw txTooBig(_WHERE("%s packet of %i bytes don't fits inside an uru message\n",str(),psize));
 	}
+	if (n_pkts > 0 && ((flags & UNetNegotiation) || (flags & UNetAckReply)))
+		throw txProtocolError(_WHERE("Nego and ack packets must not be fragmented!"));
 	
 	U32 i,tts=0;
 	
@@ -320,6 +331,7 @@ void tNetSession::send(tmBase &msg) {
 		if(flags & UNetUrgent) {
 			net->rawsend(this,pmsg);
 			if(flags & UNetAckReq) {
+				// since ack replies can't have the AckReq flag set, we can be sure this packet is correct at the end of the queue
 				pmsg->snd_timestamp=net->net_time;
 				pmsg->timestamp+=timeout;
 				++pmsg->tryes;
@@ -328,13 +340,33 @@ void tNetSession::send(tmBase &msg) {
 			else
 				delete pmsg;
 		} else {
-			//put pmsg to the qeue
-			sndq->add(pmsg);
+			if (flags & UNetAckReply) {
+				//ensure acks to be present at the top of the qeue
+				if(sndq->isEmpty()) {
+					sndq->add(pmsg);
+					DBG(5,"Ack inserted into void msg qeue\n");
+				} else {
+					tUnetUruMsg * kiwi;
+					sndq->rewind();
+					kiwi=sndq->getNext();
+					DBG(5,"ack checking q...\n");
+					while(kiwi!=NULL && (kiwi->tf & UNetAckReply)) {
+						kiwi=sndq->getNext();
+						DBG(5,"sndq->getNext()\n");
+					}
+					sndq->insertBefore(pmsg);
+					DBG(5,"insertBefore\n");
+				}
+			}
+			else {
+				//put pmsg to the qeue
+				sndq->add(pmsg);
+			}
 		}
 		
 		if(tf & UNetAckReq) { // if this packet has the ack flag on, save it's number
-			serverMsg.ps=serverMsg.sn;
-			serverMsg.pfr=i;
+			serverMsg.ps=pmsg->sn;
+			serverMsg.pfr=pmsg->frn;
 		}
 	}
 	
@@ -582,10 +614,6 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 	/* There is one problem with this way of checking duplicates: If the first packet of a fragmented message is lost, the additional ones
 	   will be dropped. Since there is no sane way to work around that, we have to live with it. */
-	#ifdef ENABLE_MSGDEBUG
-	net->log->log("%s INF: last acked packet was %d (waitingForFragments: %d), checking new packet %d.%d\n", str(), clientPs, waitingForFragments, msg.sn, msg.frn);
-	net->log->flush();
-	#endif
 	if (msg.ps < clientPs) { // we already got that one - ack it, but don't parse again
 		net->log->log("%s INF: Dropped already parsed packet %d.%d (last ack is %d, expected %d)\n", str(), msg.sn, msg.frn, msg.ps, clientPs);
 		net->log->flush();
@@ -610,9 +638,6 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 	
 	if (msg.tf & UNetAckReq) {
 		clientPs = msg.sn;
-		#ifdef ENABLE_MSGDEBUG
-		net->log->log("%s INF: last acked packet is now %d\n", str(), clientPs);
-		#endif
 	}
 	return 0;
 #if 0
@@ -797,132 +822,45 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 
 /** puts acks from the ackq in the sndq */
 void tNetSession::ackUpdate() {
-	U32 i,maxacks=30,tts;
-	Byte val, tf;
+	U32 maxacks=30;
 	if (ackq->len() == 0) return;
-
-	tUnetUruMsg * pmsg;
-
-	tf=UNetAckReply;
-	val=validation;
-	if(cflags & UNetUpgraded) {
-		tf = UNetAckReply | UNetExt;
-		val = 0x00;
-	}
-	if(val==0x01) { val=0x00; }
-
+	
 	ackq->rewind();
-	tUnetAck *ack;
-	while((ack = ackq->getNext())) {
-		if (ack->timestamp > net->net_time) {
-			net->updateTimerAbs(ack->timestamp); // come back when we want to process this ack
-			continue;
-		}
-		
-		// now we have at least one ack packet to send
-		
-		pmsg=new tUnetUruMsg;
-
-		//now update the other fields
-		serverMsg.sn++;
-		
-		pmsg->val=val;
-		//pmsg.pn NOT in this layer (done in the msg sender, tUnet::rawsend)
-		//since acks are put at the top of the sndq, the pn would be wrong if we did it differently
-		pmsg->tf=tf;
-		pmsg->frn=0;
-		pmsg->sn=serverMsg.sn;
-		pmsg->frt=0;
-		pmsg->pfr=serverMsg.pfr;
-		pmsg->ps=serverMsg.ps;
-
-		if(!(pmsg->tf & UNetExt))
-			pmsg->data.putU16(0);
-		
-		i=0;
-		do {
+	tUnetAck *ack = ackq->getNext();
+	while(ack) {
+		tmNetAck ackMsg;
+		while (ack) {
 			if (ack->timestamp > net->net_time) {
 				net->updateTimerAbs(ack->timestamp); // come back when we want to process this ack
-				continue;
+				ack = ackq->getNext();
 			}
-			pmsg->data.putU32(ack->A);
-			if(!(pmsg->tf & UNetExt))
-				pmsg->data.putU32(0);
-			pmsg->data.putU32(ack->B);
-			if(!(pmsg->tf & UNetExt))
-				pmsg->data.putU32(0);
-			ackq->deleteCurrent();
-			i++;
-		} while((ack = ackq->getNext()) && i<maxacks);
-		assert(i>0);
-		
-		pmsg->_update();
-		pmsg->timestamp=net->net_time;
-		pmsg->dsize=i;
-
-		tts=0;
-		#ifdef ENABLE_NETDEBUG
-		tts+=net->latency;
-		#endif
-		//tts=0;
-		pmsg->timestamp+=tts;
-		net->updateTimerAbs(pmsg->timestamp); // come back when we want to send this ack
-		
-		//put pmsg to the qeue
-#if 0
-		//ack are at the end of the qeue
-		sndq->add(pmsg);
-#else
-		//ensure acks to be present at the top of the qeue
-		if(sndq->isEmpty()) {
-			sndq->add(pmsg);
-			DBG(5,"Ack inserted into void msg qeue\n");
-		} else {
-			tUnetUruMsg * kiwi;
-			sndq->rewind();
-			kiwi=sndq->getNext();
-			DBG(5,"ack checking q...\n");
-			while(kiwi!=NULL && (kiwi->tf & UNetAckReply)) {
-				kiwi=sndq->getNext();
-				DBG(5,"sndq->getNext()\n");
+			else {
+				ackMsg.ackq->add(ackq->unstackCurrent()); // will switch to the next one
+				ack = ackq->getCurrent();
+				if (ackMsg.ackq->len() >= maxacks) break;
 			}
-			sndq->insertBefore(pmsg);
-			DBG(5,"insertBefore\n");
 		}
-#endif
+		if (ackMsg.ackq->len() > 0)
+			send(ackMsg);
 	}
-	
 }
 
 /** parse the ack and remove the messages it acks from the sndq */
 void tNetSession::ackCheck(tUnetUruMsg &t) {
 
-	U32 i,A1,A2,A3;
-	#ifdef ENABLE_MSGDEBUG
-	U32 sn,ps;
-	Byte frn,pfr;
-	
-	net->log->log("<RCV>");
-	#endif
+	U32 A1,A2,A3;
+	tmNetAck ackMsg;
+	if (t.tf & UNetExt) ackMsg.bhflags |= UNetExt; // tmNetAck has to know that it reads an extended packet
 	t.data.rewind();
-	if(!(t.tf & UNetExt)) {
-		if(t.data.getU16()!=0) throw txUnexpectedData(_WHERE("ack unknown data"));
-	}
-	for(i=0; i<t.dsize; i++) {
-		A1=t.data.getU32();
-		if(!(t.tf & UNetExt))
-			if(t.data.getU32()!=0) throw txUnexpectedData(_WHERE("ack unknown data"));
-		A3=t.data.getU32();
-		if(!(t.tf & UNetExt))
-			if(t.data.getU32()!=0) throw txUnexpectedData(_WHERE("ack unknown data"));
-		#ifdef ENABLE_MSGDEBUG
-		frn=A1 & 0x000000FF;
-		pfr=A3 & 0x000000FF;
-		sn=A1 >> 8;
-		ps=A3 >> 8;
-		if(i!=0) net->log->print("    |");
-		net->log->print(" Ack %i,%i %i,%i\n",sn,frn,ps,pfr);
-		#endif
+	t.data.get(ackMsg);
+#ifdef ENABLE_ACKDEBUG
+	net->log->log("<RCV> %s\n", ackMsg.str());
+#endif
+	tUnetAck *ack;
+	ackMsg.ackq->rewind();
+	while ((ack = ackMsg.ackq->getNext())) {
+		A1 = ack->A;
+		A3 = ack->B;
 		//well, do it
 		tUnetUruMsg * msg=NULL;
 		sndq->rewind();
@@ -932,7 +870,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 			
 			if(A1>=A2 && A2>A3) {
 				//then delete
-				#ifdef ENABLE_MSGDEBUG
+				#ifdef ENABLE_ACKDEBUG
 				net->log->log("Deleting packet %i,%i\n",msg->sn,msg->frn);
 				#endif
 				if(msg->tryes<=1 && A1==A2) {
