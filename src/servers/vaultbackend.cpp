@@ -409,8 +409,7 @@ namespace alc {
 				// we can be sure that the vault has already been initialized (main folders and the welcome message are created) since
 				// a player has to be created to get here
 				
-				tvNode mgrNode;
-				mgrNode.flagB = MType;
+				tvNode mgrNode(MType);
 				mgrNode.type = nodeType;
 				if (nodeType == KVNodeMgrPlayerNode) { // player node
 					if (playerKi < 0) throw txProtocolError(_WHERE("VConnect for node type 2 must have playerKi set"));

@@ -1446,26 +1446,35 @@ namespace alc {
 		char query[1024];
 		MYSQL_RES *result;
 		MYSQL_ROW row;
-		int num;
 		
 		removeInvalidRefs();
 		
-		// find lost nodes and remove them
-		// a lost node is a node without a parent and which is not a mgr
-		sprintf(query, "SELECT n.idx FROM %s n LEFT JOIN %s r ON n.idx = r.id3 "
-			"WHERE r.id2 IS NULL AND n.type > 7", vaultTable, refVaultTable);
-		sql->query(query, "tVaultDB::clean: Finding lost nodes");
-		result = sql->storeResult();
-		
-		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get lost nodes"));
-		num = mysql_num_rows(result);
-		
-		lstd->log("Cleaning up: Removing %d lost nodes...\n", num);
-		for (int i = 0; i < num; ++i) {
-			row = mysql_fetch_row(result);
-			removeNodeTree(atoi(row[0]), /*cautious*/false);
+		// check for the admin node - if it does not exist, the AllPlayers folder has no parent and we can not remove lost nodes
+		tvNode node(MType);
+		node.type = KVNodeMgrAdminNode;
+		int adminNode = findNode(node);
+		if (!adminNode) {
+			lerr->print("\n\nWARNING: You have no admin node in your vault, so I can't remove lost nodes as that would destroy your vault.\n");
+			lerr->print("Please log in once with the VaultManager (which will create that node) and try again.\n\n");
 		}
-		mysql_free_result(result);
+		else {
+			// find lost nodes and remove them
+			// a lost node is a node without a parent and which is not a mgr
+			sprintf(query, "SELECT n.idx FROM %s n LEFT JOIN %s r ON n.idx = r.id3 "
+				"WHERE r.id2 IS NULL AND n.type > 7", vaultTable, refVaultTable);
+			sql->query(query, "tVaultDB::clean: Finding lost nodes");
+			result = sql->storeResult();
+			
+			if (result == NULL) throw txDatabaseError(_WHERE("couldn't get lost nodes"));
+			int num = mysql_num_rows(result);
+			
+			lstd->log("Cleaning up: Removing %d lost nodes...\n", num);
+			for (int i = 0; i < num; ++i) {
+				row = mysql_fetch_row(result);
+				removeNodeTree(atoi(row[0]), /*cautious*/false);
+			}
+			mysql_free_result(result);
+		}
 		
 		/* However, even after removing lost nodes, the vault is still not clean: there are still lost ages.
 		   Lost ages are ages of players who were deleted. The age info nodes and everything else for that age (for Relto even the
@@ -1474,7 +1483,7 @@ namespace alc {
 		   Global Ages as long as they don't get an age link somewhere - which will have to wait till there are unet3+ game servers. */
 		
 		// optimize the tables
-		lstd->log("Cleaning up: Optimizing tables...\n", num);
+		lstd->log("Cleaning up: Optimizing tables...\n");
 		sprintf(query, "OPTIMIZE TABLE %s, %s", refVaultTable, vaultTable);
 		sql->query(query, "Optimizing tables");
 	}
