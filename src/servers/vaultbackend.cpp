@@ -436,7 +436,7 @@ namespace alc {
 					send(reply, u, ki);
 				}
 				else if (nodeType == KVNodeMgrAdminNode) { // admin node
-					mgr = vaultDB->findNode(mgrNode, /*create*/false);
+					mgr = vaultDB->findNode(mgrNode, /*create*/true); // creating it is needed for vaults which were created with an old vault server
 					// create and send the reply
 					tvMessage reply(msg, 3);
 					reply.items[0] = new tvItem(/*id:*/1, /*node type*/5);
