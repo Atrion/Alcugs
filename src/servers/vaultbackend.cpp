@@ -1044,7 +1044,7 @@ namespace alc {
 			
 			U32 ageNode = getAge(ageInfo);
 			addAgeLinkToPlayer(ki, ageNode, spawnPoint);
-			addRemovePlayerToAge(ageNode, ki);
+			// I don't know why, but the NEWS file clearly says that DniCityX2Finale should not have an owner *shrug*
 		}
 		
 		// create link AllPlayersFolder -> info node (broadcasted)
