@@ -177,13 +177,11 @@ void tUnet::updateTimerRelative(U32 usec) {
 }
 
 tNetEvent * tUnet::getEvent() {
-	tNetEvent * evt,* ev;
+	tNetEvent * evt;
 	events->rewind();
 	evt=events->getNext();
 	if(evt==NULL) return NULL;
-	ev=new tNetEvent(*evt);
-	events->deleteCurrent();
-	return ev;
+	return events->unstackCurrent();
 }
 
 tNetSession * tUnet::getSession(tNetSessionIte &t) {

@@ -937,7 +937,7 @@ void tNetSession::doWork() {
 
 	if(net->net_time>=next_msg_time) {
 		sndq->rewind();
-		tUnetUruMsg * curmsg;
+		tUnetUruMsg * curmsg = sndq->getNext();
 		
 		U32 quota_max=maxPacketSz;
 		U32 cur_quota=0;
@@ -946,17 +946,11 @@ void tNetSession::doWork() {
 		U32 maxTH=150;
 		U32 tts;
 
-		while((curmsg=sndq->getNext())!=NULL && (cur_quota<quota_max)) {
-			
+		while(curmsg!=NULL && (cur_quota<quota_max)) {
 			if(curmsg->timestamp<=net->net_time) {
 				DBG(8, "%s ok to send a message\n",alcGetStrTime());
 				//we can send the message
-				if(curmsg->tf & UNetAckReply) {
-					//send paquet
-					cur_quota+=curmsg->size();
-					net->rawsend(this,curmsg);
-					sndq->deleteCurrent();
-				} else if(curmsg->tf & UNetAckReq) {
+				if(curmsg->tf & UNetAckReq) {
 					//send paquet
 					
 					// check if we need to resend
@@ -974,6 +968,7 @@ void tNetSession::doWork() {
 					
 					if(curmsg->tryes>=12 || (curmsg->tryes>=2 && terminated)) { // only 1 resend on terminated connections
 						sndq->deleteCurrent();
+						curmsg = sndq->getCurrent(); // this is the next one
 						//timeout event
 						evt=new tNetEvent(ite,UNET_TIMEOUT);
 						net->events->add(evt);
@@ -983,27 +978,30 @@ void tNetSession::doWork() {
 						net->rawsend(this,curmsg);
 						curmsg->timestamp=net->net_time+timeout;
 						curmsg->tryes++;
+						curmsg = sndq->getNext(); // go on
 					}
 				} else {
-					//probabilistic drop (of voice, and other non-ack paquets)
-					if(net->net_time-curmsg->timestamp > 4*timeout) {
+					//probabilistic drop (of voice, and other non-ack paquets) - make sure we don't drop ack replies though!
+					if(curmsg->tf == 0x00 && net->net_time-curmsg->timestamp > 4*timeout) {
 						//Unacceptable - drop it
 						net->err->log("Dropped a 0x00 packet due to unaceptable msg time %i,%i,%i\n",timeout,net->net_time-curmsg->timestamp,rtt);
-						sndq->deleteCurrent();
-					} else if(sndq->len()>minTH && (random()%maxTH)>sndq->len()) {
+					} else if(curmsg->tf == 0x00 && sndq->len() > minTH && (sndq->len() > random()%maxTH)) {
 						net->err->log("Dropped a 0x00 packet due to a big queue\n");
-						sndq->deleteCurrent();
-					} else {
+					}
+					//end prob drop
+					else {
 						cur_quota+=curmsg->size();
 						net->rawsend(this,curmsg);
-						sndq->deleteCurrent();
 					}
-				} //end prob drop
+					sndq->deleteCurrent();
+					curmsg = sndq->getCurrent(); // this is the next one
+				}
 			} //end time check
-			 else {
-			 	net->updateTimerAbs(curmsg->timestamp); // come back when we want to send this message
-			 	DBG(8,"%s Too soon (%d) to send a message\n",alcGetStrTime(), curmsg->timestamp-net->net_time);
-			 }
+			else {
+				net->updateTimerAbs(curmsg->timestamp); // come back when we want to send this message
+				DBG(8,"%s Too soon (%d) to send a message\n",alcGetStrTime(), curmsg->timestamp-net->net_time);
+				curmsg = sndq->getNext(); // go on
+			}
 		} //end while
 		tts=timeToSend(cur_quota);
 		if (cur_quota > 0) {

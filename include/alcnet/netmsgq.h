@@ -62,7 +62,7 @@ public:
 		}
 		return current;
 	}
-	T* getCurrent() {
+	inline T* getCurrent() {
 		return current;
 	}
 	T* unstackCurrent() {
@@ -86,6 +86,7 @@ public:
 		}
 	}
 	void add(T * msg) {
+		msg->next = NULL;
 		if(first==NULL) { 
 			first=msg;
 		} else {
@@ -95,6 +96,7 @@ public:
 		n++;
 	}
 	void insert(T * msg) {
+		msg->next = NULL;
 		if(first==NULL) {
 			prev=current=first=msg;
 		} else {
@@ -107,6 +109,7 @@ public:
 		n++;
 	}
 	void insertBefore(T * msg) {
+		msg->next = NULL;
 		if(first==NULL) {
 			prev=first=last=msg;
 			current=NULL;
@@ -120,13 +123,13 @@ public:
 		}
 		n++;
 	}
-	void rewind() {
+	inline void rewind() {
 		prev=current=NULL;
 	}
-	bool isEmpty() {
+	inline bool isEmpty() {
 		return(first==NULL);
 	}
-	U32 len() { return n; }
+	inline U32 len() { return n; }
 private:
 	T* first;
 	T* last;
