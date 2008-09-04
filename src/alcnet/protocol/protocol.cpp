@@ -1115,6 +1115,9 @@ const char * alcUnetGetMsgCode(U16 code) {
 		case 0x0394:
 			ret="NetMsgAccountAuthenticated";
 			break;
+		case 0x03A7:
+			ret="NetMsgRelevanceRegions";
+			break;
 		case 0x03AE:
 			ret="NetMsgLoadClone";
 			break;

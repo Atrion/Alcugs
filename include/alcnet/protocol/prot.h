@@ -253,6 +253,8 @@ unsilenced 29
 #define NetMsgAuthenticateResponse     0x0393
 #define NetMsgAccountAuthenticated     0x0394
 
+#define NetMsgRelevanceRegions         0x03A7
+
 #define NetMsgLoadClone                0x03AE
 #define NetMsgPlayerPage               0x03AF
 
