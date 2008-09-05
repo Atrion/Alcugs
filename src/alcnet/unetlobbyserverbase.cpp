@@ -275,7 +275,7 @@ namespace alc {
 			{
 				if (u->whoami != 0 || u->authenticated != 0) { // this is impossible
 					err->log("ERR: %s player is already being authend and sent another AuthenticateHello, ignoring\n", u->str());
-					return 1;
+					return 2; // ignore, leave it unparsed
 				}
 				
 				// get the data out of the packet
@@ -285,7 +285,7 @@ namespace alc {
 				
 				if (authHello.maxPacketSize != u->maxPacketSz) {
 					err->log("UNX: Max packet size of %s is not 1024, but %d, ignoring\n", u->str(), authHello.maxPacketSize);
-					return 1;
+					return 1; // it was already parsed, so we can return 1
 				}
 				
 				// determine auth result
@@ -326,7 +326,7 @@ namespace alc {
 			{
 				if (u->whoami != 0 || u->authenticated != 10) { // this is impossible
 					err->log("ERR: %s player sent an AuthenticateResponse and he is already being authend or he didn\'t yet send an AuthenticateHello, ignoring\n", u->str());
-					return 1;
+					return 2; // ignore, leave it unparsed
 				}
 				
 				// get the data out of the packet

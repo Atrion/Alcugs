@@ -312,7 +312,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 		case UNET_MSGRCV:
 		{
 			tUnetMsg * msg;
-			int ret = 0; // 0 - non parsed; 1 - parsed; -1 - parse error; -2 - hack attempt
+			int ret = 0; // 0 - non parsed; 1 - parsed; 2 - ignored; -1 - parse error; -2 - hack attempt
 			#ifdef ENABLE_MSGDEBUG
 			log->log("%s New MSG Recieved\n",u->str());
 			#endif
@@ -331,7 +331,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 				}
 				// this part can never be reached on shutdown, so messages are only processed when the server is still fully running
 				if (ret == 0) ret=onMsgRecieved(evt,msg,u);
-				if (ret > 0 && !msg->data->eof() > 0) { // when the packet was processed and there are bytes left, it is obiously invalid, terminate the client (ret = -2, hack attempt, processed below)
+				if (ret == 1 && !msg->data->eof() > 0) { // when the packet was processed and there are bytes left, it is obiously invalid, terminate the client (ret = -2, hack attempt, processed below)
 					err->log("%s Recieved a message 0x%04X (%s) which was too long (%d Bytes remaining after parsing)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data->remaining());
 					ret=-2;
 				}
@@ -360,7 +360,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 					terminate(u, RHackAttempt);
 				}
 			} else {
-				if(ret!=1) {
+				if(ret<=0) {
 					err->log("%s Error code %i parsing message 0x%04X (%s)\n",u->str(),ret,msg->cmd,alcUnetGetMsgCode(msg->cmd));
 				}
 			}
@@ -428,7 +428,7 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool 
 	switch(msg->cmd) {
 		case NetMsgLeave:
 		{
-			if (!u->client) return 1;
+			// accept it even if it is NOT a client - in that case, the peer obviously thinks it is a client, so lets respect its wish, it doesn't harm
 			tmLeave msgleave(u);
 			msg->data->get(msgleave);
 			log->log("<RCV> %s\n",msgleave.str());
@@ -442,7 +442,7 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool 
 		case NetMsgTerminated:
 		{
 			if (u->terminated || shutdown) return 0; // don't accept a NetMsgTerminated on already terminated sessions
-			if (u->client) return 1;
+			// accept it even if it IS a client - in that case, the peer obviously thinks it is a server, so lets respect its wish, it doesn't harm
 			tmTerminated msgterminated(u);
 			msg->data->get(msgterminated);
 			log->log("<RCV> %s\n",msgterminated.str());
