@@ -594,8 +594,9 @@ void alctypes_part5() {
 void alctypes_part6() {
 
 	tStrBuf sth,sth2;
-	sth="something";
+	sth="//some/thing//";
 	sth.strip('/');
+	assert(sth == "some/thing");
 	sth2=sth.dirname();
 	sth=sth.dirname();
 }
@@ -697,15 +698,12 @@ void alctypes_tests() {
 	alctypes_part3();
 	alctypes_part4();
 	alctypes_part5();
-	int i;
-	for(i=0; i<10; i++) {
-		alctypes_part6();
-	}
+	alctypes_part6();
 	alctypes_part7();
 	alctypes_part8();
 }
 
-void sith() {
+void alcparser_tests() {
 	DBG(4,"Parser tests\n");
 	int i=0;
 	
@@ -734,8 +732,8 @@ key1 = \"val2\"\n\
    so \\\n = \\\n \"this_should_be_legal\" \n\
 a=\"b\"\n\
 kkkk\\\n\
- \"k\"\n\
-\n\
+ \"k\n\
+a\"\n\
 \n\
 other \"val\"\n\
 a = \"overrided\"\n\
@@ -754,7 +752,7 @@ mproblem = \"this ' contains \\\" \\\\ some speical chars\"\n\
 	tStrBuf res;
 	
 	DBG(6,"kkkkk\n");
-	
+#if 0
 	i=0;
 	while(!a.eof()) {
 		res=a.getWord();
@@ -765,6 +763,7 @@ mproblem = \"this ' contains \\\" \\\\ some speical chars\"\n\
 		res=b.getWord();
 		printf("[b:%i] %s\n",i++,res.c_str());
 	}
+#endif
 	printf("by lines now\n");
 	a.rewind();
 	b.rewind();
@@ -836,7 +835,31 @@ mproblem = \"this ' contains \\\" \\\\ some speical chars\"\n\
 	assert(out.tell()>oldPos);
 	printf("original: ->%s<-\n",b.c_str());
 	printf("generated: ->%s<-\n",out.c_str());
+	assert(cfg1.getVar("a") == "overrided");
+	assert(cfg1.getVar("so") == "this_should_be_legal");
+	assert(cfg1.getVar("mproblem") == "this ' contains \" \\ some speical chars");
+	assert(cfg1.getVar("kkkk") == "k\na");
 	
+	// now let's test the XParser
+	b.clear();
+	b.writeStr("\
+aname  =  a, b\n\
+ [asection]	\n\
+anarr[0]=\"hi,ho\",hu\n\
+  anarr[4]           =  \"another value\n\
+which is more than a line long\"\n\
+");
+	b.rewind();
+	tXParser xparser;
+	xparser.setConfig(&cfg1);
+	xparser.store(b);
+	assert(cfg1.getVar("a") == "overrided"); // an old var
+	assert(cfg1.getVar("aname") == "a");
+	assert(cfg1.getVar("aname", "global", 1, 0) == "b");
+	assert(cfg1.getVar("anarr").isNull());
+	assert(cfg1.getVar("anarr", "asection", 0, 0) == "hi,ho");
+	assert(cfg1.getVar("anarr", "asection", 1, 0) == "hu");
+	assert(cfg1.getVar("anarr", "asection", 0, 4) == "another value\nwhich is more than a line long");
 }
 
 int log_test() {
@@ -927,7 +950,7 @@ int main(int argc, char * argv[]) {
 		alcexception_tests();
 		alctypes_tests();
 		log_test();
-		sith();
+		alcparser_tests();
 		//alcShutdown();
 		std::cout<< "Success!!" << std::endl;
 	} catch (txBase &t) {

@@ -80,9 +80,9 @@ void tSimpleParser::store(tStrBuf &t) {
 			val = t.getToken();
 			if(val=="=") {
 				val = t.getToken();
-			}
-			if(val=="=") {
-				throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token '%s'. A valid variable value was expected.\n",t.getLineNum(),t.getColumnNum(),val.c_str()));
+				if(val=="=") {
+					throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token '%s'. A valid variable value was expected.\n",t.getLineNum(),t.getColumnNum(),val.c_str()));
+				}
 			}
 			if(val=="\n") {
 				t.seek(-1);
@@ -170,7 +170,7 @@ void tXParser::store(tStrBuf &t) {
 
 	while(!t.eof()) {
 		key = t.getToken();
-		if(key!="\n" && key!=" ") {
+		if(key!="\n") {
 			DBG(9,"Reading token %s\n",key.c_str());
 			//check for section
 			if(key.startsWith("[") && key.endsWith("]")) {
@@ -181,10 +181,8 @@ void tXParser::store(tStrBuf &t) {
 			//check for read_config
 			if(key=="read_config") {
 				val = t.getToken();
-				if(val==" ") val=t.getToken();
 				if(val=="=") {
 					t.getToken();
-					if(val==" ") val=t.getToken();
 				}
 				#if defined(__WIN32__) or defined(__CYGWIN__)
 					val.convertSlashesFromWinToUnix();
@@ -215,7 +213,6 @@ void tXParser::store(tStrBuf &t) {
 				DBG(5,"**Key %s at %i\n",key.c_str(),y);
 				//get separator
 				val = t.getToken();
-				if(val==" ") val=t.getToken();
 				if(val!="=") {
 					throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token '%s. '=' was expected.\n",t.getLineNum(),t.getColumnNum(),val.c_str()));
 				}
@@ -223,7 +220,6 @@ void tXParser::store(tStrBuf &t) {
 				val=",";
 				while(val==",") {
 					val = t.getToken();
-					if(val==" ") val=t.getToken();
 					if(val==",") { x++; continue; }
 					if(val=="=") {
 						throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token '%s'. A valid variable value was expected.\n",t.getLineNum(),t.getColumnNum(),val.c_str()));
@@ -234,7 +230,6 @@ void tXParser::store(tStrBuf &t) {
 					} else {
 						cfg->setVar(val,key,section,x++,y);
 						val=t.getToken();
-						if(val==" ") val=t.getToken();
 					}
 				}
 				if(!t.eof() && val!="\n") {

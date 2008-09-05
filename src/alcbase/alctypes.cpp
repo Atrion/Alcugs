@@ -1013,7 +1013,7 @@ tStrBuf & tStrBuf::getLine(bool nl,bool slash) {
 	shot=out;
 	return *out;
 }
-
+#if 0
 tStrBuf & tStrBuf::getWord(bool slash) {
 	DBG(9,"getWord()\n");
 	Byte cc=0,c=0;
@@ -1086,6 +1086,7 @@ tStrBuf & tStrBuf::getWord(bool slash) {
 			if(c=='\n') {
 				if(!eof() && getByte()!='\r') seek(-1);
 				this->l++;
+				this->c=0;
 				if(out->size()!=0) {
 					seek(-1);
 				}
@@ -1093,6 +1094,7 @@ tStrBuf & tStrBuf::getWord(bool slash) {
 			} else if(c=='\r') {
 				if(!eof() && getByte()!='\n') seek(-1);
 				this->l++;
+				this->c=0;
 				if(out->size()!=0) {
 					seek(-1);
 				}
@@ -1133,6 +1135,7 @@ tStrBuf & tStrBuf::getWord(bool slash) {
 	shot=out;
 	return *out;
 }
+#endif
 tStrBuf & tStrBuf::getToken() {
 	DBG(9,"tStrBuf::getToken()\n");
 	Byte c;

@@ -293,25 +293,25 @@ public:
 	virtual ~tStrBuf();
 	virtual void rewind();
 	S32 find(const char cat, bool reverse=false);
+	void decreaseLineNum();
+	
 	/** \brief returns a line
-			\param size If set, limits the line size
 			\param nl If true, it will also append the \\n if it's present
 			\param slash If false, a \\n followed by an slash will be ignored
 			\return A tStrBuf object
 	*/
-	void decreaseLineNum();
 	tStrBuf & getLine(bool nl=false,bool slash=false);
+#if 0
 	/** \brief returns a word, a newline, or a separator
 			\param slash If false, a \\n followed by an slash will be ignored
 			\return A tStrBuf object
 	*/
 	tStrBuf & getWord(bool slash=false);
-	/** \brief returns a token (newline, key, value, separator)
+#endif
+	/** \brief returns a token (newline, key, value, separator - but not a space)
 			\return A tStBuf object
 	*/
 	tStrBuf & getToken();
-	/** \brief Enables quotes
-	*/
 	void convertSlashesFromWinToUnix();
 	void convertSlashesFromUnixToWin();
 	tStrBuf & strip(Byte what,Byte how=0x03);
