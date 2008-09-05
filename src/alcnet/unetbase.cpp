@@ -221,6 +221,7 @@ void tUnetBase::stop(SByte timeout) {
 
 void tUnetBase::terminate(tNetSession *u,Byte reason, bool destroyOnly)
 {
+	if (reason) reason = u->client ? RKickedOff : RQuitting;
 	if (!destroyOnly && u->client) {
 		tmTerminated terminated(u,u->ki,reason);
 		send(terminated);
@@ -258,7 +259,7 @@ void tUnetBase::terminateAll(void)
 	smgr->rewind();
 	while ((u=smgr->getNext())) { // double brackets to suppress gcc warning
 		if (!u->terminated) // avoid sending a NetMsgLeave or NetMsgTerminate to terminated peers
-			terminate(u, u->client ? RKickedOff : RQuitting);
+			terminate(u);
 	}
 }
 
@@ -276,7 +277,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 	switch(evt->id) {
 		case UNET_NEWCONN:
 			if (shutdown)
-				terminate(u, RKickedOff);
+				terminate(u);
 			else
 				onNewConnection(evt, u);
 			sec->log("%s New Connection\n",u->str());
@@ -305,7 +306,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 			if (!shutdown)
 				onConnectionFlood(evt,u);
 			if (shutdown || !evt->veto) {
-				terminate(u, RKickedOff);
+				terminate(u);
 				lerr->log("%s kicked due to a Flood Attack\n", u->str());
 			}
 			break;
@@ -326,7 +327,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 				if (u->terminated || shutdown) {
 					if (ret == 0) err->log("%s is terminated and sent a non-NetMsgLeave message 0x%04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
 					u->rcvq->deleteCurrent();
-					if (ret != 1) terminate(u, RKickedOff, true); // delete the session ASAP
+					if (ret != 1) terminate(u, /*terminate() sets the reason*/0, true); // delete the session ASAP
 					break;
 				}
 				// this part can never be reached on shutdown, so messages are only processed when the server is still fully running
@@ -448,7 +449,7 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool 
 			log->log("<RCV> %s\n",msgterminated.str());
 			ev->id=UNET_TERMINATED;
 			onTerminated(ev,msgterminated.reason,u);
-			terminate(u,msgterminated.reason);
+			terminate(u,RQuitting);
 			return 1;
 		}
 		case NetMsgAlive:

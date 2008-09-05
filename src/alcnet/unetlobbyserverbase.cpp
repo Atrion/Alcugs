@@ -273,6 +273,7 @@ namespace alc {
 			//// messages regarding authentication
 			case NetMsgAuthenticateHello:
 			{
+				u->client = true; // no matter how this connection was established, the peer definitely acts like a client
 				if (u->whoami != 0 || u->authenticated != 0) { // this is impossible
 					err->log("ERR: %s player is already being authend and sent another AuthenticateHello, ignoring\n", u->str());
 					return 2; // ignore, leave it unparsed

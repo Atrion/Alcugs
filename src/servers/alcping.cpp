@@ -81,7 +81,6 @@ class tUnetPing :public tUnetBase {
 public:
 	tUnetPing(char * lhost=NULL,U16 lport=0,Byte listen=0,double time=1,int num=5,int flood=1);
 	virtual ~tUnetPing();
-	virtual void onNewConnection(tNetEvent * ev,tNetSession * u);
 	virtual int onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u);
 	virtual void onConnectionFlood(tNetEvent * ev,tNetSession *u) {
 		ev->Veto();
@@ -163,13 +162,6 @@ void tUnetPing::onStop() {
 		out->print("\nStats:\nrecieved %i packets of %i sent, %i%% packet loss, time: %0.3f ms\n",\
 		rcvn,count,(100-((rcvn*100)/count)),(current-startup)*1000);
 		out->print("min/avg/max times = %0.3f/%0.3f/%0.3f\n",min*1000,(avg/rcvn)*1000,max*1000);
-	}
-}
-
-void tUnetPing::onNewConnection(tNetEvent * ev,tNetSession * u) {
-	if(listen==0) {
-		//out->log("%s Connection refused\n",u->str());
-		//terminate(ev->sid,true);
 	}
 }
 
