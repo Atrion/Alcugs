@@ -177,7 +177,6 @@ private:
 	// used by lobbybyse
 	Byte challenge[16]; //!< peer challenge (hex)
 	Byte release; //!< type of client (internal/external)
-	bool inRoute; //!< saves if the player is on his way to another server
 };
 
 #if 0

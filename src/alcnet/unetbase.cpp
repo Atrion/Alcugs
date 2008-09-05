@@ -451,6 +451,14 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool 
 			terminate(u,msgterminated.reason);
 			return 1;
 		}
+		case NetMsgAlive:
+		{
+			if (u->terminated) return 0; // don't accept a NetMsgAlive on already terminated sessions
+			tmAlive alive(u);
+			msg->data->get(alive);
+			log->log("<RCV> %s\n",alive.str());
+			return 1;
+		}
 	}
 	return 0;
 }

@@ -177,10 +177,8 @@ void tUnet::updateTimerRelative(U32 usec) {
 }
 
 tNetEvent * tUnet::getEvent() {
-	tNetEvent * evt;
 	events->rewind();
-	evt=events->getNext();
-	if(evt==NULL) return NULL;
+	if(events->getNext()==NULL) return NULL;
 	return events->unstackCurrent();
 }
 

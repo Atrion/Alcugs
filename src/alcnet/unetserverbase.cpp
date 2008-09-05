@@ -70,13 +70,6 @@ namespace alc {
 				else forwardPing(ping, u); // if not, forward it (only implemented by lobby and game)
 				return 1;
 			}
-			case NetMsgAlive:
-			{
-				tmAlive alive(u);
-				msg->data->get(alive);
-				log->log("<RCV> %s\n",alive.str());
-				return 1;
-			}
 		}
 		return 0;
 	}

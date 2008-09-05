@@ -109,7 +109,6 @@ void tNetSession::init() {
 	terminated = false;
 	data = NULL;
 	name[0] = 0;
-	inRoute = false;
 	
 	DBG(5, "%s Initial timeout: %d\n", str(), timeout);
 }

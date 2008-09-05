@@ -206,6 +206,8 @@ namespace alc {
 	
 	void tVaultBackend::updatePlayerStatus(tmCustomVaultPlayerStatus &status)
 	{
+		if (status.state < 0 || status.state > 2) throw txProtocolError(_WHERE("recieved invalid online state of %d", status.state));
+	
 		// update (when the palyer is online) or remove (when hes offline) all mgrs using this KI
 		bool checkShrink = false;
 		for (int i = 0; i < nVmgrs; ++i) {

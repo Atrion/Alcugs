@@ -154,20 +154,21 @@ namespace alc {
 			if (!trackingServer || !vaultServer) {
 				err->log("ERR: I've got to update a player\'s (%s) status for the tracking and vault server, but one of them is unavailable.\n", u->str());
 			}
-			else {
+			else if (reason == RLeaving) { // the player is going on to another age, so he's not really offline, but update the online state
+				if (!u->proto || u->proto >= 3) {
+					// unet2 or unet3 vault servers would not understand a state of 2, which means "just update online time"
+					tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->sid, (Byte *)"0000000000000000" /* these are 16 zeroes */, (Byte *)"", /* update player's online time */ 2, u->onlineTime());
+					send(vaultStatus);
+				}
+			}
+			else { // it really went offline
 				tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->sid, u->uid, u->name, (Byte *)"", 0 /* delete */, RStopResponding);
 				send(trackingStatus);
 				
-				Byte state = u->inRoute ? 2 : 0;
-				// if he's in route, tell the vault he'd be online... state 2 means this message just servers to update the online timer
-				// we only tell the vault he's offline if he leaves without asking for another age before
-				// this way, the vault can remove the vmgrs for this player when he crashes, without making problems when he just links
-				if (u->proto && u->proto < 3) state = 0; // old vault servers would not understand a state of 2
-				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->sid, (Byte *)"0000000000000000" /* these are 16 zeroes */, (Byte *)"", state, u->onlineTime());
+				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->sid, (Byte *)"0000000000000000" /* these are 16 zeroes */, (Byte *)"", /*player is offline */0, u->onlineTime());
 				send(vaultStatus);
-				
-				u->ki = 0; // this avoids sending the messages twice
 			}
+			u->ki = 0; // this avoids sending the messages twice
 		}
 	
 		tUnetServerBase::terminate(u, reason, destroyOnly); // do the common terminate procedure
@@ -597,8 +598,6 @@ namespace alc {
 				alcAscii2Hex(guid, serverFound.serverGuid.c_str(), 8);
 				tmFindAgeReply reply(client, serverFound.ipStr, serverFound.serverPort, serverFound.age, guid);
 				send(reply);
-				
-				client->inRoute = true; // we told the palyer where to connect, now he'll leave... but don't tell vault and tracking, he'll soon come back!
 				
 				return 1;
 			}
