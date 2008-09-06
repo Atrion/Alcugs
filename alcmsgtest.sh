@@ -19,7 +19,7 @@ sleep 2
 TEST=`ps -cp $PID | grep alcmsgtest`
 if [ -n "$TEST" ]; then
 	echo "alcmsgtest did not exit within 2s"
-	exit
+	exit 1
 fi
 # the error log files must be empty
 if [ -s log/error.log ]; then
@@ -31,12 +31,12 @@ fi
 # the recieved file must exist
 if [ ! -e rcvmsg.raw ] ; then
 	echo "recieved file doesn't exist"
-	exit
+	exit 1
 fi
 # compare files
 TEST=`diff rcvmsg.raw $FILE`
 if [ -n "$TEST" ] ; then
 	echo "sent file and recieved file differ"
-	exit
+	exit 1
 fi
 echo "Ok, all went fine"

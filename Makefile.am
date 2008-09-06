@@ -66,14 +66,14 @@ libalcnet1_a_CPPFLAGS = -DIN_ALC_LIBRARY
 #End LibAlcUruNet3 library
 
 #Test APPS
-check_PROGRAMS = test test2
-TESTS = test test2
+check_PROGRAMS = alcthread_test alcbase_test
+TESTS = alcthread_test alcbase_test alcmsgtest.sh
 
-test_LDADD = libalcbase1.a
-test_SOURCES = src/alcbase/test/test.cpp
+alcbase_test_LDADD = libalcbase1.a
+alcbase_test_SOURCES = src/alcbase/test/alcbase_test.cpp
 
-test2_LDADD = libalcbase1.a
-test2_SOURCES = src/alcbase/test/test2.cpp
+alcthread_test_LDADD = libalcbase1.a
+alcthread_test_SOURCES = src/alcbase/test/alcthread_test.cpp
 #End Test APPS
 
 bin_PROGRAMS = alcconfig urucrypt m5crypt alcping alcmsgtest alcugs_lobby alcugs_auth alcugs_tracking alcugs_vault alcugs_game

@@ -965,7 +965,7 @@ void tNetSession::doWork() {
 						updateRTT(timeout);
 					}
 					
-					if(curmsg->tryes>=12 || (curmsg->tryes>=2 && terminated)) { // only 1 resend on terminated connections
+					if(curmsg->tryes>=10 || (curmsg->tryes>=2 && terminated)) { // max. 2 sends on terminated connections, max. 10 for the rest
 						sndq->deleteCurrent();
 						curmsg = sndq->getCurrent(); // this is the next one
 						//timeout event

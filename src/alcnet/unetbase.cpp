@@ -221,7 +221,7 @@ void tUnetBase::stop(SByte timeout) {
 
 void tUnetBase::terminate(tNetSession *u,Byte reason, bool destroyOnly)
 {
-	if (reason) reason = u->client ? RKickedOff : RQuitting;
+	if (!reason) reason = u->client ? RKickedOff : RQuitting;
 	if (!destroyOnly && u->client) {
 		tmTerminated terminated(u,u->ki,reason);
 		send(terminated);
