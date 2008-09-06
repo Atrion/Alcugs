@@ -5,8 +5,69 @@
                       #-=======================-#
                      /--(     Latest news     )--\
 --------------------/|\-------------------------/|\--------------------------
-| Home: http://alcugs.sf.net                                                |
+| Home: http://alcugs.almlys.org                                            |
 -----------------------------------------------------------------------------
+
+05/Sep/2008 - Unet3+ auth, tracking, lobby and vault (version 1.3.4)
+===========================================================================0
+Finally, the above four servers are available as unet3+ servers! (though
+there still only is the unet2 game server). You will also have to patch the
+game server using patches/unet2-game.patch which fixes a bug in there.
+However, unlike Almlys obviously planned, I did not (yet) implement
+multi-threading as I have no experience in there and there was no code I
+could base this on. The other advantages still apply though ;-) And I can
+add a new one: The unet3+ servers use a different method to find out if a
+message was recieved out of order, and unlike the old one, now it is
+*asured* that all messages are parsed in the correct order. There is one
+disadvantage though, which could only be worked around with very ugly
+changes: If the first packet of a fragmented message is lost, the following
+ones will be dropped as the server can't know for sure that there was not
+something lost in between. After that first message was recieved however,
+the remaining ones can be out of order - that's no problem. This new method
+also avoids re-parsing messages which hapenned quite often before.
+
+Here's what changed in the individual servers compared to the unet3 version:
+
+Vault
+- Changed the db strcuture, all field names (internally and in the DB) now
+  use the name they have in the VaultManager and the Plasma VaultDB. The
+  upgrade is done automatically, but please do a backup first!
+- Implemented vault cleaning (only use this if you logged in using the
+  VaultManager at least once, or if the vault was created with the new vault
+  server! Otherwise, you will destroy your vault... also, make a backup
+  first!). To start cleaning, do:
+  ./alcugs_vault -c /your/config/path/uru.conf -clean
+  What happens internally is that first, all references from or to
+  non-existing nodes are removed. Then, the server looks for lost nodes:
+  These are nodes with no parent which are not a VaultMGRNode (VaultMGRs are
+  allowed to have no parents). These nodes are removed as noone needs them
+  anyway. That seems to be safe on my Shard (about 1500 of 21000 nodes
+  were removed), but of course it could still make problems on others.
+- The vault is kept cleaner as image and text note, marker and marker game
+  and chronicle nodes are deleted when the last reference to them is removed
+  (so almost no lost nodes are produced, unlike with the old vault server)
+
+Lobby
+- Fixed the bug that the player was kicked while logging in the very first
+  avatar of a new vault (it was caused by the server thinking the 99 packets
+  sent within ~2.5 seconds are a flood attack)
+- Fix for players in the VaultManager to be shown as "Joining" on the status
+  page all the time
+
+Tracking
+- Status pages are updated only when there are changes or every 5 minutes
+  (to save your harddisk ;-)
+- HTML status page contains less confusing debug information and reloads
+  automatically every 30sec
+- Sequence prefixes printed in XML status page (for UruVision). Since I
+  removed some fields which the alcugs tracking server can only guess,
+  you might have to update your UruVision to the version in alcugs SVN
+- Support for unet3 protocol (which the unet3 tracking server for some
+  reason did not have); you have to patch your unet3 servers for that,
+  see patches/unet3-tracking.patch - or just use only unet3+ and unet2 ones
+
+Auth
+- No more CGAS support
 
 30/Jan/2007 - Semi-persistent SDL state
 ===========================================================================0
