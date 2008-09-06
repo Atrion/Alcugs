@@ -891,12 +891,6 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 					msg=sndq->getNext();
 				}
 			} else {
-				#if 0
-				//Force re-transmission
-				if((msg->tf & UNetAckReq) && A3>=A2 && msg->tryes==1) {
-					msg->timestamp-=timeout/2;
-				}
-				#endif
 				msg=sndq->getNext();
 			}
 		}
@@ -917,11 +911,12 @@ void tNetSession::doWork() {
 	//check rcvq
 	if(!delayMessages && (ackq->len() == 0)) {
 		rcvq->rewind();
-		tUnetMsg * g;
-		while((g=rcvq->getNext())) {
+		tUnetMsg * g = rcvq->getNext();
+		while((g=rcvq->getCurrent())) {
 			if (!g->completed) break; // if this is a non-completed message, don't parse it or what comes after it - it would be out of order
-			evt=new tNetEvent(ite,UNET_MSGRCV);
+			evt=new tNetEvent(ite,UNET_MSGRCV,g);
 			net->events->add(evt);
+			rcvq->unstackCurrent();
 			break;
 		}
 	}
@@ -1043,6 +1038,15 @@ void tNetSession::checkAlive(void)
 U32 tNetSession::onlineTime(void)
 {
 	return alcGetTime()-nego_stamp.seconds;
+}
+
+void tNetSession::terminate(int tout)
+{
+	conn_timeout = tout;
+	net->updateTimerRelative(tout*1000000 + 200);
+	terminated = true;
+	whoami = 0; // it's terminated, so it's no one special anymore
+	timestamp.now();
 }
 
 /* End session */

@@ -62,7 +62,7 @@ private:
 	U16 x; //columns
 	U16 y; //rows
 	Byte flags; // 0x01 - with quotes
-							// 0x02 - without quotes
+	            // 0x02 - without quotes
 	friend class tConfigKey;
 };
 

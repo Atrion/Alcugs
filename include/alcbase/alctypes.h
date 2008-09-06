@@ -314,6 +314,8 @@ public:
 	tStrBuf & getToken();
 	void convertSlashesFromWinToUnix();
 	void convertSlashesFromUnixToWin();
+	
+	/** \brief strips the character from the beginning (when how=1 or 3) and/or from the end (how=2 or 3) of the string */
 	tStrBuf & strip(Byte what,Byte how=0x03);
 	tStrBuf & escape();
 	tStrBuf & lower();
@@ -323,6 +325,7 @@ public:
 	bool startsWith(const char * pat);
 	bool endsWith(const char * pat);
 	void hasQuotes(bool has);
+	
 	/** \brief returs true if original source had quotes
 			\return bool
 	*/
@@ -379,7 +382,7 @@ private:
 	tStrBuf * shot;
 	tStrBuf * cache_lower;
 	Byte flags; //0x01 - original parsed string had quotes
-							//0x02 - string is NULL
+	            //0x02 - string is NULL
 };
 
 tStrBuf operator+(const tStrBuf & str1, const tStrBuf & str2);

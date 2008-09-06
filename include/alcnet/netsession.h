@@ -54,7 +54,6 @@ public:
 
 class tNetSession {
 	friend class tUnet;
-	friend class tUnetBase;
 	friend class tUnetLobbyServerBase; // it has to do the authenticate stuff
 
 // methods
@@ -79,6 +78,9 @@ public:
 	inline Byte getTpots(void) { return tpots; }
 	U32 onlineTime(void);
 	void send(tmBase &msg);
+	inline bool isClient() { return client; }
+	inline bool isTerminated() { return terminated; }
+	void terminate(int tout);
 
 private:
 	void init();

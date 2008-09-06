@@ -103,14 +103,19 @@ private:
 
 class tNetEvent {
 public:
-	tNetEvent(tNetSessionIte who,int what) { sid=who; id=what; next=NULL; veto=false; }
-	tNetEvent(tNetEvent &t) { sid=t.sid; id=t.id; next=NULL; veto=false; }
-	tNetEvent() { next=NULL; id=0; veto=false; }
+	tNetEvent(tNetSessionIte who,int what,tUnetMsg *mymsg=NULL) { sid=who; id=what; next=NULL; veto=false; msg=mymsg; }
+	tNetEvent() { next=NULL; id=0; veto=false; msg=NULL; }
+	~tNetEvent() { if (msg) delete msg; }
 	void Veto() { veto=true; }
 	tNetSessionIte sid;
 	int id;
 	tNetEvent * next;
 	bool veto;
+	tUnetMsg *msg;
+private:
+	// make copying impossible
+	tNetEvent(const tNetEvent &);
+	tNetEvent &operator=(const tNetEvent &);
 };
 
 }

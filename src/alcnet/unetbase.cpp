@@ -221,8 +221,8 @@ void tUnetBase::stop(SByte timeout) {
 
 void tUnetBase::terminate(tNetSession *u,Byte reason, bool destroyOnly)
 {
-	if (!reason) reason = u->client ? RKickedOff : RQuitting;
-	if (!destroyOnly && u->client) {
+	if (!reason) reason = u->isClient() ? RKickedOff : RQuitting;
+	if (!destroyOnly && u->isClient()) {
 		tmTerminated terminated(u,u->ki,reason);
 		send(terminated);
 		
@@ -231,7 +231,7 @@ void tUnetBase::terminate(tNetSession *u,Byte reason, bool destroyOnly)
 		terminated and if a message different than NetMsgLeave is recieved, it will be deleted ASAP. The same happens if there's a
 		timeout, i.e. the peer sends nothing within 3 seconds. */
 	}
-	else if (!destroyOnly && !u->client) {
+	else if (!destroyOnly && !u->isClient()) {
 		tmLeave leave(u,u->ki,reason);
 		send(leave);
 	}
@@ -241,15 +241,10 @@ void tUnetBase::terminate(tNetSession *u,Byte reason, bool destroyOnly)
 #else
 	if (destroyOnly) { // if the session should be destroyed, do that ASAP
 #endif
-		u->setTimeout(0);
-		updateTimerRelative(0); // come back and check ASAP
+		u->terminate(1/*seconds*/);
 	} else { // otherwise, give the session one second to send remaining messages
-		u->setTimeout(1);
-		updateTimerRelative(1500); // be sure to be back and check for the timeout
+		u->terminate(1/*second*/);
 	}
-	u->terminated = true;
-	u->whoami = 0; // it's terminated, so it's no one special anymore
-	u->timestamp.now();
 }
 
 void tUnetBase::terminateAll(void)
@@ -258,7 +253,7 @@ void tUnetBase::terminateAll(void)
 	tNetSession *u;
 	smgr->rewind();
 	while ((u=smgr->getNext())) { // double brackets to suppress gcc warning
-		if (!u->terminated) // avoid sending a NetMsgLeave or NetMsgTerminate to terminated peers
+		if (!u->isTerminated()) // avoid sending a NetMsgLeave or NetMsgTerminate to terminated peers
 			terminate(u);
 	}
 }
@@ -283,7 +278,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 			sec->log("%s New Connection\n",u->str());
 			break;
 		case UNET_TIMEOUT:
-			if (!u->terminated && !shutdown) {
+			if (!u->isTerminated() && !shutdown) {
 				sec->log("%s Timeout\n",u->str());
 				onConnectionTimeout(evt,u);
 				if(!evt->veto)
@@ -312,21 +307,17 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 			break;
 		case UNET_MSGRCV:
 		{
-			tUnetMsg * msg;
+			tUnetMsg * msg = evt->msg;
 			int ret = 0; // 0 - non parsed; 1 - parsed; 2 - ignored; -1 - parse error; -2 - hack attempt
 			#ifdef ENABLE_MSGDEBUG
 			log->log("%s New MSG Recieved\n",u->str());
 			#endif
-			u->rcvq->rewind();
-			msg=u->rcvq->getNext();
-			if(msg==NULL || !msg->completed) break; // if the first message is not completed, we can't parse what's after it - it would be out of order
-			
+			assert(msg!=NULL && msg->completed);
 			try {
 				ret=parseBasicMsg(evt,msg,u,shutdown);
 				// terminated sessions can be deleted here - either it was a NetMsgLeave and everything is fine, or it was an invalid message
-				if (u->terminated || shutdown) {
+				if (u->isTerminated() || shutdown) {
 					if (ret == 0) err->log("%s is terminated and sent a non-NetMsgLeave message 0x%04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-					u->rcvq->deleteCurrent();
 					if (ret != 1) terminate(u, /*terminate() sets the reason*/0, true); // delete the session ASAP
 					break;
 				}
@@ -347,7 +338,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 				err->log(" Exception details: %s\n",t.what());
 				ret=-1;
 			}
-			if(u->client==1) {
+			if(u->isClient()==1) {
 				if(ret==0) {
 					err->log("%s Unexpected message %04X (%s)\n",u->str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
 					terminate(u, RUnimplemented);
@@ -365,7 +356,6 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 					err->log("%s Error code %i parsing message 0x%04X (%s)\n",u->str(),ret,msg->cmd,alcUnetGetMsgCode(msg->cmd));
 				}
 			}
-			u->rcvq->deleteCurrent();
 			break;
 		}
 		default:
@@ -433,7 +423,7 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool 
 			tmLeave msgleave(u);
 			msg->data->get(msgleave);
 			log->log("<RCV> %s\n",msgleave.str());
-			if (!shutdown && !u->terminated) {
+			if (!shutdown && !u->isTerminated()) {
 				ev->id=UNET_TERMINATED;
 				onLeave(ev,msgleave.reason,u);
 			}
@@ -442,7 +432,7 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool 
 		}
 		case NetMsgTerminated:
 		{
-			if (u->terminated || shutdown) return 0; // don't accept a NetMsgTerminated on already terminated sessions
+			if (u->isTerminated() || shutdown) return 0; // don't accept a NetMsgTerminated on already terminated sessions
 			// accept it even if it IS a client - in that case, the peer obviously thinks it is a server, so lets respect its wish, it doesn't harm
 			tmTerminated msgterminated(u);
 			msg->data->get(msgterminated);
@@ -454,7 +444,7 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool 
 		}
 		case NetMsgAlive:
 		{
-			if (u->terminated) return 0; // don't accept a NetMsgAlive on already terminated sessions
+			if (u->isTerminated()) return 0; // don't accept a NetMsgAlive on already terminated sessions
 			tmAlive alive(u);
 			msg->data->get(alive);
 			log->log("<RCV> %s\n",alive.str());

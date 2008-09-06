@@ -157,23 +157,15 @@ void tUnet::updateNetTime() {
 
 void tUnet::updateTimerRelative(U32 usec) {
 	U32 min_timer=200; // minimum interval to be used
-	if(usec>=1000000) {
-		U32 sec = usec/1000000;
-		usec %= 1000000;
-		if (sec < unet_sec || (sec == unet_sec && usec < unet_usec)) {
-			unet_sec = sec;
-			unet_usec = usec;
-		}
-		return;
+	U32 sec = usec/1000000;
+	usec %= 1000000;
+	if (sec < unet_sec || (sec == unet_sec && usec < unet_usec)) {
+		unet_sec = sec;
+		unet_usec = usec;
+		
+		if(unet_sec == 0 && unet_usec<min_timer) unet_usec=min_timer;
+		DBG(5,"Timer is now %i.%06i secs\n",unet_sec,unet_usec);
 	}
-	if(unet_sec) {
-		unet_sec=0;
-		unet_usec=usec;
-	} else {
-		if(usec<unet_usec) unet_usec=usec;
-	}
-	if(unet_usec<min_timer) unet_usec=min_timer;
-	//DBG(5,"Timer is now %i usecs (%i)\n",unet_usec,usec);
 }
 
 tNetEvent * tUnet::getEvent() {
@@ -807,7 +799,7 @@ void tUnet::dump(tLog * sf,Byte flags) {
 	f->print("net->unet_usec:%i\n",this->unet_usec);
 	f->print("net->max_version:%i\n",this->max_version);
 	f->print("net->min_version:%i\n",this->min_version);
-	f->print("net->timestamp:%s\n",alcGetStrTime(this->ntime_sec,this->ntime_usec));
+	f->print("net->timestamp:%s\n",this->ntime.str());
 	f->print("net->conn_timeout:%i\n",this->conn_timeout);
 	f->print("net->timeout:%i\n",this->timeout);
 	f->print("net->max:%i\n",this->max);
