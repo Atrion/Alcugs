@@ -54,7 +54,6 @@ public:
 
 class tNetSession {
 	friend class tUnet;
-	friend class tUnetLobbyServerBase; // it has to do the authenticate stuff
 
 // methods
 public:
@@ -64,23 +63,28 @@ public:
 	U32 getMaxFragmentSize();
 	U32 getMaxDataSize();
 	U32 getHeaderSize();
-	inline void setTimeout(U32 tout) { conn_timeout=tout; }
-	inline int getSid(void) { return sid; }
-	Byte getPeerType() { return whoami; }
 	tNetSessionIte getIte();
-	U32 getRTT() { return rtt; }
-	inline bool isConnected() { return cabal!=0; }
 	void checkAlive(void);
-	inline bool isAuthed(void) { return authenticated == 1; }
+	U32 onlineTime(void);
+	void send(tmBase &msg);
+	void terminate(int tout);
+	void setAuthData(Byte accessLevel, const Byte *passwd);
+	
+	inline void setTimeout(U32 tout) { conn_timeout=tout; }
+	inline void challengeSent(void) { if (authenticated == 0) authenticated = 10; }
+	inline void setDelayMessages(bool delay) { delayMessages = delay; }
+	
+	inline int getSid(void) { return sid; }
+	inline Byte getPeerType() { return whoami; }
+	inline U32 getRTT() { return rtt; }
+	inline bool isConnected() { return cabal!=0; }
 	inline U32 getIp(void) { return ip; }
 	inline U16 getPort(void) { return port; }
 	inline Byte getAccessLevel(void) { return accessLevel; }
-	inline Byte getTpots(void) { return tpots; }
-	U32 onlineTime(void);
-	void send(tmBase &msg);
+	inline Byte getAuthenticated(void) { return authenticated; }
+	inline U16 getMaxPacketSz(void) { return maxPacketSz; }
 	inline bool isClient() { return client; }
 	inline bool isTerminated() { return terminated; }
-	void terminate(int tout);
 
 private:
 	void init();
@@ -105,9 +109,11 @@ private:
 
 // properties
 public:
+	// The public properties are not used by tNetSession internally, they server for others to be able to save data about the session
 	Byte max_version; //!< peer major version
 	Byte min_version; //!< peer minor version
 	U32 proto; //!< peer unet protocol version
+	Byte tpots; //!< tpots version 0=undefined, 1=tpots client, 2=non-tpots client
 	
 	U32 ki; //!< player set and valid id, otherwise 0 (lobby/game)
 	U32 x; //!< x value (for lobby/game)
@@ -115,6 +121,10 @@ public:
 	Byte name[200]; //!< peer age name in tracking server, peer account name in lobby and game
 	Byte serverGuid[8]; //!< hex; server guid in tracking server
 	tNetSessionData *data; //!< save additional data (e.g. tracking information)
+	
+	// used by lobbybyse
+	Byte challenge[16]; //!< peer challenge (hex)
+	Byte release; //!< type of client (internal/external)
 
 private:
 	tUnet * net;
@@ -174,11 +184,6 @@ private:
 	
 	Byte whoami; //!< peer type
 	bool client; //!< it's a client or a server?
-	Byte tpots; //!< tpots version 0=undefined, 1=tpots client, 2=non-tpots client
-	
-	// used by lobbybyse
-	Byte challenge[16]; //!< peer challenge (hex)
-	Byte release; //!< type of client (internal/external)
 };
 
 #if 0

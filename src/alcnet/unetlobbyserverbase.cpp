@@ -84,7 +84,7 @@ namespace alc {
 	
 	void tUnetLobbyServerBase::forwardPing(tmPing &ping, tNetSession *u)
 	{
-		if (u->whoami == KAuth || u->whoami == KTracking || u->whoami == KVault) { // we got a ping reply from one of our servers, let's forward it to the client it came from
+		if (u->getPeerType() == KAuth || u->getPeerType() == KTracking || u->getPeerType() == KVault) { // we got a ping reply from one of our servers, let's forward it to the client it came from
 			if (!ping.hasFlags(plNetIP)) throw txProtocolError(_WHERE("IP flag missing"));
 			tNetSessionIte ite(ping.ip, ping.port, ping.hasFlags(plNetSid) ? ping.sid : -1);
 			tNetSession *client = getSession(ite);
@@ -116,7 +116,7 @@ namespace alc {
 		tNetSession *client;
 		smgr->rewind();
 		while ((client = smgr->getNext())) {
-			if (client->whoami == KClient && client->ki == ki) { // an age cannot host the same avatar multiple times
+			if (client->getPeerType() == KClient && client->ki == ki) { // an age cannot host the same avatar multiple times
 				if (u != client) // it could be the same session for which the active player is set twice for some reason
 					terminate(client, RLoggedInElsewhere);
 				else
@@ -136,9 +136,9 @@ namespace alc {
 		}
 		
 		// tell vault and taracking
-		tmCustomPlayerStatus trackingStatus(trackingServer, ki, u->sid, u->uid, u->name, avatar, 2 /* visible */, whoami == KGame ? RJoining : RActive);
+		tmCustomPlayerStatus trackingStatus(trackingServer, ki, u->getSid(), u->uid, u->name, avatar, 2 /* visible */, whoami == KGame ? RJoining : RActive);
 		send(trackingStatus);
-		tmCustomVaultPlayerStatus vaultStatus(vaultServer, ki, u->sid, alcGetStrGuid(serverGuid), serverName, 1 /* is online */, 0 /* don't increase online time now, do that on disconnect */);
+		tmCustomVaultPlayerStatus vaultStatus(vaultServer, ki, u->getSid(), alcGetStrGuid(serverGuid), serverName, 1 /* is online */, 0 /* don't increase online time now, do that on disconnect */);
 		send(vaultStatus);
 		
 		// now, tell the client
@@ -149,7 +149,7 @@ namespace alc {
 	
 	void tUnetLobbyServerBase::terminate(tNetSession *u, Byte reason, bool destroyOnly)
 	{
-		if (u->whoami == KClient && u->ki != 0) { // if necessary, tell the others about it
+		if (u->getPeerType() == KClient && u->ki != 0) { // if necessary, tell the others about it
 			tNetSession *trackingServer = getSession(tracking), *vaultServer = getSession(vault);
 			if (!trackingServer || !vaultServer) {
 				err->log("ERR: I've got to update a player\'s (%s) status for the tracking and vault server, but one of them is unavailable.\n", u->str());
@@ -157,15 +157,15 @@ namespace alc {
 			else if (reason == RLeaving) { // the player is going on to another age, so he's not really offline, but update the online state
 				if (!u->proto || u->proto >= 3) {
 					// unet2 or unet3 vault servers would not understand a state of 2, which means "just update online time"
-					tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->sid, (Byte *)"0000000000000000" /* these are 16 zeroes */, (Byte *)"", /* update player's online time */ 2, u->onlineTime());
+					tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->getSid(), (Byte *)"0000000000000000" /* these are 16 zeroes */, (Byte *)"", /* update player's online time */ 2, u->onlineTime());
 					send(vaultStatus);
 				}
 			}
 			else { // it really went offline
-				tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->sid, u->uid, u->name, (Byte *)"", 0 /* delete */, RStopResponding);
+				tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->getSid(), u->uid, u->name, (Byte *)"", 0 /* delete */, RStopResponding);
 				send(trackingStatus);
 				
-				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->sid, (Byte *)"0000000000000000" /* these are 16 zeroes */, (Byte *)"", /*player is offline */0, u->onlineTime());
+				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->getSid(), (Byte *)"0000000000000000" /* these are 16 zeroes */, (Byte *)"", /*player is offline */0, u->onlineTime());
 				send(vaultStatus);
 			}
 			u->ki = 0; // this avoids sending the messages twice
@@ -219,9 +219,8 @@ namespace alc {
 #endif
 		
 		U32 proto = protocol.isNull() ? 0 : protocol.asU32();
-		tNetSessionIte ite = netConnect((char *)host.c_str(), port.asU16(), (proto == 0 || proto >= 3) ? 3 : 2, 0);
+		tNetSessionIte ite = netConnect((char *)host.c_str(), port.asU16(), (proto == 0 || proto >= 3) ? 3 : 2, 0, dst);
 		tNetSession *session = getSession(ite);
-		session->whoami = dst;
 		session->proto = proto;
 		
 		// sending a NetMsgAlive is not necessary, the netConnect will already start the negotiation process
@@ -273,8 +272,7 @@ namespace alc {
 			//// messages regarding authentication
 			case NetMsgAuthenticateHello:
 			{
-				u->client = true; // no matter how this connection was established, the peer definitely acts like a client
-				if (u->whoami != 0 || u->authenticated != 0) { // this is impossible
+				if (u->getPeerType() != 0 || u->getAuthenticated() != 0) { // this is impossible
 					err->log("ERR: %s player is already being authend and sent another AuthenticateHello, ignoring\n", u->str());
 					return 2; // ignore, leave it unparsed
 				}
@@ -284,8 +282,8 @@ namespace alc {
 				msg->data->get(authHello);
 				log->log("<RCV> %s\n", authHello.str());
 				
-				if (authHello.maxPacketSize != u->maxPacketSz) {
-					err->log("UNX: Max packet size of %s is not 1024, but %d, ignoring\n", u->str(), authHello.maxPacketSize);
+				if (authHello.maxPacketSize != u->getMaxPacketSz()) {
+					err->log("UNX: Max packet size of %s is not %d, but %d, ignoring\n", u->str(), u->getMaxPacketSz(), authHello.maxPacketSize);
 					return 1; // it was already parsed, so we can return 1
 				}
 				
@@ -318,14 +316,14 @@ namespace alc {
 				
 				// reply with AuthenticateChallenge
 				tmAuthenticateChallenge authChallenge(u, result, u->challenge);
-				u->authenticated = 10; // the challenge was sent
 				send(authChallenge);
+				u->challengeSent();
 				
 				return 1;
 			}
 			case NetMsgAuthenticateResponse:
 			{
-				if (u->whoami != 0 || u->authenticated != 10) { // this is impossible
+				if (u->getPeerType() != 0 || u->getAuthenticated() != 10) { // this is impossible
 					err->log("ERR: %s player sent an AuthenticateResponse and he is already being authend or he didn\'t yet send an AuthenticateHello, ignoring\n", u->str());
 					return 2; // ignore, leave it unparsed
 				}
@@ -341,14 +339,14 @@ namespace alc {
 					err->log("ERR: I've got to ask the auth server about player %s, but it's unavailable.\n", u->str());
 					return 1;
 				}
-				tmCustomAuthAsk authAsk(authServer, u->sid, u->ip, u->port, u->name, u->challenge, authResponse.hash.readAll(), u->release);
+				tmCustomAuthAsk authAsk(authServer, u->getSid(), u->getIp(), u->getPort(), u->name, u->challenge, authResponse.hash.readAll(), u->release);
 				send(authAsk);
 				
 				return 1;
 			}
 			case NetMsgCustomAuthResponse:
 			{
-				if (u->whoami != KAuth) {
+				if (u->getPeerType() != KAuth) {
 					err->log("ERR: %s sent a NetMsgCustomAuthResponse but is not the auth server. I\'ll kick him.\n", u->str());
 					return -2; // hack attempt
 				}
@@ -373,7 +371,7 @@ namespace alc {
 				tNetSession *client = getSession(ite);
 #endif
 				// verify account name and session state
-				if (!client || client->authenticated != 10 || client->whoami != 0 || strncmp((char *)client->name, (char *)authResponse.login.c_str(), 199) != 0) {
+				if (!client || client->getAuthenticated() != 10 || client->getPeerType() != 0 || strncmp((char *)client->name, (char *)authResponse.login.c_str(), 199) != 0) {
 					err->log("ERR: Got CustomAuthResponse for player %s but can't find his session.\n", authResponse.login.c_str());
 					return 1;
 				}
@@ -381,12 +379,9 @@ namespace alc {
 				// send NetMsgAccountAuthenticated to client
 				if (authResponse.result == AAuthSucceeded) {
 					memcpy(client->uid, authResponse.uid, 16);
-					client->whoami = KClient; // it's a real client now
-					client->authenticated = 2; // the player is authenticated!
-					client->accessLevel = authResponse.accessLevel;
-					strcpy((char *)client->passwd, (char *)authResponse.passwd.c_str()); // passwd is needed for validating packets
-					client->conn_timeout = 30; // 30sec, client should send an alive every 10sec
-					tmAccountAutheticated accountAuth(client, authResponse.result, serverGuid);
+					client->setAuthData(authResponse.accessLevel, authResponse.passwd.c_str());
+					
+					tmAccountAutheticated accountAuth(client, AAuthSucceeded, serverGuid);
 					send(accountAuth);
 					sec->log("%s successful login\n", client->str());
 				}
@@ -405,7 +400,7 @@ namespace alc {
 			//// messages regarding setting the avatar
 			case NetMsgSetMyActivePlayer:
 			{
-				if (u->whoami != KClient) {
+				if (u->getPeerType() != KClient) {
 					err->log("ERR: %s sent a NetMsgSetMyActivePlayer but is not yet authed. I\'ll kick him.\n", u->str());
 					return -2; // hack attempt
 				}
@@ -426,7 +421,7 @@ namespace alc {
 					}
 				}
 				
-				if (u->accessLevel <= AcAdmin) {
+				if (u->getAccessLevel() <= AcAdmin) {
 					setActivePlayer(u, setPlayer.ki, setPlayer.avatar.c_str());
 				}
 				else {
@@ -437,7 +432,7 @@ namespace alc {
 						// kick the player since we cant be sure he doesnt lie about the KI
 						return -1; // parse error
 					}
-					u->delayMessages = true; // dont process any further messages till we verified the KI
+					u->setDelayMessages(true); // dont process any further messages till we verified the KI
 					tmCustomVaultCheckKi checkKi(vaultServer, setPlayer.ki, u->getSid(), u->uid);
 					send(checkKi);
 				}
@@ -446,7 +441,7 @@ namespace alc {
 			}
 			case NetMsgCustomVaultKiChecked:
 			{
-				if (u->whoami != KVault) {
+				if (u->getPeerType() != KVault) {
 					err->log("ERR: %s sent a NetMsgCustomVaultKiChecked but is not the vault server. I\'ll kick him.\n", u->str());
 					return -2; // hack attempt
 				}
@@ -464,7 +459,7 @@ namespace alc {
 					return 1;
 				}
 				
-				client->delayMessages = false; // KI is checked, so we can process messages
+				client->setDelayMessages(false); // KI is checked, so we can process messages
 				if (kiChecked.status != 1) { // the avatar is NOT correct - kick the player
 					terminate(client, RNotAuthenticated);
 					return 1;
@@ -492,13 +487,13 @@ namespace alc {
 				tvMessage parsedMsg(/*isTask:*/false, u->tpots);
 				vaultMsg.message.rewind();
 				
-				if (u->whoami == KVault) { // got it from the vault - send it to the client
+				if (u->getPeerType() == KVault) { // got it from the vault - send it to the client
 					if (!vaultMsg.hasFlags(plNetKi) || vaultMsg.ki == 0) throw txProtocolError(_WHERE("KI missing"));
 					
 					vaultMsg.message.get(parsedMsg);
 					
 					tNetSession *client = smgr->find(vaultMsg.ki);
-					if (!client || client->whoami != KClient) {
+					if (!client || client->getPeerType() != KClient) {
 						lvault->print("<h2 style='color:red'>Packet for unknown client</h2>\n");
 						parsedMsg.print(lvault, /*clientToServer:*/false, NULL, vaultLogShort);
 						err->log("ERR: I've got a vault message to forward to player with KI %d but can\'t find it\'s session.\n", vaultMsg.ki);
@@ -512,7 +507,7 @@ namespace alc {
 				else { // got it from a client
 					if (vaultMsg.hasFlags(plNetKi) && vaultMsg.ki != u->ki)
 						throw txProtocolError(_WHERE("KI mismatch (%d != %d)", vaultMsg.ki, u->ki));
-					if (u->whoami != KClient || u->ki == 0) { // KI is necessary to know where to route it
+					if (u->getPeerType() != KClient || u->ki == 0) { // KI is necessary to know where to route it
 						err->log("ERR: %s sent a NetMsgVault but is not yet authed or did not set his KI. I\'ll kick him.\n", u->str());
 						return -2; // hack attempt
 					}
@@ -535,7 +530,7 @@ namespace alc {
 			// messages for finding the server to link to
 			case NetMsgFindAge:
 			{
-				if (u->whoami != KClient || u->ki == 0) {
+				if (u->getPeerType() != KClient || u->ki == 0) {
 					err->log("ERR: %s sent a NetMsgVault but is not yet authed or did not set his KI. I\'ll kick him.\n", u->str());
 					return -2; // hack attempt
 				}
@@ -579,7 +574,7 @@ namespace alc {
 			}
 			case NetMsgCustomServerFound:
 			{
-				if (u->whoami != KTracking) {
+				if (u->getPeerType() != KTracking) {
 					err->log("ERR: %s sent a NetMsgCustomServerFound but is not the tracking server. I\'ll kick him.\n", u->str());
 					return -2; // hack attempt
 				}
@@ -591,7 +586,7 @@ namespace alc {
 				
 				// find the client
 				tNetSession *client = smgr->get(serverFound.x);
-				if (!client || client->whoami != KClient || client->ki != serverFound.ki) {
+				if (!client || client->getPeerType() != KClient || client->ki != serverFound.ki) {
 					err->log("ERR: I've got to tell player with KI %d about his game server, but can't find his session.\n", serverFound.ki);
 					return 1;
 				}
@@ -606,7 +601,7 @@ namespace alc {
 			// terminating a player
 			case NetMsgPlayerTerminated:
 			{
-				if (u->whoami != KTracking && u->whoami != KVault) {
+				if (u->getPeerType() != KTracking && u->getPeerType() != KVault) {
 					err->log("ERR: %s sent a NetMsgPlayerTerminated but is neither tracking nor vault server. I\'ll kick him.\n", u->str());
 					return -2; // hack attempt
 				}
@@ -617,7 +612,7 @@ namespace alc {
 				log->log("<RCV> %s\n", playerTerminated.str());
 				
 				tNetSession *client = smgr->find(playerTerminated.ki);
-				if (!client || (client->whoami != KClient && client->whoami != 0)) {
+				if (!client || (client->getPeerType() != KClient && client->getPeerType() != 0)) {
 					err->log("ERR: I've got to kick the player with KI %d but can\'t find his session.\n", playerTerminated.ki);
 					return 1;
 				}

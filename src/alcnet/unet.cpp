@@ -83,7 +83,7 @@ void tUnet::init() {
 	unet_usec=0; //(microseconds)
 	idle_timer=5; // should be max. 10 seconds, may be overwritten by tUnetBase
 
-	conn_timeout=5*60; // default timeout for new sessions (seconds) (TODO: sensible to NetMsgSetTimeout)
+	conn_timeout=5*60; // default timeout for new sessions (seconds)
 	/* This sets the timeout for unet servers from both sides
 	It also sets the timeout for Uru clients, where a high timeout is necessary since the connection is already established when changing
 	the server in the shard list and when the timeout is only 5 seconds the client gets kicked off too fast. It will be changed
@@ -418,7 +418,7 @@ void tUnet::stopOp() {
 	initialized=false;
 }
 
-tNetSessionIte tUnet::netConnect(char * hostname,U16 port,Byte validation,Byte flags) {
+tNetSessionIte tUnet::netConnect(char * hostname,U16 port,Byte validation,Byte flags,Byte peerType) {
 	tNetSessionIte ite;
 	
 	struct sockaddr_in client;
@@ -450,6 +450,7 @@ tNetSessionIte tUnet::netConnect(char * hostname,U16 port,Byte validation,Byte f
 	u->timestamp.seconds=alcGetTime();
 	u->timestamp.microseconds=alcGetMicroseconds();
 	u->client=false;
+	if (peerType) u->whoami = peerType;
 	
 	u->max_version=max_version;
 	u->min_version=min_version;

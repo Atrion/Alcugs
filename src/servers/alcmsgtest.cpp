@@ -348,8 +348,10 @@ int main(int argc,char * argv[]) {
 		
 	} catch(txBase &t) {
 		printf("Exception %s\n%s\n",t.what(),t.backtrace());
+		return -1;
 	} catch(...) {
 		printf("Unknown Exception\n");
+		return -1;
 	}
 	
 	return 0;

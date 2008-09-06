@@ -165,7 +165,7 @@ namespace alc {
 	{
 		x = u->x;
 		ki = u->ki;
-		if (u->getTpots() != 2) // if it is TPOTS or we are unsure, use TPOTS mod
+		if (u->tpots != 2) // if it is TPOTS or we are unsure, use TPOTS mod
 			cmd = NetMsgActivePlayerSet2;
 	}
 	

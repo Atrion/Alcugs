@@ -928,7 +928,7 @@ void tNetSession::doWork() {
 		}
 		return;
 	}
-
+	
 	if(net->net_time>=next_msg_time) {
 		sndq->rewind();
 		tUnetUruMsg * curmsg = sndq->getNext();
@@ -1047,6 +1047,16 @@ void tNetSession::terminate(int tout)
 	terminated = true;
 	whoami = 0; // it's terminated, so it's no one special anymore
 	timestamp.now();
+}
+
+void tNetSession::setAuthData(Byte accessLevel, const Byte *passwd)
+{
+	this->client = true; // no matter how this connection was established, the peer definitely acts like a client
+	this->whoami = KClient; // it's a real client now
+	this->authenticated = 2; // the player is authenticated!
+	this->accessLevel = accessLevel;
+	strcpy((char *)this->passwd, (char *)passwd); // passwd is needed for validating packets
+	this->conn_timeout = 30; // 30sec, client should send an alive every 10sec
 }
 
 /* End session */

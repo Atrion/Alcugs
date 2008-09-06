@@ -112,7 +112,7 @@ protected:
 	void destroySession(tNetSessionIte &t);
 	void updateTimerRelative(U32 usecs);
 	inline void updateTimerAbs(U32 usecs) { updateTimerRelative(usecs-net_time); }
-	tNetSessionIte netConnect(char * hostname,U16 port,Byte validation,Byte flags);
+	tNetSessionIte netConnect(char * hostname,U16 port,Byte validation,Byte flags,Byte peerType=0);
 	int Recv();
 	U32 getTime() { return ntime.seconds; }
 	//max resolution 15 minutes

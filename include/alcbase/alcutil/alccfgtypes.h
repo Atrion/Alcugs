@@ -63,7 +63,7 @@ private:
 	U16 y; //rows
 	Byte flags; // 0x01 - with quotes
 	            // 0x02 - without quotes
-	friend class tConfigKey;
+	friend class tConfigKey; // for more efficient searching, tConfigKey needs direct access to the var name
 };
 
 /** \brief A configuration key, a group of several configuration values */
@@ -86,7 +86,7 @@ private:
 	tStrBuf name;
 	U16 n,off;
 	tConfigVal ** values;
-	friend class tConfig;
+	friend class tConfig; // for more efficient searching, tConfig needs direct access to the key name
 };
 
 

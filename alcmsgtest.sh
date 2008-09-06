@@ -1,22 +1,23 @@
 #!/bin/bash
+set -e
+
 FILE="src/alcnet/sql.cpp"
 PORT=31732
-if [ $1 ]; then
+if [ "$1" ]; then
 	PORT=$1
 fi
 # cleanup
 rm rcvmsg.raw -rf
 # start server
 ./alcmsgtest -lm -lh localhost -lp $PORT -nl &
-PID=`pidof alcmsgtest`
 sleep 1
 # send file
-./alcmsgtest localhost:$PORT -f $FILE > /dev/null
+./alcmsgtest localhost:$PORT -f $FILE
 sleep 1
 # kill server
 killall -s INT alcmsgtest
 sleep 2
-TEST=`ps -cp $PID | grep alcmsgtest`
+TEST="`pidof alcmsgtest || exit 0`" # avoid stopping the script if pidof fails
 if [ -n "$TEST" ]; then
 	echo "alcmsgtest did not exit within 2s"
 	exit 1

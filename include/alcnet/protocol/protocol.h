@@ -99,7 +99,7 @@ public:
 	void dumpheader(tLog * f);
 	void htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port); //ip, port in network order
 	tUnetUruMsg * next;
-private:
+
 	void _update();
 	U32 timestamp; //message stamp in usecs (to send)
 	U32 snd_timestamp; //original send stamp
@@ -121,8 +121,6 @@ private:
 	U32 cps; //!< combined last acked fragment and seq num
 	U32 dsize; //!< size of data / number of acks in the packet
 	tMBuf data;
-	friend class tUnet;
-	friend class tNetSession;
 };
 
 class tmBase :public tBaseType {
