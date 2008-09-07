@@ -68,7 +68,7 @@ void alcexception_tests() {
 		throw txBase("ooops");
 	} catch (txBase &t) {
 		std::cout<< "Cauth Exception " << t.what() << std::endl;
-		std::cout<< t.backtrace() << std::endl;
+		//std::cout<< t.backtrace() << std::endl;
 	}
 	DBG(2,"Continuing...\n");
 	
@@ -76,7 +76,7 @@ void alcexception_tests() {
 		throw txBase("generate a core",0,1);
 	} catch (txBase &t) {
 		std::cout<< "Cauth Exception " << t.what() << std::endl;
-		std::cout<< t.backtrace() << std::endl;
+		//std::cout<< t.backtrace() << std::endl;
 	}
 
 	try {
@@ -84,7 +84,7 @@ void alcexception_tests() {
 		my_func();
 	} catch (txBase &t) {
 		std::cout<< "Cauth Exception " << t.what() << std::endl;
-		std::cout<< t.backtrace() << std::endl;
+		//std::cout<< t.backtrace() << std::endl;
 	}
 }
 
@@ -98,7 +98,7 @@ void alctypes_mbuf() {
 		throw txBase("Verification Test Failed - expected txOutOfRange",1);
 	} catch( txOutOfRange &t) {
 		std::cout<< "Cauth Exception " << t.what() << std::endl;
-		std::cout<< t.backtrace() << std::endl;
+		//std::cout<< t.backtrace() << std::endl;
 	}
 	const Byte * a=(Byte *)"Hello World";
 	const SByte * b="Bye cruel world";
@@ -128,7 +128,7 @@ void alctypes_mbuf() {
 		throw txBase("expected txOutOfRange",1);
 	} catch( txOutOfRange &t) {
 		std::cout<< "Cauth Exception " << t.what() << std::endl;
-		std::cout<< t.backtrace() << std::endl;
+		//std::cout<< t.backtrace() << std::endl;
 	}
 	buf1.seek(0,SEEK_SET);
 	assert(buf1.tell()==0);
@@ -145,7 +145,7 @@ void alctypes_mbuf() {
 		dmalloc_verify(NULL);
 		std::cout<< "Cauth Exception " << t.what() << std::endl;
 		dmalloc_verify(NULL);
-		std::cout<< t.backtrace() << std::endl;
+		//std::cout<< t.backtrace() << std::endl;
 		dmalloc_verify(NULL);
 	}
 	dmalloc_verify(NULL);
@@ -162,12 +162,12 @@ void alctypes_mbuf() {
 		dmalloc_verify(NULL);
 		std::cout<< "Cauth Exception " << t.what() << std::endl;
 		dmalloc_verify(NULL);
-		std::cout<< t.backtrace() << std::endl;
+		//std::cout<< t.backtrace() << std::endl;
 	} catch( txOutOfRange &t) {
 		dmalloc_verify(NULL);
 		std::cout<< "Cauth Exception " << t.what() << std::endl;
 		dmalloc_verify(NULL);
-		std::cout<< t.backtrace() << std::endl;
+		//std::cout<< t.backtrace() << std::endl;
 	}
 	dmalloc_verify(NULL);
 	buf1.rewind();
@@ -177,7 +177,7 @@ void alctypes_mbuf() {
 		throw txBase("expected txUnexpectedData");
 	} catch( txUnexpectedData &t) {
 		std::cout<< "Cauth Exception " << t.what() << std::endl;
-		std::cout<< t.backtrace() << std::endl;
+		//std::cout<< t.backtrace() << std::endl;
 	}
 #if defined(WORDS_BIGENDIAN)
 	assert(letoh32(0x013478ab) == 0xab783401);
@@ -242,7 +242,7 @@ void alctypes_mbuf() {
 		throw txBase("expected txOutOfRange",1);
 	} catch( txOutOfRange &t) {
 		std::cout<< "Cauth Exception " << t.what() << std::endl;
-		std::cout<< t.backtrace() << std::endl;
+		//std::cout<< t.backtrace() << std::endl;
 	}
 	buf1--;
 	buf1++;
@@ -336,7 +336,7 @@ void alctypes_fbuf() {
 		throw txBase("expected txNotFound",1);
 	} catch( txNotFound &t) {
 		std::cout<< "Cauth Exception " << t.what() << std::endl;
-		std::cout<< t.backtrace() << std::endl;
+		//std::cout<< t.backtrace() << std::endl;
 	}
 	
 	f1.open("garbagedump.raw","wb");
@@ -447,10 +447,14 @@ void alctypes_part3() {
 	mdir.open(".");
 	tDirEntry * k;
 	
+	bool foundSrc = false, foundMake = false;
+	
 	while((k=mdir.getEntry())!=NULL) {
-		printf("%s - %u\n",k->name,k->type);
+		if (k->type == 4 && strcmp(k->name, "src")) foundSrc = true;
+		else if (k->type == 8 && strcmp(k->name, "Makefile.am")) foundMake = true;
+		//printf("%s - %u\n",k->name,k->type);
 	}
-
+	assert(foundSrc && foundMake);
 }
 
 void alctypes_part4() {
@@ -770,12 +774,12 @@ mproblem = \"this ' contains \\\" \\\\ some speical chars\"\n\
 	i=0;
 	while(!a.eof()) {
 		res=a.getLine();
-		printf("[a:%i] %s\n",i++,res.c_str());
+		//printf("[a:%i] %s\n",i++,res.c_str());
 	}
 	i=0;
 	while(!b.eof()) {
 		res=b.getLine();
-		printf("[b:%i] %s\n",i++,res.c_str());
+		//printf("[b:%i] %s\n",i++,res.c_str());
 	}
 	printf("by tokens now\n");
 	a.rewind();
@@ -783,12 +787,12 @@ mproblem = \"this ' contains \\\" \\\\ some speical chars\"\n\
 	i=0;
 	while(!a.eof()) {
 		res=a.getToken();
-		printf("[a:%i] %s\n",i++,res.c_str());
+		//printf("[a:%i] %s\n",i++,res.c_str());
 	}
 	i=0;
 	while(!b.eof()) {
 		res=b.getToken();
-		printf("[b:%i] %s\n",i++,res.c_str());
+		//printf("[b:%i] %s\n",i++,res.c_str());
 	}
 	//Ok, If we are here then seems that it worked - everybody is ok?
 	
@@ -939,10 +943,6 @@ int log_test() {
 
 int main(int argc, char * argv[]) {
 	std::cout << "Alcugs test suit" <<std::endl;
-	DBG(0,"Starting testing suit...\n");
-	
-	int i;
-	for (i=0; i<5; i++) {
 
 	try {
 		alcdebug_tests();
@@ -960,8 +960,6 @@ int main(int argc, char * argv[]) {
 	} catch (...) {
 		std::cout<< "Cauth Unknown Exception" <<std::endl;
 		return -1;
-	}
-	
 	}
 	
 	return 0;
