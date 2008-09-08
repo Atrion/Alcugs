@@ -38,10 +38,6 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCTHREAD_H_ID "$Id$"
 
-#ifdef ENABLE_THREADS
-#error Threads are not supported yet, please re-run ./reconf.sh and ./configure
-#endif
-
 namespace alc {
 
 	////DEFINITIONS
@@ -49,12 +45,14 @@ namespace alc {
 		If we want to do it well and nice, we should add pre and post conditions here.
 	*/
 
+#if 0
 #ifdef ENABLE_THREADS
 #define alcBeginCriticalSection(a) { static tMutex a; a.lock(); }
 #define alcEndCriticalSection(a)   a.unlock()
 #else
 #define alcBeginCriticalSection(a)
 #define alcEndCriticalSection(a)
+#endif
 #endif
 
 U32 alcGetSelfThreadId();
@@ -68,13 +66,13 @@ public:
 	virtual void main()=0;
 private:
 	bool spawned;
-	#ifdef ENABLE_THREADS
+#ifdef ENABLE_THREADS
 	#ifndef __WIN32__
 	pthread_t id;
 	#else
 	HANDLE id;
 	#endif
-	#endif
+#endif
 };
 
 class tMutex {
@@ -85,14 +83,14 @@ public:
 	bool trylock();
 	void unlock();
 private:
+#ifdef ENABLE_THREADS
 	bool islocked;
-	#ifdef ENABLE_THREADS
 	#ifndef __WIN32__
 	pthread_mutex_t id;
 	#else
 	HANDLE id;
 	#endif
-	#endif
+#endif
 };
 
 

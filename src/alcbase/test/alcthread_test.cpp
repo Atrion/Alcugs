@@ -39,20 +39,22 @@ tMutex gmutex;
 
 class tmyfunc :public tThread {
 public:
-	tmyfunc(int num,int timer) {
+	tmyfunc(int threadnum,int num,int timer) {
+		this->threadnum=threadnum;
 		this->num=num;
 		this->timer=timer;
 	}
 private:
 	int num;
 	int timer;
+	int threadnum;
 	virtual void main() {
 		int i;
 		for(i=0; i<num; i++) {
 			gmutex.lock();
-			lstd->log("I am a child thread  %i!\n",i);
+			lstd->log("I am a child thread %i: %i!\n",threadnum,i);
 			usleep(timer/4);
-			lstd->log("I am a child thread  %i!\n",i);
+			lstd->log("I am a child thread %i: %i!\n",threadnum,i);
 			gmutex.unlock();
 			usleep(timer);
 		}
@@ -68,20 +70,20 @@ int main(int argc, char * argv[]) {
 		lstd->log("Init...\n");
 		
 		tmyfunc * thread;
-		thread = new tmyfunc(50,2000);
+		thread = new tmyfunc(1,50,2000);
 		thread->spawn();
 		
 		tmyfunc * thread2;
-		thread2 = new tmyfunc(10,1000);
+		thread2 = new tmyfunc(2,10,1000);
 		thread2->spawn();
 
 		thread2->join();
 		int i;
 		for(i=0; i<100; i++) {
 			gmutex.lock();
-			lstd->log("I am the main thread %i!\n",i);
+			lstd->log("I am the main thread: %i!\n",i);
 			usleep(1000);
-			lstd->log("I am the main thread %i!\n",i);
+			lstd->log("I am the main thread: %i!\n",i);
 			gmutex.unlock();
 			usleep(5000);
 		}

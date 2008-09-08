@@ -71,9 +71,6 @@ U32 alcGetSelfThreadId() {
 #define THREAD_RET static unsigned __stdcall
 #endif
 
-//static unsigned __stdcall
-//static DWORD WINAPI
-
 THREAD_RET _alcThreadSpawner(void * s) {
 	tThread * t;
 	t=(tThread *)s;
@@ -86,13 +83,13 @@ THREAD_RET _alcThreadSpawner(void * s) {
 }
 
 tThread::tThread() {
-		spawned=false;
+	spawned=false;
 }
 tThread::~tThread() {
 	join();
 }
 void tThread::spawn() {
-	#ifdef ENABLE_THREADS
+#ifdef ENABLE_THREADS
 	if(spawned) return;
 	#ifndef __WIN32__
 	if(pthread_create(&id, NULL, _alcThreadSpawner,(void *)this)!=0) {
@@ -103,12 +100,12 @@ void tThread::spawn() {
 	if((int)id==-1) throw txBase(_WHERE("Cannot create thread"));
 	#endif
 	spawned=true;
-	#else //enable thread
+#else //enable thread
 	main();
-	#endif
+#endif
 }
 void tThread::join() {
-	#ifdef ENABLE_THREADS
+#ifdef ENABLE_THREADS
 	if(!spawned) return;
 	#ifndef __WIN32__
 	if(pthread_join(id,NULL)!=0) {
@@ -123,13 +120,13 @@ void tThread::join() {
 	}
 	#endif
 	spawned=false;
-	#else //enable threads
+#else //enable threads
 	//Noop
-	#endif
+#endif
 }
 
 tMutex::tMutex() {
-	#ifdef ENABLE_THREADS
+#ifdef ENABLE_THREADS
 	#ifndef __WIN32__
 	if(pthread_mutex_init(&id,NULL)!=0) {
 		throw txBase(_WHERE("error creating mutex"));
@@ -139,10 +136,10 @@ tMutex::tMutex() {
 	if(id==NULL) throw txBase(_WHERE("error creating mutex"));
 	#endif
 	islocked=false;
-	#endif
+#endif
 }
 tMutex::~tMutex() {
-	#ifdef ENABLE_THREADS
+#ifdef ENABLE_THREADS
 	unlock();
 	#ifndef __WIN32__
 	if(pthread_mutex_destroy(&id)!=0) {
@@ -153,10 +150,10 @@ tMutex::~tMutex() {
 		throw txBase(_WHERE("error destroying mutex"));
 	}
 	#endif
-	#endif
+#endif
 }
 void tMutex::lock() {
-	#ifdef ENABLE_THREADS
+#ifdef ENABLE_THREADS
 	#ifndef __WIN32__
 	if(pthread_mutex_lock(&id)!=0) {
 		throw txBase(_WHERE("cannot lock mutex"));
@@ -167,10 +164,10 @@ void tMutex::lock() {
 	}
 	#endif
 	islocked=true;
-	#endif
+#endif
 }
 bool tMutex::trylock() {
-	#ifdef ENABLE_THREADS
+#ifdef ENABLE_THREADS
 	int retval;
 	#ifndef __WIN32__
 	retval=pthread_mutex_trylock(&id);
@@ -186,12 +183,12 @@ bool tMutex::trylock() {
 	}
 	#endif
 	islocked=true;
-	#endif
+#endif
 	return 1;
 }
 void tMutex::unlock() {
-	#ifdef ENABLE_THREADS
-	if(!islocked) return;
+#ifdef ENABLE_THREADS
+	if(!islocked) return; // if we don't do this check, pthread_mutex_unlock will fail if the mutex is not actually locked
 	islocked=false;
 	#ifndef __WIN32__
 	if(pthread_mutex_unlock(&id)!=0) {
@@ -202,7 +199,7 @@ void tMutex::unlock() {
 		throw txBase(_WHERE("cannot unlock mutex"));
 	}
 	#endif
-	#endif
+#endif
 }
 
 } //end namespace alc
