@@ -51,11 +51,12 @@ private:
 	virtual void main() {
 		int i;
 		for(i=0; i<num; i++) {
-			gmutex.lock();
-			lstd->log("I am a child thread %i: %i!\n",threadnum,i);
-			usleep(timer/4);
-			lstd->log("I am a child thread %i: %i!\n",threadnum,i);
-			gmutex.unlock();
+			{
+				tMutexLock lock(gmutex);
+				lstd->log("I am a child thread %i: %i!\n",threadnum,i);
+				usleep(timer/4);
+				lstd->log("I am a child thread %i: %i!\n",threadnum,i);
+			}
 			usleep(timer);
 		}
 	}
@@ -79,12 +80,13 @@ int main(int argc, char * argv[]) {
 
 		thread2->join();
 		int i;
-		for(i=0; i<100; i++) {
-			gmutex.lock();
-			lstd->log("I am the main thread: %i!\n",i);
-			usleep(1000);
-			lstd->log("I am the main thread: %i!\n",i);
-			gmutex.unlock();
+		for(i=0; i<50; i++) {
+			{
+				tMutexLock lock(gmutex);
+				lstd->log("I am the main thread: %i!\n",i);
+				usleep(1000);
+				lstd->log("I am the main thread: %i!\n",i);
+			}
 			usleep(5000);
 		}
 		thread->join();

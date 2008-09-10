@@ -79,17 +79,16 @@ void tUnetBase::reconfigure() {
 	if(!var.isNull()) {
 		setIdleTimer(var.asByte());
 	}
+#ifdef ENABLE_THREADS
 	//Set pool size
 	var=cfg->getVar("net.pool.size","global");
 	if(var.isNull()) {
 		pool_size=4; //Set up 4 worker threads by default (may be changed)
 	} else {
 		pool_size=var.asByte();
+		if(pool_size<=0) pool_size=1;
 	}
-	#ifndef ENABLE_THREADS
-	pool_size=1;
-	#endif
-	if(pool_size==0) pool_size=1;
+#endif
 	var=cfg->getVar("net.maxconnections","global");
 	if(!var.isNull()) {
 		max=var.getU32();

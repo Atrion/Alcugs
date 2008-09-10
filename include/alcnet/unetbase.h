@@ -141,7 +141,9 @@ private:
 	void reconfigure();
 	bool state_running;
 	Byte stop_timeout;
+#ifdef ENABLE_THREADS
 	Byte pool_size;
+#endif
 };
 
 

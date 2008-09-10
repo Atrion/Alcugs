@@ -73,6 +73,10 @@ private:
 	HANDLE id;
 	#endif
 #endif
+	
+	// prevent copying
+	tThread(const tThread &);
+	tThread &operator=(const tThread &);
 };
 
 class tMutex {
@@ -91,8 +95,34 @@ private:
 	HANDLE id;
 	#endif
 #endif
+	
+	// prevent copying
+	tMutex(const tMutex &);
+	tMutex &operator=(const tMutex &);
 };
 
+class tMutexLock {
+public:
+	inline tMutexLock(tMutex &mutex) {
+#ifdef ENABLE_THREADS
+		this->mutex = &mutex;
+		this->mutex->lock();
+#endif
+	}
+	inline ~tMutexLock(void) {
+#ifdef ENABLE_THREADS
+		mutex->unlock();
+#endif
+	}
+private:
+#ifdef ENABLE_THREADS
+	tMutex *mutex;
+#endif
+	
+	// prevent copying
+	tMutexLock(const tMutexLock &);
+	tMutexLock &operator=(const tMutexLock &);
+};
 
 
 

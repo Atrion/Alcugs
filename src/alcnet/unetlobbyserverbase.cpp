@@ -505,12 +505,12 @@ namespace alc {
 					send(vaultMsgFwd);
 				}
 				else { // got it from a client
-					if (vaultMsg.hasFlags(plNetKi) && vaultMsg.ki != u->ki)
-						throw txProtocolError(_WHERE("KI mismatch (%d != %d)", vaultMsg.ki, u->ki));
 					if (u->getPeerType() != KClient || u->ki == 0) { // KI is necessary to know where to route it
 						err->log("ERR: %s sent a NetMsgVault but is not yet authed or did not set his KI. I\'ll kick him.\n", u->str());
 						return -2; // hack attempt
 					}
+					if (vaultMsg.hasFlags(plNetKi) && vaultMsg.ki != u->ki)
+						throw txProtocolError(_WHERE("KI mismatch (%d != %d)", vaultMsg.ki, u->ki));
 					// forward it to the vault server
 					tNetSession *vaultServer = getSession(vault);
 					if (!vaultServer) {

@@ -188,7 +188,7 @@ bool tMutex::trylock() {
 }
 void tMutex::unlock() {
 #ifdef ENABLE_THREADS
-	if(!islocked) return; // if we don't do this check, pthread_mutex_unlock will fail if the mutex is not actually locked
+	if(!islocked) return; // we must never unlock an unlocked mutex, or destroying it will fail
 	islocked=false;
 	#ifndef __WIN32__
 	if(pthread_mutex_unlock(&id)!=0) {
