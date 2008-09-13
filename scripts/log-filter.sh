@@ -1,5 +1,4 @@
 #!/bin/sh
-set -e
 
 # called with the parameter "problems", this script shows the full error log as well as all warnings, errors etc. printed in other log files
 # called with "infos", it shows everything marked as information
