@@ -213,12 +213,15 @@ namespace alc {
 		for (int i = 0; i < nVmgrs; ++i) {
 			if (vmgrs[i] && vmgrs[i]->ki == status.ki) {
 				if (status.state) vmgrs[i]->session = status.getSession()->getIte();
+#if 0
+// this makes püroblems if a palyer crashed and now comes back - the unet2 game server reports it as offline and immedtialey online again
 				else {
 					delete vmgrs[i];
 					vmgrs[i] = NULL;
 					checkShrink = true; // check if the array can be srhunken
 					log->log("WARN: Player with KI %d just went offline but still had a vmgr registered... removing it\n", status.ki);
 				}
+#endif
 			}
 		}
 		if (checkShrink) {
