@@ -455,7 +455,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 				//  will not result in an endless loop of negos being exchanged)
 				resetMsgCounters();
 				if (msg.sn != 1 || msg.ps != 0) {
-					net->err->log("ERR: Got a nego with a sn of %d (expected 1) and a previous ack of %d (expected 0)\n", msg.sn, msg.ps);
+					net->err->log("%s ERR: Got a nego with a sn of %d (expected 1) and a previous ack of %d (expected 0)\n", str(), msg.sn, msg.ps);
 					clientPs = msg.ps; // the nego marks the beginning of a new connection, so accept everything from here on
 				}
 				DBG(5,"Clearing buffers\n");
