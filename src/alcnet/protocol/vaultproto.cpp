@@ -53,20 +53,20 @@ namespace alc {
 	////IMPLEMENTATION
 	
 	//// tvAgeInfoStruct
-	tvAgeInfoStruct::tvAgeInfoStruct(const char *fileName, const char *instanceName, const char *userDefName, const char *displayName, const Byte *guid) : tvBase()
+	tvAgeInfoStruct::tvAgeInfoStruct(const char *filename, const char *instanceName, const char *userDefName, const char *displayName, const Byte *guid) : tvBase()
 	{
-		flags = 0x01 | 0x02 | 0x04 | 0x08 | 0x20; // instanceName, fileName, GUID, user defined name, display name
-		this->fileName.writeStr(fileName);
+		flags = 0x01 | 0x02 | 0x04 | 0x08 | 0x20; // instanceName, filename, GUID, user defined name, display name
+		this->filename.writeStr(filename);
 		this->instanceName.writeStr(instanceName);
 		this->userDefName.writeStr(userDefName);
 		this->displayName.writeStr(displayName);
 		memcpy(this->guid, guid, 8);
 	}
 	
-	tvAgeInfoStruct::tvAgeInfoStruct(const char *fileName, const Byte *guid) : tvBase()
+	tvAgeInfoStruct::tvAgeInfoStruct(const char *filename, const Byte *guid) : tvBase()
 	{
-		flags =  0x02 | 0x04; // fileName, GUID
-		this->fileName.writeStr(fileName);
+		flags =  0x02 | 0x04; // filename, GUID
+		this->filename.writeStr(filename);
 		memcpy(this->guid, guid, 8);
 	}
 	
@@ -94,14 +94,14 @@ namespace alc {
 		if (!(flags & 0x02)) // this must always be set (filename)
 			throw txProtocolError(_WHERE("the 0x02 flag must always be set in AgeInfoStruct"));
 		
-		t.get(fileName);
+		t.get(filename);
 		
 		if (flags & 0x01) // instance name
 			t.get(instanceName);
 		else { // instance name disabled
 			throw txProtocolError(_WHERE("instance name flag not set... what to do?"));
 #if 0
-			instanceName = fileName;
+			instanceName = filename;
 			flags |= 0x01;
 #endif
 		}
@@ -133,7 +133,7 @@ namespace alc {
 		// see store for description of flags
 		t.putByte(flags);
 		
-		t.put(fileName);
+		t.put(filename);
 		
 		if (flags & 0x01) // instance name
 			t.put(instanceName);
@@ -154,7 +154,7 @@ namespace alc {
 	const Byte *tvAgeInfoStruct::str(void)
 	{
 		dbg.clear();
-		dbg.printf("Filename: %s", fileName.c_str());
+		dbg.printf("Filename: %s", filename.c_str());
 		if (flags & 0x01) // instance name
 			dbg.printf(", Instance Name: %s", instanceName.c_str());
 		if (flags & 0x04) // GUID

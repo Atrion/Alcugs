@@ -567,7 +567,7 @@ namespace alc {
 					return 1;
 				}
 				
-				tmCustomFindServer findServer(trackingServer, u->ki, u->getSid(), u->getIp(), u->getPort(), alcGetStrGuid(ageLink.ageInfo.guid), ageLink.ageInfo.fileName.c_str());
+				tmCustomFindServer findServer(trackingServer, u->ki, u->getSid(), u->getIp(), u->getPort(), alcGetStrGuid(ageLink.ageInfo.guid), ageLink.ageInfo.filename.c_str());
 				send(findServer);
 				
 				return 1;

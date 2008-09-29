@@ -206,8 +206,8 @@ namespace alc {
 	
 	class tvAgeInfoStruct : public tvBase {
 	public:
-		tvAgeInfoStruct(const char *fileName, const char *instanceName, const char *userDefName, const char *displayName, const Byte *guid);
-		tvAgeInfoStruct(const char *fileName, const Byte *guid);
+		tvAgeInfoStruct(const char *filename, const char *instanceName, const char *userDefName, const char *displayName, const Byte *guid);
+		tvAgeInfoStruct(const char *filename, const Byte *guid);
 		tvAgeInfoStruct(const tvAgeInfoStruct &);
 		tvAgeInfoStruct(void) : tvBase() { }
 		virtual void store(tBBuf &t);
@@ -216,7 +216,7 @@ namespace alc {
 		const Byte *str(void);
 		// format
 		Byte flags;
-		tUStr fileName, instanceName;
+		tUStr filename, instanceName;
 		Byte guid[8];
 		tUStr userDefName, displayName;
 		U32 language;

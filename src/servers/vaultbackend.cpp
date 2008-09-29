@@ -295,7 +295,7 @@ namespace alc {
 			alcAscii2Hex(guid, status.serverGuid.c_str(), 8);
 			tvAgeInfoStruct ageInfo((char *)status.age.c_str(), guid);
 			tvSpawnPoint spawnPoint("Default", "LinkInPointDefault");
-			log->log("Linking rule hack: adding link to %s to player %d\n", ageInfo.fileName.c_str(), status.ki);
+			log->log("Linking rule hack: adding link to %s to player %d\n", ageInfo.filename.c_str(), status.ki);
 			U32 ageInfoNode = getAge(ageInfo); // create if necessary
 			addAgeLinkToPlayer(status.ki, ageInfoNode, spawnPoint, /*noUpdate*/true);
 		}
@@ -366,16 +366,16 @@ namespace alc {
 				case 13: // GenericValue.Int: Parent of a NodeRef
 					nodeParent = itm->asInt();
 					break;
-				case 16: // GenericValue.Int: must always be 0 or 1 (seen in FindNode)
+				case 16: // GenericValue.Int: must always be 0 or 1 (1 seen in FindNode)
 					if (itm->asInt() != 0 && itm->asInt() != 1)
 						throw txProtocolError(_WHERE("a vault item with ID 16 must always have a value of 0 or 1 but I got %d", itm->asInt()));
 					break;
 				case 19: // GenericValue.Int: Set Seen flag
 					seenFlag = itm->asInt();
 					break;
-				case 20: // GenericValue.Int: must always be the same
-					if (itm->asInt() != -1)
-						throw txProtocolError(_WHERE("a vault item with ID 20 must always have a value of -1 but I got %d", itm->asInt()));
+				case 20: // GenericValue.Int: must always be the -1 or 0 (0 seen in NegotiateManifest when client gets Ahnonay SDL to update current Sphere)
+					if (itm->asInt() != -1 && itm->asInt() != 0)
+						throw txProtocolError(_WHERE("a vault item with ID 20 must always have a value of -1 or 0 but I got %d", itm->asInt()));
 					break;
 				case 21: // GenericValue.UruString: age name
 					ageName = itm->asString();
@@ -716,14 +716,14 @@ namespace alc {
 				if (ki != msg.vmgr)
 					throw txProtocolError(_WHERE("the vmgr of a TRegisterOwnedAge task must be the player's KI, but %d != %d", ki, msg.vmgr));
 				if (!ageLink) throw txProtocolError(_WHERE("the age link must be set for a TRegisterOwnedAge"));
-				log->log("TRegisterOwnedAge (age filename: %s) from %d\n", ageLink->ageInfo.fileName.c_str(), msg.vmgr);
+				log->log("TRegisterOwnedAge (age filename: %s) from %d\n", ageLink->ageInfo.filename.c_str(), msg.vmgr);
 				
 				// if necessary, generate the guid
 				Byte zeroGuid[8];
 				memset(zeroGuid, 0, 8);
 				if (memcmp(ageLink->ageInfo.guid, zeroGuid, 8) == 0) {
 					// this happens for the Watcher's Guild link which is created "on the fly" as Relto expects it
-					if (!guidGen->generateGuid(ageLink->ageInfo.guid, ageLink->ageInfo.fileName.c_str(), msg.vmgr))
+					if (!guidGen->generateGuid(ageLink->ageInfo.guid, ageLink->ageInfo.filename.c_str(), msg.vmgr))
 						throw txProtocolError(_WHERE("could not generate GUID"));
 				}
 				
@@ -764,7 +764,7 @@ namespace alc {
 			case TRegisterVisitAge:
 			{
 				if (!ageLink) throw txProtocolError(_WHERE("the age link must be set for a TRegisterVisitAge"));
-				log->log("TRegisterVisitAge (age filename: %s) from %d to %d\n", ageLink->ageInfo.fileName.c_str(), ki, msg.vmgr);
+				log->log("TRegisterVisitAge (age filename: %s) from %d to %d\n", ageLink->ageInfo.filename.c_str(), ki, msg.vmgr);
 				
 				// msg.vmgr is the reciever's KI, ki the sender's one
 				
@@ -810,9 +810,9 @@ namespace alc {
 		// search for the age
 		node = new tvNode(MType | MStr64_4);
 		node->type = KAgeInfoNode;
-		if (ageInfo.fileName.size() > 0) {
+		if (ageInfo.filename.size() > 0) {
 			node->flagB |= MStr64_1;
-			node->str1 = ageInfo.fileName;
+			node->str1 = ageInfo.filename;
 		}
 		node->str4.writeStr(alcGetStrGuid(ageInfo.guid));
 		U32 ageInfoNode = vaultDB->findNode(*node);
@@ -839,7 +839,7 @@ namespace alc {
 		node = new tvNode(MType | MUInt32_1 | MStr64_1 | MStr64_2 | MStr64_3 | MStr64_4 | MText_1);
 		node->type = KAgeInfoNode;
 		node->uInt1 = ageMgrNode;
-		node->str1 = ageInfo.fileName;
+		node->str1 = ageInfo.filename;
 		node->str2 = ageInfo.instanceName;
 		node->str3 = ageInfo.userDefName;
 		node->str4.writeStr(alcGetStrGuid(ageInfo.guid));
