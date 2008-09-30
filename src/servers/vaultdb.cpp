@@ -811,7 +811,7 @@ namespace alc {
 		int auxIndex, feedIndex;
 		
 		// get base node
-		sprintf(query, "SELECT idx, mod_time FROM %s WHERE idx='%d'", vaultTable, baseNode);
+		sprintf(query, "SELECT idx, mod_time FROM %s WHERE idx='%d' LIMIT 1", vaultTable, baseNode);
 		sql->query(query, "getManifest: getting first node");
 		
 		result = sql->storeResult();
@@ -970,7 +970,7 @@ namespace alc {
 		nFeed = 1;
 		
 		// check if the node we're talking about is a MGR itself (it has to be added ti the list then)
-		sprintf(query, "SELECT type FROM %s WHERE idx='%d'", vaultTable, baseNode);
+		sprintf(query, "SELECT type FROM %s WHERE idx='%d' LIMIT 1", vaultTable, baseNode);
 		sql->query(query, "getMGRs: node type");
 		result = sql->storeResult();
 		
@@ -1219,7 +1219,7 @@ namespace alc {
 		MYSQL_RES *result;
 		
 		// first check if this ref already exists
-		sprintf(query, "SELECT id1 FROM %s WHERE id2='%d' AND id3='%d'", refVaultTable, ref.parent, ref.child);
+		sprintf(query, "SELECT id1 FROM %s WHERE id2='%d' AND id3='%d' LIMIT 1", refVaultTable, ref.parent, ref.child);
 		sql->query(query, "addNodeRef: checking for ref");
 		result = sql->storeResult();
 		if (!result) throw txDatabaseError(_WHERE("couldn't check for ref"));
@@ -1260,7 +1260,7 @@ namespace alc {
 		mysql_free_result(result);
 		
 		// get node type
-		sprintf(query, "SELECT type FROM %s WHERE idx='%d'", vaultTable, son);
+		sprintf(query, "SELECT type FROM %s WHERE idx='%d' LIMIT 1", vaultTable, son);
 		sql->query(query, "removeNodeRef: node type");
 		result = sql->storeResult();
 		
@@ -1442,7 +1442,45 @@ namespace alc {
 		mysql_free_result(result);
 	}
 	
-	void tVaultDB::clean(void)
+	bool tVaultDB::isLostAge(int id)
+	{
+		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		
+		// look for age info node (which must be a direct child)
+		char query[1024];
+		MYSQL_RES *result;
+		MYSQL_ROW row;
+		
+		int ageInfo = 0;
+		
+		// check if there is an age info node
+		sprintf(query, "SELECT n.idx FROM %s n LEFT JOIN %s r ON n.idx = r.id3 WHERE r.id2 = '%d' AND n.type='%d' LIMIT 1", vaultTable, refVaultTable, id, KAgeInfoNode);
+		sql->query(query, "tVaultDB::isLostAge: Looking for age info node");
+		result = sql->storeResult();
+		
+		if (result == NULL) throw txDatabaseError(_WHERE("couldn't look for age info node"));
+		int num = mysql_num_rows(result);
+		
+		if (num == 1) {
+			row = mysql_fetch_row(result);
+			ageInfo = atoi(row[0]);
+		}
+		mysql_free_result(result);
+		if (!num || !ageInfo) return true; // no age info node, the age is lost
+		
+		// check if the age info node is referenced from anywhere else
+		sprintf(query, "SELECT id2 FROM %s WHERE id3 = '%d' LIMIT 2", refVaultTable, ageInfo);
+		sql->query(query, "tVaultDB::isLostAge: Looking for references to age info node");
+		result = sql->storeResult();
+		
+		if (result == NULL) throw txDatabaseError(_WHERE("couldn't look for references to age info node"));
+		num = mysql_num_rows(result);
+		if (num < 1) throw txDatabaseError(_WHERE("First I found the node, then there's no reference to it? This can't happen"));
+		mysql_free_result(result);
+		return (num == 1); // if there's only one reference, the age is lost, otherwise, it isn't
+	}
+	
+	void tVaultDB::clean(bool cleanAges)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
@@ -1451,6 +1489,28 @@ namespace alc {
 		MYSQL_ROW row;
 		
 		removeInvalidRefs();
+		
+		// if enabled, remove lost ages
+		if (cleanAges) {
+			lstd->log("Cleaning up: Looking for lost ages...\n");
+		
+			sprintf(query, "SELECT idx, str_1 FROM %s WHERE type = '%d'", vaultTable, KVNodeMgrAgeNode);
+			sql->query(query, "tVaultDB::clean: Finding age MGRs");
+			result = sql->storeResult();
+			
+			if (result == NULL) throw txDatabaseError(_WHERE("couldn't get age MGRs"));
+			int num = mysql_num_rows(result);
+			
+			for (int i = 0; i < num; ++i) {
+				row = mysql_fetch_row(result);
+				int id = atoi(row[0]);
+				if (isLostAge(id)) {
+					lstd->log("Age MGR %s is lost, removing it...\n", row[1]);
+					removeNodeTree(id, /*cautious*/false);
+				}
+			}
+			mysql_free_result(result);
+		}
 		
 		// check for the admin node - if it does not exist, the AllPlayers folder has no parent and we can not remove lost nodes
 		tvNode node(MType);
@@ -1461,6 +1521,7 @@ namespace alc {
 			lerr->print("Please log in once with the VaultManager (which will create that node) and try again.\n\n");
 		}
 		else {
+			lstd->log("Cleaning up: Looking for lost nodes...\n");
 			// find lost nodes and remove them
 			// a lost node is a node without a parent and which is not a mgr
 			sprintf(query, "SELECT n.idx FROM %s n LEFT JOIN %s r ON n.idx = r.id3 "
@@ -1471,10 +1532,12 @@ namespace alc {
 			if (result == NULL) throw txDatabaseError(_WHERE("couldn't get lost nodes"));
 			int num = mysql_num_rows(result);
 			
-			lstd->log("Cleaning up: Removing %d lost nodes...\n", num);
-			for (int i = 0; i < num; ++i) {
-				row = mysql_fetch_row(result);
-				removeNodeTree(atoi(row[0]), /*cautious*/false);
+			if (num > 0) {
+				lstd->log("Cleaning up: Removing %d lost nodes...\n", num);
+				for (int i = 0; i < num; ++i) {
+					row = mysql_fetch_row(result);
+					removeNodeTree(atoi(row[0]), /*cautious*/false);
+				}
 			}
 			mysql_free_result(result);
 		}

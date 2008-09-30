@@ -71,7 +71,9 @@ namespace alc {
 				lerr->log("I will only clean the vault in interactive mode to give you more feedback\n");
 				return;
 			}
-			vaultBackend->cleanVault();
+			var = cfg->getVar("vault.clean.ages");
+			bool cleanAges = !var.isNull() && var.asByte(); // disabled per default
+			vaultBackend->cleanVault(cleanAges);
 			forcestop(); // don't let the server run, we started just for cleaning
 		}
 	}

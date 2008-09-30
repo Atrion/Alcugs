@@ -1186,10 +1186,10 @@ namespace alc {
 		free((void *)table);
 	}
 	
-	void tVaultBackend::cleanVault(void)
+	void tVaultBackend::cleanVault(bool cleanAges)
 	{
 		log->log("Cleaning up the vault. I hope you did a backup first! Now it's too late though...\n");
-		vaultDB->clean();
+		vaultDB->clean(cleanAges);
 	}
 
 } //end namespace alc

@@ -94,7 +94,7 @@ namespace alc {
 		void getReferences(U32 node, tvNodeRef ***ref, int *nRef); // this is a pointer to an array of pointers
 		
 		/** removes all lost nodes and their subnodes */
-		void clean(void);
+		void clean(bool cleanAges);
 	private:
 		/** creates a query to SELECT (isUpdate = false) or UPDATE (isUpdate = true) that vault node
 		    the query is appended (using strcat) to out which must be big enough
@@ -107,6 +107,7 @@ namespace alc {
 		void convertIntToTimestamp(const char *table, const char *intColumn, const char *timestampColumn);
 		void convertIntToDouble(const char *table, const char *intColumn, const char *doubleColumn);
 		void removeInvalidRefs(void);
+		bool isLostAge(int id);
 		
 		tSQL *sql;
 		tLog *log;
