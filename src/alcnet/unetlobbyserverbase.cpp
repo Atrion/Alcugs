@@ -546,8 +546,8 @@ namespace alc {
 				if (!findAge.message.eof()) throw txProtocolError(_WHERE("Got a NetMsgFindAge which is too long"));
 				log->print(" %s\n", ageLink.str());
 				
-				if (ageLink.linkingRule != KOriginalBook && ageLink.linkingRule != KOwnedBook && ageLink.linkingRule != KBasicLink)
-					throw txProtocolError(_WHERE("Linking rule must be KOriginalBook, KOwnedBook or KBasicLink but is 0x%02X", ageLink.linkingRule));
+				if (ageLink.linkingRule != KOriginalBook && ageLink.linkingRule != KOwnedBook && ageLink.linkingRule != KBasicLink && ageLink.linkingRule != KVisitBook)
+					throw txProtocolError(_WHERE("Linking rule must be KOriginalBook, KOwnedBook, KVisitBook or KBasicLink but is 0x%02X", ageLink.linkingRule));
 				if (ageLink.ccr)
 					throw txProtocolError(_WHERE("Linking as CCR is not allowed"));
 				

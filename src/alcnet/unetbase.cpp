@@ -431,7 +431,6 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool 
 		}
 		case NetMsgTerminated:
 		{
-			if (u->isTerminated() || shutdown) return 0; // don't accept a NetMsgTerminated on already terminated sessions
 			// accept it even if it IS a client - in that case, the peer obviously thinks it is a server, so lets respect its wish, it doesn't harm
 			tmTerminated msgterminated(u);
 			msg->data->get(msgterminated);
@@ -443,7 +442,7 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool 
 		}
 		case NetMsgAlive:
 		{
-			if (u->isTerminated()) return 0; // don't accept a NetMsgAlive on already terminated sessions
+			if (u->isTerminated() || shutdown) return 0; // don't accept a NetMsgAlive on already terminated sessions
 			tmAlive alive(u);
 			msg->data->get(alive);
 			log->log("<RCV> %s\n",alive.str());
