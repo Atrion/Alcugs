@@ -220,7 +220,7 @@ tNetSessionIte tNetSession::getIte() {
 	puts the message in the session's send queue
 */
 void tNetSession::send(tmBase &msg) {
-#ifndef ENABLE_ACKDEBUG
+#ifndef ENABLE_ACKLOG
 	if (!(msg.bhflags & UNetAckReply))
 #endif
 		net->log->log("<SND> %s\n",msg.str());
@@ -851,7 +851,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 	if (t.tf & UNetExt) ackMsg.bhflags |= UNetExt; // tmNetAck has to know that it reads an extended packet
 	t.data.rewind();
 	t.data.get(ackMsg);
-#ifdef ENABLE_ACKDEBUG
+#ifdef ENABLE_ACKLOG
 	net->log->log("<RCV> [%d] %s\n", t.sn, ackMsg.str());
 #endif
 	tUnetAck *ack;
