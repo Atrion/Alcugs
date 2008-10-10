@@ -499,17 +499,17 @@ void tmNetClientComm::stream(tBBuf &t) {
 	t.put(timestamp);
 }
 const Byte * tmNetClientComm::str() {
-	#ifdef ENABLE_MSGLOG
 	static Byte cnt[1024];
+#ifdef ENABLE_MSGLOG
 	sprintf((char *)cnt,"(Re)Negotation bandwidth: %i bps time: %s",bandwidth,(char *)timestamp.str());
+#else
+	sprintf((char *)cnt,"(Re)Negotation");
+#endif
 	if (s) { // don't use sprintf(cnt, "%s", cnt), valgrind shows a "Source and destination overlap in mempcpy"
 		strcat((char *)cnt, " on ");
 		strcat((char *)cnt, s->str());
 	}
 	return cnt;
-	#else
-	return (Byte *)"Negotiation";
-	#endif
 }
 
 // Ack
@@ -749,10 +749,13 @@ void tmMsgBase::copyProps(tmMsgBase &t) {
 	}
 }
 const Byte * tmMsgBase::str() {
-	#ifdef ENABLE_MSGLOG
 	dbg.clear();
-	dbg.printf("%s %04X %08X",alcUnetGetMsgCode(cmd),cmd,flags);
+	dbg.printf("%s",alcUnetGetMsgCode(cmd));
+#ifdef ENABLE_MSGLOG
+	dbg.printf(" %04X %08X",cmd,flags);
+#endif
 	dbg.printf(" on %s", u->str());
+#ifdef ENABLE_MSGLOG
 	dbg.printf("\n Flags:");
 	if(flags & plNetAck)
 		dbg.writeStr(" ack,");
@@ -787,10 +790,8 @@ const Byte * tmMsgBase::str() {
 	dbg.seek(-1); // remove the last comma
 	additionalFields();
 	dbg.putByte(0); // this is necessary because of the seek() call
+#endif
 	return dbg.c_str();
-	#else
-	return (Byte *)alcUnetGetMsgCode(cmd);
-	#endif
 }
 
 const char * alcUnetGetRelease(Byte rel) {

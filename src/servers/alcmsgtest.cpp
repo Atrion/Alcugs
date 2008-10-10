@@ -212,7 +212,7 @@ int tUnetSimpleFileServer::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSessi
 			if(listen!=0) {
 				tmData data(u);
 				msg->data->get(data);
-				log->log("<RCV> %s\n", data.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, data.str());
 				printf("Saving file to rcvmsg.raw...\n");
 				tFBuf f1;
 				f1.open("rcvmsg.raw","wb");

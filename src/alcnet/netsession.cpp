@@ -440,8 +440,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		tmNetClientComm comm(this);
 		msg.data.rewind();
 		msg.data.get(comm);
-		net->log->log("<RCV> ");
-		net->log->print("%s",(const char *)comm.str());
+		net->log->log("<RCV> [%d] %s",msg.sn,comm.str());
 		bandwidth=comm.bandwidth;
 		if(renego_stamp==comm.timestamp) { // it's a duplicate, we already got this message
 		    // It is necessary to do the check this way since the usual check by SN would treat a nego on an existing connection as
@@ -505,7 +504,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		ackCheck(msg);
 		if(authenticated==2) authenticated=1;
 	}
-	// if it is ok parse the packet, do that
+	// if it is ok to parse the packet, do that
 	else if (ret == 0 && !(msg.tf & UNetAckReply)) {
 		//flood control
 		if((msg.tf & UNetAckReq) && (msg.frn==0) && (net->flags & UNET_NOFLOOD)) {
@@ -568,7 +567,7 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 		msg->frt=t.frt;
 		msg->hsize=t.hSize();
 		rcvq->add(msg);
-		msg->data->setSize((t.frt +1) * frg_size);
+		msg->data->setSize((t.frt +1) * frg_size); // now the buffer thinks its full of data
 	}
 	msg->stamp=net->ntime.seconds;
 	if(msg->frt!=t.frt || msg->hsize!=t.hSize()) throw(txProtocolError(_WHERE("Inconsistency on fragmented stream %i %i %i %i",msg->frt,t.frt,msg->hsize,t.hSize())));
@@ -578,7 +577,7 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 		msg->check[t.frn/8] |= (0x01<<(t.frn%8));
 		
 		if(t.frn==t.frt) { 
-			msg->data->setSize((t.frt * frg_size) + t.data.size());
+			msg->data->setSize((t.frt * frg_size) + t.data.size()); // correctly set the size of the whole message
 		}
 		
 		msg->data->set(t.frn * frg_size);
@@ -853,7 +852,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 	t.data.rewind();
 	t.data.get(ackMsg);
 #ifdef ENABLE_ACKDEBUG
-	net->log->log("<RCV> %s\n", ackMsg.str());
+	net->log->log("<RCV> [%d] %s\n", t.sn, ackMsg.str());
 #endif
 	tUnetAck *ack;
 	ackMsg.ackq->rewind();

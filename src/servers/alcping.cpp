@@ -168,11 +168,12 @@ void tUnetPing::onStop() {
 int tUnetPing::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
 	int ret=0;
 
-	tmPing ping(u);
-
 	switch(msg->cmd) {
 		case NetMsgPing:
+		{
+			tmPing ping(u);
 			msg->data->get(ping);
+			log->log("<RCV> [%d] %s\n", msg->sn, ping.str());
 			if(listen==0) {
 				if(dstite==ev->sid) {
 					current=alcGetCurrentTime();
@@ -195,6 +196,7 @@ int tUnetPing::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
 			}
 			ret=1;
 			break;
+		}
 		default:
 			if(listen==0) {
 				ret=1;

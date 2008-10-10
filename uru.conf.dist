@@ -49,7 +49,7 @@
 
 # the bind adress for lobby and game servers (i.e. the IP of the interface to the router)
 bind = "127.0.0.1"
-# the address others use to connect to your server (i.e. your external address)
+# the address others use to connect to your server (i.e. your external address - can be a hostname)
 public_address  = "127.0.0.1"
 ;net.up = 128000 # upstream to the internet (default: 128 kBits)
 ;net.down = 512000 # downstram from the internet (default: 512 kBits)

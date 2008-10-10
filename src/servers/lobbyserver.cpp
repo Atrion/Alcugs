@@ -103,7 +103,7 @@ namespace alc {
 				// get the packet
 				tmRequestMyVaultPlayerList requestList(u);
 				msg->data->get(requestList);
-				log->log("<RCV> %s\n", requestList.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, requestList.str());
 				
 				// forward it to the vault server
 				tNetSession *vaultServer = getSession(vault);
@@ -125,7 +125,7 @@ namespace alc {
 				// get the packet
 				tmCustomVaultPlayerList playerList(u);
 				msg->data->get(playerList);
-				log->log("<RCV> %s\n", playerList.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, playerList.str());
 				
 				// find the client's session
 				tNetSession *client = smgr->get(playerList.x);
@@ -153,7 +153,7 @@ namespace alc {
 				// get the packet
 				tmCreatePlayer createPlayer(u);
 				msg->data->get(createPlayer);
-				log->log("<RCV> %s\n", createPlayer.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, createPlayer.str());
 				
 				// forward it to the vault server
 				tNetSession *vaultServer = getSession(vault);
@@ -176,7 +176,7 @@ namespace alc {
 				// get the packet
 				tmCustomVaultPlayerCreated playerCreated(u);
 				msg->data->get(playerCreated);
-				log->log("<RCV> %s\n", playerCreated.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, playerCreated.str());
 				
 				// find the client's session
 				tNetSession *client = smgr->get(playerCreated.x);
@@ -202,7 +202,7 @@ namespace alc {
 				// get the packet
 				tmDeletePlayer deletePlayer(u);
 				msg->data->get(deletePlayer);
-				log->log("<RCV> %s\n", deletePlayer.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, deletePlayer.str());
 				
 				// forward it to the vault server
 				tNetSession *vaultServer = getSession(vault);
@@ -227,7 +227,7 @@ namespace alc {
 				// get the data out of the packet
 				tmCustomForkServer forkServer(u);
 				msg->data->get(forkServer);
-				log->log("<RCV> %s\n", forkServer.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, forkServer.str());
 				
 				if (!loadOnDemand) {
 					log->log("Ignoring fork request since I'm in manual mode\n");
