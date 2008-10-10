@@ -1,7 +1,7 @@
 /*******************************************************************************
-*    Alcugs H'uru server                                                       *
+*    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2005  The Alcugs H'uru Server Team                     *
+*    Copyright (C) 2004-2008  The Alcugs Project Server Team                   *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -25,35 +25,41 @@
 *******************************************************************************/
 
 /**
-	URUNET 3+
+	Description:
+		This does this, and that.
+	ChangeLog:
+		Initial
+	Bugs:
+		Several
 */
 
-#ifndef __U_ALCNET_H
-#define __U_ALCNET_H
+#ifndef __U_AGEINFO_H
+#define __U_AGEINFO_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_ALCNET_H_ID "$Id$"
+#define __U_AGEINFO_H_ID "$Id$"
 
-#ifndef __WIN32__
-#include <netdb.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
+namespace alc {
+
+	////DEFINITIONS
+	class tAgeInfo
+	{
+	public:
+		tAgeInfo(const char *dir, const char *file);
+		U32 seqPrefix; // it's actually 3 Bytes
+		Byte name[200];
+	};
+	
+	class tAgeParser
+	{
+	public:
+		tAgeParser(const char *dir);
+		~tAgeParser(void);
+		tAgeInfo *getAge(const Byte *name);
+	private:
+		int size;
+		tAgeInfo **ages;
+	};
+
+} //End alc namespace
+
 #endif
-
-#include "protocol/prot.h"
-#include "netmsgq.h"
-#include "protocol/protocol.h"
-#include "netsession.h"
-#include "netsessionmgr.h"
-#include "protocol/umsgbasic.h"
-#include "netlog.h"
-#include "unet.h"
-#include "unetbase.h"
-#include "configalias.h"
-#include "unetmain.h"
-#include "unetserverbase.h"
-#include "unetlobbyserverbase.h"
-#include "sql.h"
-#include "ageinfo.h"
-
-#endif
-

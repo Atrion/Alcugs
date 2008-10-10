@@ -33,6 +33,7 @@
 #include <protocol/vaultproto.h>
 
 #include "vaultdb.h"
+#include "guidgen.h"
 
 namespace alc {
 

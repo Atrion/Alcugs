@@ -357,10 +357,8 @@ void tNetSession::send(tmBase &msg) {
 					DBG(5,"insertBefore\n");
 				}
 			}
-			else {
-				//put pmsg to the qeue
+			else //put pmsg to the qeue
 				sndq->add(pmsg);
-			}
 		}
 		
 		if(tf & UNetAckReq) { // if this packet has the ack flag on, save it's number

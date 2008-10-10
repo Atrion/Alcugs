@@ -39,6 +39,7 @@
 //#define _DBG_LEVEL_ 10
 
 #include <alcugs.h>
+#include <alcnet.h>
 
 ////extra includes
 #include "guidgen.h"
@@ -48,76 +49,6 @@
 namespace alc {
 
 	////IMPLEMENTATION
-	tAgeInfo::tAgeInfo(const char *dir, const char *file)
-	{
-		// get age name from file name
-		strncpy((char *)name, file, 199);
-		alcStripExt((char *)name);
-		// assemble file name
-		char filename[1024];
-		strncpy(filename, dir, 512);
-		strncat(filename, file, 511);
-		DBG(9, "opening %s... ", filename);
-		// open and decrypt file
-		tFBuf ageFile;
-		ageFile.open(filename, "r");
-		tWDYSBuf ageContent;
-		ageFile.get(ageContent);
-		ageContent.decrypt();
-		// parse file
-		tConfig *cfg = new tConfig;
-		tXParser parser;
-		parser.setConfig(cfg);
-		ageContent.get(parser);
-		// get sequence prefix
-		tStrBuf prefix = cfg->getVar("SequencePrefix");
-		if (prefix.isNull()) throw txParseError(_WHERE("can\'t find the ages SequencePrefix"));
-		seqPrefix = prefix.asU16();
-		// done!
-		DBGM(9, "found sequence prefix %d for age %s\n", seqPrefix, name);
-		delete cfg;
-	}
-	
-	tAgeParser::tAgeParser(const char *dir)
-	{
-		lstd->log("reading age files from %s\n", dir);
-		lstd->flush();
-		
-		size = 0;
-		ages = NULL;
-		
-		tDirectory ageDir;
-		tDirEntry *file;
-		ageDir.open(dir);
-		while( (file = ageDir.getEntry()) != NULL) {
-			if (file->type != 8 || strcasecmp(alcGetExt(file->name), "age") != 0) continue;
-			
-			// grow the array
-			++size;
-			ages = (tAgeInfo **)realloc(ages, size*sizeof(tAgeInfo*));
-			ages[size-1] = new tAgeInfo(dir, file->name);
-		}
-	}
-	
-	tAgeParser::~tAgeParser(void)
-	{
-		if (ages != NULL) {
-			for (int i = 0; i < size; ++i) {
-				if (ages[i]) delete ages[i];
-			}
-			free(ages);
-		}
-	}
-	
-	tAgeInfo *tAgeParser::getAge(const Byte *name)
-	{
-		for (int i = 0; i < size; ++i) {
-			if (!ages[i]) continue;
-			if (strcmp((char *)ages[i]->name, (char *)name) == 0) return ages[i];
-		}
-		return NULL;
-	}
-	
 	tGuidGen::tGuidGen(void)
 	{
 		// load age file dir and age files
@@ -161,7 +92,7 @@ namespace alc {
 		---------------------------------
 		| 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
 		--------------------------------
-		| 0 | ki here       | 0 | s | s |
+		| 0 | ki here       | s | s | s |
 		--------------------------------
 	
 		Where s is the sequence prefix.
@@ -174,8 +105,12 @@ namespace alc {
 		tMBuf buf;
 		buf.putByte(0);
 		buf.putU32(isPrivate ? ki : 0);
-		buf.putByte(0);
-		buf.putU16(ageInfo->seqPrefix);
+		
+		// 3 byte sequence prefix: First the one which usually is zero, to keep compatability
+		buf.putByte(ageInfo->seqPrefix >> 16);
+		// then the remaining two bytes
+		buf.putU16(ageInfo->seqPrefix & 0x0000FFFF);
+		
 		buf.rewind();
 		memcpy(guid, buf.read(8), 8);
 		return true;

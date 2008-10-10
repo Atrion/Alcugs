@@ -41,25 +41,6 @@
 namespace alc {
 
 	////DEFINITIONS
-	class tAgeInfo
-	{
-	public:
-		tAgeInfo(const char *dir, const char *file);
-		U16 seqPrefix;
-		Byte name[200];
-	};
-	
-	class tAgeParser
-	{
-	public:
-		tAgeParser(const char *dir);
-		~tAgeParser(void);
-		tAgeInfo *getAge(const Byte *name);
-	private:
-		int size;
-		tAgeInfo **ages;
-	};
-	
 	class tGuidGen
 	{
 	public:
