@@ -826,7 +826,7 @@ void tNetSession::ackUpdate() {
 	ackq->rewind();
 	tUnetAck *ack = ackq->getNext();
 	while(ack) {
-		tmNetAck ackMsg;
+		tmNetAck ackMsg(this);
 		while (ack) {
 			if (ack->timestamp > net->net_time) {
 				net->updateTimerAbs(ack->timestamp); // come back when we want to process this ack
@@ -847,7 +847,7 @@ void tNetSession::ackUpdate() {
 void tNetSession::ackCheck(tUnetUruMsg &t) {
 
 	U32 A1,A2,A3;
-	tmNetAck ackMsg;
+	tmNetAck ackMsg(this);
 	if (t.tf & UNetExt) ackMsg.bhflags |= UNetExt; // tmNetAck has to know that it reads an extended packet
 	t.data.rewind();
 	t.data.get(ackMsg);

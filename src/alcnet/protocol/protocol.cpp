@@ -505,10 +505,9 @@ const Byte * tmNetClientComm::str() {
 #else
 	sprintf((char *)cnt,"(Re)Negotation");
 #endif
-	if (s) { // don't use sprintf(cnt, "%s", cnt), valgrind shows a "Source and destination overlap in mempcpy"
-		strcat((char *)cnt, " on ");
-		strcat((char *)cnt, s->str());
-	}
+	// don't use sprintf(cnt, "%s", cnt), valgrind shows a "Source and destination overlap in mempcpy"
+	strcat((char *)cnt, " on ");
+	strcat((char *)cnt, u->str());
 	return cnt;
 }
 
@@ -545,9 +544,9 @@ void tmNetAck::stream(tBBuf &t)
 	}
 }
 const Byte * tmNetAck::str() {
-	#ifdef ENABLE_MSGLOG
 	dbg.clear();
-	dbg.printf("Ack");
+	dbg.printf("Ack on %s", u->str());
+	#ifdef ENABLE_MSGLOG
 	tUnetAck *ack;
 	bool firstOne = true;
 	while ((ack = ackq->getNext())) {
@@ -557,22 +556,17 @@ const Byte * tmNetAck::str() {
 			dbg.printf(" |");
 		dbg.printf(" %i,%i %i,%i", ack->A >> 8, ack->A & 0x000000FF, ack->B >> 8, ack->B & 0x000000FF);
 	}
-	return dbg.c_str();
-	#else
-	return (Byte *)"Ack";
 	#endif
-	
+	return dbg.c_str();
 }
 
 //Base message
-tmMsgBase::tmMsgBase(U16 cmd,U32 flags,tNetSession * u) {
+tmMsgBase::tmMsgBase(U16 cmd,U32 flags,tNetSession * u) : tmBase(0, u) {
 	DBG(5,"tmMsgBase()\n");
 	this->cmd=cmd;
 	this->flags=flags;
-	this->u=u;
 	this->timestamp.seconds=0; // the timestamp is unitialized per default (this removes a valgrind error)
 	//set bhflags
-	bhflags=0;
 	if(this->flags & plNetAck)
 		bhflags |= UNetAckReq;
 	// get version froms session

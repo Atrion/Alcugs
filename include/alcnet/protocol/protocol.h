@@ -125,27 +125,28 @@ public:
 
 class tmBase :public tBaseType {
 public:
+	tmBase(Byte bhflags, tNetSession *u) : bhflags(bhflags), u(u) { }
 	virtual void store(tBBuf &t)=0;
 	virtual void stream(tBBuf &t)=0;
 	virtual const Byte * str()=0;
 	Byte bhflags;
+	tNetSession * u; //!< associated session (source for incoming, destination for outgoing)
 };
 
 class tmNetClientComm :public tmBase {
 public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t);
-	tmNetClientComm(tNetSession *s = NULL) { bhflags=(UNetNegotiation|UNetAckReq|UNetUrgent); this->s = s; }
-	tmNetClientComm(tTime &t,U32 bw, tNetSession *s = NULL) { timestamp=t; bandwidth=bw; bhflags=(UNetNegotiation|UNetAckReq|UNetUrgent); this->s = s; }
+	tmNetClientComm(tNetSession *u) : tmBase(UNetNegotiation|UNetAckReq|UNetUrgent, u) { }
+	tmNetClientComm(tTime &t,U32 bw, tNetSession *u) : tmBase(UNetNegotiation|UNetAckReq|UNetUrgent, u) { timestamp=t; bandwidth=bw; }
 	virtual const Byte * str();
-	tNetSession *s;
 	tTime timestamp;
 	U32 bandwidth;
 };
 
 class tmNetAck :public tmBase {
 public:
-	tmNetAck() { bhflags=UNetAckReply; ackq = new tUnetMsgQ<tUnetAck>; }
+	tmNetAck(tNetSession *u) : tmBase(UNetAckReply|UNetUrgent, u) { ackq = new tUnetMsgQ<tUnetAck>; }
 	virtual ~tmNetAck() { delete ackq; }
 	
 	virtual void store(tBBuf &t);
@@ -187,7 +188,6 @@ public:
 protected:
 	virtual void additionalFields() {} //!< writes the additional fields of this message type to the dbg buffer (called by str() to print the package)
 	
-	tNetSession * u; //!< associated session (source for incoming, destination for outgoing)
 	tStrBuf dbg;
 };
 
