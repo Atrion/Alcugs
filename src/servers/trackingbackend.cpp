@@ -645,9 +645,7 @@ namespace alc {
 							fprintf(f, "<Guid>%s02</Guid>\n", alcGetStrGuid(data->agentGuid));
 						fprintf(f, "</ServerInfo>\n");
 					fprintf(f, "</Server>\n");
-					fprintf(f, "<Players>\n");
-						printPlayersXML(f, lobby);
-					fprintf(f, "</Players>\n");
+					printPlayersXML(f, lobby);
 				fprintf(f, "</Process></Lobby>\n");
 			}
 			// Game Servers
@@ -671,8 +669,10 @@ namespace alc {
 	
 	void tTrackingBackend::printPlayersXML(FILE *f, tNetSession *server)
 	{
+		fprintf(f, "<Players>\n");
 		for (int i = 0; i < size; ++i) {
 			if (!players[i] || players[i]->u != server) continue;
+			if (players[i]->status != RActive) continue;
 			fprintf(f, "<Player>\n");
 				fprintf(f, "<AcctName>%s</AcctName>\n", players[i]->account);
 				fprintf(f, "<PlayerID>%i</PlayerID>\n", players[i]->ki);
@@ -681,6 +681,20 @@ namespace alc {
 				fprintf(f, "<State>%s</State>\n", alcUnetGetReasonCode(players[i]->status));
 			fprintf(f, "</Player>\n");
 		}
+		fprintf(f, "</Players>\n");
+		fprintf(f, "<InRoutePlayers>\n");
+		for (int i = 0; i < size; ++i) {
+			if (!players[i] || players[i]->u != server) continue;
+			if (players[i]->status == RActive) continue;
+			fprintf(f, "<Player>\n");
+				fprintf(f, "<AcctName>%s</AcctName>\n", players[i]->account);
+				fprintf(f, "<PlayerID>%i</PlayerID>\n", players[i]->ki);
+				fprintf(f, "<PlayerName>%s</PlayerName>\n", players[i]->avatar);
+				fprintf(f, "<AccountUUID>%s</AccountUUID>\n", alcGetStrUid(players[i]->uid));
+				fprintf(f, "<State>%s</State>\n", alcUnetGetReasonCode(players[i]->status));
+			fprintf(f, "</Player>\n");
+		}
+		fprintf(f, "</InRoutePlayers>\n");
 	}
 	
 	void tTrackingBackend::printGameXML(FILE *f, tNetSession *game)
@@ -697,9 +711,7 @@ namespace alc {
 						fprintf(f, "<Guid>%s</Guid>\n", alcGetStrGuid(game->serverGuid));
 					fprintf(f, "</ServerInfo>\n");
 				fprintf(f, "</Server>\n");
-				fprintf(f, "<Players>\n");
-					printPlayersXML(f, game);
-				fprintf(f, "</Players>\n");
+				printPlayersXML(f, game);
 			fprintf(f, "</Process>\n");
 			fprintf(f, "<AgeLink>\n");
 				fprintf(f, "<AgeInfo>\n");
