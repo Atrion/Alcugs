@@ -136,7 +136,7 @@ namespace alc {
 		}
 		
 		// tell vault and taracking
-		tmCustomPlayerStatus trackingStatus(trackingServer, ki, u->getSid(), u->uid, u->name, avatar, 2 /* visible */, whoami == KGame ? RJoining : RActive);
+		tmCustomPlayerStatus trackingStatus(trackingServer, ki, u->getSid(), u->uid, u->name, avatar, 2 /* visible */, (whoami == KLobby && u->release == TIntRel) ? RActive : RJoining); // show the VaultManager as active in the lobby
 		send(trackingStatus);
 		tmCustomVaultPlayerStatus vaultStatus(vaultServer, ki, u->getSid(), alcGetStrGuid(serverGuid), serverName, 1 /* is online */, 0 /* don't increase online time now, do that on disconnect */);
 		send(vaultStatus);

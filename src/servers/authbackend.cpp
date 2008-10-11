@@ -235,7 +235,7 @@ namespace alc {
 				authResult = AAccountDisabled;
 			}
 			// check internal client (i.e. VaultManager)
-			else if (release == TIntRel && *accessLevel > AcCCR) {
+			else if (release != TExtRel && !(release == TIntRel && *accessLevel <= AcCCR)) {
 				log->print("unauthorized client\n");
 				authResult = AAccountDisabled;
 				++attempts;
