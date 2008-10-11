@@ -373,7 +373,7 @@ namespace alc {
 			}
 			else { // if it already exists, check if the avi is already logged in elsewhere
 				// to do so, we first check if the game server the player uses changed. if that's the case, and the player did not request to link, kick the old player
-				if (player->u != game && player->status != RInRoute && player->status != RLeaving) {
+				if (player->u != game && player->status != RLeaving) {
 					tmPlayerTerminated term(player->u, player->ki, RLoggedInElsewhere);
 					net->send(term);
 				}
@@ -388,8 +388,8 @@ namespace alc {
 			memcpy(player->uid, playerStatus.uid, 16);
 			// no longer waiting
 			player->waiting = false;
-			if (player->status != RInRoute && player->status != RLeaving) {
-				// when we're still in route/leaving, keep this info (to be shown on status page)
+			if (player->status != RLeaving) {
+				// when he's leaving to another age, keep this info (to be shown on status page)
 				player->awaiting_age[0] = 0;
 				memset(player->awaiting_guid, 0, 8);
 			}
@@ -542,7 +542,8 @@ namespace alc {
 			if (!players[i]) continue;
 			fprintf(f, "<tr><td>%s (%s)</td><td>%d</td><td>%s</td><td>%s</td>", players[i]->avatar, players[i]->account, players[i]->ki,
 					players[i]->u->name, alcGetStrGuid(players[i]->u->serverGuid));
-			if (players[i]->awaiting_age[0] != 0 && (players[i]->status == RInRoute || players[i]->status == RLeaving)) // when the age he wants to is saved, print it
+			if (players[i]->awaiting_age[0] != 0)
+				// if the age he wants to is saved, print it
 				fprintf(f, "<td>%s to %s</td></tr>\n", alcUnetGetReasonCode(players[i]->status), players[i]->awaiting_age);
 			else fprintf(f, "<td>%s</td></tr>\n", alcUnetGetReasonCode(players[i]->status));
 		}
@@ -678,7 +679,7 @@ namespace alc {
 				fprintf(f, "<PlayerID>%i</PlayerID>\n", players[i]->ki);
 				fprintf(f, "<PlayerName>%s</PlayerName>\n", players[i]->avatar);
 				fprintf(f, "<AccountUUID>%s</AccountUUID>\n", alcGetStrUid(players[i]->uid));
-				fprintf(f, "<State>%s</State>\n", alcUnetGetReasonCode(players[i]->status));
+				fprintf(f, "<State>Active</State>\n");
 			fprintf(f, "</Player>\n");
 		}
 		fprintf(f, "</Players>\n");
@@ -691,7 +692,10 @@ namespace alc {
 				fprintf(f, "<PlayerID>%i</PlayerID>\n", players[i]->ki);
 				fprintf(f, "<PlayerName>%s</PlayerName>\n", players[i]->avatar);
 				fprintf(f, "<AccountUUID>%s</AccountUUID>\n", alcGetStrUid(players[i]->uid));
-				fprintf(f, "<State>%s</State>\n", alcUnetGetReasonCode(players[i]->status));
+				if (players[i]->awaiting_age[0] != 0)
+					// if the age he wants to is saved, print it
+					fprintf(f, "<State>%s to %s</State>\n", alcUnetGetReasonCode(players[i]->status), players[i]->awaiting_age);
+				else fprintf(f, "<State>%s</State>\n", alcUnetGetReasonCode(players[i]->status));
 			fprintf(f, "</Player>\n");
 		}
 		fprintf(f, "</InRoutePlayers>\n");

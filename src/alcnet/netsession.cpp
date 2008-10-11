@@ -109,6 +109,7 @@ void tNetSession::init() {
 	terminated = false;
 	data = NULL;
 	name[0] = 0;
+	avatar[0] = 0;
 	
 	DBG(5, "%s Initial timeout: %d\n", str(), timeout);
 }
@@ -132,7 +133,7 @@ const char * tNetSession::str(bool detail) {
 	sprintf(cnt,"[%i][%s:%i]",sid,alcGetStrIp(ip),ntohs(port));
 	if (name[0] != 0 && authenticated != 0) {
 		if (authenticated == 10) sprintf(tmp, "[%s?]", name); // if the auth server didn't yet confirm that, add a question mark
-		else if (ki != 0) sprintf(tmp, "[%s:%d]", name, ki);
+		else if (ki != 0) sprintf(tmp, "[%s:%s,%d]", name, avatar, ki);
 		else sprintf(tmp, "[%s]", name);
 		strcat(cnt, tmp);
 	}

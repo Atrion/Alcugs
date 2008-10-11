@@ -261,7 +261,7 @@ namespace alc {
 		}
 		
 		// find and update the info node
-		if (status.state == 0 || status.state == 1) { // don't update when status.state is 2
+		if (status.state == 0 || status.state == 1) { // don't update when status.state is 2 (see above)
 			node = new tvNode(MType | MOwner);
 			node->type = KPlayerInfoNode;
 			node->owner = status.ki;
@@ -281,7 +281,7 @@ namespace alc {
 			free((void *)nodes);
 		}
 		
-		if (!linkingRulesHack) return;
+		if (!linkingRulesHack || status.state != 1) return;
 		// linking rules hack
 		// this hack was originally written by a'moaca' for the unet3 vault server. I just ported it to unet3+. Unlike the original hack,
 		//  this one also creates the age if necessary as otherwise the first link there would be done without the hack

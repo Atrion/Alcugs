@@ -135,14 +135,17 @@ namespace alc {
 			return;
 		}
 		
+		// save the data
+		strncpy((char *)u->avatar, (char *)avatar, 199);
+		u->ki = ki;
+		
 		// tell vault and taracking
-		tmCustomPlayerStatus trackingStatus(trackingServer, ki, u->getSid(), u->uid, u->name, avatar, 2 /* visible */, (whoami == KLobby && u->release == TIntRel) ? RActive : RJoining); // show the VaultManager as active in the lobby
+		tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->getSid(), u->uid, u->name, u->avatar, 2 /* visible */, (whoami == KLobby && u->release == TIntRel) ? RActive : RJoining); // show the VaultManager as active in the lobby
 		send(trackingStatus);
-		tmCustomVaultPlayerStatus vaultStatus(vaultServer, ki, u->getSid(), alcGetStrGuid(serverGuid), serverName, 1 /* is online */, 0 /* don't increase online time now, do that on disconnect */);
+		tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->getSid(), alcGetStrGuid(serverGuid), serverName, 1 /* is online */, 0 /* don't increase online time now, do that on disconnect */);
 		send(vaultStatus);
 		
 		// now, tell the client
-		u->ki = ki;
 		tmActivePlayerSet playerSet(u);
 		send(playerSet);
 	}
@@ -154,18 +157,21 @@ namespace alc {
 			if (!trackingServer || !vaultServer) {
 				err->log("ERR: I've got to update a player\'s (%s) status for the tracking and vault server, but one of them is unavailable.\n", u->str());
 			}
-			else if (reason == RLeaving) { // the player is going on to another age, so he's not really offline, but update the online state
-				if (!u->proto || u->proto >= 3) {
-					// unet2 or unet3 vault servers would not understand a state of 2, which means "just update online time"
-					tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->getSid(), (Byte *)"0000000000000000" /* these are 16 zeroes */, (Byte *)"", /* update player's online time */ 2, u->onlineTime());
+			else if (reason == RLeaving) { // the player is going on to another age, so he's not really offline
+				if (!u->proto || u->proto >= 3) { // unet2 or unet3 vault servers would not understand a state of 2
+					// update online time
+					tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->getSid(), alcGetStrGuid(serverGuid), serverName, /* offline but will soon come back */ 2, u->onlineTime());
 					send(vaultStatus);
 				}
+				
+				tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->getSid(), u->uid, u->name, u->avatar, 2 /* visible */, reason);
+				send(trackingStatus);
 			}
-			else { // it really went offline
-				tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->getSid(), u->uid, u->name, (Byte *)"", 0 /* delete */, RStopResponding);
+			else { // the player really went offline
+				tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->getSid(), u->uid, u->name, u->avatar, 0 /* delete */, reason);
 				send(trackingStatus);
 				
-				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->getSid(), (Byte *)"0000000000000000" /* these are 16 zeroes */, (Byte *)"", /*player is offline */0, u->onlineTime());
+				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->getSid(), (Byte *)"0000000000000000" /* these are 16 zeroes */, (Byte *)"", /* player is offline */0, u->onlineTime());
 				send(vaultStatus);
 			}
 			u->ki = 0; // this avoids sending the messages twice

@@ -119,6 +119,7 @@ public:
 	U32 x; //!< x value (for lobby/game)
 	Byte uid[16]; //!< hex; player uid in lobby/game server
 	Byte name[200]; //!< peer age name in tracking server, peer account name in lobby and game
+	Byte avatar[200]; //!< peer avatar name if set (lobby and game)
 	Byte serverGuid[8]; //!< hex; server guid in tracking server
 	tNetSessionData *data; //!< save additional data (e.g. tracking information)
 	
