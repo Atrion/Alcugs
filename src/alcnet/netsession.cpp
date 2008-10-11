@@ -343,7 +343,7 @@ void tNetSession::send(tmBase &msg) {
 				delete pmsg;
 		} else {
 			//put pmsg to the qeue
-            sndq->add(pmsg);
+			sndq->add(pmsg);
 		}
 		
 		if(tf & UNetAckReq) { // if this packet has the ack flag on, save it's number
