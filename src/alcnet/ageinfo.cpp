@@ -71,6 +71,8 @@ namespace alc {
 		tStrBuf prefix = cfg->getVar("SequencePrefix");
 		if (prefix.isNull()) throw txParseError(_WHERE("can\'t find the ages SequencePrefix"));
 		seqPrefix = prefix.asU32();
+		if (seqPrefix > 0x00FFFFFF && seqPrefix < 0xFFFFFFF0) // allow only 3 Bytes (but allow negative prefixes)
+			throw txUnexpectedData(_WHERE("A sequence prefix of %d (higher than 0x00FFFFFF) is not allowed)", seqPrefix));
 		// done!
 		DBGM(9, "found sequence prefix %d for age %s\n", seqPrefix, name);
 		delete cfg;

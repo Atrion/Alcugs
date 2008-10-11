@@ -329,6 +329,10 @@ void tNetSession::send(tmBase &msg) {
 		//Urgent!?
 		if(flags & UNetUrgent) {
 			net->rawsend(this,pmsg);
+			//update time to send next message according to cabal
+			if (next_msg_time) next_msg_time += timeToSend(pmsg->size());
+			else next_msg_time = net->net_time + timeToSend(pmsg->size());
+			// if necessary, put in queue as "sent once"
 			if(flags & UNetAckReq) {
 				pmsg->snd_timestamp=net->net_time;
 				pmsg->timestamp+=timeout;
@@ -395,7 +399,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	
 	// if we know the downstream of the peer, set avg cabal using what is smaller: our upstream or the peers downstream
 	//  (this is the last part of the negotiationg process)
-	if(cabal==0 && bandwidth!=0) {
+	if(!isConnected() && bandwidth!=0) {
 		if((ntohl(ip) & 0xFFFFFF00) == 0x7F000000) { //lo
 			cabal=100000000/8; //100Mbps
 		} else if((ip & net->lan_mask) == net->lan_addr) { //LAN
@@ -444,7 +448,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 			}
 			cabal=0; // re-determine cabal with the new bandwidth
 		}
-	} else if(bandwidth==0 || cabal==0 ) { // we did not yet negotiate
+	} else if (!isConnected()) { // we did not yet negotiate
 		if(!negotiating) { // and we are not in the process of doing it - so start that process
 			net->log->log("%s WARN: Obviously a new connection was started with something different than a nego\n", str());
 			nego_stamp=timestamp;
@@ -452,6 +456,8 @@ void tNetSession::processMsg(Byte * buf,int size) {
 			clientPs = msg.ps; // this message is the beginning of a new connection, so accept everything from here on
 		}
 	}
+	else
+		assert(bandwidth != 0);
 	
 	//fix the problem that happens every 15-30 days of server uptime (prefer doing that when the sndq is empty)
 	if((sndq->len() == 0 && (serverMsg.sn>=8378605 || msg.sn>=8378605)) ||
@@ -477,9 +483,8 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		createAckReply(msg);
 	}
 
-	if(isConnected() && (msg.tf & UNetAckReply)) { // if we are connected, we can parse acks out of order (if not, the ack sent in reply
-	                                               //  to the nego serves to set the cabal, so it has to be parsed in order)
-		//ack update
+	if(isConnected() && (msg.tf & UNetAckReply)) {
+		// don't parse acks before we are connected (if we do, we might get SN confusion if connections don't start with a Nego)
 		ackCheck(msg);
 		if(authenticated==2) authenticated=1;
 	}

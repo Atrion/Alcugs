@@ -40,6 +40,8 @@ namespace alc {
 		virtual void stream(tBBuf &t);
 		// format
 		tMBuf message;
+	protected:
+		virtual void additionalFields();
 	};
 	
 	class tmCustomVaultAskPlayerList : public tmMsgBase {

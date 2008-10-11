@@ -68,6 +68,12 @@ namespace alc {
 		t.put(message);
 	}
 	
+	void tmVault::additionalFields()
+	{
+		dbg.nl();
+		dbg.printf(" Size of attached message: %d Bytes", message.size());
+	}
+	
 	//// tmCustomVaultAskPlayerList
 	tmCustomVaultAskPlayerList::tmCustomVaultAskPlayerList(tNetSession *u, U32 x, const Byte *uid)
 	: tmMsgBase(NetMsgCustomVaultAskPlayerList, plNetAck | plNetCustom | plNetX | plNetVersion | plNetUID, u)
