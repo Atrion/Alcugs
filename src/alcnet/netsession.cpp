@@ -330,7 +330,6 @@ void tNetSession::send(tmBase &msg) {
 		if(flags & UNetUrgent) {
 			net->rawsend(this,pmsg);
 			if(flags & UNetAckReq) {
-				// since ack replies can't have the AckReq flag set, we can be sure this packet is correct at the end of the queue
 				pmsg->snd_timestamp=net->net_time;
 				pmsg->timestamp+=timeout;
 				++pmsg->tryes;
@@ -339,26 +338,8 @@ void tNetSession::send(tmBase &msg) {
 			else
 				delete pmsg;
 		} else {
-			if (flags & UNetAckReply) {
-				//ensure acks to be present at the top of the qeue
-				if(sndq->isEmpty()) {
-					sndq->add(pmsg);
-					DBG(5,"Ack inserted into void msg qeue\n");
-				} else {
-					tUnetUruMsg * kiwi;
-					sndq->rewind();
-					kiwi=sndq->getNext();
-					DBG(5,"ack checking q...\n");
-					while(kiwi!=NULL && (kiwi->tf & UNetAckReply)) {
-						kiwi=sndq->getNext();
-						DBG(5,"sndq->getNext()\n");
-					}
-					sndq->insertBefore(pmsg);
-					DBG(5,"insertBefore\n");
-				}
-			}
-			else //put pmsg to the qeue
-				sndq->add(pmsg);
+			//put pmsg to the qeue
+            sndq->add(pmsg);
 		}
 		
 		if(tf & UNetAckReq) { // if this packet has the ack flag on, save it's number
