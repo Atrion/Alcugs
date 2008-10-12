@@ -322,7 +322,7 @@ namespace alc {
 				log->log("ERR: Found game server %s without a Lobby belonging to it\n", game->str());
 			
 			// get the age's sequence prefix
-			tAgeInfo *age = guidGen->getAgeParser()->getAge(game->name);
+			tAgeInfo *age = guidGen->getAge(game->name);
 			if (!age) log->log("WARN: Strange, I can\'t find the age file for game server %s\n", game->str());
 			else data->seqPrefix = age->seqPrefix;
 		}

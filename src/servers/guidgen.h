@@ -45,14 +45,14 @@ namespace alc {
 	{
 	public:
 		tGuidGen(void);
-		~tGuidGen(void) { delete ageParser; }
+		~tGuidGen(void) { delete ageInfos; }
 		bool generateGuid(Byte *guid, const Byte *age, U32 ki);
-		inline tAgeParser *getAgeParser() { return ageParser; }
+		inline tAgeInfo *getAge(const Byte *age) { return ageInfos->getAge(age); }
 	private:
 		bool isAgePrivate(const Byte *age);
 	
 		int instanceMode;
-		tAgeParser *ageParser;
+		tAgeInfoLoader *ageInfos;
 		Byte privateAges[1024];
 	};
 

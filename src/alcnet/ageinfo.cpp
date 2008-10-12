@@ -78,28 +78,44 @@ namespace alc {
 		delete cfg;
 	}
 	
-	tAgeParser::tAgeParser(const char *dir)
+	tAgeInfoLoader::tAgeInfoLoader(const Byte *name)
 	{
-		lstd->log("reading age files from %s\n", dir);
+		// load age file dir and age files
+		tConfig *cfg = alcGetConfig();
+		tStrBuf dir = cfg->getVar("age");
+		if (dir.size() < 2) throw txBase(_WHERE("age directory is not defined"));
+		if (!dir.endsWith("/")) dir.writeStr("/");
+	
+		lstd->log("reading age files from %s\n", dir.c_str());
 		lstd->flush();
 		
 		size = 0;
 		ages = NULL;
 		
-		tDirectory ageDir;
-		tDirEntry *file;
-		ageDir.open(dir);
-		while( (file = ageDir.getEntry()) != NULL) {
-			if (file->type != 8 || strcasecmp(alcGetExt(file->name), "age") != 0) continue;
-			
+		if (!name) { // we should load all ages
+			tDirectory ageDir;
+			tDirEntry *file;
+			ageDir.open((char *)dir.c_str());
+			while( (file = ageDir.getEntry()) != NULL) {
+				if (file->type != 8 || strcasecmp(alcGetExt(file->name), "age") != 0) continue;
+				
+				// grow the array
+				++size;
+				ages = (tAgeInfo **)realloc(ages, size*sizeof(tAgeInfo*));
+				ages[size-1] = new tAgeInfo((char *)dir.c_str(), file->name);
+			}
+		}
+		else { // we should load only one certain age
+			char filename[200];
+			sprintf(filename, "%s.age", name);
 			// grow the array
 			++size;
 			ages = (tAgeInfo **)realloc(ages, size*sizeof(tAgeInfo*));
-			ages[size-1] = new tAgeInfo(dir, file->name);
+			ages[size-1] = new tAgeInfo((char *)dir.c_str(), filename);
 		}
 	}
 	
-	tAgeParser::~tAgeParser(void)
+	tAgeInfoLoader::~tAgeInfoLoader(void)
 	{
 		if (ages != NULL) {
 			for (int i = 0; i < size; ++i) {
@@ -109,7 +125,7 @@ namespace alc {
 		}
 	}
 	
-	tAgeInfo *tAgeParser::getAge(const Byte *name)
+	tAgeInfo *tAgeInfoLoader::getAge(const Byte *name)
 	{
 		for (int i = 0; i < size; ++i) {
 			if (!ages[i]) continue;

@@ -51,13 +51,11 @@ namespace alc {
 	////IMPLEMENTATION
 	tGuidGen::tGuidGen(void)
 	{
-		// load age file dir and age files
-		tConfig *cfg = alcGetConfig();
-		tStrBuf var = cfg->getVar("age");
-		if (!var.endsWith("/")) var.writeStr("/");
-		ageParser = new tAgeParser((char *)var.c_str());
+		// load age files
+		ageInfos = new tAgeInfoLoader();
 		// load the list of private ages
-		var = cfg->getVar("private_ages");
+		tConfig *cfg = alcGetConfig();
+		tStrBuf var = cfg->getVar("private_ages");
 		if (var.isNull()) strcpy((char *)privateAges, "AvatarCustomization,Personal,Nexus,BahroCave,DniCityX2Finale");
 		else strncpy((char *)privateAges, (char *)var.c_str(), 1023);
 		// load instance mode setting
@@ -84,7 +82,7 @@ namespace alc {
 	
 	bool tGuidGen::generateGuid(Byte *guid, const Byte *age, U32 ki)
 	{
-		tAgeInfo *ageInfo = ageParser->getAge(age);
+		tAgeInfo *ageInfo = getAge(age);
 		if (!ageInfo) return false;
 		if (ageInfo->seqPrefix > 0x00FFFFFF) return false; // obviously he wants to link to an age like GlobalMarkers
 		bool isPrivate = (instanceMode == 1) ? isAgePrivate(age) : false;

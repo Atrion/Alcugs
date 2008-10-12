@@ -46,8 +46,7 @@ namespace alc {
 	void tmAuthenticateHello::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		// the vault manager sends these without X and KI
-		if (ki != 0) throw txProtocolError(_WHERE("KI must be 0 in NetMsgAuthenticateHello but is %d", ki));
+		// the vault manager sends these without X and KI, and the game server gets it with a KI set (which we ignore)
 		t.get(account);
 		maxPacketSize = t.getU16();
 		release = t.getByte();
@@ -95,8 +94,7 @@ namespace alc {
 	void tmAuthenticateResponse::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		// the vault manager sends these without X and KI
-		if (ki != 0) throw txProtocolError(_WHERE("KI must be 0 in NetMsgAuthenticateResponse but is %d", ki));
+		// the vault manager sends these without X and KI, and the game server gets it with a KI set (which we ignore)
 		t.get(hash);
 		if (hash.size() != 16) throw txProtocolError(_WHERE("tmAuthenticateResponse.hash must be 16 characters long"));
 		

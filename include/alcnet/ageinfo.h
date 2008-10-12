@@ -49,11 +49,11 @@ namespace alc {
 		Byte name[200];
 	};
 	
-	class tAgeParser
+	class tAgeInfoLoader
 	{
 	public:
-		tAgeParser(const char *dir);
-		~tAgeParser(void);
+		tAgeInfoLoader(const Byte *name = NULL);
+		~tAgeInfoLoader(void);
 		tAgeInfo *getAge(const Byte *name);
 	private:
 		int size;
