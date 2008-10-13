@@ -941,7 +941,7 @@ void tNetSession::doWork() {
 						// The server used to duplicate the timeout here - but since the timeout will be overwritten next time updateRTT
 						//  is called, that's of no use. So better make the RTT bigger - it is obviously at least the timeout
 						// This will result in a more long-term reduction of the timeout
-						updateRTT(timeout);
+						updateRTT(2*timeout);
 					}
 					
 					if(curmsg->tryes>=10 || (curmsg->tryes>=2 && terminated)) { // max. 2 sends on terminated connections, max. 10 for the rest

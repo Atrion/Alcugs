@@ -377,9 +377,9 @@ void tUnetUruMsg::dumpheader(tLog * f) {
 }
 //flux 0 client -> server, 1 server -> client
 void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
-	if (!log->doesPrint()) return;
 	static int count=0;
 	count++;
+	if (!log->doesPrint()) return;
 
 	log->print("%04i: ",count);
 	log->stamp();
@@ -407,16 +407,16 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
 	}
 
 	if(flux==0) {
-		log->print("<b> me <- ");
+		log->print("<b> me &lt;- ");
 	} else {
-		log->print(" me -> ");
+		log->print(" me -&gt; ");
 	}
 	log->print("%i %i,%i (%i) %i,%i ",pn,sn,frn,frt,ps,pfr);
 
 	if(flux==0) {
-		log->print(" <- %s:%i</b> ",alcGetStrIp(ip),ntohs(port));
+		log->print(" &lt;- %s:%i</b> ",alcGetStrIp(ip),ntohs(port));
 	} else {
-		log->print(" -> %s:%i ",alcGetStrIp(ip),ntohs(port));
+		log->print(" -&gt; %s:%i ",alcGetStrIp(ip),ntohs(port));
 	}
 
 	int i;
