@@ -29,6 +29,8 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_TRACKINGMSG_H_ID "$Id$"
 
+#include "gamemsg.h" // tmCustomDirectedFwd is derived from tmGameMessageDirected
+
 namespace alc {
 
 	////DEFINITIONS
@@ -96,17 +98,11 @@ namespace alc {
 		virtual void additionalFields();
 	};
 	
-	class tmCustomDirectedFwd : public tmMsgBase {
+	class tmCustomDirectedFwd : public tmGameMessageDirected {
 	public:
 		tmCustomDirectedFwd(tNetSession *u);
 		tmCustomDirectedFwd(tNetSession *u, tmCustomDirectedFwd &directedFwd);
-		virtual ~tmCustomDirectedFwd(void);
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
-		// format
-		tMBuf gameMessage; // saves the complete message
-		Byte nRecipients;
-		U32 *recipients;
 	};
 	
 } //End alc namespace

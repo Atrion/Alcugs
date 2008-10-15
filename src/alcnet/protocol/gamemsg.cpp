@@ -49,7 +49,7 @@
 namespace alc {
 
 	//// tmJoinReq
-	tmJoinReq::tmJoinReq(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
+	tmJoinReq::tmJoinReq(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
 	//// tmJoinAck
@@ -68,6 +68,59 @@ namespace alc {
 		t.putU32(0); // real size
 		t.putByte(0); // compression flag
 		t.putU32(0); // sent size
+	}
+	
+	//// tmGameMessage
+	tmGameMessage::tmGameMessage(tNetSession *u) : tmMsgBase(u)
+	{ }
+	
+	tmGameMessage::tmGameMessage(U16 cmd, U32 flags, tNetSession *u) : tmMsgBase(cmd, flags, u)
+	{ }
+	
+	void tmGameMessage::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		// store the whole message
+		gameMessage.clear();
+		t.get(gameMessage);
+		// now, verify (will throw a txOutOfRange when too small)
+		gameMessage.rewind();
+		gameMessage.read(5); // ignore the first bytes
+		U32 gameMsgSize = gameMessage.getU32();
+		gameMessage.read(gameMsgSize); // this is the message itself
+		gameMessage.read(1); // ignore 1 byte
+		if (cmd == NetMsgGameMessage && !gameMessage.eof()) // the derived msg types do this check themselves
+			throw txProtocolError(_WHERE("Message is too long")); // there must not be any byte after the message
+	}
+	
+	void tmGameMessage::stream(tBBuf &t)
+	{
+		tmMsgBase::stream(t);
+		gameMessage.rewind();
+		t.put(gameMessage);
+	}
+	
+	//// tmGameMessageDirected
+	tmGameMessageDirected::tmGameMessageDirected(tNetSession *u) : tmGameMessage(u)
+	{ recipients = NULL; }
+	
+	tmGameMessageDirected::tmGameMessageDirected(U16 cmd, U32 flags, tNetSession *u) : tmGameMessage(cmd, flags, u)
+	{ recipients = NULL; }
+	
+	tmGameMessageDirected::~tmGameMessageDirected(void)
+	{
+		if (recipients) free(recipients);
+	}
+	
+	void tmGameMessageDirected::store(tBBuf &t)
+	{
+		tmGameMessage::store(t);
+		// get list of recipients
+		nRecipients = gameMessage.getByte();
+		if (recipients) free(recipients);
+		recipients = (U32 *)malloc(nRecipients*sizeof(U32));
+		for (int i = 0; i < nRecipients; ++i) recipients[i] = gameMessage.getU32();
+		if (!gameMessage.eof()) throw txProtocolError(_WHERE("Message is too long")); // there must not be any byte after the recipient list
 	}
 
 } //end namespace alc

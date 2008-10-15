@@ -163,6 +163,7 @@ public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t);
 	tmMsgBase(U16 cmd,U32 flags,tNetSession * u);
+	tmMsgBase(tNetSession * u);
 	virtual ~tmMsgBase() {};
 	void setFlags(U32 f);
 	void unsetFlags(U32 f);

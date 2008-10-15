@@ -38,7 +38,7 @@
 namespace alc {
 
 	//// tmCustomSetGuid
-	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u) : tmMsgBase(NetMsgCustomSetGuid, plNetAck | plNetVersion | plNetCustom, u)
+	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u) : tmMsgBase(u)
 	{
 		serverGuid.setVersion(5); // inverted UruString
 		age.setVersion(0); // normal UrurString
@@ -101,13 +101,8 @@ namespace alc {
 	}
 	
 	//// tmCustomPlayerStatus
-	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *u)
-	 : tmMsgBase(NetMsgCustomPlayerStatus, plNetAck | plNetVersion | plNetCustom | plNetX | plNetKi | plNetUID, u)
+	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *u) : tmMsgBase(u)
 	{
-#ifdef ENABLE_UNET2
-		if (u->proto == 1)
-			unsetFlags(plNetUID);
-#endif
 		account.setVersion(0); // normal UrurString
 		avatar.setVersion(0); // normal UrurString
 	}
@@ -168,8 +163,7 @@ namespace alc {
 	}
 	
 	//// tmCustomFindServer
-	tmCustomFindServer::tmCustomFindServer(tNetSession *u)
-	 : tmMsgBase(NetMsgCustomFindServer, plNetX | plNetKi | plNetAck | plNetCustom | plNetIP, u)
+	tmCustomFindServer::tmCustomFindServer(tNetSession *u) : tmMsgBase(u)
 	{
 		serverGuid.setVersion(5); // inverted UruString
 		age.setVersion(0); // normal UrurString
@@ -231,8 +225,7 @@ namespace alc {
 	}
 	
 	//// tmCustomForkServer
-	tmCustomForkServer::tmCustomForkServer(tNetSession *u)
-	 : tmMsgBase(NetMsgCustomForkServer, plNetAck | plNetCustom | plNetX | plNetKi | plNetVersion, u)
+	tmCustomForkServer::tmCustomForkServer(tNetSession *u) : tmMsgBase(u)
 	{
 		serverGuid.setVersion(5); // inverted UruString
 		age.setVersion(0); // normal UruString
@@ -280,8 +273,7 @@ namespace alc {
 	}
 	
 	//// tmCustomServerFound
-	tmCustomServerFound::tmCustomServerFound(tNetSession *u)
-	: tmMsgBase(NetMsgCustomServerFound, plNetAck | plNetCustom | plNetX | plNetKi | plNetVersion, u)
+	tmCustomServerFound::tmCustomServerFound(tNetSession *u) : tmMsgBase(u)
 	{
 		ipStr.setVersion(0); // normal UruString
 		serverGuid.setVersion(5); // inverted UruString
@@ -329,51 +321,22 @@ namespace alc {
 	}
 	
 	////tmCustomDirectedFwd
-	tmCustomDirectedFwd::tmCustomDirectedFwd(tNetSession *u)
-	: tmMsgBase(NetMsgCustomDirectedFwd, plNetAck | plNetKi | plNetCustom | plNetVersion, u)
-	{
-		recipients = NULL;
-		ki = 0;
-	}
+	tmCustomDirectedFwd::tmCustomDirectedFwd(tNetSession *u) : tmGameMessageDirected(u)
+	{ }
 	
 	tmCustomDirectedFwd::tmCustomDirectedFwd(tNetSession *u, tmCustomDirectedFwd &directedFwd)
-	 : tmMsgBase(NetMsgCustomDirectedFwd, plNetAck | plNetKi | plNetCustom | plNetVersion, u), gameMessage(directedFwd.gameMessage)
+	 : tmGameMessageDirected(NetMsgCustomDirectedFwd, plNetAck | plNetKi | plNetCustom | plNetVersion, u)
 	{
 		recipients = NULL;
 		ki = directedFwd.ki;
+		gameMessage = directedFwd.gameMessage;
 	}
 	
-	tmCustomDirectedFwd::~tmCustomDirectedFwd(void)
-	{
-		if (recipients) free(recipients);
-	}
 	
 	void tmCustomDirectedFwd::store(tBBuf &t)
 	{
-		tmMsgBase::store(t);
+		tmGameMessageDirected::store(t);
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
-		// store the whole message
-		gameMessage.clear();
-		t.get(gameMessage);
-		// now, verify (will throw a txOutOfRange when too small)
-		gameMessage.rewind();
-		gameMessage.read(5); // ignore the first bytes
-		U32 gameMsgSize = gameMessage.getU32();
-		gameMessage.read(gameMsgSize); // this is the message itself
-		gameMessage.read(1); // ignore 1 byte
-		// get list of recipients
-		nRecipients = gameMessage.getByte();
-		if (recipients) free(recipients);
-		recipients = (U32 *)malloc(nRecipients*sizeof(U32));
-		for (int i = 0; i < nRecipients; ++i) recipients[i] = gameMessage.getU32();
-		if (!gameMessage.eof()) throw txProtocolError(_WHERE("Message is too long")); // there must not be any byte after the recipient list
-	}
-	
-	void tmCustomDirectedFwd::stream(tBBuf &t)
-	{
-		tmMsgBase::stream(t);
-		gameMessage.rewind();
-		t.put(gameMessage);
 	}
 
 } //end namespace alc

@@ -575,6 +575,12 @@ tmMsgBase::tmMsgBase(U16 cmd,U32 flags,tNetSession * u) : tmBase(0, u) {
 		min_version = u->min_version;
 	}
 }
+tmMsgBase::tmMsgBase(tNetSession * u) : tmBase(0, u) {
+	DBG(5,"tmMsgBase()\n");
+	this->cmd=0;
+	this->flags=0;
+	this->timestamp.seconds=0; // the timestamp is unitialized per default (this removes a valgrind error)
+}
 void tmMsgBase::setFlags(U32 f) {
 	this->flags |= f;
 	if(f & plNetAck)
@@ -671,7 +677,7 @@ void tmMsgBase::store(tBBuf &t) {
 	else sid = 0;
 
 	U32 check=plNetAck | plNetBcast | plNetVersion | plNetTimestamp | \
-	plNetX | plNetKi | plNetUID | plNetIP | plNetCustom | plNetSid;
+	plNetX | plNetKi | plNetUID | plNetIP | plNetCustom | plNetSid | plNetGame;
 	
 	//now catch undocumented protocol flags
 	if (flags & ~(check)) {
@@ -679,9 +685,11 @@ void tmMsgBase::store(tBBuf &t) {
 		lerr->dumpbuf(t);
 		lerr->nl();
 		lerr->nl();
+		throw txProtocolError(_WHERE("%s Problem parsing a plNetMsg header format mask %08X\n",u->str(),flags & ~(check)));
 	}
 }
 void tmMsgBase::stream(tBBuf &t) {
+	if (!cmd) throw txProtocolError(_WHERE("attempt to send message without cmd"));
 	if((flags & plNetSid) && u->proto!=0 && u->proto<3) unsetFlags(plNetSid); // dont send this flag to old peers
 	t.putU16(cmd);
 	t.putU32(flags);
@@ -759,6 +767,8 @@ const Byte * tmMsgBase::str() {
 		dbg.writeStr(" bcast,");
 	if(flags & plNetCustom)
 		dbg.writeStr(" UCPNPI,");
+	if (flags & plNetGame)
+		dbg.writeStr(" GameMsg,");
 	if(flags & plNetVersion)
 		dbg.printf(" version (%i.%i),",max_version,min_version);
 	if(flags & plNetTimestamp) {

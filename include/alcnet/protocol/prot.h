@@ -52,13 +52,14 @@
 #define plNetX          0x00000200 //* contains the X
 #define plNetKi         0x00001000 //* contains the ki
 #define plNetUID        0x00004000 //* contains a player uid
-#define plNetIP         0x00000010 //* This message should contain client's ip address
+#define plNetIP         0x00000010 //* contains client's ip address
 
 //Suppositions for unidentified flags.
-#define plNetCustom     0x00020000 //*? Unknown purpose flag
-#define plNetStateReq   0x00000800 //(unknown, seen on the 1st plNetMsgStateRequest)
-#define plNetDirected   0x00008000 //Unknown, seen on plNetMsgGameMessageDirected
-#define plNetP2P        0x08000000 //p2p request? (seen on plNetMsgJoinReq)
+#define plNetGame       0x00000002 //Unknown, seen in NetMsgGameMessage
+#define plNetCustom     0x00020000 //Unknown purpose flag
+//#define plNetStateReq   0x00000800 //Unknown, seen on the 1st plNetMsgStateRequest
+//#define plNetDirected   0x00008000 //Unknown, seen on plNetMsgGameMessageDirected
+//#define plNetP2P        0x08000000 //p2p request? (seen on plNetMsgJoinReq)
 
 //CUSTOM plNetFlags
 #define plNetSid        0x00800000 //* this message contains a sid (used when X is already used otherwise)

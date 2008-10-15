@@ -55,6 +55,27 @@ namespace alc {
 		tmJoinAck(tNetSession *u);
 		virtual void stream(tBBuf &t);
 	};
+	
+	class tmGameMessage : public tmMsgBase {
+	public:
+		tmGameMessage(tNetSession *u);
+		tmGameMessage(U16 cmd, U32 flags, tNetSession *u);
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
+		// format
+		tMBuf gameMessage; // saves the complete message including recipients (if existing)
+	};
+	
+	class tmGameMessageDirected : public tmGameMessage {
+	public:
+		tmGameMessageDirected(tNetSession *u);
+		tmGameMessageDirected(U16 cmd, U32 flags, tNetSession *u);
+		~tmGameMessageDirected(void);
+		virtual void store(tBBuf &t);
+		// format
+		Byte nRecipients;
+		U32 *recipients;
+	};
 
 } //End alc namespace
 

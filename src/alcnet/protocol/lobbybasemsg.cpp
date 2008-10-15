@@ -38,7 +38,7 @@
 namespace alc {
 
 	//// tmAuthenticateHello
-	tmAuthenticateHello::tmAuthenticateHello(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
+	tmAuthenticateHello::tmAuthenticateHello(tNetSession *u) : tmMsgBase(u) // it's not capable of sending
 	{
 		account.setVersion(0); // normal UruString
 	}
@@ -86,7 +86,7 @@ namespace alc {
 	}
 	
 	//// tmAuthenticateResponse
-	tmAuthenticateResponse::tmAuthenticateResponse(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending are set
+	tmAuthenticateResponse::tmAuthenticateResponse(tNetSession *u) : tmMsgBase(u) // it's not capable of sending are set
 	{
 		hash.setVersion(0); // normal UruString, but in Hex, not Ascii
 	}
@@ -133,7 +133,7 @@ namespace alc {
 	}
 	
 	//// tmSetMyActivePlayer
-	tmSetMyActivePlayer::tmSetMyActivePlayer(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
+	tmSetMyActivePlayer::tmSetMyActivePlayer(tNetSession *u) : tmMsgBase(u) // it's not capable of sending
 	{
 		avatar.setVersion(0); // normal UruString
 	}
@@ -168,7 +168,7 @@ namespace alc {
 	}
 	
 	//// tmFindAge
-	tmFindAge::tmFindAge(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
+	tmFindAge::tmFindAge(tNetSession *u) : tmMsgBase(u) // it's not capable of sending
 	 { }
 	
 	void tmFindAge::store(tBBuf &t)
