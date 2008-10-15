@@ -111,7 +111,7 @@ namespace alc {
 		}
 	}
 	
-	void tUnetLobbyServerBase::setActivePlayer(tNetSession *u, U32 ki, const Byte *avatar)
+	void tUnetLobbyServerBase::setActivePlayer(tNetSession *u, S32 ki, const Byte *avatar)
 	{
 		tNetSession *client;
 		smgr->rewind();

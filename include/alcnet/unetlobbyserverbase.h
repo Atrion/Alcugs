@@ -58,7 +58,7 @@ public:
 	virtual void onLoadConfig(bool reload);
 protected:
 	tNetSessionIte reconnectPeer(Byte dst); //!< establishes a connection to that service (remember to set the corresponding gone variable to 0)
-	void setActivePlayer(tNetSession *u, U32 ki, const Byte *avatar);
+	void setActivePlayer(tNetSession *u, S32 ki, const Byte *avatar);
 	void killPlayer(tNetSession *u, Byte reason, bool dontTerminate = false);
 
 	tNetSessionIte auth, tracking, vault;

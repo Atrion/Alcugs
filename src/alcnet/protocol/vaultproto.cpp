@@ -363,7 +363,7 @@ namespace alc {
 	}
 	
 	//// tvCreatableGenericValue
-	tvCreatableGenericValue::tvCreatableGenericValue(S32 integer) : tvBase()
+	tvCreatableGenericValue::tvCreatableGenericValue(U32 integer) : tvBase()
 	{
 		format = DInteger;
 		this->integer = integer;
@@ -387,7 +387,7 @@ namespace alc {
 		
 		switch (format) {
 			case DInteger:
-				integer = t.getS32();
+				integer = t.getU32();
 				break;
 			case DUruString:
 				str.setVersion(5); /* inverted UruString */
@@ -406,7 +406,7 @@ namespace alc {
 		t.putByte(format);
 		switch (format) {
 			case DInteger:
-				t.putS32(integer);
+				t.putU32(integer);
 				break;
 			case DUruString:
 				str.setVersion(5); /* inverted UruString */
@@ -420,7 +420,7 @@ namespace alc {
 		}
 	}
 	
-	S32 tvCreatableGenericValue::asInt(void)
+	U32 tvCreatableGenericValue::asInt(void)
 	{
 		if (format != DInteger)
 			throw txProtocolError(_WHERE("expected a GenericValue.format of 0x%02X (DInteger) but got 0x%02X", DInteger, format));
@@ -625,7 +625,7 @@ namespace alc {
 		permissions = t.getU32();
 		if ((permissions & ~(KAllPermissions)) != 0)
 			throw txProtocolError(_WHERE("invalid permissions mask (0x%08X)", permissions));
-		owner = t.getS32();
+		owner = t.getU32();
 		group = t.getU32();
 		modTime = t.getU32();
 		modTime += t.getU32()/1000000.0; // these are the microseconds
@@ -779,7 +779,7 @@ namespace alc {
 		t.putU32(index);
 		t.putByte(type);
 		t.putU32(permissions);
-		t.putS32(owner);
+		t.putU32(owner);
 		t.putU32(group);
 		U32 modTimeSec = (U32)modTime;
 		t.putU32(modTimeSec);
@@ -965,7 +965,7 @@ namespace alc {
 	}
 	
 	//// tvItem
-	tvItem::tvItem(Byte id, S32 integer) : tvBase()
+	tvItem::tvItem(Byte id, U32 integer) : tvBase()
 	{
 		this->id = id;
 		type = DCreatableGenericValue;
@@ -1053,7 +1053,7 @@ namespace alc {
 		t.put(*data);
 	}
 	
-	S32 tvItem::asInt(void)
+	U32 tvItem::asInt(void)
 	{
 		if (type != DCreatableGenericValue)
 			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a DCreatableGenericValue", id, alcVaultGetDataType(type)));

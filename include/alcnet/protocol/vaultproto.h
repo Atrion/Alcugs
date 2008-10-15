@@ -282,7 +282,7 @@ namespace alc {
 	
 	class tvCreatableGenericValue : public tvBase {
 	public:
-		tvCreatableGenericValue(S32 integer);
+		tvCreatableGenericValue(U32 integer);
 		tvCreatableGenericValue(double time);
 		tvCreatableGenericValue(const Byte *str);
 		tvCreatableGenericValue(void) : tvBase() { }
@@ -290,12 +290,12 @@ namespace alc {
 		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log, bool shortLog);
 		
-		S32 asInt(void);
+		U32 asInt(void);
 		const Byte *asString(void);
 		
 		// format
 		Byte format;
-		S32 integer;
+		U32 integer;
 		tUStr str;
 		double time;
 	};
@@ -349,7 +349,7 @@ namespace alc {
 		U32 index;
 		Byte type;
 		U32 permissions;
-		S32 owner;
+		U32 owner;
 		U32 group;
 		double modTime;
 		U32 creator;
@@ -376,7 +376,7 @@ namespace alc {
 	
 	class tvItem : public tvBase {
 	public:
-		tvItem(Byte id, S32 integer);
+		tvItem(Byte id, U32 integer);
 		tvItem(Byte id, double time);
 		tvItem(Byte id, const Byte *str);
 		tvItem(tvCreatableStream *stream);
@@ -387,7 +387,7 @@ namespace alc {
 		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log, bool shortLog);
 		
-		S32 asInt(void);
+		U32 asInt(void);
 		const Byte *asString(void);
 		const Byte *asGuid(void);
 		tvNode *asNode(void);

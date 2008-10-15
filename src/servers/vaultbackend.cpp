@@ -318,7 +318,7 @@ namespace alc {
 		msg.print(logHtml, /*clientToServer:*/true, u, shortHtml, ki);
 		
 		// have everything on the stack as we can safely throw exceptions then
-		S32 nodeType = -1, playerKi = -1, nodeSon = -1, nodeParent = -1, seenFlag = -1, rcvPlayer = -1;
+		U32 nodeType = -1, playerKi = -1, nodeSon = -1, nodeParent = -1, seenFlag = -1, rcvPlayer = -1;
 		U16 tableSize = 0;
 		tMBuf table;
 		tvNode *savedNode = NULL;
@@ -330,7 +330,7 @@ namespace alc {
 			tvItem *itm = msg.items[i];
 			switch (itm->id) {
 				case 0: // GenericValue.Int: used in VaultManager, must always be the same
-					if (itm->asInt() != (S32)0xC0AB3041)
+					if (itm->asInt() != 0xC0AB3041)
 						throw txProtocolError(_WHERE("a vault item with ID 0 must always have a value of 0xC0AB3041 but I got 0x%08X", itm->asInt()));
 					break;
 				case 1: // GenericValue.Int: node type
@@ -374,7 +374,7 @@ namespace alc {
 					seenFlag = itm->asInt();
 					break;
 				case 20: // GenericValue.Int: must always be the -1 or 0 (0 seen in NegotiateManifest when client gets Ahnonay SDL to update current Sphere)
-					if (itm->asInt() != -1 && itm->asInt() != 0)
+					if (itm->asInt() != (U32)-1 && itm->asInt() != 0)
 						throw txProtocolError(_WHERE("a vault item with ID 20 must always have a value of -1 or 0 but I got %d", itm->asInt()));
 					break;
 				case 21: // GenericValue.UruString: age name
@@ -423,7 +423,7 @@ namespace alc {
 						throw txProtocolError(_WHERE("Player with KI %d wants to VConnect as %d\n", ki, mgr));
 					// create reply
 					tvMessage reply(msg, 2);
-					reply.items[0] = new tvItem(/*id*/2, /*mgr node id*/(S32)mgr);
+					reply.items[0] = new tvItem(/*id*/2, /*mgr node id*/mgr);
 					reply.items[1] = new tvItem(/*id*/23, /*folder name*/vaultFolderName);
 					send(reply, u, ki);
 				}
@@ -434,7 +434,7 @@ namespace alc {
 					mgr = vaultDB->findNode(mgrNode, /*create*/true);
 					// create and send the reply
 					tvMessage reply(msg, 3);
-					reply.items[0] = new tvItem(/*id:*/2, /*mgr node id*/(S32)mgr);
+					reply.items[0] = new tvItem(/*id:*/2, /*mgr node id*/mgr);
 					reply.items[1] = new tvItem(/*id*/21, /*age name*/ageName);
 					reply.items[2] = new tvItem(/*id*/23, /*folder name*/vaultFolderName);
 					send(reply, u, ki);
@@ -443,8 +443,8 @@ namespace alc {
 					mgr = vaultDB->findNode(mgrNode, /*create*/true); // creating it is needed for vaults which were created with an old vault server
 					// create and send the reply
 					tvMessage reply(msg, 3);
-					reply.items[0] = new tvItem(/*id:*/1, /*node type*/5);
-					reply.items[1] = new tvItem(/*id*/2, /*mgr node id*/(S32)mgr);
+					reply.items[0] = new tvItem(/*id:*/1, /*node type*/5u);
+					reply.items[1] = new tvItem(/*id*/2, /*mgr node id*/mgr);
 					reply.items[2] = new tvItem(/*id*/23, /*folder name*/vaultFolderName);
 					send(reply, u, ki);
 				}
@@ -558,8 +558,8 @@ namespace alc {
 					
 					// reply to the sender
 					tvMessage reply(msg, 2);
-					reply.items[0] = new tvItem(/*id*/9, /*old node index*/(S32)oldIndex);
-					reply.items[1] = new tvItem(/*id*/11, /*old node index*/(S32)newIndex);
+					reply.items[0] = new tvItem(/*id*/9, /*old node index*/oldIndex);
+					reply.items[1] = new tvItem(/*id*/11, /*old node index*/newIndex);
 					send(reply, u, ki);
 				}
 				else {
@@ -569,7 +569,7 @@ namespace alc {
 					
 					// create the reply to the sender
 					tvMessage reply(msg, 1);
-					reply.items[0] = new tvItem(/*id*/9, /*old node index*/(S32)savedNode->index);
+					reply.items[0] = new tvItem(/*id*/9, /*old node index*/savedNode->index);
 					send(reply, u, ki);
 					// and the broadcast
 					broadcastNodeUpdate(*savedNode, ki, msg.vmgr);
@@ -592,7 +592,7 @@ namespace alc {
 					throw txProtocolError(_WHERE("got a VFindNode but can't find the node"));
 				// create and send the reply
 				tvMessage reply(msg, 2);
-				reply.items[0] = new tvItem(/*id*/9, /*old node index*/(S32)mfs.id);
+				reply.items[0] = new tvItem(/*id*/9, /*old node index*/mfs.id);
 				reply.items[1] = new tvItem(/*id*/24, /*timestamp*/(double)mfs.time);
 				send(reply, u, ki);
 			}
@@ -607,7 +607,7 @@ namespace alc {
 				
 				// split the message into several ones to avoid it getting too big
 				tMBuf buf;
-				int num = 0;
+				U32 num = 0;
 				for (int i = 0; i < nNodes; ++i) {
 					buf.put(*nodes[i]);
 					++num;
@@ -618,7 +618,7 @@ namespace alc {
 						reply.compress = true;
 						reply.items[0] = new tvItem(new tvCreatableStream(/*id*/6, buf)); // tvMessage will delete it for us
 						reply.items[1] = new tvItem(/*id*/25, /*number of nodes*/num);
-						if (eof) reply.items[2] = new tvItem(/*id*/31, 0); // EOF mark (this is the last packet of nodes)
+						if (eof) reply.items[2] = new tvItem(/*id*/31, 0u); // EOF mark (this is the last packet of nodes)
 						send(reply, u, ki);
 						buf.clear();
 						num = 0;
@@ -735,7 +735,7 @@ namespace alc {
 				addRemovePlayerToAge(ageInfoNode, msg.vmgr);
 				
 				tvMessage reply(msg, 1);
-				reply.items[0] = new tvItem(/*id*/1, (S32)linkNode);
+				reply.items[0] = new tvItem(/*id*/1, linkNode);
 				send(reply, u, ki, x);
 				break;
 			}
@@ -778,7 +778,7 @@ namespace alc {
 					addRemovePlayerToAge(ageInfoNode, msg.vmgr, /*visitor*/true);
 				
 				tvMessage reply(msg, 1);
-				reply.items[0] = new tvItem(/*id*/1, (S32)linkNode);
+				reply.items[0] = new tvItem(/*id*/1, linkNode);
 				send(reply, u, ki, x);
 				break;
 			}
@@ -1132,7 +1132,7 @@ namespace alc {
 	{
 		// create the broadcast message
 		tvMessage bcast(VSaveNode, 2);
-		bcast.items[0] = new tvItem(/*id*/9, /*old node index*/(S32)node.index);
+		bcast.items[0] = new tvItem(/*id*/9, /*old node index*/node.index);
 		bcast.items[1] = new tvItem(/*id*/24, /*timestamp*/node.modTime);
 		// and send it
 		broadcast(bcast, node.index, origKi, origMgr);
@@ -1151,15 +1151,15 @@ namespace alc {
 	{
 		// create the broadcast message
 		tvMessage bcast(VOnlineState, node.int1 ? 5 : 3);
-		bcast.items[0] = new tvItem(/*id*/9, /*node index*/(S32)node.index);
+		bcast.items[0] = new tvItem(/*id*/9, /*node index*/node.index);
 		bcast.items[1] = new tvItem(/*id*/24, /*timestamp*/node.modTime);
 		if (node.int1) { // if he's online
 			bcast.items[2] = new tvItem(/*id*/27, node.str1.c_str()); // age name
 			bcast.items[3] = new tvItem(/*id*/28, node.str2.c_str()); // age guid
-			bcast.items[4] = new tvItem(/*id*/29, (S32)node.int1); // online state
+			bcast.items[4] = new tvItem(/*id*/29, node.int1); // online state
 		}
 		else { // if he's not online
-			bcast.items[2] = new tvItem(/*id*/29, (S32)node.int1); // online state
+			bcast.items[2] = new tvItem(/*id*/29, node.int1); // online state
 		}
 		// and send it
 		broadcast(bcast, node.index, origKi, origMgr);

@@ -86,6 +86,7 @@ namespace alc {
 		if (!ageInfo) return false;
 		if (ageInfo->seqPrefix > 0x00FFFFFF) return false; // obviously he wants to link to an age like GlobalMarkers
 		bool isPrivate = (instanceMode == 1) ? isAgePrivate(age) : false;
+		if (isPrivate && ki > 0x0FFFFFFF) throw txBase(_WHERE("KI is too big!")); // ensure 1st bit of the 4 byte is 0 (see comment below)
 		
 		/* so we have "The server GUID, aka age guid"
 		---------------------------------
@@ -99,8 +100,7 @@ namespace alc {
 		we will be completely sure, that all players, at least will have only one instance for his
 		own age.
 		The 0 byte is reserved for a random number for the hoods, and any other age (for the future).
-		And the 1st bit of the 4 byte, should be always 0 (since the Ki number is a signed value, this
-		will happen always. */
+		And the 1st bit of the 4 byte, should be always 0 */
 		tMBuf buf;
 		buf.putByte(0);
 		buf.putU32(isPrivate ? ki : 0);
