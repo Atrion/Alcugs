@@ -38,7 +38,7 @@
 namespace alc {
 
 	//// tmRequestMyVaultPlayerList
-	tmRequestMyVaultPlayerList::tmRequestMyVaultPlayerList(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
+	tmRequestMyVaultPlayerList::tmRequestMyVaultPlayerList(tNetSession *u) : tmMsgBase(u) // it's not capable of sending
 	{ }
 	
 	void tmRequestMyVaultPlayerList::store(tBBuf &t)
@@ -78,7 +78,7 @@ namespace alc {
 	}
 	
 	//// tmCreatePlayer
-	tmCreatePlayer::tmCreatePlayer(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
+	tmCreatePlayer::tmCreatePlayer(tNetSession *u) : tmMsgBase(u) // it's not capable of sending
 	{
 		avatar.setVersion(0); // normal UruString
 		gender.setVersion(0); // normal UruString
@@ -131,7 +131,7 @@ namespace alc {
 	}
 	
 	//// tmDeletePlayer
-	tmDeletePlayer::tmDeletePlayer(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
+	tmDeletePlayer::tmDeletePlayer(tNetSession *u) : tmMsgBase(u) // it's not capable of sending
 	{ }
 	
 	void tmDeletePlayer::store(tBBuf &t)

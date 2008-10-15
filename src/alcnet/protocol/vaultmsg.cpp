@@ -38,8 +38,8 @@
 namespace alc {
 
 	//// tmVault
-	tmVault::tmVault(tNetSession *u) : tmMsgBase(NetMsgVault, plNetAck | plNetKi, u)
-	{ ki = 0; }
+	tmVault::tmVault(tNetSession *u) : tmMsgBase(u)
+	{ }
 	
 	tmVault::tmVault(tNetSession *u, U32 ki, U32 x, bool task, tBaseType *vaultMessage) : tmMsgBase(NetMsgVault, plNetAck | plNetKi, u)
 	{
@@ -82,8 +82,7 @@ namespace alc {
 		memcpy(this->uid, uid, 16);
 	}
 	
-	tmCustomVaultAskPlayerList::tmCustomVaultAskPlayerList(tNetSession *u)
-	: tmMsgBase(NetMsgCustomVaultAskPlayerList, plNetAck | plNetCustom | plNetX | plNetVersion | plNetUID, u)
+	tmCustomVaultAskPlayerList::tmCustomVaultAskPlayerList(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
 	void tmCustomVaultAskPlayerList::store(tBBuf &t)
@@ -93,8 +92,7 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultPlayerList
-	tmCustomVaultPlayerList::tmCustomVaultPlayerList(tNetSession *u)
-	: tmMsgBase(NetMsgCustomVaultPlayerList, plNetAck | plNetCustom | plNetX | plNetVersion | plNetUID, u)
+	tmCustomVaultPlayerList::tmCustomVaultPlayerList(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
 	tmCustomVaultPlayerList::tmCustomVaultPlayerList(tNetSession *u, U32 x, const Byte *uid)
@@ -129,8 +127,7 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultPlayerStatus
-	tmCustomVaultPlayerStatus::tmCustomVaultPlayerStatus(tNetSession *u)
-	 : tmMsgBase(NetMsgCustomVaultPlayerStatus, plNetAck | plNetCustom | plNetVersion | plNetX | plNetKi, u)
+	tmCustomVaultPlayerStatus::tmCustomVaultPlayerStatus(tNetSession *u) : tmMsgBase(u)
 	{
 		serverGuid.setVersion(0); // normal UruString
 		age.setVersion(0); // normal UruString
@@ -176,13 +173,8 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultCreatePlayer
-	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u)
-	 : tmMsgBase(NetMsgCustomVaultCreatePlayer, plNetX | plNetUID | plNetVersion | plNetAck | plNetCustom, u)
+	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u) : tmMsgBase(u)
 	{
-#ifdef ENABLE_UNET2
-		if (u->proto == 1) unsetFlags(plNetUID);
-#endif
-
 		this->login.setVersion(5); // inverted
 		this->avatar.setVersion(0); // normal UruString
 		this->gender.setVersion(0); // normal UruString
@@ -259,13 +251,8 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultPlayerCreated
-	tmCustomVaultPlayerCreated::tmCustomVaultPlayerCreated(tNetSession *u)
-	 : tmMsgBase(NetMsgCustomVaultPlayerCreated, plNetKi | plNetX | plNetAck | plNetCustom | plNetUID, u)
-	{
-#ifdef ENABLE_UNET2
-		if (u->proto == 1) unsetFlags(plNetUID);
-#endif
-	}
+	tmCustomVaultPlayerCreated::tmCustomVaultPlayerCreated(tNetSession *u) : tmMsgBase(u)
+	{ }
 	
 	tmCustomVaultPlayerCreated::tmCustomVaultPlayerCreated(tNetSession *u, U32 ki, U32 x, const Byte *uid, Byte result)
 	 : tmMsgBase(NetMsgCustomVaultPlayerCreated, plNetKi | plNetX | plNetAck | plNetCustom | plNetUID, u)

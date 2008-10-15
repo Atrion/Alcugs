@@ -95,10 +95,11 @@ namespace alc {
 		if (ret != 0) return ret; // cancel if it was processed, otherwise it's our turn
 		
 		switch(msg->cmd) {
+			//// message for joining the game
 			case NetMsgJoinReq:
 			{
-				if (u->getPeerType() != KClient || u->ki == 0) {
-					err->log("ERR: %s sent a NetMsgJoinReq but is not yet authed or did not set his KI. I\'ll kick him.\n", u->str());
+				if (!u->ki) {
+					err->log("ERR: %s sent a NetMsgJoinReq but did not yet set his KI. I\'ll kick him.\n", u->str());
 					return -2; // hack attempt
 				}
 				
@@ -122,6 +123,23 @@ namespace alc {
 				send(joinAck);
 				// now, it'll stat sending GameMessages
 				
+				return 1;
+			}
+			
+			//// game messages
+			case NetMsgGameMessage:
+			{
+				if (!u->joined) {
+					err->log("ERR: %s sent a NetMsgGameMessage but did not yet join the game. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmGameMessage gameMsg(u);
+				msg->data->get(gameMsg);
+				log->log("<RCV> [%d] %s\n", msg->sn, gameMsg.str());
+				
+				// FIXME: do something
 				return 1;
 			}
 		}

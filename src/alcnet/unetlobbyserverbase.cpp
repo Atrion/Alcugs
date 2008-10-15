@@ -511,8 +511,8 @@ namespace alc {
 					send(vaultMsgFwd);
 				}
 				else { // got it from a client
-					if (u->getPeerType() != KClient || u->ki == 0) { // KI is necessary to know where to route it
-						err->log("ERR: %s sent a NetMsgVault but is not yet authed or did not set his KI. I\'ll kick him.\n", u->str());
+					if (!u->ki) { // KI is necessary to know where to route it
+						err->log("ERR: %s sent a NetMsgJoinReq but did not yet set his KI. I\'ll kick him.\n", u->str());
 						return -2; // hack attempt
 					}
 					if (vaultMsg.hasFlags(plNetKi) && vaultMsg.ki != u->ki)
@@ -536,8 +536,8 @@ namespace alc {
 			// messages for finding the server to link to
 			case NetMsgFindAge:
 			{
-				if (u->getPeerType() != KClient || u->ki == 0) {
-					err->log("ERR: %s sent a NetMsgVault but is not yet authed or did not set his KI. I\'ll kick him.\n", u->str());
+				if (!u->ki) {
+					err->log("ERR: %s sent a NetMsgJoinReq but did not yet set his KI. I\'ll kick him.\n", u->str());
 					return -2; // hack attempt
 				}
 				

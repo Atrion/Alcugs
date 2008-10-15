@@ -65,13 +65,8 @@ namespace alc {
 		this->release = release;
 	}
 	
-	tmCustomAuthAsk::tmCustomAuthAsk(tNetSession *u)
-	: tmMsgBase(NetMsgCustomAuthAsk, plNetAck | plNetCustom | plNetX | plNetVersion | plNetIP, u)
+	tmCustomAuthAsk::tmCustomAuthAsk(tNetSession *u) : tmMsgBase(u)
 	{
-#ifdef ENABLE_UNET2
-		if (u->proto == 1)
-			unsetFlags(plNetIP);
-#endif
 		login.setVersion(0); // normal UrurString
 	}
 	
@@ -142,13 +137,8 @@ namespace alc {
 		this->accessLevel = accessLevel;
 	}
 	
-	tmCustomAuthResponse::tmCustomAuthResponse(tNetSession *u)
-	: tmMsgBase(NetMsgCustomAuthResponse, plNetAck | plNetCustom | plNetX | plNetVersion | plNetIP | plNetUID, u)
+	tmCustomAuthResponse::tmCustomAuthResponse(tNetSession *u) : tmMsgBase(u)
 	{
-#ifdef ENABLE_UNET2
-		if (u->proto == 1)
-			unsetFlags(plNetIP | plNetUID);
-#endif
 		login.setVersion(0); // normal UrurString
 		passwd.setVersion(0); // normal UrurString
 	}
