@@ -123,4 +123,6 @@ namespace std {
 #include "alcutil/alcpkg.h"
 #include "urutypes/pypkg.h"
 
+#include "urutypes/ageinfo.h"
+
 #endif

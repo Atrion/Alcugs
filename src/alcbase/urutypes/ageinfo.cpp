@@ -124,14 +124,14 @@ namespace alc {
 		tStrBuf dir = cfg->getVar("age");
 		if (dir.size() < 2) throw txBase(_WHERE("age directory is not defined"));
 		if (!dir.endsWith("/")) dir.writeStr("/");
-	
-		lstd->log("reading age files from %s\n", dir.c_str());
-		lstd->flush();
 		
 		size = 0;
 		ages = NULL;
 		
 		if (!name) { // we should load all ages
+			lstd->log("reading age files from %s\n", dir.c_str());
+			lstd->flush();
+			
 			tDirectory ageDir;
 			tDirEntry *file;
 			ageDir.open((char *)dir.c_str());
@@ -145,6 +145,9 @@ namespace alc {
 			}
 		}
 		else { // we should load only one certain age
+			lstd->log("reading age file %s%s.age\n", dir.c_str(), name);
+			lstd->flush();
+			
 			char filename[200];
 			sprintf(filename, "%s.age", name);
 			// grow the array

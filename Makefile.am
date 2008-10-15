@@ -29,7 +29,8 @@ libalcbase1_a_SOURCES = \
  src/alcbase/urutypes/urubasetypes.cpp \
  src/alcbase/alcutil/alcthread.cpp \
  src/alcbase/alcutil/alcpkg.cpp \
- src/alcbase/urutypes/pypkg.cpp
+ src/alcbase/urutypes/pypkg.cpp \
+ src/alcbase/urutypes/ageinfo.cpp
 
 if WIN32
 libalcbase1_a_SOURCES += src/alcbase/alcutil/windoze.cpp
@@ -54,7 +55,6 @@ libalcnet1_a_SOURCES = \
  src/alcnet/unetserverbase.cpp \
  src/alcnet/unetlobbyserverbase.cpp \
  src/alcnet/sql.cpp \
- src/alcnet/ageinfo.cpp \
  src/alcnet/protocol/authmsg.cpp \
  src/alcnet/protocol/trackingmsg.cpp \
  src/alcnet/protocol/lobbybasemsg.cpp \
