@@ -110,6 +110,7 @@ void tNetSession::init() {
 	data = NULL;
 	name[0] = 0;
 	avatar[0] = 0;
+	joined = false;
 	
 	DBG(5, "%s Initial timeout: %d\n", str(), timeout);
 }

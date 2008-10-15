@@ -33,17 +33,29 @@
 		Several
 */
 
-#ifndef __U_MSGPARSERS_H
-#define __U_MSGPARSERS_H
+#ifndef __U_FILENAME_H
+#define __U_FILENAME_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_MSGPARSERS_H_ID "$Id$"
+#define __U_FILENAME_H_ID "$Id$"
 
-#include "protocol/lobbybasemsg.h"
-#include "protocol/lobbymsg.h"
-#include "protocol/gamemsg.h"
-#include "protocol/authmsg.h"
-#include "protocol/trackingmsg.h"
-#include "protocol/vaultmsg.h"
-#include "protocol/vaultproto.h"
+namespace alc {
+
+	////DEFINITIONS
+	/**
+		If we want to do it well and nice, we should add pre and post conditions here.
+	*/
+	
+	class tmJoinReq : public tmMsgBase {
+	public:
+		tmJoinReq(tNetSession *u);
+	};
+	
+	class tmJoinAck : public tmMsgBase {
+	public:
+		tmJoinAck(tNetSession *u);
+		virtual void stream(tBBuf &t);
+	};
+
+} //End alc namespace
 
 #endif

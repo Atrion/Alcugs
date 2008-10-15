@@ -123,9 +123,12 @@ public:
 	Byte serverGuid[8]; //!< hex; server guid in tracking server
 	tNetSessionData *data; //!< save additional data (e.g. tracking information)
 	
-	// used by lobbybyse
+	// used by lobbybase
 	Byte challenge[16]; //!< peer challenge (hex)
 	Byte release; //!< type of client (internal/external)
+	
+	// used by game
+	bool joined;
 
 private:
 	tUnet * net;

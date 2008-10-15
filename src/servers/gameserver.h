@@ -50,6 +50,7 @@ namespace alc {
 		tUnetGameServer(void);
 		~tUnetGameServer(void);
 		virtual void onConnectionClosed(tNetEvent *ev, tNetSession *u);
+		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
 	private:
 		tAgeInfo *ageInfo;
 	};

@@ -42,7 +42,7 @@
 #define UNetExp         0x01 //Additional flags byte
 
 //known flags for plNetMsg's
-#define plNetFirewalled 0x00000020 //Firewalled flag only
+#define plNetFirewalled 0x00000020 //Firewalled flag only (seen only in NetMsgJoinAck)
 #define plNetBcast      0x00000400 //Bcast flag only (if that flag is enabled, do a bcast)
 #define plNetAck        0x00040000 //Ack flag only
 

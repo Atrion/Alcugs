@@ -33,17 +33,42 @@
 		Several
 */
 
-#ifndef __U_MSGPARSERS_H
-#define __U_MSGPARSERS_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_MSGPARSERS_H_ID "$Id$"
+#define __U_GAMEMSG_ID "$Id$"
 
-#include "protocol/lobbybasemsg.h"
-#include "protocol/lobbymsg.h"
+//#define _DBG_LEVEL_ 10
+
+#include "alcugs.h"
+#include "alcnet.h"
 #include "protocol/gamemsg.h"
-#include "protocol/authmsg.h"
-#include "protocol/trackingmsg.h"
-#include "protocol/vaultmsg.h"
-#include "protocol/vaultproto.h"
 
-#endif
+////extra includes
+
+#include "alcdebug.h"
+
+namespace alc {
+
+	//// tmJoinReq
+	tmJoinReq::tmJoinReq(tNetSession *u) : tmMsgBase(0, 0, u) // it's not capable of sending
+	{ }
+	
+	//// tmJoinAck
+	tmJoinAck::tmJoinAck(tNetSession *u) : tmMsgBase(NetMsgJoinAck, plNetAck | plNetCustom | plNetKi | plNetX | plNetFirewalled, u)
+	{
+		x = u->x;
+		ki = u->ki;
+	}
+	
+	void tmJoinAck::stream(tBBuf &t)
+	{
+		tmMsgBase::stream(t);
+		
+		t.putU16(0); // unknown flag
+		// write an empty SDL. FIXME: send the age state here
+		t.putU32(0); // real size
+		t.putByte(0); // compression flag
+		t.putU32(0); // sent size
+	}
+
+} //end namespace alc
+

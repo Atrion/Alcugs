@@ -89,5 +89,44 @@ namespace alc {
 			tUnetLobbyServerBase::onConnectionClosed(ev, u);
 	}
 
+	int tUnetGameServer::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
+	{
+		int ret = tUnetLobbyServerBase::onMsgRecieved(ev, msg, u); // first let tUnetLobbyServerBase process the message
+		if (ret != 0) return ret; // cancel if it was processed, otherwise it's our turn
+		
+		switch(msg->cmd) {
+			case NetMsgJoinReq:
+			{
+				if (u->getPeerType() != KClient || u->ki == 0) {
+					err->log("ERR: %s sent a NetMsgJoinReq but is not yet authed or did not set his KI. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmJoinReq joinReq(u);
+				msg->data->get(joinReq);
+				log->log("<RCV> [%d] %s\n", msg->sn, joinReq.str());
+				
+				// the player is joined - tell tracking
+				tNetSession *trackingServer = getSession(tracking);
+				if (!trackingServer) {
+					err->log("ERR: Player %s is joining, but tracking is unavailable.\n", u->str());
+					return 1;
+				}
+				tmCustomPlayerStatus status(trackingServer, u->ki, u->getSid(), u->uid, u->name, u->avatar, 2 /* visible */, RActive);
+				send(status);
+				
+				// ok, tell the client he successfully joined
+				u->joined = true;
+				tmJoinAck joinAck(u);
+				send(joinAck);
+				// now, it'll stat sending GameMessages
+				
+				return 1;
+			}
+		}
+		return 0;
+	}
+
 } //end namespace alc
 

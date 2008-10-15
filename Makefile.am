@@ -59,6 +59,7 @@ libalcnet1_a_SOURCES = \
  src/alcnet/protocol/trackingmsg.cpp \
  src/alcnet/protocol/lobbybasemsg.cpp \
  src/alcnet/protocol/lobbymsg.cpp \
+ src/alcnet/protocol/gamemsg.cpp \
  src/alcnet/protocol/vaultmsg.cpp \
  src/alcnet/protocol/vaultproto.cpp
 
