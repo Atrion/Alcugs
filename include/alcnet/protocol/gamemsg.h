@@ -48,6 +48,8 @@ namespace alc {
 	class tmJoinReq : public tmMsgBase {
 	public:
 		tmJoinReq(tNetSession *u);
+		virtual void store(tBBuf &t);
+		
 	};
 	
 	class tmJoinAck : public tmMsgBase {

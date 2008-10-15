@@ -52,6 +52,12 @@ namespace alc {
 	tmJoinReq::tmJoinReq(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
+	void tmJoinReq::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		u->x = x;
+	}
+	
 	//// tmJoinAck
 	tmJoinAck::tmJoinAck(tNetSession *u) : tmMsgBase(NetMsgJoinAck, plNetAck | plNetCustom | plNetKi | plNetX | plNetFirewalled, u)
 	{

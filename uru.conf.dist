@@ -178,7 +178,7 @@ website = "http://server/info.html"
 game.log = "../game/" # the path where the game log files will be saved (there will be subdirs for each instance: /basis/agename/ageguid/)
 game.config = "/home/user/etc/unet2.conf" # config file for game servers. If not set, game will use the same config file as lobby.
 ;game.bin = "/home/user/bin/uru_game" # full path and name of game server binary, overwrites global "bin" path
-;load_on_demand = 1 # enables/disables automaic game server forking (default 1)
+;load_on_demand = 1 # enables/disables automatic game server forking (default 1)
 
 stop = 1
 

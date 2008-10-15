@@ -479,18 +479,25 @@ namespace alc {
 			
 			//// vault messages
 			case NetMsgVault:
+			case NetMsgVaultTask:
 			case NetMsgVault2: // TPOTS
 			{
-				if (msg->cmd == NetMsgVault) u->tpots = 2; // it's not TPOTS
-				else                         u->tpots = 1; // it is TPOTS
+				bool isTask = (msg->cmd == NetMsgVaultTask);
+				if (msg->cmd == NetMsgVault)       u->tpots = 2; // it's not TPOTS
+				else if (msg->cmd == NetMsgVault2) u->tpots = 1; // it is TPOTS
 				
 				// get the data out of the packet
 				tmVault vaultMsg(u);
 				msg->data->get(vaultMsg);
 				log->log("<RCV> [%d] %s\n", msg->sn, vaultMsg.str());
+				if (isTask) {
+					if (!vaultMsg.hasFlags(plNetX))  throw txProtocolError(_WHERE("X flag missing"));
+					u->x = vaultMsg.x;
+				}
+				else vaultMsg.x = 0; // make sure it is set
 				
-				// prepare for parsing the message (actual parsing is only done when the packet is really forwarded
-				tvMessage parsedMsg(/*isTask:*/false, u->tpots);
+				// prepare for parsing the message (actual parsing is only done when the packet is really forwarded)
+				tvMessage parsedMsg(/*isTask:*/isTask, u->tpots);
 				vaultMsg.message.rewind();
 				
 				if (u->getPeerType() == KVault) { // got it from the vault - send it to the client
@@ -507,12 +514,12 @@ namespace alc {
 					}
 					parsedMsg.print(lvault, /*clientToServer:*/false, client, vaultLogShort);
 					parsedMsg.tpots = client->tpots;
-					tmVault vaultMsgFwd(client, vaultMsg.ki, /*x*/0, /*task*/false, &parsedMsg);
+					tmVault vaultMsgFwd(client, vaultMsg.ki, vaultMsg.x, isTask, &parsedMsg);
 					send(vaultMsgFwd);
 				}
 				else { // got it from a client
 					if (!u->ki) { // KI is necessary to know where to route it
-						err->log("ERR: %s sent a NetMsgJoinReq but did not yet set his KI. I\'ll kick him.\n", u->str());
+						err->log("ERR: %s sent a vault message but did not yet set his KI. I\'ll kick him.\n", u->str());
 						return -2; // hack attempt
 					}
 					if (vaultMsg.hasFlags(plNetKi) && vaultMsg.ki != u->ki)
@@ -526,7 +533,7 @@ namespace alc {
 					vaultMsg.message.get(parsedMsg);
 					parsedMsg.print(lvault, /*clientToServer:*/true, u, vaultLogShort);
 					parsedMsg.tpots = vaultServer->tpots;
-					tmVault vaultMsgFwd(vaultServer, u->ki, /*x*/0, /*task*/false, &parsedMsg);
+					tmVault vaultMsgFwd(vaultServer, u->ki, vaultMsg.x, isTask, &parsedMsg);
 					send(vaultMsgFwd);
 				}
 				
@@ -537,7 +544,7 @@ namespace alc {
 			case NetMsgFindAge:
 			{
 				if (!u->ki) {
-					err->log("ERR: %s sent a NetMsgJoinReq but did not yet set his KI. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgFindAge but did not yet set his KI. I\'ll kick him.\n", u->str());
 					return -2; // hack attempt
 				}
 				
