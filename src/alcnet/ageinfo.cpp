@@ -46,7 +46,20 @@
 namespace alc {
 
 	////IMPLEMENTATION
-	tAgeInfo::tAgeInfo(const char *dir, const char *file)
+	tPageInfo::tPageInfo(tConfigVal *val, int row)
+	{
+		tStrBuf name = val->getVal(0, row), id = val->getVal(1, row), conditionalLoad = val->getVal(2, row);
+		strncpy((char *)this->name, (char *)name.c_str(), 199);
+		this->id = id.asU16();
+		if (conditionalLoad.isNull()) this->conditionalLoad = false;
+		else {
+			if (conditionalLoad != "1") throw txBase(_WHERE("if a conditional load value is specified, it must be set to 1"));
+			this->conditionalLoad = conditionalLoad.asByte();
+		}
+		DBG(9, "New Page %s: ID %d, conditionalLoad %d\n", this->name, this->id, this->conditionalLoad);
+	}
+	
+	tAgeInfo::tAgeInfo(const char *dir, const char *file, bool loadPages)
 	{
 		// get age name from file name
 		strncpy((char *)name, file, 199);
@@ -55,7 +68,6 @@ namespace alc {
 		char filename[1024];
 		strncpy(filename, dir, 512);
 		strncat(filename, file, 511);
-		DBG(9, "opening %s... ", filename);
 		// open and decrypt file
 		tFBuf ageFile;
 		ageFile.open(filename, "r");
@@ -64,7 +76,7 @@ namespace alc {
 		ageContent.decrypt();
 		// parse file
 		tConfig *cfg = new tConfig;
-		tXParser parser;
+		tXParser parser(/*override*/false);
 		parser.setConfig(cfg);
 		ageContent.get(parser);
 		// get sequence prefix
@@ -73,12 +85,39 @@ namespace alc {
 		seqPrefix = prefix.asU32();
 		if (seqPrefix > 0x00FFFFFF && seqPrefix < 0xFFFFFFF0) // allow only 3 Bytes (but allow negative prefixes)
 			throw txUnexpectedData(_WHERE("A sequence prefix of %d (higher than 0x00FFFFFF) is not allowed)", seqPrefix));
-		// done!
 		DBGM(9, "found sequence prefix %d for age %s\n", seqPrefix, name);
+		// get pages
+		if (loadPages) {
+			tConfigVal *pageVal = cfg->findVar("Page");
+			nPages = pageVal ? pageVal->getRows() : 0;
+			if (!nPages) throw txBase(_WHERE("an age without pages? This is not possible"));
+			pages = (tPageInfo *)malloc(nPages*sizeof(tPageInfo));
+			for (int i = 0; i < nPages; ++i)
+				pages[i] = tPageInfo(pageVal, i);
+		}
+		else {
+			nPages = 0;
+			pages = NULL;
+		}
+		// done!
 		delete cfg;
 	}
 	
-	tAgeInfoLoader::tAgeInfoLoader(const Byte *name)
+	tAgeInfo &tAgeInfo::operator=(const tAgeInfo &ageInfo)
+	{
+		seqPrefix = ageInfo.seqPrefix;
+		strncpy((char *)name, (char *)ageInfo.name, 199);
+		nPages = ageInfo.nPages;
+		if (nPages) {
+			pages = (tPageInfo *)malloc(nPages*sizeof(tPageInfo));
+			memcpy(pages, ageInfo.pages, nPages*sizeof(tPageInfo));
+		}
+		else
+			pages = NULL;
+		return *this;
+	}
+	
+	tAgeInfoLoader::tAgeInfoLoader(const Byte *name, bool loadPages)
 	{
 		// load age file dir and age files
 		tConfig *cfg = alcGetConfig();
@@ -102,7 +141,7 @@ namespace alc {
 				// grow the array
 				++size;
 				ages = (tAgeInfo **)realloc(ages, size*sizeof(tAgeInfo*));
-				ages[size-1] = new tAgeInfo((char *)dir.c_str(), file->name);
+				ages[size-1] = new tAgeInfo((char *)dir.c_str(), file->name, loadPages);
 			}
 		}
 		else { // we should load only one certain age
@@ -111,7 +150,7 @@ namespace alc {
 			// grow the array
 			++size;
 			ages = (tAgeInfo **)realloc(ages, size*sizeof(tAgeInfo*));
-			ages[size-1] = new tAgeInfo((char *)dir.c_str(), filename);
+			ages[size-1] = new tAgeInfo((char *)dir.c_str(), filename, loadPages);
 		}
 	}
 	

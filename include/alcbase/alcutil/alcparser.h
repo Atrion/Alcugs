@@ -81,12 +81,13 @@ protected:
 */
 class tXParser :public tSimpleParser {
 public:
-	tXParser();
+	tXParser(bool override = true);
 	virtual ~tXParser() {}
 	virtual void store(tStrBuf &t);
 	virtual void stream(tStrBuf &t);
 	void setBasePath(tStrBuf & base);
 private:
+	bool override;
 	U16 parseKey(tStrBuf &t);
 	tStrBuf path;
 };

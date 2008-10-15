@@ -49,12 +49,11 @@ namespace alc {
 	public:
 		tUnetGameServer(void);
 		~tUnetGameServer(void);
-		virtual void onStart(void);
 		virtual void onConnectionClosed(tNetEvent *ev, tNetSession *u);
 	private:
 		tAgeInfo *ageInfo;
 	};
-	
+
 } //End alc namespace
 
 #endif

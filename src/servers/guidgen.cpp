@@ -94,13 +94,11 @@ namespace alc {
 		--------------------------------
 		| 0 | ki here       | s | s | s |
 		--------------------------------
-	
-		Where s is the sequence prefix.
-		This is only a preliminar usage of the age guid. Using the player id, as part of the age,
-		we will be completely sure, that all players, at least will have only one instance for his
-		own age.
-		The 0 byte is reserved for a random number for the hoods, and any other age (for the future).
-		And the 1st bit of the 4 byte, should be always 0 */
+		Where s is the sequence prefix, and the 1st bit of the 4 byte should be always 0.
+		
+		This ensures all GUIDs are unique as no player can have an age several times. That's what happened in Cyan's servers when you
+		reset an age, but Alcugs will handle that differently to also avoid names like "Diafero's(1) Relto".
+		*/
 		tMBuf buf;
 		buf.putByte(0);
 		buf.putU32(isPrivate ? ki : 0);

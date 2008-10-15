@@ -53,20 +53,11 @@ namespace alc {
 	
 	const char * alcNetName="Game";
 	Byte alcWhoami=KGame;
-	
+
 	tUnetGameServer::tUnetGameServer(void) : tUnetLobbyServerBase()
 	{
-		ageInfo = NULL;
 		lerr->log("WARNING: The game server is not finished yet. So if it doesn\'t work, that's not even a bug.\n");
-	}
-	
-	tUnetGameServer::~tUnetGameServer(void)
-	{
-		if (ageInfo) delete ageInfo;
-	}
-	
-	void tUnetGameServer::onStart(void)
-	{
+		
 		// find out which age we are supposed to host
 		tConfig *cfg = alcGetConfig();
 		tStrBuf var = cfg->getVar("age_filename");
@@ -77,10 +68,13 @@ namespace alc {
 		alcAscii2Hex(serverGuid, var.c_str(), 8);
 		
 		// load our age info
-		tAgeInfoLoader ageInfoLoader(serverName);
+		tAgeInfoLoader ageInfoLoader(serverName, /*loadPages*/true);
 		ageInfo = new tAgeInfo(*ageInfoLoader.getAge(serverName)); // get ourselves a copy of it
-		
-		tUnetLobbyServerBase::onStart();
+	}
+
+	tUnetGameServer::~tUnetGameServer(void)
+	{
+		delete ageInfo;
 	}
 
 	void tUnetGameServer::onConnectionClosed(tNetEvent *ev, tNetSession *u)

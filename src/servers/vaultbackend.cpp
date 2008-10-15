@@ -722,7 +722,8 @@ namespace alc {
 				Byte zeroGuid[8];
 				memset(zeroGuid, 0, 8);
 				if (memcmp(ageLink->ageInfo.guid, zeroGuid, 8) == 0) {
-					// this happens for the Watcher's Guild link which is created "on the fly" as Relto expects it
+					// this happens for the Watcher's Guild link which is created "on the fly" as Relto expects it, and
+					// for the links to the 4 Ahnonay spheres which are created when linking to the Cathedral
 					if (!guidGen->generateGuid(ageLink->ageInfo.guid, ageLink->ageInfo.filename.c_str(), msg.vmgr))
 						throw txProtocolError(_WHERE("could not generate GUID"));
 				}

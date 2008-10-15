@@ -217,7 +217,7 @@ namespace alc {
 			// search for free ports
 			tTrackingData *data = (tTrackingData*)lobby->data;
 			int nPorts = data->port_end - data->port_start + 1;
-			bool *freePorts = new bool[nPorts];
+			bool *freePorts = (bool *)malloc(nPorts*sizeof(bool));
 			for (int i = 0; i < nPorts; ++i) freePorts[i] = true;
 			data->childs->rewind();
 			while ((server = data->childs->getNext()))
@@ -227,7 +227,7 @@ namespace alc {
 				if (freePorts[lowest]) break; // we found a free one
 			}
 			lowest += data->port_start;
-			delete[] freePorts;
+			free(freePorts);
 			if (lowest == nPorts) { // no free port on the lobby with the least childs
 				log->log("ERR: No free port on lobby %s, can't spawn game server\n", lobby->str());
 				return;

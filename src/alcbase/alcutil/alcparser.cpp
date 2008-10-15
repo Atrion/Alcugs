@@ -139,8 +139,8 @@ tConfig * tSimpleParser::getConfig() {
 	return cfg;
 }
 
-tXParser::tXParser() :tSimpleParser() {
-	
+tXParser::tXParser(bool override) :tSimpleParser() {
+	this->override = override;
 }
 
 void tXParser::setBasePath(tStrBuf & base) {
@@ -214,7 +214,7 @@ void tXParser::store(tStrBuf &t) {
 				//get separator
 				val = t.getToken();
 				if(val!="=") {
-					throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token '%s. '=' was expected.\n",t.getLineNum(),t.getColumnNum(),val.c_str()));
+					throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token '%s'. '=' was expected.\n",t.getLineNum(),t.getColumnNum(),val.c_str()));
 				}
 				//get value(s)
 				val=",";
@@ -224,6 +224,8 @@ void tXParser::store(tStrBuf &t) {
 					if(val=="=") {
 						throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token '%s'. A valid variable value was expected.\n",t.getLineNum(),t.getColumnNum(),val.c_str()));
 					}
+					if (!override)
+						while (!cfg->getVar(key.c_str(),section.c_str(),x,y).isNull()) ++y; // if override is disabled, go to next row
 					if(val=="\n") {
 						val="";
 						cfg->setVar(val,key,section,x++,y);

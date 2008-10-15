@@ -733,7 +733,7 @@ key1 = \"val2\"\n\
  key2 = \"val3\"\n\
                            juas                 =            \"jo\"\n\
 					ho_ho_ho = \"qaz\"\n\
-   so \\\n = \\\n \"this_should_be_legal\" \n\
+   so \\\n = \\\n this_should_be_legal_ä \n\
 a=\"b\"\n\
 kkkk\\\n\
  \"k\n\
@@ -745,7 +745,7 @@ a = \"overrided\"\n\
 \n\
 problems = \"these are problems\"\n\
 \n\
-mproblem = \"this ' contains \\\" \\\\ some speical chars\"\n\
+mproblem = \"this ' contains \\\" \\\\ some speical chars: äß\"\n\
 ");
 
 	//Ok, let's going to crash the system
@@ -799,52 +799,65 @@ mproblem = \"this ' contains \\\" \\\\ some speical chars\"\n\
 	// e = m * c^2
 	// Now we should apply this formula everywhere, and we will be able to get flying cows in Relto as a  bonus relto page
 	//config
-	tConfig cfg1;
-	tConfig * cfg2;
+	tConfig *cfg1 = new tConfig();
+	tConfig *cfg2;
 	
 	cfg2 = new tConfig();
 
 	tConfigKey * key1;
-	key1 = cfg1.findKey("global");
+	key1 = cfg1->findKey("global");
 	assert(key1==NULL);
 	dmalloc_verify(NULL);
-	key1 = cfg1.findKey("global",1); //<--BOUM
+	key1 = cfg1->findKey("global",1); //<--BOUM
 	dmalloc_verify(NULL);
 	assert(key1!=NULL);
 	dmalloc_verify(NULL);
 
 	tConfigVal * val1;
-	val1 = cfg1.findVar("kaka");
+	val1 = cfg1->findVar("kaka");
 	assert(val1==NULL);
 	dmalloc_verify(NULL);
-	cfg1.setVar("1","kaka");
+	cfg1->setVar("1","kaka");
 	dmalloc_verify(NULL);
 
-	val1 = cfg1.findVar("kaka");
+	val1 = cfg1->findVar("kaka");
 	assert(val1!=NULL);
 	//assert(!strcmp((const char *)val1->getName(),"kaka"));
 	assert(val1->getName()=="kaka");
 
+	delete cfg1;
 	delete cfg2;
 	dmalloc_verify(NULL);
 	
 	//parser
 	b.rewind();
 	tSimpleParser parser;
-	parser.setConfig(&cfg1);
+	cfg1 = new tConfig();
+	parser.setConfig(cfg1);
 	parser.store(b);
 	tStrBuf out;
 	U32 oldPos = out.tell();
 	parser.stream(out);
 	assert(out.tell()>oldPos);
-	printf("original: ->%s<-\n",b.c_str());
-	printf("generated: ->%s<-\n",out.c_str());
-	assert(cfg1.getVar("a") == "overrided");
-	assert(cfg1.getVar("so") == "this_should_be_legal");
-	assert(cfg1.getVar("mproblem") == "this ' contains \" \\ some speical chars");
-	assert(cfg1.getVar("kkkk") == "k\na");
+	assert(cfg1->getVar("a") == "overrided");
+	assert(cfg1->getVar("so") == "this_should_be_legal_ä");
+	assert(cfg1->getVar("mproblem") == "this ' contains \" \\ some speical chars: äß");
+	assert(cfg1->getVar("kkkk") == "k\na");
 	
-	// now let's test the XParser
+	// now let's test the XParser with override disabled
+	b.clear();
+	b.writeStr("a=b\na=\"overrided\"");
+	b.rewind();
+	tXParser xparser1(/*override*/false);
+	xparser1.setConfig(cfg1);
+	xparser1.store(b);
+	assert(cfg1->getVar("so") == "this_should_be_legal_ä"); // an old var from the first parser test
+	assert(cfg1->getVar("a", "global", 0, 0) == "overrided"); // an old var from the first parser test
+	assert(cfg1->getVar("a", "global", 0, 1) == "b");
+	assert(cfg1->getVar("a", "global", 0, 2) == "overrided");
+	delete cfg1;
+	
+	// and XParser-specific stuff
 	b.clear();
 	b.writeStr("\
 aname  =  a, b\n\
@@ -854,16 +867,17 @@ anarr[0]=\"hi,ho\",hu\n\
 which is more than a line long\"\n\
 ");
 	b.rewind();
-	tXParser xparser;
-	xparser.setConfig(&cfg1);
-	xparser.store(b);
-	assert(cfg1.getVar("a") == "overrided"); // an old var
-	assert(cfg1.getVar("aname") == "a");
-	assert(cfg1.getVar("aname", "global", 1, 0) == "b");
-	assert(cfg1.getVar("anarr").isNull());
-	assert(cfg1.getVar("anarr", "asection", 0, 0) == "hi,ho");
-	assert(cfg1.getVar("anarr", "asection", 1, 0) == "hu");
-	assert(cfg1.getVar("anarr", "asection", 0, 4) == "another value\nwhich is more than a line long");
+	tXParser xparser2;
+	cfg1 = new tConfig();
+	xparser2.setConfig(cfg1);
+	xparser2.store(b);
+	assert(cfg1->getVar("aname") == "a");
+	assert(cfg1->getVar("aname", "global", 1, 0) == "b");
+	assert(cfg1->getVar("anarr").isNull());
+	assert(cfg1->getVar("anarr", "asection", 0, 0) == "hi,ho");
+	assert(cfg1->getVar("anarr", "asection", 1, 0) == "hu");
+	assert(cfg1->getVar("anarr", "asection", 0, 4) == "another value\nwhich is more than a line long");
+	delete cfg1;
 }
 
 int log_test() {
@@ -916,8 +930,6 @@ int log_test() {
 
 	const char * kk="afjsakflñjasfdñalsdkfjskdlfñjasdfjj3\
 	8p94r37u9jujujoiasdfujasdofuasdfuñjlkasfdhasjfkl\
-	8p94r37u9jujujoiasdfujasdofuasdfuñjlkasfdhasjfkl\
-	8p94r37u9jujujoiasdfujasdofuasdfuñjlkasfdhasjfkl\
 	ñasdfhasfpiuoeñawhfe43w89piyehyhfwe";
 
 	const char * kk3="hola whola ";
@@ -928,7 +940,7 @@ int log_test() {
 	log1.dumpbuf((Byte *)kk3,strlen(kk3));
 	log1.nl();
 
-	log1.print("The test ends _here_\n");
+	log1.print("The test log ends _here_\n");
 	
 	dmalloc_verify(NULL);
 

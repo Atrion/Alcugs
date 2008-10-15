@@ -41,18 +41,37 @@
 namespace alc {
 
 	////DEFINITIONS
+	class tPageInfo
+	{
+	public:
+		tPageInfo(tConfigVal *val, int row);
+		
+		Byte name[200];
+		U16 id;
+		bool conditionalLoad;
+		S32 groupOwner;
+	};
+	
 	class tAgeInfo
 	{
 	public:
-		tAgeInfo(const char *dir, const char *file);
+		tAgeInfo(const char *dir, const char *file, bool loadPages);
+		tAgeInfo(const tAgeInfo &ageInfo) { *this = ageInfo; }
+		~tAgeInfo(void) { if (nPages) free(pages); }
+		
+		tAgeInfo &operator=(const tAgeInfo &ageInfo);
+		
 		U32 seqPrefix; // it's actually 3 Bytes
 		Byte name[200];
+		
+		int nPages;
+		tPageInfo *pages;
 	};
 	
 	class tAgeInfoLoader
 	{
 	public:
-		tAgeInfoLoader(const Byte *name = NULL);
+		tAgeInfoLoader(const Byte *name = NULL, bool loadPages = false);
 		~tAgeInfoLoader(void);
 		tAgeInfo *getAge(const Byte *name);
 	private:
