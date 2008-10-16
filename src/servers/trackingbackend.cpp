@@ -65,7 +65,7 @@ namespace alc {
 	tPlayer::tPlayer(U32 ki)
 	{
 		this->ki = ki;
-		this->x = 0;
+		this->sid = 0;
 		account[0] = avatar[0] = 0;
 		flag = status = 0;
 		ip = port = 0;
@@ -169,7 +169,8 @@ namespace alc {
 			log->log("ERR: Ignoring a NetMsgCustomFindServer for player with KI %d since I can't find that player\n", findServer.ki);
 			return;
 		}
-		player->x = findServer.x;
+		player->sid = findServer.sid;
+		player->awaiting_x = findServer.x;
 		player->ip = findServer.ip;
 		player->port = findServer.port;
 		log->log("Player %s[%s:%d] wants to link to %s (%s)\n", player->str(), alcGetStrIp(player->ip), player->port, findServer.age.c_str(), findServer.serverGuid.c_str());
@@ -234,7 +235,7 @@ namespace alc {
 			}
 			// ok, telling the lobby to fork
 			bool loadState = doesAgeLoadState(player->awaiting_age);
-			tmCustomForkServer forkServer(lobby, player->ki, player->x, lowest, alcGetStrGuid(player->awaiting_guid), player->awaiting_age, loadState);
+			tmCustomForkServer forkServer(lobby, lowest, alcGetStrGuid(player->awaiting_guid), player->awaiting_age, loadState);
 			net->send(forkServer);
 			log->log("Spawning new game server %s (Server GUID: %s, port: %d) on %s ", player->awaiting_age, alcGetStrGuid(player->awaiting_guid), lowest, lobby->str());
 			if (loadState) log->print("(loading age state)\n");
@@ -262,7 +263,7 @@ namespace alc {
 		if (!server->data) throw txUnet(_WHERE("server passed in tTrackingBackend::serverFound is not a game/lobby server"));
 		// notifiy the player that it's server is available
 		tTrackingData *data = (tTrackingData *)server->data;
-		tmCustomServerFound found(player->u, player->ki, player->x, ntohs(server->getPort()), data->externalIp, alcGetStrGuid(server->serverGuid), server->name);
+		tmCustomServerFound found(player->u, player->ki, player->awaiting_x, player->sid, ntohs(server->getPort()), data->externalIp, alcGetStrGuid(server->serverGuid), server->name);
 		net->send(found);
 		log->log("Found age for player %s\n", player->str());
 		// no longer waiting
@@ -379,7 +380,7 @@ namespace alc {
 				}
 			}
 			// update the player's data
-			player->x = playerStatus.x;
+			player->sid = playerStatus.sid;
 			player->u = game;
 			player->flag = playerStatus.playerFlag;
 			player->status = playerStatus.playerStatus;
@@ -392,6 +393,7 @@ namespace alc {
 				// when he's leaving to another age, keep this info (to be shown on status page)
 				player->awaiting_age[0] = 0;
 				memset(player->awaiting_guid, 0, 8);
+				player->awaiting_x = 0;
 			}
 			log->log("Got status update for player %s: 0x%02X (%s)\n", player->str(), playerStatus.playerStatus,
 					alcUnetGetReasonCode(playerStatus.playerStatus));

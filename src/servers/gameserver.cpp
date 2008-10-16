@@ -119,7 +119,7 @@ namespace alc {
 				
 				// ok, tell the client he successfully joined
 				u->joined = true;
-				tmJoinAck joinAck(u);
+				tmJoinAck joinAck(u, joinReq.x);
 				send(joinAck);
 				// now, it'll stat sending GameMessages
 				

@@ -49,7 +49,7 @@ namespace alc {
 	class tmCustomPlayerStatus : public tmMsgBase {
 	public:
 		tmCustomPlayerStatus(tNetSession *u);
-		tmCustomPlayerStatus(tNetSession *u, U32 ki, U32 x, const Byte *uid, const Byte *account, const Byte *avatar, Byte playerFlag, Byte playerStatus);
+		tmCustomPlayerStatus(tNetSession *u, U32 ki, U32 sid, const Byte *uid, const Byte *account, const Byte *avatar, Byte playerFlag, Byte playerStatus);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format
@@ -62,7 +62,7 @@ namespace alc {
 	class tmCustomFindServer : public tmMsgBase {
 	public:
 		tmCustomFindServer(tNetSession *u);
-		tmCustomFindServer(tNetSession *u, U32 ki, U32 x, U32 ip, U16 port, const Byte *serverGuid, const Byte *age);
+		tmCustomFindServer(tNetSession *u, U32 ki, U32 x, U32 sid, U32 ip, U16 port, const Byte *serverGuid, const Byte *age);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format
@@ -74,7 +74,7 @@ namespace alc {
 	class tmCustomForkServer : public tmMsgBase {
 	public:
 		tmCustomForkServer(tNetSession *u);
-		tmCustomForkServer(tNetSession *u, U32 ki, U32 x, U16 port, const Byte *serverGuid, const Byte *name, bool loadSDL);
+		tmCustomForkServer(tNetSession *u, U16 port, const Byte *serverGuid, const Byte *name, bool loadSDL);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format
@@ -88,7 +88,7 @@ namespace alc {
 	class tmCustomServerFound : public tmMsgBase {
 	public:
 		tmCustomServerFound(tNetSession *u);
-		tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U16 port, const Byte *ipStr, const Byte *serverGuid, const Byte *name);
+		tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U32 sid, U16 port, const Byte *ipStr, const Byte *serverGuid, const Byte *name);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format

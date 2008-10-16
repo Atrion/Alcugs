@@ -55,13 +55,13 @@ namespace alc {
 	void tmJoinReq::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		u->x = x;
+		if (!hasFlags(plNetX)) throw txProtocolError(_WHERE("X flag missing"));
 	}
 	
 	//// tmJoinAck
-	tmJoinAck::tmJoinAck(tNetSession *u) : tmMsgBase(NetMsgJoinAck, plNetAck | plNetCustom | plNetKi | plNetX | plNetFirewalled, u)
+	tmJoinAck::tmJoinAck(tNetSession *u, U32 x) : tmMsgBase(NetMsgJoinAck, plNetAck | plNetCustom | plNetKi | plNetX | plNetFirewalled, u)
 	{
-		x = u->x;
+		this->x = x;
 		ki = u->ki;
 	}
 	

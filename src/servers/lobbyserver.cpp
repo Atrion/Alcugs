@@ -111,8 +111,12 @@ namespace alc {
 					err->log("ERR: I've got to ask the vault server about player %s, but it's unavailable.\n", u->str());
 					return 1;
 				}
-				tmCustomVaultAskPlayerList askList(vaultServer, u->getSid(), u->uid);
+				tmCustomVaultAskPlayerList askList(vaultServer, requestList.x, u->getSid(), u->uid);
 				send(askList);
+#ifdef ENABLE_UNET3
+				// perhaps the server does not preserve the X
+				u->x = requestList.x;
+#endif
 				return 1;
 			}
 			case NetMsgCustomVaultPlayerList:
@@ -128,7 +132,7 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, playerList.str());
 				
 				// find the client's session
-				tNetSession *client = smgr->get(playerList.x);
+				tNetSession *client = smgr->get(playerList.sid);
 				// verify UID and session state
 				if (!client || client->getPeerType() != KClient || memcmp(client->uid, playerList.uid, 16) != 0) {
 					err->log("ERR: Got NetMsgCustomVaultPlayerList for player with UID %s but can't find his session.\n", alcGetStrUid(playerList.uid));
@@ -136,7 +140,11 @@ namespace alc {
 				}
 				
 				// forward player list to client
-				tmVaultPlayerList playerListClient(client, playerList.numberPlayers, playerList.players, website);
+#ifdef ENABLE_UNET3
+				if (u->proto == 1 || u->proto == 2) // the server does not preserve the X
+					playerList.x = client->x;
+#endif
+				tmVaultPlayerList playerListClient(client, playerList.x, playerList.numberPlayers, playerList.players, website);
 				send(playerListClient);
 				
 				return 1;
@@ -161,8 +169,12 @@ namespace alc {
 					err->log("ERR: I've got to ask the vault server to create a player, but it's unavailable.\n", u->str());
 					return 1;
 				}
-				tmCustomVaultCreatePlayer vaultCreatePlayer(vaultServer, u->getSid(), u->uid, u->getAccessLevel(), u->name, createPlayer.avatar, createPlayer.gender, createPlayer.friendName, createPlayer.key);
+				tmCustomVaultCreatePlayer vaultCreatePlayer(vaultServer, createPlayer.x, u->getSid(), u->uid, u->getAccessLevel(), u->name, createPlayer.avatar, createPlayer.gender, createPlayer.friendName, createPlayer.key);
 				send(vaultCreatePlayer);
+#ifdef ENABLE_UNET3
+				// perhaps the server does not preserve the X
+				u->x = createPlayer.x;
+#endif
 				
 				return 1;
 			}
@@ -179,7 +191,7 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, playerCreated.str());
 				
 				// find the client's session
-				tNetSession *client = smgr->get(playerCreated.x);
+				tNetSession *client = smgr->get(playerCreated.sid);
 				// verify UID and session state
 				if (!client || client->getPeerType() != KClient || memcmp(client->uid, playerCreated.uid, 16) != 0) {
 					err->log("ERR: Got NetMsgCustomVaultPlayerCreated for player with UID %s but can't find his session.\n", alcGetStrUid(playerCreated.uid));
@@ -187,7 +199,11 @@ namespace alc {
 				}
 				
 				// forward answer to client
-				tmPlayerCreated playerCreatedClient(client, playerCreated.ki, playerCreated.result);
+#ifdef ENABLE_UNET3
+				if (u->proto == 1 || u->proto == 2) // the server does not preserve the X
+					playerCreated.x = client->x;
+#endif
+				tmPlayerCreated playerCreatedClient(client, playerCreated.ki, playerCreated.x, playerCreated.result);
 				send(playerCreatedClient);
 				
 				return 1;
@@ -210,7 +226,7 @@ namespace alc {
 					err->log("ERR: I've got to ask the vault server to delete a player, but it's unavailable.\n", u->str());
 					return 1;
 				}
-				tmCustomVaultDeletePlayer vaultDeletePlayer(vaultServer, deletePlayer.ki, u->getSid(), u->uid, u->getAccessLevel());
+				tmCustomVaultDeletePlayer vaultDeletePlayer(vaultServer, deletePlayer.ki, deletePlayer.x, u->getSid(), u->uid, u->getAccessLevel());
 				send(vaultDeletePlayer);
 				
 				return 1;

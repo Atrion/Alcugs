@@ -44,7 +44,7 @@ namespace alc {
 	class tmCustomAuthAsk : public tmMsgBase {
 	public:
 		tmCustomAuthAsk(tNetSession *u);
-		tmCustomAuthAsk(tNetSession *u, U32 x, U32 ip, U16 port, const Byte *login, const Byte *challenge, const Byte *hash, Byte release);
+		tmCustomAuthAsk(tNetSession *u, U32 x, U32 sid, U32 ip, U16 port, const Byte *login, const Byte *challenge, const Byte *hash, Byte release);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format

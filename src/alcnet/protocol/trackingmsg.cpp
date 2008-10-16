@@ -48,6 +48,9 @@ namespace alc {
 	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u, const Byte *serverGuid, const Byte *age, const Byte *externalIp)
 	 : tmMsgBase(NetMsgCustomSetGuid, plNetAck | plNetVersion | plNetCustom, u)
 	{
+#ifdef ENABLE_UNET3
+		if (u->proto == 1 || u->proto == 2) setFlags(plNetX | plNetKi); // older protocols have this set, but the value is ignored
+#endif
 		this->serverGuid.setVersion(5); // inverted UrurString
 		this->serverGuid.writeStr(serverGuid);
 		this->age.setVersion(0); // normal UrurString
@@ -66,18 +69,13 @@ namespace alc {
 #ifdef ENABLE_UNET2
 		if (!t.eof()) { // if there's still something to read, there's a netmask before the external IP (unet2 protocol)
 			t.get(externalIp);
-			if (u) u->proto = 1; // unet2 protocol
+			u->proto = 1; // unet2 protocol
 		}
 #endif
 	}
 	
 	void tmCustomSetGuid::stream(tBBuf &t)
 	{
-		if (u->proto == 1 || u->proto == 2) { // I don't know why, but old servers have this set
-			setFlags(plNetX | plNetKi);
-			x = ki = 0;
-		}
-		
 		tmMsgBase::stream(t);
 		t.put(serverGuid);
 		t.put(age);
@@ -96,7 +94,7 @@ namespace alc {
 		dbg.nl();
 		dbg.printf(" Server GUID: %s, Age filename: %s, external IP: %s", serverGuid.c_str(), age.c_str(), externalIp.c_str());
 #ifdef ENABLE_UNET2
-		if (u && u->proto == 1) dbg.printf(" (unet2 protocol)");
+		if (u->proto == 1) dbg.printf(" (unet2 protocol)");
 #endif
 	}
 	
@@ -107,16 +105,23 @@ namespace alc {
 		avatar.setVersion(0); // normal UrurString
 	}
 	
-	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *u, U32 ki, U32 x, const Byte *uid, const Byte *account, const Byte *avatar, Byte playerFlag, Byte playerStatus)
-	 : tmMsgBase(NetMsgCustomPlayerStatus, plNetAck | plNetVersion | plNetCustom | plNetX | plNetKi | plNetUID, u)
+	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *u, U32 ki, U32 sid, const Byte *uid, const Byte *account, const Byte *avatar, Byte playerFlag, Byte playerStatus)
+	 : tmMsgBase(NetMsgCustomPlayerStatus, plNetAck | plNetVersion | plNetCustom | plNetKi | plNetUID | plNetSid, u)
 	{
+		this->sid = sid;
+		this->ki = ki;
+		memcpy(this->uid, uid, 16);
 #ifdef ENABLE_UNET2
 		if (u->proto == 1)
 			unsetFlags(plNetUID);
 #endif
-		this->x = x;
-		this->ki = ki;
-		memcpy(this->uid, uid, 16);
+#ifdef ENABLE_UNET3
+		if (u->proto == 1 || u->proto == 2) {
+			unsetFlags(plNetSid);
+			setFlags(plNetX);
+			this->x = sid; // older protocols have the sid in the X field
+		}
+#endif
 		
 		this->account.setVersion(0); // normal UrurString
 		this->account.writeStr(account);
@@ -129,11 +134,20 @@ namespace alc {
 	void tmCustomPlayerStatus::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
+		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
 #ifndef ENABLE_UNET2
 		if (!hasFlags(plNetUID)) throw txProtocolError(_WHERE("UID flag missing"));
 #else
 		if (!hasFlags(plNetUID)) memcpy(uid, t.read(16), 16);
+#endif
+#ifndef ENABLE_UNET3
+		if (!hasFlags(plNetSid)) throw txProtocolError(_WHERE("Sid flag missing"));
+#else
+		if (!hasFlags(plNetSid)) { // unet3+ carries the sid in the sid field, older protocols have it in the X field
+			if (!hasFlags(plNetX)) throw txProtocolError(_WHERE("X flag missing"));
+			sid = x;
+			if (u->proto != 1) u->proto = 2; // unet3 protocol
+		}
 #endif
 		t.get(account);
 		t.get(avatar);
@@ -157,7 +171,7 @@ namespace alc {
 	{
 		dbg.nl();
 #ifdef ENABLE_UNET2
-		if (u && u->proto == 1) dbg.printf(" UID (unet2 protocol): %s,", alcGetStrUid(uid));
+		if (u->proto == 1) dbg.printf(" UID (unet2 protocol): %s,", alcGetStrUid(uid));
 #endif
 		dbg.printf(" Account: %s, Avatar: %s, Flag: 0x%02X, Status: 0x%02X (%s)", account.c_str(), avatar.c_str(), playerFlag, playerStatus, alcUnetGetReasonCode(playerStatus));
 	}
@@ -169,17 +183,24 @@ namespace alc {
 		age.setVersion(0); // normal UrurString
 	}
 	
-	tmCustomFindServer::tmCustomFindServer(tNetSession *u, U32 ki, U32 x, U32 ip, U16 port, const Byte *serverGuid, const Byte *age)
-	 : tmMsgBase(NetMsgCustomFindServer, plNetX | plNetKi | plNetAck | plNetCustom | plNetIP, u)
+	tmCustomFindServer::tmCustomFindServer(tNetSession *u, U32 ki, U32 x, U32 sid, U32 ip, U16 port, const Byte *serverGuid, const Byte *age)
+	 : tmMsgBase(NetMsgCustomFindServer, plNetX | plNetKi | plNetAck | plNetCustom | plNetIP | plNetSid, u)
 	{
+		this->ki = ki;
+		this->x = x;
+		this->sid = sid;
+		this->ip = ip;
+		this->port = port;
 #ifdef ENABLE_UNET2
 		if (u->proto == 1)
 			unsetFlags(plNetIP);
 #endif
-		this->ki = ki;
-		this->x = x;
-		this->ip = ip;
-		this->port = port;
+#ifdef ENABLE_UNET3
+		if (u->proto == 1 || u->proto == 2) {
+			unsetFlags(plNetSid);
+			this->x = sid; // older protocols have the sid in the X field
+		}
+#endif
 		
 		this->serverGuid.setVersion(5); // inverted UruString
 		this->serverGuid.writeStr(serverGuid);
@@ -193,6 +214,15 @@ namespace alc {
 		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
 #ifndef ENABLE_UNET2
 		if (!hasFlags(plNetIP)) throw txProtocolError(_WHERE("IP flag missing"));
+#endif
+#ifndef ENABLE_UNET3
+		if (!hasFlags(plNetSid)) throw txProtocolError(_WHERE("Sid flag missing"));
+#else
+		if (!hasFlags(plNetSid)) { // unet3+ carries the sid in the sid field, older protocols have it in the X field
+			sid = x;
+			x = 0;
+			if (u->proto != 1) u->proto = 2; // unet3 protocol
+		}
 #endif
 		t.get(serverGuid);
 		if (serverGuid.size() != 16) throw txProtocolError(_WHERE("NetMsgCustomFindServer.serverGuid must be 16 characters long"));
@@ -231,11 +261,14 @@ namespace alc {
 		age.setVersion(0); // normal UruString
 	}
 	
-	tmCustomForkServer::tmCustomForkServer(tNetSession *u, U32 ki, U32 x, U16 port, const Byte *serverGuid, const Byte *name, bool loadSDL)
-	: tmMsgBase(NetMsgCustomForkServer, plNetAck | plNetCustom | plNetX | plNetKi | plNetVersion, u)
+	tmCustomForkServer::tmCustomForkServer(tNetSession *u, U16 port, const Byte *serverGuid, const Byte *name, bool loadSDL)
+	: tmMsgBase(NetMsgCustomForkServer, plNetAck | plNetCustom | plNetVersion, u)
 	{
-		this->x = x;
-		this->ki = ki;
+		this->x = 0;
+		this->ki = 0;
+#ifdef ENABLE_UNET3
+		if (u->proto == 1 || u->proto == 2) setFlags(plNetX | plNetKi); // older protocols have this set, but the value is ignored
+#endif
 		
 		forkPort = port;
 		this->serverGuid.setVersion(5); // inverted UruString
@@ -280,11 +313,18 @@ namespace alc {
 		age.setVersion(0); // normal UruString
 	}
 	
-	tmCustomServerFound::tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U16 port, const Byte *ipStr, const Byte *serverGuid, const Byte *name)
-	: tmMsgBase(NetMsgCustomServerFound, plNetAck | plNetCustom | plNetX | plNetKi | plNetVersion, u)
+	tmCustomServerFound::tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U32 sid, U16 port, const Byte *ipStr, const Byte *serverGuid, const Byte *name)
+	: tmMsgBase(NetMsgCustomServerFound, plNetAck | plNetCustom | plNetX | plNetKi | plNetVersion | plNetSid, u)
 	{
 		this->x = x;
 		this->ki = ki;
+		this->sid = sid;
+#ifdef ENABLE_UNET3
+		if (u->proto == 1 || u->proto == 2) {
+			unsetFlags(plNetSid);
+			this->x = sid; // older protocols have the sid in the X field
+		}
+#endif
 		
 		serverPort = port;
 		this->ipStr.writeStr(ipStr);
@@ -298,6 +338,15 @@ namespace alc {
 	void tmCustomServerFound::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
+#ifndef ENABLE_UNET3
+		if (!hasFlags(plNetSid)) throw txProtocolError(_WHERE("Sid flag missing"));
+#else
+		if (!hasFlags(plNetSid)) { // unet3+ carries the sid in the sid field, older protocols have it in the X field
+			sid = x;
+			x = 0;
+			if (u->proto != 1) u->proto = 2; // unet3 protocol
+		}
+#endif
 		serverPort = t.getU16();
 		t.get(ipStr);
 		t.get(serverGuid);

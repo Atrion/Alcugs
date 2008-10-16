@@ -680,17 +680,13 @@ void tmMsgBase::store(tBBuf &t) {
 	plNetX | plNetKi | plNetUID | plNetIP | plNetCustom | plNetSid | plNetGame;
 	
 	//now catch undocumented protocol flags
-	if (flags & ~(check)) {
-		lerr->log("%s Problem parsing a plNetMsg header format mask %08X\n",u->str(),flags & ~(check));
-		lerr->dumpbuf(t);
-		lerr->nl();
-		lerr->nl();
+	if (flags & ~(check))
 		throw txProtocolError(_WHERE("%s Problem parsing a plNetMsg header format mask %08X\n",u->str(),flags & ~(check)));
-	}
 }
 void tmMsgBase::stream(tBBuf &t) {
 	if (!cmd) throw txProtocolError(_WHERE("attempt to send message without cmd"));
-	if((flags & plNetSid) && u->proto!=0 && u->proto<3) unsetFlags(plNetSid); // dont send this flag to old peers
+	if((flags & plNetSid) && u->proto!=0 && u->proto<3)
+		throw txProtocolError(_WHERE("attempt to send message with sid flag to old client")); // dont send this flag to old peers
 	t.putU16(cmd);
 	t.putU32(flags);
 	if(flags & plNetVersion) {
@@ -789,7 +785,7 @@ const Byte * tmMsgBase::str() {
 		dbg.printf(" uid: %s,",alcGetStrUid(uid));
 	if(flags & plNetIP)
 		dbg.printf(" ip: %s:%i,",alcGetStrIp(ip),ntohs(port));
-	if((flags & plNetSid) && (u->proto == 0 || u->proto >= 3)) // it will not be sent to unet2 or unet3 peers
+	if(flags & plNetSid)
 		dbg.printf(" sid: %i,",sid);
 	dbg.seek(-1); // remove the last comma
 	additionalFields();

@@ -54,7 +54,7 @@ namespace alc {
 	
 	class tmJoinAck : public tmMsgBase {
 	public:
-		tmJoinAck(tNetSession *u);
+		tmJoinAck(tNetSession *u, U32 x);
 		virtual void stream(tBBuf &t);
 	};
 	

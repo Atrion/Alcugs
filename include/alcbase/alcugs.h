@@ -86,6 +86,10 @@ const char * alcXVERSION = ALC_PROGRAM_VERSION;
 #endif
 #endif
 
+#ifdef ENABLE_UNET2
+#define ENABLE_UNET3
+#endif
+
 //std includes
 #include <iostream>
 #include <cstdio>

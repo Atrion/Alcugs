@@ -111,7 +111,7 @@ namespace alc {
 		}
 	}
 	
-	void tUnetLobbyServerBase::setActivePlayer(tNetSession *u, U32 ki, const Byte *avatar)
+	void tUnetLobbyServerBase::setActivePlayer(tNetSession *u, U32 ki, U32 x, const Byte *avatar)
 	{
 		tNetSession *client;
 		smgr->rewind();
@@ -142,11 +142,11 @@ namespace alc {
 		// tell vault and taracking
 		tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->getSid(), u->uid, u->name, u->avatar, 2 /* visible */, (whoami == KLobby && u->release == TIntRel) ? RActive : RJoining); // show the VaultManager as active in the lobby
 		send(trackingStatus);
-		tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->getSid(), alcGetStrGuid(serverGuid), serverName, 1 /* is online */, 0 /* don't increase online time now, do that on disconnect */);
+		tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, alcGetStrGuid(serverGuid), serverName, 1 /* is online */, 0 /* don't increase online time now, do that on disconnect */);
 		send(vaultStatus);
 		
 		// now, tell the client
-		tmActivePlayerSet playerSet(u);
+		tmActivePlayerSet playerSet(u, x);
 		send(playerSet);
 	}
 	
@@ -160,7 +160,7 @@ namespace alc {
 			else if (reason == RLeaving) { // the player is going on to another age, so he's not really offline
 				if (!u->proto || u->proto >= 3) { // unet2 or unet3 vault servers would not understand a state of 2
 					// update online time
-					tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->getSid(), alcGetStrGuid(serverGuid), serverName, /* offline but will soon come back */ 2, u->onlineTime());
+					tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, alcGetStrGuid(serverGuid), serverName, /* offline but will soon come back */ 2, u->onlineTime());
 					send(vaultStatus);
 				}
 				
@@ -171,7 +171,7 @@ namespace alc {
 				tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->getSid(), u->uid, u->name, u->avatar, 0 /* delete */, reason);
 				send(trackingStatus);
 				
-				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, u->getSid(), (Byte *)"0000000000000000" /* these are 16 zeroes */, (Byte *)"", /* player is offline */0, u->onlineTime());
+				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, (Byte *)"0000000000000000" /* these are 16 zeroes */, (Byte *)"", /* player is offline */0, u->onlineTime());
 				send(vaultStatus);
 			}
 			u->ki = 0; // this avoids sending the messages twice
@@ -321,7 +321,7 @@ namespace alc {
 				u->release = authHello.release;
 				
 				// reply with AuthenticateChallenge
-				tmAuthenticateChallenge authChallenge(u, result, u->challenge);
+				tmAuthenticateChallenge authChallenge(u, authHello.x, result, u->challenge);
 				send(authChallenge);
 				u->challengeSent();
 				
@@ -345,8 +345,12 @@ namespace alc {
 					err->log("ERR: I've got to ask the auth server about player %s, but it's unavailable.\n", u->str());
 					return 1;
 				}
-				tmCustomAuthAsk authAsk(authServer, u->getSid(), u->getIp(), u->getPort(), u->name, u->challenge, authResponse.hash.readAll(), u->release);
+				tmCustomAuthAsk authAsk(authServer, authResponse.x, u->getSid(), u->getIp(), u->getPort(), u->name, u->challenge, authResponse.hash.readAll(), u->release);
 				send(authAsk);
+#ifdef ENABLE_UNET3
+				// perhaps the server does not preserve the X
+				u->x = authResponse.x;
+#endif
 				
 				return 1;
 			}
@@ -363,31 +367,29 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, authResponse.str());
 				
 				// find the client's session
-				tNetSessionIte ite(authResponse.ip, authResponse.port, authResponse.x);
-#ifdef ENABLE_UNET2
-				tNetSession *client = NULL;
-				if (u->proto != 1) { // when we're using the new protocol, we're getting IP and Port, not only the sid
-					client = getSession(ite);
+				tNetSession *client = smgr->get(authResponse.sid);
+				if (u->proto != 1 && client) { // check if IP and Port are correct
+					if (client->getIp() != authResponse.ip || client->getPort() != authResponse.port) {
+						err->log("ERR: Got CustomAuthResponse for player %s but can't find his session.\n", authResponse.login.c_str());
+						return 1;
+					}
 				}
-				else { // for the old protocol, we get only the sid, so let's hope it's still the right one
-					client = smgr->get(authResponse.x);
-					ite = client->getIte();
-				}
-#else
-				tNetSession *client = getSession(ite);
-#endif
 				// verify account name and session state
 				if (!client || client->getAuthenticated() != 10 || client->getPeerType() != 0 || strncmp((char *)client->name, (char *)authResponse.login.c_str(), 199) != 0) {
 					err->log("ERR: Got CustomAuthResponse for player %s but can't find his session.\n", authResponse.login.c_str());
 					return 1;
 				}
+#ifdef ENABLE_UNET3
+				if (u->proto == 1 || u->proto == 2) // the server does not preserve the X
+					authResponse.x = client->x;
+#endif
 				
 				// send NetMsgAccountAuthenticated to client
 				if (authResponse.result == AAuthSucceeded) {
 					memcpy(client->uid, authResponse.uid, 16);
 					client->setAuthData(authResponse.accessLevel, authResponse.passwd.c_str());
 					
-					tmAccountAutheticated accountAuth(client, AAuthSucceeded, serverGuid);
+					tmAccountAutheticated accountAuth(client, authResponse.x, AAuthSucceeded, serverGuid);
 					send(accountAuth);
 					sec->log("%s successful login\n", client->str());
 				}
@@ -395,7 +397,7 @@ namespace alc {
 					Byte zeroGuid[8]; // only send zero-filled GUIDs to non-authed players
 					memset(zeroGuid, 0, 8);
 					memset(client->uid, 0, 16);
-					tmAccountAutheticated accountAuth(client, authResponse.result, zeroGuid);
+					tmAccountAutheticated accountAuth(client, authResponse.x, authResponse.result, zeroGuid);
 					send(accountAuth);
 					sec->log("%s failed login\n", client->str());
 					terminate(client, RNotAuthenticated);
@@ -428,7 +430,7 @@ namespace alc {
 				}
 				
 				if (u->getAccessLevel() <= AcAdmin) {
-					setActivePlayer(u, setPlayer.ki, setPlayer.avatar.c_str());
+					setActivePlayer(u, setPlayer.ki, setPlayer.x, setPlayer.avatar.c_str());
 				}
 				else {
 					// ask the vault server about this KI
@@ -439,8 +441,12 @@ namespace alc {
 						return -1; // parse error
 					}
 					u->setDelayMessages(true); // dont process any further messages till we verified the KI
-					tmCustomVaultCheckKi checkKi(vaultServer, setPlayer.ki, u->getSid(), u->uid);
+					tmCustomVaultCheckKi checkKi(vaultServer, setPlayer.ki, setPlayer.x, u->getSid(), u->uid);
 					send(checkKi);
+#ifdef ENABLE_UNET3
+					// perhaps the server does not preserve the X
+					u->x = setPlayer.x;
+#endif
 				}
 				
 				return 1;
@@ -458,7 +464,7 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, kiChecked.str());
 				
 				// find the client's session
-				tNetSession *client = smgr->get(kiChecked.x);
+				tNetSession *client = smgr->get(kiChecked.sid);
 				// verify GUID and session state
 				if (!client || client->getPeerType() != KClient || u->ki != 0 || memcmp(client->uid, kiChecked.uid, 16) != 0) {
 					err->log("ERR: Got NetMsgCustomVaultKiChecked for player with UID %s but can't find his session.\n", alcGetStrUid(kiChecked.uid));
@@ -470,9 +476,13 @@ namespace alc {
 					terminate(client, RNotAuthenticated);
 					return 1;
 				}
+#ifdef ENABLE_UNET3
+				if (u->proto == 1 || u->proto == 2) // the server does not preserve the X
+					kiChecked.x = client->x;
+#endif
 				
 				// it is correct, so tell everyone about it
-				setActivePlayer(client, kiChecked.ki, kiChecked.avatar.c_str());
+				setActivePlayer(client, kiChecked.ki, kiChecked.x, kiChecked.avatar.c_str());
 				
 				return 1;
 			}
@@ -492,7 +502,6 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, vaultMsg.str());
 				if (isTask) {
 					if (!vaultMsg.hasFlags(plNetX))  throw txProtocolError(_WHERE("X flag missing"));
-					u->x = vaultMsg.x;
 				}
 				else vaultMsg.x = 0; // make sure it is set
 				
@@ -580,8 +589,12 @@ namespace alc {
 					return 1;
 				}
 				
-				tmCustomFindServer findServer(trackingServer, u->ki, u->getSid(), u->getIp(), u->getPort(), alcGetStrGuid(ageLink.ageInfo.guid), ageLink.ageInfo.filename.c_str());
+				tmCustomFindServer findServer(trackingServer, u->ki, findAge.x, u->getSid(), u->getIp(), u->getPort(), alcGetStrGuid(ageLink.ageInfo.guid), ageLink.ageInfo.filename.c_str());
 				send(findServer);
+#ifdef ENABLE_UNET3
+				// perhaps the server does not preserve the X
+				u->x = findAge.x;
+#endif
 				
 				return 1;
 			}
@@ -598,14 +611,19 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, serverFound.str());
 				
 				// find the client
-				tNetSession *client = smgr->get(serverFound.x);
+				tNetSession *client = smgr->get(serverFound.sid);
 				if (!client || client->getPeerType() != KClient || client->ki != serverFound.ki) {
 					err->log("ERR: I've got to tell player with KI %d about his game server, but can't find his session.\n", serverFound.ki);
 					return 1;
 				}
 				Byte guid[8];
 				alcAscii2Hex(guid, serverFound.serverGuid.c_str(), 8);
-				tmFindAgeReply reply(client, serverFound.ipStr, serverFound.serverPort, serverFound.age, guid);
+				
+#ifdef ENABLE_UNET3
+				if (u->proto == 1 || u->proto == 2) // the server does not preserve the X
+					serverFound.x = client->x;
+#endif
+				tmFindAgeReply reply(client, serverFound.x, serverFound.ipStr, serverFound.serverPort, serverFound.age, guid);
 				send(reply);
 				
 				return 1;

@@ -75,11 +75,18 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultAskPlayerList
-	tmCustomVaultAskPlayerList::tmCustomVaultAskPlayerList(tNetSession *u, U32 x, const Byte *uid)
-	: tmMsgBase(NetMsgCustomVaultAskPlayerList, plNetAck | plNetCustom | plNetX | plNetVersion | plNetUID, u)
+	tmCustomVaultAskPlayerList::tmCustomVaultAskPlayerList(tNetSession *u, U32 x, U32 sid, const Byte *uid)
+	: tmMsgBase(NetMsgCustomVaultAskPlayerList, plNetAck | plNetCustom | plNetX | plNetVersion | plNetUID | plNetSid, u)
 	{
 		this->x = x;
+		this->sid = sid;
 		memcpy(this->uid, uid, 16);
+#ifdef ENABLE_UNET3
+		if (u->proto == 1 || u->proto == 2) {
+			unsetFlags(plNetSid);
+			this->x = sid; // older protocols have the sid in the X field
+		}
+#endif
 	}
 	
 	tmCustomVaultAskPlayerList::tmCustomVaultAskPlayerList(tNetSession *u) : tmMsgBase(u)
@@ -89,24 +96,49 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX | plNetUID)) throw txProtocolError(_WHERE("X or UID flag missing"));
+#ifndef ENABLE_UNET3
+		if (!hasFlags(plNetSid)) throw txProtocolError(_WHERE("Sid flag missing"));
+#else
+		if (!hasFlags(plNetSid)) { // unet3+ carries the sid in the sid field, older protocols have it in the X field
+			sid = x;
+			x = 0;
+			if (u->proto != 1) u->proto = 2; // unet3 protocol
+		}
+#endif
 	}
 	
 	//// tmCustomVaultPlayerList
 	tmCustomVaultPlayerList::tmCustomVaultPlayerList(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
-	tmCustomVaultPlayerList::tmCustomVaultPlayerList(tNetSession *u, U32 x, const Byte *uid)
-	: tmMsgBase(NetMsgCustomVaultPlayerList, plNetAck | plNetCustom | plNetX | plNetVersion | plNetUID, u)
+	tmCustomVaultPlayerList::tmCustomVaultPlayerList(tNetSession *u, U32 x, U32 sid, const Byte *uid)
+	: tmMsgBase(NetMsgCustomVaultPlayerList, plNetAck | plNetCustom | plNetX | plNetVersion | plNetUID | plNetSid, u)
 	{
 		this->x = x;
+		this->sid = sid;
 		memcpy(this->uid, uid, 16);
 		numberPlayers = 0;
+#ifdef ENABLE_UNET3
+		if (u->proto == 1 || u->proto == 2) {
+			unsetFlags(plNetSid);
+			this->x = sid; // older protocols have the sid in the X field
+		}
+#endif
 	}
 	
 	void tmCustomVaultPlayerList::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX | plNetUID)) throw txProtocolError(_WHERE("X or UID flag missing"));
+#ifndef ENABLE_UNET3
+		if (!hasFlags(plNetSid)) throw txProtocolError(_WHERE("Sid flag missing"));
+#else
+		if (!hasFlags(plNetSid)) { // unet3+ carries the sid in the sid field, older protocols have it in the X field
+			sid = x;
+			x = 0;
+			if (u->proto != 1) u->proto = 2; // unet3 protocol
+		}
+#endif
 		numberPlayers = t.getU16();
 		players.clear();
 		t.get(players); // the rest is the data about the players
@@ -133,11 +165,14 @@ namespace alc {
 		age.setVersion(0); // normal UruString
 	}
 	
-	tmCustomVaultPlayerStatus::tmCustomVaultPlayerStatus(tNetSession *u, U32 ki, U32 x, const Byte *serverGuid, const Byte *age, Byte state, U32 onlineTime)
-	 : tmMsgBase(NetMsgCustomVaultPlayerStatus, plNetAck | plNetCustom | plNetVersion | plNetX | plNetKi, u)
+	tmCustomVaultPlayerStatus::tmCustomVaultPlayerStatus(tNetSession *u, U32 ki, const Byte *serverGuid, const Byte *age, Byte state, U32 onlineTime)
+	 : tmMsgBase(NetMsgCustomVaultPlayerStatus, plNetAck | plNetCustom | plNetVersion | plNetKi, u)
 	{
 		this->ki = ki;
-		this->x = x;
+		this->x = 0;
+#ifdef ENABLE_UNET3
+		if (u->proto == 1 || u->proto == 2) setFlags(plNetX); // older protocols have this set, but the value is ignored
+#endif
 		
 		this->serverGuid.setVersion(0); // normal UruString
 		this->serverGuid.writeStr(serverGuid);
@@ -150,7 +185,7 @@ namespace alc {
 	void tmCustomVaultPlayerStatus::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		if (!hasFlags(plNetX | plNetKi))  throw txProtocolError(_WHERE("X or KI flag missing"));
+		if (!hasFlags(plNetKi))  throw txProtocolError(_WHERE("KI flag missing"));
 		t.get(age);
 		t.get(serverGuid);
 		state = t.getByte();
@@ -182,15 +217,23 @@ namespace alc {
 		this->key.setVersion(0); // normal UruString
 	}
 	
-	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u, U32 x, Byte *uid,
+	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u, U32 x, U32 sid, Byte *uid,
 	  Byte accessLevel, const Byte *login, tUStr &avatar, tUStr &gender, tUStr &friendName, tUStr &key)
-	 : tmMsgBase(NetMsgCustomVaultCreatePlayer, plNetX | plNetUID | plNetVersion | plNetAck | plNetCustom, u),
+	 : tmMsgBase(NetMsgCustomVaultCreatePlayer, plNetX | plNetUID | plNetVersion | plNetAck | plNetCustom | plNetSid, u),
 	   avatar(avatar), gender(gender), friendName(friendName), key(key)
 	{
 		this->x = x;
+		this->sid = sid;
 		memcpy(this->uid, uid, 16);
 #ifdef ENABLE_UNET2
 		if (u->proto == 1) unsetFlags(plNetUID);
+#endif
+#ifdef ENABLE_UNET3
+		if (u->proto == 1 || u->proto == 2) {
+			unsetFlags(plNetSid);
+			setFlags(plNetX);
+			this->x = sid; // older protocols have the sid in the X field
+		}
 #endif
 		
 		this->accessLevel = accessLevel;
@@ -208,6 +251,15 @@ namespace alc {
 		if (!hasFlags(plNetX)) throw txProtocolError(_WHERE("X flag missing"));
 #ifndef ENABLE_UNET2
 		if (!hasFlags(plNetUID)) throw txProtocolError(_WHERE("UID flag missing"));
+#endif
+#ifndef ENABLE_UNET3
+		if (!hasFlags(plNetSid)) throw txProtocolError(_WHERE("Sid flag missing"));
+#else
+		if (!hasFlags(plNetSid)) { // unet3+ carries the sid in the sid field, older protocols have it in the X field
+			sid = x;
+			x = 0;
+			if (u->proto != 1) u->proto = 2; // unet3 protocol
+		}
 #endif
 		t.get(login);
 #ifdef ENABLE_UNET2
@@ -254,14 +306,21 @@ namespace alc {
 	tmCustomVaultPlayerCreated::tmCustomVaultPlayerCreated(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
-	tmCustomVaultPlayerCreated::tmCustomVaultPlayerCreated(tNetSession *u, U32 ki, U32 x, const Byte *uid, Byte result)
-	 : tmMsgBase(NetMsgCustomVaultPlayerCreated, plNetKi | plNetX | plNetAck | plNetCustom | plNetUID, u)
+	tmCustomVaultPlayerCreated::tmCustomVaultPlayerCreated(tNetSession *u, U32 ki, U32 x, U32 sid, const Byte *uid, Byte result)
+	 : tmMsgBase(NetMsgCustomVaultPlayerCreated, plNetKi | plNetX | plNetAck | plNetCustom | plNetUID | plNetSid, u)
 	{
 		this->ki = ki;
 		this->x = x;
+		this->sid = sid;
 		memcpy(this->uid, uid, 16);
 #ifdef ENABLE_UNET2
 		if (u->proto == 1) unsetFlags(plNetUID);
+#endif
+#ifdef ENABLE_UNET3
+		if (u->proto == 1 || u->proto == 2) {
+			unsetFlags(plNetSid);
+			this->x = sid; // older protocols have the sid in the X field
+		}
 #endif
 
 		this->result = result;
@@ -279,6 +338,15 @@ namespace alc {
 			u->proto = 1; // unet2 protocol
 		}
 # endif
+#ifndef ENABLE_UNET3
+		if (!hasFlags(plNetSid)) throw txProtocolError(_WHERE("Sid flag missing"));
+#else
+		if (!hasFlags(plNetSid)) { // unet3+ carries the sid in the sid field, older protocols have it in the X field
+			sid = x;
+			x = 0;
+			if (u->proto != 1) u->proto = 2; // unet3 protocol
+		}
+#endif
 		result = t.getByte();
 	}
 	
@@ -309,14 +377,21 @@ namespace alc {
 #endif
 	}
 	
-	tmCustomVaultDeletePlayer::tmCustomVaultDeletePlayer(tNetSession *u, U32 ki, U32 x, Byte *uid, Byte accessLevel)
-	 : tmMsgBase(NetMsgCustomVaultDeletePlayer, plNetX | plNetKi | plNetUID | plNetAck | plNetCustom | plNetVersion, u)
+	tmCustomVaultDeletePlayer::tmCustomVaultDeletePlayer(tNetSession *u, U32 ki, U32 x, U32 sid, Byte *uid, Byte accessLevel)
+	 : tmMsgBase(NetMsgCustomVaultDeletePlayer, plNetX | plNetKi | plNetUID | plNetAck | plNetCustom | plNetVersion | plNetSid, u)
 	{
 		this->x = x;
 		this->ki = ki;
+		this->sid = sid;
 		memcpy(this->uid, uid, 16);
 #ifdef ENABLE_UNET2
 		if (u->proto == 1) unsetFlags(plNetUID);
+#endif
+#ifdef ENABLE_UNET3
+		if (u->proto == 1 || u->proto == 2) {
+			unsetFlags(plNetSid);
+			this->x = sid; // older protocols have the sid in the X field
+		}
 #endif
 		this->accessLevel = accessLevel;
 	}
@@ -333,6 +408,15 @@ namespace alc {
 			u->proto = 1; // unet2 protocol
 		}
 # endif
+#ifndef ENABLE_UNET3
+		if (!hasFlags(plNetSid)) throw txProtocolError(_WHERE("Sid flag missing"));
+#else
+		if (!hasFlags(plNetSid)) { // unet3+ carries the sid in the sid field, older protocols have it in the X field
+			sid = x;
+			x = 0;
+			if (u->proto != 1) u->proto = 2; // unet3 protocol
+		}
+#endif
 		accessLevel = t.getByte();
 	}
 	
@@ -355,14 +439,21 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultCheckKi
-	tmCustomVaultCheckKi::tmCustomVaultCheckKi(tNetSession *u, U32 ki, U32 x, Byte *uid)
-	 : tmMsgBase(NetMsgCustomVaultCheckKi, plNetX | plNetKi | plNetUID | plNetAck | plNetCustom | plNetVersion, u)
+	tmCustomVaultCheckKi::tmCustomVaultCheckKi(tNetSession *u, U32 ki, U32 x, U32 sid, Byte *uid)
+	 : tmMsgBase(NetMsgCustomVaultCheckKi, plNetX | plNetKi | plNetUID | plNetAck | plNetCustom | plNetVersion | plNetSid, u)
 	{
 		this->x = x;
 		this->ki = ki;
+		this->sid = sid;
 		memcpy(this->uid, uid, 16);
 #ifdef ENABLE_UNET2
 		if (u->proto == 1) unsetFlags(plNetUID);
+#endif
+#ifdef ENABLE_UNET3
+		if (u->proto == 1 || u->proto == 2) {
+			unsetFlags(plNetSid);
+			this->x = sid; // older protocols have the sid in the X field
+		}
 #endif
 	}
 	
@@ -382,6 +473,15 @@ namespace alc {
 			u->proto = 1; // unet2 protocol
 		}
 # endif
+#ifndef ENABLE_UNET3
+		if (!hasFlags(plNetSid)) throw txProtocolError(_WHERE("Sid flag missing"));
+#else
+		if (!hasFlags(plNetSid)) { // unet3+ carries the sid in the sid field, older protocols have it in the X field
+			sid = x;
+			x = 0;
+			if (u->proto != 1) u->proto = 2; // unet3 protocol
+		}
+#endif
 	}
 	
 	void tmCustomVaultCheckKi::stream(tBBuf &t)
@@ -403,14 +503,21 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultKiChecked
-	tmCustomVaultKiChecked::tmCustomVaultKiChecked(tNetSession *u, U32 ki, U32 x, const Byte *uid, Byte status, const Byte *avatar)
-	: tmMsgBase(NetMsgCustomVaultKiChecked, plNetX | plNetKi | plNetUID | plNetAck | plNetCustom | plNetVersion, u)
+	tmCustomVaultKiChecked::tmCustomVaultKiChecked(tNetSession *u, U32 ki, U32 x, U32 sid, const Byte *uid, Byte status, const Byte *avatar)
+	: tmMsgBase(NetMsgCustomVaultKiChecked, plNetX | plNetKi | plNetUID | plNetAck | plNetCustom | plNetVersion | plNetSid, u)
 	{
 		this->ki = ki;
 		this->x = x;
+		this->sid = sid;
 		memcpy(this->uid, uid, 16);
 #ifdef ENABLE_UNET2
 		if (u->proto == 1) unsetFlags(plNetUID);
+#endif
+#ifdef ENABLE_UNET3
+		if (u->proto == 1 || u->proto == 2) {
+			unsetFlags(plNetSid);
+			this->x = sid; // older protocols have the sid in the X field
+		}
 #endif
 	
 		this->status = status;
@@ -418,8 +525,7 @@ namespace alc {
 		this->avatar.writeStr(avatar);
 	}
 	
-	tmCustomVaultKiChecked::tmCustomVaultKiChecked(tNetSession *u)
-	: tmMsgBase(NetMsgCustomVaultKiChecked, plNetX | plNetKi | plNetUID | plNetAck | plNetCustom | plNetVersion, u)
+	tmCustomVaultKiChecked::tmCustomVaultKiChecked(tNetSession *u) : tmMsgBase(u)
 	{
 		avatar.setVersion(0); // normal UruString
 	}
@@ -436,6 +542,15 @@ namespace alc {
 			u->proto = 1; // unet2 protocol
 		}
 # endif
+#ifndef ENABLE_UNET3
+		if (!hasFlags(plNetSid)) throw txProtocolError(_WHERE("Sid flag missing"));
+#else
+		if (!hasFlags(plNetSid)) { // unet3+ carries the sid in the sid field, older protocols have it in the X field
+			sid = x;
+			x = 0;
+			if (u->proto != 1) u->proto = 2; // unet3 protocol
+		}
+#endif
 		status = t.getByte();
 		t.get(avatar);
 	}

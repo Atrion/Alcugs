@@ -50,8 +50,6 @@ namespace alc {
 		t.get(account);
 		maxPacketSize = t.getU16();
 		release = t.getByte();
-		
-		u->x = x;
 	}
 	
 	void tmAuthenticateHello::additionalFields(void)
@@ -61,11 +59,11 @@ namespace alc {
 	}
 	
 	//// tmAuthenticateChallenge	
-	tmAuthenticateChallenge::tmAuthenticateChallenge(tNetSession *u, Byte authResult, const Byte *challenge)
+	tmAuthenticateChallenge::tmAuthenticateChallenge(tNetSession *u, U32 x, Byte authResult, const Byte *challenge)
 	: tmMsgBase(NetMsgAuthenticateChallenge, plNetKi | plNetAck | plNetX | plNetVersion | plNetCustom, u)
 	{
 		ki = 0; // we're not yet logged in, so no KI can be set
-		x = u->x;
+		this->x = x;
 		
 		this->authResult = authResult;
 		this->challenge.write(challenge, 16);
@@ -86,7 +84,7 @@ namespace alc {
 	}
 	
 	//// tmAuthenticateResponse
-	tmAuthenticateResponse::tmAuthenticateResponse(tNetSession *u) : tmMsgBase(u) // it's not capable of sending are set
+	tmAuthenticateResponse::tmAuthenticateResponse(tNetSession *u) : tmMsgBase(u) // it's not capable of sending
 	{
 		hash.setVersion(0); // normal UruString, but in Hex, not Ascii
 	}
@@ -97,8 +95,6 @@ namespace alc {
 		// the vault manager sends these without X and KI, and the game server gets it with a KI set (which we ignore)
 		t.get(hash);
 		if (hash.size() != 16) throw txProtocolError(_WHERE("tmAuthenticateResponse.hash must be 16 characters long"));
-		
-		u->x = x;
 	}
 	
 	void tmAuthenticateResponse::additionalFields(void)
@@ -108,11 +104,11 @@ namespace alc {
 	}
 	
 	//// tmAccountAutheticated	
-	tmAccountAutheticated::tmAccountAutheticated(tNetSession *u, Byte authResult, const Byte *serverGuid)
+	tmAccountAutheticated::tmAccountAutheticated(tNetSession *u, U32 x, Byte authResult, const Byte *serverGuid)
 	: tmMsgBase(NetMsgAccountAuthenticated, plNetKi | plNetAck | plNetX | plNetUID | plNetCustom, u)
 	{
 		memcpy(uid, u->uid, 16);
-		x = u->x;
+		this->x = x;
 		ki = 0; // we're not yet logged in, so no KI can be set
 		
 		this->authResult = authResult;
@@ -141,15 +137,13 @@ namespace alc {
 	void tmSetMyActivePlayer::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
+		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing")); // VaultManager sends it without X
 		t.get(avatar);
 		Byte unk = t.getByte();
 		if (unk != 0) {
 			lerr->log("NetMsgSetMyActivePlayer.unk is not null but %d\n", unk);
 			throw txProtocolError(_WHERE("NetMsgSetMyActivePlayer.unk is not 0"));
 		}
-		
-		u->x = x;
 	}
 	
 	void tmSetMyActivePlayer::additionalFields(void)
@@ -159,9 +153,9 @@ namespace alc {
 	}
 	
 	//// tmActivePlayerSet
-	tmActivePlayerSet::tmActivePlayerSet(tNetSession *u) : tmMsgBase(NetMsgActivePlayerSet, plNetAck | plNetCustom | plNetKi | plNetX, u)
+	tmActivePlayerSet::tmActivePlayerSet(tNetSession *u, U32 x) : tmMsgBase(NetMsgActivePlayerSet, plNetAck | plNetCustom | plNetKi | plNetX, u)
 	{
-		x = u->x;
+		this->x = x;
 		ki = u->ki;
 		if (u->tpots != 2) // if it is TPOTS or we are unsure, use TPOTS mod
 			cmd = NetMsgActivePlayerSet2;
@@ -179,15 +173,13 @@ namespace alc {
 		// store the whole message
 		message.clear();
 		t.get(message);
-		
-		u->x = x;
 	}
 	
 	//// tmFindAgeReply
-	tmFindAgeReply::tmFindAgeReply(tNetSession *u, tUStr &ipStr, U16 port, tUStr &age, const Byte *guid)
+	tmFindAgeReply::tmFindAgeReply(tNetSession *u, U32 x, tUStr &ipStr, U16 port, tUStr &age, const Byte *guid)
 	 : tmMsgBase(NetMsgFindAgeReply, plNetAck | plNetCustom | plNetKi | plNetX, u), age(age), ipStr(ipStr)
 	{
-		x = u->x;
+		this->x = x;
 		ki = u->ki;
 	
 		this->ipStr.setVersion(0); // normal UruString

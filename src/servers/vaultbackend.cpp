@@ -191,7 +191,7 @@ namespace alc {
 	
 	void tVaultBackend::sendPlayerList(tmCustomVaultAskPlayerList &askPlayerList)
 	{
-		tmCustomVaultPlayerList list(askPlayerList.getSession(), askPlayerList.x, askPlayerList.uid);
+		tmCustomVaultPlayerList list(askPlayerList.getSession(), askPlayerList.x, askPlayerList.sid, askPlayerList.uid);
 		list.numberPlayers = vaultDB->getPlayerList(askPlayerList.uid, &list.players);
 		net->send(list);
 	}
@@ -200,7 +200,7 @@ namespace alc {
 	{
 		Byte avatar[256], status;
 		status = vaultDB->checkKi(checkKi.ki, checkKi.uid, avatar);
-		tmCustomVaultKiChecked checked(checkKi.getSession(), checkKi.ki, checkKi.x, checkKi.uid, status, avatar);
+		tmCustomVaultKiChecked checked(checkKi.getSession(), checkKi.ki, checkKi.x, checkKi.sid, checkKi.uid, status, avatar);
 		net->send(checked);
 	}
 	

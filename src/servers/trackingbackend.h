@@ -68,13 +68,14 @@ namespace alc {
 		tPlayer(U32 ki);
 		char *str(void);
 		U32 ki; //!< player's ki number
-		U32 x; //!< player's X value
+		U32 sid; //!< player's sid in the lobby/game server
 		Byte uid[16]; //!< the player's account uid
 		Byte avatar[200]; //!< the avatar's name
 		Byte account[200]; //!< the account the player is logged in with
 		U16 flag; //!< the player's flag (see tTrackingBackend::updatePlayer)
 		U16 status; //!< the player's status
 		bool waiting; //!< true if the player is waiting for ServerFound, false if it isn't [only defined when waiting=true]
+		U32 awaiting_x; //!< the X alue the player requested the age with
 		Byte awaiting_guid[8]; //!< Age guid where the player wants to go (hex) [only defined when waiting=true]
 		Byte awaiting_age[200]; //!< Age name where the player wants to go
 		tNetSession *u; //!< the lobby or game server the player is connected to

@@ -119,7 +119,7 @@ namespace alc {
 					else result = AOK;
 				}
 				
-				tmCustomVaultPlayerCreated playerCreated(u, ki, createPlayer.x, createPlayer.uid, result);
+				tmCustomVaultPlayerCreated playerCreated(u, ki, createPlayer.x, createPlayer.sid, createPlayer.uid, result);
 				send(playerCreated);
 				
 				return 1;

@@ -47,16 +47,24 @@
 namespace alc {
 
 	//// tmCustomAuthAsk
-	tmCustomAuthAsk::tmCustomAuthAsk(tNetSession *u, U32 x, U32 ip, U16 port, const Byte *login, const Byte *challenge, const Byte *hash, Byte release)
-	: tmMsgBase(NetMsgCustomAuthAsk, plNetAck | plNetCustom | plNetX | plNetVersion | plNetIP, u)
+	tmCustomAuthAsk::tmCustomAuthAsk(tNetSession *u, U32 x, U32 sid, U32 ip, U16 port, const Byte *login, const Byte *challenge, const Byte *hash, Byte release)
+	: tmMsgBase(NetMsgCustomAuthAsk, plNetAck | plNetCustom | plNetX | plNetVersion | plNetSid | plNetIP, u)
 	{
+		this->sid = sid; // this is the SID the lobby uses for the connection to the client to be authed
+		this->x = x; // the X value the client sent to the lobby
+		this->ip = ip; // the client's IP and Port (for logging)
+		this->port = port;
+		
 #ifdef ENABLE_UNET2
 		if (u->proto == 1)
 			unsetFlags(plNetIP);
 #endif
-		this->x = x; // this is the SID the lobby uses for the connection to the client to be authed
-		this->ip = ip; // the client's IP and Port (for logging)
-		this->port = port;
+#ifdef ENABLE_UNET3
+		if (u->proto == 1 || u->proto == 2) {
+			unsetFlags(plNetSid);
+			this->x = sid; // older protocols have the sid in the X field
+		}
+#endif
 		
 		this->login.setVersion(0); // normal UrurString
 		this->login.writeStr(login);
@@ -77,6 +85,15 @@ namespace alc {
 #ifndef ENABLE_UNET2
 		if (!hasFlags(plNetIP)) throw txProtocolError(_WHERE("IP flag missing"));
 #endif
+#ifndef ENABLE_UNET3
+		if (!hasFlags(plNetSid)) throw txProtocolError(_WHERE("Sid flag missing"));
+#else
+		if (!hasFlags(plNetSid)) { // unet3+ carries the sid in the sid field, older protocols have it in the X field
+			sid = x;
+			x = 0;
+			if (u->proto != 1) u->proto = 2; // unet3 protocol
+		}
+#endif
 		t.get(login);
 		memcpy(challenge, t.read(16), 16);
 		memcpy(hash, t.read(16), 16);
@@ -85,7 +102,7 @@ namespace alc {
 		if(!hasFlags(plNetIP)) {
 			ip = t.getU32();
 			port = 0;
-			if (u) u->proto = 1; // unet2 protocol
+			 u->proto = 1; // unet2 protocol
 		}
 #endif
 	}
@@ -117,16 +134,25 @@ namespace alc {
 	
 	//// tmCustomAuthResponse
 	tmCustomAuthResponse::tmCustomAuthResponse(tNetSession *u, tmCustomAuthAsk &authAsk, const Byte *uid, const Byte *passwd, Byte result, Byte accessLevel)
-	 : tmMsgBase(NetMsgCustomAuthResponse, plNetAck | plNetCustom | plNetX | plNetVersion | plNetIP | plNetUID, u)
+	 : tmMsgBase(NetMsgCustomAuthResponse, plNetAck | plNetCustom | plNetX | plNetVersion | plNetSid | plNetIP | plNetUID, u)
 	 {
+		// copy stuff from the authAsk
+		sid = authAsk.sid; // this is the SID the lobby uses for the connection to the client to be authed
+		x = authAsk.x; // the X value the client sent to the lobby
+		ip = authAsk.ip; // the client's IP and Port (for finding the correct session)
+		port = authAsk.port;
+
 #ifdef ENABLE_UNET2
 		if (u->proto == 1)
 			unsetFlags(plNetIP | plNetUID);
 #endif
-		// copy stuff from the authAsk
-		x = authAsk.x; // this is the SID the lobby uses for the connection to the client to be authed
-		ip = authAsk.ip; // the client's IP and Port (for finding the correct session)
-		port = authAsk.port;
+#ifdef ENABLE_UNET3
+		if (u->proto == 1 || u->proto == 2) {
+			unsetFlags(plNetSid);
+			this->x = sid; // older protocols have the sid in the X field
+		}
+#endif
+		
 		login = authAsk.login;
 		login.setVersion(0); // normal UrurString
 		
@@ -150,6 +176,15 @@ namespace alc {
 #ifndef ENABLE_UNET2
 		if (!hasFlags(plNetIP | plNetUID)) throw txProtocolError(_WHERE("IP or UID flag missing"));
 #endif
+#ifndef ENABLE_UNET3
+		if (!hasFlags(plNetSid)) throw txProtocolError(_WHERE("Sid flag missing"));
+#else
+		if (!hasFlags(plNetSid)) { // unet3+ carries the sid in the sid field, older protocols have it in the X field
+			sid = x;
+			x = 0;
+			if (u->proto != 1) u->proto = 2; // unet3 protocol
+		}
+#endif
 		t.get(login);
 		result = t.getByte();
 		t.get(passwd);
@@ -157,7 +192,7 @@ namespace alc {
 		if (!hasFlags(plNetUID)) {
 			memcpy(uid, t.read(16), 16);
 			ip = port = 0; // they should be initialized
-			if (u) u->proto = 1; // unet2 protocol
+			u->proto = 1; // unet2 protocol
 		}
 #endif
 		accessLevel = t.getByte();

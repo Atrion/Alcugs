@@ -116,7 +116,6 @@ public:
 	Byte tpots; //!< tpots version 0=undefined, 1=tpots client, 2=non-tpots client
 	
 	U32 ki; //!< player set and valid id, otherwise 0 (lobby/game)
-	U32 x; //!< x value (for lobby/game)
 	Byte uid[16]; //!< hex; player uid in lobby/game server
 	Byte name[200]; //!< peer age name in tracking server, peer account name in lobby and game
 	Byte avatar[200]; //!< peer avatar name if set (lobby and game)
@@ -129,6 +128,11 @@ public:
 	
 	// used by game
 	bool joined;
+	
+#ifdef ENABLE_UNET3
+	// legacy protocol support
+	U32 x; //!< x value (for lobby/game)
+#endif
 
 private:
 	tUnet * net;
