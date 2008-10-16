@@ -142,6 +142,21 @@ namespace alc {
 				// FIXME: do something
 				return 1;
 			}
+			case NetMsgGameMessageDirected:
+			{
+				if (!u->joined) {
+					err->log("ERR: %s sent a NetMsgGameMessageDirected but did not yet join the game. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmGameMessageDirected gameMsg(u);
+				msg->data->get(gameMsg);
+				log->log("<RCV> [%d] %s\n", msg->sn, gameMsg.str());
+				
+				// FIXME: do something
+				return 1;
+			}
 		}
 		return 0;
 	}

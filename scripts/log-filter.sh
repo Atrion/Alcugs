@@ -43,7 +43,7 @@ case $1 in
 			cat fork_err.log
 			echo
 		fi
-		logfilter "warn|[^de]err|unx|unexpect|fatal"
+		logfilter "warn|[^a-z]err|unx|unexpect|fatal"
 	;;
 	info|infos)
 		logfilter "[^e]\sinf"
