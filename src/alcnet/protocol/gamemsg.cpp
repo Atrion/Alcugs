@@ -59,7 +59,7 @@ namespace alc {
 	}
 	
 	//// tmJoinAck
-	tmJoinAck::tmJoinAck(tNetSession *u, U32 x) : tmMsgBase(NetMsgJoinAck, plNetAck | plNetCustom | plNetKi | plNetX | plNetFirewalled, u)
+	tmJoinAck::tmJoinAck(tNetSession *u, U32 x) : tmMsgBase(NetMsgJoinAck, plNetAck | plNetCustom | plNetKi | plNetX, u)
 	{
 		this->x = x;
 		ki = u->ki;
@@ -127,6 +127,39 @@ namespace alc {
 		recipients = (U32 *)malloc(nRecipients*sizeof(U32));
 		for (int i = 0; i < nRecipients; ++i) recipients[i] = gameMessage.getU32();
 		if (!gameMessage.eof()) throw txProtocolError(_WHERE("Message is too long")); // there must not be any byte after the recipient list
+	}
+	
+	//// tmLoadClone
+	tmLoadClone::tmLoadClone(tNetSession *u) : tmMsgBase(u)
+	{ }
+	
+	void tmLoadClone::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		t.read(); // just accept whatever we get
+		// FIXME: actually parse the message
+	}
+	
+	//// tmPagingRoom
+	tmPagingRoom::tmPagingRoom(tNetSession *u) : tmMsgBase(u)
+	{ }
+	
+	void tmPagingRoom::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		t.read(); // just accept whatever we get
+		// FIXME: actually parse the message
+	}
+	
+	//// tmPlayerPage
+	tmPlayerPage::tmPlayerPage(tNetSession *u) : tmMsgBase(u)
+	{ }
+	
+	void tmPlayerPage::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		t.read(); // just accept whatever we get
+		// FIXME: actually parse the message
 	}
 
 } //end namespace alc

@@ -120,6 +120,7 @@ namespace alc {
 				// ok, tell the client he successfully joined
 				u->joined = true;
 				tmJoinAck joinAck(u, joinReq.x);
+				if (joinReq.hasFlags(plNetP2P)) joinAck.setFlags(plNetFirewalled);
 				send(joinAck);
 				// now, it'll stat sending GameMessages
 				
@@ -153,6 +154,55 @@ namespace alc {
 				tmGameMessageDirected gameMsg(u);
 				msg->data->get(gameMsg);
 				log->log("<RCV> [%d] %s\n", msg->sn, gameMsg.str());
+				
+				// FIXME: do something
+				return 1;
+			}
+			
+			//// SDL and object state messages
+			case NetMsgLoadClone:
+			{
+				if (!u->joined) {
+					err->log("ERR: %s sent a NetMsgLoadClone but did not yet join the game. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmLoadClone loadClone(u);
+				msg->data->get(loadClone);
+				log->log("<RCV> [%d] %s\n", msg->sn, loadClone.str());
+				
+				// FIXME: do something
+				return 1;
+			}
+			case NetMsgPlayerPage: // FIXME: is this an SDL and avatar state message, or something related to pages?
+			{
+				if (!u->joined) {
+					err->log("ERR: %s sent a NetMsgPlayerPage but did not yet join the game. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmPlayerPage playerPage(u);
+				msg->data->get(playerPage);
+				log->log("<RCV> [%d] %s\n", msg->sn, playerPage.str());
+				
+				// FIXME: do something
+				return 1;
+			}
+			
+			//// page and group owner messages
+			case NetMsgPagingRoom:
+			{
+				if (!u->joined) {
+					err->log("ERR: %s sent a NetMsgPagingRoom but did not yet join the game. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmPagingRoom pagingRoom(u);
+				msg->data->get(pagingRoom);
+				log->log("<RCV> [%d] %s\n", msg->sn, pagingRoom.str());
 				
 				// FIXME: do something
 				return 1;

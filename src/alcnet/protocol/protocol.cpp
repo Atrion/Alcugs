@@ -677,7 +677,10 @@ void tmMsgBase::store(tBBuf &t) {
 	else sid = 0;
 
 	U32 check=plNetAck | plNetBcast | plNetVersion | plNetTimestamp | \
-	plNetX | plNetKi | plNetUID | plNetIP | plNetCustom | plNetSid | plNetGame;
+	plNetX | plNetKi | plNetUID | plNetIP | plNetCustom | plNetSid;
+	// accept some flags only for certain messages
+	if (cmd == NetMsgGameMessage) check |= plNetGame;
+	if (cmd == NetMsgJoinReq) check |= plNetP2P;
 	
 	//now catch undocumented protocol flags
 	if (flags & ~(check))
@@ -759,6 +762,8 @@ const Byte * tmMsgBase::str() {
 		dbg.writeStr(" ack,");
 	if(flags & plNetFirewalled)
 		dbg.writeStr(" firewalled,");
+	if(flags & plNetP2P)
+		dbg.writeStr(" P2P request,");
 	if(flags & plNetBcast)
 		dbg.writeStr(" bcast,");
 	if(flags & plNetCustom)

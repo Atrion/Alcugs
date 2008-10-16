@@ -236,7 +236,7 @@ namespace alc {
 			case NetMsgCustomForkServer:
 			{
 				if (u->getPeerType() != KTracking) {
-					err->log("ERR: %s sent a NetMsgCustomVaultPlayerList but is not the tracking server. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgCustomForkServer but is not the tracking server. I\'ll kick him.\n", u->str());
 					return -2; // hack attempt
 				}
 				

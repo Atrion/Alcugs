@@ -78,6 +78,24 @@ namespace alc {
 		Byte nRecipients;
 		U32 *recipients;
 	};
+	
+	class tmLoadClone : public tmMsgBase {
+	public:
+		tmLoadClone(tNetSession *u);
+		virtual void store(tBBuf &t);
+	};
+	
+	class tmPagingRoom : public tmMsgBase {
+	public:
+		tmPagingRoom(tNetSession *u);
+		virtual void store(tBBuf &t);
+	};
+	
+	class tmPlayerPage : public tmMsgBase {
+	public:
+		tmPlayerPage(tNetSession *u);
+		virtual void store(tBBuf &t);
+	};
 
 } //End alc namespace
 
