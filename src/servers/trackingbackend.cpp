@@ -534,6 +534,7 @@ namespace alc {
 		if (file) ++file; // it points to the slash, but we want to start after it
 		else file = (char *)statusHTMLFile; // no slash... it must be a relative filename then, containing no directory, so let's use that
 		fprintf(f, "<meta http-equiv=\"refresh\" content=\"30;url=%s\" />\n", file);
+		fprintf(f, "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=ISO-8859-1\">");
 		fprintf(f, "</head><body>\n");
 		fprintf(f, "Last Update: %s<br />\n", alcGetStrTime());
 		// player list
@@ -580,7 +581,7 @@ namespace alc {
 		  return;
 		}
 		
-		fprintf(f, "<?xml version='1.0'?>\n");
+		fprintf(f, "<?xml version='1.0' encoding='iso-8859-1'?>\n");
 		fprintf(f, "<SystemView>\n");
 			fprintf(f, "<Version>2.0</Version>\n");
 			fprintf(f, "<Lookup>\n");

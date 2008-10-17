@@ -78,6 +78,16 @@ namespace alc {
 		}
 	}
 	
+	bool tUnetVaultServer::isValidAvatarName(tUStr &avatar)
+	{
+		for (U32 i = 0; i < avatar.size(); ++i) {
+			Byte c = avatar[i];
+			if (!isprint(c) && !isalpha(c) && !alcIsAlpha(c)) return false;
+			if (c == '\n' || c == '\t') return false;
+		}
+		return true;
+	}
+	
 	int tUnetVaultServer::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
 	{
 		int ret = tUnetServerBase::onMsgRecieved(ev, msg, u); // first let tUnetServerBase process the message
@@ -108,6 +118,7 @@ namespace alc {
 				else if (createPlayer.avatar.size() < 3) result = ANameIsTooShort;
 				else if (createPlayer.avatar.size() > 20) result = ANameIsTooLong;
 				else if (createPlayer.friendName.size() > 0 || createPlayer.key.size() > 0) result = AInvitationNotFound;
+				else if (!isValidAvatarName(createPlayer.avatar)) result = ANameIsNotAllowed;
 				else {
 					tStrBuf gender = createPlayer.gender.lower();
 					if (gender != "male" && gender != "female" && createPlayer.accessLevel > AcCCR) {
