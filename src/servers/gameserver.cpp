@@ -88,6 +88,45 @@ namespace alc {
 		else
 			tUnetLobbyServerBase::onConnectionClosed(ev, u);
 	}
+	
+	bool tUnetGameServer::setActivePlayer(tNetSession *u, U32 ki, U32 x, const Byte *avatar)
+	{
+		if (!tUnetLobbyServerBase::setActivePlayer(u, ki, x, avatar)) return false;
+		
+		tNetSession *vaultServer = getSession(vault);
+		if (!vaultServer) {
+			err->log("ERR: I've got to update a player\'s (%s) status for the vault server, but it is unavailable.\n", u->str());
+		}
+		else {
+			// tell vault
+			tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, alcGetStrGuid(serverGuid), serverName, 1 /* is online */, 0 /* don't increase online time now, do that on disconnect */);
+			send(vaultStatus);
+		}
+		return true;
+	}
+	
+	void tUnetGameServer::terminate(tNetSession *u, Byte reason, bool destroyOnly)
+	{
+		if (u->getPeerType() == KClient && u->ki != 0) { // if necessary, tell the others about it
+			tNetSession *vaultServer = getSession(vault);
+			if (!vaultServer) {
+				err->log("ERR: I've got to update a player\'s (%s) status for the vault server, but it is unavailable.\n", u->str());
+			}
+			else if (reason == RLeaving) { // the player is going on to another age, so he's not really offline
+				if (!u->proto || u->proto >= 3) { // unet2 or unet3 vault servers would not understand a state of 2
+					// update online time
+					tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, alcGetStrGuid(serverGuid), serverName, /* offline but will soon come back */ 2, u->onlineTime());
+					send(vaultStatus);
+				}
+			}
+			else { // the player really went offline
+				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, (Byte *)"0000000000000000" /* these are 16 zeroes */, (Byte *)"", /* player is offline */0, u->onlineTime());
+				send(vaultStatus);
+			}
+		}
+	
+		tUnetLobbyServerBase::terminate(u, reason, destroyOnly); // do the lobbybase terminate procedure
+	}
 
 	int tUnetGameServer::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
 	{

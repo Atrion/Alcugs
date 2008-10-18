@@ -111,7 +111,7 @@ namespace alc {
 		}
 	}
 	
-	void tUnetLobbyServerBase::setActivePlayer(tNetSession *u, U32 ki, U32 x, const Byte *avatar)
+	bool tUnetLobbyServerBase::setActivePlayer(tNetSession *u, U32 ki, U32 x, const Byte *avatar)
 	{
 		tNetSession *client;
 		smgr->rewind();
@@ -128,53 +128,42 @@ namespace alc {
 		if (whoami == KGame && avatar[0] == 0) // empty avatar names are not allowed in game server
 			throw txProtocolError(_WHERE("Someone with KI %d is trying to set an empty avatar name, but I\'m a game server. Kick him.", ki));
 	
-		tNetSession *trackingServer = getSession(tracking), *vaultServer = getSession(vault);
-		if (!trackingServer || !vaultServer) {
-			err->log("ERR: I've got to set player %s active, but tracking or vault is unavailable.\n",
-					u->str());
-			return;
+		tNetSession *trackingServer = getSession(tracking);
+		if (!trackingServer) {
+			err->log("ERR: I've got to set player %s active, but tracking is unavailable.\n", u->str());
+			return false;
 		}
 		
 		// save the data
 		strncpy((char *)u->avatar, (char *)avatar, 199);
 		u->ki = ki;
 		
-		// tell vault and taracking
-		tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->getSid(), u->uid, u->name, u->avatar, 2 /* visible */, (whoami == KLobby && u->release == TIntRel) ? RActive : RJoining); // show the VaultManager as active in the lobby
+		// tell tracking
+		tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->getSid(), u->uid, u->name, u->avatar, 2 /* visible */, (u->release == TIntRel) ? RActive : RJoining); // show the VaultManager as active (it's the only IntRel we have)
 		send(trackingStatus);
-		tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, alcGetStrGuid(serverGuid), serverName, 1 /* is online */, 0 /* don't increase online time now, do that on disconnect */);
-		send(vaultStatus);
 		
 		// now, tell the client
 		tmActivePlayerSet playerSet(u, x);
 		send(playerSet);
 		// and write to the logfile
 		sec->log("%s player set\n", u->str());
+		return true;
 	}
 	
 	void tUnetLobbyServerBase::terminate(tNetSession *u, Byte reason, bool destroyOnly)
 	{
 		if (u->getPeerType() == KClient && u->ki != 0) { // if necessary, tell the others about it
-			tNetSession *trackingServer = getSession(tracking), *vaultServer = getSession(vault);
-			if (!trackingServer || !vaultServer) {
-				err->log("ERR: I've got to update a player\'s (%s) status for the tracking and vault server, but one of them is unavailable.\n", u->str());
+			tNetSession *trackingServer = getSession(tracking);
+			if (!trackingServer) {
+				err->log("ERR: I've got to update a player\'s (%s) status for the tracking server, but it is unavailable.\n", u->str());
 			}
 			else if (reason == RLeaving) { // the player is going on to another age, so he's not really offline
-				if (!u->proto || u->proto >= 3) { // unet2 or unet3 vault servers would not understand a state of 2
-					// update online time
-					tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, alcGetStrGuid(serverGuid), serverName, /* offline but will soon come back */ 2, u->onlineTime());
-					send(vaultStatus);
-				}
-				
 				tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->getSid(), u->uid, u->name, u->avatar, 2 /* visible */, reason);
 				send(trackingStatus);
 			}
 			else { // the player really went offline
 				tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->getSid(), u->uid, u->name, u->avatar, 0 /* delete */, reason);
 				send(trackingStatus);
-				
-				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, (Byte *)"0000000000000000" /* these are 16 zeroes */, (Byte *)"", /* player is offline */0, u->onlineTime());
-				send(vaultStatus);
 			}
 			u->ki = 0; // this avoids sending the messages twice
 		}
