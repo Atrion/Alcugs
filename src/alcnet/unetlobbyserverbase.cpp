@@ -148,6 +148,8 @@ namespace alc {
 		// now, tell the client
 		tmActivePlayerSet playerSet(u, x);
 		send(playerSet);
+		// and write to the logfile
+		sec->log("%s player set\n", u->str());
 	}
 	
 	void tUnetLobbyServerBase::terminate(tNetSession *u, Byte reason, bool destroyOnly)

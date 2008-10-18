@@ -122,6 +122,8 @@ namespace alc {
 				tmJoinAck joinAck(u, joinReq.x);
 				if (joinReq.hasFlags(plNetP2P)) joinAck.setFlags(plNetFirewalled);
 				send(joinAck);
+				// log the join
+				sec->log("%s joined\n", u->str());
 				// now, it'll stat sending GameMessages
 				
 				return 1;
