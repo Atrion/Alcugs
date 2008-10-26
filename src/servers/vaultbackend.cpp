@@ -786,9 +786,9 @@ namespace alc {
 			case TUnRegisterVisitAge:
 			{
 				if (!ageGuid) throw txProtocolError(_WHERE("the age GUID must be set for a TRegisterVisitAge"));
-				if (ki != msg.vmgr)
-					throw txProtocolError(_WHERE("the vmgr of a TUnRegisterVisitAge task must be the player's KI, but %d != %d", ki, msg.vmgr));
 				log->log("TUnRegisterVisitAge from %d\n", ki);
+				
+				// msg.vmgr is the reciever's KI, ki the sender's one
 				
 				// now find the age info node of the age we're looking for
 				tvAgeInfoStruct ageInfo("", ageGuid); // filename is unknown

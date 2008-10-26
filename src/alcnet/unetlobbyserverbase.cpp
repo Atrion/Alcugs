@@ -157,12 +157,9 @@ namespace alc {
 			if (!trackingServer) {
 				err->log("ERR: I've got to update a player\'s (%s) status for the tracking server, but it is unavailable.\n", u->str());
 			}
-			else if (reason == RLeaving) { // the player is going on to another age, so he's not really offline
-				tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->getSid(), u->uid, u->name, u->avatar, 2 /* visible */, reason);
-				send(trackingStatus);
-			}
-			else { // the player really went offline
-				tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->getSid(), u->uid, u->name, u->avatar, 0 /* delete */, reason);
+			else {
+				int state = (reason == RLeaving) ? 2 /* visible */ : 0 /* delete */; // if the player just goes on to another age, don't remove him from the list
+				tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->getSid(), u->uid, u->name, u->avatar, state, reason);
 				send(trackingStatus);
 			}
 			u->ki = 0; // this avoids sending the messages twice
