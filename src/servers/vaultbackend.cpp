@@ -760,6 +760,9 @@ namespace alc {
 				removeAgeLinkFromPlayer(msg.vmgr, ageInfoNode);
 				// remove the player from that age
 				addRemovePlayerToAge(ageInfoNode, msg.vmgr, /*visitor*/false, /*remove*/true);
+				
+				tvMessage reply(msg, 0);
+				send(reply, u, ki, x);
 				break;
 			}
 			case TRegisterVisitAge:
@@ -798,6 +801,9 @@ namespace alc {
 				removeAgeLinkFromPlayer(msg.vmgr, ageInfoNode, /*visitedAge*/true);
 				// remove the player from that age
 				addRemovePlayerToAge(ageInfoNode, msg.vmgr, /*visitor*/true, /*remove*/true);
+				
+				tvMessage reply(msg, 0);
+				send(reply, u, ki, x);
 				break;
 			}
 			default:
@@ -939,10 +945,10 @@ namespace alc {
 		// find the age link
 		U32 linkedAgesFolder;
 		U32 ageLinkNode = findAgeLink(ki, ageInfoNode, &linkedAgesFolder, visitedAge);
-		if (!ageLinkNode) return; // the palyer does not have a link to this age
+		if (!ageLinkNode) return; // the player does not have a link to this age
 		
 		// and now remove that node and broadcast the removal
-		vaultDB->removeNodeRef(linkedAgesFolder, ageLinkNode, /*cautious*/false); // this will remove the node if this was the only ref (which it should be)
+		vaultDB->removeNodeRef(linkedAgesFolder, ageLinkNode, /*cautious*/false); // this will remove the node if this was the only ref
 		broadcastNodeRefUpdate(new tvNodeRef(0, linkedAgesFolder, ageLinkNode), /*removal*/true);
 	}
 	
