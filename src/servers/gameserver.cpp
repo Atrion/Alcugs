@@ -216,17 +216,17 @@ namespace alc {
 				// FIXME: do something
 				return 1;
 			}
-			case NetMsgPlayerPage: // FIXME: is this an SDL and avatar state message, or something related to pages?
+			case NetMsgGameStateRequest:
 			{
 				if (!u->joined) {
-					err->log("ERR: %s sent a NetMsgPlayerPage but did not yet join the game. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgGameStateRequest but did not yet join the game. I\'ll kick him.\n", u->str());
 					return -2; // hack attempt
 				}
 				
 				// get the data out of the packet
-				tmPlayerPage playerPage(u);
-				msg->data->get(playerPage);
-				log->log("<RCV> [%d] %s\n", msg->sn, playerPage.str());
+				tmGameStateRequest gameStateRequest(u);
+				msg->data->get(gameStateRequest);
+				log->log("<RCV> [%d] %s\n", msg->sn, gameStateRequest.str());
 				
 				// FIXME: do something
 				return 1;
@@ -244,6 +244,70 @@ namespace alc {
 				tmPagingRoom pagingRoom(u);
 				msg->data->get(pagingRoom);
 				log->log("<RCV> [%d] %s\n", msg->sn, pagingRoom.str());
+				
+				// FIXME: do something
+				return 1;
+			}
+			
+			//// member list messages
+			case NetMsgMembersListReq:
+			{
+				if (!u->joined) {
+					err->log("ERR: %s sent a NetMsgMembersListReq but did not yet join the game. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmMembersListReq membersListReq(u);
+				msg->data->get(membersListReq);
+				log->log("<RCV> [%d] %s\n", msg->sn, membersListReq.str());
+				
+				// FIXME: do something
+				return 1;
+			}
+			
+			//// unknown purpose messages (FIXME: but these somewhere)
+			case NetMsgPlayerPage:
+			{
+				if (!u->joined) {
+					err->log("ERR: %s sent a NetMsgPlayerPage but did not yet join the game. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmPlayerPage playerPage(u);
+				msg->data->get(playerPage);
+				log->log("<RCV> [%d] %s\n", msg->sn, playerPage.str());
+				
+				// FIXME: do something
+				return 1;
+			}
+			case NetMsgTestAndSet:
+			{
+				if (!u->joined) {
+					err->log("ERR: %s sent a NetMsgTestAndSet but did not yet join the game. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmTestAndSet testAndSet(u);
+				msg->data->get(testAndSet);
+				log->log("<RCV> [%d] %s\n", msg->sn, testAndSet.str());
+				
+				// FIXME: do something
+				return 1;
+			}
+			case NetMsgRelevanceRegions:
+			{
+				if (!u->joined) {
+					err->log("ERR: %s sent a NetMsgRelevanceRegions but did not yet join the game. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmRelevanceRegions relevanceRegions(u);
+				msg->data->get(relevanceRegions);
+				log->log("<RCV> [%d] %s\n", msg->sn, relevanceRegions.str());
 				
 				// FIXME: do something
 				return 1;

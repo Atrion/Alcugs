@@ -679,8 +679,9 @@ void tmMsgBase::store(tBBuf &t) {
 	U32 check=plNetAck | plNetBcast | plNetVersion | plNetTimestamp | \
 	plNetX | plNetKi | plNetUID | plNetIP | plNetCustom | plNetSid;
 	// accept some flags only for certain messages
-	if (cmd == NetMsgGameMessage) check |= plNetGame;
-	if (cmd == NetMsgJoinReq) check |= plNetP2P;
+	if (cmd == NetMsgGameMessage) check |= plNetGame1 | plNetGame2;
+	else if (cmd == NetMsgJoinReq) check |= plNetP2P;
+	else if (cmd == NetMsgGameStateRequest) check |= plNetStateReq;
 	
 	//now catch undocumented protocol flags
 	if (flags & ~(check))
@@ -768,8 +769,12 @@ const Byte * tmMsgBase::str() {
 		dbg.writeStr(" bcast,");
 	if(flags & plNetCustom)
 		dbg.writeStr(" UCPNPI,");
-	if (flags & plNetGame)
-		dbg.writeStr(" GameMsg,");
+	if (flags & plNetGame1)
+		dbg.writeStr(" GameMsg1,");
+	if (flags & plNetGame2)
+		dbg.writeStr(" GameMsg2,");
+	if(flags & plNetStateReq)
+		dbg.writeStr(" StateReq,");
 	if(flags & plNetVersion)
 		dbg.printf(" version (%i.%i),",max_version,min_version);
 	if(flags & plNetTimestamp) {

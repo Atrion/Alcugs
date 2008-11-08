@@ -161,6 +161,50 @@ namespace alc {
 		t.read(); // just accept whatever we get
 		// FIXME: actually parse the message
 	}
+	
+	//// tmGameStateRequest
+	tmGameStateRequest::tmGameStateRequest(tNetSession *u) : tmMsgBase(u)
+	{ }
+	
+	void tmGameStateRequest::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		t.read(); // just accept whatever we get
+		// FIXME: actually parse the message
+	}
+	
+	//// tmMembersListReq
+	tmMembersListReq::tmMembersListReq(tNetSession *u) : tmMsgBase(u)
+	{ }
+	
+	void tmMembersListReq::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		t.read(); // just accept whatever we get
+		// FIXME: actually parse the message
+	}
+	
+	//// tmTestAndSet
+	tmTestAndSet::tmTestAndSet(tNetSession *u) : tmMsgBase(u)
+	{ }
+	
+	void tmTestAndSet::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		t.read(); // just accept whatever we get
+		// FIXME: actually parse the message
+	}
+	
+	//// tmRelevanceRegions
+	tmRelevanceRegions::tmRelevanceRegions(tNetSession *u) : tmMsgBase(u)
+	{ }
+	
+	void tmRelevanceRegions::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		t.read(); // just accept whatever we get
+		// FIXME: actually parse the message
+	}
 
 } //end namespace alc
 

@@ -96,6 +96,30 @@ namespace alc {
 		tmPlayerPage(tNetSession *u);
 		virtual void store(tBBuf &t);
 	};
+	
+	class tmGameStateRequest : public tmMsgBase {
+	public:
+		tmGameStateRequest(tNetSession *u);
+		virtual void store(tBBuf &t);
+	};
+	
+	class tmMembersListReq : public tmMsgBase {
+	public:
+		tmMembersListReq(tNetSession *u);
+		virtual void store(tBBuf &t);
+	};
+	
+	class tmTestAndSet : public tmMsgBase {
+	public:
+		tmTestAndSet(tNetSession *u);
+		virtual void store(tBBuf &t);
+	};
+	
+	class tmRelevanceRegions : public tmMsgBase {
+	public:
+		tmRelevanceRegions(tNetSession *u);
+		virtual void store(tBBuf &t);
+	};
 
 } //End alc namespace
 
