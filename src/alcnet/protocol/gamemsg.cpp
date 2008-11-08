@@ -169,8 +169,28 @@ namespace alc {
 	void tmGameStateRequest::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		t.read(); // just accept whatever we get
-		// FIXME: actually parse the message
+		int nPages = t.getU32();
+		// FIXME: accept nPages != 0
+		if (nPages || !hasFlags(plNetStateReq))
+			throw txProtocolError(_WHERE("Rejecting GameStateReq which contains a list of pages"));
+	}
+	
+	//// tmInitialAgeStateSent
+	tmInitialAgeStateSent::tmInitialAgeStateSent(tNetSession *u, U32 num) : tmMsgBase(NetMsgInitialAgeStateSent, plNetCustom | plNetAck, u)
+	{
+		this->num = num;
+	}
+	
+	void tmInitialAgeStateSent::stream(tBBuf &t)
+	{
+		tmMsgBase::stream(t);
+		t.putU32(num);
+	}
+	
+	void tmInitialAgeStateSent::additionalFields()
+	{
+		dbg.nl();
+		dbg.printf(" number of sent states: %d", num);
 	}
 	
 	//// tmMembersListReq
@@ -202,8 +222,47 @@ namespace alc {
 	void tmRelevanceRegions::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
+		U32 unk = t.getU32();
+		if (unk != 1) throw txProtocolError(_WHERE("NetMsgRelevanceRegions.Unk1 must be 1 but is %d", unk));
+		unk = t.getU32();
+		if (unk != 1) throw txProtocolError(_WHERE("NetMsgRelevanceRegions.Unk2 must be 1 but is %d", unk));
+		unk = t.getU32();
+		if (unk != 1) throw txProtocolError(_WHERE("NetMsgRelevanceRegions.Unk3 must be 1 but is %d", unk));
+		unk = t.getU32();
+		if (unk != 1) throw txProtocolError(_WHERE("NetMsgRelevanceRegions.Unk4 must be 1 but is %d", unk));
+	}
+	
+	//// tmSDLState
+	tmSDLState::tmSDLState(tNetSession *u) : tmMsgBase(u)
+	{ }
+	
+	void tmSDLState::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
 		t.read(); // just accept whatever we get
 		// FIXME: actually parse the message
+	}
+	
+	//// tmSDLStateBCast
+	tmSDLStateBCast::tmSDLStateBCast(tNetSession *u) : tmMsgBase(u)
+	{ }
+	
+	void tmSDLStateBCast::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		t.read(); // just accept whatever we get
+		// FIXME: actually parse the message
+	}
+	
+	//// tmSetTimeout
+	tmSetTimeout::tmSetTimeout(tNetSession *u) : tmMsgBase(u)
+	{ }
+	
+	void tmSetTimeout::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		U32 unk = t.getU32();
+		if (unk != 0x43340000) throw txProtocolError(_WHERE("NetMsgSetTimeout.Unk must be 0x43340000 but is 0x%08X", unk));
 	}
 
 } //end namespace alc

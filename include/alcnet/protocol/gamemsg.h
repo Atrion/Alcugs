@@ -103,6 +103,16 @@ namespace alc {
 		virtual void store(tBBuf &t);
 	};
 	
+	class tmInitialAgeStateSent : public tmMsgBase {
+	public:
+		tmInitialAgeStateSent(tNetSession *u, U32 num);
+		virtual void stream(tBBuf &t);
+		// format
+		U32 num;
+	protected:
+		virtual void additionalFields();
+	};
+	
 	class tmMembersListReq : public tmMsgBase {
 	public:
 		tmMembersListReq(tNetSession *u);
@@ -118,6 +128,24 @@ namespace alc {
 	class tmRelevanceRegions : public tmMsgBase {
 	public:
 		tmRelevanceRegions(tNetSession *u);
+		virtual void store(tBBuf &t);
+	};
+	
+	class tmSDLState : public tmMsgBase {
+	public:
+		tmSDLState(tNetSession *u);
+		virtual void store(tBBuf &t);
+	};
+	
+	class tmSDLStateBCast : public tmMsgBase {
+	public:
+		tmSDLStateBCast(tNetSession *u);
+		virtual void store(tBBuf &t);
+	};
+	
+	class tmSetTimeout : public tmMsgBase {
+	public:
+		tmSetTimeout(tNetSession *u);
 		virtual void store(tBBuf &t);
 	};
 

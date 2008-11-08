@@ -201,6 +201,24 @@ namespace alc {
 			}
 			
 			//// SDL and object state messages
+			case NetMsgGameStateRequest:
+			{
+				if (!u->joined) {
+					err->log("ERR: %s sent a NetMsgGameStateRequest but did not yet join the game. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmGameStateRequest gameStateRequest(u);
+				msg->data->get(gameStateRequest);
+				log->log("<RCV> [%d] %s\n", msg->sn, gameStateRequest.str());
+				
+				// FIXME: take requested pages into account, send SDL states
+				tmInitialAgeStateSent stateSent(u, 0);
+				send(stateSent);
+				
+				return 1;
+			}
 			case NetMsgLoadClone:
 			{
 				if (!u->joined) {
@@ -216,17 +234,32 @@ namespace alc {
 				// FIXME: do something
 				return 1;
 			}
-			case NetMsgGameStateRequest:
+			case NetMsgSDLState:
 			{
 				if (!u->joined) {
-					err->log("ERR: %s sent a NetMsgGameStateRequest but did not yet join the game. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgSDLState but did not yet join the game. I\'ll kick him.\n", u->str());
 					return -2; // hack attempt
 				}
 				
 				// get the data out of the packet
-				tmGameStateRequest gameStateRequest(u);
-				msg->data->get(gameStateRequest);
-				log->log("<RCV> [%d] %s\n", msg->sn, gameStateRequest.str());
+				tmSDLState SDLState(u);
+				msg->data->get(SDLState);
+				log->log("<RCV> [%d] %s\n", msg->sn, SDLState.str());
+				
+				// FIXME: do something
+				return 1;
+			}
+			case NetMsgSDLStateBCast:
+			{
+				if (!u->joined) {
+					err->log("ERR: %s sent a NetMsgSDLStateBCast but did not yet join the game. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmSDLStateBCast SDLStateBCast(u);
+				msg->data->get(SDLStateBCast);
+				log->log("<RCV> [%d] %s\n", msg->sn, SDLStateBCast.str());
 				
 				// FIXME: do something
 				return 1;
@@ -308,6 +341,22 @@ namespace alc {
 				tmRelevanceRegions relevanceRegions(u);
 				msg->data->get(relevanceRegions);
 				log->log("<RCV> [%d] %s\n", msg->sn, relevanceRegions.str());
+				
+				// FIXME: do something
+				return 1;
+			}
+			case NetMsgSetTimeout:
+			case NetMsgSetTimeout2:
+			{
+				if (!u->joined) {
+					err->log("ERR: %s sent a NetMsgSetTimeout but did not yet join the game. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmSetTimeout setTimeout(u);
+				msg->data->get(setTimeout);
+				log->log("<RCV> [%d] %s\n", msg->sn, setTimeout.str());
 				
 				// FIXME: do something
 				return 1;
