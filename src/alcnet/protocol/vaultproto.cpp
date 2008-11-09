@@ -228,7 +228,7 @@ namespace alc {
 		//Supposicions:
 		// 0x0023: 3 bits for AgeInfoStruct LinkingRules and SpawnPoint (must always be set)
 		// 0x0010: CCR flag
-		// 0x0040: May be the age description? (text1?)
+		// 0x0040: Parent age name (according to libPlasma)
 		flags = t.getU16();
 		U16 check = 0x0023 | 0x0010 | 0x0040;
 		if (flags & ~(check))
@@ -249,12 +249,12 @@ namespace alc {
 		else
 			ccr = 0;
 		
-		if (flags & 0x0040) { // age descripion?
-			// ignore and disable it
+		if (flags & 0x0040) { // parent age name
+			// ignore it
 			tUStr desc;
 			t.get(desc);
-			flags &= ~0x0040;
-			lerr->log("Ignoring unsupported flag 0x0040 of an AgeLinkStruct (Value: %s)\n", desc.c_str());
+			flags &= ~0x0040; // disable it
+			lerr->log("Ignoring flag 0x0040 (parent age name) of an AgeLinkStruct (Value: %s)\n", desc.c_str());
 		}
 	}
 	
