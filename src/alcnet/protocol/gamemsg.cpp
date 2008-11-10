@@ -94,7 +94,9 @@ namespace alc {
 		gameMessage.read(5); // ignore the first bytes
 		U32 gameMsgSize = gameMessage.getU32();
 		gameMessage.read(gameMsgSize); // this is the message itself
-		gameMessage.read(1); // ignore 1 byte
+		Byte unk = gameMessage.getByte();
+		if (unk != 0x00)
+			throw txProtocolError(_WHERE("Unexpected NetMsgGameMessage.unk of 0x%02X (should be 0x00)", unk));
 		if (cmd == NetMsgGameMessage && !gameMessage.eof()) // the derived msg types do this check themselves
 			throw txProtocolError(_WHERE("Message is too long")); // there must not be any byte after the message
 	}
@@ -210,9 +212,60 @@ namespace alc {
 	
 	void tmTestAndSet::store(tBBuf &t)
 	{
+		Byte flag, state1, state2, state3;
+		U32 unk;
+		tUStr trigger, triggered;
+	
 		tmMsgBase::store(t);
-		t.read(); // just accept whatever we get
-		// FIXME: actually parse the message
+		t.get(obj);
+		flag = t.getByte();
+		if (flag != 0x00)
+			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.flag1 of 0x%02X (should be 0x00)", flag));
+		unk = t.getU32();
+		if (unk != 0x00000000)
+			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.unk1 of 0x%08X (should be 0x00000000)", unk));
+		unk = t.getU32();
+		if (unk != 0x0000001D)
+			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.unk2 of 0x%08X (should be 0x0000001D)", unk));
+		t.get(trigger);
+		if (trigger != "TrigState")
+			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.Trigger of %s (should be \"TrigState\")", trigger.c_str()));
+		unk = t.getU32();
+		if (unk != 0x00000001)
+			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.unk3 of 0x%08X (should be 0x00000001)", unk));
+		state1 = t.getByte();
+		if (state1 != 0x00 && state1 != 0x01)
+			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.state1 of 0x%02X (should be 0x00 or 0x01)", state1));
+		t.get(triggered);
+		if (triggered != "Triggered")
+			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.Triggered of %s (should be \"Triggered\")", triggered.c_str()));
+		flag = t.getByte();
+		if (flag != 0x02)
+			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.flag2 of 0x%02X (should be 0x02)", flag));
+		state2 = t.getByte();
+		if (state2 != 0x00 && state2 != 0x01)
+			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.state2 of 0x%02X (should be 0x00 or 0x01)", state2));
+		state3 = t.getByte();
+		if (state3 != 0x00 && state3 != 0x01)
+			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.state3 of 0x%02X (should be 0x00 or 0x01)", state3));
+		
+		// now check if the states are a valid combination
+		if (state2 != state3)
+			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet: state2 (0x%02X) and state3 (0x%02X) must be equal", state2, state3));
+		if (state2 == state1)
+			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet: state1 (0x%02X) and state2 (0x%02X) must not be equal", state2, state3));
+		/* When state1 and state2 are not the same while state2 and state3 are the same, only the following combinations are possible:
+		0-1-1 (lockReq = true)
+		1-0-0 (lockReq = false) */
+		lockReq = state2;
+	}
+	
+	void tmTestAndSet::additionalFields()
+	{
+		dbg.nl();
+		dbg.printf(" Object reference: [%s], Lock requested: ", obj.str());
+		if (lockReq) dbg.printf("yes");
+		else         dbg.printf("no");
 	}
 	
 	//// tmRelevanceRegions

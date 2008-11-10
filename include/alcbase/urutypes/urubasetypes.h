@@ -84,6 +84,24 @@ private:
 	Byte version;
 };
 
+/** Uruobject */
+class tUruObject : public tBaseType {
+public:
+	tUruObject(void);
+	virtual void store(tBBuf &t);
+	virtual void stream(tBBuf &t);
+	const Byte *str(void);
+private:
+	Byte hasClientId;
+	U32 pageId;
+	U16 pageType;
+	U16 objType;
+	tUStr objName;
+	U32 clientId;
+	
+	tStrBuf dbg;
+};
+
 } //End alc namespace
 
 #endif

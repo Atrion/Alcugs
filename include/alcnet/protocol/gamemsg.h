@@ -123,6 +123,11 @@ namespace alc {
 	public:
 		tmTestAndSet(tNetSession *u);
 		virtual void store(tBBuf &t);
+		// format
+		tUruObject obj;
+		bool lockReq;
+	protected:
+		virtual void additionalFields();
 	};
 	
 	class tmRelevanceRegions : public tmMsgBase {

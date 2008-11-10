@@ -255,4 +255,56 @@ void tUStr::_pcopy(tUStr &t)
 }
 /* end tUStr */
 
+/* tUruObject */
+tUruObject::tUruObject(void) : tBaseType()
+{
+	hasClientId = 0;
+	pageId = 0;
+	pageType = objType = 0;
+	objName.setVersion(5); // inverted UrurString
+	clientId = 0;
+}
+
+void tUruObject::store(tBBuf &t)
+{
+	hasClientId = t.getByte();
+	if (hasClientId != 0x00 && hasClientId != 0x01)
+		throw txUnexpectedData(_WHERE("the client ID flag of an Uruobject must be 0x00 or 0x01, not 0x%02X", hasClientId));
+	pageId = t.getU32();
+	pageType = t.getU16();
+	objType = t.getU16();
+	t.get(objName);
+	
+	// if contained, read the client ID
+	if (hasClientId) {
+		U32 uniqueFlag = t.getU32(); // don't save it until we find an example that is different than 1
+		if (uniqueFlag != 1)
+			throw txUnexpectedData(_WHERE("The client unique flag must always be 1, not %d", uniqueFlag));
+		clientId = t.getU32();
+	}
+}
+
+void tUruObject::stream(tBBuf &t)
+{
+	t.putByte(hasClientId);
+	t.putU32(pageId);
+	t.putU32(pageType);
+	t.putU32(objType);
+	t.put(objName);
+	if (hasClientId) {
+		t.putU32(1); // the unique flag
+		t.putU32(clientId);
+	}
+}
+
+const Byte *tUruObject::str(void)
+{
+	dbg.clear();
+	dbg.printf("Page ID: 0x%08X, Page Type: 0x%04X, Object: [0x%04X]%s", pageId, pageType, objType, objName.c_str());
+	if (hasClientId)
+		dbg.printf(", Client ID: %d", clientId);
+	return dbg.c_str();
+}
+/* end tUruObject */
+
 } //end namespace alc
