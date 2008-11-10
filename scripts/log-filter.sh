@@ -9,17 +9,17 @@ logfilter(){
 	if [ -f tracking.log ]; then
 		echo
 		echo "Tracking log:"
-		grep "$1" tracking.4.log tracking.3.log tracking.2.log tracking.1.log tracking.log
+		grep -Ehi "$1" tracking.4.log tracking.3.log tracking.2.log tracking.1.log tracking.log
 	fi
 	if [ -f auth.log ]; then
 		echo
 		echo "Auth log:"
-		grep "$1" auth.4.log auth.3.log auth.2.log auth.1.log auth.log
+		grep -Ehi "$1" auth.4.log auth.3.log auth.2.log auth.1.log auth.log
 	fi
 	if [ -f vault.log ]; then
 		echo
 		echo "Vault log:"
-		grep "$1" vault.4.log vault.3.log vault.2.log vault.1.log vault.log
+		grep -Ehi "$1" vault.4.log vault.3.log vault.2.log vault.1.log vault.log
 	fi
 }
 

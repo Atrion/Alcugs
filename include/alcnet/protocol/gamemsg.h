@@ -61,6 +61,7 @@ namespace alc {
 	class tmGameMessage : public tmMsgBase {
 	public:
 		tmGameMessage(tNetSession *u);
+		tmGameMessage(tNetSession *u, U32 ki);
 		tmGameMessage(U16 cmd, U32 flags, tNetSession *u);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);

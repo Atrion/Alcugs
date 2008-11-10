@@ -327,7 +327,25 @@ namespace alc {
 				msg->data->get(testAndSet);
 				log->log("<RCV> [%d] %s\n", msg->sn, testAndSet.str());
 				
-				// FIXME: do something
+				// if required, send a reply
+				if (testAndSet.lockReq) {
+					tmGameMessage msg(u, u->ki);
+					// build the game message
+					msg.message.putU16(0x026A); // game message cmd: plServerReplyMsg
+					msg.message.putByte(0);
+					msg.message.putU32(1);
+					msg.message.putByte(1);
+					msg.message.put(testAndSet.obj);
+					msg.message.putByte(1);
+					msg.message.putU32(0);
+					msg.message.putU32(0);
+					msg.message.putU16(8);
+					msg.message.putByte(0);
+					msg.message.putU32(1);
+					// send it
+					send(msg);
+				}
+				
 				return 1;
 			}
 			case NetMsgRelevanceRegions:

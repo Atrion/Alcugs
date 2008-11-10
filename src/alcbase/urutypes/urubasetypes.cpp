@@ -288,8 +288,8 @@ void tUruObject::stream(tBBuf &t)
 {
 	t.putByte(hasClientId);
 	t.putU32(pageId);
-	t.putU32(pageType);
-	t.putU32(objType);
+	t.putU16(pageType);
+	t.putU16(objType);
 	t.put(objName);
 	if (hasClientId) {
 		t.putU32(1); // the unique flag

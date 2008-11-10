@@ -80,6 +80,12 @@ namespace alc {
 	tmGameMessage::tmGameMessage(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
+	tmGameMessage::tmGameMessage(tNetSession *u, U32 ki) : tmMsgBase(NetMsgGameMessage, plNetAck | plNetKi, u)
+	{
+		this->ki = ki;
+		unk2 = 0;
+	}
+	
 	tmGameMessage::tmGameMessage(U16 cmd, U32 flags, tNetSession *u) : tmMsgBase(cmd, flags, u)
 	{ }
 	

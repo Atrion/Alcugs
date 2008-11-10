@@ -176,7 +176,7 @@ namespace alc {
 		log->log("Player %s[%s:%d] wants to link to %s (%s)\n", player->str(), alcGetStrIp(player->ip), player->port, findServer.age.c_str(), findServer.serverGuid.c_str());
 		if (strcmp((char *)findServer.serverGuid.c_str(), "0000000000000000") == 0) { // these are 16 zeroes
 			if (!guidGen->generateGuid(player->awaiting_guid, findServer.age.c_str(), player->ki)) {
-				log->log("WARN: Request to link to unknown age %s - kicking player %s\n", findServer.age.c_str(), player->str());
+				log->log("ERR: Request to link to unknown age %s - kicking player %s\n", findServer.age.c_str(), player->str());
 				tmPlayerTerminated term(player->u, player->ki, RKickedOff);
 				net->send(term);
 				return;
@@ -324,7 +324,7 @@ namespace alc {
 			
 			// get the age's sequence prefix
 			tAgeInfo *age = guidGen->getAge(game->name);
-			if (!age) log->log("WARN: Strange, I can\'t find the age file for game server %s\n", game->str());
+			if (!age) log->log("ERR: Can\'t find the age file for game server %s\n", game->str());
 			else data->seqPrefix = age->seqPrefix;
 		}
 		else // if it is a lobby
