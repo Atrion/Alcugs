@@ -85,27 +85,30 @@ namespace alc {
 	
 	void tmGameMessage::store(tBBuf &t)
 	{
+		message.clear();
+		
 		tmMsgBase::store(t);
-		// store the whole message
-		gameMessage.clear();
-		t.get(gameMessage);
-		// now, verify (will throw a txOutOfRange when too small)
-		gameMessage.rewind();
-		gameMessage.read(5); // ignore the first bytes
-		U32 gameMsgSize = gameMessage.getU32();
-		gameMessage.read(gameMsgSize); // this is the message itself
-		Byte unk = gameMessage.getByte();
-		if (unk != 0x00)
-			throw txProtocolError(_WHERE("Unexpected NetMsgGameMessage.unk of 0x%02X (should be 0x00)", unk));
-		if (cmd == NetMsgGameMessage && !gameMessage.eof()) // the derived msg types do this check themselves
-			throw txProtocolError(_WHERE("Message is too long")); // there must not be any byte after the message
+		U32 unk1 = t.getU32();
+		if (unk1 != 0x00000000)
+			throw txProtocolError(_WHERE("Unexpected NetMsgGameMessage.unk1 of 0x%08X (should be 0x00000000)", unk1));
+		unk2 = t.getByte();
+		if (unk2 != 0x00 && unk2 != 0x03)
+			throw txProtocolError(_WHERE("Unexpected NetMsgGameMessage.unk2 of 0x%02X (should be 0x00 0r 0x03)", unk2));
+		U32 gameMsgSize = t.getU32();
+		message.write(t.read(gameMsgSize), gameMsgSize); // that's the message itself
+		Byte unk3 = t.getByte();
+		if (unk3 != 0x00)
+			throw txProtocolError(_WHERE("Unexpected NetMsgGameMessage.unk3 of 0x%02X (should be 0x00)", unk3));
 	}
 	
 	void tmGameMessage::stream(tBBuf &t)
 	{
 		tmMsgBase::stream(t);
-		gameMessage.rewind();
-		t.put(gameMessage);
+		t.putU32(0); // unk1
+		t.putByte(unk2);
+		t.putU32(message.size());
+		t.put(message);
+		t.putByte(0); // unk3
 	}
 	
 	//// tmGameMessageDirected
@@ -124,11 +127,18 @@ namespace alc {
 	{
 		tmGameMessage::store(t);
 		// get list of recipients
-		nRecipients = gameMessage.getByte();
+		nRecipients = t.getByte();
 		if (recipients) free(recipients);
 		recipients = (U32 *)malloc(nRecipients*sizeof(U32));
-		for (int i = 0; i < nRecipients; ++i) recipients[i] = gameMessage.getU32();
-		if (!gameMessage.eof()) throw txProtocolError(_WHERE("Message is too long")); // there must not be any byte after the recipient list
+		for (int i = 0; i < nRecipients; ++i) recipients[i] = t.getU32();
+	}
+	
+	void tmGameMessageDirected::stream(tBBuf &t)
+	{
+		if (!recipients) throw txProtocolError(_WHERE("I've got nothing to send"));
+		tmGameMessage::stream(t);
+		t.putByte(nRecipients);
+		for (int i = 0; i < nRecipients; ++i) t.putU32(recipients[i]);
 	}
 	
 	//// tmLoadClone

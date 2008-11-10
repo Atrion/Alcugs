@@ -378,7 +378,11 @@ namespace alc {
 	{
 		recipients = NULL;
 		ki = directedFwd.ki;
-		gameMessage = directedFwd.gameMessage;
+		unk2 = directedFwd.unk2;
+		message = directedFwd.message;
+		nRecipients = directedFwd.nRecipients;
+		recipients = (U32 *)malloc(nRecipients*sizeof(U32));
+		memcpy(recipients, directedFwd.recipients, nRecipients*sizeof(U32));
 	}
 	
 	

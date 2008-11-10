@@ -65,7 +65,8 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format
-		tMBuf gameMessage; // saves the complete message including recipients (if existing)
+		Byte unk2; // unk1 and unk3 have always the same value, so they don't have to be saved
+		tMBuf message; // saves only the complete message content
 	};
 	
 	class tmGameMessageDirected : public tmGameMessage {
@@ -74,6 +75,7 @@ namespace alc {
 		tmGameMessageDirected(U16 cmd, U32 flags, tNetSession *u);
 		~tmGameMessageDirected(void);
 		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
 		// format
 		Byte nRecipients;
 		U32 *recipients;
