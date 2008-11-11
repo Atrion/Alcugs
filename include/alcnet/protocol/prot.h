@@ -59,7 +59,7 @@
 #define plNetUnk2       0x00002000 //Unknown, seen in NetMsgGameMessage and NetMsgSDLStateBCast
 #define plNetCustom     0x00020000 //Unknown purpose flag
 #define plNetStateReq   0x00000800 //Unknown, seen on the 1st plNetMsgStateRequest
-//#define plNetDirected   0x00008000 //Unknown, seen on plNetMsgGameMessageDirected
+#define plNetDirected   0x00008000 //Unknown, seen on plNetMsgGameMessageDirected
 #define plNetP2P        0x08000000 //p2p request? (seen on plNetMsgJoinReq)
 
 //CUSTOM plNetFlags

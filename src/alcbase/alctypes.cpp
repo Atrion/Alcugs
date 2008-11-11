@@ -58,23 +58,6 @@ namespace alc {
 
 using namespace std;
 
-/*
-	Abstract base type class
-*/
-void tBaseType::_pcopy(tBaseType &t) {
-	DBG(9,"tBaseType::_pcopy()\n");
-}
-void tBaseType::copy(tBaseType &t) {
-	DBG(9,"tBaseType::copy()\n");
-	this->_pcopy(t);
-	tMBuf * aux=new tMBuf();
-	aux->put(t);
-	aux->rewind();
-	this->store(*aux);
-	delete aux;
-}
-/* end base type */
-
 /* 
 	basicbuffer
 */
@@ -219,7 +202,6 @@ void tBBuf::check(const Byte * what,U32 n) {
 }
 void tBBuf::_pcopy(tBBuf &t) {
 	DBG(9,"tBBuf::_pcopy()\n");
-	tBaseType::_pcopy(t);
 }
 void tBBuf::copy(tBBuf &t) {
 	DBG(9,"tBBuf::copy()\n");

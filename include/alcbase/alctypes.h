@@ -50,8 +50,6 @@ class tMBuf;
 
 /** Base type */
 class tBaseType {
-protected:
-	virtual void _pcopy(tBaseType &t);
 public:
 	virtual ~tBaseType() {} //GCC 4 wants this?
 	//tBaseType() {}
@@ -59,8 +57,6 @@ public:
 	virtual void store(tBBuf &t)=0;
 	//!streams to a buffer
 	virtual void stream(tBBuf &t)=0;
-	virtual void copy(tBaseType &t);
-	virtual void operator=(tBaseType &t) { this->copy(t); }
 };
 //end base type
 
