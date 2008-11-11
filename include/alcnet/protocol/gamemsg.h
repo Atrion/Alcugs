@@ -61,25 +61,33 @@ namespace alc {
 	class tmGameMessage : public tmMsgBase {
 	public:
 		tmGameMessage(tNetSession *u);
-		tmGameMessage(tNetSession *u, U32 ki);
 		tmGameMessage(U16 cmd, U32 flags, tNetSession *u);
+		tmGameMessage(U16 cmd, U32 flags, tNetSession *u, tmGameMessage &msg);
+		tmGameMessage(tNetSession *u, tmGameMessage &msg);
+		tmGameMessage(tNetSession *u, U32 ki);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format
-		Byte unk2; // unk1 and unk3 have always the same value, so they don't have to be saved
+		Byte header[5];
 		tMBuf message; // saves only the complete message content
+	protected:
+		void copyBaseProps(tmGameMessage &msg);
 	};
 	
 	class tmGameMessageDirected : public tmGameMessage {
 	public:
 		tmGameMessageDirected(tNetSession *u);
 		tmGameMessageDirected(U16 cmd, U32 flags, tNetSession *u);
+		tmGameMessageDirected(U16 cmd, U32 flags, tNetSession *u, tmGameMessageDirected &msg);
+		tmGameMessageDirected(tNetSession *u, tmGameMessageDirected &msg);
 		~tmGameMessageDirected(void);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format
 		Byte nRecipients;
 		U32 *recipients;
+	protected:
+		void copyDrctProps(tmGameMessageDirected &msg);
 	};
 	
 	class tmLoadClone : public tmMsgBase {

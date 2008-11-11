@@ -373,23 +373,8 @@ namespace alc {
 	tmCustomDirectedFwd::tmCustomDirectedFwd(tNetSession *u) : tmGameMessageDirected(u)
 	{ }
 	
-	tmCustomDirectedFwd::tmCustomDirectedFwd(tNetSession *u, tmCustomDirectedFwd &directedFwd)
-	 : tmGameMessageDirected(NetMsgCustomDirectedFwd, plNetAck | plNetKi | plNetCustom | plNetVersion, u)
-	{
-		recipients = NULL;
-		ki = directedFwd.ki;
-		unk2 = directedFwd.unk2;
-		message = directedFwd.message;
-		nRecipients = directedFwd.nRecipients;
-		recipients = (U32 *)malloc(nRecipients*sizeof(U32));
-		memcpy(recipients, directedFwd.recipients, nRecipients*sizeof(U32));
-	}
-	
-	
-	void tmCustomDirectedFwd::store(tBBuf &t)
-	{
-		tmGameMessageDirected::store(t);
-		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
-	}
+	tmCustomDirectedFwd::tmCustomDirectedFwd(tNetSession *u, tmGameMessageDirected &msg)
+	 : tmGameMessageDirected(NetMsgCustomDirectedFwd, plNetAck | plNetKi | plNetCustom | plNetVersion, u, msg)
+	{ }
 
 } //end namespace alc

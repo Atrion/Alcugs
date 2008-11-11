@@ -101,8 +101,7 @@ namespace alc {
 	class tmCustomDirectedFwd : public tmGameMessageDirected {
 	public:
 		tmCustomDirectedFwd(tNetSession *u);
-		tmCustomDirectedFwd(tNetSession *u, tmCustomDirectedFwd &directedFwd);
-		virtual void store(tBBuf &t);
+		tmCustomDirectedFwd(tNetSession *u, tmGameMessageDirected &msg);
 	};
 	
 } //End alc namespace

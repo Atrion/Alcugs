@@ -40,6 +40,8 @@
 
 namespace alc {
 
+	class tmGameMessageDirected;
+
 	////DEFINITIONS
 	/**
 		If we want to do it well and nice, we should add pre and post conditions here.
@@ -55,6 +57,8 @@ namespace alc {
 	protected:
 		virtual bool setActivePlayer(tNetSession *u, U32 ki, U32 x, const Byte *avatar);
 	private:
+		Byte fwdGameMsg(tmGameMessageDirected &msg);
+	
 		tAgeInfo *ageInfo;
 	};
 

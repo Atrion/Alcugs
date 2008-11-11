@@ -80,26 +80,37 @@ namespace alc {
 	tmGameMessage::tmGameMessage(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
+	tmGameMessage::tmGameMessage(U16 cmd, U32 flags, tNetSession *u) : tmMsgBase(cmd, flags, u)
+	{ }
+	
+	tmGameMessage::tmGameMessage(U16 cmd, U32 flags, tNetSession *u, tmGameMessage &msg)
+	 : tmMsgBase(cmd, flags, u), message(msg.message)
+	{ copyBaseProps(msg); }
+	
+	tmGameMessage::tmGameMessage(tNetSession *u, tmGameMessage &msg)
+	 : tmMsgBase(NetMsgGameMessage, plNetAck | plNetKi, u), message(msg.message)
+	{ copyBaseProps(msg); }
+	
 	tmGameMessage::tmGameMessage(tNetSession *u, U32 ki) : tmMsgBase(NetMsgGameMessage, plNetAck | plNetKi, u)
 	{
 		this->ki = ki;
-		unk2 = 0;
+		memset(header, 0, 5);
 	}
 	
-	tmGameMessage::tmGameMessage(U16 cmd, U32 flags, tNetSession *u) : tmMsgBase(cmd, flags, u)
-	{ }
+	void tmGameMessage::copyBaseProps(tmGameMessage &msg)
+	{
+		memcpy(header, msg.header, 5);
+		ki = msg.ki;
+	}
 	
 	void tmGameMessage::store(tBBuf &t)
 	{
 		message.clear();
 		
 		tmMsgBase::store(t);
-		U32 unk1 = t.getU32();
-		if (unk1 != 0x00000000)
-			throw txProtocolError(_WHERE("Unexpected NetMsgGameMessage.unk1 of 0x%08X (should be 0x00000000)", unk1));
-		unk2 = t.getByte();
-		if (unk2 != 0x00 && unk2 != 0x03)
-			throw txProtocolError(_WHERE("Unexpected NetMsgGameMessage.unk2 of 0x%02X (should be 0x00 0r 0x03)", unk2));
+		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
+		
+		memcpy(header, t.read(5), 5);
 		U32 gameMsgSize = t.getU32();
 		message.write(t.read(gameMsgSize), gameMsgSize); // that's the message itself
 		Byte unk3 = t.getByte();
@@ -110,8 +121,7 @@ namespace alc {
 	void tmGameMessage::stream(tBBuf &t)
 	{
 		tmMsgBase::stream(t);
-		t.putU32(0); // unk1
-		t.putByte(unk2);
+		t.write(header, 5);
 		t.putU32(message.size());
 		t.put(message);
 		t.putByte(0); // unk3
@@ -124,9 +134,24 @@ namespace alc {
 	tmGameMessageDirected::tmGameMessageDirected(U16 cmd, U32 flags, tNetSession *u) : tmGameMessage(cmd, flags, u)
 	{ recipients = NULL; }
 	
+	tmGameMessageDirected::tmGameMessageDirected(U16 cmd, U32 flags, tNetSession *u, tmGameMessageDirected &msg)
+	 : tmGameMessage(cmd, flags, u, msg)
+	{ copyDrctProps(msg); }
+	
+	tmGameMessageDirected::tmGameMessageDirected(tNetSession *u, tmGameMessageDirected &msg)
+	 : tmGameMessage(NetMsgGameMessageDirected, plNetAck | plNetKi | plNetDirected, u, msg)
+	{ copyDrctProps(msg); }
+	
 	tmGameMessageDirected::~tmGameMessageDirected(void)
 	{
 		if (recipients) free(recipients);
+	}
+	
+	void tmGameMessageDirected::copyDrctProps(tmGameMessageDirected &msg)
+	{
+		nRecipients = msg.nRecipients;
+		recipients = (U32 *)malloc(nRecipients*sizeof(U32));
+		memcpy(recipients, msg.recipients, nRecipients*sizeof(U32));
 	}
 	
 	void tmGameMessageDirected::store(tBBuf &t)

@@ -680,6 +680,7 @@ void tmMsgBase::store(tBBuf &t) {
 	plNetX | plNetKi | plNetUID | plNetIP | plNetCustom | plNetSid;
 	// accept some flags only for certain messages
 	if (cmd == NetMsgGameMessage) check |= plNetUnk1 | plNetUnk2;
+	else if (cmd == NetMsgGameMessageDirected) check |= plNetDirected;
 	else if (cmd == NetMsgJoinReq) check |= plNetP2P;
 	else if (cmd == NetMsgGameStateRequest) check |= plNetStateReq;
 	else if (cmd == NetMsgSDLStateBCast) check |= plNetUnk2;
@@ -776,6 +777,8 @@ const Byte * tmMsgBase::str() {
 		dbg.writeStr(" Unk2,");
 	if(flags & plNetStateReq)
 		dbg.writeStr(" InitialStateReq,");
+	if (flags & plNetDirected)
+		dbg.writeStr(" Directed,");
 	if(flags & plNetVersion)
 		dbg.printf(" version (%i.%i),",max_version,min_version);
 	if(flags & plNetTimestamp) {
@@ -1099,6 +1102,9 @@ const char * alcUnetGetMsgCode(U16 code) {
 			break;
 		case 0x0324:
 			ret="NetMsgSDLStateBCast";
+			break;
+		case 0x0329:
+			ret="NetMsgGameMessageDirected";
 			break;
 		case 0x034E:
 			ret="NetMsgRequestMyVaultPlayerList";

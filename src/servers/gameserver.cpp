@@ -127,6 +127,29 @@ namespace alc {
 	
 		tUnetLobbyServerBase::terminate(u, reason, destroyOnly); // do the lobbybase terminate procedure
 	}
+	
+	Byte tUnetGameServer::fwdGameMsg(tmGameMessageDirected &msg)
+	{
+		// look for all recipients
+		Byte nSent = 0;
+		tNetSession *session;
+		for (int i = 0; i < msg.nRecipients; ++i) {
+			U32 recip = msg.recipients[i];
+			// now search for that player
+			smgr->rewind();
+			while ((session = smgr->getNext())) {
+				if (session->ki == recip) {
+					if (session->joined && session->ki != msg.ki) {
+						tmGameMessageDirected fwdMsg(session, msg);
+						send(fwdMsg);
+					}
+					++nSent;
+					break;
+				}
+			}
+		}
+		return nSent;
+	}
 
 	int tUnetGameServer::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
 	{
@@ -196,7 +219,50 @@ namespace alc {
 				msg->data->get(gameMsg);
 				log->log("<RCV> [%d] %s\n", msg->sn, gameMsg.str());
 				
-				// FIXME: do something
+				// Because sharing the Relto book causes everyone in the age to crash
+				// out, throw out the initial message of the exchange. This is all we
+				// can do without client-side PRP file updates. Other sharing is fine
+				// and I could write code to throw out *only* the Relto share, but we
+				// don't need sharing the way things are usually set up right now, so
+				// it's not worth the effort to me. (Also, sharing is not enabled for
+				// books, just Bahro stones.)
+				gameMsg.message.rewind();
+				U16 type = gameMsg.message.getU16();
+				if (type == 0x02E8) { // plNotifyMsg
+					log->log("INF: Throwing out book share notification from %s\n", u->str());
+					return 1;
+				}
+				
+				// forward it
+				Byte nSent = fwdGameMsg(gameMsg);
+				
+				if (nSent < gameMsg.nRecipients) { // we did not yet reach all recipients
+					tNetSession *trackingServer = getSession(tracking);
+					if (!trackingServer) {
+						err->log("ERR: I've got to to forward a message through the tracking server, but it's unavailable.\n");
+						return 1;
+					}
+					tmCustomDirectedFwd fwdMsg(trackingServer, gameMsg);
+					send(fwdMsg);
+				}
+				
+				return 1;
+			}
+			case NetMsgCustomDirectedFwd:
+			{
+				if (u->getPeerType() != KTracking) {
+					err->log("ERR: %s sent a NetMsgCustomDirectedFwd but is not the tracking server. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmCustomDirectedFwd gameMsg(u);
+				msg->data->get(gameMsg);
+				log->log("<RCV> [%d] %s\n", msg->sn, gameMsg.str());
+				
+				// forward it
+				fwdGameMsg(gameMsg);
+				
 				return 1;
 			}
 			
