@@ -190,8 +190,21 @@ namespace alc {
 	void tmPagingRoom::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		t.read(); // just accept whatever we get
-		// FIXME: actually parse the message
+		U32 format = t.getU32();
+		if (format != 1)
+			throw txProtocolError(_WHERE("NetMsgPagingRoom.format must be 1, but is %d", format));
+		pageId = t.getU32();
+		pageType = t.getU16();
+		t.get(pageName);
+		isPageOut = t.getByte();
+	}
+	
+	void tmPagingRoom::additionalFields()
+	{
+		dbg.nl();
+		dbg.printf(" Page ID: 0x%08X, Page Type: 0x%04X, Page Name: %s, Paged out: ", pageId, pageType, pageName.c_str());
+		if (isPageOut) dbg.printf("yes");
+		else         dbg.printf("no");
 	}
 	
 	//// tmPlayerPage
@@ -201,8 +214,17 @@ namespace alc {
 	void tmPlayerPage::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		t.read(); // just accept whatever we get
-		// FIXME: actually parse the message
+		isPageOut = t.getByte();
+		t.get(obj);
+	}
+	
+	void tmPlayerPage::additionalFields()
+	{
+		dbg.nl();
+		dbg.printf(" Paged out: ");
+		if (isPageOut) dbg.printf("yes");
+		else         dbg.printf("no");
+		dbg.printf(", Object reference: [%s]", obj.str());
 	}
 	
 	//// tmGameStateRequest
@@ -239,13 +261,6 @@ namespace alc {
 	//// tmMembersListReq
 	tmMembersListReq::tmMembersListReq(tNetSession *u) : tmMsgBase(u)
 	{ }
-	
-	void tmMembersListReq::store(tBBuf &t)
-	{
-		tmMsgBase::store(t);
-		t.read(); // just accept whatever we get
-		// FIXME: actually parse the message
-	}
 	
 	//// tmTestAndSet
 	tmTestAndSet::tmTestAndSet(tNetSession *u) : tmMsgBase(u)

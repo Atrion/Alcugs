@@ -204,7 +204,16 @@ namespace alc {
 				msg->data->get(gameMsg);
 				log->log("<RCV> [%d] %s\n", msg->sn, gameMsg.str());
 				
-				// FIXME: do something
+				// broadcast message
+				tNetSession *session;
+				smgr->rewind();
+				while ((session = smgr->getNext())) {
+					if (session->joined && session->ki != gameMsg.ki) {
+						tmGameMessage fwdMsg(session, gameMsg);
+						send(fwdMsg);
+					}
+				}
+				
 				return 1;
 			}
 			case NetMsgGameMessageDirected:
@@ -285,21 +294,6 @@ namespace alc {
 				
 				return 1;
 			}
-			case NetMsgLoadClone:
-			{
-				if (!u->joined) {
-					err->log("ERR: %s sent a NetMsgLoadClone but did not yet join the game. I\'ll kick him.\n", u->str());
-					return -2; // hack attempt
-				}
-				
-				// get the data out of the packet
-				tmLoadClone loadClone(u);
-				msg->data->get(loadClone);
-				log->log("<RCV> [%d] %s\n", msg->sn, loadClone.str());
-				
-				// FIXME: do something
-				return 1;
-			}
 			case NetMsgSDLState:
 			{
 				if (!u->joined) {
@@ -377,6 +371,21 @@ namespace alc {
 				tmPlayerPage playerPage(u);
 				msg->data->get(playerPage);
 				log->log("<RCV> [%d] %s\n", msg->sn, playerPage.str());
+				
+				// FIXME: do something
+				return 1;
+			}
+			case NetMsgLoadClone:
+			{
+				if (!u->joined) {
+					err->log("ERR: %s sent a NetMsgLoadClone but did not yet join the game. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmLoadClone loadClone(u);
+				msg->data->get(loadClone);
+				log->log("<RCV> [%d] %s\n", msg->sn, loadClone.str());
 				
 				// FIXME: do something
 				return 1;

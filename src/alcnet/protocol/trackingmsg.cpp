@@ -41,8 +41,8 @@ namespace alc {
 	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u) : tmMsgBase(u)
 	{
 		serverGuid.setVersion(5); // inverted UruString
-		age.setVersion(0); // normal UrurString
-		externalIp.setVersion(0); // normal UrurString
+		age.setVersion(0); // normal UruString
+		externalIp.setVersion(0); // normal UruString
 	}
 	
 	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u, const Byte *serverGuid, const Byte *age, const Byte *externalIp)
@@ -51,11 +51,11 @@ namespace alc {
 #ifdef ENABLE_UNET3
 		if (u->proto == 1 || u->proto == 2) setFlags(plNetX | plNetKi); // older protocols have this set, but the value is ignored
 #endif
-		this->serverGuid.setVersion(5); // inverted UrurString
+		this->serverGuid.setVersion(5); // inverted UruString
 		this->serverGuid.writeStr(serverGuid);
-		this->age.setVersion(0); // normal UrurString
+		this->age.setVersion(0); // normal UruString
 		this->age.writeStr(age);
-		this->externalIp.setVersion(0); // normal UrurString
+		this->externalIp.setVersion(0); // normal UruString
 		this->externalIp.writeStr(externalIp);
 	}
 	
@@ -101,8 +101,8 @@ namespace alc {
 	//// tmCustomPlayerStatus
 	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *u) : tmMsgBase(u)
 	{
-		account.setVersion(0); // normal UrurString
-		avatar.setVersion(0); // normal UrurString
+		account.setVersion(0); // normal UruString
+		avatar.setVersion(0); // normal UruString
 	}
 	
 	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *u, U32 ki, U32 sid, const Byte *uid, const Byte *account, const Byte *avatar, Byte playerFlag, Byte playerStatus)
@@ -123,9 +123,9 @@ namespace alc {
 		}
 #endif
 		
-		this->account.setVersion(0); // normal UrurString
+		this->account.setVersion(0); // normal UruString
 		this->account.writeStr(account);
-		this->avatar.setVersion(0); // normal UrurString
+		this->avatar.setVersion(0); // normal UruString
 		this->avatar.writeStr(avatar);
 		this->playerFlag = playerFlag;
 		this->playerStatus = playerStatus;
@@ -180,7 +180,7 @@ namespace alc {
 	tmCustomFindServer::tmCustomFindServer(tNetSession *u) : tmMsgBase(u)
 	{
 		serverGuid.setVersion(5); // inverted UruString
-		age.setVersion(0); // normal UrurString
+		age.setVersion(0); // normal UruString
 	}
 	
 	tmCustomFindServer::tmCustomFindServer(tNetSession *u, U32 ki, U32 x, U32 sid, U32 ip, U16 port, const Byte *serverGuid, const Byte *age)
@@ -204,7 +204,7 @@ namespace alc {
 		
 		this->serverGuid.setVersion(5); // inverted UruString
 		this->serverGuid.writeStr(serverGuid);
-		this->age.setVersion(0); // normal UrurString
+		this->age.setVersion(0); // normal UruString
 		this->age.writeStr(age);
 	}
 	

@@ -113,16 +113,17 @@ public:
 	Byte max_version; //!< peer major version
 	Byte min_version; //!< peer minor version
 	U32 proto; //!< peer unet protocol version
-	Byte tpots; //!< tpots version 0=undefined, 1=tpots client, 2=non-tpots client
 	
-	U32 ki; //!< player set and valid id, otherwise 0 (lobby/game)
-	Byte uid[16]; //!< hex; player uid in lobby/game server
+	// used only by some servers
 	Byte name[200]; //!< peer age name in tracking server, peer account name in lobby and game
-	Byte avatar[200]; //!< peer avatar name if set (lobby and game)
 	Byte serverGuid[8]; //!< hex; server guid in tracking server
 	tNetSessionData *data; //!< save additional data (e.g. tracking information)
 	
 	// used by lobbybase
+	Byte tpots; //!< tpots version 0=undefined, 1=tpots client, 2=non-tpots client
+	U32 ki; //!< player set and valid id, otherwise 0
+	Byte uid[16]; //!< hex; player uid
+	Byte avatar[200]; //!< peer avatar name if set
 	Byte challenge[16]; //!< peer challenge (hex)
 	Byte release; //!< type of client (internal/external)
 	

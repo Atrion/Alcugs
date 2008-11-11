@@ -66,7 +66,7 @@ namespace alc {
 		}
 #endif
 		
-		this->login.setVersion(0); // normal UrurString
+		this->login.setVersion(0); // normal UruString
 		this->login.writeStr(login);
 		memcpy(this->challenge, challenge, 16);
 		memcpy(this->hash, hash, 16);
@@ -75,7 +75,7 @@ namespace alc {
 	
 	tmCustomAuthAsk::tmCustomAuthAsk(tNetSession *u) : tmMsgBase(u)
 	{
-		login.setVersion(0); // normal UrurString
+		login.setVersion(0); // normal UruString
 	}
 	
 	void tmCustomAuthAsk::store(tBBuf &t)
@@ -154,19 +154,19 @@ namespace alc {
 #endif
 		
 		login = authAsk.login;
-		login.setVersion(0); // normal UrurString
+		login.setVersion(0); // normal UruString
 		
 		memcpy(this->uid, uid, 16);
 		this->passwd = passwd;
-		this->passwd.setVersion(0); // normal UrurString
+		this->passwd.setVersion(0); // normal UruString
 		this->result = result;
 		this->accessLevel = accessLevel;
 	}
 	
 	tmCustomAuthResponse::tmCustomAuthResponse(tNetSession *u) : tmMsgBase(u)
 	{
-		login.setVersion(0); // normal UrurString
-		passwd.setVersion(0); // normal UrurString
+		login.setVersion(0); // normal UruString
+		passwd.setVersion(0); // normal UruString
 	}
 	
 	void tmCustomAuthResponse::store(tBBuf &t)

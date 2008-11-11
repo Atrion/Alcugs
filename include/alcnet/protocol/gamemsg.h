@@ -100,12 +100,24 @@ namespace alc {
 	public:
 		tmPagingRoom(tNetSession *u);
 		virtual void store(tBBuf &t);
+		// format
+		U32 pageId;
+		U16 pageType;
+		tUStr pageName;
+		bool isPageOut;
+	protected:
+		virtual void additionalFields();
 	};
 	
 	class tmPlayerPage : public tmMsgBase {
 	public:
 		tmPlayerPage(tNetSession *u);
 		virtual void store(tBBuf &t);
+		// format
+		bool isPageOut;
+		tUruObject obj;
+	protected:
+		virtual void additionalFields();
 	};
 	
 	class tmGameStateRequest : public tmMsgBase {
@@ -127,7 +139,6 @@ namespace alc {
 	class tmMembersListReq : public tmMsgBase {
 	public:
 		tmMembersListReq(tNetSession *u);
-		virtual void store(tBBuf &t);
 	};
 	
 	class tmTestAndSet : public tmMsgBase {

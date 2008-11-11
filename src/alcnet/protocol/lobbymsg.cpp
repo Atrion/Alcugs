@@ -57,7 +57,7 @@ namespace alc {
 		
 		this->numberPlayers = numberPlayers;
 		this->players = players;
-		this->url.setVersion(0); // normal UrurString
+		this->url.setVersion(0); // normal UruString
 		this->url.writeStr(url);
 	}
 	
