@@ -92,12 +92,12 @@ public:
 	virtual void stream(tBBuf &t);
 	const Byte *str(void);
 private:
-	Byte hasClientId;
+	Byte hasCloneId;
 	U32 pageId;
 	U16 pageType;
 	U16 objType;
 	tUStr objName;
-	U32 clientId;
+	U32 clonePlayerId;
 	
 	tStrBuf dbg;
 };
