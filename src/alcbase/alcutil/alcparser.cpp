@@ -186,13 +186,13 @@ void tXParser::store(tStrBuf &t) {
 				}
 				#if defined(__WIN32__) or defined(__CYGWIN__)
 					val.convertSlashesFromWinToUnix();
-					if(val[1]==':' || val[0]=='/') {
+					if(val.getAt(1)==':' || val.getAt(0)=='/') {
 						key=val;
 					} else {
 						key=path + "/" + val;
 					}
 				#else
-					if(val[0]=='/') {
+					if(val.getAt(0)=='/') {
 						key=val;
 					} else {
 						key=path + "/" + val;

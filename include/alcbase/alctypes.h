@@ -179,7 +179,7 @@ private:
 class tMBuf :public tBBuf {
 public:
 	tMBuf();
-	tMBuf(const tMBuf &t,U32 start=0,U32 len=0);
+	tMBuf(const tMBuf &t);
 	tMBuf(tBBuf &t,U32 start=0,U32 len=0);
 	tMBuf(U32 size);
 	virtual ~tMBuf();
@@ -197,7 +197,7 @@ public:
 	virtual void operator=(tMBuf &t) { this->copy(t); }
 	virtual Byte getAt(U32 pos);
 	virtual void setAt(U32 pos,const char what);
-	virtual Byte operator[](U32 pos) { return(this->getAt(pos)); }
+	//virtual Byte operator[](U32 pos) { return(this->getAt(pos)); }
 	//virtual void operator[](U32 pos,const char what) { setAt(pos,what); }
 	virtual void setSize(U32 size) {
 		msize=size;
@@ -211,7 +211,8 @@ protected:
 	virtual void onmodify();
 	virtual void _pcopy(tMBuf &t);
 	tRefBuf * buf;
-	U32 off,msize,mstart;
+	U32 off;
+	U32 msize; //!< this is the part of the buffer that is actually used, while buf->size() is the currently available size
 };
 
 /** File buffer */

@@ -312,6 +312,19 @@ void alctypes_mbuf() {
 	// check for copying an empty mbuf
 	tMBuf emptyBuf;
 	tMBuf emptyBuf2(emptyBuf);
+	
+	// check writing from somehwere before the end over the end
+	Byte bulk[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
+	tMBuf writeTest;
+	writeTest.write(bulk, 4);
+	writeTest.seek(-2);
+	writeTest.write(bulk, 8);
+	assert(writeTest.tell() == 10);
+	assert(writeTest.size() == 10);
+	writeTest.rewind();
+	assert(memcmp(writeTest.read(2), bulk, 2) == 0);
+	assert(memcmp(writeTest.read(8), bulk, 8) == 0);
+	assert(writeTest.eof());
 }
 
 void alctypes_mbuf2() {
@@ -504,14 +517,14 @@ void alctypes_part5() {
 
 	char mychar;
 	
-	assert(test[0]=='/');
-	assert(test[1]=='p');
-	assert(test[3]=='t');
-	assert(test[0]=='/');
+	assert(test.getAt(0)=='/');
+	assert(test.getAt(1)=='p');
+	assert(test.getAt(3)=='t');
+	assert(test.getAt(0)=='/');
 	dmalloc_verify(NULL);
 	try {
 		dmalloc_verify(NULL);
-		mychar=test[1000];
+		mychar=test.getAt(100);
 		dmalloc_verify(NULL);
 		throw txBase("Expected OutofRange");
 		dmalloc_verify(NULL);

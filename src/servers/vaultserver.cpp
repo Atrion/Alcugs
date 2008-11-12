@@ -81,7 +81,7 @@ namespace alc {
 	bool tUnetVaultServer::isValidAvatarName(tUStr &avatar)
 	{
 		for (U32 i = 0; i < avatar.size(); ++i) {
-			Byte c = avatar[i];
+			Byte c = avatar.getAt(i);
 			if (!isprint(c) && !isalpha(c) && !alcIsAlpha(c)) return false;
 			if (c == '\n' || c == '\t') return false;
 		}

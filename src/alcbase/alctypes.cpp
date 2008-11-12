@@ -299,19 +299,13 @@ tMBuf::tMBuf(tBBuf &t,U32 start,U32 len) {
 tMBuf::tMBuf(U32 size) {
 	DBG(9,"tMBuf(size:%i)\n",size);
 	buf = new tRefBuf(size);
-	mstart=msize=off=0;
+	msize=off=0;
 }
-tMBuf::tMBuf(const tMBuf &t,U32 start,U32 len) {
-	DBG(9,"tMBuf(tMBuf,start:%u,len:%u)\n",start,len);
-	if((S32)t.msize-(S32)(start+t.mstart)<0) throw txOutOfRange(_WHERE("start:%i,size:%i",start,t.msize));
+tMBuf::tMBuf(const tMBuf &t) {
+	DBG(9,"tMBuf(tMBuf)\n");
 	buf = t.buf;
 	if (buf != NULL) buf->inc();
-	if(len==0) {
-		msize = t.msize-(t.mstart+start);
-	} else {
-		msize = len;
-	}
-	mstart=t.mstart+start;
+	msize = t.msize;
 	off=t.off;
 }
 tMBuf::~tMBuf() {
@@ -338,7 +332,6 @@ void tMBuf::_pcopy(tMBuf &t) {
 	if(buf!=NULL) buf->inc();
 	off=t.off;
 	msize=t.msize;
-	mstart=t.mstart;
 }
 void tMBuf::copy(tMBuf &t) {
 	DBG(9,"tMBuf::copy()\n");
@@ -347,7 +340,7 @@ void tMBuf::copy(tMBuf &t) {
 void tMBuf::init() {
 	DBG(9,"tMBuf::init()\n");
 	buf=NULL;
-	mstart=msize=off=0;
+	msize=off=0;
 }
 U32 tMBuf::tell() { return off; }
 void tMBuf::set(U32 pos) { 
@@ -359,11 +352,11 @@ Byte tMBuf::getAt(U32 pos) {
 		//std::printf("getAt %i \n%s\n",pos,hexToAscii());
 		throw txOutOfRange(_WHERE("OutOfRange %i>%i",pos,msize));
 	}
-	return *(Byte *)(buf->buf+mstart+pos);
+	return *(Byte *)(buf->buf+pos);
 }
 void tMBuf::setAt(U32 pos,const char what) {
 	if(pos>msize) throw txOutOfRange(_WHERE("OutOfRange %i>%i",pos,msize));
-	*(char *)(buf->buf+mstart+pos)=what;
+	*(char *)(buf->buf+pos)=what;
 	onmodify();
 }
 void tMBuf::zeroend() {
@@ -381,10 +374,9 @@ void tMBuf::write(const Byte * val,U32 n) {
 	else if(buf->getRefs()>1) {
 		buf->dec();
 		Byte * oldbuf=buf->buf;
-		U32 xsize=buf->size()-mstart;
+		U32 xsize=buf->size();
 		buf = new tRefBuf((xsize)+1024+n);
-		memcpy(buf->buf,oldbuf+mstart,xsize);
-		mstart=0;
+		memcpy(buf->buf,oldbuf,xsize);
 	}
 	U32 oldoff=off;
 	off+=n;
@@ -394,11 +386,11 @@ void tMBuf::write(const Byte * val,U32 n) {
 		buf->resize(newsize);
 	}
 	memcpy(buf->buf+oldoff,val,n);
-	if(off>msize) msize+=n;
+	if(off>msize) msize=off;
 	onmodify();
 }
 Byte * tMBuf::read(U32 n) {
-	U32 pos=off+mstart;
+	U32 pos=off;
 	if(n==0) n=msize-off;
 	if(n==0) return NULL;
 	off+=n;
@@ -411,7 +403,7 @@ Byte * tMBuf::read(U32 n) {
 }
 void tMBuf::stream(tBBuf &b) {
 	if(buf==NULL || buf->buf==NULL) return;
-	b.write(buf->buf+mstart,msize);
+	b.write(buf->buf,msize);
 	//return msize;
 }
 void tMBuf::store(tBBuf &b) {
@@ -547,9 +539,8 @@ void tZBuf::compress() {
 	zlib::uLongf comp_size;
 	comp_size=msize+(msize/10)+12;
 	this->buf = new tRefBuf(comp_size);
-	int ret=zlib::compress(this->buf->buf,&comp_size,aux->buf+mstart,msize);
+	int ret=zlib::compress(this->buf->buf,&comp_size,aux->buf,msize);
 	if(ret!=0) throw txBase(_WHERE("Something terrible happenened compressing the buffer"));
-	mstart=0;
 	msize=comp_size;
 	if(aux->getRefs()<1) delete aux;
 	this->buf->resize(msize);
@@ -562,9 +553,8 @@ void tZBuf::uncompress(int iosize) {
 	if(iosize<=0) { comp_size=10*msize; } //yes, is very dirty
 	else comp_size=iosize;
 	this->buf = new tRefBuf(comp_size);
-	int ret=zlib::uncompress(this->buf->buf,&comp_size,aux->buf+mstart,msize);
+	int ret=zlib::uncompress(this->buf->buf,&comp_size,aux->buf,msize);
 	if(ret!=0) throw txBase(_WHERE("Something terrible happenened uncompressing the buffer"));
-	mstart=0;
 	msize=comp_size;
 	if(aux->getRefs()<1) delete aux;
 	this->buf->resize(msize);
@@ -577,8 +567,7 @@ void tMD5Buf::compute() {
 	tRefBuf * aux=this->buf;
 	aux->dec();
 	this->buf = new tRefBuf(0x10);
-	md5::MD5((const unsigned char *)aux->buf+mstart,msize,(unsigned char *)this->buf->buf);
-	mstart=0;
+	md5::MD5((const unsigned char *)aux->buf,msize,(unsigned char *)this->buf->buf);
 	msize=0x10;
 	if(aux->getRefs()<1) delete aux;
 	off=0;
