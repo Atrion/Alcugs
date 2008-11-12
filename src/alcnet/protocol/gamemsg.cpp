@@ -70,10 +70,7 @@ namespace alc {
 		tmMsgBase::stream(t);
 		
 		t.putU16(0); // unknown flag
-		// write an empty SDL. FIXME: send the age state here
-		t.putU32(0); // real size
-		t.putByte(0); // compression flag
-		t.putU32(0); // sent size
+		t.put(sdl);
 	}
 	
 	//// tmGameMessage
@@ -99,6 +96,7 @@ namespace alc {
 	
 	void tmGameMessage::copyBaseProps(tmGameMessage &msg)
 	{
+		if (!msg.hasFlags(plNetAck)) unsetFlags(plNetAck);
 		memcpy(header, msg.header, 5);
 		ki = msg.ki;
 	}
@@ -113,9 +111,9 @@ namespace alc {
 		memcpy(header, t.read(5), 5);
 		U32 gameMsgSize = t.getU32();
 		message.write(t.read(gameMsgSize), gameMsgSize); // that's the message itself
-		Byte unk3 = t.getByte();
-		if (unk3 != 0x00)
-			throw txProtocolError(_WHERE("Unexpected NetMsgGameMessage.unk3 of 0x%02X (should be 0x00)", unk3));
+		Byte unk = t.getByte();
+		if (unk != 0x00)
+			throw txProtocolError(_WHERE("Unexpected NetMsgGameMessage.unk of 0x%02X (should be 0x00)", unk));
 	}
 	
 	void tmGameMessage::stream(tBBuf &t)
@@ -124,7 +122,7 @@ namespace alc {
 		t.write(header, 5);
 		t.putU32(message.size());
 		t.put(message);
-		t.putByte(0); // unk3
+		t.putByte(0); // unk
 	}
 	
 	//// tmGameMessageDirected
@@ -157,6 +155,7 @@ namespace alc {
 	void tmGameMessageDirected::store(tBBuf &t)
 	{
 		tmGameMessage::store(t);
+		if (cmd == NetMsgGameMessageDirected && !hasFlags(plNetDirected)) throw txProtocolError(_WHERE("Directed flag missing"));
 		// get list of recipients
 		nRecipients = t.getByte();
 		if (recipients) free(recipients);
@@ -196,7 +195,10 @@ namespace alc {
 		pageId = t.getU32();
 		pageType = t.getU16();
 		t.get(pageName);
-		isPageOut = t.getByte();
+		Byte pageFlag = t.getByte();
+		if (pageFlag == 0x00 || pageFlag == 0x01) isPageOut = pageFlag;
+		else
+			throw txProtocolError(_WHERE("NetMsgPagingRoom.pageFlag must be 0x00 or 0x01 but is 0x%02X", pageFlag));
 	}
 	
 	void tmPagingRoom::additionalFields()
@@ -214,7 +216,10 @@ namespace alc {
 	void tmPlayerPage::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		isPageOut = t.getByte();
+		Byte pageFlag = t.getByte();
+		if (pageFlag == 0x00 || pageFlag == 0x01) isPageOut = pageFlag;
+		else
+			throw txProtocolError(_WHERE("NetMsgPlayerPage.pageFlag must be 0x00 or 0x01 but is 0x%02X", pageFlag));
 		t.get(obj);
 	}
 	
@@ -234,10 +239,12 @@ namespace alc {
 	void tmGameStateRequest::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
+		if (!hasFlags(plNetStateReq))
+			throw txProtocolError(_WHERE("StateReq flag missing"));
 		int nPages = t.getU32();
 		// FIXME: accept nPages != 0
-		if (nPages || !hasFlags(plNetStateReq))
-			throw txProtocolError(_WHERE("Rejecting GameStateReq which contains a list of pages"));
+		if (nPages)
+			throw txProtocolError(_WHERE("Rejecting GameStateRequest which contains a list of pages"));
 	}
 	
 	//// tmInitialAgeStateSent
@@ -348,19 +355,63 @@ namespace alc {
 	void tmSDLState::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		t.read(); // just accept whatever we get
-		// FIXME: actually parse the message
+		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
+		
+		t.get(obj);
+		sdl.clear();
+		U32 sdlSize = t.remaining()-1;
+		sdl.write(t.read(sdlSize), sdlSize);
+		Byte flag = t.getByte();
+		if (flag == 0x00 || flag == 0x01) isInitialAgeState = flag;
+		else
+			throw txProtocolError(_WHERE("NetMsgSDLState.flag must be 0x00 or 0x01 but is 0x%02X", flag));
+	}
+	
+	void tmSDLState::additionalFields()
+	{
+		dbg.nl();
+		dbg.printf(" Object reference: [%s], is initial age state: ", obj.str());
+		if (isInitialAgeState) dbg.printf("yes");
+		else                   dbg.printf("no");
 	}
 	
 	//// tmSDLStateBCast
 	tmSDLStateBCast::tmSDLStateBCast(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
+	tmSDLStateBCast::tmSDLStateBCast(tNetSession *u, tmSDLStateBCast & msg)
+	 : tmMsgBase(NetMsgSDLStateBCast, plNetAck | plNetKi | plNetBcast, u), obj(msg.obj), sdl(msg.sdl)
+	{
+		if (!msg.hasFlags(plNetBcast)) unsetFlags(plNetBcast);
+		ki = msg.ki;
+	}
+	
 	void tmSDLStateBCast::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		t.read(); // just accept whatever we get
-		// FIXME: actually parse the message
+		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
+		
+		t.get(obj);
+		sdl.clear();
+		U32 sdlSize = t.remaining()-2;
+		sdl.write(t.read(sdlSize), sdlSize);
+		U16 unk = t.getU16();
+		if (unk != 0x0100)
+			throw txProtocolError(_WHERE("NetMsgSDLStateBCast.unk must be 0x0100 but is 0x%04X", unk));
+	}
+	
+	void tmSDLStateBCast::stream(tBBuf &t)
+	{
+		tmMsgBase::stream(t);
+		t.put(obj);
+		t.put(sdl);
+		t.putU16(0x0100); // unk
+	}
+	
+	void tmSDLStateBCast::additionalFields()
+	{
+		dbg.nl();
+		dbg.printf(" Object reference: [%s]", obj.str());
 	}
 	
 	//// tmSetTimeout

@@ -259,9 +259,10 @@ tUruObject::tUruObject(void) : tBaseType()
 
 void tUruObject::store(tBBuf &t)
 {
-	hasCloneId = t.getByte();
-	if (hasCloneId != 0x00 && hasCloneId != 0x01)
+	Byte cloneIdFlag = t.getByte();
+	if (cloneIdFlag != 0x00 && cloneIdFlag != 0x01)
 		throw txUnexpectedData(_WHERE("the clone ID flag of an Uruobject must be 0x00 or 0x01, not 0x%02X", hasCloneId));
+	else hasCloneId = cloneIdFlag;
 	pageId = t.getU32();
 	pageType = t.getU16();
 	objType = t.getU16();

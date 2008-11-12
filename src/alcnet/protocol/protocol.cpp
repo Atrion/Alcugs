@@ -676,14 +676,15 @@ void tmMsgBase::store(tBBuf &t) {
 	}
 	else sid = 0;
 
-	U32 check=plNetAck | plNetBcast | plNetVersion | plNetTimestamp | \
+	U32 check=plNetAck | plNetVersion | plNetTimestamp | \
 	plNetX | plNetKi | plNetUID | plNetIP | plNetCustom | plNetSid;
 	// accept some flags only for certain messages
 	if (cmd == NetMsgGameMessage) check |= plNetUnk1 | plNetUnk2;
 	else if (cmd == NetMsgGameMessageDirected) check |= plNetDirected;
 	else if (cmd == NetMsgJoinReq) check |= plNetP2P;
 	else if (cmd == NetMsgGameStateRequest) check |= plNetStateReq;
-	else if (cmd == NetMsgSDLStateBCast) check |= plNetUnk2;
+	else if (cmd == NetMsgSDLState) check |= plNetBcast;
+	else if (cmd == NetMsgSDLStateBCast) check |= plNetBcast | plNetUnk2;
 	
 	//now catch undocumented protocol flags
 	if (flags & ~(check))

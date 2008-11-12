@@ -44,6 +44,7 @@
 
 ////extra includes
 #include "gameserver.h"
+#include "sdl.h"
 
 #include <alcdebug.h>
 
@@ -70,11 +71,15 @@ namespace alc {
 		// load our age info
 		tAgeInfoLoader ageInfoLoader(serverName, /*loadPages*/true);
 		ageInfo = new tAgeInfo(*ageInfoLoader.getAge(serverName)); // get ourselves a copy of it
+		
+		// load SDL Manager
+		sdlMgr = new tSdlManager;
 	}
 
 	tUnetGameServer::~tUnetGameServer(void)
 	{
 		delete ageInfo;
+		delete sdlMgr;
 	}
 
 	void tUnetGameServer::onConnectionClosed(tNetEvent *ev, tNetSession *u)
@@ -128,7 +133,7 @@ namespace alc {
 		tUnetLobbyServerBase::terminate(u, reason, destroyOnly); // do the lobbybase terminate procedure
 	}
 	
-	Byte tUnetGameServer::fwdGameMsg(tmGameMessageDirected &msg)
+	Byte tUnetGameServer::fwdDirectedGameMsg(tmGameMessageDirected &msg)
 	{
 		// look for all recipients
 		Byte nSent = 0;
@@ -182,6 +187,8 @@ namespace alc {
 				// ok, tell the client he successfully joined
 				u->joined = true;
 				tmJoinAck joinAck(u, joinReq.x);
+				tSdlStruct emptySdl; // FIXME: Send the age state
+				joinAck.sdl.put(emptySdl);
 				if (joinReq.hasFlags(plNetP2P)) joinAck.setFlags(plNetFirewalled);
 				send(joinAck);
 				// log the join
@@ -243,7 +250,7 @@ namespace alc {
 				}
 				
 				// forward it
-				Byte nSent = fwdGameMsg(gameMsg);
+				Byte nSent = fwdDirectedGameMsg(gameMsg);
 				
 				if (nSent < gameMsg.nRecipients) { // we did not yet reach all recipients
 					tNetSession *trackingServer = getSession(tracking);
@@ -270,7 +277,7 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, gameMsg.str());
 				
 				// forward it
-				fwdGameMsg(gameMsg);
+				fwdDirectedGameMsg(gameMsg);
 				
 				return 1;
 			}
@@ -306,7 +313,12 @@ namespace alc {
 				msg->data->get(SDLState);
 				log->log("<RCV> [%d] %s\n", msg->sn, SDLState.str());
 				
-				// FIXME: do something
+				// save SDL state
+				sdlMgr->saveSdlState(SDLState.obj, SDLState.sdl);
+				
+				// NetMsgSDLState sometimes has the bcast falg set and NetMsgSDLStateBCast sometimes doesn't.
+				// I assume the message type is correct and the flag not.
+				
 				return 1;
 			}
 			case NetMsgSDLStateBCast:
@@ -321,7 +333,21 @@ namespace alc {
 				msg->data->get(SDLStateBCast);
 				log->log("<RCV> [%d] %s\n", msg->sn, SDLStateBCast.str());
 				
-				// FIXME: do something
+				// save SDL state
+				sdlMgr->saveSdlState(SDLStateBCast.obj, SDLStateBCast.sdl);
+				
+				// NetMsgSDLState sometimes has the bcast falg set and NetMsgSDLStateBCast sometimes doesn't.
+				// I assume the message type is correct and the flag not.
+				
+				// broadcast message
+				tNetSession *session;
+				smgr->rewind();
+				while ((session = smgr->getNext())) {
+					if (session->joined && session->ki != SDLStateBCast.ki) {
+						tmSDLStateBCast fwdMsg(session, SDLStateBCast);
+						send(fwdMsg);
+					}
+				}
 				return 1;
 			}
 			

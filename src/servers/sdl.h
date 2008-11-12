@@ -33,36 +33,35 @@
 		Several
 */
 
-#ifndef __U_GAMESERVER_H
-#define __U_GAMESERVER_H
+#ifndef __U_SDL_H
+#define __U_SDL_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_GAMESERVER_H_ID "$Id$"
-
-#include "sdl.h"
+#define __U_SDL_H_ID "$Id$"
 
 namespace alc {
-
-	class tmGameMessageDirected;
 
 	////DEFINITIONS
 	/**
 		If we want to do it well and nice, we should add pre and post conditions here.
 	*/
-
-	class tUnetGameServer : public tUnetLobbyServerBase {
-	public:
-		tUnetGameServer(void);
-		~tUnetGameServer(void);
-		virtual void onConnectionClosed(tNetEvent *ev, tNetSession *u);
-		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
-		virtual void terminate(tNetSession *u, Byte reason = RKickedOff, bool destroyOnly = false);
-	protected:
-		virtual bool setActivePlayer(tNetSession *u, U32 ki, U32 x, const Byte *avatar);
-	private:
-		Byte fwdDirectedGameMsg(tmGameMessageDirected &msg);
 	
-		tAgeInfo *ageInfo;
-		tSdlManager *sdlMgr;
+	class tSdlStruct : public tBaseType {
+	public:
+		tSdlStruct(void);
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
+	private:
+		// format
+		bool compress;
+		tUStr name;
+		U16 version;
+		tMBuf data;
+	};
+	
+	class tSdlManager {
+	public:
+		tSdlManager(void);
+		void saveSdlState(tUruObject &obj, tMBuf &data);
 	};
 
 } //End alc namespace

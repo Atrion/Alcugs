@@ -92,7 +92,7 @@ public:
 	virtual void stream(tBBuf &t);
 	const Byte *str(void);
 private:
-	Byte hasCloneId;
+	bool hasCloneId;
 	U32 pageId;
 	U16 pageType;
 	U16 objType;

@@ -56,6 +56,8 @@ namespace alc {
 	public:
 		tmJoinAck(tNetSession *u, U32 x);
 		virtual void stream(tBBuf &t);
+		// format
+		tMBuf sdl;
 	};
 	
 	class tmGameMessage : public tmMsgBase {
@@ -162,12 +164,25 @@ namespace alc {
 	public:
 		tmSDLState(tNetSession *u);
 		virtual void store(tBBuf &t);
+		// format
+		tUruObject obj;
+		tMBuf sdl;
+		bool isInitialAgeState;
+	protected:
+		virtual void additionalFields();
 	};
 	
 	class tmSDLStateBCast : public tmMsgBase {
 	public:
 		tmSDLStateBCast(tNetSession *u);
+		tmSDLStateBCast(tNetSession *u, tmSDLStateBCast & msg);
 		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
+		// format
+		tUruObject obj;
+		tMBuf sdl;
+	protected:
+		virtual void additionalFields();
 	};
 	
 	class tmSetTimeout : public tmMsgBase {
