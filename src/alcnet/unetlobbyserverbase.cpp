@@ -241,17 +241,18 @@ namespace alc {
 	{
 		if (!isRunning()) return;
 		
-		if (auth_gone && auth_gone+5 < alcGetTime()) { // if it went more than 5 sec ago, reconnect
+		U32 time = alcGetTime();
+		if (auth_gone && auth_gone+5 < time) { // if it went more than 5 sec ago, reconnect
 			auth = reconnectPeer(KAuth);
 			auth_gone = 0;
 		}
 		
-		if (tracking_gone && tracking_gone+5 < alcGetTime()) { // if it went more than 5 sec ago, reconnect
+		if (tracking_gone && tracking_gone+5 < time) { // if it went more than 5 sec ago, reconnect
 			tracking = reconnectPeer(KTracking);
 			tracking_gone = 0;
 		}
 		
-		if (vault_gone && vault_gone+5 < alcGetTime()) { // if it went more than 5 sec ago, reconnect
+		if (vault_gone && vault_gone+5 < time) { // if it went more than 5 sec ago, reconnect
 			vault = reconnectPeer(KVault);
 			vault_gone = 0;
 		}

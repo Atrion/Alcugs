@@ -59,6 +59,8 @@ namespace alc {
 	{
 		lerr->log("WARNING: The game server is not finished yet. So if it doesn\'t work, that's not even a bug.\n");
 		
+		lastPlayerLeft = 0;
+		
 		// find out which age we are supposed to host
 		tConfig *cfg = alcGetConfig();
 		tStrBuf var = cfg->getVar("age_filename");
@@ -98,6 +100,9 @@ namespace alc {
 	{
 		if (!tUnetLobbyServerBase::setActivePlayer(u, ki, x, avatar)) return false;
 		
+		// a new player joined, so we are no longer alone
+		lastPlayerLeft = 0;
+		
 		tNetSession *vaultServer = getSession(vault);
 		if (!vaultServer) {
 			err->log("ERR: I've got to update a player\'s (%s) status for the vault server, but it is unavailable.\n", u->str());
@@ -128,6 +133,18 @@ namespace alc {
 				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, (Byte *)"0000000000000000" /* these are 16 zeroes */, (Byte *)"", /* player is offline */0, u->onlineTime());
 				send(vaultStatus);
 			}
+			
+			// check if this was the last player
+			bool playerFound = false;
+			tNetSession *session;
+			smgr->rewind();
+			while ((session = smgr->getNext())) {
+				if (session->ki && session->ki != u->ki) {
+					playerFound = true;
+					break;
+				}
+			}
+			lastPlayerLeft = playerFound ? 0 : alcGetTime();
 		}
 	
 		tUnetLobbyServerBase::terminate(u, reason, destroyOnly); // do the lobbybase terminate procedure
@@ -154,6 +171,15 @@ namespace alc {
 			}
 		}
 		return nSent;
+	}
+
+	void tUnetGameServer::onIdle(bool idle)
+	{
+		if (lastPlayerLeft && lastPlayerLeft + 120 < alcGetTime()) {
+			log->log("The last player left more than 120sec ago, so I will go down.\n");
+			stop(); // no player for 120sec, so go down. FIXME: Make time configurable
+		}
+		tUnetLobbyServerBase::onIdle(idle);
 	}
 
 	int tUnetGameServer::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)

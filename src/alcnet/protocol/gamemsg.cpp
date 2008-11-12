@@ -437,7 +437,8 @@ namespace alc {
 		tmMsgBase::stream(t);
 		t.put(obj);
 		t.put(sdl);
-		t.putU16(0x0100); // unk
+		t.putByte(0x00); // unk1 (initial?)
+		t.putByte(0x01); // unk2
 	}
 	
 	void tmSDLStateBCast::additionalFields()
