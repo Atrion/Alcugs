@@ -189,7 +189,6 @@ namespace alc {
 				tmJoinAck joinAck(u, joinReq.x);
 				tSdlStruct emptySdl; // FIXME: Send the age state
 				joinAck.sdl.put(emptySdl);
-				if (joinReq.hasFlags(plNetP2P)) joinAck.setFlags(plNetFirewalled);
 				send(joinAck);
 				// log the join
 				sec->log("%s joined\n", u->str());

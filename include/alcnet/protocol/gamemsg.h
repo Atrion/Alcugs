@@ -92,10 +92,15 @@ namespace alc {
 		void copyDrctProps(tmGameMessageDirected &msg);
 	};
 	
-	class tmLoadClone : public tmMsgBase {
+	class tmLoadClone : public tmGameMessage {
 	public:
 		tmLoadClone(tNetSession *u);
 		virtual void store(tBBuf &t);
+		// format
+		tUruObject obj;
+		bool isLoad;
+	protected:
+		virtual void additionalFields();
 	};
 	
 	class tmPagingRoom : public tmMsgBase {

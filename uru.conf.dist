@@ -1,5 +1,5 @@
 ###############################################################################
-#      Sample Uru Server Configuration file                                   #
+#      Sample Alcuge Server Configuration file                                #
 ###############################################################################
 # $Id$                                                                        #
 ###############################################################################
@@ -7,9 +7,9 @@
 # Important!, some features are unimplemented, others may work or not, and 
 # others may cause unstability.
 # Warning: This file contains passwords, so remember to make it only readable
-# by the user uru.
+# by the user running the alcugs server.
 #
-# $ chown uru.uru
+# $ chown alcugs:alcugs
 # $ chmod 400
 #
 # remember that the LAST entry overrides the previous one for example,
@@ -24,6 +24,8 @@
 #
 # The syntax, is very simple: variable = "string text" or variable = 1284
 # NOTE: Commented text starts with the characters '#' and/or ';'
+# If a "default" value is defined, that's the one which is used if the option
+# is not specified at all
 #
 #
 ############# Global Settings #################################################
@@ -189,8 +191,7 @@ stop = 1
 #  be overwritten (for configuring the log files used by the game server, see game.log in the [lobby] section)
 
 # client settings
-;allow_uu_clients = 1 # (dis)allow UU clients to connect to this server (default: 1)
+allow_uu_clients = 0 # (dis)allow UU clients to connect to this server (default: 1)
 # This should NOT be set for lobby as the UruSetup.exe everyone uses is an UU client. For game servers however, it's a good mean to
-# prevent SDL confusion to be caused by UU clients
-
+# prevent SDL confusion to be caused by UU clients. Also note that UU client support is untested.
 stop = 1

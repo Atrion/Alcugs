@@ -421,7 +421,7 @@ namespace alc {
 		tvItem **items;
 		U16 context; // sub in VaultTask
 		U32 vmgr; // client in VaultTask
-		U16 vn; // what is that?
+		U16 vn;
 		
 	};
 	

@@ -59,7 +59,7 @@ namespace alc {
 	}
 	
 	//// tmJoinAck
-	tmJoinAck::tmJoinAck(tNetSession *u, U32 x) : tmMsgBase(NetMsgJoinAck, plNetAck | plNetCustom | plNetKi | plNetX, u)
+	tmJoinAck::tmJoinAck(tNetSession *u, U32 x) : tmMsgBase(NetMsgJoinAck, plNetAck | plNetCustom | plNetKi | plNetX | plNetFirewalled, u)
 	{
 		this->x = x;
 		ki = u->ki;
@@ -69,7 +69,7 @@ namespace alc {
 	{
 		tmMsgBase::stream(t);
 		
-		t.putU16(0); // unknown flag
+		t.putU16(0); // unknown flag ("joinOrder" and "ExpLevel")
 		t.put(sdl);
 	}
 	
@@ -172,14 +172,41 @@ namespace alc {
 	}
 	
 	//// tmLoadClone
-	tmLoadClone::tmLoadClone(tNetSession *u) : tmMsgBase(u)
+	tmLoadClone::tmLoadClone(tNetSession *u) : tmGameMessage(u)
 	{ }
 	
 	void tmLoadClone::store(tBBuf &t)
 	{
-		tmMsgBase::store(t);
-		t.read(); // just accept whatever we get
-		// FIXME: actually parse the message
+		tmGameMessage::store(t);
+		
+		// check if header is all zero
+		Byte zero[5];
+		memset(zero, 0, 5);
+		if (memcmp(header, zero, 5) != 0)
+			throw txProtocolError(_WHERE("The header of a NetMsgLoadClone must be all zero"));
+		
+		t.get(obj);
+		
+		Byte unk = t.getByte();
+		if (unk != 0x01)
+			throw txProtocolError(_WHERE("Unexpected NetMsgLoadClone.unk1 of 0x%02X (should be 0x01)", unk));
+		
+		Byte load = t.getByte();
+		if (load != 0x00 && load != 0x01)
+			throw txProtocolError(_WHERE("Unexpected NetMsgLoadClone.load of 0x%02X (should be 0x00 or 0x01)", load));
+		isLoad = load;
+		
+		unk = t.getByte();
+		if (unk != 0x00) // this seems to be "initial", but I couldn't yet find an example where it is not 0
+			throw txProtocolError(_WHERE("Unexpected NetMsgLoadClone.unk2 of 0x%02X (should be 0x00)", unk));
+	}
+	
+	void tmLoadClone::additionalFields()
+	{
+		dbg.nl();
+		dbg.printf(" Object reference: [%s], load: ", obj.str());
+		if (isLoad) dbg.printf("yes");
+		else        dbg.printf("no");
 	}
 	
 	//// tmPagingRoom
@@ -206,7 +233,7 @@ namespace alc {
 		dbg.nl();
 		dbg.printf(" Page ID: 0x%08X, Page Type: 0x%04X, Page Name: %s, Paged out: ", pageId, pageType, pageName.c_str());
 		if (isPageOut) dbg.printf("yes");
-		else         dbg.printf("no");
+		else           dbg.printf("no");
 	}
 	
 	//// tmPlayerPage
@@ -338,14 +365,15 @@ namespace alc {
 	void tmRelevanceRegions::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
+		// two of these values are "rgnsImIn" and "rgnsICareAbout", but everything is always 1 anyway
 		U32 unk = t.getU32();
-		if (unk != 1) throw txProtocolError(_WHERE("NetMsgRelevanceRegions.Unk1 must be 1 but is %d", unk));
+		if (unk != 1) throw txProtocolError(_WHERE("NetMsgRelevanceRegions.unk1 must be 1 but is %d", unk));
 		unk = t.getU32();
-		if (unk != 1) throw txProtocolError(_WHERE("NetMsgRelevanceRegions.Unk2 must be 1 but is %d", unk));
+		if (unk != 1) throw txProtocolError(_WHERE("NetMsgRelevanceRegions.unk2 must be 1 but is %d", unk));
 		unk = t.getU32();
-		if (unk != 1) throw txProtocolError(_WHERE("NetMsgRelevanceRegions.Unk3 must be 1 but is %d", unk));
+		if (unk != 1) throw txProtocolError(_WHERE("NetMsgRelevanceRegions.unk3 must be 1 but is %d", unk));
 		unk = t.getU32();
-		if (unk != 1) throw txProtocolError(_WHERE("NetMsgRelevanceRegions.Unk4 must be 1 but is %d", unk));
+		if (unk != 1) throw txProtocolError(_WHERE("NetMsgRelevanceRegions.unk4 must be 1 but is %d", unk));
 	}
 	
 	//// tmSDLState
@@ -395,9 +423,13 @@ namespace alc {
 		sdl.clear();
 		U32 sdlSize = t.remaining()-2;
 		sdl.write(t.read(sdlSize), sdlSize);
-		U16 unk = t.getU16();
-		if (unk != 0x0100)
-			throw txProtocolError(_WHERE("NetMsgSDLStateBCast.unk must be 0x0100 but is 0x%04X", unk));
+		
+		Byte unk = t.getByte();
+		if (unk != 0x00) // this is most likely "initial", but since BCasts are never sent on initializing, it is always 0
+			throw txProtocolError(_WHERE("NetMsgSDLStateBCast.unk1 must be 0x00 but is 0x%02X", unk));
+		unk = t.getByte();
+		if (unk != 0x01)
+			throw txProtocolError(_WHERE("NetMsgSDLStateBCast.unk2 must be 0x01 but is 0x%02X", unk));
 	}
 	
 	void tmSDLStateBCast::stream(tBBuf &t)
@@ -422,7 +454,8 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		U32 unk = t.getU32();
-		if (unk != 0x43340000) throw txProtocolError(_WHERE("NetMsgSetTimeout.Unk must be 0x43340000 but is 0x%08X", unk));
+		if (unk != 0x43340000) throw txProtocolError(_WHERE("NetMsgSetTimeout.unk must be 0x43340000 but is 0x%08X", unk));
+		// it seems this means 180sec, but I have no clue how
 	}
 
 } //end namespace alc
