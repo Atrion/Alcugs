@@ -185,7 +185,7 @@ namespace alc {
 					if (isTask) vaultBackend->processVaultTask(parsedMsg, u, vaultMsg.ki, vaultMsg.x);
 					else vaultBackend->processVaultMsg(parsedMsg, u, vaultMsg.ki);
 				}
-				catch (txProtocolError &t) { // don't kick the lobby/game server we are talking to but let it kick the client
+				catch (txBase &t) { // don't kick the lobby/game server we are talking to but let it kick the client
 					err->log("%s Recieved invalid vault message from player %d\n", u->str(), vaultMsg.ki);
 					err->log(" Exception details: %s\n",t.what());
 					tmPlayerTerminated term(u, vaultMsg.ki, RParseError);

@@ -322,17 +322,12 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 				}
 				// this part can never be reached on shutdown, so messages are only processed when the server is still fully running
 				if (ret == 0) ret=onMsgRecieved(evt,msg,u);
-				if (ret == 1 && !msg->data->eof() > 0) { // when the packet was processed and there are bytes left, it is obiously invalid, terminate the client (ret = -2, hack attempt, processed below)
+				if (ret == 1 && !msg->data->eof() > 0) { // when the packet was processed and there are bytes left, it is obiously invalid, terminate the client with a parse error
 					err->log("%s Recieved a message 0x%04X (%s) which was too long (%d Bytes remaining after parsing)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data->remaining());
-					ret=-2;
+					ret=-1;
 				}
 			}
-			catch (txOutOfRange &t) { // when there was an out of range error, don't crash the whole server (it would be easy to crash then...) but kick the responsible client
-				err->log("%s Recieved a message 0x%04X (%s) which was too short (error txOutOfRange)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-				err->log(" Exception details: %s\n%s\n",t.what(),t.backtrace());
-				ret=-2;
-			}
-			catch (txProtocolError &t) { // the same for a protocol error
+			catch (txBase &t) { // if there was an error parsing the message, kick the responsible player
 				err->log("%s Recieved invalid 0x%04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
 				err->log(" Exception details: %s\n",t.what());
 				ret=-1;
