@@ -130,18 +130,17 @@ namespace alc {
 		throw txProtocolError(_WHERE("Writing a non-empty SDL is not supported"));
 	}
 	
+	bool tSdlState::operator==(tSdlState &state)
+	{
+		if (obj != state.obj) return false;
+		if (name != state.name) return false;
+		return true;
+	}
+	
 	//// tAgeStateManager
 	tAgeStateManager::tAgeStateManager(tUnet *net)
 	{
 		this->net = net;
-	}
-	
-	void tAgeStateManager::saveSdlState(tUruObject &obj, tMBuf &data)
-	{
-		tSdlState sdl(obj);
-		data.rewind();
-		data.get(sdl);
-		// FIXME: do something
 	}
 	
 	tAgeStateManager::~tAgeStateManager(void)
@@ -149,6 +148,47 @@ namespace alc {
 		for (tCloneList::iterator it = clones.begin(); it != clones.end(); ++it) {
 			delete *it;
 		}
+		for (tSdlList::iterator it = sdlStates.begin(); it != sdlStates.end(); ++it) {
+			delete *it;
+		}
+	}
+	
+	void tAgeStateManager::saveSdlState(tUruObject &obj, tMBuf &data)
+	{
+		tSdlState *sdl = new tSdlState(obj);
+		data.rewind();
+		data.get(*sdl);
+		// check if state is already in list
+		tSdlList::iterator it = findSdlState(sdl);
+		if (it == sdlStates.end())
+			sdlStates.push_back(sdl);
+		else {
+			delete *it;
+			*it = sdl;
+		}
+		
+		// FIXME: make somehow sure that the SDL for a player is also removed when the player leaves
+		// FIXME: Detect version mismatches
+	}
+	
+	tSdlList::iterator tAgeStateManager::findSdlState(tSdlState *state)
+	{
+		for (tSdlList::iterator it = sdlStates.begin(); it != sdlStates.end(); ++it) {
+			if (**it == *state) return it;
+		}
+		return sdlStates.end();
+	}
+	
+	int tAgeStateManager::sendSdlStates(tNetSession *u)
+	{
+		int n = 0;
+		for (tSdlList::iterator it = sdlStates.begin(); it != sdlStates.end(); ++it) {
+			tmSDLState sdlMsg(u, (*it)->obj, true);
+			sdlMsg.sdl.put(**it);
+			net->send(sdlMsg);
+			++n;
+		}
+		return n;
 	}
 	
 	void tAgeStateManager::saveClone(tmLoadClone &clone)
@@ -157,11 +197,11 @@ namespace alc {
 		if (clone.isLoad) {
 			tmLoadClone *savedClone = new tmLoadClone(clone);
 			savedClone->isInitial = true; // it is sent as initial clone later
-			if (it != clones.end()) { // it is already in the list, don't save a duplicate
+			if (it != clones.end()) { // it is already in the list, don't save a duplicate but replace the existing one
 				delete *it;
 				*it = savedClone;
 			}
-			else
+			else // add new clone
 				clones.push_back(savedClone);
 		}
 		else if (it != clones.end()) { // remove clone if it was in list

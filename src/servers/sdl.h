@@ -44,9 +44,11 @@
 namespace alc {
 
 	class tmLoadClone;
+	class tSdlState;
 
 	////DEFINITIONS
 	typedef std::list<tmLoadClone *> tCloneList;
+	typedef std::list<tSdlState *> tSdlList;
 
 	/**
 		If we want to do it well and nice, we should add pre and post conditions here.
@@ -58,8 +60,11 @@ namespace alc {
 		tSdlState(const tSdlState &);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
-	private:
+		
+		bool operator==(tSdlState &state);
+		
 		tUruObject &obj;
+	private:
 		// format
 		bool compress;
 		tUStr name;
@@ -74,11 +79,14 @@ namespace alc {
 		void saveSdlState(tUruObject &obj, tMBuf &data);
 		void saveClone(tmLoadClone &clone);
 		int sendClones(tNetSession *u);
+		int sendSdlStates(tNetSession *u);
 		void writeAgeState(tMBuf *buf);
 	private:
 		tCloneList::iterator findClone(tUruObject &obj);
+		tSdlList::iterator findSdlState(tSdlState *state);
 	
 		tCloneList clones;
+		tSdlList sdlStates;
 		tUnet *net;
 	};
 

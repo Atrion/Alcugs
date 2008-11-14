@@ -234,8 +234,8 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, gameStateRequest.str());
 				
 				int n = ageState->sendClones(u);
+				n += ageState->sendSdlStates(u); // FIXME: take requested pages into account
 				
-				// FIXME: take requested pages into account, send SDL states
 				tmInitialAgeStateSent stateSent(u, n);
 				send(stateSent);
 				

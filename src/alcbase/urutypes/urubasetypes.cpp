@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_URUBASICTYPES_ID "$Id$"
 
-//#define _DBG_LEVEL_ 10
+#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
 
@@ -301,6 +301,7 @@ const Byte *tUruObject::str(void)
 
 bool tUruObject::operator==(tUruObject &obj)
 {
+	DBG(9, "Comparing %s and %s\n", str(), obj.str());
 	if (pageId != obj.pageId) return false;
 	if (pageType != obj.pageType) return false;
 	if (objType != obj.objType) return false;

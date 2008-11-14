@@ -171,7 +171,9 @@ namespace alc {
 	class tmSDLState : public tmMsgBase {
 	public:
 		tmSDLState(tNetSession *u);
+		tmSDLState(tNetSession *u, tUruObject &obj, bool isInitial);
 		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
 		// format
 		tUruObject obj;
 		tMBuf sdl;

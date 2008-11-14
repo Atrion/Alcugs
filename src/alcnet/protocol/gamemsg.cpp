@@ -400,6 +400,11 @@ namespace alc {
 	tmSDLState::tmSDLState(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
+	tmSDLState::tmSDLState(tNetSession *u, tUruObject &obj, bool isInitial) : tmMsgBase(NetMsgSDLState, plNetAck, u), obj(obj)
+	{
+		this->isInitial = isInitial;
+	}
+	
 	void tmSDLState::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
@@ -413,6 +418,14 @@ namespace alc {
 		if (initial == 0x00 || initial == 0x01) isInitial = initial;
 		else
 			throw txProtocolError(_WHERE("NetMsgSDLState.initial must be 0x00 or 0x01 but is 0x%02X", initial));
+	}
+	
+	void tmSDLState::stream(tBBuf &t)
+	{
+		tmMsgBase::stream(t);
+		t.put(obj);
+		t.put(sdl);
+		t.putByte(isInitial);
 	}
 	
 	void tmSDLState::additionalFields()

@@ -92,8 +92,8 @@ public:
 	virtual void stream(tBBuf &t);
 	const Byte *str(void);
 	
-	virtual bool operator==(tUruObject &obj);
-	inline virtual bool operator!=(tUruObject &obj) {
+	bool operator==(tUruObject &obj);
+	inline bool operator!=(tUruObject &obj) {
 		return !(*this == obj);
 	}
 private:
