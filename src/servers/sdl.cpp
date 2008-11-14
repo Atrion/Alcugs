@@ -51,7 +51,13 @@ namespace alc {
 
 	////IMPLEMENTATION
 	//// tSdlState
-	tSdlState::tSdlState(tUruObject &obj) : obj(obj)
+	tSdlState::tSdlState(void)
+	{
+		compress = false;
+		version = 0;
+	}
+	
+	tSdlState::tSdlState(const tUruObject &obj) : obj(obj)
 	{
 		compress = false;
 		version = 0;
@@ -123,14 +129,42 @@ namespace alc {
 		if (!data.size()) {
 			// write an empty SDL
 			t.putU32(0); // real size
-			t.putByte(0); // compression flag
+			t.putByte(0x00); // compression flag
 			t.putU32(0); // sent size
 			return;
 		}
-		throw txProtocolError(_WHERE("Writing a non-empty SDL is not supported"));
+		
+		// it's not yet empty, so we have to write something
+		// first, write the part which might get compressed as we would need it's size then
+		tMBuf buf; // this should be created on the stack to avoid leaks when there's an exception
+		buf.put(name);
+		buf.putU16(version);
+		buf.put(data);
+		
+		if (compress) {
+			t.putU32(buf.size()+2); // uncompressed size (take object flag and SDL magic into account)
+			t.putByte(0x02); // compression flag
+			// compress it
+			tZBuf content;
+			content.put(buf);
+			content.compress();
+			// put sent size and compressed data in buffer
+			t.putU32(content.size()+2);
+			t.putByte(0x00); // object present
+			t.putByte(0x80); // SDL magic number
+			t.put(content);
+		}
+		else {
+			t.putU32(0); // the real size 0 for uncompressed messages
+			t.putByte(0x00); // compression flag
+			t.putU32(buf.size()+2); // sent size
+			t.putByte(0x00); // object present
+			t.putByte(0x80); // SDL magic number
+			t.put(buf);
+		}
 	}
 	
-	bool tSdlState::operator==(tSdlState &state)
+	bool tSdlState::operator==(const tSdlState &state)
 	{
 		if (obj != state.obj) return false;
 		if (name != state.name) return false;
@@ -153,7 +187,7 @@ namespace alc {
 		}
 	}
 	
-	void tAgeStateManager::saveSdlState(tUruObject &obj, tMBuf &data)
+	void tAgeStateManager::saveSdlState(const tUruObject &obj, tMBuf &data)
 	{
 		tSdlState *sdl = new tSdlState(obj);
 		data.rewind();
@@ -163,12 +197,17 @@ namespace alc {
 		if (it == sdlStates.end())
 			sdlStates.push_back(sdl);
 		else {
-			delete *it;
-			*it = sdl;
+			if ((*it)->version > sdl->version) {
+				// don't override the SDL state with a state described in an older version
+				// FIXME: log this and kick the player
+			}
+			else { // it's the same or a newer version, use it
+				delete *it;
+				*it = sdl;
+			}
 		}
 		
 		// FIXME: make somehow sure that the SDL for a player is also removed when the player leaves
-		// FIXME: Detect version mismatches
 	}
 	
 	tSdlList::iterator tAgeStateManager::findSdlState(tSdlState *state)
@@ -191,7 +230,7 @@ namespace alc {
 		return n;
 	}
 	
-	void tAgeStateManager::saveClone(tmLoadClone &clone)
+	void tAgeStateManager::saveClone(const tmLoadClone &clone)
 	{
 		tCloneList::iterator it = findClone(clone.obj);
 		if (clone.isLoad) {
@@ -212,7 +251,7 @@ namespace alc {
 		// FIXME: make somehow sure that the clone for a player is also removed when the player leaves
 	}
 	
-	tCloneList::iterator tAgeStateManager::findClone(tUruObject &obj)
+	tCloneList::iterator tAgeStateManager::findClone(const tUruObject &obj)
 	{
 		for (tCloneList::iterator it = clones.begin(); it != clones.end(); ++it) {
 			if ((*it)->obj == obj) return it;
@@ -233,8 +272,7 @@ namespace alc {
 	
 	void tAgeStateManager::writeAgeState(tMBuf *buf)
 	{
-		tUruObject obj;
-		tSdlState state(obj);
+		tSdlState state;
 		buf->put(state);
 		// FIXME: actually write a useful SDL state
 	}

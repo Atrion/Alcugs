@@ -56,15 +56,15 @@ namespace alc {
 	
 	class tSdlState : public tBaseType {
 	public:
-		tSdlState(tUruObject &obj);
+		tSdlState(void);
+		tSdlState(const tUruObject &obj);
 		tSdlState(const tSdlState &);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		
-		bool operator==(tSdlState &state);
+		bool operator==(const tSdlState &state);
 		
-		tUruObject &obj;
-	private:
+		tUruObject obj;
 		// format
 		bool compress;
 		tUStr name;
@@ -76,13 +76,13 @@ namespace alc {
 	public:
 		tAgeStateManager(tUnet *net);
 		~tAgeStateManager(void);
-		void saveSdlState(tUruObject &obj, tMBuf &data);
-		void saveClone(tmLoadClone &clone);
+		void saveSdlState(const tUruObject &obj, tMBuf &data);
+		void saveClone(const tmLoadClone &clone);
 		int sendClones(tNetSession *u);
 		int sendSdlStates(tNetSession *u);
 		void writeAgeState(tMBuf *buf);
 	private:
-		tCloneList::iterator findClone(tUruObject &obj);
+		tCloneList::iterator findClone(const tUruObject &obj);
 		tSdlList::iterator findSdlState(tSdlState *state);
 	
 		tCloneList clones;
