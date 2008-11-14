@@ -180,7 +180,7 @@ class tMBuf :public tBBuf {
 public:
 	tMBuf();
 	tMBuf(const tMBuf &t);
-	tMBuf(tBBuf &t,U32 start=0,U32 len=0);
+	tMBuf(tBBuf &t);
 	tMBuf(U32 size);
 	virtual ~tMBuf();
 	virtual U32 tell();
@@ -264,7 +264,7 @@ private:
 class tZBuf :public tMBuf {
 public:
 	tZBuf() :tMBuf() {}
-	tZBuf(tMBuf &k,U32 start=0,U32 len=0) :tMBuf(k,start,len) {}
+	tZBuf(tMBuf &k) :tMBuf(k) {}
 	void compress();
 	void uncompress(int iosize=0);
 };
@@ -273,7 +273,7 @@ public:
 class tMD5Buf :public tMBuf {
 public:
 	tMD5Buf() :tMBuf() {}
-	tMD5Buf(tMBuf &k,U32 start=0,U32 len=0) :tMBuf(k,start,len) { this->compute(); }
+	tMD5Buf(tMBuf &k) :tMBuf(k) { this->compute(); }
 	void compute();
 };
 
@@ -282,9 +282,9 @@ class tStrBuf :public tMBuf {
 public:
 	tStrBuf(const void * k);
 	tStrBuf(U32 size=200);
-	tStrBuf(tBBuf &k,U32 start=0,U32 len=0);
-	tStrBuf(tMBuf &k,U32 start=0,U32 len=0);
-	tStrBuf(const tStrBuf &k,U32 start=0,U32 len=0);
+	tStrBuf(tBBuf &k);
+	tStrBuf(tMBuf &k);
+	tStrBuf(const tStrBuf &k);
 	void init();
 	void onmodify();
 	virtual ~tStrBuf();

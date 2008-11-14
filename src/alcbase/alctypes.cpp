@@ -285,14 +285,12 @@ tMBuf::tMBuf() {
 	DBG(9,"tMBuf()\n");
 	this->init();
 }
-tMBuf::tMBuf(tBBuf &t,U32 start,U32 len) {
-	DBG(9,"tMBuf(tBBuf,start:%u,len:%u)\n",start,len);
+tMBuf::tMBuf(tBBuf &t) {
+	DBG(9,"tMBuf(tBBuf)\n");
 	this->init();
 	U32 pos=t.tell();
 	t.rewind();
-	if(start) t.read(start);
-	if(!len) len=t.size()-start;
-	this->write(t.read(),len);
+	this->write(t.read(), t.size());
 	t.set(pos);
 	set(pos);
 }
@@ -582,17 +580,17 @@ tStrBuf::tStrBuf(const void * k) :tMBuf(200) {
 	end();
 }
 tStrBuf::tStrBuf(U32 size) :tMBuf(size) { init(); }
-tStrBuf::tStrBuf(tBBuf &k,U32 start,U32 len) :tMBuf(k,start,len) {
+tStrBuf::tStrBuf(tBBuf &k) :tMBuf(k) {
 	DBG(9,"copy zero\n");
 	init();
 	if(size()) isNull(false);
 }
-tStrBuf::tStrBuf(tMBuf &k,U32 start,U32 len) :tMBuf(k,start,len) { 
+tStrBuf::tStrBuf(tMBuf &k) :tMBuf(k) { 
 	DBG(9,"copy one\n");
 	init(); 
 	if(size()) isNull(false);
 }
-tStrBuf::tStrBuf(const tStrBuf &k,U32 start,U32 len) :tMBuf((tStrBuf &)k,start,len) { 
+tStrBuf::tStrBuf(const tStrBuf &k) :tMBuf(/*(tStrBuf &)*/k) { 
 	DBG(9,"copy two\n");
 	if(this==&k) return;
 	init(); 

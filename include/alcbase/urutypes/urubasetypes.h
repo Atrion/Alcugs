@@ -93,6 +93,9 @@ public:
 	const Byte *str(void);
 	
 	virtual bool operator==(tUruObject &obj);
+	inline virtual bool operator!=(tUruObject &obj) {
+		return !(*this == obj);
+	}
 private:
 	bool hasCloneId;
 	U32 pageId;
