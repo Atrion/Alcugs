@@ -65,16 +65,16 @@ class tBBuf :public tBaseType {
 public:
 	//You must implement the next ones on derived buffer classes, plus the tBaseType ones.
 	//! Gets absolute offset
-	virtual U32 tell()=0;
+	virtual U32 tell() const=0;
 	//! Sets absolute offset
 	virtual void set(U32 pos)=0;
 	//! Write a buffer of size n
 	virtual void write(const Byte * val,U32 n)=0;
-	//virtual void write(SByte * val,U32 n) { this->write((Byte *)val,n); }
+	virtual void write(const SByte * val,U32 n) { this->write((Byte *)val,n); }
 	//! Reads n bytes, if n=0 reads the entire buffer
 	virtual Byte * read(U32 n=0)=0;
 	//!gets buffer size
-	virtual U32 size()=0;
+	virtual U32 size() const=0;
 	//!gets average buffer size (faster than size())
 	virtual U32 avgSize() { return this->size(); }
 	
@@ -96,22 +96,33 @@ public:
 	virtual void check(const char * what,U32 n) {
 		this->check((Byte *)what,n);
 	}
-	virtual void putU16(U16 val);
-	//NOTE: I have already tought about overloading a "put(U16 val)", and I don't want
+	
+	// put and get functions
+	//NOTE: I have already thought about overloading a "put(U16 val)", and I don't want
 	// it, mainly because it can be a little confusing when you are reading the code.
-	virtual void putS16(S16 val);
-	virtual void putU32(U32 val);
-	virtual void putS32(S32 val);
-	virtual void putByte(Byte val);
-	virtual void putSByte(SByte val);
-	virtual void putDouble(double val);
-	virtual U16 getU16();
-	virtual S16 getS16();
-	virtual U32 getU32();
-	virtual S32 getS32();
-	virtual Byte getByte();
-	virtual SByte getSByte();
-	virtual double getDouble();
+	void putU16(U16 val);
+	void putS16(S16 val);
+	void putU32(U32 val);
+	void putS32(S32 val);
+	void putByte(Byte val);
+	void putSByte(SByte val);
+	void putDouble(double val);
+	U16 getU16();
+	S16 getS16();
+	U32 getU32();
+	S32 getS32();
+	Byte getByte();
+	SByte getSByte();
+	double getDouble();
+	/** Puts an object into the buffer (streams the object) \return the amount of written bytes */
+	inline void put(tBaseType &t) {
+		t.stream(*this);
+	}
+	/** Gets an object from the buffer (stores object from stream) */
+	inline void get(tBaseType &t) {
+		t.store(*this);
+	}
+	
 	virtual void copy(tBBuf &t);
 	virtual SByte compare(tBBuf &t);
 	/** \return True if the pointer is at the end of the stream */
@@ -124,11 +135,10 @@ public:
 		return (this->size()-this->tell());
 	}
 	/** \return A pointer to a readonly location with the Ascii representation of the buffer */
-	virtual Byte * hexToAscii();
+	virtual const Byte * hexToAscii();
 	//Overlaoded Operators
 	virtual void operator++(int) { this->seek(+1); }
 	virtual void operator--(int) { this->seek(-1); }
-	//virtual void operator+(tBaseType &t) { this->put(t); }
 	virtual void operator+=(U32 n) { this->seek(+n); }
 	virtual void operator-=(U32 n) { this->seek(-n); }
 	
@@ -139,19 +149,10 @@ public:
 	virtual bool operator>=(tBBuf &t) { return(this->compare(t)<=0); }
 	virtual bool operator<=(tBBuf &t) { return(this->compare(t)>=0); }
 	virtual void operator=(tBBuf &t) { this->copy(t); }
-	
-	/** Puts an object into the buffer (streams the object) \return the amount of written bytes */
-	inline void put(tBaseType &t) {
-		t.stream(*this);
-	}
-	/** Gets an object form the buffer (stores object from stream) */
-	inline void get(tBaseType &t) {
-		t.store(*this);
-	}
 protected:
 	//! Built-in initialization
 	virtual void init();
-	virtual void _pcopy(tBBuf &t);
+	virtual void _pcopy(const tBBuf &t);
 private:
 	Byte * gpbuf;
 };
@@ -183,36 +184,37 @@ public:
 	tMBuf(tBBuf &t);
 	tMBuf(U32 size);
 	virtual ~tMBuf();
-	virtual U32 tell();
+	virtual U32 tell() const;
 	virtual void set(U32 pos);
 	virtual void write(const Byte * val,U32 n);
 	virtual void write(const SByte * val,U32 n) { this->write((Byte *)val,n); }
-	virtual void zeroend(); //!< makes sure there is a zero after the end of the buffer - this zero is NOT counted as part of the buffer!
+	virtual void zeroend(); //!< makes sure there is a zero after the end of the buffer - this zero is NOT counted as part of the buffer size!
 	virtual Byte * read(U32 n=0);
 	virtual void stream(tBBuf &buf);
 	virtual void store(tBBuf &buf);
-	virtual U32 size();
+	virtual U32 size() const;
 	virtual void clear();
-	virtual void copy(tMBuf &t);
-	virtual void operator=(tMBuf &t) { this->copy(t); }
-	virtual Byte getAt(U32 pos);
+	virtual void copy(const tMBuf &t);
+	virtual void operator=(const tMBuf &t) { this->copy(t); }
+	virtual Byte getAt(U32 pos) const;
 	virtual void setAt(U32 pos,const char what);
 	//virtual Byte operator[](U32 pos) { return(this->getAt(pos)); }
 	//virtual void operator[](U32 pos,const char what) { setAt(pos,what); }
 	virtual void setSize(U32 size) {
 		msize=size;
 	}
-	virtual Byte *readAll(void) {
-		rewind();
-		return read();
+	virtual const Byte *readAll(void) const {
+		return buf->buf;
 	}
 protected:
-	virtual void init();
 	virtual void onmodify();
-	virtual void _pcopy(tMBuf &t);
+	virtual void _pcopy(const tMBuf &t);
+	
 	tRefBuf * buf;
 	U32 off;
 	U32 msize; //!< this is the part of the buffer that is actually used, while buf->size() is the currently available size
+private:
+	virtual void init();
 };
 
 /** File buffer */
@@ -220,13 +222,14 @@ class tFBuf :public tBBuf {
 public:
 	tFBuf();
 	virtual ~tFBuf();
-	virtual U32 tell();
+	virtual U32 tell() const;
 	virtual void set(U32 pos);
 	virtual void write(const Byte * val,U32 n);
 	virtual void write(const SByte * val,U32 n) { this->write((Byte *)val,n); }
 	virtual Byte * read(U32 n=0);
 	virtual void stream(tBBuf &buf);
 	virtual void store(tBBuf &buf);
+	virtual U32 size() const;
 	virtual U32 size();
 	virtual void close();
 	virtual void open(const void * path,const void * mode="rb");
@@ -246,14 +249,13 @@ private:
 class tSBuf :public tBBuf {
 public:
 	tSBuf(Byte * buf,U32 msize);
-	virtual U32 tell();
+	virtual U32 tell() const;
 	virtual void set(U32 pos);
 	virtual void write(const Byte * val,U32 n) {}
-	virtual void write(const SByte * val,U32 n) {}
 	virtual Byte * read(U32 n=0);
 	virtual void stream(tBBuf &buf);
 	virtual void store(tBBuf &buf) {}
-	virtual U32 size();
+	virtual U32 size() const;
 private:
 	Byte * buf;
 	U32 off;
@@ -283,10 +285,10 @@ public:
 	tStrBuf(const void * k);
 	tStrBuf(U32 size=200);
 	tStrBuf(tBBuf &k);
-	tStrBuf(tMBuf &k);
+	tStrBuf(const tMBuf &k);
 	tStrBuf(const tStrBuf &k);
-	void init();
-	void onmodify();
+	virtual void init();
+	virtual void onmodify();
 	virtual ~tStrBuf();
 	virtual void rewind();
 	S32 find(const char cat, bool reverse=false);
@@ -355,24 +357,23 @@ public:
 	Byte asByte() { return (Byte)asU32(); }
 	SByte asSByte() { return (SByte)asU32(); }
 	const Byte * c_str();
-	virtual void copy(tStrBuf &t);
 	virtual void copy(const char * str);
-	virtual tStrBuf & operator=(tStrBuf &t) { this->copy(t); return *this; }
-	virtual tStrBuf & operator=(const tStrBuf &t) { this->copy((tStrBuf &)t); return *this; }
-	virtual tStrBuf & operator=(const char * str) { this->copy(str); return *this; }
+	virtual void copy(const tStrBuf &t);
+	virtual tStrBuf & operator=(const tStrBuf &t) { copy(t); return *this; }
+	virtual tStrBuf & operator=(const char * str) { copy(str); return *this; }
 	void setSeparator(char w) { sep=w; }
-	virtual SByte compare(tStrBuf &t);
+	virtual SByte compare(const tStrBuf &t);
 	virtual SByte compare(const char * str);
-	virtual bool operator==(tStrBuf &t) { return(!this->compare(t)); }
-	virtual bool operator!=(tStrBuf &t) { return(this->compare(t)); }
-	virtual bool operator>(tStrBuf &t) { return(this->compare(t)<0); }
-	virtual bool operator<(tStrBuf &t) { return(this->compare(t)>0); }
-	virtual bool operator>=(tStrBuf &t) { return(this->compare(t)<=0); }
-	virtual bool operator<=(tStrBuf &t) { return(this->compare(t)>=0); }
+	virtual bool operator==(const tStrBuf &t) { return(!this->compare(t)); }
+	virtual bool operator!=(const tStrBuf &t) { return(this->compare(t)); }
+	virtual bool operator>(const tStrBuf &t) { return(this->compare(t)<0); }
+	virtual bool operator<(const tStrBuf &t) { return(this->compare(t)>0); }
+	virtual bool operator>=(const tStrBuf &t) { return(this->compare(t)<=0); }
+	virtual bool operator<=(const tStrBuf &t) { return(this->compare(t)>=0); }
 	virtual bool operator==(const char * str) { return(!this->compare(str)); }
 	virtual bool operator!=(const char * str) { return(this->compare(str)); }
 protected:
-	virtual void _pcopy(tStrBuf &t);
+	virtual void _pcopy(const tStrBuf &t);
 private:
 	U16 l,c;
 	char sep;

@@ -235,12 +235,15 @@ void tUStr::store(tBBuf &b) {
 		}
 	}
 }
-void tUStr::copy(tUStr &t)
+void tUStr::copy(const tUStr &t)
 {
+	DBG(9,"tUStr::copy()\n");
+	if(this==&t) return;
 	this->_pcopy(t);
 }
-void tUStr::_pcopy(tUStr &t)
+void tUStr::_pcopy(const tUStr &t)
 {
+	DBG(9, " tUStr::_pcopy()\n");
 	if (&t == this) return;
 	tStrBuf::_pcopy(t);
 	version = t.version;
@@ -299,9 +302,8 @@ const Byte *tUruObject::str(void)
 	return dbg.c_str();
 }
 
-bool tUruObject::operator==(tUruObject &obj)
+bool tUruObject::operator==(const tUruObject &obj)
 {
-	DBG(9, "Comparing %s and %s\n", str(), obj.str());
 	if (pageId != obj.pageId) return false;
 	if (pageType != obj.pageType) return false;
 	if (objType != obj.objType) return false;

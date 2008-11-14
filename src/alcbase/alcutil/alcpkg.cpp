@@ -73,7 +73,7 @@ U32 tPkgFile::size() {
 }
 U32 tPkgFile::avgsize() { return this->size(); }
 void tPkgFile::setName(const void * x) {
-	name=x;
+	name=(char *)x;
 }
 void tPkgFile::setName(const tStrBuf & x) {
 	name=x;

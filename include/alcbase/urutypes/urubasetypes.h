@@ -67,20 +67,19 @@ public:
 	*/
 	tUStr(int mode=1);
 	tUStr(const void *k, int mode = 1);
-	tUStr(tUStr &t) { this->copy(t); }
+	tUStr(const tUStr &t) { copy(t); }
 	virtual void stream(tBBuf &b);
 	virtual void store(tBBuf &b);
-	virtual void copy(tUStr &t);
 	void setVersion(Byte version) { this->version=version; }
 	Byte getVersion(void) { return version; }
+	virtual void copy(const tUStr &t);
 	
-	virtual tUStr & operator=(tUStr &t) { this->copy(t); return *this; }
-	virtual tUStr & operator=(tStrBuf &t) { tStrBuf::copy(t); return *this; }
-	virtual tUStr & operator=(const tStrBuf &t) { tStrBuf::copy((tStrBuf &)t); return *this; }
-	virtual tUStr & operator=(const char * str) { tStrBuf::copy(str); return *this; }
-
+	virtual tUStr & operator=(const tUStr &t) { copy(t); return *this; }
+	virtual tStrBuf & operator=(const tStrBuf &t) { tStrBuf::copy(t); return *this; }
+	virtual tStrBuf & operator=(const char *t) { tStrBuf::copy(t); return *this; }
+	virtual tStrBuf & operator=(const Byte *t) { tStrBuf::copy((char *)t); return *this; }
 private:
-	virtual void _pcopy(tUStr &t);
+	virtual void _pcopy(const tUStr &t);
 	Byte version;
 };
 
@@ -92,8 +91,8 @@ public:
 	virtual void stream(tBBuf &t);
 	const Byte *str(void);
 	
-	bool operator==(tUruObject &obj);
-	inline bool operator!=(tUruObject &obj) {
+	bool operator==(const tUruObject &obj);
+	inline bool operator!=(const tUruObject &obj) {
 		return !(*this == obj);
 	}
 private:

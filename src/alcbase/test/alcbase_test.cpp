@@ -256,12 +256,18 @@ void alctypes_mbuf() {
 	assert(buf3==buf2);
 	
 	buf3=buf1;
-
 	tMBuf * buf4,* buf5, * buf6, *buf7;
 	buf4=new tMBuf();
 	buf5=new tMBuf(buf3);
-	buf6=new tMBuf(buf1,1);
-	buf7=new tMBuf(buf1,5,10);
+	buf6=new tMBuf();
+	U32 oldPos = buf1.tell();
+	buf1.set(1);
+	buf6->write(buf1.read(), buf1.size()-1);
+	buf7=new tMBuf();
+	buf1.set(5);
+	buf7->write(buf1.read(10), 10);
+	buf1.set(oldPos);
+	
 	
 	
 	assert(*buf5==buf1);

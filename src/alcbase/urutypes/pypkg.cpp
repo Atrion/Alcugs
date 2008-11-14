@@ -81,7 +81,7 @@ U32 tPyPkgFile::size() {
 U32 tPyPkgFile::avgsize() { return this->size(); }
 void tPyPkgFile::setName(const void * x) {
 	//printf("assing %s\n",x);
-	name=x;
+	name=(char *)x;
 }
 void tPyPkgFile::setName(const tStrBuf & x) {
 	name=x;
