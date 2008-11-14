@@ -38,19 +38,28 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_SDL_H_ID "$Id$"
 
+#include <list>
+#include <memory>
+
 namespace alc {
 
+	class tmLoadClone;
+
 	////DEFINITIONS
+	typedef std::list<tmLoadClone *> tCloneList;
+
 	/**
 		If we want to do it well and nice, we should add pre and post conditions here.
 	*/
 	
-	class tSdlStruct : public tBaseType {
+	class tSdlState : public tBaseType {
 	public:
-		tSdlStruct(void);
+		tSdlState(tUruObject &obj);
+		tSdlState(const tSdlState &);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 	private:
+		tUruObject &obj;
 		// format
 		bool compress;
 		tUStr name;
@@ -58,10 +67,19 @@ namespace alc {
 		tMBuf data;
 	};
 	
-	class tSdlManager {
+	class tAgeStateManager {
 	public:
-		tSdlManager(void);
+		tAgeStateManager(tUnet *net);
+		~tAgeStateManager(void);
 		void saveSdlState(tUruObject &obj, tMBuf &data);
+		void saveClone(tmLoadClone &clone);
+		int sendClones(tNetSession *u);
+		void writeAgeState(tMBuf *buf);
+	private:
+		tCloneList::iterator findClone(tUruObject &obj);
+	
+		tCloneList clones;
+		tUnet *net;
 	};
 
 } //End alc namespace

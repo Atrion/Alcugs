@@ -95,10 +95,13 @@ namespace alc {
 	class tmLoadClone : public tmGameMessage {
 	public:
 		tmLoadClone(tNetSession *u);
+		tmLoadClone(tNetSession *u, tmLoadClone &msg);
 		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
 		// format
 		tUruObject obj;
 		bool isLoad;
+		bool isInitial;
 	protected:
 		virtual void additionalFields();
 	};
@@ -172,7 +175,7 @@ namespace alc {
 		// format
 		tUruObject obj;
 		tMBuf sdl;
-		bool isInitialAgeState;
+		bool isInitial;
 	protected:
 		virtual void additionalFields();
 	};

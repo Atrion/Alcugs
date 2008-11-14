@@ -129,7 +129,9 @@ public:
 	virtual void store(tBBuf &t)=0;
 	virtual void stream(tBBuf &t)=0;
 	virtual const Byte * str()=0;
+	inline tNetSession *getSession(void) { return u; }
 	Byte bhflags;
+protected:
 	tNetSession * u; //!< associated session (source for incoming, destination for outgoing)
 };
 
@@ -171,7 +173,6 @@ public:
 	void unsetUrgent();
 	U32 getFlags();
 	bool hasFlags(U32 f);
-	inline tNetSession *getSession(void) { return u; }
 	void copyProps(tmMsgBase &t);
 	virtual const Byte * str();
 	

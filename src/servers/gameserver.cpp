@@ -75,13 +75,13 @@ namespace alc {
 		ageInfo = new tAgeInfo(*ageInfoLoader.getAge(serverName)); // get ourselves a copy of it
 		
 		// load SDL Manager
-		sdlMgr = new tSdlManager;
+		ageState = new tAgeStateManager(this);
 	}
 
 	tUnetGameServer::~tUnetGameServer(void)
 	{
 		delete ageInfo;
-		delete sdlMgr;
+		delete ageState;
 	}
 
 	void tUnetGameServer::onConnectionClosed(tNetEvent *ev, tNetSession *u)
@@ -188,7 +188,7 @@ namespace alc {
 		if (ret != 0) return ret; // cancel if it was processed, otherwise it's our turn
 		
 		switch(msg->cmd) {
-			//// message for joining the game
+			//// message for joining the game and for initializing the new client
 			case NetMsgJoinReq:
 			{
 				if (!u->ki) {
@@ -213,8 +213,7 @@ namespace alc {
 				// ok, tell the client he successfully joined
 				u->joined = true;
 				tmJoinAck joinAck(u, joinReq.x);
-				tSdlStruct emptySdl; // FIXME: Send the age state
-				joinAck.sdl.put(emptySdl);
+				ageState->writeAgeState(&joinAck.sdl);
 				send(joinAck);
 				// log the join
 				sec->log("%s joined\n", u->str());
@@ -222,13 +221,65 @@ namespace alc {
 				
 				return 1;
 			}
+			case NetMsgGameStateRequest:
+			{
+				if (!u->joined) {
+					err->log("ERR: %s sent a NetMsgGameStateRequest but did not yet join the game. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmGameStateRequest gameStateRequest(u);
+				msg->data->get(gameStateRequest);
+				log->log("<RCV> [%d] %s\n", msg->sn, gameStateRequest.str());
+				
+				int n = ageState->sendClones(u);
+				
+				// FIXME: take requested pages into account, send SDL states
+				tmInitialAgeStateSent stateSent(u, n);
+				send(stateSent);
+				
+				return 1;
+			}
+			case NetMsgMembersListReq:
+			{
+				if (!u->joined) {
+					err->log("ERR: %s sent a NetMsgMembersListReq but did not yet join the game. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmMembersListReq membersListReq(u);
+				msg->data->get(membersListReq);
+				log->log("<RCV> [%d] %s\n", msg->sn, membersListReq.str());
+				
+				// FIXME: do something
+				return 1;
+			}
+			case NetMsgPagingRoom:
+			{
+				if (!u->joined) {
+					err->log("ERR: %s sent a NetMsgPagingRoom but did not yet join the game. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmPagingRoom pagingRoom(u);
+				msg->data->get(pagingRoom);
+				log->log("<RCV> [%d] %s\n", msg->sn, pagingRoom.str());
+				
+				// FIXME: do something
+				return 1;
+			}
 			
 			//// game messages
 			case NetMsgGameMessage:
 			{
 				if (!u->joined) {
-					err->log("ERR: %s sent a NetMsgGameMessage but did not yet join the game. I\'ll kick him.\n", u->str());
-					return -2; // hack attempt
+					err->log("ERR: %s sent a NetMsgGameMessage but did not yet join the game - ignore it.\n", u->str());
+					// even the normal client sometimes does this, I donÄt know why, so just ignore this message
+					msg->data->end(); // avoid a warning because the message was too long
+					return 1;
 				}
 				
 				// get the data out of the packet
@@ -307,25 +358,7 @@ namespace alc {
 				return 1;
 			}
 			
-			//// SDL and object state messages
-			case NetMsgGameStateRequest:
-			{
-				if (!u->joined) {
-					err->log("ERR: %s sent a NetMsgGameStateRequest but did not yet join the game. I\'ll kick him.\n", u->str());
-					return -2; // hack attempt
-				}
-				
-				// get the data out of the packet
-				tmGameStateRequest gameStateRequest(u);
-				msg->data->get(gameStateRequest);
-				log->log("<RCV> [%d] %s\n", msg->sn, gameStateRequest.str());
-				
-				// FIXME: take requested pages into account, send SDL states
-				tmInitialAgeStateSent stateSent(u, 0);
-				send(stateSent);
-				
-				return 1;
-			}
+			//// SDL and age state messages
 			case NetMsgSDLState:
 			{
 				if (!u->joined) {
@@ -339,7 +372,7 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, SDLState.str());
 				
 				// save SDL state
-				sdlMgr->saveSdlState(SDLState.obj, SDLState.sdl);
+				ageState->saveSdlState(SDLState.obj, SDLState.sdl);
 				
 				// NetMsgSDLState sometimes has the bcast falg set and NetMsgSDLStateBCast sometimes doesn't.
 				// I assume the message type is correct and the flag not.
@@ -359,7 +392,7 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, SDLStateBCast.str());
 				
 				// save SDL state
-				sdlMgr->saveSdlState(SDLStateBCast.obj, SDLStateBCast.sdl);
+				ageState->saveSdlState(SDLStateBCast.obj, SDLStateBCast.sdl);
 				
 				// NetMsgSDLState sometimes has the bcast falg set and NetMsgSDLStateBCast sometimes doesn't.
 				// I assume the message type is correct and the flag not.
@@ -375,57 +408,6 @@ namespace alc {
 				}
 				return 1;
 			}
-			
-			//// page and group owner messages
-			case NetMsgPagingRoom:
-			{
-				if (!u->joined) {
-					err->log("ERR: %s sent a NetMsgPagingRoom but did not yet join the game. I\'ll kick him.\n", u->str());
-					return -2; // hack attempt
-				}
-				
-				// get the data out of the packet
-				tmPagingRoom pagingRoom(u);
-				msg->data->get(pagingRoom);
-				log->log("<RCV> [%d] %s\n", msg->sn, pagingRoom.str());
-				
-				// FIXME: do something
-				return 1;
-			}
-			
-			//// member list messages
-			case NetMsgMembersListReq:
-			{
-				if (!u->joined) {
-					err->log("ERR: %s sent a NetMsgMembersListReq but did not yet join the game. I\'ll kick him.\n", u->str());
-					return -2; // hack attempt
-				}
-				
-				// get the data out of the packet
-				tmMembersListReq membersListReq(u);
-				msg->data->get(membersListReq);
-				log->log("<RCV> [%d] %s\n", msg->sn, membersListReq.str());
-				
-				// FIXME: do something
-				return 1;
-			}
-			
-			//// unknown purpose messages (FIXME: but these somewhere)
-			case NetMsgPlayerPage:
-			{
-				if (!u->joined) {
-					err->log("ERR: %s sent a NetMsgPlayerPage but did not yet join the game. I\'ll kick him.\n", u->str());
-					return -2; // hack attempt
-				}
-				
-				// get the data out of the packet
-				tmPlayerPage playerPage(u);
-				msg->data->get(playerPage);
-				log->log("<RCV> [%d] %s\n", msg->sn, playerPage.str());
-				
-				// FIXME: do something
-				return 1;
-			}
 			case NetMsgLoadClone:
 			{
 				if (!u->joined) {
@@ -437,6 +419,36 @@ namespace alc {
 				tmLoadClone loadClone(u);
 				msg->data->get(loadClone);
 				log->log("<RCV> [%d] %s\n", msg->sn, loadClone.str());
+				
+				ageState->saveClone(loadClone);
+				
+				// broadcast message
+				tNetSession *session;
+				smgr->rewind();
+				while ((session = smgr->getNext())) {
+					if (session->joined && session->ki != loadClone.ki) {
+						tmLoadClone fwdMsg(session, loadClone);
+						send(fwdMsg);
+					}
+				}
+				
+				// FIXME: The unet2 game server does this completely different
+				
+				return 1;
+			}
+			
+			//// unknown purpose messages (FIXME: put these somewhere)
+			case NetMsgPlayerPage:
+			{
+				if (!u->joined) {
+					err->log("ERR: %s sent a NetMsgPlayerPage but did not yet join the game. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmPlayerPage playerPage(u);
+				msg->data->get(playerPage);
+				log->log("<RCV> [%d] %s\n", msg->sn, playerPage.str());
 				
 				// FIXME: do something
 				return 1;

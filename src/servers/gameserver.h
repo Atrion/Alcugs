@@ -63,7 +63,7 @@ namespace alc {
 		Byte fwdDirectedGameMsg(tmGameMessageDirected &msg);
 	
 		tAgeInfo *ageInfo;
-		tSdlManager *sdlMgr;
+		tAgeStateManager *ageState;
 		
 		U32 lastPlayerLeft;
 	};

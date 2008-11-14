@@ -175,6 +175,13 @@ namespace alc {
 	tmLoadClone::tmLoadClone(tNetSession *u) : tmGameMessage(u)
 	{ }
 	
+	tmLoadClone::tmLoadClone(tNetSession *u, tmLoadClone &msg)
+	 : tmGameMessage(NetMsgLoadClone, plNetAck | plNetKi, u, msg), obj(msg.obj)
+	{
+		isLoad = msg.isLoad;
+		isInitial = msg.isInitial;
+	}
+	
 	void tmLoadClone::store(tBBuf &t)
 	{
 		tmGameMessage::store(t);
@@ -189,16 +196,26 @@ namespace alc {
 		
 		Byte unk = t.getByte();
 		if (unk != 0x01)
-			throw txProtocolError(_WHERE("Unexpected NetMsgLoadClone.unk1 of 0x%02X (should be 0x01)", unk));
+			throw txProtocolError(_WHERE("Unexpected NetMsgLoadClone.unk of 0x%02X (should be 0x01)", unk));
 		
 		Byte load = t.getByte();
 		if (load != 0x00 && load != 0x01)
 			throw txProtocolError(_WHERE("Unexpected NetMsgLoadClone.load of 0x%02X (should be 0x00 or 0x01)", load));
 		isLoad = load;
 		
-		unk = t.getByte();
-		if (unk != 0x00) // this seems to be "initial", but I couldn't yet find an example where it is not 0
-			throw txProtocolError(_WHERE("Unexpected NetMsgLoadClone.unk2 of 0x%02X (should be 0x00)", unk));
+		Byte initial = t.getByte();
+		if (initial != 0x00 && initial != 0x01)
+			throw txProtocolError(_WHERE("Unexpected NetMsgLoadClone.initial of 0x%02X (should be 0x00 or 0x01)", initial));
+		isInitial = initial;
+	}
+	
+	void tmLoadClone::stream(tBBuf &t)
+	{
+		tmGameMessage::stream(t);
+		t.put(obj);
+		t.putByte(0x01);
+		t.putByte(isLoad);
+		t.putByte(isInitial);
 	}
 	
 	void tmLoadClone::additionalFields()
@@ -207,6 +224,9 @@ namespace alc {
 		dbg.printf(" Object reference: [%s], load: ", obj.str());
 		if (isLoad) dbg.printf("yes");
 		else        dbg.printf("no");
+		dbg.printf(", is initial age state: ");
+		if (isInitial) dbg.printf("yes");
+		else           dbg.printf("no");
 	}
 	
 	//// tmPagingRoom
@@ -389,18 +409,18 @@ namespace alc {
 		sdl.clear();
 		U32 sdlSize = t.remaining()-1;
 		sdl.write(t.read(sdlSize), sdlSize);
-		Byte flag = t.getByte();
-		if (flag == 0x00 || flag == 0x01) isInitialAgeState = flag;
+		Byte initial = t.getByte();
+		if (initial == 0x00 || initial == 0x01) isInitial = initial;
 		else
-			throw txProtocolError(_WHERE("NetMsgSDLState.flag must be 0x00 or 0x01 but is 0x%02X", flag));
+			throw txProtocolError(_WHERE("NetMsgSDLState.initial must be 0x00 or 0x01 but is 0x%02X", initial));
 	}
 	
 	void tmSDLState::additionalFields()
 	{
 		dbg.nl();
 		dbg.printf(" Object reference: [%s], is initial age state: ", obj.str());
-		if (isInitialAgeState) dbg.printf("yes");
-		else                   dbg.printf("no");
+		if (isInitial) dbg.printf("yes");
+		else           dbg.printf("no");
 	}
 	
 	//// tmSDLStateBCast

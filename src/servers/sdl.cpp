@@ -40,6 +40,7 @@
 
 #include <alcugs.h>
 #include <alcnet.h>
+#include <protocol/gamemsg.h>
 
 ////extra includes
 #include "sdl.h"
@@ -49,14 +50,21 @@
 namespace alc {
 
 	////IMPLEMENTATION
-	//// tSdlStruct
-	tSdlStruct::tSdlStruct(void)
+	//// tSdlState
+	tSdlState::tSdlState(tUruObject &obj) : obj(obj)
 	{
 		compress = false;
 		version = 0;
 	}
 	
-	void tSdlStruct::store(tBBuf &t)
+	tSdlState::tSdlState(const tSdlState &state) : obj(state.obj), data(state.data)
+	{
+		name = state.name;
+		compress = state.compress;
+		version = state.version;
+	}
+	
+	void tSdlState::store(tBBuf &t)
 	{
 		data.clear();
 	
@@ -94,7 +102,7 @@ namespace alc {
 			version = buf->getU16();
 			DBG(5, "Got SDL message of type %s, version %d\n", name.c_str(), version);
 			
-			// get SDL binary
+			// get SDL binary. FIXME: parse it
 			U32 dataSize = dataEnd - buf->tell();
 			data.write(buf->read(dataSize), dataSize);
 			
@@ -110,7 +118,7 @@ namespace alc {
 		if (!t.eof()) throw txProtocolError(_WHERE("The SDL struct is too long (%d Bytes remaining after parsing)", t.remaining()));
 	}
 	
-	void tSdlStruct::stream(tBBuf &t)
+	void tSdlState::stream(tBBuf &t)
 	{
 		if (!data.size()) {
 			// write an empty SDL
@@ -122,16 +130,73 @@ namespace alc {
 		throw txProtocolError(_WHERE("Writing a non-empty SDL is not supported"));
 	}
 	
-	//// tSdlManager
-	tSdlManager::tSdlManager(void)
-	{ }
-	
-	void tSdlManager::saveSdlState(tUruObject &obj, tMBuf &data)
+	//// tAgeStateManager
+	tAgeStateManager::tAgeStateManager(tUnet *net)
 	{
-		tSdlStruct sdl;
+		this->net = net;
+	}
+	
+	void tAgeStateManager::saveSdlState(tUruObject &obj, tMBuf &data)
+	{
+		tSdlState sdl(obj);
 		data.rewind();
 		data.get(sdl);
 		// FIXME: do something
+	}
+	
+	tAgeStateManager::~tAgeStateManager(void)
+	{
+		for (tCloneList::iterator it = clones.begin(); it != clones.end(); ++it) {
+			delete *it;
+		}
+	}
+	
+	void tAgeStateManager::saveClone(tmLoadClone &clone)
+	{
+		tCloneList::iterator it = findClone(clone.obj);
+		if (clone.isLoad) {
+			tmLoadClone *savedClone = new tmLoadClone(clone);
+			savedClone->isInitial = true; // it is sent as initial clone later
+			if (it != clones.end()) { // it is already in the list, don't save a duplicate
+				delete *it;
+				*it = savedClone;
+			}
+			else
+				clones.push_back(savedClone);
+		}
+		else if (it != clones.end()) { // remove clone if it was in list
+			delete *it;
+			clones.erase(it);
+		}
+		
+		// FIXME: make somehow sure that the clone for a player is also removed when the player leaves
+	}
+	
+	tCloneList::iterator tAgeStateManager::findClone(tUruObject &obj)
+	{
+		for (tCloneList::iterator it = clones.begin(); it != clones.end(); ++it) {
+			if ((*it)->obj == obj) return it;
+		}
+		return clones.end();
+	}
+	
+	int tAgeStateManager::sendClones(tNetSession *u)
+	{
+		int n = 0;
+		for (tCloneList::iterator it = clones.begin(); it != clones.end(); ++it) {
+			tmLoadClone cloneMsg(u, **it);
+			net->send(cloneMsg);
+			++n;
+		}
+		return n;
+	}
+	
+	void tAgeStateManager::writeAgeState(tMBuf *buf)
+	{
+		tUruObject obj;
+		tSdlState state(obj);
+		buf->put(state);
+		// FIXME: actually write a useful SDL state
 	}
 
 } //end namespace alc

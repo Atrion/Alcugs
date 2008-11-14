@@ -298,6 +298,17 @@ const Byte *tUruObject::str(void)
 		dbg.printf(", Clone Player ID: %d", clonePlayerId);
 	return dbg.c_str();
 }
+
+bool tUruObject::operator==(tUruObject &obj)
+{
+	if (pageId != obj.pageId) return false;
+	if (pageType != obj.pageType) return false;
+	if (objType != obj.objType) return false;
+	if (objName != obj.objName) return false;
+	if (hasCloneId != obj.hasCloneId) return false;
+	if (clonePlayerId != obj.clonePlayerId) return false;
+	return true;
+}
 /* end tUruObject */
 
 } //end namespace alc

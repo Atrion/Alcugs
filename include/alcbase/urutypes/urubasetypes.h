@@ -91,6 +91,8 @@ public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t);
 	const Byte *str(void);
+	
+	virtual bool operator==(tUruObject &obj);
 private:
 	bool hasCloneId;
 	U32 pageId;
