@@ -150,7 +150,7 @@ namespace alc {
 			tNetSessionIte session;
 		};
 		int nVmgrs;
-		tVmgr **vmgrs;
+		tVmgr **vmgrs; // FIXME: use STL container
 	};
 
 

@@ -94,7 +94,7 @@ namespace alc {
 		
 		tCloneList::iterator findClone(const tUruObject &obj);
 		tSdlList::iterator findSdlState(tSdlBinary *state);
-		void removeSDLStates(U32 ki);
+		void removeSDLStates(U32 ki, U32 cloneId = 0);
 	
 		tCloneList clones;
 		tSdlList sdlStates;

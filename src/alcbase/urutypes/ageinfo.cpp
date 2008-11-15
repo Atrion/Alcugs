@@ -150,10 +150,10 @@ namespace alc {
 			
 			char filename[200];
 			sprintf(filename, "%s.age", name);
-			// grow the array
-			++size;
-			ages = (tAgeInfo **)realloc(ages, size*sizeof(tAgeInfo*));
-			ages[size-1] = new tAgeInfo((char *)dir.c_str(), filename, loadPages);
+			// initialize the array
+			size = 1;
+			ages = (tAgeInfo **)malloc(sizeof(tAgeInfo*));
+			ages[0] = new tAgeInfo((char *)dir.c_str(), filename, loadPages);
 		}
 	}
 	

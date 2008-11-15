@@ -21,6 +21,11 @@ logfilter(){
 		echo "Vault log:"
 		grep -Ehi "$1" vault.4.log vault.3.log vault.2.log vault.1.log vault.log
 	fi
+	if [ -f agestate.log ]; then
+		echo
+		echo "Age state log:"
+		grep -Ehi "$1" agestate.4.log agestate.3.log agestate.2.log agestate.1.log agestate.log
+	fi
 }
 
 oldPwd="`pwd`"

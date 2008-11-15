@@ -48,6 +48,11 @@ namespace alc {
 	/**
 		If we want to do it well and nice, we should add pre and post conditions here.
 	*/
+	class tGameData : public tNetSessionData {
+	public:
+		tGameData(const tUruObject &obj) : obj(obj) { }
+		tUruObject obj;
+	};
 
 	class tUnetGameServer : public tUnetLobbyServerBase {
 	public:

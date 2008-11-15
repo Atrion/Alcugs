@@ -257,7 +257,7 @@ tUruObject::tUruObject(void) : tBaseType()
 	pageId = 0;
 	pageType = objType = 0;
 	objName.setVersion(5); // inverted UrurString
-	clonePlayerId = 0;
+	cloneId = clonePlayerId = 0;
 }
 
 void tUruObject::store(tBBuf &t)
@@ -273,9 +273,7 @@ void tUruObject::store(tBBuf &t)
 	
 	// if contained, read the client ID
 	if (hasCloneId) {
-		U32 cloneId = t.getU32(); // don't save it until we find an example that is different than 1
-		if (cloneId != 1)
-			throw txUnexpectedData(_WHERE("The clone ID must always be 1, not %d", cloneId));
+		cloneId = t.getU32();
 		clonePlayerId = t.getU32();
 	}
 }
@@ -288,7 +286,7 @@ void tUruObject::stream(tBBuf &t)
 	t.putU16(objType);
 	t.put(objName);
 	if (hasCloneId) {
-		t.putU32(1); // the clone ID
+		t.putU32(cloneId);
 		t.putU32(clonePlayerId);
 	}
 }
@@ -298,7 +296,7 @@ const Byte *tUruObject::str(void)
 	dbg.clear();
 	dbg.printf("Page ID: 0x%08X, Page Type: 0x%04X, Object: [0x%04X]%s", pageId, pageType, objType, objName.c_str());
 	if (hasCloneId)
-		dbg.printf(", Clone Player ID: %d", clonePlayerId);
+		dbg.printf(", Clone ID: %d, Clone Player ID: %d", cloneId, clonePlayerId);
 	return dbg.c_str();
 }
 
@@ -309,6 +307,7 @@ bool tUruObject::operator==(const tUruObject &obj)
 	if (objType != obj.objType) return false;
 	if (objName != obj.objName) return false;
 	if (hasCloneId != obj.hasCloneId) return false;
+	if (cloneId != obj.cloneId) return false;
 	if (clonePlayerId != obj.clonePlayerId) return false;
 	return true;
 }

@@ -76,7 +76,7 @@ namespace alc {
 		tAgeInfo *getAge(const Byte *name);
 	private:
 		int size;
-		tAgeInfo **ages;
+		tAgeInfo **ages; // FIXME: use STL container
 	};
 
 } //End alc namespace

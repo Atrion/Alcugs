@@ -101,6 +101,7 @@ public:
 	U16 pageType;
 	U16 objType;
 	tUStr objName;
+	U32 cloneId;
 	U32 clonePlayerId;
 private:
 	tStrBuf dbg;

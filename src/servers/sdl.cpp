@@ -195,6 +195,8 @@ namespace alc {
 		for (tSdlList::iterator it = sdlStates.begin(); it != sdlStates.end(); ++it) {
 			delete *it;
 		}
+		
+		// FIXME: Set up default AgeSDLHook
 	}
 	
 	void tAgeStateManager::load(void)
@@ -224,9 +226,9 @@ namespace alc {
 		// check for that player in the clone list
 		tCloneList::iterator it = clones.begin();
 		while (it != clones.end()) {
-			if ((*it)->obj.clonePlayerId == ki) {
+			if ((*it)->obj.clonePlayerId == ki) { // that clone is dead now, remov it and all of it's SDL states
 				log->log("Removing Clone [%s] as it belongs to player with KI %d who just left us\n", (*it)->obj.str(), ki);
-				// FIXME: Somehow tell the rest of the clients that this one left. Just sending the load message again with isLaod set to 0 doesn't work
+				// FIXME: Somehow tell the rest of the clients that this one left. Just sending the load message again with isLaod set to 0 doesn't seem to work
 				// remove states from our list
 				removeSDLStates((*it)->obj.clonePlayerId);
 				delete *it;
@@ -259,8 +261,6 @@ namespace alc {
 				*it = sdl;
 			}
 		}
-		
-		// FIXME: make somehow sure that the SDL for a player is also removed when the player leaves
 	}
 	
 	tSdlList::iterator tAgeStateManager::findSdlState(tSdlBinary *state)
@@ -284,11 +284,12 @@ namespace alc {
 		return n;
 	}
 	
-	void tAgeStateManager::removeSDLStates(U32 ki)
+	void tAgeStateManager::removeSDLStates(U32 ki, U32 cloneId)
 	{
+		// remove all SDL states which belong the the object with the clonePlayerId which was passed
 		tSdlList::iterator it = sdlStates.begin();
 		while (it != sdlStates.end()) {
-			if ((*it)->obj.hasCloneId && (*it)->obj.clonePlayerId == ki) {
+			if ((*it)->obj.hasCloneId && (*it)->obj.clonePlayerId == ki && (cloneId == 0 || (*it)->obj.cloneId == cloneId)) {
 				log->log("Removing %s because Clone was removed\n", (*it)->str());
 				delete *it;
 				sdlStates.erase(it++);
@@ -316,12 +317,10 @@ namespace alc {
 		}
 		else if (it != clones.end()) { // remove clone if it was in list
 			log->log("Removing Clone [%s]\n", (*it)->obj.str());
-			removeSDLStates((*it)->obj.clonePlayerId);
+			removeSDLStates((*it)->obj.clonePlayerId, (*it)->obj.cloneId);
 			delete *it;
 			clones.erase(it);
 		}
-		
-		// FIXME: make somehow sure that the clone for a player is also removed when the player leaves
 	}
 	
 	tCloneList::iterator tAgeStateManager::findClone(const tUruObject &obj)
@@ -346,9 +345,22 @@ namespace alc {
 	
 	void tAgeStateManager::writeAgeState(tMBuf *buf)
 	{
-		tSdlBinary state;
-		buf->put(state);
-		// FIXME: actually write a useful SDL state
+		// look for the AgeSDLHook
+		tSdlBinary *sdlHook = NULL;
+		for (tSdlList::iterator it = sdlStates.begin(); it != sdlStates.end(); ++it) {
+			if ((*it)->obj.objName == "AgeSDLHook") {
+				if (sdlHook) log->log("ERR: Two SDL Hooks found!\n");
+				sdlHook = *it;
+			}
+		}
+		if (sdlHook) { // found it - send it
+			buf->put(*sdlHook);
+		}
+		else {
+			log->log("No SDL hook found, send empty SDL\n");
+			tSdlBinary state;
+			buf->put(state);
+		}
 	}
 
 } //end namespace alc

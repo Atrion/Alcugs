@@ -148,6 +148,16 @@ namespace alc {
 			
 			// remove leftovers of this player from the age state
 			ageState->removePlayer(u->ki);
+			
+			// remove player from player list if he is still on there
+			if (u->data) {
+				delete u->data;
+				u->data = NULL;
+				// FIXME: send members list update
+			}
+			
+			// this player is no longer joined
+			u->joined = false;
 		}
 	
 		tUnetLobbyServerBase::terminate(u, reason, destroyOnly); // do the lobbybase terminate procedure
@@ -256,7 +266,35 @@ namespace alc {
 				msg->data->get(membersListReq);
 				log->log("<RCV> [%d] %s\n", msg->sn, membersListReq.str());
 				
-				// FIXME: do something
+				// FIXME: send members list
+				return 1;
+			}
+			case NetMsgPlayerPage:
+			{
+				if (!u->joined) {
+					err->log("ERR: %s sent a NetMsgPlayerPage but did not yet join the game. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmPlayerPage playerPage(u);
+				msg->data->get(playerPage);
+				log->log("<RCV> [%d] %s\n", msg->sn, playerPage.str());
+				
+				if (playerPage.isPageOut) {
+					if (u->data) {
+						delete u->data;
+						u->data = NULL;
+					}
+					// FIXME: send members list update
+				}
+				else {
+					// the player paged in
+					if (u->data) ((tGameData *)u->data)->obj = playerPage.obj;
+					else u->data = new tGameData(playerPage.obj);
+					// FIXME: send members list update
+				}
+				
 				return 1;
 			}
 			case NetMsgPagingRoom:
@@ -437,22 +475,7 @@ namespace alc {
 				return 1;
 			}
 			
-			//// unknown purpose messages (FIXME: put these somewhere)
-			case NetMsgPlayerPage:
-			{
-				if (!u->joined) {
-					err->log("ERR: %s sent a NetMsgPlayerPage but did not yet join the game. I\'ll kick him.\n", u->str());
-					return -2; // hack attempt
-				}
-				
-				// get the data out of the packet
-				tmPlayerPage playerPage(u);
-				msg->data->get(playerPage);
-				log->log("<RCV> [%d] %s\n", msg->sn, playerPage.str());
-				
-				// FIXME: do something
-				return 1;
-			}
+			//// unknown purpose messages
 			case NetMsgTestAndSet:
 			{
 				if (!u->joined) {
@@ -465,7 +488,7 @@ namespace alc {
 				msg->data->get(testAndSet);
 				log->log("<RCV> [%d] %s\n", msg->sn, testAndSet.str());
 				
-				// if required, send a reply
+				// if required, send a reply - this is simply copied from the old game server, don't ask me what it means
 				if (testAndSet.lockReq) {
 					tmGameMessage msg(u, u->ki);
 					// build the game message
@@ -497,8 +520,7 @@ namespace alc {
 				tmRelevanceRegions relevanceRegions(u);
 				msg->data->get(relevanceRegions);
 				log->log("<RCV> [%d] %s\n", msg->sn, relevanceRegions.str());
-				
-				// FIXME: do something
+				// I have no clue what this message is supposed to do, and things work without reacting to it
 				return 1;
 			}
 			case NetMsgSetTimeout:
@@ -513,8 +535,8 @@ namespace alc {
 				tmSetTimeout setTimeout(u);
 				msg->data->get(setTimeout);
 				log->log("<RCV> [%d] %s\n", msg->sn, setTimeout.str());
-				
-				// FIXME: do something
+				// I have no clue what this message is supposed to do (well, it obviously should somehow set the timeout, but neither
+				// do I know how 0x43340000 should be 180sec nor is that a useful timeout). Things work without reacting to it.
 				return 1;
 			}
 		}

@@ -114,7 +114,7 @@ namespace alc {
 		void generateFakeGuid(Byte *guid); //!< generates a random 7 bytes fake guid for UruVision
 	
 		int size, count;
-		tPlayer **players;
+		tPlayer **players; // FIXME: use STL container
 		tUnet *net;
 		tNetSessionList *servers;
 		tLog *log;
