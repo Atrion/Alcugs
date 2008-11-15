@@ -34,7 +34,7 @@
 */
 
 /* CVS tag - DON'T TOUCH*/
-#define __U_GAMESERVER_ID "$Id$"
+#define __U_SDL_ID "$Id$"
 
 #define _DBG_LEVEL_ 10
 
@@ -171,14 +171,24 @@ namespace alc {
 		return true;
 	}
 	
+	const Byte *tSdlBinary::str(void)
+	{
+		dbg.clear();
+		dbg.printf("SDL State for [%s]: %s (version %d)", obj.str(), name.c_str(), version);
+		return dbg.c_str();
+	}
+	
 	//// tAgeStateManager
 	tAgeStateManager::tAgeStateManager(tUnet *net)
 	{
 		this->net = net;
+		log = lnull;
+		load();
 	}
 	
 	tAgeStateManager::~tAgeStateManager(void)
 	{
+		unload();
 		for (tCloneList::iterator it = clones.begin(); it != clones.end(); ++it) {
 			delete *it;
 		}
@@ -187,12 +197,35 @@ namespace alc {
 		}
 	}
 	
+	void tAgeStateManager::load(void)
+	{
+		if (log == lnull) {
+			log = new tLog("agestate.log", 4, 0);
+			log->log("AgeState backend started (%s)\n", __U_SDL_ID);
+		}
+	}
+	
+	void tAgeStateManager::unload(void)
+	{
+		if (log != lnull) {
+			delete log;
+			log = lnull;
+		}
+	}
+	
+	void tAgeStateManager::reload(void)
+	{
+		unload();
+		load();
+	}
+	
 	void tAgeStateManager::removePlayer(U32 ki)
 	{
 		// check for that player in the clone list
 		tCloneList::iterator it = clones.begin();
 		while (it != clones.end()) {
 			if ((*it)->obj.clonePlayerId == ki) {
+				log->log("Removing Clone [%s] as it belongs to player with KI %d who just left us\n", (*it)->obj.str(), ki);
 				// FIXME: Somehow tell the rest of the clients that this one left. Just sending the load message again with isLaod set to 0 doesn't work
 				// remove states from our list
 				removeSDLStates((*it)->obj.clonePlayerId);
@@ -211,14 +244,17 @@ namespace alc {
 		data.get(*sdl);
 		// check if state is already in list
 		tSdlList::iterator it = findSdlState(sdl);
-		if (it == sdlStates.end())
+		if (it == sdlStates.end()) {
+			log->log("Adding %s\n", sdl->str());
 			sdlStates.push_back(sdl);
+		}
 		else {
 			if ((*it)->version > sdl->version) {
 				// don't override the SDL state with a state described in an older version
-				// FIXME: log this and kick the player
+				throw txProtocolError(_WHERE("SDL version mismatch: %s should be downgraded to %s", (*it)->str(), sdl->str()));
 			}
 			else { // it's the same or a newer version, use it
+				log->log("Updating %s\n", sdl->str());
 				delete *it;
 				*it = sdl;
 			}
@@ -244,6 +280,7 @@ namespace alc {
 			net->send(sdlMsg);
 			++n;
 		}
+		log->log("Sent %d SDLState messages to %s\n", n, u->str());
 		return n;
 	}
 	
@@ -252,6 +289,7 @@ namespace alc {
 		tSdlList::iterator it = sdlStates.begin();
 		while (it != sdlStates.end()) {
 			if ((*it)->obj.hasCloneId && (*it)->obj.clonePlayerId == ki) {
+				log->log("Removing %s because Clone was removed\n", (*it)->str());
 				delete *it;
 				sdlStates.erase(it++);
 			}
@@ -267,13 +305,17 @@ namespace alc {
 			tmLoadClone *savedClone = new tmLoadClone(clone);
 			savedClone->isInitial = true; // it is sent as initial clone later
 			if (it != clones.end()) { // it is already in the list, don't save a duplicate but replace the existing one
+				log->log("Updating Clone [%s]\n", savedClone->obj.str());
 				delete *it;
 				*it = savedClone;
 			}
-			else // add new clone
+			else { // add new clone
+				log->log("Adding Clone [%s]\n", savedClone->obj.str());
 				clones.push_back(savedClone);
+			}
 		}
 		else if (it != clones.end()) { // remove clone if it was in list
+			log->log("Removing Clone [%s]\n", (*it)->obj.str());
 			removeSDLStates((*it)->obj.clonePlayerId);
 			delete *it;
 			clones.erase(it);
@@ -298,6 +340,7 @@ namespace alc {
 			net->send(cloneMsg);
 			++n;
 		}
+		log->log("Sent %d LoadClone messages to %s\n", n, u->str());
 		return n;
 	}
 	

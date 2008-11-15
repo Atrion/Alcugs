@@ -62,6 +62,7 @@ namespace alc {
 		tSdlBinary(const tSdlBinary &);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
+		const Byte *str(void);
 		
 		bool operator==(const tSdlBinary &state);
 		
@@ -71,12 +72,16 @@ namespace alc {
 		tUStr name;
 		U16 version;
 		tMBuf data;
+	private:
+		tStrBuf dbg;
 	};
 	
 	class tAgeStateManager {
 	public:
 		tAgeStateManager(tUnet *net);
 		~tAgeStateManager(void);
+		void reload(void);
+		
 		void saveSdlState(const tUruObject &obj, tMBuf &data);
 		void saveClone(const tmLoadClone &clone);
 		int sendClones(tNetSession *u);
@@ -84,6 +89,9 @@ namespace alc {
 		void writeAgeState(tMBuf *buf);
 		void removePlayer(U32 ki);
 	private:
+		void load(void);
+		void unload(void);
+		
 		tCloneList::iterator findClone(const tUruObject &obj);
 		tSdlList::iterator findSdlState(tSdlBinary *state);
 		void removeSDLStates(U32 ki);
@@ -91,6 +99,7 @@ namespace alc {
 		tCloneList clones;
 		tSdlList sdlStates;
 		tUnet *net;
+		tLog *log;
 	};
 
 } //End alc namespace

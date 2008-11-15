@@ -57,6 +57,9 @@ namespace alc {
 		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
 		virtual void onIdle(bool idle);
 		virtual void terminate(tNetSession *u, Byte reason = RKickedOff, bool destroyOnly = false);
+		virtual void onReloadConfig(bool reload) {
+			ageState->reload();
+		}
 	protected:
 		virtual bool setActivePlayer(tNetSession *u, U32 ki, U32 x, const Byte *avatar);
 	private:
