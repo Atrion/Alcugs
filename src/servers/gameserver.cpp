@@ -145,6 +145,9 @@ namespace alc {
 				}
 			}
 			lastPlayerLeft = playerFound ? 0 : alcGetTime();
+			
+			// remove leftovers of this player from the age state
+			ageState->removePlayer(u->ki);
 		}
 	
 		tUnetLobbyServerBase::terminate(u, reason, destroyOnly); // do the lobbybase terminate procedure
@@ -318,9 +321,7 @@ namespace alc {
 				// don't need sharing the way things are usually set up right now, so
 				// it's not worth the effort to me. (Also, sharing is not enabled for
 				// books, just Bahro stones.)
-				gameMsg.message.rewind();
-				U16 type = gameMsg.message.getU16();
-				if (type == 0x02E8) { // plNotifyMsg
+				if (gameMsg.getSubMsgType() == 0x02E8) { // plNotifyMsg
 					log->log("INF: Throwing out book share notification from %s\n", u->str());
 					return 1;
 				}
@@ -393,6 +394,7 @@ namespace alc {
 				
 				// save SDL state
 				ageState->saveSdlState(SDLStateBCast.obj, SDLStateBCast.sdl);
+				// FIXME: The old game server sets a restriction how many updates can be sent for a physical in a certain time
 				
 				// NetMsgSDLState sometimes has the bcast falg set and NetMsgSDLStateBCast sometimes doesn't.
 				// I assume the message type is correct and the flag not.
@@ -431,8 +433,6 @@ namespace alc {
 						send(fwdMsg);
 					}
 				}
-				
-				// FIXME: The unet2 game server does this completely different
 				
 				return 1;
 			}

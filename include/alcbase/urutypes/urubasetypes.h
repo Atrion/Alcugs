@@ -95,14 +95,14 @@ public:
 	inline bool operator!=(const tUruObject &obj) {
 		return !(*this == obj);
 	}
-private:
+
 	bool hasCloneId;
 	U32 pageId;
 	U16 pageType;
 	U16 objType;
 	tUStr objName;
 	U32 clonePlayerId;
-	
+private:
 	tStrBuf dbg;
 };
 

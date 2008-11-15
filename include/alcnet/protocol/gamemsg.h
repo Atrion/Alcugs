@@ -69,6 +69,7 @@ namespace alc {
 		tmGameMessage(tNetSession *u, U32 ki);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
+		U16 getSubMsgType();
 		// format
 		Byte header[5];
 		tMBuf message; // saves only the complete message content

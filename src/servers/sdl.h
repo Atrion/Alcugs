@@ -44,25 +44,26 @@
 namespace alc {
 
 	class tmLoadClone;
-	class tSdlState;
+	class tSdlBinary;
 
 	////DEFINITIONS
 	typedef std::list<tmLoadClone *> tCloneList;
-	typedef std::list<tSdlState *> tSdlList;
+	typedef std::list<tSdlBinary *> tSdlList;
 
 	/**
 		If we want to do it well and nice, we should add pre and post conditions here.
 	*/
 	
-	class tSdlState : public tBaseType {
+	//! This class saves an SDL state as a binary buffer (there will be a tSdlData to parse it)
+	class tSdlBinary : public tBaseType {
 	public:
-		tSdlState(void);
-		tSdlState(const tUruObject &obj);
-		tSdlState(const tSdlState &);
+		tSdlBinary(void);
+		tSdlBinary(const tUruObject &obj);
+		tSdlBinary(const tSdlBinary &);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		
-		bool operator==(const tSdlState &state);
+		bool operator==(const tSdlBinary &state);
 		
 		tUruObject obj;
 		// format
@@ -81,9 +82,11 @@ namespace alc {
 		int sendClones(tNetSession *u);
 		int sendSdlStates(tNetSession *u);
 		void writeAgeState(tMBuf *buf);
+		void removePlayer(U32 ki);
 	private:
 		tCloneList::iterator findClone(const tUruObject &obj);
-		tSdlList::iterator findSdlState(tSdlState *state);
+		tSdlList::iterator findSdlState(tSdlBinary *state);
+		void removeSDLStates(U32 ki);
 	
 		tCloneList clones;
 		tSdlList sdlStates;

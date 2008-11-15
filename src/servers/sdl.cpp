@@ -50,27 +50,27 @@
 namespace alc {
 
 	////IMPLEMENTATION
-	//// tSdlState
-	tSdlState::tSdlState(void)
+	//// tSdlBinary
+	tSdlBinary::tSdlBinary(void)
 	{
 		compress = false;
 		version = 0;
 	}
 	
-	tSdlState::tSdlState(const tUruObject &obj) : obj(obj)
+	tSdlBinary::tSdlBinary(const tUruObject &obj) : obj(obj)
 	{
 		compress = false;
 		version = 0;
 	}
 	
-	tSdlState::tSdlState(const tSdlState &state) : obj(state.obj), data(state.data)
+	tSdlBinary::tSdlBinary(const tSdlBinary &state) : obj(state.obj), data(state.data)
 	{
 		name = state.name;
 		compress = state.compress;
 		version = state.version;
 	}
 	
-	void tSdlState::store(tBBuf &t)
+	void tSdlBinary::store(tBBuf &t)
 	{
 		data.clear();
 	
@@ -108,7 +108,7 @@ namespace alc {
 			version = buf->getU16();
 			DBG(5, "Got SDL message of type %s, version %d\n", name.c_str(), version);
 			
-			// get SDL binary. FIXME: parse it
+			// get SDL binary
 			U32 dataSize = dataEnd - buf->tell();
 			data.write(buf->read(dataSize), dataSize);
 			
@@ -124,7 +124,7 @@ namespace alc {
 		if (!t.eof()) throw txProtocolError(_WHERE("The SDL struct is too long (%d Bytes remaining after parsing)", t.remaining()));
 	}
 	
-	void tSdlState::stream(tBBuf &t)
+	void tSdlBinary::stream(tBBuf &t)
 	{
 		if (!data.size()) {
 			// write an empty SDL
@@ -164,7 +164,7 @@ namespace alc {
 		}
 	}
 	
-	bool tSdlState::operator==(const tSdlState &state)
+	bool tSdlBinary::operator==(const tSdlBinary &state)
 	{
 		if (obj != state.obj) return false;
 		if (name != state.name) return false;
@@ -187,9 +187,26 @@ namespace alc {
 		}
 	}
 	
+	void tAgeStateManager::removePlayer(U32 ki)
+	{
+		// check for that player in the clone list
+		tCloneList::iterator it = clones.begin();
+		while (it != clones.end()) {
+			if ((*it)->obj.clonePlayerId == ki) {
+				// FIXME: Somehow tell the rest of the clients that this one left. Just sending the load message again with isLaod set to 0 doesn't work
+				// remove states from our list
+				removeSDLStates((*it)->obj.clonePlayerId);
+				delete *it;
+				clones.erase(it++);
+			}
+			else
+				++it;
+		}
+	}
+	
 	void tAgeStateManager::saveSdlState(const tUruObject &obj, tMBuf &data)
 	{
-		tSdlState *sdl = new tSdlState(obj);
+		tSdlBinary *sdl = new tSdlBinary(obj);
 		data.rewind();
 		data.get(*sdl);
 		// check if state is already in list
@@ -210,7 +227,7 @@ namespace alc {
 		// FIXME: make somehow sure that the SDL for a player is also removed when the player leaves
 	}
 	
-	tSdlList::iterator tAgeStateManager::findSdlState(tSdlState *state)
+	tSdlList::iterator tAgeStateManager::findSdlState(tSdlBinary *state)
 	{
 		for (tSdlList::iterator it = sdlStates.begin(); it != sdlStates.end(); ++it) {
 			if (**it == *state) return it;
@@ -222,12 +239,25 @@ namespace alc {
 	{
 		int n = 0;
 		for (tSdlList::iterator it = sdlStates.begin(); it != sdlStates.end(); ++it) {
-			tmSDLState sdlMsg(u, (*it)->obj, true);
+			tmSDLState sdlMsg(u, (*it)->obj, /*initial*/true);
 			sdlMsg.sdl.put(**it);
 			net->send(sdlMsg);
 			++n;
 		}
 		return n;
+	}
+	
+	void tAgeStateManager::removeSDLStates(U32 ki)
+	{
+		tSdlList::iterator it = sdlStates.begin();
+		while (it != sdlStates.end()) {
+			if ((*it)->obj.hasCloneId && (*it)->obj.clonePlayerId == ki) {
+				delete *it;
+				sdlStates.erase(it++);
+			}
+			else
+				++it;
+		}
 	}
 	
 	void tAgeStateManager::saveClone(const tmLoadClone &clone)
@@ -244,6 +274,7 @@ namespace alc {
 				clones.push_back(savedClone);
 		}
 		else if (it != clones.end()) { // remove clone if it was in list
+			removeSDLStates((*it)->obj.clonePlayerId);
 			delete *it;
 			clones.erase(it);
 		}
@@ -272,7 +303,7 @@ namespace alc {
 	
 	void tAgeStateManager::writeAgeState(tMBuf *buf)
 	{
-		tSdlState state;
+		tSdlBinary state;
 		buf->put(state);
 		// FIXME: actually write a useful SDL state
 	}
