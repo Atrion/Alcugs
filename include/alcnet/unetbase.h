@@ -69,7 +69,8 @@ public:
 		closelogs();
 		reconfigure();
 		openlogs();
-		onLoadConfig(true);
+		onReloadConfig();
+		onLoadConfig();
 	}
 	inline bool isRunning(void) { return state_running; }
 
@@ -130,11 +131,12 @@ public:
 	virtual void onStart() {}
 	
 	/** this is called after loading and reloading the config */
-	virtual void onLoadConfig(bool reload) {}
-	
+	virtual void onLoadConfig() {}
 	/** this is called before reloading the config and before quitting.
 			Everything created in onLoadConfig must be freed here */
 	virtual void onUnloadConfig() {}
+	/** this is called after loading and reloading the config */
+	virtual void onReloadConfig() {}
 private:
 	void processEvent(tNetEvent *evt, tNetSession *u, bool shutdown = false);
 	int parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool shutdown);

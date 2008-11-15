@@ -366,7 +366,7 @@ void tUnetBase::run() {
 	tNetSession * u;
 
 	onStart();
-	onLoadConfig(false);
+	onLoadConfig();
 	while(state_running) {
 		Recv();
 		while((evt=getEvent())) {

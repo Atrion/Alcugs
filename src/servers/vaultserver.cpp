@@ -55,12 +55,9 @@ namespace alc {
 	const char * alcNetName="Vault";
 	Byte alcWhoami=KVault;
 	
-	void tUnetVaultServer::onLoadConfig(bool reload)
+	void tUnetVaultServer::onLoadConfig(void)
 	{
-		vaultBackend->load();
-		if (reload) return;
-		
-		// if this is the first configuration, check if we should clean the vault
+		// check if we should clean the vault
 		tConfig *cfg = alcGetConfig();
 		tStrBuf var = cfg->getVar("daemon");
 		bool daemon = (!var.isNull() && var.asByte()); // disabled per default

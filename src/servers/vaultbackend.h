@@ -42,8 +42,7 @@ namespace alc {
 	public:
 		tVaultBackend(tUnet *net);
 		~tVaultBackend(void);
-		void unload(void);
-		void load(void);
+		void reload(void);
 		
 		void sendPlayerList(tmCustomVaultAskPlayerList &askPlayerList);
 		void checkKi(tmCustomVaultCheckKi &checkKi);
@@ -58,6 +57,9 @@ namespace alc {
 		}
 		inline int getMaxPlayers(void) { return maxPlayers; }
 	private:
+		void unload(void);
+		void load(void);
+		
 		/** send a vault message */
 		void send(tvMessage &msg, tNetSession *u, U32 ki, U32 x = 0);
 		

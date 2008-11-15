@@ -55,7 +55,7 @@ public:
 	virtual void forwardPing(tmPing &ping, tNetSession *u);
 	virtual void terminate(tNetSession *u, Byte reason = RKickedOff, bool destroyOnly = false);
 	virtual void onUnloadConfig(void);
-	virtual void onLoadConfig(bool reload);
+	virtual void onLoadConfig(void);
 protected:
 	tNetSessionIte reconnectPeer(Byte dst); //!< establishes a connection to that service (remember to set the corresponding gone variable to 0)
 	virtual bool setActivePlayer(tNetSession *u, U32 ki, U32 x, const Byte *avatar);

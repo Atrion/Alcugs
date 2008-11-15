@@ -60,11 +60,8 @@ namespace alc {
 		virtual void onConnectionClosed(tNetEvent * ev,tNetSession * u) {
 			trackingBackend->removeServer(u);
 		}
-		virtual void onLoadConfig(bool reload) {
-			trackingBackend->load();
-		}
-		virtual void onUnloadConfig(void) {
-			trackingBackend->unload();
+		virtual void onReloadConfig(void) {
+			trackingBackend->reload();
 		}
 		virtual void onIdle(bool idle) {
 			trackingBackend->updateStatusFile();

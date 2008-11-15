@@ -55,8 +55,8 @@ namespace alc {
 		}
 		~tUnetVaultServer(void) { delete vaultBackend; }
 		
-		virtual void onLoadConfig(bool reload);
-		virtual void onUnloadConfig(void) { vaultBackend->unload(); }
+		virtual void onLoadConfig(void);
+		virtual void onReloadConfig(void) { vaultBackend->reload(); }
 		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
 	private:
 		bool isValidAvatarName(tUStr &avatar);

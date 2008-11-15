@@ -97,6 +97,7 @@ namespace alc {
 		size = count = lastUpdate = 0;
 		players = NULL;
 		generateFakeGuid(fakeLobbyGuid);
+		load();
 	}
 	
 	tTrackingBackend::~tTrackingBackend(void)
@@ -127,7 +128,6 @@ namespace alc {
 		}
 	}
 	
-		
 	void tTrackingBackend::load(void)
 	{
 		tConfig *cfg = alcGetConfig();
@@ -157,7 +157,14 @@ namespace alc {
 		else strncpy((char *)statusXMLFile, (char *)var.c_str(), 255);
 		statusFileUpdate = true;
 		
-		guidGen = new tGuidGen();
+		if (guidGen == NULL)
+			guidGen = new tGuidGen();
+	}
+	
+	void tTrackingBackend::reload(void)
+	{
+		unload();
+		load();
 	}
 	
 	void tTrackingBackend::findServer(tmCustomFindServer &findServer)

@@ -87,8 +87,8 @@ namespace alc {
 	public:
 		tTrackingBackend(tUnet *net, tNetSessionList *servers, char *host, U16 port);
 		~tTrackingBackend(void);
-		void load(void);
-		void unload(void);
+		void reload(void);
+		
 		void updateStatusFile(void);
 		
 		void updatePlayer(tNetSession *game, tmCustomPlayerStatus &playerStatus);
@@ -98,6 +98,9 @@ namespace alc {
 		void findServer(tmCustomFindServer &findServer);
 		void forwardMessage(tmCustomDirectedFwd &directedFwd);
 	private:
+		void load(void);
+		void unload(void);
+		
 		tPlayer *getPlayer(U32 ki, int *nr = NULL);
 		void notifyWaiting(tNetSession *server);
 		void serverFound(tPlayer *player, tNetSession *server);

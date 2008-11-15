@@ -51,6 +51,7 @@ namespace alc {
 		guidGen = NULL;
 		nVmgrs = 0;
 		vmgrs = NULL;
+		load();
 	}
 	
 	tVaultBackend::~tVaultBackend(void)
@@ -131,7 +132,14 @@ namespace alc {
 		vaultDB->getVaultFolderName(vaultFolderName);
 		DBG(5, "global vault folder name is %s\n", vaultFolderName);
 		
-		guidGen = new tGuidGen();
+		if (guidGen == NULL)
+			guidGen = new tGuidGen();
+	}
+	
+	void tVaultBackend::reload(void)
+	{
+		unload();
+		load();
 	}
 	
 	void tVaultBackend::createVault(void)

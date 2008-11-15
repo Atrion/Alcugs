@@ -49,7 +49,7 @@ namespace alc {
 
 		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
 		virtual void onIdle(bool idle) { authBackend->checkTimeout(); }
-		virtual void onLoadConfig(bool reload) {
+		virtual void onLoadConfig() {
 			authBackend = new tAuthBackend;
 		}
 		virtual void onUnloadConfig() {

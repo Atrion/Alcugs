@@ -58,7 +58,7 @@ namespace alc {
 		vaultLogShort = false;
 	}
 	
-	void tUnetLobbyServerBase::onLoadConfig(bool reload)
+	void tUnetLobbyServerBase::onLoadConfig(void)
 	{
 		tConfig *cfg = alcGetConfig();
 		tStrBuf var = cfg->getVar("vault.html.log");

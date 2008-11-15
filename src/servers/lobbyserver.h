@@ -50,7 +50,7 @@ namespace alc {
 		tUnetLobbyServer(void);
 		
 		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
-		virtual void onLoadConfig(bool reload);
+		virtual void onLoadConfig(void);
 	private:	
 		Byte website[256];
 		Byte gameLogPath[256];
