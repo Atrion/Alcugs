@@ -185,6 +185,7 @@ namespace alc {
 		node->str1.writeStr(welcomeMsgTitle);
 		node->blob1Size = strlen(welcomeMsgText)+1;
 		node->blob1 = (Byte *)malloc(node->blob1Size * sizeof(Byte));
+		if (node->blob1 == NULL) throw txNoMem(_WHERE("NoMem"));
 		strcpy((char *)node->blob1, welcomeMsgText);
 		vaultDB->createChildNode(KVaultID, globalInboxNode, *node);
 		delete node;
@@ -238,7 +239,8 @@ namespace alc {
 			while (last >= 0 && vmgrs[last] == NULL) --last;
 			if (last < nVmgrs-1) { // there are some NULLs at the end, shrink the array
 				nVmgrs=last+1;
-				vmgrs=(tVmgr **)realloc(vmgrs, sizeof(tVmgr *) * nVmgrs); // it's not a bug if we get NULL here - the size might be 0
+				vmgrs=(tVmgr **)realloc(vmgrs, sizeof(tVmgr *) * nVmgrs);
+				if (nVmgrs && vmgrs == NULL) throw txNoMem(_WHERE("NoMem"));
 				DBG(9, "shrinking vmgr array to %d\n", nVmgrs);
 			}
 		}
@@ -476,6 +478,7 @@ namespace alc {
 					nr = nVmgrs;
 					++nVmgrs;
 					vmgrs = (tVmgr **)realloc((void *)vmgrs, sizeof(tVmgr *)*nVmgrs);
+					if (vmgrs == NULL) throw txNoMem(_WHERE("NoMem"));
 				}
 				vmgrs[nr] = new tVmgr(ki, mgr, u->getIte());
 				break;
@@ -500,7 +503,8 @@ namespace alc {
 				while (last >= 0 && vmgrs[last] == NULL) --last;
 				if (last < nVmgrs-1) { // there are some NULLs at the end, shrink the array
 					nVmgrs=last+1;
-					vmgrs=(tVmgr **)realloc(vmgrs, sizeof(tVmgr *) * nVmgrs); // it's not a bug if we get NULL here - the size might be 0
+					vmgrs=(tVmgr **)realloc(vmgrs, sizeof(tVmgr *) * nVmgrs);
+					if (nVmgrs && vmgrs == NULL) throw txNoMem(_WHERE("NoMem"));
 					DBG(9, "shrinking vmgr array to %d\n", nVmgrs);
 				}
 				break;
@@ -920,6 +924,7 @@ namespace alc {
 			// add spawn point info
 			node->blob1Size += strlen(spawnPnt);
 			node->blob1 = (Byte *)realloc(node->blob1, node->blob1Size*sizeof(Byte));
+			if (node->blob1 == NULL) throw txNoMem(_WHERE("NoMem"));
 			strcat((char *)node->blob1, spawnPnt);
 			// update it and broadcast the update
 			vaultDB->updateNode(*node);
@@ -937,6 +942,7 @@ namespace alc {
 			// add spawn point info
 			node->blob1Size = strlen(spawnPnt)+1; // one for the terminator
 			node->blob1 = (Byte *)malloc(node->blob1Size*sizeof(Byte));
+			if (node->blob1 == NULL) throw txNoMem(_WHERE("NoMem"));
 			strcpy((char *)node->blob1, spawnPnt);
 			// insert the age link node as child of the AgesIOwnFolder
 			ageLinkNode = createChildNodeBCasted(ki, linkedAgesFolder, *node);

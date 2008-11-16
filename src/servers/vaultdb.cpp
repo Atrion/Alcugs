@@ -359,6 +359,7 @@ namespace alc {
 		
 		if (isUpdate) {
 			escapedData = (char *)malloc((node.blob1Size*2 + 2048)*sizeof(char));
+			if (escapedData == NULL) throw txNoMem(_WHERE("NoMem"));
 			escapedData[0] = 0; // empty it
 		}
 		
@@ -601,6 +602,7 @@ namespace alc {
 		char *query = (char *)malloc((size+4096)*sizeof(char));
 		char *values = (char *)malloc(size*sizeof(char));
 		char *helpStr = (char *)malloc(size*sizeof(char));
+		if (query == NULL || values == NULL || helpStr == NULL) throw txNoMem(_WHERE("NoMem"));
 		
 		// set current time
 		node.flagB |= (MModTime | MCrtTime | MAgeTime);
@@ -783,6 +785,7 @@ namespace alc {
 		
 		// create the query
 		char *query = (char *)malloc((node.blob1Size*2 + 4048)*sizeof(char)), cond[64];
+		if (query == NULL) throw txNoMem(_WHERE("NoMem"));
 		sprintf(query, "UPDATE %s SET ", vaultTable);
 		createNodeQuery(query, node, /*isUpdate*/true);
 		sprintf(cond, " WHERE idx='%d'", node.index);
@@ -823,6 +826,7 @@ namespace alc {
 		// save it in the feed
 		row = mysql_fetch_row(result);
 		feed = (tvManifest **)malloc(sizeof(tvManifest *));
+		if (feed == NULL) throw txNoMem(_WHERE("NoMem"));
 		feed[0] = new tvManifest(atoi(row[0]), atof(row[1]));
 		nFeed = 1;
 		mysql_free_result(result);
@@ -834,6 +838,7 @@ namespace alc {
 			nAux = nFinal;
 			// get space for the new final list - it will contain all elements of the so-far final list and the feed
 			final = (tvManifest **)malloc((nFinal+nFeed)*sizeof(tvManifest *));
+			if (final == NULL) throw txNoMem(_WHERE("NoMem"));
 			nFinal = 0;
 			
 			sprintf(query, "SELECT n.idx, n.mod_time, r.id1, r.id2, UNIX_TIMESTAMP(r.timestamp), r.microseconds, r.flag FROM %s n JOIN %s r ON r.id3=n.idx WHERE r.id2 IN(", vaultTable, refVaultTable);
@@ -921,6 +926,7 @@ namespace alc {
 			// the result goes into the feed table, and the refs are saved in their table as well
 			feed = (tvManifest **)malloc(number*sizeof(tvManifest *));
 			*ref = (tvNodeRef **)realloc((void *)*ref, (*nRef + number)*sizeof(tvNodeRef *));
+			if (feed == NULL || *ref == NULL) throw txNoMem(_WHERE("NoMem"));
 			while (nFeed < number) {
 				row = mysql_fetch_row(result);
 				// save manifest
@@ -966,6 +972,7 @@ namespace alc {
 		
 		// put base node in the feed
 		feed = (U32 *)malloc(sizeof(U32));
+		if (feed == NULL) throw txNoMem(_WHERE("NoMem"));
 		feed[0] = baseNode;
 		nFeed = 1;
 		
@@ -985,6 +992,7 @@ namespace alc {
 			// it's a MGR, add it to the list
 			*tableSize = 1;
 			*table = (U32 *)malloc(sizeof(U32));
+			if (*table == NULL) throw txNoMem(_WHERE("NoMem"));
 			(*table)[0] = baseNode;
 		}
 		
@@ -995,6 +1003,7 @@ namespace alc {
 			nAux = nFinal;
 			// get space for the new final list - it will contain all elements of the so-far final list and the feed
 			final = (U32 *)malloc((nFinal+nFeed)*sizeof(U32));
+			if (final == NULL) throw txNoMem(_WHERE("NoMem"));
 			nFinal = 0;
 			
 			sprintf(query, "SELECT n.idx,n.type FROM %s n JOIN %s r ON r.id2=n.idx WHERE r.id3 IN(", vaultTable, refVaultTable);
@@ -1081,6 +1090,7 @@ namespace alc {
 				
 			// the result goes into the feed table
 			feed = (U32 *)malloc(number*sizeof(U32));
+			if (feed == NULL) throw txNoMem(_WHERE("NoMem"));
 			while (nFeed < number) {
 				row = mysql_fetch_row(result);
 				// save ID
@@ -1101,6 +1111,7 @@ namespace alc {
 					if (*tableSize == 0 || (*table)[*tableSize-1] < insertVal) { // if a value still has to be inserted, grow the table
 						++(*tableSize);
 						*table = (U32 *)realloc((void *)(*table), (*tableSize)*sizeof(U32));
+						if (*table == NULL) throw txNoMem(_WHERE("NoMem"));
 						(*table)[*tableSize-1] = insertVal;
 					}
 				}
@@ -1125,7 +1136,10 @@ namespace alc {
 	
 	void tVaultDB::fetchNodes(tMBuf &buf, int tableSize, tvNode ***nodes, int *nNodes)
 	{
+		if (!tableSize)
+			throw txDatabaseError(_WHERE("There must be at least one node to fetch"));
 		U32 *table = (U32 *)malloc(tableSize*sizeof(U32));
+		if (table == NULL) throw txNoMem(_WHERE("NoMem"));
 		buf.rewind();
 		for (int i = 0; i < tableSize; ++i) table[i] = buf.getU32();
 		fetchNodes(table, tableSize, nodes, nNodes);
@@ -1135,6 +1149,8 @@ namespace alc {
 	void tVaultDB::fetchNodes(U32 *table, int tableSize, tvNode ***nodes, int *nNodes)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		if (!tableSize)
+			throw txDatabaseError(_WHERE("There must be at least one node to fetch"));
 	
 		char query[32*1024], cond[32];
 		MYSQL_RES *result;
@@ -1159,6 +1175,7 @@ namespace alc {
 		*nNodes = mysql_num_rows(result);
 		
 		*nodes = (tvNode **)malloc((*nNodes)*sizeof(tvNode *));
+		if (*nodes == NULL) throw txNoMem(_WHERE("NoMem"));
 		for (int i = 0; i < *nNodes; ++i) {
 			row = mysql_fetch_row(result);
 			lengths = mysql_fetch_lengths(result); //get the size of each column
@@ -1203,6 +1220,7 @@ namespace alc {
 			node->blob1Size = lengths[29];
 			if (node->blob1Size > 0) {
 				node->blob1 = (Byte *)malloc(sizeof(Byte)*node->blob1Size);
+				if (node->blob1 == NULL) throw txNoMem(_WHERE("NoMem"));
 				memcpy(node->blob1, row[29], node->blob1Size);
 			}
 			
@@ -1344,6 +1362,7 @@ namespace alc {
 		*tableSize = mysql_num_rows(result);
 		
 		*table = (int *)malloc((*tableSize)*sizeof(int));
+		if (*table == NULL) throw txNoMem(_WHERE("NoMem"));
 		for (int i = 0; i < *tableSize; ++i) {
 			row = mysql_fetch_row(result);
 			(*table)[i] = atoi(row[0]);
@@ -1375,6 +1394,7 @@ namespace alc {
 			
 			if (newSize > *nRef) {
 				*ref = (tvNodeRef **)realloc(*ref, newSize*sizeof(tvNodeRef *));
+				if (*ref == NULL) throw txNoMem(_WHERE("NoMem"));
 				for (int j = *nRef; j < newSize; ++j) {
 					row = mysql_fetch_row(result);
 					U32 parent = atoi(row[1]), child = atoi(row[2]);

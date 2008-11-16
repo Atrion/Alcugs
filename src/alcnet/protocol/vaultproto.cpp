@@ -463,6 +463,7 @@ namespace alc {
 		buf.rewind();
 		size = buf.size();
 		data = (Byte *)malloc(sizeof(Byte) * size);
+		if (data == NULL) throw txNoMem(_WHERE("NoMem"));
 		memcpy(data, buf.read(size), size);
 	}
 	
@@ -471,6 +472,7 @@ namespace alc {
 		this->id = id;
 		size = buf.size();
 		data = (Byte *)malloc(sizeof(Byte) * size);
+		if (data == NULL) throw txNoMem(_WHERE("NoMem"));
 		buf.rewind();
 		memcpy(data, buf.read(size), size);
 	}
@@ -480,6 +482,7 @@ namespace alc {
 		size = t.getU32();
 		if (data) free(data);
 		data = (Byte *)malloc(sizeof(Byte) * size);
+		if (data == NULL) throw txNoMem(_WHERE("NoMem"));
 		memcpy(data, t.read(size), size);
 	}
 	
@@ -739,6 +742,7 @@ namespace alc {
 			blob1Size = t.getU32();
 			if (blob1Size > 0) {
 				blob1 = (Byte *)malloc(sizeof(Byte) * blob1Size);
+				if (blob1 == NULL) throw txNoMem(_WHERE("NoMem"));
 				memcpy(blob1, t.read(blob1Size), blob1Size);
 			}
 		}
@@ -1115,6 +1119,7 @@ namespace alc {
 		vn = msg.vn;
 		numItems = nItems;
 		items = (tvItem **)malloc(numItems * sizeof(tvItem *));
+		if (items == NULL) throw txNoMem(_WHERE("NoMem"));
 		for (int i = 0; i < numItems; ++i) items[i] = NULL;
 	}
 	
@@ -1129,6 +1134,7 @@ namespace alc {
 		vn = 0;
 		numItems = nItems;
 		items = (tvItem **)malloc(numItems * sizeof(tvItem *));
+		if (items == NULL) throw txNoMem(_WHERE("NoMem"));
 		for (int i = 0; i < numItems; ++i) items[i] = NULL;
 	}
 	
@@ -1179,6 +1185,7 @@ namespace alc {
 			free(items);
 		}
 		items = (tvItem **)malloc(numItems * sizeof(tvItem *));
+		if (items == NULL) throw txNoMem(_WHERE("NoMem"));
 		memset(items, 0, numItems * sizeof(tvItem *));
 		for (int i = 0; i < numItems; ++i) {
 			items[i] = new tvItem(tpots);

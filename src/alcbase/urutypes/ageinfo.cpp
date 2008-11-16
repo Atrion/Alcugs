@@ -92,6 +92,7 @@ namespace alc {
 			nPages = pageVal ? pageVal->getRows() : 0;
 			if (!nPages) throw txBase(_WHERE("an age without pages? This is not possible"));
 			pages = (tPageInfo *)malloc(nPages*sizeof(tPageInfo));
+			if (pages==NULL) throw txNoMem(_WHERE("NoMem"));
 			for (int i = 0; i < nPages; ++i)
 				pages[i] = tPageInfo(pageVal, i);
 		}
@@ -110,6 +111,7 @@ namespace alc {
 		nPages = ageInfo.nPages;
 		if (nPages) {
 			pages = (tPageInfo *)malloc(nPages*sizeof(tPageInfo));
+			if (pages==NULL) throw txNoMem(_WHERE("NoMem"));
 			memcpy(pages, ageInfo.pages, nPages*sizeof(tPageInfo));
 		}
 		else
@@ -141,6 +143,7 @@ namespace alc {
 				// grow the array
 				++size;
 				ages = (tAgeInfo **)realloc(ages, size*sizeof(tAgeInfo*));
+				if (ages==NULL) throw txNoMem(_WHERE("NoMem"));
 				ages[size-1] = new tAgeInfo((char *)dir.c_str(), file->name, loadPages);
 			}
 		}
@@ -153,6 +156,7 @@ namespace alc {
 			// initialize the array
 			size = 1;
 			ages = (tAgeInfo **)malloc(sizeof(tAgeInfo*));
+			if (ages==NULL) throw txNoMem(_WHERE("NoMem"));
 			ages[0] = new tAgeInfo((char *)dir.c_str(), filename, loadPages);
 		}
 	}

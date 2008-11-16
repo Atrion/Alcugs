@@ -49,13 +49,21 @@ tSQL::tSQL(const Byte *host, U16 port, const Byte *username, const Byte *passwor
 	stamp = 0;
 	
 	this->host = (Byte *)malloc( (strlen((char *)host)+1) * sizeof(Byte) );
+	if (this->host == NULL) throw txNoMem(_WHERE("NoMem"));
 	strcpy((char *)this->host, (char *)host);
+	
 	this->port = port;
+	
 	this->username = (Byte *)malloc( (strlen((char *)username)+1) * sizeof(Byte) );
+	if (this->username == NULL) throw txNoMem(_WHERE("NoMem"));
 	strcpy((char *)this->username, (char *)username);
+	
 	this->password = (Byte *)malloc( (strlen((char *)password)+1) * sizeof(Byte) );
+	if (this->password == NULL) throw txNoMem(_WHERE("NoMem"));
 	strcpy((char *)this->password, (char *)password);
+	
 	this->dbname = (Byte *)malloc( (strlen((char *)dbname)+1) * sizeof(Byte) );
+	if (this->dbname == NULL) throw txNoMem(_WHERE("NoMem"));
 	strcpy((char *)this->dbname, (char *)dbname);
 	
 	// initialize logging

@@ -719,7 +719,6 @@ bool tStrBuf::isNull() {
 }
 void tStrBuf::isNull(bool val) {
 	DBG(9,"isNull %i\n",val);
-	//throw txBase("s",1,1);
 	if (val) {
 		flags |= 0x02;
 	} else {

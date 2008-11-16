@@ -106,7 +106,8 @@ void tNetSessionList::remove(tNetSession *u)
 	}
 	if(found!=-1) { // if that's the case, shrink
 		DBG(5, "shrinking to %d\n", found);
-		table=(tNetSession **)realloc(table,sizeof(tNetSession*) * found); // it's not a bug if we get NULL here - the size might be 0
+		table=(tNetSession **)realloc(table,sizeof(tNetSession*) * found);
+		if (found && table==NULL) throw txNoMem(_WHERE("NoMem"));
 		size=found;
 	}
 	if (count == 0) { assert(size == 0); }

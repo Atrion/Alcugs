@@ -226,6 +226,7 @@ namespace alc {
 			tTrackingData *data = (tTrackingData*)lobby->data;
 			int nPorts = data->port_end - data->port_start + 1;
 			bool *freePorts = (bool *)malloc(nPorts*sizeof(bool));
+			if (*freePorts == NULL) throw txNoMem(_WHERE("NoMem"));
 			for (int i = 0; i < nPorts; ++i) freePorts[i] = true;
 			data->childs->rewind();
 			while ((server = data->childs->getNext()))
@@ -374,6 +375,7 @@ namespace alc {
 				if (slot < 0) {
 					++size;
 					players = (tPlayer **)realloc((void *)players, size*sizeof(tPlayer*));
+					if (players == NULL) throw txNoMem(_WHERE("NoMem"));
 					slot = size-1;
 				}
 				player = players[slot] = new tPlayer(playerStatus.ki);
@@ -425,7 +427,8 @@ namespace alc {
 		while (last >= 0 && players[last] == NULL) --last;
 		if (last < size-1) { // there are some NULLs at the end, shrink the array
 			size=last+1;
-			players=(tPlayer **)realloc(players, sizeof(tPlayer*) * size); // it's not a bug if we get NULL here - the size might be 0
+			players=(tPlayer **)realloc(players, sizeof(tPlayer*) * size);
+			if (size && players == NULL) throw txNoMem(_WHERE("NoMem"));
 		}
 	}
 	

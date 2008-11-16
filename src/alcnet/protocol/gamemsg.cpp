@@ -155,6 +155,7 @@ namespace alc {
 	{
 		nRecipients = msg.nRecipients;
 		recipients = (U32 *)malloc(nRecipients*sizeof(U32));
+		if (recipients == NULL) throw txNoMem(_WHERE("NoMem"));
 		memcpy(recipients, msg.recipients, nRecipients*sizeof(U32));
 	}
 	
@@ -166,6 +167,7 @@ namespace alc {
 		nRecipients = t.getByte();
 		if (recipients) free(recipients);
 		recipients = (U32 *)malloc(nRecipients*sizeof(U32));
+		if (recipients == NULL) throw txNoMem(_WHERE("NoMem"));
 		for (int i = 0; i < nRecipients; ++i) recipients[i] = t.getU32();
 	}
 	

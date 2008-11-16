@@ -161,10 +161,7 @@ U32 alcUruChecksum(Byte* buf, int size, int alg, Byte * aux_hash) {
 			//allocate the space for the buffer
 			DBG(4,"Allocating md5buffer - %i bytes...\n",aux_size);
 			md5buffer = (Byte *)malloc(sizeof(Byte)*(aux_size+10));
-			if(md5buffer==NULL) {
-				DBG(4,"md5buffer is NULL?\n");
-				return 0xFFFFFFFF;
-			}
+			if (md5buffer == NULL) throw txNoMem(_WHERE("NoMem"));
 			for(i=6; i<size; i++) {
 				md5buffer[i-6]=buf[i];
 			}
