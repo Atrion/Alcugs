@@ -371,7 +371,13 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	ret=alcUruValidatePacket(buf,size,&validation,authenticated==1 || authenticated==2,passwd);
 	
 	if(ret!=0 && (ret!=1 || net->flags & UNET_ECRC)) {
-		if(ret==1) net->err->log("ERR: %s Failed Validating a message!\n", str());
+		if(ret==1) {
+			net->err->log("ERR: %s Failed validating a message in validation level %d", str(), validation);
+			if (authenticated==1 || authenticated==2)
+				net->err->print(" (authed)!\n");
+			else
+				net->err->print(" (not authed)!\n");
+		}
 		else net->err->log("ERR: %s Non-Uru protocol packet recieved!\n", str());
 		return;
 	}

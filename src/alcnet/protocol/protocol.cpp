@@ -255,10 +255,10 @@ int alcUruValidatePacket(Byte * buf,int n,Byte * validation,bool authed,Byte * p
 				buf[1]=0x02;
 				if(aux_checksum==checksum) { return 0; } //All went ok with v1
 			}
-			if (authed)
+			/*if (authed)
 				lerr->log("ERR: Validation level %i (authed), got: %08X exp: %08X\n",*validation,checksum,aux_checksum);
 			else
-				lerr->log("ERR: Validation level %i (not authed), got: %08X exp: %08X\n",*validation,checksum,aux_checksum);
+				lerr->log("ERR: Validation level %i (not authed), got: %08X exp: %08X\n",*validation,checksum,aux_checksum);*/
 			/*if(u->validation==1) {
 				uru_checksum1trace(buf, n);
 			}
