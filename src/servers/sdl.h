@@ -44,34 +44,41 @@
 namespace alc {
 
 	class tmLoadClone;
-	class tSdlBinary;
+	class tSdlState;
 
 	////DEFINITIONS
 	typedef std::list<tmLoadClone *> tCloneList;
-	typedef std::list<tSdlBinary *> tSdlList;
+	typedef std::list<tSdlState *> tSdlList;
 
 	/**
 		If we want to do it well and nice, we should add pre and post conditions here.
 	*/
 	
-	//! This class saves an SDL state as a binary buffer (there will be a tSdlData to parse it)
+	//! This class saves an SDL state as a binary buffer - it's a helper class of tSdlState
 	class tSdlBinary : public tBaseType {
 	public:
 		tSdlBinary(void);
-		tSdlBinary(const tUruObject &obj);
-		tSdlBinary(const tSdlBinary &);
+		tSdlBinary(const tMBuf &b);
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
+		// format
+		bool compress;
+		tMBuf data;
+	};
+	
+	class tSdlState : public tBaseType {
+	public:
+		tSdlState(const tUruObject &obj);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		const Byte *str(void);
-		
-		bool operator==(const tSdlBinary &state);
+		bool operator==(const tSdlState &state);
 		
 		tUruObject obj;
 		// format
-		bool compress;
 		tUStr name;
 		U16 version;
-		tMBuf data;
+		tMBuf unparsed;  //!< stuff which is not (yet) parsed
 	private:
 		tStrBuf dbg;
 	};
@@ -93,7 +100,7 @@ namespace alc {
 		void unload(void);
 		
 		tCloneList::iterator findClone(const tUruObject &obj);
-		tSdlList::iterator findSdlState(tSdlBinary *state);
+		tSdlList::iterator findSdlState(tSdlState *state);
 		void removeSDLStates(U32 ki, U32 cloneId = 0);
 	
 		tCloneList clones;

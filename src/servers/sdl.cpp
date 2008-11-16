@@ -54,20 +54,11 @@ namespace alc {
 	tSdlBinary::tSdlBinary(void)
 	{
 		compress = false;
-		version = 0;
 	}
 	
-	tSdlBinary::tSdlBinary(const tUruObject &obj) : obj(obj)
+	tSdlBinary::tSdlBinary(const tMBuf &b) : data(b)
 	{
-		compress = false;
-		version = 0;
-	}
-	
-	tSdlBinary::tSdlBinary(const tSdlBinary &state) : obj(state.obj), data(state.data)
-	{
-		name = state.name;
-		compress = state.compress;
-		version = state.version;
+		compress = (data.size() > 255); // just a guess
 	}
 	
 	void tSdlBinary::store(tBBuf &t)
@@ -101,16 +92,9 @@ namespace alc {
 			}
 			else
 				throw txProtocolError(_WHERE("unknown compression format 0x%02X", compressed));
-			U32 dataEnd = buf->tell() + realSize;
 			
-			// get version information
-			buf->get(name);
-			version = buf->getU16();
-			DBG(5, "Got SDL message of type %s, version %d\n", name.c_str(), version);
-			
-			// get SDL binary
-			U32 dataSize = dataEnd - buf->tell();
-			data.write(buf->read(dataSize), dataSize);
+			// get binary body
+			data.write(buf->read(realSize), realSize);
 			
 			if (compressed == 0x02) { // it was compressed, so we have to clean up
 				if (!buf->eof()) throw txProtocolError(_WHERE("Message is too long")); // there must not be any byte after what we parsed above
@@ -135,18 +119,12 @@ namespace alc {
 		}
 		
 		// it's not yet empty, so we have to write something
-		// first, write the part which might get compressed as we would need it's size then
-		tMBuf buf; // this should be created on the stack to avoid leaks when there's an exception
-		buf.put(name);
-		buf.putU16(version);
-		buf.put(data);
-		
 		if (compress) {
-			t.putU32(buf.size()+2); // uncompressed size (take object flag and SDL magic into account)
+			t.putU32(data.size()+2); // uncompressed size (take object flag and SDL magic into account)
 			t.putByte(0x02); // compression flag
 			// compress it
 			tZBuf content;
-			content.put(buf);
+			content.put(data);
 			content.compress();
 			// put sent size and compressed data in buffer
 			t.putU32(content.size()+2);
@@ -157,21 +135,53 @@ namespace alc {
 		else {
 			t.putU32(0); // the real size 0 for uncompressed messages
 			t.putByte(0x00); // compression flag
-			t.putU32(buf.size()+2); // sent size
+			t.putU32(data.size()+2); // sent size
 			t.putByte(0x00); // object present
 			t.putByte(0x80); // SDL magic number
-			t.put(buf);
+			t.put(data);
 		}
 	}
 	
-	bool tSdlBinary::operator==(const tSdlBinary &state)
+	//// tSdlState
+	tSdlState::tSdlState(const tUruObject &obj) : obj(obj)
+	{
+		version = 0;
+	}
+	
+	void tSdlState::store(tBBuf &t)
+	{
+		unparsed.clear();
+		// use tSdlBinay to get the message body
+		tSdlBinary bin;
+		t.get(bin);
+		// parse it
+		tBBuf *b = &bin.data;
+		b->rewind();
+		b->get(name);
+		version = b->getU16();
+		U32 size = b->remaining();
+		unparsed.write(b->read(size), size); // FIXME: parse more
+	}
+	
+	void tSdlState::stream(tBBuf &t)
+	{
+		tMBuf b;
+		b.put(name);
+		b.putU16(version);
+		b.put(unparsed);
+		// use tSdlBinary to get the SDL header around it
+		tSdlBinary bin(b);
+		t.put(bin);
+	}
+	
+	bool tSdlState::operator==(const tSdlState &state)
 	{
 		if (obj != state.obj) return false;
 		if (name != state.name) return false;
 		return true;
 	}
 	
-	const Byte *tSdlBinary::str(void)
+	const Byte *tSdlState::str(void)
 	{
 		dbg.clear();
 		dbg.printf("SDL State for [%s]: %s (version %d)", obj.str(), name.c_str(), version);
@@ -241,7 +251,7 @@ namespace alc {
 	
 	void tAgeStateManager::saveSdlState(const tUruObject &obj, tMBuf &data)
 	{
-		tSdlBinary *sdl = new tSdlBinary(obj);
+		tSdlState *sdl = new tSdlState(obj);
 		data.rewind();
 		data.get(*sdl);
 		// check if state is already in list
@@ -263,7 +273,7 @@ namespace alc {
 		}
 	}
 	
-	tSdlList::iterator tAgeStateManager::findSdlState(tSdlBinary *state)
+	tSdlList::iterator tAgeStateManager::findSdlState(tSdlState *state)
 	{
 		for (tSdlList::iterator it = sdlStates.begin(); it != sdlStates.end(); ++it) {
 			if (**it == *state) return it;
@@ -346,7 +356,7 @@ namespace alc {
 	void tAgeStateManager::writeAgeState(tMBuf *buf)
 	{
 		// look for the AgeSDLHook
-		tSdlBinary *sdlHook = NULL;
+		tSdlState *sdlHook = NULL;
 		for (tSdlList::iterator it = sdlStates.begin(); it != sdlStates.end(); ++it) {
 			if ((*it)->obj.objName == "AgeSDLHook") {
 				if (sdlHook) log->log("ERR: Two SDL Hooks found!\n");
@@ -358,8 +368,8 @@ namespace alc {
 		}
 		else {
 			log->log("No SDL hook found, send empty SDL\n");
-			tSdlBinary state;
-			buf->put(state);
+			tSdlBinary empty;
+			buf->put(empty);
 		}
 	}
 
