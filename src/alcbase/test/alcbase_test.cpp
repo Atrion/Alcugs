@@ -67,7 +67,7 @@ void alcexception_tests() {
 	try {
 		throw txBase("ooops");
 	} catch (txBase &t) {
-		std::cout<< "Cauth Exception " << t.what() << std::endl;
+		std::cout<< "Caught Exception " << t.what() << std::endl;
 		//std::cout<< t.backtrace() << std::endl;
 	}
 	DBG(2,"Continuing...\n");
@@ -75,7 +75,7 @@ void alcexception_tests() {
 	try {
 		throw txBase("generate a core",0,1);
 	} catch (txBase &t) {
-		std::cout<< "Cauth Exception " << t.what() << std::endl;
+		std::cout<< "Caught Exception " << t.what() << std::endl;
 		//std::cout<< t.backtrace() << std::endl;
 	}
 
@@ -83,7 +83,7 @@ void alcexception_tests() {
 		//throw txBase("generate a core and abort",1,1);
 		my_func();
 	} catch (txBase &t) {
-		std::cout<< "Cauth Exception " << t.what() << std::endl;
+		std::cout<< "Caught Exception " << t.what() << std::endl;
 		//std::cout<< t.backtrace() << std::endl;
 	}
 }
@@ -97,7 +97,7 @@ void alctypes_mbuf() {
 		buf1.set(2);
 		throw txBase("Verification Test Failed - expected txOutOfRange",1);
 	} catch( txOutOfRange &t) {
-		std::cout<< "Cauth Exception " << t.what() << std::endl;
+		//std::cout<< "Caught Exception " << t.what() << std::endl;
 		//std::cout<< t.backtrace() << std::endl;
 	}
 	const Byte * a=(Byte *)"Hello World";
@@ -127,7 +127,7 @@ void alctypes_mbuf() {
 		buf1.seek(1);
 		throw txBase("expected txOutOfRange",1);
 	} catch( txOutOfRange &t) {
-		std::cout<< "Cauth Exception " << t.what() << std::endl;
+		//std::cout<< "Caught Exception " << t.what() << std::endl;
 		//std::cout<< t.backtrace() << std::endl;
 	}
 	buf1.seek(0,SEEK_SET);
@@ -143,7 +143,7 @@ void alctypes_mbuf() {
 		throw txBase("expected txOutOfRange",1);
 	} catch( txOutOfRange &t) {
 		dmalloc_verify(NULL);
-		std::cout<< "Cauth Exception " << t.what() << std::endl;
+		//std::cout<< "Caught Exception " << t.what() << std::endl;
 		dmalloc_verify(NULL);
 		//std::cout<< t.backtrace() << std::endl;
 		dmalloc_verify(NULL);
@@ -157,15 +157,10 @@ void alctypes_mbuf() {
 		dmalloc_verify(NULL);
 		buf1.check(&c,1);
 		dmalloc_verify(NULL);
-		throw txBase("expected txOutOfRange",1);
+		throw txBase("expected txUnexpectedData",1);
 	} catch( txUnexpectedData &t) {
 		dmalloc_verify(NULL);
-		std::cout<< "Cauth Exception " << t.what() << std::endl;
-		dmalloc_verify(NULL);
-		//std::cout<< t.backtrace() << std::endl;
-	} catch( txOutOfRange &t) {
-		dmalloc_verify(NULL);
-		std::cout<< "Cauth Exception " << t.what() << std::endl;
+		std::cout<< "Caught Exception " << t.what() << std::endl;
 		dmalloc_verify(NULL);
 		//std::cout<< t.backtrace() << std::endl;
 	}
@@ -176,7 +171,7 @@ void alctypes_mbuf() {
 		buf1.check(&c,1);
 		throw txBase("expected txUnexpectedData");
 	} catch( txUnexpectedData &t) {
-		std::cout<< "Cauth Exception " << t.what() << std::endl;
+		//std::cout<< "Caught Exception " << t.what() << std::endl;
 		//std::cout<< t.backtrace() << std::endl;
 	}
 #if defined(WORDS_BIGENDIAN)
@@ -241,7 +236,7 @@ void alctypes_mbuf() {
 		buf1++;
 		throw txBase("expected txOutOfRange",1);
 	} catch( txOutOfRange &t) {
-		std::cout<< "Cauth Exception " << t.what() << std::endl;
+		//std::cout<< "Caught Exception " << t.what() << std::endl;
 		//std::cout<< t.backtrace() << std::endl;
 	}
 	buf1--;
@@ -354,7 +349,7 @@ void alctypes_fbuf() {
 		f1.open("one");
 		throw txBase("expected txNotFound",1);
 	} catch( txNotFound &t) {
-		std::cout<< "Cauth Exception " << t.what() << std::endl;
+		//std::cout<< "Caught Exception " << t.what() << std::endl;
 		//std::cout<< t.backtrace() << std::endl;
 	}
 	
@@ -929,7 +924,7 @@ int log_test() {
 
 	log2.open("maika/sordida",4,DF_HTML);
 
-	log1.print("I'm going to continue writting here\n");
+	log1.print("I'm going to continue writing here\n");
 
 	log1.rotate();
 	log2.rotate();
@@ -985,11 +980,11 @@ int main(int argc, char * argv[]) {
 		//alcShutdown();
 		std::cout<< "Success!!" << std::endl;
 	} catch (txBase &t) {
-		std::cout<< "Cauth Exception " << t.what() << std::endl;
+		std::cout<< "Caught Exception " << t.what() << std::endl;
 		std::cout<< t.backtrace() << std::endl;
 		return -1;
 	} catch (...) {
-		std::cout<< "Cauth Unknown Exception" <<std::endl;
+		std::cout<< "Caught Unknown Exception" <<std::endl;
 		return -1;
 	}
 	
