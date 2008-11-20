@@ -96,25 +96,6 @@ namespace alc {
 			tUnetLobbyServerBase::onConnectionClosed(ev, u);
 	}
 	
-	bool tUnetGameServer::setActivePlayer(tNetSession *u, U32 ki, U32 x, const Byte *avatar)
-	{
-		if (!tUnetLobbyServerBase::setActivePlayer(u, ki, x, avatar)) return false;
-		
-		// a new player joined, so we are no longer alone
-		lastPlayerLeft = 0;
-		
-		tNetSession *vaultServer = getSession(vault);
-		if (!vaultServer) {
-			err->log("ERR: I've got to update a player\'s (%s) status for the vault server, but it is unavailable.\n", u->str());
-		}
-		else {
-			// tell vault
-			tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, alcGetStrGuid(serverGuid), serverName, 1 /* is online */, 0 /* don't increase online time now, do that on disconnect */);
-			send(vaultStatus);
-		}
-		return true;
-	}
-	
 	void tUnetGameServer::terminate(tNetSession *u, Byte reason, bool destroyOnly)
 	{
 		if (u->getPeerType() == KClient && u->ki != 0) { // if necessary, tell the others about it
@@ -139,7 +120,7 @@ namespace alc {
 			tNetSession *session;
 			smgr->rewind();
 			while ((session = smgr->getNext())) {
-				if (session->ki && session->ki != u->ki) {
+				if (session->joined && session != u) {
 					playerFound = true;
 					break;
 				}
@@ -151,9 +132,9 @@ namespace alc {
 			
 			// remove player from player list if he is still on there
 			if (u->data) {
+				bcastMemberUpdate(u, /*isJoined*/false);
 				delete u->data;
 				u->data = NULL;
-				// FIXME: send members list update
 			}
 			
 			// this player is no longer joined
@@ -185,6 +166,18 @@ namespace alc {
 		}
 		return nSent;
 	}
+	
+	void tUnetGameServer::bcastMemberUpdate(tNetSession *u, bool isJoined)
+	{
+		tNetSession *session;
+		smgr->rewind();
+		while ((session = smgr->getNext())) {
+			if (session != u && session->data) {
+				tmMemberUpdate memberUpdate(session, u, ((tGameData *)u->data)->obj, isJoined);
+				send(memberUpdate);
+			}
+		}
+	}
 
 	void tUnetGameServer::onIdle(bool idle)
 	{
@@ -214,14 +207,16 @@ namespace alc {
 				msg->data->get(joinReq);
 				log->log("<RCV> [%d] %s\n", msg->sn, joinReq.str());
 				
-				// the player is joined - tell tracking
-				tNetSession *trackingServer = getSession(tracking);
-				if (!trackingServer) {
-					err->log("ERR: Player %s is joining, but tracking is unavailable.\n", u->str());
+				// the player is joined - tell tracking and vault
+				tNetSession *trackingServer = getSession(tracking), *vaultServer = getSession(vault);
+				if (!trackingServer || !vaultServer) {
+					err->log("ERR: Player %s is joining, but vault or tracking is unavailable.\n", u->str());
 					return 1;
 				}
-				tmCustomPlayerStatus status(trackingServer, u->ki, u->getSid(), u->uid, u->name, u->avatar, 2 /* visible */, RActive);
-				send(status);
+				tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->getSid(), u->uid, u->name, u->avatar, 2 /* visible */, RActive);
+				send(trackingStatus);
+				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, alcGetStrGuid(serverGuid), serverName, 1 /* is online */, 0 /* don't increase online time now, do that on disconnect */);
+				send(vaultStatus);
 				
 				// ok, tell the client he successfully joined
 				u->joined = true;
@@ -231,6 +226,9 @@ namespace alc {
 				// log the join
 				sec->log("%s joined\n", u->str());
 				// now, it'll stat sending GameMessages
+				
+				// a new player joined, so we are no longer alone
+				lastPlayerLeft = 0;
 				
 				return 1;
 			}
@@ -267,34 +265,6 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, membersListReq.str());
 				
 				// FIXME: send members list
-				return 1;
-			}
-			case NetMsgPlayerPage:
-			{
-				if (!u->joined) {
-					err->log("ERR: %s sent a NetMsgPlayerPage but did not yet join the game. I\'ll kick him.\n", u->str());
-					return -2; // hack attempt
-				}
-				
-				// get the data out of the packet
-				tmPlayerPage playerPage(u);
-				msg->data->get(playerPage);
-				log->log("<RCV> [%d] %s\n", msg->sn, playerPage.str());
-				
-				if (playerPage.isPageOut) {
-					if (u->data) {
-						delete u->data;
-						u->data = NULL;
-					}
-					// FIXME: send members list update
-				}
-				else {
-					// the player paged in
-					if (u->data) ((tGameData *)u->data)->obj = playerPage.obj;
-					else u->data = new tGameData(playerPage.obj);
-					// FIXME: send members list update
-				}
-				
 				return 1;
 			}
 			case NetMsgPagingRoom:
@@ -472,6 +442,19 @@ namespace alc {
 					}
 				}
 				
+				// if it's an (un)load of the player's avatar, do the member list update
+				if (loadClone.isPlayerAvatar) {
+					if (!loadClone.isLoad && u->data) {
+						bcastMemberUpdate(u, /*isJoined*/false);
+						delete u->data;
+						u->data = NULL;
+					}
+					else if (loadClone.isLoad && !u->data) {
+						u->data = new tGameData(loadClone.obj);
+						bcastMemberUpdate(u, /*isJoined*/true);
+					}
+				}
+				
 				return 1;
 			}
 			
@@ -506,6 +489,23 @@ namespace alc {
 					// send it
 					send(msg);
 				}
+				
+				return 1;
+			}
+			case NetMsgPlayerPage:
+			{
+				if (!u->joined) {
+					err->log("ERR: %s sent a NetMsgPlayerPage but did not yet join the game. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmPlayerPage playerPage(u);
+				msg->data->get(playerPage);
+				log->log("<RCV> [%d] %s\n", msg->sn, playerPage.str());
+				
+				// This message is sent once when the client starts and links to the first age, and once again when the client quits and
+				// completely leaves the game
 				
 				return 1;
 			}

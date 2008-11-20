@@ -226,7 +226,7 @@ namespace alc {
 			tTrackingData *data = (tTrackingData*)lobby->data;
 			int nPorts = data->port_end - data->port_start + 1;
 			bool *freePorts = (bool *)malloc(nPorts*sizeof(bool));
-			if (*freePorts == NULL) throw txNoMem(_WHERE("NoMem"));
+			if (freePorts == NULL) throw txNoMem(_WHERE("NoMem"));
 			for (int i = 0; i < nPorts; ++i) freePorts[i] = true;
 			data->childs->rewind();
 			while ((server = data->childs->getNext()))

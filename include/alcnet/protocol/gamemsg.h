@@ -45,6 +45,23 @@ namespace alc {
 		If we want to do it well and nice, we should add pre and post conditions here.
 	*/
 	
+	// Helper class for the member list messages
+	class tMemberInfo : public tBaseType {
+	public:
+		tMemberInfo(tNetSession *u, const tUruObject &obj);
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
+		const Byte *str(void);
+	private:
+		U32 ki;
+		tUStr avatar;
+		U32 ip;
+		U16 port;
+		tUruObject obj;
+		
+		tStrBuf dbg;
+	};
+	
 	class tmJoinReq : public tmMsgBase {
 	public:
 		tmJoinReq(tNetSession *u);
@@ -101,6 +118,7 @@ namespace alc {
 		virtual void stream(tBBuf &t);
 		// format
 		tUruObject obj;
+		bool isPlayerAvatar;
 		bool isLoad;
 		bool isInitial;
 	protected:
@@ -200,6 +218,17 @@ namespace alc {
 	public:
 		tmSetTimeout(tNetSession *u);
 		virtual void store(tBBuf &t);
+	};
+	
+	class tmMemberUpdate : public tmMsgBase {
+	public:
+		tmMemberUpdate(tNetSession *u, tNetSession *memberSession, const tUruObject &obj, bool isJoined);
+		virtual void stream(tBBuf &t);
+		// format
+		tMemberInfo info;
+		bool isJoined;
+	protected:
+		virtual void additionalFields();
 	};
 
 } //End alc namespace

@@ -48,6 +48,41 @@
 
 namespace alc {
 
+	//// tMemberInfo
+	tMemberInfo::tMemberInfo(tNetSession *u, const tUruObject &obj) : avatar(u->avatar), obj(obj)
+	{
+		avatar.setVersion(0); // normal UruString
+		ki = u->ki;
+		ip = u->getIp();
+		port = u->getPort();
+	}
+	
+	void tMemberInfo::store(tBBuf &t)
+	{
+		throw txProtocolError(_WHERE("Storing a tMemberInfo is not supported"));
+	}
+	
+	void tMemberInfo::stream(tBBuf &t)
+	{
+		t.putU32(0x00000020); //unknown, seen 0x20 and 0x22 (seems to be a flag)
+		t.putU16(0x03EA); //always seen that value
+		t.putU32(ki);
+		t.put(avatar);
+		t.putByte(0x00); //always seen that value
+		t.putByte(0x03); //always seen that value
+		t.putU32(ntohl(ip));
+		t.putU16(ntohs(port));
+		t.putByte(0x00); //always seen that value
+		t.put(obj);
+	}
+	
+	const Byte *tMemberInfo::str(void)
+	{
+		dbg.clear();
+		dbg.printf("Avatar Name: %s, IP: %s:%i, Object reference: [%s]", avatar.c_str(), alcGetStrIp(ip), ntohs(port), obj.str());
+		return dbg.c_str();
+	}
+
 	//// tmJoinReq
 	tmJoinReq::tmJoinReq(tNetSession *u) : tmMsgBase(u)
 	{ }
@@ -186,6 +221,7 @@ namespace alc {
 	tmLoadClone::tmLoadClone(tNetSession *u, tmLoadClone &msg)
 	 : tmGameMessage(NetMsgLoadClone, plNetAck | plNetKi, u, msg), obj(msg.obj)
 	{
+		isPlayerAvatar = msg.isPlayerAvatar;
 		isLoad = msg.isLoad;
 		isInitial = msg.isInitial;
 	}
@@ -208,9 +244,10 @@ namespace alc {
 		t.get(obj);
 		if (!obj.hasCloneId) throw txProtocolError(_WHERE("The UruObject of a NetMsgLoadClone must have the clone ID set"));
 		
-		Byte unk = t.getByte();
-		if (unk != 0x01)
-			throw txProtocolError(_WHERE("Unexpected NetMsgLoadClone.unk of 0x%02X (should be 0x01)", unk));
+		Byte playerAvatar = t.getByte();
+		if (playerAvatar != 0x00 && playerAvatar != 0x01)
+			throw txProtocolError(_WHERE("Unexpected NetMsgLoadClone.playerAvatar of 0x%02X (should be 0x00 or 0x01)", playerAvatar));
+		isPlayerAvatar = playerAvatar;
 		
 		Byte load = t.getByte();
 		if (load != 0x00 && load != 0x01)
@@ -227,7 +264,7 @@ namespace alc {
 	{
 		tmGameMessage::stream(t);
 		t.put(obj);
-		t.putByte(0x01);
+		t.putByte(isPlayerAvatar);
 		t.putByte(isLoad);
 		t.putByte(isInitial);
 	}
@@ -235,7 +272,10 @@ namespace alc {
 	void tmLoadClone::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" Object reference: [%s], load: ", obj.str());
+		dbg.printf(" Object reference: [%s], is player avatar: ", obj.str());
+		if (isPlayerAvatar) dbg.printf("yes");
+		else                dbg.printf("no");
+		dbg.printf(", is load: ");
 		if (isLoad) dbg.printf("yes");
 		else        dbg.printf("no");
 		dbg.printf(", is initial age state: ");
@@ -504,6 +544,28 @@ namespace alc {
 		U32 unk = t.getU32();
 		if (unk != 0x43340000) throw txProtocolError(_WHERE("NetMsgSetTimeout.unk must be 0x43340000 but is 0x%08X", unk));
 		// it seems this means 180sec, but I have no clue how
+	}
+	
+	//// tmMemberUpdate
+	tmMemberUpdate::tmMemberUpdate(tNetSession *u, tNetSession *memberSession, const tUruObject &obj, bool isJoined)
+	 : tmMsgBase(NetMsgMemberUpdate, plNetAck | plNetCustom, u), info(memberSession, obj)
+	{
+		this->isJoined = isJoined;
+	}
+	
+	void tmMemberUpdate::stream(tBBuf &t)
+	{
+		tmMsgBase::stream(t);
+		t.put(info);
+		t.putByte(isJoined);
+	}
+	
+	void tmMemberUpdate::additionalFields()
+	{
+		dbg.nl();
+		dbg.printf(" Member Info: [%s], is joined: ", info.str());
+		if (isJoined) dbg.printf("yes");
+		else          dbg.printf("no");
 	}
 
 } //end namespace alc

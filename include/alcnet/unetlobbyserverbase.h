@@ -57,19 +57,19 @@ public:
 	virtual void onUnloadConfig(void);
 	virtual void onLoadConfig(void);
 protected:
-	tNetSessionIte reconnectPeer(Byte dst); //!< establishes a connection to that service (remember to set the corresponding gone variable to 0)
-	virtual bool setActivePlayer(tNetSession *u, U32 ki, U32 x, const Byte *avatar);
-	void killPlayer(tNetSession *u, Byte reason, bool dontTerminate = false);
-
 	tNetSessionIte auth, tracking, vault;
-	U32 auth_gone, tracking_gone, vault_gone; // saves when this server got disconnected. wait 10sec before trying to connect again
 
 	Byte serverGuid[8]; //!< This system's guid (age guid) (in Hex)
 	Byte serverName[200]; //!< The system/server name, normally the age filename
-	
+private:
+	tNetSessionIte reconnectPeer(Byte dst); //!< establishes a connection to that service (remember to set the corresponding gone variable to 0)
+	bool setActivePlayer(tNetSession *u, U32 ki, U32 x, const Byte *avatar);
+
+	U32 auth_gone, tracking_gone, vault_gone; // saves when this server got disconnected. wait 10sec before trying to connect again
+
 	tLog *lvault;
 	bool vaultLogShort;
-	
+
 	bool allowUU;
 	char linkLog[512];
 };
