@@ -168,50 +168,36 @@ namespace alc {
 	
 	//// tmGameMessageDirected
 	tmGameMessageDirected::tmGameMessageDirected(tNetSession *u) : tmGameMessage(u)
-	{ recipients = NULL; }
+	{ }
 	
 	tmGameMessageDirected::tmGameMessageDirected(U16 cmd, U32 flags, tNetSession *u) : tmGameMessage(cmd, flags, u)
-	{ recipients = NULL; }
+	{ }
 	
 	tmGameMessageDirected::tmGameMessageDirected(U16 cmd, U32 flags, tNetSession *u, tmGameMessageDirected &msg)
-	 : tmGameMessage(cmd, flags, u, msg)
-	{ copyDrctProps(msg); }
+	 : tmGameMessage(cmd, flags, u, msg), recipients(msg.recipients)
+	{ }
 	
 	tmGameMessageDirected::tmGameMessageDirected(tNetSession *u, tmGameMessageDirected &msg)
-	 : tmGameMessage(NetMsgGameMessageDirected, plNetAck | plNetKi | plNetDirected, u, msg)
-	{ copyDrctProps(msg); }
-	
-	tmGameMessageDirected::~tmGameMessageDirected(void)
-	{
-		if (recipients) free(recipients);
-	}
-	
-	void tmGameMessageDirected::copyDrctProps(tmGameMessageDirected &msg)
-	{
-		nRecipients = msg.nRecipients;
-		recipients = (U32 *)malloc(nRecipients*sizeof(U32));
-		if (recipients == NULL) throw txNoMem(_WHERE("NoMem"));
-		memcpy(recipients, msg.recipients, nRecipients*sizeof(U32));
-	}
+	 : tmGameMessage(NetMsgGameMessageDirected, plNetAck | plNetKi | plNetDirected, u, msg), recipients(msg.recipients)
+	{ }
 	
 	void tmGameMessageDirected::store(tBBuf &t)
 	{
 		tmGameMessage::store(t);
 		if (cmd == NetMsgGameMessageDirected && !hasFlags(plNetDirected)) throw txProtocolError(_WHERE("Directed flag missing"));
 		// get list of recipients
-		nRecipients = t.getByte();
-		if (recipients) free(recipients);
-		recipients = (U32 *)malloc(nRecipients*sizeof(U32));
-		if (recipients == NULL) throw txNoMem(_WHERE("NoMem"));
-		for (int i = 0; i < nRecipients; ++i) recipients[i] = t.getU32();
+		Byte nRecipients = t.getByte();
+		recipients.clear();
+		recipients.reserve(nRecipients);
+		for (int i = 0; i < nRecipients; ++i) recipients.push_back(t.getU32());
 	}
 	
 	void tmGameMessageDirected::stream(tBBuf &t)
 	{
-		if (!recipients) throw txProtocolError(_WHERE("I've got nothing to send"));
 		tmGameMessage::stream(t);
-		t.putByte(nRecipients);
-		for (int i = 0; i < nRecipients; ++i) t.putU32(recipients[i]);
+		t.putByte(recipients.size());
+		for (std::vector<U32>::iterator it = recipients.begin(); it != recipients.end(); ++it)
+			t.putU32(*it);
 	}
 	
 	//// tmLoadClone
@@ -376,7 +362,8 @@ namespace alc {
 	
 	void tmTestAndSet::store(tBBuf &t)
 	{
-		Byte flag, state1, state2, state3;
+		Byte flag, state1, state2;
+		Byte lockReq;
 		U32 unk;
 		tUStr trigger, triggered;
 	
@@ -409,26 +396,23 @@ namespace alc {
 		state2 = t.getByte();
 		if (state2 != 0x00 && state2 != 0x01)
 			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.state2 of 0x%02X (should be 0x00 or 0x01)", state2));
-		state3 = t.getByte();
-		if (state3 != 0x00 && state3 != 0x01)
-			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.state3 of 0x%02X (should be 0x00 or 0x01)", state3));
+		lockReq = t.getByte();
+		if (lockReq != 0x00 && lockReq != 0x01)
+			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.lockReq of 0x%02X (should be 0x00 or 0x01)", lockReq));
+		isLockReq = lockReq;
 		
 		// now check if the states are a valid combination
-		if (state2 != state3)
-			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet: state2 (0x%02X) and state3 (0x%02X) must be equal", state2, state3));
-		if (state2 == state1)
-			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet: state1 (0x%02X) and state2 (0x%02X) must not be equal", state2, state3));
-		/* When state1 and state2 are not the same while state2 and state3 are the same, only the following combinations are possible:
-		0-1-1 (lockReq = true)
-		1-0-0 (lockReq = false) */
-		lockReq = state2;
+		if (state1 == lockReq)
+			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet: state1 (0x%02X) and lockReq (0x%02X) must not be equal", state1, lockReq));
+		if (state2 != lockReq)
+			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet: state2 (0x%02X) and lockReq (0x%02X) must be equal", state2, lockReq));
 	}
 	
 	void tmTestAndSet::additionalFields()
 	{
 		dbg.nl();
 		dbg.printf(" Object reference: [%s], Lock requested: ", obj.str());
-		if (lockReq) dbg.printf("yes");
+		if (isLockReq) dbg.printf("yes");
 		else         dbg.printf("no");
 	}
 	
@@ -544,6 +528,24 @@ namespace alc {
 		U32 unk = t.getU32();
 		if (unk != 0x43340000) throw txProtocolError(_WHERE("NetMsgSetTimeout.unk must be 0x43340000 but is 0x%08X", unk));
 		// it seems this means 180sec, but I have no clue how
+	}
+	
+	//// tmMembersList
+	tmMembersList::tmMembersList(tNetSession *u) : tmMsgBase(NetMsgMembersList, plNetAck | plNetCustom, u)
+	{ }
+	
+	void tmMembersList::stream(tBBuf &t)
+	{
+		tmMsgBase::stream(t);
+		t.putU16(members.size());
+		for (std::vector<tMemberInfo>::iterator i = members.begin(); i != members.end(); ++i)
+			t.put(*i);
+	}
+	
+	void tmMembersList::additionalFields()
+	{
+		dbg.nl();
+		dbg.printf(" Number of other players: %d", members.size());
 	}
 	
 	//// tmMemberUpdate

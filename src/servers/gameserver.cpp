@@ -149,12 +149,11 @@ namespace alc {
 		// look for all recipients
 		Byte nSent = 0;
 		tNetSession *session;
-		for (int i = 0; i < msg.nRecipients; ++i) {
-			U32 recip = msg.recipients[i];
+		for (std::vector<U32>::iterator it = msg.recipients.begin(); it != msg.recipients.end(); ++it) {
 			// now search for that player
 			smgr->rewind();
 			while ((session = smgr->getNext())) {
-				if (session->ki == recip) {
+				if (session->ki == *it) {
 					if (session->joined && session->ki != msg.ki) {
 						tmGameMessageDirected fwdMsg(session, msg);
 						send(fwdMsg);
@@ -264,7 +263,18 @@ namespace alc {
 				msg->data->get(membersListReq);
 				log->log("<RCV> [%d] %s\n", msg->sn, membersListReq.str());
 				
-				// FIXME: send members list
+				// send members list
+				tmMembersList list(u);
+				list.members.reserve(smgr->getSize()); // avoid moving the member info structs
+				tNetSession *session;
+				smgr->rewind();
+				while ((session = smgr->getNext())) {
+					if (session != u && session->data) {
+						list.members.push_back(tMemberInfo(session, ((tGameData *)session->data)->obj));
+					}
+				}
+				send(list);
+				
 				return 1;
 			}
 			case NetMsgPagingRoom:
@@ -337,7 +347,7 @@ namespace alc {
 				// forward it
 				Byte nSent = fwdDirectedGameMsg(gameMsg);
 				
-				if (nSent < gameMsg.nRecipients) { // we did not yet reach all recipients
+				if (nSent < gameMsg.recipients.size()) { // we did not yet reach all recipients
 					tNetSession *trackingServer = getSession(tracking);
 					if (!trackingServer) {
 						err->log("ERR: I've got to to forward a message through the tracking server, but it's unavailable.\n");
@@ -472,7 +482,7 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, testAndSet.str());
 				
 				// if required, send a reply - this is simply copied from the old game server, don't ask me what it means
-				if (testAndSet.lockReq) {
+				if (testAndSet.isLockReq) {
 					tmGameMessage msg(u, u->ki);
 					// build the game message
 					msg.message.putU16(0x026A); // game message cmd: plServerReplyMsg

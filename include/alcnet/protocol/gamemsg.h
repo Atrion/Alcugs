@@ -38,6 +38,8 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_FILENAME_H_ID "$Id$"
 
+#include <vector>
+
 namespace alc {
 
 	////DEFINITIONS
@@ -100,14 +102,10 @@ namespace alc {
 		tmGameMessageDirected(U16 cmd, U32 flags, tNetSession *u);
 		tmGameMessageDirected(U16 cmd, U32 flags, tNetSession *u, tmGameMessageDirected &msg);
 		tmGameMessageDirected(tNetSession *u, tmGameMessageDirected &msg);
-		~tmGameMessageDirected(void);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format
-		Byte nRecipients;
-		U32 *recipients;
-	protected:
-		void copyDrctProps(tmGameMessageDirected &msg);
+		std::vector<U32> recipients;
 	};
 	
 	class tmLoadClone : public tmGameMessage {
@@ -176,7 +174,7 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		// format
 		tUruObject obj;
-		bool lockReq;
+		bool isLockReq;
 	protected:
 		virtual void additionalFields();
 	};
@@ -218,6 +216,16 @@ namespace alc {
 	public:
 		tmSetTimeout(tNetSession *u);
 		virtual void store(tBBuf &t);
+	};
+	
+	class tmMembersList : public tmMsgBase {
+	public:
+		tmMembersList(tNetSession *u);
+		virtual void stream(tBBuf &t);
+		// format
+		std::vector<tMemberInfo> members;
+	private:
+		virtual void additionalFields();
 	};
 	
 	class tmMemberUpdate : public tmMsgBase {
