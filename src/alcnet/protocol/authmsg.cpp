@@ -127,7 +127,7 @@ namespace alc {
 #ifdef ENABLE_UNET2
 		if (u->proto == 1) dbg.printf(" ip (unet2 protocol): %s,", alcGetStrIp(ip));
 #endif
-		// use two printf commands as alcGetStrGuid uses a static array and when using one command it would seems as if challenge and hash would be the same
+		// use two printf commands as alcGetStrGuid uses a static array and when using one command it would seem as if challenge and hash would be the same
 		dbg.printf(" login: %s, challenge: %s, ", login.c_str(), alcGetStrUid(challenge));
 		dbg.printf("hash: %s, build: 0x%02X (%s)", alcGetStrUid(hash), release, alcUnetGetRelease(release));
 	}

@@ -1108,7 +1108,7 @@ namespace alc {
 	}
 	
 	//// tvMessage
-	tvMessage::tvMessage(tvMessage &msg, int nItems) : tvBase()
+	tvMessage::tvMessage(const tvMessage &msg) : tvBase()
 	{
 		tpots = 0;
 		task = msg.task;
@@ -1117,13 +1117,9 @@ namespace alc {
 		context = msg.context;
 		vmgr = msg.vmgr;
 		vn = msg.vn;
-		numItems = nItems;
-		items = (tvItem **)malloc(numItems * sizeof(tvItem *));
-		if (items == NULL) throw txNoMem(_WHERE("NoMem"));
-		for (int i = 0; i < numItems; ++i) items[i] = NULL;
 	}
 	
-	tvMessage::tvMessage(Byte cmd, int nItems, bool task)
+	tvMessage::tvMessage(Byte cmd, bool task)
 	{
 		tpots = 0;
 		this->task = task;
@@ -1132,19 +1128,12 @@ namespace alc {
 		context = 0;
 		vmgr = 0;
 		vn = 0;
-		numItems = nItems;
-		items = (tvItem **)malloc(numItems * sizeof(tvItem *));
-		if (items == NULL) throw txNoMem(_WHERE("NoMem"));
-		for (int i = 0; i < numItems; ++i) items[i] = NULL;
 	}
 	
 	tvMessage::~tvMessage(void)
 	{
-		if (items) {
-			for (int i = 0; i < numItems; ++i) {
-				if (items[i]) delete items[i];
-			}
-			free(items);
+		for (tItemList::iterator it = items.begin(); it != items.end(); ++it) {
+			delete *it;
 		}
 	}
 	
@@ -1178,18 +1167,14 @@ namespace alc {
 			throw txProtocolError(_WHERE("unknown compression format 0x%02X", compressed));
 		
 		// get the items
-		numItems = buf->getU16();
+		U16 numItems = buf->getU16();
 		DBGM(5, ", number of items: %d\n", numItems);
-		if (items) {
-			for (int i = 0; i < numItems; ++i) delete items[i];
-			free(items);
-		}
-		items = (tvItem **)malloc(numItems * sizeof(tvItem *));
-		if (items == NULL) throw txNoMem(_WHERE("NoMem"));
-		memset(items, 0, numItems * sizeof(tvItem *));
+		items.clear();
+		items.reserve(numItems);
 		for (int i = 0; i < numItems; ++i) {
-			items[i] = new tvItem(tpots);
-			buf->get(*items[i]);
+			tvItem *item = new tvItem(tpots);
+			buf->get(*item);
+			items.push_back(item);
 		}
 		
 		if (compressed == 0x03) { // it was compressed, so we have to clean up
@@ -1221,18 +1206,16 @@ namespace alc {
 	
 	void tvMessage::stream(tBBuf &t)
 	{
-		if (!items) throw txProtocolError(_WHERE("don\'t have any items to write"));
 		t.putByte(cmd);
 		t.putU16(0);// result
 		t.putByte(compress ? 0x03 : 0x01);
 		
 		// put the items into a temporary buffer which might be compressed
 		tMBuf buf; // this should be created on the stack to avoid leaks when there's an exception
-		buf.putU16(numItems);
-		for (int i = 0; i < numItems; ++i) {
-			if (!items[i]) throw txProtocolError(_WHERE("vault item nr. %d has not been initialized", i));
-			items[i]->tpots = tpots; // make sure the right TPOTS value is used
-			buf.put(*items[i]);
+		buf.putU16(items.size());
+		for (tItemList::iterator it = items.begin(); it != items.end(); ++it) {
+			(*it)->tpots = tpots; // make sure the right TPOTS value is used
+			buf.put(**it);
 		}
 		
 		// save the real size of the buffer
@@ -1302,13 +1285,14 @@ namespace alc {
 		else      log->print("context: %d, <b>vmgr: %d</b>, vn: %d<br />\n", context, vmgr, vn);
 		
 		// the items
-		if (numItems > 0) {
+		if (items.size() > 0) {
 			log->print("<table border='1'>\n");
-			for (int i = 0; i < numItems; ++i) {
-				if (!items[i]) throw txProtocolError(_WHERE("vault item nr. %d has not been initialized", i));
-				log->print("<tr><th style='background-color:cyan;'>Item %d</th></tr>\n", i+1);
+			int i = 0;
+			for (tItemList::iterator it = items.begin(); it != items.end(); ++it) {
+				++i;
+				log->print("<tr><th style='background-color:cyan;'>Item %d</th></tr>\n", i);
 				log->print("<tr><td>\n");
-				items[i]->asHtml(log, shortLog);
+				(*it)->asHtml(log, shortLog);
 				log->print("</td></tr>\n");
 			}
 			log->print("</table>");

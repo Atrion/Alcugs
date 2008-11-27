@@ -38,6 +38,8 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_AGEINFO_H_ID "$Id$"
 
+#include <vector>
+
 namespace alc {
 
 	////DEFINITIONS
@@ -72,11 +74,9 @@ namespace alc {
 	{
 	public:
 		tAgeInfoLoader(const Byte *name = NULL, bool loadPages = false);
-		~tAgeInfoLoader(void);
 		tAgeInfo *getAge(const Byte *name);
 	private:
-		int size;
-		tAgeInfo **ages; // FIXME: use STL container
+		std::vector<tAgeInfo> ages;
 	};
 
 } //End alc namespace

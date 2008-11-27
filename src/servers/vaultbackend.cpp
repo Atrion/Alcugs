@@ -49,25 +49,14 @@ namespace alc {
 		log = logHtml = lnull;
 		vaultDB = NULL;
 		guidGen = NULL;
-		nVmgrs = 0;
-		vmgrs = NULL;
 		load();
 	}
 	
 	tVaultBackend::~tVaultBackend(void)
 	{
 		unload();
-		int del = 0;
-		if (vmgrs) {
-			for (int i = 0; i < nVmgrs; ++i) {
-				if (vmgrs[i]) {
-					delete vmgrs[i];
-					++del;
-				}
-			}
-			free((void *)vmgrs);
-			lerr->log("ERR: The vault server is quitting and I still have %d vmgrs left\n", del);
-		}
+		if (vmgrs.size() > 0)
+			lerr->log("ERR: The vault server is quitting and I still have %d vmgrs left\n", vmgrs.size());
 	}
 	
 	void tVaultBackend::unload(void)
@@ -217,13 +206,12 @@ namespace alc {
 	{
 		if (status.state > 2) throw txProtocolError(_WHERE("recieved invalid online state of %d", status.state));
 	
-		// update (when the palyer is online) or remove (when hes offline) all mgrs using this KI
-		bool checkShrink = false;
-		for (int i = 0; i < nVmgrs; ++i) {
-			if (vmgrs[i] && vmgrs[i]->ki == status.ki) {
-				if (status.state) vmgrs[i]->session = status.getSession()->getIte();
+		// update (when the palyer is online) or remove (when he's offline) all mgrs using this KI
+		for (tVmgrList::iterator it = vmgrs.begin(); it != vmgrs.end(); ++it) {
+			if (it->ki == status.ki) {
+				if (status.state) it->session = status.getSession()->getIte();
 #if 0
-// this makes püroblems if a palyer crashed and now comes back - the unet2 game server reports it as offline and immedtialey online again
+// this makes problems if a palyer crashed and now comes back - the unet2 game server reports it as offline and immedtialey online again
 				else {
 					delete vmgrs[i];
 					vmgrs[i] = NULL;
@@ -231,17 +219,6 @@ namespace alc {
 					log->log("WARN: Player with KI %d just went offline but still had a vmgr registered... removing it\n", status.ki);
 				}
 #endif
-			}
-		}
-		if (checkShrink) {
-			// shrink the array if possible
-			int last = nVmgrs-1; // find the last vmgr
-			while (last >= 0 && vmgrs[last] == NULL) --last;
-			if (last < nVmgrs-1) { // there are some NULLs at the end, shrink the array
-				nVmgrs=last+1;
-				vmgrs=(tVmgr **)realloc(vmgrs, sizeof(tVmgr *) * nVmgrs);
-				if (nVmgrs && vmgrs == NULL) throw txNoMem(_WHERE("NoMem"));
-				DBG(9, "shrinking vmgr array to %d\n", nVmgrs);
 			}
 		}
 		
@@ -311,15 +288,15 @@ namespace alc {
 		}
 	}
 	
-	int tVaultBackend::findVmgr(tNetSession *u, U32 ki, U32 mgr)
+	tVaultBackend::tVmgrList::iterator tVaultBackend::findVmgr(tNetSession *u, U32 ki, U32 mgr)
 	{
-		for (int i = 0; i < nVmgrs; ++i) {
-			if (vmgrs[i] && vmgrs[i]->ki == ki && vmgrs[i]->mgr == mgr) {
-				vmgrs[i]->session = u->getIte();
-				return i;
+		for (tVmgrList::iterator it = vmgrs.begin(); it != vmgrs.end(); ++it) {
+			if (it->ki == ki && it->mgr == mgr) {
+				it->session = u->getIte();
+				return it;
 			}
 		}
-		return -1;
+		return vmgrs.end();
 	}
 	
 	void tVaultBackend::processVaultMsg(tvMessage &msg, tNetSession *u, U32 ki)
@@ -336,8 +313,8 @@ namespace alc {
 		const Byte *ageName = NULL, *ageGuid = NULL;
 		
 		// read and verify the general vault items
-		for (int i = 0; i < msg.numItems; ++i) {
-			tvItem *itm = msg.items[i];
+		for (tItemList::iterator it = msg.items.begin(); it != msg.items.end(); ++it) {
+			tvItem *itm = *it;
 			switch (itm->id) {
 				case 0: // GenericValue.Int: used in VaultManager, must always be the same
 					if (itm->asInt() != 0xC0AB3041)
@@ -410,7 +387,7 @@ namespace alc {
 			}
 		}
 		
-		if (msg.cmd != VConnect && findVmgr(u, ki, msg.vmgr) < 0)
+		if (msg.cmd != VConnect && findVmgr(u, ki, msg.vmgr) == vmgrs.end())
 			throw txProtocolError(_WHERE("player did not yet send his VConnect"));
 		switch (msg.cmd) {
 			case VConnect:
@@ -432,9 +409,9 @@ namespace alc {
 					if (mgr != ki)
 						throw txProtocolError(_WHERE("Player with KI %d wants to VConnect as %d\n", ki, mgr));
 					// create reply
-					tvMessage reply(msg, 2);
-					reply.items[0] = new tvItem(/*id*/2, /*mgr node id*/mgr);
-					reply.items[1] = new tvItem(/*id*/23, /*folder name*/vaultFolderName);
+					tvMessage reply(msg);
+					reply.items.push_back(new tvItem(/*id*/2, /*mgr node id*/mgr));
+					reply.items.push_back(new tvItem(/*id*/23, /*folder name*/vaultFolderName));
 					send(reply, u, ki);
 				}
 				else if (nodeType == KVNodeMgrAgeNode) { // age node
@@ -443,44 +420,29 @@ namespace alc {
 					mgrNode.str1.writeStr(alcGetStrGuid(ageGuid));
 					mgr = vaultDB->findNode(mgrNode, /*create*/true);
 					// create and send the reply
-					tvMessage reply(msg, 3);
-					reply.items[0] = new tvItem(/*id:*/2, /*mgr node id*/mgr);
-					reply.items[1] = new tvItem(/*id*/21, /*age name*/ageName);
-					reply.items[2] = new tvItem(/*id*/23, /*folder name*/vaultFolderName);
+					tvMessage reply(msg);
+					reply.items.push_back(new tvItem(/*id:*/2, /*mgr node id*/mgr));
+					reply.items.push_back(new tvItem(/*id*/21, /*age name*/ageName));
+					reply.items.push_back(new tvItem(/*id*/23, /*folder name*/vaultFolderName));
 					send(reply, u, ki);
 				}
 				else if (nodeType == KVNodeMgrAdminNode) { // admin node
 					mgr = vaultDB->findNode(mgrNode, /*create*/true); // creating it is needed for vaults which were created with an old vault server
 					// create and send the reply
-					tvMessage reply(msg, 3);
-					reply.items[0] = new tvItem(/*id:*/1, /*node type*/5u);
-					reply.items[1] = new tvItem(/*id*/2, /*mgr node id*/mgr);
-					reply.items[2] = new tvItem(/*id*/23, /*folder name*/vaultFolderName);
+					tvMessage reply(msg);
+					reply.items.push_back(new tvItem(/*id:*/1, /*node type*/5u));
+					reply.items.push_back(new tvItem(/*id*/2, /*mgr node id*/mgr));
+					reply.items.push_back(new tvItem(/*id*/23, /*folder name*/vaultFolderName));
 					send(reply, u, ki);
 				}
 				else // wrong or no node type at all
 					throw txProtocolError(_WHERE("Connect request for unknown node type %d from KI %d\n", nodeType));
 				// now let's see where we save this... first look if we already have this one registered
-				int nr = findVmgr(u, ki, mgr);
-				if (nr >= 0) // it is already registered, and findVmgr updated the session, so we have nothing to do
+				tVmgrList::iterator it = findVmgr(u, ki, mgr);
+				if (it != vmgrs.end()) // it is already registered, and findVmgr updated the session, so we have nothing to do
 					break;
-				// if that's not the case, search for a free slot
-				else {
-					for (int i = 0; i < nVmgrs; ++i) {
-						if (!vmgrs[i]) {
-							nr = i;
-							break; // breaks the loop, not the switch
-						}
-					}
-				}
-				// if there's none, we have to resize the table
-				if (nr < 0) {
-					nr = nVmgrs;
-					++nVmgrs;
-					vmgrs = (tVmgr **)realloc((void *)vmgrs, sizeof(tVmgr *)*nVmgrs);
-					if (vmgrs == NULL) throw txNoMem(_WHERE("NoMem"));
-				}
-				vmgrs[nr] = new tVmgr(ki, mgr, u->getIte());
+				// if that's not the case, add a new one
+				vmgrs.push_back(tVmgr(ki, mgr, u->getIte()));
 				break;
 			}
 			case VDisconnect:
@@ -491,22 +453,12 @@ namespace alc {
 				log->flush();
 				if (nodeType != KVNodeMgrAdminNode) { // VaultManager sometimes leaves too fast, and it doesn't need the VDisconnect reply
 					// send reply
-					tvMessage reply(msg, 0);
+					tvMessage reply(msg);
 					send(reply, u, ki);
 				}
 				// remove vmgr
-				int nr = findVmgr(u, ki, msg.vmgr);
-				delete vmgrs[nr];
-				vmgrs[nr] = NULL;
-				// shrink if possible
-				int last = nVmgrs-1; // find the last vmgr
-				while (last >= 0 && vmgrs[last] == NULL) --last;
-				if (last < nVmgrs-1) { // there are some NULLs at the end, shrink the array
-					nVmgrs=last+1;
-					vmgrs=(tVmgr **)realloc(vmgrs, sizeof(tVmgr *) * nVmgrs);
-					if (nVmgrs && vmgrs == NULL) throw txNoMem(_WHERE("NoMem"));
-					DBG(9, "shrinking vmgr array to %d\n", nVmgrs);
-				}
+				tVmgrList::iterator it = findVmgr(u, ki, msg.vmgr);
+				vmgrs.erase(it);
 				break;
 			}
 			case VAddNodeRef:
@@ -545,10 +497,10 @@ namespace alc {
 				vaultDB->getManifest(mgr, &mfs, &nMfs, &ref, &nRef);
 				
 				// create reply
-				tvMessage reply(msg, 2);
+				tvMessage reply(msg);
 				reply.compress = true;
-				reply.items[0] = new tvItem(new tvCreatableStream(/*id*/14, (tvBase **)mfs, nMfs)); // tvMessage will delete it for us
-				reply.items[1] = new tvItem(new tvCreatableStream(/*id*/15, (tvBase **)ref, nRef)); // tvMessage will delete it for us
+				reply.items.push_back(new tvItem(new tvCreatableStream(/*id*/14, (tvBase **)mfs, nMfs))); // tvMessage will delete it for us
+				reply.items.push_back(new tvItem(new tvCreatableStream(/*id*/15, (tvBase **)ref, nRef))); // tvMessage will delete it for us
 				send(reply, u, ki);
 				
 				// free stuff
@@ -569,9 +521,9 @@ namespace alc {
 					log->flush();
 					
 					// reply to the sender
-					tvMessage reply(msg, 2);
-					reply.items[0] = new tvItem(/*id*/9, /*old node index*/oldIndex);
-					reply.items[1] = new tvItem(/*id*/11, /*old node index*/newIndex);
+					tvMessage reply(msg);
+					reply.items.push_back(new tvItem(/*id*/9, /*old node index*/oldIndex));
+					reply.items.push_back(new tvItem(/*id*/11, /*old node index*/newIndex));
 					send(reply, u, ki);
 				}
 				else {
@@ -580,8 +532,8 @@ namespace alc {
 					log->flush();
 					
 					// create the reply to the sender
-					tvMessage reply(msg, 1);
-					reply.items[0] = new tvItem(/*id*/9, /*old node index*/savedNode->index);
+					tvMessage reply(msg);
+					reply.items.push_back(new tvItem(/*id*/9, /*old node index*/savedNode->index));
 					send(reply, u, ki);
 					// and the broadcast
 					broadcastNodeUpdate(*savedNode, ki, msg.vmgr);
@@ -603,9 +555,9 @@ namespace alc {
 				if (!vaultDB->findNode(*savedNode, create, &mfs))
 					throw txProtocolError(_WHERE("got a VFindNode but can't find the node"));
 				// create and send the reply
-				tvMessage reply(msg, 2);
-				reply.items[0] = new tvItem(/*id*/9, /*old node index*/mfs.id);
-				reply.items[1] = new tvItem(/*id*/24, /*timestamp*/(double)mfs.time);
+				tvMessage reply(msg);
+				reply.items.push_back(new tvItem(/*id*/9, /*old node index*/mfs.id));
+				reply.items.push_back(new tvItem(/*id*/24, /*timestamp*/(double)mfs.time));
 				send(reply, u, ki);
 			}
 			case VFetchNode:
@@ -626,11 +578,11 @@ namespace alc {
 					if (buf.size() > 128000 || i == (nNodes-1)) { // if size is already big enough or this is the last one
 						// create reply
 						bool eof = (i == (nNodes-1));
-						tvMessage reply(msg, eof ? 3 : 2);
+						tvMessage reply(msg);
 						reply.compress = true;
-						reply.items[0] = new tvItem(new tvCreatableStream(/*id*/6, buf)); // tvMessage will delete it for us
-						reply.items[1] = new tvItem(/*id*/25, /*number of nodes*/num);
-						if (eof) reply.items[2] = new tvItem(/*id*/31, 0u); // EOF mark (this is the last packet of nodes)
+						reply.items.push_back(new tvItem(new tvCreatableStream(/*id*/6, buf))); // tvMessage will delete it for us
+						reply.items.push_back(new tvItem(/*id*/25, /*number of nodes*/num));
+						if (eof) reply.items.push_back(new tvItem(/*id*/31, 0u)); // EOF mark (this is the last packet of nodes)
 						send(reply, u, ki);
 						buf.clear();
 						num = 0;
@@ -702,8 +654,8 @@ namespace alc {
 		const Byte *ageGuid = NULL, *ageName = NULL;
 		
 		// read and verify the general vault items
-		for (int i = 0; i < msg.numItems; ++i) {
-			tvItem *itm = msg.items[i];
+		for (tItemList::iterator it = msg.items.begin(); it != msg.items.end(); ++it) {
+			tvItem *itm = *it;
 			switch (itm->id) {
 				case 11: // AgeLinkStruct: an age link
 					ageLink = itm->asAgeLink(); // we don't have to free it, tvMessage does that
@@ -747,8 +699,8 @@ namespace alc {
 				// and add that player to the age owner's list
 				addRemovePlayerToAge(ageInfoNode, msg.vmgr);
 				
-				tvMessage reply(msg, 1);
-				reply.items[0] = new tvItem(/*id*/1, linkNode);
+				tvMessage reply(msg);
+				reply.items.push_back(new tvItem(/*id*/1, linkNode));
 				send(reply, u, ki, x);
 				break;
 			}
@@ -773,7 +725,7 @@ namespace alc {
 				// remove the player from that age
 				addRemovePlayerToAge(ageInfoNode, msg.vmgr, /*visitor*/false, /*remove*/true);
 				
-				tvMessage reply(msg, 0);
+				tvMessage reply(msg);
 				send(reply, u, ki, x);
 				break;
 			}
@@ -793,8 +745,8 @@ namespace alc {
 				if (linkNode) // the player does not own that age
 					addRemovePlayerToAge(ageInfoNode, msg.vmgr, /*visitor*/true);
 				
-				tvMessage reply(msg, 1);
-				reply.items[0] = new tvItem(/*id*/1, linkNode);
+				tvMessage reply(msg);
+				reply.items.push_back(new tvItem(/*id*/1, linkNode));
 				send(reply, u, ki, x);
 				break;
 			}
@@ -814,7 +766,7 @@ namespace alc {
 				// remove the player from that age
 				addRemovePlayerToAge(ageInfoNode, msg.vmgr, /*visitor*/true, /*remove*/true);
 				
-				tvMessage reply(msg, 0);
+				tvMessage reply(msg);
 				send(reply, u, ki, x);
 				break;
 			}
@@ -1152,9 +1104,9 @@ namespace alc {
 	void tVaultBackend::broadcastNodeUpdate(tvNode &node, U32 origKi, U32 origMgr)
 	{
 		// create the broadcast message
-		tvMessage bcast(VSaveNode, 2);
-		bcast.items[0] = new tvItem(/*id*/9, /*old node index*/node.index);
-		bcast.items[1] = new tvItem(/*id*/24, /*timestamp*/node.modTime);
+		tvMessage bcast(VSaveNode);
+		bcast.items.push_back(new tvItem(/*id*/9, /*old node index*/node.index));
+		bcast.items.push_back(new tvItem(/*id*/24, /*timestamp*/node.modTime));
 		// and send it
 		broadcast(bcast, node.index, origKi, origMgr);
 	}
@@ -1162,8 +1114,8 @@ namespace alc {
 	void tVaultBackend::broadcastNodeRefUpdate(tvNodeRef *ref, bool remove, U32 origKi, U32 origMgr)
 	{
 		// create the broadcast message
-		tvMessage bcast(remove ? VRemoveNodeRef : VAddNodeRef, 1);
-		bcast.items[0] = new tvItem(/*id*/7, ref);
+		tvMessage bcast(remove ? VRemoveNodeRef : VAddNodeRef);
+		bcast.items.push_back(new tvItem(/*id*/7, ref));
 		// and send it
 		broadcast(bcast, ref->parent, origKi, origMgr);
 	}
@@ -1171,16 +1123,16 @@ namespace alc {
 	void tVaultBackend::broadcastOnlineState(tvNode &node, U32 origKi, U32 origMgr)
 	{
 		// create the broadcast message
-		tvMessage bcast(VOnlineState, node.int1 ? 5 : 3);
-		bcast.items[0] = new tvItem(/*id*/9, /*node index*/node.index);
-		bcast.items[1] = new tvItem(/*id*/24, /*timestamp*/node.modTime);
+		tvMessage bcast(VOnlineState);
+		bcast.items.push_back(new tvItem(/*id*/9, /*node index*/node.index));
+		bcast.items.push_back(new tvItem(/*id*/24, /*timestamp*/node.modTime));
 		if (node.int1) { // if he's online
-			bcast.items[2] = new tvItem(/*id*/27, node.str1.c_str()); // age name
-			bcast.items[3] = new tvItem(/*id*/28, node.str2.c_str()); // age guid
-			bcast.items[4] = new tvItem(/*id*/29, node.int1); // online state
+			bcast.items.push_back(new tvItem(/*id*/27, node.str1.c_str())); // age name
+			bcast.items.push_back(new tvItem(/*id*/28, node.str2.c_str())); // age guid
+			bcast.items.push_back(new tvItem(/*id*/29, node.int1)); // online state
 		}
 		else { // if he's not online
-			bcast.items[2] = new tvItem(/*id*/29, node.int1); // online state
+			bcast.items.push_back(new tvItem(/*id*/29, node.int1)); // online state
 		}
 		// and send it
 		broadcast(bcast, node.index, origKi, origMgr);
@@ -1192,15 +1144,15 @@ namespace alc {
 		tNetSession *session;
 		vaultDB->getMGRs(node, &table, &tableSize);
 		// now let's see who gets notified
-		for (int i = 0; i < nVmgrs; ++i) {
-			if (!vmgrs[i] || vmgrs[i]->mgr == 0 || (vmgrs[i]->ki == origKi && vmgrs[i]->mgr == origMgr)) continue;
-			session = net->getSession(vmgrs[i]->session);
+		for (tVmgrList::iterator it = vmgrs.begin(); it != vmgrs.end(); ++it) {
+			if (it->mgr == 0 || (it->ki == origKi && it->mgr == origMgr)) continue;
+			session = net->getSession(it->session);
 			if (!session) continue;
 			for (U32 j = 0; j < tableSize; ++j) {
-				if (table[j] > vmgrs[i]->mgr) break; // the list is in order, we will not find this node in there
-				else if (table[j] < vmgrs[i]->mgr) continue;
-				msg.vmgr = vmgrs[i]->mgr;
-				send(msg, session, vmgrs[i]->ki);
+				if (table[j] > it->mgr) break; // the list is in order, we will not find this node in there
+				else if (table[j] < it->mgr) continue;
+				msg.vmgr = it->mgr;
+				send(msg, session, it->ki);
 				break;
 			}
 		}

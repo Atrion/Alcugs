@@ -127,9 +127,6 @@ namespace alc {
 		if (dir.size() < 2) throw txBase(_WHERE("age directory is not defined"));
 		if (!dir.endsWith("/")) dir.writeStr("/");
 		
-		size = 0;
-		ages = NULL;
-		
 		if (!name) { // we should load all ages
 			lstd->log("reading age files from %s\n", dir.c_str());
 			lstd->flush();
@@ -139,12 +136,8 @@ namespace alc {
 			ageDir.open((char *)dir.c_str());
 			while( (file = ageDir.getEntry()) != NULL) {
 				if (file->type != 8 || strcasecmp(alcGetExt(file->name), "age") != 0) continue;
-				
-				// grow the array
-				++size;
-				ages = (tAgeInfo **)realloc(ages, size*sizeof(tAgeInfo*));
-				if (ages==NULL) throw txNoMem(_WHERE("NoMem"));
-				ages[size-1] = new tAgeInfo((char *)dir.c_str(), file->name, loadPages);
+				// load it
+				ages.push_back(tAgeInfo((char *)dir.c_str(), file->name, loadPages));
 			}
 		}
 		else { // we should load only one certain age
@@ -153,29 +146,15 @@ namespace alc {
 			
 			char filename[200];
 			sprintf(filename, "%s.age", name);
-			// initialize the array
-			size = 1;
-			ages = (tAgeInfo **)malloc(sizeof(tAgeInfo*));
-			if (ages==NULL) throw txNoMem(_WHERE("NoMem"));
-			ages[0] = new tAgeInfo((char *)dir.c_str(), filename, loadPages);
-		}
-	}
-	
-	tAgeInfoLoader::~tAgeInfoLoader(void)
-	{
-		if (ages != NULL) {
-			for (int i = 0; i < size; ++i) {
-				if (ages[i]) delete ages[i];
-			}
-			free(ages);
+			// load it
+			ages.push_back(tAgeInfo((char *)dir.c_str(), filename, loadPages));
 		}
 	}
 	
 	tAgeInfo *tAgeInfoLoader::getAge(const Byte *name)
 	{
-		for (int i = 0; i < size; ++i) {
-			if (!ages[i]) continue;
-			if (strcmp((char *)ages[i]->name, (char *)name) == 0) return ages[i];
+		for (std::vector<tAgeInfo>::iterator i = ages.begin(); i != ages.end(); ++i) {
+			if (strcmp((char *)i->name, (char *)name) == 0) return &(*i);
 		}
 		return NULL;
 	}

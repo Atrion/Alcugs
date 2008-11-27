@@ -196,6 +196,9 @@ namespace alc {
 	const char *alcVaultGetDataType(U16 type);
 	const char *alcVaultGetNodeType(Byte type);
 	const char *alcVaultGetFolderType(U32 type);
+	
+	class tvItem;
+	typedef std::vector<tvItem *> tItemList;
 
 	////DEFINITIONS
 	class tvBase : public tBaseType {
@@ -399,13 +402,17 @@ namespace alc {
 		Byte id;
 		U16 type;
 		tvBase *data;
+	private:
+		// forbid copying
+		tvItem(const tvItem &);
+		tvItem &operator=(const tvItem &);
 	};
 	
 	class tvMessage : public tvBase {
 	public:
-		tvMessage(tvMessage &msg, int nItems);
-		tvMessage(Byte cmd, int nItem, bool task = false);
-		tvMessage(bool isTask, Byte tpots) : tvBase() { task = isTask; this->tpots = tpots; items = NULL; }
+		tvMessage(const tvMessage &msg);
+		tvMessage(Byte cmd, bool task = false);
+		tvMessage(bool isTask, Byte tpots) : tvBase() { task = isTask; this->tpots = tpots; }
 		virtual ~tvMessage(void);
 		virtual void store(tBBuf &t); //!< unpacks the message
 		virtual void stream(tBBuf &t);
@@ -417,11 +424,10 @@ namespace alc {
 		bool task;
 		Byte cmd; //!< the vault command
 		bool compress;
-		U16 numItems; //!< number of items
-		tvItem **items;
-		U16 context; // sub in VaultTask
-		U32 vmgr; // client in VaultTask
-		U16 vn;
+		tItemList items;
+		U16 context; //!< vault context; sub in VaultTask
+		U32 vmgr; //!< vault manager; client in VaultTask
+		U16 vn; //!< vault number
 		
 	};
 	

@@ -42,12 +42,17 @@
 
 #include "guidgen.h"
 
+#include <list>
+
 namespace alc {
 
 	////DEFINITIONS
 	/**
 		If we want to do it well and nice, we should add pre and post conditions here.
 	*/
+	
+	class tPlayer;
+	typedef std::list<tPlayer *> tPlayerList;
 	
 		
 	class tTrackingData : public tNetSessionData {
@@ -101,10 +106,10 @@ namespace alc {
 		void load(void);
 		void unload(void);
 		
-		tPlayer *getPlayer(U32 ki, int *nr = NULL);
+		tPlayerList::iterator getPlayer(U32 ki);
 		void notifyWaiting(tNetSession *server);
 		void serverFound(tPlayer *player, tNetSession *server);
-		void removePlayer(int player);
+		void removePlayer(tPlayerList::iterator it);
 		bool doesAgeLoadState(const Byte *age);
 		void printStatusHTML(void);
 		void printStatusXML(void);
@@ -112,9 +117,8 @@ namespace alc {
 		void printPlayersXML(FILE *f, tNetSession *server);
 		void printGameXML(FILE *f, tNetSession *game);
 		void generateFakeGuid(Byte *guid); //!< generates a random 7 bytes fake guid for UruVision
-	
-		int size, count;
-		tPlayer **players; // FIXME: use STL container
+
+		tPlayerList players;
 		tUnet *net;
 		tNetSessionList *servers;
 		tLog *log;

@@ -35,9 +35,12 @@
 #include "vaultdb.h"
 #include "guidgen.h"
 
+#include <list>
+
 namespace alc {
 
 	////DEFINITIONS
+	
 	class tVaultBackend {
 	public:
 		tVaultBackend(tUnet *net);
@@ -57,6 +60,19 @@ namespace alc {
 		}
 		inline int getMaxPlayers(void) { return maxPlayers; }
 	private:
+		// first the new types
+		struct tVmgr {
+			tVmgr(U32 ki, U32 mgr, tNetSessionIte session) {
+				this->ki = ki;
+				this->mgr = mgr;
+				this->session = session;
+			}
+			U32 ki;
+			U32 mgr;
+			tNetSessionIte session;
+		};
+		typedef std::list<tVmgr> tVmgrList;
+	
 		void unload(void);
 		void load(void);
 		
@@ -64,8 +80,8 @@ namespace alc {
 		void send(tvMessage &msg, tNetSession *u, U32 ki, U32 x = 0);
 		
 		/** finds the vault mgr with that data and updates its session ite
-		    \returns the number of that vmgr or -1 */
-		int findVmgr(tNetSession *u, U32 ki, U32 mgr);
+		    \returns the iterator of that vmgr or vmgrs.end() */
+		tVmgrList::iterator findVmgr(tNetSession *u, U32 ki, U32 mgr);
 		
 		// high-level vault tasks
 		
@@ -139,18 +155,7 @@ namespace alc {
 		bool linkingRulesHack;
 		
 		// the list of vmgrs
-		struct tVmgr {
-			tVmgr(U32 ki, U32 mgr, tNetSessionIte session) {
-				this->ki = ki;
-				this->mgr = mgr;
-				this->session = session;
-			}
-			U32 ki;
-			U32 mgr;
-			tNetSessionIte session;
-		};
-		int nVmgrs;
-		tVmgr **vmgrs; // FIXME: use STL container
+		tVmgrList vmgrs;
 	};
 
 
