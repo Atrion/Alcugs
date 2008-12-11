@@ -136,7 +136,7 @@ namespace alc {
 		var = cfg->getVar("tracking.tmp.hacks.agestate");
 		loadAgeState = (var.isNull() || var.asByte());
 		var = cfg->getVar("tracking.tmp.hacks.resetting_ages");
-		if (var.isNull()) strcpy((char *)resettingAges, "Cleft,DniCityX2Finale,GreatZero,Kveer,Myst,Neighborhood02,Personal02,RestorationGuild,spyroom"); // see uru.conf.dist for explanation
+		if (var.isNull()) strcpy(resettingAges, "Cleft,DniCityX2Finale,GreatZero,Kveer,Myst,Neighborhood02,Personal02,RestorationGuild,spyroom"); // see uru.conf.dist for explanation
 		else strncpy((char *)resettingAges, (char *)var.c_str(), 1023);
 		
 		var = cfg->getVar("track.html");
@@ -176,7 +176,7 @@ namespace alc {
 		player->ip = findServer.ip;
 		player->port = findServer.port;
 		log->log("Player %s[%s:%d] wants to link to %s (%s)\n", player->str(), alcGetStrIp(player->ip), player->port, findServer.age.c_str(), findServer.serverGuid.c_str());
-		if (strcmp((char *)findServer.serverGuid.c_str(), "0000000000000000") == 0) { // these are 16 zeroes
+		if (strcmp(findServer.serverGuid.c_str(), "0000000000000000") == 0) { // these are 16 zeroes
 			if (!guidGen->generateGuid(player->awaiting_guid, findServer.age.c_str(), player->ki)) {
 				log->log("ERR: Request to link to unknown age %s - kicking player %s\n", findServer.age.c_str(), player->str());
 				tmPlayerTerminated term(player->u, player->ki, RKickedOff);
@@ -195,7 +195,7 @@ namespace alc {
 		tNetSession *server = NULL, *game = NULL;
 		servers->rewind();
 		while ((server = servers->getNext())) {
-			if (server->data && memcmp(server->serverGuid, player->awaiting_guid, 8) == 0 && strncmp((char *)server->name, (char *)player->awaiting_age, 199) == 0) {
+			if (server->data && memcmp(server->serverGuid, player->awaiting_guid, 8) == 0 && strncmp(server->name, player->awaiting_age, 199) == 0) {
 				game = server; // we found it
 				break;
 			}
@@ -255,7 +255,7 @@ namespace alc {
 	{
 		for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
 			if (!(*it)->waiting) continue;
-			if (memcmp((char *)(*it)->awaiting_guid, server->serverGuid, 8) != 0 || strncmp((char *)(*it)->awaiting_age, (char *)server->name, 199)) continue;
+			if (memcmp((char *)(*it)->awaiting_guid, server->serverGuid, 8) != 0 || strncmp((*it)->awaiting_age, server->name, 199)) continue;
 			// ok, this player is waiting for this age, let's tell him about it
 			serverFound(*it, server);
 		}
@@ -374,8 +374,8 @@ namespace alc {
 			player->u = game;
 			player->flag = playerStatus.playerFlag;
 			player->status = playerStatus.playerStatus;
-			strcpy((char *)player->avatar, (char *)playerStatus.avatar.c_str());
-			strcpy((char *)player->account, (char *)playerStatus.account.c_str());
+			strcpy(player->avatar, playerStatus.avatar.c_str());
+			strcpy(player->account, playerStatus.account.c_str());
 			memcpy(player->uid, playerStatus.uid, 16);
 			// no longer waiting
 			player->waiting = false;
@@ -440,12 +440,12 @@ namespace alc {
 		
 		// local copy of resetting age list as strsep modifies it
 		char ages[1024];
-		strcpy(ages, (char *)resettingAges);
+		strcpy(ages, resettingAges);
 		
 		char *buf = ages;
 		char *p = strsep(&buf, ",");
 		while (p != 0) {
-			if (strcmp(p, (char *)age) == 0) return false;
+			if (strcmp(p, age) == 0) return false;
 			p = strsep(&buf, ",");
 		}
 		return true;

@@ -99,6 +99,8 @@ namespace alc {
 		void load(void);
 		void unload(void);
 		
+		void loadSdlStructs(const Byte *filename);
+		
 		tCloneList::iterator findClone(const tUruObject &obj);
 		tSdlList::iterator findSdlState(tSdlState *state);
 		void removeSDLStates(U32 ki, U32 cloneId = 0);
@@ -107,6 +109,8 @@ namespace alc {
 		tSdlList sdlStates;
 		tUnet *net;
 		tLog *log;
+		
+		Byte sdlDir[256];
 	};
 
 } //End alc namespace

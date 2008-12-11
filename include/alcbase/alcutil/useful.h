@@ -62,5 +62,23 @@ char alcIsAlpha(int c);
 
 }
 
+// allow us to use some string functions with arguments of type Byte *
+inline char *strcpy(const void *to, const void *from)
+{
+	return strcpy((char *)to, (char *)from);
+}
+inline char *strncpy(const void *to, const void *from, size_t n)
+{
+	return strncpy((char *)to, (char *)from, n);
+}
+inline int strcmp(const void *a, const void *b)
+{
+	return strcmp((char *)a, (char *)b);
+}
+inline int strncmp(const void *a, const void *b, size_t n)
+{
+	return strncmp((char *)a, (char *)b, n);
+}
+
 #endif
 

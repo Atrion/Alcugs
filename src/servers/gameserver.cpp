@@ -65,7 +65,7 @@ namespace alc {
 		tConfig *cfg = alcGetConfig();
 		tStrBuf var = cfg->getVar("age_filename");
 		if (var.size() < 2) throw txBase(_WHERE("an age name must be set"));
-		strncpy((char *)serverName, (char *)var.c_str(), 199);
+		strncpy(serverName, var.c_str(), 199);
 		var = cfg->getVar("age_guid");
 		if (var.size() != 16) throw txBase(_WHERE("an age GUID must be set"));
 		alcAscii2Hex(serverGuid, var.c_str(), 8);

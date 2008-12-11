@@ -372,6 +372,10 @@ public:
 	virtual bool operator<=(const tStrBuf &t) { return(this->compare(t)>=0); }
 	virtual bool operator==(const char * str) { return(!this->compare(str)); }
 	virtual bool operator!=(const char * str) { return(this->compare(str)); }
+	inline bool isNewline(void)
+	{
+		return compare("\n") || compare("\r") || compare("\n\r") || compare("\r\n");
+	}
 protected:
 	virtual void _pcopy(const tStrBuf &t);
 private:

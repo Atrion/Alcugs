@@ -76,6 +76,7 @@ db.passwd = "yourpassword"
 # paths
 bin = "/home/user/bin/" # directory where uru_game is in (deprecated, use game.bin in lobby section instead)
 age = "/home/user/age/" # directory containing the age files (for tracking and vault)
+sdl = "/home/user/sdl/" # directory containing the sdl files (for game)
 
 # Instancing settings (used by tracking and vault)
 ;instance_mode = 1 # 0: all ages are global; 1 (default): the ages specified in private_ages are private

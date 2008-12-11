@@ -211,10 +211,20 @@ namespace alc {
 	
 	void tAgeStateManager::load(void)
 	{
-		if (log == lnull) {
+		tConfig *cfg = alcGetConfig();
+		tStrBuf var = cfg->getVar("game.log");
+		if (var.isNull() || var.asByte()) { // logging enabled per default
 			log = new tLog("agestate.log", 4, 0);
-			log->log("AgeState backend started (%s)\n", __U_SDL_ID);
 		}
+		
+		var = cfg->getVar("sdl");
+		if (var.size() < 2) throw txBase(_WHERE("a sdl path must be set"));
+		strncpy(sdlDir, var.c_str(), 255);
+		
+		// FIXME: Load all SDL files in that directory
+		loadSdlStructs((var + "/Dustin.sdl").c_str());
+		
+		log->log("AgeState backend started (%s)\n", __U_SDL_ID);
 	}
 	
 	void tAgeStateManager::unload(void)
@@ -371,6 +381,42 @@ namespace alc {
 			tSdlBinary empty;
 			buf->put(empty);
 		}
+	}
+	
+	/** This is the SDL file parser */
+	void tAgeStateManager::loadSdlStructs(const Byte *filename)
+	{
+		DBG(9, "Loading %s\n", filename);
+		
+		// open and decrypt file
+		tFBuf sdlFile;
+		sdlFile.open(filename, "r");
+		tWDYSBuf sdlContent;
+		sdlFile.get(sdlContent);
+		sdlContent.decrypt();
+		
+		Byte state = 0;
+/*
+	states:
+	0: out of a statedesc block, wait for one
+*/
+		tStrBuf s(sdlContent), c;
+		while (!s.eof()) {
+			c = s.getToken(); // getToken already skips comments for us, so we don't have to care about that
+			DBG(9, "Token: %s, state: %d\n", c.c_str(), state);
+			switch (state) {
+				case 0: // out of a statedesc block, wait for one
+					if (c == "STATEDESC")
+						state = 1;
+					else if (!c.isNewline())
+						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
+					break;
+				default:
+					throw txParseError(_WHERE("Unknown state %d", state));
+			}
+		}
+		
+		// TODO: Finish it
 	}
 
 } //end namespace alc

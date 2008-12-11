@@ -178,7 +178,7 @@ namespace alc {
 		node->blob1Size = strlen(welcomeMsgText)+1;
 		node->blob1 = (Byte *)malloc(node->blob1Size * sizeof(Byte));
 		if (node->blob1 == NULL) throw txNoMem(_WHERE("NoMem"));
-		strcpy((char *)node->blob1, welcomeMsgText);
+		strcpy(node->blob1, welcomeMsgText);
 		vaultDB->createChildNode(KVaultID, globalInboxNode, *node);
 		delete node;
 	}
@@ -922,7 +922,7 @@ namespace alc {
 			node->blob1Size = strlen(spawnPnt)+1; // one for the terminator
 			node->blob1 = (Byte *)malloc(node->blob1Size*sizeof(Byte));
 			if (node->blob1 == NULL) throw txNoMem(_WHERE("NoMem"));
-			strcpy((char *)node->blob1, spawnPnt);
+			strcpy(node->blob1, spawnPnt);
 			// insert the age link node as child of the AgesIOwnFolder
 			ageLinkNode = createChildNodeBCasted(ki, linkedAgesFolder, *node);
 			// create link age link node -> age info node
@@ -1065,7 +1065,7 @@ namespace alc {
 		vaultDB->fetchNodes(&deletePlayer.ki, 1, &nodes, &nNodes);
 		if (nNodes != 1) throw txProtocolError(_WHERE("asked to remvoe non-existing player"));
 		
-		if (deletePlayer.accessLevel <= AcAdmin || strcmp((char *)(*nodes)->lStr2.c_str(), (char *)alcGetStrUid(deletePlayer.uid)) == 0) {
+		if (deletePlayer.accessLevel <= AcAdmin || strcmp((*nodes)->lStr2.c_str(), alcGetStrUid(deletePlayer.uid)) == 0) {
 			int *table, tableSize;
 			// find the  info node
 			tvNode *node = new tvNode(MType | MOwner);
