@@ -120,6 +120,7 @@ namespace alc {
 		log->flush();
 		vaultDB->getVaultFolderName(vaultFolderName);
 		DBG(5, "global vault folder name is %s\n", vaultFolderName);
+		checkMainNodes();
 		
 		if (guidGen == NULL)
 			guidGen = new tGuidGen();
@@ -148,12 +149,14 @@ namespace alc {
 		vaultDB->createChildNode(KVaultID, adminNode, *node);
 		delete node;
 		
+#if 0
 		// create PublicAgesFolder (what is this used for?)
 		node = new tvNode(MType | MInt32_1);
 		node->type = KFolderNode;
 		node->int1 = KPublicAgesFolder;
 		vaultDB->createChildNode(KVaultID, adminNode, *node);
 		delete node;
+#endif
 		
 		// create System node
 		node = new tvNode(MType);
@@ -177,6 +180,30 @@ namespace alc {
 		if (node->blob1 == NULL) throw txNoMem(_WHERE("NoMem"));
 		strcpy((char *)node->blob1, welcomeMsgText);
 		vaultDB->createChildNode(KVaultID, globalInboxNode, *node);
+		delete node;
+	}
+	
+	void tVaultBackend::checkMainNodes(void)
+	{
+		tvNode *node;
+		// get AdminMGR
+		node = new tvNode(MType);
+		node->type = KVNodeMgrAdminNode;
+		U32 adminNode = vaultDB->findNode(*node);
+		delete node;
+		
+		// find the two main nodes and ensure they are connected to this one
+		// AllPlayersFolder
+		node = new tvNode(MType | MInt32_1);
+		node->type = KFolderNode;
+		node->int1 = KAllPlayersFolder;
+		getChildNodeBCasted(KVaultID, adminNode, *node);
+		delete node;
+		
+		// System node
+		node = new tvNode(MType);
+		node->type = KSystem;
+		getChildNodeBCasted(KVaultID, adminNode, *node);
 		delete node;
 	}
 	
@@ -1079,7 +1106,10 @@ namespace alc {
 	U32 tVaultBackend::getChildNodeBCasted(U32 saver, U32 parent, tvNode &node)
 	{
 		U32 nodeId = vaultDB->findNode(node);
-		if (nodeId) return nodeId;
+		if (nodeId) {
+			addRefBCasted(saver, parent, nodeId); // ensure that this is really a child node of the given parent
+			return nodeId;
+		}
 		// it doesn't exist, create it
 		return createChildNodeBCasted(saver, parent, node);
 	}

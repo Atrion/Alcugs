@@ -88,6 +88,9 @@ namespace alc {
 		/** creates the main vault nodes like AllPlayers and GlobalInbox */
 		void createVault(void);
 		
+		/** ensures that the main vault nodes (AllPlayers, System) exist and are children of the AdminMGR */
+		void checkMainNodes(void);
+		
 		/** searches the age by filename and creates it if necessary and wished, returns the ID of the age info node.
 		    If the age should not be created and it is not found, returns 0 */
 		U32 getAge(tvAgeInfoStruct &ageInfo, bool create = true);

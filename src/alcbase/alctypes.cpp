@@ -1322,10 +1322,11 @@ const Byte * tTime::str(Byte type) {
 		Byte minutes=(seconds/60)%60;
 		Byte hours=(seconds/3600)%24;
 		Byte days=(seconds/(3600*24))%30;
-		Byte months=(seconds/(3600*24*30))%12;
-		Byte years=(seconds/(3600*24*365));
-		if(years==1) sth.printf("1 year, "); //I bet that nobody will get this uptime
-		else if(years>1) sth.printf("%i years, ",years);
+		Byte months=(seconds/(3600*24*30)); //%12;
+		// a year is not exactly 12 months, so 361 days would show as 0 years, 0 months and 1 day...
+		//Byte years=(seconds/(3600*24*365));
+		//if(years==1) sth.printf("1 year, "); //I bet that nobody will get this uptime
+		//else if(years>1) sth.printf("%i years, ",years);
 		if(months==1) sth.printf("1 month, "); //This one, should be possible, the GoE shard has beatten it without problems
 		else if(months>1) sth.printf("%i months, ",months);
 		if(days==1) sth.printf("1 day, ");
