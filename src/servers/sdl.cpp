@@ -212,7 +212,7 @@ namespace alc {
 	void tAgeStateManager::load(void)
 	{
 		tConfig *cfg = alcGetConfig();
-		tStrBuf var = cfg->getVar("game.log");
+		tStrBuf var = cfg->getVar("agestate.log");
 		if (var.isNull() || var.asByte()) { // logging enabled per default
 			log = new tLog("agestate.log", 4, 0);
 		}

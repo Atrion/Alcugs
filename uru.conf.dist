@@ -153,6 +153,9 @@ stop = 1
 bind = "127.0.0.1" # the vault server doesn't have to be accessed from outside
 port = 2012
 
+# enable/disable vault logging
+;vault.log = 1 # default 1
+
 # database settings
 db.name = "alcugs_vault"
 # you can overwrite the global settings here if host, username and/or password aren't the same for all servers
@@ -190,6 +193,9 @@ stop = 1
 # this is the section containing options for the game server. global options like verbose_level or log_files_path can be overwritten here
 # NOTE: Some options like log_files_path and port are set by the lobby when it automatically spawns a game server, so these values will
 #  be overwritten (for configuring the log files used by the game server, see game.log in the [lobby] section)
+
+# enable/disable game sverer agestate logging
+;agestate.log = 1 # default 1
 
 # client settings
 allow_uu_clients = 0 # (dis)allow UU clients to connect to this server (default: 1)
