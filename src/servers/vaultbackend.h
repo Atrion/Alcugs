@@ -71,6 +71,7 @@ namespace alc {
 			U32 mgr;
 			tNetSessionIte session;
 		};
+		
 		typedef std::list<tVmgr> tVmgrList;
 	
 		void unload(void);

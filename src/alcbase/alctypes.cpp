@@ -348,7 +348,6 @@ void tMBuf::set(U32 pos) {
 }
 Byte tMBuf::getAt(U32 pos) const {
 	if(pos>msize) {
-		//std::printf("getAt %i \n%s\n",pos,hexToAscii());
 		throw txOutOfRange(_WHERE("OutOfRange %i>%i",pos,msize));
 	}
 	return *(Byte *)(buf->buf+pos);
@@ -782,7 +781,6 @@ tStrBuf & tStrBuf::strip(Byte what,Byte how) {
 	Byte ctrl=what;
 	if(how & 0x01) {
 		while(i<max && ctrl==what) {
-			//std::printf("get1 %i\n",i);
 			ctrl=getAt(i++);
 		}
 		start=i-1;
@@ -792,14 +790,12 @@ tStrBuf & tStrBuf::strip(Byte what,Byte how) {
 		ctrl=what;
 		i=max-1;
 		while(i>=0 && ctrl==what) {
-			//std::printf("get2 %i\n",i);
 			ctrl=getAt(i--);
 		}
 		end=i+1;
 		if(end>=max) end=max-1;
 	}
 	for(i=start; i<=end; i++) {
-		//std::printf("put %i\n",i);
 		aux.putSByte(getAt(i));
 	}
 	aux.rewind();
@@ -891,7 +887,6 @@ tStrBuf & tStrBuf::substring(U32 start,U32 len) {
 
 	set(start);
 	out->write(read(len),len);
-	//std::printf("wtf -%s-%s-\n",c_str(),out->c_str());
 
 	if(shot!=NULL) delete shot;
 	shot=out;
@@ -909,7 +904,6 @@ tStrBuf & tStrBuf::dirname() {
 	int pos;
 	strip('/',0x02);
 	pos=find('/',1);
-	//std::printf("thepos %i\n",pos);
 	
 	if(pos==-1) {
 		out->writeStr(".");

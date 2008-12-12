@@ -198,7 +198,6 @@ namespace alc {
 	const char *alcVaultGetFolderType(U32 type);
 	
 	class tvItem;
-	typedef std::vector<tvItem *> tItemList;
 
 	////DEFINITIONS
 	class tvBase : public tBaseType {
@@ -417,6 +416,8 @@ namespace alc {
 		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log, bool shortLog);
 		void print(tLog *log, bool clientToServer, tNetSession *client, bool shortLog, U32 ki = 0);
+		
+		typedef std::vector<tvItem *> tItemList;
 		
 		Byte tpots; // 1: generate/parse for TPOTS client, everything else: for non-TPOTS client (or the vault server)
 		// format

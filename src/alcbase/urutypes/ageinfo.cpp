@@ -132,7 +132,7 @@ namespace alc {
 	
 	tAgeInfo *tAgeInfoLoader::getAge(const Byte *name)
 	{
-		for (std::vector<tAgeInfo>::iterator i = ages.begin(); i != ages.end(); ++i) {
+		for (tAgeList::iterator i = ages.begin(); i != ages.end(); ++i) {
 			if (strcmp((char *)i->name, (char *)name) == 0) return &(*i);
 		}
 		return NULL;

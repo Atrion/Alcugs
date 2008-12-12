@@ -273,7 +273,7 @@ namespace alc {
 		player->waiting = false;
 	}
 	
-	tPlayerList::iterator tTrackingBackend::getPlayer(U32 ki)
+	tTrackingBackend::tPlayerList::iterator tTrackingBackend::getPlayer(U32 ki)
 	{
 		for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
 			if ((*it)->ki == ki)
@@ -466,7 +466,7 @@ namespace alc {
 			DBG(5, "looking for players on %s\n", server->str());
 			for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
 				if ((*it)->u != server) continue; // search only for players on this server
-				for (std::vector<U32>::iterator jt = directedFwd.recipients.begin(); jt != directedFwd.recipients.end(); ++jt) {
+				for (tmCustomDirectedFwd::tRecList::iterator jt = directedFwd.recipients.begin(); jt != directedFwd.recipients.end(); ++jt) {
 					if (*jt == (*it)->ki) { // one of the recipients is on this server, so send the message
 						tmCustomDirectedFwd forwardedMsg(server, directedFwd);
 						net->send(forwardedMsg);

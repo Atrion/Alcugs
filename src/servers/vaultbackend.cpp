@@ -340,7 +340,7 @@ namespace alc {
 		const Byte *ageName = NULL, *ageGuid = NULL;
 		
 		// read and verify the general vault items
-		for (tItemList::iterator it = msg.items.begin(); it != msg.items.end(); ++it) {
+		for (tvMessage::tItemList::iterator it = msg.items.begin(); it != msg.items.end(); ++it) {
 			tvItem *itm = *it;
 			switch (itm->id) {
 				case 0: // GenericValue.Int: used in VaultManager, must always be the same
@@ -681,7 +681,7 @@ namespace alc {
 		const Byte *ageGuid = NULL, *ageName = NULL;
 		
 		// read and verify the general vault items
-		for (tItemList::iterator it = msg.items.begin(); it != msg.items.end(); ++it) {
+		for (tvMessage::tItemList::iterator it = msg.items.begin(); it != msg.items.end(); ++it) {
 			tvItem *itm = *it;
 			switch (itm->id) {
 				case 11: // AgeLinkStruct: an age link

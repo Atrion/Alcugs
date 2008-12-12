@@ -51,9 +51,6 @@ namespace alc {
 		If we want to do it well and nice, we should add pre and post conditions here.
 	*/
 	
-	class tPlayer;
-	typedef std::list<tPlayer *> tPlayerList;
-	
 		
 	class tTrackingData : public tNetSessionData {
 	public:
@@ -105,6 +102,8 @@ namespace alc {
 	private:
 		void load(void);
 		void unload(void);
+		
+		typedef std::list<tPlayer *> tPlayerList;
 		
 		tPlayerList::iterator getPlayer(U32 ki);
 		void notifyWaiting(tNetSession *server);

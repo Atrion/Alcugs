@@ -26,7 +26,7 @@
 
 #define _DBG_LEVEL_ 10
 #define IN_ALC_PROGRAM
-#define ALC_PROGRAM_ID "$Id$"
+#define ALC_PROGRAM_ID "$Id: alcbase_test.cpp 1883 2008-11-16 17:31:00Z diafero $"
 
 #include <alcugs.h>
 
@@ -42,8 +42,8 @@ void alcdebug_tests() {
 	}
 	std::cout << "where:" <<_WHERE("hello") <<std::endl;
 	
-	std::FILE * f;
-	f=std::fopen("this_file_does_not_exists_","rb");
+	FILE * f;
+	f=fopen("this_file_does_not_exists_","rb");
 	assert(f==NULL);
 	ERR(0,"testing dbg ERR call\n");
 	//_DIE("testing die");

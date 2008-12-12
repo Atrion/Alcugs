@@ -62,7 +62,8 @@ namespace alc {
 		U32 seqPrefix; // it's actually 3 Bytes
 		Byte name[200];
 		
-		std::vector<tPageInfo> pages;
+		typedef std::vector<tPageInfo> tPageList;
+		tPageList pages;
 	};
 	
 	class tAgeInfoLoader
@@ -71,7 +72,8 @@ namespace alc {
 		tAgeInfoLoader(const Byte *name = NULL, bool loadPages = false);
 		tAgeInfo *getAge(const Byte *name);
 	private:
-		std::vector<tAgeInfo> ages;
+		typedef std::vector<tAgeInfo> tAgeList;
+		tAgeList ages;
 	};
 
 } //End alc namespace

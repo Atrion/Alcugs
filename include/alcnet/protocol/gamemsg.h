@@ -105,7 +105,8 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format
-		std::vector<U32> recipients;
+		typedef std::vector<U32> tRecList;
+		tRecList recipients;
 	};
 	
 	class tmLoadClone : public tmGameMessage {
@@ -223,7 +224,8 @@ namespace alc {
 		tmMembersList(tNetSession *u);
 		virtual void stream(tBBuf &t);
 		// format
-		std::vector<tMemberInfo> members;
+		typedef std::vector<tMemberInfo> tMemberList;
+		tMemberList members;
 	private:
 		virtual void additionalFields();
 	};

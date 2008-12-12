@@ -43,12 +43,8 @@
 
 namespace alc {
 
-	class tmLoadClone;
-	class tSdlState;
-
 	////DEFINITIONS
-	typedef std::list<tmLoadClone *> tCloneList;
-	typedef std::list<tSdlState *> tSdlList;
+	class tmLoadClone;
 
 	/**
 		If we want to do it well and nice, we should add pre and post conditions here.
@@ -98,6 +94,9 @@ namespace alc {
 	private:
 		void load(void);
 		void unload(void);
+		
+		typedef std::list<tmLoadClone *> tCloneList;
+		typedef std::list<tSdlState *> tSdlList;
 		
 		void loadSdlStructs(const Byte *filename);
 		

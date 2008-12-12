@@ -196,7 +196,7 @@ namespace alc {
 	{
 		tmGameMessage::stream(t);
 		t.putByte(recipients.size());
-		for (std::vector<U32>::iterator it = recipients.begin(); it != recipients.end(); ++it)
+		for (tRecList::iterator it = recipients.begin(); it != recipients.end(); ++it)
 			t.putU32(*it);
 	}
 	
@@ -538,7 +538,7 @@ namespace alc {
 	{
 		tmMsgBase::stream(t);
 		t.putU16(members.size());
-		for (std::vector<tMemberInfo>::iterator i = members.begin(); i != members.end(); ++i)
+		for (tMemberList::iterator i = members.begin(); i != members.end(); ++i)
 			t.put(*i);
 	}
 	

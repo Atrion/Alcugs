@@ -127,7 +127,6 @@ public:
 	virtual SByte compare(tBBuf &t);
 	/** \return True if the pointer is at the end of the stream */
 	virtual bool eof() {
-		//std::printf("%i>=%i?\n",this->tell(),this->size());
 		return(this->tell()>=this->size());
 	}
 	/** \return the number of bytes remaining to the end of the stream */

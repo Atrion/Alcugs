@@ -283,7 +283,7 @@ namespace alc {
 		}
 	}
 	
-	tSdlList::iterator tAgeStateManager::findSdlState(tSdlState *state)
+	tAgeStateManager::tSdlList::iterator tAgeStateManager::findSdlState(tSdlState *state)
 	{
 		for (tSdlList::iterator it = sdlStates.begin(); it != sdlStates.end(); ++it) {
 			if (**it == *state) return it;
@@ -343,7 +343,7 @@ namespace alc {
 		}
 	}
 	
-	tCloneList::iterator tAgeStateManager::findClone(const tUruObject &obj)
+	tAgeStateManager::tCloneList::iterator tAgeStateManager::findClone(const tUruObject &obj)
 	{
 		for (tCloneList::iterator it = clones.begin(); it != clones.end(); ++it) {
 			if ((*it)->obj == obj) return it;
@@ -458,14 +458,13 @@ namespace alc {
 					break;
 				// ------------------------------------------------------------------------------------------------------------------
 				case 6: // in a statedesc block, search for VAR or the curly bracket
-					if (c.isNewline()) continue;
-					else if (c == "}") {
+					if (c == "}") {
 						log->log("Finished parsing %s, version %d\n", sdlStruct.getName().c_str(), sdlStruct.getVersion());
 						state = 0;
 					}
 					else if (c == "VAR")
 						state = 7;
-					else
+					else if (!c.isNewline())
 						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
 					break;
 				default:

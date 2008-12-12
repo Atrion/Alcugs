@@ -169,8 +169,6 @@ void alcDumpConfig() {
 }
 
 bool alcParseConfig(tStrBuf & path) {
-	//std::printf("parsing %s...\n",path.c_str());
-
 	tXParser parser;
 	DBG(5,"setting config parser...");
 	parser.setConfig(alcGetConfig());
@@ -193,9 +191,8 @@ bool alcParseConfig(tStrBuf & path) {
 		
 		//tStrBuf out;
 		//out.put(parser);
-		//std::printf("result \n%s\n",out.c_str());
 	} catch(txNotFound &t) {
-		std::fprintf(stderr,"Error: %s\n",t.what());
+		fprintf(stderr,"Error: %s\n",t.what());
 		ok=false;
 	}
 	

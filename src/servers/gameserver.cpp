@@ -149,7 +149,7 @@ namespace alc {
 		// look for all recipients
 		Byte nSent = 0;
 		tNetSession *session;
-		for (std::vector<U32>::iterator it = msg.recipients.begin(); it != msg.recipients.end(); ++it) {
+		for (tmCustomDirectedFwd::tRecList::iterator it = msg.recipients.begin(); it != msg.recipients.end(); ++it) {
 			// now search for that player
 			smgr->rewind();
 			while ((session = smgr->getNext())) {
