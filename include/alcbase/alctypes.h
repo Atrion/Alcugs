@@ -374,7 +374,7 @@ public:
 	virtual bool operator!=(const char * str) { return(this->compare(str)); }
 	inline bool isNewline(void)
 	{
-		return compare("\n") || compare("\r") || compare("\n\r") || compare("\r\n");
+		return compare("\n") == 0 || compare("\r") == 0 || compare("\n\r") == 0 || compare("\r\n") == 0;
 	}
 protected:
 	virtual void _pcopy(const tStrBuf &t);

@@ -112,6 +112,19 @@ namespace alc {
 		
 		Byte sdlDir[256];
 	};
+	
+	class tSdlStruct {
+	public:
+		tSdlStruct();
+		
+		void setName(tStrBuf newName) { name = newName; }
+		tStrBuf getName(void) { return name; }
+		void setVersion(U32 newVersion) { version = newVersion; }
+		U32 getVersion(void) { return version; }
+	private:
+		tStrBuf name;
+		U32 version;
+	};
 
 } //End alc namespace
 

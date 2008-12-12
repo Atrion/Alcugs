@@ -222,7 +222,7 @@ namespace alc {
 		strncpy(sdlDir, var.c_str(), 255);
 		
 		// FIXME: Load all SDL files in that directory
-		loadSdlStructs((var + "/Dustin.sdl").c_str());
+		loadSdlStructs((var + "/ahnySphere03.sdl").c_str());
 		
 		log->log("AgeState backend started (%s)\n", __U_SDL_ID);
 	}
@@ -387,6 +387,7 @@ namespace alc {
 	void tAgeStateManager::loadSdlStructs(const Byte *filename)
 	{
 		DBG(9, "Loading %s\n", filename);
+		tSdlStruct sdlStruct;
 		
 		// open and decrypt file
 		tFBuf sdlFile;
@@ -399,6 +400,15 @@ namespace alc {
 /*
 	states:
 	0: out of a statedesc block, wait for one
+	1: found a statedesc block, search for name
+	2: search for the curly bracket
+	-------------------------------------------------
+	3: in a statedesc block, search for VERSION
+	4: in a statedesc block after VERSION, search version number
+	5: in a statedesc block after the version number, search for newline
+	-------------------------------------------------
+	6: in a statedesc block, search for VAR or the curly bracket
+	7: search for var type
 */
 		tStrBuf s(sdlContent), c;
 		while (!s.eof()) {
@@ -411,12 +421,68 @@ namespace alc {
 					else if (!c.isNewline())
 						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
 					break;
+				case 1: // found a statedesc block, search for name
+					// check if it is a valid name
+					if (c.isNewline())
+						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
+					sdlStruct.setName(c);
+					state = 2;
+					break;
+				case 2: // search for the curly bracket
+					if (c == "{")
+						state = 3;
+					else if (!c.isNewline())
+						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
+					break;
+				// ------------------------------------------------------------------------------------------------------------------
+				case 3: // in a statedesc block, search for VERSION
+					if (c == "VERSION")
+						state = 4;
+					else if (!c.isNewline())
+						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
+					break;
+				case 4: // in a statedesc block after VERSION, search version number
+				{
+					U32 version = c.asU32();
+					if (!version)
+						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
+					sdlStruct.setVersion(version);
+					log->log("Parsing %s, version %d\n", sdlStruct.getName().c_str(), version);
+					state = 5;
+					break;
+				}
+				case 5: // in a statedesc block after the version number, search for newline
+					if (!c.isNewline())
+						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
+					state = 6;
+					break;
+				// ------------------------------------------------------------------------------------------------------------------
+				case 6: // in a statedesc block, search for VAR or the curly bracket
+					if (c.isNewline()) continue;
+					else if (c == "}") {
+						log->log("Finished parsing %s, version %d\n", sdlStruct.getName().c_str(), sdlStruct.getVersion());
+						state = 0;
+					}
+					else if (c == "VAR")
+						state = 7;
+					else
+						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
+					break;
 				default:
 					throw txParseError(_WHERE("Unknown state %d", state));
 			}
 		}
 		
+		if (state != 0)
+			throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected end of file", s.getLineNum(), s.getColumnNum()));
+		
 		// TODO: Finish it
+	}
+	
+	/** The SDL Struct classes */
+	tSdlStruct::tSdlStruct()
+	{
+		version = 0;
 	}
 
 } //end namespace alc
