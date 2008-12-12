@@ -74,10 +74,10 @@ public:
 	Byte getVersion(void) { return version; }
 	virtual void copy(const tUStr &t);
 	
-	virtual tUStr & operator=(const tUStr &t) { copy(t); return *this; }
-	virtual tStrBuf & operator=(const tStrBuf &t) { tStrBuf::copy(t); return *this; }
-	virtual tStrBuf & operator=(const char *t) { tStrBuf::copy(t); return *this; }
-	virtual tStrBuf & operator=(const Byte *t) { tStrBuf::copy((char *)t); return *this; }
+	virtual const tUStr & operator=(const tUStr &t) { copy(t); return *this; }
+	virtual const tStrBuf & operator=(const tStrBuf &t) { tStrBuf::copy(t); return *this; }
+	virtual const tStrBuf & operator=(const char *t) { tStrBuf::copy(t); return *this; }
+	virtual const tStrBuf & operator=(const Byte *t) { tStrBuf::copy((char *)t); return *this; }
 private:
 	virtual void _pcopy(const tUStr &t);
 	Byte version;

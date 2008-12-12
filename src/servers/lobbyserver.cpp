@@ -102,7 +102,7 @@ namespace alc {
 			
 				// get the packet
 				tmRequestMyVaultPlayerList requestList(u);
-				msg->data->get(requestList);
+				msg->data.get(requestList);
 				log->log("<RCV> [%d] %s\n", msg->sn, requestList.str());
 				
 				// forward it to the vault server
@@ -128,7 +128,7 @@ namespace alc {
 				
 				// get the packet
 				tmCustomVaultPlayerList playerList(u);
-				msg->data->get(playerList);
+				msg->data.get(playerList);
 				log->log("<RCV> [%d] %s\n", msg->sn, playerList.str());
 				
 				// find the client's session
@@ -160,7 +160,7 @@ namespace alc {
 				
 				// get the packet
 				tmCreatePlayer createPlayer(u);
-				msg->data->get(createPlayer);
+				msg->data.get(createPlayer);
 				log->log("<RCV> [%d] %s\n", msg->sn, createPlayer.str());
 				
 				// forward it to the vault server
@@ -187,7 +187,7 @@ namespace alc {
 				
 				// get the packet
 				tmCustomVaultPlayerCreated playerCreated(u);
-				msg->data->get(playerCreated);
+				msg->data.get(playerCreated);
 				log->log("<RCV> [%d] %s\n", msg->sn, playerCreated.str());
 				
 				// find the client's session
@@ -217,7 +217,7 @@ namespace alc {
 				
 				// get the packet
 				tmDeletePlayer deletePlayer(u);
-				msg->data->get(deletePlayer);
+				msg->data.get(deletePlayer);
 				log->log("<RCV> [%d] %s\n", msg->sn, deletePlayer.str());
 				
 				// forward it to the vault server
@@ -242,7 +242,7 @@ namespace alc {
 				
 				// get the data out of the packet
 				tmCustomForkServer forkServer(u);
-				msg->data->get(forkServer);
+				msg->data.get(forkServer);
 				log->log("<RCV> [%d] %s\n", msg->sn, forkServer.str());
 				
 				if (!loadOnDemand) {

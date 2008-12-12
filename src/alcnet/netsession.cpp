@@ -547,7 +547,7 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 			//DBG(7, "%s inserted a message %s (SN: %d) before an", str(), alcUnetGetMsgCode(t.data.getU16()), t.sn);
 			//DBGM(7, " %s (SN: %d)\n", alcUnetGetMsgCode(msgalt->cmd), msgalt->sn);
 			//t.data.rewind();
-			msg->data->setSize((t.frt +1) * frg_size);
+			msg->data.setSize((t.frt +1) * frg_size);
 			break;
 		} else {
 			msg=rcvq->getNext();
@@ -559,7 +559,7 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 		msg->frt=t.frt;
 		msg->hsize=t.hSize();
 		rcvq->add(msg);
-		msg->data->setSize((t.frt +1) * frg_size); // now the buffer thinks its full of data
+		msg->data.setSize((t.frt +1) * frg_size); // now the buffer thinks its full of data
 	}
 	msg->stamp=net->ntime.seconds;
 	if(msg->frt!=t.frt || msg->hsize!=t.hSize()) throw(txProtocolError(_WHERE("Inconsistency on fragmented stream %i %i %i %i",msg->frt,t.frt,msg->hsize,t.hSize())));
@@ -569,18 +569,18 @@ void tNetSession::assembleMessage(tUnetUruMsg &t) {
 		msg->check[t.frn/8] |= (0x01<<(t.frn%8));
 		
 		if(t.frn==t.frt) { 
-			msg->data->setSize((t.frt * frg_size) + t.data.size()); // correctly set the size of the whole message
+			msg->data.setSize((t.frt * frg_size) + t.data.size()); // correctly set the size of the whole message
 		}
 		
-		msg->data->set(t.frn * frg_size);
+		msg->data.set(t.frn * frg_size);
 		t.data.rewind();
-		msg->data->write(t.data.read(),t.data.size());
+		msg->data.write(t.data.read(),t.data.size());
 
 		if(msg->fr_count==t.frt) {
 			msg->completed=0x01;
-			msg->data->rewind();
-			msg->cmd=msg->data->getU16();
-			msg->data->rewind();
+			msg->data.rewind();
+			msg->cmd=msg->data.getU16();
+			msg->data.rewind();
 
 			if (t.sn == clientPs) {
 				waitingForFragments = false;
@@ -825,12 +825,12 @@ void tNetSession::ackUpdate() {
 				ack = ackq->getNext();
 			}
 			else {
-				ackMsg.ackq->add(ackq->unstackCurrent()); // will switch to the next one
+				ackMsg.ackq.add(ackq->unstackCurrent()); // will switch to the next one
 				ack = ackq->getCurrent();
-				if (ackMsg.ackq->len() >= maxacks) break;
+				if (ackMsg.ackq.len() >= maxacks) break;
 			}
 		}
-		if (ackMsg.ackq->len() > 0)
+		if (ackMsg.ackq.len() > 0)
 			send(ackMsg);
 	}
 }
@@ -847,8 +847,8 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 	net->log->log("<RCV> [%d] %s\n", t.sn, ackMsg.str());
 #endif
 	tUnetAck *ack;
-	ackMsg.ackq->rewind();
-	while ((ack = ackMsg.ackq->getNext())) {
+	ackMsg.ackq.rewind();
+	while ((ack = ackMsg.ackq.getNext())) {
 		A1 = ack->A;
 		A3 = ack->B;
 		//well, do it

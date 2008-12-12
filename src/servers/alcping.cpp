@@ -172,7 +172,7 @@ int tUnetPing::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
 		case NetMsgPing:
 		{
 			tmPing ping(u);
-			msg->data->get(ping);
+			msg->data.get(ping);
 			log->log("<RCV> [%d] %s\n", msg->sn, ping.str());
 			if(listen==0) {
 				if(dstite==ev->sid) {

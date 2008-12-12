@@ -66,7 +66,7 @@ namespace alc {
 				int authResult;
 				
 				// get the data out of the packet
-				msg->data->get(authAsk);
+				msg->data.get(authAsk);
 				log->log("<RCV> [%d] %s\n", msg->sn, authAsk.str());
 				
 				// authenticate player

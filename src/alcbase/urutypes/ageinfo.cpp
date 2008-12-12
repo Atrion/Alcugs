@@ -89,34 +89,13 @@ namespace alc {
 		// get pages
 		if (loadPages) {
 			tConfigVal *pageVal = cfg->findVar("Page");
-			nPages = pageVal ? pageVal->getRows() : 0;
+			int nPages = pageVal ? pageVal->getRows() : 0;
 			if (!nPages) throw txBase(_WHERE("an age without pages? This is not possible"));
-			pages = (tPageInfo *)malloc(nPages*sizeof(tPageInfo));
-			if (pages==NULL) throw txNoMem(_WHERE("NoMem"));
 			for (int i = 0; i < nPages; ++i)
-				pages[i] = tPageInfo(pageVal, i);
-		}
-		else {
-			nPages = 0;
-			pages = NULL;
+				pages.push_back(tPageInfo(pageVal, i));
 		}
 		// done!
 		delete cfg;
-	}
-	
-	tAgeInfo &tAgeInfo::operator=(const tAgeInfo &ageInfo)
-	{
-		seqPrefix = ageInfo.seqPrefix;
-		strncpy((char *)name, (char *)ageInfo.name, 199);
-		nPages = ageInfo.nPages;
-		if (nPages) {
-			pages = (tPageInfo *)malloc(nPages*sizeof(tPageInfo));
-			if (pages==NULL) throw txNoMem(_WHERE("NoMem"));
-			memcpy(pages, ageInfo.pages, nPages*sizeof(tPageInfo));
-		}
-		else
-			pages = NULL;
-		return *this;
 	}
 	
 	tAgeInfoLoader::tAgeInfoLoader(const Byte *name, bool loadPages)

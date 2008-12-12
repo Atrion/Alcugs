@@ -511,7 +511,7 @@ const Byte * tmNetClientComm::str() {
 // Ack
 void tmNetAck::store(tBBuf &t)
 {
-	ackq->clear();
+	ackq.clear();
 	if (!(bhflags & UNetExt)) {
 		if(t.getU16() != 0) throw txUnexpectedData(_WHERE("ack unknown data"));
 	}
@@ -523,15 +523,15 @@ void tmNetAck::store(tBBuf &t)
 		ack->B=t.getU32();
 		if(!(bhflags & UNetExt))
 			if(t.getU32()!=0) throw txUnexpectedData(_WHERE("ack unknown data"));
-		ackq->add(ack);
+		ackq.add(ack);
 	}
 }
 void tmNetAck::stream(tBBuf &t)
 {
 	if (!(bhflags & UNetExt)) t.putU16(0);
-	ackq->rewind();
+	ackq.rewind();
 	tUnetAck *ack;
-	while ((ack = ackq->getNext())) {
+	while ((ack = ackq.getNext())) {
 		t.putU32(ack->A);
 		if(!(bhflags & UNetExt))
 			t.putU32(0);
@@ -546,7 +546,8 @@ const Byte * tmNetAck::str() {
 	#ifdef ENABLE_MSGLOG
 	tUnetAck *ack;
 	bool firstOne = true;
-	while ((ack = ackq->getNext())) {
+	ackq.rewind();
+	while ((ack = ackq.getNext())) {
 		if (firstOne)
 			firstOne = false;
 		else

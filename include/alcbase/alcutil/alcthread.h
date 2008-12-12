@@ -76,7 +76,7 @@ private:
 	
 	// prevent copying
 	tThread(const tThread &);
-	tThread &operator=(const tThread &);
+	const tThread &operator=(const tThread &);
 };
 
 class tMutex {
@@ -98,7 +98,7 @@ private:
 	
 	// prevent copying
 	tMutex(const tMutex &);
-	tMutex &operator=(const tMutex &);
+	const tMutex &operator=(const tMutex &);
 };
 
 class tMutexLock {
@@ -121,7 +121,7 @@ private:
 	
 	// prevent copying
 	tMutexLock(const tMutexLock &);
-	tMutexLock &operator=(const tMutexLock &);
+	const tMutexLock &operator=(const tMutexLock &);
 };
 
 

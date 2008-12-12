@@ -73,7 +73,7 @@ public:
 	txBase(const void * name,const void * msg,bool abort,bool core);
 	txBase(const txBase &t);
 	void copy(txBase &t);
-	txBase & operator=(txBase &t) { this->copy(t); return *this; }
+	const txBase & operator=(txBase &t) { this->copy(t); return *this; }
 	/** \brief Returns the description message */
 	virtual const char * what();
 	/** \brief Returns a backtrace (Only on Linux) */

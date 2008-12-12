@@ -54,7 +54,7 @@ public:
 	U16 getRows() { return y; }
 	U16 getCols() { return x; }
 	void copy(tConfigVal & t);
-	void operator=(tConfigVal & t) { copy(t); }
+	const tConfigVal &operator=(tConfigVal & t) { copy(t); return *this; }
 private:
 	void init();
 	tStrBuf name;
@@ -79,7 +79,7 @@ public:
 	void copy(tConfigKey & t);
 	void merge(tConfigKey & t);
 	void add(tConfigVal &t);
-	void operator=(tConfigKey & t) { copy(t); }
+	const tConfigKey &operator=(tConfigKey & t) { copy(t); return *this; }
 	void rewind();
 	tConfigVal * getNext();
 private:

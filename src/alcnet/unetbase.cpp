@@ -322,8 +322,8 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 				}
 				// this part can never be reached on shutdown, so messages are only processed when the server is still fully running
 				if (ret == 0) ret=onMsgRecieved(evt,msg,u);
-				if (ret == 1 && !msg->data->eof() > 0) { // when the packet was processed and there are bytes left, it is obiously invalid, terminate the client with a parse error
-					err->log("%s Recieved a message 0x%04X (%s) which was too long (%d Bytes remaining after parsing)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data->remaining());
+				if (ret == 1 && !msg->data.eof() > 0) { // when the packet was processed and there are bytes left, it is obiously invalid, terminate the client with a parse error
+					err->log("%s Recieved a message 0x%04X (%s) which was too long (%d Bytes remaining after parsing)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data.remaining());
 					ret=-1;
 				}
 			}
@@ -415,7 +415,7 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool 
 		{
 			// accept it even if it is NOT a client - in that case, the peer obviously thinks it is a client, so lets respect its wish, it doesn't harm
 			tmLeave msgleave(u);
-			msg->data->get(msgleave);
+			msg->data.get(msgleave);
 			log->log("<RCV> [%d] %s\n",msg->sn,msgleave.str());
 			if (!shutdown && !u->isTerminated()) {
 				ev->id=UNET_TERMINATED;
@@ -428,7 +428,7 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool 
 		{
 			// accept it even if it IS a client - in that case, the peer obviously thinks it is a server, so lets respect its wish, it doesn't harm
 			tmTerminated msgterminated(u);
-			msg->data->get(msgterminated);
+			msg->data.get(msgterminated);
 			log->log("<RCV> [%d] %s\n",msg->sn,msgterminated.str());
 			ev->id=UNET_TERMINATED;
 			onTerminated(ev,msgterminated.reason,u);
@@ -439,7 +439,7 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool 
 		{
 			if (u->isTerminated() || shutdown) return 0; // don't accept a NetMsgAlive on already terminated sessions
 			tmAlive alive(u);
-			msg->data->get(alive);
+			msg->data.get(alive);
 			log->log("<RCV> [%d] %s\n",msg->sn,alive.str());
 			return 1;
 		}

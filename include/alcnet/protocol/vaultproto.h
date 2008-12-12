@@ -308,7 +308,6 @@ namespace alc {
 		 /** create a stream with a list of vault objects. These must be tvManifest or tvNodeRef, otherwise that's not a valid stream! */
 		tvCreatableStream(Byte id, tvBase **dataList, int nData);
 		tvCreatableStream(Byte id, tMBuf &buf);
-		
 		tvCreatableStream(Byte id) : tvBase() { this->id = id; size = 0; data = NULL; }
 		virtual ~tvCreatableStream(void) { if (data) free(data); }
 		virtual void store(tBBuf &t);
@@ -322,7 +321,7 @@ namespace alc {
 	private:
 		// avoid copying it
 		tvCreatableStream(const tvCreatableStream &);
-		tvCreatableStream &operator=(const tvCreatableStream &);
+		const tvCreatableStream &operator=(const tvCreatableStream &);
 	};
 	
 	class tvServerGuid : public tvBase {
@@ -374,7 +373,7 @@ namespace alc {
 	private:
 		// avoid copying it
 		tvNode(const tvNode &);
-		tvNode &operator=(const tvNode &);
+		const tvNode &operator=(const tvNode &);
 	};
 	
 	class tvItem : public tvBase {
@@ -405,7 +404,7 @@ namespace alc {
 	private:
 		// forbid copying
 		tvItem(const tvItem &);
-		tvItem &operator=(const tvItem &);
+		const tvItem &operator=(const tvItem &);
 	};
 	
 	class tvMessage : public tvBase {

@@ -204,7 +204,7 @@ namespace alc {
 				
 				// get the data out of the packet
 				tmJoinReq joinReq(u);
-				msg->data->get(joinReq);
+				msg->data.get(joinReq);
 				log->log("<RCV> [%d] %s\n", msg->sn, joinReq.str());
 				
 				// the player is joined - tell tracking and vault
@@ -241,7 +241,7 @@ namespace alc {
 				
 				// get the data out of the packet
 				tmGameStateRequest gameStateRequest(u);
-				msg->data->get(gameStateRequest);
+				msg->data.get(gameStateRequest);
 				log->log("<RCV> [%d] %s\n", msg->sn, gameStateRequest.str());
 				
 				int n = ageState->sendClones(u);
@@ -261,7 +261,7 @@ namespace alc {
 				
 				// get the data out of the packet
 				tmMembersListReq membersListReq(u);
-				msg->data->get(membersListReq);
+				msg->data.get(membersListReq);
 				log->log("<RCV> [%d] %s\n", msg->sn, membersListReq.str());
 				
 				// send members list
@@ -287,7 +287,7 @@ namespace alc {
 				
 				// get the data out of the packet
 				tmPagingRoom pagingRoom(u);
-				msg->data->get(pagingRoom);
+				msg->data.get(pagingRoom);
 				log->log("<RCV> [%d] %s\n", msg->sn, pagingRoom.str());
 				
 				// FIXME: do something
@@ -299,14 +299,14 @@ namespace alc {
 			{
 				if (!u->joined) {
 					err->log("ERR: %s sent a NetMsgGameMessage but did not yet join the game - ignore it.\n", u->str());
-					// even the normal client sometimes does this, I donÄt know why, so just ignore this message
-					msg->data->end(); // avoid a warning because the message was too long
+					// even the normal client sometimes does this, I don't know why, so just ignore this message
+					msg->data.end(); // avoid a warning because the message was too long
 					return 1;
 				}
 				
 				// get the data out of the packet
 				tmGameMessage gameMsg(u);
-				msg->data->get(gameMsg);
+				msg->data.get(gameMsg);
 				log->log("<RCV> [%d] %s\n", msg->sn, gameMsg.str());
 				
 				// broadcast message
@@ -330,7 +330,7 @@ namespace alc {
 				
 				// get the data out of the packet
 				tmGameMessageDirected gameMsg(u);
-				msg->data->get(gameMsg);
+				msg->data.get(gameMsg);
 				log->log("<RCV> [%d] %s\n", msg->sn, gameMsg.str());
 				
 				// Because sharing the Relto book causes everyone in the age to crash
@@ -369,7 +369,7 @@ namespace alc {
 				
 				// get the data out of the packet
 				tmCustomDirectedFwd gameMsg(u);
-				msg->data->get(gameMsg);
+				msg->data.get(gameMsg);
 				log->log("<RCV> [%d] %s\n", msg->sn, gameMsg.str());
 				
 				// forward it
@@ -388,7 +388,7 @@ namespace alc {
 				
 				// get the data out of the packet
 				tmSDLState SDLState(u);
-				msg->data->get(SDLState);
+				msg->data.get(SDLState);
 				log->log("<RCV> [%d] %s\n", msg->sn, SDLState.str());
 				
 				// save SDL state
@@ -408,7 +408,7 @@ namespace alc {
 				
 				// get the data out of the packet
 				tmSDLStateBCast SDLStateBCast(u);
-				msg->data->get(SDLStateBCast);
+				msg->data.get(SDLStateBCast);
 				log->log("<RCV> [%d] %s\n", msg->sn, SDLStateBCast.str());
 				
 				// save SDL state
@@ -438,7 +438,7 @@ namespace alc {
 				
 				// get the data out of the packet
 				tmLoadClone loadClone(u);
-				msg->data->get(loadClone);
+				msg->data.get(loadClone);
 				log->log("<RCV> [%d] %s\n", msg->sn, loadClone.str());
 				
 				ageState->saveClone(loadClone);
@@ -479,7 +479,7 @@ namespace alc {
 				
 				// get the data out of the packet
 				tmTestAndSet testAndSet(u);
-				msg->data->get(testAndSet);
+				msg->data.get(testAndSet);
 				log->log("<RCV> [%d] %s\n", msg->sn, testAndSet.str());
 				
 				// if required, send a reply - this is simply copied from the old game server, don't ask me what it means
@@ -512,7 +512,7 @@ namespace alc {
 				
 				// get the data out of the packet
 				tmPlayerPage playerPage(u);
-				msg->data->get(playerPage);
+				msg->data.get(playerPage);
 				log->log("<RCV> [%d] %s\n", msg->sn, playerPage.str());
 				
 				// This message is sent once when the client starts and links to the first age, and once again when the client quits and
@@ -529,7 +529,7 @@ namespace alc {
 				
 				// get the data out of the packet
 				tmRelevanceRegions relevanceRegions(u);
-				msg->data->get(relevanceRegions);
+				msg->data.get(relevanceRegions);
 				log->log("<RCV> [%d] %s\n", msg->sn, relevanceRegions.str());
 				// I have no clue what this message is supposed to do, and things work without reacting to it
 				return 1;
@@ -544,7 +544,7 @@ namespace alc {
 				
 				// get the data out of the packet
 				tmSetTimeout setTimeout(u);
-				msg->data->get(setTimeout);
+				msg->data.get(setTimeout);
 				log->log("<RCV> [%d] %s\n", msg->sn, setTimeout.str());
 				// I have no clue what this message is supposed to do (well, it obviously should somehow set the timeout, but neither
 				// do I know how 0x43340000 should be 180sec nor is that a useful timeout). Things work without reacting to it.

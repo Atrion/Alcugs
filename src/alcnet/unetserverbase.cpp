@@ -60,7 +60,7 @@ namespace alc {
 			case NetMsgPing:
 			{
 				tmPing ping(u);
-				msg->data->get(ping);
+				msg->data.get(ping);
 				log->log("<RCV> [%d] %s\n",msg->sn,ping.str());
 				if (ping.destination == whoami || ping.destination == KBcast) { // if it's for us or for everyone, answer
 					tmPing pingReply(u, ping);

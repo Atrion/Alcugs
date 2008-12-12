@@ -55,14 +55,13 @@ const char * alcUnetGetAvatarCode(Byte code);
 const char * alcUnetGetLinkingRule(Byte rule);
 const char * alcUnetGetMsgCode(U16 code);
 
-class tUnet;
 class tNetSession;
 
 /** this class is used to save incoming NetMsgs and collect their fragments */
 class tUnetMsg {
 public:
-	tUnetMsg(U32 size=1024) { next=NULL; completed=0; fr_count=0; data=new tMBuf(size); memset(check,0,32); }
-	virtual ~tUnetMsg() { delete data; }
+	tUnetMsg(U32 size=1024) : data(size) { next=NULL; completed=0; fr_count=0; memset(check,0,32); }
+	//virtual ~tUnetMsg() { delete data; }
 	tUnetMsg * next;
 	U16 cmd;
 	U32 sn;
@@ -70,10 +69,14 @@ public:
 	Byte completed;
 	Byte fr_count; //Number of fragments we already got
 	char check[32]; //bitmap
-	tMBuf * data;
+	tMBuf data;
 	//sanity check
 	U32 frt;
 	Byte hsize;
+private:
+	// prevent copying
+	tUnetMsg(const tUnetMsg &);
+	const tUnetMsg &operator=(const tUnetMsg &);
 };
 
 /** this class is used to save acks in an ackq */
@@ -84,6 +87,10 @@ public:
 	U32 A;
 	U32 B;
 	tUnetAck * next;
+private:
+	// prevent copying
+	tUnetAck(const tUnetAck &);
+	const tUnetAck &operator=(const tUnetAck &);
 };
 
 /** this is the class responsible for the UruMsg header. The data must be filled with a class derived from tmBase. */
@@ -121,6 +128,10 @@ public:
 	U32 cps; //!< combined last acked fragment and seq num
 	U32 dsize; //!< size of data / number of acks in the packet
 	tMBuf data;
+private:
+	// prevent copying
+	tUnetUruMsg(const tUnetUruMsg &);
+	const tUnetUruMsg &operator=(const tUnetUruMsg &);
 };
 
 class tmBase :public tBaseType {
@@ -148,16 +159,20 @@ public:
 
 class tmNetAck :public tmBase {
 public:
-	tmNetAck(tNetSession *u) : tmBase(UNetAckReply|UNetUrgent, u) { ackq = new tUnetMsgQ<tUnetAck>; }
-	virtual ~tmNetAck() { delete ackq; }
+	tmNetAck(tNetSession *u) : tmBase(UNetAckReply|UNetUrgent, u) { }
+	//virtual ~tmNetAck() { delete ackq; }
 	
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t);
 	virtual const Byte * str();
 	
-	tUnetMsgQ<tUnetAck> * ackq;
+	tUnetMsgQ<tUnetAck> ackq;
 private:
 	tStrBuf dbg;
+
+	// prevent copying
+	tmNetAck(const tmNetAck &);
+	const tmNetAck &operator=(const tmNetAck &);
 };
 
 class tmMsgBase :public tmBase {

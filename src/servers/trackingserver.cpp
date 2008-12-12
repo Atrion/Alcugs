@@ -64,7 +64,7 @@ namespace alc {
 			{
 				// get the data out of the packet
 				tmCustomSetGuid setGuid(u);
-				msg->data->get(setGuid);
+				msg->data.get(setGuid);
 				log->log("<RCV> [%d] %s\n", msg->sn, setGuid.str());
 				
 				// save the data for the session
@@ -76,7 +76,7 @@ namespace alc {
 			{
 				// get the data out of the packet
 				tmCustomPlayerStatus playerStatus(u);
-				msg->data->get(playerStatus);
+				msg->data.get(playerStatus);
 				log->log("<RCV> [%d] %s\n", msg->sn, playerStatus.str());
 				
 				// update the player's data
@@ -88,7 +88,7 @@ namespace alc {
 			{
 				// get the data out of the packet
 				tmCustomFindServer findServer(u);
-				msg->data->get(findServer);
+				msg->data.get(findServer);
 				log->log("<RCV> [%d] %s\n", msg->sn, findServer.str());
 				
 				trackingBackend->findServer(findServer);
@@ -99,7 +99,7 @@ namespace alc {
 			{
 				// get the data out of the packet
 				tmCustomDirectedFwd directedFwd(u);
-				msg->data->get(directedFwd);
+				msg->data.get(directedFwd);
 				log->log("<RCV> [%d] %s\n", msg->sn, directedFwd.str());
 				
 				trackingBackend->forwardMessage(directedFwd);

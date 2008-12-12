@@ -115,7 +115,7 @@ public:
 private:
 	// make copying impossible
 	tNetEvent(const tNetEvent &);
-	tNetEvent &operator=(const tNetEvent &);
+	const tNetEvent &operator=(const tNetEvent &);
 };
 
 }

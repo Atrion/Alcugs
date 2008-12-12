@@ -94,7 +94,7 @@ namespace alc {
 			case NetMsgCustomVaultAskPlayerList:
 			{
 				tmCustomVaultAskPlayerList askPlayerList(u);
-				msg->data->get(askPlayerList);
+				msg->data.get(askPlayerList);
 				log->log("<RCV> [%d] %s\n", msg->sn, askPlayerList.str());
 				
 				vaultBackend->sendPlayerList(askPlayerList);
@@ -104,7 +104,7 @@ namespace alc {
 			case NetMsgCustomVaultCreatePlayer:
 			{
 				tmCustomVaultCreatePlayer createPlayer(u);
-				msg->data->get(createPlayer);
+				msg->data.get(createPlayer);
 				log->log("<RCV> [%d] %s\n", msg->sn, createPlayer.str());
 				
 				Byte result = AUnspecifiedServerError;
@@ -135,7 +135,7 @@ namespace alc {
 			case NetMsgCustomVaultDeletePlayer:
 			{
 				tmCustomVaultDeletePlayer deletePlayer(u);
-				msg->data->get(deletePlayer);
+				msg->data.get(deletePlayer);
 				log->log("<RCV> [%d] %s\n", msg->sn, deletePlayer.str());
 				
 				vaultBackend->deletePlayer(deletePlayer);
@@ -145,7 +145,7 @@ namespace alc {
 			case NetMsgCustomVaultCheckKi:
 			{
 				tmCustomVaultCheckKi checkKi(u);
-				msg->data->get(checkKi);
+				msg->data.get(checkKi);
 				log->log("<RCV> [%d] %s\n", msg->sn, checkKi.str());
 				
 				vaultBackend->checkKi(checkKi);
@@ -155,7 +155,7 @@ namespace alc {
 			case NetMsgCustomVaultPlayerStatus:
 			{
 				tmCustomVaultPlayerStatus status(u);
-				msg->data->get(status);
+				msg->data.get(status);
 				log->log("<RCV> [%d] %s\n", msg->sn, status.str());
 				
 				vaultBackend->updatePlayerStatus(status);
@@ -170,7 +170,7 @@ namespace alc {
 				
 				// get the data out of the packet
 				tmVault vaultMsg(u);
-				msg->data->get(vaultMsg);
+				msg->data.get(vaultMsg);
 				log->log("<RCV> [%d] %s\n", msg->sn, vaultMsg.str());
 				if (!vaultMsg.hasFlags(plNetKi) || vaultMsg.ki == 0) throw txProtocolError(_WHERE("KI missing"));
 				if (isTask && !vaultMsg.hasFlags(plNetX))  throw txProtocolError(_WHERE("X flag missing"));

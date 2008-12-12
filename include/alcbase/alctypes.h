@@ -148,7 +148,7 @@ public:
 	virtual bool operator<(tBBuf &t) { return(this->compare(t)>0); }
 	virtual bool operator>=(tBBuf &t) { return(this->compare(t)<=0); }
 	virtual bool operator<=(tBBuf &t) { return(this->compare(t)>=0); }
-	virtual void operator=(tBBuf &t) { this->copy(t); }
+	virtual const tBBuf &operator=(tBBuf &t) { this->copy(t); return *this; }
 protected:
 	//! Built-in initialization
 	virtual void init();
@@ -195,7 +195,7 @@ public:
 	virtual U32 size() const;
 	virtual void clear();
 	virtual void copy(const tMBuf &t);
-	virtual void operator=(const tMBuf &t) { this->copy(t); }
+	virtual const tMBuf &operator=(const tMBuf &t) { this->copy(t); return *this; }
 	virtual Byte getAt(U32 pos) const;
 	virtual void setAt(U32 pos,const char what);
 	//virtual Byte operator[](U32 pos) { return(this->getAt(pos)); }
@@ -235,7 +235,6 @@ public:
 	virtual void open(const void * path,const void * mode="rb");
 	virtual void flush();
 	//virtual void copy(tFBuf &t);
-	//virtual void operator=(tFBuf &t) { this->copy(t); }
 protected:
 	virtual void init();
 	//virtual void _pcopy(tFBuf &t);
@@ -359,8 +358,8 @@ public:
 	const Byte * c_str();
 	virtual void copy(const char * str);
 	virtual void copy(const tStrBuf &t);
-	virtual tStrBuf & operator=(const tStrBuf &t) { copy(t); return *this; }
-	virtual tStrBuf & operator=(const char * str) { copy(str); return *this; }
+	virtual const tStrBuf & operator=(const tStrBuf &t) { copy(t); return *this; }
+	virtual const tStrBuf & operator=(const char * str) { copy(str); return *this; }
 	void setSeparator(char w) { sep=w; }
 	virtual SByte compare(const tStrBuf &t);
 	virtual SByte compare(const char * str);
@@ -405,9 +404,10 @@ public:
 	virtual bool operator<(tTime &t) { return(this->compare(t)>0); }
 	virtual bool operator>=(tTime &t) { return(this->compare(t)<=0); }
 	virtual bool operator<=(tTime &t) { return(this->compare(t)>=0); }
-	void operator=(tTime &t) {
+	const tTime &operator=(tTime &t) {
 		seconds=t.seconds;
 		microseconds=t.microseconds;
+		return *this;
 	}
 	void now();
 	double asDouble(char how='s');

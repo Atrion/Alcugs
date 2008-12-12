@@ -58,16 +58,11 @@ namespace alc {
 	{
 	public:
 		tAgeInfo(const char *dir, const char *file, bool loadPages);
-		tAgeInfo(const tAgeInfo &ageInfo) { *this = ageInfo; }
-		~tAgeInfo(void) { if (nPages) free(pages); }
-		
-		tAgeInfo &operator=(const tAgeInfo &ageInfo);
 		
 		U32 seqPrefix; // it's actually 3 Bytes
 		Byte name[200];
 		
-		int nPages;
-		tPageInfo *pages;
+		std::vector<tPageInfo> pages;
 	};
 	
 	class tAgeInfoLoader
