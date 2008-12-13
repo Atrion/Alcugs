@@ -208,4 +208,20 @@ void alcStrFilter(char * what) {
 }
 
 
+/** \brief parses a "name[number]" kind of string, setting "t" to the name and returning the number */
+U16 alcParseKey(tStrBuf &t) {
+	int pos;
+	pos=t.find('[');
+	tStrBuf offset;
+	if(pos==-1) return 0;
+	if(!t.endsWith("]")) {
+		throw txParseError(_WHERE("Parse error near %s, malformed var name.\n",t.c_str()));
+	}
+	offset=t.substring(pos,t.size()-pos);
+	offset=offset.strip('[').strip(']');
+	t.setSize(pos);
+	return offset.asU16();
+}
+
+
 }

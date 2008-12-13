@@ -186,11 +186,6 @@ namespace alc {
 #define DVaultNode             0x0439
 #define DVaultNode2            0x043A // TPOTS
 
-//sub data types (incomplete)
-#define DInteger 0x00 // (4 bytes) integer
-#define DUruString 0x03 // string
-#define DTimestamp 0x07 // (8 bytes) timestamp as double
-
 	const char *alcVaultGetCmd(Byte cmd);
 	const char *alcVaultGetTask(Byte cmd);
 	const char *alcVaultGetDataType(U16 type);

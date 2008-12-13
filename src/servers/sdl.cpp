@@ -222,7 +222,7 @@ namespace alc {
 		strncpy(sdlDir, var.c_str(), 255);
 		
 		// FIXME: Load all SDL files in that directory
-		loadSdlStructs((var + "/ahnySphere03.sdl").c_str());
+		loadSdlStructs((var + "/Dustin.sdl").c_str());
 		
 		log->log("AgeState backend started (%s)\n", __U_SDL_ID);
 	}
@@ -388,6 +388,7 @@ namespace alc {
 	{
 		DBG(9, "Loading %s\n", filename);
 		tSdlStruct sdlStruct;
+		tSdlStructVar sdlVar;
 		
 		// open and decrypt file
 		tFBuf sdlFile;
@@ -409,6 +410,11 @@ namespace alc {
 	-------------------------------------------------
 	6: in a statedesc block, search for VAR or the curly bracket
 	7: search for var type
+	8: search for var name
+	9: find additional information (DEFAULT) or newline
+	-------------------------------------------------
+	10: find equal sign after DEFAULT
+	11: find default data
 */
 		tStrBuf s(sdlContent), c;
 		while (!s.eof()) {
@@ -425,7 +431,7 @@ namespace alc {
 					// check if it is a valid name
 					if (c.isNewline())
 						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
-					sdlStruct.setName(c);
+					sdlStruct = tSdlStruct(c);
 					state = 2;
 					break;
 				case 2: // search for the curly bracket
@@ -446,8 +452,8 @@ namespace alc {
 					U32 version = c.asU32();
 					if (!version)
 						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
-					sdlStruct.setVersion(version);
-					log->log("Parsing %s, version %d\n", sdlStruct.getName().c_str(), version);
+					sdlStruct.version = version;
+					log->log("Parsing %s, version %d\n", sdlStruct.name.c_str(), version);
 					state = 5;
 					break;
 				}
@@ -458,15 +464,54 @@ namespace alc {
 					break;
 				// ------------------------------------------------------------------------------------------------------------------
 				case 6: // in a statedesc block, search for VAR or the curly bracket
-					if (c == "}") {
-						log->log("Finished parsing %s, version %d\n", sdlStruct.getName().c_str(), sdlStruct.getVersion());
-						state = 0;
-					}
+					if (c == "}")
+						state = 0; // go back to state 0 and wait for EOF or next statedesc
 					else if (c == "VAR")
 						state = 7;
 					else if (!c.isNewline())
 						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
 					break;
+				case 7: // search for var type
+					sdlVar = tSdlStructVar(c);
+					state = 8;
+					break;
+				case 8: // search for var name
+				{
+					U32 size = alcParseKey(c);
+					if (!size)
+						throw txParseError(_WHERE("Parse error at line %d, column %d: Invalid key %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
+					if (size != 1)
+						throw txParseError(_WHERE("The size of a SDL key must be 1")); // FIXME
+					DBG(9, "Found SDL var %s, size %d\n", c.c_str(), size);
+					sdlVar.name = c;
+					state = 9;
+					break;
+				}
+				case 9: // find additional information (DEFAULT, DEFAULTOPTION, DISPLAYOPTION) or newline
+					if (c == "DEFAULT")
+						state = 10;
+					else if (c.isNewline()) {
+						sdlStruct.vars.push_back(sdlVar); // this VAR is finished, save it
+						state = 6; // go back to state 6 and search for next var or end of statedesc
+					} else
+						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
+					break;
+				// ------------------------------------------------------------------------------------------------------------------
+				case 10: // find equal sign after DEFAULT
+					if (c == "=")
+						state = 11;
+					else
+						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
+					break;
+				case 11: // find default data
+				{
+					U32 defaultVal = c.asU32();
+					if (!defaultVal && c != "0")
+						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
+					sdlVar.defaultVal = defaultVal;
+					state = 9; // find more information or the end of the VAR
+					break;
+				}
 				default:
 					throw txParseError(_WHERE("Unknown state %d", state));
 			}
@@ -479,7 +524,21 @@ namespace alc {
 	}
 	
 	/** The SDL Struct classes */
-	tSdlStruct::tSdlStruct()
+	tSdlStructVar::tSdlStructVar(tStrBuf type)
+	{
+		if (type.size())
+			this->type = getVarTypeFromName(type);
+		else
+			this->type = DInvalid;
+	}
+	
+	Byte tSdlStructVar::getVarTypeFromName(tStrBuf type)
+	{
+		if (type == "BOOL") return DBool;
+		throw txParseError(_WHERE("Unknown SDL VAR type %s", name.c_str()));
+	}
+	
+	tSdlStruct::tSdlStruct(tStrBuf name) : name(name)
 	{
 		version = 0;
 	}

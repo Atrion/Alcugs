@@ -112,17 +112,28 @@ namespace alc {
 		Byte sdlDir[256];
 	};
 	
+	/** The SDL Struct classes */
+	class tSdlStructVar {
+	public:
+		tSdlStructVar(tStrBuf type = tStrBuf());
+		
+		// these are public, I would have to add write functions for them anyway or make many classes "friend"
+		Byte type;
+		tStrBuf name;
+		U32 defaultVal;
+	private:
+		Byte getVarTypeFromName(tStrBuf type);
+	};
+	
 	class tSdlStruct {
 	public:
-		tSdlStruct();
-		
-		void setName(tStrBuf newName) { name = newName; }
-		tStrBuf getName(void) { return name; }
-		void setVersion(U32 newVersion) { version = newVersion; }
-		U32 getVersion(void) { return version; }
-	private:
+		tSdlStruct(tStrBuf name = tStrBuf());
+	
+		typedef std::vector<tSdlStructVar> tVarList;
+		// these are public, I would have to add write functions for them anyway or make many classes "friend"
 		tStrBuf name;
 		U32 version;
+		tVarList vars;
 	};
 
 } //End alc namespace

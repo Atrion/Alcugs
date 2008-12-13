@@ -147,20 +147,6 @@ void tXParser::setBasePath(tStrBuf & base) {
 	path=base;
 }
 
-U16 tXParser::parseKey(tStrBuf &t) {
-	int pos;
-	pos=t.find('[');
-	tStrBuf offset;
-	if(pos==-1) return 0;
-	if(!t.endsWith("]")) {
-		throw txParseError(_WHERE("Parse error near %s, malformed var name.\n",t.c_str()));
-	}
-	offset=t.substring(pos,t.size()-pos);
-	offset=offset.strip('[').strip(']');
-	t.setSize(pos);
-	return offset.asU16();
-}
-
 void tXParser::store(tStrBuf &t) {
 	if(!cfg) return;
 	tStrBuf section,key,val;
@@ -209,7 +195,7 @@ void tXParser::store(tStrBuf &t) {
 				throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token '%s'. A variable name was expected.\n",t.getLineNum(),t.getColumnNum(),key.c_str()));
 			} else {
 				//get table offsets
-				y=parseKey(key);
+				y=alcParseKey(key);
 				DBG(5,"**Key %s at %i\n",key.c_str(),y);
 				//get separator
 				val = t.getToken();

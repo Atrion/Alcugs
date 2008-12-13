@@ -78,6 +78,9 @@ void alcAscii2Hex(Byte * out, const Byte * in, int size);
 */
 void alcStrFilter(char * what);
 
+/** parses a "name[number]" kind of string, setting "t" to the name and returning the number */
+U16 alcParseKey(tStrBuf &t);
+
 }
 
 #endif

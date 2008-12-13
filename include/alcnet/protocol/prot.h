@@ -197,6 +197,13 @@ unsilenced 29
 #define KVisitBook 4
 #define KChildAgeBook 5
 
+//var types (incomplete) (used by vault and sdl)
+#define DInteger 0x00 // (4 bytes) integer
+#define DBool 0x02 //(1 byte) boolean value
+#define DUruString 0x03 // string
+#define DTimestamp 0x07 // (8 bytes) timestamp as double
+#define DInvalid 0xFF
+
 //tpots modifier
 //#define NetTPOTSmod 0x0428
 

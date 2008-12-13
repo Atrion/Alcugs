@@ -88,7 +88,6 @@ public:
 	void setBasePath(tStrBuf & base);
 private:
 	bool override;
-	U16 parseKey(tStrBuf &t);
 	tStrBuf path;
 };
 
