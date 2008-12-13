@@ -53,8 +53,6 @@ tLog * lstd=NULL;
 tLog * lerr=NULL;
 tLog * lnull=NULL;
 
-using namespace std;
-
 typedef struct {
 	//files
 	Byte silent; //!< set what to print to the console

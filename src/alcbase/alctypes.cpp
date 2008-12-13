@@ -56,8 +56,6 @@ namespace md5 {
 
 namespace alc {
 
-using namespace std;
-
 /* 
 	basicbuffer
 */

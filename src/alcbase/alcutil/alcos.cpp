@@ -44,8 +44,6 @@
 
 namespace alc {
 
-using namespace std;
-
 
 char * alcGetExt(const char * addr) {
 	static char ext[11];

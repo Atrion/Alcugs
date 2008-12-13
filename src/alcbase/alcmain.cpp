@@ -36,17 +36,15 @@
 #include "alcugs.h"
 
 #include <cstdlib>
-namespace std {
+//namespace std {
 #include <signal.h>
 #include <sys/types.h>
 #ifndef __WIN32__
 #include <sys/wait.h>
 #endif
-};
+//};
 
 #include "alcdebug.h"
-
-using namespace std;
 
 namespace alc {
 
@@ -221,17 +219,9 @@ void alcSignal(int signum, bool install) {
 	if(alcSignalHandler==NULL) return;
 	DBG(5,"%i - %i\n",signum,install);
 	if(install) {
-		#ifdef __CYGWIN__
 		signal(signum,_alcHandleSignal);
-		#else
-		std::signal(signum,_alcHandleSignal);
-		#endif
 	} else {
-		#ifdef __CYGWIN__
 		signal(signum,SIG_DFL);
-		#else
-		std::signal(signum,SIG_DFL);
-		#endif
 	}
 }
 

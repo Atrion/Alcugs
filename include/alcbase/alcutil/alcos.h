@@ -64,8 +64,8 @@ public:
 	tDirEntry * getEntry();
 	void rewind();
 private:
-	std::DIR *dir;
-	struct std::dirent *entry;
+	DIR *dir;
+	struct dirent *entry;
 	tDirEntry ent;
 	char path[512];
 };

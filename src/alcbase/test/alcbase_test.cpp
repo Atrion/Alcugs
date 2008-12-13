@@ -26,7 +26,7 @@
 
 #define _DBG_LEVEL_ 10
 #define IN_ALC_PROGRAM
-#define ALC_PROGRAM_ID "$Id: alcbase_test.cpp 1883 2008-11-16 17:31:00Z diafero $"
+#define ALC_PROGRAM_ID "$Id$"
 
 #include <alcugs.h>
 

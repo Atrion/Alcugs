@@ -46,8 +46,6 @@
 
 namespace alc {
 
-using namespace std;
-
 tUnet::tUnet(const char * lhost,U16 lport) {
 	DBG(9,"tUnet()\n");
 	initialized=false;

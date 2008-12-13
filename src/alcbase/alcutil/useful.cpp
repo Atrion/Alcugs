@@ -37,8 +37,6 @@
 
 namespace alc {
 
-using namespace std;
-
 /**
 	Waits for user input, blocks until user has not entered something followed by return
 */

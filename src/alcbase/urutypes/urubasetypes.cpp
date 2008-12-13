@@ -50,8 +50,6 @@ namespace wdys {
 
 namespace alc {
 
-using namespace std;
-
 /* wdys buff */
 void tWDYSBuf::encrypt() {
 	tRefBuf * aux=this->buf;

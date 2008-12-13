@@ -100,12 +100,12 @@ const char * alcXVERSION = ALC_PROGRAM_VERSION;
 #include "alcutil/windoze.h"
 #endif
 
-namespace std {       
+//namespace std {
 #include <sys/types.h>
 #include <sys/time.h>
 #include <dirent.h>
 #include <signal.h>
-}
+//}
 
 //alcugs includes
 #include "alcexception.h"

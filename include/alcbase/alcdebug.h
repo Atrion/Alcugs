@@ -44,7 +44,6 @@
 
 #ifdef __cplusplus
 extern "C" {
-//using namespace std;
 #endif
 
 // make sure ENABLE_DEBUG is unset if _DBG_LEVEL_ is unset or set to 0
