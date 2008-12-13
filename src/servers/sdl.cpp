@@ -50,20 +50,23 @@
 namespace alc {
 
 	////IMPLEMENTATION
-	//// tSdlBinary
-	tSdlBinary::tSdlBinary(void)
+	/** SDL binary processing class */
+	//// tSdlState
+	tSdlState::tSdlState(const tUruObject &obj, tSdlStructList *structs) : obj(obj)
 	{
-		compress = false;
+		version = 0;
+		this->structs = structs;
 	}
 	
-	tSdlBinary::tSdlBinary(const tMBuf &b) : data(b)
+	tSdlState::tSdlState(void)
 	{
-		compress = (data.size() > 255); // just a guess
+		version = 0;
+		this->structs = NULL;
 	}
 	
-	void tSdlBinary::store(tBBuf &t)
+	tMBuf tSdlState::decompress(tBBuf &t)
 	{
-		data.clear();
+		tMBuf data;
 	
 		U32 realSize = t.getU32();
 		Byte compressed = t.getByte();
@@ -80,7 +83,6 @@ namespace alc {
 			
 			tBBuf *buf = &t;
 			if (compressed == 0x02) {
-				compress = true;
 				tZBuf *content = new tZBuf;
 				content->write(t.read(sentSize), sentSize);
 				content->uncompress(realSize);
@@ -88,7 +90,6 @@ namespace alc {
 			}
 			else if (compressed == 0x00) {
 				realSize = sentSize;
-				compress = false;
 			}
 			else
 				throw txProtocolError(_WHERE("unknown compression format 0x%02X", compressed));
@@ -106,20 +107,23 @@ namespace alc {
 		}
 		
 		if (!t.eof()) throw txProtocolError(_WHERE("The SDL struct is too long (%d Bytes remaining after parsing)", t.remaining()));
+		
+		return data;
 	}
 	
-	void tSdlBinary::stream(tBBuf &t)
+	tMBuf tSdlState::compress(tMBuf &data)
 	{
+		tMBuf t;
 		if (!data.size()) {
 			// write an empty SDL
 			t.putU32(0); // real size
 			t.putByte(0x00); // compression flag
 			t.putU32(0); // sent size
-			return;
+			return t;
 		}
 		
 		// it's not yet empty, so we have to write something
-		if (compress) {
+		if (data.size() > 255) { // just a guess - we compress if it's bigger than 255 bytes
 			t.putU32(data.size()+2); // uncompressed size (take object flag and SDL magic into account)
 			t.putByte(0x02); // compression flag
 			// compress it
@@ -140,38 +144,33 @@ namespace alc {
 			t.putByte(0x80); // SDL magic number
 			t.put(data);
 		}
-	}
-	
-	//// tSdlState
-	tSdlState::tSdlState(const tUruObject &obj) : obj(obj)
-	{
-		version = 0;
+		return t;
 	}
 	
 	void tSdlState::store(tBBuf &t)
 	{
 		unparsed.clear();
-		// use tSdlBinay to get the message body
-		tSdlBinary bin;
-		t.get(bin);
+		// use tSdlBinay to get the message body and decompress stuff
+		tMBuf data = decompress(t);
 		// parse it
-		tBBuf *b = &bin.data;
-		b->rewind();
-		b->get(name);
-		version = b->getU16();
-		U32 size = b->remaining();
-		unparsed.write(b->read(size), size); // FIXME: parse more
+		data.rewind();
+		data.get(name);
+		version = data.getU16();
+		U32 size = data.remaining();
+		unparsed.write(data.read(size), size); // FIXME: parse more
 	}
 	
 	void tSdlState::stream(tBBuf &t)
 	{
-		tMBuf b;
-		b.put(name);
-		b.putU16(version);
-		b.put(unparsed);
+		tMBuf data;
+		if (version && name.size() && obj.objName.size()) {
+			data.put(name);
+			data.putU16(version);
+			data.put(unparsed);
+		}
 		// use tSdlBinary to get the SDL header around it
-		tSdlBinary bin(b);
-		t.put(bin);
+		tMBuf b = compress(data);
+		t.put(b);
 	}
 	
 	bool tSdlState::operator==(const tSdlState &state)
@@ -268,7 +267,7 @@ namespace alc {
 	
 	void tAgeStateManager::saveSdlState(const tUruObject &obj, tMBuf &data)
 	{
-		tSdlState *sdl = new tSdlState(obj);
+		tSdlState *sdl = new tSdlState(obj, &structs);
 		data.rewind();
 		data.get(*sdl);
 		// check if state is already in list
@@ -385,7 +384,7 @@ namespace alc {
 		}
 		else {
 			log->log("No SDL hook found, send empty SDL\n");
-			tSdlBinary empty;
+			tSdlState empty;
 			buf->put(empty);
 		}
 	}
@@ -477,9 +476,10 @@ namespace alc {
 					break;
 				// ------------------------------------------------------------------------------------------------------------------
 				case 6: // in a statedesc block, search for VAR or the curly bracket
-					if (c == "}")
+					if (c == "}") {
+						structs.push_back(sdlStruct); // the STATEDESC is finished now
 						state = 0; // go back to state 0 and wait for EOF or next statedesc
-					else if (c == "VAR")
+					} else if (c == "VAR")
 						state = 7;
 					else if (!c.isNewline())
 						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
@@ -583,6 +583,7 @@ namespace alc {
 	}
 	
 	/** The SDL Struct classes */
+	//// tSdlStructVar
 	tSdlStructVar::tSdlStructVar(tStrBuf type)
 	{
 		if (type.size()) {
@@ -617,6 +618,7 @@ namespace alc {
 		else throw txParseError(_WHERE("Unknown SDL VAR type %s", type.c_str()));
 	}
 	
+	//// tSdlStruct
 	tSdlStruct::tSdlStruct(tStrBuf name) : name(name)
 	{
 		version = 0;

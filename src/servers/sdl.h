@@ -45,37 +45,31 @@ namespace alc {
 
 	////DEFINITIONS
 	class tmLoadClone;
+	class tSdlStruct;
+	typedef std::vector<tSdlStruct> tSdlStructList;
 
 	/**
 		If we want to do it well and nice, we should add pre and post conditions here.
 	*/
-	
-	//! This class saves an SDL state as a binary buffer - it's a helper class of tSdlState
-	class tSdlBinary : public tBaseType {
-	public:
-		tSdlBinary(void);
-		tSdlBinary(const tMBuf &b);
-		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
-		// format
-		bool compress;
-		tMBuf data;
-	};
-	
 	class tSdlState : public tBaseType {
 	public:
-		tSdlState(const tUruObject &obj);
+		tSdlState(const tUruObject &obj, tSdlStructList *structs);
+		tSdlState(void);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		const Byte *str(void);
 		bool operator==(const tSdlState &state);
 		
 		tUruObject obj;
+		tSdlStructList *structs;
 		// format
 		tUStr name;
 		U16 version;
 		tMBuf unparsed;  //!< stuff which is not (yet) parsed
 	private:
+		static tMBuf decompress(tBBuf &t);
+		static tMBuf compress(tMBuf &data);
+	
 		tStrBuf dbg;
 	};
 	
@@ -106,6 +100,7 @@ namespace alc {
 	
 		tCloneList clones;
 		tSdlList sdlStates;
+		tSdlStructList structs;
 		tUnet *net;
 		tLog *log;
 	};

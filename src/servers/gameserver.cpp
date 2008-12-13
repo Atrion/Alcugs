@@ -76,6 +76,9 @@ namespace alc {
 		
 		// load SDL Manager
 		ageState = new tAgeStateManager(this);
+		
+		// make sure we quite if noone comes
+		lastPlayerLeft = alcGetTime();
 	}
 
 	tUnetGameServer::~tUnetGameServer(void)
@@ -183,7 +186,6 @@ namespace alc {
 		if (lastPlayerLeft && lastPlayerLeft + 120 < alcGetTime()) {
 			log->log("The last player left more than 120sec ago, so I will go down.\n");
 			stop(); // no player for 120sec, so go down. FIXME: Make time configurable
-			// FIXME: also go down if noone connects at all, i.e. the game server started, but noone is interested
 		}
 		tUnetLobbyServerBase::onIdle(idle);
 	}
