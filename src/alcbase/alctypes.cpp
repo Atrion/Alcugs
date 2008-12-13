@@ -1119,8 +1119,13 @@ tStrBuf & tStrBuf::getToken() {
 		c=getByte();
 		this->c++;
 		if(quote==0 && (c=='#' || c==';')) {
-			getLine();
-			out->putByte('\n');
+			if (out->size()) { // we already have something in out, dont attach the newline to it but make it the next token
+				this->c--;
+				seek(-1);
+			} else {
+				getLine();
+				out->putByte('\n');
+			}
 			break;
 		} else if(slash==1) {
 			slash=0;

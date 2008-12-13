@@ -219,10 +219,17 @@ namespace alc {
 		
 		var = cfg->getVar("sdl");
 		if (var.size() < 2) throw txBase(_WHERE("a sdl path must be set"));
-		strncpy(sdlDir, var.c_str(), 255);
+		if (!var.endsWith("/")) var.writeStr("/");
 		
-		// FIXME: Load all SDL files in that directory
-		loadSdlStructs((var + "/Dustin.sdl").c_str());
+		// load SDL files
+		tDirectory sdlDir;
+		tDirEntry *file;
+		sdlDir.open((char *)var.c_str());
+		while( (file = sdlDir.getEntry()) != NULL) {
+			if (file->type != 8 || strcasecmp(alcGetExt(file->name), "sdl") != 0) continue;
+			// load it
+			loadSdlStructs((var + file->name).c_str());
+		}
 		
 		log->log("AgeState backend started (%s)\n", __U_SDL_ID);
 	}
@@ -411,15 +418,21 @@ namespace alc {
 	6: in a statedesc block, search for VAR or the curly bracket
 	7: search for var type
 	8: search for var name
-	9: find additional information (DEFAULT) or newline
+	9: find additional information (DEFAULT, DEFAULTOPTION or DISPLAYOPTION) or newline
 	-------------------------------------------------
 	10: find equal sign after DEFAULT
 	11: find default data
+	-------------------------------------------------
+	12: find equal sign after DEFAULTOPTION
+	13: find defaultoption data
+	-------------------------------------------------
+	14: find equal sign after DISPLAYOPTION
+	15: find displayoption data
 */
 		tStrBuf s(sdlContent), c;
 		while (!s.eof()) {
 			c = s.getToken(); // getToken already skips comments for us, so we don't have to care about that
-			DBG(9, "Token: %s, state: %d\n", c.c_str(), state);
+			//DBG(9, "Token: %s, state: %d\n", c.c_str(), state);
 			switch (state) {
 				case 0: // out of a statedesc block, wait for one
 					if (c == "STATEDESC")
@@ -477,19 +490,24 @@ namespace alc {
 					break;
 				case 8: // search for var name
 				{
+					bool varSize =  c.endsWith("[]");
 					U32 size = alcParseKey(c);
+					if (varSize) size = -1; // variable sizes are saved as "-1"
 					if (!size)
 						throw txParseError(_WHERE("Parse error at line %d, column %d: Invalid key %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
-					if (size != 1)
-						throw txParseError(_WHERE("The size of a SDL key must be 1")); // FIXME
 					DBG(9, "Found SDL var %s, size %d\n", c.c_str(), size);
 					sdlVar.name = c;
+					sdlVar.size = size;
 					state = 9;
 					break;
 				}
 				case 9: // find additional information (DEFAULT, DEFAULTOPTION, DISPLAYOPTION) or newline
 					if (c == "DEFAULT")
 						state = 10;
+					else if (c == "DEFAULTOPTION")
+						state = 12;
+					else if (c == "DISPLAYOPTION")
+						state = 14;
 					else if (c.isNewline()) {
 						sdlStruct.vars.push_back(sdlVar); // this VAR is finished, save it
 						state = 6; // go back to state 6 and search for next var or end of statedesc
@@ -505,10 +523,53 @@ namespace alc {
 					break;
 				case 11: // find default data
 				{
-					U32 defaultVal = c.asU32();
-					if (!defaultVal && c != "0")
+					if (c .startsWith("(") && !c.endsWith(")")) { // it's a part of a tuple, take the whole tuple (several tokes) as default value
+						tStrBuf token;
+						do {
+							token = s.getToken();
+							DBG(9, "Token: %s is part of tuple\n", token.c_str());
+							c = c+token;
+						} while (!token.endsWith(")"));
+					}
+					sdlVar.defaultVal = c;
+					state = 9; // find more information or the end of the VAR
+					break;
+				}
+				// ------------------------------------------------------------------------------------------------------------------
+				case 12: // find equal sign after DEFAULTOPTION
+					if (c == "=")
+						state = 13;
+					else
 						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
-					sdlVar.defaultVal = defaultVal;
+					break;
+				case 13: // find defaultoption data
+				{
+					if (c == "VAULT")
+						sdlVar.flags |= tSdlStructVar::DVault; // doesn't change anything (yet)
+					else if (c == "hidden" && (sdlStruct.name == "EderDelin" || sdlStruct.name == "EderTsogal" || sdlStruct.name == "Minkata" || sdlStruct.name == "Negilahn"))  // work-around for "DEFAULTOPTION=hidden" in some sdl files
+						sdlVar.flags |= tSdlStructVar::DHidden; // doesn't change anything (yet)
+					else
+						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
+					state = 9; // find more information or the end of the VAR
+					break;
+				}
+				// ------------------------------------------------------------------------------------------------------------------
+				case 14: // find equal sign after DISPLAYOPTION
+					if (c == "=")
+						state = 15;
+					else
+						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
+					break;
+				case 15: // find displayoption data
+				{
+					if (c == "hidden")
+						sdlVar.flags |= tSdlStructVar::DHidden; // doesn't change anything (yet)
+					else if (c == "red")
+						sdlVar.flags |= tSdlStructVar::DRed; // doesn't change anything (yet)
+					else if (c == "VAULT" && (sdlStruct.name == "BahroCave" || sdlStruct.name == "Jalak")) // work-around for "DISPLAYOPTION=VAULT" in some sdl files
+						sdlVar.flags |= tSdlStructVar::DVault; // doesn't change anything (yet)
+					else
+						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
 					state = 9; // find more information or the end of the VAR
 					break;
 				}
@@ -519,23 +580,41 @@ namespace alc {
 		
 		if (state != 0)
 			throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected end of file", s.getLineNum(), s.getColumnNum()));
-		
-		// TODO: Finish it
 	}
 	
 	/** The SDL Struct classes */
 	tSdlStructVar::tSdlStructVar(tStrBuf type)
 	{
-		if (type.size())
-			this->type = getVarTypeFromName(type);
+		if (type.size()) {
+			if (type.startsWith("$")) {
+				structName = type.substring(1, type.size()-1);
+				this->type = DStruct;
+			} else
+				this->type = getVarTypeFromName(type);
+		}
 		else
 			this->type = DInvalid;
+		size = 0;
+		flags = 0x00;
 	}
 	
 	Byte tSdlStructVar::getVarTypeFromName(tStrBuf type)
 	{
-		if (type == "BOOL") return DBool;
-		throw txParseError(_WHERE("Unknown SDL VAR type %s", name.c_str()));
+		if (type == "INT") return DInteger;
+		else if (type == "FLOAT") return DFloat;
+		else if (type == "BOOL") return DBool;
+		else if (type == "STRING32") return DUruString;
+		else if (type == "PLKEY") return DPlKey;
+		else if (type == "CREATABLE") return DCreatable;
+		else if (type == "TIME") return DTime;
+		else if (type == "BYTE" || type == "Byte") return DByte; // don't fail on Prad SDL version 9 which uses "Byte" instead of "BYTE"
+		else if (type == "SHORT") return DShort;
+		else if (type == "AGETIMEOFDAY") return DAgeTimeOfDay;
+		else if (type == "VECTOR3") return DVector3;
+		else if (type == "POINT3") return DPoint3;
+		else if (type == "QUATERNION") return DQuaternion;
+		else if (type == "RGB8") return DRGB8;
+		else throw txParseError(_WHERE("Unknown SDL VAR type %s", type.c_str()));
 	}
 	
 	tSdlStruct::tSdlStruct(tStrBuf name) : name(name)

@@ -59,18 +59,14 @@ namespace alc {
 		DBG(9, "New Page %s: ID %d, conditionalLoad %d\n", this->name, this->id, this->conditionalLoad);
 	}
 	
-	tAgeInfo::tAgeInfo(const char *dir, const char *file, bool loadPages)
+	tAgeInfo::tAgeInfo(const tStrBuf &dir, const char *file, bool loadPages)
 	{
 		// get age name from file name
 		strncpy((char *)name, file, 199);
 		alcStripExt((char *)name);
-		// assemble file name
-		char filename[1024];
-		strncpy(filename, dir, 512);
-		strncat(filename, file, 511);
 		// open and decrypt file
 		tFBuf ageFile;
-		ageFile.open(filename, "r");
+		ageFile.open((dir + file).c_str(), "r");
 		tWDYSBuf ageContent;
 		ageFile.get(ageContent);
 		ageContent.decrypt();
@@ -116,7 +112,7 @@ namespace alc {
 			while( (file = ageDir.getEntry()) != NULL) {
 				if (file->type != 8 || strcasecmp(alcGetExt(file->name), "age") != 0) continue;
 				// load it
-				ages.push_back(tAgeInfo((char *)dir.c_str(), file->name, loadPages));
+				ages.push_back(tAgeInfo(dir, file->name, loadPages));
 			}
 		}
 		else { // we should load only one certain age

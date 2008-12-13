@@ -57,7 +57,7 @@ namespace alc {
 	class tAgeInfo
 	{
 	public:
-		tAgeInfo(const char *dir, const char *file, bool loadPages);
+		tAgeInfo(const tStrBuf &dir, const char *file, bool loadPages);
 		
 		U32 seqPrefix; // it's actually 3 Bytes
 		Byte name[200];

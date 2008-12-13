@@ -199,9 +199,21 @@ unsilenced 29
 
 //var types (incomplete) (used by vault and sdl)
 #define DInteger 0x00 // (4 bytes) integer
+#define DFloat 0x01 //(4 bytes) float
 #define DBool 0x02 //(1 byte) boolean value
 #define DUruString 0x03 // string
+#define DPlKey 0x04 // an uruobject
+#define DStruct 0x05 //a list of variables (an struct)
+#define DCreatable 0x06 // a creatable stream
 #define DTimestamp 0x07 // (8 bytes) timestamp as double
+#define DTime 0x08 // the timestamp and the microseconds (8 bytes)
+#define DByte 0x09 // a byte
+#define DShort 0x0A // (2 bytes) a short integer
+#define DAgeTimeOfDay 0x0B // the timestamp and the microseconds (8 bytes)
+#define DVector3 0x32 // (4+4+4 bytes) three floats
+#define DPoint3 0x33 // (4+4+4 bytes) three floats
+#define DQuaternion 0x36 // (4+4+4+4 bytes) four floats
+#define DRGB8 0x37 // (3 bytes) RBG color
 #define DInvalid 0xFF
 
 //tpots modifier

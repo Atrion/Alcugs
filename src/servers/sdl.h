@@ -108,8 +108,6 @@ namespace alc {
 		tSdlList sdlStates;
 		tUnet *net;
 		tLog *log;
-		
-		Byte sdlDir[256];
 	};
 	
 	/** The SDL Struct classes */
@@ -117,10 +115,15 @@ namespace alc {
 	public:
 		tSdlStructVar(tStrBuf type = tStrBuf());
 		
+		typedef enum { DVault = 0x01, DHidden = 0x02, DRed = 0x04 } tSdlStructVarFlags;
+		
 		// these are public, I would have to add write functions for them anyway or make many classes "friend"
 		Byte type;
+		U32 size; // "-1" means variable size
 		tStrBuf name;
-		U32 defaultVal;
+		tStrBuf structName;
+		tStrBuf defaultVal;
+		Byte flags; // see tSdlStructVarFlags
 	private:
 		Byte getVarTypeFromName(tStrBuf type);
 	};
