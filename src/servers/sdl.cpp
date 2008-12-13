@@ -50,7 +50,66 @@
 namespace alc {
 
 	////IMPLEMENTATION
-	/** SDL binary processing class */
+	/** SDL binary processing classes */
+	
+	//// tSdlStateVar
+	void tSdlStateVar::store(tBBuf &t)
+	{
+		Byte type = t.getByte();
+		if (type != 0x02) throw txProtocolError(_WHERE("sdlBinaryVar.type must be 0x02 to 0x%02X", type));
+		Byte unk1 = t.getByte();
+		if (unk1 != 0x00)
+			throw txProtocolError(_WHERE("Unexpected sdlBinary.unk1 of 0x%02X (expected 0x00)", unk1));
+		tUStr unk2;
+		t.get(unk2);
+		if (unk2.size())
+			throw txProtocolError(_WHERE("Unexpected non-empty sdlBinary.unk2 of %s", unk2.c_str()));
+		// now comes the content
+		flags = t.getByte();
+		DBG(9, "Flags are 0x%02X\n", flags);
+	}
+	
+	void tSdlStateVar::stream(tBBuf &t)
+	{
+		throw txProtocolError(_WHERE("streaming not supported")); // FIXME
+	}
+	
+	//// tSdlStateBinary
+	tSdlStateBinary::tSdlStateBinary(tSdlStruct *sdlStruct)
+	{ reset(sdlStruct); }
+	
+	void tSdlStateBinary::store(tBBuf &t)
+	{
+		if (sdlStruct == NULL)
+			throw txProtocolError(_WHERE("You have to set a sdlStruct before parsing a sdlBinary"));
+		U16 unk1 = t.getU16();
+		if (unk1 != 0x0000)
+			throw txProtocolError(_WHERE("Unexpected sdlBinary.unk1 of 0x%04X (expected 0x0000)", unk1));
+		Byte unk2 = t.getByte();
+		if (unk2 != 0x06)
+			throw txProtocolError(_WHERE("Unexpected sdlBinary.unk1 of 0x%02X (expected 0x06)", unk2));
+		// parse the variables which are in here
+		Byte nValues = t.getByte();
+		DBG(7, "nValues: %d\n", nValues);
+		if (nValues != sdlStruct->nVar)
+			throw txProtocolError(_WHERE("size mismatch, expected %d values, got %d values", sdlStruct->nVar, nValues));
+		for (int i = 0; i < nValues; ++i) {
+			tSdlStateVar var;
+			t.get(var); // parse this var
+			vars.push_back(var);
+		}
+	}
+	void tSdlStateBinary::stream(tBBuf &t)
+	{
+		throw txProtocolError(_WHERE("streaming not supported")); // FIXME
+	}
+	
+	void tSdlStateBinary::reset(tSdlStruct *sdlStruct)
+	{
+		this->sdlStruct = sdlStruct;
+		vars.clear();
+	}
+	
 	//// tSdlState
 	tSdlState::tSdlState(const tUruObject &obj, tSdlStructList *structs) : obj(obj)
 	{
@@ -149,15 +208,17 @@ namespace alc {
 	
 	void tSdlState::store(tBBuf &t)
 	{
-		unparsed.clear();
 		// use tSdlBinay to get the message body and decompress stuff
 		tMBuf data = decompress(t);
-		// parse it
+		// parse "header data"
 		data.rewind();
 		data.get(name);
 		version = data.getU16();
-		U32 size = data.remaining();
-		unparsed.write(data.read(size), size); // FIXME: parse more
+		// parse binary content
+		DBG(5, "Parsing a %s version %d\n", name.c_str(), version);
+		content.reset(findStruct());
+		data.get(content);
+		if (!data.eof()) throw txProtocolError(_WHERE("The SDL struct is too long (%d Bytes remaining after parsing)", data.remaining()));
 	}
 	
 	void tSdlState::stream(tBBuf &t)
@@ -166,11 +227,19 @@ namespace alc {
 		if (version && name.size() && obj.objName.size()) {
 			data.put(name);
 			data.putU16(version);
-			data.put(unparsed);
+			data.put(content);
 		}
 		// use tSdlBinary to get the SDL header around it
 		tMBuf b = compress(data);
 		t.put(b);
+	}
+	
+	tSdlStruct *tSdlState::findStruct(void)
+	{
+		for (tSdlStructList::iterator it = structs->begin(); it != structs->end(); ++it) {
+			if (it->name == name && it->version == version) return &(*it);
+		}
+		throw txProtocolError(_WHERE("SDL version mismatch, no SDL Struct found for %s version %d", name.c_str(), version));
 	}
 	
 	bool tSdlState::operator==(const tSdlState &state)
@@ -465,7 +534,6 @@ namespace alc {
 					if (!version)
 						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
 					sdlStruct.version = version;
-					log->log("Parsing %s, version %d\n", sdlStruct.name.c_str(), version);
 					state = 5;
 					break;
 				}
@@ -477,6 +545,7 @@ namespace alc {
 				// ------------------------------------------------------------------------------------------------------------------
 				case 6: // in a statedesc block, search for VAR or the curly bracket
 					if (c == "}") {
+						sdlStruct.count(); // count vars and structs
 						structs.push_back(sdlStruct); // the STATEDESC is finished now
 						state = 0; // go back to state 0 and wait for EOF or next statedesc
 					} else if (c == "VAR")
@@ -495,7 +564,6 @@ namespace alc {
 					if (varSize) size = -1; // variable sizes are saved as "-1"
 					if (!size)
 						throw txParseError(_WHERE("Parse error at line %d, column %d: Invalid key %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
-					DBG(9, "Found SDL var %s, size %d\n", c.c_str(), size);
 					sdlVar.name = c;
 					sdlVar.size = size;
 					state = 9;
@@ -527,7 +595,6 @@ namespace alc {
 						tStrBuf token;
 						do {
 							token = s.getToken();
-							DBG(9, "Token: %s is part of tuple\n", token.c_str());
 							c = c+token;
 						} while (!token.endsWith(")"));
 					}
@@ -622,6 +689,17 @@ namespace alc {
 	tSdlStruct::tSdlStruct(tStrBuf name) : name(name)
 	{
 		version = 0;
+		nVar = nStruct = 0;
+	}
+	
+	void tSdlStruct::count(void)
+	{
+		nVar = nStruct = 0;
+		for (tVarList::iterator it = vars.begin(); it != vars.end(); ++it) {
+			if (it->type == DStruct) ++nStruct;
+			else ++nVar;
+		}
+		DBG(9, "%s version %d has %d vars and %d structs\n", name.c_str(), version, nVar, nStruct);
 	}
 
 } //end namespace alc

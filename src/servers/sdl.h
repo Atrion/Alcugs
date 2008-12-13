@@ -47,10 +47,28 @@ namespace alc {
 	class tmLoadClone;
 	class tSdlStruct;
 	typedef std::vector<tSdlStruct> tSdlStructList;
+	
+	class tSdlStateVar : public tBaseType {
+	public:
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
+	private:
+		Byte flags;
+	};
+	
+	class tSdlStateBinary : public tBaseType {
+	public:
+		tSdlStateBinary(tSdlStruct *sdlStruct = NULL);
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
+		void reset(tSdlStruct *sdlStruct); //!< reset the state, empty all lists etc.
+	private:
+		typedef std::vector<tSdlStateVar> tVarList;
+		
+		tSdlStruct *sdlStruct;
+		tVarList vars;
+	};
 
-	/**
-		If we want to do it well and nice, we should add pre and post conditions here.
-	*/
 	class tSdlState : public tBaseType {
 	public:
 		tSdlState(const tUruObject &obj, tSdlStructList *structs);
@@ -61,16 +79,18 @@ namespace alc {
 		bool operator==(const tSdlState &state);
 		
 		tUruObject obj;
-		tSdlStructList *structs;
 		// format
 		tUStr name;
 		U16 version;
-		tMBuf unparsed;  //!< stuff which is not (yet) parsed
+		tSdlStateBinary content;
 	private:
 		static tMBuf decompress(tBBuf &t);
 		static tMBuf compress(tMBuf &data);
+		tSdlStruct *findStruct(void);
 	
 		tStrBuf dbg;
+		
+		tSdlStructList *structs;
 	};
 	
 	class tAgeStateManager {
@@ -126,12 +146,14 @@ namespace alc {
 	class tSdlStruct {
 	public:
 		tSdlStruct(tStrBuf name = tStrBuf());
+		void count(void);
 	
 		typedef std::vector<tSdlStructVar> tVarList;
 		// these are public, I would have to add write functions for them anyway or make many classes "friend"
 		tStrBuf name;
 		U32 version;
 		tVarList vars;
+		int nVar, nStruct;
 	};
 
 } //End alc namespace
