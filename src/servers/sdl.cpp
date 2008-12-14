@@ -139,6 +139,8 @@ namespace alc {
 		tSdlState *sdl = new tSdlState(obj, this);
 		data.rewind();
 		data.get(*sdl);
+		log->log("Got "); // FIXME: Add option to disable detailed logging
+		sdl->print(log);
 		// check if state is already in list
 		tSdlList::iterator it = findSdlState(sdl);
 		if (it == sdlStates.end()) {

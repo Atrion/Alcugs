@@ -59,12 +59,12 @@ namespace alc {
 		~tSdlStateVar(void);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
+		void print(tLog *log, Byte indentSize);
 	private:
 		typedef union {
 			Byte byteVal;
-			U32 intVal;
+			U32 intVal[2];
 			float floatVal;
-			U32 time[2];
 			tSdlStateBinary *sdlState; // we have to use a pointer here - classes are not allowed in unions
 		} tElement;
 		typedef std::vector<tElement> tElementList;
@@ -76,7 +76,7 @@ namespace alc {
 		tAgeStateManager *ageMgr;
 	};
 	
-	/** parses a SDL struct - a SDL state is mainly a struct, but a struct is a list of vars and can in turn also contain other structs */
+	/** parses a SDL state binary, which is a list of vars and can recursively contain other state binaries */
 	class tSdlStateBinary : public tBaseType {
 	public:
 		tSdlStateBinary(void);
@@ -84,12 +84,14 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		void reset(tAgeStateManager *ageMgr, tStrBuf name, U32 version); //!< reset the state, empty all lists etc.
+		void print(tLog *log, Byte indentSize = 1);
 	private:
 		typedef std::vector<tSdlStateVar> tVarList;
 		
 		Byte unk1;
 		tVarList vars;
 		
+		tStrBuf dbg;
 		tSdlStruct *sdlStruct;
 		tAgeStateManager *ageMgr;
 	};
@@ -102,6 +104,7 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		const Byte *str(void);
+		void print(tLog *log);
 		bool operator==(const tSdlState &state);
 		
 		tUruObject obj;
@@ -115,7 +118,6 @@ namespace alc {
 		tSdlStruct *findStruct(void); //!< finds the correct tSdlStruct which is necessary for this SDL State
 	
 		tStrBuf dbg;
-		
 		tAgeStateManager *stateMgr;
 	};
 

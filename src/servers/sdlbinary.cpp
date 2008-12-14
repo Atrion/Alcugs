@@ -36,7 +36,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_SDLBINARY_ID "$Id$"
 
-#define _DBG_LEVEL_ 10
+#define _DBG_LEVEL_ 8
 
 #include <alcugs.h>
 #include <alcnet.h>
@@ -116,10 +116,14 @@ namespace alc {
 		//Supposicions meaning:
 		// 0x04: Timestamp is present
 		// 0x08: It has the default value
-		// 0x10: unknown (non-struct var?)
+		// 0x10: non-struct var
 		Byte check = 0x04 | 0x08 | 0x10;
 		if (flags & ~(check))
 			throw txProtocolError(_WHERE("unknown flag 0x%02X for sdlBinaryVar", flags));
+		if (flags & 0x10 && sdlVar->type == DStruct)
+			throw txProtocolError(_WHERE("struct var must not have 0x10 flag set"));
+		else if (!(flags & 0x10) && sdlVar->type != DStruct)
+			throw txProtocolError(_WHERE("non-struct var must have 0x10 flag set"));
 		// parse according to flags
 		if (flags & 0x04)
 			throw txProtocolError(_WHERE("Parsing the timestamp is not yet supported"));
@@ -127,38 +131,38 @@ namespace alc {
 			if (sdlVar->type == DStruct)
 				throw txProtocolError(_WHERE("Default vars for complete structs are not yet supported"));
 			// don't read anything, it's still the default
-			DBG(9, "Using default for %s\n", sdlVar->name.c_str());
 		} else {
 			// it's not a default var, we have to do something
 			U32 n = sdlVar->size;
 			if (!n) // a var with dynamic size
 				n = t.getU32();
-			DBG(9, "Reading %d values for %s\n", n, sdlVar->name.c_str());
+			DBG(7, "Reading %d values for %s\n", n, sdlVar->name.c_str());
 			for (U32 i = 0; i < n; ++i) {
 				tElement element;
+				// parse the variable and save it in the union
 				switch (sdlVar->type) {
 					case DInteger:
-						element.intVal = t.getU32();
-						DBG(9, "Int value of %d\n", element.intVal);
+						element.intVal[0] = t.getU32();
 						break;
 					case DFloat:
 						element.floatVal = t.getFloat();
-						DBG(9, "Float value of %f\n", element.floatVal);
 						break;
 					case DBool:
 					case DByte:
 						element.byteVal = t.getByte();
-						DBG(9, "Byte/Bool value of 0x%02X\n", element.byteVal);
 						break;
 					case DStruct:
+					{
 						element.sdlState = new tSdlStateBinary(ageMgr, sdlVar->structName, sdlVar->structVersion);
-						t.getByte(); // FIXME: somewhere we need to read one byte more for recursive structs
+						Byte num = t.getByte(); // it seems for structs the number of structs to be parsed is saved again before each struct
+						if (num != n)
+							throw txProtocolError(_WHERE("Unexpected Struct num, should be %d but is %d", n, num));
 						t.get(*element.sdlState);
 						break;
+					}
 					case DTime:
-						element.time[0] = t.getU32(); // seconds
-						element.time[1] = t.getU32(); // microseconds
-						DBG(9, "Time value of %d.%d\n", element.time[0], element.time[1]);
+						element.intVal[0] = t.getU32(); // seconds
+						element.intVal[1] = t.getU32(); // microseconds
 						break;
 					default:
 						throw txProtocolError(_WHERE("Unable to parse SDL var of type 0x%02X", sdlVar->type));
@@ -171,6 +175,45 @@ namespace alc {
 	void tSdlStateVar::stream(tBBuf &t)
 	{
 		throw txUnet(_WHERE("streaming not supported")); // FIXME
+	}
+	
+	void tSdlStateVar::print(tLog *log, Byte indentSize)
+	{
+		char indent[] = "                        ";
+		if (indentSize < strlen(indent)) indent[indentSize] = NULL; // let the string end there
+		log->print("%s%s[%d] = ", indent, sdlVar->name.c_str(), elements.size());
+		if (flags & 0x08) {
+			log->print("default value %s\n", sdlVar->defaultVal.c_str());
+		}
+		else {
+			for (tElementList::iterator it = elements.begin(); it != elements.end(); ++it) {
+				if (it != elements.begin()) log->print(",");
+				// print value
+				switch (sdlVar->type) {
+					case DInteger:
+						log->print("INT: %d\n", it->intVal[0]);
+						break;
+					case DFloat:
+						log->print("FLOAT: %f\n", it->floatVal);
+						break;
+					case DBool:
+					case DByte:
+						if (sdlVar->type == DBool) log->print("BOOL");
+						else log->print("BYTE");
+						log->print(": %d\n", it->byteVal);
+						break;
+					case DStruct:
+						log->print("SDL Struct:\n");
+						it->sdlState->print(log, indentSize+2);
+						break;
+					case DTime:
+						log->print("TIME: %d.%d\n", it->intVal[0], it->intVal[1]);
+						break;
+					default:
+						throw txProtocolError(_WHERE("Unable to print SDL var of type 0x%02X", sdlVar->type));
+				}
+			}
+		}
 	}
 	
 	//// tSdlStateBinary
@@ -199,6 +242,7 @@ namespace alc {
 			throw txUnet(_WHERE("You have to set a sdlStruct before parsing a sdlBinary"));
 		DBG(5, "Parsing a %s version %d\n", sdlStruct->name.c_str(), sdlStruct->version);
 		
+		// parse the unknown header information
 		unk1 = t.getByte();
 		if (unk1 != 0x00 && unk1 != 0x01)
 			throw txProtocolError(_WHERE("Unexpected sdlBinary.unk1 of 0x%02X (expected 0x00 or 0x01)", unk1));
@@ -241,6 +285,15 @@ namespace alc {
 	void tSdlStateBinary::stream(tBBuf &t)
 	{
 		throw txUnet(_WHERE("streaming not supported")); // FIXME
+	}
+	
+	void tSdlStateBinary::print(tLog *log, Byte indentSize)
+	{
+		char indent[] = "                        ";
+		if (indentSize < strlen(indent)) indent[indentSize] = NULL; // let the string end there
+		log->print("%s%s version %d\n", indent, sdlStruct->name.c_str(), sdlStruct->version);
+		for (tVarList::iterator it = vars.begin(); it != vars.end(); ++it)
+			it->print(log, indentSize+2);
 	}
 	
 	//// tSdlState
@@ -388,6 +441,13 @@ namespace alc {
 		dbg.clear();
 		dbg.printf("SDL State for [%s]: %s (version %d)", obj.str(), name.c_str(), version);
 		return dbg.c_str();
+	}
+	
+	void tSdlState::print(tLog *log)
+	{
+		if (!log->doesPrint()) return;
+		log->print("SDL State for [%s]:\n", obj.str());
+		content.print(log);
 	}
 
 } //end namespace alc
