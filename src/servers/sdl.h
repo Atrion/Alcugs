@@ -97,14 +97,14 @@ namespace alc {
 		U32 structVersion;
 		tStrBuf defaultVal;
 		Byte flags; // see tSdlStructVarFlags
-	private:
-		Byte getVarTypeFromName(tStrBuf type);
 	};
 	
 	class tSdlStruct {
 	public:
 		tSdlStruct(tStrBuf name = tStrBuf());
 		void count(void);
+		
+		tSdlStructVar *getElement(int nr, bool var); //!< returns the nth variable (if var == true) or the nth struct (if var == false)
 	
 		typedef std::vector<tSdlStructVar> tVarList;
 		// these are public, I would have to add write functions for them anyway or make many classes "friend"

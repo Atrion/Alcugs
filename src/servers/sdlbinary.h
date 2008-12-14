@@ -61,11 +61,14 @@ namespace alc {
 		virtual void stream(tBBuf &t);
 		void print(tLog *log, Byte indentSize);
 	private:
+		void clear(void);
+	
 		typedef union {
-			Byte byteVal;
+			Byte byteVal[3];
 			U32 intVal[2];
 			float floatVal;
 			tSdlStateBinary *sdlState; // we have to use a pointer here - classes are not allowed in unions
+			tUruObject *obj;
 		} tElement;
 		typedef std::vector<tElement> tElementList;
 	
@@ -90,6 +93,10 @@ namespace alc {
 		
 		Byte unk1;
 		tVarList vars;
+		tVarList structs;
+		
+		bool incompleteVars; //!< this state contains only a part of the full information and uses indices for the vars
+		bool incompleteStructs; //!< this state contains only a part of the full information and uses indices for the structs
 		
 		tStrBuf dbg;
 		tSdlStruct *sdlStruct;

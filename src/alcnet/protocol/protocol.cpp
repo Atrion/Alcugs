@@ -807,6 +807,79 @@ const Byte * tmMsgBase::str() {
 	return dbg.c_str();
 }
 
+Byte alcUnetGetVarTypeFromName(tStrBuf type) {
+	if (type == "INT") return DInteger;
+	else if (type == "FLOAT") return DFloat;
+	else if (type == "BOOL") return DBool;
+	else if (type == "STRING32") return DUruString;
+	else if (type == "PLKEY") return DPlKey;
+	else if (type == "CREATABLE") return DCreatable;
+	else if (type == "TIME") return DTime;
+	else if (type == "BYTE" || type == "Byte") return DByte; // don't fail on Prad SDL version 9 which uses "Byte" instead of "BYTE"
+	else if (type == "SHORT") return DShort;
+	else if (type == "AGETIMEOFDAY") return DAgeTimeOfDay;
+	else if (type == "VECTOR3") return DVector3;
+	else if (type == "POINT3") return DPoint3;
+	else if (type == "QUATERNION") return DQuaternion;
+	else if (type == "RGB8") return DRGB8;
+	else throw txParseError(_WHERE("Unknown SDL VAR type %s", type.c_str()));
+}
+
+const char * alcUnetGetVarType(Byte type) {
+	static const char * ret;
+	switch(type) {
+		case DInteger:
+			ret="INT";
+			break;
+		case DFloat:
+			ret="FLOAT";
+			break;
+		case DBool:
+			ret="BOOL";
+			break;
+		case DUruString:
+			ret="STRING32";
+			break;
+		case DPlKey:
+			ret="PLKEY";
+			break;
+		case DCreatable:
+			ret="CREATABLE";
+			break;
+		case DTime:
+			ret="TIME";
+			break;
+		case DByte:
+			ret="BYTE";
+			break;
+		case DStruct:
+			ret="SDL STRUCT";
+			break;
+		case DShort:
+			ret="SHORT";
+			break;
+		case DAgeTimeOfDay:
+			ret="AGETIMEOFDAY";
+			break;
+		case DVector3:
+			ret="VECTOR3";
+			break;
+		case DPoint3:
+			ret="POINT3";
+			break;
+		case DQuaternion:
+			ret="QUATERNION";
+			break;
+		case DRGB8:
+			ret="RGB8";
+			break;
+		default:
+			ret="Unknown";
+			break;
+	}
+	return ret;
+}
+
 const char * alcUnetGetRelease(Byte rel) {
 	static const char * ret;
 	switch(rel) {

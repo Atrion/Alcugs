@@ -71,15 +71,14 @@ namespace alc {
 		flags = var.flags;
 		sdlVar = var.sdlVar;
 		ageMgr = var.ageMgr;
-		if (sdlVar->type == DStruct) {
+		if (sdlVar->type == DStruct || sdlVar->type == DPlKey) {
 			// cleanup
-			for (tElementList::iterator it = elements.begin(); it != elements.end(); ++it)
-				delete it->sdlState;
+			clear();
 			// copy each element
-			elements.clear();
 			for (tElementList::const_iterator it = var.elements.begin(); it != var.elements.end(); ++it) {
 				tElement element;
-				element.sdlState = new tSdlStateBinary(*it->sdlState);
+				if (sdlVar->type == DStruct) element.sdlState = new tSdlStateBinary(*it->sdlState);
+				else                         element.obj = new tUruObject(*it->obj);
 				elements.push_back(element);
 			}
 		}
@@ -90,14 +89,20 @@ namespace alc {
 		return *this;
 	}
 	
-	tSdlStateVar::~tSdlStateVar(void)
+	void tSdlStateVar::clear(void)
 	{
-		if (sdlVar->type == DStruct) {
+		if (sdlVar->type == DStruct || sdlVar->type == DPlKey) {
 			// cleanup
-			for (tElementList::iterator it = elements.begin(); it != elements.end(); ++it)
-				delete it->sdlState;
+			for (tElementList::iterator it = elements.begin(); it != elements.end(); ++it) {
+				if (sdlVar->type == DStruct) delete it->sdlState;
+				else                         delete it->obj;
+			}
 		}
+		elements.clear();
 	}
+	
+	tSdlStateVar::~tSdlStateVar(void)
+	{ clear(); }
 	
 	void tSdlStateVar::store(tBBuf &t)
 	{
@@ -137,6 +142,11 @@ namespace alc {
 			if (!n) // a var with dynamic size
 				n = t.getU32();
 			DBG(7, "Reading %d values for %s\n", n, sdlVar->name.c_str());
+			if (sdlVar->type == DStruct) {
+				// it seems for structs the number of structs to be parsed is saved again before the first struct
+				Byte num = t.getByte();
+				if (num != n) throw txProtocolError(_WHERE("Unexpected number of structs to be parsed - expected %d, got %d", n, num));
+			}
 			for (U32 i = 0; i < n; ++i) {
 				tElement element;
 				// parse the variable and save it in the union
@@ -149,20 +159,28 @@ namespace alc {
 						break;
 					case DBool:
 					case DByte:
-						element.byteVal = t.getByte();
+						element.byteVal[0] = t.getByte();
+						if (sdlVar->type == DBool && element.byteVal[0] != 0 && element.byteVal[0] != 1)
+							throw txProtocolError(_WHERE("Unexpected BOOL var, must be 0 or 1 but is %d\n", element.byteVal));
+						break;
+					case DPlKey:
+						element.obj = new tUruObject;
+						t.get(*element.obj);
 						break;
 					case DStruct:
 					{
 						element.sdlState = new tSdlStateBinary(ageMgr, sdlVar->structName, sdlVar->structVersion);
-						Byte num = t.getByte(); // it seems for structs the number of structs to be parsed is saved again before each struct
-						if (num != n)
-							throw txProtocolError(_WHERE("Unexpected Struct num, should be %d but is %d", n, num));
 						t.get(*element.sdlState);
 						break;
 					}
 					case DTime:
 						element.intVal[0] = t.getU32(); // seconds
 						element.intVal[1] = t.getU32(); // microseconds
+						break;
+					case DRGB8:
+						element.byteVal[0] = t.getByte();
+						element.byteVal[1] = t.getByte();
+						element.byteVal[2] = t.getByte();
 						break;
 					default:
 						throw txProtocolError(_WHERE("Unable to parse SDL var of type 0x%02X", sdlVar->type));
@@ -181,38 +199,44 @@ namespace alc {
 	{
 		char indent[] = "                        ";
 		if (indentSize < strlen(indent)) indent[indentSize] = NULL; // let the string end there
-		log->print("%s%s[%d] = ", indent, sdlVar->name.c_str(), elements.size());
+		log->print("%s%s[%d] (0x%02X) = ", indent, sdlVar->name.c_str(), elements.size(), flags);
 		if (flags & 0x08) {
 			log->print("default value %s\n", sdlVar->defaultVal.c_str());
 		}
 		else {
+			log->print("%s: ", alcUnetGetVarType(sdlVar->type));
 			for (tElementList::iterator it = elements.begin(); it != elements.end(); ++it) {
 				if (it != elements.begin()) log->print(",");
 				// print value
 				switch (sdlVar->type) {
 					case DInteger:
-						log->print("INT: %d\n", it->intVal[0]);
+						log->print("%d", it->intVal[0]);
 						break;
 					case DFloat:
-						log->print("FLOAT: %f\n", it->floatVal);
+						log->print("%f", it->floatVal);
 						break;
 					case DBool:
 					case DByte:
-						if (sdlVar->type == DBool) log->print("BOOL");
-						else log->print("BYTE");
-						log->print(": %d\n", it->byteVal);
+						log->print("%d", it->byteVal[0]);
+						break;
+					case DPlKey:
+						log->print("%s", it->obj->str());
 						break;
 					case DStruct:
-						log->print("SDL Struct:\n");
+						log->nl();
 						it->sdlState->print(log, indentSize+2);
 						break;
 					case DTime:
-						log->print("TIME: %d.%d\n", it->intVal[0], it->intVal[1]);
+						log->print("%d.%d", it->intVal[0], it->intVal[1]);
+						break;
+					case DRGB8:
+						log->print("%d-%d-%d", it->byteVal[0], it->byteVal[1], it->byteVal[2]);
 						break;
 					default:
 						throw txProtocolError(_WHERE("Unable to print SDL var of type 0x%02X", sdlVar->type));
 				}
 			}
+			if (sdlVar->type != DStruct) log->nl();
 		}
 	}
 	
@@ -221,12 +245,14 @@ namespace alc {
 	{
 		ageMgr = NULL;
 		sdlStruct = NULL;
+		incompleteVars = incompleteStructs = false;
 	}
 	
 	tSdlStateBinary::tSdlStateBinary(tAgeStateManager *ageMgr, tStrBuf name, U32 version)
 	{
 		this->ageMgr = ageMgr;
 		this->sdlStruct = ageMgr->findStruct(name, version);
+		incompleteVars = incompleteStructs = false;
 	}
 	
 	void tSdlStateBinary::reset(tAgeStateManager *ageMgr, tStrBuf name, U32 version)
@@ -234,6 +260,8 @@ namespace alc {
 		this->ageMgr = ageMgr;
 		this->sdlStruct = ageMgr->findStruct(name, version);
 		vars.clear();
+		structs.clear();
+		incompleteVars = incompleteStructs = false;
 	}
 	
 	void tSdlStateBinary::store(tBBuf &t)
@@ -255,30 +283,34 @@ namespace alc {
 		
 		// get number of values
 		Byte nValues = t.getByte();
-		DBG(7, "nValues: %d\n", nValues);
-		if (nValues != sdlStruct->nVar)
-			throw txProtocolError(_WHERE("size mismatch, expected %d values, got %d values", sdlStruct->nVar, nValues));
+		DBG(7, "nValues: %d, struct contains: %d\n", nValues, sdlStruct->nVar);
+		if (nValues != sdlStruct->nVar) {
+			incompleteVars = true;
+			if (nValues > sdlStruct->nVar)
+				throw txProtocolError(_WHERE("size mismatch, expected maximal %d values, got %d values", sdlStruct->nVar, nValues));
+		}
 		// parse those values
-		tSdlStruct::tVarList::iterator it = sdlStruct->vars.begin(); // we have to know which SDL var we speak about
-		for (int i = 0; i < nValues; ++i, ++it) {
-			while (it->type == DStruct) ++it; // skip structs
-			tSdlStateVar var(&(*it), ageMgr);
+		for (int i = 0; i < nValues; ++i) {
+			int nr = incompleteVars ? t.getByte() : i;
+			tSdlStateVar var(sdlStruct->getElement(nr, true/*search for a var*/), ageMgr);
 			t.get(var); // parse this var
 			vars.push_back(var);
 		}
 		
 		// get number of structs
 		Byte nStructs = t.getByte();
-		DBG(7, "nStructs: %d\n", nStructs);
-		if (nStructs != sdlStruct->nStruct)
-			throw txProtocolError(_WHERE("size mismatch, expected %d structs, got %d structs", sdlStruct->nStruct, nStructs));
+		DBG(7, "nStructs: %d, struct contains: %d\n", nStructs, sdlStruct->nStruct);
+		if (nStructs != sdlStruct->nStruct) {
+			incompleteStructs = true;
+			if (nStructs > sdlStruct->nStruct)
+				throw txProtocolError(_WHERE("size mismatch, expected maximal %d structs, got %d structs", sdlStruct->nStruct, nStructs));
+		}
 		// parse those structs
-		it = sdlStruct->vars.begin(); // we have to know which SDL var we speak about
-		for (int i = 0; i < nStructs; ++i, ++it) {
-			while (it->type != DStruct) ++it; // skip non-structs
-			tSdlStateVar var(&(*it), ageMgr);
+		for (int i = 0; i < nStructs; ++i) {
+			int nr = incompleteStructs ? t.getByte() : i;
+			tSdlStateVar var(sdlStruct->getElement(nr, false/*search for a struct*/), ageMgr);
 			t.get(var); // parse this var
-			vars.push_back(var);
+			structs.push_back(var);
 		}
 	}
 	
@@ -291,8 +323,13 @@ namespace alc {
 	{
 		char indent[] = "                        ";
 		if (indentSize < strlen(indent)) indent[indentSize] = NULL; // let the string end there
-		log->print("%s%s version %d\n", indent, sdlStruct->name.c_str(), sdlStruct->version);
+		log->print("%s%s version %d (unk1: 0x%02X)", indent, sdlStruct->name.c_str(), sdlStruct->version, unk1);
+		if (incompleteVars) log->print(", vars are indexed");
+		if (incompleteStructs) log->print(", structs are indexed");
+		log->nl();
 		for (tVarList::iterator it = vars.begin(); it != vars.end(); ++it)
+			it->print(log, indentSize+2);
+		for (tVarList::iterator it = structs.begin(); it != structs.end(); ++it)
 			it->print(log, indentSize+2);
 	}
 	

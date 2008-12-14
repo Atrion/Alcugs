@@ -55,6 +55,9 @@ const char * alcUnetGetAvatarCode(Byte code);
 const char * alcUnetGetLinkingRule(Byte rule);
 const char * alcUnetGetMsgCode(U16 code);
 
+const char * alcUnetGetVarType(Byte type);
+Byte alcUnetGetVarTypeFromName(tStrBuf type);
+
 class tNetSession;
 
 /** this class is used to save incoming NetMsgs and collect their fragments */

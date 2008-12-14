@@ -477,32 +477,13 @@ namespace alc {
 				structName = type.substring(1, type.size()-1);
 				this->type = DStruct;
 			} else
-				this->type = getVarTypeFromName(type);
+				this->type = alcUnetGetVarTypeFromName(type);
 		}
 		else
 			this->type = DInvalid;
 		size = -1;
 		structVersion = 0;
 		flags = 0x00;
-	}
-	
-	Byte tSdlStructVar::getVarTypeFromName(tStrBuf type)
-	{
-		if (type == "INT") return DInteger;
-		else if (type == "FLOAT") return DFloat;
-		else if (type == "BOOL") return DBool;
-		else if (type == "STRING32") return DUruString;
-		else if (type == "PLKEY") return DPlKey;
-		else if (type == "CREATABLE") return DCreatable;
-		else if (type == "TIME") return DTime;
-		else if (type == "BYTE" || type == "Byte") return DByte; // don't fail on Prad SDL version 9 which uses "Byte" instead of "BYTE"
-		else if (type == "SHORT") return DShort;
-		else if (type == "AGETIMEOFDAY") return DAgeTimeOfDay;
-		else if (type == "VECTOR3") return DVector3;
-		else if (type == "POINT3") return DPoint3;
-		else if (type == "QUATERNION") return DQuaternion;
-		else if (type == "RGB8") return DRGB8;
-		else throw txParseError(_WHERE("Unknown SDL VAR type %s", type.c_str()));
 	}
 	
 	//// tSdlStruct
@@ -520,6 +501,18 @@ namespace alc {
 			else ++nVar;
 		}
 		DBG(7, "%s version %d has %d vars and %d structs\n", name.c_str(), version, nVar, nStruct);
+	}
+	
+	tSdlStructVar *tSdlStruct::getElement(int nr, bool var)
+	{
+		int curNr = 0;
+		for (tVarList::iterator it = vars.begin(); it != vars.end(); ++it) {
+			if ((var && it->type != DStruct) || (!var && it->type == DStruct)) {
+				if (nr == curNr) return &(*it);
+				++curNr;
+			}
+		}
+		throw txProtocolError(_WHERE("Could not find variable/struct number %d", nr));
 	}
 
 } //end namespace alc
