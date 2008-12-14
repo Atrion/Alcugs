@@ -107,6 +107,7 @@ public:
 	void putByte(Byte val);
 	void putSByte(SByte val);
 	void putDouble(double val);
+	void putFloat(float val);
 	U16 getU16();
 	S16 getS16();
 	U32 getU32();
@@ -114,6 +115,7 @@ public:
 	Byte getByte();
 	SByte getSByte();
 	double getDouble();
+	float getFloat();
 	/** Puts an object into the buffer (streams the object) \return the amount of written bytes */
 	inline void put(tBaseType &t) {
 		t.stream(*this);

@@ -59,6 +59,8 @@ namespace alc {
 		int sendSdlStates(tNetSession *u);
 		void writeAgeState(tMBuf *buf);
 		void removePlayer(U32 ki);
+		
+		tSdlStruct *findStruct(tStrBuf name, U32 version);
 	private:
 		void load(void);
 		void unload(void);
@@ -67,6 +69,7 @@ namespace alc {
 		typedef std::list<tSdlState *> tSdlList;
 		
 		void loadSdlStructs(const Byte *filename);
+		U32 findLatestStructVersion(tStrBuf name); //!< returns the highest version number available for this struct
 		
 		tCloneList::iterator findClone(const tUruObject &obj);
 		tSdlList::iterator findSdlState(tSdlState *state);
@@ -88,9 +91,10 @@ namespace alc {
 		
 		// these are public, I would have to add write functions for them anyway or make many classes "friend"
 		Byte type;
-		U32 size; // "-1" means variable size
+		U32 size; // "0" means dynamic size
 		tStrBuf name;
 		tStrBuf structName;
+		U32 structVersion;
 		tStrBuf defaultVal;
 		Byte flags; // see tSdlStructVarFlags
 	private:

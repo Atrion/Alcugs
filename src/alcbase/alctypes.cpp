@@ -112,6 +112,9 @@ void tBBuf::putDouble(double val) {
 #endif
 	this->write((Byte *)&val,8);
 }
+void tBBuf::putFloat(float val) { // TODO: Does this work on big-endian?
+	this->write((Byte *)&val,4);
+}
 U16 tBBuf::getU16() {
 	U16 val;
 #if defined(NEED_STRICT_ALIGNMENT)
@@ -170,6 +173,15 @@ double tBBuf::getDouble() {
 	U32 hi = letoh32(valAsArray[0]);
 	valAsArray[0] = lo;
 	valAsArray[1] = hi;
+#endif
+	return(val);
+}
+float tBBuf::getFloat() { // TODO: Does this work on big-endian?
+	float val;
+#if defined(NEED_STRICT_ALIGNMENT)
+	memcpy((void *)&val, this->read(4), 4);
+#else
+	val = *(S32 *)(this->read(4));
 #endif
 	return(val);
 }

@@ -36,7 +36,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_SDL_ID "$Id$"
 
-#define _DBG_LEVEL_ 10
+#define _DBG_LEVEL_ 5
 
 #include <alcugs.h>
 #include <alcnet.h>
@@ -55,6 +55,27 @@ namespace alc {
 		this->net = net;
 		log = lnull;
 		load();
+		
+		tConfig *cfg = alcGetConfig();
+		tStrBuf var = cfg->getVar("sdl");
+		if (var.size() < 2) throw txBase(_WHERE("a sdl path must be set"));
+		if (!var.endsWith("/")) var.writeStr("/");
+		
+		// load SDL files
+		tDirectory sdlDir;
+		tDirEntry *file;
+		sdlDir.open((char *)var.c_str());
+		while( (file = sdlDir.getEntry()) != NULL) {
+			if (file->type != 8 || strcasecmp(alcGetExt(file->name), "sdl") != 0) continue;
+			// load it
+			loadSdlStructs((var + file->name).c_str());
+		}
+		// updates the version numbers of the embedded SDL structs (always uses the latest one)
+		for (tSdlStructList::iterator it1 = structs.begin(); it1 != structs.end(); ++it1) {
+			for (tSdlStruct::tVarList::iterator it2 = it1->vars.begin(); it2 != it1->vars.end(); ++it2) {
+				if (it2->type == DStruct) it2->structVersion = findLatestStructVersion(it2->structName);
+			}
+		}
 	}
 	
 	tAgeStateManager::~tAgeStateManager(void)
@@ -76,20 +97,6 @@ namespace alc {
 		tStrBuf var = cfg->getVar("agestate.log");
 		if (var.isNull() || var.asByte()) { // logging enabled per default
 			log = new tLog("agestate.log", 4, 0);
-		}
-		
-		var = cfg->getVar("sdl");
-		if (var.size() < 2) throw txBase(_WHERE("a sdl path must be set"));
-		if (!var.endsWith("/")) var.writeStr("/");
-		
-		// load SDL files
-		tDirectory sdlDir;
-		tDirEntry *file;
-		sdlDir.open((char *)var.c_str());
-		while( (file = sdlDir.getEntry()) != NULL) {
-			if (file->type != 8 || strcasecmp(alcGetExt(file->name), "sdl") != 0) continue;
-			// load it
-			loadSdlStructs((var + file->name).c_str());
 		}
 		
 		log->log("AgeState backend started (%s)\n", __U_SDL_ID);
@@ -129,7 +136,7 @@ namespace alc {
 	
 	void tAgeStateManager::saveSdlState(const tUruObject &obj, tMBuf &data)
 	{
-		tSdlState *sdl = new tSdlState(obj, &structs);
+		tSdlState *sdl = new tSdlState(obj, this);
 		data.rewind();
 		data.get(*sdl);
 		// check if state is already in list
@@ -251,10 +258,28 @@ namespace alc {
 		}
 	}
 	
+	U32 tAgeStateManager::findLatestStructVersion(tStrBuf name)
+	{
+		U32 version = 0;
+		for (tSdlStructList::iterator it = structs.begin(); it != structs.end(); ++it) {
+			if (it->name == name && it->version > version) version = it->version;
+		}
+		if (!version) throw txProtocolError(_WHERE("Could not find any SDL struct for %s", name.c_str()));
+		return version;
+	}
+	
+	tSdlStruct *tAgeStateManager::findStruct(tStrBuf name, U32 version)
+	{
+		for (tSdlStructList::iterator it = structs.begin(); it != structs.end(); ++it) {
+			if (name == it->name && it->version == version) return &(*it);
+		}
+		throw txUnet(_WHERE("SDL version mismatch, no SDL Struct found for %s version %d", name.c_str(), version));
+	}
+	
 	/** This is the SDL file parser */
 	void tAgeStateManager::loadSdlStructs(const Byte *filename)
 	{
-		DBG(9, "Loading %s\n", filename);
+		log->log("Reading %s\n", filename);
 		tSdlStruct sdlStruct;
 		tSdlStructVar sdlVar;
 		
@@ -293,7 +318,7 @@ namespace alc {
 		tStrBuf s(sdlContent), c;
 		while (!s.eof()) {
 			c = s.getToken(); // getToken already skips comments for us, so we don't have to care about that
-			//DBG(9, "Token: %s, state: %d\n", c.c_str(), state);
+			DBG(9, "Token: %s, state: %d\n", c.c_str(), state);
 			switch (state) {
 				case 0: // out of a statedesc block, wait for one
 					if (c == "STATEDESC")
@@ -352,13 +377,12 @@ namespace alc {
 					break;
 				case 8: // search for var name
 				{
-					bool varSize =  c.endsWith("[]");
+					bool dynSize =  c.endsWith("[]");
 					U32 size = alcParseKey(c);
-					if (varSize) size = -1; // variable sizes are saved as "-1"
-					if (!size)
+					if (!size && !dynSize)
 						throw txParseError(_WHERE("Parse error at line %d, column %d: Invalid key %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
 					sdlVar.name = c;
-					sdlVar.size = size;
+					sdlVar.size = dynSize ? 0 : size; // "0" means dynamic size
 					state = 9;
 					break;
 				}
@@ -455,7 +479,8 @@ namespace alc {
 		}
 		else
 			this->type = DInvalid;
-		size = 0;
+		size = -1;
+		structVersion = 0;
 		flags = 0x00;
 	}
 	
@@ -492,7 +517,7 @@ namespace alc {
 			if (it->type == DStruct) ++nStruct;
 			else ++nVar;
 		}
-		DBG(9, "%s version %d has %d vars and %d structs\n", name.c_str(), version, nVar, nStruct);
+		DBG(7, "%s version %d has %d vars and %d structs\n", name.c_str(), version, nVar, nStruct);
 	}
 
 } //end namespace alc

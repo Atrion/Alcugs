@@ -45,32 +45,59 @@ namespace alc {
 
 	////DEFINITIONS
 	class tSdlStruct;
+	class tSdlStructVar;
+	class tSdlStateBinary;
+	class tAgeStateManager;
 	typedef std::vector<tSdlStruct> tSdlStructList;
 	
+	/** parses a signel SDL var */
 	class tSdlStateVar : public tBaseType {
 	public:
+		tSdlStateVar(tSdlStructVar *sdlVar, tAgeStateManager *ageMgr);
+		tSdlStateVar(const tSdlStateVar &var);
+		const tSdlStateVar &operator=(const tSdlStateVar &var);
+		~tSdlStateVar(void);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 	private:
+		typedef union {
+			Byte byteVal;
+			U32 intVal;
+			float floatVal;
+			U32 time[2];
+			tSdlStateBinary *sdlState; // we have to use a pointer here - classes are not allowed in unions
+		} tElement;
+		typedef std::vector<tElement> tElementList;
+	
 		Byte flags;
+		tElementList elements;
+		
+		tSdlStructVar *sdlVar;
+		tAgeStateManager *ageMgr;
 	};
 	
+	/** parses a SDL struct - a SDL state is mainly a struct, but a struct is a list of vars and can in turn also contain other structs */
 	class tSdlStateBinary : public tBaseType {
 	public:
-		tSdlStateBinary(const tSdlStruct *sdlStruct = NULL);
+		tSdlStateBinary(void);
+		tSdlStateBinary(tAgeStateManager *ageMgr, tStrBuf name, U32 version);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
-		void reset(const tSdlStruct *sdlStruct); //!< reset the state, empty all lists etc.
+		void reset(tAgeStateManager *ageMgr, tStrBuf name, U32 version); //!< reset the state, empty all lists etc.
 	private:
 		typedef std::vector<tSdlStateVar> tVarList;
 		
-		const tSdlStruct *sdlStruct;
+		Byte unk1;
 		tVarList vars;
+		
+		tSdlStruct *sdlStruct;
+		tAgeStateManager *ageMgr;
 	};
 
+	/** parses the SDL state */
 	class tSdlState : public tBaseType {
 	public:
-		tSdlState(const tUruObject &obj, const tSdlStructList *structs);
+		tSdlState(const tUruObject &obj, tAgeStateManager *stateMgr);
 		tSdlState(void);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
@@ -83,13 +110,13 @@ namespace alc {
 		U16 version;
 		tSdlStateBinary content;
 	private:
-		static tMBuf decompress(tBBuf &t);
-		static tMBuf compress(tMBuf &data);
-		const tSdlStruct *findStruct(void);
+		static tMBuf decompress(tBBuf &t); //!< gives us the decompressed content of the SDL stream, the bytes we really want to parse
+		static tMBuf compress(tMBuf &data); //!< packs our SDL stream to be sent, adds length bytes and perhaps compresses
+		tSdlStruct *findStruct(void); //!< finds the correct tSdlStruct which is necessary for this SDL State
 	
 		tStrBuf dbg;
 		
-		const tSdlStructList *structs;
+		tAgeStateManager *stateMgr;
 	};
 
 } //End alc namespace
