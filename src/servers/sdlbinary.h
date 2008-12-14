@@ -33,81 +33,63 @@
 		Several
 */
 
-#ifndef __U_SDL_H
-#define __U_SDL_H
+#ifndef __U_SDLBINARY_H
+#define __U_SDLBINARY_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_SDL_H_ID "$Id$"
+#define __U_SDLBINARY_H_ID "$Id$"
 
 #include <list>
 #include <memory>
-#include "sdlbinary.h"
 
 namespace alc {
 
 	////DEFINITIONS
-	class tmLoadClone;
+	class tSdlStruct;
+	typedef std::vector<tSdlStruct> tSdlStructList;
 	
-	class tAgeStateManager {
+	class tSdlStateVar : public tBaseType {
 	public:
-		tAgeStateManager(tUnet *net);
-		~tAgeStateManager(void);
-		void reload(void);
-		
-		void saveSdlState(const tUruObject &obj, tMBuf &data);
-		void saveClone(const tmLoadClone &clone);
-		int sendClones(tNetSession *u);
-		int sendSdlStates(tNetSession *u);
-		void writeAgeState(tMBuf *buf);
-		void removePlayer(U32 ki);
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
 	private:
-		void load(void);
-		void unload(void);
-		
-		typedef std::list<tmLoadClone *> tCloneList;
-		typedef std::list<tSdlState *> tSdlList;
-		
-		void loadSdlStructs(const Byte *filename);
-		
-		tCloneList::iterator findClone(const tUruObject &obj);
-		tSdlList::iterator findSdlState(tSdlState *state);
-		void removeSDLStates(U32 ki, U32 cloneId = 0);
-	
-		tCloneList clones;
-		tSdlList sdlStates;
-		tSdlStructList structs;
-		tUnet *net;
-		tLog *log;
+		Byte flags;
 	};
 	
-	/** The SDL Struct classes */
-	class tSdlStructVar {
+	class tSdlStateBinary : public tBaseType {
 	public:
-		tSdlStructVar(tStrBuf type = tStrBuf());
-		
-		typedef enum { DVault = 0x01, DHidden = 0x02, DRed = 0x04 } tSdlStructVarFlags;
-		
-		// these are public, I would have to add write functions for them anyway or make many classes "friend"
-		Byte type;
-		U32 size; // "-1" means variable size
-		tStrBuf name;
-		tStrBuf structName;
-		tStrBuf defaultVal;
-		Byte flags; // see tSdlStructVarFlags
+		tSdlStateBinary(const tSdlStruct *sdlStruct = NULL);
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
+		void reset(const tSdlStruct *sdlStruct); //!< reset the state, empty all lists etc.
 	private:
-		Byte getVarTypeFromName(tStrBuf type);
-	};
-	
-	class tSdlStruct {
-	public:
-		tSdlStruct(tStrBuf name = tStrBuf());
-		void count(void);
-	
-		typedef std::vector<tSdlStructVar> tVarList;
-		// these are public, I would have to add write functions for them anyway or make many classes "friend"
-		tStrBuf name;
-		U32 version;
+		typedef std::vector<tSdlStateVar> tVarList;
+		
+		const tSdlStruct *sdlStruct;
 		tVarList vars;
-		int nVar, nStruct;
+	};
+
+	class tSdlState : public tBaseType {
+	public:
+		tSdlState(const tUruObject &obj, const tSdlStructList *structs);
+		tSdlState(void);
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
+		const Byte *str(void);
+		bool operator==(const tSdlState &state);
+		
+		tUruObject obj;
+		// format
+		tUStr name;
+		U16 version;
+		tSdlStateBinary content;
+	private:
+		static tMBuf decompress(tBBuf &t);
+		static tMBuf compress(tMBuf &data);
+		const tSdlStruct *findStruct(void);
+	
+		tStrBuf dbg;
+		
+		const tSdlStructList *structs;
 	};
 
 } //End alc namespace

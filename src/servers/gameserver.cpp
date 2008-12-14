@@ -77,7 +77,7 @@ namespace alc {
 		// load SDL Manager
 		ageState = new tAgeStateManager(this);
 		
-		// make sure we quite if noone comes
+		// make sure we quit if noone comes
 		lastPlayerLeft = alcGetTime();
 	}
 
