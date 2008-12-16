@@ -394,7 +394,7 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, SDLState.str());
 				
 				// save SDL state
-				ageState->saveSdlState(SDLState.obj, SDLState.sdl);
+				ageState->saveSdlState(SDLState.sdl);
 				
 				// NetMsgSDLState sometimes has the bcast falg set and NetMsgSDLStateBCast sometimes doesn't.
 				// I assume the message type is correct and the flag not.
@@ -414,7 +414,7 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, SDLStateBCast.str());
 				
 				// save SDL state
-				ageState->saveSdlState(SDLStateBCast.obj, SDLStateBCast.sdl);
+				ageState->saveSdlState(SDLStateBCast.sdl);
 				// FIXME: The old game server sets a restriction how many updates can be sent for a physical in a certain time
 				
 				// NetMsgSDLState sometimes has the bcast falg set and NetMsgSDLStateBCast sometimes doesn't.

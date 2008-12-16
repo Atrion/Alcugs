@@ -60,14 +60,15 @@ class tUStr :public tStrBuf {
 public:
 	/**
 		\param mode
-		0 - normal
+		0 - normal Uru (plasma 2.0)
 		1 - auto (normal/inverted) Uru (plasma 2.0) [Please avoid using this mode]
-		5 - inverted
+		5 - inverted Uru (plasma 2.0)
 		6 - myst5 (plasma 2.1)
 	*/
 	tUStr(int mode=1);
 	tUStr(const void *k, int mode = 1);
 	tUStr(const tUStr &t) { copy(t); }
+	tUStr(const tStrBuf &t) { tStrBuf::copy(t); }
 	virtual void stream(tBBuf &b);
 	virtual void store(tBBuf &b);
 	void setVersion(Byte version) { this->version=version; }

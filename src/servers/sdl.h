@@ -55,7 +55,7 @@ namespace alc {
 		~tAgeStateManager(void);
 		void reload(void);
 		
-		void saveSdlState(const tUruObject &obj, tMBuf &data);
+		void saveSdlState(tMBuf &data);
 		void saveClone(const tmLoadClone &clone);
 		int sendClones(tNetSession *u);
 		int sendSdlStates(tNetSession *u);
@@ -103,8 +103,9 @@ namespace alc {
 	
 	class tSdlStruct {
 	public:
-		tSdlStruct(tStrBuf name = tStrBuf());
+		tSdlStruct(tAgeStateManager *stateMgr, tStrBuf name = tStrBuf());
 		void count(void);
+		tSdlState createDefaultState(void);
 		
 		tSdlStructVar *getElement(int nr, bool var); //!< returns the nth variable (if var == true) or the nth struct (if var == false)
 	
@@ -114,6 +115,8 @@ namespace alc {
 		U32 version;
 		tVarList vars;
 		int nVar, nStruct;
+	private:
+		tAgeStateManager *stateMgr;
 	};
 
 } //End alc namespace

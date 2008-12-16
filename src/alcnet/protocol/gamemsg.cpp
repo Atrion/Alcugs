@@ -438,7 +438,7 @@ namespace alc {
 	tmSDLState::tmSDLState(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
-	tmSDLState::tmSDLState(tNetSession *u, tUruObject &obj, bool isInitial) : tmMsgBase(NetMsgSDLState, plNetAck, u), obj(obj)
+	tmSDLState::tmSDLState(tNetSession *u, bool isInitial) : tmMsgBase(NetMsgSDLState, plNetAck, u)
 	{
 		this->isInitial = isInitial;
 	}
@@ -448,7 +448,6 @@ namespace alc {
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
 		
-		t.get(obj);
 		sdl.clear();
 		U32 sdlSize = t.remaining()-1;
 		sdl.write(t.read(sdlSize), sdlSize);
@@ -461,7 +460,6 @@ namespace alc {
 	void tmSDLState::stream(tBBuf &t)
 	{
 		tmMsgBase::stream(t);
-		t.put(obj);
 		t.put(sdl);
 		t.putByte(isInitial);
 	}
@@ -469,7 +467,7 @@ namespace alc {
 	void tmSDLState::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" Object reference: [%s], is initial age state: ", obj.str());
+		dbg.printf(" is initial age state: ");
 		if (isInitial) dbg.printf("yes");
 		else           dbg.printf("no");
 	}
@@ -479,7 +477,7 @@ namespace alc {
 	{ }
 	
 	tmSDLStateBCast::tmSDLStateBCast(tNetSession *u, tmSDLStateBCast & msg)
-	 : tmMsgBase(NetMsgSDLStateBCast, plNetAck | plNetKi | plNetBcast, u), obj(msg.obj), sdl(msg.sdl)
+	 : tmMsgBase(NetMsgSDLStateBCast, plNetAck | plNetKi | plNetBcast, u), sdl(msg.sdl)
 	{
 		if (!msg.hasFlags(plNetBcast)) unsetFlags(plNetBcast);
 		ki = msg.ki;
@@ -490,7 +488,6 @@ namespace alc {
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
 		
-		t.get(obj);
 		sdl.clear();
 		U32 sdlSize = t.remaining()-2;
 		sdl.write(t.read(sdlSize), sdlSize);
@@ -506,16 +503,9 @@ namespace alc {
 	void tmSDLStateBCast::stream(tBBuf &t)
 	{
 		tmMsgBase::stream(t);
-		t.put(obj);
 		t.put(sdl);
 		t.putByte(0x00); // unk1 (initial?)
 		t.putByte(0x01); // unk2
-	}
-	
-	void tmSDLStateBCast::additionalFields()
-	{
-		dbg.nl();
-		dbg.printf(" Object reference: [%s]", obj.str());
 	}
 	
 	//// tmSetTimeout

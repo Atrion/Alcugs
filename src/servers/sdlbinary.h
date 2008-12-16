@@ -52,7 +52,7 @@ namespace alc {
 	/** parses a signel SDL var */
 	class tSdlStateVar : public tBaseType {
 	public:
-		tSdlStateVar(tSdlStructVar *sdlVar, tAgeStateManager *ageMgr);
+		tSdlStateVar(tSdlStructVar *sdlVar, tAgeStateManager *stateMgr);
 		tSdlStateVar(const tSdlStateVar &var);
 		const tSdlStateVar &operator=(const tSdlStateVar &var);
 		~tSdlStateVar(void);
@@ -76,20 +76,23 @@ namespace alc {
 		tElementList elements;
 		
 		tSdlStructVar *sdlVar;
-		tAgeStateManager *ageMgr;
+		tAgeStateManager *stateMgr;
 	};
 	
 	/** parses a SDL state binary, which is a list of vars and can recursively contain other state binaries */
 	class tSdlStateBinary : public tBaseType {
 	public:
 		tSdlStateBinary(void);
-		tSdlStateBinary(tAgeStateManager *ageMgr, tStrBuf name, U32 version);
+		tSdlStateBinary(tAgeStateManager *stateMgr, tStrBuf name, U32 version);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
-		void reset(tAgeStateManager *ageMgr, tStrBuf name, U32 version); //!< reset the state, empty all lists etc.
 		void print(tLog *log, Byte indentSize = 1);
-	private:
+		
+		tUStr getName(void) const;
+		U16 getVersion(void) const;
+		
 		typedef std::vector<tSdlStateVar> tVarList; // FIXME: perhaps better use a list?
+	private:
 		
 		Byte unk1;
 		tVarList vars;
@@ -100,13 +103,14 @@ namespace alc {
 		
 		tStrBuf dbg;
 		tSdlStruct *sdlStruct;
-		tAgeStateManager *ageMgr;
+		tAgeStateManager *stateMgr;
 	};
 
 	/** parses the SDL state */
 	class tSdlState : public tBaseType {
 	public:
-		tSdlState(const tUruObject &obj, tAgeStateManager *stateMgr);
+		tSdlState(tAgeStateManager *stateMgr);
+		tSdlState(tAgeStateManager *stateMgr, const tUruObject &obj, tUStr name, U16 version);
 		tSdlState(void);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
@@ -116,8 +120,6 @@ namespace alc {
 		
 		tUruObject obj;
 		// format
-		tUStr name;
-		U16 version;
 		tSdlStateBinary content;
 	private:
 		static tMBuf decompress(tBBuf &t); //!< gives us the decompressed content of the SDL stream, the bytes we really want to parse

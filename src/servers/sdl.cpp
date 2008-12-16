@@ -134,9 +134,9 @@ namespace alc {
 		}
 	}
 	
-	void tAgeStateManager::saveSdlState(const tUruObject &obj, tMBuf &data)
+	void tAgeStateManager::saveSdlState(tMBuf &data)
 	{
-		tSdlState *sdl = new tSdlState(obj, this); // below catch-try cares about cleaning up in case of a parse error
+		tSdlState *sdl = new tSdlState(this); // below catch-try cares about cleaning up in case of a parse error
 		try {
 			data.rewind();
 			data.get(*sdl);
@@ -150,7 +150,7 @@ namespace alc {
 				sdl = NULL; // do not cleanup
 			}
 			else {
-				if ((*it)->version > sdl->version) {
+				if ((*it)->content.getVersion() > sdl->content.getVersion()) {
 					// don't override the SDL state with a state described in an older version
 					throw txProtocolError(_WHERE("SDL version mismatch: %s should be downgraded to %s", (*it)->str(), sdl->str()));
 				}
@@ -180,7 +180,7 @@ namespace alc {
 	{
 		int n = 0;
 		for (tSdlList::iterator it = sdlStates.begin(); it != sdlStates.end(); ++it) {
-			tmSDLState sdlMsg(u, (*it)->obj, /*initial*/true);
+			tmSDLState sdlMsg(u, /*initial*/true);
 			sdlMsg.sdl.put(**it);
 			net->send(sdlMsg);
 			++n;
@@ -262,7 +262,7 @@ namespace alc {
 			buf->put(*sdlHook);
 		}
 		else {
-			log->log("No SDL hook found, send empty SDL\n");
+			log->log("No Age SDL hook found, send empty SDL\n");
 			tSdlState empty;
 			buf->put(empty);
 		}
@@ -290,7 +290,7 @@ namespace alc {
 	void tAgeStateManager::loadSdlStructs(const Byte *filename)
 	{
 		log->log("Reading %s\n", filename);
-		tSdlStruct sdlStruct;
+		tSdlStruct sdlStruct(this);
 		tSdlStructVar sdlVar;
 		
 		// open and decrypt file
@@ -340,7 +340,7 @@ namespace alc {
 					// check if it is a valid name
 					if (c.isNewline())
 						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
-					sdlStruct = tSdlStruct(c);
+					sdlStruct = tSdlStruct(this, c);
 					state = 2;
 					break;
 				case 2: // search for the curly bracket
@@ -495,8 +495,9 @@ namespace alc {
 	}
 	
 	//// tSdlStruct
-	tSdlStruct::tSdlStruct(tStrBuf name) : name(name)
+	tSdlStruct::tSdlStruct(tAgeStateManager *stateMgr, tStrBuf name) : name(name)
 	{
+		this->stateMgr = stateMgr;
 		version = 0;
 		nVar = nStruct = 0;
 	}
@@ -521,6 +522,19 @@ namespace alc {
 			}
 		}
 		throw txProtocolError(_WHERE("Could not find variable/struct number %d", nr));
+	}
+	
+	tSdlState tSdlStruct::createDefaultState(void)
+	{
+		tUruObject obj; // FIXME: correctly create this one
+		tSdlState state(stateMgr, obj, name, version);
+		// now add defaults for everything
+		for (tVarList::iterator it = vars.begin(); it != vars.end(); ++it) {
+			tSdlStateBinary::tVarList::iterator newIt;
+			//if (it->type == DStruct) newIt = state.content.structs.insert(state.content.structs.end(), tSdlStateVar());
+			//else newIt = state.content.vars.insert(state.content.vars.end(), tSdlStateVar());
+		}
+		return state;
 	}
 
 } //end namespace alc

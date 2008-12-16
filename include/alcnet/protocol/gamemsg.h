@@ -189,11 +189,10 @@ namespace alc {
 	class tmSDLState : public tmMsgBase {
 	public:
 		tmSDLState(tNetSession *u);
-		tmSDLState(tNetSession *u, tUruObject &obj, bool isInitial);
+		tmSDLState(tNetSession *u, bool isInitial);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format
-		tUruObject obj;
 		tMBuf sdl;
 		bool isInitial;
 	protected:
@@ -207,10 +206,7 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format
-		tUruObject obj;
 		tMBuf sdl;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmSetTimeout : public tmMsgBase {

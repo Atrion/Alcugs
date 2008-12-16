@@ -149,12 +149,12 @@ alcugs_vault_CPPFLAGS = -DI_AM_THE_VAULT_SERVER
 # game server
 alcugs_game_SOURCES = \
  src/servers/alcugs_main.cpp \
- src/servers/sdl.cpp \
  src/servers/sdlbinary.cpp \
+ src/servers/sdl.cpp \
  src/servers/gameserver.cpp
 alcugs_game_INCLUDES = \
- src/servers/sdl.h \
  src/servers/sdlbinary.h \
+ src/servers/sdl.h \
  src/servers/gameserver.h
 alcugs_game_LDADD = libalcnet1.a libalcbase1.a
 alcugs_game_CPPFLAGS = -DI_AM_THE_GAME_SERVER

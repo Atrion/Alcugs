@@ -54,10 +54,10 @@ namespace alc {
 	/** SDL binary processing classes */
 	
 	//// tSdlStateVar
-	tSdlStateVar::tSdlStateVar(tSdlStructVar *sdlVar, tAgeStateManager *ageMgr)
+	tSdlStateVar::tSdlStateVar(tSdlStructVar *sdlVar, tAgeStateManager *stateMgr)
 	{
 		this->sdlVar = sdlVar;
-		this->ageMgr = ageMgr;
+		this->stateMgr = stateMgr;
 		str.setVersion(5); // inverted UruString
 	}
 	
@@ -71,7 +71,7 @@ namespace alc {
 	{
 		flags = var.flags;
 		sdlVar = var.sdlVar;
-		ageMgr = var.ageMgr;
+		stateMgr = var.stateMgr;
 		str = var.str;
 		// because there can be pointers in the elements list, we have to copy manually
 		if (sdlVar->type == DStruct || sdlVar->type == DPlKey) {
@@ -171,7 +171,7 @@ namespace alc {
 					case DStruct:
 					{
 						// the pointer to the new element are immediatley stored in the list, so they are correctly cleaned up
-						it->sdlState = new tSdlStateBinary(ageMgr, sdlVar->structName, sdlVar->structVersion);
+						it->sdlState = new tSdlStateBinary(stateMgr, sdlVar->structName, sdlVar->structVersion);
 						t.get(*it->sdlState);
 						break;
 					}
@@ -214,8 +214,8 @@ namespace alc {
 		char indent[] = "                        ";
 		if (indentSize < strlen(indent)) indent[indentSize] = NULL; // let the string end there
 		log->print("%s%s[%d] (", indent, sdlVar->name.c_str(), elements.size());
-		if (str.size()) log->print("str = %s, ", str.c_str());
-		log->print("flags = 0x%02X) = ", flags);
+		if (str.size()) log->print("str: %s, ", str.c_str());
+		log->print("flags: 0x%02X) = ", flags);
 		if (flags & 0x08) {
 			log->print("default value %s\n", sdlVar->defaultVal.c_str());
 		}
@@ -266,24 +266,17 @@ namespace alc {
 	//// tSdlStateBinary
 	tSdlStateBinary::tSdlStateBinary(void)
 	{
-		ageMgr = NULL;
+		unk1 = 0x00;
+		stateMgr = NULL;
 		sdlStruct = NULL;
 		incompleteVars = incompleteStructs = false;
 	}
 	
-	tSdlStateBinary::tSdlStateBinary(tAgeStateManager *ageMgr, tStrBuf name, U32 version)
+	tSdlStateBinary::tSdlStateBinary(tAgeStateManager *stateMgr, tStrBuf name, U32 version)
 	{
-		this->ageMgr = ageMgr;
-		this->sdlStruct = ageMgr->findStruct(name, version);
-		incompleteVars = incompleteStructs = false;
-	}
-	
-	void tSdlStateBinary::reset(tAgeStateManager *ageMgr, tStrBuf name, U32 version)
-	{
-		this->ageMgr = ageMgr;
-		this->sdlStruct = ageMgr->findStruct(name, version);
-		vars.clear();
-		structs.clear();
+		unk1 = 0x00;
+		this->stateMgr = stateMgr;
+		this->sdlStruct = stateMgr->findStruct(name, version);
 		incompleteVars = incompleteStructs = false;
 	}
 	
@@ -315,7 +308,7 @@ namespace alc {
 		// parse those values
 		for (int i = 0; i < nValues; ++i) {
 			int nr = incompleteVars ? t.getByte() : i;
-			tVarList::iterator it = vars.insert(vars.end(), tSdlStateVar(sdlStruct->getElement(nr, true/*search for a var*/), ageMgr));
+			tVarList::iterator it = vars.insert(vars.end(), tSdlStateVar(sdlStruct->getElement(nr, true/*search for a var*/), stateMgr));
 			t.get(*it); // parse this var
 		}
 		
@@ -331,7 +324,7 @@ namespace alc {
 		// parse those structs
 		for (int i = 0; i < nStructs; ++i) {
 			int nr = incompleteStructs ? t.getByte() : i;
-			tVarList::iterator it = vars.insert(vars.end(), tSdlStateVar(sdlStruct->getElement(nr, false/*search for a struct*/), ageMgr));
+			tVarList::iterator it = vars.insert(vars.end(), tSdlStateVar(sdlStruct->getElement(nr, false/*search for a struct*/), stateMgr));
 			t.get(*it); // parse this var
 		}
 	}
@@ -355,16 +348,27 @@ namespace alc {
 			it->print(log, indentSize+2);
 	}
 	
+	tUStr tSdlStateBinary::getName(void) const {
+		return sdlStruct ? tUStr(sdlStruct->name) : tUStr();
+	}
+	U16 tSdlStateBinary::getVersion(void) const {
+		return sdlStruct ? sdlStruct->version : 0;
+	}
+	
 	//// tSdlState
-	tSdlState::tSdlState(const tUruObject &obj, tAgeStateManager *stateMgr) : obj(obj)
+	tSdlState::tSdlState(tAgeStateManager *stateMgr)
 	{
-		version = 0;
+		this->stateMgr = stateMgr;
+	}
+	
+	tSdlState::tSdlState(tAgeStateManager *stateMgr, const tUruObject &obj, tUStr name, U16 version)
+	 : obj(obj), content(stateMgr, name, version)
+	{
 		this->stateMgr = stateMgr;
 	}
 	
 	tSdlState::tSdlState(void)
 	{
-		version = 0;
 		this->stateMgr = NULL;
 	}
 	
@@ -456,13 +460,15 @@ namespace alc {
 		if (stateMgr == NULL)
 			throw txUnet(_WHERE("You have to set a stateMgr before parsing a sdlState"));
 		// use tSdlBinay to get the message body and decompress stuff
+		t.get(obj);
 		tMBuf data = decompress(t);
 		// parse "header data"
 		data.rewind();
+		tUStr name;
 		data.get(name);
-		version = data.getU16();
+		U16 version = data.getU16();
 		// parse binary content
-		content.reset(stateMgr, name, version);
+		content = tSdlStateBinary(stateMgr, name, version);
 		data.get(content);
 		
 		if (!data.eof()) {
@@ -477,10 +483,12 @@ namespace alc {
 	
 	void tSdlState::stream(tBBuf &t)
 	{
+		t.put(obj);
 		tMBuf data;
-		if (version && name.size() && obj.objName.size()) {
+		if (content.getVersion() && content.getName().size() && obj.objName.size()) {
+			tUStr name(content.getName());
 			data.put(name);
-			data.putU16(version);
+			data.putU16(content.getVersion());
 			data.put(content);
 		}
 		// use tSdlBinary to get the SDL header around it
@@ -491,14 +499,14 @@ namespace alc {
 	bool tSdlState::operator==(const tSdlState &state)
 	{
 		if (obj != state.obj) return false;
-		if (name != state.name) return false;
+		if (content.getName() != state.content.getName()) return false;
 		return true;
 	}
 	
 	const Byte *tSdlState::str(void)
 	{
 		dbg.clear();
-		dbg.printf("SDL State for [%s]: %s (version %d)", obj.str(), name.c_str(), version);
+		dbg.printf("SDL State for [%s]: %s (version %d)", obj.str(), content.getName().c_str(), content.getVersion());
 		return dbg.c_str();
 	}
 	
