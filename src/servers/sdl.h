@@ -47,6 +47,8 @@ namespace alc {
 	////DEFINITIONS
 	class tmLoadClone;
 	
+	typedef std::vector<tSdlStruct> tSdlStructList;
+	
 	class tAgeStateManager {
 	public:
 		tAgeStateManager(tUnet *net);
@@ -65,8 +67,8 @@ namespace alc {
 		void load(void);
 		void unload(void);
 		
-		typedef std::list<tmLoadClone *> tCloneList;
-		typedef std::list<tSdlState *> tSdlList;
+		typedef std::vector<tmLoadClone *> tCloneList; // FIXME: perhaps better use a list and no pointers?
+		typedef std::vector<tSdlState *> tSdlList; // FIXME: perhaps better use a list and no pointers?
 		
 		void loadSdlStructs(const Byte *filename);
 		U32 findLatestStructVersion(tStrBuf name); //!< returns the highest version number available for this struct

@@ -87,6 +87,7 @@ namespace alc {
 			tConfigVal *pageVal = cfg->findVar("Page");
 			int nPages = pageVal ? pageVal->getRows() : 0;
 			if (!nPages) throw txBase(_WHERE("an age without pages? This is not possible"));
+			pages.reserve(nPages); // avoid re-allocating memory
 			for (int i = 0; i < nPages; ++i)
 				pages.push_back(tPageInfo(pageVal, i));
 		}

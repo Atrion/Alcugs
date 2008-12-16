@@ -412,7 +412,7 @@ namespace alc {
 		virtual void asHtml(tLog *log, bool shortLog);
 		void print(tLog *log, bool clientToServer, tNetSession *client, bool shortLog, U32 ki = 0);
 		
-		typedef std::vector<tvItem *> tItemList;
+		typedef std::vector<tvItem *> tItemList; // FIXME: perhaps better no pointers (maybe even a list)?
 		
 		Byte tpots; // 1: generate/parse for TPOTS client, everything else: for non-TPOTS client (or the vault server)
 		// format

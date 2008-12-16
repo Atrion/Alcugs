@@ -103,7 +103,7 @@ namespace alc {
 		void load(void);
 		void unload(void);
 		
-		typedef std::list<tPlayer *> tPlayerList;
+		typedef std::vector<tPlayer *> tPlayerList; // FIXME: perhaps better no pointers (maybe even a list)?
 		
 		tPlayerList::iterator getPlayer(U32 ki);
 		void notifyWaiting(tNetSession *server);

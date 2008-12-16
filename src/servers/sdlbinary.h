@@ -48,7 +48,6 @@ namespace alc {
 	class tSdlStructVar;
 	class tSdlStateBinary;
 	class tAgeStateManager;
-	typedef std::vector<tSdlStruct> tSdlStructList;
 	
 	/** parses a signel SDL var */
 	class tSdlStateVar : public tBaseType {
@@ -66,12 +65,13 @@ namespace alc {
 		typedef union {
 			Byte byteVal[3];
 			U32 intVal[2];
-			float floatVal;
+			float floatVal[4];
 			tSdlStateBinary *sdlState; // we have to use a pointer here - classes are not allowed in unions
 			tUruObject *obj;
 		} tElement;
-		typedef std::vector<tElement> tElementList;
+		typedef std::vector<tElement> tElementList; // FIXME: perhaps better use a list?
 	
+		tUStr str; //!< details about how the state was changed
 		Byte flags;
 		tElementList elements;
 		
@@ -89,7 +89,7 @@ namespace alc {
 		void reset(tAgeStateManager *ageMgr, tStrBuf name, U32 version); //!< reset the state, empty all lists etc.
 		void print(tLog *log, Byte indentSize = 1);
 	private:
-		typedef std::vector<tSdlStateVar> tVarList;
+		typedef std::vector<tSdlStateVar> tVarList; // FIXME: perhaps better use a list?
 		
 		Byte unk1;
 		tVarList vars;

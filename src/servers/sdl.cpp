@@ -136,27 +136,35 @@ namespace alc {
 	
 	void tAgeStateManager::saveSdlState(const tUruObject &obj, tMBuf &data)
 	{
-		tSdlState *sdl = new tSdlState(obj, this);
-		data.rewind();
-		data.get(*sdl);
-		log->log("Got "); // FIXME: Add option to disable detailed logging
-		sdl->print(log);
-		// check if state is already in list
-		tSdlList::iterator it = findSdlState(sdl);
-		if (it == sdlStates.end()) {
-			log->log("Adding %s\n", sdl->str());
-			sdlStates.push_back(sdl);
+		tSdlState *sdl = new tSdlState(obj, this); // below catch-try cares about cleaning up in case of a parse error
+		try {
+			data.rewind();
+			data.get(*sdl);
+			log->log("Got "); // FIXME: Add option to disable detailed logging
+			sdl->print(log);
+			// check if state is already in list
+			tSdlList::iterator it = findSdlState(sdl);
+			if (it == sdlStates.end()) {
+				log->log("Adding %s\n", sdl->str());
+				sdlStates.push_back(sdl);
+				sdl = NULL; // do not cleanup
+			}
+			else {
+				if ((*it)->version > sdl->version) {
+					// don't override the SDL state with a state described in an older version
+					throw txProtocolError(_WHERE("SDL version mismatch: %s should be downgraded to %s", (*it)->str(), sdl->str()));
+				}
+				else { // it's the same or a newer version, use it
+					log->log("Updating %s\n", sdl->str());
+					delete *it;
+					*it = sdl;
+					sdl = NULL; // do not cleanup
+				}
+			}
 		}
-		else {
-			if ((*it)->version > sdl->version) {
-				// don't override the SDL state with a state described in an older version
-				throw txProtocolError(_WHERE("SDL version mismatch: %s should be downgraded to %s", (*it)->str(), sdl->str()));
-			}
-			else { // it's the same or a newer version, use it
-				log->log("Updating %s\n", sdl->str());
-				delete *it;
-				*it = sdl;
-			}
+		catch (...) {
+			if (sdl) delete sdl; // cleanup
+			throw; // re-throw exception
 		}
 	}
 	

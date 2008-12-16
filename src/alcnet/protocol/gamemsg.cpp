@@ -188,7 +188,7 @@ namespace alc {
 		// get list of recipients
 		Byte nRecipients = t.getByte();
 		recipients.clear();
-		recipients.reserve(nRecipients);
+		recipients.reserve(nRecipients); // avoid re-allocating memory
 		for (int i = 0; i < nRecipients; ++i) recipients.push_back(t.getU32());
 	}
 	

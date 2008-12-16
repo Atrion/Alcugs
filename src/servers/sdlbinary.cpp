@@ -58,28 +58,31 @@ namespace alc {
 	{
 		this->sdlVar = sdlVar;
 		this->ageMgr = ageMgr;
+		str.setVersion(5); // inverted UruString
 	}
 	
 	tSdlStateVar::tSdlStateVar(const tSdlStateVar &var)
 	{
 		*this = var;
+		str.setVersion(5); // inverted UruString
 	}
 	
 	const tSdlStateVar &tSdlStateVar::operator=(const tSdlStateVar &var)
 	{
-		// because there can be pointers in the elements list, we have to copy manually
 		flags = var.flags;
 		sdlVar = var.sdlVar;
 		ageMgr = var.ageMgr;
+		str = var.str;
+		// because there can be pointers in the elements list, we have to copy manually
 		if (sdlVar->type == DStruct || sdlVar->type == DPlKey) {
 			// cleanup
 			clear();
 			// copy each element
 			for (tElementList::const_iterator it = var.elements.begin(); it != var.elements.end(); ++it) {
-				tElement element;
-				if (sdlVar->type == DStruct) element.sdlState = new tSdlStateBinary(*it->sdlState);
-				else                         element.obj = new tUruObject(*it->obj);
-				elements.push_back(element);
+				tElementList::iterator newIt = elements.insert(elements.end(), tElement());
+				// the pointers to the new elements are immediatley stored in the list, so they are correctly cleaned up
+				if (sdlVar->type == DStruct) newIt->sdlState = new tSdlStateBinary(*it->sdlState);
+				else                         newIt->obj = new tUruObject(*it->obj);
 			}
 		}
 		else {
@@ -111,10 +114,7 @@ namespace alc {
 		Byte unk1 = t.getByte();
 		if (unk1 != 0x00)
 			throw txProtocolError(_WHERE("Unexpected sdlBinary.unk1 of 0x%02X (expected 0x00)", unk1));
-		tUStr unk2;
-		t.get(unk2);
-		if (unk2.size())
-			throw txProtocolError(_WHERE("Unexpected non-empty sdlBinary.unk2 of %s", unk2.c_str()));
+		t.get(str);
 		// now come the flags
 		flags = t.getByte();
 		DBG(9, "Flags are 0x%02X\n", flags);
@@ -148,44 +148,58 @@ namespace alc {
 				if (num != n) throw txProtocolError(_WHERE("Unexpected number of structs to be parsed - expected %d, got %d", n, num));
 			}
 			for (U32 i = 0; i < n; ++i) {
-				tElement element;
+				tElementList::iterator it = elements.insert(elements.end(), tElement());
 				// parse the variable and save it in the union
 				switch (sdlVar->type) {
 					case DInteger:
-						element.intVal[0] = t.getU32();
+						it->intVal[0] = t.getU32();
 						break;
 					case DFloat:
-						element.floatVal = t.getFloat();
+						it->floatVal[0] = t.getFloat();
 						break;
 					case DBool:
 					case DByte:
-						element.byteVal[0] = t.getByte();
-						if (sdlVar->type == DBool && element.byteVal[0] != 0 && element.byteVal[0] != 1)
-							throw txProtocolError(_WHERE("Unexpected BOOL var, must be 0 or 1 but is %d\n", element.byteVal));
+						it->byteVal[0] = t.getByte();
+						if (sdlVar->type == DBool && it->byteVal[0] != 0 && it->byteVal[0] != 1)
+							throw txProtocolError(_WHERE("Unexpected BOOL var, must be 0 or 1 but is %d\n", it->byteVal));
 						break;
 					case DPlKey:
-						element.obj = new tUruObject;
-						t.get(*element.obj);
+						// the pointer to the new element are immediatley stored in the list, so they are correctly cleaned up
+						it->obj = new tUruObject;
+						t.get(*it->obj);
 						break;
 					case DStruct:
 					{
-						element.sdlState = new tSdlStateBinary(ageMgr, sdlVar->structName, sdlVar->structVersion);
-						t.get(*element.sdlState);
+						// the pointer to the new element are immediatley stored in the list, so they are correctly cleaned up
+						it->sdlState = new tSdlStateBinary(ageMgr, sdlVar->structName, sdlVar->structVersion);
+						t.get(*it->sdlState);
 						break;
 					}
 					case DTime:
-						element.intVal[0] = t.getU32(); // seconds
-						element.intVal[1] = t.getU32(); // microseconds
+						it->intVal[0] = t.getU32(); // seconds
+						it->intVal[1] = t.getU32(); // microseconds
+						break;
+					case DVector3:
+					case DPoint3:
+						it->floatVal[0] = t.getFloat();
+						it->floatVal[1] = t.getFloat();
+						it->floatVal[2] = t.getFloat();
+						break;
+					case DQuaternion:
+						it->floatVal[0] = t.getFloat();
+						it->floatVal[1] = t.getFloat();
+						it->floatVal[2] = t.getFloat();
+						it->floatVal[3] = t.getFloat();
 						break;
 					case DRGB8:
-						element.byteVal[0] = t.getByte();
-						element.byteVal[1] = t.getByte();
-						element.byteVal[2] = t.getByte();
+						it->byteVal[0] = t.getByte();
+						it->byteVal[1] = t.getByte();
+						it->byteVal[2] = t.getByte();
 						break;
 					default:
+						// FIXME: Yet to implement; DUruString, DCreatable, DTimestamp, DShort, DAgeTimeOfDay
 						throw txProtocolError(_WHERE("Unable to parse SDL var of type 0x%02X", sdlVar->type));
 				}
-				elements.push_back(element);
 			}
 		}
 	}
@@ -199,21 +213,23 @@ namespace alc {
 	{
 		char indent[] = "                        ";
 		if (indentSize < strlen(indent)) indent[indentSize] = NULL; // let the string end there
-		log->print("%s%s[%d] (0x%02X) = ", indent, sdlVar->name.c_str(), elements.size(), flags);
+		log->print("%s%s[%d] (", indent, sdlVar->name.c_str(), elements.size());
+		if (str.size()) log->print("str = %s, ", str.c_str());
+		log->print("flags = 0x%02X) = ", flags);
 		if (flags & 0x08) {
 			log->print("default value %s\n", sdlVar->defaultVal.c_str());
 		}
 		else {
 			log->print("%s: ", alcUnetGetVarType(sdlVar->type));
 			for (tElementList::iterator it = elements.begin(); it != elements.end(); ++it) {
-				if (it != elements.begin()) log->print(",");
+				if (it != elements.begin() && sdlVar->type != DStruct) log->print(", ");
 				// print value
 				switch (sdlVar->type) {
 					case DInteger:
 						log->print("%d", it->intVal[0]);
 						break;
 					case DFloat:
-						log->print("%f", it->floatVal);
+						log->print("%f", it->floatVal[0]);
 						break;
 					case DBool:
 					case DByte:
@@ -223,14 +239,21 @@ namespace alc {
 						log->print("%s", it->obj->str());
 						break;
 					case DStruct:
-						log->nl();
+						if (it == elements.begin()) log->nl();
 						it->sdlState->print(log, indentSize+2);
 						break;
 					case DTime:
 						log->print("%d.%d", it->intVal[0], it->intVal[1]);
 						break;
+					case DVector3:
+					case DPoint3:
+						log->print("(%f,%f,%f)", it->floatVal[0], it->floatVal[1], it->floatVal[2]);
+						break;
+					case DQuaternion:
+						log->print("(%f,%f,%f,%f)", it->floatVal[0], it->floatVal[1], it->floatVal[2], it->floatVal[3]);
+						break;
 					case DRGB8:
-						log->print("%d-%d-%d", it->byteVal[0], it->byteVal[1], it->byteVal[2]);
+						log->print("(%d-%d-%d)", it->byteVal[0], it->byteVal[1], it->byteVal[2]);
 						break;
 					default:
 						throw txProtocolError(_WHERE("Unable to print SDL var of type 0x%02X", sdlVar->type));
@@ -292,13 +315,13 @@ namespace alc {
 		// parse those values
 		for (int i = 0; i < nValues; ++i) {
 			int nr = incompleteVars ? t.getByte() : i;
-			tSdlStateVar var(sdlStruct->getElement(nr, true/*search for a var*/), ageMgr);
-			t.get(var); // parse this var
-			vars.push_back(var);
+			tVarList::iterator it = vars.insert(vars.end(), tSdlStateVar(sdlStruct->getElement(nr, true/*search for a var*/), ageMgr));
+			t.get(*it); // parse this var
 		}
 		
 		// get number of structs
 		Byte nStructs = t.getByte();
+		if (!nStructs) return;
 		DBG(7, "nStructs: %d, struct contains: %d\n", nStructs, sdlStruct->nStruct);
 		if (nStructs != sdlStruct->nStruct) {
 			incompleteStructs = true;
@@ -308,9 +331,8 @@ namespace alc {
 		// parse those structs
 		for (int i = 0; i < nStructs; ++i) {
 			int nr = incompleteStructs ? t.getByte() : i;
-			tSdlStateVar var(sdlStruct->getElement(nr, false/*search for a struct*/), ageMgr);
-			t.get(var); // parse this var
-			structs.push_back(var);
+			tVarList::iterator it = vars.insert(vars.end(), tSdlStateVar(sdlStruct->getElement(nr, false/*search for a struct*/), ageMgr));
+			t.get(*it); // parse this var
 		}
 	}
 	
