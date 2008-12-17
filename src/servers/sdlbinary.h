@@ -52,13 +52,14 @@ namespace alc {
 	/** parses a signel SDL var */
 	class tSdlStateVar : public tBaseType {
 	public:
-		tSdlStateVar(tSdlStructVar *sdlVar, tAgeStateManager *stateMgr);
+		tSdlStateVar(tSdlStructVar *sdlVar, tAgeStateManager *stateMgr, Byte num);
 		tSdlStateVar(const tSdlStateVar &var);
 		const tSdlStateVar &operator=(const tSdlStateVar &var);
 		~tSdlStateVar(void);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		void print(tLog *log, Byte indentSize);
+		inline Byte getNum(void) { return num; }
 	private:
 		void clear(void);
 	
@@ -71,6 +72,8 @@ namespace alc {
 		} tElement;
 		typedef std::vector<tElement> tElementList; // FIXME: perhaps better use a list?
 	
+		Byte num; //!< this is the nth var/struct of the SDL, starting with 0
+		
 		tUStr str; //!< details about how the state was changed
 		Byte flags;
 		tElementList elements;
@@ -119,6 +122,7 @@ namespace alc {
 		bool operator==(const tSdlState &state);
 		
 		tUruObject obj;
+		bool skipObj;
 		// format
 		tSdlStateBinary content;
 	private:

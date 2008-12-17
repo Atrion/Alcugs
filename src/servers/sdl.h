@@ -51,7 +51,7 @@ namespace alc {
 	
 	class tAgeStateManager {
 	public:
-		tAgeStateManager(tUnet *net);
+		tAgeStateManager(tUnet *net, const tAgeInfo *age);
 		~tAgeStateManager(void);
 		void reload(void);
 		
@@ -71,7 +71,8 @@ namespace alc {
 		typedef std::vector<tSdlState *> tSdlList; // FIXME: perhaps better use a list and no pointers?
 		
 		void loadSdlStructs(const Byte *filename);
-		U32 findLatestStructVersion(tStrBuf name); //!< returns the highest version number available for this struct
+		U32 findLatestStructVersion(tStrBuf name, bool throwOnError = true); //!< returns the highest version number available for this struct
+		tSdlList::iterator findAgeSDLHook(void);
 		
 		tCloneList::iterator findClone(const tUruObject &obj);
 		tSdlList::iterator findSdlState(tSdlState *state);

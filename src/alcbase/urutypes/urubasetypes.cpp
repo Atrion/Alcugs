@@ -170,6 +170,12 @@ tUStr::tUStr(int mode) : tStrBuf() {
 tUStr::tUStr(const void *k, int mode) : tStrBuf(k) {
 	this->version=mode;
 }
+tUStr::tUStr(const tUStr &t) : tStrBuf(t) {
+	this->version = t.version;
+}
+tUStr::tUStr(const tStrBuf &t, int mode) : tStrBuf(t) {
+	this->version = mode;
+}
 void tUStr::stream(tBBuf &b) {
 	if (version == 0x04)
 		throw txBase(_WHERE("Can't send version 0x04 (normal+hex)")); 
@@ -262,7 +268,7 @@ void tUruObject::store(tBBuf &t)
 {
 	Byte cloneIdFlag = t.getByte();
 	if (cloneIdFlag != 0x00 && cloneIdFlag != 0x01)
-		throw txUnexpectedData(_WHERE("the clone ID flag of an Uruobject must be 0x00 or 0x01, not 0x%02X", hasCloneId));
+		throw txUnexpectedData(_WHERE("the clone ID flag of an Uruobject must be 0x00 or 0x01, not 0x%02X", cloneIdFlag));
 	else hasCloneId = cloneIdFlag;
 	pageId = t.getU32();
 	pageType = t.getU16();

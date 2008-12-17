@@ -67,8 +67,8 @@ public:
 	*/
 	tUStr(int mode=1);
 	tUStr(const void *k, int mode = 1);
-	tUStr(const tUStr &t) { copy(t); }
-	tUStr(const tStrBuf &t) { tStrBuf::copy(t); }
+	tUStr(const tUStr &t);
+	tUStr(const tStrBuf &t, int mode = 1);
 	virtual void stream(tBBuf &b);
 	virtual void store(tBBuf &b);
 	void setVersion(Byte version) { this->version=version; }

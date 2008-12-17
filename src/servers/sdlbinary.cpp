@@ -54,18 +54,18 @@ namespace alc {
 	/** SDL binary processing classes */
 	
 	//// tSdlStateVar
-	tSdlStateVar::tSdlStateVar(tSdlStructVar *sdlVar, tAgeStateManager *stateMgr)
+	tSdlStateVar::tSdlStateVar(tSdlStructVar *sdlVar, tAgeStateManager *stateMgr, Byte num)
 	{
+		this->num = num;
 		this->sdlVar = sdlVar;
 		this->stateMgr = stateMgr;
 		str.setVersion(5); // inverted UruString
-		if (sdlVar->type != DStruct) flags = 0x04 | 0x10; // default non-struct var
-		else flags = 0x00; // a struct, can't just be a default var
+		flags = 0x18; // default non-struct var
 	}
 	
 	tSdlStateVar::tSdlStateVar(const tSdlStateVar &var)
 	{
-		*this = var;
+		*this = var; // call operator= which does the real work
 		str.setVersion(5); // inverted UruString
 	}
 	
@@ -75,6 +75,7 @@ namespace alc {
 		sdlVar = var.sdlVar;
 		stateMgr = var.stateMgr;
 		str = var.str;
+		num = var.num;
 		// because there can be pointers in the elements list, we have to copy manually
 		if (sdlVar->type == DStruct || sdlVar->type == DPlKey) {
 			// cleanup
@@ -113,9 +114,9 @@ namespace alc {
 	{
 		Byte type = t.getByte();
 		if (type != 0x02) throw txProtocolError(_WHERE("sdlBinaryVar.type must be 0x02 not 0x%02X", type));
-		Byte unk1 = t.getByte();
-		if (unk1 != 0x00)
-			throw txProtocolError(_WHERE("Unexpected sdlBinary.unk1 of 0x%02X (expected 0x00)", unk1));
+		Byte unk = t.getByte();
+		if (unk != 0x00)
+			throw txProtocolError(_WHERE("Unexpected sdlBinary.unk of 0x%02X (expected 0x00)", unk));
 		t.get(str);
 		// now come the flags
 		flags = t.getByte();
@@ -123,7 +124,7 @@ namespace alc {
 		//Supposicions meaning:
 		// 0x04: Timestamp is present
 		// 0x08: It has the default value
-		// 0x10: non-struct var
+		// 0x10: non-struct var?
 		Byte check = 0x04 | 0x08 | 0x10;
 		if (flags & ~(check))
 			throw txProtocolError(_WHERE("unknown flag 0x%02X for sdlBinaryVar", flags));
@@ -199,8 +200,9 @@ namespace alc {
 						it->byteVal[2] = t.getByte();
 						break;
 					default:
-						// FIXME: Yet to implement; DUruString, DCreatable, DShort, DAgeTimeOfDay
+						// FIXME: Yet to implement; DUruString, DShort, DAgeTimeOfDay
 						// DTimestamp is only used in vault messages (generic creatable value), not in SDL files
+						// DCreatable is used in cloneMessage.sdl, but I could not yet find an example message
 						throw txProtocolError(_WHERE("Unable to parse SDL var of type 0x%02X", sdlVar->type));
 				}
 			}
@@ -209,7 +211,37 @@ namespace alc {
 	
 	void tSdlStateVar::stream(tBBuf &t)
 	{
-		throw txUnet(_WHERE("streaming not supported")); // FIXME
+		t.putByte(0x02); // type
+		t.putByte(0x00); // unk
+		t.put(str);
+		// check non-struct var flag (0x10)
+		if (flags & 0x10 && sdlVar->type == DStruct)
+			throw txProtocolError(_WHERE("struct var must not have 0x10 flag set"));
+		else if (!(flags & 0x10) && sdlVar->type != DStruct)
+			throw txProtocolError(_WHERE("non-struct var must have 0x10 flag set"));
+		// write flags and var
+		t.putByte(flags);
+		if (flags & 0x04)
+			throw txProtocolError(_WHERE("Writing the timestamp is not yet supported"));
+		if (flags & 0x08) { // default value
+			if (sdlVar->type == DStruct)
+				throw txProtocolError(_WHERE("Default vars for complete structs are not yet supported"));
+			// don't write anything, it has the default value
+		}
+		else {
+			// we have to write the value
+			if (!sdlVar->size) t.putU32(elements.size());
+			else if (elements.size() != sdlVar->size)
+				throw txProtocolError(_WHERE("Element count mismatch, must be %d, is %d", sdlVar->size, elements.size()));
+			if (sdlVar->type == DStruct) // for some reason, this needs the size again
+				t.putByte(elements.size());
+			for (tElementList::iterator it = elements.begin(); it != elements.end(); ++it) {
+				switch (sdlVar->type) {
+					default:
+						throw txProtocolError(_WHERE("Unable to write SDL var of type 0x%02X", sdlVar->type));
+				}
+			}
+		}
 	}
 	
 	void tSdlStateVar::print(tLog *log, Byte indentSize)
@@ -269,7 +301,7 @@ namespace alc {
 	//// tSdlStateBinary
 	tSdlStateBinary::tSdlStateBinary(void)
 	{
-		unk1 = 0x00;
+		unk1 = 0x01;
 		stateMgr = NULL;
 		sdlStruct = NULL;
 		incompleteVars = incompleteStructs = false;
@@ -277,18 +309,18 @@ namespace alc {
 	
 	tSdlStateBinary::tSdlStateBinary(tAgeStateManager *stateMgr, tStrBuf name, U32 version, bool initDefault)
 	{
-		unk1 = 0x00;
+		unk1 = 0x01;
 		this->stateMgr = stateMgr;
 		sdlStruct = stateMgr->findStruct(name, version);
 		incompleteVars = incompleteStructs = false;
 		
 		if (initDefault) {
-			// add defaults for everything
+			// add defaults for everything (just sending an emtpy indexed state does not work)
 			for (tSdlStruct::tVarList::iterator it = sdlStruct->vars.begin(); it != sdlStruct->vars.end(); ++it) {
 				if (it->type == DStruct)
 					throw txUnet(_WHERE("Can't create default for struct")); // this should never be necessary
 				else
-					vars.push_back(tSdlStateVar(&(*it), stateMgr));
+					vars.push_back(tSdlStateVar(&(*it), stateMgr, vars.size()));
 			}
 		}
 	}
@@ -321,7 +353,7 @@ namespace alc {
 		// parse those values
 		for (int i = 0; i < nValues; ++i) {
 			int nr = incompleteVars ? t.getByte() : i;
-			tVarList::iterator it = vars.insert(vars.end(), tSdlStateVar(sdlStruct->getElement(nr, true/*search for a var*/), stateMgr));
+			tVarList::iterator it = vars.insert(vars.end(), tSdlStateVar(sdlStruct->getElement(nr, true/*search for a var*/), stateMgr, nr));
 			t.get(*it); // parse this var
 		}
 		
@@ -337,14 +369,32 @@ namespace alc {
 		// parse those structs
 		for (int i = 0; i < nStructs; ++i) {
 			int nr = incompleteStructs ? t.getByte() : i;
-			tVarList::iterator it = vars.insert(vars.end(), tSdlStateVar(sdlStruct->getElement(nr, false/*search for a struct*/), stateMgr));
+			tVarList::iterator it = vars.insert(vars.end(), tSdlStateVar(sdlStruct->getElement(nr, false/*search for a struct*/),
+					stateMgr, nr));
 			t.get(*it); // parse this var
 		}
 	}
 	
 	void tSdlStateBinary::stream(tBBuf &t)
 	{
-		throw txUnet(_WHERE("streaming not supported")); // FIXME
+		// write unknown header information
+		t.putByte(unk1);
+		t.putByte(0x00); // unk2
+		t.putByte(0x06); // unk3
+		
+		// write values
+		t.putByte(vars.size());
+		for (tVarList::iterator it = vars.begin(); it != vars.end(); ++it) {
+			if (incompleteVars) t.putByte(it->getNum());
+			t.put(*it);
+		}
+		
+		// write structs
+		t.putByte(structs.size());
+		for (tVarList::iterator it = structs.begin(); it != structs.end(); ++it) {
+			if (incompleteStructs) t.putByte(it->getNum());
+			t.put(*it);
+		}
 	}
 	
 	void tSdlStateBinary::print(tLog *log, Byte indentSize)
@@ -362,7 +412,7 @@ namespace alc {
 	}
 	
 	tUStr tSdlStateBinary::getName(void) const {
-		return sdlStruct ? tUStr(sdlStruct->name) : tUStr();
+		return sdlStruct ? tUStr(sdlStruct->name, 5) : tUStr(5); // 5 = inverted UruString
 	}
 	U16 tSdlStateBinary::getVersion(void) const {
 		return sdlStruct ? sdlStruct->version : 0;
@@ -372,17 +422,20 @@ namespace alc {
 	tSdlState::tSdlState(tAgeStateManager *stateMgr)
 	{
 		this->stateMgr = stateMgr;
+		skipObj = false;
 	}
 	
 	tSdlState::tSdlState(tAgeStateManager *stateMgr, const tUruObject &obj, tUStr name, U16 version, bool initDefault)
 	 : obj(obj), content(stateMgr, name, version, initDefault)
 	{
 		this->stateMgr = stateMgr;
+		skipObj = false;
 	}
 	
 	tSdlState::tSdlState(void)
 	{
 		this->stateMgr = NULL;
+		skipObj = false;
 	}
 	
 	tMBuf tSdlState::decompress(tBBuf &t)
@@ -458,7 +511,7 @@ namespace alc {
 			t.put(content);
 		}
 		else {
-			t.putU32(0); // the real size 0 for uncompressed messages
+			t.putU32(0); // the real size is 0 for uncompressed messages
 			t.putByte(0x00); // compression flag
 			t.putU32(data.size()+2); // sent size
 			t.putByte(0x00); // object present
@@ -473,7 +526,8 @@ namespace alc {
 		if (stateMgr == NULL)
 			throw txUnet(_WHERE("You have to set a stateMgr before parsing a sdlState"));
 		// use tSdlBinay to get the message body and decompress stuff
-		t.get(obj);
+		if (!skipObj) // the NetMsgJoinAck doesn't contain the UruObject
+			t.get(obj);
 		tMBuf data = decompress(t);
 		// parse "header data"
 		data.rewind();
@@ -496,9 +550,10 @@ namespace alc {
 	
 	void tSdlState::stream(tBBuf &t)
 	{
-		t.put(obj);
+		if (!skipObj) // the NetMsgJoinAck doesn't contain the UruObject
+			t.put(obj);
 		tMBuf data;
-		if (content.getVersion() && content.getName().size() && obj.objName.size()) {
+		if (content.getVersion() && content.getName().size()) {
 			tUStr name(content.getName());
 			data.put(name);
 			data.putU16(content.getVersion());

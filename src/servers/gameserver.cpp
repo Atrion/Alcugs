@@ -75,7 +75,7 @@ namespace alc {
 		ageInfo = new tAgeInfo(*ageInfoLoader.getAge(serverName)); // get ourselves a copy of it
 		
 		// load SDL Manager
-		ageState = new tAgeStateManager(this);
+		ageState = new tAgeStateManager(this, ageInfo);
 		
 		// make sure we quit if noone comes
 		lastPlayerLeft = alcGetTime();

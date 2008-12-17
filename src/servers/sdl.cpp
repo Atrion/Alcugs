@@ -50,7 +50,7 @@
 namespace alc {
 
 	//// tAgeStateManager
-	tAgeStateManager::tAgeStateManager(tUnet *net)
+	tAgeStateManager::tAgeStateManager(tUnet *net, const tAgeInfo *age)
 	{
 		this->net = net;
 		log = lnull;
@@ -76,6 +76,21 @@ namespace alc {
 				if (it2->type == DStruct) it2->structVersion = findLatestStructVersion(it2->structName);
 			}
 		}
+		
+		// if necessary, set up AgeSDLHook
+		// sending just a default age SDL for the JoinAck is not enough, we really have to create a SDL state for it
+		if (findAgeSDLHook() == sdlStates.end()) { // AgeSDLHook not found
+			U32 ageSDLVersion = findLatestStructVersion(age->name, false/*don't throw exception if no struct found*/);
+			if (!ageSDLVersion) return;
+			// first make up the UruObject
+			tUruObject obj;
+			obj.pageId = 0x1f | (age->seqPrefix + 1 << 8);
+			obj.pageType = 0x0008; // BultIn
+			obj.objType = 0x0001; // SceneObject
+			obj.objName = "AgeSDLHook";
+			// now create the SDL state
+			sdlStates.push_back(new tSdlState(this, obj, age->name, ageSDLVersion, true/*init default*/));
+		}
 	}
 	
 	tAgeStateManager::~tAgeStateManager(void)
@@ -84,8 +99,6 @@ namespace alc {
 		for (tSdlList::iterator it = sdlStates.begin(); it != sdlStates.end(); ++it) {
 			delete *it;
 		}
-		
-		// FIXME: Set up default AgeSDLHook
 	}
 	
 	void tAgeStateManager::load(void)
@@ -152,6 +165,7 @@ namespace alc {
 				}
 				else { // it's the same or a newer version, use it
 					log->log("Updating %s\n", sdl->str());
+					// FIXME: to update the state, don't replace it but just the vars which got re-sent
 					delete *it;
 					*it = sdl;
 					sdl = NULL; // do not cleanup
@@ -242,35 +256,43 @@ namespace alc {
 		return n;
 	}
 	
-	void tAgeStateManager::writeAgeState(tMBuf *buf)
+	tAgeStateManager::tSdlList::iterator tAgeStateManager::findAgeSDLHook(void)
 	{
 		// look for the AgeSDLHook
-		tSdlState *sdlHook = NULL;
+		tSdlList::iterator sdlHook = sdlStates.end();
 		for (tSdlList::iterator it = sdlStates.begin(); it != sdlStates.end(); ++it) {
 			if ((*it)->obj.objName == "AgeSDLHook") {
-				if (sdlHook) log->log("ERR: Two SDL Hooks found!\n");
-				sdlHook = *it;
+				if (sdlHook != sdlStates.end()) log->log("ERR: Two SDL Hooks found!\n");
+				sdlHook = it;
 			}
 		}
-		if (sdlHook) { // found it - send it
+		return sdlHook;
+	}
+	
+	void tAgeStateManager::writeAgeState(tMBuf *buf)
+	{
+		tSdlList::iterator sdlHook = findAgeSDLHook();
+		if (sdlHook != sdlStates.end()) { // found it - send it
 			log->log("Sending Age SDL Hook: ");
-			sdlHook->print(log);
-			buf->put(*sdlHook);
+			(*sdlHook)->print(log);
+			(*sdlHook)->skipObj = true; // write it without the object
+			buf->put(**sdlHook);
+			(*sdlHook)->skipObj = false;
 		}
-		else {
+		else { // not found
 			log->log("No Age SDL hook found, send empty SDL\n");
 			tSdlState empty;
 			buf->put(empty);
 		}
 	}
 	
-	U32 tAgeStateManager::findLatestStructVersion(tStrBuf name)
+	U32 tAgeStateManager::findLatestStructVersion(tStrBuf name, bool throwOnError)
 	{
 		U32 version = 0;
 		for (tSdlStructList::iterator it = structs.begin(); it != structs.end(); ++it) {
 			if (it->name == name && it->version > version) version = it->version;
 		}
-		if (!version) throw txProtocolError(_WHERE("Could not find any SDL struct for %s", name.c_str()));
+		if (throwOnError && !version) throw txProtocolError(_WHERE("Could not find any SDL struct for %s", name.c_str()));
 		return version;
 	}
 	
@@ -500,6 +522,7 @@ namespace alc {
 	
 	void tSdlStruct::count(void)
 	{
+		if (vars.size() > 255) throw txUnet(_WHERE("A SDL struct must never mave more than 255 entries!"));
 		nVar = nStruct = 0;
 		for (tVarList::iterator it = vars.begin(); it != vars.end(); ++it) {
 			if (it->type == DStruct) ++nStruct;
