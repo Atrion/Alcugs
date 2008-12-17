@@ -81,9 +81,6 @@ namespace alc {
 	tAgeStateManager::~tAgeStateManager(void)
 	{
 		unload();
-		for (tCloneList::iterator it = clones.begin(); it != clones.end(); ++it) {
-			delete *it;
-		}
 		for (tSdlList::iterator it = sdlStates.begin(); it != sdlStates.end(); ++it) {
 			delete *it;
 		}
@@ -121,12 +118,11 @@ namespace alc {
 		// check for that player in the clone list
 		tCloneList::iterator it = clones.begin();
 		while (it != clones.end()) {
-			if ((*it)->obj.clonePlayerId == ki) { // that clone is dead now, remov it and all of it's SDL states
-				log->log("Removing Clone [%s] as it belongs to player with KI %d who just left us\n", (*it)->obj.str(), ki);
+			if (it->obj.clonePlayerId == ki) { // that clone is dead now, remov it and all of it's SDL states
+				log->log("Removing Clone [%s] as it belongs to player with KI %d who just left us\n", it->obj.str(), ki);
 				// FIXME: Somehow tell the rest of the clients that this avatar left. Just sending the load message again with isLaod set to 0 doesn't seem to work
 				// remove states from our list
-				removeSDLStates((*it)->obj.clonePlayerId);
-				delete *it;
+				removeSDLStates(it->obj.clonePlayerId);
 				clones.erase(it++);
 			}
 			else
@@ -208,22 +204,20 @@ namespace alc {
 	{
 		tCloneList::iterator it = findClone(clone.obj);
 		if (clone.isLoad) {
-			tmLoadClone *savedClone = new tmLoadClone(clone);
-			savedClone->isInitial = true; // it is sent as initial clone later
-			if (it != clones.end()) { // it is already in the list, don't save a duplicate but replace the existing one
-				log->log("Updating Clone [%s]\n", savedClone->obj.str());
-				delete *it;
-				*it = savedClone;
+			if (it != clones.end()) {// it is already in the list, remove old one
+				log->log("Updating Clone ");
+				clones.erase(it);
 			}
-			else { // add new clone
-				log->log("Adding Clone [%s]\n", savedClone->obj.str());
-				clones.push_back(savedClone);
+			else { // it's a new clone
+				log->log("Adding Clone ");
 			}
+			it = clones.insert(clones.end(), clone);
+			it->isInitial = true; // it is sent as initial clone later
+			log->log("[%s]\n", it->obj.str());
 		}
 		else if (it != clones.end()) { // remove clone if it was in list
-			log->log("Removing Clone [%s]\n", (*it)->obj.str());
-			removeSDLStates((*it)->obj.clonePlayerId, (*it)->obj.cloneId);
-			delete *it;
+			log->log("Removing Clone [%s]\n", it->obj.str());
+			removeSDLStates(it->obj.clonePlayerId, it->obj.cloneId);
 			clones.erase(it);
 		}
 	}
@@ -231,7 +225,7 @@ namespace alc {
 	tAgeStateManager::tCloneList::iterator tAgeStateManager::findClone(const tUruObject &obj)
 	{
 		for (tCloneList::iterator it = clones.begin(); it != clones.end(); ++it) {
-			if ((*it)->obj == obj) return it;
+			if (it->obj == obj) return it;
 		}
 		return clones.end();
 	}
@@ -240,7 +234,7 @@ namespace alc {
 	{
 		int n = 0;
 		for (tCloneList::iterator it = clones.begin(); it != clones.end(); ++it) {
-			tmLoadClone cloneMsg(u, **it);
+			tmLoadClone cloneMsg(u, *it);
 			net->send(cloneMsg);
 			++n;
 		}
@@ -259,6 +253,8 @@ namespace alc {
 			}
 		}
 		if (sdlHook) { // found it - send it
+			log->log("Sending Age SDL Hook: ");
+			sdlHook->print(log);
 			buf->put(*sdlHook);
 		}
 		else {
@@ -522,19 +518,6 @@ namespace alc {
 			}
 		}
 		throw txProtocolError(_WHERE("Could not find variable/struct number %d", nr));
-	}
-	
-	tSdlState tSdlStruct::createDefaultState(void)
-	{
-		tUruObject obj; // FIXME: correctly create this one
-		tSdlState state(stateMgr, obj, name, version);
-		// now add defaults for everything
-		for (tVarList::iterator it = vars.begin(); it != vars.end(); ++it) {
-			tSdlStateBinary::tVarList::iterator newIt;
-			//if (it->type == DStruct) newIt = state.content.structs.insert(state.content.structs.end(), tSdlStateVar());
-			//else newIt = state.content.vars.insert(state.content.vars.end(), tSdlStateVar());
-		}
-		return state;
 	}
 
 } //end namespace alc

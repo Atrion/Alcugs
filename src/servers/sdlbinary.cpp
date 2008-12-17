@@ -59,6 +59,8 @@ namespace alc {
 		this->sdlVar = sdlVar;
 		this->stateMgr = stateMgr;
 		str.setVersion(5); // inverted UruString
+		if (sdlVar->type != DStruct) flags = 0x04 | 0x10; // default non-struct var
+		else flags = 0x00; // a struct, can't just be a default var
 	}
 	
 	tSdlStateVar::tSdlStateVar(const tSdlStateVar &var)
@@ -197,7 +199,8 @@ namespace alc {
 						it->byteVal[2] = t.getByte();
 						break;
 					default:
-						// FIXME: Yet to implement; DUruString, DCreatable, DTimestamp, DShort, DAgeTimeOfDay
+						// FIXME: Yet to implement; DUruString, DCreatable, DShort, DAgeTimeOfDay
+						// DTimestamp is only used in vault messages (generic creatable value), not in SDL files
 						throw txProtocolError(_WHERE("Unable to parse SDL var of type 0x%02X", sdlVar->type));
 				}
 			}
@@ -272,12 +275,22 @@ namespace alc {
 		incompleteVars = incompleteStructs = false;
 	}
 	
-	tSdlStateBinary::tSdlStateBinary(tAgeStateManager *stateMgr, tStrBuf name, U32 version)
+	tSdlStateBinary::tSdlStateBinary(tAgeStateManager *stateMgr, tStrBuf name, U32 version, bool initDefault)
 	{
 		unk1 = 0x00;
 		this->stateMgr = stateMgr;
-		this->sdlStruct = stateMgr->findStruct(name, version);
+		sdlStruct = stateMgr->findStruct(name, version);
 		incompleteVars = incompleteStructs = false;
+		
+		if (initDefault) {
+			// add defaults for everything
+			for (tSdlStruct::tVarList::iterator it = sdlStruct->vars.begin(); it != sdlStruct->vars.end(); ++it) {
+				if (it->type == DStruct)
+					throw txUnet(_WHERE("Can't create default for struct")); // this should never be necessary
+				else
+					vars.push_back(tSdlStateVar(&(*it), stateMgr));
+			}
+		}
 	}
 	
 	void tSdlStateBinary::store(tBBuf &t)
@@ -361,8 +374,8 @@ namespace alc {
 		this->stateMgr = stateMgr;
 	}
 	
-	tSdlState::tSdlState(tAgeStateManager *stateMgr, const tUruObject &obj, tUStr name, U16 version)
-	 : obj(obj), content(stateMgr, name, version)
+	tSdlState::tSdlState(tAgeStateManager *stateMgr, const tUruObject &obj, tUStr name, U16 version, bool initDefault)
+	 : obj(obj), content(stateMgr, name, version, initDefault)
 	{
 		this->stateMgr = stateMgr;
 	}

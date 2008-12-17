@@ -191,7 +191,6 @@ public:
 	void unsetUrgent();
 	U32 getFlags();
 	bool hasFlags(U32 f);
-	void copyProps(tmMsgBase &t);
 	virtual const Byte * str();
 	
 	U16 cmd;
@@ -209,6 +208,8 @@ protected:
 	virtual void additionalFields() {} //!< writes the additional fields of this message type to the dbg buffer (called by str() to print the package)
 	
 	tStrBuf dbg;
+private:
+	void copyProps(tmMsgBase &t);
 };
 
 /* You must derive any message from the above class, e.g:

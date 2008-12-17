@@ -67,7 +67,7 @@ namespace alc {
 		void load(void);
 		void unload(void);
 		
-		typedef std::vector<tmLoadClone *> tCloneList; // FIXME: perhaps better use a list and no pointers?
+		typedef std::list<tmLoadClone> tCloneList;
 		typedef std::vector<tSdlState *> tSdlList; // FIXME: perhaps better use a list and no pointers?
 		
 		void loadSdlStructs(const Byte *filename);
@@ -105,7 +105,6 @@ namespace alc {
 	public:
 		tSdlStruct(tAgeStateManager *stateMgr, tStrBuf name = tStrBuf());
 		void count(void);
-		tSdlState createDefaultState(void);
 		
 		tSdlStructVar *getElement(int nr, bool var); //!< returns the nth variable (if var == true) or the nth struct (if var == false)
 	

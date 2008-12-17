@@ -83,7 +83,7 @@ namespace alc {
 	class tSdlStateBinary : public tBaseType {
 	public:
 		tSdlStateBinary(void);
-		tSdlStateBinary(tAgeStateManager *stateMgr, tStrBuf name, U32 version);
+		tSdlStateBinary(tAgeStateManager *stateMgr, tStrBuf name, U32 version, bool initDefault = false);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		void print(tLog *log, Byte indentSize = 1);
@@ -110,7 +110,7 @@ namespace alc {
 	class tSdlState : public tBaseType {
 	public:
 		tSdlState(tAgeStateManager *stateMgr);
-		tSdlState(tAgeStateManager *stateMgr, const tUruObject &obj, tUStr name, U16 version);
+		tSdlState(tAgeStateManager *stateMgr, const tUruObject &obj, tUStr name, U16 version, bool initDefault = false);
 		tSdlState(void);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
