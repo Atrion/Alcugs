@@ -103,12 +103,11 @@ namespace alc {
 		void load(void);
 		void unload(void);
 		
-		typedef std::vector<tPlayer *> tPlayerList; // FIXME: perhaps better no pointers (maybe even a list)?
+		typedef std::list<tPlayer> tPlayerList;
 		
 		tPlayerList::iterator getPlayer(U32 ki);
 		void notifyWaiting(tNetSession *server);
 		void serverFound(tPlayer *player, tNetSession *server);
-		void removePlayer(tPlayerList::iterator it);
 		bool doesAgeLoadState(const Byte *age);
 		void printStatusHTML(void);
 		void printStatusXML(void);

@@ -102,12 +102,8 @@ namespace alc {
 	tTrackingBackend::~tTrackingBackend(void)
 	{
 		unload();
-		if (players.size()) {
+		if (players.size())
 			lerr->log("ERR: The backend is quitting, and there were still %d players online\n", players.size());
-			for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
-				delete *it;
-			}
-		}
 	}
 	
 	void tTrackingBackend::unload(void)
@@ -165,12 +161,11 @@ namespace alc {
 	{
 		statusFileUpdate = true;
 		
-		tPlayerList::iterator it = getPlayer(findServer.ki);
-		if (it == players.end()) {
+		tPlayerList::iterator player = getPlayer(findServer.ki);
+		if (player == players.end()) {
 			log->log("ERR: Ignoring a NetMsgCustomFindServer for player with KI %d since I can't find that player\n", findServer.ki);
 			return;
 		}
-		tPlayer *player = *it;
 		player->sid = findServer.sid;
 		player->awaiting_x = findServer.x;
 		player->ip = findServer.ip;
@@ -246,7 +241,7 @@ namespace alc {
 		}
 		else {
 			// ok, we got it, let's tell the player about it
-			serverFound(player, game);
+			serverFound(&*player, game);
 		}
 		log->flush();
 	}
@@ -254,10 +249,10 @@ namespace alc {
 	void tTrackingBackend::notifyWaiting(tNetSession *server)
 	{
 		for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
-			if (!(*it)->waiting) continue;
-			if (memcmp((char *)(*it)->awaiting_guid, server->serverGuid, 8) != 0 || strncmp((*it)->awaiting_age, server->name, 199)) continue;
+			if (!it->waiting) continue;
+			if (memcmp((char *)it->awaiting_guid, server->serverGuid, 8) != 0 || strncmp(it->awaiting_age, server->name, 199)) continue;
 			// ok, this player is waiting for this age, let's tell him about it
-			serverFound(*it, server);
+			serverFound(&*it, server);
 		}
 	}
 	
@@ -276,7 +271,7 @@ namespace alc {
 	tTrackingBackend::tPlayerList::iterator tTrackingBackend::getPlayer(U32 ki)
 	{
 		for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
-			if ((*it)->ki == ki)
+			if (it->ki == ki)
 				return it;
 		}
 		return players.end();
@@ -348,21 +343,19 @@ namespace alc {
 		1: set invisible
 		2: set visible
 		3: set only buddies */
-		tPlayerList::iterator it = getPlayer(playerStatus.ki);
+		tPlayerList::iterator player = getPlayer(playerStatus.ki);
 		if (playerStatus.playerFlag == 0) {
-			if (it != players.end()) {
-				log->log("Player %s quit\n", (*it)->str());
-				removePlayer(it);
+			if (player != players.end()) {
+				log->log("Player %s quit\n", player->str());
+				players.erase(player);
+				statusFileUpdate = true;
 			}
 		}
 		else if (playerStatus.playerFlag >= 1 && playerStatus.playerFlag <= 3) {
-			tPlayer *player;
-			if (it == players.end()) { // it doesn't exist, create it
-				player = new tPlayer(playerStatus.ki);
-				players.push_back(player);
+			if (player == players.end()) { // it doesn't exist, create it
+				player = players.insert(players.end(), tPlayer(playerStatus.ki));
 			}
 			else { // if it already exists, check if the avi is already logged in elsewhere
-				player = *it;
 				// to do so, we first check if the game server the player uses changed. if that's the case, and the player did not request to link, kick the old player
 				if (player->u != game && player->status != RLeaving) {
 					tmPlayerTerminated term(player->u, player->ki, RLoggedInElsewhere);
@@ -394,24 +387,16 @@ namespace alc {
 		log->flush();
 	}
 	
-	void tTrackingBackend::removePlayer(tPlayerList::iterator it)
-	{
-		statusFileUpdate = true;
-		delete *it;
-		players.erase(it);
-	}
-	
 	void tTrackingBackend::removeServer(tNetSession *game)
 	{
 		if (!game->data) return;
 		statusFileUpdate = true;
 		// remove all players which were still on this server
 		for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
-			if ((*it)->u == game) {
-				log->log("WARN: Removing player %s as it was on a terminating server\n", (*it)->str());
-				removePlayer(it);
-				if (players.size() == 0) break; // no player left, get out of here
-				it = players.begin(); // the old iterator got invalid, get a new one
+			if (it->u == game) {
+				log->log("WARN: Removing player %s as it was on a terminating server\n", it->str());
+				players.erase(++it); // since players is a list, iterators remain valid
+				statusFileUpdate = true;
 			}
 		}
 		log->log("Server %s is leaving us\n", game->str());
@@ -465,9 +450,9 @@ namespace alc {
 			sent = false; // so far, the message was not sent to this server
 			DBG(5, "looking for players on %s\n", server->str());
 			for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
-				if ((*it)->u != server) continue; // search only for players on this server
+				if (it->u != server) continue; // search only for players on this server
 				for (tmCustomDirectedFwd::tRecList::iterator jt = directedFwd.recipients.begin(); jt != directedFwd.recipients.end(); ++jt) {
-					if (*jt == (*it)->ki) { // one of the recipients is on this server, so send the message
+					if (*jt == it->ki) { // one of the recipients is on this server, so send the message
 						tmCustomDirectedFwd forwardedMsg(server, directedFwd);
 						net->send(forwardedMsg);
 						sent = true;
@@ -523,12 +508,12 @@ namespace alc {
 		fprintf(f, "<b>Total population: %d</b><br /><br />\n", players.size());
 		fprintf(f, "<table border=\"1\"><tr><th>Avatar (Account)</th><th>KI</th><th>Age</th><th>Server GUID</th><th>Status</th></tr>\n");
 		for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
-			fprintf(f, "<tr><td>%s (%s)</td><td>%d</td><td>%s</td><td>%s</td>", (*it)->avatar, (*it)->account, (*it)->ki,
-					(*it)->u->name, alcGetStrGuid((*it)->u->serverGuid));
-			if ((*it)->awaiting_age[0] != 0)
+			fprintf(f, "<tr><td>%s (%s)</td><td>%d</td><td>%s</td><td>%s</td>", it->avatar, it->account, it->ki,
+					it->u->name, alcGetStrGuid(it->u->serverGuid));
+			if (it->awaiting_age[0] != 0)
 				// if the age he wants to is saved, print it
-				fprintf(f, "<td>%s to %s</td></tr>\n", alcUnetGetReasonCode((*it)->status), (*it)->awaiting_age);
-			else fprintf(f, "<td>%s</td></tr>\n", alcUnetGetReasonCode((*it)->status));
+				fprintf(f, "<td>%s to %s</td></tr>\n", alcUnetGetReasonCode(it->status), it->awaiting_age);
+			else fprintf(f, "<td>%s</td></tr>\n", alcUnetGetReasonCode(it->status));
 		}
 		fprintf(f, "</table><br /><br />\n");
 		// server list
@@ -655,31 +640,31 @@ namespace alc {
 	{
 		fprintf(f, "<Players>\n");
 		for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
-			if ((*it)->u != server || (*it)->status != RActive) continue;
+			if (it->u != server || it->status != RActive) continue;
 			fprintf(f, "<Player>\n");
-				fprintf(f, "<AcctName>%s</AcctName>\n", (*it)->account);
-				fprintf(f, "<PlayerID>%i</PlayerID>\n", (*it)->ki);
-				fprintf(f, "<PlayerName>%s</PlayerName>\n", (*it)->avatar);
-				fprintf(f, "<AccountUUID>%s</AccountUUID>\n", alcGetStrUid((*it)->uid));
-				if ((*it)->awaiting_age[0] != 0)
+				fprintf(f, "<AcctName>%s</AcctName>\n", it->account);
+				fprintf(f, "<PlayerID>%i</PlayerID>\n", it->ki);
+				fprintf(f, "<PlayerName>%s</PlayerName>\n", it->avatar);
+				fprintf(f, "<AccountUUID>%s</AccountUUID>\n", alcGetStrUid(it->uid));
+				if (it->awaiting_age[0] != 0)
 					// if the age he wants to is saved, print it
-					fprintf(f, "<State>%s to %s</State>\n", alcUnetGetReasonCode((*it)->status), (*it)->awaiting_age);
-				else fprintf(f, "<State>%s</State>\n", alcUnetGetReasonCode((*it)->status));
+					fprintf(f, "<State>%s to %s</State>\n", alcUnetGetReasonCode(it->status), it->awaiting_age);
+				else fprintf(f, "<State>%s</State>\n", alcUnetGetReasonCode(it->status));
 			fprintf(f, "</Player>\n");
 		}
 		fprintf(f, "</Players>\n");
 		fprintf(f, "<InRoutePlayers>\n");
 		for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
-			if ((*it)->u != server || (*it)->status == RActive) continue;
+			if (it->u != server || it->status == RActive) continue;
 			fprintf(f, "<Player>\n");
-				fprintf(f, "<AcctName>%s</AcctName>\n", (*it)->account);
-				fprintf(f, "<PlayerID>%i</PlayerID>\n", (*it)->ki);
-				fprintf(f, "<PlayerName>%s</PlayerName>\n", (*it)->avatar);
-				fprintf(f, "<AccountUUID>%s</AccountUUID>\n", alcGetStrUid((*it)->uid));
-				if ((*it)->awaiting_age[0] != 0)
+				fprintf(f, "<AcctName>%s</AcctName>\n", it->account);
+				fprintf(f, "<PlayerID>%i</PlayerID>\n", it->ki);
+				fprintf(f, "<PlayerName>%s</PlayerName>\n", it->avatar);
+				fprintf(f, "<AccountUUID>%s</AccountUUID>\n", alcGetStrUid(it->uid));
+				if (it->awaiting_age[0] != 0)
 					// if the age he wants to is saved, print it
-					fprintf(f, "<State>%s to %s</State>\n", alcUnetGetReasonCode((*it)->status), (*it)->awaiting_age);
-				else fprintf(f, "<State>%s</State>\n", alcUnetGetReasonCode((*it)->status));
+					fprintf(f, "<State>%s to %s</State>\n", alcUnetGetReasonCode(it->status), it->awaiting_age);
+				else fprintf(f, "<State>%s</State>\n", alcUnetGetReasonCode(it->status));
 			fprintf(f, "</Player>\n");
 		}
 		fprintf(f, "</InRoutePlayers>\n");

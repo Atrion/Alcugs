@@ -247,7 +247,7 @@ namespace alc {
 	void tSdlStateVar::print(tLog *log, Byte indentSize)
 	{
 		char indent[] = "                        ";
-		if (indentSize < strlen(indent)) indent[indentSize] = NULL; // let the string end there
+		if (indentSize < strlen(indent)) indent[indentSize] = 0; // let the string end there
 		log->print("%s%s[%d] (", indent, sdlVar->name.c_str(), elements.size());
 		if (str.size()) log->print("str: %s, ", str.c_str());
 		log->print("flags: 0x%02X) = ", flags);
@@ -400,7 +400,7 @@ namespace alc {
 	void tSdlStateBinary::print(tLog *log, Byte indentSize)
 	{
 		char indent[] = "                        ";
-		if (indentSize < strlen(indent)) indent[indentSize] = NULL; // let the string end there
+		if (indentSize < strlen(indent)) indent[indentSize] = 0; // let the string end there
 		log->print("%s%s version %d (unk1: 0x%02X)", indent, sdlStruct->name.c_str(), sdlStruct->version, unk1);
 		if (incompleteVars) log->print(", vars are indexed");
 		if (incompleteStructs) log->print(", structs are indexed");

@@ -412,7 +412,7 @@ namespace alc {
 		virtual void asHtml(tLog *log, bool shortLog);
 		void print(tLog *log, bool clientToServer, tNetSession *client, bool shortLog, U32 ki = 0);
 		
-		typedef std::vector<tvItem *> tItemList; // FIXME: perhaps better no pointers (maybe even a list)?
+		typedef std::vector<tvItem *> tItemList; // to avoid re-allocating and since tvItems can't be copied, this is a vector of pointers
 		
 		Byte tpots; // 1: generate/parse for TPOTS client, everything else: for non-TPOTS client (or the vault server)
 		// format
@@ -423,7 +423,9 @@ namespace alc {
 		U16 context; //!< vault context; sub in VaultTask
 		U32 vmgr; //!< vault manager; client in VaultTask
 		U16 vn; //!< vault number
-		
+	private:
+		// forbid assigning
+		const tvMessage &operator=(const tvMessage &);
 	};
 	
 	

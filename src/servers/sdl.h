@@ -68,7 +68,7 @@ namespace alc {
 		void unload(void);
 		
 		typedef std::list<tmLoadClone> tCloneList;
-		typedef std::vector<tSdlState *> tSdlList; // FIXME: perhaps better use a list and no pointers?
+		typedef std::list<tSdlState> tSdlList;
 		
 		void loadSdlStructs(const Byte *filename);
 		U32 findLatestStructVersion(tStrBuf name, bool throwOnError = true); //!< returns the highest version number available for this struct

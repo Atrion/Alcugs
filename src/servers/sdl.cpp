@@ -89,16 +89,15 @@ namespace alc {
 			obj.objType = 0x0001; // SceneObject
 			obj.objName = "AgeSDLHook";
 			// now create the SDL state
-			sdlStates.push_back(new tSdlState(this, obj, age->name, ageSDLVersion, true/*init default*/));
+			sdlStates.push_back(tSdlState(this, obj, age->name, ageSDLVersion, true/*init default*/));
 		}
 	}
 	
 	tAgeStateManager::~tAgeStateManager(void)
 	{
 		unload();
-		for (tSdlList::iterator it = sdlStates.begin(); it != sdlStates.end(); ++it) {
-			delete *it;
-		}
+		// make sure the states are removed before the structs as they point to them
+		sdlStates.clear();
 	}
 	
 	void tAgeStateManager::load(void)
@@ -136,7 +135,7 @@ namespace alc {
 				// FIXME: Somehow tell the rest of the clients that this avatar left. Just sending the load message again with isLaod set to 0 doesn't seem to work
 				// remove states from our list
 				removeSDLStates(it->obj.clonePlayerId);
-				clones.erase(it++);
+				clones.erase(it++); // works only in lists (where the iterators remain valid)
 			}
 			else
 				++it;
@@ -145,43 +144,34 @@ namespace alc {
 	
 	void tAgeStateManager::saveSdlState(tMBuf &data)
 	{
-		tSdlState *sdl = new tSdlState(this); // below catch-try cares about cleaning up in case of a parse error
-		try {
-			data.rewind();
-			data.get(*sdl);
-			log->log("Got "); // FIXME: Add option to disable detailed logging
-			sdl->print(log);
-			// check if state is already in list
-			tSdlList::iterator it = findSdlState(sdl);
-			if (it == sdlStates.end()) {
-				log->log("Adding %s\n", sdl->str());
-				sdlStates.push_back(sdl);
-				sdl = NULL; // do not cleanup
-			}
-			else {
-				if ((*it)->content.getVersion() > sdl->content.getVersion()) {
-					// don't override the SDL state with a state described in an older version
-					throw txProtocolError(_WHERE("SDL version mismatch: %s should be downgraded to %s", (*it)->str(), sdl->str()));
-				}
-				else { // it's the same or a newer version, use it
-					log->log("Updating %s\n", sdl->str());
-					// FIXME: to update the state, don't replace it but just the vars which got re-sent
-					delete *it;
-					*it = sdl;
-					sdl = NULL; // do not cleanup
-				}
-			}
+		tSdlState sdl(this); // below catch-try cares about cleaning up in case of a parse error
+		data.rewind();
+		data.get(sdl);
+		log->log("Got "); // FIXME: Add option to disable detailed logging
+		sdl.print(log);
+		// check if state is already in list
+		tSdlList::iterator it = findSdlState(&sdl);
+		if (it == sdlStates.end()) {
+			log->log("Adding %s\n", sdl.str());
+			sdlStates.push_back(sdl);
 		}
-		catch (...) {
-			if (sdl) delete sdl; // cleanup
-			throw; // re-throw exception
+		else {
+			if (it->content.getVersion() > sdl.content.getVersion()) {
+				// don't override the SDL state with a state described in an older version
+				throw txProtocolError(_WHERE("SDL version mismatch: %s should be downgraded to %s", it->str(), sdl.str()));
+			}
+			else { // it's the same or a newer version, use it
+				log->log("Updating %s\n", sdl.str());
+				// FIXME: to update the state, don't replace it but just the vars which got re-sent
+				*it = sdl;
+			}
 		}
 	}
 	
 	tAgeStateManager::tSdlList::iterator tAgeStateManager::findSdlState(tSdlState *state)
 	{
 		for (tSdlList::iterator it = sdlStates.begin(); it != sdlStates.end(); ++it) {
-			if (**it == *state) return it;
+			if (*it == *state) return it;
 		}
 		return sdlStates.end();
 	}
@@ -191,7 +181,7 @@ namespace alc {
 		int n = 0;
 		for (tSdlList::iterator it = sdlStates.begin(); it != sdlStates.end(); ++it) {
 			tmSDLState sdlMsg(u, /*initial*/true);
-			sdlMsg.sdl.put(**it);
+			sdlMsg.sdl.put(*it);
 			net->send(sdlMsg);
 			++n;
 		}
@@ -204,10 +194,9 @@ namespace alc {
 		// remove all SDL states which belong the the object with the clonePlayerId which was passed
 		tSdlList::iterator it = sdlStates.begin();
 		while (it != sdlStates.end()) {
-			if ((*it)->obj.hasCloneId && (*it)->obj.clonePlayerId == ki && (cloneId == 0 || (*it)->obj.cloneId == cloneId)) {
-				log->log("Removing %s because Clone was removed\n", (*it)->str());
-				delete *it;
-				sdlStates.erase(it++);
+			if (it->obj.hasCloneId && it->obj.clonePlayerId == ki && (cloneId == 0 || it->obj.cloneId == cloneId)) {
+				log->log("Removing %s because Clone was removed\n", it->str());
+				sdlStates.erase(it++); // it is a list, so the iterators remain valid
 			}
 			else
 				++it;
@@ -261,7 +250,7 @@ namespace alc {
 		// look for the AgeSDLHook
 		tSdlList::iterator sdlHook = sdlStates.end();
 		for (tSdlList::iterator it = sdlStates.begin(); it != sdlStates.end(); ++it) {
-			if ((*it)->obj.objName == "AgeSDLHook") {
+			if (it->obj.objName == "AgeSDLHook") {
 				if (sdlHook != sdlStates.end()) log->log("ERR: Two SDL Hooks found!\n");
 				sdlHook = it;
 			}
@@ -274,10 +263,10 @@ namespace alc {
 		tSdlList::iterator sdlHook = findAgeSDLHook();
 		if (sdlHook != sdlStates.end()) { // found it - send it
 			log->log("Sending Age SDL Hook: ");
-			(*sdlHook)->print(log);
-			(*sdlHook)->skipObj = true; // write it without the object
-			buf->put(**sdlHook);
-			(*sdlHook)->skipObj = false;
+			sdlHook->print(log);
+			sdlHook->skipObj = true; // write it without the object
+			buf->put(*sdlHook);
+			sdlHook->skipObj = false;
 		}
 		else { // not found
 			log->log("No Age SDL hook found, send empty SDL\n");
