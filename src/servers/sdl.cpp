@@ -105,8 +105,12 @@ namespace alc {
 	{
 		tConfig *cfg = alcGetConfig();
 		tStrBuf var = cfg->getVar("agestate.log");
+		logDetailed = false;
 		if (var.isNull() || var.asByte()) { // logging enabled per default
 			log = new tLog("agestate.log", 4, 0);
+			var = cfg->getVar("agestate.log.detailed");
+			if (!var.isNull() && var.asByte()) // detailed logging disabled per default
+				logDetailed = true;
 		}
 		
 		log->log("AgeState backend started (%s)\n", __U_SDL_ID);
@@ -150,8 +154,10 @@ namespace alc {
 		tSdlState sdl(this); // below catch-try cares about cleaning up in case of a parse error
 		data.rewind();
 		data.get(sdl);
-		log->log("Got "); // FIXME: Add option to disable detailed logging
-		sdl.print(log);
+		if (logDetailed) {
+			log->log("Got ");
+			sdl.print(log);
+		}
 		// check if state is already in list
 		tSdlList::iterator it = findSdlState(&sdl);
 		if (it == sdlStates.end()) {
@@ -182,6 +188,11 @@ namespace alc {
 	{
 		int n = 0;
 		for (tSdlList::iterator it = sdlStates.begin(); it != sdlStates.end(); ++it) {
+			//if (!it->obj.hasCloneId || it->obj.clonePlayerId == u->ki) continue;
+			if (logDetailed) {
+				log->log("Sending SDL State to %s:\n", u->str());
+				it->print(log);
+			}
 			tmSDLState sdlMsg(u, /*initial*/true);
 			sdlMsg.sdl.put(*it);
 			net->send(sdlMsg);
@@ -242,6 +253,8 @@ namespace alc {
 	{
 		int n = 0;
 		for (tCloneList::iterator it = clones.begin(); it != clones.end(); ++it) {
+			//if (it->obj.clonePlayerId == u->ki) continue;
+			if (logDetailed) log->log("Sending to %s: clone [%s]\n", u->str(), it->obj.str());
 			tmLoadClone cloneMsg(u, *it);
 			net->send(cloneMsg);
 			++n;
@@ -267,8 +280,13 @@ namespace alc {
 	{
 		tSdlList::iterator sdlHook = findAgeSDLHook();
 		if (sdlHook != sdlStates.end()) { // found it - send it
-			log->log("Sending Age SDL Hook: ");
-			sdlHook->print(log);
+			log->log("Sending Age SDL Hook");
+			if (logDetailed) {
+				log->print(": ");
+				sdlHook->print(log);
+			}
+			else
+				log->nl();
 			sdlHook->skipObj = true; // write it without the object
 			buf->put(*sdlHook);
 			sdlHook->skipObj = false;

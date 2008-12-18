@@ -489,7 +489,7 @@ namespace alc {
 		
 		// then the structs
 		if (newState->incompleteStructs) // merge new data in
-			mergeData(&vars, &newState->vars); // this will not correctly merge indexed sub-structs - but I have no clue how I would have to do that
+			mergeData(&vars, &newState->vars); // FIXME: this will not correctly merge indexed sub-structs - but I have no clue how I would have to do that
 		else { // just copy
 			structs = newState->structs;
 			incompleteStructs = false;

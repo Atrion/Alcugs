@@ -83,6 +83,7 @@ namespace alc {
 		tSdlStructList structs;
 		tUnet *net;
 		tLog *log;
+		bool logDetailed;
 	};
 	
 	/** The SDL Struct classes */

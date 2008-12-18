@@ -196,6 +196,7 @@ stop = 1
 
 # enable/disable game sverer agestate logging
 ;agestate.log = 1 # default 1
+;agestate.log.detailed = 0 # print details about the content of the sent and received SDL messages (default 0)
 
 # client settings
 allow_uu_clients = 0 # (dis)allow UU clients to connect to this server (default: 1)
