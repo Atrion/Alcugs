@@ -392,12 +392,15 @@ namespace alc {
 		if (!game->data) return;
 		statusFileUpdate = true;
 		// remove all players which were still on this server
-		for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
+		tPlayerList::iterator it = players.begin();
+		while (it != players.end()) {
 			if (it->u == game) {
 				log->log("WARN: Removing player %s as it was on a terminating server\n", it->str());
 				players.erase(++it); // since players is a list, iterators remain valid
 				statusFileUpdate = true;
 			}
+			else
+				++it; // we have to increment manually because above if block already increments
 		}
 		log->log("Server %s is leaving us\n", game->str());
 		log->flush();

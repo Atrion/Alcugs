@@ -64,7 +64,8 @@ namespace alc {
 		void clear(void);
 	
 		typedef union {
-			Byte byteVal[3];
+			Byte byteVal[32]; // also used to store the STRING32
+			U16 shortVal;
 			U32 intVal[2];
 			float floatVal[4];
 			tSdlStateBinary *sdlState; // we have to use a pointer here - classes are not allowed in unions
@@ -93,9 +94,13 @@ namespace alc {
 		
 		tUStr getName(void) const;
 		U16 getVersion(void) const;
+		inline bool isIndexed(void) { return incompleteVars || incompleteStructs; }
+		
+		void updateWith(tSdlStateBinary *newState); //!< updates the current state with the additional information from the new one
 		
 		typedef std::vector<tSdlStateVar> tVarList; // FIXME: perhaps better use a list?
 	private:
+		void mergeData(tVarList *curData, tVarList *newData);
 		
 		Byte unk1;
 		tVarList vars;

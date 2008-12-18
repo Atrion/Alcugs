@@ -166,6 +166,9 @@ namespace alc {
 						if (sdlVar->type == DBool && it->byteVal[0] != 0 && it->byteVal[0] != 1)
 							throw txProtocolError(_WHERE("Unexpected BOOL var, must be 0 or 1 but is %d\n", it->byteVal));
 						break;
+					case DUruString:
+						memcpy(it->byteVal, t.read(32), 32);
+						break;
 					case DPlKey:
 						// the pointer to the new element are immediatley stored in the list, so they are correctly cleaned up
 						it->obj = new tUruObject;
@@ -181,6 +184,9 @@ namespace alc {
 					case DTime:
 						it->intVal[0] = t.getU32(); // seconds
 						it->intVal[1] = t.getU32(); // microseconds
+						break;
+					case DShort:
+						it->shortVal = t.getU16();
 						break;
 					case DVector3:
 					case DPoint3:
@@ -200,10 +206,10 @@ namespace alc {
 						it->byteVal[2] = t.getByte();
 						break;
 					default:
-						// FIXME: Yet to implement; DUruString, DShort, DAgeTimeOfDay
+						// FIXME: Yet to implement; DAgeTimeOfDay
 						// DTimestamp is only used in vault messages (generic creatable value), not in SDL files
 						// DCreatable is used in cloneMessage.sdl, but I could not yet find an example message
-						throw txProtocolError(_WHERE("Unable to parse SDL var of type 0x%02X", sdlVar->type));
+						throw txProtocolError(_WHERE("Unable to parse SDL var of type %s (0x%02X)", alcUnetGetVarType(sdlVar->type), sdlVar->type));
 				}
 			}
 		}
@@ -237,8 +243,51 @@ namespace alc {
 				t.putByte(elements.size());
 			for (tElementList::iterator it = elements.begin(); it != elements.end(); ++it) {
 				switch (sdlVar->type) {
+					case DInteger:
+						t.putU32(it->intVal[0]);
+						break;
+					case DFloat:
+						t.putFloat(it->floatVal[0]);
+						break;
+					case DBool:
+					case DByte:
+						t.putByte(it->byteVal[0]);
+						break;
+					case DUruString:
+						t.write(it->byteVal, 32);
+						break;
+					case DPlKey:
+						t.put(*it->obj);
+						break;
+					case DStruct:
+						t.put(*it->sdlState);
+						break;
+					case DTime:
+						t.putU32(it->intVal[0]); // seconds
+						t.putU32(it->intVal[1]); // microseconds
+						break;
+					case DShort:
+						t.putU16(it->shortVal);
+						break;
+					case DVector3:
+					case DPoint3:
+						t.putFloat(it->floatVal[0]);
+						t.putFloat(it->floatVal[1]);
+						t.putFloat(it->floatVal[2]);
+						break;
+					case DQuaternion:
+						t.putFloat(it->floatVal[0]);
+						t.putFloat(it->floatVal[1]);
+						t.putFloat(it->floatVal[2]);
+						t.putFloat(it->floatVal[3]);
+						break;
+					case DRGB8:
+						t.putByte(it->byteVal[0]);
+						t.putByte(it->byteVal[1]);
+						t.putByte(it->byteVal[2]);
+						break;
 					default:
-						throw txProtocolError(_WHERE("Unable to write SDL var of type 0x%02X", sdlVar->type));
+						throw txProtocolError(_WHERE("Unable to write SDL var of type %s (0x%02X)", alcUnetGetVarType(sdlVar->type), sdlVar->type));
 				}
 			}
 		}
@@ -270,6 +319,9 @@ namespace alc {
 					case DByte:
 						log->print("%d", it->byteVal[0]);
 						break;
+					case DUruString:
+						log->print("%s", it->byteVal);
+						break;
 					case DPlKey:
 						log->print("%s", it->obj->str());
 						break;
@@ -279,6 +331,9 @@ namespace alc {
 						break;
 					case DTime:
 						log->print("%d.%d", it->intVal[0], it->intVal[1]);
+						break;
+					case DShort:
+						log->print("%d", it->shortVal);
 						break;
 					case DVector3:
 					case DPoint3:
@@ -291,7 +346,7 @@ namespace alc {
 						log->print("(%d-%d-%d)", it->byteVal[0], it->byteVal[1], it->byteVal[2]);
 						break;
 					default:
-						throw txProtocolError(_WHERE("Unable to print SDL var of type 0x%02X", sdlVar->type));
+						throw txProtocolError(_WHERE("Unable to print SDL var of type %s (0x%02X)", alcUnetGetVarType(sdlVar->type), sdlVar->type));
 				}
 			}
 			if (sdlVar->type != DStruct) log->nl();
@@ -416,6 +471,46 @@ namespace alc {
 	}
 	U16 tSdlStateBinary::getVersion(void) const {
 		return sdlStruct ? sdlStruct->version : 0;
+	}
+	
+	// this is not really something caring about the binary representation of a SDL state, but it just belongs to this class
+	void tSdlStateBinary::updateWith(tSdlStateBinary *newState)
+	{
+		if (sdlStruct != newState->sdlStruct)
+			throw txUnet(_WHERE("Merging different SDL states not possible!"));
+		
+		// first the vars
+		if (newState->incompleteVars) // merge new data in
+			mergeData(&vars, &newState->vars);
+		else {// just copy
+			vars = newState->vars;
+			incompleteVars = false;
+		}
+		
+		// then the structs
+		if (newState->incompleteStructs) // merge new data in
+			mergeData(&vars, &newState->vars); // this will not correctly merge indexed sub-structs - but I have no clue how I would have to do that
+		else { // just copy
+			structs = newState->structs;
+			incompleteStructs = false;
+		}
+	}
+	
+	void tSdlStateBinary::mergeData(tVarList *curData, tVarList *newData)
+	{
+		tVarList::iterator curIt = curData->begin();
+		for (tVarList::iterator newIt = newData->begin(); newIt != newData->end(); ++newIt) { // merge each new value
+			// find the first current element with a number equal to or bigger than the one of the new element
+			while (curIt->getNum() < newIt->getNum() && curIt != curData->end()) ++curIt;
+			if (curIt == curData->end() || curIt->getNum() > newIt->getNum()) {
+				// if we are at the end of the old list, or at an element with a bigger number, we have to isnert the new one
+				curIt = curData->insert(curIt, *newIt) + 1; // save returned iterator as the old one got invalid, and go to next element since we are not interested in the just inserted one
+			}
+			else {
+				// we found the new element in the old list, overwrite it
+				*curIt = *newIt;
+			}
+		}
 	}
 	
 	//// tSdlState

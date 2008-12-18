@@ -326,6 +326,13 @@ void alctypes_mbuf() {
 	assert(memcmp(writeTest.read(2), bulk, 2) == 0);
 	assert(memcmp(writeTest.read(8), bulk, 8) == 0);
 	assert(writeTest.eof());
+	
+	// test the get/put float functions
+	tMBuf floatTest;
+	float test = 0.467;
+	floatTest.putFloat(test);
+	floatTest.rewind();
+	assert(floatTest.getFloat() == test);
 }
 
 void alctypes_mbuf2() {

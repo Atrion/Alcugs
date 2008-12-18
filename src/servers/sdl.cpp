@@ -36,7 +36,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_SDL_ID "$Id$"
 
-#define _DBG_LEVEL_ 5
+//#define _DBG_LEVEL_ 10
 
 #include <alcugs.h>
 #include <alcnet.h>
@@ -76,6 +76,7 @@ namespace alc {
 				if (it2->type == DStruct) it2->structVersion = findLatestStructVersion(it2->structName);
 			}
 		}
+		log->flush();
 		
 		// if necessary, set up AgeSDLHook
 		// sending just a default age SDL for the JoinAck is not enough, we really have to create a SDL state for it
@@ -109,6 +110,7 @@ namespace alc {
 		}
 		
 		log->log("AgeState backend started (%s)\n", __U_SDL_ID);
+		log->flush();
 	}
 	
 	void tAgeStateManager::unload(void)
@@ -140,6 +142,7 @@ namespace alc {
 			else
 				++it;
 		}
+		log->flush();
 	}
 	
 	void tAgeStateManager::saveSdlState(tMBuf &data)
@@ -156,16 +159,15 @@ namespace alc {
 			sdlStates.push_back(sdl);
 		}
 		else {
-			if (it->content.getVersion() > sdl.content.getVersion()) {
-				// don't override the SDL state with a state described in an older version
-				throw txProtocolError(_WHERE("SDL version mismatch: %s should be downgraded to %s", it->str(), sdl.str()));
+			if (it->content.getVersion() != sdl.content.getVersion()) {
+				throw txProtocolError(_WHERE("SDL version mismatch: %s should be changed to %s", it->str(), sdl.str()));
 			}
-			else { // it's the same or a newer version, use it
+			else { // update existing state
 				log->log("Updating %s\n", sdl.str());
-				// FIXME: to update the state, don't replace it but just the vars which got re-sent
-				*it = sdl;
+				it->content.updateWith(&sdl.content);
 			}
 		}
+		log->flush();
 	}
 	
 	tAgeStateManager::tSdlList::iterator tAgeStateManager::findSdlState(tSdlState *state)
@@ -186,6 +188,7 @@ namespace alc {
 			++n;
 		}
 		log->log("Sent %d SDLState messages to %s\n", n, u->str());
+		log->flush();
 		return n;
 	}
 	
@@ -201,6 +204,7 @@ namespace alc {
 			else
 				++it;
 		}
+		log->flush();
 	}
 	
 	void tAgeStateManager::saveClone(const tmLoadClone &clone)
@@ -223,6 +227,7 @@ namespace alc {
 			removeSDLStates(it->obj.clonePlayerId, it->obj.cloneId);
 			clones.erase(it);
 		}
+		log->flush();
 	}
 	
 	tAgeStateManager::tCloneList::iterator tAgeStateManager::findClone(const tUruObject &obj)
@@ -273,6 +278,7 @@ namespace alc {
 			tSdlState empty;
 			buf->put(empty);
 		}
+		log->flush();
 	}
 	
 	U32 tAgeStateManager::findLatestStructVersion(tStrBuf name, bool throwOnError)
