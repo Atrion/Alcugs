@@ -912,6 +912,10 @@ void tNetSession::doWork() {
 		}
 	}
 	
+	// for terminating session, make sure they are cleaned up on time
+	if (terminated)
+	   net->updateTimerRelative(conn_timeout*1000000);
+	
 	if(sndq->isEmpty()) {
 		next_msg_time=0;
 		if(ackq->isEmpty() && rcvq->isEmpty()) {
@@ -1034,7 +1038,7 @@ U32 tNetSession::onlineTime(void)
 void tNetSession::terminate(int tout)
 {
 	conn_timeout = tout;
-	net->updateTimerRelative(tout*1000000 + 200);
+	net->updateTimerRelative(tout*1000000);
 	terminated = true;
 	whoami = 0; // it's terminated, so it's no one special anymore
 	timestamp.now();

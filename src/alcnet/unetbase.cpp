@@ -240,7 +240,7 @@ void tUnetBase::terminate(tNetSession *u,Byte reason, bool destroyOnly)
 #else
 	if (destroyOnly) { // if the session should be destroyed, do that ASAP
 #endif
-		u->terminate(1/*seconds*/);
+		u->terminate(0/*seconds*/);
 	} else { // otherwise, give the session one second to send remaining messages
 		u->terminate(1/*second*/);
 	}
