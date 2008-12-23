@@ -158,6 +158,10 @@ namespace alc {
 				u->data = NULL;
 			}
 			
+			// make sure this player is on none of the pages' player lists
+			for (tAgeInfo::tPageList::iterator it = ageInfo->pages.begin(); it != ageInfo->pages.end(); ++it)
+				removePlayerFromPage(&*it, u->ki);
+			
 			// this player is no longer joined
 			u->joined = false;
 		}
@@ -206,6 +210,30 @@ namespace alc {
 			stop(); // no player for some time, so go down
 		}
 		tUnetLobbyServerBase::onIdle(idle);
+	}
+	
+	void tUnetGameServer::removePlayerFromPage(tPageInfo *page, U32 ki)
+	{
+		tPageInfo::tPlayerList::iterator it = page->getPlayer(ki);
+		if (it == page->players.end()) return; // player did not even load that age
+		page->players.erase(it); // remove player from list of players who loaded that age
+		if (page->owner != ki) return; // he is not the owner, we are done
+		// search for another owner
+		if (page->players.size()) {
+			U32 newOwner = *page->players.begin();
+			tNetSession *session = smgr->find(newOwner);
+			if (!session) {
+				// very strange, the player is on the list but not connected anymore?
+				throw txUnet(_WHERE("Player %d is on list of players who loaded page %s, but not connected anymore", newOwner, page->name));
+			}
+			page->owner = newOwner;
+			tmGroupOwner groupOwner(session, page, true/*is owner*/);
+			send(groupOwner);
+		}
+		else {
+			// no player left for this page, no owner
+			page->owner = 0;
+		}
 	}
 
 	int tUnetGameServer::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
@@ -313,7 +341,31 @@ namespace alc {
 				msg->data.get(pagingRoom);
 				log->log("<RCV> [%d] %s\n", msg->sn, pagingRoom.str());
 				
-				// FIXME: do something
+				tPageInfo *page = ageInfo->getPage(pagingRoom.pageId);
+				if (!page)
+					throw txProtocolError(_WHERE("Requested non-existing page %s (0x%08X)", pagingRoom.pageName.c_str(), pagingRoom.pageId));
+				// fill in page information
+				if (!page->plasmaPageId) {
+					page->plasmaPageId = pagingRoom.pageId;
+					page->plasmaPageType = pagingRoom.pageType;
+				}
+				
+				// process message
+				if (pagingRoom.isPageOut) {
+					// player paged out, remove him as owner
+					removePlayerFromPage(page, u->ki);
+				}
+				else if (!page->hasPlayer(u->ki)) {
+					// paged in
+					bool isOwner = false;
+					page->players.push_back(u->ki); // this player loaded that page
+					if (!page->owner) {
+						isOwner = true;
+						page->owner = u->ki; // this player is the new owner
+					}
+					tmGroupOwner groupOwner(u, page, isOwner);
+					send(groupOwner);
+				}
 				return 1;
 			}
 			

@@ -137,6 +137,18 @@ namespace alc {
 		virtual void additionalFields();
 	};
 	
+	class tmGroupOwner : public tmMsgBase {
+	public:
+		tmGroupOwner(tNetSession *u, tPageInfo *page, bool isOwner);
+		virtual void stream(tBBuf &t);
+		// format
+		U32 pageId;
+		U16 pageType;
+		bool isOwner;
+	protected:
+		virtual void additionalFields();
+	};
+	
 	class tmPlayerPage : public tmMsgBase {
 	public:
 		tmPlayerPage(tNetSession *u);

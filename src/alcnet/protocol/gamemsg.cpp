@@ -296,6 +296,32 @@ namespace alc {
 		else           dbg.printf("no");
 	}
 	
+	//// tmGroupOwner
+	tmGroupOwner::tmGroupOwner(tNetSession *u, tPageInfo *page, bool isOwner) : tmMsgBase(NetMsgGroupOwner, plNetAck | plNetCustom, u)
+	{
+		this->pageId = page->plasmaPageId;
+		this->pageType = page->plasmaPageType;
+		this->isOwner = isOwner;
+	}
+	
+	void tmGroupOwner::stream(tBBuf &t)
+	{
+		tmMsgBase::stream(t);
+		t.putU32(1); // format
+		t.putU32(pageId);
+		t.putU16(pageType);
+		t.putByte(0x00);
+		t.putByte(isOwner);
+	}
+	
+	void tmGroupOwner::additionalFields()
+	{
+		dbg.nl();
+		dbg.printf(" Page ID: 0x%08X, Page Type: 0x%04X, is owner: ");
+		if (isOwner) dbg.printf("yes");
+		else         dbg.printf("no");
+	}
+	
 	//// tmPlayerPage
 	tmPlayerPage::tmPlayerPage(tNetSession *u) : tmMsgBase(u)
 	{ }

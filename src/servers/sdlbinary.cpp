@@ -204,9 +204,9 @@ namespace alc {
 						it->byteVal[2] = t.getByte();
 						break;
 					default:
-						// FIXME: Yet to implement; DAgeTimeOfDay
 						// DTimestamp is only used in vault messages (generic creatable value), not in SDL files
 						// DCreatable is used in cloneMessage.sdl, but I could not yet find an example message
+						// DAgeTimeOfDay obviously is never sent, even when it is used in an age
 						throw txProtocolError(_WHERE("Unable to parse SDL var of type %s (0x%02X)", alcUnetGetVarType(sdlVar->type), sdlVar->type));
 				}
 			}

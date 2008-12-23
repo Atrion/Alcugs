@@ -46,18 +46,29 @@ namespace alc {
 	class tPageInfo
 	{
 	public:
+		typedef std::vector<U32> tPlayerList;
+		
 		tPageInfo(tConfigVal *val, int row);
+		tPlayerList::iterator getPlayer(U32 ki);
+		inline bool hasPlayer(U32 ki) { return getPlayer(ki) != players.end(); }
 		
 		Byte name[200];
 		U16 id;
 		bool conditionalLoad;
-		S32 groupOwner;
+		U32 owner;
+		
+		// data for the messages (filled when we get a NetMsgPagingRom for this page)
+		U32 plasmaPageId;
+		U16 plasmaPageType;
+		
+		tPlayerList players;
 	};
 	
 	class tAgeInfo
 	{
 	public:
 		tAgeInfo(const tStrBuf &dir, const char *file, bool loadPages);
+		tPageInfo *getPage(U32 pageId);
 		
 		U32 seqPrefix; // it's actually 3 Bytes
 		Byte name[200];

@@ -57,6 +57,16 @@ namespace alc {
 			this->conditionalLoad = conditionalLoad.asByte();
 		}
 		DBG(9, "New Page %s: ID %d, conditionalLoad %d\n", this->name, this->id, this->conditionalLoad);
+		
+		owner = 0;
+		plasmaPageId = plasmaPageType = 0;
+	}
+	
+	tPageInfo::tPlayerList::iterator tPageInfo::getPlayer(U32 ki)
+	{
+		for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it)
+			if (*it == ki) return it;
+		return players.end();
 	}
 	
 	tAgeInfo::tAgeInfo(const tStrBuf &dir, const char *file, bool loadPages)
@@ -93,6 +103,15 @@ namespace alc {
 		}
 		// done!
 		delete cfg;
+	}
+	
+	tPageInfo *tAgeInfo::getPage(U32 pageId)
+	{
+		U16 id = (pageId - (seqPrefix << 8)) - 33; // weird, but whatever...
+		for (tPageList::iterator it = pages.begin(); it != pages.end(); ++it) {
+			if (it->id == id) return &*it;
+		}
+		return NULL;
 	}
 	
 	tAgeInfoLoader::tAgeInfoLoader(const Byte *name, bool loadPages)

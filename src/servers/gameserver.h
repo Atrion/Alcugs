@@ -69,6 +69,8 @@ namespace alc {
 	private:
 		Byte fwdDirectedGameMsg(tmGameMessageDirected &msg);
 		void bcastMemberUpdate(tNetSession *u, bool isJoined);
+		
+		void removePlayerFromPage(tPageInfo *page, U32 ki);
 	
 		tAgeInfo *ageInfo;
 		tAgeStateManager *ageState;
