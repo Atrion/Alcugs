@@ -353,6 +353,9 @@ namespace alc {
 		}
 	}
 	
+	Byte tSdlStateVar::getType(void)
+	{ return sdlVar->type; }
+	
 	//// tSdlStateBinary
 	tSdlStateBinary::tSdlStateBinary(void)
 	{
@@ -424,7 +427,7 @@ namespace alc {
 		// parse those structs
 		for (int i = 0; i < nStructs; ++i) {
 			int nr = incompleteStructs ? t.getByte() : i;
-			tVarList::iterator it = vars.insert(vars.end(), tSdlStateVar(sdlStruct->getElement(nr, false/*search for a struct*/),
+			tVarList::iterator it = structs.insert(structs.end(), tSdlStateVar(sdlStruct->getElement(nr, false/*search for a struct*/),
 					stateMgr, nr));
 			t.get(*it); // parse this var
 		}
@@ -437,16 +440,28 @@ namespace alc {
 		t.putByte(0x00); // unk2
 		t.putByte(0x06); // unk3
 		
+		// check number of values
+		if (vars.size() != sdlStruct->nVar) {
+			if (!incompleteVars || vars.size() > sdlStruct->nVar)
+				throw txProtocolError(_WHERE("Size mismatch: %d vars to be stored, %d vars in struct, incomplete: %d", vars.size(), sdlStruct->nVar, incompleteVars));
+		}
 		// write values
 		t.putByte(vars.size());
 		for (tVarList::iterator it = vars.begin(); it != vars.end(); ++it) {
+			if (it->getType() == DStruct) throw txProtocolError(_WHERE("There's a struct in the vars!"));
 			if (incompleteVars) t.putByte(it->getNum());
 			t.put(*it);
 		}
 		
+		// check number of structs
+		if (structs.size() != sdlStruct->nStruct) {
+			if (!incompleteStructs || structs.size() > sdlStruct->nStruct)
+				throw txProtocolError(_WHERE("Size mismatch: %d structs to be stored, %d structs in struct, incomplete: %d", structs.size(), sdlStruct->nStruct, incompleteStructs));
+		}
 		// write structs
 		t.putByte(structs.size());
 		for (tVarList::iterator it = structs.begin(); it != structs.end(); ++it) {
+			if (it->getType() != DStruct) throw txProtocolError(_WHERE("There's a var in the structs!"));
 			if (incompleteStructs) t.putByte(it->getNum());
 			t.put(*it);
 		}
@@ -476,20 +491,23 @@ namespace alc {
 	// this is not really something caring about the binary representation of a SDL state, but it just belongs to this class
 	void tSdlStateBinary::updateWith(tSdlStateBinary *newState)
 	{
-		if (sdlStruct != newState->sdlStruct)
+		if (sdlStruct != newState->sdlStruct || !sdlStruct)
 			throw txUnet(_WHERE("Merging different SDL states not possible!"));
 		
+		DBG(8, "Updating %s.%d\n", sdlStruct->name.c_str(), sdlStruct->version);
 		// first the vars
-		if (newState->incompleteVars) // merge new data in
+		if (newState->incompleteVars) { // merge new data in
+			DBG(8, "Merging %d current with %d new vars\n", vars.size(), newState->vars.size());
 			mergeData(&vars, &newState->vars);
-		else {// just copy
+		} else { // just copy
+			DBG(8, "Just copying %d vars\n", newState->vars.size());
 			vars = newState->vars;
 			incompleteVars = false;
 		}
 		
 		// then the structs
 		if (newState->incompleteStructs) // merge new data in
-			mergeData(&vars, &newState->vars); // FIXME: this will not correctly merge indexed sub-structs - but I have no clue how I would have to do that
+			mergeData(&structs, &newState->structs); // FIXME: this will not correctly merge indexed sub-structs - but I have no clue how I would have to do that
 		else { // just copy
 			structs = newState->structs;
 			incompleteStructs = false;

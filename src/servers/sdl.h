@@ -115,7 +115,7 @@ namespace alc {
 		tStrBuf name;
 		U32 version;
 		tVarList vars;
-		int nVar, nStruct;
+		U32 nVar, nStruct;
 	private:
 		tAgeStateManager *stateMgr;
 	};

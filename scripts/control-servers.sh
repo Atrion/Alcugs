@@ -41,6 +41,7 @@ getPid(){
 
 case $1 in
 	start)
+		ulimit -c unlimited # make sure we get coredumps
 		for prog in $start_servers; do
 			echo -n "Starting $prog... "
 			if [[ -z `getPid $prog` ]]; then

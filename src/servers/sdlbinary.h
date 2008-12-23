@@ -60,6 +60,7 @@ namespace alc {
 		virtual void stream(tBBuf &t);
 		void print(tLog *log, Byte indentSize);
 		inline Byte getNum(void) { return num; }
+		Byte getType(void);
 	private:
 		void clear(void);
 	
