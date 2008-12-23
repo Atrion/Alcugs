@@ -71,7 +71,7 @@ typedef struct {
 	int n_files2rotate; //!< set number the files to rotate
 												/* 0 - logging disabled
 												   1 - one file (old behaviour)
-													 >2 - rotate logs
+													 >=2 - rotate logs
 												*/
 	tStrBuf * path; //!<path to the log directory
 	int rotate_size; //!< maxium size of a file, if reached, file will be rotated
@@ -148,6 +148,12 @@ void alcLogSetLogLevel(Byte level) {
 	if(tvLogConfig!=NULL) {
 		if(level>3) level=3;
 		tvLogConfig->silent=((((char)level)*(-1)) + 3);
+	}
+}
+
+void alcLogSetFiles2Rotate(Byte n) {
+	if(tvLogConfig!=NULL) {
+		tvLogConfig->n_files2rotate = n;
 	}
 }
 

@@ -124,6 +124,7 @@ tStrBuf alcLogGetLogPath(void);
 void alcLogOpenStdLogs(bool shutup=false);
 
 void alcLogSetLogLevel(Byte level);
+void alcLogSetFiles2Rotate(Byte n);
 
 char * alcHtmlGenerateHead(char * title,char * powered);
 

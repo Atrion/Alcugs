@@ -138,6 +138,11 @@ void alcReApplyConfig() {
 		var="log/";
 	}
 	alcLogSetLogPath(var);
+	var=cfg->getVar("log.n_rotate","global");
+	if(var.isNull()) {
+		var="5";
+	}
+	alcLogSetFiles2Rotate(var.asByte());
 	var=cfg->getVar("log.enabled","global");
 	if(var.isNull()) {
 		var="1";
