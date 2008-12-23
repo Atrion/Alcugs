@@ -51,12 +51,18 @@ namespace alc {
 		
 		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
 		virtual void onLoadConfig(void);
-	private:	
+	private:
+		bool loadWithGame2(const char *age);
+		
 		Byte website[256];
 		Byte gameLogPath[256];
 		Byte gameConfig[256];
 		Byte gameBin[256];
 		bool loadOnDemand;
+		
+		Byte game2Bin[256];
+		Byte game2Ages[256];
+		Byte game2Config[256];
 	};
 	
 } //End alc namespace
