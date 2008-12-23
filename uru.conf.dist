@@ -198,6 +198,9 @@ stop = 1
 ;agestate.log = 1 # default 1
 ;agestate.log.detailed = 0 # print details about the content of the sent and received SDL messages (default 0)
 
+# game server linger time: How long to wait before shutting down after the last player left? (0 = do not shut down)
+game.linger_time = 120 # default: 120
+
 # client settings
 allow_uu_clients = 0 # (dis)allow UU clients to connect to this server (default: 1)
 # This should NOT be set for lobby as the UruSetup.exe everyone uses is an UU client. For game servers however, it's a good mean to

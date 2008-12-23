@@ -328,10 +328,20 @@ namespace alc {
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetStateReq))
 			throw txProtocolError(_WHERE("StateReq flag missing"));
-		int nPages = t.getU32();
-		// FIXME: accept nPages != 0
-		if (nPages)
-			throw txProtocolError(_WHERE("Rejecting GameStateRequest which contains a list of pages"));
+		nPages = t.getU32();
+		pages.clear();
+		pages.reserve(nPages);
+		tUStr pageName;
+		for (U32 i = 0; i < nPages; ++i) {
+			pages.push_back(t.getU32());
+			t.get(pageName); // ignore it
+		}
+	}
+	
+	void tmGameStateRequest::additionalFields()
+	{
+		dbg.nl();
+		dbg.printf(" Explicitly requested pages: %d", nPages);
 	}
 	
 	//// tmInitialAgeStateSent

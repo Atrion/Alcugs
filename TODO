@@ -14,8 +14,10 @@ Auth
 
 Tracking
 ========
-* Implement Inter-Age Chat
 * Optimizations
+* Tracking should somehow tell a game server that a player will soon come so that this server can
+  (a) avoid to go down due to inactivity before the player can connect
+  (b) tell everyone the player is dead if he does not come
 
 Vault
 ===========
@@ -26,6 +28,15 @@ Vault
 * WorkAround against invalid SDL nodes
 * Finish the Postgres driver
 * Finish the filesystem driver
+* Vault must be asked to find an age before tracking is asked to find the server (no more GUID gen in tracking!)
+  regard linking rule while doing that:
+  We need a list of instanced and a list of non-instanced ages
+  kBasicLink with GUID set => we don't have to do anything (link from foreign Relto to one of the owner's ages)
+  kBasicLink without GUID => GlobalAge, not allowed for ages which are in one of the list (for fan-ages only).
+  kOwnedBook, kVisitBook => GUID must be already present.
+  kOriginalBook => GUID must not be present. Generate GUID according to list, fail if it's on neither list.
+                   If age already exists we have to somehow reset it.
+  Of course the even better solution would be to find a way to get rid of at least one of these lists
 
 Lobby
 ========
@@ -46,8 +57,8 @@ Other Generic Stuff
 * MetaServer
 * Optimizations
 * Full Multithreaded support
-* Telnet builting service
-* Http builting service
+* Telnet builtin service
+* Http builtin service
 * Debug port/service
 * P2P tech
 * Allow to add new ages to the servers on fly without the need of recompiling again the servers.

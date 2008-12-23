@@ -65,6 +65,7 @@ namespace alc {
 		virtual void onReloadConfig(bool reload) {
 			ageState->reload();
 		}
+		virtual void onLoadConfig(void);
 	private:
 		Byte fwdDirectedGameMsg(tmGameMessageDirected &msg);
 		void bcastMemberUpdate(tNetSession *u, bool isJoined);
@@ -73,6 +74,7 @@ namespace alc {
 		tAgeStateManager *ageState;
 		
 		U32 lastPlayerLeft;
+		U32 lingerTime;
 	};
 
 } //End alc namespace

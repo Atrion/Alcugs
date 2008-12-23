@@ -72,7 +72,7 @@ namespace alc {
 			tSdlStateBinary *sdlState; // we have to use a pointer here - classes are not allowed in unions
 			tUruObject *obj;
 		} tElement;
-		typedef std::vector<tElement> tElementList; // FIXME: perhaps better use a list?
+		typedef std::vector<tElement> tElementList;
 	
 		Byte num; //!< this is the nth var/struct of the SDL, starting with 0
 		
@@ -99,7 +99,7 @@ namespace alc {
 		
 		void updateWith(tSdlStateBinary *newState); //!< updates the current state with the additional information from the new one
 		
-		typedef std::vector<tSdlStateVar> tVarList; // FIXME: perhaps better use a list?
+		typedef std::list<tSdlStateVar> tVarList;
 	private:
 		void mergeData(tVarList *curData, tVarList *newData);
 		

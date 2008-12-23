@@ -152,6 +152,12 @@ namespace alc {
 	public:
 		tmGameStateRequest(tNetSession *u);
 		virtual void store(tBBuf &t);
+		// format
+		U32 nPages;
+		typedef std::vector<U32> tPageList;
+		tPageList pages;
+	protected:
+		virtual void additionalFields();
 	};
 	
 	class tmInitialAgeStateSent : public tmMsgBase {

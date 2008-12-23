@@ -86,6 +86,24 @@ namespace alc {
 		delete ageInfo;
 		delete ageState;
 	}
+	
+	void tUnetGameServer::onLoadConfig(void)
+	{
+		tUnetLobbyServerBase::onLoadConfig();
+		
+		tConfig *cfg = alcGetConfig();
+		tStrBuf var = cfg->getVar("game.persistent");
+		if (!var.isNull() && var.asByte()) { // disabled per default
+			lingerTime = 0;
+		}
+		else {
+			var = cfg->getVar("game.linger_time");
+			if (!var.isNull())
+				lingerTime = var.asU32();
+			else
+				lingerTime = 120; // default
+		}
+	}
 
 	void tUnetGameServer::onConnectionClosed(tNetEvent *ev, tNetSession *u)
 	{
@@ -183,9 +201,9 @@ namespace alc {
 
 	void tUnetGameServer::onIdle(bool idle)
 	{
-		if (lastPlayerLeft && lastPlayerLeft + 120 < alcGetTime()) {
-			log->log("The last player left more than 120sec ago, so I will go down.\n");
-			stop(); // no player for 120sec, so go down. FIXME: Make time configurable (also take game.persistent into account - not to kill the server at all)
+		if (lingerTime && lastPlayerLeft && lastPlayerLeft + lingerTime < alcGetTime()) {
+			log->log("The last player left more than %d sec ago, so I will go down.\n", lingerTime);
+			stop(); // no player for some time, so go down
 		}
 		tUnetLobbyServerBase::onIdle(idle);
 	}
@@ -246,8 +264,11 @@ namespace alc {
 				msg->data.get(gameStateRequest);
 				log->log("<RCV> [%d] %s\n", msg->sn, gameStateRequest.str());
 				
+				if (gameStateRequest.nPages) // FIXME: support requesting certain pages
+					throw txProtocolError(_WHERE("Sending state for specific pages not supported"));
+				
 				int n = ageState->sendClones(u);
-				n += ageState->sendSdlStates(u); // FIXME: take requested pages into account
+				n += ageState->sendSdlStates(u);
 				
 				tmInitialAgeStateSent stateSent(u, n);
 				send(stateSent);
