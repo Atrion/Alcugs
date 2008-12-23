@@ -70,6 +70,9 @@ namespace alc {
 		typedef std::list<tmLoadClone> tCloneList;
 		typedef std::list<tSdlState> tSdlList;
 		
+		void loadAgeState(tStrBuf &fileName);
+		void saveAgeState(tStrBuf &fileName);
+		
 		void loadSdlStructs(const Byte *filename);
 		U32 findLatestStructVersion(tStrBuf name, bool throwOnError = true); //!< returns the highest version number available for this struct
 		tSdlList::iterator findAgeSDLHook(void);

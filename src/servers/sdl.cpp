@@ -76,7 +76,15 @@ namespace alc {
 				if (it2->type == DStruct) it2->structVersion = findLatestStructVersion(it2->structName);
 			}
 		}
-		log->flush();
+		
+		// load agestate from file
+		tStrBuf fileName = alcLogGetLogPath() + "/agestate.raw";
+		var = cfg->getVar("game.load_agestate");
+		if (!var.isNull() && var.asByte()) { // disabled per default
+			loadAgeState(fileName);
+		}
+		else // in case the server crashes, remove state to really reset it
+			unlink((char *)fileName.c_str());
 		
 		// if necessary, set up AgeSDLHook
 		// sending just a default age SDL for the JoinAck is not enough, we really have to create a SDL state for it
@@ -91,14 +99,72 @@ namespace alc {
 			obj.objName = "AgeSDLHook";
 			// now create the SDL state
 			sdlStates.push_back(tSdlState(this, obj, age->name, ageSDLVersion, true/*init default*/));
+			log->log("Set up default AgeSDLHook\n");
 		}
+		
+		log->flush();
 	}
 	
 	tAgeStateManager::~tAgeStateManager(void)
 	{
+		// save state to disk
+		tStrBuf fileName = alcLogGetLogPath() + "/agestate.raw";
+		saveAgeState(fileName);
+		// close log
 		unload();
 		// make sure the states are removed before the structs as they point to them
 		sdlStates.clear();
+	}
+	
+	void tAgeStateManager::loadAgeState(tStrBuf &fileName)
+	{
+		log->log("Loading age state from %s\n", fileName.c_str());
+		// open file
+		tFBuf file;
+		try {
+			file.open(fileName.c_str());
+		}
+		catch (txNotFound &t) {
+			log->log("File %s not found\n", fileName.c_str());
+			return;
+		}
+		
+		// read it
+		U32 nState = file.getU32();
+		for (U32 i = 0; i < nState; ++i) {
+			tSdlState state(this, true/*there can be data atfer the end of the struct*/);
+			file.get(state);
+			if (state.obj.hasCloneId) {
+				log->log("Not loading state %s with clone ID\n", state.str());
+				continue;
+			}
+			tSdlList::iterator it = findSdlState(&state);
+			if (it != sdlStates.end()) {
+				log->log("Got state duplicate: %s and %s. Keeping the one with higher version number.\n", state.str(), it->str());
+				if (it->content.getVersion() >= state.content.getVersion()) // keep existing version
+					continue;
+				else // remove existing version
+					sdlStates.erase(it);
+			}
+			sdlStates.push_back(state);
+		}
+		if (!file.eof())
+			throw txProtocolError(_WHERE("Agestate file is too long"));
+		file.close();
+	}
+	
+	void tAgeStateManager::saveAgeState(tStrBuf &fileName)
+	{
+		log->log("Saving age state to %s\n", fileName.c_str());
+		// open file
+		tFBuf file;
+		file.open(fileName.c_str(), "wb");
+		
+		// write to it
+		file.putU32(sdlStates.size());
+		for (tSdlList::iterator it = sdlStates.begin(); it != sdlStates.end(); ++it)
+			file.put(*it);
+		file.close();
 	}
 	
 	void tAgeStateManager::load(void)

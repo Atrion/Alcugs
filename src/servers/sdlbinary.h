@@ -118,7 +118,7 @@ namespace alc {
 	/** parses the SDL state */
 	class tSdlState : public tBaseType {
 	public:
-		tSdlState(tAgeStateManager *stateMgr);
+		tSdlState(tAgeStateManager *stateMgr, bool canBeLonger = false);
 		tSdlState(tAgeStateManager *stateMgr, const tUruObject &obj, tUStr name, U16 version, bool initDefault = false);
 		tSdlState(void);
 		virtual void store(tBBuf &t);
@@ -132,10 +132,11 @@ namespace alc {
 		// format
 		tSdlStateBinary content;
 	private:
-		static tMBuf decompress(tBBuf &t); //!< gives us the decompressed content of the SDL stream, the bytes we really want to parse
+		static tMBuf decompress(tBBuf &t, bool canBeLonger); //!< gives us the decompressed content of the SDL stream, the bytes we really want to parse
 		static tMBuf compress(tMBuf &data); //!< packs our SDL stream to be sent, adds length bytes and perhaps compresses
 		tSdlStruct *findStruct(void); //!< finds the correct tSdlStruct which is necessary for this SDL State
 	
+		bool canBeLonger;
 		tStrBuf dbg;
 		tAgeStateManager *stateMgr;
 	};

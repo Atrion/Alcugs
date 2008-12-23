@@ -140,6 +140,10 @@ void alcLogSetLogPath(tStrBuf & path) {
 	*(tvLogConfig->path)=path;
 }
 
+tStrBuf alcLogGetLogPath(void) {
+	return *(tvLogConfig->path);
+}
+
 void alcLogSetLogLevel(Byte level) {
 	if(tvLogConfig!=NULL) {
 		if(level>3) level=3;

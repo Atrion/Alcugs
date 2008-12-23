@@ -185,7 +185,7 @@ namespace alc {
 	{
 		if (lastPlayerLeft && lastPlayerLeft + 120 < alcGetTime()) {
 			log->log("The last player left more than 120sec ago, so I will go down.\n");
-			stop(); // no player for 120sec, so go down. FIXME: Make time configurable
+			stop(); // no player for 120sec, so go down. FIXME: Make time configurable (also take game.persistent into account - not to kill the server at all)
 		}
 		tUnetLobbyServerBase::onIdle(idle);
 	}

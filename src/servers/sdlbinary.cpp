@@ -124,14 +124,12 @@ namespace alc {
 		//Supposicions meaning:
 		// 0x04: Timestamp is present
 		// 0x08: It has the default value
-		// 0x10: non-struct var?
+		// 0x10: non-struct var? (true for all the messages from the client, but agestate files from old client sometimes don't have it set on non-struct vars)
 		Byte check = 0x04 | 0x08 | 0x10;
 		if (flags & ~(check))
 			throw txProtocolError(_WHERE("unknown flag 0x%02X for sdlBinaryVar", flags));
 		if (flags & 0x10 && sdlVar->type == DStruct)
 			throw txProtocolError(_WHERE("struct var must not have 0x10 flag set"));
-		else if (!(flags & 0x10) && sdlVar->type != DStruct)
-			throw txProtocolError(_WHERE("non-struct var must have 0x10 flag set"));
 		// parse according to flags
 		if (flags & 0x04)
 			throw txProtocolError(_WHERE("Parsing the timestamp is not yet supported"));
@@ -223,8 +221,6 @@ namespace alc {
 		// check non-struct var flag (0x10)
 		if (flags & 0x10 && sdlVar->type == DStruct)
 			throw txProtocolError(_WHERE("struct var must not have 0x10 flag set"));
-		else if (!(flags & 0x10) && sdlVar->type != DStruct)
-			throw txProtocolError(_WHERE("non-struct var must have 0x10 flag set"));
 		// write flags and var
 		t.putByte(flags);
 		if (flags & 0x04)
@@ -349,7 +345,7 @@ namespace alc {
 						throw txProtocolError(_WHERE("Unable to print SDL var of type %s (0x%02X)", alcUnetGetVarType(sdlVar->type), sdlVar->type));
 				}
 			}
-			if (sdlVar->type != DStruct) log->nl();
+			if (sdlVar->type != DStruct || !elements.size()) log->nl();
 		}
 	}
 	
@@ -445,6 +441,8 @@ namespace alc {
 			if (!incompleteVars || vars.size() > sdlStruct->nVar)
 				throw txProtocolError(_WHERE("Size mismatch: %d vars to be stored, %d vars in struct, incomplete: %d", vars.size(), sdlStruct->nVar, incompleteVars));
 		}
+		else
+			incompleteVars = false;
 		// write values
 		t.putByte(vars.size());
 		for (tVarList::iterator it = vars.begin(); it != vars.end(); ++it) {
@@ -458,6 +456,8 @@ namespace alc {
 			if (!incompleteStructs || structs.size() > sdlStruct->nStruct)
 				throw txProtocolError(_WHERE("Size mismatch: %d structs to be stored, %d structs in struct, incomplete: %d", structs.size(), sdlStruct->nStruct, incompleteStructs));
 		}
+		else
+			incompleteStructs = false;
 		// write structs
 		t.putByte(structs.size());
 		for (tVarList::iterator it = structs.begin(); it != structs.end(); ++it) {
@@ -506,9 +506,11 @@ namespace alc {
 		}
 		
 		// then the structs
-		if (newState->incompleteStructs) // merge new data in
+		if (newState->incompleteStructs) { // merge new data in
+			DBG(8, "Merging %d current with %d new structs\n", structs.size(), newState->structs.size());
 			mergeData(&structs, &newState->structs); // FIXME: this will not correctly merge indexed sub-structs - but I have no clue how I would have to do that
-		else { // just copy
+		} else { // just copy
+			DBG(8, "Just copying %d structs\n", newState->structs.size());
 			structs = newState->structs;
 			incompleteStructs = false;
 		}
@@ -532,9 +534,10 @@ namespace alc {
 	}
 	
 	//// tSdlState
-	tSdlState::tSdlState(tAgeStateManager *stateMgr)
+	tSdlState::tSdlState(tAgeStateManager *stateMgr, bool canBeLonger)
 	{
 		this->stateMgr = stateMgr;
+		this->canBeLonger = canBeLonger;
 		skipObj = false;
 	}
 	
@@ -542,6 +545,7 @@ namespace alc {
 	 : obj(obj), content(stateMgr, name, version, initDefault)
 	{
 		this->stateMgr = stateMgr;
+		canBeLonger = false;
 		skipObj = false;
 	}
 	
@@ -551,7 +555,7 @@ namespace alc {
 		skipObj = false;
 	}
 	
-	tMBuf tSdlState::decompress(tBBuf &t)
+	tMBuf tSdlState::decompress(tBBuf &t, bool canBeLonger)
 	{
 		tMBuf data;
 	
@@ -593,7 +597,8 @@ namespace alc {
 			DBG(5, "Got empty SDL message\n");
 		}
 		
-		if (!t.eof()) throw txProtocolError(_WHERE("The SDL struct is too long (%d Bytes remaining after parsing)", t.remaining()));
+		if (!canBeLonger && !t.eof())
+			throw txProtocolError(_WHERE("The SDL struct is too long (%d Bytes remaining after parsing)", t.remaining()));
 		
 		return data;
 	}
@@ -641,7 +646,7 @@ namespace alc {
 		// use tSdlBinay to get the message body and decompress stuff
 		if (!skipObj) // the NetMsgJoinAck doesn't contain the UruObject
 			t.get(obj);
-		tMBuf data = decompress(t);
+		tMBuf data = decompress(t, canBeLonger);
 		// parse "header data"
 		data.rewind();
 		tUStr name;
