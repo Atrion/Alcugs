@@ -396,7 +396,7 @@ namespace alc {
 		while (it != players.end()) {
 			if (it->u == game) {
 				log->log("WARN: Removing player %s as it was on a terminating server\n", it->str());
-				players.erase(++it); // since players is a list, iterators remain valid
+				players.erase(it++); // since players is a list, iterators remain valid
 				statusFileUpdate = true;
 			}
 			else
