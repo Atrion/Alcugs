@@ -114,6 +114,9 @@ namespace alc {
 		var = cfg->getVar("vault.tmp.hacks.linkrules");
 		linkingRulesHack = (!var.isNull() && var.asByte()); // disabled per default
 		
+		var = cfg->getVar("vault.auto_remove_mgrs");
+		autoRemoveMgrs = (!var.isNull() && var.asByte()); // disabled per default
+		
 		log->log("Started VaultBackend (%s)\n", __U_VAULTBACKEND_ID);
 		vaultDB = new tVaultDB(log);
 		log->nl();
@@ -234,19 +237,17 @@ namespace alc {
 		if (status.state > 2) throw txProtocolError(_WHERE("recieved invalid online state of %d", status.state));
 	
 		// update (when the palyer is online) or remove (when he's offline) all mgrs using this KI
-		for (tVmgrList::iterator it = vmgrs.begin(); it != vmgrs.end(); ++it) {
+		tVmgrList::iterator it = vmgrs.begin();
+		while (it != vmgrs.end()) {
 			if (it->ki == status.ki) {
 				if (status.state) it->session = status.getSession()->getIte();
-#if 0
-// this makes problems if a palyer crashed and now comes back - the unet2 game server reports it as offline and immedtialey online again
-				else {
-					delete vmgrs[i];
-					vmgrs[i] = NULL;
-					checkShrink = true; // check if the array can be srhunken
+				else if (autoRemoveMgrs) {
+					vmgrs.erase(it++); // sicne it is a list, this works - iertators remain valid
 					log->log("WARN: Player with KI %d just went offline but still had a vmgr registered... removing it\n", status.ki);
+					continue; // we already incremented
 				}
-#endif
 			}
+			++it;
 		}
 		
 		tvNode *node;
