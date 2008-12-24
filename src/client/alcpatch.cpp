@@ -963,7 +963,7 @@ public:
 	}
 	void OnCancel(wxWizardEvent& ev) {
 		if(!failed) {
-			if(wxMessageBox(_T("Warning: Clossing the patcher when it has not finished, may corrupt your game. Are you sure that you want to cancel and corrupt your client?"), _T("Are you sure?"), wxICON_QUESTION | wxYES_NO, this) != wxYES) {
+			if(wxMessageBox(_T("Warning: Closing the patcher when it has not finished, may corrupt your game. Are you sure that you want to cancel and corrupt your client?"), _T("Are you sure?"), wxICON_QUESTION | wxYES_NO, this) != wxYES) {
 				ev.Veto();
 			}
 		}

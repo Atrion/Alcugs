@@ -36,17 +36,15 @@
 #include "alcugs.h"
 
 #include <cstdlib>
-namespace std {
+//namespace std {
 #include <signal.h>
 #include <sys/types.h>
 #ifndef __WIN32__
 #include <sys/wait.h>
 #endif
-};
+//};
 
 #include "alcdebug.h"
-
-using namespace std;
 
 namespace alc {
 
@@ -140,6 +138,11 @@ void alcReApplyConfig() {
 		var="log/";
 	}
 	alcLogSetLogPath(var);
+	var=cfg->getVar("log.n_rotate","global");
+	if(var.isNull()) {
+		var="5";
+	}
+	alcLogSetFiles2Rotate(var.asByte());
 	var=cfg->getVar("log.enabled","global");
 	if(var.isNull()) {
 		var="1";
@@ -169,8 +172,6 @@ void alcDumpConfig() {
 }
 
 bool alcParseConfig(tStrBuf & path) {
-	std::printf("parsing %s...\n",path.c_str());
-
 	tXParser parser;
 	DBG(5,"setting config parser...");
 	parser.setConfig(alcGetConfig());
@@ -193,9 +194,8 @@ bool alcParseConfig(tStrBuf & path) {
 		
 		//tStrBuf out;
 		//out.put(parser);
-		//std::printf("result \n%s\n",out.c_str());
 	} catch(txNotFound &t) {
-		std::fprintf(stderr,"Error: %s\n",t.what());
+		fprintf(stderr,"Error: %s\n",t.what());
 		ok=false;
 	}
 	
@@ -224,17 +224,9 @@ void alcSignal(int signum, bool install) {
 	if(alcSignalHandler==NULL) return;
 	DBG(5,"%i - %i\n",signum,install);
 	if(install) {
-		#ifdef __CYGWIN__
 		signal(signum,_alcHandleSignal);
-		#else
-		std::signal(signum,_alcHandleSignal);
-		#endif
 	} else {
-		#ifdef __CYGWIN__
 		signal(signum,SIG_DFL);
-		#else
-		std::signal(signum,SIG_DFL);
-		#endif
 	}
 }
 
@@ -253,7 +245,8 @@ void tSignalHandler::handle_signal(int s) {
 		switch (s) {
 #ifndef __WIN32__
 			case SIGCHLD:
-				lstd->log("INF: RECIEVED SIGCHLD: a child has exited.\n\n");
+				lstd->log("INF: RECIEVED SIGCHLD: a child has exited.\n");
+				lstd->flush();
 				alcSignal(SIGCHLD);
 				int status;
 				waitpid(-1, &status, WNOHANG);
@@ -262,6 +255,7 @@ void tSignalHandler::handle_signal(int s) {
 			case SIGSEGV:
 				lerr->log("\n PANIC!!!\n");
 				lerr->log("TERRIBLE FATAL ERROR: SIGSEGV recieved!!!\n\n");
+				lerr->flush();
 				//On windows, the signal handler runs on another thread
 				#ifndef __WIN32__
 				if(alcGetSelfThreadId()!=alcGetMainThreadId()) return;

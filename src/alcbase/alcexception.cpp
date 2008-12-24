@@ -36,22 +36,22 @@
 #include "alcugs.h"
 
 #if !(defined(__WIN32__) or defined(__CYGWIN__)) and defined(HAVE_EXECINFO_H)
-namespace std {
-extern "C" {
+//namespace std {
+//extern "C" {
 #include <execinfo.h>
-}
-}
+//}
+//}
 #endif
 
-//FIXME
-namespace std {
-extern "C" {
+// change this
+//namespace std {
+//extern "C" {
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-}
-}
+//}
+//}
 
 #if defined(HAVE_GOOGLE_COREDUMPER_H)
 namespace google {
@@ -66,16 +66,16 @@ namespace google {
 namespace alc {
 
 static bool txvAbort=0;
-static char txvCore=0x01; //0x00 - dissabled, 0x01 - enabled, 0x02 -always
+static char txvCore=0x01; //0x00 - disabled, 0x01 - enabled, 0x02 -always
 static char * txvCorePath=NULL;
 
-void alcWriteCoreDump(char * name) {
+void alcWriteCoreDump(const char * name) {
 	DBG(5,"alcWriteCoreDump ");
 	#if !(defined(__WIN32__) or defined(__CYGWIN__)) and defined(HAVE_GOOGLE_COREDUMPER_H)
 	DBG(5,"is enabled\n");
 	unsigned int t,pid;
 	pid=getpid();
-	t=(unsigned int)std::time(NULL);
+	t=(unsigned int)time(NULL);
 	
 	int strsize=60;
 	if(txvCorePath!=NULL) strsize+=strlen(txvCorePath);
@@ -150,12 +150,12 @@ void txBase::copy(txBase &t) {
 	strcpy(this->imsg,t.imsg);
 }
 void txBase::_preparebacktrace() {
-//TODO: Porting - This code only works under Linux (it's part of the libc)
+// This needs porting - This code only works under Linux (it's part of the libc)
 #if !(defined(__WIN32__) or defined(__CYGWIN__)) and defined(HAVE_EXECINFO_H)
 	//get the backtrace
 	char **strings;
-	size=std::backtrace(btArray,txExcLevels);
-	strings=std::backtrace_symbols(btArray,size);
+	size=::backtrace(btArray,txExcLevels);
+	strings=backtrace_symbols(btArray,size);
 	
 	/*
 	int f;
@@ -168,21 +168,21 @@ void txBase::_preparebacktrace() {
 	unsigned int i,msize=0;
 	
 	for(i=0; i<size; i++) {
-		msize+=std::strlen(strings[i])+6;
+		msize+=strlen(strings[i])+6;
 	}
 	msize+=30+50;
 	bt=(char *)malloc(sizeof(char) * msize);
 	if(bt!=NULL) {
-		std::memset(bt,0,msize);
-		std::sprintf(bt,"Backtrace with %u levels:\n",size);
+		memset(bt,0,msize);
+		sprintf(bt,"Backtrace with %u levels:\n",size);
 		for(i=0; i<size; i++) {
-			std::strcat(bt," ");
-			std::strcat(bt,strings[i]);
-			std::strcat(bt,"\n");
+			strcat(bt," ");
+			strcat(bt,strings[i]);
+			strcat(bt,"\n");
 		}
-		std::strcat(bt,"c++filt and addr2line may be useful\n");
+		strcat(bt,"c++filt and addr2line may be useful\n");
 	}
-	if(strings!=NULL) free((void *)strings);
+	free((void *)strings);
 #else
 	bt=(char *)std::malloc(sizeof(char) * 50);
 	std::sprintf(bt,"Backtrace not implemented in your OS\n");
@@ -195,8 +195,9 @@ void txBase::_preparebacktrace() {
 		std::abort();
 	}
 }
-void txBase::dump() {
-		fprintf(stderr,"Exception %s:\n%s\n",this->what(),this->backtrace());
+void txBase::dump(bool toStderr) {
+		if (toStderr)
+			fprintf(stderr,"Exception %s:\n%s\n",this->what(),this->backtrace());
 
 		unsigned int t,pid;
 		pid=getpid();
@@ -230,11 +231,11 @@ void txBase::dump() {
 const char * txBase::what() { return (const char *)msg; }
 const char * txBase::backtrace() { return bt; }
 txBase::~txBase() {
-	dmalloc_verify(NULL);
+	//dmalloc_verify(NULL);
 	if(bt!=NULL) free((void *)bt);
-	dmalloc_verify(NULL);
+	//dmalloc_verify(NULL);
 	if(imsg!=NULL) free((void *)imsg);
-	dmalloc_verify(NULL);
+	//dmalloc_verify(NULL);
 }
 //End base
 

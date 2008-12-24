@@ -1,5 +1,4 @@
-Ok, this list contains a list of known bugs and issues.
-We are working to fix them up.
+This list contains a list of known bugs and issues
 
 Game/Vault (vclient communications)
 * Vault task RegisterVisitAge is not working. This causes the issues related
@@ -8,10 +7,6 @@ Game/Vault (vclient communications)
 the RegisterOwnedAge vault task.
 
 General
-* Loadclone issues.
+* Loadclone issues
 
-* Member list bug.
-
-* Cannot bind 0.0.0.0 or 127.0.0.1, causes a lot of problems. All runs fine if you bind
-  to a fixed address.
-
+* Member list bug

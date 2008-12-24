@@ -57,21 +57,23 @@ void tPkgFile::store(tBBuf &t) {
 	msize=t.getU32();
 	if(msize>0) { pkg.write(t.read(msize),msize); pkg.rewind(); }
 }
-int tPkgFile::stream(tBBuf &t) {
-	U32 xsize=0;
-	xsize+=t.put(name);
+void tPkgFile::stream(tBBuf &t) {
+	//U32 xsize=0;
+	//xsize+=
+	t.put(name);
 	msize=pkg.size();
 	t.putU32(msize);
-	xsize+=4;
-	xsize+=t.put(pkg);
-	return xsize;
+	//xsize+=4;
+	//xsize+=
+	t.put(pkg);
+	//return xsize;
 }
 U32 tPkgFile::size() {
 	return(name.size() + 4 + msize);
 }
 U32 tPkgFile::avgsize() { return this->size(); }
 void tPkgFile::setName(const void * x) {
-	name=x;
+	name=(char *)x;
 }
 void tPkgFile::setName(const tStrBuf & x) {
 	name=x;
@@ -112,15 +114,16 @@ void tPkg::store(tBBuf &t) {
 	}
 	printf("done loading tPkgs\n");
 }
-int tPkg::stream(tBBuf &t) {
-	U32 s=6+8;
+void tPkg::stream(tBBuf &t) {
+	//U32 s=6+8;
 	t.write((Byte *)"alcugs",6);
 	t.putU32(version);
 	t.putU32(n);
 	for(U32 i=0; i<n; i++) {
-		s+=t.put(*lpkgs[i]);
+		//s+=
+		t.put(*lpkgs[i]);
 	}
-	return s;
+	//return s;
 }
 U32 tPkg::size() {
 	U32 s=8+6;

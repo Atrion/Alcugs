@@ -16,6 +16,7 @@ Proposed:
 * Underscores "_" are going to be removed, and "this_name" will be replaced with "ThisName"
 * Exceptions will start with "tx". (txNoFile, txTooLong, txTooBig, txNoName, ...)
 * Messages will start with "tm". (tmNetMsgPing, tmNetMsgVoice, tmNetCustomMsgXX, ...)
+* Vault Types will start with "tv". (tvMessage, tvItem, tvCreatableGenericValue, ...)
 * Private vars in a module will be tvVarName or txvVarName
 * Class methods will start with the first letter in lowercase.
 

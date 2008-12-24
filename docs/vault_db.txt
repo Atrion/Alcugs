@@ -1,108 +1,95 @@
-#This will create the table where all nodes are stored.
+#This will create the table where all nodes are stored
 
-CREATE TABLE `vault` (\
-  `idx` int(11) NOT NULL auto_increment,
-  `type` tinyint(1) unsigned NOT NULL default '0',
-  `permissions` int(11) NOT NULL default '0',
-  `owner` int(11) NOT NULL default '0',
-  `unk1` int(11) NOT NULL default '0',
-  `timestamp` int(11) NOT NULL default '0',
-  `microseconds` int(11) NOT NULL default '0',
-  `id1` int(11) NOT NULL default '0',
-  `timestamp2` int(11) NOT NULL default '0',
-  `microseconds2` int(11) NOT NULL default '0',
-  `timestamp3` int(11) NOT NULL default '0',
-  `microseconds3` int(11) NOT NULL default '0',
-  `age_name` varchar(255) NOT NULL default '',
-  `age_guid` varchar(16) NOT NULL default '',
-  `torans` int(11) NOT NULL default '0',
-  `distance` int(11) NOT NULL default '0',
-  `elevation` int(11) NOT NULL default '0',
-  `unk5` int(11) NOT NULL default '0',
-  `id2` int(11) NOT NULL default '0',
-  `unk7` int(11) NOT NULL default '0',
-  `unk8` int(11) NOT NULL default '0',
-  `unk9` int(11) NOT NULL default '0',
-  `entry_name` varchar(255) NOT NULL default '',
-  `sub_entry_name` varchar(255) NOT NULL default '',
-  `owner_name` varchar(255) NOT NULL default '',
-  `guid` varchar(255) NOT NULL default '',
-  `str1` varchar(255) NOT NULL default '',
-  `str2` varchar(255) NOT NULL default '',
-  `avie` varchar(255) NOT NULL default '',
-  `uid` varchar(255) NOT NULL default '',
-  `entry_value` varchar(255) NOT NULL default '',
-  `entry2` varchar(255) NOT NULL default '',
-  `data_size` int(11) NOT NULL default '0',
-  `entry2` varchar(255) NOT NULL default '',
-  `data_size` int(11) NOT NULL default '0',
-  `data` longblob NOT NULL,
-  `data2_size` int(11) NOT NULL default '0',
-  `data2` longblob NOT NULL,
-  `unk13` int(11) NOT NULL default '0',
-  `unk14` int(11) NOT NULL default '0',
-  `unk15` int(11) NOT NULL default '0',
-  `unk16` int(11) NOT NULL default '0',
-  PRIMARY KEY  (`idx`),
-  KEY `type` (`type`),
-  KEY `owner` (`owner`),
-  KEY `id1` (`id1`),
-  KEY `age_name` (`age_name`),
-  KEY `age_guid` (`age_guid`),
-  KEY `torans` (`torans`),
-  KEY `guid` (`guid`),
-  KEY `avie` (`avie`),
-  KEY `uid` (`uid`)
+CREATE TABLE `vault` (
+ `idx` int NOT NULL auto_increment ,
+ `type` tinyint unsigned NOT NULL default 0,
+ `permissions` int NOT NULL default 0,
+ `owner` int NOT NULL default 0,
+ `grp` int NOT NULL default 0,
+ `mod_time` double NOT NULL default 0,
+ `creator` int NOT NULL default 0,
+ `crt_time` timestamp NOT NULL default 0,
+ `age_time` timestamp NOT NULL default 0,
+ `age_name` varchar(255) NOT NULL default '',
+ `age_guid` varchar(16) NOT NULL default '',
+ `int_1` int NOT NULL default 0,
+ `int_2` int NOT NULL default 0,
+ `int_3` int NOT NULL default 0,
+ `int_4` int NOT NULL default 0,
+ `uint_1` int NOT NULL default 0,
+ `uint_2` int NOT NULL default 0,
+ `uint_3` int NOT NULL default 0,
+ `uint_4` int NOT NULL default 0,
+ `str_1` varchar(255) NOT NULL default '',
+ `str_2` varchar(255) NOT NULL default '',
+ `str_3` varchar(255) NOT NULL default '',
+ `str_4` varchar(255) NOT NULL default '',
+ `str_5` varchar(255) NOT NULL default '',
+ `str_6` varchar(255) NOT NULL default '',
+ `lstr_1` varchar(255) NOT NULL default '',
+ `lstr_2` varchar(255) NOT NULL default '',
+ `text_1` varchar(255) NOT NULL default '',
+ `text_2` varchar(255) NOT NULL default '',
+ `blob_1` longblob NOT NULL ,
+ PRIMARY KEY ( `idx` ) ,
+ KEY `type` ( `type` ) ,
+ KEY `owner` ( `owner` ) ,
+ KEY `creator` ( `creator` ) ,
+ KEY `age_name` ( `age_name` ) ,
+ KEY `age_guid` ( `age_guid` ) ,
+ KEY `int_1` ( `int_1` ) ,
+ KEY `str_4` ( `str_4` ) ,
+ KEY `lstr_1` ( `lstr_1` ) ,
+ KEY `lstr_2` ( `lstr_2` )
 ) TYPE=MyISAM PACK_KEYS=0 AUTO_INCREMENT=20001;
 
-* This table will be useful for the conversion from the Nodes (plasma) to the Vault (H'uru) table.
-** About the names used, well, this names where set a lot of time ago, without having access to a Plasma server,
-and there are several number of code changes required to change only one field name. (But is in the ToDo list)
-** The structure is going to change, and perhaps in the next server build, there will be changes in the format of all
-the timestamp fields.
+This table will be useful for the conversion from the Nodes (plasma) to the Vault (H'uru) table.
+(the structure might change in future)
 
-VaultManager Name  ||  Plasma DB field Name  ||   H'uru DB field Name
-[Index]                 Idx                        idx
-[Type]                  NodeType/NodeTypeStr       type
-[Permissions]           Permissions                permissions
-[Owner ID]              OwnerIdx                   owner
-[Group ID]              GroupIdx                   unk1
-[Modify Time]           ModifyTime                 timestamp & microseconds
-[Creator ID]            CreatorIdx                 id1
-[Create Time]           AutoTime                   timestamp2 & microseconds2
-[Create Age Time]       CreateAgeTime              timestamp3 & microseconds3
-[Create Age Coords]     CreateAgeCoordsBlobIdx     **unused** (Never found a example in more than 1GB of logs)
-[Create Age Name]       CreateAgeName              age_name
-[Create Age Guid]       CreateAgeGuid              age_guid
-[Int32_1]               Int32_1                    torans
-[Int32_2]               Int32_2                    distance
-[Int32_3]               Int32_3                    elevation
-[Int32_4]               Int32_4                    unk5
-[UInt32_1]              UInt32_1                   id2
-[UInt32_2]              UInt32_2                   unk7
-[UInt32_3]              UInt32_3                   unk8
-[UInt32_4]              UInt32_4                   unk9
-[String64_1]            String64_1                 entry_name
-[String64_2]            String64_2                 sub_entry_name
-[String64_3]            String64_3                 owner_name
-[String64_4]            String64_4                 guid
-[String64_5]            String64_5                 str1
-[String64_6]            String64_6                 str2
-[lString64_1]           lString64_1                avie
-[lString64_2]           lString64_2                uid
-[Text_1]                Text_1                     entry_value
-[Text_2]                Text_2                     entry2
-[Blob1 data]            **not stored in db**       data_size (contains the size of the binary data)
-                                                   data (It's a longblob, and contains binary data, jpgs,sdls,journals...)
-[Blob2 data]            **not stored in db**       data2_size (contains the size of the binary data)
-                                                   data2 (It's a longblob, and contains binary data, jpgs,sdls,journals...)
-[Blob1_guid]            Blob1Guid                  **unused** They're the unk13 & unk14 and both must be zero always
-[Blob2_guid]            Blob2Guid                  **unused** They're the unk15 & unk16 and both must be zero always
+VaultManager Name  ||  Plasma DB field Name  ||  Alcugs DB field Name (v0-2)  || Alcugs DB field Name (v3)
+[Index]                 Idx                        idx                             idx
+[Type]                  NodeType/NodeTypeStr       type                            type
+[Permissions]           Permissions                permissions                     permissions
+[Owner ID]              OwnerIdx                   owner                           owner
+[Group ID]              GroupIdx                   unk1                            grp (group is a SQL keyword)
+[Modify Time]           ModifyTime                 timestamp, microseconds         mod_time
+[Creator ID]            CreatorIdx                 id1                             creator
+[Create Time]           AutoTime                   timestamp2, microseconds2       crt_time (microseconds are always 0)
+[Create Age Coords]     CreateAgeCoordsBlobIdx     **unused**                      **unused**
+[Create Age Time]       CreateAgeTime              timestamp3, microseconds3       age_time (microseconds are always 0)
+[Create Age Name]       CreateAgeName              age_name                        age_name
+[Create Age Guid]       CreateAgeGuid              age_guid                        age_guid
+[Int32_1]               Int32_1                    torans                          int_1
+[Int32_2]               Int32_2                    distance                        int_2
+[Int32_3]               Int32_3                    elevation                       int_3
+[Int32_4]               Int32_4                    unk5                            int_4
+[UInt32_1]              UInt32_1                   id2                             uint_1
+[UInt32_2]              UInt32_2                   unk7                            uint_2
+[UInt32_3]              UInt32_3                   unk8                            uint_3
+[UInt32_4]              UInt32_4                   unk9                            uint_4
+[String64_1]            String64_1                 entry_name                      str_1
+[String64_2]            String64_2                 sub_entry_name                  str_2
+[String64_3]            String64_3                 owner_name                      str_3
+[String64_4]            String64_4                 guid                            str_4
+[String64_5]            String64_5                 str1                            str_5
+[String64_6]            String64_6                 str2                            str_6
+[lString64_1]           lString64_1                avie                            lstr_1
+[lString64_2]           lString64_2                uid                             lstr_2
+[Text_1]                Text_1                     entry_value                     text_1
+[Text_2]                Text_2                     entry2                          text_2
+[Blob1 data]            **not stored in db**       data                            blob_1
+[Blob2 data]            **not stored in db**       data2                           **unused**
+[Blob1_guid]            Blob1Guid                  **unused**                      **unused**
+[Blob2_guid]            Blob2Guid                  **unused**                      **unused**
+
+CreateAgeCoordsBlobIdx was never seen in more than 1GB of logs
+Blob1_guid and Blob2_guid must always be empty
 
 
-* All timestamp, and microseconds fields must contain an integer value.
-All timestamp fields contain Seconds since 1 January of 1970, all of them are mandatory!
-All microseconds fields can be zero without any problem.
+* v0-2:
+  -All timestamp, and microseconds fields must contain an integer value.
+  -All timestamp fields contain Seconds since 1 January of 1970, all of them are mandatory!
+* All microseconds fields can be zero without any problem.
 
 * The H'uru server has Access levels for the user account, and for each player.
 
@@ -130,9 +117,7 @@ Currently there aren't much checks in this value, since we can't trust it becaus
 field throught python. (But it will be used in the future, when the permissions code is finished and working)
 
 * All the binary data, that is stored in the filesystem, in the H'uru server is stored in the database as
-binary data. So all the blobs, need to be inserted into the adecuated data and data2 fields, updating the corresponding
-data_size and data2_size fields. (both fields are unused, but is used in some place to verify that the returned size by
-mysql matches the stored size.) (I think that both size fields will be deleted in the future).
+binary data. So all the blobs, need to be inserted into the adecuated data/blob1 field
 
 
 The vault database used by the plasma servers has two tables where node references
@@ -174,3 +159,4 @@ Well, I don't know if all the required necessary information is here,
 let me know any question(s) that you may have.
 
 ~Almlys
+(updated by diafero for later alcugs database versions)

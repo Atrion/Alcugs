@@ -28,13 +28,13 @@
 //Program vars
 #define IN_ALC_PROGRAM
 #define ALC_PROGRAM_ID "$Id$"
-#define ALC_PROGRAM_NAME "UruTestingSuit"
+#define ALC_PROGRAM_NAME "UruTestingSuite"
 
-#include<alcugs.h>
-#include<urunet/unet.h>
+#include <alcugs.h>
+#include <alcnet.h>
 
 
-#include<alcdebug.h>
+#include <alcdebug.h>
 
 using namespace alc;
 
@@ -45,6 +45,7 @@ void parameters_usage() {
 	printf(alcVersionText());
 	printf("Usage: urumsgtest peer:port [options]\n\n\
  -f x: Set the file to upload\n\
+ -z: Compress the file\n\
  -val x: set validation level (0-3) (default 2)\n\
  -nl: enable netcore logs\n\
  -V: show version and end\n\
@@ -61,25 +62,47 @@ void parameters_usage() {
 class tmData :public tmMsgBase {
 public:
 	virtual void store(tBBuf &t);
-	virtual int stream(tBBuf &t);
-	tmData(tNetSession * u=NULL);
+	virtual void stream(tBBuf &t);
+	tmData(tNetSession * u);
+	void setCompressed(void) {
+		compressed=true;
+	}
+	bool compressed;
 	//format
 	tMBuf data;
 };
 
 tmData::tmData(tNetSession * u)
- :tmMsgBase(0x1313,plNetTimestamp | plNetAck,u) {}
+ :tmMsgBase(NetMsgCustomTest,plNetTimestamp | plNetAck,u) { compressed = false; }
 void tmData::store(tBBuf &t) {
 	tmMsgBase::store(t);
 	data.clear();
-	t.get(data);
+	compressed = hasFlags(plNetX);
+	if (compressed) {
+		tZBuf zdata;
+		t.get(zdata);
+		zdata.uncompress(x);
+		zdata.get(data);
+		if (data.size() != x) throw txBase(_WHERE("size mismatch (%d != %d)", data.size(), x));
+	}
+	else
+		t.get(data);
 }
-int tmData::stream(tBBuf &t) {
-	int off;
-	off=tmMsgBase::stream(t);
-	t.put(data);
-	off+=data.size();
-	return off;
+void tmData::stream(tBBuf &t) {
+	if (compressed) {
+		setFlags(plNetX);
+		x = data.size(); // the X value saves the uncompressed size
+	}
+	tmMsgBase::stream(t);
+	if (compressed) {
+		tZBuf zdata;
+		zdata.put(data);
+		zdata.compress();
+		t.put(zdata);
+	}
+	else {
+		t.put(data);
+	}
 }
 
 
@@ -100,7 +123,10 @@ public:
 		urgent=true;
 	}
 	void setFile(char * file) {
-		strcpy(this->file,file);
+		strncpy(this->file,file,499);
+	}
+	void setCompressed(void) {
+		compressed=true;
 	}
 private:
 	Byte listen;
@@ -109,6 +135,7 @@ private:
 	U16 d_port;
 	Byte validation;
 	bool urgent;
+	bool compressed;
 	char file[500];
 	bool sent;
 	tNetSessionIte dstite;
@@ -119,13 +146,13 @@ tUnetSimpleFileServer::tUnetSimpleFileServer(char * lhost,U16 lport,Byte listen)
 	this->setBindAddress(lhost);
 	this->listen=listen;
 	out=lstd;
-	setTimer(1);
-	updatetimer(1000);
+	setIdleTimer(1);
 	d_host=NULL;
 	d_port=5000;
 	validation=2;
 	urgent=false;
 	sent=false;
+	compressed=false;
 	dstite.ip=0;
 	dstite.port=0;
 	dstite.sid=-1;
@@ -149,9 +176,9 @@ void tUnetSimpleFileServer::onStart() {
 }
 
 void tUnetSimpleFileServer::onIdle(bool idle) {
+	updateTimerRelative(1000);
 	if(listen==0) {
 		if(!sent) {
-			tmData data;
 			tNetSession * u=NULL;
 			u=getSession(dstite);
 			if(u==NULL) {
@@ -159,14 +186,15 @@ void tUnetSimpleFileServer::onIdle(bool idle) {
 				return;
 			}
 			if(!u->isConnected()) return;
-			data.setDestination(u);
+			tmData data(u);
 			if(urgent) data.setUrgent();
+			if (compressed) data.setCompressed();
 			tFBuf f1;
 			f1.open(file);
 			data.data.clear();
 			data.data.put(f1);
 			f1.close();
-			u->send(data);
+			send(data);
 			sent=true;
 		} else {
 			if(idle) {
@@ -179,13 +207,13 @@ void tUnetSimpleFileServer::onIdle(bool idle) {
 int tUnetSimpleFileServer::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
 	int ret=0;
 
-	tmData data;
-
 	switch(msg->cmd) {
-		case 0x1313:
+		case NetMsgCustomTest:
 			if(listen!=0) {
-				tmData data;
-				msg->data->get(data);
+				tmData data(u);
+				msg->data.get(data);
+				log->log("<RCV> [%d] %s\n", msg->sn, data.str());
+				printf("Saving file to rcvmsg.raw...\n");
 				tFBuf f1;
 				f1.open("rcvmsg.raw","wb");
 				f1.put(data.data);
@@ -205,18 +233,6 @@ int tUnetSimpleFileServer::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSessi
 }
 
 tUnetSimpleFileServer * netcore=NULL;
-Byte __state_running=1;
-
-//handler
-void s_handler(int s) {
-	lstd->log("INF: Catch up signal %i\n",s);
-	if(__state_running==0) {
-		lerr->log("killed\n");
-		exit(-1);
-	}
-	__state_running=0;
-	netcore->stop(5);
-}
 
 int main(int argc,char * argv[]) {
 
@@ -228,8 +244,6 @@ int main(int argc,char * argv[]) {
 	U16 l_port=0;
 	//remote settings
 	char hostname[100]="";
-	char username[100]="";
-	char avie[100]="";
 	U16 port=5000;
 	
 	char file[500];
@@ -238,7 +252,7 @@ int main(int argc,char * argv[]) {
 	Byte val=2; //validation level
 	
 	//options
-	Byte listen=0,nlogs=0,urgent=0;
+	Byte listen=0,nlogs=0,urgent=0,compress=0;
 
 	//parse parameters
 	for (i=1; i<argc; i++) {
@@ -248,15 +262,16 @@ int main(int argc,char * argv[]) {
 			return -1;
 		} else if(!strcmp(argv[i],"-lp") && argc>i+1) { i++; l_port=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-rp") && argc>i+1) { i++; port=atoi(argv[i]); }
-		else if(!strcmp(argv[i],"-f") && argc>i+1) { i++; strcpy(file,argv[i]); }
+		else if(!strcmp(argv[i],"-f") && argc>i+1) { i++; strncpy(file,argv[i],499); }
 		else if(!strcmp(argv[i],"-lm")) { listen=1; }
 		else if(!strcmp(argv[i],"-nl")) { nlogs=1; }
 		else if(!strcmp(argv[i],"-val") && argc>i+1) { i++; val=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-u")) { urgent=1; }
+		else if(!strcmp(argv[i],"-z")) { compress=1; }
 		else if(!strcmp(argv[i],"-v") && argc>i+1) { i++; loglevel=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-lh") && argc>i+1) {
 			i++;
-			strcpy(l_hostname,argv[i]);
+			strncpy(l_hostname,argv[i],99);
 		}
 		else if(!strcmp(argv[i],"-l")) {
 			printf(alcVersionTextShort());
@@ -265,11 +280,11 @@ int main(int argc,char * argv[]) {
 		}
 		else if(!strcmp(argv[i],"-rh") && argc>i+1) {
 			i++;
-			strcpy(hostname,argv[i]);
+			strncpy(hostname,argv[i],99);
 		}
 		else {
 			if(i==1) {
-				if(alcGetLoginInfo(argv[1],hostname,username,((U16 *)&port),avie)!=1) {
+				if(alcGetLoginInfo(argv[1],hostname,NULL,((U16 *)&port),NULL)!=1) {
 					parameters_usage();
 					return -1;
 				}
@@ -290,17 +305,17 @@ int main(int argc,char * argv[]) {
 
 		netcore=new tUnetSimpleFileServer(l_hostname,l_port,listen);
 		
-		netcore->setFlags(UNET_LQUIET);
 		if(nlogs) {
 			netcore->setFlags(UNET_ELOG | UNET_FLOG);
 		} else {
 			netcore->unsetFlags(UNET_ELOG | UNET_FLOG);
+			netcore->setFlags(UNET_LQUIET);
 		}
 		if(loglevel!=0) netcore->setFlags(UNET_ELOG);
 
 		while(listen==0 && !strcmp(hostname,"")) {
 			printf("\nHostname not set, please enter destination host: ");
-			strcpy(hostname,alcConsoleAsk());
+			strncpy(hostname,alcConsoleAsk(),99);
 		}
 
 		if(listen==0 && !strcmp(file,"")) {
@@ -309,7 +324,7 @@ int main(int argc,char * argv[]) {
 		}
 		
 		if(listen==0) {
-			printf("Connecting to %s#%s@%s:%i...\n",username,avie,hostname,port);
+			printf("Connecting to %s:%i...\n",hostname,port);
 			printf("Sending file...\n");
 		} else {
 			printf("Waiting for messages... CTR+C stops\n");
@@ -321,6 +336,7 @@ int main(int argc,char * argv[]) {
 		netcore->setValidation(val);
 		netcore->setDestinationAddress(hostname,port);
 		if(urgent==1) netcore->setUrgent();
+		if(compress==1) netcore->setCompressed();
 		netcore->setFile(file);
 		
 		netcore->run();
@@ -332,8 +348,10 @@ int main(int argc,char * argv[]) {
 		
 	} catch(txBase &t) {
 		printf("Exception %s\n%s\n",t.what(),t.backtrace());
+		return -1;
 	} catch(...) {
 		printf("Unknown Exception\n");
+		return -1;
 	}
 	
 	return 0;

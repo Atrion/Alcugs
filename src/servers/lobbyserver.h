@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2006  The Alcugs Server Team                           *
+*    Copyright (C) 2004-2008  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -45,8 +45,24 @@ namespace alc {
 		If we want to do it well and nice, we should add pre and post conditions here.
 	*/
 
-	class tUnetLobbyServer :public tUnetLobbyServerBase {
-	
+	class tUnetLobbyServer : public tUnetLobbyServerBase {
+	public:
+		tUnetLobbyServer(void);
+		
+		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
+		virtual void onLoadConfig(void);
+	private:
+		bool loadWithGame2(const char *age);
+		
+		Byte website[256];
+		Byte gameLogPath[256];
+		Byte gameConfig[256];
+		Byte gameBin[256];
+		bool loadOnDemand;
+		
+		Byte game2Bin[256];
+		Byte game2Ages[256];
+		Byte game2Config[256];
 	};
 	
 } //End alc namespace

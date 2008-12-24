@@ -37,8 +37,6 @@
 
 namespace alc {
 
-using namespace std;
-
 /**
 	Waits for user input, blocks until user has not entered something followed by return
 */
@@ -68,6 +66,7 @@ int alcGetLoginInfo(char * argv,char * hostname,char * username,U16 * port,char 
 	char left[100]="";
 	char mid[100]="";
 	char right[100]="";
+	char user[100]="";
 
 	for(i=0; i<strlen(argv); i++) {
 
@@ -100,18 +99,18 @@ int alcGetLoginInfo(char * argv,char * hostname,char * username,U16 * port,char 
 
 	switch (q) {
 		case 0:
-			strcpy(hostname,left);
+			strncpy(hostname,left,99);
 			break;
 		case 1:
-			strcpy(username,left);
-			strcpy(hostname,mid);
+			strncpy(user,left,99);
+			strncpy(hostname,mid,99);
 			break;
 		case 2:
 			if(b!=0) {
-				strcpy(username,left);
-				strcpy(hostname,mid);
+				strncpy(user,left,99);
+				strncpy(hostname,mid,99);
 			} else {
-				strcpy(hostname,left);
+				strncpy(hostname,left,99);
 			}
 			*port=atoi(right);
 			break;
@@ -119,17 +118,17 @@ int alcGetLoginInfo(char * argv,char * hostname,char * username,U16 * port,char 
 
 	//check for avie
 	a=0; b=0; q=0;
-	for(i=0; i<strlen(username); i++) {
+	for(i=0; i<strlen(user); i++) {
 
-		if(username[i]=='#') { q=1; }
+		if(user[i]=='#') { q=1; }
 		else {
 			switch (q) {
 				case 0:
-					left[a]=username[i];
+					left[a]=user[i];
 					a++;
 					break;
 				case 1:
-					mid[b]=username[i];
+					mid[b]=user[i];
 					b++;
 					break;
 			}
@@ -140,11 +139,14 @@ int alcGetLoginInfo(char * argv,char * hostname,char * username,U16 * port,char 
 
 	switch (q) {
 		case 0:
-			strcpy(username,left);
+			if (username != 0)
+				strncpy(username,left,99);
 			break;
 		case 1:
-			strcpy(username,left);
-			strcpy(avie,mid);
+			if (username != 0)
+				strncpy(username,left,99);
+			if (avie != 0)
+				strncpy(avie,mid,99);
 			break;
 	}
 
@@ -190,7 +192,7 @@ char alcIsAlpha(int c) {
 	return(IsCharAlpha(c));
 #else
   return(index("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZáàâä\
-éèêëóòôöúùûüçÇñÑ", c)!=NULL); //<- Some characters are not visible on UTF systems, or under other codifications, so you may see garbage
+éèêëíìîïóòôöúùûüçÇñÑß", c)!=NULL); //<- Some characters are not visible on UTF systems, or under other codifications, so you may see garbage
 #endif
 }
 

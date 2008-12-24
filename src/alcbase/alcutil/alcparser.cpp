@@ -52,24 +52,25 @@ tSimpleParser::tSimpleParser() {
 }
 U32 tSimpleParser::size() {
 	tStrBuf s;
-	return stream(s);
+	stream(s);
+	return s.size();
 }
 void tSimpleParser::store(tBBuf &t) {
 	tStrBuf s(t);
 	store(s);
 }
-int tSimpleParser::stream(tBBuf &t) {
+void tSimpleParser::stream(tBBuf &t) {
 	tStrBuf s;
-	int ret=stream(s);
+	//int ret=
+	stream(s);
 	t.put(s);
-	return ret;
+	//return ret;
 }
 
 void tSimpleParser::store(tStrBuf &t) {
 	if(!cfg) return;
 	tStrBuf key,val;
 	DBG(4,"Store\n");
-	//assert(!t.eof());
 	while(!t.eof()) {
 		key = t.getToken();
 		DBG(5,"Reading token %s\n",key.c_str());
@@ -79,9 +80,9 @@ void tSimpleParser::store(tStrBuf &t) {
 			val = t.getToken();
 			if(val=="=") {
 				val = t.getToken();
-			}
-			if(val=="=") {
-				throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token '%s'. A valid variable value was expected.\n",t.getLineNum(),t.getColumnNum(),val.c_str()));
+				if(val=="=") {
+					throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token '%s'. A valid variable value was expected.\n",t.getLineNum(),t.getColumnNum(),val.c_str()));
+				}
 			}
 			if(val=="\n") {
 				t.seek(-1);
@@ -100,10 +101,10 @@ void tSimpleParser::store(tStrBuf &t) {
 		}
 	}	
 }
-int tSimpleParser::stream(tStrBuf &t) {
-	U32 start=t.tell();
+void tSimpleParser::stream(tStrBuf &t) {
+	//U32 start=t.tell();
 	DBG(4,"stream()\n");
-	if(!cfg) return 0;
+	if(!cfg) return;
 	DBG(5,"cfg->rewind()\n");
 	cfg->rewind();
 	tConfigKey * key;
@@ -128,7 +129,7 @@ int tSimpleParser::stream(tStrBuf &t) {
 			t.nl();
 		}
 	}
-	return (t.tell()-start);
+	//return (t.tell()-start);
 }
 void tSimpleParser::setConfig(tConfig * c) {
 	DBG(5,"setconfig()\n");
@@ -138,26 +139,12 @@ tConfig * tSimpleParser::getConfig() {
 	return cfg;
 }
 
-tXParser::tXParser() :tSimpleParser() {
-	
+tXParser::tXParser(bool override) :tSimpleParser() {
+	this->override = override;
 }
 
 void tXParser::setBasePath(tStrBuf & base) {
 	path=base;
-}
-
-U16 tXParser::parseKey(tStrBuf &t) {
-	int pos;
-	pos=t.find('[');
-	tStrBuf offset;
-	if(pos==-1) return 0;
-	if(!t.endsWith("]")) {
-		throw txParseError(_WHERE("Parse error near %s, malformed var name.\n",t.c_str()));
-	}
-	offset=t.substring(pos,t.size()-pos);
-	offset=offset.strip('[').strip(']');
-	t.setSize(pos);
-	return offset.asU16();
 }
 
 void tXParser::store(tStrBuf &t) {
@@ -169,7 +156,7 @@ void tXParser::store(tStrBuf &t) {
 
 	while(!t.eof()) {
 		key = t.getToken();
-		if(key!="\n" && key!=" ") {
+		if(key!="\n") {
 			DBG(9,"Reading token %s\n",key.c_str());
 			//check for section
 			if(key.startsWith("[") && key.endsWith("]")) {
@@ -180,20 +167,18 @@ void tXParser::store(tStrBuf &t) {
 			//check for read_config
 			if(key=="read_config") {
 				val = t.getToken();
-				if(val==" ") val=t.getToken();
 				if(val=="=") {
 					t.getToken();
-					if(val==" ") val=t.getToken();
 				}
 				#if defined(__WIN32__) or defined(__CYGWIN__)
 					val.convertSlashesFromWinToUnix();
-					if(val[1]==':' || val[0]=='/') {
+					if(val.getAt(1)==':' || val.getAt(0)=='/') {
 						key=val;
 					} else {
 						key=path + "/" + val;
 					}
 				#else
-					if(val[0]=='/') {
+					if(val.getAt(0)=='/') {
 						key=val;
 					} else {
 						key=path + "/" + val;
@@ -210,33 +195,32 @@ void tXParser::store(tStrBuf &t) {
 				throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token '%s'. A variable name was expected.\n",t.getLineNum(),t.getColumnNum(),key.c_str()));
 			} else {
 				//get table offsets
-				y=parseKey(key);
+				y=alcParseKey(key);
 				DBG(5,"**Key %s at %i\n",key.c_str(),y);
 				//get separator
 				val = t.getToken();
-				if(val==" ") val=t.getToken();
 				if(val!="=") {
-					throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token '%s. '=' was expected.\n",t.getLineNum(),t.getColumnNum(),val.c_str()));
+					throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token '%s'. '=' was expected.\n",t.getLineNum(),t.getColumnNum(),val.c_str()));
 				}
 				//get value(s)
 				val=",";
 				while(val==",") {
 					val = t.getToken();
-					if(val==" ") val=t.getToken();
 					if(val==",") { x++; continue; }
 					if(val=="=") {
 						throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token '%s'. A valid variable value was expected.\n",t.getLineNum(),t.getColumnNum(),val.c_str()));
 					}
+					if (!override)
+						while (!cfg->getVar(key.c_str(),section.c_str(),x,y).isNull()) ++y; // if override is disabled, go to next row
 					if(val=="\n") {
 						val="";
 						cfg->setVar(val,key,section,x++,y);
 					} else {
 						cfg->setVar(val,key,section,x++,y);
 						val=t.getToken();
-						if(val==" ") val=t.getToken();
 					}
 				}
-				if(val!="\n") {
+				if(!t.eof() && val!="\n") {
 					throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token '%s'. A newline was expected.\n",t.getLineNum(),t.getColumnNum(),val.c_str()));
 				}
 			}
@@ -244,10 +228,9 @@ void tXParser::store(tStrBuf &t) {
 	}
 }
 
-int tXParser::stream(tStrBuf &t) {
-	U32 start=t.tell();
+void tXParser::stream(tStrBuf &t) {
 	DBG(4,"stream()\n");
-	if(!cfg) return 0;
+	if(!cfg) return;
 	DBG(5,"cfg->rewind()\n");
 	cfg->rewind();
 	tConfigKey * key;
@@ -285,7 +268,6 @@ int tXParser::stream(tStrBuf &t) {
 			}
 		}
 	}
-	return (t.tell()-start);
 }
 
 

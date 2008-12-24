@@ -67,13 +67,13 @@ void tPyPkgFile::store(tBBuf &t) {
 		pkg.rewind();
 	}
 }
-int tPyPkgFile::stream(tBBuf &t) {
+void tPyPkgFile::stream(tBBuf &t) {
 	msize=pkg.size();
 	t.putU32(msize-8);
 	pkg.rewind();
 	pkg.read(8);
 	t.write(pkg.read(),msize-8);
-	return msize-4;
+	//return msize-4;
 }
 U32 tPyPkgFile::size() {
 	return(pkg.size()-4);
@@ -81,7 +81,7 @@ U32 tPyPkgFile::size() {
 U32 tPyPkgFile::avgsize() { return this->size(); }
 void tPyPkgFile::setName(const void * x) {
 	//printf("assing %s\n",x);
-	name=x;
+	name=(char *)x;
 }
 void tPyPkgFile::setName(const tStrBuf & x) {
 	name=x;
@@ -118,7 +118,7 @@ void tPyPkg::store(tBBuf &t) {
 		//printf("size:%u,off:%u\n",t.size(),t.tell());
 		t.get(name);
 		Byte xxxname[300];
-		strcpy((char *)xxxname,(char *)name.str());
+		strcpy((char *)xxxname,(char *)name.c_str());
 		strcat((char *)xxxname,"c");
 		lpkgs[i]->setName(xxxname);
 		poff=t.getU32();
@@ -130,12 +130,12 @@ void tPyPkg::store(tBBuf &t) {
 	}
 	//printf("done loading packages\n");
 }
-int tPyPkg::stream(tBBuf &t) {
+void tPyPkg::stream(tBBuf &t) {
 	U32 base;
-	U32 s=0;
+	//U32 s=0;
 	base=t.tell();
 	t.putU32(n);
-	s+=4;
+	//s+=4;
 	U32 hsize=4,wtf;
 	tUStr work(5);
 	//printf("size: %u\n",t.size());
@@ -155,20 +155,22 @@ int tPyPkg::stream(tBBuf &t) {
 		//work.assing(lpkgs[i]->getName(),strlen((char *)lpkgs[i]->getName())-1);
 		work=lpkgs[i]->getName();
 		t.set(wtf);
-		s+=work.stream(t,0x01);
+		//s+=
+		work.stream(t);
 		//printf("size-work: %u\n",t.size());
 		t.putU32(hsize);
 		//printf("size-hsize: %u\n",t.size());
-		s+=4;
+		//s+=4;
 		wtf=t.tell();
 		t.set(base+hsize);
-		s+=t.put(*lpkgs[i]);
+		//s+=
+		t.put(*lpkgs[i]);
 		//printf("size-lpkgs: %u\n",t.size());
 		hsize+=lpkgs[i]->size();
 		//printf("size-end%i: %u\n",i,t.size());
 	}
 	//printf("size-final: %u\n",t.size());
-	return s;
+	//return s;
 }
 U32 tPyPkg::size() {
 	U32 s=4;

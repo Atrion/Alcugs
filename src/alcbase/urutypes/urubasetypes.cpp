@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_URUBASICTYPES_ID "$Id$"
 
-#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
 
@@ -50,8 +50,6 @@ namespace wdys {
 
 namespace alc {
 
-using namespace std;
-
 /* wdys buff */
 void tWDYSBuf::encrypt() {
 	tRefBuf * aux=this->buf;
@@ -59,14 +57,12 @@ void tWDYSBuf::encrypt() {
 	this->buf = new tRefBuf(msize+12+4+8);
 	this->buf->zero();
 	U32 xsize=msize;
-	U32 xstart=mstart;
 	msize=0;
-	mstart=0;
 	off=0;
 	
 	write((Byte *)"whatdoyousee",(U32)sizeof(char)*12);
 	putU32(xsize);
-	write(aux->buf+xstart,xsize);
+	write(aux->buf,xsize);
 	set(16);
 	msize=16;
 	
@@ -79,19 +75,17 @@ void tWDYSBuf::encrypt() {
 	off=0;
 }
 void tWDYSBuf::decrypt() {
-	if(memcmp(this->buf->buf+mstart,"whatdoyousee",12)) throw txUnexpectedData(_WHERE("NotAWDYSFile!")); 
+	if(memcmp(this->buf->buf,"whatdoyousee",12)) throw txUnexpectedData(_WHERE("NotAWDYSFile!")); 
 	set(12);
 	U32 dsize=getU32();
 	tRefBuf * aux=this->buf;
 	aux->dec();
 	this->buf = new tRefBuf(msize);
 	U32 xsize=msize;
-	U32 xstart=mstart;
 	msize=0;
-	mstart=0;
 	off=0;
 	
-	write(aux->buf+xstart+16,xsize-16);
+	write(aux->buf+16,xsize-16);
 	msize=dsize;
 	off=0;
 	
@@ -125,20 +119,18 @@ void tAESBuf::encrypt() {
 	this->buf = new tRefBuf(msize+4+4+16);
 	this->buf->zero();
 	U32 xsize=msize;
-	U32 xstart=mstart;
 	msize=0;
-	mstart=0;
 	off=0;
 	
 	putU32(0x0D874288);
 	putU32(xsize);
-	write(aux->buf+xstart,xsize);
+	write(aux->buf,xsize);
 	set(8);
 	msize=8;
 
 	Rijndael rin;
 	rin.init(Rijndael::ECB,Rijndael::Encrypt,key,Rijndael::Key16Bytes);
-	int res = rin.padEncrypt(aux->buf+xstart,xsize,this->buf->buf+off);
+	int res = rin.padEncrypt(aux->buf,xsize,this->buf->buf+off);
 	if(res<0) throw txUnkErr(_WHERE("Rijndael encrypt error"));
 	msize+=res;
 	
@@ -152,19 +144,17 @@ void tAESBuf::decrypt() {
 	aux->dec();
 	this->buf = new tRefBuf(msize);
 	U32 xsize=msize;
-	U32 xstart=mstart;
 	msize=0;
-	mstart=0;
 	off=0;
 	
-	write(aux->buf+xstart+8,xsize-8);
-	msize=*(U32 *)(aux->buf+xstart+4);
+	write(aux->buf+8,xsize-8);
+	msize=*(U32 *)(aux->buf+4);
 	off=0;
 
 	Rijndael rin;
 	rin.init(Rijndael::ECB,Rijndael::Decrypt,key,Rijndael::Key16Bytes);
 
-	int res = rin.padDecrypt(aux->buf+xstart+8,xsize-8,buf->buf+off);
+	int res = rin.padDecrypt(aux->buf+8,xsize-8,buf->buf+off);
 	if(res<0) throw txUnkErr(_WHERE("Rijndael decrypt error %i",res));
 
 	if(aux->getRefs()<1) delete aux;
@@ -174,91 +164,157 @@ void tAESBuf::decrypt() {
 
 
 /* tUStr */
-tUStr::tUStr(Byte mode) {
+tUStr::tUStr(int mode) : tStrBuf() {
 	this->version=mode;
-	name=NULL;
-	msize=0;
 }
-tUStr::~tUStr() {
-	if(name!=NULL) free((void *)name);
+tUStr::tUStr(const void *k, int mode) : tStrBuf(k) {
+	this->version=mode;
 }
-int tUStr::stream(tBBuf &buf,bool inv) {
-	int spos = buf.tell();
+tUStr::tUStr(const tUStr &t) : tStrBuf(t) {
+	this->version = t.version;
+}
+tUStr::tUStr(const tStrBuf &t, int mode) : tStrBuf(t) {
+	this->version = mode;
+}
+void tUStr::stream(tBBuf &b) {
+	if (version == 0x04)
+		throw txBase(_WHERE("Can't send version 0x04 (normal+hex)")); 
+
+	//int spos = b.tell();
 	U16 ize = msize;
-	if(version!=0x01) inv=false;
+	bool inv=false;
 	if(version==0x05) inv=true;
 	if(inv) ize|=0xF000;
-	buf.putU16(ize);
+	b.putU16(ize);
+	
 	if(!inv) {
 		if(version!=0x06) {
-			buf.write(name,msize);
+			b.write(buf->buf, msize);
 		} else { //this is required to parse Myst 5 strings
 			Byte key[9]="mystnerd";
-			for(int i=0; i<msize; i++) {
-				buf.putByte(name[i] ^ key[i%8]);
+			for(U32 i=0; i<msize; i++) {
+				b.putByte(buf->buf[i] ^ key[i%8]);
 			}
 		}
 	} else {
-		for(int i=0; i<msize; i++) {
-			buf.putByte(~name[i]);
+		for(U32 i=0; i<msize; i++) {
+			b.putByte(~buf->buf[i]);
 		}
 	}
-	return (buf.tell() - spos);
+	//return (b.tell() - spos);
 }
-int tUStr::stream(tBBuf &buf) {
-	return(this->stream(buf,0));
-}
-void tUStr::store(tBBuf &buf) {
-	U16 ize = buf.getU16();
+void tUStr::store(tBBuf &b) {
+	U16 ize = b.getU16();
 	U16 how= (ize>>8) & 0xF0;
-	msize = ize & 0x0FFF;
+	U32 nsize = ize & 0x0FFF;
 	
-	if(name!=NULL) free((void *)name);
+	if(nsize>0xF000) throw txBase(_WHERE("TooBig"));
 	
-	if(msize>0xF000) throw txBase(_WHERE("TooBig"));
-	name=(Byte *)malloc(sizeof(Byte) * (msize+1));
-	if(name==NULL) throw txNoMem(_WHERE("NoMem"));
-
-	if(how==0x00) {
-		if(this->version==0x06) {
-			Byte key[9]="mystnerd";
-			for(int i=0; i<msize; i++) {
-				name[i]=buf.getByte() ^ key[i%8];
+	clear();
+	if (nsize > 0) { // only read if there's something to read
+		if(how==0x00) {
+			if(this->version==0x06) {
+				Byte key[9]="mystnerd";
+				for(U32 i=0; i<nsize; i++) {
+					putByte(b.getByte() ^ key[i%8]);
+				}
+			} else { // make sure nsize is > 0 here, otherwise read(0) will read the rtest of the buffer
+				if (version != 0x00 && version != 0x01) { // the given version is neither normal nor auto, so it's WRONG
+					throw txUnexpectedData(_WHERE("Version is 0x00, but expected 0x%02X", version));
+				}
+				if (version == 0x01) version = 0x00; // when we are auto-detecting, save the realy version (normal)
+				write(b.read(nsize), nsize);
 			}
 		} else {
-			memcpy(name,buf.read(msize),msize);
-		}
-	} else {
-		if(this->version==0x06) {
-			throw txUnexpectedData(_WHERE("how should be 0x00 for version 0x06"));
-		}
-		for(int i=0; i<msize; i++) {
-			name[i]=~buf.getByte();
+			if(this->version==0x06) {
+				throw txUnexpectedData(_WHERE("how should be 0x00 for version 0x06"));
+			}
+			else if (version != 0x05 && version != 0x01) { // the given version is neither inverted nor auto, so it's WRONG
+				throw txUnexpectedData(_WHERE("Version is 0x05, but expected 0x%02X", version));
+			}
+			if (version == 0x01) version = 0x05; // when we are auto-detecting, save the realy version (inverted)
+			for(U32 i=0; i<nsize; i++) {
+				putByte(~b.getByte());
+			}
 		}
 	}
-	name[msize]=0;
 }
-U32 tUStr::size() { return msize+2; }
-U32 tUStr::len() { return msize; }
-void tUStr::set(Byte * val,U32 _n) {
-	if(name!=NULL) free((void *)name);
-	if(_n==0) {
-		msize=strlen((const char *)val);
-	} else {
-		msize=_n;
-	}
-	if(msize>0xF000) throw txBase(_WHERE("TooBig"));
-	name=(Byte *)malloc(sizeof(Byte) * (msize+1));
-	memset(name,0,sizeof(Byte) * (msize+1));
-	if(name==NULL) throw txNoMem(_WHERE("NoMem"));
-	strncpy((char *)name,(char *)val,msize);
+void tUStr::copy(const tUStr &t)
+{
+	DBG(9,"tUStr::copy()\n");
+	if(this==&t) return;
+	this->_pcopy(t);
 }
-void tUStr::set(char * val,U32 _n) {
-	this->set((Byte *)val,_n);
-}
-Byte * tUStr::str() {
-	return name;
+void tUStr::_pcopy(const tUStr &t)
+{
+	DBG(9, " tUStr::_pcopy()\n");
+	if (&t == this) return;
+	tStrBuf::_pcopy(t);
+	version = t.version;
 }
 /* end tUStr */
+
+/* tUruObject */
+tUruObject::tUruObject(void) : tBaseType()
+{
+	hasCloneId = 0;
+	pageId = 0;
+	pageType = objType = 0;
+	objName.setVersion(5); // inverted UrurString
+	cloneId = clonePlayerId = 0;
+}
+
+void tUruObject::store(tBBuf &t)
+{
+	Byte cloneIdFlag = t.getByte();
+	if (cloneIdFlag != 0x00 && cloneIdFlag != 0x01)
+		throw txUnexpectedData(_WHERE("the clone ID flag of an Uruobject must be 0x00 or 0x01, not 0x%02X", cloneIdFlag));
+	else hasCloneId = cloneIdFlag;
+	pageId = t.getU32();
+	pageType = t.getU16();
+	objType = t.getU16();
+	t.get(objName);
+	
+	// if contained, read the client ID
+	if (hasCloneId) {
+		cloneId = t.getU32();
+		clonePlayerId = t.getU32();
+	}
+}
+
+void tUruObject::stream(tBBuf &t)
+{
+	t.putByte(hasCloneId);
+	t.putU32(pageId);
+	t.putU16(pageType);
+	t.putU16(objType);
+	t.put(objName);
+	if (hasCloneId) {
+		t.putU32(cloneId);
+		t.putU32(clonePlayerId);
+	}
+}
+
+const Byte *tUruObject::str(void)
+{
+	dbg.clear();
+	dbg.printf("Page ID: 0x%08X, Page Type: 0x%04X, Object: [0x%04X]%s", pageId, pageType, objType, objName.c_str());
+	if (hasCloneId)
+		dbg.printf(", Clone ID: %d, Clone Player ID: %d", cloneId, clonePlayerId);
+	return dbg.c_str();
+}
+
+bool tUruObject::operator==(const tUruObject &obj)
+{
+	if (pageId != obj.pageId) return false;
+	if (pageType != obj.pageType) return false;
+	if (objType != obj.objType) return false;
+	if (objName != obj.objName) return false;
+	if (hasCloneId != obj.hasCloneId) return false;
+	if (cloneId != obj.cloneId) return false;
+	if (clonePlayerId != obj.clonePlayerId) return false;
+	return true;
+}
+/* end tUruObject */
 
 } //end namespace alc

@@ -37,7 +37,7 @@ namespace alc {
 /**
   \brief Converts an hex guid to ascii
 */
-const Byte * alcGetStrGuid(Byte * guid) {
+const Byte * alcGetStrGuid(const Byte * guid) {
 	if(guid==NULL) return (const Byte *)"null";
 	static Byte str_guid[17];
 	alcHex2Ascii(str_guid,guid,8);
@@ -47,7 +47,7 @@ const Byte * alcGetStrGuid(Byte * guid) {
 /**
   \brief Converts an hex uid to ascii.
 */
-const Byte * alcGetStrUid(Byte * guid) {
+const Byte * alcGetStrUid(const Byte * guid) {
 	int off1=0;
 	int off2=0;
 	if(guid==NULL) return (const Byte *)"null";
@@ -125,10 +125,11 @@ const Byte * alcGetStrTime(U32 timestamp, U32 microseconds) {
 	static Byte btime[50];
 	Byte tmptime[25];
 	struct tm * tptr;
+	time_t stamp = (time_t)timestamp;
 
-	tptr=gmtime((const time_t *)&timestamp);
-	strftime((char *)tmptime,25,"(%Y:%m:%d:%H:%M:%S",tptr);
-	sprintf((char *)btime,"%s.%06d) ",(char *)tmptime,microseconds);
+	tptr=gmtime(&stamp);
+	strftime((char *)tmptime,25,"%Y:%m:%d-%H:%M:%S",tptr);
+	sprintf((char *)btime,"%s.%06d",(char *)tmptime,microseconds);
 
 	return btime;
 }
@@ -147,8 +148,9 @@ const Byte * alcGetStrTime(double stamp, const char format) {
 				break;
 			case 's':
 			default:
-				micros = (U32)(stamp*1000000) % 1000000;
 				time = (U32)(stamp);
+				micros = (U32)((stamp-time)*1000000);
+				DBG(5, "%f = %d . %d\n", stamp, time, micros);
 				break;
 		}
 	} else {
@@ -164,7 +166,7 @@ const Byte * alcGetStrTime(double stamp, const char format) {
   \param in pointer to the input data
   \param size size of the input data
 */
-void alcHex2Ascii(Byte * out, Byte * in, int size) {
+void alcHex2Ascii(Byte * out, const Byte * in, int size) {
 	int i;
 	for(i=0; i<size; i++) {
 		out[2*i]=  ((in[i] & 0xF0)>>4);
@@ -180,7 +182,7 @@ void alcHex2Ascii(Byte * out, Byte * in, int size) {
   \param in pointer to the input data
   \param size size of the input data (must be 2*size)
 */
-void alcAscii2Hex(Byte * out, Byte * in, int size) {
+void alcAscii2Hex(Byte * out, const Byte * in, int size) {
 	//humm I will write it if i need it :D
 	int i;
 	for(i=0; i<size; i++) {
@@ -190,76 +192,12 @@ void alcAscii2Hex(Byte * out, Byte * in, int size) {
 }
 
 /**
-  \brief Decodes the specific UruString associated to a buffer.
-  \note The result will be put on out, and it must have the required
-	size to host it!!!
-  \return The size of the decoded string is returned, so be sure to add 2
-	to continue moving throught the buffer!!!
-*/
-int alcDecodeUStr(unsigned char* out, unsigned char* in, U16 max_size) {
-	U16 size;
-	Byte how;
-	int i;
-
-	size=*(U16 *)(in) & 0x0FFF;
-	how=(*(Byte *)(in+1) & 0xF0);
-
-	if(size<max_size) max_size=size;
-
-	//print2log(f_uru,"--->HURUSTRING SIZE:%02X - how:%02X<-----\n",size,how);
-	//fprintf(stderr,"--->HURUSTRING SIZE:%02X - how:%02X<-----\n",size,how);
-
-	for(i=0; i<max_size; i++) {
-		if(how!=0x00) { out[i]=~in[i+2]; }
-		else { out[i]=in[i+2]; }
-	}
-	out[i]='\0'; //be sure that is correctly ended!
-
-	return size;
-}
-
-/**
-  \brief Encodes the specific UruString associated to a buffer.
-  \note The result will be put on out, and it must have the required
-	size to host it!!!
-  \param how
-	0x00 -> Normal string
-    0x01 -> Invert Bits string
-  \return The size of the encoded string with its "header" is returned.
-*/
-int alcEncodeUStr(unsigned char* out, unsigned char* in, U16 size, Byte how) {
-	int i;
-	if(how==0x01) { how=0xF0; }
-
-	*(U16 *)(out)=(size & 0x0FFF);
-	*(Byte *)(out+1)=(how & 0xF0);
-
-	for(i=0; i<size; i++) {
-		if(how!=0x00) { out[i+2]=~in[i]; }
-		else { out[i+2]=in[i]; }
-	}
-
-	return size+2;
-}
-
-/** \brief Check if the char X is present n bytes in the buffer
-	\return Returns true if is the case, false in any other case
-*/
-char alcCheckBuf(Byte * buf, Byte car, int n) {
-	int i;
-	for(i=0; i<n; i++) {
-		if(buf[i]!=car) return 0; //false
-	}
-	return 1; //true
-}
-
-/**
 	\brief Strips out some characters that win32 doesn't like in file names
 */
-void alcStrFilter(Byte * what) {
+void alcStrFilter(char * what) {
 	int i=0,e=0;
 	while(what[i]!=0) {
-		if(what[i]!='<' && what[i]!='>' && what[i]!=':' && what[i]!='#' && what[i]!='\\' && what[i]!='/' && what[i]!='*' && what[i]!='?' && what[i]!='"' && what[i]!='|') {
+		if(what[i]!='<' && what[i]!='>' && what[i]!=':' && what[i]!='#' && what[i]!='\\' && what[i]!='/' && what[i]!='*' && what[i]!='?' && what[i]!='"' && what[i]!='\'' && what[i]!='|') {
 			what[e]=what[i];
 			e++; i++;
 		} else {
@@ -268,5 +206,22 @@ void alcStrFilter(Byte * what) {
 	}
 	what[e]='\0';
 }
+
+
+/** \brief parses a "name[number]" kind of string, setting "t" to the name and returning the number */
+U16 alcParseKey(tStrBuf &t) {
+	int pos;
+	pos=t.find('[');
+	tStrBuf offset;
+	if(pos==-1) return 0;
+	if(!t.endsWith("]")) {
+		throw txParseError(_WHERE("Parse error near %s, malformed var name.\n",t.c_str()));
+	}
+	offset=t.substring(pos,t.size()-pos);
+	offset=offset.strip('[').strip(']');
+	t.setSize(pos);
+	return offset.asU16();
+}
+
 
 }

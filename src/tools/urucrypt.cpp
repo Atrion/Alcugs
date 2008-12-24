@@ -44,9 +44,9 @@ using namespace alc;
 
 void usage() {
 #ifdef M5CRYPT
-	char * p="m5crypt";
+	const char * p="m5crypt";
 #else
-	char * p="urucrypt";
+	const char * p="urucrypt";
 #endif
 	printf("Usage:\nFor decrypt: \n\
  %s d source.sdl destination.sdl.dec\n\

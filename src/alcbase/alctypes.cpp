@@ -56,31 +56,6 @@ namespace md5 {
 
 namespace alc {
 
-using namespace std;
-
-/*
-	Abstract base type class
-*/
-SByte tBaseType::compare(tBaseType &t) {
-	DBG(9,"tBaseType::compare()\n");
-	if(this->size()==t.size()) return 0;
-	else if(this->size()<t.size()) return 1;
-	else return -1;
-}
-void tBaseType::_pcopy(tBaseType &t) {
-	DBG(9,"tBaseType::_pcopy()\n");
-}
-void tBaseType::copy(tBaseType &t) {
-	DBG(9,"tBaseType::copy()\n");
-	this->_pcopy(t);
-	tMBuf * aux=new tMBuf();
-	aux->put(t);
-	aux->rewind();
-	this->store(*aux);
-	delete aux;
-}
-/* end base type */
-
 /* 
 	basicbuffer
 */
@@ -136,6 +111,9 @@ void tBBuf::putDouble(double val) {
 	valAsArray[1] = hi;
 #endif
 	this->write((Byte *)&val,8);
+}
+void tBBuf::putFloat(float val) { // TODO: Does this work on big-endian?
+	this->write((Byte *)&val,4);
 }
 U16 tBBuf::getU16() {
 	U16 val;
@@ -198,11 +176,14 @@ double tBBuf::getDouble() {
 #endif
 	return(val);
 }
-U32 tBBuf::put(tBaseType &t) {
-	return(t.stream(*this));
-}
-void tBBuf::get(tBaseType &t) {
-	t.store(*this);
+float tBBuf::getFloat() { // TODO: Does this work on big-endian?
+	float val;
+#if defined(NEED_STRICT_ALIGNMENT)
+	memcpy((void *)&val, this->read(4), 4);
+#else
+	val = *(S32 *)(this->read(4));
+#endif
+	return(val);
 }
 void tBBuf::rewind() {
 	this->set(0);
@@ -224,14 +205,13 @@ void tBBuf::seek(int n,Byte flags) {
 	if(res<0) throw txOutOfRange(_WHERE("range is %i<0",res));
 	this->set(res);
 }
-void tBBuf::check(Byte * what,U32 n) {
+void tBBuf::check(const Byte * what,U32 n) {
 	if(eof() || size()-tell()<n || memcmp(what,this->read(n),n)) {
 		throw txUnexpectedData(_WHERE("UnexpectedData"));
 	}
 }
-void tBBuf::_pcopy(tBBuf &t) {
+void tBBuf::_pcopy(const tBBuf &t) {
 	DBG(9,"tBBuf::_pcopy()\n");
-	tBaseType::_pcopy(t);
 }
 void tBBuf::copy(tBBuf &t) {
 	DBG(9,"tBBuf::copy()\n");
@@ -256,7 +236,7 @@ char tBBuf::compare(tBBuf &t) {
 	}
 	return out;
 }
-Byte * tBBuf::hexToAscii() {
+const Byte * tBBuf::hexToAscii() {
 	if(gpbuf!=NULL) free((void *)gpbuf);
 	Byte * out;
 	out=(Byte *)malloc(sizeof(Byte) * ((2*size())+1));
@@ -315,33 +295,25 @@ tMBuf::tMBuf() {
 	DBG(9,"tMBuf()\n");
 	this->init();
 }
-tMBuf::tMBuf(tBBuf &t,U32 start,U32 len) {
-	DBG(9,"tMBuf(tBBuf,start:%u,len:%u)\n",start,len);
+tMBuf::tMBuf(tBBuf &t) {
+	DBG(9,"tMBuf(tBBuf)\n");
 	this->init();
 	U32 pos=t.tell();
 	t.rewind();
-	if(start) t.read(start);
-	if(!len) len=t.size()-start;
-	this->write(t.read(),len);
+	this->write(t.read(), t.size());
 	t.set(pos);
 	set(pos);
 }
 tMBuf::tMBuf(U32 size) {
 	DBG(9,"tMBuf(size:%i)\n",size);
 	buf = new tRefBuf(size);
-	mstart=msize=off=0;
+	msize=off=0;
 }
-tMBuf::tMBuf(tMBuf &t,U32 start,U32 len) {
-	DBG(9,"tMBuf(tMBuf,start:%u,len:%u)\n",start,len);
-	if((S32)t.msize-(S32)(start+t.mstart)<0) throw txOutOfRange(_WHERE("start:%i,size:%i",start,t.msize));
+tMBuf::tMBuf(const tMBuf &t) {
+	DBG(9,"tMBuf(tMBuf)\n");
 	buf = t.buf;
-	buf->inc();
-	if(len==0) {
-		msize = t.msize-(t.mstart+start);
-	} else {
-		msize = len;
-	}
-	mstart=t.mstart+start;
+	if (buf != NULL) buf->inc();
+	msize = t.msize;
 	off=t.off;
 }
 tMBuf::~tMBuf() {
@@ -355,7 +327,7 @@ tMBuf::~tMBuf() {
 }
 void tMBuf::onmodify() {
 }
-void tMBuf::_pcopy(tMBuf &t) {
+void tMBuf::_pcopy(const tMBuf &t) {
 	DBG(9,"tMBuf::_pcopy()\n");
 	tBBuf::_pcopy(t);
 	if(buf!=NULL) {
@@ -368,32 +340,31 @@ void tMBuf::_pcopy(tMBuf &t) {
 	if(buf!=NULL) buf->inc();
 	off=t.off;
 	msize=t.msize;
-	mstart=t.mstart;
 }
-void tMBuf::copy(tMBuf &t) {
+void tMBuf::copy(const tMBuf &t) {
 	DBG(9,"tMBuf::copy()\n");
+	if(this==&t) return;
 	this->_pcopy(t);
 }
 void tMBuf::init() {
 	DBG(9,"tMBuf::init()\n");
 	buf=NULL;
-	mstart=msize=off=0;
+	msize=off=0;
 }
-U32 tMBuf::tell() { return off; }
+U32 tMBuf::tell() const { return off; }
 void tMBuf::set(U32 pos) { 
 	if(pos>msize) throw txOutOfRange(_WHERE("OutOfRange %i>%i",pos,msize));
 	off=pos;
 }
-Byte tMBuf::getAt(U32 pos) {
+Byte tMBuf::getAt(U32 pos) const {
 	if(pos>msize) {
-		//std::printf("getAt %i \n%s\n",pos,hexToAscii());
 		throw txOutOfRange(_WHERE("OutOfRange %i>%i",pos,msize));
 	}
-	return *(Byte *)(buf->buf+mstart+pos);
+	return *(Byte *)(buf->buf+pos);
 }
 void tMBuf::setAt(U32 pos,const char what) {
 	if(pos>msize) throw txOutOfRange(_WHERE("OutOfRange %i>%i",pos,msize));
-	*(char *)(buf->buf+mstart+pos)=what;
+	*(char *)(buf->buf+pos)=what;
 	onmodify();
 }
 void tMBuf::zeroend() {
@@ -405,16 +376,15 @@ void tMBuf::zeroend() {
 	}
 	*(Byte *)(buf->buf+off)=0x00;
 }
-void tMBuf::write(Byte * val,U32 n) {
+void tMBuf::write(const Byte * val,U32 n) {
 	if(val==NULL) return;
 	if(buf==NULL) buf = new tRefBuf(1024 + n);
 	else if(buf->getRefs()>1) {
 		buf->dec();
 		Byte * oldbuf=buf->buf;
-		U32 xsize=buf->size()-mstart;
+		U32 xsize=buf->size();
 		buf = new tRefBuf((xsize)+1024+n);
-		memcpy(buf->buf,oldbuf+mstart,xsize);
-		mstart=0;
+		memcpy(buf->buf,oldbuf,xsize);
 	}
 	U32 oldoff=off;
 	off+=n;
@@ -424,11 +394,11 @@ void tMBuf::write(Byte * val,U32 n) {
 		buf->resize(newsize);
 	}
 	memcpy(buf->buf+oldoff,val,n);
-	if(off>msize) msize+=n;
+	if(off>msize) msize=off;
 	onmodify();
 }
 Byte * tMBuf::read(U32 n) {
-	U32 pos=off+mstart;
+	U32 pos=off;
 	if(n==0) n=msize-off;
 	if(n==0) return NULL;
 	off+=n;
@@ -439,17 +409,17 @@ Byte * tMBuf::read(U32 n) {
 	}
 	return buf->buf+pos;
 }
-int tMBuf::stream(tBBuf &b) {
-	if(buf==NULL || buf->buf==NULL) return 0;
-	b.write(buf->buf+mstart,msize);
-	return msize;
+void tMBuf::stream(tBBuf &b) {
+	if(buf==NULL || buf->buf==NULL) return;
+	b.write(buf->buf,msize);
+	//return msize;
 }
 void tMBuf::store(tBBuf &b) {
 	//b.rewind();
 	U32 baal=b.tell();
 	this->write(b.read(),b.size()-baal);
 }
-U32 tMBuf::size() { return msize; }
+U32 tMBuf::size() const { return msize; }
 void tMBuf::clear() {
 	off=0;
 	msize=0;
@@ -471,7 +441,7 @@ void tFBuf::init() {
 	xsize=msize=0;
 	xbuf=NULL;
 }
-U32 tFBuf::tell() {
+U32 tFBuf::tell() const {
 	DBG(9,"ftell()\n");
 	if(f!=NULL) return ftell(f);
 	return 0; 
@@ -481,7 +451,7 @@ void tFBuf::set(U32 pos) {
 		throw txOutOfRange(_WHERE("OutOfRange"));
 	}
 }
-void tFBuf::write(Byte * val,U32 n) {
+void tFBuf::write(const Byte * val,U32 n) {
 	DBG(9,"write(val:%s,n:%u)\n",val,n);
 	if(val==NULL) return;
 	if(f==NULL) throw txNoFile(_WHERE("NoFile"));
@@ -504,14 +474,27 @@ Byte * tFBuf::read(U32 n) {
 	fread(xbuf,n,1,f);
 	return xbuf;
 }
-int tFBuf::stream(tBBuf &b) {
+void tFBuf::stream(tBBuf &b) {
 	this->size();
 	b.write(this->read(),msize);
-	return msize;
+	//return msize;
 }
 void tFBuf::store(tBBuf &b) {
 	b.rewind();
 	this->write(b.read(),b.size());
+}
+U32 tFBuf::size() const {
+	if(msize==0) {
+		if (f==NULL) return 0;
+		int wtf=ftell(f);
+		fseek(f,0,SEEK_END);
+		int size=ftell(f);
+		fseek(f,wtf,SEEK_SET);
+		DBG(9,"size:%i\n",msize);
+		return size;
+	}
+	DBG(9,"msize:%i\n",msize);
+	return msize;
 }
 U32 tFBuf::size() {
 	if(msize==0) {
@@ -522,7 +505,7 @@ U32 tFBuf::size() {
 		fseek(f,wtf,SEEK_SET);
 	}
 	DBG(9,"msize:%i\n",msize);
-	return msize; 
+	return msize;
 }
 void tFBuf::open(const void * path,const void * mode) {
 	f=fopen((const char *)path,(const char *)mode);
@@ -548,7 +531,7 @@ tSBuf::tSBuf(Byte * buf,U32 msize) {
 	this->msize=msize;
 	this->buf=buf;
 }
-U32 tSBuf::tell() { return off; }
+U32 tSBuf::tell() const { return off; }
 void tSBuf::set(U32 pos) {
 	if(pos>msize) throw txOutOfRange(_WHERE("Cannot access pos %i, size %i\n",pos,msize));
 	off=pos; 
@@ -562,11 +545,11 @@ Byte * tSBuf::read(U32 n) {
 	else off=msize;
 	return auxbuf;
 }
-int tSBuf::stream(tBBuf &buf) {
+void tSBuf::stream(tBBuf &buf) {
 	buf.write(this->buf,msize);
-	return msize;
+	//return msize;
 }
-U32 tSBuf::size() { return msize; }
+U32 tSBuf::size() const { return msize; }
 
 /* end static buffer */
 
@@ -574,12 +557,11 @@ U32 tSBuf::size() { return msize; }
 void tZBuf::compress() {
 	tRefBuf * aux=this->buf;
 	aux->dec();
-	int comp_size;
+	zlib::uLongf comp_size;
 	comp_size=msize+(msize/10)+12;
 	this->buf = new tRefBuf(comp_size);
-	int ret=zlib::compress(this->buf->buf,(zlib::uLongf *)&comp_size,aux->buf+mstart,msize);
+	int ret=zlib::compress(this->buf->buf,&comp_size,aux->buf,msize);
 	if(ret!=0) throw txBase(_WHERE("Something terrible happenened compressing the buffer"));
-	mstart=0;
 	msize=comp_size;
 	if(aux->getRefs()<1) delete aux;
 	this->buf->resize(msize);
@@ -588,13 +570,12 @@ void tZBuf::compress() {
 void tZBuf::uncompress(int iosize) {
 	tRefBuf * aux=this->buf;
 	aux->dec();
-	int comp_size;
-	if(iosize==0) { comp_size=10*msize; } //yes, is very dirty
-	else comp_size=10*msize;
+	zlib::uLongf comp_size;
+	if(iosize<=0) { comp_size=10*msize; } //yes, is very dirty
+	else comp_size=iosize;
 	this->buf = new tRefBuf(comp_size);
-	int ret=zlib::uncompress(this->buf->buf,(zlib::uLongf *)&comp_size,aux->buf+mstart,msize);
+	int ret=zlib::uncompress(this->buf->buf,&comp_size,aux->buf,msize);
 	if(ret!=0) throw txBase(_WHERE("Something terrible happenened uncompressing the buffer"));
-	mstart=0;
 	msize=comp_size;
 	if(aux->getRefs()<1) delete aux;
 	this->buf->resize(msize);
@@ -607,8 +588,7 @@ void tMD5Buf::compute() {
 	tRefBuf * aux=this->buf;
 	aux->dec();
 	this->buf = new tRefBuf(0x10);
-	md5::MD5((const unsigned char *)aux->buf+mstart,msize,(unsigned char *)this->buf->buf);
-	mstart=0;
+	md5::MD5((const unsigned char *)aux->buf,msize,(unsigned char *)this->buf->buf);
 	msize=0x10;
 	if(aux->getRefs()<1) delete aux;
 	off=0;
@@ -620,20 +600,20 @@ tStrBuf::tStrBuf(const void * k) :tMBuf(200) {
 	DBG(9,"ctor\n");
 	init();
 	writeStr((char *)k);
-	rewind();
+	end();
 }
-tStrBuf::tStrBuf(U32 size) :tMBuf(size) { init(); }
-tStrBuf::tStrBuf(tBBuf &k,U32 start,U32 len) :tMBuf(k,start,len) {
+tStrBuf::tStrBuf(U32 size) :tMBuf(size) { DBG(9,"ctor 2\n"); init(); }
+tStrBuf::tStrBuf(tBBuf &k) :tMBuf(k) {
 	DBG(9,"copy zero\n");
 	init();
 	if(size()) isNull(false);
 }
-tStrBuf::tStrBuf(tMBuf &k,U32 start,U32 len) :tMBuf(k,start,len) { 
+tStrBuf::tStrBuf(const tMBuf &k) :tMBuf(k) { 
 	DBG(9,"copy one\n");
 	init(); 
 	if(size()) isNull(false);
 }
-tStrBuf::tStrBuf(const tStrBuf &k,U32 start,U32 len) :tMBuf((tStrBuf &)k,start,len) { 
+tStrBuf::tStrBuf(const tStrBuf &k) :tMBuf(k) { 
 	DBG(9,"copy two\n");
 	if(this==&k) return;
 	init(); 
@@ -645,13 +625,11 @@ tStrBuf::tStrBuf(const tStrBuf &k,U32 start,U32 len) :tMBuf((tStrBuf &)k,start,l
 }
 tStrBuf::~tStrBuf() {
 	DBG(9,"dtor\n");
-	if(bufstr!=NULL) free((void *)bufstr);
 	if(shot!=NULL) delete shot;
 	if(cache_lower!=NULL) delete cache_lower;
 }
 void tStrBuf::init() {
-	DBG(9,"init\n");
-	bufstr=NULL;
+	DBG(9,"tStrBuf::init\n");
 	l=c=0;
 	sep='=';
 	shot=NULL;
@@ -659,21 +637,17 @@ void tStrBuf::init() {
 	flags=0x02; //Null true by default
 }
 void tStrBuf::onmodify() {
-	DBG(2,"tStrBuf::onmodify()\n");
+	DBG(7,"tStrBuf::onmodify()\n");
 	tMBuf::onmodify();
 	if(cache_lower!=NULL) {
 		delete cache_lower;
 		cache_lower=NULL;
 	}
 }
-void tStrBuf::_pcopy(tStrBuf &t) {
-	DBG(2,"tStrBuf::_pcopy()\n");
+void tStrBuf::_pcopy(const tStrBuf &t) {
+	DBG(9,"tStrBuf::_pcopy()\n");
 	if(this==&t) return;
 	tMBuf::_pcopy(t);
-	if(bufstr!=NULL) {
-		free((void *)bufstr);
-		bufstr=NULL;
-	}
 	l=t.l;
 	c=t.c;
 	sep=t.sep;
@@ -689,38 +663,42 @@ void tStrBuf::_pcopy(tStrBuf &t) {
 	}
 	DBG(9,"flags are %02X\n",flags);
 }
-void tStrBuf::copy(tStrBuf &t) {
-	DBG(2,"tStrBuf::copy()\n");
+void tStrBuf::copy(const tStrBuf &t) {
+	DBG(9,"tStrBuf::copy()\n");
 	if(this==&t) return;
 	this->_pcopy(t);
-	DBG(9,"flags are %02X\n",flags);
 }
-void tStrBuf::copy(const void * str) {
+void tStrBuf::copy(const char * str) {
 	DBG(2,"cpy\n");
 	tStrBuf pat(str);
 	copy(pat);
 }
-SByte tStrBuf::compare(tStrBuf &t) {
+SByte tStrBuf::compare(const tStrBuf &t) {
 	if(this==&t) return 0;
-	rewind();
-	t.rewind();
 	U32 s = size();
 	U32 s2 = t.size();
 	//if(s>s2) s=s2;
 	DBG(9,"sizes %i,%i\n",s,s2);
 	if(s<s2) return 1;
 	if(s>s2) return -1;
-	return((SByte)strncmp((char *)read(),(char *)t.read(),s));
+	return((SByte)strncmp((char *)readAll(),(char *)t.readAll(),s));
 }
-SByte tStrBuf::compare(const void * str) {
+SByte tStrBuf::compare(const char * str) {
 	DBG(9,"compare %s\n",(const char *)str);
-	tStrBuf pat(str);
-	return(compare(pat));
+	//tStrBuf pat(str);
+	//return(compare(pat));
+	U32 s = size();
+	U32 s2 = strlen(str);
+	DBG(9,"sizes %i,%i\n",s,s2);
+	if(s<s2) return 1;
+	if(s>s2) return -1;
+	return((SByte)strncmp((char *)readAll(),str,s));
 }
 const Byte * tStrBuf::c_str() {
-	DBG(2,"c_str()\n");
-	if(isNull()) {
-		return NULL;
+	DBG(2,"tStrBuf::c_str()\n");
+	if(isNull() || msize == 0) {
+		DBG(2,"is null: %d\n", msize);
+		return (Byte *)"";
 	}
 	zeroend();
 	//end();
@@ -750,7 +728,6 @@ bool tStrBuf::isNull() {
 }
 void tStrBuf::isNull(bool val) {
 	DBG(9,"isNull %i\n",val);
-	//throw txBase("s",1,1);
 	if (val) {
 		flags |= 0x02;
 	} else {
@@ -814,7 +791,6 @@ tStrBuf & tStrBuf::strip(Byte what,Byte how) {
 	Byte ctrl=what;
 	if(how & 0x01) {
 		while(i<max && ctrl==what) {
-			//std::printf("get1 %i\n",i);
 			ctrl=getAt(i++);
 		}
 		start=i-1;
@@ -824,14 +800,12 @@ tStrBuf & tStrBuf::strip(Byte what,Byte how) {
 		ctrl=what;
 		i=max-1;
 		while(i>=0 && ctrl==what) {
-			//std::printf("get2 %i\n",i);
 			ctrl=getAt(i--);
 		}
 		end=i+1;
 		if(end>=max) end=max-1;
 	}
 	for(i=start; i<=end; i++) {
-		//std::printf("put %i\n",i);
 		aux.putSByte(getAt(i));
 	}
 	aux.rewind();
@@ -871,10 +845,10 @@ tStrBuf & tStrBuf::escape() {
 
 tStrBuf & tStrBuf::lower() {
 	if(cache_lower!=NULL) {
-		DBG(2,"cached...\n");
+		DBG(7,"cached...\n");
 		return *cache_lower;
 	}
-	DBG(2,"non-cached %s...\n",c_str());
+	DBG(7,"non-cached %s...\n",c_str());
 	
 	int i,max;
 	max=size();
@@ -882,20 +856,20 @@ tStrBuf & tStrBuf::lower() {
 	tStrBuf * out;
 	out = new tStrBuf(max);
 
-	DBG(2,"##begin##%s\n",out->c_str());
+	DBG(7,"##begin##%s\n",out->c_str());
 
 	for(i=0; i<max; i++) {
 		out->putByte(std::tolower(getAt(i)));
-		DBG(2,"%i:%c\n",i,getAt(i));
+		DBG(7,"%i:%c\n",i,getAt(i));
 	}
 
-	DBG(2,"##end##%s\n",out->c_str());
+	DBG(7,"##end##%s\n",out->c_str());
 
 	//if(shot!=NULL) delete shot;
 	//shot=out;
-	DBG(2,"lower end %s - %s\n",c_str(),out->c_str());
-	DBG(2,"lower end %s - %s\n",c_str(),out->c_str());
-	DBG(2,"lower end %s - %s\n",c_str(),out->c_str());
+	DBG(7,"lower end %s - %s\n",c_str(),out->c_str());
+	DBG(7,"lower end %s - %s\n",c_str(),out->c_str());
+	DBG(7,"lower end %s - %s\n",c_str(),out->c_str());
 	cache_lower=out;
 	//DBG(2,"lower end %s - %s\n",c_str(),out->c_str());
 	return *out;
@@ -923,16 +897,15 @@ tStrBuf & tStrBuf::substring(U32 start,U32 len) {
 
 	set(start);
 	out->write(read(len),len);
-	//std::printf("wtf -%s-%s-\n",c_str(),out->c_str());
 
 	if(shot!=NULL) delete shot;
 	shot=out;
 	return *out;
 }
-bool tStrBuf::startsWith(const void * pat) {
+bool tStrBuf::startsWith(const char * pat) {
 	return(substring(0,strlen((const char *)pat))==pat);
 }
-bool tStrBuf::endsWith(const void * pat) {
+bool tStrBuf::endsWith(const char * pat) {
 	return(substring(size()-strlen((const char *)pat),strlen((const char *)pat))==pat);
 }
 tStrBuf & tStrBuf::dirname() {
@@ -941,7 +914,6 @@ tStrBuf & tStrBuf::dirname() {
 	int pos;
 	strip('/',0x02);
 	pos=find('/',1);
-	//std::printf("thepos %i\n",pos);
 	
 	if(pos==-1) {
 		out->writeStr(".");
@@ -956,7 +928,6 @@ tStrBuf & tStrBuf::dirname() {
 	return *out;
 }
 tStrBuf & tStrBuf::getLine(bool nl,bool slash) {
-	DBG(9,"getLine()\n");
 	Byte c=0;
 	Byte slashm=0;
 	tStrBuf * out;
@@ -1023,7 +994,7 @@ tStrBuf & tStrBuf::getLine(bool nl,bool slash) {
 	shot=out;
 	return *out;
 }
-
+#if 0
 tStrBuf & tStrBuf::getWord(bool slash) {
 	DBG(9,"getWord()\n");
 	Byte cc=0,c=0;
@@ -1096,6 +1067,7 @@ tStrBuf & tStrBuf::getWord(bool slash) {
 			if(c=='\n') {
 				if(!eof() && getByte()!='\r') seek(-1);
 				this->l++;
+				this->c=0;
 				if(out->size()!=0) {
 					seek(-1);
 				}
@@ -1103,6 +1075,7 @@ tStrBuf & tStrBuf::getWord(bool slash) {
 			} else if(c=='\r') {
 				if(!eof() && getByte()!='\n') seek(-1);
 				this->l++;
+				this->c=0;
 				if(out->size()!=0) {
 					seek(-1);
 				}
@@ -1143,6 +1116,7 @@ tStrBuf & tStrBuf::getWord(bool slash) {
 	shot=out;
 	return *out;
 }
+#endif
 tStrBuf & tStrBuf::getToken() {
 	DBG(9,"tStrBuf::getToken()\n");
 	Byte c;
@@ -1157,8 +1131,13 @@ tStrBuf & tStrBuf::getToken() {
 		c=getByte();
 		this->c++;
 		if(quote==0 && (c=='#' || c==';')) {
-			getLine();
-			out->putByte('\n');
+			if (out->size()) { // we already have something in out, dont attach the newline to it but make it the next token
+				this->c--;
+				seek(-1);
+			} else {
+				getLine();
+				out->putByte('\n');
+			}
 			break;
 		} else if(slash==1) {
 			slash=0;
@@ -1246,7 +1225,7 @@ void tStrBuf::printf(const char * msg, ...) {
 	char buffer[1024];
 
 	va_start(ap,msg);
-	       
+	
 	vsnprintf(buffer,1023,msg,ap);
 	buffer[1023]='\0';
 	this->write((Byte *)buffer,strlen(buffer));
@@ -1285,10 +1264,10 @@ void tTime::store(tBBuf &t) {
 	seconds=t.getU32();
 	microseconds=t.getU32();
 }
-int tTime::stream(tBBuf &t) {
+void tTime::stream(tBBuf &t) {
 	t.putU32(seconds);
 	t.putU32(microseconds);
-	return 8;
+	//return 8;
 }
 U32 tTime::size() { return 8; }
 SByte tTime::compare(tTime &t) {
@@ -1297,7 +1276,7 @@ SByte tTime::compare(tTime &t) {
 		if(microseconds<t.microseconds) return 1;
 		return -1;
 	}
-	if(seconds>t.seconds) return 1;
+	if(seconds<t.seconds) return 1;
 	return -1;
 }
 tTime operator+(tTime &a,tTime &b) {
@@ -1352,10 +1331,11 @@ const Byte * tTime::str(Byte type) {
 		Byte minutes=(seconds/60)%60;
 		Byte hours=(seconds/3600)%24;
 		Byte days=(seconds/(3600*24))%30;
-		Byte months=(seconds/(3600*24*30))%12;
-		Byte years=(seconds/(3600*24*365));
-		if(years==1) sth.printf("1 year, "); //I bet that nobody will get this uptime
-		else if(years>1) sth.printf("%i years, ",years);
+		Byte months=(seconds/(3600*24*30)); //%12;
+		// a year is not exactly 12 months, so 361 days would show as 0 years, 0 months and 1 day...
+		//Byte years=(seconds/(3600*24*365));
+		//if(years==1) sth.printf("1 year, "); //I bet that nobody will get this uptime
+		//else if(years>1) sth.printf("%i years, ",years);
 		if(months==1) sth.printf("1 month, "); //This one, should be possible, the GoE shard has beatten it without problems
 		else if(months>1) sth.printf("%i months, ",months);
 		if(days==1) sth.printf("1 day, ");

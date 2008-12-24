@@ -452,7 +452,7 @@ Public License instead of this License.\n\
     Revised: 15th of October  of 2005.\n\
     Updated: 22th of November of 2005.\n\
 \n\
-    You may pass the output of license to \"more\" using a pipe \"./uru -l | more\"\n\
+    You may pass the output of license to \"more\" using a pipe \"./alcugs -l | more\"\n\
     \n";
 
 

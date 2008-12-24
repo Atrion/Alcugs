@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2006  The Alcugs Server Team                           *
+*    Copyright (C) 2004-2008  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -31,10 +31,10 @@
 #define ALC_PROGRAM_ID "$Id$"
 #define ALC_PROGRAM_NAME "UruPing"
 
-#include<alcugs.h>
-#include<urunet/unet.h>
+#include <alcugs.h>
+#include <alcnet.h>
 
-#include<alcdebug.h>
+#include <alcdebug.h>
 
 using namespace alc;
 
@@ -81,11 +81,11 @@ class tUnetPing :public tUnetBase {
 public:
 	tUnetPing(char * lhost=NULL,U16 lport=0,Byte listen=0,double time=1,int num=5,int flood=1);
 	virtual ~tUnetPing();
-	virtual void onNewConnection(tNetEvent * ev,tNetSession * u);
 	virtual int onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u);
 	virtual void onConnectionFlood(tNetEvent * ev,tNetSession *u) {
 		ev->Veto();
 	}
+	virtual void onLeave(tNetEvent * ev,Byte reason,tNetSession * u);
 	virtual void onIdle(bool idle);
 	virtual void onStop();
 	void setSource(Byte s);
@@ -120,8 +120,7 @@ tUnetPing::tUnetPing(char * lhost,U16 lport,Byte listen,double time,int num,int 
 	this->setBindAddress(lhost);
 	this->listen=listen;
 	out=lstd;
-	setTimer(1);
-	updatetimer(1000);
+	setIdleTimer(1);
 	this->time=time;
 	this->num=num;
 	this->flood=flood;
@@ -166,22 +165,15 @@ void tUnetPing::onStop() {
 	}
 }
 
-void tUnetPing::onNewConnection(tNetEvent * ev,tNetSession * u) {
-	if(listen==0) {
-		//out->log("%s Connection refused\n",u->str());
-		//terminate(ev->sid,true);
-	}
-}
-
 int tUnetPing::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
 	int ret=0;
 
-	tmPing ping;
-
 	switch(msg->cmd) {
 		case NetMsgPing:
-			ping.setSource(u);
-			msg->data->get(ping);
+		{
+			tmPing ping(u);
+			msg->data.get(ping);
+			log->log("<RCV> [%d] %s\n", msg->sn, ping.str());
 			if(listen==0) {
 				if(dstite==ev->sid) {
 					current=alcGetCurrentTime();
@@ -200,10 +192,11 @@ int tUnetPing::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
 				alcUnetGetDestination(ping.destination),ping.mtime*1000);
 				ping.setReply();
 				if(urgent) ping.setUrgent();
-				u->send(ping);
+				send(ping);
 			}
 			ret=1;
 			break;
+		}
 		default:
 			if(listen==0) {
 				ret=1;
@@ -215,11 +208,18 @@ int tUnetPing::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
 	return ret;
 }
 
+void tUnetPing::onLeave(tNetEvent * ev,Byte reason,tNetSession * u)
+{
+	if(listen!=0) {
+		out->log("Leave from %s:%i reason=%i %s\n", alcGetStrIp(ev->sid.ip), ntohs(ev->sid.port), reason, alcUnetGetReasonCode(reason));
+	}
+}
+
 void tUnetPing::onIdle(bool idle) {
 	int i;
 	if(listen==0) {
 
-		updatetimer(100);
+		updateTimerRelative(100);
 		if(count==0) {
 			dstite=netConnect(d_host,d_port,validation,0);
 			current=startup=alcGetCurrentTime();
@@ -236,18 +236,14 @@ void tUnetPing::onIdle(bool idle) {
 		if((rcv-current)>time || count==0) {
 			if(count<num || num==0 || count==0) {
 				//snd ping message
-				tmPing ping;
-				ping.destination=destination;
-				ping.setDestination(u);
-				ping.setFlags(plNetTimestamp);
+				tmPing ping(u, destination);
 				if(urgent) ping.setUrgent();
 
 				count++;
 				for(i=0; i<flood; i++) {
 					ping.x = (flood * (count-1)) + i;
-					current = alcGetCurrentTime(),
-					ping.mtime = current;
-					u->send(ping);
+					ping.mtime = current = alcGetCurrentTime();
+					send(ping);
 				}
 			} else if((rcv-current) > (4*time) || (u && (rcv-current) > ((u->getRTT()+(u->getRTT()/2))/1000000))) {
 				stop();
@@ -258,18 +254,6 @@ void tUnetPing::onIdle(bool idle) {
 
 
 tUnetPing * netcore=NULL;
-Byte __state_running=1;
-
-//handler
-void s_handler(int s) {
-	lstd->log("INF: Catch up signal %i\n",s);
-	if(__state_running==0) {
-		lerr->log("killed\n");
-		exit(-1);
-	}
-	__state_running=0;
-	netcore->stop(5);
-}
 
 int main(int argc,char * argv[]) {
 
@@ -281,16 +265,15 @@ int main(int argc,char * argv[]) {
 	U16 l_port=0;
 	//remote settings
 	char hostname[100]="";
-	char username[100]="";
-	char avie[100]="";
 	U16 port=5000;
 	
 	Byte val=2; //validation level
 	
 	double time=1; //time
-	Byte destination=KLobby,source=0,admin=0;
-	
-	if (__VTC) admin=1;
+	Byte destination=KLobby,source=0;
+#ifdef ENABLE_ADMIN
+	Byte admin=0;
+#endif
 	
 	//options
 	int num=5,flood=1; //num probes & flood multiplier
@@ -306,7 +289,9 @@ int main(int argc,char * argv[]) {
 		else if(!strcmp(argv[i],"-rp") && argc>i+1) { i++; port=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-b")) { bcast=1; }
 		else if(!strcmp(argv[i],"-lm")) { listen=1; }
+#ifdef ENABLE_ADMIN
 		else if(!strcmp(argv[i],"-i_know_what_i_am_doing")) { admin=1; }
+#endif
 		else if(!strcmp(argv[i],"-nl")) { nlogs=1; }
 		else if(!strcmp(argv[i],"-t") && argc>i+1) { i++; time=atof(argv[i]); }
 		else if(!strcmp(argv[i],"-n") && argc>i+1) { i++; num=atoi(argv[i]); }
@@ -319,7 +304,7 @@ int main(int argc,char * argv[]) {
 		else if(!strcmp(argv[i],"-v") && argc>i+1) { i++; loglevel=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-lh") && argc>i+1) {
 			i++;
-			strcpy(l_hostname,argv[i]);
+			strncpy(l_hostname,argv[i],99);
 		}
 		else if(!strcmp(argv[i],"-l")) {
 			printf(alcVersionTextShort());
@@ -328,11 +313,11 @@ int main(int argc,char * argv[]) {
 		}
 		else if(!strcmp(argv[i],"-rh") && argc>i+1) {
 			i++;
-			strcpy(hostname,argv[i]);
+			strncpy(hostname,argv[i],99);
 		}
 		else {
 			if(i==1) {
-				if(alcGetLoginInfo(argv[1],hostname,username,((U16 *)&port),avie)!=1) {
+				if(alcGetLoginInfo(argv[1],hostname,NULL,((U16 *)&port),NULL)!=1) {
 					parameters_usage();
 					return -1;
 				}
@@ -354,25 +339,27 @@ int main(int argc,char * argv[]) {
 			lstd->print(alcVersionText());
 		}
 		
-		if(time<0.2 && (admin==0 || __WTC==0)) {
-			if(__WTC) {
-				printf("\nOnly the administrator can set less than 0.2 seconds\n Setting up to 1 second. (enable admin mode with -i_know_what_i_am_doing)\n");
-			} else {
-				printf("\nTime must be bigger than 0.2 seconds\n Setting up to 1 second.\n");
-			}
-			time=1;
-		}
-		
 		if(flood<=0) flood=1;
 		
-		if(flood>1 && (admin==0 || __WTC==0)) {
-			if(__WTC) {
-				printf("\nOnly the administrator can perform stressing flood tests to the server.\n Dissabling flooding.\n");
-			} else {
-				printf("\nFlood dissabled.\n");
-			}
+#ifdef ENABLE_ADMIN
+		if(time<0.2 && admin==0) {
+			printf("\nOnly the administrator can set less than 0.2 seconds\n Setting up to 1 second. (enable admin mode with -i_know_what_i_am_doing)\n");
+			time=1;
+		}
+		if(flood>1 && admin==0) {
+			printf("\nOnly the administrator can perform stressing flood tests to the server.\n Disabling flooding. (enable admin mode with -i_know_what_i_am_doing)\n");
 			flood=1;
 		}
+#else
+		if(time<0.2) {
+			printf("\nTime must be bigger than 0.2 seconds\n Setting up to 1 second.\n");
+			time=1;
+		}
+		if(flood>1) {
+			printf("\nCannot perform stressing flood tests to the server.\n Disabling flooding\n");
+			flood=1;
+		}
+#endif
 		
 		if(mrtg==1) num=1;
 
@@ -391,11 +378,11 @@ int main(int argc,char * argv[]) {
 
 		while(listen==0 && !strcmp(hostname,"")) {
 			printf("\nHostname not set, please enter destination host: ");
-			strcpy(hostname,alcConsoleAsk());
+			strncpy(hostname,alcConsoleAsk(),99);
 		}
 
 		if(listen==0 && mrtg==0) {
-			printf("Connecting to %s#%s@%s:%i...\n",username,avie,hostname,port);
+			printf("Connecting to %s:%i...\n",hostname,port);
 			printf("Sending ping probe to %i %s...\n",destination,alcUnetGetDestination(destination));
 		}
 		if(listen!=0) {
@@ -420,8 +407,10 @@ int main(int argc,char * argv[]) {
 		
 	} catch(txBase &t) {
 		printf("Exception %s\n%s\n",t.what(),t.backtrace());
+		return -1;
 	} catch(...) {
 		printf("Unknown Exception\n");
+		return -1;
 	}
 	
 	return 0;

@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2006  The Alcugs Server Team                           *
+*    Copyright (C) 2004-2008  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -28,10 +28,10 @@
 //Program vars
 #define IN_ALC_PROGRAM
 #define ALC_PROGRAM_ID "$Id$"
-#define ALC_PROGRAM_NAME "Alcugs server"
+#define ALC_PROGRAM_NAME "Alcugs Server"
 
-#include<alcugs.h>
-#include<urunet/unet.h>
+#include <alcugs.h>
+#include <alcnet.h>
 
 #if defined(I_AM_THE_LOBBY_SERVER)
 #include "lobbyserver.h"
@@ -43,7 +43,7 @@
 #include "vaultserver.h"
 #elif defined(I_AM_THE_TRACKING_SERVER)
 #include "trackingserver.h"
-#elif defined(I_AM_THE_META_SERVER)
+/*#elif defined(I_AM_THE_META_SERVER)
 #include "metaserver.h"
 #elif defined(I_AM_THE_DATA_SERVER)
 #include "dataserver.h"
@@ -52,12 +52,12 @@
 #elif defined(I_AM_THE_PROXY_SERVER)
 #include "proxyserver.h"
 #elif defined(I_AM_THE_PLFIRE_SERVER)
-#include "plfireserver.h"
+#include "plfireserver.h"*/
 #else
 #error UNKNOWN SERVER
 #endif
 
-#include<alcdebug.h>
+#include <alcdebug.h>
 
 using namespace alc;
 
@@ -70,13 +70,14 @@ void parameters_usage() {
  -p 5000: select the listenning port\n\
  -c uru.conf: Set an alternate configuration file\n\
  -f : Force to start the servers including if parse errors occured\n\
- -guid XXXXXXXX: Set the server guid\n\
- -name XXXXX: Set the age filename\n\
+ -guid XXXXXXXX: Set the server guid [kGame]\n\
+ -name XXXXX: Set the age filename [kGame]\n\
+ -L: Load age state from file [kGame]\n\
  -log folder: Set the logging folder\n\
- -bcast 1/0: Enable disable server broadcasts\n\
+ -bcast 1/0: Enable/disable server broadcasts\n\
  -l: Shows the servers license\n\
  -nokill: Don't kill the gameservers, let them running [kGame].\n\
- -clean: Performs vault cleanup on vault server startup [kVault].\n\
+ -clean: Performs vault cleanup on vault server startup (make a backup of your database first!) [kVault].\n\
  -oOption value: Sets addional configuration settings, for example -oPort 5000\n\n");
 }
 
@@ -122,6 +123,8 @@ int u_parse_arguments(int argc, char * argv[]) {
 		} else if(!strcmp(argv[i],"-log") && argc>i+1) {
 			i++;
 			cfg->setVar(argv[i],"log_files_path","cmdline");
+		} else if(!strcmp(argv[i],"-L")) {
+			cfg->setVar("1","game.load_agestate","cmdline");
 		} else if(!strcmp(argv[i],"-bcast") && argc>i+1) {
 			i++;
 			cfg->setVar(argv[i],"broadcast","cmdline");
@@ -155,14 +158,15 @@ int main(int argc, char * argv[]) {
 		//Load and parse config files
 		if(alcUnetReloadConfig(true)<0) return -1;
 		DBGM(5," done\n");
-		//daemon?
+		//stopped?
 		tConfig * cfg=alcGetConfig();
 		tStrBuf var;
 		var=cfg->getVar("stop","global");
 		if(!var.isNull() && var.asByte()) {
-			lstd->log("INFO: Administratively dissabled! - Change the stop/dissabled configuration directive to false\n");
+			lstd->log("INFO: Administratively disabled! - Change the stop/disabled configuration directive to false\n");
 			return -1;
 		}
+		//daemon?
 		var=cfg->getVar("daemon","global");
 		if(var.isNull()) {
 			var="0";
@@ -176,7 +180,7 @@ int main(int argc, char * argv[]) {
 		var=alcNetName;
 		lstd->print("<%s SERVER>\n",var.upper().c_str());
 		lstd->nl();
-		lstd->log("The Server is running...\nPresh CTRL+C to kill the server.\n\n");
+		lstd->log("The Server is running...\n Press CTRL+C to kill the server.\n\n");
 		
 		//Create the server
 		#if defined(I_AM_THE_LOBBY_SERVER)
@@ -194,7 +198,7 @@ int main(int argc, char * argv[]) {
 		#elif defined(I_AM_THE_TRACKING_SERVER)
 		tUnetTrackingServer * service;
 		service = new tUnetTrackingServer();
-		#elif defined(I_AM_THE_META_SERVER)
+		/*#elif defined(I_AM_THE_META_SERVER)
 		tUnetMetaServer * service;
 		service = new tUnetMetaServer();
 		#elif defined(I_AM_THE_DATA_SERVER)
@@ -208,7 +212,7 @@ int main(int argc, char * argv[]) {
 		service = new tUnetProxyServer();
 		#elif defined(I_AM_THE_PLFIRE_SERVER)
 		tUnetPlFireServer * service;
-		service = new tUnetPlFireServer();
+		service = new tUnetPlFireServer();*/
 		#else
 		#error UNKNOWN SERVER
 		#endif
@@ -217,7 +221,7 @@ int main(int argc, char * argv[]) {
 		service->run();
 		
 		delete service;
-		lstd->log("The service has succesfully terminated\n");
+		lstd->print("The service has succesfully terminated\n");
 		lstd->print("Born:    %s\n",alcGetBornTime().str());
 		tTime now;
 		now.now();
@@ -225,11 +229,9 @@ int main(int argc, char * argv[]) {
 		lstd->print("Uptime:  %s\n",alcGetUptime().str(0x01));
 		lstd->print("========================================\n");
 	} catch(txBase &t) {
-		//fprintf(stderr,"FATAL Server died: Exception %s\n%s\n",t.what(),t.backtrace());
-		fprintf(stderr,"FATAL Server died: ");
-		t.dump();
+		t.dump(false); // don't dump to stderr, we would get the backtrace twice
 		lerr->log("FATAL Server died: Exception %s\n%s\n",t.what(),t.backtrace());
-		lstd->log("The service has been unexpectely killed!!!\n");
+		lstd->print("The service has been unexpectely killed!!!\n");
 		lstd->print("Born:    %s\n",alcGetBornTime().str());
 		tTime now;
 		now.now();
@@ -239,9 +241,8 @@ int main(int argc, char * argv[]) {
 		alcCrashAction();
 		return -1;
 	} catch(...) {
-		fprintf(stderr,"FATAL Server died: Unknown Exception\n");
 		lerr->log("FATAL Server died: Unknown Exception\n");
-		lstd->log("The service has been unexpectely killed!!!\n");
+		lstd->print("The service has been unexpectely killed!!!\n");
 		lstd->print("Born:    %s\n",alcGetBornTime().str());
 		tTime now;
 		now.now();
