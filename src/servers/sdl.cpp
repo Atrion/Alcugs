@@ -250,11 +250,22 @@ namespace alc {
 		return sdlStates.end();
 	}
 	
-	int tAgeStateManager::sendSdlStates(tNetSession *u)
+	int tAgeStateManager::sendSdlStates(tNetSession *u, tmGameStateRequest::tPageList *pages)
 	{
 		int n = 0;
 		for (tSdlList::iterator it = sdlStates.begin(); it != sdlStates.end(); ++it) {
-			//if (!it->obj.hasCloneId || it->obj.clonePlayerId == u->ki) continue;
+			if (pages->size()) { // check if this object should be sent
+				if (it->obj.hasCloneId) continue; // objects with clone ID are never sent when a page is requested
+				bool found = false;
+				for (tmGameStateRequest::tPageList::iterator it2 = pages->begin(); it2 != pages->end(); ++it2) {
+					if (it->obj.pageId == *it2) {
+						found = true;
+						break;
+					}
+				}
+				if (!found) continue; // it's not on the list, don't send it
+			}
+			// FIXME: If no page is requested, we currently send all SDL states, also those which are on a page which is dynamically loaded
 			if (logDetailed) {
 				log->log("Sending SDL State to %s:\n", u->str());
 				it->print(log);
@@ -299,10 +310,14 @@ namespace alc {
 			it->isInitial = true; // it is sent as initial clone later
 			log->log("[%s]\n", it->obj.str());
 		}
-		else if (it != clones.end()) { // remove clone if it was in list
-			log->log("Removing Clone [%s]\n", it->obj.str());
-			removeSDLStates(it->obj.clonePlayerId, it->obj.cloneId);
-			clones.erase(it);
+		else { // remove clone if it was in list
+			tUruObject obj(clone.obj); // we can't call str on clone.obj as it is const and not on it->obj as it might be invalid (the clone doesn't have to be in our list)
+			log->log("Removing Clone [%s]\n", obj.str());
+			removeSDLStates(obj.clonePlayerId, obj.cloneId); // remove SDL states even if cloenw as not on list
+			if (it != clones.end()) {
+				log->log("WARN: That clone was not on our list!\n");
+				clones.erase(it);
+			}
 		}
 		log->flush();
 	}
@@ -362,6 +377,7 @@ namespace alc {
 		else { // not found
 			log->log("No Age SDL hook found, send empty SDL\n");
 			tSdlState empty;
+			empty.skipObj = true; // write it without the object
 			buf->put(empty);
 		}
 		log->flush();

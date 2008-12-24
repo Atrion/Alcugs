@@ -218,7 +218,7 @@ namespace alc {
 		
 		// check message tyoe
 		U16 msgType = getSubMsgType();
-		if (msgType != 0x03AC) // plNetLoadAvatar
+		if (msgType != 0x024E && msgType != 0x03AC) // 0x024E = plNetLoadClone, 0x03AC = plNetLoadAvatar
 			throw txProtocolError(_WHERE("The sub message of a NetMsgLoadClone must be of the type 0x03AC (plNetLoadAvatar), not 0x%04X", msgType));
 		
 		// check if header is all zero
@@ -352,22 +352,26 @@ namespace alc {
 	void tmGameStateRequest::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		if (!hasFlags(plNetStateReq))
+		U32 nPages = t.getU32();
+		if (nPages == 0 && !hasFlags(plNetStateReq))
 			throw txProtocolError(_WHERE("StateReq flag missing"));
-		nPages = t.getU32();
+		else if (nPages != 0 && hasFlags(plNetStateReq))
+			throw txProtocolError(_WHERE("Unexpected StateReq flag"));
+		
 		pages.clear();
 		pages.reserve(nPages);
 		tUStr pageName;
 		for (U32 i = 0; i < nPages; ++i) {
 			pages.push_back(t.getU32());
-			t.get(pageName); // ignore it
+			t.getU16(); // ignore pageType
+			t.get(pageName); // ignore pageName
 		}
 	}
 	
 	void tmGameStateRequest::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" Explicitly requested pages: %d", nPages);
+		dbg.printf(" Explicitly requested pages: %d", pages.size());
 	}
 	
 	//// tmInitialAgeStateSent

@@ -39,7 +39,7 @@
 #define __U_SDL_H_ID "$Id$"
 
 #include <list>
-#include <memory>
+#include <protocol/gamemsg.h>
 #include "sdlbinary.h"
 
 namespace alc {
@@ -58,7 +58,7 @@ namespace alc {
 		void saveSdlState(tMBuf &data);
 		void saveClone(const tmLoadClone &clone);
 		int sendClones(tNetSession *u);
-		int sendSdlStates(tNetSession *u);
+		int sendSdlStates(tNetSession *u, tmGameStateRequest::tPageList *pages);
 		void writeAgeState(tMBuf *buf);
 		void removePlayer(U32 ki);
 		

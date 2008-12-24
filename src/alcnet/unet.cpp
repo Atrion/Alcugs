@@ -107,8 +107,9 @@ void tUnet::init() {
 	nat_up=128 * 1000;
 	nat_down=512 * 1000;
 	
-	flood_check_sec=5;
-	max_flood_pkts=110; // when first launching a client for an amtpy vault, this is almost reached (usually there are 99 packets within about 2.5 seconds)
+	flood_check_sec=2;
+	max_flood_pkts=200; // when first launching a client for an emtpy vault, there are about 100 packets within about 2.5 seconds
+	                    // when linking to MountainScene, huge amount of packets are sent... about 100 per second
 
 	snd_expire=30; //should be enough
 
