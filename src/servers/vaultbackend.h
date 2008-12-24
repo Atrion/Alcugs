@@ -157,6 +157,7 @@ namespace alc {
 		char welcomeMsgTitle[512], welcomeMsgText[4096];
 		char hoodName[512], hoodDesc[512];
 		bool linkingRulesHack;
+		bool autoRemoveMgrs;
 		
 		// the list of vmgrs
 		tVmgrList vmgrs;
