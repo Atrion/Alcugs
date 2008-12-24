@@ -290,14 +290,16 @@ namespace alc {
 				msg->data.get(gameStateRequest);
 				log->log("<RCV> [%d] %s\n", msg->sn, gameStateRequest.str());
 				
-				if (gameStateRequest.nPages) // FIXME: support requesting certain pages
-					throw txProtocolError(_WHERE("Sending state for specific pages not supported"));
+				int n = 0;
+				if (!gameStateRequest.pages.size())
+					n += ageState->sendClones(u); // only send clones if global state is requested
+				n += ageState->sendSdlStates(u, &gameStateRequest.pages);
 				
-				int n = ageState->sendClones(u);
-				n += ageState->sendSdlStates(u);
-				
-				tmInitialAgeStateSent stateSent(u, n);
-				send(stateSent);
+				if (!gameStateRequest.pages.size()) {
+					// send this only when it's the initial request
+					tmInitialAgeStateSent stateSent(u, n);
+					send(stateSent);
+				}
 				
 				return 1;
 			}
@@ -505,8 +507,10 @@ namespace alc {
 			case NetMsgLoadClone:
 			{
 				if (!u->joined) {
-					err->log("ERR: %s sent a NetMsgLoadClone but did not yet join the game. I\'ll kick him.\n", u->str());
-					return -2; // hack attempt
+					err->log("ERR: %s sent a NetMsgLoadClone but did not yet join the game - ignore it.\n", u->str());
+					// even the normal client sometimes does this, I don't know why, so just ignore this message
+					msg->data.end(); // avoid a warning because the message was too long
+					return 1;
 				}
 				
 				// get the data out of the packet
