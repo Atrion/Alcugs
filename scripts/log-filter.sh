@@ -1,34 +1,58 @@
-#!/bin/sh
+#!/bin/bash
 
 # called with the parameter "problems", this script shows the full error log as well as all warnings, errors etc. printed in other log files
 # called with "infos", it shows everything marked as information
+# The 2nd parameter can be "rec" or "recursive" to tell the script to search recursively in subdirectories (useful for game server logs)
+
+catfiles(){
+	cat $1.log
+	if [ -f "$1.1.log" ]; then
+		ls $1.*.log | while read file; do
+			cat $file
+		done
+	fi
+}
 
 logfilter(){
 	echo "General alcugs log:"
-	grep -Ehi "$1" alcugs.4.log alcugs.3.log alcugs.2.log alcugs.1.log alcugs.log
+	catfiles "alcugs" | grep -Ehi "$1"
 	if [ -f tracking.log ]; then
 		echo
 		echo "Tracking log:"
-		grep -Ehi "$1" tracking.4.log tracking.3.log tracking.2.log tracking.1.log tracking.log
+		catfiles "tracking" | grep -Ehi "$1"
 	fi
 	if [ -f auth.log ]; then
 		echo
 		echo "Auth log:"
-		grep -Ehi "$1" auth.4.log auth.3.log auth.2.log auth.1.log auth.log
+		catfiles "auth" | grep -Ehi "$1"
 	fi
 	if [ -f vault.log ]; then
 		echo
 		echo "Vault log:"
-		grep -Ehi "$1" vault.4.log vault.3.log vault.2.log vault.1.log vault.log
+		catfiles "vault" | grep -Ehi "$1"
 	fi
 	if [ -f agestate.log ]; then
 		echo
 		echo "Age state log:"
-		grep -Ehi "$1" agestate.4.log agestate.3.log agestate.2.log agestate.1.log agestate.log
+		catfiles "agestate" | grep -Ehi "$1"
 	fi
 }
 
 oldPwd="`pwd`"
+
+if [[ "$2" == "rec" || "$2" == "recursive" ]]; then
+	if [ ! -f alcugs.log ]; then # no log found so far, go on searching
+		ls -d */ | while read dir; do
+			echo "============================================================================"
+			echo "$dir:"
+			cd "$oldPwd/$dir"
+			$0 $1 $2
+		done
+		cd $oldPwd
+		exit
+	fi
+fi
+
 if [ ! -f alcugs.log ]; then
 	if [ -f log/alcugs.log ]; then
 		cd log
@@ -41,7 +65,7 @@ fi
 case $1 in
 	problem|problems)
 		echo "General errors:"
-		cat error.4.log error.3.log error.2.log error.1.log error.log
+		catfiles "error"
 		echo
 		if [ -f fork_err.log ]; then
 			echo "Fork error log"

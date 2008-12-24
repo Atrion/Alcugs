@@ -57,8 +57,6 @@ namespace alc {
 
 	tUnetGameServer::tUnetGameServer(void) : tUnetLobbyServerBase()
 	{
-		lerr->log("WARNING: The game server is not finished yet. So if it doesn\'t work, that's not even a bug.\n");
-		
 		lastPlayerLeft = 0;
 		
 		// find out which age we are supposed to host
