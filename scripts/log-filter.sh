@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# called with the parameter "problems", this script shows the full error log as well as all warnings, errors etc. printed in other log files
+# called with the parameter "errors", this script shows the full error log
+# called with "problems", it also shows warnings and errors printed in other logfiles
 # called with "infos", it shows everything marked as information
 # The 2nd parameter can be "rec" or "recursive" to tell the script to search recursively in subdirectories (useful for game server logs)
 
@@ -42,15 +43,17 @@ oldPwd="`pwd`"
 
 if [[ "$2" == "rec" || "$2" == "recursive" ]]; then
 	if [ ! -f alcugs.log ]; then # no log found so far, go on searching
-		ls -d */ | while read dir; do
-			echo "============================================================================"
-			echo "$dir:"
-			cd "$oldPwd/$dir"
-			$0 $1 $2
-		done
+		if `ls -d */ &> /dev/null`; then
+			ls -d */ | while read dir; do
+				cd "$oldPwd/$dir"
+				$0 $1 $2
+			done
+		fi
 		cd $oldPwd
 		exit
 	fi
+	echo "============================================================================"
+	echo "`pwd`:"
 fi
 
 if [ ! -f alcugs.log ]; then
@@ -73,6 +76,15 @@ case $1 in
 			echo
 		fi
 		logfilter "warn|[^a-z]err|unx|unexpect|fatal"
+	;;
+	error|errors)
+		catfiles "error"
+		echo
+		if [ -f fork_err.log ]; then
+			echo "Fork error log"
+			cat fork_err.log
+			echo
+		fi
 	;;
 	info|infos)
 		logfilter "[^e]\sinf"
