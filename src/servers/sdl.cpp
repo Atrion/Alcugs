@@ -347,7 +347,7 @@ namespace alc {
 		tSdlList::iterator sdlHook = findAgeSDLHook();
 		if (sdlHook != sdlStates.end()) { // found it - send it
 			if (sdlHook->content.isIndexed())
-				log->log("ERR: THe Age SDL Hook is incomplete, strange behaviour of the client is guaranteed\n");
+				log->log("ERR: The Age SDL Hook is incomplete, strange behaviour of the client is guaranteed\n");
 			log->log("Sending Age SDL Hook");
 			if (logDetailed) {
 				log->print(": ");

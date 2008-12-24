@@ -56,7 +56,7 @@ namespace alc {
 	{
 		unload();
 		if (vmgrs.size() > 0)
-			lerr->log("ERR: The vault server is quitting and I still have %d vmgrs left\n", vmgrs.size());
+			log->log("ERR: The vault server is quitting and I still have %d vmgrs left\n", vmgrs.size());
 	}
 	
 	void tVaultBackend::unload(void)
@@ -295,6 +295,9 @@ namespace alc {
 			delete node;
 			free((void *)nodes);
 		}
+		
+		log->log("Status update for KI %d: %d\n", status.ki, status.state);
+		log->flush();
 		
 		if (!linkingRulesHack || status.state != 1) return;
 		// linking rules hack

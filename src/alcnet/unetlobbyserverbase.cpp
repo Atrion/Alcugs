@@ -157,7 +157,7 @@ namespace alc {
 			if (!trackingServer) {
 				err->log("ERR: I've got to update a player\'s (%s) status for the tracking server, but it is unavailable.\n", u->str());
 			}
-			else {
+			else if (reason != RLoggedInElsewhere) { // if the player went somewhere else, don't remove him from tracking
 				int state = (reason == RLeaving) ? 2 /* visible */ : 0 /* delete */; // if the player just goes on to another age, don't remove him from the list
 				tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->getSid(), u->uid, u->name, u->avatar, state, reason);
 				send(trackingStatus);

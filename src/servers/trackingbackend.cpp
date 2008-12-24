@@ -358,6 +358,8 @@ namespace alc {
 			else { // if it already exists, check if the avi is already logged in elsewhere
 				// to do so, we first check if the game server the player uses changed. if that's the case, and the player did not request to link, kick the old player
 				if (player->u != game && player->status != RLeaving) {
+					log->log("WARN: Kicking player %s at %s as it just logged in at ", player->str(), player->u->str());
+					log->print("%s\n", game->str()); // we have to do this seperated as the two tNetSession::str calls overwrite each other
 					tmPlayerTerminated term(player->u, player->ki, RLoggedInElsewhere);
 					net->send(term);
 				}
