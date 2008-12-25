@@ -9,7 +9,7 @@
 catfiles(){
 	cat $1.log
 	if [ -f "$1.1.log" ]; then
-		ls $1.*.log | while read file; do
+		ls -r $1.*.log | while read file; do
 			cat $file
 		done
 	fi
