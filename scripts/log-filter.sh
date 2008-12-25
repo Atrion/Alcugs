@@ -7,12 +7,12 @@
 # The 2nd parameter can be "rec" or "recursive" to tell the script to search recursively in subdirectories (useful for game server logs)
 
 catfiles(){
-	cat $1.log
 	if [ -f "$1.1.log" ]; then
 		ls -r $1.*.log | while read file; do
 			cat $file
 		done
 	fi
+       cat $1.log
 }
 
 logfilter(){
