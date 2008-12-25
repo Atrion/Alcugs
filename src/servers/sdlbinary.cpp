@@ -524,7 +524,8 @@ namespace alc {
 			while (curIt->getNum() < newIt->getNum() && curIt != curData->end()) ++curIt;
 			if (curIt == curData->end() || curIt->getNum() > newIt->getNum()) {
 				// if we are at the end of the old list, or at an element with a bigger number, we have to isnert the new one
-				curIt = curData->insert(curIt, *newIt)++; // save returned iterator as the old one got invalid, and go to next element since we are not interested in the just inserted one
+				curIt = curData->insert(curIt, *newIt); // save returned iterator as the old one got invalid
+				++curIt; // go to next element since we are not interested in the just inserted one
 			}
 			else {
 				// we found the new element in the old list, overwrite it

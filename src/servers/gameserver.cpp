@@ -518,6 +518,9 @@ namespace alc {
 				msg->data.get(loadClone);
 				log->log("<RCV> [%d] %s\n", msg->sn, loadClone.str());
 				
+				if (loadClone.obj.clonePlayerId != u->ki)
+					throw txProtocolError(_WHERE("ClonePlayerID of loaded clone must be the same as Player KI (%d) but is %d", u->ki, loadClone.obj.clonePlayerId));
+				
 				ageState->saveClone(loadClone);
 				
 				// broadcast message
