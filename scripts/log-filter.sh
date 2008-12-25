@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # called with the parameter "errors", this script shows the full error log
-# called with "problems", it also shows warnings and errors printed in other logfiles
+# called with "warnings", it also shows warnings (and errors) from other logfiles
+# called with "problems", it also shows the output of both "warnings" and "errors"
 # called with "infos", it shows everything marked as information
 # The 2nd parameter can be "rec" or "recursive" to tell the script to search recursively in subdirectories (useful for game server logs)
 
@@ -67,15 +68,8 @@ fi
 
 case $1 in
 	problem|problems)
-		echo "General errors:"
-		catfiles "error"
-		echo
-		if [ -f fork_err.log ]; then
-			echo "Fork error log"
-			cat fork_err.log
-			echo
-		fi
-		logfilter "warn|[^a-z]err|unx|unexpect|fatal"
+		$0 errors
+		$0 warnings
 	;;
 	error|errors)
 		catfiles "error"
@@ -86,11 +80,14 @@ case $1 in
 			echo
 		fi
 	;;
+	warning|warnings)
+		logfilter "warn|[^a-z]err|unx|unexpect|fatal"
+	;;
 	info|infos)
 		logfilter "[^e]\sinf"
 	;;
 	*)
-		echo "Usage: $0 {problems|infos}"
+		echo "Usage: $0 {errors|warnings|problems|infos}"
 	;;
 esac
 

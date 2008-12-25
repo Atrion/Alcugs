@@ -314,10 +314,10 @@ namespace alc {
 			tUruObject obj(clone.obj); // we can't call str on clone.obj as it is const and not on it->obj as it might be invalid (the clone doesn't have to be in our list)
 			log->log("Removing Clone [%s]\n", obj.str());
 			removeSDLStates(obj.clonePlayerId, obj.cloneId); // remove SDL states even if cloenw as not on list
-			if (it != clones.end()) {
-				log->log("WARN: That clone was not on our list!\n");
+			if (it != clones.end())
 				clones.erase(it);
-			}
+			else
+				log->log("WARN: That clone was not on our list!\n");
 		}
 		log->flush();
 	}
