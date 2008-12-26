@@ -115,6 +115,32 @@ namespace alc {
 			tUnetLobbyServerBase::onConnectionClosed(ev, u);
 	}
 	
+	void tUnetGameServer::additionalVaultProcessing(tNetSession *u, tvMessage *msg)
+	{
+		/* this is a very dirty fix for the bahro poles, but as long as the game server doesn't subscribe to the vault to get it's 
+		own SDL node, we have to do it this way */
+		
+		if (u->getPeerType() == KVault) return; // we care only about messages from the client
+		if (msg->task) return; // ignore vault tasks
+		if (msg->cmd != VSaveNode) return; // we are only interested in VSaveNode messages
+		
+		// ok, now find the saved node
+		tvNode *node = NULL;
+		for (tvMessage::tItemList::iterator it = msg->items.begin(); it != msg->items.end(); ++it) {
+			if ((*it)->id != 5) continue;
+			node = (*it)->asNode(); // got it
+			break;
+		}
+		if (!node)
+			throw txProtocolError(_WHERE("A VSaveNode without a node attached???"));
+		if (node->type != KSDLNode) return;
+		// got the node, and it is a SDL one... get the SDL binary stream
+		tMBuf data(node->blob1Size);
+		data.write(node->blob1, node->blob1Size);
+		data.rewind();
+		ageState->saveSdlVaultMessage(data, u); // process it
+	}
+	
 	void tUnetGameServer::terminate(tNetSession *u, Byte reason, bool destroyOnly)
 	{
 		if (u->getPeerType() == KClient && u->ki != 0) { // if necessary, tell the others about it

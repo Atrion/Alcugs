@@ -38,6 +38,8 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_LOBBYSERVER_H_ID "$Id$"
 
+#include <unetlobbyserverbase.h>
+
 namespace alc {
 
 	////DEFINITIONS

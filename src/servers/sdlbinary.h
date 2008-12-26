@@ -60,6 +60,9 @@ namespace alc {
 		virtual void stream(tBBuf &t);
 		void print(tLog *log, Byte indentSize);
 		inline Byte getNum(void) { return num; }
+		inline bool hasFlags(Byte f){
+			return (flags | f) == flags; // there can be several flags enabled in f, so a simple & is not enough
+		}
 		Byte getType(void);
 	private:
 		void clear(void);
@@ -128,12 +131,16 @@ namespace alc {
 		bool operator==(const tSdlState &state);
 		
 		tUruObject obj;
-		bool skipObj;
+		Byte format;
+		/* possible formats:
+			0x00: first the object, then a SDL message with the compression header
+			0x01: a SDL message with the compression header
+			0x02: a SDL message without compression header */
 		// format
 		tSdlStateBinary content;
 	private:
-		static tMBuf decompress(tBBuf &t, bool canBeLonger); //!< gives us the decompressed content of the SDL stream, the bytes we really want to parse
-		static tMBuf compress(tMBuf &data); //!< packs our SDL stream to be sent, adds length bytes and perhaps compresses
+		tMBuf decompress(tBBuf &t); //!< gives us the decompressed content of the SDL stream, the bytes we really want to parse
+		tMBuf compress(tMBuf &data); //!< packs our SDL stream to be sent, adds length bytes and perhaps compresses
 		tSdlStruct *findStruct(void); //!< finds the correct tSdlStruct which is necessary for this SDL State
 	
 		bool canBeLonger;
