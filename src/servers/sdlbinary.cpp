@@ -124,12 +124,13 @@ namespace alc {
 		//Supposicions meaning:
 		// 0x04: Timestamp is present
 		// 0x08: It has the default value
-		// 0x10: non-struct var? (true for all the messages from the client, but agestate files from old client sometimes don't have it set on non-struct vars)
-		Byte check = 0x04 | 0x08 | 0x10;
+		// 0x10: seen only on vars, not on structs: If set, the value overwrites the current age status, if not, it is ignored while merging
+		// 0x20: seen only in KSDLNodes (it is set for all vars there)
+		Byte check = 0x04 | 0x08 | 0x10 | 0x20;
 		if (flags & ~(check))
 			throw txProtocolError(_WHERE("unknown flag 0x%02X for sdlBinaryVar", flags));
 		if (flags & 0x10 && sdlVar->type == DStruct)
-			throw txProtocolError(_WHERE("struct var must not have 0x10 flag set"));
+			throw txProtocolError(_WHERE("Structs must not have the 0x10 flag set"));
 		// parse according to flags
 		if (flags & 0x04)
 			throw txProtocolError(_WHERE("Parsing the timestamp is not yet supported"));
@@ -218,9 +219,8 @@ namespace alc {
 		t.putByte(0x02); // type
 		t.putByte(0x00); // unk
 		t.put(str);
-		// check non-struct var flag (0x10)
 		if (flags & 0x10 && sdlVar->type == DStruct)
-			throw txProtocolError(_WHERE("struct var must not have 0x10 flag set"));
+			throw txProtocolError(_WHERE("Structs must not have the 0x10 flag set"));
 		// write flags and var
 		t.putByte(flags);
 		if (flags & 0x04)
@@ -495,31 +495,20 @@ namespace alc {
 			throw txUnet(_WHERE("Merging different SDL states not possible!"));
 		
 		DBG(8, "Updating %s.%d\n", sdlStruct->name.c_str(), sdlStruct->version);
-		// first the vars
-		if (newState->incompleteVars) { // merge new data in
-			DBG(8, "Merging %d current with %d new vars\n", vars.size(), newState->vars.size());
-			mergeData(&vars, &newState->vars);
-		} else { // just copy
-			DBG(8, "Just copying %d vars\n", newState->vars.size());
-			vars = newState->vars;
-			incompleteVars = false;
-		}
+		// first merge the vars
+		DBG(8, "Merging %d current with %d new vars\n", vars.size(), newState->vars.size());
+		mergeData(&vars, &newState->vars);
 		
 		// then the structs
-		if (newState->incompleteStructs) { // merge new data in
-			DBG(8, "Merging %d current with %d new structs\n", structs.size(), newState->structs.size());
-			mergeData(&structs, &newState->structs); // FIXME: this will not correctly merge indexed sub-structs - but I have no clue how I would have to do that
-		} else { // just copy
-			DBG(8, "Just copying %d structs\n", newState->structs.size());
-			structs = newState->structs;
-			incompleteStructs = false;
-		}
+		DBG(8, "Merging %d current with %d new structs\n", structs.size(), newState->structs.size());
+		mergeData(&structs, &newState->structs); // FIXME: this will not correctly merge indexed sub-structs - but I have no clue how I would have to do that
 	}
 	
 	void tSdlStateBinary::mergeData(tVarList *curData, tVarList *newData)
 	{
 		tVarList::iterator curIt = curData->begin();
 		for (tVarList::iterator newIt = newData->begin(); newIt != newData->end(); ++newIt) { // merge each new value
+			if (newIt->getType() != DStruct && !newIt->hasFlags(0x10)) continue; // vars without that flag set are skipped
 			// find the first current element with a number equal to or bigger than the one of the new element
 			while (curIt->getNum() < newIt->getNum() && curIt != curData->end()) ++curIt;
 			if (curIt == curData->end() || curIt->getNum() > newIt->getNum()) {
@@ -539,7 +528,7 @@ namespace alc {
 	{
 		this->stateMgr = stateMgr;
 		this->canBeLonger = canBeLonger;
-		skipObj = false;
+		format = 0x00;
 	}
 	
 	tSdlState::tSdlState(tAgeStateManager *stateMgr, const tUruObject &obj, tUStr name, U16 version, bool initDefault)
@@ -547,22 +536,25 @@ namespace alc {
 	{
 		this->stateMgr = stateMgr;
 		canBeLonger = false;
-		skipObj = false;
+		format = 0x00;
 	}
 	
 	tSdlState::tSdlState(void)
 	{
 		this->stateMgr = NULL;
-		skipObj = false;
+		format = 0x00;
 	}
 	
-	tMBuf tSdlState::decompress(tBBuf &t, bool canBeLonger)
+	tMBuf tSdlState::decompress(tBBuf &t)
 	{
 		tMBuf data;
-	
-		U32 realSize = t.getU32();
-		Byte compressed = t.getByte();
-		U32 sentSize = t.getU32();
+		U32 realSize = 0, sentSize = t.remaining(), compressed = 0x00; // default values for when it is sent without header
+		
+		if (format != 0x02) { // it has the compression header (format 0x02 does not)
+			realSize = t.getU32();
+			compressed = t.getByte();
+			sentSize = t.getU32();
+		}
 		
 		if (sentSize > 0) {
 			Byte objPresent = t.getByte();
@@ -615,6 +607,9 @@ namespace alc {
 			return t;
 		}
 		
+		if (format == 0x02)
+			throw txProtocolError(_WHERE("Wiriting a SDL without compression header is not supported"));
+		
 		// it's not yet empty, so we have to write something
 		if (data.size() > 255) { // just a guess - we compress if it's bigger than 255 bytes
 			t.putU32(data.size()+2); // uncompressed size (take object flag and SDL magic into account)
@@ -645,9 +640,9 @@ namespace alc {
 		if (stateMgr == NULL)
 			throw txUnet(_WHERE("You have to set a stateMgr before parsing a sdlState"));
 		// use tSdlBinay to get the message body and decompress stuff
-		if (!skipObj) // the NetMsgJoinAck doesn't contain the UruObject
+		if (format == 0x00) // only format 0x00 has the object
 			t.get(obj);
-		tMBuf data = decompress(t, canBeLonger);
+		tMBuf data = decompress(t);
 		// parse "header data"
 		data.rewind();
 		tUStr name;
@@ -658,18 +653,13 @@ namespace alc {
 		data.get(content);
 		
 		if (!data.eof()) {
-			tMBuf buf;
-			U32 size = data.remaining();
-			buf.write(data.read(size), size);
-			lstd->dumpbuf(buf);
-			lstd->nl();
-			throw txProtocolError(_WHERE("The SDL struct is too long (%d Bytes remaining after parsing)", size));
+			throw txProtocolError(_WHERE("The SDL struct is too long (%d Bytes remaining after parsing)", data.remaining()));
 		}
 	}
 	
 	void tSdlState::stream(tBBuf &t)
 	{
-		if (!skipObj) // the NetMsgJoinAck doesn't contain the UruObject
+		if (format == 0x00) // only format 0x00 has the object
 			t.put(obj);
 		tMBuf data;
 		if (content.getVersion() && content.getName().size()) {
@@ -700,7 +690,10 @@ namespace alc {
 	void tSdlState::print(tLog *log)
 	{
 		if (!log->doesPrint()) return;
-		log->print("SDL State for [%s]:\n", obj.str());
+		if (format == 0x00)
+			log->print("SDL State for [%s]:\n", obj.str());
+		else
+			log->print("SDL State:\n"); // other formats than 0x00 don't contain the object
 		content.print(log);
 	}
 

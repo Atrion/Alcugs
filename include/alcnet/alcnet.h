@@ -51,7 +51,6 @@
 #include "configalias.h"
 #include "unetmain.h"
 #include "unetserverbase.h"
-#include "unetlobbyserverbase.h"
 #include "sql.h"
 
 #endif

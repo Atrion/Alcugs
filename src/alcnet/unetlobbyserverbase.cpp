@@ -40,6 +40,7 @@
 
 #include "alcugs.h"
 #include "alcnet.h"
+#include "unetlobbyserverbase.h"
 #include "protocol/msgparsers.h"
 
 ////extra includes
@@ -534,6 +535,8 @@ namespace alc {
 					tmVault vaultMsgFwd(vaultServer, u->ki, vaultMsg.x, isTask, &parsedMsg);
 					send(vaultMsgFwd);
 				}
+				// do additional processing
+				additionalVaultProcessing(u, &parsedMsg);
 				
 				return 1;
 			}

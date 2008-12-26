@@ -38,6 +38,8 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_UNETLOBBYSERVERBASE_H_ID "$Id$"
 
+#include "protocol/vaultproto.h"
+
 namespace alc {
 
 	////DEFINITIONS
@@ -57,6 +59,8 @@ public:
 	virtual void onUnloadConfig(void);
 	virtual void onLoadConfig(void);
 protected:
+	virtual void additionalVaultProcessing(tNetSession *u, tvMessage *msg) {}
+
 	tNetSessionIte auth, tracking, vault;
 
 	Byte serverGuid[8]; //!< This system's guid (age guid) (in Hex)

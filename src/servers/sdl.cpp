@@ -50,9 +50,10 @@
 namespace alc {
 
 	//// tAgeStateManager
-	tAgeStateManager::tAgeStateManager(tUnet *net, const tAgeInfo *age)
+	tAgeStateManager::tAgeStateManager(tUnet *net, tAgeInfo *age)
 	{
 		this->net = net;
+		this->age = age;
 		log = lnull;
 		load();
 		
@@ -217,7 +218,7 @@ namespace alc {
 	
 	void tAgeStateManager::saveSdlState(tMBuf &data)
 	{
-		tSdlState sdl(this); // below catch-try cares about cleaning up in case of a parse error
+		tSdlState sdl(this);
 		data.rewind();
 		data.get(sdl);
 		if (logDetailed) {
@@ -234,12 +235,36 @@ namespace alc {
 			if (it->content.getVersion() != sdl.content.getVersion()) {
 				throw txProtocolError(_WHERE("SDL version mismatch: %s should be changed to %s", it->str(), sdl.str()));
 			}
-			else { // update existing state
-				log->log("Updating %s\n", sdl.str());
-				it->content.updateWith(&sdl.content);
-			}
+			// update existing state
+			log->log("Updating %s\n", sdl.str());
+			it->content.updateWith(&sdl.content);
 		}
 		log->flush();
+	}
+	
+	void tAgeStateManager::saveSdlVaultMessage(tMBuf &data, tNetSession *u)
+	{
+		// get the content
+		tSdlState sdl(this);
+		sdl.format = 0x02; // no compression header
+		data.get(sdl);
+		if (sdl.content.getName() != age->name) return; // ignore updates for other ages
+		if (logDetailed) {
+			log->log("Got SDL Vault Message ");
+			sdl.print(log);
+		}
+		// find our AgeSDLHook
+		tSdlList::iterator sdlHook = findAgeSDLHook();
+		if (sdlHook != sdlStates.end()) { // found it - update it
+			if (sdlHook->content.getName() != sdl.content.getName() || sdlHook->content.getVersion() != sdl.content.getVersion())
+				throw txProtocolError(_WHERE("SDL version mismatch: %s should be changed to %s", sdlHook->str(), sdl.str()));
+			log->log("Updating %s\n", sdl.str());
+			sdlHook->content.updateWith(&sdl.content);
+			// send update to client (for some strange reason, it is enough to send the SDL update to the client who triggered it)
+			tmSDLState sdlMsg(u, /*initial*/false);
+			sdlMsg.sdl.put(*sdlHook);
+			net->send(sdlMsg);
+		}
 	}
 	
 	tAgeStateManager::tSdlList::iterator tAgeStateManager::findSdlState(tSdlState *state)
@@ -370,14 +395,14 @@ namespace alc {
 			}
 			else
 				log->nl();
-			sdlHook->skipObj = true; // write it without the object
+			sdlHook->format = 0x01; // write it without the object
 			buf->put(*sdlHook);
-			sdlHook->skipObj = false;
+			sdlHook->format = 0x00; // restore the correct format
 		}
 		else { // not found
 			log->log("No Age SDL hook found, send empty SDL\n");
 			tSdlState empty;
-			empty.skipObj = true; // write it without the object
+			empty.format = 0x01; // write it without the object
 			buf->put(empty);
 		}
 		log->flush();

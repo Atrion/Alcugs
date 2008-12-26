@@ -317,7 +317,7 @@ namespace alc {
 	void tmGroupOwner::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" Page ID: 0x%08X, Page Type: 0x%04X, is owner: ");
+		dbg.printf(" Page ID: 0x%08X, Page Type: 0x%04X, is owner: ", pageId, pageType);
 		if (isOwner) dbg.printf("yes");
 		else         dbg.printf("no");
 	}

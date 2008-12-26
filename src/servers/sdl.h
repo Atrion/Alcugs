@@ -51,11 +51,12 @@ namespace alc {
 	
 	class tAgeStateManager {
 	public:
-		tAgeStateManager(tUnet *net, const tAgeInfo *age);
+		tAgeStateManager(tUnet *net, tAgeInfo *age);
 		~tAgeStateManager(void);
 		void reload(void);
 		
 		void saveSdlState(tMBuf &data);
+		void saveSdlVaultMessage(tMBuf &data, tNetSession *u);
 		void saveClone(const tmLoadClone &clone);
 		int sendClones(tNetSession *u);
 		int sendSdlStates(tNetSession *u, tmGameStateRequest::tPageList *pages);
@@ -85,6 +86,7 @@ namespace alc {
 		tSdlList sdlStates;
 		tSdlStructList structs;
 		tUnet *net;
+		tAgeInfo *age;
 		tLog *log;
 		bool logDetailed;
 	};

@@ -38,6 +38,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_GAMESERVER_H_ID "$Id$"
 
+#include <unetlobbyserverbase.h>
 #include "sdl.h"
 
 namespace alc {
@@ -66,6 +67,8 @@ namespace alc {
 			ageState->reload();
 		}
 		virtual void onLoadConfig(void);
+	protected:
+		virtual void additionalVaultProcessing(tNetSession *u, tvMessage *msg);
 	private:
 		Byte fwdDirectedGameMsg(tmGameMessageDirected &msg);
 		void bcastMemberUpdate(tNetSession *u, bool isJoined);
