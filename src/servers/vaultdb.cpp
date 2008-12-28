@@ -964,7 +964,7 @@ namespace alc {
 	
 		U32 *feed = NULL, *aux = NULL, *final = NULL;
 		U32  nFeed = 0,    nAux = 0,    nFinal = 0;
-		char query[8*1024], cond[32];
+		tStrBuf query;
 		MYSQL_RES *result;
 		MYSQL_ROW row;
 		bool comma;
@@ -977,8 +977,8 @@ namespace alc {
 		nFeed = 1;
 		
 		// check if the node we're talking about is a MGR itself (it has to be added ti the list then)
-		sprintf(query, "SELECT type FROM %s WHERE idx='%d' LIMIT 1", vaultTable, baseNode);
-		sql->query(query, "getMGRs: node type");
+		query.printf("SELECT type FROM %s WHERE idx='%d' LIMIT 1", vaultTable, baseNode);
+		sql->query(query.c_str(), "getMGRs: node type");
 		result = sql->storeResult();
 		
 		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get node type of %d", baseNode));
@@ -1006,7 +1006,8 @@ namespace alc {
 			if (final == NULL) throw txNoMem(_WHERE("NoMem"));
 			nFinal = 0;
 			
-			sprintf(query, "SELECT n.idx,n.type FROM %s n JOIN %s r ON r.id2=n.idx WHERE r.id3 IN(", vaultTable, refVaultTable);
+			query.clear();
+			query.printf("SELECT n.idx,n.type FROM %s n JOIN %s r ON r.id2=n.idx WHERE r.id3 IN(", vaultTable, refVaultTable);
 			comma = false;
 			
 			// our task is now to (a) merge the (both sorted) lists aux and feed into a (sorted) final list and (b) add all the node ids
@@ -1021,9 +1022,8 @@ namespace alc {
 							final[nFinal] = feed[feedIndex];
 							++nFinal;
 							// add it to the query
-							if (comma) strcat(query, ",");
-							sprintf(cond, "%d", feed[feedIndex]);
-							strcat(query, cond);
+							if (comma) query.writeStr(",");
+							query.printf("%d", feed[feedIndex]);
 							comma = true;
 						}
 						else
@@ -1057,15 +1057,15 @@ namespace alc {
 					final[nFinal] = feed[feedIndex];
 					++nFinal;
 					// add it to the query
-					if (comma) strcat(query, ",");
-					sprintf(cond, "%d", feed[feedIndex]);
-					strcat(query, cond);
+					if (comma) query.writeStr(",");
+					query.printf("%d", feed[feedIndex]);
 					comma = true;
 				}
 				else
 					; // duplicate
 				++feedIndex; // got this one
 			}
+			DBG(9, "Completed the new lists\n");
 			
 			// now we can free the aux and feed tables
 			if (aux != NULL) {
@@ -1081,12 +1081,13 @@ namespace alc {
 			
 			// ok... now we can query (if there's anything)
 			if (!comma) break;
-			strcat(query, ") ORDER BY n.idx ASC");
-			sql->query(query, "getMGRs: getting child nodes");
+			query.writeStr(") ORDER BY n.idx ASC");
+			sql->query(query.c_str(), "getMGRs: getting child nodes");
 			
 			result = sql->storeResult();
 			if (result == NULL) throw txDatabaseError(_WHERE("couldn't get nodes"));
 			U32 number = mysql_num_rows(result);
+			DBG(9, "Got %d child nodes, adding them to table\n", number);
 				
 			// the result goes into the feed table
 			feed = (U32 *)malloc(number*sizeof(U32));
@@ -1098,6 +1099,7 @@ namespace alc {
 				feed[nFeed] = idx;
 				++nFeed;
 				if (atoi(row[1]) <= 7) { // it's a MGR so lets save it - and keep the table in order!
+					DBG(9, "%d is a MGR, adding it\n", idx);
 					U32 insertVal = idx, tmp;
 					for (U32 i = 0; i < *tableSize; ++i) {
 						if ((*table)[i] == insertVal) break;
@@ -1118,6 +1120,7 @@ namespace alc {
 			}
 			mysql_free_result(result);
 		}
+		DBG(9, "That was the last loop\n");
 		
 		// now we can free the aux and feed tables
 		if (aux != NULL) {
