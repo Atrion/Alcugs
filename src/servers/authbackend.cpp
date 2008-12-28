@@ -114,9 +114,9 @@ namespace alc {
 		sql = tSQL::createFromConfig();
 		if (sql->prepare()) {
 			// check if the auth table exists
-			char query[100];
-			sprintf(query, "SHOW TABLES LIKE 'accounts'");
-			sql->query(query, "Looking for accounts table");
+			tStrBuf query;
+			query.printf("SHOW TABLES LIKE 'accounts'");
+			sql->query(query.c_str(), "Looking for accounts table");
 			MYSQL_RES *result = sql->storeResult();
 			bool exists = mysql_num_rows(result);
 			mysql_free_result(result);
@@ -150,7 +150,7 @@ namespace alc {
 	
 	int tAuthBackend::queryPlayer(Byte *login, Byte *passwd, Byte *guid, U32 *attempts, U32 *lastAttempt)
 	{
-		char query[1024];
+		tStrBuf query;
 		*attempts = *lastAttempt = passwd[0] = 0; // ensure there's a valid value in there
 		strcpy((char *)guid, "00000000-0000-0000-0000-000000000000");
 		
@@ -161,8 +161,8 @@ namespace alc {
 		}
 		
 		// query the database
-		sprintf(query,"SELECT UCASE(passwd), a_level, guid, attempts, UNIX_TIMESTAMP(last_attempt) FROM accounts WHERE name='%s' LIMIT 1", sql->escape((char *)login));
-		sql->query(query, "Query player");
+		query.printf("SELECT UCASE(passwd), a_level, guid, attempts, UNIX_TIMESTAMP(last_attempt) FROM accounts WHERE name='%s' LIMIT 1", sql->escape((char *)login));
+		sql->query(query.c_str(), "Query player");
 		
 		// read the result
 		MYSQL_RES *result = sql->storeResult();
@@ -185,17 +185,18 @@ namespace alc {
 
 	void tAuthBackend::updatePlayer(Byte *guid, Byte *ip, U32 attempts, Byte updateStamps)
 	{
-		char query[2048], stamps[256], ip_escaped[50], guid_escaped[50];
+		char ip_escaped[50], guid_escaped[50];
+		tStrBuf query;
 		strncpy(ip_escaped, sql->escape((char *)ip), 49);
 		strncpy(guid_escaped, sql->escape((char *)guid), 49);
+		query.printf("UPDATE accounts SET attempts='%d', last_ip='%s'", attempts, ip_escaped);
 		if (updateStamps == 1) // update only last attempt
-			sprintf(stamps, ", last_attempt=NOW()");
+			query.printf(", last_attempt=NOW()");
 		else if (updateStamps == 2) // update last attempt and last login
-			sprintf(stamps, ", last_attempt=NOW(), last_login=NOW()");
-		else // don't update any stamp
-			stamps[0] = 0; // an empty string
-		sprintf(query, "UPDATE accounts SET attempts='%d', last_ip='%s'%s WHERE guid='%s'", attempts, ip_escaped, stamps, guid_escaped);
-		sql->query(query, "Update player");
+			query.printf(", last_attempt=NOW(), last_login=NOW()");
+		else ; // don't update any stamp
+		query.printf(" WHERE guid='%s'", guid_escaped);
+		sql->query(query.c_str(), "Update player");
 	}
 
 	int tAuthBackend::authenticatePlayer(tNetSession *u, Byte *login, Byte *challenge, Byte *hash, Byte release, Byte *ip, Byte *passwd,

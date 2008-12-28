@@ -183,25 +183,26 @@ namespace alc {
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
-		char query[512];
-		int version;
-		sprintf(query, "SHOW COLUMNS FROM %s LIKE 'torans'", vaultTable);
-		sql->query(query, "getVersion: Checking for torans column");
+		tStrBuf query;
+		int version = 0;
+		query.printf("SHOW COLUMNS FROM %s LIKE 'torans'", vaultTable);
+		sql->query(query.c_str(), "getVersion: Checking for torans column");
 		
 		MYSQL_RES *result = sql->storeResult();
 		bool exists = mysql_num_rows(result);
 		mysql_free_result(result);
+		query.clear();
 		if (exists)
-			sprintf(query, "SELECT torans FROM %s WHERE type=6 LIMIT 1", vaultTable); // only the root node has type 6
+			query.printf("SELECT torans FROM %s WHERE type=6 LIMIT 1", vaultTable); // only the root node has type 6
 		else
-			sprintf(query, "SELECT int_1 FROM %s WHERE type=6 LIMIT 1", vaultTable); // only the root node has type 6
-		sql->query(query, "getVersion: Checking version number");
+			query.printf("SELECT int_1 FROM %s WHERE type=6 LIMIT 1", vaultTable); // only the root node has type 6
+		sql->query(query.c_str(), "getVersion: Checking version number");
 		result = sql->storeResult();
 		if (result == NULL) throw txDatabaseError(_WHERE("couldn't check version number"));
 		MYSQL_ROW row = mysql_fetch_row(result);
 		if (row) version = atoi(row[0]);
 		mysql_free_result(result);
-		if (!row) throw txDatabaseError("couldn't find vault folder node");
+		if (!row || !version) throw txDatabaseError("couldn't find vault folder node");
 		return version;
 	}
 	
@@ -209,9 +210,9 @@ namespace alc {
 	{
 		folder[0] = 0; // empty it
 		
-		char query[512];
-		sprintf(query, "SELECT idx, str_1 FROM %s WHERE type=6 LIMIT 1", vaultTable);
-		sql->query(query, "Getting vault folder name");
+		tStrBuf query;
+		query.printf("SELECT idx, str_1 FROM %s WHERE type=6 LIMIT 1", vaultTable);
+		sql->query(query.c_str(), "Getting vault folder name");
 		
 		MYSQL_RES *result = sql->storeResult();
 		if (result == NULL) throw txDatabaseError(_WHERE("couldn't query vault folder name"));
@@ -227,75 +228,83 @@ namespace alc {
 	
 	void tVaultDB::convertIntToTimestamp(const char *table, const char *intColumn, const char *timestampColumn)
 	{
-		char query[512];
+		tStrBuf query;
 		
-		sprintf(query, "ALTER TABLE %s ADD %s timestamp NOT NULL default 0 AFTER %s", table, timestampColumn, intColumn);
-		sql->query(query, "converting int to timestamp (1/3)");
+		query.printf("ALTER TABLE %s ADD %s timestamp NOT NULL default 0 AFTER %s", table, timestampColumn, intColumn);
+		sql->query(query.c_str(), "converting int to timestamp (1/3)");
 		
-		sprintf(query, "UPDATE %s SET %s = FROM_UNIXTIME(%s)", table, timestampColumn, intColumn);
-		sql->query(query, "converting int to timestamp (2/3)");
+		query.clear();
+		query.printf("UPDATE %s SET %s = FROM_UNIXTIME(%s)", table, timestampColumn, intColumn);
+		sql->query(query.c_str(), "converting int to timestamp (2/3)");
 		
-		sprintf(query, "ALTER TABLE %s DROP %s", table, intColumn);
-		sql->query(query, "converting int to timestamp (3/3)");
+		query.clear();
+		query.printf("ALTER TABLE %s DROP %s", table, intColumn);
+		sql->query(query.c_str(), "converting int to timestamp (3/3)");
 	}
 	
 	void tVaultDB::convertIntToDouble(const char *table, const char *intColumn, const char *doubleColumn)
 	{
-		char query[512];
+		tStrBuf query;
 		
-		sprintf(query, "ALTER TABLE %s ADD %s double NOT NULL default 0 AFTER %s", table, doubleColumn, intColumn);
-		sql->query(query, "converting int to double (1/3)");
+		query.printf("ALTER TABLE %s ADD %s double NOT NULL default 0 AFTER %s", table, doubleColumn, intColumn);
+		sql->query(query.c_str(), "converting int to double (1/3)");
 		
-		sprintf(query, "UPDATE %s SET %s = %s", table, doubleColumn, intColumn);
-		sql->query(query, "converting int to double (2/3)");
+		query.clear();
+		query.printf("UPDATE %s SET %s = %s", table, doubleColumn, intColumn);
+		sql->query(query.c_str(), "converting int to double (2/3)");
 		
-		sprintf(query, "ALTER TABLE %s DROP %s", table, intColumn);
-		sql->query(query, "converting int to double (3/3)");
+		query.clear();
+		query.printf("ALTER TABLE %s DROP %s", table, intColumn);
+		sql->query(query.c_str(), "converting int to double (3/3)");
 	}
 	
 	void tVaultDB::migrateVersion2to3(void)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
-		char query[2048];
+		tStrBuf query;
 		/* From version 2 to 3, the layout of the tables changed, but the way the content is organized stayed the same.
 		   On both tables, the timestamp columns were converted to type TIMESTAMP.
-		   For the main vault table, the columns were renamed to the names tvNode uses (which are taked from Vault Manager) */
+		   For the main vault table, the columns were renamed to the names tvNode uses (which are taken from Vault Manager) */
 		
 		// first, the ref_vault
 		// rename old timestamp column and delete microseconds
-		sprintf(query, "ALTER TABLE %s CHANGE timestamp timestamp_old int NOT NULL default 0", refVaultTable);
-		sql->query(query, "migrateVersion2to3: renaming old timestamp row");
+		query.printf("ALTER TABLE %s CHANGE timestamp timestamp_old int NOT NULL default 0", refVaultTable);
+		sql->query(query.c_str(), "migrateVersion2to3: renaming old timestamp row");
 		// and create new one
 		convertIntToTimestamp(refVaultTable, "timestamp_old", "timestamp");
 		
 		// now, the main vault
 		// drop unused columns
-		sprintf(query, "ALTER TABLE %s DROP microseconds, DROP microseconds2, DROP microseconds3, DROP data2, DROP unk13, DROP unk14", vaultTable);
-		sql->query(query, "migrateVersion2to3: remove unused columns");
+		query.clear();
+		query.printf("ALTER TABLE %s DROP microseconds, DROP microseconds2, DROP microseconds3, DROP data2, DROP unk13, DROP unk14", vaultTable);
+		sql->query(query.c_str(), "migrateVersion2to3: remove unused columns");
 		// rename int columns (besides timestamps)
-		sprintf(query, "ALTER TABLE %s CHANGE unk1 grp int NOT NULL default 0,\n\
+		query.clear();
+		query.printf("ALTER TABLE %s CHANGE unk1 grp int NOT NULL default 0,\n\
 			CHANGE id1 creator int NOT NULL default 0, CHANGE torans int_1 int NOT NULL default 0,\n\
 			CHANGE distance int_2 int NOT NULL default 0, CHANGE elevation int_3 int NOT NULL default 0,\n\
 			CHANGE unk5 int_4 int NOT NULL default 0, CHANGE id2 uint_1 int NOT NULL default 0,\n\
 			CHANGE unk7 uint_2 int NOT NULL default 0, CHANGE unk8 uint_3 int NOT NULL default 0,\n\
 			CHANGE unk9 uint_4 int NOT NULL default 0", vaultTable);
-		sql->query(query, "migrateVersion2to3: rename int columns");
+		sql->query(query.c_str(), "migrateVersion2to3: rename int columns");
 		// rename string and blob columns
-		sprintf(query, "ALTER TABLE %s CHANGE entry_name str_1 varchar(255) NOT NULL default '',\n\
+		query.clear();
+		query.printf("ALTER TABLE %s CHANGE entry_name str_1 varchar(255) NOT NULL default '',\n\
 			CHANGE sub_entry_name str_2 varchar(255) NOT NULL default '', CHANGE owner_name str_3 varchar(255) NOT NULL default '',\n\
 			CHANGE guid str_4 varchar(255) NOT NULL default '', CHANGE str1 str_5 varchar(255) NOT NULL default '',\n\
 			CHANGE str2 str_6 varchar(255) NOT NULL default '', CHANGE avie lstr_1 varchar(255) NOT NULL default '',\n\
 			CHANGE uid lstr_2 varchar(255) NOT NULL default '', CHANGE entry_value text_1 varchar(255) NOT NULL default '',\n\
 			CHANGE entry2 text_2 varchar(255) NOT NULL default '', CHANGE data blob_1 longblob NOT NULL", vaultTable);
-		sql->query(query, "migrateVersion2to3: rename string and blob columns");
+		sql->query(query.c_str(), "migrateVersion2to3: rename string and blob columns");
 		// convert timestamp columns
 		convertIntToDouble(vaultTable, "timestamp", "mod_time");
 		convertIntToTimestamp(vaultTable, "timestamp2", "crt_time");
 		convertIntToTimestamp(vaultTable, "timestamp3", "age_time");
 		// update version number
-		sprintf(query, "UPDATE %s SET int_1=3 WHERE type=6", vaultTable); // only the root node has type 6
-		sql->query(query, "migrateVersion2to3: setting version number");
+		query.clear();
+		query.printf("UPDATE %s SET int_1=3 WHERE type=6", vaultTable); // only the root node has type 6
+		sql->query(query.c_str(), "migrateVersion2to3: setting version number");
 		// remove invalid references
 		removeInvalidRefs();
 	}
@@ -304,11 +313,11 @@ namespace alc {
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
-		char query[1024];
+		tStrBuf query;
 		if (t) t->clear();
 		
-		sprintf(query, "SELECT idx, lstr_1, int_2 FROM %s WHERE lstr_2 = '%s'", vaultTable, alcGetStrUid(uid));
-		sql->query(query, "getting player list");
+		query.printf("SELECT idx, lstr_1, int_2 FROM %s WHERE lstr_2 = '%s'", vaultTable, alcGetStrUid(uid));
+		sql->query(query.c_str(), "getting player list");
 		
 		MYSQL_RES *result = sql->storeResult();
 		if (result == NULL) throw txDatabaseError(_WHERE("couldn't query player list"));
@@ -332,11 +341,11 @@ namespace alc {
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
-		char query[1024];
+		tStrBuf query;
 		avatar[0] = 0; // first emtpy the string
 		
-		sprintf(query, "SELECT lstr_1 FROM %s WHERE lstr_2 = '%s' and idx='%d' LIMIT 1", vaultTable, alcGetStrUid(uid), ki);
-		sql->query(query, "checking ki");
+		query.printf("SELECT lstr_1 FROM %s WHERE lstr_2 = '%s' and idx='%d' LIMIT 1", vaultTable, alcGetStrUid(uid), ki);
+		sql->query(query.c_str(), "checking ki");
 		
 		MYSQL_RES *result = sql->storeResult();
 		if (result == NULL) throw txDatabaseError(_WHERE("couldn't check ki"));
@@ -350,217 +359,184 @@ namespace alc {
 		return (number == 1) ? 1 : 0;
 	}
 	
-	void tVaultDB::createNodeQuery(char *query, tvNode &node, bool isUpdate)
+	tStrBuf tVaultDB::createNodeQuery(tvNode &node, bool isUpdate)
 	{
+		tStrBuf query;
 		char *escapedData = NULL;
-		char cond[1024];
 		bool comma = false;
 		const char *commaStr = isUpdate ? "," : " and ";
 		
-		if (isUpdate) {
-			escapedData = (char *)malloc((node.blob1Size*2 + 2048)*sizeof(char));
-			if (escapedData == NULL) throw txNoMem(_WHERE("NoMem"));
-			escapedData[0] = 0; // empty it
-		}
-		
 		if (!isUpdate && node.flagB & MIndex) { // only insert this if it is a SELECT
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "idx='%d'", node.index);
-			strcat(query, cond);
+			query.printf("idx='%d'", node.index);
 			comma = true;
 		}
 		if (node.flagB & MType) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "type='%d'", node.type);
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("type='%d'", node.type);
 			comma = true;
 		}
 		if (node.flagB & MPerms) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "permissions='%d'", node.permissions);
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("permissions='%d'", node.permissions);
 			comma = true;
 		}
 		if (node.flagB & MOwner) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "owner='%d'", node.owner);
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("owner='%d'", node.owner);
 			comma = true;
 		}
 		if (node.flagB & MGroup) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "grp='%d'", node.group);
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("grp='%d'", node.group);
 			comma = true;
 		}
 		if (node.flagB & MModTime) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "mod_time=%f", node.modTime);
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("mod_time=%f", node.modTime);
 			comma = true;
 		}
 		if (node.flagB & MCreator) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "creator='%d'", node.creator);
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("creator='%d'", node.creator);
 			comma = true;
 		}
 		if (node.flagB & MCrtTime) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "crt_time=FROM_UNIXTIME(%d)", node.crtTime);
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("crt_time=FROM_UNIXTIME(%d)", node.crtTime);
 			comma = true;
 		}
 		if (node.flagB & MAgeTime) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "age_time=FROM_UNIXTIME(%d)", node.ageTime);
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("age_time=FROM_UNIXTIME(%d)", node.ageTime);
 			comma = true;
 		}
 		if (node.flagB & MAgeName) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "age_name='%s'", sql->escape((char *)node.ageName.c_str()));
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("age_name='%s'", sql->escape((char *)node.ageName.c_str()));
 			comma = true;
 		}
 		if (node.flagB & MAgeGuid) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "age_guid='%s'", sql->escape((char *)alcGetStrGuid(node.ageGuid)));
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("age_guid='%s'", sql->escape((char *)alcGetStrGuid(node.ageGuid)));
 			comma = true;
 		}
 		if (node.flagB & MInt32_1) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "int_1='%d'", node.int1);
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("int_1='%d'", node.int1);
 			comma = true;
 		}
 		if (node.flagB & MInt32_2) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "int_2='%d'", node.int2);
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("int_2='%d'", node.int2);
 			comma = true;
 		}
 		if (node.flagB & MInt32_3) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "int_3='%d'", node.int3);
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("int_3='%d'", node.int3);
 			comma = true;
 		}
 		if (node.flagB & MInt32_4) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "int_4='%d'", node.int4);
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("int_4='%d'", node.int4);
 			comma = true;
 		}
 		if (node.flagB & MUInt32_1) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "uint_1='%d'", node.uInt1);
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("uint_1='%d'", node.uInt1);
 			comma = true;
 		}
 		if (node.flagB & MUInt32_2) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "uint_2='%d'", node.uInt2);
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("uint_2='%d'", node.uInt2);
 			comma = true;
 		}
 		if (node.flagB & MUInt32_3) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "uint_3='%d'", node.uInt3);
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("uint_3='%d'", node.uInt3);
 			comma = true;
 		}
 		if (node.flagB & MUInt32_4) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "uint_4='%d'", node.uInt4);
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("uint_4='%d'", node.uInt4);
 			comma = true;
 		}
 		if (node.flagB & MStr64_1) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "str_1='%s'", sql->escape((char *)node.str1.c_str()));
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("str_1='%s'", sql->escape((char *)node.str1.c_str()));
 			comma = true;
 		}
 		if (node.flagB & MStr64_2) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "str_2='%s'", sql->escape((char *)node.str2.c_str()));
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("str_2='%s'", sql->escape((char *)node.str2.c_str()));
 			comma = true;
 		}
 		if (node.flagB & MStr64_3) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "str_3='%s'", sql->escape((char *)node.str3.c_str()));
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("str_3='%s'", sql->escape((char *)node.str3.c_str()));
 			comma = true;
 		}
 		if (node.flagB & MStr64_4) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "str_4='%s'", sql->escape((char *)node.str4.c_str()));
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("str_4='%s'", sql->escape((char *)node.str4.c_str()));
 			comma = true;
 		}
 		if (node.flagB & MStr64_5) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "str_5='%s'", sql->escape((char *)node.str5.c_str()));
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("str_5='%s'", sql->escape((char *)node.str5.c_str()));
 			comma = true;
 		}
 		if (node.flagB & MStr64_6) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "str_6='%s'", sql->escape((char *)node.str6.c_str()));
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("str_6='%s'", sql->escape((char *)node.str6.c_str()));
 			comma = true;
 		}
 		if (node.flagB & MlStr64_1) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "lstr_1='%s'", sql->escape((char *)node.lStr1.c_str()));
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("lstr_1='%s'", sql->escape((char *)node.lStr1.c_str()));
 			comma = true;
 		}
 		if (node.flagB & MlStr64_2) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "lstr_2='%s'", sql->escape((char *)node.lStr2.c_str()));
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("lstr_2='%s'", sql->escape((char *)node.lStr2.c_str()));
 			comma = true;
 		}
 		if (node.flagB & MText_1) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "text_1='%s'", sql->escape((char *)node.text1.c_str()));
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("text_1='%s'", sql->escape((char *)node.text1.c_str()));
 			comma = true;
 		}
 		if (node.flagB & MText_2) {
-			if (comma) strcat(query, commaStr);
-			sprintf(cond, "text_2='%s'", sql->escape((char *)node.text2.c_str()));
-			strcat(query, cond);
+			if (comma) query.writeStr(commaStr);
+			query.printf("text_2='%s'", sql->escape((char *)node.text2.c_str()));
 			comma = true;
 		}
 		if (isUpdate && node.flagB & MBlob1) { // only insert this if it is an UPDATE
-			if (comma) strcat(query, commaStr);
-			strcat(query, "blob_1='");
+			if (comma) query.writeStr(commaStr);
+			query.writeStr("blob_1='");
 			if (node.blob1Size) {
-				strcat(query, sql->escape(escapedData, (char *)node.blob1, node.blob1Size));
+				escapedData = (char *)malloc((node.blob1Size*2 + 2048)*sizeof(char));
+				if (escapedData == NULL) throw txNoMem(_WHERE("NoMem"));
+				query.writeStr(sql->escape(escapedData, (char *)node.blob1, node.blob1Size));
+				free(escapedData);
 			}
-			strcat(query, "'");
+			query.writeStr( "'");
 			comma = true;
 		}
 		
-		if (escapedData) free(escapedData);
+		return query;
 	}
 	
 	U32 tVaultDB::findNode(tvNode &node, bool create, tvManifest *mfs)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
-		char query[8*1024];
+		tStrBuf query;
 		// first, we have to create the query...
-		sprintf(query, "SELECT idx, mod_time FROM %s WHERE ", vaultTable);
-		createNodeQuery(query, node, /*isUpdate*/false);
+		query.printf("SELECT idx, mod_time FROM %s WHERE ", vaultTable);
+		query.writeStr(createNodeQuery(node, /*isUpdate*/false));
 		
 		// now, let's execute it
-		sql->query(query, "finding node");
+		sql->query(query.c_str(), "finding node");
 		MYSQL_RES *result = sql->storeResult();
 		if (result == NULL) throw txDatabaseError(_WHERE("couldn't check ki"));
 		int number = mysql_num_rows(result);
@@ -784,16 +760,12 @@ namespace alc {
 		node.modTime = alcGetCurrentTime();
 		
 		// create the query
-		char *query = (char *)malloc((node.blob1Size*2 + 4048)*sizeof(char)), cond[64];
-		if (query == NULL) throw txNoMem(_WHERE("NoMem"));
-		sprintf(query, "UPDATE %s SET ", vaultTable);
-		createNodeQuery(query, node, /*isUpdate*/true);
-		sprintf(cond, " WHERE idx='%d'", node.index);
-		strcat(query, cond);
+		tStrBuf query;
+		query.printf("UPDATE %s SET ", vaultTable);
+		query.writeStr(createNodeQuery(node, /*isUpdate*/true));
+		query.printf(" WHERE idx='%d'", node.index);
 		
-		sql->query(query, "Updating vault node", true);
-		
-		free(query);
+		sql->query(query.c_str(), "Updating vault node", true);
 	}
 	
 	void tVaultDB::getManifest(U32 baseNode, tvManifest ***mfs, int *nMfs, tvNodeRef ***ref, int *nRef)
@@ -807,15 +779,15 @@ namespace alc {
 	
 		tvManifest **feed = NULL, **aux = NULL, **final = NULL;
 		int          nFeed = 0,     nAux = 0,     nFinal = 0;
-		char query[8*1024], cond[32];
+		tStrBuf query;
 		MYSQL_RES *result;
 		MYSQL_ROW row;
 		bool comma;
 		int auxIndex, feedIndex;
 		
 		// get base node
-		sprintf(query, "SELECT idx, mod_time FROM %s WHERE idx='%d' LIMIT 1", vaultTable, baseNode);
-		sql->query(query, "getManifest: getting first node");
+		query.printf("SELECT idx, mod_time FROM %s WHERE idx='%d' LIMIT 1", vaultTable, baseNode);
+		sql->query(query.c_str(), "getManifest: getting first node");
 		
 		result = sql->storeResult();
 		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get first node %d", baseNode));
@@ -841,7 +813,8 @@ namespace alc {
 			if (final == NULL) throw txNoMem(_WHERE("NoMem"));
 			nFinal = 0;
 			
-			sprintf(query, "SELECT n.idx, n.mod_time, r.id1, r.id2, UNIX_TIMESTAMP(r.timestamp), r.microseconds, r.flag FROM %s n JOIN %s r ON r.id3=n.idx WHERE r.id2 IN(", vaultTable, refVaultTable);
+			query.clear();
+			query.printf("SELECT n.idx, n.mod_time, r.id1, r.id2, UNIX_TIMESTAMP(r.timestamp), r.microseconds, r.flag FROM %s n JOIN %s r ON r.id3=n.idx WHERE r.id2 IN(", vaultTable, refVaultTable);
 			comma = false;
 			
 			// our task is now to (a) merge the (both sorted) lists aux and feed into a (sorted) final list and (b) add all the node ids
@@ -856,9 +829,8 @@ namespace alc {
 							final[nFinal] = feed[feedIndex];
 							++nFinal;
 							// add it to the query
-							if (comma) strcat(query, ",");
-							sprintf(cond, "%d", feed[feedIndex]->id);
-							strcat(query, cond);
+							if (comma) query.writeStr(",");
+							query.printf("%d", feed[feedIndex]->id);
 							comma = true;
 						}
 						else
@@ -892,9 +864,8 @@ namespace alc {
 					final[nFinal] = feed[feedIndex];
 					++nFinal;
 					// add it to the query
-					if (comma) strcat(query, ",");
-					sprintf(cond, "%d", feed[feedIndex]->id);
-					strcat(query, cond);
+					if (comma) query.writeStr(",");
+					query.printf("%d", feed[feedIndex]->id);
 					comma = true;
 				}
 				else
@@ -916,8 +887,8 @@ namespace alc {
 			
 			// ok... now we can query (if there's anything)
 			if (!comma) break;
-			strcat(query, ") ORDER BY n.idx ASC");
-			sql->query(query, "getManifest: getting child nodes");
+			query.writeStr(") ORDER BY n.idx ASC");
+			sql->query(query.c_str(), "getManifest: getting child nodes");
 			
 			result = sql->storeResult();
 			if (result == NULL) throw txDatabaseError(_WHERE("couldn't get nodes"));
@@ -1155,23 +1126,22 @@ namespace alc {
 		if (!tableSize)
 			throw txDatabaseError(_WHERE("There must be at least one node to fetch"));
 	
-		char query[32*1024], cond[32];
+		tStrBuf query;
 		MYSQL_RES *result;
 		MYSQL_ROW row;
 		unsigned long *lengths; // the len of each column
 		*nodes = NULL;
 		*nNodes = 0;
 		
-		sprintf(query, "SELECT idx, type, permissions, owner, grp, mod_time, creator, UNIX_TIMESTAMP(crt_time), UNIX_TIMESTAMP(age_time), age_name, age_guid, int_1, int_2, int_3, int_4, uint_1, uint_2, uint_3, uint_4, str_1, str_2, str_3, str_4, str_5, str_6, lstr_1, lstr_2, text_1, text_2, blob_1 FROM %s WHERE idx IN(", vaultTable);
+		query.printf("SELECT idx, type, permissions, owner, grp, mod_time, creator, UNIX_TIMESTAMP(crt_time), UNIX_TIMESTAMP(age_time), age_name, age_guid, int_1, int_2, int_3, int_4, uint_1, uint_2, uint_3, uint_4, str_1, str_2, str_3, str_4, str_5, str_6, lstr_1, lstr_2, text_1, text_2, blob_1 FROM %s WHERE idx IN(", vaultTable);
 		
 		for (int i = 0; i < tableSize; ++i) {
-			if (i > 0) strcat(query, ",");
-			sprintf(cond, "%d", table[i]);
-			strcat(query, cond);
+			if (i > 0) query.writeStr(",");
+			query.printf("%d", table[i]);
 		}
 		
-		strcat(query, ")");
-		sql->query(query, "fetching nodes");
+		query.writeStr(")");
+		sql->query(query.c_str(), "fetching nodes");
 		
 		result = sql->storeResult();
 		if (result == NULL) throw txDatabaseError(_WHERE("couldn't fetch nodes"));
@@ -1236,12 +1206,12 @@ namespace alc {
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
-		char query[1024];
+		tStrBuf query;
 		MYSQL_RES *result;
 		
 		// first check if this ref already exists
-		sprintf(query, "SELECT id1 FROM %s WHERE id2='%d' AND id3='%d' LIMIT 1", refVaultTable, ref.parent, ref.child);
-		sql->query(query, "addNodeRef: checking for ref");
+		query.printf("SELECT id1 FROM %s WHERE id2='%d' AND id3='%d' LIMIT 1", refVaultTable, ref.parent, ref.child);
+		sql->query(query.c_str(), "addNodeRef: checking for ref");
 		result = sql->storeResult();
 		if (!result) throw txDatabaseError(_WHERE("couldn't check for ref"));
 		bool exists = mysql_num_rows(result);
@@ -1253,8 +1223,9 @@ namespace alc {
 		ref.time = alcGetTime();
 		ref.microsec = alcGetMicroseconds();
 		
-		sprintf(query, "INSERT INTO %s (id1, id2, id3, timestamp, microseconds, flag) VALUES('%d', '%d', '%d', FROM_UNIXTIME('%d'), '%d', '%d')", refVaultTable, ref.saver, ref.parent, ref.child, ref.time, ref.microsec, ref.flags);
-		sql->query(query, "Creating new node ref");
+		query.clear();
+		query.printf("INSERT INTO %s (id1, id2, id3, timestamp, microseconds, flag) VALUES('%d', '%d', '%d', FROM_UNIXTIME('%d'), '%d', '%d')", refVaultTable, ref.saver, ref.parent, ref.child, ref.time, ref.microsec, ref.flags);
+		sql->query(query.c_str(), "Creating new node ref");
 		return true;
 	}
 	
@@ -1262,14 +1233,14 @@ namespace alc {
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
-		char query[2048];
+		tStrBuf query;
 		MYSQL_RES *result;
 		MYSQL_ROW row;
 		int numParent, type, num;
 		
 		// get number of parent nodes
-		sprintf(query, "SELECT COUNT(*) FROM %s WHERE id3='%d'", refVaultTable, son);
-		sql->query(query, "removeNodeRef: number of parent nodes");
+		query.printf("SELECT COUNT(*) FROM %s WHERE id3='%d'", refVaultTable, son);
+		sql->query(query.c_str(), "removeNodeRef: number of parent nodes");
 		result = sql->storeResult();
 		
 		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get number of parent nodes of %d", son));
@@ -1281,8 +1252,9 @@ namespace alc {
 		mysql_free_result(result);
 		
 		// get node type
-		sprintf(query, "SELECT type FROM %s WHERE idx='%d' LIMIT 1", vaultTable, son);
-		sql->query(query, "removeNodeRef: node type");
+		query.clear();
+		query.printf("SELECT type FROM %s WHERE idx='%d' LIMIT 1", vaultTable, son);
+		sql->query(query.c_str(), "removeNodeRef: node type");
 		result = sql->storeResult();
 		
 		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get node type of %d", son));
@@ -1301,8 +1273,9 @@ namespace alc {
 			removeNodeTree(son, cautious);
 		}
 		else { // only remove this ref
-			sprintf(query, "DELETE FROM %s WHERE id2='%d' AND id3='%d'", refVaultTable, parent, son);
-			sql->query(query, "removeNodeRef: removing a node reference");
+			query.clear();
+			query.printf("DELETE FROM %s WHERE id2='%d' AND id3='%d'", refVaultTable, parent, son);
+			sql->query(query.c_str(), "removeNodeRef: removing a node reference");
 		}
 	}
 	
@@ -1310,21 +1283,23 @@ namespace alc {
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
-		char query[2048];
+		tStrBuf query;
 		MYSQL_RES *result;
 		MYSQL_ROW row;
 		int num;
 		
 		// remove the node and all references to it
-		sprintf(query, "DELETE FROM %s WHERE idx='%d'", vaultTable, node);
-		sql->query(query, "removeNodeTree: removing a node");
-		sprintf(query, "DELETE FROM %s WHERE id3='%d'", refVaultTable, node);
-		sql->query(query, "removeNodeTree: removing all references to a node");
+		query.printf("DELETE FROM %s WHERE idx='%d'", vaultTable, node);
+		sql->query(query.c_str(), "removeNodeTree: removing a node");
+		query.clear();
+		query.printf("DELETE FROM %s WHERE id3='%d'", refVaultTable, node);
+		sql->query(query.c_str(), "removeNodeTree: removing all references to a node");
 		
 		// get all references from this node and remove them
 		// we do this using recursion since doing it with a loop would make things more complicated without saving database queries
-		sprintf(query, "SELECT id3 FROM %s WHERE id2='%d'", refVaultTable, node);
-		sql->query(query, "removeNodeTree: getting child nodes");
+		query.clear();
+		query.printf("SELECT id3 FROM %s WHERE id2='%d'", refVaultTable, node);
+		sql->query(query.c_str(), "removeNodeTree: getting child nodes");
 		result = sql->storeResult();
 		
 		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get child nodes"));
@@ -1341,24 +1316,24 @@ namespace alc {
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
-		char query[512];
-		sprintf(query, "UPDATE %s SET flag='%d' WHERE id2='%d' AND id3='%d'", refVaultTable, seen, parent, seen);
-		sql->query(query, "Updating seen flag");
+		tStrBuf query;
+		query.printf("UPDATE %s SET flag='%d' WHERE id2='%d' AND id3='%d'", refVaultTable, seen, parent, seen);
+		sql->query(query.c_str(), "Updating seen flag");
 	}
 	
 	void tVaultDB::getParentNodes(U32 node, int **table, int *tableSize)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
-		char query[2048];
+		tStrBuf query;
 		MYSQL_RES *result;
 		MYSQL_ROW row;
 		
 		*table = NULL;
 		*tableSize = 0;
 		
-		sprintf(query, "SELECT id2 FROM %s WHERE id3='%d'", refVaultTable, node);
-		sql->query(query, "getting parent nodes");
+		query.printf("SELECT id2 FROM %s WHERE id3='%d'", refVaultTable, node);
+		sql->query(query.c_str(), "getting parent nodes");
 		result = sql->storeResult();
 		
 		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get parent nodes of %d", node));
@@ -1377,7 +1352,7 @@ namespace alc {
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
-		char query[1024];
+		tStrBuf query;
 		MYSQL_RES *result;
 		MYSQL_ROW row;
 		
@@ -1388,8 +1363,9 @@ namespace alc {
 		while (i < *nRef) {
 			if (i >= 0) node = (*ref)[i]->child; // this is the next one
 			
-			sprintf(query, "SELECT id1, id2, id3, UNIX_TIMESTAMP(timestamp), microseconds, flag FROM %s WHERE id2='%d'", refVaultTable, node);
-			sql->query(query, "getting references");
+			query.clear();
+			query.printf("SELECT id1, id2, id3, UNIX_TIMESTAMP(timestamp), microseconds, flag FROM %s WHERE id2='%d'", refVaultTable, node);
+			sql->query(query.c_str(), "getting references");
 			result = sql->storeResult();
 			
 			if (result == NULL) throw txDatabaseError(_WHERE("couldn't get references from %d", node));
@@ -1424,15 +1400,15 @@ namespace alc {
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
-		char query[1024];
+		tStrBuf query;
 		MYSQL_RES *result;
 		MYSQL_ROW row;
 		int num;
 		
 		// find invalid references and remove them
 		// first: invalid parent
-		sprintf(query, "SELECT r.id2, r.id3 FROM %s r LEFT JOIN %s n ON n.idx = r.id2 WHERE n.idx IS NULL", refVaultTable, vaultTable);
-		sql->query(query, "tVaultDB::removeInvalidRefs: Finding references with invalid parent");
+		query.printf("SELECT r.id2, r.id3 FROM %s r LEFT JOIN %s n ON n.idx = r.id2 WHERE n.idx IS NULL", refVaultTable, vaultTable);
+		sql->query(query.c_str(), "tVaultDB::removeInvalidRefs: Finding references with invalid parent");
 		result = sql->storeResult();
 		
 		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get references with invalid parent"));
@@ -1441,15 +1417,17 @@ namespace alc {
 			lerr->log("WARNING: Found %d references with invalid parent - removing them...\n", num);
 			for (int i = 0; i < num; ++i) {
 				row = mysql_fetch_row(result);
-				sprintf(query, "DELETE FROM %s WHERE id2='%s' AND id3='%s'", refVaultTable, row[0], row[1]);
-				sql->query(query, "tVaultDB::removeInvalidRefs: Removing reference with invalid parent");
+				query.clear();
+				query.printf("DELETE FROM %s WHERE id2='%s' AND id3='%s'", refVaultTable, row[0], row[1]);
+				sql->query(query.c_str(), "tVaultDB::removeInvalidRefs: Removing reference with invalid parent");
 			}
 		}
 		mysql_free_result(result);
 		
 		// then: invalid son
-		sprintf(query, "SELECT r.id2, r.id3 FROM %s r LEFT JOIN %s n ON n.idx = r.id3 WHERE n.idx IS NULL", refVaultTable, vaultTable);
-		sql->query(query, "tVaultDB::removeInvalidRefs: Finding references with invalid son");
+		query.clear();
+		query.printf("SELECT r.id2, r.id3 FROM %s r LEFT JOIN %s n ON n.idx = r.id3 WHERE n.idx IS NULL", refVaultTable, vaultTable);
+		sql->query(query.c_str(), "tVaultDB::removeInvalidRefs: Finding references with invalid son");
 		result = sql->storeResult();
 		
 		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get references with invalid son"));
@@ -1458,8 +1436,9 @@ namespace alc {
 			lerr->log("WARNING: Found %d references with invalid son - removing them...\n", num);
 			for (int i = 0; i < num; ++i) {
 				row = mysql_fetch_row(result);
-				sprintf(query, "DELETE FROM %s WHERE id2='%s' AND id3='%s'", refVaultTable, row[0], row[1]);
-				sql->query(query, "tVaultDB::removeInvalidRefs: Removing reference with invalid son");
+				query.clear();
+				query.printf("DELETE FROM %s WHERE id2='%s' AND id3='%s'", refVaultTable, row[0], row[1]);
+				sql->query(query.c_str(), "tVaultDB::removeInvalidRefs: Removing reference with invalid son");
 			}
 		}
 		mysql_free_result(result);
@@ -1470,15 +1449,15 @@ namespace alc {
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
 		// look for age info node (which must be a direct child)
-		char query[1024];
+		tStrBuf query;
 		MYSQL_RES *result;
 		MYSQL_ROW row;
 		
 		int ageInfo = 0;
 		
 		// check if there is an age info node
-		sprintf(query, "SELECT n.idx FROM %s n LEFT JOIN %s r ON n.idx = r.id3 WHERE r.id2 = '%d' AND n.type='%d' LIMIT 1", vaultTable, refVaultTable, id, KAgeInfoNode);
-		sql->query(query, "tVaultDB::isLostAge: Looking for age info node");
+		query.printf("SELECT n.idx FROM %s n LEFT JOIN %s r ON n.idx = r.id3 WHERE r.id2 = '%d' AND n.type='%d' LIMIT 1", vaultTable, refVaultTable, id, KAgeInfoNode);
+		sql->query(query.c_str(), "tVaultDB::isLostAge: Looking for age info node");
 		result = sql->storeResult();
 		
 		if (result == NULL) throw txDatabaseError(_WHERE("couldn't look for age info node"));
@@ -1492,8 +1471,9 @@ namespace alc {
 		if (!num || !ageInfo) return true; // no age info node, the age is lost
 		
 		// check if the age info node is referenced from anywhere else
-		sprintf(query, "SELECT id2 FROM %s WHERE id3 = '%d' LIMIT 2", refVaultTable, ageInfo);
-		sql->query(query, "tVaultDB::isLostAge: Looking for references to age info node");
+		query.clear();
+		query.printf("SELECT id2 FROM %s WHERE id3 = '%d' LIMIT 2", refVaultTable, ageInfo);
+		sql->query(query.c_str(), "tVaultDB::isLostAge: Looking for references to age info node");
 		result = sql->storeResult();
 		
 		if (result == NULL) throw txDatabaseError(_WHERE("couldn't look for references to age info node"));
@@ -1507,7 +1487,7 @@ namespace alc {
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
-		char query[1024];
+		tStrBuf query;
 		MYSQL_RES *result;
 		MYSQL_ROW row;
 		
@@ -1518,8 +1498,9 @@ namespace alc {
 		if (cleanAges) {
 			lstd->log("Cleaning up: Looking for lost ages...\n");
 		
-			sprintf(query, "SELECT idx, str_1 FROM %s WHERE type = '%d'", vaultTable, KVNodeMgrAgeNode);
-			sql->query(query, "tVaultDB::clean: Finding age MGRs");
+			query.clear();
+			query.printf("SELECT idx, str_1 FROM %s WHERE type = '%d'", vaultTable, KVNodeMgrAgeNode);
+			sql->query(query.c_str(), "tVaultDB::clean: Finding age MGRs");
 			result = sql->storeResult();
 			
 			if (result == NULL) throw txDatabaseError(_WHERE("couldn't get age MGRs"));
@@ -1548,9 +1529,10 @@ namespace alc {
 			lstd->log("Cleaning up: Looking for lost nodes...\n");
 			// find lost nodes and remove them
 			// a lost node is a node without a parent and which is not a mgr
-			sprintf(query, "SELECT n.idx FROM %s n LEFT JOIN %s r ON n.idx = r.id3 "
+			query.clear();
+			query.printf("SELECT n.idx FROM %s n LEFT JOIN %s r ON n.idx = r.id3 "
 				"WHERE r.id2 IS NULL AND n.type > 7", vaultTable, refVaultTable);
-			sql->query(query, "tVaultDB::clean: Finding lost nodes");
+			sql->query(query.c_str(), "tVaultDB::clean: Finding lost nodes");
 			result = sql->storeResult();
 			
 			if (result == NULL) throw txDatabaseError(_WHERE("couldn't get lost nodes"));
@@ -1574,8 +1556,9 @@ namespace alc {
 		
 		// optimize the tables
 		lstd->log("Cleaning up: Optimizing tables...\n");
-		sprintf(query, "OPTIMIZE TABLE %s, %s", refVaultTable, vaultTable);
-		sql->query(query, "Optimizing tables");
+		query.clear();
+		query.printf("OPTIMIZE TABLE %s, %s", refVaultTable, vaultTable);
+		sql->query(query.c_str(), "Optimizing tables");
 	}
 
 } //end namespace alc

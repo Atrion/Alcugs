@@ -99,7 +99,7 @@ namespace alc {
 		/** creates a query to SELECT (isUpdate = false) or UPDATE (isUpdate = true) that vault node
 		    the query is appended (using strcat) to out which must be big enough
 		    \returns a pointer to the query which you have to free */
-		void createNodeQuery(char *query, tvNode &node, bool isUpdate);
+		tStrBuf createNodeQuery(tvNode &node, bool isUpdate);
 		
 		bool prepare(void);
 		int getVersion(void);

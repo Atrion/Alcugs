@@ -242,7 +242,7 @@ namespace alc {
 			if (it->ki == status.ki) {
 				if (status.state) it->session = status.getSession()->getIte();
 				else if (autoRemoveMgrs) {
-					vmgrs.erase(it++); // sicne it is a list, this works - iertators remain valid
+					vmgrs.erase(it++); // since it is a list, this works - iterators remain valid
 					log->log("WARN: Player with KI %d just went offline but still had a vmgr registered... removing it\n", status.ki);
 					continue; // we already incremented
 				}

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-FILE="src/alcnet/sql.cpp"
+FILE="config.status"
 PORT=31732
 if [ "$1" ]; then
 	PORT=$1
