@@ -193,7 +193,12 @@ namespace alc {
 		node = new tvNode(MType);
 		node->type = KVNodeMgrAdminNode;
 		U32 adminNode = vaultDB->findNode(*node);
+		if (!adminNode) {
+			createVault();
+			adminNode = vaultDB->findNode(*node);
+		}
 		delete node;
+		if (!adminNode) throw txDatabaseError(_WHERE("No admin node found"));
 		
 		// find the two main nodes and ensure they are connected to this one
 		// AllPlayersFolder
@@ -996,12 +1001,8 @@ namespace alc {
 		node->type = KFolderNode;
 		node->int1 = KAllPlayersFolder;
 		U32 allPlayers = vaultDB->findNode(*node);
-		if (!allPlayers) {
-			createVault();
-			allPlayers = vaultDB->findNode(*node);
-			if (!allPlayers) throw txUnet(_WHERE("could not find or create all players folder"));
-		}
 		delete node;
+		if (!allPlayers) throw txUnet(_WHERE("could not find all players folder"));
 		
 		// create player node
 		node = new tvNode(MType | MPerms | MStr64_1 | MlStr64_1 | MlStr64_2 | MText_1);
