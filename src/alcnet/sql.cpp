@@ -142,7 +142,7 @@ bool tSQL::prepare(void)
 	return false;
 }
 
-bool tSQL::query(const char *str, const char *desc, bool throwOnError)
+bool tSQL::query(const void *str, const char *desc, bool throwOnError)
 {
 	if (connection == NULL) {
 		if (!prepare()) {
@@ -157,7 +157,7 @@ bool tSQL::query(const char *str, const char *desc, bool throwOnError)
 	}
 	
 	stamp = time(NULL);
-	if (!mysql_query(connection, str)) return true; // if everything worked fine, we're done
+	if (!mysql_query(connection, (char *)str)) return true; // if everything worked fine, we're done
 
 	// there was an error - print it
 	printError(desc);
@@ -167,7 +167,7 @@ bool tSQL::query(const char *str, const char *desc, bool throwOnError)
 		sql->log("Reconnecting...\n"); sql->flush();
 		disconnect();
 		connect(true);
-		if (!mysql_query(connection, str)) return true; // it worked on the 2nd try
+		if (!mysql_query(connection, (char *)str)) return true; // it worked on the 2nd try
 		// failed again... print the error
 		printError(desc);
 	}

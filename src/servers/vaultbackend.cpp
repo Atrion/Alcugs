@@ -1177,6 +1177,7 @@ namespace alc {
 		U32 *table, tableSize;
 		tNetSession *session;
 		vaultDB->getMGRs(node, &table, &tableSize);
+		DBG(9, "Got interested MGRs\n");
 		// now let's see who gets notified
 		for (tVmgrList::iterator it = vmgrs.begin(); it != vmgrs.end(); ++it) {
 			if (it->mgr == 0 || (it->ki == origKi && it->mgr == origMgr)) continue;
