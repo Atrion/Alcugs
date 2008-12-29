@@ -248,7 +248,6 @@ void tUnetBase::terminate(tNetSession *u,Byte reason, bool destroyOnly)
 
 void tUnetBase::terminateAll(void)
 {
-	tNetSessionIte ite;
 	tNetSession *u;
 	smgr->rewind();
 	while ((u=smgr->getNext())) { // double brackets to suppress gcc warning

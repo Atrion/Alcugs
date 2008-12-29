@@ -50,6 +50,7 @@ namespace alc {
 class tUnetLobbyServerBase : public tUnetServerBase {
 public:
 	tUnetLobbyServerBase(void);
+	virtual void terminateAll();
 protected:
 	virtual void onStart(void);
 	virtual void onIdle(bool idle);

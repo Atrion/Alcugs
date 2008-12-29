@@ -52,7 +52,7 @@ public:
 	void forcestop() { stop(0); /* stop with a timeout of 0 */ }
 	/** Terminates all connections
 	*/
-	void terminateAll();
+	virtual void terminateAll();
 	/** Force a reload of the netcore settings (after changing the configuration for example)
 	*/
 	void reload()
