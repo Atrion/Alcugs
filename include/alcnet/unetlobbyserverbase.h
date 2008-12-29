@@ -50,6 +50,7 @@ namespace alc {
 class tUnetLobbyServerBase : public tUnetServerBase {
 public:
 	tUnetLobbyServerBase(void);
+protected:
 	virtual void onStart(void);
 	virtual void onIdle(bool idle);
 	virtual void onConnectionClosed(tNetEvent *ev, tNetSession *u);
@@ -58,7 +59,7 @@ public:
 	virtual void terminate(tNetSession *u, Byte reason = RKickedOff, bool destroyOnly = false);
 	virtual void onUnloadConfig(void);
 	virtual void onLoadConfig(void);
-protected:
+
 	virtual void additionalVaultProcessing(tNetSession *u, tvMessage *msg) {}
 
 	tNetSessionIte auth, tracking, vault;

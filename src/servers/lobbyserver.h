@@ -50,7 +50,7 @@ namespace alc {
 	class tUnetLobbyServer : public tUnetLobbyServerBase {
 	public:
 		tUnetLobbyServer(void);
-		
+	protected:
 		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
 		virtual void onLoadConfig(void);
 	private:

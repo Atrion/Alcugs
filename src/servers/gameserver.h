@@ -59,6 +59,7 @@ namespace alc {
 	public:
 		tUnetGameServer(void);
 		~tUnetGameServer(void);
+	protected:
 		virtual void onConnectionClosed(tNetEvent *ev, tNetSession *u);
 		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
 		virtual void onIdle(bool idle);
