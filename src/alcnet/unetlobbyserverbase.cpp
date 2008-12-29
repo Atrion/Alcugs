@@ -59,6 +59,19 @@ namespace alc {
 		vaultLogShort = false;
 	}
 	
+	void tUnetLobbyServerBase::terminateAll()
+	{
+		// make sure that player connections are terminated before the server connections
+		tNetSession *u;
+		smgr->rewind();
+		while ((u=smgr->getNext())) { // double brackets to suppress gcc warning
+			if (!u->isTerminated() && u->getPeerType() == KClient) // terminate only KClients (i.e. authed players)
+				terminate(u);
+		}
+		// now the remaining connections
+		tUnetServerBase::terminateAll();
+	}
+	
 	void tUnetLobbyServerBase::onLoadConfig(void)
 	{
 		tConfig *cfg = alcGetConfig();
