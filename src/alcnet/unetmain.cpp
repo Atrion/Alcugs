@@ -100,7 +100,7 @@ void tUnetSignalHandler::handle_signal(int s) {
 				alcSignal(SIGHUP,1);
 				lstd->log("INF: ReReading configuration\n\n");
 				alcUnetReloadConfig(false);
-				if(net!=NULL) { net->reload(); }
+				net->reload();
 				break;
 			case SIGALRM:
 			case SIGTERM:
@@ -111,7 +111,7 @@ void tUnetSignalHandler::handle_signal(int s) {
 						#ifndef __WIN32__
 						if(alcGetSelfThreadId()!=alcGetMainThreadId()) return;
 						#endif
-						net->stop(-1);
+						net->stop();
 						__state_running--;
 						break;
 					case 1:

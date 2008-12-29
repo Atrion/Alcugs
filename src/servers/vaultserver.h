@@ -54,7 +54,7 @@ namespace alc {
 			vaultBackend = new tVaultBackend(this);
 		}
 		~tUnetVaultServer(void) { delete vaultBackend; }
-		
+	protected:
 		virtual void onLoadConfig(void);
 		virtual void onReloadConfig(void) { vaultBackend->reload(); }
 		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);

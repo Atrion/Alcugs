@@ -50,7 +50,7 @@ namespace alc {
 	class tUnetTrackingServer : public tUnetServerBase {
 	public:
 		tUnetTrackingServer(void) : tUnetServerBase() { }
-		
+	protected:
 		virtual void onStart(void) {
 			trackingBackend = new tTrackingBackend(this, smgr, bindaddr, bindport);
 		}
