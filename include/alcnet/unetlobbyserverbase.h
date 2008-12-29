@@ -62,14 +62,15 @@ protected:
 	virtual void onLoadConfig(void);
 
 	virtual void additionalVaultProcessing(tNetSession *u, tvMessage *msg) {}
+	virtual bool setActivePlayer(tNetSession *u, U32 ki, U32 x, const Byte *avatar);
 
 	tNetSessionIte auth, tracking, vault;
 
 	Byte serverGuid[8]; //!< This system's guid (age guid) (in Hex)
 	Byte serverName[200]; //!< The system/server name, normally the age filename
+
 private:
 	tNetSessionIte reconnectPeer(Byte dst); //!< establishes a connection to that service (remember to set the corresponding gone variable to 0)
-	bool setActivePlayer(tNetSession *u, U32 ki, U32 x, const Byte *avatar);
 
 	U32 auth_gone, tracking_gone, vault_gone; // saves when this server got disconnected. wait 10sec before trying to connect again
 

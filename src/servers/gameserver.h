@@ -68,8 +68,9 @@ namespace alc {
 			ageState->reload();
 		}
 		virtual void onLoadConfig(void);
-	protected:
+
 		virtual void additionalVaultProcessing(tNetSession *u, tvMessage *msg);
+		virtual bool setActivePlayer(tNetSession *u, U32 ki, U32 x, const Byte *avatar);
 	private:
 		Byte fwdDirectedGameMsg(tmGameMessageDirected &msg);
 		void bcastMemberUpdate(tNetSession *u, bool isJoined);
