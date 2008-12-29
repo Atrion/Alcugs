@@ -141,6 +141,16 @@ namespace alc {
 		ageState->saveSdlVaultMessage(data, u); // process it
 	}
 	
+	bool tUnetGameServer::setActivePlayer(tNetSession *u, U32 ki, U32 x, const Byte *avatar)
+	{
+		bool ret = tUnetLobbyServerBase::setActivePlayer(u, ki, x, avatar);
+		if (ret) {
+			// a new player joined, so we are no longer alone
+			lastPlayerLeft = 0;
+		}
+		return ret;
+	}
+	
 	void tUnetGameServer::terminate(tNetSession *u, Byte reason, bool destroyOnly)
 	{
 		if (u->getPeerType() == KClient && u->ki != 0) { // if necessary, tell the others about it
@@ -165,7 +175,7 @@ namespace alc {
 			tNetSession *session;
 			smgr->rewind();
 			while ((session = smgr->getNext())) {
-				if (session->joined && session != u) {
+				if (session->ki != 0 && session != u) {
 					playerFound = true;
 					break;
 				}
@@ -298,9 +308,6 @@ namespace alc {
 				// log the join
 				sec->log("%s joined\n", u->str());
 				// now, it'll stat sending GameMessages
-				
-				// a new player joined, so we are no longer alone
-				lastPlayerLeft = 0;
 				
 				return 1;
 			}
