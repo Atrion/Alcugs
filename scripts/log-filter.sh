@@ -68,6 +68,7 @@ fi
 
 case $1 in
 	problem|problems)
+		echo "General errors:"
 		$0 errors
 		$0 warnings
 	;;

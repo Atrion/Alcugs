@@ -610,12 +610,12 @@ Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
 		return 1; // we already got it, send an ack
 	}
 	else if (msg.ps > clientPs) { // we missed something in between
-		net->log->log("%s WARN: Dropped unexpected packet %d.%d (last ack is %d, expected %d)\n", str(), msg.sn, msg.frn, msg.ps, clientPs);
+		net->log->log("%s INF: Dropped unexpected packet %d.%d (last ack is %d, expected %d)\n", str(), msg.sn, msg.frn, msg.ps, clientPs);
 		net->log->flush();
 		return 2; // we can not parse it, the peer has to send it again
 	}
 	else if (waitingForFragments && msg.sn != clientPs) { // we have a not-yet complete message and this packet does not belong to it
-		net->log->log("%s WARN: Dropped unexpected packet %d.%d (%d is not yet complete)\n", str(), msg.sn, msg.frn, clientPs);
+		net->log->log("%s INF: Dropped unexpected packet %d.%d (%d is not yet complete)\n", str(), msg.sn, msg.frn, clientPs);
 		net->log->flush();
 		return 2; // we can not parse it, the peer has to send it again
 	}
