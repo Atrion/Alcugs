@@ -82,7 +82,7 @@ case $1 in
 		fi
 	;;
 	warning|warnings)
-		logfilter "warn|[^a-z]err|unx|unexpect|fatal"
+		logfilter "warn|[^a-z]err|unx|unexpect|fatal" | grep -v " INF: " # remove INF lines like "Dropped unexpected packet"
 	;;
 	info|infos)
 		logfilter "[^e]\sinf"
