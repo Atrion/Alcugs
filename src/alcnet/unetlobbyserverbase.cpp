@@ -391,6 +391,8 @@ namespace alc {
 				if (authResponse.result == AAuthSucceeded) {
 					memcpy(client->uid, authResponse.uid, 16);
 					client->setAuthData(authResponse.accessLevel, authResponse.passwd.c_str());
+					// Minkata timeout hack - the client doesn't send a NetMsgAlive while loading some parts of Minkata which sometimes takes more than 30sec, so increase timeout to 60sec in that age. Yes, this is ugly, but what else could I do?
+					if (strcmp("Minkata", serverName) == 0) client->setTimeout(60);
 					
 					tmAccountAutheticated accountAuth(client, authResponse.x, AAuthSucceeded, serverGuid);
 					send(accountAuth);
