@@ -111,9 +111,6 @@ port = 2010
 # database settings
 db.name = "alcugs_auth"
 # you can overwrite the global settings here if host, username and/or password aren't the same for all servers
-;db.host = "127.0.0.1"
-;db.username = "alcugs"
-;db.passwd = "yourpassword"
 
 stop = 1
 
@@ -159,9 +156,6 @@ port = 2012
 # database settings
 db.name = "alcugs_vault"
 # you can overwrite the global settings here if host, username and/or password aren't the same for all servers
-;db.host = "127.0.0.1"
-;db.username = "alcugs"
-;db.passwd = "yourpassword"
 
 # settings controlling vault behaviour
 vault.hood.name = "Alcugs hood" # name of the default (and only) hood (will only be applied for a new, clean vault)
@@ -183,7 +177,6 @@ website = "http://server/info.html"
 # game server settings
 game.log = "../game/" # the path where the game log files will be saved (there will be subdirs for each instance: /base_path/agename/ageguid/)
 game.bin = "/home/user/bin/alcugs_game" # full path and name of game server binary (if you want to use an unet2 game server, you also have to set game.config to the name of the game server config file)
-;load_on_demand = 1 # enables/disables automatic game server forking (default 1)
 
 stop = 1
 

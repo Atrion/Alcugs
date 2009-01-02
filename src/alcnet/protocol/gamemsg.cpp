@@ -466,12 +466,18 @@ namespace alc {
 		// two of these values are "rgnsImIn" and "rgnsICareAbout", but everything is always 1 anyway
 		U32 unk = t.getU32();
 		if (unk != 1) throw txProtocolError(_WHERE("NetMsgRelevanceRegions.unk1 must be 1 but is %d", unk));
+		rgnsICareAbout = t.getU32();
 		unk = t.getU32();
 		if (unk != 1) throw txProtocolError(_WHERE("NetMsgRelevanceRegions.unk2 must be 1 but is %d", unk));
-		unk = t.getU32();
-		if (unk != 1) throw txProtocolError(_WHERE("NetMsgRelevanceRegions.unk3 must be 1 but is %d", unk));
-		unk = t.getU32();
-		if (unk != 1) throw txProtocolError(_WHERE("NetMsgRelevanceRegions.unk4 must be 1 but is %d", unk));
+		rgnsImIn = t.getU32();
+		if (rgnsImIn > rgnsICareAbout)
+			throw txProtocolError(_WHERE("rgnsImIn must be equal or lower than rgnsICareAbout, but %d > %d", rgnsImIn, rgnsICareAbout));
+	}
+	
+	void tmRelevanceRegions::additionalFields()
+	{
+		dbg.nl();
+		dbg.printf(" Regions I care about: %d, Regions I\'m in: %d", rgnsICareAbout, rgnsImIn);
 	}
 	
 	//// tmSDLState
