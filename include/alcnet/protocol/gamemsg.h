@@ -201,6 +201,10 @@ namespace alc {
 	public:
 		tmRelevanceRegions(tNetSession *u);
 		virtual void store(tBBuf &t);
+		// format
+		U32 rgnsICareAbout, rgnsImIn;
+	protected:
+		virtual void additionalFields();
 	};
 	
 	class tmSDLState : public tmMsgBase {
