@@ -360,12 +360,13 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 
 // main event processing loop - blocks
 void tUnetBase::run() {
+	onLoadConfig();
 	startOp();
+	onStart();
+	
 	tNetEvent * evt;
 	tNetSession * u;
 
-	onLoadConfig();
-	onStart();
 	while(state_running) {
 		Recv();
 		while((evt=getEvent())) {
@@ -402,8 +403,7 @@ void tUnetBase::run() {
 	
 	onStop();
 	onUnloadConfig();
-	
-	log->log("INF: Service sanely terminated\n");
+	log->log("INF: Service sanely terminated\n"); // stopOp closes the log files, so print this before calling stopOp
 	stopOp();
 }
 

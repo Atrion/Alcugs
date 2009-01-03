@@ -78,6 +78,10 @@ namespace alc {
 		// make sure we quit if noone comes
 		lastPlayerLeft = alcGetTime();
 	}
+	
+	bool tUnetGameServer::canPortBeUsed(U16 port) {
+		return (port >= spawnStart && port <= spawnStop);
+	}
 
 	tUnetGameServer::~tUnetGameServer(void)
 	{
