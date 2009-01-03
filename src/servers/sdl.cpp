@@ -290,7 +290,7 @@ namespace alc {
 				}
 				if (!found) continue; // it's not on the list, don't send it
 			}
-			// FIXME: If no page is requested, we currently send all SDL states, also those which are on a page which is dynamically loaded
+			// FIXME: If no page is requested, we currently send all SDL states, including those which are on a page which is dynamically loaded
 			if (logDetailed) {
 				log->log("Sending SDL State to %s:\n", u->str());
 				it->print(log);

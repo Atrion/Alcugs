@@ -8,6 +8,30 @@
 | Home: http://alcugs.almlys.org                                            |
 -----------------------------------------------------------------------------
 
+03/Jan/2008 - Unet3+ game (version 1.3.4b)
+===========================================================================0
+The unet3+ is now ready to replace the unet2 one. While it still has to
+prove stability with many players in an age, it already has the following
+advantages over the last usable game server, the unet2 version:
+- When the reuqested port is not available, like unet2 it tries other ports
+  to bind to, but unlike unet2, it takes the start and end port which are
+  assigned to game servers into account
+- Much better cleanup is performed when a client is detected to have
+  crashed: It is correctly marked as offline for tracking and vault, and it
+  is removed from the age player list. Players joining later will not see
+  the dead avatar, only players which were in the age during the crash still
+  see it
+- Much less problems with special avatars as a bunch of hacks to distinguish
+  avatar status messages from age mechanic status messages is no longer
+  necessary
+The new game server has the same format for saving an age state as the old
+one, so it can seamlessly replace older versions.
+Because a whole Shard can now be run by using only unet3+ servers, I
+disabled support for the unet2 and unet3 protocols per default. If you still
+want to use old servers, you can enable that support with:
+./configure --enable-unet3 # to get unet3, but no unet2 support
+./configure --enable-unet2 # to get both unet2 and unet3 support
+
 05/Sep/2008 - Unet3+ auth, tracking, lobby and vault (version 1.3.4)
 ===========================================================================0
 Finally, the above four servers are available as unet3+ servers! (though
