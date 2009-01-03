@@ -69,6 +69,9 @@ protected:
 	Byte serverGuid[8]; //!< This system's guid (age guid) (in Hex)
 	Byte serverName[200]; //!< The system/server name, normally the age filename
 
+protected:
+	U16 spawnStart, spawnStop;
+
 private:
 	tNetSessionIte reconnectPeer(Byte dst); //!< establishes a connection to that service (remember to set the corresponding gone variable to 0)
 
@@ -79,7 +82,6 @@ private:
 
 	bool allowUU;
 	char linkLog[512];
-	U16 spawnStart, spawnStop;
 };
 
 #if 0

@@ -373,8 +373,21 @@ void tUnet::startOp() {
 	}
 	this->server.sin_port=htons(bindport); //port 5000 default
 
-	//binding port
-	if(bind(this->sock,(struct sockaddr *)&this->server,sizeof(this->server))<0) {
+	// binding to port - some servers can try different ports, too (used by game)
+	bool error;
+	do {
+		error = (bind(this->sock,(struct sockaddr *)&this->server,sizeof(this->server))<0);
+		if (error) {
+			DBG(3, "Probing alternative port %d\n", bindport+15);
+			if (canPortBeUsed(bindport+15)) { // we got an error, BUT me may try again on another port
+				bindport += 15;
+				this->server.sin_port=htons(bindport);
+			}
+			else
+				break; // we can't try another port
+		}
+	} while (error);
+	if (error) {
 		this->err->log("ERR: Fatal - Failed binding to address %s:%i\n",bindaddr,bindport);
 		neterror("bind() ");
 		throw txUnetIniErr(_WHERE("Cannot bind to address %s:%i",bindaddr,bindport));

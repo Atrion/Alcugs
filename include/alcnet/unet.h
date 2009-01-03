@@ -118,6 +118,8 @@ protected:
 	//max resolution 15 minutes
 	U32 getNetTime() { return net_time; }
 	tNetEvent * getEvent();
+	
+	virtual bool canPortBeUsed(U16 port) { return false; }
 
 private:
 	void init();
