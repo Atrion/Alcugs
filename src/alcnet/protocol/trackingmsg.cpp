@@ -45,7 +45,7 @@ namespace alc {
 		externalIp.setVersion(0); // normal UruString
 	}
 	
-	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u, const Byte *serverGuid, const Byte *age, const Byte *externalIp)
+	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u, const Byte *serverGuid, const Byte *age, const Byte *externalIp, U16 spawnStart, U16 spawnStop)
 	 : tmMsgBase(NetMsgCustomSetGuid, plNetAck | plNetVersion | plNetCustom, u)
 	{
 #ifdef ENABLE_UNET3
@@ -57,6 +57,8 @@ namespace alc {
 		this->age.writeStr(age);
 		this->externalIp.setVersion(0); // normal UruString
 		this->externalIp.writeStr(externalIp);
+		this->spawnStart = spawnStart;
+		this->spawnStop = spawnStop;
 	}
 	
 	void tmCustomSetGuid::store(tBBuf &t)
@@ -66,12 +68,30 @@ namespace alc {
 		if (serverGuid.size() != 16) throw txProtocolError(_WHERE("NetMsgCustomSetGuid.serverGuid must be 16 characters long"));
 		t.get(age);
 		t.get(externalIp);
+		
+		/* now comes some crazy protocol magic...
+		unet2 format (X and KI flag set): saverGuid|age|netmask|externalIp
+		unet3 (X and KI flag set): serverGuid|age|externalIp
+		unet3+ (X and KI flag NOT set): serverGuid|age|spawnStart|spawnStop */
+		if (!t.eof()) { // if there's still something to read, this is an unet2 or an unet3+ packet, depending on the flags
 #ifdef ENABLE_UNET2
-		if (!t.eof()) { // if there's still something to read, there's a netmask before the external IP (unet2 protocol)
-			t.get(externalIp);
-			u->proto = 1; // unet2 protocol
-		}
+			if (hasFlags(plNetX | plNetKi)) { // there's a netmask before the external IP (unet2 protocol)
+				t.get(externalIp);
+				u->proto = 1; // unet2 protocol
+				return;
+			}
 #endif
+			// it's unet3+
+			spawnStart = t.getU16();
+			spawnStop = t.getU16();
+		}
+		else { // it is unet3
+#ifdef ENABLE_UNET3
+			u->proto = 2; // unet3 protocol
+#else
+			throw txProtocolError(_WHERE("unet3 protocol no longer supported"));
+#endif
+		}
 	}
 	
 	void tmCustomSetGuid::stream(tBBuf &t)
@@ -87,6 +107,11 @@ namespace alc {
 		}
 #endif
 		t.put(externalIp);
+#ifdef ENABLE_UNET3
+		if (u->proto == 1 || u->proto == 2) return;
+#endif
+		t.putU16(spawnStart);
+		t.putU16(spawnStop);
 	}
 	
 	void tmCustomSetGuid::additionalFields()
@@ -96,6 +121,11 @@ namespace alc {
 #ifdef ENABLE_UNET2
 		if (u->proto == 1) dbg.printf(" (unet2 protocol)");
 #endif
+#ifdef ENABLE_UNET3
+		if (u->proto == 2) dbg.printf(" (unet3 protocol)");
+		if (u->proto == 1 || u->proto == 2) return;
+#endif
+		dbg.printf(", Spawn Start: %d, Spawn Stop: %d", spawnStart, spawnStop);
 	}
 	
 	//// tmCustomPlayerStatus
@@ -134,7 +164,7 @@ namespace alc {
 	void tmCustomPlayerStatus::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
+		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
 #ifndef ENABLE_UNET2
 		if (!hasFlags(plNetUID)) throw txProtocolError(_WHERE("UID flag missing"));
 #else

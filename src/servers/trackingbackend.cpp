@@ -55,8 +55,7 @@ namespace alc {
 		isLobby = false;
 		parent = NULL;
 		externalIp[0] = 0;
-		port_start = 5001;
-		port_end = 6000;
+		portStart = portEnd = 0;
 		seqPrefix = 0;
 		childs = new tNetSessionList;
 	}
@@ -214,23 +213,23 @@ namespace alc {
 			}
 			// search for free ports
 			tTrackingData *data = (tTrackingData*)lobby->data;
-			int nPorts = data->port_end - data->port_start + 1;
+			int nPorts = data->portEnd - data->portStart + 1;
 			bool *freePorts = (bool *)malloc(nPorts*sizeof(bool));
 			if (freePorts == NULL) throw txNoMem(_WHERE("NoMem"));
 			for (int i = 0; i < nPorts; ++i) freePorts[i] = true;
 			data->childs->rewind();
 			while ((server = data->childs->getNext()))
-				freePorts[ntohs(server->getPort()) - data->port_start] = false; // this port is occupied
+				freePorts[ntohs(server->getPort()) - data->portStart] = false; // this port is occupied
 			int lowest;
 			for (lowest = 0; lowest < nPorts; ++lowest) {
 				if (freePorts[lowest]) break; // we found a free one
 			}
-			lowest += data->port_start;
 			free(freePorts);
 			if (lowest == nPorts) { // no free port on the lobby with the least childs
 				log->log("ERR: No free port on lobby %s, can't spawn game server\n", lobby->str());
 				return;
 			}
+			lowest += data->portStart;
 			// ok, telling the lobby to fork
 			bool loadState = doesAgeLoadState(player->awaiting_age);
 			tmCustomForkServer forkServer(lobby, lowest, alcGetStrGuid(player->awaiting_guid), player->awaiting_age, loadState);
@@ -298,7 +297,21 @@ namespace alc {
 		
 		if (game->data) return; // ignore the rest of the info if we already got it. IP and Port can't change.
 		tTrackingData *data = new tTrackingData;
-		data->isLobby = (ntohs(game->getPort()) == 5000); // FIXME: the criteria to determine whether it's a lobby or a game server is BAD
+		if (setGuid.validSpawnPorts()) {
+			data->isLobby = true;
+			data->portStart = setGuid.spawnStart;
+			data->portEnd = setGuid.spawnStop;
+		}
+		else {
+			data->isLobby = false;
+#ifdef ENABLE_UNET3
+			if ( (game->proto == 1 || game->proto == 2) && ntohs(game->getPort()) == 5000 ) {
+				data->isLobby = true;
+				data->portStart = 5001;
+				data->portEnd = 5002;
+			}
+#endif
+		}
 		strncpy((char *)data->externalIp, (char *)setGuid.externalIp.c_str(), 99);
 		if (!data->isLobby) { // let's look to which lobby this server belongs
 			tNetSession *lobby = NULL;

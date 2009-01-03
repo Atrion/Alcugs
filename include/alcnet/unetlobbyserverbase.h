@@ -79,6 +79,7 @@ private:
 
 	bool allowUU;
 	char linkLog[512];
+	U16 spawnStart, spawnStop;
 };
 
 #if 0

@@ -37,11 +37,13 @@ namespace alc {
 	class tmCustomSetGuid : public tmMsgBase {
 	public:
 		tmCustomSetGuid(tNetSession *u);
-		tmCustomSetGuid(tNetSession *u, const Byte *serverGuid, const Byte *age, const Byte *externalIp);
+		tmCustomSetGuid(tNetSession *u, const Byte *serverGuid, const Byte *age, const Byte *externalIp, U16 spawnStart, U16 spawnStop);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
+		inline bool validSpawnPorts(void) { return spawnStart && spawnStop && spawnStart <= spawnStop; }
 		// format
 		tUStr serverGuid, age, externalIp;
+		U16 spawnStart, spawnStop;
 	protected:
 		virtual void additionalFields();
 	};
