@@ -2,10 +2,12 @@
 set -e
 
 # configuration
+# EDIT THESE ACCORDING TO YOUR NEEDS
 root=/home/alcugs/
 basedir=$root/var/
 bindir=$root/bin/
 config=$root/etc/uru.conf
+# END
 waittime=1 # time to wait after a server was started
 
 start_servers="tracking vault auth lobby"
@@ -38,6 +40,11 @@ getPid(){
 		fi
 	fi
 }
+
+if [[ "`whoami`" == "root" ]]; then
+	echo "Don't run the alcugs servers as root!"
+	exit
+fi
 
 case $1 in
 	start)
