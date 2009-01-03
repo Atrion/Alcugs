@@ -24,6 +24,9 @@ advantages over the last usable game server, the unet2 version:
 - Much less problems with special avatars as a bunch of hacks to distinguish
   avatar status messages from age mechanic status messages is no longer
   necessary
+- When assigning the owner of a page in the current age, the server takes
+  into account who actually loaded that page to avoid assigning the page
+  to someone who didn't even load it
 The new game server has the same format for saving an age state as the old
 one, so it can seamlessly replace older versions.
 Because a whole Shard can now be run by using only unet3+ servers, I
