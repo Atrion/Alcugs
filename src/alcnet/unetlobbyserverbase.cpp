@@ -86,6 +86,19 @@ namespace alc {
 		var = cfg->getVar("tmp.link_log");
 		if (!var.isNull()) strncpy(linkLog, (char *)var.c_str(), 511);
 		else linkLog[0] = 0;
+		
+		var = cfg->getVar("spawn.start");
+		if (var.isNull()) spawnStart = 5001;
+		else spawnStart = var.asU16();
+		
+		var = cfg->getVar("spawn.stop");
+		if (var.isNull()) spawnStop = 6000;
+		else spawnStop = var.asU16();
+		
+		if (spawnStop < spawnStart) {
+			log->log("WARN: spawnStop (%d) lower than spawnStart (%d), setting both to %d\n", spawnStop, spawnStart, spawnStart);
+			spawnStop = spawnStart;
+		}
 	}
 	
 	void tUnetLobbyServerBase::onUnloadConfig()
@@ -225,6 +238,12 @@ namespace alc {
 			return tNetSessionIte();
 		}
 #endif
+#ifndef ENABLE_UNET3
+		if (!protocol.isNull() && protocol.asU32() == 2) {
+			err->log("ERR: Unet3 protocol is requested for service %d (%s) but it is no longer supported\n", dst, alcUnetGetDestination(dst));
+			return tNetSessionIte();
+		}
+#endif
 		
 		U32 proto = protocol.isNull() ? 0 : protocol.asU32();
 		tNetSessionIte ite = netConnect((char *)host.c_str(), port.asU16(), (proto == 0 || proto >= 3) ? 3 : 2, 0, dst);
@@ -236,7 +255,7 @@ namespace alc {
 		if (dst == KTracking) {
 			tStrBuf var = cfg->getVar("public_address");
 			if (var.isNull()) log->log("WARNING: No public address set, using bind address %s\n", bindaddr);
-			tmCustomSetGuid setGuid(session, alcGetStrGuid(serverGuid), serverName, var.c_str());
+			tmCustomSetGuid setGuid(session, alcGetStrGuid(serverGuid), serverName, var.c_str(), whoami == KGame ? 0 : spawnStart, whoami == KGame ? 0 : spawnStop);
 			send(setGuid);
 		}
 		

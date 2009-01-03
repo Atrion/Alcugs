@@ -364,8 +364,8 @@ void tUnetBase::run() {
 	tNetEvent * evt;
 	tNetSession * u;
 
-	onStart();
 	onLoadConfig();
+	onStart();
 	while(state_running) {
 		Recv();
 		while((evt=getEvent())) {
@@ -400,8 +400,8 @@ void tUnetBase::run() {
 		}
 	}
 	
-	onUnloadConfig();
 	onStop();
+	onUnloadConfig();
 	
 	log->log("INF: Service sanely terminated\n");
 	stopOp();

@@ -59,7 +59,7 @@ namespace alc {
 		bool isLobby;
 		tNetSession *parent; //!< saves the lobby of a game server, is NULL for lobbys
 		tNetSessionList *childs;
-		U16 port_start, port_end;
+		U16 portStart, portEnd;
 		Byte externalIp[100]; //!< the external IP (the ones palyers should use to connect to this server)
 		Byte agentGuid[8]; //!< set when isLobby = true, saves the fake guid for UruVision
 		U32 seqPrefix;
