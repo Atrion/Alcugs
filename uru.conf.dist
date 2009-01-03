@@ -134,7 +134,7 @@ port = 2011
 # you might want to add Garden because of the the rain bug
 ;tracking.tmp.hacks.resetting_ages = "Cleft,DniCityX2Finale,GreatZero,Kveer,Neighborhood02,Myst,Personal02,RestorationGuild,spyroom"
 
-# Status file settings. Please make sure these files are on a ramdisk so that the tracking server doesn't trash your HD!
+# Status file settings
 ;track.html = 0 # Enable standard online players html output (default 0)
 ;track.html.path = "/path/to/your/ramdisk/status.html" # Set file for online players list
 ;track.xml = 0 # Enable online players XML output for UruVision (default 0)
@@ -176,7 +176,8 @@ website = "http://server/info.html"
 
 # game server settings
 game.log = "../game/" # the path where the game log files will be saved (there will be subdirs for each instance: /base_path/agename/ageguid/)
-game.bin = "/usr/local/alcugs/bin/alcugs_game" # full path and name of game server binary (if you want to use an unet2 game server, you also have to set game.config to the name of the game server config file)
+game.bin = "/usr/local/alcugs/bin/alcugs_game" # full path and name of game server binary
+# (if you want to use an unet2 game server, you also have to set game.config to the name of the game server config file)
 
 stop = 1
 
