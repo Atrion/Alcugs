@@ -191,6 +191,7 @@ namespace alc {
 			
 			// remove player from player list if he is still on there
 			if (u->data) {
+				log->log("WARN: Player %s did not log off correctly\n", u->str());
 				bcastMemberUpdate(u, /*isJoined*/false);
 				delete u->data;
 				u->data = NULL;
