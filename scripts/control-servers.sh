@@ -2,12 +2,12 @@
 set -e
 
 # configuration
-# EDIT THESE ACCORDING TO YOUR NEEDS
-root=/home/alcugs/
+# EDIT THIS ACCORDING TO YOUR NEEDS
+root=/usr/local/alcugs # change this to the path you work in
+# END
 basedir=$root/var/
 bindir=$root/bin/
 config=$root/etc/uru.conf
-# END
 waittime=1 # time to wait after a server was started
 
 start_servers="tracking vault auth lobby"
