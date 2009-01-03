@@ -1051,7 +1051,7 @@ void tNetSession::setAuthData(Byte accessLevel, const Byte *passwd)
 	this->authenticated = 2; // the player is authenticated!
 	this->accessLevel = accessLevel;
 	strcpy((char *)this->passwd, (char *)passwd); // passwd is needed for validating packets
-	this->conn_timeout = 30; // 30sec, client should send an alive every 10sec
+	this->conn_timeout = 40; // 40sec, client should send an alive every 10sec (30sec is not enough for Minkata and BahroCave on some PCs)
 }
 
 /* End session */
