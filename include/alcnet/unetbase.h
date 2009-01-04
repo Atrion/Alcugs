@@ -64,13 +64,14 @@ public:
 		onReloadConfig();
 		onLoadConfig();
 	}
+	inline void terminate(tNetSession *u) { terminate(u, 0); }
 protected:
 	/** Terminates the connection of the specified peer
 			\param who A session iterator that points to the desired peer
 			\param reason The reason code (error code) (if 0, send RKickedOff to clients and RQutting for servers)
 			\param destroyOnly false=sends a terminated/leave message, true=silently closes the connection and destroys it ASAP
 	*/
-	virtual void terminate(tNetSession *u, Byte reason = 0, bool destroyOnly = false);
+	virtual void terminate(tNetSession *u, Byte reason, bool destroyOnly = false);
 	/** destroy that session and do an onConnectionClosed */
 	void closeConnection(tNetSession *u);
 	inline bool isRunning(void) { return state_running; }

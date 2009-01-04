@@ -87,7 +87,7 @@ namespace alc {
 	
 	class tTrackingBackend {
 	public:
-		tTrackingBackend(tUnet *net, tNetSessionList *servers, char *host, U16 port);
+		tTrackingBackend(tUnetBase *net, tNetSessionList *servers, char *host, U16 port);
 		~tTrackingBackend(void);
 		void reload(void);
 		
@@ -117,7 +117,7 @@ namespace alc {
 		void generateFakeGuid(Byte *guid); //!< generates a random 7 bytes fake guid for UruVision
 
 		tPlayerList players;
-		tUnet *net;
+		tUnetBase *net;
 		tNetSessionList *servers;
 		tLog *log;
 		char *host;

@@ -85,7 +85,7 @@ namespace alc {
 	}
 	
 	//// tTrackingBackend
-	tTrackingBackend::tTrackingBackend(tUnet *net, tNetSessionList *servers, char *host, U16 port)
+	tTrackingBackend::tTrackingBackend(tUnetBase *net, tNetSessionList *servers, char *host, U16 port)
 	{
 		log = lnull;
 		guidGen = NULL;
@@ -286,7 +286,9 @@ namespace alc {
 		while ((server = servers->getNext())) {
 			if (server == game || !server->data) continue;
 			if (memcmp(server->serverGuid, serverGuid, 8) == 0) {
-				log->log("ERR: There already is a server for guid %s, ignoring the new one %s\n", setGuid.serverGuid.c_str(), game->str());
+				log->log("ERR: There already is a server for guid %s, kicking the new one %s\n", setGuid.serverGuid.c_str(), game->str());
+				net->terminate(game); // this should usually result in the game server going down
+				log->flush();
 				return;
 			}
 		}
@@ -332,7 +334,10 @@ namespace alc {
 			
 			// get the age's sequence prefix
 			tAgeInfo *age = guidGen->getAge(game->name);
-			if (!age) log->log("ERR: Can\'t find the age file for game server %s\n", game->str());
+			if (!age) {
+				log->log("ERR: Can\'t find the age file (%s) for game server %s - kicking it\n", game->name, game->str());
+				net->terminate(game);
+			}
 			else data->seqPrefix = age->seqPrefix;
 		}
 		else // if it is a lobby
