@@ -138,6 +138,7 @@ namespace alc {
 		if (!node)
 			throw txProtocolError(_WHERE("A VSaveNode without a node attached???"));
 		if (node->type != KSDLNode) return;
+		if (!node->blob1Size) return; // don't bother parsing empty messages
 		// got the node, and it is a SDL one... get the SDL binary stream
 		tMBuf data(node->blob1Size);
 		data.write(node->blob1, node->blob1Size);

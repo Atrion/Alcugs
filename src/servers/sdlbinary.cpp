@@ -638,8 +638,7 @@ namespace alc {
 	void tSdlState::store(tBBuf &t)
 	{
 		if (stateMgr == NULL)
-			throw txUnet(_WHERE("You have to set a stateMgr before parsing a sdlState"));
-		// use tSdlBinay to get the message body and decompress stuff
+			throw txUnet(_WHERE("You have to set a stateMgr before parsing an sdlState"));
 		if (format == 0x00) // only format 0x00 has the object
 			t.get(obj);
 		tMBuf data = decompress(t);
