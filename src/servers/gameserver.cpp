@@ -237,7 +237,7 @@ namespace alc {
 
 	void tUnetGameServer::onIdle(bool idle)
 	{
-		if (lingerTime && lastPlayerLeft && lastPlayerLeft + lingerTime < alcGetTime()) {
+		if (idle && lingerTime && lastPlayerLeft && lastPlayerLeft + lingerTime < alcGetTime()) {
 			log->log("The last player left more than %d sec ago, so I will go down.\n", lingerTime);
 			stop(); // no player for some time, so go down
 		}
