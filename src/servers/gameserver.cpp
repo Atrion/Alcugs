@@ -104,6 +104,8 @@ namespace alc {
 				lingerTime = var.asU32();
 			else
 				lingerTime = 120; // default
+			if (lingerTime && lingerTime < 20)
+				log->log("WARN: You set a linger time of only %d, which could result in the game server going down before the player even has the chance to join it - I recommend to set it to at least 20\n", lingerTime);
 		}
 	}
 
@@ -144,16 +146,6 @@ namespace alc {
 		data.write(node->blob1, node->blob1Size);
 		data.rewind();
 		ageState->saveSdlVaultMessage(data, u); // process it
-	}
-	
-	bool tUnetGameServer::setActivePlayer(tNetSession *u, U32 ki, U32 x, const Byte *avatar)
-	{
-		bool ret = tUnetLobbyServerBase::setActivePlayer(u, ki, x, avatar);
-		if (ret) {
-			// a new player joined, so we are no longer alone
-			lastPlayerLeft = 0;
-		}
-		return ret;
 	}
 	
 	void tUnetGameServer::terminate(tNetSession *u, Byte reason, bool destroyOnly)
@@ -314,6 +306,9 @@ namespace alc {
 				// log the join
 				sec->log("%s joined\n", u->str());
 				// now, it'll stat sending GameMessages
+				
+				// a new player joined, so we are no longer alone
+				lastPlayerLeft = 0;
 				
 				return 1;
 			}
@@ -583,6 +578,27 @@ namespace alc {
 						u->data = new tGameData(loadClone.obj);
 						bcastMemberUpdate(u, /*isJoined*/true);
 					}
+				}
+				
+				return 1;
+			}
+			
+			//// message to prevent the server from going down while someone joins
+			case NetMsgCustomPlayerToCome:
+			{
+				if (u->getPeerType() != KTracking) {
+					err->log("ERR: %s sent a NetMsgCustomPlayerToCome but is not the tracking server. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmCustomPlayerToCome playerToCome(u);
+				msg->data.get(playerToCome);
+				log->log("<RCV> [%d] %s\n", msg->sn, playerToCome.str());
+				
+				if (lastPlayerLeft) {
+					// stay up as if the last player left now, that should be long enough for the new player to join
+					lastPlayerLeft = alcGetTime();
 				}
 				
 				return 1;

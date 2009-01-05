@@ -1307,6 +1307,9 @@ const char * alcUnetGetMsgCode(U16 code) {
 		case 0x101A:
 			ret="NetMsgCustomDirectedFwd";
 			break;
+		case 0x101B:
+			ret="NetMsgCustomPlayerToCome";
+			break;
 		case 0x1313:
 			ret="NetMsgCustomTest";
 			break;

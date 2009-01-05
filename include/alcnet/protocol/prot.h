@@ -233,7 +233,7 @@ unsilenced 29
 
 #define NetMsgGameMessage              0x0266
 
-#define NetMsgVoice                    0x0274
+#define NetMsgVoice                    0x0274 //*
 
 #define NetMsgTestAndSet               0x0278
 
@@ -303,22 +303,25 @@ unsilenced 29
 #define NetMsgCustomPlayerStatus       0x1008
 #define NetMsgCustomVaultCheckKi       0x1009
 #define NetMsgCustomVaultKiChecked     0x100A
-#define NetMsgCustomRequestAllPlStatus 0x100B
-#define NetMsgCustomAllPlayerStatus    0x100C
+#define NetMsgCustomRequestAllPlStatus 0x100B //*
+#define NetMsgCustomAllPlayerStatus    0x100C //*
 #define NetMsgCustomSetGuid            0x100D
 #define NetMsgCustomFindServer         0x100E
 #define NetMsgCustomServerFound        0x100F
 #define NetMsgCustomForkServer         0x1010
 #define NetMsgPlayerTerminated         0x1011
 #define NetMsgCustomVaultPlayerStatus  0x1012
-#define NetMsgCustomMetaRegister       0x1013
-#define NetMsgCustomMetaPing           0x1014
-#define NetMsgCustomServerVault        0x1015
-#define NetMsgCustomServerVaultTask    0x1016
-#define NetMsgCustomSaveGame           0x1017
-#define NetMsgCustomLoadGame           0x1018
-#define NetMsgCustomCmd                0x1019
+#define NetMsgCustomMetaRegister       0x1013 //*
+#define NetMsgCustomMetaPing           0x1014 //*
+#define NetMsgCustomServerVault        0x1015 //*
+#define NetMsgCustomServerVaultTask    0x1016 //*
+#define NetMsgCustomSaveGame           0x1017 //*
+#define NetMsgCustomLoadGame           0x1018 //*
+#define NetMsgCustomCmd                0x1019 //*
 #define NetMsgCustomDirectedFwd        0x101A
+#define NetMsgCustomPlayerToCome       0x101B
 #define NetMsgCustomTest               0x1313
+
+// * unimplemented, unknown format
 
 #endif
