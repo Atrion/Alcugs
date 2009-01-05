@@ -106,6 +106,11 @@ namespace alc {
 		tmCustomDirectedFwd(tNetSession *u, tmGameMessageDirected &msg);
 	};
 	
+	class tmCustomPlayerToCome : public tmMsgBase {
+	public:
+		tmCustomPlayerToCome(tNetSession *u);
+	};
+	
 } //End alc namespace
 
 #endif

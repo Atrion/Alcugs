@@ -258,6 +258,9 @@ namespace alc {
 	void tTrackingBackend::serverFound(tPlayer *player, tNetSession *server)
 	{
 		if (!server->data) throw txUnet(_WHERE("server passed in tTrackingBackend::serverFound is not a game/lobby server"));
+		// notify the server that a player will come
+		tmCustomPlayerToCome playerToCome(server);
+		net->send(playerToCome);
 		// notifiy the player that it's server is available
 		tTrackingData *data = (tTrackingData *)server->data;
 		tmCustomServerFound found(player->u, player->ki, player->awaiting_x, player->sid, ntohs(server->getPort()), data->externalIp, alcGetStrGuid(server->serverGuid), server->name);

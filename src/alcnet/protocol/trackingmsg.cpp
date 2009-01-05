@@ -406,5 +406,10 @@ namespace alc {
 	tmCustomDirectedFwd::tmCustomDirectedFwd(tNetSession *u, tmGameMessageDirected &msg)
 	 : tmGameMessageDirected(NetMsgCustomDirectedFwd, plNetAck | plNetKi | plNetCustom | plNetVersion, u, msg)
 	{ }
+	
+	//// tmCustomPlayerToCome
+	tmCustomPlayerToCome::tmCustomPlayerToCome(tNetSession *u)
+	 : tmMsgBase(NetMsgCustomPlayerToCome, plNetAck | plNetCustom | plNetVersion, u)
+	{ }
 
 } //end namespace alc
