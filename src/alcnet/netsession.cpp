@@ -186,9 +186,8 @@ void tNetSession::increaseCabal() {
 }
 void tNetSession::decreaseCabal(bool partial) {
 	if(!cabal) return;
-	const U32 delta=333;
-	if (partial) cabal-=(delta*cabal)/1000;
-	else cabal /= 2;
+	const U32 delta = partial ? 333 : 500;
+	cabal -= (delta*cabal)/1000;
 	if(cabal<maxPacketSz) cabal=maxPacketSz;
 	DBG(5,"-Cabal is now %i\n",cabal);
 }
