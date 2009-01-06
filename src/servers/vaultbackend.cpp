@@ -502,6 +502,11 @@ namespace alc {
 				if (!savedNodeRef) throw txProtocolError(_WHERE("got a VAddNodeRef without a node ref attached"));
 				log->log("Vault Add Node Ref from %d to %d for %d\n", savedNodeRef->parent, savedNodeRef->child, ki);
 				log->flush();
+				
+				// check if both nodes exist
+				if (!vaultDB->checkNode(savedNodeRef->parent) || !vaultDB->checkNode(savedNodeRef->child))
+					throw txProtocolError(_WHERE("One of the nodes I should connect (%d -> %d) doesn't exist", savedNodeRef->parent, savedNodeRef->child));
+				
 				if (!vaultDB->addNodeRef(*savedNodeRef)) return; // ignore duplicates
 				
 				// broadcast the change
@@ -634,9 +639,15 @@ namespace alc {
 			{
 				if (rcvPlayer < 0 || !savedNode) throw txProtocolError(_WHERE("Got a VSendNode without the reciever or the node"));
 				log->log("Sending node %d from player %d to %d\n", savedNode->index, ki, rcvPlayer);
+				log->flush();
 				tvNode *node;
 				tvNode **nodes;
 				int nNodes;
+				
+				// check if node to send exists
+				if (!vaultDB->checkNode(savedNode->index))
+					throw txProtocolError(_WHERE("Not sending non-existing node %d", savedNode->index));
+				
 				// check if reciever exists
 				U32 reciever = rcvPlayer;
 				vaultDB->fetchNodes(&reciever, 1, &nodes, &nNodes);
@@ -644,6 +655,7 @@ namespace alc {
 				free(nodes);
 				if (nNodes == 0) {
 					log->log("ERR: I should send a message to the non-existing player %d\n", rcvPlayer);
+					log->flush();
 					break;
 				}
 				

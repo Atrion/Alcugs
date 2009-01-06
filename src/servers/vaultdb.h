@@ -70,6 +70,9 @@ namespace alc {
 		void fetchNodes(U32 *table, int tableSize, tvNode ***nodes, int *nNodes); // this is a pointer to an array of pointers
 		void fetchNodes(tMBuf &table, int tableSize, tvNode ***nodes, int *nNodes); // this is a pointer to an array of pointers
 		
+		/** checks if this node exists */
+		bool checkNode(U32 node);
+		
 		/** gets a list of all direct and indirect MGRS (parent nodes with a type <= 7) of this node
 		    Remember to free the table */
 		void getMGRs(U32 baseNode, U32 **table, U32 *tableSize);

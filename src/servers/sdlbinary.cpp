@@ -642,6 +642,7 @@ namespace alc {
 		if (format == 0x00) // only format 0x00 has the object
 			t.get(obj);
 		tMBuf data = decompress(t);
+		if (!data.size()) throw txProtocolError(_WHERE("Parsing an empty SDL binary is not supported"));
 		// parse "header data"
 		data.rewind();
 		tUStr name;
