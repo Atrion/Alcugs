@@ -172,20 +172,21 @@ private:
 	Byte passwd[33]; //!< peer passwd hash (used in V2) (string)
 	Byte accessLevel; //!< peer access level
 
-	//flux control
-	U32 bandwidth; //!< client reported bandwidth (in byte/s)
-	U32 cabal; //!< cur avg bandwidth (in bytes per second), can't be > max_cabal
-	U32 max_cabal; //!< min(client's upstream, our downstream), cabal will grow slower when it gets to this mark, will never be > bandwidth
+	//flux control (bandwidth and latency)
+	U32 minBandwidth, maxBandwidth; //!< min(client's upstream, our downstream) and max(client's upstream, our downstream) in bytes/s
+	U32 cabal; //!< cur avg bandwidth (in bytes per second), can't be > maxBandwidth, will grow slower when > minBandwith
 	
 	U32 next_msg_time; //!< time to send next msg in usecs (referring to tUnet::net_time)
 	U32 rtt; //!< round trip time, used to caluclate timeout
 	S32 deviation; //!< used to calculate timeout
 	U32 timeout; //!< time after which a message is re-sent
 	
+	// queues
 	tUnetMsgQ<tUnetAck> * ackq; //!< ack queue, saves acks to be packed
 	tUnetMsgQ<tUnetUruMsg> * sndq; //!<outcomming message queue
 	tUnetMsgQ<tUnetMsg> * rcvq; //!< incomming message queue
 	
+	// other status variables
 	bool idle; //!< true when the session has nothing to do (all queue emtpy)
 	bool delayMessages; //!< when set to true, messages are kept in the recieve buffer
 	
