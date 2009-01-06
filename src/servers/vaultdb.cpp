@@ -1202,6 +1202,24 @@ namespace alc {
 		mysql_free_result(result);
 	}
 	
+	bool tVaultDB::checkNode(U32 node)
+	{
+		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		
+		tStrBuf query;
+		MYSQL_RES *result;
+		U32 nNodes;
+		
+		query.printf("SELECT idx FROM %s WHERE idx='%d'", vaultTable, node);
+		sql->query(query.c_str(), "checkNode");
+		result = sql->storeResult();
+		if (result == NULL) throw txDatabaseError(_WHERE("couldn't check for node"));
+		nNodes = mysql_num_rows(result);
+		mysql_free_result(result);
+		
+		return (nNodes == 1);
+	}
+	
 	bool tVaultDB::addNodeRef(tvNodeRef &ref)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
