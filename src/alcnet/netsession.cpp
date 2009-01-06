@@ -74,14 +74,12 @@ void tNetSession::init() {
 	cflags=0; //default flags
 	if(net->flags & UNET_NOCONN) {
 		cflags |= UNetNoConn;
-		bandwidth=(4096*8)*2;
-		cabal=4096;
-		max_cabal=4096;
+		maxBandwidth=4096*2;
+		minBandwidth=4096;
+		cabal=minBandwidth;
 	}
 	else {
-		bandwidth=0;
-		cabal=0;
-		max_cabal=0;
+		maxBandwidth=minBandwidth=cabal=0;
 	}
 	maxPacketSz=1024;
 	flood_last_check=0;
@@ -179,28 +177,20 @@ void tNetSession::updateRTT(U32 newread) {
 }
 void tNetSession::increaseCabal() {
 	if(!cabal) return;
-	U32 delta=275;
+	const U32 delta=300;
 	U32 inc=(delta*cabal)/1000;
+	if(cabal+inc > minBandwidth) inc /= 8;
 	cabal+=inc;
-	if(cabal>max_cabal) {
-		cabal=max_cabal;
-		max_cabal+=inc/8;
-		if(max_cabal>(bandwidth/8)) max_cabal=(bandwidth/8);
-	}
-	DBG(5,"+Cabal is now %i (max:%i)\n",cabal,max_cabal);
+    if(cabal > maxBandwidth) cabal=maxBandwidth;
+	DBG(5,"+Cabal is now %i\n",cabal);
 }
 void tNetSession::decreaseCabal(bool partial) {
 	if(!cabal) return;
-	U32 delta=100;
-	U32 gamma=333;
-	if(partial) cabal-=(gamma*cabal)/1000;
-	else {
-		cabal=cabal/2;
-		max_cabal-=(delta*max_cabal)/1000;
-		if(max_cabal<maxPacketSz) max_cabal=maxPacketSz;
-	}
+	const U32 delta=333;
+	if (partial) cabal-=(delta*cabal)/1000;
+	else cabal /= 2;
 	if(cabal<maxPacketSz) cabal=maxPacketSz;
-	DBG(5,"-Cabal is now %i (max:%i)\n",cabal,max_cabal);
+	DBG(5,"-Cabal is now %i\n",cabal);
 }
 
 /** computes the time we have to wait after sending the given amount of bytes */
@@ -308,7 +298,7 @@ void tNetSession::send(tmBase &msg) {
 		pmsg=new tUnetUruMsg();
 		pmsg->val=val;
 		//pmsg.pn NOT in this layer (done in the msg sender, tUnet::rawsend)
-		//since acks are put at the top of the sndq, the pn would be wrong if we did it differently
+		//since urgent messages are put at the top of the sndq, the pn would be wrong if we did it differently
 		pmsg->tf=tf;
 		pmsg->frn=i;
 		pmsg->sn=serverMsg.sn;
@@ -405,23 +395,6 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		throw txProtocolError(_WHERE("Cannot parse a message"));
 	}
 	
-	// if we know the downstream of the peer, set avg cabal using what is smaller: our upstream or the peers downstream
-	//  (this is the last part of the negotiationg process)
-	if(!isConnected() && bandwidth!=0) {
-		if((ntohl(ip) & 0xFFFFFF00) == 0x7F000000) { //lo
-			cabal=100000000/8; //100Mbps
-		} else if((ip & net->lan_mask) == net->lan_addr) { //LAN
-			cabal=((net->lan_up > bandwidth) ? bandwidth : net->lan_up) / 8;
-		} else { //WAN
-			cabal=((net->nat_up > bandwidth) ? bandwidth : net->nat_up) / 8;
-		}
-		max_cabal=cabal;
-		cabal=(cabal * 250)/1000;
-		DBG(5, "INF: Cabal is now %i (%i bps) max: %i (%i bps)\n",cabal,cabal*8,max_cabal,max_cabal*8);
-		negotiating=false;
-	}
-	//How do you say "Cabal" in English?
-	
 	//Protocol Upgrade
 	if(msg.tf & UNetExt) {
 		cflags |= UNetUpgraded;
@@ -432,7 +405,6 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		msg.data.rewind();
 		msg.data.get(comm);
 		net->log->log("<RCV> [%d] %s",msg.sn,comm.str());
-		bandwidth=comm.bandwidth;
 		if(renego_stamp==comm.timestamp) { // it's a duplicate, we already got this message
 		    // It is necessary to do the check this way since the usual check by SN would treat a nego on an existing connection as
 		    //  "already parsed" since the SN is started from the beginning
@@ -456,6 +428,27 @@ void tNetSession::processMsg(Byte * buf,int size) {
 			}
 			cabal=0; // re-determine cabal with the new bandwidth
 		}
+		
+		// calculate connection bandwidth
+		if (!isConnected()) {
+			// if we know the downstream of the peer, set avg cabal using what is smaller: our upstream or the peers downstream
+			//  (this is the last part of the negotiationg process)
+			
+			// save our upstream in cabal
+			if((ntohl(ip) & 0xFFFFFF00) == 0x7F000000) { //lo
+				cabal=100000000/8; //100Mbps
+			} else if((ip & net->lan_mask) == net->lan_addr) { //LAN
+				cabal=net->lan_up / 8;
+			} else { //WAN
+				cabal=net->nat_up / 8;
+			}
+			// determine connection limits
+			maxBandwidth = std::max(cabal, comm.bandwidth/8);
+			minBandwidth = std::min(cabal, comm.bandwidth/8);
+			cabal=minBandwidth/2;
+			DBG(5, "INF: Cabal is now %i\n",cabal);
+			negotiating=false;
+		}
 	} else if (!isConnected()) { // we did not yet negotiate
 		if(!negotiating) { // and we are not in the process of doing it - so start that process
 			net->log->log("%s WARN: Obviously a new connection was started with something different than a nego\n", str());
@@ -465,7 +458,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		}
 	}
 	else
-		assert(bandwidth != 0);
+		assert(maxBandwidth && minBandwidth); // we are connected, so these *must* be set
 	
 	//fix the problem that happens every 15-30 days of server uptime (prefer doing that when the sndq is empty)
 	if((sndq->len() == 0 && (serverMsg.sn>=8378605 || msg.sn>=8378605)) ||
@@ -937,7 +930,7 @@ void tNetSession::doWork() {
 
 		while(curmsg!=NULL && (cur_quota<quota_max)) {
 			if(curmsg->timestamp<=net->net_time) {
-				DBG(8, "%s ok to send a message\n",alcGetStrTime());
+				DBG(8, "%s %d ok to send a message\n",str(),net->net_time);
 				//we can send the message
 				if(curmsg->tf & UNetAckReq) {
 					//send paquet
@@ -988,20 +981,18 @@ void tNetSession::doWork() {
 			} //end time check
 			else {
 				net->updateTimerAbs(curmsg->timestamp); // come back when we want to send this message
-				DBG(8,"%s Too soon (%d) to send a message\n",alcGetStrTime(), curmsg->timestamp-net->net_time);
+				DBG(8,"%s %d Too soon (%d) to send a message\n",str(),net->net_time,curmsg->timestamp-net->net_time);
 				curmsg = sndq->getNext(); // go on
 			}
 		} //end while
 		tts=timeToSend(cur_quota);
-		if (cur_quota > 0) {
-			DBG(8,"%s tts is now:%i quota:%i,cabal:%i\n",alcGetStrTime(),tts,cur_quota,cabal);
-		}
+		DBG(8,"%s %d tts is now:%i quota:%i,cabal:%i\n",str(),net->net_time,tts,cur_quota,cabal);
 		next_msg_time=net->net_time + tts;
-		net->updateTimerAbs(next_msg_time); // come back when we want to send the next message
 	} else {
-		net->updateTimerAbs(next_msg_time); // come back when we want to send the next message
-		DBG(8,"Too soon (%d) to check sndq\n", next_msg_time-net->net_time);
+		DBG(8,"%s %d Too soon (%d) to check sndq\n",str(),net->net_time,next_msg_time-net->net_time);
 	}
+	if (next_msg_time > net->net_time) // only update the timer if we are waiting for the next_msg_time
+		net->updateTimerAbs(next_msg_time); // come back when we want to send the next message
 }
 
 /** send a negotiation to the peer */

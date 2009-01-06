@@ -163,7 +163,7 @@ void tUnet::updateTimerRelative(U32 usec) {
 		unet_usec = usec;
 		
 		if(unet_sec == 0 && unet_usec<min_timer) unet_usec=min_timer;
-		DBG(5,"Timer is now %i.%06i secs\n",unet_sec,unet_usec);
+		DBG(8,"Timer is now %i.%06i secs (wanted: %i usecs)\n",unet_sec,unet_usec,usec);
 	}
 }
 
@@ -470,12 +470,7 @@ tNetSessionIte tUnet::netConnect(char * hostname,U16 port,Byte validation,Byte f
 	
 	if(!(u->cflags & UNetNoConn)) {
 		u->nego_stamp=u->timestamp;
-		u->negotiating=true;
 		u->negotiate();
-	} else {
-		u->bandwidth=(4096*8)*2;
-		u->cabal=4096;
-		u->max_cabal=4096;
 	}
 	
 	return ite;
@@ -508,7 +503,7 @@ int tUnet::Recv() {
 	tv.tv_sec = this->unet_sec;
 	tv.tv_usec = this->unet_usec;
 
-	DBG(9,"waiting for incoming messages (%u.%06u)...\n", unet_sec, unet_usec);
+	DBG(8,"waiting for incoming messages (%u.%06u)...\n", unet_sec, unet_usec);
 	valret = select(this->sock+1, &rfds, NULL, NULL, &tv); // this is the command taking the time - now lets process what we got
 	/* Don't trust tv value after the call */
 	
