@@ -48,6 +48,8 @@ namespace alc {
 		virtual void stream(tBBuf &t);
 		void checkNetMsg(tmLoadClone &loadClone);
 		tmLoadClone createNetMsg(tNetSession *u, bool isInitial);
+		const Byte *str(void) { return clonedObj.str(); }
+		void print(tLog *log);
 
 		// format
 		U32 unk7; //!< for plLoadAvatarMsg: seen 0x00000840 and 0x00000040, for plLoadCloneMsg: seen 0x00000AC0 and 0x00000040
