@@ -136,9 +136,9 @@ port = 2011
 
 # Status file settings
 ;track.html = 0 # Enable standard online players html output (default 0)
-;track.html.path = "/path/to/your/ramdisk/status.html" # Set file for online players list
+;track.html.path = "/var/www/status.html" # Set file for online players list
 ;track.xml = 0 # Enable online players XML output for UruVision (default 0)
-;track.xml.path = "/path/to/your/ramdisk/status.xml" # Set file for XML players list
+;track.xml.path = "/var/www/status.xml" # Set file for XML players list
 
 stop = 1
 

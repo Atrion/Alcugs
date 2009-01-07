@@ -223,6 +223,19 @@ namespace alc {
 		return nSent;
 	}
 	
+	template <class T> void tUnetGameServer::bcastMessage(T &msg)
+	{
+		// broadcast message
+		tNetSession *session;
+		smgr->rewind();
+		while ((session = smgr->getNext())) {
+			if (session->joined && session->ki != msg.ki) {
+				T fwdMsg(session, msg);
+				send(fwdMsg);
+			}
+		}
+	}
+	
 	void tUnetGameServer::bcastMemberUpdate(tNetSession *u, bool isJoined)
 	{
 		tNetSession *session;
@@ -419,14 +432,7 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, gameMsg.str());
 				
 				// broadcast message
-				tNetSession *session;
-				smgr->rewind();
-				while ((session = smgr->getNext())) {
-					if (session->joined && session->ki != gameMsg.ki) {
-						tmGameMessage fwdMsg(session, gameMsg);
-						send(fwdMsg);
-					}
-				}
+				bcastMessage(gameMsg);
 				
 				return 1;
 			}
@@ -528,14 +534,8 @@ namespace alc {
 				// I assume the message type is correct and the flag not.
 				
 				// broadcast message
-				tNetSession *session;
-				smgr->rewind();
-				while ((session = smgr->getNext())) {
-					if (session->joined && session->ki != SDLStateBCast.ki) {
-						tmSDLStateBCast fwdMsg(session, SDLStateBCast);
-						send(fwdMsg);
-					}
-				}
+				bcastMessage(SDLStateBCast);
+				
 				return 1;
 			}
 			case NetMsgLoadClone:
@@ -558,14 +558,7 @@ namespace alc {
 				ageState->saveClone(loadClone);
 				
 				// broadcast message
-				tNetSession *session;
-				smgr->rewind();
-				while ((session = smgr->getNext())) {
-					if (session->joined && session->ki != loadClone.ki) {
-						tmLoadClone fwdMsg(session, loadClone);
-						send(fwdMsg);
-					}
-				}
+				bcastMessage(loadClone);
 				
 				// if it's an (un)load of the player's avatar, do the member list update
 				if (loadClone.isPlayerAvatar) {
