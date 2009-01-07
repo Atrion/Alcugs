@@ -216,11 +216,6 @@ namespace alc {
 	{
 		tmGameMessage::store(t);
 		
-		// check message tyoe
-		U16 msgType = getSubMsgType();
-		if (msgType != 0x024E && msgType != 0x03AC) // 0x024E = plNetLoadClone, 0x03AC = plNetLoadAvatar
-			throw txProtocolError(_WHERE("The sub message of a NetMsgLoadClone must be of the type 0x03AC (plNetLoadAvatar), not 0x%04X", msgType));
-		
 		// check if header is all zero
 		Byte zero[5];
 		memset(zero, 0, 5);
