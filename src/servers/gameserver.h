@@ -59,6 +59,8 @@ namespace alc {
 	public:
 		tUnetGameServer(void);
 		~tUnetGameServer(void);
+		
+		template <class T> void bcastMessage(T &msg);
 	protected:
 		virtual void onConnectionClosed(tNetEvent *ev, tNetSession *u);
 		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);

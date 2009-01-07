@@ -44,13 +44,14 @@
 
 ////extra includes
 #include "sdl.h"
+#include "gameserver.h"
 
 #include <alcdebug.h>
 
 namespace alc {
 
 	//// tAgeStateManager
-	tAgeStateManager::tAgeStateManager(tUnet *net, tAgeInfo *age)
+	tAgeStateManager::tAgeStateManager(tUnetGameServer *net, tAgeInfo *age)
 	{
 		this->net = net;
 		this->age = age;
@@ -359,7 +360,6 @@ namespace alc {
 	{
 		int n = 0;
 		for (tCloneList::iterator it = clones.begin(); it != clones.end(); ++it) {
-			//if (it->obj.clonePlayerId == u->ki) continue;
 			if (logDetailed) log->log("Sending to %s: clone [%s]\n", u->str(), it->obj.str());
 			tmLoadClone cloneMsg(u, *it);
 			net->send(cloneMsg);
