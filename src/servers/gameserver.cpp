@@ -434,7 +434,7 @@ namespace alc {
 				
 				// verify contained game message
 				U16 msgType = gameMsg.getSubMsgType();
-				if (msgType == 0x024E || msgType == 0x03AC) // plLoadCloneMsg, plLoadAvatarMsg
+				if (msgType == 0x024E || msgType == 0x03AC) // 0x024E = plLoadCloneMsg, 0x03AC = plLoadAvatarMsg
 					throw txProtocolError(_WHERE("Got game message with invalid sub message type ox%04X", msgType));
 				
 				// broadcast message
@@ -456,7 +456,7 @@ namespace alc {
 				
 				// verify contained game message
 				U16 msgType = gameMsg.getSubMsgType();
-				if (msgType == 0x024E || msgType == 0x03AC) // plLoadCloneMsg, plLoadAvatarMsg
+				if (msgType == 0x024E || msgType == 0x03AC) // 0x024E = plLoadCloneMsg, 0x03AC = plLoadAvatarMsg
 					throw txProtocolError(_WHERE("Got game message with invalid sub message type ox%04X", msgType));
 				
 				// Because sharing the Relto book causes everyone in the age to crash
@@ -563,24 +563,18 @@ namespace alc {
 				msg->data.get(loadClone);
 				log->log("<RCV> [%d] %s\n", msg->sn, loadClone.str());
 				
-				if (loadClone.obj.clonePlayerId != u->ki)
-					throw txProtocolError(_WHERE("ClonePlayerID of loaded clone must be the same as Player KI (%d) but is %d", u->ki, loadClone.obj.clonePlayerId));
-				
-				// verify contained game message
+				// parse contained game message
 				U16 msgType = loadClone.getSubMsgType();
-				if (msgType == 0x024E) { // plLoadCloneMsg
-					// always accepted
-				}
-				else if (msgType == 0x03AC) { // plLoadAvatarMsg
-					tLoadAvatarMsg subMsg;
-					loadClone.message.get(subMsg);
-					subMsg.check(loadClone);
+				tLoadCloneMsg loadCloneMsg(msgType == 0x03AC); // the plLoadAvatarMsgs are treated a bit differently
+				if (msgType == 0x024E || msgType == 0x03AC) { // 0x024E = plLoadCloneMsg, 0x03AC = plLoadAvatarMsg
+					loadClone.message.get(loadCloneMsg);
+					loadCloneMsg.checkNetMsg(loadClone);
 				}
 				else
 					throw txProtocolError(_WHERE("The sub message of a NetMsgLoadClone must be of the type 0x024E (plLoadCloneMsg) or 0x03AC (plLoadAvatarMsg), not 0x%04X", msgType));
 				
 				// save clone in age state
-				ageState->saveClone(loadClone);
+				ageState->saveClone(loadCloneMsg);
 				
 				// broadcast message
 				bcastMessage(loadClone);

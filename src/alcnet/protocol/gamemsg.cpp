@@ -113,7 +113,7 @@ namespace alc {
 	{ }
 	
 	tmGameMessage::tmGameMessage(U16 cmd, U32 flags, tNetSession *u) : tmMsgBase(cmd, flags, u)
-	{ }
+	{ memset(header, 0, 5); }
 	
 	tmGameMessage::tmGameMessage(U16 cmd, U32 flags, tNetSession *u, tmGameMessage &msg)
 	 : tmMsgBase(cmd, flags, u), message(msg.message)
@@ -212,6 +212,15 @@ namespace alc {
 		isInitial = msg.isInitial;
 	}
 	
+	tmLoadClone::tmLoadClone(tNetSession *u, tUruObject obj, bool isPlayerAvatar, bool isLoad, bool isInitial)
+	 : tmGameMessage(NetMsgLoadClone, plNetAck | plNetKi, u), obj(obj)
+	{
+		ki = obj.clonePlayerId;
+		this->isPlayerAvatar = isPlayerAvatar;
+		this->isLoad = isLoad;
+		this->isInitial = isInitial;
+	}
+	
 	void tmLoadClone::store(tBBuf &t)
 	{
 		tmGameMessage::store(t);
@@ -224,6 +233,8 @@ namespace alc {
 		
 		t.get(obj);
 		if (!obj.hasCloneId) throw txProtocolError(_WHERE("The UruObject of a NetMsgLoadClone must have the clone ID set"));
+		if (obj.clonePlayerId != ki)
+			throw txProtocolError(_WHERE("ClonePlayerID of loaded clone must be the same as Player KI (%d) but is %d", ki, obj.clonePlayerId));
 		
 		Byte playerAvatar = t.getByte();
 		if (playerAvatar != 0x00 && playerAvatar != 0x01)

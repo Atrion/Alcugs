@@ -41,19 +41,26 @@
 namespace alc {
 
 	////DEFINITIONS
-	class tLoadAvatarMsg : public tBaseType {
+	class tLoadCloneMsg : public tBaseType {
 	public:
-		tLoadAvatarMsg(void) : tBaseType() {}
+		tLoadCloneMsg(bool loadAvatarMsg) : tBaseType() { this->loadAvatarMsg = loadAvatarMsg; }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
-		void check(tmLoadClone &loadClone);
+		void checkNetMsg(tmLoadClone &loadClone);
+		tmLoadClone createNetMsg(tNetSession *u, bool isInitial);
+
 		// format
-		U32 unk7; // seen 0x00000840 and 0x00000040
+		U32 unk7; //!< for plLoadAvatarMsg: seen 0x00000840 and 0x00000040, for plLoadCloneMsg: seen 0x00000AC0 and 0x00000040
 		tUruObject clonedObj;
 		bool isLoad;
+		U16 unk13; //!< for plLoadAvatarMsg: seen 0x8000, for plLoadCloneMsg: seen 0x8000 and 0x032E; determines format of the following fields
 		bool isPlayerAvatar;
-		bool hasParentObj; // when true, the message contains the parent object
-		tUruObject parentObj;
+		bool hasParentObj; //!< when true, the message contains the parent object
+		tUruObject parentObj, unkObj;
+		U16 count; //!< count of bugs flying around avatar
+	private:
+		// other members
+		bool loadAvatarMsg;
 	};
 
 } //End alc namespace
