@@ -267,6 +267,25 @@ namespace alc {
 		stream(loadClone.message);
 		return loadClone;
 	}
+	
+	void tLoadCloneMsg::print(tLog *log)
+	{
+		if (!log->doesPrint()) return;
+		log->print("Clone [%s]\n is load: ", clonedObj.str());
+		if (isLoad) log->print("yes");
+		else        log->print("no");
+		if (! (loadAvatarMsg == false && unk13 == 0x8000) ) { // there is no isPlayerAvatar flag for plLoadCloneMsg with unk13 = 0x8000
+			log->print(", is player avatar: ");
+			if (isPlayerAvatar) log->print("yes");
+			else                log->print("no");
+		}
+		log->print(", unk7: 0x%08X, unk13: 0x%04X\n", unk7, unk13);
+		if (! (loadAvatarMsg == false && unk13 == 0x8000) ) { // there is no further data for plLoadCloneMsg with unk13 = 0x8000
+			if (hasParentObj) log->print(" Parent object: [%s]\n", parentObj.str());
+			if (unk13 == 0x032E)  // it's a plLoadCloneMsg with unk13 = 0x032E
+				log->print(" Some other object: [%s], count: %d\n", unkObj.str(), count);
+		}
+	}
 
 } //end namespace alc
 

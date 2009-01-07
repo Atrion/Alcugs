@@ -205,7 +205,7 @@ namespace alc {
 		tCloneList::iterator it = clones.begin();
 		while (it != clones.end()) {
 			if (it->clonedObj.clonePlayerId == ki) { // that clone is dead now, remove it and all of it's SDL states
-				log->log("Removing Clone [%s] as it belongs to player with KI %d who just left us\n", it->clonedObj.str(), ki);
+				log->log("Removing Clone [%s] as it belongs to player with KI %d who just left us\n", it->str(), ki);
 				// FIXME: Somehow tell the rest of the clients that this avatar left. Just sending the load message again with isLaod set to 0 doesn't seem to work
 				// remove states from our list
 				removeSDLStates(it->clonedObj.clonePlayerId);
@@ -324,6 +324,10 @@ namespace alc {
 	void tAgeStateManager::saveClone(tLoadCloneMsg &clone)
 	{
 		tCloneList::iterator it = findClone(clone.clonedObj);
+		if (logDetailed) {
+			log->log("Got ");
+			clone.print(log);
+		}
 		if (clone.isLoad) {
 			if (it != clones.end()) {// it is already in the list, remove old one
 				log->log("Updating Clone ");
@@ -333,10 +337,10 @@ namespace alc {
 				log->log("Adding Clone ");
 			}
 			it = clones.insert(clones.end(), clone);
-			log->log("[%s]\n", it->clonedObj.str());
+			log->log("[%s]\n", it->str());
 		}
 		else { // remove clone if it was in list
-			log->log("Removing Clone [%s]\n", clone.clonedObj.str());
+			log->log("Removing Clone [%s]\n", clone.str());
 			removeSDLStates(clone.clonedObj.clonePlayerId, clone.clonedObj.cloneId); // remove SDL states even if cloenw as not on list
 			if (it != clones.end())
 				clones.erase(it);
@@ -358,7 +362,7 @@ namespace alc {
 	{
 		int n = 0;
 		for (tCloneList::iterator it = clones.begin(); it != clones.end(); ++it) {
-			if (logDetailed) log->log("Sending to %s: clone [%s]\n", u->str(), it->clonedObj.str());
+			if (logDetailed) log->log("Sending to %s: clone [%s]\n", u->str(), it->str());
 			tmLoadClone loadClone (it->createNetMsg(u, true/*isInitial*/));
 			net->send(loadClone);
 			++n;
