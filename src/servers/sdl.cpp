@@ -204,11 +204,11 @@ namespace alc {
 		// check for that player in the clone list
 		tCloneList::iterator it = clones.begin();
 		while (it != clones.end()) {
-			if (it->obj.clonePlayerId == ki) { // that clone is dead now, remov it and all of it's SDL states
-				log->log("Removing Clone [%s] as it belongs to player with KI %d who just left us\n", it->obj.str(), ki);
+			if (it->clonedObj.clonePlayerId == ki) { // that clone is dead now, remove it and all of it's SDL states
+				log->log("Removing Clone [%s] as it belongs to player with KI %d who just left us\n", it->clonedObj.str(), ki);
 				// FIXME: Somehow tell the rest of the clients that this avatar left. Just sending the load message again with isLaod set to 0 doesn't seem to work
 				// remove states from our list
-				removeSDLStates(it->obj.clonePlayerId);
+				removeSDLStates(it->clonedObj.clonePlayerId);
 				clones.erase(it++); // works only in lists (where the iterators remain valid)
 			}
 			else
@@ -321,9 +321,9 @@ namespace alc {
 		log->flush();
 	}
 	
-	void tAgeStateManager::saveClone(const tmLoadClone &clone)
+	void tAgeStateManager::saveClone(tLoadCloneMsg &clone)
 	{
-		tCloneList::iterator it = findClone(clone.obj);
+		tCloneList::iterator it = findClone(clone.clonedObj);
 		if (clone.isLoad) {
 			if (it != clones.end()) {// it is already in the list, remove old one
 				log->log("Updating Clone ");
@@ -333,13 +333,11 @@ namespace alc {
 				log->log("Adding Clone ");
 			}
 			it = clones.insert(clones.end(), clone);
-			it->isInitial = true; // it is sent as initial clone later
-			log->log("[%s]\n", it->obj.str());
+			log->log("[%s]\n", it->clonedObj.str());
 		}
 		else { // remove clone if it was in list
-			tUruObject obj(clone.obj); // we can't call str on clone.obj as it is const and not on it->obj as it might be invalid (the clone doesn't have to be in our list)
-			log->log("Removing Clone [%s]\n", obj.str());
-			removeSDLStates(obj.clonePlayerId, obj.cloneId); // remove SDL states even if cloenw as not on list
+			log->log("Removing Clone [%s]\n", clone.clonedObj.str());
+			removeSDLStates(clone.clonedObj.clonePlayerId, clone.clonedObj.cloneId); // remove SDL states even if cloenw as not on list
 			if (it != clones.end())
 				clones.erase(it);
 			else
@@ -351,7 +349,7 @@ namespace alc {
 	tAgeStateManager::tCloneList::iterator tAgeStateManager::findClone(const tUruObject &obj)
 	{
 		for (tCloneList::iterator it = clones.begin(); it != clones.end(); ++it) {
-			if (it->obj == obj) return it;
+			if (it->clonedObj == obj) return it;
 		}
 		return clones.end();
 	}
@@ -360,9 +358,9 @@ namespace alc {
 	{
 		int n = 0;
 		for (tCloneList::iterator it = clones.begin(); it != clones.end(); ++it) {
-			if (logDetailed) log->log("Sending to %s: clone [%s]\n", u->str(), it->obj.str());
-			tmLoadClone cloneMsg(u, *it);
-			net->send(cloneMsg);
+			if (logDetailed) log->log("Sending to %s: clone [%s]\n", u->str(), it->clonedObj.str());
+			tmLoadClone loadClone (it->createNetMsg(u, true/*isInitial*/));
+			net->send(loadClone);
 			++n;
 		}
 		log->log("Sent %d LoadClone messages to %s\n", n, u->str());
