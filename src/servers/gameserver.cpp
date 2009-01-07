@@ -432,6 +432,11 @@ namespace alc {
 				msg->data.get(gameMsg);
 				log->log("<RCV> [%d] %s\n", msg->sn, gameMsg.str());
 				
+				// verify contained game message
+				U16 msgType = gameMsg.getSubMsgType();
+				if (msgType == 0x024E || msgType == 0x03AC) // plLoadCloneMsg, plLoadAvatarMsg
+					throw txProtocolError(_WHERE("Got game message with invalid sub message type ox%04X", msgType));
+				
 				// broadcast message
 				bcastMessage(gameMsg);
 				
@@ -449,6 +454,11 @@ namespace alc {
 				msg->data.get(gameMsg);
 				log->log("<RCV> [%d] %s\n", msg->sn, gameMsg.str());
 				
+				// verify contained game message
+				U16 msgType = gameMsg.getSubMsgType();
+				if (msgType == 0x024E || msgType == 0x03AC) // plLoadCloneMsg, plLoadAvatarMsg
+					throw txProtocolError(_WHERE("Got game message with invalid sub message type ox%04X", msgType));
+				
 				// Because sharing the Relto book causes everyone in the age to crash
 				// out, throw out the initial message of the exchange. This is all we
 				// can do without client-side PRP file updates. Other sharing is fine
@@ -456,7 +466,7 @@ namespace alc {
 				// don't need sharing the way things are usually set up right now, so
 				// it's not worth the effort to me. (Also, sharing is not enabled for
 				// books, just Bahro stones.)
-				if (gameMsg.getSubMsgType() == 0x02E8) { // plNotifyMsg
+				if (msgType == 0x02E8) { // plNotifyMsg
 					log->log("INF: Throwing out book share notification from %s\n", u->str());
 					return 1;
 				}
@@ -558,16 +568,16 @@ namespace alc {
 				
 				// verify contained game message
 				U16 msgType = loadClone.getSubMsgType();
-				if (msgType == 0x024E) { // plNetLoadClone
+				if (msgType == 0x024E) { // plLoadCloneMsg
 					// always accepted
 				}
-				else if (msgType == 0x03AC) { // plNetLoadAvatar
+				else if (msgType == 0x03AC) { // plLoadAvatarMsg
 					tLoadAvatarMsg subMsg;
 					loadClone.message.get(subMsg);
 					subMsg.check(loadClone);
 				}
 				else
-					throw txProtocolError(_WHERE("The sub message of a NetMsgLoadClone must be of the type 0x024E (plNetLoadClone) or 0x03AC (plNetLoadAvatar), not 0x%04X", msgType));
+					throw txProtocolError(_WHERE("The sub message of a NetMsgLoadClone must be of the type 0x024E (plLoadCloneMsg) or 0x03AC (plLoadAvatarMsg), not 0x%04X", msgType));
 				
 				// save clone in age state
 				ageState->saveClone(loadClone);
