@@ -45,6 +45,7 @@
 ////extra includes
 #include "gameserver.h"
 #include "sdl.h"
+#include "gamesubmsg.h"
 
 #include <alcdebug.h>
 
@@ -555,6 +556,20 @@ namespace alc {
 				if (loadClone.obj.clonePlayerId != u->ki)
 					throw txProtocolError(_WHERE("ClonePlayerID of loaded clone must be the same as Player KI (%d) but is %d", u->ki, loadClone.obj.clonePlayerId));
 				
+				// verify contained game message
+				U16 msgType = loadClone.getSubMsgType();
+				if (msgType == 0x024E) { // plNetLoadClone
+					// always accepted
+				}
+				else if (msgType == 0x03AC) { // plNetLoadAvatar
+					tLoadAvatarMsg subMsg;
+					loadClone.message.get(subMsg);
+					subMsg.check(loadClone);
+				}
+				else
+					throw txProtocolError(_WHERE("The sub message of a NetMsgLoadClone must be of the type 0x024E (plNetLoadClone) or 0x03AC (plNetLoadAvatar), not 0x%04X", msgType));
+				
+				// save clone in age state
 				ageState->saveClone(loadClone);
 				
 				// broadcast message
