@@ -90,7 +90,8 @@ namespace alc {
 	void tmJoinReq::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		if (!hasFlags(plNetX)) throw txProtocolError(_WHERE("X flag missing"));
+		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
+		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 	}
 	
 	//// tmJoinAck
@@ -142,6 +143,7 @@ namespace alc {
 		
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
+		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		
 		memcpy(header, t.read(5), 5);
 		U32 gameMsgSize = t.getU32();
@@ -282,6 +284,9 @@ namespace alc {
 	void tmPagingRoom::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
+		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
+		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
+		
 		U32 format = t.getU32();
 		if (format != 1)
 			throw txProtocolError(_WHERE("NetMsgPagingRoom.format must be 1, but is %d", format));
@@ -335,6 +340,9 @@ namespace alc {
 	void tmPlayerPage::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
+		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
+		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
+		
 		Byte pageFlag = t.getByte();
 		if (pageFlag == 0x00 || pageFlag == 0x01) isPageOut = pageFlag;
 		else
@@ -358,6 +366,9 @@ namespace alc {
 	void tmGameStateRequest::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
+		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
+		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
+		
 		U32 nPages = t.getU32();
 		if (nPages == 0 && !hasFlags(plNetStateReq))
 			throw txProtocolError(_WHERE("StateReq flag missing"));
@@ -414,6 +425,9 @@ namespace alc {
 		tUStr trigger, triggered;
 	
 		tmMsgBase::store(t);
+		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
+		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
+		
 		t.get(obj);
 		flag = t.getByte();
 		if (flag != 0x00)
@@ -469,7 +483,9 @@ namespace alc {
 	void tmRelevanceRegions::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		// two of these values are "rgnsImIn" and "rgnsICareAbout", but everything is always 1 anyway
+		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
+		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
+		
 		U32 unk = t.getU32();
 		if (unk != 1) throw txProtocolError(_WHERE("NetMsgRelevanceRegions.unk1 must be 1 but is %d", unk));
 		rgnsICareAbout = t.getU32();
@@ -499,6 +515,7 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
+		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		
 		sdl.clear();
 		U32 sdlSize = t.remaining()-1;
@@ -539,6 +556,7 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
+		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		
 		sdl.clear();
 		U32 sdlSize = t.remaining()-2;
@@ -567,6 +585,9 @@ namespace alc {
 	void tmSetTimeout::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
+		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
+		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
+		
 		U32 unk = t.getU32();
 		if (unk != 0x43340000) throw txProtocolError(_WHERE("NetMsgSetTimeout.unk must be 0x43340000 but is 0x%08X", unk));
 		// it seems this means 180sec, but I have no clue how
