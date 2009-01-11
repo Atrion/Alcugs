@@ -179,9 +179,9 @@ void tNetSession::increaseCabal() {
 	if(!cabal) return;
 	const U32 delta=300;
 	U32 inc=(delta*cabal)/1000;
-	if(cabal+inc > minBandwidth) inc /= 8;
+	if(cabal+inc > minBandwidth) inc /= 6;
 	cabal+=inc;
-    if(cabal > maxBandwidth) cabal=maxBandwidth;
+	if(cabal > maxBandwidth) cabal=maxBandwidth;
 	DBG(5,"+Cabal is now %i\n",cabal);
 }
 void tNetSession::decreaseCabal(bool partial) {
@@ -923,7 +923,7 @@ void tNetSession::doWork() {
 		U32 quota_max=maxPacketSz;
 		U32 cur_quota=0;
 		
-		U32 minTH=10;
+		U32 minTH=15;
 		U32 maxTH=150;
 		U32 tts;
 
@@ -963,10 +963,10 @@ void tNetSession::doWork() {
 					}
 				} else {
 					//probabilistic drop (of voice, and other non-ack paquets) - make sure we don't drop ack replies though!
-					if(curmsg->tf == 0x00 && net->net_time-curmsg->timestamp > 4*timeout) {
+					if(curmsg->tf == 0x00 && net->net_time-curmsg->timestamp > 5*timeout) {
 						//Unacceptable - drop it
 						net->err->log("%s Dropped a 0x00 packet due to unaceptable msg time %i,%i,%i\n",str(),timeout,net->net_time-curmsg->timestamp,rtt);
-					} else if(curmsg->tf == 0x00 && sndq->len() > minTH && (sndq->len() > random()%maxTH)) {
+					} else if(curmsg->tf == 0x00 && sndq->len() > minTH && (sndq->len() > (minTH + random()%(maxTH-minTH))) ) {
 						net->err->log("%s Dropped a 0x00 packet due to a big queue\n",str());
 					}
 					//end prob drop

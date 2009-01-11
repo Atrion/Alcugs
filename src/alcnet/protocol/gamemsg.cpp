@@ -143,7 +143,8 @@ namespace alc {
 		
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
-		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
+		if (ki == 0 || (cmd != NetMsgCustomDirectedFwd && ki != u->ki)) // don't kick connection game <-> tracking
+			throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		
 		memcpy(header, t.read(5), 5);
 		U32 gameMsgSize = t.getU32();
