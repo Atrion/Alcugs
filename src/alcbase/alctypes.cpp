@@ -36,6 +36,7 @@
 #include "alcugs.h"
 
 #include <cerrno>
+#include <cstdarg>
 
 
 namespace zlib {

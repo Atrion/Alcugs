@@ -33,16 +33,17 @@
 
 using namespace alc;
 
-#ifdef __cplusplus
+//#ifdef __cplusplus
 //#include <cstdio>
 //#include <cstring>
 extern "C" {
-#else
+//#else
 //#include <stdio.h>
 //#include <string.h>
-#endif
+//#endif
 
 //#include <stdarg.h>
+#include <cstdarg>
 
 #ifdef __MSVC__
 	//this looks like crap, i know...
@@ -162,7 +163,7 @@ extern "C" {
 
 #endif
 
-#ifdef __cplusplus
+//#ifdef __cplusplus
 }
-#endif
+//#endif
 
