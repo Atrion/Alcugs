@@ -79,9 +79,9 @@ U32 tPyPkgFile::size() {
 	return(pkg.size()-4);
 }
 U32 tPyPkgFile::avgsize() { return this->size(); }
-void tPyPkgFile::setName(const void * x) {
+void tPyPkgFile::setName(const char * x) {
 	//printf("assing %s\n",x);
-	name=(char *)x;
+	name=x;
 }
 void tPyPkgFile::setName(const tStrBuf & x) {
 	name=x;
@@ -117,9 +117,9 @@ void tPyPkg::store(tBBuf &t) {
 		//printf("getting it...\n");
 		//printf("size:%u,off:%u\n",t.size(),t.tell());
 		t.get(name);
-		Byte xxxname[300];
-		strcpy((char *)xxxname,(char *)name.c_str());
-		strcat((char *)xxxname,"c");
+		char xxxname[300];
+		strcpy(xxxname,name.c_str());
+		strcat(xxxname,"c");
 		lpkgs[i]->setName(xxxname);
 		poff=t.getU32();
 		myoff=t.tell();
@@ -141,7 +141,7 @@ void tPyPkg::stream(tBBuf &t) {
 	//printf("size: %u\n",t.size());
 	//printf("hsize: %u\n",hsize);
 	for(U32 i=0; i<n; i++) {
-		hsize+=strlen((char *)lpkgs[i]->getName().c_str())+5;
+		hsize+=strlen(lpkgs[i]->getName().c_str())+5;
 		//printf("hsize: %u\n",hsize);
 	}
 	wtf=t.tell();
@@ -176,7 +176,7 @@ U32 tPyPkg::size() {
 	U32 s=4;
 	for(U32 i=0; i<n; i++) {
 		s+=lpkgs[i]->size();
-		s+=strlen((char *)lpkgs[i]->getName().c_str())+5;
+		s+=strlen(lpkgs[i]->getName().c_str())+5;
 	}
 	return s;	
 }
@@ -188,7 +188,7 @@ void tPyPkg::add(char * name,tBBuf &t) {
 	lpkgs[n-1] = new tPyPkgFile();
 
 	lpkgs[n-1]->pkg.put(t);
-	lpkgs[n-1]->setName((Byte *)name);
+	lpkgs[n-1]->setName(name);
 }
 void tPyPkg::rewind() {
 	ite=0;

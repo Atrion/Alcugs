@@ -56,7 +56,7 @@ namespace alc {
 	
 	tUnetLobbyServer::tUnetLobbyServer(void) : tUnetLobbyServerBase()
 	{
-		strcpy((char*)serverName, alcNetName);
+		strcpy(serverName, alcNetName);
 	}
 	
 	void tUnetLobbyServer::onLoadConfig(void)
@@ -65,35 +65,35 @@ namespace alc {
 		tConfig *cfg = alcGetConfig();
 		
 		tStrBuf var = cfg->getVar("website");
-		strncpy((char *)website, (char *)var.c_str(), 255);
+		strncpy(website, var.c_str(), 255);
 		
 		var = cfg->getVar("game.log");
-		strncpy((char *)gameLogPath, (char *)var.c_str(), 255);
+		strncpy(gameLogPath, var.c_str(), 255);
 		
 		var = cfg->getVar("game.config");
 		if (var.isNull()) var = cfg->getVar("read_config", "cmdline");
-		strncpy((char *)gameConfig, (char *)var.c_str(), 255);
+		strncpy(gameConfig, var.c_str(), 255);
 		
 		var = cfg->getVar("bin");
-		strncpy((char *)gameBin, (char *)var.c_str(), 255);
-		strncat((char *)gameBin, "/uru_game", 255);
+		strncpy(gameBin, var.c_str(), 255);
+		strncat(gameBin, "/uru_game", 255);
 		
 		var = cfg->getVar("game.bin");
 		if (!var.isNull()) // if set, overwrite global "bin" path
-			strncpy((char *)gameBin, (char *)var.c_str(), 255);
+			strncpy(gameBin, var.c_str(), 255);
 		
 		var = cfg->getVar("load_on_demand");
 		loadOnDemand = (var.isNull() || var.asByte()); // on per default
 		
 		var = cfg->getVar("game.alternative");
-		strncpy((char *)game2Bin, (char *)var.c_str(), 255);
+		strncpy(game2Bin, var.c_str(), 255);
 		
 		var = cfg->getVar("game.alternative.ages");
-		strncpy((char *)game2Ages, (char *)var.c_str(), 255);
+		strncpy(game2Ages, var.c_str(), 255);
 		
 		var = cfg->getVar("game.alternative.config");
 		if (var.isNull()) var = cfg->getVar("read_config", "cmdline");
-		strncpy((char *)game2Config, (char *)var.c_str(), 255);
+		strncpy(game2Config, var.c_str(), 255);
 	}
 	
 	bool tUnetLobbyServer::loadWithGame2(const char *age)
@@ -287,9 +287,9 @@ namespace alc {
 					
 					// get the arguments for starting the server
 					char gameName[128], gameGuid[32], gameLog[512], gamePort[16];
-					strncpy(gameName, (char *)forkServer.age.c_str(), 127);
+					strncpy(gameName, forkServer.age.c_str(), 127);
 					alcStrFilter(gameName);
-					strncpy(gameGuid, (char *)forkServer.serverGuid.c_str(), 31);
+					strncpy(gameGuid, forkServer.serverGuid.c_str(), 31);
 					alcStrFilter(gameGuid);
 					sprintf(gameLog, "%s/%s/%s/", gameLogPath, gameName, gameGuid);
 					sprintf(gamePort, "%d", forkServer.forkPort);
@@ -298,8 +298,8 @@ namespace alc {
 					alcOnFork(); // will close all logs
 					
 					// check if we should use the alternative game server
-					Byte *bin = gameBin, *conf = gameConfig;
-					if (strlen((char *)game2Bin) && loadWithGame2(gameName)) {
+					char *bin = gameBin, *conf = gameConfig;
+					if (strlen(game2Bin) && loadWithGame2(gameName)) {
 						bin = game2Bin;
 						conf = game2Config;
 					}
@@ -307,10 +307,10 @@ namespace alc {
 					// if the server was put in daemon mode, th lobby would get the SIGCHILD immediately after starting, so it'd
 					// be useless for debugging
 					if (forkServer.loadSDL)
-						execlp((char *)bin, (char *)bin,"-p",gamePort,"-guid",gameGuid,"-name",gameName,
+						execlp(bin, bin,"-p",gamePort,"-guid",gameGuid,"-name",gameName,
 								"-log",gameLog,"-c",conf,"-v","0","-L",NULL);
 					else
-						execlp((char *)bin, (char *)bin,"-p",gamePort,"-guid",gameGuid,"-name",gameName,
+						execlp(bin, bin,"-p",gamePort,"-guid",gameGuid,"-name",gameName,
 								"-log",gameLog,"-c",conf,"-v","0",NULL);
 					
 					// if we come here, there was an error in the execlp call (but we're still in the game server process!)

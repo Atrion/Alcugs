@@ -56,15 +56,15 @@ namespace alc {
 	private:
 		bool loadWithGame2(const char *age);
 		
-		Byte website[256];
-		Byte gameLogPath[256];
-		Byte gameConfig[256];
-		Byte gameBin[256];
+		char website[256];
+		char gameLogPath[256];
+		char gameConfig[256];
+		char gameBin[256];
 		bool loadOnDemand;
 		
-		Byte game2Bin[256];
-		Byte game2Ages[256];
-		Byte game2Config[256];
+		char game2Bin[256];
+		char game2Ages[256];
+		char game2Config[256];
 	};
 	
 } //End alc namespace

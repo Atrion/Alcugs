@@ -39,6 +39,11 @@
 #include <netinet/in.h>
 #endif
 
+namespace alc {
+	extern const char * alcNetName;
+	extern Byte alcWhoami;
+}
+
 #include "protocol/prot.h"
 #include "netmsgq.h"
 #include "protocol/protocol.h"

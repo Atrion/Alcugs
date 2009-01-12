@@ -56,8 +56,8 @@ namespace alc {
 		// load the list of private ages
 		tConfig *cfg = alcGetConfig();
 		tStrBuf var = cfg->getVar("private_ages");
-		if (var.isNull()) strcpy((char *)privateAges, "AvatarCustomization,Personal,Nexus,BahroCave,DniCityX2Finale");
-		else strncpy((char *)privateAges, (char *)var.c_str(), 1023);
+		if (var.isNull()) strcpy(privateAges, "AvatarCustomization,Personal,Nexus,BahroCave,DniCityX2Finale");
+		else strncpy(privateAges, var.c_str(), 1023);
 		// load instance mode setting
 		var = cfg->getVar("instance_mode");
 		if (var.isNull()) instanceMode = 1;
@@ -65,22 +65,22 @@ namespace alc {
 		if (instanceMode != 0 && instanceMode != 1) throw txBase(_WHERE("instance_mode must be 0 or 1 but is %d", instanceMode));
 	}
 	
-	bool tGuidGen::isAgePrivate(const Byte *age)
+	bool tGuidGen::isAgePrivate(const char *age)
 	{
 		// local copy of private age list as strsep modifies it
 		char ages[1024];
-		strcpy(ages, (char *)privateAges);
+		strcpy(ages, privateAges);
 		
 		char *buf = ages;
 		char *p = strsep(&buf, ",");
 		while (p != 0) {
-			if (strcmp(p, (char *)age) == 0) return true;
+			if (strcmp(p, age) == 0) return true;
 			p = strsep(&buf, ",");
 		}
 		return false;
 	}
 	
-	bool tGuidGen::generateGuid(Byte *guid, const Byte *age, U32 ki)
+	bool tGuidGen::generateGuid(Byte *guid, const char *age, U32 ki)
 	{
 		tAgeInfo *ageInfo = getAge(age);
 		if (!ageInfo) return false;

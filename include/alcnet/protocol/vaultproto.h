@@ -210,7 +210,7 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log, bool shortLog);
-		const Byte *str(void);
+		const char *str(void);
 		// format
 		Byte flags;
 		tUStr filename, instanceName;
@@ -228,7 +228,7 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log, bool shortLog);
-		const Byte *str(void);
+		const char *str(void);
 		// format
 		U32 flags;
 		tUStr title, name, cameraStack;
@@ -240,7 +240,7 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log, bool shortLog);
-		const Byte *str(void);
+		const char *str(void);
 		// format
 		U16 flags;
 		tvAgeInfoStruct ageInfo;
@@ -281,14 +281,14 @@ namespace alc {
 	public:
 		tvCreatableGenericValue(U32 integer);
 		tvCreatableGenericValue(double time);
-		tvCreatableGenericValue(const Byte *str);
+		tvCreatableGenericValue(const char *str);
 		tvCreatableGenericValue(void) : tvBase() { }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		virtual void asHtml(tLog *log, bool shortLog);
 		
 		U32 asInt(void);
-		const Byte *asString(void);
+		const char *asString(void);
 		
 		// format
 		Byte format;
@@ -374,7 +374,7 @@ namespace alc {
 	public:
 		tvItem(Byte id, U32 integer);
 		tvItem(Byte id, double time);
-		tvItem(Byte id, const Byte *str);
+		tvItem(Byte id, const char *str);
 		tvItem(tvCreatableStream *stream);
 		tvItem(Byte id, tvNodeRef *ref);
 		tvItem(Byte tpots) : tvBase() { this->tpots = tpots; data = NULL; }
@@ -384,7 +384,7 @@ namespace alc {
 		virtual void asHtml(tLog *log, bool shortLog);
 		
 		U32 asInt(void);
-		const Byte *asString(void);
+		const char *asString(void);
 		const Byte *asGuid(void);
 		tvNode *asNode(void);
 		tvNodeRef *asNodeRef(void);

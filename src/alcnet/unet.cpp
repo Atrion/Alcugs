@@ -63,9 +63,9 @@ tUnet::~tUnet() {
 void tUnet::setBindPort(U16 lport) {
 	bindport=lport;
 }
-void tUnet::setBindAddress(const void * lhost) {
+void tUnet::setBindAddress(const char * lhost) {
 	if(lhost==NULL) strcpy(bindaddr,"0.0.0.0");
-	else strcpy(bindaddr,(const char *)lhost);
+	else strcpy(bindaddr,lhost);
 }
 /**
 	Fills the unet struct with the default values
@@ -430,7 +430,7 @@ void tUnet::stopOp() {
 	initialized=false;
 }
 
-tNetSessionIte tUnet::netConnect(char * hostname,U16 port,Byte validation,Byte flags,Byte peerType) {
+tNetSessionIte tUnet::netConnect(const char * hostname,U16 port,Byte validation,Byte flags,Byte peerType) {
 	tNetSessionIte ite;
 	
 	struct sockaddr_in client;

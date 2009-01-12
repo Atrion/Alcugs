@@ -46,10 +46,10 @@
 // change this
 //namespace std {
 //extern "C" {
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
+//#include <sys/types.h>
+//#include <sys/stat.h>
+//#include <fcntl.h>
+//#include <unistd.h>
 //}
 //}
 
@@ -85,7 +85,7 @@ void alcWriteCoreDump(const char * name) {
 		if(txvCorePath!=NULL) sprintf(where,"%s/core-%06i-%08X-%s.core",txvCorePath,pid,t,name);
 		else sprintf(where,"core-%06i-%08X-%s.core",pid,t,name);
 	
-		if(txvCore & 0x01) google::WriteCoreDump((const char *)where);
+		if(txvCore & 0x01) google::WriteCoreDump(where);
 		free((void *)where);
 	}
 	#else
@@ -113,20 +113,20 @@ void alcSetAbort(bool c) {
 //Exceptions
 
 //Base class
-txBase::txBase(const void * msg,bool abort,bool core) {
+txBase::txBase(const char * msg,bool abort,bool core) {
 	this->name=NULL;
 	this->abort=abort;
 	this->core=core;
-	this->msg=(const char *)msg;
+	this->msg=msg;
 	this->size=0;
 	this->bt=NULL;
 	this->imsg=NULL;
 	this->_preparebacktrace();
 }
-txBase::txBase(const void * name,const void * msg,bool abort,bool core) {
-	this->name=(const char *)name;
-	this->imsg=(char *)malloc(sizeof(char) * (strlen((const char *)name) + strlen((const char *)msg) + 2));
-	if(this->imsg!=NULL) { strcpy(this->imsg,(const char *)name); strcat(this->imsg,":"); strcat(this->imsg,(const char *)msg); }
+txBase::txBase(const char * name,const char * msg,bool abort,bool core) {
+	this->name=name;
+	this->imsg=(char *)malloc(sizeof(char) * (strlen(name) + strlen(msg) + 2));
+	if(this->imsg!=NULL) { strcpy(this->imsg,name); strcat(this->imsg,":"); strcat(this->imsg,msg); }
 	this->abort=abort;
 	this->core=core;
 	this->msg=this->imsg;
@@ -144,9 +144,9 @@ void txBase::copy(txBase &t) {
 	this->core=t.core;
 	this->msg=NULL;
 	this->size=t.size;
-	this->bt=(char *)malloc(sizeof(char) * (strlen((const char *)t.bt)+1));
+	this->bt=(char *)malloc(sizeof(char) * (strlen(t.bt)+1));
 	strcpy(this->bt,t.bt);
-	this->imsg=(char *)malloc(sizeof(char) * (strlen((const char *)t.imsg)+1));
+	this->imsg=(char *)malloc(sizeof(char) * (strlen(t.imsg)+1));
 	strcpy(this->imsg,t.imsg);
 }
 void txBase::_preparebacktrace() {
@@ -210,7 +210,7 @@ void txBase::dump(bool toStderr) {
 			if(txvCorePath!=NULL) sprintf(where,"%s/BackTrace-%06i-%08X.txt",txvCorePath,pid,t);
 			else sprintf(where,"BackTrace-%06i-%08X.txt",pid,t);
 			FILE * f=NULL;
-			f=fopen((const char *)where,"w");
+			f=fopen(where,"w");
 			if(f!=NULL) {
 				fprintf(f,"Servers Build info:\n%s\n",alcVersionTextShort());
 				fprintf(f,"System info: %s\n\n",alcSystemInfo());
@@ -228,7 +228,7 @@ void txBase::dump(bool toStderr) {
 		}
 
 }
-const char * txBase::what() { return (const char *)msg; }
+const char * txBase::what() { return msg; }
 const char * txBase::backtrace() { return bt; }
 txBase::~txBase() {
 	//dmalloc_verify(NULL);

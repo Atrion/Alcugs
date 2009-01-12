@@ -42,12 +42,12 @@ class tConfig;
 class tConfigVal {
 public:
 	tConfigVal();
-	tConfigVal(const void * name);
+	tConfigVal(const char * name);
 	tConfigVal(tStrBuf & name);
 	~tConfigVal();
-	void setName(const void * name);
+	void setName(const char * name);
 	void setName(tStrBuf & name);
-	void setVal(const void * val,U16 x=0,U16 y=0);
+	void setVal(const char * val,U16 x=0,U16 y=0);
 	void setVal(tStrBuf & t,U16 x=0,U16 y=0);
 	tStrBuf & getName();
 	tStrBuf & getVal(U16 x=0,U16 y=0);
@@ -71,10 +71,10 @@ class tConfigKey {
 public:
 	tConfigKey();
 	~tConfigKey();
-	void setName(const void * name);
+	void setName(const char * name);
 	void setName(tStrBuf & name);
 	tStrBuf & getName() { return name; }
-	tConfigVal * find(const void * what,bool create=false);
+	tConfigVal * find(const char * what,bool create=false);
 	tConfigVal * find(tStrBuf & what,bool create=false);
 	void copy(tConfigKey & t);
 	void merge(tConfigKey & t);
@@ -95,16 +95,16 @@ class tConfig {
 public:
 	tConfig();
 	~tConfig();
-	tConfigKey * findKey(const void * where=(const void *)"global",bool create=false);
+	tConfigKey * findKey(const char * where="global",bool create=false);
 	tConfigKey * findKey(tStrBuf & where,bool create=false);
-	tConfigVal * findVar(const void * what,const void * where=(const void *)"global",bool create=false);
-	tStrBuf & getVar(const void * what,const void * where=(const void *)"global",U16 x=0,U16 y=0);
-	void setVar(const void * val,const void * what,const void * where=(const void *)"global",U16 x=0,U16 y=0);
+	tConfigVal * findVar(const char * what,const char * where="global",bool create=false);
+	tStrBuf & getVar(const char * what,const char * where="global",U16 x=0,U16 y=0);
+	void setVar(const char * val,const char * what,const char * where="global",U16 x=0,U16 y=0);
 	void setVar(tStrBuf &val,tStrBuf &what,tStrBuf &where,U16 x=0,U16 y=0);
 	void rewind();
 	tConfigKey * getNext();
-	void copy(const void * to,const void * from);
-	void copyKey(const void * tok,const void * fromk,const void * to,const void * from);
+	void copy(const char * to,const char * from);
+	void copyKey(const char * tok,const char * fromk,const char * to,const char * from);
 private:
 	U16 n,off;
 	tConfigKey ** values;

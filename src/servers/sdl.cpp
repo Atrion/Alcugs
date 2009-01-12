@@ -66,7 +66,7 @@ namespace alc {
 		// load SDL files
 		tDirectory sdlDir;
 		tDirEntry *file;
-		sdlDir.open((char *)var.c_str());
+		sdlDir.open(var.c_str());
 		while( (file = sdlDir.getEntry()) != NULL) {
 			if (file->type != 8 || strcasecmp(alcGetExt(file->name), "sdl") != 0) continue;
 			// load it
@@ -86,7 +86,7 @@ namespace alc {
 			loadAgeState(fileName);
 		}
 		else // in case the server crashes, remove state to really reset it
-			unlink((char *)fileName.c_str());
+			unlink(fileName.c_str());
 		
 		// if necessary, set up AgeSDLHook
 		// sending just a default age SDL for the JoinAck is not enough, we really have to create a SDL state for it
@@ -432,7 +432,7 @@ namespace alc {
 	}
 	
 	/** This is the SDL file parser */
-	void tAgeStateManager::loadSdlStructs(const Byte *filename)
+	void tAgeStateManager::loadSdlStructs(const char *filename)
 	{
 		log->log("Reading %s\n", filename);
 		tSdlStruct sdlStruct(this);

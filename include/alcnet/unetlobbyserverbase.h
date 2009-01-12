@@ -66,13 +66,13 @@ protected:
 	tNetSessionIte auth, tracking, vault;
 
 	Byte serverGuid[8]; //!< This system's guid (age guid) (in Hex)
-	Byte serverName[200]; //!< The system/server name, normally the age filename
+	char serverName[200]; //!< The system/server name, normally the age filename
 
 protected:
 	U16 spawnStart, spawnStop;
 
 private:
-	bool setActivePlayer(tNetSession *u, U32 ki, U32 x, const Byte *avatar);
+	bool setActivePlayer(tNetSession *u, U32 ki, U32 x, const char *avatar);
 	tNetSessionIte reconnectPeer(Byte dst); //!< establishes a connection to that service (remember to set the corresponding gone variable to 0)
 
 	U32 auth_gone, tracking_gone, vault_gone; // saves when this server got disconnected. wait 10sec before trying to connect again

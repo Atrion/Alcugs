@@ -151,7 +151,7 @@ namespace alc {
 			t.putU32(language);
 	}
 	
-	const Byte *tvAgeInfoStruct::str(void)
+	const char *tvAgeInfoStruct::str(void)
 	{
 		dbg.clear();
 		dbg.printf("Filename: %s", filename.c_str());
@@ -205,10 +205,10 @@ namespace alc {
 		t.put(cameraStack);
 	}
 	
-	const Byte *tvSpawnPoint::str(void)
+	const char *tvSpawnPoint::str(void)
 	{
-		static Byte dbg[256];
-		sprintf((char *)dbg, "Title: %s, Name: %s, Camera Stack: %s", title.c_str(), name.c_str(), cameraStack.c_str());
+		static char dbg[256];
+		sprintf(dbg, "Title: %s, Name: %s, Camera Stack: %s", title.c_str(), name.c_str(), cameraStack.c_str());
 		return dbg;
 	}
 	
@@ -273,7 +273,7 @@ namespace alc {
 			t.putByte(ccr);
 	}
 	
-	const Byte *tvAgeLinkStruct::str(void)
+	const char *tvAgeLinkStruct::str(void)
 	{
 		dbg.clear();
 		dbg.printf("Age Info [%s], Linking Rule: 0x%02X (%s), Spawn Point [%s]", ageInfo.str(), linkingRule, alcUnetGetLinkingRule(linkingRule), spawnPoint.str());
@@ -313,7 +313,7 @@ namespace alc {
 	
 	void tvManifest::asHtml(tLog *log, bool shortLog)
 	{
-		log->print("ID: 0x%08X (%d), Stamp: %s<br />\n", id, id, time ? alcGetStrTime(time) : (Byte *)"0");
+		log->print("ID: 0x%08X (%d), Stamp: %s<br />\n", id, id, time ? alcGetStrTime(time) : "0");
 	}
 	
 	//// tvNodeRef
@@ -359,7 +359,7 @@ namespace alc {
 	void tvNodeRef::asHtml(tLog *log, bool shortLog)
 	{
 		log->print("Saver: 0x%08X (%d), Parent:  0x%08X (%d), Child: 0x%08X (%d), ", saver, saver, parent, parent, child, child);
-		log->print("Stamp: %s, Flags: 0x%02X<br />\n", time ? alcGetStrTime(time, microsec) : (Byte *)"0", flags);
+		log->print("Stamp: %s, Flags: 0x%02X<br />\n", time ? alcGetStrTime(time, microsec) : "0", flags);
 	}
 	
 	//// tvCreatableGenericValue
@@ -375,7 +375,7 @@ namespace alc {
 		this->time = time;
 	}
 	
-	tvCreatableGenericValue::tvCreatableGenericValue(const Byte *str) : tvBase()
+	tvCreatableGenericValue::tvCreatableGenericValue(const char *str) : tvBase()
 	{
 		format = DUruString;
 		this->str.writeStr(str);
@@ -427,7 +427,7 @@ namespace alc {
 		return integer;
 	}
 	
-	const Byte *tvCreatableGenericValue::asString(void)
+	const char *tvCreatableGenericValue::asString(void)
 	{
 		if (format != DUruString)
 			throw txProtocolError(_WHERE("expected a GenericValue.format of 0x%02X (DUruString) but got 0x%02X", DUruString, format));
@@ -838,7 +838,7 @@ namespace alc {
 	void tvNode::permissionsAsHtml(tLog *log)
 	{
 		// make a permission stingas it's common on linux, i.e. rwr-r-r for the default permissions
-		Byte permStr[7] = "------"; // no permissions
+		char permStr[7] = "------"; // no permissions
 		if (permissions & KOwnerRead) permStr[0] = 'r';
 		if (permissions & KOwnerWrite) permStr[1] = 'w';
 		if (permissions & KGroupRead) permStr[2] = 'r';
@@ -929,9 +929,9 @@ namespace alc {
 		// optional fields
 		if (!shortLog) { // only print this in long logs
 			if (flagB & MCreator) log->print("<b>Creator:</b> 0x%08X (%d)<br />\n", creator, creator);
-			if (flagB & MCrtTime) log->print("<b>Create time:</b> %s<br />\n", crtTime ? alcGetStrTime(crtTime) : (Byte *)"0");
+			if (flagB & MCrtTime) log->print("<b>Create time:</b> %s<br />\n", crtTime ? alcGetStrTime(crtTime) : "0");
 			if (flagB & MAgeCoords) log->print("<b>Age coords:</b> unused<br />\n");
-			if (flagB & MAgeTime) log->print("<b>Age time:</b> %s<br />\n", ageTime ? alcGetStrTime(ageTime) : (Byte *)"0");
+			if (flagB & MAgeTime) log->print("<b>Age time:</b> %s<br />\n", ageTime ? alcGetStrTime(ageTime) : "0");
 			if (flagB & MAgeName) log->print("<b>Age name:</b> %s<br />\n", ageName.c_str());
 			if (flagB & MAgeGuid) log->print("<b>Age guid:</b> %s<br />\n", alcGetStrGuid(ageGuid));
 			if (flagB & MInt32_1) {
@@ -983,7 +983,7 @@ namespace alc {
 		data = new tvCreatableGenericValue(time);
 	}
 	
-	tvItem::tvItem(Byte id, const Byte *str)
+	tvItem::tvItem(Byte id, const char *str)
 	{
 		this->id = id;
 		type = DCreatableGenericValue;
@@ -1064,7 +1064,7 @@ namespace alc {
 		return ((tvCreatableGenericValue *)data)->asInt();
 	}
 	
-	const Byte *tvItem::asString(void)
+	const char *tvItem::asString(void)
 	{
 		if (type != DCreatableGenericValue)
 			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a DCreatableGenericValue", id, alcVaultGetDataType(type)));

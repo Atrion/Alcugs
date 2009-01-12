@@ -60,7 +60,7 @@ namespace alc {
 		tNetSession *parent; //!< saves the lobby of a game server, is NULL for lobbys
 		tNetSessionList *childs;
 		U16 portStart, portEnd;
-		Byte externalIp[100]; //!< the external IP (the ones palyers should use to connect to this server)
+		char externalIp[100]; //!< the external IP (the ones palyers should use to connect to this server)
 		Byte agentGuid[8]; //!< set when isLobby = true, saves the fake guid for UruVision
 		U32 seqPrefix;
 	};
@@ -71,15 +71,15 @@ namespace alc {
 		char *str(void);
 		U32 ki; //!< player's ki number
 		U32 sid; //!< player's sid in the lobby/game server
-		Byte uid[16]; //!< the player's account uid
-		Byte avatar[200]; //!< the avatar's name
-		Byte account[200]; //!< the account the player is logged in with
+		Byte uid[16]; //!< the player's account uid (hex)
+		char avatar[200]; //!< the avatar's name
+		char account[200]; //!< the account the player is logged in with
 		U16 flag; //!< the player's flag (see tTrackingBackend::updatePlayer)
 		U16 status; //!< the player's status
 		bool waiting; //!< true if the player is waiting for ServerFound, false if it isn't [only defined when waiting=true]
 		U32 awaiting_x; //!< the X alue the player requested the age with
 		Byte awaiting_guid[8]; //!< Age guid where the player wants to go (hex) [only defined when waiting=true]
-		Byte awaiting_age[200]; //!< Age name where the player wants to go
+		char awaiting_age[200]; //!< Age name where the player wants to go [only defined when waiting=true]
 		tNetSession *u; //!< the lobby or game server the player is connected to
 		U32 ip;
 		U16 port;
@@ -108,7 +108,7 @@ namespace alc {
 		tPlayerList::iterator getPlayer(U32 ki);
 		void notifyWaiting(tNetSession *server);
 		void serverFound(tPlayer *player, tNetSession *server);
-		bool doesAgeLoadState(const Byte *age);
+		bool doesAgeLoadState(const char *age);
 		void printStatusHTML(void);
 		void printStatusXML(void);
 		void printLobbyXML(FILE *f, tNetSession *lobby);
@@ -125,12 +125,12 @@ namespace alc {
 		Byte fakeLobbyGuid[8]; //!< saves the GUID for the fake lobby (for UruVision)
 		
 		tGuidGen *guidGen;
-		Byte resettingAges[1024];
+		char resettingAges[1024];
 		bool loadAgeState;
 		
 		bool statusFileUpdate;
 		bool statusHTML, statusXML;
-		Byte statusHTMLFile[256], statusXMLFile[256];
+		char statusHTMLFile[256], statusXMLFile[256];
 		U32 lastUpdate;
 	};
 

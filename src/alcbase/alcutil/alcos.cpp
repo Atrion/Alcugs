@@ -35,8 +35,8 @@
 
 #include "alcugs.h"
 
-#include <sys/stat.h>
-#include <unistd.h>
+//#include <sys/stat.h>
+//#include <unistd.h>
 
 //alcos.h already included in alcugs.h
 
@@ -93,7 +93,7 @@ tDirectory::~tDirectory() {
 	this->close();
 }
 void tDirectory::open(const char * path) {
-	dir=opendir((const char *)path);
+	dir=opendir(path);
 	if(dir==NULL) throw txBase(_WHERE("OpenDirFailed"));
 	strncpy(this->path, path, 511);
 }
@@ -111,7 +111,7 @@ tDirEntry * tDirectory::getEntry() {
 	strcat(kpath,"\\");
 	strcat(kpath,entry->d_name);
 	struct stat buf;
-	stat((const char *)kpath,&buf);
+	stat(kpath,&buf);
 	if(S_ISDIR(buf.st_mode)) ent.type=0x04;
 	else ent.type=0x08;
 	//ent.type=buf.st_mode;

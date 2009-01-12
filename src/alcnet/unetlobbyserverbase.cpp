@@ -84,7 +84,7 @@ namespace alc {
 		var = cfg->getVar("allow_uu_clients");
 		allowUU = (var.isNull() || var.asByte()); // per default, UU clients are allowed
 		var = cfg->getVar("tmp.link_log");
-		if (!var.isNull()) strncpy(linkLog, (char *)var.c_str(), 511);
+		if (!var.isNull()) strncpy(linkLog, var.c_str(), 511);
 		else linkLog[0] = 0;
 		
 		var = cfg->getVar("spawn.start");
@@ -138,7 +138,7 @@ namespace alc {
 		}
 	}
 	
-	bool tUnetLobbyServerBase::setActivePlayer(tNetSession *u, U32 ki, U32 x, const Byte *avatar)
+	bool tUnetLobbyServerBase::setActivePlayer(tNetSession *u, U32 ki, U32 x, const char *avatar)
 	{
 		tNetSession *client;
 		smgr->rewind();
@@ -162,7 +162,7 @@ namespace alc {
 		}
 		
 		// save the data
-		strncpy((char *)u->avatar, (char *)avatar, 199);
+		strncpy(u->avatar, avatar, 199);
 		u->ki = ki;
 		
 		// tell tracking
@@ -246,7 +246,7 @@ namespace alc {
 #endif
 		
 		U32 proto = protocol.isNull() ? 0 : protocol.asU32();
-		tNetSessionIte ite = netConnect((char *)host.c_str(), port.asU16(), (proto == 0 || proto >= 3) ? 3 : 2, 0, dst);
+		tNetSessionIte ite = netConnect(host.c_str(), port.asU16(), (proto == 0 || proto >= 3) ? 3 : 2, 0, dst);
 		tNetSession *session = getSession(ite);
 		session->proto = proto;
 		
@@ -338,7 +338,7 @@ namespace alc {
 				md5buffer.compute();
 		
 				// save data in session
-				strcpy((char *)u->name, (char *)authHello.account.c_str());
+				strcpy(u->name, authHello.account.c_str());
 				memcpy(u->challenge, md5buffer.read(16), 16);
 				u->release = authHello.release;
 				
@@ -397,7 +397,7 @@ namespace alc {
 					}
 				}
 				// verify account name and session state
-				if (!client || client->getAuthenticated() != 10 || client->getPeerType() != 0 || strncmp((char *)client->name, (char *)authResponse.login.c_str(), 199) != 0) {
+				if (!client || client->getAuthenticated() != 10 || client->getPeerType() != 0 || strncmp(client->name, authResponse.login.c_str(), 199) != 0) {
 					err->log("ERR: Got CustomAuthResponse for player %s but can't find his session.\n", authResponse.login.c_str());
 					return 1;
 				}

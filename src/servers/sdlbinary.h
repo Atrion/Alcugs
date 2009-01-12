@@ -126,7 +126,7 @@ namespace alc {
 		tSdlState(void);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
-		const Byte *str(void);
+		const char *str(void);
 		void print(tLog *log);
 		bool operator==(const tSdlState &state);
 		

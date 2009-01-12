@@ -680,7 +680,7 @@ namespace alc {
 		return true;
 	}
 	
-	const Byte *tSdlState::str(void)
+	const char *tSdlState::str(void)
 	{
 		dbg.clear();
 		dbg.printf("SDL State for [%s]: %s (version %d)", obj.str(), content.getName().c_str(), content.getVersion());

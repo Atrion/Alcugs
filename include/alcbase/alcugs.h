@@ -93,6 +93,8 @@ const char * alcXVERSION = ALC_PROGRAM_VERSION;
 //std includes
 #include <iostream>
 #include <cstdio>
+#include <cstring>
+using namespace std;
 
 //system includes
 
@@ -101,10 +103,9 @@ const char * alcXVERSION = ALC_PROGRAM_VERSION;
 #endif
 
 //namespace std {
-#include <sys/types.h>
-#include <sys/time.h>
+//#include <sys/types.h>
 #include <dirent.h>
-#include <signal.h>
+#include <csignal>
 //}
 
 //alcugs includes

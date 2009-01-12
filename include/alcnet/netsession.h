@@ -68,7 +68,7 @@ public:
 	U32 onlineTime(void);
 	void send(tmBase &msg);
 	void terminate(int tout);
-	void setAuthData(Byte accessLevel, const Byte *passwd);
+	void setAuthData(Byte accessLevel, const char *passwd);
 	
 	inline void setTimeout(U32 tout) { conn_timeout=tout; }
 	inline void challengeSent(void) { if (authenticated == 0) authenticated = 10; }
@@ -115,7 +115,7 @@ public:
 	U32 proto; //!< peer unet protocol version
 	
 	// used only by some servers
-	Byte name[200]; //!< peer age name in tracking server, peer account name in lobby and game
+	char name[200]; //!< peer age name in tracking server, peer account name in lobby and game
 	Byte serverGuid[8]; //!< hex; server guid in tracking server
 	tNetSessionData *data; //!< save additional data (e.g. tracking information)
 	
@@ -123,7 +123,7 @@ public:
 	Byte tpots; //!< tpots version 0=undefined, 1=tpots client, 2=non-tpots client
 	U32 ki; //!< player set and valid id, otherwise 0
 	Byte uid[16]; //!< hex; player uid
-	Byte avatar[200]; //!< peer avatar name if set
+	char avatar[200]; //!< peer avatar name if set
 	Byte challenge[16]; //!< peer challenge (hex)
 	Byte release; //!< type of client (internal/external)
 	
@@ -169,7 +169,7 @@ private:
 	U32 conn_timeout; //!< time after which the session will timeout (in secs)
 	bool negotiating; //!< set to true when we are waiting for the answer of a negotiate we sent
 	
-	Byte passwd[33]; //!< peer passwd hash (used in V2) (string)
+	char passwd[33]; //!< peer passwd hash (used in V2) (string)
 	Byte accessLevel; //!< peer access level
 
 	//flux control (bandwidth and latency)
@@ -194,6 +194,8 @@ private:
 	
 	Byte whoami; //!< peer type
 	bool client; //!< it's a client or a server?
+	
+	tStrBuf dbg; //!< buffer for str function
 };
 
 #if 0

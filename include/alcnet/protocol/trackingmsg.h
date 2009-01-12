@@ -37,7 +37,7 @@ namespace alc {
 	class tmCustomSetGuid : public tmMsgBase {
 	public:
 		tmCustomSetGuid(tNetSession *u);
-		tmCustomSetGuid(tNetSession *u, const Byte *serverGuid, const Byte *age, const Byte *externalIp, U16 spawnStart, U16 spawnStop);
+		tmCustomSetGuid(tNetSession *u, const char *serverGuid, const char *age, const char *externalIp, U16 spawnStart, U16 spawnStop);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		inline bool validSpawnPorts(void) { return spawnStart && spawnStop && spawnStart <= spawnStop; }
@@ -51,7 +51,7 @@ namespace alc {
 	class tmCustomPlayerStatus : public tmMsgBase {
 	public:
 		tmCustomPlayerStatus(tNetSession *u);
-		tmCustomPlayerStatus(tNetSession *u, U32 ki, U32 sid, const Byte *uid, const Byte *account, const Byte *avatar, Byte playerFlag, Byte playerStatus);
+		tmCustomPlayerStatus(tNetSession *u, U32 ki, U32 sid, const Byte *uid, const char *account, const char *avatar, Byte playerFlag, Byte playerStatus);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format
@@ -64,7 +64,7 @@ namespace alc {
 	class tmCustomFindServer : public tmMsgBase {
 	public:
 		tmCustomFindServer(tNetSession *u);
-		tmCustomFindServer(tNetSession *u, U32 ki, U32 x, U32 sid, U32 ip, U16 port, const Byte *serverGuid, const Byte *age);
+		tmCustomFindServer(tNetSession *u, U32 ki, U32 x, U32 sid, U32 ip, U16 port, const char *serverGuid, const char *age);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format
@@ -76,7 +76,7 @@ namespace alc {
 	class tmCustomForkServer : public tmMsgBase {
 	public:
 		tmCustomForkServer(tNetSession *u);
-		tmCustomForkServer(tNetSession *u, U16 port, const Byte *serverGuid, const Byte *name, bool loadSDL);
+		tmCustomForkServer(tNetSession *u, U16 port, const char *serverGuid, const char *name, bool loadSDL);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format
@@ -90,7 +90,7 @@ namespace alc {
 	class tmCustomServerFound : public tmMsgBase {
 	public:
 		tmCustomServerFound(tNetSession *u);
-		tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U32 sid, U16 port, const Byte *ipStr, const Byte *serverGuid, const Byte *name);
+		tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U32 sid, U16 port, const char *ipStr, const char *serverGuid, const char *name);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format

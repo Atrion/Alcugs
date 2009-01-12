@@ -53,7 +53,7 @@ public:
 	virtual void stream(tBBuf &t);
 	virtual U32 size();
 	virtual U32 avgsize();
-	void setName(const void * name);
+	void setName(const char * name);
 	void setName(const tStrBuf & name);
 	tStrBuf & getName();
 	tMBuf pkg; //file contents

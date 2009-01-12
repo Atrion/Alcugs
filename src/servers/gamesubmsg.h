@@ -48,7 +48,7 @@ namespace alc {
 		virtual void stream(tBBuf &t);
 		void checkNetMsg(tmLoadClone &loadClone);
 		tmLoadClone createNetMsg(tNetSession *u, bool isInitial);
-		const Byte *str(void) { return clonedObj.str(); }
+		const char *str(void) { return clonedObj.str(); }
 		void print(tLog *log);
 
 		// format

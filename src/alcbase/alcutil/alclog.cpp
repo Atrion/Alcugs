@@ -35,10 +35,10 @@
 #include "alcugs.h"
 
 #include <sys/stat.h>
-#include <sys/types.h>
+/*#include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <stdarg.h>
+#include <stdarg.h>*/
 #include <errno.h>
 
 #ifndef __WIN32__
@@ -303,7 +303,7 @@ void tLog::open(const char * name, char level, U16 flags) {
 			DBG(7,"here too\n");
 
 			if(name[0]!='/') {
-				strcpy(path,(const char *)tvLogConfig->path->c_str());
+				strcpy(path,tvLogConfig->path->c_str());
 			} else {
 				strcpy(path,"");
 				size=strlen(name);
@@ -395,7 +395,7 @@ void tLog::rotate(bool force) {
 	
 	DBG(5,"3..\n");
 
-	size=strlen(this->name) + strlen((const char *)tvLogConfig->path->c_str());
+	size=strlen(this->name) + strlen(tvLogConfig->path->c_str());
 
 	croak=(char *)malloc(sizeof(char) * (size+1+5));
 	if(croak==NULL) return;
@@ -410,7 +410,7 @@ void tLog::rotate(bool force) {
 	DBG(5,"4..\n");
 
 	if(this->name[0]!='/') {
-		strcpy(path,(const char *)tvLogConfig->path->c_str());
+		strcpy(path,tvLogConfig->path->c_str());
 	} else {
 		strcpy(path,"");
 	}
