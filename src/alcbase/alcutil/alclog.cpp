@@ -37,9 +37,9 @@
 #include <sys/stat.h>
 /*#include <sys/types.h>
 #include <fcntl.h>
-#include <unistd.h>
-#include <stdarg.h>*/
+#include <unistd.h>*/
 #include <errno.h>
+#include <cstdarg>
 
 #ifndef __WIN32__
 #include <syslog.h>
