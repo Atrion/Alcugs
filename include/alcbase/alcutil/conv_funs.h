@@ -38,38 +38,38 @@ namespace alc {
 		\param guid A hex guid
 		\return A str guid, twice as long as the hex guid
 */
-const Byte * alcGetStrGuid(const Byte * guid);
+const char * alcGetStrGuid(const Byte * guid);
 
 /** creates a 00000000-0000-0000-0000-000000000000 valid guid
 		\param uid A 16 bytes user id
 		\return A 36 bytes str formated id
 */
-const Byte * alcGetStrUid(const Byte * guid);
+const char * alcGetStrUid(const Byte * guid);
 
 /** \param uid A 36 bytes str user id
 		\return A 16 bytes hex user id
 */
-const Byte * alcGetHexUid(Byte * guid);
+const Byte * alcGetHexUid(char * guid);
 
 /**
 		\returns a pointer to a formated time string
 */
-const Byte * alcGetStrTime(U32 timestamp, U32 microseconds);
-const Byte * alcGetStrTime(double stamp=0, const char format='s');
+const char * alcGetStrTime(U32 timestamp, U32 microseconds);
+const char * alcGetStrTime(double stamp=0, const char format='s');
 
 /** Gets an ascii string from hex values
 	\param out A buffer of at least 2*sizeof(in) bytes
 	\param in Input buffer
 	\param size size of the input buffer
 */
-void alcHex2Ascii(Byte * out, const Byte * in, int size);
+void alcHex2Ascii(char * out, const Byte * in, int size);
 
 /** Encodes in Hex, an hex string
 	\param out Output buffer of at least sizeof(in)/2 bytes
 	\param in Input buffer, must be 2*sizeof(out)
 	\param size size of the output buffer
 */
-void alcAscii2Hex(Byte * out, const Byte * in, int size);
+void alcAscii2Hex(Byte * out, const char * in, int size);
 
 
 /**

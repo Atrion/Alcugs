@@ -103,7 +103,7 @@ public:
 		if(timer!=0) this->idle_timer=timer;
 	}
 	void setBindPort(U16 lport); //lport in host order
-	void setBindAddress(const void * lhost);
+	void setBindAddress(const char * lhost);
 	inline void send(tmMsgBase &m) { m.getSession()->send(m); }
 
 protected:
@@ -112,7 +112,7 @@ protected:
 	void destroySession(tNetSessionIte &t);
 	void updateTimerRelative(U32 usecs);
 	inline void updateTimerAbs(U32 usecs) { updateTimerRelative(usecs-net_time); }
-	tNetSessionIte netConnect(char * hostname,U16 port,Byte validation,Byte flags,Byte peerType=0);
+	tNetSessionIte netConnect(const char * hostname,U16 port,Byte validation,Byte flags,Byte peerType=0);
 	int Recv();
 	U32 getTime() { return ntime.seconds; }
 	//max resolution 15 minutes

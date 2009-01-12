@@ -35,9 +35,6 @@
 
 namespace alc {
 
-extern const char * alcNetName;
-extern Byte alcWhoami;
-
 /** Base abstract class, you need to derive your server/client app's from here */
 class tUnetBase :public tUnet {
 public:

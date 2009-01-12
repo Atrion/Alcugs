@@ -48,7 +48,7 @@ namespace alc {
 	tPageInfo::tPageInfo(tConfigVal *val, int row)
 	{
 		tStrBuf name = val->getVal(0, row), id = val->getVal(1, row), conditionalLoad = val->getVal(2, row);
-		strncpy((char *)this->name, (char *)name.c_str(), 199);
+		strncpy(this->name, name.c_str(), 199);
 		this->id = id.asU16();
 		if (conditionalLoad.isNull()) this->conditionalLoad = false;
 		else {
@@ -71,8 +71,8 @@ namespace alc {
 	tAgeInfo::tAgeInfo(const tStrBuf &dir, const char *file, bool loadPages)
 	{
 		// get age name from file name
-		strncpy((char *)name, file, 199);
-		alcStripExt((char *)name);
+		strncpy(name, file, 199);
+		alcStripExt(name);
 		// open and decrypt file
 		tFBuf ageFile;
 		ageFile.open((dir + file).c_str(), "r");
@@ -113,7 +113,7 @@ namespace alc {
 		return NULL;
 	}
 	
-	tAgeInfoLoader::tAgeInfoLoader(const Byte *name, bool loadPages)
+	tAgeInfoLoader::tAgeInfoLoader(const char *name, bool loadPages)
 	{
 		// load age file dir and age files
 		tConfig *cfg = alcGetConfig();
@@ -127,7 +127,7 @@ namespace alc {
 			
 			tDirectory ageDir;
 			tDirEntry *file;
-			ageDir.open((char *)dir.c_str());
+			ageDir.open(dir.c_str());
 			while( (file = ageDir.getEntry()) != NULL) {
 				if (file->type != 8 || strcasecmp(alcGetExt(file->name), "age") != 0) continue;
 				// load it
@@ -141,14 +141,14 @@ namespace alc {
 			char filename[200];
 			sprintf(filename, "%s.age", name);
 			// load it
-			ages.push_back(tAgeInfo((char *)dir.c_str(), filename, loadPages));
+			ages.push_back(tAgeInfo(dir.c_str(), filename, loadPages));
 		}
 	}
 	
-	tAgeInfo *tAgeInfoLoader::getAge(const Byte *name)
+	tAgeInfo *tAgeInfoLoader::getAge(const char *name)
 	{
 		for (tAgeList::iterator i = ages.begin(); i != ages.end(); ++i) {
-			if (strcmp((char *)i->name, (char *)name) == 0) return &(*i);
+			if (strcmp(i->name, name) == 0) return &(*i);
 		}
 		return NULL;
 	}

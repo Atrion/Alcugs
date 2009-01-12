@@ -122,25 +122,23 @@ void tNetSession::resetMsgCounters(void) {
 	serverMsg.ps=0;
 }
 const char * tNetSession::str(bool detail) {
-	static char cnt[1024], tmp[1024];
-	if (!detail) {
-		// short string
-		sprintf(cnt,"[%s:%i]",alcGetStrIp(ip),ntohs(port));
-		return cnt;
-	}
+	dbg.clear();
+	if (detail) dbg.printf("[%i]", sid);
+	dbg.printf("[%s:%i]",alcGetStrIp(ip),ntohs(port));
+	if (!detail) return dbg.c_str();
 	// detailed string
-	sprintf(cnt,"[%i][%s:%i]",sid,alcGetStrIp(ip),ntohs(port));
 	if (name[0] != 0 && authenticated != 0) {
-		if (authenticated == 10) sprintf(tmp, "[%s?]", name); // if the auth server didn't yet confirm that, add a question mark
-		else if (ki != 0) sprintf(tmp, "[%s:%s,%d]", name, avatar, ki);
-		else sprintf(tmp, "[%s]", name);
-		strcat(cnt, tmp);
+		if (authenticated == 10) dbg.printf("[%s?]", name); // if the auth server didn't yet confirm that, add a question mark
+		else if (ki != 0) dbg.printf("[%s:%s,%d]", name, avatar, ki);
+		else dbg.printf("[%s]", name);
+	}
+	else if (name[0] != 0 && net->whoami == KTracking) { // we are tracking and this is a game server
+		dbg.printf("[%s:%s]", name, alcGetStrGuid(serverGuid));
 	}
 	else if (whoami != 0) {
-		sprintf(tmp, "[%s]", alcUnetGetDestination(whoami));
-		strcat(cnt, tmp);
+		dbg.printf("[%s]", alcUnetGetDestination(whoami));
 	}
-	return cnt;
+	return dbg.c_str();
 }
 
 U32 tNetSession::getHeaderSize() {
@@ -924,7 +922,7 @@ void tNetSession::doWork() {
 		U32 cur_quota=0;
 		
 		U32 minTH=15;
-		U32 maxTH=150;
+		U32 maxTH=100;
 		U32 tts;
 
 		while(curmsg!=NULL && (cur_quota<quota_max)) {
@@ -1034,13 +1032,13 @@ void tNetSession::terminate(int tout)
 	timestamp.now();
 }
 
-void tNetSession::setAuthData(Byte accessLevel, const Byte *passwd)
+void tNetSession::setAuthData(Byte accessLevel, const char *passwd)
 {
 	this->client = true; // no matter how this connection was established, the peer definitely acts like a client
 	this->whoami = KClient; // it's a real client now
 	this->authenticated = 2; // the player is authenticated!
 	this->accessLevel = accessLevel;
-	strcpy((char *)this->passwd, (char *)passwd); // passwd is needed for validating packets
+	strcpy(this->passwd, passwd); // passwd is needed for validating packets
 	this->conn_timeout = 60; // 60sec, client should send an alive every 10sec (40sec is not enough for Minkata and 30sec not enough for BahroCave on some PCs)
 }
 

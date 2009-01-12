@@ -46,14 +46,14 @@ namespace alc {
 	public:
 		tGuidGen(void);
 		~tGuidGen(void) { delete ageInfos; }
-		bool generateGuid(Byte *guid, const Byte *age, U32 ki);
-		inline tAgeInfo *getAge(const Byte *age) { return ageInfos->getAge(age); }
+		bool generateGuid(Byte *guid, const char *age, U32 ki);
+		inline tAgeInfo *getAge(const char *age) { return ageInfos->getAge(age); }
 	private:
-		bool isAgePrivate(const Byte *age);
+		bool isAgePrivate(const char *age);
 	
 		int instanceMode;
 		tAgeInfoLoader *ageInfos;
-		Byte privateAges[1024];
+		char privateAges[1024];
 	};
 
 } //End alc namespace

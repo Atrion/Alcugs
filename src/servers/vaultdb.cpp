@@ -146,7 +146,7 @@ namespace alc {
 				sql->query(query, "Prepare: Creating ref vault table");
 				// create the root folder
 				tMBuf folderName;
-				Byte asciiFolderName[17];
+				char asciiFolderName[17];
 				folderName.putByte(0x0F);
 				folderName.putByte(0x13);
 				folderName.putByte(0x37);
@@ -206,7 +206,7 @@ namespace alc {
 		return version;
 	}
 	
-	void tVaultDB::getVaultFolderName(Byte *folder)
+	void tVaultDB::getVaultFolderName(char *folder)
 	{
 		folder[0] = 0; // empty it
 		
@@ -222,7 +222,7 @@ namespace alc {
 		MYSQL_ROW row = mysql_fetch_row(result);
 		if (atoi(row[0]) != KVaultID || strlen(row[1]) != 16)
 			throw txDatabaseError(_WHERE("invalid main vault folder found"));
-		strcpy((char *)folder, row[1]);
+		strcpy(folder, row[1]);
 		mysql_free_result(result);
 	}
 	
@@ -337,7 +337,7 @@ namespace alc {
 		return number;
 	}
 	
-	int tVaultDB::checkKi(U32 ki, const Byte *uid, Byte *avatar)
+	int tVaultDB::checkKi(U32 ki, const Byte *uid, char *avatar)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
@@ -353,7 +353,7 @@ namespace alc {
 		
 		if (number == 1) {
 			MYSQL_ROW row = mysql_fetch_row(result);
-			strncpy((char*)avatar, row[0], 255);
+			strncpy(avatar, row[0], 255);
 		}
 		mysql_free_result(result);
 		return (number == 1) ? 1 : 0;
@@ -412,12 +412,12 @@ namespace alc {
 		}
 		if (node.flagB & MAgeName) {
 			if (comma) query.writeStr(commaStr);
-			query.printf("age_name='%s'", sql->escape((char *)node.ageName.c_str()));
+			query.printf("age_name='%s'", sql->escape(node.ageName.c_str()));
 			comma = true;
 		}
 		if (node.flagB & MAgeGuid) {
 			if (comma) query.writeStr(commaStr);
-			query.printf("age_guid='%s'", sql->escape((char *)alcGetStrGuid(node.ageGuid)));
+			query.printf("age_guid='%s'", sql->escape(alcGetStrGuid(node.ageGuid)));
 			comma = true;
 		}
 		if (node.flagB & MInt32_1) {
@@ -462,52 +462,52 @@ namespace alc {
 		}
 		if (node.flagB & MStr64_1) {
 			if (comma) query.writeStr(commaStr);
-			query.printf("str_1='%s'", sql->escape((char *)node.str1.c_str()));
+			query.printf("str_1='%s'", sql->escape(node.str1.c_str()));
 			comma = true;
 		}
 		if (node.flagB & MStr64_2) {
 			if (comma) query.writeStr(commaStr);
-			query.printf("str_2='%s'", sql->escape((char *)node.str2.c_str()));
+			query.printf("str_2='%s'", sql->escape(node.str2.c_str()));
 			comma = true;
 		}
 		if (node.flagB & MStr64_3) {
 			if (comma) query.writeStr(commaStr);
-			query.printf("str_3='%s'", sql->escape((char *)node.str3.c_str()));
+			query.printf("str_3='%s'", sql->escape(node.str3.c_str()));
 			comma = true;
 		}
 		if (node.flagB & MStr64_4) {
 			if (comma) query.writeStr(commaStr);
-			query.printf("str_4='%s'", sql->escape((char *)node.str4.c_str()));
+			query.printf("str_4='%s'", sql->escape(node.str4.c_str()));
 			comma = true;
 		}
 		if (node.flagB & MStr64_5) {
 			if (comma) query.writeStr(commaStr);
-			query.printf("str_5='%s'", sql->escape((char *)node.str5.c_str()));
+			query.printf("str_5='%s'", sql->escape(node.str5.c_str()));
 			comma = true;
 		}
 		if (node.flagB & MStr64_6) {
 			if (comma) query.writeStr(commaStr);
-			query.printf("str_6='%s'", sql->escape((char *)node.str6.c_str()));
+			query.printf("str_6='%s'", sql->escape(node.str6.c_str()));
 			comma = true;
 		}
 		if (node.flagB & MlStr64_1) {
 			if (comma) query.writeStr(commaStr);
-			query.printf("lstr_1='%s'", sql->escape((char *)node.lStr1.c_str()));
+			query.printf("lstr_1='%s'", sql->escape(node.lStr1.c_str()));
 			comma = true;
 		}
 		if (node.flagB & MlStr64_2) {
 			if (comma) query.writeStr(commaStr);
-			query.printf("lstr_2='%s'", sql->escape((char *)node.lStr2.c_str()));
+			query.printf("lstr_2='%s'", sql->escape(node.lStr2.c_str()));
 			comma = true;
 		}
 		if (node.flagB & MText_1) {
 			if (comma) query.writeStr(commaStr);
-			query.printf("text_1='%s'", sql->escape((char *)node.text1.c_str()));
+			query.printf("text_1='%s'", sql->escape(node.text1.c_str()));
 			comma = true;
 		}
 		if (node.flagB & MText_2) {
 			if (comma) query.writeStr(commaStr);
-			query.printf("text_2='%s'", sql->escape((char *)node.text2.c_str()));
+			query.printf("text_2='%s'", sql->escape(node.text2.c_str()));
 			comma = true;
 		}
 		if (isUpdate && node.flagB & MBlob1) { // only insert this if it is an UPDATE
@@ -516,7 +516,7 @@ namespace alc {
 			if (node.blob1Size) {
 				escapedData = (char *)malloc((node.blob1Size*2 + 2048)*sizeof(char));
 				if (escapedData == NULL) throw txNoMem(_WHERE("NoMem"));
-				query.writeStr(sql->escape(escapedData, (char *)node.blob1, node.blob1Size));
+				query.writeStr(sql->escape(escapedData, node.blob1, node.blob1Size));
 				free(escapedData);
 			}
 			query.writeStr( "'");
@@ -625,12 +625,12 @@ namespace alc {
 		}
 		if (node.flagB & MAgeName) {
 			strcat(query, ",age_name");
-			sprintf(helpStr, ",'%s'", sql->escape((char *)node.ageName.c_str()));
+			sprintf(helpStr, ",'%s'", sql->escape(node.ageName.c_str()));
 			strcat(values, helpStr);
 		}
 		if (node.flagB & MAgeGuid) {
 			strcat(query, ",age_guid");
-			sprintf(helpStr, ",'%s'", sql->escape((char *)alcGetStrGuid(node.ageGuid)));
+			sprintf(helpStr, ",'%s'", sql->escape(alcGetStrGuid(node.ageGuid)));
 			strcat(values, helpStr);
 		}
 		if (node.flagB & MInt32_1) {
@@ -675,59 +675,59 @@ namespace alc {
 		}
 		if (node.flagB & MStr64_1) {
 			strcat(query, ",str_1");
-			sprintf(helpStr, ",'%s'", sql->escape((char *)node.str1.c_str()));
+			sprintf(helpStr, ",'%s'", sql->escape(node.str1.c_str()));
 			strcat(values, helpStr);
 		}
 		if (node.flagB & MStr64_2) {
 			strcat(query, ",str_2");
-			sprintf(helpStr, ",'%s'", sql->escape((char *)node.str2.c_str()));
+			sprintf(helpStr, ",'%s'", sql->escape(node.str2.c_str()));
 			strcat(values, helpStr);
 		}
 		if (node.flagB & MStr64_3) {
 			strcat(query, ",str_3");
-			sprintf(helpStr, ",'%s'", sql->escape((char *)node.str3.c_str()));
+			sprintf(helpStr, ",'%s'", sql->escape(node.str3.c_str()));
 			strcat(values, helpStr);
 		}
 		if (node.flagB & MStr64_4) {
 			strcat(query, ",str_4");
-			sprintf(helpStr, ",'%s'", sql->escape((char *)node.str4.c_str()));
+			sprintf(helpStr, ",'%s'", sql->escape(node.str4.c_str()));
 			strcat(values, helpStr);
 		}
 		if (node.flagB & MStr64_5) {
 			strcat(query, ",str_5");
-			sprintf(helpStr, ",'%s'", sql->escape((char *)node.str5.c_str()));
+			sprintf(helpStr, ",'%s'", sql->escape(node.str5.c_str()));
 			strcat(values, helpStr);
 		}
 		if (node.flagB & MStr64_6) {
 			strcat(query, ",str_6");
-			sprintf(helpStr, ",'%s'", sql->escape((char *)node.str6.c_str()));
+			sprintf(helpStr, ",'%s'", sql->escape(node.str6.c_str()));
 			strcat(values, helpStr);
 		}
 		if (node.flagB & MlStr64_1) {
 			strcat(query, ",lstr_1");
-			sprintf(helpStr, ",'%s'", sql->escape((char *)node.lStr1.c_str()));
+			sprintf(helpStr, ",'%s'", sql->escape(node.lStr1.c_str()));
 			strcat(values, helpStr);
 		}
 		if (node.flagB & MlStr64_2) {
 			strcat(query, ",lstr_2");
-			sprintf(helpStr, ",'%s'", sql->escape((char *)node.lStr2.c_str()));
+			sprintf(helpStr, ",'%s'", sql->escape(node.lStr2.c_str()));
 			strcat(values, helpStr);
 		}
 		if (node.flagB & MText_1) {
 			strcat(query, ",text_1");
-			sprintf(helpStr, ",'%s'", sql->escape((char *)node.text1.c_str()));
+			sprintf(helpStr, ",'%s'", sql->escape(node.text1.c_str()));
 			strcat(values, helpStr);
 		}
 		if (node.flagB & MText_2) {
 			strcat(query, ",text_2");
-			sprintf(helpStr, ",'%s'", sql->escape((char *)node.text2.c_str()));
+			sprintf(helpStr, ",'%s'", sql->escape(node.text2.c_str()));
 			strcat(values, helpStr);
 		}
 		if (node.flagB & MBlob1) {
 			strcat(query, ",blob_1");
 			strcat(values, ",'");
 			if (node.blob1Size) {
-				strcat(values, sql->escape(helpStr, (char *)node.blob1, node.blob1Size));
+				strcat(values, sql->escape(helpStr, node.blob1, node.blob1Size));
 			}
 			strcat(values, "'");
 		}
@@ -1169,7 +1169,7 @@ namespace alc {
 			node->ageTime = atoi(row[8]);
 			node->ageName.writeStr(row[9]);
 			if (strlen(row[10]) == 16)
-				alcAscii2Hex(node->ageGuid, (Byte *)row[10], 8);
+				alcAscii2Hex(node->ageGuid, row[10], 8);
 			else
 				memset(node->ageGuid, 0, 8);
 			node->int1 = atoi(row[11]);

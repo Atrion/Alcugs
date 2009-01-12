@@ -45,7 +45,7 @@ namespace alc {
 		externalIp.setVersion(0); // normal UruString
 	}
 	
-	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u, const Byte *serverGuid, const Byte *age, const Byte *externalIp, U16 spawnStart, U16 spawnStop)
+	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u, const char *serverGuid, const char *age, const char *externalIp, U16 spawnStart, U16 spawnStop)
 	 : tmMsgBase(NetMsgCustomSetGuid, plNetAck | plNetVersion | plNetCustom, u)
 	{
 #ifdef ENABLE_UNET3
@@ -135,7 +135,7 @@ namespace alc {
 		avatar.setVersion(0); // normal UruString
 	}
 	
-	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *u, U32 ki, U32 sid, const Byte *uid, const Byte *account, const Byte *avatar, Byte playerFlag, Byte playerStatus)
+	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *u, U32 ki, U32 sid, const Byte *uid, const char *account, const char *avatar, Byte playerFlag, Byte playerStatus)
 	 : tmMsgBase(NetMsgCustomPlayerStatus, plNetAck | plNetVersion | plNetCustom | plNetKi | plNetUID | plNetSid, u)
 	{
 		this->sid = sid;
@@ -213,7 +213,7 @@ namespace alc {
 		age.setVersion(0); // normal UruString
 	}
 	
-	tmCustomFindServer::tmCustomFindServer(tNetSession *u, U32 ki, U32 x, U32 sid, U32 ip, U16 port, const Byte *serverGuid, const Byte *age)
+	tmCustomFindServer::tmCustomFindServer(tNetSession *u, U32 ki, U32 x, U32 sid, U32 ip, U16 port, const char *serverGuid, const char *age)
 	 : tmMsgBase(NetMsgCustomFindServer, plNetX | plNetKi | plNetAck | plNetCustom | plNetIP | plNetSid, u)
 	{
 		this->ki = ki;
@@ -291,7 +291,7 @@ namespace alc {
 		age.setVersion(0); // normal UruString
 	}
 	
-	tmCustomForkServer::tmCustomForkServer(tNetSession *u, U16 port, const Byte *serverGuid, const Byte *name, bool loadSDL)
+	tmCustomForkServer::tmCustomForkServer(tNetSession *u, U16 port, const char *serverGuid, const char *name, bool loadSDL)
 	: tmMsgBase(NetMsgCustomForkServer, plNetAck | plNetCustom | plNetVersion, u)
 	{
 		this->x = 0;
@@ -343,7 +343,7 @@ namespace alc {
 		age.setVersion(0); // normal UruString
 	}
 	
-	tmCustomServerFound::tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U32 sid, U16 port, const Byte *ipStr, const Byte *serverGuid, const Byte *name)
+	tmCustomServerFound::tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U32 sid, U16 port, const char *ipStr, const char *serverGuid, const char *name)
 	: tmMsgBase(NetMsgCustomServerFound, plNetAck | plNetCustom | plNetX | plNetKi | plNetVersion | plNetSid, u)
 	{
 		this->x = x;

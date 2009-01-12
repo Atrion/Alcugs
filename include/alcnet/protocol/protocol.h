@@ -44,8 +44,8 @@ namespace alc {
 void alcEncodePacket(unsigned char* buf2,unsigned char* buf, int n);
 void alcDecodePacket(unsigned char* buf, int n);
 
-int alcUruValidatePacket(Byte * buf,int n,Byte * validation,bool authed=false,Byte * phash=NULL);
-U32 alcUruChecksum(Byte* buf, int size, int alg, Byte * aux_hash);
+int alcUruValidatePacket(Byte * buf,int n,Byte * validation,bool authed=false,char * phash=NULL);
+U32 alcUruChecksum(Byte* buf, int size, int alg, char * aux_hash);
 
 const char * alcUnetGetRelease(Byte rel);
 const char * alcUnetGetDestination(Byte dest);
@@ -142,7 +142,7 @@ public:
 	tmBase(Byte bhflags, tNetSession *u) : bhflags(bhflags), u(u) { }
 	virtual void store(tBBuf &t)=0;
 	virtual void stream(tBBuf &t)=0;
-	virtual const Byte * str()=0;
+	virtual const char * str()=0;
 	inline tNetSession *getSession(void) { return u; }
 	Byte bhflags;
 protected:
@@ -155,7 +155,7 @@ public:
 	virtual void stream(tBBuf &t);
 	tmNetClientComm(tNetSession *u) : tmBase(UNetNegotiation|UNetAckReq|UNetUrgent, u) { }
 	tmNetClientComm(tTime &t,U32 bw, tNetSession *u) : tmBase(UNetNegotiation|UNetAckReq|UNetUrgent, u) { timestamp=t; bandwidth=bw; }
-	virtual const Byte * str();
+	virtual const char * str();
 	tTime timestamp;
 	U32 bandwidth;
 };
@@ -167,7 +167,7 @@ public:
 	
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t);
-	virtual const Byte * str();
+	virtual const char * str();
 	
 	tUnetMsgQ<tUnetAck> ackq;
 private:
@@ -191,7 +191,7 @@ public:
 	void unsetUrgent();
 	U32 getFlags();
 	bool hasFlags(U32 f);
-	virtual const Byte * str();
+	virtual const char * str();
 	
 	U16 cmd;
 	U32 flags;

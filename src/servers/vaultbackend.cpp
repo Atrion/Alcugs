@@ -98,17 +98,17 @@ namespace alc {
 		else maxPlayers = 5;
 		
 		var = cfg->getVar("vault.hood.name");
-		if (!var.isNull()) strncpy(hoodName, (char *)var.c_str(), 511);
+		if (!var.isNull()) strncpy(hoodName, var.c_str(), 511);
 		else strncpy(hoodName, "Alcugs hood", 511);
 		var = cfg->getVar("vault.hood.desc");
-		if (!var.isNull()) strncpy(hoodDesc, (char *)var.c_str(), 511);
+		if (!var.isNull()) strncpy(hoodDesc, var.c_str(), 511);
 		else strncpy(hoodDesc, "This is a hood on an Alcugs server", 511);
 		
 		var = cfg->getVar("vault.wipe.msg.title");
-		if (!var.isNull()) strncpy(welcomeMsgTitle, (char *)var.c_str(), 511);
+		if (!var.isNull()) strncpy(welcomeMsgTitle, var.c_str(), 511);
 		else strncpy(welcomeMsgTitle, defaultWelcomeMsgTitle, 511);
 		var = cfg->getVar("vault.wipe.msg");
-		if (!var.isNull()) strncpy(welcomeMsgText, (char *)var.c_str(), 4095);
+		if (!var.isNull()) strncpy(welcomeMsgText, var.c_str(), 4095);
 		else strncpy(welcomeMsgText, defaultWelcomeMsgText, 4095);
 		
 		var = cfg->getVar("vault.tmp.hacks.linkrules");
@@ -181,7 +181,7 @@ namespace alc {
 		node->blob1Size = strlen(welcomeMsgText)+1;
 		node->blob1 = (Byte *)malloc(node->blob1Size * sizeof(Byte));
 		if (node->blob1 == NULL) throw txNoMem(_WHERE("NoMem"));
-		strcpy(node->blob1, welcomeMsgText);
+		strcpy((char *)node->blob1, welcomeMsgText);
 		vaultDB->createChildNode(KVaultID, globalInboxNode, *node);
 		delete node;
 	}
@@ -231,7 +231,8 @@ namespace alc {
 	
 	void tVaultBackend::checkKi(tmCustomVaultCheckKi &checkKi)
 	{
-		Byte avatar[256], status;
+		char avatar[256];
+		Byte status;
 		status = vaultDB->checkKi(checkKi.ki, checkKi.uid, avatar);
 		tmCustomVaultKiChecked checked(checkKi.getSession(), checkKi.ki, checkKi.x, checkKi.sid, checkKi.uid, status, avatar);
 		net->send(checked);
@@ -316,7 +317,7 @@ namespace alc {
 		if (status.age == "Ahnonay" || status.age == "Neighborhood02" || status.age == "Myst") {
 			Byte guid[8];
 			alcAscii2Hex(guid, status.serverGuid.c_str(), 8);
-			tvAgeInfoStruct ageInfo((char *)status.age.c_str(), guid);
+			tvAgeInfoStruct ageInfo(status.age.c_str(), guid);
 			tvSpawnPoint spawnPoint("Default", "LinkInPointDefault");
 			log->log("Linking rule hack: adding link to %s to player %d\n", ageInfo.filename.c_str(), status.ki);
 			U32 ageInfoNode = getAge(ageInfo); // create if necessary
@@ -346,7 +347,8 @@ namespace alc {
 		tMBuf table;
 		tvNode *savedNode = NULL;
 		tvNodeRef *savedNodeRef = NULL;
-		const Byte *ageName = NULL, *ageGuid = NULL;
+		const char *ageName = NULL;
+		const Byte *ageGuid = NULL;
 		
 		// read and verify the general vault items
 		for (tvMessage::tItemList::iterator it = msg.items.begin(); it != msg.items.end(); ++it) {
@@ -699,7 +701,8 @@ namespace alc {
 		msg.print(logHtml, /*clientToServer:*/true, u, shortHtml, ki);
 		
 		tvAgeLinkStruct *ageLink = NULL;
-		const Byte *ageGuid = NULL, *ageName = NULL;
+		const Byte *ageGuid = NULL;
+		const char *ageName = NULL;
 		
 		// read and verify the general vault items
 		for (tvMessage::tItemList::iterator it = msg.items.begin(); it != msg.items.end(); ++it) {
@@ -765,7 +768,7 @@ namespace alc {
 					throw txProtocolError(_WHERE("could not generate GUID"));
 				
 				// find age info node
-				tvAgeInfoStruct ageInfo((char *)ageName, guid);
+				tvAgeInfoStruct ageInfo(ageName, guid);
 				U32 ageInfoNode = getAge(ageInfo, /*create*/false);
 				if (!ageInfoNode) throw txProtocolError(_WHERE("I should remove a non-existing owned age"));
 				// remove the link from the player
@@ -943,7 +946,7 @@ namespace alc {
 			node->blob1Size = strlen(spawnPnt)+1; // one for the terminator
 			node->blob1 = (Byte *)malloc(node->blob1Size*sizeof(Byte));
 			if (node->blob1 == NULL) throw txNoMem(_WHERE("NoMem"));
-			strcpy(node->blob1, spawnPnt);
+			strcpy((char *)node->blob1, spawnPnt);
 			// insert the age link node as child of the AgesIOwnFolder
 			ageLinkNode = createChildNodeBCasted(ki, linkedAgesFolder, *node);
 			// create link age link node -> age info node
@@ -1040,7 +1043,7 @@ namespace alc {
 		// link that player with Ae'gura, the hood and DniCityX2Final
 		Byte guid[8];
 		{
-			if (!guidGen->generateGuid(guid, (Byte *)"city", ki)) throw txProtocolError(_WHERE("error creating GUID"));
+			if (!guidGen->generateGuid(guid, "city", ki)) throw txProtocolError(_WHERE("error creating GUID"));
 			tvAgeInfoStruct ageInfo("city", "Ae'gura", "Ae'gura", "Ae'gura", guid);
 			tvSpawnPoint spawnPoint("FerryTerminal", "LinkInPointFerry");
 			
@@ -1049,7 +1052,7 @@ namespace alc {
 		}
 		
 		{
-			if (!guidGen->generateGuid(guid, (Byte *)"Neighborhood", ki)) throw txProtocolError(_WHERE("error creating GUID"));
+			if (!guidGen->generateGuid(guid, "Neighborhood", ki)) throw txProtocolError(_WHERE("error creating GUID"));
 			tvAgeInfoStruct ageInfo("Neighborhood", "Neighborhood", hoodName, hoodDesc, guid);
 			tvSpawnPoint spawnPoint("Default", "LinkInPointDefault");
 			
@@ -1059,7 +1062,7 @@ namespace alc {
 		}
 		
 		{
-			if (!guidGen->generateGuid(guid, (Byte *)"DniCityX2Finale", ki)) throw txProtocolError(_WHERE("error creating GUID"));
+			if (!guidGen->generateGuid(guid, "DniCityX2Finale", ki)) throw txProtocolError(_WHERE("error creating GUID"));
 			tvAgeInfoStruct ageInfo("DniCityX2Finale", "DniCityX2Finale", "", "", guid);
 			tvSpawnPoint spawnPoint("Default", "LinkInPointDefault");
 			

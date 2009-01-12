@@ -76,7 +76,7 @@ namespace alc {
 		t.put(obj);
 	}
 	
-	const Byte *tMemberInfo::str(void)
+	const char *tMemberInfo::str(void)
 	{
 		dbg.clear();
 		dbg.printf("Avatar Name: %s, IP: %s:%i, Object reference: [%s]", avatar.c_str(), alcGetStrIp(ip), ntohs(port), obj.str());

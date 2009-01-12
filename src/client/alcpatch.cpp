@@ -553,7 +553,7 @@ public:
 			
 			//input prp
 			Log("   Reading...\n");
-			ret=readprp(&prp,(char *)path.c_str(),n_flags);
+			ret=readprp(&prp,path.c_str(),n_flags);
 			if(ret<0) Fatal("Error reading input file");
 			if(prp.MinorVersion!=11 || prp.MajorVersion!=63) {
 				Fatal("Cannot update, I was expecting a prp version 63.11");
@@ -569,7 +569,7 @@ public:
 			ret=prp_patch_refs(&prp);
 			if(ret<0) Fatal("Failed patching Banned references!");
 			Log("   Saving...\n");
-			saveprp(&prp,(char *)path.c_str(),n_flags);
+			saveprp(&prp,path.c_str(),n_flags);
 			
 			//cleanup
 			destroy_PrpHeader(&prp);
@@ -657,7 +657,7 @@ public:
 		
 		directory d;
 		direntry * e;
-		d.open((char *)path.c_str());
+		d.open(path.c_str());
 		
 		wxString sumname;
 		
@@ -677,7 +677,7 @@ public:
 		wdysbuf w1;
 		mbuf work;
 		md5buf sum;
-		f1.open((char *)t.c_str(),"rb");
+		f1.open(t.c_str(),"rb");
 		w1.put(f1);
 		w1.decrypt();
 		f1.close();
@@ -737,7 +737,7 @@ public:
 		w1.put(work);
 		w1.encrypt();
 		
-		f1.open((char *)t.c_str(),"wb");
+		f1.open(t.c_str(),"wb");
 		f1.put(w1);
 		f1.close();
 		IncPgr(1);
@@ -803,7 +803,7 @@ public:
 		m_intro = new wxTextCtrl(this,-1,_T("\
 Now, you need to select the complete\
  path to the directory/folder where \
- your Untìl Uru game client is \
+ your Untï¿½l Uru game client is \
  installed. (For example: \"C:\\Program Files\\Cyan Wolrds\\Until Uru\\\"). \
 This path will be used only as a \
 source of files, so it will be not\
@@ -813,7 +813,7 @@ source of files, so it will be not\
 		h=m_intro->GetSize().GetHeight();
 		p+=h+10;
 		
-		m_luu = new wxStaticText(this,-1,_T("Full path to the Untìl Uru Base installation directory:"), wxPoint(10,p) , wxDefaultSize);
+		m_luu = new wxStaticText(this,-1,_T("Full path to the Untï¿½l Uru Base installation directory:"), wxPoint(10,p) , wxDefaultSize);
 		
 		h=m_luu->GetSize().GetHeight();
 		p+=h+10;
@@ -858,7 +858,7 @@ The Patcher will patch several game files of that installation, so you must have
 			wxString k=wxString(GetUUPath()) + wxString("/UruExplorer.exe");
 			if(!(f=fopen(k,"r"))) {
 				ev.Veto();
-				wxMessageBox(_T("The Selected Path \"") + wxString(GetUUPath()) + _T("\" doesn't contain the required Untìl Uru game files."),_T("Incorrect Path!"), wxOK | wxICON_ERROR);
+				wxMessageBox(_T("The Selected Path \"") + wxString(GetUUPath()) + _T("\" doesn't contain the required Untï¿½l Uru game files."),_T("Incorrect Path!"), wxOK | wxICON_ERROR);
 			} else {
 				fclose(f);
 			}
@@ -896,10 +896,10 @@ The Patcher will patch several game files of that installation, so you must have
 		}
 	}
 	char * GetUUPath() {
-		return (char *)m_uu->GetValue().c_str();
+		return m_uu->GetValue().c_str();
 	}
 	char * GetTPOTSPath() {
-		return (char *)m_tpots->GetValue().c_str();
+		return m_tpots->GetValue().c_str();
 	}
 private:
 	wxTextCtrl * m_intro;

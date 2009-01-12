@@ -46,17 +46,17 @@ namespace alc {
 
 class tSQL {
 public:
-	tSQL(const Byte *host, U16 port, const Byte *username, const Byte *password, const Byte *dbname, Byte flags, U32 timeout);
+	tSQL(const char *host, U16 port, const char *username, const char *password, const char *dbname, Byte flags, U32 timeout);
 	~tSQL(void);
 	
 	bool prepare(void); //!< this must be called before each query. it establishes the connection and creates the database if necessary \return true on success, false on error
 	void printError(const char *msg); //!< print the last MySQL error (with the given desctiption) to the error protocol
-	bool query(const void *str, const char *desc, bool throwOnError = true); //!< query the database \return true on success, false on error
+	bool query(const char *str, const char *desc, bool throwOnError = true); //!< query the database \return true on success, false on error
 	void checkTimeout(void); //!< closes the connection on timeout
 	int insertId(void);
 	
-	char *escape(char *str); //!< escapes the given string and returns the point to a static array. max string length is 511
-	char *escape(char *out, char *data, int size); //!< escapes the given data into the out array and returns that array
+	char *escape(const char *str); //!< escapes the given string and returns the point to a static array. max string length is 511
+	char *escape(char *out, const Byte *data, int size); //!< escapes the given data into the out array and returns that array
 	MYSQL_RES *storeResult(void);
 	
 	static Byte allFlags(void) { return SQL_LOG | SQL_LOGQ | SQL_CREATEDB | SQL_STAYCONN | SQL_CREATABL; }
@@ -66,7 +66,7 @@ private:
 	U32 timeout, stamp;
 	tLog *sql, *err;
 	// connection info
-	Byte *host, *username, *password, *dbname;
+	char *host, *username, *password, *dbname;
 	U16 port;
 	
 	MYSQL *connection;

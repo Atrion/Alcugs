@@ -132,18 +132,18 @@ namespace alc {
 		loadAgeState = (var.isNull() || var.asByte());
 		var = cfg->getVar("tracking.tmp.hacks.resetting_ages");
 		if (var.isNull()) strcpy(resettingAges, "Cleft,DniCityX2Finale,GreatZero,Kveer,Myst,Neighborhood02,Personal02,RestorationGuild,spyroom"); // see uru.conf.dist for explanation
-		else strncpy((char *)resettingAges, (char *)var.c_str(), 1023);
+		else strncpy(resettingAges, var.c_str(), 1023);
 		
 		var = cfg->getVar("track.html");
 		statusHTML = (!var.isNull() && var.asByte());
 		var = cfg->getVar("track.html.path");
 		if (var.isNull()) statusHTML = false;
-		else strncpy((char *)statusHTMLFile, (char *)var.c_str(), 255);
+		else strncpy(statusHTMLFile, var.c_str(), 255);
 		var = cfg->getVar("track.xml");
 		statusXML = (!var.isNull() && var.asByte());
 		var = cfg->getVar("track.xml.path");
 		if (var.isNull()) statusXML = false;
-		else strncpy((char *)statusXMLFile, (char *)var.c_str(), 255);
+		else strncpy(statusXMLFile, var.c_str(), 255);
 		statusFileUpdate = true;
 		
 		if (guidGen == NULL)
@@ -183,7 +183,7 @@ namespace alc {
 			alcAscii2Hex(player->awaiting_guid, findServer.serverGuid.c_str(), 8);
 		// copy data to player
 		player->status = RInRoute;
-		strncpy((char *)player->awaiting_age, (char *)findServer.age.c_str(), 199);
+		strncpy(player->awaiting_age, findServer.age.c_str(), 199);
 		player->waiting = true;
 		// search for the game server the player needs
 		tNetSession *server = NULL, *game = NULL;
@@ -249,7 +249,7 @@ namespace alc {
 	{
 		for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
 			if (!it->waiting) continue;
-			if (memcmp((char *)it->awaiting_guid, server->serverGuid, 8) != 0 || strncmp(it->awaiting_age, server->name, 199)) continue;
+			if (memcmp(it->awaiting_guid, server->serverGuid, 8) != 0 || strncmp(it->awaiting_age, server->name, 199)) continue;
 			// ok, this player is waiting for this age, let's tell him about it
 			serverFound(&*it, server);
 		}
@@ -297,7 +297,7 @@ namespace alc {
 		}
 		
 		memcpy(game->serverGuid, serverGuid, 8);
-		strncpy((char *)game->name, (char *)setGuid.age.c_str(), 199);
+		strncpy(game->name, setGuid.age.c_str(), 199);
 		
 		
 		if (game->data) return; // ignore the rest of the info if we already got it. IP and Port can't change.
@@ -317,7 +317,7 @@ namespace alc {
 			}
 #endif
 		}
-		strncpy((char *)data->externalIp, (char *)setGuid.externalIp.c_str(), 99);
+		strncpy(data->externalIp, setGuid.externalIp.c_str(), 99);
 		if (!data->isLobby) { // let's look to which lobby this server belongs
 			tNetSession *lobby = NULL;
 			server = NULL;
@@ -346,7 +346,7 @@ namespace alc {
 		else // if it is a lobby
 			generateFakeGuid(data->agentGuid); // create guid for UruVision
 		game->data = data; // save the data
-		log->log("Found server at %s: %s (%s)\n", game->str(), game->name, alcGetStrGuid(game->serverGuid));
+		log->log("Found server at %s\n", game->str());
 		
 		notifyWaiting(game);
 		log->flush();
@@ -379,8 +379,7 @@ namespace alc {
 			else { // if it already exists, check if the avi is already logged in elsewhere
 				// to do so, we first check if the game server the player uses changed. if that's the case, and the player did not request to link, kick the old player
 				if (player->u != game && player->status != RLeaving) {
-					log->log("WARN: Kicking player %s at %s as it just logged in at ", player->str(), player->u->str());
-					log->print("%s\n", game->str()); // we have to do this seperated as the two tNetSession::str calls overwrite each other
+					log->log("WARN: Kicking player %s at %s as it just logged in at %s\n", player->str(), player->u->str(), game->str());
 					tmPlayerTerminated term(player->u, player->ki, RLoggedInElsewhere);
 					net->send(term);
 				}
@@ -445,7 +444,7 @@ namespace alc {
 		}
 	}
 	
-	bool tTrackingBackend::doesAgeLoadState(const Byte *age)
+	bool tTrackingBackend::doesAgeLoadState(const char *age)
 	{
 		if (!loadAgeState) return false;
 		
@@ -514,7 +513,7 @@ namespace alc {
 	
 	void tTrackingBackend::printStatusHTML(void)
 	{
-		FILE *f = fopen((char *)statusHTMLFile, "w");
+		FILE *f = fopen(statusHTMLFile, "w");
 		if (!f) {
 		  lerr->log("Can\'t open %s for writing - disabling HTML status page\n", statusHTMLFile);
 		  statusHTML = false;
@@ -522,9 +521,9 @@ namespace alc {
 		}
 		// header
 		fprintf(f, "<html><head><title>Shard Status</title>\n");
-		char *file = strrchr((char*)statusHTMLFile, '/'); // get only the filename (for automatic reload)
+		char *file = strrchr(statusHTMLFile, '/'); // get only the filename (for automatic reload)
 		if (file) ++file; // it points to the slash, but we want to start after it
-		else file = (char *)statusHTMLFile; // no slash... it must be a relative filename then, containing no directory, so let's use that
+		else file = statusHTMLFile; // no slash... it must be a relative filename then, containing no directory, so let's use that
 		fprintf(f, "<meta http-equiv=\"refresh\" content=\"30;url=%s\" />\n", file);
 		fprintf(f, "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=ISO-8859-1\">");
 		fprintf(f, "</head><body>\n");
@@ -565,7 +564,7 @@ namespace alc {
 	{
 		tNetSession *server;
 		bool needFake = false;
-		FILE *f = fopen((char *)statusXMLFile, "w");
+		FILE *f = fopen(statusXMLFile, "w");
 		if (!f) {
 		  lerr->log("Can\'t open %s for writing - disabling XML status page\n", statusXMLFile);
 		  statusXML = false;

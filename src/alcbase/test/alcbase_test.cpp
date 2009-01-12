@@ -100,23 +100,22 @@ void alctypes_mbuf() {
 		//std::cout<< "Caught Exception " << t.what() << std::endl;
 		//std::cout<< t.backtrace() << std::endl;
 	}
-	const Byte * a=(Byte *)"Hello World";
+	const char * a="Hello World";
 	const SByte * b="Bye cruel world";
-	buf1.write(a,(U32)strlen((char *)a));
-	buf1.write(b,(U32)strlen(b));
-	std::cout<< "tell():" << buf1.tell() << ",len:" << strlen((char *)a) + strlen(b) << std::endl;
-	assert(buf1.tell()==strlen((char *)a) + strlen(b));
+	buf1.write(a,strlen(a));
+	buf1.write(b,strlen(b));
+	//std::cout<< "tell():" << buf1.tell() << ",len:" << strlen(a) + strlen(b) << std::endl;
+	assert(buf1.tell()==strlen(a) + strlen(b));
 	buf1.set(1);
 	assert(buf1.tell()==1);
-	buf1.set(strlen((char *)a) + strlen(b));
-	assert(buf1.tell()==strlen((char *)a) + strlen(b));
+	buf1.set(strlen(a) + strlen(b));
+	assert(buf1.tell()==strlen(a) + strlen(b));
 	SByte c=0;
 	buf1.write(&c,1);
 	buf1.set(0);
 	assert(buf1.tell()==0);
 	std::cout<<"-"<< buf1.read()<<"-" <<std::endl;
-	buf1.set(0);
-	assert(!strcmp((char *)buf1.read(),"Hello WorldBye cruel world"));
+	assert(!strcmp((char *)buf1.readAll(),"Hello WorldBye cruel world"));
 	buf1.rewind();
 	assert(buf1.tell()==0);
 	buf1.end();
@@ -149,7 +148,7 @@ void alctypes_mbuf() {
 		dmalloc_verify(NULL);
 	}
 	dmalloc_verify(NULL);
-	buf1.check(a,strlen((char *)a));
+	buf1.check(a,strlen(a));
 	buf1.check(b,strlen(b));
 	buf1.check(&c,1);
 	dmalloc_verify(NULL);
@@ -205,9 +204,9 @@ void alctypes_mbuf() {
 	memcpy(&tmp,rawbuf+8,4);
 	assert(*((S32 *)&tmp)==(S32)letoh32((S32)-399));
 	rawbuf+=12;
-	assert(*((Byte *)rawbuf)==(Byte)255);
+	assert(*(rawbuf)==(Byte)255);
 	rawbuf+=1;
-	assert(*((SByte *)rawbuf)==(SByte)-2);
+	assert(*((rawbuf)==(SByte)-2);
 	buf1.set(my);
 #endif
 	assert(buf1.getU16()==23);
@@ -636,7 +635,7 @@ void alctypes_part7()
 	b.write(ustr1, 10);
 	b.rewind();
 	b.get(str);
-	assert(strcmp((char *)str.c_str(), "Hi World") == 0);
+	assert(strcmp(str.c_str(), "Hi World") == 0);
 	assert(str.getVersion() == 0);
 	
 	str.setVersion(1); // auto-detect
@@ -645,7 +644,7 @@ void alctypes_part7()
 	b.write(ustr2, 17);
 	b.rewind();
 	b.get(str);
-	assert(strcmp((char *)str.c_str(), "this is a text%") == 0);
+	assert(strcmp(str.c_str(), "this is a text%") == 0);
 	assert(str.getVersion() == 5);
 	
 	str.setVersion(0); // normal, but we don't use ASCII characters this time (check if a 0 in the string is a problem)
@@ -654,9 +653,9 @@ void alctypes_part7()
 	b.write(ustr5, 5);
 	b.rewind();
 	b.get(str);
-	Byte check[7];
+	char check[7];
 	alcHex2Ascii(check, str.readAll(), 3);
-	assert(strcmp((char *)check, "8B0016") == 0);
+	assert(strcmp(check, "8B0016") == 0);
 	
 	// write ustr tests
 	str.setVersion(0);
@@ -843,7 +842,6 @@ mproblem = \"this ' contains \\\" \\\\ some speical chars: дя\"\n\
 
 	val1 = cfg1->findVar("kaka");
 	assert(val1!=NULL);
-	//assert(!strcmp((const char *)val1->getName(),"kaka"));
 	assert(val1->getName()=="kaka");
 
 	delete cfg1;

@@ -40,7 +40,7 @@
 
 namespace alc {
 
-tSQL::tSQL(const Byte *host, U16 port, const Byte *username, const Byte *password, const Byte *dbname, Byte flags, U32 timeout)
+tSQL::tSQL(const char *host, U16 port, const char *username, const char *password, const char *dbname, Byte flags, U32 timeout)
 {
 	this->flags = flags;
 	this->timeout = timeout;
@@ -48,23 +48,23 @@ tSQL::tSQL(const Byte *host, U16 port, const Byte *username, const Byte *passwor
 	connection = NULL;
 	stamp = 0;
 	
-	this->host = (Byte *)malloc( (strlen((char *)host)+1) * sizeof(Byte) );
+	this->host = (char *)malloc( (strlen(host)+1) * sizeof(Byte) );
 	if (this->host == NULL) throw txNoMem(_WHERE("NoMem"));
-	strcpy((char *)this->host, (char *)host);
+	strcpy(this->host, host);
 	
 	this->port = port;
 	
-	this->username = (Byte *)malloc( (strlen((char *)username)+1) * sizeof(Byte) );
+	this->username = (char *)malloc( (strlen(username)+1) * sizeof(Byte) );
 	if (this->username == NULL) throw txNoMem(_WHERE("NoMem"));
-	strcpy((char *)this->username, (char *)username);
+	strcpy(this->username, username);
 	
-	this->password = (Byte *)malloc( (strlen((char *)password)+1) * sizeof(Byte) );
+	this->password = (char *)malloc( (strlen(password)+1) * sizeof(Byte) );
 	if (this->password == NULL) throw txNoMem(_WHERE("NoMem"));
-	strcpy((char *)this->password, (char *)password);
+	strcpy(this->password, password);
 	
-	this->dbname = (Byte *)malloc( (strlen((char *)dbname)+1) * sizeof(Byte) );
+	this->dbname = (char *)malloc( (strlen(dbname)+1) * sizeof(Byte) );
 	if (this->dbname == NULL) throw txNoMem(_WHERE("NoMem"));
-	strcpy((char *)this->dbname, (char *)dbname);
+	strcpy(this->dbname, dbname);
 	
 	// initialize logging
 	if (flags & SQL_LOG) {
@@ -109,8 +109,7 @@ bool tSQL::connect(bool openDatabase)
 		throw txNoMem(_WHERE("not enough memory to create MySQL handle"));
 	
 	stamp = time(NULL);
-	return mysql_real_connect(connection, (const char *)host, (const char *)username,
-		(const char *)password, openDatabase ? (const char *)dbname : NULL, port, NULL, 0);
+	return mysql_real_connect(connection, host, username, password, openDatabase ? dbname : NULL, port, NULL, 0);
 }
 
 void tSQL::disconnect(void)
@@ -142,7 +141,7 @@ bool tSQL::prepare(void)
 	return false;
 }
 
-bool tSQL::query(const void *str, const char *desc, bool throwOnError)
+bool tSQL::query(const char *str, const char *desc, bool throwOnError)
 {
 	if (connection == NULL) {
 		if (!prepare()) {
@@ -157,7 +156,7 @@ bool tSQL::query(const void *str, const char *desc, bool throwOnError)
 	}
 	
 	stamp = time(NULL);
-	if (!mysql_query(connection, (char *)str)) return true; // if everything worked fine, we're done
+	if (!mysql_query(connection, str)) return true; // if everything worked fine, we're done
 
 	// there was an error - print it
 	printError(desc);
@@ -167,7 +166,7 @@ bool tSQL::query(const void *str, const char *desc, bool throwOnError)
 		sql->log("Reconnecting...\n"); sql->flush();
 		disconnect();
 		connect(true);
-		if (!mysql_query(connection, (char *)str)) return true; // it worked on the 2nd try
+		if (!mysql_query(connection, str)) return true; // it worked on the 2nd try
 		// failed again... print the error
 		printError(desc);
 	}
@@ -182,7 +181,7 @@ void tSQL::checkTimeout(void)
 		disconnect();
 }
 
-char *tSQL::escape(char *str)
+char *tSQL::escape(const char *str)
 {
 	static char escaped_str[512];
 	if (connection == NULL) throw txDatabaseError(_WHERE("can't escape a string"));
@@ -190,10 +189,10 @@ char *tSQL::escape(char *str)
 	return escaped_str;
 }
 
-char *tSQL::escape(char *out, char *data, int size)
+char *tSQL::escape(char *out, const Byte *data, int size)
 {
 	if (connection == NULL) throw txDatabaseError(_WHERE("can't escape a string"));
-	mysql_real_escape_string(connection, out, data, size);
+	mysql_real_escape_string(connection, out, (const char *)data, size);
 	return out;
 }
 

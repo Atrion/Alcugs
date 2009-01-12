@@ -31,17 +31,18 @@
 
 #include "alcugs.h"
 
-#ifdef __cplusplus
-#include <cstdio>
-#include <cstring>
-extern "C" {
 using namespace alc;
+
+#ifdef __cplusplus
+//#include <cstdio>
+//#include <cstring>
+extern "C" {
 #else
-#include <stdio.h>
-#include <string.h>
+//#include <stdio.h>
+//#include <string.h>
 #endif
 
-#include <stdarg.h>
+//#include <stdarg.h>
 
 #ifdef __MSVC__
 	//this looks like crap, i know...
@@ -97,7 +98,7 @@ using namespace alc;
 		char * __dbg_where(const char * a,const char * b,int d) {
 			static char buffer[500];
 			sprintf(buffer,"%s:%i:%s",b,d,a);
-			return (char *)buffer;
+			return buffer;
 		}
 
 	#else
@@ -140,7 +141,7 @@ using namespace alc;
 		char * __dbg_where(const char * a,const char * b,const char * c,int d) {
 			static char buffer[500];
 			sprintf(buffer,"%s:%s:%i:%s",b,c,d,a);
-			return (char *)buffer;
+			return buffer;
 		}
 
 	#endif //(_MSC_VER <= 1200)
@@ -156,7 +157,7 @@ using namespace alc;
 		sprintf(buffer,"%d:%s:%s:%i:",alcGetSelfThreadId(),b,c,d);
 		vsnprintf(buffer+strlen(buffer),sizeof(buffer) - (strlen(buffer)+1),a,ap);
 		va_end(ap);
-		return (char *)buffer;
+		return buffer;
 	}
 
 #endif

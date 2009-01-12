@@ -52,7 +52,7 @@ namespace alc {
 		tPlayerList::iterator getPlayer(U32 ki);
 		inline bool hasPlayer(U32 ki) { return getPlayer(ki) != players.end(); }
 		
-		Byte name[200];
+		char name[200];
 		U16 id;
 		bool conditionalLoad;
 		U32 owner;
@@ -71,7 +71,7 @@ namespace alc {
 		tPageInfo *getPage(U32 pageId);
 		
 		U32 seqPrefix; // it's actually 3 Bytes
-		Byte name[200];
+		char name[200];
 		
 		typedef std::vector<tPageInfo> tPageList;
 		tPageList pages;
@@ -80,8 +80,8 @@ namespace alc {
 	class tAgeInfoLoader
 	{
 	public:
-		tAgeInfoLoader(const Byte *name = NULL, bool loadPages = false);
-		tAgeInfo *getAge(const Byte *name);
+		tAgeInfoLoader(const char *name = NULL, bool loadPages = false);
+		tAgeInfo *getAge(const char *name);
 	private:
 		typedef std::vector<tAgeInfo> tAgeList;
 		tAgeList ages;

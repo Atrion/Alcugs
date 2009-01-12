@@ -35,10 +35,10 @@
 
 #include "alcugs.h"
 
-#include <cstdlib>
+//#include <cstdlib>
 //namespace std {
-#include <signal.h>
-#include <sys/types.h>
+//#include <signal.h>
+//#include <sys/types.h>
 #ifndef __WIN32__
 #include <sys/wait.h>
 #endif
@@ -235,7 +235,7 @@ void alcCrashAction() {
 	tConfig * cfg=alcGetConfig();
 	var=cfg->getVar("crash.action","global");
 	if(!var.isNull()) {
-		system((const char *)var.c_str());
+		system(var.c_str());
 	}
 }
 

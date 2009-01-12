@@ -37,9 +37,9 @@ namespace alc {
 /**
   \brief Converts an hex guid to ascii
 */
-const Byte * alcGetStrGuid(const Byte * guid) {
-	if(guid==NULL) return (const Byte *)"null";
-	static Byte str_guid[17];
+const char * alcGetStrGuid(const Byte * guid) {
+	if(guid==NULL) return "null";
+	static char str_guid[17];
 	alcHex2Ascii(str_guid,guid,8);
 	return str_guid;
 }
@@ -47,13 +47,13 @@ const Byte * alcGetStrGuid(const Byte * guid) {
 /**
   \brief Converts an hex uid to ascii.
 */
-const Byte * alcGetStrUid(const Byte * guid) {
+const char * alcGetStrUid(const Byte * guid) {
 	int off1=0;
 	int off2=0;
-	if(guid==NULL) return (const Byte *)"null";
+	if(guid==NULL) return "null";
 
-	Byte str_guid[33];
-	static Byte str_guid2[50];
+	char str_guid[33];
+	static char str_guid2[50];
 
 	alcHex2Ascii(str_guid,guid,16);
 	DBG(6,"the guid is %s\n",str_guid);
@@ -88,53 +88,53 @@ const Byte * alcGetStrUid(const Byte * guid) {
 /**
   \brief Converts an Ascii uid to hex
 */
-const Byte * alcGetHexUid(Byte * guid) {
+const Byte * alcGetHexUid(char * guid) {
 	int off1=0;
 	int off2=0;
 
-	static Byte str_guid[50];
+	static Byte hex_guid[50];
 
 	int i;
-	for(i=0; i<(int)strlen((const char *)guid); i++) {
+	for(i=0; i<(int)strlen(guid); i++) {
 		guid[i]=toupper(guid[i]);
 	}
 
-	alcAscii2Hex(str_guid+off1,guid+off2,4); //ID1
+	alcAscii2Hex(hex_guid+off1,guid+off2,4); //ID1
 	off1+=4;
 	off2+=9;
-	alcAscii2Hex(str_guid+off1,guid+off2,4); //ID2
+	alcAscii2Hex(hex_guid+off1,guid+off2,4); //ID2
 	off1+=2;
 	off2+=5;
-	alcAscii2Hex(str_guid+off1,guid+off2,4); //ID3
+	alcAscii2Hex(hex_guid+off1,guid+off2,4); //ID3
 	off1+=2;
 	off2+=5;
-	alcAscii2Hex(str_guid+off1,guid+off2,4); //ID4
+	alcAscii2Hex(hex_guid+off1,guid+off2,4); //ID4
 	off1+=2;
 	off2+=5;
-	alcAscii2Hex(str_guid+off1,guid+off2,6); //ID5
+	alcAscii2Hex(hex_guid+off1,guid+off2,6); //ID5
 	off1+=6;
 	off2+=12;
 
-	return (const Byte *)str_guid; //In hex
+	return hex_guid; //In hex
 }
 
 /**
   \brief returns a pointer to a formated time string
 */
-const Byte * alcGetStrTime(U32 timestamp, U32 microseconds) {
-	static Byte btime[50];
-	Byte tmptime[25];
+const char * alcGetStrTime(U32 timestamp, U32 microseconds) {
+	static char btime[50];
+	char tmptime[25];
 	struct tm * tptr;
 	time_t stamp = (time_t)timestamp;
 
 	tptr=gmtime(&stamp);
-	strftime((char *)tmptime,25,"%Y:%m:%d-%H:%M:%S",tptr);
-	sprintf((char *)btime,"%s.%06d",(char *)tmptime,microseconds);
+	strftime(tmptime,25,"%Y:%m:%d-%H:%M:%S",tptr);
+	sprintf(btime,"%s.%06d",tmptime,microseconds);
 
 	return btime;
 }
 
-const Byte * alcGetStrTime(double stamp, const char format) {
+const char * alcGetStrTime(double stamp, const char format) {
 	U32 time,micros;
 	if(stamp!=0) {
 		switch(format) {
@@ -166,7 +166,7 @@ const Byte * alcGetStrTime(double stamp, const char format) {
   \param in pointer to the input data
   \param size size of the input data
 */
-void alcHex2Ascii(Byte * out, const Byte * in, int size) {
+void alcHex2Ascii(char * out, const Byte * in, int size) {
 	int i;
 	for(i=0; i<size; i++) {
 		out[2*i]=  ((in[i] & 0xF0)>>4);
@@ -182,7 +182,7 @@ void alcHex2Ascii(Byte * out, const Byte * in, int size) {
   \param in pointer to the input data
   \param size size of the input data (must be 2*size)
 */
-void alcAscii2Hex(Byte * out, const Byte * in, int size) {
+void alcAscii2Hex(Byte * out, const char * in, int size) {
 	//humm I will write it if i need it :D
 	int i;
 	for(i=0; i<size; i++) {

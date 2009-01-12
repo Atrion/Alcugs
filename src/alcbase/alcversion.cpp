@@ -82,17 +82,17 @@ void _alcVersionInitVars() {
 
 const char * alcSystemInfo() {
 	_alcVersionInitVars();
-	return (const char *)tvalcSystemInfo;
+	return tvalcSystemInfo;
 }
 
 const char * alcVersionTextShort() {
 	_alcVersionInitVars();
-	return (const char *)tvalcVerTextShort;
+	return tvalcVerTextShort;
 }
 
 const char * alcVersionText() {
 	_alcVersionInitVars();
-	return (const char *)tvalcVerText;
+	return tvalcVerText;
 }
 
 int alcGetMaxVersion() {

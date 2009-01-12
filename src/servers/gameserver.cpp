@@ -164,7 +164,7 @@ namespace alc {
 				}
 			}
 			else { // the player really went offline
-				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, (Byte *)"0000000000000000" /* these are 16 zeroes */, (Byte *)"", /* player is offline */0, u->onlineTime());
+				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, "0000000000000000" /* these are 16 zeroes */, "", /* player is offline */0, u->onlineTime());
 				send(vaultStatus);
 			}
 			

@@ -72,8 +72,8 @@ U32 tPkgFile::size() {
 	return(name.size() + 4 + msize);
 }
 U32 tPkgFile::avgsize() { return this->size(); }
-void tPkgFile::setName(const void * x) {
-	name=(char *)x;
+void tPkgFile::setName(const char * x) {
+	name=x;
 }
 void tPkgFile::setName(const tStrBuf & x) {
 	name=x;
@@ -140,7 +140,7 @@ void tPkg::add(char * name,tBBuf &t) {
 	lpkgs[n-1] = new tPkgFile();
 
 	lpkgs[n-1]->pkg.put(t);
-	lpkgs[n-1]->setName((Byte *)name);
+	lpkgs[n-1]->setName(name);
 }
 void tPkg::rewind() {
 	ite=0;

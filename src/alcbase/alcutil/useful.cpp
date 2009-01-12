@@ -33,6 +33,8 @@
 
 #include "alcugs.h"
 
+#include <sys/time.h>
+
 #include "alcdebug.h"
 
 namespace alc {

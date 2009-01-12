@@ -66,7 +66,7 @@ public:
 		6 - myst5 (plasma 2.1)
 	*/
 	tUStr(int mode=1);
-	tUStr(const void *k, int mode = 1);
+	tUStr(const char *k, int mode = 1);
 	tUStr(const tUStr &t);
 	tUStr(const tStrBuf &t, int mode = 1);
 	virtual void stream(tBBuf &b);
@@ -78,7 +78,6 @@ public:
 	virtual const tUStr & operator=(const tUStr &t) { copy(t); return *this; }
 	virtual const tStrBuf & operator=(const tStrBuf &t) { tStrBuf::copy(t); return *this; }
 	virtual const tStrBuf & operator=(const char *t) { tStrBuf::copy(t); return *this; }
-	virtual const tStrBuf & operator=(const Byte *t) { tStrBuf::copy((char *)t); return *this; }
 private:
 	virtual void _pcopy(const tUStr &t);
 	Byte version;
@@ -90,7 +89,7 @@ public:
 	tUruObject(void);
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t);
-	const Byte *str(void);
+	const char *str(void);
 	
 	bool operator==(const tUruObject &obj);
 	inline bool operator!=(const tUruObject &obj) {

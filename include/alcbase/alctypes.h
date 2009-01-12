@@ -198,14 +198,15 @@ public:
 	virtual void copy(const tMBuf &t);
 	virtual const tMBuf &operator=(const tMBuf &t) { this->copy(t); return *this; }
 	virtual Byte getAt(U32 pos) const;
-	virtual void setAt(U32 pos,const char what);
+	virtual void setAt(U32 pos,const Byte what);
 	//virtual Byte operator[](U32 pos) { return(this->getAt(pos)); }
 	//virtual void operator[](U32 pos,const char what) { setAt(pos,what); }
 	virtual void setSize(U32 size) {
 		msize=size;
 	}
 	virtual const Byte *readAll(void) const {
-		return buf->buf;
+		static const Byte null = {0};
+		return buf ? buf->buf : null;
 	}
 protected:
 	virtual void onmodify();
@@ -233,7 +234,7 @@ public:
 	virtual U32 size() const;
 	virtual U32 size();
 	virtual void close();
-	virtual void open(const void * path,const void * mode="rb");
+	virtual void open(const char * path,const char * mode="rb");
 	virtual void flush();
 	//virtual void copy(tFBuf &t);
 protected:
@@ -282,7 +283,7 @@ public:
 /** String buffer */
 class tStrBuf :public tMBuf {
 public:
-	tStrBuf(const void * k);
+	tStrBuf(const char * k);
 	tStrBuf(U32 size=200);
 	tStrBuf(tBBuf &k);
 	tStrBuf(const tMBuf &k);
@@ -337,17 +338,10 @@ public:
 		tMBuf::write(val,n);
 		isNull(false);
 	}
-	void writeStr(const Byte * t);
-	void writeStr(const SByte * t) { writeStr((const Byte *)t); }
-	void writeStr(Byte val) { printf("%u",val); }
-	void writeStr(SByte val) { printf("%i",val); }
-	void writeStr(U16 val) { printf("%u",val); }
-	void writeStr(S16 val) { printf("%i",val); }
-	void writeStr(U32 val) { printf("%u",val); }
-	void writeStr(S32 val) { printf("%i",val); }
+	void writeStr(const char * t);
 	void writeStr(tStrBuf * val) { val->rewind(); write(val->read(),val->size()); }
 	void writeStr(tStrBuf & val) { val.rewind(); write(val.read(),val.size()); }
-	void writeStr(const tStrBuf & val) { writeStr((tStrBuf &)val); }
+	void writeStr(const tStrBuf & val) { writeStr((tStrBuf &)val); } // ugly, casting a const away...
 	void printf(const char * msg, ...);
 	void nl() { writeStr("\n"); }
 	U32 asU32();
@@ -356,7 +350,7 @@ public:
 	S16 asS16() { return (S16)asU32(); }
 	Byte asByte() { return (Byte)asU32(); }
 	SByte asSByte() { return (SByte)asU32(); }
-	const Byte * c_str();
+	const char * c_str();
 	virtual void copy(const char * str);
 	virtual void copy(const tStrBuf &t);
 	virtual const tStrBuf & operator=(const tStrBuf &t) { copy(t); return *this; }
@@ -388,8 +382,8 @@ private:
 };
 
 tStrBuf operator+(const tStrBuf & str1, const tStrBuf & str2);
-tStrBuf operator+(const void * str1, const tStrBuf & str2);
-tStrBuf operator+(const tStrBuf & str1, const void * str2);
+tStrBuf operator+(const char * str1, const tStrBuf & str2);
+tStrBuf operator+(const tStrBuf & str1, const char * str2);
 
 /** Time */
 class tTime :public tBaseType {
@@ -413,7 +407,7 @@ public:
 	void now();
 	double asDouble(char how='s');
 	U32 asU32(char how='s');
-	const Byte * str(Byte type=0x00);
+	const char * str(Byte type=0x00);
 	U32 seconds;
 	U32 microseconds;
 };

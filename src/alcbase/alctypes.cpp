@@ -35,11 +35,7 @@
 
 #include "alcugs.h"
 
-#include <cstdlib>
-#include <cstring>
-
 #include <cerrno>
-#include <cstdarg>
 
 
 namespace zlib {
@@ -276,7 +272,7 @@ tRefBuf::~tRefBuf() {
 }
 void tRefBuf::resize(U32 newsize) {
 	msize=newsize;
-	Byte * b2 =(Byte *)realloc((void *)buf,sizeof(Byte *) * newsize);
+	Byte * b2 =(Byte *)realloc(buf,sizeof(Byte *) * newsize);
 	if(b2==NULL) throw txNoMem(_WHERE("NoMem"));
 	buf=b2;
 }
@@ -360,11 +356,11 @@ Byte tMBuf::getAt(U32 pos) const {
 	if(pos>msize) {
 		throw txOutOfRange(_WHERE("OutOfRange %i>%i",pos,msize));
 	}
-	return *(Byte *)(buf->buf+pos);
+	return *(buf->buf+pos);
 }
-void tMBuf::setAt(U32 pos,const char what) {
+void tMBuf::setAt(U32 pos,const Byte what) {
 	if(pos>msize) throw txOutOfRange(_WHERE("OutOfRange %i>%i",pos,msize));
-	*(char *)(buf->buf+pos)=what;
+	*(buf->buf+pos)=what;
 	onmodify();
 }
 void tMBuf::zeroend() {
@@ -507,11 +503,11 @@ U32 tFBuf::size() {
 	DBG(9,"msize:%i\n",msize);
 	return msize;
 }
-void tFBuf::open(const void * path,const void * mode) {
-	f=fopen((const char *)path,(const char *)mode);
+void tFBuf::open(const char * path,const char * mode) {
+	f=fopen(path,mode);
 	if(f==NULL) {
-		if(errno==EACCES || errno==EISDIR) throw txNoAccess((const char *)path);
-		if(errno==ENOENT) throw txNotFound((const char *)path);
+		if(errno==EACCES || errno==EISDIR) throw txNoAccess(path);
+		if(errno==ENOENT) throw txNotFound(path);
 		throw txUnkErr("Unknown error code: %i\n",errno);
 	}
 }
@@ -596,10 +592,10 @@ void tMD5Buf::compute() {
 /* end md5 buf */
 
 /* String buffer */
-tStrBuf::tStrBuf(const void * k) :tMBuf(200) {
+tStrBuf::tStrBuf(const char * k) :tMBuf(200) {
 	DBG(9,"ctor\n");
 	init();
-	writeStr((char *)k);
+	writeStr(k);
 	end();
 }
 tStrBuf::tStrBuf(U32 size) :tMBuf(size) { DBG(9,"ctor 2\n"); init(); }
@@ -684,7 +680,7 @@ SByte tStrBuf::compare(const tStrBuf &t) {
 	return((SByte)strncmp((char *)readAll(),(char *)t.readAll(),s));
 }
 SByte tStrBuf::compare(const char * str) {
-	DBG(9,"compare %s\n",(const char *)str);
+	DBG(9,"compare %s\n",str);
 	//tStrBuf pat(str);
 	//return(compare(pat));
 	U32 s = size();
@@ -694,18 +690,18 @@ SByte tStrBuf::compare(const char * str) {
 	if(s>s2) return -1;
 	return((SByte)strncmp((char *)readAll(),str,s));
 }
-const Byte * tStrBuf::c_str() {
+const char * tStrBuf::c_str() {
 	DBG(2,"tStrBuf::c_str()\n");
 	if(isNull() || msize == 0) {
 		DBG(2,"is null: %d\n", msize);
-		return (Byte *)"";
+		return "";
 	}
 	zeroend();
 	//end();
 	//putByte(0);
 	//setSize(tell()-1);
 	rewind();
-	return read();
+	return (char *)read();
 }
 void tStrBuf::rewind() {
 	tMBuf::rewind();
@@ -903,10 +899,10 @@ tStrBuf & tStrBuf::substring(U32 start,U32 len) {
 	return *out;
 }
 bool tStrBuf::startsWith(const char * pat) {
-	return(substring(0,strlen((const char *)pat))==pat);
+	return(substring(0,strlen(pat))==pat);
 }
 bool tStrBuf::endsWith(const char * pat) {
-	return(substring(size()-strlen((const char *)pat),strlen((const char *)pat))==pat);
+	return(substring(size()-strlen(pat),strlen(pat))==pat);
 }
 tStrBuf & tStrBuf::dirname() {
 	tStrBuf * out;
@@ -1216,8 +1212,8 @@ tStrBuf & tStrBuf::getToken() {
 	return *out;
 }
 
-void tStrBuf::writeStr(const Byte * t) {
-	this->write((Byte *)t,strlen((const char *)t));
+void tStrBuf::writeStr(const char * t) {
+	this->write((Byte *)t,strlen(t));
 }
 void tStrBuf::printf(const char * msg, ...) {
 	va_list ap;
@@ -1236,7 +1232,7 @@ U32 tStrBuf::asU32() {
 	rewind();
 	DBG(9,"asU32 %s\n",c_str());
 	if(size()==0) return 0;
-	return atoi((char *)c_str());
+	return atoi(c_str());
 }
 
 tStrBuf operator+(const tStrBuf & str1, const tStrBuf & str2) {
@@ -1245,13 +1241,13 @@ tStrBuf operator+(const tStrBuf & str1, const tStrBuf & str2) {
 	out.writeStr(str2);
 	return out;
 }
-tStrBuf operator+(const void * str1, const tStrBuf & str2) {
+tStrBuf operator+(const char * str1, const tStrBuf & str2) {
 	tStrBuf out;
 	out.writeStr(str1);
 	out.writeStr(str2);
 	return out;
 }
-tStrBuf operator+(const tStrBuf & str1, const void * str2) {
+tStrBuf operator+(const tStrBuf & str1, const char * str2) {
 	tStrBuf out;
 	out.writeStr(str1);
 	out.writeStr(str2);
@@ -1322,7 +1318,7 @@ U32 tTime::asU32(char how) {
 			return seconds;
 	}
 }
-const Byte * tTime::str(Byte type) {
+const char * tTime::str(Byte type) {
 	if(type==0x00) {
 		return alcGetStrTime(seconds,microseconds);
 	} else {

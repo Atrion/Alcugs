@@ -118,7 +118,7 @@ U32 alcUruChecksum1Trace(Byte * buf, int size) {
 	 2 -> live md5 + passwd sum,
   \note REMEMBER THAT aux_hash must be 32 bytes and contain an ascii hash
 */
-U32 alcUruChecksum(Byte* buf, int size, int alg, Byte * aux_hash) {
+U32 alcUruChecksum(Byte* buf, int size, int alg, char * aux_hash) {
 	int i;
 	U32 aux=0; //little-endian order when returned
 	//S32 saux=0;
@@ -207,7 +207,7 @@ U32 alcUruChecksum(Byte* buf, int size, int alg, Byte * aux_hash) {
 	 2 -> Validation level too high
 	 3 -> Bogus packet!!
 */
-int alcUruValidatePacket(Byte * buf,int n,Byte * validation,bool authed,Byte * phash) {
+int alcUruValidatePacket(Byte * buf,int n,Byte * validation,bool authed,char * phash) {
 	U32 checksum;
 #ifndef _NO_CHECKSUM
 	U32 aux_checksum;
@@ -425,7 +425,6 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
 			data.seek(2);
 			for(i=0; i<(int)dsize; i++) {
 				if(i!=0) { log->print(" |"); }
-				//log->print(" %i,%i %i,%i",*(Byte *)((buf+2)+i*0x10),*(U32 *)((buf+3)+i*0x10),*(Byte *)((buf+2+8)+i*0x10),*(U32 *)((buf+3+8)+i*0x10));
 				Byte i1=data.getByte();
 				U32 i2=data.getU32();
 				data.seek(3);
@@ -440,7 +439,6 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
 			log->print("aack");
 			for(i=0; i<(int)dsize; i++) {
 				if(i!=0) { log->print(" |"); }
-				//log->print(" %i,%i %i,%i",(*(U32 *)((buf+1)+i*0x08)) & 0x00FFFFFF,*(Byte *)((buf)+i*0x08),(*(U32 *)((buf+1+4)+i*0x08)) & 0x00FFFFFF,*(Byte *)((buf+4)+i*0x08));
 				Byte i1=data.getByte();
 				data.seek(-1);
 				U32 i2=data.getU32();
@@ -495,16 +493,16 @@ void tmNetClientComm::stream(tBBuf &t) {
 	t.putU32(bandwidth);
 	t.put(timestamp);
 }
-const Byte * tmNetClientComm::str() {
-	static Byte cnt[1024];
+const char * tmNetClientComm::str() {
+	static char cnt[1024];
 #ifdef ENABLE_MSGLOG
-	sprintf((char *)cnt,"(Re)Negotation bandwidth: %i bps time: %s",bandwidth,(char *)timestamp.str());
+	sprintf(cnt,"(Re)Negotation bandwidth: %i bps time: %s",bandwidth,timestamp.str());
 #else
-	sprintf((char *)cnt,"(Re)Negotation");
+	sprintf(cnt,"(Re)Negotation");
 #endif
 	// don't use sprintf(cnt, "%s", cnt), valgrind shows a "Source and destination overlap in mempcpy"
-	strcat((char *)cnt, " on ");
-	strcat((char *)cnt, u->str());
+	strcat(cnt, " on ");
+	strcat(cnt, u->str());
 	return cnt;
 }
 
@@ -540,7 +538,7 @@ void tmNetAck::stream(tBBuf &t)
 			t.putU32(0);
 	}
 }
-const Byte * tmNetAck::str() {
+const char * tmNetAck::str() {
 	dbg.clear();
 	dbg.printf("Ack on %s", u->str());
 	#ifdef ENABLE_MSGLOG
@@ -751,7 +749,7 @@ void tmMsgBase::copyProps(tmMsgBase &t) {
 		sid=t.sid;
 	}
 }
-const Byte * tmMsgBase::str() {
+const char * tmMsgBase::str() {
 	dbg.clear();
 	dbg.printf("%s",alcUnetGetMsgCode(cmd));
 #ifdef ENABLE_MSGLOG

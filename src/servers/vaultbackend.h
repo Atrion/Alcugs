@@ -143,7 +143,7 @@ namespace alc {
 		void broadcast(tvMessage &msg, U32 node, U32 origKi = 0, U32 origMgr = 0);
 	
 		tVaultDB *vaultDB;
-		Byte vaultFolderName[17];
+		char vaultFolderName[17];
 		U32 adminNode;
 		
 		tGuidGen *guidGen;

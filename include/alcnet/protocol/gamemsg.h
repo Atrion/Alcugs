@@ -53,7 +53,7 @@ namespace alc {
 		tMemberInfo(tNetSession *u, const tUruObject &obj);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
-		const Byte *str(void);
+		const char *str(void);
 	private:
 		U32 ki;
 		tUStr avatar;

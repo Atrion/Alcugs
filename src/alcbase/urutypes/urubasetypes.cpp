@@ -167,7 +167,7 @@ void tAESBuf::decrypt() {
 tUStr::tUStr(int mode) : tStrBuf() {
 	this->version=mode;
 }
-tUStr::tUStr(const void *k, int mode) : tStrBuf(k) {
+tUStr::tUStr(const char *k, int mode) : tStrBuf(k) {
 	this->version=mode;
 }
 tUStr::tUStr(const tUStr &t) : tStrBuf(t) {
@@ -295,7 +295,7 @@ void tUruObject::stream(tBBuf &t)
 	}
 }
 
-const Byte *tUruObject::str(void)
+const char *tUruObject::str(void)
 {
 	dbg.clear();
 	dbg.printf("Page ID: 0x%08X, Page Type: 0x%04X, Object: [0x%04X]%s", pageId, pageType, objType, objName.c_str());

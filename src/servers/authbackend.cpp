@@ -138,21 +138,21 @@ namespace alc {
 		return false;
 	}
 
-	void tAuthBackend::calculateHash(Byte *login, Byte *passwd, Byte *challenge, Byte *hash)
+	void tAuthBackend::calculateHash(const char *login, const char *passwd, const char *challenge, char *hash)
 	{
 		tMD5Buf md5buffer;
-		md5buffer.write(challenge, strlen((char *)challenge));
-		md5buffer.write(login, strlen((char *)login));
-		md5buffer.write(passwd, strlen((char *)passwd));
+		md5buffer.write(challenge, strlen(challenge));
+		md5buffer.write(login, strlen(login));
+		md5buffer.write(passwd, strlen(passwd));
 		md5buffer.compute();
 		alcHex2Ascii(hash, md5buffer.read(16), 16);
 	}
 	
-	int tAuthBackend::queryPlayer(Byte *login, Byte *passwd, Byte *guid, U32 *attempts, U32 *lastAttempt)
+	int tAuthBackend::queryPlayer(const char *login, char *passwd, char *guid, U32 *attempts, U32 *lastAttempt)
 	{
 		tStrBuf query;
 		*attempts = *lastAttempt = passwd[0] = 0; // ensure there's a valid value in there
-		strcpy((char *)guid, "00000000-0000-0000-0000-000000000000");
+		strcpy(guid, "00000000-0000-0000-0000-000000000000");
 		
 		// only query if we are connected properly
 		if (!prepare()) {
@@ -161,7 +161,7 @@ namespace alc {
 		}
 		
 		// query the database
-		query.printf("SELECT UCASE(passwd), a_level, guid, attempts, UNIX_TIMESTAMP(last_attempt) FROM accounts WHERE name='%s' LIMIT 1", sql->escape((char *)login));
+		query.printf("SELECT UCASE(passwd), a_level, guid, attempts, UNIX_TIMESTAMP(last_attempt) FROM accounts WHERE name='%s' LIMIT 1", sql->escape(login));
 		sql->query(query.c_str(), "Query player");
 		
 		// read the result
@@ -171,9 +171,9 @@ namespace alc {
 			MYSQL_ROW row = mysql_fetch_row(result);
 			if (row == NULL) ret = -1; // player doesn't exist
 			else { // read the columns
-				strncpy((char *)passwd, row[0], 49); // passwd
+				strncpy(passwd, row[0], 49); // passwd
 				ret = atoi(row[1]); // a_level
-				strncpy((char *)guid, row[2], 49); // guid
+				strncpy(guid, row[2], 49); // guid
 				*attempts = atoi(row[3]); // attempts
 				*lastAttempt = atoi(row[4]);
 			}
@@ -183,12 +183,12 @@ namespace alc {
 		return ret;
 	}
 
-	void tAuthBackend::updatePlayer(Byte *guid, Byte *ip, U32 attempts, Byte updateStamps)
+	void tAuthBackend::updatePlayer(char *guid, char *ip, U32 attempts, Byte updateStamps)
 	{
 		char ip_escaped[50], guid_escaped[50];
 		tStrBuf query;
-		strncpy(ip_escaped, sql->escape((char *)ip), 49);
-		strncpy(guid_escaped, sql->escape((char *)guid), 49);
+		strncpy(ip_escaped, sql->escape(ip), 49);
+		strncpy(guid_escaped, sql->escape(guid), 49);
 		query.printf("UPDATE accounts SET attempts='%d', last_ip='%s'", attempts, ip_escaped);
 		if (updateStamps == 1) // update only last attempt
 			query.printf(", last_attempt=NOW()");
@@ -199,10 +199,10 @@ namespace alc {
 		sql->query(query.c_str(), "Update player");
 	}
 
-	int tAuthBackend::authenticatePlayer(tNetSession *u, Byte *login, Byte *challenge, Byte *hash, Byte release, Byte *ip, Byte *passwd,
-			Byte *guid, Byte *accessLevel)
+	int tAuthBackend::authenticatePlayer(tNetSession *u, const char *login, const char *challenge, const char *hash, Byte release, char *ip, char *passwd,
+			char *guid, Byte *accessLevel)
 	{
-		Byte correctHash[50];
+		char correctHash[50];
 		U32 attempts, lastAttempt;
 		int queryResult = queryPlayer(login, passwd, guid, &attempts, &lastAttempt); // query password, access level and guid of this user
 		
@@ -243,7 +243,7 @@ namespace alc {
 			}
 			else { // everythign seems fine... let's compare the password
 				calculateHash(login, passwd, challenge, correctHash);
-				if(strncmp((char *)hash, (char *)correctHash, 49) != 0) { // wrong password :(
+				if(strncmp(hash, correctHash, 49) != 0) { // wrong password :(
 					log->print("invalid password\n");
 					authResult = AInvalidPasswd;
 					++attempts;
