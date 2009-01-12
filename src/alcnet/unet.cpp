@@ -74,7 +74,7 @@ void tUnet::init() {
 	DBG(9,"tUnet::init()\n");
 	if(initialized) return;
 	flags=UNET_DEFAULT_FLAGS;
-	whoami=0; //None (new connection) //KClient; //default type of peer
+	whoami=alcWhoami; // the server should know who it is
 
 	//netcore timeout < min(all RTT's), nope, it must be the min tts (stt)
 	unet_sec=1; //(seconds)

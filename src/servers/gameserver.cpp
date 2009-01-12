@@ -181,7 +181,7 @@ namespace alc {
 			lastPlayerLeft = playerFound ? 0 : alcGetTime();
 			
 			// remove leftovers of this player from the age state
-			ageState->removePlayer(u->ki);
+			ageState->removePlayer(u);
 			
 			// remove player from player list if he is still on there
 			if (u->data) {

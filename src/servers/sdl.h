@@ -63,7 +63,7 @@ namespace alc {
 		int sendClones(tNetSession *u);
 		int sendSdlStates(tNetSession *u, tmGameStateRequest::tPageList *pages);
 		void writeAgeState(tMBuf *buf);
-		void removePlayer(U32 ki);
+		void removePlayer(tNetSession *player);
 		
 		tSdlStruct *findStruct(tStrBuf name, U32 version);
 	private:
