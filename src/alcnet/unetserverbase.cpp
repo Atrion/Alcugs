@@ -49,9 +49,7 @@ namespace alc {
 
 	////IMPLEMENTATION
 	tUnetServerBase::tUnetServerBase(void) : tUnetBase()
-	{
-		whoami = alcWhoami; // the server should know who it is
-	}
+	{ }
 	
 	int tUnetServerBase::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
 	{

@@ -199,14 +199,17 @@ namespace alc {
 		load();
 	}
 	
-	void tAgeStateManager::removePlayer(U32 ki)
+	void tAgeStateManager::removePlayer(tNetSession *player)
 	{
 		// check for that player in the clone list
 		tCloneList::iterator it = clones.begin();
 		while (it != clones.end()) {
-			if (it->clonedObj.clonePlayerId == ki) { // that clone is dead now, remove it and all of it's SDL states
-				log->log("Removing Clone [%s] as it belongs to player with KI %d who just left us\n", it->str(), ki);
-				// FIXME: Somehow tell the rest of the clients that this avatar left. Just sending the load message again with isLaod set to 0 doesn't seem to work
+			if (it->clonedObj.clonePlayerId == player->ki) { // that clone is dead now, remove it and all of it's SDL states
+				log->log("Removing Clone [%s] as it belongs to player %s who just left us\n", it->str(), player->str());
+				// remove avatar from age
+				it->isLoad = false;
+				tmLoadClone loadClone (it->createNetMsg(player, false/*isInitial*/));
+				net->bcastMessage(loadClone);
 				// remove states from our list
 				removeSDLStates(it->clonedObj.clonePlayerId);
 				clones.erase(it++); // works only in lists (where the iterators remain valid)
