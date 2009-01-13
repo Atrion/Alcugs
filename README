@@ -22,12 +22,9 @@ Congratulations, you have arrived here, now continue reading! :)
 ========================================================
 
 You need to have installed the development headers and libraries of:
-* openssl
 * mysql
 * zlib
-* python
 * expat
-* wxwidgets (for GUI based apps only)
 * And anything else that I forgot
 
 ========================
@@ -37,18 +34,12 @@ You need to have installed the development headers and libraries of:
 (A) If you are on Linux or a similar *nix system
 ------------------------------------------------
 
-1) If you are building from SVN, or a snapshot, you need to have:
- autoconf and automake tools.
- Then you need to run the reconf.sh script by typing
 
-$ ./reconf.sh
-
-
-2) Run configure
+1) Run configure
 
 $ ./configure
 
-3) Run make
+2) Run make
 
 $ make all
 
@@ -64,9 +55,8 @@ B) Build with Cygwin
 
 1) Download and install Cygwin
 2) Download mysql with the C API
-3) download python 2.2 with the dev headers
-4) Fix the Makefiles
-5) Compile by the same way
+3) Fix the Makefiles
+4) Compile by the same way
 (I wish you luck ;) )
 
 or
@@ -80,7 +70,7 @@ or
 
 D) Build with MSVC
 
-1) There are some files that should allow you to compile with MSVC.
+1) You will have to figure this out yourself
 
 
 ==============
@@ -99,40 +89,19 @@ $ make install
 
 B) Manual installation (recommended)
 
-1) Search for the server binaries, and copy them to the place that you wish.
-
-2) If everything when well, you only need to understand the uru.conf file, and you need
-to configure it for your purposes.
-Then you can start the servers. There is a script somewhere that should allow you to start
-them.
-You can also manually start the servers in the following order.
-
-uru_auth -D
-uru_vault -D
-uru_tracking -D
-uru_lobby -D
-
-NOTE FOR UNET3 BRANCH: The unet3 Game server is not finished, and not useful for playing it,
-you will need to replace the binary uru_game with an older one, and use the game.config option
-pointing to an old configuration file.
-
-NOTE FOR UNET3+ BRANCH: The unet3+ branch servers are broken and not working, I suggest you
-waiting a little, sometimes you may be able to compile working experimental versions.
+See http://alcugs.almlys.org/AlcugsInstall#Setting_Up_the_Servers
 
 
 Configuring
 -----------
 
-Read the uru.conf.dist file for more info. It explains each variable, and how to configure it.
-
-For admin access:
- 1) Log into the game.
- 2) run the script/addadmin.sh and answer well to all the questions.
+Read the uru.conf.dist file for more info. It explains most mof the variables, and how to configure them.
+You can find a complete list add http://alcugs.almlys.org/AlcugsConfig
 
 Running
 -------
 
-Well, the best way is to run it as the nobody user, you can also create an user called Uru,
+Well, the best way is to run it as the nobody user, you can also create an user called alcugs,
 and run it as this user. Never run it as the superuser, or with an user with some privileges.
 Also a chrooted jail will add more security.
 
@@ -152,14 +121,14 @@ What is required?
 * Porting to other OSes.
 
 
-What To Do if It don't works?
+What to do if It doesn't work?
 -----------------------------
 
 If you are reading this, then is because it is not working.
 Is expected to have several problems. I'm sure that it compiles without
-problems on Debian Etch where it is being developed.
+problems on Debian Etch and Ubuntu where it is being developed.
 
-Please go to the forums at http://alcugs.almlys.dyns.net/forum and ask
+Please go to the forums at http://forum.almlys.org/ and ask
 for help.
 
 
@@ -167,4 +136,3 @@ Contact
 -------
 
 See the file AUTHORS for contact information.
-
