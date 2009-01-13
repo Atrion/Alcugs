@@ -174,15 +174,15 @@ void txBase::_preparebacktrace() {
 	}
 	free((void *)strings);
 #else
-	bt=(char *)std::malloc(sizeof(char) * 50);
-	std::sprintf(bt,"Backtrace not implemented in your OS\n");
+	bt=(char *)malloc(sizeof(char) * 50);
+	sprintf(bt,"Backtrace not implemented in your OS\n");
 #endif
 	if((txvCore & 0x02) || this->core) { alcWriteCoreDump(); }
 	if(txvAbort || this->abort) {
 		dump();
 		alcCrashAction();
 		fprintf(stderr,"An exception requested to abort\n");
-		std::abort();
+		::abort();
 	}
 }
 void txBase::dump(bool toStderr) {
@@ -191,7 +191,7 @@ void txBase::dump(bool toStderr) {
 
 		unsigned int t,pid;
 		pid=getpid();
-		t=(unsigned int)std::time(NULL);
+		t=(unsigned int)time(NULL);
 		int strsize=60;
 		if(txvCorePath!=NULL) strsize+=strlen(txvCorePath);
 		char * where=(char *)malloc(sizeof(char) * strsize+1);
