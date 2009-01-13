@@ -1,8 +1,6 @@
 
 #define __U_WHATDOYOUSEE_ID "$Id$"
 
-#include <stdio.h>
-#include <string.h>
 
 #include "urutypes/whatdoyousee.h"
 #include "alcugs.h"

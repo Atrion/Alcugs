@@ -43,16 +43,6 @@
 //}
 #endif
 
-// change this
-//namespace std {
-//extern "C" {
-//#include <sys/types.h>
-//#include <sys/stat.h>
-//#include <fcntl.h>
-//#include <unistd.h>
-//}
-//}
-
 #if defined(HAVE_GOOGLE_COREDUMPER_H)
 namespace google {
 #include <google/coredumper.h>

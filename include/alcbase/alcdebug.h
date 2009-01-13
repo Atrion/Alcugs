@@ -40,8 +40,6 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCDEBUG_H_ID "$Id$"
 
-#include <assert.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

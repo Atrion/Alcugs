@@ -31,18 +31,10 @@
 
 #include "alcugs.h"
 
-using namespace alc;
-
-//#ifdef __cplusplus
-//#include <cstdio>
-//#include <cstring>
+#ifdef __cplusplus
 extern "C" {
-//#else
-//#include <stdio.h>
-//#include <string.h>
-//#endif
+#endif
 
-//#include <stdarg.h>
 #include <cstdarg>
 
 #ifdef __MSVC__
@@ -155,7 +147,7 @@ extern "C" {
 		static char buffer[2*1024];
 		
 		va_start(ap,a);
-		sprintf(buffer,"%d:%s:%s:%i:",alcGetSelfThreadId(),b,c,d);
+		sprintf(buffer,"%d:%s:%s:%i:",alc::alcGetSelfThreadId(),b,c,d);
 		vsnprintf(buffer+strlen(buffer),sizeof(buffer) - (strlen(buffer)+1),a,ap);
 		va_end(ap);
 		return buffer;
@@ -163,7 +155,7 @@ extern "C" {
 
 #endif
 
-//#ifdef __cplusplus
+#ifdef __cplusplus
 }
-//#endif
+#endif
 

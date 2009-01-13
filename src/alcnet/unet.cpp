@@ -36,11 +36,10 @@
 #include "alcugs.h"
 #include "alcnet.h"
 
-#include <unistd.h>
 #include <fcntl.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <errno.h>
+#include <cerrno>
 
 #include "alcdebug.h"
 
