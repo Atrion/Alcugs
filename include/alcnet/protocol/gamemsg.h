@@ -38,8 +38,6 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_FILENAME_H_ID "$Id$"
 
-#include <vector>
-
 namespace alc {
 
 	////DEFINITIONS

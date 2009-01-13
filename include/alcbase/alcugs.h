@@ -92,9 +92,12 @@ const char * alcXVERSION = ALC_PROGRAM_VERSION;
 
 //std includes
 #include <iostream>
+#include <vector>
 #include <cstdio>
 #include <cstring>
-using namespace std;
+#include <csignal>
+#include <cstdlib>
+#include <cassert>
 
 //system includes
 
@@ -102,11 +105,7 @@ using namespace std;
 #include "alcutil/windoze.h"
 #endif
 
-//namespace std {
-//#include <sys/types.h>
 #include <dirent.h>
-#include <csignal>
-//}
 
 //alcugs includes
 #include "alcexception.h"
@@ -117,17 +116,16 @@ using namespace std;
 #include "alcmain.h"
 #include "alclicense.h"
 
-#include "urutypes/urubasetypes.h"
-
 #include "alcutil/alcos.h"
 #include "alcutil/conv_funs.h"
 #include "alcutil/useful.h"
 #include "alcutil/alclog.h"
 #include "alcutil/alcparser.h"
 
+#include "urutypes/urubasetypes.h"
+#include "urutypes/ageinfo.h"
+
 #include "alcutil/alcpkg.h"
 #include "urutypes/pypkg.h"
-
-#include "urutypes/ageinfo.h"
 
 #endif

@@ -35,14 +35,9 @@
 
 #include "alcugs.h"
 
-//#include <cstdlib>
-//namespace std {
-//#include <signal.h>
-//#include <sys/types.h>
 #ifndef __WIN32__
 #include <sys/wait.h>
 #endif
-//};
 
 #include "alcdebug.h"
 

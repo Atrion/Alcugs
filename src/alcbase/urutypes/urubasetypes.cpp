@@ -35,9 +35,6 @@
 
 #include "alcugs.h"
 
-#include <cstdlib>
-#include <cstring>
-
 namespace wdys {
 #include "urutypes/whatdoyousee.h"
 }

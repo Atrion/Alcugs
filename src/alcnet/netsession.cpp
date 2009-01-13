@@ -961,7 +961,7 @@ void tNetSession::doWork() {
 					}
 				} else {
 					//probabilistic drop (of voice, and other non-ack paquets) - make sure we don't drop ack replies though!
-					if(curmsg->tf == 0x00 && net->net_time-curmsg->timestamp > 5*timeout) {
+					if(curmsg->tf == 0x00 && net->net_time-curmsg->timestamp > 4*timeout) {
 						//Unacceptable - drop it
 						net->err->log("%s Dropped a 0x00 packet due to unaceptable msg time %i,%i,%i\n",str(),timeout,net->net_time-curmsg->timestamp,rtt);
 					} else if(curmsg->tf == 0x00 && sndq->len() > minTH && (sndq->len() > (minTH + random()%(maxTH-minTH))) ) {

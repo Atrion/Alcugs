@@ -33,7 +33,6 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_SQL_H_ID "$Id$"
 
-#include <mysql/mysql.h>
 
 //flags
 #define SQL_LOG      0x01   // Enable logging

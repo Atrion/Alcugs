@@ -46,7 +46,7 @@
 #endif
 #endif
 
-#include <errno.h>
+#include <cerrno>
 
 #include "alcdebug.h"
 

@@ -35,8 +35,7 @@
 
 #include "alcugs.h"
 
-//#include <sys/stat.h>
-//#include <unistd.h>
+#include <sys/stat.h>
 
 //alcos.h already included in alcugs.h
 

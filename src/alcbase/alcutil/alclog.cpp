@@ -35,10 +35,7 @@
 #include "alcugs.h"
 
 #include <sys/stat.h>
-/*#include <sys/types.h>
-#include <fcntl.h>
-#include <unistd.h>*/
-#include <errno.h>
+#include <cerrno>
 #include <cstdarg>
 
 #ifndef __WIN32__

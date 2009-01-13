@@ -33,16 +33,19 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCNET_H_ID "$Id$"
 
+namespace alc {
+	extern const char * alcNetName;
+	extern Byte alcWhoami;
+}
+
+// system includes
 #ifndef __WIN32__
 #include <netdb.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #endif
 
-namespace alc {
-	extern const char * alcNetName;
-	extern Byte alcWhoami;
-}
+#include <mysql/mysql.h>
 
 #include "protocol/prot.h"
 #include "netmsgq.h"
