@@ -319,6 +319,9 @@ namespace alc {
 				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, alcGetStrGuid(serverGuid), serverName, 1 /* is online */, 0 /* don't increase online time now, do that on disconnect */);
 				send(vaultStatus);
 				
+				// now that the player joined, age loading is done, so decrease timeout to 30sec
+				u->setTimeout(30);
+				
 				// ok, tell the client he successfully joined
 				u->joined = true;
 				tmJoinAck joinAck(u, joinReq.x);
@@ -706,4 +709,3 @@ namespace alc {
 	}
 
 } //end namespace alc
-
