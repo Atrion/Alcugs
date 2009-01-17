@@ -72,6 +72,7 @@ namespace alc {
 		virtual void onLoadConfig(void);
 
 		virtual void additionalVaultProcessing(tNetSession *u, tvMessage *msg);
+		virtual void playerAuthed(tNetSession *u);
 		
 		virtual bool canPortBeUsed(U16 port);
 	private:

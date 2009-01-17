@@ -62,6 +62,7 @@ protected:
 	virtual void onLoadConfig(void);
 
 	virtual void additionalVaultProcessing(tNetSession *u, tvMessage *msg) {}
+	virtual void playerAuthed(tNetSession *u) {}
 
 	tNetSessionIte auth, tracking, vault;
 
