@@ -414,6 +414,7 @@ namespace alc {
 					tmAccountAutheticated accountAuth(client, authResponse.x, AAuthSucceeded, serverGuid);
 					send(accountAuth);
 					sec->log("%s successful login\n", client->str());
+					playerAuthed(client);
 				}
 				else {
 					Byte zeroGuid[8]; // only send zero-filled GUIDs to non-authed players
