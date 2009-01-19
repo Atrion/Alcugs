@@ -72,15 +72,15 @@ void tNetSession::init() {
 	authenticated=0;
 	accessLevel=0;
 	cflags=0; //default flags
-	if(net->flags & UNET_NOCONN) {
+	/*if(net->flags & UNET_NOCONN) {
 		cflags |= UNetNoConn;
 		maxBandwidth=4096*2;
 		minBandwidth=4096;
 		cabal=minBandwidth;
 	}
-	else {
+	else {*/
 		maxBandwidth=minBandwidth=cabal=0;
-	}
+	//}
 	maxPacketSz=1024;
 	flood_last_check=0;
 	flood_npkts=0;
