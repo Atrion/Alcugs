@@ -141,7 +141,7 @@ namespace alc {
 			char filename[200];
 			sprintf(filename, "%s.age", name);
 			// load it
-			ages.push_back(tAgeInfo(dir.c_str(), filename, loadPages));
+			ages.push_back(tAgeInfo(dir, filename, loadPages));
 		}
 	}
 	

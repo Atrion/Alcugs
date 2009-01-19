@@ -183,7 +183,7 @@ public:
 	tMBuf();
 	tMBuf(const tMBuf &t);
 	tMBuf(tBBuf &t);
-	tMBuf(U32 size);
+	explicit tMBuf(U32 size);
 	virtual ~tMBuf();
 	virtual U32 tell() const;
 	virtual void set(U32 pos);
@@ -283,8 +283,8 @@ public:
 /** String buffer */
 class tStrBuf :public tMBuf {
 public:
-	tStrBuf(const char * k);
-	tStrBuf(U32 size=200);
+	explicit tStrBuf(const char * k);
+	explicit tStrBuf(U32 size=200);
 	tStrBuf(tBBuf &k);
 	tStrBuf(const tMBuf &k);
 	tStrBuf(const tStrBuf &k);

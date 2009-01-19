@@ -131,9 +131,9 @@ int u_parse_arguments(int argc, char * argv[]) {
 		} else if(!strcmp(argv[i],"-clean")) {
 			cfg->setVar("1","vault.clean","cmdline");
 		} else if(!strncmp(argv[i],"-o",2) && argc>i+1) {
-			tStrBuf opt=argv[i];
+			tStrBuf opt(argv[i]);
 			i++;
-			tStrBuf val=argv[i];
+			tStrBuf val(argv[i]);
 			opt=opt.substring(2,opt.size()-2);
 			cfg->setVar(val.c_str(),opt.c_str(),"cmdline");
 		} else {

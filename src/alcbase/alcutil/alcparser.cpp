@@ -249,7 +249,7 @@ void tXParser::stream(tStrBuf &t) {
 				t.writeStr(val->getName());
 				if(my!=1) {
 					t.writeStr("[");
-					t.writeStr(y);
+					t.printf("%d", y);
 					t.writeStr("]");
 				}
 				t.writeStr(" = ");
