@@ -190,7 +190,7 @@ tConfigVal * tConfigKey::find(tStrBuf & what,bool create) {
 	return values[n-1];
 }
 tConfigVal * tConfigKey::find(const char * what,bool create) {
-	tStrBuf name=what;
+	tStrBuf name(what);
 	return find(name,create);
 }
 void tConfigKey::copy(tConfigKey &t) {
@@ -267,7 +267,7 @@ tConfigKey * tConfig::findKey(tStrBuf & where,bool create) {
 	return values[n-1];
 }
 tConfigKey * tConfig::findKey(const char * where,bool create) {
-	tStrBuf name=where;
+	tStrBuf name(where);
 	return findKey(name,create);
 }
 //This code needs to be optimized

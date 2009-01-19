@@ -75,7 +75,7 @@ namespace alc {
 		// updates the version numbers of the embedded SDL structs (always uses the latest one)
 		for (tSdlStructList::iterator it1 = structs.begin(); it1 != structs.end(); ++it1) {
 			for (tSdlStruct::tVarList::iterator it2 = it1->vars.begin(); it2 != it1->vars.end(); ++it2) {
-				if (it2->type == DStruct) it2->structVersion = findLatestStructVersion(it2->structName);
+				if (it2->type == DStruct) it2->structVersion = findLatestStructVersion(it2->structName.c_str());
 			}
 		}
 		
@@ -413,13 +413,13 @@ namespace alc {
 		log->flush();
 	}
 	
-	U32 tAgeStateManager::findLatestStructVersion(tStrBuf name, bool throwOnError)
+	U32 tAgeStateManager::findLatestStructVersion(const char *name, bool throwOnError)
 	{
 		U32 version = 0;
 		for (tSdlStructList::iterator it = structs.begin(); it != structs.end(); ++it) {
 			if (it->name == name && it->version > version) version = it->version;
 		}
-		if (throwOnError && !version) throw txProtocolError(_WHERE("Could not find any SDL struct for %s", name.c_str()));
+		if (throwOnError && !version) throw txProtocolError(_WHERE("Could not find any SDL struct for %s", name));
 		return version;
 	}
 	
