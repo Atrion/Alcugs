@@ -467,10 +467,10 @@ tNetSessionIte tUnet::netConnect(const char * hostname,U16 port,Byte validation,
 	u->min_version=min_version;
 	u->proto=alcProtoMIN_VER;
 	
-	if(!(u->cflags & UNetNoConn)) {
+	//if(!(u->cflags & UNetNoConn)) {
 		u->nego_stamp=u->timestamp;
 		u->negotiate();
-	}
+	//}
 	
 	return ite;
 }

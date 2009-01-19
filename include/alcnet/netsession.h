@@ -43,7 +43,7 @@ class tUnetLobbyServerBase;
 typedef Byte tNetSessionFlags;
 
 #define UNetUpgraded 0x01
-#define UNetNoConn   0x02
+//#define UNetNoConn   0x02
 
 /** base class for data associated to a session */
 class tNetSessionData {
@@ -156,7 +156,7 @@ private:
 	
 	Byte validation; //!< store the validation level (0,1,2)
 	Byte authenticated; //!< is the peer authed? 0 = no, 1 = yes, 2 = it just got authed, 10 = the client got an auth challenge
-	tNetSessionFlags cflags; //!< ession flags
+	tNetSessionFlags cflags; //!< session flags
 	U16 maxPacketSz; //!< maxium size of the packets. Must be 1024 (always)
 
 	//flood control

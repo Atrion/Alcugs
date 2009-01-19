@@ -79,7 +79,7 @@ typedef U16 tUnetFlags;
 //#define UNET_DLUNE    0x0400 /* Disable une log */
 #define UNET_DLSEC    0x0800 /* Disable sec log */
 #define UNET_LQUIET   0x1000 /* Disable dumping to the console */
-#define UNET_NOCONN   0x2000 /* Non connected server */
+//#define UNET_NOCONN   0x2000 /* Non connected server */
 
 #define UNET_DEFAULT_FLAGS (UNET_NBLOCK | UNET_ELOG | UNET_ECRC | /*UNET_AUTOSP |*/ UNET_NOFLOOD | UNET_FLOG)
 
