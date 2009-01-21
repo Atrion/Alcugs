@@ -108,6 +108,10 @@ namespace alc {
 			if (lingerTime && lingerTime < 20)
 				log->log("WARN: You set a linger time of only %d, which could result in the game server going down before the player even has the chance to join it - I recommend to set it to at least 20\n", lingerTime);
 		}
+		
+		var = cfg->getVar("game.set_vault_player_state");
+		if (var.isNull()) setVaultOnlineState = true;
+		else setVaultOnlineState = var.asByte();
 	}
 
 	void tUnetGameServer::onConnectionClosed(tNetEvent *ev, tNetSession *u)
@@ -308,7 +312,7 @@ namespace alc {
 				msg->data.get(joinReq);
 				log->log("<RCV> [%d] %s\n", msg->sn, joinReq.str());
 				
-				// the player is joined - tell tracking and vault
+				// the player is joined - tell tracking and (perhaps) vault
 				tNetSession *trackingServer = getSession(tracking), *vaultServer = getSession(vault);
 				if (!trackingServer || !vaultServer) {
 					err->log("ERR: Player %s is joining, but vault or tracking is unavailable.\n", u->str());
@@ -316,8 +320,10 @@ namespace alc {
 				}
 				tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->getSid(), u->uid, u->name, u->avatar, 2 /* visible */, RActive);
 				send(trackingStatus);
-				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, alcGetStrGuid(serverGuid), serverName, 1 /* is online */, 0 /* don't increase online time now, do that on disconnect */);
-				send(vaultStatus);
+				if (setVaultOnlineState) {
+					tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, alcGetStrGuid(serverGuid), serverName, 1 /* is online */, 0 /* don't increase online time now, do that on disconnect */);
+					send(vaultStatus);
+				}
 				
 				// now that the player joined, age loading is done, so decrease timeout to 30sec
 				u->setTimeout(30);
