@@ -212,7 +212,7 @@ namespace alc {
 				net->bcastMessage(loadClone);
 				// remove states from our list
 				removeSDLStates(it->clonedObj.clonePlayerId);
-				clones.erase(it++); // works only in lists (where the iterators remain valid)
+				it = clones.erase(it);
 			}
 			else
 				++it;
@@ -316,7 +316,7 @@ namespace alc {
 		while (it != sdlStates.end()) {
 			if (it->obj.hasCloneId && it->obj.clonePlayerId == ki && (cloneId == 0 || it->obj.cloneId == cloneId)) {
 				log->log("Removing %s because Clone was removed\n", it->str());
-				sdlStates.erase(it++); // it is a list, so the iterators remain valid
+				it = sdlStates.erase(it);
 			}
 			else
 				++it;
@@ -332,7 +332,7 @@ namespace alc {
 			clone.print(log);
 		}
 		if (clone.isLoad) {
-			if (it != clones.end()) {// it is already in the list, remove old one
+			if (it != clones.end()) { // it is already in the list, remove old one
 				log->log("Updating Clone ");
 				clones.erase(it);
 			}
