@@ -53,6 +53,7 @@ namespace alc {
 	{
 		avatar.setVersion(0); // normal UruString
 		ki = u->ki;
+		hidePlayer = false;
 		ip = u->getIp();
 		port = u->getPort();
 	}
@@ -64,15 +65,15 @@ namespace alc {
 	
 	void tMemberInfo::stream(tBBuf &t)
 	{
-		t.putU32(0x00000020); //unknown, seen 0x20 and 0x22 (seems to be a flag)
-		t.putU16(0x03EA); //always seen that value
+		t.putU32(0x00000020); // unknown, seen 0x20 and 0x22 (seems to be a flag)
+		t.putU16(0x03EA); // always seen that value
 		t.putU32(ki);
 		t.put(avatar);
-		t.putByte(0x00); //always seen that value
-		t.putByte(0x03); //always seen that value
+		t.putByte(hidePlayer); // CCR flag - when set to 1, the player is hidden on the age list
+		t.putByte(0x03); // always seen that value
 		t.putU32(ntohl(ip));
 		t.putU16(ntohs(port));
-		t.putByte(0x00); //always seen that value
+		t.putByte(0x00); // always seen that value
 		t.put(obj);
 	}
 	

@@ -55,6 +55,7 @@ namespace alc {
 	private:
 		U32 ki;
 		tUStr avatar;
+		bool hidePlayer;
 		U32 ip;
 		U16 port;
 		tUruObject obj;
