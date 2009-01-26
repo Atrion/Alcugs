@@ -175,18 +175,20 @@ void tNetSession::updateRTT(U32 newread) {
 }
 void tNetSession::increaseCabal() {
 	if(!cabal) return;
-	const U32 delta=300;
+	const U32 delta=250;
 	U32 inc=(delta*cabal)/1000;
 	if(cabal+inc > minBandwidth) inc /= 6;
 	cabal+=inc;
-	if(cabal > maxBandwidth) cabal=maxBandwidth;
+	if(cabal > maxBandwidth) cabal = maxBandwidth;
 	DBG(5,"+Cabal is now %i\n",cabal);
 }
 void tNetSession::decreaseCabal(bool partial) {
 	if(!cabal) return;
-	const U32 delta = partial ? 333 : 500;
-	cabal -= (delta*cabal)/1000;
-	if(cabal<maxPacketSz) cabal=maxPacketSz;
+	const U32 delta = partial ? 250 : 500;
+	U32 dec = (delta*cabal)/1000;
+	if (cabal-dec < minBandwidth) dec /= 4;
+	cabal -= dec;
+	if(cabal < maxPacketSz) cabal = maxPacketSz;
 	DBG(5,"-Cabal is now %i\n",cabal);
 }
 
