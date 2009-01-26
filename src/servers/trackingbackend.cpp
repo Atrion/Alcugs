@@ -556,7 +556,7 @@ namespace alc {
 		}
 		fprintf(f, "</table>\n");
 		// footer
-		fprintf(f, "</html>\n");
+		fprintf(f, "</body></html>\n");
 		fclose(f);
 	}
 	
