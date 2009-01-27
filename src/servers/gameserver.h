@@ -86,7 +86,6 @@ namespace alc {
 		
 		U32 lastPlayerLeft;
 		U32 lingerTime;
-		bool setVaultOnlineState;
 	};
 
 } //End alc namespace
