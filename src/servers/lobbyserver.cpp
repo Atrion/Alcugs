@@ -68,18 +68,21 @@ namespace alc {
 		strncpy(website, var.c_str(), 255);
 		
 		var = cfg->getVar("game.log");
+		if (var.isNull()) throw txBase(_WHERE("game log directory is not defined"));
 		strncpy(gameLogPath, var.c_str(), 255);
 		
 		var = cfg->getVar("game.config");
 		if (var.isNull()) var = cfg->getVar("read_config", "cmdline");
 		strncpy(gameConfig, var.c_str(), 255);
 		
-		var = cfg->getVar("bin");
-		strncpy(gameBin, var.c_str(), 255);
-		strncat(gameBin, "/uru_game", 255);
-		
 		var = cfg->getVar("game.bin");
-		if (!var.isNull()) // if set, overwrite global "bin" path
+		if (var.isNull()) {
+			var = cfg->getVar("bin");
+			if (var.isNull() < 2) throw txBase(_WHERE("game bin is not defined"));
+			strncpy(gameBin, var.c_str(), 255);
+			strncat(gameBin, "/uru_game", 255);
+		}
+		else
 			strncpy(gameBin, var.c_str(), 255);
 		
 		var = cfg->getVar("load_on_demand");

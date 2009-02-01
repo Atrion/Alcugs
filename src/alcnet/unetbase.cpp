@@ -113,7 +113,6 @@ void tUnetBase::reconfigure() {
 	if(!var.isNull()) {
 		lan_down=var.asU32();
 	}
-	//"public_address"
 	var=cfg->getVar("private_mask","global");
 	if(!var.isNull()) {
 		lan_mask=(U32)inet_addr(var.c_str());
@@ -130,8 +129,6 @@ void tUnetBase::reconfigure() {
 			lan_addr=0;
 		}
 	}
-	//"spawn.start"
-	//"spawn.stop"
 	var=cfg->getVar("net.noflood","global");
 	if(!var.isNull()) {
 		if(var.asByte()) {

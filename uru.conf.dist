@@ -75,7 +75,7 @@ db.username = "alcugs"
 db.passwd = "yourpassword"
 
 # paths
-age = "/usr/local/alcugs/age/" # directory containing the age files (for tracking and vault)
+age = "/usr/local/alcugs/age/" # directory containing the age files (for game, tracking and vault)
 sdl = "/usr/local/alcugs/sdl/" # directory containing the sdl files (for game)
 
 # Instancing settings (used by tracking and vault)
