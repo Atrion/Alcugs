@@ -122,7 +122,7 @@ void alcNetSetConfigAliases() {
 	}
 
 	//shard public info
-	cfg->copyKey("shard.name","shard_name","global","global");
+	/*cfg->copyKey("shard.name","shard_name","global","global");
 	cfg->copyKey("shard.website","shard_website","global","global");
 	cfg->copyKey("shard.desc","shard_description","global","global");
 	cfg->copyKey("shard.passwd","shard_password","global","global");
@@ -137,13 +137,13 @@ void alcNetSetConfigAliases() {
 	if(val.isNull()) {
 		cfg->setVar("http://huru.almlys.dyns.net/unconfigured.php",\
 		"shard.website","global");
-	}*/
+	}* /
 	val=cfg->getVar("shard.desc","global");
 	if(val.isNull()) {
 		cfg->setVar("Generic unconfigured Alcugs shard",\
 		"shard.desc","global");
 	}
-	cfg->copyKey("meta","enable_metaserver","global","global");
+	cfg->copyKey("meta","enable_metaserver","global","global");*/
 
 	cfg->copyKey("vault.hood.name","neighborhood_name","global","global");
 	cfg->copyKey("vault.hood.desc","neighborhood_comment","global","global");
