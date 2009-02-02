@@ -46,10 +46,6 @@
 ;net.log.ack = 1 # enables/disables logging of acks (default 1)
 ;log.n_rotate = 5 # set number of files to rotate (0 will disable logging, 1 keeps only one log file without rotating, default is 5)
 
-# sets the bandwidth in kbit/s. This speed is anounced to the clients
-# and used to compute how fast the server sends the messages
-;bandwidth = 128
-
 # the bind adress for lobby and game servers (i.e. the IP of the interface to the router)
 bind = "127.0.0.1"
 # the address others use to connect to your server (i.e. your external address - can be a hostname)
@@ -131,8 +127,8 @@ port = 2011
 # Cleft: for Relto book -- required if someone doesn't finish Cleft on first try (but only if Cleft is not instanced)
 # DniCityX2Finale,GreatZero,Kveer,Neighborhood02: for gameplay
 # Myst,Personal02,RestorationGuild,spyroom: for reward clothing
-# you might want to add Garden because of the the rain bug
-;tracking.tmp.hacks.resetting_ages = "Cleft,DniCityX2Finale,GreatZero,Kveer,Neighborhood02,Myst,Personal02,RestorationGuild,spyroom"
+# Garden: to fix the rain bug
+;tracking.tmp.hacks.resetting_ages = "Cleft,DniCityX2Finale,GreatZero,Kveer,Neighborhood02,Myst,Personal02,RestorationGuild,spyroom,Garden"
 
 # Status file settings
 ;track.html = 0 # Enable standard online players html output (default 0)
@@ -161,7 +157,8 @@ db.name = "alcugs_vault"
 vault.hood.name = "Alcugs hood" # name of the default (and only) hood (will only be applied for a new, clean vault)
 vault.hood.desc = "This is a hood on an Alcugs server" # description of the default hood (will only be applied for a new, clean vault)
 ;vault.maxplayers = 5 # maximum number of avatars per account
-vault.tmp.hacks.linkrules = 1 # enable a hack which fixes problems with Ahnonay, Myst and Kirel (default 0)
+;vault.tmp.hacks.linkrules = 1 # enable a hack which fixes problems with Ahnonay, Myst and Kirel (default 0)
+;vault.auto_remove_mgrs = 0 # If you use only unet3+ servers, please enable this to automatically remove subscriptions from players the server knows to be offline. It will cause problems with unet2 game servers though.
 
 stop = 1
 
