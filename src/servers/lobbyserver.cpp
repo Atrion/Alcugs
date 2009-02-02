@@ -87,31 +87,6 @@ namespace alc {
 		
 		var = cfg->getVar("load_on_demand");
 		loadOnDemand = (var.isNull() || var.asByte()); // on per default
-		
-		var = cfg->getVar("game.alternative");
-		strncpy(game2Bin, var.c_str(), 255);
-		
-		var = cfg->getVar("game.alternative.ages");
-		strncpy(game2Ages, var.c_str(), 255);
-		
-		var = cfg->getVar("game.alternative.config");
-		if (var.isNull()) var = cfg->getVar("read_config", "cmdline");
-		strncpy(game2Config, var.c_str(), 255);
-	}
-	
-	bool tUnetLobbyServer::loadWithGame2(const char *age)
-	{
-		// local copy of ages list as strsep modifies it
-		char ages[1024];
-		strcpy(ages, game2Ages);
-		
-		char *buf = ages;
-		char *p = strsep(&buf, ",");
-		while (p != 0) {
-			if (strcmp(p, age) == 0) return true;
-			p = strsep(&buf, ",");
-		}
-		return false;
 	}
 	
 	int tUnetLobbyServer::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
@@ -300,21 +275,14 @@ namespace alc {
 					stopOp(); // will close the alcnet logs as well as the socket
 					alcOnFork(); // will close all logs
 					
-					// check if we should use the alternative game server
-					char *bin = gameBin, *conf = gameConfig;
-					if (strlen(game2Bin) && loadWithGame2(gameName)) {
-						bin = game2Bin;
-						conf = game2Config;
-					}
-					
 					// if the server was put in daemon mode, th lobby would get the SIGCHILD immediately after starting, so it'd
 					// be useless for debugging
 					if (forkServer.loadSDL)
-						execlp(bin, bin,"-p",gamePort,"-guid",gameGuid,"-name",gameName,
-								"-log",gameLog,"-c",conf,"-v","0","-L",NULL);
+						execlp(gameBin, gameBin,"-p",gamePort,"-guid",gameGuid,"-name",gameName,
+								"-log",gameLog,"-c",gameConfig,"-v","0","-L",NULL);
 					else
-						execlp(bin, bin,"-p",gamePort,"-guid",gameGuid,"-name",gameName,
-								"-log",gameLog,"-c",conf,"-v","0",NULL);
+						execlp(gameBin, gameBin,"-p",gamePort,"-guid",gameGuid,"-name",gameName,
+								"-log",gameLog,"-c",gameConfig,"-v","0",NULL);
 					
 					// if we come here, there was an error in the execlp call (but we're still in the game server process!)
 					// weve already shut down the logs, so we have to get them up again
