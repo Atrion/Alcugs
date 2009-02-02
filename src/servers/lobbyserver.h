@@ -61,10 +61,6 @@ namespace alc {
 		char gameConfig[256];
 		char gameBin[256];
 		bool loadOnDemand;
-		
-		char game2Bin[256];
-		char game2Ages[256];
-		char game2Config[256];
 	};
 	
 } //End alc namespace
