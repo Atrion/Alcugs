@@ -435,7 +435,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 			
 			// save our upstream in cabal
 			if((ntohl(ip) & 0xFFFFFF00) == 0x7F000000) { //lo
-				cabal=100000000/8; //100Mbps
+				cabal=100 * 1000 * 1000/8; //100Mbps
 			} else if((ip & net->lan_mask) == net->lan_addr) { //LAN
 				cabal=net->lan_up / 8;
 			} else { //WAN

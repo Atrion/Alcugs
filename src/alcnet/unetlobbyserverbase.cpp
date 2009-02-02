@@ -79,7 +79,7 @@ namespace alc {
 		if (var.isNull() || var.asByte()) { // logging enabled per default
 			if (lvault == lnull) lvault = new tLog("vault.html", 2, DF_HTML);
 			var = cfg->getVar("vault.html.log.short");
-			vaultLogShort = (!var.isNull() && var.asByte()); // per default, it's not short
+			vaultLogShort = (var.isNull() || var.asByte()); // per default, it *is* short
 		}
 		var = cfg->getVar("allow_uu_clients");
 		allowUU = (var.isNull() || var.asByte()); // per default, UU clients are allowed

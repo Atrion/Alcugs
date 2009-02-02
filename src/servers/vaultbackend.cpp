@@ -90,7 +90,7 @@ namespace alc {
 		if (var.isNull() || var.asByte()) { // logging enabled per default
 			logHtml = new tLog("vault.html", 2, DF_HTML);
 			var = cfg->getVar("vault.html.log.short");
-			shortHtml = (!var.isNull() && var.asByte()); // per default, it's not short
+			shortHtml = (var.isNull() || var.asByte()); // per default, it *is* short
 		}
 		
 		var = cfg->getVar("vault.maxplayers");
@@ -112,7 +112,7 @@ namespace alc {
 		else strncpy(welcomeMsgText, defaultWelcomeMsgText, 4095);
 		
 		var = cfg->getVar("vault.tmp.hacks.linkrules");
-		linkingRulesHack = (!var.isNull() && var.asByte()); // disabled per default
+		linkingRulesHack = (var.isNull() || var.asByte()); // enabled per default
 		
 		var = cfg->getVar("vault.auto_remove_mgrs");
 		autoRemoveMgrs = (!var.isNull() && var.asByte()); // disabled per default
