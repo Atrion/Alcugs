@@ -545,6 +545,9 @@ namespace alc {
 						return 1;
 					}
 					parsedMsg.print(lvault, /*clientToServer:*/false, client, vaultLogShort);
+					// do additional processing
+					additionalVaultProcessing(u, &parsedMsg);
+					// send it on to client
 					parsedMsg.tpots = client->tpots;
 					tmVault vaultMsgFwd(client, vaultMsg.ki, vaultMsg.x, isTask, &parsedMsg);
 					send(vaultMsgFwd);
@@ -564,12 +567,13 @@ namespace alc {
 					}
 					vaultMsg.message.get(parsedMsg);
 					parsedMsg.print(lvault, /*clientToServer:*/true, u, vaultLogShort);
+					// do additional processing
+					additionalVaultProcessing(u, &parsedMsg);
+					// send it on to vault
 					parsedMsg.tpots = vaultServer->tpots;
 					tmVault vaultMsgFwd(vaultServer, u->ki, vaultMsg.x, isTask, &parsedMsg);
 					send(vaultMsgFwd);
 				}
-				// do additional processing
-				additionalVaultProcessing(u, &parsedMsg);
 				
 				return 1;
 			}

@@ -72,7 +72,7 @@ private_ages		V	str		AvatarCustomization,Personal,Nexus   set private age names
 	 5 tpos
 	 6 tpos2
 
-(2) quick note about access levels
+(2) quick note about access levels (to see what was actually implemented, look at include/alcnet/protocol/prot.h)
  0 -> FULL access. Gamemasters, admins, vault managers.
  1-2 -> *unused*
  3 -> Basic Admin access. GameMasters, write permissions
@@ -85,7 +85,7 @@ private_ages		V	str		AvatarCustomization,Personal,Nexus   set private age names
  11-14 -> *unused*
  15 -> Player Level
  16-24 -> *unused*
- 25 -> Account Not Activated (Dissabled)
+ 25 -> Account Not Activated (Disabled)
  26-29 -> *unused*
  30 -> Banned
 

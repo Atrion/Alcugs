@@ -110,7 +110,7 @@ namespace alc {
 				Byte result = AUnspecifiedServerError;
 				U32 ki = 0;
 				int num = 0;
-				if (createPlayer.accessLevel > AcCCR) num = vaultBackend->getNumberOfPlayers(createPlayer.uid);
+				if (createPlayer.accessLevel > AcMod) num = vaultBackend->getNumberOfPlayers(createPlayer.uid);
 				if (num >= vaultBackend->getMaxPlayers()) result = AMaxNumberPerAccountReached;
 				else if (createPlayer.avatar.size() < 3) result = ANameIsTooShort;
 				else if (createPlayer.avatar.size() > 20) result = ANameIsTooLong;
