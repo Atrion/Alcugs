@@ -51,8 +51,13 @@ namespace alc {
 	*/
 	class tGameData : public tNetSessionData {
 	public:
-		tGameData(const tUruObject &obj) : obj(obj) { }
+		tGameData(const tUruObject &obj) : obj(obj) { isHidden = false; }
 		tUruObject obj;
+		bool isHidden;
+		
+		inline tMemberInfo createInfo(tNetSession *u) {
+			return tMemberInfo(u, obj, isHidden);
+		}
 	};
 
 	class tUnetGameServer : public tUnetLobbyServerBase {

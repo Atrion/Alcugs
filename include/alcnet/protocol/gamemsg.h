@@ -48,7 +48,7 @@ namespace alc {
 	// Helper class for the member list messages
 	class tMemberInfo : public tBaseType {
 	public:
-		tMemberInfo(tNetSession *u, const tUruObject &obj);
+		tMemberInfo(tNetSession *u, const tUruObject &obj, bool hidePlayer);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		const char *str(void);
@@ -249,7 +249,7 @@ namespace alc {
 	
 	class tmMemberUpdate : public tmMsgBase {
 	public:
-		tmMemberUpdate(tNetSession *u, tNetSession *memberSession, const tUruObject &obj, bool isJoined);
+		tmMemberUpdate(tNetSession *u, tNetSession *memberSession, const tMemberInfo &info, bool isJoined);
 		virtual void stream(tBBuf &t);
 		// format
 		tMemberInfo info;

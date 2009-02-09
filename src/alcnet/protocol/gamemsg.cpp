@@ -49,11 +49,11 @@
 namespace alc {
 
 	//// tMemberInfo
-	tMemberInfo::tMemberInfo(tNetSession *u, const tUruObject &obj) : avatar(u->avatar), obj(obj)
+	tMemberInfo::tMemberInfo(tNetSession *u, const tUruObject &obj, bool hidePlayer) : avatar(u->avatar), obj(obj)
 	{
 		avatar.setVersion(0); // normal UruString
 		ki = u->ki;
-		hidePlayer = false;
+		this->hidePlayer = hidePlayer;
 		ip = u->getIp();
 		port = u->getPort();
 	}
@@ -614,8 +614,8 @@ namespace alc {
 	}
 	
 	//// tmMemberUpdate
-	tmMemberUpdate::tmMemberUpdate(tNetSession *u, tNetSession *memberSession, const tUruObject &obj, bool isJoined)
-	 : tmMsgBase(NetMsgMemberUpdate, plNetAck | plNetCustom, u), info(memberSession, obj)
+	tmMemberUpdate::tmMemberUpdate(tNetSession *u, tNetSession *memberSession, const tMemberInfo &info, bool isJoined)
+	 : tmMsgBase(NetMsgMemberUpdate, plNetAck | plNetCustom, u), info(info)
 	{
 		this->isJoined = isJoined;
 	}

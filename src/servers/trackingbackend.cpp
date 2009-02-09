@@ -361,9 +361,9 @@ namespace alc {
 		statusFileUpdate = true;
 		/* Flags:
 		0: delete
-		1: set invisible
+		1: set invisible (unused!)
 		2: set visible
-		3: set only buddies */
+		3: set only buddies (unused!) */
 		tPlayerList::iterator player = getPlayer(playerStatus.ki);
 		if (playerStatus.playerFlag == 0) {
 			if (player != players.end()) {
@@ -372,7 +372,7 @@ namespace alc {
 				statusFileUpdate = true;
 			}
 		}
-		else if (playerStatus.playerFlag >= 1 && playerStatus.playerFlag <= 3) {
+		else if (playerStatus.playerFlag == 2) {
 			if (player == players.end()) { // it doesn't exist, create it
 				player = players.insert(players.end(), tPlayer(playerStatus.ki));
 			}
