@@ -70,15 +70,16 @@
 
 //account access levels
 #define AcRoot 0
-#define AcAdmin 3
+#define AcAdmin 3 // can set current player and remove avatars from all accounts
 #define AcDebug 5
-#define AcCCR 7
-#define AcMod 10
-#define AcPlayer 15
+#define AcCCR 7 // VaultManager access, and create avatars with special types
+#define AcMod 10 // can create as many avatars as he wants, can hide online state and change avatar name
+#define AcPlayer 15 // default for new players
 #define AcWarned 16
-#define AcNotActivated 25
+#define AcActivated 24 // game access (default, can be changed by configuration)
+#define AcNotActivated (AcActivated+1)
 #define AcBanned 30
-#define AcNotRes 40
+#define AcNotRes 40 // unable to verify authentication request (user not found, DB query failed)
 
 //type of clients
 #define TExtRel 0x03

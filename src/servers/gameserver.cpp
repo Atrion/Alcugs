@@ -124,13 +124,10 @@ namespace alc {
 	
 	void tUnetGameServer::additionalVaultProcessing(tNetSession *u, tvMessage *msg)
 	{
-		/* this is a very dirty fix for the bahro poles, but as long as the game server doesn't subscribe to the vault to get it's 
-		own SDL node, we have to do it this way */
-		
+		// first of all, we are only interested in VSaveNodes sent from client to vault
 		if (u->getPeerType() == KVault) return; // we care only about messages from the client
 		if (msg->task) return; // ignore vault tasks
 		if (msg->cmd != VSaveNode) return; // we are only interested in VSaveNode messages
-		
 		// ok, now find the saved node
 		tvNode *node = NULL;
 		for (tvMessage::tItemList::iterator it = msg->items.begin(); it != msg->items.end(); ++it) {
@@ -140,13 +137,28 @@ namespace alc {
 		}
 		if (!node)
 			throw txProtocolError(_WHERE("A VSaveNode without a node attached???"));
-		if (node->type != KSDLNode) return;
-		if (!node->blob1Size) return; // don't bother parsing empty messages
-		// got the node, and it is a SDL one... get the SDL binary stream
-		tMBuf data(node->blob1Size);
-		data.write(node->blob1, node->blob1Size);
-		data.rewind();
-		ageState->saveSdlVaultMessage(data, u); // process it
+		
+		// now let's see what to do
+		if (node->type == KSDLNode) {
+			/* this is a very dirty fix for the bahro poles, but as long as the game server doesn't subscribe to the vault to get it's 
+			own SDL node, we have to do it this way */
+			if (!node->blob1Size) return; // don't bother parsing empty messages
+			// got the node, and it is a SDL one... get the SDL binary stream
+			tMBuf data(node->blob1Size);
+			data.write(node->blob1, node->blob1Size);
+			data.rewind();
+			ageState->saveSdlVaultMessage(data, u); // process it
+		}
+		else if (node->type == KPlayerInfoNode) {
+			if (node->owner != u->ki)
+				throw txProtocolError(_WHERE("chaning a foreign player info is not allowed"));
+			if (u->getAccessLevel() > AcMod)
+				throw txProtocolError(_WHERE("%s is not allowed to change his player info node", u->str()));
+			if (!(node->flagB & MAgeName)) return; // the hidden/shown status is not changed
+			bool isHidden = node->ageName.size();
+			if (isHidden) log->log("Player %s just hid\n", u->str());
+			else log->log("Player %s just unhid\n", u->str());
+		}
 	}
 	
 	void tUnetGameServer::playerAuthed(tNetSession *u)

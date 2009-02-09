@@ -72,7 +72,7 @@ namespace alc {
 	
 		tConfig *cfg = alcGetConfig();
 		tStrBuf var = cfg->getVar("auth.minalevel");
-		if (var.isNull()) minAccess = 25;
+		if (var.isNull()) minAccess = AcNotActivated;
 		else minAccess = var.asU16();
 		
 		var = cfg->getVar("auth.att");
@@ -208,7 +208,7 @@ namespace alc {
 		
 		log->log("AUTH: player %s (IP: %s, game server %s):\n ", login, ip, u->str());
 		if (queryResult < 0) { // that means: player not found
-			*accessLevel = AcNotActivated;
+			*accessLevel = AcNotRes;
 			log->print("Player not found\n");
 			log->flush();
 			return AInvalidUser;
