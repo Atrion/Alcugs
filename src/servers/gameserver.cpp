@@ -149,15 +149,36 @@ namespace alc {
 			data.rewind();
 			ageState->saveSdlVaultMessage(data, u); // process it
 		}
+		/* NOTE: These checks are not mainly security checks but are necessary to update the age list when a player changes his name or hides.
+		   The KVNodeMgrPlayerNode check is meant to provided consistence in rejecting player name changes.
+		   But since these checks are in the game server and not in the lobbybase, you can still do everything as long as you are logged
+		   in through lobby. */
 		else if (node->type == KPlayerInfoNode) {
 			if (node->owner != u->ki)
-				throw txProtocolError(_WHERE("chaning a foreign player info is not allowed"));
+				throw txProtocolError(_WHERE("changing a foreign player info node is not allowed"));
 			if (u->getAccessLevel() > AcMod)
 				throw txProtocolError(_WHERE("%s is not allowed to change his player info node", u->str()));
-			if (!(node->flagB & MAgeName)) return; // the hidden/shown status is not changed
-			bool isHidden = node->ageName.size();
-			if (isHidden) log->log("Player %s just hid\n", u->str());
-			else log->log("Player %s just unhid\n", u->str());
+			
+			if (!u->data) throw txProtocolError(_WHERE("Player data must be set when player node is changed"));
+			if (node->flagB & MAgeName) { // the hidden/shown status changed
+				bool isHidden = node->ageName.size();
+				if (isHidden) log->log("Player %s just hid\n", u->str());
+				else log->log("Player %s just unhid\n", u->str());
+				((tGameData *)u->data)->isHidden = isHidden;
+				bcastMemberUpdate(u, /*isJoined*/true); // update member list
+			}
+			if (node->flagB & MlStr64_1) { // avatar name changed
+				log->log("%s is now called %s\n", u->str(), node->lStr1.c_str());
+				// update member list
+				strncpy(u->avatar, node->lStr1.c_str(), 199);
+				bcastMemberUpdate(u, /*isJoined*/true);
+			}
+		}
+		else if (node->type == KVNodeMgrPlayerNode) {
+			if (node->index != u->ki)
+				throw txProtocolError(_WHERE("changing a foreign player mgr node is not allowed"));
+			if (u->getAccessLevel() > AcMod)
+				throw txProtocolError(_WHERE("%s is not allowed to change his player mgr node", u->str()));
 		}
 	}
 	
@@ -262,7 +283,7 @@ namespace alc {
 		smgr->rewind();
 		while ((session = smgr->getNext())) {
 			if (session != u && session->data) {
-				tmMemberUpdate memberUpdate(session, u, ((tGameData *)u->data)->obj, isJoined);
+				tmMemberUpdate memberUpdate(session, u, ((tGameData *)u->data)->createInfo(u), isJoined);
 				send(memberUpdate);
 			}
 		}
@@ -389,7 +410,7 @@ namespace alc {
 				smgr->rewind();
 				while ((session = smgr->getNext())) {
 					if (session != u && session->data) {
-						list.members.push_back(tMemberInfo(session, ((tGameData *)session->data)->obj));
+						list.members.push_back(((tGameData *)session->data)->createInfo(session));
 					}
 				}
 				send(list);
