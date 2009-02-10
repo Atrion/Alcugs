@@ -159,19 +159,30 @@ namespace alc {
 			if (u->getAccessLevel() > AcMod)
 				throw txProtocolError(_WHERE("%s is not allowed to change his player info node", u->str()));
 			
-			if (!u->data) throw txProtocolError(_WHERE("Player data must be set when player node is changed"));
+			if (!u->joined || !u->data) throw txProtocolError(_WHERE("Player data must be set when player node is changed"));
 			if (node->flagB & MAgeName) { // the hidden/shown status changed
 				bool isHidden = node->ageName.size();
 				if (isHidden) log->log("Player %s just hid\n", u->str());
 				else log->log("Player %s just unhid\n", u->str());
+				// update member list
 				((tGameData *)u->data)->isHidden = isHidden;
-				bcastMemberUpdate(u, /*isJoined*/true); // update member list
+				bcastMemberUpdate(u, /*isJoined*/true);
 			}
 			if (node->flagB & MlStr64_1) { // avatar name changed
 				log->log("%s is now called %s\n", u->str(), node->lStr1.c_str());
 				// update member list
 				strncpy(u->avatar, node->lStr1.c_str(), 199);
 				bcastMemberUpdate(u, /*isJoined*/true);
+			}
+			// update tracking server status
+			tNetSession *trackingServer = getSession(tracking);
+			if (!trackingServer) {
+				err->log("ERR: I've got to set player %s to hidden, but tracking is unavailable.\n", u->str());
+			}
+			else {
+				// tell tracking
+				tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->getSid(), u->uid, u->name, u->avatar, ((tGameData *)u->data)->isHidden ? 1 /* invisible */ : 2 /* visible */, RActive);
+				send(trackingStatus);
 			}
 		}
 		else if (node->type == KVNodeMgrPlayerNode) {
