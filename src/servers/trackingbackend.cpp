@@ -139,6 +139,13 @@ namespace alc {
 		var = cfg->getVar("track.html.path");
 		if (var.isNull()) statusHTML = false;
 		else strncpy(statusHTMLFile, var.c_str(), 255);
+		
+		var = cfg->getVar("track.htmldbg");
+		statusHTMLdbg = (!var.isNull() && var.asByte());
+		var = cfg->getVar("track.htmldbg.path");
+		if (var.isNull()) statusHTMLdbg = false;
+		else strncpy(statusHTMLdbgFile, var.c_str(), 255);
+		
 		var = cfg->getVar("track.xml");
 		statusXML = (!var.isNull() && var.asByte());
 		var = cfg->getVar("track.xml.path");
@@ -361,7 +368,7 @@ namespace alc {
 		statusFileUpdate = true;
 		/* Flags:
 		0: delete
-		1: set invisible (unused!)
+		1: set invisible
 		2: set visible
 		3: set only buddies (unused!) */
 		tPlayerList::iterator player = getPlayer(playerStatus.ki);
@@ -372,7 +379,7 @@ namespace alc {
 				statusFileUpdate = true;
 			}
 		}
-		else if (playerStatus.playerFlag == 2) {
+		else if (playerStatus.playerFlag == 1 || playerStatus.playerFlag == 2) {
 			if (player == players.end()) { // it doesn't exist, create it
 				player = players.insert(players.end(), tPlayer(playerStatus.ki));
 			}
@@ -402,6 +409,7 @@ namespace alc {
 			}
 			log->log("Got status update for player %s: 0x%02X (%s)\n", player->str(), playerStatus.playerStatus,
 					alcUnetGetReasonCode(playerStatus.playerStatus));
+			statusFileUpdate = true;
 		}
 		else {
 			log->log("ERR: Got unknown flag 0x%02X for player with KI %d\n", playerStatus.playerFlag, playerStatus.ki);
@@ -506,14 +514,15 @@ namespace alc {
 		DBG(9, "Printing the online list to %s\n", statusHTMLFile);
 		
 		if (statusHTML) printStatusHTML();
+		if (statusHTMLdbg) printStatusHTML(true);
 		if (statusXML) printStatusXML();
 		statusFileUpdate = false;
 		lastUpdate = alcGetTime();
 	}
 	
-	void tTrackingBackend::printStatusHTML(void)
+	void tTrackingBackend::printStatusHTML(bool dbg)
 	{
-		FILE *f = fopen(statusHTMLFile, "w");
+		FILE *f = fopen(dbg ? statusHTMLdbgFile : statusHTMLFile, "w");
 		if (!f) {
 		  lerr->log("Can\'t open %s for writing - disabling HTML status page\n", statusHTMLFile);
 		  statusHTML = false;
@@ -531,10 +540,16 @@ namespace alc {
 		// player list
 		fprintf(f, "<h2>Current Online Players</h2>\n");
 		fprintf(f, "<b>Total population: %d</b><br /><br />\n", players.size());
-		fprintf(f, "<table border=\"1\"><tr><th>Avatar (Account)</th><th>KI</th><th>Age</th><th>Server GUID</th><th>Status</th></tr>\n");
+		if (dbg)
+			fprintf(f, "<table border=\"1\"><tr><th>Avatar (Account)</th><th>KI</th><th>Age</th><th>Server GUID</th><th>Status</th></tr>\n");
+		else
+			fprintf(f, "<table border=\"1\"><tr><th>Avatar (Account)</th><th>KI</th><th>Age</th><th>Status</th></tr>\n");
 		for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
-			fprintf(f, "<tr><td>%s (%s)</td><td>%d</td><td>%s</td><td>%s</td>", it->avatar, it->account, it->ki,
-					it->u->name, alcGetStrGuid(it->u->serverGuid));
+			if (it->flag != 2) continue;
+			fprintf(f, "<tr><td>%s (%s)</td><td>%d</td><td>%s</td>", it->avatar, it->account, it->ki,
+					it->u->name);
+			if (dbg)
+				fprintf(f, "<td>%s</td>", alcGetStrGuid(it->u->serverGuid));
 			if (it->awaiting_age[0] != 0)
 				// if the age he wants to is saved, print it
 				fprintf(f, "<td>%s to %s</td></tr>\n", alcUnetGetReasonCode(it->status), it->awaiting_age);
@@ -542,19 +557,21 @@ namespace alc {
 		}
 		fprintf(f, "</table><br /><br />\n");
 		// server list
-		tNetSession *server;
-		fprintf(f,"<h2>Current Server Instances</h2>");
-		fprintf(f, "<table border=\"1\"><tr><th>Age</th><th>GUID</th><th>IP and Port</th></tr>\n");
-		servers->rewind();
-		while ((server = servers->getNext())) {
-			if (!server->data) {
-				fprintf(f, "<tr><td colspan=\"2\" style=\"color:red\">Unknown (not a game or lobby server)</td><td>%s:%d</td><tr>\n",
-					alcGetStrIp(server->getIp()), ntohs(server->getPort()));
-				continue;
+		if (dbg) {
+			tNetSession *server;
+			fprintf(f,"<h2>Current Server Instances</h2>");
+			fprintf(f, "<table border=\"1\"><tr><th>Age</th><th>GUID</th><th>IP and Port</th></tr>\n");
+			servers->rewind();
+			while ((server = servers->getNext())) {
+				if (!server->data) {
+					fprintf(f, "<tr><td colspan=\"2\" style=\"color:red\">Unknown (not a game or lobby server)</td><td>%s:%d</td><tr>\n",
+						alcGetStrIp(server->getIp()), ntohs(server->getPort()));
+					continue;
+				}
+				fprintf(f, "<tr><td>%s</td><td>%s</td><td>%s:%d</td><tr>\n", server->name, alcGetStrGuid(server->serverGuid), alcGetStrIp(server->getIp()), ntohs(server->getPort()));
 			}
-			fprintf(f, "<tr><td>%s</td><td>%s</td><td>%s:%d</td><tr>\n", server->name, alcGetStrGuid(server->serverGuid), alcGetStrIp(server->getIp()), ntohs(server->getPort()));
+			fprintf(f, "</table>\n");
 		}
-		fprintf(f, "</table>\n");
 		// footer
 		fprintf(f, "</body></html>\n");
 		fclose(f);

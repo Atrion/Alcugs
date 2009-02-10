@@ -109,7 +109,7 @@ namespace alc {
 		void notifyWaiting(tNetSession *server);
 		void serverFound(tPlayer *player, tNetSession *server);
 		bool doesAgeLoadState(const char *age);
-		void printStatusHTML(void);
+		void printStatusHTML(bool dbg = false);
 		void printStatusXML(void);
 		void printLobbyXML(FILE *f, tNetSession *lobby);
 		void printPlayersXML(FILE *f, tNetSession *server);
@@ -129,8 +129,8 @@ namespace alc {
 		bool loadAgeState;
 		
 		bool statusFileUpdate;
-		bool statusHTML, statusXML;
-		char statusHTMLFile[256], statusXMLFile[256];
+		bool statusHTML, statusHTMLdbg, statusXML;
+		char statusHTMLFile[256], statusHTMLdbgFile[256], statusXMLFile[256];
 		U32 lastUpdate;
 	};
 
