@@ -113,6 +113,7 @@ namespace alc {
 		void printStatusXML(void);
 		void printLobbyXML(FILE *f, tNetSession *lobby);
 		void printPlayersXML(FILE *f, tNetSession *server);
+		void printPlayerXML(FILE *f, tPlayer *player);
 		void printGameXML(FILE *f, tNetSession *game);
 		void generateFakeGuid(Byte *guid); //!< generates a random 7 bytes fake guid for UruVision
 
