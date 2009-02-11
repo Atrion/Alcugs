@@ -558,7 +558,7 @@ namespace alc {
 			}
 			fprintf(f, "</tr>\n");
 		}
-		fprintf(f, "</table><br /><br />\n");
+		fprintf(f, "</table><br />\n");
 		// server list
 		if (dbg) {
 			tNetSession *server;
@@ -573,14 +573,14 @@ namespace alc {
 				}
 				fprintf(f, "<tr><td>%s</td><td>%s</td><td>%s:%d</td><tr>\n", server->name, alcGetStrGuid(server->serverGuid), alcGetStrIp(server->getIp()), ntohs(server->getPort()));
 			}
-			fprintf(f, "</table>\n");
+			fprintf(f, "</table><br />\n");
 		}
 		// footer
 		char tmptime[26];
 		time_t stamp = time(NULL);
 		struct tm * tptr = gmtime(&stamp);
 		strftime(tmptime,25,"%Y:%m:%d %H:%M:%S",tptr);
-		fprintf(f, "Last Update: %s<br />\n", tmptime);
+		fprintf(f, "<br />Last Update: %s<br />\n", tmptime);
 		fprintf(f, "</body></html>\n");
 		fclose(f);
 	}
@@ -691,33 +691,29 @@ namespace alc {
 		fprintf(f, "<Players>\n");
 		for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
 			if (it->u != server || it->status != RActive) continue;
-			fprintf(f, "<Player>\n");
-				fprintf(f, "<AcctName>%s</AcctName>\n", it->account);
-				fprintf(f, "<PlayerID>%i</PlayerID>\n", it->ki);
-				fprintf(f, "<PlayerName>%s%s</PlayerName>\n", it->avatar, it->flag == 2 ? "" : " [hidden]");
-				fprintf(f, "<AccountUUID>%s</AccountUUID>\n", alcGetStrUid(it->uid));
-				if (it->awaiting_age[0] != 0)
-					// if the age he wants to is saved, print it
-					fprintf(f, "<State>%s to %s</State>\n", alcUnetGetReasonCode(it->status), it->awaiting_age);
-				else fprintf(f, "<State>%s</State>\n", alcUnetGetReasonCode(it->status));
-			fprintf(f, "</Player>\n");
+			printPlayerXML(f, &*it);
 		}
 		fprintf(f, "</Players>\n");
 		fprintf(f, "<InRoutePlayers>\n");
 		for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
 			if (it->u != server || it->status == RActive) continue;
-			fprintf(f, "<Player>\n");
-				fprintf(f, "<AcctName>%s</AcctName>\n", it->account);
-				fprintf(f, "<PlayerID>%i</PlayerID>\n", it->ki);
-				fprintf(f, "<PlayerName>%s</PlayerName>\n", it->avatar);
-				fprintf(f, "<AccountUUID>%s</AccountUUID>\n", alcGetStrUid(it->uid));
-				if (it->awaiting_age[0] != 0)
-					// if the age he wants to is saved, print it
-					fprintf(f, "<State>%s to %s</State>\n", alcUnetGetReasonCode(it->status), it->awaiting_age);
-				else fprintf(f, "<State>%s</State>\n", alcUnetGetReasonCode(it->status));
-			fprintf(f, "</Player>\n");
+			printPlayerXML(f, &*it);
 		}
 		fprintf(f, "</InRoutePlayers>\n");
+	}
+	
+	void tTrackingBackend::printPlayerXML(FILE *f, tPlayer *player)
+	{
+		fprintf(f, "<Player>\n");
+			fprintf(f, "<AcctName>%s</AcctName>\n", player->account);
+			fprintf(f, "<PlayerID>%i</PlayerID>\n", player->ki);
+			fprintf(f, "<PlayerName>%s%s</PlayerName>\n", player->avatar, player->flag == 2 ? "" : " [hidden]");
+			fprintf(f, "<AccountUUID>%s</AccountUUID>\n", alcGetStrUid(player->uid));
+			if (player->awaiting_age[0] != 0)
+				// if the age he wants to is saved, print it
+				fprintf(f, "<State>%s to %s</State>\n", alcUnetGetReasonCode(player->status), player->awaiting_age);
+			else fprintf(f, "<State>%s</State>\n", alcUnetGetReasonCode(player->status));
+		fprintf(f, "</Player>\n");
 	}
 	
 	void tTrackingBackend::printGameXML(FILE *f, tNetSession *game)
