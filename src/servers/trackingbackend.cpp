@@ -511,7 +511,6 @@ namespace alc {
 	void tTrackingBackend::updateStatusFile(void)
 	{
 		if (!statusFileUpdate && lastUpdate > alcGetTime()-5*60) return; // update at least every 5 minutes
-		DBG(9, "Printing the online list to %s\n", statusHTMLFile);
 		
 		if (statusHTML) printStatusHTML();
 		if (statusHTMLdbg) printStatusHTML(true);
@@ -522,38 +521,42 @@ namespace alc {
 	
 	void tTrackingBackend::printStatusHTML(bool dbg)
 	{
-		FILE *f = fopen(dbg ? statusHTMLdbgFile : statusHTMLFile, "w");
+		char *statusfile = dbg ? statusHTMLdbgFile : statusHTMLFile;
+		char *filename = strrchr(statusfile, '/'); // get only the filename (for automatic reload)
+		if (filename) ++filename; // it points to the slash, but we want to start after it
+		else filename = statusfile; // no slash... it must be a relative filename then, containing no directory, so let's use that
+		
+		FILE *f = fopen(statusfile, "w");
 		if (!f) {
-		  lerr->log("Can\'t open %s for writing - disabling HTML status page\n", statusHTMLFile);
-		  statusHTML = false;
-		  return;
+			lerr->log("Can\'t open %s for writing - disabling HTML status page\n", statusfile);
+			if (dbg) statusHTMLdbg = false;
+			else statusHTML = false;
+			return;
 		}
+		
 		// header
 		fprintf(f, "<html><head><title>Shard Status</title>\n");
-		char *file = strrchr(statusHTMLFile, '/'); // get only the filename (for automatic reload)
-		if (file) ++file; // it points to the slash, but we want to start after it
-		else file = statusHTMLFile; // no slash... it must be a relative filename then, containing no directory, so let's use that
-		fprintf(f, "<meta http-equiv=\"refresh\" content=\"30;url=%s\" />\n", file);
+		fprintf(f, "<meta http-equiv=\"refresh\" content=\"30;url=%s\" />\n", filename);
 		fprintf(f, "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=ISO-8859-1\">");
 		fprintf(f, "</head><body>\n");
-		fprintf(f, "Last Update: %s<br />\n", alcGetStrTime());
 		// player list
 		fprintf(f, "<h2>Current Online Players</h2>\n");
-		fprintf(f, "<b>Total population: %d</b><br /><br />\n", players.size());
-		if (dbg)
+		if (dbg) {
+			fprintf(f, "<b>Total population: %d</b><br /><br />\n", players.size());
 			fprintf(f, "<table border=\"1\"><tr><th>Avatar (Account)</th><th>KI</th><th>Age</th><th>Server GUID</th><th>Status</th></tr>\n");
+		}
 		else
-			fprintf(f, "<table border=\"1\"><tr><th>Avatar (Account)</th><th>KI</th><th>Age</th><th>Status</th></tr>\n");
+			fprintf(f, "<table border=\"1\"><tr><th>Avatar (Account)</th><th>KI</th><th>Age</th></tr>\n");
 		for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
-			if (it->flag != 2) continue;
-			fprintf(f, "<tr><td>%s (%s)</td><td>%d</td><td>%s</td>", it->avatar, it->account, it->ki,
-					it->u->name);
-			if (dbg)
+			if (!dbg && it->flag != 2) continue;
+			fprintf(f, "<tr><td>%s (%s)%s</td><td>%d</td><td>%s</td>", it->avatar, it->account, it->flag == 2 ? "" : " [hidden]", it->ki, it->u->name);
+			if (dbg) {
 				fprintf(f, "<td>%s</td>", alcGetStrGuid(it->u->serverGuid));
-			if (it->awaiting_age[0] != 0)
-				// if the age he wants to is saved, print it
-				fprintf(f, "<td>%s to %s</td></tr>\n", alcUnetGetReasonCode(it->status), it->awaiting_age);
-			else fprintf(f, "<td>%s</td></tr>\n", alcUnetGetReasonCode(it->status));
+				if (it->awaiting_age[0] != 0) // if the age he wants to is saved, print it
+					fprintf(f, "<td>%s to %s</td>", alcUnetGetReasonCode(it->status), it->awaiting_age);
+				else fprintf(f, "<td>%s</td>", alcUnetGetReasonCode(it->status));
+			}
+			fprintf(f, "</tr>\n");
 		}
 		fprintf(f, "</table><br /><br />\n");
 		// server list
@@ -573,6 +576,11 @@ namespace alc {
 			fprintf(f, "</table>\n");
 		}
 		// footer
+		char tmptime[26];
+		time_t stamp = time(NULL);
+		struct tm * tptr = gmtime(&stamp);
+		strftime(tmptime,25,"%Y:%m:%d %H:%M:%S",tptr);
+		fprintf(f, "Last Update: %s<br />\n", tmptime);
 		fprintf(f, "</body></html>\n");
 		fclose(f);
 	}
@@ -686,7 +694,7 @@ namespace alc {
 			fprintf(f, "<Player>\n");
 				fprintf(f, "<AcctName>%s</AcctName>\n", it->account);
 				fprintf(f, "<PlayerID>%i</PlayerID>\n", it->ki);
-				fprintf(f, "<PlayerName>%s</PlayerName>\n", it->avatar);
+				fprintf(f, "<PlayerName>%s%s</PlayerName>\n", it->avatar, it->flag == 2 ? "" : " [hidden]");
 				fprintf(f, "<AccountUUID>%s</AccountUUID>\n", alcGetStrUid(it->uid));
 				if (it->awaiting_age[0] != 0)
 					// if the age he wants to is saved, print it

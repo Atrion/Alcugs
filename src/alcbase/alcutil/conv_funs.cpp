@@ -123,7 +123,7 @@ const Byte * alcGetHexUid(char * guid) {
 */
 const char * alcGetStrTime(U32 timestamp, U32 microseconds) {
 	static char btime[50];
-	char tmptime[25];
+	char tmptime[26];
 	struct tm * tptr;
 	time_t stamp = (time_t)timestamp;
 
