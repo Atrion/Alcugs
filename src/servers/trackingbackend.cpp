@@ -578,8 +578,8 @@ namespace alc {
 		// footer
 		char tmptime[26];
 		time_t stamp = time(NULL);
-		struct tm * tptr = gmtime(&stamp);
-		strftime(tmptime,25,"%Y:%m:%d %H:%M:%S",tptr);
+		struct tm *tptr = gmtime(&stamp);
+		strftime(tmptime, 25, "%d.%m.%Y, %H:%M:%S", tptr);
 		fprintf(f, "<br />Last Update: %s<br />\n", tmptime);
 		fprintf(f, "</body></html>\n");
 		fclose(f);
