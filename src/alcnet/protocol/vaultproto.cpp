@@ -1303,22 +1303,22 @@ namespace alc {
 	{
 		static const char *ret;
 		switch (type) {
-			case 0x02BF:
+			case DAgeLinkStruct:
 				ret = "DAgeLinkStruct";
 				break;
-			case 0x0387:
+			case DCreatableGenericValue:
 				ret = "DCreatableGenericValue";
 				break;
-			case 0x0389:
+			case DCreatableStream:
 				ret = "DCreatableStream";
 				break;
-			case 0x034D:
+			case DServerGuid:
 				ret = "DServerGuid";
 				break;
-			case 0x0438:
+			case DVaultNodeRef: // has a different value in TPOTS, but it is converted before this function is called
 				ret = "DVaultNodeRef";
 				break;
-			case 0x0439:
+			case DVaultNode: // has a different value in TPOTS, but it is converted before this function is called
 				ret = "DVaultNode";
 				break;
 			default:
@@ -1332,37 +1332,37 @@ namespace alc {
 	{
 		static const char *ret;
 		switch (cmd) {
-			case 0x01:
+			case VConnect:
 				ret = "VConnect";
 				break;
-			case 0x02:
+			case VDisconnect:
 				ret = "VDisconnect";
 				break;
-			case 0x03:
+			case VAddNodeRef:
 				ret = "VAddNodeRef";
 				break;
-			case 0x04:
+			case VRemoveNodeRef:
 				ret = "VRemoveNodeRef";
 				break;
-			case 0x05:
+			case VNegotiateManifest:
 				ret = "VNegotiateManifest";
 				break;
-			case 0x06:
+			case VSaveNode:
 				ret = "VSaveNode";
 				break;
-			case 0x07:
+			case VFindNode:
 				ret = "VFindNode";
 				break;
-			case 0x08:
+			case VFetchNode:
 				ret = "VFetchNode";
 				break;
-			case 0x09:
+			case VSendNode:
 				ret = "VSendNode";
 				break;
-			case 0x0A:
+			case VSetSeen:
 				ret = "VSetSeen";
 				break;
-			case 0x0B:
+			case VOnlineState:
 				ret = "VOnlineState";
 				break;
 			default:
@@ -1376,43 +1376,43 @@ namespace alc {
 	{
 		static const char *ret;
 		switch (cmd) {
-			case 0x01:
+			case TCreatePlayer:
 				ret = "TCreatePlayer";
 				break;
-			case 0x02:
+			case TDeletePlayer:
 				ret = "TDeletePlayer";
 				break;
-			case 0x03:
+			case TGetPlayerList:
 				ret = "TGetPlayerList";
 				break;
-			case 0x04:
+			case TCreateNeighborhood:
 				ret = "TCreateNeighborhood";
 				break;
-			case 0x05:
+			case TJoinNeighborhood:
 				ret = "TJoinNeighborhood";
 				break;
-			case 0x06:
+			case TSetAgePublic:
 				ret = "TSetAgePublic";
 				break;
-			case 0x07:
+			case TIncPlayerOnlineTime:
 				ret = "TIncPlayerOnlineTime";
 				break;
-			case 0x08:
+			case TEnablePlayer:
 				ret = "TEnablePlayer";
 				break;
-			case 0x09:
+			case TRegisterOwnedAge:
 				ret = "TRegisterOwnedAge";
 				break;
-			case 0x0A:
+			case TUnRegisterOwnedAge:
 				ret = "TUnRegisterOwnedAge";
 				break;
-			case 0x0B:
+			case TRegisterVisitAge:
 				ret = "TRegisterVisitAge";
 				break;
-			case 0x0C:
+			case TUnRegisterVisitAge:
 				ret = "TUnRegisterVisitAge";
 				break;
-			case 0x0D:
+			case TFriendInvite:
 				ret = "TFriendInvite";
 				break;
 			default:
@@ -1426,64 +1426,64 @@ namespace alc {
 	{
 		static const char *ret;
 		switch (type) {
-			case 0x00:
+			case KInvalidNode:
 				ret = "KInvalidNode";
 				break;
-			case 0x02:
+			case KVNodeMgrPlayerNode:
 				ret = "KVNodeMgrPlayerNode";
 				break;
-			case 0x03:
+			case KVNodeMgrAgeNode:
 				ret = "KVNodeMgrAgeNode";
 				break;
-			case 0x04:
+			case KVNodeMgrGameServerNode:
 				ret = "KVNodeMgrGameServerNode";
 				break;
-			case 0x05:
+			case KVNodeMgrAdminNode:
 				ret = "KVNodeMgrAdminNode";
 				break;
-			case 0x06:
+			case KVNodeMgrServerNode:
 				ret = "KVNodeMgrServerNode";
 				break;
-			case 0x07:
+			case KVNodeMgrCCRNode:
 				ret = "KVNodeMgrCCRNode";
 				break;
-			case 0x16:
+			case KFolderNode:
 				ret = "KFolderNode";
 				break;
-			case 0x17:
+			case KPlayerInfoNode:
 				ret = "KPlayerInfoNode";
 				break;
-			case 0x18:
+			case KSystem:
 				ret = "KSystem";
 				break;
-			case 0x19:
+			case KImageNode:
 				ret = "KImageNode";
 				break;
-			case 0x1A:
+			case KTextNoteNode:
 				ret = "KTextNoteNode";
 				break;
-			case 0x1B:
+			case KSDLNode:
 				ret = "KSDLNode";
 				break;
-			case 0x1C:
+			case KAgeLinkNode:
 				ret = "KAgeLinkNode";
 				break;
-			case 0x1D:
+			case KChronicleNode:
 				ret = "KChronicleNode";
 				break;
-			case 0x1E:
+			case KPlayerInfoListNode:
 				ret = "KPlayerInfoListNode";
 				break;
-			case 0x20:
+			case KMarkerNode:
 				ret = "KMarkerNode";
 				break;
-			case 0x21:
+			case KAgeInfoNode:
 				ret = "KAgeInfoNode";
 				break;
-			case 0x22:
+			case KAgeInfoListNode:
 				ret = "KAgeInfoListNode";
 				break;
-			case 0x23:
+			case KMarkerListNode:
 				ret = "KMarkerListNode";
 				break;
 			default:
@@ -1497,100 +1497,100 @@ namespace alc {
 	{
 		static const char *ret;
 		switch (type) {
-			case 0:
+			case KGeneric:
 				ret = "KGeneric";
 				break;
-			case 1:
+			case KInboxFolder:
 				ret = "KInboxFolder";
 				break;
-			case 2:
+			case KBuddyListFolder:
 				ret = "KBuddyListFolder";
 				break;
-			case 3:
+			case KIgnoreListFolder:
 				ret = "KIgnoreListFolder";
 				break;
-			case 4:
+			case KPeopleIKnowAboutFolder:
 				ret = "KPeopleIKnowAboutFolder";
 				break;
-			case 5:
+			case KVaultMgrGlobalDataFolder:
 				ret = "KVaultMgrGlobalDataFolder";
 				break;
-			case 6:
+			case KChronicleFolder:
 				ret = "KChronicleFolder";
 				break;
-			case 7:
+			case KAvatarOutfitFolder:
 				ret = "KAvatarOutfitFolder";
 				break;
-			case 8:
+			case KAgeTypeJournalFolder:
 				ret = "KAgeTypeJournalFolder";
 				break;
-			case 9:
+			case KSubAgesFolder:
 				ret = "KSubAgesFolder";
 				break;
-			case 10:
+			case KDeviceInboxFolder:
 				ret = "KDeviceInboxFolder";
 				break;
-			case 11:
+			case KHoodMembersFolder:
 				ret = "KHoodMembersFolder";
 				break;
-			case 12:
+			case KAllPlayersFolder:
 				ret = "KAllPlayersFolder";
 				break;
-			case 13:
+			case KAgeMembersFolder:
 				ret = "KAgeMembersFolder";
 				break;
-			case 14:
+			case KAgeJournalsFolder:
 				ret = "KAgeJournalsFolder";
 				break;
-			case 15:
+			case KAgeDevicesFolder:
 				ret = "KAgeDevicesFolder";
 				break;
-			case 16:
+			case KAgeInstaceSDLNode:
 				ret = "KAgeInstaceSDLNode";
 				break;
-			case 17:
+			case KAgeGlobalSDLNode:
 				ret = "KAgeGlobalSDLNode";
 				break;
-			case 18:
+			case KCanVisitFolder:
 				ret = "KCanVisitFolder";
 				break;
-			case 19:
+			case KAgeOwnersFolder:
 				ret = "KAgeOwnersFolder";
 				break;
-			case 20:
+			case KAllAgeGlobalSDLNodesFolder:
 				ret = "KAllAgeGlobalSDLNodesFolder";
 				break;
-			case 21:
+			case KPlayerInfoNodeFolder:
 				ret = "KPlayerInfoNodeFolder";
 				break;
-			case 22:
+			case KPublicAgesFolder:
 				ret = "KPublicAgesFolder";
 				break;
-			case 23:
+			case KAgesIOwnFolder:
 				ret = "KAgesIOwnFolder";
 				break;
-			case 24:
+			case KAgesICanVisitFolder:
 				ret = "KAgesICanVisitFolder";
 				break;
-			case 25:
+			case KAvatarClosetFolder:
 				ret = "KAvatarClosetFolder";
 				break;
-			case 26:
+			case KAgeInfoNodeFolder:
 				ret = "KAgeInfoNodeFolder";
 				break;
-			case 27:
+			case KSystemNode:
 				ret = "KSystemNode";
 				break;
-			case 28:
+			case KPlayerInviteFolder:
 				ret = "KPlayerInviteFolder";
 				break;
-			case 29:
+			case KCCRPlayersFolder:
 				ret = "KCCRPlayersFolder";
 				break;
-			case 30:
+			case KGlobalInboxFolder:
 				ret = "KGlobalInboxFolder";
 				break;
-			case 31:
+			case KChildAgesFolder:
 				ret = "KChildAgesFolder";
 				break;
 			default:
