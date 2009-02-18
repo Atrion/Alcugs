@@ -881,13 +881,13 @@ const char * alcUnetGetVarType(Byte type) {
 const char * alcUnetGetRelease(Byte rel) {
 	static const char * ret;
 	switch(rel) {
-		case 0x03:
+		case TExtRel:
 			ret="ExtRel";
 			break;
-		case 0x02:
+		case TIntRel:
 			ret="IntRel";
 			break;
-		case 0x01:
+		case TDbg:
 			ret="Dbg";
 			break;
 		default:
@@ -900,41 +900,47 @@ const char * alcUnetGetRelease(Byte rel) {
 const char * alcUnetGetDestination(Byte dest) {
 	static const char * ret;
 	switch(dest) {
-		case 0x01:
+		case KAgent:
 			ret="kAgent";
 			break;
-		case 0x02:
+		case KLobby:
 			ret="kLobby";
 			break;
-		case 0x03:
+		case KGame:
 			ret="kGame";
 			break;
-		case 0x04:
+		case KVault:
 			ret="kVault";
 			break;
-		case 0x05:
+		case KAuth:
 			ret="kAuth";
 			break;
-		case 0x06:
+		case KAdmin:
 			ret="kAdmin";
 			break;
-		case 0x07:
+		case KLookup: // same as KTracking
 			ret="kLookup";
 			break;
-		case 0x08:
+		case KClient:
 			ret="kClient";
 			break;
 		case KMeta:
 			ret="kMeta";
 			break;
+		case KTest:
+			ret="kTest";
+			break;
 		case KData:
 			ret="kData";
 			break;
+		case KProxy:
+			ret="kProxy";
+			break;
+		case KPlFire:
+			ret="kPlFire";
+			break;
 		case KBcast:
 			ret="kBcast";
-			break;
-		case KTest:
-			ret="kTest";
 			break;
 		default:
 			ret="Unknown";
@@ -946,55 +952,55 @@ const char * alcUnetGetDestination(Byte dest) {
 const char * alcUnetGetReasonCode(Byte code) {
 	static const char * ret;
 	switch(code) {
-		case 0x00:
+		case RStopResponding:
 			ret="StopResponding";
 			break;
-		case 0x14:
+		case RActive:
 			ret="Active";
 			break;
-		case 0x16:
+		case RInRoute:
 			ret="InRoute";
 			break;
-		case 0x17:
+		case RArriving:
 			ret="Arriving";
 			break;
-		case 0x18:
+		case RJoining:
 			ret="Joining";
 			break;
-		case 0x19:
+		case RLeaving:
 			ret="Leaving";
 			break;
-		case 0x1A:
+		case RQuitting:
 			ret="Quitting";
 			break;
-		case 0x01:
-			ret="Unknown";
+		case RUnknown:
+			ret="UnknownReason";
 			break;
-		case 0x02:
+		case RKickedOff:
 			ret="KickedOff";
 			break;
-		case 0x03:
+		case RTimedOut:
 			ret="TimedOut";
 			break;
-		case 0x04:
+		case RLoggedInElsewhere:
 			ret="LoggedInElsewhere";
 			break;
-		case 0x05:
+		case RNotAuthenticated:
 			ret="NotAuthenticated";
 			break;
-		case 0x06:
+		case RUnprotectedCCR:
 			ret="UnprotectedCCR";
 			break;
-		case 0x07:
+		case RIllegalCCRClient:
 			ret="IllegalCCRClient";
 			break;
-		case 0x08:
+		case RHackAttempt:
 			ret="HackAttempt";
 			break;
-		case 0x09:
+		case RUnimplemented:
 			ret="Unimplemented";
 			break;
-		case 0x10:
+		case RParseError:
 			ret="ParseError";
 			break;
 		default:
@@ -1007,29 +1013,32 @@ const char * alcUnetGetReasonCode(Byte code) {
 const char * alcUnetGetAuthCode(Byte code) {
 	static const char * ret;
 	switch(code) {
-		case 0x00:
+		case AAuthSucceeded:
 			ret="AuthSucceeded";
 			break;
-		case 0x01:
+		case AAuthHello:
 			ret="AuthHello";
 			break;
-		case 0xF7:
+		case AProtocolOlder:
 			ret="ProtocolOlder";
 			break;
-		case 0xF8:
+		case AProtocolNewer:
 			ret="ProtocolNewer";
 			break;
-		case 0xFB:
+		case AAccountExpired:
 			ret="AccountExpired";
 			break;
-		case 0xFC:
+		case AAccountDisabled:
 			ret="AccountDisabled";
 			break;
-		case 0xFD:
+		case AInvalidPasswd:
 			ret="InvalidPasswd";
 			break;
-		case 0xFE:
+		case AInvalidUser:
 			ret="InvalidUser";
+			break;
+		case AUnspecifiedServerError:
+			ret="UnspecifiedServerError";
 			break;
 		default:
 			ret="Unknown";
@@ -1041,31 +1050,34 @@ const char * alcUnetGetAuthCode(Byte code) {
 const char * alcUnetGetAvatarCode(Byte code) {
 	static const char * ret;
 	switch(code) {
-		case 0x00:
+		case AOK:
 			ret="Ok";
 			break;
-		case 0xF8:
+		case AUnknown:
+			ret="UnknownReason";
+			break;
+		case ANameDoesNotHaveEnoughLetters:
 			ret="NameDoesNotHaveEnoughLetters";
 			break;
-		case 0xF9:
+		case ANameIsTooShort:
 			ret="NameIsTooShort";
 			break;
-		case 0xFA:
+		case ANameIsTooLong:
 			ret="NameIsTooLong";
 			break;
-		case 0xFB:
+		case AInvitationNotFound:
 			ret="InvitationNotFound";
 			break;
-		case 0xFC:
+		case ANameIsAlreadyInUse:
 			ret="NameIsAlreadyInUse";
 			break;
-		case 0xFD:
+		case ANameIsNotAllowed:
 			ret="NameIsNotAllowed";
 			break;
-		case 0xFE:
+		case AMaxNumberPerAccountReached:
 			ret="MaxNumberPerAccountReached";
 			break;
-		case 0xFF:
+		case AUnspecifiedServerError:
 			ret="UnspecifiedServerError";
 			break;
 		default:
@@ -1079,22 +1091,22 @@ const char * alcUnetGetLinkingRule(Byte rule)
 {
 	static const char * ret;
 	switch (rule) {
-		case 0:
+		case KBasicLink:
 			ret="KBasicLink";
 			break;
-		case 1:
+		case KOriginalBook:
 			ret="KOriginalBook";
 			break;
-		case 2:
+		case KSubAgeBook:
 			ret="KSubAgeBook";
 			break;
-		case 3:
+		case KOwnedBook:
 			ret="KOwnedBook";
 			break;
-		case 4:
+		case KVisitBook:
 			ret="KVisitBook";
 			break;
-		case 5:
+		case KChildAgeBook:
 			ret="KChildAgeBook";
 			break;
 		default:
@@ -1107,208 +1119,208 @@ const char * alcUnetGetLinkingRule(Byte rule)
 const char * alcUnetGetMsgCode(U16 code) {
 	static const char * ret;
 	switch(code) {
-		case 0x0218:
+		case NetMsgPagingRoom:
 			ret="NetMsgPagingRoom";
 			break;
-		case 0x025A:
+		case NetMsgJoinReq:
 			ret="NetMsgJoinReq";
 			break;
-		case 0x025B:
+		case NetMsgJoinAck:
 			ret="NetMsgJoinAck";
 			break;
-		case 0x025C:
+		case NetMsgLeave:
 			ret="NetMsgLeave";
 			break;
-		case 0x025D:
+		case NetMsgPing:
 			ret="NetMsgPing";
 			break;
-		case 0x025F:
+		case NetMsgGroupOwner:
 			ret="NetMsgGroupOwner";
 			break;
-		case 0x0260:
+		case NetMsgGameStateRequest:
 			ret="NetMsgGameStateRequest";
 			break;
-		case 0x0266:
+		case NetMsgGameMessage:
 			ret="NetMsgGameMessage";
 			break;
-		case 0x0274:
+		case NetMsgVoice:
 			ret="NetMsgVoice";
 			break;
-		case 0x0278:
+		case NetMsgTestAndSet:
 			ret="NetMsgTestAndSet";
 			break;
-		case 0x02A8:
+		case NetMsgMembersListReq:
 			ret="NetMsgMembersListReq";
 			break;
-		case 0x02A9:
+		case NetMsgMembersList:
 			ret="NetMsgMembersList";
 			break;
-		case 0x02AC:
+		case NetMsgMemberUpdate:
 			ret="NetMsgMemberUpdate";
 			break;
-		case 0x02AE:
+		case NetMsgCreatePlayer:
 			ret="NetMsgCreatePlayer";
 			break;
-		case 0x02AF:
+		case NetMsgAuthenticateHello:
 			ret="NetMsgAuthenticateHello";
 			break;
-		case 0x02B0:
+		case NetMsgAuthenticateChallenge:
 			ret="NetMsgAuthenticateChallenge";
 			break;
-		case 0x02B3:
+		case NetMsgInitialAgeStateSent:
 			ret="NetMsgInitialAgeStateSent";
 			break;
-		case 0x02BE:
+		case NetMsgVaultTask:
 			ret="NetMsgVaultTask";
 			break;
-		case 0x02C5:
+		case NetMsgAlive:
 			ret="NetMsgAlive";
 			break;
-		case 0x02C6:
+		case NetMsgTerminated:
 			ret="NetMsgTerminated";
 			break;
-		case 0x02C8:
+		case NetMsgSDLState:
 			ret="NetMsgSDLState";
 			break;
-		case 0x0324:
+		case NetMsgSDLStateBCast:
 			ret="NetMsgSDLStateBCast";
 			break;
-		case 0x0329:
+		case NetMsgGameMessageDirected:
 			ret="NetMsgGameMessageDirected";
 			break;
-		case 0x034E:
+		case NetMsgRequestMyVaultPlayerList:
 			ret="NetMsgRequestMyVaultPlayerList";
 			break;
-		case 0x0373:
+		case NetMsgVaultPlayerList:
 			ret="NetMsgVaultPlayerList";
 			break;
-		case 0x0374:
+		case NetMsgSetMyActivePlayer:
 			ret="NetMsgSetMyActivePlayer";
 			break;
-		case 0x0377:
+		case NetMsgPlayerCreated:
 			ret="NetMsgPlayerCreated";
 			break;
-		case 0x037A:
+		case NetMsgFindAge:
 			ret="NetMsgFindAge";
 			break;
-		case 0x037B:
+		case NetMsgFindAgeReply:
 			ret="NetMsgFindAgeReply";
 			break;
-		case 0x0384:
+		case NetMsgDeletePlayer:
 			ret="NetMsgDeletePlayer";
 			break;
-		case 0x0393:
+		case NetMsgAuthenticateResponse:
 			ret="NetMsgAuthenticateResponse";
 			break;
-		case 0x0394:
+		case NetMsgAccountAuthenticated:
 			ret="NetMsgAccountAuthenticated";
 			break;
-		case 0x03A7:
+		case NetMsgRelevanceRegions:
 			ret="NetMsgRelevanceRegions";
 			break;
-		case 0x03AE:
+		case NetMsgLoadClone:
 			ret="NetMsgLoadClone";
 			break;
-		case 0x03AF:
+		case NetMsgPlayerPage:
 			ret="NetMsgPlayerPage";
 			break;
-		case 0x0428:
+		case NetMsgVault:
 			ret="NetMsgVault";
 			break;
-		case 0x0429:
+		case NetMsgVault2:
 			ret="NetMsgVault2";
 			break;
-		case 0x0464:
+		case NetMsgSetTimeout:
 			ret="NetMsgSetTimeout";
 			break;
-		case 0x0465:
+		case NetMsgActivePlayerSet: // is the same as NetMsgSetTimeout2
 			ret="NetMsgActivePlayerSet|NetMsgSetTimeout2";
 			break;
-		case 0x0466:
+		case NetMsgActivePlayerSet2:
 			ret="NetMsgActivePlayerSet2";
 			break;
-		case 0x1001:
+		case NetMsgCustomAuthAsk:
 			ret="NetMsgCustomAuthAsk";
 			break;
-		case 0x1002:
+		case NetMsgCustomAuthResponse:
 			ret="NetMsgCustomAuthResponse";
 			break;
-		case 0x1003:
+		case NetMsgCustomVaultAskPlayerList:
 			ret="NetMsgCustomVaultAskPlayerList";
 			break;
-		case 0x1004:
+		case NetMsgCustomVaultPlayerList:
 			ret="NetMsgCustomVaultPlayerList";
 			break;
-		case 0x1005:
+		case NetMsgCustomVaultCreatePlayer:
 			ret="NetMsgCustomVaultCreatePlayer";
 			break;
-		case 0x1006:
+		case NetMsgCustomVaultPlayerCreated:
 			ret="NetMsgCustomVaultPlayerCreated";
 			break;
-		case 0x1007:
+		case NetMsgCustomVaultDeletePlayer:
 			ret="NetMsgCustomVaultDeletePlayer";
 			break;
-		case 0x1008:
+		case NetMsgCustomPlayerStatus:
 			ret="NetMsgCustomPlayerStatus";
 			break;
-		case 0x1009:
+		case NetMsgCustomVaultCheckKi:
 			ret="NetMsgCustomVaultCheckKi";
 			break;
-		case 0x100A:
+		case NetMsgCustomVaultKiChecked:
 			ret="NetMsgCustomVaultKiChecked";
 			break;
-		case 0x100B:
+		case NetMsgCustomRequestAllPlStatus:
 			ret="NetMsgCustomRequestAllPlStatus";
 			break;
-		case 0x100C:
+		case NetMsgCustomAllPlayerStatus:
 			ret="NetMsgCustomAllPlayerStatus";
 			break;
-		case 0x100D:
+		case NetMsgCustomSetGuid:
 			ret="NetMsgCustomSetGuid";
 			break;
-		case 0x100E:
+		case NetMsgCustomFindServer:
 			ret="NetMsgCustomFindServer";
 			break;
-		case 0x100F:
+		case NetMsgCustomServerFound:
 			ret="NetMsgCustomServerFound";
 			break;
-		case 0x1010:
+		case NetMsgCustomForkServer:
 			ret="NetMsgCustomForkServer";
 			break;
-		case 0x1011:
+		case NetMsgPlayerTerminated:
 			ret="NetMsgPlayerTerminated";
 			break;
-		case 0x1012:
+		case NetMsgCustomVaultPlayerStatus:
 			ret="NetMsgCustomVaultPlayerStatus";
 			break;
-		case 0x1013:
+		case NetMsgCustomMetaRegister:
 			ret="NetMsgCustomMetaRegister";
 			break;
-		case 0x1014:
+		case NetMsgCustomMetaPing:
 			ret="NetMsgCustomMetaPing";
 			break;
-		case 0x1015:
+		case NetMsgCustomServerVault:
 			ret="NetMsgCustomServerVault";
 			break;
-		case 0x1016:
+		case NetMsgCustomServerVaultTask:
 			ret="NetMsgCustomServerVaultTask";
 			break;
-		case 0x1017:
+		case NetMsgCustomSaveGame:
 			ret="NetMsgCustomSaveGame";
 			break;
-		case 0x1018:
+		case NetMsgCustomLoadGame:
 			ret="NetMsgCustomLoadGame";
 			break;
-		case 0x1019:
+		case NetMsgCustomCmd:
 			ret="NetMsgCustomCmd";
 			break;
-		case 0x101A:
+		case NetMsgCustomDirectedFwd:
 			ret="NetMsgCustomDirectedFwd";
 			break;
-		case 0x101B:
+		case NetMsgCustomPlayerToCome:
 			ret="NetMsgCustomPlayerToCome";
 			break;
-		case 0x1313:
+		case NetMsgCustomTest:
 			ret="NetMsgCustomTest";
 			break;
 		default:

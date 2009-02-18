@@ -103,7 +103,6 @@
 #define KData 11
 #define KProxy 12
 #define KPlFire 13
-
 #define KBcast 255
 
 
@@ -118,8 +117,8 @@
 #define AInvalidUser 0xFE
 #define AUnspecifiedServerError 0xFF
 //Custom
-#define AHacked 0xF6
-#define ABanned 0xF5
+//#define AHacked 0xF6
+//#define ABanned 0xF5
 
 //Reasons (Leave)
 #define RStopResponding 0x00
@@ -130,7 +129,6 @@
 #define RQuitting 0x1A
 //custom
 #define RActive 0x14
-
 //Reasons (Terminated)
 #define RUnknown 0x01
 #define RKickedOff 0x02

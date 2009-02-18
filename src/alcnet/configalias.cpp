@@ -133,11 +133,11 @@ void alcNetSetConfigAliases() {
 	if(val.isNull()) {
 		cfg->setVar("Unnamed Alcugs shard","shard.name","global");
 	}
-	/*val=cfg->getVar("shard.website","global"); // http://huru.almlys.dyns.net/unconfigured.php does no longer exist
+	val=cfg->getVar("shard.website","global"); // http://huru.almlys.dyns.net/unconfigured.php does no longer exist
 	if(val.isNull()) {
 		cfg->setVar("http://huru.almlys.dyns.net/unconfigured.php",\
 		"shard.website","global");
-	}* /
+	}
 	val=cfg->getVar("shard.desc","global");
 	if(val.isNull()) {
 		cfg->setVar("Generic unconfigured Alcugs shard",\
