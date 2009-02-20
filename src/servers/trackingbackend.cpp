@@ -541,21 +541,15 @@ namespace alc {
 		fprintf(f, "</head><body>\n");
 		// player list
 		fprintf(f, "<h2>Current Online Players</h2>\n");
-		if (dbg) {
+		if (dbg)
 			fprintf(f, "<b>Total population: %d</b><br /><br />\n", players.size());
-			fprintf(f, "<table border=\"1\"><tr><th>Avatar (Account)</th><th>KI</th><th>Age</th><th>Server GUID</th><th>Status</th></tr>\n");
-		}
-		else
-			fprintf(f, "<table border=\"1\"><tr><th>Avatar (Account)</th><th>KI</th><th>Age</th></tr>\n");
+		fprintf(f, "<table border=\"1\"><tr><th>Avatar (Account)</th><th>KI</th><th>Age Name</th><th>Age GUID</th><th>Status</th></tr>\n");
 		for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
 			if (!dbg && it->flag != 2) continue;
-			fprintf(f, "<tr><td>%s (%s)%s</td><td>%d</td><td>%s</td>", it->avatar, it->account, it->flag == 2 ? "" : " [hidden]", it->ki, it->u->name);
-			if (dbg) {
-				fprintf(f, "<td>%s</td>", alcGetStrGuid(it->u->serverGuid));
-				if (it->awaiting_age[0] != 0) // if the age he wants to is saved, print it
-					fprintf(f, "<td>%s to %s</td>", alcUnetGetReasonCode(it->status), it->awaiting_age);
-				else fprintf(f, "<td>%s</td>", alcUnetGetReasonCode(it->status));
-			}
+			fprintf(f, "<tr><td>%s (%s)%s</td><td>%d</td><td>%s</td><td>%s</td>", it->avatar, it->account, it->flag == 2 ? "" : " [hidden]", it->ki, it->u->name, alcGetStrGuid(it->u->serverGuid));
+			if (it->awaiting_age[0] != 0) // if the age he wants to is saved, print it
+				fprintf(f, "<td>%s to %s</td>", alcUnetGetReasonCode(it->status), it->awaiting_age);
+			else fprintf(f, "<td>%s</td>", alcUnetGetReasonCode(it->status));
 			fprintf(f, "</tr>\n");
 		}
 		fprintf(f, "</table><br />\n");

@@ -486,7 +486,7 @@ namespace alc {
 				// verify contained game message
 				U16 msgType = gameMsg.getSubMsgType();
 				if (msgType == 0x024E || msgType == 0x03AC) // 0x024E = plLoadCloneMsg, 0x03AC = plLoadAvatarMsg
-					throw txProtocolError(_WHERE("Got game message with invalid sub message type ox%04X", msgType));
+					throw txProtocolError(_WHERE("Got game message with invalid sub message type 0x%04X", msgType));
 				
 				// broadcast message
 				bcastMessage(gameMsg);
@@ -508,7 +508,7 @@ namespace alc {
 				// verify contained game message
 				U16 msgType = gameMsg.getSubMsgType();
 				if (msgType == 0x024E || msgType == 0x03AC) // 0x024E = plLoadCloneMsg, 0x03AC = plLoadAvatarMsg
-					throw txProtocolError(_WHERE("Got game message with invalid sub message type ox%04X", msgType));
+					throw txProtocolError(_WHERE("Got game message with invalid sub message type 0x%04X", msgType));
 				
 				// Because sharing the Relto book causes everyone in the age to crash
 				// out, throw out the initial message of the exchange. This is all we
