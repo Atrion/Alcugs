@@ -343,7 +343,9 @@ public:
 	void writeStr(tStrBuf & val) { val.rewind(); write(val.read(),val.size()); }
 	void writeStr(const tStrBuf & val) { writeStr((tStrBuf &)val); } // ugly, casting a const away...
 	void printf(const char * msg, ...);
-	void nl() { writeStr("\n"); }
+	inline void printBoolean(const char *desc, bool val) { writeStr(desc); printBoolean(val); }
+	void printBoolean(bool val);
+	inline void nl() { writeStr("\n"); }
 	U32 asU32();
 	S32 asS32() { return (S32)asU32(); }
 	U16 asU16() { return (U16)asU32(); }

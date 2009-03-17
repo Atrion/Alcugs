@@ -314,4 +314,28 @@ bool tUruObject::operator==(const tUruObject &obj)
 }
 /* end tUruObject */
 
+/* tUruObjectRef */
+tUruObjectRef::tUruObjectRef(void) : tBaseType()
+{
+	hasObj = false;
+}
+
+void tUruObjectRef::store(tBBuf &t)
+{
+	hasObj = t.getByte();
+	if (hasObj) t.get(obj);
+}
+
+void tUruObjectRef::stream(tBBuf &t)
+{
+	t.putByte(hasObj);
+	if (hasObj) t.put(obj);
+}
+
+const char *tUruObjectRef::str(void)
+{
+	if (hasObj) return obj.str();
+	else return "null";
+}
+
 } //end namespace alc
