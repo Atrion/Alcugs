@@ -216,13 +216,19 @@ namespace alc {
 		isInitial = msg.isInitial;
 	}
 	
-	tmLoadClone::tmLoadClone(tNetSession *u, tUruObject obj, bool isPlayerAvatar, bool isLoad, bool isInitial)
-	 : tmGameMessage(NetMsgLoadClone, plNetAck | plNetKi, u), obj(obj)
+	tmLoadClone::tmLoadClone(tNetSession *u, tpLoadCloneMsg *subMsg, bool isInitial)
+	 : tmGameMessage(NetMsgLoadClone, plNetAck | plNetKi, u), obj(subMsg->clonedObj.obj)
 	{
 		ki = obj.clonePlayerId;
-		this->isPlayerAvatar = isPlayerAvatar;
-		this->isLoad = isLoad;
+		this->isLoad = subMsg->isLoad;
 		this->isInitial = isInitial;
+		this->isPlayerAvatar = false;
+		if ( subMsg->getType() == plLoadAvatarMsg ) {
+			tpLoadAvatarMsg *avMsg = static_cast<tpLoadAvatarMsg *>(subMsg);
+			this->isPlayerAvatar = avMsg->isPlayerAvatar;
+		}
+		message.putU16(subMsg->getType());
+		message.put(*subMsg);
 	}
 	
 	void tmLoadClone::store(tBBuf &t)

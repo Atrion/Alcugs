@@ -107,6 +107,17 @@ private:
 	tStrBuf dbg;
 };
 
+class tUruObjectRef : public tBaseType {
+public:
+	tUruObjectRef(void);
+	virtual void store(tBBuf &t);
+	virtual void stream(tBBuf &t);
+	const char *str(void);
+
+	bool hasObj;
+	tUruObject obj;
+};
+
 } //End alc namespace
 
 #endif

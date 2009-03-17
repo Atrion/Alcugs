@@ -110,12 +110,11 @@ const char * alcXVERSION = ALC_PROGRAM_VERSION;
 //alcugs includes
 #include "alcexception.h"
 #include "alctypes.h"
-#include "alcutil/alcthread.h"
 #include "alcversion.h"
-#include "alcutil/alccfgtypes.h"
-#include "alcmain.h"
 #include "alclicense.h"
 
+#include "alcutil/alccfgtypes.h"
+#include "alcutil/alcthread.h"
 #include "alcutil/alcos.h"
 #include "alcutil/conv_funs.h"
 #include "alcutil/useful.h"
@@ -124,8 +123,12 @@ const char * alcXVERSION = ALC_PROGRAM_VERSION;
 
 #include "urutypes/urubasetypes.h"
 #include "urutypes/ageinfo.h"
+#include "urutypes/plbase.h"
+#include "urutypes/plmessage.h"
 
-#include "alcutil/alcpkg.h"
-#include "urutypes/pypkg.h"
+#include "alcmain.h"
+
+//#include "alcutil/alcpkg.h"
+//#include "urutypes/pypkg.h"
 
 #endif

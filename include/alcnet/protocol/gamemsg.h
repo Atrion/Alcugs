@@ -112,7 +112,7 @@ namespace alc {
 	public:
 		tmLoadClone(tNetSession *u);
 		tmLoadClone(tNetSession *u, tmLoadClone &msg);
-		tmLoadClone(tNetSession *u, tUruObject obj, bool isPlayerAvatar, bool isLoad, bool isInitial);
+		tmLoadClone(tNetSession *u, tpLoadCloneMsg *subMsg, bool isInitial);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		

@@ -45,7 +45,6 @@
 ////extra includes
 #include "gameserver.h"
 #include "sdl.h"
-#include "gamesubmsg.h"
 
 #include <alcdebug.h>
 
@@ -485,8 +484,8 @@ namespace alc {
 				
 				// verify contained game message
 				U16 msgType = gameMsg.getSubMsgType();
-				if (msgType == 0x024E || msgType == 0x03AC) // 0x024E = plLoadCloneMsg, 0x03AC = plLoadAvatarMsg
-					throw txProtocolError(_WHERE("Got game message with invalid sub message type 0x%04X", msgType));
+				if (msgType == plLoadCloneMsg || msgType == plLoadAvatarMsg)
+					throw txProtocolError(_WHERE("Invalid type of NetMsgGameMessage.subMsg: %s (0x%04X)", alcGetPlasmaType(msgType), msgType));
 				
 				// broadcast message
 				bcastMessage(gameMsg);
@@ -507,8 +506,8 @@ namespace alc {
 				
 				// verify contained game message
 				U16 msgType = gameMsg.getSubMsgType();
-				if (msgType == 0x024E || msgType == 0x03AC) // 0x024E = plLoadCloneMsg, 0x03AC = plLoadAvatarMsg
-					throw txProtocolError(_WHERE("Got game message with invalid sub message type 0x%04X", msgType));
+				if (msgType == plLoadCloneMsg || msgType == plLoadAvatarMsg)
+					throw txProtocolError(_WHERE("Invalid type of NetMsgGameMessageDirected.subMsg: %s (0x%04X)", alcGetPlasmaType(msgType), msgType));
 				
 				// Because sharing the Relto book causes everyone in the age to crash
 				// out, throw out the initial message of the exchange. This is all we
@@ -590,7 +589,6 @@ namespace alc {
 				
 				// save SDL state
 				ageState->saveSdlState(SDLStateBCast.sdl);
-				// FIXME: The old game server sets a restriction how many updates can be sent for a physical in a certain time
 				
 				// NetMsgSDLState sometimes has the bcast falg set and NetMsgSDLStateBCast sometimes doesn't.
 				// I assume the message type is correct and the flag not.
@@ -614,15 +612,11 @@ namespace alc {
 				msg->data.get(loadClone);
 				log->log("<RCV> [%d] %s\n", msg->sn, loadClone.str());
 				
-				// parse contained game message
-				U16 msgType = loadClone.getSubMsgType();
-				tLoadCloneMsg loadCloneMsg(msgType == 0x03AC); // the plLoadAvatarMsgs are treated a bit differently
-				if (msgType == 0x024E || msgType == 0x03AC) { // 0x024E = plLoadCloneMsg, 0x03AC = plLoadAvatarMsg
-					loadClone.message.get(loadCloneMsg);
-					loadCloneMsg.checkNetMsg(loadClone);
-				}
-				else
-					throw txProtocolError(_WHERE("The sub message of a NetMsgLoadClone must be of the type 0x024E (plLoadCloneMsg) or 0x03AC (plLoadAvatarMsg), not 0x%04X", msgType));
+				// parse contained plasma message
+				U16 type = loadClone.getSubMsgType();
+				tpLoadCloneMsg *loadCloneMsg = tpLoadCloneMsg::create(type);
+				loadClone.message.get(*loadCloneMsg);
+				loadClone.checkSubMsg(loadCloneMsg);
 				
 				// save clone in age state
 				ageState->saveClone(loadCloneMsg);

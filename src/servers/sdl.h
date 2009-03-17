@@ -41,7 +41,6 @@
 #include <list>
 #include <protocol/gamemsg.h>
 #include "sdlbinary.h"
-#include "gamesubmsg.h"
 
 namespace alc {
 
@@ -59,7 +58,7 @@ namespace alc {
 		
 		void saveSdlState(tMBuf &data);
 		void saveSdlVaultMessage(tMBuf &data, tNetSession *u);
-		void saveClone(tLoadCloneMsg &clone);
+		void saveClone(tpLoadCloneMsg *clone);
 		int sendClones(tNetSession *u);
 		int sendSdlStates(tNetSession *u, tmGameStateRequest::tPageList *pages);
 		void writeAgeState(tMBuf *buf);
@@ -70,7 +69,7 @@ namespace alc {
 		void load(void);
 		void unload(void);
 		
-		typedef std::list<tLoadCloneMsg> tCloneList;
+		typedef std::vector<tpLoadCloneMsg *> tCloneList;
 		typedef std::list<tSdlState> tSdlList;
 		
 		void loadAgeState(tStrBuf &fileName);

@@ -133,9 +133,9 @@ namespace alc {
 		tUruObject obj;
 		Byte format;
 		/* possible formats:
-			0x00: first the object, then a SDL message with the compression header
-			0x01: a SDL message with the compression header
-			0x02: a SDL message without compression header */
+			0x00: first the object, then a SDL message with the compression header (used in NetMsgSDLState*)
+			0x01: a SDL message with the compression header (used in NetMsgJoinAck)
+			0x02: a SDL message without compression header (the format of the binary blob of a vault SDL node) */
 		// format
 		tSdlStateBinary content;
 	private:

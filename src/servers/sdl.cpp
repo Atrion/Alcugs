@@ -116,6 +116,12 @@ namespace alc {
 		unload();
 		// make sure the states are removed before the structs as they point to them
 		sdlStates.clear();
+		// remove clone messages
+		tCloneList::iterator it = clones.begin();
+		while (it != clones.end()) {
+			delete *it;
+			it = clones.erase(it);
+		}
 	}
 	
 	void tAgeStateManager::loadAgeState(tStrBuf &fileName)
@@ -204,14 +210,15 @@ namespace alc {
 		// check for that player in the clone list
 		tCloneList::iterator it = clones.begin();
 		while (it != clones.end()) {
-			if (it->clonedObj.clonePlayerId == player->ki) { // that clone is dead now, remove it and all of it's SDL states
-				log->log("Removing Clone [%s] as it belongs to player %s who just left us\n", it->str(), player->str());
+			if ((*it)->clonedObj.obj.clonePlayerId == player->ki) { // that clone is dead now, remove it and all of it's SDL states
+				log->log("Removing Clone [%s] as it belongs to player %s who just left us\n", (*it)->clonedObj.str(), player->str());
 				// remove avatar from age
-				it->isLoad = false;
-				tmLoadClone loadClone (it->createNetMsg(player, false/*isInitial*/));
+				(*it)->isLoad = false;
+				tmLoadClone loadClone(player, *it, false/*isInitial*/);
 				net->bcastMessage(loadClone);
 				// remove states from our list
-				removeSDLStates(it->clonedObj.clonePlayerId);
+				removeSDLStates((*it)->clonedObj.obj.clonePlayerId);
+				delete *it;
 				it = clones.erase(it);
 			}
 			else
@@ -324,31 +331,33 @@ namespace alc {
 		log->flush();
 	}
 	
-	void tAgeStateManager::saveClone(tLoadCloneMsg &clone)
+	void tAgeStateManager::saveClone(tpLoadCloneMsg *clone)
 	{
-		tCloneList::iterator it = findClone(clone.clonedObj);
+		tCloneList::iterator it = findClone(clone->clonedObj.obj);
 		if (logDetailed) {
-			log->log("Got ");
-			clone.print(log);
+			log->log("Got Message %s", clone->str());
 		}
-		if (clone.isLoad) {
+		if (clone->isLoad) {
 			if (it != clones.end()) { // it is already in the list, remove old one
 				log->log("Updating Clone ");
+				delete *it;
 				clones.erase(it);
 			}
 			else { // it's a new clone
 				log->log("Adding Clone ");
 			}
-			it = clones.insert(clones.end(), clone);
-			log->log("[%s]\n", it->str());
+			log->log("[%s]\n", clone->clonedObj.str());
+			it = clones.insert(clones.end(), clone); // save the message we got
 		}
 		else { // remove clone if it was in list
-			log->log("Removing Clone [%s]\n", clone.str());
-			removeSDLStates(clone.clonedObj.clonePlayerId, clone.clonedObj.cloneId); // remove SDL states even if cloenw as not on list
-			if (it != clones.end())
+			log->log("Removing Clone [%s]\n", clone->clonedObj.str());
+			removeSDLStates(clone->clonedObj.obj.clonePlayerId, clone->clonedObj.obj.cloneId); // remove SDL states even if cloenw as not on list
+			if (it != clones.end()) {
+				delete *it;
 				clones.erase(it);
-			else
+			} else
 				log->log("WARN: That clone was not on our list!\n");
+			delete clone; // remove the message we got
 		}
 		log->flush();
 	}
@@ -356,7 +365,7 @@ namespace alc {
 	tAgeStateManager::tCloneList::iterator tAgeStateManager::findClone(const tUruObject &obj)
 	{
 		for (tCloneList::iterator it = clones.begin(); it != clones.end(); ++it) {
-			if (it->clonedObj == obj) return it;
+			if ((*it)->clonedObj.obj == obj) return it;
 		}
 		return clones.end();
 	}
@@ -365,8 +374,8 @@ namespace alc {
 	{
 		int n = 0;
 		for (tCloneList::iterator it = clones.begin(); it != clones.end(); ++it) {
-			if (logDetailed) log->log("Sending to %s: clone [%s]\n", u->str(), it->str());
-			tmLoadClone loadClone (it->createNetMsg(u, true/*isInitial*/));
+			if (logDetailed) log->log("Sending to %s: clone [%s]\n", u->str(), (*it)->clonedObj.str());
+			tmLoadClone loadClone(u, *it, true/*isInitial*/);
 			net->send(loadClone);
 			++n;
 		}
