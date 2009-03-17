@@ -17,6 +17,9 @@ Proposed:
 * Exceptions will start with "tx". (txNoFile, txTooLong, txTooBig, txNoName, ...)
 * Messages will start with "tm". (tmNetMsgPing, tmNetMsgVoice, tmNetCustomMsgXX, ...)
 * Vault Types will start with "tv". (tvMessage, tvItem, tvCreatableGenericValue, ...)
+* Plasma Object Types will start with "tp" (tpMessage, tpLoadCloneMsg, ...)
+  * On the Plasma side of things, tmMsgBase and its sub-classes as well as tvItem are also plasma objects, but for historical reasons,
+    they are managed differently in alcugs
 * Private vars in a module will be tvVarName or txvVarName
 * Class methods will start with the first letter in lowercase.
 
@@ -28,5 +31,3 @@ Proposed:
 * All source files, will contain the SVN tag $Id$.
 * On header files, this tag is __U_FILENAME_H_ID
 * On source files, this tag is __U_FILENAME_ID
-
-

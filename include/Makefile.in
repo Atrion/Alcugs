@@ -35,8 +35,8 @@ host_triplet = @host@
 subdir = include
 DIST_COMMON = $(include_alcbase_HEADERS) \
 	$(include_alcbase_alcutil_HEADERS) \
-	$(include_alcbase_urutypes_HEADERS) $(include_unet_HEADERS) \
-	$(include_unet_protocol_HEADERS) $(srcdir)/Makefile.am \
+	$(include_alcbase_urutypes_HEADERS) $(include_alcnet_HEADERS) \
+	$(include_alcnet_protocol_HEADERS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/align.m4 \
@@ -58,17 +58,17 @@ am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
 am__installdirs = "$(DESTDIR)$(include_alcbasedir)" \
 	"$(DESTDIR)$(include_alcbase_alcutildir)" \
 	"$(DESTDIR)$(include_alcbase_urutypesdir)" \
-	"$(DESTDIR)$(include_unetdir)" \
-	"$(DESTDIR)$(include_unet_protocoldir)"
+	"$(DESTDIR)$(include_alcnetdir)" \
+	"$(DESTDIR)$(include_alcnet_protocoldir)"
 include_alcbaseHEADERS_INSTALL = $(INSTALL_HEADER)
 include_alcbase_alcutilHEADERS_INSTALL = $(INSTALL_HEADER)
 include_alcbase_urutypesHEADERS_INSTALL = $(INSTALL_HEADER)
-include_unetHEADERS_INSTALL = $(INSTALL_HEADER)
-include_unet_protocolHEADERS_INSTALL = $(INSTALL_HEADER)
+include_alcnetHEADERS_INSTALL = $(INSTALL_HEADER)
+include_alcnet_protocolHEADERS_INSTALL = $(INSTALL_HEADER)
 HEADERS = $(include_alcbase_HEADERS) \
 	$(include_alcbase_alcutil_HEADERS) \
-	$(include_alcbase_urutypes_HEADERS) $(include_unet_HEADERS) \
-	$(include_unet_protocol_HEADERS)
+	$(include_alcbase_urutypes_HEADERS) $(include_alcnet_HEADERS) \
+	$(include_alcnet_protocol_HEADERS)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -180,10 +180,10 @@ include_alcbase_alcutildir = $(includedir)/alcbase/alcutil
 include_alcbase_alcutil_HEADERS = $(top_srcdir)/include/alcbase/alcutil/*.h
 include_alcbase_urutypesdir = $(includedir)/alcbase/urutypes
 include_alcbase_urutypes_HEADERS = $(top_srcdir)/include/alcbase/urutypes/*.h
-include_unetdir = $(includedir)/alcnet
-include_unet_HEADERS = $(top_srcdir)/include/alcnet/*.h
-include_unet_protocoldir = $(includedir)/alcnet/protocol
-include_unet_protocol_HEADERS = $(top_srcdir)/include/alcnet/protocol/*.h
+include_alcnetdir = $(includedir)/alcnet
+include_alcnet_HEADERS = $(top_srcdir)/include/alcnet/*.h
+include_alcnet_protocoldir = $(includedir)/alcnet/protocol
+include_alcnet_protocol_HEADERS = $(top_srcdir)/include/alcnet/protocol/*.h
 all: all-am
 
 .SUFFIXES:
@@ -267,39 +267,39 @@ uninstall-include_alcbase_urutypesHEADERS:
 	  echo " rm -f '$(DESTDIR)$(include_alcbase_urutypesdir)/$$f'"; \
 	  rm -f "$(DESTDIR)$(include_alcbase_urutypesdir)/$$f"; \
 	done
-install-include_unetHEADERS: $(include_unet_HEADERS)
+install-include_alcnetHEADERS: $(include_alcnet_HEADERS)
 	@$(NORMAL_INSTALL)
-	test -z "$(include_unetdir)" || $(MKDIR_P) "$(DESTDIR)$(include_unetdir)"
-	@list='$(include_unet_HEADERS)'; for p in $$list; do \
+	test -z "$(include_alcnetdir)" || $(MKDIR_P) "$(DESTDIR)$(include_alcnetdir)"
+	@list='$(include_alcnet_HEADERS)'; for p in $$list; do \
 	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
 	  f=$(am__strip_dir) \
-	  echo " $(include_unetHEADERS_INSTALL) '$$d$$p' '$(DESTDIR)$(include_unetdir)/$$f'"; \
-	  $(include_unetHEADERS_INSTALL) "$$d$$p" "$(DESTDIR)$(include_unetdir)/$$f"; \
+	  echo " $(include_alcnetHEADERS_INSTALL) '$$d$$p' '$(DESTDIR)$(include_alcnetdir)/$$f'"; \
+	  $(include_alcnetHEADERS_INSTALL) "$$d$$p" "$(DESTDIR)$(include_alcnetdir)/$$f"; \
 	done
 
-uninstall-include_unetHEADERS:
+uninstall-include_alcnetHEADERS:
 	@$(NORMAL_UNINSTALL)
-	@list='$(include_unet_HEADERS)'; for p in $$list; do \
+	@list='$(include_alcnet_HEADERS)'; for p in $$list; do \
 	  f=$(am__strip_dir) \
-	  echo " rm -f '$(DESTDIR)$(include_unetdir)/$$f'"; \
-	  rm -f "$(DESTDIR)$(include_unetdir)/$$f"; \
+	  echo " rm -f '$(DESTDIR)$(include_alcnetdir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(include_alcnetdir)/$$f"; \
 	done
-install-include_unet_protocolHEADERS: $(include_unet_protocol_HEADERS)
+install-include_alcnet_protocolHEADERS: $(include_alcnet_protocol_HEADERS)
 	@$(NORMAL_INSTALL)
-	test -z "$(include_unet_protocoldir)" || $(MKDIR_P) "$(DESTDIR)$(include_unet_protocoldir)"
-	@list='$(include_unet_protocol_HEADERS)'; for p in $$list; do \
+	test -z "$(include_alcnet_protocoldir)" || $(MKDIR_P) "$(DESTDIR)$(include_alcnet_protocoldir)"
+	@list='$(include_alcnet_protocol_HEADERS)'; for p in $$list; do \
 	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
 	  f=$(am__strip_dir) \
-	  echo " $(include_unet_protocolHEADERS_INSTALL) '$$d$$p' '$(DESTDIR)$(include_unet_protocoldir)/$$f'"; \
-	  $(include_unet_protocolHEADERS_INSTALL) "$$d$$p" "$(DESTDIR)$(include_unet_protocoldir)/$$f"; \
+	  echo " $(include_alcnet_protocolHEADERS_INSTALL) '$$d$$p' '$(DESTDIR)$(include_alcnet_protocoldir)/$$f'"; \
+	  $(include_alcnet_protocolHEADERS_INSTALL) "$$d$$p" "$(DESTDIR)$(include_alcnet_protocoldir)/$$f"; \
 	done
 
-uninstall-include_unet_protocolHEADERS:
+uninstall-include_alcnet_protocolHEADERS:
 	@$(NORMAL_UNINSTALL)
-	@list='$(include_unet_protocol_HEADERS)'; for p in $$list; do \
+	@list='$(include_alcnet_protocol_HEADERS)'; for p in $$list; do \
 	  f=$(am__strip_dir) \
-	  echo " rm -f '$(DESTDIR)$(include_unet_protocoldir)/$$f'"; \
-	  rm -f "$(DESTDIR)$(include_unet_protocoldir)/$$f"; \
+	  echo " rm -f '$(DESTDIR)$(include_alcnet_protocoldir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(include_alcnet_protocoldir)/$$f"; \
 	done
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
@@ -379,7 +379,7 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(HEADERS)
 installdirs:
-	for dir in "$(DESTDIR)$(include_alcbasedir)" "$(DESTDIR)$(include_alcbase_alcutildir)" "$(DESTDIR)$(include_alcbase_urutypesdir)" "$(DESTDIR)$(include_unetdir)" "$(DESTDIR)$(include_unet_protocoldir)"; do \
+	for dir in "$(DESTDIR)$(include_alcbasedir)" "$(DESTDIR)$(include_alcbase_alcutildir)" "$(DESTDIR)$(include_alcbase_urutypesdir)" "$(DESTDIR)$(include_alcnetdir)" "$(DESTDIR)$(include_alcnet_protocoldir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -427,8 +427,8 @@ info-am:
 install-data-am: install-include_alcbaseHEADERS \
 	install-include_alcbase_alcutilHEADERS \
 	install-include_alcbase_urutypesHEADERS \
-	install-include_unetHEADERS \
-	install-include_unet_protocolHEADERS
+	install-include_alcnetHEADERS \
+	install-include_alcnet_protocolHEADERS
 
 install-dvi: install-dvi-am
 
@@ -465,8 +465,8 @@ ps-am:
 uninstall-am: uninstall-include_alcbaseHEADERS \
 	uninstall-include_alcbase_alcutilHEADERS \
 	uninstall-include_alcbase_urutypesHEADERS \
-	uninstall-include_unetHEADERS \
-	uninstall-include_unet_protocolHEADERS
+	uninstall-include_alcnetHEADERS \
+	uninstall-include_alcnet_protocolHEADERS
 
 .MAKE: install-am install-strip
 
@@ -478,8 +478,8 @@ uninstall-am: uninstall-include_alcbaseHEADERS \
 	install-include_alcbaseHEADERS \
 	install-include_alcbase_alcutilHEADERS \
 	install-include_alcbase_urutypesHEADERS \
-	install-include_unetHEADERS \
-	install-include_unet_protocolHEADERS install-info \
+	install-include_alcnetHEADERS \
+	install-include_alcnet_protocolHEADERS install-info \
 	install-info-am install-man install-pdf install-pdf-am \
 	install-ps install-ps-am install-strip installcheck \
 	installcheck-am installdirs maintainer-clean \
@@ -488,8 +488,8 @@ uninstall-am: uninstall-include_alcbaseHEADERS \
 	uninstall-include_alcbaseHEADERS \
 	uninstall-include_alcbase_alcutilHEADERS \
 	uninstall-include_alcbase_urutypesHEADERS \
-	uninstall-include_unetHEADERS \
-	uninstall-include_unet_protocolHEADERS
+	uninstall-include_alcnetHEADERS \
+	uninstall-include_alcnet_protocolHEADERS
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

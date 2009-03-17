@@ -265,18 +265,26 @@ namespace alc {
 		t.putByte(isInitial);
 	}
 	
+	void tmLoadClone::checkSubMsg(tpLoadCloneMsg *subMsg)
+	{
+		if (obj != subMsg->clonedObj.obj)
+			throw txProtocolError(_WHERE("LoadClone.obj must be the same as plLoadCloneMsg.clonedObj, but these are different: %s != %s", obj.str(), subMsg->clonedObj.str()));
+		if (isLoad != subMsg->isLoad)
+			throw txProtocolError(_WHERE("LoadClone.isLoad must be the same as plLoadCloneMsg.isLoad, but these are different: %d != %d", isLoad, subMsg->isLoad));
+		if ( subMsg->getType() == plLoadAvatarMsg ) {
+			tpLoadAvatarMsg *avMsg = static_cast<tpLoadAvatarMsg *>(subMsg);
+			if (isPlayerAvatar != avMsg->isPlayerAvatar)
+				throw txProtocolError(_WHERE("LoadClone.isPlayerAvatar must be the same as plLoadAvatarMsg.isPlayerAvatar, but these are different: %d != %d", isPlayerAvatar, avMsg->isPlayerAvatar));
+		}
+	}
+	
 	void tmLoadClone::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" Object reference: [%s], is player avatar: ", obj.str());
-		if (isPlayerAvatar) dbg.printf("yes");
-		else                dbg.printf("no");
-		dbg.printf(", is load: ");
-		if (isLoad) dbg.printf("yes");
-		else        dbg.printf("no");
-		dbg.printf(", is initial age state: ");
-		if (isInitial) dbg.printf("yes");
-		else           dbg.printf("no");
+		dbg.printf(" Object reference: [%s], player avatar: ", obj.str());
+		dbg.printBoolean(isPlayerAvatar);
+		dbg.printBoolean(", load: ", isLoad);
+		dbg.printBoolean(", initial age state: ", isInitial);
 	}
 	
 	//// tmPagingRoom
@@ -305,8 +313,7 @@ namespace alc {
 	{
 		dbg.nl();
 		dbg.printf(" Page ID: 0x%08X, Page Type: 0x%04X, Page Name: %s, Paged out: ", pageId, pageType, pageName.c_str());
-		if (isPageOut) dbg.printf("yes");
-		else           dbg.printf("no");
+		dbg.printBoolean(isPageOut);
 	}
 	
 	//// tmGroupOwner
@@ -330,9 +337,8 @@ namespace alc {
 	void tmGroupOwner::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" Page ID: 0x%08X, Page Type: 0x%04X, is owner: ", pageId, pageType);
-		if (isOwner) dbg.printf("yes");
-		else         dbg.printf("no");
+		dbg.printf(" Page ID: 0x%08X, Page Type: 0x%04X, owner: ", pageId, pageType);
+		dbg.printBoolean(isOwner);
 	}
 	
 	//// tmPlayerPage
@@ -355,9 +361,7 @@ namespace alc {
 	void tmPlayerPage::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" Paged out: ");
-		if (isPageOut) dbg.printf("yes");
-		else         dbg.printf("no");
+		dbg.printBoolean(" Paged out: ", isPageOut);
 		dbg.printf(", Object reference: [%s]", obj.str());
 	}
 	
@@ -474,8 +478,7 @@ namespace alc {
 	{
 		dbg.nl();
 		dbg.printf(" Object reference: [%s], Lock requested: ", obj.str());
-		if (isLockReq) dbg.printf("yes");
-		else         dbg.printf("no");
+		dbg.printBoolean(isLockReq);
 	}
 	
 	//// tmRelevanceRegions
@@ -538,9 +541,7 @@ namespace alc {
 	void tmSDLState::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" is initial age state: ");
-		if (isInitial) dbg.printf("yes");
-		else           dbg.printf("no");
+		dbg.printBoolean(" initial age state: ", isInitial);
 	}
 	
 	//// tmSDLStateBCast
@@ -631,8 +632,7 @@ namespace alc {
 	{
 		dbg.nl();
 		dbg.printf(" Member Info: [%s], is joined: ", info.str());
-		if (isJoined) dbg.printf("yes");
-		else          dbg.printf("no");
+		dbg.printBoolean(isJoined);
 	}
 
 } //end namespace alc

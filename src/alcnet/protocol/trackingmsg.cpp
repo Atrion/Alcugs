@@ -331,8 +331,7 @@ namespace alc {
 	{
 		dbg.nl();
 		dbg.printf(" Port: %d, Server GUID: %s, Age filename: %s, Load SDL state: ", forkPort, serverGuid.c_str(), age.c_str());
-		if (loadSDL) dbg.printf("yes");
-		else         dbg.printf("no");
+		dbg.printBoolean(loadSDL);
 	}
 	
 	//// tmCustomServerFound

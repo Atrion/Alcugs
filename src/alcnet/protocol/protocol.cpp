@@ -879,22 +879,12 @@ const char * alcUnetGetVarType(Byte type) {
 }
 
 const char * alcUnetGetRelease(Byte rel) {
-	static const char * ret;
 	switch(rel) {
-		case TExtRel:
-			ret="ExtRel";
-			break;
-		case TIntRel:
-			ret="IntRel";
-			break;
-		case TDbg:
-			ret="Dbg";
-			break;
-		default:
-			ret="Unknown";
-			break;
+		case TExtRel: return "ExtRel";
+		case TIntRel: return "IntRel";
+		case TDbg: return "Dbg";
+		default: return "Unknown";
 	}
-	return ret;
 }
 
 const char * alcUnetGetDestination(Byte dest) {

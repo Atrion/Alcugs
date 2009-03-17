@@ -115,6 +115,8 @@ namespace alc {
 		tmLoadClone(tNetSession *u, tUruObject obj, bool isPlayerAvatar, bool isLoad, bool isInitial);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
+		
+		void checkSubMsg(tpLoadCloneMsg *subMsg);
 		// format
 		tUruObject obj;
 		bool isPlayerAvatar;

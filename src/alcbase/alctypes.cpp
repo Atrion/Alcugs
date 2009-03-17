@@ -1229,6 +1229,11 @@ void tStrBuf::printf(const char * msg, ...) {
 	
 	va_end(ap);
 }
+void tStrBuf::printBoolean(bool val)
+{
+	if (val) writeStr("yes");
+	else writeStr("no");
+}
 U32 tStrBuf::asU32() {
 	rewind();
 	DBG(9,"asU32 %s\n",c_str());
