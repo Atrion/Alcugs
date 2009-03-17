@@ -159,12 +159,6 @@ public:
 	txParseError(const char * msg="",bool abort=false,bool core=false) :txBase("ParseError",msg,abort,core) {}
 	txParseError(const txParseError &t) :txBase((txParseError &)t) {}
 };
-/** Type error */
-class txTypeError : public txBase {
-public:
-	txTypeError(const char * msg="",bool abort=false,bool core=false) :txBase("TypeError",msg,abort,core) {}
-	txTypeError(const txTypeError &t) :txBase((txTypeError &)t) {}
-};
 
 
 } //End alc namespace

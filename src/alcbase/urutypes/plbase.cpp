@@ -33,38 +33,61 @@
 		Several
 */
 
-#ifndef __U_GAMESUBMSG_H
-#define __U_GAMESUBMSG_H
 /* CVS tag - DON'T TOUCH*/
-#define __U_GAMESUBMSG_H_ID "$Id$"
+#define __U_PLBASE_ID "$Id$"
+
+//#define _DBG_LEVEL_ 10
+
+#include <alcugs.h>
+
+////extra includes
+
+#include "alcdebug.h"
 
 namespace alc {
 
-	////DEFINITIONS
-	class tLoadCloneMsg : public tBaseType {
-	public:
-		tLoadCloneMsg(bool loadAvatarMsg) : tBaseType() { this->loadAvatarMsg = loadAvatarMsg; }
-		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
-		void checkNetMsg(tmLoadClone &loadClone);
-		tmLoadClone createNetMsg(tNetSession *u, bool isInitial);
-		const char *str(void) { return clonedObj.str(); }
-		void print(tLog *log);
+	////IMPLEMENTATION
+	const char *alcGetPlasmaType(U16 type)
+	{
+		switch(type) {
+			case plControlEventMsg: return "plControlEventMsg";
+			case plLoadCloneMsg: return "plLoadCloneMsg";
+			case plEnableMsg: return "plEnableMsg";
+			case plWarpMsg: return "plWarpMsg";
+			case plServerReplyMsg: return "plServerReplyMsg";
+			case plAvTaskMsg: return "plAvTaskMsg";
+			case plNotifyMsg: return "plNotifyMsg";
+			case plLinkEffectsTriggerMsg: return "plLinkEffectsTriggerMsg";
+			case plParticleTransferMsg: return "plParticleTransferMsg";
+			case plAvatarInputStateMsg: return "plAvatarInputStateMsg";
+			case pfKIMsg: return "pfKIMsg";
+			case plAvBrainGenericMsg: return "plAvBrainGenericMsg";
+			case plLoadAvatarMsg: return "plLoadAvatarMsg";
+			case plNull: return "plNull";
+			default: return "Unknown";
+		}
+	}
+	
+	tpObject *alcCreatePlasmaObject(U16 type, bool /*mustBeComplete*/)
+	{
+		switch (type) {
+			case plLoadCloneMsg: return new tpLoadCloneMsg();
+			case plParticleTransferMsg: return new tpParticleTransferMsg();
+			case plLoadAvatarMsg: return new tpLoadAvatarMsg();
+			case plNull: return new tpObject(plNull);
+			default:
+				throw txUnexpectedData(_WHERE("Unknown message type %s (0x%04X)", alcGetPlasmaType(type), type));
+		}
+	}
+	
+	//// tpObject
+	const char *tpObject::str(void)
+	{
+		strBuf.clear();
+		strBuf.printf("%s (0x%04X)\n", alcGetPlasmaType(type), type);
+		toString();
+		return strBuf.c_str();
+	}
 
-		// format
-		U32 unk7; //!< for plLoadAvatarMsg: seen 0x00000840 and 0x00000040, for plLoadCloneMsg: seen 0x00000AC0 and 0x00000040
-		tUruObject clonedObj;
-		bool isLoad;
-		U16 unk13; //!< for plLoadAvatarMsg: seen 0x8000, for plLoadCloneMsg: seen 0x8000 and 0x032E; determines format of the following fields
-		bool isPlayerAvatar;
-		bool hasParentObj; //!< when true, the message contains the parent object
-		tUruObject parentObj, unkObj;
-		U16 count; //!< count of bugs flying around avatar
-	private:
-		// other members
-		bool loadAvatarMsg;
-	};
+} //end namespace alc
 
-} //End alc namespace
-
-#endif

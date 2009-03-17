@@ -820,7 +820,7 @@ Byte alcUnetGetVarTypeFromName(tStrBuf type) {
 	else if (type == "POINT3") return DPoint3;
 	else if (type == "QUATERNION") return DQuaternion;
 	else if (type == "RGB8") return DRGB8;
-	else throw txParseError(_WHERE("Unknown SDL VAR type %s", type.c_str()));
+	else throw txUnexpectedData(_WHERE("Unknown SDL VAR type %s", type.c_str()));
 }
 
 const char * alcUnetGetVarType(Byte type) {

@@ -33,6 +33,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+# src/alcbase/alcutil/alcpkg.cpp
+# src/alcbase/urutypes/pypkg.cpp
 @WIN32_TRUE@am__append_1 = src/alcbase/alcutil/windoze.cpp
 check_PROGRAMS = alcthread_test$(EXEEXT) alcbase_test$(EXEEXT)
 TESTS = alcthread_test$(EXEEXT) alcbase_test$(EXEEXT) alcmsgtest.sh
@@ -83,8 +85,9 @@ am__libalcbase1_a_SOURCES_DIST = src/alcbase/alcexception.cpp \
 	src/alcbase/urutypes/whatdoyousee.cpp \
 	src/alcbase/urutypes/urubasetypes.cpp \
 	src/alcbase/alcutil/alcthread.cpp \
-	src/alcbase/alcutil/alcpkg.cpp src/alcbase/urutypes/pypkg.cpp \
 	src/alcbase/urutypes/ageinfo.cpp \
+	src/alcbase/urutypes/plbase.cpp \
+	src/alcbase/urutypes/plmessage.cpp \
 	src/alcbase/alcutil/windoze.cpp
 @WIN32_TRUE@am__objects_1 = libalcbase1_a-windoze.$(OBJEXT)
 am_libalcbase1_a_OBJECTS = libalcbase1_a-alcexception.$(OBJEXT) \
@@ -102,8 +105,8 @@ am_libalcbase1_a_OBJECTS = libalcbase1_a-alcexception.$(OBJEXT) \
 	libalcbase1_a-whatdoyousee.$(OBJEXT) \
 	libalcbase1_a-urubasetypes.$(OBJEXT) \
 	libalcbase1_a-alcthread.$(OBJEXT) \
-	libalcbase1_a-alcpkg.$(OBJEXT) libalcbase1_a-pypkg.$(OBJEXT) \
-	libalcbase1_a-ageinfo.$(OBJEXT) $(am__objects_1)
+	libalcbase1_a-ageinfo.$(OBJEXT) libalcbase1_a-plbase.$(OBJEXT) \
+	libalcbase1_a-plmessage.$(OBJEXT) $(am__objects_1)
 libalcbase1_a_OBJECTS = $(am_libalcbase1_a_OBJECTS)
 libalcnet1_a_AR = $(AR) $(ARFLAGS)
 libalcnet1_a_LIBADD =
@@ -149,7 +152,6 @@ alcugs_auth_OBJECTS = $(am_alcugs_auth_OBJECTS)
 alcugs_auth_DEPENDENCIES = libalcnet1.a libalcbase1.a
 am_alcugs_game_OBJECTS = alcugs_game-alcugs_main.$(OBJEXT) \
 	alcugs_game-sdlbinary.$(OBJEXT) alcugs_game-sdl.$(OBJEXT) \
-	alcugs_game-gamesubmsg.$(OBJEXT) \
 	alcugs_game-gameserver.$(OBJEXT)
 alcugs_game_OBJECTS = $(am_alcugs_game_OBJECTS)
 alcugs_game_DEPENDENCIES = libalcnet1.a libalcbase1.a
@@ -345,12 +347,13 @@ libalcbase1_a_SOURCES = src/alcbase/alcexception.cpp \
 	src/alcbase/urutypes/whatdoyousee.cpp \
 	src/alcbase/urutypes/urubasetypes.cpp \
 	src/alcbase/alcutil/alcthread.cpp \
-	src/alcbase/alcutil/alcpkg.cpp src/alcbase/urutypes/pypkg.cpp \
-	src/alcbase/urutypes/ageinfo.cpp $(am__append_1)
+	src/alcbase/urutypes/ageinfo.cpp \
+	src/alcbase/urutypes/plbase.cpp \
+	src/alcbase/urutypes/plmessage.cpp $(am__append_1)
 libalcbase1_a_CPPFLAGS = -DIN_ALC_LIBRARY
 #End LibAlcBase library
 
-#LibAlcUruNet3 library
+#LibAlcNet library
 libalcnet1_a_SOURCES = \
  src/alcnet/unet.cpp \
  src/alcnet/netlog.cpp \
@@ -456,13 +459,11 @@ alcugs_game_SOURCES = \
  src/servers/alcugs_main.cpp \
  src/servers/sdlbinary.cpp \
  src/servers/sdl.cpp \
- src/servers/gamesubmsg.cpp \
  src/servers/gameserver.cpp
 
 alcugs_game_INCLUDES = \
  src/servers/sdlbinary.h \
  src/servers/sdl.h \
- src/servers/gamesubmsg.h \
  src/servers/gameserver.h
 
 alcugs_game_LDADD = libalcnet1.a libalcbase1.a
@@ -637,7 +638,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alcugs_auth-authserver.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alcugs_game-alcugs_main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alcugs_game-gameserver.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alcugs_game-gamesubmsg.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alcugs_game-sdl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alcugs_game-sdlbinary.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alcugs_lobby-alcugs_main.Po@am__quote@
@@ -660,13 +660,13 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcbase1_a-alcmain.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcbase1_a-alcos.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcbase1_a-alcparser.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcbase1_a-alcpkg.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcbase1_a-alcthread.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcbase1_a-alctypes.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcbase1_a-alcversion.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcbase1_a-conv_funs.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcbase1_a-md5.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcbase1_a-pypkg.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcbase1_a-plbase.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcbase1_a-plmessage.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcbase1_a-rijndael.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcbase1_a-urubasetypes.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcbase1_a-useful.Po@am__quote@
@@ -947,34 +947,6 @@ libalcbase1_a-alcthread.obj: src/alcbase/alcutil/alcthread.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcbase1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libalcbase1_a-alcthread.obj `if test -f 'src/alcbase/alcutil/alcthread.cpp'; then $(CYGPATH_W) 'src/alcbase/alcutil/alcthread.cpp'; else $(CYGPATH_W) '$(srcdir)/src/alcbase/alcutil/alcthread.cpp'; fi`
 
-libalcbase1_a-alcpkg.o: src/alcbase/alcutil/alcpkg.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcbase1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libalcbase1_a-alcpkg.o -MD -MP -MF $(DEPDIR)/libalcbase1_a-alcpkg.Tpo -c -o libalcbase1_a-alcpkg.o `test -f 'src/alcbase/alcutil/alcpkg.cpp' || echo '$(srcdir)/'`src/alcbase/alcutil/alcpkg.cpp
-@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/libalcbase1_a-alcpkg.Tpo $(DEPDIR)/libalcbase1_a-alcpkg.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/alcbase/alcutil/alcpkg.cpp' object='libalcbase1_a-alcpkg.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcbase1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libalcbase1_a-alcpkg.o `test -f 'src/alcbase/alcutil/alcpkg.cpp' || echo '$(srcdir)/'`src/alcbase/alcutil/alcpkg.cpp
-
-libalcbase1_a-alcpkg.obj: src/alcbase/alcutil/alcpkg.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcbase1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libalcbase1_a-alcpkg.obj -MD -MP -MF $(DEPDIR)/libalcbase1_a-alcpkg.Tpo -c -o libalcbase1_a-alcpkg.obj `if test -f 'src/alcbase/alcutil/alcpkg.cpp'; then $(CYGPATH_W) 'src/alcbase/alcutil/alcpkg.cpp'; else $(CYGPATH_W) '$(srcdir)/src/alcbase/alcutil/alcpkg.cpp'; fi`
-@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/libalcbase1_a-alcpkg.Tpo $(DEPDIR)/libalcbase1_a-alcpkg.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/alcbase/alcutil/alcpkg.cpp' object='libalcbase1_a-alcpkg.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcbase1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libalcbase1_a-alcpkg.obj `if test -f 'src/alcbase/alcutil/alcpkg.cpp'; then $(CYGPATH_W) 'src/alcbase/alcutil/alcpkg.cpp'; else $(CYGPATH_W) '$(srcdir)/src/alcbase/alcutil/alcpkg.cpp'; fi`
-
-libalcbase1_a-pypkg.o: src/alcbase/urutypes/pypkg.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcbase1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libalcbase1_a-pypkg.o -MD -MP -MF $(DEPDIR)/libalcbase1_a-pypkg.Tpo -c -o libalcbase1_a-pypkg.o `test -f 'src/alcbase/urutypes/pypkg.cpp' || echo '$(srcdir)/'`src/alcbase/urutypes/pypkg.cpp
-@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/libalcbase1_a-pypkg.Tpo $(DEPDIR)/libalcbase1_a-pypkg.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/alcbase/urutypes/pypkg.cpp' object='libalcbase1_a-pypkg.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcbase1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libalcbase1_a-pypkg.o `test -f 'src/alcbase/urutypes/pypkg.cpp' || echo '$(srcdir)/'`src/alcbase/urutypes/pypkg.cpp
-
-libalcbase1_a-pypkg.obj: src/alcbase/urutypes/pypkg.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcbase1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libalcbase1_a-pypkg.obj -MD -MP -MF $(DEPDIR)/libalcbase1_a-pypkg.Tpo -c -o libalcbase1_a-pypkg.obj `if test -f 'src/alcbase/urutypes/pypkg.cpp'; then $(CYGPATH_W) 'src/alcbase/urutypes/pypkg.cpp'; else $(CYGPATH_W) '$(srcdir)/src/alcbase/urutypes/pypkg.cpp'; fi`
-@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/libalcbase1_a-pypkg.Tpo $(DEPDIR)/libalcbase1_a-pypkg.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/alcbase/urutypes/pypkg.cpp' object='libalcbase1_a-pypkg.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcbase1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libalcbase1_a-pypkg.obj `if test -f 'src/alcbase/urutypes/pypkg.cpp'; then $(CYGPATH_W) 'src/alcbase/urutypes/pypkg.cpp'; else $(CYGPATH_W) '$(srcdir)/src/alcbase/urutypes/pypkg.cpp'; fi`
-
 libalcbase1_a-ageinfo.o: src/alcbase/urutypes/ageinfo.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcbase1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libalcbase1_a-ageinfo.o -MD -MP -MF $(DEPDIR)/libalcbase1_a-ageinfo.Tpo -c -o libalcbase1_a-ageinfo.o `test -f 'src/alcbase/urutypes/ageinfo.cpp' || echo '$(srcdir)/'`src/alcbase/urutypes/ageinfo.cpp
 @am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/libalcbase1_a-ageinfo.Tpo $(DEPDIR)/libalcbase1_a-ageinfo.Po
@@ -988,6 +960,34 @@ libalcbase1_a-ageinfo.obj: src/alcbase/urutypes/ageinfo.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/alcbase/urutypes/ageinfo.cpp' object='libalcbase1_a-ageinfo.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcbase1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libalcbase1_a-ageinfo.obj `if test -f 'src/alcbase/urutypes/ageinfo.cpp'; then $(CYGPATH_W) 'src/alcbase/urutypes/ageinfo.cpp'; else $(CYGPATH_W) '$(srcdir)/src/alcbase/urutypes/ageinfo.cpp'; fi`
+
+libalcbase1_a-plbase.o: src/alcbase/urutypes/plbase.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcbase1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libalcbase1_a-plbase.o -MD -MP -MF $(DEPDIR)/libalcbase1_a-plbase.Tpo -c -o libalcbase1_a-plbase.o `test -f 'src/alcbase/urutypes/plbase.cpp' || echo '$(srcdir)/'`src/alcbase/urutypes/plbase.cpp
+@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/libalcbase1_a-plbase.Tpo $(DEPDIR)/libalcbase1_a-plbase.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/alcbase/urutypes/plbase.cpp' object='libalcbase1_a-plbase.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcbase1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libalcbase1_a-plbase.o `test -f 'src/alcbase/urutypes/plbase.cpp' || echo '$(srcdir)/'`src/alcbase/urutypes/plbase.cpp
+
+libalcbase1_a-plbase.obj: src/alcbase/urutypes/plbase.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcbase1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libalcbase1_a-plbase.obj -MD -MP -MF $(DEPDIR)/libalcbase1_a-plbase.Tpo -c -o libalcbase1_a-plbase.obj `if test -f 'src/alcbase/urutypes/plbase.cpp'; then $(CYGPATH_W) 'src/alcbase/urutypes/plbase.cpp'; else $(CYGPATH_W) '$(srcdir)/src/alcbase/urutypes/plbase.cpp'; fi`
+@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/libalcbase1_a-plbase.Tpo $(DEPDIR)/libalcbase1_a-plbase.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/alcbase/urutypes/plbase.cpp' object='libalcbase1_a-plbase.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcbase1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libalcbase1_a-plbase.obj `if test -f 'src/alcbase/urutypes/plbase.cpp'; then $(CYGPATH_W) 'src/alcbase/urutypes/plbase.cpp'; else $(CYGPATH_W) '$(srcdir)/src/alcbase/urutypes/plbase.cpp'; fi`
+
+libalcbase1_a-plmessage.o: src/alcbase/urutypes/plmessage.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcbase1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libalcbase1_a-plmessage.o -MD -MP -MF $(DEPDIR)/libalcbase1_a-plmessage.Tpo -c -o libalcbase1_a-plmessage.o `test -f 'src/alcbase/urutypes/plmessage.cpp' || echo '$(srcdir)/'`src/alcbase/urutypes/plmessage.cpp
+@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/libalcbase1_a-plmessage.Tpo $(DEPDIR)/libalcbase1_a-plmessage.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/alcbase/urutypes/plmessage.cpp' object='libalcbase1_a-plmessage.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcbase1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libalcbase1_a-plmessage.o `test -f 'src/alcbase/urutypes/plmessage.cpp' || echo '$(srcdir)/'`src/alcbase/urutypes/plmessage.cpp
+
+libalcbase1_a-plmessage.obj: src/alcbase/urutypes/plmessage.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcbase1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libalcbase1_a-plmessage.obj -MD -MP -MF $(DEPDIR)/libalcbase1_a-plmessage.Tpo -c -o libalcbase1_a-plmessage.obj `if test -f 'src/alcbase/urutypes/plmessage.cpp'; then $(CYGPATH_W) 'src/alcbase/urutypes/plmessage.cpp'; else $(CYGPATH_W) '$(srcdir)/src/alcbase/urutypes/plmessage.cpp'; fi`
+@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/libalcbase1_a-plmessage.Tpo $(DEPDIR)/libalcbase1_a-plmessage.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/alcbase/urutypes/plmessage.cpp' object='libalcbase1_a-plmessage.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcbase1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libalcbase1_a-plmessage.obj `if test -f 'src/alcbase/urutypes/plmessage.cpp'; then $(CYGPATH_W) 'src/alcbase/urutypes/plmessage.cpp'; else $(CYGPATH_W) '$(srcdir)/src/alcbase/urutypes/plmessage.cpp'; fi`
 
 libalcbase1_a-windoze.o: src/alcbase/alcutil/windoze.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcbase1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libalcbase1_a-windoze.o -MD -MP -MF $(DEPDIR)/libalcbase1_a-windoze.Tpo -c -o libalcbase1_a-windoze.o `test -f 'src/alcbase/alcutil/windoze.cpp' || echo '$(srcdir)/'`src/alcbase/alcutil/windoze.cpp
@@ -1436,20 +1436,6 @@ alcugs_game-sdl.obj: src/servers/sdl.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/servers/sdl.cpp' object='alcugs_game-sdl.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(alcugs_game_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o alcugs_game-sdl.obj `if test -f 'src/servers/sdl.cpp'; then $(CYGPATH_W) 'src/servers/sdl.cpp'; else $(CYGPATH_W) '$(srcdir)/src/servers/sdl.cpp'; fi`
-
-alcugs_game-gamesubmsg.o: src/servers/gamesubmsg.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(alcugs_game_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT alcugs_game-gamesubmsg.o -MD -MP -MF $(DEPDIR)/alcugs_game-gamesubmsg.Tpo -c -o alcugs_game-gamesubmsg.o `test -f 'src/servers/gamesubmsg.cpp' || echo '$(srcdir)/'`src/servers/gamesubmsg.cpp
-@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/alcugs_game-gamesubmsg.Tpo $(DEPDIR)/alcugs_game-gamesubmsg.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/servers/gamesubmsg.cpp' object='alcugs_game-gamesubmsg.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(alcugs_game_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o alcugs_game-gamesubmsg.o `test -f 'src/servers/gamesubmsg.cpp' || echo '$(srcdir)/'`src/servers/gamesubmsg.cpp
-
-alcugs_game-gamesubmsg.obj: src/servers/gamesubmsg.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(alcugs_game_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT alcugs_game-gamesubmsg.obj -MD -MP -MF $(DEPDIR)/alcugs_game-gamesubmsg.Tpo -c -o alcugs_game-gamesubmsg.obj `if test -f 'src/servers/gamesubmsg.cpp'; then $(CYGPATH_W) 'src/servers/gamesubmsg.cpp'; else $(CYGPATH_W) '$(srcdir)/src/servers/gamesubmsg.cpp'; fi`
-@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/alcugs_game-gamesubmsg.Tpo $(DEPDIR)/alcugs_game-gamesubmsg.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/servers/gamesubmsg.cpp' object='alcugs_game-gamesubmsg.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(alcugs_game_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o alcugs_game-gamesubmsg.obj `if test -f 'src/servers/gamesubmsg.cpp'; then $(CYGPATH_W) 'src/servers/gamesubmsg.cpp'; else $(CYGPATH_W) '$(srcdir)/src/servers/gamesubmsg.cpp'; fi`
 
 alcugs_game-gameserver.o: src/servers/gameserver.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(alcugs_game_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT alcugs_game-gameserver.o -MD -MP -MF $(DEPDIR)/alcugs_game-gameserver.Tpo -c -o alcugs_game-gameserver.o `test -f 'src/servers/gameserver.cpp' || echo '$(srcdir)/'`src/servers/gameserver.cpp

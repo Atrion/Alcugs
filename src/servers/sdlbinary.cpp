@@ -557,10 +557,8 @@ namespace alc {
 		}
 		
 		if (sentSize > 0) {
-			Byte objPresent = t.getByte();
-			if (objPresent != 0x00) throw txProtocolError(_WHERE("objPresent must be 0x00 but is 0x%02X", objPresent));
-			Byte sdlMagicNumber = t.getByte();
-			if (sdlMagicNumber != 0x80) throw txProtocolError(_WHERE("sdlMagicNumber must be 0x80 but is 0x%02X", sdlMagicNumber));
+			U16 sdlMagicNumber = t.getU16(); // SDL magic number (or the type ID of a NULL object?)
+			if (sdlMagicNumber != 0x8000) throw txProtocolError(_WHERE("sdlMagicNumber must be 0x8000 but is 0x%04X", sdlMagicNumber));
 			// remove these two Bytes from above counters
 			realSize -= 2;
 			sentSize -= 2;
@@ -620,16 +618,14 @@ namespace alc {
 			content.compress();
 			// put sent size and compressed data in buffer
 			t.putU32(content.size()+2);
-			t.putByte(0x00); // object present
-			t.putByte(0x80); // SDL magic number
+			t.putU16(0x8000); // SDL magic number (or the type ID of a NULL object?)
 			t.put(content);
 		}
 		else {
 			t.putU32(0); // the real size is 0 for uncompressed messages
 			t.putByte(0x00); // compression flag
 			t.putU32(data.size()+2); // sent size
-			t.putByte(0x00); // object present
-			t.putByte(0x80); // SDL magic number
+			t.putU16(0x8000); // SDL magic number (or the type ID of a NULL object?)
 			t.put(data);
 		}
 		return t;

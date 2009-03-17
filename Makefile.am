@@ -28,9 +28,11 @@ libalcbase1_a_SOURCES = \
  src/alcbase/urutypes/whatdoyousee.cpp \
  src/alcbase/urutypes/urubasetypes.cpp \
  src/alcbase/alcutil/alcthread.cpp \
- src/alcbase/alcutil/alcpkg.cpp \
- src/alcbase/urutypes/pypkg.cpp \
- src/alcbase/urutypes/ageinfo.cpp
+ src/alcbase/urutypes/ageinfo.cpp \
+ src/alcbase/urutypes/plbase.cpp \
+ src/alcbase/urutypes/plmessage.cpp
+# src/alcbase/alcutil/alcpkg.cpp
+# src/alcbase/urutypes/pypkg.cpp
 
 if WIN32
 libalcbase1_a_SOURCES += src/alcbase/alcutil/windoze.cpp
@@ -39,8 +41,7 @@ endif
 libalcbase1_a_CPPFLAGS = -DIN_ALC_LIBRARY
 #End LibAlcBase library
 
-
-#LibAlcUruNet3 library
+#LibAlcNet library
 libalcnet1_a_SOURCES = \
  src/alcnet/unet.cpp \
  src/alcnet/netlog.cpp \
@@ -64,7 +65,7 @@ libalcnet1_a_SOURCES = \
  src/alcnet/protocol/vaultproto.cpp
 
 libalcnet1_a_CPPFLAGS = -DIN_ALC_LIBRARY
-#End LibAlcUruNet3 library
+#End LibAlcNet library
 
 #Test APPS
 check_PROGRAMS = alcthread_test alcbase_test
@@ -151,12 +152,10 @@ alcugs_game_SOURCES = \
  src/servers/alcugs_main.cpp \
  src/servers/sdlbinary.cpp \
  src/servers/sdl.cpp \
- src/servers/gamesubmsg.cpp \
  src/servers/gameserver.cpp
 alcugs_game_INCLUDES = \
  src/servers/sdlbinary.h \
  src/servers/sdl.h \
- src/servers/gamesubmsg.h \
  src/servers/gameserver.h
 alcugs_game_LDADD = libalcnet1.a libalcbase1.a
 alcugs_game_CPPFLAGS = -DI_AM_THE_GAME_SERVER
