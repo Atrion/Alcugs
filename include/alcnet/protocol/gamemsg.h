@@ -251,7 +251,7 @@ namespace alc {
 	
 	class tmMemberUpdate : public tmMsgBase {
 	public:
-		tmMemberUpdate(tNetSession *u, tNetSession *memberSession, const tMemberInfo &info, bool isJoined);
+		tmMemberUpdate(tNetSession *u, const tMemberInfo &info, bool isJoined);
 		virtual void stream(tBBuf &t);
 		// format
 		tMemberInfo info;

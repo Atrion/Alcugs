@@ -678,7 +678,7 @@ namespace alc {
 					while ((server = servers->getNext())) {
 						tTrackingData *subData = dynamic_cast<tTrackingData *>(server->data);
 						if (!subData) continue;
-						if (!data->isLobby && !data->parent) printGameXML(f, server, subData);
+						if (!subData->isLobby && !subData->parent) printGameXML(f, server, subData);
 					}
 				}
 			fprintf(f, "</Games>\n");
