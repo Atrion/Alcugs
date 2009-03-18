@@ -51,7 +51,7 @@ namespace alc {
 	*/
 	class tGameData : public tNetSessionData {
 	public:
-		tGameData(const tUruObject &obj, tNetSession *u) : obj(obj) { isHidden = false; }
+		tGameData(const tUruObject &obj, tNetSession *u) : obj(obj) { isHidden = false; this->u = u; }
 		tUruObject obj;
 		bool isHidden;
 		tNetSession *u;
