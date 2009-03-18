@@ -600,37 +600,25 @@ void tmMsgBase::unsetUrgent() {
 	bhflags &= ~UNetUrgent;
 }
 void tmMsgBase::store(tBBuf &t) {
+	if (!u)  throw txProtocolError(_WHERE("attempt to save message without session being set"));
 	//base
 	cmd=t.getU16();
 	flags=t.getU32();
 	if(flags & plNetVersion) {
 		max_version=t.getByte();
 		min_version=t.getByte();
-		if (u) { // this overrides existing values, which might be guessed
-			u->max_version=max_version;
-			u->min_version=min_version;
-		}
+		// this overrides existing values, which might be guessed
+		u->max_version=max_version;
+		u->min_version=min_version;
 	} else {
 		max_version=0;
 		min_version=0;
 	}
-	//BEGIN ** guess the protocol version from behaviours
 	// The first message from Plasma clients is always an auth hello that contains the version numbers
-	if(u && u->max_version==0 && !(flags & plNetVersion)) { // don't auto-guess when we got a version number (it could have been a version 0.0)
-		// old versions always include the timestamp, newer ones have a flag for that and sometimes dont contain it
-		if(flags & plNetTimestamp || t.remaining() < 8) { // when there are less than 8 bytes remaining, no timestamp can be contained
-			u->max_version=12; //sure (normally on ping proves)
-			u->min_version=6;
-		} else {
-			u->max_version=12;
-			u->min_version=0;
-		}
-		DBG(5,"Detected version is %i.%i\n",s->max_version,s->min_version);
-	}
-	//END ** guess protocol version
+	// besides, NetMsgPing should have always the timestamp enabled in new versions
 	
-	//NetMsgPing should have always the timestamp enabled in new versions
-	if(flags & plNetTimestamp || (u && (u->min_version<6 && u->max_version==12))) {
+	
+	if(flags & plNetTimestamp || (u->min_version<6 && u->max_version==12)) {
 		t.get(timestamp);
 	} else {
 		timestamp.seconds=0;
@@ -687,6 +675,7 @@ void tmMsgBase::store(tBBuf &t) {
 		throw txProtocolError(_WHERE("%s Problem parsing a plNetMsg header format mask %08X\n",u->str(),flags & ~(check)));
 }
 void tmMsgBase::stream(tBBuf &t) {
+	if (!u)  throw txProtocolError(_WHERE("attempt to send message without session being set"));
 	if (!cmd) throw txProtocolError(_WHERE("attempt to send message without cmd"));
 	if((flags & plNetSid) && u->proto!=0 && u->proto<3)
 		throw txProtocolError(_WHERE("attempt to send message with sid flag to old client")); // dont send this flag to old peers
@@ -696,7 +685,7 @@ void tmMsgBase::stream(tBBuf &t) {
 		t.putByte(max_version);
 		t.putByte(min_version);
 	}
-	if(flags & plNetTimestamp || (u && (u->min_version<6 && u->max_version==12))) {
+	if(flags & plNetTimestamp || (u->min_version<6 && u->max_version==12)) {
 		if(timestamp.seconds==0) {
 			timestamp.seconds=alcGetTime();
 			timestamp.microseconds=alcGetMicroseconds();
