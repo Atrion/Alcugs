@@ -1301,303 +1301,119 @@ namespace alc {
 	
 	const char *alcVaultGetDataType(U16 type)
 	{
-		static const char *ret;
 		switch (type) {
-			case DAgeLinkStruct:
-				ret = "DAgeLinkStruct";
-				break;
-			case DCreatableGenericValue:
-				ret = "DCreatableGenericValue";
-				break;
-			case DCreatableStream:
-				ret = "DCreatableStream";
-				break;
-			case DServerGuid:
-				ret = "DServerGuid";
-				break;
-			case DVaultNodeRef: // has a different value in TPOTS, but it is converted before this function is called
-				ret = "DVaultNodeRef";
-				break;
-			case DVaultNode: // has a different value in TPOTS, but it is converted before this function is called
-				ret = "DVaultNode";
-				break;
-			default:
-				ret = "DUnknown";
-				break;
+			case DAgeLinkStruct: return "DAgeLinkStruct";
+			case DCreatableGenericValue: return "DCreatableGenericValue";
+			case DCreatableStream: return "DCreatableStream";
+			case DServerGuid: return "DServerGuid";
+			case DVaultNodeRef: return "DVaultNodeRef"; // has a different value in TPOTS, but it is converted before this function is called
+			case DVaultNode: return "DVaultNode"; // has a different value in TPOTS, but it is converted before this function is called
+			default: return "Unknown";
 		}
-		return ret;
 	}
 	
 	const char *alcVaultGetCmd(Byte cmd)
 	{
-		static const char *ret;
 		switch (cmd) {
-			case VConnect:
-				ret = "VConnect";
-				break;
-			case VDisconnect:
-				ret = "VDisconnect";
-				break;
-			case VAddNodeRef:
-				ret = "VAddNodeRef";
-				break;
-			case VRemoveNodeRef:
-				ret = "VRemoveNodeRef";
-				break;
-			case VNegotiateManifest:
-				ret = "VNegotiateManifest";
-				break;
-			case VSaveNode:
-				ret = "VSaveNode";
-				break;
-			case VFindNode:
-				ret = "VFindNode";
-				break;
-			case VFetchNode:
-				ret = "VFetchNode";
-				break;
-			case VSendNode:
-				ret = "VSendNode";
-				break;
-			case VSetSeen:
-				ret = "VSetSeen";
-				break;
-			case VOnlineState:
-				ret = "VOnlineState";
-				break;
-			default:
-				ret = "VUnknown";
-				break;
+			case VConnect: return "VConnect";
+			case VDisconnect: return "VDisconnect";
+			case VAddNodeRef: return "VAddNodeRef";
+			case VRemoveNodeRef: return "VRemoveNodeRef";
+			case VNegotiateManifest: return "VNegotiateManifest";
+			case VSaveNode: return "VSaveNode";
+			case VFindNode: return "VFindNode";
+			case VFetchNode: return "VFetchNode";
+			case VSendNode: return "VSendNode";
+			case VSetSeen: return "VSetSeen";
+			case VOnlineState: return "VOnlineState";
+			default: return "Unknown";
 		}
-		return ret;
 	}
 	
 	const char *alcVaultGetTask(Byte cmd)
 	{
-		static const char *ret;
 		switch (cmd) {
-			case TCreatePlayer:
-				ret = "TCreatePlayer";
-				break;
-			case TDeletePlayer:
-				ret = "TDeletePlayer";
-				break;
-			case TGetPlayerList:
-				ret = "TGetPlayerList";
-				break;
-			case TCreateNeighborhood:
-				ret = "TCreateNeighborhood";
-				break;
-			case TJoinNeighborhood:
-				ret = "TJoinNeighborhood";
-				break;
-			case TSetAgePublic:
-				ret = "TSetAgePublic";
-				break;
-			case TIncPlayerOnlineTime:
-				ret = "TIncPlayerOnlineTime";
-				break;
-			case TEnablePlayer:
-				ret = "TEnablePlayer";
-				break;
-			case TRegisterOwnedAge:
-				ret = "TRegisterOwnedAge";
-				break;
-			case TUnRegisterOwnedAge:
-				ret = "TUnRegisterOwnedAge";
-				break;
-			case TRegisterVisitAge:
-				ret = "TRegisterVisitAge";
-				break;
-			case TUnRegisterVisitAge:
-				ret = "TUnRegisterVisitAge";
-				break;
-			case TFriendInvite:
-				ret = "TFriendInvite";
-				break;
-			default:
-				ret = "TUnknown";
-				break;
+			case TCreatePlayer: return "TCreatePlayer";
+			case TDeletePlayer: return "TDeletePlayer";
+			case TGetPlayerList: return "TGetPlayerList";
+			case TCreateNeighborhood: return "TCreateNeighborhood";
+			case TJoinNeighborhood: return "TJoinNeighborhood";
+			case TSetAgePublic: return "TSetAgePublic";
+			case TIncPlayerOnlineTime: return "TIncPlayerOnlineTime";
+			case TEnablePlayer: return "TEnablePlayer";
+			case TRegisterOwnedAge: return "TRegisterOwnedAge";
+			case TUnRegisterOwnedAge: return "TUnRegisterOwnedAge";
+			case TRegisterVisitAge: return "TRegisterVisitAge";
+			case TUnRegisterVisitAge: return "TUnRegisterVisitAge";
+			case TFriendInvite: return "TFriendInvite";
+			default: return "Unknown";
 		}
-		return ret;
 	}
 	
 	const char *alcVaultGetNodeType(Byte type)
 	{
-		static const char *ret;
 		switch (type) {
-			case KInvalidNode:
-				ret = "KInvalidNode";
-				break;
-			case KVNodeMgrPlayerNode:
-				ret = "KVNodeMgrPlayerNode";
-				break;
-			case KVNodeMgrAgeNode:
-				ret = "KVNodeMgrAgeNode";
-				break;
-			case KVNodeMgrGameServerNode:
-				ret = "KVNodeMgrGameServerNode";
-				break;
-			case KVNodeMgrAdminNode:
-				ret = "KVNodeMgrAdminNode";
-				break;
-			case KVNodeMgrServerNode:
-				ret = "KVNodeMgrServerNode";
-				break;
-			case KVNodeMgrCCRNode:
-				ret = "KVNodeMgrCCRNode";
-				break;
-			case KFolderNode:
-				ret = "KFolderNode";
-				break;
-			case KPlayerInfoNode:
-				ret = "KPlayerInfoNode";
-				break;
-			case KSystem:
-				ret = "KSystem";
-				break;
-			case KImageNode:
-				ret = "KImageNode";
-				break;
-			case KTextNoteNode:
-				ret = "KTextNoteNode";
-				break;
-			case KSDLNode:
-				ret = "KSDLNode";
-				break;
-			case KAgeLinkNode:
-				ret = "KAgeLinkNode";
-				break;
-			case KChronicleNode:
-				ret = "KChronicleNode";
-				break;
-			case KPlayerInfoListNode:
-				ret = "KPlayerInfoListNode";
-				break;
-			case KMarkerNode:
-				ret = "KMarkerNode";
-				break;
-			case KAgeInfoNode:
-				ret = "KAgeInfoNode";
-				break;
-			case KAgeInfoListNode:
-				ret = "KAgeInfoListNode";
-				break;
-			case KMarkerListNode:
-				ret = "KMarkerListNode";
-				break;
-			default:
-				ret = "KUnknown";
-				break;
+			case KInvalidNode: return "KInvalidNode";
+			case KVNodeMgrPlayerNode: return "KVNodeMgrPlayerNode";
+			case KVNodeMgrAgeNode: return "KVNodeMgrAgeNode";
+			case KVNodeMgrGameServerNode: return "KVNodeMgrGameServerNode";
+			case KVNodeMgrAdminNode: return "KVNodeMgrAdminNode";
+			case KVNodeMgrServerNode: return "KVNodeMgrServerNode";
+			case KVNodeMgrCCRNode: return "KVNodeMgrCCRNode";
+			case KFolderNode: return "KFolderNode";
+			case KPlayerInfoNode: return "KPlayerInfoNode";
+			case KSystem: return "KSystem";
+			case KImageNode: return "KImageNode";
+			case KTextNoteNode: return "KTextNoteNode";
+			case KSDLNode: return "KSDLNode";
+			case KAgeLinkNode: return "KAgeLinkNode";
+			case KChronicleNode: return "KChronicleNode";
+			case KPlayerInfoListNode: return "KPlayerInfoListNode";
+			case KMarkerNode: return "KMarkerNode";
+			case KAgeInfoNode: return "KAgeInfoNode";
+			case KAgeInfoListNode: return "KAgeInfoListNode";
+			case KMarkerListNode: return "KMarkerListNode";
+			default: return "Unknown";
 		}
-		return ret;
 	}
 	
 	const char *alcVaultGetFolderType(U32 type)
 	{
-		static const char *ret;
 		switch (type) {
-			case KGeneric:
-				ret = "KGeneric";
-				break;
-			case KInboxFolder:
-				ret = "KInboxFolder";
-				break;
-			case KBuddyListFolder:
-				ret = "KBuddyListFolder";
-				break;
-			case KIgnoreListFolder:
-				ret = "KIgnoreListFolder";
-				break;
-			case KPeopleIKnowAboutFolder:
-				ret = "KPeopleIKnowAboutFolder";
-				break;
-			case KVaultMgrGlobalDataFolder:
-				ret = "KVaultMgrGlobalDataFolder";
-				break;
-			case KChronicleFolder:
-				ret = "KChronicleFolder";
-				break;
-			case KAvatarOutfitFolder:
-				ret = "KAvatarOutfitFolder";
-				break;
-			case KAgeTypeJournalFolder:
-				ret = "KAgeTypeJournalFolder";
-				break;
-			case KSubAgesFolder:
-				ret = "KSubAgesFolder";
-				break;
-			case KDeviceInboxFolder:
-				ret = "KDeviceInboxFolder";
-				break;
-			case KHoodMembersFolder:
-				ret = "KHoodMembersFolder";
-				break;
-			case KAllPlayersFolder:
-				ret = "KAllPlayersFolder";
-				break;
-			case KAgeMembersFolder:
-				ret = "KAgeMembersFolder";
-				break;
-			case KAgeJournalsFolder:
-				ret = "KAgeJournalsFolder";
-				break;
-			case KAgeDevicesFolder:
-				ret = "KAgeDevicesFolder";
-				break;
-			case KAgeInstaceSDLNode:
-				ret = "KAgeInstaceSDLNode";
-				break;
-			case KAgeGlobalSDLNode:
-				ret = "KAgeGlobalSDLNode";
-				break;
-			case KCanVisitFolder:
-				ret = "KCanVisitFolder";
-				break;
-			case KAgeOwnersFolder:
-				ret = "KAgeOwnersFolder";
-				break;
-			case KAllAgeGlobalSDLNodesFolder:
-				ret = "KAllAgeGlobalSDLNodesFolder";
-				break;
-			case KPlayerInfoNodeFolder:
-				ret = "KPlayerInfoNodeFolder";
-				break;
-			case KPublicAgesFolder:
-				ret = "KPublicAgesFolder";
-				break;
-			case KAgesIOwnFolder:
-				ret = "KAgesIOwnFolder";
-				break;
-			case KAgesICanVisitFolder:
-				ret = "KAgesICanVisitFolder";
-				break;
-			case KAvatarClosetFolder:
-				ret = "KAvatarClosetFolder";
-				break;
-			case KAgeInfoNodeFolder:
-				ret = "KAgeInfoNodeFolder";
-				break;
-			case KSystemNode:
-				ret = "KSystemNode";
-				break;
-			case KPlayerInviteFolder:
-				ret = "KPlayerInviteFolder";
-				break;
-			case KCCRPlayersFolder:
-				ret = "KCCRPlayersFolder";
-				break;
-			case KGlobalInboxFolder:
-				ret = "KGlobalInboxFolder";
-				break;
-			case KChildAgesFolder:
-				ret = "KChildAgesFolder";
-				break;
-			default:
-				ret = "KUnknown";
-				break;
+			case KGeneric: return "KGeneric";
+			case KInboxFolder: return "KInboxFolder";
+			case KBuddyListFolder: return "KBuddyListFolder";
+			case KIgnoreListFolder: return "KIgnoreListFolder";
+			case KPeopleIKnowAboutFolder: return "KPeopleIKnowAboutFolder";
+			case KVaultMgrGlobalDataFolder: return "KVaultMgrGlobalDataFolder";
+			case KChronicleFolder: return "KChronicleFolder";
+			case KAvatarOutfitFolder: return "KAvatarOutfitFolder";
+			case KAgeTypeJournalFolder: return "KAgeTypeJournalFolder";
+			case KSubAgesFolder: return "KSubAgesFolder";
+			case KDeviceInboxFolder: return "KDeviceInboxFolder";
+			case KHoodMembersFolder: return "KHoodMembersFolder";
+			case KAllPlayersFolder: return "KAllPlayersFolder";
+			case KAgeMembersFolder: return "KAgeMembersFolder";
+			case KAgeJournalsFolder: return "KAgeJournalsFolder";
+			case KAgeDevicesFolder: return "KAgeDevicesFolder";
+			case KAgeInstaceSDLNode: return "KAgeInstaceSDLNode";
+			case KAgeGlobalSDLNode: return "KAgeGlobalSDLNode";
+			case KCanVisitFolder: return "KCanVisitFolder";
+			case KAgeOwnersFolder: return "KAgeOwnersFolder";
+			case KAllAgeGlobalSDLNodesFolder: return "KAllAgeGlobalSDLNodesFolder";
+			case KPlayerInfoNodeFolder: return "KPlayerInfoNodeFolder";
+			case KPublicAgesFolder: return "KPublicAgesFolder";
+			case KAgesIOwnFolder: return "KAgesIOwnFolder";
+			case KAgesICanVisitFolder: return "KAgesICanVisitFolder";
+			case KAvatarClosetFolder: return "KAvatarClosetFolder";
+			case KAgeInfoNodeFolder: return "KAgeInfoNodeFolder";
+			case KSystemNode: return "KSystemNode";
+			case KPlayerInviteFolder: return "KPlayerInviteFolder";
+			case KCCRPlayersFolder: return "KCCRPlayersFolder";
+			case KGlobalInboxFolder: return "KGlobalInboxFolder";
+			case KChildAgesFolder: return "KChildAgesFolder";
+			default: return "Unknown";
 		}
-		return ret;
 	}
 
 } //end namespace alc

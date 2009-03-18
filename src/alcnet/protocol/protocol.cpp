@@ -607,7 +607,7 @@ void tmMsgBase::store(tBBuf &t) {
 	if(flags & plNetVersion) {
 		max_version=t.getByte();
 		min_version=t.getByte();
-		// this overrides existing values, which might be guessed
+		// this overrides existing values
 		u->max_version=max_version;
 		u->min_version=min_version;
 	} else {
@@ -813,58 +813,24 @@ Byte alcUnetGetVarTypeFromName(tStrBuf type) {
 }
 
 const char * alcUnetGetVarType(Byte type) {
-	static const char * ret;
 	switch(type) {
-		case DInteger:
-			ret="INT";
-			break;
-		case DFloat:
-			ret="FLOAT";
-			break;
-		case DBool:
-			ret="BOOL";
-			break;
-		case DUruString:
-			ret="STRING32";
-			break;
-		case DPlKey:
-			ret="PLKEY";
-			break;
-		case DCreatable:
-			ret="CREATABLE";
-			break;
-		case DTime:
-			ret="TIME";
-			break;
-		case DByte:
-			ret="BYTE";
-			break;
-		case DStruct:
-			ret="SDL STRUCT";
-			break;
-		case DShort:
-			ret="SHORT";
-			break;
-		case DAgeTimeOfDay:
-			ret="AGETIMEOFDAY";
-			break;
-		case DVector3:
-			ret="VECTOR3";
-			break;
-		case DPoint3:
-			ret="POINT3";
-			break;
-		case DQuaternion:
-			ret="QUATERNION";
-			break;
-		case DRGB8:
-			ret="RGB8";
-			break;
-		default:
-			ret="Unknown";
-			break;
+		case DInteger: return "INT";
+		case DFloat: return "FLOAT";
+		case DBool: return "BOOL";
+		case DUruString: return "STRING32";
+		case DPlKey: return "PLKEY";
+		case DCreatable: return "CREATABLE";
+		case DTime: return "TIME";
+		case DByte: return "BYTE";
+		case DStruct: return "SDL STRUCT";
+		case DShort: return "SHORT";
+		case DAgeTimeOfDay: return "AGETIMEOFDAY";
+		case DVector3: return "VECTOR3";
+		case DPoint3: return "POINT3";
+		case DQuaternion: return "QUATERNION";
+		case DRGB8: return "RGB8";
+		default: return "Unknown";
 	}
-	return ret;
 }
 
 const char * alcUnetGetRelease(Byte rel) {
@@ -877,436 +843,164 @@ const char * alcUnetGetRelease(Byte rel) {
 }
 
 const char * alcUnetGetDestination(Byte dest) {
-	static const char * ret;
 	switch(dest) {
-		case KAgent:
-			ret="kAgent";
-			break;
-		case KLobby:
-			ret="kLobby";
-			break;
-		case KGame:
-			ret="kGame";
-			break;
-		case KVault:
-			ret="kVault";
-			break;
-		case KAuth:
-			ret="kAuth";
-			break;
-		case KAdmin:
-			ret="kAdmin";
-			break;
-		case KLookup: // same as KTracking
-			ret="kLookup";
-			break;
-		case KClient:
-			ret="kClient";
-			break;
-		case KMeta:
-			ret="kMeta";
-			break;
-		case KTest:
-			ret="kTest";
-			break;
-		case KData:
-			ret="kData";
-			break;
-		case KProxy:
-			ret="kProxy";
-			break;
-		case KPlFire:
-			ret="kPlFire";
-			break;
-		case KBcast:
-			ret="kBcast";
-			break;
-		default:
-			ret="Unknown";
-			break;
+		case KAgent: return "kAgent";
+		case KLobby: return "kLobby";
+		case KGame: return "kGame";
+		case KVault: return "kVault";
+		case KAuth: return "kAuth";
+		case KAdmin: return "kAdmin";
+		case KLookup: return "kLookup"; // same as KTracking
+		case KClient: return "kClient";
+		case KMeta: return "kMeta";
+		case KTest: return "kTest";
+		case KData: return "kData";
+		case KProxy: return "kProxy";
+		case KPlFire: return "kPlFire";
+		case KBcast: return "kBcast";
+		default: return "Unknown";
 	}
-	return ret;
 }
 
 const char * alcUnetGetReasonCode(Byte code) {
-	static const char * ret;
 	switch(code) {
-		case RStopResponding:
-			ret="StopResponding";
-			break;
-		case RActive:
-			ret="Active";
-			break;
-		case RInRoute:
-			ret="InRoute";
-			break;
-		case RArriving:
-			ret="Arriving";
-			break;
-		case RJoining:
-			ret="Joining";
-			break;
-		case RLeaving:
-			ret="Leaving";
-			break;
-		case RQuitting:
-			ret="Quitting";
-			break;
-		case RUnknown:
-			ret="UnknownReason";
-			break;
-		case RKickedOff:
-			ret="KickedOff";
-			break;
-		case RTimedOut:
-			ret="TimedOut";
-			break;
-		case RLoggedInElsewhere:
-			ret="LoggedInElsewhere";
-			break;
-		case RNotAuthenticated:
-			ret="NotAuthenticated";
-			break;
-		case RUnprotectedCCR:
-			ret="UnprotectedCCR";
-			break;
-		case RIllegalCCRClient:
-			ret="IllegalCCRClient";
-			break;
-		case RHackAttempt:
-			ret="HackAttempt";
-			break;
-		case RUnimplemented:
-			ret="Unimplemented";
-			break;
-		case RParseError:
-			ret="ParseError";
-			break;
-		default:
-			ret="Unknown";
-			break;
+		case RStopResponding: return "StopResponding";
+		case RActive: return "Active";
+		case RInRoute: return "InRoute";
+		case RArriving: return "Arriving";
+		case RJoining: return "Joining";
+		case RLeaving: return "Leaving";
+		case RQuitting: return "Quitting";
+		case RUnknown: return "UnknownReason";
+		case RKickedOff: return "KickedOff";
+		case RTimedOut: return "TimedOut";
+		case RLoggedInElsewhere: return "LoggedInElsewhere";
+		case RNotAuthenticated: return "NotAuthenticated";
+		case RUnprotectedCCR: return "UnprotectedCCR";
+		case RIllegalCCRClient: return "IllegalCCRClient";
+		case RHackAttempt: return "HackAttempt";
+		case RUnimplemented: return "Unimplemented";
+		case RParseError: return "ParseError";
+		default: return "Unknown";
 	}
-	return ret;
 }
 
 const char * alcUnetGetAuthCode(Byte code) {
-	static const char * ret;
 	switch(code) {
-		case AAuthSucceeded:
-			ret="AuthSucceeded";
-			break;
-		case AAuthHello:
-			ret="AuthHello";
-			break;
-		case AProtocolOlder:
-			ret="ProtocolOlder";
-			break;
-		case AProtocolNewer:
-			ret="ProtocolNewer";
-			break;
-		case AAccountExpired:
-			ret="AccountExpired";
-			break;
-		case AAccountDisabled:
-			ret="AccountDisabled";
-			break;
-		case AInvalidPasswd:
-			ret="InvalidPasswd";
-			break;
-		case AInvalidUser:
-			ret="InvalidUser";
-			break;
-		case AUnspecifiedServerError:
-			ret="UnspecifiedServerError";
-			break;
-		default:
-			ret="Unknown";
-			break;
+		case AAuthSucceeded: return "AuthSucceeded";
+		case AAuthHello: return "AuthHello";
+		case AProtocolOlder: return "ProtocolOlder";
+		case AProtocolNewer: return "ProtocolNewer";
+		case AAccountExpired: return "AccountExpired";
+		case AAccountDisabled: return "AccountDisabled";
+		case AInvalidPasswd: return "InvalidPasswd";
+		case AInvalidUser: return "InvalidUser";
+		case AUnspecifiedServerError: return "UnspecifiedServerError";
+		default: return "Unknown";
 	}
-	return ret;
 }
 
 const char * alcUnetGetAvatarCode(Byte code) {
-	static const char * ret;
 	switch(code) {
-		case AOK:
-			ret="Ok";
-			break;
-		case AUnknown:
-			ret="UnknownReason";
-			break;
-		case ANameDoesNotHaveEnoughLetters:
-			ret="NameDoesNotHaveEnoughLetters";
-			break;
-		case ANameIsTooShort:
-			ret="NameIsTooShort";
-			break;
-		case ANameIsTooLong:
-			ret="NameIsTooLong";
-			break;
-		case AInvitationNotFound:
-			ret="InvitationNotFound";
-			break;
-		case ANameIsAlreadyInUse:
-			ret="NameIsAlreadyInUse";
-			break;
-		case ANameIsNotAllowed:
-			ret="NameIsNotAllowed";
-			break;
-		case AMaxNumberPerAccountReached:
-			ret="MaxNumberPerAccountReached";
-			break;
-		case AUnspecifiedServerError:
-			ret="UnspecifiedServerError";
-			break;
-		default:
-			ret="Unknown";
-			break;
+		case AOK: return "Ok";
+		case AUnknown: return "UnknownReason";
+		case ANameDoesNotHaveEnoughLetters: return "NameDoesNotHaveEnoughLetters";
+		case ANameIsTooShort: return "NameIsTooShort";
+		case ANameIsTooLong: return "NameIsTooLong";
+		case AInvitationNotFound: return "InvitationNotFound";
+		case ANameIsAlreadyInUse: return "NameIsAlreadyInUse";
+		case ANameIsNotAllowed: return "NameIsNotAllowed";
+		case AMaxNumberPerAccountReached: return "MaxNumberPerAccountReached";
+		case AUnspecifiedServerError: return "UnspecifiedServerError";
+		default: return "Unknown";
 	}
-	return ret;
 }
 
 const char * alcUnetGetLinkingRule(Byte rule)
 {
-	static const char * ret;
 	switch (rule) {
-		case KBasicLink:
-			ret="KBasicLink";
-			break;
-		case KOriginalBook:
-			ret="KOriginalBook";
-			break;
-		case KSubAgeBook:
-			ret="KSubAgeBook";
-			break;
-		case KOwnedBook:
-			ret="KOwnedBook";
-			break;
-		case KVisitBook:
-			ret="KVisitBook";
-			break;
-		case KChildAgeBook:
-			ret="KChildAgeBook";
-			break;
-		default:
-			ret="KUnknown";
-			break;
+		case KBasicLink: return "KBasicLink";
+		case KOriginalBook: return "KOriginalBook";
+		case KSubAgeBook: return "KSubAgeBook";
+		case KOwnedBook: return "KOwnedBook";
+		case KVisitBook: return "KVisitBook";
+		case KChildAgeBook: return "KChildAgeBook";
+		default: return "Unknown";
 	}
-	return ret;
 }
 
 const char * alcUnetGetMsgCode(U16 code) {
-	static const char * ret;
 	switch(code) {
-		case NetMsgPagingRoom:
-			ret="NetMsgPagingRoom";
-			break;
-		case NetMsgJoinReq:
-			ret="NetMsgJoinReq";
-			break;
-		case NetMsgJoinAck:
-			ret="NetMsgJoinAck";
-			break;
-		case NetMsgLeave:
-			ret="NetMsgLeave";
-			break;
-		case NetMsgPing:
-			ret="NetMsgPing";
-			break;
-		case NetMsgGroupOwner:
-			ret="NetMsgGroupOwner";
-			break;
-		case NetMsgGameStateRequest:
-			ret="NetMsgGameStateRequest";
-			break;
-		case NetMsgGameMessage:
-			ret="NetMsgGameMessage";
-			break;
-		case NetMsgVoice:
-			ret="NetMsgVoice";
-			break;
-		case NetMsgTestAndSet:
-			ret="NetMsgTestAndSet";
-			break;
-		case NetMsgMembersListReq:
-			ret="NetMsgMembersListReq";
-			break;
-		case NetMsgMembersList:
-			ret="NetMsgMembersList";
-			break;
-		case NetMsgMemberUpdate:
-			ret="NetMsgMemberUpdate";
-			break;
-		case NetMsgCreatePlayer:
-			ret="NetMsgCreatePlayer";
-			break;
-		case NetMsgAuthenticateHello:
-			ret="NetMsgAuthenticateHello";
-			break;
-		case NetMsgAuthenticateChallenge:
-			ret="NetMsgAuthenticateChallenge";
-			break;
-		case NetMsgInitialAgeStateSent:
-			ret="NetMsgInitialAgeStateSent";
-			break;
-		case NetMsgVaultTask:
-			ret="NetMsgVaultTask";
-			break;
-		case NetMsgAlive:
-			ret="NetMsgAlive";
-			break;
-		case NetMsgTerminated:
-			ret="NetMsgTerminated";
-			break;
-		case NetMsgSDLState:
-			ret="NetMsgSDLState";
-			break;
-		case NetMsgSDLStateBCast:
-			ret="NetMsgSDLStateBCast";
-			break;
-		case NetMsgGameMessageDirected:
-			ret="NetMsgGameMessageDirected";
-			break;
-		case NetMsgRequestMyVaultPlayerList:
-			ret="NetMsgRequestMyVaultPlayerList";
-			break;
-		case NetMsgVaultPlayerList:
-			ret="NetMsgVaultPlayerList";
-			break;
-		case NetMsgSetMyActivePlayer:
-			ret="NetMsgSetMyActivePlayer";
-			break;
-		case NetMsgPlayerCreated:
-			ret="NetMsgPlayerCreated";
-			break;
-		case NetMsgFindAge:
-			ret="NetMsgFindAge";
-			break;
-		case NetMsgFindAgeReply:
-			ret="NetMsgFindAgeReply";
-			break;
-		case NetMsgDeletePlayer:
-			ret="NetMsgDeletePlayer";
-			break;
-		case NetMsgAuthenticateResponse:
-			ret="NetMsgAuthenticateResponse";
-			break;
-		case NetMsgAccountAuthenticated:
-			ret="NetMsgAccountAuthenticated";
-			break;
-		case NetMsgRelevanceRegions:
-			ret="NetMsgRelevanceRegions";
-			break;
-		case NetMsgLoadClone:
-			ret="NetMsgLoadClone";
-			break;
-		case NetMsgPlayerPage:
-			ret="NetMsgPlayerPage";
-			break;
-		case NetMsgVault:
-			ret="NetMsgVault";
-			break;
-		case NetMsgVault2:
-			ret="NetMsgVault2";
-			break;
-		case NetMsgSetTimeout:
-			ret="NetMsgSetTimeout";
-			break;
-		case NetMsgActivePlayerSet: // is the same as NetMsgSetTimeout2
-			ret="NetMsgActivePlayerSet|NetMsgSetTimeout2";
-			break;
-		case NetMsgActivePlayerSet2:
-			ret="NetMsgActivePlayerSet2";
-			break;
-		case NetMsgCustomAuthAsk:
-			ret="NetMsgCustomAuthAsk";
-			break;
-		case NetMsgCustomAuthResponse:
-			ret="NetMsgCustomAuthResponse";
-			break;
-		case NetMsgCustomVaultAskPlayerList:
-			ret="NetMsgCustomVaultAskPlayerList";
-			break;
-		case NetMsgCustomVaultPlayerList:
-			ret="NetMsgCustomVaultPlayerList";
-			break;
-		case NetMsgCustomVaultCreatePlayer:
-			ret="NetMsgCustomVaultCreatePlayer";
-			break;
-		case NetMsgCustomVaultPlayerCreated:
-			ret="NetMsgCustomVaultPlayerCreated";
-			break;
-		case NetMsgCustomVaultDeletePlayer:
-			ret="NetMsgCustomVaultDeletePlayer";
-			break;
-		case NetMsgCustomPlayerStatus:
-			ret="NetMsgCustomPlayerStatus";
-			break;
-		case NetMsgCustomVaultCheckKi:
-			ret="NetMsgCustomVaultCheckKi";
-			break;
-		case NetMsgCustomVaultKiChecked:
-			ret="NetMsgCustomVaultKiChecked";
-			break;
-		case NetMsgCustomRequestAllPlStatus:
-			ret="NetMsgCustomRequestAllPlStatus";
-			break;
-		case NetMsgCustomAllPlayerStatus:
-			ret="NetMsgCustomAllPlayerStatus";
-			break;
-		case NetMsgCustomSetGuid:
-			ret="NetMsgCustomSetGuid";
-			break;
-		case NetMsgCustomFindServer:
-			ret="NetMsgCustomFindServer";
-			break;
-		case NetMsgCustomServerFound:
-			ret="NetMsgCustomServerFound";
-			break;
-		case NetMsgCustomForkServer:
-			ret="NetMsgCustomForkServer";
-			break;
-		case NetMsgPlayerTerminated:
-			ret="NetMsgPlayerTerminated";
-			break;
-		case NetMsgCustomVaultPlayerStatus:
-			ret="NetMsgCustomVaultPlayerStatus";
-			break;
-		case NetMsgCustomMetaRegister:
-			ret="NetMsgCustomMetaRegister";
-			break;
-		case NetMsgCustomMetaPing:
-			ret="NetMsgCustomMetaPing";
-			break;
-		case NetMsgCustomServerVault:
-			ret="NetMsgCustomServerVault";
-			break;
-		case NetMsgCustomServerVaultTask:
-			ret="NetMsgCustomServerVaultTask";
-			break;
-		case NetMsgCustomSaveGame:
-			ret="NetMsgCustomSaveGame";
-			break;
-		case NetMsgCustomLoadGame:
-			ret="NetMsgCustomLoadGame";
-			break;
-		case NetMsgCustomCmd:
-			ret="NetMsgCustomCmd";
-			break;
-		case NetMsgCustomDirectedFwd:
-			ret="NetMsgCustomDirectedFwd";
-			break;
-		case NetMsgCustomPlayerToCome:
-			ret="NetMsgCustomPlayerToCome";
-			break;
-		case NetMsgCustomTest:
-			ret="NetMsgCustomTest";
-			break;
-		default:
-			ret="UnimplementedMsg";
-			break;
+		case NetMsgPagingRoom: return "NetMsgPagingRoom";
+		case NetMsgJoinReq: return "NetMsgJoinReq";
+		case NetMsgJoinAck: return "NetMsgJoinAck";
+		case NetMsgLeave: return "NetMsgLeave";
+		case NetMsgPing: return "NetMsgPing";
+		case NetMsgGroupOwner: return "NetMsgGroupOwner";
+		case NetMsgGameStateRequest: return "NetMsgGameStateRequest";
+		case NetMsgGameMessage: return "NetMsgGameMessage";
+		case NetMsgVoice: return "NetMsgVoice";
+		case NetMsgTestAndSet: return "NetMsgTestAndSet";
+		case NetMsgMembersListReq: return "NetMsgMembersListReq";
+		case NetMsgMembersList: return "NetMsgMembersList";
+		case NetMsgMemberUpdate: return "NetMsgMemberUpdate";
+		case NetMsgCreatePlayer: return "NetMsgCreatePlayer";
+		case NetMsgAuthenticateHello: return "NetMsgAuthenticateHello";
+		case NetMsgAuthenticateChallenge: return "NetMsgAuthenticateChallenge";
+		case NetMsgInitialAgeStateSent: return "NetMsgInitialAgeStateSent";
+		case NetMsgVaultTask: return "NetMsgVaultTask";
+		case NetMsgAlive: return "NetMsgAlive";
+		case NetMsgTerminated: return "NetMsgTerminated";
+		case NetMsgSDLState: return "NetMsgSDLState";
+		case NetMsgSDLStateBCast: return "NetMsgSDLStateBCast";
+		case NetMsgGameMessageDirected: return "NetMsgGameMessageDirected";
+		case NetMsgRequestMyVaultPlayerList: return "NetMsgRequestMyVaultPlayerList";
+		case NetMsgVaultPlayerList: return "NetMsgVaultPlayerList";
+		case NetMsgSetMyActivePlayer: return "NetMsgSetMyActivePlayer";
+		case NetMsgPlayerCreated: return "NetMsgPlayerCreated";
+		case NetMsgFindAge: return "NetMsgFindAge";
+		case NetMsgFindAgeReply: return "NetMsgFindAgeReply";
+		case NetMsgDeletePlayer: return "NetMsgDeletePlayer";
+		case NetMsgAuthenticateResponse: return "NetMsgAuthenticateResponse";
+		case NetMsgAccountAuthenticated: return "NetMsgAccountAuthenticated";
+		case NetMsgRelevanceRegions: return "NetMsgRelevanceRegions";
+		case NetMsgLoadClone: return "NetMsgLoadClone";
+		case NetMsgPlayerPage: return "NetMsgPlayerPage";
+		case NetMsgVault: return "NetMsgVault";
+		case NetMsgVault2: return "NetMsgVault2";
+		case NetMsgSetTimeout: return "NetMsgSetTimeout";
+		case NetMsgActivePlayerSet: return "NetMsgActivePlayerSet|NetMsgSetTimeout2"; // is the same as NetMsgSetTimeout2
+		case NetMsgActivePlayerSet2: return "NetMsgActivePlayerSet2";
+		case NetMsgCustomAuthAsk: return "NetMsgCustomAuthAsk";
+		case NetMsgCustomAuthResponse: return "NetMsgCustomAuthResponse";
+		case NetMsgCustomVaultAskPlayerList: return "NetMsgCustomVaultAskPlayerList";
+		case NetMsgCustomVaultPlayerList: return "NetMsgCustomVaultPlayerList";
+		case NetMsgCustomVaultCreatePlayer: return "NetMsgCustomVaultCreatePlayer";
+		case NetMsgCustomVaultPlayerCreated: return "NetMsgCustomVaultPlayerCreated";
+		case NetMsgCustomVaultDeletePlayer: return "NetMsgCustomVaultDeletePlayer";
+		case NetMsgCustomPlayerStatus: return "NetMsgCustomPlayerStatus";
+		case NetMsgCustomVaultCheckKi: return "NetMsgCustomVaultCheckKi";
+		case NetMsgCustomVaultKiChecked: return "NetMsgCustomVaultKiChecked";
+		case NetMsgCustomRequestAllPlStatus: return "NetMsgCustomRequestAllPlStatus";
+		case NetMsgCustomAllPlayerStatus: return "NetMsgCustomAllPlayerStatus";
+		case NetMsgCustomSetGuid: return "NetMsgCustomSetGuid";
+		case NetMsgCustomFindServer: return "NetMsgCustomFindServer";
+		case NetMsgCustomServerFound: return "NetMsgCustomServerFound";
+		case NetMsgCustomForkServer: return "NetMsgCustomForkServer";
+		case NetMsgPlayerTerminated: return "NetMsgPlayerTerminated";
+		case NetMsgCustomVaultPlayerStatus: return "NetMsgCustomVaultPlayerStatus";
+		case NetMsgCustomMetaRegister: return "NetMsgCustomMetaRegister";
+		case NetMsgCustomMetaPing: return "NetMsgCustomMetaPing";
+		case NetMsgCustomServerVault: return "NetMsgCustomServerVault";
+		case NetMsgCustomServerVaultTask: return "NetMsgCustomServerVaultTask";
+		case NetMsgCustomSaveGame: return "NetMsgCustomSaveGame";
+		case NetMsgCustomLoadGame: return "NetMsgCustomLoadGame";
+		case NetMsgCustomCmd: return "NetMsgCustomCmd";
+		case NetMsgCustomDirectedFwd: return "NetMsgCustomDirectedFwd";
+		case NetMsgCustomPlayerToCome: return "NetMsgCustomPlayerToCome";
+		case NetMsgCustomTest: return "NetMsgCustomTest";
+		default: return "Unknown";
 	}
-	return ret;
 }
 
 } //namespace
