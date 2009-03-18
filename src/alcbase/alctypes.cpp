@@ -91,10 +91,10 @@ void tBBuf::putS32(S32 val) {
 	this->write((Byte *)&val,4);
 }
 void tBBuf::putByte(Byte val) {
-	this->write((Byte *)&val,1);
+	this->write(&val,1);
 }
 void tBBuf::putSByte(SByte val) {
-	this->write((Byte *)&val,1);
+	this->write(&val,1);
 }
 void tBBuf::putDouble(double val) {
 #if defined(WORDS_BIGENDIAN)
@@ -149,10 +149,10 @@ S32 tBBuf::getS32() {
 	return(letoh32(val));
 }
 Byte tBBuf::getByte() {
-	return(*(Byte *)(this->read(1)));
+	return(*(this->read(1)));
 }
 SByte tBBuf::getSByte() {
-	return(*(SByte *)(this->read(1)));
+	return(*(this->read(1)));
 }
 double tBBuf::getDouble() {
 	double val;
@@ -371,7 +371,7 @@ void tMBuf::zeroend() {
 		U32 newsize = (((off+1)-bsize)>1024 ? off+1025 : bsize+1024);
 		buf->resize(newsize);
 	}
-	*(Byte *)(buf->buf+off)=0x00;
+	*(buf->buf+off)=0x00;
 }
 void tMBuf::write(const Byte * val,U32 n) {
 	if(val==NULL) return;
@@ -678,7 +678,7 @@ SByte tStrBuf::compare(const tStrBuf &t) {
 	DBG(9,"sizes %i,%i\n",s,s2);
 	if(s<s2) return 1;
 	if(s>s2) return -1;
-	return((SByte)strncmp((char *)readAll(),(char *)t.readAll(),s));
+	return strncmp(c_str(),(char *)t.readAll(),s);
 }
 SByte tStrBuf::compare(const char * str) {
 	DBG(9,"compare %s\n",str);
@@ -689,7 +689,7 @@ SByte tStrBuf::compare(const char * str) {
 	DBG(9,"sizes %i,%i\n",s,s2);
 	if(s<s2) return 1;
 	if(s>s2) return -1;
-	return((SByte)strncmp((char *)readAll(),str,s));
+	return strncmp(c_str(),str,s);
 }
 const char * tStrBuf::c_str() {
 	DBG(2,"tStrBuf::c_str()\n");
@@ -1214,7 +1214,7 @@ tStrBuf & tStrBuf::getToken() {
 }
 
 void tStrBuf::writeStr(const char * t) {
-	this->write((Byte *)t,strlen(t));
+	this->write(t,strlen(t));
 }
 void tStrBuf::printf(const char * msg, ...) {
 	va_list ap;
@@ -1225,7 +1225,7 @@ void tStrBuf::printf(const char * msg, ...) {
 	
 	vsnprintf(buffer,1023,msg,ap);
 	buffer[1023]='\0';
-	this->write((Byte *)buffer,strlen(buffer));
+	this->write(buffer,strlen(buffer));
 	
 	va_end(ap);
 }

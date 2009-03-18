@@ -207,11 +207,10 @@ namespace alc {
 			int load = -1;
 			servers->rewind();
 			while ((server = servers->getNext())) {
-				if (!server->data) continue;
-				tTrackingData *data = (tTrackingData*)server->data;
-				if (data->isLobby && (load < 0 || ((tTrackingData*)server->data)->childs->getCount() < load)) {
+				tTrackingData *data = dynamic_cast<tTrackingData*>(server->data);
+				if (data && data->isLobby && (load < 0 || data->childs->getCount() < load)) {
 					lobby = server;
-					load = ((tTrackingData*)server->data)->childs->getCount();
+					load = data->childs->getCount();
 				}
 			}
 			if (!lobby) {
@@ -219,7 +218,7 @@ namespace alc {
 				return;
 			}
 			// search for free ports
-			tTrackingData *data = (tTrackingData*)lobby->data;
+			tTrackingData *data = static_cast<tTrackingData*>(lobby->data); // we already checked the type above
 			int nPorts = data->portEnd - data->portStart + 1;
 			bool *freePorts = (bool *)malloc(nPorts*sizeof(bool));
 			if (freePorts == NULL) throw txNoMem(_WHERE("NoMem"));
@@ -264,12 +263,12 @@ namespace alc {
 	
 	void tTrackingBackend::serverFound(tPlayer *player, tNetSession *server)
 	{
-		if (!server->data) throw txUnet(_WHERE("server passed in tTrackingBackend::serverFound is not a game/lobby server"));
+		tTrackingData *data = dynamic_cast<tTrackingData *>(server->data);
+		if (!data) throw txUnet(_WHERE("server passed in tTrackingBackend::serverFound is not a game/lobby server"));
 		// notify the server that a player will come
 		tmCustomPlayerToCome playerToCome(server);
 		net->send(playerToCome);
 		// notifiy the player that it's server is available
-		tTrackingData *data = (tTrackingData *)server->data;
 		tmCustomServerFound found(player->u, player->ki, player->awaiting_x, player->sid, ntohs(server->getPort()), data->externalIp, alcGetStrGuid(server->serverGuid), server->name);
 		net->send(found);
 		log->log("Found age for player %s\n", player->str());
@@ -330,13 +329,14 @@ namespace alc {
 			server = NULL;
 			servers->rewind();
 			while ((server = servers->getNext())) {
-				if (server->data && ((tTrackingData *)server->data)->isLobby && server->getIp() == game->getIp()) {
+				tTrackingData *data = dynamic_cast<tTrackingData *>(server->data);
+				if (data && data->isLobby && server->getIp() == game->getIp()) {
 					lobby = server;
 					break;
 				}
 			}
 			if (lobby) { // we found the server's lobby
-				((tTrackingData *)server->data)->childs->add(game); // add the game server to the list of children of that lobby
+				static_cast<tTrackingData *>(server->data)->childs->add(game); // add the game server to the list of children of that lobby
 				data->parent = lobby;
 			}
 			else
@@ -419,7 +419,8 @@ namespace alc {
 	
 	void tTrackingBackend::removeServer(tNetSession *game)
 	{
-		if (!game->data) return;
+		tTrackingData *data = dynamic_cast<tTrackingData *>(game->data);
+		if (!data) return;
 		statusFileUpdate = true;
 		// remove all players which were still on this server
 		tPlayerList::iterator it = players.begin();
@@ -435,20 +436,20 @@ namespace alc {
 		log->log("Server %s is leaving us\n", game->str());
 		log->flush();
 		// remove this server from the list of childs of its lobby/from the game server it is the lobby for
-		tTrackingData *data = (tTrackingData *)game->data;
 		if (data->isLobby) {
 			// it's childs are lobbyless now
 			tNetSession *server;
 			data->childs->rewind();
 			while ((server = data->childs->getNext())) {
-				if (!server->data) throw txUnet(_WHERE("One child of the lobby I'm just deteting is not a game/lobby server"));
-				((tTrackingData *)server->data)->parent = NULL;
+				tTrackingData *subData = dynamic_cast<tTrackingData *>(server->data);
+				if (!subData) throw txUnet(_WHERE("One child of the lobby I'm just deteting is not a game/lobby server"));
+				subData->parent = NULL;
 			}
 		}
 		else if (data->parent) {
-			if (!data->parent->data) throw txUnet(_WHERE("The parent of the game server I'm just deleting is not a game/lobby server"));
-			tTrackingData *parent_data = (tTrackingData *)data->parent->data;
-			parent_data->childs->remove(game);
+			tTrackingData *parentData = dynamic_cast<tTrackingData *>(data->parent->data);
+			if (!parentData) throw txUnet(_WHERE("The parent of the game server I'm just deleting is not a game/lobby server"));
+			parentData->childs->remove(game);
 		}
 	}
 	
@@ -477,8 +478,9 @@ namespace alc {
 		bool sent;
 		servers->rewind();
 		while ((server = servers->getNext())) {
-			if (server == directedFwd.getSession() || !server->data) continue; // don't send the message back to the server which sent it
-			data = (tTrackingData *)server->data;
+			if (server == directedFwd.getSession()) continue; // don't send the message back to the server which sent it
+			data = dynamic_cast<tTrackingData *>(server->data);
+			if (!data) continue;
 			if (data->isLobby) continue; // don't send messages to players in a lobby
 			sent = false; // so far, the message was not sent to this server
 			DBG(5, "looking for players on %s\n", server->str());
@@ -606,27 +608,26 @@ namespace alc {
 				fprintf(f, "<Agents>\n");
 				servers->rewind();
 				while ((server = servers->getNext())) {
-					if (!server->data) continue;
-					tTrackingData *data = (tTrackingData *)server->data;
+					tTrackingData *data = dynamic_cast<tTrackingData *>(server->data);
+					if (!data) continue;
 					if (!data->isLobby && !data->parent) needFake = true;
-					else if (data->isLobby) printLobbyXML(f, server);
+					else if (data->isLobby) printLobbyXML(f, server, data);
 				}
-				if (needFake) printLobbyXML(f, NULL);
+				if (needFake) printLobbyXML(f, NULL, NULL);
 				fprintf(f, "</Agents>\n");
 			fprintf(f, "</Lookup>\n");
 		fprintf(f, "</SystemView>\n");
 		fclose(f);
 	}
 	
-	void tTrackingBackend::printLobbyXML(FILE *f, tNetSession *lobby)
-	{	// when lobby is NULL, we're printing the fake lobby
-		tTrackingData *data = lobby ? (tTrackingData *)lobby->data : NULL;
+	void tTrackingBackend::printLobbyXML(FILE *f, tNetSession *lobby, tTrackingData *data)
+	{	// when lobby or data are NULL, we're printing the fake lobby
 		fprintf(f, "<Agent>\n");
 			// Agent
 			fprintf(f, "<ServerInfo>\n");
 				fprintf(f, "<Name>Agent</Name>\n");
 				fprintf(f, "<Type>1</Type>\n");
-				if (lobby) {
+				if (lobby && data) {
 					fprintf(f, "<Addr>%s</Addr>\n", alcGetStrIp(lobby->getIp()));
 					fprintf(f, "<Port>%d</Port>\n", ntohs(lobby->getPort()));
 					data->agentGuid[7] = 0x00; // set last byte to 00 (to distinguish from Lobby)
@@ -646,7 +647,7 @@ namespace alc {
 			fprintf(f, "<GameLimit>-1</GameLimit>\n");
 #endif
 			// Lobby
-			if (lobby) {
+			if (lobby && data) {
 				fprintf(f, "<Lobby><Process>\n");
 					fprintf(f, "<Server>\n");
 						fprintf(f, "<ServerInfo>\n");
@@ -664,16 +665,20 @@ namespace alc {
 			// Game Servers
 			fprintf(f, "<Games>\n");
 				tNetSession *server;
-				if (data) { // the lobby's children
+				if (lobby && data) { // the lobby's children
 					data->childs->rewind();
-					while ((server = data->childs->getNext())) printGameXML(f, server);
+					while ((server = data->childs->getNext())) {
+						tTrackingData *subData = dynamic_cast<tTrackingData *>(server->data);
+						if (!subData) continue;
+						printGameXML(f, server, subData);
+					}
 				}
 				else { // all game server without lobby
 					servers->rewind();
 					while ((server = servers->getNext())) {
-						if (!server->data) continue;
-						tTrackingData *data = (tTrackingData *)server->data;
-						if (!data->isLobby && !data->parent) printGameXML(f, server);
+						tTrackingData *subData = dynamic_cast<tTrackingData *>(server->data);
+						if (!subData) continue;
+						if (!data->isLobby && !data->parent) printGameXML(f, server, subData);
 					}
 				}
 			fprintf(f, "</Games>\n");
@@ -710,9 +715,9 @@ namespace alc {
 		fprintf(f, "</Player>\n");
 	}
 	
-	void tTrackingBackend::printGameXML(FILE *f, tNetSession *game)
+	void tTrackingBackend::printGameXML(FILE *f, tNetSession *game, tTrackingData *data)
 	{
-		tTrackingData *data = (tTrackingData *)game->data;
+		if (!data) return;
 		fprintf(f, "<Game>\n");
 			fprintf(f, "<Process>\n");
 				fprintf(f, "<Server>\n");

@@ -115,7 +115,8 @@ void alctypes_mbuf() {
 	buf1.set(0);
 	assert(buf1.tell()==0);
 	std::cout<<"-"<< buf1.read()<<"-" <<std::endl;
-	assert(!strcmp((char *)buf1.readAll(),"Hello WorldBye cruel world"));
+	buf1.rewind();
+	assert(!strcmp((char *)buf1.read(),"Hello WorldBye cruel world"));
 	buf1.rewind();
 	assert(buf1.tell()==0);
 	buf1.end();
@@ -585,32 +586,32 @@ void alctypes_part5() {
 	due.strip('/');
 	printf("due:%s\n",due.c_str());
 	assert(due=="");
-	due="howhowhow ajfk ñfajf///////////////";
+	due="howhowhow ajfk fajf///////////////";
 	due.strip('/');
 	printf("due:%s\n",due.c_str());
-	assert(due=="howhowhow ajfk ñfajf");
-	due="///////////////howhowhow ajfk ñfajf///////////////";
+	assert(due=="howhowhow ajfk fajf");
+	due="///////////////howhowhow ajfk fajf///////////////";
 	due.strip('/');
-	assert(due=="howhowhow ajfk ñfajf");
-	due="///////////////howhowhow ajfk ñfajf";
+	assert(due=="howhowhow ajfk fajf");
+	due="///////////////howhowhow ajfk fajf";
 	due.strip('/');
-	assert(due=="howhowhow ajfk ñfajf");
-	due="// /////////////howh//////////owhow/////// aj////////fk ñfajf////// /////////";
+	assert(due=="howhowhow ajfk fajf");
+	due="// /////////////howh//////////owhow/////// aj////////fk fajf////// /////////";
 	due.strip('/');
-	assert(due==" /////////////howh//////////owhow/////// aj////////fk ñfajf////// ");
+	assert(due==" /////////////howh//////////owhow/////// aj////////fk fajf////// ");
 	due="/ /";
 	due.strip('/');
 	assert(due==" ");
 	due=" / ";
 	due.strip('/');
 	assert(due==" / ");
-	due="///////////////howhowhow ajfk ñfajf///////////////";
+	due="///////////////howhowhow ajfk fajf///////////////";
 	due.strip('/',0x01);
 	printf("due:%s\n",due.c_str());
-	assert(due=="howhowhow ajfk ñfajf///////////////");
-	due="///////////////howhowhow ajfk ñfajf///////////////";
+	assert(due=="howhowhow ajfk fajf///////////////");
+	due="///////////////howhowhow ajfk fajf///////////////";
 	due.strip('/',0x02);
-	assert(due=="///////////////howhowhow ajfk ñfajf");
+	assert(due=="///////////////howhowhow ajfk fajf");
 	//abort();
 	dmalloc_verify(NULL);
 }
@@ -738,10 +739,10 @@ This story starts when someday\\\n_someone started to\
 start touching the button that will\\\n one, tha ma la ka cha ta\
 pa ka la cha sa la ma ka la ti ko su pi ko la mi na ca la pi la ta\
 enia la le li lo lu sa se si so su ka ke ki ko ku pa pe pi po pu\n\
-asdfghijklmnñopqrstuvwxyz[23] = \"Tretze jutjes d'un jutjat menjen fetge d'un penjat\"\n\
+asdfghijklmnopqrstuvwxyz[23] = \"Tretze jutjes d'un jutjat menjen fetge d'un penjat\"\n\
 \n\n\n\r\n		wow = !!wow = !!!!wow			lpeze		\n\
 \n\
-ñaklsjfas aslkñfdjas fañsklfdjeapuj3 0p89u3290hupivnp wapñjkvdsa  9iiii0u3wrj\n\
+aklsjfas aslkfdjas fasklfdjeapuj3 0p89u3290hupivnp wapjkvdsa  9iiii0u3wrj\n\
 \n\
 Hello I'm Mr SEGFAULT, and today I'm going to annoy you.\n\
 do you want somethin else?");
@@ -753,7 +754,7 @@ key1 = \"val2\"\n\
  key2 = \"val3\"\n\
                            juas                 =            \"jo\"\n\
 					ho_ho_ho = \"qaz\"\n\
-   so \\\n = \\\n this_should_be_legal_ä \n\
+   so \\\n = \\\n this_should_be_legal_ \n\
 a=\"b\"\n\
 kkkk\\\n\
  \"k\n\
@@ -765,7 +766,7 @@ a = \"overrided\"\n\
 \n\
 problems = \"these are problems\"\n\
 \n\
-mproblem = \"this ' contains \\\" \\\\ some speical chars: äß\"\n\
+mproblem = \"this ' contains \\\" \\\\ some speical chars\"\n\
 ");
 
 	//Ok, let's going to crash the system
@@ -859,8 +860,8 @@ mproblem = \"this ' contains \\\" \\\\ some speical chars: äß\"\n\
 	parser.stream(out);
 	assert(out.tell()>oldPos);
 	assert(cfg1->getVar("a") == "overrided");
-	assert(cfg1->getVar("so") == "this_should_be_legal_ä");
-	assert(cfg1->getVar("mproblem") == "this ' contains \" \\ some speical chars: äß");
+	assert(cfg1->getVar("so") == "this_should_be_legal_");
+	assert(cfg1->getVar("mproblem") == "this ' contains \" \\ some speical chars");
 	assert(cfg1->getVar("kkkk") == "k\na");
 	
 	// now let's test the XParser with override disabled
@@ -870,7 +871,7 @@ mproblem = \"this ' contains \\\" \\\\ some speical chars: äß\"\n\
 	tXParser xparser1(/*override*/false);
 	xparser1.setConfig(cfg1);
 	xparser1.store(b);
-	assert(cfg1->getVar("so") == "this_should_be_legal_ä"); // an old var from the first parser test
+	assert(cfg1->getVar("so") == "this_should_be_legal_"); // an old var from the first parser test
 	assert(cfg1->getVar("a", "global", 0, 0) == "overrided"); // an old var from the first parser test
 	assert(cfg1->getVar("a", "global", 0, 1) == "b");
 	assert(cfg1->getVar("a", "global", 0, 2) == "overrided");
@@ -947,9 +948,9 @@ int log_test() {
 
 	log1.rotate();
 
-	const char * kk="afjsakflñjasfdñalsdkfjskdlfñjasdfjj3\
-	8p94r37u9jujujoiasdfujasdofuasdfuñjlkasfdhasjfkl\
-	ñasdfhasfpiuoeñawhfe43w89piyehyhfwe";
+	const char * kk="afjsakfljasfdalsdkfjskdlfjasdfjj3\
+	8p94r37u9jujujoiasdfujasdofuasdfujlkasfdhasjfkl\
+	asdfhasfpiuoeawhfe43w89piyehyhfwe";
 
 	const char * kk3="hola whola ";
 

@@ -312,13 +312,19 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 				ret=parseBasicMsg(evt,msg,u,shutdown);
 				// terminated sessions can be deleted here - either it was a NetMsgLeave and everything is fine, or it was an invalid message
 				if (u->isTerminated() || shutdown) {
-					if (ret == 0) err->log("%s is terminated and sent a non-NetMsgLeave message 0x%04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-					if (ret != 1) terminate(u, /*terminate() sets the reason*/0, true); // delete the session ASAP
+					if (ret != 1) {
+						err->log("%s is terminated and sent a non-NetMsgLeave message 0x%04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+						terminate(u, /*terminate() sets the reason*/0, true); // delete the session ASAP
+					}
+					else if (ret == 1 && !msg->data.eof() > 0) { // packet was processed and there are bytes left
+						err->log("%s Recieved a message 0x%04X (%s) which was too long (%d Bytes remaining after parsing)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data.remaining());
+						terminate(u, /*terminate() sets the reason*/0, true); // delete the session ASAP
+					}
 					break;
 				}
 				// this part can never be reached on shutdown, so messages are only processed when the server is still fully running
 				if (ret == 0) ret=onMsgRecieved(evt,msg,u);
-				if (ret == 1 && !msg->data.eof() > 0) { // when the packet was processed and there are bytes left, it is obiously invalid, terminate the client with a parse error
+				if (ret == 1 && !msg->data.eof() > 0) { // packet was processed and there are bytes left, obiously invalid, terminate the client
 					err->log("%s Recieved a message 0x%04X (%s) which was too long (%d Bytes remaining after parsing)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data.remaining());
 					ret=-1;
 				}
@@ -349,8 +355,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 			break;
 		}
 		default:
-			err->log("%s Unknown Event id %i\n",u->str(),evt->id);
-			break;
+			throw txBase(_WHERE("%s Unknown Event id %i\n",u->str(),evt->id));
 	}
 	log->flush(); err->flush(); sec->flush(); // I don't know how much perforcmance this costs, but without flushing it's not possible to follow the server logs using tail -F
 }

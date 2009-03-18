@@ -317,7 +317,7 @@ int main(int argc,char * argv[]) {
 		}
 		else {
 			if(i==1) {
-				if(alcGetLoginInfo(argv[1],hostname,NULL,((U16 *)&port),NULL)!=1) {
+				if(alcGetLoginInfo(argv[1],hostname,NULL,&port,NULL)!=1) {
 					parameters_usage();
 					return -1;
 				}

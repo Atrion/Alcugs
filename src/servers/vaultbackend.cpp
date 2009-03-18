@@ -379,7 +379,7 @@ namespace alc {
 				case 10: // GenericStream: Stream containing a table of ints
 				{
 					if (itm->type != DCreatableStream) throw txProtocolError(_WHERE("a vault item with id 10 must always have a creatable generic stream"));
-					tMBuf *buf = ((tvCreatableStream *)itm->data)->getData();
+					tMBuf *buf = static_cast<tvCreatableStream *>(itm->data)->getData();
 					tableSize = buf->getU16();
 					table.write(buf->read(tableSize*4), tableSize*4);
 					bool eof = buf->eof();
@@ -542,8 +542,8 @@ namespace alc {
 				// create reply
 				tvMessage reply(msg);
 				reply.compress = true;
-				reply.items.push_back(new tvItem(new tvCreatableStream(/*id*/14, (tvBase **)mfs, nMfs))); // tvMessage will delete it for us
-				reply.items.push_back(new tvItem(new tvCreatableStream(/*id*/15, (tvBase **)ref, nRef))); // tvMessage will delete it for us
+				reply.items.push_back(new tvItem(new tvCreatableStream(/*id*/14, reinterpret_cast<tvBase **>(mfs), nMfs))); // tvMessage will delete it for us
+				reply.items.push_back(new tvItem(new tvCreatableStream(/*id*/15, reinterpret_cast<tvBase **>(ref), nRef))); // tvMessage will delete it for us
 				send(reply, u, ki);
 				
 				// free stuff
