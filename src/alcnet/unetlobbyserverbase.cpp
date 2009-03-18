@@ -282,9 +282,23 @@ namespace alc {
 	void tUnetLobbyServerBase::onConnectionClosed(tNetEvent *ev, tNetSession */*u*/)
 	{
 		// if it was one of the servers, save the time it went (it will be reconnected later)
-		if (ev->sid == authIte) { auth_gone = alcGetTime(); authIte = tNetSessionIte(); }
-		else if (ev->sid == trackingIte) { tracking_gone = alcGetTime(); trackingIte = tNetSessionIte(); }
-		else if (ev->sid == vaultIte) { vault_gone = alcGetTime(); vaultIte = tNetSessionIte(); }
+		if (ev->sid == authIte) {
+			auth_gone = alcGetTime(); authIte = tNetSessionIte();
+		}
+		else if (ev->sid == trackingIte) {
+			if (whoami == KGame && isRunning()) {
+				err->log("ERR: I lost the connection to the tracking server, so I will go down\n");
+				/* The game server should go down when it looses the connection to tracking. This way, you can easily
+				shut down all game servers. In addition, it won't get any new peers anyway without the tracking server */
+				stop();
+			}
+			else {
+				tracking_gone = alcGetTime(); trackingIte = tNetSessionIte();
+			}
+		}
+		else if (ev->sid == vaultIte) {
+			vault_gone = alcGetTime(); vaultIte = tNetSessionIte();
+		}
 	}
 	
 	void tUnetLobbyServerBase::onIdle(bool idle)

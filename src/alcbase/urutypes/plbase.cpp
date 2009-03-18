@@ -68,13 +68,31 @@ namespace alc {
 		}
 	}
 	
-	tpObject *alcCreatePlasmaObject(U16 type, bool /*mustBeComplete*/)
+	tpObject *alcCreatePlasmaObject(U16 type, bool mustBeComplete)
 	{
 		switch (type) {
 			case plLoadCloneMsg: return new tpLoadCloneMsg();
 			case plParticleTransferMsg: return new tpParticleTransferMsg();
 			case plLoadAvatarMsg: return new tpLoadAvatarMsg();
 			case plNull: return new tpObject(plNull);
+			// messages of which the details are unknown
+			case plControlEventMsg:
+			case plEnableMsg:
+			case plWarpMsg:
+			case plServerReplyMsg:
+			case plAvTaskMsg:
+			case plNotifyMsg:
+			case plLinkEffectsTriggerMsg:
+			case plAvatarInputStateMsg:
+			case pfKIMsg:
+			case plAvBrainGenericMsg:
+			case 0x0206: // FIXME: what is this?
+			case 0x02E1: // FIXME: what is this?
+			case 0x0346: // FIXME: what is this?
+			case 0x0352: // FIXME: what is this?
+			case 0x035E: // FIXME: what is this?
+				if (!mustBeComplete) return new tpMessage(type); // if mustBeComplete is true, go on with the default behaviour
+			// completely unknown types
 			default:
 				throw txUnexpectedData(_WHERE("Unknown message type %s (0x%04X)", alcGetPlasmaType(type), type));
 		}
