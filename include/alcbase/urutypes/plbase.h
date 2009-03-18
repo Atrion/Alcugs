@@ -53,6 +53,7 @@ namespace alc {
 #define pfKIMsg                    0x035F
 #define plAvBrainGenericMsg        0x038A
 #define plLoadAvatarMsg            0x03AC
+#define plSubWorldMsg              0x03BA
 #define plNull                     0x8000
 
 	////DEFINITIONS

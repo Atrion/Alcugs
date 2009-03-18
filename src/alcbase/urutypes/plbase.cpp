@@ -63,6 +63,7 @@ namespace alc {
 			case pfKIMsg: return "pfKIMsg";
 			case plAvBrainGenericMsg: return "plAvBrainGenericMsg";
 			case plLoadAvatarMsg: return "plLoadAvatarMsg";
+			case plSubWorldMsg: return "plSubWorldMsg";
 			case plNull: return "plNull";
 			default: return "Unknown";
 		}
@@ -86,11 +87,15 @@ namespace alc {
 			case plAvatarInputStateMsg:
 			case pfKIMsg:
 			case plAvBrainGenericMsg:
-			case 0x0206: // FIXME: what is this?
-			case 0x02E1: // FIXME: what is this?
-			case 0x0346: // FIXME: what is this?
-			case 0x0352: // FIXME: what is this?
-			case 0x035E: // FIXME: what is this?
+			case plSubWorldMsg:
+			 // FIXME: what are the names of these?
+			case 0x0206:
+			case 0x0294:
+			case 0x02E1:
+			case 0x0346:
+			case 0x0352:
+			case 0x035E:
+			case 0x039E:
 				if (!mustBeComplete) return new tpMessage(type); // if mustBeComplete is true, go on with the default behaviour
 			// completely unknown types
 			default:
