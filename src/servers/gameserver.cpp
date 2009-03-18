@@ -290,13 +290,14 @@ namespace alc {
 	
 	void tUnetGameServer::bcastMemberUpdate(tNetSession *u, bool isJoined)
 	{
+		tGameData *data = dynamic_cast<tGameData *>(u->data);
+		if (!data) return;
 		tNetSession *session;
 		smgr->rewind();
 		while ((session = smgr->getNext())) {
 			if (session == u) continue;
-			tGameData *data = dynamic_cast<tGameData *>(u->data);
 			if (session->data) {
-				tmMemberUpdate memberUpdate(session, u, data->createInfo(u), isJoined);
+				tmMemberUpdate memberUpdate(session, data->createInfo(), isJoined);
 				send(memberUpdate);
 			}
 		}
@@ -423,9 +424,9 @@ namespace alc {
 				smgr->rewind();
 				while ((session = smgr->getNext())) {
 					if (session == u) continue;
-					tGameData *data = dynamic_cast<tGameData *>(u->data);
+					tGameData *data = dynamic_cast<tGameData *>(session->data);
 					if (data) {
-						list.members.push_back(data->createInfo(session));
+						list.members.push_back(data->createInfo());
 					}
 				}
 				send(list);
@@ -635,7 +636,7 @@ namespace alc {
 						u->data = NULL;
 					}
 					else if (loadClone.isLoad && !u->data) {
-						u->data = new tGameData(loadClone.obj);
+						u->data = new tGameData(loadClone.obj, u);
 						bcastMemberUpdate(u, /*isJoined*/true);
 					}
 				}

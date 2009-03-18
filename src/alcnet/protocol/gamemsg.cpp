@@ -621,7 +621,7 @@ namespace alc {
 	}
 	
 	//// tmMemberUpdate
-	tmMemberUpdate::tmMemberUpdate(tNetSession *u, tNetSession *memberSession, const tMemberInfo &info, bool isJoined)
+	tmMemberUpdate::tmMemberUpdate(tNetSession *u, const tMemberInfo &info, bool isJoined)
 	 : tmMsgBase(NetMsgMemberUpdate, plNetAck | plNetCustom, u), info(info)
 	{
 		this->isJoined = isJoined;
