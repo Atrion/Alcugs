@@ -108,19 +108,6 @@ namespace alc {
 				log->log("WARN: You set a linger time of only %d, which could result in the game server going down before the player even has the chance to join it - I recommend to set it to at least 20\n", lingerTime);
 		}
 	}
-
-	void tUnetGameServer::onConnectionClosed(tNetEvent *ev, tNetSession *u)
-	{
-		tNetSession *session = getSession(ev->sid);
-		if (session && session->getPeerType() == KTracking && isRunning()) {
-			err->log("ERR: I lost the connection to the tracking server, so I will go down\n");
-			/* The game server should go down when it looses the connection to tracking. This way, you can easily
-			   shut down all game servers. In addition, it won't get any new peers anyway without the tracking server */
-			stop();
-		}
-		else
-			tUnetLobbyServerBase::onConnectionClosed(ev, u);
-	}
 	
 	void tUnetGameServer::additionalVaultProcessing(tNetSession *u, tvMessage *msg)
 	{
@@ -488,10 +475,11 @@ namespace alc {
 				msg->data.get(gameMsg);
 				log->log("<RCV> [%d] %s\n", msg->sn, gameMsg.str());
 				
-				// verify contained game message
+				// parse contained plasma message
 				U16 msgType = gameMsg.getSubMsgType();
-				if (msgType == plLoadCloneMsg || msgType == plLoadAvatarMsg)
-					throw txProtocolError(_WHERE("Invalid type of NetMsgGameMessage.subMsg: %s (0x%04X)", alcGetPlasmaType(msgType), msgType));
+				tpMessage *subMsg = tpMessage::create(msgType, /*mustBeComplete*/false);
+				gameMsg.message.get(*subMsg);
+				delete subMsg;
 				
 				// broadcast message
 				bcastMessage(gameMsg);
@@ -510,10 +498,11 @@ namespace alc {
 				msg->data.get(gameMsg);
 				log->log("<RCV> [%d] %s\n", msg->sn, gameMsg.str());
 				
-				// verify contained game message
+				// parse contained plasma message
 				U16 msgType = gameMsg.getSubMsgType();
-				if (msgType == plLoadCloneMsg || msgType == plLoadAvatarMsg)
-					throw txProtocolError(_WHERE("Invalid type of NetMsgGameMessageDirected.subMsg: %s (0x%04X)", alcGetPlasmaType(msgType), msgType));
+				tpMessage *subMsg = tpMessage::create(msgType, /*mustBeComplete*/false);
+				gameMsg.message.get(*subMsg);
+				delete subMsg;
 				
 				// Because sharing the Relto book causes everyone in the age to crash
 				// out, throw out the initial message of the exchange. This is all we
@@ -618,8 +607,8 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, loadClone.str());
 				
 				// parse contained plasma message
-				U16 type = loadClone.getSubMsgType();
-				tpLoadCloneMsg *loadCloneMsg = tpLoadCloneMsg::create(type);
+				U16 msgType = loadClone.getSubMsgType();
+				tpLoadCloneMsg *loadCloneMsg = tpLoadCloneMsg::create(msgType);
 				loadClone.message.get(*loadCloneMsg);
 				loadClone.checkSubMsg(loadCloneMsg);
 				
