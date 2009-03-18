@@ -1061,42 +1061,42 @@ namespace alc {
 	{
 		if (type != DCreatableGenericValue)
 			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a DCreatableGenericValue", id, alcVaultGetDataType(type)));
-		return ((tvCreatableGenericValue *)data)->asInt();
+		return static_cast<tvCreatableGenericValue *>(data)->asInt();
 	}
 	
 	const char *tvItem::asString(void)
 	{
 		if (type != DCreatableGenericValue)
 			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a DCreatableGenericValue", id, alcVaultGetDataType(type)));
-		return ((tvCreatableGenericValue *)data)->asString();
+		return static_cast<tvCreatableGenericValue *>(data)->asString();
 	}
 	
 	const Byte *tvItem::asGuid(void)
 	{
 		if (type != DServerGuid)
 			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a DServerGuid", id, alcVaultGetDataType(type)));
-		return ((tvServerGuid *)data)->guid;
+		return static_cast<tvServerGuid *>(data)->guid;
 	}
 	
 	tvNode *tvItem::asNode(void)
 	{
 		if (type != DVaultNode)
 			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a DVaultNode", id, alcVaultGetDataType(type)));
-		return (tvNode *)data;
+		return static_cast<tvNode *>(data);
 	}
 	
 	tvNodeRef *tvItem::asNodeRef(void)
 	{
 		if (type != DVaultNodeRef)
 			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a DVaultNodeRef", id, alcVaultGetDataType(type)));
-		return (tvNodeRef *)data;
+		return static_cast<tvNodeRef *>(data);
 	}
 	
 	tvAgeLinkStruct *tvItem::asAgeLink(void)
 	{
 		if (type != DAgeLinkStruct)
 			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a DAgeLinkStruct", id, alcVaultGetDataType(type)));
-		return (tvAgeLinkStruct *)data;
+		return static_cast<tvAgeLinkStruct *>(data);
 	}
 	
 	void tvItem::asHtml(tLog *log, bool shortLog)

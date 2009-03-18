@@ -93,7 +93,7 @@ void tConfigVal::setVal(tStrBuf & t,U16 x,U16 y) {
 		this->y = my;
 		ox = x+1;
 		oy = my;
-		if((void *)ovalues!=NULL) {
+		if(ovalues!=NULL) {
 			free((void *)ovalues);
 		}
 		ovalues=values;

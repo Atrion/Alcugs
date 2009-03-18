@@ -111,10 +111,10 @@ namespace alc {
 		bool doesAgeLoadState(const char *age);
 		void printStatusHTML(bool dbg = false);
 		void printStatusXML(void);
-		void printLobbyXML(FILE *f, tNetSession *lobby);
+		void printLobbyXML(FILE *f, tNetSession *lobby, tTrackingData *data);
 		void printPlayersXML(FILE *f, tNetSession *server);
 		void printPlayerXML(FILE *f, tPlayer *player);
-		void printGameXML(FILE *f, tNetSession *game);
+		void printGameXML(FILE *f, tNetSession *game, tTrackingData *data);
 		void generateFakeGuid(Byte *guid); //!< generates a random 7 bytes fake guid for UruVision
 
 		tPlayerList players;

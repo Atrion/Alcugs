@@ -70,7 +70,7 @@ public:
 	virtual void set(U32 pos)=0;
 	//! Write a buffer of size n
 	virtual void write(const Byte * val,U32 n)=0;
-	virtual void write(const SByte * val,U32 n) { this->write((Byte *)val,n); }
+	inline virtual void write(const SByte * val,U32 n) { this->write((Byte *)val,n); }
 	//! Reads n bytes, if n=0 reads the entire buffer
 	virtual Byte * read(U32 n=0)=0;
 	//!gets buffer size
@@ -90,32 +90,6 @@ public:
 			\throws txOutOfRange
 	*/
 	virtual void seek(int n,Byte flags=SEEK_CUR);
-	/** \throws txUnexpectedData if pattern don't matches buffer contents
-	*/
-	virtual void check(const Byte * what,U32 n);
-	virtual void check(const char * what,U32 n) {
-		this->check((Byte *)what,n);
-	}
-	
-	// put and get functions
-	//NOTE: I have already thought about overloading a "put(U16 val)", and I don't want
-	// it, mainly because it can be a little confusing when you are reading the code.
-	void putU16(U16 val);
-	void putS16(S16 val);
-	void putU32(U32 val);
-	void putS32(S32 val);
-	void putByte(Byte val);
-	void putSByte(SByte val);
-	void putDouble(double val);
-	void putFloat(float val);
-	U16 getU16();
-	S16 getS16();
-	U32 getU32();
-	S32 getS32();
-	Byte getByte();
-	SByte getSByte();
-	double getDouble();
-	float getFloat();
 	/** Puts an object into the buffer (streams the object) \return the amount of written bytes */
 	inline void put(tBaseType &t) {
 		t.stream(*this);
@@ -150,6 +124,34 @@ public:
 	virtual bool operator>=(tBBuf &t) { return(this->compare(t)<=0); }
 	virtual bool operator<=(tBBuf &t) { return(this->compare(t)>=0); }
 	virtual const tBBuf &operator=(tBBuf &t) { this->copy(t); return *this; }
+	
+	// non-virtual functions
+	/** \throws txUnexpectedData if pattern don't matches buffer contents
+	*/
+	void check(const Byte * what,U32 n);
+	void check(const char * what,U32 n) {
+		this->check((Byte *)what,n);
+	}
+	
+	// put and get functions
+	//NOTE: I have already thought about overloading a "put(U16 val)", and I don't want
+	// it, mainly because it can be a little confusing when you are reading the code.
+	void putU16(U16 val);
+	void putS16(S16 val);
+	void putU32(U32 val);
+	void putS32(S32 val);
+	void putByte(Byte val);
+	void putSByte(SByte val);
+	void putDouble(double val);
+	void putFloat(float val);
+	U16 getU16();
+	S16 getS16();
+	U32 getU32();
+	S32 getS32();
+	Byte getByte();
+	SByte getSByte();
+	double getDouble();
+	float getFloat();
 protected:
 	//! Built-in initialization
 	virtual void init();
@@ -188,8 +190,7 @@ public:
 	virtual U32 tell() const;
 	virtual void set(U32 pos);
 	virtual void write(const Byte * val,U32 n);
-	virtual void write(const SByte * val,U32 n) { this->write((Byte *)val,n); }
-	virtual void zeroend(); //!< makes sure there is a zero after the end of the buffer - this zero is NOT counted as part of the buffer size!
+	inline virtual void write(const SByte * val,U32 n) { this->write((Byte *)val,n); }
 	virtual Byte * read(U32 n=0);
 	virtual void stream(tBBuf &buf);
 	virtual void store(tBBuf &buf);
@@ -197,18 +198,15 @@ public:
 	virtual void clear();
 	virtual void copy(const tMBuf &t);
 	virtual const tMBuf &operator=(const tMBuf &t) { this->copy(t); return *this; }
-	virtual Byte getAt(U32 pos) const;
-	virtual void setAt(U32 pos,const Byte what);
-	//virtual Byte operator[](U32 pos) { return(this->getAt(pos)); }
-	//virtual void operator[](U32 pos,const char what) { setAt(pos,what); }
-	virtual void setSize(U32 size) {
+
+	Byte getAt(U32 pos) const;
+	void setAt(U32 pos,const Byte what);
+	void setSize(U32 size) {
 		msize=size;
 	}
-	virtual const Byte *readAll(void) const {
-		static const Byte null = {0};
-		return buf ? buf->buf : null;
-	}
 protected:
+	void zeroend(); //!< makes sure there is a zero after the end of the buffer - this zero is NOT counted as part of the buffer size!
+
 	virtual void onmodify();
 	virtual void _pcopy(const tMBuf &t);
 	
@@ -227,7 +225,7 @@ public:
 	virtual U32 tell() const;
 	virtual void set(U32 pos);
 	virtual void write(const Byte * val,U32 n);
-	virtual void write(const SByte * val,U32 n) { this->write((Byte *)val,n); }
+	inline virtual void write(const SByte * val,U32 n) { this->write((Byte *)val,n); }
 	virtual Byte * read(U32 n=0);
 	virtual void stream(tBBuf &buf);
 	virtual void store(tBBuf &buf);
@@ -338,6 +336,10 @@ public:
 		tMBuf::write(val,n);
 		isNull(false);
 	}
+	virtual void write(const SByte * val,U32 n) {
+		tMBuf::write(val,n);
+		isNull(false);
+	}
 	void writeStr(const char * t);
 	void writeStr(tStrBuf * val) { val->rewind(); write(val->read(),val->size()); }
 	void writeStr(tStrBuf & val) { val.rewind(); write(val.read(),val.size()); }
@@ -371,6 +373,10 @@ public:
 	inline bool isNewline(void)
 	{
 		return compare("\n") == 0 || compare("\r") == 0 || compare("\n\r") == 0 || compare("\r\n") == 0;
+	}
+	const Byte *readAll(void) const {
+		static const Byte null = {0};
+		return buf ? buf->buf : null;
 	}
 protected:
 	virtual void _pcopy(const tStrBuf &t);

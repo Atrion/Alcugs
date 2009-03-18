@@ -289,7 +289,7 @@ void tLog::open(const char * name, char level, U16 flags) {
 		if(tvLogConfig->n_files2rotate<=0 || level==0) {
 			this->dsc=def;
 		} else {
-			size=strlen(name) + strlen((const char *)tvLogConfig->path->c_str());
+			size=strlen(name) + tvLogConfig->path->size();
 			DBG(6,"size is:%i\n",size);
 
 			croak=(char *)malloc(sizeof(char) * (size+1+5));
@@ -392,7 +392,7 @@ void tLog::rotate(bool force) {
 	
 	DBG(5,"3..\n");
 
-	size=strlen(this->name) + strlen(tvLogConfig->path->c_str());
+	size=strlen(this->name) + tvLogConfig->path->size();
 
 	croak=(char *)malloc(sizeof(char) * (size+1+5));
 	if(croak==NULL) return;
@@ -452,10 +452,10 @@ void tLog::rotate(bool force) {
 				if(stat(croak,&file_stats)==0) {
 					if(i==tvLogConfig->n_files2rotate) {
 						DBG(5,"deleting %s\n",croak);
-						unlink((const char *)croak);
+						unlink(croak);
 					} else {
 						DBG(5,"rename from %s to %s\n",croak,croak2);
-						rename((const char *)croak,(const char *)croak2);
+						rename(croak, croak2);
 					}
 				}
 			}

@@ -57,7 +57,7 @@ void tWDYSBuf::encrypt() {
 	msize=0;
 	off=0;
 	
-	write((Byte *)"whatdoyousee",(U32)sizeof(char)*12);
+	write("whatdoyousee",(U32)sizeof(char)*12);
 	putU32(xsize);
 	write(aux->buf,xsize);
 	set(16);
