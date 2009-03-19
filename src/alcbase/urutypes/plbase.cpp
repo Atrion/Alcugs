@@ -58,6 +58,7 @@ namespace alc {
 			case plWarpMsg: return "plWarpMsg";
 			case plServerReplyMsg: return "plServerReplyMsg";
 			case plAvTaskMsg: return "plAvTaskMsg";
+			case plAvSeekMsg: return "plAvSeekMsg";
 			case plLinkToAgeMsg: return "plLinkToAgeMsg";
 			case plNotifyMsg: return "plNotifyMsg";
 			case plLinkEffectsTriggerMsg: return "plLinkEffectsTriggerMsg";
@@ -68,6 +69,7 @@ namespace alc {
 			case plInputIfaceMgrMsg: return "plInputIfaceMgrMsg";
 			case pfKIMsg: return "pfKIMsg";
 			case plAvBrainGenericMsg: return "plAvBrainGenericMsg";
+			case plMultistageModMsg: return "plMultistageModMsg";
 			case plLoadAvatarMsg: return "plLoadAvatarMsg";
 			case plSubWorldMsg: return "plSubWorldMsg";
 			case plPseudoLinkEffectMsg: return "plPseudoLinkEffectMsg";
@@ -100,7 +102,8 @@ namespace alc {
 			case plEnableMsg:
 			case plWarpMsg:
 			case plServerReplyMsg:
-			case plAvTaskMsg: // I thought this was a plMessage, but the message sent when opening the KI looks... different
+			case plAvTaskMsg:
+			case plAvSeekMsg:
 			case plLinkToAgeMsg:
 			case plNotifyMsg:
 			case plLinkEffectsTriggerMsg:
@@ -109,10 +112,9 @@ namespace alc {
 			case plClothingMsg:
 			case plInputIfaceMgrMsg:
 			case plAvBrainGenericMsg:
+			case plMultistageModMsg:
 			case plSubWorldMsg:
 			case plPseudoLinkEffectMsg:
-			case 0x0294: // FIXME: what are the names of these?
-			case 0x039E:
 				if (!mustBeComplete) return new tpMessage(type); // if mustBeComplete is true, go on with the default behaviour
 			default:
 				throw txUnexpectedData(_WHERE("Unknown message type %s (0x%04X)", alcGetPlasmaType(type), type));

@@ -477,7 +477,7 @@ namespace alc {
 				
 				// parse contained plasma message
 				U16 msgType = gameMsg.getSubMsgType();
-				if (msgType != plAvTaskMsg) { // FIXME: What is wrong with this type?
+				if (msgType != plAvTaskMsg) { // plAvTaskMsg is compressed with zlib so we can't easily parse it
 					tpMessage *subMsg = tpMessage::create(msgType, /*mustBeComplete*/false);
 					gameMsg.message.get(*subMsg);
 					delete subMsg;

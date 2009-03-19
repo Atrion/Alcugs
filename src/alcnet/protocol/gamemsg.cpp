@@ -66,7 +66,7 @@ namespace alc {
 	void tMemberInfo::stream(tBBuf &t)
 	{
 		t.putU32(0x00000020); // unknown, seen 0x20 and 0x22 (seems to be a flag)
-		t.putU16(0x03EA); // always seen that value. FIXME: This is a plasma object, isn't it?
+		t.putU16(0x03EA); // always seen that value - doesn't seem to be a plasma obhect type, though
 		t.putU32(ki);
 		t.put(avatar);
 		t.putByte(hidePlayer); // CCR flag - when set to 1, the player is hidden on the age list
