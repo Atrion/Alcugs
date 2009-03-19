@@ -477,9 +477,11 @@ namespace alc {
 				
 				// parse contained plasma message
 				U16 msgType = gameMsg.getSubMsgType();
-				tpMessage *subMsg = tpMessage::create(msgType, /*mustBeComplete*/false);
-				gameMsg.message.get(*subMsg);
-				delete subMsg;
+				if (msgType != plAvTaskMsg) { // FIXME: What is wrong with this type?
+					tpMessage *subMsg = tpMessage::create(msgType, /*mustBeComplete*/false);
+					gameMsg.message.get(*subMsg);
+					delete subMsg;
+				}
 				
 				// broadcast message
 				bcastMessage(gameMsg);
@@ -672,6 +674,7 @@ namespace alc {
 				if (testAndSet.isLockReq) {
 					tmGameMessage msg(u, u->ki);
 					// build the game message
+					// FIXME: Use tpServerReplyMsg for this
 					msg.message.putU16(plServerReplyMsg);
 					msg.message.putByte(0);
 					msg.message.putU32(1);

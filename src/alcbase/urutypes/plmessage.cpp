@@ -156,7 +156,7 @@ namespace alc {
 		
 		unk3 = t.getU32();
 		byteVal = t.getByte();
-		if (byteVal != 1) throw txUnexpectedData(_WHERE("plLoadCloneMsg.unk4 must be 0x01 but is 0x%02X", byteVal));
+		if (byteVal != 0x01) throw txUnexpectedData(_WHERE("plLoadCloneMsg.unk4 must be 0x01 but is 0x%02X", byteVal));
 		
 		byteVal = t.getByte();
 		if (byteVal != 0x00 && byteVal != 0x01)

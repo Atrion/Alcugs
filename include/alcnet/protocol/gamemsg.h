@@ -225,11 +225,12 @@ namespace alc {
 	class tmSDLStateBCast : public tmMsgBase {
 	public:
 		tmSDLStateBCast(tNetSession *u);
-		tmSDLStateBCast(tNetSession *u, tmSDLStateBCast & msg);
+		tmSDLStateBCast(tNetSession *u, tmSDLStateBCast & msg, bool isInitial = false);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format
 		tMBuf sdl;
+		bool isInitial;
 	};
 	
 	class tmSetTimeout : public tmMsgBase {
