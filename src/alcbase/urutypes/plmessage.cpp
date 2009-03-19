@@ -47,6 +47,12 @@
 namespace alc {
 
 	//// tpMessage
+	tpMessage::tpMessage(U16 type, const tUruObjectRef &parentObj) : tpObject(type), parentObj(parentObj)
+	{
+		// the reference list stays empty
+		unk1 = unk2 = flags = 0;
+	}
+	
 	tpMessage *tpMessage::create(U16 type, bool mustBeComplete)
 	{
 		tpObject *obj = alcCreatePlasmaObject(type, mustBeComplete);
@@ -98,37 +104,6 @@ namespace alc {
 	}
 	
 	//// tpLoadCloneMsg
-	/* Old format notes (didn't use tpMessage inheritance) - this was too much work to simply remove it ;-)
-	The beginning of these messages (plLoadCloneMsg [used for the Kemo bugs only] and plLoadAvatarMsg) is always the same:
-	(By "static" bytes I mean they are always the same)
-	- 13 static bytes, then the key type [2 bytes, plNetClientMgr], then its name [urustring, "kNetClientMgr_KEY"], then 8 more static bytes
-	- 4 bytes which might be a flag, with different values being seen for the two message types, but no difference in the format
-	  (that might be a coincidence though as I determine the read format from the 2-byte-flag mentioned below)
-	<-- it's here where tPlasmaMsg ends -->
-	- An "object present" flag (1 byte) which is always true followed by a ref to the object which is loaded [clonedObj]
-	- 8 static bytes, then the key value [2 bytes, plAvatarMgr], the its name [urustring, "kAvatarMgr_KEY"]
-	- 4 bytes: The ID of the player who loads (same as clonedObj.clonePlayerId)
-	- 4 bytes: A zero for plLoadAvatarMsg and the same ID again for plLoadCloneMsg
-	- 1 byte which is always 1
-	- 1 byte: The isLoad flag (1 when the clone is loaded, 0 when it is unloaded)
-	- 2 bytes: Also seems to be a flag. For plLoadAvatarMsg its always 0x8000, for plLoadCloneMsg it can be 0x8000 and 0x032E
-	
-	Now come the differences:
-	plLoadCloneMsg:
-	- if the 2-byte-flag is 0x8000, the message ends here
-	- otherwise, it is 0x032E and things go on
-	- 1 byte which is always 0
-	- 4 static bytes
-	- an objectPresent flag (1 byte) which is always one followed by an object reference [parentObj]
-	- 8 static bytes
-	- 4 bytes: The same as the 4-byte-flag mentioned above
-	- an object present flag (1 byte) which is always one followed by an object reference with unknown meaning
-	- 2 bytes: The number of bugs to appear
-	plLoadAvatarMsg:
-	- 1 byte: isPlayerAvatar flag (1 when we are loading the avatar of the player, 0 for NPC-avatars like Zandi in the Cleft and the Quabs)
-	- an objectPresent flag (1 byte) which is sometimes followed by an object (the "manager" of the quabs) [parentObj]
-	- 1 byte which is always 0
-	*/
 	tpLoadCloneMsg *tpLoadCloneMsg::create(U16 type, bool mustBeComplete)
 	{
 		tpObject *obj = alcCreatePlasmaObject(type, mustBeComplete);
@@ -259,6 +234,25 @@ namespace alc {
 	{
 		tpMessage::toString();
 		strBuf.printf(" Unknown object: [%s], Count: %d\n", unkObj1.str(), count);
+	}
+	
+	//// tpServerReplyMsg
+	void tpServerReplyMsg::store(tBBuf &t)
+	{
+		tpMessage::store(t);
+		unk3 = t.getU32();
+	}
+	
+	void tpServerReplyMsg::stream(tBBuf &t)
+	{
+		tpMessage::stream(t);
+		t.putU32(unk3);
+	}
+	
+	void tpServerReplyMsg::toString()
+	{
+		tpMessage::toString();
+		strBuf.printf(" Unknown 3: %d\n", unk3);
 	}
 
 } //end namespace alc

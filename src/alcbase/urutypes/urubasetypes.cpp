@@ -320,6 +320,11 @@ tUruObjectRef::tUruObjectRef(void) : tBaseType()
 	hasObj = false;
 }
 
+tUruObjectRef::tUruObjectRef(const tUruObject &obj) : obj(obj)
+{
+	hasObj = true;
+}
+
 void tUruObjectRef::store(tBBuf &t)
 {
 	Byte hasObjFlag = t.getByte();
