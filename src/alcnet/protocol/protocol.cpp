@@ -966,11 +966,11 @@ const char * alcUnetGetMsgCode(U16 code) {
 		case NetMsgRelevanceRegions: return "NetMsgRelevanceRegions";
 		case NetMsgLoadClone: return "NetMsgLoadClone";
 		case NetMsgPlayerPage: return "NetMsgPlayerPage";
+		case NetMsgVault_UU: return "NetMsgVault_UU";
 		case NetMsgVault: return "NetMsgVault";
-		case NetMsgVault2: return "NetMsgVault2";
-		case NetMsgSetTimeout: return "NetMsgSetTimeout";
-		case NetMsgActivePlayerSet: return "NetMsgActivePlayerSet|NetMsgSetTimeout2"; // is the same as NetMsgSetTimeout2
-		case NetMsgActivePlayerSet2: return "NetMsgActivePlayerSet2";
+		case NetMsgSetTimeout_UU: return "NetMsgSetTimeout_UU";
+		case NetMsgSetTimeout: return "NetMsgSetTimeout|NetMsgActivePlayerSet_UU"; // is the same as NetMsgActivePlayerSet_UU
+		case NetMsgActivePlayerSet: return "NetMsgActivePlayerSet";
 		case NetMsgCustomAuthAsk: return "NetMsgCustomAuthAsk";
 		case NetMsgCustomAuthResponse: return "NetMsgCustomAuthResponse";
 		case NetMsgCustomVaultAskPlayerList: return "NetMsgCustomVaultAskPlayerList";

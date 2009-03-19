@@ -378,7 +378,7 @@ namespace alc {
 					break;
 				case 10: // GenericStream: Stream containing a table of ints
 				{
-					if (itm->type != DCreatableStream) throw txProtocolError(_WHERE("a vault item with id 10 must always have a creatable generic stream"));
+					if (itm->type != plCreatableStream) throw txProtocolError(_WHERE("a vault item with id 10 must always be a plCreatableStream"));
 					tMBuf *buf = static_cast<tvCreatableStream *>(itm->data)->getData();
 					tableSize = buf->getU16();
 					table.write(buf->read(tableSize*4), tableSize*4);

@@ -972,35 +972,35 @@ namespace alc {
 	tvItem::tvItem(Byte id, U32 integer) : tvBase()
 	{
 		this->id = id;
-		type = DCreatableGenericValue;
+		type = plCreatableGenericValue;
 		data = new tvCreatableGenericValue(integer);
 	}
 	
 	tvItem::tvItem(Byte id, double time) : tvBase()
 	{
 		this->id = id;
-		type = DCreatableGenericValue;
+		type = plCreatableGenericValue;
 		data = new tvCreatableGenericValue(time);
 	}
 	
 	tvItem::tvItem(Byte id, const char *str)
 	{
 		this->id = id;
-		type = DCreatableGenericValue;
+		type = plCreatableGenericValue;
 		data = new tvCreatableGenericValue(str);
 	}
 	
 	tvItem::tvItem(tvCreatableStream *stream)
 	{
 		this->id = stream->id;
-		type = DCreatableStream;
+		type = plCreatableStream;
 		data = stream;
 	}
 	
 	tvItem::tvItem(Byte id, tvNodeRef *ref)
 	{
 		this->id = id;
-		type = DVaultNodeRef;
+		type = plVaultNodeRef;
 		data = ref;
 	}
 	
@@ -1012,29 +1012,29 @@ namespace alc {
 			throw txProtocolError(_WHERE("bad item.unk value 0x%02X", unk));
 		}
 		type = t.getU16();
-		if (tpots == 1) {
-			if (type == DVaultNode2) type = DVaultNode; // a DVaultNode is called DVaultNode2 in TPOTS
-			else if (type == DVaultNodeRef2) type = DVaultNodeRef; // a DVaultNodeRef is called DVaultNodeRef2 in TPOTS
+		if (tpots == 2) { // it's Until Uru, use other type IDs
+			if (type == plVaultNode_UU) type = plVaultNode;
+			else if (type == plVaultNodeRef_UU) type = plVaultNodeRef;
 		}
 		
 		if (data) delete data;
 		switch (type) {
-			case DAgeLinkStruct:
+			case plAgeLinkStruct:
 				data = new tvAgeLinkStruct;
 				break;
-			case DCreatableGenericValue:
+			case plCreatableGenericValue:
 				data = new tvCreatableGenericValue;
 				break;
-			case DCreatableStream:
+			case plCreatableStream:
 				data = new tvCreatableStream(id);
 				break;
-			case DServerGuid:
+			case plServerGuid:
 				data = new tvServerGuid;
 				break;
-			case DVaultNodeRef:
+			case plVaultNodeRef:
 				data = new tvNodeRef;
 				break;
-			case DVaultNode:
+			case plVaultNode:
 				data = new tvNode;
 				break;
 			default:
@@ -1049,9 +1049,9 @@ namespace alc {
 		t.putByte(id);
 		t.putByte(0); // unknown
 		U16 sentType = type;
-		if (tpots == 1) {
-			if (sentType == DVaultNode) sentType = DVaultNode2; // a DVaultNode is called DVaultNode2 in TPOTS
-			else if (sentType == DVaultNodeRef) sentType = DVaultNodeRef2; // a DVaultNodeRef is called DVaultNodeRef2 in TPOTS
+		if (tpots == 2) { // it's Until Uru, use other type IDs
+			if (sentType == plVaultNode) sentType = plVaultNode_UU;
+			else if (sentType == plVaultNodeRef) sentType = plVaultNodeRef_UU;
 		}
 		t.putU16(sentType);
 		t.put(*data);
@@ -1059,52 +1059,52 @@ namespace alc {
 	
 	U32 tvItem::asInt(void)
 	{
-		if (type != DCreatableGenericValue)
-			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a DCreatableGenericValue", id, alcVaultGetDataType(type)));
+		if (type != plCreatableGenericValue)
+			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a plCreatableGenericValue", id, alcGetPlasmaType(type)));
 		return static_cast<tvCreatableGenericValue *>(data)->asInt();
 	}
 	
 	const char *tvItem::asString(void)
 	{
-		if (type != DCreatableGenericValue)
-			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a DCreatableGenericValue", id, alcVaultGetDataType(type)));
+		if (type != plCreatableGenericValue)
+			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a plCreatableGenericValue", id, alcGetPlasmaType(type)));
 		return static_cast<tvCreatableGenericValue *>(data)->asString();
 	}
 	
 	const Byte *tvItem::asGuid(void)
 	{
-		if (type != DServerGuid)
-			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a DServerGuid", id, alcVaultGetDataType(type)));
+		if (type != plServerGuid)
+			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a plServerGuid", id, alcGetPlasmaType(type)));
 		return static_cast<tvServerGuid *>(data)->guid;
 	}
 	
 	tvNode *tvItem::asNode(void)
 	{
-		if (type != DVaultNode)
-			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a DVaultNode", id, alcVaultGetDataType(type)));
+		if (type != plVaultNode)
+			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a plVaultNode", id, alcGetPlasmaType(type)));
 		return static_cast<tvNode *>(data);
 	}
 	
 	tvNodeRef *tvItem::asNodeRef(void)
 	{
-		if (type != DVaultNodeRef)
-			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a DVaultNodeRef", id, alcVaultGetDataType(type)));
+		if (type != plVaultNodeRef)
+			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a plVaultNodeRef", id, alcGetPlasmaType(type)));
 		return static_cast<tvNodeRef *>(data);
 	}
 	
 	tvAgeLinkStruct *tvItem::asAgeLink(void)
 	{
-		if (type != DAgeLinkStruct)
-			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a DAgeLinkStruct", id, alcVaultGetDataType(type)));
+		if (type != plAgeLinkStruct)
+			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a plAgeLinkStruct", id, alcGetPlasmaType(type)));
 		return static_cast<tvAgeLinkStruct *>(data);
 	}
 	
 	void tvItem::asHtml(tLog *log, bool shortLog)
 	{
-		log->print("Id: <b>0x%02X (%d)</b>, type: 0x%04X (%s)<br />\n", id, id, type, alcVaultGetDataType(type));
-		if (type == DVaultNode) log->print("<table border='1'>\n");
+		log->print("Id: <b>0x%02X (%d)</b>, type: 0x%04X (%s)<br />\n", id, id, type, alcGetPlasmaType(type));
+		if (type == plVaultNode) log->print("<table border='1'>\n");
 		data->asHtml(log, shortLog);
-		if (type == DVaultNode) log->print("</table>\n");
+		if (type == plVaultNode) log->print("</table>\n");
 	}
 	
 	//// tvMessage
@@ -1264,9 +1264,9 @@ namespace alc {
 		else
 			strcpy(clientDesc, "?");
 		if (clientToServer)
-			log->print("<h2 style='color:blue'>From client (%s) to vault</h2>\n", clientDesc);
+			log->print("<h2 style='color:blue'>%s: From client (%s) to vault</h2>\n", alcGetStrTime(), clientDesc);
 		else
-			log->print("<h2 style='color:green'>From vault to client (%s)</h2>\n", clientDesc);
+			log->print("<h2 style='color:green'>%s: From vault to client (%s)</h2>\n", alcGetStrTime(), clientDesc);
 		asHtml(log, shortLog);
 		log->print("<hr>\n\n");
 		log->flush();
@@ -1296,19 +1296,6 @@ namespace alc {
 				log->print("</td></tr>\n");
 			}
 			log->print("</table>");
-		}
-	}
-	
-	const char *alcVaultGetDataType(U16 type)
-	{
-		switch (type) {
-			case DAgeLinkStruct: return "DAgeLinkStruct";
-			case DCreatableGenericValue: return "DCreatableGenericValue";
-			case DCreatableStream: return "DCreatableStream";
-			case DServerGuid: return "DServerGuid";
-			case DVaultNodeRef: return "DVaultNodeRef"; // has a different value in TPOTS, but it is converted before this function is called
-			case DVaultNode: return "DVaultNode"; // has a different value in TPOTS, but it is converted before this function is called
-			default: return "Unknown";
 		}
 	}
 	

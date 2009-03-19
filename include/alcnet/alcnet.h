@@ -47,7 +47,6 @@ namespace alc {
 
 #include <mysql/mysql.h>
 
-#include "protocol/prot.h"
 #include "netmsgq.h"
 #include "protocol/protocol.h"
 #include "netsession.h"
