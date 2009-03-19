@@ -50,16 +50,21 @@ namespace alc {
 	const char *alcGetPlasmaType(U16 type)
 	{
 		switch(type) {
+			case plAnimCmdMsg: return "plAnimCmdMsg";
 			case plControlEventMsg: return "plControlEventMsg";
 			case plLoadCloneMsg: return "plLoadCloneMsg";
 			case plEnableMsg: return "plEnableMsg";
 			case plWarpMsg: return "plWarpMsg";
 			case plServerReplyMsg: return "plServerReplyMsg";
 			case plAvTaskMsg: return "plAvTaskMsg";
+			case plLinkToAgeMsg: return "plLinkToAgeMsg";
 			case plNotifyMsg: return "plNotifyMsg";
 			case plLinkEffectsTriggerMsg: return "plLinkEffectsTriggerMsg";
 			case plParticleTransferMsg: return "plParticleTransferMsg";
 			case plAvatarInputStateMsg: return "plAvatarInputStateMsg";
+			case plLinkingMgrMsg: return "plLinkingMgrMsg";
+			case plClothingMsg: return "plClothingMsg";
+			case plInputIfaceMgrMsg: return "plInputIfaceMgrMsg";
 			case pfKIMsg: return "pfKIMsg";
 			case plAvBrainGenericMsg: return "plAvBrainGenericMsg";
 			case plLoadAvatarMsg: return "plLoadAvatarMsg";
@@ -75,26 +80,26 @@ namespace alc {
 			case plLoadCloneMsg: return new tpLoadCloneMsg();
 			case plParticleTransferMsg: return new tpParticleTransferMsg();
 			case plLoadAvatarMsg: return new tpLoadAvatarMsg();
-			case plNull: return new tpObject(plNull);
+			case plNull: return new tpObject(plNull); // the NULL object
 			// messages of which the details are unknown
+			case plAnimCmdMsg:
 			case plControlEventMsg:
 			case plEnableMsg:
 			case plWarpMsg:
 			case plServerReplyMsg:
-			case plAvTaskMsg:
+			case plAvTaskMsg: // I thought this was a plMessage, but the message sent when opening the KI looks... different
+			case plLinkToAgeMsg:
 			case plNotifyMsg:
 			case plLinkEffectsTriggerMsg:
 			case plAvatarInputStateMsg:
+			case plLinkingMgrMsg:
+			case plClothingMsg:
+			case plInputIfaceMgrMsg:
 			case pfKIMsg:
 			case plAvBrainGenericMsg:
 			case plSubWorldMsg:
 			 // FIXME: what are the names of these?
-			case 0x0206:
 			case 0x0294:
-			case 0x02E1:
-			case 0x0346:
-			case 0x0352:
-			case 0x035E:
 			case 0x039E:
 				if (!mustBeComplete) return new tpMessage(type); // if mustBeComplete is true, go on with the default behaviour
 			// completely unknown types

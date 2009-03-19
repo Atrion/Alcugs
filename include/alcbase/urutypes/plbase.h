@@ -40,20 +40,26 @@
 
 namespace alc {
 
+#define plAnimCmdMsg               0x0206
 #define plControlEventMsg          0x0210
 #define plLoadCloneMsg             0x024E
 #define plEnableMsg                0x024F
 #define plWarpMsg                  0x0250
 #define plServerReplyMsg           0x026A
 #define plAvTaskMsg                0x0293
+#define plLinkToAgeMsg             0x02E1
 #define plNotifyMsg                0x02E8
 #define plLinkEffectsTriggerMsg    0x02FB
 #define plParticleTransferMsg      0x032E
 #define plAvatarInputStateMsg      0x0342
+#define plLinkingMgrMsg            0x0346
+#define plClothingMsg              0x0352
+#define plInputIfaceMgrMsg         0x035E
 #define pfKIMsg                    0x035F
 #define plAvBrainGenericMsg        0x038A
 #define plLoadAvatarMsg            0x03AC
 #define plSubWorldMsg              0x03BA
+
 #define plNull                     0x8000
 
 	////DEFINITIONS

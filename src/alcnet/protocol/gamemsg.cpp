@@ -65,6 +65,7 @@ namespace alc {
 	
 	void tMemberInfo::stream(tBBuf &t)
 	{
+		// FIXME: Is there an UruObject in here? Better check via Wireshark
 		t.putU32(0x00000020); // unknown, seen 0x20 and 0x22 (seems to be a flag)
 		t.putU16(0x03EA); // always seen that value
 		t.putU32(ki);
@@ -441,6 +442,7 @@ namespace alc {
 		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		
 		t.get(obj);
+		// FIXME: Is there an UruObject in here? Better check via Wireshark
 		flag = t.getByte();
 		if (flag != 0x00)
 			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.flag1 of 0x%02X (should be 0x00)", flag));
@@ -532,9 +534,9 @@ namespace alc {
 		U32 sdlSize = t.remaining()-1;
 		sdl.write(t.read(sdlSize), sdlSize);
 		Byte initial = t.getByte();
-		if (initial == 0x00 || initial == 0x01) isInitial = initial;
-		else
+		if (initial != 0x00 && initial != 0x01)
 			throw txProtocolError(_WHERE("NetMsgSDLState.initial must be 0x00 or 0x01 but is 0x%02X", initial));
+		isInitial = initial;
 	}
 	
 	void tmSDLState::stream(tBBuf &t)
@@ -554,11 +556,12 @@ namespace alc {
 	tmSDLStateBCast::tmSDLStateBCast(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
-	tmSDLStateBCast::tmSDLStateBCast(tNetSession *u, tmSDLStateBCast & msg)
+	tmSDLStateBCast::tmSDLStateBCast(tNetSession *u, tmSDLStateBCast & msg, bool isInitial)
 	 : tmMsgBase(NetMsgSDLStateBCast, plNetAck | plNetKi | plNetBcast, u), sdl(msg.sdl)
 	{
 		if (!msg.hasFlags(plNetBcast)) unsetFlags(plNetBcast);
 		ki = msg.ki;
+		this->isInitial = isInitial;
 	}
 	
 	void tmSDLStateBCast::store(tBBuf &t)
@@ -571,10 +574,12 @@ namespace alc {
 		U32 sdlSize = t.remaining()-2;
 		sdl.write(t.read(sdlSize), sdlSize);
 		
+		Byte initial = t.getByte();
+		if (initial != 0x00 && initial != 0x01)
+			throw txProtocolError(_WHERE("NetMsgSDLState.initial must be 0x00 or 0x01 but is 0x%02X", initial));
+		isInitial = initial;
+		
 		Byte unk = t.getByte();
-		if (unk != 0x00) // this is most likely "initial", but since BCasts are never sent on initializing, it is always 0
-			throw txProtocolError(_WHERE("NetMsgSDLStateBCast.unk1 must be 0x00 but is 0x%02X", unk));
-		unk = t.getByte();
 		if (unk != 0x01)
 			throw txProtocolError(_WHERE("NetMsgSDLStateBCast.unk2 must be 0x01 but is 0x%02X", unk));
 	}

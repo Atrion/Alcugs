@@ -83,7 +83,7 @@ private:
 	Byte version;
 };
 
-/** Uruobject */
+/** UruObject */
 class tUruObject : public tBaseType {
 public:
 	tUruObject(void);
