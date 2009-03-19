@@ -355,6 +355,7 @@ unsilenced 29
 #define plWarpMsg                  0x0250
 #define plServerReplyMsg           0x026A
 #define plAvTaskMsg                0x0293
+#define plAvSeekMsg                0x0294
 #define plLinkToAgeMsg             0x02E1
 #define plNotifyMsg                0x02E8
 #define plLinkEffectsTriggerMsg    0x02FB
@@ -365,6 +366,7 @@ unsilenced 29
 #define plInputIfaceMgrMsg         0x035E
 #define pfKIMsg                    0x035F
 #define plAvBrainGenericMsg        0x038A
+#define plMultistageModMsg         0x039E
 #define plLoadAvatarMsg            0x03AC
 #define plSubWorldMsg              0x03BA
 #define plPseudoLinkEffectMsg      0x048F

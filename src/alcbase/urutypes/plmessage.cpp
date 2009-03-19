@@ -132,6 +132,8 @@ namespace alc {
 			throw txUnexpectedData(_WHERE("plLoadCloneMsg.id (%d) must be the same as the clonedObj.clonePlayerId (%d)", u32Val, clonedObj.obj.clonePlayerId));
 		
 		unk3 = t.getU32(); // when loading an avatar, this is the avatar KI; for the bugs, it's zero
+		if (unk3 != 0 && unk3 != clonedObj.obj.clonePlayerId)
+			throw txUnexpectedData(_WHERE("plLoadCloneMsg.unk3 (%d) must be 0 or the same as the clonedObj.clonePlayerId (%d)", unk3, clonedObj.obj.clonePlayerId));
 		
 		byteVal = t.getByte();
 		if (byteVal != 0x01) throw txUnexpectedData(_WHERE("plLoadCloneMsg.unk4 must be 0x01 but is 0x%02X", byteVal));

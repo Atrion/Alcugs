@@ -84,7 +84,7 @@ private:
 };
 
 /** UruObject */
-class tUruObject : public tBaseType {
+class tUruObject : public tBaseType { // equivalent to plUoid in Plasma
 public:
 	tUruObject(void);
 	virtual void store(tBBuf &t);
@@ -107,7 +107,7 @@ private:
 	tStrBuf dbg;
 };
 
-class tUruObjectRef : public tBaseType {
+class tUruObjectRef : public tBaseType { // equivalent to the key reader of the resource manager in Plasma
 public:
 	tUruObjectRef(void);
 	tUruObjectRef(const tUruObject &obj);
