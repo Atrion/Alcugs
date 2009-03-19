@@ -367,6 +367,7 @@ unsilenced 29
 #define plAvBrainGenericMsg        0x038A
 #define plLoadAvatarMsg            0x03AC
 #define plSubWorldMsg              0x03BA
+#define plPseudoLinkEffectMsg      0x048F
 
 // vault types
 #define plAgeLinkStruct            0x02BF

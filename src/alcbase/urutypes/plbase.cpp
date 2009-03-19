@@ -70,6 +70,7 @@ namespace alc {
 			case plAvBrainGenericMsg: return "plAvBrainGenericMsg";
 			case plLoadAvatarMsg: return "plLoadAvatarMsg";
 			case plSubWorldMsg: return "plSubWorldMsg";
+			case plPseudoLinkEffectMsg: return "plPseudoLinkEffectMsg";
 			// vault types
 			case plAgeLinkStruct: return "plAgeLinkStruct";
 			case plCreatableGenericValue: return "plCreatableGenericValue";
@@ -86,11 +87,14 @@ namespace alc {
 	tpObject *alcCreatePlasmaObject(U16 type, bool mustBeComplete)
 	{
 		switch (type) {
+			// known message types
 			case plLoadCloneMsg: return new tpLoadCloneMsg();
 			case plParticleTransferMsg: return new tpParticleTransferMsg();
+			case pfKIMsg: return new tpKIMsg();
 			case plLoadAvatarMsg: return new tpLoadAvatarMsg();
+			// NULL type
 			case plNull: return new tpObject(plNull); // the NULL object
-			// messages of which the details are unknown
+			// unknown message types
 			case plAnimCmdMsg:
 			case plControlEventMsg:
 			case plEnableMsg:
@@ -104,14 +108,12 @@ namespace alc {
 			case plLinkingMgrMsg:
 			case plClothingMsg:
 			case plInputIfaceMgrMsg:
-			case pfKIMsg:
 			case plAvBrainGenericMsg:
 			case plSubWorldMsg:
-			 // FIXME: what are the names of these?
-			case 0x0294:
+			case plPseudoLinkEffectMsg:
+			case 0x0294: // FIXME: what are the names of these?
 			case 0x039E:
 				if (!mustBeComplete) return new tpMessage(type); // if mustBeComplete is true, go on with the default behaviour
-			// completely unknown types
 			default:
 				throw txUnexpectedData(_WHERE("Unknown message type %s (0x%04X)", alcGetPlasmaType(type), type));
 		}

@@ -57,7 +57,6 @@ namespace alc {
 		// format
 		tUruObjectRef parentObj;
 		tReferenceList references;
-		U32 unk1, unk2;
 		U32 flags;
 	protected:
 		virtual void toString(void);
@@ -102,7 +101,7 @@ namespace alc {
 	
 	class tpParticleTransferMsg : public tpMessage {
 	public:
-		tpParticleTransferMsg(void) : tpMessage(plParticleTransferMsg) {  }
+		tpParticleTransferMsg(void) : tpMessage(plParticleTransferMsg) {}
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		
@@ -115,19 +114,30 @@ namespace alc {
 	
 	class tpServerReplyMsg : public tpMessage {
 	public:
-		tpServerReplyMsg(void) : tpMessage(plServerReplyMsg) {  }
+		tpServerReplyMsg(void) : tpMessage(plServerReplyMsg) {}
 		tpServerReplyMsg(const tUruObjectRef &parentObj) : tpMessage(plServerReplyMsg, parentObj) { unk3 = 0; }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		
-		// Format
+		// format
 		U32 unk3;
 	protected:
 		virtual void toString(void);
 	};
 	
 	class tpKIMsg : public tpMessage {
-	// FIXME: implement
+	public:
+		tpKIMsg(void) : tpMessage(pfKIMsg) {}
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
+		
+		// format
+		tUStr senderName;
+		U32 senderKi;
+		tUStr text;
+		U32 messageType;
+	protected:
+		virtual void toString(void);
 	};
 
 } //End alc namespace

@@ -676,8 +676,6 @@ namespace alc {
 					// build the game message
 					tpServerReplyMsg serverReplyMsg = tpServerReplyMsg(tUruObjectRef()); // the parent is an empty object
 					serverReplyMsg.references.push_back(tUruObjectRef(testAndSet.obj)); // add the sent object as reference
-					serverReplyMsg.unk1 = 1;
-					serverReplyMsg.unk2 = 0;
 					serverReplyMsg.flags = 0x00000800;
 					serverReplyMsg.unk3 = 1;
 					// write it
