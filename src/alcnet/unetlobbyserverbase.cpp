@@ -543,12 +543,12 @@ namespace alc {
 			
 			//// vault messages
 			case NetMsgVault:
+			case NetMsgVault_UU:
 			case NetMsgVaultTask:
-			case NetMsgVault2: // TPOTS
 			{
 				bool isTask = (msg->cmd == NetMsgVaultTask);
-				if (msg->cmd == NetMsgVault)       u->tpots = 2; // it's not TPOTS
-				else if (msg->cmd == NetMsgVault2) u->tpots = 1; // it is TPOTS
+				if (msg->cmd == NetMsgVault_UU)    u->tpots = 2; // it's not TPOTS
+				else if (msg->cmd == NetMsgVault)  u->tpots = 1; // it is TPOTS
 				
 				// get the data out of the packet
 				tmVault vaultMsg(u);

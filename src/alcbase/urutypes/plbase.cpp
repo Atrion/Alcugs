@@ -50,6 +50,7 @@ namespace alc {
 	const char *alcGetPlasmaType(U16 type)
 	{
 		switch(type) {
+			// message types
 			case plAnimCmdMsg: return "plAnimCmdMsg";
 			case plControlEventMsg: return "plControlEventMsg";
 			case plLoadCloneMsg: return "plLoadCloneMsg";
@@ -69,6 +70,14 @@ namespace alc {
 			case plAvBrainGenericMsg: return "plAvBrainGenericMsg";
 			case plLoadAvatarMsg: return "plLoadAvatarMsg";
 			case plSubWorldMsg: return "plSubWorldMsg";
+			// vault types
+			case plAgeLinkStruct: return "plAgeLinkStruct";
+			case plCreatableGenericValue: return "plCreatableGenericValue";
+			case plCreatableStream: return "plCreatableStream";
+			case plServerGuid: return "plServerGuid";
+			case plVaultNodeRef: return "plVaultNodeRef";
+			case plVaultNode: return "plVaultNode";
+			// NULL type and unknown
 			case plNull: return "plNull";
 			default: return "Unknown";
 		}

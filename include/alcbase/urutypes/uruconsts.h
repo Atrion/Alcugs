@@ -24,14 +24,16 @@
 *                                                                              *
 *******************************************************************************/
 
-/* All The Uru Protocol is here */
+/* Globally needed Uru constants */
+/* Most of the vault constants can be found in include/alcnet/protocol/vaultproto.h */
 
 #ifndef __U_PROT_H
 #define __U_PROT_H
 /* CVS tag - DON'T TOUCH*/
 #define __U_PROT_H_ID "$Id$"
 
-//UruMsgFlags
+////============================================================================
+//// UruMsgFlags
 #define UNetAckReply    0x80
 #define UNetNegotiation 0x40
 #define UNetAckReq      0x02
@@ -67,8 +69,11 @@
 
 //An '*' means that the flag adds a new data field in the unet header.
 // the rest is only a flag...
+////============================================================================
 
-//account access levels
+
+////============================================================================
+//// Account access levels
 #define AcRoot 0
 #define AcAdmin 3 // can set current player and remove avatars from all accounts
 #define AcDebug 5
@@ -80,14 +85,19 @@
 #define AcNotActivated (AcActivated+1)
 #define AcBanned 30
 #define AcNotRes 40 // unable to verify authentication request (user not found, DB query failed)
+////============================================================================
 
-//type of clients
+
+////============================================================================
+//// Type of clients
 #define TExtRel 0x03
 #define TIntRel 0x02
 #define TDbg 0x01
+////============================================================================
 
 
-//type of server destinations (for ping and other stuff)
+////============================================================================
+//// Type of server destinations (for ping and other stuff)
 #define KAgent 1 //unused, lobby does the job
 #define KLobby 2
 #define KGame 3
@@ -104,9 +114,12 @@
 #define KProxy 12
 #define KPlFire 13
 #define KBcast 255
+////============================================================================
 
 
-//Reasons (Auth)
+////============================================================================
+//// Reason Flags
+// Auth
 #define AAuthSucceeded 0x00
 #define AAuthHello 0x01
 #define AProtocolOlder 0xF7
@@ -120,7 +133,7 @@
 //#define AHacked 0xF6
 //#define ABanned 0xF5
 
-//Reasons (Leave)
+// Leave
 #define RStopResponding 0x00
 #define RInRoute 0x16
 #define RArriving 0x17
@@ -175,8 +188,10 @@ LinkingRestored 27
 silenced 28
 unsilenced 29
 */
+////============================================================================
 
-//CreateAvatar Result code
+////============================================================================
+//// CreateAvatar Result codes
 #define AOK 0x00
 #define AUnknown 0x80
 #define ANameDoesNotHaveEnoughLetters 0xF8
@@ -187,16 +202,22 @@ unsilenced 29
 #define ANameIsNotAllowed 0xFD
 #define AMaxNumberPerAccountReached 0xFE
 #define AUnspecifiedServerError 0xFF
+////============================================================================
 
-//Linking Rules
+
+////============================================================================
+//// Linking Rules
 #define KBasicLink 0
 #define KOriginalBook 1
 #define KSubAgeBook 2
 #define KOwnedBook 3
 #define KVisitBook 4
 #define KChildAgeBook 5
+////============================================================================
 
-//var types (incomplete) (used by vault and sdl)
+
+////============================================================================
+//// Var types (incomplete) (used by vault and sdl)
 #define DInteger 0x00 // (4 bytes) integer
 #define DFloat 0x01 //(4 bytes) float
 #define DBool 0x02 //(1 byte) boolean value
@@ -214,11 +235,11 @@ unsilenced 29
 #define DQuaternion 0x36 // (4+4+4+4 bytes) four floats
 #define DRGB8 0x37 // (3 bytes) RBG color
 #define DInvalid 0xFF
+////============================================================================
 
-//tpots modifier
-//#define NetTPOTSmod 0x0428
 
-//plNetMsg's
+////============================================================================
+////plNetMsg's
 #define NetMsgPagingRoom               0x0218
 
 #define NetMsgJoinReq                  0x025A
@@ -278,17 +299,17 @@ unsilenced 29
 #define NetMsgLoadClone                0x03AE
 #define NetMsgPlayerPage               0x03AF
 
-#define NetMsgVault                    0x0428
-#define NetMsgVault2                   0x0429 // TPOTS
+#define NetMsgVault_UU                 0x0428 // UntilUru
+#define NetMsgVault                    0x0429
 
-#define NetMsgSetTimeout               0x0464
-#define NetMsgSetTimeout2              0x0465 // TPOTS
-#define NetMsgActivePlayerSet          0x0465
-#define NetMsgActivePlayerSet2         0x0466 // TPOTS
+#define NetMsgSetTimeout_UU            0x0464 // UntilUru
+#define NetMsgSetTimeout               0x0465
+#define NetMsgActivePlayerSet_UU       0x0465 // UntilUru
+#define NetMsgActivePlayerSet          0x0466
 
 //tpots note
 //type 0x02BC is now 0x03BC
-//All types that are >0x03BC are now incremented +1
+//All types that are >0x03BC are incremented +1 in TPOTS (compared to UU)
 //thx to ngilb120
 
 //custom
@@ -320,7 +341,45 @@ unsilenced 29
 #define NetMsgCustomDirectedFwd        0x101A
 #define NetMsgCustomPlayerToCome       0x101B
 #define NetMsgCustomTest               0x1313
-
 // * unimplemented, unknown format
+////============================================================================
+
+
+////============================================================================
+//// Plasma Object Types
+// message types
+#define plAnimCmdMsg               0x0206
+#define plControlEventMsg          0x0210
+#define plLoadCloneMsg             0x024E
+#define plEnableMsg                0x024F
+#define plWarpMsg                  0x0250
+#define plServerReplyMsg           0x026A
+#define plAvTaskMsg                0x0293
+#define plLinkToAgeMsg             0x02E1
+#define plNotifyMsg                0x02E8
+#define plLinkEffectsTriggerMsg    0x02FB
+#define plParticleTransferMsg      0x032E
+#define plAvatarInputStateMsg      0x0342
+#define plLinkingMgrMsg            0x0346
+#define plClothingMsg              0x0352
+#define plInputIfaceMgrMsg         0x035E
+#define pfKIMsg                    0x035F
+#define plAvBrainGenericMsg        0x038A
+#define plLoadAvatarMsg            0x03AC
+#define plSubWorldMsg              0x03BA
+
+// vault types
+#define plAgeLinkStruct            0x02BF
+#define plCreatableGenericValue    0x0387
+#define plCreatableStream          0x0389
+#define plServerGuid               0x034D
+#define plVaultNodeRef_UU          0x0438 // UntilUru
+#define plVaultNodeRef             0x0439
+#define plVaultNode_UU             0x0439 // UntilUru
+#define plVaultNode                0x043A
+
+// NULL type
+#define plNull                     0x8000
+////============================================================================
 
 #endif

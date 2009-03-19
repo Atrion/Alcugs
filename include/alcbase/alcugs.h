@@ -121,6 +121,7 @@ const char * alcXVERSION = ALC_PROGRAM_VERSION;
 #include "alcutil/alclog.h"
 #include "alcutil/alcparser.h"
 
+#include "urutypes/uruconsts.h"
 #include "urutypes/urubasetypes.h"
 #include "urutypes/ageinfo.h"
 #include "urutypes/plbase.h"

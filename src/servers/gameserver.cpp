@@ -721,7 +721,7 @@ namespace alc {
 				return 1;
 			}
 			case NetMsgSetTimeout:
-			case NetMsgSetTimeout2:
+			case NetMsgSetTimeout_UU:
 			{
 				if (!u->joined) {
 					err->log("ERR: %s sent a NetMsgSetTimeout but did not yet join the game. I\'ll kick him.\n", u->str());

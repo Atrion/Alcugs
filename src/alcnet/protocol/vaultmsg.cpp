@@ -50,8 +50,8 @@ namespace alc {
 			cmd = NetMsgVaultTask;
 			flags |= plNetX;
 		}
-		else if (u->tpots == 1) // if were sure it is TPOTS, use TPOTS mod
-			cmd = NetMsgVault2;
+		else if (u->tpots == 2) // if were sure it is UU, use that value
+			cmd = NetMsgVault_UU;
 	}
 	
 	void tmVault::store(tBBuf &t)

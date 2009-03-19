@@ -176,19 +176,8 @@ namespace alc {
 #define TUnRegisterVisitAge 0x0C
 #define TFriendInvite 0x0D
 
-//data types
-#define DAgeLinkStruct         0x02BF
-#define DCreatableGenericValue 0x0387
-#define DCreatableStream       0x0389
-#define DServerGuid            0x034D
-#define DVaultNodeRef          0x0438
-#define DVaultNodeRef2         0x0439 // TPOTS
-#define DVaultNode             0x0439
-#define DVaultNode2            0x043A // TPOTS
-
 	const char *alcVaultGetCmd(Byte cmd);
 	const char *alcVaultGetTask(Byte cmd);
-	const char *alcVaultGetDataType(U16 type);
 	const char *alcVaultGetNodeType(Byte type);
 	const char *alcVaultGetFolderType(U32 type);
 	
@@ -390,7 +379,7 @@ namespace alc {
 		tvNodeRef *asNodeRef(void);
 		tvAgeLinkStruct *asAgeLink(void);
 		
-		Byte tpots; // 1: generate/parse for TPOTS client, everything else: for non-TPOTS client (or the vault server)
+		Byte tpots; // 2: generate/parse for non-TPOTS client, everything else: for TPOTS client or the vault server
 		// format
 		Byte id;
 		U16 type;
@@ -414,7 +403,7 @@ namespace alc {
 		
 		typedef std::vector<tvItem *> tItemList; // to avoid re-allocating and since tvItems can't be copied, this is a vector of pointers
 		
-		Byte tpots; // 1: generate/parse for TPOTS client, everything else: for non-TPOTS client (or the vault server)
+		Byte tpots; // 2: generate/parse for non-TPOTS client, everything else: for TPOTS client or the vault server
 		// format
 		bool task;
 		Byte cmd; //!< the vault command
