@@ -9,10 +9,10 @@
 catfiles(){
 	if [ -f "$1.1.log" ]; then
 		ls -r $1.*.log | while read file; do
-			cat $file
+			cat "$file"
 		done
 	fi
-       cat $1.log
+       cat "$1.log"
 }
 
 logfilter(){
@@ -47,10 +47,10 @@ if [[ "$2" == "rec" || "$2" == "recursive" ]]; then
 		if `ls -d */ &> /dev/null`; then
 			ls -d */ | while read dir; do
 				cd "$oldPwd/$dir"
-				$0 $1 $2
+				"$0" "$1" "$2"
 			done
 		fi
-		cd $oldPwd
+		cd "$oldPwd"
 		exit
 	fi
 	echo "============================================================================"
@@ -69,8 +69,8 @@ fi
 case $1 in
 	problem|problems)
 		echo "General errors:"
-		$0 errors
-		$0 warnings
+		"$0" errors
+		"$0" warnings
 	;;
 	error|errors)
 		catfiles "error"
@@ -92,4 +92,4 @@ case $1 in
 	;;
 esac
 
-cd $oldPwd
+cd "$oldPwd"
