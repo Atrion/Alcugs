@@ -50,7 +50,7 @@ namespace alc {
 	tpMessage::tpMessage(U16 type, const tUruObjectRef &parentObj) : tpObject(type), parentObj(parentObj)
 	{
 		// the reference list stays empty
-		unk1 = unk2 = flags = 0;
+		flags = 0;
 	}
 	
 	tpMessage *tpMessage::create(U16 type, bool mustBeComplete)
@@ -64,6 +64,8 @@ namespace alc {
 	
 	void tpMessage::store(tBBuf &t)
 	{
+		U32 u32Val;
+		
 		t.get(parentObj);
 		U32 refCount = t.getU32();
 		// read array of references - perhaps put this into a helper function?
@@ -75,10 +77,10 @@ namespace alc {
 			t.get(*it);
 		}
 		// remaining values
-		unk1 = t.getU32();
-		if (unk1 != 0) throw txUnexpectedData(_WHERE("plMessage.unk1 must be 0 but is %d", unk1));
-		unk2 = t.getU32();
-		if (unk2 != 0) throw txUnexpectedData(_WHERE("plMessage.unk1 must be 0 but is %d", unk2));
+		u32Val = t.getU32();
+		if (u32Val != 0) throw txUnexpectedData(_WHERE("plMessage.unk1 must be 0 but is %d", u32Val));
+		u32Val = t.getU32();
+		if (u32Val != 0) throw txUnexpectedData(_WHERE("plMessage.unk2 must be 0 but is %d", u32Val));
 		flags = t.getU32();
 	}
 	
@@ -88,8 +90,8 @@ namespace alc {
 		t.putU32(references.size());
 		for (tReferenceList::iterator it = references.begin(); it != references.end(); ++it)
 			t.put(*it);
-		t.putU32(unk1);
-		t.putU32(unk2);
+		t.putU32(0); // unk1
+		t.putU32(0); // unk2
 		t.putU32(flags);
 	}
 	
@@ -100,7 +102,7 @@ namespace alc {
 		for (tReferenceList::iterator it = references.begin(); it != references.end(); ++it, ++nr) {
 			strBuf.printf(" Reference %d: [%s]\n", nr, it->str());
 		}
-		strBuf.printf(" Unk1: %d, Unk2: %d, Flags: 0x%08X\n", unk1, unk2, flags);
+		strBuf.printf(" Flags: 0x%08X\n", flags);
 	}
 	
 	//// tpLoadCloneMsg
@@ -129,7 +131,8 @@ namespace alc {
 		if (u32Val != clonedObj.obj.clonePlayerId)
 			throw txUnexpectedData(_WHERE("plLoadCloneMsg.id (%d) must be the same as the clonedObj.clonePlayerId (%d)", u32Val, clonedObj.obj.clonePlayerId));
 		
-		unk3 = t.getU32();
+		unk3 = t.getU32(); // when loading an avatar, this is the avatar KI; for the bugs, it's zero
+		
 		byteVal = t.getByte();
 		if (byteVal != 0x01) throw txUnexpectedData(_WHERE("plLoadCloneMsg.unk4 must be 0x01 but is 0x%02X", byteVal));
 		
@@ -221,6 +224,9 @@ namespace alc {
 		tpMessage::store(t);
 		t.get(unkObj1);
 		count = t.getU16();
+		
+		if (!t.eof())
+			throw txUnexpectedData(_WHERE("Got a plParticleTransferMsg which is too long: %d Bytes remaining after parsing", t.remaining()));
 	}
 	
 	void tpParticleTransferMsg::stream(tBBuf &t)
@@ -241,6 +247,9 @@ namespace alc {
 	{
 		tpMessage::store(t);
 		unk3 = t.getU32();
+		
+		if (!t.eof())
+			throw txUnexpectedData(_WHERE("Got a plServerReplyMsg which is too long: %d Bytes remaining after parsing", t.remaining()));
 	}
 	
 	void tpServerReplyMsg::stream(tBBuf &t)
@@ -253,6 +262,51 @@ namespace alc {
 	{
 		tpMessage::toString();
 		strBuf.printf(" Unknown 3: %d\n", unk3);
+	}
+	
+	//// tpKIMsg
+	void tpKIMsg::store(tBBuf &t)
+	{
+		tpMessage::store(t);
+		
+		Byte byteVal;
+		float floatVal;
+		U32 u32Val;
+		
+		byteVal = t.getByte();
+		if (byteVal != 0) throw txUnexpectedData(_WHERE("pfKIMsg.unk3 must be 0 but is %d", byteVal));
+		
+		t.get(senderName);
+		senderKi = t.getU32();
+		t.get(text);
+		messageType = t.getU32();
+		
+		floatVal = t.getFloat();
+		if (floatVal != 0.0) throw txUnexpectedData(_WHERE("pfKIMsg.unk4 must be 0.0 but is %f", floatVal));
+		u32Val = t.getU32();
+		if (u32Val != 0) throw txUnexpectedData(_WHERE("pfKIMsg.unk5 must be 0 but is %d", u32Val));
+		
+		if (!t.eof())
+			throw txUnexpectedData(_WHERE("Got a pfKIMsg which is too long: %d Bytes remaining after parsing", t.remaining()));
+	}
+	
+	void tpKIMsg::stream(tBBuf &t)
+	{
+		tpMessage::stream(t);
+		t.putByte(0); // unk3
+		t.put(senderName);
+		t.putU32(senderKi);
+		t.put(text);
+		t.putU32(messageType);
+		t.putFloat(0.0); // unk4
+		t.putU32(0); // unk5
+	}
+	
+	void tpKIMsg::toString()
+	{
+		tpMessage::toString();
+		strBuf.printf(" Sender: %s (KI: %d)\n", senderName.c_str(), senderKi);
+		strBuf.printf(" Text: %s, Message Type: 0x%08X\n", text.c_str(), messageType);
 	}
 
 } //end namespace alc
