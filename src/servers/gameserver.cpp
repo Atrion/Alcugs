@@ -513,7 +513,7 @@ namespace alc {
 				// don't need sharing the way things are usually set up right now, so
 				// it's not worth the effort to me. (Also, sharing is not enabled for
 				// books, just Bahro stones.)
-				if (msgType == 0x02E8) { // plNotifyMsg
+				if (msgType == plNotifyMsg) {
 					log->log("INF: Throwing out book share notification from %s\n", u->str());
 					return 1;
 				}
@@ -674,18 +674,15 @@ namespace alc {
 				if (testAndSet.isLockReq) {
 					tmGameMessage msg(u, u->ki);
 					// build the game message
-					// FIXME: Use tpServerReplyMsg for this
-					msg.message.putU16(plServerReplyMsg);
-					msg.message.putByte(0);
-					msg.message.putU32(1);
-					msg.message.putByte(1);
-					msg.message.put(testAndSet.obj);
-					msg.message.putByte(1);
-					msg.message.putU32(0);
-					msg.message.putU32(0);
-					msg.message.putU16(8);
-					msg.message.putByte(0);
-					msg.message.putU32(1);
+					tpServerReplyMsg serverReplyMsg = tpServerReplyMsg(tUruObjectRef()); // the parent is an empty object
+					serverReplyMsg.references.push_back(tUruObjectRef(testAndSet.obj)); // add the sent object as reference
+					serverReplyMsg.unk1 = 1;
+					serverReplyMsg.unk2 = 0;
+					serverReplyMsg.flags = 0x00000800;
+					serverReplyMsg.unk3 = 1;
+					// write it
+					msg.message.putU16(plServerReplyMsg); // message type
+					msg.message.put(serverReplyMsg); // the message itself
 					// send it
 					send(msg);
 				}

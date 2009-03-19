@@ -65,9 +65,8 @@ namespace alc {
 	
 	void tMemberInfo::stream(tBBuf &t)
 	{
-		// FIXME: Is there an UruObject in here? Better check via Wireshark
 		t.putU32(0x00000020); // unknown, seen 0x20 and 0x22 (seems to be a flag)
-		t.putU16(0x03EA); // always seen that value
+		t.putU16(0x03EA); // always seen that value. FIXME: This is a plasma object, isn't it?
 		t.putU32(ki);
 		t.put(avatar);
 		t.putByte(hidePlayer); // CCR flag - when set to 1, the player is hidden on the age list
@@ -442,19 +441,20 @@ namespace alc {
 		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		
 		t.get(obj);
-		// FIXME: Is there an UruObject in here? Better check via Wireshark
-		flag = t.getByte();
-		if (flag != 0x00)
-			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.flag1 of 0x%02X (should be 0x00)", flag));
-		unk = t.getU32();
-		if (unk != 0x00000000)
-			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.unk1 of 0x%08X (should be 0x00000000)", unk));
-		unk = t.getU32();
-		if (unk != 0x0000001D)
-			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.unk2 of 0x%08X (should be 0x0000001D)", unk));
-		t.get(trigger);
-		if (trigger != "TrigState")
-			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.Trigger of %s (should be \"TrigState\")", trigger.c_str()));
+		{ // the part I marked with btrackets could be an UruObject - the format fits
+			flag = t.getByte();
+			if (flag != 0x00)
+				throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.flag1 of 0x%02X (should be 0x00)", flag));
+			unk = t.getU32();
+			if (unk != 0x00000000)
+				throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.unk1 of 0x%08X (should be 0x00000000)", unk));
+			unk = t.getU32();
+			if (unk != 0x0000001D)
+				throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.unk2 of 0x%08X (should be 0x0000001D)", unk));
+			t.get(trigger);
+			if (trigger != "TrigState")
+				throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.Trigger of %s (should be \"TrigState\")", trigger.c_str()));
+		}
 		unk = t.getU32();
 		if (unk != 0x00000001)
 			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.unk3 of 0x%08X (should be 0x00000001)", unk));
@@ -520,9 +520,10 @@ namespace alc {
 	{ }
 	
 	tmSDLState::tmSDLState(tNetSession *u, bool isInitial) : tmMsgBase(NetMsgSDLState, plNetAck, u)
-	{
-		this->isInitial = isInitial;
-	}
+	{ this->isInitial = isInitial; }
+	
+	tmSDLState::tmSDLState(U16 cmd, U32 flags, tNetSession *u, tMBuf& sdl, bool isInitial) : tmMsgBase(cmd, flags, u), sdl(sdl)
+	{ this->isInitial = isInitial; }
 	
 	void tmSDLState::store(tBBuf &t)
 	{
@@ -532,6 +533,7 @@ namespace alc {
 		
 		sdl.clear();
 		U32 sdlSize = t.remaining()-1;
+		if (cmd == NetMsgSDLStateBCast) --sdlSize; // there one remaining byte more in NetMsgSDLStateBCast
 		sdl.write(t.read(sdlSize), sdlSize);
 		Byte initial = t.getByte();
 		if (initial != 0x00 && initial != 0x01)
@@ -553,32 +555,19 @@ namespace alc {
 	}
 	
 	//// tmSDLStateBCast
-	tmSDLStateBCast::tmSDLStateBCast(tNetSession *u) : tmMsgBase(u)
+	tmSDLStateBCast::tmSDLStateBCast(tNetSession *u) : tmSDLState(u)
 	{ }
 	
-	tmSDLStateBCast::tmSDLStateBCast(tNetSession *u, tmSDLStateBCast & msg, bool isInitial)
-	 : tmMsgBase(NetMsgSDLStateBCast, plNetAck | plNetKi | plNetBcast, u), sdl(msg.sdl)
+	tmSDLStateBCast::tmSDLStateBCast(tNetSession *u, tmSDLStateBCast & msg)
+	 : tmSDLState(NetMsgSDLStateBCast, plNetAck | plNetKi | plNetBcast, u, msg.sdl, /*isInitial*/false)
 	{
 		if (!msg.hasFlags(plNetBcast)) unsetFlags(plNetBcast);
 		ki = msg.ki;
-		this->isInitial = isInitial;
 	}
 	
 	void tmSDLStateBCast::store(tBBuf &t)
 	{
-		tmMsgBase::store(t);
-		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
-		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
-		
-		sdl.clear();
-		U32 sdlSize = t.remaining()-2;
-		sdl.write(t.read(sdlSize), sdlSize);
-		
-		Byte initial = t.getByte();
-		if (initial != 0x00 && initial != 0x01)
-			throw txProtocolError(_WHERE("NetMsgSDLState.initial must be 0x00 or 0x01 but is 0x%02X", initial));
-		isInitial = initial;
-		
+		tmSDLState::store(t);
 		Byte unk = t.getByte();
 		if (unk != 0x01)
 			throw txProtocolError(_WHERE("NetMsgSDLStateBCast.unk2 must be 0x01 but is 0x%02X", unk));
@@ -586,10 +575,8 @@ namespace alc {
 	
 	void tmSDLStateBCast::stream(tBBuf &t)
 	{
-		tmMsgBase::stream(t);
-		t.put(sdl);
-		t.putByte(0x00); // unk1 (initial?)
-		t.putByte(0x01); // unk2
+		tmSDLState::stream(t);
+		t.putByte(0x01); // unk
 	}
 	
 	//// tmSetTimeout

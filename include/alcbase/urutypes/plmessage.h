@@ -47,6 +47,7 @@ namespace alc {
 	class tpMessage : public tpObject {
 	public:
 		tpMessage(U16 type) : tpObject(type) {}
+		tpMessage(U16 type, const tUruObjectRef &parentObj);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		
@@ -110,6 +111,23 @@ namespace alc {
 		U16 count;
 	protected:
 		virtual void toString(void);
+	};
+	
+	class tpServerReplyMsg : public tpMessage {
+	public:
+		tpServerReplyMsg(void) : tpMessage(plServerReplyMsg) {  }
+		tpServerReplyMsg(const tUruObjectRef &parentObj) : tpMessage(plServerReplyMsg, parentObj) { unk3 = 0; }
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
+		
+		// Format
+		U32 unk3;
+	protected:
+		virtual void toString(void);
+	};
+	
+	class tpKIMsg : public tpMessage {
+	// FIXME: implement
 	};
 
 } //End alc namespace

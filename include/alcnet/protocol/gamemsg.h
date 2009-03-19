@@ -81,8 +81,6 @@ namespace alc {
 	class tmGameMessage : public tmMsgBase {
 	public:
 		tmGameMessage(tNetSession *u);
-		tmGameMessage(U16 cmd, U32 flags, tNetSession *u);
-		tmGameMessage(U16 cmd, U32 flags, tNetSession *u, tmGameMessage &msg);
 		tmGameMessage(tNetSession *u, tmGameMessage &msg);
 		tmGameMessage(tNetSession *u, U32 ki);
 		virtual void store(tBBuf &t);
@@ -92,20 +90,24 @@ namespace alc {
 		Byte header[5];
 		tMBuf message; // saves only the complete message content
 	protected:
+		tmGameMessage(U16 cmd, U32 flags, tNetSession *u);
+		tmGameMessage(U16 cmd, U32 flags, tNetSession *u, tmGameMessage &msg);
+		
 		void copyBaseProps(tmGameMessage &msg);
 	};
 	
 	class tmGameMessageDirected : public tmGameMessage {
 	public:
 		tmGameMessageDirected(tNetSession *u);
-		tmGameMessageDirected(U16 cmd, U32 flags, tNetSession *u);
-		tmGameMessageDirected(U16 cmd, U32 flags, tNetSession *u, tmGameMessageDirected &msg);
 		tmGameMessageDirected(tNetSession *u, tmGameMessageDirected &msg);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format
 		typedef std::vector<U32> tRecList;
 		tRecList recipients;
+	protected:
+		tmGameMessageDirected(U16 cmd, U32 flags, tNetSession *u);
+		tmGameMessageDirected(U16 cmd, U32 flags, tNetSession *u, tmGameMessageDirected &msg);
 	};
 	
 	class tmLoadClone : public tmGameMessage {
@@ -219,18 +221,17 @@ namespace alc {
 		tMBuf sdl;
 		bool isInitial;
 	protected:
+		tmSDLState(U16 cmd, U32 flags, tNetSession *u, tMBuf& sdl, bool isInitial);
+		
 		virtual void additionalFields();
 	};
 	
-	class tmSDLStateBCast : public tmMsgBase {
+	class tmSDLStateBCast : public tmSDLState {
 	public:
 		tmSDLStateBCast(tNetSession *u);
-		tmSDLStateBCast(tNetSession *u, tmSDLStateBCast & msg, bool isInitial = false);
+		tmSDLStateBCast(tNetSession *u, tmSDLStateBCast & msg);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
-		// format
-		tMBuf sdl;
-		bool isInitial;
 	};
 	
 	class tmSetTimeout : public tmMsgBase {

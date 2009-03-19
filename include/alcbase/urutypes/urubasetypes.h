@@ -110,6 +110,7 @@ private:
 class tUruObjectRef : public tBaseType {
 public:
 	tUruObjectRef(void);
+	tUruObjectRef(const tUruObject &obj);
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t);
 	const char *str(void);
