@@ -12,7 +12,7 @@ catfiles(){
 			cat "$file"
 		done
 	fi
-       cat "$1.log"
+	cat "$1.log"
 }
 
 logfilter(){
@@ -40,56 +40,64 @@ logfilter(){
 	fi
 }
 
-oldPwd="`pwd`"
+doaction(){
+	case $1 in
+		problem|problems)
+			echo "General errors:"
+			doaction errors
+			doaction warnings
+		;;
+		error|errors)
+			catfiles "error"
+			echo
+			if [ -f fork_err.log ]; then
+				echo "Fork error log"
+				cat fork_err.log
+				echo
+			fi
+		;;
+		warning|warnings)
+			logfilter "warn|[^a-z]err|unx|unexpect|fatal" | grep -v " INF: " # remove INF lines like "Dropped unexpected packet"
+		;;
+		info|infos)
+			logfilter "[^e]\sinf"
+		;;
+		*)
+			echo "Usage: log-filter.sh {errors|warnings|problems|infos}"
+		;;
+	esac
+}
 
-if [[ "$2" == "rec" || "$2" == "recursive" ]]; then
+recurse(){
 	if [ ! -f alcugs.log ]; then # no log found so far, go on searching
 		if `ls -d */ &> /dev/null`; then
 			ls -d */ | while read dir; do
-				cd "$oldPwd/$dir"
-				"$0" "$1" "$2"
+				cd "$dir"
+				recurse
+				cd ".."
 			done
 		fi
-		cd "$oldPwd"
-		exit
+	else
+		echo "============================================================================"
+		echo "`pwd`:"
+		doaction "$action" # has to be set by caller
 	fi
-	echo "============================================================================"
-	echo "`pwd`:"
-fi
+}
 
-if [ ! -f alcugs.log ]; then
+oldPwd="`pwd`"
+
+if [[ "$2" == "rec" || "$2" == "recursive" ]]; then
+	action="$1"
+	recurse
+elif [ ! -f alcugs.log ]; then
 	if [ -f log/alcugs.log ]; then
 		cd log
 	else
 		echo "No alcugs log found in current directory"
 		exit
 	fi
+else
+	doaction "$1"
 fi
-
-case $1 in
-	problem|problems)
-		echo "General errors:"
-		"$0" errors
-		"$0" warnings
-	;;
-	error|errors)
-		catfiles "error"
-		echo
-		if [ -f fork_err.log ]; then
-			echo "Fork error log"
-			cat fork_err.log
-			echo
-		fi
-	;;
-	warning|warnings)
-		logfilter "warn|[^a-z]err|unx|unexpect|fatal" | grep -v " INF: " # remove INF lines like "Dropped unexpected packet"
-	;;
-	info|infos)
-		logfilter "[^e]\sinf"
-	;;
-	*)
-		echo "Usage: $0 {errors|warnings|problems|infos}"
-	;;
-esac
 
 cd "$oldPwd"
