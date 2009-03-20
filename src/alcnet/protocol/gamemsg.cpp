@@ -148,6 +148,7 @@ namespace alc {
 			throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		
 		memcpy(header, t.read(5), 5);
+		
 		U32 gameMsgSize = t.getU32();
 		message.write(t.read(gameMsgSize), gameMsgSize); // that's the message itself
 		Byte unk = t.getByte();
@@ -234,12 +235,6 @@ namespace alc {
 	void tmLoadClone::store(tBBuf &t)
 	{
 		tmGameMessage::store(t);
-		
-		// check if header is all zero
-		Byte zero[5];
-		memset(zero, 0, 5);
-		if (memcmp(header, zero, 5) != 0)
-			throw txProtocolError(_WHERE("The header of a NetMsgLoadClone must be all zero"));
 		
 		t.get(obj);
 		if (!obj.hasCloneId) throw txProtocolError(_WHERE("The UruObject of a NetMsgLoadClone must have the clone ID set"));

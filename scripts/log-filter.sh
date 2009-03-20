@@ -89,14 +89,15 @@ oldPwd="`pwd`"
 if [[ "$2" == "rec" || "$2" == "recursive" ]]; then
 	action="$1"
 	recurse
-elif [ ! -f alcugs.log ]; then
-	if [ -f log/alcugs.log ]; then
-		cd log
-	else
-		echo "No alcugs log found in current directory"
-		exit
-	fi
 else
+	if [ ! -f alcugs.log ]; then
+		if [ -f log/alcugs.log ]; then
+			cd log
+		else
+			echo "No alcugs log found in current directory"
+			exit
+		fi
+	fi
 	doaction "$1"
 fi
 
