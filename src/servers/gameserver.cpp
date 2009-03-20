@@ -477,11 +477,10 @@ namespace alc {
 				
 				// parse contained plasma message
 				U16 msgType = gameMsg.getSubMsgType();
-				if (msgType != plAvTaskMsg) { // plAvTaskMsg is compressed with zlib so we can't easily parse it
-					tpMessage *subMsg = tpMessage::create(msgType, /*mustBeComplete*/false);
+				tpMessage *subMsg = tpMessage::create(msgType, /*mustBeComplete*/false);
+				if (gameMsg.streamType != 0x02)
 					gameMsg.message.get(*subMsg);
-					delete subMsg;
-				}
+				delete subMsg;
 				
 				// broadcast message
 				bcastMessage(gameMsg);
@@ -503,7 +502,8 @@ namespace alc {
 				// parse contained plasma message
 				U16 msgType = gameMsg.getSubMsgType();
 				tpMessage *subMsg = tpMessage::create(msgType, /*mustBeComplete*/false);
-				gameMsg.message.get(*subMsg);
+				if (gameMsg.streamType != 0x02)
+					gameMsg.message.get(*subMsg);
 				delete subMsg;
 				
 				// Because sharing the Relto book causes everyone in the age to crash

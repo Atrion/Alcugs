@@ -568,8 +568,8 @@ void tZBuf::uncompress(int iosize) {
 	tRefBuf * aux=this->buf;
 	aux->dec();
 	zlib::uLongf comp_size;
-	if(iosize<=0) { comp_size=10*msize; } //yes, is very dirty
-	else comp_size=iosize;
+	/*if(iosize<=0) { comp_size=10*msize; } //yes, is very dirty
+	else */comp_size=iosize;
 	this->buf = new tRefBuf(comp_size);
 	int ret=zlib::uncompress(this->buf->buf,&comp_size,aux->buf,msize);
 	if(ret!=0) throw txBase(_WHERE("Something terrible happenened uncompressing the buffer"));
@@ -577,6 +577,8 @@ void tZBuf::uncompress(int iosize) {
 	if(aux->getRefs()<1) delete aux;
 	this->buf->resize(msize);
 	off=0;
+	if ((zlib::uLong)iosize != comp_size)
+		throw txUnexpectedData(_WHERE("tZBuf size mismatch: %i != %i", iosize, comp_size));
 }
 /* end tZBuf */
 

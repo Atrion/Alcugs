@@ -115,7 +115,7 @@ namespace alc {
 	{ }
 	
 	tmGameMessage::tmGameMessage(U16 cmd, U32 flags, tNetSession *u) : tmMsgBase(cmd, flags, u)
-	{ memset(header, 0, 5); }
+	{ uncompressedSize = 0; streamType = 0; }
 	
 	tmGameMessage::tmGameMessage(U16 cmd, U32 flags, tNetSession *u, tmGameMessage &msg)
 	 : tmMsgBase(cmd, flags, u), message(msg.message)
@@ -128,13 +128,15 @@ namespace alc {
 	tmGameMessage::tmGameMessage(tNetSession *u, U32 ki) : tmMsgBase(NetMsgGameMessage, plNetAck | plNetKi, u)
 	{
 		this->ki = ki;
-		memset(header, 0, 5);
+		uncompressedSize = 0;
+		streamType = 0;
 	}
 	
 	void tmGameMessage::copyBaseProps(tmGameMessage &msg)
 	{
 		if (!msg.hasFlags(plNetAck)) unsetFlags(plNetAck);
-		memcpy(header, msg.header, 5);
+		uncompressedSize = msg.uncompressedSize;
+		streamType = msg.streamType;
 		ki = msg.ki;
 	}
 	
@@ -147,7 +149,10 @@ namespace alc {
 		if (ki == 0 || (cmd != NetMsgCustomDirectedFwd && ki != u->ki)) // don't kick connection game <-> tracking
 			throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		
-		memcpy(header, t.read(5), 5);
+		uncompressedSize = t.getU32();
+		streamType = t.getByte();
+		if (streamType != 0x02 && uncompressedSize)
+			throw txProtocolError(_WHERE("NetMsgGameMessage.uncompressedSize must not be set for a streamType of 0x%02X", streamType));
 		
 		U32 gameMsgSize = t.getU32();
 		message.write(t.read(gameMsgSize), gameMsgSize); // that's the message itself
@@ -159,7 +164,8 @@ namespace alc {
 	void tmGameMessage::stream(tBBuf &t)
 	{
 		tmMsgBase::stream(t);
-		t.write(header, 5);
+		t.putU32(uncompressedSize);
+		t.putByte(streamType);
 		t.putU32(message.size());
 		t.put(message);
 		t.putByte(0); // unk

@@ -63,6 +63,7 @@ namespace alc {
 			case plNotifyMsg: return "plNotifyMsg";
 			case plLinkEffectsTriggerMsg: return "plLinkEffectsTriggerMsg";
 			case plParticleTransferMsg: return "plParticleTransferMsg";
+			case plParticleKillMsg: return "plParticleKillMsg";
 			case plAvatarInputStateMsg: return "plAvatarInputStateMsg";
 			case plLinkingMgrMsg: return "plLinkingMgrMsg";
 			case plClothingMsg: return "plClothingMsg";
@@ -107,6 +108,7 @@ namespace alc {
 			case plLinkToAgeMsg:
 			case plNotifyMsg:
 			case plLinkEffectsTriggerMsg:
+			case plParticleKillMsg:
 			case plAvatarInputStateMsg:
 			case plLinkingMgrMsg:
 			case plClothingMsg:
