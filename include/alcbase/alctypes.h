@@ -267,7 +267,7 @@ public:
 	tZBuf() :tMBuf() {}
 	tZBuf(tMBuf &k) :tMBuf(k) {}
 	void compress();
-	void uncompress(int iosize=0);
+	void uncompress(int iosize);
 };
 
 /** Md5 buffer */

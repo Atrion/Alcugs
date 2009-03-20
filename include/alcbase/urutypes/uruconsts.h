@@ -360,6 +360,7 @@ unsilenced 29
 #define plNotifyMsg                0x02E8
 #define plLinkEffectsTriggerMsg    0x02FB
 #define plParticleTransferMsg      0x032E
+#define plParticleKillMsg          0x032F
 #define plAvatarInputStateMsg      0x0342
 #define plLinkingMgrMsg            0x0346
 #define plClothingMsg              0x0352

@@ -12,7 +12,7 @@ rm rcvmsg.raw -rf
 ./alcmsgtest -lm -lh localhost -lp $PORT -nl &
 sleep 1
 # send file
-./alcmsgtest localhost:$PORT -f $FILE
+./alcmsgtest localhost:$PORT -f "$FILE" 
 sleep 1
 # kill server
 killall -s INT alcmsgtest
