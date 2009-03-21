@@ -524,149 +524,54 @@ namespace alc {
 	}
 	
 	//// tSdlState
-	tSdlState::tSdlState(tAgeStateManager *stateMgr, bool canBeLonger)
-	{
-		this->stateMgr = stateMgr;
-		this->canBeLonger = canBeLonger;
-		format = 0x00;
-	}
-	
 	tSdlState::tSdlState(tAgeStateManager *stateMgr, const tUruObject &obj, tUStr name, U16 version, bool initDefault)
 	 : obj(obj), content(stateMgr, name, version, initDefault)
 	{
 		this->stateMgr = stateMgr;
-		canBeLonger = false;
-		format = 0x00;
+	}
+	
+	tSdlState::tSdlState(tAgeStateManager *stateMgr, tMBuf &t, const tUruObject &obj) : obj(obj)
+	{
+		this->stateMgr = stateMgr;
+		store(t);
+	}
+	
+	tSdlState::tSdlState(tAgeStateManager *stateMgr, tMBuf &t)
+	{
+		this->stateMgr = stateMgr;
+		store(t);
 	}
 	
 	tSdlState::tSdlState(void)
 	{
 		this->stateMgr = NULL;
-		format = 0x00;
-	}
-	
-	tMBuf tSdlState::decompress(tBBuf &t)
-	{
-		tMBuf data;
-		U32 realSize = 0, sentSize = t.remaining(), compressed = 0x00; // default values for when it is sent without header
-		
-		if (format != 0x02) { // it has the compression header (format 0x02 does not)
-			realSize = t.getU32();
-			compressed = t.getByte();
-			sentSize = t.getU32();
-		}
-		
-		if (sentSize > 0) {
-			U16 sdlMagicNumber = t.getU16(); // SDL magic number (or the type ID of a NULL object?)
-			if (sdlMagicNumber != 0x8000) throw txProtocolError(_WHERE("sdlMagicNumber must be 0x8000 but is 0x%04X", sdlMagicNumber));
-			// remove these two Bytes from above counters
-			realSize -= 2;
-			sentSize -= 2;
-			
-			tBBuf *buf = &t;
-			if (compressed == 0x02) {
-				tZBuf *content = new tZBuf;
-				content->write(t.read(sentSize), sentSize);
-				content->uncompress(realSize);
-				buf = content;
-			}
-			else if (compressed == 0x00) {
-				realSize = sentSize;
-			}
-			else
-				throw txProtocolError(_WHERE("unknown compression format 0x%02X", compressed));
-			
-			// get binary body
-			data.write(buf->read(realSize), realSize);
-			
-			if (compressed == 0x02) { // it was compressed, so we have to clean up
-				if (!buf->eof()) throw txProtocolError(_WHERE("Message is too long")); // there must not be any byte after what we parsed above
-				delete buf;
-			}
-		}
-		else {
-			DBG(5, "Got empty SDL message\n");
-		}
-		
-		if (!canBeLonger && !t.eof())
-			throw txProtocolError(_WHERE("The SDL struct is too long (%d Bytes remaining after parsing)", t.remaining()));
-		
-		return data;
-	}
-	
-	tMBuf tSdlState::compress(tMBuf &data)
-	{
-		tMBuf t;
-		if (!data.size()) {
-			// write an empty SDL
-			t.putU32(0); // real size
-			t.putByte(0x00); // compression flag
-			t.putU32(0); // sent size
-			return t;
-		}
-		
-		if (format == 0x02)
-			throw txProtocolError(_WHERE("Wiriting a SDL without compression header is not supported"));
-		
-		// it's not yet empty, so we have to write something
-		if (data.size() > 255) { // just a guess - we compress if it's bigger than 255 bytes
-			t.putU32(data.size()+2); // uncompressed size (take object flag and SDL magic into account)
-			t.putByte(0x02); // compression flag
-			// compress it
-			tZBuf content;
-			content.put(data);
-			content.compress();
-			// put sent size and compressed data in buffer
-			t.putU32(content.size()+2);
-			t.putU16(0x8000); // SDL magic number (or the type ID of a NULL object?)
-			t.put(content);
-		}
-		else {
-			t.putU32(0); // the real size is 0 for uncompressed messages
-			t.putByte(0x00); // compression flag
-			t.putU32(data.size()+2); // sent size
-			t.putU16(0x8000); // SDL magic number (or the type ID of a NULL object?)
-			t.put(data);
-		}
-		return t;
 	}
 	
 	void tSdlState::store(tBBuf &t)
 	{
 		if (stateMgr == NULL)
 			throw txUnet(_WHERE("You have to set a stateMgr before parsing an sdlState"));
-		if (format == 0x00) // only format 0x00 has the object
-			t.get(obj);
-		tMBuf data = decompress(t);
-		if (!data.size()) throw txProtocolError(_WHERE("Parsing an empty SDL binary is not supported"));
 		// parse "header data"
-		data.rewind();
 		tUStr name;
-		data.get(name);
-		U16 version = data.getU16();
+		t.get(name);
+		U16 version = t.getU16();
 		// parse binary content
 		content = tSdlStateBinary(stateMgr, name, version);
-		data.get(content);
+		t.get(content);
 		
-		if (!data.eof()) {
-			throw txProtocolError(_WHERE("The SDL struct is too long (%d Bytes remaining after parsing)", data.remaining()));
+		if (!t.eof()) {
+			throw txProtocolError(_WHERE("The SDL struct is too long (%d Bytes remaining after parsing)", t.remaining()));
 		}
 	}
 	
 	void tSdlState::stream(tBBuf &t)
 	{
-		if (format == 0x00) // only format 0x00 has the object
-			t.put(obj);
-		tMBuf data;
 		if (content.getVersion() && content.getName().size()) {
 			tUStr name(content.getName());
-			data.put(name);
-			data.putU16(content.getVersion());
-			data.put(content);
+			t.put(name);
+			t.putU16(content.getVersion());
+			t.put(content);
 		}
-		// use tSdlBinary to get the SDL header around it
-		tMBuf b = compress(data);
-		t.put(b);
 	}
 	
 	bool tSdlState::operator==(const tSdlState &state)
@@ -686,7 +591,7 @@ namespace alc {
 	void tSdlState::print(tLog *log)
 	{
 		if (!log->doesPrint()) return;
-		if (format == 0x00)
+		if (obj.objName.size())
 			log->print("SDL State for [%s]:\n", obj.str());
 		else
 			log->print("SDL State:\n"); // other formats than 0x00 don't contain the object

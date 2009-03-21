@@ -140,12 +140,19 @@ namespace alc {
 		// read it
 		U32 nState = file.getU32();
 		for (U32 i = 0; i < nState; ++i) {
-			tSdlState state(this, true/*there can be data atfer the end of the struct*/);
-			file.get(state);
-			if (state.obj.hasCloneId) {
-				log->log("Not loading state %s with clone ID\n", state.str());
+			tUruObject obj;
+			file.get(obj);
+			tStreamedObject sdlStream;
+			file.get(sdlStream);
+			if (obj.hasCloneId) {
+				log->log("Not loading state for object %s with clone ID\n", obj.str());
 				continue;
 			}
+			if (sdlStream.getType() != plNull)
+				throw txProtocolError(_WHERE("Plasma object type of an SDL must be plNull"));
+			sdlStream.uncompress();
+			
+			tSdlState state(this, sdlStream, obj);
 			tSdlList::iterator it = findSdlState(&state);
 			if (it != sdlStates.end()) {
 				log->log("Got state duplicate: %s and %s. Keeping the one with higher version number.\n", state.str(), it->str());
@@ -170,8 +177,14 @@ namespace alc {
 		
 		// write to it
 		file.putU32(sdlStates.size());
-		for (tSdlList::iterator it = sdlStates.begin(); it != sdlStates.end(); ++it)
-			file.put(*it);
+		for (tSdlList::iterator it = sdlStates.begin(); it != sdlStates.end(); ++it) {
+			file.put(it->obj);
+			
+			tStreamedObject sdl;
+			sdl.put(*it);
+			sdl.compress();
+			file.put(sdl);
+		}
 		file.close();
 	}
 	
@@ -227,11 +240,9 @@ namespace alc {
 		log->flush();
 	}
 	
-	void tAgeStateManager::saveSdlState(tMBuf &data)
+	void tAgeStateManager::saveSdlState(tMBuf &data, const tUruObject &obj)
 	{
-		tSdlState sdl(this);
-		data.rewind();
-		data.get(sdl);
+		tSdlState sdl(this, data, obj);
 		if (logDetailed) {
 			log->log("Got ");
 			sdl.print(log);
@@ -256,9 +267,10 @@ namespace alc {
 	void tAgeStateManager::saveSdlVaultMessage(tMBuf &data, tNetSession *u)
 	{
 		// get the content
-		tSdlState sdl(this);
-		sdl.format = 0x02; // no compression header
-		data.get(sdl);
+		U16 type = data.getU16();
+		if (type != plNull)
+			throw txProtocolError(_WHERE("Plasma object type of an SDL must be plNull"));
+		tSdlState sdl(this, data);
 		if (sdl.content.getName() != age->name) return; // ignore updates for other ages
 		if (logDetailed) {
 			log->log("Got SDL Vault Message ");
@@ -272,8 +284,7 @@ namespace alc {
 			log->log("Updating %s\n", sdl.str());
 			sdlHook->content.updateWith(&sdl.content);
 			// send update to client (for some strange reason, it is enough to send the SDL update to the client who triggered it)
-			tmSDLState sdlMsg(u, /*initial*/false);
-			sdlMsg.sdl.put(*sdlHook);
+			tmSDLState sdlMsg(u, sdlHook->obj, &*sdlHook, /*initial*/false);
 			net->send(sdlMsg);
 		}
 	}
@@ -306,8 +317,7 @@ namespace alc {
 				log->log("Sending SDL State to %s:\n", u->str());
 				it->print(log);
 			}
-			tmSDLState sdlMsg(u, /*initial*/true);
-			sdlMsg.sdl.put(*it);
+			tmSDLState sdlMsg(u, it->obj, &*it, /*initial*/true);
 			net->send(sdlMsg);
 			++n;
 		}
@@ -396,7 +406,7 @@ namespace alc {
 		return sdlHook;
 	}
 	
-	void tAgeStateManager::writeAgeState(tMBuf *buf)
+	tBaseType *tAgeStateManager::getAgeState(void)
 	{
 		tSdlList::iterator sdlHook = findAgeSDLHook();
 		if (sdlHook != sdlStates.end()) { // found it - send it
@@ -409,17 +419,15 @@ namespace alc {
 			}
 			else
 				log->nl();
-			sdlHook->format = 0x01; // write it without the object
-			buf->put(*sdlHook);
-			sdlHook->format = 0x00; // restore the correct format
+			log->flush();
+			return &*sdlHook;
 		}
 		else { // not found
 			log->log("No Age SDL hook found, send empty SDL\n");
-			tSdlState empty;
-			empty.format = 0x01; // write it without the object
-			buf->put(empty);
+			log->flush();
+			static tSdlState empty;
+			return &empty;
 		}
-		log->flush();
 	}
 	
 	U32 tAgeStateManager::findLatestStructVersion(const char *name, bool throwOnError)

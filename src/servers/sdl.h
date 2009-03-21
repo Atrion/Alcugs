@@ -56,12 +56,12 @@ namespace alc {
 		~tAgeStateManager(void);
 		void reload(void);
 		
-		void saveSdlState(tMBuf &data);
+		void saveSdlState(tMBuf &data, const tUruObject &obj);
 		void saveSdlVaultMessage(tMBuf &data, tNetSession *u);
 		void saveClone(tpLoadCloneMsg *clone);
 		int sendClones(tNetSession *u);
 		int sendSdlStates(tNetSession *u, tmGameStateRequest::tPageList *pages);
-		void writeAgeState(tMBuf *buf);
+		tBaseType *getAgeState(void); //!< returns the AgeSDLHook or an empty object
 		void removePlayer(tNetSession *player);
 		
 		tSdlStruct *findStruct(tStrBuf name, U32 version);

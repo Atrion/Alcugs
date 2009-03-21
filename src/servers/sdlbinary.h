@@ -121,8 +121,9 @@ namespace alc {
 	/** parses the SDL state */
 	class tSdlState : public tBaseType {
 	public:
-		tSdlState(tAgeStateManager *stateMgr, bool canBeLonger = false);
 		tSdlState(tAgeStateManager *stateMgr, const tUruObject &obj, tUStr name, U16 version, bool initDefault = false);
+		tSdlState(tAgeStateManager *stateMgr, tMBuf &t, const tUruObject &obj);
+		tSdlState(tAgeStateManager *stateMgr, tMBuf &t);
 		tSdlState(void);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
@@ -131,19 +132,11 @@ namespace alc {
 		bool operator==(const tSdlState &state);
 		
 		tUruObject obj;
-		Byte format;
-		/* possible formats:
-			0x00: first the object, then a SDL message with the compression header (used in NetMsgSDLState*)
-			0x01: a SDL message with the compression header (used in NetMsgJoinAck)
-			0x02: a SDL message without compression header (the format of the binary blob of a vault SDL node) */
 		// format
 		tSdlStateBinary content;
 	private:
-		tMBuf decompress(tBBuf &t); //!< gives us the decompressed content of the SDL stream, the bytes we really want to parse
-		tMBuf compress(tMBuf &data); //!< packs our SDL stream to be sent, adds length bytes and perhaps compresses
 		tSdlStruct *findStruct(void); //!< finds the correct tSdlStruct which is necessary for this SDL State
 	
-		bool canBeLonger;
 		tStrBuf dbg;
 		tAgeStateManager *stateMgr;
 	};

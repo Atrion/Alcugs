@@ -346,4 +346,85 @@ const char *tUruObjectRef::str(void)
 	else return "null";
 }
 
+/* tStreamedObject */
+void tStreamedObject::store(tBBuf &t)
+{
+	DBG(8, "tStreamedObject::store\n");
+	clear();
+	
+	realSize = t.getU32();
+	format = t.getByte();
+	if (format != 0x00 && format != 0x02 && format != 0x03)
+		throw txUnexpectedData(_WHERE("Invalid stream format 0x%02X", format));
+	if (format != 0x02 && realSize)
+		throw txUnexpectedData(_WHERE("Uncompressed stream must not have real size set"));
+	U32 sentSize = t.getU32();
+	if (sentSize == 0) {
+		type = plNull;
+		return;
+	}
+	// strip out the two type bytes
+	realSize -= 2;
+	sentSize -= 2;
+	
+	type = t.getU16();
+	write(t.read(sentSize), sentSize);
+}
+
+void tStreamedObject::stream(tBBuf &t)
+{
+	DBG(8, "tStreamedObject::stream\n");
+	if (!size()) {
+		// write an empty stream
+		t.putU32(0); // real size
+		t.putByte(0x00); // compression flag
+		t.putU32(0); // sent size
+		return;
+	}
+	
+	// it's not yet empty, so we have to write something
+	t.putU32(format == 0x02 ? realSize+2 : 0); // add the two type bytes
+	t.putByte(format);
+	t.putU32(size()+2); // add the two type bytes
+	t.putU16(type);
+	tMBuf::stream(t);
+}
+
+void tStreamedObject::uncompress(void)
+{
+	if (format == 0x02) {
+		DBG(8, "tStreamedObject::uncompress\n");
+		tZBuf content(*this);
+		content.uncompress(realSize);
+		tMBuf::copy(content);
+		format = 0x00;
+	}
+	rewind();
+}
+
+void tStreamedObject::compress(U32 maxSize)
+{
+	if (format == 0x02 || size() < maxSize) return; // nothing to do
+	DBG(8, "tStreamedObject::compress\n");
+	// compress it
+	realSize = size();
+	tZBuf content(*this);
+	content.compress();
+	tMBuf::copy(content);
+	format = 0x02;
+}
+
+void tStreamedObject::copy(const tStreamedObject &t)
+{
+	if(this==&t) return;
+	this->_pcopy(t);
+}
+void tStreamedObject::_pcopy(const tStreamedObject &t)
+{
+	if (&t == this) return;
+	tMBuf::_pcopy(t);
+	format = t.format;
+	type = t.type;
+}
+
 } //end namespace alc

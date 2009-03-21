@@ -359,8 +359,7 @@ namespace alc {
 				
 				// ok, tell the client he successfully joined
 				u->joined = true;
-				tmJoinAck joinAck(u, joinReq.x);
-				ageState->writeAgeState(&joinAck.sdl);
+				tmJoinAck joinAck(u, joinReq.x, ageState->getAgeState());
 				send(joinAck);
 				// log the join
 				sec->log("%s joined\n", u->str());
@@ -565,7 +564,7 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, SDLState.str());
 				
 				// save SDL state
-				ageState->saveSdlState(SDLState.sdl);
+				ageState->saveSdlState(SDLState.sdlStream, SDLState.obj);
 				
 				// NetMsgSDLState sometimes has the bcast falg set and NetMsgSDLStateBCast sometimes doesn't.
 				// I assume the message type is correct and the flag not.
@@ -585,7 +584,7 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, SDLStateBCast.str());
 				
 				// save SDL state
-				ageState->saveSdlState(SDLStateBCast.sdl);
+				ageState->saveSdlState(SDLStateBCast.sdlStream, SDLStateBCast.obj);
 				
 				// NetMsgSDLState sometimes has the bcast falg set and NetMsgSDLStateBCast sometimes doesn't.
 				// I assume the message type is correct and the flag not.
