@@ -96,10 +96,12 @@ namespace alc {
 	}
 	
 	//// tmJoinAck
-	tmJoinAck::tmJoinAck(tNetSession *u, U32 x) : tmMsgBase(NetMsgJoinAck, plNetAck | plNetCustom | plNetKi | plNetX | plNetFirewalled, u)
+	tmJoinAck::tmJoinAck(tNetSession *u, U32 x, tBaseType *sdl)
+	 : tmMsgBase(NetMsgJoinAck, plNetAck | plNetCustom | plNetKi | plNetX | plNetFirewalled, u)
 	{
 		this->x = x;
 		ki = u->ki;
+		sdlStream.put(*sdl);
 	}
 	
 	void tmJoinAck::stream(tBBuf &t)
@@ -107,7 +109,9 @@ namespace alc {
 		tmMsgBase::stream(t);
 		
 		t.putU16(0); // unknown flag ("joinOrder" and "ExpLevel")
-		t.put(sdl);
+		
+		sdlStream.compress();
+		t.put(sdlStream);
 	}
 	
 	//// tmGameMessage
@@ -520,11 +524,16 @@ namespace alc {
 	tmSDLState::tmSDLState(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
-	tmSDLState::tmSDLState(tNetSession *u, bool isInitial) : tmMsgBase(NetMsgSDLState, plNetAck, u)
-	{ this->isInitial = isInitial; }
+	tmSDLState::tmSDLState(tNetSession *u, const tUruObject &obj, tBaseType *sdl, bool isInitial)
+	 : tmMsgBase(NetMsgSDLState, plNetAck, u), obj(obj)
+	{
+		this->isInitial = isInitial;
+		sdlStream.put(*sdl);
+	}
 	
-	tmSDLState::tmSDLState(U16 cmd, U32 flags, tNetSession *u, tMBuf& sdl, bool isInitial) : tmMsgBase(cmd, flags, u), sdl(sdl)
-	{ this->isInitial = isInitial; }
+	tmSDLState::tmSDLState(U16 cmd, U32 flags, tNetSession *u, tmSDLState &msg)
+	 : tmMsgBase(cmd, flags, u), obj(msg.obj), sdlStream(msg.sdlStream)
+	{ isInitial = msg.isInitial; }
 	
 	void tmSDLState::store(tBBuf &t)
 	{
@@ -532,10 +541,12 @@ namespace alc {
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
 		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		
-		sdl.clear();
-		U32 sdlSize = t.remaining()-1;
-		if (cmd == NetMsgSDLStateBCast) --sdlSize; // there one remaining byte more in NetMsgSDLStateBCast
-		sdl.write(t.read(sdlSize), sdlSize);
+		t.get(obj);
+		t.get(sdlStream);
+		if (sdlStream.getType() != plNull)
+			throw txProtocolError(_WHERE("Plasma object type of an SDL must be plNull"));
+		sdlStream.uncompress();
+		
 		Byte initial = t.getByte();
 		if (initial != 0x00 && initial != 0x01)
 			throw txProtocolError(_WHERE("NetMsgSDLState.initial must be 0x00 or 0x01 but is 0x%02X", initial));
@@ -545,7 +556,11 @@ namespace alc {
 	void tmSDLState::stream(tBBuf &t)
 	{
 		tmMsgBase::stream(t);
-		t.put(sdl);
+		
+		t.put(obj);
+		sdlStream.compress();
+		t.put(sdlStream);
+		
 		t.putByte(isInitial);
 	}
 	
@@ -560,7 +575,7 @@ namespace alc {
 	{ }
 	
 	tmSDLStateBCast::tmSDLStateBCast(tNetSession *u, tmSDLStateBCast & msg)
-	 : tmSDLState(NetMsgSDLStateBCast, plNetAck | plNetKi | plNetBcast, u, msg.sdl, /*isInitial*/false)
+	 : tmSDLState(NetMsgSDLStateBCast, plNetAck | plNetKi | plNetBcast, u, msg)
 	{
 		if (!msg.hasFlags(plNetBcast)) unsetFlags(plNetBcast);
 		ki = msg.ki;

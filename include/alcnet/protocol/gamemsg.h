@@ -72,10 +72,10 @@ namespace alc {
 	
 	class tmJoinAck : public tmMsgBase {
 	public:
-		tmJoinAck(tNetSession *u, U32 x);
+		tmJoinAck(tNetSession *u, U32 x, tBaseType *sdl);
 		virtual void stream(tBBuf &t);
 		// format
-		tMBuf sdl;
+		tStreamedObject sdlStream;
 	};
 	
 	class tmGameMessage : public tmMsgBase {
@@ -215,14 +215,16 @@ namespace alc {
 	class tmSDLState : public tmMsgBase {
 	public:
 		tmSDLState(tNetSession *u);
-		tmSDLState(tNetSession *u, bool isInitial);
+		tmSDLState(tNetSession *u, const tUruObject &obj, tBaseType *sdl, bool isInitial);
+		
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format
-		tMBuf sdl;
+		tUruObject obj;
+		tStreamedObject sdlStream;
 		bool isInitial;
 	protected:
-		tmSDLState(U16 cmd, U32 flags, tNetSession *u, tMBuf& sdl, bool isInitial);
+		tmSDLState(U16 cmd, U32 flags, tNetSession *u, tmSDLState &msg);
 		
 		virtual void additionalFields();
 	};

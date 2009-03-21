@@ -1146,6 +1146,8 @@ namespace alc {
 			throw txProtocolError(_WHERE("bad 1st result code 0x%04X", result));
 		}
 		Byte compressed = t.getByte();
+		if (compressed != 0x01 && compressed != 0x03)
+			throw txProtocolError(_WHERE("unknown compression format 0x%02X", compressed));
 		U32 realSize = t.getU32();
 		U32 startPos = t.tell(); // remember the pos to verify the real size
 		DBG(5, "vault message: command: 0x%02X, compressed: 0x%02X, real size: %d", cmd, compressed, realSize);
@@ -1160,11 +1162,9 @@ namespace alc {
 			content->uncompress(realSize);
 			buf = content;
 		}
-		else if (compressed == 0x01) {
+		else {
 			compress = false;
 		}
-		else
-			throw txProtocolError(_WHERE("unknown compression format 0x%02X", compressed));
 		
 		// get the items
 		U16 numItems = buf->getU16();

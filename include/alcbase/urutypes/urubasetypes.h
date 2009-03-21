@@ -119,6 +119,25 @@ public:
 	tUruObject obj;
 };
 
+/** StreamedObject */
+class tStreamedObject : public tMBuf {
+public:
+	tStreamedObject(U16 type = plNull) : tMBuf(), type(type) { format = 0x00; realSize = 0; }
+	virtual void copy(const tStreamedObject &t);
+	virtual void store(tBBuf &t);
+	virtual void stream(tBBuf &t);
+	
+	void uncompress(void); //!< call this before using it
+	void compress(U32 minSize = 256); //!< call this before streaming or sending it
+	inline U16 getType(void) { return type; }
+protected:
+	virtual void _pcopy(const tStreamedObject &t);
+private:
+	U32 realSize; // if flag is 0x02, this saves the uncompressed size, otherwise, it is zero
+	Byte format; // 0x00, 0x03: uncompressed, 0x02: compressed
+	U16 type;
+};
+
 } //End alc namespace
 
 #endif
