@@ -150,7 +150,6 @@ namespace alc {
 			}
 			if (sdlStream.getType() != plNull)
 				throw txProtocolError(_WHERE("Plasma object type of an SDL must be plNull"));
-			sdlStream.uncompress();
 			
 			tSdlState state(this, sdlStream, obj);
 			tSdlList::iterator it = findSdlState(&state);
@@ -182,7 +181,6 @@ namespace alc {
 			
 			tStreamedObject sdl;
 			sdl.put(*it);
-			sdl.compress();
 			file.put(sdl);
 		}
 		file.close();
