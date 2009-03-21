@@ -369,6 +369,8 @@ void tStreamedObject::store(tBBuf &t)
 	
 	type = t.getU16();
 	write(t.read(sentSize), sentSize);
+	
+	uncompress();
 }
 
 void tStreamedObject::stream(tBBuf &t)
@@ -381,6 +383,7 @@ void tStreamedObject::stream(tBBuf &t)
 		t.putU32(0); // sent size
 		return;
 	}
+	compress();
 	
 	// it's not yet empty, so we have to write something
 	t.putU32(format == 0x02 ? realSize+2 : 0); // add the two type bytes
@@ -411,7 +414,7 @@ void tStreamedObject::compress(U32 maxSize)
 	tZBuf content(*this);
 	content.compress();
 	tMBuf::copy(content);
-	format = 0x02;
+	format = 0x02; // save that we compressed it so that we don't do it again
 }
 
 void tStreamedObject::copy(const tStreamedObject &t)

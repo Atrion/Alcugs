@@ -475,10 +475,8 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, gameMsg.str());
 				
 				// parse contained plasma message
-				U16 msgType = gameMsg.getSubMsgType();
-				tpMessage *subMsg = tpMessage::create(msgType, /*mustBeComplete*/false);
-				if (gameMsg.streamType != 0x02)
-					gameMsg.message.get(*subMsg);
+				tpMessage *subMsg = tpMessage::create(gameMsg.msgStream.getType(), /*mustBeComplete*/false);
+				gameMsg.msgStream.get(*subMsg);
 				delete subMsg;
 				
 				// broadcast message
@@ -499,10 +497,8 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, gameMsg.str());
 				
 				// parse contained plasma message
-				U16 msgType = gameMsg.getSubMsgType();
-				tpMessage *subMsg = tpMessage::create(msgType, /*mustBeComplete*/false);
-				if (gameMsg.streamType != 0x02)
-					gameMsg.message.get(*subMsg);
+				tpMessage *subMsg = tpMessage::create(gameMsg.msgStream.getType(), /*mustBeComplete*/false);
+				gameMsg.msgStream.get(*subMsg);
 				delete subMsg;
 				
 				// Because sharing the Relto book causes everyone in the age to crash
@@ -512,7 +508,7 @@ namespace alc {
 				// don't need sharing the way things are usually set up right now, so
 				// it's not worth the effort to me. (Also, sharing is not enabled for
 				// books, just Bahro stones.)
-				if (msgType == plNotifyMsg) {
+				if (gameMsg.msgStream.getType() == plNotifyMsg) {
 					log->log("INF: Throwing out book share notification from %s\n", u->str());
 					return 1;
 				}
@@ -608,9 +604,8 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, loadClone.str());
 				
 				// parse contained plasma message
-				U16 msgType = loadClone.getSubMsgType();
-				tpLoadCloneMsg *loadCloneMsg = tpLoadCloneMsg::create(msgType);
-				loadClone.message.get(*loadCloneMsg);
+				tpLoadCloneMsg *loadCloneMsg = tpLoadCloneMsg::create(loadClone.msgStream.getType());
+				loadClone.msgStream.get(*loadCloneMsg);
 				loadClone.checkSubMsg(loadCloneMsg);
 				
 				// save clone in age state
@@ -671,15 +666,14 @@ namespace alc {
 				
 				// if required, send a reply - this is simply copied from the old game server, don't ask me what it means
 				if (testAndSet.isLockReq) {
-					tmGameMessage msg(u, u->ki);
+					tmGameMessage msg(u, u->ki, plServerReplyMsg);
 					// build the game message
 					tpServerReplyMsg serverReplyMsg = tpServerReplyMsg(tUruObjectRef()); // the parent is an empty object
 					serverReplyMsg.references.push_back(tUruObjectRef(testAndSet.obj)); // add the sent object as reference
 					serverReplyMsg.flags = 0x00000800;
 					serverReplyMsg.unk3 = 1;
 					// write it
-					msg.message.putU16(plServerReplyMsg); // message type
-					msg.message.put(serverReplyMsg); // the message itself
+					msg.msgStream.put(serverReplyMsg);
 					// send it
 					send(msg);
 				}

@@ -127,12 +127,13 @@ public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t);
 	
+	inline U16 getType(void) { return type; }
 	void uncompress(void); //!< call this before using it
 	void compress(U32 minSize = 256); //!< call this before streaming or sending it
-	inline U16 getType(void) { return type; }
 protected:
 	virtual void _pcopy(const tStreamedObject &t);
 private:
+	
 	U32 realSize; // if flag is 0x02, this saves the uncompressed size, otherwise, it is zero
 	Byte format; // 0x00, 0x03: uncompressed, 0x02: compressed
 	U16 type;

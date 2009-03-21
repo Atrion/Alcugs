@@ -82,16 +82,13 @@ namespace alc {
 	public:
 		tmGameMessage(tNetSession *u);
 		tmGameMessage(tNetSession *u, tmGameMessage &msg);
-		tmGameMessage(tNetSession *u, U32 ki);
+		tmGameMessage(tNetSession *u, U32 ki, U16 msgType = plNull);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
-		U16 getSubMsgType();
 		// format
-		U32 uncompressedSize;
-		Byte streamType;
-		tMBuf message; // saves only the complete message content
+		tStreamedObject msgStream;
 	protected:
-		tmGameMessage(U16 cmd, U32 flags, tNetSession *u);
+		tmGameMessage(U16 cmd, U32 flags, tNetSession *u, U16 msgType = plNull);
 		tmGameMessage(U16 cmd, U32 flags, tNetSession *u, tmGameMessage &msg);
 		
 		void copyBaseProps(tmGameMessage &msg);

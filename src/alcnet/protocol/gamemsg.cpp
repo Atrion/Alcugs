@@ -109,8 +109,6 @@ namespace alc {
 		tmMsgBase::stream(t);
 		
 		t.putU16(0); // unknown flag ("joinOrder" and "ExpLevel")
-		
-		sdlStream.compress();
 		t.put(sdlStream);
 	}
 	
@@ -118,48 +116,38 @@ namespace alc {
 	tmGameMessage::tmGameMessage(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
-	tmGameMessage::tmGameMessage(U16 cmd, U32 flags, tNetSession *u) : tmMsgBase(cmd, flags, u)
-	{ uncompressedSize = 0; streamType = 0; }
+	tmGameMessage::tmGameMessage(U16 cmd, U32 flags, tNetSession *u, U16 msgType) : tmMsgBase(cmd, flags, u), msgStream(msgType)
+	{  }
 	
 	tmGameMessage::tmGameMessage(U16 cmd, U32 flags, tNetSession *u, tmGameMessage &msg)
-	 : tmMsgBase(cmd, flags, u), message(msg.message)
+	 : tmMsgBase(cmd, flags, u), msgStream(msg.msgStream)
 	{ copyBaseProps(msg); }
 	
 	tmGameMessage::tmGameMessage(tNetSession *u, tmGameMessage &msg)
-	 : tmMsgBase(NetMsgGameMessage, plNetAck | plNetKi, u), message(msg.message)
+	 : tmMsgBase(NetMsgGameMessage, plNetAck | plNetKi, u), msgStream(msg.msgStream)
 	{ copyBaseProps(msg); }
 	
-	tmGameMessage::tmGameMessage(tNetSession *u, U32 ki) : tmMsgBase(NetMsgGameMessage, plNetAck | plNetKi, u)
+	tmGameMessage::tmGameMessage(tNetSession *u, U32 ki, U16 msgType)
+	 : tmMsgBase(NetMsgGameMessage, plNetAck | plNetKi, u), msgStream(msgType)
 	{
 		this->ki = ki;
-		uncompressedSize = 0;
-		streamType = 0;
 	}
 	
 	void tmGameMessage::copyBaseProps(tmGameMessage &msg)
 	{
 		if (!msg.hasFlags(plNetAck)) unsetFlags(plNetAck);
-		uncompressedSize = msg.uncompressedSize;
-		streamType = msg.streamType;
 		ki = msg.ki;
 	}
 	
 	void tmGameMessage::store(tBBuf &t)
 	{
-		message.clear();
-		
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
 		if (ki == 0 || (cmd != NetMsgCustomDirectedFwd && ki != u->ki)) // don't kick connection game <-> tracking
 			throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		
-		uncompressedSize = t.getU32();
-		streamType = t.getByte();
-		if (streamType != 0x02 && uncompressedSize)
-			throw txProtocolError(_WHERE("NetMsgGameMessage.uncompressedSize must not be set for a streamType of 0x%02X", streamType));
+		t.get(msgStream);
 		
-		U32 gameMsgSize = t.getU32();
-		message.write(t.read(gameMsgSize), gameMsgSize); // that's the message itself
 		Byte unk = t.getByte();
 		if (unk != 0x00)
 			throw txProtocolError(_WHERE("Unexpected NetMsgGameMessage.unk of 0x%02X (should be 0x00)", unk));
@@ -168,17 +156,8 @@ namespace alc {
 	void tmGameMessage::stream(tBBuf &t)
 	{
 		tmMsgBase::stream(t);
-		t.putU32(uncompressedSize);
-		t.putByte(streamType);
-		t.putU32(message.size());
-		t.put(message);
+		t.put(msgStream);
 		t.putByte(0); // unk
-	}
-	
-	U16 tmGameMessage::getSubMsgType()
-	{
-		message.rewind();
-		return message.getU16();
 	}
 	
 	//// tmGameMessageDirected
@@ -228,7 +207,7 @@ namespace alc {
 	}
 	
 	tmLoadClone::tmLoadClone(tNetSession *u, tpLoadCloneMsg *subMsg, bool isInitial)
-	 : tmGameMessage(NetMsgLoadClone, plNetAck | plNetKi, u), obj(subMsg->clonedObj.obj)
+	 : tmGameMessage(NetMsgLoadClone, plNetAck | plNetKi, u, subMsg->getType()), obj(subMsg->clonedObj.obj)
 	{
 		ki = obj.clonePlayerId;
 		this->isLoad = subMsg->isLoad;
@@ -238,8 +217,7 @@ namespace alc {
 			tpLoadAvatarMsg *avMsg = static_cast<tpLoadAvatarMsg *>(subMsg);
 			this->isPlayerAvatar = avMsg->isPlayerAvatar;
 		}
-		message.putU16(subMsg->getType());
-		message.put(*subMsg);
+		msgStream.put(*subMsg);
 	}
 	
 	void tmLoadClone::store(tBBuf &t)
@@ -545,7 +523,6 @@ namespace alc {
 		t.get(sdlStream);
 		if (sdlStream.getType() != plNull)
 			throw txProtocolError(_WHERE("Plasma object type of an SDL must be plNull"));
-		sdlStream.uncompress();
 		
 		Byte initial = t.getByte();
 		if (initial != 0x00 && initial != 0x01)
@@ -556,11 +533,8 @@ namespace alc {
 	void tmSDLState::stream(tBBuf &t)
 	{
 		tmMsgBase::stream(t);
-		
 		t.put(obj);
-		sdlStream.compress();
 		t.put(sdlStream);
-		
 		t.putByte(isInitial);
 	}
 	
