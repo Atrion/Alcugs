@@ -130,6 +130,7 @@ public:
 	inline U16 getType(void) { return type; }
 	void uncompress(void); //!< call this before using it
 	void compress(U32 minSize = 256); //!< call this before streaming or sending it
+	void eofCheck(void);
 protected:
 	virtual void _pcopy(const tStreamedObject &t);
 private:

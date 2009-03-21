@@ -477,6 +477,7 @@ namespace alc {
 				// parse contained plasma message
 				tpMessage *subMsg = tpMessage::create(gameMsg.msgStream.getType(), /*mustBeComplete*/false);
 				gameMsg.msgStream.get(*subMsg);
+				if (!subMsg->isIncomplete()) gameMsg.msgStream.eofCheck();
 				delete subMsg;
 				
 				// broadcast message
@@ -499,6 +500,7 @@ namespace alc {
 				// parse contained plasma message
 				tpMessage *subMsg = tpMessage::create(gameMsg.msgStream.getType(), /*mustBeComplete*/false);
 				gameMsg.msgStream.get(*subMsg);
+				if (!subMsg->isIncomplete()) gameMsg.msgStream.eofCheck();
 				delete subMsg;
 				
 				// Because sharing the Relto book causes everyone in the age to crash
@@ -606,6 +608,7 @@ namespace alc {
 				// parse contained plasma message
 				tpLoadCloneMsg *loadCloneMsg = tpLoadCloneMsg::create(loadClone.msgStream.getType());
 				loadClone.msgStream.get(*loadCloneMsg);
+				loadClone.msgStream.eofCheck();
 				loadClone.checkSubMsg(loadCloneMsg);
 				
 				// save clone in age state

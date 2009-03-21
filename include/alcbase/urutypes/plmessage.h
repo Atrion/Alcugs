@@ -46,7 +46,7 @@ namespace alc {
 	*/
 	class tpMessage : public tpObject {
 	public:
-		tpMessage(U16 type) : tpObject(type) {}
+		tpMessage(U16 type, bool incomplete = false) : tpObject(type, incomplete) {}
 		tpMessage(U16 type, const tUruObjectRef &parentObj);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
