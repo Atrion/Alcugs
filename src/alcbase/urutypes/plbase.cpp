@@ -117,7 +117,8 @@ namespace alc {
 			case plMultistageModMsg:
 			case plSubWorldMsg:
 			case plPseudoLinkEffectMsg:
-				if (!mustBeComplete) return new tpMessage(type); // if mustBeComplete is true, go on with the default behaviour
+				if (!mustBeComplete) return new tpMessage(type, /*incomplete*/true);
+				// if mustBeComplete is true, go on with the default behaviour
 			default:
 				throw txUnexpectedData(_WHERE("Unknown message type %s (0x%04X)", alcGetPlasmaType(type), type));
 		}

@@ -417,6 +417,12 @@ void tStreamedObject::compress(U32 maxSize)
 	format = 0x02; // save that we compressed it so that we don't do it again
 }
 
+void tStreamedObject::eofCheck(void)
+{
+	if (!eof())
+		throw txUnexpectedData(_WHERE("Got a %s which is too long: %d bytes remaining after parsing", alcGetPlasmaType(type), remaining()));
+}
+
 void tStreamedObject::copy(const tStreamedObject &t)
 {
 	if(this==&t) return;

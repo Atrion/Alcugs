@@ -150,9 +150,6 @@ namespace alc {
 		subMessage = NULL;
 		subMessage = alcCreatePlasmaObject(u16Val);
 		t.get(*subMessage);
-		
-		if (getType() == plLoadCloneMsg && !t.eof()) // there may be subclasses
-			throw txUnexpectedData(_WHERE("Got a plLoadCloneMsg which is too long: %d Bytes remaining after parsing", t.remaining()));
 	}
 	
 	void tpLoadCloneMsg::stream(tBBuf &t)
@@ -199,9 +196,6 @@ namespace alc {
 		byteVal = t.getByte();
 		if (byteVal != 0x00)
 			throw txUnexpectedData(_WHERE("plLoadAvatarMsg.unk5 must be 0x00 but is 0x%02X", byteVal));
-		
-		if (!t.eof())
-			throw txUnexpectedData(_WHERE("Got a plLoadAvatarMsg which is too long: %d Bytes remaining after parsing", t.remaining()));
 	}
 	
 	void tpLoadAvatarMsg::stream(tBBuf &t)
@@ -226,9 +220,6 @@ namespace alc {
 		tpMessage::store(t);
 		t.get(unkObj1);
 		count = t.getU16();
-		
-		if (!t.eof())
-			throw txUnexpectedData(_WHERE("Got a plParticleTransferMsg which is too long: %d Bytes remaining after parsing", t.remaining()));
 	}
 	
 	void tpParticleTransferMsg::stream(tBBuf &t)
@@ -249,9 +240,6 @@ namespace alc {
 	{
 		tpMessage::store(t);
 		unk3 = t.getU32();
-		
-		if (!t.eof())
-			throw txUnexpectedData(_WHERE("Got a plServerReplyMsg which is too long: %d Bytes remaining after parsing", t.remaining()));
 	}
 	
 	void tpServerReplyMsg::stream(tBBuf &t)
@@ -287,9 +275,6 @@ namespace alc {
 		if (floatVal != 0.0) throw txUnexpectedData(_WHERE("pfKIMsg.unk4 must be 0.0 but is %f", floatVal));
 		u32Val = t.getU32();
 		if (u32Val != 0) throw txUnexpectedData(_WHERE("pfKIMsg.unk5 must be 0 but is %d", u32Val));
-		
-		if (!t.eof())
-			throw txUnexpectedData(_WHERE("Got a pfKIMsg which is too long: %d Bytes remaining after parsing", t.remaining()));
 	}
 	
 	void tpKIMsg::stream(tBBuf &t)

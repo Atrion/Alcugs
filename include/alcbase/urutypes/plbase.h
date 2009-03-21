@@ -48,16 +48,18 @@ namespace alc {
 	
 	class tpObject : public tBaseType {
 	public:
-		tpObject(U16 type) : tBaseType(), type(type) {}
+		tpObject(U16 type, bool incomplete = false) : tBaseType(), incomplete(incomplete), type(type) {}
 		virtual void store(tBBuf &t) {}
 		virtual void stream(tBBuf &t) {}
 		
 		inline U16 getType(void) { return type; }
+		inline bool isIncomplete(void) { return incomplete; }
 		const char *str(void);
 	protected:
 		virtual void toString(void) {}
 		tStrBuf strBuf;
 	private:
+		bool incomplete;
 		U16 type;
 	};
 
