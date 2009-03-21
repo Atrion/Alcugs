@@ -73,6 +73,7 @@ namespace alc {
 			case plMultistageModMsg: return "plMultistageModMsg";
 			case plLoadAvatarMsg: return "plLoadAvatarMsg";
 			case plSubWorldMsg: return "plSubWorldMsg";
+			case plSetNetGroupIDMsg: return "plSetNetGroupIDMsg";
 			case plPseudoLinkEffectMsg: return "plPseudoLinkEffectMsg";
 			// vault types
 			case plAgeLinkStruct: return "plAgeLinkStruct";
@@ -116,6 +117,7 @@ namespace alc {
 			case plAvBrainGenericMsg:
 			case plMultistageModMsg:
 			case plSubWorldMsg:
+			case plSetNetGroupIDMsg:
 			case plPseudoLinkEffectMsg:
 				if (!mustBeComplete) return new tpMessage(type, /*incomplete*/true);
 				// if mustBeComplete is true, go on with the default behaviour

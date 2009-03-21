@@ -370,6 +370,7 @@ unsilenced 29
 #define plMultistageModMsg         0x039E
 #define plLoadAvatarMsg            0x03AC
 #define plSubWorldMsg              0x03BA
+#define plSetNetGroupIDMsg         0x045F
 #define plPseudoLinkEffectMsg      0x048F
 
 // vault types
