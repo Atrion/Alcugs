@@ -368,6 +368,7 @@ unsilenced 29
 #define pfKIMsg                    0x035F
 #define plAvBrainGenericMsg        0x038A
 #define plMultistageModMsg         0x039E
+#define plBulletMsg                0x03A1
 #define plLoadAvatarMsg            0x03AC
 #define plSubWorldMsg              0x03BA
 #define plSetNetGroupIDMsg         0x045F

@@ -71,6 +71,7 @@ namespace alc {
 			case pfKIMsg: return "pfKIMsg";
 			case plAvBrainGenericMsg: return "plAvBrainGenericMsg";
 			case plMultistageModMsg: return "plMultistageModMsg";
+			case plBulletMsg: return "plBulletMsg";
 			case plLoadAvatarMsg: return "plLoadAvatarMsg";
 			case plSubWorldMsg: return "plSubWorldMsg";
 			case plSetNetGroupIDMsg: return "plSetNetGroupIDMsg";
@@ -116,6 +117,7 @@ namespace alc {
 			case plInputIfaceMgrMsg:
 			case plAvBrainGenericMsg:
 			case plMultistageModMsg:
+			case plBulletMsg:
 			case plSubWorldMsg:
 			case plSetNetGroupIDMsg:
 			case plPseudoLinkEffectMsg:
