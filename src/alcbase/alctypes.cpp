@@ -756,6 +756,11 @@ S32 tStrBuf::find(const char cat, bool reverse) {
 	}
 	return -1;
 }
+S32 tStrBuf::find(const char *str) {
+	char *c = strstr(c_str(), str);
+	if (c == NULL) return -1;
+	return (c-(char *)buf->buf);
+}
 void tStrBuf::convertSlashesFromWinToUnix() {
 #if defined(__WIN32__) or defined(__CYGWIN__)
 	int i,max;
@@ -892,9 +897,10 @@ tStrBuf & tStrBuf::upper() {
 
 tStrBuf & tStrBuf::substring(U32 start,U32 len) {
 	tStrBuf * out;
-	out = new tStrBuf(200);
 
 	set(start);
+	if (len == 0) len = remaining();
+	out = new tStrBuf(len);
 	out->write(read(len),len);
 
 	if(shot!=NULL) delete shot;

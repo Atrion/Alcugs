@@ -181,6 +181,53 @@ namespace alc {
 		}
 	}
 	
+	bool tUnetGameServer::processGameMessage(tStreamedObject *msg, tNetSession *u)
+	{
+		bool processed = false;
+		tpMessage *subMsg = tpMessage::create(msg->getType(), /*mustBeComplete*/false);
+		msg->get(*subMsg);
+		if (!subMsg->isIncomplete()) {
+			msg->eofCheck();
+			// check for chat messages
+			tpKIMsg *kiMsg = dynamic_cast<tpKIMsg*>(subMsg);
+			if (kiMsg) {
+				// the text itself starts after the <<sender>> part
+				tStrBuf text(kiMsg->text);
+				int pos = text.find(">>");
+				if (pos >= 0)
+					text = text.substring(pos+2); // got the text!
+				if (text.startsWith("!")) { // if it is a command
+					processed = true;
+					processKICommand(text, u);
+				}
+			}
+		}
+		delete subMsg;
+		return processed;
+	}
+	
+	void tUnetGameServer::processKICommand(tStrBuf &text, tNetSession *u)
+	{
+		// process server-side commands
+		if (text == "!ping") sendKIMessage(tStrBuf("You are still online"), u);
+		else {
+			tStrBuf error;
+			error.printf("Unable to process server-side command: \"%s\"", text.c_str());
+			sendKIMessage(error, u);
+		}
+	}
+	
+	void tUnetGameServer::sendKIMessage(const tStrBuf &text, tNetSession *u)
+	{
+		tpKIMsg kiMsg(tUruObjectRef(), tStrBuf("Game Server"), 0, text);
+		kiMsg.flags = 0x00004248;
+		kiMsg.messageType = 0x0009; // private inter age chat
+		// send message
+		tmGameMessageDirected msg(u, 0, &kiMsg);
+		msg.recipients.push_back(u->ki);
+		send(msg);
+	}
+	
 	void tUnetGameServer::playerAuthed(tNetSession *u)
 	{
 		// a new player connected, so we are no longer alone
@@ -474,11 +521,8 @@ namespace alc {
 				msg->data.get(gameMsg);
 				log->log("<RCV> [%d] %s\n", msg->sn, gameMsg.str());
 				
-				// parse contained plasma message
-				tpMessage *subMsg = tpMessage::create(gameMsg.msgStream.getType(), /*mustBeComplete*/false);
-				gameMsg.msgStream.get(*subMsg);
-				if (!subMsg->isIncomplete()) gameMsg.msgStream.eofCheck();
-				delete subMsg;
+				// process contained plasma message
+				if (processGameMessage(&gameMsg.msgStream, u)) return 1;
 				
 				// broadcast message
 				bcastMessage(gameMsg);
@@ -497,11 +541,8 @@ namespace alc {
 				msg->data.get(gameMsg);
 				log->log("<RCV> [%d] %s\n", msg->sn, gameMsg.str());
 				
-				// parse contained plasma message
-				tpMessage *subMsg = tpMessage::create(gameMsg.msgStream.getType(), /*mustBeComplete*/false);
-				gameMsg.msgStream.get(*subMsg);
-				if (!subMsg->isIncomplete()) gameMsg.msgStream.eofCheck();
-				delete subMsg;
+				// process contained plasma message
+				if (processGameMessage(&gameMsg.msgStream, u)) return 1;
 				
 				// Because sharing the Relto book causes everyone in the age to crash
 				// out, throw out the initial message of the exchange. This is all we
@@ -669,15 +710,13 @@ namespace alc {
 				
 				// if required, send a reply - this is simply copied from the old game server, don't ask me what it means
 				if (testAndSet.isLockReq) {
-					tmGameMessage msg(u, u->ki, plServerReplyMsg);
 					// build the game message
 					tpServerReplyMsg serverReplyMsg = tpServerReplyMsg(tUruObjectRef()); // the parent is an empty object
 					serverReplyMsg.references.push_back(tUruObjectRef(testAndSet.obj)); // add the sent object as reference
 					serverReplyMsg.flags = 0x00000800;
 					serverReplyMsg.unk3 = 1;
-					// write it
-					msg.msgStream.put(serverReplyMsg);
-					// send it
+					// send message
+					tmGameMessage msg(u, u->ki, &serverReplyMsg);
 					send(msg);
 				}
 				

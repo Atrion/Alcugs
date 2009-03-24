@@ -291,6 +291,8 @@ public:
 	virtual ~tStrBuf();
 	virtual void rewind();
 	S32 find(const char cat, bool reverse=false);
+	S32 find(const char *str);
+	S32 find(tStrBuf &str) { return find(str.c_str()); }
 	void decreaseLineNum();
 	
 	/** \brief returns a line
@@ -318,7 +320,7 @@ public:
 	tStrBuf & escape();
 	tStrBuf & lower();
 	tStrBuf & upper();
-	tStrBuf & substring(U32 start,U32 len);
+	tStrBuf & substring(U32 start,U32 len=0);
 	tStrBuf & dirname();
 	bool startsWith(const char * pat);
 	bool endsWith(const char * pat);

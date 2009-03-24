@@ -35,6 +35,8 @@
 
 namespace alc {
 
+class tpObject;
+
 /** Wdys buffer */
 class tWDYSBuf :public tMBuf {
 public:
@@ -123,6 +125,7 @@ public:
 class tStreamedObject : public tMBuf {
 public:
 	tStreamedObject(U16 type = plNull) : tMBuf(), type(type) { format = 0x00; realSize = 0; }
+	tStreamedObject(tpObject *obj);
 	virtual void copy(const tStreamedObject &t);
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t);
