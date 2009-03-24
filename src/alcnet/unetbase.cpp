@@ -332,6 +332,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 			catch (txBase &t) { // if there was an error parsing the message, kick the responsible player
 				err->log("%s Recieved invalid 0x%04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
 				err->log(" Exception details: %s\n",t.what());
+				err->log(" Backtrace: %s\n", t.backtrace());
 				ret=-1;
 			}
 			if(u->isClient()==1) {

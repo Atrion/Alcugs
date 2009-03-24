@@ -409,12 +409,9 @@ Byte * tMBuf::read(U32 n) {
 void tMBuf::stream(tBBuf &b) {
 	if(buf==NULL || buf->buf==NULL) return;
 	b.write(buf->buf,msize);
-	//return msize;
 }
 void tMBuf::store(tBBuf &b) {
-	//b.rewind();
-	U32 baal=b.tell();
-	this->write(b.read(),b.size()-baal);
+	throw txBase(_WHERE("can not store a tMBuf")); // leave this until we are sure nothing calls this method
 }
 U32 tMBuf::size() const { return msize; }
 void tMBuf::clear() {
@@ -474,26 +471,8 @@ Byte * tFBuf::read(U32 n) {
 void tFBuf::stream(tBBuf &b) {
 	this->size();
 	b.write(this->read(),msize);
-	//return msize;
-}
-void tFBuf::store(tBBuf &b) {
-	b.rewind();
-	this->write(b.read(),b.size());
 }
 U32 tFBuf::size() const {
-	if(msize==0) {
-		if (f==NULL) return 0;
-		int wtf=ftell(f);
-		fseek(f,0,SEEK_END);
-		int size=ftell(f);
-		fseek(f,wtf,SEEK_SET);
-		DBG(9,"size:%i\n",msize);
-		return size;
-	}
-	DBG(9,"msize:%i\n",msize);
-	return msize;
-}
-U32 tFBuf::size() {
 	if(msize==0) {
 		if (f==NULL) return 0;
 		int wtf=ftell(f);
@@ -544,7 +523,6 @@ Byte * tSBuf::read(U32 n) {
 }
 void tSBuf::stream(tBBuf &buf) {
 	buf.write(this->buf,msize);
-	//return msize;
 }
 U32 tSBuf::size() const { return msize; }
 
@@ -812,7 +790,6 @@ tStrBuf & tStrBuf::strip(Byte what,Byte how) {
 	for(i=start; i<=end; i++) {
 		aux.putSByte(getAt(i));
 	}
-	aux.rewind();
 	copy(aux);
 	return *this;
 }
@@ -1277,7 +1254,6 @@ void tTime::store(tBBuf &t) {
 void tTime::stream(tBBuf &t) {
 	t.putU32(seconds);
 	t.putU32(microseconds);
-	//return 8;
 }
 U32 tTime::size() { return 8; }
 SByte tTime::compare(tTime &t) {

@@ -457,7 +457,7 @@ namespace alc {
 		tFBuf sdlFile;
 		sdlFile.open(filename, "r");
 		tWDYSBuf sdlContent;
-		sdlFile.get(sdlContent);
+		sdlContent.put(sdlFile);
 		sdlContent.decrypt();
 		
 		Byte state = 0;

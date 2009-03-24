@@ -228,9 +228,8 @@ public:
 	inline virtual void write(const SByte * val,U32 n) { this->write((Byte *)val,n); }
 	virtual Byte * read(U32 n=0);
 	virtual void stream(tBBuf &buf);
-	virtual void store(tBBuf &buf);
+	virtual void store(tBBuf &buf) {}
 	virtual U32 size() const;
-	virtual U32 size();
 	virtual void close();
 	virtual void open(const char * path,const char * mode="rb");
 	virtual void flush();
@@ -240,7 +239,8 @@ protected:
 	//virtual void _pcopy(tFBuf &t);
 private:
 	FILE * f;
-	U32 msize,xsize;
+	U32 xsize;
+	mutable U32 msize;
 	Byte * xbuf;
 };
 

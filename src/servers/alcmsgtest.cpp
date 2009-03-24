@@ -78,15 +78,16 @@ void tmData::store(tBBuf &t) {
 	tmMsgBase::store(t);
 	data.clear();
 	compressed = hasFlags(plNetX);
+	U32 remaining = t.remaining();
 	if (compressed) {
 		tZBuf zdata;
-		t.get(zdata);
+		zdata.write(t.read(), remaining);
 		zdata.uncompress(x);
-		zdata.get(data);
+		data = zdata;
 		if (data.size() != x) throw txBase(_WHERE("size mismatch (%d != %d)", data.size(), x));
 	}
 	else
-		t.get(data);
+		data.write(t.read(), remaining);
 }
 void tmData::stream(tBBuf &t) {
 	if (compressed) {
