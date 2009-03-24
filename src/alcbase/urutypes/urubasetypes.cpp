@@ -176,7 +176,7 @@ tUStr::tUStr(const tStrBuf &t, int mode) : tStrBuf(t) {
 void tUStr::stream(tBBuf &b) {
 	if (version == 0x04)
 		throw txBase(_WHERE("Can't send version 0x04 (normal+hex)")); 
-
+	// FIXME: do something about invert/non-invert crazyness... perhaps remove auto mode?
 	//int spos = b.tell();
 	U16 ize = msize;
 	bool inv=false;
@@ -206,7 +206,7 @@ void tUStr::store(tBBuf &b) {
 	U32 nsize = ize & 0x0FFF;
 	
 	if(nsize>0xF000) throw txBase(_WHERE("TooBig"));
-	
+	// FIXME: do something about invert/non-invert crazyness... perhaps remove auto mode?
 	clear();
 	if (nsize > 0) { // only read if there's something to read
 		if(how==0x00) {
@@ -347,6 +347,14 @@ const char *tUruObjectRef::str(void)
 }
 
 /* tStreamedObject */
+tStreamedObject::tStreamedObject(tpObject *obj) : tMBuf()
+{
+	type = obj->getType();
+	format = 0x00;
+	realSize = 0;
+	put(*obj);
+}
+
 void tStreamedObject::store(tBBuf &t)
 {
 	DBG(8, "tStreamedObject::store\n");

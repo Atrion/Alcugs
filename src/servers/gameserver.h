@@ -85,6 +85,10 @@ namespace alc {
 		void bcastMemberUpdate(tNetSession *u, bool isJoined);
 		
 		void removePlayerFromPage(tPageInfo *page, U32 ki);
+		
+		bool processGameMessage(tStreamedObject *msg, tNetSession *u); //!< returns true if the message was processed and should not be broadcasted or forwarded
+		void processKICommand(tStrBuf &text, tNetSession *u);
+		void sendKIMessage(const tStrBuf &text, tNetSession *u);
 	
 		tAgeInfo *ageInfo;
 		tAgeStateManager *ageState;
