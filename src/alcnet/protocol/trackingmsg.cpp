@@ -39,24 +39,14 @@ namespace alc {
 
 	//// tmCustomSetGuid
 	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u) : tmMsgBase(u)
-	{
-		serverGuid.setVersion(5); // inverted UruString
-		age.setVersion(0); // normal UruString
-		externalIp.setVersion(0); // normal UruString
-	}
+	{ }
 	
 	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u, const char *serverGuid, const char *age, const char *externalIp, U16 spawnStart, U16 spawnStop)
-	 : tmMsgBase(NetMsgCustomSetGuid, plNetAck | plNetVersion | plNetCustom, u)
+	 : tmMsgBase(NetMsgCustomSetGuid, plNetAck | plNetVersion | plNetCustom, u), serverGuid(serverGuid), age(age), externalIp(externalIp)
 	{
 #ifdef ENABLE_UNET3
 		if (u->proto == 1 || u->proto == 2) setFlags(plNetX | plNetKi); // older protocols have this set, but the value is ignored
 #endif
-		this->serverGuid.setVersion(5); // inverted UruString
-		this->serverGuid.writeStr(serverGuid);
-		this->age.setVersion(0); // normal UruString
-		this->age.writeStr(age);
-		this->externalIp.setVersion(0); // normal UruString
-		this->externalIp.writeStr(externalIp);
 		this->spawnStart = spawnStart;
 		this->spawnStop = spawnStop;
 	}
@@ -101,7 +91,7 @@ namespace alc {
 		t.put(age);
 #ifdef ENABLE_UNET2
 		if (u->proto == 1) {
-			tUStr netmask(0); // normal UruString
+			tStrBuf netmask;
 			netmask.writeStr("255.255.255.0");
 			t.put(netmask);
 		}
@@ -130,13 +120,10 @@ namespace alc {
 	
 	//// tmCustomPlayerStatus
 	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *u) : tmMsgBase(u)
-	{
-		account.setVersion(0); // normal UruString
-		avatar.setVersion(0); // normal UruString
-	}
+	{ }
 	
 	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *u, U32 ki, U32 sid, const Byte *uid, const char *account, const char *avatar, Byte playerFlag, Byte playerStatus)
-	 : tmMsgBase(NetMsgCustomPlayerStatus, plNetAck | plNetVersion | plNetCustom | plNetKi | plNetUID | plNetSid, u)
+	 : tmMsgBase(NetMsgCustomPlayerStatus, plNetAck | plNetVersion | plNetCustom | plNetKi | plNetUID | plNetSid, u), account(account), avatar(avatar)
 	{
 		this->sid = sid;
 		this->ki = ki;
@@ -153,10 +140,6 @@ namespace alc {
 		}
 #endif
 		
-		this->account.setVersion(0); // normal UruString
-		this->account.writeStr(account);
-		this->avatar.setVersion(0); // normal UruString
-		this->avatar.writeStr(avatar);
 		this->playerFlag = playerFlag;
 		this->playerStatus = playerStatus;
 	}
@@ -208,13 +191,10 @@ namespace alc {
 	
 	//// tmCustomFindServer
 	tmCustomFindServer::tmCustomFindServer(tNetSession *u) : tmMsgBase(u)
-	{
-		serverGuid.setVersion(5); // inverted UruString
-		age.setVersion(0); // normal UruString
-	}
+	{ }
 	
 	tmCustomFindServer::tmCustomFindServer(tNetSession *u, U32 ki, U32 x, U32 sid, U32 ip, U16 port, const char *serverGuid, const char *age)
-	 : tmMsgBase(NetMsgCustomFindServer, plNetX | plNetKi | plNetAck | plNetCustom | plNetIP | plNetSid, u)
+	 : tmMsgBase(NetMsgCustomFindServer, plNetX | plNetKi | plNetAck | plNetCustom | plNetIP | plNetSid, u), serverGuid(serverGuid), age(age)
 	{
 		this->ki = ki;
 		this->x = x;
@@ -231,11 +211,6 @@ namespace alc {
 			this->x = sid; // older protocols have the sid in the X field
 		}
 #endif
-		
-		this->serverGuid.setVersion(5); // inverted UruString
-		this->serverGuid.writeStr(serverGuid);
-		this->age.setVersion(0); // normal UruString
-		this->age.writeStr(age);
 	}
 	
 	void tmCustomFindServer::store(tBBuf &t)
@@ -286,13 +261,10 @@ namespace alc {
 	
 	//// tmCustomForkServer
 	tmCustomForkServer::tmCustomForkServer(tNetSession *u) : tmMsgBase(u)
-	{
-		serverGuid.setVersion(5); // inverted UruString
-		age.setVersion(0); // normal UruString
-	}
+	{ }
 	
 	tmCustomForkServer::tmCustomForkServer(tNetSession *u, U16 port, const char *serverGuid, const char *name, bool loadSDL)
-	: tmMsgBase(NetMsgCustomForkServer, plNetAck | plNetCustom | plNetVersion, u)
+	: tmMsgBase(NetMsgCustomForkServer, plNetAck | plNetCustom | plNetVersion, u), serverGuid(serverGuid), age(name)
 	{
 		this->x = 0;
 		this->ki = 0;
@@ -301,10 +273,6 @@ namespace alc {
 #endif
 		
 		forkPort = port;
-		this->serverGuid.setVersion(5); // inverted UruString
-		this->serverGuid.writeStr(serverGuid);
-		age.writeStr(name);
-		age.setVersion(0); // normal UruString
 		this->loadSDL = loadSDL;
 	}
 	
@@ -336,14 +304,10 @@ namespace alc {
 	
 	//// tmCustomServerFound
 	tmCustomServerFound::tmCustomServerFound(tNetSession *u) : tmMsgBase(u)
-	{
-		ipStr.setVersion(0); // normal UruString
-		serverGuid.setVersion(5); // inverted UruString
-		age.setVersion(0); // normal UruString
-	}
+	{ }
 	
 	tmCustomServerFound::tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U32 sid, U16 port, const char *ipStr, const char *serverGuid, const char *name)
-	: tmMsgBase(NetMsgCustomServerFound, plNetAck | plNetCustom | plNetX | plNetKi | plNetVersion | plNetSid, u)
+	: tmMsgBase(NetMsgCustomServerFound, plNetAck | plNetCustom | plNetX | plNetKi | plNetVersion | plNetSid, u), ipStr(ipStr), serverGuid(serverGuid), age(name)
 	{
 		this->x = x;
 		this->ki = ki;
@@ -354,14 +318,7 @@ namespace alc {
 			this->x = sid; // older protocols have the sid in the X field
 		}
 #endif
-		
 		serverPort = port;
-		this->ipStr.writeStr(ipStr);
-		this->ipStr.setVersion(0); // normal UruString
-		this->serverGuid.setVersion(5); // inverted UruString
-		this->serverGuid.writeStr(serverGuid);
-		age.writeStr(name);
-		age.setVersion(0); // normal UruString
 	}
 	
 	void tmCustomServerFound::store(tBBuf &t)

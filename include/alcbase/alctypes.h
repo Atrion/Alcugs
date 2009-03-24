@@ -290,6 +290,8 @@ public:
 	virtual void onmodify();
 	virtual ~tStrBuf();
 	virtual void rewind();
+	virtual void store(tBBuf &t);
+	virtual void stream(tBBuf &t);
 	S32 find(const char cat, bool reverse=false);
 	S32 find(const char *str);
 	S32 find(tStrBuf &str) { return find(str.c_str()); }

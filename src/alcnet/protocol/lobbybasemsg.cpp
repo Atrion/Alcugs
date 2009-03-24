@@ -39,9 +39,7 @@ namespace alc {
 
 	//// tmAuthenticateHello
 	tmAuthenticateHello::tmAuthenticateHello(tNetSession *u) : tmMsgBase(u) // it's not capable of sending
-	{
-		account.setVersion(0); // normal UruString
-	}
+	{ }
 	
 	void tmAuthenticateHello::store(tBBuf &t)
 	{
@@ -67,7 +65,6 @@ namespace alc {
 		
 		this->authResult = authResult;
 		this->challenge.write(challenge, 16);
-		this->challenge.setVersion(0); // normal UruString, but in Hex, not Ascii
 	}
 	
 	void tmAuthenticateChallenge::stream(tBBuf &t)
@@ -85,9 +82,7 @@ namespace alc {
 	
 	//// tmAuthenticateResponse
 	tmAuthenticateResponse::tmAuthenticateResponse(tNetSession *u) : tmMsgBase(u) // it's not capable of sending
-	{
-		hash.setVersion(0); // normal UruString, but in Hex, not Ascii
-	}
+	{ }
 	
 	void tmAuthenticateResponse::store(tBBuf &t)
 	{
@@ -130,9 +125,7 @@ namespace alc {
 	
 	//// tmSetMyActivePlayer
 	tmSetMyActivePlayer::tmSetMyActivePlayer(tNetSession *u) : tmMsgBase(u) // it's not capable of sending
-	{
-		avatar.setVersion(0); // normal UruString
-	}
+	{ }
 	
 	void tmSetMyActivePlayer::store(tBBuf &t)
 	{
@@ -177,15 +170,13 @@ namespace alc {
 	}
 	
 	//// tmFindAgeReply
-	tmFindAgeReply::tmFindAgeReply(tNetSession *u, U32 x, tUStr &ipStr, U16 port, tUStr &age, const Byte *guid)
+	tmFindAgeReply::tmFindAgeReply(tNetSession *u, U32 x, tStrBuf &ipStr, U16 port, tStrBuf &age, const Byte *guid)
 	 : tmMsgBase(NetMsgFindAgeReply, plNetAck | plNetCustom | plNetKi | plNetX, u), age(age), ipStr(ipStr)
 	{
 		this->x = x;
 		ki = u->ki;
 	
-		this->ipStr.setVersion(0); // normal UruString
 		this->serverPort = port;
-		this->age.setVersion(0); // normal UruString
 		memcpy(serverGuid, guid, 8);
 	}
 	

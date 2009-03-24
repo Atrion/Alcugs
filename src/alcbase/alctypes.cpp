@@ -650,6 +650,19 @@ void tStrBuf::copy(const char * str) {
 	tStrBuf pat(str);
 	copy(pat);
 }
+void tStrBuf::store(tBBuf &t)
+{
+	clear();
+	U32 bufSize = t.getU16();
+	if (bufSize & 0xF000) throw txUnexpectedData(_WHERE("This is an inverted string!"));
+	if (bufSize)
+		write(t.read(bufSize), bufSize);
+}
+void tStrBuf::stream(tBBuf &t)
+{
+	t.putU16(msize);
+	tMBuf::stream(t); // just puts the bytes into the buffer
+}
 SByte tStrBuf::compare(const tStrBuf &t) {
 	if(this==&t) return 0;
 	U32 s = size();

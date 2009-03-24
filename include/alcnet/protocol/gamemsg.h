@@ -54,7 +54,7 @@ namespace alc {
 		const char *str(void);
 	private:
 		U32 ki;
-		tUStr avatar;
+		tStrBuf avatar;
 		bool hidePlayer;
 		U32 ip;
 		U16 port;
@@ -135,7 +135,7 @@ namespace alc {
 		// format
 		U32 pageId;
 		U16 pageType;
-		tUStr pageName;
+		tStrBuf pageName;
 		bool isPageOut;
 	protected:
 		virtual void additionalFields();

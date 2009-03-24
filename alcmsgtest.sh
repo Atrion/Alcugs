@@ -13,13 +13,13 @@ rm rcvmsg.raw -rf
 sleep 0.5
 # send file
 ./alcmsgtest localhost:$PORT -f "$FILE"
-sleep 1.0
+sleep 0.75
 # kill server
 killall -s INT alcmsgtest
-sleep 0.5
+sleep 1
 TEST="`pidof alcmsgtest || exit 0`" # avoid stopping the script if pidof fails
 if [ -n "$TEST" ]; then
-	echo "alcmsgtest did not exit within 2s"
+	echo "alcmsgtest did not exit within 1s"
 	exit 1
 fi
 # the error log files must be empty

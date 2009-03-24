@@ -51,7 +51,6 @@ namespace alc {
 	//// tMemberInfo
 	tMemberInfo::tMemberInfo(tNetSession *u, const tUruObject &obj, bool hidePlayer) : avatar(u->avatar), obj(obj)
 	{
-		avatar.setVersion(0); // normal UruString
 		ki = u->ki;
 		this->hidePlayer = hidePlayer;
 		ip = u->getIp();
@@ -431,7 +430,8 @@ namespace alc {
 		Byte flag, state1, state2;
 		Byte lockReq;
 		U32 unk;
-		tUStr trigger, triggered;
+		tStrBuf trigger;
+		tUStr triggered;
 	
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));

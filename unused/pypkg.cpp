@@ -105,7 +105,7 @@ tPyPkg::~tPyPkg() {
 }
 void tPyPkg::store(tBBuf &t) {
 	U32 myoff,poff;
-	tUStr name(5);
+	tUStr name;
 	n=t.getU32();
 	lpkgs=(tPyPkgFile **)malloc(sizeof(tPyPkgFile *) * n);
 	if(lpkgs==NULL) throw txNoMem(_WHERE("NoMem"));
@@ -137,7 +137,7 @@ void tPyPkg::stream(tBBuf &t) {
 	t.putU32(n);
 	//s+=4;
 	U32 hsize=4,wtf;
-	tUStr work(5);
+	tUStr work;
 	//printf("size: %u\n",t.size());
 	//printf("hsize: %u\n",hsize);
 	for(U32 i=0; i<n; i++) {

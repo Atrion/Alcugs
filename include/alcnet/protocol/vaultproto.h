@@ -202,9 +202,9 @@ namespace alc {
 		const char *str(void);
 		// format
 		Byte flags;
-		tUStr filename, instanceName;
+		tStrBuf filename, instanceName;
 		Byte guid[8];
-		tUStr userDefName, displayName;
+		tStrBuf userDefName, displayName;
 		U32 language;
 	private:
 		tStrBuf dbg;
@@ -220,7 +220,7 @@ namespace alc {
 		const char *str(void);
 		// format
 		U32 flags;
-		tUStr title, name, cameraStack;
+		tStrBuf title, name, cameraStack;
 	};
 	
 	class tvAgeLinkStruct : public tvBase {
@@ -340,13 +340,13 @@ namespace alc {
 		U32 creator;
 		U32 crtTime;
 		U32 ageTime;
-		tUStr ageName;
+		tStrBuf ageName;
 		Byte ageGuid[8];
 		U32 int1, int2, int3, int4;
 		U32 uInt1, uInt2, uInt3, uInt4;
-		tUStr str1, str2, str3, str4, str5, str6;
-		tUStr lStr1, lStr2;
-		tUStr text1, text2;
+		tStrBuf str1, str2, str3, str4, str5, str6;
+		tStrBuf lStr1, lStr2;
+		tStrBuf text1, text2;
 		U32 blob1Size;
 		Byte *blob1;
 

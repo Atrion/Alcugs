@@ -258,8 +258,6 @@ namespace alc {
 	tpKIMsg::tpKIMsg(const tUruObjectRef &parentObj, const tStrBuf &sender, U32 senderKi, const tStrBuf &text)
 	 : tpMessage(pfKIMsg, parentObj), senderName(sender), senderKi(senderKi), text(text)
 	{
-		this->senderName.setVersion(5); // inverted UrurString
-		this->text.setVersion(5); // inverted UrurString
 		messageType = 0;
 	}
 	
