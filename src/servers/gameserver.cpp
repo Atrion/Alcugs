@@ -209,7 +209,7 @@ namespace alc {
 	void tUnetGameServer::processKICommand(tStrBuf &text, tNetSession *u)
 	{
 		// process server-side commands
-		if (text == "!ping") sendKIMessage(tStrBuf("You are still online"), u);
+		if (text == "!ping") sendKIMessage(tStrBuf("You are still online :)"), u);
 		else {
 			tStrBuf error;
 			error.printf("Unable to process server-side command: \"%s\"", text.c_str());

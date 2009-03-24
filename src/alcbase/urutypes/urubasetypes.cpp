@@ -161,93 +161,38 @@ void tAESBuf::decrypt() {
 
 
 /* tUStr */
-tUStr::tUStr(int mode) : tStrBuf() {
-	this->version=mode;
-}
-tUStr::tUStr(const char *k, int mode) : tStrBuf(k) {
-	this->version=mode;
-}
-tUStr::tUStr(const tUStr &t) : tStrBuf(t) {
-	this->version = t.version;
-}
-tUStr::tUStr(const tStrBuf &t, int mode) : tStrBuf(t) {
-	this->version = mode;
-}
-void tUStr::stream(tBBuf &b) {
-	if (version == 0x04)
-		throw txBase(_WHERE("Can't send version 0x04 (normal+hex)")); 
-	// FIXME: do something about invert/non-invert crazyness... perhaps remove auto mode?
-	//int spos = b.tell();
-	U16 ize = msize;
-	bool inv=false;
-	if(version==0x05) inv=true;
-	if(inv) ize|=0xF000;
-	b.putU16(ize);
-	
-	if(!inv) {
-		if(version!=0x06) {
-			b.write(buf->buf, msize);
-		} else { //this is required to parse Myst 5 strings
-			Byte key[9]="mystnerd";
-			for(U32 i=0; i<msize; i++) {
-				b.putByte(buf->buf[i] ^ key[i%8]);
-			}
-		}
-	} else {
-		for(U32 i=0; i<msize; i++) {
-			b.putByte(~buf->buf[i]);
-		}
-	}
-	//return (b.tell() - spos);
-}
-void tUStr::store(tBBuf &b) {
-	U16 ize = b.getU16();
-	U16 how= (ize>>8) & 0xF0;
-	U32 nsize = ize & 0x0FFF;
-	
-	if(nsize>0xF000) throw txBase(_WHERE("TooBig"));
-	// FIXME: do something about invert/non-invert crazyness... perhaps remove auto mode?
+void tUStr::store(tBBuf &t) {
 	clear();
-	if (nsize > 0) { // only read if there's something to read
-		if(how==0x00) {
-			if(this->version==0x06) {
-				Byte key[9]="mystnerd";
-				for(U32 i=0; i<nsize; i++) {
-					putByte(b.getByte() ^ key[i%8]);
-				}
-			} else { // make sure nsize is > 0 here, otherwise read(0) will read the rtest of the buffer
-				if (version != 0x00 && version != 0x01) { // the given version is neither normal nor auto, so it's WRONG
-					throw txUnexpectedData(_WHERE("Version is 0x00, but expected 0x%02X", version));
-				}
-				if (version == 0x01) version = 0x00; // when we are auto-detecting, save the realy version (normal)
-				write(b.read(nsize), nsize);
-			}
-		} else {
-			if(this->version==0x06) {
-				throw txUnexpectedData(_WHERE("how should be 0x00 for version 0x06"));
-			}
-			else if (version != 0x05 && version != 0x01) { // the given version is neither inverted nor auto, so it's WRONG
-				throw txUnexpectedData(_WHERE("Version is 0x05, but expected 0x%02X", version));
-			}
-			if (version == 0x01) version = 0x05; // when we are auto-detecting, save the realy version (inverted)
-			for(U32 i=0; i<nsize; i++) {
-				putByte(~b.getByte());
-			}
-		}
+	U32 bufSize = t.getU16();
+	if (!(bufSize & 0xF000)) throw txUnexpectedData(_WHERE("This is not an inverted string!"));
+	bufSize &= 0x0FFF;
+	for(U32 i=0; i<bufSize; i++) {
+		putByte(~t.getByte());
 	}
+	
+	/* Myst V decryption
+	Byte key[9]="mystnerd";
+	for(U32 i=0; i<nsize; i++) {
+		putByte(b.getByte() ^ key[i%8]);
+	} */
+}
+void tUStr::stream(tBBuf &t) {
+	t.putU16(msize|0xF000);
+	for(U32 i=0; i<msize; i++) {
+		t.putByte(~buf->buf[i]);
+	}
+	
+	/* Myst V encryption
+	Byte key[9]="mystnerd";
+	for(U32 i=0; i<msize; i++) {
+		b.putByte(buf->buf[i] ^ key[i%8]);
+	} */
 }
 void tUStr::copy(const tUStr &t)
 {
 	DBG(9,"tUStr::copy()\n");
 	if(this==&t) return;
 	this->_pcopy(t);
-}
-void tUStr::_pcopy(const tUStr &t)
-{
-	DBG(9, " tUStr::_pcopy()\n");
-	if (&t == this) return;
-	tStrBuf::_pcopy(t);
-	version = t.version;
 }
 /* end tUStr */
 
@@ -257,7 +202,6 @@ tUruObject::tUruObject(void) : tBaseType()
 	hasCloneId = 0;
 	pageId = 0;
 	pageType = objType = 0;
-	objName.setVersion(5); // inverted UrurString
 	cloneId = clonePlayerId = 0;
 }
 

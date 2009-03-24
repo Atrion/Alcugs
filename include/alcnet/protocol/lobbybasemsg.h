@@ -37,7 +37,7 @@ namespace alc {
 		tmAuthenticateHello(tNetSession *u);
 		virtual void store(tBBuf &t);
 		// format
-		tUStr account;
+		tStrBuf account;
 		U16 maxPacketSize;
 		Byte release;
 	protected:
@@ -50,7 +50,7 @@ namespace alc {
 		virtual void stream(tBBuf &t);
 		// format
 		Byte authResult;
-		tUStr challenge;
+		tStrBuf challenge;
 	protected:
 		virtual void additionalFields();
 	};
@@ -60,7 +60,7 @@ namespace alc {
 		tmAuthenticateResponse(tNetSession *u);
 		virtual void store(tBBuf &t);
 		// format
-		tUStr hash;
+		tStrBuf hash;
 	protected:
 		virtual void additionalFields();
 	};
@@ -81,7 +81,7 @@ namespace alc {
 		tmSetMyActivePlayer(tNetSession *u);
 		virtual void store(tBBuf &t);
 		// format
-		tUStr avatar;
+		tStrBuf avatar;
 	protected:
 		virtual void additionalFields();
 	};
@@ -101,10 +101,10 @@ namespace alc {
 	
 	class tmFindAgeReply : public tmMsgBase {
 	public:
-		tmFindAgeReply(tNetSession *u, U32 x, tUStr &ipStr, U16 port, tUStr &age, const Byte *guid);
+		tmFindAgeReply(tNetSession *u, U32 x, tStrBuf &ipStr, U16 port, tStrBuf &age, const Byte *guid);
 		virtual void stream(tBBuf &t);
 		// format
-		tUStr age, ipStr;
+		tStrBuf age, ipStr;
 		U16 serverPort;
 		Byte serverGuid[8];
 	protected:

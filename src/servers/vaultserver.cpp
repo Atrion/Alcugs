@@ -75,7 +75,7 @@ namespace alc {
 		}
 	}
 	
-	bool tUnetVaultServer::isValidAvatarName(tUStr &avatar)
+	bool tUnetVaultServer::isValidAvatarName(tStrBuf &avatar)
 	{
 		for (U32 i = 0; i < avatar.size(); ++i) {
 			Byte c = avatar.getAt(i);

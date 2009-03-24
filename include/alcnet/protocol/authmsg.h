@@ -48,7 +48,7 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format
-		tUStr login;
+		tStrBuf login;
 		Byte challenge[16], hash[16];
 		Byte release;
 	protected:
@@ -62,7 +62,7 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format
-		tUStr login, passwd;
+		tStrBuf login, passwd;
 		Byte result, accessLevel;
 	protected:
 		virtual void additionalFields();

@@ -42,7 +42,8 @@ namespace alc {
 		virtual void stream(tBBuf &t);
 		inline bool validSpawnPorts(void) { return spawnStart && spawnStop && spawnStart <= spawnStop; }
 		// format
-		tUStr serverGuid, age, externalIp;
+		tUStr serverGuid;
+		tStrBuf age, externalIp;
 		U16 spawnStart, spawnStop;
 	protected:
 		virtual void additionalFields();
@@ -55,7 +56,7 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format
-		tUStr account, avatar;
+		tStrBuf account, avatar;
 		Byte playerFlag, playerStatus;
 	protected:
 		virtual void additionalFields();
@@ -68,7 +69,8 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format
-		tUStr serverGuid, age;
+		tUStr serverGuid;
+		tStrBuf age;
 	protected:
 		virtual void additionalFields();
 	};
@@ -81,7 +83,8 @@ namespace alc {
 		virtual void stream(tBBuf &t);
 		// format
 		U16 forkPort;
-		tUStr serverGuid, age;
+		tUStr serverGuid;
+		tStrBuf age;
 		Byte loadSDL;
 	protected:
 		virtual void additionalFields();
@@ -95,7 +98,9 @@ namespace alc {
 		virtual void stream(tBBuf &t);
 		// format
 		U16 serverPort;
-		tUStr ipStr, serverGuid, age;
+		tStrBuf ipStr;
+		tUStr serverGuid;
+		tStrBuf age;
 	protected:
 		virtual void additionalFields();
 	};

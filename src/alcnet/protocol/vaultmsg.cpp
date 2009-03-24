@@ -160,13 +160,10 @@ namespace alc {
 	
 	//// tmCustomVaultPlayerStatus
 	tmCustomVaultPlayerStatus::tmCustomVaultPlayerStatus(tNetSession *u) : tmMsgBase(u)
-	{
-		serverGuid.setVersion(0); // normal UruString
-		age.setVersion(0); // normal UruString
-	}
+	{ }
 	
 	tmCustomVaultPlayerStatus::tmCustomVaultPlayerStatus(tNetSession *u, U32 ki, const char *serverGuid, const char *age, Byte state, U32 onlineTime)
-	 : tmMsgBase(NetMsgCustomVaultPlayerStatus, plNetAck | plNetCustom | plNetVersion | plNetKi, u)
+	 : tmMsgBase(NetMsgCustomVaultPlayerStatus, plNetAck | plNetCustom | plNetVersion | plNetKi, u), age(age), serverGuid(serverGuid)
 	{
 		this->ki = ki;
 		this->x = 0;
@@ -174,10 +171,6 @@ namespace alc {
 		if (u->proto == 1 || u->proto == 2) setFlags(plNetX); // older protocols have this set, but the value is ignored
 #endif
 		
-		this->serverGuid.setVersion(0); // normal UruString
-		this->serverGuid.writeStr(serverGuid);
-		this->age.setVersion(0); // normal UruString
-		this->age.writeStr(age);
 		this->state = state;
 		this->onlineTime = onlineTime;
 	}
@@ -209,17 +202,11 @@ namespace alc {
 	
 	//// tmCustomVaultCreatePlayer
 	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u) : tmMsgBase(u)
-	{
-		this->login.setVersion(5); // inverted
-		this->avatar.setVersion(0); // normal UruString
-		this->gender.setVersion(0); // normal UruString
-		this->friendName.setVersion(0); // normal UruString
-		this->key.setVersion(0); // normal UruString
-	}
+	{ }
 	
 	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u, U32 x, U32 sid, Byte *uid,
-	  Byte accessLevel, const char *login, tUStr &avatar, tUStr &gender, tUStr &friendName, tUStr &key)
-	 : tmMsgBase(NetMsgCustomVaultCreatePlayer, plNetX | plNetUID | plNetVersion | plNetAck | plNetCustom | plNetSid, u),
+	  Byte accessLevel, const char *login, tStrBuf &avatar, tStrBuf &gender, tStrBuf &friendName, tStrBuf &key)
+	 : tmMsgBase(NetMsgCustomVaultCreatePlayer, plNetX | plNetUID | plNetVersion | plNetAck | plNetCustom | plNetSid, u), login(login),
 	   avatar(avatar), gender(gender), friendName(friendName), key(key)
 	{
 		this->x = x;
@@ -237,12 +224,6 @@ namespace alc {
 #endif
 		
 		this->accessLevel = accessLevel;
-		this->login.setVersion(5); // inverted
-		this->login.writeStr(login);
-		this->avatar.setVersion(0); // normal UruString
-		this->gender.setVersion(0); // normal UruString
-		this->friendName.setVersion(0); // normal UruString
-		this->key.setVersion(0); // normal UruString
 	}
 	
 	void tmCustomVaultCreatePlayer::store(tBBuf &t)
@@ -504,7 +485,7 @@ namespace alc {
 	
 	//// tmCustomVaultKiChecked
 	tmCustomVaultKiChecked::tmCustomVaultKiChecked(tNetSession *u, U32 ki, U32 x, U32 sid, const Byte *uid, Byte status, const char *avatar)
-	: tmMsgBase(NetMsgCustomVaultKiChecked, plNetX | plNetKi | plNetUID | plNetAck | plNetCustom | plNetVersion | plNetSid, u)
+	: tmMsgBase(NetMsgCustomVaultKiChecked, plNetX | plNetKi | plNetUID | plNetAck | plNetCustom | plNetVersion | plNetSid, u), avatar(avatar)
 	{
 		this->ki = ki;
 		this->x = x;
@@ -521,14 +502,10 @@ namespace alc {
 #endif
 	
 		this->status = status;
-		this->avatar.setVersion(0); // normal UruString
-		this->avatar.writeStr(avatar);
 	}
 	
 	tmCustomVaultKiChecked::tmCustomVaultKiChecked(tNetSession *u) : tmMsgBase(u)
-	{
-		avatar.setVersion(0); // normal UruString
-	}
+	{ }
 	
 	void tmCustomVaultKiChecked::store(tBBuf &t)
 	{

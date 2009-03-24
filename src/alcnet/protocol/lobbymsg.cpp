@@ -50,15 +50,13 @@ namespace alc {
 	
 	//// tmVaultPlayerList
 	tmVaultPlayerList::tmVaultPlayerList(tNetSession *u, U32 x, U16 numberPlayers, tMBuf players, const char *url)
-	: tmMsgBase(NetMsgVaultPlayerList, plNetAck | plNetCustom | plNetX | plNetKi, u)
+	: tmMsgBase(NetMsgVaultPlayerList, plNetAck | plNetCustom | plNetX | plNetKi, u), url(url)
 	{
 		this->x = x;
 		ki = 0; // we're not yet logged in, so no KI can be set
 		
 		this->numberPlayers = numberPlayers;
 		this->players = players;
-		this->url.setVersion(0); // normal UruString
-		this->url.writeStr(url);
 	}
 	
 	void tmVaultPlayerList::stream(tBBuf &t)
@@ -77,12 +75,7 @@ namespace alc {
 	
 	//// tmCreatePlayer
 	tmCreatePlayer::tmCreatePlayer(tNetSession *u) : tmMsgBase(u) // it's not capable of sending
-	{
-		avatar.setVersion(0); // normal UruString
-		gender.setVersion(0); // normal UruString
-		friendName.setVersion(0); // normal UruString
-		key.setVersion(0); // normal UruString
-	}
+	{ }
 	
 	void tmCreatePlayer::store(tBBuf &t)
 	{

@@ -48,7 +48,7 @@ namespace alc {
 
 	//// tmCustomAuthAsk
 	tmCustomAuthAsk::tmCustomAuthAsk(tNetSession *u, U32 x, U32 sid, U32 ip, U16 port, const char *login, const Byte *challenge, const Byte *hash, Byte release)
-	: tmMsgBase(NetMsgCustomAuthAsk, plNetAck | plNetCustom | plNetX | plNetVersion | plNetSid | plNetIP, u)
+	: tmMsgBase(NetMsgCustomAuthAsk, plNetAck | plNetCustom | plNetX | plNetVersion | plNetSid | plNetIP, u), login(login)
 	{
 		this->sid = sid; // this is the SID the lobby uses for the connection to the client to be authed
 		this->x = x; // the X value the client sent to the lobby
@@ -66,17 +66,13 @@ namespace alc {
 		}
 #endif
 		
-		this->login.setVersion(0); // normal UruString
-		this->login.writeStr(login);
 		memcpy(this->challenge, challenge, 16);
 		memcpy(this->hash, hash, 16);
 		this->release = release;
 	}
 	
 	tmCustomAuthAsk::tmCustomAuthAsk(tNetSession *u) : tmMsgBase(u)
-	{
-		login.setVersion(0); // normal UruString
-	}
+	{ }
 	
 	void tmCustomAuthAsk::store(tBBuf &t)
 	{
@@ -134,7 +130,7 @@ namespace alc {
 	
 	//// tmCustomAuthResponse
 	tmCustomAuthResponse::tmCustomAuthResponse(tNetSession *u, tmCustomAuthAsk &authAsk, const Byte *uid, const char *passwd, Byte result, Byte accessLevel)
-	 : tmMsgBase(NetMsgCustomAuthResponse, plNetAck | plNetCustom | plNetX | plNetVersion | plNetSid | plNetIP | plNetUID, u)
+	 : tmMsgBase(NetMsgCustomAuthResponse, plNetAck | plNetCustom | plNetX | plNetVersion | plNetSid | plNetIP | plNetUID, u), login(authAsk.login), passwd(passwd)
 	 {
 		// copy stuff from the authAsk
 		sid = authAsk.sid; // this is the SID the lobby uses for the connection to the client to be authed
@@ -153,21 +149,13 @@ namespace alc {
 		}
 #endif
 		
-		login = authAsk.login;
-		login.setVersion(0); // normal UruString
-		
 		memcpy(this->uid, uid, 16);
-		this->passwd = passwd;
-		this->passwd.setVersion(0); // normal UruString
 		this->result = result;
 		this->accessLevel = accessLevel;
 	}
 	
 	tmCustomAuthResponse::tmCustomAuthResponse(tNetSession *u) : tmMsgBase(u)
-	{
-		login.setVersion(0); // normal UruString
-		passwd.setVersion(0); // normal UruString
-	}
+	{ }
 	
 	void tmCustomAuthResponse::store(tBBuf &t)
 	{

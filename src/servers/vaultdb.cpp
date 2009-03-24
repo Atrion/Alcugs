@@ -327,7 +327,7 @@ namespace alc {
 			for (int i = 0; i < number; ++i) {
 				MYSQL_ROW row = mysql_fetch_row(result);
 				t->putU32(atoi(row[0])); // KI
-				tUStr avatar(0); // normal UruString
+				tStrBuf avatar;
 				avatar.writeStr(row[1]);
 				t->put(avatar);
 				t->putByte(atoi(row[2])); // flags

@@ -390,7 +390,6 @@ namespace alc {
 				integer = t.getU32();
 				break;
 			case DUruString:
-				str.setVersion(5); /* inverted UruString */
 				t.get(str);
 				break;
 			case DTimestamp:
@@ -409,7 +408,6 @@ namespace alc {
 				t.putU32(integer);
 				break;
 			case DUruString:
-				str.setVersion(5); /* inverted UruString */
 				t.put(str);
 				break;
 			case DTimestamp:

@@ -59,14 +59,12 @@ namespace alc {
 		this->num = num;
 		this->sdlVar = sdlVar;
 		this->stateMgr = stateMgr;
-		str.setVersion(5); // inverted UruString
 		flags = 0x18; // default non-struct var
 	}
 	
 	tSdlStateVar::tSdlStateVar(const tSdlStateVar &var)
 	{
 		*this = var; // call operator= which does the real work
-		str.setVersion(5); // inverted UruString
 	}
 	
 	const tSdlStateVar &tSdlStateVar::operator=(const tSdlStateVar &var)
@@ -482,7 +480,7 @@ namespace alc {
 	}
 	
 	tUStr tSdlStateBinary::getName(void) const {
-		return sdlStruct ? tUStr(sdlStruct->name, 5) : tUStr(5); // 5 = inverted UruString
+		return sdlStruct ? tUStr(sdlStruct->name) : tUStr();
 	}
 	U16 tSdlStateBinary::getVersion(void) const {
 		return sdlStruct ? sdlStruct->version : 0;

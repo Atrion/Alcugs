@@ -67,22 +67,17 @@ public:
 		5 - inverted Uru (plasma 2.0)
 		6 - myst5 (plasma 2.1)
 	*/
-	tUStr(int mode=1);
-	tUStr(const char *k, int mode = 1);
-	tUStr(const tUStr &t);
-	tUStr(const tStrBuf &t, int mode = 1);
-	virtual void stream(tBBuf &b);
-	virtual void store(tBBuf &b);
-	void setVersion(Byte version) { this->version=version; }
-	Byte getVersion(void) { return version; }
+	tUStr(void) : tStrBuf() {}
+	tUStr(const char *k) : tStrBuf(k) {}
+	tUStr(const tUStr &t) : tStrBuf(t) {}
+	tUStr(const tStrBuf &t) : tStrBuf(t) {}
+	virtual void store(tBBuf &t);
+	virtual void stream(tBBuf &t);
 	virtual void copy(const tUStr &t);
 	
 	virtual const tUStr & operator=(const tUStr &t) { copy(t); return *this; }
 	virtual const tStrBuf & operator=(const tStrBuf &t) { tStrBuf::copy(t); return *this; }
 	virtual const tStrBuf & operator=(const char *t) { tStrBuf::copy(t); return *this; }
-private:
-	virtual void _pcopy(const tUStr &t);
-	Byte version;
 };
 
 /** UruObject */
