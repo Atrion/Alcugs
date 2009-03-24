@@ -172,7 +172,8 @@ namespace alc {
 		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		// store the whole message
 		message.clear();
-		t.get(message);
+		U32 remaining = t.remaining();
+		message.write(t.read(), remaining);
 	}
 	
 	//// tmFindAgeReply

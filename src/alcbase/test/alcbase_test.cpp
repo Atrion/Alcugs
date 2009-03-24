@@ -395,7 +395,7 @@ void alctypes_fbuf() {
 	tMBuf b2,b3;
 	b2.put(f1);
 	f1.rewind();
-	f1.get(b3);
+	b3.put(f1);
 	assert(b2==b1);
 	assert(b2==f1);
 	assert(b2==b3);
@@ -453,7 +453,7 @@ void alctypes_part2() {
 	
 	f2.open("out.raw");
 	b1.clear();
-	f2.get(b1);
+	b1.put(f2);
 	f2.close();
 	
 	assert(b1==w2);

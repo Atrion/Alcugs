@@ -77,7 +77,7 @@ namespace alc {
 		tFBuf ageFile;
 		ageFile.open((dir + file).c_str(), "r");
 		tWDYSBuf ageContent;
-		ageFile.get(ageContent);
+		ageContent.put(ageFile);
 		ageContent.decrypt();
 		// parse file
 		tConfig *cfg = new tConfig;

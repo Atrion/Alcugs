@@ -83,6 +83,8 @@ class tXParser :public tSimpleParser {
 public:
 	tXParser(bool override = true);
 	virtual ~tXParser() {}
+	virtual void store(tBBuf &t);
+	virtual void stream(tBBuf &t);
 	virtual void store(tStrBuf &t);
 	virtual void stream(tStrBuf &t);
 	void setBasePath(tStrBuf & base);

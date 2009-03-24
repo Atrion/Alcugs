@@ -455,11 +455,12 @@ namespace alc {
 	tvCreatableStream::tvCreatableStream(Byte id, tvBase **dataList, int nData)
 	{
 		this->id = id;
-		// put the data in here
+		// put the data in the buffer
 		tMBuf buf;
 		buf.putU32(nData);
 		for (int i = 0; i < nData; ++i)
 			buf.put(*dataList[i]);
+		// put the buffer in our space
 		buf.rewind();
 		size = buf.size();
 		data = (Byte *)malloc(sizeof(Byte) * size);

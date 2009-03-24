@@ -343,7 +343,6 @@ void tUnetUruMsg::stream(tBBuf &t) {
 	}
 	t.putU32(cps);
 	t.putU32(dsize);
-	data.rewind();
 	t.put(data);
 }
 U32 tUnetUruMsg::size() {

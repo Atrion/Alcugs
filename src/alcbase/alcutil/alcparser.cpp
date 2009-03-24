@@ -61,10 +61,8 @@ void tSimpleParser::store(tBBuf &t) {
 }
 void tSimpleParser::stream(tBBuf &t) {
 	tStrBuf s;
-	//int ret=
 	stream(s);
 	t.put(s);
-	//return ret;
 }
 
 void tSimpleParser::store(tStrBuf &t) {
@@ -147,6 +145,15 @@ void tXParser::setBasePath(tStrBuf & base) {
 	path=base;
 }
 
+void tXParser::store(tBBuf &t) {
+	tStrBuf s(t);
+	store(s);
+}
+void tXParser::stream(tBBuf &t) {
+	tStrBuf s;
+	stream(s);
+	t.put(s);
+}
 void tXParser::store(tStrBuf &t) {
 	if(!cfg) return;
 	tStrBuf section,key,val;
