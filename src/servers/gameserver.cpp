@@ -190,16 +190,9 @@ namespace alc {
 			msg->eofCheck();
 			// check for chat messages
 			tpKIMsg *kiMsg = dynamic_cast<tpKIMsg*>(subMsg);
-			if (kiMsg) {
-				// the text itself starts after the <<sender>> part
-				tStrBuf text(kiMsg->text);
-				int pos = text.find(">>");
-				if (pos >= 0)
-					text = text.substring(pos+2); // got the text!
-				if (text.startsWith("!")) { // if it is a command
-					processed = true;
-					processKICommand(text, u);
-				}
+			if (kiMsg && kiMsg->text.startsWith("!")) { // if it is a command
+				processKICommand(kiMsg->text, u);
+				processed = true;
 			}
 		}
 		delete subMsg;
@@ -212,7 +205,7 @@ namespace alc {
 		if (text == "!ping") sendKIMessage(tStrBuf("You are still online :)"), u);
 		else {
 			tStrBuf error;
-			error.printf("Unable to process server-side command: \"%s\"", text.c_str());
+			error.printf("Unknown server-side command: \"%s\"", text.c_str());
 			sendKIMessage(error, u);
 		}
 	}
