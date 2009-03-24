@@ -61,7 +61,6 @@ Other Generic Stuff
 * Http builtin service
 * Debug port/service
 * P2P tech
-* Allow to add new ages to the servers on fly without the need of recompiling again the servers.
 
 Clients
 ========
@@ -69,4 +68,7 @@ Clients
 * Do a GUI implementation for UruLoader
 * Finish the basic urucmd client for admins
 
-Anything else is in the Feature-Requests list
+Feature-Requests list
+=======================
+* E-mail notifications on Ki mail.
+* Be able to broadcast admin messages to all players.
