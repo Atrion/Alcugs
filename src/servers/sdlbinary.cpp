@@ -499,7 +499,7 @@ namespace alc {
 		
 		// then the structs
 		DBG(8, "Merging %d current with %d new structs\n", structs.size(), newState->structs.size());
-		mergeData(&structs, &newState->structs); // FIXME: this will not correctly merge indexed sub-structs - but I have no clue how I would have to do that
+		mergeData(&structs, &newState->structs); // NOTE: this will not correctly merge indexed sub-structs - but it seems to work anyway
 	}
 	
 	void tSdlStateBinary::mergeData(tVarList *curData, tVarList *newData)

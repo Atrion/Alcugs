@@ -135,16 +135,13 @@ namespace alc {
 	
 	bool tUnetLobbyServerBase::setActivePlayer(tNetSession *u, U32 ki, U32 x, const char *avatar)
 	{
-		tNetSession *client;
+		tNetSession *client = smgr->find(ki);
 		smgr->rewind();
-		while ((client = smgr->getNext())) {
-			if (client->getPeerType() == KClient && client->ki == ki) { // an age cannot host the same avatar multiple times
-				if (u != client) // it could be the same session for which the active player is set twice for some reason
-					terminate(client, RLoggedInElsewhere);
-				else
-					lerr->log("Active player is set twice for %s\n", u->str());
-				break;
-			}
+		if (client && client->getPeerType() == KClient) { // an age cannot host the same avatar multiple times
+			if (u != client) // it could be the same session for which the active player is set twice for some reason
+				terminate(client, RLoggedInElsewhere);
+			else
+				lerr->log("Active player is set twice for %s\n", u->str());
 		}
 		
 		if (whoami == KGame && avatar[0] == 0) // empty avatar names are not allowed in game server

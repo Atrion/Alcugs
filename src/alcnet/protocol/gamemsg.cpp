@@ -385,7 +385,7 @@ namespace alc {
 		
 		pages.clear();
 		pages.reserve(nPages);
-		tUStr pageName;
+		tStrBuf pageName;
 		for (U32 i = 0; i < nPages; ++i) {
 			pages.push_back(t.getU32());
 			t.getU16(); // ignore pageType
