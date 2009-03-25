@@ -503,7 +503,7 @@ namespace alc {
 		// check if we got all recipients - if not, tell the sender
 		if (directedFwd.recipients.size()) {
 			// format the text
-			tStrBuf text("The following recipients of your message are currently not available (maybe they are linking?): ");
+			tStrBuf text("These players did not get the message (linking?): ");
 			bool comma = false;
 			for (it = directedFwd.recipients.begin(); it != directedFwd.recipients.end(); ++it) {
 				if (comma) text.writeStr(", ");

@@ -203,6 +203,7 @@ namespace alc {
 	{
 		// process server-side commands
 		if (text == "!ping") sendKIMessage(tStrBuf("You are still online :)"), u);
+		else if (text == "!silentping") sendKIMessage(tStrBuf("!silentpong"), u);
 		else {
 			tStrBuf error;
 			error.printf("Unknown server-side command: \"%s\"", text.c_str());
@@ -288,7 +289,7 @@ namespace alc {
 		tmCustomDirectedFwd::tRecList::iterator it = msg.recipients.begin();
 		while (it != msg.recipients.end()) {
 			session = smgr->find(*it);
-			if (session && session->joined) {
+			if (session && session->ki) { // forward messages to all players which have their KI set - even if they are still linking
 				if (session->ki != msg.ki) { // don't send it back to the sender
 					tmGameMessageDirected fwdMsg(session, msg);
 					send(fwdMsg);
@@ -521,8 +522,8 @@ namespace alc {
 			}
 			case NetMsgGameMessageDirected:
 			{
-				if (!u->joined) {
-					err->log("ERR: %s sent a NetMsgGameMessageDirected but did not yet join the game. I\'ll kick him.\n", u->str());
+				if (!u->ki) { // directed game messages are accepted from all players which have their KI set
+					err->log("ERR: %s sent a NetMsgGameMessageDirected but did not yet set the KI. I\'ll kick him.\n", u->str());
 					return -2; // hack attempt
 				}
 				
