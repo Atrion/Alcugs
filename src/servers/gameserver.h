@@ -81,7 +81,7 @@ namespace alc {
 		
 		virtual bool canPortBeUsed(U16 port);
 	private:
-		Byte fwdDirectedGameMsg(tmGameMessageDirected &msg);
+		void fwdDirectedGameMsg(tmGameMessageDirected &msg);
 		void bcastMemberUpdate(tNetSession *u, bool isJoined);
 		
 		void removePlayerFromPage(tPageInfo *page, U32 ki);

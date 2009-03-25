@@ -442,7 +442,7 @@ namespace alc {
 			data->childs->rewind();
 			while ((server = data->childs->getNext())) {
 				tTrackingData *subData = dynamic_cast<tTrackingData *>(server->data);
-				if (!subData) throw txUnet(_WHERE("One child of the lobby I'm just deteting is not a game/lobby server"));
+				if (!subData) throw txUnet(_WHERE("One child of the lobby I'm just deleting is not a game/lobby server"));
 				subData->parent = NULL;
 			}
 		}

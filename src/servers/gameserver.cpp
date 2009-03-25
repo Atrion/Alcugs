@@ -281,26 +281,23 @@ namespace alc {
 		tUnetLobbyServerBase::terminate(u, reason, destroyOnly); // do the lobbybase terminate procedure
 	}
 	
-	Byte tUnetGameServer::fwdDirectedGameMsg(tmGameMessageDirected &msg)
+	void tUnetGameServer::fwdDirectedGameMsg(tmGameMessageDirected &msg)
 	{
 		// look for all recipients
-		Byte nSent = 0;
 		tNetSession *session;
-		for (tmCustomDirectedFwd::tRecList::iterator it = msg.recipients.begin(); it != msg.recipients.end(); ++it) {
-			// now search for that player
-			smgr->rewind();
-			while ((session = smgr->getNext())) {
-				if (session->ki == *it) {
-					if (session->joined && session->ki != msg.ki) {
-						tmGameMessageDirected fwdMsg(session, msg);
-						send(fwdMsg);
-					}
-					++nSent;
-					break;
+		tmCustomDirectedFwd::tRecList::iterator it = msg.recipients.begin();
+		while (it != msg.recipients.end()) {
+			session = smgr->find(*it);
+			if (session && session->joined) {
+				if (session->ki != msg.ki) { // don't send it back to the sender
+					tmGameMessageDirected fwdMsg(session, msg);
+					send(fwdMsg);
 				}
+				it = msg.recipients.erase(it); // next one
 			}
+			else
+				++it; // next one
 		}
-		return nSent;
 	}
 	
 	template <class T> void tUnetGameServer::bcastMessage(T &msg)
@@ -550,9 +547,9 @@ namespace alc {
 				}
 				
 				// forward it
-				Byte nSent = fwdDirectedGameMsg(gameMsg);
+				fwdDirectedGameMsg(gameMsg);
 				
-				if (nSent < gameMsg.recipients.size()) { // we did not yet reach all recipients
+				if (gameMsg.recipients.size()) { // we did not yet reach all recipients
 					tNetSession *trackingServer = getServer(KTracking);
 					if (!trackingServer) {
 						err->log("ERR: I've got to to forward a message through the tracking server, but it's unavailable.\n");
