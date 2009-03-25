@@ -151,7 +151,7 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
-		if (ki == 0 || (cmd != NetMsgCustomDirectedFwd && ki != u->ki)) // don't kick connection game <-> tracking
+		if (cmd != NetMsgCustomDirectedFwd && (ki == 0 || ki != u->ki)) // don't kick connection game <-> tracking
 			throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		
 		t.get(msgStream);
@@ -187,6 +187,10 @@ namespace alc {
 	
 	tmGameMessageDirected::tmGameMessageDirected(U16 cmd, U32 flags, tNetSession *u, tmGameMessageDirected &msg)
 	 : tmGameMessage(cmd, flags, u, msg), recipients(msg.recipients)
+	{ }
+	
+	tmGameMessageDirected::tmGameMessageDirected(U16 cmd, U32 flags, tNetSession *u, U32 ki, tpObject *obj)
+	 : tmGameMessage(cmd, flags, u, ki, obj)
 	{ }
 	
 	// methods

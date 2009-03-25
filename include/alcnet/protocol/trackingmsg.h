@@ -109,6 +109,7 @@ namespace alc {
 	public:
 		tmCustomDirectedFwd(tNetSession *u);
 		tmCustomDirectedFwd(tNetSession *u, tmGameMessageDirected &msg);
+		tmCustomDirectedFwd(tNetSession *u, U32 ki, tpObject *obj);
 	};
 	
 	class tmCustomPlayerToCome : public tmMsgBase {

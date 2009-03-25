@@ -42,6 +42,7 @@
 #include <alcnet.h>
 
 ////extra includes
+#include <set>
 #include "trackingbackend.h"
 
 #include "alcdebug.h"
@@ -472,30 +473,51 @@ namespace alc {
 	
 	void tTrackingBackend::forwardMessage(tmCustomDirectedFwd &directedFwd)
 	{
-		// for each game server, look which clients of that server need this message. This way, only one message is sent per server.
-		tNetSession *server;
+		// for each player, check if we can reach it, and save which game server we need to send the message to
+		typedef std::set<tNetSession *> tSessionList;
 		tTrackingData *data;
-		bool sent;
-		servers->rewind();
-		while ((server = servers->getNext())) {
-			if (server == directedFwd.getSession()) continue; // don't send the message back to the server which sent it
-			data = dynamic_cast<tTrackingData *>(server->data);
-			if (!data) continue;
-			if (data->isLobby) continue; // don't send messages to players in a lobby
-			sent = false; // so far, the message was not sent to this server
-			DBG(5, "looking for players on %s\n", server->str());
-			for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
-				if (it->u != server) continue; // search only for players on this server
-				for (tmCustomDirectedFwd::tRecList::iterator jt = directedFwd.recipients.begin(); jt != directedFwd.recipients.end(); ++jt) {
-					if (*jt == it->ki) { // one of the recipients is on this server, so send the message
-						tmCustomDirectedFwd forwardedMsg(server, directedFwd);
-						net->send(forwardedMsg);
-						sent = true;
-						break;
-					}
+		tSessionList receivers; // to save where we already sent it
+		tmCustomDirectedFwd::tRecList::iterator it = directedFwd.recipients.begin();
+		while (it != directedFwd.recipients.end()) {
+			bool removed = false;
+			for (tPlayerList::iterator jt = players.begin(); jt != players.end(); ++jt) {
+				if (*it != jt->ki) continue; // next one
+				// ok, this player should get this message
+				if (jt->u == directedFwd.getSession()) break; // don't send it back to where it comes from
+				if (jt->status == RLeaving) break; // the player is not connected
+				data = dynamic_cast<tTrackingData *>(jt->u->data);
+				if (!data || data->isLobby) break; // don't send messages to the lobby
+				// ok, let's go - check if we already sent the message there
+				if (!receivers.count(jt->u)) {
+					// no, we didn't - do it! and save that
+					tmCustomDirectedFwd forwardedMsg(jt->u, directedFwd);
+					net->send(forwardedMsg);
+					receivers.insert(jt->u);
 				}
-				if (sent) break; // if we already sent the message here, its not necessary to go on searching for players
+				removed = true;
+				it = directedFwd.recipients.erase(it); // since we already sent the message for this player we can remove it from our list
 			}
+			if (!removed) ++it; // go to next one if we did not yet do that
+		}
+		
+		// check if we got all recipients - if not, tell the sender
+		if (directedFwd.recipients.size()) {
+			// format the text
+			tStrBuf text("The following recipients of your message are currently not available (maybe they are linking?): ");
+			bool comma = false;
+			for (it = directedFwd.recipients.begin(); it != directedFwd.recipients.end(); ++it) {
+				if (comma) text.writeStr(", ");
+				text.printf("%d", *it);
+				comma = true;
+			}
+			// create the message
+			tpKIMsg kiMsg(tUruObjectRef(), tStrBuf("Tracking Server"), 0, text);
+			kiMsg.flags = 0x00004248;
+			kiMsg.messageType = 0x0009; // private inter age chat
+			// send message
+			tmCustomDirectedFwd msg(directedFwd.getSession(), 0, &kiMsg);
+			msg.recipients.push_back(directedFwd.ki);
+			net->send(msg);
 		}
 	}
 	
