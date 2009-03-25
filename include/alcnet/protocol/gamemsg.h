@@ -108,6 +108,7 @@ namespace alc {
 	protected:
 		tmGameMessageDirected(U16 cmd, U32 flags, tNetSession *u);
 		tmGameMessageDirected(U16 cmd, U32 flags, tNetSession *u, tmGameMessageDirected &msg);
+		tmGameMessageDirected(U16 cmd, U32 flags, tNetSession *u, U32 ki, tpObject *obj);
 	};
 	
 	class tmLoadClone : public tmGameMessage {

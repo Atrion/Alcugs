@@ -48,7 +48,7 @@ public:
 		this->port=port;
 		this->sid=sid;
 	}
-	bool operator==(tNetSessionIte &t) {
+	bool operator==(const tNetSessionIte &t) const {
 		return(ip==t.ip && port==t.port);
 	}
 };
@@ -59,7 +59,7 @@ public:
 	tNetSessionList(void);
 	virtual ~tNetSessionList();
 	
-	//! find the session with the given ip and port (ignore the sid) and return it
+	//! find the session with the given ip and port and return it
 	tNetSession *search(U32 ip, U16 port);
 	//! add that session and return the place where it's saved (to be used by tNetSessionMgr::search)
 	int add(tNetSession *u);
@@ -94,7 +94,7 @@ class tNetSessionMgr : public tNetSessionList {
 public:
 	tNetSessionMgr(tUnet * net,int limit=0);
 	virtual ~tNetSessionMgr();
-	tNetSession * search(tNetSessionIte &ite,bool create);
+	tNetSession * search(tNetSessionIte &ite,bool create = false);
 	void destroy(tNetSessionIte &ite);
 private:
 	int max;
