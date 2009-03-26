@@ -52,14 +52,13 @@ namespace alc {
 		inline bool hasPlayer(U32 ki) { return getPlayer(ki) != players.end(); }
 		
 		char name[200];
-		U16 id;
+		Byte number;
 		bool conditionalLoad;
-		U32 owner;
 		
 		// data for the messages (filled when we get a NetMsgPagingRom for this page)
-		U32 plasmaPageId;
-		U16 plasmaPageType;
-		
+		U32 owner;
+		U32 pageId; // this and the next one are used when we send a NetMsgGroupOwner
+		U16 pageType;
 		tPlayerList players;
 	};
 	
@@ -68,11 +67,12 @@ namespace alc {
 	public:
 		tAgeInfo(const tStrBuf &dir, const char *file, bool loadPages);
 		tPageInfo *getPage(U32 pageId);
+		bool validPage(U32 pageId);
 		
 		U32 seqPrefix; // it's actually 3 Bytes
 		char name[200];
-		
-		typedef std::vector<tPageInfo> tPageList;
+	
+		typedef std::map<Byte, tPageInfo> tPageList;
 		tPageList pages;
 	};
 	

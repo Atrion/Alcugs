@@ -93,6 +93,7 @@ const char * alcXVERSION = ALC_PROGRAM_VERSION;
 //std includes
 #include <iostream>
 #include <vector>
+#include <map>
 #include <cstdio>
 #include <cstring>
 #include <csignal>

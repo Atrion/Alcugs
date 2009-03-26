@@ -722,6 +722,18 @@ void alctypes_tests() {
 	alctypes_part8();
 }
 
+void alcpageid_tests() {
+	assert(alcPageIdToNumber(6, 0x00000621) == 0);
+	assert(alcPageIdToNumber(6, 0x00000627) == 6);
+	assert(alcPageIdToNumber(6, 0x0000071F) == 256-2);
+	assert(alcPageIdToNumber(6, 0x00000720) == 256-1);
+	
+	assert(alcPageNumberToId(6, 0) == 0x00000621);
+	assert(alcPageNumberToId(6, 6) == 0x00000627);
+	assert(alcPageNumberToId(6, 256-2) == 0x0000071F);
+	assert(alcPageNumberToId(6, 256-1) == 0x00000720);
+}
+
 void alcparser_tests() {
 	DBG(4,"Parser tests\n");
 	int i=0;
@@ -975,6 +987,7 @@ int main(int argc, char * argv[]) {
 		alcInit(argc,argv);
 		alcexception_tests();
 		alctypes_tests();
+		alcpageid_tests();
 		log_test();
 		alcparser_tests();
 		//alcShutdown();

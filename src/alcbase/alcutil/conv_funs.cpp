@@ -56,8 +56,7 @@ const char * alcGetStrUid(const Byte * guid) {
 	static char str_guid2[50];
 
 	alcHex2Ascii(str_guid,guid,16);
-	DBG(6,"the guid is %s\n",str_guid);
-	//abort();
+	
 	memcpy(str_guid2+off1,str_guid+off2,8); //ID1
 	off1+=8;
 	off2+=8;
@@ -222,6 +221,5 @@ U16 alcParseKey(tStrBuf &t) {
 	t.setSize(pos);
 	return offset.asU16();
 }
-
 
 }

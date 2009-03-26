@@ -95,7 +95,7 @@ namespace alc {
 			if (!ageSDLVersion) return;
 			// first make up the UruObject
 			tUruObject obj;
-			obj.pageId = 0x1f | (age->seqPrefix + 1 << 8);
+			obj.pageId = alcPageNumberToId(age->seqPrefix, 256-2); // BultIn page ID
 			obj.pageType = 0x0008; // BultIn
 			obj.objType = 0x0001; // SceneObject
 			obj.objName = "AgeSDLHook";
@@ -144,8 +144,8 @@ namespace alc {
 			file.get(obj);
 			tStreamedObject sdlStream;
 			file.get(sdlStream);
-			if (obj.hasCloneId) {
-				log->log("Not loading state for object %s with clone ID\n", obj.str());
+			if (obj.hasCloneId || !age->validPage(obj.pageId)) {
+				log->log("Not loading state for object %s with clone ID or on a page not belonging to this age\n", obj.str());
 				continue;
 			}
 			if (sdlStream.getType() != plNull)
@@ -245,6 +245,9 @@ namespace alc {
 			log->log("Got ");
 			sdl.print(log);
 		}
+		// check if this state is allowed in this age
+		if (!sdl.obj.hasCloneId && !age->validPage(sdl.obj.pageId))
+			throw txProtocolError(_WHERE("Object %s is not in this age", sdl.obj.str()));
 		// check if state is already in list
 		tSdlList::iterator it = findSdlState(&sdl);
 		if (it == sdlStates.end()) {
@@ -299,7 +302,7 @@ namespace alc {
 	{
 		int n = 0;
 		for (tSdlList::iterator it = sdlStates.begin(); it != sdlStates.end(); ++it) {
-			if (pages->size()) { // check if this object should be sent
+			if (pages->size()) { // it is necessary to check if this object should be sent
 				if (it->obj.hasCloneId) continue; // objects with clone ID are never sent when a page is requested
 				bool found = false;
 				for (tmGameStateRequest::tPageList::iterator it2 = pages->begin(); it2 != pages->end(); ++it2) {
@@ -310,7 +313,11 @@ namespace alc {
 				}
 				if (!found) continue; // it's not on the list, don't send it
 			}
-			// FIXME: If no page is requested, we currently send all SDL states, including those which are on a page which is dynamically loaded
+			else if (!it->obj.hasCloneId) { // objects with CloneID are ok
+				tPageInfo *info = age->getPage(it->obj.pageId);
+				if (!info && !age->validPage(it->obj.pageId)) throw txBase(_WHERE("How did this invalid state get here: %s", it->obj.str()));
+				else if (info && info->conditionalLoad) continue; // don't send this one, it's on an optional page
+			}
 			if (logDetailed) {
 				log->log("Sending SDL State to %s:\n", u->str());
 				it->print(log);

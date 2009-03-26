@@ -81,6 +81,17 @@ void alcStrFilter(char * what);
 /** parses a "name[number]" kind of string, setting "t" to the name and returning the number */
 U16 alcParseKey(tStrBuf &t);
 
+
+/** convert pageIDs to pageNumbers and the other way around - wired, but whatever... */
+inline Byte alcPageIdToNumber(U32 seqPrefix, U32 pageId)
+{
+	return pageId - (seqPrefix << 8) - 33;
+}
+inline U32 alcPageNumberToId(U32 seqPrefix, Byte number)
+{
+	return (seqPrefix << 8) + 33 + number;
+}
+
 }
 
 #endif
