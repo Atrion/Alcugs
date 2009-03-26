@@ -117,8 +117,8 @@ namespace alc {
 	{ }
 	
 	tmGameMessage::tmGameMessage(tNetSession *u, tmGameMessage &msg)
-	 : tmMsgBase(NetMsgGameMessage, plNetAck | plNetKi, u), msgStream(msg.msgStream)
-	{ copyBaseProps(msg); }
+	 : tmMsgBase(NetMsgGameMessage, msg.flags, u), msgStream(msg.msgStream)
+	{ ki = msg.ki; }
 	
 	tmGameMessage::tmGameMessage(tNetSession *u, U32 ki, tpObject *obj)
 	 : tmMsgBase(NetMsgGameMessage, plNetAck | plNetKi, u), msgStream(obj)
@@ -127,26 +127,20 @@ namespace alc {
 	}
 	
 	// constructors for sub-classes
-	tmGameMessage::tmGameMessage(U16 cmd, U32 flags, tNetSession *u) : tmMsgBase(cmd, flags, u), msgStream()
+	tmGameMessage::tmGameMessage(U16 cmd, tNetSession *u) : tmMsgBase(cmd, plNetAck | plNetKi, u), msgStream()
 	{  }
 	
-	tmGameMessage::tmGameMessage(U16 cmd, U32 flags, tNetSession *u, tmGameMessage &msg)
-	 : tmMsgBase(cmd, flags, u), msgStream(msg.msgStream)
-	{ copyBaseProps(msg); }
+	tmGameMessage::tmGameMessage(U16 cmd, tNetSession *u, tmGameMessage &msg)
+	 : tmMsgBase(cmd, msg.flags, u), msgStream(msg.msgStream)
+	{ ki = msg.ki; }
 	
-	tmGameMessage::tmGameMessage(U16 cmd, U32 flags, tNetSession *u, U32 ki, tpObject *obj)
-	 : tmMsgBase(cmd, flags, u), msgStream(obj)
+	tmGameMessage::tmGameMessage(U16 cmd, tNetSession *u, U32 ki, tpObject *obj)
+	 : tmMsgBase(cmd, plNetAck | plNetKi, u), msgStream(obj)
 	{
 		this->ki = ki;
 	}
 	
 	// methods
-	void tmGameMessage::copyBaseProps(tmGameMessage &msg)
-	{
-		if (!msg.hasFlags(plNetAck)) unsetFlags(plNetAck);
-		ki = msg.ki;
-	}
-	
 	void tmGameMessage::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
@@ -174,30 +168,29 @@ namespace alc {
 	{ }
 	
 	tmGameMessageDirected::tmGameMessageDirected(tNetSession *u, tmGameMessageDirected &msg)
-	 : tmGameMessage(NetMsgGameMessageDirected, plNetAck | plNetKi | plNetDirected, u, msg), recipients(msg.recipients)
+	 : tmGameMessage(NetMsgGameMessageDirected, u, msg), recipients(msg.recipients)
 	{ }
 	
 	tmGameMessageDirected::tmGameMessageDirected(tNetSession *u, U32 ki, tpObject *obj)
-	 : tmGameMessage(NetMsgGameMessageDirected, plNetAck | plNetKi | plNetDirected, u, ki, obj)
+	 : tmGameMessage(NetMsgGameMessageDirected, u, ki, obj)
 	{ }
 	
 	// constructors for sub-classes
-	tmGameMessageDirected::tmGameMessageDirected(U16 cmd, U32 flags, tNetSession *u) : tmGameMessage(cmd, flags, u)
+	tmGameMessageDirected::tmGameMessageDirected(U16 cmd, tNetSession *u) : tmGameMessage(cmd, u)
 	{ }
 	
-	tmGameMessageDirected::tmGameMessageDirected(U16 cmd, U32 flags, tNetSession *u, tmGameMessageDirected &msg)
-	 : tmGameMessage(cmd, flags, u, msg), recipients(msg.recipients)
+	tmGameMessageDirected::tmGameMessageDirected(U16 cmd, tNetSession *u, tmGameMessageDirected &msg)
+	 : tmGameMessage(cmd, u, msg), recipients(msg.recipients)
 	{ }
 	
-	tmGameMessageDirected::tmGameMessageDirected(U16 cmd, U32 flags, tNetSession *u, U32 ki, tpObject *obj)
-	 : tmGameMessage(cmd, flags, u, ki, obj)
+	tmGameMessageDirected::tmGameMessageDirected(U16 cmd, tNetSession *u, U32 ki, tpObject *obj)
+	 : tmGameMessage(cmd, u, ki, obj)
 	{ }
 	
 	// methods
 	void tmGameMessageDirected::store(tBBuf &t)
 	{
 		tmGameMessage::store(t);
-		if (cmd == NetMsgGameMessageDirected && !hasFlags(plNetDirected)) throw txProtocolError(_WHERE("Directed flag missing"));
 		// get list of recipients
 		Byte nRecipients = t.getByte();
 		recipients.clear();
@@ -218,7 +211,7 @@ namespace alc {
 	{ }
 	
 	tmLoadClone::tmLoadClone(tNetSession *u, tmLoadClone &msg)
-	 : tmGameMessage(NetMsgLoadClone, plNetAck | plNetKi, u, msg), obj(msg.obj)
+	 : tmGameMessage(NetMsgLoadClone, u, msg), obj(msg.obj)
 	{
 		isPlayerAvatar = msg.isPlayerAvatar;
 		isLoad = msg.isLoad;
@@ -226,7 +219,7 @@ namespace alc {
 	}
 	
 	tmLoadClone::tmLoadClone(tNetSession *u, tpLoadCloneMsg *subMsg, bool isInitial)
-	 : tmGameMessage(NetMsgLoadClone, plNetAck | plNetKi, u, subMsg->clonedObj.obj.clonePlayerId, subMsg), obj(subMsg->clonedObj.obj)
+	 : tmGameMessage(NetMsgLoadClone, u, subMsg->clonedObj.obj.clonePlayerId, subMsg), obj(subMsg->clonedObj.obj)
 	{
 		this->isLoad = subMsg->isLoad;
 		this->isInitial = isInitial;
@@ -527,8 +520,8 @@ namespace alc {
 		sdlStream.put(*sdl);
 	}
 	
-	tmSDLState::tmSDLState(U16 cmd, U32 flags, tNetSession *u, tmSDLState &msg)
-	 : tmMsgBase(cmd, flags, u), obj(msg.obj), sdlStream(msg.sdlStream)
+	tmSDLState::tmSDLState(U16 cmd, tNetSession *u, tmSDLState &msg)
+	 : tmMsgBase(cmd, msg.flags, u), obj(msg.obj), sdlStream(msg.sdlStream)
 	{ isInitial = msg.isInitial; }
 	
 	void tmSDLState::store(tBBuf &t)
@@ -567,9 +560,8 @@ namespace alc {
 	{ }
 	
 	tmSDLStateBCast::tmSDLStateBCast(tNetSession *u, tmSDLStateBCast & msg)
-	 : tmSDLState(NetMsgSDLStateBCast, plNetAck | plNetKi | plNetBcast, u, msg)
+	 : tmSDLState(NetMsgSDLStateBCast, u, msg)
 	{
-		if (!msg.hasFlags(plNetBcast)) unsetFlags(plNetBcast);
 		ki = msg.ki;
 	}
 	

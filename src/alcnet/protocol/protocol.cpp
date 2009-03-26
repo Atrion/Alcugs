@@ -660,10 +660,10 @@ void tmMsgBase::store(tBBuf &t) {
 	else sid = 0;
 
 	U32 check=plNetAck | plNetVersion | plNetTimestamp | \
-	plNetX | plNetKi | plNetUID | plNetIP | plNetCustom | plNetSid;
+	plNetX | plNetKi | plNetUID | plNetIP | plNetCustom | plNetSid | plNetDirected;
 	// accept some flags only for certain messages
 	if (cmd == NetMsgGameMessage) check |= plNetUnk1 | plNetUnk2;
-	else if (cmd == NetMsgGameMessageDirected) check |= plNetDirected;
+	else if (cmd == NetMsgGameMessageDirected || cmd == NetMsgCustomDirectedFwd) check |= plNetUnk1 | plNetDirected;
 	else if (cmd == NetMsgJoinReq) check |= plNetP2P;
 	else if (cmd == NetMsgGameStateRequest) check |= plNetStateReq;
 	else if (cmd == NetMsgSDLState) check |= plNetBcast;

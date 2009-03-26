@@ -360,11 +360,11 @@ namespace alc {
 	{ }
 	
 	tmCustomDirectedFwd::tmCustomDirectedFwd(tNetSession *u, tmGameMessageDirected &msg)
-	 : tmGameMessageDirected(NetMsgCustomDirectedFwd, plNetAck | plNetKi | plNetCustom | plNetVersion, u, msg)
+	 : tmGameMessageDirected(NetMsgCustomDirectedFwd, u, msg)
 	{ }
 	
 	tmCustomDirectedFwd::tmCustomDirectedFwd(tNetSession *u, U32 ki, tpObject *obj)
-	 : tmGameMessageDirected(NetMsgCustomDirectedFwd, plNetAck | plNetKi | plNetCustom | plNetVersion, u, ki, obj)
+	 : tmGameMessageDirected(NetMsgCustomDirectedFwd, u, ki, obj)
 	{ }
 	
 	//// tmCustomPlayerToCome
