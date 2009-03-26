@@ -47,7 +47,7 @@
 namespace alc {
 
 	//// tpMessage
-	tpMessage::tpMessage(U16 type, const tUruObjectRef &parentObj) : tpObject(type), parentObj(parentObj)
+	tpMessage::tpMessage(U16 type, const tUruObjectRef &sender) : tpObject(type), sender(sender)
 	{
 		// the reference list stays empty
 		flags = 0;
@@ -66,14 +66,14 @@ namespace alc {
 	{
 		U32 u32Val;
 		
-		t.get(parentObj);
+		t.get(sender);
 		U32 refCount = t.getU32();
-		// read array of references - perhaps put this into a helper function?
-		references.clear();
-		references.reserve(refCount);
-		tReferenceList::iterator it;
+		// read array of receivers - perhaps put this into a helper function?
+		receivers.clear();
+		receivers.reserve(refCount);
+		tReceiverList::iterator it;
 		for (U32 i = 0; i < refCount; ++i) {
-			it = references.insert(references.end(), tUruObjectRef());
+			it = receivers.insert(receivers.end(), tUruObjectRef());
 			t.get(*it);
 		}
 		// remaining values
@@ -86,9 +86,9 @@ namespace alc {
 	
 	void tpMessage::stream(tBBuf &t)
 	{
-		t.put(parentObj);
-		t.putU32(references.size());
-		for (tReferenceList::iterator it = references.begin(); it != references.end(); ++it)
+		t.put(sender);
+		t.putU32(receivers.size());
+		for (tReceiverList::iterator it = receivers.begin(); it != receivers.end(); ++it)
 			t.put(*it);
 		t.putU32(0); // unk1
 		t.putU32(0); // unk2
@@ -97,10 +97,10 @@ namespace alc {
 	
 	void tpMessage::toString()
 	{
-		strBuf.printf(" Parent: [%s]\n", parentObj.str());
+		strBuf.printf(" Sender: [%s]\n", sender.str());
 		int nr = 1;
-		for (tReferenceList::iterator it = references.begin(); it != references.end(); ++it, ++nr) {
-			strBuf.printf(" Reference %d: [%s]\n", nr, it->str());
+		for (tReceiverList::iterator it = receivers.begin(); it != receivers.end(); ++it, ++nr) {
+			strBuf.printf(" Receiver %d: [%s]\n", nr, it->str());
 		}
 		strBuf.printf(" Flags: 0x%08X\n", flags);
 	}
@@ -255,8 +255,8 @@ namespace alc {
 	}
 	
 	//// tpKIMsg
-	tpKIMsg::tpKIMsg(const tUruObjectRef &parentObj, const tStrBuf &sender, U32 senderKi, const tStrBuf &text)
-	 : tpMessage(pfKIMsg, parentObj), senderName(sender), senderKi(senderKi), text(text)
+	tpKIMsg::tpKIMsg(const tUruObjectRef &sender, const tStrBuf &senderName, U32 senderKi, const tStrBuf &text)
+	 : tpMessage(pfKIMsg, sender), senderName(senderName), senderKi(senderKi), text(text)
 	{
 		messageType = 0;
 	}

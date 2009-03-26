@@ -47,16 +47,16 @@ namespace alc {
 	class tpMessage : public tpObject {
 	public:
 		tpMessage(U16 type, bool incomplete = false) : tpObject(type, incomplete) {}
-		tpMessage(U16 type, const tUruObjectRef &parentObj);
+		tpMessage(U16 type, const tUruObjectRef &sender);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		
 		static tpMessage *create(U16 type, bool mustBeComplete = true);
 		
-		typedef std::vector<tUruObjectRef> tReferenceList;
+		typedef std::vector<tUruObjectRef> tReceiverList;
 		// format
-		tUruObjectRef parentObj;
-		tReferenceList references;
+		tUruObjectRef sender;
+		tReceiverList receivers;
 		U32 flags;
 	protected:
 		virtual void toString(void);
@@ -115,7 +115,7 @@ namespace alc {
 	class tpServerReplyMsg : public tpMessage {
 	public:
 		tpServerReplyMsg(void) : tpMessage(plServerReplyMsg) {}
-		tpServerReplyMsg(const tUruObjectRef &parentObj) : tpMessage(plServerReplyMsg, parentObj) { unk3 = 0; }
+		tpServerReplyMsg(const tUruObjectRef &sender) : tpMessage(plServerReplyMsg, sender) { unk3 = 0; }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		
@@ -128,7 +128,7 @@ namespace alc {
 	class tpKIMsg : public tpMessage {
 	public:
 		tpKIMsg(void) : tpMessage(pfKIMsg) {}
-		tpKIMsg(const tUruObjectRef &parentObj, const tStrBuf &sender, U32 senderKi, const tStrBuf &text);
+		tpKIMsg(const tUruObjectRef &sender, const tStrBuf &sender, U32 senderKi, const tStrBuf &text);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		

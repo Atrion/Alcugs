@@ -435,20 +435,18 @@ namespace alc {
 		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		
 		t.get(obj);
-		{ // the part I marked with btrackets could be an UruObject - the format fits
-			flag = t.getByte();
-			if (flag != 0x00)
-				throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.flag1 of 0x%02X (should be 0x00)", flag));
-			unk = t.getU32();
-			if (unk != 0x00000000)
-				throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.unk1 of 0x%08X (should be 0x00000000)", unk));
-			unk = t.getU32();
-			if (unk != 0x0000001D)
-				throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.unk2 of 0x%08X (should be 0x0000001D)", unk));
-			t.get(trigger);
-			if (trigger != "TrigState")
-				throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.Trigger of %s (should be \"TrigState\")", trigger.c_str()));
-		}
+		flag = t.getByte();
+		if (flag != 0x00)
+			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.flag1 of 0x%02X (should be 0x00)", flag));
+		unk = t.getU32();
+		if (unk != 0x00000000)
+			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.unk1 of 0x%08X (should be 0x00000000)", unk));
+		unk = t.getU32();
+		if (unk != 0x0000001D)
+			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.unk2 of 0x%08X (should be 0x0000001D)", unk));
+		t.get(trigger);
+		if (trigger != "TrigState")
+			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.Trigger of %s (should be \"TrigState\")", trigger.c_str()));
 		unk = t.getU32();
 		if (unk != 0x00000001)
 			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.unk3 of 0x%08X (should be 0x00000001)", unk));
