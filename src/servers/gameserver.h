@@ -86,7 +86,7 @@ namespace alc {
 		
 		void removePlayerFromPage(tPageInfo *page, U32 ki);
 		
-		bool processGameMessage(tStreamedObject *msg, tNetSession *u); //!< returns true if the message was processed and should not be broadcasted or forwarded
+		bool processGameMessage(tStreamedObject *msg, tNetSession *u, tUruObjectRef *receiver = NULL); //!< returns true if the message was processed and should not be broadcasted or forwarded
 		void processKICommand(tStrBuf &text, tNetSession *u);
 		void sendKIMessage(const tStrBuf &text, tNetSession *u);
 	

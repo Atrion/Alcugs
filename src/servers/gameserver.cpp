@@ -181,11 +181,12 @@ namespace alc {
 		}
 	}
 	
-	bool tUnetGameServer::processGameMessage(tStreamedObject *msg, tNetSession *u)
+	bool tUnetGameServer::processGameMessage(tStreamedObject *msg, tNetSession *u, tUruObjectRef *receiver)
 	{
 		bool processed = false;
 		tpMessage *subMsg = tpMessage::create(msg->getType(), /*mustBeComplete*/false);
 		msg->get(*subMsg);
+		if (receiver && subMsg->receivers.size()) *receiver = subMsg->receivers.at(0);
 		if (!subMsg->isIncomplete()) {
 			msg->eofCheck();
 			// check for chat messages
@@ -533,18 +534,19 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, gameMsg.str());
 				
 				// process contained plasma message
-				if (processGameMessage(&gameMsg.msgStream, u)) return 1;
+				tUruObjectRef receiver;
+				if (processGameMessage(&gameMsg.msgStream, u, &receiver)) return 1;
 				
 				// Because sharing the Relto book causes everyone in the age to crash
 				// out, throw out the initial message of the exchange. This is all we
-				// can do without client-side PRP file updates. Other sharing is fine
-				// and I could write code to throw out *only* the Relto share, but we
-				// don't need sharing the way things are usually set up right now, so
-				// it's not worth the effort to me. (Also, sharing is not enabled for
-				// books, just Bahro stones.)
-				if (gameMsg.msgStream.getType() == plNotifyMsg) {
-					log->log("INF: Throwing out book share notification from %s\n", u->str());
-					sendKIMessage(tStrBuf("Ignoring the book share notification you just sent - it would crash people"), u);
+				// can do without client-side PRP file updates.
+				// To distinguish Relto book sharing from other book sharing, we check
+				// the type of the page the PythonFileMod doing all this is on: The
+				// Relto one is in a GUI page with type 0x0004, books you find in the
+				// age have their PythonFileMod on a page with type 0x0000
+				if (gameMsg.msgStream.getType() == plNotifyMsg && receiver.hasObj && receiver.obj.pageType != 0x000) {
+					log->log("INF: Throwing out relto book share notification from %s\n", u->str());
+					sendKIMessage(tStrBuf("Ignoring the relto book share notification you just sent - it would crash people"), u);
 					return 1;
 				}
 				
@@ -704,7 +706,7 @@ namespace alc {
 				if (testAndSet.isLockReq) {
 					// build the game message
 					tpServerReplyMsg serverReplyMsg = tpServerReplyMsg(tUruObjectRef()); // the parent is an empty object
-					serverReplyMsg.references.push_back(tUruObjectRef(testAndSet.obj)); // add the sent object as reference
+					serverReplyMsg.receivers.push_back(tUruObjectRef(testAndSet.obj)); // add the sent object as receiver
 					serverReplyMsg.flags = 0x00000800;
 					serverReplyMsg.unk3 = 1;
 					// send message
