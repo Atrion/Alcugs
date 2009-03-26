@@ -273,7 +273,7 @@ namespace alc {
 			
 			// make sure this player is on none of the pages' player lists
 			for (tAgeInfo::tPageList::iterator it = ageInfo->pages.begin(); it != ageInfo->pages.end(); ++it)
-				removePlayerFromPage(&*it, u->ki);
+				removePlayerFromPage(&it->second, u->ki);
 			
 			// this player is no longer joined
 			u->joined = false;
@@ -474,9 +474,9 @@ namespace alc {
 				if (!page)
 					throw txProtocolError(_WHERE("Requested non-existing page %s (0x%08X)", pagingRoom.pageName.c_str(), pagingRoom.pageId));
 				// fill in page information
-				if (!page->plasmaPageId) {
-					page->plasmaPageId = pagingRoom.pageId;
-					page->plasmaPageType = pagingRoom.pageType;
+				if (!page->pageId) {
+					page->pageId = pagingRoom.pageId;
+					page->pageType = pagingRoom.pageType;
 				}
 				
 				// process message

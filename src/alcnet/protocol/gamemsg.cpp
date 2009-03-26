@@ -325,8 +325,8 @@ namespace alc {
 	//// tmGroupOwner
 	tmGroupOwner::tmGroupOwner(tNetSession *u, tPageInfo *page, bool isOwner) : tmMsgBase(NetMsgGroupOwner, plNetAck | plNetCustom, u)
 	{
-		this->pageId = page->plasmaPageId;
-		this->pageType = page->plasmaPageType;
+		this->pageId = page->pageId;
+		this->pageType = page->pageType;
 		this->isOwner = isOwner;
 	}
 	

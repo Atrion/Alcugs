@@ -47,18 +47,20 @@ namespace alc {
 	////IMPLEMENTATION
 	tPageInfo::tPageInfo(tConfigVal *val, int row)
 	{
-		tStrBuf name = val->getVal(0, row), id = val->getVal(1, row), conditionalLoad = val->getVal(2, row);
+		tStrBuf name = val->getVal(0, row), number = val->getVal(1, row), conditionalLoad = val->getVal(2, row);
 		strncpy(this->name, name.c_str(), 199);
-		this->id = id.asU16();
+		U16 numberCheck = number.asU16();
+		if (numberCheck > 200) throw txBase(_WHERE("PageNumber %s is bigger than 200", numberCheck));
+		this->number = numberCheck;
 		if (conditionalLoad.isNull()) this->conditionalLoad = false;
 		else {
 			if (conditionalLoad != "1") throw txBase(_WHERE("if a conditional load value is specified, it must be set to 1"));
-			this->conditionalLoad = conditionalLoad.asByte();
+			this->conditionalLoad = true;
 		}
-		DBG(9, "New Page %s: ID %d, conditionalLoad %d\n", this->name, this->id, this->conditionalLoad);
+		DBG(9, "New Page %s: Number %d, conditionalLoad %d\n", this->name, this->number, this->conditionalLoad);
 		
 		owner = 0;
-		plasmaPageId = plasmaPageType = 0;
+		pageId = pageType = 0;
 	}
 	
 	tPageInfo::tPlayerList::iterator tPageInfo::getPlayer(U32 ki)
@@ -96,9 +98,10 @@ namespace alc {
 			tConfigVal *pageVal = cfg->findVar("Page");
 			int nPages = pageVal ? pageVal->getRows() : 0;
 			if (!nPages) throw txBase(_WHERE("an age without pages? This is not possible"));
-			pages.reserve(nPages); // avoid re-allocating memory
-			for (int i = 0; i < nPages; ++i)
-				pages.push_back(tPageInfo(pageVal, i));
+			for (int i = 0; i < nPages; ++i) {
+				tPageInfo pageInfo(pageVal, i);
+				pages.insert(std::pair<U32, tPageInfo>(pageInfo.number, pageInfo));
+			}
 		}
 		// done!
 		delete cfg;
@@ -106,11 +109,16 @@ namespace alc {
 	
 	tPageInfo *tAgeInfo::getPage(U32 pageId)
 	{
-		U16 id = (pageId - (seqPrefix << 8)) - 33; // weird, but whatever...
-		for (tPageList::iterator it = pages.begin(); it != pages.end(); ++it) {
-			if (it->id == id) return &*it;
-		}
-		return NULL;
+		Byte number = alcPageIdToNumber(seqPrefix, pageId);
+		tPageList::iterator it = pages.find(number);
+		return (it == pages.end() ? NULL : &it->second);
+	}
+	
+	bool tAgeInfo::validPage(U32 pageId)
+	{
+		Byte number = alcPageIdToNumber(seqPrefix, pageId);
+		if (number == 256-2) return true; // BuiltIn page
+		return pages.count(number);
 	}
 	
 	tAgeInfoLoader::tAgeInfoLoader(const char *name, bool loadPages)
