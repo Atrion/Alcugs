@@ -88,11 +88,9 @@ namespace alc {
 		// format
 		tStreamedObject msgStream;
 	protected:
-		tmGameMessage(U16 cmd, U32 flags, tNetSession *u);
-		tmGameMessage(U16 cmd, U32 flags, tNetSession *u, tmGameMessage &msg);
-		tmGameMessage(U16 cmd, U32 flags, tNetSession *u, U32 ki, tpObject *obj);
-		
-		void copyBaseProps(tmGameMessage &msg);
+		tmGameMessage(U16 cmd, tNetSession *u);
+		tmGameMessage(U16 cmd, tNetSession *u, tmGameMessage &msg);
+		tmGameMessage(U16 cmd, tNetSession *u, U32 ki, tpObject *obj);
 	};
 	
 	class tmGameMessageDirected : public tmGameMessage {
@@ -106,9 +104,9 @@ namespace alc {
 		typedef std::vector<U32> tRecList;
 		tRecList recipients;
 	protected:
-		tmGameMessageDirected(U16 cmd, U32 flags, tNetSession *u);
-		tmGameMessageDirected(U16 cmd, U32 flags, tNetSession *u, tmGameMessageDirected &msg);
-		tmGameMessageDirected(U16 cmd, U32 flags, tNetSession *u, U32 ki, tpObject *obj);
+		tmGameMessageDirected(U16 cmd, tNetSession *u);
+		tmGameMessageDirected(U16 cmd, tNetSession *u, tmGameMessageDirected &msg);
+		tmGameMessageDirected(U16 cmd, tNetSession *u, U32 ki, tpObject *obj);
 	};
 	
 	class tmLoadClone : public tmGameMessage {
@@ -224,7 +222,7 @@ namespace alc {
 		tStreamedObject sdlStream;
 		bool isInitial;
 	protected:
-		tmSDLState(U16 cmd, U32 flags, tNetSession *u, tmSDLState &msg);
+		tmSDLState(U16 cmd, tNetSession *u, tmSDLState &msg);
 		
 		virtual void additionalFields();
 	};

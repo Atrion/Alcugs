@@ -57,7 +57,7 @@
 #define plNetIP         0x00000010 //* contains client's ip address
 
 //Suppositions for unidentified flags.
-#define plNetUnk1       0x00000002 //Unknown, seen in NetMsgGameMessage
+#define plNetUnk1       0x00000002 //Unknown, seen in NetMsgGameMessage and NetMsgGameMessageDirected
 #define plNetUnk2       0x00002000 //Unknown, seen in NetMsgGameMessage and NetMsgSDLStateBCast
 #define plNetCustom     0x00020000 //Unknown purpose flag
 #define plNetStateReq   0x00000800 //Unknown, seen on the 1st plNetMsgStateRequest

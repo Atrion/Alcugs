@@ -544,6 +544,7 @@ namespace alc {
 				// books, just Bahro stones.)
 				if (gameMsg.msgStream.getType() == plNotifyMsg) {
 					log->log("INF: Throwing out book share notification from %s\n", u->str());
+					sendKIMessage(tStrBuf("Ignoring the book share notification you just sent - it would crash people"), u);
 					return 1;
 				}
 				
