@@ -50,7 +50,6 @@ namespace alc {
 		tStrBuf name = val->getVal(0, row), number = val->getVal(1, row), conditionalLoad = val->getVal(2, row);
 		strncpy(this->name, name.c_str(), 199);
 		this->number = number.asU16();
-		if (this->number > 240 && this->number < 260) throw txBase(_WHERE("Invalid page number %d\n", this->number));
 		if (conditionalLoad.isNull()) this->conditionalLoad = false;
 		else {
 			if (conditionalLoad != "1") throw txBase(_WHERE("if a conditional load value is specified, it must be set to 1"));
