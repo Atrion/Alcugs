@@ -898,10 +898,20 @@ tStrBuf & tStrBuf::substring(U32 start,U32 len) {
 	return *out;
 }
 bool tStrBuf::startsWith(const char * pat) {
-	return(substring(0,strlen(pat))==pat);
+	try {
+		return(substring(0,strlen(pat))==pat);
+	}
+	catch (txOutOfRange &e) {
+		return false;
+	}
 }
 bool tStrBuf::endsWith(const char * pat) {
-	return(substring(size()-strlen(pat),strlen(pat))==pat);
+	try {
+		return(substring(size()-strlen(pat),strlen(pat))==pat);
+	}
+	catch (txOutOfRange &e) {
+		return false;
+	}
 }
 tStrBuf & tStrBuf::dirname() {
 	tStrBuf * out;
