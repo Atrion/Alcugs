@@ -122,23 +122,16 @@ namespace alc {
 	
 	tmGameMessage::tmGameMessage(tNetSession *u, U32 ki, tpObject *obj)
 	 : tmMsgBase(NetMsgGameMessage, plNetAck | plNetKi, u), msgStream(obj)
-	{
-		this->ki = ki;
-	}
+	{ this->ki = ki; }
 	
 	// constructors for sub-classes
-	tmGameMessage::tmGameMessage(U16 cmd, tNetSession *u) : tmMsgBase(cmd, plNetAck | plNetKi, u), msgStream()
-	{  }
-	
 	tmGameMessage::tmGameMessage(U16 cmd, tNetSession *u, tmGameMessage &msg)
 	 : tmMsgBase(cmd, msg.flags, u), msgStream(msg.msgStream)
 	{ ki = msg.ki; }
 	
 	tmGameMessage::tmGameMessage(U16 cmd, tNetSession *u, U32 ki, tpObject *obj)
 	 : tmMsgBase(cmd, plNetAck | plNetKi, u), msgStream(obj)
-	{
-		this->ki = ki;
-	}
+	{ this->ki = ki; }
 	
 	// methods
 	void tmGameMessage::store(tBBuf &t)
@@ -176,9 +169,6 @@ namespace alc {
 	{ }
 	
 	// constructors for sub-classes
-	tmGameMessageDirected::tmGameMessageDirected(U16 cmd, tNetSession *u) : tmGameMessage(cmd, u)
-	{ }
-	
 	tmGameMessageDirected::tmGameMessageDirected(U16 cmd, tNetSession *u, tmGameMessageDirected &msg)
 	 : tmGameMessage(cmd, u, msg), recipients(msg.recipients)
 	{ }
