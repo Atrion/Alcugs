@@ -107,6 +107,9 @@ namespace alc {
 			if (lingerTime && lingerTime < 20)
 				log->log("WARN: You set a linger time of only %d, which could result in the game server going down before the player even has the chance to join it - I recommend to set it to at least 20\n", lingerTime);
 		}
+		
+		var = cfg->getVar("game.tmp.hacks.noreltoshare");
+		noReltoShare = (var.isNull() || var.asByte()); // enabled per default
 	}
 	
 	void tUnetGameServer::additionalVaultProcessing(tNetSession *u, tvMessage *msg)
@@ -544,7 +547,7 @@ namespace alc {
 				// the type of the page the PythonFileMod doing all this is on: The
 				// Relto one is in a GUI page with type 0x0004, books you find in the
 				// age have their PythonFileMod on a page with type 0x0000
-				if (gameMsg.msgStream.getType() == plNotifyMsg && receiver.hasObj && receiver.obj.pageType != 0x000) {
+				if (noReltoShare && gameMsg.msgStream.getType() == plNotifyMsg && receiver.hasObj && receiver.obj.pageType != 0x000) {
 					log->log("INF: Throwing out relto book share notification from %s\n", u->str());
 					sendKIMessage(tStrBuf("Ignoring the relto book share notification you just sent - it would crash people"), u);
 					return 1;

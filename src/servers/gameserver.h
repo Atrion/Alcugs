@@ -95,6 +95,7 @@ namespace alc {
 		
 		U32 lastPlayerLeft;
 		U32 lingerTime;
+		bool noReltoShare;
 	};
 
 } //End alc namespace

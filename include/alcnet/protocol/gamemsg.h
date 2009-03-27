@@ -88,7 +88,6 @@ namespace alc {
 		// format
 		tStreamedObject msgStream;
 	protected:
-		tmGameMessage(U16 cmd, tNetSession *u);
 		tmGameMessage(U16 cmd, tNetSession *u, tmGameMessage &msg);
 		tmGameMessage(U16 cmd, tNetSession *u, U32 ki, tpObject *obj);
 	};
@@ -104,7 +103,6 @@ namespace alc {
 		typedef std::vector<U32> tRecList;
 		tRecList recipients;
 	protected:
-		tmGameMessageDirected(U16 cmd, tNetSession *u);
 		tmGameMessageDirected(U16 cmd, tNetSession *u, tmGameMessageDirected &msg);
 		tmGameMessageDirected(U16 cmd, tNetSession *u, U32 ki, tpObject *obj);
 	};
