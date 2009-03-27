@@ -95,7 +95,7 @@ namespace alc {
 			if (!ageSDLVersion) return;
 			// first make up the UruObject
 			tUruObject obj;
-			obj.pageId = alcPageNumberToId(age->seqPrefix, 256-2); // BultIn page ID
+			obj.pageId = alcPageNumberToId(age->seqPrefix, 254); // BultIn page ID
 			obj.pageType = 0x0008; // BultIn
 			obj.objType = 0x0001; // SceneObject
 			obj.objName = "AgeSDLHook";

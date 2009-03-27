@@ -723,15 +723,19 @@ void alctypes_tests() {
 }
 
 void alcpageid_tests() {
+	// city
 	assert(alcPageIdToNumber(6, 0x00000621) == 0);
 	assert(alcPageIdToNumber(6, 0x00000627) == 6);
-	assert(alcPageIdToNumber(6, 0x0000071F) == 256-2);
-	assert(alcPageIdToNumber(6, 0x00000720) == 256-1);
-	
+	assert(alcPageIdToNumber(6, 0x0000071F) == 254); // BultIn
+	assert(alcPageIdToNumber(6, 0x00000720) == 255); // Textures
 	assert(alcPageNumberToId(6, 0) == 0x00000621);
 	assert(alcPageNumberToId(6, 6) == 0x00000627);
-	assert(alcPageNumberToId(6, 256-2) == 0x0000071F);
-	assert(alcPageNumberToId(6, 256-1) == 0x00000720);
+	assert(alcPageNumberToId(6, 254) == 0x0000071F);
+	assert(alcPageNumberToId(6, 255) == 0x00000720);
+	
+	// Pahts (page number > 255)
+	assert(alcPageIdToNumber(189, 0x0000BEC9) == 424);
+	assert(alcPageNumberToId(189, 424) == 0x0000BEC9);
 }
 
 void alcparser_tests() {

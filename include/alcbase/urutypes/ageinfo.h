@@ -52,7 +52,7 @@ namespace alc {
 		inline bool hasPlayer(U32 ki) { return getPlayer(ki) != players.end(); }
 		
 		char name[200];
-		Byte number;
+		U16 number;
 		bool conditionalLoad;
 		
 		// data for the messages (filled when we get a NetMsgPagingRom for this page)
@@ -72,7 +72,7 @@ namespace alc {
 		U32 seqPrefix; // it's actually 3 Bytes
 		char name[200];
 	
-		typedef std::map<Byte, tPageInfo> tPageList;
+		typedef std::map<U16, tPageInfo> tPageList;
 		tPageList pages;
 	};
 	

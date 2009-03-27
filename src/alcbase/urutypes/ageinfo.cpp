@@ -49,9 +49,8 @@ namespace alc {
 	{
 		tStrBuf name = val->getVal(0, row), number = val->getVal(1, row), conditionalLoad = val->getVal(2, row);
 		strncpy(this->name, name.c_str(), 199);
-		U16 numberCheck = number.asU16();
-		if (numberCheck > 200) throw txBase(_WHERE("PageNumber %s is bigger than 200", numberCheck));
-		this->number = numberCheck;
+		this->number = number.asU16();
+		if (this->number > 240 && this->number < 260) throw txBase(_WHERE("Invalid page number %d\n", this->number));
 		if (conditionalLoad.isNull()) this->conditionalLoad = false;
 		else {
 			if (conditionalLoad != "1") throw txBase(_WHERE("if a conditional load value is specified, it must be set to 1"));
@@ -109,15 +108,15 @@ namespace alc {
 	
 	tPageInfo *tAgeInfo::getPage(U32 pageId)
 	{
-		Byte number = alcPageIdToNumber(seqPrefix, pageId);
+		U16 number = alcPageIdToNumber(seqPrefix, pageId);
 		tPageList::iterator it = pages.find(number);
 		return (it == pages.end() ? NULL : &it->second);
 	}
 	
 	bool tAgeInfo::validPage(U32 pageId)
 	{
-		Byte number = alcPageIdToNumber(seqPrefix, pageId);
-		if (number == 256-2) return true; // BuiltIn page
+		U16 number = alcPageIdToNumber(seqPrefix, pageId);
+		if (number == 254) return true; // BuiltIn page
 		return pages.count(number);
 	}
 	

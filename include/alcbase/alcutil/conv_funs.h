@@ -83,11 +83,11 @@ U16 alcParseKey(tStrBuf &t);
 
 
 /** convert pageIDs to pageNumbers and the other way around - wired, but whatever... */
-inline Byte alcPageIdToNumber(U32 seqPrefix, U32 pageId)
+inline U16 alcPageIdToNumber(U32 seqPrefix, U32 pageId)
 {
 	return pageId - (seqPrefix << 8) - 33;
 }
-inline U32 alcPageNumberToId(U32 seqPrefix, Byte number)
+inline U32 alcPageNumberToId(U32 seqPrefix, U16 number)
 {
 	return (seqPrefix << 8) + 33 + number;
 }
