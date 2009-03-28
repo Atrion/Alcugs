@@ -53,6 +53,7 @@ namespace alc {
 	class tSdlStateVar : public tBaseType {
 	public:
 		tSdlStateVar(tSdlStructVar *sdlVar, tAgeStateManager *stateMgr, Byte num);
+		tSdlStateVar(tSdlStructVar *sdlVar, const tSdlStateVar &var, Byte num);
 		tSdlStateVar(const tSdlStateVar &var);
 		const tSdlStateVar &operator=(const tSdlStateVar &var);
 		~tSdlStateVar(void);
@@ -64,6 +65,8 @@ namespace alc {
 			return (flags | f) == flags; // there can be several flags enabled in f, so a simple & is not enough
 		}
 		Byte getType(void);
+		tStrBuf getName(void);
+		U32 getSize(void);
 	private:
 		void clear(void);
 	
@@ -101,6 +104,7 @@ namespace alc {
 		inline bool isIndexed(void) { return incompleteVars || incompleteStructs; }
 		
 		void updateWith(tSdlStateBinary *newState); //!< updates the current state with the additional information from the new one
+		void updateTo(tSdlStruct *newSdlStruct); //!< updates the struct the data is saved in
 		
 		typedef std::list<tSdlStateVar> tVarList;
 	private:

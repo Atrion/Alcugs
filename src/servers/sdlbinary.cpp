@@ -62,9 +62,17 @@ namespace alc {
 		flags = 0x18; // default non-struct var
 	}
 	
+	tSdlStateVar::tSdlStateVar(tSdlStructVar *sdlVar, const tSdlStateVar &var, Byte num)
+	{
+		operator=(var); // first, copy the old one
+		// now we need to change some properties as this is updated to a new version
+		this->num = num;
+		this->sdlVar = sdlVar;
+	}
+	
 	tSdlStateVar::tSdlStateVar(const tSdlStateVar &var)
 	{
-		*this = var; // call operator= which does the real work
+		operator=(var); // this one does the real work
 	}
 	
 	const tSdlStateVar &tSdlStateVar::operator=(const tSdlStateVar &var)
@@ -350,6 +358,12 @@ namespace alc {
 	Byte tSdlStateVar::getType(void)
 	{ return sdlVar->type; }
 	
+	tStrBuf tSdlStateVar::getName(void)
+	{ return sdlVar->name; }
+	
+	U32 tSdlStateVar::getSize(void)
+	{ return sdlVar->size; }
+	
 	//// tSdlStateBinary
 	tSdlStateBinary::tSdlStateBinary(void)
 	{
@@ -429,6 +443,8 @@ namespace alc {
 	
 	void tSdlStateBinary::stream(tBBuf &t)
 	{
+		if (sdlStruct == NULL)
+			throw txUnet(_WHERE("You have to set a sdlStruct before streaming a sdlBinary"));
 		// write unknown header information
 		t.putByte(unk1);
 		t.putByte(0x00); // unk2
@@ -519,6 +535,40 @@ namespace alc {
 				*curIt = *newIt;
 			}
 		}
+	}
+	
+	void tSdlStateBinary::updateTo(tSdlStruct *newSdlStruct)
+	{
+		if (!sdlStruct || newSdlStruct->name != sdlStruct->name)
+			throw txUnet(_WHERE("Can only update structs of same type"));
+		if (newSdlStruct->version <= sdlStruct->version)
+			throw txUnet(_WHERE("I will not downgrade anything"));
+		// ok, do the same as when initializing a default struct, but fill it with the old data
+		tVarList newVars;
+		for (tSdlStruct::tVarList::iterator it = newSdlStruct->vars.begin(); it != newSdlStruct->vars.end(); ++it) {
+			if (it->type == DStruct)
+				throw txUnet(_WHERE("Can't update nested struct")); // this should never be necessary
+			else {
+				// check if we have that var in our old list
+				bool found = false;
+				for (tVarList::iterator jt = vars.begin(); jt != vars.end(); ++jt) {
+					if (jt->getName() != it->name) continue; // this is another var
+					if (jt->getSize() == it->size && jt->getType() == it->type) {
+						// ok, we found an old var of the same type - let's copy it
+						newVars.push_back(tSdlStateVar(&(*it), *jt, newVars.size()));
+						found = true;
+					}
+					break;
+				}
+				if (!found) // add default state
+					newVars.push_back(tSdlStateVar(&(*it), stateMgr, newVars.size()));
+			}
+		}
+		// save the new stuff
+		sdlStruct = newSdlStruct;
+		incompleteVars = incompleteStructs = false;
+		vars = newVars;
+		structs.empty();
 	}
 	
 	//// tSdlState

@@ -60,7 +60,7 @@ namespace alc {
 		
 		tConfig *cfg = alcGetConfig();
 		tStrBuf var = cfg->getVar("sdl");
-		if (var.size() < 2) throw txBase(_WHERE("a sdl path must be set"));
+		if (var.size() < 2) throw txUnet(_WHERE("a sdl path must be set"));
 		if (!var.endsWith("/")) var.writeStr("/");
 		
 		// load SDL files
@@ -161,6 +161,19 @@ namespace alc {
 					sdlStates.erase(it);
 			}
 			sdlStates.push_back(state);
+			if (logDetailed) {
+				log->log("Loaded ");
+				state.print(log);
+			}
+			// check if that struct can be updated
+			U32 structVersion = findLatestStructVersion(state.content.getName().c_str());
+			if (structVersion > state.content.getVersion()) {
+				state.content.updateTo(findStruct(state.content.getName(), structVersion));
+				if (logDetailed) {
+					log->log("Updated it to ");
+					state.print(log);
+				}
+			}
 		}
 		if (!file.eof())
 			throw txProtocolError(_WHERE("Agestate file is too long"));
@@ -315,7 +328,7 @@ namespace alc {
 			}
 			else if (!it->obj.hasCloneId) { // objects with CloneID are ok
 				tPageInfo *info = age->getPage(it->obj.pageId);
-				if (!info && !age->validPage(it->obj.pageId)) throw txBase(_WHERE("How did this invalid state get here: %s", it->obj.str()));
+				if (!info && !age->validPage(it->obj.pageId)) throw txUnet(_WHERE("How did this invalid state get here: %s", it->obj.str()));
 				else if (info && info->conditionalLoad) continue; // don't send this one, it's on an optional page
 			}
 			if (logDetailed) {
@@ -445,12 +458,14 @@ namespace alc {
 		return version;
 	}
 	
-	tSdlStruct *tAgeStateManager::findStruct(tStrBuf name, U32 version)
+	tSdlStruct *tAgeStateManager::findStruct(tStrBuf name, U32 version, bool throwOnError)
 	{
 		for (tSdlStructList::iterator it = structs.begin(); it != structs.end(); ++it) {
 			if (name == it->name && it->version == version) return &(*it);
 		}
-		throw txUnet(_WHERE("SDL version mismatch, no SDL Struct found for %s version %d", name.c_str(), version));
+		if (throwOnError)
+			throw txUnet(_WHERE("SDL version mismatch, no SDL Struct found for %s version %d", name.c_str(), version));
+		return NULL;
 	}
 	
 	/** This is the SDL file parser */
@@ -529,6 +544,8 @@ namespace alc {
 					if (!version)
 						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
 					sdlStruct.version = version;
+					if (findStruct(sdlStruct.name, sdlStruct.version, /*throwOnError*/false))
+						throw txUnet(_WHERE("Duplicate definition of %s version %d\n", sdlStruct.name.c_str(), sdlStruct.version));
 					state = 5;
 					break;
 				}
