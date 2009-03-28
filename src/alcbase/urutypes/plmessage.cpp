@@ -248,14 +248,17 @@ namespace alc {
 		if (var32 != 2) throw txUnexpectedData(_WHERE("plAvBrainGenericMsg.unk3 must be 2, not %d", var32));
 		var32 = t.getU32();
 		if (var32 != 2) throw txUnexpectedData(_WHERE("plAvBrainGenericMsg.unk4 must be 2, not %d", var32));
-		var8 = t.getByte();
-		if (var8 != 0) throw txUnexpectedData(_WHERE("plAvBrainGenericMsg.unk5 must be 0, not %d", var8));
+		
+		unk5 = t.getByte();
+		if (unk5 != 0 && unk5 != 1) throw txUnexpectedData(_WHERE("plAvBrainGenericMsg.unk5 must be 0 or 1, not %d", unk5));
+		
 		varFloat = t.getFloat();
 		if (varFloat != 0.0) throw txUnexpectedData(_WHERE("plAvBrainGenericMsg.unk6 must be 0.0, not %f", varFloat));
 		var8 = t.getByte();
 		if (var8 != 0) throw txUnexpectedData(_WHERE("plAvBrainGenericMsg.unk7 must be 0, not %d", var8));
-		var8 = t.getByte();
-		if (var8 != 0) throw txUnexpectedData(_WHERE("plAvBrainGenericMsg.unk8 must be 0, not %d", var8));
+		
+		unk8 = t.getByte();
+		if (unk8 != 0 && unk8 != 1) throw txUnexpectedData(_WHERE("plAvBrainGenericMsg.unk8 must be 0 or 1, not %d", unk8));
 		
 		unk9 = t.getFloat();
 	}
@@ -263,19 +266,19 @@ namespace alc {
 	void tpAvBrainGenericMsg::stream(tBBuf &t)
 	{
 		tpAvatarMsg::stream(t);
-		t.putU32(2);
-		t.putU32(2);
-		t.putByte(0);
-		t.putFloat(0.0);
-		t.putByte(0);
-		t.putByte(0);
+		t.putU32(2); // unk3
+		t.putU32(2); // unk4
+		t.putByte(unk5);
+		t.putFloat(0.0); // unk6
+		t.putByte(0); // unk7
+		t.putByte(unk8);
 		t.putFloat(unk9);
 	}
 	
 	void tpAvBrainGenericMsg::toString()
 	{
 		tpAvatarMsg::toString();
-		strBuf.printf(" Unknown 9: %f\n", unk9);
+		strBuf.printf(" Unkonw 5: %d, Unknown 8: %d, Unknown 9: %f\n", unk5, unk8, unk9);
 	}
 	
 	//// tpServerReplyMsg
