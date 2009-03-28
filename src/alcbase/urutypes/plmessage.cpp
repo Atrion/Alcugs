@@ -235,6 +235,49 @@ namespace alc {
 		strBuf.printf(" Unknown object: [%s], Count: %d\n", unkObj1.str(), count);
 	}
 	
+	//// tpAvBrainGenericMsg
+	void tpAvBrainGenericMsg::store(tBBuf &t)
+	{
+		tpAvatarMsg::store(t);
+		
+		float varFloat;
+		U32 var32;
+		Byte var8;
+		
+		var32 = t.getU32();
+		if (var32 != 2) throw txUnexpectedData(_WHERE("plAvBrainGenericMsg.unk3 must be 2, not %d", var32));
+		var32 = t.getU32();
+		if (var32 != 2) throw txUnexpectedData(_WHERE("plAvBrainGenericMsg.unk4 must be 2, not %d", var32));
+		var8 = t.getByte();
+		if (var8 != 0) throw txUnexpectedData(_WHERE("plAvBrainGenericMsg.unk5 must be 0, not %d", var8));
+		varFloat = t.getFloat();
+		if (varFloat != 0.0) throw txUnexpectedData(_WHERE("plAvBrainGenericMsg.unk6 must be 0.0, not %f", varFloat));
+		var8 = t.getByte();
+		if (var8 != 0) throw txUnexpectedData(_WHERE("plAvBrainGenericMsg.unk7 must be 0, not %d", var8));
+		var8 = t.getByte();
+		if (var8 != 0) throw txUnexpectedData(_WHERE("plAvBrainGenericMsg.unk8 must be 0, not %d", var8));
+		
+		unk9 = t.getFloat();
+	}
+	
+	void tpAvBrainGenericMsg::stream(tBBuf &t)
+	{
+		tpAvatarMsg::stream(t);
+		t.putU32(2);
+		t.putU32(2);
+		t.putByte(0);
+		t.putFloat(0.0);
+		t.putByte(0);
+		t.putByte(0);
+		t.putFloat(unk9);
+	}
+	
+	void tpAvBrainGenericMsg::toString()
+	{
+		tpAvatarMsg::toString();
+		strBuf.printf(" Unknown 9: %f\n", unk9);
+	}
+	
 	//// tpServerReplyMsg
 	void tpServerReplyMsg::store(tBBuf &t)
 	{

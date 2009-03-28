@@ -104,7 +104,7 @@ public:
 	}
 	void setBindPort(U16 lport); //lport in host order
 	void setBindAddress(const char * lhost);
-	inline void send(tmMsgBase &m) { m.getSession()->send(m); }
+	inline void send(tmMsgBase &m, U32 delay = 0) { m.getSession()->send(m, delay); } //!< delay is in msecs
 
 protected:
 	void openlogs();

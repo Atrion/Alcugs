@@ -251,7 +251,7 @@ namespace alc {
 		
 		if (flags & 0x0040) { // parent age name
 			// ignore it
-			tUStr desc;
+			tStrBuf desc;
 			t.get(desc);
 			flags &= ~0x0040; // disable it
 			lerr->log("Ignoring flag 0x0040 (parent age name) of an AgeLinkStruct (Value: %s)\n", desc.c_str());

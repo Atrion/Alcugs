@@ -62,6 +62,14 @@ namespace alc {
 		virtual void toString(void);
 	};
 	
+	class tpAvatarMsg : public tpMessage {
+	public:
+		tpAvatarMsg(void) : tpMessage(plAvatarMsg) {}
+	protected:
+		tpAvatarMsg(U16 type) : tpMessage(type) {}
+		tpAvatarMsg(U16 type, const tUruObjectRef &sender) : tpMessage(type, sender) {}
+	};
+	
 	class tpLoadCloneMsg : public tpMessage {
 	public:
 		tpLoadCloneMsg(void) : tpMessage(plLoadCloneMsg) { subMessage = NULL; }
@@ -108,6 +116,19 @@ namespace alc {
 		// format
 		tUruObjectRef unkObj1;
 		U16 count;
+	protected:
+		virtual void toString(void);
+	};
+	
+	class tpAvBrainGenericMsg : public tpAvatarMsg {
+	public:
+		tpAvBrainGenericMsg(void) : tpAvatarMsg(plAvBrainGenericMsg) {}
+		tpAvBrainGenericMsg(const tUruObjectRef &sender) : tpAvatarMsg(plAvBrainGenericMsg, sender) { unk9 = 0.0; }
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
+		
+		// format
+		float unk9;
 	protected:
 		virtual void toString(void);
 	};

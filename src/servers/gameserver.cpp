@@ -305,7 +305,7 @@ namespace alc {
 		}
 	}
 	
-	template <class T> void tUnetGameServer::bcastMessage(T &msg)
+	template <class T> void tUnetGameServer::bcastMessage(const T &msg, U32 delay)
 	{
 		// broadcast message
 		tNetSession *session;
@@ -313,7 +313,7 @@ namespace alc {
 		while ((session = smgr->getNext())) {
 			if (session->joined && session->ki != msg.ki) {
 				T fwdMsg(session, msg);
-				send(fwdMsg);
+				send(fwdMsg, delay);
 			}
 		}
 	}
@@ -331,6 +331,29 @@ namespace alc {
 				send(memberUpdate);
 			}
 		}
+	}
+	
+	tmGameMessage tUnetGameServer::makePlayerIdle(tNetSession *u, tUruObject rec)
+	{
+		// get the right object for the receiver
+		if (rec.pageId == 0xFFFF0304) { // Yeesha
+			rec.objType = 0x008F;
+			rec.objName = "Avatar01";
+		}
+		else if (rec.pageId == 0xFFFF030B) { // YeeshaNoGlow
+			rec.objType = 0x008F;
+			rec.objName = "AvatarYeeshaNoGlow";
+		}
+		else { // everyone else
+			rec.objType = 0x0095;
+			rec.objName = "LODAvatar01";
+		}
+		// create the plAvBrainGenericMsg
+		tpAvBrainGenericMsg avBrainMsg = tpAvBrainGenericMsg(tUruObjectRef());
+		avBrainMsg.receivers.push_back(rec);
+		avBrainMsg.flags = 0x00000A40;
+		// create the message
+		return tmGameMessage(u, u->ki, &avBrainMsg);
 	}
 
 	void tUnetGameServer::onIdle(bool idle)
@@ -368,6 +391,20 @@ namespace alc {
 
 	int tUnetGameServer::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
 	{
+		if (msg->cmd == NetMsgFindAge) {
+			// he is going to leave soon - make sure everyone is idle for him
+			tNetSession *session;
+			smgr->rewind();
+			while ((session = smgr->getNext())) {
+				if (session == u) continue;
+				tGameData *data = dynamic_cast<tGameData *>(session->data);
+				if (data) {
+					tmGameMessage msg(u, makePlayerIdle(session, data->obj));
+					send(msg);
+				}
+			}
+		}
+	
 		int ret = tUnetLobbyServerBase::onMsgRecieved(ev, msg, u); // first let tUnetLobbyServerBase process the message
 		if (ret != 0) return ret; // cancel if it was processed, otherwise it's our turn
 		
@@ -649,11 +686,18 @@ namespace alc {
 				loadClone.msgStream.eofCheck();
 				loadClone.checkSubMsg(loadCloneMsg);
 				
-				// save clone in age state
+				if (loadClone.isPlayerAvatar && !loadClone.isLoad) {
+					// he leaves - make him idle
+					bcastMessage(makePlayerIdle(u, loadCloneMsg->clonedObj.obj));
+					// It is too late to make others idle - if he linked out, that was already done when we got the NetMsgFindAge.
+					// If he quits, he will do that too quickly.
+				}
+				
+				// save clone in age state - this my delete the loadCloneMsg, so don't use it aferwards
 				ageState->saveClone(loadCloneMsg);
 				
-				// broadcast message
-				bcastMessage(loadClone);
+				// broadcast message. A delay of less than 2800msecs will cause crashes when the avatar just left the sitting state.
+				bcastMessage(loadClone, /*delay*/ (loadClone.isPlayerAvatar && !loadClone.isLoad) ? 2800 : 0 );
 				
 				// if it's an (un)load of the player's avatar, do the member list update
 				if (loadClone.isPlayerAvatar) {

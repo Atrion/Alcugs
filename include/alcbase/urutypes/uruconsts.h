@@ -354,6 +354,7 @@ unsilenced 29
 #define plEnableMsg                0x024F
 #define plWarpMsg                  0x0250
 #define plServerReplyMsg           0x026A
+#define plAvatarMsg                0x0292
 #define plAvTaskMsg                0x0293
 #define plAvSeekMsg                0x0294
 #define plLinkToAgeMsg             0x02E1

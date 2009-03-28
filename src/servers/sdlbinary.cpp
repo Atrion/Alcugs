@@ -502,7 +502,7 @@ namespace alc {
 		return sdlStruct ? sdlStruct->version : 0;
 	}
 	
-	// this is not really something caring about the binary representation of a SDL state, but it just belongs to this class
+	// what is below here is not really something caring about the binary representation of a SDL state, but it just belongs to this class
 	void tSdlStateBinary::updateWith(tSdlStateBinary *newState)
 	{
 		if (sdlStruct != newState->sdlStruct || !sdlStruct)
@@ -568,7 +568,7 @@ namespace alc {
 		sdlStruct = newSdlStruct;
 		incompleteVars = incompleteStructs = false;
 		vars = newVars;
-		structs.empty();
+		structs.clear();
 	}
 	
 	//// tSdlState

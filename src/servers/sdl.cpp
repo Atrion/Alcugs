@@ -236,12 +236,14 @@ namespace alc {
 		while (it != clones.end()) {
 			if ((*it)->clonedObj.obj.clonePlayerId == player->ki) { // that clone is dead now, remove it and all of it's SDL states
 				log->log("Removing Clone [%s] as it belongs to player %s who just left us\n", (*it)->clonedObj.str(), player->str());
-				// remove avatar from age
+				// make sure that clone is in the idle state
+				net->bcastMessage(net->makePlayerIdle(player, (*it)->clonedObj.obj));
+				// remove states from our list
+				removeCloneStates((*it)->clonedObj.obj.clonePlayerId);
+				// remove avatar from age (a delay of less than 2800msecs will cause crashes when the avatar just left the sitting state)
 				(*it)->isLoad = false;
 				tmLoadClone loadClone(player, *it, false/*isInitial*/);
-				net->bcastMessage(loadClone);
-				// remove states from our list
-				removeSDLStates((*it)->clonedObj.obj.clonePlayerId);
+				net->bcastMessage(loadClone, 2800);
 				delete *it;
 				it = clones.erase(it);
 			}
@@ -344,7 +346,7 @@ namespace alc {
 		return n;
 	}
 	
-	void tAgeStateManager::removeSDLStates(U32 ki, U32 cloneId)
+	void tAgeStateManager::removeCloneStates(U32 ki, U32 cloneId)
 	{
 		// remove all SDL states which belong the the object with the clonePlayerId which was passed
 		tSdlList::iterator it = sdlStates.begin();
@@ -379,7 +381,8 @@ namespace alc {
 		}
 		else { // remove clone if it was in list
 			log->log("Removing Clone [%s]\n", clone->clonedObj.str());
-			removeSDLStates(clone->clonedObj.obj.clonePlayerId, clone->clonedObj.obj.cloneId); // remove SDL states even if cloenw as not on list
+			// remove SDL states even if clone is not on list, just to be sure
+			removeCloneStates(clone->clonedObj.obj.clonePlayerId, clone->clonedObj.obj.cloneId);
 			if (it != clones.end()) {
 				delete *it;
 				clones.erase(it);

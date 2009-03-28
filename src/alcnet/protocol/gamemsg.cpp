@@ -116,7 +116,7 @@ namespace alc {
 	tmGameMessage::tmGameMessage(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
-	tmGameMessage::tmGameMessage(tNetSession *u, tmGameMessage &msg)
+	tmGameMessage::tmGameMessage(tNetSession *u, const tmGameMessage &msg)
 	 : tmMsgBase(NetMsgGameMessage, msg.flags, u), msgStream(msg.msgStream)
 	{ ki = msg.ki; }
 	
@@ -125,7 +125,7 @@ namespace alc {
 	{ this->ki = ki; }
 	
 	// constructors for sub-classes
-	tmGameMessage::tmGameMessage(U16 cmd, tNetSession *u, tmGameMessage &msg)
+	tmGameMessage::tmGameMessage(U16 cmd, tNetSession *u, const tmGameMessage &msg)
 	 : tmMsgBase(cmd, msg.flags, u), msgStream(msg.msgStream)
 	{ ki = msg.ki; }
 	
@@ -160,7 +160,7 @@ namespace alc {
 	tmGameMessageDirected::tmGameMessageDirected(tNetSession *u) : tmGameMessage(u)
 	{ }
 	
-	tmGameMessageDirected::tmGameMessageDirected(tNetSession *u, tmGameMessageDirected &msg)
+	tmGameMessageDirected::tmGameMessageDirected(tNetSession *u, const tmGameMessageDirected &msg)
 	 : tmGameMessage(NetMsgGameMessageDirected, u, msg), recipients(msg.recipients)
 	{ }
 	
@@ -169,7 +169,7 @@ namespace alc {
 	{ }
 	
 	// constructors for sub-classes
-	tmGameMessageDirected::tmGameMessageDirected(U16 cmd, tNetSession *u, tmGameMessageDirected &msg)
+	tmGameMessageDirected::tmGameMessageDirected(U16 cmd, tNetSession *u, const tmGameMessageDirected &msg)
 	 : tmGameMessage(cmd, u, msg), recipients(msg.recipients)
 	{ }
 	
@@ -200,7 +200,7 @@ namespace alc {
 	tmLoadClone::tmLoadClone(tNetSession *u) : tmGameMessage(u)
 	{ }
 	
-	tmLoadClone::tmLoadClone(tNetSession *u, tmLoadClone &msg)
+	tmLoadClone::tmLoadClone(tNetSession *u, const tmLoadClone &msg)
 	 : tmGameMessage(NetMsgLoadClone, u, msg), obj(msg.obj)
 	{
 		isPlayerAvatar = msg.isPlayerAvatar;
@@ -508,7 +508,7 @@ namespace alc {
 		sdlStream.put(*sdl);
 	}
 	
-	tmSDLState::tmSDLState(U16 cmd, tNetSession *u, tmSDLState &msg)
+	tmSDLState::tmSDLState(U16 cmd, tNetSession *u, const tmSDLState &msg)
 	 : tmMsgBase(cmd, msg.flags, u), obj(msg.obj), sdlStream(msg.sdlStream)
 	{ isInitial = msg.isInitial; }
 	
@@ -547,7 +547,7 @@ namespace alc {
 	tmSDLStateBCast::tmSDLStateBCast(tNetSession *u) : tmSDLState(u)
 	{ }
 	
-	tmSDLStateBCast::tmSDLStateBCast(tNetSession *u, tmSDLStateBCast & msg)
+	tmSDLStateBCast::tmSDLStateBCast(tNetSession *u, const tmSDLStateBCast & msg)
 	 : tmSDLState(NetMsgSDLStateBCast, u, msg)
 	{
 		ki = msg.ki;
