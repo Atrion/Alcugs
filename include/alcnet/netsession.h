@@ -66,7 +66,7 @@ public:
 	tNetSessionIte getIte();
 	void checkAlive(void);
 	U32 onlineTime(void);
-	void send(tmBase &msg);
+	void send(tmBase &msg, U32 delay = 0); //!< delay is in msecs
 	void terminate(int tout);
 	void setAuthData(Byte accessLevel, const char *passwd);
 	

@@ -66,7 +66,8 @@ namespace alc {
 		tUnetGameServer(void);
 		~tUnetGameServer(void);
 		
-		template <class T> void bcastMessage(T &msg);
+		template <class T> void bcastMessage(const T &msg, U32 delay = 0); //!< delay is in msecs
+		tmGameMessage makePlayerIdle(tNetSession *u, tUruObject rec);
 	protected:
 		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
 		virtual void onIdle(bool idle);

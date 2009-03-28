@@ -57,6 +57,7 @@ namespace alc {
 			case plEnableMsg: return "plEnableMsg";
 			case plWarpMsg: return "plWarpMsg";
 			case plServerReplyMsg: return "plServerReplyMsg";
+			case plAvatarMsg: return "plAvatarMsg";
 			case plAvTaskMsg: return "plAvTaskMsg";
 			case plAvSeekMsg: return "plAvSeekMsg";
 			case plLinkToAgeMsg: return "plLinkToAgeMsg";
@@ -94,7 +95,10 @@ namespace alc {
 		switch (type) {
 			// known message types
 			case plLoadCloneMsg: return new tpLoadCloneMsg();
+			case plServerReplyMsg: return new tpServerReplyMsg();
+			case plAvatarMsg: return new tpAvatarMsg();
 			case plParticleTransferMsg: return new tpParticleTransferMsg();
+			case plAvBrainGenericMsg: return new tpAvBrainGenericMsg();
 			case pfKIMsg: return new tpKIMsg();
 			case plLoadAvatarMsg: return new tpLoadAvatarMsg();
 			// NULL type
@@ -104,7 +108,6 @@ namespace alc {
 			case plControlEventMsg:
 			case plEnableMsg:
 			case plWarpMsg:
-			case plServerReplyMsg:
 			case plAvTaskMsg:
 			case plAvSeekMsg:
 			case plLinkToAgeMsg:
@@ -115,7 +118,6 @@ namespace alc {
 			case plLinkingMgrMsg:
 			case plClothingMsg:
 			case plInputIfaceMgrMsg:
-			case plAvBrainGenericMsg:
 			case plMultistageModMsg:
 			case plBulletMsg:
 			case plSubWorldMsg:

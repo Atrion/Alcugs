@@ -81,21 +81,21 @@ namespace alc {
 	class tmGameMessage : public tmMsgBase {
 	public:
 		tmGameMessage(tNetSession *u);
-		tmGameMessage(tNetSession *u, tmGameMessage &msg);
+		tmGameMessage(tNetSession *u, const tmGameMessage &msg);
 		tmGameMessage(tNetSession *u, U32 ki, tpObject *obj);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		// format
 		tStreamedObject msgStream;
 	protected:
-		tmGameMessage(U16 cmd, tNetSession *u, tmGameMessage &msg);
+		tmGameMessage(U16 cmd, tNetSession *u, const tmGameMessage &msg);
 		tmGameMessage(U16 cmd, tNetSession *u, U32 ki, tpObject *obj);
 	};
 	
 	class tmGameMessageDirected : public tmGameMessage {
 	public:
 		tmGameMessageDirected(tNetSession *u);
-		tmGameMessageDirected(tNetSession *u, tmGameMessageDirected &msg);
+		tmGameMessageDirected(tNetSession *u, const tmGameMessageDirected &msg);
 		tmGameMessageDirected(tNetSession *u, U32 ki, tpObject *obj);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
@@ -103,14 +103,14 @@ namespace alc {
 		typedef std::vector<U32> tRecList;
 		tRecList recipients;
 	protected:
-		tmGameMessageDirected(U16 cmd, tNetSession *u, tmGameMessageDirected &msg);
+		tmGameMessageDirected(U16 cmd, tNetSession *u, const tmGameMessageDirected &msg);
 		tmGameMessageDirected(U16 cmd, tNetSession *u, U32 ki, tpObject *obj);
 	};
 	
 	class tmLoadClone : public tmGameMessage {
 	public:
 		tmLoadClone(tNetSession *u);
-		tmLoadClone(tNetSession *u, tmLoadClone &msg);
+		tmLoadClone(tNetSession *u, const tmLoadClone &msg);
 		tmLoadClone(tNetSession *u, tpLoadCloneMsg *subMsg, bool isInitial);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
@@ -220,7 +220,7 @@ namespace alc {
 		tStreamedObject sdlStream;
 		bool isInitial;
 	protected:
-		tmSDLState(U16 cmd, tNetSession *u, tmSDLState &msg);
+		tmSDLState(U16 cmd, tNetSession *u, const tmSDLState &msg);
 		
 		virtual void additionalFields();
 	};
@@ -228,7 +228,7 @@ namespace alc {
 	class tmSDLStateBCast : public tmSDLState {
 	public:
 		tmSDLStateBCast(tNetSession *u);
-		tmSDLStateBCast(tNetSession *u, tmSDLStateBCast & msg);
+		tmSDLStateBCast(tNetSession *u, const tmSDLStateBCast & msg);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 	};

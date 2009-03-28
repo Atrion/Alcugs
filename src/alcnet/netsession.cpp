@@ -210,7 +210,7 @@ tNetSessionIte tNetSession::getIte() {
 /**
 	puts the message in the session's send queue
 */
-void tNetSession::send(tmBase &msg) {
+void tNetSession::send(tmBase &msg, U32 delay) {
 #ifndef ENABLE_ACKLOG
 	if (!(msg.bhflags & UNetAckReply))
 #endif
@@ -289,6 +289,7 @@ void tNetSession::send(tmBase &msg) {
 	
 	U32 i,tts=0;
 	
+	delay *= 1000; // make it usecs
 	for(i=0; i<=n_pkts; i++) {
 		//get current paquet size
 		if(i==n_pkts) csize=psize - (i*pkt_sz);
@@ -308,7 +309,7 @@ void tNetSession::send(tmBase &msg) {
 		pmsg->data.write(buf.read(csize),csize);
 		pmsg->_update();
 		
-		pmsg->timestamp=net->net_time+tts;
+		pmsg->timestamp=net->net_time+delay+tts;
 		tts+=timeToSend(csize+hsize+net->ip_overhead);
 		
 		#ifdef ENABLE_NETDEBUG
