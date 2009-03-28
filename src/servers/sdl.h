@@ -64,7 +64,7 @@ namespace alc {
 		tBaseType *getAgeState(void); //!< returns the AgeSDLHook or an empty object
 		void removePlayer(tNetSession *player);
 		
-		tSdlStruct *findStruct(tStrBuf name, U32 version);
+		tSdlStruct *findStruct(tStrBuf name, U32 version, bool throwOnError = true);
 	private:
 		void load(void);
 		void unload(void);
