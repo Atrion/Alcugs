@@ -696,8 +696,8 @@ namespace alc {
 				// save clone in age state - this my delete the loadCloneMsg, so don't use it aferwards
 				ageState->saveClone(loadCloneMsg);
 				
-				// broadcast message. A delay of less than 2800msecs will cause crashes when the avatar just left the sitting state.
-				bcastMessage(loadClone, /*delay*/ (loadClone.isPlayerAvatar && !loadClone.isLoad) ? 2800 : 0 );
+				// broadcast message. A delay of less than 2700msecs is likely to cause crashes when the avatar just left the sitting state.
+				bcastMessage(loadClone, /*delay*/ (loadClone.isPlayerAvatar && !loadClone.isLoad) ? 3000 : 0 );
 				
 				// if it's an (un)load of the player's avatar, do the member list update
 				if (loadClone.isPlayerAvatar) {

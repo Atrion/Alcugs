@@ -240,10 +240,10 @@ namespace alc {
 				net->bcastMessage(net->makePlayerIdle(player, (*it)->clonedObj.obj));
 				// remove states from our list
 				removeCloneStates((*it)->clonedObj.obj.clonePlayerId);
-				// remove avatar from age (a delay of less than 2800msecs will cause crashes when the avatar just left the sitting state)
+				// remove avatar from age (a delay of < 2700msecs is likely to cause crashes when the avatar just left the sitting state)
 				(*it)->isLoad = false;
 				tmLoadClone loadClone(player, *it, false/*isInitial*/);
-				net->bcastMessage(loadClone, 2800);
+				net->bcastMessage(loadClone, /*delay*/ 3000);
 				delete *it;
 				it = clones.erase(it);
 			}
