@@ -194,7 +194,7 @@ namespace alc {
 			msg->eofCheck();
 			// check for chat messages
 			tpKIMsg *kiMsg = dynamic_cast<tpKIMsg*>(subMsg);
-			if (kiMsg && kiMsg->text.startsWith("!")) { // if it is a command
+			if (kiMsg && kiMsg->messageType == 0 && kiMsg->text.startsWith("!")) { // if it is a command
 				processKICommand(kiMsg->text, u);
 				processed = true;
 			}
@@ -219,7 +219,7 @@ namespace alc {
 	{
 		tpKIMsg kiMsg(tUruObjectRef(), tStrBuf("Game Server"), 0, text);
 		kiMsg.flags = 0x00004248;
-		kiMsg.messageType = 0x0009; // private inter age chat
+		kiMsg.messageType = 0x0001; // private age chat
 		// send message
 		tmGameMessageDirected msg(u, 0, &kiMsg);
 		msg.recipients.push_back(u->ki);
