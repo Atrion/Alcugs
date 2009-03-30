@@ -240,26 +240,18 @@ namespace alc {
 	{
 		tpAvatarMsg::store(t);
 		
-		float varFloat;
-		U32 var32;
-		Byte var8;
+		unk3 = t.getU32();
 		
-		var32 = t.getU32();
-		if (var32 != 2) throw txUnexpectedData(_WHERE("plAvBrainGenericMsg.unk3 must be 2, not %d", var32));
-		var32 = t.getU32();
+		U32 var32 = t.getU32();
 		if (var32 != 2) throw txUnexpectedData(_WHERE("plAvBrainGenericMsg.unk4 must be 2, not %d", var32));
 		
 		unk5 = t.getByte();
-		if (unk5 != 0 && unk5 != 1) throw txUnexpectedData(_WHERE("plAvBrainGenericMsg.unk5 must be 0 or 1, not %d", unk5));
 		
-		varFloat = t.getFloat();
+		float varFloat = t.getFloat();
 		if (varFloat != 0.0) throw txUnexpectedData(_WHERE("plAvBrainGenericMsg.unk6 must be 0.0, not %f", varFloat));
-		var8 = t.getByte();
-		if (var8 != 0) throw txUnexpectedData(_WHERE("plAvBrainGenericMsg.unk7 must be 0, not %d", var8));
 		
+		unk7 = t.getByte();
 		unk8 = t.getByte();
-		if (unk8 != 0 && unk8 != 1) throw txUnexpectedData(_WHERE("plAvBrainGenericMsg.unk8 must be 0 or 1, not %d", unk8));
-		
 		unk9 = t.getFloat();
 	}
 	

@@ -124,12 +124,13 @@ namespace alc {
 	public:
 		tpAvBrainGenericMsg(void) : tpAvatarMsg(plAvBrainGenericMsg) {}
 		tpAvBrainGenericMsg(const tUruObjectRef &sender) : tpAvatarMsg(plAvBrainGenericMsg, sender)
-			{ unk5 = unk8 = 0; unk9 = 0.0; }
+			{ unk3 = 0; unk5 = unk7 = unk8 = 0; unk9 = 0.0; }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		
 		// format
-		Byte unk5, unk8;
+		U32 unk3;
+		Byte unk5, unk7, unk8;
 		float unk9;
 	protected:
 		virtual void toString(void);
