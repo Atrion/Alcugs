@@ -241,10 +241,7 @@ namespace alc {
 		tpAvatarMsg::store(t);
 		
 		unk3 = t.getU32();
-		
-		U32 var32 = t.getU32();
-		if (var32 != 2) throw txUnexpectedData(_WHERE("plAvBrainGenericMsg.unk4 must be 2, not %d", var32));
-		
+		unk4 = t.getU32();
 		unk5 = t.getByte();
 		
 		float varFloat = t.getFloat();
@@ -258,11 +255,11 @@ namespace alc {
 	void tpAvBrainGenericMsg::stream(tBBuf &t)
 	{
 		tpAvatarMsg::stream(t);
-		t.putU32(2); // unk3
-		t.putU32(2); // unk4
+		t.putU32(unk3);
+		t.putU32(unk4);
 		t.putByte(unk5);
 		t.putFloat(0.0); // unk6
-		t.putByte(0); // unk7
+		t.putByte(unk7);
 		t.putByte(unk8);
 		t.putFloat(unk9);
 	}
