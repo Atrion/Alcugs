@@ -165,7 +165,7 @@ void tUStr::store(tBBuf &t) {
 	clear();
 	U32 bufSize = t.getU16();
 	if (!(bufSize & 0xF000)) throw txUnexpectedData(_WHERE("This is not an inverted string!"));
-	bufSize &= 0x0FFF;
+	bufSize &= ~0xF000; // remove highest bit
 	for(U32 i=0; i<bufSize; i++) {
 		putByte(~t.getByte());
 	}
