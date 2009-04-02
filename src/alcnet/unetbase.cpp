@@ -215,9 +215,9 @@ void tUnetBase::stop(SByte timeout) {
 	state_running=false;
 }
 
-void tUnetBase::terminate(tNetSession *u, Byte reason)
+void tUnetBase::terminate(tNetSession *u, Byte reason, bool gotLeave)
 {
-	bool destroy = u->isTerminated();
+	bool destroy = gotLeave || u->isTerminated();
 	if (!reason) reason = u->isClient() ? RKickedOff : RQuitting;
 	if (!destroy) { // don't send message again if we already sent it
 		if (u->isClient()) {
@@ -425,7 +425,7 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool 
 				onLeave(ev,msgleave.reason,u);
 			}
 			/* The peer left, so there is nothing we have to do anymore, just remove it */
-			u->terminate(0/*seconds*/); // delete the session ASAP
+			terminate(u, msgleave.reason, /*gotLeave*/true); // this will delete the session ASAP
 			return 1;
 		}
 		case NetMsgTerminated:

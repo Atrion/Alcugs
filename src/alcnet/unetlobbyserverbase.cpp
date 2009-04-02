@@ -169,7 +169,7 @@ namespace alc {
 		return true;
 	}
 	
-	void tUnetLobbyServerBase::terminate(tNetSession *u, Byte reason)
+	void tUnetLobbyServerBase::terminate(tNetSession *u, Byte reason, bool gotLeave)
 	{
 		if (u->getPeerType() == KClient && u->ki != 0) { // if necessary, tell the others about it
 			tNetSession *trackingServer = getServer(KTracking);
@@ -184,7 +184,7 @@ namespace alc {
 			u->ki = 0; // this avoids sending the messages twice
 		}
 	
-		tUnetServerBase::terminate(u, reason); // do the common terminate procedure
+		tUnetServerBase::terminate(u, reason, gotLeave); // do the common terminate procedure
 	}
 	
 	void tUnetLobbyServerBase::onStart(void)
