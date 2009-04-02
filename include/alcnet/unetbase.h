@@ -65,13 +65,16 @@ public:
 		onLoadConfig();
 	}
 	
+	inline void terminate(tNetSession *u) { terminate(u, 0); }
+protected:
+	inline bool isRunning(void) { return state_running; }
+	
 	/** Terminates the connection of the specified peer
 			\param who A session iterator that points to the desired peer
 			\param reason The reason code (error code) (if 0, send RKickedOff to clients and RQutting for servers)
+			\param gotLeave Set to true if this is the reaction to a NetMsgLeave, which will not be answered to
 	*/
-	virtual void terminate(tNetSession *u, Byte reason = 0 /*auto-determine reason*/);
-protected:
-	inline bool isRunning(void) { return state_running; }
+	virtual void terminate(tNetSession *u, Byte reason, bool gotLeave = false);
 
 	/** This event is raised when we have a new connection
 			You need to override it in your derived classes with your implementation.
