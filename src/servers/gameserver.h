@@ -71,7 +71,7 @@ namespace alc {
 	protected:
 		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
 		virtual void onIdle(bool idle);
-		virtual void terminate(tNetSession *u, Byte reason = RKickedOff, bool destroyOnly = false);
+		virtual void terminate(tNetSession *u, Byte reason = 0 /*auto-determine reason*/);
 		virtual void onReloadConfig(bool reload) {
 			ageState->reload();
 		}

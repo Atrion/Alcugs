@@ -215,27 +215,28 @@ void tUnetBase::stop(SByte timeout) {
 	state_running=false;
 }
 
-void tUnetBase::terminate(tNetSession *u,Byte reason, bool destroyOnly)
+void tUnetBase::terminate(tNetSession *u, Byte reason)
 {
+	bool destroy = u->isTerminated();
 	if (!reason) reason = u->isClient() ? RKickedOff : RQuitting;
-	if (!destroyOnly && u->isClient()) {
-		tmTerminated terminated(u,u->ki,reason);
-		send(terminated);
-		
-		/* We sent a NetMsgTerminated, the peer should answer with a NetMsgLeave which will trigger below if block.
-		However, the unet3 lobby doesn't do that. it sends a NetMsgAlive instead. To cope with that, this session will be remembered as
-		terminated and if a message different than NetMsgLeave is recieved, it will be deleted ASAP. The same happens if there's a
-		timeout, i.e. the peer sends nothing within 3 seconds. */
-	}
-	else if (!destroyOnly && !u->isClient()) {
-		tmLeave leave(u,u->ki,reason);
-		send(leave);
+	if (!destroy) { // don't send message again if we already sent it
+		if (u->isClient()) {
+			tmTerminated terminated(u,u->ki,reason);
+			send(terminated);
+			/* We sent a NetMsgTerminated, the peer should answer with a NetMsgLeave which will correctly end the connection. */
+		}
+		else {
+			tmLeave leave(u,u->ki,reason);
+			send(leave);
+			/* We left, nothing to be done for us anymore */
+			destroy = true; // destroy this session ASAP
+		}
 	}
 	
 #ifdef ENABLE_UNET2
-	if (destroyOnly && u->proto != 1) { // if the session should be destroyed, do that ASAP - but not for unet2 servers
+	if (destroy && u->proto != 1) { // if the session should be destroyed, do that ASAP - but not for unet2 servers
 #else
-	if (destroyOnly) { // if the session should be destroyed, do that ASAP
+	if (destroy) { // if the session should be destroyed, do that ASAP
 #endif
 		u->terminate(0/*seconds*/);
 	} else { // otherwise, give the session one second to send remaining messages
@@ -314,11 +315,11 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 				if (u->isTerminated() || shutdown) {
 					if (ret != 1) {
 						err->log("%s is terminated and sent a non-NetMsgLeave message 0x%04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-						terminate(u, /*terminate() sets the reason*/0, true); // delete the session ASAP
+						terminate(u); // this will delete the session ASAP as it already is terminated
 					}
 					else if (ret == 1 && !msg->data.eof() > 0) { // packet was processed and there are bytes left
 						err->log("%s Recieved a message 0x%04X (%s) which was too long (%d Bytes remaining after parsing)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data.remaining());
-						terminate(u, /*terminate() sets the reason*/0, true); // delete the session ASAP
+						terminate(u); // this will delete the session ASAP as it already is terminated
 					}
 					break;
 				}
@@ -423,7 +424,8 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool 
 				ev->id=UNET_TERMINATED;
 				onLeave(ev,msgleave.reason,u);
 			}
-			terminate(u, msgleave.reason, true); // delete the session ASAP
+			/* The peer left, so there is nothing we have to do anymore, just remove it */
+			u->terminate(0/*seconds*/); // delete the session ASAP
 			return 1;
 		}
 		case NetMsgTerminated:
@@ -434,7 +436,8 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool 
 			log->log("<RCV> [%d] %s\n",msg->sn,msgterminated.str());
 			ev->id=UNET_TERMINATED;
 			onTerminated(ev,msgterminated.reason,u);
-			terminate(u,RQuitting);
+			/* The peer wants to terminate, so tell him we are ready to leave */
+			terminate(u);
 			return 1;
 		}
 		case NetMsgAlive:
