@@ -152,7 +152,7 @@ namespace alc {
 	class tpKIMsg : public tpMessage {
 	public:
 		tpKIMsg(void) : tpMessage(pfKIMsg) {}
-		tpKIMsg(const tUruObjectRef &sender, const tStrBuf &sender, U32 senderKi, const tStrBuf &text);
+		tpKIMsg(const tUruObjectRef &sender, const tStrBuf &senderName, U32 senderKi, const tStrBuf &text);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t);
 		
