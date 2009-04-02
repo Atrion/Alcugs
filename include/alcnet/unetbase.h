@@ -42,14 +42,17 @@ public:
 	virtual ~tUnetBase();
 	/** Runs the netcore */
 	void run();
+	
 	/** Stops the netcore
 			\param timeout Sets the timeout to wait for closing the connection to all peers (<0 gets timeout from config file)
 	*/
 	void stop(SByte timeout=-1);
+	
 	void forcestop() { stop(0); /* stop with a timeout of 0 */ }
 	/** Terminates all connections
 	*/
 	virtual void terminateAll();
+	
 	/** Force a reload of the netcore settings (after changing the configuration for example)
 	*/
 	void reload()
@@ -61,16 +64,13 @@ public:
 		onReloadConfig();
 		onLoadConfig();
 	}
-	inline void terminate(tNetSession *u) { terminate(u, 0); }
-protected:
+	
 	/** Terminates the connection of the specified peer
 			\param who A session iterator that points to the desired peer
 			\param reason The reason code (error code) (if 0, send RKickedOff to clients and RQutting for servers)
-			\param destroyOnly false=sends a terminated/leave message, true=silently closes the connection and destroys it ASAP
 	*/
-	virtual void terminate(tNetSession *u, Byte reason, bool destroyOnly = false);
-	/** destroy that session and do an onConnectionClosed */
-	void closeConnection(tNetSession *u);
+	virtual void terminate(tNetSession *u, Byte reason = 0 /*auto-determine reason*/);
+protected:
 	inline bool isRunning(void) { return state_running; }
 
 	/** This event is raised when we have a new connection
@@ -137,6 +137,9 @@ protected:
 	/** this is called after loading and reloading the config */
 	virtual void onReloadConfig() {}
 private:
+	/** destroy that session and do an onConnectionClosed */
+	void closeConnection(tNetSession *u);
+	
 	void processEvent(tNetEvent *evt, tNetSession *u, bool shutdown = false);
 	int parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool shutdown);
 	void reconfigure();

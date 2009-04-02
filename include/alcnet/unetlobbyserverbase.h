@@ -57,7 +57,7 @@ protected:
 	virtual void onConnectionClosed(tNetEvent *ev, tNetSession *u);
 	virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
 	virtual void forwardPing(tmPing &ping, tNetSession *u);
-	virtual void terminate(tNetSession *u, Byte reason = RKickedOff, bool destroyOnly = false);
+	virtual void terminate(tNetSession *u, Byte reason = 0 /*auto-determine reason*/);
 	virtual void onUnloadConfig(void);
 	virtual void onLoadConfig(void);
 
