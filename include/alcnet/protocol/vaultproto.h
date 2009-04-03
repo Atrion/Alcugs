@@ -205,7 +205,6 @@ namespace alc {
 		tStrBuf filename, instanceName;
 		Byte guid[8];
 		tStrBuf userDefName, displayName;
-		U32 language;
 	private:
 		tStrBuf dbg;
 	};
@@ -236,6 +235,7 @@ namespace alc {
 		Byte linkingRule;
 		tvSpawnPoint spawnPoint;
 		Byte ccr;
+		tStrBuf parentAgeName;
 	private:
 		tStrBuf dbg;
 	};
