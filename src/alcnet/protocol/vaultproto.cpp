@@ -118,14 +118,10 @@ namespace alc {
 			t.get(displayName);
 		
 		if (flags & 0x40) { // language
-			// this is not the language of the client
-			language = t.getU32();
-			// always seen 0
-			if (language != 0)
-				lerr->log("Language value of an AgeInfoStruct is 0x%08X instead of 0\n", language);
+			// this is not the language of the client, but something else
+			U32 language = t.getU32(); // always seen 0
+			if (language != 0) throw txProtocolError(_WHERE("Language value of an AgeInfoStruct is 0x%08X instead of 0\n", language));
 		}
-		else
-			language = 0;
 	}
 	
 	void tvAgeInfoStruct::stream(tBBuf &t)
@@ -148,7 +144,7 @@ namespace alc {
 			t.put(displayName);
 		
 		if (flags & 0x40) // language
-			t.putU32(language);
+			t.putU32(0);
 	}
 	
 	const char *tvAgeInfoStruct::str(void)
@@ -164,7 +160,7 @@ namespace alc {
 		if (flags & 0x20) // display name
 			dbg.printf(", Display name: %s", displayName.c_str());
 		if (flags & 0x40) // language
-			dbg.printf(", Language: 0x%08X (%d)", language, language);
+			dbg.printf(", Language: 0");
 		return dbg.c_str();
 	}
 	
@@ -249,13 +245,8 @@ namespace alc {
 		else
 			ccr = 0;
 		
-		if (flags & 0x0040) { // parent age name
-			// ignore it
-			tStrBuf desc;
-			t.get(desc);
-			flags &= ~0x0040; // disable it
-			lerr->log("Ignoring flag 0x0040 (parent age name) of an AgeLinkStruct (Value: %s)\n", desc.c_str());
-		}
+		if (flags & 0x0040) // parent age name
+			t.get(parentAgeName);
 	}
 	
 	void tvAgeLinkStruct::stream(tBBuf &t)
@@ -271,6 +262,8 @@ namespace alc {
 		// optional fields
 		if (flags & 0x0010) // CCR
 			t.putByte(ccr);
+		if (flags & 0x0040) // parent age name
+			t.put(parentAgeName);
 	}
 	
 	const char *tvAgeLinkStruct::str(void)
@@ -279,6 +272,8 @@ namespace alc {
 		dbg.printf("Age Info [%s], Linking Rule: 0x%02X (%s), Spawn Point [%s]", ageInfo.str(), linkingRule, alcUnetGetLinkingRule(linkingRule), spawnPoint.str());
 		if (flags & 0x0010) // CCR
 			dbg.printf(", CCR: 0x%02X", ccr);
+		if (flags & 0x0040) // parent age name
+			dbg.printf(", Parent Age: %s", parentAgeName.c_str());
 		return dbg.c_str();
 	}
 	
@@ -290,6 +285,8 @@ namespace alc {
 		spawnPoint.asHtml(log, shortLog);
 		if (flags & 0x0010) // CCR
 			log->print("CCR: 0x%02X<br />\n", ccr);
+		if (flags & 0x0040) // parent age name
+			log->print("Parent Age: %s<br />\n", parentAgeName.c_str());
 	}
 	
 	//// tvManifest
