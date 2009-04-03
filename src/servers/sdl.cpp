@@ -160,7 +160,6 @@ namespace alc {
 				else // remove existing version
 					sdlStates.erase(it);
 			}
-			sdlStates.push_back(state);
 			if (logDetailed) {
 				log->log("Loaded ");
 				state.print(log);
@@ -174,6 +173,8 @@ namespace alc {
 					state.print(log);
 				}
 			}
+			// save state
+			sdlStates.push_back(state);
 		}
 		if (!file.eof())
 			throw txProtocolError(_WHERE("Agestate file is too long"));
