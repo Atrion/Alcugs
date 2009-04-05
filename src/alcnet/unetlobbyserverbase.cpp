@@ -569,7 +569,7 @@ namespace alc {
 					if (!client || client->getPeerType() != KClient) {
 						lvault->print("<h2 style='color:red'>Packet for unknown client</h2>\n");
 						parsedMsg.print(lvault, /*clientToServer:*/false, NULL, vaultLogShort);
-						err->log("ERR: I've got a vault message to forward to player with KI %d but can\'t find it\'s session.\n", vaultMsg.ki);
+						log->log("WARN: I've got a vault message to forward to player with KI %d but can\'t find the session.\n", vaultMsg.ki);
 						return 1;
 					}
 					parsedMsg.print(lvault, /*clientToServer:*/false, client, vaultLogShort);
