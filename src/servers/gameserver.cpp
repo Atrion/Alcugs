@@ -45,6 +45,7 @@
 ////extra includes
 #include "gameserver.h"
 #include "sdl.h"
+#include "guidgen.h"
 
 #include <alcdebug.h>
 
@@ -71,6 +72,10 @@ namespace alc {
 		// load our age info
 		tAgeInfoLoader ageInfoLoader(serverName, /*loadPages*/true);
 		ageInfo = new tAgeInfo(*ageInfoLoader.getAge(serverName)); // get ourselves a copy of it
+		
+		// find out if this is a private age
+		tGuidGen guidGen(&ageInfoLoader);
+		thisAgeIsPrivate = guidGen.isAgePrivate(serverName);
 		
 		// load SDL Manager
 		ageState = new tAgeStateManager(this, ageInfo);
@@ -116,71 +121,104 @@ namespace alc {
 	{
 		// first of all, we are only interested in VSaveNodes sent from client to vault
 		if (u->getPeerType() == KVault) return; // we care only about messages from the client
-		if (msg->task) return; // ignore vault tasks
-		if (msg->cmd != VSaveNode) return; // we are only interested in VSaveNode messages
-		// ok, now find the saved node
-		tvNode *node = NULL;
-		for (tvMessage::tItemList::iterator it = msg->items.begin(); it != msg->items.end(); ++it) {
-			if ((*it)->id != 5) continue;
-			node = (*it)->asNode(); // got it
-			break;
+		if (msg->task) { // it is a vault task
+			if (msg->cmd != TRegisterOwnedAge) return; // we are only interested in these messages which are sent when an age is reset
+			if (!thisAgeIsPrivate) return; // only allow to reset private ages
+			// now, find the age link struct
+			tvAgeLinkStruct *ageLink = NULL;
+			for (tvMessage::tItemList::iterator it = msg->items.begin(); it != msg->items.end(); ++it) {
+				if ((*it)->id != 11) continue;
+				ageLink = (*it)->asAgeLink(); // we don't have to free it, tvMessage does that
+				break; // got it
+			}
+			if (!ageLink)
+				throw txProtocolError(_WHERE("A TRegisterOwnedAge without an AgeLinkStruct attached???"));
+			// make sure we are actually talking about this age
+			if (ageLink->ageInfo.filename != serverName || memcmp(serverGuid, ageLink->ageInfo.guid, 8) != 0)
+				return; // this is another age!
+			// ok, the player definitely wants to reset us, check if there is someone else in here
+			bool playerFound = false;
+			tNetSession *session;
+			smgr->rewind();
+			while ((session = smgr->getNext())) {
+				if (session->joined) {
+					playerFound = true;
+					break;
+				}
+			}
+			if (playerFound) { // there is someone else here, do not reset
+				sendKIMessage("Sorry, but someone else is already in this age, so I can not reset it", u);
+				return;
+			}
+			// ok, let's go :)
+			ageState->clearAllStates();
 		}
-		if (!node)
-			throw txProtocolError(_WHERE("A VSaveNode without a node attached???"));
-		
-		// now let's see what to do
-		if (node->type == KSDLNode) {
-			/* this is a very dirty fix for the bahro poles, but as long as the game server doesn't subscribe to the vault to get it's 
-			own SDL node, we have to do it this way */
-			if (!node->blob1Size) return; // don't bother parsing empty messages
-			// got the node, and it is a SDL one... get the SDL binary stream
-			tMBuf data(node->blob1Size);
-			data.write(node->blob1, node->blob1Size);
-			data.rewind();
-			ageState->saveSdlVaultMessage(data, u); // process it
-		}
-		/* NOTE: These checks are not mainly security checks but are necessary to update the age list when a player changes his name or hides.
-		   The KVNodeMgrPlayerNode check is meant to provided consistence in rejecting player name changes.
-		   But since these checks are in the game server and not in the lobbybase, you can still do everything as long as you are logged
-		   in through lobby. */
-		else if (node->type == KPlayerInfoNode) {
-			if (node->owner != u->ki)
-				throw txProtocolError(_WHERE("changing a foreign player info node is not allowed"));
-			if (u->getAccessLevel() > AcMod)
-				throw txProtocolError(_WHERE("%s is not allowed to change his player info node", u->str()));
+		else { // it is a vault command
+			if (msg->cmd != VSaveNode) return; // we are only interested in VSaveNode messages
+			// ok, now find the saved node
+			tvNode *node = NULL;
+			for (tvMessage::tItemList::iterator it = msg->items.begin(); it != msg->items.end(); ++it) {
+				if ((*it)->id != 5) continue;
+				node = (*it)->asNode(); // we don't have to free it, tvMessage does that
+				break; // got it
+			}
+			if (!node)
+				throw txProtocolError(_WHERE("A VSaveNode without a node attached???"));
 			
-			tGameData *data = dynamic_cast<tGameData *>(u->data);
-			if (!u->joined || !data) throw txProtocolError(_WHERE("Player data must be set when player node is changed"));
-			if (node->flagB & MAgeName) { // the hidden/shown status changed
-				bool isHidden = node->ageName.size();
-				if (isHidden) log->log("Player %s just hid\n", u->str());
-				else log->log("Player %s just unhid\n", u->str());
-				// update member list
-				data->isHidden = isHidden;
-				bcastMemberUpdate(u, /*isJoined*/true);
+			// now let's see what to do
+			if (node->type == KSDLNode) {
+				/* this is a very dirty fix for the bahro poles, but as long as the game server doesn't subscribe to the vault to get it's 
+				own SDL node, we have to do it this way */
+				if (!node->blob1Size) return; // don't bother parsing empty messages
+				// got the node, and it is a SDL one... get the SDL binary stream
+				tMBuf data(node->blob1Size);
+				data.write(node->blob1, node->blob1Size);
+				data.rewind();
+				ageState->saveSdlVaultMessage(data, u); // process it
 			}
-			if (node->flagB & MlStr64_1) { // avatar name changed
-				log->log("%s is now called %s\n", u->str(), node->lStr1.c_str());
-				// update member list
-				strncpy(u->avatar, node->lStr1.c_str(), 199);
-				bcastMemberUpdate(u, /*isJoined*/true);
+			/* NOTE: These checks are not mainly security checks but are necessary to update the age list when a player changes his name or hides.
+			The KVNodeMgrPlayerNode check is meant to provided consistence in rejecting player name changes.
+			But since these checks are in the game server and not in the lobbybase, you can still do everything as long as you are logged
+			in through lobby. */
+			else if (node->type == KPlayerInfoNode) {
+				if (node->owner != u->ki)
+					throw txProtocolError(_WHERE("changing a foreign player info node is not allowed"));
+				if (u->getAccessLevel() > AcMod)
+					throw txProtocolError(_WHERE("%s is not allowed to change his player info node", u->str()));
+				
+				tGameData *data = dynamic_cast<tGameData *>(u->data);
+				if (!u->joined || !data) throw txProtocolError(_WHERE("Player data must be set when player node is changed"));
+				if (node->flagB & MAgeName) { // the hidden/shown status changed
+					bool isHidden = node->ageName.size();
+					if (isHidden) log->log("Player %s just hid\n", u->str());
+					else log->log("Player %s just unhid\n", u->str());
+					// update member list
+					data->isHidden = isHidden;
+					bcastMemberUpdate(u, /*isJoined*/true);
+				}
+				if (node->flagB & MlStr64_1) { // avatar name changed
+					log->log("%s is now called %s\n", u->str(), node->lStr1.c_str());
+					// update member list
+					strncpy(u->avatar, node->lStr1.c_str(), 199);
+					bcastMemberUpdate(u, /*isJoined*/true);
+				}
+				// update tracking server status
+				tNetSession *trackingServer = getServer(KTracking);
+				if (!trackingServer) {
+					err->log("ERR: I've got to set player %s to hidden, but tracking is unavailable.\n", u->str());
+				}
+				else {
+					// tell tracking
+					tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->getSid(), u->uid, u->name, u->avatar, data->isHidden ? 1 /* invisible */ : 2 /* visible */, RActive);
+					send(trackingStatus);
+				}
 			}
-			// update tracking server status
-			tNetSession *trackingServer = getServer(KTracking);
-			if (!trackingServer) {
-				err->log("ERR: I've got to set player %s to hidden, but tracking is unavailable.\n", u->str());
+			else if (node->type == KVNodeMgrPlayerNode) {
+				if (node->index != u->ki)
+					throw txProtocolError(_WHERE("changing a foreign player mgr node is not allowed"));
+				if (u->getAccessLevel() > AcMod)
+					throw txProtocolError(_WHERE("%s is not allowed to change his player mgr node", u->str()));
 			}
-			else {
-				// tell tracking
-				tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->getSid(), u->uid, u->name, u->avatar, data->isHidden ? 1 /* invisible */ : 2 /* visible */, RActive);
-				send(trackingStatus);
-			}
-		}
-		else if (node->type == KVNodeMgrPlayerNode) {
-			if (node->index != u->ki)
-				throw txProtocolError(_WHERE("changing a foreign player mgr node is not allowed"));
-			if (u->getAccessLevel() > AcMod)
-				throw txProtocolError(_WHERE("%s is not allowed to change his player mgr node", u->str()));
 		}
 	}
 	
@@ -206,8 +244,8 @@ namespace alc {
 	void tUnetGameServer::processKICommand(tStrBuf &text, tNetSession *u)
 	{
 		// process server-side commands
-		if (text == "!ping") sendKIMessage(tStrBuf("You are still online :)"), u);
-		else if (text == "!silentping") sendKIMessage(tStrBuf("!silentpong"), u);
+		if (text == "!ping") sendKIMessage("You are still online :)", u);
+		else if (text == "!silentping") sendKIMessage("!silentpong", u);
 		else {
 			tStrBuf error;
 			error.printf("Unknown server-side command: \"%s\"", text.c_str());
@@ -217,7 +255,7 @@ namespace alc {
 	
 	void tUnetGameServer::sendKIMessage(const tStrBuf &text, tNetSession *u)
 	{
-		tpKIMsg kiMsg(tUruObjectRef(), tStrBuf("Game Server"), 0, text);
+		tpKIMsg kiMsg(tUruObjectRef(), "Game Server", 0, text);
 		kiMsg.flags = 0x00004248;
 		kiMsg.messageType = 0x0001; // private age chat
 		// send message

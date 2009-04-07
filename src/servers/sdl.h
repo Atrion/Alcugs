@@ -63,6 +63,7 @@ namespace alc {
 		int sendSdlStates(tNetSession *u, tmGameStateRequest::tPageList *pages);
 		tBaseType *getAgeState(void); //!< returns the AgeSDLHook or an empty object
 		void removePlayer(tNetSession *player);
+		void clearAllStates(void);//!< remove all SDL states and clones (only call if you are sure noone is in the age!)
 		
 		tSdlStruct *findStruct(tStrBuf name, U32 version, bool throwOnError = true);
 	private:
