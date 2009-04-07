@@ -281,10 +281,10 @@ public:
 /** String buffer */
 class tStrBuf :public tMBuf {
 public:
-	explicit tStrBuf(const char * k);
+	tStrBuf(const char * k);
 	explicit tStrBuf(U32 size=200);
-	tStrBuf(tBBuf &k);
-	tStrBuf(const tMBuf &k);
+	explicit tStrBuf(tBBuf &k);
+	explicit tStrBuf(const tMBuf &k);
 	tStrBuf(const tStrBuf &k);
 	virtual void init();
 	virtual void onmodify();

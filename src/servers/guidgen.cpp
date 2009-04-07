@@ -49,10 +49,17 @@
 namespace alc {
 
 	////IMPLEMENTATION
-	tGuidGen::tGuidGen(void)
+	tGuidGen::tGuidGen(tAgeInfoLoader *ageInfos)
 	{
 		// load age files
-		ageInfos = new tAgeInfoLoader();
+		if (ageInfos) {
+			this->ageInfos = ageInfos;
+			ourAgeInfos = false;
+		}
+		else {
+			this->ageInfos = new tAgeInfoLoader();
+			ourAgeInfos = true;
+		}
 		// load the list of private ages
 		tConfig *cfg = alcGetConfig();
 		tStrBuf var = cfg->getVar("private_ages");

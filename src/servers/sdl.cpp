@@ -88,22 +88,6 @@ namespace alc {
 		else // in case the server crashes, remove state to really reset it
 			unlink(fileName.c_str());
 		
-		// if necessary, set up AgeSDLHook
-		// sending just a default age SDL for the JoinAck is not enough, we really have to create a SDL state for it
-		if (findAgeSDLHook() == sdlStates.end()) { // AgeSDLHook not found
-			U32 ageSDLVersion = findLatestStructVersion(age->name, false/*don't throw exception if no struct found*/);
-			if (!ageSDLVersion) return;
-			// first make up the UruObject
-			tUruObject obj;
-			obj.pageId = alcPageNumberToId(age->seqPrefix, 254); // BultIn page ID
-			obj.pageType = 0x0008; // BultIn
-			obj.objType = 0x0001; // SceneObject
-			obj.objName = "AgeSDLHook";
-			// now create the SDL state
-			sdlStates.push_back(tSdlState(this, obj, age->name, ageSDLVersion, true/*init default*/));
-			log->log("Set up default AgeSDLHook\n");
-		}
-		
 		log->flush();
 	}
 	
@@ -388,7 +372,7 @@ namespace alc {
 				delete *it;
 				clones.erase(it);
 			} else
-				log->log("WARN: That clone was not on our list!\n");
+				log->log("WARN: Clone [%s] was not on our list!\n", clone->clonedObj.str());
 			delete clone; // remove the message we got
 		}
 		log->flush();
@@ -425,6 +409,20 @@ namespace alc {
 				sdlHook = it;
 			}
 		}
+		if (sdlHook != sdlStates.end()) return sdlHook;
+		// ok, there is none, let's try to create it
+		U32 ageSDLVersion = findLatestStructVersion(age->name, false/*don't throw exception if no struct found*/);
+		if (!ageSDLVersion) // no way, nothing to be done
+			return sdlStates.end();
+		// first make up the UruObject
+		tUruObject obj;
+		obj.pageId = alcPageNumberToId(age->seqPrefix, 254); // BultIn page ID
+		obj.pageType = 0x0008; // BultIn
+		obj.objType = 0x0001; // SceneObject
+		obj.objName = "AgeSDLHook";
+		// now create the SDL state
+		sdlHook = sdlStates.insert(sdlStates.end(), tSdlState(this, obj, age->name, ageSDLVersion, true/*init default*/));
+		log->log("Set up default AgeSDLHook\n");
 		return sdlHook;
 	}
 	
@@ -470,6 +468,12 @@ namespace alc {
 		if (throwOnError)
 			throw txUnet(_WHERE("SDL version mismatch, no SDL Struct found for %s version %d", name.c_str(), version));
 		return NULL;
+	}
+	
+	void tAgeStateManager::clearAllStates(void)
+	{
+		clones.clear();
+		sdlStates.clear();
 	}
 	
 	/** This is the SDL file parser */

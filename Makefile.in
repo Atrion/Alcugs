@@ -152,7 +152,7 @@ alcugs_auth_OBJECTS = $(am_alcugs_auth_OBJECTS)
 alcugs_auth_DEPENDENCIES = libalcnet1.a libalcbase1.a
 am_alcugs_game_OBJECTS = alcugs_game-alcugs_main.$(OBJEXT) \
 	alcugs_game-sdlbinary.$(OBJEXT) alcugs_game-sdl.$(OBJEXT) \
-	alcugs_game-gameserver.$(OBJEXT)
+	alcugs_game-guidgen.$(OBJEXT) alcugs_game-gameserver.$(OBJEXT)
 alcugs_game_OBJECTS = $(am_alcugs_game_OBJECTS)
 alcugs_game_DEPENDENCIES = libalcnet1.a libalcbase1.a
 am_alcugs_lobby_OBJECTS = alcugs_lobby-alcugs_main.$(OBJEXT) \
@@ -459,11 +459,13 @@ alcugs_game_SOURCES = \
  src/servers/alcugs_main.cpp \
  src/servers/sdlbinary.cpp \
  src/servers/sdl.cpp \
+ src/servers/guidgen.cpp \
  src/servers/gameserver.cpp
 
 alcugs_game_INCLUDES = \
  src/servers/sdlbinary.h \
  src/servers/sdl.h \
+ src/servers/guidgen.h \
  src/servers/gameserver.h
 
 alcugs_game_LDADD = libalcnet1.a libalcbase1.a
@@ -638,6 +640,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alcugs_auth-authserver.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alcugs_game-alcugs_main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alcugs_game-gameserver.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alcugs_game-guidgen.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alcugs_game-sdl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alcugs_game-sdlbinary.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alcugs_lobby-alcugs_main.Po@am__quote@
@@ -1436,6 +1439,20 @@ alcugs_game-sdl.obj: src/servers/sdl.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/servers/sdl.cpp' object='alcugs_game-sdl.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(alcugs_game_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o alcugs_game-sdl.obj `if test -f 'src/servers/sdl.cpp'; then $(CYGPATH_W) 'src/servers/sdl.cpp'; else $(CYGPATH_W) '$(srcdir)/src/servers/sdl.cpp'; fi`
+
+alcugs_game-guidgen.o: src/servers/guidgen.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(alcugs_game_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT alcugs_game-guidgen.o -MD -MP -MF $(DEPDIR)/alcugs_game-guidgen.Tpo -c -o alcugs_game-guidgen.o `test -f 'src/servers/guidgen.cpp' || echo '$(srcdir)/'`src/servers/guidgen.cpp
+@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/alcugs_game-guidgen.Tpo $(DEPDIR)/alcugs_game-guidgen.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/servers/guidgen.cpp' object='alcugs_game-guidgen.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(alcugs_game_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o alcugs_game-guidgen.o `test -f 'src/servers/guidgen.cpp' || echo '$(srcdir)/'`src/servers/guidgen.cpp
+
+alcugs_game-guidgen.obj: src/servers/guidgen.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(alcugs_game_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT alcugs_game-guidgen.obj -MD -MP -MF $(DEPDIR)/alcugs_game-guidgen.Tpo -c -o alcugs_game-guidgen.obj `if test -f 'src/servers/guidgen.cpp'; then $(CYGPATH_W) 'src/servers/guidgen.cpp'; else $(CYGPATH_W) '$(srcdir)/src/servers/guidgen.cpp'; fi`
+@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/alcugs_game-guidgen.Tpo $(DEPDIR)/alcugs_game-guidgen.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/servers/guidgen.cpp' object='alcugs_game-guidgen.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(alcugs_game_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o alcugs_game-guidgen.obj `if test -f 'src/servers/guidgen.cpp'; then $(CYGPATH_W) 'src/servers/guidgen.cpp'; else $(CYGPATH_W) '$(srcdir)/src/servers/guidgen.cpp'; fi`
 
 alcugs_game-gameserver.o: src/servers/gameserver.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(alcugs_game_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT alcugs_game-gameserver.o -MD -MP -MF $(DEPDIR)/alcugs_game-gameserver.Tpo -c -o alcugs_game-gameserver.o `test -f 'src/servers/gameserver.cpp' || echo '$(srcdir)/'`src/servers/gameserver.cpp
