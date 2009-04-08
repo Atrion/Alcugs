@@ -371,7 +371,7 @@ namespace alc {
 		}
 	}
 	
-	tmGameMessage tUnetGameServer::makePlayerIdle(tNetSession *u, tUruObject rec)
+	tmGameMessage tUnetGameServer::makePlayerIdle(tNetSession *u, tUruObject rec, S32 inputState)
 	{
 		// get the right object for the receiver
 		if (rec.pageId == 0xFFFF0304) { // Yeesha
@@ -386,12 +386,23 @@ namespace alc {
 			rec.objType = 0x0095;
 			rec.objName = "LODAvatar01";
 		}
-		// create the plAvBrainGenericMsg
-		tpAvBrainGenericMsg avBrainMsg = tpAvBrainGenericMsg(tUruObjectRef());
-		avBrainMsg.receivers.push_back(rec);
-		avBrainMsg.flags = 0x00000A40;
-		// create the message
-		return tmGameMessage(u, u->ki, &avBrainMsg);
+		if (inputState >= 0) {
+			// create the plAvatarInputStateMsg
+			tpAvatarInputStateMsg inputStateMsg = tpAvatarInputStateMsg(tUruObjectRef());
+			inputStateMsg.receivers.push_back(rec);
+			inputStateMsg.flags = 0x00008140;
+			inputStateMsg.state = inputState;
+			// create the message
+			return tmGameMessage(u, u->ki, &inputStateMsg);
+		}
+		else {
+			// create the plAvBrainGenericMsg
+			tpAvBrainGenericMsg avBrainMsg = tpAvBrainGenericMsg(tUruObjectRef());
+			avBrainMsg.receivers.push_back(rec);
+			avBrainMsg.flags = 0x00000A40;
+			// create the message
+			return tmGameMessage(u, u->ki, &avBrainMsg);
+		}
 	}
 
 	void tUnetGameServer::onIdle(bool idle)
@@ -437,8 +448,14 @@ namespace alc {
 				if (session == u) continue;
 				tGameData *data = dynamic_cast<tGameData *>(session->data);
 				if (data) {
+					// make sure noone else is sitting/has his KI open
 					tmGameMessage msg(u, makePlayerIdle(session, data->obj));
 					send(msg);
+					// make sure noone else is just running an animation
+					tmGameMessage msgWalk(makePlayerIdle(u, data->obj, 1)); // let it walk forwards
+					send(msgWalk, 200); // 200msecs after the sit/KI state message
+					tmGameMessage msgStop(makePlayerIdle(u, data->obj, 0)); // let it walk forwards
+					send(msgStop, 200+100); // 100msecs after the walk message (don't make this lower than 50msecs!)
 				}
 			}
 		}
@@ -727,7 +744,7 @@ namespace alc {
 				if (loadClone.isPlayerAvatar && !loadClone.isLoad) {
 					// he leaves - make him idle
 					bcastMessage(makePlayerIdle(u, loadCloneMsg->clonedObj.obj));
-					// It is too late to make others idle - if he linked out, that was already done when we got the NetMsgFindAge.
+					// It is too late to make others idle for him - if he linked out, that was already done when we got the NetMsgFindAge.
 					// If he quits, he will do that too quickly.
 				}
 				

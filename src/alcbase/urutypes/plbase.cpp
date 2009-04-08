@@ -94,13 +94,14 @@ namespace alc {
 	{
 		switch (type) {
 			// known message types
-			case plLoadCloneMsg: return new tpLoadCloneMsg();
-			case plServerReplyMsg: return new tpServerReplyMsg();
-			case plAvatarMsg: return new tpAvatarMsg();
-			case plParticleTransferMsg: return new tpParticleTransferMsg();
-			case plAvBrainGenericMsg: return new tpAvBrainGenericMsg();
-			case pfKIMsg: return new tpKIMsg();
-			case plLoadAvatarMsg: return new tpLoadAvatarMsg();
+			case plLoadCloneMsg: return new tpLoadCloneMsg;
+			case plServerReplyMsg: return new tpServerReplyMsg;
+			case plAvatarMsg: return new tpAvatarMsg;
+			case plParticleTransferMsg: return new tpParticleTransferMsg;
+			case plAvatarInputStateMsg: return new tpAvatarInputStateMsg;
+			case plAvBrainGenericMsg: return new tpAvBrainGenericMsg;
+			case pfKIMsg: return new tpKIMsg;
+			case plLoadAvatarMsg: return new tpLoadAvatarMsg;
 			// NULL type
 			case plNull: return new tpObject(plNull); // the NULL object
 			// unknown message types
@@ -114,7 +115,6 @@ namespace alc {
 			case plNotifyMsg:
 			case plLinkEffectsTriggerMsg:
 			case plParticleKillMsg:
-			case plAvatarInputStateMsg:
 			case plLinkingMgrMsg:
 			case plClothingMsg:
 			case plInputIfaceMgrMsg:

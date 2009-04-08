@@ -164,6 +164,19 @@ namespace alc {
 	protected:
 		virtual void toString(void);
 	};
+	
+	class tpAvatarInputStateMsg : public tpMessage {
+	public:
+		tpAvatarInputStateMsg(void) : tpMessage(plAvatarInputStateMsg) {}
+		tpAvatarInputStateMsg(const tUruObjectRef &sender) : tpMessage(plAvatarInputStateMsg, sender) { state = 0; }
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t);
+		
+		// format
+		U16 state;
+	protected:
+		virtual void toString(void);
+	};
 
 } //End alc namespace
 
