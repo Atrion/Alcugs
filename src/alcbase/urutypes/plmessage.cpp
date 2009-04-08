@@ -336,6 +336,25 @@ namespace alc {
 		strBuf.printf(" Sender: %s (KI: %d)\n", senderName.c_str(), senderKi);
 		strBuf.printf(" Text: %s, Message Type: 0x%08X\n", text.c_str(), messageType);
 	}
+	
+	//// tpAvatarInputStateMsg
+	void tpAvatarInputStateMsg::store(tBBuf &t)
+	{
+		tpMessage::store(t);
+		state = t.getU16();
+	}
+	
+	void tpAvatarInputStateMsg::stream(tBBuf &t)
+	{
+		tpMessage::stream(t);
+		t.putU16(state);
+	}
+	
+	void tpAvatarInputStateMsg::toString()
+	{
+		tpMessage::toString();
+		strBuf.printf(" State: %d\n", state);
+	}
 
 } //end namespace alc
 

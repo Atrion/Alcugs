@@ -474,6 +474,8 @@ namespace alc {
 	{
 		clones.clear();
 		sdlStates.clear();
+		log->log("Cleared the complete age state\n");
+		log->flush();
 	}
 	
 	/** This is the SDL file parser */
