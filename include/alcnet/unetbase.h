@@ -70,7 +70,7 @@ protected:
 	inline bool isRunning(void) { return state_running; }
 	
 	/** Terminates the connection of the specified peer
-			\param who A session iterator that points to the desired peer
+			\param u A session iterator that points to the desired peer
 			\param reason The reason code (error code) (if 0, send RKickedOff to clients and RQutting for servers)
 			\param gotLeave Set to true if this is the reaction to a NetMsgLeave, which will not be answered to
 	*/

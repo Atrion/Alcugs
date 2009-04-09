@@ -41,13 +41,13 @@ namespace alc {
 const char * alcGetStrGuid(const Byte * guid);
 
 /** creates a 00000000-0000-0000-0000-000000000000 valid guid
-		\param uid A 16 bytes user id
+		\param guid A 16 bytes user id
 		\return A 36 bytes str formated id
 */
 const char * alcGetStrUid(const Byte * guid);
 
-/** \param uid A 36 bytes str user id
-		\return A 16 bytes hex user id
+/** \param guid A 36 bytes str user id
+	\return A 16 bytes hex user id
 */
 const Byte * alcGetHexUid(char * guid);
 

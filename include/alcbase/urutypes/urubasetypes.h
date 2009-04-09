@@ -60,13 +60,6 @@ private:
 /** Urustring */
 class tUStr :public tStrBuf {
 public:
-	/**
-		\param mode
-		0 - normal Uru (plasma 2.0)
-		1 - auto (normal/inverted) Uru (plasma 2.0) [Please avoid using this mode]
-		5 - inverted Uru (plasma 2.0)
-		6 - myst5 (plasma 2.1)
-	*/
 	tUStr(void) : tStrBuf() {}
 	tUStr(const char *k) : tStrBuf(k) {}
 	tUStr(const tUStr &t) : tStrBuf(t) {}

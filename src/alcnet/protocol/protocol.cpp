@@ -112,10 +112,13 @@ U32 alcUruChecksum1Trace(Byte * buf, int size) {
 
 /**
   \brief Computes the Uru known checksums
-  \param alg
+  \param buf The data to calculate the checksum for
+  \param size Size of the data
+  \param alg Checksum algorithm
 	 0 -> prime sum,
 	 1 -> live md5 sum,
 	 2 -> live md5 + passwd sum,
+  \param aux_hash Password hash for algorithm 2
   \note REMEMBER THAT aux_hash must be 32 bytes and contain an ascii hash
 */
 U32 alcUruChecksum(Byte* buf, int size, int alg, char * aux_hash) {

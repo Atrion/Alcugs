@@ -42,8 +42,8 @@ namespace alc {
 */
 void alcWriteCoreDump(const char * name="");
 /** 
-	\brief Set coredump flags.
-	\param flags 0x00 - disabled, 0x01 - enabled, 0x02 -always
+	\brief Set coredump flags
+	\param f flags: 0x00 - disabled, 0x01 - enabled, 0x02 -always
 */
 void alcSetCoreDumpFlags(char f);
 /** 

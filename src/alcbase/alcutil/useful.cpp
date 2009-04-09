@@ -57,7 +57,7 @@ const char * alcConsoleAsk() {
 }
 
 /**
-	Transforms a  username#avie@host:port  into hostname, username, avie and port
+	\brief "Transforms a  username#avie@host:port into hostname, username, avie and port"
 */
 int alcGetLoginInfo(char * argv,char * hostname,char * username,U16 * port,char * avie) {
 	unsigned int i;
