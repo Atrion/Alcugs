@@ -36,7 +36,7 @@
 namespace alc {
 
 /** 
-	\param filename name
+	\param addr filename
 	\return the extension 
 */
 char * alcGetExt(const char * addr);

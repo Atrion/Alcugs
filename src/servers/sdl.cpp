@@ -221,8 +221,13 @@ namespace alc {
 		while (it != clones.end()) {
 			if ((*it)->clonedObj.obj.clonePlayerId == player->ki) { // that clone is dead now, remove it and all of it's SDL states
 				log->log("Removing Clone [%s] as it belongs to player %s who just left us\n", (*it)->clonedObj.str(), player->str());
-				// make sure that clone is in the idle state
-				net->bcastMessage(net->makePlayerIdle(player, (*it)->clonedObj.obj));
+				if ((*it)->getType() == plLoadAvatarMsg) { // for avatars
+					// make sure that clone is in the idle state
+					net->bcastMessage(net->makePlayerIdle(player, (*it)->clonedObj.obj));
+					// make sure the clone does not run an animation
+					net->bcastMessage(net->makePlayerIdle(player, (*it)->clonedObj.obj, 1), 200); // 200msecs later, let it walk forwards
+					net->bcastMessage(net->makePlayerIdle(player, (*it)->clonedObj.obj, 0), 200+100); // again 100msecs later, it stops walking
+				}
 				// remove states from our list
 				removeCloneStates((*it)->clonedObj.obj.clonePlayerId);
 				// remove avatar from age (a delay of < 2700msecs is likely to cause crashes when the avatar just left the sitting state)
