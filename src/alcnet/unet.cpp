@@ -106,9 +106,9 @@ void tUnet::init() {
 	nat_up=128 * 1000;
 	nat_down=512 * 1000;
 	
-	flood_check_sec=5;
-	max_flood_pkts=300; // when first launching a client for an emtpy vault, there are about 100 packets within about 2.5 seconds
-	                    // when linking to MountainScene, huge amount of packets are sent... about 280 in 5 seconds
+	flood_check_sec=10;
+	max_flood_pkts=600; // when first launching a client for an emtpy vault, there are about 100 packets within about 2.5 seconds
+	                    // linking to Noloben is a good testcase (500 per 10 seconds was not enough)
 
 	snd_expire=30; //should be enough
 
@@ -632,6 +632,8 @@ void tUnet::doWork() {
 		if(ntime.seconds - cur->timestamp.seconds >= cur->conn_timeout) { // also create the timeout when it's exactly the same time
 		/*  this way the time from a session being marked as deleteable till it is deleted is kept short */
 			//timeout event
+			if (!cur->isTerminated())
+				sec->log("%s Timeout (didn't send a packet for a while)\n",cur->str());
 			tNetSessionIte ite(cur->ip,cur->port,cur->sid);
 			tNetEvent * evt=new tNetEvent(ite,UNET_TIMEOUT);
 			events->add(evt);
