@@ -175,16 +175,15 @@ void tNetSession::updateRTT(U32 newread) {
 }
 void tNetSession::increaseCabal() {
 	if(!cabal) return;
-	const U32 delta=250;
-	U32 inc=(delta*cabal)/1000;
-	if(cabal+inc > minBandwidth) inc /= 6;
+	U32 inc = 5000;
+	if(cabal+inc > minBandwidth) inc /= 4;
 	cabal+=inc;
 	if(cabal > maxBandwidth) cabal = maxBandwidth;
 	DBG(5,"+Cabal is now %i\n",cabal);
 }
-void tNetSession::decreaseCabal(bool partial) {
+void tNetSession::decreaseCabal(bool small) {
 	if(!cabal) return;
-	const U32 delta = partial ? 250 : 500;
+	const U32 delta = small ? 200 : 333;
 	U32 dec = (delta*cabal)/1000;
 	if (cabal-dec < minBandwidth) dec /= 4;
 	cabal -= dec;
@@ -214,7 +213,7 @@ void tNetSession::send(tmBase &msg, U32 delay) {
 #ifndef ENABLE_ACKLOG
 	if (!(msg.bhflags & UNetAckReply))
 #endif
-		net->log->log("<SND> %s\n",msg.str());
+	net->log->log("<SND> %s\n",msg.str());
 	tMBuf buf;
 	U32 csize,psize,hsize,pkt_sz,n_pkts;
 	Byte flags=msg.bhflags, val, tf;
@@ -445,7 +444,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 			// determine connection limits
 			maxBandwidth = std::max(cabal, comm.bandwidth/8);
 			minBandwidth = std::min(cabal, comm.bandwidth/8);
-			cabal=minBandwidth/2;
+			cabal=minBandwidth;
 			DBG(5, "INF: Cabal is now %i\n",cabal);
 			negotiating=false;
 		}
@@ -938,9 +937,9 @@ void tNetSession::doWork() {
 					// check if we need to resend
 					if(curmsg->tryes!=0) {
 						if(curmsg->tryes==1) {
-							decreaseCabal(true);
+							decreaseCabal(true); // true = small
 						} else {
-							decreaseCabal(false);
+							decreaseCabal(false); // false = big
 						}
 						// The server used to duplicate the timeout here - but since the timeout will be overwritten next time updateRTT
 						//  is called, that's of no use. So better make the RTT bigger - it is obviously at least the timeout
@@ -952,6 +951,7 @@ void tNetSession::doWork() {
 						sndq->deleteCurrent();
 						curmsg = sndq->getCurrent(); // this is the next one
 						//timeout event
+						net->sec->log("%s Timeout (didn't ack a packet)\n", str());
 						evt=new tNetEvent(ite,UNET_TIMEOUT);
 						net->events->add(evt);
 					} else {

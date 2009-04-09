@@ -102,7 +102,7 @@ private:
 
 	void updateRTT(U32 newread);
 	void increaseCabal();
-	void decreaseCabal(bool partial);
+	void decreaseCabal(bool small);
 	U32 timeToSend(U32 psize);
 	
 	void negotiate();

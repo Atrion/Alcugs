@@ -275,7 +275,6 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 			break;
 		case UNET_TIMEOUT:
 			if (!u->isTerminated() && !shutdown) {
-				sec->log("%s Timeout\n",u->str());
 				onConnectionTimeout(evt,u);
 				if(!evt->veto)
 					terminate(u, RTimedOut);
