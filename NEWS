@@ -8,6 +8,29 @@
 | Home: http://alcugs.almlys.org                                            |
 -----------------------------------------------------------------------------
 
+10/Apr/2009 - Release 1.3.5
+===========================================================================0
+There were a bunch of fixes and improvements since the last version, which
+was 1.3.4b. See the ChangeLog for a complete list. The highlights are:
+- Add server-side commands, currently implemented is "!ping" for a player to
+  check if he is still online, and "!silentping" for the same to be done
+  automatically via Python
+- Send warning (KI message) to sender if the receiver of an inter-age
+  message is not currently available
+- Implement updating SDL structs to a newer version
+- Improve book share filter so that only Relto book share notifications are
+  sorted out, and tell the sender of the notification via KI message that it
+  was ignored.
+  (This means that Bahro stones can be correctly shared now - other linking
+  books need Python changes to even offer that possibility)
+- Work-around for client-caused crash when linking out while someone
+  sits/has his KI open or runs an avatar animation or when the one who links
+  out sits/has his KI open:
+  The game server now sends messages to make sure that the avatars are
+  brought into a safe state before the linking is done
+- Implement reseting an age by sliding back the book in Relto
+- Fix for a lot of inter-age chat being lost while linking
+
 12/Jan/2009 - game server cleanup procedure completed
 ===========================================================================0
 The crashed avatar is now also removed for players who are online at the
@@ -32,6 +55,7 @@ advantages over the last usable game server, the unet2 version:
 - When assigning the owner of a page in the current age, the server takes
   into account who actually loaded that page to avoid assigning the page
   to someone who didn't even load it
+(see the changelog for some more fixes and changes)
 The new game server has the same format for saving an age state as the old
 one, so it can seamlessly replace older versions.
 Because a whole Shard can now be run by using only unet3+ servers, I
