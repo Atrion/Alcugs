@@ -411,7 +411,7 @@ public:
 	virtual bool operator<(tTime &t) { return(this->compare(t)>0); }
 	virtual bool operator>=(tTime &t) { return(this->compare(t)<=0); }
 	virtual bool operator<=(tTime &t) { return(this->compare(t)>=0); }
-	const tTime &operator=(tTime &t) {
+	const tTime &operator=(const tTime &t) {
 		seconds=t.seconds;
 		microseconds=t.microseconds;
 		return *this;

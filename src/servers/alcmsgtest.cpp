@@ -177,18 +177,17 @@ void tUnetSimpleFileServer::onStart() {
 }
 
 void tUnetSimpleFileServer::onIdle(bool idle) {
-	updateTimerRelative(1000);
-	if(listen==0) {
-		if(!sent) {
+	if (listen==0) {
+		if (!sent) {
 			tNetSession * u=NULL;
 			u=getSession(dstite);
-			if(u==NULL) {
+			if (u==NULL) {
 				stop();
 				return;
 			}
-			if(!u->isConnected()) return;
+			if (!u->isConnected()) return;
 			tmData data(u);
-			if(urgent) data.setUrgent();
+			if (urgent) data.setUrgent();
 			if (compressed) data.setCompressed();
 			tFBuf f1;
 			f1.open(file);
@@ -197,10 +196,8 @@ void tUnetSimpleFileServer::onIdle(bool idle) {
 			f1.close();
 			send(data);
 			sent=true;
-		} else {
-			if(idle) {
-				stop();
-			}
+		} else if (idle) {
+			stop();
 		}
 	}
 }

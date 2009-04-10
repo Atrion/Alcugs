@@ -179,7 +179,7 @@ void tNetSession::increaseCabal() {
 	if(cabal+inc > minBandwidth) inc /= 4;
 	cabal+=inc;
 	if(cabal > maxBandwidth) cabal = maxBandwidth;
-	DBG(5,"+Cabal is now %i\n",cabal);
+	DBG(5,"%s +Cabal is now %i\n",str(),cabal);
 }
 void tNetSession::decreaseCabal(bool small) {
 	if(!cabal) return;
@@ -188,7 +188,7 @@ void tNetSession::decreaseCabal(bool small) {
 	if (cabal-dec < minBandwidth) dec /= 4;
 	cabal -= dec;
 	if(cabal < maxPacketSz) cabal = maxPacketSz;
-	DBG(5,"-Cabal is now %i\n",cabal);
+	DBG(5,"%s -Cabal is now %i\n",str(),cabal);
 }
 
 /** computes the time we have to wait after sending the given amount of bytes */
@@ -286,7 +286,7 @@ void tNetSession::send(tmBase &msg, U32 delay) {
 	if (n_pkts > 0 && ((flags & UNetNegotiation) || (flags & UNetAckReply)))
 		throw txProtocolError(_WHERE("Nego and ack packets must not be fragmented!"));
 	
-	U32 i,tts=0;
+	U32 i;
 	
 	delay *= 1000; // make it usecs
 	for(i=0; i<=n_pkts; i++) {
@@ -308,8 +308,7 @@ void tNetSession::send(tmBase &msg, U32 delay) {
 		pmsg->data.write(buf.read(csize),csize);
 		pmsg->_update();
 		
-		pmsg->timestamp=net->net_time+delay+tts;
-		tts+=timeToSend(csize+hsize+net->ip_overhead);
+		pmsg->timestamp=net->net_time+delay; // no need to take tts into account now, the send queue worker does that
 		
 		#ifdef ENABLE_NETDEBUG
 		pmsg->timestamp+=net->latency;
@@ -433,7 +432,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 			// if we know the downstream of the peer, set avg cabal using what is smaller: our upstream or the peers downstream
 			//  (this is the last part of the negotiationg process)
 			
-			// save our upstream in cabal
+			// save our upstream in cabal (in bytes per second)
 			if((ntohl(ip) & 0xFFFFFF00) == 0x7F000000) { //lo
 				cabal=100 * 1000 * 1000/8; //100Mbps
 			} else if((ip & net->lan_mask) == net->lan_addr) { //LAN
@@ -442,10 +441,11 @@ void tNetSession::processMsg(Byte * buf,int size) {
 				cabal=net->nat_up / 8;
 			}
 			// determine connection limits
-			maxBandwidth = std::max(cabal, comm.bandwidth/8);
-			minBandwidth = std::min(cabal, comm.bandwidth/8);
+			comm.bandwidth /= 8; // we want bytes per second
+			maxBandwidth = std::max(cabal, comm.bandwidth);
+			minBandwidth = std::min(cabal, comm.bandwidth);
 			cabal=minBandwidth;
-			DBG(5, "INF: Cabal is now %i\n",cabal);
+			DBG(5, "%s Cabal is now %i\n",str(),cabal);
 			negotiating=false;
 		}
 	} else if (!isConnected()) { // we did not yet negotiate
