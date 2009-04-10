@@ -37,9 +37,9 @@
 //Alcugs version numbers
 #define alcMAX_VER 1
 #define alcMIN_VER 3
-#define alcREL_VER 4
-#define alcBET_VER 2
-#define alcSTR_VER "1.3.4b"
+#define alcREL_VER 5
+#define alcBET_VER 0
+#define alcSTR_VER "1.3.5"
 #define alcREVISION "$Revision$"
 
 #define alcDATE __DATE__

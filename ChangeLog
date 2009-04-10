@@ -1,1 +1,117 @@
-Use "svn log" to get the changelog
+Version 1.3.5 (10/Apr/2009)
+===============================
+Improvements:
+- When a player crashes its avatar is correctly removed from the age
+- When an avatar changes its name, the age player list is updated
+  immediately
+- Prettify status pages and add one with more debug information
+- Game server now verifies the type and the header of the game messages it
+  forwards, with the ability to also read compressed game messages
+- Add server-side commands, currently implemented is "!ping" for a player to
+  check if he is still online, and "!silentping" for the same to be done
+  automatically via Python
+- Send warning (KI message) to sender if the receiver of an inter-age
+  message is not currently available
+- Implement updating SDL structs to a newer version
+- Improve book share filter so that only Relto book share notifications are
+  sorted out, and tell the sender of the notification via KI message that it
+  was ignored
+  (This means that Bahro stones can be correctly shared now - other linking
+  books need Python changes to even offer that possibility)
+- Work-around for client-caused crash when linking out while someone
+  sits/has his KI open or runs an avatar animation or when the one who links
+  out sits/has his KI open:
+  The game server now sends messages to make sure that the avatars are
+  brought into a safe state before the linking is done
+- Implement reseting an age by sliding back the book in Relto
+
+Bugfixes:
+- Partial fix for problem of game server going down just when a player wants
+  to join - the time in which that can happen is much shorter now
+- Don't add vault references if parent or son does not exist, also don't
+  allow a client to fetch a non-existing node
+- Changes to the network packet control to hopefully improve connection
+  speed and stability
+- Fix for the problem of the client timing out when loading an age where
+  big pages are loaded via python (like Ahra Pahts or Minkata)
+- Attempt to fix "communication block" between two servers resulting in them
+  kicking each other endlessly
+- When the client sends a NetMsgGameStateRequest without mentioning any
+  pages, only send game state of pages loaded at startup
+- Fix for a lot of inter-age chat being lost while linking
+
+Version 1.3.4b (03/Jan/2009)
+===============================
+Unet3+ is completely usable now, the game server brings the following improvoements over the unet2 version:
+- When the reuqested port is not available, like unet2 it tries other ports
+  to bind to, but unlike unet2, it takes the start and end port which are
+  assigned to game servers into account
+- Much better cleanup is performed when a client is detected to have
+  crashed: It is correctly marked as offline for tracking and vault, and it
+  is removed from the age player list. Players joining later will not see
+  the dead avatar, only players which were in the age during the crash still
+  see it
+- Much less problems with special avatars as a bunch of hacks to distinguish
+  avatar status messages from age mechanic status messages are no longer
+  necessary
+- When assigning the owner of a page in the current age, the server takes
+  into account who actually loaded that page to avoid assigning the page
+  to someone who didn't even load it
+
+There also were some fixes and improvements which effect all or other servers:
+- Send acks urgently (to avoid them being queued too long)
+- Improve UruVision output of tracking server and update UruVision to use it
+- Some preperations for perhaps going multi-threaded in future
+- Use STL containers instead of realloc where it can be easily changed
+- Add option to disable unet2 and unet3 procotol support
+
+Version 1.3.4a (24/Dec/2008)
+===============================
+This version marks the move of the unet3+ source to the public part of the SVN repository.
+The changes are included in the 1.3.4b changelog.
+
+Version 1.3.4 (05/Sep/2008)
+===============================
+This is the first usable unet3+ version. It contains auth, vault, tracking and lobby servers (game is still being worked on).
+Here's what changed in the individual servers compared to the unet3 version:
+
+Vault
+- Changed the db strcuture, all field names (internally and in the DB) now
+  use the name they have in the VaultManager and the Plasma VaultDB. The
+  upgrade is done automatically, but please do a backup first!
+- Implemented vault cleaning (only use this if you logged in using the
+  VaultManager at least once, or if the vault was created with the new vault
+  server! Otherwise, you will destroy your vault... also, make a backup
+  first!). To start cleaning, do:
+  ./alcugs_vault -c /your/config/path/uru.conf -clean
+  What happens internally is that first, all references from or to
+  non-existing nodes are removed. Then, the server looks for lost nodes:
+  These are nodes with no parent which are not a VaultMGRNode (VaultMGRs are
+  allowed to have no parents). These nodes are removed as noone needs them
+  anyway. That seems to be safe on my Shard (about 1500 of 21000 nodes
+  were removed), but of course it could still make problems on others.
+- The vault is kept cleaner as image and text note, marker and marker game
+  and chronicle nodes are deleted when the last reference to them is removed
+  (so almost no lost nodes are produced, unlike with the old vault server)
+
+Lobby
+- Fixed the bug that the player was kicked while logging in the very first
+  avatar of a new vault (it was caused by the server thinking the 99 packets
+  sent within ~2.5 seconds are a flood attack)
+- Fix for players in the VaultManager to be shown as "Joining" on the status
+  page all the time
+
+Tracking
+- Status pages are updated only when there are changes or every 5 minutes
+  (to save your harddisk ;-)
+- HTML status page contains less confusing debug information and reloads
+  automatically every 30sec
+- Sequence prefixes printed in XML status page (for UruVision). Since I
+  removed some fields which the alcugs tracking server can only guess,
+  you might have to update your UruVision to the version in alcugs SVN
+- Support for unet3 protocol (which the unet3 tracking server for some
+  reason did not have); you have to patch your unet3 servers for that,
+  see patches/unet3-tracking.patch - or just use only unet3+ and unet2 ones
+
+Auth
+- No more CGAS support
