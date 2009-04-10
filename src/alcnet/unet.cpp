@@ -502,8 +502,16 @@ int tUnet::Recv() {
 	tv.tv_sec = this->unet_sec;
 	tv.tv_usec = this->unet_usec;
 
+#if defined(ENABLE_DEBUG) && _DBG_LEVEL_ >= 8
 	DBG(8,"waiting for incoming messages (%u.%06u)...\n", unet_sec, unet_usec);
+	tTime start; start.now();
+#endif
 	valret = select(this->sock+1, &rfds, NULL, NULL, &tv); // this is the command taking the time - now lets process what we got
+#if defined(ENABLE_DEBUG) && _DBG_LEVEL_ >= 8
+	tTime diff; diff.now();
+	diff = diff-start;
+	DBG(8,"waited %u.%06u\n",diff.seconds,diff.microseconds);
+#endif
 	/* Don't trust tv value after the call */
 	
 	//BEGIN ** CRITICIAL REGION STARTS HERE **
@@ -633,7 +641,7 @@ void tUnet::doWork() {
 		/*  this way the time from a session being marked as deleteable till it is deleted is kept short */
 			//timeout event
 			if (!cur->isTerminated())
-				sec->log("%s Timeout (didn't send a packet for a while)\n",cur->str());
+				sec->log("%s Timeout (didn't send a packet for %d seconds)\n",cur->str(),cur->conn_timeout);
 			tNetSessionIte ite(cur->ip,cur->port,cur->sid);
 			tNetEvent * evt=new tNetEvent(ite,UNET_TIMEOUT);
 			events->add(evt);
