@@ -261,7 +261,7 @@ void tNetSession::send(tmBase &msg, U32 delay) {
 	if((cflags & UNetUpgraded) || (flags & UNetExt)) {
 		val=0x00;
 		tf |= UNetExt;
-		DBG(5,"Sending an Alcugs Extended paquet\n");
+		DBG(7,"Sending an Alcugs Extended packet\n");
 	}
 
 	//On validation level 1 - ack and negotiations don't have checksum verification
@@ -277,7 +277,7 @@ void tNetSession::send(tmBase &msg, U32 delay) {
 	if(tf & UNetExt) { hsize-=8; }
 
 	pkt_sz=maxPacketSz - hsize; //get maxium message size
-	n_pkts=(psize-1)/pkt_sz; //get number of fragments
+	n_pkts=(psize-1)/pkt_sz; //get number of fragments (0 means everything is sent in one packet, which must be the case if psize == pkt_sz)
 	DBG(5,"pkt_sz:%i n_pkts:%i\n",pkt_sz,n_pkts);
 	if(n_pkts>=256) {
 		net->err->log("%s ERR: Attempted to send a packet of size %i bytes, that don't fits inside an uru message\n",str(),psize);
@@ -322,6 +322,7 @@ void tNetSession::send(tmBase &msg, U32 delay) {
 			//update time to send next message according to cabal
 			if (next_msg_time) next_msg_time += timeToSend(pmsg->size());
 			else next_msg_time = net->net_time + timeToSend(pmsg->size());
+			DBG(5, "%s Packet sent urgently, next one in %d\n", str(), next_msg_time-net->net_time);
 			// if necessary, put in queue as "sent once"
 			if(flags & UNetAckReq) {
 				pmsg->snd_timestamp=net->net_time;
@@ -445,7 +446,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 			maxBandwidth = std::max(cabal, comm.bandwidth);
 			minBandwidth = std::min(cabal, comm.bandwidth);
 			cabal=minBandwidth;
-			DBG(5, "%s Cabal is now %i\n",str(),cabal);
+			DBG(5, "%s Initial cabal is %i\n",str(),cabal);
 			negotiating=false;
 		}
 	} else if (!isConnected()) { // we did not yet negotiate
@@ -714,7 +715,7 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	if(ackWaitTime > timeout/4) ackWaitTime=timeout/4; // don't use the rtt as basis, it is 0 at the beginning, resulting in a much too quick first answer, a much too low rtt on the other side and thus the packets being re-sent too early
 	ack->timestamp=net->net_time + ackWaitTime;
 	// the net timer will be updated when the ackq is checked (which is done since processMsg will call doWork after calling createAckReply)
-	DBG(3, "ack tts: %i, %i, %i\n",msg.frt,ackWaitTime,cabal);
+	DBG(5, "ack tts: %i, %i, %i\n",msg.frt,ackWaitTime,cabal);
 	
 	int i=0;
 
@@ -932,10 +933,11 @@ void tNetSession::doWork() {
 				DBG(8, "%s %d ok to send a message\n",str(),net->net_time);
 				//we can send the message
 				if(curmsg->tf & UNetAckReq) {
-					//send paquet
+					//send packet
 					
 					// check if we need to resend
 					if(curmsg->tryes!=0) {
+						DBG(3, "%s Re-sending a message\n", str());
 						if(curmsg->tryes==1) {
 							decreaseCabal(true); // true = small
 						} else {
@@ -963,7 +965,7 @@ void tNetSession::doWork() {
 						curmsg = sndq->getNext(); // go on
 					}
 				} else {
-					//probabilistic drop (of voice, and other non-ack paquets) - make sure we don't drop ack replies though!
+					//probabilistic drop (of voice, and other non-ack packets) - make sure we don't drop ack replies though!
 					if(curmsg->tf == 0x00 && net->net_time-curmsg->timestamp > 4*timeout) {
 						//Unacceptable - drop it
 						net->err->log("%s Dropped a 0x00 packet due to unaceptable msg time %i,%i,%i\n",str(),timeout,net->net_time-curmsg->timestamp,rtt);
