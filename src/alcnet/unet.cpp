@@ -507,9 +507,10 @@ int tUnet::Recv() {
 	tTime start; start.now();
 #endif
 	valret = select(this->sock+1, &rfds, NULL, NULL, &tv); // this is the command taking the time - now lets process what we got
+	// update stamp, since we spent some time in the select function, and doWork() [see below] needs the current time
+	updateNetTime();
 #if defined(ENABLE_DEBUG) && _DBG_LEVEL_ >= 8
-	tTime diff; diff.now();
-	diff = diff-start;
+	start = ntime-start;
 	DBG(8,"waited %u.%06u\n",diff.seconds,diff.microseconds);
 #endif
 	/* Don't trust tv value after the call */
@@ -529,8 +530,6 @@ int tUnet::Recv() {
 	if (valret) { DBG(9,"Data recieved...\n"); } 
 	else { DBG(9,"No data recieved...\n"); }
 #endif
-	//set stamp
-	updateNetTime();
 	
 	//Here, the old netcore performed some work (ack check, retransmission, timeout, pending paquets to send...)
 	doWork(); // this will also set the idle state and the timeout for the next round
@@ -543,8 +542,6 @@ int tUnet::Recv() {
 #endif
 	DBG(9,"After recvfrom\n");
 	
-	//set stamp
-	updateNetTime();
 #ifdef ENABLE_NETDEBUG
 	if(n>0) {
 		if(!in_noise || (random() % 100) >= in_noise) {
@@ -637,8 +634,9 @@ void tUnet::doWork() {
 	tNetSession * cur;
 	smgr->rewind();
 	while((cur=smgr->getNext())) {
-		if(ntime.seconds - cur->timestamp.seconds >= cur->conn_timeout) { // also create the timeout when it's exactly the same time
-		/*  this way the time from a session being marked as deleteable till it is deleted is kept short */
+		/* Also create the timeout when it's exactly the same time.
+		  This way the time from a session being marked as deleteable till it is deleted is kept short */
+		if(ntime.seconds - cur->timestamp.seconds >= cur->conn_timeout) {
 			//timeout event
 			if (!cur->isTerminated())
 				sec->log("%s Timeout (didn't send a packet for %d seconds)\n",cur->str(),cur->conn_timeout);
