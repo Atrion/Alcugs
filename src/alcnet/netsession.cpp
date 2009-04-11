@@ -218,7 +218,7 @@ void tNetSession::send(tmBase &msg, U32 delay) {
 	U32 csize,psize,hsize,pkt_sz,n_pkts;
 	Byte flags=msg.bhflags, val, tf;
 	
-	net->updateNetTime();
+	net->updateNetTime(); // in order for the send time to be correct
 	
 	tUnetUruMsg * pmsg=NULL;
 	
