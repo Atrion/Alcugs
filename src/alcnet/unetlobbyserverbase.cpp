@@ -395,7 +395,8 @@ namespace alc {
 					err->log("ERR: I've got to ask the auth server about player %s, but it's unavailable.\n", u->str());
 					return 1;
 				}
-				tmCustomAuthAsk authAsk(authServer, authResponse.x, u->getSid(), u->getIp(), u->getPort(), u->name, u->challenge, authResponse.hash.readAll(), u->release);
+				authResponse.hash.rewind();
+				tmCustomAuthAsk authAsk(authServer, authResponse.x, u->getSid(), u->getIp(), u->getPort(), u->name, u->challenge, authResponse.hash.read(), u->release);
 				send(authAsk);
 #ifdef ENABLE_UNET3
 				// perhaps the server does not preserve the X

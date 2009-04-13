@@ -121,7 +121,6 @@ void alctypes_mbuf() {
 	assert(buf1.tell()==0);
 	buf1.end();
 	assert(buf1.tell()==buf1.size());
-	assert(buf1.size()==buf1.avgSize());
 	assert(buf1.eof());
 	try {
 		buf1.seek(1);
@@ -221,7 +220,6 @@ void alctypes_mbuf() {
 	
 	assert(buf2.size()==buf1.size());
 	assert(buf2.tell()==buf1.tell());
-	assert(!buf1.compare(buf2));
 	assert(buf1==buf2);
 	buf1.end();
 	buf1.put(buf2);
@@ -277,6 +275,8 @@ void alctypes_mbuf() {
 
 	buf1.rewind();
 	buf3.rewind();
+	buf6->rewind();
+	buf7->rewind();
 
 	buf1.seek(1);
 	buf3.seek(5);
@@ -376,7 +376,7 @@ void alctypes_fbuf() {
 	
 	f1.open("garbagedump.raw");
 	f2.open("garbagedump.raw");
-	assert(f1==f2);
+	assert(tMBuf(f1)==tMBuf(f2));
 	f1.close();
 	f2.close();
 	
@@ -390,7 +390,7 @@ void alctypes_fbuf() {
 	b1.putU32(5);
 	
 	f1.open("garbagedump2.raw");
-	assert(f1==b1);
+	assert(tMBuf(f1)==b1);
 	
 	tMBuf b2,b3;
 	b2.put(f1);
@@ -516,6 +516,22 @@ void alctypes_part4() {
 	test2.c_str();
 	test2.c_str();
 	assert(test2.size() == 4);
+	
+	// find
+	assert(tStrBuf("hiWorld").find("iW") == 1);
+	assert(tStrBuf("hiWorldW").find("W") == 2);
+	assert(tStrBuf("hiWorldW").find("Wdgdg") == -1);
+	
+	// comparsion
+	assert(tStrBuf("aa") != "z");
+	assert(tStrBuf("a") < tStrBuf("z"));
+	assert(tStrBuf("a") <= "zz");
+	assert(tStrBuf("a") <= "a");
+	assert(!(tStrBuf("a") > "z"));
+	assert(tStrBuf("zz") > "a");
+	assert(tStrBuf("z") >= "aa");
+	assert(tStrBuf("a") > "");
+	assert(tStrBuf("") < tStrBuf("a"));
 }
 
 void alctypes_part5() {
@@ -547,9 +563,7 @@ void alctypes_part5() {
 	assert(test=="/path/to/something.txt");
 	assert(test!="/path/to");
 	dmalloc_verify(NULL);
-	printf("%s\n",test.dirname().c_str());
 	assert(test.dirname()=="/path/to");
-	printf("-%s-\n",test.dirname().c_str());
 	dmalloc_verify(NULL);
 	test="/usr/lib";
 	assert(test.dirname()=="/usr");
@@ -651,7 +665,8 @@ void alctypes_part7()
 	b.rewind();
 	b.get(str);
 	char check[7];
-	alcHex2Ascii(check, str.readAll(), 3);
+	str.rewind();
+	alcHex2Ascii(check, str.read(), 3);
 	assert(strcmp(check, "8B0016") == 0);
 	
 	// write ustr tests
@@ -902,6 +917,7 @@ which is more than a line long\"\n\
 	xparser2.setConfig(cfg1);
 	xparser2.store(b);
 	assert(cfg1->getVar("aname") == "a");
+	assert(!cfg1->getVar("aname").isNull());
 	assert(cfg1->getVar("aname", "global", 1, 0) == "b");
 	assert(cfg1->getVar("anarr").isNull());
 	assert(cfg1->getVar("anarr", "asection", 0, 0) == "hi,ho");

@@ -77,7 +77,8 @@ namespace alc {
 	void tmAuthenticateChallenge::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" auth result: 0x%02X (%s), challenge: %s", authResult, alcUnetGetAuthCode(authResult), alcGetStrUid(challenge.readAll()));
+		challenge.rewind();
+		dbg.printf(" auth result: 0x%02X (%s), challenge: %s", authResult, alcUnetGetAuthCode(authResult), alcGetStrUid(challenge.read()));
 	}
 	
 	//// tmAuthenticateResponse
@@ -95,7 +96,8 @@ namespace alc {
 	void tmAuthenticateResponse::additionalFields(void)
 	{
 		dbg.nl();
-		dbg.printf(" hash: %s", alcGetStrUid(hash.readAll()));
+		hash.rewind();
+		dbg.printf(" hash: %s", alcGetStrUid(hash.read()));
 	}
 	
 	//// tmAccountAutheticated	

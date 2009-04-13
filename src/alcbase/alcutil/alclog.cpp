@@ -681,7 +681,7 @@ n = buffer size
 buf = The Buffer
 dsc = File descriptor where the packet will be dumped
  --------------------------------------------------------------*/
-void tLog::dumpbuf(Byte * buf, U32 n, U32 e, Byte how) {
+void tLog::dumpbuf(const Byte * buf, U32 n, U32 e, Byte how) {
 	unsigned int i=0,j=0,k=0;
 
 	if(!this->level) return;

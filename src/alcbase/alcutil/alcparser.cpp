@@ -117,13 +117,9 @@ void tSimpleParser::stream(tStrBuf &t) {
 			t.putByte(sep);
 			//t.writeStr(" ");
 			str=val->getVal();
-			if(str.hasQuotes()) {
-				t.writeStr("\"");
-			}
+			t.writeStr("\"");
 			t.writeStr(str);
-			if(str.hasQuotes()) {
-				t.writeStr("\"");
-			}
+			t.writeStr("\"");
 			t.nl();
 		}
 	}
@@ -141,7 +137,7 @@ tXParser::tXParser(bool override) :tSimpleParser() {
 	this->override = override;
 }
 
-void tXParser::setBasePath(tStrBuf & base) {
+void tXParser::setBasePath(const tStrBuf & base) {
 	path=base;
 }
 
@@ -263,13 +259,9 @@ void tXParser::stream(tStrBuf &t) {
 				for(x=0; x<mx; x++) {
 					if(x!=0) t.writeStr(",");
 					str=val->getVal(x,y);
-					if(str.hasQuotes()) {
-						t.writeStr("\"");
-					}
+					t.writeStr("\"");
 					t.writeStr(str.escape());
-					if(str.hasQuotes()) {
-						t.writeStr("\"");
-					}
+					t.writeStr("\"");
 				}
 				t.nl();
 			}

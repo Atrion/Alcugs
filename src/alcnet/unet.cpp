@@ -692,7 +692,7 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 	U32 msize=mbuf->size();
 	mbuf->rewind();
 	Byte * buf, * buf2=NULL;
-	buf=mbuf->read();
+	buf=const_cast<Byte *>(mbuf->read());
 
 	if(msg->val==2) {
 		DBG(8,"Encoding validation 2 packet of %i bytes...\n",msize);

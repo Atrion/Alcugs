@@ -66,11 +66,11 @@ public:
 	tUStr(const tStrBuf &t) : tStrBuf(t) {}
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t);
-	virtual void copy(const tUStr &t);
 	
+	// assignment
 	virtual const tUStr & operator=(const tUStr &t) { copy(t); return *this; }
-	virtual const tStrBuf & operator=(const tStrBuf &t) { tStrBuf::copy(t); return *this; }
-	virtual const tStrBuf & operator=(const char *t) { tStrBuf::copy(t); return *this; }
+	virtual const tStrBuf & operator=(const tStrBuf &t) { copy(t); return *this; }
+	virtual const tStrBuf & operator=(const char *t) { copy(t); return *this; }
 };
 
 /** UruObject */
@@ -114,7 +114,6 @@ class tStreamedObject : public tMBuf {
 public:
 	tStreamedObject(U16 type = plNull) : tMBuf(), type(type) { format = 0x00; realSize = 0; }
 	tStreamedObject(tpObject *obj);
-	virtual void copy(const tStreamedObject &t);
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t);
 	
@@ -122,8 +121,12 @@ public:
 	void uncompress(void); //!< call this before using it
 	void compress(U32 minSize = 256); //!< call this before streaming or sending it
 	void eofCheck(void);
+	
+	// assignment
+	const tStreamedObject &operator=(const tStreamedObject &t) { copy(t); return *this; }
 protected:
-	virtual void _pcopy(const tStreamedObject &t);
+	//! assignment
+	virtual void copy(const tStreamedObject &t);
 private:
 	
 	U32 realSize; // if flag is 0x02, this saves the uncompressed size, otherwise, it is zero

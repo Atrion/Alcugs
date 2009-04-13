@@ -81,7 +81,7 @@ public:
 	void logl(char level,const char * msg,...);
 	void flush();
 
-	void dumpbuf(Byte * buf, U32 n, U32 e=0,Byte how=7);
+	void dumpbuf(const Byte * buf, U32 n, U32 e=0,Byte how=7);
 	void dumpbuf(tBBuf &t, U32 n=0, U32 e=0,Byte how=7);
 
 	/** New Line */
