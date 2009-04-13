@@ -87,7 +87,7 @@ public:
 	virtual void stream(tBBuf &t);
 	virtual void store(tStrBuf &t);
 	virtual void stream(tStrBuf &t);
-	void setBasePath(tStrBuf & base);
+	void setBasePath(const tStrBuf & base);
 private:
 	bool override;
 	tStrBuf path;

@@ -188,12 +188,6 @@ void tUStr::stream(tBBuf &t) {
 		b.putByte(buf->buf[i] ^ key[i%8]);
 	} */
 }
-void tUStr::copy(const tUStr &t)
-{
-	DBG(9,"tUStr::copy()\n");
-	if(this==&t) return;
-	this->_pcopy(t);
-}
 /* end tUStr */
 
 /* tUruObject */
@@ -377,13 +371,8 @@ void tStreamedObject::eofCheck(void)
 
 void tStreamedObject::copy(const tStreamedObject &t)
 {
-	if(this==&t) return;
-	this->_pcopy(t);
-}
-void tStreamedObject::_pcopy(const tStreamedObject &t)
-{
 	if (&t == this) return;
-	tMBuf::_pcopy(t);
+	tMBuf::copy(t);
 	format = t.format;
 	type = t.type;
 }

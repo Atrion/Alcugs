@@ -58,19 +58,17 @@ namespace alc {
 */
 tBBuf::tBBuf() {
 	DBG(9,"tBBuf::tBBuf()\n");
-	this->init(); 
+	this->init();
 }
 tBBuf::~tBBuf() {
 	DBG(9,"~tBBuf()\n");
-	if(gpbuf!=NULL) free((void *)gpbuf);
 }
 void tBBuf::init() {
 	DBG(9,"tBBuf::init()\n");
-	gpbuf=NULL;
 }
-	//Uru is Little-Endian, so if we are on a Big-Endian machine, 
-	// all writes and reads to any network/file buffer must be
-	// correctly swapped.
+//Uru is Little-Endian, so if we are on a Big-Endian machine, 
+// all writes and reads to any network/file buffer must be
+// correctly swapped.
 
 //For these put* functions DO NOT change val to a reference (though I don't
 // know why anyone would). If you do, the byte-swapping will hurt you!
@@ -203,58 +201,9 @@ void tBBuf::seek(int n,Byte flags) {
 	this->set(res);
 }
 void tBBuf::check(const Byte * what,U32 n) {
-	if(eof() || size()-tell()<n || memcmp(what,this->read(n),n)) {
+	if(n && (size()-tell()<n || memcmp(what,read(n),n) != 0)) {
 		throw txUnexpectedData(_WHERE("UnexpectedData"));
 	}
-}
-void tBBuf::_pcopy(const tBBuf &t) {
-	DBG(9,"tBBuf::_pcopy()\n");
-}
-void tBBuf::copy(tBBuf &t) {
-	DBG(9,"tBBuf::copy()\n");
-	this->_pcopy(t);
-	this->rewind();
-	t.rewind();
-	this->write(t.read(),t.size());
-}
-char tBBuf::compare(tBBuf &t) {
-	DBG(9,"tBBuf::compare()\n");
-	char out;
-	rewind();
-	t.rewind();
-	DBG(9,"%u==%u?\n",t.size(),size());
-	if(t.size()==size()) {
-		out=memcmp(read(),t.read(),size());
-		rewind();
-		t.rewind();
-	} else {
-		if(t.size()>size()) out=1;
-		else out=-1;
-	}
-	return out;
-}
-const Byte * tBBuf::hexToAscii() {
-	if(gpbuf!=NULL) free((void *)gpbuf);
-	Byte * out;
-	out=(Byte *)malloc(sizeof(Byte) * ((2*size())+1));
-	
-	U32 pos;
-	pos=tell();
-	rewind();
-	Byte * in;
-	in=read();
-
-	U32 i;
-	for(i=0; i<size(); i++) {
-		out[2*i]=  ((in[i] & 0xF0)>>4);
-		out[2*i]= (out[2*i]<0x0A ? out[2*i]+0x30 : out[2*i]+(0x41-0x0A));
-		out[(2*i)+1] = ((in[i] & 0x0F)<0x0A ? (in[i] & 0x0F)+0x30 : (in[i] & 0x0F)+(0x41-0x0A));
-	}
-	out[size()*2]='\0';
-	
-	set(pos);
-	gpbuf=out;
-	return gpbuf;	
 }
 /* end Basic buffer */
 
@@ -298,7 +247,7 @@ tMBuf::tMBuf(tBBuf &t) {
 	U32 pos=t.tell();
 	t.rewind();
 	this->write(t.read(), t.size());
-	t.set(pos);
+	t.set(pos); // restore old pos
 	set(pos);
 }
 tMBuf::tMBuf(U32 size) {
@@ -324,9 +273,8 @@ tMBuf::~tMBuf() {
 }
 void tMBuf::onmodify() {
 }
-void tMBuf::_pcopy(const tMBuf &t) {
-	DBG(9,"tMBuf::_pcopy()\n");
-	tBBuf::_pcopy(t);
+void tMBuf::copy(const tMBuf &t) {
+	DBG(9,"tMBuf::copy()\n");
 	if(buf!=NULL) {
 		buf->dec();
 		if(buf->getRefs()<=0) {
@@ -337,11 +285,6 @@ void tMBuf::_pcopy(const tMBuf &t) {
 	if(buf!=NULL) buf->inc();
 	off=t.off;
 	msize=t.msize;
-}
-void tMBuf::copy(const tMBuf &t) {
-	DBG(9,"tMBuf::copy()\n");
-	if(this==&t) return;
-	this->_pcopy(t);
 }
 void tMBuf::init() {
 	DBG(9,"tMBuf::init()\n");
@@ -364,15 +307,6 @@ void tMBuf::setAt(U32 pos,const Byte what) {
 	*(buf->buf+pos)=what;
 	onmodify();
 }
-void tMBuf::zeroend() {
-	U32 bsize=buf->size();
-	end();
-	if(off+1>bsize) {
-		U32 newsize = (((off+1)-bsize)>1024 ? off+1025 : bsize+1024);
-		buf->resize(newsize);
-	}
-	*(buf->buf+off)=0x00;
-}
 void tMBuf::write(const Byte * val,U32 n) {
 	if(val==NULL) return;
 	if(buf==NULL) buf = new tRefBuf(1024 + n);
@@ -394,7 +328,7 @@ void tMBuf::write(const Byte * val,U32 n) {
 	if(off>msize) msize=off;
 	onmodify();
 }
-Byte * tMBuf::read(U32 n) {
+const Byte * tMBuf::read(U32 n) {
 	U32 pos=off;
 	if(n==0) n=msize-off;
 	if(n==0) return NULL;
@@ -410,13 +344,24 @@ void tMBuf::stream(tBBuf &b) {
 	if(buf==NULL || buf->buf==NULL) return;
 	b.write(buf->buf,msize);
 }
-void tMBuf::store(tBBuf &b) {
-	throw txBase(_WHERE("can not store a tMBuf")); // leave this until we are sure nothing calls this method
-}
 U32 tMBuf::size() const { return msize; }
 void tMBuf::clear() {
 	off=0;
 	msize=0;
+	onmodify();
+}
+char tMBuf::compare(const tMBuf &t) const {
+	DBG(9,"tBBuf::compare()\n");
+	U32 s1 = size(), s2 = t.size();
+	if (!s1 || !s2) {
+		// needs special treatment as buf might be NULL
+		if (!s1 && !s2) return 0; // both empty
+		else if (s1) return 1; // we empty
+		else return -1; // the other one empty
+	}
+	SByte out = memcmp(buf->buf, t.buf->buf, std::min(s1, s2));
+	if (out != 0 || s1 == s2) return out;
+	return (s1 < s2) ? -1 : 1;
 }
 /* end tMBuf */
 
@@ -452,7 +397,7 @@ void tFBuf::write(const Byte * val,U32 n) {
 	U32 nn=fwrite(val,n,1,f);
 	if(nn!=1) throw txWriteErr(_WHERE("write error, only wrote %u of 1",nn));
 }
-Byte * tFBuf::read(U32 n) {
+const Byte * tFBuf::read(U32 n) {
 	if(n==0) n=this->size();
 	if(f==NULL) throw txNoFile(_WHERE("NoFile"));
 	if(xbuf==NULL) {
@@ -512,7 +457,7 @@ void tSBuf::set(U32 pos) {
 	if(pos>msize) throw txOutOfRange(_WHERE("Cannot access pos %i, size %i\n",pos,msize));
 	off=pos; 
 }
-Byte * tSBuf::read(U32 n) {
+const Byte * tSBuf::read(U32 n) {
 	Byte * auxbuf=buf+off;
 	if(n) {
 		off+=n;
@@ -583,12 +528,12 @@ tStrBuf::tStrBuf(U32 size) :tMBuf(size) { DBG(9,"ctor 2\n"); init(); }
 tStrBuf::tStrBuf(tBBuf &k) :tMBuf(k) {
 	DBG(9,"copy zero\n");
 	init();
-	if(size()) isNull(false);
+	if(size()) null = false;
 }
 tStrBuf::tStrBuf(const tMBuf &k) :tMBuf(k) { 
 	DBG(9,"copy one\n");
 	init(); 
-	if(size()) isNull(false);
+	if(size()) null = false;
 }
 tStrBuf::tStrBuf(const tStrBuf &k) :tMBuf(k) { 
 	DBG(9,"copy two\n");
@@ -597,7 +542,7 @@ tStrBuf::tStrBuf(const tStrBuf &k) :tMBuf(k) {
 	l=k.l; 
 	c=k.c;
 	sep=k.sep;
-	flags=k.flags;
+	null=k.null;
 	DBG(9,"flags are %02X\n",flags);
 }
 tStrBuf::~tStrBuf() {
@@ -611,7 +556,7 @@ void tStrBuf::init() {
 	sep='=';
 	shot=NULL;
 	cache_lower=NULL;
-	flags=0x02; //Null true by default
+	null = true;
 }
 void tStrBuf::onmodify() {
 	DBG(7,"tStrBuf::onmodify()\n");
@@ -620,30 +565,24 @@ void tStrBuf::onmodify() {
 		delete cache_lower;
 		cache_lower=NULL;
 	}
-}
-void tStrBuf::_pcopy(const tStrBuf &t) {
-	DBG(9,"tStrBuf::_pcopy()\n");
-	if(this==&t) return;
-	tMBuf::_pcopy(t);
-	l=t.l;
-	c=t.c;
-	sep=t.sep;
-	flags=t.flags;
-	if(cache_lower!=NULL) {
-		delete cache_lower;
-		cache_lower=NULL;
-	}
-	//last thing
-	if(shot!=NULL) {
-		delete shot;
-		shot=NULL;
-	}
-	DBG(9,"flags are %02X\n",flags);
+	null = false;
 }
 void tStrBuf::copy(const tStrBuf &t) {
 	DBG(9,"tStrBuf::copy()\n");
 	if(this==&t) return;
-	this->_pcopy(t);
+	tMBuf::copy(t);
+	l=t.l;
+	c=t.c;
+	sep=t.sep;
+	null=t.null;
+	if(cache_lower!=NULL) {
+		delete cache_lower;
+		cache_lower=NULL;
+	}
+	if(shot!=NULL) {
+		delete shot;
+		shot=NULL;
+	}
 }
 void tStrBuf::copy(const char * str) {
 	DBG(2,"cpy\n");
@@ -663,26 +602,17 @@ void tStrBuf::stream(tBBuf &t)
 	t.putU16(msize);
 	tMBuf::stream(t); // just puts the bytes into the buffer
 }
-SByte tStrBuf::compare(const tStrBuf &t) {
-	if(this==&t) return 0;
-	U32 s = size();
-	U32 s2 = t.size();
-	//if(s>s2) s=s2;
-	DBG(9,"sizes %i,%i\n",s,s2);
-	if(s<s2) return 1;
-	if(s>s2) return -1;
-	return strncmp(c_str(),(char *)t.readAll(),s);
-}
-SByte tStrBuf::compare(const char * str) {
-	DBG(9,"compare %s\n",str);
-	//tStrBuf pat(str);
-	//return(compare(pat));
-	U32 s = size();
-	U32 s2 = strlen(str);
-	DBG(9,"sizes %i,%i\n",s,s2);
-	if(s<s2) return 1;
-	if(s>s2) return -1;
-	return strncmp(c_str(),str,s);
+SByte tStrBuf::compare(const char * str) const {
+	U32 s1 = size(), s2 = strlen(str);
+	if (!s1 || !s2) {
+		// needs special treatment as buf might be NULL
+		if (!s1 && !s2) return 0; // both empty
+		else if (s1) return 1; // we empty
+		else return -1; // the other one empty
+	}
+	SByte out = memcmp(buf->buf, str, std::min(s1, s2));
+	if (out != 0 || s1 == s2) return out;
+	return (s1 < s2) ? -1 : 1;
 }
 const char * tStrBuf::c_str() {
 	DBG(2,"tStrBuf::c_str()\n");
@@ -690,39 +620,27 @@ const char * tStrBuf::c_str() {
 		DBG(2,"is null: %d\n", msize);
 		return "";
 	}
-	zeroend();
-	//end();
-	//putByte(0);
-	//setSize(tell()-1);
-	rewind();
-	return (char *)read();
+	// add zero byte
+	U32 bsize = buf->size();
+	if(size()+1>bsize) {
+		buf->resize(bsize+128);
+	}
+	buf->buf[size()] = 0;
+	return (const char *)buf->buf;
+}
+const char * tStrBuf::c_str() const {
+	DBG(2,"tStrBuf::c_str()\n");
+	if(isNull() || msize == 0) {
+		DBG(2,"is null: %d\n", msize);
+		return "";
+	}
+	if (shot) delete shot;
+	shot = new tStrBuf(*this);
+	return shot->c_str();
 }
 void tStrBuf::rewind() {
 	tMBuf::rewind();
 	c=l=0;
-}
-bool tStrBuf::hasQuotes() {
-	DBG(9,"hasQuotes %02X\n",flags);
-	return flags & 0x01;
-}
-void tStrBuf::hasQuotes(bool has) {
-	if (has) {
-		flags |= 0x01;
-	} else {
-		flags &= ~0x01;
-	}
-	DBG(9,"hasQuotes enable %02X\n",flags);
-}
-bool tStrBuf::isNull() {
-	return flags & 0x02;
-}
-void tStrBuf::isNull(bool val) {
-	DBG(9,"isNull %i\n",val);
-	if (val) {
-		flags |= 0x02;
-	} else {
-		flags &= ~0x02;
-	}
 }
 U16 tStrBuf::getLineNum() {
 	return l+1;
@@ -733,7 +651,7 @@ U16 tStrBuf::getColumnNum() {
 void tStrBuf::decreaseLineNum() {
 	l--;
 }
-S32 tStrBuf::find(const char cat, bool reverse) {
+S32 tStrBuf::find(const char cat, bool reverse) const {
 	int i,max;
 	max=size();
 	if(reverse) {
@@ -747,7 +665,7 @@ S32 tStrBuf::find(const char cat, bool reverse) {
 	}
 	return -1;
 }
-S32 tStrBuf::find(const char *str) {
+S32 tStrBuf::find(const char *str) const {
 	char *c = strstr(c_str(), str);
 	if (c == NULL) return -1;
 	return (c-(char *)buf->buf);
@@ -806,9 +724,9 @@ tStrBuf & tStrBuf::strip(Byte what,Byte how) {
 	copy(aux);
 	return *this;
 }
-tStrBuf & tStrBuf::escape() {
-	tStrBuf * out;
-	out = new tStrBuf(200);
+tStrBuf & tStrBuf::escape() const {
+	if(shot!=NULL) delete shot;
+	shot = new tStrBuf(size()*3/2); // nothing inside this function will use shot, so we can initialize it now
 
 	int i,max;
 	Byte ctrl; 
@@ -816,28 +734,26 @@ tStrBuf & tStrBuf::escape() {
 	for(i=0; i<max; i++) {
 		ctrl=getAt(i);
 		if(ctrl=='\n') {
-			out->putByte('\\');
-			out->putByte('n');
+			shot->putByte('\\');
+			shot->putByte('n');
 		} else if(ctrl=='\r') {
-			out->putByte('\\');
-			out->putByte('r');
+			shot->putByte('\\');
+			shot->putByte('r');
 		} else if(ctrl=='"') {
-			out->putByte('\\');
-			out->putByte('"');
+			shot->putByte('\\');
+			shot->putByte('"');
 		} else if(ctrl=='\\') {
-			out->putByte('\\');
-			out->putByte('\\');
+			shot->putByte('\\');
+			shot->putByte('\\');
 		} else {
-			out->putByte(ctrl);
+			shot->putByte(ctrl);
 		}
 	}
 	
-	if(shot!=NULL) delete shot;
-	shot=out;
-	return *out;
+	return *shot;
 }
 
-tStrBuf & tStrBuf::lower() {
+tStrBuf & tStrBuf::lower() const {
 	if(cache_lower!=NULL) {
 		DBG(7,"cached...\n");
 		return *cache_lower;
@@ -847,57 +763,37 @@ tStrBuf & tStrBuf::lower() {
 	int i,max;
 	max=size();
 
-	tStrBuf * out;
-	out = new tStrBuf(max);
-
-	DBG(7,"##begin##%s\n",out->c_str());
+	cache_lower = new tStrBuf(max);
 
 	for(i=0; i<max; i++) {
-		out->putByte(std::tolower(getAt(i)));
+		cache_lower->putByte(std::tolower(getAt(i)));
 		DBG(7,"%i:%c\n",i,getAt(i));
 	}
-
-	DBG(7,"##end##%s\n",out->c_str());
-
-	//if(shot!=NULL) delete shot;
-	//shot=out;
-	DBG(7,"lower end %s - %s\n",c_str(),out->c_str());
-	DBG(7,"lower end %s - %s\n",c_str(),out->c_str());
-	DBG(7,"lower end %s - %s\n",c_str(),out->c_str());
-	cache_lower=out;
-	//DBG(2,"lower end %s - %s\n",c_str(),out->c_str());
-	return *out;
+	return *cache_lower;
 }
 
-tStrBuf & tStrBuf::upper() {
-	tStrBuf * out;
-	out = new tStrBuf(200);
+tStrBuf & tStrBuf::upper() const {
+	if (shot) delete shot;
+	shot = new tStrBuf(200); // nothing inside this function will use shot, so we can initialize it now
 	
 	int i,max;
 	max=size();
 	for(i=0; i<max; i++) {
-		out->putByte(std::toupper(getAt(i)));
+		shot->putByte(std::toupper(getAt(i)));
 	}
 	
-	if(shot!=NULL) delete shot;
-	shot=out;
-	return *out;
+	return *shot;
 }
 
 
-tStrBuf & tStrBuf::substring(U32 start,U32 len) {
-	tStrBuf * out;
-
-	set(start);
+tStrBuf & tStrBuf::substring(U32 start,U32 len) const {
 	if (len == 0) len = remaining();
-	out = new tStrBuf(len);
-	out->write(read(len),len);
-
-	if(shot!=NULL) delete shot;
-	shot=out;
-	return *out;
+	if (shot) delete shot;
+	shot = new tStrBuf(len); // nothing inside this function will use shot, so we can initialize it now
+	shot->write(buf->buf+start,len);
+	return *shot;
 }
-bool tStrBuf::startsWith(const char * pat) {
+bool tStrBuf::startsWith(const char * pat) const {
 	try {
 		return(substring(0,strlen(pat))==pat);
 	}
@@ -905,7 +801,7 @@ bool tStrBuf::startsWith(const char * pat) {
 		return false;
 	}
 }
-bool tStrBuf::endsWith(const char * pat) {
+bool tStrBuf::endsWith(const char * pat) const {
 	try {
 		return(substring(size()-strlen(pat),strlen(pat))==pat);
 	}
@@ -913,30 +809,25 @@ bool tStrBuf::endsWith(const char * pat) {
 		return false;
 	}
 }
-tStrBuf & tStrBuf::dirname() {
-	tStrBuf * out;
-	out = new tStrBuf(200);
-	int pos;
-	strip('/',0x02);
-	pos=find('/',1);
+const tStrBuf & tStrBuf::dirname() const {
+	if (shot) delete shot;
+	shot = new tStrBuf(*this); // nothing inside this function will use shot, so we can initialize it now
+	shot->strip('/',0x02);
+	int pos=shot->find('/',1);
 	
 	if(pos==-1) {
-		out->writeStr(".");
+		*shot = ".";
 	} else if(pos==0) {
-		out->writeStr("/");
+		*shot = "/";
 	} else {
-		out->writeStr(substring(0,pos));
+		*shot = shot->substring(0,pos);
 	}
-
-	if(shot!=NULL) delete shot;
-	shot=out;
-	return *out;
+	return *shot;
 }
-tStrBuf & tStrBuf::getLine(bool nl,bool slash) {
+const tStrBuf & tStrBuf::getLine(bool nl,bool slash) {
 	Byte c=0;
 	Byte slashm=0;
-	tStrBuf * out;
-	out = new tStrBuf(200);
+	tStrBuf out(255);
 
 	while(!eof()) {
 		c=getByte();
@@ -944,8 +835,8 @@ tStrBuf & tStrBuf::getLine(bool nl,bool slash) {
 			if(c=='\\') {
 				if(slashm) {
 					slashm=0;
-					out->putByte('\\');
-					out->putByte('\\');
+					out.putByte('\\');
+					out.putByte('\\');
 				} else {
 					slashm=1;
 				}
@@ -970,9 +861,9 @@ tStrBuf & tStrBuf::getLine(bool nl,bool slash) {
 			} else {
 				if(slashm) {
 					slashm=0;
-					out->putByte('\\');
+					out.putByte('\\');
 				}
-				out->putByte(c);
+				out.putByte(c);
 			}
 		} else {
 			if(c=='\n') {
@@ -986,169 +877,47 @@ tStrBuf & tStrBuf::getLine(bool nl,bool slash) {
 				this->c=0;
 				break;
 			} else {
-				out->putByte(c);
+				out.putByte(c);
 			}
 		}
 	}
 	if(nl) {
 		if(c=='\n' || c=='\r') {
-			out->putByte('\n');
+			out.putByte('\n');
 		}
 	}
+	
+	// use shot only now as functions above might use it, too
 	if(shot!=NULL) delete shot;
-	shot=out;
-	return *out;
+	shot=new tStrBuf(out);
+	return *shot;
 }
-#if 0
-tStrBuf & tStrBuf::getWord(bool slash) {
-	DBG(9,"getWord()\n");
-	Byte cc=0,c=0;
-	Byte slashm=0;
-	tStrBuf * out;
-	out = new tStrBuf(200);
-
-	while(!eof()) {
-		c=getByte();
-		this->c++;
-		if(!slash) {
-			if(c=='\\') {
-				if(slashm) {
-					slashm=0;
-					out->putByte('\\');
-					out->putByte('\\');
-				} else {
-					slashm=1;
-				}
-			} else if(c=='\n') {
-				if(!eof() && getByte()!='\r') seek(-1);
-				this->l++;
-				this->c=0;
-				if(!slashm) {
-					if(out->size()!=0) {
-						seek(-1);
-					}
-					break;
-				}
-				slashm=0;
-				c=0;
-			} else if(c=='\r') {
-				if(!eof() && getByte()!='\n') seek(-1);
-				this->l++;
-				this->c=0;
-				if(!slashm) {
-					if(out->size()!=0) {
-						seek(-1);
-					}
-					break;
-				}
-				slashm=0;
-				c=0;
-			} else if(c==sep || c==' ' || isblank(c)) {
-				while(!eof()) {
-					cc=c;
-					c=getByte();
-					if(c==sep || c==' ' || isblank(c)) {
-						this->c++;
-					} else {
-						c=cc;
-						if(out->size()!=0) {
-							seek(-2);
-							this->c--;
-						} else {
-							seek(-1);
-						}
-						break;
-					}
-				}
-				break;
-			} else {
-				if(slashm) {
-					slashm=0;
-					out->putByte('\\');
-				}
-				out->putByte(c);
-			}
-		} else { //slash is true
-			if(c=='\n') {
-				if(!eof() && getByte()!='\r') seek(-1);
-				this->l++;
-				this->c=0;
-				if(out->size()!=0) {
-					seek(-1);
-				}
-				break;
-			} else if(c=='\r') {
-				if(!eof() && getByte()!='\n') seek(-1);
-				this->l++;
-				this->c=0;
-				if(out->size()!=0) {
-					seek(-1);
-				}
-				break;
-			} else if(c==sep || c==' ' || isblank(c)) {
-				while(!eof()) {
-					cc=c;
-					c=getByte();
-					if(c==sep || c==' ' || isblank(c)) {
-						this->c++;
-					} else {
-						c=cc;
-						if(out->size()!=0) {
-							seek(-2);
-							this->c--;
-						} else {
-							seek(-1);
-						}
-						break;
-					}
-				}
-				break;
-			} else {
-				out->putByte(c);
-			}
-		}
-	}
-	if (out->size()==0) {
-		if(c=='\n' || c=='\r') {
-			out->putByte('\n');
-		} else if(c==sep) {
-			out->putByte(sep);
-		} else if(c==' ' || isblank(c)) {
-			out->putByte(' ');
-		}
-	}
-	if(shot!=NULL) delete shot;
-	shot=out;
-	return *out;
-}
-#endif
 tStrBuf & tStrBuf::getToken() {
 	DBG(9,"tStrBuf::getToken()\n");
 	Byte c;
 	Byte slash=0;
 	Byte quote=0;
 	Byte mode=0;
-	tStrBuf * out;
-	out = new tStrBuf(200);
-	//out->hasQuotes(true);
-	//assert(out->hasQuotes());
+	tStrBuf out(200);
+	//out.hasQuotes(true);
+	//assert(out.hasQuotes());
 	while(!eof()) {
 		c=getByte();
 		this->c++;
 		if(quote==0 && (c=='#' || c==';')) {
-			if (out->size()) { // we already have something in out, dont attach the newline to it but make it the next token
+			if (out.size()) { // we already have something in out, dont attach the newline to it but make it the next token
 				this->c--;
 				seek(-1);
 			} else {
 				getLine();
-				out->putByte('\n');
+				out.putByte('\n');
 			}
 			break;
 		} else if(slash==1) {
 			slash=0;
 			if(quote==1 && (c=='n' || c=='r')) {
-				if(c=='n') out->putByte('\n');
-				else out->putByte('\r');
+				if(c=='n') out.putByte('\n');
+				else out.putByte('\r');
 			} else if(c=='\n' || c=='\r') {
 				if(c=='\n') {
 					if(!eof() && getByte()!='\r') seek(-1);
@@ -1161,13 +930,12 @@ tStrBuf & tStrBuf::getToken() {
 				}
 			} else {
 				if(quote==1) {
-					out->putByte(c);
+					out.putByte(c);
 				} else {
 					throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected '\\'\n",l,this->c));
 				}
 			}
 		} else if(c=='\"') {
-			out->hasQuotes(true);
 			if(quote==1) {
 				quote=0;
 				break;
@@ -1180,16 +948,16 @@ tStrBuf & tStrBuf::getToken() {
 				c=0;
 				break;
 			} else {
-				//out->putByte(c);
-				out->putByte('\n');
+				//out.putByte(c);
+				out.putByte('\n');
 				if(c=='\n') {
 					if(!eof() && getByte()!='\r') seek(-1);
-					//else out->putByte('\r');
+					//else out.putByte('\r');
 					this->l++;
 					this->c=0;
 				} else {
 					if(!eof() && getByte()!='\n') seek(-1);
-					//else out->putByte('\n');
+					//else out.putByte('\n');
 					this->l++;
 					this->c=0;
 				}
@@ -1205,20 +973,21 @@ tStrBuf & tStrBuf::getToken() {
 				break;
 			} else {
 				if(c==sep || c==',') {
-					out->putByte(c);
+					out.putByte(c);
 					break;
 				}
 			}
 		} else if(isalpha(c) || isprint(c) || alcIsAlpha(c)) {
-			out->putByte(c);
+			out.putByte(c);
 			mode=1;
 		} else {
 			throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected character '%c'\n",l,this->c,c));
 		}
 	}
+	// use shot only now as functions above might use it, too
 	if(shot!=NULL) delete shot;
-	shot=out;
-	return *out;
+	shot=new tStrBuf(out);
+	return *shot;
 }
 
 void tStrBuf::writeStr(const char * t) {
@@ -1242,9 +1011,7 @@ void tStrBuf::printBoolean(bool val)
 	if (val) writeStr("yes");
 	else writeStr("no");
 }
-U32 tStrBuf::asU32() {
-	rewind();
-	DBG(9,"asU32 %s\n",c_str());
+U32 tStrBuf::asU32() const {
 	if(size()==0) return 0;
 	return atoi(c_str());
 }
@@ -1282,11 +1049,11 @@ U32 tTime::size() { return 8; }
 SByte tTime::compare(tTime &t) {
 	if(seconds==t.seconds) {
 		if(microseconds==t.microseconds) return 0;
-		if(microseconds<t.microseconds) return 1;
-		return -1;
+		if(microseconds<t.microseconds) return -1;
+		return 1;
 	}
-	if(seconds<t.seconds) return 1;
-	return -1;
+	if(seconds<t.seconds) return -1;
+	return 1;
 }
 tTime operator+(tTime &a,tTime &b) {
 	tTime r;
