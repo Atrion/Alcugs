@@ -898,10 +898,8 @@ void tNetSession::doWork() {
 		tUnetMsg * g = rcvq->getNext();
 		while((g=rcvq->getCurrent())) {
 			if (!g->completed) break; // if this is a non-completed message, don't parse it or what comes after it - it would be out of order
-			evt=new tNetEvent(ite,UNET_MSGRCV,g);
+			evt=new tNetEvent(ite, UNET_MSGRCV, rcvq->unstackCurrent());
 			net->events->add(evt);
-			rcvq->unstackCurrent();
-			break;
 		}
 	}
 	
