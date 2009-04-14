@@ -37,7 +37,7 @@ namespace alc {
 class tmTerminated :public tmMsgBase {
 public:
 	virtual void store(tBBuf &t);
-	virtual void stream(tBBuf &t);
+	virtual void stream(tBBuf &t) const;
 	tmTerminated(tNetSession * u,U32 ki=0,Byte reason=RKickedOff);
 	//format
 	Byte reason;
@@ -49,7 +49,7 @@ protected:
 class tmLeave :public tmMsgBase {
 public:
 	virtual void store(tBBuf &t);
-	virtual void stream(tBBuf &t);
+	virtual void stream(tBBuf &t) const;
 	tmLeave(tNetSession * u,U32 ki=0,Byte reason=RQuitting);
 	//format
 	Byte reason;
@@ -71,7 +71,7 @@ public:
 class tmPlayerTerminated :public tmMsgBase {
 public:
 	virtual void store(tBBuf &t);
-	virtual void stream(tBBuf &t);
+	virtual void stream(tBBuf &t) const;
 	tmPlayerTerminated(tNetSession * u,U32 ki=0,Byte reason=RKickedOff);
 	//format
 	Byte reason;
@@ -83,7 +83,7 @@ protected:
 class tmPing :public tmMsgBase {
 public:
 	virtual void store(tBBuf &t);
-	virtual void stream(tBBuf &t);
+	virtual void stream(tBBuf &t) const;
 	tmPing(tNetSession * u, Byte dst = KLobby);
 	tmPing(tNetSession *u, tmPing &ping);
 	void setReply();

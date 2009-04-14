@@ -103,7 +103,7 @@ namespace alc {
 #endif
 	}
 	
-	void tmCustomAuthAsk::stream(tBBuf &t)
+	void tmCustomAuthAsk::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 		t.put(login);
@@ -186,7 +186,7 @@ namespace alc {
 		accessLevel = t.getByte();
 	}
 	
-	void tmCustomAuthResponse::stream(tBBuf &t)
+	void tmCustomAuthResponse::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 		t.put(login); // login

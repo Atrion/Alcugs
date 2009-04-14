@@ -43,7 +43,7 @@ namespace alc {
 class tParserBase :public tBaseType {
 public:
 	virtual void store(tStrBuf &t)=0;
-	virtual void stream(tStrBuf &t)=0;
+	virtual void stream(tStrBuf &t) const=0;
 };
 
 /**
@@ -57,9 +57,9 @@ class tSimpleParser :public tParserBase {
 public:
 	tSimpleParser();
 	virtual void store(tBBuf &t);
-	virtual void stream(tBBuf &t);
+	virtual void stream(tBBuf &t) const;
 	virtual void store(tStrBuf &t);
-	virtual void stream(tStrBuf &t);
+	virtual void stream(tStrBuf &t) const;
 	/**
 		\brief Computes the size, runs the same code as stream
 	*/
@@ -84,9 +84,9 @@ public:
 	tXParser(bool override = true);
 	virtual ~tXParser() {}
 	virtual void store(tBBuf &t);
-	virtual void stream(tBBuf &t);
+	virtual void stream(tBBuf &t) const;
 	virtual void store(tStrBuf &t);
-	virtual void stream(tStrBuf &t);
+	virtual void stream(tStrBuf &t) const;
 	void setBasePath(const tStrBuf & base);
 private:
 	bool override;

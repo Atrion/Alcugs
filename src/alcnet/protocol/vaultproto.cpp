@@ -124,7 +124,7 @@ namespace alc {
 		}
 	}
 	
-	void tvAgeInfoStruct::stream(tBBuf &t)
+	void tvAgeInfoStruct::stream(tBBuf &t) const
 	{
 		// see store for description of flags
 		t.putByte(flags);
@@ -192,7 +192,7 @@ namespace alc {
 		t.get(cameraStack);
 	}
 	
-	void tvSpawnPoint::stream(tBBuf &t)
+	void tvSpawnPoint::stream(tBBuf &t) const
 	{
 		// see store for description of flags
 		t.putU32(flags);
@@ -249,7 +249,7 @@ namespace alc {
 			t.get(parentAgeName);
 	}
 	
-	void tvAgeLinkStruct::stream(tBBuf &t)
+	void tvAgeLinkStruct::stream(tBBuf &t) const
 	{
 		// see store for description of flags
 		t.putU16(flags);
@@ -302,7 +302,7 @@ namespace alc {
 		time = t.getDouble();
 	}
 	
-	void tvManifest::stream(tBBuf &t)
+	void tvManifest::stream(tBBuf &t) const
 	{
 		t.putU32(id);
 		t.putDouble(time);
@@ -343,7 +343,7 @@ namespace alc {
 		flags = t.getByte();
 	}
 	
-	void tvNodeRef::stream(tBBuf &t)
+	void tvNodeRef::stream(tBBuf &t) const
 	{
 		t.putU32(saver);
 		t.putU32(parent);
@@ -397,7 +397,7 @@ namespace alc {
 		}
 	}
 	
-	void tvCreatableGenericValue::stream(tBBuf &t)
+	void tvCreatableGenericValue::stream(tBBuf &t) const
 	{
 		t.putByte(format);
 		switch (format) {
@@ -482,7 +482,7 @@ namespace alc {
 		memcpy(data, t.read(size), size);
 	}
 	
-	void tvCreatableStream::stream(tBBuf &t)
+	void tvCreatableStream::stream(tBBuf &t) const
 	{
 		t.putU32(size);
 		if (data)
@@ -573,7 +573,7 @@ namespace alc {
 		memcpy(guid, t.read(8), 8);
 	}
 	
-	void tvServerGuid::stream(tBBuf &t)
+	void tvServerGuid::stream(tBBuf &t) const
 	{
 		t.write(guid, 8);
 	}
@@ -766,7 +766,7 @@ namespace alc {
 		}
 	}
 	
-	void tvNode::stream(tBBuf &t)
+	void tvNode::stream(tBBuf &t) const
 	{
 		// write flags
 		t.putU32(flagA);
@@ -1039,7 +1039,7 @@ namespace alc {
 		t.get(*data);
 	}
 	
-	void tvItem::stream(tBBuf &t)
+	void tvItem::stream(tBBuf &t) const
 	{
 		if (!data) throw txProtocolError(_WHERE("don\'t have any data to write"));
 		t.putByte(id);
@@ -1200,7 +1200,7 @@ namespace alc {
 		if (!t.eof()) throw txProtocolError(_WHERE("Message is too long")); // there must not be any byte after what we parsed above
 	}
 	
-	void tvMessage::stream(tBBuf &t)
+	void tvMessage::stream(tBBuf &t) const
 	{
 		t.putByte(cmd);
 		t.putU16(0);// result
@@ -1209,7 +1209,7 @@ namespace alc {
 		// put the items into a temporary buffer which might be compressed
 		tMBuf buf; // this should be created on the stack to avoid leaks when there's an exception
 		buf.putU16(items.size());
-		for (tItemList::iterator it = items.begin(); it != items.end(); ++it) {
+		for (tItemList::const_iterator it = items.begin(); it != items.end(); ++it) {
 			(*it)->tpots = tpots; // make sure the right TPOTS value is used
 			buf.put(**it);
 		}

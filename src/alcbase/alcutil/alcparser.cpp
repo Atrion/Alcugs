@@ -59,7 +59,7 @@ void tSimpleParser::store(tBBuf &t) {
 	tStrBuf s(t);
 	store(s);
 }
-void tSimpleParser::stream(tBBuf &t) {
+void tSimpleParser::stream(tBBuf &t) const {
 	tStrBuf s;
 	stream(s);
 	t.put(s);
@@ -99,7 +99,7 @@ void tSimpleParser::store(tStrBuf &t) {
 		}
 	}	
 }
-void tSimpleParser::stream(tStrBuf &t) {
+void tSimpleParser::stream(tStrBuf &t) const {
 	//U32 start=t.tell();
 	DBG(4,"stream()\n");
 	if(!cfg) return;
@@ -145,7 +145,7 @@ void tXParser::store(tBBuf &t) {
 	tStrBuf s(t);
 	store(s);
 }
-void tXParser::stream(tBBuf &t) {
+void tXParser::stream(tBBuf &t) const {
 	tStrBuf s;
 	stream(s);
 	t.put(s);
@@ -231,7 +231,7 @@ void tXParser::store(tStrBuf &t) {
 	}
 }
 
-void tXParser::stream(tStrBuf &t) {
+void tXParser::stream(tStrBuf &t) const {
 	DBG(4,"stream()\n");
 	if(!cfg) return;
 	DBG(5,"cfg->rewind()\n");

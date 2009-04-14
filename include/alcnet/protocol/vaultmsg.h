@@ -37,7 +37,7 @@ namespace alc {
 		tmVault(tNetSession *u);
 		tmVault(tNetSession *u, U32 ki, U32 x, bool task, tBaseType *vaultMessage);
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		// format
 		tMBuf message;
 	protected:
@@ -56,7 +56,7 @@ namespace alc {
 		tmCustomVaultPlayerList(tNetSession *u);
 		tmCustomVaultPlayerList(tNetSession *u, U32 x, U32 sid, const Byte *uid);
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		// format
 		U16 numberPlayers;
 		tMBuf players;
@@ -69,7 +69,7 @@ namespace alc {
 		tmCustomVaultPlayerStatus(tNetSession *u, U32 ki, const char *serverGuid, const char *age, Byte state, U32 onlineTime);
 		tmCustomVaultPlayerStatus(tNetSession *u);
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		// format
 		tStrBuf age, serverGuid;
 		Byte state;
@@ -83,7 +83,7 @@ namespace alc {
 		tmCustomVaultCreatePlayer(tNetSession *u);
 		tmCustomVaultCreatePlayer(tNetSession *u, U32 x, U32 sid, Byte *uid, Byte accessLevel, const char *login, tStrBuf &avatar, tStrBuf &gender, tStrBuf &friendName, tStrBuf &key);
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		// format
 		tUStr login;
 		tStrBuf avatar, gender, friendName, key;
@@ -97,7 +97,7 @@ namespace alc {
 		tmCustomVaultPlayerCreated(tNetSession *u);
 		tmCustomVaultPlayerCreated(tNetSession *u, U32 ki, U32 x, U32 sid, const Byte *uid, Byte result);
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		// format
 		Byte result;
 	protected:
@@ -109,7 +109,7 @@ namespace alc {
 		tmCustomVaultDeletePlayer(tNetSession *u);
 		tmCustomVaultDeletePlayer(tNetSession *u, U32 ki, U32 x, U32 sid, Byte *uid, Byte accessLevel);
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		// format
 		Byte accessLevel;
 	protected:
@@ -121,7 +121,7 @@ namespace alc {
 		tmCustomVaultCheckKi(tNetSession *u, U32 ki, U32 x, U32 sid, Byte *uid);
 		tmCustomVaultCheckKi(tNetSession *u);
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 	protected:
 		virtual void additionalFields();
 	};
@@ -131,7 +131,7 @@ namespace alc {
 		tmCustomVaultKiChecked(tNetSession *u, U32 ki, U32 x, U32 sid, const Byte *uid, Byte status, const char *avatar);
 		tmCustomVaultKiChecked(tNetSession *u);
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		// format
 		Byte status;
 		tStrBuf avatar;

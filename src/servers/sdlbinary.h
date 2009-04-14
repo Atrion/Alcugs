@@ -58,15 +58,15 @@ namespace alc {
 		const tSdlStateVar &operator=(const tSdlStateVar &var);
 		~tSdlStateVar(void);
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		void print(tLog *log, Byte indentSize);
-		inline Byte getNum(void) { return num; }
-		inline bool hasFlags(Byte f){
+		inline Byte getNum(void) const { return num; }
+		inline bool hasFlags(Byte f) const {
 			return (flags | f) == flags; // there can be several flags enabled in f, so a simple & is not enough
 		}
-		Byte getType(void);
-		tStrBuf getName(void);
-		U32 getSize(void);
+		Byte getType(void) const;
+		tStrBuf getName(void) const;
+		U32 getSize(void) const;
 	private:
 		void clear(void);
 	
@@ -96,12 +96,12 @@ namespace alc {
 		tSdlStateBinary(void);
 		tSdlStateBinary(tAgeStateManager *stateMgr, tStrBuf name, U32 version, bool initDefault = false);
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		void print(tLog *log, Byte indentSize = 1);
 		
 		tUStr getName(void) const;
 		U16 getVersion(void) const;
-		inline bool isIndexed(void) { return incompleteVars || incompleteStructs; }
+		inline bool isIndexed(void) const { return incompleteVars || incompleteStructs; }
 		
 		void updateWith(tSdlStateBinary *newState); //!< updates the current state with the additional information from the new one
 		void updateTo(tSdlStruct *newSdlStruct); //!< updates the struct the data is saved in
@@ -130,7 +130,7 @@ namespace alc {
 		tSdlState(tAgeStateManager *stateMgr, tMBuf &t);
 		tSdlState(void);
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		const char *str(void);
 		void print(tLog *log);
 		bool operator==(const tSdlState &state);
@@ -139,8 +139,6 @@ namespace alc {
 		// format
 		tSdlStateBinary content;
 	private:
-		tSdlStruct *findStruct(void); //!< finds the correct tSdlStruct which is necessary for this SDL State
-	
 		tStrBuf dbg;
 		tAgeStateManager *stateMgr;
 	};

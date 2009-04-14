@@ -62,7 +62,7 @@ namespace alc {
 		message.write(t.read(), remaining); // the rest is the message
 	}
 	
-	void tmVault::stream(tBBuf &t)
+	void tmVault::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 		t.put(message);
@@ -145,7 +145,7 @@ namespace alc {
 		players.write(t.read(), remaining); // the rest is the data about the players
 	}
 	
-	void tmCustomVaultPlayerList::stream(tBBuf &t)
+	void tmCustomVaultPlayerList::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 		t.putU16(numberPlayers);
@@ -185,7 +185,7 @@ namespace alc {
 		onlineTime = t.getU32();
 	}
 	
-	void tmCustomVaultPlayerStatus::stream(tBBuf &t)
+	void tmCustomVaultPlayerStatus::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 		t.put(age);
@@ -258,7 +258,7 @@ namespace alc {
 		if (unk != 0) throw txProtocolError(_WHERE("NetMsgCustomVaultCreatePlayer.unk must always be 0"));
 	}
 	
-	void tmCustomVaultCreatePlayer::stream(tBBuf &t)
+	void tmCustomVaultCreatePlayer::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 		t.put(login);
@@ -331,7 +331,7 @@ namespace alc {
 		result = t.getByte();
 	}
 	
-	void tmCustomVaultPlayerCreated::stream(tBBuf &t)
+	void tmCustomVaultPlayerCreated::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 #ifdef ENABLE_UNET2
@@ -401,7 +401,7 @@ namespace alc {
 		accessLevel = t.getByte();
 	}
 	
-	void tmCustomVaultDeletePlayer::stream(tBBuf &t)
+	void tmCustomVaultDeletePlayer::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 #ifdef ENABLE_UNET2
@@ -465,7 +465,7 @@ namespace alc {
 #endif
 	}
 	
-	void tmCustomVaultCheckKi::stream(tBBuf &t)
+	void tmCustomVaultCheckKi::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 #ifdef ENABLE_UNET2
@@ -532,7 +532,7 @@ namespace alc {
 		t.get(avatar);
 	}
 	
-	void tmCustomVaultKiChecked::stream(tBBuf &t)
+	void tmCustomVaultKiChecked::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 #ifdef ENABLE_UNET2

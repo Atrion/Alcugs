@@ -59,7 +59,7 @@ namespace alc {
 		this->players = players;
 	}
 	
-	void tmVaultPlayerList::stream(tBBuf &t)
+	void tmVaultPlayerList::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 		t.putU16(numberPlayers);
@@ -107,7 +107,7 @@ namespace alc {
 		this->result = result;
 	}
 	
-	void tmPlayerCreated::stream(tBBuf &t)
+	void tmPlayerCreated::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 		t.putByte(result);

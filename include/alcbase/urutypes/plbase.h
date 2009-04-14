@@ -50,7 +50,7 @@ namespace alc {
 	public:
 		tpObject(U16 type, bool incomplete = false) : tBaseType(), incomplete(incomplete), type(type) {}
 		virtual void store(tBBuf &t) {}
-		virtual void stream(tBBuf &t) {}
+		virtual void stream(tBBuf &t) const {}
 		
 		inline U16 getType(void) { return type; }
 		inline bool isIncomplete(void) { return incomplete; }

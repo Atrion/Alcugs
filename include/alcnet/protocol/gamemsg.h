@@ -50,7 +50,7 @@ namespace alc {
 	public:
 		tMemberInfo(tNetSession *u, const tUruObject &obj, bool hidePlayer);
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		const char *str(void);
 	private:
 		U32 ki;
@@ -73,7 +73,7 @@ namespace alc {
 	class tmJoinAck : public tmMsgBase {
 	public:
 		tmJoinAck(tNetSession *u, U32 x, tBaseType *sdl);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		// format
 		tStreamedObject sdlStream;
 	};
@@ -84,7 +84,7 @@ namespace alc {
 		tmGameMessage(tNetSession *u, const tmGameMessage &msg);
 		tmGameMessage(tNetSession *u, U32 ki, tpObject *obj);
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		// format
 		tStreamedObject msgStream;
 	protected:
@@ -98,7 +98,7 @@ namespace alc {
 		tmGameMessageDirected(tNetSession *u, const tmGameMessageDirected &msg);
 		tmGameMessageDirected(tNetSession *u, U32 ki, tpObject *obj);
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		// format
 		typedef std::vector<U32> tRecList;
 		tRecList recipients;
@@ -113,7 +113,7 @@ namespace alc {
 		tmLoadClone(tNetSession *u, const tmLoadClone &msg);
 		tmLoadClone(tNetSession *u, tpLoadCloneMsg *subMsg, bool isInitial);
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		
 		void checkSubMsg(tpLoadCloneMsg *subMsg);
 		// format
@@ -141,7 +141,7 @@ namespace alc {
 	class tmGroupOwner : public tmMsgBase {
 	public:
 		tmGroupOwner(tNetSession *u, tPageInfo *page, bool isOwner);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		// format
 		U32 pageId;
 		U16 pageType;
@@ -175,7 +175,7 @@ namespace alc {
 	class tmInitialAgeStateSent : public tmMsgBase {
 	public:
 		tmInitialAgeStateSent(tNetSession *u, U32 num);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		// format
 		U32 num;
 	protected:
@@ -214,7 +214,8 @@ namespace alc {
 		tmSDLState(tNetSession *u, const tUruObject &obj, tBaseType *sdl, bool isInitial);
 		
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
+	
 		// format
 		tUruObject obj;
 		tStreamedObject sdlStream;
@@ -230,7 +231,7 @@ namespace alc {
 		tmSDLStateBCast(tNetSession *u);
 		tmSDLStateBCast(tNetSession *u, const tmSDLStateBCast & msg);
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 	};
 	
 	class tmSetTimeout : public tmMsgBase {
@@ -242,7 +243,7 @@ namespace alc {
 	class tmMembersList : public tmMsgBase {
 	public:
 		tmMembersList(tNetSession *u);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		// format
 		typedef std::vector<tMemberInfo> tMemberList;
 		tMemberList members;
@@ -253,7 +254,7 @@ namespace alc {
 	class tmMemberUpdate : public tmMsgBase {
 	public:
 		tmMemberUpdate(tNetSession *u, const tMemberInfo &info, bool isJoined);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		// format
 		tMemberInfo info;
 		bool isJoined;

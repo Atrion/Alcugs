@@ -47,7 +47,7 @@ namespace alc {
 	class tmAuthenticateChallenge : public tmMsgBase {
 	public:
 		tmAuthenticateChallenge(tNetSession *u, U32 x, Byte authResult, const Byte *challenge);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		// format
 		Byte authResult;
 		tStrBuf challenge;
@@ -68,7 +68,7 @@ namespace alc {
 	class tmAccountAutheticated : public tmMsgBase {
 	public:
 		tmAccountAutheticated(tNetSession *u, U32 x, Byte authResult, const Byte *serverGuid);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		// format
 		Byte authResult;
 		Byte serverGuid[8];
@@ -102,7 +102,7 @@ namespace alc {
 	class tmFindAgeReply : public tmMsgBase {
 	public:
 		tmFindAgeReply(tNetSession *u, U32 x, tStrBuf &ipStr, U16 port, tStrBuf &age, const Byte *guid);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		// format
 		tStrBuf age, ipStr;
 		U16 serverPort;

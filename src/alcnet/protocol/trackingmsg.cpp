@@ -84,7 +84,7 @@ namespace alc {
 		}
 	}
 	
-	void tmCustomSetGuid::stream(tBBuf &t)
+	void tmCustomSetGuid::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 		t.put(serverGuid);
@@ -168,7 +168,7 @@ namespace alc {
 		playerStatus = t.getByte();
 	}
 	
-	void tmCustomPlayerStatus::stream(tBBuf &t)
+	void tmCustomPlayerStatus::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 #ifdef ENABLE_UNET2
@@ -240,7 +240,7 @@ namespace alc {
 #endif
 	}
 	
-	void tmCustomFindServer::stream(tBBuf &t)
+	void tmCustomFindServer::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 		t.put(serverGuid);
@@ -286,7 +286,7 @@ namespace alc {
 		loadSDL = t.getByte();
 	}
 	
-	void tmCustomForkServer::stream(tBBuf &t)
+	void tmCustomForkServer::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 		t.putU16(forkPort);
@@ -340,7 +340,7 @@ namespace alc {
 		t.get(age);
 	}
 	
-	void tmCustomServerFound::stream(tBBuf &t)
+	void tmCustomServerFound::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 		t.putU16(serverPort);

@@ -197,7 +197,7 @@ namespace alc {
 		tvAgeInfoStruct(const tvAgeInfoStruct &);
 		tvAgeInfoStruct(void) : tvBase() { }
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
 		const char *str(void);
 		// format
@@ -214,7 +214,7 @@ namespace alc {
 		tvSpawnPoint(const char *title, const char *name, const char *cameraStack = "");
 		tvSpawnPoint(void) : tvBase() { }
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
 		const char *str(void);
 		// format
@@ -226,7 +226,7 @@ namespace alc {
 	public:
 		tvAgeLinkStruct(void) : tvBase() { }
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
 		const char *str(void);
 		// format
@@ -245,7 +245,7 @@ namespace alc {
 		tvManifest(U32 id, double timestamp);
 		tvManifest(void) : tvBase() {}
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
 		// format
 		U32 id;
@@ -258,7 +258,7 @@ namespace alc {
 		tvNodeRef(U32 saver, U32 parent, U32 child);
 		tvNodeRef(void) : tvBase() { }
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
 		// format
 		U32 saver, parent, child;
@@ -273,7 +273,7 @@ namespace alc {
 		tvCreatableGenericValue(const char *str);
 		tvCreatableGenericValue(void) : tvBase() { }
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
 		
 		U32 asInt(void);
@@ -294,7 +294,7 @@ namespace alc {
 		tvCreatableStream(Byte id) : tvBase() { this->id = id; size = 0; data = NULL; }
 		virtual ~tvCreatableStream(void) { if (data) free(data); }
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
 		tMBuf *getData(void); //!< remember to delete the MBuf
 		// format
@@ -311,7 +311,7 @@ namespace alc {
 	public:
 		tvServerGuid(void) : tvBase() { }
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
 		// format
 		Byte guid[8];
@@ -325,7 +325,7 @@ namespace alc {
 		
 		virtual ~tvNode(void);
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
 	
 		// format
@@ -369,7 +369,7 @@ namespace alc {
 		tvItem(Byte tpots) : tvBase() { this->tpots = tpots; data = NULL; }
 		virtual ~tvItem(void) { if (data) delete data; }
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
 		
 		U32 asInt(void);
@@ -397,7 +397,7 @@ namespace alc {
 		tvMessage(bool isTask, Byte tpots) : tvBase() { task = isTask; this->tpots = tpots; }
 		virtual ~tvMessage(void);
 		virtual void store(tBBuf &t); //!< unpacks the message
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
 		void print(tLog *log, bool clientToServer, tNetSession *client, bool shortLog, U32 ki = 0);
 		

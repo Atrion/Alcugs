@@ -56,7 +56,7 @@ public:
 	//!stores from a buffer
 	virtual void store(tBBuf &t)=0;
 	//!streams to a buffer
-	virtual void stream(tBBuf &t)=0;
+	virtual void stream(tBBuf &t) const=0;
 };
 //end base type
 
@@ -79,18 +79,25 @@ public:
 	//!gets buffer size
 	virtual U32 size() const=0;
 	
+	// convenience functions
 	//! Sets offset to 0
-	virtual void rewind();
+	inline void rewind() {
+		set(0);
+		onrewind();
+	}
 	//! Sets offset ot End of the stream
-	virtual void end();
+	inline void end() {
+		set(size());
+	}
 	/** Relative seek
 			\param n pos
 			\param flags SEEK_CUR (default), SEEK_SET, SEEK_END
 			\throws txOutOfRange
 	*/
-	virtual void seek(int n,Byte flags=SEEK_CUR);
+	void seek(int n,Byte flags=SEEK_CUR);
+	
 	/** Puts an object into the buffer (streams the object) \return the amount of written bytes */
-	inline void put(tBaseType &t) {
+	inline void put(const tBaseType &t) {
 		t.stream(*this);
 	}
 	/** Gets an object from the buffer (stores object from stream) */
@@ -99,21 +106,21 @@ public:
 	}
 	
 	/** \return True if the pointer is at the end of the stream */
-	virtual bool eof() const {
+	inline bool eof() const {
 		return(this->tell()>=this->size());
 	}
 	/** \return the number of bytes remaining to the end of the stream */
-	virtual int remaining() const {
+	inline int remaining() const {
 		return (this->size()-this->tell());
 	}
 	
 	// Overlaoded Operators
-	virtual void operator++(int) { this->seek(+1); }
-	virtual void operator++() { this->seek(+1); }
-	virtual void operator--(int) { this->seek(-1); }
-	virtual void operator--() { this->seek(-1); }
-	virtual void operator+=(U32 n) { this->seek(+n); }
-	virtual void operator-=(U32 n) { this->seek(-n); }
+	void operator++(int) { this->seek(+1); }
+	void operator++() { this->seek(+1); }
+	void operator--(int) { this->seek(-1); }
+	void operator--() { this->seek(-1); }
+	void operator+=(U32 n) { this->seek(+n); }
+	void operator-=(U32 n) { this->seek(-n); }
 	
 	// put and get functions
 	//NOTE: I have already thought about overloading a "put(U16 val)", and I don't want
@@ -140,9 +147,9 @@ public:
 	void check(const char * what,U32 n) {
 		this->check((Byte *)what,n);
 	}
-private:
-	//! Built-in initialization
-	virtual void init();
+protected:
+	//! called when rewind is called
+	virtual void onrewind() {}
 };
 
 /** Buffer with reference control */
@@ -175,7 +182,7 @@ public:
 	virtual ~tMBuf();
 	
 	// implement interface
-	virtual void stream(tBBuf &buf);
+	virtual void stream(tBBuf &buf) const;
 	virtual void store(tBBuf &buf) {}
 	virtual U32 tell() const;
 	virtual void set(U32 pos);
@@ -215,7 +222,7 @@ protected:
 	U32 off;
 	U32 msize; //!< this is the part of the buffer that is actually used, while buf->size() is the currently available size
 private:
-	virtual void init();
+	void init();
 };
 
 /** File buffer */
@@ -228,19 +235,19 @@ public:
 	virtual void write(const Byte * val,U32 n);
 	inline virtual void write(const SByte * val,U32 n) { this->write((Byte *)val,n); }
 	virtual const Byte * read(U32 n=0);
-	virtual void stream(tBBuf &buf);
+	virtual void stream(tBBuf &buf) const;
 	virtual void store(tBBuf &buf) {}
 	virtual U32 size() const;
 	virtual void close();
 	virtual void open(const char * path,const char * mode="rb");
 	virtual void flush();
 protected:
-	virtual void init();
+	void init();
 private:
 	FILE * f;
-	U32 xsize;
 	mutable U32 msize;
-	Byte * xbuf;
+	mutable Byte *xbuf;
+	mutable U32 xsize; // size of the xbuf
 };
 
 /** Static buffer */
@@ -252,7 +259,7 @@ public:
 	virtual void write(const Byte * val,U32 n) {}
 	inline virtual void write(const SByte * val,U32 n) { this->write((Byte *)val,n); }
 	virtual const Byte * read(U32 n=0);
-	virtual void stream(tBBuf &buf);
+	virtual void stream(tBBuf &buf) const;
 	virtual void store(tBBuf &buf) {}
 	virtual U32 size() const;
 private:
@@ -265,7 +272,7 @@ private:
 class tZBuf :public tMBuf {
 public:
 	tZBuf() :tMBuf() {}
-	tZBuf(tMBuf &k) :tMBuf(k) {}
+	tZBuf(const tMBuf &k) :tMBuf(k) {}
 	void compress();
 	void uncompress(int iosize);
 };
@@ -289,9 +296,8 @@ public:
 	virtual ~tStrBuf();
 	
 	// interface
-	virtual void rewind();
 	virtual void store(tBBuf &t);
-	virtual void stream(tBBuf &t);
+	virtual void stream(tBBuf &t) const;
 	
 	// string functions
 	S32 find(const char cat, bool reverse=false) const;
@@ -307,13 +313,14 @@ public:
 	bool startsWith(const char * pat) const;
 	bool endsWith(const char * pat) const;
 	void writeStr(const char * t);
-	void writeStr(tStrBuf * val) { val->rewind(); write(val->read(),val->size()); }
-	void writeStr(tStrBuf & val) { val.rewind(); write(val.read(),val.size()); }
-	void writeStr(const tStrBuf & val) { writeStr((tStrBuf &)val); } // ugly, casting a const away...
+	void writeStr(const tStrBuf *val) { write(val->c_str(),val->size()); }
+	void writeStr(const tStrBuf & val) { write(val.c_str(),val.size()); }
+	void writeStr(tStrBuf *val) { write(val->c_str(),val->size()); }
+	void writeStr(tStrBuf &val) { write(val.c_str(),val.size()); }
 	void printf(const char * msg, ...);
-	inline void printBoolean(const char *desc, bool val) { writeStr(desc); printBoolean(val); }
+	void printBoolean(const char *desc, bool val) { writeStr(desc); printBoolean(val); }
 	void printBoolean(bool val);
-	inline void nl() { writeStr("\n"); }
+	void nl() { writeStr("\n"); }
 	U32 asU32() const;
 	S32 asS32() const { return (S32)asU32(); }
 	U16 asU16() const { return (U16)asU32(); }
@@ -322,7 +329,7 @@ public:
 	SByte asSByte() const { return (SByte)asU32(); }
 	const char * c_str();
 	const char * c_str() const;
-	inline bool isNewline(void) const
+	bool isNewline(void) const
 	{
 		return compare("\n") == 0 || compare("\r") == 0 || compare("\n\r") == 0 || compare("\r\n") == 0;
 	}
@@ -367,6 +374,7 @@ public:
 	virtual bool operator<=(const char *t) const { return(this->compare(t)<=0); }
 protected:
 	virtual void onmodify();
+	virtual void onrewind();
 	// assignment
 	virtual void copy(const char * str);
 	virtual void copy(const tStrBuf &t);
@@ -377,9 +385,9 @@ private:
 	mutable tStrBuf * cache_lower;
 	bool null;
 
-	virtual void init();
+	void init();
 	// comparison
-	inline virtual SByte compare(const tStrBuf &t) const { return tMBuf::compare(t); }
+	virtual SByte compare(const tStrBuf &t) const { return tMBuf::compare(t); }
 	virtual SByte compare(const char * str) const;
 };
 
@@ -392,7 +400,7 @@ class tTime :public tBaseType {
 public:
 	tTime(void) : tBaseType() { seconds = microseconds = 0; }
 	virtual void store(tBBuf &t);
-	virtual void stream(tBBuf &t);
+	virtual void stream(tBBuf &t) const;
 	virtual U32 size();
 	virtual bool operator==(tTime &t) { return(seconds==t.seconds && microseconds==t.microseconds); }
 	virtual bool operator!=(tTime &t) { return(seconds!=t.seconds || microseconds!=t.microseconds); }
@@ -415,8 +423,8 @@ private:
 	virtual SByte compare(tTime &t);
 };
 
-tTime operator+ (tTime &a,tTime &b);
-tTime operator- (tTime &a,tTime &b);
+tTime operator+ (const tTime &a,const tTime &b);
+tTime operator- (const tTime &a,const tTime &b);
 
 
 } //End alc namespace

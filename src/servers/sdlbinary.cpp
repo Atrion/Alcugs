@@ -220,7 +220,7 @@ namespace alc {
 		}
 	}
 	
-	void tSdlStateVar::stream(tBBuf &t)
+	void tSdlStateVar::stream(tBBuf &t) const
 	{
 		t.putByte(0x02); // type
 		t.putByte(0x00); // unk
@@ -243,7 +243,7 @@ namespace alc {
 				throw txProtocolError(_WHERE("Element count mismatch, must be %d, is %d", sdlVar->size, elements.size()));
 			if (sdlVar->type == DStruct) // for some reason, this needs the size again
 				t.putByte(elements.size());
-			for (tElementList::iterator it = elements.begin(); it != elements.end(); ++it) {
+			for (tElementList::const_iterator it = elements.begin(); it != elements.end(); ++it) {
 				switch (sdlVar->type) {
 					case DInteger:
 						t.putU32(it->intVal[0]);
@@ -355,13 +355,13 @@ namespace alc {
 		}
 	}
 	
-	Byte tSdlStateVar::getType(void)
+	Byte tSdlStateVar::getType(void) const
 	{ return sdlVar->type; }
 	
-	tStrBuf tSdlStateVar::getName(void)
+	tStrBuf tSdlStateVar::getName(void) const
 	{ return sdlVar->name; }
 	
-	U32 tSdlStateVar::getSize(void)
+	U32 tSdlStateVar::getSize(void) const
 	{ return sdlVar->size; }
 	
 	//// tSdlStateBinary
@@ -441,7 +441,7 @@ namespace alc {
 		}
 	}
 	
-	void tSdlStateBinary::stream(tBBuf &t)
+	void tSdlStateBinary::stream(tBBuf &t) const
 	{
 		if (sdlStruct == NULL)
 			throw txUnet(_WHERE("You have to set a sdlStruct before streaming a sdlBinary"));
@@ -451,32 +451,34 @@ namespace alc {
 		t.putByte(0x06); // unk3
 		
 		// check number of values
+		bool writeIndex = incompleteVars;
 		if (vars.size() != sdlStruct->nVar) {
 			if (!incompleteVars || vars.size() > sdlStruct->nVar)
 				throw txProtocolError(_WHERE("Size mismatch: %d vars to be stored, %d vars in struct, incomplete: %d", vars.size(), sdlStruct->nVar, incompleteVars));
 		}
 		else
-			incompleteVars = false;
+			writeIndex = false;
 		// write values
 		t.putByte(vars.size());
-		for (tVarList::iterator it = vars.begin(); it != vars.end(); ++it) {
+		for (tVarList::const_iterator it = vars.begin(); it != vars.end(); ++it) {
 			if (it->getType() == DStruct) throw txProtocolError(_WHERE("There's a struct in the vars!"));
-			if (incompleteVars) t.putByte(it->getNum());
+			if (writeIndex) t.putByte(it->getNum());
 			t.put(*it);
 		}
 		
 		// check number of structs
+		writeIndex = incompleteStructs;
 		if (structs.size() != sdlStruct->nStruct) {
 			if (!incompleteStructs || structs.size() > sdlStruct->nStruct)
 				throw txProtocolError(_WHERE("Size mismatch: %d structs to be stored, %d structs in struct, incomplete: %d", structs.size(), sdlStruct->nStruct, incompleteStructs));
 		}
 		else
-			incompleteStructs = false;
+			writeIndex = false;
 		// write structs
 		t.putByte(structs.size());
-		for (tVarList::iterator it = structs.begin(); it != structs.end(); ++it) {
+		for (tVarList::const_iterator it = structs.begin(); it != structs.end(); ++it) {
 			if (it->getType() != DStruct) throw txProtocolError(_WHERE("There's a var in the structs!"));
-			if (incompleteStructs) t.putByte(it->getNum());
+			if (writeIndex) t.putByte(it->getNum());
 			t.put(*it);
 		}
 	}
@@ -612,7 +614,7 @@ namespace alc {
 		}
 	}
 	
-	void tSdlState::stream(tBBuf &t)
+	void tSdlState::stream(tBBuf &t) const
 	{
 		if (content.getVersion() && content.getName().size()) {
 			tUStr name(content.getName());

@@ -62,24 +62,23 @@ void parameters_usage() {
 class tmData :public tmMsgBase {
 public:
 	virtual void store(tBBuf &t);
-	virtual void stream(tBBuf &t);
+	virtual void stream(tBBuf &t) const;
 	tmData(tNetSession * u);
 	void setCompressed(void) {
-		compressed=true;
+		setFlags(plNetX);
+		x = data.size();
 	}
-	bool compressed;
 	//format
 	tMBuf data;
 };
 
 tmData::tmData(tNetSession * u)
- :tmMsgBase(NetMsgCustomTest,plNetTimestamp | plNetAck,u) { compressed = false; }
+ :tmMsgBase(NetMsgCustomTest,plNetTimestamp | plNetAck,u) { }
 void tmData::store(tBBuf &t) {
 	tmMsgBase::store(t);
 	data.clear();
-	compressed = hasFlags(plNetX);
 	U32 remaining = t.remaining();
-	if (compressed) {
+	if (hasFlags(plNetX)) {
 		tZBuf zdata;
 		zdata.write(t.read(), remaining);
 		zdata.uncompress(x);
@@ -89,13 +88,9 @@ void tmData::store(tBBuf &t) {
 	else
 		data.write(t.read(), remaining);
 }
-void tmData::stream(tBBuf &t) {
-	if (compressed) {
-		setFlags(plNetX);
-		x = data.size(); // the X value saves the uncompressed size
-	}
+void tmData::stream(tBBuf &t) const {
 	tmMsgBase::stream(t);
-	if (compressed) {
+	if (hasFlags(plNetX)) {
 		tZBuf zdata;
 		zdata.put(data);
 		zdata.compress();
@@ -188,12 +183,12 @@ void tUnetSimpleFileServer::onIdle(bool idle) {
 			if (!u->isConnected()) return;
 			tmData data(u);
 			if (urgent) data.setUrgent();
-			if (compressed) data.setCompressed();
 			tFBuf f1;
 			f1.open(file);
 			data.data.clear();
 			data.data.put(f1);
 			f1.close();
+			if (compressed) data.setCompressed(); // do this *AFTER* the data is written to the buffer
 			send(data);
 			sent=true;
 		} else if (idle) {

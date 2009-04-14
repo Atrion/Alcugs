@@ -58,13 +58,9 @@ namespace alc {
 */
 tBBuf::tBBuf() {
 	DBG(9,"tBBuf::tBBuf()\n");
-	this->init();
 }
 tBBuf::~tBBuf() {
 	DBG(9,"~tBBuf()\n");
-}
-void tBBuf::init() {
-	DBG(9,"tBBuf::init()\n");
 }
 //Uru is Little-Endian, so if we are on a Big-Endian machine, 
 // all writes and reads to any network/file buffer must be
@@ -179,12 +175,6 @@ float tBBuf::getFloat() { // TODO: Does this work on big-endian?
 	val = *(S32 *)(this->read(4));
 #endif
 	return(val);
-}
-void tBBuf::rewind() {
-	this->set(0);
-}
-void tBBuf::end() {
-	this->set(this->size());
 }
 void tBBuf::seek(int n,Byte flags) {
 	int res;
@@ -340,7 +330,7 @@ const Byte * tMBuf::read(U32 n) {
 	}
 	return buf->buf+pos;
 }
-void tMBuf::stream(tBBuf &b) {
+void tMBuf::stream(tBBuf &b) const {
 	if(buf==NULL || buf->buf==NULL) return;
 	b.write(buf->buf,msize);
 }
@@ -383,7 +373,7 @@ void tFBuf::init() {
 U32 tFBuf::tell() const {
 	DBG(9,"ftell()\n");
 	if(f!=NULL) return ftell(f);
-	return 0; 
+	return 0;
 }
 void tFBuf::set(U32 pos) {
 	if(f==NULL || fseek(f,pos,SEEK_SET)<0) {
@@ -413,9 +403,23 @@ const Byte * tFBuf::read(U32 n) {
 	fread(xbuf,n,1,f);
 	return xbuf;
 }
-void tFBuf::stream(tBBuf &b) {
-	this->size();
-	b.write(this->read(),msize);
+void tFBuf::stream(tBBuf &b) const {
+	// make sure the position in the file is the same after the read
+	U32 pos = tell(), n = size();
+	fseek(f,0,SEEK_SET);
+	if(xbuf==NULL) {
+		xbuf=(Byte *)malloc(n);
+		if(xbuf==NULL) throw txNoMem(_WHERE("NoMem"));
+		xsize=n;
+	}
+	if(xsize<n) {
+		xbuf=(Byte *)realloc((void *)xbuf,n);
+		if(xbuf==NULL) throw txNoMem(_WHERE("NoMem"));
+		xsize=n;
+	}
+	fread(xbuf,n,1,f);
+	b.write(xbuf,n);
+	fseek(f,pos,SEEK_SET);
 }
 U32 tFBuf::size() const {
 	if(msize==0) {
@@ -466,7 +470,7 @@ const Byte * tSBuf::read(U32 n) {
 	else off=msize;
 	return auxbuf;
 }
-void tSBuf::stream(tBBuf &buf) {
+void tSBuf::stream(tBBuf &buf) const {
 	buf.write(this->buf,msize);
 }
 U32 tSBuf::size() const { return msize; }
@@ -597,7 +601,7 @@ void tStrBuf::store(tBBuf &t)
 	if (bufSize)
 		write(t.read(bufSize), bufSize);
 }
-void tStrBuf::stream(tBBuf &t)
+void tStrBuf::stream(tBBuf &t) const
 {
 	t.putU16(msize);
 	tMBuf::stream(t); // just puts the bytes into the buffer
@@ -638,8 +642,8 @@ const char * tStrBuf::c_str() const {
 	shot = new tStrBuf(*this);
 	return shot->c_str();
 }
-void tStrBuf::rewind() {
-	tMBuf::rewind();
+void tStrBuf::onrewind() {
+	tMBuf::onrewind();
 	c=l=0;
 }
 U16 tStrBuf::getLineNum() {
@@ -1041,7 +1045,7 @@ void tTime::store(tBBuf &t) {
 	seconds=t.getU32();
 	microseconds=t.getU32();
 }
-void tTime::stream(tBBuf &t) {
+void tTime::stream(tBBuf &t) const {
 	t.putU32(seconds);
 	t.putU32(microseconds);
 }
@@ -1055,7 +1059,7 @@ SByte tTime::compare(tTime &t) {
 	if(seconds<t.seconds) return -1;
 	return 1;
 }
-tTime operator+(tTime &a,tTime &b) {
+tTime operator+(const tTime &a,const tTime &b) {
 	tTime r;
 	r.seconds=a.seconds + b.seconds;
 	r.microseconds=a.microseconds + b.microseconds;
@@ -1065,7 +1069,7 @@ tTime operator+(tTime &a,tTime &b) {
 	}
 	return r;
 }
-tTime operator-(tTime &a,tTime &b) {
+tTime operator-(const tTime &a,const tTime &b) {
 	tTime r;
 	r.seconds=a.seconds - b.seconds;
 	if(a.microseconds<b.microseconds) {
