@@ -65,7 +65,7 @@ public:
 	tUStr(const tUStr &t) : tStrBuf(t) {}
 	tUStr(const tStrBuf &t) : tStrBuf(t) {}
 	virtual void store(tBBuf &t);
-	virtual void stream(tBBuf &t);
+	virtual void stream(tBBuf &t) const;
 	
 	// assignment
 	virtual const tUStr & operator=(const tUStr &t) { copy(t); return *this; }
@@ -78,7 +78,7 @@ class tUruObject : public tBaseType { // equivalent to plUoid in Plasma
 public:
 	tUruObject(void);
 	virtual void store(tBBuf &t);
-	virtual void stream(tBBuf &t);
+	virtual void stream(tBBuf &t) const;
 	const char *str(void);
 	
 	bool operator==(const tUruObject &obj);
@@ -102,7 +102,7 @@ public:
 	tUruObjectRef(void);
 	tUruObjectRef(const tUruObject &obj);
 	virtual void store(tBBuf &t);
-	virtual void stream(tBBuf &t);
+	virtual void stream(tBBuf &t) const;
 	const char *str(void);
 
 	bool hasObj;
@@ -112,14 +112,15 @@ public:
 /** StreamedObject */
 class tStreamedObject : public tMBuf {
 public:
-	tStreamedObject(U16 type = plNull) : tMBuf(), type(type) { format = 0x00; realSize = 0; }
+	tStreamedObject(U16 type = plNull) : tMBuf(), maxSize(256), type(type) // make sure this is the same maxSize as in urubasetypes.cpp
+		{ format = 0x00; realSize = 0; }
 	tStreamedObject(tpObject *obj);
 	virtual void store(tBBuf &t);
-	virtual void stream(tBBuf &t);
+	virtual void stream(tBBuf &t) const;
 	
 	inline U16 getType(void) { return type; }
 	void uncompress(void); //!< call this before using it
-	void compress(U32 minSize = 256); //!< call this before streaming or sending it
+	void compress(void); //!< call this before streaming or sending it
 	void eofCheck(void);
 	
 	// assignment
@@ -128,6 +129,8 @@ protected:
 	//! assignment
 	virtual void copy(const tStreamedObject &t);
 private:
+
+	const U32 maxSize;
 	
 	U32 realSize; // if flag is 0x02, this saves the uncompressed size, otherwise, it is zero
 	Byte format; // 0x00, 0x03: uncompressed, 0x02: compressed

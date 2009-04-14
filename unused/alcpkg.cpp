@@ -57,7 +57,7 @@ void tPkgFile::store(tBBuf &t) {
 	msize=t.getU32();
 	if(msize>0) { pkg.write(t.read(msize),msize); pkg.rewind(); }
 }
-void tPkgFile::stream(tBBuf &t) {
+void tPkgFile::stream(tBBuf &t) const {
 	//U32 xsize=0;
 	//xsize+=
 	t.put(name);
@@ -114,7 +114,7 @@ void tPkg::store(tBBuf &t) {
 	}
 	printf("done loading tPkgs\n");
 }
-void tPkg::stream(tBBuf &t) {
+void tPkg::stream(tBBuf &t) const {
 	//U32 s=6+8;
 	t.write((Byte *)"alcugs",6);
 	t.putU32(version);

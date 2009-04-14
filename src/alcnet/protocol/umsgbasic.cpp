@@ -48,7 +48,7 @@ void tmTerminated::store(tBBuf &t) {
 	tmMsgBase::store(t);
 	reason=t.getByte();
 }
-void tmTerminated::stream(tBBuf &t) {
+void tmTerminated::stream(tBBuf &t) const {
 	tmMsgBase::stream(t);
 	t.putByte(reason);
 }
@@ -67,7 +67,7 @@ void tmLeave::store(tBBuf &t) {
 	tmMsgBase::store(t);
 	reason=t.getByte();
 }
-void tmLeave::stream(tBBuf &t) {
+void tmLeave::stream(tBBuf &t) const {
 	tmMsgBase::stream(t);
 	t.putByte(reason);
 }
@@ -86,7 +86,7 @@ void tmPlayerTerminated::store(tBBuf &t) {
 	if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
 	reason=t.getByte();
 }
-void tmPlayerTerminated::stream(tBBuf &t) {
+void tmPlayerTerminated::stream(tBBuf &t) const {
 	if((flags & plNetIP) && u && u->proto!=0 && u->proto<3) throw txProtocolError(_WHERE("Unsuported message in Alcugs protocol <3"));
 	tmMsgBase::stream(t);
 	t.putByte(reason);
@@ -136,7 +136,7 @@ void tmPing::setRouteInfo(const tNetSessionIte &ite) {
 void tmPing::unsetRouteInfo() {
 	unsetFlags(plNetIP | plNetSid);
 }
-void tmPing::stream(tBBuf &t) {
+void tmPing::stream(tBBuf &t) const {
 	tmMsgBase::stream(t);
 	t.putDouble(mtime);
 	t.putByte(destination);

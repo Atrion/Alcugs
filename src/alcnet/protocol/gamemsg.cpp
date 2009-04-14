@@ -62,7 +62,7 @@ namespace alc {
 		throw txProtocolError(_WHERE("Storing a tMemberInfo is not supported"));
 	}
 	
-	void tMemberInfo::stream(tBBuf &t)
+	void tMemberInfo::stream(tBBuf &t) const
 	{
 		t.putU32(0x00000020); // unknown, seen 0x20 and 0x22 (seems to be a flag)
 		t.putU16(0x03EA); // always seen that value - doesn't seem to be a plasma obhect type, though
@@ -101,9 +101,10 @@ namespace alc {
 		this->x = x;
 		ki = u->ki;
 		sdlStream.put(*sdl);
+		sdlStream.compress();
 	}
 	
-	void tmJoinAck::stream(tBBuf &t)
+	void tmJoinAck::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 		
@@ -118,19 +119,25 @@ namespace alc {
 	
 	tmGameMessage::tmGameMessage(tNetSession *u, const tmGameMessage &msg)
 	 : tmMsgBase(NetMsgGameMessage, msg.flags, u), msgStream(msg.msgStream)
-	{ ki = msg.ki; }
+	{
+		ki = msg.ki;
+		msgStream.compress();
+	}
 	
 	tmGameMessage::tmGameMessage(tNetSession *u, U32 ki, tpObject *obj)
-	 : tmMsgBase(NetMsgGameMessage, plNetAck | plNetKi, u), msgStream(obj)
+	 : tmMsgBase(NetMsgGameMessage, plNetAck | plNetKi, u), msgStream(obj) // this already compresses the stream
 	{ this->ki = ki; }
 	
 	// constructors for sub-classes
 	tmGameMessage::tmGameMessage(U16 cmd, tNetSession *u, const tmGameMessage &msg)
 	 : tmMsgBase(cmd, msg.flags, u), msgStream(msg.msgStream)
-	{ ki = msg.ki; }
+	{
+		ki = msg.ki;
+		msgStream.compress();
+	}
 	
 	tmGameMessage::tmGameMessage(U16 cmd, tNetSession *u, U32 ki, tpObject *obj)
-	 : tmMsgBase(cmd, plNetAck | plNetKi, u), msgStream(obj)
+	 : tmMsgBase(cmd, plNetAck | plNetKi, u), msgStream(obj) // this already compresses the stream
 	{ this->ki = ki; }
 	
 	// methods
@@ -148,7 +155,7 @@ namespace alc {
 			throw txProtocolError(_WHERE("Unexpected NetMsgGameMessage.unk of 0x%02X (should be 0x00)", unk));
 	}
 	
-	void tmGameMessage::stream(tBBuf &t)
+	void tmGameMessage::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 		t.put(msgStream);
@@ -188,11 +195,11 @@ namespace alc {
 		for (int i = 0; i < nRecipients; ++i) recipients.push_back(t.getU32());
 	}
 	
-	void tmGameMessageDirected::stream(tBBuf &t)
+	void tmGameMessageDirected::stream(tBBuf &t) const
 	{
 		tmGameMessage::stream(t);
 		t.putByte(recipients.size());
-		for (tRecList::iterator it = recipients.begin(); it != recipients.end(); ++it)
+		for (tRecList::const_iterator it = recipients.begin(); it != recipients.end(); ++it)
 			t.putU32(*it);
 	}
 	
@@ -245,7 +252,7 @@ namespace alc {
 		isInitial = initial;
 	}
 	
-	void tmLoadClone::stream(tBBuf &t)
+	void tmLoadClone::stream(tBBuf &t) const
 	{
 		tmGameMessage::stream(t);
 		t.put(obj);
@@ -313,7 +320,7 @@ namespace alc {
 		this->isOwner = isOwner;
 	}
 	
-	void tmGroupOwner::stream(tBBuf &t)
+	void tmGroupOwner::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 		t.putU32(1); // format
@@ -392,7 +399,7 @@ namespace alc {
 		this->num = num;
 	}
 	
-	void tmInitialAgeStateSent::stream(tBBuf &t)
+	void tmInitialAgeStateSent::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 		t.putU32(num);
@@ -506,11 +513,15 @@ namespace alc {
 	{
 		this->isInitial = isInitial;
 		sdlStream.put(*sdl);
+		sdlStream.compress();
 	}
 	
 	tmSDLState::tmSDLState(U16 cmd, tNetSession *u, const tmSDLState &msg)
 	 : tmMsgBase(cmd, msg.flags, u), obj(msg.obj), sdlStream(msg.sdlStream)
-	{ isInitial = msg.isInitial; }
+	{
+		isInitial = msg.isInitial;
+		sdlStream.compress();
+	}
 	
 	void tmSDLState::store(tBBuf &t)
 	{
@@ -529,7 +540,7 @@ namespace alc {
 		isInitial = initial;
 	}
 	
-	void tmSDLState::stream(tBBuf &t)
+	void tmSDLState::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 		t.put(obj);
@@ -561,7 +572,7 @@ namespace alc {
 			throw txProtocolError(_WHERE("NetMsgSDLStateBCast.unk2 must be 0x01 but is 0x%02X", unk));
 	}
 	
-	void tmSDLStateBCast::stream(tBBuf &t)
+	void tmSDLStateBCast::stream(tBBuf &t) const
 	{
 		tmSDLState::stream(t);
 		t.putByte(0x01); // unk
@@ -586,11 +597,11 @@ namespace alc {
 	tmMembersList::tmMembersList(tNetSession *u) : tmMsgBase(NetMsgMembersList, plNetAck | plNetCustom, u)
 	{ }
 	
-	void tmMembersList::stream(tBBuf &t)
+	void tmMembersList::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 		t.putU16(members.size());
-		for (tMemberList::iterator i = members.begin(); i != members.end(); ++i)
+		for (tMemberList::const_iterator i = members.begin(); i != members.end(); ++i)
 			t.put(*i);
 	}
 	
@@ -607,7 +618,7 @@ namespace alc {
 		this->isJoined = isJoined;
 	}
 	
-	void tmMemberUpdate::stream(tBBuf &t)
+	void tmMemberUpdate::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 		t.put(info);

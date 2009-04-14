@@ -176,7 +176,7 @@ void tUStr::store(tBBuf &t) {
 		putByte(b.getByte() ^ key[i%8]);
 	} */
 }
-void tUStr::stream(tBBuf &t) {
+void tUStr::stream(tBBuf &t) const {
 	t.putU16(msize|0xF000);
 	for(U32 i=0; i<msize; i++) {
 		t.putByte(~buf->buf[i]);
@@ -217,7 +217,7 @@ void tUruObject::store(tBBuf &t)
 	}
 }
 
-void tUruObject::stream(tBBuf &t)
+void tUruObject::stream(tBBuf &t) const
 {
 	t.putByte(hasCloneId);
 	t.putU32(pageId);
@@ -272,7 +272,7 @@ void tUruObjectRef::store(tBBuf &t)
 	if (hasObj) t.get(obj);
 }
 
-void tUruObjectRef::stream(tBBuf &t)
+void tUruObjectRef::stream(tBBuf &t) const
 {
 	t.putByte(hasObj);
 	if (hasObj) t.put(obj);
@@ -285,12 +285,13 @@ const char *tUruObjectRef::str(void)
 }
 
 /* tStreamedObject */
-tStreamedObject::tStreamedObject(tpObject *obj) : tMBuf()
+tStreamedObject::tStreamedObject(tpObject *obj) : tMBuf(), maxSize(256) // make sure this is the same maxSize as in urubasetypes.h
 {
 	type = obj->getType();
 	format = 0x00;
 	realSize = 0;
 	put(*obj);
+	compress();
 }
 
 void tStreamedObject::store(tBBuf &t)
@@ -319,7 +320,7 @@ void tStreamedObject::store(tBBuf &t)
 	uncompress();
 }
 
-void tStreamedObject::stream(tBBuf &t)
+void tStreamedObject::stream(tBBuf &t) const
 {
 	DBG(8, "tStreamedObject::stream\n");
 	if (!size()) {
@@ -329,7 +330,8 @@ void tStreamedObject::stream(tBBuf &t)
 		t.putU32(0); // sent size
 		return;
 	}
-	compress();
+	else if (size() > maxSize && format == 0x00) // an uncompressed stream of that size?
+		throw txBase(_WHERE("Someone forgot to call tStreamedObject::compress()"));
 	
 	// it's not yet empty, so we have to write something
 	t.putU32(format == 0x02 ? realSize+2 : 0); // add the two type bytes
@@ -351,9 +353,9 @@ void tStreamedObject::uncompress(void)
 	rewind();
 }
 
-void tStreamedObject::compress(U32 maxSize)
+void tStreamedObject::compress(void)
 {
-	if (format == 0x02 || size() < maxSize) return; // nothing to do
+	if (format == 0x02 || size() <= maxSize) return; // nothing to do
 	DBG(8, "tStreamedObject::compress\n");
 	// compress it
 	realSize = size();

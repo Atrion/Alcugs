@@ -49,7 +49,7 @@ namespace alc {
 		tpMessage(U16 type, bool incomplete = false) : tpObject(type, incomplete) {}
 		tpMessage(U16 type, const tUruObjectRef &sender);
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		
 		static tpMessage *create(U16 type, bool mustBeComplete = true);
 		
@@ -75,7 +75,7 @@ namespace alc {
 		tpLoadCloneMsg(void) : tpMessage(plLoadCloneMsg) { subMessage = NULL; }
 		~tpLoadCloneMsg(void) { if (subMessage) delete subMessage; }
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		
 		static tpLoadCloneMsg *create(U16 type, bool mustBeComplete = true);
 		
@@ -98,7 +98,7 @@ namespace alc {
 	public:
 		tpLoadAvatarMsg(void) : tpLoadCloneMsg(plLoadAvatarMsg) {}
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		
 		// format
 		bool isPlayerAvatar;
@@ -111,7 +111,7 @@ namespace alc {
 	public:
 		tpParticleTransferMsg(void) : tpMessage(plParticleTransferMsg) {}
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		
 		// format
 		tUruObjectRef unkObj1;
@@ -126,7 +126,7 @@ namespace alc {
 		tpAvBrainGenericMsg(const tUruObjectRef &sender) : tpAvatarMsg(plAvBrainGenericMsg, sender)
 			{ unk3 = unk4 = 2; unk5 = unk7 = unk8 = 0; unk9 = 0.0; }
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		
 		// format
 		U32 unk3, unk4;
@@ -141,7 +141,7 @@ namespace alc {
 		tpServerReplyMsg(void) : tpMessage(plServerReplyMsg) {}
 		tpServerReplyMsg(const tUruObjectRef &sender) : tpMessage(plServerReplyMsg, sender) { unk3 = 0; }
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		
 		// format
 		U32 unk3;
@@ -154,7 +154,7 @@ namespace alc {
 		tpKIMsg(void) : tpMessage(pfKIMsg) {}
 		tpKIMsg(const tUruObjectRef &sender, const tStrBuf &senderName, U32 senderKi, const tStrBuf &text);
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		
 		// format
 		tUStr senderName;
@@ -170,7 +170,7 @@ namespace alc {
 		tpAvatarInputStateMsg(void) : tpMessage(plAvatarInputStateMsg) {}
 		tpAvatarInputStateMsg(const tUruObjectRef &sender) : tpMessage(plAvatarInputStateMsg, sender) { state = 0; }
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		
 		// format
 		U16 state;

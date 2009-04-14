@@ -102,7 +102,7 @@ public:
 	tUnetUruMsg() { next=NULL; tryes=0; }
 	virtual ~tUnetUruMsg() {}
 	virtual void store(tBBuf &t);
-	virtual void stream(tBBuf &t);
+	virtual void stream(tBBuf &t) const;
 	virtual U32 size();
 	/** Get header size */
 	U32 hSize();
@@ -140,8 +140,6 @@ private:
 class tmBase :public tBaseType {
 public:
 	tmBase(Byte bhflags, tNetSession *u) : bhflags(bhflags), u(u) { }
-	virtual void store(tBBuf &t)=0;
-	virtual void stream(tBBuf &t)=0;
 	virtual const char * str()=0;
 	inline tNetSession *getSession(void) { return u; }
 	Byte bhflags;
@@ -152,7 +150,7 @@ protected:
 class tmNetClientComm :public tmBase {
 public:
 	virtual void store(tBBuf &t);
-	virtual void stream(tBBuf &t);
+	virtual void stream(tBBuf &t) const;
 	tmNetClientComm(tNetSession *u) : tmBase(UNetNegotiation|UNetAckReq|UNetUrgent, u) { }
 	tmNetClientComm(tTime &t,U32 bw, tNetSession *u) : tmBase(UNetNegotiation|UNetAckReq|UNetUrgent, u) { timestamp=t; bandwidth=bw; }
 	virtual const char * str();
@@ -163,13 +161,14 @@ public:
 class tmNetAck :public tmBase {
 public:
 	tmNetAck(tNetSession *u) : tmBase(UNetAckReply|UNetUrgent, u) { }
-	//virtual ~tmNetAck() { delete ackq; }
+	virtual ~tmNetAck();
 	
 	virtual void store(tBBuf &t);
-	virtual void stream(tBBuf &t);
+	virtual void stream(tBBuf &t) const;
 	virtual const char * str();
 	
-	tUnetMsgQ<tUnetAck> ackq;
+	typedef std::vector<tUnetAck *> tAckList;
+	tAckList ackq;
 private:
 	tStrBuf dbg;
 
@@ -181,7 +180,7 @@ private:
 class tmMsgBase :public tmBase {
 public:
 	virtual void store(tBBuf &t);
-	virtual void stream(tBBuf &t);
+	virtual void stream(tBBuf &t) const;
 	tmMsgBase(U16 cmd,U32 flags,tNetSession * u);
 	tmMsgBase(tNetSession * u);
 	virtual ~tmMsgBase() {};
@@ -189,8 +188,8 @@ public:
 	void unsetFlags(U32 f);
 	void setUrgent();
 	void unsetUrgent();
-	U32 getFlags();
-	bool hasFlags(U32 f);
+	U32 getFlags() const;
+	bool hasFlags(U32 f) const;
 	virtual const char * str();
 	
 	U16 cmd;

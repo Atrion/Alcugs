@@ -67,7 +67,7 @@ namespace alc {
 		this->challenge.write(challenge, 16);
 	}
 	
-	void tmAuthenticateChallenge::stream(tBBuf &t)
+	void tmAuthenticateChallenge::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 		t.putByte(authResult); // auth result
@@ -112,7 +112,7 @@ namespace alc {
 		memcpy(this->serverGuid, serverGuid, 8);
 	}
 	
-	void tmAccountAutheticated::stream(tBBuf &t)
+	void tmAccountAutheticated::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 		t.putByte(authResult); // auth result
@@ -182,7 +182,7 @@ namespace alc {
 		memcpy(serverGuid, guid, 8);
 	}
 	
-	void tmFindAgeReply::stream(tBBuf &t)
+	void tmFindAgeReply::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 		t.putByte(0x1F); // seems to be some response code

@@ -84,11 +84,11 @@ namespace alc {
 		flags = t.getU32();
 	}
 	
-	void tpMessage::stream(tBBuf &t)
+	void tpMessage::stream(tBBuf &t) const
 	{
 		t.put(sender);
 		t.putU32(receivers.size());
-		for (tReceiverList::iterator it = receivers.begin(); it != receivers.end(); ++it)
+		for (tReceiverList::const_iterator it = receivers.begin(); it != receivers.end(); ++it)
 			t.put(*it);
 		t.putU32(0); // unk1
 		t.putU32(0); // unk2
@@ -152,7 +152,7 @@ namespace alc {
 		t.get(*subMessage);
 	}
 	
-	void tpLoadCloneMsg::stream(tBBuf &t)
+	void tpLoadCloneMsg::stream(tBBuf &t) const
 	{
 		if (subMessage == NULL) throw txUnexpectedData(_WHERE("A subMessage must be set"));
 		tpMessage::stream(t);
@@ -198,7 +198,7 @@ namespace alc {
 			throw txUnexpectedData(_WHERE("plLoadAvatarMsg.unk5 must be 0x00 but is 0x%02X", byteVal));
 	}
 	
-	void tpLoadAvatarMsg::stream(tBBuf &t)
+	void tpLoadAvatarMsg::stream(tBBuf &t) const
 	{
 		tpLoadCloneMsg::stream(t);
 		
@@ -222,7 +222,7 @@ namespace alc {
 		count = t.getU16();
 	}
 	
-	void tpParticleTransferMsg::stream(tBBuf &t)
+	void tpParticleTransferMsg::stream(tBBuf &t) const
 	{
 		tpMessage::stream(t);
 		t.put(unkObj1);
@@ -252,7 +252,7 @@ namespace alc {
 		unk9 = t.getFloat();
 	}
 	
-	void tpAvBrainGenericMsg::stream(tBBuf &t)
+	void tpAvBrainGenericMsg::stream(tBBuf &t) const
 	{
 		tpAvatarMsg::stream(t);
 		t.putU32(unk3);
@@ -277,7 +277,7 @@ namespace alc {
 		unk3 = t.getU32();
 	}
 	
-	void tpServerReplyMsg::stream(tBBuf &t)
+	void tpServerReplyMsg::stream(tBBuf &t) const
 	{
 		tpMessage::stream(t);
 		t.putU32(unk3);
@@ -318,7 +318,7 @@ namespace alc {
 		if (u32Val != 0) throw txUnexpectedData(_WHERE("pfKIMsg.unk5 must be 0 but is %d", u32Val));
 	}
 	
-	void tpKIMsg::stream(tBBuf &t)
+	void tpKIMsg::stream(tBBuf &t) const
 	{
 		tpMessage::stream(t);
 		t.putByte(0); // unk3
@@ -344,7 +344,7 @@ namespace alc {
 		state = t.getU16();
 	}
 	
-	void tpAvatarInputStateMsg::stream(tBBuf &t)
+	void tpAvatarInputStateMsg::stream(tBBuf &t) const
 	{
 		tpMessage::stream(t);
 		t.putU16(state);

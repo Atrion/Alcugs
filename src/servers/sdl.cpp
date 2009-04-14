@@ -179,6 +179,7 @@ namespace alc {
 			
 			tStreamedObject sdl;
 			sdl.put(*it);
+			sdl.compress();
 			file.put(sdl);
 		}
 		file.close();

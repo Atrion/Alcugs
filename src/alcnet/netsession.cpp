@@ -818,12 +818,12 @@ void tNetSession::ackUpdate() {
 				ack = ackq->getNext();
 			}
 			else {
-				ackMsg.ackq.add(ackq->unstackCurrent()); // will switch to the next one
+				ackMsg.ackq.push_back(ackq->unstackCurrent()); // will switch to the next one
 				ack = ackq->getCurrent();
-				if (ackMsg.ackq.len() >= maxacks) break;
+				if (ackMsg.ackq.size() >= maxacks) break;
 			}
 		}
-		if (ackMsg.ackq.len() > 0)
+		if (ackMsg.ackq.size() > 0)
 			send(ackMsg);
 	}
 }
@@ -839,9 +839,8 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 #ifdef ENABLE_ACKLOG
 	net->log->log("<RCV> [%d] %s\n", t.sn, ackMsg.str());
 #endif
-	tUnetAck *ack;
-	ackMsg.ackq.rewind();
-	while ((ack = ackMsg.ackq.getNext())) {
+	for (tmNetAck::tAckList::iterator it = ackMsg.ackq.begin(); it != ackMsg.ackq.end(); ++it) {
+		tUnetAck *ack = *it;
 		A1 = ack->A;
 		A3 = ack->B;
 		//well, do it

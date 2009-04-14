@@ -327,7 +327,7 @@ void tUnetUruMsg::store(tBBuf &t) {
 	ps=cps >> 8;
 	if (frn > frt) throw txProtocolError(_WHERE("A message must not have more fragments than it says it would have"));
 }
-void tUnetUruMsg::stream(tBBuf &t) {
+void tUnetUruMsg::stream(tBBuf &t) const {
 	DBG(5,"[%i] ->%02X<- {%i,%i (%i) %i,%i} - %02X|%i bytes\n",pn,tf,sn,frn,frt,ps,pfr,dsize,dsize);
 	t.putByte(0x03); //already done by the sender ()
 	t.putByte(val);
@@ -491,7 +491,7 @@ void tmNetClientComm::store(tBBuf &t) {
 	bandwidth=t.getU32();
 	t.get(timestamp);
 }
-void tmNetClientComm::stream(tBBuf &t) {
+void tmNetClientComm::stream(tBBuf &t) const {
 	t.putU32(bandwidth);
 	t.put(timestamp);
 }
@@ -509,6 +509,14 @@ const char * tmNetClientComm::str() {
 }
 
 // Ack
+tmNetAck::~tmNetAck()
+{
+	tAckList::iterator it = ackq.begin();
+	while (it != ackq.end()) {
+		delete *it;
+		it = ackq.erase(it);
+	}
+}
 void tmNetAck::store(tBBuf &t)
 {
 	ackq.clear();
@@ -523,19 +531,17 @@ void tmNetAck::store(tBBuf &t)
 		ack->B=t.getU32();
 		if(!(bhflags & UNetExt))
 			if(t.getU32()!=0) throw txUnexpectedData(_WHERE("ack unknown data"));
-		ackq.add(ack);
+		ackq.push_back(ack);
 	}
 }
-void tmNetAck::stream(tBBuf &t)
+void tmNetAck::stream(tBBuf &t) const
 {
 	if (!(bhflags & UNetExt)) t.putU16(0);
-	ackq.rewind();
-	tUnetAck *ack;
-	while ((ack = ackq.getNext())) {
-		t.putU32(ack->A);
+	for (tAckList::const_iterator it = ackq.begin(); it != ackq.end(); ++it) {
+		t.putU32((*it)->A);
 		if(!(bhflags & UNetExt))
 			t.putU32(0);
-		t.putU32(ack->B);
+		t.putU32((*it)->B);
 		if(!(bhflags & UNetExt))
 			t.putU32(0);
 	}
@@ -544,15 +550,13 @@ const char * tmNetAck::str() {
 	dbg.clear();
 	dbg.printf("Ack on %s", u->str());
 	#ifdef ENABLE_MSGLOG
-	tUnetAck *ack;
 	bool firstOne = true;
-	ackq.rewind();
-	while ((ack = ackq.getNext())) {
+	for (tAckList::const_iterator it = ackq.begin(); it != ackq.end(); ++it) {
 		if (firstOne)
 			firstOne = false;
 		else
 			dbg.printf(" |");
-		dbg.printf(" %i,%i %i,%i", ack->A >> 8, ack->A & 0x000000FF, ack->B >> 8, ack->B & 0x000000FF);
+		dbg.printf(" %i,%i %i,%i", (*it)->A >> 8, (*it)->A & 0x000000FF, (*it)->B >> 8, (*it)->B & 0x000000FF);
 	}
 	#endif
 	return dbg.c_str();
@@ -589,10 +593,10 @@ void tmMsgBase::unsetFlags(U32 f) {
 	if(f & plNetAck)
 		bhflags &= ~UNetAckReq;
 }
-U32 tmMsgBase::getFlags() {
+U32 tmMsgBase::getFlags() const {
 	return flags;
 }
-bool tmMsgBase::hasFlags(U32 f) {
+bool tmMsgBase::hasFlags(U32 f) const {
 	return (flags | f) == flags; // there can be several flags enabled in f, so a simple & is not enough
 }
 void tmMsgBase::setUrgent() {
@@ -676,7 +680,7 @@ void tmMsgBase::store(tBBuf &t) {
 	if (flags & ~(check))
 		throw txProtocolError(_WHERE("%s Problem parsing a plNetMsg header format mask %08X\n",u->str(),flags & ~(check)));
 }
-void tmMsgBase::stream(tBBuf &t) {
+void tmMsgBase::stream(tBBuf &t) const {
 	if (!u)  throw txProtocolError(_WHERE("attempt to send message without session being set"));
 	if (!cmd) throw txProtocolError(_WHERE("attempt to send message without cmd"));
 	if((flags & plNetSid) && u->proto!=0 && u->proto<3)
@@ -689,10 +693,12 @@ void tmMsgBase::stream(tBBuf &t) {
 	}
 	if(flags & plNetTimestamp || (u->min_version<6 && u->max_version==12)) {
 		if(timestamp.seconds==0) {
-			timestamp.seconds=alcGetTime();
-			timestamp.microseconds=alcGetMicroseconds();
+			tTime stamp;
+			stamp.now();
+			t.put(stamp);
 		}
-		t.put(timestamp);
+		else
+			t.put(timestamp);
 	}
 	if(flags & plNetX) {
 		t.putU32(x);

@@ -67,7 +67,7 @@ void tPyPkgFile::store(tBBuf &t) {
 		pkg.rewind();
 	}
 }
-void tPyPkgFile::stream(tBBuf &t) {
+void tPyPkgFile::stream(tBBuf &t) const {
 	msize=pkg.size();
 	t.putU32(msize-8);
 	pkg.rewind();
@@ -130,7 +130,7 @@ void tPyPkg::store(tBBuf &t) {
 	}
 	//printf("done loading packages\n");
 }
-void tPyPkg::stream(tBBuf &t) {
+void tPyPkg::stream(tBBuf &t) const {
 	U32 base;
 	//U32 s=0;
 	base=t.tell();

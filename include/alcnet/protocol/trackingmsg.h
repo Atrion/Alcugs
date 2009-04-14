@@ -39,7 +39,7 @@ namespace alc {
 		tmCustomSetGuid(tNetSession *u);
 		tmCustomSetGuid(tNetSession *u, const char *serverGuid, const char *age, const char *externalIp, U16 spawnStart, U16 spawnStop);
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		inline bool validSpawnPorts(void) { return spawnStart && spawnStop && spawnStart <= spawnStop; }
 		// format
 		tUStr serverGuid;
@@ -54,7 +54,7 @@ namespace alc {
 		tmCustomPlayerStatus(tNetSession *u);
 		tmCustomPlayerStatus(tNetSession *u, U32 ki, U32 sid, const Byte *uid, const char *account, const char *avatar, Byte playerFlag, Byte playerStatus);
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		// format
 		tStrBuf account, avatar;
 		Byte playerFlag, playerStatus;
@@ -67,7 +67,7 @@ namespace alc {
 		tmCustomFindServer(tNetSession *u);
 		tmCustomFindServer(tNetSession *u, U32 ki, U32 x, U32 sid, U32 ip, U16 port, const char *serverGuid, const char *age);
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		// format
 		tUStr serverGuid;
 		tStrBuf age;
@@ -80,7 +80,7 @@ namespace alc {
 		tmCustomForkServer(tNetSession *u);
 		tmCustomForkServer(tNetSession *u, U16 port, const char *serverGuid, const char *name, bool loadSDL);
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		// format
 		U16 forkPort;
 		tUStr serverGuid;
@@ -95,7 +95,7 @@ namespace alc {
 		tmCustomServerFound(tNetSession *u);
 		tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U32 sid, U16 port, const char *ipStr, const char *serverGuid, const char *name);
 		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
 		// format
 		U16 serverPort;
 		tStrBuf ipStr;
