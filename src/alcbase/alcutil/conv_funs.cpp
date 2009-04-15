@@ -48,15 +48,15 @@ const char * alcGetStrGuid(const Byte * guid) {
   \brief Converts an hex uid to ascii.
 */
 const char * alcGetStrUid(const Byte * guid) {
-	int off1=0;
-	int off2=0;
 	if(guid==NULL) return "null";
 
 	char str_guid[33];
-	static char str_guid2[50];
+	static char str_guid2[37];
 
 	alcHex2Ascii(str_guid,guid,16);
 	
+	int off1=0;
+	int off2=0;
 	memcpy(str_guid2+off1,str_guid+off2,8); //ID1
 	off1+=8;
 	off2+=8;
@@ -81,6 +81,7 @@ const char * alcGetStrUid(const Byte * guid) {
 	off1+=12;
 	off2+=12;
 	str_guid2[off1]='\0';
+	assert(off1 == 36 && off2 == 32);
 	return str_guid2;
 }
 
@@ -88,32 +89,34 @@ const char * alcGetStrUid(const Byte * guid) {
   \brief Converts an Ascii uid to hex
 */
 const Byte * alcGetHexUid(const char * passed_guid) {
-	int off1=0;
-	int off2=0;
+	
+	if (strlen(passed_guid) != 36) throw txUnexpectedData(_WHERE("An UID string must be 36 characters long"));
 
-	static Byte hex_guid[50];
-	char guid[50];
+	static Byte hex_guid[16];
+	char guid[36];
 
-	int i;
-	for(i=0; i<(int)strlen(passed_guid); i++) {
+	for(U32 i=0; i<36; i++) {
 		guid[i]=toupper(passed_guid[i]);
 	}
 
+	int off1=0;
+	int off2=0;
 	alcAscii2Hex(hex_guid+off1,guid+off2,4); //ID1
 	off1+=4;
 	off2+=9;
-	alcAscii2Hex(hex_guid+off1,guid+off2,4); //ID2
+	alcAscii2Hex(hex_guid+off1,guid+off2,2); //ID2
 	off1+=2;
 	off2+=5;
-	alcAscii2Hex(hex_guid+off1,guid+off2,4); //ID3
+	alcAscii2Hex(hex_guid+off1,guid+off2,2); //ID3
 	off1+=2;
 	off2+=5;
-	alcAscii2Hex(hex_guid+off1,guid+off2,4); //ID4
+	alcAscii2Hex(hex_guid+off1,guid+off2,2); //ID4
 	off1+=2;
 	off2+=5;
 	alcAscii2Hex(hex_guid+off1,guid+off2,6); //ID5
 	off1+=6;
 	off2+=12;
+	assert(off1 == 16 && off2 == 36);
 
 	return hex_guid; //In hex
 }

@@ -24,7 +24,8 @@
 *                                                                              *
 *******************************************************************************/
 
-#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 10
+
 #define IN_ALC_PROGRAM
 #define ALC_PROGRAM_ID "$Id$"
 
@@ -35,7 +36,6 @@
 using namespace alc;
 
 void alcdebug_tests() {
-	std::cout << "alcdebug_tests" <<std::endl;
 	int i;
 	for(i=0; i<100; i++) {
 		DBG(i,"Debug Level %i\n",i);
@@ -62,7 +62,6 @@ void my_func() {
 }
 
 void alcexception_tests() {
-	std::cout << "alcexception_tests" <<std::endl;
 	DBG(1,"Generating an exception...\n");
 	try {
 		throw txBase("ooops");
@@ -338,8 +337,7 @@ void alctypes_mbuf() {
 void alctypes_mbuf2() {
 	tMBuf k1,k2;
 	
-	if(k1==k2) std::cout<<"eq"<<std::endl;
-	else std::cout<<"!eq"<<std::endl;
+	assert(k2==k1);
 	k2=k1;
 	assert(k2==k1);
 	
@@ -537,7 +535,7 @@ void alctypes_part4() {
 void alctypes_part5() {
 
 	tStrBuf test("/path/to/something.txt");
-	printf("%s\n",test.c_str());
+	assert(test == test.c_str());
 
 	char mychar;
 	
@@ -554,10 +552,7 @@ void alctypes_part5() {
 		dmalloc_verify(NULL);
 	} catch(txOutOfRange) {
 		dmalloc_verify(NULL);
-		printf("passed.\n");
-		dmalloc_verify(NULL);
 	}
-	dmalloc_verify(NULL);
 	dmalloc_verify(NULL);
 
 	assert(test=="/path/to/something.txt");
@@ -568,7 +563,7 @@ void alctypes_part5() {
 	test="/usr/lib";
 	assert(test.dirname()=="/usr");
 	test="/usr/";
-	printf("-%s-\n",test.dirname().c_str());
+	//printf("-%s-\n",test.dirname().c_str());
 	assert(test.dirname()=="/");
 	test="usr";
 	assert(test.dirname()==".");
@@ -581,28 +576,28 @@ void alctypes_part5() {
 	test="/usr/lib/";
 	assert(test.dirname()=="/usr");
 	test="usr/lib/";
-	printf("-%s-\n",test.dirname().c_str());
+	//printf("-%s-\n",test.dirname().c_str());
 	assert(test.dirname()=="usr");
 	test="usr/";
 	assert(test.dirname()==".");
 	test="usr/lib/kk/path/something";
-	printf("-%s-\n",test.dirname().c_str());
+	//printf("-%s-\n",test.dirname().c_str());
 	assert(test.dirname()=="usr/lib/kk/path");
 	test="../../../usr/lib/kk/path/something";
-	printf("-%s-\n",test.dirname().c_str());
+	//printf("-%s-\n",test.dirname().c_str());
 	assert(test.dirname()=="../../../usr/lib/kk/path");
 	test="/../../../usr/lib/kk/path/something";
-	printf("-%s-\n",test.dirname().c_str());
+	//printf("-%s-\n",test.dirname().c_str());
 	assert(test.dirname()=="/../../../usr/lib/kk/path");
 	dmalloc_verify(NULL);
 	
 	tStrBuf due("/////////");
 	due.strip('/');
-	printf("due:%s\n",due.c_str());
+	//printf("due:%s\n",due.c_str());
 	assert(due=="");
 	due="howhowhow ajfk fajf///////////////";
 	due.strip('/');
-	printf("due:%s\n",due.c_str());
+	//printf("due:%s\n",due.c_str());
 	assert(due=="howhowhow ajfk fajf");
 	due="///////////////howhowhow ajfk fajf///////////////";
 	due.strip('/');
@@ -621,7 +616,7 @@ void alctypes_part5() {
 	assert(due==" / ");
 	due="///////////////howhowhow ajfk fajf///////////////";
 	due.strip('/',0x01);
-	printf("due:%s\n",due.c_str());
+	//printf("due:%s\n",due.c_str());
 	assert(due=="howhowhow ajfk fajf///////////////");
 	due="///////////////howhowhow ajfk fajf///////////////";
 	due.strip('/',0x02);
@@ -818,7 +813,7 @@ mproblem = \"this ' contains \\\" \\\\ some speical chars\"\n\
 		printf("[b:%i] %s\n",i++,res.c_str());
 	}
 #endif
-	printf("by lines now\n");
+	//printf("by lines now\n");
 	a.rewind();
 	b.rewind();
 	i=0;
@@ -831,7 +826,7 @@ mproblem = \"this ' contains \\\" \\\\ some speical chars\"\n\
 		res=b.getLine();
 		//printf("[b:%i] %s\n",i++,res.c_str());
 	}
-	printf("by tokens now\n");
+	//printf("by tokens now\n");
 	a.rewind();
 	b.rewind();
 	i=0;
@@ -1004,7 +999,7 @@ int log_test() {
 }
 
 int main(int argc, char * argv[]) {
-	std::cout << "Alcugs test suit" <<std::endl;
+	std::cout << std::endl << "Alcugs test suite - alcbase tests" <<std::endl;
 
 	try {
 		alcdebug_tests();

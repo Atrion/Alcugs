@@ -27,7 +27,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_VAULTDB_ID "$Id$"
 
-#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 10
 
 #include <alcugs.h>
 #include <alcnet.h>
@@ -312,7 +312,7 @@ namespace alc {
 	int tVaultDB::getPlayerList(const Byte *uid, tMBuf *t)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
-		assert(t);
+		if (t) t->clear(); // t may be NULL if we just check the number of players
 	
 		tStrBuf query;
 		t->clear();
@@ -324,14 +324,15 @@ namespace alc {
 		if (result == NULL) throw txDatabaseError(_WHERE("couldn't query player list"));
 		int number = mysql_num_rows(result);
 		
-		DBG(1, "Players: %d\n", number);
-		for (int i = 0; i < number; ++i) {
-			MYSQL_ROW row = mysql_fetch_row(result);
-			t->putU32(atoi(row[0])); // KI
-			tStrBuf avatar;
-			avatar.writeStr(row[1]);
-			t->put(avatar);
-			t->putByte(atoi(row[2])); // flags
+		if (t) {
+			for (int i = 0; i < number; ++i) {
+				MYSQL_ROW row = mysql_fetch_row(result);
+				t->putU32(atoi(row[0])); // KI
+				tStrBuf avatar;
+				avatar.writeStr(row[1]);
+				t->put(avatar);
+				t->putByte(atoi(row[2])); // flags
+			}
 		}
 		mysql_free_result(result);
 		return number;

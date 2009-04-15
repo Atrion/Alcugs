@@ -24,7 +24,8 @@
 *                                                                              *
 *******************************************************************************/
 
-#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 10
+
 #define IN_ALC_PROGRAM
 #define ALC_PROGRAM_ID "$Id$"
 
@@ -50,6 +51,7 @@ private:
 	int threadnum;
 	virtual void main() {
 		int i;
+		std::cout<<"Child thread "<<threadnum<<": "<<alcGetSelfThreadId()<<std::endl;
 		for(i=0; i<num; i++) {
 			{
 				tMutexLock lock(gmutex);
@@ -63,24 +65,24 @@ private:
 };
 
 int main(int argc, char * argv[]) {
-
+	std::cout << std::endl << "Alcugs test suite - alcthread tests" <<std::endl;
 	try {
 		alcInit(argc,argv);
 
-		std::cout<<"Main thread: "<<alcGetSelfThreadId()<<std::endl;
 		lstd->log("Init...\n");
 		
 		tmyfunc * thread;
-		thread = new tmyfunc(1,50,2000);
+		thread = new tmyfunc(1,15,2000);
 		thread->spawn();
 		
 		tmyfunc * thread2;
-		thread2 = new tmyfunc(2,10,1000);
+		thread2 = new tmyfunc(2,5,1000);
 		thread2->spawn();
 
 		thread2->join();
 		int i;
-		for(i=0; i<50; i++) {
+		std::cout<<"Main thread: "<<alcGetSelfThreadId()<<std::endl;
+		for(i=0; i<10; i++) {
 			{
 				tMutexLock lock(gmutex);
 				lstd->log("I am the main thread: %i!\n",i);
