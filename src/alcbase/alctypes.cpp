@@ -1049,8 +1049,7 @@ void tTime::stream(tBBuf &t) const {
 	t.putU32(seconds);
 	t.putU32(microseconds);
 }
-U32 tTime::size() { return 8; }
-SByte tTime::compare(tTime &t) {
+SByte tTime::compare(const tTime &t) const {
 	if(seconds==t.seconds) {
 		if(microseconds==t.microseconds) return 0;
 		if(microseconds<t.microseconds) return -1;
@@ -1080,7 +1079,7 @@ tTime operator-(const tTime &a,const tTime &b) {
 	}
 	return r;
 }
-double tTime::asDouble(char how) {
+double tTime::asDouble(char how) const {
 	switch(how) {
 		case 'u':
 			return ((double)seconds * 1000000) + (double)microseconds;
@@ -1091,7 +1090,7 @@ double tTime::asDouble(char how) {
 			return ((double)seconds + ((double)microseconds / 1000000));
 	}
 }
-U32 tTime::asU32(char how) {
+U32 tTime::asU32(char how) const {
 	switch(how) {
 		case 'u':
 			return ((seconds %1000) * 1000000) + microseconds;
@@ -1102,7 +1101,7 @@ U32 tTime::asU32(char how) {
 			return seconds;
 	}
 }
-const char * tTime::str(Byte type) {
+const char * tTime::str(Byte type) const {
 	if(type==0x00) {
 		return alcGetStrTime(seconds,microseconds);
 	} else {

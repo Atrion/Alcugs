@@ -559,7 +559,7 @@ namespace alc {
 		delete buf;
 	}
 	
-	tMBuf *tvCreatableStream::getData(void)
+	tMBuf *tvCreatableStream::getData(void) const
 	{
 		tMBuf *buf = new tMBuf;
 		buf->write(data, size);
