@@ -478,8 +478,15 @@ namespace alc {
 	
 	void tAgeStateManager::clearAllStates(void)
 	{
-		clones.clear();
+		// remove clones
+		tCloneList::iterator it = clones.begin();
+		while (it != clones.end()) {
+			delete *it;
+			it = clones.erase(it);
+		}
+		// remove SDL states
 		sdlStates.clear();
+		// done
 		log->log("Cleared the complete age state\n");
 		log->flush();
 	}

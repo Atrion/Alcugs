@@ -24,7 +24,7 @@
 *                                                                              *
 *******************************************************************************/
 
-#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 10
 
 //Program vars
 #define IN_ALC_PROGRAM

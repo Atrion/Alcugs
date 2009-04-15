@@ -24,8 +24,6 @@ Congratulations, you have arrived here, now continue reading! :)
 You need to have installed the development headers and libraries of:
 * mysql
 * zlib
-* expat
-* And anything else that I forgot
 
 ========================
 = Building the servers =

@@ -54,9 +54,6 @@
 /* Define to 1 if you have the <execinfo.h> header file. */
 #undef HAVE_EXECINFO_H
 
-/* Define to 1 if you have the <expat.h> header file. */
-#undef HAVE_EXPAT_H
-
 /* Define to 1 if you have the <google/coredumper.h> header file. */
 #undef HAVE_GOOGLE_COREDUMPER_H
 
