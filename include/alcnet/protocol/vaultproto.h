@@ -296,7 +296,7 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
-		tMBuf *getData(void); //!< remember to delete the MBuf
+		tMBuf *getData(void) const; //!< remember to delete the MBuf
 		// format
 		U32 size;
 		Byte id;

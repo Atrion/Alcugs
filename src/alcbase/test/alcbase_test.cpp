@@ -397,7 +397,7 @@ void alctypes_fbuf() {
 	f1.rewind();
 	b3.put(f1);
 	assert(b2==b1);
-	assert(b2==f1);
+	assert(b2==tMBuf(f1));
 	assert(b2==b3);
 	
 	f1.close();

@@ -177,7 +177,7 @@ class tMBuf :public tBBuf {
 public:
 	tMBuf();
 	tMBuf(const tMBuf &t);
-	tMBuf(tBBuf &t);
+	explicit tMBuf(tBBuf &t);
 	explicit tMBuf(U32 size);
 	virtual ~tMBuf();
 	
@@ -399,28 +399,38 @@ tStrBuf operator+(const tStrBuf & str1, const char * str2);
 class tTime :public tBaseType {
 public:
 	tTime(void) : tBaseType() { seconds = microseconds = 0; }
+	
+	// Interface
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	virtual U32 size();
-	virtual bool operator==(tTime &t) { return(seconds==t.seconds && microseconds==t.microseconds); }
-	virtual bool operator!=(tTime &t) { return(seconds!=t.seconds || microseconds!=t.microseconds); }
-	virtual bool operator>(tTime &t) { return(this->compare(t)>0); }
-	virtual bool operator<(tTime &t) { return(this->compare(t)<0); }
-	virtual bool operator>=(tTime &t) { return(this->compare(t)>=0); }
-	virtual bool operator<=(tTime &t) { return(this->compare(t)<=0); }
+	
+	// Comparison
+	bool operator==(const tTime &t) const { return(seconds==t.seconds && microseconds==t.microseconds); }
+	bool operator!=(const tTime &t) const { return(seconds!=t.seconds || microseconds!=t.microseconds); }
+	bool operator>(const tTime &t) const { return(this->compare(t)>0); }
+	bool operator<(const tTime &t) const { return(this->compare(t)<0); }
+	bool operator>=(const tTime &t) const { return(this->compare(t)>=0); }
+	bool operator<=(const tTime &t) const { return(this->compare(t)<=0); }
+	
+	// assignment
 	const tTime &operator=(const tTime &t) {
 		seconds=t.seconds;
 		microseconds=t.microseconds;
 		return *this;
 	}
+	
+	// convenience functions
 	void now();
-	double asDouble(char how='s');
-	U32 asU32(char how='s');
-	const char * str(Byte type=0x00);
+	double asDouble(char how='s') const;
+	U32 asU32(char how='s') const;
+	const char * str(Byte type=0x00) const;
+	
+	// data
 	U32 seconds;
 	U32 microseconds;
 private:
-	virtual SByte compare(tTime &t);
+	//! Comparison
+	SByte compare(const tTime &t) const;
 };
 
 tTime operator+ (const tTime &a,const tTime &b);

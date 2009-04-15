@@ -839,8 +839,9 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 #ifdef ENABLE_ACKLOG
 	net->log->log("<RCV> [%d] %s\n", t.sn, ackMsg.str());
 #endif
+	tUnetAck *ack;
 	for (tmNetAck::tAckList::iterator it = ackMsg.ackq.begin(); it != ackMsg.ackq.end(); ++it) {
-		tUnetAck *ack = *it;
+		ack = *it;
 		A1 = ack->A;
 		A3 = ack->B;
 		//well, do it

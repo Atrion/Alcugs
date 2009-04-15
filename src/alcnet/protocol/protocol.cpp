@@ -490,6 +490,7 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
 void tmNetClientComm::store(tBBuf &t) {
 	bandwidth=t.getU32();
 	t.get(timestamp);
+	if (!t.eof()) throw txUnexpectedData(_WHERE("Nego is too long"));
 }
 void tmNetClientComm::stream(tBBuf &t) const {
 	t.putU32(bandwidth);
@@ -533,6 +534,7 @@ void tmNetAck::store(tBBuf &t)
 			if(t.getU32()!=0) throw txUnexpectedData(_WHERE("ack unknown data"));
 		ackq.push_back(ack);
 	}
+	// no need to check for eof, the loop already does that
 }
 void tmNetAck::stream(tBBuf &t) const
 {
