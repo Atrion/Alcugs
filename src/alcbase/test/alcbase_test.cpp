@@ -737,7 +737,8 @@ void alctypes_tests() {
 	alctypes_part8();
 }
 
-void alcpageid_tests() {
+void alcfuncs_tests() {
+	//// PageIDs
 	// city
 	assert(alcPageIdToNumber(6, 0x00000621) == 0);
 	assert(alcPageIdToNumber(6, 0x00000627) == 6);
@@ -751,6 +752,9 @@ void alcpageid_tests() {
 	// Pahts (page number > 255)
 	assert(alcPageIdToNumber(189, 0x0000BEC9) == 424);
 	assert(alcPageNumberToId(189, 424) == 0x0000BEC9);
+	
+	//// Convenience
+	assert(tStrBuf(alcGetStrUid(alcGetHexUid("3F207CB7-3D85-41F8-B6E2-FAFA9C36B999"))) == tStrBuf("3F207CB7-3D85-41F8-B6E2-FAFA9C36B999"));
 }
 
 void alcparser_tests() {
@@ -1007,7 +1011,7 @@ int main(int argc, char * argv[]) {
 		alcInit(argc,argv);
 		alcexception_tests();
 		alctypes_tests();
-		alcpageid_tests();
+		alcfuncs_tests();
 		log_test();
 		alcparser_tests();
 		//alcShutdown();

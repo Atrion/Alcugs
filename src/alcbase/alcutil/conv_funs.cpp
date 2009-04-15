@@ -95,7 +95,7 @@ const Byte * alcGetHexUid(const char * passed_guid) {
 	char guid[50];
 
 	int i;
-	for(i=0; i<(int)strlen(guid); i++) {
+	for(i=0; i<(int)strlen(passed_guid); i++) {
 		guid[i]=toupper(passed_guid[i]);
 	}
 
