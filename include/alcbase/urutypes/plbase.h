@@ -52,12 +52,12 @@ namespace alc {
 		virtual void store(tBBuf &t) {}
 		virtual void stream(tBBuf &t) const {}
 		
-		inline U16 getType(void) { return type; }
-		inline bool isIncomplete(void) { return incomplete; }
-		const char *str(void);
+		inline U16 getType(void) const { return type; }
+		inline bool isIncomplete(void) const { return incomplete; }
+		const char *str(void) const;
 	protected:
-		virtual void toString(void) {}
-		tStrBuf strBuf;
+		virtual void toString(void) const {}
+		mutable tStrBuf strBuf;
 	private:
 		bool incomplete;
 		U16 type;

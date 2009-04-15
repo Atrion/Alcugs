@@ -1,5 +1,8 @@
 Version 1.3.5a (??)
 ===============================
+Improvements:
+- Code rework to be more readable and reasonable (especially use const wherever possible)
+
 Bugfixes:
 - Fix much too slow parsing of incoming messages under some circumstances
 

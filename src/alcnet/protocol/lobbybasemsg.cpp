@@ -172,7 +172,7 @@ namespace alc {
 	}
 	
 	//// tmFindAgeReply
-	tmFindAgeReply::tmFindAgeReply(tNetSession *u, U32 x, tStrBuf &ipStr, U16 port, tStrBuf &age, const Byte *guid)
+	tmFindAgeReply::tmFindAgeReply(tNetSession *u, U32 x, const tStrBuf &ipStr, U16 port, const tStrBuf &age, const Byte *guid)
 	 : tmMsgBase(NetMsgFindAgeReply, plNetAck | plNetCustom | plNetKi | plNetX, u), age(age), ipStr(ipStr)
 	{
 		this->x = x;

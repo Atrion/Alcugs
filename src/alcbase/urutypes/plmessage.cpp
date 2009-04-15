@@ -95,11 +95,11 @@ namespace alc {
 		t.putU32(flags);
 	}
 	
-	void tpMessage::toString()
+	void tpMessage::toString() const
 	{
 		strBuf.printf(" Sender: [%s]\n", sender.str());
 		int nr = 1;
-		for (tReceiverList::iterator it = receivers.begin(); it != receivers.end(); ++it, ++nr) {
+		for (tReceiverList::const_iterator it = receivers.begin(); it != receivers.end(); ++it, ++nr) {
 			strBuf.printf(" Receiver %d: [%s]\n", nr, it->str());
 		}
 		strBuf.printf(" Flags: 0x%08X\n", flags);
@@ -168,7 +168,7 @@ namespace alc {
 		t.put(*subMessage);
 	}
 	
-	void tpLoadCloneMsg::toString()
+	void tpLoadCloneMsg::toString() const
 	{
 		tpMessage::toString();
 		strBuf.printf(" Cloned object: [%s]\n", clonedObj.str());
@@ -207,7 +207,7 @@ namespace alc {
 		t.putByte(0);
 	}
 	
-	void tpLoadAvatarMsg::toString()
+	void tpLoadAvatarMsg::toString() const
 	{
 		tpLoadCloneMsg::toString();
 		strBuf.printBoolean(" Player avatar: ", isPlayerAvatar);
@@ -229,7 +229,7 @@ namespace alc {
 		t.putU16(count);
 	}
 	
-	void tpParticleTransferMsg::toString()
+	void tpParticleTransferMsg::toString() const
 	{
 		tpMessage::toString();
 		strBuf.printf(" Unknown object: [%s], Count: %d\n", unkObj1.str(), count);
@@ -264,7 +264,7 @@ namespace alc {
 		t.putFloat(unk9);
 	}
 	
-	void tpAvBrainGenericMsg::toString()
+	void tpAvBrainGenericMsg::toString() const
 	{
 		tpAvatarMsg::toString();
 		strBuf.printf(" Unkonw 5: %d, Unknown 8: %d, Unknown 9: %f\n", unk5, unk8, unk9);
@@ -283,7 +283,7 @@ namespace alc {
 		t.putU32(unk3);
 	}
 	
-	void tpServerReplyMsg::toString()
+	void tpServerReplyMsg::toString() const
 	{
 		tpMessage::toString();
 		strBuf.printf(" Unknown 3: %d\n", unk3);
@@ -330,7 +330,7 @@ namespace alc {
 		t.putU32(0); // unk5
 	}
 	
-	void tpKIMsg::toString()
+	void tpKIMsg::toString() const
 	{
 		tpMessage::toString();
 		strBuf.printf(" Sender: %s (KI: %d)\n", senderName.c_str(), senderKi);
@@ -350,7 +350,7 @@ namespace alc {
 		t.putU16(state);
 	}
 	
-	void tpAvatarInputStateMsg::toString()
+	void tpAvatarInputStateMsg::toString() const
 	{
 		tpMessage::toString();
 		strBuf.printf(" State: %d\n", state);

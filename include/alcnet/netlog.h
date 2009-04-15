@@ -35,7 +35,7 @@
 
 namespace alc {
 
-char * alcGetStrIp(U32 ip);
+const char * alcGetStrIp(U32 ip);
 //const char * alcGetStrUnetErr(S16 code);
 
 class txUnet : public txBase {

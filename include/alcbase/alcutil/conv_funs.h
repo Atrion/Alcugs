@@ -46,10 +46,10 @@ const char * alcGetStrGuid(const Byte * guid);
 */
 const char * alcGetStrUid(const Byte * guid);
 
-/** \param guid A 36 bytes str user id
+/** \param passed_guid A 36 bytes str user id
 	\return A 16 bytes hex user id
 */
-const Byte * alcGetHexUid(char * guid);
+const Byte * alcGetHexUid(const char * passed_guid);
 
 /**
 		\returns a pointer to a formated time string
@@ -79,7 +79,7 @@ void alcAscii2Hex(Byte * out, const char * in, int size);
 void alcStrFilter(char * what);
 
 /** parses a "name[number]" kind of string, setting "t" to the name and returning the number */
-U16 alcParseKey(tStrBuf &t);
+U16 alcParseKey(tStrBuf *t);
 
 
 /** convert pageIDs to pageNumbers and the other way around - wired, but whatever... */

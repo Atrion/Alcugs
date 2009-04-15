@@ -87,7 +87,7 @@ namespace alc {
 	
 	class tTrackingBackend {
 	public:
-		tTrackingBackend(tUnetBase *net, tNetSessionList *servers, char *host, U16 port);
+		tTrackingBackend(tUnetBase *net, tNetSessionList *servers, const char *host, U16 port);
 		~tTrackingBackend(void);
 		void reload(void);
 		
@@ -121,7 +121,7 @@ namespace alc {
 		tUnetBase *net;
 		tNetSessionList *servers;
 		tLog *log;
-		char *host;
+		const char *host;
 		U16 port;
 		Byte fakeLobbyGuid[8]; //!< saves the GUID for the fake lobby (for UruVision)
 		

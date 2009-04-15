@@ -63,9 +63,9 @@ public:
 	/**
 		\brief Computes the size, runs the same code as stream
 	*/
-	virtual U32 size();
+	U32 size() const;
 	void setConfig(tConfig * c);
-	tConfig * getConfig();
+	tConfig * getConfig() const { return cfg; }
 protected:
 	tConfig * cfg;
 	char sep;

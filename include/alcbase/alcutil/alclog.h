@@ -88,8 +88,8 @@ public:
 	void nl();
 	/** logs an std error */
 	void logerr(const char *msg);
-	bool doesPrint(void);
-	const char *getDir(void);
+	bool doesPrint(void) const;
+	const char *getDir(void) const;
 
 private:
 	char * name;
@@ -118,7 +118,7 @@ void alcLogInit();
 void alcLogShutdown(bool silent=false);
 
 void alcLogSetDefaults();
-void alcLogSetLogPath(tStrBuf & path);
+void alcLogSetLogPath(const tStrBuf & path);
 tStrBuf alcLogGetLogPath(void);
 
 void alcLogOpenStdLogs(bool shutup=false);
@@ -126,7 +126,7 @@ void alcLogOpenStdLogs(bool shutup=false);
 void alcLogSetLogLevel(Byte level);
 void alcLogSetFiles2Rotate(Byte n);
 
-char * alcHtmlGenerateHead(char * title,char * powered);
+char * alcHtmlGenerateHead(const char * title,const char * powered);
 
 }
 

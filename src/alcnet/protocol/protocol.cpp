@@ -54,7 +54,7 @@ namespace alc {
    k = offset MOD 8
    enc: c = x * 2 ^ k MOD 255
 */
-void alcEncodePacket(unsigned char* buf2,unsigned char* buf, int n) {
+void alcEncodePacket(Byte* buf2,const Byte* buf, int n) {
 	int i;
 	for(i=0; i<n; i++) {
 		buf2[i] = buf[i] << (i%8) | buf[i] >> (8-(i%8));
@@ -66,7 +66,7 @@ void alcEncodePacket(unsigned char* buf2,unsigned char* buf, int n) {
    k = offset MOD 8
    dec: x = c * 2 ^ (8-k) MOD 255
 */
-void alcDecodePacket(unsigned char* buf, int n) {
+void alcDecodePacket(Byte* buf, int n) {
 	int i;
 	for(i=0; i<n; i++) {
 		buf[i] = buf[i] >> (i%8) | buf[i] << (8-(i%8));
@@ -121,7 +121,7 @@ U32 alcUruChecksum1Trace(Byte * buf, int size) {
   \param aux_hash Password hash for algorithm 2
   \note REMEMBER THAT aux_hash must be 32 bytes and contain an ascii hash
 */
-U32 alcUruChecksum(Byte* buf, int size, int alg, char * aux_hash) {
+U32 alcUruChecksum(const Byte* buf, int size, int alg, const char * aux_hash) {
 	int i;
 	U32 aux=0; //little-endian order when returned
 	//S32 saux=0;
@@ -210,7 +210,7 @@ U32 alcUruChecksum(Byte* buf, int size, int alg, char * aux_hash) {
 	 2 -> Validation level too high
 	 3 -> Bogus packet!!
 */
-int alcUruValidatePacket(Byte * buf,int n,Byte * validation,bool authed,char * phash) {
+int alcUruValidatePacket(Byte * buf,int n,Byte * validation,bool authed,const char * phash) {
 	U32 checksum;
 #ifndef _NO_CHECKSUM
 	U32 aux_checksum;

@@ -166,7 +166,7 @@ void alcDumpConfig() {
 	lstd->print("Config Dump:\n%s\n",out.c_str());
 }
 
-bool alcParseConfig(tStrBuf & path) {
+bool alcParseConfig(const tStrBuf & path) {
 	tXParser parser;
 	DBG(5,"setting config parser...");
 	parser.setConfig(alcGetConfig());

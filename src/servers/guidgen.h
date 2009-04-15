@@ -48,7 +48,7 @@ namespace alc {
 		~tGuidGen(void) { if (ourAgeInfos) delete ageInfos; }
 		bool generateGuid(Byte *guid, const char *age, U32 ki);
 		inline tAgeInfo *getAge(const char *age) { return ageInfos->getAge(age); }
-		bool isAgePrivate(const char *age);
+		bool isAgePrivate(const char *age) const;
 	private:
 	
 		int instanceMode;

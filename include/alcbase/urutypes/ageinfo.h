@@ -48,8 +48,8 @@ namespace alc {
 		typedef std::vector<U32> tPlayerList;
 		
 		tPageInfo(tConfigVal *val, int row);
-		tPlayerList::iterator getPlayer(U32 ki);
-		inline bool hasPlayer(U32 ki) { return getPlayer(ki) != players.end(); }
+		bool hasPlayer(U32 ki) const;
+		bool removePlayer(U32 ki); //!< \returns false if that players was not on the list, true if it got removed
 		
 		char name[200];
 		U16 number;
@@ -67,7 +67,7 @@ namespace alc {
 	public:
 		tAgeInfo(const tStrBuf &dir, const char *file, bool loadPages);
 		tPageInfo *getPage(U32 pageId);
-		bool validPage(U32 pageId);
+		bool validPage(U32 pageId) const;
 		
 		U32 seqPrefix; // it's actually 3 Bytes
 		char name[200];

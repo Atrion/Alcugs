@@ -98,7 +98,7 @@ void tWDYSBuf::decrypt() {
 
 
 /* AES buff */
-void tAESBuf::setKey(Byte * key) {
+void tAESBuf::setKey(const Byte * key) {
 	memcpy(this->key,key,16);
 }
 void tAESBuf::setM5Key() {
@@ -230,7 +230,7 @@ void tUruObject::stream(tBBuf &t) const
 	}
 }
 
-const char *tUruObject::str(void)
+const char *tUruObject::str(void) const
 {
 	dbg.clear();
 	dbg.printf("Page ID: 0x%08X, Page Type: 0x%04X, Object: [0x%04X]%s", pageId, pageType, objType, objName.c_str());
@@ -239,7 +239,7 @@ const char *tUruObject::str(void)
 	return dbg.c_str();
 }
 
-bool tUruObject::operator==(const tUruObject &obj)
+bool tUruObject::operator==(const tUruObject &obj) const
 {
 	if (pageId != obj.pageId) return false;
 	if (pageType != obj.pageType) return false;
@@ -278,7 +278,7 @@ void tUruObjectRef::stream(tBBuf &t) const
 	if (hasObj) t.put(obj);
 }
 
-const char *tUruObjectRef::str(void)
+const char *tUruObjectRef::str(void) const
 {
 	if (hasObj) return obj.str();
 	else return "null";

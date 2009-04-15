@@ -86,7 +86,7 @@ namespace alc {
 	}
 	
 	//// tTrackingBackend
-	tTrackingBackend::tTrackingBackend(tUnetBase *net, tNetSessionList *servers, char *host, U16 port)
+	tTrackingBackend::tTrackingBackend(tUnetBase *net, tNetSessionList *servers, const char *host, U16 port)
 	{
 		log = lnull;
 		guidGen = NULL;

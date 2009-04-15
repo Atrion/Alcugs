@@ -44,7 +44,7 @@ tConfigVal::tConfigVal(const char * name) {
 	init();
 	setName(name);
 }
-tConfigVal::tConfigVal(tStrBuf & name) {
+tConfigVal::tConfigVal(const tStrBuf & name) {
 	init();
 	setName(name);
 }
@@ -70,10 +70,10 @@ tConfigVal::~tConfigVal() {
 void tConfigVal::setName(const char * name) {
 	this->name=name;
 }
-void tConfigVal::setName(tStrBuf & name) {
+void tConfigVal::setName(const tStrBuf & name) {
 	this->name=name;
 }
-void tConfigVal::setVal(tStrBuf & t,U16 x,U16 y) {
+void tConfigVal::setVal(const tStrBuf & t,U16 x,U16 y) {
 	DBG(9,"x: %i,y: %i\n",x,y);
 	U16 ox,oy,my,j,k;
 	tStrBuf ** ovalues=this->values;
@@ -117,10 +117,10 @@ void tConfigVal::setVal(const char * val,U16 x,U16 y) {
 	tStrBuf w(val);
 	setVal(w,x,y);
 }
-tStrBuf & tConfigVal::getName() {
+const tStrBuf & tConfigVal::getName() const {
 	return name;
 }
-tStrBuf & tConfigVal::getVal(U16 x,U16 y) {
+const tStrBuf & tConfigVal::getVal(U16 x,U16 y) const {
 	static tStrBuf nullstr;
 	if(values==NULL || x>=this->x || y>=this->y) {
 		return nullstr;
@@ -173,10 +173,10 @@ tConfigKey::~tConfigKey() {
 void tConfigKey::setName(const char * name) {
 	this->name=name;
 }
-void tConfigKey::setName(tStrBuf & name) {
+void tConfigKey::setName(const tStrBuf & name) {
 	this->name=name;
 }
-tConfigVal * tConfigKey::find(tStrBuf & what,bool create) {
+tConfigVal * tConfigKey::find(const tStrBuf & what,bool create) {
 	U16 i;
 	for(i=0; i<n; i++) {
 		if(values[i]->name.lower()==what.lower()) {
@@ -251,7 +251,7 @@ tConfig::~tConfig() {
 		free((void *)values);
 	}
 }
-tConfigKey * tConfig::findKey(tStrBuf & where,bool create) {
+tConfigKey * tConfig::findKey(const tStrBuf & where,bool create) {
 	U16 i;
 	for(i=0; i<n; i++) {
 		DBG(9,"checking %s %s %s %s \n",values[i]->name.c_str(),where.c_str(),values[i]->name.lower().c_str(),where.lower().c_str());
@@ -284,14 +284,14 @@ void tConfig::setVar(const char * val,const char * what,const char * where,U16 x
 	DBGM(5," done\n");
 	myvar->setVal(val,x,y);
 }
-void tConfig::setVar(tStrBuf &val, tStrBuf &what, tStrBuf &where,U16 x,U16 y) {
+void tConfig::setVar(const tStrBuf &val, const tStrBuf &what, const tStrBuf &where,U16 x,U16 y) {
 	tConfigVal * myvar;
 	DBG(5,"findVar...");
 	myvar=findVar(what.c_str(),where.c_str(),true);
 	DBGM(5," done\n");
 	myvar->setVal(val,x,y);
 }
-tStrBuf & tConfig::getVar(const char * what,const char * where,U16 x,U16 y) {
+const tStrBuf & tConfig::getVar(const char * what,const char * where,U16 x,U16 y) {
 	tConfigVal * myvar;
 	myvar=findVar(what,where,false);
 	if(myvar==NULL) {

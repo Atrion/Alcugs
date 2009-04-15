@@ -57,7 +57,7 @@ namespace alc {
 		
 		bool prepare(void); //!< prepares the connection \returns true when the connection is established, false when there was an error (the sql object will be deleted in that case)
 		int queryPlayer(const char *login, char *passwd, char *guid, U32 *attempts, U32 *lastAttempt);
-		void updatePlayer(char *guid, char *ip, U32 attempts, Byte updateStamps); // updateStamps can be: 0 = don't update any stamp, 1 = update only last attempt, 2 = update last attempt and last login
+		void updatePlayer(const char *guid, const char *ip, U32 attempts, Byte updateStamps); // updateStamps can be: 0 = don't update any stamp, 1 = update only last attempt, 2 = update last attempt and last login
 	};
 	
 } //End alc namespace

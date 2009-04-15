@@ -193,7 +193,7 @@ void alctypes_mbuf() {
 	buf1.putSByte(-2);
 	buf1.set(my);
 #if defined(WORDS_BIGENDIAN)
-	Byte * rawbuf=buf1.read();
+	const Byte * rawbuf=buf1.read();
 	U32 tmp;
 	memcpy(&tmp,rawbuf,2);
 	assert(*((U16 *)&tmp)==(U16)letoh16((U16)23));

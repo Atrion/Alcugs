@@ -253,17 +253,17 @@ private:
 /** Static buffer */
 class tSBuf :public tBBuf {
 public:
-	explicit tSBuf(Byte * buf,U32 msize);
+	explicit tSBuf(const Byte * buf,U32 msize);
 	virtual U32 tell() const;
 	virtual void set(U32 pos);
 	virtual void write(const Byte * val,U32 n) {}
-	inline virtual void write(const SByte * val,U32 n) { this->write((Byte *)val,n); }
+	inline virtual void write(const SByte * val,U32 n) { }
 	virtual const Byte * read(U32 n=0);
 	virtual void stream(tBBuf &buf) const;
 	virtual void store(tBBuf &buf) {}
 	virtual U32 size() const;
 private:
-	Byte * buf;
+	const Byte * buf;
 	U32 off;
 	U32 msize;
 };
@@ -304,11 +304,11 @@ public:
 	S32 find(const char *str) const;
 	S32 find(const tStrBuf &str) const { return find(str.c_str()); }
 	/** \brief strips the character from the beginning (when how=1 or 3) and/or from the end (how=2 or 3) of the string */
-	tStrBuf & strip(Byte what,Byte how=0x03);
-	tStrBuf & escape() const;
-	tStrBuf & lower() const;
-	tStrBuf & upper() const;
-	tStrBuf & substring(U32 start,U32 len=0) const;
+	const tStrBuf & strip(Byte what,Byte how=0x03);
+	const tStrBuf & escape() const;
+	const tStrBuf & lower() const;
+	const tStrBuf & upper() const;
+	const tStrBuf & substring(U32 start,U32 len=0) const;
 	const tStrBuf & dirname() const;
 	bool startsWith(const char * pat) const;
 	bool endsWith(const char * pat) const;
@@ -348,7 +348,7 @@ public:
 	/** \brief returns a token (newline, key, value, separator - but not a space)
 			\return A tStBuf object
 	*/
-	tStrBuf & getToken();
+	const tStrBuf & getToken();
 	
 	// helpful functions
 	void convertSlashesFromWinToUnix();

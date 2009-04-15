@@ -73,8 +73,8 @@ namespace alc {
 		typedef std::vector<tpLoadCloneMsg *> tCloneList;
 		typedef std::list<tSdlState> tSdlList;
 		
-		void loadAgeState(tStrBuf &fileName);
-		void saveAgeState(tStrBuf &fileName);
+		void loadAgeState(const tStrBuf &fileName);
+		void saveAgeState(const tStrBuf &fileName);
 		
 		void loadSdlStructs(const char *filename);
 		U32 findLatestStructVersion(const char *name, bool throwOnError = true); //!< returns the highest version number available for this struct

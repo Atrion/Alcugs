@@ -64,7 +64,7 @@ tTime alcGetBornTime();
 void alcIngoreConfigParseErrors(bool val);
 
 /** \brief Parses the given configuration file */
-bool alcParseConfig(tStrBuf & path);
+bool alcParseConfig(const tStrBuf & path);
 void alcReApplyConfig();
 
 /** \brief Interface for installing signals */

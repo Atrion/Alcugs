@@ -48,7 +48,7 @@ namespace alc {
 
 /** gets the ip address string of a host ip in network byte order
 */
-char * alcGetStrIp(U32 ip) {
+const char * alcGetStrIp(U32 ip) {
 	// valgrind gives an error here about some malloc within inet_ntoa still being reachable. However I've got no idea what to do about that.
 	in_addr cip;
 	static char mip[16];

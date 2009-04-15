@@ -59,7 +59,7 @@ namespace alc {
 		tReceiverList receivers;
 		U32 flags;
 	protected:
-		virtual void toString(void);
+		virtual void toString(void) const;
 	};
 	
 	class tpAvatarMsg : public tpMessage {
@@ -87,7 +87,7 @@ namespace alc {
 		tpObject *subMessage;
 	protected:
 		tpLoadCloneMsg(U16 type) : tpMessage(type) { subMessage = NULL; } // to be used by tpLoadAvatarMsg
-		virtual void toString(void);
+		virtual void toString(void) const;
 	private:
 		// forbid copying
 		tpLoadCloneMsg(const tpLoadCloneMsg &);
@@ -104,7 +104,7 @@ namespace alc {
 		bool isPlayerAvatar;
 		tUruObjectRef unkObj2;
 	protected:
-		virtual void toString(void);
+		virtual void toString(void) const;
 	};
 	
 	class tpParticleTransferMsg : public tpMessage {
@@ -117,7 +117,7 @@ namespace alc {
 		tUruObjectRef unkObj1;
 		U16 count;
 	protected:
-		virtual void toString(void);
+		virtual void toString(void) const;
 	};
 	
 	class tpAvBrainGenericMsg : public tpAvatarMsg {
@@ -133,7 +133,7 @@ namespace alc {
 		Byte unk5, unk7, unk8;
 		float unk9;
 	protected:
-		virtual void toString(void);
+		virtual void toString(void) const;
 	};
 	
 	class tpServerReplyMsg : public tpMessage {
@@ -146,7 +146,7 @@ namespace alc {
 		// format
 		U32 unk3;
 	protected:
-		virtual void toString(void);
+		virtual void toString(void) const;
 	};
 	
 	class tpKIMsg : public tpMessage {
@@ -162,7 +162,7 @@ namespace alc {
 		tUStr text;
 		U32 messageType;
 	protected:
-		virtual void toString(void);
+		virtual void toString(void) const;
 	};
 	
 	class tpAvatarInputStateMsg : public tpMessage {
@@ -175,7 +175,7 @@ namespace alc {
 		// format
 		U16 state;
 	protected:
-		virtual void toString(void);
+		virtual void toString(void) const;
 	};
 
 } //End alc namespace
