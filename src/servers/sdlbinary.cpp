@@ -624,7 +624,7 @@ namespace alc {
 		}
 	}
 	
-	bool tSdlState::operator==(const tSdlState &state)
+	bool tSdlState::operator==(const tSdlState &state) const
 	{
 		if (obj != state.obj) return false;
 		if (content.getName() != state.content.getName()) return false;

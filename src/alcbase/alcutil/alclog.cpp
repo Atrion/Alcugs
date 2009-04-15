@@ -133,7 +133,7 @@ void alcLogSetDefaults() {
 	}
 }
 
-void alcLogSetLogPath(tStrBuf & path) {
+void alcLogSetLogPath(const tStrBuf & path) {
 	*(tvLogConfig->path)=path;
 }
 
@@ -795,13 +795,13 @@ void tLog::logerr(const char *msg) {
 	this->log(" errno %i: %s\n",errno,strerror(errno));
 }
 
-bool tLog::doesPrint(void)
+bool tLog::doesPrint(void) const
 {
 	return level != 0 && (dsc!=NULL || (!(flags & DF_HTML) && !(flags & DF_NODUMP)));
 	// if the descriptor is set or neither of these flags is set, then the log actually prints something
 }
 
-const char *tLog::getDir(void)
+const char *tLog::getDir(void) const
 {
 	static char dir[512];
 	strncpy(dir, fullpath, 510);

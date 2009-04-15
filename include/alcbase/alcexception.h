@@ -53,11 +53,11 @@ void alcSetAbort(bool c);
 /** 
 	\brief Sets the coredumper path. 
 */
-void alcSetCoreDumpPath(char * p);
+void alcSetCoreDumpPath(const char * p);
 /** 
 	\brief Gets the coredumper path. 
 */
-char * alcGetCoreDumpPath();
+const char * alcGetCoreDumpPath();
 
 #define txExcLevels 20
 

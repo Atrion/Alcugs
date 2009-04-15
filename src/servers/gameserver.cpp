@@ -241,7 +241,7 @@ namespace alc {
 		return processed;
 	}
 	
-	void tUnetGameServer::processKICommand(tStrBuf &text, tNetSession *u)
+	void tUnetGameServer::processKICommand(const tStrBuf &text, tNetSession *u)
 	{
 		// process server-side commands
 		if (text == "!ping") sendKIMessage("You are still online :)", u);
@@ -416,9 +416,8 @@ namespace alc {
 	
 	void tUnetGameServer::removePlayerFromPage(tPageInfo *page, U32 ki)
 	{
-		tPageInfo::tPlayerList::iterator it = page->getPlayer(ki);
-		if (it == page->players.end()) return; // player did not even load that age
-		page->players.erase(it); // remove player from list of players who loaded that age
+		bool removed = page->removePlayer(ki); // remove player from list of players who loaded that age
+		if (!removed) return; // player did not even load that age
 		if (page->owner != ki) return; // he is not the owner, we are done
 		// search for another owner
 		if (page->players.size()) {

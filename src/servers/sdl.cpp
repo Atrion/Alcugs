@@ -108,7 +108,7 @@ namespace alc {
 		}
 	}
 	
-	void tAgeStateManager::loadAgeState(tStrBuf &fileName)
+	void tAgeStateManager::loadAgeState(const tStrBuf &fileName)
 	{
 		log->log("Loading age state from %s\n", fileName.c_str());
 		// open file
@@ -165,7 +165,7 @@ namespace alc {
 		file.close();
 	}
 	
-	void tAgeStateManager::saveAgeState(tStrBuf &fileName)
+	void tAgeStateManager::saveAgeState(const tStrBuf &fileName)
 	{
 		log->log("Saving age state to %s\n", fileName.c_str());
 		// open file
@@ -588,7 +588,7 @@ namespace alc {
 				case 8: // search for var name
 				{
 					bool dynSize =  c.endsWith("[]");
-					U32 size = alcParseKey(c);
+					U32 size = alcParseKey(&c);
 					if (!size && !dynSize)
 						throw txParseError(_WHERE("Parse error at line %d, column %d: Invalid key %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
 					sdlVar.name = c;

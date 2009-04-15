@@ -55,7 +55,7 @@ namespace alc {
 		void deletePlayer(tmCustomVaultDeletePlayer &deletePlayer);
 		U32 createPlayer(tmCustomVaultCreatePlayer &createPlayer); //!< \returns KI number of created player or 0 if name already exists
 		void cleanVault(bool cleanAges);
-		inline int getNumberOfPlayers(Byte *uid) {
+		inline int getNumberOfPlayers(const Byte *uid) {
 			return vaultDB->getPlayerList(uid);
 		}
 		inline int getMaxPlayers(void) { return maxPlayers; }

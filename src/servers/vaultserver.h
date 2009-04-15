@@ -59,7 +59,7 @@ namespace alc {
 		virtual void onReloadConfig(void) { vaultBackend->reload(); }
 		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
 	private:
-		bool isValidAvatarName(tStrBuf &avatar);
+		bool isValidAvatarName(const tStrBuf &avatar);
 	
 		tVaultBackend *vaultBackend;
 		

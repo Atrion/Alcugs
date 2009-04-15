@@ -92,7 +92,7 @@ void alcSetCoreDumpFlags(char f) {
 void alcSetCoreDumpPath(char * p) {
 	txvCorePath=p;
 }
-char * alcGetCoreDumpPath() {
+const char * alcGetCoreDumpPath() {
 	return txvCorePath;
 }
 void alcSetAbort(bool c) {

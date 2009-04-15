@@ -51,7 +51,7 @@ public:
 	tAESBuf() :tMBuf() {}
 	void encrypt();
 	void decrypt();
-	void setKey(Byte * key);
+	void setKey(const Byte * key);
 	void setM5Key();
 private:
 	Byte key[16];
@@ -79,10 +79,10 @@ public:
 	tUruObject(void);
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	const char *str(void);
+	const char *str(void) const;
 	
-	bool operator==(const tUruObject &obj);
-	inline bool operator!=(const tUruObject &obj) {
+	bool operator==(const tUruObject &obj) const;
+	inline bool operator!=(const tUruObject &obj) const {
 		return !(*this == obj);
 	}
 
@@ -94,7 +94,7 @@ public:
 	U32 cloneId;
 	U32 clonePlayerId;
 private:
-	tStrBuf dbg;
+	mutable tStrBuf dbg;
 };
 
 class tUruObjectRef : public tBaseType { // equivalent to the key reader of the resource manager in Plasma
@@ -103,7 +103,7 @@ public:
 	tUruObjectRef(const tUruObject &obj);
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	const char *str(void);
+	const char *str(void) const;
 
 	bool hasObj;
 	tUruObject obj;

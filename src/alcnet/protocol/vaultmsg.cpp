@@ -204,8 +204,8 @@ namespace alc {
 	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
-	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u, U32 x, U32 sid, Byte *uid,
-	  Byte accessLevel, const char *login, tStrBuf &avatar, tStrBuf &gender, tStrBuf &friendName, tStrBuf &key)
+	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u, U32 x, U32 sid, const Byte *uid,
+	  Byte accessLevel, const char *login, const tStrBuf &avatar, const tStrBuf &gender, const tStrBuf &friendName, const tStrBuf &key)
 	 : tmMsgBase(NetMsgCustomVaultCreatePlayer, plNetX | plNetUID | plNetVersion | plNetAck | plNetCustom | plNetSid, u), login(login),
 	   avatar(avatar), gender(gender), friendName(friendName), key(key)
 	{
@@ -358,7 +358,7 @@ namespace alc {
 #endif
 	}
 	
-	tmCustomVaultDeletePlayer::tmCustomVaultDeletePlayer(tNetSession *u, U32 ki, U32 x, U32 sid, Byte *uid, Byte accessLevel)
+	tmCustomVaultDeletePlayer::tmCustomVaultDeletePlayer(tNetSession *u, U32 ki, U32 x, U32 sid, const Byte *uid, Byte accessLevel)
 	 : tmMsgBase(NetMsgCustomVaultDeletePlayer, plNetX | plNetKi | plNetUID | plNetAck | plNetCustom | plNetVersion | plNetSid, u)
 	{
 		this->x = x;
@@ -420,7 +420,7 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultCheckKi
-	tmCustomVaultCheckKi::tmCustomVaultCheckKi(tNetSession *u, U32 ki, U32 x, U32 sid, Byte *uid)
+	tmCustomVaultCheckKi::tmCustomVaultCheckKi(tNetSession *u, U32 ki, U32 x, U32 sid, const Byte *uid)
 	 : tmMsgBase(NetMsgCustomVaultCheckKi, plNetX | plNetKi | plNetUID | plNetAck | plNetCustom | plNetVersion | plNetSid, u)
 	{
 		this->x = x;

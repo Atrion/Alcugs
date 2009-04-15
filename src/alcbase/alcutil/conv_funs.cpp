@@ -87,15 +87,16 @@ const char * alcGetStrUid(const Byte * guid) {
 /**
   \brief Converts an Ascii uid to hex
 */
-const Byte * alcGetHexUid(char * guid) {
+const Byte * alcGetHexUid(const char * passed_guid) {
 	int off1=0;
 	int off2=0;
 
 	static Byte hex_guid[50];
+	char guid[50];
 
 	int i;
 	for(i=0; i<(int)strlen(guid); i++) {
-		guid[i]=toupper(guid[i]);
+		guid[i]=toupper(passed_guid[i]);
 	}
 
 	alcAscii2Hex(hex_guid+off1,guid+off2,4); //ID1
@@ -208,17 +209,18 @@ void alcStrFilter(char * what) {
 
 
 /** \brief parses a "name[number]" kind of string, setting "t" to the name and returning the number */
-U16 alcParseKey(tStrBuf &t) {
+U16 alcParseKey(tStrBuf *t) {
 	int pos;
-	pos=t.find('[');
+	pos=t->find('[');
 	tStrBuf offset;
 	if(pos==-1) return 0;
-	if(!t.endsWith("]")) {
-		throw txParseError(_WHERE("Parse error near %s, malformed var name.\n",t.c_str()));
+	if(!t->endsWith("]")) {
+		throw txParseError(_WHERE("Parse error near %s, malformed var name.\n",t->c_str()));
 	}
-	offset=t.substring(pos,t.size()-pos);
-	offset=offset.strip('[').strip(']');
-	t.setSize(pos);
+	offset=t->substring(pos,t->size()-pos);
+	offset=offset.strip('[');
+	offset=offset.strip(']');
+	t->setSize(pos);
 	return offset.asU16();
 }
 

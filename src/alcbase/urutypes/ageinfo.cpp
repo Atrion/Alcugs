@@ -40,6 +40,8 @@
 
 #include "alcugs.h"
 
+#include <algorithm>
+
 #include "alcdebug.h"
 
 namespace alc {
@@ -61,11 +63,17 @@ namespace alc {
 		pageId = pageType = 0;
 	}
 	
-	tPageInfo::tPlayerList::iterator tPageInfo::getPlayer(U32 ki)
+	bool tPageInfo::hasPlayer(U32 ki) const
 	{
-		for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it)
-			if (*it == ki) return it;
-		return players.end();
+		return std::find(players.begin(), players.end(), ki) != players.end();
+	}
+	
+	bool tPageInfo::removePlayer(U32 ki)
+	{
+		tPlayerList::iterator it = std::find(players.begin(), players.end(), ki);
+		if (it == players.end()) return false;
+		players.erase(it);
+		return true;
 	}
 	
 	tAgeInfo::tAgeInfo(const tStrBuf &dir, const char *file, bool loadPages)
@@ -112,7 +120,7 @@ namespace alc {
 		return (it == pages.end() ? NULL : &it->second);
 	}
 	
-	bool tAgeInfo::validPage(U32 pageId)
+	bool tAgeInfo::validPage(U32 pageId) const
 	{
 		U16 number = alcPageIdToNumber(seqPrefix, pageId);
 		if (number == 254) return true; // BuiltIn page

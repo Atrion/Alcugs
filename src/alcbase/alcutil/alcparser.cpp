@@ -50,7 +50,7 @@ tSimpleParser::tSimpleParser() {
 	cfg=NULL;
 	sep=' ';
 }
-U32 tSimpleParser::size() {
+U32 tSimpleParser::size() const {
 	tStrBuf s;
 	stream(s);
 	return s.size();
@@ -129,9 +129,6 @@ void tSimpleParser::setConfig(tConfig * c) {
 	DBG(5,"setconfig()\n");
 	cfg=c;
 }
-tConfig * tSimpleParser::getConfig() {
-	return cfg;
-}
 
 tXParser::tXParser(bool override) :tSimpleParser() {
 	this->override = override;
@@ -163,7 +160,8 @@ void tXParser::store(tStrBuf &t) {
 			DBG(9,"Reading token %s\n",key.c_str());
 			//check for section
 			if(key.startsWith("[") && key.endsWith("]")) {
-				section=key.strip('[').strip(']');
+				section=key.strip('[');
+				section=section.strip(']');
 				DBG(5,">>Entering section %s\n",section.c_str());
 				continue;
 			}
@@ -198,7 +196,7 @@ void tXParser::store(tStrBuf &t) {
 				throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token '%s'. A variable name was expected.\n",t.getLineNum(),t.getColumnNum(),key.c_str()));
 			} else {
 				//get table offsets
-				y=alcParseKey(key);
+				y=alcParseKey(&key);
 				DBG(5,"**Key %s at %i\n",key.c_str(),y);
 				//get separator
 				val = t.getToken();

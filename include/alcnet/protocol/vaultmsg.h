@@ -81,7 +81,7 @@ namespace alc {
 	class tmCustomVaultCreatePlayer : public tmMsgBase {
 	public:
 		tmCustomVaultCreatePlayer(tNetSession *u);
-		tmCustomVaultCreatePlayer(tNetSession *u, U32 x, U32 sid, Byte *uid, Byte accessLevel, const char *login, tStrBuf &avatar, tStrBuf &gender, tStrBuf &friendName, tStrBuf &key);
+		tmCustomVaultCreatePlayer(tNetSession *u, U32 x, U32 sid, const Byte *uid, Byte accessLevel, const char *login, const tStrBuf &avatar, const tStrBuf &gender, const tStrBuf &friendName, const tStrBuf &key);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		// format
@@ -107,7 +107,7 @@ namespace alc {
 	class tmCustomVaultDeletePlayer : public tmMsgBase {
 	public:
 		tmCustomVaultDeletePlayer(tNetSession *u);
-		tmCustomVaultDeletePlayer(tNetSession *u, U32 ki, U32 x, U32 sid, Byte *uid, Byte accessLevel);
+		tmCustomVaultDeletePlayer(tNetSession *u, U32 ki, U32 x, U32 sid, const Byte *uid, Byte accessLevel);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		// format
@@ -118,7 +118,7 @@ namespace alc {
 	
 	class tmCustomVaultCheckKi : public tmMsgBase {
 	public:
-		tmCustomVaultCheckKi(tNetSession *u, U32 ki, U32 x, U32 sid, Byte *uid);
+		tmCustomVaultCheckKi(tNetSession *u, U32 ki, U32 x, U32 sid, const Byte *uid);
 		tmCustomVaultCheckKi(tNetSession *u);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;

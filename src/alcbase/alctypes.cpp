@@ -451,7 +451,7 @@ void tFBuf::flush() {
 /* end File buffer */
 
 /* static buffer */
-tSBuf::tSBuf(Byte * buf,U32 msize) {
+tSBuf::tSBuf(const Byte * buf,U32 msize) {
 	off=0;
 	this->msize=msize;
 	this->buf=buf;
@@ -462,7 +462,7 @@ void tSBuf::set(U32 pos) {
 	off=pos; 
 }
 const Byte * tSBuf::read(U32 n) {
-	Byte * auxbuf=buf+off;
+	const Byte * auxbuf=buf+off;
 	if(n) {
 		off+=n;
 		if(off>msize) { off-=n; throw txOutOfRange(_WHERE("Cannot read pos %i,len:%i size %i\n",off,n,msize)); }
@@ -698,7 +698,7 @@ void tStrBuf::convertSlashesFromUnixToWin() {
 #endif
 //noop on linux
 }
-tStrBuf & tStrBuf::strip(Byte what,Byte how) {
+const tStrBuf & tStrBuf::strip(Byte what,Byte how) {
 	tStrBuf aux;
 	int i,max,start,end;
 	start=0;
@@ -728,7 +728,7 @@ tStrBuf & tStrBuf::strip(Byte what,Byte how) {
 	copy(aux);
 	return *this;
 }
-tStrBuf & tStrBuf::escape() const {
+const tStrBuf & tStrBuf::escape() const {
 	if(shot!=NULL) delete shot;
 	shot = new tStrBuf(size()*3/2); // nothing inside this function will use shot, so we can initialize it now
 
@@ -757,7 +757,7 @@ tStrBuf & tStrBuf::escape() const {
 	return *shot;
 }
 
-tStrBuf & tStrBuf::lower() const {
+const tStrBuf & tStrBuf::lower() const {
 	if(cache_lower!=NULL) {
 		DBG(7,"cached...\n");
 		return *cache_lower;
@@ -776,7 +776,7 @@ tStrBuf & tStrBuf::lower() const {
 	return *cache_lower;
 }
 
-tStrBuf & tStrBuf::upper() const {
+const tStrBuf & tStrBuf::upper() const {
 	if (shot) delete shot;
 	shot = new tStrBuf(200); // nothing inside this function will use shot, so we can initialize it now
 	
@@ -790,7 +790,7 @@ tStrBuf & tStrBuf::upper() const {
 }
 
 
-tStrBuf & tStrBuf::substring(U32 start,U32 len) const {
+const tStrBuf & tStrBuf::substring(U32 start,U32 len) const {
 	if (len == 0) len = remaining();
 	if (shot) delete shot;
 	shot = new tStrBuf(len); // nothing inside this function will use shot, so we can initialize it now
@@ -896,7 +896,7 @@ const tStrBuf & tStrBuf::getLine(bool nl,bool slash) {
 	shot=new tStrBuf(out);
 	return *shot;
 }
-tStrBuf & tStrBuf::getToken() {
+const tStrBuf & tStrBuf::getToken() {
 	DBG(9,"tStrBuf::getToken()\n");
 	Byte c;
 	Byte slash=0;

@@ -72,7 +72,7 @@ namespace alc {
 		if (instanceMode != 0 && instanceMode != 1) throw txBase(_WHERE("instance_mode must be 0 or 1 but is %d", instanceMode));
 	}
 	
-	bool tGuidGen::isAgePrivate(const char *age)
+	bool tGuidGen::isAgePrivate(const char *age) const
 	{
 		// local copy of private age list as strsep modifies it
 		char ages[1024];

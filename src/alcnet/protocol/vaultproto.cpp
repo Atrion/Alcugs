@@ -844,7 +844,7 @@ namespace alc {
 		log->print("<b>Permissions:</b> 0x%08X (%s)<br />\n", permissions, permStr);
 	}
 	
-	void tvNode::blobAsHtml(tLog *log, Byte *blob, U32 size)
+	void tvNode::blobAsHtml(tLog *log, const Byte *blob, U32 size)
 	{
 		char filename[512], path[1024];
 		if (type == KImageNode) { // the first 4 bytes are skipped so anything smaller than that would make problems

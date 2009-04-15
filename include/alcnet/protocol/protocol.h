@@ -41,11 +41,11 @@
 
 namespace alc {
 
-void alcEncodePacket(unsigned char* buf2,unsigned char* buf, int n);
-void alcDecodePacket(unsigned char* buf, int n);
+void alcEncodePacket(Byte* buf2,const Byte* buf, int n);
+void alcDecodePacket(Byte* buf, int n);
 
-int alcUruValidatePacket(Byte * buf,int n,Byte * validation,bool authed=false,char * phash=NULL);
-U32 alcUruChecksum(Byte* buf, int size, int alg, char * aux_hash);
+int alcUruValidatePacket(Byte * buf,int n,Byte * validation,bool authed=false,const char * phash=NULL);
+U32 alcUruChecksum(const Byte* buf, int size, int alg, const char * aux_hash);
 
 const char * alcUnetGetRelease(Byte rel);
 const char * alcUnetGetDestination(Byte dest);
@@ -141,7 +141,7 @@ class tmBase :public tBaseType {
 public:
 	tmBase(Byte bhflags, tNetSession *u) : bhflags(bhflags), u(u) { }
 	virtual const char * str()=0;
-	inline tNetSession *getSession(void) { return u; }
+	inline tNetSession *getSession(void) const { return u; }
 	Byte bhflags;
 protected:
 	tNetSession * u; //!< associated session (source for incoming, destination for outgoing)

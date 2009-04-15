@@ -183,7 +183,7 @@ namespace alc {
 		return ret;
 	}
 
-	void tAuthBackend::updatePlayer(char *guid, char *ip, U32 attempts, Byte updateStamps)
+	void tAuthBackend::updatePlayer(const char *guid, const char *ip, U32 attempts, Byte updateStamps)
 	{
 		char ip_escaped[50], guid_escaped[50];
 		tStrBuf query;

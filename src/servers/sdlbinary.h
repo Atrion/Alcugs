@@ -133,7 +133,7 @@ namespace alc {
 		virtual void stream(tBBuf &t) const;
 		const char *str(void);
 		void print(tLog *log);
-		bool operator==(const tSdlState &state);
+		bool operator==(const tSdlState &state) const;
 		
 		tUruObject obj;
 		// format

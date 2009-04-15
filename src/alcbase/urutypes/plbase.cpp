@@ -131,7 +131,7 @@ namespace alc {
 	}
 	
 	//// tpObject
-	const char *tpObject::str(void)
+	const char *tpObject::str(void) const
 	{
 		strBuf.clear();
 		strBuf.printf("%s (0x%04X)\n", alcGetPlasmaType(type), type);

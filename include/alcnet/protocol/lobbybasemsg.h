@@ -101,7 +101,7 @@ namespace alc {
 	
 	class tmFindAgeReply : public tmMsgBase {
 	public:
-		tmFindAgeReply(tNetSession *u, U32 x, tStrBuf &ipStr, U16 port, tStrBuf &age, const Byte *guid);
+		tmFindAgeReply(tNetSession *u, U32 x, const tStrBuf &ipStr, U16 port, const tStrBuf &age, const Byte *guid);
 		virtual void stream(tBBuf &t) const;
 		// format
 		tStrBuf age, ipStr;
