@@ -96,7 +96,7 @@ public:
 	*/
 	void seek(int n,Byte flags=SEEK_CUR);
 	
-	/** Puts an object into the buffer (streams the object) \return the amount of written bytes */
+	/** Puts an object into the buffer (streams the object) */
 	inline void put(const tBaseType &t) {
 		t.stream(*this);
 	}
