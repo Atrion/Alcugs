@@ -315,7 +315,6 @@ namespace alc {
 		if (t) t->clear(); // t may be NULL if we just check the number of players
 	
 		tStrBuf query;
-		t->clear();
 		
 		query.printf("SELECT idx, lstr_1, int_2 FROM %s WHERE lstr_2 = '%s'", vaultTable, alcGetStrUid(uid));
 		sql->query(query.c_str(), "getting player list");
