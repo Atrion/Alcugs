@@ -39,6 +39,8 @@
 
 namespace alc {
 
+const tStrBuf nullstr;
+
 tConfigVal::tConfigVal() { init(); }
 tConfigVal::tConfigVal(const char * name) {
 	init();
@@ -121,7 +123,6 @@ const tStrBuf & tConfigVal::getName() const {
 	return name;
 }
 const tStrBuf & tConfigVal::getVal(U16 x,U16 y) const {
-	static tStrBuf nullstr;
 	if(values==NULL || x>=this->x || y>=this->y) {
 		return nullstr;
 	}
@@ -294,11 +295,8 @@ void tConfig::setVar(const tStrBuf &val, const tStrBuf &what, const tStrBuf &whe
 const tStrBuf & tConfig::getVar(const char * what,const char * where,U16 x,U16 y) {
 	tConfigVal * myvar;
 	myvar=findVar(what,where,false);
-	if(myvar==NULL) {
-		static tStrBuf nullstr;
-		assert(nullstr.isNull());
+	if(myvar==NULL)
 		return nullstr;
-	}
 	return(myvar->getVal(x,y));
 }
 void tConfig::rewind() {
