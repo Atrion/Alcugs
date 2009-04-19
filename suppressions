@@ -1,61 +1,18 @@
 {
-   inet_ntoa bug (?)
-   Memcheck:Leak
-   fun:malloc
-   fun:inet_ntoa
-   fun:_ZN3alc11alcGetStrIpEj
-}
-
-{
-   mysql_init bug (?)
+   mysql init bug (?)
    Memcheck:Addr4
-   obj:/lib/ld-2.7.so
-   obj:/lib/tls/i686/cmov/libc-2.7.so
-   obj:/lib/ld-2.7.so
+   obj:/lib/ld-2.9.so
+   obj:/lib/tls/i686/cmov/libc-2.9.so
+   obj:/lib/ld-2.9.so
    fun:__libc_dlopen_mode
    fun:__nss_lookup_function
-   obj:/lib/tls/i686/cmov/libc-2.7.so
-   fun:__nss_services_lookup
+   obj:/lib/tls/i686/cmov/libc-2.9.so
+   fun:__nss_services_lookup2
    fun:getservbyname_r
    fun:getservbyname
    fun:mysql_server_init
    fun:mysql_init
-}
-{
-   mysql_init bug (?)
-   Memcheck:Cond
-   obj:/lib/ld-2.7.so
-   obj:/lib/ld-2.7.so
-   obj:/lib/tls/i686/cmov/libc-2.7.so
-   obj:/lib/ld-2.7.so
-   fun:__libc_dlopen_mode
-   fun:__nss_lookup_function
-   obj:/lib/tls/i686/cmov/libc-2.7.so
-   fun:__nss_services_lookup
-   fun:getservbyname_r
-   fun:getservbyname
-   fun:mysql_server_init
-   fun:mysql_init
-}
-{
-   mysql_init bug (?)
-   Memcheck:Addr4
-   obj:/lib/ld-2.7.so
-   obj:/lib/ld-2.7.so
-   obj:/lib/ld-2.7.so
-   obj:/lib/ld-2.7.so
-   obj:/lib/ld-2.7.so
-   obj:/lib/ld-2.7.so
-   obj:/lib/tls/i686/cmov/libc-2.7.so
-   obj:/lib/ld-2.7.so
-   fun:__libc_dlopen_mode
-   fun:__nss_lookup_function
-   obj:/lib/tls/i686/cmov/libc-2.7.so
-   fun:__nss_services_lookup
-   fun:getservbyname_r
-   fun:getservbyname
-   fun:mysql_server_init
-   fun:mysql_init
+   fun:_ZN3alc4tSQL7connectEb
 }
 
 {
@@ -81,67 +38,17 @@
 }
 
 {
-   gethostbyname bug (?)
-   Memcheck:Addr4
-   obj:/lib/ld-2.7.so
-   obj:/lib/ld-2.7.so
-   obj:/lib/ld-2.7.so
-   obj:/lib/ld-2.7.so
-   obj:/lib/ld-2.7.so
-   obj:/lib/ld-2.7.so
-   obj:/lib/tls/i686/cmov/libc-2.7.so
-   obj:/lib/ld-2.7.so
-   fun:__libc_dlopen_mode
-   fun:__nss_lookup_function
-   obj:/lib/tls/i686/cmov/libc-2.7.so
-   fun:__nss_hosts_lookup
-   fun:gethostbyname_r
-   fun:gethostbyname
-}
-
-{
    std::backtrace bug (?)
    Memcheck:Leak
    fun:malloc
-   obj:/lib/ld-2.7.so
-   obj:/lib/ld-2.7.so
-   obj:/lib/ld-2.7.so
-   obj:/lib/ld-2.7.so
-   obj:/lib/tls/i686/cmov/libc-2.7.so
-   obj:/lib/ld-2.7.so
+   obj:/lib/ld-2.9.so
+   obj:/lib/ld-2.9.so
+   obj:/lib/ld-2.9.so
+   obj:/lib/ld-2.9.so
+   obj:/lib/tls/i686/cmov/libc-2.9.so
+   obj:/lib/ld-2.9.so
    fun:__libc_dlopen_mode
-   obj:/lib/tls/i686/cmov/libc-2.7.so
+   obj:/lib/tls/i686/cmov/libc-2.9.so
    fun:pthread_once
    fun:_ZN3alc6txBase17_preparebacktraceEv
 }
-
-{
-   zlib bug (?)
-   Memcheck:Cond
-   obj:/usr/lib/libz.so.1.2.3.3
-   fun:deflate
-   fun:compress2
-   fun:compress
-   fun:_ZN3alc5tZBuf8compressEv
-}
-{
-   zlib bug (?)
-   Memcheck:Value4
-   obj:/usr/lib/libz.so.1.2.3.3
-   fun:deflate
-   fun:compress2
-   fun:compress
-   fun:_ZN3alc5tZBuf8compressEv
-}
-{
-   zlib bug (?)
-   Memcheck:Value4
-   obj:/usr/lib/libz.so.1.2.3.3
-   obj:/usr/lib/libz.so.1.2.3.3
-   obj:/usr/lib/libz.so.1.2.3.3
-   fun:deflate
-   fun:compress2
-   fun:compress
-   fun:_ZN3alc5tZBuf8compressEv
-}
-
