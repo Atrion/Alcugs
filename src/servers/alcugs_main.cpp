@@ -93,11 +93,11 @@ int u_parse_arguments(int argc, char * argv[]) {
 		if(!strcmp(argv[i],"-h")) {
 			parameters_usage(); return -1;
 		} else if(!strcmp(argv[i],"-V")) {
-			printf(alcVersionText());
+			puts(alcVersionText());
 			return -1;
 		} else if(!strcmp(argv[i],"-l")) {
-			printf(alcVersionTextShort());
-			printf(alcLicenseText());
+			puts(alcVersionTextShort());
+			puts(alcLicenseText());
 			return -1;
 		} else if(!strcmp(argv[i],"-D")) {
 			cfg->setVar("1","daemon","cmdline");

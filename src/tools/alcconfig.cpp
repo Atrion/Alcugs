@@ -53,12 +53,12 @@ int main(int argc, char * argv[]) {
 			usage(); return -1;
 		} else if(!strcmp(argv[i],"-V")) {
 			usage();
-			printf(alcVersionText());
+			puts(alcVersionText());
 			return -1;
 		} else if(!strcmp(argv[i],"-l")) {
 			usage();
-			printf(alcVersionTextShort());
-			printf(alcLicenseText());
+			puts(alcVersionTextShort());
+			puts(alcLicenseText());
 			return -1;
 		} else if(!strcmp(argv[i],"--version")) {
 			printf("%i.%i.%i\n",alcGetMaxVersion(),alcGetMinVersion(),alcGetRelVersion());

@@ -103,16 +103,24 @@ const Byte * alcGetHexUid(const char * passed_guid) {
 	int off2=0;
 	alcAscii2Hex(hex_guid+off1,guid+off2,4); //ID1
 	off1+=4;
-	off2+=9;
+	off2+=8;
+	if (guid[off2] != '-') throw txUnexpectedData(_WHERE("There must be a dash at position %d", off2));
+	++off2;
 	alcAscii2Hex(hex_guid+off1,guid+off2,2); //ID2
 	off1+=2;
-	off2+=5;
+	off2+=4;
+	if (guid[off2] != '-') throw txUnexpectedData(_WHERE("There must be a dash at position %d", off2));
+	++off2;
 	alcAscii2Hex(hex_guid+off1,guid+off2,2); //ID3
 	off1+=2;
-	off2+=5;
+	off2+=4;
+	if (guid[off2] != '-') throw txUnexpectedData(_WHERE("There must be a dash at position %d", off2));
+	++off2;
 	alcAscii2Hex(hex_guid+off1,guid+off2,2); //ID4
 	off1+=2;
-	off2+=5;
+	off2+=4;
+	if (guid[off2] != '-') throw txUnexpectedData(_WHERE("There must be a dash at position %d", off2));
+	++off2;
 	alcAscii2Hex(hex_guid+off1,guid+off2,6); //ID5
 	off1+=6;
 	off2+=12;
@@ -181,14 +189,15 @@ void alcHex2Ascii(char * out, const Byte * in, int size) {
 
 /**
   \brief Converts an ASCII string to hex data
-  \param out pointer to the output buffer
-  \param in pointer to the input data
-  \param size size of the input data (must be 2*size)
 */
 void alcAscii2Hex(Byte * out, const char * in, int size) {
 	//humm I will write it if i need it :D
 	int i;
 	for(i=0; i<size; i++) {
+		if ((in[2*i] < 0x41 || in[2*i] > 0x41+25) && (in[2*i] < 0x30 || in[2*i] > 0x30+9))
+			throw txUnexpectedData(_WHERE("There is an invalid character in the data: %c", in[2*i]));
+		if ((in[2*i+1] < 0x41 || in[2*i+1] > 0x41+25) && (in[2*i+1] < 0x30 || in[2*i+1] > 0x30+9))
+			throw txUnexpectedData(_WHERE("There is an invalid character in the data: %c", in[2*i+1]));
 		out[i]=  ((in[2*i])<0x3A ? (in[2*i] - 0x30) : (in[2*i] - (0x41-0x0A)));
 		out[i]= (0x10 * out[i]) + ((in[(2*i)+1])<0x3A ? (in[(2*i)+1] - 0x30) : (in[(2*i)+1] - (0x41-0x0A)));
 	}
