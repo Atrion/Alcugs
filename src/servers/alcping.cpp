@@ -42,7 +42,7 @@ const char * alc::alcNetName="Client";
 Byte alc::alcWhoami=KClient;
 
 void parameters_usage() {
-	printf(alcVersionText());
+	puts(alcVersionText());
 	printf("Usage: uruping server:port [options]\n\n\
  -val x: set validation level (0-3) (default 2)\n\
  -nl: enable netcore logs\n\
@@ -283,7 +283,7 @@ int main(int argc,char * argv[]) {
 	for (i=1; i<argc; i++) {
 		if(!strcmp(argv[i],"-h")) { parameters_usage(); return -1; }
 		else if(!strcmp(argv[i],"-V")) {
-			printf(alcVersionText());
+			puts(alcVersionText());
 			return -1;
 		} else if(!strcmp(argv[i],"-lp") && argc>i+1) { i++; l_port=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-rp") && argc>i+1) { i++; port=atoi(argv[i]); }
@@ -307,8 +307,8 @@ int main(int argc,char * argv[]) {
 			strncpy(l_hostname,argv[i],99);
 		}
 		else if(!strcmp(argv[i],"-l")) {
-			printf(alcVersionTextShort());
-			printf(alcLicenseText());
+			puts(alcVersionTextShort());
+			puts(alcLicenseText());
 			return 0;
 		}
 		else if(!strcmp(argv[i],"-rh") && argc>i+1) {

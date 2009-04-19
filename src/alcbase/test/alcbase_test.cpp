@@ -749,7 +749,23 @@ void alcfuncs_tests() {
 	assert(alcPageNumberToId(189, 424) == 0x0000BEC9);
 	
 	//// Convenience
-	assert(tStrBuf(alcGetStrUid(alcGetHexUid("3F207CB7-3D85-41F8-B6E2-FAFA9C36B999"))) == tStrBuf("3F207CB7-3D85-41F8-B6E2-FAFA9C36B999"));
+	// with lower-case
+	assert(tStrBuf(alcGetStrUid(alcGetHexUid("3F207Cb7-3D85-41F8-B6E2-FAFA9C36B999"))) == tStrBuf("3F207CB7-3D85-41F8-B6E2-FAFA9C36B999"));
+	try {
+		alcGetHexUid("3F207"); // too short
+		throw txBase(_WHERE("no exception?"));
+	}
+	catch (txUnexpectedData &) {}
+	try {
+		alcGetHexUid("3F207CB--3D85-41F8-B6E2-FAFA9C36B999"); // invalid form
+		throw txBase(_WHERE("no exception?"));
+	}
+	catch (txUnexpectedData &) {}
+	try {
+		alcGetHexUid("3F207CB783D85-41F8-B6E2-FAFA9C36B999"); // invalid form
+		throw txBase(_WHERE("no exception?"));
+	}
+	catch (txUnexpectedData &) {}
 }
 
 void alcparser_tests() {

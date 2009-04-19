@@ -68,10 +68,10 @@ int main(int argc, char * argv[]) {
 	try {
 	
 	alcInit(argc,argv,true);
-	printf(alcVersionText());
+	puts(alcVersionText());
 	
 	if(argc>1 && !strcmp(argv[1],"-l")) {
-		printf(alcLicenseText());
+		puts(alcLicenseText());
 		return 0;
 	} else if(argc>1 && !strcmp(argv[1],"-h")) {
 		usage();
@@ -153,7 +153,7 @@ int main(int argc, char * argv[]) {
 	
 	} catch(txBase &t) {
 		printf("Exception: %s\n",t.what());
-		printf(t.backtrace());
+		puts(t.backtrace());
 	} catch(...) {
 		printf("ERROR: Unknown exception...\n");
 	}
