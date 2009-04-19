@@ -145,6 +145,7 @@ namespace alc {
 			while( (file = ageDir.getEntry()) != NULL) {
 				if (file->type != 8 || strcasecmp(alcGetExt(file->name), "age") != 0) continue;
 				// load it
+				DBG(9, "Reading age file %s%s:", dir.c_str(), file->name);
 				ages.push_back(tAgeInfo(dir, file->name, loadPages));
 			}
 		}
