@@ -158,6 +158,7 @@ namespace alc {
 			// load it
 			ages.push_back(tAgeInfo(dir, filename, loadPages));
 		}
+		DBG(9, "Done reading age file(s)\n");
 	}
 	
 	tAgeInfo *tAgeInfoLoader::getAge(const char *name)
