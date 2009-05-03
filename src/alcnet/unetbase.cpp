@@ -325,12 +325,12 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 				// this part can never be reached on shutdown, so messages are only processed when the server is still fully running
 				if (ret == 0) ret=onMsgRecieved(evt,msg,u);
 				if (ret == 1 && !msg->data.eof() > 0) { // packet was processed and there are bytes left, obiously invalid, terminate the client
-					err->log("%s Recieved a message 0x%04X (%s) which was too long (%d Bytes remaining after parsing)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data.remaining());
+					err->log("%s Recieved a message 0x%04X (%s) which was too long (%d Bytes remaining after parsing) - kicking player\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data.remaining());
 					ret=-1;
 				}
 			}
 			catch (txBase &t) { // if there was an error parsing the message, kick the responsible player
-				err->log("%s Recieved invalid 0x%04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+				err->log("%s Recieved invalid 0x%04X (%s) - kicking player\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
 				err->log(" Exception details: %s\n",t.what());
 				//err->log(" Backtrace: %s\n", t.backtrace());
 				ret=-1;
@@ -341,7 +341,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 					terminate(u, RUnimplemented);
 				}
 				else if(ret==-1) {
-					err->log("%s Kicked off due to a parse error in a previus message 0x%04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+					sec->log("%s Kicked off due to a parse error in a previus message 0x%04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
 					terminate(u, RParseError);
 				}
 				else if(ret==-2) {
