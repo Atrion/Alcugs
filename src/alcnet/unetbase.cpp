@@ -337,14 +337,17 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 			}
 			if(u->isClient()==1) {
 				if(ret==0) {
-					err->log("%s Unexpected message %04X (%s)\n",u->str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
+					err->log("%s Unexpected message %04X (%s) - kicking player\n",u->str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
+					sec->log("%s Unexpected message %04X (%s)\n",u->str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
 					terminate(u, RUnimplemented);
 				}
 				else if(ret==-1) {
+					// the problem already got printed to the error log wherever this return value was set
 					sec->log("%s Kicked off due to a parse error in a previus message 0x%04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
 					terminate(u, RParseError);
 				}
 				else if(ret==-2) {
+					// the problem already got printed to the error log wherever this return value was set
 					sec->log("%s Kicked off due to cracking 0x%04X (%s)\n",u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
 					terminate(u, RHackAttempt);
 				}
