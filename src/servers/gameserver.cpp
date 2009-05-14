@@ -232,7 +232,7 @@ namespace alc {
 			msg->eofCheck();
 			// check for chat messages
 			tpKIMsg *kiMsg = dynamic_cast<tpKIMsg*>(subMsg);
-			if (kiMsg && kiMsg->messageType == 0 && kiMsg->text.startsWith("!")) { // if it is a command
+			if (kiMsg && kiMsg->messageType == 0 && kiMsg->text.startsWith("/!")) { // if it is a command
 				processKICommand(kiMsg->text, u);
 				processed = true;
 			}
@@ -244,8 +244,8 @@ namespace alc {
 	void tUnetGameServer::processKICommand(const tStrBuf &text, tNetSession *u)
 	{
 		// process server-side commands
-		if (text == "!ping") sendKIMessage("You are still online :)", u);
-		else if (text == "!silentping") sendKIMessage("!silentpong", u);
+		if (text == "/!ping") sendKIMessage("You are still online :)", u);
+		else if (text == "/!silentping") sendKIMessage("!silentpong", u);
 		else {
 			tStrBuf error;
 			error.printf("Unknown server-side command: \"%s\"", text.c_str());
