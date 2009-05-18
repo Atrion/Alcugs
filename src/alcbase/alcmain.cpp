@@ -243,8 +243,7 @@ void tSignalHandler::handle_signal(int s) {
 				lstd->log("INF: RECIEVED SIGCHLD: a child has exited.\n");
 				lstd->flush();
 				alcSignal(SIGCHLD);
-				int status;
-				waitpid(-1, &status, WNOHANG);
+				wait(NULL); // properly exit child
 				break;
 #endif
 			case SIGSEGV:
