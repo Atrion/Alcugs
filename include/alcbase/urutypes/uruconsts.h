@@ -357,6 +357,7 @@ unsilenced 29
 #define plAvatarMsg                0x0292
 #define plAvTaskMsg                0x0293
 #define plAvSeekMsg                0x0294
+#define plAvOneShotMsg             0x0295
 #define plLinkToAgeMsg             0x02E1
 #define plNotifyMsg                0x02E8
 #define plLinkEffectsTriggerMsg    0x02FB
