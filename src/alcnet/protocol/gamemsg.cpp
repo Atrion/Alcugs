@@ -494,8 +494,6 @@ namespace alc {
 		unk = t.getU32();
 		if (unk != 1) throw txProtocolError(_WHERE("NetMsgRelevanceRegions.unk2 must be 1 but is %d", unk));
 		rgnsImIn = t.getU32();
-		if (rgnsImIn > rgnsICareAbout)
-			throw txProtocolError(_WHERE("rgnsImIn must be equal or lower than rgnsICareAbout, but %d > %d", rgnsImIn, rgnsICareAbout));
 	}
 	
 	void tmRelevanceRegions::additionalFields()
