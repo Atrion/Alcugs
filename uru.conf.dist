@@ -71,8 +71,8 @@ db.username = "alcugs"
 db.passwd = "yourpassword"
 
 # paths
-age = "/usr/local/alcugs/age/" # directory containing the age files (for game, tracking and vault)
-sdl = "/usr/local/alcugs/sdl/" # directory containing the sdl files (for game)
+age = "/home/alcugs/age/" # directory containing the age files (for game, tracking and vault)
+sdl = "/home/alcugs/sdl/" # directory containing the sdl files (for game)
 
 # Instancing settings (used by tracking, vault and game)
 # Don't change these if the vault got already created!
@@ -176,7 +176,7 @@ website = "http://server/info.html"
 
 # game server settings
 game.log = "../game/" # the path where the game log files will be saved (there will be subdirs for each instance: /base_path/agename/ageguid/)
-game.bin = "/usr/local/alcugs/bin/alcugs_game" # full path and name of game server binary
+game.bin = "/home/alcugs/bin/alcugs_game" # full path and name of game server binary
 # (if you want to use an unet2 game server, you also have to set game.config to the name of the game server config file)
 
 stop = 1
