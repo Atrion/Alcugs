@@ -64,6 +64,7 @@ namespace alc {
 		if (!var.endsWith("/")) var.writeStr("/");
 		
 		// load SDL files
+		log->log("Reading SDL files from %s...\n", var.c_str());
 		tDirectory sdlDir;
 		tDirEntry *file;
 		sdlDir.open(var.c_str());
@@ -494,7 +495,7 @@ namespace alc {
 	/** This is the SDL file parser */
 	void tAgeStateManager::loadSdlStructs(const char *filename)
 	{
-		log->log("Reading %s\n", filename);
+		log->log("  Reading %s\n", filename);
 		tSdlStruct sdlStruct(this);
 		tSdlStructVar sdlVar;
 		

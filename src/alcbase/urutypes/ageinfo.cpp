@@ -136,7 +136,7 @@ namespace alc {
 		if (!dir.endsWith("/")) dir.writeStr("/");
 		
 		if (!name) { // we should load all ages
-			lstd->log("reading age files from %s\n", dir.c_str());
+			lstd->log("Reading age files from %s\n", dir.c_str());
 			lstd->flush();
 			
 			tDirectory ageDir;
@@ -150,7 +150,7 @@ namespace alc {
 			}
 		}
 		else { // we should load only one certain age
-			lstd->log("reading age file %s%s.age\n", dir.c_str(), name);
+			lstd->log("Reading age file %s%s.age\n", dir.c_str(), name);
 			lstd->flush();
 			
 			char filename[200];
