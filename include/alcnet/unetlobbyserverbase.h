@@ -71,6 +71,7 @@ protected:
 
 protected:
 	U16 spawnStart, spawnStop;
+	const U32 authedTimeout;
 
 private:
 	bool setActivePlayer(tNetSession *u, U32 ki, U32 x, const char *avatar);
@@ -83,6 +84,7 @@ private:
 	bool vaultLogShort;
 
 	bool allowUU;
+	U32 loadingTimeout;
 	char linkLog[512];
 };
 

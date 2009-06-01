@@ -50,7 +50,7 @@
 namespace alc {
 
 	////IMPLEMENTATION
-	tUnetLobbyServerBase::tUnetLobbyServerBase(void) : tUnetServerBase()
+	tUnetLobbyServerBase::tUnetLobbyServerBase(void) : tUnetServerBase(), authedTimeout(30) // 30seconds for authenticated clients
 	{
 		memset(serverGuid, 0, 8);
 		serverName[0] = 0;
@@ -99,6 +99,10 @@ namespace alc {
 			log->log("WARN: spawnStop (%d) lower than spawnStart (%d), setting both to %d\n", spawnStop, spawnStart, spawnStart);
 			spawnStop = spawnStart;
 		}
+		
+		var = cfg->getVar("net.timeout.loading");
+		if (var.isNull()) loadingTimeout = 90;
+		else loadingTimeout = var.asU32();
 	}
 	
 	void tUnetLobbyServerBase::onUnloadConfig()
@@ -439,6 +443,8 @@ namespace alc {
 				if (authResponse.result == AAuthSucceeded) {
 					memcpy(client->uid, authResponse.uid, 16);
 					client->setAuthData(authResponse.accessLevel, authResponse.passwd.c_str());
+					if (whoami == KGame) client->setTimeout(loadingTimeout); // the client is still loading the age, so use higher timeout
+					else client->setTimeout(authedTimeout);
 					
 					tmAccountAutheticated accountAuth(client, authResponse.x, AAuthSucceeded, serverGuid);
 					send(accountAuth);
