@@ -361,6 +361,7 @@ unsilenced 29
 #define plLinkToAgeMsg             0x02E1
 #define plNotifyMsg                0x02E8
 #define plLinkEffectsTriggerMsg    0x02FB
+#define plOneShotMsg               0x0302
 #define plParticleTransferMsg      0x032E
 #define plParticleKillMsg          0x032F
 #define plAvatarInputStateMsg      0x0342
