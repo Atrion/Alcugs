@@ -122,7 +122,7 @@ namespace alc {
 	{
 		// establish database connection
 		if (sql) { // the connection is already established?
-			if (sql->prepare()) // when we're still connected or recoonnection works, everything is fine
+			if (sql->prepare()) // when we're still connected or reconnection works, everything is fine
 				return true;
 			// otherwise, delete the connection and try again
 			DBG(6, "deleting sql\n");
@@ -181,7 +181,7 @@ namespace alc {
 	
 	int tVaultDB::getVersion(void)
 	{
-		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		// this is a private function, so the caller already did the prepare() check
 		
 		tStrBuf query;
 		int version = 0;
@@ -208,6 +208,8 @@ namespace alc {
 	
 	void tVaultDB::getVaultFolderName(char *folder)
 	{
+		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		
 		folder[0] = 0; // empty it
 		
 		tStrBuf query;
@@ -228,6 +230,7 @@ namespace alc {
 	
 	void tVaultDB::convertIntToTimestamp(const char *table, const char *intColumn, const char *timestampColumn)
 	{
+		// this is a private function, so the caller already did the prepare() check
 		tStrBuf query;
 		
 		query.printf("ALTER TABLE %s ADD %s timestamp NOT NULL default 0 AFTER %s", table, timestampColumn, intColumn);
@@ -244,6 +247,7 @@ namespace alc {
 	
 	void tVaultDB::convertIntToDouble(const char *table, const char *intColumn, const char *doubleColumn)
 	{
+		// this is a private function, so the caller already did the prepare() check
 		tStrBuf query;
 		
 		query.printf("ALTER TABLE %s ADD %s double NOT NULL default 0 AFTER %s", table, doubleColumn, intColumn);
@@ -260,7 +264,7 @@ namespace alc {
 	
 	void tVaultDB::migrateVersion2to3(void)
 	{
-		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		// this is a private function, so the caller already did the prepare() check
 	
 		tStrBuf query;
 		/* From version 2 to 3, the layout of the tables changed, but the way the content is organized stayed the same.
@@ -1416,7 +1420,7 @@ namespace alc {
 	
 	void tVaultDB::removeInvalidRefs(void)
 	{
-		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		// this is a private function, so the caller already did the prepare() check
 		
 		tStrBuf query;
 		MYSQL_RES *result;
@@ -1464,7 +1468,7 @@ namespace alc {
 	
 	bool tVaultDB::isLostAge(int id)
 	{
-		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		// this is a private function, so the caller already did the prepare() check
 		
 		// look for age info node (which must be a direct child)
 		tStrBuf query;
