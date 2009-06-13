@@ -144,9 +144,9 @@ bool tSQL::prepare(void)
 bool tSQL::query(const char *str, const char *desc, bool throwOnError)
 {
 	if (connection == NULL) {
-		if (!prepare()) {
+		if (!prepare()) { // DANGER: possible endless loop (query calls prepare calls query...)
 			if (throwOnError) throw txDatabaseError(_WHERE("No connection to DB for \"%s\"", desc));
-			return false; // DANGER: possible endless loop (query calls prepare calls query...)
+			return false;
 		}
 	}
 	
