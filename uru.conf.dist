@@ -43,7 +43,7 @@
 ;log_files_path = log/ # path top contain the log files (parameter: [-log path/]) (default log/)
 ;vault.html.log = 1 # enables/disables logging of vault objects to a HTML file in lobby, game and vault server (default 1)
 ;vault.html.log.short = 0 # makes the vault logging much shorter (saves up to 75%) and doesn't dump data to files (default 0)
-;net.log.ack = 1 # enables/disables logging of acks (default 1)
+;net.log.ack = 0 # enables/disables logging of acks (default 0)
 ;log.n_rotate = 5 # set number of files to rotate (0 will disable logging, 1 keeps only one log file without rotating, default is 5)
 
 # the bind adress for lobby and game servers (i.e. the IP of the interface to the router)

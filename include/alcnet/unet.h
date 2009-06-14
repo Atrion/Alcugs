@@ -68,20 +68,21 @@ typedef U16 tUnetFlags;
 #define UNET_NBLOCK   0x0001 /* non-blocking socket */
 #define UNET_ELOG     0x0002 /* enable netcore logging */
 #define UNET_ECRC     0x0004 /* crc check enabled */
-//#define UNET_AUTOSP   0x0008 /* auto speed correction */
 #define UNET_NOFLOOD  0x0010 /* enable flooding control */
 #define UNET_BCAST    0x0020 /* enable broadcast */
-#define UNET_FLOG     0x0040 /* enable file based logging, (also, 0x02 must be present) */
-//#define UNET_NETAUTH  0x0080 /* Enable authentication through servers */
-// UNET_NETAUTH was meant to enable an authentication for auth, tracking and vault against lobby and game and vice versa. it was never implemented though.
-#define UNET_DLACK    0x0100 /* Disable ack trace */
-//#define UNET_DLCHK    0x0200 /* Disable chk log */
-//#define UNET_DLUNE    0x0400 /* Disable une log */
+#define UNET_FLOG     0x0040 /* enable file based logging, (also, UNET_ELOG must be present) */
+#define UNET_ACKLOG   0x0100 /* Enable ack trace */
 #define UNET_DLSEC    0x0800 /* Disable sec log */
 #define UNET_LQUIET   0x1000 /* Disable dumping to the console */
+
+//#define UNET_AUTOSP   0x0008 /* auto speed correction */
+//#define UNET_NETAUTH  0x0080 /* Enable authentication through servers */
+	// UNET_NETAUTH was meant to enable an authentication for auth, tracking and vault against lobby and game and vice versa. it was never implemented though.
+//#define UNET_DLCHK    0x0200 /* Disable chk log */
+//#define UNET_DLUNE    0x0400 /* Disable une log */
 //#define UNET_NOCONN   0x2000 /* Non connected server */
 
-#define UNET_DEFAULT_FLAGS (UNET_NBLOCK | UNET_ELOG | UNET_ECRC | /*UNET_AUTOSP |*/ UNET_NOFLOOD | UNET_FLOG)
+#define UNET_DEFAULT_FLAGS (UNET_NBLOCK | UNET_ELOG | UNET_ECRC | UNET_NOFLOOD | UNET_FLOG)
 
 
 class tUnet {
