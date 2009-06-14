@@ -225,7 +225,7 @@ void tUnet::openlogs() {
 			this->unx->open(NULL,4,0);
 		}
 #endif
-		if(this->ack==lnull && (this->flags & UNET_FLOG) && !(this->flags & UNET_DLACK)) {
+		if(this->ack==lnull && (this->flags & UNET_FLOG) && (this->flags & UNET_ACKLOG)) {
 			this->ack=new tLog;
 			this->ack->open("ack.html",4,DF_HTML);
 		} else {

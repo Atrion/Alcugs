@@ -148,9 +148,9 @@ void tUnetBase::reconfigure() {
 	var=cfg->getVar("net.log.ack","global");
 	if(!var.isNull()) {
 		if(var.asByte()) {
-			unsetFlags(UNET_DLACK);
+			setFlags(UNET_ACKLOG);
 		} else {
-			setFlags(UNET_DLACK);
+			unsetFlags(UNET_ACKLOG);
 		}
 	}
 	//Other DEVEL vars (dangerous to touch)
