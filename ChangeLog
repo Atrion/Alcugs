@@ -4,13 +4,14 @@ Improvements:
 - Code rework to be more readable and reasonable (especially use const wherever possible)
 
 Bugfixes:
-- Fix much too slow parsing of incoming messages under some circumstances
-- Fix problems arising when invalid GUIDs where saved in the auth database
-- Make sure that kicking a player is mentioned both in error.log and access.log
+- Fixed much too slow parsing of incoming messages under some circumstances
+- Fixed problems arising when invalid GUIDs where saved in the auth database
+- Made sure that kicking a player is mentioned both in error.log and access.log
 - Some changes to the timeouts of the connection to the client should hopefully allow more slow PCs to load big ages
   (thanks to Marten for his testing)
-- Fix some vault server crashes
-- Disable advanced message and ack logging per default (it just spams the disk)
+- Fixed some vault server crashes
+- Disabled advanced message and ack logging per default (it just spams the disk)
+- Fixed strange problem on some Linux systems which prevents age and sdl files from being read
 
 Version 1.3.5 (10/Apr/2009)
 ===============================

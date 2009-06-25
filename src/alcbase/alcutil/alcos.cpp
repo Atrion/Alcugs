@@ -78,7 +78,7 @@ void alcStripExt(char * addr) {
 /* dir entry */
 tDirEntry::tDirEntry() {
 	name=NULL;
-	type=0;
+	entryType=0;
 }
 tDirEntry::~tDirEntry() {}
 /* end dir entry */
@@ -111,11 +111,11 @@ tDirEntry * tDirectory::getEntry() {
 	strcat(kpath,entry->d_name);
 	struct stat buf;
 	stat(kpath,&buf);
-	if(S_ISDIR(buf.st_mode)) ent.type=0x04;
-	else ent.type=0x08;
+	if(S_ISDIR(buf.st_mode)) ent.entryType=DT_DIR;
+	else ent.entryType=DT_REG;
 	//ent.type=buf.st_mode;
 	#else
-	ent.type=entry->d_type; // 0x04 - Directory, 0x08 Regular file
+	ent.entryType=entry->d_type;
 	#endif
 	return &ent;
 }
