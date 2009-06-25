@@ -469,8 +469,8 @@ void alctypes_part3() {
 	bool foundSrc = false, foundMake = false;
 	
 	while((k=mdir.getEntry())!=NULL) {
-		if (k->type == 4 && strcmp(k->name, "src")) foundSrc = true;
-		else if (k->type == 8 && strcmp(k->name, "Makefile.am")) foundMake = true;
+		if (k->isDir() && strcmp(k->name, "src") == 0) foundSrc = true;
+		else if (k->isFile() && strcmp(k->name, "Makefile.am") == 0) foundMake = true;
 		//printf("%s - %u\n",k->name,k->type);
 	}
 	assert(foundSrc && foundMake);
