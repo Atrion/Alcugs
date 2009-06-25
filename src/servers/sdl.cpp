@@ -473,7 +473,7 @@ namespace alc {
 			if (name == it->name && it->version == version) return &(*it);
 		}
 		if (throwOnError)
-			throw txUnet(_WHERE("SDL version mismatch, no SDL Struct found for %s version %d", name.c_str(), version));
+			throw txUnet(_WHERE("No SDL Struct found for %s version %d", name.c_str(), version));
 		return NULL;
 	}
 	
