@@ -61,10 +61,7 @@ tConfigVal::~tConfigVal() {
 	if(values!=NULL) {
 		for(i=0; i<x*y; i++) {
 			DBG(9,"i:%i\n",i);
-			if(values[i]!=NULL) {
-				DBG(9,"deleting...\n");
-				delete values[i];
-			}
+			delete values[i];
 		}
 		free((void *)values);
 	}
@@ -95,9 +92,7 @@ void tConfigVal::setVal(const tStrBuf & t,U16 x,U16 y) {
 		this->y = my;
 		ox = x+1;
 		oy = my;
-		if(ovalues!=NULL) {
-			free((void *)ovalues);
-		}
+		free((void *)ovalues);
 		ovalues=values;
 	}
 	if(oy<(y+1)) {
@@ -137,9 +132,7 @@ void tConfigVal::copy(tConfigVal &t) {
 	setName(t.getName());
 	if(values!=NULL) {
 		for(i=0; i<x*y; i++) {
-			if(values[i]!=NULL) {
-				delete values[i];
-			}
+			delete values[i];
 		}
 		free((void *)values);
 	}
@@ -164,9 +157,7 @@ tConfigKey::~tConfigKey() {
 	//if(name!=NULL) free((void *)name);
 	if(values!=NULL) {
 		for(i=0; i<n; i++) {
-			if(values[i]!=NULL) {
-				delete values[i];
-			}
+			delete values[i];
 		}
 		free((void *)values);
 	}
@@ -199,9 +190,7 @@ void tConfigKey::copy(tConfigKey &t) {
 	setName(t.getName());
 	if(values!=NULL) {
 		for(i=0; i<n; i++) {
-			if(values[i]!=NULL) {
-				delete values[i];
-			}
+			delete values[i];
 		}
 		free((void *)values);
 	}
@@ -245,9 +234,7 @@ tConfig::~tConfig() {
 	U16 i;
 	if(values!=NULL) {
 		for(i=0; i<n; i++) {
-			if(values[i]!=NULL) {
-				delete values[i];
-			}
+			delete values[i];
 		}
 		free((void *)values);
 	}

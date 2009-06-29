@@ -221,11 +221,8 @@ void txBase::dump(bool toStderr) {
 const char * txBase::what() { return msg; }
 const char * txBase::backtrace() { return bt; }
 txBase::~txBase() {
-	//dmalloc_verify(NULL);
-	if(bt!=NULL) free((void *)bt);
-	//dmalloc_verify(NULL);
-	if(imsg!=NULL) free((void *)imsg);
-	//dmalloc_verify(NULL);
+	free((void *)bt);
+	free((void *)imsg);
 }
 //End base
 

@@ -414,7 +414,8 @@ void tUnet::startOp() {
 */
 void tUnet::stopOp() {
 	if(!initialized) return;
-	if(smgr!=NULL) delete smgr;
+	delete smgr;
+	smgr = NULL;
 
 #ifdef __WIN32__
 	closesocket(this->sock);
@@ -772,7 +773,7 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 		neterror(" sendto() ");
 	}
 	DBG(9,"After the Sendto call...\n");
-	if(buf2!=NULL) { free((void *)buf2); }
+	free((void *)buf2);
 	delete mbuf;
 	DBG(8,"returning from uru_net_send RET:%i\n",msize);
 }

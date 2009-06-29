@@ -878,15 +878,11 @@ namespace alc {
 			}
 			
 			// now we can free the aux and feed tables
-			if (aux != NULL) {
-				free((void *)aux);
-				aux = NULL;
-			}
+			free((void *)aux);
+			aux = NULL;
 			nAux = 0;
-			if (feed != NULL) {
-				free((void *)feed);
-				feed = NULL;
-			}
+			free((void *)feed);
+			feed = NULL;
 			nFeed = 0;
 			
 			// ok... now we can query (if there's anything)
@@ -916,14 +912,10 @@ namespace alc {
 		}
 		
 		// now we can free the aux and feed tables
-		if (aux != NULL) {
-			free((void *)aux);
-			aux = NULL;
-		}
-		if (feed != NULL) {
-			free((void *)feed);
-			feed = NULL;
-		}
+		free((void *)aux);
+		aux = NULL;
+		free((void *)feed);
+		feed = NULL;
 		
 		// the final list is what the caller gets
 		*mfs = final;
@@ -1043,15 +1035,11 @@ namespace alc {
 			DBG(9, "Completed the new lists\n");
 			
 			// now we can free the aux and feed tables
-			if (aux != NULL) {
-				free((void *)aux);
-				aux = NULL;
-			}
+			free((void *)aux);
+			aux = NULL;
 			nAux = 0;
-			if (feed != NULL) {
-				free((void *)feed);
-				feed = NULL;
-			}
+			free((void *)feed);
+			feed = NULL;
 			nFeed = 0;
 			
 			// ok... now we can query (if there's anything)
@@ -1098,18 +1086,12 @@ namespace alc {
 		DBG(9, "That was the last loop\n");
 		
 		// now we can free the aux and feed tables
-		if (aux != NULL) {
-			free((void *)aux);
-			aux = NULL;
-		}
-		if (feed != NULL) {
-			free((void *)feed);
-			feed = NULL;
-		}
-		if (final != NULL) {
-			free((void *)final);
-			final = NULL;
-		}
+		free((void *)aux);
+		aux = NULL;
+		free((void *)feed);
+		feed = NULL;
+		free((void *)final);
+		final = NULL;
 	}
 	
 	void tVaultDB::fetchNodes(tMBuf &buf, int tableSize, tvNode ***nodes, int *nNodes)

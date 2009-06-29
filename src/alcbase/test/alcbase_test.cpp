@@ -466,14 +466,14 @@ void alctypes_part3() {
 	mdir.open(".");
 	tDirEntry * k;
 	
-	bool foundSrc = false, foundMake = false;
+	bool foundDocs = false, foundGame = false;
 	
 	while((k=mdir.getEntry())!=NULL) {
-		if (k->isDir() && strcmp(k->name, "src") == 0) foundSrc = true;
-		else if (k->isFile() && strcmp(k->name, "Makefile.am") == 0) foundMake = true;
+		if (k->isDir() && strcmp(k->name, "docs") == 0) foundDocs = true;
+		else if (k->isFile() && strcmp(k->name, "alcugs_game") == 0) foundGame = true;
 		//printf("%s - %u\n",k->name,k->type);
 	}
-	assert(foundSrc && foundMake);
+	assert(foundDocs && foundGame);
 }
 
 void alctypes_part4() {

@@ -780,9 +780,7 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 			}
 		}
 	}
-	if(ack!=NULL) {
-		delete ack;
-	}
+	delete ack;
 	
 	#ifdef ENABLE_ACKDEBUG
 	net->log->log("ack stack TAIL looks like:\n");

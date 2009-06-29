@@ -77,8 +77,11 @@ typedef struct {
 	U16 log_flags; //!< default flags assigned to a log file on creation
 	//build vars
 	char build[100]; //!< build
+	//track logs
+	int n_logs; //How many log files are open
+	tLog ** logs; //Pointer to each one
 	//syslog
-	char syslogname[100]; //!< the syslog name
+	/*char syslogname[100]; //!< the syslog name
 	char syslog_enabled; //!< enable syslog logging? (0x01 yes, 0x0 no)
 	//db
 	char dbhost[100]; //!<database params
@@ -91,9 +94,7 @@ typedef struct {
 	//unet
 	char host[100]; //!< udp/tcp listener
 	U16 port;
-	char protocol; //UDP, TCP <! 0x00 disabled, 0x01 udp, 0x02 tcp
-	int n_logs; //How many log files are open
-	tLog ** logs; //Pointer to each one
+	char protocol; //UDP, TCP <! 0x00 disabled, 0x01 udp, 0x02 tcp*/
 } tLogConfig;
 
 tLogConfig * tvLogConfig=NULL;
@@ -103,33 +104,33 @@ void alcLogSetDefaults() {
 		tvLogConfig=(tLogConfig *)malloc(sizeof(tLogConfig) * 1);
 	}
 	if(tvLogConfig!=NULL) {
-	//memset(tvLogConfig,0,sizeof(tvLogConfig));
-	tvLogConfig->silent=0;
-	tvLogConfig->n_files2rotate=5;
-	tvLogConfig->path=new tStrBuf("log/");
-	tvLogConfig->rotate_size=2*1024*1024;
-	tvLogConfig->creation_mask=00750;
-	tvLogConfig->level=6;
-	tvLogConfig->log_flags= DF_DEFSTDOUT | DF_STAMP | DF_IP; // | DF_ANOY;
-	strncpy(tvLogConfig->build, "Alcugs logging system", 99);
-	//syslog
-	strncpy(tvLogConfig->syslogname, "alcugs", 99);
-	tvLogConfig->syslog_enabled=0x00;
-	//db
-	strncpy(tvLogConfig->dbhost, "", 99);
-	tvLogConfig->dbport=0;
-	strncpy(tvLogConfig->dbname, "uru_events", 99);
-	strncpy(tvLogConfig->dbuser, "uru", 99);
-	strncpy(tvLogConfig->dbpasswd, "", 99);
-	strncpy(tvLogConfig->dbeventtable, "events", 99);
-	tvLogConfig->db_enabled=0x00;
-	//unet
-	strncpy(tvLogConfig->host, "localhost", 99);
-	tvLogConfig->port=9000;
-	tvLogConfig->protocol=0x00;
-	//track logs
-	tvLogConfig->n_logs=0;
-	tvLogConfig->logs=NULL;
+		//memset(tvLogConfig,0,sizeof(tvLogConfig));
+		tvLogConfig->silent=0;
+		tvLogConfig->n_files2rotate=5;
+		tvLogConfig->path=new tStrBuf("log/");
+		tvLogConfig->rotate_size=2*1024*1024;
+		tvLogConfig->creation_mask=00750;
+		tvLogConfig->level=6;
+		tvLogConfig->log_flags= DF_DEFSTDOUT | DF_STAMP | DF_IP; // | DF_ANOY;
+		strncpy(tvLogConfig->build, "Alcugs logging system", 99);
+		//track logs
+		tvLogConfig->n_logs=0;
+		tvLogConfig->logs=NULL;
+		//syslog
+		/*strncpy(tvLogConfig->syslogname, "alcugs", 99);
+		tvLogConfig->syslog_enabled=0x00;
+		//db
+		strncpy(tvLogConfig->dbhost, "", 99);
+		tvLogConfig->dbport=0;
+		strncpy(tvLogConfig->dbname, "uru_events", 99);
+		strncpy(tvLogConfig->dbuser, "uru", 99);
+		strncpy(tvLogConfig->dbpasswd, "", 99);
+		strncpy(tvLogConfig->dbeventtable, "events", 99);
+		tvLogConfig->db_enabled=0x00;
+		//unet
+		strncpy(tvLogConfig->host, "localhost", 99);
+		tvLogConfig->port=9000;
+		tvLogConfig->protocol=0x00;*/
 	}
 }
 
@@ -171,24 +172,18 @@ void alcLogShutdown(bool silent) {
 		delete lnull;
 		lnull=NULL;
 	}
-	if(tvLogConfig->path!=NULL) {
-		delete tvLogConfig->path;
-		tvLogConfig->path=NULL;
-	}
+	delete tvLogConfig->path;
+	tvLogConfig->path=NULL;
 	for(i=0; i<tvLogConfig->n_logs; i++) {
 		if(tvLogConfig->logs[i]!=NULL) {
 			tvLogConfig->logs[i]->close(silent);
 			delete tvLogConfig->logs[i];
 		}
 	}
-	if(tvLogConfig->logs!=NULL) {
-		free((void *)tvLogConfig->logs);
-		tvLogConfig->logs=NULL;
-	}
-	if(tvLogConfig!=NULL) {
-		free((void *)tvLogConfig);
-		tvLogConfig=NULL;
-	}
+	free((void *)tvLogConfig->logs);
+	tvLogConfig->logs=NULL;
+	free((void *)tvLogConfig);
+	tvLogConfig=NULL;
 }
 
 void alcLogInit() {
@@ -321,7 +316,7 @@ void tLog::open(const char * name, char level, U16 flags) {
 				}
 			}
 
-			if(croak!=NULL) { free((void *)croak); }
+			free((void *)croak);
 
 			//rotation
 			if(!(this->flags & DF_APPEND) || (this->flags & DF_HTML)) {
@@ -331,11 +326,11 @@ void tLog::open(const char * name, char level, U16 flags) {
 			}
 			
 			// preserve the path
-			if (fullpath != NULL) free(fullpath);
+			free(fullpath);
 			fullpath=(char *)malloc(sizeof(char) * (strlen(path)+1));
 			if (!fullpath) throw txNoMem(_WHERE(""));
 			strcpy(fullpath, path);
-			if(path!=NULL) { free((void *)path); }
+			free((void *)path);
 
 			this->dsc=fopen(fullpath,"a");
 			if(this->dsc==NULL) {
@@ -475,10 +470,10 @@ void tLog::rotate(bool force) {
 		}
 	}
 
-	if(croak!=NULL) free((void *)croak);
-	if(path!=NULL) free((void *)path);
-	if(croak2!=NULL) free((void *)croak2);
-	if(gustavo!=NULL) free((void *)gustavo);
+	free((void *)croak);
+	free((void *)path);
+	free((void *)croak2);
+	free((void *)gustavo);
 
 	//return ret;
 }
@@ -502,8 +497,8 @@ void tLog::close(bool silent) {
 		fclose(this->dsc);
 		this->dsc=NULL;
 	}
-	if(this->name!=NULL) free((void *)this->name);
-	if(this->fullpath!=NULL) free((void *)this->fullpath);
+	free((void *)this->name);
+	free((void *)this->fullpath);
 	this->name=NULL;
 	this->fullpath=NULL;
 	this->flags=0;

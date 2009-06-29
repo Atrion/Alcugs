@@ -208,7 +208,7 @@ tRefBuf::tRefBuf(U32 csize) {
 	throw txNoMem(_WHERE("NoMem"));
 }
 tRefBuf::~tRefBuf() {
-	if(buf!=NULL) free((void *)buf);
+	free((void *)buf);
 }
 void tRefBuf::resize(U32 newsize) {
 	msize=newsize;
@@ -363,7 +363,7 @@ tFBuf::tFBuf() {
 }
 tFBuf::~tFBuf() {
 	this->close();
-	if(xbuf!=NULL) free((void *)xbuf);
+	free((void *)xbuf);
 }
 void tFBuf::init() {
 	f=NULL;
@@ -547,12 +547,10 @@ tStrBuf::tStrBuf(const tStrBuf &k) :tMBuf(k) {
 	c=k.c;
 	sep=k.sep;
 	null=k.null;
-	DBG(9,"flags are %02X\n",flags);
 }
 tStrBuf::~tStrBuf() {
-	DBG(9,"dtor\n");
-	if(shot!=NULL) delete shot;
-	if(cache_lower!=NULL) delete cache_lower;
+	delete shot;
+	delete cache_lower;
 }
 void tStrBuf::init() {
 	DBG(9,"tStrBuf::init\n");
@@ -565,10 +563,8 @@ void tStrBuf::init() {
 void tStrBuf::onmodify() {
 	DBG(7,"tStrBuf::onmodify()\n");
 	tMBuf::onmodify();
-	if(cache_lower!=NULL) {
-		delete cache_lower;
-		cache_lower=NULL;
-	}
+	delete cache_lower;
+	cache_lower=NULL;
 	null = false;
 }
 void tStrBuf::copy(const tStrBuf &t) {
@@ -579,14 +575,10 @@ void tStrBuf::copy(const tStrBuf &t) {
 	c=t.c;
 	sep=t.sep;
 	null=t.null;
-	if(cache_lower!=NULL) {
-		delete cache_lower;
-		cache_lower=NULL;
-	}
-	if(shot!=NULL) {
-		delete shot;
-		shot=NULL;
-	}
+	delete cache_lower;
+	cache_lower=NULL;
+	delete shot;
+	shot=NULL;
 }
 void tStrBuf::copy(const char * str) {
 	DBG(2,"cpy\n");
@@ -729,7 +721,7 @@ const tStrBuf & tStrBuf::strip(Byte what,Byte how) {
 	return *this;
 }
 const tStrBuf & tStrBuf::escape() const {
-	if(shot!=NULL) delete shot;
+	delete shot;
 	shot = new tStrBuf(size()*3/2); // nothing inside this function will use shot, so we can initialize it now
 
 	int i,max;
@@ -892,7 +884,7 @@ const tStrBuf & tStrBuf::getLine(bool nl,bool slash) {
 	}
 	
 	// use shot only now as functions above might use it, too
-	if(shot!=NULL) delete shot;
+	delete shot;
 	shot=new tStrBuf(out);
 	return *shot;
 }
@@ -989,7 +981,7 @@ const tStrBuf & tStrBuf::getToken() {
 		}
 	}
 	// use shot only now as functions above might use it, too
-	if(shot!=NULL) delete shot;
+	delete shot;
 	shot=new tStrBuf(out);
 	return *shot;
 }
