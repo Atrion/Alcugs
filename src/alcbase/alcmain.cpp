@@ -74,9 +74,7 @@ void alcInit(int argc,char ** argv,bool shutup) {
 	srandom(alcGetMicroseconds() + (alcGetTime() % 10000));
 	
 	//init config system
-	if(alcGlobalConfig!=NULL) {
-		delete alcGlobalConfig;
-	}
+	delete alcGlobalConfig;
 	alcGlobalConfig = new tConfig();
 	tSignalHandler * h = new tSignalHandler();
 	DBG(7,"Installing default signal handler...");
@@ -93,10 +91,8 @@ void alcShutdown() {
 	DBG(5,"Stopping log system...");
 	alcLogShutdown();
 	DBGM(5," done\n");
-	if(alcGlobalConfig!=NULL) {
-		delete alcGlobalConfig;
-		alcGlobalConfig=NULL;
-	}
+	delete alcGlobalConfig;
+	alcGlobalConfig=NULL;
 	//the last thing
 	alcInstallSignalHandler(NULL);
 }
@@ -202,11 +198,8 @@ bool alcParseConfig(const tStrBuf & path) {
 }
 
 void alcInstallSignalHandler(tSignalHandler * t) {
-	//if(t==NULL) return;
-	if(alcSignalHandler!=NULL) {
-		delete alcSignalHandler;
-	}
-	alcSignalHandler= t;
+	delete alcSignalHandler;
+	alcSignalHandler = t;
 }
 
 void _alcHandleSignal(int s) {

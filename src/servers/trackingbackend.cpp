@@ -112,10 +112,8 @@ namespace alc {
 			delete log;
 			log = lnull;
 		}
-		if (guidGen != NULL) {
-			delete guidGen;
-			guidGen = NULL;
-		}
+		delete guidGen;
+		guidGen = NULL;
 	}
 	
 	void tTrackingBackend::load(void)

@@ -61,14 +61,10 @@ namespace alc {
 	
 	void tVaultBackend::unload(void)
 	{
-		if (vaultDB != NULL) {
-			delete vaultDB;
-			vaultDB = NULL;
-		}
-		if (guidGen != NULL) {
-			delete guidGen;
-			guidGen = NULL;
-		}
+		delete vaultDB;
+		vaultDB = NULL;
+		delete guidGen;
+		guidGen = NULL;
 		if (log != lnull) {
 			delete log;
 			log = lnull;

@@ -49,8 +49,7 @@ tNetSessionList::tNetSessionList(void)
 }
 tNetSessionList::~tNetSessionList()
 {
-	if(table!=NULL)
-		free((void *)table);
+	free((void *)table);
 }
 tNetSession *tNetSessionList::search(U32 ip, U16 port)
 {
@@ -146,7 +145,7 @@ tNetSessionMgr::~tNetSessionMgr()
 {
 	if(table!=NULL) {
 		for(int i=0; i<size; i++) {
-			if(table[i]!=NULL) delete table[i];
+			delete table[i];
 		}
 	}
 	// the table itself will be freed in ~tNetSessionList
