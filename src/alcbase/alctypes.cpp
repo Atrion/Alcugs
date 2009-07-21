@@ -103,7 +103,7 @@ void tBBuf::putDouble(double val) {
 #endif
 	this->write((Byte *)&val,8);
 }
-void tBBuf::putFloat(float val) { // TODO: Does this work on big-endian?
+void tBBuf::putFloat(float val) { // Does this work on big-endian?
 	this->write((Byte *)&val,4);
 }
 U16 tBBuf::getU16() {
@@ -167,7 +167,7 @@ double tBBuf::getDouble() {
 #endif
 	return(val);
 }
-float tBBuf::getFloat() { // TODO: Does this work on big-endian?
+float tBBuf::getFloat() { // Does this work on big-endian?
 	float val;
 #if defined(NEED_STRICT_ALIGNMENT)
 	memcpy((void *)&val, this->read(4), 4);

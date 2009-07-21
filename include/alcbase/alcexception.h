@@ -38,7 +38,6 @@ namespace alc {
 /** 
 	\brief Dumps core to coredumps directory.
 	\param name Mr. core name
-	\todo implement a Mutex here
 */
 void alcWriteCoreDump(const char * name="");
 /** 

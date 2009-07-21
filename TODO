@@ -1,33 +1,10 @@
-NetCore
-============
-* Finish the threaded implementation
-* Implement the save Bandwidth thingy
-* Fix some free() problems
-* Fix the 256KBytes max message size problem
-* Fix some exploits
-
-Auth
-========
-* Allow admins to select wich client versions they want
-* Implement additional cryptographic asimetric authentication extension
-* Implement server Identification
-
 Tracking
 ========
-* Optimizations
-* Tracking should somehow tell a game server that a player will soon come so that this server can
-  (a) avoid to go down due to inactivity before the player can connect
-  (b) tell everyone the player is dead if he does not come
+* Only tell new players to go to a game server if we have confirmation from the game server that it is alife
 
 Vault
 ===========
-* Optimizations
 * Implement permissions
-* Fix some vault server based exploits
-* Implement vault server side limits
-* WorkAround against invalid SDL nodes
-* Finish the Postgres driver
-* Finish the filesystem driver
 * Vault must be asked to find an age before tracking is asked to find the server (no more GUID gen in tracking!)
   regard linking rule while doing that:
   We need a list of instanced and a list of non-instanced ages
@@ -38,37 +15,16 @@ Vault
                    If age already exists we have to somehow reset it.
   Of course the even better solution would be to find a way to get rid of at least one of these lists
 
-Lobby
-========
-* Optimizations
-* Fix some exploits, and clean the code
-
 Game
 ======
-* Fix the LoadClone issue
-* End the SDL parser
-* Implement the storage of game objects
-* Fix the members list problem
-* Optimizations
-* Some thoughts about the LAG
+* Save agestate file in a more reasonable location
+* Marge game state from file, age vault and global SDL
 
-Other Generic Stuff
-====================
-* MetaServer
-* Optimizations
+Generic Stuff
+==================
+* Implement server Identification
 * Full Multithreaded support
-* Telnet builtin service
-* Http builtin service
-* Debug port/service
-* P2P tech
-
-Clients
-========
-* End the UruLoader
-* Do a GUI implementation for UruLoader
-* Finish the basic urucmd client for admins
 
 Feature-Requests list
 =======================
-* E-mail notifications on Ki mail.
-* Be able to broadcast admin messages to all players.
+* Be able to broadcast admin messages to all players
