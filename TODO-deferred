@@ -1,0 +1,63 @@
+The ToDo items in here are either deferred or unclear to me (i.e. I don't know what the author meant).
+
+NetCore
+============
+* Implement the save Bandwidth thingy
+* Implement a firewall
+* Fix some free() problems
+* Fix the 256KBytes max message size problem
+* Fix some exploits
+
+Auth
+========
+* Allow admins to select wich client versions they want
+* Implement additional cryptographic asimetric authentication extension
+* Implement server Identification
+
+Tracking
+========
+* Optimizations
+
+Vault
+===========
+* Optimizations
+* Fix some vault server based exploits
+* Implement vault server side limits
+* WorkAround against invalid SDL nodes
+* Finish the Postgres driver
+* Finish the filesystem driver
+
+Lobby
+========
+* Optimizations
+* Fix some exploits, and clean the code
+
+Game
+======
+* Fix the LoadClone issue
+* End the SDL parser
+* Implement the storage of game objects
+* Fix the members list problem
+* Optimizations
+* Some thoughts about the LAG
+
+Generic Stuff
+==================
+* MetaServer
+* Optimizations
+* Telnet builtin service
+* Http builtin service
+* Debug port/service
+* P2P tech
+* Database based logging
+* Socket based logging
+
+Clients
+========
+* End the UruLoader
+* Do a GUI implementation for UruLoader
+* Finish the basic urucmd client for admins
+
+Feature-Requests list
+=======================
+* E-mail notifications on Ki mail

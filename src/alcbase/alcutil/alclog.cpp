@@ -629,12 +629,12 @@ void tLog::logl(char level,const char * msg, ...) {
 */
 void dblog(st_log * log, char * type, char * user, char * location, char * msg, ...) {
 #ifdef _DBLOGGING_
-		//TODO: implement here database based log system, that is optional.
+		//database based log system
 		//will work only, if the user compiles this module with the _DBLOGGING_ option
 #endif
 }
 /**
-	TODO: socket based logging, send all debugging messages to an udp listener, or spawn
+	socket based logging, send all debugging messages to an udp listener, or spawn
 	a new thread to listen to incoming tcp connections.
 */
 #endif
