@@ -478,7 +478,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	//check duplicates
 	ret=checkDuplicate(msg);
 
-	// if the packet requires it and the above chack told us that'd be ok, send an ack
+	// if the packet requires it and the above check told us that'd be ok, send an ack
 	if(ret!=2 && (msg.tf & UNetAckReq)) {
 		//ack reply
 		createAckReply(msg);
@@ -886,9 +886,9 @@ void tNetSession::doWork() {
 	tNetEvent * evt;
 	tNetSessionIte ite(ip,port,sid);
 
-	idle=false;
-
 	ackUpdate(); //generate ack messages (i.e. put them from the ackq to the sndq)
+
+	idle = (ackq->isEmpty() && rcvq->isEmpty() && sndq->isEmpty());
 	
 	//check rcvq
 	if(!delayMessages && (ackq->len() == 0)) {
@@ -907,9 +907,6 @@ void tNetSession::doWork() {
 	
 	if(sndq->isEmpty()) {
 		next_msg_time=0;
-		if(ackq->isEmpty() && rcvq->isEmpty()) {
-			idle=true;
-		}
 		return;
 	}
 	
