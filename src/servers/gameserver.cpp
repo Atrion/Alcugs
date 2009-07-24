@@ -115,6 +115,9 @@ namespace alc {
 		
 		var = cfg->getVar("game.tmp.hacks.noreltoshare");
 		noReltoShare = (var.isNull() || var.asByte()); // enabled per default
+		
+		var = cfg->getVar("game.serversidecommands");
+		serverSideCommands = (!var.isNull() && var.asByte()); // disabled per default
 	}
 	
 	void tUnetGameServer::additionalVaultProcessing(tNetSession *u, tvMessage *msg)
@@ -232,7 +235,7 @@ namespace alc {
 			msg->eofCheck();
 			// check for chat messages
 			tpKIMsg *kiMsg = dynamic_cast<tpKIMsg*>(subMsg);
-			if (kiMsg && kiMsg->messageType == 0 && kiMsg->text.startsWith("/!")) { // if it is a command
+			if (serverSideCommands && kiMsg && kiMsg->messageType == 0 && kiMsg->text.startsWith("/!")) { // if it is a command
 				processKICommand(kiMsg->text, u);
 				processed = true;
 			}
@@ -245,7 +248,7 @@ namespace alc {
 	{
 		// process server-side commands
 		if (text == "/!ping") sendKIMessage("You are still online :)", u);
-		else if (text == "/!silentping") sendKIMessage("/!silentpong", u);
+		else if (text == "/!silentping") sendKIMessage("/!silentpingback", u);
 		else {
 			tStrBuf error;
 			error.printf("Unknown server-side command: \"%s\"", text.c_str());
