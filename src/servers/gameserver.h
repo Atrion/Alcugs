@@ -99,7 +99,7 @@ namespace alc {
 		
 		U32 lastPlayerLeft;
 		U32 lingerTime;
-		bool noReltoShare, thisAgeIsPrivate;
+		bool noReltoShare, thisAgeIsPrivate, serverSideCommands;
 	};
 
 } //End alc namespace
