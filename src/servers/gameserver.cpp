@@ -248,7 +248,7 @@ namespace alc {
 	{
 		// process server-side commands
 		if (text == "/!ping") sendKIMessage("You are still online :)", u);
-		else if (text == "/!silentping") sendKIMessage("/!silentpingback", u);
+		else if (text == "/!silentping") sendKIMessage("/!silentpong", u);
 		else {
 			tStrBuf error;
 			error.printf("Unknown server-side command: \"%s\"", text.c_str());
