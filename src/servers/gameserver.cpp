@@ -58,8 +58,6 @@ namespace alc {
 
 	tUnetGameServer::tUnetGameServer(void) : tUnetLobbyServerBase()
 	{
-		lastPlayerLeft = 0;
-		
 		// find out which age we are supposed to host
 		tConfig *cfg = alcGetConfig();
 		tStrBuf var = cfg->getVar("age_filename");
