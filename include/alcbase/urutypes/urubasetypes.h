@@ -42,7 +42,7 @@ class tWDYSBuf :public tMBuf {
 public:
 	tWDYSBuf() :tMBuf() {}
 	void encrypt();
-	void decrypt();
+	void decrypt(bool mustBeWDYS = true);
 };
 
 /** AES buffer */

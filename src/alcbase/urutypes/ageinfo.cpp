@@ -36,7 +36,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_AGEINFO_ID "$Id$"
 
-#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
 
@@ -86,7 +86,7 @@ namespace alc {
 		ageFile.open((dir + file).c_str(), "r");
 		tWDYSBuf ageContent;
 		ageContent.put(ageFile);
-		ageContent.decrypt();
+		ageContent.decrypt(/*mustBeWDYS*/false);
 		// parse file
 		tConfig *cfg = new tConfig;
 		tXParser parser(/*override*/false);

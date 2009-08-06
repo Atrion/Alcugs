@@ -504,7 +504,7 @@ namespace alc {
 		sdlFile.open(filename, "r");
 		tWDYSBuf sdlContent;
 		sdlContent.put(sdlFile);
-		sdlContent.decrypt();
+		sdlContent.decrypt(/*mustBeWDYS*/false);
 		
 		Byte state = 0;
 /*
