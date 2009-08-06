@@ -71,8 +71,11 @@ void tWDYSBuf::encrypt() {
 	if(aux->getRefs()<1) delete aux;
 	off=0;
 }
-void tWDYSBuf::decrypt() {
-	if(memcmp(this->buf->buf,"whatdoyousee",12)) throw txUnexpectedData(_WHERE("NotAWDYSFile!")); 
+void tWDYSBuf::decrypt(bool mustBeWDYS) {
+	if(memcmp(this->buf->buf,"whatdoyousee",12) != 0) {
+		if (mustBeWDYS) throw txUnexpectedData(_WHERE("NotAWDYSFile!")); 
+		return;
+	}
 	set(12);
 	U32 dsize=getU32();
 	tRefBuf * aux=this->buf;

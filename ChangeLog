@@ -12,6 +12,7 @@ Bugfixes:
 - Fixed some vault server crashes
 - Disabled advanced message and ack logging per default (it just spams the disk)
 - Fixed strange problem on some Linux systems which prevents age and sdl files from being read
+- age and sdl files can now also be plain text
 
 Version 1.3.5 (10/Apr/2009)
 ===============================
