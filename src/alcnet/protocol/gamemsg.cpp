@@ -96,7 +96,7 @@ namespace alc {
 	
 	//// tmJoinAck
 	tmJoinAck::tmJoinAck(tNetSession *u, U32 x, tBaseType *sdl)
-	 : tmMsgBase(NetMsgJoinAck, plNetAck | plNetCustom | plNetKi | plNetX/* | plNetFirewalled*/, u)
+	 : tmMsgBase(NetMsgJoinAck, plNetAck | plNetKi | plNetX/* | plNetFirewalled*/, u)
 	{
 		this->x = x;
 		ki = u->ki;
@@ -314,7 +314,7 @@ namespace alc {
 	}
 	
 	//// tmGroupOwner
-	tmGroupOwner::tmGroupOwner(tNetSession *u, tPageInfo *page, bool isOwner) : tmMsgBase(NetMsgGroupOwner, plNetAck | plNetCustom, u)
+	tmGroupOwner::tmGroupOwner(tNetSession *u, tPageInfo *page, bool isOwner) : tmMsgBase(NetMsgGroupOwner, plNetAck, u)
 	{
 		this->pageId = page->pageId;
 		this->pageType = page->pageType;
@@ -395,7 +395,7 @@ namespace alc {
 	}
 	
 	//// tmInitialAgeStateSent
-	tmInitialAgeStateSent::tmInitialAgeStateSent(tNetSession *u, U32 num) : tmMsgBase(NetMsgInitialAgeStateSent, plNetCustom | plNetAck, u)
+	tmInitialAgeStateSent::tmInitialAgeStateSent(tNetSession *u, U32 num) : tmMsgBase(NetMsgInitialAgeStateSent, plNetAck, u)
 	{
 		this->num = num;
 	}
@@ -593,7 +593,7 @@ namespace alc {
 	}
 	
 	//// tmMembersList
-	tmMembersList::tmMembersList(tNetSession *u) : tmMsgBase(NetMsgMembersList, plNetAck | plNetCustom, u)
+	tmMembersList::tmMembersList(tNetSession *u) : tmMsgBase(NetMsgMembersList, plNetAck, u)
 	{ }
 	
 	void tmMembersList::stream(tBBuf &t) const
@@ -612,7 +612,7 @@ namespace alc {
 	
 	//// tmMemberUpdate
 	tmMemberUpdate::tmMemberUpdate(tNetSession *u, const tMemberInfo &info, bool isJoined)
-	 : tmMsgBase(NetMsgMemberUpdate, plNetAck | plNetCustom, u), info(info)
+	 : tmMsgBase(NetMsgMemberUpdate, plNetAck, u), info(info)
 	{
 		this->isJoined = isJoined;
 	}

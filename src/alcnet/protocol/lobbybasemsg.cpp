@@ -58,7 +58,7 @@ namespace alc {
 	
 	//// tmAuthenticateChallenge	
 	tmAuthenticateChallenge::tmAuthenticateChallenge(tNetSession *u, U32 x, Byte authResult, const Byte *challenge)
-	: tmMsgBase(NetMsgAuthenticateChallenge, plNetKi | plNetAck | plNetX | plNetVersion | plNetCustom, u)
+	: tmMsgBase(NetMsgAuthenticateChallenge, plNetKi | plNetAck | plNetX | plNetVersion, u)
 	{
 		ki = 0; // we're not yet logged in, so no KI can be set
 		this->x = x;
@@ -102,7 +102,7 @@ namespace alc {
 	
 	//// tmAccountAutheticated	
 	tmAccountAutheticated::tmAccountAutheticated(tNetSession *u, U32 x, Byte authResult, const Byte *serverGuid)
-	: tmMsgBase(NetMsgAccountAuthenticated, plNetKi | plNetAck | plNetX | plNetUID | plNetCustom, u)
+	: tmMsgBase(NetMsgAccountAuthenticated, plNetKi | plNetAck | plNetX | plNetUID, u)
 	{
 		memcpy(uid, u->uid, 16);
 		this->x = x;
@@ -148,7 +148,7 @@ namespace alc {
 	}
 	
 	//// tmActivePlayerSet
-	tmActivePlayerSet::tmActivePlayerSet(tNetSession *u, U32 x) : tmMsgBase(NetMsgActivePlayerSet, plNetAck | plNetCustom | plNetKi | plNetX, u)
+	tmActivePlayerSet::tmActivePlayerSet(tNetSession *u, U32 x) : tmMsgBase(NetMsgActivePlayerSet, plNetAck | plNetKi | plNetX, u)
 	{
 		this->x = x;
 		ki = u->ki;
@@ -173,7 +173,7 @@ namespace alc {
 	
 	//// tmFindAgeReply
 	tmFindAgeReply::tmFindAgeReply(tNetSession *u, U32 x, const tStrBuf &ipStr, U16 port, const tStrBuf &age, const Byte *guid)
-	 : tmMsgBase(NetMsgFindAgeReply, plNetAck | plNetCustom | plNetKi | plNetX, u), age(age), ipStr(ipStr)
+	 : tmMsgBase(NetMsgFindAgeReply, plNetAck | plNetKi | plNetX, u), age(age), ipStr(ipStr)
 	{
 		this->x = x;
 		ki = u->ki;

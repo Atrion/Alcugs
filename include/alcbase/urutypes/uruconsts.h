@@ -46,7 +46,7 @@
 //// plNetMsg flags. Text in [brackets] is the Plasma name for that flag. A '*' indicates this flags adds a new data field
 //known flags for plNetMsg's
 #define plNetAck        0x00040000 // [kNeedsReliableSend] Ack flag
-#define plNetCustom     0x00020000 // [kIsSystemMessage]   Server-internal communication
+#define plNetCustom     0x00020000 // [kIsSystemMessage]   unknown purpose flag
 
 //currently handled by the netcore
 #define plNetVersion    0x00010000 //* [kHasVersion]       contains version numbers
