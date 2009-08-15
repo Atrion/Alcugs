@@ -56,6 +56,7 @@ namespace alc {
 		U32 ki;
 		tStrBuf avatar;
 		bool hidePlayer;
+		Byte buildType;
 		U32 ip;
 		U16 port;
 		tUruObject obj;
@@ -203,7 +204,7 @@ namespace alc {
 		tmRelevanceRegions(tNetSession *u);
 		virtual void store(tBBuf &t);
 		// format
-		U32 rgnsICareAbout, rgnsImIn;
+		U32 rgnsICareAbout, rgnsImIn; // according to libPlasma, these are actually bit fields - most likely one bit per region
 	protected:
 		virtual void additionalFields();
 	};

@@ -53,6 +53,7 @@ namespace alc {
 	{
 		ki = u->ki;
 		this->hidePlayer = hidePlayer;
+		buildType = u->buildType;
 		ip = u->getIp();
 		port = u->getPort();
 	}
@@ -64,15 +65,19 @@ namespace alc {
 	
 	void tMemberInfo::stream(tBBuf &t) const
 	{
-		t.putU32(0x00000020); // unknown, seen 0x20 and 0x22 (seems to be a flag)
-		t.putU16(0x03EA); // always seen that value - doesn't seem to be a plasma obhect type, though
+		t.putU32(0x00000020); // unknown, seen 0x20 and 0x22 - a flag
+		t.putU16(0x03EA); // unknoen, always seen that value - a flag
+		/* according to libPlasma, 0x03EA is the combination of:
+		  kPlayerID = 0x0002, kCCRLevel = 0x0008,
+		  kBuildType = 0x0020, kPlayerName = 0x0040, kSrcAddr = 0x0080,
+		  kSrcPort = 0x0100, kReserved = 0x0200 */
 		t.putU32(ki);
 		t.put(avatar);
 		t.putByte(hidePlayer); // CCR flag - when set to 1, the player is hidden on the age list
-		t.putByte(0x03); // always seen that value
+		t.putByte(buildType);
 		t.putU32(ntohl(ip));
 		t.putU16(ntohs(port));
-		t.putByte(0x00); // always seen that value
+		t.putByte(0x00); // always seen that value (the "reserved" field?)
 		t.put(obj);
 	}
 	
@@ -324,7 +329,7 @@ namespace alc {
 	void tmGroupOwner::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
-		t.putU32(1); // format
+		t.putU32(1); // number of sent blocks (Alcugs does not support sending several of them at once)
 		t.putU32(pageId);
 		t.putU16(pageType);
 		t.putByte(0x00);
@@ -567,7 +572,7 @@ namespace alc {
 	{
 		tmSDLState::store(t);
 		Byte unk = t.getByte();
-		if (unk != 0x01)
+		if (unk != 0x01) // this might be "persistent on server"
 			throw txProtocolError(_WHERE("NetMsgSDLStateBCast.unk2 must be 0x01 but is 0x%02X", unk));
 	}
 	

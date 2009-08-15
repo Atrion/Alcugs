@@ -87,7 +87,7 @@
 
 
 ////============================================================================
-//// Type of clients
+//// Type of clients/builds
 #define TExtRel 0x03
 #define TIntRel 0x02
 #define TDbg 0x01
