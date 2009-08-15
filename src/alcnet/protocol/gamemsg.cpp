@@ -96,7 +96,7 @@ namespace alc {
 	
 	//// tmJoinAck
 	tmJoinAck::tmJoinAck(tNetSession *u, U32 x, tBaseType *sdl)
-	 : tmMsgBase(NetMsgJoinAck, plNetAck | plNetCustom | plNetKi | plNetX | plNetFirewalled, u)
+	 : tmMsgBase(NetMsgJoinAck, plNetAck | plNetCustom | plNetKi | plNetX/* | plNetFirewalled*/, u)
 	{
 		this->x = x;
 		ki = u->ki;
@@ -188,6 +188,7 @@ namespace alc {
 	void tmGameMessageDirected::store(tBBuf &t)
 	{
 		tmGameMessage::store(t);
+		
 		// get list of recipients
 		Byte nRecipients = t.getByte();
 		recipients.clear();
@@ -372,9 +373,9 @@ namespace alc {
 		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		
 		U32 nPages = t.getU32();
-		if (nPages == 0 && !hasFlags(plNetStateReq))
+		if (nPages == 0 && !hasFlags(plNetStateReq1))
 			throw txProtocolError(_WHERE("StateReq flag missing"));
-		else if (nPages != 0 && hasFlags(plNetStateReq))
+		else if (nPages != 0 && hasFlags(plNetStateReq1))
 			throw txProtocolError(_WHERE("Unexpected StateReq flag"));
 		
 		pages.clear();
