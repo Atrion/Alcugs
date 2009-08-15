@@ -60,7 +60,7 @@ if ($_GET['action'] == 'go') {
    forget your password, it can be reset, but it
    can't be retrieved, since the passwords are encrypted.</p>
 <br>
-<form action="adduser.php?action=go" method="post">
+<form action="<?php echo basename($_SERVER['SCRIPT_FILENAME']); ?>?action=go" method="post">
 <table border="0">
   <tr>
     <td>Login Name:</td>
