@@ -42,7 +42,7 @@ namespace alc {
 	{ }
 	
 	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u, const char *serverGuid, const char *age, const char *externalIp, U16 spawnStart, U16 spawnStop)
-	 : tmMsgBase(NetMsgCustomSetGuid, plNetAck | plNetVersion | plNetCustom, u), serverGuid(serverGuid), age(age), externalIp(externalIp)
+	 : tmMsgBase(NetMsgCustomSetGuid, plNetAck | plNetVersion, u), serverGuid(serverGuid), age(age), externalIp(externalIp)
 	{
 #ifdef ENABLE_UNET3
 		if (u->proto == 1 || u->proto == 2) setFlags(plNetX | plNetKi); // older protocols have this set, but the value is ignored
@@ -123,7 +123,7 @@ namespace alc {
 	{ }
 	
 	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *u, U32 ki, U32 sid, const Byte *uid, const char *account, const char *avatar, Byte playerFlag, Byte playerStatus)
-	 : tmMsgBase(NetMsgCustomPlayerStatus, plNetAck | plNetVersion | plNetCustom | plNetKi | plNetUID | plNetSid, u), account(account), avatar(avatar)
+	 : tmMsgBase(NetMsgCustomPlayerStatus, plNetAck | plNetVersion | plNetKi | plNetUID | plNetSid, u), account(account), avatar(avatar)
 	{
 		this->sid = sid;
 		this->ki = ki;
@@ -194,7 +194,7 @@ namespace alc {
 	{ }
 	
 	tmCustomFindServer::tmCustomFindServer(tNetSession *u, U32 ki, U32 x, U32 sid, U32 ip, U16 port, const char *serverGuid, const char *age)
-	 : tmMsgBase(NetMsgCustomFindServer, plNetX | plNetKi | plNetAck | plNetCustom | plNetIP | plNetSid, u), serverGuid(serverGuid), age(age)
+	 : tmMsgBase(NetMsgCustomFindServer, plNetX | plNetKi | plNetAck | plNetIP | plNetSid, u), serverGuid(serverGuid), age(age)
 	{
 		this->ki = ki;
 		this->x = x;
@@ -264,7 +264,7 @@ namespace alc {
 	{ }
 	
 	tmCustomForkServer::tmCustomForkServer(tNetSession *u, U16 port, const char *serverGuid, const char *name, bool loadSDL)
-	: tmMsgBase(NetMsgCustomForkServer, plNetAck | plNetCustom | plNetVersion, u), serverGuid(serverGuid), age(name)
+	: tmMsgBase(NetMsgCustomForkServer, plNetAck | plNetVersion, u), serverGuid(serverGuid), age(name)
 	{
 		this->x = 0;
 		this->ki = 0;
@@ -307,7 +307,7 @@ namespace alc {
 	{ }
 	
 	tmCustomServerFound::tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U32 sid, U16 port, const char *ipStr, const char *serverGuid, const char *name)
-	: tmMsgBase(NetMsgCustomServerFound, plNetAck | plNetCustom | plNetX | plNetKi | plNetVersion | plNetSid, u), ipStr(ipStr), serverGuid(serverGuid), age(name)
+	: tmMsgBase(NetMsgCustomServerFound, plNetAck | plNetX | plNetKi | plNetVersion | plNetSid, u), ipStr(ipStr), serverGuid(serverGuid), age(name)
 	{
 		this->x = x;
 		this->ki = ki;
@@ -369,7 +369,7 @@ namespace alc {
 	
 	//// tmCustomPlayerToCome
 	tmCustomPlayerToCome::tmCustomPlayerToCome(tNetSession *u)
-	 : tmMsgBase(NetMsgCustomPlayerToCome, plNetAck | plNetCustom | plNetVersion, u)
+	 : tmMsgBase(NetMsgCustomPlayerToCome, plNetAck | plNetVersion, u)
 	{ }
 
 } //end namespace alc

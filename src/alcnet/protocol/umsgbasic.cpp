@@ -39,7 +39,7 @@
 namespace alc {
 
 tmTerminated::tmTerminated(tNetSession * u,U32 who,Byte what)
- :tmMsgBase(NetMsgTerminated,plNetKi | plNetCustom | plNetAck,u) {
+ :tmMsgBase(NetMsgTerminated,plNetKi | plNetAck,u) {
 	DBG(5,"tmTerminated() who:%i,what:%i,ack:%i\n",who,what,ack);
 	ki=who;
 	reason=what;
@@ -58,7 +58,7 @@ void tmTerminated::additionalFields() {
 
 
 tmLeave::tmLeave(tNetSession * u,U32 ki,Byte reason)
- :tmMsgBase(NetMsgLeave,plNetKi | plNetCustom,u) {
+ :tmMsgBase(NetMsgLeave,plNetKi,u) {
  // the connection will be dropped immediately after recieving this message, an ack would already trigger a new one
 	this->ki=ki;
 	this->reason=reason;
@@ -77,7 +77,7 @@ void tmLeave::additionalFields() {
 
 
 tmPlayerTerminated::tmPlayerTerminated(tNetSession * u,U32 ki,Byte reason)
- :tmMsgBase(NetMsgPlayerTerminated,plNetKi | plNetCustom | plNetAck,u) {
+ :tmMsgBase(NetMsgPlayerTerminated,plNetKi | plNetAck,u) {
 	this->ki=ki;
 	this->reason=reason;
 }
@@ -96,7 +96,7 @@ void tmPlayerTerminated::additionalFields() {
 
 
 tmPing::tmPing(tNetSession * u, Byte dst)
- : tmMsgBase(NetMsgPing,plNetKi | plNetX | plNetCustom | plNetAck,u)
+ : tmMsgBase(NetMsgPing,plNetKi | plNetX | plNetAck,u)
 {
 	ki = x = 0;
 	mtime = 0;

@@ -50,7 +50,7 @@ namespace alc {
 	
 	//// tmVaultPlayerList
 	tmVaultPlayerList::tmVaultPlayerList(tNetSession *u, U32 x, U16 numberPlayers, tMBuf players, const char *url)
-	: tmMsgBase(NetMsgVaultPlayerList, plNetAck | plNetCustom | plNetX | plNetKi, u), url(url)
+	: tmMsgBase(NetMsgVaultPlayerList, plNetAck | plNetX | plNetKi, u), url(url)
 	{
 		this->x = x;
 		ki = 0; // we're not yet logged in, so no KI can be set
@@ -100,7 +100,7 @@ namespace alc {
 	
 	//// tmPlayerCreated
 	tmPlayerCreated::tmPlayerCreated(tNetSession *u, U32 ki, U32 x, Byte result)
-	 : tmMsgBase(NetMsgPlayerCreated, plNetX | plNetKi | plNetAck | plNetCustom, u)
+	 : tmMsgBase(NetMsgPlayerCreated, plNetX | plNetKi | plNetAck, u)
 	{
 		this->x = x;
 		this->ki = ki; // the KI of the newly created player, not the one set for the session

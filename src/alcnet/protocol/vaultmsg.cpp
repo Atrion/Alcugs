@@ -76,7 +76,7 @@ namespace alc {
 	
 	//// tmCustomVaultAskPlayerList
 	tmCustomVaultAskPlayerList::tmCustomVaultAskPlayerList(tNetSession *u, U32 x, U32 sid, const Byte *uid)
-	: tmMsgBase(NetMsgCustomVaultAskPlayerList, plNetAck | plNetCustom | plNetX | plNetVersion | plNetUID | plNetSid, u)
+	: tmMsgBase(NetMsgCustomVaultAskPlayerList, plNetAck | plNetX | plNetVersion | plNetUID | plNetSid, u)
 	{
 		this->x = x;
 		this->sid = sid;
@@ -112,7 +112,7 @@ namespace alc {
 	{ }
 	
 	tmCustomVaultPlayerList::tmCustomVaultPlayerList(tNetSession *u, U32 x, U32 sid, const Byte *uid)
-	: tmMsgBase(NetMsgCustomVaultPlayerList, plNetAck | plNetCustom | plNetX | plNetVersion | plNetUID | plNetSid, u)
+	: tmMsgBase(NetMsgCustomVaultPlayerList, plNetAck | plNetX | plNetVersion | plNetUID | plNetSid, u)
 	{
 		this->x = x;
 		this->sid = sid;
@@ -163,7 +163,7 @@ namespace alc {
 	{ }
 	
 	tmCustomVaultPlayerStatus::tmCustomVaultPlayerStatus(tNetSession *u, U32 ki, const char *serverGuid, const char *age, Byte state, U32 onlineTime)
-	 : tmMsgBase(NetMsgCustomVaultPlayerStatus, plNetAck | plNetCustom | plNetVersion | plNetKi, u), age(age), serverGuid(serverGuid)
+	 : tmMsgBase(NetMsgCustomVaultPlayerStatus, plNetAck | plNetVersion | plNetKi, u), age(age), serverGuid(serverGuid)
 	{
 		this->ki = ki;
 		this->x = 0;
@@ -206,7 +206,7 @@ namespace alc {
 	
 	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u, U32 x, U32 sid, const Byte *uid,
 	  Byte accessLevel, const char *login, const tStrBuf &avatar, const tStrBuf &gender, const tStrBuf &friendName, const tStrBuf &key)
-	 : tmMsgBase(NetMsgCustomVaultCreatePlayer, plNetX | plNetUID | plNetVersion | plNetAck | plNetCustom | plNetSid, u), login(login),
+	 : tmMsgBase(NetMsgCustomVaultCreatePlayer, plNetX | plNetUID | plNetVersion | plNetAck | plNetSid, u), login(login),
 	   avatar(avatar), gender(gender), friendName(friendName), key(key)
 	{
 		this->x = x;
@@ -288,7 +288,7 @@ namespace alc {
 	{ }
 	
 	tmCustomVaultPlayerCreated::tmCustomVaultPlayerCreated(tNetSession *u, U32 ki, U32 x, U32 sid, const Byte *uid, Byte result)
-	 : tmMsgBase(NetMsgCustomVaultPlayerCreated, plNetKi | plNetX | plNetAck | plNetCustom | plNetUID | plNetSid, u)
+	 : tmMsgBase(NetMsgCustomVaultPlayerCreated, plNetKi | plNetX | plNetAck | plNetUID | plNetSid, u)
 	{
 		this->ki = ki;
 		this->x = x;
@@ -351,7 +351,7 @@ namespace alc {
 	
 	//// tmCustomVaultDeletePlayer
 	tmCustomVaultDeletePlayer::tmCustomVaultDeletePlayer(tNetSession *u)
-	 : tmMsgBase(NetMsgCustomVaultDeletePlayer, plNetX | plNetKi | plNetUID | plNetAck | plNetCustom | plNetVersion, u)
+	 : tmMsgBase(NetMsgCustomVaultDeletePlayer, plNetX | plNetKi | plNetUID | plNetAck | plNetVersion, u)
 	{
 #ifdef ENABLE_UNET2
 		if (u->proto == 1) unsetFlags(plNetUID);
@@ -359,7 +359,7 @@ namespace alc {
 	}
 	
 	tmCustomVaultDeletePlayer::tmCustomVaultDeletePlayer(tNetSession *u, U32 ki, U32 x, U32 sid, const Byte *uid, Byte accessLevel)
-	 : tmMsgBase(NetMsgCustomVaultDeletePlayer, plNetX | plNetKi | plNetUID | plNetAck | plNetCustom | plNetVersion | plNetSid, u)
+	 : tmMsgBase(NetMsgCustomVaultDeletePlayer, plNetX | plNetKi | plNetUID | plNetAck | plNetVersion | plNetSid, u)
 	{
 		this->x = x;
 		this->ki = ki;
@@ -421,7 +421,7 @@ namespace alc {
 	
 	//// tmCustomVaultCheckKi
 	tmCustomVaultCheckKi::tmCustomVaultCheckKi(tNetSession *u, U32 ki, U32 x, U32 sid, const Byte *uid)
-	 : tmMsgBase(NetMsgCustomVaultCheckKi, plNetX | plNetKi | plNetUID | plNetAck | plNetCustom | plNetVersion | plNetSid, u)
+	 : tmMsgBase(NetMsgCustomVaultCheckKi, plNetX | plNetKi | plNetUID | plNetAck | plNetVersion | plNetSid, u)
 	{
 		this->x = x;
 		this->ki = ki;
@@ -439,7 +439,7 @@ namespace alc {
 	}
 	
 	tmCustomVaultCheckKi::tmCustomVaultCheckKi(tNetSession *u)
-	 : tmMsgBase(NetMsgCustomVaultCheckKi, plNetX | plNetKi | plNetUID | plNetAck | plNetCustom | plNetVersion, u)
+	 : tmMsgBase(NetMsgCustomVaultCheckKi, plNetX | plNetKi | plNetUID | plNetAck | plNetVersion, u)
 	{ }
 
 	void tmCustomVaultCheckKi::store(tBBuf &t)
@@ -485,7 +485,7 @@ namespace alc {
 	
 	//// tmCustomVaultKiChecked
 	tmCustomVaultKiChecked::tmCustomVaultKiChecked(tNetSession *u, U32 ki, U32 x, U32 sid, const Byte *uid, Byte status, const char *avatar)
-	: tmMsgBase(NetMsgCustomVaultKiChecked, plNetX | plNetKi | plNetUID | plNetAck | plNetCustom | plNetVersion | plNetSid, u), avatar(avatar)
+	: tmMsgBase(NetMsgCustomVaultKiChecked, plNetX | plNetKi | plNetUID | plNetAck | plNetVersion | plNetSid, u), avatar(avatar)
 	{
 		this->ki = ki;
 		this->x = x;

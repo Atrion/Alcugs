@@ -48,7 +48,7 @@ namespace alc {
 
 	//// tmCustomAuthAsk
 	tmCustomAuthAsk::tmCustomAuthAsk(tNetSession *u, U32 x, U32 sid, U32 ip, U16 port, const char *login, const Byte *challenge, const Byte *hash, Byte release)
-	: tmMsgBase(NetMsgCustomAuthAsk, plNetAck | plNetCustom | plNetX | plNetVersion | plNetSid | plNetIP, u), login(login)
+	: tmMsgBase(NetMsgCustomAuthAsk, plNetAck | plNetX | plNetVersion | plNetSid | plNetIP, u), login(login)
 	{
 		this->sid = sid; // this is the SID the lobby uses for the connection to the client to be authed
 		this->x = x; // the X value the client sent to the lobby
@@ -130,7 +130,7 @@ namespace alc {
 	
 	//// tmCustomAuthResponse
 	tmCustomAuthResponse::tmCustomAuthResponse(tNetSession *u, tmCustomAuthAsk &authAsk, const Byte *uid, const char *passwd, Byte result, Byte accessLevel)
-	 : tmMsgBase(NetMsgCustomAuthResponse, plNetAck | plNetCustom | plNetX | plNetVersion | plNetSid | plNetIP | plNetUID, u), login(authAsk.login), passwd(passwd)
+	 : tmMsgBase(NetMsgCustomAuthResponse, plNetAck | plNetX | plNetVersion | plNetSid | plNetIP | plNetUID, u), login(authAsk.login), passwd(passwd)
 	 {
 		// copy stuff from the authAsk
 		sid = authAsk.sid; // this is the SID the lobby uses for the connection to the client to be authed

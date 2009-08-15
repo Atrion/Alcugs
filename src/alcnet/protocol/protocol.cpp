@@ -668,7 +668,7 @@ void tmMsgBase::store(tBBuf &t) {
 	}
 	else sid = 0;
 
-	U32 check=plNetAck | plNetVersion | plNetTimestamp | plNetX | plNetKi | plNetUID | plNetIP | plNetSid | plNetCustom;
+	U32 check=plNetAck | plNetVersion | plNetTimestamp | plNetX | plNetKi | plNetUID | plNetCustom | plNetIP | plNetSid;
 	// accept some flags only for certain messages
 	if (cmd == NetMsgGameMessage || cmd == NetMsgSDLStateBCast)
 		check |= plNetRelRegions;
@@ -768,8 +768,6 @@ const char * tmMsgBase::str() {
 		dbg.writeStr(" P2P request,");
 	if(flags & plNetNewSDL)
 		dbg.writeStr(" new SDL,");
-	if(flags & plNetCustom)
-		dbg.writeStr(" system,");
 	if (flags & plNetMsgRecvrs)
 		dbg.writeStr(" game msg receivers,");
 	if (flags & plNetRelRegions)
