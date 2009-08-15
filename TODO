@@ -22,7 +22,7 @@ Game
 
 Generic Stuff
 ==================
-* Implement server Identification
+* Implement server Identification. This should  also be used to force custom flags not to be used outside internal communication.
 * Full Multithreaded support
 * UU support
 

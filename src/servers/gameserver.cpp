@@ -511,11 +511,11 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, gameStateRequest.str());
 				
 				int n = 0;
-				if (!gameStateRequest.pages.size())
-					n += ageState->sendClones(u); // only send clones if global state is requested
+				if (gameStateRequest.hasFlags(plNetStateReq1))
+					n += ageState->sendClones(u); // only send clones for first state
 				n += ageState->sendSdlStates(u, &gameStateRequest.pages);
 				
-				if (!gameStateRequest.pages.size()) {
+				if (gameStateRequest.hasFlags(plNetStateReq1)) {
 					// send this only when it's the initial request
 					tmInitialAgeStateSent stateSent(u, n);
 					send(stateSent);
@@ -649,6 +649,7 @@ namespace alc {
 				fwdDirectedGameMsg(gameMsg);
 				
 				if (gameMsg.recipients.size()) { // we did not yet reach all recipients
+					// this is a more reliable method to know whether to forward messages to tracking - the alternative would be the plNetDirected flag
 					tNetSession *trackingServer = getServer(KTracking);
 					if (!trackingServer) {
 						err->log("ERR: I've got to to forward a message through the tracking server, but it's unavailable.\n");
@@ -694,9 +695,6 @@ namespace alc {
 				// save SDL state
 				ageState->saveSdlState(SDLState.sdlStream, SDLState.obj);
 				
-				// NetMsgSDLState sometimes has the bcast falg set and NetMsgSDLStateBCast sometimes doesn't.
-				// I assume the message type is correct and the flag not.
-				
 				return 1;
 			}
 			case NetMsgSDLStateBCast:
@@ -713,9 +711,6 @@ namespace alc {
 				
 				// save SDL state
 				ageState->saveSdlState(SDLStateBCast.sdlStream, SDLStateBCast.obj);
-				
-				// NetMsgSDLState sometimes has the bcast falg set and NetMsgSDLStateBCast sometimes doesn't.
-				// I assume the message type is correct and the flag not.
 				
 				// broadcast message
 				bcastMessage(SDLStateBCast);

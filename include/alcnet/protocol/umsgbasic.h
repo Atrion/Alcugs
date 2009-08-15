@@ -61,7 +61,7 @@ protected:
 class tmAlive :public tmMsgBase {
 public:
 	tmAlive(tNetSession * u,U32 ki=0)
-	: tmMsgBase(NetMsgAlive, plNetKi | plNetAck | plNetCustom | plNetTimestamp, u)
+	: tmMsgBase(NetMsgAlive, plNetKi | plNetAck | plNetTimestamp, u)
 	{
 		this->ki=ki;
 	}

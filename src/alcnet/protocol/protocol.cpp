@@ -668,15 +668,20 @@ void tmMsgBase::store(tBBuf &t) {
 	}
 	else sid = 0;
 
-	U32 check=plNetAck | plNetVersion | plNetTimestamp | \
-	plNetX | plNetKi | plNetUID | plNetIP | plNetCustom | plNetSid | plNetDirected;
+	U32 check=plNetAck | plNetVersion | plNetTimestamp | plNetX | plNetKi | plNetUID | plNetIP | plNetSid | plNetCustom;
 	// accept some flags only for certain messages
-	if (cmd == NetMsgGameMessage) check |= plNetUnk1 | plNetUnk2;
-	else if (cmd == NetMsgGameMessageDirected || cmd == NetMsgCustomDirectedFwd) check |= plNetUnk1 | plNetDirected;
-	else if (cmd == NetMsgJoinReq) check |= plNetP2P;
-	else if (cmd == NetMsgGameStateRequest) check |= plNetStateReq;
-	else if (cmd == NetMsgSDLState) check |= plNetBcast;
-	else if (cmd == NetMsgSDLStateBCast) check |= plNetBcast | plNetUnk2;
+	if (cmd == NetMsgGameMessage || cmd == NetMsgSDLStateBCast)
+		check |= plNetRelRegions;
+	if (cmd == NetMsgSDLState || cmd == NetMsgSDLStateBCast)
+		check |= plNetNewSDL;
+	if (cmd == NetMsgGameMessage || cmd == NetMsgGameMessageDirected || cmd == NetMsgCustomDirectedFwd)
+		check |= plNetMsgRecvrs; // whatever the purpose of this flag is, the message type is more reliable
+	if (cmd == NetMsgGameMessageDirected || cmd == NetMsgCustomDirectedFwd)
+		check |= plNetDirected; // I think the Plasma game server uses this to check if the msg needs to be forwarded to tracking
+	if (cmd == NetMsgGameStateRequest)
+		check |= plNetStateReq1;
+	if (cmd == NetMsgJoinReq)
+		check |= plNetP2P;
 	
 	//now catch undocumented protocol flags
 	if (flags & ~(check))
@@ -685,8 +690,6 @@ void tmMsgBase::store(tBBuf &t) {
 void tmMsgBase::stream(tBBuf &t) const {
 	if (!u)  throw txProtocolError(_WHERE("attempt to send message without session being set"));
 	if (!cmd) throw txProtocolError(_WHERE("attempt to send message without cmd"));
-	if((flags & plNetSid) && u->proto!=0 && u->proto<3)
-		throw txProtocolError(_WHERE("attempt to send message with sid flag to old client")); // dont send this flag to old peers
 	t.putU16(cmd);
 	t.putU32(flags);
 	if(flags & plNetVersion) {
@@ -759,22 +762,23 @@ const char * tmMsgBase::str() {
 	dbg.printf("\n Flags:");
 	if(flags & plNetAck)
 		dbg.writeStr(" ack,");
-	if(flags & plNetFirewalled)
-		dbg.writeStr(" firewalled,");
+	//if(flags & plNetFirewalled)
+	//	dbg.writeStr(" firewalled,");
 	if(flags & plNetP2P)
 		dbg.writeStr(" P2P request,");
-	if(flags & plNetBcast)
-		dbg.writeStr(" bcast,");
+	if(flags & plNetNewSDL)
+		dbg.writeStr(" new SDL,");
 	if(flags & plNetCustom)
-		dbg.writeStr(" UCPNPI,");
-	if (flags & plNetUnk1)
-		dbg.writeStr(" Unk1,");
-	if (flags & plNetUnk2)
-		dbg.writeStr(" Unk2,");
-	if(flags & plNetStateReq)
-		dbg.writeStr(" InitialStateReq,");
+		dbg.writeStr(" system,");
+	if (flags & plNetMsgRecvrs)
+		dbg.writeStr(" game msg receivers,");
+	if (flags & plNetRelRegions)
+		dbg.writeStr(" use relevance regions,");
+	if(flags & plNetStateReq1)
+		dbg.writeStr(" initial state req,");
 	if (flags & plNetDirected)
-		dbg.writeStr(" Directed,");
+		dbg.writeStr(" directed,");
+
 	if(flags & plNetVersion)
 		dbg.printf(" version (%i.%i),",max_version,min_version);
 	if(flags & plNetTimestamp) {
@@ -785,8 +789,6 @@ const char * tmMsgBase::str() {
 			dbg.writeStr(timestamp.str());
 		dbg.writeStr(",");
 	}
-	//dbg.seek(-1); // remove the last comma
-	//dbg.nl();
 	if(flags & plNetX)
 		dbg.printf(" x: %i,",x);
 	if(flags & plNetKi)
@@ -797,6 +799,7 @@ const char * tmMsgBase::str() {
 		dbg.printf(" ip: %s:%i,",alcGetStrIp(ip),ntohs(port));
 	if(flags & plNetSid)
 		dbg.printf(" sid: %i,",sid);
+
 	dbg.seek(-1); // remove the last comma
 	additionalFields();
 	dbg.putByte(0); // this is necessary because of the seek() call

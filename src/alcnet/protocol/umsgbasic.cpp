@@ -87,7 +87,6 @@ void tmPlayerTerminated::store(tBBuf &t) {
 	reason=t.getByte();
 }
 void tmPlayerTerminated::stream(tBBuf &t) const {
-	if((flags & plNetIP) && u && u->proto!=0 && u->proto<3) throw txProtocolError(_WHERE("Unsuported message in Alcugs protocol <3"));
 	tmMsgBase::stream(t);
 	t.putByte(reason);
 }
