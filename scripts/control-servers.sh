@@ -2,7 +2,7 @@
 set -e
 
 # configuration
-source ./control-config.sh
+source ${0%/*}/control-config.sh # the file has to be in the same directory as the script
 
 # Borrowed from LSB init-functions
 # define the output string colors and text
