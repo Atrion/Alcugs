@@ -1,9 +1,6 @@
 <?php
 // this script was written by MercAngel
-$dbhost = 'dbhostname';
-$dbuser = 'dbusername';
-$dbpass = 'dbpassword';
-$dbname = 'dbdatabasename';
+require 'adduser-config.php';
 
 function make_uuid() {
   // Set initial randomness

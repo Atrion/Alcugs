@@ -2,17 +2,7 @@
 set -e
 
 # configuration
-# EDIT THIS ACCORDING TO YOUR NEEDS
-root=/usr/local/alcugs # change this to the path you work in
-# END
-basedir=$root/var/
-bindir=$root/bin/
-config=$root/etc/uru.conf
-waittime=1 # time to wait after a server was started
-
-start_servers="tracking vault auth lobby"
-stop_servers="lobby tracking vault auth"
-
+source ./control-config.sh
 
 # Borrowed from LSB init-functions
 # define the output string colors and text
@@ -87,7 +77,7 @@ case $1 in
 						kill -KILL $PID
 					fi
 					i=$[$i+1]
-					sleep 1
+					sleep $waittime
 				done
 				echo -e $RESULT_OK
 			else
