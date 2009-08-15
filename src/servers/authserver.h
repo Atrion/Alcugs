@@ -55,6 +55,9 @@ namespace alc {
 		virtual void onUnloadConfig() {
 			delete authBackend;
 		}
+		virtual void onNewConnection(tNetEvent * ev,tNetSession * u) {
+			u->setTypeToGame(); // assume everyone connecting to us is a game (could also be a lobby though)
+		}
 	private:
 		tAuthBackend *authBackend;
 	};
