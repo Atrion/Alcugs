@@ -668,7 +668,7 @@ void tmMsgBase::store(tBBuf &t) {
 	}
 	else sid = 0;
 
-	U32 check=plNetAck | plNetVersion | plNetTimestamp | plNetX | plNetKi | plNetUID | plNetCustom | plNetIP | plNetSid;
+	U32 check=plNetAck | plNetVersion | plNetTimestamp | plNetX | plNetKi | plNetUID | plNetIP | plNetSystem;
 	// accept some flags only for certain messages
 	if (cmd == NetMsgGameMessage || cmd == NetMsgSDLStateBCast)
 		check |= plNetRelRegions;
@@ -682,6 +682,9 @@ void tmMsgBase::store(tBBuf &t) {
 		check |= plNetStateReq1;
 	if (cmd == NetMsgJoinReq)
 		check |= plNetP2P;
+	// accept custom types from servers only
+	if (u->isAlcugsServer())
+		check |= plNetSid;
 	
 	//now catch undocumented protocol flags
 	if (flags & ~(check))
@@ -690,6 +693,9 @@ void tmMsgBase::store(tBBuf &t) {
 void tmMsgBase::stream(tBBuf &t) const {
 	if (!u)  throw txProtocolError(_WHERE("attempt to send message without session being set"));
 	if (!cmd) throw txProtocolError(_WHERE("attempt to send message without cmd"));
+	if (!u->isAlcugsServer() && hasFlags(plNetSid)) // if the message has one of these flags set and the peer is not an alcugs server
+		throw txProtocolError(_WHERE("Custom flags must only be sent to Alcugs servers"));
+	
 	t.putU16(cmd);
 	t.putU32(flags);
 	if(flags & plNetVersion) {
@@ -760,25 +766,6 @@ const char * tmMsgBase::str() {
 	dbg.printf(" on %s", u->str());
 #ifdef ENABLE_MSGLOG
 	dbg.printf("\n Flags:");
-	if(flags & plNetAck)
-		dbg.writeStr(" ack,");
-	//if(flags & plNetFirewalled)
-	//	dbg.writeStr(" firewalled,");
-	if(flags & plNetP2P)
-		dbg.writeStr(" P2P request,");
-	if(flags & plNetNewSDL)
-		dbg.writeStr(" new SDL,");
-	if (flags & plNetMsgRecvrs)
-		dbg.writeStr(" game msg receivers,");
-	if (flags & plNetRelRegions)
-		dbg.writeStr(" use relevance regions,");
-	if(flags & plNetStateReq1)
-		dbg.writeStr(" initial state req,");
-	if (flags & plNetDirected)
-		dbg.writeStr(" directed,");
-
-	if(flags & plNetVersion)
-		dbg.printf(" version (%i.%i),",max_version,min_version);
 	if(flags & plNetTimestamp) {
 		dbg.writeStr(" timestamp ");
 		if (timestamp.seconds == 0) // the timestamp will be set on sending, so we can't print it now
@@ -787,16 +774,34 @@ const char * tmMsgBase::str() {
 			dbg.writeStr(timestamp.str());
 		dbg.writeStr(",");
 	}
-	if(flags & plNetX)
-		dbg.printf(" x: %i,",x);
-	if(flags & plNetKi)
-		dbg.printf(" ki: %i,",ki);
-	if(flags & plNetUID)
-		dbg.printf(" uid: %s,",alcGetStrUid(uid));
+	if (flags & plNetMsgRecvrs)
+		dbg.writeStr(" game msg receivers,");
 	if(flags & plNetIP)
 		dbg.printf(" ip: %s:%i,",alcGetStrIp(ip),ntohs(port));
+	if(flags & plNetX)
+		dbg.printf(" x: %i,",x);
+	if(flags & plNetNewSDL)
+		dbg.writeStr(" new SDL,");
+	if(flags & plNetStateReq1)
+		dbg.writeStr(" initial state req,");
+	if(flags & plNetKi)
+		dbg.printf(" ki: %i,",ki);
+	if (flags & plNetRelRegions)
+		dbg.writeStr(" use relevance regions,");
+	if(flags & plNetUID)
+		dbg.printf(" uid: %s,",alcGetStrUid(uid));
+	if (flags & plNetDirected)
+		dbg.writeStr(" directed,");
+	if(flags & plNetVersion)
+		dbg.printf(" version (%i.%i),",max_version,min_version);
+	if(flags & plNetSystem)
+		dbg.writeStr(" system,");
+	if(flags & plNetAck)
+		dbg.writeStr(" ack,");
 	if(flags & plNetSid)
 		dbg.printf(" sid: %i,",sid);
+	if(flags & plNetP2P)
+		dbg.writeStr(" P2P request,");
 
 	dbg.seek(-1); // remove the last comma
 	additionalFields();

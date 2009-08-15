@@ -58,6 +58,9 @@ namespace alc {
 		virtual void onLoadConfig(void);
 		virtual void onReloadConfig(void) { vaultBackend->reload(); }
 		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
+		virtual void onNewConnection(tNetEvent * ev,tNetSession * u) {
+			u->setTypeToGame(); // assume everyone connecting to us is a game (could also be a lobby though)
+		}
 	private:
 		bool isValidAvatarName(const tStrBuf &avatar);
 	

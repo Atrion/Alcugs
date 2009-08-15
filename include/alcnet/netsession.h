@@ -85,6 +85,9 @@ public:
 	inline U16 getMaxPacketSz(void) { return maxPacketSz; }
 	inline bool isClient() { return client; }
 	inline bool isTerminated() { return terminated; }
+	inline void setTypeToGame() { whoami = KGame; }
+	inline bool isAlcugsServer()
+		{ return whoami == KLobby || whoami == KGame || whoami == KVault || whoami == KAuth || whoami == KTracking; }
 
 private:
 	void init();

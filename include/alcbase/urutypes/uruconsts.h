@@ -46,7 +46,7 @@
 //// plNetMsg flags. Text in [brackets] is the Plasma name for that flag. A '*' indicates this flags adds a new data field
 //known flags for plNetMsg's
 #define plNetAck        0x00040000 // [kNeedsReliableSend] Ack flag
-#define plNetCustom     0x00020000 // [kIsSystemMessage]   unknown purpose flag
+#define plNetSystem     0x00020000 // [kIsSystemMessage]   unknown purpose flag
 
 //currently handled by the netcore
 #define plNetVersion    0x00010000 //* [kHasVersion]       contains version numbers
@@ -54,6 +54,7 @@
 #define plNetX          0x00000200 //* [kHasTransactionID] contains the X
 #define plNetKi         0x00001000 //* [kHasPlayerID]      contains the ki
 #define plNetUID        0x00004000 //* [kHasAcctUuid]      contains a player uid
+#define plNetIP         0x00000010 //* [kAllowTimeOut]     contains client's ip address - the Plasma name is obviously wrong
 
 //Suppositions for unidentified flags
 //#define plNetFirewalled 0x00000020 // [kIndirectMember]         Firewalled flag only (seen only in NetMsgJoinAck)
@@ -65,7 +66,6 @@
 #define plNetP2P        0x08000000 // [not in Plasma]           p2p request? (seen on plNetMsgJoinReq)
 
 //CUSTOM plNetFlags (should only exist if the server-internal flag is set)
-#define plNetIP         0x00000010 //* contains client's ip address
 #define plNetSid        0x00800000 //* this message contains a sid (used when X is already used otherwise)
 ////============================================================================
 
