@@ -128,7 +128,7 @@ public:
 	Byte uid[16]; //!< hex; player uid
 	char avatar[200]; //!< peer avatar name if set
 	Byte challenge[16]; //!< peer challenge (hex)
-	Byte release; //!< type of client (internal/external)
+	Byte buildType; //!< type of client (internal/external)
 	
 	// used by game
 	bool joined;

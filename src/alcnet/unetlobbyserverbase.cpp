@@ -162,7 +162,7 @@ namespace alc {
 		u->ki = ki;
 		
 		// tell tracking
-		tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->getSid(), u->uid, u->name, u->avatar, 2 /* visible */, (u->release == TIntRel) ? RActive : RJoining); // show the VaultManager as active (it's the only IntRel we have)
+		tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->getSid(), u->uid, u->name, u->avatar, 2 /* visible */, (u->buildType == TIntRel) ? RActive : RJoining); // show the VaultManager as active (it's the only IntRel we have)
 		send(trackingStatus);
 		
 		// now, tell the client
@@ -372,7 +372,7 @@ namespace alc {
 				// save data in session
 				strcpy(u->name, authHello.account.c_str());
 				memcpy(u->challenge, md5buffer.read(16), 16);
-				u->release = authHello.release;
+				u->buildType = authHello.release;
 				
 				// reply with AuthenticateChallenge
 				tmAuthenticateChallenge authChallenge(u, authHello.x, result, u->challenge);
@@ -400,7 +400,7 @@ namespace alc {
 					return 1;
 				}
 				authResponse.hash.rewind();
-				tmCustomAuthAsk authAsk(authServer, authResponse.x, u->getSid(), u->getIp(), u->getPort(), u->name, u->challenge, authResponse.hash.read(), u->release);
+				tmCustomAuthAsk authAsk(authServer, authResponse.x, u->getSid(), u->getIp(), u->getPort(), u->name, u->challenge, authResponse.hash.read(), u->buildType);
 				send(authAsk);
 #ifdef ENABLE_UNET3
 				// perhaps the server does not preserve the X
