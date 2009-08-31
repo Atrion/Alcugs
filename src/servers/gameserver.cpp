@@ -115,7 +115,7 @@ namespace alc {
 		noReltoShare = (var.isNull() || var.asByte()); // enabled per default
 		
 		var = cfg->getVar("game.serversidecommands");
-		serverSideCommands = (!var.isNull() && var.asByte()); // disabled per default
+		serverSideCommands = (var.isNull() || var.asByte()); // enabled per default
 	}
 	
 	void tUnetGameServer::additionalVaultProcessing(tNetSession *u, tvMessage *msg)
