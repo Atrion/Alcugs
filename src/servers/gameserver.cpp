@@ -603,7 +603,7 @@ namespace alc {
 			case NetMsgGameMessage:
 			{
 				if (!u->joined) {
-					err->log("ERR: %s sent a NetMsgGameMessage but did not yet join the game - ignore it.\n", u->str());
+					log->log("WARN: %s sent a NetMsgGameMessage but did not yet join the game - ignore it.\n", u->str());
 					// even the normal client sometimes does this, I don't know why, so just ignore this message
 					return 2; // ignored
 				}
@@ -725,7 +725,7 @@ namespace alc {
 			case NetMsgLoadClone:
 			{
 				if (!u->joined) {
-					err->log("ERR: %s sent a NetMsgLoadClone but did not yet join the game - ignore it.\n", u->str());
+					log->log("WARN: %s sent a NetMsgLoadClone but did not yet join the game - ignore it.\n", u->str());
 					// even the normal client sometimes does this, I don't know why, so just ignore this message
 					return 2; // ignored
 				}
