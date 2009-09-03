@@ -86,7 +86,6 @@ public:
 	virtual void stream(tBBuf &t) const;
 	tmPing(tNetSession * u, Byte dst = KLobby);
 	tmPing(tNetSession *u, tmPing &ping);
-	void setReply();
 	void setRouteInfo(const tNetSessionIte &ite);
 	void unsetRouteInfo();
 	//format
