@@ -190,7 +190,6 @@ int tUnetPing::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
 				out->log("Ping from %s:%i x=%i dest=%i %s time=%0.3f ms .... pong....\n",\
 				alcGetStrIp(ev->sid.ip),ntohs(ev->sid.port),ping.x,ping.destination,\
 				alcUnetGetDestination(ping.destination),ping.mtime*1000);
-				ping.setReply();
 				if(urgent) ping.setUrgent();
 				send(ping);
 			}

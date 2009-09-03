@@ -40,7 +40,7 @@ namespace alc {
 
 tmTerminated::tmTerminated(tNetSession * u,U32 who,Byte what)
  :tmMsgBase(NetMsgTerminated,plNetKi | plNetAck,u) {
-	DBG(5,"tmTerminated() who:%i,what:%i,ack:%i\n",who,what,ack);
+	DBG(5,"tmTerminated() who:%i,what:%i\n",who,what);
 	ki=who;
 	reason=what;
 }
@@ -122,9 +122,6 @@ void tmPing::store(tBBuf &t) {
 	tmMsgBase::store(t);
 	mtime=t.getDouble();
 	destination=t.getByte();
-}
-void tmPing::setReply() {
-	unsetFlags(plNetAck);
 }
 void tmPing::setRouteInfo(const tNetSessionIte &ite) {
 	ip=ite.ip;
