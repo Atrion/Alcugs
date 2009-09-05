@@ -614,6 +614,7 @@ int tUnet::Recv() {
 		}
 
 	}
+	if(!events->isEmpty()) idle=false; // we are not really idle if we still have stuff to do
 	
 	//END CRITICAL REGION
 	
@@ -647,8 +648,6 @@ void tUnet::doWork() {
 			else cur->checkAlive();
 		}
 	}
-	
-	if(!events->isEmpty()) idle=false;
 }
 
 /** sends the message (internal use only)
