@@ -70,7 +70,7 @@ db.host = "127.0.0.1" # note: set db.host to nothing to use the local unix socke
 db.username = "alcugs"
 db.passwd = "yourpassword"
 
-# paths (grouped here to amke it easier to find and edit them)
+# paths (grouped here to make it easier to find and edit them)
 age = "/home/alcugs/age/" # directory containing the age files (for game, tracking and vault)
 sdl = "/home/alcugs/sdl/" # directory containing the sdl files (for game)
 game.agestates = "/home/alcugs/agestates/" # directory the agestates should be saved in (for game)
