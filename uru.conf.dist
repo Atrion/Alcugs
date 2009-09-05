@@ -78,7 +78,7 @@ game.agestates = "/home/alcugs/agestates/" # directory the agestates should be s
 # Instancing settings (used by tracking, vault and game)
 # Don't change these if the vault got already created!
 ;instance_mode = 1 # 0: all ages are global; 1 (default): the ages specified in private_ages are private
-;private_ages = "AvatarCustomization,Personal,Nexus,BahroCave,BahroCave02,LiveBahroCaves,DniCityX2Finale,Cleft,Kadish,Gira,Garrison,Garden,Teledahn,Ercana,Minkata,Jalak"
+private_ages = "AvatarCustomization,Personal,Nexus,BahroCave,BahroCave02,LiveBahroCaves,DniCityX2Finale,Cleft,Kadish,Gira,Garrison,Garden,Teledahn,Ercana,Minkata,Jalak"
 
 # compatability for old servers (used by lobby and game)
 # 0 = latest (default), 1 = unet2, 2 = unet3, 3 = unet3+
@@ -125,12 +125,14 @@ port = 2011
 
 # Age state settings
 ;tracking.tmp.hacks.agestate = 1 # enable age state saving (on by default)
-# The following list was carefully chosen, please think before removing any.
-# Cleft: for Relto book -- required if someone doesn't finish Cleft on first try (but only if Cleft is not instanced)
-# DniCityX2Finale,GreatZero,Kveer,Neighborhood02: for gameplay
-# Myst,Personal02,RestorationGuild,spyroom: for reward clothing
+# The following list was carefully chosen, please think before editing it
+# Kveer: for gameplay
 # Garden: to fix the rain bug
-;tracking.tmp.hacks.resetting_ages = "Cleft,DniCityX2Finale,GreatZero,Kveer,Neighborhood02,Myst,Personal02,RestorationGuild,spyroom,Garden"
+;tracking.tmp.hacks.resetting_ages = "Kveer,Garden"
+# Depending on your setup (especially if you don't use the Offline KI) some more ages should be added here
+# Cleft: for Relto book -- required if someone doesn't finish Cleft on first try (but only if Cleft is not instanced)
+# DniCityX2Finale,GreatZero,Neighborhood02: for gameplay
+# Myst,Personal02,RestorationGuild,spyroom: for reward clothing
 
 # Status file settings
 ;track.html = 0 # Enable standard online players html output (default 0)
