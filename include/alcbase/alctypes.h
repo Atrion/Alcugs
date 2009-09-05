@@ -213,7 +213,7 @@ protected:
 	//! assignment
 	virtual void copy(const tMBuf &t);
 	//! called when content is modified
-	virtual void onmodify();
+	virtual void onmodify(bool clear = false) {}
 	//! comparison
 	virtual SByte compare(const tMBuf &t) const;
 	
@@ -373,7 +373,7 @@ public:
 	virtual bool operator<=(const tStrBuf &t) const { return(this->compare(t)<=0); }
 	virtual bool operator<=(const char *t) const { return(this->compare(t)<=0); }
 protected:
-	virtual void onmodify();
+	virtual void onmodify(bool clear = false);
 	virtual void onrewind();
 	// assignment
 	virtual void copy(const char * str);
