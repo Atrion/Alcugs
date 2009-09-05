@@ -530,6 +530,16 @@ void alctypes_part4() {
 	assert(tStrBuf("z") >= "aa");
 	assert(tStrBuf("a") > "");
 	assert(tStrBuf("") < tStrBuf("a"));
+	
+	// isNull
+	tStrBuf null;
+	assert(null.isNull());
+	null = "";
+	assert(!null.isNull());
+	null = "hi!";
+	assert(!null.isNull());
+	null.clear();
+	assert(null.isNull());
 }
 
 void alctypes_part5() {

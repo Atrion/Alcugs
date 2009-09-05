@@ -261,8 +261,6 @@ tMBuf::~tMBuf() {
 		}
 	}
 }
-void tMBuf::onmodify() {
-}
 void tMBuf::copy(const tMBuf &t) {
 	DBG(9,"tMBuf::copy()\n");
 	if(buf!=NULL) {
@@ -338,7 +336,7 @@ U32 tMBuf::size() const { return msize; }
 void tMBuf::clear() {
 	off=0;
 	msize=0;
-	onmodify();
+	onmodify(/*clear*/true);
 }
 char tMBuf::compare(const tMBuf &t) const {
 	DBG(9,"tBBuf::compare()\n");
@@ -560,12 +558,12 @@ void tStrBuf::init() {
 	cache_lower=NULL;
 	null = true;
 }
-void tStrBuf::onmodify() {
+void tStrBuf::onmodify(bool clear) {
 	DBG(7,"tStrBuf::onmodify()\n");
 	tMBuf::onmodify();
 	delete cache_lower;
 	cache_lower=NULL;
-	null = false;
+	null = clear;
 }
 void tStrBuf::copy(const tStrBuf &t) {
 	DBG(9,"tStrBuf::copy()\n");
