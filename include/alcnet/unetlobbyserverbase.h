@@ -51,6 +51,9 @@ class tUnetLobbyServerBase : public tUnetServerBase {
 public:
 	tUnetLobbyServerBase(void);
 	virtual void terminateAll();
+	
+	inline const Byte *getGuid() { return serverGuid; }
+	inline const char *getName() { return serverName; }
 protected:
 	virtual void onStart(void);
 	virtual void onIdle(bool idle);
