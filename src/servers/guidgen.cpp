@@ -63,7 +63,7 @@ namespace alc {
 		// load the list of private ages
 		tConfig *cfg = alcGetConfig();
 		tStrBuf var = cfg->getVar("private_ages");
-		if (var.isNull()) strcpy(privateAges, "AvatarCustomization,Personal,Nexus,BahroCave,DniCityX2Finale");
+		if (var.isNull()) strcpy(privateAges, "AvatarCustomization,Personal,Nexus,BahroCave,BahroCave02,LiveBahroCaves,DniCityX2Finale,Cleft,Kadish,Gira,Garrison,Garden,Teledahn,Ercana,Minkata,Jalak");
 		else strncpy(privateAges, var.c_str(), 1023);
 		// load instance mode setting
 		var = cfg->getVar("instance_mode");

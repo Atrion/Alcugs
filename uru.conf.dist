@@ -78,7 +78,7 @@ game.agestates = "/home/alcugs/agestates/" # directory the agestates should be s
 # Instancing settings (used by tracking, vault and game)
 # Don't change these if the vault got already created!
 ;instance_mode = 1 # 0: all ages are global; 1 (default): the ages specified in private_ages are private
-;private_ages = "AvatarCustomization,Personal,Nexus,BahroCave,DniCityX2Finale"
+;private_ages = "AvatarCustomization,Personal,Nexus,BahroCave,BahroCave02,LiveBahroCaves,DniCityX2Finale,Cleft,Kadish,Gira,Garrison,Garden,Teledahn,Ercana,Minkata,Jalak"
 
 # compatability for old servers (used by lobby and game)
 # 0 = latest (default), 1 = unet2, 2 = unet3, 3 = unet3+
