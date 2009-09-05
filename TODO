@@ -7,13 +7,11 @@ Vault
 * Implement permissions
 * Vault must be asked to find an age before tracking is asked to find the server (no more GUID gen in tracking!)
   regard linking rule while doing that:
-  We need a list of instanced and a list of non-instanced ages
+  We use a list of ages that are global even though the linking rules requests an owned book.
   kBasicLink with GUID set => we don't have to do anything (link from foreign Relto to one of the owner's ages)
-  kBasicLink without GUID => GlobalAge, not allowed for ages which are in one of the list (for fan-ages only).
+  kBasicLink without GUID => Global age (for fan-ages, Eder Delin & Tsogal and so on), register the age somewhere in the vault tree
   kOwnedBook, kVisitBook => GUID must be already present.
-  kOriginalBook => GUID must not be present. Generate GUID according to list, fail if it's on neither list.
-                   If age already exists we have to somehow reset it.
-  Of course the even better solution would be to find a way to get rid of at least one of these lists
+  kOriginalBook => GUID must not be present. Generate GUID according to list, if the GUID is already used something went crazy.
 
 Game
 ======
@@ -21,7 +19,7 @@ Game
 
 Generic Stuff
 ==================
-* Implement server Identification. This should  also be used to force custom flags not to be used outside internal communication.
+* Implement server Identification. This could also be used to force custom flags not to be used outside internal communication.
 * Full Multithreaded support
 * UU support
 
