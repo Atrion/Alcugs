@@ -43,6 +43,7 @@
 #include <protocol/gamemsg.h>
 
 ////extra includes
+#include <sys/stat.h>
 #include "sdl.h"
 #include "gameserver.h"
 
@@ -81,13 +82,25 @@ namespace alc {
 		}
 		
 		// load agestate from file
-		tStrBuf fileName = alcLogGetLogPath() + "/agestate.raw";
-		var = cfg->getVar("game.load_agestate");
-		if (!var.isNull() && var.asByte()) { // disabled per default
-			loadAgeState(fileName);
+		ageStateFile = cfg->getVar("game.agestates");
+		tStrBuf alternativeStateFile = alcLogGetLogPath() + "/agestate.raw";
+		if (ageStateFile.isNull()) { // fall back to old system
+			ageStateFile = alternativeStateFile;
 		}
-		else // in case the server crashes, remove state to really reset it
-			unlink(fileName.c_str());
+		else { // new system, but we may have to migrate
+			mkdir(ageStateFile.c_str(), 00750); // make sure the path exists
+			ageStateFile.printf("/%s-%s.state", net->getName(), alcGetStrGuid(net->getGuid()));
+			if (access(alternativeStateFile.c_str(), F_OK) == 0)
+				rename(alternativeStateFile.c_str(), ageStateFile.c_str());
+		}
+		var = cfg->getVar("game.load_agestate");
+		if (!var.isNull() && var.asByte()) { // disabled per default - set by tracking via command line
+			loadAgeState();
+		}
+		else { // in case the server crashes, remove state to really reset it
+			unlink(ageStateFile.c_str());
+			ageStateFile.clear(); // don't save age state
+		}
 		
 		log->flush();
 	}
@@ -95,8 +108,7 @@ namespace alc {
 	tAgeStateManager::~tAgeStateManager(void)
 	{
 		// save state to disk
-		tStrBuf fileName = alcLogGetLogPath() + "/agestate.raw";
-		saveAgeState(fileName);
+		saveAgeState();
 		// close log
 		unload();
 		// make sure the states are removed before the structs as they point to them
@@ -109,16 +121,16 @@ namespace alc {
 		}
 	}
 	
-	void tAgeStateManager::loadAgeState(const tStrBuf &fileName)
+	void tAgeStateManager::loadAgeState()
 	{
-		log->log("Loading age state from %s\n", fileName.c_str());
+		log->log("Loading age state from %s\n", ageStateFile.c_str());
 		// open file
 		tFBuf file;
 		try {
-			file.open(fileName.c_str());
+			file.open(ageStateFile.c_str());
 		}
 		catch (txNotFound &t) {
-			log->log("File %s not found\n", fileName.c_str());
+			log->log("File %s not found\n", ageStateFile.c_str());
 			return;
 		}
 		
@@ -166,12 +178,13 @@ namespace alc {
 		file.close();
 	}
 	
-	void tAgeStateManager::saveAgeState(const tStrBuf &fileName)
+	void tAgeStateManager::saveAgeState()
 	{
-		log->log("Saving age state to %s\n", fileName.c_str());
+		if (ageStateFile.isNull()) return;
+		log->log("Saving age state to %s\n", ageStateFile.c_str());
 		// open file
 		tFBuf file;
-		file.open(fileName.c_str(), "wb");
+		file.open(ageStateFile.c_str(), "wb");
 		
 		// write to it
 		file.putU32(sdlStates.size());

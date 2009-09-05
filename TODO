@@ -17,7 +17,6 @@ Vault
 
 Game
 ======
-* Save agestate file in a more reasonable location
 * Marge game state from file, age vault and global SDL
 
 Generic Stuff

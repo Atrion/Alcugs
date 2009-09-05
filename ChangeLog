@@ -2,6 +2,7 @@ Version 1.3.5a (??)
 ===============================
 Improvements:
 - Code rework to be more readable and reasonable (especially use const wherever possible)
+- The age states are now saved in the directory specified by game.agestates (with an automatic migration from the old system)
 
 Bugfixes:
 - Fixed much too slow parsing of incoming messages under some circumstances
