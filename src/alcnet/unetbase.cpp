@@ -137,14 +137,6 @@ void tUnetBase::reconfigure() {
 			unsetFlags(UNET_NOFLOOD);
 		}
 	}
-	var=cfg->getVar("broadcast","global");
-	if(!var.isNull()) {
-		if(var.asByte()) {
-			unsetFlags(UNET_BCAST);
-		} else {
-			setFlags(UNET_BCAST);
-		}
-	}
 	var=cfg->getVar("net.log.ack","global");
 	if(!var.isNull()) {
 		if(var.asByte()) {
@@ -154,6 +146,14 @@ void tUnetBase::reconfigure() {
 		}
 	}
 	//Other DEVEL vars (dangerous to touch)
+	var=cfg->getVar("broadcast","global");
+	if(!var.isNull()) {
+		if(var.asByte()) {
+			unsetFlags(UNET_BCAST);
+		} else {
+			setFlags(UNET_BCAST);
+		}
+	}
 	var=cfg->getVar("net.flood_check_sec","global");
 	if(!var.isNull()) {
 		flood_check_sec=var.asU32();
