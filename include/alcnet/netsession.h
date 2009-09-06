@@ -115,7 +115,6 @@ public:
 	// The public properties are not used by tNetSession internally, they server for others to be able to save data about the session
 	Byte max_version; //!< peer major version
 	Byte min_version; //!< peer minor version
-	U32 proto; //!< peer unet protocol version
 	
 	// used only by some servers
 	char name[200]; //!< peer age name in tracking server, peer account name in lobby and game
@@ -135,6 +134,7 @@ public:
 	
 #ifdef ENABLE_UNET3
 	// legacy protocol support
+	U32 proto; //!< peer unet protocol version
 	U32 x; //!< x value (for lobby/game)
 #endif
 

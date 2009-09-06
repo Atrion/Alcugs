@@ -285,7 +285,11 @@ namespace alc {
 				err->log("ERR: I've got to update a player\'s (%s) status for the vault server, but it is unavailable.\n", u->str());
 			}
 			else if (reason == RLeaving) { // the player is going on to another age, so he's not really offline
+#ifdef ENABLE_UNET3
 				if (!u->proto || u->proto >= 3) { // unet2 or unet3 vault servers would not understand a state of 2
+#else
+				{
+#endif
 					// update online time
 					tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, alcGetStrGuid(serverGuid), serverName, /* offline but will soon come back */ 2, u->onlineTime());
 					send(vaultStatus);
