@@ -506,8 +506,8 @@ void tNetSession::processMsg(Byte * buf,int size) {
 			net->log->log("WARN: Dropping re-sent old packet %d.%d (last ack: %d.%d, expected: %d.%d)\n", msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
 		}
 		else if (ret > 0) {
-			if (net->receiveAhead && msg->sn <= clientMsg.ps+net->receiveAhead+1)
-				ret = 2; // preserve for future use
+			if (!(msg->tf & UNetNegotiation) && rcvq->len() < net->receiveAhead)
+				ret = 2; // preserve for future use - but don't do this for negos (we can not get here for ack replies)
 			else
 				net->log->log("WARN: Dropped packet I can not yet parse: %d.%d (last ack: %d.%d, expected: %d.%d)\n", msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
 		}
@@ -609,8 +609,13 @@ void tNetSession::queueReceivedMessage(tUnetUruMsg *msg)
 	rcvq->rewind();
 	// the queue is sorted ascending
 	while ((cur = rcvq->getNext())) {
-		if (compareMsgNumbers(msg->sn, msg->frn, cur->sn, cur->frn) < 0) {// we have to put it after the current one!
+		int ret = compareMsgNumbers(msg->sn, msg->frn, cur->sn, cur->frn);
+		if (ret < 0) {// we have to put it after the current one!
 			rcvq->insertBefore(msg);
+			return;
+		}
+		else if (ret == 0) { // the message is already in the queue
+			delete msg;
 			return;
 		}
 	}
