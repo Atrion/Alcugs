@@ -76,7 +76,6 @@ public:
 	void end();
 	tNetSession * getNext();
 	bool empty() { return count==0; }
-	inline int getSize() { return size; }
 	inline int getCount() { return count; }
 protected:
 	int findFreeSlot(void);

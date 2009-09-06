@@ -2,7 +2,7 @@
 set -e
 
 FILE="config.status"
-PORT=31732
+PORT=5938
 if [ "$1" ]; then
 	PORT=$1
 fi
