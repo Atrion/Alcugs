@@ -63,13 +63,11 @@ class tNetSession;
 /** this class is used to save incoming NetMsgs and collect their fragments */
 class tUnetMsg {
 public:
-	tUnetMsg(U32 size=1024) : data(size) { next=NULL; completed=0; fr_count=0; memset(check,0,32); }
+	tUnetMsg(U32 size=1024) : data(size) { data.setSize(size); next=NULL; fr_count=0; memset(check,0,32); }
 	//virtual ~tUnetMsg() { delete data; }
 	tUnetMsg * next;
 	U16 cmd;
 	U32 sn;
-	U32 stamp;
-	Byte completed;
 	Byte fr_count; //Number of fragments we already got
 	char check[32]; //bitmap
 	tMBuf data;

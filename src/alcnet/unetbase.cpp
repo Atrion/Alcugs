@@ -307,7 +307,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 			#ifdef ENABLE_MSGDEBUG
 			log->log("%s New MSG Recieved\n",u->str());
 			#endif
-			assert(msg!=NULL && msg->completed);
+			assert(msg!=NULL);
 			try {
 				ret=parseBasicMsg(evt,msg,u,shutdown);
 				// terminated sessions can be deleted here - either it was a NetMsgLeave and everything is fine, or it was an invalid message

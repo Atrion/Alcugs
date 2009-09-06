@@ -95,14 +95,15 @@ private:
 	void processMsg(Byte * buf,int size);
 	void doWork();
 
-	Byte checkDuplicate(tUnetUruMsg &msg);
-
 	void createAckReply(tUnetUruMsg &msg);
 	void ackUpdate();
 	void ackCheck(tUnetUruMsg &msg);
 	
-	void assembleMessage(tUnetUruMsg &msg);
+	void acceptMessage(tUnetUruMsg *msg);
+	void queueReceivedMessage(tUnetUruMsg *msg);
+	void checkQueuedMessages(void);
 
+	inline SByte compareMsgNumbers(U32 sn1, Byte fr1, U32 sn2, Byte fr2);
 	void updateRTT(U32 newread);
 	void increaseCabal();
 	void decreaseCabal(bool small);
@@ -145,22 +146,21 @@ private:
 	int sid;
 	char sock_array[sizeof(struct sockaddr_in)]; // used by tUnet
 	socklen_t a_client_size; // used by tUnet
-	//server Message counters
-	struct {
+	struct { //server message counters
 		U32 pn; //!< the overall packet number
 		U32 sn; //!< the message number
 		Byte pfr; //!< the fragment number of the last packet I sent which required an ack
 		U32 ps; //!< the msg number of the last packet I sent which required an ack
 	} serverMsg;
-	
-	// avoid parsing messages twice or out-of-order
-	U32 clientPs; //!< sn of last acked packet we got
-	bool waitingForFragments; //!< true when we are waiting for remaining fragments of the last acked packet, false when not
-	
+	struct { // client message counters
+		Byte pfr;
+		U32 ps;
+	} clientMsg;
 	Byte validation; //!< store the validation level (0,1,2)
 	Byte authenticated; //!< is the peer authed? 0 = no, 1 = yes, 2 = it just got authed, 10 = the client got an auth challenge
 	tNetSessionFlags cflags; //!< session flags
 	U16 maxPacketSz; //!< maxium size of the packets. Must be 1024 (always)
+	tUnetMsg *rcv; //!< The place to assemble a fragmented message
 
 	//flood control
 	U32 flood_last_check;
@@ -185,9 +185,9 @@ private:
 	U32 timeout; //!< time after which a message is re-sent
 	
 	// queues
-	tUnetMsgQ<tUnetAck> * ackq; //!< ack queue, saves acks to be packed
-	tUnetMsgQ<tUnetUruMsg> * sndq; //!<outcomming message queue
-	tUnetMsgQ<tUnetMsg> * rcvq; //!< incomming message queue
+	tUnetMsgQ<tUnetAck> *ackq; //!< ack queue, saves acks to be packed
+	tUnetMsgQ<tUnetUruMsg> *sndq; //!<outcomming message queue
+	tUnetMsgQ<tUnetUruMsg> *rcvq; //!< received, but not yet accepted messages
 	
 	// other status variables
 	bool idle; //!< true when the session has nothing to do (all queue emtpy)
