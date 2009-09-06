@@ -115,6 +115,8 @@ namespace alc {
 	class tmCustomPlayerToCome : public tmMsgBase {
 	public:
 		tmCustomPlayerToCome(tNetSession *u);
+		tmCustomPlayerToCome(tNetSession *u, U32 ki);
+		virtual void store(tBBuf &t);
 	};
 	
 } //End alc namespace

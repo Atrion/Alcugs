@@ -106,6 +106,17 @@ namespace alc {
 				
 				return 1;
 			}
+			case NetMsgCustomPlayerToCome:
+			{
+				// get the data out of the packet
+				tmCustomPlayerToCome playerToCome(u);
+				msg->data.get(playerToCome);
+				log->log("<RCV> [%d] %s\n", msg->sn, playerToCome.str());
+				
+				trackingBackend->playerCanCome(u, playerToCome.ki);
+				
+				return 1;
+			}
 		}
 		return 0;
 	}

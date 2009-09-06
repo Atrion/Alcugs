@@ -788,6 +788,10 @@ namespace alc {
 					lastPlayerLeft = alcGetTime();
 				}
 				
+				// Send the reply back
+				tmCustomPlayerToCome reply(u, playerToCome.ki);
+				send(reply);
+				
 				return 1;
 			}
 			

@@ -47,6 +47,16 @@
 
 #include "alcdebug.h"
 
+/* The process of finding an age for a player works as follows:
+
+Find age request => set the "waiting" variables for the player => check if there is a game server for this age
+	no game server yet => ask lobby to spawn one
+	there is a game server => send player to come message (and save this ina  per game-server list of players waiting)
+New game server says hello (because we told lobby to spawn it) => tell players we found this one
+Game server replies "player can come" => tell player we found the server
+A game server is going down => Check if there is anyone waiting for this server
+	If yes => Argh, we needed this one! Tell lobby to spawn a new server (but wait a second for the server to go down properly) */
+
 namespace alc {
 
 	////IMPLEMENTATION
@@ -201,53 +211,86 @@ namespace alc {
 			}
 		}
 		if (!game) {
-			// search for the lobby with the least load
-			tNetSession *lobby = NULL;
-			int load = -1;
-			servers->rewind();
-			while ((server = servers->getNext())) {
-				tTrackingData *data = dynamic_cast<tTrackingData*>(server->data);
-				if (data && data->isLobby && (load < 0 || data->childs->getCount() < load)) {
-					lobby = server;
-					load = data->childs->getCount();
-				}
-			}
-			if (!lobby) {
-				log->log("ERR: There's no lobby I could use to spawn the server\n");
-				return;
-			}
-			// search for free ports
-			tTrackingData *data = static_cast<tTrackingData*>(lobby->data); // we already checked the type above
-			int nPorts = data->portEnd - data->portStart + 1;
-			bool *freePorts = (bool *)malloc(nPorts*sizeof(bool));
-			if (freePorts == NULL) throw txNoMem(_WHERE("NoMem"));
-			for (int i = 0; i < nPorts; ++i) freePorts[i] = true;
-			data->childs->rewind();
-			while ((server = data->childs->getNext()))
-				freePorts[ntohs(server->getPort()) - data->portStart] = false; // this port is occupied
-			int lowest;
-			for (lowest = 0; lowest < nPorts; ++lowest) {
-				if (freePorts[lowest]) break; // we found a free one
-			}
-			free(freePorts);
-			if (lowest == nPorts) { // no free port on the lobby with the least childs
-				log->log("ERR: No free port on lobby %s, can't spawn game server\n", lobby->str());
-				return;
-			}
-			lowest += data->portStart;
-			// ok, telling the lobby to fork
-			bool loadState = doesAgeLoadState(player->awaiting_age);
-			tmCustomForkServer forkServer(lobby, lowest, alcGetStrGuid(player->awaiting_guid), player->awaiting_age, loadState);
-			net->send(forkServer);
-			log->log("Spawning new game server %s (Server GUID: %s, port: %d) on %s ", player->awaiting_age, alcGetStrGuid(player->awaiting_guid), lowest, lobby->str());
-			if (loadState) log->print("(loading age state)\n");
-			else log->print("(not loading age state)\n");
+			spawnServer(player->awaiting_age, player->awaiting_guid);
 		}
 		else {
-			// ok, we got it, let's tell the player about it
-			serverFound(&*player, game);
+			// ok, we got it, let's make sure it is running
+			tTrackingData *data = dynamic_cast<tTrackingData*>(server->data);
+			if (!data) throw txUnet(_WHERE("server found in tTrackingBackend::findServer is not a game/lobby server"));
+			data->waitingPlayers.push_back(player->ki);
+			tmCustomPlayerToCome playerToCome(server, player->ki);
+			net->send(playerToCome);
 		}
 		log->flush();
+	}
+	
+	void tTrackingBackend::playerCanCome(tNetSession *game, U32 ki)
+	{
+		tTrackingData *data = dynamic_cast<tTrackingData*>(game->data);
+		if (!data) throw txUnet(_WHERE("server passed in tTrackingBackend::playerCanCome is not a game/lobby server"));
+		log->log("Game server %s tells us that player %d can join\n", game->str(), ki);
+		log->flush();
+		for (tTrackingData::tPlayerList::iterator it = data->waitingPlayers.begin(); it != data->waitingPlayers.end(); ++it) {
+			if (*it == ki) {
+				// it is indeed in the list
+				tPlayerList::iterator player = getPlayer(ki);
+				if (player != players.end())
+					serverFound(&*player, game);
+				else
+					log->log("ERR: Game server %s told us that player %d can come, but the player no longer exists\n", game->str(), ki);
+				data->waitingPlayers.erase(it);
+				log->flush();
+				return;
+			}
+		}
+		// The player is not in the list of waiting players - weird
+		log->log("ERR: Game server %s told us that player %d can come, but the player doesn't even wait for this server\n", game->str(), ki);
+		log->flush();
+	}
+	
+	void tTrackingBackend::spawnServer(const char *age, const Byte *guid, U32 delay)
+	{
+		// search for the lobby with the least load
+		tNetSession *lobby = NULL, *server;
+		int load = -1;
+		servers->rewind();
+		while ((server = servers->getNext())) {
+			tTrackingData *data = dynamic_cast<tTrackingData*>(server->data);
+			if (data && data->isLobby && (load < 0 || data->childs->getCount() < load)) {
+				lobby = server;
+				load = data->childs->getCount();
+			}
+		}
+		if (!lobby) {
+			log->log("ERR: There's no lobby I could use to spawn the server\n");
+			return;
+		}
+		// search for free ports
+		tTrackingData *data = static_cast<tTrackingData*>(lobby->data); // we already checked the type above
+		int nPorts = data->portEnd - data->portStart + 1;
+		bool *freePorts = (bool *)malloc(nPorts*sizeof(bool));
+		if (freePorts == NULL) throw txNoMem(_WHERE("NoMem"));
+		for (int i = 0; i < nPorts; ++i) freePorts[i] = true;
+		data->childs->rewind();
+		while ((server = data->childs->getNext()))
+			freePorts[ntohs(server->getPort()) - data->portStart] = false; // this port is occupied
+		int lowest;
+		for (lowest = 0; lowest < nPorts; ++lowest) {
+			if (freePorts[lowest]) break; // we found a free one
+		}
+		free(freePorts);
+		if (lowest == nPorts) { // no free port on the lobby with the least childs
+			log->log("ERR: No free port on lobby %s, can't spawn game server\n", lobby->str());
+			return;
+		}
+		lowest += data->portStart;
+		// ok, telling the lobby to fork
+		bool loadState = doesAgeLoadState(age);
+		tmCustomForkServer forkServer(lobby, lowest, alcGetStrGuid(guid), age, loadState);
+		net->send(forkServer, delay);
+		log->log("Spawning new game server %s (Server GUID: %s, port: %d) on %s ", age, alcGetStrGuid(guid), lowest, lobby->str());
+		if (loadState) log->print("(loading age state)\n");
+		else log->print("(not loading age state)\n");
 	}
 	
 	void tTrackingBackend::notifyWaiting(tNetSession *server)
@@ -264,9 +307,6 @@ namespace alc {
 	{
 		tTrackingData *data = dynamic_cast<tTrackingData *>(server->data);
 		if (!data) throw txUnet(_WHERE("server passed in tTrackingBackend::serverFound is not a game/lobby server"));
-		// notify the server that a player will come
-		tmCustomPlayerToCome playerToCome(server);
-		net->send(playerToCome);
 		// notifiy the player that it's server is available
 		tmCustomServerFound found(player->u, player->ki, player->awaiting_x, player->sid, ntohs(server->getPort()), data->externalIp, alcGetStrGuid(server->serverGuid), server->name);
 		net->send(found);
@@ -421,6 +461,12 @@ namespace alc {
 		tTrackingData *data = dynamic_cast<tTrackingData *>(game->data);
 		if (!data) return;
 		statusFileUpdate = true;
+		// if players are waiting for this server, we have a problem - we need it! But we can't stop it from going down, so instead launch it again after a second
+		if (data->waitingPlayers.size()) {
+			log->log("I need to respawn %s\n", game->str());
+			spawnServer(game->name, game->serverGuid, /*delay*/1000);
+			
+		}
 		// remove all players which were still on this server
 		tPlayerList::iterator it = players.begin();
 		while (it != players.end()) {
