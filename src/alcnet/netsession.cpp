@@ -101,7 +101,9 @@ void tNetSession::init() {
 	max_version=0;
 	min_version=0;
 	tpots=0;
+#ifdef ENABLE_UNET3
 	proto=0; //alcProtoMIN_VER
+#endif
 	ki=0;
 	client = true;
 	terminated = false;

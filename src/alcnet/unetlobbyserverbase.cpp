@@ -244,7 +244,9 @@ namespace alc {
 		U32 proto = protocol.isNull() ? 0 : protocol.asU32();
 		tNetSessionIte ite = netConnect(host.c_str(), port.asU16(), (proto == 0 || proto >= 3) ? 3 : 2, 0, dst);
 		tNetSession *session = getSession(ite);
+#ifdef ENABLE_UNET3
 		session->proto = proto;
+#endif
 		
 		// sending a NetMsgAlive is not necessary, the netConnect will already start the negotiation process
 		
@@ -423,11 +425,9 @@ namespace alc {
 				
 				// find the client's session
 				tNetSession *client = smgr->get(authResponse.sid);
-				if (u->proto != 1 && client) { // check if IP and Port are correct
-					if (client->getIp() != authResponse.ip || client->getPort() != authResponse.port) {
-						err->log("ERR: Got CustomAuthResponse for player %s but can't find his session.\n", authResponse.login.c_str());
-						return 1;
-					}
+				if (client && (client->getIp() != authResponse.ip || client->getPort() != authResponse.port)) { // check if IP and Port are correct
+					err->log("ERR: Got CustomAuthResponse for player %s but can't find his session.\n", authResponse.login.c_str());
+					return 1;
 				}
 				// verify account name and session state
 				if (!client || client->getAuthenticated() != 10 || client->getPeerType() != 0 || strncmp(client->name, authResponse.login.c_str(), 199) != 0) {

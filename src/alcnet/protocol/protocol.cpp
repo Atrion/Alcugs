@@ -682,7 +682,7 @@ void tmMsgBase::store(tBBuf &t) {
 		check |= plNetStateReq1;
 	if (cmd == NetMsgJoinReq)
 		check |= plNetP2P;
-	// accept custom types from servers only
+	// accept custom types from Alcugs servers only
 	if (u->isAlcugsServer())
 		check |= plNetSid;
 	

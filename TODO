@@ -15,7 +15,7 @@ Game
 
 Generic Stuff
 ==================
-* Implement server Identification. This could also be used to force custom flags not to be used outside internal communication.
+* Implement server identification. This could also be used for the tNetSession::isAlcugsServer function.
 * Full Multithreaded support
 * UU support
 

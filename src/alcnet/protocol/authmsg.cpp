@@ -98,7 +98,7 @@ namespace alc {
 		if(!hasFlags(plNetIP)) {
 			ip = t.getU32();
 			port = 0;
-			 u->proto = 1; // unet2 protocol
+			u->proto = 1; // unet2 protocol
 		}
 #endif
 	}
