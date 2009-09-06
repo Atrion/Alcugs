@@ -98,7 +98,7 @@ void tNetSession::init() {
 	resetMsgCounters();
 	assert(serverMsg.pn==0);
 	idle=false;
-	delayMessages=false;
+	rejectMessages=false;
 	whoami=0;
 	max_version=0;
 	min_version=0;
@@ -498,6 +498,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 
 		//check uplicates
 		ret = compareMsgNumbers(msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
+		if (rejectMessages) ret = 1; // we curently don't accept messages - please come back later
 		/* ret values:
 		  <0: This is an old packet, ack, but don't accept
 		   0: This is what we need
@@ -506,7 +507,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 			net->log->log("WARN: Dropping re-sent old packet %d.%d (last ack: %d.%d, expected: %d.%d)\n", msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
 		}
 		else if (ret > 0) {
-			if (!(msg->tf & UNetNegotiation) && rcvq->len() < net->receiveAhead)
+			if (!(msg->tf & UNetNegotiation) && !rejectMessages && rcvq->len() < net->receiveAhead)
 				ret = 2; // preserve for future use - but don't do this for negos (we can not get here for ack replies)
 			else
 				net->log->log("WARN: Dropped packet I can not yet parse: %d.%d (last ack: %d.%d, expected: %d.%d)\n", msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
