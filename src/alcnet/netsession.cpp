@@ -47,18 +47,20 @@ tNetSession::tNetSession(tUnet * net,U32 ip,U16 port,int sid) {
 	this->ip=ip;
 	this->port=port;
 	this->sid=sid;
-	init();
 	sndq = new tUnetMsgQ<tUnetUruMsg>;
 	ackq = new tUnetMsgQ<tUnetAck>;
-	rcvq = new tUnetMsgQ<tUnetMsg>;
+	rcvq = new tUnetMsgQ<tUnetUruMsg>;
+	rcv = NULL;
+	init();
 	//new conn event
 	tNetSessionIte ite(ip,port,sid);
 	tNetEvent * evt=new tNetEvent(ite,UNET_NEWCONN);
 	net->events->add(evt);
 }
 tNetSession::~tNetSession() {
-	DBG(5,"~tNetSession()\n");
-	if (data) delete data;
+	DBG(5,"~tNetSession() (sndq: %d)\n", sndq->len());
+	delete data;
+	delete rcv;
 	delete sndq;
 	delete ackq;
 	delete rcvq;
@@ -116,12 +118,24 @@ void tNetSession::init() {
 }
 void tNetSession::resetMsgCounters(void) {
 	DBG(3, "tNetSession::resetMsgCounters\n");
-	clientPs = 0;
-	waitingForFragments = false;
+	clientMsg.pfr=0;
+	clientMsg.ps=0;
 	serverMsg.pn=0;
 	serverMsg.sn=0;
 	serverMsg.pfr=0;
 	serverMsg.ps=0;
+	// empty queues
+	sndq->clear();
+	ackq->clear();
+	rcvq->clear();
+	delete rcv;
+	rcv = NULL;
+}
+inline SByte tNetSession::compareMsgNumbers(U32 sn1, Byte fr1, U32 sn2, Byte fr2)
+{
+	if (sn1 < sn2 || (sn1 == sn2 && fr1 < fr2)) return -1;
+	else if (sn1 == sn2 && fr1 == fr2) return 0;
+	else return 1;
 }
 const char * tNetSession::str(bool detail) {
 	dbg.clear();
@@ -164,10 +178,10 @@ void tNetSession::updateRTT(U32 newread) {
 		rtt=((alpha*rtt)/1000) + (((1000-alpha)*newread)/1000);
 		timeout=2*rtt;
 	#else //Jacobson/Karels
-		S32 alpha=125; // this is effectively 0.125
-		S32 u=2;
-		S32 delta=4;
-		S32 diff=(S32)newread - (S32)rtt;
+		const S32 alpha=125; // this is effectively 0.125
+		const S32 u=2;
+		const S32 delta=4;
+		const S32 diff=(S32)newread - (S32)rtt;
 		rtt=(S32)rtt+((alpha*diff)/1000);
 		deviation+=(alpha*(abs(diff)-deviation))/1000;
 		timeout=u*rtt + delta*deviation;
@@ -354,12 +368,10 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	//stamp
 	timestamp=net->ntime;
 	
-	int ret;
-	
 	// when authenticated == 2, we don't expect an encoded packet, but sometimes, we get one. Since alcUruValidatePacket will try to
 	// validate the packet both with and without passwd if possible, we tell it to use the passwd whenever we have one - as a result,
 	// even if the client for some reason decides to encode a packet while authenticated == 2, we don't care
-	ret=alcUruValidatePacket(buf,size,&validation,authenticated==1 || authenticated==2,passwd);
+	int ret=alcUruValidatePacket(buf,size,&validation,authenticated==1 || authenticated==2,passwd);
 	
 	if(ret!=0 && (ret!=1 || net->flags & UNET_ECRC)) {
 		if(ret==1) {
@@ -381,31 +393,32 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	
 	tSBuf mbuf(buf,size);
 	
-	tUnetUruMsg msg;
+	tUnetUruMsg *msg = new tUnetUruMsg;
 	
 	try {
-		mbuf.get(msg);
+		mbuf.get(*msg);
 		#ifdef ENABLE_MSGDEBUG
 		net->log->log("<RCV> ");
-		msg.dumpheader(net->log);
+		msg->dumpheader(net->log);
 		net->log->nl();
 		#endif
-		msg.htmlDumpHeader(net->ack,0,ip,port);
+		msg->htmlDumpHeader(net->ack,0,ip,port);
 	} catch(txUnexpectedData &t) {
 		net->err->log("%s Unexpected Data %s\nBacktrace:%s\n",str(),t.what(),t.backtrace());
+		delete msg;
 		throw txProtocolError(_WHERE("Cannot parse a message"));
 	}
 	
 	//Protocol Upgrade
-	if(msg.tf & UNetExt) {
+	if(msg->tf & UNetExt) {
 		cflags |= UNetUpgraded;
 	}
 
-	if(msg.tf & UNetNegotiation) {
+	if(msg->tf & UNetNegotiation) {
 		tmNetClientComm comm(this);
-		msg.data.rewind();
-		msg.data.get(comm);
-		net->log->log("<RCV> [%d] %s",msg.sn,comm.str());
+		msg->data.rewind();
+		msg->data.get(comm);
+		net->log->log("<RCV> [%d] %s",msg->sn,comm.str());
 		if(renego_stamp==comm.timestamp) { // it's a duplicate, we already got this message
 		    // It is necessary to do the check this way since the usual check by SN would treat a nego on an existing connection as
 		    //  "already parsed" since the SN is started from the beginning
@@ -417,13 +430,11 @@ void tNetSession::processMsg(Byte * buf,int size) {
 				// if this nego came unexpectedly, reset everything and send a nego back (since the other peer expects our answer, this
 				//  will not result in an endless loop of negos being exchanged)
 				resetMsgCounters();
-				if (msg.sn != 1 || msg.ps != 0) {
-					net->err->log("%s ERR: Got a nego with a sn of %d (expected 1) and a previous ack of %d (expected 0)\n", str(), msg.sn, msg.ps);
-					clientPs = msg.ps; // the nego marks the beginning of a new connection, so accept everything from here on
+				if (msg->sn != 1 || msg->ps != 0) {
+					net->err->log("%s ERR: Got a nego with a sn of %d (expected 1) and a previous ack of %d (expected 0)\n", str(), msg->sn, msg->ps);
+					clientMsg.ps = msg->ps; // the nego marks the beginning of a new connection, so accept everything from here on
+					clientMsg.pfr = msg->pfr;
 				}
-				DBG(5,"Clearing buffers\n");
-				sndq->clear();
-				ackq->clear();
 				if(nego_stamp.seconds==0) nego_stamp=timestamp;
 				negotiate();
 			}
@@ -456,244 +467,180 @@ void tNetSession::processMsg(Byte * buf,int size) {
 			net->log->log("%s WARN: Obviously a new connection was started with something different than a nego\n", str());
 			nego_stamp=timestamp;
 			negotiate();
-			clientPs = msg.ps; // this message is the beginning of a new connection, so accept everything from here on
+			clientMsg.ps = msg->ps; // this message is the beginning of a new connection, so accept everything from here on
+			clientMsg.pfr = msg->pfr;
 		}
 	}
 	else
 		assert(maxBandwidth && minBandwidth); // we are connected, so these *must* be set
 	
 	//fix the problem that happens every 15-30 days of server uptime (prefer doing that when the sndq is empty)
-	if((sndq->len() == 0 && (serverMsg.sn>=8378605 || msg.sn>=8378605)) ||
-		(serverMsg.sn>=8388605 || msg.sn>=8388605) ) { // that's aproximately 2^23
+	if((sndq->len() == 0 && (serverMsg.sn>=8378605 || msg->sn>=8378605)) || (serverMsg.sn>=8388605 || msg->sn>=8388605) ) {
+		// that's aproximately 2^23 (try to get the sndq empty first, but in doubt, flush it)
 		net->log->log("%s WARN: Congratulations! You have reached the maxium allowed sequence number, don't worry, this is not an error\n", str());
 		net->log->flush();
 		resetMsgCounters();
-		//clear buffers
-		DBG(5,"Clearing buffers\n");
-		sndq->clear();
-		ackq->clear();
 		nego_stamp=timestamp;
 		renego_stamp.seconds=0;
 		negotiate();
 	}
 
-	//check duplicates
-	ret=checkDuplicate(msg);
-
-	// if the packet requires it and the above check told us that'd be ok, send an ack
-	if(ret!=2 && (msg.tf & UNetAckReq)) {
-		//ack reply
-		createAckReply(msg);
-	}
-
-	if(isConnected() && (msg.tf & UNetAckReply)) {
-		// don't parse acks before we are connected (if we do, we might get SN confusion if connections don't start with a Nego)
-		ackCheck(msg);
-		if(authenticated==2) authenticated=1;
-	}
-	// if it is ok to parse the packet, do that
-	else if (ret == 0 && !(msg.tf & UNetAckReply)) {
-		//flood control
-		if((msg.tf & UNetAckReq) && (msg.frn==0) && (net->flags & UNET_NOFLOOD)) {
-			if(net->ntime.seconds - flood_last_check > net->flood_check_sec) {
-				flood_last_check=net->ntime.seconds;
-				flood_npkts=0;
-			} else {
-				flood_npkts++;
-				if(flood_npkts>net->max_flood_pkts) {
-					// send UNET_FLOOD event
-					tNetSessionIte ite(ip,port,sid);
-					tNetEvent * evt=new tNetEvent(ite,UNET_FLOOD);
-					net->events->add(evt);
-				}
-			}
-		} // end flood control
-		
-		if(!(msg.tf & UNetNegotiation)) {
-			assembleMessage(msg);
+	if (msg->tf & UNetAckReply) {
+		// Process ack replies, no matter whether they are out of roder or not
+		if (isConnected()) {
+			// don't parse acks before we are connected (if we do, we might get SN confusion if connections don't start with a Nego)
+			ackCheck(*msg);
+			if(authenticated==2) authenticated=1;
 		}
 	}
+	else {
+		// Negotiation (processed above, but we have to do the ack checking) and normal packets
+
+		//check uplicates
+		ret = compareMsgNumbers(msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
+		/* ret values:
+		  <0: This is an old packet, ack, but don't accept
+		   0: This is what we need
+		  >0: This is a future packet (1: Drop it, 2: Cache it) */
+		if (ret < 0) {
+			net->log->log("WARN: Dropping re-sent old packet %d.%d (last ack: %d.%d, expected: %d.%d)\n", msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
+		}
+		else if (ret > 0) {
+			if (msg->sn <= clientMsg.ps+10)
+				ret = 2; // preserve for future use
+			else
+				net->log->log("WARN: Dropped packet I can not yet parse: %d.%d (last ack: %d.%d, expected: %d.%d)\n", msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
+		}
+
+		// if the packet requires it and the above check told us that'd be ok, send an ack
+		if (ret != 1 && (msg->tf & UNetAckReq)) {
+			//ack reply
+			createAckReply(*msg);
+		}
+		
+		// We may be able to cache it
+		if (ret == 2) {
+			queueReceivedMessage(msg);
+			msg = NULL; // don't delete
+		}
+		// if it is ok to parse the packet, do that
+		else if (ret == 0) {
+			//flood control
+			if((msg->tf & UNetAckReq) && (msg->frn==0) && (net->flags & UNET_NOFLOOD)) {
+				if(net->ntime.seconds - flood_last_check > net->flood_check_sec) {
+					flood_last_check=net->ntime.seconds;
+					flood_npkts=0;
+				} else {
+					flood_npkts++;
+					if(flood_npkts>net->max_flood_pkts) {
+						// send UNET_FLOOD event
+						tNetSessionIte ite(ip,port,sid);
+						tNetEvent * evt=new tNetEvent(ite,UNET_FLOOD);
+						net->events->add(evt);
+					}
+				}
+			}
+			// end flood control
+			
+			// We can use it!
+			acceptMessage(msg);
+			msg = NULL; // acceptMessage will delete it
+
+			// We might be able to accept cached messages now
+			checkQueuedMessages();
+		}
+	}
+	delete msg;
 	
 	doWork();
 }
 
-/** put this message in the rcvq and put fragments together */
-void tNetSession::assembleMessage(tUnetUruMsg &t) {
-	U32 frg_size=maxPacketSz - t.hSize();
-	tUnetMsg * msg;
-	rcvq->rewind();
-	msg=rcvq->getNext();
-	while(msg!=NULL) {
-		if(msg->completed==0 && (net->ntime.seconds - msg->stamp) > net->snd_expire) {
-			net->err->log("%s INF: Message %i expired!\n",str(),msg->sn);
-			rcvq->deleteCurrent();
-			msg=rcvq->getCurrent();
-		} else if(msg->sn==t.sn) {
-			break;
-		} else if(t.sn<msg->sn) { // the rcvq is ordered by SN, so if the new message has an SN smaller than the current one
-		                          // and bigger or equal to the last one (since the if wasn't executed then), this is the right place
-			//tUnetMsg *msgalt = msg;
-			msg=new tUnetMsg((t.frt+1) * frg_size);
-			msg->sn=t.sn;
-			msg->frt=t.frt;
-			msg->hsize=t.hSize();
-			rcvq->insertBefore(msg);
-			//t.data.rewind();
-			//DBG(7, "%s inserted a message %s (SN: %d) before an", str(), alcUnetGetMsgCode(t.data.getU16()), t.sn);
-			//DBGM(7, " %s (SN: %d)\n", alcUnetGetMsgCode(msgalt->cmd), msgalt->sn);
-			//t.data.rewind();
-			msg->data.setSize((t.frt +1) * frg_size);
-			break;
-		} else {
-			msg=rcvq->getNext();
-		}
+/** put this message in the rcvq and put fragments together - this deletes the passed message! */
+void tNetSession::acceptMessage(tUnetUruMsg *t)
+{
+	DBG(5, "Accepting %d.%d\n", t->sn, t->frn);
+	if (t->tf & UNetAckReq) {
+		clientMsg.ps = t->sn;
+		clientMsg.pfr = t->frn;
 	}
-	if(msg==NULL) {
-		msg=new tUnetMsg((t.frt+1) * frg_size);
-		msg->sn=t.sn;
-		msg->frt=t.frt;
-		msg->hsize=t.hSize();
-		rcvq->add(msg);
-		msg->data.setSize((t.frt +1) * frg_size); // now the buffer thinks its full of data
+	if (t->tf & UNetNegotiation) {
+		delete t;
+		return; // These are already processed
 	}
-	msg->stamp=net->ntime.seconds;
-	if(msg->frt!=t.frt || msg->hsize!=t.hSize()) throw(txProtocolError(_WHERE("Inconsistency on fragmented stream %i %i %i %i",msg->frt,t.frt,msg->hsize,t.hSize())));
-	
-	if(!((msg->check[t.frn/8] >> (t.frn%8)) & 0x01)) {
-		//found missing fragment
-		msg->check[t.frn/8] |= (0x01<<(t.frn%8));
+
+	U32 frg_size = maxPacketSz - t->hSize();
+	if (!rcv) { // this is a brand new message
+		if (t->frn != 0)
+			throw txProtocolError(_WHERE("A message must always start with fragment 0, not %d", t->frn));
+		rcv=new tUnetMsg((t->frt+1) * frg_size);
+		rcv->sn=t->sn;
+		rcv->frt=t->frt;
+		rcv->hsize=t->hSize();
+	}
+	else {
+		if (rcv->sn != t->sn)
+			throw txProtocolError(_WHERE("I am assembling %d and received %d", rcv->sn, t->sn));
+		if (rcv->frt!=t->frt || rcv->hsize!=t->hSize())
+			throw(txProtocolError(_WHERE("Inconsistency on fragmented stream %i %i %i %i",rcv->frt,t->frt,rcv->hsize,t->hSize())));
+	}
+
+	if(!((rcv->check[t->frn/8] >> (t->frn%8)) & 0x01)) {
+		// found missing fragment
+		rcv->check[t->frn/8] |= (0x01<<(t->frn%8));
 		
-		if(t.frn==t.frt) { 
-			msg->data.setSize((t.frt * frg_size) + t.data.size()); // correctly set the size of the whole message
+		if(t->frn==t->frt) { 
+			rcv->data.setSize((t->frt * frg_size) + t->data.size()); // correctly set the size of the whole message
 		}
 		
-		msg->data.set(t.frn * frg_size);
-		t.data.rewind();
-		msg->data.write(t.data.read(),t.data.size());
+		rcv->data.set(t->frn * frg_size);
+		t->data.rewind();
+		rcv->data.write(t->data.read(),t->data.size());
 
-		if(msg->fr_count==t.frt) {
-			msg->completed=0x01;
-			msg->data.rewind();
-			msg->cmd=msg->data.getU16();
-			msg->data.rewind();
+		if(rcv->fr_count==t->frt) {
+			// We are done!
+			rcv->data.rewind();
+			rcv->cmd=rcv->data.getU16();
+			rcv->data.rewind();
 
-			if (t.sn == clientPs) {
-				waitingForFragments = false;
-			}
-		} else {
-			msg->fr_count++;
-
-			if (t.sn == clientPs) {
-				waitingForFragments = true;
-			}
+			tNetEvent *evt=new tNetEvent(getIte(), UNET_MSGRCV, rcv);
+			net->events->add(evt);
+			rcv = NULL;
+		}
+		else {
+			rcv->fr_count++;
 		}
 	}
-
+	delete t;
 }
 
-/**
-	\return 2 - neither parse nor send ack (the packet is after what we expected)
-	\return 1 - send ack, but don't parse (we already parsed the packet)
-	\return 0 - parse and send ack (it's exactly what we need)
-*/
-Byte tNetSession::checkDuplicate(tUnetUruMsg &msg) {
-	/* There is one problem with this way of checking duplicates: If the first packet of a fragmented message is lost, the additional ones
-	   will be dropped. Since there is no sane way to work around that, we have to live with it. */
-	if (msg.ps < clientPs) { // we already got that one - ack it, but don't parse again
-		net->log->log("%s INF: Dropped already parsed packet %d.%d (last ack is %d, expected %d)\n", str(), msg.sn, msg.frn, msg.ps, clientPs);
-		net->log->flush();
-		return 1; // we already got it, send an ack
-	}
-	else if (msg.ps > clientPs) { // we missed something in between
-		net->log->log("%s INF: Dropped unexpected packet %d.%d (last ack is %d, expected %d)\n", str(), msg.sn, msg.frn, msg.ps, clientPs);
-		net->log->flush();
-		return 2; // we can not parse it, the peer has to send it again
-	}
-	else if (waitingForFragments && msg.sn != clientPs) { // we have a not-yet complete message and this packet does not belong to it
-		net->log->log("%s INF: Dropped unexpected packet %d.%d (%d is not yet complete)\n", str(), msg.sn, msg.frn, clientPs);
-		net->log->flush();
-		return 2; // we can not parse it, the peer has to send it again
-	}
-	else if (!waitingForFragments && msg.sn == clientPs) { // this message belongs to the one we already completed, so don't parse it again
-		net->log->log("%s INF: Dropped already parsed packet %d.%d (%d is already complete)\n", str(), msg.sn, msg.frn, clientPs);
-		net->log->flush();
-		return 1; // we already got it, send an ack
-	}
-	DBG(5, "accepted packet %d.%d\n", msg.sn, msg.frn);
-	
-	if (msg.tf & UNetAckReq) {
-		clientPs = msg.sn;
-	}
-	return 0;
-#if 0
-	//drop already parsed messages
-	#ifdef ENABLE_MSGDEBUG
-	net->log->log("%s INF: SN %i (Before) window is (wite: %d):\n",str(),msg.sn,wite);
-	net->log->dumpbuf((Byte *)w,rcv_win);
-	net->log->nl();
-	net->log->flush();
-	#endif
-	
-	// Note: for fragmented messages, already parsed packets can not be dropped as all fragments have the same SN.
-	// As a result of this, a fragmented message will be parsed twice if it is recieved twice.
-	// A solution would be to only mark the packet as recieved after all fragments were recieved, but
-	//  that would have to be done in tNetSession::assembleMessage
-	
-	if (wite == 0 || msg.sn >= (wite+rcv_win)) {
-		net->err->log("%s INF: Dropped packet %i after the window by sn (wite: %i)\n",str(),msg.sn,wite);
-		net->err->flush();
-		return 2;
-	} else if(msg.sn < wite) { // this means we already parsed it
-		if (msg.frn == 0) {
-			net->err->log("%s INF: Dropped packet %i before the window by sn (wite: %i)\n",str(),msg.sn,wite);
-			net->err->flush();
-			return 1;
-		} else { // it's fragmented but out of the window, so we can't do anything (see above)
-			return 0;
-		}
-	} else { //then check if is already marked
-		U32 i,start,ck;
-		start=wite % (rcv_win*8);
-		i=msg.sn % (rcv_win*8);
-		if(((w[i/8] >> (i%8)) & 0x01) && msg.frn==0) { // don't drop fragmented messages, see above
-			net->err->log("%s INF: Dropped already parsed packet %i\n",str(),msg.sn);
-			net->err->flush();
-			return 1;
-		} else {
-			w[i/8] |= (0x01<<(i%8)); //activate bit
-			while((i==start && ((w[i/8] >> (i%8)) & 0x01))) { //move the iterator
-				w[i/8] &= ~(0x01<<(i%8)); //deactivate bit
-				i++; start++;
-				wite++;
-				if(i>=rcv_win*8) { i=0; start=0; }
-				#ifdef ENABLE_MSGDEBUG
-				net->log->log("%s INF: A bit was deactivated (1)\n",str());
-				#endif
-			}
-			ck=(i < start ? i+(rcv_win*8) : i);
-			while((ck-start)>((rcv_win*8)/2)) {
-				DBG(9,"ck: %i,start:%i\n",ck,start);
-				w[start/8] &= ~(0x01<<(start%8)); //deactivate bit
-				start++;
-				wite++;
-				if(start>=rcv_win*8) { start=0; ck=i; }
-				#ifdef ENABLE_MSGDEBUG
-				net->log->log("%s INF: A bit was deactivated (2)\n",str());
-				#endif
-			}
-			#ifdef ENABLE_MSGDEBUG
-			net->log->log("%s INF: Packet %i accepted to be parsed\n",str(),msg.sn);
-			#endif
+/** Saves a received, not-yet accepted message for future use */
+void tNetSession::queueReceivedMessage(tUnetUruMsg *msg)
+{
+	net->log->log("Queuing %d.%d for future use (can not yet accept it - last ack: %d.%d, expected: %d.%d)\n", msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
+	tUnetUruMsg *cur;
+	rcvq->rewind();
+	// the queue is sorted ascending
+	while ((cur = rcvq->getNext())) {
+		if (compareMsgNumbers(msg->sn, msg->frn, cur->sn, cur->frn) < 0) {// we have to put it after the current one!
+			rcvq->insertBefore(msg);
+			return;
 		}
 	}
-	#ifdef ENABLE_MSGDEBUG
-	net->log->log("%s INF: SN %i (after) window is (wite: %d):\n",str(),msg.sn,wite);
-	net->log->dumpbuf((Byte *)w,rcv_win);
-	net->log->nl();
-	net->log->flush();
-	#endif
-	return 0;
-#endif
+	rcvq->add(msg); // insert it at the end
+}
+
+/** Checks if messages saved by queueReceivedMessage can now be used */
+void tNetSession::checkQueuedMessages(void)
+{
+	rcvq->rewind();
+	tUnetUruMsg *cur = rcvq->getNext();
+	while (cur) {
+		int ret = compareMsgNumbers(cur->ps, cur->pfr, clientMsg.ps, clientMsg.pfr);
+		if (ret < 0) rcvq->deleteCurrent(); // old packet
+		else if (ret == 0) acceptMessage(rcvq->unstackCurrent());
+		else return; // These can still not be accepted
+		cur = rcvq->getCurrent();
+	 }
 }
 
 /** creates an ack in the ackq */
@@ -883,25 +830,11 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 }
 
 /** Send, and re-send messages, update idle state and set netcore timeout (the last is NECESSARY - otherwise, the idle timer will be used) */
-void tNetSession::doWork() {
-
-	tNetEvent * evt;
-	tNetSessionIte ite(ip,port,sid);
-
+void tNetSession::doWork()
+{
 	ackUpdate(); //generate ack messages (i.e. put them from the ackq to the sndq)
 
-	idle = (ackq->isEmpty() && rcvq->isEmpty() && sndq->isEmpty());
-	
-	//check rcvq
-	if(!delayMessages && (ackq->len() == 0)) {
-		rcvq->rewind();
-		tUnetMsg * g = rcvq->getNext();
-		while((g=rcvq->getCurrent())) {
-			if (!g->completed) break; // if this is a non-completed message, don't parse it or what comes after it - it would be out of order
-			evt=new tNetEvent(ite, UNET_MSGRCV, rcvq->unstackCurrent());
-			net->events->add(evt);
-		}
-	}
+	idle = (ackq->isEmpty() && sndq->isEmpty());
 	
 	// for terminating session, make sure they are cleaned up on time
 	if (terminated)
@@ -949,7 +882,7 @@ void tNetSession::doWork() {
 						curmsg = sndq->getCurrent(); // this is the next one
 						//timeout event
 						net->sec->log("%s Timeout (didn't ack a packet)\n", str());
-						evt=new tNetEvent(ite,UNET_TIMEOUT);
+						tNetEvent *evt=new tNetEvent(getIte(),UNET_TIMEOUT);
 						net->events->add(evt);
 					} else {
 						cur_quota+=curmsg->size();
