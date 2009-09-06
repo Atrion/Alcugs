@@ -125,17 +125,18 @@ void tUnet::init() {
 	ip_overhead=20+8;
 
 	#ifdef ENABLE_NETDEBUG
-	lim_down_cap=0; //in bytes
-	lim_up_cap=0; //in bytes
+	lim_down_cap=5000; //in bytes
+	lim_up_cap=5000; //in bytes
 	in_noise=12; //(0-100)
 	out_noise=12; //(0-100)
 	latency=10000; //(in usecs)
-	cur_down_quota=0;
-	cur_up_quota=0;
 	quota_check_sec=0;
 	quota_check_usec=250000;
-	time_quota_check_sec=ntime_sec;
-	time_quota_check_usec=ntime_usec;
+	// the rest are controlling vairables, do not touch!
+	cur_down_quota=0;
+	cur_up_quota=0;
+	time_quota_check_sec=ntime.seconds;
+	time_quota_check_usec=ntime.microseconds;
 	#endif
 	
 }
@@ -554,11 +555,11 @@ int tUnet::Recv() {
 			n=0;
 		}
 		//check quotas
-		if(ntime_sec-time_quota_check_sec>quota_check_sec || ntime_usec-time_quota_check_usec>=quota_check_usec) {
+		if(ntime.seconds-time_quota_check_sec>quota_check_sec || ntime.microseconds-time_quota_check_usec>=quota_check_usec) {
 			cur_up_quota=0;
 			cur_down_quota=0;
-			time_quota_check_sec=ntime_sec;
-			time_quota_check_usec=ntime_usec;
+			time_quota_check_sec=ntime.seconds;
+			time_quota_check_usec=ntime.microseconds;
 		}
 		if(n>0 && lim_down_cap) {
 			if((cur_down_quota+n+ip_overhead)>lim_down_cap) {
@@ -741,11 +742,11 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 		msize=0;
 	}
 	//check quotas
-	if(ntime_sec-time_quota_check_sec>quota_check_sec || ntime_usec-time_quota_check_usec>=quota_check_usec) {
+	if(ntime.seconds-time_quota_check_sec>quota_check_sec || ntime.microseconds-time_quota_check_usec>=quota_check_usec) {
 		cur_up_quota=0;
 		cur_down_quota=0;
-		time_quota_check_sec=ntime_sec;
-		time_quota_check_usec=ntime_usec;
+		time_quota_check_sec=ntime.seconds;
+		time_quota_check_usec=ntime.microseconds;
 	}
 	if(msize>0 && lim_up_cap) {
 		if((cur_up_quota+msize+ip_overhead)>lim_up_cap) {
