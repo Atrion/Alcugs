@@ -498,7 +498,7 @@ namespace alc {
 						// kick the player since we cant be sure he doesnt lie about the KI
 						return -1; // parse error
 					}
-					u->setDelayMessages(true); // dont process any further messages till we verified the KI
+					u->setRejectMessages(true); // dont process any further messages till we verified the KI
 					tmCustomVaultCheckKi checkKi(vaultServer, setPlayer.ki, setPlayer.x, u->getSid(), u->uid);
 					send(checkKi);
 #ifdef ENABLE_UNET3
@@ -529,7 +529,7 @@ namespace alc {
 					return 1;
 				}
 				
-				client->setDelayMessages(false); // KI is checked, so we can process messages
+				client->setRejectMessages(false); // KI is checked, so we can process messages
 				if (kiChecked.status != 1) { // the avatar is NOT correct - kick the player
 					terminate(client, RNotAuthenticated);
 					return 1;

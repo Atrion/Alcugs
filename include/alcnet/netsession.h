@@ -72,7 +72,7 @@ public:
 	
 	inline void setTimeout(U32 tout) { conn_timeout=tout; }
 	inline void challengeSent(void) { if (authenticated == 0) authenticated = 10; }
-	inline void setDelayMessages(bool delay) { delayMessages = delay; }
+	inline void setRejectMessages(bool reject) { rejectMessages = reject; }
 	
 	inline int getSid(void) { return sid; }
 	inline Byte getPeerType() { return whoami; }
@@ -191,7 +191,7 @@ private:
 	
 	// other status variables
 	bool idle; //!< true when the session has nothing to do (all queue emtpy)
-	bool delayMessages; //!< when set to true, messages are kept in the recieve buffer
+	bool rejectMessages; //!< when set to true, messages are rejected (the other side has to send them again)
 	
 	bool terminated; //!< false: connection is established; true: a NetMsgTerminated was sent (and we expect a NetMsgLeave), or a NetMsgLeave was sent
 	
