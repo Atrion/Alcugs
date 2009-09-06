@@ -54,6 +54,8 @@ namespace alc {
 		
 	class tTrackingData : public tNetSessionData {
 	public:
+		typedef std::list<U32> tPlayerList;
+	
 		tTrackingData(void);
 		virtual ~tTrackingData(void) { delete childs; }
 		bool isLobby;
@@ -63,6 +65,7 @@ namespace alc {
 		char externalIp[100]; //!< the external IP (the ones palyers should use to connect to this server)
 		Byte agentGuid[8]; //!< set when isLobby = true, saves the fake guid for UruVision
 		U32 seqPrefix;
+		tPlayerList waitingPlayers;
 	};
 	
 	class tPlayer {
@@ -99,6 +102,7 @@ namespace alc {
 		void removeServer(tNetSession *game);
 		void findServer(tmCustomFindServer &findServer);
 		void forwardMessage(tmCustomDirectedFwd &directedFwd);
+		void playerCanCome(tNetSession *game, U32 ki);
 	private:
 		void load(void);
 		void unload(void);
@@ -106,6 +110,7 @@ namespace alc {
 		typedef std::list<tPlayer> tPlayerList;
 		
 		tPlayerList::iterator getPlayer(U32 ki);
+		void spawnServer(const char *age, const Byte *guid, U32 delay = 0);
 		void notifyWaiting(tNetSession *server);
 		void serverFound(tPlayer *player, tNetSession *server);
 		bool doesAgeLoadState(const char *age);

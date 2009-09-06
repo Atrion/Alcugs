@@ -368,8 +368,19 @@ namespace alc {
 	{ }
 	
 	//// tmCustomPlayerToCome
-	tmCustomPlayerToCome::tmCustomPlayerToCome(tNetSession *u)
-	 : tmMsgBase(NetMsgCustomPlayerToCome, plNetAck | plNetVersion, u)
+	tmCustomPlayerToCome::tmCustomPlayerToCome(tNetSession *u) : tmMsgBase(u)
 	{ }
+	
+	tmCustomPlayerToCome::tmCustomPlayerToCome(tNetSession *u, U32 ki)
+	 : tmMsgBase(NetMsgCustomPlayerToCome, plNetAck | plNetVersion | plNetKi, u)
+	{
+		this->ki = ki;
+	}
+	
+	void tmCustomPlayerToCome::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
+	}
 
 } //end namespace alc
