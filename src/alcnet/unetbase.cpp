@@ -162,9 +162,9 @@ void tUnetBase::reconfigure() {
 	if(!var.isNull()) {
 		max_flood_pkts=var.asU32();
 	}
-	var=cfg->getVar("net.snd_expire","global");
+	var=cfg->getVar("net.receive_ahead","global");
 	if(!var.isNull()) {
-		snd_expire=var.asU32();
+		receiveAhead=var.asU32();
 	}
 	#ifdef ENABLE_NETDEBUG
 	var=cfg->getVar("net.lim_down_cap","global");

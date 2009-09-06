@@ -506,7 +506,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 			net->log->log("WARN: Dropping re-sent old packet %d.%d (last ack: %d.%d, expected: %d.%d)\n", msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
 		}
 		else if (ret > 0) {
-			if (msg->sn <= clientMsg.ps+10)
+			if (net->receiveAhead && msg->sn <= clientMsg.ps+net->receiveAhead+1)
 				ret = 2; // preserve for future use
 			else
 				net->log->log("WARN: Dropped packet I can not yet parse: %d.%d (last ack: %d.%d, expected: %d.%d)\n", msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
@@ -570,45 +570,33 @@ void tNetSession::acceptMessage(tUnetUruMsg *t)
 
 	U32 frg_size = maxPacketSz - t->hSize();
 	if (!rcv) { // this is a brand new message
-		if (t->frn != 0)
-			throw txProtocolError(_WHERE("A message must always start with fragment 0, not %d", t->frn));
 		rcv=new tUnetMsg((t->frt+1) * frg_size);
 		rcv->sn=t->sn;
-		rcv->frt=t->frt;
-		rcv->hsize=t->hSize();
 	}
 	else {
-		if (rcv->sn != t->sn)
-			throw txProtocolError(_WHERE("I am assembling %d and received %d", rcv->sn, t->sn));
-		if (rcv->frt!=t->frt || rcv->hsize!=t->hSize())
-			throw(txProtocolError(_WHERE("Inconsistency on fragmented stream %i %i %i %i",rcv->frt,t->frt,rcv->hsize,t->hSize())));
+		if (rcv->sn != t->sn) throw txProtocolError(_WHERE("I am assembling %d and received %d?!?", rcv->sn, t->sn));
 	}
+	if (t->frn != rcv->fr_count) throw txProtocolError(_WHERE("Expected fragment %d, got %d\n", rcv->fr_count, t->frn));
 
-	if(!((rcv->check[t->frn/8] >> (t->frn%8)) & 0x01)) {
-		// found missing fragment
-		rcv->check[t->frn/8] |= (0x01<<(t->frn%8));
-		
-		if(t->frn==t->frt) { 
-			rcv->data.setSize((t->frt * frg_size) + t->data.size()); // correctly set the size of the whole message
-		}
-		
-		rcv->data.set(t->frn * frg_size);
-		t->data.rewind();
-		rcv->data.write(t->data.read(),t->data.size());
+	// Got the next one!
+	t->data.rewind();
+	rcv->data.write(t->data.read(),t->data.size());
 
-		if(rcv->fr_count==t->frt) {
-			// We are done!
-			rcv->data.rewind();
-			rcv->cmd=rcv->data.getU16();
-			rcv->data.rewind();
+	if(rcv->fr_count==t->frt) {
+		U32 size = t->frt * frg_size + t->data.size();
+		if (rcv->data.size() != size)
+			throw txProtocolError(_WHERE("Expected a size of %d, got %d\n", size, rcv->data.size()));
+		// We are done!
+		rcv->data.rewind();
+		rcv->cmd=rcv->data.getU16();
+		rcv->data.rewind();
 
-			tNetEvent *evt=new tNetEvent(getIte(), UNET_MSGRCV, rcv);
-			net->events->add(evt);
-			rcv = NULL;
-		}
-		else {
-			rcv->fr_count++;
-		}
+		tNetEvent *evt=new tNetEvent(getIte(), UNET_MSGRCV, rcv);
+		net->events->add(evt);
+		rcv = NULL;
+	}
+	else {
+		rcv->fr_count++;
 	}
 	delete t;
 }
