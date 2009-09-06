@@ -288,10 +288,12 @@ void tUnetUruMsg::store(tBBuf &t) {
 	}
 	pn=t.getU32();
 	tf=t.getByte();
-	if(tf & UNetExp) throw txUnexpectedData(_WHERE("Expansion flag not supported on this server version"));
+	// Catch unknown or unhandled flags
+	Byte check = UNetNegotiation | UNetAckReq | UNetAckReply | UNetExt;
+	if (tf & ~(check)) throw txUnexpectedData(_WHERE("Problem parsing uru msg flag %08X\n",tf & ~(check)));
+	// Catch invalid Flag combinations
 	if((tf & UNetNegotiation) && (tf & UNetAckReply)) throw txUnexpectedData(_WHERE("That must be a maliciusly crafted paquet, flags UNetAckReply and UNetNegotiation cannot be set at the same time"));
 	if((tf & UNetAckReq) && (tf & UNetAckReply)) throw txUnexpectedData(_WHERE("That must be a maliciusly crafted paquet, flags UNetAckReply and UNetAckReq cannot be set at the same time"));
-	if(tf & (UNetForce0 | UNetUrgent)) throw txUnexpectedData(_WHERE("Illegal flags %02X",tf));
 	if(tf & UNetExt) {
 		hsize-=8; //20 - 24
 		csn=t.getU32();
@@ -302,7 +304,10 @@ void tUnetUruMsg::store(tBBuf &t) {
 		frt=t.getByte();
 		if(t.getU32()!=0) throw txUnexpectedData(_WHERE("Non-zero unk2"));
 	}
-	if (frt > 0 && ((tf & UNetNegotiation) || (tf & UNetAckReply))) throw txProtocolError(_WHERE("Nego and ack packets must not be fragmented!"));
+	if (frt > 0 && ((tf & UNetNegotiation) || (tf & UNetAckReply)))
+		throw txProtocolError(_WHERE("Nego and ack packets must not be fragmented!"));
+	if (frt > 0 && !(tf & UNetAckReq))
+		throw txProtocolError(_WHERE("Non-acked packets must not be fragmented!"));
 	cps=t.getU32();
 	dsize=t.getU32();
 	if(dsize==0) throw txUnexpectedData(_WHERE("A zero sized message!?"));

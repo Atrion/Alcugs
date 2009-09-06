@@ -59,9 +59,10 @@ void tmTerminated::additionalFields() {
 
 tmLeave::tmLeave(tNetSession * u,U32 ki,Byte reason)
  :tmMsgBase(NetMsgLeave,plNetKi,u) {
- // the connection will be dropped immediately after recieving this message, an ack would already trigger a new one
+ // the connection will be dropped immediately after sending this message, the ack reply would already trigger a new one
 	this->ki=ki;
 	this->reason=reason;
+	setUrgent(); // We can not wait long after sending the message, so do it quickly!
 }
 void tmLeave::store(tBBuf &t) {
 	tmMsgBase::store(t);

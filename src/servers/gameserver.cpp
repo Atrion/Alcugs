@@ -546,7 +546,7 @@ namespace alc {
 				
 				// send members list
 				tmMembersList list(u);
-				list.members.reserve(smgr->getSize()); // avoid moving the member info structs
+				list.members.reserve(smgr->getCount()); // avoid moving the member info structs
 				tNetSession *session;
 				smgr->rewind();
 				while ((session = smgr->getNext())) {
