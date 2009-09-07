@@ -443,8 +443,7 @@ namespace alc {
 				if (authResponse.result == AAuthSucceeded) {
 					memcpy(client->uid, authResponse.uid, 16);
 					client->setAuthData(authResponse.accessLevel, authResponse.passwd.c_str());
-					if (whoami == KGame) client->setTimeout(loadingTimeout); // the client is still loading the age, so use higher timeout
-					else client->setTimeout(authedTimeout);
+					client->setTimeout(loadingTimeout); // use higher timeout - the client might be in the lobby (waiting for the user to work with the GUI) or loading an age
 					
 					tmAccountAutheticated accountAuth(client, authResponse.x, AAuthSucceeded, serverGuid);
 					send(accountAuth);
