@@ -78,7 +78,7 @@ namespace alc {
 		var = cfg->getVar("game.bin");
 		if (var.isNull()) {
 			var = cfg->getVar("bin");
-			if (var.isNull() < 2) throw txBase(_WHERE("game bin is not defined"));
+			if (var.size() < 2) throw txBase(_WHERE("game bin is not defined"));
 			strncpy(gameBin, var.c_str(), 255);
 			strncat(gameBin, "/uru_game", 255);
 		}

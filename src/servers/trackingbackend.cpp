@@ -555,7 +555,7 @@ namespace alc {
 				comma = true;
 			}
 			// create the message
-			tpKIMsg kiMsg(tUruObjectRef(), tStrBuf("Tracking Server"), 0, text);
+			tpKIMsg kiMsg = tpKIMsg(tUruObjectRef(), tStrBuf("Tracking Server"), 0, text);
 			kiMsg.flags = 0x00004248;
 			kiMsg.messageType = 0x0009; // private inter age chat
 			// send message
