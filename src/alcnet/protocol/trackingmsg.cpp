@@ -263,17 +263,17 @@ namespace alc {
 	tmCustomForkServer::tmCustomForkServer(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
-	tmCustomForkServer::tmCustomForkServer(tNetSession *u, U16 port, const char *serverGuid, const char *name, bool loadSDL)
+	tmCustomForkServer::tmCustomForkServer(tNetSession *u, U16 port, const char *serverGuid, const char *name)
 	: tmMsgBase(NetMsgCustomForkServer, plNetAck | plNetVersion, u), serverGuid(serverGuid), age(name)
 	{
 		this->x = 0;
 		this->ki = 0;
 #ifdef ENABLE_UNET3
 		if (u->proto == 1 || u->proto == 2) setFlags(plNetX | plNetKi); // older protocols have this set, but the value is ignored
+		loadSDL = true;
 #endif
 		
 		forkPort = port;
-		this->loadSDL = loadSDL;
 	}
 	
 	void tmCustomForkServer::store(tBBuf &t)
@@ -283,7 +283,10 @@ namespace alc {
 		t.get(serverGuid);
 		if (serverGuid.size() != 16) throw txProtocolError(_WHERE("NetMsgCustomForkServer.serverGuid must be 16 characters long"));
 		t.get(age);
-		loadSDL = t.getByte();
+#ifdef ENABLE_UNET3
+		if (t.eof()) loadSDL = true;
+		else loadSDL = t.getByte();
+#endif
 	}
 	
 	void tmCustomForkServer::stream(tBBuf &t) const
@@ -292,14 +295,18 @@ namespace alc {
 		t.putU16(forkPort);
 		t.put(serverGuid);
 		t.put(age);
-		t.putByte(loadSDL);
+#ifdef ENABLE_UNET3
+		t.putByte(loadSDL); // Even with a unet3+ lobby, the game server might be unet2
+#endif
 	}
 	
 	void tmCustomForkServer::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" Port: %d, Server GUID: %s, Age filename: %s, Load SDL state: ", forkPort, serverGuid.c_str(), age.c_str());
-		dbg.printBoolean(loadSDL);
+		dbg.printf(" Port: %d, Server GUID: %s, Age filename: %s", forkPort, serverGuid.c_str(), age.c_str());
+#ifdef ENABLE_UNET3
+		dbg.printBoolean(" Load SDL state: ", loadSDL);
+#endif
 	}
 	
 	//// tmCustomServerFound

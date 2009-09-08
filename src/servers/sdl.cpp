@@ -81,7 +81,11 @@ namespace alc {
 			}
 		}
 		
-		// load agestate from file
+		// Check if we should load the state
+		var = cfg->getVar("game.tmp.hacks.resetting_ages");
+		if (var.isNull()) var = "Kveer,Garden"; // see uru.conf.dist for explanation
+		bool ageLoadsState = doesAgeLoadState(var.c_str(), net->getName());
+		// load agestate from file (do the migration even if we should not load)
 		ageStateFile = cfg->getVar("game.agestates");
 		tStrBuf alternativeStateFile = alcLogGetLogPath() + "/agestate.raw";
 		if (ageStateFile.isNull()) { // fall back to old system
@@ -93,8 +97,7 @@ namespace alc {
 			if (access(alternativeStateFile.c_str(), F_OK) == 0)
 				rename(alternativeStateFile.c_str(), ageStateFile.c_str());
 		}
-		var = cfg->getVar("game.load_agestate");
-		if (!var.isNull() && var.asByte()) { // disabled per default - set by tracking via command line
+		if (ageLoadsState) {
 			loadAgeState();
 		}
 		else { // in case the server crashes, remove state to really reset it
@@ -119,6 +122,21 @@ namespace alc {
 			delete *it;
 			it = clones.erase(it);
 		}
+	}
+	
+	bool tAgeStateManager::doesAgeLoadState(const char *resettingAges, const char *age)
+	{
+		// local copy of resetting age list as strsep modifies it
+		char ages[1024];
+		strcpy(ages, resettingAges);
+		
+		char *buf = ages;
+		char *p = strsep(&buf, ",");
+		while (p != 0) {
+			if (strcmp(p, age) == 0) return false;
+			p = strsep(&buf, ",");
+		}
+		return true;
 	}
 	
 	void tAgeStateManager::loadAgeState()

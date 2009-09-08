@@ -136,12 +136,13 @@ namespace alc {
 			log->log("Tracking driver started (%s)\n\n", __U_TRACKINGBACKEND_ID);
 			log->flush();
 		}
-		
+
+#ifdef ENABLE_UNET3
 		var = cfg->getVar("tracking.tmp.hacks.agestate");
 		loadAgeState = (var.isNull() || var.asByte());
 		var = cfg->getVar("tracking.tmp.hacks.resetting_ages");
-		if (var.isNull()) strcpy(resettingAges, "Kveer,Garden"); // see uru.conf.dist for explanation
-		else strncpy(resettingAges, var.c_str(), 1023);
+		strncpy(resettingAges, var.c_str(), 1023);
+#endif
 		
 		var = cfg->getVar("track.html");
 		statusHTML = (!var.isNull() && var.asByte());
@@ -285,12 +286,12 @@ namespace alc {
 		}
 		lowest += data->portStart;
 		// ok, telling the lobby to fork
-		bool loadState = doesAgeLoadState(age);
-		tmCustomForkServer forkServer(lobby, lowest, alcGetStrGuid(guid), age, loadState);
+		tmCustomForkServer forkServer(lobby, lowest, alcGetStrGuid(guid), age);
+#ifdef ENABLE_UNET3
+		forkServer.loadSDL = doesAgeLoadState(age);
+#endif
 		net->send(forkServer, delay);
-		log->log("Spawning new game server %s (Server GUID: %s, port: %d) on %s ", age, alcGetStrGuid(guid), lowest, lobby->str());
-		if (loadState) log->print("(loading age state)\n");
-		else log->print("(not loading age state)\n");
+		log->log("Spawning new game server %s (Server GUID: %s, port: %d) on %s\n", age, alcGetStrGuid(guid), lowest, lobby->str());
 	}
 	
 	void tTrackingBackend::notifyWaiting(tNetSession *server)
@@ -498,6 +499,7 @@ namespace alc {
 		}
 	}
 	
+#ifdef ENABLE_UNET3
 	bool tTrackingBackend::doesAgeLoadState(const char *age)
 	{
 		if (!loadAgeState) return false;
@@ -514,6 +516,7 @@ namespace alc {
 		}
 		return true;
 	}
+#endif
 	
 	void tTrackingBackend::forwardMessage(tmCustomDirectedFwd &directedFwd)
 	{

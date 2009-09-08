@@ -49,6 +49,8 @@ namespace alc {
 
 	////IMPLEMENTATION
 void alcNetSetConfigAliases() {
+	// This is called AFTER the current server's settings are copied to global!
+
 	tConfig * cfg;
 	tStrBuf val;
 	cfg=alcGetConfig();
@@ -68,6 +70,20 @@ void alcNetSetConfigAliases() {
 	cfg->copyKey("auth.port","auth_server_port","global","global");
 	cfg->copyKey("vault.port","vault_server_port","global","global");
 	cfg->copyKey("tracking.port","tracking_server_port","global","global");
+
+	val=cfg->getVar("bandwidth","global");
+	if(!val.isNull()) {
+		val=cfg->getVar("net.up","global");
+		if(val.isNull()) {
+			cfg->copyKey("net.up","bandwidth","global","global");
+		}
+		val=cfg->getVar("net.down","global");
+		if(val.isNull()) {
+			cfg->copyKey("net.down","bandwidth","global","global");
+		}
+	}
+	
+	// Everything below here is legacy settings support!
 
 #if 0
 	//check some things
@@ -103,18 +119,6 @@ void alcNetSetConfigAliases() {
 	cfg->copyKey("net.timeout","connection_timeout","global","global");
 	cfg->copyKey("net.maxconnections","max_clients","global","global");
 	//cfg->copyKey("max_population","max_players","global","global");
-
-	val=cfg->getVar("bandwidth","global");
-	if(!val.isNull()) {
-		val=cfg->getVar("net.up","global");
-		if(val.isNull()) {
-			cfg->copyKey("net.up","bandwidth","global","global");
-		}
-		val=cfg->getVar("net.down","global");
-		if(val.isNull()) {
-			cfg->copyKey("net.down","bandwidth","global","global");
-		}
-	}
 
 	val=cfg->getVar("disabled","global");
 	if(!val.isNull()) {
@@ -218,6 +222,11 @@ void alcNetSetConfigAliases() {
 			break;
 	}
 #endif
+
+	if (cfg->getVar("game.tmp.hacks.resetting_ages", "global").isNull()) {
+		cfg->copyKey("game.tmp.hacks.resetting_ages", "tracking.tmp.hacks.resetting_ages", "global", "global");
+		cfg->copyKey("game.tmp.hacks.resetting_ages", "tracking.tmp.hacks.resetting_ages", "global", "tracking");
+	}
 }
 
 } //end namespace alc

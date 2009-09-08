@@ -123,17 +123,6 @@ port = 2011
 # enable/disable tracking logging
 ;tracking.log = 1 # default 1
 
-# Age state settings
-;tracking.tmp.hacks.agestate = 1 # enable age state saving (on by default)
-# The following list was carefully chosen, please think before editing it
-# Kveer: for gameplay
-# Garden: to fix the rain bug
-;tracking.tmp.hacks.resetting_ages = "Kveer,Garden"
-# Depending on your setup (especially if you don't use the Offline KI) some more ages should be added here
-# Cleft: for Relto book -- required if someone doesn't finish Cleft on first try (but only if Cleft is not instanced)
-# DniCityX2Finale,GreatZero,Neighborhood02: for gameplay
-# Myst,Personal02,RestorationGuild,spyroom: for reward clothing
-
 # Status file settings
 ;track.html = 0 # Enable standard online players html output (default 0)
 ;track.html.path = "/var/www/status/status.html" # Set file for online players list
@@ -191,9 +180,17 @@ stop = 1
 #  be overwritten (for configuring the log files used by the game server, see game.log in the [lobby] section)
 log.n_rotate = 2 # keep only one old version of the game server logfiles (to avoid filling the disk too much)
 
-# enable/disable game sverer agestate logging
-;agestate.log = 1 # default 1
+# Age state settings
+;agestate.log = 1 # enable/disable game sverer agestate logging (default 1)
 ;agestate.log.detailed = 0 # print details about the content of the sent and received SDL and LoadClone messages (default 0)
+# The following list was carefully chosen, please think before editing it
+# Kveer: for gameplay
+# Garden: to fix the rain bug
+;game.tmp.hacks.resetting_ages = "Kveer,Garden"
+# Depending on your setup (especially if you don't use the Offline KI) some more ages should be added here
+# Cleft: for Relto book -- required if someone doesn't finish Cleft on first try (but only if Cleft is not instanced)
+# DniCityX2Finale,GreatZero,Neighborhood02: for gameplay (fixed by instancing DniCityX2Finale and using Offline KI)
+# Myst,Personal02,RestorationGuild,spyroom: for reward clothing (fixed by Offline KI)
 
 # game server linger time: How long to wait before shutting down after the last player left? (0 = do not shut down)
 game.linger_time = 120 # default: 120

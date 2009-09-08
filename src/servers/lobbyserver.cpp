@@ -277,10 +277,12 @@ namespace alc {
 					
 					// if the server was put in daemon mode, th lobby would get the SIGCHILD immediately after starting, so it'd
 					// be useless for debugging
+#ifdef ENABLE_UNET3
 					if (forkServer.loadSDL)
 						execlp(gameBin, gameBin,"-p",gamePort,"-guid",gameGuid,"-name",gameName,
 								"-log",gameLog,"-c",gameConfig,"-v","0","-L",NULL);
 					else
+#endif
 						execlp(gameBin, gameBin,"-p",gamePort,"-guid",gameGuid,"-name",gameName,
 								"-log",gameLog,"-c",gameConfig,"-v","0",NULL);
 					
