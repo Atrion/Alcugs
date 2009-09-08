@@ -133,6 +133,8 @@ int u_parse_arguments(int argc, char * argv[]) {
 			tStrBuf val(argv[i]);
 			opt=opt.substring(2,opt.size()-2);
 			cfg->setVar(val.c_str(),opt.c_str(),"cmdline");
+		} else if(!strcmp(argv[i],"-L")) {
+			lstd->log("The \"-L\" option is no longer supported and will be ignored.\n");
 		} else {
 			parameters_usage();
 			return -1;

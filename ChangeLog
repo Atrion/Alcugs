@@ -5,6 +5,7 @@ Improvements:
 - The age states are now saved in the directory specified by game.agestates (with an automatic migration from the old system)
 - The tracking server requires a confirmation from the game server that it is still alive before sending a player there - this hopefully fixes a lot of "Authentication Failed" crashes while linking
 - Changed way of dealing with lost packages to hopefully result in a much better connection when some packets are lost (less re-sends should be necessary)
+- Game server now decides whether an agestate is loaded or not: "tracking".tmp.hacks.resetting_ages" has therefore been renamed to "game.tmp.hacks.resetting_ages"
 
 Bugfixes:
 - Fixed much too slow parsing of incoming messages under some circumstances
