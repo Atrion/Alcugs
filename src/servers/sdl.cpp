@@ -101,6 +101,7 @@ namespace alc {
 			loadAgeState();
 		}
 		else { // in case the server crashes, remove state to really reset it
+			log->log("Not loading the age state - starting from scratch\n");
 			unlink(ageStateFile.c_str());
 			ageStateFile.clear(); // don't save age state
 		}
