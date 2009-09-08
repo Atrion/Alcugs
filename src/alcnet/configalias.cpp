@@ -118,36 +118,11 @@ void alcNetSetConfigAliases() {
 	//unet
 	cfg->copyKey("net.timeout","connection_timeout","global","global");
 	cfg->copyKey("net.maxconnections","max_clients","global","global");
-	//cfg->copyKey("max_population","max_players","global","global");
 
 	val=cfg->getVar("disabled","global");
 	if(!val.isNull()) {
 		cfg->copyKey("stop","disabled","global","global");
 	}
-
-	//shard public info
-	/*cfg->copyKey("shard.name","shard_name","global","global");
-	cfg->copyKey("shard.website","shard_website","global","global");
-	cfg->copyKey("shard.desc","shard_description","global","global");
-	cfg->copyKey("shard.passwd","shard_password","global","global");
-	cfg->copyKey("shard.passwd","shard.password","global","global");
-	cfg->copyKey("shard.contact","shard_contact","global","global");
-
-	val=cfg->getVar("shard.name","global");
-	if(val.isNull()) {
-		cfg->setVar("Unnamed Alcugs shard","shard.name","global");
-	}
-	val=cfg->getVar("shard.website","global"); // http://huru.almlys.dyns.net/unconfigured.php does no longer exist
-	if(val.isNull()) {
-		cfg->setVar("http://huru.almlys.dyns.net/unconfigured.php",\
-		"shard.website","global");
-	}
-	val=cfg->getVar("shard.desc","global");
-	if(val.isNull()) {
-		cfg->setVar("Generic unconfigured Alcugs shard",\
-		"shard.desc","global");
-	}
-	cfg->copyKey("meta","enable_metaserver","global","global");*/
 
 	cfg->copyKey("vault.hood.name","neighborhood_name","global","global");
 	cfg->copyKey("vault.hood.desc","neighborhood_comment","global","global");
@@ -175,53 +150,6 @@ void alcNetSetConfigAliases() {
 			cfg->setVar("2","tracking.protocol","global");
 		}
 	}
-
-#if 0
-	val=cfg->getVar("dataset","global");
-	if(val.isNull()) {
-		val="-1";
-		cfg->setVar("-1","dataset","global");
-	}
-	
-	switch(val.asS32()) {
-		case -1:
-			cfg->setVar("undef","dataset.tag","global");
-			break;
-		case 0:
-			cfg->setVar("custom","dataset.tag","global");
-			break;
-		case 1:
-			cfg->setVar("prime","dataset.tag","global");
-			break;
-		case 2:
-			cfg->setVar("prime12","dataset.tag","global");
-			break;
-		case 3:
-			cfg->setVar("live","dataset.tag","global");
-			break;
-		case 4:
-			cfg->setVar("todni","dataset.tag","global");
-			break;
-		case 5:
-			cfg->setVar("tpots","dataset.tag","global");
-			break;
-		case 6:
-			cfg->setVar("stable","dataset.tag","global");
-			break;
-		case 7:
-			cfg->setVar("testing","dataset.tag","global");
-			break;
-		case 8:
-			cfg->setVar("hacking","dataset.tag","global");
-			break;
-		case 9:
-			cfg->setVar("uu","dataset.tag","global");
-			break;
-		default:
-			cfg->copyKey("dataset.tag","dataset","global","global");
-			break;
-	}
-#endif
 
 	if (cfg->getVar("game.tmp.hacks.resetting_ages", "global").isNull()) {
 		cfg->copyKey("game.tmp.hacks.resetting_ages", "tracking.tmp.hacks.resetting_ages", "global", "global");
