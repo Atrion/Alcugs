@@ -85,27 +85,6 @@ void alcNetSetConfigAliases() {
 	
 	// Everything below here is legacy settings support!
 
-#if 0
-	//check some things
-	// unused (no CGAS support implemented or planned):
-	val=cfg->getVar("allow_unknown_accounts","global");
-	if(!val.isNull() && val.asByte()==0) {
-		val="";
-		val.printf("%i",AcNotActivated);
-		cfg->setVar(val.c_str(),"default_access_level","global");
-	}
-
-	cfg->copyKey("auth.reg","auto_register_account","global","global");
-	cfg->copyKey("auth.reg.db","auto_register_account","global","global");
-
-	val=cfg->getVar("default_access_level","global");
-	if(!val.isNull() && val.asU32()>=AcNotRes) {
-		val="";
-		val.printf("%i",AcPlayer);
-		cfg->setVar(val.c_str(),"default_access_level","global");
-	}
-#endif
-
 	//database
 	cfg->copyKey("db.host","db_server","global","global");
 	cfg->copyKey("db.name","db_name","global","global");
@@ -119,38 +98,11 @@ void alcNetSetConfigAliases() {
 	cfg->copyKey("net.timeout","connection_timeout","global","global");
 	cfg->copyKey("net.maxconnections","max_clients","global","global");
 
-	val=cfg->getVar("disabled","global");
-	if(!val.isNull()) {
-		cfg->copyKey("stop","disabled","global","global");
-	}
-
+	//vault
 	cfg->copyKey("vault.hood.name","neighborhood_name","global","global");
 	cfg->copyKey("vault.hood.desc","neighborhood_comment","global","global");
 
-	//protocol stuff
-	//0-latest
-	//1-unet2
-	//2-unet3
-	//3-unet3+
-	val=cfg->getVar("auth.oldprotocol","global");
-	if(!val.isNull()) {
-		if(val.asByte()) {
-			cfg->setVar("2","auth.protocol","global");
-		}
-	}
-	val=cfg->getVar("vault.oldprotocol","global");
-	if(!val.isNull()) {
-		if(val.asByte()) {
-			cfg->setVar("2","vault.protocol","global");
-		}
-	}
-	val=cfg->getVar("tracking.oldprotocol","global");
-	if(!val.isNull()) {
-		if(val.asByte()) {
-			cfg->setVar("2","tracking.protocol","global");
-		}
-	}
-
+	//game
 	if (cfg->getVar("game.tmp.hacks.resetting_ages", "global").isNull()) {
 		cfg->copyKey("game.tmp.hacks.resetting_ages", "tracking.tmp.hacks.resetting_ages", "global", "global");
 		cfg->copyKey("game.tmp.hacks.resetting_ages", "tracking.tmp.hacks.resetting_ages", "global", "tracking");
