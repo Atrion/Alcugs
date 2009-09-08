@@ -73,6 +73,7 @@ namespace alc {
 		typedef std::vector<tpLoadCloneMsg *> tCloneList;
 		typedef std::list<tSdlState> tSdlList;
 		
+		bool doesAgeLoadState(const char *resettingAges, const char *age);
 		void loadAgeState();
 		void saveAgeState();
 		

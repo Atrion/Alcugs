@@ -72,7 +72,6 @@ void parameters_usage() {
  -f : Force to start the servers including if parse errors occured\n\
  -guid XXXXXXXX: Set the server guid [kGame]\n\
  -name XXXXX: Set the age filename [kGame]\n\
- -L: Load age state from file [kGame]\n\
  -log folder: Set the logging folder\n\
  -bcast 1/0: Enable/disable server broadcasts\n\
  -l: Shows the servers license\n\
@@ -123,8 +122,6 @@ int u_parse_arguments(int argc, char * argv[]) {
 		} else if(!strcmp(argv[i],"-log") && argc>i+1) {
 			i++;
 			cfg->setVar(argv[i],"log_files_path","cmdline");
-		} else if(!strcmp(argv[i],"-L")) {
-			cfg->setVar("1","game.load_agestate","cmdline");
 		} else if(!strcmp(argv[i],"-bcast") && argc>i+1) {
 			i++;
 			cfg->setVar(argv[i],"broadcast","cmdline");

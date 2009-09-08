@@ -78,14 +78,16 @@ namespace alc {
 	class tmCustomForkServer : public tmMsgBase {
 	public:
 		tmCustomForkServer(tNetSession *u);
-		tmCustomForkServer(tNetSession *u, U16 port, const char *serverGuid, const char *name, bool loadSDL);
+		tmCustomForkServer(tNetSession *u, U16 port, const char *serverGuid, const char *name);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		// format
 		U16 forkPort;
 		tUStr serverGuid;
 		tStrBuf age;
+#ifdef ENABLE_UNET3
 		Byte loadSDL;
+#endif
 	protected:
 		virtual void additionalFields();
 	};

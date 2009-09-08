@@ -113,7 +113,6 @@ namespace alc {
 		void spawnServer(const char *age, const Byte *guid, U32 delay = 0);
 		void notifyWaiting(tNetSession *server);
 		void serverFound(tPlayer *player, tNetSession *server);
-		bool doesAgeLoadState(const char *age);
 		void printStatusHTML(bool dbg = false);
 		void printStatusXML(void);
 		void printLobbyXML(FILE *f, tNetSession *lobby, tTrackingData *data);
@@ -129,10 +128,13 @@ namespace alc {
 		const char *host;
 		U16 port;
 		Byte fakeLobbyGuid[8]; //!< saves the GUID for the fake lobby (for UruVision)
-		
 		tGuidGen *guidGen;
+
+#ifdef ENABLE_UNET3
+		bool doesAgeLoadState(const char *age);
 		char resettingAges[1024];
 		bool loadAgeState;
+#endif
 		
 		bool statusFileUpdate;
 		bool statusHTML, statusHTMLdbg, statusXML;
