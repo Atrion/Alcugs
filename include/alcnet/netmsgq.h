@@ -35,7 +35,9 @@
 
 namespace alc {
 
-template <class T> class tUnetMsgQ {
+template <class T>
+class tUnetMsgQ
+{
 public:
 	tUnetMsgQ() {
 		first=last=current=prev=NULL;
@@ -137,7 +139,6 @@ private:
 	T* prev;
 	U32 n;
 };
-
 
 }
 

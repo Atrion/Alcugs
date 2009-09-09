@@ -55,8 +55,6 @@ void _alcVersionInitVars() {
 	sprintf(p1,"%s\nId: %s\n",alcXSNAME,alcXID);
 	sprintf(p,"Alcugs %s %s - Version %s\n",alcXBUILDINFO,_PLATFORM_,alcSTR_VER);
 	strcat(p1,p);
-	//sprintf(p,"Supported Uru protocols 12.0-12.7\n");
-	//strcat(p1,p);
 	sprintf(p,"Unet 3+ Protocol %i.%i\n",alcProtoMAX_VER,alcProtoMIN_VER);
 	strcat(p1,p);
 	//long

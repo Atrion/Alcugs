@@ -41,9 +41,6 @@
 namespace alc {
 
 	////DEFINITIONS
-	/**
-		If we want to do it well and nice, we should add pre and post conditions here.
-	*/
 	void alcNetSetConfigAliases();
 
 } //End alc namespace

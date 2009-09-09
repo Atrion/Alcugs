@@ -38,6 +38,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_MSGPARSERS_H_ID "$Id$"
 
+// A convenience header file including all message parser headers
 #include "protocol/lobbybasemsg.h"
 #include "protocol/lobbymsg.h"
 #include "protocol/gamemsg.h"

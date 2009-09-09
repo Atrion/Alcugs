@@ -40,10 +40,7 @@
 
 namespace alc {
 
-	////DEFINITIONS
-	/**
-		If we want to do it well and nice, we should add pre and post conditions here.
-	*/
+////DEFINITIONS
 
 int alcUnetReloadConfig(bool firsttime=false);
 
