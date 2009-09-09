@@ -1,7 +1,9 @@
 These are come scripts which are useful when running an Alcugs Shard:
 
-- adduser.php (my MercAngel): Copy this somewhere into your webserver's htdocs directory. It creates users for the Shard.
+- adduser.php + adduser-config.php (my MercAngel): Copy this somewhere into your webserver's htdocs directory. It creates users for the Shard.
   To make a user an admin, create it normally and then use phpmyadmin or something similar to change the access level to 0 (meaning full access)
-- control-servers.sh: After chaning some paths at the beginning of the file, this script can be used to start and stop the Alcugs servers.
+- control-servers.sh + control-config.sh: After chaning some paths at the beginning of the file, this script can be used to start and stop the Alcugs servers.
 - log-filter.sh: run it in the log-directory of one of the servers with "problems" or "infos" as argument.
   It will filter the logfiles accordingly.
+
+Generally, there should be no need to touch the scripts themselves (so if you use symlinks, they can still be upgraded). Everything which should be changed is in the config files.

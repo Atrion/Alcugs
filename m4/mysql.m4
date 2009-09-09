@@ -106,7 +106,7 @@ AC_DEFUN([AC_ALC_MYSQL], [
   AC_MSG_RESULT([yes])
   CPPFLAGS="$ac_alc_cached_CPPFLAGS"
   LDFLAGS="$ac_alc_cached_LDFLAGS"
-  # I don't actually understand what I do here, but the "$MYSQL_LIBS" in the next line is necessary for the auth server to compile
+  # I don't actually understand what I do here, but the "$MYSQL_LIBS" in the next line is necessary for the auth server to compile - so better not touch it
 	LIBS="$ac_alc_cached_LIBS $MYSQL_LIBS"
   AC_SUBST(MYSQL_CPPFLAGS)
   AC_SUBST(MYSQL_LDFLAGS)
