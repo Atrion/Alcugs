@@ -52,8 +52,8 @@
 		here http://sourceforge.net/projects/libmd5-rfc/
  */
 
-#ifndef md5_INCLUDED
-#  define md5_INCLUDED
+#ifndef MD5_H
+#  define MD5_H
 
 /*
  * This package supports both compile-time and run-time determination of CPU
@@ -96,4 +96,4 @@ void MD5(const unsigned char *buf, int size, unsigned char *hash);
 }  /* end extern "C" */
 #endif
 
-#endif /* md5_INCLUDED */
+#endif /* MD5_H */

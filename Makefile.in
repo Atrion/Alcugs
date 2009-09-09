@@ -113,7 +113,7 @@ am_libalcnet1_a_OBJECTS = libalcnet1_a-unet.$(OBJEXT) \
 	libalcnet1_a-netlog.$(OBJEXT) \
 	libalcnet1_a-netsession.$(OBJEXT) \
 	libalcnet1_a-netsessionmgr.$(OBJEXT) \
-	libalcnet1_a-netmsgq.$(OBJEXT) libalcnet1_a-protocol.$(OBJEXT) \
+	libalcnet1_a-protocol.$(OBJEXT) \
 	libalcnet1_a-unetbase.$(OBJEXT) \
 	libalcnet1_a-umsgbasic.$(OBJEXT) \
 	libalcnet1_a-configalias.$(OBJEXT) \
@@ -357,7 +357,6 @@ libalcnet1_a_SOURCES = \
  src/alcnet/netlog.cpp \
  src/alcnet/netsession.cpp \
  src/alcnet/netsessionmgr.cpp \
- src/alcnet/netmsgq.cpp \
  src/alcnet/protocol/protocol.cpp \
  src/alcnet/unetbase.cpp \
  src/alcnet/protocol/umsgbasic.cpp \
@@ -679,7 +678,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcnet1_a-lobbybasemsg.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcnet1_a-lobbymsg.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcnet1_a-netlog.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcnet1_a-netmsgq.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcnet1_a-netsession.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcnet1_a-netsessionmgr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcnet1_a-protocol.Po@am__quote@
@@ -1059,20 +1057,6 @@ libalcnet1_a-netsessionmgr.obj: src/alcnet/netsessionmgr.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/alcnet/netsessionmgr.cpp' object='libalcnet1_a-netsessionmgr.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcnet1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libalcnet1_a-netsessionmgr.obj `if test -f 'src/alcnet/netsessionmgr.cpp'; then $(CYGPATH_W) 'src/alcnet/netsessionmgr.cpp'; else $(CYGPATH_W) '$(srcdir)/src/alcnet/netsessionmgr.cpp'; fi`
-
-libalcnet1_a-netmsgq.o: src/alcnet/netmsgq.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcnet1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libalcnet1_a-netmsgq.o -MD -MP -MF $(DEPDIR)/libalcnet1_a-netmsgq.Tpo -c -o libalcnet1_a-netmsgq.o `test -f 'src/alcnet/netmsgq.cpp' || echo '$(srcdir)/'`src/alcnet/netmsgq.cpp
-@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/libalcnet1_a-netmsgq.Tpo $(DEPDIR)/libalcnet1_a-netmsgq.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/alcnet/netmsgq.cpp' object='libalcnet1_a-netmsgq.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcnet1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libalcnet1_a-netmsgq.o `test -f 'src/alcnet/netmsgq.cpp' || echo '$(srcdir)/'`src/alcnet/netmsgq.cpp
-
-libalcnet1_a-netmsgq.obj: src/alcnet/netmsgq.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcnet1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libalcnet1_a-netmsgq.obj -MD -MP -MF $(DEPDIR)/libalcnet1_a-netmsgq.Tpo -c -o libalcnet1_a-netmsgq.obj `if test -f 'src/alcnet/netmsgq.cpp'; then $(CYGPATH_W) 'src/alcnet/netmsgq.cpp'; else $(CYGPATH_W) '$(srcdir)/src/alcnet/netmsgq.cpp'; fi`
-@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/libalcnet1_a-netmsgq.Tpo $(DEPDIR)/libalcnet1_a-netmsgq.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/alcnet/netmsgq.cpp' object='libalcnet1_a-netmsgq.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcnet1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libalcnet1_a-netmsgq.obj `if test -f 'src/alcnet/netmsgq.cpp'; then $(CYGPATH_W) 'src/alcnet/netmsgq.cpp'; else $(CYGPATH_W) '$(srcdir)/src/alcnet/netmsgq.cpp'; fi`
 
 libalcnet1_a-protocol.o: src/alcnet/protocol/protocol.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcnet1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libalcnet1_a-protocol.o -MD -MP -MF $(DEPDIR)/libalcnet1_a-protocol.Tpo -c -o libalcnet1_a-protocol.o `test -f 'src/alcnet/protocol/protocol.cpp' || echo '$(srcdir)/'`src/alcnet/protocol/protocol.cpp

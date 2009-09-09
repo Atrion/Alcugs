@@ -134,7 +134,7 @@
 #define LOG_AUTHPRIV    (10<<3) /* security/authorization messages (private) */
 #define LOG_FTP         (11<<3) /* ftp daemon */
 
-//another very important missing function
+// some missing functions
 int getuid(void);
 int daemon(int a,int b);
 unsigned int alarm(unsigned int sec);
