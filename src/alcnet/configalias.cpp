@@ -50,6 +50,7 @@ namespace alc {
 	////IMPLEMENTATION
 void alcNetSetConfigAliases() {
 	// This is called AFTER the current server's settings are copied to global!
+	// Also note that, when copying a value and both source and destination exist, the source is used!
 
 	tConfig * cfg;
 	tStrBuf val;
@@ -57,55 +58,55 @@ void alcNetSetConfigAliases() {
 	
 	// save the auth, tracking and vault host and port in global: [auth/tracking/vault] and global: [auth/tracking/vault].port
 	// use bind and port in the corresponding section
-	cfg->copyKey("auth","bind","global","auth");
-	cfg->copyKey("vault","bind","global","vault");
-	cfg->copyKey("tracking","bind","global","tracking");
-	cfg->copyKey("auth.port","port","global","auth");
-	cfg->copyKey("vault.port","port","global","vault");
-	cfg->copyKey("tracking.port","port","global","tracking");
+	cfg->copyValue("auth","bind","global","auth");
+	cfg->copyValue("vault","bind","global","vault");
+	cfg->copyValue("tracking","bind","global","tracking");
+	cfg->copyValue("auth.port","port","global","auth");
+	cfg->copyValue("vault.port","port","global","vault");
+	cfg->copyValue("tracking.port","port","global","tracking");
 	// if available, prefer global: [auth/tracking/vault]_server and global: [auth/tracking/vault]_server_port
-	cfg->copyKey("auth","auth_server","global","global");
-	cfg->copyKey("vault","vault_server","global","global");
-	cfg->copyKey("tracking","tracking_server","global","global");
-	cfg->copyKey("auth.port","auth_server_port","global","global");
-	cfg->copyKey("vault.port","vault_server_port","global","global");
-	cfg->copyKey("tracking.port","tracking_server_port","global","global");
+	cfg->copyValue("auth","auth_server","global","global");
+	cfg->copyValue("vault","vault_server","global","global");
+	cfg->copyValue("tracking","tracking_server","global","global");
+	cfg->copyValue("auth.port","auth_server_port","global","global");
+	cfg->copyValue("vault.port","vault_server_port","global","global");
+	cfg->copyValue("tracking.port","tracking_server_port","global","global");
 
 	val=cfg->getVar("bandwidth","global");
 	if(!val.isNull()) {
 		val=cfg->getVar("net.up","global");
 		if(val.isNull()) {
-			cfg->copyKey("net.up","bandwidth","global","global");
+			cfg->copyValue("net.up","bandwidth","global","global");
 		}
 		val=cfg->getVar("net.down","global");
 		if(val.isNull()) {
-			cfg->copyKey("net.down","bandwidth","global","global");
+			cfg->copyValue("net.down","bandwidth","global","global");
 		}
 	}
 	
 	// Everything below here is legacy settings support!
 
 	//database
-	cfg->copyKey("db.host","db_server","global","global");
-	cfg->copyKey("db.name","db_name","global","global");
-	cfg->copyKey("db.username","db_username","global","global");
-	cfg->copyKey("db.passwd","db_passwd","global","global");
-	cfg->copyKey("db.passwd","db_password","global","global");
-	cfg->copyKey("db.passwd","db.password","global","global");
-	cfg->copyKey("db.port","db_port","global","global");
+	cfg->copyValue("db.host","db_server","global","global");
+	cfg->copyValue("db.name","db_name","global","global");
+	cfg->copyValue("db.username","db_username","global","global");
+	cfg->copyValue("db.passwd","db_passwd","global","global");
+	cfg->copyValue("db.passwd","db_password","global","global");
+	cfg->copyValue("db.passwd","db.password","global","global");
+	cfg->copyValue("db.port","db_port","global","global");
 
 	//unet
-	cfg->copyKey("net.timeout","connection_timeout","global","global");
-	cfg->copyKey("net.maxconnections","max_clients","global","global");
+	cfg->copyValue("net.timeout","connection_timeout","global","global");
+	cfg->copyValue("net.maxconnections","max_clients","global","global");
 
 	//vault
-	cfg->copyKey("vault.hood.name","neighborhood_name","global","global");
-	cfg->copyKey("vault.hood.desc","neighborhood_comment","global","global");
+	cfg->copyValue("vault.hood.name","neighborhood_name","global","global");
+	cfg->copyValue("vault.hood.desc","neighborhood_comment","global","global");
 
 	//game
-	if (cfg->getVar("game.tmp.hacks.resetting_ages", "global").isNull()) {
-		cfg->copyKey("game.tmp.hacks.resetting_ages", "tracking.tmp.hacks.resetting_ages", "global", "global");
-		cfg->copyKey("game.tmp.hacks.resetting_ages", "tracking.tmp.hacks.resetting_ages", "global", "tracking");
+	if (cfg->getVar("game.tmp.hacks.resetting_ages", "global").isNull()) { // don't overwrite the new value if it exists
+		cfg->copyValue("game.tmp.hacks.resetting_ages", "tracking.tmp.hacks.resetting_ages", "global", "global");
+		cfg->copyValue("game.tmp.hacks.resetting_ages", "tracking.tmp.hacks.resetting_ages", "global", "tracking");
 	}
 }
 

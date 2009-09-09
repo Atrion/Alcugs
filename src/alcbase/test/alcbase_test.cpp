@@ -949,6 +949,29 @@ which is more than a line long\"\n\
 	assert(cfg1->getVar("anarr", "asection", 1, 0) == "hu");
 	assert(cfg1->getVar("anarr", "asection", 0, 4) == "another value\nwhich is more than a line long");
 	delete cfg1;
+	
+	// copy tests
+	cfg1 = new tConfig();
+	cfg1->setVar("value1", "name1");
+	assert(cfg1->getVar("name1") == "value1");
+	cfg1->copyKey("group", "global");
+	assert(cfg1->getVar("name1", "group") == "value1");
+	// Copy value from existing to non-existing
+	cfg1->copyValue("name2", "name1");
+	assert(cfg1->getVar("name2") == "value1");
+	cfg1->copyValue("name2", "name1", "group", "global");
+	assert(cfg1->getVar("name2", "group") == "value1");
+	// Copy value from non-existing to existing
+	cfg1->copyValue("name1", "name3");
+	assert(cfg1->getVar("name1") == "value1");
+	// Copy value from existing to existing
+	cfg1->setVar("value2", "name2");
+	cfg1->copyValue("name2", "name1");
+	assert(cfg1->getVar("name2") == "value1");
+	// from non-existing to existing
+	cfg1->copyValue("name2", "nameWhichDoesNotExist");
+	assert(cfg1->getVar("name2") == "value1");
+	delete cfg1;
 }
 
 int log_test() {
