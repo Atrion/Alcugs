@@ -1,5 +1,5 @@
-#ifndef _RIJNDAEL_H_
-#define _RIJNDAEL_H_
+#ifndef RIJNDAEL_H_
+#define RIJNDAEL_H_
 
 //
 // File : rijndael.h
@@ -154,4 +154,4 @@ protected:
 	void decrypt(const UINT8 a[16], UINT8 b[16]);
 };
 	
-#endif // _RIJNDAEL_H_
+#endif // RIJNDAEL_H_

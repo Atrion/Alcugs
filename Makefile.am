@@ -47,7 +47,6 @@ libalcnet1_a_SOURCES = \
  src/alcnet/netlog.cpp \
  src/alcnet/netsession.cpp \
  src/alcnet/netsessionmgr.cpp \
- src/alcnet/netmsgq.cpp \
  src/alcnet/protocol/protocol.cpp \
  src/alcnet/unetbase.cpp \
  src/alcnet/protocol/umsgbasic.cpp \

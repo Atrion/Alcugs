@@ -5765,7 +5765,7 @@ $as_echo "$as_me: error: no working MySQL installation found!" >&2;}
 $as_echo "yes" >&6; }
   CPPFLAGS="$ac_alc_cached_CPPFLAGS"
   LDFLAGS="$ac_alc_cached_LDFLAGS"
-  # I don't actually understand what I do here, but the "$MYSQL_LIBS" in the next line is necessary for the auth server to compile
+  # I don't actually understand what I do here, but the "$MYSQL_LIBS" in the next line is necessary for the auth server to compile - so better not touch it
 	LIBS="$ac_alc_cached_LIBS $MYSQL_LIBS"
 
 

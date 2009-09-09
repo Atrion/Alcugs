@@ -41,6 +41,8 @@
 	software under a hasecorp system.
 
 	You know windows sucks and linux rocks.
+	
+	Please also note that this support is untested and unmaintained currently!
  */
 
 #define __U_WINDOZE_ID $Id$

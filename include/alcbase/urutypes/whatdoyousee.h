@@ -18,4 +18,3 @@ void encodeQuad(unsigned int *first, unsigned int *second);
 #endif
 
 #endif
-
