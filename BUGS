@@ -1,12 +1,1 @@
-This list contains a list of known bugs and issues
-
-Game/Vault (vclient communications)
-* Vault task RegisterVisitAge is not working. This causes the issues related
- with books that don't work if you are not owner of the age. (see the Relto bookself)
-* Some ages are not sending the correct linking rules, and then they fail to send
-the RegisterOwnedAge vault task.
-
-General
-* Loadclone issues
-
-* Member list bug
+Have a list at the TODO file to see what was not yet implemented - I am not aware of any other bugs currently

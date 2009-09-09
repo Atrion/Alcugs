@@ -1,93 +1,24 @@
 Alcugs Uru server project.
 
-==========
-= Status =
-==========
 
-The software is still in Alpha stage.
+Status
+------
 
+The software is still in Beta stage.
 Check the file TODO to see what is still not implemented.
-
 Read the file COPYING and DISCLAIMER to check the license.
-
 Read the ChangeLog, to see, how is going all.
 
-=====================
-= For the impatient =
-=====================
+
+For the impatient
+-----------------
 Congratulations, you have arrived here, now continue reading! :)
 
-========================================================
-= Requirements for Building the servers, tools and API =
-========================================================
 
-You need to have installed the development headers and libraries of:
-* mysql
-* zlib
+Installation
+------------
 
-========================
-= Building the servers =
-========================
-
-(A) If you are on Linux or a similar *nix system
-------------------------------------------------
-
-
-1) Run configure
-
-$ ./configure
-
-2) Run make
-
-$ make all
-
-
-(B) If you are using 'windows'
-------------------------------
-
-A) Upgrade your OS to Linux (recommended)
-
-or
-
-B) Build with Cygwin
-
-1) Download and install Cygwin
-2) Download mysql with the C API
-3) Fix the Makefiles
-4) Compile by the same way
-(I wish you luck ;) )
-
-or
-
-C) Build with MinGW
-
-1) Download and install MinGW or Dev-Cpp
-2) And do the same as B).
-
-or
-
-D) Build with MSVC
-
-1) You will have to figure this out yourself
-
-
-==============
-= Installing =
-==============
-
-A) Automated installation (*UNTESTED* and BROKEN!!!)
-
-1) Run make install
-
-$ make install
-
-2) Copy the client sdl and age files inside the lobby/sdl and lobby/age folders.
-
---
-
-B) Manual installation (recommended)
-
-See http://alcugs.almlys.org/AlcugsInstall#Setting_Up_the_Servers
+The installation is described at http://alcugs.almlys.org/AlcugsInstall
 
 
 Configuring
@@ -96,12 +27,14 @@ Configuring
 Read the uru.conf.dist file for more info. It explains most mof the variables, and how to configure them.
 You can find a complete list add http://alcugs.almlys.org/AlcugsConfig
 
+
 Running
 -------
 
 Well, the best way is to run it as the nobody user, you can also create an user called alcugs,
 and run it as this user. Never run it as the superuser, or with an user with some privileges.
 Also a chrooted jail will add more security.
+
 
 Helping
 -------
