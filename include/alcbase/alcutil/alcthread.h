@@ -40,19 +40,14 @@
 
 namespace alc {
 
-	////DEFINITIONS
-	/**
-		If we want to do it well and nice, we should add pre and post conditions here.
-	*/
+////DEFINITIONS
 
-#if 0
 #ifdef ENABLE_THREADS
 #define alcBeginCriticalSection(a) { static tMutex a; a.lock(); }
 #define alcEndCriticalSection(a)   a.unlock()
 #else
 #define alcBeginCriticalSection(a)
 #define alcEndCriticalSection(a)
-#endif
 #endif
 
 U32 alcGetSelfThreadId();
