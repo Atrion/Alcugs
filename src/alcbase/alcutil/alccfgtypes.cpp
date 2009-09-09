@@ -127,7 +127,7 @@ const tStrBuf & tConfigVal::getVal(U16 x,U16 y) const {
 	}
 	return **(values+((nx*y)+x));
 }
-void tConfigVal::copy(tConfigVal &t) {
+void tConfigVal::copy(const tConfigVal &t) {
 	U16 i;
 	setName(t.getName());
 	if(values!=NULL) {
@@ -185,7 +185,7 @@ tConfigVal * tConfigKey::find(const char * what,bool create) {
 	tStrBuf name(what);
 	return find(name,create);
 }
-void tConfigKey::copy(tConfigKey &t) {
+void tConfigKey::copy(const tConfigKey &t) {
 	U16 i;
 	setName(t.getName());
 	if(values!=NULL) {
@@ -294,7 +294,7 @@ tConfigKey * tConfig::getNext() {
 	off++;
 	return values[off-1];
 }
-void tConfig::copy(const char * to, const char * from) {
+void tConfig::copyKey(const char * to, const char * from) {
 	tConfigKey * dst;
 	tConfigKey * src;
 	src=findKey(from,0);
@@ -302,7 +302,7 @@ void tConfig::copy(const char * to, const char * from) {
 	dst=findKey(to,1);
 	dst->merge(*src);
 }
-void tConfig::copyKey(const char * tok, const char * fromk,const char * to, const char * from) {
+void tConfig::copyValue(const char * tok, const char * fromk,const char * to, const char * from) {
 	tConfigKey * dst;
 	tConfigKey * src;
 	src=findKey(from,0);
@@ -311,8 +311,7 @@ void tConfig::copyKey(const char * tok, const char * fromk,const char * to, cons
 	tConfigVal * val;
 	val=src->find(fromk,0);
 	if(val==NULL) return;
-	tConfigVal myval;
-	myval=*val;
+	tConfigVal myval=*val;
 	myval.setName(tok);
 	dst->add(myval);
 }

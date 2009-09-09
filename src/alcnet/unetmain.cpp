@@ -66,8 +66,8 @@ int alcUnetReloadConfig(bool firsttime) {
 		}
 	}
 	//Set config settings
-	cfg->copy("global",alcNetName);
-	cfg->copy("global","cmdline");
+	cfg->copyKey("global",alcNetName);
+	cfg->copyKey("global","cmdline");
 	DBG(5,"setting config aliases...");
 	alcNetSetConfigAliases();
 	DBGM(5," done\n");

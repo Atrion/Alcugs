@@ -42,6 +42,7 @@ class tConfig;
 class tConfigVal {
 public:
 	tConfigVal();
+	tConfigVal(const tConfigVal &t) { init(); copy(t); }
 	tConfigVal(const char * name);
 	tConfigVal(const tStrBuf & name);
 	~tConfigVal();
@@ -53,8 +54,8 @@ public:
 	const tStrBuf & getVal(U16 x=0,U16 y=0) const;
 	U16 getRows() const { return y; }
 	U16 getCols() const { return x; }
-	void copy(tConfigVal & t);
-	const tConfigVal &operator=(tConfigVal & t) { copy(t); return *this; }
+	void copy(const tConfigVal & t);
+	const tConfigVal &operator=(const tConfigVal & t) { copy(t); return *this; }
 private:
 	void init();
 	tStrBuf name;
@@ -64,6 +65,7 @@ private:
 	Byte flags; // 0x01 - with quotes
 	            // 0x02 - without quotes
 	friend class tConfigKey; // for more efficient searching, tConfigKey needs direct access to the var name
+	
 };
 
 /** \brief A configuration key, a group of several configuration values */
@@ -76,10 +78,10 @@ public:
 	const tStrBuf & getName() const { return name; }
 	tConfigVal * find(const char * what,bool create=false);
 	tConfigVal * find(const tStrBuf & what,bool create=false);
-	void copy(tConfigKey & t);
+	void copy(const tConfigKey & t);
 	void merge(tConfigKey & t);
 	void add(tConfigVal &t);
-	const tConfigKey &operator=(tConfigKey & t) { copy(t); return *this; }
+	const tConfigKey &operator=(const tConfigKey & t) { copy(t); return *this; }
 	void rewind();
 	tConfigVal * getNext();
 private:
@@ -87,6 +89,8 @@ private:
 	U16 n,off;
 	tConfigVal ** values;
 	friend class tConfig; // for more efficient searching, tConfig needs direct access to the key name
+	
+	tConfigKey(const tConfigKey &); // prevent copying
 };
 
 
@@ -103,11 +107,13 @@ public:
 	void setVar(const tStrBuf &val,const tStrBuf &what,const tStrBuf &where,U16 x=0,U16 y=0);
 	void rewind();
 	tConfigKey * getNext();
-	void copy(const char * to,const char * from);
-	void copyKey(const char * tok,const char * fromk,const char * to,const char * from);
+	void copyKey(const char * to,const char * from); //!< this will merge the key if the destination already exists
+	void copyValue(const char * tok,const char * fromk,const char * to="global",const char * from="global"); //!< this overwrites an already existing value - but only of the value which is copied exists!
 private:
 	U16 n,off;
 	tConfigKey ** values;
+	
+	tConfig(const tConfig &); // prevent copying
 };
 
 } //End alc namespace
