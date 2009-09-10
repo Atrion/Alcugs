@@ -45,12 +45,6 @@
 /* Enable threads */
 #undef ENABLE_THREADS
 
-/* Enable unet2 protocol (also enables unet3) */
-#undef ENABLE_UNET2
-
-/* Enable unet3 protocol */
-#undef ENABLE_UNET3
-
 /* Define to 1 if you have the <dmalloc.h> header file. */
 #undef HAVE_DMALLOC_H
 

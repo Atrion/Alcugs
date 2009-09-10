@@ -746,8 +746,6 @@ enable_threads
 with_mysql
 with_coredumper
 with_dmalloc
-enable_unet2
-enable_unet3
 enable_admin
 enable_msglog
 enable_ackdebug
@@ -1400,8 +1398,6 @@ Optional Features:
   --enable-dependency-tracking   do not reject slow dependency extractors
   --enable-debug          Turn on debugging (default NO). Set to "opt" to have debugging and optimization enabled (e.g. for callgrind)
   --enable-threads        Enables threads (UNIMPLEMENTED - default NO)
-  --enable-unet2          Enables the unet2 protocol (default NO). Also enables unet3 support.
-  --enable-unet3          Enables the unet3 protocol (default NO)
   --enable-admin          Enables possibly dangerous admin options in alcping (default NO)
   --enable-msglog         Enables detailed logs about incoming and outgoing messages: normal = NetMsgs and Negos (default), full = All messages (NetMsgs, Negos and Acks)
   --enable-ackdebug       Enables detailed logs about the ack stack (default NO)
@@ -6682,36 +6678,6 @@ done
 #structures
 
 # program config
-# Check whether --enable-unet2 was given.
-if test "${enable_unet2+set}" = set; then
-  enableval=$enable_unet2; case "${enableval}" in
-       yes)
-cat >>confdefs.h <<\_ACEOF
-#define ENABLE_UNET2 /**/
-_ACEOF
- ;;
-       no) ;;
-       *) { { $as_echo "$as_me:$LINENO: error: bad value ${enableval} for --enable-unet2" >&5
-$as_echo "$as_me: error: bad value ${enableval} for --enable-unet2" >&2;}
-   { (exit 1); exit 1; }; } ;;
-     esac
-fi
-
-# Check whether --enable-unet3 was given.
-if test "${enable_unet3+set}" = set; then
-  enableval=$enable_unet3; case "${enableval}" in
-       yes)
-cat >>confdefs.h <<\_ACEOF
-#define ENABLE_UNET3 /**/
-_ACEOF
- ;;
-       no) ;;
-       *) { { $as_echo "$as_me:$LINENO: error: bad value ${enableval} for --enable-unet3" >&5
-$as_echo "$as_me: error: bad value ${enableval} for --enable-unet3" >&2;}
-   { (exit 1); exit 1; }; } ;;
-     esac
-fi
-
 # Check whether --enable-admin was given.
 if test "${enable_admin+set}" = set; then
   enableval=$enable_admin; case "${enableval}" in
