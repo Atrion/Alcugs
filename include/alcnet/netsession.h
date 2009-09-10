@@ -132,13 +132,6 @@ public:
 	
 	// used by game
 	bool joined;
-	
-#ifdef ENABLE_UNET3
-	// legacy protocol support
-	U32 proto; //!< peer unet protocol version
-	U32 x; //!< x value (for lobby/game)
-#endif
-
 private:
 	tUnet * net;
 	U32 ip; //network order

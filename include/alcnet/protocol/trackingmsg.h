@@ -85,9 +85,6 @@ namespace alc {
 		U16 forkPort;
 		tUStr serverGuid;
 		tStrBuf age;
-#ifdef ENABLE_UNET3
-		Byte loadSDL;
-#endif
 	protected:
 		virtual void additionalFields();
 	};

@@ -200,24 +200,21 @@ namespace alc {
 	
 	tNetSessionIte tUnetLobbyServerBase::reconnectPeer(Byte dst)
 	{
-		tStrBuf host, port, protocol;
+		tStrBuf host, port;
 		tConfig *cfg = alcGetConfig();
 		
 		switch (dst) {
 			case KAuth:
 				host = cfg->getVar("auth","global");
 				port = cfg->getVar("auth.port","global");
-				protocol = cfg->getVar("auth.protocol","global");
 				break;
 			case KTracking:
 				host = cfg->getVar("tracking","global");
 				port = cfg->getVar("tracking.port","global");
-				protocol = cfg->getVar("tracking.protocol","global");
 				break;
 			case KVault:
 				host = cfg->getVar("vault","global");
 				port = cfg->getVar("vault.port","global");
-				protocol = cfg->getVar("vault.protocol","global");
 				break;
 			default:
 				err->log("ERR: Connection to unknown service %d requested\n", dst);
@@ -228,23 +225,8 @@ namespace alc {
 			return tNetSessionIte();
 		}
 		
-		if (!protocol.isNull() && protocol.asU32() == 1) {
-			err->log("ERR: Unet2 protocol is requested for service %d (%s) but it is no longer supported\n", dst, alcUnetGetDestination(dst));
-			return tNetSessionIte();
-		}
-#ifndef ENABLE_UNET3
-		if (!protocol.isNull() && protocol.asU32() == 2) {
-			err->log("ERR: Unet3 protocol is requested for service %d (%s) but it is no longer supported\n", dst, alcUnetGetDestination(dst));
-			return tNetSessionIte();
-		}
-#endif
-		
-		U32 proto = protocol.isNull() ? 0 : protocol.asU32();
-		tNetSessionIte ite = netConnect(host.c_str(), port.asU16(), (proto == 0 || proto >= 3) ? 3 : 2, 0, dst);
+		tNetSessionIte ite = netConnect(host.c_str(), port.asU16(), 3 /* Alcugs upgraded protocol */, 0, dst);
 		tNetSession *session = getSession(ite);
-#ifdef ENABLE_UNET3
-		session->proto = proto;
-#endif
 		
 		// sending a NetMsgAlive is not necessary, the netConnect will already start the negotiation process
 		
@@ -402,10 +384,6 @@ namespace alc {
 				authResponse.hash.rewind();
 				tmCustomAuthAsk authAsk(authServer, authResponse.x, u->getSid(), u->getIp(), u->getPort(), u->name, u->challenge, authResponse.hash.read(), u->buildType);
 				send(authAsk);
-#ifdef ENABLE_UNET3
-				// perhaps the server does not preserve the X
-				u->x = authResponse.x;
-#endif
 				
 				return 1;
 			}
@@ -432,10 +410,6 @@ namespace alc {
 					err->log("ERR: Got CustomAuthResponse for player %s but can't find his session.\n", authResponse.login.c_str());
 					return 1;
 				}
-#ifdef ENABLE_UNET3
-				if (u->proto == 1 || u->proto == 2) // the server does not preserve the X
-					authResponse.x = client->x;
-#endif
 				
 				// send NetMsgAccountAuthenticated to client
 				if (authResponse.result == AAuthSucceeded) {
@@ -498,10 +472,6 @@ namespace alc {
 					u->setRejectMessages(true); // dont process any further messages till we verified the KI
 					tmCustomVaultCheckKi checkKi(vaultServer, setPlayer.ki, setPlayer.x, u->getSid(), u->uid);
 					send(checkKi);
-#ifdef ENABLE_UNET3
-					// perhaps the server does not preserve the X
-					u->x = setPlayer.x;
-#endif
 				}
 				
 				return 1;
@@ -531,10 +501,6 @@ namespace alc {
 					terminate(client, RNotAuthenticated);
 					return 1;
 				}
-#ifdef ENABLE_UNET3
-				if (u->proto == 1 || u->proto == 2) // the server does not preserve the X
-					kiChecked.x = client->x;
-#endif
 				
 				// it is correct, so tell everyone about it
 				setActivePlayer(client, kiChecked.ki, kiChecked.x, kiChecked.avatar.c_str());
@@ -652,10 +618,6 @@ namespace alc {
 				
 				tmCustomFindServer findServer(trackingServer, u->ki, findAge.x, u->getSid(), u->getIp(), u->getPort(), alcGetStrGuid(ageLink.ageInfo.guid), ageLink.ageInfo.filename.c_str());
 				send(findServer);
-#ifdef ENABLE_UNET3
-				// perhaps the server does not preserve the X
-				u->x = findAge.x;
-#endif
 				
 				return 1;
 			}
@@ -680,10 +642,6 @@ namespace alc {
 				Byte guid[8];
 				alcAscii2Hex(guid, serverFound.serverGuid.c_str(), 8);
 				
-#ifdef ENABLE_UNET3
-				if (u->proto == 1 || u->proto == 2) // the server does not preserve the X
-					serverFound.x = client->x;
-#endif
 				tmFindAgeReply reply(client, serverFound.x, serverFound.ipStr, serverFound.serverPort, serverFound.age, guid);
 				send(reply);
 				

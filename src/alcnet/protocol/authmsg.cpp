@@ -55,13 +55,6 @@ namespace alc {
 		this->ip = ip; // the client's IP and Port (for logging)
 		this->port = port;
 		
-#ifdef ENABLE_UNET3
-		if (u->proto == 1 || u->proto == 2) {
-			unsetFlags(plNetSid);
-			this->x = sid; // older protocols have the sid in the X field
-		}
-#endif
-		
 		memcpy(this->challenge, challenge, 16);
 		memcpy(this->hash, hash, 16);
 		this->release = release;
@@ -73,17 +66,8 @@ namespace alc {
 	void tmCustomAuthAsk::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		if (!hasFlags(plNetX)) throw txProtocolError(_WHERE("X flag missing"));
-		if (!hasFlags(plNetIP)) throw txProtocolError(_WHERE("IP flag missing"));
-#ifndef ENABLE_UNET3
-		if (!hasFlags(plNetSid)) throw txProtocolError(_WHERE("Sid flag missing"));
-#else
-		if (!hasFlags(plNetSid)) { // unet3+ carries the sid in the sid field, older protocols have it in the X field
-			sid = x;
-			x = 0;
-			if (u->proto != 1) u->proto = 2; // unet3 protocol
-		}
-#endif
+		if (!hasFlags(plNetX | plNetIP | plNetSid)) throw txProtocolError(_WHERE("X, IP or Sid flag missing"));
+
 		t.get(login);
 		memcpy(challenge, t.read(16), 16);
 		memcpy(hash, t.read(16), 16);
@@ -116,13 +100,6 @@ namespace alc {
 		x = authAsk.x; // the X value the client sent to the lobby
 		ip = authAsk.ip; // the client's IP and Port (for finding the correct session)
 		port = authAsk.port;
-
-#ifdef ENABLE_UNET3
-		if (u->proto == 1 || u->proto == 2) {
-			unsetFlags(plNetSid);
-			this->x = sid; // older protocols have the sid in the X field
-		}
-#endif
 		
 		memcpy(this->uid, uid, 16);
 		this->result = result;
@@ -135,17 +112,8 @@ namespace alc {
 	void tmCustomAuthResponse::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		if (!hasFlags(plNetX)) throw txProtocolError(_WHERE("X flag missing"));
-		if (!hasFlags(plNetIP | plNetUID)) throw txProtocolError(_WHERE("IP or UID flag missing"));
-#ifndef ENABLE_UNET3
-		if (!hasFlags(plNetSid)) throw txProtocolError(_WHERE("Sid flag missing"));
-#else
-		if (!hasFlags(plNetSid)) { // unet3+ carries the sid in the sid field, older protocols have it in the X field
-			sid = x;
-			x = 0;
-			if (u->proto != 1) u->proto = 2; // unet3 protocol
-		}
-#endif
+		if (!hasFlags(plNetX | plNetIP | plNetUID | plNetSid)) throw txProtocolError(_WHERE("X, IP, UID or Sid flag missing"));
+		
 		t.get(login);
 		result = t.getByte();
 		t.get(passwd);

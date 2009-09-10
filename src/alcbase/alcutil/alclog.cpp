@@ -24,8 +24,7 @@
 *                                                                              *
 *******************************************************************************/
 
-/** UNET3 debugging system
-
+/** Alcugs debugging system
 */
 
 #define __U_ALCLOG_ID $Id$

@@ -116,10 +116,6 @@ namespace alc {
 				}
 				tmCustomVaultAskPlayerList askList(vaultServer, requestList.x, u->getSid(), u->uid);
 				send(askList);
-#ifdef ENABLE_UNET3
-				// perhaps the server does not preserve the X
-				u->x = requestList.x;
-#endif
 				return 1;
 			}
 			case NetMsgCustomVaultPlayerList:
@@ -143,10 +139,6 @@ namespace alc {
 				}
 				
 				// forward player list to client
-#ifdef ENABLE_UNET3
-				if (u->proto == 1 || u->proto == 2) // the server does not preserve the X
-					playerList.x = client->x;
-#endif
 				tmVaultPlayerList playerListClient(client, playerList.x, playerList.numberPlayers, playerList.players, website);
 				send(playerListClient);
 				
@@ -174,10 +166,6 @@ namespace alc {
 				}
 				tmCustomVaultCreatePlayer vaultCreatePlayer(vaultServer, createPlayer.x, u->getSid(), u->uid, u->getAccessLevel(), u->name, createPlayer.avatar, createPlayer.gender, createPlayer.friendName, createPlayer.key);
 				send(vaultCreatePlayer);
-#ifdef ENABLE_UNET3
-				// perhaps the server does not preserve the X
-				u->x = createPlayer.x;
-#endif
 				
 				return 1;
 			}
@@ -202,10 +190,6 @@ namespace alc {
 				}
 				
 				// forward answer to client
-#ifdef ENABLE_UNET3
-				if (u->proto == 1 || u->proto == 2) // the server does not preserve the X
-					playerCreated.x = client->x;
-#endif
 				tmPlayerCreated playerCreatedClient(client, playerCreated.ki, playerCreated.x, playerCreated.result);
 				send(playerCreatedClient);
 				
@@ -277,14 +261,8 @@ namespace alc {
 					
 					// if the server was put in daemon mode, th lobby would get the SIGCHILD immediately after starting, so it'd
 					// be useless for debugging
-#ifdef ENABLE_UNET3
-					if (forkServer.loadSDL)
-						execlp(gameBin, gameBin,"-p",gamePort,"-guid",gameGuid,"-name",gameName,
-								"-log",gameLog,"-c",gameConfig,"-v","0","-L",NULL);
-					else
-#endif
-						execlp(gameBin, gameBin,"-p",gamePort,"-guid",gameGuid,"-name",gameName,
-								"-log",gameLog,"-c",gameConfig,"-v","0",NULL);
+					execlp(gameBin, gameBin,"-p",gamePort,"-guid",gameGuid,"-name",gameName,
+							"-log",gameLog,"-c",gameConfig,"-v","0",NULL);
 					
 					// if we come here, there was an error in the execlp call (but we're still in the game server process!)
 					// weve already shut down the logs, so we have to get them up again
