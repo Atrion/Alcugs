@@ -2,7 +2,7 @@ Vault
 ===========
 * Implement permissions
 * Vault must be asked to find an age before tracking is asked to find the server (no more GUID gen in tracking!)
-  regard linking rule while doing that:
+* Take linking rule into account while generating the GUID:
   We use a list of ages that are global even though the linking rules requests an owned book.
   kBasicLink with GUID set => we don't have to do anything (link from foreign Relto to one of the owner's ages)
   kBasicLink without GUID => Global age (for fan-ages, Eder Delin & Tsogal and so on), register the age somewhere in the vault tree

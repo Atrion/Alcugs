@@ -228,12 +228,10 @@ namespace alc {
 			return tNetSessionIte();
 		}
 		
-#ifndef ENABLE_UNET2
 		if (!protocol.isNull() && protocol.asU32() == 1) {
 			err->log("ERR: Unet2 protocol is requested for service %d (%s) but it is no longer supported\n", dst, alcUnetGetDestination(dst));
 			return tNetSessionIte();
 		}
-#endif
 #ifndef ENABLE_UNET3
 		if (!protocol.isNull() && protocol.asU32() == 2) {
 			err->log("ERR: Unet3 protocol is requested for service %d (%s) but it is no longer supported\n", dst, alcUnetGetDestination(dst));

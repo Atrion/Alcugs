@@ -60,18 +60,9 @@ namespace alc {
 		t.get(externalIp);
 		
 		/* now comes some crazy protocol magic...
-		unet2 format (X and KI flag set): saverGuid|age|netmask|externalIp
 		unet3 (X and KI flag set): serverGuid|age|externalIp
 		unet3+ (X and KI flag NOT set): serverGuid|age|spawnStart|spawnStop */
-		if (!t.eof()) { // if there's still something to read, this is an unet2 or an unet3+ packet, depending on the flags
-#ifdef ENABLE_UNET2
-			if (hasFlags(plNetX | plNetKi)) { // there's a netmask before the external IP (unet2 protocol)
-				t.get(externalIp);
-				u->proto = 1; // unet2 protocol
-				return;
-			}
-#endif
-			// it's unet3+
+		if (!t.eof()) { // if there's still something to read, this is an unet3+ packet
 			spawnStart = t.getU16();
 			spawnStop = t.getU16();
 		}
@@ -89,13 +80,6 @@ namespace alc {
 		tmMsgBase::stream(t);
 		t.put(serverGuid);
 		t.put(age);
-#ifdef ENABLE_UNET2
-		if (u->proto == 1) {
-			tStrBuf netmask;
-			netmask.writeStr("255.255.255.0");
-			t.put(netmask);
-		}
-#endif
 		t.put(externalIp);
 #ifdef ENABLE_UNET3
 		if (u->proto == 1 || u->proto == 2) return;
@@ -108,9 +92,6 @@ namespace alc {
 	{
 		dbg.nl();
 		dbg.printf(" Server GUID: %s, Age filename: %s, external IP: %s", serverGuid.c_str(), age.c_str(), externalIp.c_str());
-#ifdef ENABLE_UNET2
-		if (u->proto == 1) dbg.printf(" (unet2 protocol)");
-#endif
 #ifdef ENABLE_UNET3
 		if (u->proto == 2) dbg.printf(" (unet3 protocol)");
 		if (u->proto == 1 || u->proto == 2) return;
@@ -128,10 +109,6 @@ namespace alc {
 		this->sid = sid;
 		this->ki = ki;
 		memcpy(this->uid, uid, 16);
-#ifdef ENABLE_UNET2
-		if (u->proto == 1)
-			unsetFlags(plNetUID);
-#endif
 #ifdef ENABLE_UNET3
 		if (u->proto == 1 || u->proto == 2) {
 			unsetFlags(plNetSid);
@@ -148,11 +125,7 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
-#ifndef ENABLE_UNET2
 		if (!hasFlags(plNetUID)) throw txProtocolError(_WHERE("UID flag missing"));
-#else
-		if (!hasFlags(plNetUID)) memcpy(uid, t.read(16), 16);
-#endif
 #ifndef ENABLE_UNET3
 		if (!hasFlags(plNetSid)) throw txProtocolError(_WHERE("Sid flag missing"));
 #else
@@ -171,9 +144,6 @@ namespace alc {
 	void tmCustomPlayerStatus::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
-#ifdef ENABLE_UNET2
-		if (u->proto == 1) { t.write(uid, 16); } // UID (only for old protocol, the new one sends it in the header)
-#endif
 		t.put(account);
 		t.put(avatar);
 		t.putByte(playerFlag);
@@ -183,9 +153,6 @@ namespace alc {
 	void tmCustomPlayerStatus::additionalFields()
 	{
 		dbg.nl();
-#ifdef ENABLE_UNET2
-		if (u->proto == 1) dbg.printf(" UID (unet2 protocol): %s,", alcGetStrUid(uid));
-#endif
 		dbg.printf(" Account: %s, Avatar: %s, Flag: 0x%02X, Status: 0x%02X (%s)", account.c_str(), avatar.c_str(), playerFlag, playerStatus, alcUnetGetReasonCode(playerStatus));
 	}
 	
@@ -201,10 +168,6 @@ namespace alc {
 		this->sid = sid;
 		this->ip = ip;
 		this->port = port;
-#ifdef ENABLE_UNET2
-		if (u->proto == 1)
-			unsetFlags(plNetIP);
-#endif
 #ifdef ENABLE_UNET3
 		if (u->proto == 1 || u->proto == 2) {
 			unsetFlags(plNetSid);
@@ -217,9 +180,7 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
-#ifndef ENABLE_UNET2
 		if (!hasFlags(plNetIP)) throw txProtocolError(_WHERE("IP flag missing"));
-#endif
 #ifndef ENABLE_UNET3
 		if (!hasFlags(plNetSid)) throw txProtocolError(_WHERE("Sid flag missing"));
 #else
@@ -232,12 +193,6 @@ namespace alc {
 		t.get(serverGuid);
 		if (serverGuid.size() != 16) throw txProtocolError(_WHERE("NetMsgCustomFindServer.serverGuid must be 16 characters long"));
 		t.get(age);
-#ifdef ENABLE_UNET2
-		if (!hasFlags(plNetIP)) {
-			ip = t.getU32(); // use the tmMsgBase property
-			port = 0;
-		}
-#endif
 	}
 	
 	void tmCustomFindServer::stream(tBBuf &t) const
@@ -245,18 +200,12 @@ namespace alc {
 		tmMsgBase::stream(t);
 		t.put(serverGuid);
 		t.put(age);
-#ifdef ENABLE_UNET2
-		if (u->proto == 1) t.putU32(ip);
-#endif
 	}
 	
 	void tmCustomFindServer::additionalFields()
 	{
 		dbg.nl();
 		dbg.printf(" Server GUID: %s, Age filename: %s", serverGuid.c_str(), age.c_str());
-#ifdef ENABLE_UNET2
-		if (u && u->proto == 1) dbg.printf(", IP (unet2 protocol): %s,", alcGetStrIp(ip));
-#endif
 	}
 	
 	//// tmCustomForkServer

@@ -55,10 +55,6 @@ namespace alc {
 		this->ip = ip; // the client's IP and Port (for logging)
 		this->port = port;
 		
-#ifdef ENABLE_UNET2
-		if (u->proto == 1)
-			unsetFlags(plNetIP);
-#endif
 #ifdef ENABLE_UNET3
 		if (u->proto == 1 || u->proto == 2) {
 			unsetFlags(plNetSid);
@@ -78,9 +74,7 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX)) throw txProtocolError(_WHERE("X flag missing"));
-#ifndef ENABLE_UNET2
 		if (!hasFlags(plNetIP)) throw txProtocolError(_WHERE("IP flag missing"));
-#endif
 #ifndef ENABLE_UNET3
 		if (!hasFlags(plNetSid)) throw txProtocolError(_WHERE("Sid flag missing"));
 #else
@@ -94,13 +88,6 @@ namespace alc {
 		memcpy(challenge, t.read(16), 16);
 		memcpy(hash, t.read(16), 16);
 		release = t.getByte();
-#ifdef ENABLE_UNET2
-		if(!hasFlags(plNetIP)) {
-			ip = t.getU32();
-			port = 0;
-			u->proto = 1; // unet2 protocol
-		}
-#endif
 	}
 	
 	void tmCustomAuthAsk::stream(tBBuf &t) const
@@ -110,19 +97,11 @@ namespace alc {
 		t.write(challenge, 16);
 		t.write(hash, 16);
 		t.putByte(release);
-#ifdef ENABLE_UNET2
-		if (u->proto == 1) {
-			t.putU32(ip);
-		}
-#endif
 	}
 	
 	void tmCustomAuthAsk::additionalFields()
 	{
 		dbg.nl();
-#ifdef ENABLE_UNET2
-		if (u->proto == 1) dbg.printf(" ip (unet2 protocol): %s,", alcGetStrIp(ip));
-#endif
 		// use two printf commands as alcGetStrGuid uses a static array and when using one command it would seem as if challenge and hash would be the same
 		dbg.printf(" login: %s, challenge: %s, ", login.c_str(), alcGetStrUid(challenge));
 		dbg.printf("hash: %s, build: 0x%02X (%s)", alcGetStrUid(hash), release, alcUnetGetRelease(release));
@@ -138,10 +117,6 @@ namespace alc {
 		ip = authAsk.ip; // the client's IP and Port (for finding the correct session)
 		port = authAsk.port;
 
-#ifdef ENABLE_UNET2
-		if (u->proto == 1)
-			unsetFlags(plNetIP | plNetUID);
-#endif
 #ifdef ENABLE_UNET3
 		if (u->proto == 1 || u->proto == 2) {
 			unsetFlags(plNetSid);
@@ -161,9 +136,7 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX)) throw txProtocolError(_WHERE("X flag missing"));
-#ifndef ENABLE_UNET2
 		if (!hasFlags(plNetIP | plNetUID)) throw txProtocolError(_WHERE("IP or UID flag missing"));
-#endif
 #ifndef ENABLE_UNET3
 		if (!hasFlags(plNetSid)) throw txProtocolError(_WHERE("Sid flag missing"));
 #else
@@ -176,13 +149,6 @@ namespace alc {
 		t.get(login);
 		result = t.getByte();
 		t.get(passwd);
-#ifdef ENABLE_UNET2
-		if (!hasFlags(plNetUID)) {
-			memcpy(uid, t.read(16), 16);
-			ip = port = 0; // they should be initialized
-			u->proto = 1; // unet2 protocol
-		}
-#endif
 		accessLevel = t.getByte();
 	}
 	
@@ -192,18 +158,12 @@ namespace alc {
 		t.put(login); // login
 		t.putByte(result); // result
 		t.put(passwd); // passwd
-#ifdef ENABLE_UNET2
-		if (u->proto == 1) { t.write(uid, 16); } // UID (only for old protocol, the new one sends it in the header)
-#endif
 		t.putByte(accessLevel); // acess level
 	}
 	
 	void tmCustomAuthResponse::additionalFields()
 	{
 		dbg.nl();
-#ifdef ENABLE_UNET2
-		if (u->proto == 1) dbg.printf(" uid (unet2 protocol): %s,", alcGetStrUid(uid));
-#endif
 		dbg.printf(" login: %s, passwd: (hidden), result: 0x%02X (%s), accessLevel: %d", login.c_str(), result, alcUnetGetAuthCode(result), accessLevel);
 	}
 
