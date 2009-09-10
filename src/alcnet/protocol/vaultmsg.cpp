@@ -212,9 +212,6 @@ namespace alc {
 		this->x = x;
 		this->sid = sid;
 		memcpy(this->uid, uid, 16);
-#ifdef ENABLE_UNET2
-		if (u->proto == 1) unsetFlags(plNetUID);
-#endif
 #ifdef ENABLE_UNET3
 		if (u->proto == 1 || u->proto == 2) {
 			unsetFlags(plNetSid);
@@ -230,9 +227,7 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX)) throw txProtocolError(_WHERE("X flag missing"));
-#ifndef ENABLE_UNET2
 		if (!hasFlags(plNetUID)) throw txProtocolError(_WHERE("UID flag missing"));
-#endif
 #ifndef ENABLE_UNET3
 		if (!hasFlags(plNetSid)) throw txProtocolError(_WHERE("Sid flag missing"));
 #else
@@ -243,12 +238,6 @@ namespace alc {
 		}
 #endif
 		t.get(login);
-#ifdef ENABLE_UNET2
-		if (!hasFlags(plNetUID)) {
-			memcpy(uid, t.read(16), 16);
-			u->proto = 1; // unet2 protocol
-		}
-# endif
 		accessLevel = t.getByte();
 		t.get(avatar);
 		t.get(gender);
@@ -262,9 +251,6 @@ namespace alc {
 	{
 		tmMsgBase::stream(t);
 		t.put(login);
-#ifdef ENABLE_UNET2
-		if (u->proto == 1) { t.write(uid, 16); } // UID (only for old protocol, the new one sends it in the header)
-#endif
 		t.putByte(accessLevel);
 		t.put(avatar);
 		t.put(gender);
@@ -277,9 +263,6 @@ namespace alc {
 	{
 		dbg.nl();
 		dbg.printf(" login: %s, ", login.c_str());
-#ifdef ENABLE_UNET2
-		if (u && u->proto == 1) dbg.printf("uid (unet2 protocol): %s, ", alcGetStrUid(uid));
-#endif
 		dbg.printf("accessLevel: %d, avatar: %s, gender: %s, friend: %s, key: %s", accessLevel, avatar.c_str(), gender.c_str(), friendName.c_str(), key.c_str());
 	}
 	
@@ -294,9 +277,6 @@ namespace alc {
 		this->x = x;
 		this->sid = sid;
 		memcpy(this->uid, uid, 16);
-#ifdef ENABLE_UNET2
-		if (u->proto == 1) unsetFlags(plNetUID);
-#endif
 #ifdef ENABLE_UNET3
 		if (u->proto == 1 || u->proto == 2) {
 			unsetFlags(plNetSid);
@@ -311,14 +291,7 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
-#ifndef ENABLE_UNET2
 		if (!hasFlags(plNetUID)) throw txProtocolError(_WHERE("UID flag missing"));
-#else
-		if (!hasFlags(plNetUID)) {
-			memcpy(uid, t.read(16), 16);
-			u->proto = 1; // unet2 protocol
-		}
-# endif
 #ifndef ENABLE_UNET3
 		if (!hasFlags(plNetSid)) throw txProtocolError(_WHERE("Sid flag missing"));
 #else
@@ -334,29 +307,19 @@ namespace alc {
 	void tmCustomVaultPlayerCreated::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
-#ifdef ENABLE_UNET2
-		if (u->proto == 1) { t.write(uid, 16); } // UID (only for old protocol, the new one sends it in the header)
-#endif
 		t.putByte(result);
 	}
 	
 	void tmCustomVaultPlayerCreated::additionalFields()
 	{
 		dbg.nl();
-#ifdef ENABLE_UNET2
-		if (u->proto == 1) dbg.printf(" uid (unet2 protocol): %s,", alcGetStrUid(uid));
-#endif
 		dbg.printf(" result: 0x%02X (%s)", result, alcUnetGetAvatarCode(result));
 	}
 	
 	//// tmCustomVaultDeletePlayer
 	tmCustomVaultDeletePlayer::tmCustomVaultDeletePlayer(tNetSession *u)
 	 : tmMsgBase(NetMsgCustomVaultDeletePlayer, plNetX | plNetKi | plNetUID | plNetAck | plNetVersion, u)
-	{
-#ifdef ENABLE_UNET2
-		if (u->proto == 1) unsetFlags(plNetUID);
-#endif
-	}
+	{ }
 	
 	tmCustomVaultDeletePlayer::tmCustomVaultDeletePlayer(tNetSession *u, U32 ki, U32 x, U32 sid, const Byte *uid, Byte accessLevel)
 	 : tmMsgBase(NetMsgCustomVaultDeletePlayer, plNetX | plNetKi | plNetUID | plNetAck | plNetVersion | plNetSid, u)
@@ -365,9 +328,6 @@ namespace alc {
 		this->ki = ki;
 		this->sid = sid;
 		memcpy(this->uid, uid, 16);
-#ifdef ENABLE_UNET2
-		if (u->proto == 1) unsetFlags(plNetUID);
-#endif
 #ifdef ENABLE_UNET3
 		if (u->proto == 1 || u->proto == 2) {
 			unsetFlags(plNetSid);
@@ -381,14 +341,7 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
-#ifndef ENABLE_UNET2
 		if (!hasFlags(plNetUID)) throw txProtocolError(_WHERE("UID flag missing"));
-#else
-		if (!hasFlags(plNetUID)) {
-			memcpy(uid, t.read(16), 16);
-			u->proto = 1; // unet2 protocol
-		}
-# endif
 #ifndef ENABLE_UNET3
 		if (!hasFlags(plNetSid)) throw txProtocolError(_WHERE("Sid flag missing"));
 #else
@@ -404,18 +357,12 @@ namespace alc {
 	void tmCustomVaultDeletePlayer::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
-#ifdef ENABLE_UNET2
-		if (u->proto == 1) { t.write(uid, 16); } // UID (only for old protocol, the new one sends it in the header)
-#endif
 		t.putByte(accessLevel);
 	}
 	
 	void tmCustomVaultDeletePlayer::additionalFields()
 	{
 		dbg.nl();
-#ifdef ENABLE_UNET2
-		if (u && u->proto == 1) dbg.printf(" uid (unet2 protocol): %s,", alcGetStrUid(uid));
-#endif
 		dbg.printf(" access level: %d", accessLevel);
 	}
 	
@@ -427,9 +374,6 @@ namespace alc {
 		this->ki = ki;
 		this->sid = sid;
 		memcpy(this->uid, uid, 16);
-#ifdef ENABLE_UNET2
-		if (u->proto == 1) unsetFlags(plNetUID);
-#endif
 #ifdef ENABLE_UNET3
 		if (u->proto == 1 || u->proto == 2) {
 			unsetFlags(plNetSid);
@@ -446,14 +390,7 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
-#ifndef ENABLE_UNET2
 		if (!hasFlags(plNetUID)) throw txProtocolError(_WHERE("UID flag missing"));
-#else
-		if (!hasFlags(plNetUID)) {
-			memcpy(uid, t.read(16), 16);
-			u->proto = 1; // unet2 protocol
-		}
-# endif
 #ifndef ENABLE_UNET3
 		if (!hasFlags(plNetSid)) throw txProtocolError(_WHERE("Sid flag missing"));
 #else
@@ -468,19 +405,6 @@ namespace alc {
 	void tmCustomVaultCheckKi::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
-#ifdef ENABLE_UNET2
-		if (u->proto == 1) { t.write(uid, 16); } // UID (only for old protocol, the new one sends it in the header)
-#endif
-	}
-	
-	void tmCustomVaultCheckKi::additionalFields()
-	{
-#ifdef ENABLE_UNET2
-		if (u && u->proto == 1) {
-			dbg.nl();
-			dbg.printf(" uid (unet2 protocol): %s,", alcGetStrUid(uid));
-		}
-#endif
 	}
 	
 	//// tmCustomVaultKiChecked
@@ -491,9 +415,6 @@ namespace alc {
 		this->x = x;
 		this->sid = sid;
 		memcpy(this->uid, uid, 16);
-#ifdef ENABLE_UNET2
-		if (u->proto == 1) unsetFlags(plNetUID);
-#endif
 #ifdef ENABLE_UNET3
 		if (u->proto == 1 || u->proto == 2) {
 			unsetFlags(plNetSid);
@@ -511,14 +432,7 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
-#ifndef ENABLE_UNET2
 		if (!hasFlags(plNetUID)) throw txProtocolError(_WHERE("UID flag missing"));
-#else
-		if (!hasFlags(plNetUID)) {
-			memcpy(uid, t.read(16), 16);
-			u->proto = 1; // unet2 protocol
-		}
-# endif
 #ifndef ENABLE_UNET3
 		if (!hasFlags(plNetSid)) throw txProtocolError(_WHERE("Sid flag missing"));
 #else
@@ -535,9 +449,6 @@ namespace alc {
 	void tmCustomVaultKiChecked::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
-#ifdef ENABLE_UNET2
-		if (u->proto == 1) { t.write(uid, 16); } // UID (only for old protocol, the new one sends it in the header)
-#endif
 		t.putByte(status);
 		t.put(avatar);
 	}
@@ -545,9 +456,6 @@ namespace alc {
 	void tmCustomVaultKiChecked::additionalFields()
 	{
 		dbg.nl();
-#ifdef ENABLE_UNET2
-		if (u && u->proto == 1) dbg.printf(" uid (unet2 protocol): %s,", alcGetStrUid(uid));
-#endif
 		dbg.printf(" status: 0x%02X, avatar: %s", status, avatar.c_str());	
 	}
 	

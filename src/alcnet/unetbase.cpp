@@ -233,11 +233,7 @@ void tUnetBase::terminate(tNetSession *u, Byte reason, bool gotLeave)
 		}
 	}
 	
-#ifdef ENABLE_UNET2
-	if (destroy && u->proto != 1) { // if the session should be destroyed, do that ASAP - but not for unet2 servers
-#else
 	if (destroy) { // if the session should be destroyed, do that ASAP
-#endif
 		u->terminate(0/*seconds*/);
 	} else { // otherwise, give the session one second to send remaining messages
 		u->terminate(1/*second*/);

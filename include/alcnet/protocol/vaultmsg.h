@@ -122,8 +122,6 @@ namespace alc {
 		tmCustomVaultCheckKi(tNetSession *u);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmCustomVaultKiChecked : public tmMsgBase {
