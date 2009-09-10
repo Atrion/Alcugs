@@ -129,12 +129,6 @@ namespace alc {
 		U16 port;
 		Byte fakeLobbyGuid[8]; //!< saves the GUID for the fake lobby (for UruVision)
 		tGuidGen *guidGen;
-
-#ifdef ENABLE_UNET3
-		bool doesAgeLoadState(const char *age);
-		char resettingAges[1024];
-		bool loadAgeState;
-#endif
 		
 		bool statusFileUpdate;
 		bool statusHTML, statusHTMLdbg, statusXML;

@@ -469,14 +469,9 @@ tNetSessionIte tUnet::netConnect(const char * hostname,U16 port,Byte validation,
 	
 	u->max_version=max_version;
 	u->min_version=min_version;
-#ifdef ENABLE_UNET3
-	u->proto=alcProtoMIN_VER;
-#endif
 	
-	//if(!(u->cflags & UNetNoConn)) {
-		u->nego_stamp=u->timestamp;
-		u->negotiate();
-	//}
+	u->nego_stamp=u->timestamp;
+	u->negotiate();
 	
 	return ite;
 }

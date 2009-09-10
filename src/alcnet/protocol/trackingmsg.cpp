@@ -44,9 +44,6 @@ namespace alc {
 	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u, const char *serverGuid, const char *age, const char *externalIp, U16 spawnStart, U16 spawnStop)
 	 : tmMsgBase(NetMsgCustomSetGuid, plNetAck | plNetVersion, u), serverGuid(serverGuid), age(age), externalIp(externalIp)
 	{
-#ifdef ENABLE_UNET3
-		if (u->proto == 1 || u->proto == 2) setFlags(plNetX | plNetKi); // older protocols have this set, but the value is ignored
-#endif
 		this->spawnStart = spawnStart;
 		this->spawnStop = spawnStop;
 	}
@@ -58,21 +55,8 @@ namespace alc {
 		if (serverGuid.size() != 16) throw txProtocolError(_WHERE("NetMsgCustomSetGuid.serverGuid must be 16 characters long"));
 		t.get(age);
 		t.get(externalIp);
-		
-		/* now comes some crazy protocol magic...
-		unet3 (X and KI flag set): serverGuid|age|externalIp
-		unet3+ (X and KI flag NOT set): serverGuid|age|spawnStart|spawnStop */
-		if (!t.eof()) { // if there's still something to read, this is an unet3+ packet
-			spawnStart = t.getU16();
-			spawnStop = t.getU16();
-		}
-		else { // it is unet3
-#ifdef ENABLE_UNET3
-			u->proto = 2; // unet3 protocol
-#else
-			throw txProtocolError(_WHERE("unet3 protocol no longer supported"));
-#endif
-		}
+		spawnStart = t.getU16();
+		spawnStop = t.getU16();
 	}
 	
 	void tmCustomSetGuid::stream(tBBuf &t) const
@@ -81,9 +65,6 @@ namespace alc {
 		t.put(serverGuid);
 		t.put(age);
 		t.put(externalIp);
-#ifdef ENABLE_UNET3
-		if (u->proto == 1 || u->proto == 2) return;
-#endif
 		t.putU16(spawnStart);
 		t.putU16(spawnStop);
 	}
@@ -92,10 +73,6 @@ namespace alc {
 	{
 		dbg.nl();
 		dbg.printf(" Server GUID: %s, Age filename: %s, external IP: %s", serverGuid.c_str(), age.c_str(), externalIp.c_str());
-#ifdef ENABLE_UNET3
-		if (u->proto == 2) dbg.printf(" (unet3 protocol)");
-		if (u->proto == 1 || u->proto == 2) return;
-#endif
 		dbg.printf(", Spawn Start: %d, Spawn Stop: %d", spawnStart, spawnStop);
 	}
 	
@@ -109,13 +86,6 @@ namespace alc {
 		this->sid = sid;
 		this->ki = ki;
 		memcpy(this->uid, uid, 16);
-#ifdef ENABLE_UNET3
-		if (u->proto == 1 || u->proto == 2) {
-			unsetFlags(plNetSid);
-			setFlags(plNetX);
-			this->x = sid; // older protocols have the sid in the X field
-		}
-#endif
 		
 		this->playerFlag = playerFlag;
 		this->playerStatus = playerStatus;
@@ -124,17 +94,8 @@ namespace alc {
 	void tmCustomPlayerStatus::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
-		if (!hasFlags(plNetUID)) throw txProtocolError(_WHERE("UID flag missing"));
-#ifndef ENABLE_UNET3
-		if (!hasFlags(plNetSid)) throw txProtocolError(_WHERE("Sid flag missing"));
-#else
-		if (!hasFlags(plNetSid)) { // unet3+ carries the sid in the sid field, older protocols have it in the X field
-			if (!hasFlags(plNetX)) throw txProtocolError(_WHERE("X flag missing"));
-			sid = x;
-			if (u->proto != 1) u->proto = 2; // unet3 protocol
-		}
-#endif
+		if (!hasFlags(plNetKi | plNetUID | plNetSid)) throw txProtocolError(_WHERE("KI, UID or Sid flag missing"));
+		
 		t.get(account);
 		t.get(avatar);
 		playerFlag = t.getByte();
@@ -168,28 +129,13 @@ namespace alc {
 		this->sid = sid;
 		this->ip = ip;
 		this->port = port;
-#ifdef ENABLE_UNET3
-		if (u->proto == 1 || u->proto == 2) {
-			unsetFlags(plNetSid);
-			this->x = sid; // older protocols have the sid in the X field
-		}
-#endif
 	}
 	
 	void tmCustomFindServer::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
-		if (!hasFlags(plNetIP)) throw txProtocolError(_WHERE("IP flag missing"));
-#ifndef ENABLE_UNET3
-		if (!hasFlags(plNetSid)) throw txProtocolError(_WHERE("Sid flag missing"));
-#else
-		if (!hasFlags(plNetSid)) { // unet3+ carries the sid in the sid field, older protocols have it in the X field
-			sid = x;
-			x = 0;
-			if (u->proto != 1) u->proto = 2; // unet3 protocol
-		}
-#endif
+		if (!hasFlags(plNetX | plNetKi | plNetIP | plNetSid)) throw txProtocolError(_WHERE("X, KI, IP or Sid flag missing"));
+		
 		t.get(serverGuid);
 		if (serverGuid.size() != 16) throw txProtocolError(_WHERE("NetMsgCustomFindServer.serverGuid must be 16 characters long"));
 		t.get(age);
@@ -217,10 +163,6 @@ namespace alc {
 	{
 		this->x = 0;
 		this->ki = 0;
-#ifdef ENABLE_UNET3
-		if (u->proto == 1 || u->proto == 2) setFlags(plNetX | plNetKi); // older protocols have this set, but the value is ignored
-		loadSDL = true;
-#endif
 		
 		forkPort = port;
 	}
@@ -232,10 +174,6 @@ namespace alc {
 		t.get(serverGuid);
 		if (serverGuid.size() != 16) throw txProtocolError(_WHERE("NetMsgCustomForkServer.serverGuid must be 16 characters long"));
 		t.get(age);
-#ifdef ENABLE_UNET3
-		if (t.eof()) loadSDL = true;
-		else loadSDL = t.getByte();
-#endif
 	}
 	
 	void tmCustomForkServer::stream(tBBuf &t) const
@@ -244,18 +182,12 @@ namespace alc {
 		t.putU16(forkPort);
 		t.put(serverGuid);
 		t.put(age);
-#ifdef ENABLE_UNET3
-		t.putByte(loadSDL); // Even with a unet3+ lobby, the game server might be unet2
-#endif
 	}
 	
 	void tmCustomForkServer::additionalFields()
 	{
 		dbg.nl();
 		dbg.printf(" Port: %d, Server GUID: %s, Age filename: %s", forkPort, serverGuid.c_str(), age.c_str());
-#ifdef ENABLE_UNET3
-		dbg.printBoolean(" Load SDL state: ", loadSDL);
-#endif
 	}
 	
 	//// tmCustomServerFound
@@ -268,27 +200,14 @@ namespace alc {
 		this->x = x;
 		this->ki = ki;
 		this->sid = sid;
-#ifdef ENABLE_UNET3
-		if (u->proto == 1 || u->proto == 2) {
-			unsetFlags(plNetSid);
-			this->x = sid; // older protocols have the sid in the X field
-		}
-#endif
-		serverPort = port;
+		this->serverPort = port;
 	}
 	
 	void tmCustomServerFound::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-#ifndef ENABLE_UNET3
 		if (!hasFlags(plNetSid)) throw txProtocolError(_WHERE("Sid flag missing"));
-#else
-		if (!hasFlags(plNetSid)) { // unet3+ carries the sid in the sid field, older protocols have it in the X field
-			sid = x;
-			x = 0;
-			if (u->proto != 1) u->proto = 2; // unet3 protocol
-		}
-#endif
+		
 		serverPort = t.getU16();
 		t.get(ipStr);
 		t.get(serverGuid);

@@ -136,13 +136,6 @@ namespace alc {
 			log->log("Tracking driver started (%s)\n\n", __U_TRACKINGBACKEND_ID);
 			log->flush();
 		}
-
-#ifdef ENABLE_UNET3
-		var = cfg->getVar("tracking.tmp.hacks.agestate");
-		loadAgeState = (var.isNull() || var.asByte());
-		var = cfg->getVar("tracking.tmp.hacks.resetting_ages");
-		strncpy(resettingAges, var.c_str(), 1023);
-#endif
 		
 		var = cfg->getVar("track.html");
 		statusHTML = (!var.isNull() && var.asByte());
@@ -287,9 +280,6 @@ namespace alc {
 		lowest += data->portStart;
 		// ok, telling the lobby to fork
 		tmCustomForkServer forkServer(lobby, lowest, alcGetStrGuid(guid), age);
-#ifdef ENABLE_UNET3
-		forkServer.loadSDL = doesAgeLoadState(age);
-#endif
 		net->send(forkServer, delay);
 		log->log("Spawning new game server %s (Server GUID: %s, port: %d) on %s\n", age, alcGetStrGuid(guid), lowest, lobby->str());
 	}
@@ -355,13 +345,6 @@ namespace alc {
 		}
 		else {
 			data->isLobby = false;
-#ifdef ENABLE_UNET3
-			if ( (game->proto == 1 || game->proto == 2) && ntohs(game->getPort()) == 5000 ) {
-				data->isLobby = true;
-				data->portStart = 5001;
-				data->portEnd = 5002;
-			}
-#endif
 		}
 		strncpy(data->externalIp, setGuid.externalIp.c_str(), 99);
 		if (!data->isLobby) { // let's look to which lobby this server belongs
@@ -498,25 +481,6 @@ namespace alc {
 			parentData->childs->remove(game);
 		}
 	}
-	
-#ifdef ENABLE_UNET3
-	bool tTrackingBackend::doesAgeLoadState(const char *age)
-	{
-		if (!loadAgeState) return false;
-		
-		// local copy of resetting age list as strsep modifies it
-		char ages[1024];
-		strcpy(ages, resettingAges);
-		
-		char *buf = ages;
-		char *p = strsep(&buf, ",");
-		while (p != 0) {
-			if (strcmp(p, age) == 0) return false;
-			p = strsep(&buf, ",");
-		}
-		return true;
-	}
-#endif
 	
 	void tTrackingBackend::forwardMessage(tmCustomDirectedFwd &directedFwd)
 	{
