@@ -261,7 +261,7 @@ namespace alc {
 	
 	void tUnetGameServer::sendKIMessage(const tStrBuf &text, tNetSession *u)
 	{
-		tpKIMsg kiMsg(tUruObjectRef(), "Game Server", 0, text);
+		tpKIMsg kiMsg = tpKIMsg(tUruObjectRef(), "Game Server", 0, text);
 		kiMsg.flags = 0x00004248;
 		kiMsg.messageType = 0x0001; // private age chat
 		// send message
