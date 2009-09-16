@@ -41,9 +41,6 @@
 
 # logging
 ;log_files_path = log/ # path top contain the log files (parameter: [-log path/]) (default log/)
-;vault.html.log = 1 # enables/disables logging of vault objects to a HTML file in lobby, game and vault server (default 1)
-;vault.html.log.short = 0 # makes the vault logging much shorter (saves up to 75%) and doesn't dump data to files (default 0)
-;net.log.ack = 0 # enables/disables logging of acks (default 0)
 ;log.n_rotate = 5 # set number of files to rotate (0 will disable logging, 1 keeps only one log file without rotating, default is 5)
 
 # the bind adress for lobby and game servers (i.e. the IP of the interface to the router)
@@ -74,17 +71,6 @@ db.passwd = "yourpassword"
 age = "/home/alcugs/age/" # directory containing the age files (for game, tracking and vault)
 sdl = "/home/alcugs/sdl/" # directory containing the sdl files (for game)
 game.agestates = "/home/alcugs/agestates/" # directory the agestates should be saved in (for game)
-
-# Instancing settings (used by tracking, vault and game)
-# Don't change these if the vault got already created!
-instance_mode = 1 # 0: all ages are global; 1 (default): the ages specified in private_ages are private
-private_ages = "AvatarCustomization,Personal,Nexus,BahroCave,BahroCave02,LiveBahroCaves,DniCityX2Finale,Cleft,Kadish,Gira,Garrison,Garden,Teledahn,Ercana,Minkata,Jalak"
-
-# compatability for old servers (used by lobby and game)
-# 0 = latest (default), 1 = unet2, 2 = unet3, 3 = unet3+
-;auth.protocol = 0
-;tracking.protocol = 0
-;vault.protocol = 0
 
 # There is a stop var for each server section, remove them to check that you
 # have already read and understood how this configuration file works.
@@ -154,6 +140,11 @@ vault.hood.desc = "This is a hood on an Alcugs server" # description of the defa
 ;vault.maxplayers = 5 # maximum number of avatars per account
 ;vault.tmp.hacks.linkrules = 1 # enable a hack which fixes problems with Ahnonay, Myst and Kirel (default 0)
 
+# Instancing settings
+# IMPORTANT: Don't change these if the vault got already created!
+instance_mode = 1 # 0: all ages are global; 1 (default): the ages specified in private_ages are private
+private_ages = "AvatarCustomization,Personal,Nexus,BahroCave,BahroCave02,LiveBahroCaves,DniCityX2Finale,Cleft,Kadish,Gira,Garrison,Garden,Teledahn,Ercana,Minkata,Jalak"
+
 stop = 1
 
 ############# Lobby Settings ##################################################
@@ -198,7 +189,7 @@ game.linger_time = 120 # default: 120
 ;game.tmp.hacks.noreltoshare = 1 # enable a hack which prevents a crash when trying to share a Relto book (default 0)
 
 # client settings
-allow_uu_clients = 0 # (dis)allow UU clients to connect to this server (default: 1)
+allow_uu_clients = 0 # allow UU clients to connect to this server (default: 1)
 # This should NOT be set for lobby as the UruSetup.exe everyone uses is an UU client. For game servers however, it's a good mean to
 # prevent SDL confusion to be caused by UU clients. Also note that UU client support is untested.
 stop = 1
