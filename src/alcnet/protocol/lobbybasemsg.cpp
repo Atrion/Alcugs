@@ -29,9 +29,8 @@
 
 //#define _DBG_LEVEL_ 10
 
-#include "alcugs.h"
 #include "alcnet.h"
-#include "protocol/lobbybasemsg.h"
+#include "protocol/ext-protocol.h"
 
 #include <alcdebug.h>
 

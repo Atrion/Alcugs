@@ -30,7 +30,6 @@
 #define ALC_PROGRAM_ID "$Id$"
 #define ALC_PROGRAM_NAME "UruTestingSuite"
 
-#include <alcugs.h>
 #include <alcnet.h>
 
 

@@ -38,13 +38,12 @@
 
 //#define _DBG_LEVEL_ 10
 
-#include "alcugs.h"
 #include "alcnet.h"
-#include "protocol/gamemsg.h"
+#include "protocol/ext-protocol.h"
 
 ////extra includes
 
-#include "alcdebug.h"
+#include <alcdebug.h>
 
 namespace alc {
 

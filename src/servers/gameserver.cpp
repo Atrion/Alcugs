@@ -38,9 +38,8 @@
 
 //#define _DBG_LEVEL_ 10
 
-#include <alcugs.h>
 #include <alcnet.h>
-#include <protocol/msgparsers.h>
+#include <protocol/ext-protocol.h>
 
 ////extra includes
 #include "gameserver.h"
@@ -124,7 +123,7 @@ namespace alc {
 		if (u->getPeerType() == KVault) return; // we care only about messages from the client
 		if (msg->task) { // it is a vault task
 			if (msg->cmd != TRegisterOwnedAge) return; // we are only interested in these messages which are sent when an age is reset
-			if (!thisAgeIsPrivate) return; // only allow to reset private ages
+			if (!thisAgeIsPrivate) throw txProtocolError(_WHERE("Resetting a public age?")); // only allow to reset private ages - FIXME: Is this triggered when linking to a public age for the first time?
 			// now, find the age link struct
 			tvAgeLinkStruct *ageLink = NULL;
 			for (tvMessage::tItemList::iterator it = msg->items.begin(); it != msg->items.end(); ++it) {

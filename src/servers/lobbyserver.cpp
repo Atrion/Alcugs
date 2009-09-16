@@ -38,9 +38,8 @@
 
 //#define _DBG_LEVEL_ 10
 
-#include <alcugs.h>
 #include <alcnet.h>
-#include <protocol/msgparsers.h>
+#include <protocol/ext-protocol.h>
 
 ////extra includes
 #include "lobbyserver.h"

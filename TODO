@@ -15,8 +15,8 @@ Game
 
 Generic Stuff
 ==================
-* Implement server identification. This could also be used for the tNetSession::isAlcugsServer function.
-* Full Multithreaded support
+* Implement server identification (this could also be used for the tNetSession::isAlcugsServer function)
+* Multithreading support
 * UU support
 
 Feature-Requests list

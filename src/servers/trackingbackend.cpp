@@ -38,14 +38,13 @@
 
 //#define _DBG_LEVEL_ 10
 
-#include <alcugs.h>
 #include <alcnet.h>
 
 ////extra includes
 #include <set>
 #include "trackingbackend.h"
 
-#include "alcdebug.h"
+#include <alcdebug.h>
 
 /* The process of finding an age for a player works as follows:
 
@@ -67,7 +66,6 @@ namespace alc {
 		parent = NULL;
 		externalIp[0] = 0;
 		portStart = portEnd = 0;
-		seqPrefix = 0;
 		childs = new tNetSessionList;
 	}
 	
@@ -99,7 +97,6 @@ namespace alc {
 	tTrackingBackend::tTrackingBackend(tUnetBase *net, tNetSessionList *servers, const char *host, U16 port)
 	{
 		log = lnull;
-		guidGen = NULL;
 		this->servers = servers;
 		this->net = net;
 		this->host = host;
@@ -122,8 +119,6 @@ namespace alc {
 			delete log;
 			log = lnull;
 		}
-		delete guidGen;
-		guidGen = NULL;
 	}
 	
 	void tTrackingBackend::load(void)
@@ -155,9 +150,6 @@ namespace alc {
 		if (var.isNull()) statusXML = false;
 		else strncpy(statusXMLFile, var.c_str(), 255);
 		statusFileUpdate = true;
-		
-		if (guidGen == NULL)
-			guidGen = new tGuidGen();
 	}
 	
 	void tTrackingBackend::reload(void)
@@ -180,19 +172,11 @@ namespace alc {
 		player->ip = findServer.ip;
 		player->port = findServer.port;
 		log->log("Player %s[%s:%d] wants to link to %s (%s)\n", player->str(), alcGetStrIp(player->ip), player->port, findServer.age.c_str(), findServer.serverGuid.c_str());
-		if (strcmp(findServer.serverGuid.c_str(), "0000000000000000") == 0) { // these are 16 zeroes
-			if (!guidGen->generateGuid(player->awaiting_guid, findServer.age.c_str(), player->ki)) {
-				log->log("ERR: Request to link to unknown age %s - kicking player %s\n", findServer.age.c_str(), player->str());
-				tmPlayerTerminated term(player->u, player->ki, RKickedOff);
-				net->send(term);
-				return;
-			}
-			log->log(" Generated GUID: %s\n", alcGetStrGuid(player->awaiting_guid));
-		}
-		else
-			alcAscii2Hex(player->awaiting_guid, findServer.serverGuid.c_str(), 8);
+		if (strcmp(findServer.serverGuid.c_str(), "0000000000000000") == 0) // these are 16 zeroes
+			throw txProtocolError(_WHERE("No age GUID set"));
 		// copy data to player
 		player->status = RInRoute;
+		alcAscii2Hex(player->awaiting_guid, findServer.serverGuid.c_str(), 8);
 		strncpy(player->awaiting_age, findServer.age.c_str(), 199);
 		player->waiting = true;
 		// search for the game server the player needs
@@ -364,14 +348,6 @@ namespace alc {
 			}
 			else
 				log->log("ERR: Found game server %s without a Lobby belonging to it\n", game->str());
-			
-			// get the age's sequence prefix
-			tAgeInfo *age = guidGen->getAge(game->name);
-			if (!age) {
-				log->log("ERR: Can\'t find the age file (%s) for game server %s - kicking it\n", game->name, game->str());
-				net->terminate(game);
-			}
-			else data->seqPrefix = age->seqPrefix;
 		}
 		else // if it is a lobby
 			generateFakeGuid(data->agentGuid); // create guid for UruVision
@@ -768,7 +744,6 @@ namespace alc {
 				fprintf(f, "<AgeInfo>\n");
 					fprintf(f, "<AgeInstanceName>%s</AgeInstanceName>\n", game->name);
 					fprintf(f, "<AgeInstanceGuid>%s</AgeInstanceGuid>\n", alcGetStrGuid(game->serverGuid));
-					fprintf(f, "<AgeSequenceNumber>%d</AgeSequenceNumber>\n", data->seqPrefix);
 				fprintf(f, "</AgeInfo>\n");
 			fprintf(f, "</AgeLink>\n");
 		fprintf(f, "</Game>\n");

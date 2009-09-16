@@ -29,13 +29,12 @@
 
 //#define _DBG_LEVEL_ 10
 
-#include <alcugs.h>
 #include <alcnet.h>
 
 ////extra includes
 #include "vaultdb.h"
 
-#include "alcdebug.h"
+#include <alcdebug.h>
 
 namespace alc {
 

@@ -29,8 +29,6 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_VAULTDB_H_ID "$Id$"
 
-#include <protocol/vaultproto.h>
-
 namespace alc {
 
 	////DEFINITIONS

@@ -33,6 +33,8 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCNET_H_ID "$Id$"
 
+#include <alcugs.h>
+
 namespace alc {
 	extern const char * alcNetName;
 	extern Byte alcWhoami;
@@ -58,6 +60,7 @@ namespace alc {
 #include "configalias.h"
 #include "unetmain.h"
 #include "unetserverbase.h"
+#include "unetlobbyserverbase.h"
 #include "sql.h"
 
 #endif

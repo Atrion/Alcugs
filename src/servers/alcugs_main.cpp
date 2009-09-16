@@ -30,7 +30,6 @@
 #define ALC_PROGRAM_ID "$Id$"
 #define ALC_PROGRAM_NAME "Alcugs Server"
 
-#include <alcugs.h>
 #include <alcnet.h>
 
 #if defined(I_AM_THE_LOBBY_SERVER)

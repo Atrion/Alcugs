@@ -38,7 +38,6 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_GAMESERVER_H_ID "$Id$"
 
-#include <unetlobbyserverbase.h>
 #include "sdl.h"
 
 namespace alc {

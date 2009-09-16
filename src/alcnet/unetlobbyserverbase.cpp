@@ -38,14 +38,12 @@
 
 //#define _DBG_LEVEL_ 10
 
-#include "alcugs.h"
 #include "alcnet.h"
-#include "unetlobbyserverbase.h"
-#include "protocol/msgparsers.h"
+#include "protocol/ext-protocol.h"
 
 ////extra includes
 
-#include "alcdebug.h"
+#include <alcdebug.h>
 
 namespace alc {
 
@@ -609,6 +607,29 @@ namespace alc {
 					}
 				}
 				
+				// Let's ask vault
+				tNetSession *vaultServer = getServer(KVault);
+				if (!vaultServer) {
+					err->log("ERR: I've got the ask the vault server to check an age for me, but it's unavailable.\n");
+					return 1;
+				}
+				tmCustomVaultFindAge vaultFindAge(vaultServer, u->ki, findAge.x, u->getSid(), u->getIp(), u->getPort(), findAge.message);
+				send(vaultFindAge);
+				
+				return 1;
+			}
+			case NetMsgCustomFindServer:
+			{
+				if (u->getPeerType() != KVault) {
+					err->log("ERR: %s sent a NetMsgCustomFindServer but is not the vault server. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmCustomFindServer findServer(u);
+				msg->data.get(findServer);
+				log->log("<RCV> [%d] %s\n", msg->sn, findServer.str());
+			
 				// let's ask the tracking server
 				tNetSession *trackingServer = getServer(KTracking);
 				if (!trackingServer) {
@@ -616,10 +637,8 @@ namespace alc {
 					return 1;
 				}
 				
-				tmCustomFindServer findServer(trackingServer, u->ki, findAge.x, u->getSid(), u->getIp(), u->getPort(), alcGetStrGuid(ageLink.ageInfo.guid), ageLink.ageInfo.filename.c_str());
-				send(findServer);
-				
-				return 1;
+				tmCustomFindServer trackingFindServer(trackingServer, findServer);
+				send(trackingFindServer);
 			}
 			case NetMsgCustomServerFound:
 			{

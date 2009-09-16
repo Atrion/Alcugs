@@ -29,8 +29,6 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_TRACKINGMSG_H_ID "$Id$"
 
-#include "gamemsg.h" // tmCustomDirectedFwd is derived from tmGameMessageDirected
-
 namespace alc {
 
 	////DEFINITIONS
@@ -62,10 +60,11 @@ namespace alc {
 		virtual void additionalFields();
 	};
 	
-	class tmCustomFindServer : public tmMsgBase {
+	class tmCustomFindServer : public tmMsgBase { // also used by vault
 	public:
 		tmCustomFindServer(tNetSession *u);
-		tmCustomFindServer(tNetSession *u, U32 ki, U32 x, U32 sid, U32 ip, U16 port, const char *serverGuid, const char *age);
+		tmCustomFindServer(tNetSession *u, const tmCustomVaultFindAge &findAge, const char *serverGuid, const tStrBuf &age);
+		tmCustomFindServer(tNetSession *u, const tmCustomFindServer &findServer);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		// format

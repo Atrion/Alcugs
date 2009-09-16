@@ -38,13 +38,12 @@
 
 //#define _DBG_LEVEL_ 10
 
-#include <alcugs.h>
 #include <alcnet.h>
 
 ////extra includes
 #include "guidgen.h"
 
-#include "alcdebug.h"
+#include <alcdebug.h>
 
 namespace alc {
 
@@ -89,7 +88,7 @@ namespace alc {
 	
 	bool tGuidGen::generateGuid(Byte *guid, const char *age, U32 ki)
 	{
-		tAgeInfo *ageInfo = getAge(age);
+		tAgeInfo *ageInfo = ageInfos->getAge(age);
 		if (!ageInfo) return false;
 		if (ageInfo->seqPrefix > 0x00FFFFFF) return false; // obviously he wants to link to an age like GlobalMarkers
 		bool isPrivate = (instanceMode == 1) ? isAgePrivate(age) : false;

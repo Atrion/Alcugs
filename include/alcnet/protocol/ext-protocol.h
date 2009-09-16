@@ -43,8 +43,8 @@
 #include "protocol/lobbymsg.h"
 #include "protocol/gamemsg.h"
 #include "protocol/authmsg.h"
-#include "protocol/trackingmsg.h"
 #include "protocol/vaultmsg.h"
+#include "protocol/trackingmsg.h"
 #include "protocol/vaultproto.h"
 
 #endif

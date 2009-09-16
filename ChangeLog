@@ -1,11 +1,12 @@
 Version 1.3.5a (??)
 ===============================
-Improvements:
+Improvements and Changes:
 - Code rework to be more readable and reasonable (especially use const wherever possible)
 - The age states are now saved in the directory specified by game.agestates (with an automatic migration from the old system)
 - The tracking server requires a confirmation from the game server that it is still alive before sending a player there - this hopefully fixes a lot of "Authentication Failed" crashes while linking
 - Changed way of dealing with lost packages to hopefully result in a much better connection when some packets are lost (less re-sends should be necessary)
 - Game server now decides whether an agestate is loaded or not: "tracking".tmp.hacks.resetting_ages" has therefore been renamed to "game.tmp.hacks.resetting_ages" (the old one will automatically be used if the new one is not yet set)
+- Removed legacy unet2 and unet3 protocol support (migration from old servers is still possible though)
 
 Bugfixes:
 - Fixed much too slow parsing of incoming messages under some circumstances
