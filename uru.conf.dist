@@ -159,7 +159,6 @@ website = "http://server/info.html"
 # game server settings
 game.log = "../game/" # the path where the game log files will be saved (there will be subdirs for each instance: /base_path/agename/ageguid/)
 game.bin = "/home/alcugs/bin/alcugs_game" # full path and name of game server binary
-# (if you want to use an unet2 game server, you also have to set game.config to the name of the game server config file)
 
 stop = 1
 
