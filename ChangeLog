@@ -7,6 +7,7 @@ Improvements and Changes:
 - Changed way of dealing with lost packages to hopefully result in a much better connection when some packets are lost (less re-sends should be necessary)
 - Game server now decides whether an agestate is loaded or not: "tracking".tmp.hacks.resetting_ages" has therefore been renamed to "game.tmp.hacks.resetting_ages" (the old one will automatically be used if the new one is not yet set)
 - Removed legacy unet2 and unet3 protocol support (migration from old servers is still possible though)
+- GUID generation is now done exclusively in the vault server
 
 Bugfixes:
 - Fixed much too slow parsing of incoming messages under some circumstances
