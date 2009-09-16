@@ -29,9 +29,6 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_VAULTBACKEND_H_ID "$Id$"
 
-#include <protocol/vaultmsg.h>
-#include <protocol/vaultproto.h>
-
 #include "vaultdb.h"
 #include "guidgen.h"
 
@@ -39,6 +36,7 @@
 
 namespace alc {
 
+	class tvAgeLink;
 	////DEFINITIONS
 	
 	class tVaultBackend {
@@ -59,6 +57,7 @@ namespace alc {
 			return vaultDB->getPlayerList(uid);
 		}
 		inline int getMaxPlayers(void) { return maxPlayers; }
+		bool setAgeGuid(tvAgeLinkStruct *link, U32 ownerKi);
 	private:
 		// first the new types
 		struct tVmgr {
@@ -157,7 +156,6 @@ namespace alc {
 		char welcomeMsgTitle[512], welcomeMsgText[4096];
 		char hoodName[512], hoodDesc[512];
 		bool linkingRulesHack;
-		bool autoRemoveMgrs;
 		
 		// the list of vmgrs
 		tVmgrList vmgrs;

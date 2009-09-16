@@ -29,9 +29,8 @@
 
 //#define _DBG_LEVEL_ 10
 
-#include "alcugs.h"
 #include "alcnet.h"
-#include "protocol/vaultmsg.h"
+#include "protocol/ext-protocol.h"
 
 #include <alcdebug.h>
 
@@ -343,6 +342,36 @@ namespace alc {
 	{
 		dbg.nl();
 		dbg.printf(" status: 0x%02X, avatar: %s", status, avatar.c_str());	
+	}
+	
+	//// tmCustomVaultFindAge
+	tmCustomVaultFindAge::tmCustomVaultFindAge(tNetSession *u, U32 ki, U32 x, U32 sid, U32 ip, U16 port, const tMBuf &data)
+	 : tmMsgBase(NetMsgCustomVaultFindAge, plNetX | plNetKi | plNetAck | plNetIP | plNetSid, u), data(data)
+	{
+		this->ki = ki;
+		this->x = x;
+		this->sid = sid;
+		this->ip = ip;
+		this->port = port;
+	}
+	
+	tmCustomVaultFindAge::tmCustomVaultFindAge(tNetSession *u) : tmMsgBase(u)
+	{ }
+	
+	void tmCustomVaultFindAge::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		if (!hasFlags(plNetX | plNetKi | plNetIP | plNetSid)) throw txProtocolError(_WHERE("X, KI, IP or Sid flag missing"));
+		// store the whole message
+		data.clear();
+		U32 remaining = t.remaining();
+		data.write(t.read(), remaining);
+	}
+	
+	void tmCustomVaultFindAge::stream(tBBuf &t) const
+	{
+		tmMsgBase::stream(t);
+		t.put(data);
 	}
 	
 } //end namespace alc

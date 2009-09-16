@@ -29,9 +29,8 @@
 
 //#define _DBG_LEVEL_ 10
 
-#include "alcugs.h"
 #include "alcnet.h"
-#include "protocol/trackingmsg.h"
+#include "protocol/ext-protocol.h"
 
 #include <alcdebug.h>
 
@@ -121,14 +120,24 @@ namespace alc {
 	tmCustomFindServer::tmCustomFindServer(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
-	tmCustomFindServer::tmCustomFindServer(tNetSession *u, U32 ki, U32 x, U32 sid, U32 ip, U16 port, const char *serverGuid, const char *age)
+	tmCustomFindServer::tmCustomFindServer(tNetSession *u, const tmCustomVaultFindAge &findAge, const char *serverGuid, const tStrBuf &age)
 	 : tmMsgBase(NetMsgCustomFindServer, plNetX | plNetKi | plNetAck | plNetIP | plNetSid, u), serverGuid(serverGuid), age(age)
 	{
-		this->ki = ki;
-		this->x = x;
-		this->sid = sid;
-		this->ip = ip;
-		this->port = port;
+		this->ki = findAge.ki;
+		this->x = findAge.x;
+		this->sid = findAge.sid;
+		this->ip = findAge.ip;
+		this->port = findAge.port;
+	}
+	
+	tmCustomFindServer::tmCustomFindServer(tNetSession *u, const tmCustomFindServer &findServer)
+	 : tmMsgBase(NetMsgCustomFindServer, plNetX | plNetKi | plNetAck | plNetIP | plNetSid, u), serverGuid(findServer.serverGuid), age(findServer.age)
+	{
+		this->ki = findServer.ki;
+		this->x = findServer.x;
+		this->sid = findServer.sid;
+		this->ip = findServer.ip;
+		this->port = findServer.port;
 	}
 	
 	void tmCustomFindServer::store(tBBuf &t)

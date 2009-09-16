@@ -199,6 +199,7 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
+		inline bool hasGuid(void) { return (flags & 0x04); }
 		const char *str(void);
 		// format
 		Byte flags;

@@ -38,10 +38,7 @@
 
 //#define _DBG_LEVEL_ 10
 
-#include <alcugs.h>
 #include <alcnet.h>
-#include <protocol/vaultmsg.h>
-#include <protocol/vaultproto.h>
 
 ////extra includes
 #include "vaultserver.h"
@@ -149,6 +146,31 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, checkKi.str());
 				
 				vaultBackend->checkKi(checkKi);
+				
+				return 1;
+			}
+			case NetMsgCustomVaultFindAge:
+			{
+				tmCustomVaultFindAge findAge(u);
+				msg->data.get(findAge);
+				log->log("<RCV> [%d] %s\n", msg->sn, findAge.str());
+				
+				tvAgeLinkStruct ageLink;
+				findAge.data.rewind();
+				findAge.data.get(ageLink);
+				if (!findAge.data.eof()) throw txProtocolError(_WHERE("Got a NetMsgFindAge which is too long"));
+				log->print(" %s\n", ageLink.str());
+				
+				if (!ageLink.ageInfo.hasGuid()) {
+					if (!vaultBackend->setAgeGuid(&ageLink, findAge.ki)) {
+						err->log("ERR: Request to link to unknown age %s - kicking player %d\n", ageLink.ageInfo.filename.c_str(), findAge.ki);
+						tmPlayerTerminated term(u, findAge.ki, RKickedOff);
+						send(term);
+					}
+				}
+				
+				tmCustomFindServer findServer(u, findAge, alcGetStrGuid(ageLink.ageInfo.guid), ageLink.ageInfo.filename);
+				send(findServer);
 				
 				return 1;
 			}

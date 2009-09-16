@@ -38,15 +38,13 @@
 
 //#define _DBG_LEVEL_ 10
 
-#include "alcugs.h"
 #include "alcnet.h"
-#include "protocol/msgparsers.h"
-#include "protocol/vaultproto.h"
+#include "protocol/ext-protocol.h"
 
 ////extra includes
 #include <sys/stat.h>
 
-#include "alcdebug.h"
+#include <alcdebug.h>
 
 namespace alc {
 
@@ -109,7 +107,7 @@ namespace alc {
 		if (flags & 0x04) // GUID
 			memcpy(guid, t.read(8), 8);
 		else
-			memset(guid, 0, 8);
+			memset(guid, 0, 8); // some parts of the server rely on this being all zero when no GUID is set
 		
 		if (flags & 0x08) // user defined name
 			t.get(userDefName);

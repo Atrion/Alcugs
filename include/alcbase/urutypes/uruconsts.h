@@ -338,6 +338,7 @@ unsilenced 29
 #define NetMsgCustomCmd                0x1019 //*
 #define NetMsgCustomDirectedFwd        0x101A
 #define NetMsgCustomPlayerToCome       0x101B
+#define NetMsgCustomVaultFindAge       0x101C
 #define NetMsgCustomTest               0x1313
 // * unimplemented, unknown format
 ////============================================================================

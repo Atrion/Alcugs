@@ -38,11 +38,9 @@
 
 //#define _DBG_LEVEL_ 10
 
-#include <alcugs.h>
 #include <alcnet.h>
 
 ////extra includes
-#include <protocol/authmsg.h>
 #include "authserver.h"
 
 #include <alcdebug.h>

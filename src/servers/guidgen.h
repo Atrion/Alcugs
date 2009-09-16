@@ -47,10 +47,8 @@ namespace alc {
 		tGuidGen(tAgeInfoLoader *ageInfos = NULL);
 		~tGuidGen(void) { if (ourAgeInfos) delete ageInfos; }
 		bool generateGuid(Byte *guid, const char *age, U32 ki);
-		inline tAgeInfo *getAge(const char *age) { return ageInfos->getAge(age); }
 		bool isAgePrivate(const char *age) const;
 	private:
-	
 		int instanceMode;
 		tAgeInfoLoader *ageInfos;
 		bool ourAgeInfos; //!< saves whether we created the age info loader (and will delete it) or not

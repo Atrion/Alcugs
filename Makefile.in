@@ -159,7 +159,6 @@ am_alcugs_lobby_OBJECTS = alcugs_lobby-alcugs_main.$(OBJEXT) \
 alcugs_lobby_OBJECTS = $(am_alcugs_lobby_OBJECTS)
 alcugs_lobby_DEPENDENCIES = libalcnet1.a libalcbase1.a
 am_alcugs_tracking_OBJECTS = alcugs_tracking-alcugs_main.$(OBJEXT) \
-	alcugs_tracking-guidgen.$(OBJEXT) \
 	alcugs_tracking-trackingbackend.$(OBJEXT) \
 	alcugs_tracking-trackingserver.$(OBJEXT)
 alcugs_tracking_OBJECTS = $(am_alcugs_tracking_OBJECTS)
@@ -409,12 +408,10 @@ alcugs_lobby_CPPFLAGS = -DI_AM_THE_LOBBY_SERVER
 # tracking server
 alcugs_tracking_SOURCES = \
  src/servers/alcugs_main.cpp \
- src/servers/guidgen.cpp \
  src/servers/trackingbackend.cpp \
  src/servers/trackingserver.cpp
 
 alcugs_tracking_INCLUDES = \
- src/servers/guidgen.h \
  src/servers/trackingbackend.h \
  src/servers/trackingserver.h
 
@@ -643,7 +640,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alcugs_lobby-alcugs_main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alcugs_lobby-lobbyserver.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alcugs_tracking-alcugs_main.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alcugs_tracking-guidgen.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alcugs_tracking-trackingbackend.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alcugs_tracking-trackingserver.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alcugs_vault-alcugs_main.Po@am__quote@
@@ -1491,20 +1487,6 @@ alcugs_tracking-alcugs_main.obj: src/servers/alcugs_main.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/servers/alcugs_main.cpp' object='alcugs_tracking-alcugs_main.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(alcugs_tracking_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o alcugs_tracking-alcugs_main.obj `if test -f 'src/servers/alcugs_main.cpp'; then $(CYGPATH_W) 'src/servers/alcugs_main.cpp'; else $(CYGPATH_W) '$(srcdir)/src/servers/alcugs_main.cpp'; fi`
-
-alcugs_tracking-guidgen.o: src/servers/guidgen.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(alcugs_tracking_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT alcugs_tracking-guidgen.o -MD -MP -MF $(DEPDIR)/alcugs_tracking-guidgen.Tpo -c -o alcugs_tracking-guidgen.o `test -f 'src/servers/guidgen.cpp' || echo '$(srcdir)/'`src/servers/guidgen.cpp
-@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/alcugs_tracking-guidgen.Tpo $(DEPDIR)/alcugs_tracking-guidgen.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/servers/guidgen.cpp' object='alcugs_tracking-guidgen.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(alcugs_tracking_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o alcugs_tracking-guidgen.o `test -f 'src/servers/guidgen.cpp' || echo '$(srcdir)/'`src/servers/guidgen.cpp
-
-alcugs_tracking-guidgen.obj: src/servers/guidgen.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(alcugs_tracking_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT alcugs_tracking-guidgen.obj -MD -MP -MF $(DEPDIR)/alcugs_tracking-guidgen.Tpo -c -o alcugs_tracking-guidgen.obj `if test -f 'src/servers/guidgen.cpp'; then $(CYGPATH_W) 'src/servers/guidgen.cpp'; else $(CYGPATH_W) '$(srcdir)/src/servers/guidgen.cpp'; fi`
-@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/alcugs_tracking-guidgen.Tpo $(DEPDIR)/alcugs_tracking-guidgen.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/servers/guidgen.cpp' object='alcugs_tracking-guidgen.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(alcugs_tracking_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o alcugs_tracking-guidgen.obj `if test -f 'src/servers/guidgen.cpp'; then $(CYGPATH_W) 'src/servers/guidgen.cpp'; else $(CYGPATH_W) '$(srcdir)/src/servers/guidgen.cpp'; fi`
 
 alcugs_tracking-trackingbackend.o: src/servers/trackingbackend.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(alcugs_tracking_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT alcugs_tracking-trackingbackend.o -MD -MP -MF $(DEPDIR)/alcugs_tracking-trackingbackend.Tpo -c -o alcugs_tracking-trackingbackend.o `test -f 'src/servers/trackingbackend.cpp' || echo '$(srcdir)/'`src/servers/trackingbackend.cpp

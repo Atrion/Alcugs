@@ -38,7 +38,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_UNETLOBBYSERVERBASE_H_ID "$Id$"
 
-#include "protocol/vaultproto.h"
+#include "protocol/ext-protocol.h"
 
 namespace alc {
 

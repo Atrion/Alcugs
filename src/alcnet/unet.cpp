@@ -33,7 +33,6 @@
 
 //#define _DBG_LEVEL_ 3
 
-#include "alcugs.h"
 #include "alcnet.h"
 
 #include <fcntl.h>
@@ -41,7 +40,7 @@
 #include <sys/types.h>
 #include <cerrno>
 
-#include "alcdebug.h"
+#include <alcdebug.h>
 
 namespace alc {
 

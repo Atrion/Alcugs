@@ -38,9 +38,6 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_TRACKINGBACKEND_H_ID "$Id$"
 
-#include <protocol/trackingmsg.h>
-
-#include "guidgen.h"
 
 #include <list>
 
@@ -64,7 +61,6 @@ namespace alc {
 		U16 portStart, portEnd;
 		char externalIp[100]; //!< the external IP (the ones palyers should use to connect to this server)
 		Byte agentGuid[8]; //!< set when isLobby = true, saves the fake guid for UruVision
-		U32 seqPrefix;
 		tPlayerList waitingPlayers;
 	};
 	
@@ -128,7 +124,6 @@ namespace alc {
 		const char *host;
 		U16 port;
 		Byte fakeLobbyGuid[8]; //!< saves the GUID for the fake lobby (for UruVision)
-		tGuidGen *guidGen;
 		
 		bool statusFileUpdate;
 		bool statusHTML, statusHTMLdbg, statusXML;

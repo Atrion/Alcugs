@@ -38,14 +38,13 @@ No sockets please
 
 //#define _DBG_LEVEL_ 10
 
-#include "alcugs.h"
 #include "alcnet.h"
 
 namespace md5 {
 #include "alcutil/md5.h"
 }
 
-#include "alcdebug.h"
+#include <alcdebug.h>
 
 namespace alc {
 
@@ -1019,6 +1018,7 @@ const char * alcUnetGetMsgCode(U16 code) {
 		case NetMsgCustomCmd: return "NetMsgCustomCmd";
 		case NetMsgCustomDirectedFwd: return "NetMsgCustomDirectedFwd";
 		case NetMsgCustomPlayerToCome: return "NetMsgCustomPlayerToCome";
+		case NetMsgCustomVaultFindAge: return "NetMsgCustomVaultFindAge";
 		case NetMsgCustomTest: return "NetMsgCustomTest";
 		default: return "Unknown";
 	}

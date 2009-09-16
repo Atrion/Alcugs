@@ -29,13 +29,13 @@
 
 //#define _DBG_LEVEL_ 10
 
-#include <alcugs.h>
 #include <alcnet.h>
+#include <protocol/ext-protocol.h>
 
 ////extra includes
 #include "vaultbackend.h"
 
-#include "alcdebug.h"
+#include <alcdebug.h>
 
 namespace alc {
 
@@ -108,10 +108,7 @@ namespace alc {
 		else strncpy(welcomeMsgText, defaultWelcomeMsgText, 4095);
 		
 		var = cfg->getVar("vault.tmp.hacks.linkrules");
-		linkingRulesHack = (var.isNull() || var.asByte()); // enabled per default
-		
-		var = cfg->getVar("vault.auto_remove_mgrs");
-		autoRemoveMgrs = (!var.isNull() && var.asByte()); // disabled per default
+		linkingRulesHack = (var.isNull() || var.asByte()); // enabled per default (FIXME: disable this and all *.tmp.hacks.* per default - check uru.conf.dist for more things to change)
 		
 		log->log("Started VaultBackend (%s)\n", __U_VAULTBACKEND_ID);
 		vaultDB = new tVaultDB(log);
@@ -243,7 +240,7 @@ namespace alc {
 		while (it != vmgrs.end()) {
 			if (it->ki == status.ki) {
 				if (status.state) it->session = status.getSession()->getIte();
-				else if (autoRemoveMgrs) {
+				else {
 					it = vmgrs.erase(it);
 					log->log("WARN: Player with KI %d just went offline but still had a vmgr registered... removing it\n", status.ki);
 					continue; // we already incremented
@@ -1210,6 +1207,11 @@ namespace alc {
 	{
 		log->log("Cleaning up the vault. I hope you did a backup first! Now it's too late though...\n");
 		vaultDB->clean(cleanAges);
+	}
+	
+	bool tVaultBackend::setAgeGuid(tvAgeLinkStruct *link, U32 ownerKi)
+	{
+		return guidGen->generateGuid(link->ageInfo.guid, link->ageInfo.filename.c_str(), ownerKi);
 	}
 
 } //end namespace alc

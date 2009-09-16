@@ -39,7 +39,6 @@
 #define __U_SDL_H_ID "$Id$"
 
 #include <list>
-#include <protocol/gamemsg.h>
 #include "sdlbinary.h"
 
 namespace alc {
