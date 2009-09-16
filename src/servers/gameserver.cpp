@@ -44,7 +44,6 @@
 ////extra includes
 #include "gameserver.h"
 #include "sdl.h"
-#include "guidgen.h"
 
 #include <alcdebug.h>
 
@@ -69,10 +68,6 @@ namespace alc {
 		// load our age info
 		tAgeInfoLoader ageInfoLoader(serverName, /*loadPages*/true);
 		ageInfo = new tAgeInfo(*ageInfoLoader.getAge(serverName)); // get ourselves a copy of it
-		
-		// find out if this is a private age
-		tGuidGen guidGen(&ageInfoLoader);
-		thisAgeIsPrivate = guidGen.isAgePrivate(serverName);
 		
 		// load SDL Manager
 		ageState = new tAgeStateManager(this, ageInfo);
@@ -111,7 +106,7 @@ namespace alc {
 		}
 		
 		var = cfg->getVar("game.tmp.hacks.noreltoshare");
-		noReltoShare = (var.isNull() || var.asByte()); // enabled per default
+		noReltoShare = (!var.isNull() && var.asByte()); // disabled per default
 		
 		var = cfg->getVar("game.serversidecommands");
 		serverSideCommands = (var.isNull() || var.asByte()); // enabled per default
@@ -123,7 +118,6 @@ namespace alc {
 		if (u->getPeerType() == KVault) return; // we care only about messages from the client
 		if (msg->task) { // it is a vault task
 			if (msg->cmd != TRegisterOwnedAge) return; // we are only interested in these messages which are sent when an age is reset
-			if (!thisAgeIsPrivate) throw txProtocolError(_WHERE("Resetting a public age?")); // only allow to reset private ages - FIXME: Is this triggered when linking to a public age for the first time?
 			// now, find the age link struct
 			tvAgeLinkStruct *ageLink = NULL;
 			for (tvMessage::tItemList::iterator it = msg->items.begin(); it != msg->items.end(); ++it) {
@@ -136,7 +130,10 @@ namespace alc {
 			// make sure we are actually talking about this age
 			if (ageLink->ageInfo.filename != serverName || memcmp(serverGuid, ageLink->ageInfo.guid, 8) != 0)
 				return; // this is another age!
-			// ok, the player definitely wants to reset us, check if there is someone else in here
+			// ok, the player definitely wants to reset us, check if this is a public age - FIXME: this is a bad hack
+			if (ageLink->ageInfo.guid[1] == 0) // it's public (since no KI is set in the GUID)
+				return;
+			// check there is someone else in here
 			bool playerFound = false;
 			tNetSession *session;
 			smgr->rewind();

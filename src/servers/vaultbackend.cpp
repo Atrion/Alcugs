@@ -108,7 +108,7 @@ namespace alc {
 		else strncpy(welcomeMsgText, defaultWelcomeMsgText, 4095);
 		
 		var = cfg->getVar("vault.tmp.hacks.linkrules");
-		linkingRulesHack = (var.isNull() || var.asByte()); // enabled per default (FIXME: disable this and all *.tmp.hacks.* per default - check uru.conf.dist for more things to change)
+		linkingRulesHack = (!var.isNull() && var.asByte()); // disabled per default
 		
 		log->log("Started VaultBackend (%s)\n", __U_VAULTBACKEND_ID);
 		vaultDB = new tVaultDB(log);
