@@ -67,7 +67,7 @@ namespace alc {
 		
 		// load our age info
 		tAgeInfoLoader ageInfoLoader(serverName, /*loadPages*/true);
-		ageInfo = new tAgeInfo(*ageInfoLoader.getAge(serverName)); // get ourselves a copy of it
+		ageInfo = new tAgeInfo(*ageInfoLoader.getAge(serverName)); // get ourselves a copy of it (and forget the rest)
 		
 		// load SDL Manager
 		ageState = new tAgeStateManager(this, ageInfo);
