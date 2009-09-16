@@ -48,7 +48,7 @@ namespace alc {
 		this->net = net;
 		log = logHtml = lnull;
 		vaultDB = NULL;
-		guidGen = NULL;
+		ageInfos = NULL;
 		load();
 	}
 	
@@ -63,8 +63,8 @@ namespace alc {
 	{
 		delete vaultDB;
 		vaultDB = NULL;
-		delete guidGen;
-		guidGen = NULL;
+		delete ageInfos;
+		ageInfos = NULL;
 		if (log != lnull) {
 			delete log;
 			log = lnull;
@@ -110,6 +110,18 @@ namespace alc {
 		var = cfg->getVar("vault.tmp.hacks.linkrules");
 		linkingRulesHack = (!var.isNull() && var.asByte()); // disabled per default
 		
+		// load the list of private ages
+		var = cfg->getVar("private_ages");
+		if (var.isNull()) strcpy(privateAges, "AvatarCustomization,Personal,Nexus,BahroCave,BahroCave02,LiveBahroCaves,DniCityX2Finale,Cleft,Kadish,Gira,Garrison,Garden,Teledahn,Ercana,Minkata,Jalak");
+		else strncpy(privateAges, var.c_str(), 1023);
+		// load instance mode setting
+		var = cfg->getVar("instance_mode");
+		if (var.isNull()) instanceMode = 1;
+		else instanceMode = var.asByte();
+		if (instanceMode != 0 && instanceMode != 1) throw txBase(_WHERE("instance_mode must be 0 or 1 but is %d", instanceMode));
+		// Load age files
+		if (!ageInfos) ageInfos = new tAgeInfoLoader;
+		
 		log->log("Started VaultBackend (%s)\n", __U_VAULTBACKEND_ID);
 		vaultDB = new tVaultDB(log);
 		log->nl();
@@ -117,9 +129,6 @@ namespace alc {
 		vaultDB->getVaultFolderName(vaultFolderName);
 		DBG(5, "global vault folder name is %s\n", vaultFolderName);
 		checkMainNodes();
-		
-		if (guidGen == NULL)
-			guidGen = new tGuidGen();
 	}
 	
 	void tVaultBackend::reload(void)
@@ -732,7 +741,7 @@ namespace alc {
 				if (memcmp(ageLink->ageInfo.guid, zeroGuid, 8) == 0) {
 					// this happens for the Watcher's Guild link which is created "on the fly" as Relto expects it, and
 					// for the links to the 4 Ahnonay spheres which are created when linking to the Cathedral
-					if (!guidGen->generateGuid(ageLink->ageInfo.guid, ageLink->ageInfo.filename.c_str(), msg.vmgr))
+					if (!generateGuid(ageLink->ageInfo.guid, ageLink->ageInfo.filename.c_str(), msg.vmgr))
 						throw txProtocolError(_WHERE("could not generate GUID"));
 				}
 				
@@ -757,7 +766,7 @@ namespace alc {
 				
 				// generate the GUID
 				Byte guid[8];
-				if (!guidGen->generateGuid(guid, ageName, msg.vmgr))
+				if (!generateGuid(guid, ageName, msg.vmgr))
 					throw txProtocolError(_WHERE("could not generate GUID"));
 				
 				// find age info node
@@ -1036,7 +1045,7 @@ namespace alc {
 		// link that player with Ae'gura, the hood and DniCityX2Final
 		Byte guid[8];
 		{
-			if (!guidGen->generateGuid(guid, "city", ki)) throw txProtocolError(_WHERE("error creating GUID"));
+			if (!generateGuid(guid, "city", ki)) throw txProtocolError(_WHERE("error creating GUID"));
 			tvAgeInfoStruct ageInfo("city", "Ae'gura", "Ae'gura", "Ae'gura", guid);
 			tvSpawnPoint spawnPoint("FerryTerminal", "LinkInPointFerry");
 			
@@ -1045,7 +1054,7 @@ namespace alc {
 		}
 		
 		{
-			if (!guidGen->generateGuid(guid, "Neighborhood", ki)) throw txProtocolError(_WHERE("error creating GUID"));
+			if (!generateGuid(guid, "Neighborhood", ki)) throw txProtocolError(_WHERE("error creating GUID"));
 			tvAgeInfoStruct ageInfo("Neighborhood", "Neighborhood", hoodName, hoodDesc, guid);
 			tvSpawnPoint spawnPoint("Default", "LinkInPointDefault");
 			
@@ -1055,7 +1064,7 @@ namespace alc {
 		}
 		
 		{
-			if (!guidGen->generateGuid(guid, "DniCityX2Finale", ki)) throw txProtocolError(_WHERE("error creating GUID"));
+			if (!generateGuid(guid, "DniCityX2Finale", ki)) throw txProtocolError(_WHERE("error creating GUID"));
 			tvAgeInfoStruct ageInfo("DniCityX2Finale", "DniCityX2Finale", "", "", guid);
 			tvSpawnPoint spawnPoint("Default", "LinkInPointDefault");
 			
@@ -1209,9 +1218,57 @@ namespace alc {
 		vaultDB->clean(cleanAges);
 	}
 	
+	bool tVaultBackend::isAgePrivate(const char *age) const
+	{
+		// local copy of private age list as strsep modifies it
+		char ages[1024];
+		strcpy(ages, privateAges);
+		
+		char *buf = ages;
+		char *p = strsep(&buf, ",");
+		while (p != 0) {
+			if (strcmp(p, age) == 0) return true;
+			p = strsep(&buf, ",");
+		}
+		return false;
+	}
+	
+	bool tVaultBackend::generateGuid(Byte *guid, const char *age, U32 ki)
+	{
+		tAgeInfo *ageInfo = ageInfos->getAge(age);
+		if (!ageInfo) return false;
+		if (ageInfo->seqPrefix > 0x00FFFFFF) return false; // obviously he wants to link to an age like GlobalMarkers
+		bool isPrivate = (instanceMode == 1) ? isAgePrivate(age) : false;
+		if (isPrivate && ki > 0x0FFFFFFF) throw txBase(_WHERE("KI is too big!")); // ensure 1st bit of the 4 byte is 0 (see comment below)
+		
+		/* so we have "The server GUID, aka age guid"
+		---------------------------------
+		| 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+		--------------------------------
+		| 0 | ki here       | s | s | s |
+		--------------------------------
+		Where s is the sequence prefix, and the 1st bit of the 4 byte should be always 0.
+		
+		This ensures all GUIDs are unique as no player can have an age several times. That's what happened in Cyan's servers when you
+		reset an age, but Alcugs will handle that differently to also avoid names like "Diafero's(1) Relto".
+		*/
+		tMBuf buf;
+		buf.putByte(0);
+		buf.putU32(isPrivate ? ki : 0);
+		
+		// 3 byte sequence prefix: First the one which usually is zero, to keep compatability
+		buf.putByte(ageInfo->seqPrefix >> 16);
+		// then the remaining two bytes
+		buf.putU16(ageInfo->seqPrefix & 0x0000FFFF);
+		
+		buf.rewind();
+		memcpy(guid, buf.read(8), 8);
+		return true;
+	}
+	
 	bool tVaultBackend::setAgeGuid(tvAgeLinkStruct *link, U32 ownerKi)
 	{
-		return guidGen->generateGuid(link->ageInfo.guid, link->ageInfo.filename.c_str(), ownerKi);
+		return generateGuid(link->ageInfo.guid, link->ageInfo.filename.c_str(), ownerKi);
 	}
 
 } //end namespace alc

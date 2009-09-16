@@ -30,7 +30,6 @@
 #define __U_VAULTBACKEND_H_ID "$Id$"
 
 #include "vaultdb.h"
-#include "guidgen.h"
 
 #include <list>
 
@@ -140,12 +139,20 @@ namespace alc {
 		/** broadcast the message to all vmgrs interested in that node, except for the one with origKi and origMgr
 		    (i.e. the one who did the change) */
 		void broadcast(tvMessage &msg, U32 node, U32 origKi = 0, U32 origMgr = 0);
+		
+		/** Find oit if an age is private (used by GUID generation) */
+		bool isAgePrivate(const char *age) const;
+		
+		/** Generate the GUID for an age */
+		bool generateGuid(Byte *guid, const char *age, U32 ki);
 	
 		tVaultDB *vaultDB;
 		char vaultFolderName[17];
 		U32 adminNode;
 		
-		tGuidGen *guidGen;
+		int instanceMode;
+		tAgeInfoLoader *ageInfos;
+		char privateAges[1024];
 		
 		tLog *log, *logHtml;
 		bool shortHtml;

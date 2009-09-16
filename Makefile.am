@@ -132,12 +132,10 @@ alcugs_auth_CPPFLAGS = -DI_AM_THE_AUTH_SERVER
 # vault server
 alcugs_vault_SOURCES = \
  src/servers/alcugs_main.cpp \
- src/servers/guidgen.cpp \
  src/servers/vaultbackend.cpp \
  src/servers/vaultdb.cpp \
  src/servers/vaultserver.cpp
 alcugs_vault_INCLUDES = \
- src/servers/guidgen.h \
  src/servers/vaultbackend.h \
  src/servers/vaultdb.h \
  src/servers/vaultserver.h
