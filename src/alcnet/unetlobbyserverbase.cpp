@@ -639,6 +639,8 @@ namespace alc {
 				
 				tmCustomFindServer trackingFindServer(trackingServer, findServer);
 				send(trackingFindServer);
+				
+				return 1;
 			}
 			case NetMsgCustomServerFound:
 			{
