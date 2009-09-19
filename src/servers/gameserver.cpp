@@ -114,6 +114,7 @@ namespace alc {
 	
 	void tUnetGameServer::additionalVaultProcessing(tNetSession *u, tvMessage *msg)
 	{
+		// FIXME: This whole function is a bad hack - eventually, everything done here should be properly implemented elsewhere
 		// first of all, we are only interested in VSaveNodes sent from client to vault
 		if (u->getPeerType() == KVault) return; // we care only about messages from the client
 		if (msg->task) { // it is a vault task
@@ -130,7 +131,7 @@ namespace alc {
 			// make sure we are actually talking about this age
 			if (ageLink->ageInfo.filename != serverName || memcmp(serverGuid, ageLink->ageInfo.guid, 8) != 0)
 				return; // this is another age!
-			// ok, the player definitely wants to reset us, check if this is a public age - FIXME: this is a bad hack
+			// ok, the player definitely wants to reset us, check if this is a public age
 			if (ageLink->ageInfo.guid[1] == 0) // it's public (since no KI is set in the GUID)
 				return;
 			// check there is someone else in here
