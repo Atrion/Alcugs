@@ -570,12 +570,12 @@ namespace alc {
 					if (c == "STATEDESC")
 						state = 1;
 					else if (!c.isNewline())
-						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
+						throw txParseError(_WHERE("Parse error at %s line %d, column %d: Unexpected token %s", filename, s.getLineNum(), s.getColumnNum(), c.c_str()));
 					break;
 				case 1: // found a statedesc block, search for name
 					// check if it is a valid name
 					if (c.isNewline())
-						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
+						throw txParseError(_WHERE("Parse error at %s line %d, column %d: Unexpected token %s", filename, s.getLineNum(), s.getColumnNum(), c.c_str()));
 					sdlStruct = tSdlStruct(this, c);
 					state = 2;
 					break;
@@ -583,29 +583,29 @@ namespace alc {
 					if (c == "{")
 						state = 3;
 					else if (!c.isNewline())
-						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
+						throw txParseError(_WHERE("Parse error at %s line %d, column %d: Unexpected token %s", filename, s.getLineNum(), s.getColumnNum(), c.c_str()));
 					break;
 				// ------------------------------------------------------------------------------------------------------------------
 				case 3: // in a statedesc block, search for VERSION
 					if (c == "VERSION")
 						state = 4;
 					else if (!c.isNewline())
-						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
+						throw txParseError(_WHERE("Parse error at %s line %d, column %d: Unexpected token %s", filename, s.getLineNum(), s.getColumnNum(), c.c_str()));
 					break;
 				case 4: // in a statedesc block after VERSION, search version number
 				{
 					U32 version = c.asU32();
 					if (!version)
-						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
+						throw txParseError(_WHERE("Parse error at %s line %d, column %d: Unexpected token %s", filename, s.getLineNum(), s.getColumnNum(), c.c_str()));
 					sdlStruct.version = version;
 					if (findStruct(sdlStruct.name, sdlStruct.version, /*throwOnError*/false))
-						throw txUnet(_WHERE("Duplicate definition of %s version %d\n", sdlStruct.name.c_str(), sdlStruct.version));
+						throw txUnet(_WHERE("%s: Duplicate definition of %s version %d\n", filename, sdlStruct.name.c_str(), sdlStruct.version));
 					state = 5;
 					break;
 				}
 				case 5: // in a statedesc block after the version number, search for newline
 					if (!c.isNewline())
-						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
+						throw txParseError(_WHERE("Parse error at %s line %d, column %d: Unexpected token %s", filename, s.getLineNum(), s.getColumnNum(), c.c_str()));
 					state = 6;
 					break;
 				// ------------------------------------------------------------------------------------------------------------------
@@ -617,7 +617,7 @@ namespace alc {
 					} else if (c == "VAR")
 						state = 7;
 					else if (!c.isNewline())
-						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
+						throw txParseError(_WHERE("Parse error at %s line %d, column %d: Unexpected token %s", filename, s.getLineNum(), s.getColumnNum(), c.c_str()));
 					break;
 				case 7: // search for var type
 					sdlVar = tSdlStructVar(c);
@@ -628,7 +628,7 @@ namespace alc {
 					bool dynSize =  c.endsWith("[]");
 					U32 size = alcParseKey(&c);
 					if (!size && !dynSize)
-						throw txParseError(_WHERE("Parse error at line %d, column %d: Invalid key %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
+						throw txParseError(_WHERE("Parse error at %s line %d, column %d: Invalid key %s", filename, s.getLineNum(), s.getColumnNum(), c.c_str()));
 					sdlVar.name = c;
 					sdlVar.size = dynSize ? 0 : size; // "0" means dynamic size
 					state = 9;
@@ -645,14 +645,14 @@ namespace alc {
 						sdlStruct.vars.push_back(sdlVar); // this VAR is finished, save it
 						state = 6; // go back to state 6 and search for next var or end of statedesc
 					} else
-						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
+						throw txParseError(_WHERE("Parse error at %s line %d, column %d: Unexpected token %s", filename, s.getLineNum(), s.getColumnNum(), c.c_str()));
 					break;
 				// ------------------------------------------------------------------------------------------------------------------
 				case 10: // find equal sign after DEFAULT
 					if (c == "=")
 						state = 11;
 					else
-						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
+						throw txParseError(_WHERE("Parse error at %s line %d, column %d: Unexpected token %s", filename, s.getLineNum(), s.getColumnNum(), c.c_str()));
 					break;
 				case 11: // find default data
 				{
@@ -672,7 +672,7 @@ namespace alc {
 					if (c == "=")
 						state = 13;
 					else
-						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
+						throw txParseError(_WHERE("Parse error at %s line %d, column %d: Unexpected token %s", filename, s.getLineNum(), s.getColumnNum(), c.c_str()));
 					break;
 				case 13: // find defaultoption data
 				{
@@ -681,7 +681,7 @@ namespace alc {
 					else if (c == "hidden" && (sdlStruct.name == "EderDelin" || sdlStruct.name == "EderTsogal" || sdlStruct.name == "Minkata" || sdlStruct.name == "Negilahn"))  // work-around for "DEFAULTOPTION=hidden" in some sdl files
 						sdlVar.flags |= tSdlStructVar::DHidden; // doesn't change anything (yet)
 					else
-						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
+						throw txParseError(_WHERE("Parse error at %s line %d, column %d: Unexpected token %s", filename, s.getLineNum(), s.getColumnNum(), c.c_str()));
 					state = 9; // find more information or the end of the VAR
 					break;
 				}
@@ -690,7 +690,7 @@ namespace alc {
 					if (c == "=")
 						state = 15;
 					else
-						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
+						throw txParseError(_WHERE("Parse error at %s line %d, column %d: Unexpected token %s", filename, s.getLineNum(), s.getColumnNum(), c.c_str()));
 					break;
 				case 15: // find displayoption data
 				{
@@ -701,17 +701,17 @@ namespace alc {
 					else if (c == "VAULT" && (sdlStruct.name == "BahroCave" || sdlStruct.name == "Jalak")) // work-around for "DISPLAYOPTION=VAULT" in some sdl files
 						sdlVar.flags |= tSdlStructVar::DVault; // doesn't change anything (yet)
 					else
-						throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected token %s", s.getLineNum(), s.getColumnNum(), c.c_str()));
+						throw txParseError(_WHERE("Parse error at %s line %d, column %d: Unexpected token %s", filename, s.getLineNum(), s.getColumnNum(), c.c_str()));
 					state = 9; // find more information or the end of the VAR
 					break;
 				}
 				default:
-					throw txParseError(_WHERE("Unknown state %d", state));
+					throw txParseError(_WHERE("%s: Unknown state %d", filename, state));
 			}
 		}
 		
 		if (state != 0)
-			throw txParseError(_WHERE("Parse error at line %d, column %d: Unexpected end of file", s.getLineNum(), s.getColumnNum()));
+			throw txParseError(_WHERE("Parse error at %s line %d, column %d: Unexpected end of file", filename, s.getLineNum(), s.getColumnNum()));
 	}
 	
 	/** The SDL Struct classes */
