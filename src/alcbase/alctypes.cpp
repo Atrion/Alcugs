@@ -660,7 +660,7 @@ S32 tStrBuf::find(const char cat, bool reverse) const {
 	return -1;
 }
 S32 tStrBuf::find(const char *str) const {
-	char *c = strstr(c_str(), str);
+	const char *c = strstr(c_str(), str);
 	if (c == NULL) return -1;
 	return (c-(char *)buf->buf);
 }
