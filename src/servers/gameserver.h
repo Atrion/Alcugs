@@ -65,7 +65,18 @@ namespace alc {
 		tUnetGameServer(void);
 		~tUnetGameServer(void);
 		
-		template <class T> void bcastMessage(const T &msg, U32 delay = 0); //!< delay is in msecs
+		template <class T> void bcastMessage(const T &msg, U32 delay = 0) //!< delay is in msecs
+		{ // template functions must be in the header so they can be instanciated properly
+			// broadcast message
+			tNetSession *session;
+			smgr->rewind();
+			while ((session = smgr->getNext())) {
+				if (session->joined && session->ki != msg.ki) {
+					T fwdMsg(session, msg);
+					send(fwdMsg, delay);
+				}
+			}
+		}
 		
 		/** creates a message to bring that player into the idle state. When inputState is < 0, generate a plAvBrainGenericMsg which
 		gets the avatar out of afk/KI state. When it is >= 0, send a plAvatarInputStateMsg with the given state to get it out of animations */
