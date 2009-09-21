@@ -344,19 +344,6 @@ namespace alc {
 		}
 	}
 	
-	template <class T> void tUnetGameServer::bcastMessage(const T &msg, U32 delay)
-	{
-		// broadcast message
-		tNetSession *session;
-		smgr->rewind();
-		while ((session = smgr->getNext())) {
-			if (session->joined && session->ki != msg.ki) {
-				T fwdMsg(session, msg);
-				send(fwdMsg, delay);
-			}
-		}
-	}
-	
 	void tUnetGameServer::bcastMemberUpdate(tNetSession *u, bool isJoined)
 	{
 		tGameData *data = dynamic_cast<tGameData *>(u->data);
