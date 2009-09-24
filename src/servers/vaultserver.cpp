@@ -166,7 +166,7 @@ namespace alc {
 						err->log("ERR: Request to link to unknown age %s - kicking player %d\n", ageLink.ageInfo.filename.c_str(), findAge.ki);
 						tmPlayerTerminated term(u, findAge.ki, RKickedOff);
 						send(term);
-						return;
+						return 1;
 					}
 				}
 				
