@@ -162,7 +162,7 @@ int main(int argc, char * argv[]) {
 		tStrBuf var;
 		var=cfg->getVar("stop","global");
 		if(!var.isNull() && var.asByte()) {
-			lstd->log("INFO: Administratively disabled! - Change the stop/disabled configuration directive to false\n");
+			lstd->log("INFO: Administratively disabled! Please read the Alcugs configuration file (usually uru.conf) carefully to solve this issue.\n");
 			return -1;
 		}
 		//daemon?
