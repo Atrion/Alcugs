@@ -1,44 +1,10 @@
 ###############################################################################
-#      Sample Alcuge Server Configuration file                                #
+#      Alcuge Server Configuration Template                                   #
 ###############################################################################
-# $Id$                                                                        #
-###############################################################################
-#
-# Important!, some features are unimplemented, others may work or not, and 
-# others may cause unstability.
-# Warning: This file contains passwords, so remember to make it only readable
-# by the user running the alcugs server.
-#
-# $ chown alcugs:alcugs
-# $ chmod 400
-#
-# remember that the LAST entry overrides the previous one for example,
-# if you write:
-#  port = 4764
-#
-# and then later on you write:
-#  read_config = myconfig.txt
-#
-# and if this new file contains the directive "port" then the value will be 
-# overrided by the last one.
-#
-# The syntax, is very simple: variable = "string text" or variable = 1284
-# NOTE: Commented text starts with the characters '#' and/or ';'
-# If a "default" value is defined, that's the one which is used if the option
-# is not specified at all
-#
-#
+# Please read http://alcugs.almlys.org/AlcugsConfig for an explanation of the #
+# Syntax and a documentation of the possible values.                          #
 ############# Global Settings #################################################
 [global]
-# set the logging/verbose level (you can also set it as parameter: [-v n])
-# 3-> print all messages to the stdout (default)
-# 2-> print only informative and error messages
-# 1-> print only error messages
-# 0-> total silence, perfect for daemon mode
-;verbose_level = 0 # default 3
-# set daemon mode (parameter: [-D])
-;daemon = 1 # default 0
-
 # logging
 ;log_files_path = log/ # path top contain the log files (parameter: [-log path/]) (default log/)
 ;log.n_rotate = 5 # set number of files to rotate (0 will disable logging, 1 keeps only one log file without rotating, default is 5)
@@ -55,11 +21,6 @@ public_address = "127.0.0.1"
 ;net.lan.up = 100000000 # upstream to your LAN (default: 100 MBits)
 ;net.lan.down = 100000000 # downstram from your LAN (default: 100 MBits)
 
-# global database settings
-;db.timeout = 950 # set the database tiemout if the connection is not persistent (default 15 minutes = 950 seconds)
-;db.persistent = 1 # enable persistent connection to the database (default 1)
-;db.log = 1 # enable logging of the database driver (default 1)
-;db.sql.log = 1 # enable sql query logging (default 0), doesn't work when db.log is disabled
 # global database connection data
 # (the vault database should be local because otherwise the latency is too big and lobby/game might get confused)
 db.host = "127.0.0.1" # note: set db.host to nothing to use the local unix socket (untested with unet3+)
