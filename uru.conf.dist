@@ -2,7 +2,7 @@
 #      Alcuge Server Configuration Template                                   #
 ###############################################################################
 # Please read http://alcugs.almlys.org/AlcugsConfig for an explanation of the #
-# Syntax and a documentation of the possible values.                          #
+# syntax and a documentation of the possible values.                          #
 ############# Global Settings #################################################
 [global]
 # logging
@@ -149,7 +149,7 @@ game.linger_time = 120 # default: 120
 ;game.tmp.hacks.noreltoshare = 1 # enable a hack which prevents a crash when trying to share a Relto book (default 0)
 
 # client settings
-allow_uu_clients = 0 # allow UU clients to connect to this server (default: 1)
-# This should NOT be set for lobby as the UruSetup.exe everyone uses is an UU client. For game servers however, it's a good mean to
+allow_uu_clients = 0 # this controls whether UU clients are allowed to connect to the game server (default: 1)
+# This should NOT be set to 0 in [lobby] as the UruSetup.exe everyone uses is an UU client. For game servers however, it's a good mean to
 # prevent SDL confusion to be caused by UU clients. Also note that UU client support is untested.
 stop = 1
