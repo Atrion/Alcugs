@@ -1,8 +1,0 @@
-These python scripts are Only for the Alcugs Servers.
-These python scripts don't work with the client and or Plasma servers.
-
-Feel free to send me any improved, modified, cool, server side scripts.
-
-The current API is very limited, but my objective, is to write a server
-side NPC in pure python.
-
