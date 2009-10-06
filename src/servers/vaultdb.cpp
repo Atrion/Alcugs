@@ -1551,12 +1551,6 @@ namespace alc {
 			mysql_free_result(result);
 		}
 		
-		/* However, even after removing lost nodes, the vault is still not clean: there are still lost ages.
-		   Lost ages are ages of players who were deleted. The age info nodes and everything else for that age (for Relto even the
-		   AgesIOwnFOlder of the owner) are still referenced by the age mgr for this age, so the nodes are not lost.
-		   Lost ages can be found by searching for age info nodes which are not referenced by an age link. However, this might also find
-		   Global Ages as long as they don't get an age link somewhere - which will have to wait till there are unet3+ game servers. */
-		
 		// optimize the tables
 		lstd->log("Cleaning up: Optimizing tables...\n");
 		query.clear();
