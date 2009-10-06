@@ -76,19 +76,24 @@ namespace alc {
 		return true;
 	}
 	
-	tAgeInfo::tAgeInfo(const tStrBuf &dir, const char *file, bool loadPages)
+	tAgeInfo::tAgeInfo(const char *file, bool loadPages)
 	{
+		// load age file dir
+		tConfig *cfg = alcGetConfig();
+		tStrBuf dir = cfg->getVar("age");
+		if (dir.size() < 2) throw txBase(_WHERE("age directory is not defined"));
+		if (!dir.endsWith("/")) dir.writeStr("/");
 		// get age name from file name
 		strncpy(name, file, 199);
 		alcStripExt(name);
 		// open and decrypt file
 		tFBuf ageFile;
-		ageFile.open((dir + file).c_str(), "r");
+		ageFile.open((dir + file + ".age").c_str(), "r");
 		tWDYSBuf ageContent;
 		ageContent.put(ageFile);
 		ageContent.decrypt(/*mustBeWDYS*/false);
 		// parse file
-		tConfig *cfg = new tConfig;
+		cfg = new tConfig;
 		tXParser parser(/*override*/false);
 		parser.setConfig(cfg);
 		ageContent.get(parser);
@@ -126,48 +131,7 @@ namespace alc {
 		if (number == 254) return true; // BuiltIn page
 		return pages.count(number);
 	}
-	
-	tAgeInfoLoader::tAgeInfoLoader(const char *name, bool loadPages)
-	{
-		// load age file dir and age files
-		tConfig *cfg = alcGetConfig();
-		tStrBuf dir = cfg->getVar("age");
-		if (dir.size() < 2) throw txBase(_WHERE("age directory is not defined"));
-		if (!dir.endsWith("/")) dir.writeStr("/");
-		
-		if (!name) { // we should load all ages
-			lstd->log("Reading age files from %s\n", dir.c_str());
-			lstd->flush();
-			
-			tDirectory ageDir;
-			tDirEntry *file;
-			ageDir.open(dir.c_str());
-			while( (file = ageDir.getEntry()) != NULL) {
-				if (!file->isFile() || strcasecmp(alcGetExt(file->name), "age") != 0) continue;
-				// load it
-				DBG(9, "Reading age file %s%s:", dir.c_str(), file->name);
-				ages.push_back(tAgeInfo(dir, file->name, loadPages));
-			}
-		}
-		else { // we should load only one certain age
-			lstd->log("Reading age file %s%s.age\n", dir.c_str(), name);
-			lstd->flush();
-			
-			char filename[200];
-			sprintf(filename, "%s.age", name);
-			// load it
-			ages.push_back(tAgeInfo(dir, filename, loadPages));
-		}
-		DBG(9, "Done reading age file(s)\n");
-	}
-	
-	tAgeInfo *tAgeInfoLoader::getAge(const char *name)
-	{
-		for (tAgeList::iterator i = ages.begin(); i != ages.end(); ++i) {
-			if (strcmp(i->name, name) == 0) return &(*i);
-		}
-		return NULL;
-	}
+
 
 } //end namespace alc
 

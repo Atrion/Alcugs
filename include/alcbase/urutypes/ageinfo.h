@@ -65,7 +65,7 @@ namespace alc {
 	class tAgeInfo
 	{
 	public:
-		tAgeInfo(const tStrBuf &dir, const char *file, bool loadPages);
+		tAgeInfo(const char *file, bool loadPages);
 		tPageInfo *getPage(U32 pageId);
 		bool validPage(U32 pageId) const;
 		
@@ -74,16 +74,6 @@ namespace alc {
 	
 		typedef std::map<U16, tPageInfo> tPageList;
 		tPageList pages;
-	};
-	
-	class tAgeInfoLoader
-	{
-	public:
-		tAgeInfoLoader(const char *name = NULL, bool loadPages = false);
-		tAgeInfo *getAge(const char *name);
-	private:
-		typedef std::vector<tAgeInfo> tAgeList;
-		tAgeList ages;
 	};
 
 } //End alc namespace

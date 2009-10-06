@@ -151,7 +151,6 @@ namespace alc {
 		U32 adminNode;
 		
 		int instanceMode;
-		tAgeInfoLoader *ageInfos;
 		char privateAges[1024];
 		
 		tLog *log, *logHtml;

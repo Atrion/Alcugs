@@ -65,11 +65,8 @@ namespace alc {
 		if (var.size() != 16) throw txBase(_WHERE("an age GUID must be set"));
 		alcAscii2Hex(serverGuid, var.c_str(), 8);
 		
-		// load our age info
-		tAgeInfoLoader ageInfoLoader(serverName, /*loadPages*/true);
-		ageInfo = new tAgeInfo(*ageInfoLoader.getAge(serverName)); // get ourselves a copy of it (and forget the rest)
-		
-		// load SDL Manager
+		// load age file and SDL Manager
+		ageInfo = new tAgeInfo(serverName, /*loadPages*/true);
 		ageState = new tAgeStateManager(this, ageInfo);
 		
 		// make sure we quit if noone comes
