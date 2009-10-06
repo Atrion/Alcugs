@@ -48,7 +48,6 @@ namespace alc {
 		this->net = net;
 		log = logHtml = lnull;
 		vaultDB = NULL;
-		ageInfos = NULL;
 		load();
 	}
 	
@@ -63,8 +62,6 @@ namespace alc {
 	{
 		delete vaultDB;
 		vaultDB = NULL;
-		delete ageInfos;
-		ageInfos = NULL;
 		if (log != lnull) {
 			delete log;
 			log = lnull;
@@ -119,8 +116,6 @@ namespace alc {
 		if (var.isNull()) instanceMode = 1;
 		else instanceMode = var.asByte();
 		if (instanceMode != 0 && instanceMode != 1) throw txBase(_WHERE("instance_mode must be 0 or 1 but is %d", instanceMode));
-		// Load age files
-		if (!ageInfos) ageInfos = new tAgeInfoLoader;
 		
 		log->log("Started VaultBackend (%s)\n", __U_VAULTBACKEND_ID);
 		vaultDB = new tVaultDB(log);
@@ -1235,35 +1230,39 @@ namespace alc {
 	
 	bool tVaultBackend::generateGuid(Byte *guid, const char *age, U32 ki)
 	{
-		tAgeInfo *ageInfo = ageInfos->getAge(age);
-		if (!ageInfo) return false;
-		if (ageInfo->seqPrefix > 0x00FFFFFF) return false; // obviously he wants to link to an age like GlobalMarkers
-		bool isPrivate = (instanceMode == 1) ? isAgePrivate(age) : false;
-		if (isPrivate && ki > 0x0FFFFFFF) throw txBase(_WHERE("KI is too big!")); // ensure 1st bit of the 4 byte is 0 (see comment below)
-		
-		/* so we have "The server GUID, aka age guid"
-		---------------------------------
-		| 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
-		--------------------------------
-		| 0 | ki here       | s | s | s |
-		--------------------------------
-		Where s is the sequence prefix, and the 1st bit of the 4 byte should be always 0.
-		
-		This ensures all GUIDs are unique as no player can have an age several times. That's what happened in Cyan's servers when you
-		reset an age, but Alcugs will handle that differently to also avoid names like "Diafero's(1) Relto".
-		*/
-		tMBuf buf;
-		buf.putByte(0);
-		buf.putU32(isPrivate ? ki : 0);
-		
-		// 3 byte sequence prefix: First the one which usually is zero, to keep compatability
-		buf.putByte(ageInfo->seqPrefix >> 16);
-		// then the remaining two bytes
-		buf.putU16(ageInfo->seqPrefix & 0x0000FFFF);
-		
-		buf.rewind();
-		memcpy(guid, buf.read(8), 8);
-		return true;
+		try {
+			tAgeInfo ageInfo = tAgeInfo(age, /*loadPages*/false);
+			if (ageInfo.seqPrefix > 0x00FFFFFF) return false; // obviously he wants to link to an age like GlobalMarkers
+			bool isPrivate = (instanceMode == 1) ? isAgePrivate(age) : false;
+			if (isPrivate && ki > 0x0FFFFFFF) throw txBase(_WHERE("KI is too big!")); // ensure 1st bit of the 4 byte is 0 (see comment below)
+			
+			/* so we have "The server GUID, aka age guid"
+			---------------------------------
+			| 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+			--------------------------------
+			| 0 | ki here       | s | s | s |
+			--------------------------------
+			Where s is the sequence prefix, and the 1st bit of the 4 byte should be always 0.
+			
+			This ensures all GUIDs are unique as no player can have an age several times. That's what happened in Cyan's servers when you
+			reset an age, but Alcugs will handle that differently to also avoid names like "Diafero's(1) Relto".
+			*/
+			tMBuf buf;
+			buf.putByte(0);
+			buf.putU32(isPrivate ? ki : 0);
+			
+			// 3 byte sequence prefix: First the one which usually is zero, to keep compatability
+			buf.putByte(ageInfo.seqPrefix >> 16);
+			// then the remaining two bytes
+			buf.putU16(ageInfo.seqPrefix & 0x0000FFFF);
+			
+			buf.rewind();
+			memcpy(guid, buf.read(8), 8);
+			return true;
+		}
+		catch (const txNotFound &) {
+			return false;
+		}
 	}
 	
 	bool tVaultBackend::setAgeGuid(tvAgeLinkStruct *link, U32 ownerKi)
