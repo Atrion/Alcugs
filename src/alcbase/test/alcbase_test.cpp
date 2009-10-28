@@ -827,19 +827,6 @@ mproblem = \"this ' contains \\\" \\\\ some speical chars\"\n\
 	tStrBuf res;
 	
 	DBG(6,"kkkkk\n");
-#if 0
-	i=0;
-	while(!a.eof()) {
-		res=a.getWord();
-		printf("[a:%i] %s\n",i++,res.c_str());
-	}
-	i=0;
-	while(!b.eof()) {
-		res=b.getWord();
-		printf("[b:%i] %s\n",i++,res.c_str());
-	}
-#endif
-	//printf("by lines now\n");
 	a.rewind();
 	b.rewind();
 	i=0;

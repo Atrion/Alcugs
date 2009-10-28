@@ -169,19 +169,14 @@ U32 tNetSession::getMaxDataSize() {
 // functions to calculate cabal and rtt
 void tNetSession::updateRTT(U32 newread) {
 	if(rtt==0) rtt=newread;
-	#if 0 //Original
-		const U32 alpha=800;
-		rtt=((alpha*rtt)/1000) + (((1000-alpha)*newread)/1000);
-		timeout=2*rtt;
-	#else //Jacobson/Karels
-		const S32 alpha=125; // this is effectively 0.125
-		const S32 u=2;
-		const S32 delta=4;
-		const S32 diff=(S32)newread - (S32)rtt;
-		rtt=(S32)rtt+((alpha*diff)/1000);
-		deviation+=(alpha*(abs(diff)-deviation))/1000;
-		timeout=u*rtt + delta*deviation;
-	#endif
+	//Jacobson/Karels
+	const S32 alpha=125; // this is effectively 0.125
+	const S32 u=2;
+	const S32 delta=4;
+	const S32 diff=(S32)newread - (S32)rtt;
+	rtt=(S32)rtt+((alpha*diff)/1000);
+	deviation+=(alpha*(abs(diff)-deviation))/1000;
+	timeout=u*rtt + delta*deviation;
 	if (timeout > 4000000) timeout = 4000000;
 	DBG(5,"%s RTT update (sample rtt: %i) new rtt:%i, timeout:%i, deviation:%i\n", str(),newread,rtt,timeout,deviation);
 }
@@ -552,7 +547,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	doWork();
 }
 
-/** put this message in the rcvq and put fragments together - this deletes the passed message! */
+/** add this to the received message and put fragments together - this deletes the passed message! */
 void tNetSession::acceptMessage(tUnetUruMsg *t)
 {
 	DBG(5, "Accepting %d.%d\n", t->sn, t->frn);

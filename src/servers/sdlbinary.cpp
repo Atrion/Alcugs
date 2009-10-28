@@ -435,7 +435,7 @@ namespace alc {
 			int nr = incompleteStructs ? t.getByte() : i;
 			tVarList::iterator it = structs.insert(structs.end(), tSdlStateVar(sdlStruct->getElement(nr, false/*search for a struct*/),
 					stateMgr, nr));
-			t.get(*it); // parse this var
+			t.get(*it); // parse this struct
 		}
 	}
 	
@@ -513,9 +513,9 @@ namespace alc {
 		DBG(8, "Merging %d current with %d new vars\n", vars.size(), newState->vars.size());
 		mergeData(&vars, &newState->vars);
 		
-		// then the structs
+		// then the structs (if we have indexed sub-structs here, they are not recursively merged but overwritten as I see no way to decide which structs to merge if their number is dynamic and old and new number don't match)
 		DBG(8, "Merging %d current with %d new structs\n", structs.size(), newState->structs.size());
-		mergeData(&structs, &newState->structs); // NOTE: this will not correctly merge indexed sub-structs - but it seems to work anyway
+		mergeData(&structs, &newState->structs);
 	}
 	
 	void tSdlStateBinary::mergeData(tVarList *curData, tVarList *newData)

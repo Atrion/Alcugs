@@ -672,18 +672,19 @@ void tmMsgBase::store(tBBuf &t) {
 	}
 	else sid = 0;
 
-	U32 check=plNetAck | plNetVersion | plNetTimestamp | plNetX | plNetKi | plNetUID | plNetIP | plNetSystem;
-	// accept some flags only for certain messages
+	U32 check = plNetAck | plNetVersion | plNetTimestamp | plNetX | plNetKi | plNetUID | plNetIP | plNetSystem /*unknown purpose*/;
+	// message-specific flags
+	if (cmd == NetMsgGameMessageDirected || cmd == NetMsgCustomDirectedFwd)
+		check |= plNetDirected; // Alcugs uses the message type to check if the msg needs to be forwarded to tracking
+	if (cmd == NetMsgGameStateRequest)
+		check |= plNetStateReq1; // one could also use the number of requested pages to check if this is the initial state request
+	// unknown purpose message-specific flags
 	if (cmd == NetMsgGameMessage || cmd == NetMsgSDLStateBCast)
 		check |= plNetRelRegions;
 	if (cmd == NetMsgSDLState || cmd == NetMsgSDLStateBCast)
 		check |= plNetNewSDL;
 	if (cmd == NetMsgGameMessage || cmd == NetMsgGameMessageDirected || cmd == NetMsgCustomDirectedFwd)
 		check |= plNetMsgRecvrs; // whatever the purpose of this flag is, the message type is more reliable
-	if (cmd == NetMsgGameMessageDirected || cmd == NetMsgCustomDirectedFwd)
-		check |= plNetDirected; // I think the Plasma game server uses this to check if the msg needs to be forwarded to tracking
-	if (cmd == NetMsgGameStateRequest)
-		check |= plNetStateReq1;
 	if (cmd == NetMsgJoinReq)
 		check |= plNetP2P;
 	// accept custom types from Alcugs servers only

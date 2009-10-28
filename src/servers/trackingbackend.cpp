@@ -648,13 +648,6 @@ namespace alc {
 					fprintf(f, "<Guid>%s00</Guid>\n", alcGetStrGuid(fakeLobbyGuid));
 				}
 			fprintf(f, "</ServerInfo>\n");
-#if 0
-			// not used by UruVision
-			if (lobby) fprintf(f, "<ExternalAddr>%s</ExternalAddr>\n", data->externalIp);
-			else       fprintf(f, "<ExternalAddr>Fake Agent</ExternalAddr>\n");
-			fprintf(f, "<PlayerLimit>-1</PlayerLimit>\n");
-			fprintf(f, "<GameLimit>-1</GameLimit>\n");
-#endif
 			// Lobby
 			if (lobby && data) {
 				fprintf(f, "<Lobby><Process>\n");

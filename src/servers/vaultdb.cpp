@@ -1521,6 +1521,7 @@ namespace alc {
 		}
 		
 		// check for the admin node - if it does not exist, the AllPlayers folder has no parent and we can not remove lost nodes
+		// (the vault server now creates it automatically when initializing a new vault, but older versions did not do that)
 		tvNode node(MType);
 		node.type = KVNodeMgrAdminNode;
 		int adminNode = findNode(node);

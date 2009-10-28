@@ -150,7 +150,7 @@ namespace alc {
 		delete node;
 		
 #if 0
-		// create PublicAgesFolder (what is this used for?)
+		// create PublicAgesFolder
 		node = new tvNode(MType | MInt32_1);
 		node->type = KFolderNode;
 		node->int1 = KPublicAgesFolder;
