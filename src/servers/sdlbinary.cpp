@@ -127,9 +127,9 @@ namespace alc {
 		DBG(9, "Flags are 0x%02X\n", flags);
 		//Supposicions meaning:
 		// 0x04: Timestamp is present
-		// 0x08: It has the default value
-		// 0x10: seen only on vars, not on structs: If set, the value overwrites the current age status, if not, it is ignored while merging
-		// 0x20: seen only in KSDLNodes (it is set for all vars there)
+		// 0x08: Default value
+		// 0x10: The value overwrites the current age status (if unset, it is ignored while merging) - seen only on vars, not on structs
+		// 0x20: seen only in KSDLNodes (it is set for all vars there) - libPlasma calls this "want timestamp"
 		Byte check = 0x04 | 0x08 | 0x10 | 0x20;
 		if (flags & ~(check))
 			throw txProtocolError(_WHERE("unknown flag 0x%02X for sdlBinaryVar", flags));
