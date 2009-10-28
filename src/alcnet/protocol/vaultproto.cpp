@@ -98,10 +98,6 @@ namespace alc {
 			t.get(instanceName);
 		else { // instance name disabled
 			throw txProtocolError(_WHERE("instance name flag not set... what to do?"));
-#if 0
-			instanceName = filename;
-			flags |= 0x01;
-#endif
 		}
 		
 		if (flags & 0x04) // GUID
@@ -180,7 +176,7 @@ namespace alc {
 	{
 		//tvSpawnPoint flags
 		//Found:
-		// alaways 0x00000007
+		// always 0x00000007
 		//Supposicions:
 		// 0x00000007: 3 bits for title, name and cameraStack
 		flags = t.getU32();

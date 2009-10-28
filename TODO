@@ -17,6 +17,8 @@ Generic Stuff
 * Implement server identification (this could also be used for the tNetSession::isAlcugsServer function)
 * Multithreading support
 * UU support
+* Missing linking rules
+* Public ages
 
 Feature-Requests list
 =======================

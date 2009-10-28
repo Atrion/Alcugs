@@ -194,12 +194,6 @@ private:
 	tStrBuf dbg; //!< buffer for str function
 };
 
-#if 0
-	Byte reason; //reason code
-	Byte status; //the player status, defined inside a states machine (see the states machine doc)
-	Byte paged; //0x00 non-paged player, 0x01 player is paged
-#endif
-
 
 }
 

@@ -90,11 +90,6 @@ private:
 	U32 loadingTimeout;
 	char linkLog[512];
 };
-
-#if 0
-	U16 spawn_start; //first port to spawn
-	U16 spawn_stop; //last port to spawn (gameservers)
-#endif
 	
 } //End alc namespace
 
