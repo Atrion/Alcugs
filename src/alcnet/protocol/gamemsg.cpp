@@ -635,6 +635,15 @@ namespace alc {
 		dbg.printf(" Member Info: [%s], is joined: ", info.str());
 		dbg.printBoolean(isJoined);
 	}
+	
+	//// tmPython
+	tmPython::tmPython(tNetSession *u) : tmMsgBase(u) {}
+	
+	void tmPython::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		t.end(); // just ignore everything
+	}
 
 } //end namespace alc
 

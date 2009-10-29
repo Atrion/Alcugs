@@ -300,6 +300,9 @@ unsilenced 29
 #define NetMsgVault_UU                 0x0428 // UntilUru
 #define NetMsgVault                    0x0429
 
+#define NetMsgPython_UU                0x0460 // UntilUru
+#define NetMsgPython                   0x0461
+
 #define NetMsgSetTimeout_UU            0x0464 // UntilUru
 #define NetMsgSetTimeout               0x0465
 #define NetMsgActivePlayerSet_UU       0x0465 // UntilUru

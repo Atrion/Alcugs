@@ -833,7 +833,6 @@ namespace alc {
 				return 1;
 			}
 			case NetMsgSetTimeout:
-			case NetMsgSetTimeout_UU:
 			{
 				if (!u->joined) {
 					err->log("ERR: %s sent a NetMsgSetTimeout but did not yet join the game. I\'ll kick him.\n", u->str());
@@ -846,6 +845,19 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, setTimeout.str());
 				// I have no clue what this message is supposed to do (well, it obviously should somehow set the timeout, but neither
 				// do I know how 0x43340000 should be 180sec nor is that a useful timeout). Things work without reacting to it.
+				return 1;
+			}
+			case NetMsgPython:
+			{
+				if (!u->joined) {
+					err->log("ERR: %s sent a NetMsgPython but did not yet join the game. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				tmPython python(u);
+				msg->data.get(python);
+				log->log("<RCV> [%d] %s\n", msg->sn, python.str());
+				// Just ignore it, server-side Python is not supported
 				return 1;
 			}
 		}
