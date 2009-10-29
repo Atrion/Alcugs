@@ -580,7 +580,7 @@ void tNetSession::acceptMessage(tUnetUruMsg *t)
 			throw txProtocolError(_WHERE("Expected a size of %d, got %d\n", size, rcv->data.size()));
 		// We are done!
 		rcv->data.rewind();
-		rcv->cmd=alcFixUUNetMsgCommand(rcv->data.getU16(), this, /*detectPOTS*/true);
+		rcv->cmd=alcFixUUNetMsgCommand(rcv->data.getU16(), this);
 		rcv->data.rewind();
 
 		tNetEvent *evt=new tNetEvent(getIte(), UNET_MSGRCV, rcv);

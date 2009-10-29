@@ -276,13 +276,8 @@ int alcUruValidatePacket(Byte * buf,int n,Byte * validation,bool authed,const ch
 	return 3; //aiieee!!!
 }
 
-U16 alcFixUUNetMsgCommand(U16 cmd, tNetSession *u, bool detectPOTS)
+U16 alcFixUUNetMsgCommand(U16 cmd, const tNetSession *u)
 {
-	// fix for UU clients
-	if (detectPOTS) {
-		if (cmd == NetMsgVault_UU || cmd == NetMsgPython_UU || cmd == NetMsgSetTimeout_UU) u->tpots = 2; // definitely UU
-		else if (cmd == NetMsgVault || cmd == NetMsgPython || cmd == NetMsgActivePlayerSet) u->tpots = 1; // definitely TPOTS
-	}
 	// we might have to fix the message type
 	if (u->tpots == 2
 			&& (cmd == NetMsgVault_UU || cmd == NetMsgPython_UU || cmd == NetMsgSetTimeout_UU || cmd == NetMsgActivePlayerSet_UU))
