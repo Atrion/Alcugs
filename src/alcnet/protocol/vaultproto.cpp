@@ -1002,10 +1002,8 @@ namespace alc {
 			throw txProtocolError(_WHERE("bad item.unk value 0x%02X", unk));
 		}
 		type = t.getU16();
-		if (tpots == 2) { // it's Until Uru, use other type IDs
-			if (type == plVaultNode_UU) type = plVaultNode;
-			else if (type == plVaultNodeRef_UU) type = plVaultNodeRef;
-		}
+		// it's Until Uru, use other type IDs (some are incremented by 1 in POTS) - remember to also update tvItem::stream!
+		if (tpots == 2 && (type == plVaultNode_UU || type == plVaultNodeRef_UU)) ++type;
 		
 		if (data) delete data;
 		switch (type) {
@@ -1039,10 +1037,8 @@ namespace alc {
 		t.putByte(id);
 		t.putByte(0); // unknown
 		U16 sentType = type;
-		if (tpots == 2) { // it's Until Uru, use other type IDs
-			if (sentType == plVaultNode) sentType = plVaultNode_UU;
-			else if (sentType == plVaultNodeRef) sentType = plVaultNodeRef_UU;
-		}
+		// it's Until Uru, use other type IDs (some are incremented by 1 in POTS) - remember to also update tvItem::store!
+		if (tpots == 2 && (sentType == plVaultNode || sentType == plVaultNodeRef)) --sentType;
 		t.putU16(sentType);
 		t.put(*data);
 	}

@@ -276,6 +276,20 @@ int alcUruValidatePacket(Byte * buf,int n,Byte * validation,bool authed,const ch
 	return 3; //aiieee!!!
 }
 
+U16 alcFixUUNetMsgCommand(U16 cmd, tNetSession *u, bool detectPOTS)
+{
+	// fix for UU clients
+	if (detectPOTS) {
+		if (cmd == NetMsgVault_UU || cmd == NetMsgPython_UU || cmd == NetMsgSetTimeout_UU) u->tpots = 2; // definitely UU
+		else if (cmd == NetMsgVault || cmd == NetMsgPython || cmd == NetMsgActivePlayerSet) u->tpots = 1; // definitely TPOTS
+	}
+	// we might have to fix the message type
+	if (u->tpots == 2
+			&& (cmd == NetMsgVault_UU || cmd == NetMsgPython_UU || cmd == NetMsgSetTimeout_UU || cmd == NetMsgActivePlayerSet_UU))
+		return cmd+1; // these values are incremented by 1 in TPOTS (remember to aslso update tmMsgBase::stream!)
+	return cmd;
+}
+
 //Unet Uru Message
 void tUnetUruMsg::store(tBBuf &t) {
 	U32 hsize=28;
@@ -614,7 +628,7 @@ void tmMsgBase::unsetUrgent() {
 void tmMsgBase::store(tBBuf &t) {
 	if (!u)  throw txProtocolError(_WHERE("attempt to save message without session being set"));
 	//base
-	cmd=t.getU16();
+	cmd=alcFixUUNetMsgCommand(t.getU16(), u);
 	flags=t.getU32();
 	if(flags & plNetVersion) {
 		max_version=t.getByte();
@@ -626,6 +640,7 @@ void tmMsgBase::store(tBBuf &t) {
 		max_version=0;
 		min_version=0;
 	}
+	
 	// The first message from Plasma clients is always an auth hello that contains the version numbers
 	// besides, NetMsgPing should have always the timestamp enabled in new versions
 	
@@ -701,7 +716,12 @@ void tmMsgBase::stream(tBBuf &t) const {
 	if (!u->isAlcugsServer() && hasFlags(plNetSid)) // if the message has one of these flags set and the peer is not an alcugs server
 		throw txProtocolError(_WHERE("Custom flags must only be sent to Alcugs servers"));
 	
-	t.putU16(cmd);
+	// fix for UU clients
+	if (u->tpots == 2 && (cmd == NetMsgVault || cmd == NetMsgPython || cmd == NetMsgSetTimeout || cmd == NetMsgActivePlayerSet))
+		t.putU16(cmd-1); // these are incremented by 1 in POTS (remember to also update alcFixUUNetMsgCommand!)
+	else
+		t.putU16(cmd);
+	
 	t.putU32(flags);
 	if(flags & plNetVersion) {
 		t.putByte(max_version);
@@ -987,11 +1007,11 @@ const char * alcUnetGetMsgCode(U16 code) {
 		case NetMsgRelevanceRegions: return "NetMsgRelevanceRegions";
 		case NetMsgLoadClone: return "NetMsgLoadClone";
 		case NetMsgPlayerPage: return "NetMsgPlayerPage";
-		case NetMsgVault_UU: return "NetMsgVault_UU";
 		case NetMsgVault: return "NetMsgVault";
-		case NetMsgSetTimeout_UU: return "NetMsgSetTimeout_UU";
-		case NetMsgSetTimeout: return "NetMsgSetTimeout|NetMsgActivePlayerSet_UU"; // is the same as NetMsgActivePlayerSet_UU
+		case NetMsgPython: return "plNetMsgPython";
+		case NetMsgSetTimeout: return "NetMsgSetTimeout";
 		case NetMsgActivePlayerSet: return "NetMsgActivePlayerSet";
+		// Custom messages
 		case NetMsgCustomAuthAsk: return "NetMsgCustomAuthAsk";
 		case NetMsgCustomAuthResponse: return "NetMsgCustomAuthResponse";
 		case NetMsgCustomVaultAskPlayerList: return "NetMsgCustomVaultAskPlayerList";

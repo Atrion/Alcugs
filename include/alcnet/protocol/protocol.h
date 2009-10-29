@@ -41,11 +41,14 @@
 
 namespace alc {
 
+class tNetSession;
+
 void alcEncodePacket(Byte* buf2,const Byte* buf, int n);
 void alcDecodePacket(Byte* buf, int n);
 
 int alcUruValidatePacket(Byte * buf,int n,Byte * validation,bool authed=false,const char * phash=NULL);
 U32 alcUruChecksum(const Byte* buf, int size, int alg, const char * aux_hash);
+U16 alcFixUUNetMsgCommand(U16 cmd, tNetSession *u, bool detectPOTS = false);
 
 const char * alcUnetGetRelease(Byte rel);
 const char * alcUnetGetDestination(Byte dest);
@@ -57,8 +60,6 @@ const char * alcUnetGetMsgCode(U16 code);
 
 const char * alcUnetGetVarType(Byte type);
 Byte alcUnetGetVarTypeFromName(tStrBuf type);
-
-class tNetSession;
 
 /** this class is used to save incoming NetMsgs and collect their fragments */
 class tUnetMsg {

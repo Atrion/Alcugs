@@ -262,6 +262,12 @@ namespace alc {
 	protected:
 		virtual void additionalFields();
 	};
+	
+	class tmPython: public tmMsgBase {
+	public:
+		tmPython(tNetSession *u);
+		virtual void store(tBBuf &t);
+	};
 
 } //End alc namespace
 

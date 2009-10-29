@@ -151,8 +151,6 @@ namespace alc {
 	{
 		this->x = x;
 		ki = u->ki;
-		if (u->tpots == 2) // if we are sure it is UU, use that value
-			cmd = NetMsgActivePlayerSet_UU;
 	}
 	
 	//// tmFindAge
