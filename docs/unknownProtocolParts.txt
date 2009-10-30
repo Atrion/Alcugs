@@ -8,6 +8,7 @@ NetMsgs which are more or less completely unknown:
 - NetMsgSetTimeout: I thought the name would make it clear, but I always and only saw it with a U32 value of "0x43340000", which, according to the logs, means 180 seconds?!?
 - NetMsgPlayerPage: The format of this one is completely known, but not what it is meant to say: This message is sent once when the client starts and links to the first age, and once again when the client quits and completely leaves the game. The server currently ignores it.
 - NetMsgRelevanceRegions: It seems to contain two bitfields (2 bytes each) saying what is relevant for the sender. The server currently ignores it, not knowing which events to filter according to these regions and which not (maybe all those where the plNetRelRegions flag is set?).
+- NetMsgPython: The format of this message is completely unknown, but server-side Python is not supported anyway. The message is currently ignored.
 
 NetMsgs containing unknown bytes:
 - NetMsgSetMyActivePlayer: The last byte is always 0, meaning unknown.
