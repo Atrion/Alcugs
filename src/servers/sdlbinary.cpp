@@ -51,7 +51,7 @@ namespace alc {
 	////IMPLEMENTATION
 	/** SDL binary processing classes */
 	
-	//// tSdlStateVar
+	//// tSdlStateVar (Plasma: plStateVariable and subclasses)
 	tSdlStateVar::tSdlStateVar(tSdlStructVar *sdlVar, tAgeStateManager *stateMgr, Byte num)
 	{
 		this->num = num;
@@ -116,13 +116,14 @@ namespace alc {
 	
 	void tSdlStateVar::store(tBBuf &t)
 	{
-		Byte type = t.getByte();
+		Byte type = t.getByte(); // type 2 = has notification info
 		if (type != 0x02) throw txProtocolError(_WHERE("sdlBinaryVar.type must be 0x02 not 0x%02X", type));
+		// read notification info
 		Byte unk = t.getByte();
 		if (unk != 0x00)
 			throw txProtocolError(_WHERE("Unexpected sdlBinary.unk of 0x%02X (expected 0x00)", unk));
 		t.get(str);
-		// now come the flags
+		// now comes the "real" variable, starting with the flags
 		flags = t.getByte();
 		DBG(9, "Flags are 0x%02X\n", flags);
 		//Supposicions meaning:
@@ -220,9 +221,11 @@ namespace alc {
 	
 	void tSdlStateVar::stream(tBBuf &t) const
 	{
-		t.putByte(0x02); // type
+		t.putByte(0x02); // type (2 = has notification info)
+		// notification info
 		t.putByte(0x00); // unk
 		t.put(str);
+		// SDL state
 		if (flags & 0x10 && sdlVar->type == DStruct)
 			throw txProtocolError(_WHERE("Structs must not have the 0x10 flag set"));
 		// write flags and var
@@ -362,18 +365,16 @@ namespace alc {
 	U32 tSdlStateVar::getSize(void) const
 	{ return sdlVar->size; }
 	
-	//// tSdlStateBinary
-	tSdlStateBinary::tSdlStateBinary(void)
+	//// tSdlStateBinary (Plasma: plStateDataRecord)
+	tSdlStateBinary::tSdlStateBinary(void) : flags(0x0001)
 	{
-		unk1 = 0x01;
 		stateMgr = NULL;
 		sdlStruct = NULL;
 		incompleteVars = incompleteStructs = false;
 	}
 	
-	tSdlStateBinary::tSdlStateBinary(tAgeStateManager *stateMgr, tStrBuf name, U32 version, bool initDefault)
+	tSdlStateBinary::tSdlStateBinary(tAgeStateManager *stateMgr, tStrBuf name, U32 version, bool initDefault) : flags(0x0001)
 	{
-		unk1 = 0x01;
 		this->stateMgr = stateMgr;
 		sdlStruct = stateMgr->findStruct(name, version);
 		incompleteVars = incompleteStructs = false;
@@ -396,15 +397,12 @@ namespace alc {
 		DBG(5, "Parsing a %s version %d\n", sdlStruct->name.c_str(), sdlStruct->version);
 		
 		// parse the unknown header information
-		unk1 = t.getByte();
-		if (unk1 != 0x00 && unk1 != 0x01)
-			throw txProtocolError(_WHERE("Unexpected sdlBinary.unk1 of 0x%02X (expected 0x00 or 0x01)", unk1));
-		Byte unk2 = t.getByte();
-		if (unk2 != 0x00)
-			throw txProtocolError(_WHERE("Unexpected sdlBinary.unk2 of 0x%02X (expected 0x00)", unk2));
-		Byte unk3 = t.getByte();
-		if (unk3 != 0x06)
-			throw txProtocolError(_WHERE("Unexpected sdlBinary.unk3 of 0x%02X (expected 0x06)", unk3));
+		flags = t.getU16();
+		if (flags != 0x0000 && flags != 0x0001)
+			throw txProtocolError(_WHERE("Unexpected sdlBinary.flags of 0x%04X (expected 0x0000)", flags));
+		Byte version = t.getByte();
+		if (version != 0x06)
+			throw txProtocolError(_WHERE("Unexpected sdlBinary.version of 0x%02X (expected 0x06)", version));
 		
 		// get number of values
 		Byte nValues = t.getByte();
@@ -444,9 +442,8 @@ namespace alc {
 		if (sdlStruct == NULL)
 			throw txUnet(_WHERE("You have to set a sdlStruct before streaming a sdlBinary"));
 		// write unknown header information
-		t.putByte(unk1);
-		t.putByte(0x00); // unk2
-		t.putByte(0x06); // unk3
+		t.putU16(flags);
+		t.putByte(0x06); // version
 		
 		// check number of values
 		bool writeIndex = incompleteVars;
@@ -485,7 +482,7 @@ namespace alc {
 	{
 		char indent[] = "                        ";
 		if (indentSize < strlen(indent)) indent[indentSize] = 0; // let the string end there
-		log->print("%s%s version %d (unk1: 0x%02X)", indent, sdlStruct->name.c_str(), sdlStruct->version, unk1);
+		log->print("%s%s version %d (flags: 0x%04X)", indent, sdlStruct->name.c_str(), sdlStruct->version, flags);
 		if (incompleteVars) log->print(", vars are indexed");
 		if (incompleteStructs) log->print(", structs are indexed");
 		log->nl();

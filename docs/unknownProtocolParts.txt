@@ -27,6 +27,7 @@ Vault protocol:
 - VaultNode: The meaning of 0x00000004 being set on the second 4-byte flag is unknown.
 
 SDL protocol:
-- At the beginning of what I call an "SDL State Binary" (the binary representation of a whole SDL state), there are some bytes with unknown meaning: First a 0x00 or a 0x01, then a 0x00 and then a 0x06.
+- At the beginning of what I call an "SDL State Binary" (plStateDataRecord - the binary representation of a whole SDL state), there are two bytes with unknown meaning (libPlasma calls these a flag, but doesn't explain them): either 0x0000 or 0x0001.
+- At the beginning of an SDL State Variable (plStateVariable), after the first byte (indicating that there is a "notification info"), there is another one being always 0 (even libPlasma just skips it) - meaning unknown.
 - Some flags of the variable in an SDL State: 0x04 (timestamp? never seen) and 0x20 (seen only for SDLs saved in the vault, but for each variable there - libPlasma calls this "want timestamp").
 - I'm not sure what the correct behaviour is if I get an indexed (partial) update for an SDL containing another indexed SDL. Currently, Alcugs removes the old sub-SDL and replaces it with the new one. It might be more correct to recursively merge the sub-SDLs, but what to do if they are in a dynamically sized element, and the old and new sizes don't match - how to decide which structs to merge in this case?
