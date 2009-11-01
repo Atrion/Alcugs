@@ -110,7 +110,7 @@ namespace alc {
 	private:
 		void mergeData(tVarList *curData, tVarList *newData);
 		
-		Byte unk1;
+		U16 flags;
 		tVarList vars;
 		tVarList structs;
 		

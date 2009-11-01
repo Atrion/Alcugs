@@ -193,7 +193,7 @@ void tUStr::stream(tBBuf &t) const {
 }
 /* end tUStr */
 
-/* tUruObject */
+/* tUruObject (Plasma: plUoid) */
 tUruObject::tUruObject(void) : tBaseType()
 {
 	hasCloneId = 0;
@@ -255,7 +255,7 @@ bool tUruObject::operator==(const tUruObject &obj) const
 }
 /* end tUruObject */
 
-/* tUruObjectRef */
+/* tUruObjectRef (Plasma: plKey) */
 tUruObjectRef::tUruObjectRef(void) : tBaseType()
 {
 	hasObj = false;
