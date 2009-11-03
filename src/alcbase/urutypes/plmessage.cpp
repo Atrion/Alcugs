@@ -274,19 +274,19 @@ namespace alc {
 	void tpServerReplyMsg::store(tBBuf &t)
 	{
 		tpMessage::store(t);
-		unk3 = t.getU32();
+		replyType = t.getU32();
 	}
 	
 	void tpServerReplyMsg::stream(tBBuf &t) const
 	{
 		tpMessage::stream(t);
-		t.putU32(unk3);
+		t.putU32(replyType);
 	}
 	
 	void tpServerReplyMsg::toString() const
 	{
 		tpMessage::toString();
-		strBuf.printf(" Unknown 3: %d\n", unk3);
+		strBuf.printf(" Reply Type: %d\n", replyType);
 	}
 	
 	//// tpKIMsg

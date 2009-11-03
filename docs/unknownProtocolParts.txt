@@ -16,10 +16,7 @@ NetMsgs containing unknown bytes:
 - NetMsgCreatePlayer: The last four bytes are always 0, meaning unknown.
 - NetMsgDeletePlayer: The last two bytes are always 0, meaning unknown.
 - NetMsgJoinAck: The first two bytes of the body, to which the log refers to as "joinOrder" and "ExpLevel", are always 0 and have unknown meaning.
-- NetMsgGameMessage (and derived messages): The first byte after the embedded plMessage is always 0, meaning unknown.
-- NetMsgPagingRoom: The first four byte in the body contain an U32 value of unknown meaning being always 1. I somewhere saw it declared as "format".
 - NetMsgGroupOwner: The byte before the last one is always 0, meaning unknown.
-- NetMsgSDLStateBCast: The last byte is always 1. I saw this referenced to as "persistent on server", but I'm unsure how to react - the value is currently ignored.
 - NetMsgMemberUpdate, NetMsgMembersList: The structure describing a member always starts with 0x00000020, the meaning of these four bytes is unknown. In addition, the byte before the final object reference (plUoid) is always 0, again with unknown meaning (it might be the field enabled by the "reserved" flag").
 
 Vault protocol:
