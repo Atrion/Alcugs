@@ -154,16 +154,16 @@ namespace alc {
 		
 		t.get(msgStream);
 		
-		Byte unk = t.getByte();
-		if (unk != 0x00)
-			throw txProtocolError(_WHERE("Unexpected NetMsgGameMessage.unk of 0x%02X (should be 0x00)", unk));
+		Byte hasTime = t.getByte();
+		if (hasTime != 0x00)
+			throw txProtocolError(_WHERE("Unexpected NetMsgGameMessage.hasTime of 0x%02X (should be 0x00)", hasTime));
 	}
 	
 	void tmGameMessage::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 		t.put(msgStream);
-		t.putByte(0); // unk
+		t.putByte(0); // hasTime
 	}
 	
 	//// tmGameMessageDirected
@@ -298,9 +298,9 @@ namespace alc {
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
 		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		
-		U32 format = t.getU32();
-		if (format != 1)
-			throw txProtocolError(_WHERE("NetMsgPagingRoom.format must be 1, but is %d", format));
+		U32 n = t.getU32(); // the number of stored rooms
+		if (n != 1)
+			throw txProtocolError(_WHERE("NetMsgPagingRoom.n must be 1, but is %d", n));
 		pageId = t.getU32();
 		pageType = t.getU16();
 		t.get(pageName);
@@ -571,15 +571,15 @@ namespace alc {
 	void tmSDLStateBCast::store(tBBuf &t)
 	{
 		tmSDLState::store(t);
-		Byte unk = t.getByte();
-		if (unk != 0x01) // this might be "persistent on server"
-			throw txProtocolError(_WHERE("NetMsgSDLStateBCast.unk2 must be 0x01 but is 0x%02X", unk));
+		Byte persistentOnServer = t.getByte();
+		if (persistentOnServer != 0x01)
+			throw txProtocolError(_WHERE("NetMsgSDLStateBCast.persistentOnServer must be 0x01 but is 0x%02X", persistentOnServer));
 	}
 	
 	void tmSDLStateBCast::stream(tBBuf &t) const
 	{
 		tmSDLState::stream(t);
-		t.putByte(0x01); // unk
+		t.putByte(0x01); // persistentOnServer
 	}
 	
 	//// tmSetTimeout

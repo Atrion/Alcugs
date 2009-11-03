@@ -793,7 +793,7 @@ namespace alc {
 					tpServerReplyMsg serverReplyMsg = tpServerReplyMsg(tUruObjectRef()); // the parent is an empty object
 					serverReplyMsg.receivers.push_back(tUruObjectRef(testAndSet.obj)); // add the sent object as receiver
 					serverReplyMsg.flags = 0x00000800;
-					serverReplyMsg.unk3 = 1;
+					serverReplyMsg.replyType = 1; // this means "affirm"
 					// send message
 					tmGameMessage msg(u, u->ki, &serverReplyMsg);
 					send(msg);

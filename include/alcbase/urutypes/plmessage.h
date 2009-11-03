@@ -139,12 +139,12 @@ namespace alc {
 	class tpServerReplyMsg : public tpMessage {
 	public:
 		tpServerReplyMsg(void) : tpMessage(plServerReplyMsg) {}
-		tpServerReplyMsg(const tUruObjectRef &sender) : tpMessage(plServerReplyMsg, sender) { unk3 = 0; }
+		tpServerReplyMsg(const tUruObjectRef &sender) : tpMessage(plServerReplyMsg, sender), replyType(0) { }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		
 		// format
-		U32 unk3;
+		U32 replyType; // 0x00 = deny, 0x01 = affirm, 0xFF = uninit
 	protected:
 		virtual void toString(void) const;
 	};
