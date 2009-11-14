@@ -18,6 +18,7 @@ NetMsgs containing unknown bytes:
 Vault protocol:
 - AgeLinkStruct: Between linking rule and spawn point, there are four bytes: 0x00000001. Their meaning is unknown.
 - VaultNode: The meaning of 0x00000004 being set on the second 4 bytes of the giant 64bit flag.
+- VaultItem: (the struct containing a node, a node reference, an age link struct, ...): After the id, there is an unknown byte which is always 0.
 
 SDL protocol:
 - How should a "SDL State Binary" (plStateDataRecord - the binary representation of a whole SDL state) be treated differently if it is set to "volatile"? Maybe not save it but just do a broadcast? Or save it for now, but not when the server is shutting down?

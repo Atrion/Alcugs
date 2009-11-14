@@ -677,7 +677,7 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, SDLState.str());
 				
 				// save SDL state
-				ageState->saveSdlState(SDLState.sdlStream, SDLState.obj);
+				ageState->saveSdlState(SDLState.content, SDLState.obj);
 				
 				return 1;
 			}
@@ -694,7 +694,7 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, SDLStateBCast.str());
 				
 				// save SDL state
-				ageState->saveSdlState(SDLStateBCast.sdlStream, SDLStateBCast.obj);
+				ageState->saveSdlState(SDLStateBCast.content, SDLStateBCast.obj);
 				
 				// broadcast message
 				bcastMessage(SDLStateBCast);

@@ -287,7 +287,7 @@ const char *tUruObjectRef::str(void) const
 	else return "null";
 }
 
-/* tStreamedObject */
+/* tStreamedObject (Plasma: plNetMsgStreamHelper) */
 tStreamedObject::tStreamedObject(tpObject *obj) : tMBuf(), maxSize(256) // make sure this is the same maxSize as in urubasetypes.h
 {
 	type = obj->getType();
@@ -372,6 +372,14 @@ void tStreamedObject::eofCheck(void)
 {
 	if (!eof())
 		throw txUnexpectedData(_WHERE("Got a %s which is too long: %d bytes remaining after parsing", alcGetPlasmaType(type), remaining()));
+}
+
+tMBuf tStreamedObject::fullContent(void)
+{
+	tMBuf res;
+	res.putU16(type);
+	res.put(*this);
+	return res;
 }
 
 void tStreamedObject::copy(const tStreamedObject &t)

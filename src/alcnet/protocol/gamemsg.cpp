@@ -424,111 +424,90 @@ namespace alc {
 	tmMembersListReq::tmMembersListReq(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
-	//// tmTestAndSet
-	tmTestAndSet::tmTestAndSet(tNetSession *u) : tmMsgBase(u)
+	//// tmStreamedObject
+	tmStreamedObject::tmStreamedObject(tNetSession *u) : tmMsgBase(u)
+	{ }
+	
+	tmStreamedObject::tmStreamedObject(U16 cmd, tNetSession *u, const tmStreamedObject &msg)
+	: tmMsgBase(cmd, msg.flags, u), obj(msg.obj), content(msg.content)
+	{
+		content.compress();
+	}
+	
+	tmStreamedObject::tmStreamedObject(U16 cmd, tNetSession *u, const tUruObject &obj, tBaseType *content)
+	: tmMsgBase(cmd, plNetAck, u), obj(obj)
+	{
+		this->content.put(*content);
+		this->content.compress();
+	}
+	
+	void tmStreamedObject::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
+		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
+		
+		t.get(obj);
+		t.get(content);
+	}
+	
+	void tmStreamedObject::stream(tBBuf &t) const
+	{
+		tmMsgBase::stream(t);
+		t.put(obj);
+		t.put(content);
+	}
+	
+	void tmStreamedObject::additionalFields()
+	{
+		dbg.nl();
+		dbg.printf(" Object reference: [%s]", obj.str());
+	}
+	
+	//// tmTestAndSet (this class reads exactly the same data as a NetMsgSharedState)
+	tmTestAndSet::tmTestAndSet(tNetSession *u) : tmStreamedObject(u)
 	{ }
 	
 	void tmTestAndSet::store(tBBuf &t)
 	{
-		Byte flag, state1, state2;
-		Byte lockReq;
-		U32 unk;
-		tStrBuf trigger;
-		tUStr triggered;
-	
-		tmMsgBase::store(t);
-		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
-		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
+		tmStreamedObject::store(t);
 		
-		t.get(obj);
-		flag = t.getByte();
-		if (flag != 0x00)
-			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.flag1 of 0x%02X (should be 0x00)", flag));
-		unk = t.getU32();
-		if (unk != 0x00000000)
-			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.unk1 of 0x%08X (should be 0x00000000)", unk));
-		unk = t.getU32();
-		if (unk != 0x0000001D)
-			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.unk2 of 0x%08X (should be 0x0000001D)", unk));
-		t.get(trigger);
-		if (trigger != "TrigState")
-			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.Trigger of %s (should be \"TrigState\")", trigger.c_str()));
-		unk = t.getU32();
-		if (unk != 0x00000001)
-			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.unk3 of 0x%08X (should be 0x00000001)", unk));
-		state1 = t.getByte();
-		if (state1 != 0x00 && state1 != 0x01)
-			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.state1 of 0x%02X (should be 0x00 or 0x01)", state1));
-		t.get(triggered);
-		if (triggered != "Triggered")
-			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.Triggered of %s (should be \"Triggered\")", triggered.c_str()));
-		flag = t.getByte();
-		if (flag != 0x02)
-			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.flag2 of 0x%02X (should be 0x02)", flag));
-		state2 = t.getByte();
-		if (state2 != 0x00 && state2 != 0x01)
-			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.state2 of 0x%02X (should be 0x00 or 0x01)", state2));
-		lockReq = t.getByte();
+		tMBuf state = content.fullContent();
+		// FIXME: verify this state object
+		
+		Byte lockReq = t.getByte();
 		if (lockReq != 0x00 && lockReq != 0x01)
 			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.lockReq of 0x%02X (should be 0x00 or 0x01)", lockReq));
 		isLockReq = lockReq;
-		
-		// now check if the states are a valid combination
-		if (state1 == lockReq)
-			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet: state1 (0x%02X) and lockReq (0x%02X) must not be equal", state1, lockReq));
-		if (state2 != lockReq)
-			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet: state2 (0x%02X) and lockReq (0x%02X) must be equal", state2, lockReq));
 	}
 	
 	void tmTestAndSet::additionalFields()
 	{
-		dbg.nl();
-		dbg.printf(" Object reference: [%s], Lock requested: ", obj.str());
-		dbg.printBoolean(isLockReq);
-	}
-	
-	//// tmRelevanceRegions
-	tmRelevanceRegions::tmRelevanceRegions(tNetSession *u) : tmMsgBase(u)
-	{ }
-	
-	void tmRelevanceRegions::store(tBBuf &t)
-	{
-		tmMsgBase::store(t);
-		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
-		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
-		
-		// These are actually two 8-byte bitfields ("regions I care about" and "regions I'm in"), but we don't bother saving them
-		t.read(16);
+		tmStreamedObject::additionalFields();
+		dbg.printBoolean(", Lock requested: ", isLockReq);
 	}
 	
 	//// tmSDLState
-	tmSDLState::tmSDLState(tNetSession *u) : tmMsgBase(u)
+	tmSDLState::tmSDLState(tNetSession *u) : tmStreamedObject(u)
 	{ }
 	
-	tmSDLState::tmSDLState(tNetSession *u, const tUruObject &obj, tBaseType *sdl, bool isInitial)
-	 : tmMsgBase(NetMsgSDLState, plNetAck, u), obj(obj)
+	tmSDLState::tmSDLState(tNetSession *u, const tUruObject &obj, tBaseType *content, bool isInitial)
+	 : tmStreamedObject(NetMsgSDLState, u, obj, content)
 	{
 		this->isInitial = isInitial;
-		sdlStream.put(*sdl);
-		sdlStream.compress();
+		
 	}
 	
 	tmSDLState::tmSDLState(U16 cmd, tNetSession *u, const tmSDLState &msg)
-	 : tmMsgBase(cmd, msg.flags, u), obj(msg.obj), sdlStream(msg.sdlStream)
+	 : tmStreamedObject(cmd, u, msg), isInitial(msg.isInitial)
 	{
 		isInitial = msg.isInitial;
-		sdlStream.compress();
 	}
 	
 	void tmSDLState::store(tBBuf &t)
 	{
-		tmMsgBase::store(t);
-		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
-		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
-		
-		t.get(obj);
-		t.get(sdlStream);
-		if (sdlStream.getType() != plNull)
+		tmStreamedObject::store(t);
+		if (content.getType() != plNull)
 			throw txProtocolError(_WHERE("Plasma object type of an SDL must be plNull"));
 		
 		Byte initial = t.getByte();
@@ -539,16 +518,14 @@ namespace alc {
 	
 	void tmSDLState::stream(tBBuf &t) const
 	{
-		tmMsgBase::stream(t);
-		t.put(obj);
-		t.put(sdlStream);
+		tmStreamedObject::stream(t);
 		t.putByte(isInitial);
 	}
 	
 	void tmSDLState::additionalFields()
 	{
-		dbg.nl();
-		dbg.printBoolean(" initial age state: ", isInitial);
+		tmStreamedObject::additionalFields();
+		dbg.printBoolean(", initial age state: ", isInitial);
 	}
 	
 	//// tmSDLStateBCast
@@ -573,6 +550,20 @@ namespace alc {
 	{
 		tmSDLState::stream(t);
 		t.putByte(0x01); // persistentOnServer
+	}
+	
+	//// tmRelevanceRegions
+	tmRelevanceRegions::tmRelevanceRegions(tNetSession *u) : tmMsgBase(u)
+	{ }
+	
+	void tmRelevanceRegions::store(tBBuf &t)
+	{
+		tmMsgBase::store(t);
+		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
+		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
+		
+		// These are actually two 8-byte bitfields ("regions I care about" and "regions I'm in"), but we don't bother saving them
+		t.read(16);
 	}
 	
 	//// tmSetTimeout

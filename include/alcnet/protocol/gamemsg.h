@@ -188,34 +188,42 @@ namespace alc {
 		tmMembersListReq(tNetSession *u);
 	};
 	
-	class tmTestAndSet : public tmMsgBase {
+	class tmStreamedObject : public tmMsgBase {
 	public:
-		tmTestAndSet(tNetSession *u);
-		virtual void store(tBBuf &t);
-		// format
-		tUruObject obj;
-		bool isLockReq;
-	protected:
-		virtual void additionalFields();
-	};
-	
-	class tmRelevanceRegions : public tmMsgBase {
-	public:
-		tmRelevanceRegions(tNetSession *u);
-		virtual void store(tBBuf &t);
-	};
-	
-	class tmSDLState : public tmMsgBase {
-	public:
-		tmSDLState(tNetSession *u);
-		tmSDLState(tNetSession *u, const tUruObject &obj, tBaseType *sdl, bool isInitial);
+		tmStreamedObject(tNetSession *u);
 		
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 	
 		// format
 		tUruObject obj;
-		tStreamedObject sdlStream;
+		tStreamedObject content;
+	protected:
+		virtual void additionalFields();
+		
+		tmStreamedObject(U16 cmd, tNetSession *u, const tmStreamedObject &msg);
+		tmStreamedObject(U16 cmd, tNetSession *u, const tUruObject &obj, tBaseType *content);
+	};
+	
+	class tmTestAndSet : public tmStreamedObject {
+	public:
+		tmTestAndSet(tNetSession *u);
+		virtual void store(tBBuf &t);
+		// format
+		bool isLockReq;
+	protected:
+		virtual void additionalFields();
+	};
+	
+	class tmSDLState : public tmStreamedObject {
+	public:
+		tmSDLState(tNetSession *u);
+		tmSDLState(tNetSession *u, const tUruObject &obj, tBaseType *content, bool isInitial);
+		
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
+	
+		// format
 		bool isInitial;
 	protected:
 		tmSDLState(U16 cmd, tNetSession *u, const tmSDLState &msg);
@@ -229,6 +237,12 @@ namespace alc {
 		tmSDLStateBCast(tNetSession *u, const tmSDLStateBCast & msg);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
+	};
+	
+	class tmRelevanceRegions : public tmMsgBase {
+	public:
+		tmRelevanceRegions(tNetSession *u);
+		virtual void store(tBBuf &t);
 	};
 	
 	class tmSetTimeout : public tmMsgBase {
