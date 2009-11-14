@@ -376,9 +376,11 @@ void tStreamedObject::eofCheck(void)
 
 tMBuf tStreamedObject::fullContent(void)
 {
+	uncompress();
 	tMBuf res;
 	res.putU16(type);
-	res.put(*this);
+	tMBuf::stream(res);
+	res.rewind();
 	return res;
 }
 
