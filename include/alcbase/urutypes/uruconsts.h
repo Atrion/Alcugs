@@ -44,29 +44,27 @@
 #define UNetExp         0x01 //Additional flags byte
 
 //// plNetMsg flags. Text in [brackets] is the Plasma name for that flag. A '*' indicates this flags adds a new data field
-//known flags for plNetMsg's
-#define plNetAck        0x00040000 // [kNeedsReliableSend] Ack flag
-#define plNetSystem     0x00020000 // [kIsSystemMessage]   unknown purpose flag
-
 //currently handled by the netcore
+#define plNetAck        0x00040000 // [kNeedsReliableSend] Ack flag
 #define plNetVersion    0x00010000 //* [kHasVersion]       contains version numbers
 #define plNetTimestamp  0x00000001 //* [kHasTimeSent]      contains a Timestamp
 #define plNetX          0x00000200 //* [kHasTransactionID] contains the X
 #define plNetKi         0x00001000 //* [kHasPlayerID]      contains the ki
 #define plNetUID        0x00004000 //* [kHasAcctUuid]      contains a player uid
-#define plNetIP         0x00000010 //* [kAllowTimeOut]     contains client's ip address - the Plasma name is obviously wrong
+#define plNetIP         0x00000010 //* [kAllowTimeOut]     contains client's ip address (seen on NetMsgJoinReq) - the libPlasma name is obviously wrong, or the IP address actually belongs into the message body...
 
-//Suppositions for unidentified flags
-//#define plNetFirewalled 0x00000020 // [kIndirectMember]         Firewalled flag only (seen only in NetMsgJoinAck)
-#define plNetNewSDL     0x00000400 // [kNewSDLState]            seen on SDL messages
-#define plNetMsgRecvrs  0x00000002 // [kHasGameMsgRecvrs]       seen in NetMsgGameMessage and NetMsgGameMessageDirected - it is also set for some messages which do NOT have a receiver list
-#define plNetRelRegions 0x00002000 // [kUseRelevanceRegions]    seen in NetMsgGameMessage and NetMsgSDLStateBCast
-#define plNetStateReq1  0x00000800 // [kInitialAgeStateRequest] seen on the 1st plNetMsgStateRequest
-#define plNetDirected   0x00008000 // [kInterAgeRouting]        seen on plNetMsgGameMessageDirected
-#define plNetP2P        0x08000000 // [not in Plasma]           p2p request? (seen on plNetMsgJoinReq)
+// CUSTOM plNetFlags
+#define plNetSid        0x00800000 //* this message contains a sid (so that the servers remember where to send this back to)
 
-//CUSTOM plNetFlags (should only exist if the server-internal flag is set)
-#define plNetSid        0x00800000 //* this message contains a sid (used when X is already used otherwise)
+//Suppositions for unidentified flags - controlling some parts of the client before parsing the actual message? Explanations are in protocol.cpp, tmMsgBase::store
+#define plNetFirewalled 0x00000020 // [kIndirectMember]
+#define plNetSystem     0x00020000 // [kIsSystemMessage]
+#define plNetNewSDL     0x00000400 // [kNewSDLState]
+#define plNetMsgRecvrs  0x00000002 // [kHasGameMsgRecvrs]
+#define plNetRelRegions 0x00002000 // [kUseRelevanceRegions]
+#define plNetStateReq1  0x00000800 // [kInitialAgeStateRequest]
+#define plNetDirected   0x00008000 // [kInterAgeRouting]
+#define plNetP2P        0x08000000 // [not in libPlasma]
 ////============================================================================
 
 

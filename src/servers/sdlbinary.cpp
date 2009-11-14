@@ -119,18 +119,18 @@ namespace alc {
 		Byte type = t.getByte(); // type 2 = has notification info
 		if (type != 0x02) throw txProtocolError(_WHERE("sdlBinaryVar.type must be 0x02 not 0x%02X", type));
 		// read notification info
-		Byte unk = t.getByte();
-		if (unk != 0x00)
-			throw txProtocolError(_WHERE("Unexpected sdlBinary.unk of 0x%02X (expected 0x00)", unk));
+		Byte null = t.getByte();
+		if (null != 0x00) // this is just ignored by Plasma...
+			throw txProtocolError(_WHERE("Unexpected sdlBinary.null of 0x%02X (expected 0x00)", null));
 		t.get(str);
 		// now comes the "real" variable, starting with the flags
 		flags = t.getByte();
 		DBG(9, "Flags are 0x%02X\n", flags);
 		//Supposicions meaning:
-		// 0x04: Timestamp is present
+		// 0x04: Timestamp is present (a plUnifiedTime)
 		// 0x08: Default value
 		// 0x10: The value overwrites the current age status (if unset, it is ignored while merging) - seen only on vars, not on structs
-		// 0x20: seen only in KSDLNodes (it is set for all vars there) - libPlasma calls this "want timestamp"
+		// 0x20: "want timestamp": Asks the server to set the current timestamp (which we currently don't do)
 		Byte check = 0x04 | 0x08 | 0x10 | 0x20;
 		if (flags & ~(check))
 			throw txProtocolError(_WHERE("unknown flag 0x%02X for sdlBinaryVar", flags));
@@ -223,7 +223,7 @@ namespace alc {
 	{
 		t.putByte(0x02); // type (2 = has notification info)
 		// notification info
-		t.putByte(0x00); // unk
+		t.putByte(0x00); // ignored by Plasma
 		t.put(str);
 		// SDL state
 		if (flags & 0x10 && sdlVar->type == DStruct)
@@ -366,14 +366,14 @@ namespace alc {
 	{ return sdlVar->size; }
 	
 	//// tSdlStateBinary (Plasma: plStateDataRecord)
-	tSdlStateBinary::tSdlStateBinary(void) : flags(0x0001)
+	tSdlStateBinary::tSdlStateBinary(void) : volatileState(true)
 	{
 		stateMgr = NULL;
 		sdlStruct = NULL;
 		incompleteVars = incompleteStructs = false;
 	}
 	
-	tSdlStateBinary::tSdlStateBinary(tAgeStateManager *stateMgr, tStrBuf name, U32 version, bool initDefault) : flags(0x0001)
+	tSdlStateBinary::tSdlStateBinary(tAgeStateManager *stateMgr, tStrBuf name, U32 version, bool initDefault) : volatileState(true)
 	{
 		this->stateMgr = stateMgr;
 		sdlStruct = stateMgr->findStruct(name, version);
@@ -397,9 +397,10 @@ namespace alc {
 		DBG(5, "Parsing a %s version %d\n", sdlStruct->name.c_str(), sdlStruct->version);
 		
 		// parse the unknown header information
-		flags = t.getU16();
+		U16 flags = t.getU16();
 		if (flags != 0x0000 && flags != 0x0001)
 			throw txProtocolError(_WHERE("Unexpected sdlBinary.flags of 0x%04X (expected 0x0000)", flags));
+		volatileState = flags; // this is the only known flag value: 0x0001 = volatile
 		Byte version = t.getByte();
 		if (version != 0x06)
 			throw txProtocolError(_WHERE("Unexpected sdlBinary.version of 0x%02X (expected 0x06)", version));
@@ -442,7 +443,7 @@ namespace alc {
 		if (sdlStruct == NULL)
 			throw txUnet(_WHERE("You have to set a sdlStruct before streaming a sdlBinary"));
 		// write unknown header information
-		t.putU16(flags);
+		t.putU16(volatileState);
 		t.putByte(0x06); // version
 		
 		// check number of values
@@ -482,7 +483,9 @@ namespace alc {
 	{
 		char indent[] = "                        ";
 		if (indentSize < strlen(indent)) indent[indentSize] = 0; // let the string end there
-		log->print("%s%s version %d (flags: 0x%04X)", indent, sdlStruct->name.c_str(), sdlStruct->version, flags);
+		log->print("%s%s version %d, volatile: ", indent, sdlStruct->name.c_str(), sdlStruct->version);
+		if (volatileState) log->print("yes");
+		else log->print("no");
 		if (incompleteVars) log->print(", vars are indexed");
 		if (incompleteStructs) log->print(", structs are indexed");
 		log->nl();

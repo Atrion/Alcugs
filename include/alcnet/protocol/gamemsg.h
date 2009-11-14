@@ -203,10 +203,6 @@ namespace alc {
 	public:
 		tmRelevanceRegions(tNetSession *u);
 		virtual void store(tBBuf &t);
-		// format
-		U32 rgnsICareAbout, rgnsImIn; // according to libPlasma, these are actually bit fields - most likely one bit per region
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmSDLState : public tmMsgBase {
@@ -239,6 +235,10 @@ namespace alc {
 	public:
 		tmSetTimeout(tNetSession *u);
 		virtual void store(tBBuf &t);
+		// format
+		float timeout;
+	private:
+		virtual void additionalFields();
 	};
 	
 	class tmMembersList : public tmMsgBase {

@@ -182,7 +182,10 @@ namespace alc {
 	void tmFindAgeReply::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
-		t.putByte(0x1F); // seems to be some response code
+		t.putByte(0x1F); // the flag to define the following structure
+		/* this is a combination of:
+		  kHasServerName = 0x01, kHasServerType = 0x02, kHasServerAddr = 0x04,
+		  kHasServerPort = 0x08, kHasServerGuid = 0x10 */
 		t.put(age);
 		t.putByte(KGame); // server type
 		t.put(ipStr);

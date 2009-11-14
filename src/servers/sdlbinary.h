@@ -110,7 +110,7 @@ namespace alc {
 	private:
 		void mergeData(tVarList *curData, tVarList *newData);
 		
-		U16 flags;
+		bool volatileState;
 		tVarList vars;
 		tVarList structs;
 		
