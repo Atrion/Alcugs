@@ -122,6 +122,7 @@ public:
 	void uncompress(void); //!< call this before using it
 	void compress(void); //!< call this before streaming or sending it
 	void eofCheck(void);
+	tMBuf fullContent(void);
 	
 	// assignment
 	const tStreamedObject &operator=(const tStreamedObject &t) { copy(t); return *this; }
