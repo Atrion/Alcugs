@@ -473,12 +473,44 @@ namespace alc {
 		tmStreamedObject::store(t);
 		
 		tMBuf state = content.fullContent();
-		// FIXME: verify this state object
+		// Verify state
+		tStrBuf stateName;
+		tUStr varName;
+		U32 count;
+		Byte mayDelete, varType, varValue;
+		state.get(stateName);
+		if (stateName != "TrigState")
+			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.stateName of %s (should be \"TrigState\")", stateName.c_str()));
+		count = state.getU32();
+		if (count != 1)
+			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.count of %d (should be 1)", count));
+		mayDelete = state.getByte();
+		if (mayDelete != 0x00 && mayDelete != 0x01)
+			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.mayDelete of 0x%02X (should be 0x00 or 0x01)", mayDelete));
+		// This is now the first and only variable in that state
+		state.get(varName);
+		if (varName != "Triggered")
+			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.varName of %s (should be \"Triggered\")", varName.c_str()));
+		varType = state.getByte();
+		if (varType != 0x02) // 2 is a boolean value
+			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.varType of %d (should be 2)", varType));
+		varValue = state.getByte();
+		if (varValue != 0x00 && varValue != 0x01)
+			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.varValue of 0x%02X (should be 0x00 or 0x01)", varValue));
+		if (!state.eof())
+			throw txUnexpectedData(_WHERE("Got a state description which is too long: %d bytes remaining after parsing", state.remaining()));
+		// End of state
 		
 		Byte lockReq = t.getByte();
 		if (lockReq != 0x00 && lockReq != 0x01)
 			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.lockReq of 0x%02X (should be 0x00 or 0x01)", lockReq));
 		isLockReq = lockReq;
+		
+		// for some reason, these variables occur only in a certain combination
+		if (mayDelete == lockReq)
+			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet: mayDelete (0x%02X) and lockReq (0x%02X) must not be equal", mayDelete, lockReq));
+		if (varValue != lockReq)
+			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet: varValue (0x%02X) and lockReq (0x%02X) must be equal", varValue, lockReq));
 	}
 	
 	void tmTestAndSet::additionalFields()
