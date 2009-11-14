@@ -65,7 +65,8 @@ namespace alc {
 	void tMemberInfo::stream(tBBuf &t) const
 	{
 		t.putU32(0x00000020); // unknown, seen 0x20 and 0x22 - a flag
-		t.putU16(0x03EA); // unknown, always seen that value - a flag
+		// begin of the plClientGuid
+		t.putU16(0x03EA); // a flag defining the content
 		/* according to libPlasma, 0x03EA is the combination of:
 		  kPlayerID = 0x0002, kCCRLevel = 0x0008,
 		  kBuildType = 0x0020, kPlayerName = 0x0040, kSrcAddr = 0x0080,
@@ -76,7 +77,8 @@ namespace alc {
 		t.putByte(buildType);
 		t.putU32(ntohl(ip));
 		t.putU16(ntohs(port));
-		t.putByte(0x00); // always seen that value (the "reserved" field?)
+		t.putByte(0x00); // always seen that value - might be the reserved field, but according to libPlasma that would be two bytes...
+		// end of the plClientGuid
 		t.put(obj);
 	}
 	
@@ -329,9 +331,11 @@ namespace alc {
 	{
 		tmMsgBase::stream(t);
 		t.putU32(1); // number of sent blocks (Alcugs does not support sending several of them at once)
+		// begin of the plNetGroupId
 		t.putU32(pageId);
 		t.putU16(pageType);
-		t.putByte(0x00);
+		t.putByte(0x00); // the flags of a plNetGroupId
+		// end of the plNetGroupId
 		t.putByte(isOwner);
 	}
 	
@@ -493,19 +497,8 @@ namespace alc {
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
 		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		
-		// These are actually two two-byte bitfields
-		U32 unk = t.getU32();
-		if (unk != 1) throw txProtocolError(_WHERE("NetMsgRelevanceRegions.unk1 must be 1 but is %d", unk));
-		rgnsICareAbout = t.getU32();
-		unk = t.getU32();
-		if (unk != 1) throw txProtocolError(_WHERE("NetMsgRelevanceRegions.unk2 must be 1 but is %d", unk));
-		rgnsImIn = t.getU32();
-	}
-	
-	void tmRelevanceRegions::additionalFields()
-	{
-		dbg.nl();
-		dbg.printf(" Regions I care about: %d, Regions I\'m in: %d", rgnsICareAbout, rgnsImIn);
+		// These are actually two 8-byte bitfields ("regions I care about" and "regions I'm in"), but we don't bother saving them
+		t.read(16);
 	}
 	
 	//// tmSDLState
@@ -592,9 +585,13 @@ namespace alc {
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
 		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		
-		U32 unk = t.getU32();
-		if (unk != 0x43340000) throw txProtocolError(_WHERE("NetMsgSetTimeout.unk must be 0x43340000 but is 0x%08X", unk));
-		// it seems this means 180sec, but I have no clue how
+		timeout = t.getFloat();
+	}
+	
+	void tmSetTimeout::additionalFields()
+	{
+		dbg.nl();
+		dbg.printf(" Timeout: %f", timeout);
 	}
 	
 	//// tmMembersList

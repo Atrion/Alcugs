@@ -688,15 +688,17 @@ void tmMsgBase::store(tBBuf &t) {
 		check |= plNetDirected; // Alcugs uses the message type to check if the msg needs to be forwarded to tracking
 	if (cmd == NetMsgGameStateRequest)
 		check |= plNetStateReq1; // one could also use the number of requested pages to check if this is the initial state request
-	// unknown purpose message-specific flags
+	// some message-specific flags which most likely tell the client how to treat that whole message
 	if (cmd == NetMsgGameMessage || cmd == NetMsgSDLStateBCast)
 		check |= plNetRelRegions;
 	if (cmd == NetMsgSDLState || cmd == NetMsgSDLStateBCast)
 		check |= plNetNewSDL;
 	if (cmd == NetMsgGameMessage || cmd == NetMsgGameMessageDirected || cmd == NetMsgCustomDirectedFwd)
-		check |= plNetMsgRecvrs; // whatever the purpose of this flag is, the message type is more reliable
+		check |= plNetMsgRecvrs; // whatever the purpose of this flag is, the message type is more reliable - this also set for message which don't have a receiver list
 	if (cmd == NetMsgJoinReq)
 		check |= plNetP2P;
+	if (cmd == NetMsgJoinAck)
+		check |= plNetFirewalled; // old servers set this, but not doing so changed nothing
 	// accept custom types from Alcugs servers only
 	if (u->isAlcugsServer())
 		check |= plNetSid;
@@ -708,7 +710,7 @@ void tmMsgBase::store(tBBuf &t) {
 void tmMsgBase::stream(tBBuf &t) const {
 	if (!u)  throw txProtocolError(_WHERE("attempt to send message without session being set"));
 	if (!cmd) throw txProtocolError(_WHERE("attempt to send message without cmd"));
-	if (!u->isAlcugsServer() && hasFlags(plNetSid)) // if the message has one of these flags set and the peer is not an alcugs server
+	if (!u->isAlcugsServer() && (flags & plNetSid)) // check for internal flags
 		throw txProtocolError(_WHERE("Custom flags must only be sent to Alcugs servers"));
 	
 	// fix for UU clients

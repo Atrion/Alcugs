@@ -774,6 +774,35 @@ namespace alc {
 				return 1;
 			}
 			
+			//// Server control messages
+			case NetMsgSetTimeout:
+			{
+				if (!u->joined) {
+					err->log("ERR: %s sent a NetMsgSetTimeout but did not yet join the game. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				// get the data out of the packet
+				tmSetTimeout setTimeout(u);
+				msg->data.get(setTimeout);
+				log->log("<RCV> [%d] %s\n", msg->sn, setTimeout.str());
+				// let's ignore this - I don't think the client should tell the server what the timeout is, nor does 180 seconds seem a good choice to me
+				return 1;
+			}
+			case NetMsgPython:
+			{
+				if (!u->joined) {
+					err->log("ERR: %s sent a NetMsgPython but did not yet join the game. I\'ll kick him.\n", u->str());
+					return -2; // hack attempt
+				}
+				
+				tmPython python(u);
+				msg->data.get(python);
+				log->log("<RCV> [%d] %s\n", msg->sn, python.str());
+				// Just ignore it, server-side Python is not supported
+				return 1;
+			}
+			
 			//// unknown purpose messages
 			case NetMsgTestAndSet:
 			{
@@ -812,10 +841,7 @@ namespace alc {
 				tmPlayerPage playerPage(u);
 				msg->data.get(playerPage);
 				log->log("<RCV> [%d] %s\n", msg->sn, playerPage.str());
-				
-				// This message is sent once when the client starts and links to the first age, and once again when the client quits and
-				// completely leaves the game
-				
+				// And now we just have to find out why we should care that the avatar is paged in or out - this occurs only when the agme is started or quit
 				return 1;
 			}
 			case NetMsgRelevanceRegions:
@@ -830,34 +856,6 @@ namespace alc {
 				msg->data.get(relevanceRegions);
 				log->log("<RCV> [%d] %s\n", msg->sn, relevanceRegions.str());
 				// I have no clue what this message is supposed to do, and things work without reacting to it
-				return 1;
-			}
-			case NetMsgSetTimeout:
-			{
-				if (!u->joined) {
-					err->log("ERR: %s sent a NetMsgSetTimeout but did not yet join the game. I\'ll kick him.\n", u->str());
-					return -2; // hack attempt
-				}
-				
-				// get the data out of the packet
-				tmSetTimeout setTimeout(u);
-				msg->data.get(setTimeout);
-				log->log("<RCV> [%d] %s\n", msg->sn, setTimeout.str());
-				// I have no clue what this message is supposed to do (well, it obviously should somehow set the timeout, but neither
-				// do I know how 0x43340000 should be 180sec nor is that a useful timeout). Things work without reacting to it.
-				return 1;
-			}
-			case NetMsgPython:
-			{
-				if (!u->joined) {
-					err->log("ERR: %s sent a NetMsgPython but did not yet join the game. I\'ll kick him.\n", u->str());
-					return -2; // hack attempt
-				}
-				
-				tmPython python(u);
-				msg->data.get(python);
-				log->log("<RCV> [%d] %s\n", msg->sn, python.str());
-				// Just ignore it, server-side Python is not supported
 				return 1;
 			}
 		}
