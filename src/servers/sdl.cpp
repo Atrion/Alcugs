@@ -85,16 +85,15 @@ namespace alc {
 		bool ageLoadsState = doesAgeLoadState(var.c_str(), net->getName());
 		// load agestate from file (do the migration even if we should not load)
 		ageStateFile = cfg->getVar("game.agestates");
+		if (ageStateFile.isNull())
+			throw txUnet(_WHERE("You have to set the game.agestates to the directory for saving your agestate files"));
+		mkdir(ageStateFile.c_str(), 00750); // make sure the path exists
+		ageStateFile.printf("/%s-%s.state", net->getName(), alcGetStrGuid(net->getGuid()));
+		// check for old agestate location and migrate if necessary
 		tStrBuf alternativeStateFile = alcLogGetLogPath() + "/agestate.raw";
-		if (ageStateFile.isNull()) { // fall back to old system
-			ageStateFile = alternativeStateFile;
-		}
-		else { // new system, but we may have to migrate
-			mkdir(ageStateFile.c_str(), 00750); // make sure the path exists
-			ageStateFile.printf("/%s-%s.state", net->getName(), alcGetStrGuid(net->getGuid()));
-			if (access(alternativeStateFile.c_str(), F_OK) == 0)
-				rename(alternativeStateFile.c_str(), ageStateFile.c_str());
-		}
+		if (access(alternativeStateFile.c_str(), F_OK) == 0)
+			rename(alternativeStateFile.c_str(), ageStateFile.c_str());
+		// ok, now go and load it - maybe
 		if (ageLoadsState) {
 			loadAgeState();
 		}
