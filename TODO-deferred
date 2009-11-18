@@ -36,7 +36,6 @@ Game
 ======
 * Fix the LoadClone issue
 * End the SDL parser
-* Implement the storage of game objects
 * Fix the members list problem
 * Optimizations
 * Some thoughts about the LAG
