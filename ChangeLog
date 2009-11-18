@@ -8,6 +8,10 @@ Improvements and Changes:
 - Game server now decides whether an agestate is loaded or not: "tracking".tmp.hacks.resetting_ages" has therefore been renamed to "game.tmp.hacks.resetting_ages" (the old one will automatically be used if the new one is not yet set)
 - Removed legacy unet2 and unet3 protocol support (migration from old servers is still possible though)
 - GUID generation is now done exclusively in the vault server
+- age and sdl files can now also be plain text
+- Cleaned up default configuration file (and improved default options)
+- Both age and sdl files can now just be copied into the appropriate folders - no need to reload or even restart any server anymore
+- Better understanding of some parts of the network protocol (see docs/unknownProtocolParts.txt for the remaining unknown points)
 
 Bugfixes:
 - Fixed much too slow parsing of incoming messages under some circumstances
@@ -18,7 +22,6 @@ Bugfixes:
 - Fixed some vault server crashes
 - Disabled advanced message and ack logging per default (it just spams the disk)
 - Fixed strange problem on some Linux systems which prevents age and sdl files from being read
-- age and sdl files can now also be plain text
 
 Version 1.3.5 (10/Apr/2009)
 ===============================
