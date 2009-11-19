@@ -29,7 +29,7 @@ db.username = "alcugs"
 db.passwd = "yourpassword"
 
 # paths (grouped here to make it easier to find and edit them)
-age = "/home/alcugs/age/" # directory containing the age files (for game, tracking and vault)
+age = "/home/alcugs/age/" # directory containing the age files (for game and vault)
 sdl = "/home/alcugs/sdl/" # directory containing the sdl files (for game)
 game.agestates = "/home/alcugs/agestates/" # directory the agestates should be saved in (for game)
 
