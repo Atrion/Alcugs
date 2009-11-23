@@ -80,8 +80,6 @@ namespace alc {
 		Byte awaiting_guid[8]; //!< Age guid where the player wants to go (hex) [only defined when waiting=true]
 		char awaiting_age[200]; //!< Age name where the player wants to go [only defined when waiting=true]
 		tNetSession *u; //!< the lobby or game server the player is connected to
-		U32 ip;
-		U16 port;
 	};
 	
 	class tTrackingBackend {

@@ -45,26 +45,26 @@
 
 //// plNetMsg flags. Text in [brackets] is the Plasma name for that flag. A '*' indicates this flags adds a new data field
 //currently handled by the netcore
-#define plNetAck        0x00040000 // [kNeedsReliableSend] Ack flag
-#define plNetVersion    0x00010000 //* [kHasVersion]       contains version numbers
-#define plNetTimestamp  0x00000001 //* [kHasTimeSent]      contains a Timestamp
-#define plNetX          0x00000200 //* [kHasTransactionID] contains the X
-#define plNetKi         0x00001000 //* [kHasPlayerID]      contains the ki
-#define plNetUID        0x00004000 //* [kHasAcctUuid]      contains a player uid
-#define plNetIP         0x00000010 //* [kAllowTimeOut]     contains client's ip address (seen on NetMsgJoinReq) - the libPlasma name is obviously wrong, or the IP address actually belongs into the message body...
+#define plNetAck        0x00040000 //  Ack flag
+#define plNetVersion    0x00010000 //* contains version numbers
+#define plNetTimestamp  0x00000001 //* contains a Timestamp
+#define plNetX          0x00000200 //* contains the X
+#define plNetKi         0x00001000 //* contains the ki
+#define plNetUID        0x00004000 //* contains a player uid
 
 // CUSTOM plNetFlags
 #define plNetSid        0x00800000 //* this message contains a sid (so that the servers remember where to send this back to)
 
 //Suppositions for unidentified flags - controlling some parts of the client before parsing the actual message? Explanations are in protocol.cpp, tmMsgBase::store
-#define plNetFirewalled 0x00000020 // [kIndirectMember]
-#define plNetSystem     0x00020000 // [kIsSystemMessage]
-#define plNetNewSDL     0x00000400 // [kNewSDLState]
-#define plNetMsgRecvrs  0x00000002 // [kHasGameMsgRecvrs]
-#define plNetRelRegions 0x00002000 // [kUseRelevanceRegions]
-#define plNetStateReq1  0x00000800 // [kInitialAgeStateRequest]
-#define plNetDirected   0x00008000 // [kInterAgeRouting]
-#define plNetP2P        0x08000000 // [not in libPlasma]
+#define plNetFirewalled 0x00000020
+#define plNetSystem     0x00020000
+#define plNetNewSDL     0x00000400
+#define plNetMsgRecvrs  0x00000002
+#define plNetRelRegions 0x00002000
+#define plNetStateReq1  0x00000800
+#define plNetDirected   0x00008000
+#define plNetP2P        0x08000000
+#define plNetTimeoutOk  0x00000010
 ////============================================================================
 
 

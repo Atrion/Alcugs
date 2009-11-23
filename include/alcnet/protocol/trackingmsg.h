@@ -50,7 +50,7 @@ namespace alc {
 	class tmCustomPlayerStatus : public tmMsgBase {
 	public:
 		tmCustomPlayerStatus(tNetSession *u);
-		tmCustomPlayerStatus(tNetSession *u, U32 ki, U32 sid, const Byte *uid, const char *account, const char *avatar, Byte playerFlag, Byte playerStatus);
+		tmCustomPlayerStatus(tNetSession *u, tNetSession *playerSession, Byte playerFlag, Byte playerStatus);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		// format

@@ -76,7 +76,6 @@ namespace alc {
 		this->sid = 0;
 		account[0] = avatar[0] = 0;
 		flag = status = 0;
-		ip = port = 0;
 		u = NULL;
 		waiting = false;
 	}
@@ -169,9 +168,7 @@ namespace alc {
 		}
 		player->sid = findServer.sid;
 		player->awaiting_x = findServer.x;
-		player->ip = findServer.ip;
-		player->port = findServer.port;
-		log->log("Player %s[%s:%d] wants to link to %s (%s)\n", player->str(), alcGetStrIp(player->ip), player->port, findServer.age.c_str(), findServer.serverGuid.c_str());
+		log->log("Player %s wants to link to %s (%s)\n", player->str(), findServer.age.c_str(), findServer.serverGuid.c_str());
 		if (strcmp(findServer.serverGuid.c_str(), "0000000000000000") == 0) // these are 16 zeroes
 			throw txProtocolError(_WHERE("No age GUID set"));
 		// copy data to player

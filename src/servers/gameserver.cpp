@@ -204,7 +204,7 @@ namespace alc {
 				}
 				else {
 					// tell tracking
-					tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->getSid(), u->uid, u->name, u->avatar, data->isHidden ? 1 /* invisible */ : 2 /* visible */, RActive);
+					tmCustomPlayerStatus trackingStatus(trackingServer, u, data->isHidden ? 1 /* invisible */ : 2 /* visible */, RActive);
 					send(trackingStatus);
 				}
 			}
@@ -467,7 +467,7 @@ namespace alc {
 					err->log("ERR: Player %s is joining, but vault or tracking is unavailable.\n", u->str());
 					return 1;
 				}
-				tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->getSid(), u->uid, u->name, u->avatar, 2 /* visible */, RActive);
+				tmCustomPlayerStatus trackingStatus(trackingServer, u, 2 /* visible */, RActive);
 				send(trackingStatus);
 				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, alcGetStrGuid(serverGuid), serverName, 1 /* is online */, 0 /* don't increase online time now, do that on disconnect */);
 				send(vaultStatus);

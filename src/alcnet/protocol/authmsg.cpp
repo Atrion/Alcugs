@@ -46,14 +46,13 @@
 namespace alc {
 
 	//// tmCustomAuthAsk
-	tmCustomAuthAsk::tmCustomAuthAsk(tNetSession *u, U32 x, U32 sid, U32 ip, U16 port, const char *login, const Byte *challenge, const Byte *hash, Byte release)
-	: tmMsgBase(NetMsgCustomAuthAsk, plNetAck | plNetX | plNetVersion | plNetSid | plNetIP, u), login(login)
+	tmCustomAuthAsk::tmCustomAuthAsk(tNetSession *u, U32 x, U32 sid, U32 ip, const char *login, const Byte *challenge, const Byte *hash, Byte release)
+	: tmMsgBase(NetMsgCustomAuthAsk, plNetAck | plNetX | plNetVersion | plNetSid, u), login(login)
 	{
 		this->sid = sid; // this is the SID the lobby uses for the connection to the client to be authed
 		this->x = x; // the X value the client sent to the lobby
-		this->ip = ip; // the client's IP and Port (for logging)
-		this->port = port;
 		
+		this->ip = ip;
 		memcpy(this->challenge, challenge, 16);
 		memcpy(this->hash, hash, 16);
 		this->release = release;
@@ -65,8 +64,9 @@ namespace alc {
 	void tmCustomAuthAsk::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		if (!hasFlags(plNetX | plNetIP | plNetSid)) throw txProtocolError(_WHERE("X, IP or Sid flag missing"));
+		if (!hasFlags(plNetX | plNetSid)) throw txProtocolError(_WHERE("X or Sid flag missing"));
 
+		ip = letoh32(t.getU32());
 		t.get(login);
 		memcpy(challenge, t.read(16), 16);
 		memcpy(hash, t.read(16), 16);
@@ -76,6 +76,7 @@ namespace alc {
 	void tmCustomAuthAsk::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
+		t.putU32(htole32(ip));
 		t.put(login);
 		t.write(challenge, 16);
 		t.write(hash, 16);
@@ -86,19 +87,17 @@ namespace alc {
 	{
 		dbg.nl();
 		// use two printf commands as alcGetStrGuid uses a static array and when using one command it would seem as if challenge and hash would be the same
-		dbg.printf(" login: %s, challenge: %s, ", login.c_str(), alcGetStrUid(challenge));
+		dbg.printf(" IP: %s, login: %s, challenge: %s, ", alcGetStrIp(ip), login.c_str(), alcGetStrUid(challenge));
 		dbg.printf("hash: %s, build: 0x%02X (%s)", alcGetStrUid(hash), release, alcUnetGetRelease(release));
 	}
 	
 	//// tmCustomAuthResponse
 	tmCustomAuthResponse::tmCustomAuthResponse(tNetSession *u, tmCustomAuthAsk &authAsk, const Byte *uid, const char *passwd, Byte result, Byte accessLevel)
-	 : tmMsgBase(NetMsgCustomAuthResponse, plNetAck | plNetX | plNetVersion | plNetSid | plNetIP | plNetUID, u), login(authAsk.login), passwd(passwd)
+	 : tmMsgBase(NetMsgCustomAuthResponse, plNetAck | plNetX | plNetVersion | plNetSid | plNetUID, u), login(authAsk.login), passwd(passwd)
 	 {
 		// copy stuff from the authAsk
 		sid = authAsk.sid; // this is the SID the lobby uses for the connection to the client to be authed
 		x = authAsk.x; // the X value the client sent to the lobby
-		ip = authAsk.ip; // the client's IP and Port (for finding the correct session)
-		port = authAsk.port;
 		
 		memcpy(this->uid, uid, 16);
 		this->result = result;
@@ -111,7 +110,7 @@ namespace alc {
 	void tmCustomAuthResponse::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		if (!hasFlags(plNetX | plNetIP | plNetUID | plNetSid)) throw txProtocolError(_WHERE("X, IP, UID or Sid flag missing"));
+		if (!hasFlags(plNetX | plNetUID | plNetSid)) throw txProtocolError(_WHERE("X, UID or Sid flag missing"));
 		
 		t.get(login);
 		result = t.getByte();

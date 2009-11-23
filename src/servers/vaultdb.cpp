@@ -1497,7 +1497,7 @@ namespace alc {
 		removeInvalidRefs();
 		
 		// if enabled, remove lost ages
-		// NOTE: Ages linked to with kBasicLink are not referenced anywhere, so they are removed by this
+		// NOTE: Ages linked to with KBasicLink are not referenced anywhere, so they are removed by this
 		if (cleanAges) {
 			lstd->log("Cleaning up: Looking for lost ages...\n");
 		

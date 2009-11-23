@@ -69,13 +69,13 @@ void parameters_usage() {
  -p 5000: select the listenning port\n\
  -c uru.conf: Set an alternate configuration file\n\
  -f : Force to start the servers including if parse errors occured\n\
- -guid XXXXXXXX: Set the server guid [kGame]\n\
- -name XXXXX: Set the age filename [kGame]\n\
+ -guid XXXXXXXX: Set the server guid [game server only]\n\
+ -name XXXXX: Set the age filename [game server only]\n\
  -log folder: Set the logging folder\n\
  -bcast 1/0: Enable/disable server broadcasts\n\
  -l: Shows the servers license\n\
- -nokill: Don't kill the gameservers, let them running [kGame].\n\
- -clean: Performs vault cleanup on vault server startup (make a backup of your database first!) [kVault].\n\
+ -nokill: Don't kill the gameservers, let them running [game server only].\n\
+ -clean: Performs vault cleanup on vault server startup (make a backup of your database first!) [vault server only].\n\
  -oOption value: Sets addional configuration settings, for example -oPort 5000\n\n");
 }
 

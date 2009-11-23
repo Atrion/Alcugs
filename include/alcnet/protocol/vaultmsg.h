@@ -139,7 +139,7 @@ namespace alc {
 	
 	class tmCustomVaultFindAge : public tmMsgBase {
 	public:
-		tmCustomVaultFindAge(tNetSession *u, U32 ki, U32 x, U32 sid, U32 ip, U16 port, const tMBuf &data);
+		tmCustomVaultFindAge(tNetSession *u, U32 ki, U32 x, U32 sid, const tMBuf &data);
 		tmCustomVaultFindAge(tNetSession *u);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
