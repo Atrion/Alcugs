@@ -1,5 +1,5 @@
 <?php
-// this script was written by MercAngel
+// this script was written by MercAngel and adapted by diafero
 require 'adduser-config.php';
 
 function make_uuid() {
@@ -28,13 +28,19 @@ function make_uuid() {
 <?php
 if ($_GET['action'] == 'go') {
   if ($_POST['login'] == '' || $_POST['password'] == '')
-    die ("You must enter a valid username and password! Click <a ".
+    die ("You must enter a username and a password! Click <a ".
          "href=\"javascript:history.back()\">here</a> to go back.");
   if ($_POST['password'] != $_POST['password2'])
-    die ("Your passwords don't match!  Please go <a ".
+    die ("Your passwords don't match! Please go <a ".
          "href=\"javascript:history.back()\">back</a> and re-enter it."); 
   $login = (get_magic_quotes_gpc() ? $_POST['login'] : addslashes($_POST['login']));
   $hashpw = strtoupper(md5(get_magic_quotes_gpc() ? stripslashes($_POST['password']) : $_POST['password']));
+
+  // check name
+  if (!preg_match("/^[A-Za-z0-9_\-]{1,100}$/", $login))
+    // Spaces are NOT ok - Uru will complain about a syntax error while logging in
+    die ("The name you entered is invalid: Valid characters are numbers, letters as well as '_' and '-'. Please go <a ".
+         "href=\"javascript:history.back()\">back</a> and re-enter it.");
 
   // Generate GUID:
   $guid = make_uuid();
