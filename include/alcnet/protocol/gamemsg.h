@@ -68,7 +68,11 @@ namespace alc {
 	public:
 		tmJoinReq(tNetSession *u);
 		virtual void store(tBBuf &t);
-		
+		// format
+		U32 ip; //network order
+		U16 port; //network order
+	protected:
+		virtual void additionalFields();
 	};
 	
 	class tmJoinAck : public tmMsgBase {

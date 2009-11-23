@@ -195,8 +195,6 @@ public:
 	U32 x;
 	U32 ki;
 	Byte uid[16];
-	U32 ip; //network order
-	U16 port; //network order
 	U32 sid;
 protected:
 	virtual void additionalFields() {} //!< writes the additional fields of this message type to the dbg buffer (called by str() to print the package)

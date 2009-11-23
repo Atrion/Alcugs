@@ -646,7 +646,6 @@ void tmMsgBase::store(tBBuf &t) {
 		timestamp.seconds=0;
 		timestamp.microseconds=0;
 	}
-
 	if(flags & plNetX) {
 		x=t.getU32();
 	} else {
@@ -657,32 +656,17 @@ void tmMsgBase::store(tBBuf &t) {
 	} else {
 		ki=0;
 	}
-	
 	if(flags & plNetUID) {
 		memcpy(uid,t.read(16),16);
 	} else {
 		memset(uid,0,16);
-	}
-	if(flags & plNetIP) {
-		//Unfortunately it looks like the IP address is transmitted in
-		// network byte order. This means that if we just use getU32(),
-		// on little-endian systems ip will be in network order and on
-		// big-endian systems it will be byte-swapped from *both*
-		// network and host order (which are the same).
-		ip=letoh32(t.getU32());
-		//The port is transmitted in little-endian order, so is in host
-		// order after getU16().
-		port=htons(t.getU16());
-	} else {
-		ip=0;
-		port=0;
 	}
 	if(flags & plNetSid) {
 		sid=t.getU32();
 	}
 	else sid = 0;
 
-	U32 check = plNetAck | plNetVersion | plNetTimestamp | plNetX | plNetKi | plNetUID | plNetIP | plNetSystem /*unknown purpose*/;
+	U32 check = plNetAck | plNetVersion | plNetTimestamp | plNetX | plNetKi | plNetUID | plNetSystem /*unknown purpose*/;
 	// message-specific flags
 	if (cmd == NetMsgGameMessageDirected || cmd == NetMsgCustomDirectedFwd)
 		check |= plNetDirected; // Alcugs uses the message type to check if the msg needs to be forwarded to tracking
@@ -696,7 +680,7 @@ void tmMsgBase::store(tBBuf &t) {
 	if (cmd == NetMsgGameMessage || cmd == NetMsgGameMessageDirected || cmd == NetMsgCustomDirectedFwd)
 		check |= plNetMsgRecvrs; // whatever the purpose of this flag is, the message type is more reliable - this also set for message which don't have a receiver list
 	if (cmd == NetMsgJoinReq)
-		check |= plNetP2P;
+		check |= plNetP2P | plNetTimeoutOk; // plNetP2P is the only of these flags which is not mentioned in libPlasma
 	if (cmd == NetMsgJoinAck)
 		check |= plNetFirewalled; // old servers set this, but not doing so changed nothing
 	// accept custom types from Alcugs servers only
@@ -742,14 +726,6 @@ void tmMsgBase::stream(tBBuf &t) const {
 	if(flags & plNetUID) {
 		t.write(uid,16);
 	}
-	if(flags & plNetIP) {
-		//We have to swap around again on big-endian systems to get
-		// the address back to little-endian order so that it's
-		// byte-swapped back to big-endian (network) by putU32().
-		t.putU32(htole32(ip));
-		//Also switch the port back from network to host order before writing.
-		t.putU16(ntohs(port));
-	}
 	if(flags & plNetSid) {
 		t.putU32(sid);
 	}
@@ -770,10 +746,6 @@ void tmMsgBase::copyProps(tmMsgBase &t) {
 	}
 	if(flags & plNetUID) {
 		memcpy(uid,t.uid,16);
-	}
-	if(flags & plNetIP) {
-		ip=t.ip;
-		port=t.port;
 	}
 	if(flags & plNetSid) {
 		sid=t.sid;
@@ -798,8 +770,6 @@ const char * tmMsgBase::str() {
 	}
 	if (flags & plNetMsgRecvrs)
 		dbg.writeStr(" game msg receivers,");
-	if(flags & plNetIP)
-		dbg.printf(" ip: %s:%i,",alcGetStrIp(ip),ntohs(port));
 	if(flags & plNetX)
 		dbg.printf(" x: %i,",x);
 	if(flags & plNetNewSDL)
@@ -882,20 +852,20 @@ const char * alcUnetGetRelease(Byte rel) {
 
 const char * alcUnetGetDestination(Byte dest) {
 	switch(dest) {
-		case KAgent: return "kAgent";
-		case KLobby: return "kLobby";
-		case KGame: return "kGame";
-		case KVault: return "kVault";
-		case KAuth: return "kAuth";
-		case KAdmin: return "kAdmin";
-		case KLookup: return "kLookup"; // same as KTracking
-		case KClient: return "kClient";
-		case KMeta: return "kMeta";
-		case KTest: return "kTest";
-		case KData: return "kData";
-		case KProxy: return "kProxy";
-		case KPlFire: return "kPlFire";
-		case KBcast: return "kBcast";
+		case KAgent: return "KAgent";
+		case KLobby: return "KLobby";
+		case KGame: return "KGame";
+		case KVault: return "KVault";
+		case KAuth: return "KAuth";
+		case KAdmin: return "KAdmin";
+		case KLookup: return "KLookup"; // same as KTracking
+		case KClient: return "KClient";
+		case KMeta: return "KMeta";
+		case KTest: return "KTest";
+		case KData: return "KData";
+		case KProxy: return "KProxy";
+		case KPlFire: return "KPlFire";
+		case KBcast: return "KBcast";
 		default: return "Unknown";
 	}
 }

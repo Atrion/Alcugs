@@ -534,6 +534,7 @@ namespace alc {
 		tWDYSBuf sdlContent;
 		sdlContent.put(sdlFile);
 		sdlContent.decrypt(/*mustBeWDYS*/false);
+		sdlFile.close();
 		
 		Byte state = 0;
 /*

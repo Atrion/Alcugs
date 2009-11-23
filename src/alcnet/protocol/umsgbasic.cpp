@@ -112,11 +112,8 @@ tmPing::tmPing(tNetSession *u, tmPing &ping)
 	x = ping.x;
 	destination = ping.destination;
 	mtime = ping.mtime;
-	if (hasFlags(plNetIP | plNetSid)) {
-		ip = ping.ip;
-		port = ping.port;
+	if (hasFlags(plNetSid))
 		sid = ping.sid;
-	}
 }
 void tmPing::store(tBBuf &t) {
 	tmMsgBase::store(t);
@@ -124,13 +121,11 @@ void tmPing::store(tBBuf &t) {
 	destination=t.getByte();
 }
 void tmPing::setRouteInfo(const tNetSessionIte &ite) {
-	ip=ite.ip;
-	port=ite.port;
 	sid=ite.sid;
-	setFlags(plNetIP | plNetSid);
+	setFlags(plNetSid);
 }
 void tmPing::unsetRouteInfo() {
-	unsetFlags(plNetIP | plNetSid);
+	unsetFlags(plNetSid);
 }
 void tmPing::stream(tBBuf &t) const {
 	tmMsgBase::stream(t);

@@ -114,9 +114,8 @@ namespace alc {
 	void tUnetLobbyServerBase::forwardPing(tmPing &ping, tNetSession *u)
 	{
 		if (u->getPeerType() == KAuth || u->getPeerType() == KTracking || u->getPeerType() == KVault) { // we got a ping reply from one of our servers, let's forward it to the client it came from
-			if (!ping.hasFlags(plNetIP)) throw txProtocolError(_WHERE("IP flag missing"));
-			tNetSessionIte ite(ping.ip, ping.port, ping.hasFlags(plNetSid) ? ping.sid : -1);
-			tNetSession *client = getSession(ite);
+			if (!ping.hasFlags(plNetSid)) throw txProtocolError(_WHERE("SID flag missing"));
+			tNetSession *client = smgr->get(ping.sid);
 			if (client) {
 				tmPing pingFwd(client, ping);
 				pingFwd.unsetRouteInfo();
@@ -160,7 +159,7 @@ namespace alc {
 		u->ki = ki;
 		
 		// tell tracking
-		tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->getSid(), u->uid, u->name, u->avatar, 2 /* visible */, (u->buildType == TIntRel) ? RActive : RJoining); // show the VaultManager as active (it's the only IntRel we have)
+		tmCustomPlayerStatus trackingStatus(trackingServer, u, 2 /* visible */, (u->buildType == TIntRel) ? RActive : RJoining); // show the VaultManager as active (it's the only IntRel we have)
 		send(trackingStatus);
 		
 		// now, tell the client
@@ -180,7 +179,7 @@ namespace alc {
 			}
 			else if (reason != RLoggedInElsewhere) { // if the player went somewhere else, don't remove him from tracking
 				int state = (reason == RLeaving) ? 2 /* visible */ : 0 /* delete */; // if the player just goes on to another age, don't remove him from the list
-				tmCustomPlayerStatus trackingStatus(trackingServer, u->ki, u->getSid(), u->uid, u->name, u->avatar, state, reason);
+				tmCustomPlayerStatus trackingStatus(trackingServer, u, state, reason);
 				send(trackingStatus);
 			}
 			u->ki = 0; // this avoids sending the messages twice
@@ -379,7 +378,7 @@ namespace alc {
 					return 1;
 				}
 				authResponse.hash.rewind();
-				tmCustomAuthAsk authAsk(authServer, authResponse.x, u->getSid(), u->getIp(), u->getPort(), u->name, u->challenge, authResponse.hash.read(), u->buildType);
+				tmCustomAuthAsk authAsk(authServer, authResponse.x, u->getSid(), u->getIp(), u->name, u->challenge, authResponse.hash.read(), u->buildType);
 				send(authAsk);
 				
 				return 1;
@@ -398,10 +397,6 @@ namespace alc {
 				
 				// find the client's session
 				tNetSession *client = smgr->get(authResponse.sid);
-				if (client && (client->getIp() != authResponse.ip || client->getPort() != authResponse.port)) { // check if IP and Port are correct
-					err->log("ERR: Got CustomAuthResponse for player %s but can't find his session.\n", authResponse.login.c_str());
-					return 1;
-				}
 				// verify account name and session state
 				if (!client || client->getAuthenticated() != 10 || client->getPeerType() != 0 || strncmp(client->name, authResponse.login.c_str(), 199) != 0) {
 					err->log("ERR: Got CustomAuthResponse for player %s but can't find his session.\n", authResponse.login.c_str());
@@ -609,7 +604,7 @@ namespace alc {
 					err->log("ERR: I've got the ask the vault server to check an age for me, but it's unavailable.\n");
 					return 1;
 				}
-				tmCustomVaultFindAge vaultFindAge(vaultServer, u->ki, findAge.x, u->getSid(), u->getIp(), u->getPort(), findAge.message);
+				tmCustomVaultFindAge vaultFindAge(vaultServer, u->ki, findAge.x, u->getSid(), findAge.message);
 				send(vaultFindAge);
 				
 				return 1;

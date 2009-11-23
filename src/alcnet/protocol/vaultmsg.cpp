@@ -343,14 +343,12 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultFindAge
-	tmCustomVaultFindAge::tmCustomVaultFindAge(tNetSession *u, U32 ki, U32 x, U32 sid, U32 ip, U16 port, const tMBuf &data)
-	 : tmMsgBase(NetMsgCustomVaultFindAge, plNetX | plNetKi | plNetAck | plNetIP | plNetSid, u), data(data)
+	tmCustomVaultFindAge::tmCustomVaultFindAge(tNetSession *u, U32 ki, U32 x, U32 sid, const tMBuf &data)
+	 : tmMsgBase(NetMsgCustomVaultFindAge, plNetX | plNetKi | plNetAck | plNetSid, u), data(data)
 	{
 		this->ki = ki;
 		this->x = x;
 		this->sid = sid;
-		this->ip = ip;
-		this->port = port;
 	}
 	
 	tmCustomVaultFindAge::tmCustomVaultFindAge(tNetSession *u) : tmMsgBase(u)
@@ -359,7 +357,7 @@ namespace alc {
 	void tmCustomVaultFindAge::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		if (!hasFlags(plNetX | plNetKi | plNetIP | plNetSid)) throw txProtocolError(_WHERE("X, KI, IP or Sid flag missing"));
+		if (!hasFlags(plNetX | plNetKi | plNetSid)) throw txProtocolError(_WHERE("X, KI or Sid flag missing"));
 		// store the whole message
 		data.clear();
 		U32 remaining = t.remaining();

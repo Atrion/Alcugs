@@ -68,9 +68,9 @@ namespace alc {
 		// begin of the plClientGuid
 		t.putU16(0x03EA); // a flag defining the content
 		/* according to libPlasma, 0x03EA is the combination of:
-		  kPlayerID = 0x0002, kCCRLevel = 0x0008,
-		  kBuildType = 0x0020, kPlayerName = 0x0040, kSrcAddr = 0x0080,
-		  kSrcPort = 0x0100, kReserved = 0x0200 */
+		  KI = 0x0002, CCR Level = 0x0008,
+		  Build Type = 0x0020, Player Name = 0x0040, Source Address = 0x0080,
+		  Source Port = 0x0100, Reserved = 0x0200 */
 		t.putU32(ki);
 		t.put(avatar);
 		t.putByte(hidePlayer); // CCR flag - when set to 1, the player is hidden on the age list
@@ -98,6 +98,22 @@ namespace alc {
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
 		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
+		
+		//Unfortunately it looks like the IP address is transmitted in
+		// network byte order. This means that if we just use getU32(),
+		// on little-endian systems ip will be in network order and on
+		// big-endian systems it will be byte-swapped from *both*
+		// network and host order (which are the same).
+		ip=letoh32(t.getU32());
+		//The port is transmitted in little-endian order, so is in host
+		// order after getU16().
+		port=htons(t.getU16());
+	}
+	
+	void tmJoinReq::additionalFields()
+	{
+		dbg.nl();
+		dbg.printf(" IP: %s:%i", alcGetStrIp(ip), ntohs(port));
 	}
 	
 	//// tmJoinAck
@@ -114,7 +130,7 @@ namespace alc {
 	{
 		tmMsgBase::stream(t);
 		
-		t.putU16(0); // unknown flag ("joinOrder" and "ExpLevel")
+		t.putU16(0); // unknown ("joinOrder" and "ExpLevel")
 		t.put(sdlStream);
 	}
 	
@@ -464,7 +480,7 @@ namespace alc {
 		dbg.printf(" Object reference: [%s]", obj.str());
 	}
 	
-	//// tmTestAndSet (this class reads exactly the same data as a NetMsgSharedState)
+	//// tmTestAndSet (NetMsgTestAndSet and NetMsgSharedState are identical)
 	tmTestAndSet::tmTestAndSet(tNetSession *u) : tmStreamedObject(u)
 	{ }
 	

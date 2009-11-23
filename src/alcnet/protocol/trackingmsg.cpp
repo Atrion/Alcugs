@@ -79,12 +79,12 @@ namespace alc {
 	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
-	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *u, U32 ki, U32 sid, const Byte *uid, const char *account, const char *avatar, Byte playerFlag, Byte playerStatus)
-	 : tmMsgBase(NetMsgCustomPlayerStatus, plNetAck | plNetVersion | plNetKi | plNetUID | plNetSid, u), account(account), avatar(avatar)
+	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *u, tNetSession *playerSession, Byte playerFlag, Byte playerStatus)
+	 : tmMsgBase(NetMsgCustomPlayerStatus, plNetAck | plNetVersion | plNetKi | plNetUID | plNetSid, u), account(playerSession->name), avatar(playerSession->avatar)
 	{
-		this->sid = sid;
-		this->ki = ki;
-		memcpy(this->uid, uid, 16);
+		this->sid = playerSession->getSid();
+		this->ki = playerSession->ki;
+		memcpy(this->uid, playerSession->uid, 16);
 		
 		this->playerFlag = playerFlag;
 		this->playerStatus = playerStatus;
@@ -121,29 +121,25 @@ namespace alc {
 	{ }
 	
 	tmCustomFindServer::tmCustomFindServer(tNetSession *u, const tmCustomVaultFindAge &findAge, const char *serverGuid, const tStrBuf &age)
-	 : tmMsgBase(NetMsgCustomFindServer, plNetX | plNetKi | plNetAck | plNetIP | plNetSid, u), serverGuid(serverGuid), age(age)
+	 : tmMsgBase(NetMsgCustomFindServer, plNetX | plNetKi | plNetAck | plNetSid, u), serverGuid(serverGuid), age(age)
 	{
 		this->ki = findAge.ki;
 		this->x = findAge.x;
 		this->sid = findAge.sid;
-		this->ip = findAge.ip;
-		this->port = findAge.port;
 	}
 	
 	tmCustomFindServer::tmCustomFindServer(tNetSession *u, const tmCustomFindServer &findServer)
-	 : tmMsgBase(NetMsgCustomFindServer, plNetX | plNetKi | plNetAck | plNetIP | plNetSid, u), serverGuid(findServer.serverGuid), age(findServer.age)
+	 : tmMsgBase(NetMsgCustomFindServer, plNetX | plNetKi | plNetAck | plNetSid, u), serverGuid(findServer.serverGuid), age(findServer.age)
 	{
 		this->ki = findServer.ki;
 		this->x = findServer.x;
 		this->sid = findServer.sid;
-		this->ip = findServer.ip;
-		this->port = findServer.port;
 	}
 	
 	void tmCustomFindServer::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);
-		if (!hasFlags(plNetX | plNetKi | plNetIP | plNetSid)) throw txProtocolError(_WHERE("X, KI, IP or Sid flag missing"));
+		if (!hasFlags(plNetX | plNetKi | plNetSid)) throw txProtocolError(_WHERE("X, KI or Sid flag missing"));
 		
 		t.get(serverGuid);
 		if (serverGuid.size() != 16) throw txProtocolError(_WHERE("NetMsgCustomFindServer.serverGuid must be 16 characters long"));
