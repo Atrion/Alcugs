@@ -104,7 +104,7 @@ namespace alc {
 		// on little-endian systems ip will be in network order and on
 		// big-endian systems it will be byte-swapped from *both*
 		// network and host order (which are the same).
-		ip=letoh32(t.getU32());
+		ip=letoh32(t.getU32()); // this is the internal IP of the client, not the external one of the router
 		//The port is transmitted in little-endian order, so is in host
 		// order after getU16().
 		port=htons(t.getU16());
@@ -118,7 +118,7 @@ namespace alc {
 	
 	//// tmJoinAck
 	tmJoinAck::tmJoinAck(tNetSession *u, U32 x, tBaseType *sdl)
-	 : tmMsgBase(NetMsgJoinAck, plNetAck | plNetKi | plNetX/* | plNetFirewalled*/, u)
+	 : tmMsgBase(NetMsgJoinAck, plNetAck | plNetKi | plNetX, u)
 	{
 		this->x = x;
 		ki = u->ki;

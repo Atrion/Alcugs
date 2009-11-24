@@ -680,12 +680,11 @@ void tmMsgBase::store(tBBuf &t) {
 	if (cmd == NetMsgGameMessage || cmd == NetMsgGameMessageDirected || cmd == NetMsgCustomDirectedFwd)
 		check |= plNetMsgRecvrs; // whatever the purpose of this flag is, the message type is more reliable - this also set for message which don't have a receiver list
 	if (cmd == NetMsgJoinReq)
-		check |= plNetP2P | plNetTimeoutOk; // plNetP2P is the only of these flags which is not mentioned in libPlasma
-	if (cmd == NetMsgJoinAck)
-		check |= plNetFirewalled; // old servers set this, but not doing so changed nothing
+		check |= plNetTimeoutOk;
 	// accept custom types from Alcugs servers only
 	if (u->isAlcugsServer())
 		check |= plNetSid;
+	// some flags are not seen on any messages, but in earlier server versions: plNetP2P, plNetFirewalled - they should eventually be removed from Alcugs
 	
 	//now catch undocumented protocol flags
 	if (flags & ~(check))
@@ -770,6 +769,10 @@ const char * tmMsgBase::str() {
 	}
 	if (flags & plNetMsgRecvrs)
 		dbg.writeStr(" game msg receivers,");
+	if (flags & plNetTimeoutOk)
+		dbg.writeStr(" accept timeout,");
+	if (flags & plNetFirewalled)
+		dbg.writeStr(" firewalled,");
 	if(flags & plNetX)
 		dbg.printf(" x: %i,",x);
 	if(flags & plNetNewSDL)
