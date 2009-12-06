@@ -75,7 +75,7 @@ namespace alc {
 	void tVaultBackend::load(void)
 	{
 		tConfig *cfg = alcGetConfig();
-		tStrBuf var = cfg->getVar("vault.log");
+		tString var = cfg->getVar("vault.log");
 		if (var.isNull() || var.asByte()) { // logging enabled per default
 			log = new tLog("vault.log", 4, 0);
 		}

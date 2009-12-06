@@ -49,7 +49,7 @@ namespace alc {
 	////IMPLEMENTATION
 	tPageInfo::tPageInfo(tConfigVal *val, int row)
 	{
-		tStrBuf name = val->getVal(0, row), number = val->getVal(1, row), conditionalLoad = val->getVal(2, row);
+		tString name = val->getVal(0, row), number = val->getVal(1, row), conditionalLoad = val->getVal(2, row);
 		strncpy(this->name, name.c_str(), 199);
 		this->number = number.asU16();
 		if (conditionalLoad.isNull()) this->conditionalLoad = false;
@@ -80,7 +80,7 @@ namespace alc {
 	{
 		// load age file dir
 		tConfig *cfg = alcGetConfig();
-		tStrBuf dir = cfg->getVar("age");
+		tString dir = cfg->getVar("age");
 		if (dir.size() < 2) throw txBase(_WHERE("age directory is not defined"));
 		if (!dir.endsWith("/")) dir.writeStr("/");
 		// get age name from file name
@@ -98,7 +98,7 @@ namespace alc {
 		parser.setConfig(cfg);
 		ageContent.get(parser);
 		// get sequence prefix
-		tStrBuf prefix = cfg->getVar("SequencePrefix");
+		tString prefix = cfg->getVar("SequencePrefix");
 		if (prefix.isNull()) throw txUnexpectedData(_WHERE("can\'t find the ages SequencePrefix"));
 		seqPrefix = prefix.asU32();
 		if (seqPrefix > 0x00FFFFFF && seqPrefix < 0xFFFFFFF0) // allow only 3 Bytes (but allow negative prefixes)

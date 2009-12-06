@@ -45,7 +45,7 @@ namespace alc {
 		// format
 		U16 numberPlayers;
 		tMBuf players;
-		tStrBuf url;
+		tString url;
 	protected:
 		virtual void additionalFields();
 	};
@@ -55,7 +55,7 @@ namespace alc {
 		tmCreatePlayer(tNetSession *u);
 		virtual void store(tBBuf &t);
 		// format
-		tStrBuf avatar, gender, friendName, key;
+		tString avatar, gender, friendName, key;
 	protected:
 		virtual void additionalFields();
 	};

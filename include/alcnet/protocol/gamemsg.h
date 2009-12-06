@@ -54,14 +54,14 @@ namespace alc {
 		const char *str(void);
 	private:
 		U32 ki;
-		tStrBuf avatar;
+		tString avatar;
 		bool hidePlayer;
 		Byte buildType;
 		U32 ip;
 		U16 port;
 		tUruObject obj;
 		
-		tStrBuf dbg;
+		tString dbg;
 	};
 	
 	class tmJoinReq : public tmMsgBase {
@@ -137,7 +137,7 @@ namespace alc {
 		// format
 		U32 pageId;
 		U16 pageType;
-		tStrBuf pageName;
+		tString pageName;
 		bool isPageOut;
 	protected:
 		virtual void additionalFields();

@@ -51,23 +51,23 @@ tSimpleParser::tSimpleParser() {
 	sep=' ';
 }
 U32 tSimpleParser::size() const {
-	tStrBuf s;
+	tString s;
 	stream(s);
 	return s.size();
 }
 void tSimpleParser::store(tBBuf &t) {
-	tStrBuf s(t);
+	tString s(t);
 	store(s);
 }
 void tSimpleParser::stream(tBBuf &t) const {
-	tStrBuf s;
+	tString s;
 	stream(s);
 	t.put(s);
 }
 
-void tSimpleParser::store(tStrBuf &t) {
+void tSimpleParser::store(tString &t) {
 	if(!cfg) return;
-	tStrBuf key,val;
+	tString key,val;
 	DBG(4,"Store\n");
 	while(!t.eof()) {
 		key = t.getToken();
@@ -89,7 +89,7 @@ void tSimpleParser::store(tStrBuf &t) {
 			}
 			//cfg->setVar(val.c_str(),key.c_str(),"global");
 			//cfg->findVar(key.c_str(),"global",1);
-			tStrBuf section("global");
+			tString section("global");
 			cfg->setVar(val,key,section);
 			val=t.getToken();
 			//printf("Reprs:\n%s\n",val.hexToAscii());
@@ -99,7 +99,7 @@ void tSimpleParser::store(tStrBuf &t) {
 		}
 	}	
 }
-void tSimpleParser::stream(tStrBuf &t) const {
+void tSimpleParser::stream(tString &t) const {
 	//U32 start=t.tell();
 	DBG(4,"stream()\n");
 	if(!cfg) return;
@@ -109,7 +109,7 @@ void tSimpleParser::stream(tStrBuf &t) const {
 	while((key=cfg->getNext())) {
 		DBG(5,"cfg->getNext()\n");
 		tConfigVal * val;
-		tStrBuf str;
+		tString str;
 		while((val=key->getNext())) {
 			DBG(5,"key->getNext()\n");
 			t.writeStr(val->getName());
@@ -134,22 +134,22 @@ tXParser::tXParser(bool override) :tSimpleParser() {
 	this->override = override;
 }
 
-void tXParser::setBasePath(const tStrBuf & base) {
+void tXParser::setBasePath(const tString & base) {
 	path=base;
 }
 
 void tXParser::store(tBBuf &t) {
-	tStrBuf s(t);
+	tString s(t);
 	store(s);
 }
 void tXParser::stream(tBBuf &t) const {
-	tStrBuf s;
+	tString s;
 	stream(s);
 	t.put(s);
 }
-void tXParser::store(tStrBuf &t) {
+void tXParser::store(tString &t) {
 	if(!cfg) return;
-	tStrBuf section,key,val;
+	tString section,key,val;
 	DBG(4,"Store\n");
 	section="global";
 	U16 x,y;
@@ -229,7 +229,7 @@ void tXParser::store(tStrBuf &t) {
 	}
 }
 
-void tXParser::stream(tStrBuf &t) const {
+void tXParser::stream(tString &t) const {
 	DBG(4,"stream()\n");
 	if(!cfg) return;
 	DBG(5,"cfg->rewind()\n");
@@ -238,7 +238,7 @@ void tXParser::stream(tStrBuf &t) const {
 	while((key=cfg->getNext())) {
 		DBG(5,"cfg->getNext()\n");
 		tConfigVal * val;
-		tStrBuf str;
+		tString str;
 		t.writeStr("\n[" + key->getName() + "]\n");
 		while((val=key->getNext())) {
 			DBG(5,"key->getNext()\n");

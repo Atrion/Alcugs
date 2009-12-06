@@ -63,7 +63,7 @@ namespace alc {
 		tUnetLobbyServerBase::onLoadConfig();
 		tConfig *cfg = alcGetConfig();
 		
-		tStrBuf var = cfg->getVar("website");
+		tString var = cfg->getVar("website");
 		strncpy(website, var.c_str(), 255);
 		
 		var = cfg->getVar("game.log");

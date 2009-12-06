@@ -290,7 +290,7 @@ namespace alc {
 	}
 	
 	//// tpKIMsg
-	tpKIMsg::tpKIMsg(const tUruObjectRef &sender, const tStrBuf &senderName, U32 senderKi, const tStrBuf &text)
+	tpKIMsg::tpKIMsg(const tUruObjectRef &sender, const tString &senderName, U32 senderKi, const tString &text)
 	 : tpMessage(pfKIMsg, sender), senderName(senderName), senderKi(senderKi), text(text)
 	{
 		messageType = 0;

@@ -56,7 +56,7 @@ namespace alc {
 	{
 		// check if we should clean the vault
 		tConfig *cfg = alcGetConfig();
-		tStrBuf var = cfg->getVar("daemon");
+		tString var = cfg->getVar("daemon");
 		bool daemon = (!var.isNull() && var.asByte()); // disabled per default
 		var = cfg->getVar("vault.clean", "cmdline"); // this can only be enabled via cmdline
 		bool clean = (!var.isNull() && var.asByte()); // disabled per default
@@ -72,7 +72,7 @@ namespace alc {
 		}
 	}
 	
-	bool tUnetVaultServer::isValidAvatarName(const tStrBuf &avatar)
+	bool tUnetVaultServer::isValidAvatarName(const tString &avatar)
 	{
 		for (U32 i = 0; i < avatar.size(); ++i) {
 			Byte c = avatar.getAt(i);
@@ -114,7 +114,7 @@ namespace alc {
 				else if (createPlayer.friendName.size() > 0 || createPlayer.key.size() > 0) result = AInvitationNotFound;
 				else if (!isValidAvatarName(createPlayer.avatar)) result = ANameIsNotAllowed;
 				else {
-					tStrBuf gender = createPlayer.gender.lower();
+					tString gender = createPlayer.gender.lower();
 					if (gender != "male" && gender != "female" && createPlayer.accessLevel > AcCCR) {
 						if (gender == "yeesha" || gender == "yeeshanoglow" || gender == "shuterland") createPlayer.gender = "Female";
 						else createPlayer.gender = "Male";

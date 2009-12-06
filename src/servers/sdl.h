@@ -64,7 +64,7 @@ namespace alc {
 		void removePlayer(tNetSession *player);
 		void clearAllStates(void);//!< remove all SDL states and clones (only call if you are sure noone is in the age!)
 		
-		tSdlStruct *findStruct(tStrBuf name, U32 version, bool throwOnError = true);
+		tSdlStruct *findStruct(tString name, U32 version, bool throwOnError = true);
 	private:
 		void load(void);
 		void unload(void);
@@ -91,36 +91,36 @@ namespace alc {
 		tAgeInfo *age;
 		tLog *log;
 		bool logDetailed;
-		tStrBuf ageStateFile;
+		tString ageStateFile;
 	};
 	
 	/** The SDL Struct classes */
 	class tSdlStructVar {
 	public:
-		tSdlStructVar(tStrBuf type = tStrBuf());
+		tSdlStructVar(tString type = tString());
 		
 		typedef enum { DVault = 0x01, DHidden = 0x02, DRed = 0x04 } tSdlStructVarFlags;
 		
 		// these are public, I would have to add write functions for them anyway or make many classes "friend"
 		Byte type;
 		U32 size; // "0" means dynamic size
-		tStrBuf name;
-		tStrBuf structName;
+		tString name;
+		tString structName;
 		U32 structVersion;
-		tStrBuf defaultVal;
+		tString defaultVal;
 		Byte flags; // see tSdlStructVarFlags
 	};
 	
 	class tSdlStruct {
 	public:
-		tSdlStruct(tAgeStateManager *stateMgr, tStrBuf name = tStrBuf());
+		tSdlStruct(tAgeStateManager *stateMgr, tString name = tString());
 		void count(void);
 		
 		tSdlStructVar *getElement(int nr, bool var); //!< returns the nth variable (if var == true) or the nth struct (if var == false)
 	
 		typedef std::vector<tSdlStructVar> tVarList;
 		// these are public, I would have to add write functions for them anyway or make many classes "friend"
-		tStrBuf name;
+		tString name;
 		U32 version;
 		tVarList vars;
 		U32 nVar, nStruct;

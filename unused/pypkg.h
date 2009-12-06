@@ -56,12 +56,12 @@ public:
 	virtual U32 size();
 	virtual U32 avgsize();
 	void setName(const char * name);
-	void setName(const tStrBuf & name);
-	tStrBuf & getName();
+	void setName(const tString & name);
+	tString & getName();
 	tMBuf pkg; //file contents
 private:
 	//format
-	tUStr name; //file name
+	tUruString name; //file name
 	U32 msize; //compressed file size
 };
 

@@ -117,7 +117,7 @@ tTime alcGetBornTime() {
 }
 
 void alcReApplyConfig() {
-	tStrBuf var;
+	tString var;
 	tConfig * cfg=alcGetConfig();
 	var=cfg->getVar("verbose_level","global");
 	if(var.isNull()) {
@@ -157,12 +157,12 @@ void alcIngoreConfigParseErrors(bool val) {
 void alcDumpConfig() {
 	tXParser parser;
 	parser.setConfig(alcGetConfig());
-	tStrBuf out;
+	tString out;
 	out.put(parser);
 	lstd->print("Config Dump:\n%s\n",out.c_str());
 }
 
-bool alcParseConfig(const tStrBuf & path) {
+bool alcParseConfig(const tString & path) {
 	tXParser parser;
 	DBG(5,"setting config parser...");
 	parser.setConfig(alcGetConfig());
@@ -183,7 +183,7 @@ bool alcParseConfig(const tStrBuf & path) {
 		DBGM(5," done\n");
 		f1.close();
 		
-		//tStrBuf out;
+		//tString out;
 		//out.put(parser);
 	} catch(txNotFound &t) {
 		fprintf(stderr,"Error: %s\n",t.what());
@@ -219,7 +219,7 @@ void alcSignal(int signum, bool install) {
 }
 
 void alcCrashAction() {
-	tStrBuf var;
+	tString var;
 	tConfig * cfg=alcGetConfig();
 	var=cfg->getVar("crash.action","global");
 	if(!var.isNull()) {

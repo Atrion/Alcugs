@@ -69,7 +69,7 @@ typedef struct {
 												   1 - one file (old behaviour)
 													 >=2 - rotate logs
 												*/
-	tStrBuf * path; //!<path to the log directory
+	tString * path; //!<path to the log directory
 	int rotate_size; //!< maxium size of a file, if reached, file will be rotated
 	mode_t creation_mask; //!< default permissions mask
 	char level; //!< current logging level (0 - disabled, 1 minimal, 6 huge)
@@ -106,7 +106,7 @@ void alcLogSetDefaults() {
 		//memset(tvLogConfig,0,sizeof(tvLogConfig));
 		tvLogConfig->silent=0;
 		tvLogConfig->n_files2rotate=5;
-		tvLogConfig->path=new tStrBuf("log/");
+		tvLogConfig->path=new tString("log/");
 		tvLogConfig->rotate_size=2*1024*1024;
 		tvLogConfig->creation_mask=00750;
 		tvLogConfig->level=6;
@@ -133,11 +133,11 @@ void alcLogSetDefaults() {
 	}
 }
 
-void alcLogSetLogPath(const tStrBuf & path) {
+void alcLogSetLogPath(const tString & path) {
 	*(tvLogConfig->path)=path;
 }
 
-tStrBuf alcLogGetLogPath(void) {
+tString alcLogGetLogPath(void) {
 	return *(tvLogConfig->path);
 }
 

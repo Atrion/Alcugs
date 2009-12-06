@@ -182,7 +182,7 @@ namespace alc {
 	{
 		// this is a private function, so the caller already did the prepare() check
 		
-		tStrBuf query;
+		tString query;
 		int version = 0;
 		query.printf("SHOW COLUMNS FROM %s LIKE 'torans'", vaultTable);
 		sql->query(query.c_str(), "getVersion: Checking for torans column");
@@ -211,7 +211,7 @@ namespace alc {
 		
 		folder[0] = 0; // empty it
 		
-		tStrBuf query;
+		tString query;
 		query.printf("SELECT idx, str_1 FROM %s WHERE type=6 LIMIT 1", vaultTable);
 		sql->query(query.c_str(), "Getting vault folder name");
 		
@@ -230,7 +230,7 @@ namespace alc {
 	void tVaultDB::convertIntToTimestamp(const char *table, const char *intColumn, const char *timestampColumn)
 	{
 		// this is a private function, so the caller already did the prepare() check
-		tStrBuf query;
+		tString query;
 		
 		query.printf("ALTER TABLE %s ADD %s timestamp NOT NULL default 0 AFTER %s", table, timestampColumn, intColumn);
 		sql->query(query.c_str(), "converting int to timestamp (1/3)");
@@ -247,7 +247,7 @@ namespace alc {
 	void tVaultDB::convertIntToDouble(const char *table, const char *intColumn, const char *doubleColumn)
 	{
 		// this is a private function, so the caller already did the prepare() check
-		tStrBuf query;
+		tString query;
 		
 		query.printf("ALTER TABLE %s ADD %s double NOT NULL default 0 AFTER %s", table, doubleColumn, intColumn);
 		sql->query(query.c_str(), "converting int to double (1/3)");
@@ -265,7 +265,7 @@ namespace alc {
 	{
 		// this is a private function, so the caller already did the prepare() check
 	
-		tStrBuf query;
+		tString query;
 		/* From version 2 to 3, the layout of the tables changed, but the way the content is organized stayed the same.
 		   On both tables, the timestamp columns were converted to type TIMESTAMP.
 		   For the main vault table, the columns were renamed to the names tvNode uses (which are taken from Vault Manager) */
@@ -317,7 +317,7 @@ namespace alc {
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		if (t) t->clear(); // t may be NULL if we just check the number of players
 	
-		tStrBuf query;
+		tString query;
 		
 		query.printf("SELECT idx, lstr_1, int_2 FROM %s WHERE lstr_2 = '%s'", vaultTable, alcGetStrUid(uid));
 		sql->query(query.c_str(), "getting player list");
@@ -330,7 +330,7 @@ namespace alc {
 			for (int i = 0; i < number; ++i) {
 				MYSQL_ROW row = mysql_fetch_row(result);
 				t->putU32(atoi(row[0])); // KI
-				tStrBuf avatar;
+				tString avatar;
 				avatar.writeStr(row[1]);
 				t->put(avatar);
 				t->putByte(atoi(row[2])); // flags
@@ -344,7 +344,7 @@ namespace alc {
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
-		tStrBuf query;
+		tString query;
 		avatar[0] = 0; // first emtpy the string
 		
 		query.printf("SELECT lstr_1 FROM %s WHERE lstr_2 = '%s' and idx='%d' LIMIT 1", vaultTable, alcGetStrUid(uid), ki);
@@ -362,9 +362,9 @@ namespace alc {
 		return (number == 1) ? 1 : 0;
 	}
 	
-	tStrBuf tVaultDB::createNodeQuery(tvNode &node, bool isUpdate)
+	tString tVaultDB::createNodeQuery(tvNode &node, bool isUpdate)
 	{
-		tStrBuf query;
+		tString query;
 		char *escapedData = NULL;
 		bool comma = false;
 		const char *commaStr = isUpdate ? "," : " and ";
@@ -533,7 +533,7 @@ namespace alc {
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
-		tStrBuf query;
+		tString query;
 		// first, we have to create the query...
 		query.printf("SELECT idx, mod_time FROM %s WHERE ", vaultTable);
 		query.writeStr(createNodeQuery(node, /*isUpdate*/false));
@@ -763,7 +763,7 @@ namespace alc {
 		node.modTime = alcGetCurrentTime();
 		
 		// create the query
-		tStrBuf query;
+		tString query;
 		query.printf("UPDATE %s SET ", vaultTable);
 		query.writeStr(createNodeQuery(node, /*isUpdate*/true));
 		query.printf(" WHERE idx='%d'", node.index);
@@ -782,7 +782,7 @@ namespace alc {
 	
 		tvManifest **feed = NULL, **aux = NULL, **final = NULL;
 		int          nFeed = 0,     nAux = 0,     nFinal = 0;
-		tStrBuf query;
+		tString query;
 		MYSQL_RES *result;
 		MYSQL_ROW row;
 		bool comma;
@@ -930,7 +930,7 @@ namespace alc {
 	
 		U32 *feed = NULL, *aux = NULL, *final = NULL;
 		U32  nFeed = 0,    nAux = 0,    nFinal = 0;
-		tStrBuf query;
+		tString query;
 		MYSQL_RES *result;
 		MYSQL_ROW row;
 		bool comma;
@@ -1111,7 +1111,7 @@ namespace alc {
 		if (!tableSize)
 			throw txDatabaseError(_WHERE("There must be at least one node to fetch"));
 	
-		tStrBuf query;
+		tString query;
 		MYSQL_RES *result;
 		MYSQL_ROW row;
 		unsigned long *lengths; // the len of each column
@@ -1191,7 +1191,7 @@ namespace alc {
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
-		tStrBuf query;
+		tString query;
 		MYSQL_RES *result;
 		U32 nNodes;
 		
@@ -1209,7 +1209,7 @@ namespace alc {
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
-		tStrBuf query;
+		tString query;
 		MYSQL_RES *result;
 		
 		// first check if this ref already exists
@@ -1236,7 +1236,7 @@ namespace alc {
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
-		tStrBuf query;
+		tString query;
 		MYSQL_RES *result;
 		MYSQL_ROW row;
 		int numParent, type, num;
@@ -1286,7 +1286,7 @@ namespace alc {
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
-		tStrBuf query;
+		tString query;
 		MYSQL_RES *result;
 		MYSQL_ROW row;
 		int num;
@@ -1319,7 +1319,7 @@ namespace alc {
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
-		tStrBuf query;
+		tString query;
 		query.printf("UPDATE %s SET flag='%d' WHERE id2='%d' AND id3='%d'", refVaultTable, seen, parent, seen);
 		sql->query(query.c_str(), "Updating seen flag");
 	}
@@ -1328,7 +1328,7 @@ namespace alc {
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
-		tStrBuf query;
+		tString query;
 		MYSQL_RES *result;
 		MYSQL_ROW row;
 		
@@ -1355,7 +1355,7 @@ namespace alc {
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
-		tStrBuf query;
+		tString query;
 		MYSQL_RES *result;
 		MYSQL_ROW row;
 		
@@ -1403,7 +1403,7 @@ namespace alc {
 	{
 		// this is a private function, so the caller already did the prepare() check
 		
-		tStrBuf query;
+		tString query;
 		MYSQL_RES *result;
 		MYSQL_ROW row;
 		int num;
@@ -1452,7 +1452,7 @@ namespace alc {
 		// this is a private function, so the caller already did the prepare() check
 		
 		// look for age info node (which must be a direct child)
-		tStrBuf query;
+		tString query;
 		MYSQL_RES *result;
 		MYSQL_ROW row;
 		
@@ -1490,7 +1490,7 @@ namespace alc {
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
-		tStrBuf query;
+		tString query;
 		MYSQL_RES *result;
 		MYSQL_ROW row;
 		

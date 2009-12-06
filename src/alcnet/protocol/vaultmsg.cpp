@@ -169,7 +169,7 @@ namespace alc {
 	{ }
 	
 	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u, U32 x, U32 sid, const Byte *uid,
-	  Byte accessLevel, const char *login, const tStrBuf &avatar, const tStrBuf &gender, const tStrBuf &friendName, const tStrBuf &key)
+	  Byte accessLevel, const char *login, const tString &avatar, const tString &gender, const tString &friendName, const tString &key)
 	 : tmMsgBase(NetMsgCustomVaultCreatePlayer, plNetX | plNetUID | plNetVersion | plNetAck | plNetSid, u), login(login),
 	   avatar(avatar), gender(gender), friendName(friendName), key(key)
 	{

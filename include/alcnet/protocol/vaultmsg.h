@@ -71,7 +71,7 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		// format
-		tStrBuf age, serverGuid;
+		tString age, serverGuid;
 		Byte state;
 		U32 onlineTime;
 	protected:
@@ -81,12 +81,12 @@ namespace alc {
 	class tmCustomVaultCreatePlayer : public tmMsgBase {
 	public:
 		tmCustomVaultCreatePlayer(tNetSession *u);
-		tmCustomVaultCreatePlayer(tNetSession *u, U32 x, U32 sid, const Byte *uid, Byte accessLevel, const char *login, const tStrBuf &avatar, const tStrBuf &gender, const tStrBuf &friendName, const tStrBuf &key);
+		tmCustomVaultCreatePlayer(tNetSession *u, U32 x, U32 sid, const Byte *uid, Byte accessLevel, const char *login, const tString &avatar, const tString &gender, const tString &friendName, const tString &key);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		// format
-		tUStr login;
-		tStrBuf avatar, gender, friendName, key;
+		tUruString login;
+		tString avatar, gender, friendName, key;
 		Byte accessLevel;
 	protected:
 		virtual void additionalFields();
@@ -132,7 +132,7 @@ namespace alc {
 		virtual void stream(tBBuf &t) const;
 		// format
 		Byte status;
-		tStrBuf avatar;
+		tString avatar;
 	protected:
 		virtual void additionalFields();
 	};

@@ -65,7 +65,7 @@ namespace alc {
 			return (flags | f) == flags; // there can be several flags enabled in f, so a simple & is not enough
 		}
 		Byte getType(void) const;
-		tStrBuf getName(void) const;
+		tString getName(void) const;
 		U32 getSize(void) const;
 	private:
 		void clear(void);
@@ -82,7 +82,7 @@ namespace alc {
 	
 		Byte num; //!< this is the nth var/struct of the SDL, starting with 0
 		
-		tUStr str; //!< details about how the state was changed
+		tUruString str; //!< details about how the state was changed
 		Byte flags;
 		tElementList elements;
 		
@@ -94,12 +94,12 @@ namespace alc {
 	class tSdlStateBinary : public tBaseType {
 	public:
 		tSdlStateBinary(void);
-		tSdlStateBinary(tAgeStateManager *stateMgr, tStrBuf name, U32 version, bool initDefault = false);
+		tSdlStateBinary(tAgeStateManager *stateMgr, tString name, U32 version, bool initDefault = false);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		void print(tLog *log, Byte indentSize = 1);
 		
-		tUStr getName(void) const;
+		tUruString getName(void) const;
 		U16 getVersion(void) const;
 		inline bool isIndexed(void) const { return incompleteVars || incompleteStructs; }
 		
@@ -117,7 +117,7 @@ namespace alc {
 		bool incompleteVars; //!< this state contains only a part of the full information and uses indices for the vars
 		bool incompleteStructs; //!< this state contains only a part of the full information and uses indices for the structs
 		
-		tStrBuf dbg;
+		tString dbg;
 		tSdlStruct *sdlStruct;
 		tAgeStateManager *stateMgr;
 	};
@@ -125,7 +125,7 @@ namespace alc {
 	/** parses the SDL state */
 	class tSdlState : public tBaseType {
 	public:
-		tSdlState(tAgeStateManager *stateMgr, const tUruObject &obj, tUStr name, U16 version, bool initDefault = false);
+		tSdlState(tAgeStateManager *stateMgr, const tUruObject &obj, tUruString name, U16 version, bool initDefault = false);
 		tSdlState(tAgeStateManager *stateMgr, tMBuf &t, const tUruObject &obj);
 		tSdlState(tAgeStateManager *stateMgr, tMBuf &t);
 		tSdlState(void);
@@ -139,7 +139,7 @@ namespace alc {
 		// format
 		tSdlStateBinary content;
 	private:
-		tStrBuf dbg;
+		tString dbg;
 		tAgeStateManager *stateMgr;
 	};
 

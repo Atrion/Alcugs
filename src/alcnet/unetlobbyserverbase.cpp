@@ -73,7 +73,7 @@ namespace alc {
 	void tUnetLobbyServerBase::onLoadConfig(void)
 	{
 		tConfig *cfg = alcGetConfig();
-		tStrBuf var = cfg->getVar("vault.html.log");
+		tString var = cfg->getVar("vault.html.log");
 		if (var.isNull() || var.asByte()) { // logging enabled per default
 			if (lvault == lnull) lvault = new tLog("vault.html", 2, DF_HTML);
 			var = cfg->getVar("vault.html.log.short");
@@ -197,7 +197,7 @@ namespace alc {
 	
 	tNetSessionIte tUnetLobbyServerBase::reconnectPeer(Byte dst)
 	{
-		tStrBuf host, port;
+		tString host, port;
 		tConfig *cfg = alcGetConfig();
 		
 		switch (dst) {
@@ -228,7 +228,7 @@ namespace alc {
 		// sending a NetMsgAlive is not necessary, the netConnect will already start the negotiation process
 		
 		if (dst == KTracking) {
-			tStrBuf var = cfg->getVar("public_address");
+			tString var = cfg->getVar("public_address");
 			if (var.isNull()) log->log("WARNING: No public address set, using bind address %s\n", bindaddr);
 			tmCustomSetGuid setGuid(session, alcGetStrGuid(serverGuid), serverName, var.c_str(), whoami == KGame ? 0 : spawnStart, whoami == KGame ? 0 : spawnStop);
 			send(setGuid);

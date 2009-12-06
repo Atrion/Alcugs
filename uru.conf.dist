@@ -112,7 +112,7 @@ stop = 1
 [lobby]
 # this is the section containing options for the lobby server. global options like verbose_level or log_files_path can be overwritten here
 
-port = 5000
+port = 5000 # do NOT change - this is hard-coded in the Uru client!
 
 # Set the website which is displayed when the user logs into your shard
 website = "http://server/info.html"

@@ -70,7 +70,7 @@ namespace alc {
 		sql = NULL;
 	
 		tConfig *cfg = alcGetConfig();
-		tStrBuf var = cfg->getVar("auth.minalevel");
+		tString var = cfg->getVar("auth.minalevel");
 		if (var.isNull()) minAccess = AcNotActivated;
 		else minAccess = var.asU16();
 		
@@ -113,7 +113,7 @@ namespace alc {
 		sql = tSQL::createFromConfig();
 		if (sql->prepare()) {
 			// check if the auth table exists
-			tStrBuf query;
+			tString query;
 			query.printf("SHOW TABLES LIKE 'accounts'");
 			sql->query(query.c_str(), "Looking for accounts table");
 			MYSQL_RES *result = sql->storeResult();
@@ -149,7 +149,7 @@ namespace alc {
 	
 	int tAuthBackend::queryPlayer(const char *login, char *passwd, char *guid, U32 *attempts, U32 *lastAttempt)
 	{
-		tStrBuf query;
+		tString query;
 		*attempts = *lastAttempt = passwd[0] = 0; // ensure there's a valid value in there
 		strcpy(guid, "00000000-0000-0000-0000-000000000000");
 		
@@ -185,7 +185,7 @@ namespace alc {
 	void tAuthBackend::updatePlayer(const char *guid, const char *ip, U32 attempts, Byte updateStamps)
 	{
 		char ip_escaped[50], guid_escaped[50];
-		tStrBuf query;
+		tString query;
 		strncpy(ip_escaped, sql->escape(ip), 49);
 		strncpy(guid_escaped, sql->escape(guid), 49);
 		query.printf("UPDATE accounts SET attempts='%d', last_ip='%s'", attempts, ip_escaped);

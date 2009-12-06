@@ -203,11 +203,11 @@ namespace alc {
 		const char *str(void);
 		// format
 		Byte flags;
-		tStrBuf filename, instanceName;
+		tString filename, instanceName;
 		Byte guid[8];
-		tStrBuf userDefName, displayName;
+		tString userDefName, displayName;
 	private:
-		tStrBuf dbg;
+		tString dbg;
 	};
 	
 	class tvSpawnPoint : public tvBase {
@@ -220,7 +220,7 @@ namespace alc {
 		const char *str(void);
 		// format
 		U32 flags;
-		tStrBuf title, name, cameraStack;
+		tString title, name, cameraStack;
 	};
 	
 	class tvAgeLinkStruct : public tvBase {
@@ -236,9 +236,9 @@ namespace alc {
 		Byte linkingRule;
 		tvSpawnPoint spawnPoint;
 		Byte ccr;
-		tStrBuf parentAgeName;
+		tString parentAgeName;
 	private:
-		tStrBuf dbg;
+		tString dbg;
 	};
 	
 	class tvManifest : public tvBase {
@@ -283,7 +283,7 @@ namespace alc {
 		// format
 		Byte format;
 		U32 integer;
-		tUStr str;
+		tUruString str;
 		double time;
 	};
 	
@@ -341,13 +341,13 @@ namespace alc {
 		U32 creator;
 		U32 crtTime;
 		U32 ageTime;
-		tStrBuf ageName;
+		tString ageName;
 		Byte ageGuid[8];
 		U32 int1, int2, int3, int4;
 		U32 uInt1, uInt2, uInt3, uInt4;
-		tStrBuf str1, str2, str3, str4, str5, str6;
-		tStrBuf lStr1, lStr2;
-		tStrBuf text1, text2;
+		tString str1, str2, str3, str4, str5, str6;
+		tString lStr1, lStr2;
+		tString text1, text2;
 		U32 blob1Size;
 		Byte *blob1;
 

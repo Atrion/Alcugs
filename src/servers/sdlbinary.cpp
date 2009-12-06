@@ -359,7 +359,7 @@ namespace alc {
 	Byte tSdlStateVar::getType(void) const
 	{ return sdlVar->type; }
 	
-	tStrBuf tSdlStateVar::getName(void) const
+	tString tSdlStateVar::getName(void) const
 	{ return sdlVar->name; }
 	
 	U32 tSdlStateVar::getSize(void) const
@@ -373,7 +373,7 @@ namespace alc {
 		incompleteVars = incompleteStructs = false;
 	}
 	
-	tSdlStateBinary::tSdlStateBinary(tAgeStateManager *stateMgr, tStrBuf name, U32 version, bool initDefault) : volatileState(true)
+	tSdlStateBinary::tSdlStateBinary(tAgeStateManager *stateMgr, tString name, U32 version, bool initDefault) : volatileState(true)
 	{
 		this->stateMgr = stateMgr;
 		sdlStruct = stateMgr->findStruct(name, version);
@@ -495,8 +495,8 @@ namespace alc {
 			it->print(log, indentSize+2);
 	}
 	
-	tUStr tSdlStateBinary::getName(void) const {
-		return sdlStruct ? tUStr(sdlStruct->name) : tUStr();
+	tUruString tSdlStateBinary::getName(void) const {
+		return sdlStruct ? tUruString(sdlStruct->name) : tUruString();
 	}
 	U16 tSdlStateBinary::getVersion(void) const {
 		return sdlStruct ? sdlStruct->version : 0;
@@ -572,7 +572,7 @@ namespace alc {
 	}
 	
 	//// tSdlState
-	tSdlState::tSdlState(tAgeStateManager *stateMgr, const tUruObject &obj, tUStr name, U16 version, bool initDefault)
+	tSdlState::tSdlState(tAgeStateManager *stateMgr, const tUruObject &obj, tUruString name, U16 version, bool initDefault)
 	 : obj(obj), content(stateMgr, name, version, initDefault)
 	{
 		this->stateMgr = stateMgr;
@@ -600,7 +600,7 @@ namespace alc {
 		if (stateMgr == NULL)
 			throw txUnet(_WHERE("You have to set a stateMgr before parsing an sdlState"));
 		// parse "header data"
-		tUStr name;
+		tUruString name;
 		t.get(name);
 		U16 version = t.getU16();
 		// parse binary content
@@ -615,7 +615,7 @@ namespace alc {
 	void tSdlState::stream(tBBuf &t) const
 	{
 		if (content.getVersion() && content.getName().size()) {
-			tUStr name(content.getName());
+			tUruString name(content.getName());
 			t.put(name);
 			t.putU16(content.getVersion());
 			t.put(content);

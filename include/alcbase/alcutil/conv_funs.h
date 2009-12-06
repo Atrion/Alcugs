@@ -79,7 +79,7 @@ void alcAscii2Hex(Byte * out, const char * in, int size);
 void alcStrFilter(char * what);
 
 /** parses a "name[number]" kind of string, setting "t" to the name and returning the number */
-U16 alcParseKey(tStrBuf *t);
+U16 alcParseKey(tString *t);
 
 
 /** convert pageIDs to pageNumbers and the other way around - wired, but whatever... */

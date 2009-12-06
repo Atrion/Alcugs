@@ -58,7 +58,7 @@ namespace alc {
 		load();
 		
 		tConfig *cfg = alcGetConfig();
-		tStrBuf var = cfg->getVar("sdl");
+		tString var = cfg->getVar("sdl");
 		if (var.size() < 2) throw txUnet(_WHERE("a sdl path must be set"));
 		if (!var.endsWith("/")) var.writeStr("/");
 		
@@ -90,7 +90,7 @@ namespace alc {
 		mkdir(ageStateFile.c_str(), 00750); // make sure the path exists
 		ageStateFile.printf("/%s-%s.state", net->getName(), alcGetStrGuid(net->getGuid()));
 		// check for old agestate location and migrate if necessary
-		tStrBuf alternativeStateFile = alcLogGetLogPath() + "/agestate.raw";
+		tString alternativeStateFile = alcLogGetLogPath() + "/agestate.raw";
 		if (access(alternativeStateFile.c_str(), F_OK) == 0)
 			rename(alternativeStateFile.c_str(), ageStateFile.c_str());
 		// ok, now go and load it - maybe
@@ -218,7 +218,7 @@ namespace alc {
 	void tAgeStateManager::load(void)
 	{
 		tConfig *cfg = alcGetConfig();
-		tStrBuf var = cfg->getVar("agestate.log");
+		tString var = cfg->getVar("agestate.log");
 		logDetailed = false;
 		if (var.isNull() || var.asByte()) { // logging enabled per default
 			log = new tLog("agestate.log", 4, 0);
@@ -496,7 +496,7 @@ namespace alc {
 		return version;
 	}
 	
-	tSdlStruct *tAgeStateManager::findStruct(tStrBuf name, U32 version, bool throwOnError)
+	tSdlStruct *tAgeStateManager::findStruct(tString name, U32 version, bool throwOnError)
 	{
 		for (tSdlStructList::iterator it = structs.begin(); it != structs.end(); ++it) {
 			if (name == it->name && it->version == version) return &(*it);
@@ -561,7 +561,7 @@ namespace alc {
 	14: find equal sign after DISPLAYOPTION
 	15: find displayoption data
 */
-		tStrBuf s(sdlContent), c;
+		tString s(sdlContent), c;
 		while (!s.eof()) {
 			c = s.getToken(); // getToken already skips comments for us, so we don't have to care about that
 			DBG(9, "Token: %s, state: %d\n", c.c_str(), state);
@@ -657,7 +657,7 @@ namespace alc {
 				case 11: // find default data
 				{
 					if (c .startsWith("(") && !c.endsWith(")")) { // it's a part of a tuple, take the whole tuple (several tokes) as default value
-						tStrBuf token;
+						tString token;
 						do {
 							token = s.getToken();
 							c = c+token;
@@ -716,7 +716,7 @@ namespace alc {
 	
 	/** The SDL Struct classes */
 	//// tSdlStructVar
-	tSdlStructVar::tSdlStructVar(tStrBuf type)
+	tSdlStructVar::tSdlStructVar(tString type)
 	{
 		if (type.size()) {
 			if (type.startsWith("$")) {
@@ -733,7 +733,7 @@ namespace alc {
 	}
 	
 	//// tSdlStruct
-	tSdlStruct::tSdlStruct(tAgeStateManager *stateMgr, tStrBuf name) : name(name)
+	tSdlStruct::tSdlStruct(tAgeStateManager *stateMgr, tString name) : name(name)
 	{
 		this->stateMgr = stateMgr;
 		version = 0;

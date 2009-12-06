@@ -62,7 +62,7 @@ namespace alc {
 			u->setTypeToGame(); // assume everyone connecting to us is a game (could also be a lobby though)
 		}
 	private:
-		bool isValidAvatarName(const tStrBuf &avatar);
+		bool isValidAvatarName(const tString &avatar);
 	
 		tVaultBackend *vaultBackend;
 		

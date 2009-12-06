@@ -191,7 +191,7 @@ private:
 	Byte whoami; //!< peer type
 	bool client; //!< it's a client or a server?
 	
-	tStrBuf dbg; //!< buffer for str function
+	tString dbg; //!< buffer for str function
 };
 
 

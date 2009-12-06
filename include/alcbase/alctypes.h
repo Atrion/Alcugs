@@ -286,14 +286,14 @@ public:
 };
 
 /** String buffer */
-class tStrBuf :public tMBuf {
+class tString :public tMBuf {
 public:
-	tStrBuf(const char * k);
-	explicit tStrBuf(U32 size=200);
-	explicit tStrBuf(tBBuf &k);
-	explicit tStrBuf(const tMBuf &k);
-	tStrBuf(const tStrBuf &k);
-	virtual ~tStrBuf();
+	tString(const char * k);
+	explicit tString(U32 size=200);
+	explicit tString(tBBuf &k);
+	explicit tString(const tMBuf &k);
+	tString(const tString &k);
+	virtual ~tString();
 	
 	// interface
 	virtual void store(tBBuf &t);
@@ -302,21 +302,21 @@ public:
 	// string functions
 	S32 find(const char cat, bool reverse=false) const;
 	S32 find(const char *str) const;
-	S32 find(const tStrBuf &str) const { return find(str.c_str()); }
+	S32 find(const tString &str) const { return find(str.c_str()); }
 	/** \brief strips the character from the beginning (when how=1 or 3) and/or from the end (how=2 or 3) of the string */
-	const tStrBuf & strip(Byte what,Byte how=0x03);
-	const tStrBuf & escape() const;
-	const tStrBuf & lower() const;
-	const tStrBuf & upper() const;
-	const tStrBuf & substring(U32 start,U32 len=0) const;
-	const tStrBuf & dirname() const;
+	const tString & strip(Byte what,Byte how=0x03);
+	const tString & escape() const;
+	const tString & lower() const;
+	const tString & upper() const;
+	const tString & substring(U32 start,U32 len=0) const;
+	const tString & dirname() const;
 	bool startsWith(const char * pat) const;
 	bool endsWith(const char * pat) const;
 	void writeStr(const char * t);
-	void writeStr(const tStrBuf *val) { write(val->c_str(),val->size()); }
-	void writeStr(const tStrBuf & val) { write(val.c_str(),val.size()); }
-	void writeStr(tStrBuf *val) { write(val->c_str(),val->size()); }
-	void writeStr(tStrBuf &val) { write(val.c_str(),val.size()); }
+	void writeStr(const tString *val) { write(val->c_str(),val->size()); }
+	void writeStr(const tString & val) { write(val.c_str(),val.size()); }
+	void writeStr(tString *val) { write(val->c_str(),val->size()); }
+	void writeStr(tString &val) { write(val.c_str(),val.size()); }
 	void printf(const char * msg, ...);
 	void printBoolean(const char *desc, bool val) { writeStr(desc); printBoolean(val); }
 	void printBoolean(bool val);
@@ -342,13 +342,13 @@ public:
 	/** \brief returns a line
 			\param nl If true, it will also append the \\n if it's present
 			\param slash If false, a \\n followed by an slash will be ignored
-			\return A tStrBuf object
+			\return A tString object
 	*/
-	const tStrBuf & getLine(bool nl=false,bool slash=false);
+	const tString & getLine(bool nl=false,bool slash=false);
 	/** \brief returns a token (newline, key, value, separator - but not a space)
 			\return A tStBuf object
 	*/
-	const tStrBuf & getToken();
+	const tString & getToken();
 	
 	// helpful functions
 	void convertSlashesFromWinToUnix();
@@ -356,44 +356,44 @@ public:
 	inline bool isNull() const { return null; }
 	
 	// assignment
-	virtual const tStrBuf & operator=(const tStrBuf &t) { copy(t); return *this; }
-	virtual const tStrBuf & operator=(const char * str) { copy(str); return *this; }
+	virtual const tString & operator=(const tString &t) { copy(t); return *this; }
+	virtual const tString & operator=(const char * str) { copy(str); return *this; }
 	
 	// comparison
-	virtual bool operator==(const tStrBuf &t) const { return(!this->compare(t)); }
+	virtual bool operator==(const tString &t) const { return(!this->compare(t)); }
 	virtual bool operator==(const char * str) const { return(!this->compare(str)); }
-	virtual bool operator!=(const tStrBuf &t) const { return(this->compare(t)); }
+	virtual bool operator!=(const tString &t) const { return(this->compare(t)); }
 	virtual bool operator!=(const char * str) const { return(this->compare(str)); }
-	virtual bool operator>(const tStrBuf &t) const { return(this->compare(t)>0); }
+	virtual bool operator>(const tString &t) const { return(this->compare(t)>0); }
 	virtual bool operator>(const char *t) const { return(this->compare(t)>0); }
-	virtual bool operator<(const tStrBuf &t) const { return(this->compare(t)<0); }
+	virtual bool operator<(const tString &t) const { return(this->compare(t)<0); }
 	virtual bool operator<(const char *t) const { return(this->compare(t)<0); }
-	virtual bool operator>=(const tStrBuf &t) const { return(this->compare(t)>=0); }
+	virtual bool operator>=(const tString &t) const { return(this->compare(t)>=0); }
 	virtual bool operator>=(const char *t) const { return(this->compare(t)>=0); }
-	virtual bool operator<=(const tStrBuf &t) const { return(this->compare(t)<=0); }
+	virtual bool operator<=(const tString &t) const { return(this->compare(t)<=0); }
 	virtual bool operator<=(const char *t) const { return(this->compare(t)<=0); }
 protected:
 	virtual void onmodify(bool clear = false);
 	virtual void onrewind();
 	// assignment
 	virtual void copy(const char * str);
-	virtual void copy(const tStrBuf &t);
+	virtual void copy(const tString &t);
 private:
 	U16 l,c;
 	char sep;
-	mutable tStrBuf * shot;
-	mutable tStrBuf * cache_lower;
+	mutable tString * shot;
+	mutable tString * cache_lower;
 	bool null;
 
 	void init();
 	// comparison
-	virtual SByte compare(const tStrBuf &t) const { return tMBuf::compare(t); }
+	virtual SByte compare(const tString &t) const { return tMBuf::compare(t); }
 	virtual SByte compare(const char * str) const;
 };
 
-tStrBuf operator+(const tStrBuf & str1, const tStrBuf & str2);
-tStrBuf operator+(const char * str1, const tStrBuf & str2);
-tStrBuf operator+(const tStrBuf & str1, const char * str2);
+tString operator+(const tString & str1, const tString & str2);
+tString operator+(const char * str1, const tString & str2);
+tString operator+(const tString & str1, const char * str2);
 
 /** Time */
 class tTime :public tBaseType {

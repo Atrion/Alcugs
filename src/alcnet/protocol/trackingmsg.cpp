@@ -120,7 +120,7 @@ namespace alc {
 	tmCustomFindServer::tmCustomFindServer(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
-	tmCustomFindServer::tmCustomFindServer(tNetSession *u, const tmCustomVaultFindAge &findAge, const char *serverGuid, const tStrBuf &age)
+	tmCustomFindServer::tmCustomFindServer(tNetSession *u, const tmCustomVaultFindAge &findAge, const char *serverGuid, const tString &age)
 	 : tmMsgBase(NetMsgCustomFindServer, plNetX | plNetKi | plNetAck | plNetSid, u), serverGuid(serverGuid), age(age)
 	{
 		this->ki = findAge.ki;

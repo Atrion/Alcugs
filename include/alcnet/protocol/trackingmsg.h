@@ -40,8 +40,8 @@ namespace alc {
 		virtual void stream(tBBuf &t) const;
 		inline bool validSpawnPorts(void) { return spawnStart && spawnStop && spawnStart <= spawnStop; }
 		// format
-		tUStr serverGuid;
-		tStrBuf age, externalIp;
+		tUruString serverGuid;
+		tString age, externalIp;
 		U16 spawnStart, spawnStop;
 	protected:
 		virtual void additionalFields();
@@ -54,7 +54,7 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		// format
-		tStrBuf account, avatar;
+		tString account, avatar;
 		Byte playerFlag, playerStatus;
 	protected:
 		virtual void additionalFields();
@@ -63,13 +63,13 @@ namespace alc {
 	class tmCustomFindServer : public tmMsgBase { // also used by vault
 	public:
 		tmCustomFindServer(tNetSession *u);
-		tmCustomFindServer(tNetSession *u, const tmCustomVaultFindAge &findAge, const char *serverGuid, const tStrBuf &age);
+		tmCustomFindServer(tNetSession *u, const tmCustomVaultFindAge &findAge, const char *serverGuid, const tString &age);
 		tmCustomFindServer(tNetSession *u, const tmCustomFindServer &findServer);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		// format
-		tUStr serverGuid;
-		tStrBuf age;
+		tUruString serverGuid;
+		tString age;
 	protected:
 		virtual void additionalFields();
 	};
@@ -82,8 +82,8 @@ namespace alc {
 		virtual void stream(tBBuf &t) const;
 		// format
 		U16 forkPort;
-		tUStr serverGuid;
-		tStrBuf age;
+		tUruString serverGuid;
+		tString age;
 	protected:
 		virtual void additionalFields();
 	};
@@ -96,9 +96,9 @@ namespace alc {
 		virtual void stream(tBBuf &t) const;
 		// format
 		U16 serverPort;
-		tStrBuf ipStr;
-		tUStr serverGuid;
-		tStrBuf age;
+		tString ipStr;
+		tUruString serverGuid;
+		tString age;
 	protected:
 		virtual void additionalFields();
 	};

@@ -163,8 +163,8 @@ void tAESBuf::decrypt() {
 /* end AES buff */
 
 
-/* tUStr */
-void tUStr::store(tBBuf &t) {
+/* tUruString */
+void tUruString::store(tBBuf &t) {
 	clear();
 	U32 bufSize = t.getU16();
 	if (!(bufSize & 0xF000)) throw txUnexpectedData(_WHERE("This is not an inverted string!"));
@@ -179,7 +179,7 @@ void tUStr::store(tBBuf &t) {
 		putByte(b.getByte() ^ key[i%8]);
 	} */
 }
-void tUStr::stream(tBBuf &t) const {
+void tUruString::stream(tBBuf &t) const {
 	t.putU16(msize|0xF000);
 	for(U32 i=0; i<msize; i++) {
 		t.putByte(~buf->buf[i]);
@@ -191,7 +191,7 @@ void tUStr::stream(tBBuf &t) const {
 		b.putByte(buf->buf[i] ^ key[i%8]);
 	} */
 }
-/* end tUStr */
+/* end tUruString */
 
 /* tUruObject (Plasma: plUoid) */
 tUruObject::tUruObject(void) : tBaseType()

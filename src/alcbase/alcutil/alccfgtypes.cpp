@@ -39,14 +39,14 @@
 
 namespace alc {
 
-const tStrBuf nullstr;
+const tString nullstr;
 
 tConfigVal::tConfigVal() { init(); }
 tConfigVal::tConfigVal(const char * name) {
 	init();
 	setName(name);
 }
-tConfigVal::tConfigVal(const tStrBuf & name) {
+tConfigVal::tConfigVal(const tString & name) {
 	init();
 	setName(name);
 }
@@ -69,20 +69,20 @@ tConfigVal::~tConfigVal() {
 void tConfigVal::setName(const char * name) {
 	this->name=name;
 }
-void tConfigVal::setName(const tStrBuf & name) {
+void tConfigVal::setName(const tString & name) {
 	this->name=name;
 }
-void tConfigVal::setVal(const tStrBuf & t,U16 x,U16 y) {
+void tConfigVal::setVal(const tString & t,U16 x,U16 y) {
 	DBG(9,"x: %i,y: %i\n",x,y);
 	U16 ox,oy,my,j,k;
-	tStrBuf ** ovalues=this->values;
+	tString ** ovalues=this->values;
 	ox = this->x;
 	oy = this->y;
 	my = ( oy > (y+1) ? oy : (y+1));
 	if(ox<(x+1)) {
 		//resize and copy
-		values=(tStrBuf **)malloc(sizeof(tStrBuf *) * ((my) * (x+1)));
-		memset(values,0,sizeof(tStrBuf *) * ((my) * (x+1)));
+		values=(tString **)malloc(sizeof(tString *) * ((my) * (x+1)));
+		memset(values,0,sizeof(tString *) * ((my) * (x+1)));
 		for(j=0; j<oy; j++) {
 			for(k=0; k<ox; k++) {
 				*(values+(((x+1)*j)+k))=*(ovalues+((ox*j)+k));
@@ -96,28 +96,28 @@ void tConfigVal::setVal(const tStrBuf & t,U16 x,U16 y) {
 		ovalues=values;
 	}
 	if(oy<(y+1)) {
-		values=(tStrBuf **)realloc((void *)values,sizeof(tStrBuf *) * ((y+1)*(ox)));
+		values=(tString **)realloc((void *)values,sizeof(tString *) * ((y+1)*(ox)));
 		if(values==NULL) throw txNoMem(_WHERE("."));
-		memset((values+((ox)*(oy))),0,sizeof(tStrBuf *) * ((((y+1)*(ox)))-((ox)*(oy))));
+		memset((values+((ox)*(oy))),0,sizeof(tString *) * ((((y+1)*(ox)))-((ox)*(oy))));
 		this->y = my;
 		ovalues=values;
 	}
-	tStrBuf ** myval=NULL;
+	tString ** myval=NULL;
 	myval = (values+((ox*y)+x));
 	if(*myval==NULL) {
-		*myval = new tStrBuf(t);
+		*myval = new tString(t);
 	} else {
 		**myval = t;
 	}
 }
 void tConfigVal::setVal(const char * val,U16 x,U16 y) {
-	tStrBuf w(val);
+	tString w(val);
 	setVal(w,x,y);
 }
-const tStrBuf & tConfigVal::getName() const {
+const tString & tConfigVal::getName() const {
 	return name;
 }
-const tStrBuf & tConfigVal::getVal(U16 x,U16 y) const {
+const tString & tConfigVal::getVal(U16 x,U16 y) const {
 	if(values==NULL || x>=this->x || y>=this->y) {
 		return nullstr;
 	}
@@ -138,11 +138,11 @@ void tConfigVal::copy(const tConfigVal &t) {
 	}
 	x=t.x;
 	y=t.y;
-	values=(tStrBuf **)malloc(sizeof(tStrBuf *) * (x*y));
-	memset(values,0,sizeof(tStrBuf *) * (x*y));
+	values=(tString **)malloc(sizeof(tString *) * (x*y));
+	memset(values,0,sizeof(tString *) * (x*y));
 	for(i=0; i<x*y; i++) {
 		if(t.values[i]!=NULL) {
-			values[i] = new tStrBuf(*t.values[i]);
+			values[i] = new tString(*t.values[i]);
 		}
 	}
 }
@@ -165,10 +165,10 @@ tConfigKey::~tConfigKey() {
 void tConfigKey::setName(const char * name) {
 	this->name=name;
 }
-void tConfigKey::setName(const tStrBuf & name) {
+void tConfigKey::setName(const tString & name) {
 	this->name=name;
 }
-tConfigVal * tConfigKey::find(const tStrBuf & what,bool create) {
+tConfigVal * tConfigKey::find(const tString & what,bool create) {
 	U16 i;
 	for(i=0; i<n; i++) {
 		if(values[i]->name.lower()==what.lower()) {
@@ -182,7 +182,7 @@ tConfigVal * tConfigKey::find(const tStrBuf & what,bool create) {
 	return values[n-1];
 }
 tConfigVal * tConfigKey::find(const char * what,bool create) {
-	tStrBuf name(what);
+	tString name(what);
 	return find(name,create);
 }
 void tConfigKey::copy(const tConfigKey &t) {
@@ -239,7 +239,7 @@ tConfig::~tConfig() {
 		free((void *)values);
 	}
 }
-tConfigKey * tConfig::findKey(const tStrBuf & where,bool create) {
+tConfigKey * tConfig::findKey(const tString & where,bool create) {
 	U16 i;
 	for(i=0; i<n; i++) {
 		DBG(9,"checking %s %s %s %s \n",values[i]->name.c_str(),where.c_str(),values[i]->name.lower().c_str(),where.lower().c_str());
@@ -255,7 +255,7 @@ tConfigKey * tConfig::findKey(const tStrBuf & where,bool create) {
 	return values[n-1];
 }
 tConfigKey * tConfig::findKey(const char * where,bool create) {
-	tStrBuf name(where);
+	tString name(where);
 	return findKey(name,create);
 }
 //This code needs to be optimized
@@ -272,14 +272,14 @@ void tConfig::setVar(const char * val,const char * what,const char * where,U16 x
 	DBGM(5," done\n");
 	myvar->setVal(val,x,y);
 }
-void tConfig::setVar(const tStrBuf &val, const tStrBuf &what, const tStrBuf &where,U16 x,U16 y) {
+void tConfig::setVar(const tString &val, const tString &what, const tString &where,U16 x,U16 y) {
 	tConfigVal * myvar;
 	DBG(5,"findVar...");
 	myvar=findVar(what.c_str(),where.c_str(),true);
 	DBGM(5," done\n");
 	myvar->setVal(val,x,y);
 }
-const tStrBuf & tConfig::getVar(const char * what,const char * where,U16 x,U16 y) {
+const tString & tConfig::getVar(const char * what,const char * where,U16 x,U16 y) {
 	tConfigVal * myvar;
 	myvar=findVar(what,where,false);
 	if(myvar==NULL)

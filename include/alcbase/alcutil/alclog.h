@@ -118,8 +118,8 @@ void alcLogInit();
 void alcLogShutdown(bool silent=false);
 
 void alcLogSetDefaults();
-void alcLogSetLogPath(const tStrBuf & path);
-tStrBuf alcLogGetLogPath(void);
+void alcLogSetLogPath(const tString & path);
+tString alcLogGetLogPath(void);
 
 void alcLogOpenStdLogs(bool shutup=false);
 

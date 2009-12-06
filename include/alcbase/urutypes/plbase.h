@@ -57,7 +57,7 @@ namespace alc {
 		const char *str(void) const;
 	protected:
 		virtual void toString(void) const {}
-		mutable tStrBuf strBuf;
+		mutable tString strBuf;
 	private:
 		bool incomplete;
 		U16 type;
