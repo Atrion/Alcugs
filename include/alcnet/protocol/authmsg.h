@@ -49,7 +49,7 @@ namespace alc {
 		virtual void stream(tBBuf &t) const;
 		// format
 		U32 ip; //network order
-		tStrBuf login;
+		tString login;
 		Byte challenge[16], hash[16];
 		Byte release;
 	protected:
@@ -63,7 +63,7 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		// format
-		tStrBuf login, passwd;
+		tString login, passwd;
 		Byte result, accessLevel;
 	protected:
 		virtual void additionalFields();

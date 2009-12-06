@@ -127,9 +127,9 @@ int u_parse_arguments(int argc, char * argv[]) {
 		} else if(!strcmp(argv[i],"-clean")) {
 			cfg->setVar("1","vault.clean","cmdline");
 		} else if(!strncmp(argv[i],"-o",2) && argc>i+1) {
-			tStrBuf opt(argv[i]);
+			tString opt(argv[i]);
 			i++;
-			tStrBuf val(argv[i]);
+			tString val(argv[i]);
 			opt=opt.substring(2,opt.size()-2);
 			cfg->setVar(val.c_str(),opt.c_str(),"cmdline");
 		} else if(!strcmp(argv[i],"-L")) {
@@ -159,7 +159,7 @@ int main(int argc, char * argv[]) {
 		DBGM(5," done\n");
 		//stopped?
 		tConfig * cfg=alcGetConfig();
-		tStrBuf var;
+		tString var;
 		var=cfg->getVar("stop","global");
 		if(!var.isNull() && var.asByte()) {
 			lstd->log("INFO: Administratively disabled! Please read the Alcugs configuration file (usually uru.conf) carefully to solve this issue.\n");

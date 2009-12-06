@@ -47,7 +47,7 @@ namespace alc {
 
 tUnetBase::tUnetBase() :tUnet() {
 	state_running=true;
-	tStrBuf var;
+	tString var;
 	tConfig * cfg;
 	cfg=alcGetConfig();
 	var=cfg->getVar("port","global");
@@ -70,7 +70,7 @@ void tUnetBase::reconfigure() {
 	DBG(5,"tUnetBase - installing signal handler\n");
 	alcInstallSignalHandler(h);
 	// re-load configuration
-	tStrBuf var;
+	tString var;
 	tConfig * cfg;
 	cfg=alcGetConfig();
 	//Sets the idle timer
@@ -200,7 +200,7 @@ void tUnetBase::reconfigure() {
 
 void tUnetBase::stop(SByte timeout) {
 	if(timeout<0) {
-		tStrBuf var;
+		tString var;
 		tConfig * cfg=alcGetConfig();
 		var=cfg->getVar("net.stop.timeout","global");
 		if(var.isNull()) {

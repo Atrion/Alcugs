@@ -83,10 +83,10 @@ void tPyPkgFile::setName(const char * x) {
 	//printf("assing %s\n",x);
 	name=x;
 }
-void tPyPkgFile::setName(const tStrBuf & x) {
+void tPyPkgFile::setName(const tString & x) {
 	name=x;
 }
-tStrBuf & tPyPkgFile::getName() {
+tString & tPyPkgFile::getName() {
 	//printf("getName %s\n",name.str());
 	return name;
 }
@@ -105,7 +105,7 @@ tPyPkg::~tPyPkg() {
 }
 void tPyPkg::store(tBBuf &t) {
 	U32 myoff,poff;
-	tUStr name;
+	tUruString name;
 	n=t.getU32();
 	lpkgs=(tPyPkgFile **)malloc(sizeof(tPyPkgFile *) * n);
 	if(lpkgs==NULL) throw txNoMem(_WHERE("NoMem"));
@@ -137,7 +137,7 @@ void tPyPkg::stream(tBBuf &t) const {
 	t.putU32(n);
 	//s+=4;
 	U32 hsize=4,wtf;
-	tUStr work;
+	tUruString work;
 	//printf("size: %u\n",t.size());
 	//printf("hsize: %u\n",hsize);
 	for(U32 i=0; i<n; i++) {

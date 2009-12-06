@@ -49,7 +49,7 @@ namespace alc {
 
 int alcUnetReloadConfig(bool firsttime) {
 	//Load and parse config files
-	tStrBuf var;
+	tString var;
 	tConfig * cfg=alcGetConfig();
 	var=cfg->getVar("read_config","cmdline");
 	if(var.isNull()) {

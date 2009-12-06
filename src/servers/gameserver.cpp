@@ -58,7 +58,7 @@ namespace alc {
 	{
 		// find out which age we are supposed to host
 		tConfig *cfg = alcGetConfig();
-		tStrBuf var = cfg->getVar("age_filename");
+		tString var = cfg->getVar("age_filename");
 		if (var.size() < 2) throw txBase(_WHERE("an age name must be set"));
 		strncpy(serverName, var.c_str(), 199);
 		var = cfg->getVar("age_guid");
@@ -88,7 +88,7 @@ namespace alc {
 		tUnetLobbyServerBase::onLoadConfig();
 		
 		tConfig *cfg = alcGetConfig();
-		tStrBuf var = cfg->getVar("game.persistent");
+		tString var = cfg->getVar("game.persistent");
 		if (!var.isNull() && var.asByte()) { // disabled per default
 			lingerTime = 0;
 		}
@@ -236,24 +236,24 @@ namespace alc {
 		return processed;
 	}
 	
-	void tUnetGameServer::processKICommand(const tStrBuf &text, tNetSession *u)
+	void tUnetGameServer::processKICommand(const tString &text, tNetSession *u)
 	{
 		// process server-side commands
 		if (text == "/!ping") sendKIMessage("You are still online :)", u);
 		else if (text == "/!silentping") sendKIMessage("/!silentpong", u);
 		else if (text == "/!getauthlevel") {
-			tStrBuf text;
+			tString text;
 			text.printf("/!authlevel %d", u->getAccessLevel());
 			sendKIMessage(text, u);
 		}
 		else {
-			tStrBuf error;
+			tString error;
 			error.printf("Unknown server-side command: \"%s\"", text.c_str());
 			sendKIMessage(error, u);
 		}
 	}
 	
-	void tUnetGameServer::sendKIMessage(const tStrBuf &text, tNetSession *u)
+	void tUnetGameServer::sendKIMessage(const tString &text, tNetSession *u)
 	{
 		tpKIMsg kiMsg = tpKIMsg(tUruObjectRef(), "Game Server", 0, text);
 		kiMsg.flags = 0x00004248;
@@ -625,7 +625,7 @@ namespace alc {
 				// age have their PythonFileMod on a page with type 0x0000
 				if (noReltoShare && gameMsg.msgStream.getType() == plNotifyMsg && receiver.hasObj && receiver.obj.pageType != 0x000) {
 					log->log("INF: Throwing out relto book share notification from %s\n", u->str());
-					sendKIMessage(tStrBuf("Ignoring the relto book share notification you just sent - it would crash people"), u);
+					sendKIMessage(tString("Ignoring the relto book share notification you just sent - it would crash people"), u);
 					return 1;
 				}
 				

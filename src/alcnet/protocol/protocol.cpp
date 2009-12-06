@@ -805,7 +805,7 @@ const char * tmMsgBase::str() {
 	return dbg.c_str();
 }
 
-Byte alcUnetGetVarTypeFromName(tStrBuf type) {
+Byte alcUnetGetVarTypeFromName(tString type) {
 	if (type == "INT") return DInteger;
 	else if (type == "FLOAT") return DFloat;
 	else if (type == "BOOL") return DBool;

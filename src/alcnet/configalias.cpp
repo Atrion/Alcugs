@@ -52,7 +52,7 @@ void alcNetSetConfigAliases() {
 	// Also note that, when copying a value and both source and destination exist, the source is used!
 
 	tConfig * cfg;
-	tStrBuf val;
+	tString val;
 	cfg=alcGetConfig();
 	
 	// save the auth, tracking and vault host and port in global: [auth/tracking/vault] and global: [auth/tracking/vault].port

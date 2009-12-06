@@ -59,7 +59,7 @@ const char * alcUnetGetLinkingRule(Byte rule);
 const char * alcUnetGetMsgCode(U16 code);
 
 const char * alcUnetGetVarType(Byte type);
-Byte alcUnetGetVarTypeFromName(tStrBuf type);
+Byte alcUnetGetVarTypeFromName(tString type);
 
 /** this class is used to save incoming NetMsgs and collect their fragments */
 class tUnetMsg {
@@ -165,7 +165,7 @@ public:
 	typedef std::vector<tUnetAck *> tAckList;
 	tAckList ackq;
 private:
-	tStrBuf dbg;
+	tString dbg;
 
 	// prevent copying
 	tmNetAck(const tmNetAck &);
@@ -199,7 +199,7 @@ public:
 protected:
 	virtual void additionalFields() {} //!< writes the additional fields of this message type to the dbg buffer (called by str() to print the package)
 	
-	tStrBuf dbg;
+	tString dbg;
 private:
 	void copyProps(tmMsgBase &t);
 };

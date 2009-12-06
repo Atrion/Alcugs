@@ -58,19 +58,19 @@ private:
 };
 
 /** Urustring */
-class tUStr :public tStrBuf {
+class tUruString :public tString {
 public:
-	tUStr(void) : tStrBuf() {}
-	tUStr(const char *k) : tStrBuf(k) {}
-	tUStr(const tUStr &t) : tStrBuf(t) {}
-	tUStr(const tStrBuf &t) : tStrBuf(t) {}
+	tUruString(void) : tString() {}
+	tUruString(const char *k) : tString(k) {}
+	tUruString(const tUruString &t) : tString(t) {}
+	tUruString(const tString &t) : tString(t) {}
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
 	
 	// assignment
-	virtual const tUStr & operator=(const tUStr &t) { copy(t); return *this; }
-	virtual const tStrBuf & operator=(const tStrBuf &t) { copy(t); return *this; }
-	virtual const tStrBuf & operator=(const char *t) { copy(t); return *this; }
+	virtual const tUruString & operator=(const tUruString &t) { copy(t); return *this; }
+	virtual const tString & operator=(const tString &t) { copy(t); return *this; }
+	virtual const tString & operator=(const char *t) { copy(t); return *this; }
 };
 
 /** UruObject */
@@ -90,11 +90,11 @@ public:
 	U32 pageId;
 	U16 pageType;
 	U16 objType;
-	tUStr objName;
+	tUruString objName;
 	U32 cloneId;
 	U32 clonePlayerId;
 private:
-	mutable tStrBuf dbg;
+	mutable tString dbg;
 };
 
 class tUruObjectRef : public tBaseType { // equivalent to the key reader of the resource manager in Plasma

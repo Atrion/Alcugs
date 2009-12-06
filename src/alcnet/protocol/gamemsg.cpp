@@ -404,7 +404,7 @@ namespace alc {
 		
 		pages.clear();
 		pages.reserve(nPages);
-		tStrBuf pageName;
+		tString pageName;
 		for (U32 i = 0; i < nPages; ++i) {
 			pages.push_back(t.getU32());
 			t.getU16(); // ignore pageType
@@ -490,8 +490,8 @@ namespace alc {
 		
 		tMBuf state = content.fullContent();
 		// Verify state
-		tStrBuf stateName;
-		tUStr varName;
+		tString stateName;
+		tUruString varName;
 		U32 count;
 		Byte mayDelete, varType, varValue;
 		state.get(stateName);

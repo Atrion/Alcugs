@@ -520,24 +520,24 @@ void tMD5Buf::compute() {
 /* end md5 buf */
 
 /* String buffer */
-tStrBuf::tStrBuf(const char * k) :tMBuf(200) {
+tString::tString(const char * k) :tMBuf(200) {
 	DBG(9,"ctor\n");
 	init();
 	writeStr(k);
 	end();
 }
-tStrBuf::tStrBuf(U32 size) :tMBuf(size) { DBG(9,"ctor 2\n"); init(); }
-tStrBuf::tStrBuf(tBBuf &k) :tMBuf(k) {
+tString::tString(U32 size) :tMBuf(size) { DBG(9,"ctor 2\n"); init(); }
+tString::tString(tBBuf &k) :tMBuf(k) {
 	DBG(9,"copy zero\n");
 	init();
 	if(size()) null = false;
 }
-tStrBuf::tStrBuf(const tMBuf &k) :tMBuf(k) { 
+tString::tString(const tMBuf &k) :tMBuf(k) { 
 	DBG(9,"copy one\n");
 	init(); 
 	if(size()) null = false;
 }
-tStrBuf::tStrBuf(const tStrBuf &k) :tMBuf(k) { 
+tString::tString(const tString &k) :tMBuf(k) { 
 	DBG(9,"copy two\n");
 	if(this==&k) return;
 	init(); 
@@ -546,27 +546,27 @@ tStrBuf::tStrBuf(const tStrBuf &k) :tMBuf(k) {
 	sep=k.sep;
 	null=k.null;
 }
-tStrBuf::~tStrBuf() {
+tString::~tString() {
 	delete shot;
 	delete cache_lower;
 }
-void tStrBuf::init() {
-	DBG(9,"tStrBuf::init\n");
+void tString::init() {
+	DBG(9,"tString::init\n");
 	l=c=0;
 	sep='=';
 	shot=NULL;
 	cache_lower=NULL;
 	null = true;
 }
-void tStrBuf::onmodify(bool clear) {
-	DBG(7,"tStrBuf::onmodify()\n");
+void tString::onmodify(bool clear) {
+	DBG(7,"tString::onmodify()\n");
 	tMBuf::onmodify();
 	delete cache_lower;
 	cache_lower=NULL;
 	null = clear;
 }
-void tStrBuf::copy(const tStrBuf &t) {
-	DBG(9,"tStrBuf::copy()\n");
+void tString::copy(const tString &t) {
+	DBG(9,"tString::copy()\n");
 	if(this==&t) return;
 	tMBuf::copy(t);
 	l=t.l;
@@ -578,12 +578,12 @@ void tStrBuf::copy(const tStrBuf &t) {
 	delete shot;
 	shot=NULL;
 }
-void tStrBuf::copy(const char * str) {
+void tString::copy(const char * str) {
 	DBG(2,"cpy\n");
-	tStrBuf pat(str);
+	tString pat(str);
 	copy(pat);
 }
-void tStrBuf::store(tBBuf &t)
+void tString::store(tBBuf &t)
 {
 	clear();
 	U32 bufSize = t.getU16();
@@ -591,12 +591,12 @@ void tStrBuf::store(tBBuf &t)
 	if (bufSize)
 		write(t.read(bufSize), bufSize);
 }
-void tStrBuf::stream(tBBuf &t) const
+void tString::stream(tBBuf &t) const
 {
 	t.putU16(msize);
 	tMBuf::stream(t); // just puts the bytes into the buffer
 }
-SByte tStrBuf::compare(const char * str) const {
+SByte tString::compare(const char * str) const {
 	U32 s1 = size(), s2 = strlen(str);
 	if (!s1 || !s2) {
 		// needs special treatment as buf might be NULL
@@ -608,8 +608,8 @@ SByte tStrBuf::compare(const char * str) const {
 	if (out != 0 || s1 == s2) return out;
 	return (s1 < s2) ? -1 : 1;
 }
-const char * tStrBuf::c_str() {
-	DBG(2,"tStrBuf::c_str()\n");
+const char * tString::c_str() {
+	DBG(2,"tString::c_str()\n");
 	if(isNull() || msize == 0) {
 		DBG(2,"is null: %d\n", msize);
 		return "";
@@ -622,30 +622,30 @@ const char * tStrBuf::c_str() {
 	buf->buf[size()] = 0;
 	return (const char *)buf->buf;
 }
-const char * tStrBuf::c_str() const {
-	DBG(2,"tStrBuf::c_str()\n");
+const char * tString::c_str() const {
+	DBG(2,"tString::c_str()\n");
 	if(isNull() || msize == 0) {
 		DBG(2,"is null: %d\n", msize);
 		return "";
 	}
 	if (shot) delete shot;
-	shot = new tStrBuf(*this);
+	shot = new tString(*this);
 	return shot->c_str();
 }
-void tStrBuf::onrewind() {
+void tString::onrewind() {
 	tMBuf::onrewind();
 	c=l=0;
 }
-U16 tStrBuf::getLineNum() {
+U16 tString::getLineNum() {
 	return l+1;
 }
-U16 tStrBuf::getColumnNum() {
+U16 tString::getColumnNum() {
 	return c;
 }
-void tStrBuf::decreaseLineNum() {
+void tString::decreaseLineNum() {
 	l--;
 }
-S32 tStrBuf::find(const char cat, bool reverse) const {
+S32 tString::find(const char cat, bool reverse) const {
 	int i,max;
 	max=size();
 	if(reverse) {
@@ -659,12 +659,12 @@ S32 tStrBuf::find(const char cat, bool reverse) const {
 	}
 	return -1;
 }
-S32 tStrBuf::find(const char *str) const {
+S32 tString::find(const char *str) const {
 	const char *c = strstr(c_str(), str);
 	if (c == NULL) return -1;
 	return (c-(char *)buf->buf);
 }
-void tStrBuf::convertSlashesFromWinToUnix() {
+void tString::convertSlashesFromWinToUnix() {
 #if defined(__WIN32__) or defined(__CYGWIN__)
 	int i,max;
 	max=size();
@@ -676,7 +676,7 @@ void tStrBuf::convertSlashesFromWinToUnix() {
 #endif
 //noop on linux
 }
-void tStrBuf::convertSlashesFromUnixToWin() {
+void tString::convertSlashesFromUnixToWin() {
 #if defined(__WIN32__) or defined(__CYGWIN__)
 	int i,max;
 	max=size();
@@ -688,8 +688,8 @@ void tStrBuf::convertSlashesFromUnixToWin() {
 #endif
 //noop on linux
 }
-const tStrBuf & tStrBuf::strip(Byte what,Byte how) {
-	tStrBuf aux;
+const tString & tString::strip(Byte what,Byte how) {
+	tString aux;
 	int i,max,start,end;
 	start=0;
 	i=0;
@@ -718,9 +718,9 @@ const tStrBuf & tStrBuf::strip(Byte what,Byte how) {
 	copy(aux);
 	return *this;
 }
-const tStrBuf & tStrBuf::escape() const {
+const tString & tString::escape() const {
 	delete shot;
-	shot = new tStrBuf(size()*3/2); // nothing inside this function will use shot, so we can initialize it now
+	shot = new tString(size()*3/2); // nothing inside this function will use shot, so we can initialize it now
 
 	int i,max;
 	Byte ctrl; 
@@ -747,7 +747,7 @@ const tStrBuf & tStrBuf::escape() const {
 	return *shot;
 }
 
-const tStrBuf & tStrBuf::lower() const {
+const tString & tString::lower() const {
 	if(cache_lower!=NULL) {
 		DBG(7,"cached...\n");
 		return *cache_lower;
@@ -757,7 +757,7 @@ const tStrBuf & tStrBuf::lower() const {
 	int i,max;
 	max=size();
 
-	cache_lower = new tStrBuf(max);
+	cache_lower = new tString(max);
 
 	for(i=0; i<max; i++) {
 		cache_lower->putByte(std::tolower(getAt(i)));
@@ -766,9 +766,9 @@ const tStrBuf & tStrBuf::lower() const {
 	return *cache_lower;
 }
 
-const tStrBuf & tStrBuf::upper() const {
+const tString & tString::upper() const {
 	if (shot) delete shot;
-	shot = new tStrBuf(200); // nothing inside this function will use shot, so we can initialize it now
+	shot = new tString(200); // nothing inside this function will use shot, so we can initialize it now
 	
 	int i,max;
 	max=size();
@@ -780,14 +780,14 @@ const tStrBuf & tStrBuf::upper() const {
 }
 
 
-const tStrBuf & tStrBuf::substring(U32 start,U32 len) const {
+const tString & tString::substring(U32 start,U32 len) const {
 	if (len == 0) len = remaining();
 	if (shot) delete shot;
-	shot = new tStrBuf(len); // nothing inside this function will use shot, so we can initialize it now
+	shot = new tString(len); // nothing inside this function will use shot, so we can initialize it now
 	shot->write(buf->buf+start,len);
 	return *shot;
 }
-bool tStrBuf::startsWith(const char * pat) const {
+bool tString::startsWith(const char * pat) const {
 	try {
 		return(substring(0,strlen(pat))==pat);
 	}
@@ -795,7 +795,7 @@ bool tStrBuf::startsWith(const char * pat) const {
 		return false;
 	}
 }
-bool tStrBuf::endsWith(const char * pat) const {
+bool tString::endsWith(const char * pat) const {
 	try {
 		return(substring(size()-strlen(pat),strlen(pat))==pat);
 	}
@@ -803,9 +803,9 @@ bool tStrBuf::endsWith(const char * pat) const {
 		return false;
 	}
 }
-const tStrBuf & tStrBuf::dirname() const {
+const tString & tString::dirname() const {
 	if (shot) delete shot;
-	shot = new tStrBuf(*this); // nothing inside this function will use shot, so we can initialize it now
+	shot = new tString(*this); // nothing inside this function will use shot, so we can initialize it now
 	shot->strip('/',0x02);
 	int pos=shot->find('/',1);
 	
@@ -818,10 +818,10 @@ const tStrBuf & tStrBuf::dirname() const {
 	}
 	return *shot;
 }
-const tStrBuf & tStrBuf::getLine(bool nl,bool slash) {
+const tString & tString::getLine(bool nl,bool slash) {
 	Byte c=0;
 	Byte slashm=0;
-	tStrBuf out(255);
+	tString out(255);
 
 	while(!eof()) {
 		c=getByte();
@@ -883,16 +883,16 @@ const tStrBuf & tStrBuf::getLine(bool nl,bool slash) {
 	
 	// use shot only now as functions above might use it, too
 	delete shot;
-	shot=new tStrBuf(out);
+	shot=new tString(out);
 	return *shot;
 }
-const tStrBuf & tStrBuf::getToken() {
-	DBG(9,"tStrBuf::getToken()\n");
+const tString & tString::getToken() {
+	DBG(9,"tString::getToken()\n");
 	Byte c;
 	Byte slash=0;
 	Byte quote=0;
 	Byte mode=0;
-	tStrBuf out(200);
+	tString out(200);
 	//out.hasQuotes(true);
 	//assert(out.hasQuotes());
 	while(!eof()) {
@@ -980,14 +980,14 @@ const tStrBuf & tStrBuf::getToken() {
 	}
 	// use shot only now as functions above might use it, too
 	delete shot;
-	shot=new tStrBuf(out);
+	shot=new tString(out);
 	return *shot;
 }
 
-void tStrBuf::writeStr(const char * t) {
+void tString::writeStr(const char * t) {
 	this->write(t,strlen(t));
 }
-void tStrBuf::printf(const char * msg, ...) {
+void tString::printf(const char * msg, ...) {
 	va_list ap;
 	
 	char buffer[1024];
@@ -1000,30 +1000,30 @@ void tStrBuf::printf(const char * msg, ...) {
 	
 	va_end(ap);
 }
-void tStrBuf::printBoolean(bool val)
+void tString::printBoolean(bool val)
 {
 	if (val) writeStr("yes");
 	else writeStr("no");
 }
-U32 tStrBuf::asU32() const {
+U32 tString::asU32() const {
 	if(size()==0) return 0;
 	return atoi(c_str());
 }
 
-tStrBuf operator+(const tStrBuf & str1, const tStrBuf & str2) {
-	tStrBuf out;
+tString operator+(const tString & str1, const tString & str2) {
+	tString out;
 	out.writeStr(str1);
 	out.writeStr(str2);
 	return out;
 }
-tStrBuf operator+(const char * str1, const tStrBuf & str2) {
-	tStrBuf out;
+tString operator+(const char * str1, const tString & str2) {
+	tString out;
 	out.writeStr(str1);
 	out.writeStr(str2);
 	return out;
 }
-tStrBuf operator+(const tStrBuf & str1, const char * str2) {
-	tStrBuf out;
+tString operator+(const tString & str1, const char * str2) {
+	tString out;
 	out.writeStr(str1);
 	out.writeStr(str2);
 	return out;
@@ -1095,7 +1095,7 @@ const char * tTime::str(Byte type) const {
 	if(type==0x00) {
 		return alcGetStrTime(seconds,microseconds);
 	} else {
-		static tStrBuf sth;
+		static tString sth;
 		double sseconds=(seconds % 60) + (((double)microseconds)/1000000);
 		Byte minutes=(seconds/60)%60;
 		Byte hours=(seconds/3600)%24;

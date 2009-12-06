@@ -124,7 +124,7 @@ namespace alc {
 	{
 		tConfig *cfg = alcGetConfig();
 		
-		tStrBuf var = cfg->getVar("tracking.log");
+		tString var = cfg->getVar("tracking.log");
 		if (log == lnull && (var.isNull() || var.asByte())) { // logging enabled per default
 			log = new tLog("tracking.log", 4, 0);
 			log->log("Tracking driver started (%s)\n\n", __U_TRACKINGBACKEND_ID);
@@ -487,7 +487,7 @@ namespace alc {
 		// check if we got all recipients - if not, tell the sender
 		if (directedFwd.recipients.size()) {
 			// format the text
-			tStrBuf text("These players did not get the message (linking?): ");
+			tString text("These players did not get the message (linking?): ");
 			bool comma = false;
 			for (it = directedFwd.recipients.begin(); it != directedFwd.recipients.end(); ++it) {
 				if (comma) text.writeStr(", ");
@@ -495,7 +495,7 @@ namespace alc {
 				comma = true;
 			}
 			// create the message
-			tpKIMsg kiMsg = tpKIMsg(tUruObjectRef(), tStrBuf("Tracking Server"), 0, text);
+			tpKIMsg kiMsg = tpKIMsg(tUruObjectRef(), tString("Tracking Server"), 0, text);
 			kiMsg.flags = 0x00004248;
 			kiMsg.messageType = 0x0009; // private inter age chat
 			// send message

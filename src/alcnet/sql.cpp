@@ -210,13 +210,13 @@ MYSQL_RES *tSQL::storeResult(void)
 tSQL *tSQL::createFromConfig(void)
 {
 	tConfig *cfg = alcGetConfig();
-	tStrBuf var;
+	tString var;
 	// read basic connection info
-	tStrBuf host = cfg->getVar("db.host");
+	tString host = cfg->getVar("db.host");
 	U16 port = cfg->getVar("db.port").asU16();
-	tStrBuf user = cfg->getVar("db.username");
-	tStrBuf password = cfg->getVar("db.passwd");
-	tStrBuf dbname = cfg->getVar("db.name");
+	tString user = cfg->getVar("db.username");
+	tString password = cfg->getVar("db.passwd");
+	tString dbname = cfg->getVar("db.name");
 	
 	// additional options
 	U32 timeout = 15*60; // default is 15 minutes

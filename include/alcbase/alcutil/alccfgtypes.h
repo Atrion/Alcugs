@@ -44,22 +44,22 @@ public:
 	tConfigVal();
 	tConfigVal(const tConfigVal &t) { init(); copy(t); }
 	tConfigVal(const char * name);
-	tConfigVal(const tStrBuf & name);
+	tConfigVal(const tString & name);
 	~tConfigVal();
 	void setName(const char * name);
-	void setName(const tStrBuf & name);
+	void setName(const tString & name);
 	void setVal(const char * val,U16 x=0,U16 y=0);
-	void setVal(const tStrBuf & t,U16 x=0,U16 y=0);
-	const tStrBuf & getName() const;
-	const tStrBuf & getVal(U16 x=0,U16 y=0) const;
+	void setVal(const tString & t,U16 x=0,U16 y=0);
+	const tString & getName() const;
+	const tString & getVal(U16 x=0,U16 y=0) const;
 	U16 getRows() const { return y; }
 	U16 getCols() const { return x; }
 	void copy(const tConfigVal & t);
 	const tConfigVal &operator=(const tConfigVal & t) { copy(t); return *this; }
 private:
 	void init();
-	tStrBuf name;
-	tStrBuf ** values;
+	tString name;
+	tString ** values;
 	U16 x; //columns
 	U16 y; //rows
 	Byte flags; // 0x01 - with quotes
@@ -74,10 +74,10 @@ public:
 	tConfigKey();
 	~tConfigKey();
 	void setName(const char * name);
-	void setName(const tStrBuf & name);
-	const tStrBuf & getName() const { return name; }
+	void setName(const tString & name);
+	const tString & getName() const { return name; }
 	tConfigVal * find(const char * what,bool create=false);
-	tConfigVal * find(const tStrBuf & what,bool create=false);
+	tConfigVal * find(const tString & what,bool create=false);
 	void copy(const tConfigKey & t);
 	void merge(tConfigKey & t);
 	void add(tConfigVal &t);
@@ -85,7 +85,7 @@ public:
 	void rewind();
 	tConfigVal * getNext();
 private:
-	tStrBuf name;
+	tString name;
 	U16 n,off;
 	tConfigVal ** values;
 	friend class tConfig; // for more efficient searching, tConfig needs direct access to the key name
@@ -100,11 +100,11 @@ public:
 	tConfig();
 	~tConfig();
 	tConfigKey * findKey(const char * where="global",bool create=false);
-	tConfigKey * findKey(const tStrBuf & where,bool create=false);
+	tConfigKey * findKey(const tString & where,bool create=false);
 	tConfigVal * findVar(const char * what,const char * where="global",bool create=false);
-	const tStrBuf & getVar(const char * what,const char * where="global",U16 x=0,U16 y=0);
+	const tString & getVar(const char * what,const char * where="global",U16 x=0,U16 y=0);
 	void setVar(const char * val,const char * what,const char * where="global",U16 x=0,U16 y=0);
-	void setVar(const tStrBuf &val,const tStrBuf &what,const tStrBuf &where,U16 x=0,U16 y=0);
+	void setVar(const tString &val,const tString &what,const tString &where,U16 x=0,U16 y=0);
 	void rewind();
 	tConfigKey * getNext();
 	void copyKey(const char * to,const char * from); //!< this will merge the key if the destination already exists
