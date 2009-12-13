@@ -1095,25 +1095,26 @@ const char * tTime::str(Byte type) const {
 	if(type==0x00) {
 		return alcGetStrTime(seconds,microseconds);
 	} else {
+		Byte minutes=seconds/60;
+		Byte hours=minutes/60;
+		minutes %= 60;
+
+		Byte days=hours/24;
+		hours %= 24;
+
+		Byte weeks=days/7;
+		days %= 7;
+
 		static tString sth;
-		double sseconds=(seconds % 60) + (((double)microseconds)/1000000);
-		Byte minutes=(seconds/60)%60;
-		Byte hours=(seconds/3600)%24;
-		Byte days=(seconds/(3600*24))%30;
-		Byte months=(seconds/(3600*24*30)); //%12;
-		// a year is not exactly 12 months, so 361 days would show as 0 years, 0 months and 1 day...
-		//Byte years=(seconds/(3600*24*365));
-		//if(years==1) sth.printf("1 year, "); //I bet that nobody will get this uptime
-		//else if(years>1) sth.printf("%i years, ",years);
-		if(months==1) sth.printf("1 month, "); //This one, should be possible, the GoE shard has beatten it without problems
-		else if(months>1) sth.printf("%i months, ",months);
+		if(weeks==1) sth.printf("1 week, ");
+		else if(weeks>1) sth.printf("%i weeks, ",weeks);
 		if(days==1) sth.printf("1 day, ");
 		else if(days>1) sth.printf("%i days, ",days);
 		if(hours==1) sth.printf("1 hour, ");
 		else if(hours>1) sth.printf("%i hours, ",hours);
 		if(minutes==1) sth.printf("1 minute, ");
 		else if(minutes>1) sth.printf("%i minutes, ",minutes);
-		sth.printf("%.6f seconds.",sseconds);
+		sth.printf("%.6f seconds.",seconds%60 + (double)microseconds/1000000.0);
 		return sth.c_str();
 	}
 }
