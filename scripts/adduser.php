@@ -2,21 +2,6 @@
 // this script was written by MercAngel and adapted by diafero
 require 'adduser-config.php';
 
-function make_uuid() {
-  // Set initial randomness
-  $hash = md5(uniqid(rand(), true));
-
-  // Add Dashes
-  $fHash = substr($hash, 0 , 8 ).'-'.
-           substr($hash, 8 , 4 ).'-'.
-           substr($hash, 12, 4 ).'-'.
-           substr($hash, 16, 4 ).'-'.
-           substr($hash, 20, 12);
-
-  // All done
-  return $fHash;
-}
-
 ?>
 <html>
 <head>
@@ -42,9 +27,6 @@ if ($_GET['action'] == 'go') {
     die ("The name you entered is invalid: Valid characters are numbers, letters as well as '_' and '-'. Please go <a ".
          "href=\"javascript:history.back()\">back</a> and re-enter it.");
 
-  // Generate GUID:
-  $guid = make_uuid();
-
   mysql_connect($dbhost, $dbuser, $dbpass);
   mysql_select_db($dbname);
   $result = mysql_query("SELECT * FROM accounts WHERE name = '$login'");
@@ -53,8 +35,8 @@ if ($_GET['action'] == 'go') {
       "is not your account, please go <a href=\"javascript:history.back()\">".
       "back</a> and choose another login name.";
   } else {
-    mysql_query("INSERT INTO accounts (name, passwd, a_level , guid) ".
-		"VALUES ('$login', '$hashpw', '15', '$guid')");
+    mysql_query("INSERT INTO accounts (name, passwd, a_level, guid) ".
+		"VALUES ('$login', '$hashpw', '15', UUID())");
     echo "Congratulations, your account has been successfully created!";
   }
   mysql_close();
