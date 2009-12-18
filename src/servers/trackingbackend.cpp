@@ -593,9 +593,9 @@ namespace alc {
 		bool needFake = false;
 		FILE *f = fopen(statusXMLFile, "w");
 		if (!f) {
-		  lerr->log("Can\'t open %s for writing - disabling XML status page\n", statusXMLFile);
-		  statusXML = false;
-		  return;
+			lerr->log("Can\'t open %s for writing - disabling XML status page\n", statusXMLFile);
+			statusXML = false;
+			return;
 		}
 		
 		fprintf(f, "<?xml version='1.0' encoding='iso-8859-1'?>\n");
