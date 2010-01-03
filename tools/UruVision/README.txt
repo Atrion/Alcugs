@@ -13,8 +13,6 @@ Usage:
 	-or-
 	python UruVision.py
 		(edit UruVision.ini to change all options)
-Status:
-	Unsupported
 	
 Known Issues:
 	Cumulative memory leak. Don't leave it running all day.
