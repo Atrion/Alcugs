@@ -56,7 +56,7 @@ static inline void putInt(QFile *file, int val)
 	file->putChar(val % 256);
 }
 
-void patchResolution(int width, int height)
+void patchResolution(int width, int height, int colourDepth)
 {
 	log << "Trying to set resolution to " << width << "x" << height << "\n";
 	QFile file("dev_mode.dat");
@@ -104,6 +104,9 @@ void patchResolution(int width, int height)
 	putInt(&file, width);
 	putInt(&file, height);
 	log << "Resolution successfully set\n";
-	// some colour depth debug
-	log << "Btw, the colour depth is " << getInt(&file) << ".\n";
+	// We might also have to change the colour depth
+	if (colourDepth) {
+		putInt(&file, colourDepth);
+		log << "Colour depth successfully set\n";
+	}
 }
