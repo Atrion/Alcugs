@@ -22,6 +22,6 @@
 #ifndef RESOLUTION_PATCHER_H
 #define RESOLUTION_PATCHER_H
 
-void patchResolution(int width, int height);
+void patchResolution(int width, int height, int colourDepth);
 
 #endif

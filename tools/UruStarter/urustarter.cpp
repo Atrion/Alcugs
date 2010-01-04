@@ -180,12 +180,17 @@ int main(int argc, char **argv)
 		QSettings settings("urustarter.ini", QSettings::IniFormat);
 		int width = settings.value("width").toInt();
 		int height = settings.value("height").toInt();
+		int colourDepth = settings.value("colourDepth").toInt();
+		if (colourDepth != 16 && colourDepth != 32) {
+			log << "Invalid colour depth: must be 16 or 32\n";
+			colourDepth = 0;
+		}
 		if (height && width) {
 			try {
-				patchResolution(width, height);
+				patchResolution(width, height, colourDepth);
 			}
 			catch (...) {
-				log << "Somethign went wrong during patching\n";
+				log << "Something went wrong during patching\n";
 			}
 		}
 	}
