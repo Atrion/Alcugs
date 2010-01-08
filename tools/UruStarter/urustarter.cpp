@@ -181,7 +181,7 @@ int main(int argc, char **argv)
 		int width = settings.value("width").toInt();
 		int height = settings.value("height").toInt();
 		int colourDepth = settings.value("colourDepth").toInt();
-		if (colourDepth != 16 && colourDepth != 32) {
+		if (colourDepth != 0 && colourDepth != 16 && colourDepth != 32) {
 			log << "Invalid colour depth: must be 16 or 32\n";
 			colourDepth = 0;
 		}
