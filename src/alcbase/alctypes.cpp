@@ -1095,14 +1095,14 @@ const char * tTime::str(Byte type) const {
 	if(type==0x00) {
 		return alcGetStrTime(seconds,microseconds);
 	} else {
-		Byte minutes=seconds/60;
-		Byte hours=minutes/60;
+		U32 minutes=seconds/60;
+		U32 hours=minutes/60;
 		minutes %= 60;
 
-		Byte days=hours/24;
+		U32 days=hours/24;
 		hours %= 24;
 
-		Byte weeks=days/7;
+		U32 weeks=days/7;
 		days %= 7;
 
 		static tString sth;
