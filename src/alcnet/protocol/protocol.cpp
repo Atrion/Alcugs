@@ -684,7 +684,6 @@ void tmMsgBase::store(tBBuf &t) {
 	// accept custom types from Alcugs servers only
 	if (u->isAlcugsServer())
 		check |= plNetSid;
-	// some flags are not seen on any messages, but in earlier server versions: plNetP2P, plNetFirewalled - they should eventually be removed from Alcugs
 	
 	//now catch undocumented protocol flags
 	if (flags & ~(check))
@@ -771,8 +770,6 @@ const char * tmMsgBase::str() {
 		dbg.writeStr(" game msg receivers,");
 	if (flags & plNetTimeoutOk)
 		dbg.writeStr(" accept timeout,");
-	if (flags & plNetFirewalled)
-		dbg.writeStr(" firewalled,");
 	if(flags & plNetX)
 		dbg.printf(" x: %i,",x);
 	if(flags & plNetNewSDL)
@@ -795,8 +792,6 @@ const char * tmMsgBase::str() {
 		dbg.writeStr(" ack,");
 	if(flags & plNetSid)
 		dbg.printf(" sid: %i,",sid);
-	if(flags & plNetP2P)
-		dbg.writeStr(" P2P request,");
 
 	dbg.seek(-1); // remove the last comma
 	additionalFields();
