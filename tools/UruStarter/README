@@ -1,5 +1,7 @@
 UruStarter is a little application meant to be put into the Uru startup process between UruSetup and UruExplorer. After having done its work, UruStarter will run UruExplorer itself, so the user won't notice a difference. It can perform various cleanups, fixing the flaw that the dataserver can not remove files, but Uru will in some case load all files from a directory (like prp files in dat, or pak files in Python). In addition, it has a widescreen patch built in, allowing players to use their native screen resolution (Uru will still stretch the picture, but without artifacts).
 
+Diafero <diafero AT arcor.de> is the author of this tool - however, I got the idea of intercepting a custom binary in the Uru startup process from a'moaca' and others and re-purposed it in this project.
+
 To build it, you will need Qt: http://qt.nokia.com/
 
 For more details, see: http://alcugs.almlys.org/UruStarter
