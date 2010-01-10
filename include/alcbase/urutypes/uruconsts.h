@@ -55,15 +55,13 @@
 // CUSTOM plNetFlags
 #define plNetSid        0x00800000 //* this message contains a sid (so that the servers remember where to send this back to)
 
-//Suppositions for unidentified flags - controlling some parts of the client before parsing the actual message? Explanations are in protocol.cpp, tmMsgBase::store
-#define plNetFirewalled 0x00000020
+// Suppositions for unidentified flags - controlling some parts of the client before parsing the actual message? Explanations are in protocol.cpp, tmMsgBase::store
 #define plNetSystem     0x00020000
 #define plNetNewSDL     0x00000400
 #define plNetMsgRecvrs  0x00000002
 #define plNetRelRegions 0x00002000
 #define plNetStateReq1  0x00000800
 #define plNetDirected   0x00008000
-#define plNetP2P        0x08000000
 #define plNetTimeoutOk  0x00000010
 ////============================================================================
 
