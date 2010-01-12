@@ -190,7 +190,7 @@ int main(int argc, char **argv)
 				patchResolution(width, height, colourDepth);
 			}
 			catch (...) {
-				log << "Something went wrong during patching\n";
+				log << "Unexpected error in the dev_mode.dat format - can not patch resolution\n";
 			}
 		}
 	}
