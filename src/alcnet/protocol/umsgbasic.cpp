@@ -97,6 +97,7 @@ void tmPlayerTerminated::additionalFields() {
 
 tmPing::tmPing(tNetSession * u, Byte dst)
  : tmMsgBase(NetMsgPing,plNetKi | plNetX | plNetAck,u)
+ // indeed acking a ping does not make much sense... however, this gives us some really good data when a player connects to a game server (there are pings exchanged then) to estimate bandwidth and latency of the user's connection
 {
 	ki = x = 0;
 	mtime = 0;

@@ -58,6 +58,7 @@ static inline void putInt(QFile *file, int val)
 
 void patchResolution(int width, int height, int colourDepth)
 {
+	int controlValue;
 	log << "Trying to set resolution to " << width << "x" << height << "\n";
 	QFile file("dev_mode.dat");
 	if (!file.open(QIODevice::ReadWrite)) {
@@ -67,8 +68,9 @@ void patchResolution(int width, int height, int colourDepth)
 	
 	// Open the file and stream to the position we need
 	// skip device record
-	if (getInt(&file) != 11) {
-		log << "Version is not 11\n";
+	controlValue = getInt(&file);
+	if (controlValue != 11) {
+		log << "Version is " << controlValue << ", should be 11\n";
 		throw 0;
 	}
 	seek(&file, 2*4); // 3 uint32
@@ -76,27 +78,29 @@ void patchResolution(int width, int height, int colourDepth)
 	seek(&file, getInt(&file)); // a string
 	seek(&file, getInt(&file)); // a string
 	seek(&file, getInt(&file)); // a string
-	seek(&file, 8); // not sure about this one
+	seek(&file, 8); // not sure about the length of this one - DirectX device caps
 	seek(&file, 2*4); // 2 uint32
-	if (getInt(&file) != 0) {
-		log << "First control value is not 0\n";
+	controlValue = getInt(&file); // device mode count - always 0
+	if (controlValue != 0) {
+		log << "Device mode count is " << controlValue << ", should be 0\n";
 		throw 0;
 	}
-	seek(&file, 5*4), // 5 float
+	seek(&file, 5*4), // 5 floats
 	seek(&file, 2*2*4); // 2 structs each containing 2 floats
 	seek(&file, 2*1); // 2 uint8
 	// now we are in the device mode, skip to resolution
-	if (getInt(&file) != 0) {
-		log << "Second control value is not 0\n";
-		return;
+	controlValue = getInt(&file); // device mode flags - always 0
+	if (controlValue != 0) {
+		log << "Device mode flags are " << controlValue << ", should be 0\n";
+		throw 0;
 	}
 	// now this should be the resolution
 	if (getInt(&file) != 800) {
-		log << "Current width is not 800\n";
+		log << "Current width is not 800 - skipping resolution patching\n";
 		return;
 	}
 	if (getInt(&file) != 600) {
-		log << "Current height is not 600\n";
+		log << "Current height is not 600 - skipping resolution patching\n";
 		return;
 	}
 	seek(&file, -8);
