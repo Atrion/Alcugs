@@ -1,5 +1,5 @@
 <?php
-// this script was written by MercAngel and adapted by diafero
+// this script was originally written by Zrax, ported to Alcugs by MercAngel and adapted by diafero
 require 'adduser-config.php';
 
 ?>
