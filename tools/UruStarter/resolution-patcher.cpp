@@ -78,7 +78,7 @@ void patchResolution(int width, int height, int colourDepth)
 	seek(&file, getInt(&file)); // a string
 	seek(&file, getInt(&file)); // a string
 	seek(&file, getInt(&file)); // a string
-	seek(&file, 8); // not sure about the length of this one - DirectX device caps
+	seek(&file, getInt(&file)*4); // a bit vector
 	seek(&file, 2*4); // 2 uint32
 	controlValue = getInt(&file); // device mode count - always 0
 	if (controlValue != 0) {
