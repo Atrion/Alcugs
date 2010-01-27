@@ -12,6 +12,7 @@ Improvements and Changes:
 - Cleaned up default configuration file (and improved default options)
 - Both age and sdl files can now just be copied into the appropriate folders - no need to reload or even restart any server anymore
 - Better understanding of some parts of the network protocol (see docs/unknownProtocolParts.txt for the remaining unknown points)
+- Add support for kSubAgeBook links
 
 Bugfixes:
 - Fixed much too slow parsing of incoming messages under some circumstances
