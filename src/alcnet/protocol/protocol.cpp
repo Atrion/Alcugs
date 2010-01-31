@@ -135,21 +135,21 @@ U32 alcUruChecksum(const Byte* buf, int size, int alg, const char * aux_hash) {
 			for(i=6; i<(size-4); i=i+4) {
 				U32 val;
 #if defined(NEED_STRICT_ALIGNMENT)
-				memcpy((void *)&val, buf+i, 4);
+				memcpy(&val, buf+i, 4);
 #else
-				val = *((U32 *)(buf+i));
+				val = *reinterpret_cast<U32 *>(buf+i);
 #endif
 				aux = aux + letoh32(val); //V1 - working Checksum algorithm
 			}
 			whoi=((size-6)%4);
 			if(whoi==1 || whoi==2) {
-				aux += *((Byte *)(buf+size-1));
+				aux += *(buf+size-1);
 			} else if(whoi==0) {
 				U32 val;
 #if defined(NEED_STRICT_ALIGNMENT)
-				memcpy((void *)&val, buf+size-4, 4);
+				memcpy(&val, buf+size-4, 4);
 #else
-				val = *((U32 *)(buf+size-4));
+				val = *reinterpret_cast<U32 *>(buf+size-4);
 #endif
 				aux += letoh32(val);
 			} //else if whoi==3 Noop
@@ -162,7 +162,7 @@ U32 alcUruChecksum(const Byte* buf, int size, int alg, const char * aux_hash) {
 			if(alg==2) { aux_size+=32; }
 			//allocate the space for the buffer
 			DBG(4,"Allocating md5buffer - %i bytes...\n",aux_size);
-			md5buffer = (Byte *)malloc(sizeof(Byte)*(aux_size+10));
+			md5buffer = static_cast<Byte *>(malloc(sizeof(Byte)*(aux_size+10)));
 			if (md5buffer == NULL) throw txNoMem(_WHERE("NoMem"));
 			for(i=6; i<size; i++) {
 				md5buffer[i-6]=buf[i];
@@ -182,7 +182,7 @@ U32 alcUruChecksum(const Byte* buf, int size, int alg, const char * aux_hash) {
 			}*/
 			md5::MD5(md5buffer, aux_size, hash);
 			//print2log(f_chkal,"\n<-\n");
-			aux = *((U32 *)hash);
+			aux = *reinterpret_cast<U32 *>(hash);
 			free(md5buffer);
 			break;
 		default:
@@ -220,9 +220,9 @@ int alcUruValidatePacket(Byte * buf,int n,Byte * validation,bool authed,const ch
 		}
 		if(buf[1]==0x00) { return 0; } //All went OK with validation level 0
 #if defined(NEED_STRICT_ALIGNMENT)
-		memcpy((void*)&checksum,buf+0x02,4); //store the checksum
+		memcpy(&checksum,buf+0x02,4); //store the checksum
 #else
-		checksum=*(U32 *)(buf+0x02); //store the checksum
+		checksum=*reinterpret_cast<U32 *>(buf+0x02); //store the checksum
 #endif
 #ifndef _NO_CHECKSUM
 		if(buf[1]==0x01) { //validation level 1
@@ -431,14 +431,14 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
 		log->print(" -&gt; %s:%i ",alcGetStrIp(ip),ntohs(port));
 	}
 
-	int i;
+	U32 i;
 	data.rewind();
 
 	switch(tf) {
 		case UNetAckReply: //0x80
 			log->print("ack");
 			data.seek(2);
-			for(i=0; i<(int)dsize; i++) {
+			for(i=0; i<dsize; i++) {
 				if(i!=0) { log->print(" |"); }
 				Byte i1=data.getByte();
 				U32 i2=data.getU32();
@@ -452,7 +452,7 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
 			break;
 		case UNetAckReply | UNetExt:
 			log->print("aack");
-			for(i=0; i<(int)dsize; i++) {
+			for(i=0; i<dsize; i++) {
 				if(i!=0) { log->print(" |"); }
 				Byte i1=data.getByte();
 				data.seek(-1);

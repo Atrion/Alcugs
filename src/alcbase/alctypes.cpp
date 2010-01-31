@@ -70,19 +70,19 @@ tBBuf::~tBBuf() {
 // know why anyone would). If you do, the byte-swapping will hurt you!
 void tBBuf::putU16(U16 val) {
 	val = htole16(val);
-	this->write((Byte *)&val,2);
+	this->write(reinterpret_cast<Byte *>(&val),2);
 }
 void tBBuf::putS16(S16 val) {
 	val = htole16(val);
-	this->write((Byte *)&val,2);
+	this->write(reinterpret_cast<Byte *>(&val),2);
 }
 void tBBuf::putU32(U32 val) {
 	val = htole32(val);
-	this->write((Byte *)&val,4);
+	this->write(reinterpret_cast<Byte *>(&val),4);
 }
 void tBBuf::putS32(S32 val) {
 	val = htole32(val);
-	this->write((Byte *)&val,4);
+	this->write(reinterpret_cast<Byte *>(&val),4);
 }
 void tBBuf::putByte(Byte val) {
 	this->write(&val,1);
@@ -95,50 +95,50 @@ void tBBuf::putDouble(double val) {
 	//ok for integers, but I don't trust it for doubles
 	//val = htole32(val >> 32) | ((htole32(val & 0xffffffff)) << 32);
 	//is there a less yucky way?
-	U32 *valAsArray = (U32 *)&val;
+	U32 *valAsArray = reinterpret_cast<U32 *>(&val);
 	U32 lo = htole32(valAsArray[1]);
 	U32 hi = htole32(valAsArray[0]);
 	valAsArray[0] = lo;
 	valAsArray[1] = hi;
 #endif
-	this->write((Byte *)&val,8);
+	this->write(reinterpret_cast<Byte *>(&val),8);
 }
 void tBBuf::putFloat(float val) { // Does this work on big-endian?
-	this->write((Byte *)&val,4);
+	this->write(reinterpret_cast<Byte *>(&val),4);
 }
 U16 tBBuf::getU16() {
 	U16 val;
 #if defined(NEED_STRICT_ALIGNMENT)
-	memcpy((void *)&val, this->read(2), 2);
+	memcpy(&val, this->read(2), 2);
 #else
-	val = *(U16 *)(this->read(2));
+	val = *reinterpret_cast<U16 *>(this->read(2));
 #endif
 	return(letoh16(val));
 }
 S16 tBBuf::getS16() {
 	S16 val;
 #if defined(NEED_STRICT_ALIGNMENT)
-	memcpy((void *)&val, this->read(2), 2);
+	memcpy(&val, this->read(2), 2);
 #else
-	val = *(S16 *)(this->read(2));
+	val = *reinterpret_cast<S16 *>(this->read(2));
 #endif
 	return(letoh16(val));
 }
 U32 tBBuf::getU32() {
 	U32 val;
 #if defined(NEED_STRICT_ALIGNMENT)
-	memcpy((void *)&val, this->read(4), 4);
+	memcpy(&val, this->read(4), 4);
 #else
-	val = *(U32 *)(this->read(4));
+	val = *reinterpret_cast<U32 *>(this->read(4));
 #endif
 	return(letoh32(val));
 }
 S32 tBBuf::getS32() {
 	S32 val;
 #if defined(NEED_STRICT_ALIGNMENT)
-	memcpy((void *)&val, this->read(4), 4);
+	memcpy(&val, this->read(4), 4);
 #else
-	val = *(S32 *)(this->read(4));
+	val = *reinterpret_cast<S32 *>(this->read(4));
 #endif
 	return(letoh32(val));
 }
@@ -151,9 +151,9 @@ SByte tBBuf::getSByte() {
 double tBBuf::getDouble() {
 	double val;
 #if defined(NEED_STRICT_ALIGNMENT)
-	memcpy((void *)&val, this->read(8), 8);
+	memcpy(&val, this->read(8), 8);
 #else
-	val = *(double *)(this->read(8));
+	val = *reinterpret_cast<double *>(this->read(8));
 #endif
 #if defined(WORDS_BIGENDIAN)
 	//ok for integers, but I don't trust it for doubles
@@ -170,9 +170,9 @@ double tBBuf::getDouble() {
 float tBBuf::getFloat() { // Does this work on big-endian?
 	float val;
 #if defined(NEED_STRICT_ALIGNMENT)
-	memcpy((void *)&val, this->read(4), 4);
+	memcpy(&val, this->read(4), 4);
 #else
-	val = *(S32 *)(this->read(4));
+	val = *reinterpret_cast<float *>(this->read(4));
 #endif
 	return(val);
 }
@@ -203,16 +203,16 @@ void tBBuf::check(const Byte * what,U32 n) {
 tRefBuf::tRefBuf(U32 csize) {
 	refs=1;
 	msize=csize;
-	buf=(Byte *)malloc(sizeof(Byte) * csize);
+	buf=static_cast<Byte *>(malloc(sizeof(Byte) * csize));
 	if(buf==NULL) 
 	throw txNoMem(_WHERE("NoMem"));
 }
 tRefBuf::~tRefBuf() {
-	free((void *)buf);
+	free(buf);
 }
 void tRefBuf::resize(U32 newsize) {
 	msize=newsize;
-	Byte * b2 =(Byte *)realloc(buf,sizeof(Byte *) * newsize);
+	Byte * b2 =static_cast<Byte *>(realloc(buf,sizeof(Byte *) * newsize));
 	if(b2==NULL) throw txNoMem(_WHERE("NoMem"));
 	buf=b2;
 }
@@ -361,7 +361,7 @@ tFBuf::tFBuf() {
 }
 tFBuf::~tFBuf() {
 	this->close();
-	free((void *)xbuf);
+	free(xbuf);
 }
 void tFBuf::init() {
 	f=NULL;
@@ -389,12 +389,12 @@ const Byte * tFBuf::read(U32 n) {
 	if(n==0) n=this->size();
 	if(f==NULL) throw txNoFile(_WHERE("NoFile"));
 	if(xbuf==NULL) {
-		xbuf=(Byte *)malloc(n);
+		xbuf=static_cast<Byte *>(malloc(n));
 		if(xbuf==NULL) throw txNoMem(_WHERE("NoMem"));
 		xsize=n;
 	}
 	if(xsize<n) {
-		xbuf=(Byte *)realloc((void *)xbuf,n);
+		xbuf=static_cast<Byte *>(realloc(xbuf,n));
 		if(xbuf==NULL) throw txNoMem(_WHERE("NoMem"));
 		xsize=n;
 	}
@@ -406,12 +406,12 @@ void tFBuf::stream(tBBuf &b) const {
 	U32 pos = tell(), n = size();
 	fseek(f,0,SEEK_SET);
 	if(xbuf==NULL) {
-		xbuf=(Byte *)malloc(n);
+		xbuf=static_cast<Byte *>(malloc(n));
 		if(xbuf==NULL) throw txNoMem(_WHERE("NoMem"));
 		xsize=n;
 	}
 	if(xsize<n) {
-		xbuf=(Byte *)realloc((void *)xbuf,n);
+		xbuf=static_cast<Byte *>(realloc(xbuf,n));
 		if(xbuf==NULL) throw txNoMem(_WHERE("NoMem"));
 		xsize=n;
 	}
@@ -489,12 +489,10 @@ void tZBuf::compress() {
 	this->buf->resize(msize);
 	off=0;
 }
-void tZBuf::uncompress(int iosize) {
+void tZBuf::uncompress(U32 iosize) {
 	tRefBuf * aux=this->buf;
 	aux->dec();
-	zlib::uLongf comp_size;
-	/*if(iosize<=0) { comp_size=10*msize; } //yes, is very dirty
-	else */comp_size=iosize;
+	zlib::uLongf comp_size=iosize;
 	this->buf = new tRefBuf(comp_size);
 	int ret=zlib::uncompress(this->buf->buf,&comp_size,aux->buf,msize);
 	if(ret!=0) throw txBase(_WHERE("Something terrible happenened uncompressing the buffer"));
@@ -502,7 +500,7 @@ void tZBuf::uncompress(int iosize) {
 	if(aux->getRefs()<1) delete aux;
 	this->buf->resize(msize);
 	off=0;
-	if ((zlib::uLong)iosize != comp_size)
+	if (iosize != comp_size)
 		throw txUnexpectedData(_WHERE("tZBuf size mismatch: %i != %i", iosize, comp_size));
 }
 /* end tZBuf */
@@ -512,7 +510,7 @@ void tMD5Buf::compute() {
 	tRefBuf * aux=this->buf;
 	aux->dec();
 	this->buf = new tRefBuf(0x10);
-	md5::MD5((const unsigned char *)aux->buf,msize,(unsigned char *)this->buf->buf);
+	md5::MD5(aux->buf,msize,this->buf->buf);
 	msize=0x10;
 	if(aux->getRefs()<1) delete aux;
 	off=0;
@@ -620,7 +618,7 @@ const char * tString::c_str() {
 		buf->resize(bsize+128);
 	}
 	buf->buf[size()] = 0;
-	return (const char *)buf->buf;
+	return reinterpret_cast<const char *>(buf->buf);
 }
 const char * tString::c_str() const {
 	DBG(2,"tString::c_str()\n");
@@ -662,7 +660,7 @@ S32 tString::find(const char cat, bool reverse) const {
 S32 tString::find(const char *str) const {
 	const char *c = strstr(c_str(), str);
 	if (c == NULL) return -1;
-	return (c-(char *)buf->buf);
+	return (c-reinterpret_cast<const char *>(buf->buf));
 }
 void tString::convertSlashesFromWinToUnix() {
 #if defined(__WIN32__) or defined(__CYGWIN__)
@@ -1072,12 +1070,12 @@ tTime operator-(const tTime &a,const tTime &b) {
 double tTime::asDouble(char how) const {
 	switch(how) {
 		case 'u':
-			return ((double)seconds * 1000000) + (double)microseconds;
+			return (seconds * 1000000.0) + microseconds;
 		case 'm':
-			return ((double)seconds * 1000) + ((double)microseconds / 1000);
+			return (seconds * 1000.0) + (microseconds / 1000.0);
 		case 's':
 		default:
-			return ((double)seconds + ((double)microseconds / 1000000));
+			return seconds + (microseconds / 1000000.0);
 	}
 }
 U32 tTime::asU32(char how) const {
@@ -1114,7 +1112,7 @@ const char * tTime::str(Byte type) const {
 		else if(hours>1) sth.printf("%i hours, ",hours);
 		if(minutes==1) sth.printf("1 minute, ");
 		else if(minutes>1) sth.printf("%i minutes, ",minutes);
-		sth.printf("%.6f seconds.",seconds%60 + (double)microseconds/1000000.0);
+		sth.printf("%.6f seconds.",seconds%60 + microseconds/1000000.0);
 		return sth.c_str();
 	}
 }

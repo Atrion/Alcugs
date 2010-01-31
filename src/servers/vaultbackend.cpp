@@ -176,9 +176,9 @@ namespace alc {
 		node->type = KTextNoteNode;
 		node->str1.writeStr(welcomeMsgTitle);
 		node->blob1Size = strlen(welcomeMsgText)+1;
-		node->blob1 = (Byte *)malloc(node->blob1Size * sizeof(Byte));
+		node->blob1 = static_cast<Byte *>(malloc(node->blob1Size * sizeof(Byte)));
 		if (node->blob1 == NULL) throw txNoMem(_WHERE("NoMem"));
-		strcpy((char *)node->blob1, welcomeMsgText);
+		strcpy(reinterpret_cast<char *>(node->blob1), welcomeMsgText);
 		vaultDB->createChildNode(KVaultID, globalInboxNode, *node);
 		delete node;
 	}
@@ -229,8 +229,7 @@ namespace alc {
 	void tVaultBackend::checkKi(tmCustomVaultCheckKi &checkKi)
 	{
 		char avatar[256];
-		Byte status;
-		status = vaultDB->checkKi(checkKi.ki, checkKi.uid, avatar);
+		bool status = vaultDB->checkKi(checkKi.ki, checkKi.uid, avatar);
 		tmCustomVaultKiChecked checked(checkKi.getSession(), checkKi.ki, checkKi.x, checkKi.sid, checkKi.uid, status, avatar);
 		net->send(checked);
 	}
@@ -275,7 +274,7 @@ namespace alc {
 				broadcastNodeUpdate(*node);
 			// free stuff
 			delete node;
-			free((void *)nodes);
+			free(nodes);
 		}
 		
 		// find and update the info node
@@ -296,7 +295,7 @@ namespace alc {
 			broadcastOnlineState(*node);
 			// free stuff
 			delete node;
-			free((void *)nodes);
+			free(nodes);
 		}
 		
 		log->log("Status update for KI %d: %d\n", status.ki, status.state);
@@ -397,7 +396,7 @@ namespace alc {
 					seenFlag = itm->asInt();
 					break;
 				case 20: // GenericValue.Int: must always be the -1 or 0 (0 seen in NegotiateManifest when client gets Ahnonay SDL to update current Sphere)
-					if (itm->asInt() != (U32)-1 && itm->asInt() != 0)
+					if (itm->asInt() != static_cast<U32>(-1) && itm->asInt() != 0)
 						throw txProtocolError(_WHERE("a vault item with ID 20 must always have a value of -1 or 0 but I got %d", itm->asInt()));
 					break;
 				case 21: // GenericValue.UruString: age name
@@ -546,9 +545,9 @@ namespace alc {
 				
 				// free stuff
 				for (int i = 0; i < nMfs; ++i) delete mfs[i];
-				free((void *)mfs);
+				free(mfs);
 				for (int i = 0; i < nRef; ++i) delete ref[i];
-				free((void *)ref);
+				free(ref);
 				break;
 			}
 			case VSaveNode:
@@ -598,7 +597,7 @@ namespace alc {
 				// create and send the reply
 				tvMessage reply(msg);
 				reply.items.push_back(new tvItem(/*id*/9, /*old node index*/mfs.id));
-				reply.items.push_back(new tvItem(/*id*/24, /*timestamp*/(double)mfs.time));
+				reply.items.push_back(new tvItem(/*id*/24, /*timestamp*/static_cast<double>(mfs.time)));
 				send(reply, u, ki);
 			}
 			case VFetchNode:
@@ -632,7 +631,7 @@ namespace alc {
 				
 				// free stuff
 				for (int i = 0; i < nNodes; ++i) delete nodes[i];
-				free((void *)nodes);
+				free(nodes);
 				break;
 			}
 			case VSendNode:
@@ -924,9 +923,9 @@ namespace alc {
 			node->flagC = 0;
 			// add spawn point info
 			node->blob1Size += strlen(spawnPnt);
-			node->blob1 = (Byte *)realloc(node->blob1, node->blob1Size*sizeof(Byte));
+			node->blob1 = static_cast<Byte *>(realloc(node->blob1, node->blob1Size*sizeof(Byte)));
 			if (node->blob1 == NULL) throw txNoMem(_WHERE("NoMem"));
-			strcat((char *)node->blob1, spawnPnt);
+			strcat(reinterpret_cast<char *>(node->blob1), spawnPnt);
 			// update it and broadcast the update
 			vaultDB->updateNode(*node);
 			broadcastNodeUpdate(*node);
@@ -942,9 +941,9 @@ namespace alc {
 			node->int2 = 0; // volatile status: 0 = non-volatile, 1 = volatile
 			// add spawn point info
 			node->blob1Size = strlen(spawnPnt)+1; // one for the terminator
-			node->blob1 = (Byte *)malloc(node->blob1Size*sizeof(Byte));
+			node->blob1 = static_cast<Byte *>(malloc(node->blob1Size*sizeof(Byte)));
 			if (node->blob1 == NULL) throw txNoMem(_WHERE("NoMem"));
-			strcpy((char *)node->blob1, spawnPnt);
+			strcpy(reinterpret_cast<char *>(node->blob1), spawnPnt);
 			// insert the age link node as child of the AgesIOwnFolder
 			ageLinkNode = createChildNodeBCasted(ki, linkedAgesFolder, *node);
 			// create link age link node -> age info node
@@ -1084,7 +1083,8 @@ namespace alc {
 		if (nNodes != 1) throw txProtocolError(_WHERE("asked to remvoe non-existing player"));
 		
 		if (deletePlayer.accessLevel <= AcAdmin || strcmp((*nodes)->lStr2.c_str(), alcGetStrUid(deletePlayer.uid)) == 0) {
-			int *table, tableSize;
+			U32 *table;
+			int tableSize;
 			// find the  info node
 			tvNode *node = new tvNode(MType | MOwner);
 			node->type = KPlayerInfoNode;
@@ -1102,7 +1102,7 @@ namespace alc {
 			// remove the node
 			vaultDB->removeNodeTree(deletePlayer.ki, false); // don't be cautious
 			// free stuff
-			free((void *)table);
+			free(table);
 			
 			// remove info node and all sub-nodes
 			vaultDB->getParentNodes(infoNode, &table, &tableSize);
@@ -1113,12 +1113,12 @@ namespace alc {
 			// remove the node
 			vaultDB->removeNodeTree(infoNode, false); // don't be cautious
 			// free stuff
-			free((void *)table);
+			free(table);
 		}
 		
 		// free stuff
 		delete *nodes;
-		free((void *)nodes);
+		free(nodes);
 	}
 	
 	U32 tVaultBackend::getChildNodeBCasted(U32 saver, U32 parent, tvNode &node)
@@ -1205,7 +1205,7 @@ namespace alc {
 				break;
 			}
 		}
-		free((void *)table);
+		free(table);
 	}
 	
 	void tVaultBackend::cleanVault(bool cleanAges)

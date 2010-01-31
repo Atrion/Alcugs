@@ -189,7 +189,7 @@ namespace alc {
 			case NetMsgVaultTask:
 			{
 				bool isTask = (msg->cmd == NetMsgVaultTask);
-				tvMessage parsedMsg(isTask, /* 0 = non-TPOTS */(Byte)0);
+				tvMessage parsedMsg(isTask, /* 0 = non-TPOTS */0);
 				
 				// get the data out of the packet
 				tmVault vaultMsg(u);

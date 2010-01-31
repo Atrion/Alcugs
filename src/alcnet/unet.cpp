@@ -42,6 +42,9 @@
 
 #include <alcdebug.h>
 
+// Some of the macros implie an old-style cast
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+
 namespace alc {
 
 tUnet::tUnet(const char * lhost,U16 lport) {
@@ -370,14 +373,14 @@ void tUnet::startOp() {
 			this->err->log("ERR: Fatal cannot resolve address %s:%i\n",bindaddr,bindport);
 			throw txUnetIniErr(_WHERE("Cannot resolve address %s:%i",bindaddr,bindport));
 		}
-		this->server.sin_addr.s_addr=*(U32 *)host->h_addr_list[0];
+		this->server.sin_addr.s_addr=*reinterpret_cast<U32 *>(host->h_addr_list[0]);
 	}
 	this->server.sin_port=htons(bindport); //port 5000 default
 
 	// binding to port - some servers can try different ports, too (used by game)
 	bool error;
 	do {
-		error = (bind(this->sock,(struct sockaddr *)&this->server,sizeof(this->server))<0);
+		error = bind(this->sock,reinterpret_cast<struct sockaddr *>(&this->server),sizeof(this->server))<0;
 		if (error) {
 			DBG(3, "Probing alternative port %d\n", bindport+15);
 			if (canPortBeUsed(bindport+15)) { // we got an error, BUT me may try again on another port
@@ -441,7 +444,7 @@ tNetSessionIte tUnet::netConnect(const char * hostname,U16 port,Byte validation,
 	
 	if(host==NULL) throw txBase(_WHERE("Cannot resolve host: %s",hostname));
 	
-	ite.ip=*(U32 *)host->h_addr_list[0];
+	ite.ip=*reinterpret_cast<U32 *>(host->h_addr_list[0]);
 	ite.port=htons(port);
 	ite.sid=-1;
 	
@@ -536,9 +539,9 @@ int tUnet::Recv() {
 
 	DBG(9,"Before recvfrom\n");
 #ifdef __WIN32__
-	n = recvfrom(this->sock,(char *)buf,INC_BUF_SIZE,0,(struct sockaddr *)&client,&client_len);
+	n = recvfrom(this->sock,reinterpret_cast<char *>(buf),INC_BUF_SIZE,0,reinterpret_cast<struct sockaddr *>(&client),&client_len);
 #else
-	n = recvfrom(this->sock,(void *)buf,INC_BUF_SIZE,0,(struct sockaddr *)&client,&client_len);
+	n = recvfrom(this->sock,buf,INC_BUF_SIZE,0,reinterpret_cast<struct sockaddr *>(&client),&client_len);
 #endif
 	DBG(9,"After recvfrom\n");
 	
@@ -692,7 +695,7 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 
 	if(msg->val==2) {
 		DBG(8,"Encoding validation 2 packet of %i bytes...\n",msize);
-		buf2=(Byte *)malloc(sizeof(Byte) * msize);
+		buf2=static_cast<Byte *>(malloc(sizeof(Byte) * msize));
 		if(buf2==NULL) { throw txNoMem(_WHERE("")); }
 		alcEncodePacket(buf2,buf,msize);
 		buf=buf2; //don't need to decode again
@@ -700,18 +703,18 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 			DBG(8,"Client is authenticated, doing checksum...\n");
 			U32 val=alcUruChecksum(buf,msize,2,u->passwd);
 #if defined(NEED_STRICT_ALIGNMENT)
-			memcpy(buf+2,(void*)&val,4);
+			memcpy(buf+2,&val,4);
 #else
-			*((U32 *)(buf+2))=val;
+			*reinterpret_cast<U32 *>(buf+2)=val;
 #endif
 			DBG(8,"Checksum done!...\n");
 		} else {
 			DBG(8,"Client is not authenticated, doing checksum...\n");
 			U32 val=alcUruChecksum(buf,msize,1,NULL);
 #if defined(NEED_STRICT_ALIGNMENT)
-			memcpy(buf+2,(void*)&val,4);
+			memcpy(buf+2,&val,4);
 #else
-			*((U32 *)(buf+2))=val;
+			*reinterpret_cast<U32 *>(buf+2)=val;
 #endif
 			DBG(8,"Checksum done!...\n");
 		}
@@ -719,9 +722,9 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 	} else if(msg->val==1) {
 		U32 val=alcUruChecksum(buf,msize,0,NULL);
 #if defined(NEED_STRICT_ALIGNMENT)
-		memcpy(buf+2,(void*)&val,4);
+		memcpy(buf+2,&val,4);
 #else
-		*((U32 *)(buf+2))=val;
+		*reinterpret_cast<U32 *>(buf+2)=val;
 #endif
 		buf[1]=0x01;
 	} else {
@@ -757,14 +760,14 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 
 	if(msize>0) {
 #ifdef __WIN32__
-		msize = sendto(sock,(const char *)buf,msize,0,(struct sockaddr *)&client,sizeof(struct sockaddr));
+		msize = sendto(sock,reinterpret_cast<const char *>(buf),msize,0,reinterpret_cast<struct sockaddr *>(&client),sizeof(struct sockaddr));
 #else
-		msize = sendto(sock,(char *)buf,msize,0,(struct sockaddr *)&client,sizeof(struct sockaddr));
+		msize = sendto(sock,reinterpret_cast<char *>(buf),msize,0,reinterpret_cast<struct sockaddr *>(&client),sizeof(struct sockaddr));
 #endif
 	}
 
 	DBG(9,"After the Sendto call...\n");
-	free((void *)buf2);
+	free(buf2);
 	delete mbuf;
 	DBG(8,"returning from uru_net_send RET:%i\n",msize);
 }

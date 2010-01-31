@@ -166,19 +166,19 @@ U32 alcGetMicroseconds() {
 }
 
 U32 alcGetTime() {
-	return (U32)time(NULL);
+	return time(NULL);
 }
 
 /** Gets the current time as double*/
 double alcGetCurrentTime(const char format) {
 	switch(format) {
 		case 'u':
-			return ((double)time(NULL) * 1000000) + (double)alcGetMicroseconds();
+			return (time(NULL) * 1000000.0) + alcGetMicroseconds();
 		case 'm':
-			return ((double)time(NULL) * 1000) + ((double)alcGetMicroseconds() / 1000);
+			return (time(NULL) * 1000.0) + (alcGetMicroseconds() / 1000.0);
 		case 's':
 		default:
-			return ((double)time(NULL) + ((double)alcGetMicroseconds() / 1000000));
+			return time(NULL) + (alcGetMicroseconds() / 1000000.0);
 	}
 }
 

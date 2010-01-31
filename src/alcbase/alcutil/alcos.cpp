@@ -46,9 +46,9 @@ namespace alc {
 
 char * alcGetExt(const char * addr) {
 	static char ext[11];
-	int i;
-	for(i=strlen(addr); i>((int)(strlen(addr)-10)); i--) {
-		if(addr[i]=='/' || addr[i]=='\\' || addr[i]==':' || addr[i]=='.') {
+	U32 i;
+	for(i=strlen(addr); ; i--) {
+		if(addr[i]=='/' || addr[i]=='\\' || addr[i]==':' || addr[i]=='.' || i == 0) {
 			break;
 		}
 	}
@@ -64,14 +64,15 @@ char * alcGetExt(const char * addr) {
 }
 
 void alcStripExt(char * addr) {
-	int i=0;
-	for(i=strlen(addr); i>(int)(strlen(addr)-10); i--) {
-		if(addr[i]=='/' || addr[i]=='\\' || addr[i]==':') {
-			break;
-		} else if(addr[i]=='.') {
+	U32 i=0;
+	for(i=strlen(addr); ; i--) {
+		if(addr[i]=='.') {
 			addr[i]='\0';
 			break;
 		}
+		else if(addr[i]=='/' || addr[i]=='\\' || addr[i]==':' || i == 0) {
+			break;
+		} 
 	}
 }
 

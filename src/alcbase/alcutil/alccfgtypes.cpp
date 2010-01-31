@@ -63,7 +63,7 @@ tConfigVal::~tConfigVal() {
 			DBG(9,"i:%i\n",i);
 			delete values[i];
 		}
-		free((void *)values);
+		free(values);
 	}
 }
 void tConfigVal::setName(const char * name) {
@@ -92,11 +92,11 @@ void tConfigVal::setVal(const tString & t,U16 x,U16 y) {
 		this->y = my;
 		ox = x+1;
 		oy = my;
-		free((void *)ovalues);
+		free(ovalues);
 		ovalues=values;
 	}
 	if(oy<(y+1)) {
-		values=static_cast<tString **>(realloc((void *)values,sizeof(tString *) * ((y+1)*(ox))));
+		values=static_cast<tString **>(realloc(values,sizeof(tString *) * ((y+1)*(ox))));
 		if(values==NULL) throw txNoMem(_WHERE("."));
 		memset((values+((ox)*(oy))),0,sizeof(tString *) * ((((y+1)*(ox)))-((ox)*(oy))));
 		this->y = my;
@@ -134,7 +134,7 @@ void tConfigVal::copy(const tConfigVal &t) {
 		for(i=0; i<x*y; i++) {
 			delete values[i];
 		}
-		free((void *)values);
+		free(values);
 	}
 	x=t.x;
 	y=t.y;
@@ -159,7 +159,7 @@ tConfigKey::~tConfigKey() {
 		for(i=0; i<n; i++) {
 			delete values[i];
 		}
-		free((void *)values);
+		free(values);
 	}
 }
 void tConfigKey::setName(const char * name) {
@@ -192,7 +192,7 @@ void tConfigKey::copy(const tConfigKey &t) {
 		for(i=0; i<n; i++) {
 			delete values[i];
 		}
-		free((void *)values);
+		free(values);
 	}
 	n=t.n;
 	values=static_cast<tConfigVal **>(malloc(sizeof(tConfigVal *) * (n)));
@@ -236,7 +236,7 @@ tConfig::~tConfig() {
 		for(i=0; i<n; i++) {
 			delete values[i];
 		}
-		free((void *)values);
+		free(values);
 	}
 }
 tConfigKey * tConfig::findKey(const tString & where,bool create) {
@@ -249,7 +249,7 @@ tConfigKey * tConfig::findKey(const tString & where,bool create) {
 	}
 	if(!create) return NULL;
 	n++;
-	values=static_cast<tConfigKey **>(realloc((void *)values,sizeof(tConfigKey *) * n));
+	values=static_cast<tConfigKey **>(realloc(values,sizeof(tConfigKey *) * n));
 	values[n-1]=new tConfigKey();
 	values[n-1]->setName(where);
 	return values[n-1];

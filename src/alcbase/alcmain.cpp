@@ -41,6 +41,9 @@
 
 #include "alcdebug.h"
 
+// We are using SIG_DFL here which implies an old-style cast
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+
 namespace alc {
 
 static volatile bool alcInitialized=false;
