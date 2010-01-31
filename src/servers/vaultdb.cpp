@@ -70,8 +70,8 @@ namespace alc {
 		`str_6` varchar(255) NOT NULL default '',\
 		`lstr_1` varchar(255) NOT NULL default '',\
 		`lstr_2` varchar(255) NOT NULL default '',\
-		`text_1` varchar(255) NOT NULL default '',\
-		`text_2` varchar(255) NOT NULL default '',\
+		`text_1` text NOT NULL,\
+		`text_2` text NOT NULL,\
 		`blob_1` longblob NOT NULL ,\
 		PRIMARY KEY ( `idx` ) ,\
 		KEY `type` ( `type` ) ,\
@@ -84,6 +84,8 @@ namespace alc {
 		KEY `lstr_1` ( `lstr_1` ) ,\
 		KEY `lstr_2` ( `lstr_2` )\
 	) TYPE=MyISAM PACK_KEYS=0 AUTO_INCREMENT=%d;"
+	// observation shows that varchar is not enough for the text fields
+	// "blob_1" has a length field of 4 byte, with "longblob" we can be sure the data will always fit
 	
 	#define REFVAULT_TABLE_INIT "\
 	CREATE TABLE `%s` (\
@@ -98,14 +100,15 @@ namespace alc {
 		KEY `id3` (`id3`)\
 	) TYPE=MyISAM;"
 	
-	const int vaultVersion=3; // only change on major vault format changes, and be sure that there is a migration (see tVaultDB::prepare)
+	const int vaultVersion=4; // only change on major vault format changes, and be sure that there is a migration (see tVaultDB::prepare)
 		/* Version history:
 			0 -> old very old format
 			1 -> old unet3 format
 			2 -> new unet3 format, adds DniCityX2Finale to allow end game sequence play
 				NOTE THIS WILL HAVE UNEXPECTED AND UNWANTED RESULTS ON NON TPOTS CLIENTS!!!
 				The vault must have at least this version for the unet3+ vault to be able to migrate it
-			3 -> current version, removes unused columns and renames the rest to the vault manager names, uses timestamp columns
+			3 -> first unet3+ version, removes unused columns and renames the rest to the vault manager names, uses timestamp columns
+			4 -> use text instead of varchar for the text columns - varchar is not long enough
 		*/
 
 	////IMPLEMENTATION
@@ -169,7 +172,16 @@ namespace alc {
 					log->log("Converting DB from version 2 to 3... \n");
 					migrateVersion2to3();
 					log->log("Done converting DB from version 2 to 3!\n");
+					version = 3;
 				}
+				if (version == 3) {
+					log->log("Converting DB from version 3 to 4... \n");
+					migrateVersion3to4();
+					log->log("Done converting DB from version 3 to 4!\n");
+					version = 4;
+				}
+				if (version != vaultVersion)
+					throw txDatabaseError(_WHERE("Migration function missing!"));
 				log->log("Started VaultDB driver (%s)\n", __U_VAULTDB_ID);
 				return true;
 			}
@@ -313,6 +325,20 @@ namespace alc {
 		sql->query(query.c_str(), "migrateVersion2to3: setting version number");
 		// remove invalid references
 		removeInvalidRefs();
+	}
+	
+	void tVaultDB::migrateVersion3to4(void)
+	{
+		// this is a private function, so the caller already did the prepare() check
+		
+		tString query;
+		// update the text columns
+		query.printf("ALTER TABLE %s CHANGE text_1 text_1 text NOT NULL, CHANGE text_2 text_2 text NOT NULL", vaultTable);
+		sql->query(query.c_str(), "migrateVersion3to4: altering table structure");
+		// update version number
+		query.clear();
+		query.printf("UPDATE %s SET int_1=4 WHERE type=6", vaultTable); // only the root node has type 6
+		sql->query(query.c_str(), "migrateVersion3to4: setting version number");
 	}
 	
 	int tVaultDB::getPlayerList(const Byte *uid, tMBuf *t)

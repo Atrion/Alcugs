@@ -20,7 +20,7 @@ Bugfixes:
 - Made sure that kicking a player is mentioned both in error.log and access.log
 - Some changes to the timeouts of the connection to the client should hopefully allow more slow PCs to load big ages
   (thanks to Marten for his testing)
-- Fixed some vault server crashes
+- Fixed some vault server crashes as well as the problem of some chronicles being cut off
 - Disabled advanced message and ack logging per default (it just spams the disk)
 - Fixed strange problem on some Linux systems which prevents age and sdl files from being read
 - Fix some wrong assumptions about the plNetMessage flags
