@@ -109,7 +109,7 @@ namespace alc {
 		serverSideCommands = (var.isNull() || var.asByte()); // enabled per default
 	}
 	
-	void tUnetGameServer::additionalVaultProcessing(tNetSession *u, tvMessage *msg)
+	void tUnetGameServer::onVaultMessageForward(tNetSession *u, tvMessage *msg)
 	{
 		// FIXME: This whole function is a bad hack - eventually, everything done here should be properly implemented elsewhere
 		// first of all, we are only interested in VSaveNodes sent from client to vault
@@ -264,7 +264,7 @@ namespace alc {
 		send(msg);
 	}
 	
-	void tUnetGameServer::playerAuthed(tNetSession */*u*/)
+	void tUnetGameServer::onPlayerAuthed(tNetSession */*u*/)
 	{
 		// a new player connected, so we are no longer alone
 		// we have to do this when the player authenticates because it will download the age before joining, in which time the auto-kill could already stop the server

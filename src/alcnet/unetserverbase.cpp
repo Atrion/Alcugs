@@ -63,7 +63,7 @@ namespace alc {
 					tmPing pingReply(u, ping);
 					send(pingReply);
 				}
-				else forwardPing(ping, u); // if not, forward it (only implemented by lobby and game)
+				else onForwardPing(ping, u); // if not, forward it (only implemented by lobby and game)
 				return 1;
 			}
 		}

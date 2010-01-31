@@ -57,19 +57,6 @@ namespace alc {
 		vaultLogShort = false;
 	}
 	
-	void tUnetLobbyServerBase::terminateAll()
-	{
-		// make sure that player connections are terminated before the server connections
-		tNetSession *u;
-		smgr->rewind();
-		while ((u=smgr->getNext())) { // double brackets to suppress gcc warning
-			if (!u->isTerminated() && u->getPeerType() == KClient) // terminate only KClients (i.e. authed players)
-				terminate(u);
-		}
-		// now the remaining connections
-		tUnetServerBase::terminateAll();
-	}
-	
 	void tUnetLobbyServerBase::onLoadConfig(void)
 	{
 		tConfig *cfg = alcGetConfig();
@@ -111,7 +98,7 @@ namespace alc {
 		}
 	}
 	
-	void tUnetLobbyServerBase::forwardPing(tmPing &ping, tNetSession *u)
+	void tUnetLobbyServerBase::onForwardPing(tmPing &ping, tNetSession *u)
 	{
 		if (u->getPeerType() == KAuth || u->getPeerType() == KTracking || u->getPeerType() == KVault) { // we got a ping reply from one of our servers, let's forward it to the client it came from
 			if (!ping.hasFlags(plNetSid)) throw txProtocolError(_WHERE("SID flag missing"));
@@ -412,7 +399,7 @@ namespace alc {
 					tmAccountAutheticated accountAuth(client, authResponse.x, AAuthSucceeded, serverGuid);
 					send(accountAuth);
 					sec->log("%s successful login\n", client->str());
-					playerAuthed(client);
+					onPlayerAuthed(client);
 				}
 				else {
 					Byte zeroGuid[8]; // only send zero-filled GUIDs to non-authed players
@@ -533,7 +520,7 @@ namespace alc {
 					}
 					parsedMsg.print(lvault, /*clientToServer:*/false, client, vaultLogShort);
 					// do additional processing
-					additionalVaultProcessing(u, &parsedMsg);
+					onVaultMessageForward(u, &parsedMsg);
 					// send it on to client
 					parsedMsg.tpots = client->tpots;
 					tmVault vaultMsgFwd(client, vaultMsg.ki, vaultMsg.x, isTask, &parsedMsg);
@@ -555,7 +542,7 @@ namespace alc {
 					vaultMsg.message.get(parsedMsg);
 					parsedMsg.print(lvault, /*clientToServer:*/true, u, vaultLogShort);
 					// do additional processing
-					additionalVaultProcessing(u, &parsedMsg);
+					onVaultMessageForward(u, &parsedMsg);
 					// send it on to vault
 					parsedMsg.tpots = vaultServer->tpots;
 					tmVault vaultMsgFwd(vaultServer, u->ki, vaultMsg.x, isTask, &parsedMsg);

@@ -48,9 +48,9 @@ public:
 	*/
 	void stop(SByte timeout=-1);
 	
-	void forcestop() { stop(0); /* stop with a timeout of 0 */ }
-	/** Terminates all connections */
-	virtual void terminateAll();
+	inline void forcestop() { stop(0); /* stop with a timeout of 0 */ }
+	/** Terminates all connections to players */
+	inline void terminatePlayers() { terminateAll(/*playersOnly*/true); }
 	
 	/** Force a reload of the netcore settings (after changing the configuration for example) */
 	void reload()
@@ -153,10 +153,11 @@ protected:
 	/** this is called after loading and reloading the config */
 	virtual void onReloadConfig() {}
 private:
+	void terminateAll(bool playersOnly = false);
 	/** destroy that session and do an onConnectionClosed */
 	void closeConnection(tNetSession *u);
 	
-	void processEvent(tNetEvent *evt, tNetSession *u, bool shutdown = false);
+	void processEventQueue(bool shutdown = false);
 	int parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool shutdown);
 	void reconfigure();
 	bool state_running;
