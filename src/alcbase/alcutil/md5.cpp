@@ -60,6 +60,9 @@
 #include "alcutil/md5.h"
 #include <string.h>
 
+// This is a 3rd-party file, ingore warnings
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+
 #undef BYTE_ORDER	/* 1 = big-endian, -1 = little-endian, 0 = unknown */
 #ifdef WORDS_BIGENDIAN
 #  define BYTE_ORDER (WORDS_BIGENDIAN ? 1 : -1)
