@@ -173,8 +173,8 @@ void tNetSession::updateRTT(U32 newread) {
 	const S32 alpha=125; // this is effectively 0.125
 	const S32 u=2;
 	const S32 delta=4;
-	const S32 diff=(S32)newread - (S32)rtt;
-	rtt=(S32)rtt+((alpha*diff)/1000);
+	const S32 diff=newread - rtt;
+	rtt=rtt+((alpha*diff)/1000);
 	deviation+=(alpha*(abs(diff)-deviation))/1000;
 	timeout=u*rtt + delta*deviation;
 	if (timeout > 4000000) timeout = 4000000;
@@ -645,7 +645,7 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	ack->B=msg.cps;
 	
 	//we must delay either none or all messages, otherwise the rtt will vary too much
-	U32 ackWaitTime=timeToSend((((U32)msg.frt-msg.frn)+1) * maxPacketSz); // this is how long transmitting the whole packet will approximately take
+	U32 ackWaitTime=timeToSend((msg.frt-msg.frn+1) * maxPacketSz); // this is how long transmitting the whole packet will approximately take
 	if(ackWaitTime > timeout/4) ackWaitTime=timeout/4; // don't use the rtt as basis, it is 0 at the beginning, resulting in a much too quick first answer, a much too low rtt on the other side and thus the packets being re-sent too early
 	ack->timestamp=net->net_time + ackWaitTime;
 	// the net timer will be updated when the ackq is checked (which is done since processMsg will call doWork after calling createAckReply)

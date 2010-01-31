@@ -120,7 +120,7 @@ protected:
 	U32 getNetTime() { return net_time; }
 	tNetEvent * getEvent();
 	
-	virtual bool canPortBeUsed(U16 port) { return false; }
+	virtual bool canPortBeUsed(U16 /*port*/) { return false; }
 
 private:
 	void init();

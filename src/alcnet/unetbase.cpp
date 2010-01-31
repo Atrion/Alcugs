@@ -114,7 +114,7 @@ void tUnetBase::reconfigure() {
 	}
 	var=cfg->getVar("private_mask","global");
 	if(!var.isNull()) {
-		lan_mask=(U32)inet_addr(var.c_str());
+		lan_mask=inet_addr(var.c_str());
 	}
 	var=cfg->getVar("private_network","global");
 	if(!var.isNull()) {

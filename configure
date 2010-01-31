@@ -4603,7 +4603,8 @@ esac
 fi
 
 
-CXXFLAGS="-Wall -Wold-style-cast"
+CXXFLAGS="-Wall -Wextra"
+# Maybe also add -Wold-style-cast, -Wformat=2, -Winit-self, -Wswitch-enum and -Woverloaded-virtual ?
 
 if test x$RDYNAMIC = xtrue; then
 	CXXFLAGS="$CXXFLAGS -rdynamic"

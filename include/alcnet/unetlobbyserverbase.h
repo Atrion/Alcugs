@@ -64,8 +64,8 @@ protected:
 	virtual void onUnloadConfig(void);
 	virtual void onLoadConfig(void);
 
-	virtual void additionalVaultProcessing(tNetSession *u, tvMessage *msg) {}
-	virtual void playerAuthed(tNetSession *u) {}
+	virtual void additionalVaultProcessing(tNetSession */*u*/, tvMessage */*msg*/) {}
+	virtual void playerAuthed(tNetSession */*u*/) {}
 	
 	tNetSession *getServer(Byte dst);
 
