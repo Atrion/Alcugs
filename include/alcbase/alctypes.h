@@ -313,9 +313,7 @@ public:
 	bool startsWith(const char * pat) const;
 	bool endsWith(const char * pat) const;
 	void writeStr(const char * t);
-	void writeStr(const tString *val) { write(val->c_str(),val->size()); }
 	void writeStr(const tString & val) { write(val.c_str(),val.size()); }
-	void writeStr(tString *val) { write(val->c_str(),val->size()); }
 	void writeStr(tString &val) { write(val.c_str(),val.size()); }
 	void printf(const char * msg, ...);
 	void printBoolean(const char *desc, bool val) { writeStr(desc); printBoolean(val); }
