@@ -4,7 +4,6 @@ NetCore
 ============
 * Implement the save Bandwidth thingy
 * Implement a firewall
-* Fix some free() problems
 * Fix the 256KBytes max message size problem
 * Fix some exploits
 
@@ -12,7 +11,6 @@ Auth
 ========
 * Allow admins to select wich client versions they want
 * Implement additional cryptographic asimetric authentication extension
-* Implement server Identification
 
 Tracking
 ========
@@ -21,6 +19,7 @@ Tracking
 Vault
 ===========
 * Optimizations
+* Implement permissions
 * Fix some vault server based exploits
 * Implement vault server side limits
 * WorkAround against invalid SDL nodes
@@ -59,4 +58,5 @@ Clients
 
 Feature-Requests list
 =======================
+* Be able to broadcast admin messages to all players
 * E-mail notifications on Ki mail

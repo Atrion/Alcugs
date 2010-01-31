@@ -2625,8 +2625,6 @@ ac_config_headers="$ac_config_headers include/alcbase/alcconfig.h"
 
 
 
-#CXXFLAGS="-Wall -rdynamic -g3 -O0"
-
 #Platform info
 # Make sure we can run config.sub.
 $SHELL "$ac_aux_dir/config.sub" sun4 >/dev/null 2>&1 ||
@@ -4605,7 +4603,7 @@ esac
 fi
 
 
-CXXFLAGS="-Wall"
+CXXFLAGS="-Wall -Wold-style-cast"
 
 if test x$RDYNAMIC = xtrue; then
 	CXXFLAGS="$CXXFLAGS -rdynamic"

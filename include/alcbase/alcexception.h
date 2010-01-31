@@ -71,7 +71,7 @@ public:
 	txBase(const char * msg="",bool abort=false,bool core=false);
 	txBase(const char * name,const char * msg,bool abort,bool core);
 	txBase(const txBase &t);
-	void copy(txBase &t);
+	void copy(const txBase &t);
 	const txBase & operator=(txBase &t) { this->copy(t); return *this; }
 	/** \brief Returns the description message */
 	virtual const char * what();
@@ -96,67 +96,67 @@ private:
 class txOutOfRange : public txBase {
 public:
 	txOutOfRange(const char * msg="",bool abort=false,bool core=false) :txBase("OutOfRange",msg,abort,core) {}
-	txOutOfRange(const txOutOfRange &t) :txBase((txOutOfRange &)t) {}
+	txOutOfRange(const txOutOfRange &t) :txBase(t) {}
 };
 /** unknown flags */
 class txUnkFlags : public txBase {
 public:
 	txUnkFlags(const char * msg="",bool abort=false,bool core=false) :txBase("UnkFlags",msg,abort,core) {}
-	txUnkFlags(const txUnkFlags &t) :txBase((txUnkFlags &)t) {}
+	txUnkFlags(const txUnkFlags &t) :txBase(t) {}
 };
 /** unknown flags */
 class txUnexpectedData : public txBase {
 public:
 	txUnexpectedData(const char * msg="",bool abort=false,bool core=false) :txBase("UnexpectedData",msg,abort,core) {}
-	txUnexpectedData(const txUnexpectedData &t) :txBase((txUnexpectedData &)t) {}
+	txUnexpectedData(const txUnexpectedData &t) :txBase(t) {}
 };
 /** No Mem */
 class txNoMem : public txBase {
 public:
 	txNoMem(const char * msg="",bool abort=false,bool core=false) :txBase("NoMem",msg,abort,core) {}
-	txNoMem(const txNoMem &t) :txBase((txNoMem &)t) {}
+	txNoMem(const txNoMem &t) :txBase(t) {}
 };
 /** Ref Err */
 class txRefErr : public txBase {
 public:
 	txRefErr(const char * msg="",bool abort=false,bool core=false) :txBase("RefErr",msg,abort,core) {}
-	txRefErr(const txRefErr &t) :txBase((txRefErr &)t) {}
+	txRefErr(const txRefErr &t) :txBase(t) {}
 };
 /** Write Err */
 class txWriteErr : public txBase {
 public:
 	txWriteErr(const char * msg="",bool abort=false,bool core=false) :txBase("WriteErr",msg,abort,core) {}
-	txWriteErr(const txWriteErr &t) :txBase((txWriteErr &)t) {}
+	txWriteErr(const txWriteErr &t) :txBase(t) {}
 };
 /** No File */
 class txNoFile : public txBase {
 public:
 	txNoFile(const char * msg="",bool abort=false,bool core=false) :txBase("NoFile",msg,abort,core) {}
-	txNoFile(const txNoFile &t) :txBase((txNoFile &)t) {}
+	txNoFile(const txNoFile &t) :txBase(t) {}
 };
 /** Unk Err */
 class txUnkErr : public txBase {
 public:
 	txUnkErr(const char * msg="",bool abort=false,bool core=false) :txBase("UnkErr",msg,abort,core) {}
-	txUnkErr(const txUnkErr &t) :txBase((txUnkErr &)t) {}
+	txUnkErr(const txUnkErr &t) :txBase(t) {}
 };
 /** No File */
 class txNotFound : public txBase {
 public:
 	txNotFound(const char * msg="",bool abort=false,bool core=false) :txBase("NotFound",msg,abort,core) {}
-	txNotFound(const txNotFound &t) :txBase((txNotFound &)t) {}
+	txNotFound(const txNotFound &t) :txBase(t) {}
 };
 /** No File */
 class txNoAccess : public txBase {
 public:
 	txNoAccess(const char * msg="",bool abort=false,bool core=false) :txBase("NoAccess",msg,abort,core) {}
-	txNoAccess(const txNoAccess &t) :txBase((txNoAccess &)t) {}
+	txNoAccess(const txNoAccess &t) :txBase(t) {}
 };
 /** Parse error */
 class txParseError : public txBase {
 public:
 	txParseError(const char * msg="",bool abort=false,bool core=false) :txBase("ParseError",msg,abort,core) {}
-	txParseError(const txParseError &t) :txBase((txParseError &)t) {}
+	txParseError(const txParseError &t) :txBase(t) {}
 };
 
 

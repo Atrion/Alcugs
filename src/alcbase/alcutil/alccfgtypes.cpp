@@ -81,7 +81,7 @@ void tConfigVal::setVal(const tString & t,U16 x,U16 y) {
 	my = ( oy > (y+1) ? oy : (y+1));
 	if(ox<(x+1)) {
 		//resize and copy
-		values=(tString **)malloc(sizeof(tString *) * ((my) * (x+1)));
+		values=static_cast<tString **>(malloc(sizeof(tString *) * ((my) * (x+1))));
 		memset(values,0,sizeof(tString *) * ((my) * (x+1)));
 		for(j=0; j<oy; j++) {
 			for(k=0; k<ox; k++) {
@@ -96,7 +96,7 @@ void tConfigVal::setVal(const tString & t,U16 x,U16 y) {
 		ovalues=values;
 	}
 	if(oy<(y+1)) {
-		values=(tString **)realloc((void *)values,sizeof(tString *) * ((y+1)*(ox)));
+		values=static_cast<tString **>(realloc((void *)values,sizeof(tString *) * ((y+1)*(ox))));
 		if(values==NULL) throw txNoMem(_WHERE("."));
 		memset((values+((ox)*(oy))),0,sizeof(tString *) * ((((y+1)*(ox)))-((ox)*(oy))));
 		this->y = my;
@@ -138,7 +138,7 @@ void tConfigVal::copy(const tConfigVal &t) {
 	}
 	x=t.x;
 	y=t.y;
-	values=(tString **)malloc(sizeof(tString *) * (x*y));
+	values=static_cast<tString **>(malloc(sizeof(tString *) * (x*y)));
 	memset(values,0,sizeof(tString *) * (x*y));
 	for(i=0; i<x*y; i++) {
 		if(t.values[i]!=NULL) {
@@ -177,7 +177,7 @@ tConfigVal * tConfigKey::find(const tString & what,bool create) {
 	}
 	if(!create) return NULL;
 	n++;
-	values=(tConfigVal **)realloc((void *)values,sizeof(tConfigVal *) * n);
+	values=static_cast<tConfigVal **>(realloc(values,sizeof(tConfigVal *) * n));
 	values[n-1]=new tConfigVal(what);
 	return values[n-1];
 }
@@ -195,7 +195,7 @@ void tConfigKey::copy(const tConfigKey &t) {
 		free((void *)values);
 	}
 	n=t.n;
-	values=(tConfigVal **)malloc(sizeof(tConfigVal *) * (n));
+	values=static_cast<tConfigVal **>(malloc(sizeof(tConfigVal *) * (n)));
 	memset(values,0,sizeof(tConfigVal *) * (n));
 	for(i=0; i<n; i++) {
 		if(t.values[i]!=NULL) {
@@ -249,7 +249,7 @@ tConfigKey * tConfig::findKey(const tString & where,bool create) {
 	}
 	if(!create) return NULL;
 	n++;
-	values=(tConfigKey **)realloc((void *)values,sizeof(tConfigKey *) * n);
+	values=static_cast<tConfigKey **>(realloc((void *)values,sizeof(tConfigKey *) * n));
 	values[n-1]=new tConfigKey();
 	values[n-1]->setName(where);
 	return values[n-1];

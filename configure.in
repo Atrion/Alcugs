@@ -12,8 +12,6 @@ AH_TOP([#ifndef __U_ALCCONFIG_H
 AH_BOTTOM([
 #endif])
 
-#CXXFLAGS="-Wall -rdynamic -g3 -O0"
-
 #Platform info
 AC_CANONICAL_HOST
 AC_DEFINE_UNQUOTED(_PLATFORM_, "${host}",
@@ -65,7 +63,7 @@ AC_ARG_ENABLE(debug,
   *) AC_MSG_ERROR(bad value ${enableval} for --enable-debug) ;;
 esac])
 
-CXXFLAGS="-Wall"
+CXXFLAGS="-Wall -Wold-style-cast"
 
 if test x$RDYNAMIC = xtrue; then
 	CXXFLAGS="$CXXFLAGS -rdynamic"

@@ -73,7 +73,7 @@ U32 alcGetSelfThreadId() {
 
 THREAD_RET _alcThreadSpawner(void * s) {
 	tThread * t;
-	t=(tThread *)s;
+	t=static_cast<tThread *>(s);
 	t->main();
 	#ifndef __WIN32__
 	return (NULL);
