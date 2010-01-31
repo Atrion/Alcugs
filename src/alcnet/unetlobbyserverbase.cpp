@@ -157,9 +157,28 @@ namespace alc {
 		return true;
 	}
 	
-	void tUnetLobbyServerBase::terminate(tNetSession *u, Byte reason, bool gotLeave)
+	void tUnetLobbyServerBase::onConnectionClosing(tNetSession *u, Byte reason)
 	{
-		if (u->getPeerType() == KClient && u->ki != 0) { // if necessary, tell the others about it
+		// if it was one of our servers, save the time it went (it will be reconnected later)
+		if (authIte == u) {
+			auth_gone = alcGetTime(); authIte = tNetSessionIte();
+		}
+		else if (trackingIte == u) {
+			if (whoami == KGame && isRunning()) {
+				err->log("ERR: I lost the connection to the tracking server, so I will go down\n");
+				/* The game server should go down when it looses the connection to tracking. This way, you can easily
+				shut down all game servers. In addition, it won't get any new peers anyway without the tracking server */
+				stop();
+			}
+			else {
+				tracking_gone = alcGetTime(); trackingIte = tNetSessionIte();
+			}
+		}
+		else if (vaultIte == u) {
+			vault_gone = alcGetTime(); vaultIte = tNetSessionIte();
+		}
+		// If it was a client, tell the others it left
+		else if (u->getPeerType() == KClient && u->ki != 0) {
 			tNetSession *trackingServer = getServer(KTracking);
 			if (!trackingServer) {
 				err->log("ERR: I've got to update a player\'s (%s) status for the tracking server, but it is unavailable.\n", u->str());
@@ -171,8 +190,6 @@ namespace alc {
 			}
 			u->ki = 0; // this avoids sending the messages twice
 		}
-	
-		tUnetServerBase::terminate(u, reason, gotLeave); // do the common terminate procedure
 	}
 	
 	void tUnetLobbyServerBase::onStart(void)
@@ -244,28 +261,6 @@ namespace alc {
 			terminate(session);
 		}
 		return NULL;
-	}
-	
-	void tUnetLobbyServerBase::onConnectionClosed(tNetSession *u)
-	{
-		// if it was one of the servers, save the time it went (it will be reconnected later)
-		if (authIte == u) {
-			auth_gone = alcGetTime(); authIte = tNetSessionIte();
-		}
-		else if (trackingIte == u) {
-			if (whoami == KGame && isRunning()) {
-				err->log("ERR: I lost the connection to the tracking server, so I will go down\n");
-				/* The game server should go down when it looses the connection to tracking. This way, you can easily
-				shut down all game servers. In addition, it won't get any new peers anyway without the tracking server */
-				stop();
-			}
-			else {
-				tracking_gone = alcGetTime(); trackingIte = tNetSessionIte();
-			}
-		}
-		else if (vaultIte == u) {
-			vault_gone = alcGetTime(); vaultIte = tNetSessionIte();
-		}
 	}
 	
 	void tUnetLobbyServerBase::onIdle(bool /*idle*/)

@@ -232,6 +232,9 @@ void tUnetBase::terminate(tNetSession *u, Byte reason, bool gotLeave)
 		}
 	}
 	
+	if (!u->isTerminated()) // don't trigger the event twice
+		onConnectionClosing(u, reason);
+	
 	if (destroy) { // if the session should be destroyed, do that ASAP
 		u->terminate(0/*seconds*/);
 	} else { // otherwise, give the session one second to send remaining messages
@@ -249,11 +252,10 @@ void tUnetBase::terminateAll(bool playersOnly)
 	}
 }
 
-void tUnetBase::closeConnection(tNetSession *u)
+void tUnetBase::removeConnection(tNetSession *u)
 {
 	sec->log("%s Ended\n",u->str());
 	tNetEvent * ev=new tNetEvent(u->getIte(),UNET_TERMINATED);
-	onConnectionClosed(u);
 	destroySession(ev->sid);
 	delete ev;
 }
@@ -279,7 +281,7 @@ void tUnetBase::processEventQueue(bool shutdown)
 							terminate(u, RTimedOut);
 					}
 					else { // a destroyed session, close it
-						closeConnection(u);
+						removeConnection(u);
 					}
 					break;
 				case UNET_FLOOD:
@@ -389,7 +391,7 @@ void tUnetBase::run() {
 		smgr->rewind();
 		tNetSession * u;
 		while((u=smgr->getNext())) {
-			closeConnection(u);
+			removeConnection(u);
 		}
 	}
 	
@@ -410,7 +412,6 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool 
 			log->log("<RCV> [%d] %s\n",msg->sn,msgleave.str());
 			if (!shutdown && !u->isTerminated()) {
 				ev->id=UNET_TERMINATED;
-				onLeave(msgleave.reason,u);
 			}
 			/* The peer left, so there is nothing we have to do anymore, just remove it */
 			terminate(u, msgleave.reason, /*gotLeave*/true); // this will delete the session ASAP
@@ -423,7 +424,6 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool 
 			msg->data.get(msgterminated);
 			log->log("<RCV> [%d] %s\n",msg->sn,msgterminated.str());
 			ev->id=UNET_TERMINATED;
-			onTerminated(msgterminated.reason,u);
 			/* The peer wants to terminate, so tell him we are ready to leave */
 			terminate(u);
 			return 1;
