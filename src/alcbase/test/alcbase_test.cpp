@@ -115,7 +115,7 @@ void alctypes_mbuf() {
 	assert(buf1.tell()==0);
 	std::cout<<"-"<< buf1.read()<<"-" <<std::endl;
 	buf1.rewind();
-	assert(!strcmp((char *)buf1.read(),"Hello WorldBye cruel world"));
+	assert(!strcmp(reinterpret_cast<const char *>(buf1.read()),"Hello WorldBye cruel world"));
 	buf1.rewind();
 	assert(buf1.tell()==0);
 	buf1.end();
@@ -132,7 +132,7 @@ void alctypes_mbuf() {
 	assert(buf1.tell()==0);
 	buf1.seek(0,SEEK_END);
 	assert(buf1.tell()==buf1.size());
-	buf1.seek(-(S32)buf1.size());
+	buf1.seek(-static_cast<S32>(buf1.size()));
 	assert(buf1.tell()==0);
 	dmalloc_verify(NULL);
 	try {
@@ -175,13 +175,13 @@ void alctypes_mbuf() {
 #if defined(WORDS_BIGENDIAN)
 	assert(letoh32(0x013478ab) == 0xab783401);
 	assert(htole32(0x013478ab) == 0xab783401);
-	assert(letoh16((U16)0xdef0) == (U16)0xf0de);
-	assert(htole16((U16)0xdef0) == (U16)0xf0de);
+	assert(letoh16(0xdef0) == 0xf0de);
+	assert(htole16(0xdef0) == 0xf0de);
 #else
 	assert(letoh32(0x013478ab) == 0x013478ab);
 	assert(htole32(0x013478ab) == 0x013478ab);
-	assert(letoh16((U16)0xdef0) == (U16)0xdef0);
-	assert(htole16((U16)0xdef0) == (U16)0xdef0);
+	assert(letoh16(0xdef0) == 0xdef0);
+	assert(htole16(0xdef0) == 0xdef0);
 #endif
 	U32 my=buf1.tell();
 	buf1.putU16(23);
@@ -1015,10 +1015,10 @@ int log_test() {
 
 	const char * kk3="hola whola ";
 
-	log1.dumpbuf((Byte *)kk,strlen(kk));
+	log1.dumpbuf(reinterpret_cast<const Byte *>(kk),strlen(kk));
 	log1.nl();
 
-	log1.dumpbuf((Byte *)kk3,strlen(kk3));
+	log1.dumpbuf(reinterpret_cast<const Byte *>(kk3),strlen(kk3));
 	log1.nl();
 
 	log1.print("The test log ends _here_\n");
