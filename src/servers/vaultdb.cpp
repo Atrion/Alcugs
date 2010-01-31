@@ -1170,8 +1170,8 @@ namespace alc {
 			node->str6.writeStr(row[24]);
 			node->lStr1.writeStr(row[25]);
 			node->lStr2.writeStr(row[26]);
-			node->text1.writeStr(row[27]);
-			node->text2.writeStr(row[28]);
+			if (lengths[27]) node->text1.writeStr(row[27]);
+			if (lengths[28]) node->text2.writeStr(row[28]);
 			node->blob1Size = lengths[29];
 			if (node->blob1Size > 0) {
 				node->blob1 = static_cast<Byte *>(malloc(sizeof(Byte)*node->blob1Size));
