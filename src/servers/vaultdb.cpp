@@ -70,9 +70,9 @@ namespace alc {
 		`str_6` varchar(255) NOT NULL default '',\
 		`lstr_1` varchar(255) NOT NULL default '',\
 		`lstr_2` varchar(255) NOT NULL default '',\
-		`text_1` text NOT NULL,\
-		`text_2` text NOT NULL,\
-		`blob_1` longblob NOT NULL ,\
+		`text_1` text,\
+		`text_2` text,\
+		`blob_1` longblob,\
 		PRIMARY KEY ( `idx` ) ,\
 		KEY `type` ( `type` ) ,\
 		KEY `owner` ( `owner` ),\
@@ -84,7 +84,7 @@ namespace alc {
 		KEY `lstr_1` ( `lstr_1` ) ,\
 		KEY `lstr_2` ( `lstr_2` )\
 	) TYPE=MyISAM PACK_KEYS=0 AUTO_INCREMENT=%d;"
-	// observation shows that varchar is not enough for the text fields
+	// observation shows that varchar is not enough for the text fields - and setting "NOT NULL" on it makes it mandatory for inserts
 	// "blob_1" has a length field of 4 byte, with "longblob" we can be sure the data will always fit
 	
 	#define REFVAULT_TABLE_INIT "\
@@ -333,7 +333,7 @@ namespace alc {
 		
 		tString query;
 		// update the text columns
-		query.printf("ALTER TABLE %s CHANGE text_1 text_1 text NOT NULL, CHANGE text_2 text_2 text NOT NULL", vaultTable);
+		query.printf("ALTER TABLE %s CHANGE text_1 text_1 text, CHANGE text_2 text_2 text, CHANGE blob_1 blob_1 longblob", vaultTable);
 		sql->query(query.c_str(), "migrateVersion3to4: altering table structure");
 		// update version number
 		query.clear();
