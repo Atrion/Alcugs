@@ -67,7 +67,7 @@ int main(int argc, char * argv[]) {
 	
 	try {
 	
-	alcInit(argc,argv,true);
+	alcInit(true);
 	puts(alcVersionText());
 	
 	if(argc>1 && !strcmp(argv[1],"-l")) {

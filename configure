@@ -4604,7 +4604,7 @@ fi
 
 
 CXXFLAGS="-Wall -Wextra"
-# Maybe also add -Wold-style-cast, -Wformat=2, -Winit-self, -Wswitch-enum and -Woverloaded-virtual ?
+# Maybe also add -Wold-style-cast -Wformat=2 -Winit-self -Wswitch-enum -Wfloat-equal -Wshadow -Winline -Woverloaded-virtual
 
 if test x$RDYNAMIC = xtrue; then
 	CXXFLAGS="$CXXFLAGS -rdynamic"

@@ -218,8 +218,8 @@ void tRefBuf::resize(U32 newsize) {
 }
 void tRefBuf::inc() { refs++; }
 void tRefBuf::dec() {
+	if(refs==0) throw txRefErr(_WHERE("RefErr %i-1",refs));
 	refs--;
-	if(refs<0) throw txRefErr(_WHERE("RefErr %i",refs));
 }
 U32 tRefBuf::size() { return msize; }
 /* end tRefBuf */

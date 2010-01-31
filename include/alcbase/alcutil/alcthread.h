@@ -103,6 +103,7 @@ public:
 		this->mutex = &mutex;
 		this->mutex->lock();
 #endif
+		(void)mutex; // mark as used
 	}
 	inline ~tMutexLock(void) {
 #ifdef ENABLE_THREADS

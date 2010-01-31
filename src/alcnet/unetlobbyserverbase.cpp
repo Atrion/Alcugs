@@ -259,13 +259,13 @@ namespace alc {
 		return NULL;
 	}
 	
-	void tUnetLobbyServerBase::onConnectionClosed(tNetEvent *ev, tNetSession */*u*/)
+	void tUnetLobbyServerBase::onConnectionClosed(tNetSession *u)
 	{
 		// if it was one of the servers, save the time it went (it will be reconnected later)
-		if (ev->sid == authIte) {
+		if (authIte == u) {
 			auth_gone = alcGetTime(); authIte = tNetSessionIte();
 		}
-		else if (ev->sid == trackingIte) {
+		else if (trackingIte == u) {
 			if (whoami == KGame && isRunning()) {
 				err->log("ERR: I lost the connection to the tracking server, so I will go down\n");
 				/* The game server should go down when it looses the connection to tracking. This way, you can easily
@@ -276,12 +276,12 @@ namespace alc {
 				tracking_gone = alcGetTime(); trackingIte = tNetSessionIte();
 			}
 		}
-		else if (ev->sid == vaultIte) {
+		else if (vaultIte == u) {
 			vault_gone = alcGetTime(); vaultIte = tNetSessionIte();
 		}
 	}
 	
-	void tUnetLobbyServerBase::onIdle(bool idle)
+	void tUnetLobbyServerBase::onIdle(bool /*idle*/)
 	{
 		if (!isRunning()) return;
 		
@@ -302,9 +302,9 @@ namespace alc {
 		}
 	}
 	
-	int tUnetLobbyServerBase::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
+	int tUnetLobbyServerBase::onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u)
 	{
-		int ret = tUnetServerBase::onMsgRecieved(ev, msg, u); // first let tUnetServerBase process the message
+		int ret = tUnetServerBase::onMsgRecieved(msg, u); // first let tUnetServerBase process the message
 		if (ret != 0) return ret; // cancel if it was processed, otherwise it's our turn
 		
 		switch(msg->cmd) {

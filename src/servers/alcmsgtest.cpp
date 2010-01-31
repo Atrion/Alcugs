@@ -106,9 +106,9 @@ class tUnetSimpleFileServer :public tUnetBase {
 public:
 	tUnetSimpleFileServer(char * lhost=NULL,U16 lport=0,Byte listen=0);
 	virtual ~tUnetSimpleFileServer();
-	virtual int onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u);
-	virtual void onConnectionFlood(tNetEvent * ev,tNetSession *u) {
-		ev->Veto();
+	virtual int onMsgRecieved(tUnetMsg * msg,tNetSession * u);
+	virtual void onConnectionFlood(tNetEvent * ev,tNetSession */*u*/) {
+		ev->doVeto();
 	}
 	virtual void onIdle(bool idle);
 	virtual void onStart();
@@ -196,7 +196,7 @@ void tUnetSimpleFileServer::onIdle(bool idle) {
 	}
 }
 
-int tUnetSimpleFileServer::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
+int tUnetSimpleFileServer::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 	int ret=0;
 
 	switch(msg->cmd) {
@@ -290,7 +290,7 @@ int main(int argc,char * argv[]) {
 	try {
 	
 		//start Alcugs library
-		alcInit(argc,argv,nlogs!=1);
+		alcInit(nlogs!=1);
 		alcLogSetLogLevel(loglevel);
 		
 		lstd->print(alcVersionText());

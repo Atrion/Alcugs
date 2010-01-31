@@ -57,7 +57,7 @@ namespace alc {
 		port = u->getPort();
 	}
 	
-	void tMemberInfo::store(tBBuf &t)
+	void tMemberInfo::store(tBBuf &/*t*/)
 	{
 		throw txProtocolError(_WHERE("Storing a tMemberInfo is not supported"));
 	}

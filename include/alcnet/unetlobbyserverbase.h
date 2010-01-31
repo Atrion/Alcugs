@@ -57,8 +57,8 @@ public:
 protected:
 	virtual void onStart(void);
 	virtual void onIdle(bool idle);
-	virtual void onConnectionClosed(tNetEvent *ev, tNetSession *u);
-	virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
+	virtual void onConnectionClosed(tNetSession *u);
+	virtual int onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u);
 	virtual void forwardPing(tmPing &ping, tNetSession *u);
 	virtual void terminate(tNetSession *u, Byte reason = 0, bool gotLeave = false);
 	virtual void onUnloadConfig(void);

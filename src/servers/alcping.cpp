@@ -80,11 +80,11 @@ class tUnetPing :public tUnetBase {
 public:
 	tUnetPing(char * lhost=NULL,U16 lport=0,Byte listen=0,double time=1,int num=5,int flood=1);
 	virtual ~tUnetPing();
-	virtual int onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u);
-	virtual void onConnectionFlood(tNetEvent * ev,tNetSession *u) {
-		ev->Veto();
+	virtual int onMsgRecieved(tUnetMsg * msg,tNetSession * u);
+	virtual void onConnectionFlood(tNetEvent * ev,tNetSession */*u*/) {
+		ev->doVeto();
 	}
-	virtual void onLeave(tNetEvent * ev,Byte reason,tNetSession * u);
+	virtual void onLeave(Byte reason,tNetSession * u);
 	virtual void onIdle(bool idle);
 	virtual void onStop();
 	void setSource(Byte s);
@@ -164,7 +164,7 @@ void tUnetPing::onStop() {
 	}
 }
 
-int tUnetPing::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
+int tUnetPing::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 	int ret=0;
 
 	switch(msg->cmd) {
@@ -174,11 +174,11 @@ int tUnetPing::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
 			msg->data.get(ping);
 			log->log("<RCV> [%d] %s\n", msg->sn, ping.str());
 			if(listen==0) {
-				if(dstite==ev->sid) {
+				if(dstite==u) {
 					current=alcGetCurrentTime();
 					rcv=current-ping.mtime;
 					out->log("Pong from %s:%i x=%i dest=%i %s time=%0.3f ms\n",\
-					alcGetStrIp(ev->sid.ip),ntohs(ev->sid.port),ping.x,ping.destination,\
+					alcGetStrIp(u->getIp()),ntohs(u->getPort()),ping.x,ping.destination,\
 					alcUnetGetDestination(ping.destination),rcv*1000);
 					rcvn++;
 					avg+=rcv;
@@ -187,7 +187,7 @@ int tUnetPing::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
 				}
 			} else {
 				out->log("Ping from %s:%i x=%i dest=%i %s time=%0.3f ms .... pong....\n",\
-				alcGetStrIp(ev->sid.ip),ntohs(ev->sid.port),ping.x,ping.destination,\
+				alcGetStrIp(u->getIp()),ntohs(u->getPort()),ping.x,ping.destination,\
 				alcUnetGetDestination(ping.destination),ping.mtime*1000);
 				if(urgent) ping.setUrgent();
 				send(ping);
@@ -206,14 +206,14 @@ int tUnetPing::onMsgRecieved(tNetEvent * ev,tUnetMsg * msg,tNetSession * u) {
 	return ret;
 }
 
-void tUnetPing::onLeave(tNetEvent * ev,Byte reason,tNetSession * u)
+void tUnetPing::onLeave(Byte reason,tNetSession * u)
 {
 	if(listen!=0) {
-		out->log("Leave from %s:%i reason=%i %s\n", alcGetStrIp(ev->sid.ip), ntohs(ev->sid.port), reason, alcUnetGetReasonCode(reason));
+		out->log("Leave from %s:%i reason=%i %s\n", alcGetStrIp(u->getIp()), ntohs(u->getPort()), reason, alcUnetGetReasonCode(reason));
 	}
 }
 
-void tUnetPing::onIdle(bool idle) {
+void tUnetPing::onIdle(bool /*idle*/) {
 	int i;
 	if(listen==0) {
 
@@ -329,7 +329,7 @@ int main(int argc,char * argv[]) {
 	try {
 	
 		//start Alcugs library
-		alcInit(argc,argv,nlogs!=1);
+		alcInit(nlogs!=1);
 		alcLogSetLogLevel(loglevel);
 		
 		//special mode

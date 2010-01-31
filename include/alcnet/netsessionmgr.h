@@ -51,6 +51,9 @@ public:
 	bool operator==(const tNetSessionIte &t) const {
 		return(ip==t.ip && port==t.port);
 	}
+	bool operator==(tNetSession *u) const {
+		return(ip==u->getIp() && port==u->getPort());
+	}
 };
 
 /** tNetSessionList saves a list of sessions */
@@ -105,7 +108,7 @@ public:
 	tNetEvent(tNetSessionIte who,int what,tUnetMsg *mymsg=NULL) { sid=who; id=what; next=NULL; veto=false; msg=mymsg; }
 	tNetEvent() { next=NULL; id=0; veto=false; msg=NULL; }
 	~tNetEvent() { if (msg) delete msg; }
-	void Veto() { veto=true; }
+	void doVeto() { veto=true; }
 	tNetSessionIte sid;
 	int id;
 	tNetEvent * next;

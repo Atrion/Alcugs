@@ -264,7 +264,7 @@ namespace alc {
 		send(msg);
 	}
 	
-	void tUnetGameServer::playerAuthed(tNetSession *u)
+	void tUnetGameServer::playerAuthed(tNetSession */*u*/)
 	{
 		// a new player connected, so we are no longer alone
 		// we have to do this when the player authenticates because it will download the age before joining, in which time the auto-kill could already stop the server
@@ -422,7 +422,7 @@ namespace alc {
 		}
 	}
 
-	int tUnetGameServer::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
+	int tUnetGameServer::onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u)
 	{
 		if (msg->cmd == NetMsgFindAge) {
 			// he is going to leave soon - make sure everyone is idle for him
@@ -444,7 +444,7 @@ namespace alc {
 			}
 		}
 	
-		int ret = tUnetLobbyServerBase::onMsgRecieved(ev, msg, u); // first let tUnetLobbyServerBase process the message
+		int ret = tUnetLobbyServerBase::onMsgRecieved(msg, u); // first let tUnetLobbyServerBase process the message
 		if (ret != 0) return ret; // cancel if it was processed, otherwise it's our turn
 		
 		switch(msg->cmd) {

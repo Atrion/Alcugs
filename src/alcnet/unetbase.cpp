@@ -253,7 +253,7 @@ void tUnetBase::closeConnection(tNetSession *u)
 {
 	sec->log("%s Ended\n",u->str());
 	tNetEvent * ev=new tNetEvent(u->getIte(),UNET_TERMINATED);
-	onConnectionClosed(ev,u);
+	onConnectionClosed(u);
 	destroySession(ev->sid);
 	delete ev;
 }
@@ -265,7 +265,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 			if (shutdown)
 				terminate(u);
 			else
-				onNewConnection(evt, u);
+				onNewConnection(u);
 			sec->log("%s New Connection\n",u->str());
 			break;
 		case UNET_TIMEOUT:
@@ -310,7 +310,7 @@ void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
 					break;
 				}
 				// this part can never be reached on shutdown, so messages are only processed when the server is still fully running
-				if (ret == 0) ret=onMsgRecieved(evt,msg,u);
+				if (ret == 0) ret=onMsgRecieved(msg,u);
 				if (ret == 1 && !msg->data.eof() > 0) { // packet was processed and there are bytes left, obiously invalid, terminate the client
 					err->log("%s Recieved a message 0x%04X (%s) which was too long (%d Bytes remaining after parsing) - kicking player\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data.remaining());
 					ret=-1;
@@ -411,7 +411,7 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool 
 			log->log("<RCV> [%d] %s\n",msg->sn,msgleave.str());
 			if (!shutdown && !u->isTerminated()) {
 				ev->id=UNET_TERMINATED;
-				onLeave(ev,msgleave.reason,u);
+				onLeave(msgleave.reason,u);
 			}
 			/* The peer left, so there is nothing we have to do anymore, just remove it */
 			terminate(u, msgleave.reason, /*gotLeave*/true); // this will delete the session ASAP
@@ -424,7 +424,7 @@ int tUnetBase::parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool 
 			msg->data.get(msgterminated);
 			log->log("<RCV> [%d] %s\n",msg->sn,msgterminated.str());
 			ev->id=UNET_TERMINATED;
-			onTerminated(ev,msgterminated.reason,u);
+			onTerminated(msgterminated.reason,u);
 			/* The peer wants to terminate, so tell him we are ready to leave */
 			terminate(u);
 			return 1;

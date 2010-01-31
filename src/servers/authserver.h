@@ -47,15 +47,15 @@ namespace alc {
 	public:
 		tUnetAuthServer() : tUnetServerBase() {  }
 	protected:
-		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
-		virtual void onIdle(bool idle) { authBackend->checkTimeout(); }
+		virtual int onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u);
+		virtual void onIdle(bool /*idle*/) { authBackend->checkTimeout(); }
 		virtual void onLoadConfig() {
 			authBackend = new tAuthBackend;
 		}
 		virtual void onUnloadConfig() {
 			delete authBackend;
 		}
-		virtual void onNewConnection(tNetEvent * ev,tNetSession * u) {
+		virtual void onNewConnection(tNetSession * u) {
 			u->setTypeToGame(); // assume everyone connecting to us is a game (could also be a lobby though)
 		}
 	private:

@@ -57,20 +57,20 @@ namespace alc {
 		virtual void onStop(void) {
 			delete trackingBackend;
 		}
-		virtual void onConnectionClosed(tNetEvent * ev,tNetSession * u) {
+		virtual void onConnectionClosed(tNetSession * u) {
 			trackingBackend->removeServer(u);
 		}
 		virtual void onReloadConfig(void) {
 			trackingBackend->reload();
 		}
-		virtual void onIdle(bool idle) {
+		virtual void onIdle(bool /*idle*/) {
 			trackingBackend->updateStatusFile();
 		}
-		virtual void onNewConnection(tNetEvent * ev,tNetSession * u) {
+		virtual void onNewConnection(tNetSession * u) {
 			u->setTypeToGame(); // assume everyone connecting to us is a game (could also be a lobby though)
 		}
 		
-		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
+		virtual int onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u);
 	private:
 		tTrackingBackend *trackingBackend;
 	};

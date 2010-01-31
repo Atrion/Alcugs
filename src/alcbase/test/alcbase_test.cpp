@@ -1034,12 +1034,12 @@ int log_test() {
 	return 0;
 }
 
-int main(int argc, char * argv[]) {
+int main(void) {
 	std::cout << std::endl << "Alcugs test suite - alcbase tests" <<std::endl;
 
 	try {
 		alcdebug_tests();
-		alcInit(argc,argv);
+		alcInit();
 		alcexception_tests();
 		alctypes_tests();
 		alcfuncs_tests();

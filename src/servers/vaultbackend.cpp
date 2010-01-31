@@ -339,7 +339,8 @@ namespace alc {
 		msg.print(logHtml, /*clientToServer:*/true, u, shortHtml, ki);
 		
 		// have everything on the stack as we can safely throw exceptions then
-		U32 nodeType = -1, playerKi = -1, nodeSon = -1, nodeParent = -1, seenFlag = -1, rcvPlayer = -1;
+		const U32 unset = 0xFFFFFFFF;
+		U32 nodeType = unset, playerKi = unset, nodeSon = unset, nodeParent = unset, seenFlag = unset, rcvPlayer = unset;
 		U16 tableSize = 0;
 		tMBuf table;
 		tvNode *savedNode = NULL;
@@ -427,7 +428,7 @@ namespace alc {
 		switch (msg.cmd) {
 			case VConnect:
 			{
-				if (nodeType < 0)
+				if (nodeType == unset)
 					throw txProtocolError(_WHERE("got a VConnect where node type has not been set"));
 				log->log("Vault Connect request for %d (Type: %d)\n", ki, nodeType);
 				log->flush();
@@ -439,7 +440,7 @@ namespace alc {
 				tvNode mgrNode(MType);
 				mgrNode.type = nodeType;
 				if (nodeType == KVNodeMgrPlayerNode) { // player node
-					if (playerKi < 0) throw txProtocolError(_WHERE("VConnect for node type 2 must have playerKi set"));
+					if (playerKi == unset) throw txProtocolError(_WHERE("VConnect for node type 2 must have playerKi set"));
 					mgr = playerKi;
 					if (mgr != ki)
 						throw txProtocolError(_WHERE("Player with KI %d wants to VConnect as %d\n", ki, mgr));
@@ -482,7 +483,7 @@ namespace alc {
 			}
 			case VDisconnect:
 			{
-				if (nodeType < 0)
+				if (nodeType == unset)
 					throw txProtocolError(_WHERE("got a VDisconnect where the node type has not been set"));
 				log->log("Vault Disconnect request for %d (Type: %d)\n", ki, nodeType);
 				log->flush();
@@ -514,7 +515,7 @@ namespace alc {
 			}
 			case VRemoveNodeRef:
 			{
-				if (nodeSon < 0 || nodeParent < 0)
+				if (nodeSon == unset || nodeParent == unset)
 					throw txProtocolError(_WHERE("got a VRemoveNodeRef where parent or son have not been set"));
 				log->log("Vault Remove Node Ref from %d to %d for %d\n", nodeParent, nodeSon, ki);
 				log->flush();
@@ -636,7 +637,7 @@ namespace alc {
 			}
 			case VSendNode:
 			{
-				if (rcvPlayer < 0 || !savedNode) throw txProtocolError(_WHERE("Got a VSendNode without the reciever or the node"));
+				if (rcvPlayer == unset || !savedNode) throw txProtocolError(_WHERE("Got a VSendNode without the reciever or the node"));
 				log->log("Sending node %d from player %d to %d\n", savedNode->index, ki, rcvPlayer);
 				log->flush();
 				tvNode *node;
@@ -680,7 +681,7 @@ namespace alc {
 			}
 			case VSetSeen:
 			{
-				if (nodeParent < 0 || nodeSon < 0 || seenFlag < 0)
+				if (nodeParent == unset || nodeSon == unset || seenFlag == unset)
 					throw txProtocolError(_WHERE("parent, son and seen flag must be set for a VSetSeen"));
 				log->log("Vault Set Seen (parent: %d, son: %d, seen: %d) for %d\n", nodeParent, nodeSon, seenFlag, ki);
 				vaultDB->setSeen(nodeParent, nodeSon, seenFlag);

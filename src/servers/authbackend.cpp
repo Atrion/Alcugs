@@ -193,7 +193,7 @@ namespace alc {
 			query.printf(", last_attempt=NOW()");
 		else if (updateStamps == 2) // update last attempt and last login
 			query.printf(", last_attempt=NOW(), last_login=NOW()");
-		else ; // don't update any stamp
+		else {} // don't update any stamp
 		query.printf(" WHERE guid='%s'", guid_escaped);
 		sql->query(query.c_str(), "Update player");
 	}

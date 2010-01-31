@@ -79,6 +79,7 @@ void alcWriteCoreDump(const char * name) {
 		free((void *)where);
 	}
 	#else
+	(void)name; // mark as unused
 	DBG(5,"is not enabled\n");
 	#ifdef __WIN32__
 	DBG(5,"and you should get a better OS, bacause the one that you are using now, sucks :(\n");
