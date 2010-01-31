@@ -10,8 +10,8 @@
 void decodeQuad(unsigned int *first, unsigned int *second) {
 #if defined(NEED_STRICT_ALIGNMENT)
 	unsigned int out1, out2, base = 0xc6ef3720;
-	memcpy((void *)&out1, (void *)first, 4);
-	memcpy((void *)&out2, (void *)second, 4);
+	memcpy(&out1, first, 4);
+	memcpy(&out2, second, 4);
 #else
 	unsigned int out1 = *first, out2 = *second, base = 0xc6ef3720;
 #endif
@@ -64,8 +64,8 @@ void decodeQuad(unsigned int *first, unsigned int *second) {
 	out1 = htole32(out1);
 	out2 = htole32(out2);
 #if defined(NEED_STRICT_ALIGNMENT)
-	memcpy((void *)first, (void *)&out1, 4);
-	memcpy((void *)second, (void *)&out2, 4);
+	memcpy(first, &out1, 4);
+	memcpy(second, &out2, 4);
 #else
 	*first = out1;
 	*second = out2;
@@ -75,8 +75,8 @@ void decodeQuad(unsigned int *first, unsigned int *second) {
 void encodeQuad(unsigned int *first, unsigned int *second) {
 #if defined(NEED_STRICT_ALIGNMENT)
 	unsigned int out1, out2, base = 0;
-	memcpy((void *)&out1, (void *)first, 4);
-	memcpy((void *)&out2, (void *)second, 4);
+	memcpy(&out1, first, 4);
+	memcpy(&out2, second, 4);
 #else
 	unsigned int out1 = *first, out2 = *second, base = 0;
 #endif
@@ -131,8 +131,8 @@ void encodeQuad(unsigned int *first, unsigned int *second) {
 	out1 = htole32(out1);
 	out2 = htole32(out2);
 #if defined(NEED_STRICT_ALIGNMENT)
-	memcpy((void *)first, (void *)&out1, 4);
-	memcpy((void *)second, (void *)&out2, 4);
+	memcpy(first, &out1, 4);
+	memcpy(second, &out2, 4);
 #else
 	*first = out1;
 	*second = out2;

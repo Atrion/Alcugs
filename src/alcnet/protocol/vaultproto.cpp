@@ -452,7 +452,7 @@ namespace alc {
 		// put the buffer in our space
 		buf.rewind();
 		size = buf.size();
-		data = (Byte *)malloc(sizeof(Byte) * size);
+		data = static_cast<Byte *>(malloc(sizeof(Byte) * size));
 		if (data == NULL) throw txNoMem(_WHERE("NoMem"));
 		memcpy(data, buf.read(size), size);
 	}
@@ -461,7 +461,7 @@ namespace alc {
 	{
 		this->id = id;
 		size = buf.size();
-		data = (Byte *)malloc(sizeof(Byte) * size);
+		data = static_cast<Byte *>(malloc(sizeof(Byte) * size));
 		if (data == NULL) throw txNoMem(_WHERE("NoMem"));
 		buf.rewind();
 		memcpy(data, buf.read(size), size);
@@ -471,7 +471,7 @@ namespace alc {
 	{
 		size = t.getU32();
 		if (data) free(data);
-		data = (Byte *)malloc(sizeof(Byte) * size);
+		data = static_cast<Byte *>(malloc(sizeof(Byte) * size));
 		if (data == NULL) throw txNoMem(_WHERE("NoMem"));
 		memcpy(data, t.read(size), size);
 	}
@@ -731,7 +731,7 @@ namespace alc {
 		if (flagB & MBlob1) {
 			blob1Size = t.getU32();
 			if (blob1Size > 0) {
-				blob1 = (Byte *)malloc(sizeof(Byte) * blob1Size);
+				blob1 = static_cast<Byte *>(malloc(sizeof(Byte) * blob1Size));
 				if (blob1 == NULL) throw txNoMem(_WHERE("NoMem"));
 				memcpy(blob1, t.read(blob1Size), blob1Size);
 			}
@@ -775,9 +775,9 @@ namespace alc {
 		t.putU32(permissions);
 		t.putU32(owner);
 		t.putU32(group);
-		U32 modTimeSec = (U32)modTime;
+		U32 modTimeSec = static_cast<U32>(modTime);
 		t.putU32(modTimeSec);
-		t.putU32((U32)((modTime-modTimeSec)*1000000)); // microseconds
+		t.putU32(static_cast<U32>((modTime-modTimeSec)*1000000)); // microseconds
 		
 		// write optional data
 		if (flagB & MCreator) t.putU32(creator);

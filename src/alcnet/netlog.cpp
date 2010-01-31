@@ -51,7 +51,7 @@ const char * alcGetStrIp(U32 ip) {
 	// valgrind gives an error here about some malloc within inet_ntoa still being reachable. However I've got no idea what to do about that.
 	in_addr cip;
 	static char mip[16];
-	cip.s_addr=(unsigned long)ip;
+	cip.s_addr=ip;
 	strcpy(mip, inet_ntoa(cip));
 	//print2log(f_uru,"DBGDBGDBG:<<<----->>>>%s:%08X\n",mip,ip);
 	return mip;

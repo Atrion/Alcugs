@@ -48,7 +48,7 @@ tNetSessionList::tNetSessionList(void)
 }
 tNetSessionList::~tNetSessionList()
 {
-	free((void *)table);
+	free(table);
 }
 tNetSession *tNetSessionList::search(U32 ip, U16 port)
 {
@@ -68,7 +68,7 @@ int tNetSessionList::add(tNetSession *u)
 	}
 	// we have to resize the table
 	DBG(5, "growing to %d\n", size+1);
-	tNetSession **ntable=(tNetSession **)realloc((void *)table,sizeof(tNetSession*) * (size+1));
+	tNetSession **ntable=static_cast<tNetSession **>(realloc(table,sizeof(tNetSession*) * (size+1)));
 	if(ntable==NULL) throw txNoMem(_WHERE(""));
 	table=ntable;
 	++size;
@@ -104,7 +104,7 @@ void tNetSessionList::remove(tNetSession *u)
 	}
 	if(found!=-1) { // if that's the case, shrink
 		DBG(5, "shrinking to %d\n", found);
-		table=(tNetSession **)realloc(table,sizeof(tNetSession*) * found);
+		table=static_cast<tNetSession **>(realloc(table,sizeof(tNetSession*) * found));
 		if (found && table==NULL) throw txNoMem(_WHERE("NoMem"));
 		size=found;
 	}

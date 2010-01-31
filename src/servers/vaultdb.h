@@ -42,8 +42,8 @@ namespace alc {
 		int getPlayerList(const Byte *uid, tMBuf *t = NULL);
 		
 		/** checks if this account (uid) owns that ki and saves the avatar name (array must be at least 256 Bytes)
-		    \returns 1 when the avatar belongs to that account, 0 otherwise */
-		int checkKi(U32 ki, const Byte *uid, char *avatar);
+		    \returns true when the avatar belongs to that account, false otherwise */
+		bool checkKi(U32 ki, const Byte *uid, char *avatar);
 		
 		/** looks up a node in the database, using all fields which have their flag turned on (except for blobs)
 		    \returns the ID of the found/created node, 0 if neither found nor created */
@@ -89,7 +89,7 @@ namespace alc {
 		void setSeen(U32 parent, U32 son, Byte seen);
 		
 		/** saves a list of direct parent nodes */
-		void getParentNodes(U32 node, int **table, int *tableSize);
+		void getParentNodes(U32 node, U32 **table, int *tableSize);
 		
 		/** get all references (direct and indirect) of this node */
 		void getReferences(U32 node, tvNodeRef ***ref, int *nRef); // this is a pointer to an array of pointers

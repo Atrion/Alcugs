@@ -47,7 +47,7 @@ void parameters_usage() {
  -nl: enable netcore logs\n\
  -t x: set the sleep time in seconds\n\
  -f x: Flooding multiplier\n\
- -n x: set the number of proves, 0=infinite (CTR+C stops), 5 if not set\n\
+ -n x: set the number of probes, 0=infinite (CTR+C stops), 5 if not set\n\
  -V: show version and end\n\
  -h: Show short help and end\n\
  -v x: Set the verbose level\n\

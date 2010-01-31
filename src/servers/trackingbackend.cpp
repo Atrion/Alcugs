@@ -243,7 +243,7 @@ namespace alc {
 		// search for free ports
 		tTrackingData *data = static_cast<tTrackingData*>(lobby->data); // we already checked the type above
 		int nPorts = data->portEnd - data->portStart + 1;
-		bool *freePorts = (bool *)malloc(nPorts*sizeof(bool));
+		bool *freePorts = static_cast<bool *>(malloc(nPorts*sizeof(bool)));
 		if (freePorts == NULL) throw txNoMem(_WHERE("NoMem"));
 		for (int i = 0; i < nPorts; ++i) freePorts[i] = true;
 		data->childs->rewind();

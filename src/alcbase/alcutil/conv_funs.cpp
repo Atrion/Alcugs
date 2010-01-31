@@ -136,7 +136,7 @@ const char * alcGetStrTime(U32 timestamp, U32 microseconds) {
 	static char btime[50];
 	char tmptime[26];
 	struct tm * tptr;
-	time_t stamp = (time_t)timestamp;
+	time_t stamp = timestamp;
 
 	tptr=gmtime(&stamp);
 	strftime(tmptime,25,"%Y:%m:%d-%H:%M:%S",tptr);
@@ -147,20 +147,21 @@ const char * alcGetStrTime(U32 timestamp, U32 microseconds) {
 
 const char * alcGetStrTime(double stamp, const char format) {
 	U32 time,micros;
+	U32 stampInt = static_cast<U32>(stamp);
 	if(stamp!=0) {
 		switch(format) {
 			case 'u':
-				micros = (U32)stamp % 1000000;
-				time = (U32)(stamp/1000000);
+				micros = stampInt % 1000000;
+				time = (stampInt/1000000);
 				break;
 			case 'm':
-				micros = (U32)(stamp*1000) % 1000000;
-				time = (U32)(stamp/1000);
+				micros = (stampInt*1000) % 1000000;
+				time = (stampInt/1000);
 				break;
 			case 's':
 			default:
-				time = (U32)(stamp);
-				micros = (U32)((stamp-time)*1000000);
+				time = (stampInt);
+				micros = ((stampInt-time)*1000000);
 				DBG(5, "%f = %d . %d\n", stamp, time, micros);
 				break;
 		}
