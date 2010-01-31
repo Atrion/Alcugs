@@ -57,7 +57,7 @@ namespace alc {
 		virtual void onStop(void) {
 			delete trackingBackend;
 		}
-		virtual void onConnectionClosed(tNetSession * u) {
+		virtual void onConnectionClosing(tNetSession * u, Byte /*reason*/) {
 			trackingBackend->removeServer(u);
 		}
 		virtual void onReloadConfig(void) {

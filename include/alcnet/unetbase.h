@@ -64,19 +64,11 @@ public:
 	}
 	
 	/** terminate this session */
-	inline void terminate(tNetSession *u) { terminate(u, 0); }
+	inline void terminate(tNetSession *u, Byte reason = 0) { terminate(u, reason, /*gotLeave*/false); }
 	
 	/** check whether the server is still running */
 	inline bool isRunning(void) { return state_running; }
 protected:
-	
-	/** Terminates the connection of the specified peer
-			\param u A session iterator that points to the desired peer
-			\param reason The reason code (error code) (if 0, send RKickedOff to clients and RQutting for servers)
-			\param gotLeave Set to true if this is the reaction to a NetMsgLeave, which will not be answered to
-	*/
-	virtual void terminate(tNetSession *u, Byte reason, bool gotLeave = false); // FIXME: Why overload this and not onTerminated?
-
 	/** This event is raised when we have a new connection
 			You need to override it in your derived classes with your implementation.
 			\param u The peer session object
@@ -90,29 +82,12 @@ protected:
 	*/
 	virtual int onMsgRecieved(tUnetMsg * /*msg*/,tNetSession * /*u*/) { return 0; }
 	
-	/** This event is raised when a connection closes
+	/** This event is raised when a connection is being terminated
 			You need to override it in your derived classes with your implementation.
 			\param u The peer session object
+			\param reason the reason for which the client left/was kicked
 	*/
-	virtual void onConnectionClosed(tNetSession * /*u*/) {}
-	
-	/** This event is raised when a peer have left (disconnected)
-			You need to override it in your derived classes with your implementation.
-			\param reason The reason code
-			\param u The peer session object
-	*/
-	virtual void onLeave(Byte /*reason*/,tNetSession * /*u*/) {}
-	
-	/** This event is raised when a peer have sent a terminated message
-			Note: Only servers can send terminated messages, a termintated message from a client
-			is illegal, and should be processed as a leave message.
-			If a server have send us a terminated message, and we are a server slave, it will be
-			necessary to reconnect again.
-			You need to override it in your derived classes with your implementation.
-			\param reason The reason code
-			\param u The peer session object
-	*/
-	virtual void onTerminated(Byte /*reason*/,tNetSession * /*u*/) {}
+	virtual void onConnectionClosing(tNetSession * /*u*/, Byte /*reason*/) {}
 	
 	/** This event is raised when a peer is sending too many messages per second.
 			Disabling this protection, your server will be vulnerable to DoS attacks.
@@ -153,9 +128,9 @@ protected:
 	/** this is called after loading and reloading the config */
 	virtual void onReloadConfig() {}
 private:
+	void terminate(tNetSession *u, Byte reason, bool gotLeave);
 	void terminateAll(bool playersOnly = false);
-	/** destroy that session and do an onConnectionClosed */
-	void closeConnection(tNetSession *u);
+	void removeConnection(tNetSession *u); //!< destroy that session
 	
 	void processEventQueue(bool shutdown = false);
 	int parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool shutdown);

@@ -271,7 +271,7 @@ namespace alc {
 		lastPlayerLeft = 0;
 	}
 	
-	void tUnetGameServer::terminate(tNetSession *u, Byte reason, bool gotLeave)
+	void tUnetGameServer::onConnectionClosing(tNetSession *u, Byte reason)
 	{
 		if (u->getPeerType() == KClient && u->ki != 0) { // if necessary, tell the others about it
 			tNetSession *vaultServer = getServer(KVault);
@@ -319,7 +319,7 @@ namespace alc {
 			u->joined = false;
 		}
 	
-		tUnetLobbyServerBase::terminate(u, reason, gotLeave); // do the lobbybase terminate procedure
+		tUnetLobbyServerBase::onConnectionClosing(u, reason); // forward event (this sets the KI to zero, so do it at the end)
 	}
 	
 	void tUnetGameServer::fwdDirectedGameMsg(tmGameMessageDirected &msg)
