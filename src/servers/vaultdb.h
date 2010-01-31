@@ -105,6 +105,7 @@ namespace alc {
 		bool prepare(void);
 		int getVersion(void);
 		void migrateVersion2to3(void);
+		void migrateVersion3to4(void);
 		void convertIntToTimestamp(const char *table, const char *intColumn, const char *timestampColumn);
 		void convertIntToDouble(const char *table, const char *intColumn, const char *doubleColumn);
 		void removeInvalidRefs(void);

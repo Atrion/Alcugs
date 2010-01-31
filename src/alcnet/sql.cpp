@@ -123,7 +123,9 @@ void tSQL::disconnect(void)
 bool tSQL::prepare(void)
 {	// if the connection is already established or connecting works fine, do nothing
 	if (connection) return true;
-	if (connect(true)) return true;
+	if (connect(true)) {
+		return query("SET sql_mode=STRICT_ALL_TABLES", "set strict mode", false);
+	}
 	
 	// if the problem is the missing database, establish the connection again (it was closed) and create it
 	if(mysql_errno(connection) == 1049 && (flags & SQL_CREATEDB)) { // 1049 = Unknown database '%s'
@@ -135,7 +137,9 @@ bool tSQL::prepare(void)
 		if (!query(str, "create database", false)) // if we can't create it, stop
 			return false;
 		sprintf(str,"USE %s", dbname);
-		return query(str, "select database", false);
+		if (!query(str, "select database", false))
+			return false;
+		return query("SET sql_mode=STRICT_ALL_TABLES", "set strict mode", false);
 	}
 	return false;
 }
@@ -182,11 +186,11 @@ void tSQL::checkTimeout(void)
 
 char *tSQL::escape(const char *str)
 {
-	const U32 maxLength = 512;
+	const U32 maxLength = 1024;
 	static char escaped_str[maxLength*2+1]; // according to mysql doc
 	if (connection == NULL) throw txDatabaseError(_WHERE("can't escape a string"));
 	if (strlen(str) > maxLength)
-		throw txDatabaseError(_WHERE("string too long (%i > %i), use the other escape function", strlen(str), maxLength));
+		throw txDatabaseError(_WHERE("string \"%s\" too long (max. length: %i), use the other escape function", str, maxLength));
 	mysql_real_escape_string(connection, escaped_str, str, strlen(str));
 	return escaped_str;
 }
