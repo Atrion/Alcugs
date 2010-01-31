@@ -1,12 +1,12 @@
 Vault
 ===========
-* Implement permissions
 * Take linking rule into account while generating the GUID:
   We use a list of ages that are global even though the linking rules requests an owned book.
   kBasicLink with GUID set => we don't have to do anything (link from foreign Relto to one of the owner's ages)
   kBasicLink without GUID => Global age (for fan-ages, Eder Delin & Tsogal and so on), register the age somewhere in the vault tree
   kOwnedBook, kVisitBook => GUID must be already present.
   kOriginalBook => GUID must not be present. Generate GUID according to list, if the GUID is already used something went crazy.
+  kSubAgeBook => ?
 
 Game
 ======
@@ -17,9 +17,4 @@ Generic Stuff
 * Implement server identification (this could also be used for the tNetSession::isAlcugsServer function)
 * Multithreading support
 * UU support
-* Missing linking rules
 * Public ages
-
-Feature-Requests list
-=======================
-* Be able to broadcast admin messages to all players

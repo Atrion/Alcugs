@@ -118,12 +118,12 @@ void tUnetBase::reconfigure() {
 	}
 	var=cfg->getVar("private_network","global");
 	if(!var.isNull()) {
-		lan_addr=(U32)inet_addr(var.c_str());
+		lan_addr=inet_addr(var.c_str());
 	} else {
 		struct hostent *host;
 		host=gethostbyname(bindaddr);
 		if(host!=NULL) {
-			lan_addr=*(U32 *)host->h_addr_list[0] & lan_mask;
+			lan_addr=*host->h_addr_list[0] & lan_mask;
 		} else {
 			lan_addr=0;
 		}

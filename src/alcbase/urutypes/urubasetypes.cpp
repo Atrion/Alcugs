@@ -57,14 +57,14 @@ void tWDYSBuf::encrypt() {
 	msize=0;
 	off=0;
 	
-	write("whatdoyousee",(U32)sizeof(char)*12);
+	write("whatdoyousee",sizeof(char)*12);
 	putU32(xsize);
 	write(aux->buf,xsize);
 	set(16);
 	msize=16;
 	
 	for (U32 i=0; i<xsize; i+=8) {
-		wdys::encodeQuad((U32 *)(this->buf->buf+off+i),(U32 *)(this->buf->buf+off+i+4));
+		wdys::encodeQuad(reinterpret_cast<U32 *>(this->buf->buf+off+i),reinterpret_cast<U32 *>(this->buf->buf+off+i+4));
 		msize+=8;
 	}
 	
@@ -90,7 +90,7 @@ void tWDYSBuf::decrypt(bool mustBeWDYS) {
 	off=0;
 	
 	for (U32 i=0; i<msize; i+=8) {
-		wdys::decodeQuad((U32 *)(this->buf->buf+off+i),(U32 *)(this->buf->buf+off+i+4));
+		wdys::decodeQuad(reinterpret_cast<U32 *>(this->buf->buf+off+i),reinterpret_cast<U32 *>(this->buf->buf+off+i+4));
 	}
 	
 	if(aux->getRefs()<1) delete aux;
@@ -107,10 +107,10 @@ void tAESBuf::setKey(const Byte * key) {
 void tAESBuf::setM5Key() {
 	Byte key[16];
 	U32 xorkey=0xCF092676;
-	*(U32 *)(key)    = 0xFC2C6B86 ^ xorkey;
-	*(U32 *)(key+4)  = 0x952E7BDA ^ xorkey;
-	*(U32 *)(key+8)  = 0xF1713EE8 ^ xorkey;
-	*(U32 *)(key+12) = 0xC7410A13 ^ xorkey;
+	*reinterpret_cast<U32 *>(key)    = 0xFC2C6B86 ^ xorkey;
+	*reinterpret_cast<U32 *>(key+4)  = 0x952E7BDA ^ xorkey;
+	*reinterpret_cast<U32 *>(key+8)  = 0xF1713EE8 ^ xorkey;
+	*reinterpret_cast<U32 *>(key+12) = 0xC7410A13 ^ xorkey;
 	memcpy(this->key,key,16);
 }
 void tAESBuf::encrypt() {
@@ -148,7 +148,7 @@ void tAESBuf::decrypt() {
 	off=0;
 	
 	write(aux->buf+8,xsize-8);
-	msize=*(U32 *)(aux->buf+4);
+	msize=*reinterpret_cast<U32 *>(aux->buf+4);
 	off=0;
 
 	Rijndael rin;

@@ -73,7 +73,7 @@ public:
 	virtual void set(U32 pos)=0;
 	//! Write a buffer of size n
 	virtual void write(const Byte * val,U32 n)=0;
-	inline virtual void write(const SByte * val,U32 n) { this->write((Byte *)val,n); }
+	inline virtual void write(const SByte * val,U32 n) { this->write(reinterpret_cast<const Byte *>(val),n); }
 	//! Reads n bytes, if n=0 reads the entire buffer
 	virtual const Byte * read(U32 n=0)=0;
 	//!gets buffer size
@@ -144,9 +144,6 @@ public:
 	
 	// useful functions
 	void check(const Byte * what,U32 n); //!< \throws txUnexpectedData if pattern don't matches buffer contents
-	void check(const char * what,U32 n) {
-		this->check((Byte *)what,n);
-	}
 protected:
 	//! called when rewind is called
 	virtual void onrewind() {}
@@ -187,7 +184,7 @@ public:
 	virtual U32 tell() const;
 	virtual void set(U32 pos);
 	virtual void write(const Byte * val,U32 n);
-	inline virtual void write(const SByte * val,U32 n) { this->write((Byte *)val,n); }
+	inline virtual void write(const SByte * val,U32 n) { this->write(reinterpret_cast<const Byte *>(val),n); }
 	virtual const Byte * read(U32 n=0);
 	virtual U32 size() const;
 	
@@ -233,7 +230,7 @@ public:
 	virtual U32 tell() const;
 	virtual void set(U32 pos);
 	virtual void write(const Byte * val,U32 n);
-	inline virtual void write(const SByte * val,U32 n) { this->write((Byte *)val,n); }
+	inline virtual void write(const SByte * val,U32 n) { this->write(reinterpret_cast<const Byte *>(val),n); }
 	virtual const Byte * read(U32 n=0);
 	virtual void stream(tBBuf &buf) const;
 	virtual void store(tBBuf &buf) {}
@@ -322,11 +319,11 @@ public:
 	void printBoolean(bool val);
 	void nl() { writeStr("\n"); }
 	U32 asU32() const;
-	S32 asS32() const { return (S32)asU32(); }
-	U16 asU16() const { return (U16)asU32(); }
-	S16 asS16() const { return (S16)asU32(); }
-	Byte asByte() const { return (Byte)asU32(); }
-	SByte asSByte() const { return (SByte)asU32(); }
+	S32 asS32() const { return static_cast<S32>(asU32()); }
+	U16 asU16() const { return static_cast<U16>(asU32()); }
+	S16 asS16() const { return static_cast<S16>(asU32()); }
+	Byte asByte() const { return static_cast<Byte>(asU32()); }
+	SByte asSByte() const { return static_cast<SByte>(asU32()); }
 	const char * c_str();
 	const char * c_str() const;
 	bool isNewline(void) const

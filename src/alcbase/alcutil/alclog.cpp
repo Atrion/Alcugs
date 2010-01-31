@@ -100,7 +100,7 @@ tLogConfig * tvLogConfig=NULL;
 
 void alcLogSetDefaults() {
 	if(tvLogConfig==NULL) {
-		tvLogConfig=(tLogConfig *)malloc(sizeof(tLogConfig) * 1);
+		tvLogConfig=static_cast<tLogConfig *>(malloc(sizeof(tLogConfig) * 1));
 	}
 	if(tvLogConfig!=NULL) {
 		//memset(tvLogConfig,0,sizeof(tvLogConfig));
@@ -144,7 +144,7 @@ tString alcLogGetLogPath(void) {
 void alcLogSetLogLevel(Byte level) {
 	if(tvLogConfig!=NULL) {
 		if(level>3) level=3;
-		tvLogConfig->silent=((((char)level)*(-1)) + 3);
+		tvLogConfig->silent= 3-level;
 	}
 }
 
@@ -179,9 +179,9 @@ void alcLogShutdown(bool silent) {
 			delete tvLogConfig->logs[i];
 		}
 	}
-	free((void *)tvLogConfig->logs);
+	free(tvLogConfig->logs);
 	tvLogConfig->logs=NULL;
-	free((void *)tvLogConfig);
+	free(tvLogConfig);
 	tvLogConfig=NULL;
 }
 
@@ -272,7 +272,7 @@ void tLog::open(const char * name, char level, U16 flags) {
 
 	if(name!=NULL) {
 		assert(this->name==NULL);
-		this->name = (char *)malloc(sizeof(char) * (strlen(name) + 1));
+		this->name = static_cast<char *>(malloc(sizeof(char) * (strlen(name) + 1)));
 		if(this->name==NULL) { throw txNoMem(_WHERE("")); }
 		strcpy(this->name,name);
 		DBG(5,"cont...\n");
@@ -286,11 +286,11 @@ void tLog::open(const char * name, char level, U16 flags) {
 			size=strlen(name) + tvLogConfig->path->size();
 			DBG(6,"size is:%i\n",size);
 
-			croak=(char *)malloc(sizeof(char) * (size+1+5));
+			croak=static_cast<char *>(malloc(sizeof(char) * (size+1+5)));
 			if(croak==NULL) throw txNoMem(_WHERE(""));
 			DBG(6,"im here\n");
-			path=(char *)malloc(sizeof(char) * (size+1));
-			if(path==NULL) { free((void *)croak); throw txNoMem(_WHERE("")); }
+			path=static_cast<char *>(malloc(sizeof(char) * (size+1)));
+			if(path==NULL) { free(croak); throw txNoMem(_WHERE("")); }
 			DBG(7,"here too\n");
 
 			if(name[0]!='/') {
@@ -315,7 +315,7 @@ void tLog::open(const char * name, char level, U16 flags) {
 				}
 			}
 
-			free((void *)croak);
+			free(croak);
 
 			//rotation
 			if(!(this->flags & DF_APPEND) || (this->flags & DF_HTML)) {
@@ -326,10 +326,10 @@ void tLog::open(const char * name, char level, U16 flags) {
 			
 			// preserve the path
 			free(fullpath);
-			fullpath=(char *)malloc(sizeof(char) * (strlen(path)+1));
+			fullpath=static_cast<char *>(malloc(sizeof(char) * (strlen(path)+1)));
 			if (!fullpath) throw txNoMem(_WHERE(""));
 			strcpy(fullpath, path);
-			free((void *)path);
+			free(path);
 
 			this->dsc=fopen(fullpath,"a");
 			if(this->dsc==NULL) {
@@ -351,7 +351,7 @@ void tLog::open(const char * name, char level, U16 flags) {
 	if(found==-1) {
 		tvLogConfig->n_logs++;
 		tLog ** aux=NULL;
-		aux=(tLog **)realloc((void *)tvLogConfig->logs,sizeof(tLog *) * tvLogConfig->n_logs);
+		aux=static_cast<tLog **>(realloc(tvLogConfig->logs,sizeof(tLog *) * tvLogConfig->n_logs));
 		if(aux==NULL) {
 			fprintf(stderr,"Failed allocating memory!\n");
 			throw txNoMem(_WHERE(""));
@@ -388,15 +388,15 @@ void tLog::rotate(bool force) {
 
 	size=strlen(this->name) + tvLogConfig->path->size();
 
-	croak=(char *)malloc(sizeof(char) * (size+1+5));
+	croak=static_cast<char *>(malloc(sizeof(char) * (size+1+5)));
 	if(croak==NULL) return;
-	path=(char *)malloc(sizeof(char) * (size+1));
-	if(path==NULL) { free((void *)croak); return; }
-	croak2=(char *)malloc(sizeof(char) * (size+1+5));
-	if(croak2==NULL) { free((void *)path); free((void *)croak); return; }
-	gustavo=(char *)malloc(sizeof(char) * (size+1+5));
-	if(gustavo==NULL) { free((void *)path); free((void *)croak);
-		free((void *)croak2); return; }
+	path=static_cast<char *>(malloc(sizeof(char) * (size+1)));
+	if(path==NULL) { free(croak); return; }
+	croak2=static_cast<char *>(malloc(sizeof(char) * (size+1+5)));
+	if(croak2==NULL) { free(path); free(croak); return; }
+	gustavo=static_cast<char *>(malloc(sizeof(char) * (size+1+5)));
+	if(gustavo==NULL) { free(path); free(croak);
+		free(croak2); return; }
 
 	DBG(5,"4..\n");
 
@@ -413,7 +413,7 @@ void tLog::rotate(bool force) {
 		DBG(6,"file not found, cannot rotate!\n");
 	} else {
 
-		if((int)file_stats.st_size<tvLogConfig->rotate_size && !force) {
+		if(file_stats.st_size<tvLogConfig->rotate_size && !force) {
 			;
 		} else {
 
@@ -469,10 +469,10 @@ void tLog::rotate(bool force) {
 		}
 	}
 
-	free((void *)croak);
-	free((void *)path);
-	free((void *)croak2);
-	free((void *)gustavo);
+	free(croak);
+	free(path);
+	free(croak2);
+	free(gustavo);
 
 	//return ret;
 }
@@ -496,8 +496,8 @@ void tLog::close(bool silent) {
 		fclose(this->dsc);
 		this->dsc=NULL;
 	}
-	free((void *)this->name);
-	free((void *)this->fullpath);
+	free(this->name);
+	free(this->fullpath);
 	this->name=NULL;
 	this->fullpath=NULL;
 	this->flags=0;
@@ -696,9 +696,9 @@ void tLog::dumpbuf(const Byte * buf, U32 n, U32 e, Byte how) {
 		case 3:
 			for(i=e;i<n;i++) {
 				if(i%4==0) { this->print(" "); }
-				if((how==1 && isprint((int)buf[i])) || (how!=1 && isprint((Byte)(~buf[i])))) {
+				if((how==1 && isprint(buf[i])) || (how!=1 && isprint((~buf[i])))) {
 					if(how==1) { this->print("%c",buf[i]); }
-					else { this->print("%c",(Byte)(~buf[i])); }
+					else { this->print("%c",(~buf[i])); }
 				}
 				else this->print(".");
 			}
@@ -707,9 +707,9 @@ void tLog::dumpbuf(const Byte * buf, U32 n, U32 e, Byte how) {
 		case 4:
 			for(i=e;i<n;i++) {
 				if(i%4==0) { this->print(" "); }
-				if((how==2 && isprint((int)buf[i])) || (how!=2 && isprint((Byte)(~buf[i])))) {
+				if((how==2 && isprint(buf[i])) || (how!=2 && isprint((~buf[i])))) {
 					if(how==2) { this->print(" %c",buf[i]); }
-					else { this->print(" %c",(Byte)(~buf[i])); }
+					else { this->print(" %c",(~buf[i])); }
 				}
 				else this->print(" .");
 			}
@@ -727,17 +727,17 @@ void tLog::dumpbuf(const Byte * buf, U32 n, U32 e, Byte how) {
 					if((i-e)!=0) {  //not after first line
 						this->print(" ");
 						for(j=i-0x10; j<i; j++) {
-							if((how!=6 && isprint((int)buf[j])) || (how==6 && isprint((Byte)(~buf[j])))) {
+							if((how!=6 && isprint(buf[j])) || (how==6 && isprint((~buf[j])))) {
 								if(how!=6) { this->print("%c",buf[j]); }
-								else { this->print("%c",(Byte)(~buf[j])); }
+								else { this->print("%c",(~buf[j])); }
 							}
 							else this->print(".");
 						}
 						if(how==7) {
 							this->print(" ");
 							for(j=i-0x10; j<i; j++) {
-								if(isprint((Byte)(~buf[j]))) {
-									this->print("%c",(Byte)(~buf[j]));
+								if(isprint((~buf[j]))) {
+									this->print("%c",(~buf[j]));
 								}
 								else this->print(".");
 							}
@@ -752,23 +752,23 @@ void tLog::dumpbuf(const Byte * buf, U32 n, U32 e, Byte how) {
 			}
 			this->print(" ");
 			for(k=j; k<n; k++) {
-				if((how!=6 && isprint((int)buf[k])) || (how==6 && isprint((Byte)(~buf[k])))) {
+				if((how!=6 && isprint(buf[k])) || (how==6 && isprint(~buf[k]))) {
 						if(how!=6) { this->print("%c",buf[k]); }
-						else { this->print("%c",(Byte)(~buf[k])); }
+						else { this->print("%c",(~buf[k])); }
 				}
 				else this->print(".");
 			}
 			if(how==7) {
 				if((n-j)<0x10) {
 					for(k=k; k<=(((n/0x10)+1)*0x10); k++) {
-						this->print(" ",k,n,((n/0x10)));
+						this->print(" ",k,n,(n/0x10));
 					}
 				} else {
 					this->print(" ");
 				}
 				for(k=j; k<n; k++) {
-					if((isprint(((Byte)(~buf[k]))))) {
-						this->print("%c",(Byte)(~buf[k]));
+					if((isprint((~buf[k])))) {
+						this->print("%c",(~buf[k]));
 					}
 					else this->print(".");
 				}

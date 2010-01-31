@@ -47,21 +47,21 @@ tSQL::tSQL(const char *host, U16 port, const char *username, const char *passwor
 	connection = NULL;
 	stamp = 0;
 	
-	this->host = (char *)malloc( (strlen(host)+1) * sizeof(Byte) );
+	this->host = static_cast<char *>(malloc( (strlen(host)+1) * sizeof(Byte) ));
 	if (this->host == NULL) throw txNoMem(_WHERE("NoMem"));
 	strcpy(this->host, host);
 	
 	this->port = port;
 	
-	this->username = (char *)malloc( (strlen(username)+1) * sizeof(Byte) );
+	this->username = static_cast<char *>(malloc( (strlen(username)+1) * sizeof(Byte) ));
 	if (this->username == NULL) throw txNoMem(_WHERE("NoMem"));
 	strcpy(this->username, username);
 	
-	this->password = (char *)malloc( (strlen(password)+1) * sizeof(Byte) );
+	this->password = static_cast<char *>(malloc( (strlen(password)+1) * sizeof(Byte) ));
 	if (this->password == NULL) throw txNoMem(_WHERE("NoMem"));
 	strcpy(this->password, password);
 	
-	this->dbname = (char *)malloc( (strlen(dbname)+1) * sizeof(Byte) );
+	this->dbname = static_cast<char *>(malloc( (strlen(dbname)+1) * sizeof(Byte) ));
 	if (this->dbname == NULL) throw txNoMem(_WHERE("NoMem"));
 	strcpy(this->dbname, dbname);
 	
@@ -191,7 +191,7 @@ char *tSQL::escape(const char *str)
 char *tSQL::escape(char *out, const Byte *data, int size)
 {
 	if (connection == NULL) throw txDatabaseError(_WHERE("can't escape a string"));
-	mysql_real_escape_string(connection, out, (const char *)data, size);
+	mysql_real_escape_string(connection, out, reinterpret_cast<const char *>(data), size);
 	return out;
 }
 

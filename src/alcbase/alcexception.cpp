@@ -115,7 +115,7 @@ txBase::txBase(const char * msg,bool abort,bool core) {
 }
 txBase::txBase(const char * name,const char * msg,bool abort,bool core) {
 	this->name=name;
-	this->imsg=(char *)malloc(sizeof(char) * (strlen(name) + strlen(msg) + 2));
+	this->imsg=static_cast<char *>(malloc(sizeof(char) * (strlen(name) + strlen(msg) + 2)));
 	if(this->imsg!=NULL) { strcpy(this->imsg,name); strcat(this->imsg,":"); strcat(this->imsg,msg); }
 	this->abort=abort;
 	this->core=core;
@@ -125,18 +125,18 @@ txBase::txBase(const char * name,const char * msg,bool abort,bool core) {
 	this->_preparebacktrace();
 }
 txBase::txBase(const txBase &t) {
-	copy((txBase &)t);
+	copy(t);
 }
-void txBase::copy(txBase &t) {
+void txBase::copy(const txBase &t) {
 	DBG(5,"copy\n");
 	this->name=NULL;
 	this->abort=t.abort;
 	this->core=t.core;
 	this->msg=NULL;
 	this->size=t.size;
-	this->bt=(char *)malloc(sizeof(char) * (strlen(t.bt)+1));
+	this->bt=static_cast<char *>(malloc(sizeof(char) * (strlen(t.bt)+1)));
 	strcpy(this->bt,t.bt);
-	this->imsg=(char *)malloc(sizeof(char) * (strlen(t.imsg)+1));
+	this->imsg=static_cast<char *>(malloc(sizeof(char) * (strlen(t.imsg)+1)));
 	strcpy(this->imsg,t.imsg);
 }
 void txBase::_preparebacktrace() {
@@ -161,7 +161,7 @@ void txBase::_preparebacktrace() {
 		msize+=strlen(strings[i])+6;
 	}
 	msize+=30+50;
-	bt=(char *)malloc(sizeof(char) * msize);
+	bt=static_cast<char *>(malloc(sizeof(char) * msize));
 	if(bt!=NULL) {
 		memset(bt,0,msize);
 		sprintf(bt,"Backtrace with %u levels:\n",size);
@@ -172,9 +172,9 @@ void txBase::_preparebacktrace() {
 		}
 		strcat(bt,"c++filt and addr2line may be useful\n");
 	}
-	free((void *)strings);
+	free(strings);
 #else
-	bt=(char *)malloc(sizeof(char) * 50);
+	bt=static_cast<char *>(malloc(sizeof(char) * 50));
 	sprintf(bt,"Backtrace not implemented in your OS\n");
 #endif
 	if((txvCore & 0x02) || this->core) { alcWriteCoreDump(); }
@@ -186,43 +186,42 @@ void txBase::_preparebacktrace() {
 	}
 }
 void txBase::dump(bool toStderr) {
-		if (toStderr)
-			fprintf(stderr,"Exception %s:\n%s\n",this->what(),this->backtrace());
+	if (toStderr)
+		fprintf(stderr,"Exception %s:\n%s\n",this->what(),this->backtrace());
 
-		unsigned int t,pid;
-		pid=getpid();
-		t=(unsigned int)time(NULL);
-		int strsize=60;
-		if(txvCorePath!=NULL) strsize+=strlen(txvCorePath);
-		char * where=(char *)malloc(sizeof(char) * strsize+1);
-		if(where) {
-			memset(where,0,strsize+1);
-			if(txvCorePath!=NULL) sprintf(where,"%s/BackTrace-%06i-%08X.txt",txvCorePath,pid,t);
-			else sprintf(where,"BackTrace-%06i-%08X.txt",pid,t);
-			FILE * f=NULL;
-			f=fopen(where,"w");
-			if(f!=NULL) {
-				fprintf(f,"Servers Build info:\n%s\n",alcVersionTextShort());
-				fprintf(f,"System info: %s\n\n",alcSystemInfo());
-				fprintf(f,"Born:    %s\n",alcGetBornTime().str());
-				tTime now;
-				now.now();
-				fprintf(f,"Defunct: %s\n",now.str());
-				fprintf(f,"Uptime:  %s\n",alcGetUptime().str(0x01));
-				fprintf(f,"Main thread id: %d\n",alcGetMainThreadId());
-				fprintf(f,"This thread id: %d\n",alcGetSelfThreadId());
-				fprintf(f,"Exception %s:\n%s\n",this->what(),this->backtrace());
-				fclose(f);
-			}
-			free((void *)where);
+	unsigned int t,pid;
+	pid=getpid();
+	t=time(NULL);
+	int strsize=60;
+	if(txvCorePath!=NULL) strsize+=strlen(txvCorePath);
+	char * where=static_cast<char *>(malloc(sizeof(char) * strsize+1));
+	if(where) {
+		memset(where,0,strsize+1);
+		if(txvCorePath!=NULL) sprintf(where,"%s/BackTrace-%06i-%08X.txt",txvCorePath,pid,t);
+		else sprintf(where,"BackTrace-%06i-%08X.txt",pid,t);
+		FILE * f=NULL;
+		f=fopen(where,"w");
+		if(f!=NULL) {
+			fprintf(f,"Servers Build info:\n%s\n",alcVersionTextShort());
+			fprintf(f,"System info: %s\n\n",alcSystemInfo());
+			fprintf(f,"Born:    %s\n",alcGetBornTime().str());
+			tTime now;
+			now.now();
+			fprintf(f,"Defunct: %s\n",now.str());
+			fprintf(f,"Uptime:  %s\n",alcGetUptime().str(0x01));
+			fprintf(f,"Main thread id: %d\n",alcGetMainThreadId());
+			fprintf(f,"This thread id: %d\n",alcGetSelfThreadId());
+			fprintf(f,"Exception %s:\n%s\n",this->what(),this->backtrace());
+			fclose(f);
 		}
-
+		free(where);
+	}
 }
 const char * txBase::what() { return msg; }
 const char * txBase::backtrace() { return bt; }
 txBase::~txBase() {
-	free((void *)bt);
-	free((void *)imsg);
+	free(bt);
+	free(imsg);
 }
 //End base
 
