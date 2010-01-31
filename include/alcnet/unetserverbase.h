@@ -52,7 +52,8 @@ public:
 	// we're adding some default behaviour here and subclasses should call this one before doing their own processing
 	virtual int onMsgRecieved(alc::tUnetMsg*msg, alc::tNetSession*u);
 	
-	virtual void forwardPing(tmPing &/*ping*/, tNetSession */*u*/) { } //!< this is implemented by lobby and game to forward the ping if necessary
+	/** This event is triggered when there is a ping which is not for the current server and could be forwarded */
+	virtual void onForwardPing(tmPing &/*ping*/, tNetSession */*u*/) { }
 };
 
 } //End alc namespace

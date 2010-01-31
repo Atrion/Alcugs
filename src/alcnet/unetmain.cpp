@@ -151,7 +151,7 @@ void tUnetSignalHandler::handle_signal(int s) {
 				if(alcGetSelfThreadId()!=alcGetMainThreadId()) return;
 				#endif
 				lstd->log("INF: TERMINATED message sent to all players.\n\n");
-				net->terminateAll();
+				net->terminatePlayers();
 				alcSignal(SIGUSR2,1);
 				break;
 		}

@@ -50,7 +50,6 @@ namespace alc {
 class tUnetLobbyServerBase : public tUnetServerBase {
 public:
 	tUnetLobbyServerBase(void);
-	virtual void terminateAll();
 	
 	inline const Byte *getGuid() { return serverGuid; }
 	inline const char *getName() { return serverName; }
@@ -59,13 +58,16 @@ protected:
 	virtual void onIdle(bool idle);
 	virtual void onConnectionClosed(tNetSession *u);
 	virtual int onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u);
-	virtual void forwardPing(tmPing &ping, tNetSession *u);
+	virtual void onForwardPing(tmPing &ping, tNetSession *u);
 	virtual void terminate(tNetSession *u, Byte reason = 0, bool gotLeave = false);
 	virtual void onUnloadConfig(void);
 	virtual void onLoadConfig(void);
 
-	virtual void additionalVaultProcessing(tNetSession */*u*/, tvMessage */*msg*/) {}
-	virtual void playerAuthed(tNetSession */*u*/) {}
+	/** This event is triggered when a vault message is forwarded to or from the vault server */
+	virtual void onVaultMessageForward(tNetSession */*u*/, tvMessage */*msg*/) {}
+	
+	/** This event is triggered when a player authenticated itself against the server */
+	virtual void onPlayerAuthed(tNetSession */*u*/) {}
 	
 	tNetSession *getServer(Byte dst);
 

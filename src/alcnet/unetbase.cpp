@@ -239,12 +239,12 @@ void tUnetBase::terminate(tNetSession *u, Byte reason, bool gotLeave)
 	}
 }
 
-void tUnetBase::terminateAll(void)
+void tUnetBase::terminateAll(bool playersOnly)
 {
 	tNetSession *u;
 	smgr->rewind();
 	while ((u=smgr->getNext())) { // double brackets to suppress gcc warning
-		if (!u->isTerminated()) // avoid sending a NetMsgLeave or NetMsgTerminate to terminated peers
+		if (!u->isTerminated() && (!playersOnly ||  u->getPeerType() == KClient)) // avoid sending a NetMsgLeave or NetMsgTerminate to terminated peers
 			terminate(u);
 	}
 }
@@ -258,95 +258,102 @@ void tUnetBase::closeConnection(tNetSession *u)
 	delete ev;
 }
 
-void tUnetBase::processEvent(tNetEvent *evt, tNetSession *u, bool shutdown)
+void tUnetBase::processEventQueue(bool shutdown)
 {
-	switch(evt->id) {
-		case UNET_NEWCONN:
-			if (shutdown)
-				terminate(u);
-			else
-				onNewConnection(u);
-			sec->log("%s New Connection\n",u->str());
-			break;
-		case UNET_TIMEOUT:
-			if (!u->isTerminated() && !shutdown) {
-				onConnectionTimeout(evt,u);
-				if(!evt->veto)
-					terminate(u, RTimedOut);
-			}
-			else { // a destroyed session, close it
-				closeConnection(u);
-			}
-			break;
-		case UNET_FLOOD:
-			sec->log("%s Flood Attack\n",u->str());
-			if (!shutdown)
-				onConnectionFlood(evt,u);
-			if (shutdown || !evt->veto) {
-				terminate(u);
-				lerr->log("%s kicked due to a Flood Attack\n", u->str());
-			}
-			break;
-		case UNET_MSGRCV:
-		{
-			tUnetMsg * msg = evt->msg;
-			int ret = 0; // 0 - non parsed; 1 - parsed; 2 - ignored; -1 - parse error; -2 - hack attempt
-			#ifdef ENABLE_MSGDEBUG
-			log->log("%s New MSG Recieved\n",u->str());
-			#endif
-			assert(msg!=NULL);
-			try {
-				ret=parseBasicMsg(evt,msg,u,shutdown);
-				// terminated sessions can be deleted here - either it was a NetMsgLeave and everything is fine, or it was an invalid message
-				if (u->isTerminated() || shutdown) {
-					if (ret != 1) {
-						err->log("%s is terminated and sent a non-NetMsgLeave message 0x%04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-						terminate(u); // this will delete the session ASAP as it already is terminated
+	tNetEvent *evt;
+	while ((evt=getEvent())) {
+		tNetSession *u=getSession(evt->sid);
+		if (u != NULL) {
+			switch(evt->id) {
+				case UNET_NEWCONN:
+					if (shutdown)
+						terminate(u);
+					else
+						onNewConnection(u);
+					sec->log("%s New Connection\n",u->str());
+					break;
+				case UNET_TIMEOUT:
+					if (!u->isTerminated() && !shutdown) {
+						onConnectionTimeout(evt,u);
+						if(!evt->veto)
+							terminate(u, RTimedOut);
 					}
-					else if (ret == 1 && !msg->data.eof() > 0) { // packet was processed and there are bytes left
-						err->log("%s Recieved a message 0x%04X (%s) which was too long (%d Bytes remaining after parsing)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data.remaining());
-						terminate(u); // this will delete the session ASAP as it already is terminated
+					else { // a destroyed session, close it
+						closeConnection(u);
+					}
+					break;
+				case UNET_FLOOD:
+					sec->log("%s Flood Attack\n",u->str());
+					if (!shutdown)
+						onConnectionFlood(evt,u);
+					if (shutdown || !evt->veto) {
+						terminate(u);
+						lerr->log("%s kicked due to a Flood Attack\n", u->str());
+					}
+					break;
+				case UNET_MSGRCV:
+				{
+					tUnetMsg * msg = evt->msg;
+					int ret = 0; // 0 - non parsed; 1 - parsed; 2 - ignored; -1 - parse error; -2 - hack attempt
+					#ifdef ENABLE_MSGDEBUG
+					log->log("%s New MSG Recieved\n",u->str());
+					#endif
+					assert(msg!=NULL);
+					try {
+						ret=parseBasicMsg(evt,msg,u,shutdown);
+						// terminated sessions can be deleted here - either it was a NetMsgLeave and everything is fine, or it was an invalid message
+						if (u->isTerminated() || shutdown) {
+							if (ret != 1) {
+								err->log("%s is terminated and sent a non-NetMsgLeave message 0x%04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+								terminate(u); // this will delete the session ASAP as it already is terminated
+							}
+							else if (ret == 1 && !msg->data.eof() > 0) { // packet was processed and there are bytes left
+								err->log("%s Recieved a message 0x%04X (%s) which was too long (%d Bytes remaining after parsing)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data.remaining());
+								terminate(u); // this will delete the session ASAP as it already is terminated
+							}
+							break;
+						}
+						// this part can never be reached on shutdown, so messages are only processed when the server is still fully running
+						if (ret == 0) ret=onMsgRecieved(msg,u);
+						if (ret == 1 && !msg->data.eof() > 0) { // packet was processed and there are bytes left, obiously invalid, terminate the client
+							err->log("%s Recieved a message 0x%04X (%s) which was too long (%d Bytes remaining after parsing) - kicking player\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data.remaining());
+							ret=-1;
+						}
+					}
+					catch (txBase &t) { // if there was an error parsing the message, kick the responsible player
+						err->log("%s Recieved invalid 0x%04X (%s) - kicking player\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+						err->log(" Exception details: %s\n",t.what());
+						//err->log(" Backtrace: %s\n", t.backtrace());
+						ret=-1;
+					}
+					if(u->isClient()==1) {
+						if(ret==0) {
+							err->log("%s Unexpected message 0x%04X (%s) - kicking player\n",u->str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
+							sec->log("%s Unexpected message 0x%04X (%s)\n",u->str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
+							terminate(u, RUnimplemented);
+						}
+						else if(ret==-1) {
+							// the problem already got printed to the error log wherever this return value was set
+							sec->log("%s Kicked off due to a parse error in a previus message 0x%04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+							terminate(u, RParseError);
+						}
+						else if(ret==-2) {
+							// the problem already got printed to the error log wherever this return value was set
+							sec->log("%s Kicked off due to cracking 0x%04X (%s)\n",u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+							terminate(u, RHackAttempt);
+						}
+					} else {
+						if(ret<=0) {
+							err->log("%s Error code %i parsing message 0x%04X (%s)\n",u->str(),ret,msg->cmd,alcUnetGetMsgCode(msg->cmd));
+						}
 					}
 					break;
 				}
-				// this part can never be reached on shutdown, so messages are only processed when the server is still fully running
-				if (ret == 0) ret=onMsgRecieved(msg,u);
-				if (ret == 1 && !msg->data.eof() > 0) { // packet was processed and there are bytes left, obiously invalid, terminate the client
-					err->log("%s Recieved a message 0x%04X (%s) which was too long (%d Bytes remaining after parsing) - kicking player\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data.remaining());
-					ret=-1;
-				}
+				default:
+					throw txBase(_WHERE("%s Unknown Event id %i\n",u->str(),evt->id));
 			}
-			catch (txBase &t) { // if there was an error parsing the message, kick the responsible player
-				err->log("%s Recieved invalid 0x%04X (%s) - kicking player\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-				err->log(" Exception details: %s\n",t.what());
-				//err->log(" Backtrace: %s\n", t.backtrace());
-				ret=-1;
-			}
-			if(u->isClient()==1) {
-				if(ret==0) {
-					err->log("%s Unexpected message 0x%04X (%s) - kicking player\n",u->str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
-					sec->log("%s Unexpected message 0x%04X (%s)\n",u->str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
-					terminate(u, RUnimplemented);
-				}
-				else if(ret==-1) {
-					// the problem already got printed to the error log wherever this return value was set
-					sec->log("%s Kicked off due to a parse error in a previus message 0x%04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-					terminate(u, RParseError);
-				}
-				else if(ret==-2) {
-					// the problem already got printed to the error log wherever this return value was set
-					sec->log("%s Kicked off due to cracking 0x%04X (%s)\n",u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-					terminate(u, RHackAttempt);
-				}
-			} else {
-				if(ret<=0) {
-					err->log("%s Error code %i parsing message 0x%04X (%s)\n",u->str(),ret,msg->cmd,alcUnetGetMsgCode(msg->cmd));
-				}
-			}
-			break;
 		}
-		default:
-			throw txBase(_WHERE("%s Unknown Event id %i\n",u->str(),evt->id));
+		delete evt;
 	}
 	log->flush(); err->flush(); sec->flush(); // I don't know how much perforcmance this costs, but without flushing it's not possible to follow the server logs using tail -F
 }
@@ -356,39 +363,31 @@ void tUnetBase::run() {
 	onLoadConfig();
 	startOp();
 	onStart();
-	
-	tNetEvent * evt;
-	tNetSession * u;
 
 	while(state_running) {
 		Recv();
-		while((evt=getEvent())) {
-			u=getSession(evt->sid);
-			if (u != NULL)
-				processEvent(evt, u);
-			delete evt;
-		}
+		processEventQueue();
 		onIdle(idle);
 	}
+
+	// Uru clients need to be kicked first - messages might be sent to other servers as a reaction
+	terminatePlayers();
+	processEventQueue();
 	
 	//terminating the service
 	terminateAll();
 	
 	U32 startup=getTime();
 	while(!smgr->empty() && (getTime()-startup)<stop_timeout) {
-		updateTimerRelative(100000); // make sure we don't wait longer than this
+		updateTimerRelative(100000); // make sure we don't wait longer than this (0.1 seconds)
 		Recv();
-		while((evt=getEvent())) {
-			u=getSession(evt->sid);
-			if (u != NULL)
-				processEvent(evt, u, true);
-			delete evt;
-		}
+		processEventQueue();
 	}
 	
 	if(!smgr->empty()) {
 		err->log("ERR: Session manager is not empty!\n");
 		smgr->rewind();
+		tNetSession * u;
 		while((u=smgr->getNext())) {
 			closeConnection(u);
 		}
