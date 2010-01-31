@@ -580,171 +580,139 @@ namespace alc {
 		
 		if (!(node.flagB & MType)) throw txDatabaseError(_WHERE("type must be set for all new nodes"));
 		
-		int size = node.blob1Size*2 + 4096;
-		char *query = static_cast<char *>(malloc((size+4096)*sizeof(char)));
-		char *values = static_cast<char *>(malloc(size*sizeof(char)));
-		char *helpStr = static_cast<char *>(malloc(size*sizeof(char)));
-		if (query == NULL || values == NULL || helpStr == NULL) throw txNoMem(_WHERE("NoMem"));
+		tString query, values;
 		
 		// set current time
 		node.flagB |= (MModTime | MCrtTime | MAgeTime);
 		node.modTime = alcGetCurrentTime();
 		node.crtTime = node.ageTime = alcGetTime();
 		
-		sprintf(query, "INSERT INTO %s (type", vaultTable);
-		sprintf(values, ") VALUES ('%d'", node.type);
+		query.printf("INSERT INTO %s (type", vaultTable);
+		values.printf(") VALUES ('%d'", node.type);
 		
 		if (node.flagB & MPerms) {
-			strcat(query, ",permissions");
-			sprintf(helpStr, ",'%d'", node.permissions);
-			strcat(values, helpStr);
+			query.writeStr(",permissions");
+			values.printf(",'%d'", node.permissions);
 		}
 		if (node.flagB & MOwner) {
-			strcat(query, ",owner");
-			sprintf(helpStr, ",'%d'", node.owner);
-			strcat(values, helpStr);
+			query.writeStr(",owner");
+			values.printf(",'%d'", node.owner);
 		}
 		if (node.flagB & MGroup) {
-			strcat(query, ",grp");
-			sprintf(helpStr, ",'%d'", node.group);
-			strcat(values, helpStr);
+			query.writeStr(",grp");
+			values.printf(",'%d'", node.group);
 		}
 		if (node.flagB & MModTime) {
-			strcat(query, ",mod_time");
-			sprintf(helpStr, ",'%f'", node.modTime);
-			strcat(values, helpStr);
+			query.writeStr(",mod_time");
+			values.printf(",'%f'", node.modTime);
 		}
 		if (node.flagB & MCreator) {
-			strcat(query, ",creator");
-			sprintf(helpStr, ",'%d'", node.creator);
-			strcat(values, helpStr);
+			query.writeStr(",creator");
+			values.printf(",'%d'", node.creator);
 		}
 		if (node.flagB & MCrtTime) {
-			strcat(query, ",crt_time");
-			sprintf(helpStr, ",FROM_UNIXTIME('%d')", node.crtTime);
-			strcat(values, helpStr);
+			query.writeStr(",crt_time");
+			values.printf(",FROM_UNIXTIME('%d')", node.crtTime);
 		}
 		if (node.flagB & MAgeTime) {
-			strcat(query, ",age_time");
-			sprintf(helpStr, ",FROM_UNIXTIME('%d')", node.ageTime);
-			strcat(values, helpStr);
+			query.writeStr(",age_time");
+			values.printf(",FROM_UNIXTIME('%d')", node.ageTime);
 		}
 		if (node.flagB & MAgeName) {
-			strcat(query, ",age_name");
-			sprintf(helpStr, ",'%s'", sql->escape(node.ageName.c_str()));
-			strcat(values, helpStr);
+			query.writeStr(",age_name");
+			values.printf(",'%s'", sql->escape(node.ageName.c_str()));
 		}
 		if (node.flagB & MAgeGuid) {
-			strcat(query, ",age_guid");
-			sprintf(helpStr, ",'%s'", sql->escape(alcGetStrGuid(node.ageGuid)));
-			strcat(values, helpStr);
+			query.writeStr(",age_guid");
+			values.printf(",'%s'", sql->escape(alcGetStrGuid(node.ageGuid)));
 		}
 		if (node.flagB & MInt32_1) {
-			strcat(query, ",int_1");
-			sprintf(helpStr, ",'%d'", node.int1);
-			strcat(values, helpStr);
+			query.writeStr(",int_1");
+			values.printf(",'%d'", node.int1);
 		}
 		if (node.flagB & MInt32_2) {
-			strcat(query, ",int_2");
-			sprintf(helpStr, ",'%d'", node.int2);
-			strcat(values, helpStr);
+			query.writeStr(",int_2");
+			values.printf(",'%d'", node.int2);
 		}
 		if (node.flagB & MInt32_3) {
-			strcat(query, ",int_3");
-			sprintf(helpStr, ",'%d'", node.int3);
-			strcat(values, helpStr);
+			query.writeStr(",int_3");
+			values.printf(",'%d'", node.int3);
 		}
 		if (node.flagB & MInt32_4) {
-			strcat(query, ",int_4");
-			sprintf(helpStr, ",'%d'", node.int4);
-			strcat(values, helpStr);
+			query.writeStr(",int_4");
+			values.printf(",'%d'", node.int4);
 		}
 		if (node.flagB & MUInt32_1) {
-			strcat(query, ",uint_1");
-			sprintf(helpStr, ",'%d'", node.uInt1);
-			strcat(values, helpStr);
+			query.writeStr(",uint_1");
+			values.printf(",'%d'", node.uInt1);
 		}
 		if (node.flagB & MUInt32_2) {
-			strcat(query, ",uint_2");
-			sprintf(helpStr, ",'%d'", node.uInt2);
-			strcat(values, helpStr);
+			query.writeStr(",uint_2");
+			values.printf(",'%d'", node.uInt2);
 		}
 		if (node.flagB & MUInt32_3) {
-			strcat(query, ",uint_3");
-			sprintf(helpStr, ",'%d'", node.uInt3);
-			strcat(values, helpStr);
+			query.writeStr(",uint_3");
+			values.printf(",'%d'", node.uInt3);
 		}
 		if (node.flagB & MUInt32_4) {
-			strcat(query, ",uint_4");
-			sprintf(helpStr, ",'%d'", node.uInt4);
-			strcat(values, helpStr);
+			query.writeStr(",uint_4");
+			values.printf(",'%d'", node.uInt4);
 		}
 		if (node.flagB & MStr64_1) {
-			strcat(query, ",str_1");
-			sprintf(helpStr, ",'%s'", sql->escape(node.str1.c_str()));
-			strcat(values, helpStr);
+			query.writeStr(",str_1");
+			values.printf(",'%s'", sql->escape(node.str1.c_str()));
 		}
 		if (node.flagB & MStr64_2) {
-			strcat(query, ",str_2");
-			sprintf(helpStr, ",'%s'", sql->escape(node.str2.c_str()));
-			strcat(values, helpStr);
+			query.writeStr(",str_2");
+			values.printf(",'%s'", sql->escape(node.str2.c_str()));
 		}
 		if (node.flagB & MStr64_3) {
-			strcat(query, ",str_3");
-			sprintf(helpStr, ",'%s'", sql->escape(node.str3.c_str()));
-			strcat(values, helpStr);
+			query.writeStr(",str_3");
+			values.printf(",'%s'", sql->escape(node.str3.c_str()));
 		}
 		if (node.flagB & MStr64_4) {
-			strcat(query, ",str_4");
-			sprintf(helpStr, ",'%s'", sql->escape(node.str4.c_str()));
-			strcat(values, helpStr);
+			query.writeStr(",str_4");
+			values.printf(",'%s'", sql->escape(node.str4.c_str()));
 		}
 		if (node.flagB & MStr64_5) {
-			strcat(query, ",str_5");
-			sprintf(helpStr, ",'%s'", sql->escape(node.str5.c_str()));
-			strcat(values, helpStr);
+			query.writeStr(",str_5");
+			values.printf(",'%s'", sql->escape(node.str5.c_str()));
 		}
 		if (node.flagB & MStr64_6) {
-			strcat(query, ",str_6");
-			sprintf(helpStr, ",'%s'", sql->escape(node.str6.c_str()));
-			strcat(values, helpStr);
+			query.writeStr(",str_6");
+			values.printf(",'%s'", sql->escape(node.str6.c_str()));
 		}
 		if (node.flagB & MlStr64_1) {
-			strcat(query, ",lstr_1");
-			sprintf(helpStr, ",'%s'", sql->escape(node.lStr1.c_str()));
-			strcat(values, helpStr);
+			query.writeStr(",lstr_1");
+			values.printf(",'%s'", sql->escape(node.lStr1.c_str()));
 		}
 		if (node.flagB & MlStr64_2) {
-			strcat(query, ",lstr_2");
-			sprintf(helpStr, ",'%s'", sql->escape(node.lStr2.c_str()));
-			strcat(values, helpStr);
+			query.writeStr(",lstr_2");
+			values.printf(",'%s'", sql->escape(node.lStr2.c_str()));
 		}
 		if (node.flagB & MText_1) {
-			strcat(query, ",text_1");
-			sprintf(helpStr, ",'%s'", sql->escape(node.text1.c_str()));
-			strcat(values, helpStr);
+			query.writeStr(",text_1");
+			values.printf(",'%s'", sql->escape(node.text1.c_str()));
 		}
 		if (node.flagB & MText_2) {
-			strcat(query, ",text_2");
-			sprintf(helpStr, ",'%s'", sql->escape(node.text2.c_str()));
-			strcat(values, helpStr);
+			query.writeStr(",text_2");
+			values.printf(",'%s'", sql->escape(node.text2.c_str()));
 		}
 		if (node.flagB & MBlob1) {
-			strcat(query, ",blob_1");
-			strcat(values, ",'");
+			query.writeStr(",blob_1");
+			values.writeStr(",'");
 			if (node.blob1Size) {
-				strcat(values, sql->escape(helpStr, node.blob1, node.blob1Size));
+				char *helpStr = static_cast<char *>(malloc(2*node.blob1Size+1));
+				values.writeStr(sql->escape(helpStr, node.blob1, node.blob1Size));
+				free(helpStr);
 			}
-			strcat(values, "'");
+			values.writeStr("'");
 		}
 		
-		strcat(query, values);
-		strcat(query, ")");
-		sql->query(query, "Inserting new node"); // FIXME: use tString
-		
-		free(query);
-		free(values);
-		free(helpStr);
+		// Now compose the two parts
+		query.writeStr(values);
+		query.writeStr(")");
+		sql->query(query.c_str(), "Inserting new node");
 		
 		return sql->insertId();
 	}

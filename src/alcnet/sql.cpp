@@ -182,9 +182,12 @@ void tSQL::checkTimeout(void)
 
 char *tSQL::escape(const char *str)
 {
-	static char escaped_str[512];
+	const U32 maxLength = 512;
+	static char escaped_str[maxLength*2+1]; // according to mysql doc
 	if (connection == NULL) throw txDatabaseError(_WHERE("can't escape a string"));
-	mysql_real_escape_string(connection, escaped_str, str, std::min<int>(strlen(str), 511));
+	if (strlen(str) > maxLength)
+		throw txDatabaseError(_WHERE("string too long (%i > %i), use the other escape function", strlen(str), maxLength));
+	mysql_real_escape_string(connection, escaped_str, str, strlen(str));
 	return escaped_str;
 }
 
