@@ -147,7 +147,7 @@ int main(int argc, char * argv[]) {
 	try {
 		//start Alcugs library
 		DBG(5,"alcInit...");
-		alcInit(argc,argv,true);
+		alcInit(true);
 		DBGM(5," done\n");
 		//Parse command line
 		DBG(5,"parsing cmd...");

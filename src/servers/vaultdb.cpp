@@ -993,7 +993,7 @@ namespace alc {
 							comma = true;
 						}
 						else
-							; // duplicate
+							{} // duplicate
 					}
 					else if (feed[feedIndex] > aux[auxIndex]) {
 						// the current feed must be inserted into the final list after the current aux, so we can insert the current aux now
@@ -1003,7 +1003,7 @@ namespace alc {
 						break; // we have to check if this was the last aux node or there's something after it
 					}
 					else
-						; // duplicate
+						{} // duplicate
 					++feedIndex; // got this one
 				}
 				if (feedIndex >= nFeed) {
@@ -1028,7 +1028,7 @@ namespace alc {
 					comma = true;
 				}
 				else
-					; // duplicate
+					{} // duplicate
 				++feedIndex; // got this one
 			}
 			DBG(9, "Completed the new lists\n");
@@ -1320,7 +1320,7 @@ namespace alc {
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
 		tString query;
-		query.printf("UPDATE %s SET flag='%d' WHERE id2='%d' AND id3='%d'", refVaultTable, seen, parent, seen);
+		query.printf("UPDATE %s SET flag='%d' WHERE id2='%d' AND id3='%d'", refVaultTable, seen, parent, son);
 		sql->query(query.c_str(), "Updating seen flag");
 	}
 	

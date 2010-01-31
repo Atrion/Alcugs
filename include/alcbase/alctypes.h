@@ -144,6 +144,9 @@ public:
 	
 	// useful functions
 	void check(const Byte * what,U32 n); //!< \throws txUnexpectedData if pattern don't matches buffer contents
+	inline void check(const SByte * what,U32 n) {
+		check(reinterpret_cast<const Byte *>(what), n);
+	}
 protected:
 	//! called when rewind is called
 	virtual void onrewind() {}
@@ -180,7 +183,7 @@ public:
 	
 	// implement interface
 	virtual void stream(tBBuf &buf) const;
-	virtual void store(tBBuf &buf) {}
+	virtual void store(tBBuf &/*buf*/) {}
 	virtual U32 tell() const;
 	virtual void set(U32 pos);
 	virtual void write(const Byte * val,U32 n);
@@ -210,7 +213,7 @@ protected:
 	//! assignment
 	virtual void copy(const tMBuf &t);
 	//! called when content is modified
-	virtual void onmodify(bool clear = false) {}
+	virtual void onmodify(bool /*clear*/ = false) {}
 	//! comparison
 	virtual SByte compare(const tMBuf &t) const;
 	
@@ -233,7 +236,7 @@ public:
 	inline virtual void write(const SByte * val,U32 n) { this->write(reinterpret_cast<const Byte *>(val),n); }
 	virtual const Byte * read(U32 n=0);
 	virtual void stream(tBBuf &buf) const;
-	virtual void store(tBBuf &buf) {}
+	virtual void store(tBBuf &/*buf*/) {}
 	virtual U32 size() const;
 	virtual void close();
 	virtual void open(const char * path,const char * mode="rb");
@@ -253,11 +256,11 @@ public:
 	explicit tSBuf(const Byte * buf,U32 msize);
 	virtual U32 tell() const;
 	virtual void set(U32 pos);
-	virtual void write(const Byte * val,U32 n) {}
-	inline virtual void write(const SByte * val,U32 n) { }
+	virtual void write(const Byte * /*val*/,U32 /*n*/) {}
+	inline virtual void write(const SByte * /*val*/,U32 /*n*/) { }
 	virtual const Byte * read(U32 n=0);
 	virtual void stream(tBBuf &buf) const;
-	virtual void store(tBBuf &buf) {}
+	virtual void store(tBBuf &/*buf*/) {}
 	virtual U32 size() const;
 private:
 	const Byte * buf;

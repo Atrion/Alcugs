@@ -50,7 +50,7 @@ namespace alc {
 	tUnetServerBase::tUnetServerBase(void) : tUnetBase()
 	{ }
 	
-	int tUnetServerBase::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
+	int tUnetServerBase::onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u)
 	{
 		switch(msg->cmd) {
 			// answer to pings

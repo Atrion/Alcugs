@@ -763,10 +763,6 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 #endif
 	}
 
-	if(msize<0) {
-		ERR(2,"n<0 ?, %i",msize);
-		neterror(" sendto() ");
-	}
 	DBG(9,"After the Sendto call...\n");
 	free((void *)buf2);
 	delete mbuf;
@@ -832,6 +828,7 @@ void tUnet::dump(tLog * sf,Byte flags) {
 		delete f;
 	}
 #endif
+	(void)sf; (void)flags; // mark as used
 }
 
 

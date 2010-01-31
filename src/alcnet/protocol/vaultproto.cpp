@@ -158,7 +158,7 @@ namespace alc {
 		return dbg.c_str();
 	}
 	
-	void tvAgeInfoStruct::asHtml(tLog *log, bool shortLog)
+	void tvAgeInfoStruct::asHtml(tLog *log, bool /*shortLog*/)
 	{
 		log->print("Age Info: %s<br />\n", str());
 	}
@@ -202,7 +202,7 @@ namespace alc {
 		return dbg;
 	}
 	
-	void tvSpawnPoint::asHtml(tLog *log, bool shortLog)
+	void tvSpawnPoint::asHtml(tLog *log, bool /*shortLog*/)
 	{
 		log->print("Spawn Point: %s<br />\n", str());
 	}
@@ -302,7 +302,7 @@ namespace alc {
 		t.putDouble(time);
 	}
 	
-	void tvManifest::asHtml(tLog *log, bool shortLog)
+	void tvManifest::asHtml(tLog *log, bool /*shortLog*/)
 	{
 		log->print("ID: 0x%08X (%d), Stamp: %s<br />\n", id, id, time ? alcGetStrTime(time) : "0");
 	}
@@ -347,7 +347,7 @@ namespace alc {
 		t.putByte(flags);
 	}
 	
-	void tvNodeRef::asHtml(tLog *log, bool shortLog)
+	void tvNodeRef::asHtml(tLog *log, bool /*shortLog*/)
 	{
 		log->print("Saver: 0x%08X (%d), Parent:  0x%08X (%d), Child: 0x%08X (%d), ", saver, saver, parent, parent, child, child);
 		log->print("Stamp: %s, Flags: 0x%02X<br />\n", time ? alcGetStrTime(time, microsec) : "0", flags);
@@ -423,7 +423,7 @@ namespace alc {
 		return str.c_str();
 	}
 	
-	void tvCreatableGenericValue::asHtml(tLog *log, bool shortLog)
+	void tvCreatableGenericValue::asHtml(tLog *log, bool /*shortLog*/)
 	{
 		switch (format) {
 			case DInteger:
@@ -572,7 +572,7 @@ namespace alc {
 		t.write(guid, 8);
 	}
 	
-	void tvServerGuid::asHtml(tLog *log, bool shortLog)
+	void tvServerGuid::asHtml(tLog *log, bool /*shortLog*/)
 	{
 		log->print("%s<br />\n", alcGetStrGuid(guid));
 	}
@@ -637,7 +637,7 @@ namespace alc {
 			crtTime = 0;
 		
 		if (flagB & MAgeCoords) // unused, do nothing
-			;
+			{}
 		
 		if (flagB & MAgeTime) {
 			ageTime = t.getU32();
@@ -786,7 +786,7 @@ namespace alc {
 			t.putU32(0);
 		}
 		if (flagB & MAgeCoords) // unused, do nothing
-			;
+			{}
 		if (flagB & MAgeTime) {
 			t.putU32(ageTime);
 			t.putU32(0);

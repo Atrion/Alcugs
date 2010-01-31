@@ -50,7 +50,7 @@ public:
 	tUnetServerBase(void);
 	
 	// we're adding some default behaviour here and subclasses should call this one before doing their own processing
-	virtual int onMsgRecieved(alc::tNetEvent*, alc::tUnetMsg*, alc::tNetSession*);
+	virtual int onMsgRecieved(alc::tUnetMsg*msg, alc::tNetSession*u);
 	
 	virtual void forwardPing(tmPing &/*ping*/, tNetSession */*u*/) { } //!< this is implemented by lobby and game to forward the ping if necessary
 };

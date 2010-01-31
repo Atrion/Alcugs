@@ -64,10 +64,10 @@ private:
 	}
 };
 
-int main(int argc, char * argv[]) {
+int main(void) {
 	std::cout << std::endl << "Alcugs test suite - alcthread tests" <<std::endl;
 	try {
-		alcInit(argc,argv);
+		alcInit();
 
 		lstd->log("Init...\n");
 		

@@ -47,7 +47,7 @@ namespace alc {
 		\param argv args
 		\param shutup Enable logging subsystem?
 */
-void alcInit(int argc=0,char ** argv=NULL,bool shutup=false);
+void alcInit(bool shutup=false);
 /** \brief Stop Alcugs library */
 void alcShutdown();
 /** \brief Call this after a fork() call */

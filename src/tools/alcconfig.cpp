@@ -42,7 +42,7 @@ void usage() {
 
 //main
 int main(int argc, char * argv[]) {
-	alcInit(argc,argv,true);
+	alcInit(true);
 	int i;
 	if(argc<2) {
 		usage();

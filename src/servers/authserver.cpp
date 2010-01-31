@@ -51,9 +51,9 @@ namespace alc {
 	const char * alcNetName="Auth";
 	Byte alcWhoami=KAuth;
 	
-	int tUnetAuthServer::onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u)
+	int tUnetAuthServer::onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u)
 	{
-		int ret = tUnetServerBase::onMsgRecieved(ev, msg, u); // first let tUnetServerBase process the message
+		int ret = tUnetServerBase::onMsgRecieved(msg, u); // first let tUnetServerBase process the message
 		if (ret != 0) return ret; // cancel if it was processed, otherwise it's our turn
 		
 		switch(msg->cmd) {

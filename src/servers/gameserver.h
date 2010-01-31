@@ -82,10 +82,10 @@ namespace alc {
 		gets the avatar out of afk/KI state. When it is >= 0, send a plAvatarInputStateMsg with the given state to get it out of animations */
 		tmGameMessage makePlayerIdle(tNetSession *u, tUruObject rec, S32 inputState = -1);
 	protected:
-		virtual int onMsgRecieved(alc::tNetEvent *ev, alc::tUnetMsg *msg, alc::tNetSession *u);
+		virtual int onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u);
 		virtual void onIdle(bool idle);
 		virtual void terminate(tNetSession *u, Byte reason, bool gotLeave = false);
-		virtual void onReloadConfig(bool reload) {
+		virtual void onReloadConfig(bool /*reload*/) {
 			ageState->reload();
 		}
 		virtual void onLoadConfig(void);

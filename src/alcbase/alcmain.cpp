@@ -55,7 +55,7 @@ U32 alcGetMainThreadId() {
 	return alcMainThreadId;
 }
 
-void alcInit(int argc,char ** argv,bool shutup) {
+void alcInit(bool shutup) {
 	if(alcInitialized) return;
 	alcMainThreadId=alcGetSelfThreadId();
 	alcInitialized=true;
