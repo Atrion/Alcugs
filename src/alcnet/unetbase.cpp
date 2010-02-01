@@ -368,13 +368,13 @@ void tUnetBase::run() {
 
 	while(state_running) {
 		Recv();
-		processEventQueue();
+		processEventQueue(/*shutdown*/false);
 		onIdle(idle);
 	}
 
 	// Uru clients need to be kicked first - messages might be sent to other servers as a reaction
 	terminatePlayers();
-	processEventQueue();
+	processEventQueue(/*shutdown*/true);
 	
 	//terminating the service
 	terminateAll();
@@ -383,7 +383,7 @@ void tUnetBase::run() {
 	while(!smgr->empty() && (getTime()-startup)<stop_timeout) {
 		updateTimerRelative(100000); // make sure we don't wait longer than this (0.1 seconds)
 		Recv();
-		processEventQueue();
+		processEventQueue(/*shutdown*/true);
 	}
 	
 	if(!smgr->empty()) {

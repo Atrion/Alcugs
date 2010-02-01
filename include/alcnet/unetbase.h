@@ -80,7 +80,7 @@ protected:
 			\param msg The message object
 			\param u The peer session object
 	*/
-	virtual int onMsgRecieved(tUnetMsg * /*msg*/,tNetSession * /*u*/) { return 0; }
+	virtual int onMsgRecieved(tUnetMsg * msg,tNetSession * u) = 0;
 	
 	/** This event is raised when a connection is being terminated
 			You need to override it in your derived classes with your implementation.
@@ -113,10 +113,10 @@ protected:
 	virtual void onIdle(bool /*idle*/=false) {}
 	
 	/** This is called before entering the event loop */
-	virtual void onStop() {}
+	virtual void onStart() {}
 	
 	/** This is called after leaving the event loop and closing all connections */
-	virtual void onStart() {}
+	virtual void onStop() {}
 	
 	/** this is called after loading and reloading the config */
 	virtual void onLoadConfig() {}
@@ -125,14 +125,14 @@ protected:
 			Everything created in onLoadConfig must be freed here */
 	virtual void onUnloadConfig() {}
 	
-	/** this is called after loading and reloading the config */
+	/** this is called while reloading the config */
 	virtual void onReloadConfig() {}
 private:
 	void terminate(tNetSession *u, Byte reason, bool gotLeave);
 	void terminateAll(bool playersOnly = false);
 	void removeConnection(tNetSession *u); //!< destroy that session
 	
-	void processEventQueue(bool shutdown = false);
+	void processEventQueue(bool shutdown);
 	int parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool shutdown);
 	void reconfigure();
 	bool state_running;
