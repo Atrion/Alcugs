@@ -82,8 +82,6 @@ public:
 private:
 	void _preparebacktrace();
 	const char * msg;
-	void * btArray[txExcLevels];
-	unsigned int size;
 	char * bt;
 	bool abort;
 	bool core;
