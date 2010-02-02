@@ -91,26 +91,26 @@ namespace alc {
 		else maxPlayers = 5;
 		
 		var = cfg->getVar("vault.hood.name");
-		if (!var.isNull()) strncpy(hoodName, var.c_str(), 511);
-		else strncpy(hoodName, "Alcugs hood", 511);
+		if (!var.isNull()) alcStrncpy(hoodName, var.c_str(), sizeof(hoodName)-1);
+		else alcStrncpy(hoodName, "Alcugs hood", sizeof(hoodName)-1);
 		var = cfg->getVar("vault.hood.desc");
-		if (!var.isNull()) strncpy(hoodDesc, var.c_str(), 511);
-		else strncpy(hoodDesc, "This is a hood on an Alcugs server", 511);
+		if (!var.isNull()) alcStrncpy(hoodDesc, var.c_str(), sizeof(hoodDesc)-1);
+		else alcStrncpy(hoodDesc, "This is a hood on an Alcugs server", sizeof(hoodDesc)-1);
 		
 		var = cfg->getVar("vault.wipe.msg.title");
-		if (!var.isNull()) strncpy(welcomeMsgTitle, var.c_str(), 511);
-		else strncpy(welcomeMsgTitle, defaultWelcomeMsgTitle, 511);
+		if (!var.isNull()) alcStrncpy(welcomeMsgTitle, var.c_str(), sizeof(welcomeMsgTitle)-1);
+		else alcStrncpy(welcomeMsgTitle, defaultWelcomeMsgTitle, sizeof(welcomeMsgTitle)-1);
 		var = cfg->getVar("vault.wipe.msg");
-		if (!var.isNull()) strncpy(welcomeMsgText, var.c_str(), 4095);
-		else strncpy(welcomeMsgText, defaultWelcomeMsgText, 4095);
+		if (!var.isNull()) alcStrncpy(welcomeMsgText, var.c_str(), sizeof(welcomeMsgText)-1);
+		else alcStrncpy(welcomeMsgText, defaultWelcomeMsgText, sizeof(welcomeMsgText)-1);
 		
 		var = cfg->getVar("vault.tmp.hacks.linkrules");
 		linkingRulesHack = (!var.isNull() && var.asByte()); // disabled per default
 		
 		// load the list of private ages
 		var = cfg->getVar("private_ages");
-		if (var.isNull()) strcpy(privateAges, "AvatarCustomization,Personal,Nexus,BahroCave,BahroCave02,LiveBahroCaves,DniCityX2Finale,Cleft,Kadish,Gira,Garrison,Garden,Teledahn,Ercana,Minkata,Jalak");
-		else strncpy(privateAges, var.c_str(), 1023);
+		if (var.isNull()) alcStrncpy(privateAges, "AvatarCustomization,Personal,Nexus,BahroCave,BahroCave02,LiveBahroCaves,DniCityX2Finale,Cleft,Kadish,Gira,Garrison,Garden,Teledahn,Ercana,Minkata,Jalak", sizeof(privateAges)-1);
+		else alcStrncpy(privateAges, var.c_str(), sizeof(privateAges)-1);
 		// load instance mode setting
 		var = cfg->getVar("instance_mode");
 		if (var.isNull()) instanceMode = 1;
@@ -906,7 +906,7 @@ namespace alc {
 		
 		// new spawn point info
 		char spawnPnt[512];
-		sprintf(spawnPnt, "%s:%s:%s;", spawnPoint.title.c_str(), spawnPoint.name.c_str(), spawnPoint.cameraStack.c_str());
+		snprintf(spawnPnt, 512, "%s:%s:%s;", spawnPoint.title.c_str(), spawnPoint.name.c_str(), spawnPoint.cameraStack.c_str());
 		
 		// if the link node exists, fetch and update it, otherwise, create it
 		if (ageLinkNode) {
@@ -922,6 +922,8 @@ namespace alc {
 			node->flagB = MBlob1; // only save what is really necessary, so unset all flags
 			node->flagC = 0;
 			// add spawn point info
+			if (node->blob1Size != strlen(reinterpret_cast<char *>(node->blob1))+1)
+				throw txUnet(_WHERE("Size mismatch in link node"));
 			node->blob1Size += strlen(spawnPnt);
 			node->blob1 = static_cast<Byte *>(realloc(node->blob1, node->blob1Size*sizeof(Byte)));
 			if (node->blob1 == NULL) throw txNoMem(_WHERE("NoMem"));
@@ -1218,7 +1220,7 @@ namespace alc {
 	{
 		// local copy of private age list as strsep modifies it
 		char ages[1024];
-		strcpy(ages, privateAges);
+		alcStrncpy(ages, privateAges, sizeof(ages)-1);
 		
 		char *buf = ages;
 		char *p = strsep(&buf, ",");

@@ -111,23 +111,23 @@ void alcLogSetDefaults() {
 		tvLogConfig->creation_mask=00750;
 		tvLogConfig->level=6;
 		tvLogConfig->log_flags= DF_DEFSTDOUT | DF_STAMP | DF_IP; // | DF_ANOY;
-		strncpy(tvLogConfig->build, "Alcugs logging system", 99);
+		alcStrncpy(tvLogConfig->build, "Alcugs logging system", sizeof(tvLogConfig->build)-1);
 		//track logs
 		tvLogConfig->n_logs=0;
 		tvLogConfig->logs=NULL;
 		//syslog
-		/*strncpy(tvLogConfig->syslogname, "alcugs", 99);
+		/*alcStrncpy(tvLogConfig->syslogname, "alcugs", 99);
 		tvLogConfig->syslog_enabled=0x00;
 		//db
-		strncpy(tvLogConfig->dbhost, "", 99);
+		alcStrncpy(tvLogConfig->dbhost, "", 99);
 		tvLogConfig->dbport=0;
-		strncpy(tvLogConfig->dbname, "uru_events", 99);
-		strncpy(tvLogConfig->dbuser, "uru", 99);
-		strncpy(tvLogConfig->dbpasswd, "", 99);
-		strncpy(tvLogConfig->dbeventtable, "events", 99);
+		alcStrncpy(tvLogConfig->dbname, "uru_events", 99);
+		alcStrncpy(tvLogConfig->dbuser, "uru", 99);
+		alcStrncpy(tvLogConfig->dbpasswd, "", 99);
+		alcStrncpy(tvLogConfig->dbeventtable, "events", 99);
 		tvLogConfig->db_enabled=0x00;
 		//unet
-		strncpy(tvLogConfig->host, "localhost", 99);
+		alcStrncpy(tvLogConfig->host, "localhost", 99);
 		tvLogConfig->port=9000;
 		tvLogConfig->protocol=0x00;*/
 	}
@@ -218,7 +218,7 @@ char * alcHtmlGenerateHead(char * title,char * powered) {
 	static char head[512];
 	//%s. Build %s - Version %s - Id: %s
 
-	snprintf(head,511,"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\n\
+	snprintf(head,sizeof(head),"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\n\
 <html><head>\n<title>%s</title>\n\
 <meta HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=iso-8859-1\">\n\
 <meta HTTP-EQUIV=\"Generator\" CONTENT=\"%s\">\n\
@@ -427,21 +427,21 @@ void tLog::rotate(bool force) {
 
 			//rotation
 			for(i=tvLogConfig->n_files2rotate; i>0; i--) {
-				sprintf(gustavo,"%s",path);
+				snprintf(gustavo,size+1+5,"%s",path);
 				alcStripExt(gustavo);
 				if(i-1==0) {
-					sprintf(croak,"%s",path);
+					snprintf(croak,size+1+5,"%s",path);
 				} else {
 					if(strlen(alcGetExt(path))!=0) {
-						sprintf(croak,"%s.%i.%s",gustavo,i-1,alcGetExt(path));
+						snprintf(croak,size+1+5,"%s.%i.%s",gustavo,i-1,alcGetExt(path));
 					} else {
-						sprintf(croak,"%s.%i",gustavo,i-1);
+						snprintf(croak,size+1+5,"%s.%i",gustavo,i-1);
 					}
 				}
 				if(strlen(alcGetExt(path))!=0) {
-					sprintf(croak2,"%s.%i.%s",gustavo,i,alcGetExt(path));
+					snprintf(croak2,size+1+5,"%s.%i.%s",gustavo,i,alcGetExt(path));
 				} else {
-					sprintf(croak2,"%s.%i",gustavo,i);
+					snprintf(croak2,size+1+5,"%s.%i",gustavo,i);
 				}
 				if(stat(croak,&file_stats)==0) {
 					if(i==tvLogConfig->n_files2rotate) {
@@ -566,7 +566,7 @@ void tLog::log(const char * msg, ...) {
 	if(tvLogConfig->level>=this->level && this->level!=0) {
 
 		va_start(ap,msg);
-		vsnprintf(buf,sizeof(buf)-1,msg,ap);
+		vsnprintf(buf,sizeof(buf),msg,ap);
 		va_end(ap);
 
 		this->stamp();
@@ -607,7 +607,7 @@ void tLog::logl(char level,const char * msg, ...) {
 		this->level=level;
 
 		va_start(ap,msg);
-		vsnprintf(buf,sizeof(buf)-1,msg,ap);
+		vsnprintf(buf,sizeof(buf),msg,ap);
 		va_end(ap);
 
 		this->log("%s",buf);
@@ -798,14 +798,14 @@ bool tLog::doesPrint(void) const
 const char *tLog::getDir(void) const
 {
 	static char dir[512];
-	strncpy(dir, fullpath, 510);
+	alcStrncpy(dir, fullpath, sizeof(dir)-1);
 	// find the last seperator
 	char *lastSep, *lastSep2;
 	lastSep = strrchr(dir, '/');
 	lastSep2 = strrchr(dir, '\\');
 	if (lastSep2 > lastSep) lastSep = lastSep2;
 	// cut the string after it
-	if (lastSep == NULL) strcpy(dir, "./"); // if no seperator was found, use working dir
+	if (lastSep == NULL) alcStrncpy(dir, "./", sizeof(dir)-1); // if no seperator was found, use working dir
 	else *(lastSep+1) = 0; // let the String end after the seperator
 	return dir;
 }

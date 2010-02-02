@@ -84,11 +84,11 @@ namespace alc {
 	{
 		static char cnt[1024];
 		if (waiting)
-			sprintf(cnt, "[%s@%s][%d@@%s]", avatar, account, ki, awaiting_age);
+			snprintf(cnt, sizeof(cnt), "[%s@%s][%d@@%s]", avatar, account, ki, awaiting_age);
 		else if (u)
-			sprintf(cnt, "[%s@%s][%d@%s]", avatar, account, ki, u->name);
+			snprintf(cnt, sizeof(cnt), "[%s@%s][%d@%s]", avatar, account, ki, u->name);
 		else
-			sprintf(cnt, "[%s@%s][%d]", avatar, account, ki);
+			snprintf(cnt, sizeof(cnt), "[%s@%s][%d]", avatar, account, ki);
 		return cnt;
 	}
 	
@@ -135,19 +135,19 @@ namespace alc {
 		statusHTML = (!var.isNull() && var.asByte());
 		var = cfg->getVar("track.html.path");
 		if (var.isNull()) statusHTML = false;
-		else strncpy(statusHTMLFile, var.c_str(), 255);
+		else alcStrncpy(statusHTMLFile, var.c_str(), sizeof(statusHTMLFile)-1);
 		
 		var = cfg->getVar("track.htmldbg");
 		statusHTMLdbg = (!var.isNull() && var.asByte());
 		var = cfg->getVar("track.htmldbg.path");
 		if (var.isNull()) statusHTMLdbg = false;
-		else strncpy(statusHTMLdbgFile, var.c_str(), 255);
+		else alcStrncpy(statusHTMLdbgFile, var.c_str(), sizeof(statusHTMLdbgFile)-1);
 		
 		var = cfg->getVar("track.xml");
 		statusXML = (!var.isNull() && var.asByte());
 		var = cfg->getVar("track.xml.path");
 		if (var.isNull()) statusXML = false;
-		else strncpy(statusXMLFile, var.c_str(), 255);
+		else alcStrncpy(statusXMLFile, var.c_str(), sizeof(statusXMLFile)-1);
 		statusFileUpdate = true;
 	}
 	
@@ -174,7 +174,7 @@ namespace alc {
 		// copy data to player
 		player->status = RInRoute;
 		alcAscii2Hex(player->awaiting_guid, findServer.serverGuid.c_str(), 8);
-		strncpy(player->awaiting_age, findServer.age.c_str(), 199);
+		alcStrncpy(player->awaiting_age, findServer.age.c_str(), sizeof(player->awaiting_age)-1);
 		player->waiting = true;
 		// search for the game server the player needs
 		tNetSession *server = NULL, *game = NULL;
@@ -314,7 +314,7 @@ namespace alc {
 		}
 		
 		memcpy(game->serverGuid, serverGuid, 8);
-		strncpy(game->name, setGuid.age.c_str(), 199);
+		alcStrncpy(game->name, setGuid.age.c_str(), sizeof(game->name)-1);
 		
 		
 		if (game->data) return; // ignore the rest of the info if we already got it. IP and Port can't change.
@@ -327,7 +327,7 @@ namespace alc {
 		else {
 			data->isLobby = false;
 		}
-		strncpy(data->externalIp, setGuid.externalIp.c_str(), 99);
+		alcStrncpy(data->externalIp, setGuid.externalIp.c_str(), sizeof(data->externalIp)-1);
 		if (!data->isLobby) { // let's look to which lobby this server belongs
 			tNetSession *lobby = NULL;
 			server = NULL;
@@ -392,8 +392,8 @@ namespace alc {
 			player->u = game;
 			player->flag = playerStatus.playerFlag;
 			player->status = playerStatus.playerStatus;
-			strcpy(player->avatar, playerStatus.avatar.c_str());
-			strcpy(player->account, playerStatus.account.c_str());
+			alcStrncpy(player->avatar, playerStatus.avatar.c_str(), sizeof(player->avatar)-1);
+			alcStrncpy(player->account, playerStatus.account.c_str(), sizeof(player->account)-1);
 			memcpy(player->uid, playerStatus.uid, 16);
 			// no longer waiting
 			player->waiting = false;

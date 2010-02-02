@@ -151,7 +151,7 @@ namespace alc {
 	{
 		tString query;
 		*attempts = *lastAttempt = passwd[0] = 0; // ensure there's a valid value in there
-		strcpy(guid, "00000000-0000-0000-0000-000000000000");
+		alcStrncpy(guid, "00000000-0000-0000-0000-000000000000", 36);
 		
 		// only query if we are connected properly
 		if (!prepare()) {
@@ -170,9 +170,9 @@ namespace alc {
 			MYSQL_ROW row = mysql_fetch_row(result);
 			if (row == NULL) ret = -1; // player doesn't exist
 			else { // read the columns
-				strncpy(passwd, row[0], 49); // passwd
+				alcStrncpy(passwd, row[0], 49); // passwd
 				ret = atoi(row[1]); // a_level
-				strncpy(guid, row[2], 49); // guid
+				alcStrncpy(guid, row[2], 36); // guid
 				*attempts = atoi(row[3]); // attempts
 				*lastAttempt = atoi(row[4]);
 			}
@@ -186,8 +186,8 @@ namespace alc {
 	{
 		char ip_escaped[50], guid_escaped[50];
 		tString query;
-		strncpy(ip_escaped, sql->escape(ip), 49);
-		strncpy(guid_escaped, sql->escape(guid), 49);
+		alcStrncpy(ip_escaped, sql->escape(ip), sizeof(ip_escaped)-1);
+		alcStrncpy(guid_escaped, sql->escape(guid), sizeof(guid_escaped)-1);
 		query.printf("UPDATE accounts SET attempts='%d', last_ip='%s'", attempts, ip_escaped);
 		if (updateStamps == 1) // update only last attempt
 			query.printf(", last_attempt=NOW()");

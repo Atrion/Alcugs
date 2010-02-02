@@ -1066,7 +1066,7 @@ void PatcherThread::PatchNotOk() {
 /** Main method, on startup */
 bool gMainApp::OnInit() {
 	char name[200];
-	sprintf(name,"%s %s - Build:%s",SNAME,VERSION,BUILD);
+	snprintf(name,sizeof(name),"%s %s - Build:%s",SNAME,VERSION,BUILD);
 	
 	//wxFileSystem::AddHandler(new wxInternetFSHandler);
 	

@@ -198,7 +198,7 @@ namespace alc {
 	const char *tvSpawnPoint::str(void)
 	{
 		static char dbg[256];
-		sprintf(dbg, "Title: %s, Name: %s, Camera Stack: %s", title.c_str(), name.c_str(), cameraStack.c_str());
+		snprintf(dbg, sizeof(dbg), "Title: %s, Name: %s, Camera Stack: %s", title.c_str(), name.c_str(), cameraStack.c_str());
 		return dbg;
 	}
 	
@@ -848,12 +848,12 @@ namespace alc {
 				return;
 			}
 			// get the file name
-			sprintf(filename, "%s.%s.%d.%s.jpg", ageName.c_str(), str1.c_str(), index, alcGetStrTime(modTime));
+			snprintf(filename, sizeof(filename), "%s.%s.%d.%s.jpg", ageName.c_str(), str1.c_str(), index, alcGetStrTime(modTime));
 			alcStrFilter(filename); // don't trust user input
-			strncpy(path, log->getDir(), 511);
-			strncat(path, "data/", 511);
+			alcStrncpy(path, log->getDir(), sizeof(path)-1);
+			strncat(path, "data/", sizeof(path)-strlen(path)-1);
 			mkdir(path, 00750); // make sure the path exists
-			strncat(path, filename, 1023);
+			strncat(path, filename, sizeof(path)-strlen(path)-1);
 			// save the file
 			tFBuf file;
 			file.open(path, "wb");
@@ -890,12 +890,12 @@ namespace alc {
 			log->print("</pre><br />\n");
 			// dump it to a file
 			// get the file name
-			sprintf(filename, "%s.%s.%d.%s.%s", ageName.c_str(), str1.c_str(), index, alcGetStrTime(modTime), suffix);
+			snprintf(filename, sizeof(filename), "%s.%s.%d.%s.%s", ageName.c_str(), str1.c_str(), index, alcGetStrTime(modTime), suffix);
 			alcStrFilter(filename); // don't trust user input
-			strncpy(path, log->getDir(), 511);
-			strncat(path, "data/", 511);
+			alcStrncpy(path, log->getDir(), sizeof(path)-1);
+			strncat(path, "data/", sizeof(path)-strlen(path)-1);
 			mkdir(path, 00750); // make sure the path exists
-			strncat(path, filename, 1023);
+			strncat(path, filename, sizeof(path)-strlen(path)-1);
 			// save the file
 			tFBuf file;
 			file.open(path, "wb");
@@ -1244,11 +1244,11 @@ namespace alc {
 		
 		char clientDesc[512];
 		if (ki) // we're in the vault server and the "client" is only forwarding
-			sprintf(clientDesc, "KI %d, routed by %s", ki, client ? client->str() : "?");
+			snprintf(clientDesc, sizeof(clientDesc), "KI %d, routed by %s", ki, client ? client->str() : "?");
 		else if (client)
-			strncpy(clientDesc, client->str(), 511);
+			alcStrncpy(clientDesc, client->str(), sizeof(clientDesc)-1);
 		else
-			strcpy(clientDesc, "?");
+			alcStrncpy(clientDesc, "?", sizeof(clientDesc)-1);
 		if (clientToServer)
 			log->print("<h2 style='color:blue'>%s: From client (%s) to vault</h2>\n", alcGetStrTime(), clientDesc);
 		else

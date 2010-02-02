@@ -69,11 +69,11 @@ void alcWriteCoreDump(const char * name) {
 	
 	int strsize=60;
 	if(txvCorePath!=NULL) strsize+=strlen(txvCorePath);
-	char * where=(char *)malloc(sizeof(char) * strsize+1);
+	char * where=(char *)malloc(sizeof(char) * (strsize+1));
 	if(where) {
 		memset(where,0,strsize+1);
-		if(txvCorePath!=NULL) sprintf(where,"%s/core-%06i-%08X-%s.core",txvCorePath,pid,t,name);
-		else sprintf(where,"core-%06i-%08X-%s.core",pid,t,name);
+		if(txvCorePath!=NULL) snprintf(where,strsize+1,"%s/core-%06i-%08X-%s.core",txvCorePath,pid,t,name);
+		else snprintf(where,strsize+1,"core-%06i-%08X-%s.core",pid,t,name);
 	
 		if(txvCore & 0x01) google::WriteCoreDump(where);
 		free((void *)where);
@@ -161,7 +161,7 @@ void txBase::_preparebacktrace() {
 	for(i=0; i<size; i++) {
 		msize+=strlen(strings[i])+6;
 	}
-	msize+=30+50;
+	msize+=100;
 	bt=static_cast<char *>(malloc(sizeof(char) * msize));
 	if(bt!=NULL) {
 		memset(bt,0,msize);
@@ -195,11 +195,11 @@ void txBase::dump(bool toStderr) {
 	t=time(NULL);
 	int strsize=60;
 	if(txvCorePath!=NULL) strsize+=strlen(txvCorePath);
-	char * where=static_cast<char *>(malloc(sizeof(char) * strsize+1));
+	char * where=static_cast<char *>(malloc(sizeof(char) * (strsize+1)));
 	if(where) {
 		memset(where,0,strsize+1);
-		if(txvCorePath!=NULL) sprintf(where,"%s/BackTrace-%06i-%08X.txt",txvCorePath,pid,t);
-		else sprintf(where,"BackTrace-%06i-%08X.txt",pid,t);
+		if(txvCorePath!=NULL) snprintf(where,strsize+1,"%s/BackTrace-%06i-%08X.txt",txvCorePath,pid,t);
+		else snprintf(where,strsize+1,"BackTrace-%06i-%08X.txt",pid,t);
 		FILE * f=NULL;
 		f=fopen(where,"w");
 		if(f!=NULL) {

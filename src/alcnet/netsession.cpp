@@ -956,7 +956,7 @@ void tNetSession::setAuthData(Byte accessLevel, const char *passwd)
 	this->whoami = KClient; // it's a real client now
 	this->authenticated = 2; // the player is authenticated!
 	this->accessLevel = accessLevel;
-	strcpy(this->passwd, passwd); // passwd is needed for validating packets
+	alcStrncpy(this->passwd, passwd, sizeof(this->passwd)-1); // passwd is needed for validating packets
 }
 
 /* End session */

@@ -987,13 +987,13 @@ void tString::writeStr(const char * t) {
 }
 void tString::printf(const char * msg, ...) {
 	va_list ap;
-	
-	char buffer[1024];
+	const int size = 2048;
+	char buffer[size];
 
 	va_start(ap,msg);
 	
-	vsnprintf(buffer,1023,msg,ap);
-	buffer[1023]='\0';
+	if (vsnprintf(buffer,size,msg,ap) >= size) // "a return value of size or more means that the output was truncated"
+		throw txWriteErr(_WHERE("String is too long (max. %d)", size));
 	this->write(buffer,strlen(buffer));
 	
 	va_end(ap);

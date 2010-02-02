@@ -126,7 +126,7 @@ namespace alc {
 	{
 		// local copy of resetting age list as strsep modifies it
 		char ages[1024];
-		strcpy(ages, resettingAges);
+		alcStrncpy(ages, resettingAges, sizeof(ages)-1);
 		
 		char *buf = ages;
 		char *p = strsep(&buf, ",");

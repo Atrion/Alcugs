@@ -60,7 +60,7 @@ namespace alc {
 		tConfig *cfg = alcGetConfig();
 		tString var = cfg->getVar("age_filename");
 		if (var.size() < 2) throw txBase(_WHERE("an age name must be set"));
-		strncpy(serverName, var.c_str(), 199);
+		alcStrncpy(serverName, var.c_str(), sizeof(serverName)-1);
 		var = cfg->getVar("age_guid");
 		if (var.size() != 16) throw txBase(_WHERE("an age GUID must be set"));
 		alcAscii2Hex(serverGuid, var.c_str(), 8);
@@ -194,7 +194,7 @@ namespace alc {
 				if (node->flagB & MlStr64_1) { // avatar name changed
 					log->log("%s is now called %s\n", u->str(), node->lStr1.c_str());
 					// update member list
-					strncpy(u->avatar, node->lStr1.c_str(), 199);
+					alcStrncpy(u->avatar, node->lStr1.c_str(), sizeof(u->avatar)-1);
 					bcastMemberUpdate(u, /*isJoined*/true);
 				}
 				// update tracking server status

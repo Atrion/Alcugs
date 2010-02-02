@@ -90,7 +90,7 @@ extern "C" {
 
 		char * __dbg_where(const char * a,const char * b,int d) {
 			static char buffer[500];
-			sprintf(buffer,"%s:%i:%s",b,d,a);
+			snprintf(buffer,sizeof(buffer),"%s:%i:%s",b,d,a);
 			return buffer;
 		}
 
@@ -133,7 +133,7 @@ extern "C" {
 
 		char * __dbg_where(const char * a,const char * b,const char * c,int d) {
 			static char buffer[500];
-			sprintf(buffer,"%s:%s:%i:%s",b,c,d,a);
+			snprintf(buffer,sizeof(buffer),"%s:%s:%i:%s",b,c,d,a);
 			return buffer;
 		}
 
@@ -144,11 +144,11 @@ extern "C" {
 
 	char * __dbg_where(const char * b,const char * c,int d,const char * a,...) {
 		va_list ap;
-		static char buffer[2*1024];
+		static char buffer[1024];
 		
 		va_start(ap,a);
-		sprintf(buffer,"%d:%s:%s:%i:",alc::alcGetSelfThreadId(),b,c,d);
-		vsnprintf(buffer+strlen(buffer),sizeof(buffer) - (strlen(buffer)+1),a,ap);
+		snprintf(buffer,sizeof(buffer),"%d:%s:%s:%i:",alc::alcGetSelfThreadId(),b,c,d);
+		vsnprintf(buffer+strlen(buffer),sizeof(buffer) - strlen(buffer),a,ap);
 		va_end(ap);
 		return buffer;
 	}

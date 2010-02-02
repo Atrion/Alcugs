@@ -302,7 +302,7 @@ int main(int argc,char * argv[]) {
 		else if(!strcmp(argv[i],"-v") && argc>i+1) { i++; loglevel=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-lh") && argc>i+1) {
 			i++;
-			strncpy(l_hostname,argv[i],99);
+			alcStrncpy(l_hostname,argv[i],sizeof(l_hostname)-1);
 		}
 		else if(!strcmp(argv[i],"-l")) {
 			puts(alcVersionTextShort());
@@ -311,7 +311,7 @@ int main(int argc,char * argv[]) {
 		}
 		else if(!strcmp(argv[i],"-rh") && argc>i+1) {
 			i++;
-			strncpy(hostname,argv[i],99);
+			alcStrncpy(hostname,argv[i],sizeof(hostname)-1);
 		}
 		else {
 			if(i==1) {
@@ -376,7 +376,7 @@ int main(int argc,char * argv[]) {
 
 		while(listen==0 && !strcmp(hostname,"")) {
 			printf("\nHostname not set, please enter destination host: ");
-			strncpy(hostname,alcConsoleAsk(),99);
+			alcStrncpy(hostname,alcConsoleAsk(),sizeof(hostname)-1);
 		}
 
 		if(listen==0 && mrtg==0) {

@@ -118,7 +118,7 @@ public:
 		urgent=true;
 	}
 	void setFile(char * file) {
-		strncpy(this->file,file,499);
+		alcStrncpy(this->file,file,sizeof(this->file)-1);
 	}
 	void setCompressed(void) {
 		compressed=true;
@@ -254,7 +254,7 @@ int main(int argc,char * argv[]) {
 			return -1;
 		} else if(!strcmp(argv[i],"-lp") && argc>i+1) { i++; l_port=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-rp") && argc>i+1) { i++; port=atoi(argv[i]); }
-		else if(!strcmp(argv[i],"-f") && argc>i+1) { i++; strncpy(file,argv[i],499); }
+		else if(!strcmp(argv[i],"-f") && argc>i+1) { i++; alcStrncpy(file,argv[i],sizeof(file)-1); }
 		else if(!strcmp(argv[i],"-lm")) { listen=1; }
 		else if(!strcmp(argv[i],"-nl")) { nlogs=1; }
 		else if(!strcmp(argv[i],"-val") && argc>i+1) { i++; val=atoi(argv[i]); }
@@ -263,7 +263,7 @@ int main(int argc,char * argv[]) {
 		else if(!strcmp(argv[i],"-v") && argc>i+1) { i++; loglevel=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-lh") && argc>i+1) {
 			i++;
-			strncpy(l_hostname,argv[i],99);
+			alcStrncpy(l_hostname,argv[i],sizeof(l_hostname)-1);
 		}
 		else if(!strcmp(argv[i],"-l")) {
 			puts(alcVersionTextShort());
@@ -272,7 +272,7 @@ int main(int argc,char * argv[]) {
 		}
 		else if(!strcmp(argv[i],"-rh") && argc>i+1) {
 			i++;
-			strncpy(hostname,argv[i],99);
+			alcStrncpy(hostname,argv[i],sizeof(hostname)-1);
 		}
 		else {
 			if(i==1) {
@@ -307,7 +307,7 @@ int main(int argc,char * argv[]) {
 
 		while(listen==0 && !strcmp(hostname,"")) {
 			printf("\nHostname not set, please enter destination host: ");
-			strncpy(hostname,alcConsoleAsk(),99);
+			alcStrncpy(hostname,alcConsoleAsk(),sizeof(hostname)-1);
 		}
 
 		if(listen==0 && !strcmp(file,"")) {
