@@ -109,7 +109,6 @@ txBase::txBase(const char * msg,bool abort,bool core) {
 	this->abort=abort;
 	this->core=core;
 	this->msg=msg;
-	this->size=0;
 	this->bt=NULL;
 	this->imsg=NULL;
 	this->_preparebacktrace();
@@ -121,7 +120,6 @@ txBase::txBase(const char * name,const char * msg,bool abort,bool core) {
 	this->abort=abort;
 	this->core=core;
 	this->msg=this->imsg;
-	this->size=0;
 	this->bt=NULL;
 	this->_preparebacktrace();
 }
@@ -134,7 +132,6 @@ void txBase::copy(const txBase &t) {
 	this->abort=t.abort;
 	this->core=t.core;
 	this->msg=NULL;
-	this->size=t.size;
 	this->bt=static_cast<char *>(malloc(sizeof(char) * (strlen(t.bt)+1)));
 	strcpy(this->bt,t.bt);
 	this->imsg=static_cast<char *>(malloc(sizeof(char) * (strlen(t.imsg)+1)));
@@ -144,8 +141,9 @@ void txBase::_preparebacktrace() {
 // This needs porting - This code only works under Linux (it's part of the libc)
 #if !(defined(__WIN32__) or defined(__CYGWIN__)) and defined(HAVE_EXECINFO_H)
 	//get the backtrace
+	void * btArray[txExcLevels];
 	char **strings;
-	size=::backtrace(btArray,txExcLevels);
+	unsigned int size=::backtrace(btArray,txExcLevels);
 	strings=backtrace_symbols(btArray,size);
 	
 	/*

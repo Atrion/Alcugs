@@ -105,14 +105,12 @@ private:
 
 class tNetEvent {
 public:
-	tNetEvent(tNetSessionIte who,int what,tUnetMsg *mymsg=NULL) { sid=who; id=what; next=NULL; veto=false; msg=mymsg; }
-	tNetEvent() { next=NULL; id=0; veto=false; msg=NULL; }
+	tNetEvent(tNetSessionIte who,int what,tUnetMsg *mymsg=NULL) { sid=who; id=what; next=NULL; msg=mymsg; }
+	tNetEvent() { next=NULL; id=0; msg=NULL; }
 	~tNetEvent() { if (msg) delete msg; }
-	void doVeto() { veto=true; }
 	tNetSessionIte sid;
 	int id;
 	tNetEvent * next;
-	bool veto;
 	tUnetMsg *msg;
 private:
 	// make copying impossible

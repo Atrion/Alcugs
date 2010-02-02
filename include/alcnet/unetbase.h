@@ -93,18 +93,18 @@ protected:
 			Disabling this protection, your server will be vulnerable to DoS attacks.
 			You need to override it in your derived classes with your implementation.
 			If it is not vetoed, it will terminate the connection.
-			\param ev The event object (to be vetoed)
 			\param u The peer session object
+			\return true if it's ok to kick the player, false if not
 	*/
-	virtual void onConnectionFlood(tNetEvent * /*ev*/,tNetSession * /*u*/) {}
+	virtual bool onConnectionFlood(tNetSession * /*u*/) { return true; }
 	
 	/** This event is raised when a peer timed out as the connection dropped.
 			You need to override it in your derived classes with your implementation.
 			If it is not vetoed, it will terminate the connection.
-			\param ev The event object (to be vetoed)
 			\param u The peer session object
+			\return true if it's ok to kick the player, false if not
 	*/
-	virtual void onConnectionTimeout(tNetEvent * /*ev*/,tNetSession * /*u*/) {}
+	virtual bool onConnectionTimeout(tNetSession * /*u*/) { return true; }
 	
 	/** This event is raised each time after the event queue got emtpied.
 			You need to override it in your derived classes with your implementation.
@@ -133,7 +133,7 @@ private:
 	void removeConnection(tNetSession *u); //!< destroy that session
 	
 	void processEventQueue(bool shutdown);
-	int parseBasicMsg(tNetEvent * ev,tUnetMsg * msg,tNetSession * u,bool shutdown);
+	int parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown);
 	void reconfigure();
 	bool state_running;
 	Byte stop_timeout;

@@ -81,8 +81,8 @@ public:
 	tUnetPing(char * lhost=NULL,U16 lport=0,Byte listen=0,double time=1,int num=5,int flood=1);
 	virtual ~tUnetPing();
 	virtual int onMsgRecieved(tUnetMsg * msg,tNetSession * u);
-	virtual void onConnectionFlood(tNetEvent * ev,tNetSession */*u*/) {
-		ev->doVeto();
+	virtual bool onConnectionFlood(tNetSession */*u*/) {
+		return false; // don't kick nobody
 	}
 	virtual void onLeave(Byte reason,tNetSession * u);
 	virtual void onIdle(bool idle);
