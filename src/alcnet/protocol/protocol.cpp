@@ -512,13 +512,10 @@ void tmNetClientComm::stream(tBBuf &t) const {
 const char * tmNetClientComm::str() {
 	static char cnt[1024];
 #ifdef ENABLE_MSGLOG
-	sprintf(cnt,"(Re)Negotation bandwidth: %i bps time: %s",bandwidth,timestamp.str());
+	snprintf(cnt,sizeof(cnt),"(Re)Negotation (bandwidth: %i bps time: %s) on %s",bandwidth,timestamp.str(),u->str());
 #else
-	sprintf(cnt,"(Re)Negotation");
+	snprintf(cnt,sizeof(cnt),"(Re)Negotation on %s",u->str());
 #endif
-	// don't use sprintf(cnt, "%s", cnt), valgrind shows a "Source and destination overlap in mempcpy"
-	strcat(cnt, " on ");
-	strcat(cnt, u->str());
 	return cnt;
 }
 

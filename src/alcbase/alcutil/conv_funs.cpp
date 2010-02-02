@@ -140,7 +140,7 @@ const char * alcGetStrTime(U32 timestamp, U32 microseconds) {
 
 	tptr=gmtime(&stamp);
 	strftime(tmptime,25,"%Y:%m:%d-%H:%M:%S",tptr);
-	sprintf(btime,"%s.%06d",tmptime,microseconds);
+	snprintf(btime,sizeof(btime),"%s.%06d",tmptime,microseconds);
 
 	return btime;
 }

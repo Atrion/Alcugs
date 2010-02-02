@@ -52,12 +52,11 @@ char * alcGetExt(const char * addr) {
 			break;
 		}
 	}
-	memset(ext,0,sizeof(ext));
-	//printf("prext:%s\n",ext);
+	
 	if(addr[i]=='.') {
-		strncpy(ext,addr+(i+1),strlen(addr)-(i+1));
+		alcStrncpy(ext,addr+(i+1),std::min(strlen(addr)-(i+1), sizeof(ext)-1));
 	} else {
-		strcpy(ext,"");
+		ext[0] = 0;
 	}
 	//printf("ext:%s,%s,%i\n",addr,ext,sizeof(ext));
 	return ext;
@@ -95,7 +94,7 @@ tDirectory::~tDirectory() {
 void tDirectory::open(const char * path) {
 	dir=opendir(path);
 	if(dir==NULL) throw txBase(_WHERE("OpenDirFailed"));
-	strncpy(this->path, path, 511);
+	alcStrncpy(this->path, path, 511);
 }
 void tDirectory::close() {
 	if(dir!=NULL) closedir(dir);

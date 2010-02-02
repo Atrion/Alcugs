@@ -133,10 +133,10 @@ bool tSQL::prepare(void)
 		if (!connect(false)) return false; // not even that works, giving up
 		
 		char str[400];
-		sprintf(str, "CREATE DATABASE %s", dbname);
+		snprintf(str, sizeof(str), "CREATE DATABASE %s", dbname);
 		if (!query(str, "create database", false)) // if we can't create it, stop
 			return false;
-		sprintf(str,"USE %s", dbname);
+		snprintf(str, sizeof(str), "USE %s", dbname);
 		if (!query(str, "select database", false))
 			return false;
 		return query("SET sql_mode=STRICT_ALL_TABLES", "set strict mode", false);

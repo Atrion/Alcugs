@@ -101,18 +101,18 @@ int alcGetLoginInfo(const char * argv,char * hostname,char * username,U16 * port
 
 	switch (q) {
 		case 0:
-			strncpy(hostname,left,99);
+			alcStrncpy(hostname,left,99);
 			break;
 		case 1:
-			strncpy(user,left,99);
-			strncpy(hostname,mid,99);
+			alcStrncpy(user,left,99);
+			alcStrncpy(hostname,mid,99);
 			break;
 		case 2:
 			if(b!=0) {
-				strncpy(user,left,99);
-				strncpy(hostname,mid,99);
+				alcStrncpy(user,left,99);
+				alcStrncpy(hostname,mid,99);
 			} else {
-				strncpy(hostname,left,99);
+				alcStrncpy(hostname,left,99);
 			}
 			*port=atoi(right);
 			break;
@@ -142,13 +142,13 @@ int alcGetLoginInfo(const char * argv,char * hostname,char * username,U16 * port
 	switch (q) {
 		case 0:
 			if (username != 0)
-				strncpy(username,left,99);
+				alcStrncpy(username,left,99);
 			break;
 		case 1:
 			if (username != 0)
-				strncpy(username,left,99);
+				alcStrncpy(username,left,99);
 			if (avie != 0)
-				strncpy(avie,mid,99);
+				alcStrncpy(avie,mid,99);
 			break;
 	}
 

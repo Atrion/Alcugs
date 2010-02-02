@@ -95,7 +95,7 @@ int main(int argc, char * argv[]) {
 		try {
 			w1.decrypt();
 			if(w1.size()>0) {
-				strcpy(xap,argv[1]);
+				alcStrncpy(xap,argv[1],1000);
 				strcat(xap,".dec");
 				f1.open(xap,"wb");
 				f1.put(w1);
@@ -104,7 +104,7 @@ int main(int argc, char * argv[]) {
 		} catch(txUnexpectedData &t) {
 			w1.encrypt();
 			if(w1.size()>0) {
-				strcpy(xap,argv[1]);
+				alcStrncpy(xap,argv[1],1000);
 				strcat(xap,".cry"); //Jaffa CRE!!
 				f1.open(xap,"wb");
 				f1.put(w1);

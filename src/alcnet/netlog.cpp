@@ -52,7 +52,7 @@ const char * alcGetStrIp(U32 ip) {
 	in_addr cip;
 	static char mip[16];
 	cip.s_addr=ip;
-	strcpy(mip, inet_ntoa(cip));
+	alcStrncpy(mip, inet_ntoa(cip), sizeof(mip)-1);
 	//print2log(f_uru,"DBGDBGDBG:<<<----->>>>%s:%08X\n",mip,ip);
 	return mip;
 }

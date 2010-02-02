@@ -961,7 +961,33 @@ which is more than a line long\"\n\
 	delete cfg1;
 }
 
-int log_test() {
+void libc_tests() {
+	// check if snprintf guarantees a 0-terminated string? it should.
+	char buf[10];
+	snprintf(buf, sizeof(buf), "A text longer than 10 characters");
+	assert(buf[8] == 'o');
+	assert(sizeof(buf) == 10);
+	assert(buf[9] == 0);
+	// and what abut strncat? Yes, but you have to substract the last byte from the allowed size
+	buf[5] = 0;
+	buf[9] = 'x';
+	strncat(buf, "these are mroe than 10 characters", sizeof(buf)-strlen(buf)-1);
+	assert(buf[8] == 's');
+	assert(buf[9] == 0);
+	// strncpy is... BAD. It does not add the final 0.
+	buf[9] = 'x';
+	strncpy(buf, "and once again this text is longer", sizeof(buf)-1);
+	assert(buf[8] == ' ');
+	assert(buf[9] == 'x');
+	// our alcStrncpy does it better
+	buf[9] = 'x';
+	alcStrncpy(buf, "we need a long text one final time", sizeof(buf)-1);
+	assert(buf[8] == 'a');
+	assert(buf[9] == 0);
+	
+}
+
+void log_test() {
 
 	tLog log1;
 	tLog log2;
@@ -1030,8 +1056,6 @@ int log_test() {
 	system.close();
 	
 	lstd->log("Hi here\n");
-
-	return 0;
 }
 
 int main(void) {
@@ -1044,6 +1068,7 @@ int main(void) {
 		alctypes_tests();
 		alcfuncs_tests();
 		log_test();
+		libc_tests();
 		alcparser_tests();
 		//alcShutdown();
 		std::cout<< "Success!!" << std::endl;

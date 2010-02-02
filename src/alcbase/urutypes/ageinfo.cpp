@@ -50,7 +50,7 @@ namespace alc {
 	tPageInfo::tPageInfo(tConfigVal *val, int row)
 	{
 		tString name = val->getVal(0, row), number = val->getVal(1, row), conditionalLoad = val->getVal(2, row);
-		strncpy(this->name, name.c_str(), 199);
+		alcStrncpy(this->name, name.c_str(), sizeof(this->name)-1);
 		this->number = number.asU16();
 		if (conditionalLoad.isNull()) this->conditionalLoad = false;
 		else {
@@ -84,7 +84,7 @@ namespace alc {
 		if (dir.size() < 2) throw txBase(_WHERE("age directory is not defined"));
 		if (!dir.endsWith("/")) dir.writeStr("/");
 		// get age name from file name
-		strncpy(name, file, 199);
+		alcStrncpy(name, file, sizeof(name)-1);
 		alcStripExt(name);
 		// open and decrypt file
 		tFBuf ageFile;

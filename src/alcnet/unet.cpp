@@ -51,8 +51,8 @@ tUnet::tUnet(const char * lhost,U16 lport) {
 	DBG(9,"tUnet()\n");
 	initialized=false;
 	this->init();
-	if(lhost==NULL) strcpy(bindaddr,"0.0.0.0");
-	else strcpy(bindaddr,lhost);
+	if(lhost==NULL) alcStrncpy(bindaddr,"0.0.0.0",sizeof(bindaddr)-1);
+	else alcStrncpy(bindaddr,lhost,sizeof(bindaddr)-1);
 	bindport=lport;
 	events=new tUnetMsgQ<tNetEvent>;
 }
@@ -65,8 +65,8 @@ void tUnet::setBindPort(U16 lport) {
 	bindport=lport;
 }
 void tUnet::setBindAddress(const char * lhost) {
-	if(lhost==NULL) strcpy(bindaddr,"0.0.0.0");
-	else strcpy(bindaddr,lhost);
+	if(lhost==NULL) alcStrncpy(bindaddr,"0.0.0.0",sizeof(bindaddr)-1);
+	else alcStrncpy(bindaddr,lhost,sizeof(bindaddr)-1);
 }
 /**
 	Fills the unet struct with the default values

@@ -69,7 +69,7 @@ namespace alc {
 		var = cfg->getVar("allow_uu_clients");
 		allowUU = (var.isNull() || var.asByte()); // per default, UU clients are allowed
 		var = cfg->getVar("tmp.link_log");
-		if (!var.isNull()) strncpy(linkLog, var.c_str(), 511);
+		if (!var.isNull()) alcStrncpy(linkLog, var.c_str(), sizeof(linkLog)-1);
 		else linkLog[0] = 0;
 		
 		var = cfg->getVar("spawn.start");
@@ -142,7 +142,7 @@ namespace alc {
 		}
 		
 		// save the data
-		strncpy(u->avatar, avatar, 199);
+		alcStrncpy(u->avatar, avatar, sizeof(u->avatar)-1);
 		u->ki = ki;
 		
 		// tell tracking
@@ -330,7 +330,7 @@ namespace alc {
 				md5buffer.compute();
 		
 				// save data in session
-				strcpy(u->name, authHello.account.c_str());
+				alcStrncpy(u->name, authHello.account.c_str(), sizeof(u->name)-1);
 				memcpy(u->challenge, md5buffer.read(16), 16);
 				u->buildType = authHello.release;
 				

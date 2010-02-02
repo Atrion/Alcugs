@@ -41,7 +41,7 @@ namespace alc {
 	const char *vaultTable = "vault";
 	const char *refVaultTable = "ref_vault";
 	
-	#define VAULT_TABLE_INIT "\
+	const char *vault_table_init = "\
 	CREATE TABLE `%s` (\
 		`idx` int NOT NULL auto_increment ,\
 		`type` tinyint unsigned NOT NULL default 0,\
@@ -83,11 +83,11 @@ namespace alc {
 		KEY `str_4` ( `str_4` ) ,\
 		KEY `lstr_1` ( `lstr_1` ) ,\
 		KEY `lstr_2` ( `lstr_2` )\
-	) TYPE=MyISAM PACK_KEYS=0 AUTO_INCREMENT=%d;"
+	) TYPE=MyISAM PACK_KEYS=0 AUTO_INCREMENT=%d;";
 	// observation shows that varchar is not enough for the text fields - and setting "NOT NULL" on it makes it mandatory for inserts
 	// "blob_1" has a length field of 4 byte, with "longblob" we can be sure the data will always fit
 	
-	#define REFVAULT_TABLE_INIT "\
+	const char *ref_vault_table_init = "\
 	CREATE TABLE `%s` (\
 		`id1` int NOT NULL default 0,\
 		`id2` int NOT NULL default 0,\
@@ -98,7 +98,7 @@ namespace alc {
 		PRIMARY KEY  (`id2`,`id3`),\
 		KEY `id2` (`id2`),\
 		KEY `id3` (`id3`)\
-	) TYPE=MyISAM;"
+	) TYPE=MyISAM;";
 	
 	const int vaultVersion=4; // only change on major vault format changes, and be sure that there is a migration (see tVaultDB::prepare)
 		/* Version history:
@@ -143,10 +143,10 @@ namespace alc {
 			// if it doesn't exist, create it
 			if (!exists) {
 				query.clear();
-				query.printf(VAULT_TABLE_INIT, vaultTable, KVaultID);
+				query.printf(vault_table_init, vaultTable, KVaultID);
 				sql->query(query.c_str(), "Prepare: Creating vault table");
 				query.clear();
-				query.printf(REFVAULT_TABLE_INIT, refVaultTable);
+				query.printf(ref_vault_table_init, refVaultTable);
 				sql->query(query.c_str(), "Prepare: Creating ref vault table");
 				// create the root folder
 				tMBuf folderName;
@@ -238,7 +238,7 @@ namespace alc {
 		MYSQL_ROW row = mysql_fetch_row(result);
 		if (atoi(row[0]) != KVaultID || strlen(row[1]) != 16)
 			throw txDatabaseError(_WHERE("invalid main vault folder found"));
-		strcpy(folder, row[1]);
+		alcStrncpy(folder, row[1], 16);
 		mysql_free_result(result);
 	}
 	
@@ -385,7 +385,7 @@ namespace alc {
 		
 		if (number == 1) {
 			MYSQL_ROW row = mysql_fetch_row(result);
-			strncpy(avatar, row[0], 255);
+			alcStrncpy(avatar, row[0], 255);
 		}
 		mysql_free_result(result);
 		return (number == 1);

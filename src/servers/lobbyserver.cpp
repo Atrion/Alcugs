@@ -55,7 +55,7 @@ namespace alc {
 	
 	tUnetLobbyServer::tUnetLobbyServer(void) : tUnetLobbyServerBase()
 	{
-		strcpy(serverName, alcNetName);
+		alcStrncpy(serverName, alcNetName, sizeof(serverName)-1);
 	}
 	
 	void tUnetLobbyServer::onLoadConfig(void)
@@ -64,25 +64,25 @@ namespace alc {
 		tConfig *cfg = alcGetConfig();
 		
 		tString var = cfg->getVar("website");
-		strncpy(website, var.c_str(), 255);
+		alcStrncpy(website, var.c_str(), sizeof(website)-1);
 		
 		var = cfg->getVar("game.log");
 		if (var.isNull()) throw txBase(_WHERE("game log directory is not defined"));
-		strncpy(gameLogPath, var.c_str(), 255);
+		alcStrncpy(gameLogPath, var.c_str(), sizeof(gameLogPath)-1);
 		
 		var = cfg->getVar("game.config");
 		if (var.isNull()) var = cfg->getVar("read_config", "cmdline");
-		strncpy(gameConfig, var.c_str(), 255);
+		alcStrncpy(gameConfig, var.c_str(), sizeof(gameConfig)-1);
 		
 		var = cfg->getVar("game.bin");
 		if (var.isNull()) {
 			var = cfg->getVar("bin");
 			if (var.size() < 2) throw txBase(_WHERE("game bin is not defined"));
-			strncpy(gameBin, var.c_str(), 255);
-			strncat(gameBin, "/uru_game", 255);
+			alcStrncpy(gameBin, var.c_str(), sizeof(gameBin)-1);
+			strncat(gameBin, "/uru_game", sizeof(gameBin)-strlen(gameBin)-1);
 		}
 		else
-			strncpy(gameBin, var.c_str(), 255);
+			alcStrncpy(gameBin, var.c_str(), sizeof(gameBin)-1);
 		
 		var = cfg->getVar("load_on_demand");
 		loadOnDemand = (var.isNull() || var.asByte()); // on per default
@@ -247,13 +247,13 @@ namespace alc {
 					// BUT we have to close each file and socket as otherwise they will stay opened till the game server exits
 					
 					// get the arguments for starting the server
-					char gameName[128], gameGuid[32], gameLog[512], gamePort[16];
-					strncpy(gameName, forkServer.age.c_str(), 127);
+					char gameName[128], gameGuid[17], gameLog[512], gamePort[16];
+					alcStrncpy(gameName, forkServer.age.c_str(), sizeof(gameName)-1);
 					alcStrFilter(gameName);
-					strncpy(gameGuid, forkServer.serverGuid.c_str(), 31);
+					alcStrncpy(gameGuid, forkServer.serverGuid.c_str(), sizeof(gameGuid)-1);
 					alcStrFilter(gameGuid);
-					sprintf(gameLog, "%s/%s/%s/", gameLogPath, gameName, gameGuid);
-					sprintf(gamePort, "%d", forkServer.forkPort);
+					snprintf(gameLog, sizeof(gameLog), "%s/%s/%s/", gameLogPath, gameName, gameGuid);
+					snprintf(gamePort, sizeof(gamePort), "%d", forkServer.forkPort);
 					
 					stopOp(); // will close the alcnet logs as well as the socket
 					alcOnFork(); // will close all logs
