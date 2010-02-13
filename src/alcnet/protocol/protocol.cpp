@@ -121,17 +121,14 @@ U32 alcUruChecksum1Trace(Byte * buf, int size) {
   \note REMEMBER THAT aux_hash must be 32 bytes and contain an ascii hash
 */
 U32 alcUruChecksum(const Byte* buf, int size, int alg, const char * aux_hash) {
-	int i;
-	U32 aux=0; //little-endian order when returned
-	//S32 saux=0;
-	Byte * md5buffer;
-	Byte hash[16];
-	int aux_size; //auxiliar size
-	int whoi=0;
 
 	DBG(4,"Checksum %i requested, packet size is %i...\n",alg,size);
 	switch(alg) {
 		case 0:
+		{
+			int i;
+			U32 aux=0; //little-endian order when returned
+			int whoi=0;
 			for(i=6; i<(size-4); i=i+4) {
 				U32 val;
 #if defined(NEED_STRICT_ALIGNMENT)
@@ -153,43 +150,33 @@ U32 alcUruChecksum(const Byte* buf, int size, int alg, const char * aux_hash) {
 #endif
 				aux += letoh32(val);
 			} //else if whoi==3 Noop
-			aux = htole32(aux);
-			break;
+			return htole32(aux);
+		}
 		case 1:
 		case 2:
+		{
 			//code for the V2 - Checksum algorithm
-			aux_size=size-6;
+			U32 aux_size=size-6;
 			if(alg==2) { aux_size+=32; }
-			//allocate the space for the buffer
-			DBG(4,"Allocating md5buffer - %i bytes...\n",aux_size);
-			md5buffer = static_cast<Byte *>(malloc(sizeof(Byte)*(aux_size+10)));
-			if (md5buffer == NULL) throw txNoMem(_WHERE("NoMem"));
-			for(i=6; i<size; i++) {
-				md5buffer[i-6]=buf[i];
-			}
+			tMD5Buf md5buf;
+			md5buf.write(buf+6, size-6);
 			//Concatenate the ASCII passwd md5 hash as required by V2 algorithm
 			if(alg==2) {
-				for(i=size; i<(aux_size+6); i++) {
-					md5buffer[i-6]=aux_hash[i-size];
-				}
-				//print2log(f_chkal,"passwd_hash: %s\n",aux_hash);
+				md5buf.write(aux_hash, 32);
 			}
+			assert(md5buf.size() == aux_size); // FIXME
 			//print2log(f_chkal,"to be md5sumed:\n");
 			//dump_packet(f_chkal,md5buffer,aux_size,0,5);
 			/*if(alg==2) {
 				dumpbuf(f_uru,md5buffer,aux_size);
 				abort();
 			}*/
-			md5::MD5(md5buffer, aux_size, hash);
-			//print2log(f_chkal,"\n<-\n");
-			aux = *reinterpret_cast<U32 *>(hash);
-			free(md5buffer);
-			break;
-		default:
-			alcGetMain()->err()->log("ERR: Uru Checksum V%i is currently not supported in this version of the server.\n\n",alg);
-			aux = 0xFFFFFFFF;
+			md5buf.compute();
+			return md5buf.getU32();
+		}
 	}
-	return aux;
+	alcGetMain()->err()->log("ERR: Uru Checksum V%i is currently not supported in this version of the server.\n\n",alg);
+	return 0xFFFFFFFF;
 }
 
 /**
@@ -462,9 +449,6 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
 		case UNetNegotiation | UNetAckReq: //0x42
 		case UNetNegotiation | UNetAckReq | UNetExt:
 			log->print("Negotiation ");
-			//char * times;
-			//times=ctime((const time_t *)(buf+4));
-			//log->print("%i bps, %s",*(U32 *)(buf),alcGetStrTime(*(U32 *)(buf+4),*(U32 *)(buf+8)));
 			log->print("%i bps, %s",data.getU32(),alcGetStrTime(data.getU32()).c_str(),data.getU32());
 			break;
 		case 0x00: //0x00
@@ -743,8 +727,7 @@ void tmMsgBase::copyProps(tmMsgBase &t) {
 	}
 }
 tString tmMsgBase::str() const {
-	tString dbg;
-	dbg.printf("%s",alcUnetGetMsgCode(cmd));
+	tString dbg = alcUnetGetMsgCode(cmd);
 #ifdef ENABLE_MSGLOG
 	dbg.printf(" %04X %08X",cmd,flags);
 #endif

@@ -134,7 +134,7 @@ namespace alc {
 	tmCustomVaultPlayerStatus::tmCustomVaultPlayerStatus(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
-	tmCustomVaultPlayerStatus::tmCustomVaultPlayerStatus(tNetSession *u, U32 ki, const char *serverGuid, const char *age, Byte state, U32 onlineTime)
+	tmCustomVaultPlayerStatus::tmCustomVaultPlayerStatus(tNetSession *u, U32 ki, const tString &serverGuid, const tString &age, Byte state, U32 onlineTime)
 	 : tmMsgBase(NetMsgCustomVaultPlayerStatus, plNetAck | plNetVersion | plNetKi, u), age(age), serverGuid(serverGuid)
 	{
 		this->ki = ki;
@@ -175,7 +175,7 @@ namespace alc {
 	{ }
 	
 	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u, U32 x, U32 sid, const Byte *uid,
-	  Byte accessLevel, const char *login, const tString &avatar, const tString &gender, const tString &friendName, const tString &key)
+	  Byte accessLevel, const tString &login, const tString &avatar, const tString &gender, const tString &friendName, const tString &key)
 	 : tmMsgBase(NetMsgCustomVaultCreatePlayer, plNetX | plNetUID | plNetVersion | plNetAck | plNetSid, u), login(login),
 	   avatar(avatar), gender(gender), friendName(friendName), key(key)
 	{
@@ -319,7 +319,7 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultKiChecked
-	tmCustomVaultKiChecked::tmCustomVaultKiChecked(tNetSession *u, U32 ki, U32 x, U32 sid, const Byte *uid, Byte status, const char *avatar)
+	tmCustomVaultKiChecked::tmCustomVaultKiChecked(tNetSession *u, U32 ki, U32 x, U32 sid, const Byte *uid, Byte status, const tString &avatar)
 	: tmMsgBase(NetMsgCustomVaultKiChecked, plNetX | plNetKi | plNetUID | plNetAck | plNetVersion | plNetSid, u), avatar(avatar)
 	{
 		this->ki = ki;

@@ -99,7 +99,7 @@ namespace alc {
 	private:
 		/** creates a query to SELECT (isUpdate = false) or UPDATE (isUpdate = true) that vault node
 		    \returns a pointer to the query which you have to free */
-		tString createNodeQuery(tvNode &node, bool isUpdate);
+		tString createNodeQuery(const tvNode &node, bool isUpdate);
 		
 		bool prepare(void);
 		int getVersion(void);

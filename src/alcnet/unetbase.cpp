@@ -119,7 +119,7 @@ void tUnetBase::applyConfig() {
 		lan_addr=inet_addr(var.c_str());
 	} else {
 		struct hostent *host;
-		host=gethostbyname(bindaddr);
+		host=gethostbyname(bindaddr.c_str());
 		if(host!=NULL) {
 			lan_addr=*host->h_addr_list[0] & lan_mask;
 		} else {

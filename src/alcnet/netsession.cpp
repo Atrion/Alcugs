@@ -106,8 +106,6 @@ void tNetSession::init() {
 	client = true;
 	terminated = false;
 	data = NULL;
-	name[0] = 0;
-	avatar[0] = 0;
 	joined = false;
 	
 	DBG(5, "%s Initial timeout: %d\n", str(), timeout);
@@ -137,15 +135,15 @@ tString tNetSession::str(bool detail) {
 	tString dbg;
 	if (detail) dbg.printf("[%i]", sid);
 	dbg.printf("[%s:%i]",alcGetStrIp(ip).c_str(),ntohs(port));
-	if (!detail) return dbg.c_str();
+	if (!detail) return dbg;
 	// detailed string
-	if (name[0] != 0 && authenticated != 0) {
-		if (authenticated == 10) dbg.printf("[%s?]", name); // if the auth server didn't yet confirm that, add a question mark
-		else if (ki != 0) dbg.printf("[%s:%s,%d]", name, avatar, ki);
-		else dbg.printf("[%s]", name);
+	if (!name.isEmpty() && authenticated != 0) {
+		if (authenticated == 10) dbg.printf("[%s?]", name.c_str()); // if the auth server didn't yet confirm that, add a question mark
+		else if (ki != 0) dbg.printf("[%s:%s,%d]", name.c_str(), avatar.c_str(), ki);
+		else dbg.printf("[%s]", name.c_str());
 	}
-	else if (name[0] != 0 && net->whoami == KTracking) { // we are tracking and this is a game server
-		dbg.printf("[%s:%s]", name, alcGetStrGuid(serverGuid).c_str());
+	else if (!name.isEmpty() && net->whoami == KTracking) { // we are tracking and this is a game server
+		dbg.printf("[%s:%s]", name.c_str(), alcGetStrGuid(serverGuid).c_str());
 	}
 	else if (whoami != 0) {
 		dbg.printf("[%s]", alcUnetGetDestination(whoami));
@@ -362,7 +360,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	// when authenticated == 2, we don't expect an encoded packet, but sometimes, we get one. Since alcUruValidatePacket will try to
 	// validate the packet both with and without passwd if possible, we tell it to use the passwd whenever we have one - as a result,
 	// even if the client for some reason decides to encode a packet while authenticated == 2, we don't care
-	int ret=alcUruValidatePacket(buf,size,&validation,authenticated==1 || authenticated==2,passwd);
+	int ret=alcUruValidatePacket(buf,size,&validation,authenticated==1 || authenticated==2,passwd.c_str());
 	
 	if(ret!=0 && (ret!=1 || net->flags & UNET_ECRC)) {
 		if(ret==1) {
@@ -950,13 +948,13 @@ void tNetSession::terminate(int tout)
 	timestamp.setToNow();
 }
 
-void tNetSession::setAuthData(Byte accessLevel, const char *passwd)
+void tNetSession::setAuthData(Byte accessLevel, const tString &passwd)
 {
 	this->client = true; // no matter how this connection was established, the peer definitely acts like a client
 	this->whoami = KClient; // it's a real client now
 	this->authenticated = 2; // the player is authenticated!
 	this->accessLevel = accessLevel;
-	alcStrncpy(this->passwd, passwd, sizeof(this->passwd)-1); // passwd is needed for validating packets
+	this->passwd = passwd; // passwd is needed for validating packets
 }
 
 /* End session */

@@ -55,25 +55,15 @@ namespace google {
 
 namespace alc {
 
-static void alcWriteCoreDump(const char * name = "") {
+static void alcWriteCoreDump(void) {
 	DBG(5,"alcWriteCoreDump ");
 	#if !(defined(__WIN32__) or defined(__CYGWIN__)) and defined(HAVE_GOOGLE_COREDUMPER_H)
 	DBG(5,"is enabled\n");
-	unsigned int t,pid;
-	pid=getpid();
-	t=(unsigned int)time(NULL);
 	
-	int strsize=60;
-	char * where=(char *)malloc(sizeof(char) * (strsize+1));
-	if(where) {
-		memset(where,0,strsize+1);
-		snprintf(where,strsize+1,"core-%06i-%08X-%s.core",pid,t,name);
-	
-		google::WriteCoreDump(where);
-		free((void *)where);
-	}
+	tString filename;
+	filename.printf("core-%06i-%08X.core",getpid(),time(NULL));
+	google::WriteCoreDump(filename.c_str());
 	#else
-	(void)name; // mark as unused
 	DBG(5,"is not enabled\n");
 	#ifdef __WIN32__
 	DBG(5,"and you should get a better OS, bacause the one that you are using now, sucks :(\n");
@@ -88,14 +78,12 @@ static void alcWriteCoreDump(const char * name = "") {
 txBase::txBase(const tString &msg,bool abort,bool core) : msg(msg) {
 	this->abort=abort;
 	this->core=core;
-	this->bt=NULL;
 	this->_preparebacktrace();
 }
 txBase::txBase(const tString &name,const tString &msg,bool abort,bool core) {
 	this->msg = name + ": " + msg;
 	this->abort=abort;
 	this->core=core;
-	this->bt=NULL;
 	this->_preparebacktrace();
 }
 txBase::txBase(const txBase &t) {
@@ -106,8 +94,7 @@ void txBase::copy(const txBase &t) {
 	this->abort=t.abort;
 	this->core=t.core;
 	this->msg=t.msg;
-	this->bt=static_cast<char *>(malloc(sizeof(char) * (strlen(t.bt)+1)));
-	strcpy(this->bt,t.bt);
+	this->bt=t.bt;
 }
 void txBase::_preparebacktrace() {
 // This needs porting - This code only works under Linux (it's part of the libc)
@@ -126,27 +113,16 @@ void txBase::_preparebacktrace() {
 		close(f);
 	}*/
 	
-	unsigned int i,msize=0;
+	bt.clear();
 	
-	for(i=0; i<size; i++) {
-		msize+=strlen(strings[i])+6;
+	bt.printf("Backtrace with %u levels:\n",size);
+	for(U32 i=0; i<size; i++) {
+		bt.printf("  %s\n", strings[i]);
 	}
-	msize+=100;
-	bt=static_cast<char *>(malloc(sizeof(char) * msize));
-	if(bt!=NULL) {
-		memset(bt,0,msize);
-		sprintf(bt,"Backtrace with %u levels:\n",size);
-		for(i=0; i<size; i++) {
-			strcat(bt," ");
-			strcat(bt,strings[i]);
-			strcat(bt,"\n");
-		}
-		strcat(bt,"c++filt and addr2line may be useful\n");
-	}
+	bt += "c++filt and addr2line may be useful\n";
 	free(strings);
 #else
-	bt=static_cast<char *>(malloc(sizeof(char) * 50));
-	sprintf(bt,"Backtrace not implemented in your OS\n");
+	bt = "Backtrace not implemented in your OS\n";
 #endif
 	if(this->core) { alcWriteCoreDump(); }
 	if(this->abort) {
@@ -158,38 +134,25 @@ void txBase::_preparebacktrace() {
 }
 void txBase::dump(bool toStderr) {
 	if (toStderr)
-		fprintf(stderr,"Exception %s:\n%s\n",this->what(),this->backtrace());
+		fprintf(stderr,"Exception %s:\n%s\n",msg.c_str(),bt.c_str());
 
-	unsigned int t,pid;
-	pid=getpid();
-	t=time(NULL);
-	int strsize=60;
-	char * where=static_cast<char *>(malloc(sizeof(char) * (strsize+1)));
-	if(where) {
-		memset(where,0,strsize+1);
-		snprintf(where,strsize+1,"BackTrace-%06i-%08X.txt",pid,t);
-		FILE * f=NULL;
-		f=fopen(where,"w");
-		if(f!=NULL) {
-			fprintf(f,"Servers Build info:\n%s\n",alcVersionTextShort());
-			fprintf(f,"System info: %s\n\n",alcSystemInfo());
-			fprintf(f,"Born:    %s\n",alcGetMain()->bornTime().str().c_str());
-			tTime now;
-			now.setToNow();
-			fprintf(f,"Defunct: %s\n",now.str().c_str());
-			fprintf(f,"Uptime:  %s\n",alcGetMain()->upTime().str(0x01).c_str());
-			fprintf(f,"Main thread id: %d\n",alcGetMain()->threadId());
-			fprintf(f,"This thread id: %d\n",alcGetSelfThreadId());
-			fprintf(f,"Exception %s:\n%s\n",msg.c_str(),bt);
-			fclose(f);
-		}
-		free(where);
+	tString filename;
+	filename.printf("BackTrace-%06i-%08X.txt",getpid(),time(NULL));
+	FILE * f=NULL;
+	f=fopen(filename.c_str(),"w");
+	if(f!=NULL) {
+		fprintf(f,"Servers Build info:\n%s\n",alcVersionTextShort());
+		fprintf(f,"System info: %s\n\n",alcSystemInfo());
+		fprintf(f,"Born:    %s\n",alcGetMain()->bornTime().str().c_str());
+		tTime now;
+		now.setToNow();
+		fprintf(f,"Defunct: %s\n",now.str().c_str());
+		fprintf(f,"Uptime:  %s\n",alcGetMain()->upTime().str(0x01).c_str());
+		fprintf(f,"Main thread id: %d\n",alcGetMain()->threadId());
+		fprintf(f,"This thread id: %d\n",alcGetSelfThreadId());
+		fprintf(f,"Exception %s:\n%s\n",msg.c_str(),bt.c_str());
+		fclose(f);
 	}
-}
-const char *txBase::what() { return msg.c_str(); }
-const char *txBase::backtrace() { return bt; }
-txBase::~txBase() {
-	free(bt);
 }
 //End base
 

@@ -94,9 +94,9 @@ namespace alc {
 		linkingRulesHack = (!var.isEmpty() && var.asByte()); // disabled per default
 		
 		// load the list of private ages
-		var = cfg->getVar("private_ages", &found);
-		if (!found) alcStrncpy(privateAges, "AvatarCustomization,Personal,Nexus,BahroCave,BahroCave02,LiveBahroCaves,DniCityX2Finale,Cleft,Kadish,Gira,Garrison,Garden,Teledahn,Ercana,Minkata,Jalak", sizeof(privateAges)-1);
-		else alcStrncpy(privateAges, var.c_str(), sizeof(privateAges)-1);
+		privateAges = cfg->getVar("private_ages", &found);
+		if (!found) privateAges = "AvatarCustomization,Personal,Nexus,BahroCave,BahroCave02,LiveBahroCaves,DniCityX2Finale,Cleft,Kadish,Gira,Garrison,Garden,Teledahn,Ercana,Minkata,Jalak";
+		privateAges = ","+privateAges+",";
 		// load instance mode setting
 		var = cfg->getVar("instance_mode");
 		if (var.isEmpty()) instanceMode = 1;
@@ -155,7 +155,7 @@ namespace alc {
 		// create welcome message as a child of the global inbox
 		node = new tvNode(MType | MStr64_1 | MBlob1);
 		node->type = KTextNoteNode;
-		node->str1.writeStr(welcomeMsgTitle);
+		node->str1 = welcomeMsgTitle;
 		node->blob1Size = strlen(welcomeMsgText)+1;
 		node->blob1 = static_cast<Byte *>(malloc(node->blob1Size * sizeof(Byte)));
 		if (node->blob1 == NULL) throw txNoMem(_WHERE("NoMem"));
@@ -381,7 +381,7 @@ namespace alc {
 						throw txProtocolError(_WHERE("a vault item with ID 20 must always have a value of -1 or 0 but I got %d", itm->asInt()));
 					break;
 				case 21: // GenericValue.UruString: age name
-					ageName = itm->asString();
+					ageName = itm->asString().c_str();
 					break;
 				case 22: // ServerGuid: age guid
 					ageGuid = itm->asGuid();
@@ -433,7 +433,7 @@ namespace alc {
 				else if (nodeType == KVNodeMgrAgeNode) { // age node
 					if (!ageName || !ageGuid) throw txProtocolError(_WHERE("VConnect for node type 3 must have ageGuid and ageName set"));
 					mgrNode.flagB |= MStr64_1;
-					mgrNode.str1.writeStr(alcGetStrGuid(ageGuid));
+					mgrNode.str1 = alcGetStrGuid(ageGuid);
 					mgr = vaultDB->findNode(mgrNode, /*create*/true);
 					// create and send the reply
 					tvMessage reply(msg);
@@ -690,7 +690,7 @@ namespace alc {
 					ageLink = itm->asAgeLink(); // we don't have to free it, tvMessage does that
 					break;
 				case 12: // GenericValue.UruString: the filename of the age to remove
-					ageName = itm->asString();
+					ageName = itm->asString().c_str();
 					break;
 				case 13: // ServerGuid: the GUID of the age the invite should be removed from
 					ageGuid = itm->asGuid();
@@ -717,7 +717,7 @@ namespace alc {
 				if (memcmp(ageLink->ageInfo.guid, zeroGuid, 8) == 0) {
 					// this happens for the Watcher's Guild link which is created "on the fly" as Relto expects it, and
 					// for the links to the 4 Ahnonay spheres which are created when linking to the Cathedral
-					if (!generateGuid(ageLink->ageInfo.guid, ageLink->ageInfo.filename.c_str(), msg.vmgr))
+					if (!generateGuid(ageLink->ageInfo.guid, ageLink->ageInfo.filename, msg.vmgr))
 						throw txProtocolError(_WHERE("could not generate GUID"));
 				}
 				
@@ -814,7 +814,7 @@ namespace alc {
 			node->flagB |= MStr64_1;
 			node->str1 = ageInfo.filename;
 		}
-		node->str4.writeStr(alcGetStrGuid(ageInfo.guid));
+		node->str4 = alcGetStrGuid(ageInfo.guid);
 		U32 ageInfoNode = vaultDB->findNode(*node);
 		delete node;
 		if (ageInfoNode) // we got it!
@@ -831,7 +831,7 @@ namespace alc {
 		// first create the age mgr node
 		node = new tvNode(MType | MStr64_1);
 		node->type = KVNodeMgrAgeNode;
-		node->str1.writeStr(alcGetStrGuid(ageInfo.guid));
+		node->str1 = alcGetStrGuid(ageInfo.guid);
 		U32 ageMgrNode = vaultDB->createNode(*node);
 		delete node;
 		
@@ -842,7 +842,7 @@ namespace alc {
 		node->str1 = ageInfo.filename;
 		node->str2 = ageInfo.instanceName;
 		node->str3 = ageInfo.userDefName;
-		node->str4.writeStr(alcGetStrGuid(ageInfo.guid));
+		node->str4 = alcGetStrGuid(ageInfo.guid);
 		node->text1 = ageInfo.displayName;
 		U32 ageInfoNode = vaultDB->createChildNode(ageMgrNode, ageMgrNode, *node);
 		delete node;
@@ -1005,7 +1005,7 @@ namespace alc {
 		node->permissions = KDefaultPermissions;
 		node->str1 = createPlayer.gender;
 		node->lStr1 = createPlayer.avatar;
-		node->lStr2.writeStr(alcGetStrUid(createPlayer.uid));
+		node->lStr2 = alcGetStrUid(createPlayer.uid);
 		node->text1 = createPlayer.login;
 		U32 ki = vaultDB->createNode(*node);
 		delete node;
@@ -1197,22 +1197,12 @@ namespace alc {
 		vaultDB->clean(cleanAges);
 	}
 	
-	bool tVaultBackend::isAgePrivate(const char *age) const
+	bool tVaultBackend::isAgePrivate(const tString &age) const
 	{
-		// local copy of private age list as strsep modifies it
-		char ages[1024];
-		alcStrncpy(ages, privateAges, sizeof(ages)-1);
-		
-		char *buf = ages;
-		char *p = strsep(&buf, ",");
-		while (p != 0) {
-			if (strcmp(p, age) == 0) return true;
-			p = strsep(&buf, ",");
-		}
-		return false;
+		return privateAges.find(","+age+",") >= 0;
 	}
 	
-	bool tVaultBackend::generateGuid(Byte *guid, const char *age, U32 ki)
+	bool tVaultBackend::generateGuid(Byte *guid, const tString &age, U32 ki)
 	{
 		try {
 			tAgeInfo ageInfo = tAgeInfo(age, /*loadPages*/false);

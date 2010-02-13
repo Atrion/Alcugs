@@ -47,7 +47,7 @@ class tAlcUnetMain : public tAlcMain {
 	friend class tUnetBase; // these classes have a tight relationship, e.g.you need exactly one of both 
 
 public:
-	tAlcUnetMain(const char *netName);
+	tAlcUnetMain(const tString &netName);
 	virtual ~tAlcUnetMain();
 	
 	void loadUnetConfig(void); //!< convenience function to load the default unet config file and apply aliases

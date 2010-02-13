@@ -107,13 +107,13 @@ namespace alc {
 			// Check if we should load the state
 			var = cfg->getVar("game.tmp.hacks.resetting_ages", &found);
 			if (!found) var = "Kveer,Garden"; // see uru.conf.dist for explanation
-			bool ageLoadsState = doesAgeLoadState(var.c_str(), net->getName());
+			bool ageLoadsState = doesAgeLoadState(var, net->getName());
 			// load agestate from file (do the migration even if we should not load)
 			ageStateFile = cfg->getVar("game.agestates");
 			if (ageStateFile.isEmpty())
 				throw txUnet(_WHERE("You have to set the game.agestates to the directory for saving your agestate files"));
 			alcMkdir(ageStateFile, 00750); // make sure the path exists
-			ageStateFile.printf("/%s-%s.state", net->getName(), alcGetStrGuid(net->getGuid()).c_str());
+			ageStateFile.printf("/%s-%s.state", net->getName().c_str(), alcGetStrGuid(net->getGuid()).c_str());
 			// check for old agestate location and migrate if necessary
 			tString alternativeStateFile = log.getDir() + "agestate.raw";
 			if (access(alternativeStateFile.c_str(), F_OK) == 0)
@@ -134,19 +134,10 @@ namespace alc {
 		log.flush();
 	}
 	
-	bool tAgeStateManager::doesAgeLoadState(const char *resettingAges, const char *age)
+	bool tAgeStateManager::doesAgeLoadState(const tString &resettingAges, const tString &age)
 	{
-		// local copy of resetting age list as strsep modifies it
-		char ages[1024];
-		alcStrncpy(ages, resettingAges, sizeof(ages)-1);
-		
-		char *buf = ages;
-		char *p = strsep(&buf, ",");
-		while (p != 0) {
-			if (strcmp(p, age) == 0) return false;
-			p = strsep(&buf, ",");
-		}
-		return true;
+		tString ages = ","+resettingAges+",";
+		return ages.find(","+age+",") == -1;
 	}
 	
 	void tAgeStateManager::loadAgeState()

@@ -344,6 +344,10 @@ public:
 	// assignment
 	inline const tString & operator=(const tString &t) { copy(t); return *this; }
 	inline const tString & operator=(const char * str) { copy(str); return *this; }
+
+	// operator +=
+	inline const tString &operator+=(const tString &t) { end(); writeStr(t); return *this; }
+	inline const tString &operator+=(const char *str) { end(); writeStr(str); return *this; }
 	
 	// comparison
 	inline bool operator==(const tString &t) const { return(!compare(t)); }

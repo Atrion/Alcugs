@@ -68,7 +68,7 @@ public:
 	U32 onlineTime(void);
 	void send(tmBase &msg, U32 delay = 0); //!< delay is in msecs
 	void terminate(int tout);
-	void setAuthData(Byte accessLevel, const char *passwd);
+	void setAuthData(Byte accessLevel, const tString &passwd);
 	
 	inline void setTimeout(U32 tout) { conn_timeout=tout; }
 	inline void challengeSent(void) { if (authenticated == 0) authenticated = 10; }
@@ -118,7 +118,7 @@ public:
 	Byte min_version; //!< peer minor version
 	
 	// used only by some servers
-	char name[200]; //!< peer age name in tracking server, peer account name in lobby and game
+	tString name; //!< peer age name in tracking server, peer account name in lobby and game
 	Byte serverGuid[8]; //!< hex; server guid in tracking server
 	tNetSessionData *data; //!< save additional data (e.g. tracking information)
 	
@@ -126,7 +126,7 @@ public:
 	Byte tpots; //!< tpots version 0=undefined, 1=tpots client, 2=non-tpots client
 	U32 ki; //!< player set and valid id, otherwise 0
 	Byte uid[16]; //!< hex; player uid
-	char avatar[200]; //!< peer avatar name if set
+	tString avatar; //!< peer avatar name if set
 	Byte challenge[16]; //!< peer challenge (hex)
 	Byte buildType; //!< type of client (internal/external)
 	
@@ -137,8 +137,7 @@ private:
 	U32 ip; //network order
 	U16 port; //network order
 	int sid;
-	char sock_array[sizeof(struct sockaddr_in)]; // used by tUnet
-	socklen_t a_client_size; // used by tUnet
+	char sock_array[sizeof(struct sockaddr_in)]; // saves the socket of this peer
 	struct { //server message counters
 		U32 pn; //!< the overall packet number
 		U32 sn; //!< the message number
@@ -165,7 +164,7 @@ private:
 	U32 conn_timeout; //!< time after which the session will timeout (in secs)
 	bool negotiating; //!< set to true when we are waiting for the answer of a negotiate we sent
 	
-	char passwd[33]; //!< peer passwd hash (used in V2) (string)
+	tString passwd; //!< peer passwd hash (used in V2) (string)
 	Byte accessLevel; //!< peer access level
 
 	//flux control (bandwidth and latency)

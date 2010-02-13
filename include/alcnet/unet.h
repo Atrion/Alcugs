@@ -90,7 +90,7 @@ class tUnet {
 
 // methods
 public:
-	tUnet(Byte whoami,const char * lhost="0.0.0.0",U16 lport=0); //lport in host order
+	tUnet(Byte whoami,const tString & lhost="",U16 lport=0); //lport in host order
 	virtual ~tUnet();
 	void setFlags(tUnetFlags flags);
 	void unsetFlags(tUnetFlags flags);
@@ -104,7 +104,7 @@ public:
 		if(timer!=0) this->idle_timer=timer;
 	}
 	void setBindPort(U16 lport); //lport in host order
-	void setBindAddress(const char * lhost);
+	void setBindAddress(const tString & lhost);
 	inline void send(tmMsgBase &m, U32 delay = 0) { m.getSession()->send(m, delay); } //!< delay is in msecs
 
 protected:
@@ -152,7 +152,7 @@ protected:
 	U32 nat_up; //!< upstream to the WAN
 	U32 nat_down; //!< downstream from the WAN
 
-	char bindaddr[100]; //!< Server bind address
+	tString bindaddr; //!< Server bind address
 	U16 bindport; //!< Server bind port, in host order
 
 	//!logging subsystem

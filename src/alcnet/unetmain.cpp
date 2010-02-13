@@ -48,7 +48,7 @@
 namespace alc {
 
 
-tAlcUnetMain::tAlcUnetMain(const char *netName) : tAlcMain(), stateRunning(2), alarmRunning(false), netName(netName), net(NULL)
+tAlcUnetMain::tAlcUnetMain(const tString &netName) : tAlcMain(), stateRunning(2), alarmRunning(false), netName(netName), net(NULL)
 {
 	installUnetHandlers(true);
 }

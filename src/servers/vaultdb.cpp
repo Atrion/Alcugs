@@ -355,9 +355,7 @@ namespace alc {
 			for (int i = 0; i < number; ++i) {
 				MYSQL_ROW row = mysql_fetch_row(result);
 				t->putU32(atoi(row[0])); // KI
-				tString avatar;
-				avatar.writeStr(row[1]);
-				t->put(avatar);
+				t->put(tString(row[1])); // Avatar
 				t->putByte(atoi(row[2])); // flags
 			}
 		}
@@ -387,10 +385,9 @@ namespace alc {
 		return (number == 1);
 	}
 	
-	tString tVaultDB::createNodeQuery(tvNode &node, bool isUpdate)
+	tString tVaultDB::createNodeQuery(const tvNode &node, bool isUpdate)
 	{
 		tString query;
-		char *escapedData = NULL;
 		bool comma = false;
 		const char *commaStr = isUpdate ? "," : " and ";
 		
@@ -541,13 +538,8 @@ namespace alc {
 		if (isUpdate && node.flagB & MBlob1) { // only insert this if it is an UPDATE
 			if (comma) query.writeStr(commaStr);
 			query.writeStr("blob_1='");
-			if (node.blob1Size) {
-				escapedData = static_cast<char *>(malloc((node.blob1Size*2 + 2048)*sizeof(char)));
-				if (escapedData == NULL) throw txNoMem(_WHERE("NoMem"));
-				sql->escape(escapedData, node.blob1, node.blob1Size);
-				query.writeStr(escapedData);
-				free(escapedData);
-			}
+			if (node.blob1Size)
+				query.writeStr(sql->escape(node.blob1, node.blob1Size));
 			query.writeStr( "'");
 			comma = true;
 		}
@@ -724,12 +716,8 @@ namespace alc {
 		if (node.flagB & MBlob1) {
 			query.writeStr(",blob_1");
 			values.writeStr(",'");
-			if (node.blob1Size) {
-				char *helpStr = static_cast<char *>(malloc(2*node.blob1Size+1));
-				sql->escape(helpStr, node.blob1, node.blob1Size);
-				values.writeStr(helpStr);
-				free(helpStr);
-			}
+			if (node.blob1Size)
+				values.writeStr(sql->escape(node.blob1, node.blob1Size));
 			values.writeStr("'");
 		}
 		
@@ -1147,7 +1135,7 @@ namespace alc {
 			node->creator = atoi(row[6]);
 			node->crtTime = atoi(row[7]);
 			node->ageTime = atoi(row[8]);
-			node->ageName.writeStr(row[9]);
+			node->ageName = row[9];
 			if (strlen(row[10]) == 16)
 				alcGetHexGuid(node->ageGuid, tString(row[10]));
 			else
@@ -1160,16 +1148,16 @@ namespace alc {
 			node->uInt2 = atoi(row[16]);
 			node->uInt3 = atoi(row[17]);
 			node->uInt4 = atoi(row[18]);
-			node->str1.writeStr(row[19]);
-			node->str2.writeStr(row[20]);
-			node->str3.writeStr(row[21]);
-			node->str4.writeStr(row[22]);
-			node->str5.writeStr(row[23]);
-			node->str6.writeStr(row[24]);
-			node->lStr1.writeStr(row[25]);
-			node->lStr2.writeStr(row[26]);
-			if (lengths[27]) node->text1.writeStr(row[27]);
-			if (lengths[28]) node->text2.writeStr(row[28]);
+			node->str1 = row[19];
+			node->str2 = row[20];
+			node->str3 = row[21];
+			node->str4 = row[22];
+			node->str5 = row[23];
+			node->str6 = row[24];
+			node->lStr1 = row[25];
+			node->lStr2 = row[26];
+			if (lengths[27]) node->text1 = row[27];
+			if (lengths[28]) node->text2 = row[28];
 			node->blob1Size = lengths[29];
 			if (node->blob1Size > 0) {
 				node->blob1 = static_cast<Byte *>(malloc(sizeof(Byte)*node->blob1Size));

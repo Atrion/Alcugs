@@ -47,12 +47,11 @@
 
 namespace alc {
 
-tUnet::tUnet(Byte whoami,const char * lhost,U16 lport) : whoami(whoami) {
+tUnet::tUnet(Byte whoami,const tString & lhost,U16 lport) : whoami(whoami) {
 	DBG(9,"tUnet()\n");
 	initialized=false;
 	this->init();
-	if(lhost==NULL) alcStrncpy(bindaddr,"0.0.0.0",sizeof(bindaddr)-1);
-	else alcStrncpy(bindaddr,lhost,sizeof(bindaddr)-1);
+	setBindAddress(lhost);
 	bindport=lport;
 	events=new tUnetMsgQ<tNetEvent>;
 }
@@ -68,9 +67,9 @@ tUnet::~tUnet() {
 void tUnet::setBindPort(U16 lport) {
 	bindport=lport;
 }
-void tUnet::setBindAddress(const char * lhost) {
-	if(lhost==NULL) alcStrncpy(bindaddr,"0.0.0.0",sizeof(bindaddr)-1);
-	else alcStrncpy(bindaddr,lhost,sizeof(bindaddr)-1);
+void tUnet::setBindAddress(const tString & lhost) {
+	if(lhost.isEmpty()) bindaddr = "0.0.0.0";
+	else bindaddr = lhost;
 }
 /**
 	Fills the unet struct with the default values
@@ -304,14 +303,14 @@ void tUnet::startOp() {
 	//set network specific options
 	this->server.sin_family=AF_INET; //UDP IP
 
-	if(!strcmp("0.0.0.0",bindaddr)) { //gethostbyname already does that, but just in case
+	if(bindaddr == "0.0.0.0") { //gethostbyname already does that, but just in case
 		this->server.sin_addr.s_addr=htonl(INADDR_ANY); //any address
 	} else {
 		struct hostent *host;
-		host=gethostbyname(bindaddr); // there's a bug in ubuntu's glibc or valgrind which results in an valgrind error here if a hostname is given instead of an IP
+		host=gethostbyname(bindaddr.c_str());
 		if(host==NULL) {
-			this->err->log("ERR: Fatal cannot resolve address %s:%i\n",bindaddr,bindport);
-			throw txUnetIniErr(_WHERE("Cannot resolve address %s:%i",bindaddr,bindport));
+			this->err->log("ERR: Fatal cannot resolve address %s:%i\n",bindaddr.c_str(),bindport);
+			throw txUnetIniErr(_WHERE("Cannot resolve address %s:%i",bindaddr.c_str(),bindport));
 		}
 		this->server.sin_addr.s_addr=*reinterpret_cast<U32 *>(host->h_addr_list[0]);
 	}
@@ -332,16 +331,16 @@ void tUnet::startOp() {
 		}
 	} while (error);
 	if (error) {
-		this->err->log("ERR: Fatal - Failed binding to address %s:%i\n",bindaddr,bindport);
+		this->err->log("ERR: Fatal - Failed binding to address %s:%i\n",bindaddr.c_str(),bindport);
 		neterror("bind() ");
-		throw txUnetIniErr(_WHERE("Cannot bind to address %s:%i",bindaddr,bindport));
+		throw txUnetIniErr(_WHERE("Cannot bind to address %s:%i",bindaddr.c_str(),bindport));
 	}
 	// 10 February 2004 - Alcugs development starts from scratch.
 	// 10 February 2005 - Alcugs development continues..
 	// The next line of code was originally written in 10/Feb/2004,
 	// when the first listenning udp server named urud (uru daemon)
 	// was compiled on that day.
-	this->log->log("INF: Listening to incoming datagrams on %s port udp %i\n",bindaddr,bindport);
+	this->log->log("INF: Listening to incoming datagrams on %s port udp %i\n",bindaddr.c_str(),bindport);
 
 	smgr=new tNetSessionMgr(this,this->max);
 
@@ -401,7 +400,6 @@ tNetSessionIte tUnet::netConnect(const char * hostname,U16 port,Byte validation,
 	client.sin_addr.s_addr=ite.ip;
 	client.sin_port=ite.port;
 	memcpy(u->sock_array,&client,sizeof(struct sockaddr_in));
-	u->a_client_size=sizeof(struct sockaddr_in);
 	
 	u->timestamp.seconds=alcGetTime();
 	u->timestamp.microseconds=alcGetMicroseconds();
@@ -429,8 +427,7 @@ int tUnet::Recv() {
 	tNetSession * session=NULL;
 
 	struct sockaddr_in client; //client struct
-	socklen_t client_len; //client len size
-	client_len=sizeof(struct sockaddr_in); //get client struct size
+	socklen_t client_len=sizeof(struct sockaddr_in); //get client struct size (for recvfrom)
 
 	//waiting for packets - timeout
 	fd_set rfds;
@@ -542,7 +539,6 @@ int tUnet::Recv() {
 		
 		//process the message, and do the correct things with it
 		memcpy(session->sock_array,&client,sizeof(struct sockaddr_in));
-		session->a_client_size=client_len;
 		try {
 			session->processMsg(buf,n);
 		} catch(txProtocolError &t) {
@@ -640,7 +636,7 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 		buf=buf2; //don't need to decode again
 		if(u->authenticated==1) {
 			DBG(8,"Client is authenticated, doing checksum...\n");
-			U32 val=alcUruChecksum(buf,msize,2,u->passwd);
+			U32 val=alcUruChecksum(buf,msize,2,u->passwd.c_str());
 #if defined(NEED_STRICT_ALIGNMENT)
 			memcpy(buf+2,&val,4);
 #else

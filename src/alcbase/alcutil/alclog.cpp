@@ -52,21 +52,6 @@ tLogConfig::tLogConfig(void) : path("log/"), build("Alcugs logging system")
 	n_files2rotate=5;
 	rotate_size=2*1024*1024;
 	creation_mask=00750;
-	//syslog
-	/*alcStrncpy(syslogname, "alcugs", 99);
-	syslog_enabled=0x00;
-	//db
-	alcStrncpy(dbhost, "", 99);
-	dbport=0;
-	alcStrncpy(dbname, "uru_events", 99);
-	alcStrncpy(dbuser, "uru", 99);
-	alcStrncpy(dbpasswd, "", 99);
-	alcStrncpy(dbeventtable, "events", 99);
-	db_enabled=0x00;
-	//unet
-	alcStrncpy(host, "localhost", 99);
-	port=9000;
-	protocol=0x00;*/
 }
 
 void tLogConfig::addLog(tLog *log)
@@ -187,11 +172,11 @@ void tLog::rotate(bool force) {
 		if(i-1 != 0) {
 			oldName.printf(".%i", i-1);
 		}
-		oldName = oldName + suffix;
+		oldName += suffix;
 		
 		tString newName = prefix;
 		newName.printf(".%i", i);
-		newName = newName+suffix;
+		newName += suffix;
 		
 		if(stat(oldName.c_str(),&file_stats)==0) {
 			if(i==tvLogConfig->n_files2rotate) {

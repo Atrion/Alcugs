@@ -48,7 +48,7 @@ namespace alc {
 	}
 	
 	//// tmVaultPlayerList
-	tmVaultPlayerList::tmVaultPlayerList(tNetSession *u, U32 x, U16 numberPlayers, tMBuf players, const char *url)
+	tmVaultPlayerList::tmVaultPlayerList(tNetSession *u, U32 x, U16 numberPlayers, tMBuf players, const tString &url)
 	: tmMsgBase(NetMsgVaultPlayerList, plNetAck | plNetX | plNetKi, u), url(url)
 	{
 		this->x = x;

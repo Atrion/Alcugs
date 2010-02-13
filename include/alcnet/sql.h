@@ -45,27 +45,28 @@ namespace alc {
 
 class tSQL {
 public:
-	tSQL(const char *host, U16 port, const char *username, const char *password, const char *dbname, Byte flags, U32 timeout);
+	tSQL(const tString &host, U16 port, const tString &username, const tString &password, const tString &dbname, Byte flags, U32 timeout);
 	~tSQL(void);
 	
 	bool prepare(void); //!< this must be called before each query. it establishes the connection and creates the database if necessary \return true on success, false on error
-	void printError(const char *msg); //!< print the last MySQL error (with the given desctiption) to the error protocol
-	bool query(const char *str, const char *desc, bool throwOnError = true); //!< query the database \return true on success, false on error
+	bool query(const tString &str, const char *desc, bool throwOnError = true); //!< query the database \return true on success, false on error
 	void checkTimeout(void); //!< closes the connection on timeout
 	int insertId(void);
 	
 	tString escape(const char *str); //!< escapes the given string
-	void escape(char *out, const Byte *data, int size); //!< escapes the given data into the out array and returns that array (size must be at least 2*lengthOfData+1)
+	tString escape(const Byte *data, int size); //!< escapes the given data into the out array and returns that array
 	MYSQL_RES *storeResult(void);
 	
 	static Byte allFlags(void) { return SQL_LOG | SQL_LOGQ | SQL_CREATEDB | SQL_STAYCONN | SQL_CREATABL; }
 	static tSQL *createFromConfig(void);
 private:
+	void printError(const char *msg); //!< print the last MySQL error (with the given desctiption) to the error protocol
+	
 	Byte flags;
 	U32 timeout, stamp;
 	tLog *sql, *err;
 	// connection info
-	char *host, *username, *password, *dbname;
+	tString host, username, password, dbname;
 	U16 port;
 	
 	MYSQL *connection;

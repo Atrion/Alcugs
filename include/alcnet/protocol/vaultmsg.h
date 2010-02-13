@@ -64,7 +64,7 @@ namespace alc {
 	
 	class tmCustomVaultPlayerStatus : public tmMsgBase {
 	public:
-		tmCustomVaultPlayerStatus(tNetSession *u, U32 ki, const char *serverGuid, const char *age, Byte state, U32 onlineTime);
+		tmCustomVaultPlayerStatus(tNetSession *u, U32 ki, const tString &serverGuid, const tString &age, Byte state, U32 onlineTime);
 		tmCustomVaultPlayerStatus(tNetSession *u);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
@@ -78,7 +78,7 @@ namespace alc {
 	class tmCustomVaultCreatePlayer : public tmMsgBase {
 	public:
 		tmCustomVaultCreatePlayer(tNetSession *u);
-		tmCustomVaultCreatePlayer(tNetSession *u, U32 x, U32 sid, const Byte *uid, Byte accessLevel, const char *login, const tString &avatar, const tString &gender, const tString &friendName, const tString &key);
+		tmCustomVaultCreatePlayer(tNetSession *u, U32 x, U32 sid, const Byte *uid, Byte accessLevel, const tString &login, const tString &avatar, const tString &gender, const tString &friendName, const tString &key);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual tString str() const;
@@ -120,7 +120,7 @@ namespace alc {
 	
 	class tmCustomVaultKiChecked : public tmMsgBase {
 	public:
-		tmCustomVaultKiChecked(tNetSession *u, U32 ki, U32 x, U32 sid, const Byte *uid, Byte status, const char *avatar);
+		tmCustomVaultKiChecked(tNetSession *u, U32 ki, U32 x, U32 sid, const Byte *uid, Byte status, const tString &avatar);
 		tmCustomVaultKiChecked(tNetSession *u);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;

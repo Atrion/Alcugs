@@ -66,7 +66,7 @@ void alcexception_tests() {
 		throw txBase("ooops");
 	} catch (txBase &t) {
 		std::cout<< "Caught Exception " << t.what() << std::endl;
-		//std::cout<< t.backtrace() << std::endl;
+		std::cout<< t.backtrace() << std::endl;
 	}
 	DBG(2,"Continuing...\n");
 	
