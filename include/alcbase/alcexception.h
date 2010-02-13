@@ -35,29 +35,6 @@
 
 namespace alc {
 
-/** 
-	\brief Dumps core to coredumps directory.
-	\param name Mr. core name
-*/
-void alcWriteCoreDump(const char * name="");
-/** 
-	\brief Set coredump flags
-	\param f flags: 0x00 - disabled, 0x01 - enabled, 0x02 -always
-*/
-void alcSetCoreDumpFlags(char f);
-/** 
-	\brief Set if you want to abort always when an exception is raised. 
-*/
-void alcSetAbort(bool c);
-/** 
-	\brief Sets the coredumper path. 
-*/
-void alcSetCoreDumpPath(const char * p);
-/** 
-	\brief Gets the coredumper path. 
-*/
-const char * alcGetCoreDumpPath();
-
 #define txExcLevels 20
 
 /** \brief Exception, Base virtual class. */

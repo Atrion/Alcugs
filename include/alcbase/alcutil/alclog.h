@@ -109,7 +109,7 @@ private:
 	int priority; //this params are passed to syslog
 };
 
-//basic log subsystems - FIXME import that differently
+//basic log subsystems - FIXME import that differently, get rid of the global functions
 extern tLog * lerr;
 extern tLog * lstd;
 extern tLog * lnull;

@@ -55,12 +55,7 @@ namespace google {
 
 namespace alc {
 
-// FIXME: avoid global variables if possible
-static bool txvAbort=0;
-static char txvCore=0x01; //0x00 - disabled, 0x01 - enabled, 0x02 -always
-static char * txvCorePath=NULL;
-
-void alcWriteCoreDump(const char * name) {
+static void alcWriteCoreDump(const char * name = "") {
 	DBG(5,"alcWriteCoreDump ");
 	#if !(defined(__WIN32__) or defined(__CYGWIN__)) and defined(HAVE_GOOGLE_COREDUMPER_H)
 	DBG(5,"is enabled\n");
@@ -69,14 +64,12 @@ void alcWriteCoreDump(const char * name) {
 	t=(unsigned int)time(NULL);
 	
 	int strsize=60;
-	if(txvCorePath!=NULL) strsize+=strlen(txvCorePath);
 	char * where=(char *)malloc(sizeof(char) * (strsize+1));
 	if(where) {
 		memset(where,0,strsize+1);
-		if(txvCorePath!=NULL) snprintf(where,strsize+1,"%s/core-%06i-%08X-%s.core",txvCorePath,pid,t,name);
-		else snprintf(where,strsize+1,"core-%06i-%08X-%s.core",pid,t,name);
+		snprintf(where,strsize+1,"core-%06i-%08X-%s.core",pid,t,name);
 	
-		if(txvCore & 0x01) google::WriteCoreDump(where);
+		google::WriteCoreDump(where);
 		free((void *)where);
 	}
 	#else
@@ -86,19 +79,6 @@ void alcWriteCoreDump(const char * name) {
 	DBG(5,"and you should get a better OS, bacause the one that you are using now, sucks :(\n");
 	#endif
 	#endif
-}
-
-void alcSetCoreDumpFlags(char f) {
-	txvCore=f;
-}
-void alcSetCoreDumpPath(char * p) {
-	txvCorePath=p;
-}
-const char * alcGetCoreDumpPath() {
-	return txvCorePath;
-}
-void alcSetAbort(bool c) {
-	txvAbort=c;
 }
 
 
@@ -177,8 +157,8 @@ void txBase::_preparebacktrace() {
 	bt=static_cast<char *>(malloc(sizeof(char) * 50));
 	sprintf(bt,"Backtrace not implemented in your OS\n");
 #endif
-	if((txvCore & 0x02) || this->core) { alcWriteCoreDump(); }
-	if(txvAbort || this->abort) {
+	if(this->core) { alcWriteCoreDump(); }
+	if(this->abort) {
 		dump();
 		alcCrashAction();
 		fprintf(stderr,"An exception requested to abort\n");
@@ -193,12 +173,10 @@ void txBase::dump(bool toStderr) {
 	pid=getpid();
 	t=time(NULL);
 	int strsize=60;
-	if(txvCorePath!=NULL) strsize+=strlen(txvCorePath);
 	char * where=static_cast<char *>(malloc(sizeof(char) * (strsize+1)));
 	if(where) {
 		memset(where,0,strsize+1);
-		if(txvCorePath!=NULL) snprintf(where,strsize+1,"%s/BackTrace-%06i-%08X.txt",txvCorePath,pid,t);
-		else snprintf(where,strsize+1,"BackTrace-%06i-%08X.txt",pid,t);
+		snprintf(where,strsize+1,"BackTrace-%06i-%08X.txt",pid,t);
 		FILE * f=NULL;
 		f=fopen(where,"w");
 		if(f!=NULL) {

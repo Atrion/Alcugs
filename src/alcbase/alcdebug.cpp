@@ -39,7 +39,7 @@ extern "C" {
 
 #ifdef __MSVC__
 	//this looks like crap, i know...
-
+	#error These debug functions for the MSVC are not thread-safe
 	#include <stddef.h>
 	#include <stdarg.h>
 
@@ -52,6 +52,7 @@ extern "C" {
 	#endif
 	static int g_line;
 	static int dbg_or_err; //0=>DBG, 1=>ERR
+	
 
 	#if (_MSC_VER <= 1200)
 		//MSVC Version 6 or lower (doesn't support __FUNCTION__)
