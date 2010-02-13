@@ -166,7 +166,7 @@ namespace alc {
 				own SDL node, we have to do it this way */
 				if (!node->blob1Size) return; // don't bother parsing empty messages
 				// got the node, and it is a SDL one... get the SDL binary stream
-				tMBuf data(node->blob1Size);
+				tMBuf data;
 				data.write(node->blob1, node->blob1Size);
 				data.rewind();
 				ageState->saveSdlVaultMessage(data, u); // process it

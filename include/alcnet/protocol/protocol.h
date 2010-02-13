@@ -64,7 +64,7 @@ Byte alcUnetGetVarTypeFromName(tString type);
 /** this class is used to save incoming NetMsgs and collect their fragments */
 class tUnetMsg {
 public:
-	tUnetMsg(U32 size=1024) : data(size) { next=NULL; fr_count=0; }
+	tUnetMsg() { next=NULL; fr_count=0; }
 	//virtual ~tUnetMsg() { delete data; }
 	tUnetMsg * next;
 	U16 cmd;

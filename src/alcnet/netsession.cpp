@@ -562,7 +562,7 @@ void tNetSession::acceptMessage(tUnetUruMsg *t)
 
 	U32 frg_size = maxPacketSz - t->hSize();
 	if (!rcv) { // this is a brand new message
-		rcv=new tUnetMsg((t->frt+1) * frg_size);
+		rcv=new tUnetMsg();
 		rcv->sn=t->sn;
 	}
 	else {
