@@ -50,69 +50,13 @@
 namespace alc {
 
 	//// tAgeStateManager
-	tAgeStateManager::tAgeStateManager(tUnetGameServer *net, tAgeInfo *age)
-	{
-		this->net = net;
-		this->age = age;
-		log = alcUnetGetMain()->null();
-		load();
-		
-		tConfig *cfg = alcGetMain()->config();
-		bool found;
-		tString var = cfg->getVar("sdl");
-		if (var.size() < 2) throw txUnet(_WHERE("a sdl path must be set"));
-		if (!var.endsWith("/")) var.writeStr("/");
-		
-		// load SDL files
-		log->log("Reading SDL files from %s...\n", var.c_str());
-		tDirectory sdlDir;
-		tDirEntry *file;
-		sdlDir.open(var.c_str());
-		while( (file = sdlDir.getEntry()) != NULL) {
-			if (!file->isFile() || strcasecmp(alcGetExt(file->name), "sdl") != 0) continue;
-			// load it
-			loadSdlStructs((var + file->name).c_str());
-		}
-		// updates the version numbers of the embedded SDL structs (always uses the latest one)
-		for (tSdlStructList::iterator it1 = structs.begin(); it1 != structs.end(); ++it1) {
-			for (tSdlStruct::tVarList::iterator it2 = it1->vars.begin(); it2 != it1->vars.end(); ++it2) {
-				if (it2->type == DStruct) it2->structVersion = findLatestStructVersion(it2->structName.c_str());
-			}
-		}
-		
-		// Check if we should load the state
-		var = cfg->getVar("game.tmp.hacks.resetting_ages", &found);
-		if (!found) var = "Kveer,Garden"; // see uru.conf.dist for explanation
-		bool ageLoadsState = doesAgeLoadState(var.c_str(), net->getName());
-		// load agestate from file (do the migration even if we should not load)
-		ageStateFile = cfg->getVar("game.agestates");
-		if (ageStateFile.isEmpty())
-			throw txUnet(_WHERE("You have to set the game.agestates to the directory for saving your agestate files"));
-		mkdir(ageStateFile.c_str(), 00750); // make sure the path exists
-		ageStateFile.printf("/%s-%s.state", net->getName(), alcGetStrGuid(net->getGuid()));
-		// check for old agestate location and migrate if necessary
-		tString alternativeStateFile = tString(log->getDir()) + "/agestate.raw";
-		if (access(alternativeStateFile.c_str(), F_OK) == 0)
-			rename(alternativeStateFile.c_str(), ageStateFile.c_str());
-		// ok, now go and load it - maybe
-		if (ageLoadsState) {
-			loadAgeState();
-		}
-		else { // in case the server crashes, remove state to really reset it
-			log->log("Not loading the age state - starting from scratch\n");
-			unlink(ageStateFile.c_str());
-			ageStateFile.clear(); // don't save age state
-		}
-		
-		log->flush();
-	}
+	tAgeStateManager::tAgeStateManager(tUnetGameServer *net, tAgeInfo *age) : net(net), age(age), log(NULL,0,0), initialized(false)
+	{}
 	
 	tAgeStateManager::~tAgeStateManager(void)
 	{
 		// save state to disk
 		saveAgeState();
-		// close log
-		unload();
 		// make sure the states are removed before the structs as they point to them
 		sdlStates.clear();
 		// remove clone messages
@@ -121,6 +65,73 @@ namespace alc {
 			delete *it;
 			it = clones.erase(it);
 		}
+	}
+	
+	void tAgeStateManager::applyConfig(void)
+	{
+		tConfig *cfg = alcGetMain()->config();
+		tString var = cfg->getVar("agestate.log");
+		logDetailed = false;
+		if (var.isEmpty() || var.asByte()) { // logging enabled per default
+			log.open("agestate.log", 4, 0);
+			var = cfg->getVar("agestate.log.detailed");
+			if (!var.isEmpty() && var.asByte()) // detailed logging disabled per default
+				logDetailed = true;
+		}
+		else
+			log.close();
+		
+		if (!initialized) {
+			bool found;
+			tString var = cfg->getVar("sdl");
+			if (var.size() < 2) throw txUnet(_WHERE("a sdl path must be set"));
+			if (!var.endsWith("/")) var.writeStr("/");
+			
+			// load SDL files
+			log.log("Reading SDL files from %s...\n", var.c_str());
+			tDirectory sdlDir;
+			tDirEntry *file;
+			sdlDir.open(var.c_str());
+			while( (file = sdlDir.getEntry()) != NULL) {
+				if (!file->isFile() || strcasecmp(alcGetExt(file->name), "sdl") != 0) continue;
+				// load it
+				loadSdlStructs((var + file->name).c_str());
+			}
+			// updates the version numbers of the embedded SDL structs (always uses the latest one)
+			for (tSdlStructList::iterator it1 = structs.begin(); it1 != structs.end(); ++it1) {
+				for (tSdlStruct::tVarList::iterator it2 = it1->vars.begin(); it2 != it1->vars.end(); ++it2) {
+					if (it2->type == DStruct) it2->structVersion = findLatestStructVersion(it2->structName.c_str());
+				}
+			}
+			
+			// Check if we should load the state
+			var = cfg->getVar("game.tmp.hacks.resetting_ages", &found);
+			if (!found) var = "Kveer,Garden"; // see uru.conf.dist for explanation
+			bool ageLoadsState = doesAgeLoadState(var.c_str(), net->getName());
+			// load agestate from file (do the migration even if we should not load)
+			ageStateFile = cfg->getVar("game.agestates");
+			if (ageStateFile.isEmpty())
+				throw txUnet(_WHERE("You have to set the game.agestates to the directory for saving your agestate files"));
+			mkdir(ageStateFile.c_str(), 00750); // make sure the path exists
+			ageStateFile.printf("/%s-%s.state", net->getName(), alcGetStrGuid(net->getGuid()));
+			// check for old agestate location and migrate if necessary
+			tString alternativeStateFile = tString(log.getDir()) + "/agestate.raw";
+			if (access(alternativeStateFile.c_str(), F_OK) == 0)
+				rename(alternativeStateFile.c_str(), ageStateFile.c_str());
+			// ok, now go and load it - maybe
+			if (ageLoadsState) {
+				loadAgeState();
+			}
+			else { // in case the server crashes, remove state to really reset it
+				log.log("Not loading the age state - starting from scratch\n");
+				unlink(ageStateFile.c_str());
+				ageStateFile.clear(); // don't save age state
+			}
+			initialized = true;
+		}
+		
+		log.log("AgeState backend started (%s)\n", __U_SDL_ID);
+		log.flush();
 	}
 	
 	bool tAgeStateManager::doesAgeLoadState(const char *resettingAges, const char *age)
@@ -140,14 +151,14 @@ namespace alc {
 	
 	void tAgeStateManager::loadAgeState()
 	{
-		log->log("Loading age state from %s\n", ageStateFile.c_str());
+		log.log("Loading age state from %s\n", ageStateFile.c_str());
 		// open file
 		tFBuf file;
 		try {
 			file.open(ageStateFile.c_str());
 		}
 		catch (txNotFound &t) {
-			log->log("File %s not found\n", ageStateFile.c_str());
+			log.log("File %s not found\n", ageStateFile.c_str());
 			return;
 		}
 		
@@ -159,7 +170,7 @@ namespace alc {
 			tStreamedObject sdlStream;
 			file.get(sdlStream);
 			if (obj.hasCloneId || !age->validPage(obj.pageId)) {
-				log->log("Not loading state for object %s with clone ID or on a page not belonging to this age\n", obj.str());
+				log.log("Not loading state for object %s with clone ID or on a page not belonging to this age\n", obj.str());
 				continue;
 			}
 			if (sdlStream.getType() != plNull)
@@ -168,23 +179,23 @@ namespace alc {
 			tSdlState state(this, sdlStream, obj);
 			tSdlList::iterator it = findSdlState(&state);
 			if (it != sdlStates.end()) {
-				log->log("Got state duplicate: %s and %s. Keeping the one with higher version number.\n", state.str(), it->str());
+				log.log("Got state duplicate: %s and %s. Keeping the one with higher version number.\n", state.str(), it->str());
 				if (it->content.getVersion() >= state.content.getVersion()) // keep existing version
 					continue;
 				else // remove existing version
 					sdlStates.erase(it);
 			}
 			if (logDetailed) {
-				log->log("Loaded ");
-				state.print(log);
+				log.log("Loaded ");
+				state.print(&log);
 			}
 			// check if that struct can be updated
 			U32 structVersion = findLatestStructVersion(state.content.getName().c_str());
 			if (structVersion > state.content.getVersion()) {
 				state.content.updateTo(findStruct(state.content.getName(), structVersion));
 				if (logDetailed) {
-					log->log("Updated it to ");
-					state.print(log);
+					log.log("Updated it to ");
+					state.print(&log);
 				}
 			}
 			// save state
@@ -198,7 +209,7 @@ namespace alc {
 	void tAgeStateManager::saveAgeState()
 	{
 		if (ageStateFile.isEmpty()) return;
-		log->log("Saving age state to %s\n", ageStateFile.c_str());
+		log.log("Saving age state to %s\n", ageStateFile.c_str());
 		// open file
 		tFBuf file;
 		file.open(ageStateFile.c_str(), "wb");
@@ -216,43 +227,13 @@ namespace alc {
 		file.close();
 	}
 	
-	void tAgeStateManager::load(void)
-	{
-		tConfig *cfg = alcGetMain()->config();
-		tString var = cfg->getVar("agestate.log");
-		logDetailed = false;
-		if (var.isEmpty() || var.asByte()) { // logging enabled per default
-			log = new tLog("agestate.log", 4, 0);
-			var = cfg->getVar("agestate.log.detailed");
-			if (!var.isEmpty() && var.asByte()) // detailed logging disabled per default
-				logDetailed = true;
-		}
-		
-		log->log("AgeState backend started (%s)\n", __U_SDL_ID);
-		log->flush();
-	}
-	
-	void tAgeStateManager::unload(void)
-	{
-		if (log != alcUnetGetMain()->null()) {
-			delete log;
-			log = alcUnetGetMain()->null();
-		}
-	}
-	
-	void tAgeStateManager::reload(void)
-	{
-		unload();
-		load();
-	}
-	
 	void tAgeStateManager::removePlayer(tNetSession *player)
 	{
 		// check for that player in the clone list
 		tCloneList::iterator it = clones.begin();
 		while (it != clones.end()) {
 			if ((*it)->clonedObj.obj.clonePlayerId == player->ki) { // that clone is dead now, remove it and all of it's SDL states
-				log->log("Removing Clone [%s] as it belongs to player %s who just left us\n", (*it)->clonedObj.str(), player->str());
+				log.log("Removing Clone [%s] as it belongs to player %s who just left us\n", (*it)->clonedObj.str(), player->str());
 				if ((*it)->getType() == plLoadAvatarMsg) { // for avatars
 					// make sure that clone is in the idle state
 					net->bcastMessage(net->makePlayerIdle(player, (*it)->clonedObj.obj));
@@ -272,15 +253,15 @@ namespace alc {
 			else
 				++it;
 		}
-		log->flush();
+		log.flush();
 	}
 	
 	void tAgeStateManager::saveSdlState(tMBuf &data, const tUruObject &obj)
 	{
 		tSdlState sdl(this, data, obj);
 		if (logDetailed) {
-			log->log("Got ");
-			sdl.print(log);
+			log.log("Got ");
+			sdl.print(&log);
 		}
 		// check if this state is allowed in this age
 		if (!sdl.obj.hasCloneId && !age->validPage(sdl.obj.pageId))
@@ -288,7 +269,7 @@ namespace alc {
 		// check if state is already in list
 		tSdlList::iterator it = findSdlState(&sdl);
 		if (it == sdlStates.end()) {
-			log->log("Adding %s\n", sdl.str());
+			log.log("Adding %s\n", sdl.str());
 			sdlStates.push_back(sdl);
 		}
 		else {
@@ -296,10 +277,10 @@ namespace alc {
 				throw txProtocolError(_WHERE("SDL version mismatch: %s should be changed to %s", it->str(), sdl.str()));
 			}
 			// update existing state
-			log->log("Updating %s\n", sdl.str());
+			log.log("Updating %s\n", sdl.str());
 			it->content.updateWith(&sdl.content);
 		}
-		log->flush();
+		log.flush();
 	}
 	
 	void tAgeStateManager::saveSdlVaultMessage(tMBuf &data, tNetSession *u)
@@ -311,15 +292,15 @@ namespace alc {
 		tSdlState sdl(this, data);
 		if (sdl.content.getName() != age->name) return; // ignore updates for other ages
 		if (logDetailed) {
-			log->log("Got SDL Vault Message ");
-			sdl.print(log);
+			log.log("Got SDL Vault Message ");
+			sdl.print(&log);
 		}
 		// find our AgeSDLHook
 		tSdlList::iterator sdlHook = findAgeSDLHook();
 		if (sdlHook != sdlStates.end()) { // found it - update it
 			if (sdlHook->content.getName() != sdl.content.getName() || sdlHook->content.getVersion() != sdl.content.getVersion())
 				throw txProtocolError(_WHERE("SDL version mismatch: %s should be changed to %s", sdlHook->str(), sdl.str()));
-			log->log("Updating %s\n", sdl.str());
+			log.log("Updating %s\n", sdl.str());
 			sdlHook->content.updateWith(&sdl.content);
 			// send update to client (for some strange reason, it is enough to send the SDL update to the client who triggered it)
 			tmSDLState sdlMsg(u, sdlHook->obj, &*sdlHook, /*initial*/false);
@@ -356,15 +337,15 @@ namespace alc {
 				else if (info && info->conditionalLoad) continue; // don't send this one, it's on an optional page
 			}
 			if (logDetailed) {
-				log->log("Sending SDL State to %s:\n", u->str());
-				it->print(log);
+				log.log("Sending SDL State to %s:\n", u->str());
+				it->print(&log);
 			}
 			tmSDLState sdlMsg(u, it->obj, &*it, /*initial*/true);
 			net->send(sdlMsg);
 			++n;
 		}
-		log->log("Sent %d SDLState messages to %s\n", n, u->str());
-		log->flush();
+		log.log("Sent %d SDLState messages to %s\n", n, u->str());
+		log.flush();
 		return n;
 	}
 	
@@ -374,45 +355,45 @@ namespace alc {
 		tSdlList::iterator it = sdlStates.begin();
 		while (it != sdlStates.end()) {
 			if (it->obj.hasCloneId && it->obj.clonePlayerId == ki && (cloneId == 0 || it->obj.cloneId == cloneId)) {
-				log->log("Removing %s because Clone was removed\n", it->str());
+				log.log("Removing %s because Clone was removed\n", it->str());
 				it = sdlStates.erase(it);
 			}
 			else
 				++it;
 		}
-		log->flush();
+		log.flush();
 	}
 	
 	void tAgeStateManager::saveClone(tpLoadCloneMsg *clone)
 	{
 		tCloneList::iterator it = findClone(clone->clonedObj.obj);
 		if (logDetailed) {
-			log->log("Got Message %s", clone->str());
+			log.log("Got Message %s", clone->str());
 		}
 		if (clone->isLoad) {
 			if (it != clones.end()) { // it is already in the list, remove old one
-				log->log("Updating Clone ");
+				log.log("Updating Clone ");
 				delete *it;
 				clones.erase(it);
 			}
 			else { // it's a new clone
-				log->log("Adding Clone ");
+				log.log("Adding Clone ");
 			}
-			log->log("[%s]\n", clone->clonedObj.str());
+			log.log("[%s]\n", clone->clonedObj.str());
 			it = clones.insert(clones.end(), clone); // save the message we got
 		}
 		else { // remove clone if it was in list
-			log->log("Removing Clone [%s]\n", clone->clonedObj.str());
+			log.log("Removing Clone [%s]\n", clone->clonedObj.str());
 			// remove SDL states even if clone is not on list, just to be sure
 			removeCloneStates(clone->clonedObj.obj.clonePlayerId, clone->clonedObj.obj.cloneId);
 			if (it != clones.end()) {
 				delete *it;
 				clones.erase(it);
 			} else
-				log->log("WARN: Clone [%s] was not on our list!\n", clone->clonedObj.str());
+				log.log("WARN: Clone [%s] was not on our list!\n", clone->clonedObj.str());
 			delete clone; // remove the message we got
 		}
-		log->flush();
+		log.flush();
 	}
 	
 	tAgeStateManager::tCloneList::iterator tAgeStateManager::findClone(const tUruObject &obj)
@@ -427,12 +408,12 @@ namespace alc {
 	{
 		int n = 0;
 		for (tCloneList::iterator it = clones.begin(); it != clones.end(); ++it) {
-			if (logDetailed) log->log("Sending to %s: clone [%s]\n", u->str(), (*it)->clonedObj.str());
+			if (logDetailed) log.log("Sending to %s: clone [%s]\n", u->str(), (*it)->clonedObj.str());
 			tmLoadClone loadClone(u, *it, true/*isInitial*/);
 			net->send(loadClone);
 			++n;
 		}
-		log->log("Sent %d LoadClone messages to %s\n", n, u->str());
+		log.log("Sent %d LoadClone messages to %s\n", n, u->str());
 		return n;
 	}
 	
@@ -442,7 +423,7 @@ namespace alc {
 		tSdlList::iterator sdlHook = sdlStates.end();
 		for (tSdlList::iterator it = sdlStates.begin(); it != sdlStates.end(); ++it) {
 			if (it->obj.objName == "AgeSDLHook") {
-				if (sdlHook != sdlStates.end()) log->log("ERR: Two SDL Hooks found!\n");
+				if (sdlHook != sdlStates.end()) log.log("ERR: Two SDL Hooks found!\n");
 				sdlHook = it;
 			}
 		}
@@ -459,7 +440,7 @@ namespace alc {
 		obj.objName = "AgeSDLHook";
 		// now create the SDL state
 		sdlHook = sdlStates.insert(sdlStates.end(), tSdlState(this, obj, age->name, ageSDLVersion, true/*init default*/));
-		log->log("Set up default AgeSDLHook\n");
+		log.log("Set up default AgeSDLHook\n");
 		return sdlHook;
 	}
 	
@@ -469,20 +450,20 @@ namespace alc {
 		tSdlList::iterator sdlHook = findAgeSDLHook();
 		if (sdlHook != sdlStates.end()) { // found it - send it
 			if (sdlHook->content.isIndexed())
-				log->log("ERR: The Age SDL Hook is incomplete, strange behaviour of the client is guaranteed\n");
-			log->log("Sending Age SDL Hook");
+				log.log("ERR: The Age SDL Hook is incomplete, strange behaviour of the client is guaranteed\n");
+			log.log("Sending Age SDL Hook");
 			if (logDetailed) {
-				log->print(": ");
-				sdlHook->print(log);
+				log.print(": ");
+				sdlHook->print(&log);
 			}
 			else
-				log->nl();
-			log->flush();
+				log.nl();
+			log.flush();
 			return &*sdlHook;
 		}
 		else { // not found
-			log->log("No Age SDL hook found, send empty SDL\n");
-			log->flush();
+			log.log("No Age SDL hook found, send empty SDL\n");
+			log.flush();
 			return &empty;
 		}
 	}
@@ -518,14 +499,14 @@ namespace alc {
 		// remove SDL states
 		sdlStates.clear();
 		// done
-		log->log("Cleared the complete age state\n");
-		log->flush();
+		log.log("Cleared the complete age state\n");
+		log.flush();
 	}
 	
 	/** This is the SDL file parser */
 	void tAgeStateManager::loadSdlStructs(const char *filename)
 	{
-		log->log("  Reading %s\n", filename);
+		log.log("  Reading %s\n", filename);
 		tSdlStruct sdlStruct(this);
 		tSdlStructVar sdlVar;
 		

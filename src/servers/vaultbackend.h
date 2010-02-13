@@ -42,7 +42,7 @@ namespace alc {
 	public:
 		tVaultBackend(tUnet *net);
 		~tVaultBackend(void);
-		void reload(void);
+		void applyConfig(void);
 		
 		void sendPlayerList(tmCustomVaultAskPlayerList &askPlayerList);
 		void checkKi(tmCustomVaultCheckKi &checkKi);
@@ -71,9 +71,6 @@ namespace alc {
 		};
 		
 		typedef std::list<tVmgr> tVmgrList;
-	
-		void unload(void);
-		void load(void);
 		
 		/** send a vault message */
 		void send(tvMessage &msg, tNetSession *u, U32 ki, U32 x = 0);
@@ -153,7 +150,7 @@ namespace alc {
 		int instanceMode;
 		char privateAges[1024];
 		
-		tLog *log, *logHtml;
+		tLog log, logHtml;
 		bool shortHtml;
 		tUnet *net;
 		

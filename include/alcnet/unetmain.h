@@ -51,7 +51,6 @@ public:
 	virtual ~tAlcUnetMain();
 	
 	void loadUnetConfig(void); //!< convenience function to load the default unet config file and apply aliases
-	inline tLog *null() { return nullLog; }
 	
 	virtual bool onSignal(int s);
 	virtual void onApplyConfig();
@@ -65,7 +64,6 @@ private:
 	bool alarmRunning;
 	tString netName;
 	tUnetBase *net; //!< points to the one and only netcore instance if there is one
-	tLog *nullLog;
 };
 
 inline tAlcUnetMain *alcUnetGetMain(void) { return dynamic_cast<tAlcUnetMain *>(alcGetMain()); }

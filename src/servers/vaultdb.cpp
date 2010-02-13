@@ -116,8 +116,6 @@ namespace alc {
 	{
 		sql = NULL;
 		this->log = log;
-		
-		prepare();
 	}
 	
 	bool tVaultDB::prepare(void)

@@ -43,7 +43,6 @@ tSQL::tSQL(const char *host, U16 port, const char *username, const char *passwor
 {
 	this->flags = flags;
 	this->timeout = timeout;
-	sql = err = alcUnetGetMain()->null();;
 	connection = NULL;
 	stamp = 0;
 	
@@ -66,10 +65,11 @@ tSQL::tSQL(const char *host, U16 port, const char *username, const char *passwor
 	strcpy(this->dbname, dbname);
 	
 	// initialize logging
+	sql = new tLog(NULL,0,0);
 	if (flags & SQL_LOG) {
 		err = alcGetMain()->err();
 		if (flags & SQL_LOGQ) {
-			sql = new tLog("sql.log", 4, 0);
+			sql->open("sql.log", 4, 0);
 			sql->log("MySQL driver loaded (%s)\n", __U_SQL_ID);
 			sql->print(" flags: %04X, host: %s, port: %d, user: %s, dbname: %s, using password: ", this->flags, this->host, this->port, this->username, this->dbname);
 			if (password != NULL) { sql->print("yes\n"); }
@@ -78,12 +78,15 @@ tSQL::tSQL(const char *host, U16 port, const char *username, const char *passwor
 			sql->flush();
 		}
 	}
+	else
+		err = new tLog(NULL,0,0);
 }
 
 tSQL::~tSQL(void)
 {
 	disconnect();
-	if (sql != alcUnetGetMain()->null()) delete sql;
+	delete sql;
+	if (err != alcGetMain()->err()) delete err;
 	free(host);
 	free(username);
 	free(password);

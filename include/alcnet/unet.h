@@ -108,8 +108,7 @@ public:
 	inline void send(tmMsgBase &m, U32 delay = 0) { m.getSession()->send(m, delay); } //!< delay is in msecs
 
 protected:
-	void openlogs();
-	void closelogs();
+	void openLogfiles();
 	void destroySession(tNetSessionIte &t);
 	void updateTimerRelative(U32 usecs);
 	inline void updateTimerAbs(U32 usecs) { updateTimerRelative(usecs-net_time); }
@@ -159,9 +158,7 @@ protected:
 	//!logging subsystem
 	tLog * log; //!< stdout
 	tLog * err; //!< stderr
-	//tLog * unx; //unexpected
 	tLog * ack; //!< ack drawing
-	//tLog * chk; //checksum results
 	tLog * sec; //!< security and access log
 	
 	//flood control

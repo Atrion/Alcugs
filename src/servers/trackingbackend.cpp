@@ -93,43 +93,33 @@ namespace alc {
 	}
 	
 	//// tTrackingBackend
-	tTrackingBackend::tTrackingBackend(tUnetBase *net, tNetSessionList *servers, const char *host, U16 port)
+	tTrackingBackend::tTrackingBackend(tUnetBase *net, tNetSessionList *servers, const char *host, U16 port) : log(NULL,0,0)
 	{
-		log = alcUnetGetMain()->null();
 		this->servers = servers;
 		this->net = net;
 		this->host = host;
 		this->port = port;
 		lastUpdate = 0;
 		generateFakeGuid(fakeLobbyGuid);
-		load();
 	}
 	
 	tTrackingBackend::~tTrackingBackend(void)
 	{
-		unload();
 		if (players.size())
 			alcGetMain()->err()->log("ERR: The backend is quitting, and there were still %d players online\n", players.size());
 	}
 	
-	void tTrackingBackend::unload(void)
-	{
-		if (log != alcUnetGetMain()->null()) {
-			delete log;
-			log = alcUnetGetMain()->null();
-		}
-	}
-	
-	void tTrackingBackend::load(void)
+	void tTrackingBackend::applyConfig(void)
 	{
 		tConfig *cfg = alcGetMain()->config();
 		
 		tString var = cfg->getVar("tracking.log");
-		if (log == alcUnetGetMain()->null() && (var.isEmpty() || var.asByte())) { // logging enabled per default
-			log = new tLog("tracking.log", 4, 0);
-			log->log("Tracking driver started (%s)\n\n", __U_TRACKINGBACKEND_ID);
-			log->flush();
+		if (var.isEmpty() || var.asByte()) { // logging enabled per default
+			log.open("tracking.log", 4, 0);
+			log.log("Tracking driver started (%s)\n\n", __U_TRACKINGBACKEND_ID);
+			log.flush();
 		}
+		else log.close();
 		
 		var = cfg->getVar("track.html");
 		statusHTML = (!var.isEmpty() && var.asByte());
@@ -151,24 +141,18 @@ namespace alc {
 		statusFileUpdate = true;
 	}
 	
-	void tTrackingBackend::reload(void)
-	{
-		unload();
-		load();
-	}
-	
 	void tTrackingBackend::findServer(tmCustomFindServer &findServer)
 	{
 		statusFileUpdate = true;
 		
 		tPlayerList::iterator player = getPlayer(findServer.ki);
 		if (player == players.end()) {
-			log->log("ERR: Ignoring a NetMsgCustomFindServer for player with KI %d since I can't find that player\n", findServer.ki);
+			log.log("ERR: Ignoring a NetMsgCustomFindServer for player with KI %d since I can't find that player\n", findServer.ki);
 			return;
 		}
 		player->sid = findServer.sid;
 		player->awaiting_x = findServer.x;
-		log->log("Player %s wants to link to %s (%s)\n", player->str(), findServer.age.c_str(), findServer.serverGuid.c_str());
+		log.log("Player %s wants to link to %s (%s)\n", player->str(), findServer.age.c_str(), findServer.serverGuid.c_str());
 		if (strcmp(findServer.serverGuid.c_str(), "0000000000000000") == 0) // these are 16 zeroes
 			throw txProtocolError(_WHERE("No age GUID set"));
 		// copy data to player
@@ -196,15 +180,15 @@ namespace alc {
 			tmCustomPlayerToCome playerToCome(server, player->ki);
 			net->send(playerToCome);
 		}
-		log->flush();
+		log.flush();
 	}
 	
 	void tTrackingBackend::playerCanCome(tNetSession *game, U32 ki)
 	{
 		tTrackingData *data = dynamic_cast<tTrackingData*>(game->data);
 		if (!data) throw txUnet(_WHERE("server passed in tTrackingBackend::playerCanCome is not a game/lobby server"));
-		log->log("Game server %s tells us that player %d can join\n", game->str(), ki);
-		log->flush();
+		log.log("Game server %s tells us that player %d can join\n", game->str(), ki);
+		log.flush();
 		for (tTrackingData::tPlayerList::iterator it = data->waitingPlayers.begin(); it != data->waitingPlayers.end(); ++it) {
 			if (*it == ki) {
 				// it is indeed in the list
@@ -212,15 +196,15 @@ namespace alc {
 				if (player != players.end())
 					serverFound(&*player, game);
 				else
-					log->log("ERR: Game server %s told us that player %d can come, but the player no longer exists\n", game->str(), ki);
+					log.log("ERR: Game server %s told us that player %d can come, but the player no longer exists\n", game->str(), ki);
 				data->waitingPlayers.erase(it);
-				log->flush();
+				log.flush();
 				return;
 			}
 		}
 		// The player is not in the list of waiting players - weird
-		log->log("ERR: Game server %s told us that player %d can come, but the player doesn't even wait for this server\n", game->str(), ki);
-		log->flush();
+		log.log("ERR: Game server %s told us that player %d can come, but the player doesn't even wait for this server\n", game->str(), ki);
+		log.flush();
 	}
 	
 	void tTrackingBackend::spawnServer(const char *age, const Byte *guid, U32 delay)
@@ -237,7 +221,7 @@ namespace alc {
 			}
 		}
 		if (!lobby) {
-			log->log("ERR: There's no lobby I could use to spawn the server\n");
+			log.log("ERR: There's no lobby I could use to spawn the server\n");
 			return;
 		}
 		// search for free ports
@@ -255,14 +239,14 @@ namespace alc {
 		}
 		free(freePorts);
 		if (lowest == nPorts) { // no free port on the lobby with the least childs
-			log->log("ERR: No free port on lobby %s, can't spawn game server\n", lobby->str());
+			log.log("ERR: No free port on lobby %s, can't spawn game server\n", lobby->str());
 			return;
 		}
 		lowest += data->portStart;
 		// ok, telling the lobby to fork
 		tmCustomForkServer forkServer(lobby, lowest, alcGetStrGuid(guid), age);
 		net->send(forkServer, delay);
-		log->log("Spawning new game server %s (Server GUID: %s, port: %d) on %s\n", age, alcGetStrGuid(guid), lowest, lobby->str());
+		log.log("Spawning new game server %s (Server GUID: %s, port: %d) on %s\n", age, alcGetStrGuid(guid), lowest, lobby->str());
 	}
 	
 	void tTrackingBackend::notifyWaiting(tNetSession *server)
@@ -282,7 +266,7 @@ namespace alc {
 		// notifiy the player that it's server is available
 		tmCustomServerFound found(player->u, player->ki, player->awaiting_x, player->sid, ntohs(server->getPort()), data->externalIp, alcGetStrGuid(server->serverGuid), server->name);
 		net->send(found);
-		log->log("Found age for player %s\n", player->str());
+		log.log("Found age for player %s\n", player->str());
 		// no longer waiting
 		player->waiting = false;
 	}
@@ -306,9 +290,9 @@ namespace alc {
 		while ((server = servers->getNext())) {
 			if (server == game || !server->data) continue;
 			if (memcmp(server->serverGuid, serverGuid, 8) == 0) {
-				log->log("ERR: There already is a server for guid %s, kicking the new one %s\n", setGuid.serverGuid.c_str(), game->str());
+				log.log("ERR: There already is a server for guid %s, kicking the new one %s\n", setGuid.serverGuid.c_str(), game->str());
 				net->terminate(game); // this should usually result in the game server going down
-				log->flush();
+				log.flush();
 				return;
 			}
 		}
@@ -344,15 +328,15 @@ namespace alc {
 				data->parent = lobby;
 			}
 			else
-				log->log("ERR: Found game server %s without a Lobby belonging to it\n", game->str());
+				log.log("ERR: Found game server %s without a Lobby belonging to it\n", game->str());
 		}
 		else // if it is a lobby
 			generateFakeGuid(data->agentGuid); // create guid for UruVision
 		game->data = data; // save the data
-		log->log("Found server at %s\n", game->str());
+		log.log("Found server at %s\n", game->str());
 		
 		notifyWaiting(game);
-		log->flush();
+		log.flush();
 	}
 	
 	void tTrackingBackend::updatePlayer(tNetSession *game, tmCustomPlayerStatus &playerStatus)
@@ -370,7 +354,7 @@ namespace alc {
 		tPlayerList::iterator player = getPlayer(playerStatus.ki);
 		if (playerStatus.playerFlag == 0) {
 			if (player != players.end()) {
-				log->log("Player %s quit\n", player->str());
+				log.log("Player %s quit\n", player->str());
 				players.erase(player);
 				statusFileUpdate = true;
 			}
@@ -382,7 +366,7 @@ namespace alc {
 			else { // if it already exists, check if the avi is already logged in elsewhere
 				// to do so, we first check if the game server the player uses changed. if that's the case, and the player did not request to link, kick the old player
 				if (player->u != game && player->status != RLeaving) {
-					log->log("WARN: Kicking player %s at %s as it just logged in at %s\n", player->str(), player->u->str(), game->str());
+					log.log("WARN: Kicking player %s at %s as it just logged in at %s\n", player->str(), player->u->str(), game->str());
 					tmPlayerTerminated term(player->u, player->ki, RLoggedInElsewhere);
 					net->send(term);
 				}
@@ -403,14 +387,14 @@ namespace alc {
 				memset(player->awaiting_guid, 0, 8);
 				player->awaiting_x = 0;
 			}
-			log->log("Got status update for player %s: 0x%02X (%s)\n", player->str(), playerStatus.playerStatus,
+			log.log("Got status update for player %s: 0x%02X (%s)\n", player->str(), playerStatus.playerStatus,
 					alcUnetGetReasonCode(playerStatus.playerStatus));
 			statusFileUpdate = true;
 		}
 		else {
-			log->log("ERR: Got unknown flag 0x%02X for player with KI %d\n", playerStatus.playerFlag, playerStatus.ki);
+			log.log("ERR: Got unknown flag 0x%02X for player with KI %d\n", playerStatus.playerFlag, playerStatus.ki);
 		}
-		log->flush();
+		log.flush();
 	}
 	
 	void tTrackingBackend::removeServer(tNetSession *game)
@@ -420,7 +404,7 @@ namespace alc {
 		statusFileUpdate = true;
 		// if players are waiting for this server, we have a problem - we need it! But we can't stop it from going down, so instead launch it again after a second
 		if (data->waitingPlayers.size()) {
-			log->log("I need to respawn %s\n", game->str());
+			log.log("I need to respawn %s\n", game->str());
 			spawnServer(game->name, game->serverGuid, /*delay*/1000);
 			
 		}
@@ -428,15 +412,15 @@ namespace alc {
 		tPlayerList::iterator it = players.begin();
 		while (it != players.end()) {
 			if (it->u == game) {
-				log->log("WARN: Removing player %s as it was on a terminating server\n", it->str());
+				log.log("WARN: Removing player %s as it was on a terminating server\n", it->str());
 				it = players.erase(it);
 				statusFileUpdate = true;
 			}
 			else
 				++it; // we have to increment manually because above if block already increments
 		}
-		log->log("Server %s is leaving us\n", game->str());
-		log->flush();
+		log.log("Server %s is leaving us\n", game->str());
+		log.flush();
 		// remove this server from the list of childs of its lobby/from the game server it is the lobby for
 		if (data->isLobby) {
 			// it's childs are lobbyless now

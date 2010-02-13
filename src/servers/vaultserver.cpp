@@ -48,7 +48,7 @@
 namespace alc {
 
 	////IMPLEMENTATION
-	void tUnetVaultServer::onLoadConfig(void)
+	void tUnetVaultServer::onApplyConfig(void)
 	{
 		// check if we should clean the vault
 		tConfig *cfg = alcGetMain()->config();
@@ -63,9 +63,12 @@ namespace alc {
 			}
 			var = cfg->getVar("vault.clean.ages");
 			bool cleanAges = !var.isEmpty() && var.asByte(); // disabled per default
-			vaultBackend->cleanVault(cleanAges);
+			vaultBackend.cleanVault(cleanAges);
 			forcestop(); // don't let the server run, we started just for cleaning
+			return;
 		}
+		// (re)load vault backend
+		vaultBackend.applyConfig();
 	}
 	
 	bool tUnetVaultServer::isValidAvatarName(const tString &avatar)
@@ -90,7 +93,7 @@ namespace alc {
 				msg->data.get(askPlayerList);
 				log->log("<RCV> [%d] %s\n", msg->sn, askPlayerList.str());
 				
-				vaultBackend->sendPlayerList(askPlayerList);
+				vaultBackend.sendPlayerList(askPlayerList);
 				
 				return 1;
 			}
@@ -103,8 +106,8 @@ namespace alc {
 				Byte result = AUnspecifiedServerError;
 				U32 ki = 0;
 				int num = 0;
-				if (createPlayer.accessLevel > AcMod) num = vaultBackend->getNumberOfPlayers(createPlayer.uid);
-				if (num >= vaultBackend->getMaxPlayers()) result = AMaxNumberPerAccountReached;
+				if (createPlayer.accessLevel > AcMod) num = vaultBackend.getNumberOfPlayers(createPlayer.uid);
+				if (num >= vaultBackend.getMaxPlayers()) result = AMaxNumberPerAccountReached;
 				else if (createPlayer.avatar.size() < 3) result = ANameIsTooShort;
 				else if (createPlayer.avatar.size() > 20) result = ANameIsTooLong;
 				else if (createPlayer.friendName.size() > 0 || createPlayer.key.size() > 0) result = AInvitationNotFound;
@@ -115,7 +118,7 @@ namespace alc {
 						if (gender == "yeesha" || gender == "yeeshanoglow" || gender == "shuterland") createPlayer.gender = "Female";
 						else createPlayer.gender = "Male";
 					}
-					ki = vaultBackend->createPlayer(createPlayer);
+					ki = vaultBackend.createPlayer(createPlayer);
 					if (ki == 0) result = ANameIsAlreadyInUse;
 					else result = AOK;
 				}
@@ -131,7 +134,7 @@ namespace alc {
 				msg->data.get(deletePlayer);
 				log->log("<RCV> [%d] %s\n", msg->sn, deletePlayer.str());
 				
-				vaultBackend->deletePlayer(deletePlayer);
+				vaultBackend.deletePlayer(deletePlayer);
 				
 				return 1;
 			}
@@ -141,7 +144,7 @@ namespace alc {
 				msg->data.get(checkKi);
 				log->log("<RCV> [%d] %s\n", msg->sn, checkKi.str());
 				
-				vaultBackend->checkKi(checkKi);
+				vaultBackend.checkKi(checkKi);
 				
 				return 1;
 			}
@@ -158,7 +161,7 @@ namespace alc {
 				log->print(" %s\n", ageLink.str());
 				
 				if (!ageLink.ageInfo.hasGuid()) {
-					if (!vaultBackend->setAgeGuid(&ageLink, findAge.ki)) {
+					if (!vaultBackend.setAgeGuid(&ageLink, findAge.ki)) {
 						err->log("ERR: Request to link to unknown age %s - kicking player %d\n", ageLink.ageInfo.filename.c_str(), findAge.ki);
 						tmPlayerTerminated term(u, findAge.ki, RKickedOff);
 						send(term);
@@ -177,7 +180,7 @@ namespace alc {
 				msg->data.get(status);
 				log->log("<RCV> [%d] %s\n", msg->sn, status.str());
 				
-				vaultBackend->updatePlayerStatus(status);
+				vaultBackend.updatePlayerStatus(status);
 				
 				return 1;
 			}
@@ -198,8 +201,8 @@ namespace alc {
 				vaultMsg.message.get(parsedMsg);
 				
 				try {
-					if (isTask) vaultBackend->processVaultTask(parsedMsg, u, vaultMsg.ki, vaultMsg.x);
-					else vaultBackend->processVaultMsg(parsedMsg, u, vaultMsg.ki);
+					if (isTask) vaultBackend.processVaultTask(parsedMsg, u, vaultMsg.ki, vaultMsg.x);
+					else vaultBackend.processVaultMsg(parsedMsg, u, vaultMsg.ki);
 				}
 				catch (txBase &t) { // don't kick the lobby/game server we are talking to but let it kick the client
 					err->log("%s Recieved invalid vault message from player %d\n", u->str(), vaultMsg.ki);

@@ -85,10 +85,7 @@ namespace alc {
 		virtual int onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u);
 		virtual void onIdle(bool idle);
 		virtual void onConnectionClosing(tNetSession *u, Byte reason);
-		virtual void onReloadConfig(bool /*reload*/) {
-			ageState->reload();
-		}
-		virtual void onLoadConfig(void);
+		virtual void onApplyConfig(void);
 
 		virtual void onVaultMessageForward(tNetSession *u, tvMessage *msg);
 		virtual void onPlayerAuthed(tNetSession *u);

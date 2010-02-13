@@ -50,14 +50,12 @@ namespace alc {
 
 tAlcUnetMain::tAlcUnetMain(const char *netName) : tAlcMain(), stateRunning(2), alarmRunning(false), netName(netName), net(NULL)
 {
-	nullLog = new tLog(NULL,0,0);
 	installUnetHandlers(true);
 }
 
 tAlcUnetMain::~tAlcUnetMain(void)
 {
 	installUnetHandlers(false);
-	delete nullLog;
 }
 
 void tAlcUnetMain::setNet(tUnetBase *netcore)
@@ -85,7 +83,6 @@ bool tAlcUnetMain::onSignal(int s) {
 			case SIGHUP: //reload configuration
 				stdLog->log("INF: Re-reading configuration\n\n");
 				loadUnetConfig();
-				net->reload(); // FIXME do this in onApplyConfig, and re-think how the config stuff is propagated
 				return true;
 			case SIGALRM:
 			case SIGTERM:
@@ -146,6 +143,7 @@ void tAlcUnetMain::onApplyConfig()
 	if(!var.isEmpty() && var.asByte()) {
 		dumpConfig();
 	}
+	if (net) net->applyConfig(); // trigger the apply process in the netcore
 }
 
 void tAlcUnetMain::loadUnetConfig(void) {

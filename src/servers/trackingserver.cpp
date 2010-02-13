@@ -62,7 +62,7 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, setGuid.str());
 				
 				// save the data for the session
-				trackingBackend->updateServer(u, setGuid);
+				trackingBackend.updateServer(u, setGuid);
 				
 				return 1;
 			}
@@ -74,7 +74,7 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, playerStatus.str());
 				
 				// update the player's data
-				trackingBackend->updatePlayer(u, playerStatus);
+				trackingBackend.updatePlayer(u, playerStatus);
 				
 				return 1;
 			}
@@ -85,7 +85,7 @@ namespace alc {
 				msg->data.get(findServer);
 				log->log("<RCV> [%d] %s\n", msg->sn, findServer.str());
 				
-				trackingBackend->findServer(findServer);
+				trackingBackend.findServer(findServer);
 				
 				return 1;
 			}
@@ -96,7 +96,7 @@ namespace alc {
 				msg->data.get(directedFwd);
 				log->log("<RCV> [%d] %s\n", msg->sn, directedFwd.str());
 				
-				trackingBackend->forwardMessage(directedFwd);
+				trackingBackend.forwardMessage(directedFwd);
 				
 				return 1;
 			}
@@ -107,7 +107,7 @@ namespace alc {
 				msg->data.get(playerToCome);
 				log->log("<RCV> [%d] %s\n", msg->sn, playerToCome.str());
 				
-				trackingBackend->playerCanCome(u, playerToCome.ki);
+				trackingBackend.playerCanCome(u, playerToCome.ki);
 				
 				return 1;
 			}

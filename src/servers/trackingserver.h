@@ -49,22 +49,16 @@ namespace alc {
 
 	class tUnetTrackingServer : public tUnetServerBase {
 	public:
-		tUnetTrackingServer(void) : tUnetServerBase(KTracking) { }
+		tUnetTrackingServer(void) : tUnetServerBase(KTracking), trackingBackend(this, smgr, bindaddr, bindport) {}
 	protected:
-		virtual void onStart(void) {
-			trackingBackend = new tTrackingBackend(this, smgr, bindaddr, bindport);
-		}
-		virtual void onStop(void) {
-			delete trackingBackend;
-		}
 		virtual void onConnectionClosing(tNetSession * u, Byte /*reason*/) {
-			trackingBackend->removeServer(u);
+			trackingBackend.removeServer(u);
 		}
-		virtual void onReloadConfig(void) {
-			trackingBackend->reload();
+		virtual void onApplyConfig(void) {
+			trackingBackend.applyConfig();
 		}
 		virtual void onIdle(bool /*idle*/) {
-			trackingBackend->updateStatusFile();
+			trackingBackend.updateStatusFile();
 		}
 		virtual void onNewConnection(tNetSession * u) {
 			u->setTypeToGame(); // assume everyone connecting to us is a game (could also be a lobby though)
@@ -72,7 +66,7 @@ namespace alc {
 		
 		virtual int onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u);
 	private:
-		tTrackingBackend *trackingBackend;
+		tTrackingBackend trackingBackend;
 	};
 	
 } //End alc namespace

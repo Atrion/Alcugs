@@ -68,7 +68,7 @@ typedef struct {
 	tString * path; //!<path to the log directory
 	int rotate_size; //!< maxium size of a file, if reached, file will be rotated
 	mode_t creation_mask; //!< default permissions mask
-	char level; //!< current logging level (0 - disabled, 1 minimal, 6 huge)
+	char level; //!< current logging level (0 - disabled, 1 minimal, 6 huge) FIXME - this is never actually used, get rid of it
 	U16 log_flags; //!< default flags assigned to a log file on creation
 	//build vars
 	char build[100]; //!< build
@@ -153,7 +153,7 @@ void alcLogShutdown(bool silent) {
 	for(i=0; i<tvLogConfig->n_logs; i++) {
 		if(tvLogConfig->logs[i]!=NULL) {
 			tvLogConfig->logs[i]->close(silent);
-			delete tvLogConfig->logs[i];
+			//delete tvLogConfig->logs[i];
 		}
 	}
 	free(tvLogConfig->logs);
@@ -438,10 +438,12 @@ void tLog::rotate(bool force) {
 */
 void tLog::close(bool silent) {
 	int f;
-	for(f=0; f<tvLogConfig->n_logs; f++) {
-		if(tvLogConfig->logs[f]==this) {
-			tvLogConfig->logs[f]=NULL;
-			break;
+	if (tvLogConfig) {
+		for(f=0; f<tvLogConfig->n_logs; f++) {
+			if(tvLogConfig->logs[f]==this) {
+				tvLogConfig->logs[f]=NULL;
+				break;
+			}
 		}
 	}
 	if(this->name!=NULL) { DBG(1,"closing log %s...\n",this->name); }

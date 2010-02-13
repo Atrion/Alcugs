@@ -35,7 +35,7 @@ namespace alc {
 	class tVaultDB {
 	public:
 		tVaultDB(tLog *log);
-		~tVaultDB(void) { if (sql) delete sql; }
+		~tVaultDB(void) { delete sql; }
 		void getVaultFolderName(char *folder);
 		
 		/** queries the player list and saves it in the buffer if the point is not NULL \returns the number of players */

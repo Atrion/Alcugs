@@ -53,7 +53,7 @@ namespace alc {
 	private:
 		U16 minAccess, disTime, maxAttempts;
 		tSQL *sql;
-		tLog *log;
+		tLog log;
 		
 		bool prepare(void); //!< prepares the connection \returns true when the connection is established, false when there was an error (the sql object will be deleted in that case)
 		int queryPlayer(const char *login, char *passwd, char *guid, U32 *attempts, U32 *lastAttempt);

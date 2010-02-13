@@ -49,14 +49,9 @@ namespace alc {
 
 	class tUnetVaultServer : public tUnetServerBase {
 	public:
-		tUnetVaultServer(void) : tUnetServerBase(KVault)
-		{
-			vaultBackend = new tVaultBackend(this);
-		}
-		~tUnetVaultServer(void) { delete vaultBackend; }
+		tUnetVaultServer(void) : tUnetServerBase(KVault), vaultBackend(this) {}
 	protected:
-		virtual void onLoadConfig(void);
-		virtual void onReloadConfig(void) { vaultBackend->reload(); }
+		virtual void onApplyConfig(void);
 		virtual int onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u);
 		virtual void onNewConnection(tNetSession * u) {
 			u->setTypeToGame(); // assume everyone connecting to us is a game (could also be a lobby though)
@@ -64,7 +59,7 @@ namespace alc {
 	private:
 		bool isValidAvatarName(const tString &avatar);
 	
-		tVaultBackend *vaultBackend;
+		tVaultBackend vaultBackend;
 		
 		bool vaultLogShort;
 	};

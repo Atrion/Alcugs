@@ -64,9 +64,8 @@ namespace alc {
 		UNIQUE KEY `name` (`name`)\
 	) TYPE=MyISAM;";
 
-	tAuthBackend::tAuthBackend(void)
+	tAuthBackend::tAuthBackend(void) : log(NULL,0,0)
 	{
-		log = alcUnetGetMain()->null();
 		sql = NULL;
 	
 		tConfig *cfg = alcGetMain()->config();
@@ -84,7 +83,7 @@ namespace alc {
 		
 		var = cfg->getVar("auth.log");
 		if (var.isEmpty() || var.asByte()) { // logging enabled per default
-			log = new tLog("auth.log", 4, 0);
+			log.open("auth.log", 4, 0);
 		}
 
 		prepare(); // initialize the database
@@ -96,7 +95,6 @@ namespace alc {
 			DBG(5, "deleting SQL\n");
 			delete sql;
 		}
-		if (log != alcUnetGetMain()->null()) delete log;
 	}
 	
 	bool tAuthBackend::prepare(void)
@@ -121,9 +119,9 @@ namespace alc {
 			mysql_free_result(result);
 			// if it doesn't exist, create it
 			if (exists || sql->query(authTableInitScript, "Creating auth table", false)) {
-				log->log("Auth driver successfully started (%s)\n minimal access level: %d, max attempts: %d, disabled time: %d\n\n",
+				log.log("Auth driver successfully started (%s)\n minimal access level: %d, max attempts: %d, disabled time: %d\n\n",
 						__U_AUTHBACKEND_ID, minAccess, maxAttempts, disTime);
-				log->flush();
+				log.flush();
 				return true;
 			}
 			alcGetMain()->err()->log("ERR: Creating auth table failed\n");
@@ -205,50 +203,50 @@ namespace alc {
 		U32 attempts, lastAttempt;
 		int queryResult = queryPlayer(login, passwd, guid, &attempts, &lastAttempt); // query password, access level and guid of this user
 		
-		log->log("AUTH: player %s (IP: %s, game server %s):\n ", login, ip, u->str());
+		log.log("AUTH: player %s (IP: %s, game server %s):\n ", login, ip, u->str());
 		if (queryResult < 0) { // that means: player not found
 			*accessLevel = AcNotRes;
-			log->print("Player not found\n");
-			log->flush();
+			log.print("Player not found\n");
+			log.flush();
 			return AInvalidUser;
 		}
 		else if (queryResult >= AcNotRes) { // that means: there was an error
 			*accessLevel = AcNotRes;
-			log->print("unspecified server error\n");
-			log->flush();
+			log.print("unspecified server error\n");
+			log.flush();
 			return AUnspecifiedServerError;
 		}
 		else { // we found a player, let's process it
 			int authResult;
 			Byte updateStamps = 1; // update only last attempt
 			*accessLevel = queryResult;
-			log->print("UID = %s, attempt %d/%d, access level = %d\n ", guid, attempts+1, maxAttempts, *accessLevel);
+			log.print("UID = %s, attempt %d/%d, access level = %d\n ", guid, attempts+1, maxAttempts, *accessLevel);
 			
 			if (*accessLevel >= minAccess) { // the account doesn't have enough access for this shard (accessLevel = minAccess is rejected as well, for backward compatability)
-				log->print("access level is too big (must be lower than %d)\n", minAccess);
+				log.print("access level is too big (must be lower than %d)\n", minAccess);
 				authResult = AAccountDisabled;
 			}
 			// check number of attempts
 			else if (attempts+1 >= maxAttempts && time(NULL)-lastAttempt < disTime) {
-				log->print("too many attempts, login disabled for %d seconds (till %s)\n", disTime, alcGetStrTime(lastAttempt+disTime, 0));
+				log.print("too many attempts, login disabled for %d seconds (till %s)\n", disTime, alcGetStrTime(lastAttempt+disTime, 0));
 				updateStamps = 0; // don't update the last attempt time when we're already dissing
 				authResult = AAccountDisabled;
 			}
 			// check internal client (i.e. VaultManager)
 			else if (release != TExtRel && !(release == TIntRel && *accessLevel <= AcCCR)) {
-				log->print("unauthorized client\n");
+				log.print("unauthorized client\n");
 				authResult = AAccountDisabled;
 				++attempts;
 			}
 			else { // everythign seems fine... let's compare the password
 				calculateHash(login, passwd, challenge, correctHash);
 				if(strncmp(hash, correctHash, 49) != 0) { // wrong password :(
-					log->print("invalid password\n");
+					log.print("invalid password\n");
 					authResult = AInvalidPasswd;
 					++attempts;
 				}
 				else { // it's correct, the player is authenticated
-					log->print("auth succeeded\n");
+					log.print("auth succeeded\n");
 					authResult = AAuthSucceeded;
 					updateStamps = 2; // both last attempt and last login should be updated
 					attempts = 0;
@@ -258,7 +256,7 @@ namespace alc {
 			
 			// ok, now all we have to do is updating the player's last login and attempts and return the result
 			updatePlayer(guid, ip, attempts, updateStamps);
-			log->flush();
+			log.flush();
 			return authResult;
 		}
 	}

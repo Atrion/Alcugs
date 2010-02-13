@@ -54,9 +54,9 @@ namespace alc {
 		strcpy(serverName, "Lobby");
 	}
 	
-	void tUnetLobbyServer::onLoadConfig(void)
+	void tUnetLobbyServer::onApplyConfig(void)
 	{
-		tUnetLobbyServerBase::onLoadConfig();
+		tUnetLobbyServerBase::onApplyConfig();
 		tConfig *cfg = alcGetMain()->config();
 		
 		tString var = cfg->getVar("website");
