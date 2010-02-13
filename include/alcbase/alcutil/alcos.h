@@ -39,7 +39,7 @@ namespace alc {
 	\param addr filename
 	\return the extension 
 */
-char * alcGetExt(const char * addr);
+tString alcGetExt(const tString & addr);
 
 /** Strips the extension from a filename */
 void alcStripExt(char * addr);

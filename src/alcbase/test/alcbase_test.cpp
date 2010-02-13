@@ -570,6 +570,12 @@ void alctypes_part4() {
 	tString part2 = " out there";
 	assert(part1+part2 == "hi world out there");
 	assert("ouch "+part1+" oops" == "ouch hi world oops");
+	
+	// substring
+	assert(part1.substring(1, 2) == "i ");
+	assert(part2.substring(4) == " there");
+	part2 = part2.substring(3, 3);
+	assert(part2 == "t t");
 }
 
 void alctypes_part5() {
@@ -817,6 +823,26 @@ void alcfuncs_tests() {
 		throw txBase(_WHERE("no exception?"));
 	}
 	catch (txUnexpectedData &) {}
+	
+	// alcGetLoginInfo
+	const char *a = "username@host:23", *b = "serv:er:12345";
+	tString user, host;
+	U16 port;
+	
+	assert(alcGetLoginInfo(a, &user, &host, &port));
+	assert(host == "host");
+	assert(user == "username");
+	assert(port == 23);
+	
+	assert(alcGetLoginInfo(a+tString("15"), NULL, &host, &port));
+	assert(host == "username@host");
+	assert(port == 2315);
+	
+	assert(alcGetLoginInfo(b, NULL, &host, &port));
+	assert(host == "serv:er");
+	assert(port == 12345);
+	
+	assert(!alcGetLoginInfo(b, &user, &host, &port));
 }
 
 void alcparser_tests() {

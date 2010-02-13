@@ -228,7 +228,7 @@ namespace alc {
 			}
 			// check number of attempts
 			else if (attempts+1 >= maxAttempts && time(NULL)-lastAttempt < disTime) {
-				log.print("too many attempts, login disabled for %d seconds (till %s)\n", disTime, alcGetStrTime(lastAttempt+disTime, 0));
+				log.print("too many attempts, login disabled for %d seconds (till %s)\n", disTime, alcGetStrTime(lastAttempt+disTime, 0).c_str());
 				updateStamps = 0; // don't update the last attempt time when we're already dissing
 				authResult = AAccountDisabled;
 			}

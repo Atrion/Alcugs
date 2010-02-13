@@ -469,7 +469,7 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
 			//char * times;
 			//times=ctime((const time_t *)(buf+4));
 			//log->print("%i bps, %s",*(U32 *)(buf),alcGetStrTime(*(U32 *)(buf+4),*(U32 *)(buf+8)));
-			log->print("%i bps, %s",data.getU32(),alcGetStrTime(data.getU32()),data.getU32());
+			log->print("%i bps, %s",data.getU32(),alcGetStrTime(data.getU32()).c_str(),data.getU32());
 			break;
 		case 0x00: //0x00
 		case UNetExt:
@@ -512,7 +512,7 @@ void tmNetClientComm::stream(tBBuf &t) const {
 const char * tmNetClientComm::str() {
 	static char cnt[1024]; // FIXME
 #ifdef ENABLE_MSGLOG
-	snprintf(cnt,sizeof(cnt),"(Re)Negotation (bandwidth: %i bps time: %s) on %s",bandwidth,timestamp.str(),u->str());
+	snprintf(cnt,sizeof(cnt),"(Re)Negotation (bandwidth: %i bps time: %s) on %s",bandwidth,timestamp.str().c_str(),u->str());
 #else
 	snprintf(cnt,sizeof(cnt),"(Re)Negotation on %s",u->str());
 #endif

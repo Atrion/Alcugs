@@ -93,7 +93,7 @@ namespace alc {
 			tDirEntry *file;
 			sdlDir.open(var.c_str());
 			while( (file = sdlDir.getEntry()) != NULL) {
-				if (!file->isFile() || strcasecmp(alcGetExt(file->name), "sdl") != 0) continue;
+				if (!file->isFile() || alcGetExt(file->name).lower() != "sdl") continue;
 				// load it
 				loadSdlStructs((var + file->name).c_str());
 			}

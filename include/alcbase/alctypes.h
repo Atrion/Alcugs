@@ -311,7 +311,6 @@ public:
 	// functions writing strings
 	void writeStr(const char * t);
 	void writeStr(const tString & val) { write(val.c_str(),val.size()); }
-	void writeStr(tString &val) { write(val.c_str(),val.size()); }
 	void printf(const char * msg, ...);
 	void vprintf(const char * msg, va_list ap);
 	void printBoolean(const char *desc, bool val) { writeStr(desc); printBoolean(val); }
@@ -403,7 +402,7 @@ public:
 	void setToNow();
 	double asDouble(char how='s') const;
 	U32 asU32(char how='s') const;
-	const char * str(Byte type=0x00) const;
+	tString str(Byte type=0x00) const;
 	
 	// data
 	U32 seconds;

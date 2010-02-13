@@ -75,7 +75,7 @@ void parameters_usage() {
 
 class tUnetPing :public tUnetBase {
 public:
-	tUnetPing(char * lhost=NULL,U16 lport=0,Byte listen=0,double time=1,int num=5,int flood=1);
+	tUnetPing(const tString & lhost,U16 lport=0,Byte listen=0,double time=1,int num=5,int flood=1);
 	virtual ~tUnetPing();
 	virtual int onMsgRecieved(tUnetMsg * msg,tNetSession * u);
 	virtual bool onConnectionFlood(tNetSession */*u*/) {
@@ -86,7 +86,7 @@ public:
 	virtual void onStop();
 	void setSource(Byte s);
 	void setDestination(Byte d);
-	void setDestinationAddress(char * d,U16 port);
+	void setDestinationAddress(const tString &d,U16 port);
 	void setValidation(Byte val);
 	void setUrgent() {
 		urgent=true;
@@ -97,7 +97,7 @@ private:
 	int num;
 	int flood;
 	Byte destination;
-	char * d_host;
+	tString d_host;
 	U16 d_port;
 	Byte validation;
 	int count;
@@ -110,9 +110,9 @@ private:
 	bool urgent;
 };
 
-tUnetPing::tUnetPing(char * lhost,U16 lport,Byte listen,double time,int num,int flood) :tUnetBase(KClient) {
+tUnetPing::tUnetPing(const tString &lhost,U16 lport,Byte listen,double time,int num,int flood) :tUnetBase(KClient) {
 	this->setBindPort(lport);
-	this->setBindAddress(lhost);
+	this->setBindAddress(lhost.c_str());
 	this->listen=listen;
 	setIdleTimer(1);
 	this->time=time;
@@ -142,7 +142,7 @@ void tUnetPing::setSource(Byte s) {
 void tUnetPing::setDestination(Byte d) {
 	destination=d;
 }
-void tUnetPing::setDestinationAddress(char * d,U16 port) {
+void tUnetPing::setDestinationAddress(const tString &d,U16 port) {
 	d_host=d;
 	d_port=port;
 }
@@ -214,7 +214,7 @@ void tUnetPing::onIdle(bool /*idle*/) {
 
 		updateTimerRelative(100);
 		if(count==0) {
-			dstite=netConnect(d_host,d_port,validation,0);
+			dstite=netConnect(d_host.c_str(),d_port,validation,0);
 			current=startup=alcGetCurrentTime();
 		}
 
@@ -252,10 +252,10 @@ int main(int argc,char * argv[]) {
 	
 	Byte loglevel=2;
 	//local settings
-	char l_hostname[100]="0.0.0.0";
+	tString l_hostname="0.0.0.0";
 	U16 l_port=0;
 	//remote settings
-	char hostname[100]="";
+	tString hostname="";
 	U16 port=5000;
 	
 	Byte val=2; //validation level
@@ -295,7 +295,7 @@ int main(int argc,char * argv[]) {
 		else if(!strcmp(argv[i],"-v") && argc>i+1) { i++; loglevel=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-lh") && argc>i+1) {
 			i++;
-			alcStrncpy(l_hostname,argv[i],sizeof(l_hostname)-1);
+			l_hostname = argv[i];
 		}
 		else if(!strcmp(argv[i],"-l")) {
 			puts(alcVersionTextShort());
@@ -304,11 +304,11 @@ int main(int argc,char * argv[]) {
 		}
 		else if(!strcmp(argv[i],"-rh") && argc>i+1) {
 			i++;
-			alcStrncpy(hostname,argv[i],sizeof(hostname)-1);
+			hostname = argv[i];
 		}
 		else {
 			if(i==1) {
-				if(alcGetLoginInfo(argv[1],hostname,NULL,&port,NULL)!=1) {
+				if(!alcGetLoginInfo(argv[1],NULL,&hostname,&port)) {
 					parameters_usage();
 					return -1;
 				}
@@ -355,19 +355,19 @@ int main(int argc,char * argv[]) {
 		
 		if(mrtg==1) num=1;
 
-		tUnetPing netcore=tUnetPing(l_hostname,l_port,listen,time,num,flood);
+		tUnetPing netcore=tUnetPing(l_hostname.c_str(),l_port,listen,time,num,flood);
 		if (!nlogs) netcore.unsetFlags(UNET_ELOG);
 		
 		if(bcast) netcore.setFlags(UNET_BCAST);
 		else netcore.unsetFlags(UNET_BCAST);
 
-		while(listen==0 && !strcmp(hostname,"")) {
+		while(listen==0 && hostname.isEmpty()) {
 			printf("\nHostname not set, please enter destination host: ");
-			alcStrncpy(hostname,alcConsoleAsk(),sizeof(hostname)-1);
+			hostname = alcConsoleAsk();
 		}
 
 		if(listen==0 && mrtg==0) {
-			printf("Connecting to %s:%i...\n",hostname,port);
+			printf("Connecting to %s:%i...\n",hostname.c_str(),port);
 			printf("Sending ping probe to %i %s...\n",destination,alcUnetGetDestination(destination));
 		}
 		if(listen!=0) {

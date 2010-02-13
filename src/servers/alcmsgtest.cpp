@@ -101,7 +101,7 @@ void tmData::stream(tBBuf &t) const {
 
 class tUnetSimpleFileServer :public tUnetBase {
 public:
-	tUnetSimpleFileServer(char * lhost=NULL,U16 lport=0,Byte listen=0);
+	tUnetSimpleFileServer(const tString &lhost,U16 lport=0,Byte listen=0);
 	virtual ~tUnetSimpleFileServer();
 	virtual int onMsgRecieved(tUnetMsg * msg,tNetSession * u);
 	virtual bool onConnectionFlood(tNetSession */*u*/) {
@@ -109,35 +109,34 @@ public:
 	}
 	virtual void onIdle(bool idle);
 	virtual void onStart();
-	void setDestinationAddress(char * d,U16 port);
+	void setDestinationAddress(const tString & d,U16 port);
 	void setValidation(Byte val);
 	void setUrgent() {
 		urgent=true;
 	}
-	void setFile(char * file) {
-		alcStrncpy(this->file,file,sizeof(this->file)-1);
+	void setFile(const tString &file) {
+		this->file = file;
 	}
 	void setCompressed(void) {
 		compressed=true;
 	}
 private:
 	Byte listen;
-	char * d_host;
+	tString d_host;
 	U16 d_port;
 	Byte validation;
 	bool urgent;
 	bool compressed;
-	char file[500];
+	tString file;
 	bool sent;
 	tNetSessionIte dstite;
 };
 
-tUnetSimpleFileServer::tUnetSimpleFileServer(char * lhost,U16 lport,Byte listen) :tUnetBase(KClient) {
+tUnetSimpleFileServer::tUnetSimpleFileServer(const tString &lhost,U16 lport,Byte listen) :tUnetBase(KClient) {
 	this->setBindPort(lport);
-	this->setBindAddress(lhost);
+	this->setBindAddress(lhost.c_str());
 	this->listen=listen;
 	setIdleTimer(1);
-	d_host=NULL;
 	d_port=5000;
 	validation=2;
 	urgent=false;
@@ -151,7 +150,7 @@ tUnetSimpleFileServer::~tUnetSimpleFileServer() {
 
 }
 
-void tUnetSimpleFileServer::setDestinationAddress(char * d,U16 port) {
+void tUnetSimpleFileServer::setDestinationAddress(const tString &d,U16 port) {
 	d_host=d;
 	d_port=port;
 }
@@ -161,7 +160,7 @@ void tUnetSimpleFileServer::setValidation(Byte val) {
 
 void tUnetSimpleFileServer::onStart() {
 	if(listen==0) {
-		dstite=netConnect(d_host,d_port,validation,0);
+		dstite=netConnect(d_host.c_str(),d_port,validation,0);
 	}
 }
 
@@ -178,7 +177,7 @@ void tUnetSimpleFileServer::onIdle(bool idle) {
 			tmData data(u);
 			if (urgent) data.setUrgent();
 			tFBuf f1;
-			f1.open(file);
+			f1.open(file.c_str());
 			data.data.clear();
 			data.data.put(f1);
 			f1.close();
@@ -225,14 +224,13 @@ int main(int argc,char * argv[]) {
 	
 	Byte loglevel=2;
 	//local settings
-	char l_hostname[100]="0.0.0.0";
+	tString l_hostname="0.0.0.0";
 	U16 l_port=0;
 	//remote settings
-	char hostname[100]="";
+	tString hostname="";
 	U16 port=5000;
 	
-	char file[500];
-	memset(file,0,500);
+	tString file;
 	
 	Byte val=2; //validation level
 	
@@ -247,7 +245,7 @@ int main(int argc,char * argv[]) {
 			return -1;
 		} else if(!strcmp(argv[i],"-lp") && argc>i+1) { i++; l_port=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-rp") && argc>i+1) { i++; port=atoi(argv[i]); }
-		else if(!strcmp(argv[i],"-f") && argc>i+1) { i++; alcStrncpy(file,argv[i],sizeof(file)-1); }
+		else if(!strcmp(argv[i],"-f") && argc>i+1) { i++; file = argv[i]; }
 		else if(!strcmp(argv[i],"-lm")) { listen=1; }
 		else if(!strcmp(argv[i],"-nl")) { nlogs=1; }
 		else if(!strcmp(argv[i],"-val") && argc>i+1) { i++; val=atoi(argv[i]); }
@@ -256,7 +254,7 @@ int main(int argc,char * argv[]) {
 		else if(!strcmp(argv[i],"-v") && argc>i+1) { i++; loglevel=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-lh") && argc>i+1) {
 			i++;
-			alcStrncpy(l_hostname,argv[i],sizeof(l_hostname)-1);
+			l_hostname = argv[i];
 		}
 		else if(!strcmp(argv[i],"-l")) {
 			puts(alcVersionTextShort());
@@ -265,11 +263,11 @@ int main(int argc,char * argv[]) {
 		}
 		else if(!strcmp(argv[i],"-rh") && argc>i+1) {
 			i++;
-			alcStrncpy(hostname,argv[i],sizeof(hostname)-1);
+			hostname = argv[i];
 		}
 		else {
 			if(i==1) {
-				if(alcGetLoginInfo(argv[1],hostname,NULL,&port,NULL)!=1) {
+				if(!alcGetLoginInfo(argv[1],NULL,&hostname,&port)) {
 					parameters_usage();
 					return -1;
 				}
@@ -292,18 +290,18 @@ int main(int argc,char * argv[]) {
 		tUnetSimpleFileServer netcore=tUnetSimpleFileServer(l_hostname,l_port,listen);
 		if (!nlogs) netcore.unsetFlags(UNET_ELOG);
 
-		while(listen==0 && !strcmp(hostname,"")) {
+		while(listen==0 && hostname.isEmpty()) {
 			printf("\nHostname not set, please enter destination host: ");
-			alcStrncpy(hostname,alcConsoleAsk(),sizeof(hostname)-1);
+			hostname = alcConsoleAsk();
 		}
 
-		if(listen==0 && !strcmp(file,"")) {
+		if(listen==0 && file.isEmpty()) {
 			printf("No input file specified!\n");
 			exit(0);
 		}
 		
 		if(listen==0) {
-			printf("Connecting to %s:%i...\n",hostname,port);
+			printf("Connecting to %s:%i...\n",hostname.c_str(),port);
 			printf("Sending file...\n");
 		} else {
 			printf("Waiting for messages... CTR+C stops\n");

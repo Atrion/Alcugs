@@ -42,117 +42,41 @@ namespace alc {
 /**
 	Waits for user input, blocks until user has not entered something followed by return
 */
-const char * alcConsoleAsk() {
-	static char what[500]; // FIXME
-	int str_len;
+tString alcConsoleAsk() {
+	char what[501];
 	fflush(0);
 	fgets(what,500,stdin);
-	str_len=strlen(what);
+	int str_len=strlen(what);
 	if(what[str_len-1]=='\n') {
 		what[str_len-1]='\0';
-		str_len--;
 	}
-
-	return what;
+	return tString(what);
 }
 
 /**
-	\brief "Transforms a  username#avie@host:port into hostname, username, avie and port"
+	\brief "Transforms a  username@host:port into username, hostname and port"
 */
-int alcGetLoginInfo(const char * argv,char * hostname,char * username,U16 * port,char * avie) {
-	unsigned int i;
-
-	int a=0,b=0,c=0;
-	int q=0;
-
-	char left[100]="";
-	char mid[100]="";
-	char right[100]="";
-	char user[100]="";
-
-	for(i=0; i<strlen(argv); i++) {
-
-		if(argv[i]=='@') { q=1; }
-		else if(argv[i]==':') { q=2; }
-		else {
-
-			switch (q) {
-				case 0:
-					left[a]=argv[i];
-					a++;
-					break;
-				case 1:
-					mid[b]=argv[i];
-					b++;
-					break;
-				case 2:
-					right[c]=argv[i];
-					c++;
-					break;
-				default:
-					return -1;
-			}
+bool alcGetLoginInfo(tString argv,tString * username,tString * hostname,U16 *port)
+{
+	if (username) { // don't look for username if its not requested
+		int at = argv.find('@');
+		if (at >= 0) {
+			*username = argv.substring(0, at);
+			argv = argv.substring(at+1);
 		}
-
-	}
-	left[a]='\0';
-	mid[b]='\0';
-	right[c]='\0';
-
-	switch (q) {
-		case 0:
-			alcStrncpy(hostname,left,99);
-			break;
-		case 1:
-			alcStrncpy(user,left,99);
-			alcStrncpy(hostname,mid,99);
-			break;
-		case 2:
-			if(b!=0) {
-				alcStrncpy(user,left,99);
-				alcStrncpy(hostname,mid,99);
-			} else {
-				alcStrncpy(hostname,left,99);
-			}
-			*port=atoi(right);
-			break;
+		else
+			return false;
 	}
 
-	//check for avie
-	a=0; b=0; q=0;
-	for(i=0; i<strlen(user); i++) {
-
-		if(user[i]=='#') { q=1; }
-		else {
-			switch (q) {
-				case 0:
-					left[a]=user[i];
-					a++;
-					break;
-				case 1:
-					mid[b]=user[i];
-					b++;
-					break;
-			}
-		}
+	// now look for host and port
+	int colon = argv.find(':', /*reverse*/true);
+	if (colon >= 0) {
+		*hostname = argv.substring(0, colon);
+		argv = argv.substring(colon+1);
+		*port = argv.asU16();
 	}
-	left[a]='\0';
-	mid[b]='\0';
-
-	switch (q) {
-		case 0:
-			if (username != 0)
-				alcStrncpy(username,left,99);
-			break;
-		case 1:
-			if (username != 0)
-				alcStrncpy(username,left,99);
-			if (avie != 0)
-				alcStrncpy(avie,mid,99);
-			break;
-	}
-
-	return 1;
+	else return false;
+	return true;
 }
 
 /**
