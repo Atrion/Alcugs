@@ -233,7 +233,7 @@ U16 alcParseKey(tString *t) {
 	offset=t->substring(pos,t->size()-pos);
 	offset=offset.strip('[');
 	offset=offset.strip(']');
-	t->setSize(pos);
+	*t = t->substring(0, pos);
 	return offset.asU16();
 }
 

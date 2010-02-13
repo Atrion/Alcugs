@@ -59,12 +59,12 @@ void tWDYSBuf::encrypt() {
 	
 	write("whatdoyousee",sizeof(char)*12);
 	putU32(xsize);
-	write(aux->buf,xsize);
+	write(aux->buf(),xsize);
 	set(16);
 	msize=16;
 	
 	for (U32 i=0; i<xsize; i+=8) {
-		wdys::encodeQuad(reinterpret_cast<U32 *>(this->buf->buf+off+i),reinterpret_cast<U32 *>(this->buf->buf+off+i+4));
+		wdys::encodeQuad(reinterpret_cast<U32 *>(this->buf->buf()+off+i),reinterpret_cast<U32 *>(this->buf->buf()+off+i+4));
 		msize+=8;
 	}
 	
@@ -72,7 +72,7 @@ void tWDYSBuf::encrypt() {
 	off=0;
 }
 void tWDYSBuf::decrypt(bool mustBeWDYS) {
-	if(memcmp(this->buf->buf,"whatdoyousee",12) != 0) {
+	if(memcmp(this->buf->buf(),"whatdoyousee",12) != 0) {
 		if (mustBeWDYS) throw txUnexpectedData(_WHERE("NotAWDYSFile!")); 
 		return;
 	}
@@ -85,12 +85,12 @@ void tWDYSBuf::decrypt(bool mustBeWDYS) {
 	msize=0;
 	off=0;
 	
-	write(aux->buf+16,xsize-16);
+	write(aux->buf()+16,xsize-16);
 	msize=dsize;
 	off=0;
 	
 	for (U32 i=0; i<msize; i+=8) {
-		wdys::decodeQuad(reinterpret_cast<U32 *>(this->buf->buf+off+i),reinterpret_cast<U32 *>(this->buf->buf+off+i+4));
+		wdys::decodeQuad(reinterpret_cast<U32 *>(this->buf->buf()+off+i),reinterpret_cast<U32 *>(this->buf->buf()+off+i+4));
 	}
 	
 	if(aux->getRefs()<1) delete aux;
@@ -124,13 +124,13 @@ void tAESBuf::encrypt() {
 	
 	putU32(0x0D874288);
 	putU32(xsize);
-	write(aux->buf,xsize);
+	write(aux->buf(),xsize);
 	set(8);
 	msize=8;
 
 	Rijndael rin;
 	rin.init(Rijndael::ECB,Rijndael::Encrypt,key,Rijndael::Key16Bytes);
-	int res = rin.padEncrypt(aux->buf,xsize,this->buf->buf+off);
+	int res = rin.padEncrypt(aux->buf(),xsize,this->buf->buf()+off);
 	if(res<0) throw txUnkErr(_WHERE("Rijndael encrypt error"));
 	msize+=res;
 	
@@ -147,14 +147,14 @@ void tAESBuf::decrypt() {
 	msize=0;
 	off=0;
 	
-	write(aux->buf+8,xsize-8);
-	msize=*reinterpret_cast<U32 *>(aux->buf+4);
+	write(aux->buf()+8,xsize-8);
+	msize=*reinterpret_cast<U32 *>(aux->buf()+4);
 	off=0;
 
 	Rijndael rin;
 	rin.init(Rijndael::ECB,Rijndael::Decrypt,key,Rijndael::Key16Bytes);
 
-	int res = rin.padDecrypt(aux->buf+8,xsize-8,buf->buf+off);
+	int res = rin.padDecrypt(aux->buf()+8,xsize-8,buf->buf()+off);
 	if(res<0) throw txUnkErr(_WHERE("Rijndael decrypt error %i",res));
 
 	if(aux->getRefs()<1) delete aux;
@@ -182,7 +182,7 @@ void tUruString::store(tBBuf &t) {
 void tUruString::stream(tBBuf &t) const {
 	t.putU16(msize|0xF000);
 	for(U32 i=0; i<msize; i++) {
-		t.putByte(~buf->buf[i]);
+		t.putByte(~*(buf->buf()+i));
 	}
 	
 	/* Myst V encryption

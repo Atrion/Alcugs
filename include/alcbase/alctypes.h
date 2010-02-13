@@ -52,7 +52,7 @@ class tMBuf;
 class tBaseType {
 public:
 	//!(de)constructors
-	virtual ~tBaseType() {} //GCC 4 wants this?
+	inline virtual ~tBaseType() {} //GCC 4 wants this?
 	//!stores from a buffer
 	virtual void store(tBBuf &t)=0;
 	//!streams to a buffer
@@ -61,12 +61,13 @@ public:
 //end base type
 
 /** Basic buffer */
-class tBBuf :public tBaseType {
+class tBBuf : public tBaseType {
 public:
-	//You must implement the next ones on derived buffer classes, plus the tBaseType ones.
 	//!(de)constructors
-	tBBuf();
-	virtual ~tBBuf();
+	inline tBBuf() {}
+	inline virtual ~tBBuf() {}
+	
+	//You must implement the next ones on derived buffer classes, plus the tBaseType ones.
 	//! Gets absolute offset
 	virtual U32 tell() const=0;
 	//! Sets absolute offset
@@ -81,14 +82,9 @@ public:
 	
 	// convenience functions
 	//! Sets offset to 0
-	inline void rewind() {
-		set(0);
-		onrewind();
-	}
+	inline void rewind() { set(0); }
 	//! Sets offset ot End of the stream
-	inline void end() {
-		set(size());
-	}
+	inline void end() { set(size()); }
 	/** Relative seek
 			\param n pos
 			\param flags SEEK_CUR (default), SEEK_SET, SEEK_END
@@ -97,30 +93,22 @@ public:
 	void seek(int n,Byte flags=SEEK_CUR);
 	
 	/** Puts an object into the buffer (streams the object) */
-	inline void put(const tBaseType &t) {
-		t.stream(*this);
-	}
+	inline void put(const tBaseType &t) { t.stream(*this); }
 	/** Gets an object from the buffer (stores object from stream) */
-	inline void get(tBaseType &t) {
-		t.store(*this);
-	}
+	inline void get(tBaseType &t) { t.store(*this); }
 	
 	/** \return True if the pointer is at the end of the stream */
-	inline bool eof() const {
-		return(this->tell()>=this->size());
-	}
+	inline bool eof() const { return (this->tell() >= this->size()); }
 	/** \return the number of bytes remaining to the end of the stream */
-	inline int remaining() const {
-		return (this->size()-this->tell());
-	}
+	inline int remaining() const { return (this->size() - this->tell()); }
 	
 	// Overlaoded Operators
-	void operator++(int) { this->seek(+1); }
-	void operator++() { this->seek(+1); }
-	void operator--(int) { this->seek(-1); }
-	void operator--() { this->seek(-1); }
-	void operator+=(U32 n) { this->seek(+n); }
-	void operator-=(U32 n) { this->seek(-n); }
+	inline void operator++(int) { this->seek(+1); }
+	inline void operator++() { this->seek(+1); }
+	inline void operator--(int) { this->seek(-1); }
+	inline void operator--() { this->seek(-1); }
+	inline void operator+=(U32 n) { this->seek(+n); }
+	inline void operator-=(U32 n) { this->seek(-n); }
 	
 	// put and get functions
 	//NOTE: I have already thought about overloading a "put(U16 val)", and I don't want
@@ -147,9 +135,6 @@ public:
 	inline void check(const SByte * what,U32 n) {
 		check(reinterpret_cast<const Byte *>(what), n);
 	}
-protected:
-	//! called when rewind is called
-	virtual void onrewind() {}
 };
 
 /** Buffer with reference control */
@@ -160,20 +145,18 @@ public:
 	void resize(U32 newsize);
 	void inc();
 	void dec();
-	U32 size();
-	U32 getRefs() { return refs; }
-	void zero() {
-		memset(buf,0,msize);
-	}
-	
-	Byte * buf;
+	inline U32 size() { return msize; }
+	inline U32 getRefs() { return refs; }
+	inline Byte *buf() { return buffer; }
+	inline void zero() { memset(buffer,0,msize); }
 private:
 	U32 refs;
 	U32 msize;
+	Byte *buffer;
 };
 
 /** memory based buffer */
-class tMBuf :public tBBuf {
+class tMBuf : public tBBuf {
 public:
 	tMBuf();
 	tMBuf(const tMBuf &t);
@@ -184,41 +167,39 @@ public:
 	// implement interface
 	virtual void stream(tBBuf &buf) const;
 	virtual void store(tBBuf &/*buf*/) {}
-	virtual U32 tell() const;
+	inline virtual U32 tell() const { return off; }
 	virtual void set(U32 pos);
 	virtual void write(const Byte * val,U32 n);
 	inline virtual void write(const SByte * val,U32 n) { this->write(reinterpret_cast<const Byte *>(val),n); }
 	virtual const Byte * read(U32 n=0);
-	virtual U32 size() const;
+	inline virtual U32 size() const { return msize; }
 	
 	// assignment
-	virtual const tMBuf &operator=(const tMBuf &t) { this->copy(t); return *this; }
+	inline const tMBuf &operator=(const tMBuf &t) { this->copy(t); return *this; }
 	
 	// comparison
-	virtual bool operator==(const tMBuf &t) { return(!this->compare(t)); }
-	virtual bool operator!=(const tMBuf &t) { return(this->compare(t)); }
-	virtual bool operator>(const tMBuf &t) { return(this->compare(t)>0); }
-	virtual bool operator<(const tMBuf &t) { return(this->compare(t)<0); }
-	virtual bool operator>=(const tMBuf &t) { return(this->compare(t)>=0); }
-	virtual bool operator<=(const tMBuf &t) { return(this->compare(t)<=0); }
+	inline bool operator==(const tMBuf &t) { return(!this->compare(t)); }
+	inline bool operator!=(const tMBuf &t) { return(this->compare(t)); }
+	inline bool operator>(const tMBuf &t) { return(this->compare(t)>0); }
+	inline bool operator<(const tMBuf &t) { return(this->compare(t)<0); }
+	inline bool operator>=(const tMBuf &t) { return(this->compare(t)>=0); }
+	inline bool operator<=(const tMBuf &t) { return(this->compare(t)<=0); }
 	
 	// useful functions
 	void clear();
 	Byte getAt(U32 pos) const;
 	void setAt(U32 pos,const Byte what);
-	void setSize(U32 size) {
-		msize=size;
-	}
 protected:
 	//! assignment
-	virtual void copy(const tMBuf &t);
-	//! called when content is modified
-	virtual void onmodify(bool /*clear*/ = false) {}
+	void copy(const tMBuf &t);
 	//! comparison
-	virtual SByte compare(const tMBuf &t) const;
+	SByte compare(const tMBuf &t) const;
+	
+	//! called when content is modified
+	virtual void onmodify(bool /*clear*/ = false) {} // FIXME: remove this
 	
 	// data
-	tRefBuf * buf;
+	tRefBuf *buf;
 	U32 off;
 	U32 msize; //!< this is the part of the buffer that is actually used, while buf->size() is the currently available size
 private:
@@ -226,10 +207,12 @@ private:
 };
 
 /** File buffer */
-class tFBuf :public tBBuf {
+class tFBuf : public tBBuf {
 public:
 	tFBuf();
 	virtual ~tFBuf();
+	
+	// implement interface
 	virtual U32 tell() const;
 	virtual void set(U32 pos);
 	virtual void write(const Byte * val,U32 n);
@@ -238,9 +221,11 @@ public:
 	virtual void stream(tBBuf &buf) const;
 	virtual void store(tBBuf &/*buf*/) {}
 	virtual U32 size() const;
-	virtual void close();
-	virtual void open(const char * path,const char * mode="rb");
-	virtual void flush();
+	
+	// additional functions
+	void close();
+	void open(const char * path,const char * mode="rb");
+	void flush();
 protected:
 	void init();
 private:
@@ -251,17 +236,19 @@ private:
 };
 
 /** Static buffer */
-class tSBuf :public tBBuf {
+class tSBuf : public tBBuf {
 public:
 	explicit tSBuf(const Byte * buf,U32 msize);
-	virtual U32 tell() const;
+	
+	// implement interface
+	inline virtual U32 tell() const { return off; }
 	virtual void set(U32 pos);
 	virtual void write(const Byte * /*val*/,U32 /*n*/) {}
 	inline virtual void write(const SByte * /*val*/,U32 /*n*/) { }
 	virtual const Byte * read(U32 n=0);
 	virtual void stream(tBBuf &buf) const;
 	virtual void store(tBBuf &/*buf*/) {}
-	virtual U32 size() const;
+	inline virtual U32 size() const { return msize; }
 private:
 	const Byte * buf;
 	U32 off;
@@ -269,7 +256,7 @@ private:
 };
 
 /** Zlib buffer */
-class tZBuf :public tMBuf {
+class tZBuf : public tMBuf {
 public:
 	tZBuf() :tMBuf() {}
 	tZBuf(const tMBuf &k) :tMBuf(k) {}
@@ -278,15 +265,17 @@ public:
 };
 
 /** Md5 buffer */
-class tMD5Buf :public tMBuf {
+class tMD5Buf : public tMBuf {
 public:
 	tMD5Buf() :tMBuf() {}
 	tMD5Buf(tMBuf &k) :tMBuf(k) { this->compute(); }
 	void compute();
 };
 
+// API ok (except for FIXMEs) till here
+
 /** String buffer */
-class tString :public tMBuf {
+class tString : public tMBuf {
 public:
 	tString(const char * k);
 	explicit tString(U32 size=200);
@@ -354,28 +343,27 @@ public:
 	inline bool isNull() const { return null; }
 	
 	// assignment
-	virtual const tString & operator=(const tString &t) { copy(t); return *this; }
-	virtual const tString & operator=(const char * str) { copy(str); return *this; }
+	inline const tString & operator=(const tString &t) { copy(t); return *this; }
+	inline const tString & operator=(const char * str) { copy(str); return *this; }
 	
 	// comparison
-	virtual bool operator==(const tString &t) const { return(!this->compare(t)); }
-	virtual bool operator==(const char * str) const { return(!this->compare(str)); }
-	virtual bool operator!=(const tString &t) const { return(this->compare(t)); }
-	virtual bool operator!=(const char * str) const { return(this->compare(str)); }
-	virtual bool operator>(const tString &t) const { return(this->compare(t)>0); }
-	virtual bool operator>(const char *t) const { return(this->compare(t)>0); }
-	virtual bool operator<(const tString &t) const { return(this->compare(t)<0); }
-	virtual bool operator<(const char *t) const { return(this->compare(t)<0); }
-	virtual bool operator>=(const tString &t) const { return(this->compare(t)>=0); }
-	virtual bool operator>=(const char *t) const { return(this->compare(t)>=0); }
-	virtual bool operator<=(const tString &t) const { return(this->compare(t)<=0); }
-	virtual bool operator<=(const char *t) const { return(this->compare(t)<=0); }
+	inline bool operator==(const tString &t) const { return(!compare(t)); }
+	inline bool operator==(const char * str) const { return(!compare(str)); }
+	inline bool operator!=(const tString &t) const { return(compare(t)); }
+	inline bool operator!=(const char * str) const { return(compare(str)); }
+	inline bool operator>(const tString &t) const { return(compare(t)>0); }
+	inline bool operator>(const char *t) const { return(compare(t)>0); }
+	inline bool operator<(const tString &t) const { return(compare(t)<0); }
+	inline bool operator<(const char *t) const { return(compare(t)<0); }
+	inline bool operator>=(const tString &t) const { return(compare(t)>=0); }
+	inline bool operator>=(const char *t) const { return(compare(t)>=0); }
+	inline bool operator<=(const tString &t) const { return(compare(t)<=0); }
+	inline bool operator<=(const char *t) const { return(compare(t)<=0); }
 protected:
-	virtual void onmodify(bool clear = false);
-	virtual void onrewind();
+	virtual void onmodify(bool clear = false); // FIXME
 	// assignment
-	virtual void copy(const char * str);
-	virtual void copy(const tString &t);
+	void copy(const char * str);
+	void copy(const tString &t);
 private:
 	U16 l,c;
 	char sep;
@@ -385,8 +373,8 @@ private:
 
 	void init();
 	// comparison
-	virtual SByte compare(const tString &t) const { return tMBuf::compare(t); }
-	virtual SByte compare(const char * str) const;
+	inline SByte compare(const tString &t) const { return tMBuf::compare(t); }
+	SByte compare(const char * str) const;
 };
 
 tString operator+(const tString & str1, const tString & str2);
@@ -394,7 +382,7 @@ tString operator+(const char * str1, const tString & str2);
 tString operator+(const tString & str1, const char * str2);
 
 /** Time */
-class tTime :public tBaseType {
+class tTime : public tBaseType {
 public:
 	tTime(void) : tBaseType() { seconds = microseconds = 0; }
 	

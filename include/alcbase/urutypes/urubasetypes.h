@@ -61,16 +61,18 @@ private:
 class tUruString :public tString {
 public:
 	tUruString(void) : tString() {}
-	tUruString(const char *k) : tString(k) {}
 	tUruString(const tUruString &t) : tString(t) {}
-	tUruString(const tString &t) : tString(t) {}
+	explicit tUruString(const char *k) : tString(k) {}
+	explicit tUruString(const tString &t) : tString(t) {}
+	
+	// interface
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
 	
 	// assignment
-	virtual const tUruString & operator=(const tUruString &t) { copy(t); return *this; }
-	virtual const tString & operator=(const tString &t) { copy(t); return *this; }
-	virtual const tString & operator=(const char *t) { copy(t); return *this; }
+	inline const tUruString & operator=(const tUruString &t) { copy(t); return *this; }
+	inline const tString & operator=(const tString &t) { copy(t); return *this; }
+	inline const tString & operator=(const char *t) { copy(t); return *this; }
 };
 
 /** UruObject */
