@@ -83,10 +83,12 @@ namespace alc {
 		t.putByte(release);
 	}
 	
-	void tmCustomAuthAsk::additionalFields()
+	tString tmCustomAuthAsk::str() const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" IP: %s, login: %s, challenge: %s, hash: %s, build: 0x%02X (%s)", alcGetStrIp(ip).c_str(), login.c_str(), alcGetStrUid(challenge).c_str(), alcGetStrUid(hash).c_str(), release, alcUnetGetRelease(release));
+		return dbg;
 	}
 	
 	//// tmCustomAuthResponse
@@ -125,10 +127,12 @@ namespace alc {
 		t.putByte(accessLevel); // acess level
 	}
 	
-	void tmCustomAuthResponse::additionalFields()
+	tString tmCustomAuthResponse::str() const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" login: %s, passwd: (hidden), result: 0x%02X (%s), accessLevel: %d", login.c_str(), result, alcUnetGetAuthCode(result), accessLevel);
+		return dbg;
 	}
 
 } //end namespace alc

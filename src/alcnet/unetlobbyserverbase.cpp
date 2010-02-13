@@ -295,7 +295,7 @@ namespace alc {
 				// get the data out of the packet
 				tmAuthenticateHello authHello(u);
 				msg->data.get(authHello);
-				log->log("<RCV> [%d] %s\n", msg->sn, authHello.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, authHello.str().c_str());
 				
 				if (authHello.maxPacketSize != u->getMaxPacketSz()) {
 					err->log("UNX: Max packet size of %s is not %d, but %d, ignoring\n", u->str().c_str(), u->getMaxPacketSz(), authHello.maxPacketSize);
@@ -345,7 +345,7 @@ namespace alc {
 				// get the data out of the packet
 				tmAuthenticateResponse authResponse(u);
 				msg->data.get(authResponse);
-				log->log("<RCV> [%d] %s\n", msg->sn, authResponse.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, authResponse.str().c_str());
 				
 				// send authAsk to auth server
 				tNetSession *authServer = getServer(KAuth);
@@ -369,7 +369,7 @@ namespace alc {
 				// get the data out of the packet
 				tmCustomAuthResponse authResponse(u);
 				msg->data.get(authResponse);
-				log->log("<RCV> [%d] %s\n", msg->sn, authResponse.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, authResponse.str().c_str());
 				
 				// find the client's session
 				tNetSession *client = smgr->get(authResponse.sid);
@@ -413,7 +413,7 @@ namespace alc {
 				// get the data out of the packet
 				tmSetMyActivePlayer setPlayer(u);
 				msg->data.get(setPlayer);
-				log->log("<RCV> [%d] %s\n", msg->sn, setPlayer.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, setPlayer.str().c_str());
 				
 				if (u->ki != 0) {
 					if (u->ki == setPlayer.ki) {
@@ -454,7 +454,7 @@ namespace alc {
 				// get the data out of the packet
 				tmCustomVaultKiChecked kiChecked(u);
 				msg->data.get(kiChecked);
-				log->log("<RCV> [%d] %s\n", msg->sn, kiChecked.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, kiChecked.str().c_str());
 				
 				// find the client's session
 				tNetSession *client = smgr->get(kiChecked.sid);
@@ -485,7 +485,7 @@ namespace alc {
 				// get the data out of the packet
 				tmVault vaultMsg(u);
 				msg->data.get(vaultMsg);
-				log->log("<RCV> [%d] %s\n", msg->sn, vaultMsg.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, vaultMsg.str().c_str());
 				if (isTask) {
 					if (!vaultMsg.hasFlags(plNetX))  throw txProtocolError(_WHERE("X flag missing"));
 				}
@@ -552,7 +552,7 @@ namespace alc {
 				// get the data out of the packet
 				tmFindAge findAge(u);
 				msg->data.get(findAge);
-				log->log("<RCV> [%d] %s\n", msg->sn, findAge.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, findAge.str().c_str());
 				
 				tvAgeLinkStruct ageLink;
 				findAge.message.rewind();
@@ -595,7 +595,7 @@ namespace alc {
 				// get the data out of the packet
 				tmCustomFindServer findServer(u);
 				msg->data.get(findServer);
-				log->log("<RCV> [%d] %s\n", msg->sn, findServer.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, findServer.str().c_str());
 			
 				// let's ask the tracking server
 				tNetSession *trackingServer = getServer(KTracking);
@@ -619,7 +619,7 @@ namespace alc {
 				// get the data out of the packet
 				tmCustomServerFound serverFound(u);
 				msg->data.get(serverFound);
-				log->log("<RCV> [%d] %s\n", msg->sn, serverFound.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, serverFound.str().c_str());
 				
 				// find the client
 				tNetSession *client = smgr->get(serverFound.sid);
@@ -647,7 +647,7 @@ namespace alc {
 				// get the data out of the packet
 				tmPlayerTerminated playerTerminated(u);
 				msg->data.get(playerTerminated);
-				log->log("<RCV> [%d] %s\n", msg->sn, playerTerminated.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, playerTerminated.str().c_str());
 				
 				tNetSession *client = smgr->find(playerTerminated.ki);
 				if (!client || (client->getPeerType() != KClient && client->getPeerType() != 0)) {

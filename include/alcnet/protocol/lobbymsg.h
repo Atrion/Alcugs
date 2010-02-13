@@ -42,32 +42,29 @@ namespace alc {
 	public:
 		tmVaultPlayerList(tNetSession *u, U32 x, U16 numberPlayers, tMBuf players, const char *url);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str() const;
 		// format
 		U16 numberPlayers;
 		tMBuf players;
 		tString url;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmCreatePlayer : public tmMsgBase {
 	public:
 		tmCreatePlayer(tNetSession *u);
 		virtual void store(tBBuf &t);
+		virtual tString str() const;
 		// format
 		tString avatar, gender, friendName, key;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmPlayerCreated : public tmMsgBase {
 	public:
 		tmPlayerCreated(tNetSession *u, U32 ki, U32 x, Byte result);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str() const;
 		// format
 		Byte result;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmDeletePlayer : public tmMsgBase {

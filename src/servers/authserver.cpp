@@ -63,7 +63,7 @@ namespace alc {
 				
 				// get the data out of the packet
 				msg->data.get(authAsk);
-				log->log("<RCV> [%d] %s\n", msg->sn, authAsk.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, authAsk.str().c_str());
 				
 				// authenticate player
 				alcHex2Ascii(challenge, authAsk.challenge, 16);

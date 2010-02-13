@@ -51,7 +51,7 @@ namespace alc {
 		tMemberInfo(tNetSession *u, const tUruObject &obj, bool hidePlayer);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
-		const char *str(void);
+		tString str(void) const;
 	private:
 		U32 ki;
 		tString avatar;
@@ -60,19 +60,16 @@ namespace alc {
 		U32 ip;
 		U16 port;
 		tUruObject obj;
-		
-		tString dbg;
 	};
 	
 	class tmJoinReq : public tmMsgBase {
 	public:
 		tmJoinReq(tNetSession *u);
 		virtual void store(tBBuf &t);
+		virtual tString str(void) const;
 		// format
 		U32 ip; //network order
 		U16 port; //network order
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmJoinAck : public tmMsgBase {
@@ -119,6 +116,7 @@ namespace alc {
 		tmLoadClone(tNetSession *u, tpLoadCloneMsg *subMsg, bool isInitial);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str(void) const;
 		
 		void checkSubMsg(tpLoadCloneMsg *subMsg);
 		// format
@@ -126,65 +124,58 @@ namespace alc {
 		bool isPlayerAvatar;
 		bool isLoad;
 		bool isInitial;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmPagingRoom : public tmMsgBase {
 	public:
 		tmPagingRoom(tNetSession *u);
 		virtual void store(tBBuf &t);
+		virtual tString str(void) const;
 		// format
 		U32 pageId;
 		U16 pageType;
 		tString pageName;
 		bool isPageOut;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmGroupOwner : public tmMsgBase {
 	public:
 		tmGroupOwner(tNetSession *u, tPageInfo *page, bool isOwner);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str(void) const;
 		// format
 		U32 pageId;
 		U16 pageType;
 		bool isOwner;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmPlayerPage : public tmMsgBase {
 	public:
 		tmPlayerPage(tNetSession *u);
 		virtual void store(tBBuf &t);
+		virtual tString str(void) const;
 		// format
 		bool isPageOut;
 		tUruObject obj;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmGameStateRequest : public tmMsgBase {
 	public:
 		tmGameStateRequest(tNetSession *u);
 		virtual void store(tBBuf &t);
+		virtual tString str(void) const;
 		// format
 		typedef std::vector<U32> tPageList;
 		tPageList pages;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmInitialAgeStateSent : public tmMsgBase {
 	public:
 		tmInitialAgeStateSent(tNetSession *u, U32 num);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str(void) const;
 		// format
 		U32 num;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmMembersListReq : public tmMsgBase {
@@ -198,13 +189,13 @@ namespace alc {
 		
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str(void) const;
 	
 		// format
 		tUruObject obj;
 		tStreamedObject content;
-	protected:
-		virtual void additionalFields();
 		
+	protected:
 		tmStreamedObject(U16 cmd, tNetSession *u, const tmStreamedObject &msg);
 		tmStreamedObject(U16 cmd, tNetSession *u, const tUruObject &obj, tBaseType *content);
 	};
@@ -213,10 +204,9 @@ namespace alc {
 	public:
 		tmTestAndSet(tNetSession *u);
 		virtual void store(tBBuf &t);
+		virtual tString str(void) const;
 		// format
 		bool isLockReq;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmSDLState : public tmStreamedObject {
@@ -226,13 +216,13 @@ namespace alc {
 		
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str(void) const;
 	
 		// format
 		bool isInitial;
+		
 	protected:
 		tmSDLState(U16 cmd, tNetSession *u, const tmSDLState &msg);
-		
-		virtual void additionalFields();
 	};
 	
 	class tmSDLStateBCast : public tmSDLState {
@@ -253,32 +243,29 @@ namespace alc {
 	public:
 		tmSetTimeout(tNetSession *u);
 		virtual void store(tBBuf &t);
+		virtual tString str(void) const;
 		// format
 		float timeout;
-	private:
-		virtual void additionalFields();
 	};
 	
 	class tmMembersList : public tmMsgBase {
 	public:
 		tmMembersList(tNetSession *u);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str(void) const;
 		// format
 		typedef std::vector<tMemberInfo> tMemberList;
 		tMemberList members;
-	private:
-		virtual void additionalFields();
 	};
 	
 	class tmMemberUpdate : public tmMsgBase {
 	public:
 		tmMemberUpdate(tNetSession *u, const tMemberInfo &info, bool isJoined);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str(void) const;
 		// format
 		tMemberInfo info;
 		bool isJoined;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmPython: public tmMsgBase {

@@ -119,7 +119,6 @@ tUnetPing::tUnetPing(const tString &lhost,U16 lport,Byte listen,double time,int 
 	this->num=num;
 	this->flood=flood;
 	destination=KLobby;
-	d_host=NULL;
 	d_port=5000;
 	count=0;
 	dstite.ip=0;
@@ -167,7 +166,7 @@ int tUnetPing::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 		{
 			tmPing ping(u);
 			msg->data.get(ping);
-			log->log("<RCV> [%d] %s\n", msg->sn, ping.str());
+			log->log("<RCV> [%d] %s\n", msg->sn, ping.str().c_str());
 			if(listen==0) {
 				if(dstite==u) {
 					current=alcGetCurrentTime();
@@ -355,7 +354,7 @@ int main(int argc,char * argv[]) {
 		
 		if(mrtg==1) num=1;
 
-		tUnetPing netcore=tUnetPing(l_hostname.c_str(),l_port,listen,time,num,flood);
+		tUnetPing netcore(l_hostname,l_port,listen,time,num,flood);
 		if (!nlogs) netcore.unsetFlags(UNET_ELOG);
 		
 		if(bcast) netcore.setFlags(UNET_BCAST);

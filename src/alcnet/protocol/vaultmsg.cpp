@@ -65,10 +65,12 @@ namespace alc {
 		t.put(message);
 	}
 	
-	void tmVault::additionalFields()
+	tString tmVault::str() const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" Size of attached message: %d Bytes", message.size());
+		return dbg;
 	}
 	
 	//// tmCustomVaultAskPlayerList
@@ -120,10 +122,12 @@ namespace alc {
 		t.put(players);
 	}
 	
-	void tmCustomVaultPlayerList::additionalFields()
+	tString tmCustomVaultPlayerList::str() const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" number of players: %d", numberPlayers);
+		return dbg;
 	}
 	
 	//// tmCustomVaultPlayerStatus
@@ -158,10 +162,12 @@ namespace alc {
 		t.putU32(onlineTime);
 	}
 	
-	void tmCustomVaultPlayerStatus::additionalFields()
+	tString tmCustomVaultPlayerStatus::str() const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" Server GUID: %s, Age filename: %s, State: 0x%02X, online time: %d", serverGuid.c_str(), age.c_str(), state, onlineTime);
+		return dbg;
 	}
 	
 	//// tmCustomVaultCreatePlayer
@@ -206,11 +212,13 @@ namespace alc {
 		t.putU32(0);
 	}
 	
-	void tmCustomVaultCreatePlayer::additionalFields()
+	tString tmCustomVaultCreatePlayer::str() const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" login: %s, ", login.c_str());
 		dbg.printf("accessLevel: %d, avatar: %s, gender: %s, friend: %s, key: %s", accessLevel, avatar.c_str(), gender.c_str(), friendName.c_str(), key.c_str());
+		return dbg;
 	}
 	
 	//// tmCustomVaultPlayerCreated
@@ -241,10 +249,12 @@ namespace alc {
 		t.putByte(result);
 	}
 	
-	void tmCustomVaultPlayerCreated::additionalFields()
+	tString tmCustomVaultPlayerCreated::str() const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" result: 0x%02X (%s)", result, alcUnetGetAvatarCode(result));
+		return dbg;
 	}
 	
 	//// tmCustomVaultDeletePlayer
@@ -275,10 +285,12 @@ namespace alc {
 		t.putByte(accessLevel);
 	}
 	
-	void tmCustomVaultDeletePlayer::additionalFields()
+	tString tmCustomVaultDeletePlayer::str() const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" access level: %d", accessLevel);
+		return dbg;
 	}
 	
 	//// tmCustomVaultCheckKi
@@ -336,10 +348,12 @@ namespace alc {
 		t.put(avatar);
 	}
 	
-	void tmCustomVaultKiChecked::additionalFields()
+	tString tmCustomVaultKiChecked::str() const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
-		dbg.printf(" status: 0x%02X, avatar: %s", status, avatar.c_str());	
+		dbg.printf(" status: 0x%02X, avatar: %s", status, avatar.c_str());
+		return dbg;
 	}
 	
 	//// tmCustomVaultFindAge

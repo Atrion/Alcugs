@@ -36,54 +36,49 @@ namespace alc {
 	public:
 		tmAuthenticateHello(tNetSession *u);
 		virtual void store(tBBuf &t);
+		virtual tString str() const;
 		// format
 		tString account;
 		U16 maxPacketSize;
 		Byte release;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmAuthenticateChallenge : public tmMsgBase {
 	public:
 		tmAuthenticateChallenge(tNetSession *u, U32 x, Byte authResult, const Byte *challenge);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str() const;
 		// format
 		Byte authResult;
 		tString challenge;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmAuthenticateResponse : public tmMsgBase {
 	public:
 		tmAuthenticateResponse(tNetSession *u);
 		virtual void store(tBBuf &t);
+		virtual tString str() const;
 		// format
 		tString hash;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmAccountAutheticated : public tmMsgBase {
 	public:
 		tmAccountAutheticated(tNetSession *u, U32 x, Byte authResult, const Byte *serverGuid);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str() const;
 		// format
 		Byte authResult;
 		Byte serverGuid[8];
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmSetMyActivePlayer : public tmMsgBase {
 	public:
 		tmSetMyActivePlayer(tNetSession *u);
 		virtual void store(tBBuf &t);
+		virtual tString str() const;
 		// format
 		tString avatar;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmActivePlayerSet : public tmMsgBase {
@@ -103,12 +98,11 @@ namespace alc {
 	public:
 		tmFindAgeReply(tNetSession *u, U32 x, const tString &ipStr, U16 port, const tString &age, const Byte *guid);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str() const;
 		// format
 		tString age, ipStr;
 		U16 serverPort;
 		Byte serverGuid[8];
-	protected:
-		virtual void additionalFields();
 	};
 	
 } //End alc namespace

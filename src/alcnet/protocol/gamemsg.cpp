@@ -82,11 +82,11 @@ namespace alc {
 		t.put(obj);
 	}
 	
-	const char *tMemberInfo::str(void)
+	tString tMemberInfo::str(void) const
 	{
-		dbg.clear();
+		tString dbg;
 		dbg.printf("Avatar Name: %s, IP: %s:%i, Object reference: [%s]", avatar.c_str(), alcGetStrIp(ip).c_str(), ntohs(port), obj.str().c_str());
-		return dbg.c_str();
+		return dbg;
 	}
 
 	//// tmJoinReq
@@ -110,10 +110,12 @@ namespace alc {
 		port=htons(t.getU16());
 	}
 	
-	void tmJoinReq::additionalFields()
+	tString tmJoinReq::str(void) const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" IP: %s:%i", alcGetStrIp(ip).c_str(), ntohs(port));
+		return dbg;
 	}
 	
 	//// tmJoinAck
@@ -297,13 +299,15 @@ namespace alc {
 		}
 	}
 	
-	void tmLoadClone::additionalFields()
+	tString tmLoadClone::str(void) const
 	{
+		tString dbg = tmGameMessage::str();
 		dbg.nl();
 		dbg.printf(" Object reference: [%s], player avatar: ", obj.str().c_str());
 		dbg.printBoolean(isPlayerAvatar);
 		dbg.printBoolean(", load: ", isLoad);
 		dbg.printBoolean(", initial age state: ", isInitial);
+		return dbg;
 	}
 	
 	//// tmPagingRoom
@@ -328,11 +332,13 @@ namespace alc {
 			throw txProtocolError(_WHERE("NetMsgPagingRoom.pageFlag must be 0x00 or 0x01 but is 0x%02X", pageFlag));
 	}
 	
-	void tmPagingRoom::additionalFields()
+	tString tmPagingRoom::str(void) const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" Page ID: 0x%08X, Page Type: 0x%04X, Page Name: %s, Paged out: ", pageId, pageType, pageName.c_str());
 		dbg.printBoolean(isPageOut);
+		return dbg;
 	}
 	
 	//// tmGroupOwner
@@ -355,11 +361,13 @@ namespace alc {
 		t.putByte(isOwner);
 	}
 	
-	void tmGroupOwner::additionalFields()
+	tString tmGroupOwner::str(void) const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" Page ID: 0x%08X, Page Type: 0x%04X, owner: ", pageId, pageType);
 		dbg.printBoolean(isOwner);
+		return dbg;
 	}
 	
 	//// tmPlayerPage
@@ -379,11 +387,13 @@ namespace alc {
 		t.get(obj);
 	}
 	
-	void tmPlayerPage::additionalFields()
+	tString tmPlayerPage::str(void) const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printBoolean(" Paged out: ", isPageOut);
 		dbg.printf(", Object reference: [%s]", obj.str().c_str());
+		return dbg;
 	}
 	
 	//// tmGameStateRequest
@@ -412,10 +422,12 @@ namespace alc {
 		}
 	}
 	
-	void tmGameStateRequest::additionalFields()
+	tString tmGameStateRequest::str(void) const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" Explicitly requested pages: %d", pages.size());
+		return dbg;
 	}
 	
 	//// tmInitialAgeStateSent
@@ -430,10 +442,12 @@ namespace alc {
 		t.putU32(num);
 	}
 	
-	void tmInitialAgeStateSent::additionalFields()
+	tString tmInitialAgeStateSent::str(void) const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" number of sent states: %d", num);
+		return dbg;
 	}
 	
 	//// tmMembersListReq
@@ -474,10 +488,12 @@ namespace alc {
 		t.put(content);
 	}
 	
-	void tmStreamedObject::additionalFields()
+	tString tmStreamedObject::str(void) const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" Object reference: [%s]", obj.str().c_str());
+		return dbg;
 	}
 	
 	//// tmTestAndSet (NetMsgTestAndSet and NetMsgSharedState are identical)
@@ -529,10 +545,11 @@ namespace alc {
 			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet: varValue (0x%02X) and lockReq (0x%02X) must be equal", varValue, lockReq));
 	}
 	
-	void tmTestAndSet::additionalFields()
+	tString tmTestAndSet::str(void) const
 	{
-		tmStreamedObject::additionalFields();
+		tString dbg = tmStreamedObject::str();
 		dbg.printBoolean(", Lock requested: ", isLockReq);
+		return dbg;
 	}
 	
 	//// tmSDLState
@@ -570,10 +587,11 @@ namespace alc {
 		t.putByte(isInitial);
 	}
 	
-	void tmSDLState::additionalFields()
+	tString tmSDLState::str(void) const
 	{
-		tmStreamedObject::additionalFields();
+		tString dbg = tmStreamedObject::str();
 		dbg.printBoolean(", initial age state: ", isInitial);
+		return dbg;
 	}
 	
 	//// tmSDLStateBCast
@@ -627,10 +645,12 @@ namespace alc {
 		timeout = t.getFloat();
 	}
 	
-	void tmSetTimeout::additionalFields()
+	tString tmSetTimeout::str(void) const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" Timeout: %f", timeout);
+		return dbg;
 	}
 	
 	//// tmMembersList
@@ -645,10 +665,12 @@ namespace alc {
 			t.put(*i);
 	}
 	
-	void tmMembersList::additionalFields()
+	tString tmMembersList::str(void) const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" Number of other players: %d", members.size());
+		return dbg;
 	}
 	
 	//// tmMemberUpdate
@@ -665,11 +687,13 @@ namespace alc {
 		t.putByte(isJoined);
 	}
 	
-	void tmMemberUpdate::additionalFields()
+	tString tmMemberUpdate::str(void) const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
-		dbg.printf(" Member Info: [%s], is joined: ", info.str());
+		dbg.printf(" Member Info: [%s], is joined: ", info.str().c_str());
 		dbg.printBoolean(isJoined);
+		return dbg;
 	}
 	
 	//// tmPython

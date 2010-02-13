@@ -66,10 +66,12 @@ namespace alc {
 		t.put(url);
 	}
 	
-	void tmVaultPlayerList::additionalFields()
+	tString tmVaultPlayerList::str(void) const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" number of avatars: %d, URL: %s", numberPlayers, url.c_str());
+		return dbg;
 	}
 	
 	//// tmCreatePlayer
@@ -91,10 +93,12 @@ namespace alc {
 		}
 	}
 	
-	void tmCreatePlayer::additionalFields(void)
+	tString tmCreatePlayer::str(void) const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" avatar: %s, gender: %s, friend: %s, key: %s", avatar.c_str(), gender.c_str(), friendName.c_str(), key.c_str());
+		return dbg;
 	}
 	
 	//// tmPlayerCreated
@@ -112,10 +116,12 @@ namespace alc {
 		t.putByte(result);
 	}
 	
-	void tmPlayerCreated::additionalFields()
+	tString tmPlayerCreated::str(void) const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" result: 0x%02X (%s)", result, alcUnetGetAvatarCode(result));
+		return dbg;
 	}
 	
 	//// tmDeletePlayer

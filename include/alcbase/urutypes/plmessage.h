@@ -87,10 +87,7 @@ namespace alc {
 		tpObject *subMessage;
 	protected:
 		tpLoadCloneMsg(U16 type) : tpMessage(type) { subMessage = NULL; } // to be used by tpLoadAvatarMsg
-	private:
-		// forbid copying
-		tpLoadCloneMsg(const tpLoadCloneMsg &);
-		tpLoadCloneMsg &operator=(const tpLoadCloneMsg &);
+		FORBID_CLASS_COPY(tpLoadCloneMsg)
 	};
 	
 	class tpLoadAvatarMsg : public tpLoadCloneMsg {

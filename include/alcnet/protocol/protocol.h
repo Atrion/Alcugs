@@ -72,10 +72,7 @@ public:
 	U32 sn;
 	Byte fr_count; //Number of fragments we already got
 	tMBuf data;
-private:
-	// prevent copying
-	tUnetMsg(const tUnetMsg &);
-	const tUnetMsg &operator=(const tUnetMsg &);
+	FORBID_CLASS_COPY(tUnetMsg)
 };
 
 /** this class is used to save acks in an ackq */
@@ -86,10 +83,7 @@ public:
 	U32 A;
 	U32 B;
 	tUnetAck * next;
-private:
-	// prevent copying
-	tUnetAck(const tUnetAck &);
-	const tUnetAck &operator=(const tUnetAck &);
+	FORBID_CLASS_COPY(tUnetAck)
 };
 
 /** this is the class responsible for the UruMsg header. The data must be filled with a class derived from tmBase. */
@@ -127,16 +121,13 @@ public:
 	U32 cps; //!< combined last acked fragment and seq num
 	U32 dsize; //!< size of data / number of acks in the packet
 	tMBuf data;
-private:
-	// prevent copying
-	tUnetUruMsg(const tUnetUruMsg &);
-	const tUnetUruMsg &operator=(const tUnetUruMsg &);
+	FORBID_CLASS_COPY(tUnetUruMsg)
 };
 
 class tmBase :public tBaseType {
 public:
 	tmBase(Byte bhflags, tNetSession *u) : bhflags(bhflags), u(u) { }
-	virtual const char * str()=0;
+	virtual tString str() const=0;
 	inline tNetSession *getSession(void) const { return u; }
 	Byte bhflags;
 protected:
@@ -149,7 +140,7 @@ public:
 	virtual void stream(tBBuf &t) const;
 	tmNetClientComm(tNetSession *u) : tmBase(UNetNegotiation|UNetAckReq|UNetUrgent, u) { }
 	tmNetClientComm(tTime &t,U32 bw, tNetSession *u) : tmBase(UNetNegotiation|UNetAckReq|UNetUrgent, u) { timestamp=t; bandwidth=bw; }
-	virtual const char * str();
+	virtual tString str() const;
 	tTime timestamp;
 	U32 bandwidth;
 };
@@ -161,16 +152,11 @@ public:
 	
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	virtual const char * str();
+	virtual tString str() const;
 	
 	typedef std::vector<tUnetAck *> tAckList;
 	tAckList ackq;
-private:
-	tString dbg;
-
-	// prevent copying
-	tmNetAck(const tmNetAck &);
-	const tmNetAck &operator=(const tmNetAck &);
+	FORBID_CLASS_COPY(tmNetAck)
 };
 
 class tmMsgBase :public tmBase {
@@ -186,7 +172,7 @@ public:
 	void unsetUrgent();
 	U32 getFlags() const;
 	bool hasFlags(U32 f) const;
-	virtual const char * str();
+	virtual tString str() const;
 	
 	U16 cmd;
 	U32 flags;
@@ -197,10 +183,6 @@ public:
 	U32 ki;
 	Byte uid[16];
 	U32 sid;
-protected:
-	virtual void additionalFields() {} //!< writes the additional fields of this message type to the dbg buffer (called by str() to print the package)
-	
-	tString dbg; // FIXME
 private:
 	void copyProps(tmMsgBase &t);
 };

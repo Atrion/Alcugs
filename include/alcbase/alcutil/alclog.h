@@ -117,9 +117,7 @@ private:
 	typedef std::vector<tLog *> tLogList;
 	tLogList logs; //! save a pointer to each log (to able to shut them all down when forking)
 	
-	// prevent copying
-	tLogConfig(const tLogConfig &);
-	tLogConfig &operator=(const tLogConfig &);
+	FORBID_CLASS_COPY(tLogConfig)
 };
 
 class tLog {
@@ -158,9 +156,7 @@ private:
 	int priority; //this params are passed to syslog
 	Byte count;
 	
-	// prevent copying
-	tLog(const tLog &);
-	tLog &operator=(const tLog &);
+	FORBID_CLASS_COPY(tLog)
 };
 
 }
