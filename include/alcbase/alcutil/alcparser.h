@@ -54,11 +54,11 @@ public:
 			\param slash If false, a \\n followed by an slash will be ignored
 			\return A tString object
 	*/
-	const tString getLine(bool nl=false,bool slash=false);
+	tString getLine(bool nl=false,bool slash=false);
 	/** \brief returns a token (newline, key, value, separator - but not a space)
 			\return A tStBuf object
 	*/
-	const tString getToken();
+	tString getToken();
 private:
 	tString str;
 	U16 line, col;

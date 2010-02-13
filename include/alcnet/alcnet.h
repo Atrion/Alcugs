@@ -36,6 +36,7 @@
 #include <alcugs.h>
 
 namespace alc {
+	// FIXME - better way to specifiy this?
 	extern const char * alcNetName;
 	extern Byte alcWhoami;
 }

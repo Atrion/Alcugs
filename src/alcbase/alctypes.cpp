@@ -510,6 +510,7 @@ tString::tString(const char * k) :tMBuf(200) {
 	end();
 }
 tString::tString(U32 size) :tMBuf(size) { DBG(9,"ctor 2\n"); init(); }
+tString::tString() :tMBuf() { DBG(9,"ctor 3\n"); init(); }
 tString::tString(tBBuf &k) :tMBuf(k) {
 	DBG(9,"copy zero\n");
 	init();
@@ -524,18 +525,14 @@ tString::tString(const tString &k) :tMBuf(k) {
 }
 tString::~tString() {
 	delete shot;
-	delete cache_lower;
 }
 void tString::init() {
 	DBG(9,"tString::init\n");
 	shot=NULL;
-	cache_lower=NULL;
 }
 void tString::copy(const tString &t) {
-	DBG(9,"tString::copy()\n");
+	DBG(1,"tString::copy() %s, %s\n", c_str(), t.c_str());
 	tMBuf::copy(t);
-	delete cache_lower;
-	cache_lower=NULL;
 	delete shot;
 	shot=NULL;
 }
@@ -696,22 +693,16 @@ const tString & tString::escape() const {
 }
 
 const tString & tString::lower() const {
-	if(cache_lower!=NULL) {
-		DBG(7,"cached...\n");
-		return *cache_lower;
-	}
-	DBG(7,"non-cached %s...\n",c_str());
+	if (shot) delete shot;
+	shot = new tString(200); // nothing inside this function will use shot, so we can initialize it now
 	
 	int i,max;
 	max=size();
-
-	cache_lower = new tString(max);
-
 	for(i=0; i<max; i++) {
-		cache_lower->putByte(std::tolower(getAt(i)));
-		DBG(7,"%i:%c\n",i,getAt(i));
+		shot->putByte(std::tolower(getAt(i)));
 	}
-	return *cache_lower;
+	
+	return *shot;
 }
 
 const tString & tString::upper() const {

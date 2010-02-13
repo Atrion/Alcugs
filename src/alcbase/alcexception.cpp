@@ -55,6 +55,7 @@ namespace google {
 
 namespace alc {
 
+// FIXME: avoid global variables if possible
 static bool txvAbort=0;
 static char txvCore=0x01; //0x00 - disabled, 0x01 - enabled, 0x02 -always
 static char * txvCorePath=NULL;

@@ -117,7 +117,7 @@ namespace alc {
 	}
 	
 	//// tmJoinAck
-	tmJoinAck::tmJoinAck(tNetSession *u, U32 x, tBaseType *sdl)
+	tmJoinAck::tmJoinAck(tNetSession *u, U32 x, const tBaseType *sdl)
 	 : tmMsgBase(NetMsgJoinAck, plNetAck | plNetKi | plNetX, u)
 	{
 		this->x = x;

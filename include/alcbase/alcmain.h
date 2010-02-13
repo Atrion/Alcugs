@@ -33,13 +33,15 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCMAIN_H_ID "$Id$"
 
-/* You need to define these vars in your app's */
+/* You need to define these vars in your app's (FIXME?) */
 extern const char * alcXSNAME;
 extern const char * alcXBUILD;
 extern const char * alcXVERSION;
 extern const char * alcXID;
 
 namespace alc {
+
+// FIXME this definitely needs a global class... what about tAlcMain?
 
 /** 
 		\brief Start Alcugs library.
@@ -84,8 +86,6 @@ public:
 void alcInstallSignalHandler(tSignalHandler * t);
 
 #if !defined(IN_ALC_LIBRARY) and defined(IN_ALC_PROGRAM)
-#ifndef __ALC_VERIFY_VERSION_
-#define __ALC_VERIFY_VERSION_
 bool alcVerifyVersion() {
 	return(alcGetMaxVersion()==alcMAX_VER &&
 	alcGetMinVersion()==alcMIN_VER &&
@@ -94,8 +94,6 @@ bool alcVerifyVersion() {
 	alcGetProtocolVersion()==alcProtoVer);
 }
 const char * alcVerifyVersionStr = alcSTR_VER;
-#endif
-
 #else
 extern bool alcVerifyVersion();
 extern char * alcVerifyVersionStr;

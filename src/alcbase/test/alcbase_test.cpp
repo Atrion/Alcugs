@@ -837,7 +837,7 @@ a = \"overrided\"\n\
 \n\
 problems = \"these are problems\"\n\
 \n\
-mproblem = \"this ' contains \\\" \\\\ some speical chars\"\n\
+MProblem = \"this ' contains \\\" \\\\ some speical chars\"\n\
 empty1\n\
 empty2=\n\
 empty3=""\n\
@@ -917,36 +917,36 @@ empty3=""\n\
 	// check
 	assert(cfg1->getVar("a") == "overrided");
 	assert(cfg1->getVar("so") == "this_should_be_legal_");
-	assert(cfg1->getVar("mproblem") == "this ' contains \" \\ some speical chars");
+	assert(cfg1->getVar("mProblem") == "this ' contains \" \\ some speical chars");
 	assert(cfg1->getVar("kkkk") == "k\na");
 	
-	assert(cfg1->getVar("empty1", &found).isEmpty());
+	assert(cfg1->getVar("Empty1", &found).isEmpty());
 	assert(found);
-	assert(cfg1->getVar("empty2", &found) == "");
+	assert(cfg1->getVar("EMPTY2", &found) == "");
 	assert(found);
-	assert(!cfg1->getVar("empty3", &found).size());
+	assert(!cfg1->getVar("emptY3", &found).size());
 	assert(found);
 	
 	// now let's test the XParser with override disabled
 	b.clear();
-	b.writeStr("a=b\na=\"overrided\"");
+	b.writeStr("A=b\na=\"overrided\"");
 	b.rewind();
 	tXParser xparser1(/*override*/false);
 	xparser1.setConfig(cfg1);
 	xparser1.store(b);
-	assert(cfg1->getVar("so") == "this_should_be_legal_"); // an old var from the first parser test
+	assert(cfg1->getVar("SO") == "this_should_be_legal_"); // an old var from the first parser test
 	assert(cfg1->getVar("a", "global", 0, 0) == "overrided"); // an old var from the first parser test
-	assert(cfg1->getVar("a", "global", 0, 1) == "b");
-	assert(cfg1->getVar("a", "global", 0, 2) == "overrided");
+	assert(cfg1->getVar("a", "glObal", 0, 1) == "b");
+	assert(cfg1->getVar("A", "GLOBAL", 0, 2) == "overrided");
 	delete cfg1;
 	
 	// and XParser-specific stuff
 	b.clear();
 	b.writeStr("\
 aname  =  a, b\n\
- [asection]	\n\
-anarr[0]=\"hi,ho\",hu\n\
-  anarr[4]           =  \"another value\n\
+ [aseCtion]	\n\
+anarR[0]=\"hi,ho\",hu\n\
+  anArr[4]           =  \"another value\n\
 which is more than a line long\"\n\
 [global]\n\
 empty=""\n\
@@ -981,7 +981,7 @@ empty=""\n\
 	
 	assert(cfg1->getVar("agfasgasdgf", &found).isEmpty());
 	assert(!found);
-	assert(!cfg1->getVar("empty", &found).size());
+	assert(!cfg1->getVar("EMpty", &found).size());
 	assert(found);
 	delete cfg1;
 	

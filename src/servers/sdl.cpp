@@ -463,8 +463,9 @@ namespace alc {
 		return sdlHook;
 	}
 	
-	tBaseType *tAgeStateManager::getAgeState(void)
+	const tBaseType *tAgeStateManager::getAgeState(void)
 	{
+		static const tSdlState empty;
 		tSdlList::iterator sdlHook = findAgeSDLHook();
 		if (sdlHook != sdlStates.end()) { // found it - send it
 			if (sdlHook->content.isIndexed())
@@ -482,7 +483,6 @@ namespace alc {
 		else { // not found
 			log->log("No Age SDL hook found, send empty SDL\n");
 			log->flush();
-			static tSdlState empty;
 			return &empty;
 		}
 	}
