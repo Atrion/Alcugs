@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2006  The Alcugs Server Team                           *
+*    Copyright (C) 2004-2010  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -46,9 +46,169 @@
 
 namespace alc {
 
+const tString tStringTokenizer::getLine(bool nl,bool slash) {
+	Byte c=0;
+	Byte slashm=0;
+	tString out(255);
+
+	while(!str.eof()) {
+		c=str.getByte();
+		if(!slash) {
+			if(c=='\\') {
+				if(slashm) {
+					slashm=0;
+					out.putByte('\\');
+					out.putByte('\\');
+				} else {
+					slashm=1;
+				}
+			} else if(c=='\n') {
+				if(!str.eof() && str.getByte()!='\r') str.seek(-1);
+				line++;
+				col=0;
+				if(!slashm) {
+					break;
+				}
+				slashm=0;
+				c=' ';
+			} else if(c=='\r') {
+				if(!str.eof() && str.getByte()!='\n') str.seek(-1);
+				line++;
+				col=0;
+				if(!slashm) {
+					break;
+				}
+				slashm=0;
+				c=' ';
+			} else {
+				if(slashm) {
+					slashm=0;
+					out.putByte('\\');
+				}
+				out.putByte(c);
+			}
+		} else {
+			if(c=='\n') {
+				if(!str.eof() && str.getByte()!='\r') str.seek(-1);
+				line++;
+				col=0;
+				break;
+			} else if(c=='\r') {
+				if(!str.eof() && str.getByte()!='\n') str.seek(-1);
+				line++;
+				col=0;
+				break;
+			} else {
+				out.putByte(c);
+			}
+		}
+	}
+	if(nl) {
+		if(c=='\n' || c=='\r') {
+			out.putByte('\n');
+		}
+	}
+	
+	return out;
+}
+const tString tStringTokenizer::getToken() {
+	DBG(9,"tStringTokenizer::getToken()\n");
+	Byte c;
+	Byte slash=0;
+	Byte quote=0;
+	Byte mode=0;
+	tString out(200);
+	//out.hasQuotes(true);
+	//assert(out.hasQuotes());
+	while(!str.eof()) {
+		c=str.getByte();
+		col++;
+		if(quote==0 && (c=='#' || c==';')) {
+			if (out.size()) { // we already have something in out, dont attach the newline to it but make it the next token
+				col--;
+				str.seek(-1);
+			} else {
+				getLine();
+				out.putByte('\n');
+			}
+			break;
+		} else if(slash==1) {
+			slash=0;
+			if(quote==1 && (c=='n' || c=='r')) {
+				if(c=='n') out.putByte('\n');
+				else out.putByte('\r');
+			} else if(c=='\n' || c=='\r') {
+				if(c=='\n') {
+					if(!str.eof() && str.getByte()!='\r') str.seek(-1);
+					line++;
+					col=0;
+				} else {
+					if(!str.eof() && str.getByte()!='\n') str.seek(-1);
+					line++;
+					col=0;
+				}
+			} else {
+				if(quote==1) {
+					out.putByte(c);
+				} else {
+					throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected '\\'\n",line,col));
+				}
+			}
+		} else if(c=='\"') {
+			if(quote==1) {
+				quote=0;
+				break;
+			} else {
+				quote=1;
+			}
+		} else if(c=='\n' || c=='\r') {
+			if(mode==1 && quote==0) {
+				str.seek(-1);
+				c=0;
+				break;
+			} else {
+				//out.putByte(c);
+				out.putByte('\n');
+				if(c=='\n') {
+					if(!str.eof() && str.getByte()!='\r') str.seek(-1);
+					//else out.putByte('\r');
+					line++;
+					col=0;
+				} else {
+					if(!str.eof() && str.getByte()!='\n') str.seek(-1);
+					//else out.putByte('\n');
+					line++;
+					col=0;
+				}
+				if(quote==0) {
+					break;
+				}
+			}
+		} else if(c=='\\') {
+			slash=1; 
+		} else if(quote==0 && (c==' ' || c==sep || c==',' || isblank(c))) {
+			if(mode==1) {
+				if(c==sep || c==',') str.seek(-1);
+				break;
+			} else {
+				if(c==sep || c==',') {
+					out.putByte(c);
+					break;
+				}
+			}
+		} else if(isalpha(c) || isprint(c) || alcIsAlpha(c)) {
+			out.putByte(c);
+			mode=1;
+		} else {
+			throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected character '%c'\n",line,col,c));
+		}
+	}
+	DBG(9,"    result: %s\n", out.c_str());
+	return out;
+}
+
 tSimpleParser::tSimpleParser() {
 	cfg=NULL;
-	sep=' ';
 }
 U32 tSimpleParser::size() const {
 	tString s;
@@ -56,8 +216,7 @@ U32 tSimpleParser::size() const {
 	return s.size();
 }
 void tSimpleParser::store(tBBuf &t) {
-	tString s(t);
-	store(s);
+	store(tString(t));
 }
 void tSimpleParser::stream(tBBuf &t) const {
 	tString s;
@@ -65,8 +224,9 @@ void tSimpleParser::stream(tBBuf &t) const {
 	t.put(s);
 }
 
-void tSimpleParser::store(tString &t) {
+void tSimpleParser::store(const tString &str) {
 	if(!cfg) return;
+	tStringTokenizer t(str);
 	tString key,val;
 	DBG(4,"Store\n");
 	while(!t.eof()) {
@@ -82,24 +242,21 @@ void tSimpleParser::store(tString &t) {
 					throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token '%s'. A valid variable value was expected.\n",t.getLineNum(),t.getColumnNum(),val.c_str()));
 				}
 			}
-			if(val=="\n") {
-				t.seek(-1);
-				t.decreaseLineNum();
-				val=" ";
+			if(val=="\n") { // we arleady have the newline
+				val.clear();
+			}
+			else { // expect the newline now
+				if (t.getToken()!="\n") {
+					throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token: A newline was expected.\n",t.getLineNum(),t.getColumnNum()));
+				}
 			}
 			//cfg->setVar(val.c_str(),key.c_str(),"global");
 			//cfg->findVar(key.c_str(),"global",1);
-			tString section("global");
-			cfg->setVar(val,key,section);
-			val=t.getToken();
-			//printf("Reprs:\n%s\n",val.hexToAscii());
-			if(val!="\n") {
-				throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token '%s'. A newline was expected.\n",t.getLineNum(),t.getColumnNum(),val.c_str()));
-			}
+			cfg->setVar(val,key,"global");
 		}
 	}	
 }
-void tSimpleParser::stream(tString &t) const {
+void tSimpleParser::stream(tString &str) const {
 	//U32 start=t.tell();
 	DBG(4,"stream()\n");
 	if(!cfg) return;
@@ -109,18 +266,16 @@ void tSimpleParser::stream(tString &t) const {
 	while((key=cfg->getNext())) {
 		DBG(5,"cfg->getNext()\n");
 		tConfigVal * val;
-		tString str;
 		while((val=key->getNext())) {
 			DBG(5,"key->getNext()\n");
-			t.writeStr(val->getName());
+			str.writeStr(val->getName());
 			//t.writeStr(" ");
-			t.putByte(sep);
+			str.putByte(' ');
 			//t.writeStr(" ");
-			str=val->getVal();
-			t.writeStr("\"");
-			t.writeStr(str);
-			t.writeStr("\"");
-			t.nl();
+			str.writeStr("\"");
+			str.writeStr(val->getVal().escape());
+			str.writeStr("\"");
+			str.nl();
 		}
 	}
 	//return (t.tell()-start);
@@ -147,8 +302,9 @@ void tXParser::stream(tBBuf &t) const {
 	stream(s);
 	t.put(s);
 }
-void tXParser::store(tString &t) {
+void tXParser::store(const tString &str) {
 	if(!cfg) return;
+	tStringTokenizer t(str);
 	tString section,key,val;
 	DBG(4,"Store\n");
 	section="global";
@@ -220,7 +376,7 @@ void tXParser::store(tString &t) {
 						} while (found);
 					}
 					if(val=="\n") {
-						val="";
+						val.clear();
 						cfg->setVar(val,key,section,x++,y);
 					} else {
 						cfg->setVar(val,key,section,x++,y);
@@ -235,7 +391,7 @@ void tXParser::store(tString &t) {
 	}
 }
 
-void tXParser::stream(tString &t) const {
+void tXParser::stream(tString &str) const {
 	DBG(4,"stream()\n");
 	if(!cfg) return;
 	DBG(5,"cfg->rewind()\n");
@@ -244,8 +400,7 @@ void tXParser::stream(tString &t) const {
 	while((key=cfg->getNext())) {
 		DBG(5,"cfg->getNext()\n");
 		tConfigVal * val;
-		tString str;
-		t.writeStr("\n[" + key->getName() + "]\n");
+		str.writeStr("\n[" + key->getName() + "]\n");
 		while((val=key->getNext())) {
 			DBG(5,"key->getNext()\n");
 			U16 x,y,mx,my;
@@ -253,21 +408,21 @@ void tXParser::stream(tString &t) const {
 			my=val->getRows();
 
 			for(y=0; y<my; y++) {
-				t.writeStr(val->getName());
+				if (!val->hasVal(0, y)) continue;
+				str.writeStr(val->getName());
 				if(my!=1) {
-					t.writeStr("[");
-					t.printf("%d", y);
-					t.writeStr("]");
+					str.writeStr("[");
+					str.printf("%d", y);
+					str.writeStr("]");
 				}
-				t.writeStr(" = ");
-				for(x=0; x<mx; x++) {
-					if(x!=0) t.writeStr(",");
-					str=val->getVal(x,y);
-					t.writeStr("\"");
-					t.writeStr(str.escape());
-					t.writeStr("\"");
+				str.writeStr(" = ");
+				for(x=0; x<mx && val->hasVal(x, y); x++) {
+					if(x!=0) str.writeStr(",");
+					str.writeStr("\"");
+					str.writeStr(val->getVal(x,y).escape());
+					str.writeStr("\"");
 				}
-				t.nl();
+				str.nl();
 			}
 		}
 	}

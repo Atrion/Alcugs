@@ -251,7 +251,7 @@ public:
 			curfile=wxString(a->getLine());
 			strmd5=curfile.Mid(0,0x20);
 			fname=curfile.Mid(0x21).Trim();
-			if(fname=="") break;
+			if(fname.isEmpty()) break;
 			Log(wxT("Checking ") + fname + wxT(" ") + strmd5);
 			
 			path=wxGetApp().uu_path + wxT("\\") + fname;
@@ -314,7 +314,7 @@ public:
 			curfile=wxString(a->getLine());
 			strmd5=curfile.Mid(0,0x20);
 			fname=curfile.Mid(0x21).Trim();
-			if(fname=="") break;
+			if(fname.isEmpty()) break;
 			Log(wxT("Checking ") + fname + wxT(" ") + strmd5);
 			
 			path=wxGetApp().tpots_path + wxT("\\") + fname;
@@ -499,7 +499,7 @@ public:
 
 		while(!a.eof()) {
 			fname=wxString(a.getLine()).Trim();
-			if(fname=="") break;
+			if(fname.isEmpty()) break;
 			Log(wxT("Copying ") + fname + wxT(" ...\n"));
 			IncPgr(1);
 			
@@ -545,7 +545,7 @@ public:
 		
 		while(!a.eof()) {
 			fname=wxString(a.getLine()).Trim();
-			if(fname=="") break;
+			if(fname.isEmpty()) break;
 			Log(wxT("Patching ") + fname + wxT(" ...\n"));
 			IncPgr(1);
 			

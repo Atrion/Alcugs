@@ -509,14 +509,12 @@ void alctypes_part4() {
 	DBG(4,"aa-%s-\n",aa.c_str());
 	DBG(4,"cc-%s-\n",cc.c_str());
 	aa=cc;
-	DBG(4,"aa-%s-\n",aa.c_str());
-	DBG(4,"bb-%s-\n",bb.c_str());
-	DBG(4,"cc-%s-\n",cc.c_str());
 	aa=bb;
 	cc=aa;
-	DBG(4,"aa-%s-\n",aa.c_str());
-	DBG(4,"bb-%s-\n",bb.c_str());
-	DBG(4,"cc-%s-\n",cc.c_str());
+	assert(bb==cc);
+	cc=cc;
+	assert(bb==cc);
+	
 	
 	// check tString::len()
 	tString test1;
@@ -624,11 +622,12 @@ void alctypes_part5() {
 	//printf("due:%s\n",due.c_str());
 	assert(due=="");
 	due="howhowhow ajfk fajf///////////////";
-	due.strip('/');
+	tString blah = due.strip('/');
 	//printf("due:%s\n",due.c_str());
+	assert(due==blah);
 	assert(due=="howhowhow ajfk fajf");
 	due="///////////////howhowhow ajfk fajf///////////////";
-	due.strip('/');
+	due=due.strip('/');
 	assert(due=="howhowhow ajfk fajf");
 	due="///////////////howhowhow ajfk fajf";
 	due.strip('/');
@@ -651,6 +650,11 @@ void alctypes_part5() {
 	assert(due=="///////////////howhowhow ajfk fajf");
 	//abort();
 	dmalloc_verify(NULL);
+	
+	tString key("hello[23]");
+	U16 nr = alcParseKey(&key);
+	assert(key == "hello");
+	assert(nr == 23);
 }
 
 void alctypes_part6() {
@@ -798,7 +802,6 @@ void alcfuncs_tests() {
 
 void alcparser_tests() {
 	DBG(4,"Parser tests\n");
-	int i=0;
 	
 	tString a;
 	a.writeStr("hello really, really big world\n\
@@ -835,40 +838,34 @@ a = \"overrided\"\n\
 problems = \"these are problems\"\n\
 \n\
 mproblem = \"this ' contains \\\" \\\\ some speical chars\"\n\
+empty1\n\
+empty2=\n\
+empty3=""\n\
 ");
 
+	a.rewind();
+	b.rewind();
 	//Ok, let's going to crash the system
-	
-	a.rewind();
-	b.rewind();
-	
 	tString res;
-	
-	DBG(6,"kkkkk\n");
-	a.rewind();
-	b.rewind();
-	i=0;
-	while(!a.eof()) {
-		res=a.getLine();
-		//printf("[a:%i] %s\n",i++,res.c_str());
+	tStringTokenizer tokenizer(a);
+	while(!tokenizer.eof()) {
+		res=tokenizer.getLine();
+		//printf("[a] %s\n",res.c_str());
 	}
-	i=0;
-	while(!b.eof()) {
-		res=b.getLine();
-		//printf("[b:%i] %s\n",i++,res.c_str());
+	tokenizer = tStringTokenizer(b);
+	while(!tokenizer.eof()) {
+		res=tokenizer.getLine();
+		//printf("[b] %s\n",res.c_str());
 	}
-	//printf("by tokens now\n");
-	a.rewind();
-	b.rewind();
-	i=0;
-	while(!a.eof()) {
-		res=a.getToken();
-		//printf("[a:%i] %s\n",i++,res.c_str());
+	tokenizer = tStringTokenizer(a);
+	while(!tokenizer.eof()) {
+		res=tokenizer.getToken();
+		//printf("[a] %s\n",res.c_str());
 	}
-	i=0;
-	while(!b.eof()) {
-		res=b.getToken();
-		//printf("[b:%i] %s\n",i++,res.c_str());
+	tokenizer = tStringTokenizer(b);
+	while(!tokenizer.eof()) {
+		res=tokenizer.getToken();
+		//printf("[b] %s\n",res.c_str());
 	}
 	//Ok, If we are here then seems that it worked - everybody is ok?
 	
@@ -904,20 +901,31 @@ mproblem = \"this ' contains \\\" \\\\ some speical chars\"\n\
 	delete cfg2;
 	dmalloc_verify(NULL);
 	
-	//parser
+	//parser (store and stream)
+	bool found;
+	tString out;
 	b.rewind();
 	tSimpleParser parser;
-	cfg1 = new tConfig();
-	parser.setConfig(cfg1);
+	parser.setConfig(cfg1 = new tConfig());
 	parser.store(b);
-	tString out;
-	U32 oldPos = out.tell();
+	// re-parse
 	parser.stream(out);
-	assert(out.tell()>oldPos);
+	assert(out.tell()>0);
+	delete cfg1;
+	parser.setConfig(cfg1 = new tConfig());
+	parser.store(out);
+	// check
 	assert(cfg1->getVar("a") == "overrided");
 	assert(cfg1->getVar("so") == "this_should_be_legal_");
 	assert(cfg1->getVar("mproblem") == "this ' contains \" \\ some speical chars");
 	assert(cfg1->getVar("kkkk") == "k\na");
+	
+	assert(cfg1->getVar("empty1", &found).isEmpty());
+	assert(found);
+	assert(cfg1->getVar("empty2", &found) == "");
+	assert(found);
+	assert(!cfg1->getVar("empty3", &found).size());
+	assert(found);
 	
 	// now let's test the XParser with override disabled
 	b.clear();
@@ -940,22 +948,41 @@ aname  =  a, b\n\
 anarr[0]=\"hi,ho\",hu\n\
   anarr[4]           =  \"another value\n\
 which is more than a line long\"\n\
+[global]\n\
+empty=""\n\
 ");
 	b.rewind();
 	tXParser xparser2;
-	cfg1 = new tConfig();
-	bool found;
-	xparser2.setConfig(cfg1);
+	xparser2.setConfig(cfg1 = new tConfig());
 	xparser2.store(b);
+	// re-parse
+	out.clear();
+	xparser2.stream(out);
+	assert(out.tell()>0);
+	printf("%s\n", out.c_str());
+	delete cfg1;
+	xparser2.setConfig(cfg1 = new tConfig());
+	xparser2.store(out);
+	// check
 	assert(cfg1->getVar("aname") == "a");
 	assert(!cfg1->getVar("aname", &found).isEmpty());
 	assert(found);
 	assert(cfg1->getVar("aname", "global", 1, 0) == "b");
+	
 	assert(cfg1->getVar("anarr", &found).isEmpty());
 	assert(!found);
 	assert(cfg1->getVar("anarr", "asection", 0, 0) == "hi,ho");
 	assert(cfg1->getVar("anarr", "asection", 1, 0) == "hu");
+	assert(cfg1->getVar("anarr", "asection", 0, 1, &found) == "");
+	assert(!found);
 	assert(cfg1->getVar("anarr", "asection", 0, 4) == "another value\nwhich is more than a line long");
+	assert(cfg1->getVar("anarr", "asection", 1, 4, &found) == "");
+	assert(!found);
+	
+	assert(cfg1->getVar("agfasgasdgf", &found).isEmpty());
+	assert(!found);
+	assert(!cfg1->getVar("empty", &found).size());
+	assert(found);
 	delete cfg1;
 	
 	// copy tests
