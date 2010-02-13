@@ -66,6 +66,62 @@ namespace alc {
 	0x4000 avoids dumping to the console
 */
 
+class tLog;
+
+//! Helper class to manage logging settings - instanciated by tAlcMain, there's no point in having another instance (it won't be used)
+class tLogConfig {
+public:
+	tLogConfig(void); // Constructor - fills with default values
+	void forceCloseAllLogs(void);
+	void addLog(tLog *log);
+	void removeLog(tLog *log);
+	
+	//// settings
+	//files
+	Byte verboseLevel; //!< set what to print to the console
+	//silent
+	// 3 - print all, ignoring if them have stdout or stderr flags, html are not print.
+	// 2 - print only msgs with stderr or stdout flags.
+	// 1 - print only msgs with stderr flags
+	// 0 - don't print nothing
+
+	U32 n_files2rotate; //!< set number the files to rotate
+	/*  0 - logging disabled
+		1 - one file (old behaviour)
+			>=2 - rotate logs
+	*/
+	
+	// general stuff
+	tString path; //!<path to the log directory
+	int rotate_size; //!< maxium size of a file, if reached, file will be rotated
+	mode_t creation_mask; //!< default permissions mask
+	//build vars
+	tString build;
+	//syslog
+	/*char syslogname[100]; //!< the syslog name
+	char syslog_enabled; //!< enable syslog logging? (0x01 yes, 0x0 no)
+	//db
+	char dbhost[100]; //!<database params
+	U16 dbport;
+	char dbname[100];
+	char dbuser[100];
+	char dbpasswd[100];
+	char dbeventtable[100];
+	char db_enabled; //!< 0x01 enabled, 0x00 disabled
+	//unet
+	char host[100]; //!< udp/tcp listener
+	U16 port;
+	char protocol; //UDP, TCP <! 0x00 disabled, 0x01 udp, 0x02 tcp*/
+private:
+	//track logs (to close them all when forking)
+	typedef std::vector<tLog *> tLogList;
+	tLogList logs; //! save a pointer to each log (to able to shut them all down when forking)
+	
+	// prevent copying
+	tLogConfig(const tLogConfig &);
+	tLogConfig &operator=(const tLogConfig &);
+};
+
 class tLog {
 public:
 	tLog(const char * name=NULL,U16 flags=0);
@@ -90,6 +146,9 @@ public:
 	const char *getDir(void) const;
 
 private:
+	void printHtmlHead(const tString &generator);
+	
+	tLogConfig *tvLogConfig;
 	char * name;
 	char *fullpath;
 	FILE * dsc;
@@ -102,14 +161,6 @@ private:
 	tLog(const tLog &);
 	tLog &operator=(const tLog &);
 };
-
-// FIXME: Get rid of these...
-void alcLogInit();
-void alcLogShutdown(bool silent = false);
-
-void alcLogSetLogPath(const tString & path);
-void alcLogSetLogVerboseLevel(Byte level);
-void alcLogSetFiles2Rotate(Byte n);
 
 }
 

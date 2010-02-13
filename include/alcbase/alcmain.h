@@ -42,6 +42,7 @@ namespace alc {
 
 //! Global library management class - always create exactly one instance of this one!
 class tAlcMain {
+	friend class tLog; // tLog has to acces the log config
 public:
 	tAlcMain(void); //!< Run this directly in main(), not in a try...catch - it will deal with that itself
 	virtual ~tAlcMain(void);
@@ -72,7 +73,7 @@ private:
 	
 	U32 mainThreadId;
 	tTime born;
-	
+	tLogConfig logCfg;
 };
 
 //! Get global management class

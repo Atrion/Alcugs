@@ -68,7 +68,6 @@ tAlcMain::tAlcMain(void)
 		// initialization
 		mainThreadId = alcGetSelfThreadId();
 		born.setToNow();
-		alcLogInit();
 		
 		// open logfiles
 		stdLog = new tLog(NULL,DF_STDOUT);
@@ -89,8 +88,7 @@ tAlcMain::~tAlcMain() {
 	installBaseHandlers(/*install*/false);
 	delete stdLog;
 	delete errLog;
-	alcLogShutdown();
-	alcMain = NULL;
+	alcMain = NULL; // the last thing
 }
 
 tTime tAlcMain::upTime(void)
@@ -106,19 +104,20 @@ void tAlcMain::onApplyConfig() {
 	if(var.isEmpty()) {
 		var="3";
 	}
-	alcLogSetLogVerboseLevel(var.asByte());
+	if (var.asByte() >= 3) logCfg.verboseLevel = 3;
+	else logCfg.verboseLevel = var.asByte();
 	
 	var=cfg.getVar("log_files_path","global");
 	if(var.isEmpty()) {
 		var="log/";
 	}
-	alcLogSetLogPath(var);
+	logCfg.path = var;
 	
 	var=cfg.getVar("log.n_rotate","global");
 	if(var.isEmpty()) {
 		var="5";
 	}
-	alcLogSetFiles2Rotate(var.asByte());
+	logCfg.n_files2rotate = var.asByte();
 	
 	var=cfg.getVar("log.enabled","global");
 	if(var.isEmpty()) {
@@ -160,7 +159,7 @@ void tAlcMain::onCrash() {
 
 void tAlcMain::onForked() {
 	DBG(5,"alcLogShutdown from a forked child...\n");
-	alcLogShutdown(true);
+	logCfg.forceCloseAllLogs();
 }
 
 void tAlcMain::installBaseHandlers(bool install)
