@@ -50,7 +50,7 @@ namespace alc {
 		tUnetLobbyServer(void);
 	protected:
 		virtual int onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u);
-		virtual void onLoadConfig(void);
+		virtual void onApplyConfig(void);
 	private:
 		bool loadWithGame2(const char *age);
 		

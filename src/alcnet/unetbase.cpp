@@ -58,7 +58,6 @@ tUnetBase::tUnetBase(Byte whoami) :tUnet(whoami), running(true) {
 	if(!var.isEmpty()) {
 		setBindAddress(var.c_str());
 	}
-	reconfigure();
 }
 
 tUnetBase::~tUnetBase() {
@@ -66,7 +65,8 @@ tUnetBase::~tUnetBase() {
 	alcUnetGetMain()->setNet(NULL);
 }
 
-void tUnetBase::reconfigure() {
+void tUnetBase::applyConfig() {
+	openLogfiles(); // (re-)open basic logfiles
 	// re-load configuration
 	tString var;
 	tConfig * cfg;
@@ -193,7 +193,8 @@ void tUnetBase::reconfigure() {
 		quota_check_usec=var.asU32();
 	}
 	#endif
-
+	// forward to sub-classes
+	onApplyConfig();
 }
 
 void tUnetBase::stop(SByte timeout) {
@@ -353,7 +354,7 @@ void tUnetBase::processEventQueue(bool shutdown)
 
 // main event processing loop - blocks
 void tUnetBase::run() {
-	onLoadConfig();
+	applyConfig();
 	startOp();
 	onStart();
 
@@ -387,9 +388,8 @@ void tUnetBase::run() {
 	}
 	
 	onStop();
-	onUnloadConfig();
-	log->log("INF: Service sanely terminated\n"); // stopOp closes the log files, so print this before calling stopOp
 	stopOp();
+	log->log("INF: Service sanely terminated\n");
 }
 
 int tUnetBase::parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown)

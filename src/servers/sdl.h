@@ -53,7 +53,7 @@ namespace alc {
 	public:
 		tAgeStateManager(tUnetGameServer *net, tAgeInfo *age);
 		~tAgeStateManager(void);
-		void reload(void);
+		void applyConfig(void);
 		
 		void saveSdlState(tMBuf &data, const tUruObject &obj);
 		void saveSdlVaultMessage(tMBuf &data, tNetSession *u);
@@ -66,8 +66,6 @@ namespace alc {
 		
 		tSdlStruct *findStruct(tString name, U32 version, bool throwOnError = true);
 	private:
-		void load(void);
-		void unload(void);
 		
 		typedef std::vector<tpLoadCloneMsg *> tCloneList;
 		typedef std::list<tSdlState> tSdlList;
@@ -89,8 +87,8 @@ namespace alc {
 		tSdlStructList structs;
 		tUnetGameServer *net;
 		tAgeInfo *age;
-		tLog *log;
-		bool logDetailed;
+		tLog log;
+		bool logDetailed, initialized;
 		tString ageStateFile;
 	};
 	

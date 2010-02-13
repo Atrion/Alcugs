@@ -48,24 +48,26 @@
 namespace alc {
 
 	////IMPLEMENTATION
-	tUnetLobbyServerBase::tUnetLobbyServerBase(Byte whoami) : tUnetServerBase(whoami), authedTimeout(30) // 30seconds for authenticated clients
+	tUnetLobbyServerBase::tUnetLobbyServerBase(Byte whoami) : tUnetServerBase(whoami), authedTimeout(30) /* 30seconds for authenticated clients */, lvault(NULL,0,0)
 	{
 		memset(serverGuid, 0, 8);
 		serverName[0] = 0;
 		auth_gone = tracking_gone = vault_gone = 0;
-		lvault = alcUnetGetMain()->null();
 		vaultLogShort = false;
 	}
 	
-	void tUnetLobbyServerBase::onLoadConfig(void)
+	void tUnetLobbyServerBase::onApplyConfig(void)
 	{
 		tConfig *cfg = alcGetMain()->config();
 		tString var = cfg->getVar("vault.html.log");
 		if (var.isEmpty() || var.asByte()) { // logging enabled per default
-			if (lvault == alcUnetGetMain()->null()) lvault = new tLog("vault.html", 2, DF_HTML);
+			lvault.open("vault.html", 2, DF_HTML);
 			var = cfg->getVar("vault.html.log.short");
 			vaultLogShort = (var.isEmpty() || var.asByte()); // per default, it *is* short
 		}
+		else
+			lvault.close();
+		
 		var = cfg->getVar("allow_uu_clients");
 		allowUU = (var.isEmpty() || var.asByte()); // per default, UU clients are allowed
 		var = cfg->getVar("tmp.link_log");
@@ -88,14 +90,6 @@ namespace alc {
 		var = cfg->getVar("net.timeout.loading");
 		if (var.isEmpty()) loadingTimeout = 90;
 		else loadingTimeout = var.asU32();
-	}
-	
-	void tUnetLobbyServerBase::onUnloadConfig()
-	{
-		if (lvault != alcUnetGetMain()->null()) {
-			delete lvault;
-			lvault = alcUnetGetMain()->null();
-		}
 	}
 	
 	void tUnetLobbyServerBase::onForwardPing(tmPing &ping, tNetSession *u)
@@ -508,12 +502,12 @@ namespace alc {
 					
 					tNetSession *client = smgr->find(vaultMsg.ki);
 					if (!client || client->getPeerType() != KClient) {
-						lvault->print("<h2 style='color:red'>Packet for unknown client</h2>\n");
-						parsedMsg.print(lvault, /*clientToServer:*/false, NULL, vaultLogShort);
+						lvault.print("<h2 style='color:red'>Packet for unknown client</h2>\n");
+						parsedMsg.print(&lvault, /*clientToServer:*/false, NULL, vaultLogShort);
 						log->log("WARN: I've got a vault message to forward to player with KI %d but can\'t find the session.\n", vaultMsg.ki);
 						return 1;
 					}
-					parsedMsg.print(lvault, /*clientToServer:*/false, client, vaultLogShort);
+					parsedMsg.print(&lvault, /*clientToServer:*/false, client, vaultLogShort);
 					// do additional processing
 					onVaultMessageForward(u, &parsedMsg);
 					// send it on to client
@@ -535,7 +529,7 @@ namespace alc {
 						return 1;
 					}
 					vaultMsg.message.get(parsedMsg);
-					parsedMsg.print(lvault, /*clientToServer:*/true, u, vaultLogShort);
+					parsedMsg.print(&lvault, /*clientToServer:*/true, u, vaultLogShort);
 					// do additional processing
 					onVaultMessageForward(u, &parsedMsg);
 					// send it on to vault

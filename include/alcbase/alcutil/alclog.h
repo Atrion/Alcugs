@@ -97,7 +97,7 @@ private:
 	FILE * dsc;
 	tBBuf * bdsc;
 	U16 flags; //see above (DF_*)
-	Byte level;    /* 0 disabled  (logging level)
+	Byte level;    /* 0 disabled  (logging level) FIXME never actually used, get rid of it
 										1 lowest
 										2 low
 										3 normal
@@ -107,6 +107,10 @@ private:
 									*/
 	int facility; //this params are passed to syslog
 	int priority; //this params are passed to syslog
+	
+	// prevent copying
+	tLog(const tLog &);
+	tLog &operator=(const tLog &);
 };
 
 // FIXME: Get rid of these...

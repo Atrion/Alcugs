@@ -101,16 +101,9 @@ protected:
 	/** This is called after leaving the event loop and closing all connections */
 	virtual void onStop() {}
 	
-	/** this is called after loading and reloading the config */
-	virtual void onLoadConfig() {}
-	
-	/** this is called before reloading the config and before quitting.
-			Everything created in onLoadConfig must be freed here */
-	virtual void onUnloadConfig() {}
-	
-	/** this is called while reloading the config */
-	virtual void onReloadConfig() {}
-	
+	/** This is called after loading and reloading the config (the first time is BEFORE onStart was called).
+		You can rely on this being called, so put everything dealing with reading the config and opening logfiles here! */
+	virtual void onApplyConfig() {}
 	
 	/** Stops the netcore in a sane way
 			\param timeout Sets the timeout to wait for closing the connection to all peers (<0 gets timeout from config file)	*/
@@ -120,16 +113,6 @@ protected:
 private:
 	/** Just kills the socket - should only be used if the process was forked */
 	inline void kill() { stopOp(); }
-	/** Force a reload of the netcore settings (after changing the configuration for example) */
-	void reload()
-	{
-		onUnloadConfig();
-		closelogs();
-		reconfigure();
-		openlogs();
-		onReloadConfig();
-		onLoadConfig();
-	}
 	
 	void terminate(tNetSession *u, Byte reason, bool gotLeave);
 	void terminateAll(bool playersOnly = false);
@@ -138,7 +121,7 @@ private:
 	
 	void processEventQueue(bool shutdown);
 	int parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown);
-	void reconfigure();
+	void applyConfig();
 	bool running;
 	Byte stop_timeout;
 #ifdef ENABLE_THREADS

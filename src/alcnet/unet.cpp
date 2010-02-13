@@ -60,6 +60,10 @@ tUnet::~tUnet() {
 	DBG(9,"~tUnet()\n");
 	stopOp();
 	delete events;
+	if (log != alcGetMain()->std()) delete log;
+	if (log != alcGetMain()->err()) delete err;
+	delete ack;
+	delete sec;
 }
 void tUnet::setBindPort(U16 lport) {
 	bindport=lport;
@@ -114,12 +118,10 @@ void tUnet::init() {
 	receiveAhead=50; // Receive up to 50 not-yet acceptable packets "in the future"
 
 	//logs
-	log=alcUnetGetMain()->null();
-	err=alcUnetGetMain()->null();
-	//unx=lnull;
-	ack=alcUnetGetMain()->null();
-	//chk=lnull;
-	sec=alcUnetGetMain()->null();
+	log=new tLog(NULL,0,0);
+	err=new tLog(NULL,0,0);
+	ack=new tLog(NULL,0,0);
+	sec=new tLog(NULL,0,0);
 	
 	idle=false;
 
@@ -193,103 +195,50 @@ void tUnet::neterror(const char * msg) {
 #endif
 }
 
-void tUnet::openlogs() {
-	tLog *lnull = alcUnetGetMain()->null();
+void tUnet::openLogfiles() {
 	//open unet log files (FIXME: get rid of the two net-log-files and most of the flags)
 	if(this->flags & UNET_ELOG) {
-		if(this->log==lnull) {
-			if(this->flags & UNET_LQUIET) {
-				this->log=new tLog;
-				if(this->flags & UNET_FLOG) {
-					this->log->open("urunet.log",2,0);
-				} else {
-					this->log->open(NULL,2,0);
-				}
+		if(log != alcGetMain()->std()) delete log;
+		if(this->flags & UNET_LQUIET) {
+			this->log=new tLog;
+			if(this->flags & UNET_FLOG) {
+				this->log->open("urunet.log",2,0);
 			} else {
-				this->log=alcGetMain()->std();
+				this->log->open(NULL,2,0);
 			}
-		}
-		if(this->err==lnull) {
-			if(this->flags & UNET_LQUIET) {
-				this->err=new tLog; //Leaks
-				if(this->flags & UNET_FLOG) {
-					this->err->open("uneterr.log",2,0);
-				} else {
-					this->err->open(NULL,2,0);
-				}
-			} else {
-				this->err=alcGetMain()->err();
-			}
-		}
-#if 0
-		if(this->unx==lnull && (this->flags & UNET_FLOG) && !(this->flags & UNET_DLUNE)) {
-			this->unx=new tLog;
-			this->unx->open("unexpected.log",4,0);
 		} else {
-			this->unx=new tLog;
-			this->unx->open(NULL,4,0);
+			this->log=alcGetMain()->std();
 		}
-#endif
-		if(this->ack==lnull && (this->flags & UNET_FLOG) && (this->flags & UNET_ACKLOG)) {
-			this->ack=new tLog;
+		
+		if(err != alcGetMain()->err()) delete err;
+		if(this->flags & UNET_LQUIET) {
+			this->err=new tLog; //Leaks
+			if(this->flags & UNET_FLOG) {
+				this->err->open("uneterr.log",2,0);
+			} else {
+				this->err->open(NULL,2,0);
+			}
+		} else {
+			this->err=alcGetMain()->err();
+		}
+
+		if((this->flags & UNET_FLOG) && (this->flags & UNET_ACKLOG)) {
 			this->ack->open("ack.html",4,DF_HTML);
 		} else {
-			this->ack=new tLog;
 			this->ack->open(NULL,4,DF_HTML);
 		}
-#if 0
-		if(this->chk==NULL && (this->flags & UNET_FLOG) && !(this->flags & UNET_DLCHK)) {
-			this->chk=new tLog;
-			this->chk->open("chk.log",4,0);
-		} else {
-			this->chk=new tLog;
-			this->chk->open(NULL,4,0);
-		}
-#endif
-		if(this->sec==lnull && (this->flags & UNET_FLOG) && !(this->flags & UNET_DLSEC)) {
-			this->sec=new tLog;
+		
+
+		if((this->flags & UNET_FLOG) && !(this->flags & UNET_DLSEC)) {
 			this->sec->open("access.log",4,0);
 		} else {
-			this->sec=new tLog;
 			this->sec->open(NULL,4,0);
 		}
 	}
 }
 
-void tUnet::closelogs() {
-	tLog *lnull = alcUnetGetMain()->null();
-	if(this->log != alcGetMain()->std() && this->log != lnull) {
-		DBG(9, "deleting standard log\n");
-		this->log->close();
-		delete this->log;
-		this->log=lnull;
-	}
-	if(this->err != alcGetMain()->err() && this->err != lnull) {
-		DBG(9, "deleting error log\n");
-		this->err->close();
-		delete this->err;
-		this->err=lnull;
-	}
-	if(this->ack!=lnull) {
-		this->ack->close();
-		delete this->ack;
-		this->ack=lnull;
-	}
-	/*if(this->unx!=lnull) {
-		this->unx->close();
-		delete this->unx;
-		this->unx=lnull;
-	}*/
-	if(this->sec!=lnull) {
-		this->sec->close();
-		delete this->sec;
-		this->sec=lnull;
-	}
-}
-
 void tUnet::startOp() {
 	if(initialized) return;
-	openlogs();
 	//create an udp (17) socket
 #ifdef __WIN32__
 	memset(&this->ws,0,sizeof(this->ws));
@@ -432,7 +381,6 @@ void tUnet::stopOp() {
 	close(this->sock);
 #endif
 	DBG(1, "Socket closed\n");
-	closelogs();
 	initialized=false;
 }
 

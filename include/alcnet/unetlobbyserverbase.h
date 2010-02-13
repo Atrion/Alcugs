@@ -59,8 +59,7 @@ protected:
 	virtual int onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u);
 	virtual void onForwardPing(tmPing &ping, tNetSession *u);
 	virtual void onConnectionClosing(tNetSession *u, Byte reason);
-	virtual void onUnloadConfig(void);
-	virtual void onLoadConfig(void);
+	virtual void onApplyConfig(void);
 
 	/** This event is triggered when a vault message is forwarded to or from the vault server */
 	virtual void onVaultMessageForward(tNetSession */*u*/, tvMessage */*msg*/) {}
@@ -84,7 +83,7 @@ private:
 	tNetSessionIte authIte, trackingIte, vaultIte;
 	U32 auth_gone, tracking_gone, vault_gone; // saves when this server got disconnected. wait 10sec before trying to connect again
 
-	tLog *lvault;
+	tLog lvault;
 	bool vaultLogShort;
 
 	bool allowUU;

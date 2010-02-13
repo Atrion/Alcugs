@@ -43,50 +43,34 @@ namespace alc {
 	static const char *defaultWelcomeMsgText = "Shorah b'shehmtee, this Shard is running the Alcugs server software.\nThanks for your support!\n\nWelcome to the new adventure, feel free to explore Er'cana or any other age. Be careful if you see new books, some explorers have found some Kortee'nea and other ancient technology in a secret room in Kirel DRC neighborhood, and they are starting to learn the art of writting.\n";
 
 	////IMPLEMENTATION
-	tVaultBackend::tVaultBackend(tUnet *net)
-	{
-		this->net = net;
-		log = logHtml = alcUnetGetMain()->null();
-		vaultDB = NULL;
-		load();
-	}
+	tVaultBackend::tVaultBackend(tUnet *net) : vaultDB(NULL), log(NULL,0,0), logHtml(NULL,0,0), net(net)
+	{ }
 	
 	tVaultBackend::~tVaultBackend(void)
 	{
-		unload();
-		if (vmgrs.size() > 0)
-			log->log("ERR: The vault server is quitting and I still have %d vmgrs left\n", vmgrs.size());
-	}
-	
-	void tVaultBackend::unload(void)
-	{
-		tLog *lnull = alcUnetGetMain()->null();
 		delete vaultDB;
-		vaultDB = NULL;
-		if (log != lnull) {
-			delete log;
-			log = lnull;
-		}
-		if (logHtml != lnull) {
-			delete logHtml;
-			logHtml = lnull;
-		}
+		if (vmgrs.size() > 0)
+			log.log("ERR: The vault server is quitting and I still have %d vmgrs left\n", vmgrs.size());
 	}
 	
-	void tVaultBackend::load(void)
+	void tVaultBackend::applyConfig(void)
 	{
 		tConfig *cfg = alcGetMain()->config();
 		bool found;
 		tString var = cfg->getVar("vault.log");
 		if (var.isEmpty() || var.asByte()) { // logging enabled per default
-			log = new tLog("vault.log", 4, 0);
+			log.open("vault.log", 4, 0);
 		}
+		else
+			log.close();
 		var = cfg->getVar("vault.html.log");
 		if (var.isEmpty() || var.asByte()) { // logging enabled per default
-			logHtml = new tLog("vault.html", 2, DF_HTML);
+			logHtml.open("vault.html", 2, DF_HTML);
 			var = cfg->getVar("vault.html.log.short");
 			shortHtml = (var.isEmpty() || var.asByte()); // per default, it *is* short
 		}
+		else
+			logHtml.close();
 		
 		var = cfg->getVar("vault.maxplayers");
 		if (!var.isEmpty()) maxPlayers = var.asU32();
@@ -119,19 +103,14 @@ namespace alc {
 		else instanceMode = var.asByte();
 		if (instanceMode != 0 && instanceMode != 1) throw txBase(_WHERE("instance_mode must be 0 or 1 but is %d", instanceMode));
 		
-		log->log("Started VaultBackend (%s)\n", __U_VAULTBACKEND_ID);
-		vaultDB = new tVaultDB(log);
-		log->nl();
-		log->flush();
+		log.log("Started VaultBackend (%s)\n", __U_VAULTBACKEND_ID);
+		delete vaultDB;
+		vaultDB = new tVaultDB(&log);
+		log.nl();
+		log.flush();
 		vaultDB->getVaultFolderName(vaultFolderName);
 		DBG(5, "global vault folder name is %s\n", vaultFolderName);
 		checkMainNodes();
-	}
-	
-	void tVaultBackend::reload(void)
-	{
-		unload();
-		load();
 	}
 	
 	void tVaultBackend::createVault(void)
@@ -216,7 +195,7 @@ namespace alc {
 	
 	void tVaultBackend::send(tvMessage &msg, tNetSession *u, U32 ki, U32 x)
 	{
-		msg.print(logHtml, /*clientToServer:*/false, u, shortHtml, ki);
+		msg.print(&logHtml, /*clientToServer:*/false, u, shortHtml, ki);
 		tmVault vaultMsg(u, ki, x, msg.task, &msg);
 		net->send(vaultMsg);
 	}
@@ -247,7 +226,7 @@ namespace alc {
 				if (status.state) it->session = status.getSession()->getIte();
 				else {
 					it = vmgrs.erase(it);
-					log->log("WARN: Player with KI %d just went offline but still had a vmgr registered... removing it\n", status.ki);
+					log.log("WARN: Player with KI %d just went offline but still had a vmgr registered... removing it\n", status.ki);
 					continue; // we already incremented
 				}
 			}
@@ -300,8 +279,8 @@ namespace alc {
 			free(nodes);
 		}
 		
-		log->log("Status update for KI %d: %d\n", status.ki, status.state);
-		log->flush();
+		log.log("Status update for KI %d: %d\n", status.ki, status.state);
+		log.flush();
 		
 		if (!linkingRulesHack || status.state != 1) return;
 		// linking rules hack
@@ -317,7 +296,7 @@ namespace alc {
 			alcAscii2Hex(guid, status.serverGuid.c_str(), 8);
 			tvAgeInfoStruct ageInfo(status.age.c_str(), guid);
 			tvSpawnPoint spawnPoint("Default", "LinkInPointDefault");
-			log->log("Linking rule hack: adding link to %s to player %d\n", ageInfo.filename.c_str(), status.ki);
+			log.log("Linking rule hack: adding link to %s to player %d\n", ageInfo.filename.c_str(), status.ki);
 			U32 ageInfoNode = getAge(ageInfo); // create if necessary
 			addAgeLinkToPlayer(status.ki, ageInfoNode, spawnPoint, /*noUpdate*/true);
 		}
@@ -337,7 +316,7 @@ namespace alc {
 	void tVaultBackend::processVaultMsg(tvMessage &msg, tNetSession *u, U32 ki)
 	{
 		assert(!msg.task);
-		msg.print(logHtml, /*clientToServer:*/true, u, shortHtml, ki);
+		msg.print(&logHtml, /*clientToServer:*/true, u, shortHtml, ki);
 		
 		// have everything on the stack as we can safely throw exceptions then
 		const U32 unset = 0xFFFFFFFF;
@@ -431,8 +410,8 @@ namespace alc {
 			{
 				if (nodeType == unset)
 					throw txProtocolError(_WHERE("got a VConnect where node type has not been set"));
-				log->log("Vault Connect request for %d (Type: %d)\n", ki, nodeType);
-				log->flush();
+				log.log("Vault Connect request for %d (Type: %d)\n", ki, nodeType);
+				log.flush();
 				U32 mgr;
 				
 				// we can be sure that the vault has already been initialized (main folders and the welcome message are created) since
@@ -486,8 +465,8 @@ namespace alc {
 			{
 				if (nodeType == unset)
 					throw txProtocolError(_WHERE("got a VDisconnect where the node type has not been set"));
-				log->log("Vault Disconnect request for %d (Type: %d)\n", ki, nodeType);
-				log->flush();
+				log.log("Vault Disconnect request for %d (Type: %d)\n", ki, nodeType);
+				log.flush();
 				if (nodeType != KVNodeMgrAdminNode) { // VaultManager sometimes leaves too fast, and it doesn't need the VDisconnect reply
 					// send reply
 					tvMessage reply(msg);
@@ -501,8 +480,8 @@ namespace alc {
 			case VAddNodeRef:
 			{
 				if (!savedNodeRef) throw txProtocolError(_WHERE("got a VAddNodeRef without a node ref attached"));
-				log->log("Vault Add Node Ref from %d to %d for %d\n", savedNodeRef->parent, savedNodeRef->child, ki);
-				log->flush();
+				log.log("Vault Add Node Ref from %d to %d for %d\n", savedNodeRef->parent, savedNodeRef->child, ki);
+				log.flush();
 				
 				// check if both nodes exist
 				if (!vaultDB->checkNode(savedNodeRef->parent) || !vaultDB->checkNode(savedNodeRef->child))
@@ -518,8 +497,8 @@ namespace alc {
 			{
 				if (nodeSon == unset || nodeParent == unset)
 					throw txProtocolError(_WHERE("got a VRemoveNodeRef where parent or son have not been set"));
-				log->log("Vault Remove Node Ref from %d to %d for %d\n", nodeParent, nodeSon, ki);
-				log->flush();
+				log.log("Vault Remove Node Ref from %d to %d for %d\n", nodeParent, nodeSon, ki);
+				log.flush();
 				vaultDB->removeNodeRef(nodeParent, nodeSon);
 				
 				// broadcast the change
@@ -531,8 +510,8 @@ namespace alc {
 				if (tableSize != 1)
 					throw txProtocolError(_WHERE("Getting %d manifests at once is not supported\n", tableSize));
 				U32 mgr = table.getU32();
-				log->log("Vault Negoiate Manifest (MGR: %d) for %d\n", mgr, ki);
-				log->flush();
+				log.log("Vault Negoiate Manifest (MGR: %d) for %d\n", mgr, ki);
+				log.flush();
 				tvManifest **mfs;
 				tvNodeRef **ref;
 				int nMfs, nRef;
@@ -559,8 +538,8 @@ namespace alc {
 				if (savedNode->index < KVaultID) {
 					U32 oldIndex = savedNode->index;
 					U32 newIndex = vaultDB->createNode(*savedNode);
-					log->log("Vault Save Node (created new node %d) for %d\n", newIndex, ki);
-					log->flush();
+					log.log("Vault Save Node (created new node %d) for %d\n", newIndex, ki);
+					log.flush();
 					
 					// reply to the sender
 					tvMessage reply(msg);
@@ -570,8 +549,8 @@ namespace alc {
 				}
 				else {
 					vaultDB->updateNode(*savedNode);
-					log->log("Vault Save Node (updated node %d) for %d\n", savedNode->index, ki);
-					log->flush();
+					log.log("Vault Save Node (updated node %d) for %d\n", savedNode->index, ki);
+					log.flush();
 					
 					// create the reply to the sender
 					tvMessage reply(msg);
@@ -585,8 +564,8 @@ namespace alc {
 			case VFindNode:
 			{
 				if (!savedNode) throw txProtocolError(_WHERE("got a find node request without the node attached"));
-				log->log("Vault Find Node (looking for node %d) for %d\n", savedNode->index, ki);
-				log->flush();
+				log.log("Vault Find Node (looking for node %d) for %d\n", savedNode->index, ki);
+				log.flush();
 				tvManifest mfs;
 				bool create = (savedNode->type == KPlayerInfoNode || savedNode->type == KFolderNode || savedNode->type == KPlayerInfoListNode || savedNode->type == KSDLNode || savedNode->type == KAgeInfoNode);
 				// It's necessary to allow creating these
@@ -605,8 +584,8 @@ namespace alc {
 			case VFetchNode:
 			{
 				if (tableSize <= 0) break;
-				log->log("Vault Fetch Node (fetching %d nodes) for %d\n", tableSize, ki);
-				log->flush();
+				log.log("Vault Fetch Node (fetching %d nodes) for %d\n", tableSize, ki);
+				log.flush();
 				tvNode **nodes;
 				int nNodes;
 				vaultDB->fetchNodes(table, tableSize, &nodes, &nNodes);
@@ -639,8 +618,8 @@ namespace alc {
 			case VSendNode:
 			{
 				if (rcvPlayer == unset || !savedNode) throw txProtocolError(_WHERE("Got a VSendNode without the reciever or the node"));
-				log->log("Sending node %d from player %d to %d\n", savedNode->index, ki, rcvPlayer);
-				log->flush();
+				log.log("Sending node %d from player %d to %d\n", savedNode->index, ki, rcvPlayer);
+				log.flush();
 				tvNode *node;
 				tvNode **nodes;
 				int nNodes;
@@ -655,8 +634,8 @@ namespace alc {
 				if (nNodes > 0) delete *nodes;
 				free(nodes);
 				if (nNodes == 0) {
-					log->log("ERR: I should send a message to the non-existing player %d\n", rcvPlayer);
-					log->flush();
+					log.log("ERR: I should send a message to the non-existing player %d\n", rcvPlayer);
+					log.flush();
 					break;
 				}
 				
@@ -684,7 +663,7 @@ namespace alc {
 			{
 				if (nodeParent == unset || nodeSon == unset || seenFlag == unset)
 					throw txProtocolError(_WHERE("parent, son and seen flag must be set for a VSetSeen"));
-				log->log("Vault Set Seen (parent: %d, son: %d, seen: %d) for %d\n", nodeParent, nodeSon, seenFlag, ki);
+				log.log("Vault Set Seen (parent: %d, son: %d, seen: %d) for %d\n", nodeParent, nodeSon, seenFlag, ki);
 				vaultDB->setSeen(nodeParent, nodeSon, seenFlag);
 				break;
 			}
@@ -697,7 +676,7 @@ namespace alc {
 	void tVaultBackend::processVaultTask(tvMessage &msg, tNetSession *u, U32 ki, U32 x)
 	{
 		assert(msg.task);
-		msg.print(logHtml, /*clientToServer:*/true, u, shortHtml, ki);
+		msg.print(&logHtml, /*clientToServer:*/true, u, shortHtml, ki);
 		
 		tvAgeLinkStruct *ageLink = NULL;
 		const Byte *ageGuid = NULL;
@@ -730,7 +709,7 @@ namespace alc {
 				if (ki != msg.vmgr)
 					throw txProtocolError(_WHERE("the vmgr of a TRegisterOwnedAge task must be the player's KI, but %d != %d", ki, msg.vmgr));
 				if (!ageLink) throw txProtocolError(_WHERE("the age link must be set for a TRegisterOwnedAge"));
-				log->log("TRegisterOwnedAge (age filename: %s) from %d\n", ageLink->ageInfo.filename.c_str(), msg.vmgr);
+				log.log("TRegisterOwnedAge (age filename: %s) from %d\n", ageLink->ageInfo.filename.c_str(), msg.vmgr);
 				
 				// if necessary, generate the guid
 				Byte zeroGuid[8];
@@ -759,7 +738,7 @@ namespace alc {
 				if (ki != msg.vmgr)
 					throw txProtocolError(_WHERE("the vmgr of a TRegisterOwnedAge task must be the player's KI, but %d != %d", ki, msg.vmgr));
 				if (!ageName) throw txProtocolError(_WHERE("the age name must be set for a TUnRegisterOwnedAge"));
-				log->log("TUnRegisterOwnedAge (age filename: %s) from %d\n", ageName, msg.vmgr);
+				log.log("TUnRegisterOwnedAge (age filename: %s) from %d\n", ageName, msg.vmgr);
 				
 				// generate the GUID
 				Byte guid[8];
@@ -782,7 +761,7 @@ namespace alc {
 			case TRegisterVisitAge:
 			{
 				if (!ageLink) throw txProtocolError(_WHERE("the age link must be set for a TRegisterVisitAge"));
-				log->log("TRegisterVisitAge (age filename: %s) from %d to %d\n", ageLink->ageInfo.filename.c_str(), ki, msg.vmgr);
+				log.log("TRegisterVisitAge (age filename: %s) from %d to %d\n", ageLink->ageInfo.filename.c_str(), ki, msg.vmgr);
 				
 				// msg.vmgr is the reciever's KI, ki the sender's one
 				
@@ -803,7 +782,7 @@ namespace alc {
 			case TUnRegisterVisitAge:
 			{
 				if (!ageGuid) throw txProtocolError(_WHERE("the age GUID must be set for a TRegisterVisitAge"));
-				log->log("TUnRegisterVisitAge from %d\n", ki);
+				log.log("TUnRegisterVisitAge from %d\n", ki);
 				
 				// msg.vmgr is the reciever's KI, ki the sender's one
 				
@@ -1214,7 +1193,7 @@ namespace alc {
 	
 	void tVaultBackend::cleanVault(bool cleanAges)
 	{
-		log->log("Cleaning up the vault. I hope you did a backup first! Now it's too late though...\n");
+		log.log("Cleaning up the vault. I hope you did a backup first! Now it's too late though...\n");
 		vaultDB->clean(cleanAges);
 	}
 	

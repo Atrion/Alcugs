@@ -79,9 +79,9 @@ namespace alc {
 		delete ageState;
 	}
 	
-	void tUnetGameServer::onLoadConfig(void)
+	void tUnetGameServer::onApplyConfig(void)
 	{
-		tUnetLobbyServerBase::onLoadConfig();
+		tUnetLobbyServerBase::onApplyConfig();
 		
 		tConfig *cfg = alcGetMain()->config();
 		tString var = cfg->getVar("game.persistent");
@@ -103,6 +103,8 @@ namespace alc {
 		
 		var = cfg->getVar("game.serversidecommands");
 		serverSideCommands = (var.isEmpty() || var.asByte()); // enabled per default
+		
+		ageState->applyConfig();
 	}
 	
 	void tUnetGameServer::onVaultMessageForward(tNetSession *u, tvMessage *msg)
