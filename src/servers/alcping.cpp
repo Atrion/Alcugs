@@ -112,7 +112,7 @@ private:
 
 tUnetPing::tUnetPing(const tString &lhost,U16 lport,Byte listen,double time,int num,int flood) :tUnetBase(KClient) {
 	this->setBindPort(lport);
-	this->setBindAddress(lhost.c_str());
+	this->setBindAddress(lhost);
 	this->listen=listen;
 	setIdleTimer(1);
 	this->time=time;
@@ -172,8 +172,8 @@ int tUnetPing::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 					current=alcGetCurrentTime();
 					rcv=current-ping.mtime;
 					printf("Pong from %s:%i x=%i dest=%i %s time=%0.3f ms\n",\
-					alcGetStrIp(u->getIp()).c_str(),ntohs(u->getPort()),ping.x,ping.destination,\
-					alcUnetGetDestination(ping.destination),rcv*1000);
+						alcGetStrIp(u->getIp()).c_str(),ntohs(u->getPort()),ping.x,ping.destination,\
+						alcUnetGetDestination(ping.destination),rcv*1000);
 					rcvn++;
 					avg+=rcv;
 					if(rcv<min) min=rcv;
@@ -181,8 +181,8 @@ int tUnetPing::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 				}
 			} else {
 				printf("Ping from %s:%i x=%i dest=%i %s time=%0.3f ms .... pong....\n",\
-				alcGetStrIp(u->getIp()).c_str(),ntohs(u->getPort()),ping.x,ping.destination,\
-				alcUnetGetDestination(ping.destination),ping.mtime*1000);
+					alcGetStrIp(u->getIp()).c_str(),ntohs(u->getPort()),ping.x,ping.destination,\
+					alcUnetGetDestination(ping.destination),ping.mtime*1000);
 				if(urgent) ping.setUrgent();
 				send(ping);
 			}

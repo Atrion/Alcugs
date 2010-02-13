@@ -100,7 +100,7 @@ namespace alc {
 			// updates the version numbers of the embedded SDL structs (always uses the latest one)
 			for (tSdlStructList::iterator it1 = structs.begin(); it1 != structs.end(); ++it1) {
 				for (tSdlStruct::tVarList::iterator it2 = it1->vars.begin(); it2 != it1->vars.end(); ++it2) {
-					if (it2->type == DStruct) it2->structVersion = findLatestStructVersion(it2->structName.c_str());
+					if (it2->type == DStruct) it2->structVersion = findLatestStructVersion(it2->structName);
 				}
 			}
 			
@@ -181,7 +181,7 @@ namespace alc {
 				state.print(&log);
 			}
 			// check if that struct can be updated
-			U32 structVersion = findLatestStructVersion(state.content.getName().c_str());
+			U32 structVersion = findLatestStructVersion(state.content.getName());
 			if (structVersion > state.content.getVersion()) {
 				state.content.updateTo(findStruct(state.content.getName(), structVersion));
 				if (logDetailed) {

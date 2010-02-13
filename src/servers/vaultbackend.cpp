@@ -76,19 +76,15 @@ namespace alc {
 		if (!var.isEmpty()) maxPlayers = var.asU32();
 		else maxPlayers = 5;
 		
-		var = cfg->getVar("vault.hood.name", &found);
-		if (found) alcStrncpy(hoodName, var.c_str(), sizeof(hoodName)-1);
-		else alcStrncpy(hoodName, "Alcugs hood", sizeof(hoodName)-1);
-		var = cfg->getVar("vault.hood.desc", &found);
-		if (found) alcStrncpy(hoodDesc, var.c_str(), sizeof(hoodDesc)-1);
-		else alcStrncpy(hoodDesc, "This is a hood on an Alcugs server", sizeof(hoodDesc)-1);
+		hoodName = cfg->getVar("vault.hood.name", &found);
+		if (!found) hoodName = "Alcugs hood";
+		hoodDesc = cfg->getVar("vault.hood.desc", &found);
+		if (!found) hoodDesc = "This is a hood on an Alcugs server";
 		
-		var = cfg->getVar("vault.wipe.msg.title", &found);
-		if (found) alcStrncpy(welcomeMsgTitle, var.c_str(), sizeof(welcomeMsgTitle)-1);
-		else alcStrncpy(welcomeMsgTitle, defaultWelcomeMsgTitle, sizeof(welcomeMsgTitle)-1);
-		var = cfg->getVar("vault.wipe.msg", &found);
-		if (found) alcStrncpy(welcomeMsgText, var.c_str(), sizeof(welcomeMsgText)-1);
-		else alcStrncpy(welcomeMsgText, defaultWelcomeMsgText, sizeof(welcomeMsgText)-1);
+		welcomeMsgTitle = cfg->getVar("vault.wipe.msg.title", &found);
+		if (!found) welcomeMsgTitle = defaultWelcomeMsgTitle;
+		welcomeMsgText = cfg->getVar("vault.wipe.msg", &found);
+		if (!found) welcomeMsgText = defaultWelcomeMsgText;
 		
 		var = cfg->getVar("vault.tmp.hacks.linkrules");
 		linkingRulesHack = (!var.isEmpty() && var.asByte()); // disabled per default
@@ -108,7 +104,7 @@ namespace alc {
 		vaultDB = new tVaultDB(&log);
 		log.nl();
 		log.flush();
-		vaultDB->getVaultFolderName(vaultFolderName);
+		vaultFolderName = vaultDB->getVaultFolderName();
 		DBG(5, "global vault folder name is %s\n", vaultFolderName);
 		checkMainNodes();
 	}
@@ -156,7 +152,7 @@ namespace alc {
 		node = new tvNode(MType | MStr64_1 | MBlob1);
 		node->type = KTextNoteNode;
 		node->str1 = welcomeMsgTitle;
-		node->blob1.write(welcomeMsgText, strlen(welcomeMsgText));
+		node->blob1.write(welcomeMsgText.data(), welcomeMsgText.size());
 		node->blob1.putByte(0); // add terminator
 		vaultDB->createChildNode(KVaultID, globalInboxNode, *node);
 		delete node;
@@ -292,7 +288,7 @@ namespace alc {
 		if (status.age == "Ahnonay" || status.age == "Neighborhood02" || status.age == "Myst") {
 			Byte guid[8];
 			alcGetHexGuid(guid, status.serverGuid);
-			tvAgeInfoStruct ageInfo(status.age.c_str(), guid);
+			tvAgeInfoStruct ageInfo(status.age, guid);
 			tvSpawnPoint spawnPoint("Default", "LinkInPointDefault");
 			log.log("Linking rule hack: adding link to %s to player %d\n", ageInfo.filename.c_str(), status.ki);
 			U32 ageInfoNode = getAge(ageInfo); // create if necessary
@@ -323,7 +319,7 @@ namespace alc {
 		tMBuf table;
 		tvNode *savedNode = NULL;
 		tvNodeRef *savedNodeRef = NULL;
-		const char *ageName = NULL;
+		tString ageName;
 		const Byte *ageGuid = NULL;
 		
 		// read and verify the general vault items
@@ -377,7 +373,7 @@ namespace alc {
 						throw txProtocolError(_WHERE("a vault item with ID 20 must always have a value of -1 or 0 but I got %d", itm->asInt()));
 					break;
 				case 21: // GenericValue.UruString: age name
-					ageName = itm->asString().c_str();
+					ageName = itm->asString();
 					break;
 				case 22: // ServerGuid: age guid
 					ageGuid = itm->asGuid();
@@ -427,7 +423,7 @@ namespace alc {
 					send(reply, u, ki);
 				}
 				else if (nodeType == KVNodeMgrAgeNode) { // age node
-					if (!ageName || !ageGuid) throw txProtocolError(_WHERE("VConnect for node type 3 must have ageGuid and ageName set"));
+					if (ageName.isEmpty() || !ageGuid) throw txProtocolError(_WHERE("VConnect for node type 3 must have ageGuid and ageName set"));
 					mgrNode.flagB |= MStr64_1;
 					mgrNode.str1 = alcGetStrGuid(ageGuid);
 					mgr = vaultDB->findNode(mgrNode, /*create*/true);
@@ -676,7 +672,7 @@ namespace alc {
 		
 		tvAgeLinkStruct *ageLink = NULL;
 		const Byte *ageGuid = NULL;
-		const char *ageName = NULL;
+		tString ageName;
 		
 		// read and verify the general vault items
 		for (tvMessage::tItemList::iterator it = msg.items.begin(); it != msg.items.end(); ++it) {
@@ -686,7 +682,7 @@ namespace alc {
 					ageLink = itm->asAgeLink(); // we don't have to free it, tvMessage does that
 					break;
 				case 12: // GenericValue.UruString: the filename of the age to remove
-					ageName = itm->asString().c_str();
+					ageName = itm->asString();
 					break;
 				case 13: // ServerGuid: the GUID of the age the invite should be removed from
 					ageGuid = itm->asGuid();
@@ -733,8 +729,8 @@ namespace alc {
 			{
 				if (ki != msg.vmgr)
 					throw txProtocolError(_WHERE("the vmgr of a TRegisterOwnedAge task must be the player's KI, but %d != %d", ki, msg.vmgr));
-				if (!ageName) throw txProtocolError(_WHERE("the age name must be set for a TUnRegisterOwnedAge"));
-				log.log("TUnRegisterOwnedAge (age filename: %s) from %d\n", ageName, msg.vmgr);
+				if (ageName.isEmpty()) throw txProtocolError(_WHERE("the age name must be set for a TUnRegisterOwnedAge"));
+				log.log("TUnRegisterOwnedAge (age filename: %s) from %d\n", ageName.c_str(), msg.vmgr);
 				
 				// generate the GUID
 				Byte guid[8];
@@ -1150,8 +1146,8 @@ namespace alc {
 		bcast.items.push_back(new tvItem(/*id*/9, /*node index*/node.index));
 		bcast.items.push_back(new tvItem(/*id*/24, /*timestamp*/node.modTime));
 		if (node.int1) { // if he's online
-			bcast.items.push_back(new tvItem(/*id*/27, node.str1.c_str())); // age name
-			bcast.items.push_back(new tvItem(/*id*/28, node.str2.c_str())); // age guid
+			bcast.items.push_back(new tvItem(/*id*/27, node.str1)); // age name
+			bcast.items.push_back(new tvItem(/*id*/28, node.str2)); // age guid
 			bcast.items.push_back(new tvItem(/*id*/29, node.int1)); // online state
 		}
 		else { // if he's not online
@@ -1233,7 +1229,7 @@ namespace alc {
 	
 	bool tVaultBackend::setAgeGuid(tvAgeLinkStruct *link, U32 ownerKi)
 	{
-		return generateGuid(link->ageInfo.guid, link->ageInfo.filename.c_str(), ownerKi);
+		return generateGuid(link->ageInfo.guid, link->ageInfo.filename, ownerKi);
 	}
 
 } //end namespace alc

@@ -156,21 +156,12 @@ U32 alcUruChecksum(const Byte* buf, int size, int alg, const char * aux_hash) {
 		case 2:
 		{
 			//code for the V2 - Checksum algorithm
-			U32 aux_size=size-6;
-			if(alg==2) { aux_size+=32; }
 			tMD5Buf md5buf;
 			md5buf.write(buf+6, size-6);
 			//Concatenate the ASCII passwd md5 hash as required by V2 algorithm
 			if(alg==2) {
 				md5buf.write(aux_hash, 32);
 			}
-			assert(md5buf.size() == aux_size); // FIXME
-			//print2log(f_chkal,"to be md5sumed:\n");
-			//dump_packet(f_chkal,md5buffer,aux_size,0,5);
-			/*if(alg==2) {
-				dumpbuf(f_uru,md5buffer,aux_size);
-				abort();
-			}*/
 			md5buf.compute();
 			return md5buf.getU32();
 		}

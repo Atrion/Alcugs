@@ -144,7 +144,7 @@ namespace alc {
 		bool generateGuid(Byte *guid, const tString &age, U32 ki);
 	
 		tVaultDB *vaultDB;
-		char vaultFolderName[17];
+		tString vaultFolderName;
 		U32 adminNode;
 		
 		int instanceMode;
@@ -156,8 +156,8 @@ namespace alc {
 		
 		// settings
 		int maxPlayers;
-		char welcomeMsgTitle[512], welcomeMsgText[4096];
-		char hoodName[512], hoodDesc[512];
+		tString welcomeMsgTitle, welcomeMsgText;
+		tString hoodName, hoodDesc;
 		bool linkingRulesHack;
 		
 		// the list of vmgrs

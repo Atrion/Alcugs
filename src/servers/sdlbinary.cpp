@@ -323,10 +323,14 @@ namespace alc {
 						log->print("%d", it->byteVal[0]);
 						break;
 					case DUruString:
-						log->print("%s", it->byteVal);
+					{
+						tString str;
+						str.write(it->byteVal, 32);
+						log->print(str);
 						break;
+					}
 					case DPlKey:
-						log->print("%s", it->obj->str().c_str());
+						log->print(it->obj->str());
 						break;
 					case DStruct:
 						if (it == elements.begin()) log->nl();

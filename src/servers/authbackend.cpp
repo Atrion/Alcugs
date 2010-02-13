@@ -237,7 +237,7 @@ namespace alc {
 				++attempts;
 			}
 			else { // everythign seems fine... let's compare the password
-				if(calculateHash(login, passwd->c_str(), challenge) != hash) { // wrong password :(
+				if(calculateHash(login, *passwd, challenge) != hash) { // wrong password :(
 					log.print("invalid password\n");
 					authResult = AInvalidPasswd;
 					++attempts;
@@ -252,7 +252,7 @@ namespace alc {
 			}
 			
 			// ok, now all we have to do is updating the player's last login and attempts and return the result
-			updatePlayer(guid.c_str(), ip, attempts, updateStamps);
+			updatePlayer(guid, ip, attempts, updateStamps);
 			log.flush();
 			return authResult;
 		}

@@ -188,7 +188,7 @@ namespace alc {
 				if (node->flagB & MlStr64_1) { // avatar name changed
 					log->log("%s is now called %s\n", u->str().c_str(), node->lStr1.c_str());
 					// update member list
-					u->avatar = node->lStr1.c_str();
+					u->avatar = node->lStr1;
 					bcastMemberUpdate(u, /*isJoined*/true);
 				}
 				// update tracking server status
@@ -463,7 +463,7 @@ namespace alc {
 				}
 				tmCustomPlayerStatus trackingStatus(trackingServer, u, 2 /* visible */, RActive);
 				send(trackingStatus);
-				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, alcGetStrGuid(serverGuid).c_str(), serverName, 1 /* is online */, 0 /* don't increase online time now, do that on disconnect */);
+				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, alcGetStrGuid(serverGuid), serverName, 1 /* is online */, 0 /* don't increase online time now, do that on disconnect */);
 				send(vaultStatus);
 				
 				// ok, tell the client he successfully joined
