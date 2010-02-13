@@ -84,9 +84,10 @@ namespace alc {
 	
 	class tTrackingBackend {
 	public:
-		tTrackingBackend(tUnetBase *net, tNetSessionList *servers, const char *host, U16 port);
+		tTrackingBackend(tUnetBase *net, const char *host, U16 port);
 		~tTrackingBackend(void);
 		void applyConfig(void);
+		void setServerManager(tNetSessionList *smgr);
 		
 		void updateStatusFile(void);
 		

@@ -49,8 +49,11 @@ namespace alc {
 
 	class tUnetTrackingServer : public tUnetServerBase {
 	public:
-		tUnetTrackingServer(void) : tUnetServerBase(KTracking), trackingBackend(this, smgr, bindaddr, bindport) {}
+		tUnetTrackingServer(void) : tUnetServerBase(KTracking), trackingBackend(this, bindaddr, bindport) {}
 	protected:
+		virtual void onStart(void) {
+			trackingBackend.setServerManager(smgr);
+		}
 		virtual void onConnectionClosing(tNetSession * u, Byte /*reason*/) {
 			trackingBackend.removeServer(u);
 		}

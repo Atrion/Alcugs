@@ -93,9 +93,10 @@ namespace alc {
 	}
 	
 	//// tTrackingBackend
-	tTrackingBackend::tTrackingBackend(tUnetBase *net, tNetSessionList *servers, const char *host, U16 port)
+	tTrackingBackend::tTrackingBackend(tUnetBase *net, const char *host, U16 port)
 	{
-		this->servers = servers;
+		// the smgr is created during startOp(), so it can't be set in the constructor or in applyConfig
+		this->servers = NULL;
 		this->net = net;
 		this->host = host;
 		this->port = port;
@@ -139,6 +140,11 @@ namespace alc {
 		if (var.isEmpty()) statusXML = false;
 		else alcStrncpy(statusXMLFile, var.c_str(), sizeof(statusXMLFile)-1);
 		statusFileUpdate = true;
+	}
+	
+	void tTrackingBackend::setServerManager(tNetSessionList *smgr)
+	{
+		servers = smgr;
 	}
 	
 	void tTrackingBackend::findServer(tmCustomFindServer &findServer)
