@@ -64,13 +64,13 @@ tString alcGetStrUid(const Byte * guid) {
 	str_guid.rewind();
 	
 	str_guid2.write(str_guid.read(8),8); //ID1
-	str_guid2 = str_guid2+"-";
+	str_guid2 += "-";
 	str_guid2.write(str_guid.read(4),4); //ID2
-	str_guid2 = str_guid2+"-";
+	str_guid2 += "-";
 	str_guid2.write(str_guid.read(4),4); //ID3
-	str_guid2 = str_guid2+"-";
+	str_guid2 += "-";
 	str_guid2.write(str_guid.read(4),4); //ID4
-	str_guid2 = str_guid2+"-";
+	str_guid2 += "-";
 	str_guid2.write(str_guid.read(12),12); //ID5
 	assert(str_guid2.size() == 36 && str_guid.tell() == 32);
 	return str_guid2;

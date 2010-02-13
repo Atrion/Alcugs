@@ -192,8 +192,8 @@ namespace alc {
 	
 	class tvAgeInfoStruct : public tvBase {
 	public:
-		tvAgeInfoStruct(const char *filename, const char *instanceName, const char *userDefName, const char *displayName, const Byte *guid);
-		tvAgeInfoStruct(const char *filename, const Byte *guid);
+		tvAgeInfoStruct(const tString &filename, const tString &instanceName, const tString &userDefName, const tString &displayName, const Byte *guid);
+		tvAgeInfoStruct(const tString &filename, const Byte *guid);
 		tvAgeInfoStruct(const tvAgeInfoStruct &);
 		tvAgeInfoStruct(void) : tvBase() { }
 		virtual void store(tBBuf &t);
@@ -210,7 +210,7 @@ namespace alc {
 	
 	class tvSpawnPoint : public tvBase {
 	public:
-		tvSpawnPoint(const char *title, const char *name, const char *cameraStack = "");
+		tvSpawnPoint(const tString &title, const tString &name, const tString &cameraStack = "");
 		tvSpawnPoint(void) : tvBase() { }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
@@ -267,14 +267,14 @@ namespace alc {
 	public:
 		tvCreatableGenericValue(U32 integer);
 		tvCreatableGenericValue(double time);
-		tvCreatableGenericValue(const char *str);
+		tvCreatableGenericValue(const tString &str);
 		tvCreatableGenericValue(void) : tvBase() { }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
 		
-		U32 asInt(void);
-		const char *asString(void);
+		U32 asInt(void) const;
+		const tString &asString(void) const;
 		
 		// format
 		Byte format;
@@ -354,7 +354,7 @@ namespace alc {
 	public:
 		tvItem(Byte id, U32 integer);
 		tvItem(Byte id, double time);
-		tvItem(Byte id, const char *str);
+		tvItem(Byte id, const tString &str);
 		tvItem(tvCreatableStream *stream);
 		tvItem(Byte id, tvNodeRef *ref);
 		tvItem(Byte tpots) : tvBase() { this->tpots = tpots; data = NULL; }
@@ -363,12 +363,12 @@ namespace alc {
 		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
 		
-		U32 asInt(void);
-		const char *asString(void);
-		const Byte *asGuid(void);
-		tvNode *asNode(void);
-		tvNodeRef *asNodeRef(void);
-		tvAgeLinkStruct *asAgeLink(void);
+		U32 asInt(void) const;
+		const tString &asString(void) const;
+		const Byte *asGuid(void) const;
+		tvNode *asNode(void) const;
+		tvNodeRef *asNodeRef(void) const;
+		tvAgeLinkStruct *asAgeLink(void) const;
 		
 		Byte tpots; // 2: generate/parse for non-TPOTS client, everything else: for TPOTS client or the vault server
 		// format

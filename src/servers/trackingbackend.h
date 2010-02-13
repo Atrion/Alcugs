@@ -84,7 +84,7 @@ namespace alc {
 	
 	class tTrackingBackend {
 	public:
-		tTrackingBackend(tUnetBase *net, const char *host, U16 port);
+		tTrackingBackend(tUnetBase *net, const tString &host, U16 port);
 		~tTrackingBackend(void);
 		void applyConfig(void);
 		void setServerManager(tNetSessionList *smgr);
@@ -103,7 +103,7 @@ namespace alc {
 		typedef std::list<tPlayer> tPlayerList;
 		
 		tPlayerList::iterator getPlayer(U32 ki);
-		void spawnServer(const char *age, const Byte *guid, U32 delay = 0);
+		void spawnServer(const tString &age, const Byte *guid, U32 delay = 0);
 		void notifyWaiting(tNetSession *server);
 		void serverFound(tPlayer *player, tNetSession *server);
 		void printStatusHTML(bool dbg = false);
@@ -118,7 +118,7 @@ namespace alc {
 		tUnetBase *net;
 		tNetSessionList *servers;
 		tLog log;
-		const char *host;
+		tString host;
 		U16 port;
 		Byte fakeLobbyGuid[8]; //!< saves the GUID for the fake lobby (for UruVision)
 		

@@ -51,20 +51,15 @@ namespace alc {
 	////IMPLEMENTATION
 	
 	//// tvAgeInfoStruct
-	tvAgeInfoStruct::tvAgeInfoStruct(const char *filename, const char *instanceName, const char *userDefName, const char *displayName, const Byte *guid) : tvBase()
+	tvAgeInfoStruct::tvAgeInfoStruct(const tString &filename, const tString &instanceName, const tString &userDefName, const tString &displayName, const Byte *guid) : tvBase(), filename(filename), instanceName(instanceName), userDefName(userDefName), displayName(displayName)
 	{
 		flags = 0x01 | 0x02 | 0x04 | 0x08 | 0x20; // instanceName, filename, GUID, user defined name, display name
-		this->filename.writeStr(filename);
-		this->instanceName.writeStr(instanceName);
-		this->userDefName.writeStr(userDefName);
-		this->displayName.writeStr(displayName);
 		memcpy(this->guid, guid, 8);
 	}
 	
-	tvAgeInfoStruct::tvAgeInfoStruct(const char *filename, const Byte *guid) : tvBase()
+	tvAgeInfoStruct::tvAgeInfoStruct(const tString &filename, const Byte *guid) : tvBase(), filename(filename)
 	{
 		flags =  0x02 | 0x04; // filename, GUID
-		this->filename.writeStr(filename);
 		memcpy(this->guid, guid, 8);
 	}
 	
@@ -164,12 +159,9 @@ namespace alc {
 	}
 	
 	//// tvSpawnPoint
-	tvSpawnPoint::tvSpawnPoint(const char *title, const char *name, const char *cameraStack)
+	tvSpawnPoint::tvSpawnPoint(const tString &title, const tString &name, const tString &cameraStack) : title(title), name(name), cameraStack(cameraStack)
 	{
 		flags = 0x00000007;
-		this->title.writeStr(title);
-		this->name.writeStr(name);
-		this->cameraStack.writeStr(cameraStack);
 	}
 	
 	void tvSpawnPoint::store(tBBuf &t)
@@ -366,10 +358,9 @@ namespace alc {
 		this->time = time;
 	}
 	
-	tvCreatableGenericValue::tvCreatableGenericValue(const char *str) : tvBase()
+	tvCreatableGenericValue::tvCreatableGenericValue(const tString &str) : tvBase(), str(str)
 	{
 		format = DUruString;
-		this->str.writeStr(str);
 	}
 	
 	void tvCreatableGenericValue::store(tBBuf &t)
@@ -409,18 +400,18 @@ namespace alc {
 		}
 	}
 	
-	U32 tvCreatableGenericValue::asInt(void)
+	U32 tvCreatableGenericValue::asInt(void) const
 	{
 		if (format != DInteger)
 			throw txProtocolError(_WHERE("expected a GenericValue.format of 0x%02X (DInteger) but got 0x%02X", DInteger, format));
 		return integer;
 	}
 	
-	const char *tvCreatableGenericValue::asString(void)
+	const tString &tvCreatableGenericValue::asString(void) const
 	{
 		if (format != DUruString)
 			throw txProtocolError(_WHERE("expected a GenericValue.format of 0x%02X (DUruString) but got 0x%02X", DUruString, format));
-		return str.c_str();
+		return str;
 	}
 	
 	void tvCreatableGenericValue::asHtml(tLog *log, bool /*shortLog*/)
@@ -852,7 +843,7 @@ namespace alc {
 			filename = alcStrFiltered(filename); // don't trust user input
 			path = log->getDir() + "data/";
 			alcMkdir(path, 00750); // make sure the path exists
-			path = path+filename;
+			path += filename;
 			// save the file
 			tFBuf file;
 			file.open(path.c_str(), "wb");
@@ -893,7 +884,7 @@ namespace alc {
 			filename = alcStrFiltered(filename); // don't trust user input
 			path = log->getDir() + "data/";
 			alcMkdir(path, 00750); // make sure the path exists
-			path = path+filename;
+			path += filename;
 			// save the file
 			tFBuf file;
 			file.open(path.c_str(), "wb");
@@ -971,7 +962,7 @@ namespace alc {
 		data = new tvCreatableGenericValue(time);
 	}
 	
-	tvItem::tvItem(Byte id, const char *str)
+	tvItem::tvItem(Byte id, const tString &str)
 	{
 		this->id = id;
 		type = plCreatableGenericValue;
@@ -1041,42 +1032,42 @@ namespace alc {
 		t.put(*data);
 	}
 	
-	U32 tvItem::asInt(void)
+	U32 tvItem::asInt(void) const
 	{
 		if (type != plCreatableGenericValue)
 			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a plCreatableGenericValue", id, alcGetPlasmaType(type)));
 		return static_cast<tvCreatableGenericValue *>(data)->asInt();
 	}
 	
-	const char *tvItem::asString(void)
+	const tString &tvItem::asString(void) const
 	{
 		if (type != plCreatableGenericValue)
 			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a plCreatableGenericValue", id, alcGetPlasmaType(type)));
 		return static_cast<tvCreatableGenericValue *>(data)->asString();
 	}
 	
-	const Byte *tvItem::asGuid(void)
+	const Byte *tvItem::asGuid(void) const
 	{
 		if (type != plServerGuid)
 			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a plServerGuid", id, alcGetPlasmaType(type)));
 		return static_cast<tvServerGuid *>(data)->guid;
 	}
 	
-	tvNode *tvItem::asNode(void)
+	tvNode *tvItem::asNode(void) const
 	{
 		if (type != plVaultNode)
 			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a plVaultNode", id, alcGetPlasmaType(type)));
 		return static_cast<tvNode *>(data);
 	}
 	
-	tvNodeRef *tvItem::asNodeRef(void)
+	tvNodeRef *tvItem::asNodeRef(void) const
 	{
 		if (type != plVaultNodeRef)
 			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a plVaultNodeRef", id, alcGetPlasmaType(type)));
 		return static_cast<tvNodeRef *>(data);
 	}
 	
-	tvAgeLinkStruct *tvItem::asAgeLink(void)
+	tvAgeLinkStruct *tvItem::asAgeLink(void) const
 	{
 		if (type != plAgeLinkStruct)
 			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a plAgeLinkStruct", id, alcGetPlasmaType(type)));
@@ -1239,17 +1230,17 @@ namespace alc {
 	{
 		if (!log->doesPrint()) return; // don't do anything if log is disabled
 		
-		char clientDesc[512];
+		tString clientDesc;
 		if (ki) // we're in the vault server and the "client" is only forwarding
-			snprintf(clientDesc, sizeof(clientDesc), "KI %d, routed by %s", ki, client ? client->str().c_str() : "?");
+			clientDesc.printf("KI %d, routed by %s", ki, client ? client->str().c_str() : "?");
 		else if (client)
-			alcStrncpy(clientDesc, client->str().c_str(), sizeof(clientDesc)-1);
+			clientDesc = client->str();
 		else
-			alcStrncpy(clientDesc, "?", sizeof(clientDesc)-1);
+			clientDesc = "?";
 		if (clientToServer)
-			log->print("<h2 style='color:blue'>%s: From client (%s) to vault</h2>\n", alcGetStrTime().c_str(), clientDesc);
+			log->print("<h2 style='color:blue'>%s: From client (%s) to vault</h2>\n", alcGetStrTime().c_str(), clientDesc.c_str());
 		else
-			log->print("<h2 style='color:green'>%s: From vault to client (%s)</h2>\n", alcGetStrTime().c_str(), clientDesc);
+			log->print("<h2 style='color:green'>%s: From vault to client (%s)</h2>\n", alcGetStrTime().c_str(), clientDesc.c_str());
 		asHtml(log, shortLog);
 		log->print("<hr>\n\n");
 		log->flush();

@@ -45,35 +45,33 @@ static char tvalcSystemInfo[500];
 
 static bool tvalcVerInit=false;
 
-void _alcVersionInitVars() {
+static void _alcVersionInitVars() {
 	if(tvalcVerInit) return;
 	char p[200];
-	char * p1=tvalcVerTextShort;
-	char * p2=tvalcVerText;
-	char * p3=tvalcSystemInfo;
 	//short
-	sprintf(p1,"%s\nId: %s\n",alcNAME,alcID);
+	sprintf(tvalcVerTextShort,"%s\nId: %s\n",alcNAME,alcID);
+	
 	sprintf(p,"Alcugs %s %s - Version %s\n",alcBUILDINFO,_PLATFORM_,alcSTR_VER);
-	strcat(p1,p);
+	strcat(tvalcVerTextShort,p);
+	
 	sprintf(p,"Unet 3+ Protocol %i.%i\n",alcPROTO_MAX_VER,alcPROTO_MIN_VER);
-	strcat(p1,p);
+	strcat(tvalcVerTextShort,p);
 	//long
-	sprintf(p2,"%s",alcLicenseTextShort());
-	sprintf(p,"%s","Alcugs Project - ");
-	strcat(p2,p);
-	strcat(p2,p1);
+	strcpy(tvalcVerText,alcLicenseTextShort());
+	strcat(tvalcVerText,"Alcugs Project - ");
+	strcat(tvalcVerText,tvalcVerTextShort);
 	#ifndef __WIN32__
-	struct utsname buf;
-	uname(&buf);
-	char *domainname;
-	#ifdef _GNU_SOURCE // this from the linux uname(2) man page
-	domainname = buf.domainname;
+		struct utsname buf;
+		uname(&buf);
+		char *domainname;
+		#ifdef _GNU_SOURCE // this from the linux uname(2) man page
+		domainname = buf.domainname;
+		#else
+		domainname = "";
+		#endif
+		sprintf(tvalcSystemInfo,"%s %s %s %s %s %s",buf.sysname,buf.nodename,buf.release,buf.version,buf.machine,domainname);
 	#else
-	domainname = "";
-	#endif
-	sprintf(p3,"%s %s %s %s %s %s",buf.sysname,buf.nodename,buf.release,buf.version,buf.machine,domainname);
-	#else
-	sprintf(p3,"Unable to determine system info");
+		sprintf(tvalcSystemInfo,"Unable to determine system info");
 	#endif
 	tvalcVerInit = true;
 }

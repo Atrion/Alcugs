@@ -35,7 +35,7 @@ namespace alc {
 	class tmCustomSetGuid : public tmMsgBase {
 	public:
 		tmCustomSetGuid(tNetSession *u);
-		tmCustomSetGuid(tNetSession *u, const char *serverGuid, const char *age, const char *externalIp, U16 spawnStart, U16 spawnStop);
+		tmCustomSetGuid(tNetSession *u, const tString &serverGuid, const tString &age, const tString &externalIp, U16 spawnStart, U16 spawnStop);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual tString str() const;
@@ -61,7 +61,7 @@ namespace alc {
 	class tmCustomFindServer : public tmMsgBase { // also used by vault
 	public:
 		tmCustomFindServer(tNetSession *u);
-		tmCustomFindServer(tNetSession *u, const tmCustomVaultFindAge &findAge, const char *serverGuid, const tString &age);
+		tmCustomFindServer(tNetSession *u, const tmCustomVaultFindAge &findAge, const tString &serverGuid, const tString &age);
 		tmCustomFindServer(tNetSession *u, const tmCustomFindServer &findServer);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
@@ -74,7 +74,7 @@ namespace alc {
 	class tmCustomForkServer : public tmMsgBase {
 	public:
 		tmCustomForkServer(tNetSession *u);
-		tmCustomForkServer(tNetSession *u, U16 port, const char *serverGuid, const char *name);
+		tmCustomForkServer(tNetSession *u, U16 port, const tString &serverGuid, const tString &name);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual tString str() const;
@@ -87,7 +87,7 @@ namespace alc {
 	class tmCustomServerFound : public tmMsgBase {
 	public:
 		tmCustomServerFound(tNetSession *u);
-		tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U32 sid, U16 port, const char *ipStr, const char *serverGuid, const char *name);
+		tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U32 sid, U16 port, const tString &ipStr, const tString &serverGuid, const tString &name);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual tString str() const;

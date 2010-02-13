@@ -40,7 +40,7 @@ namespace alc {
 	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
-	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u, const char *serverGuid, const char *age, const char *externalIp, U16 spawnStart, U16 spawnStop)
+	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u, const tString &serverGuid, const tString &age, const tString &externalIp, U16 spawnStart, U16 spawnStop)
 	 : tmMsgBase(NetMsgCustomSetGuid, plNetAck | plNetVersion, u), serverGuid(serverGuid), age(age), externalIp(externalIp)
 	{
 		this->spawnStart = spawnStart;
@@ -124,7 +124,7 @@ namespace alc {
 	tmCustomFindServer::tmCustomFindServer(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
-	tmCustomFindServer::tmCustomFindServer(tNetSession *u, const tmCustomVaultFindAge &findAge, const char *serverGuid, const tString &age)
+	tmCustomFindServer::tmCustomFindServer(tNetSession *u, const tmCustomVaultFindAge &findAge, const tString &serverGuid, const tString &age)
 	 : tmMsgBase(NetMsgCustomFindServer, plNetX | plNetKi | plNetAck | plNetSid, u), serverGuid(serverGuid), age(age)
 	{
 		this->ki = findAge.ki;
@@ -169,7 +169,7 @@ namespace alc {
 	tmCustomForkServer::tmCustomForkServer(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
-	tmCustomForkServer::tmCustomForkServer(tNetSession *u, U16 port, const char *serverGuid, const char *name)
+	tmCustomForkServer::tmCustomForkServer(tNetSession *u, U16 port, const tString &serverGuid, const tString &name)
 	: tmMsgBase(NetMsgCustomForkServer, plNetAck | plNetVersion, u), serverGuid(serverGuid), age(name)
 	{
 		this->x = 0;
@@ -207,7 +207,7 @@ namespace alc {
 	tmCustomServerFound::tmCustomServerFound(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
-	tmCustomServerFound::tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U32 sid, U16 port, const char *ipStr, const char *serverGuid, const char *name)
+	tmCustomServerFound::tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U32 sid, U16 port, const tString &ipStr, const tString &serverGuid, const tString &name)
 	: tmMsgBase(NetMsgCustomServerFound, plNetAck | plNetX | plNetKi | plNetVersion | plNetSid, u), ipStr(ipStr), serverGuid(serverGuid), age(name)
 	{
 		this->x = x;

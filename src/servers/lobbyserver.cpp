@@ -51,7 +51,7 @@ namespace alc {
 	////IMPLEMENTATION
 	tUnetLobbyServer::tUnetLobbyServer(void) : tUnetLobbyServerBase(KLobby)
 	{
-		strcpy(serverName, "Lobby");
+		serverName = "Lobby";
 	}
 	
 	void tUnetLobbyServer::onApplyConfig(void)

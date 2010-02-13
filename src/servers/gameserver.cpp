@@ -54,10 +54,9 @@ namespace alc {
 	{
 		// find out which age we are supposed to host
 		tConfig *cfg = alcGetMain()->config();
-		tString var = cfg->getVar("age_filename");
-		if (var.size() < 2) throw txBase(_WHERE("an age name must be set"));
-		alcStrncpy(serverName, var.c_str(), sizeof(serverName)-1);
-		var = cfg->getVar("age_guid");
+		serverName = cfg->getVar("age_filename");
+		if (serverName.size() < 2) throw txBase(_WHERE("an age name must be set"));
+		tString var = cfg->getVar("age_guid");
 		if (var.size() != 16) throw txBase(_WHERE("an age GUID must be set"));
 		alcGetHexUid(serverGuid, var);
 		
@@ -192,7 +191,7 @@ namespace alc {
 				if (node->flagB & MlStr64_1) { // avatar name changed
 					log->log("%s is now called %s\n", u->str().c_str(), node->lStr1.c_str());
 					// update member list
-					alcStrncpy(u->avatar, node->lStr1.c_str(), sizeof(u->avatar)-1);
+					u->avatar = node->lStr1.c_str();
 					bcastMemberUpdate(u, /*isJoined*/true);
 				}
 				// update tracking server status
@@ -278,7 +277,7 @@ namespace alc {
 			}
 			else if (reason == RLeaving) { // the player is going on to another age, so he's not really offline
 				// update online time
-				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, alcGetStrGuid(serverGuid).c_str(), serverName, /* offline but will soon come back */ 2, u->onlineTime());
+				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, alcGetStrGuid(serverGuid), serverName, /* offline but will soon come back */ 2, u->onlineTime());
 				send(vaultStatus);
 			}
 			else { // the player really went offline

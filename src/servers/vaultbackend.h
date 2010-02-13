@@ -138,17 +138,17 @@ namespace alc {
 		void broadcast(tvMessage &msg, U32 node, U32 origKi = 0, U32 origMgr = 0);
 		
 		/** Find oit if an age is private (used by GUID generation) */
-		bool isAgePrivate(const char *age) const;
+		bool isAgePrivate(const tString &age) const;
 		
 		/** Generate the GUID for an age */
-		bool generateGuid(Byte *guid, const char *age, U32 ki);
+		bool generateGuid(Byte *guid, const tString &age, U32 ki);
 	
 		tVaultDB *vaultDB;
 		char vaultFolderName[17];
 		U32 adminNode;
 		
 		int instanceMode;
-		char privateAges[1024];
+		tString privateAges; // msut start and end with a comma
 		
 		tLog log, logHtml;
 		bool shortHtml;

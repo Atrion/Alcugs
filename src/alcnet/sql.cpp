@@ -39,30 +39,13 @@
 
 namespace alc {
 
-tSQL::tSQL(const char *host, U16 port, const char *username, const char *password, const char *dbname, Byte flags, U32 timeout)
+tSQL::tSQL(const tString &host, U16 port, const tString &username, const tString &password, const tString &dbname, Byte flags, U32 timeout)
+ :host(host), username(username), password(password), dbname(dbname),  port(port)
 {
 	this->flags = flags;
 	this->timeout = timeout;
 	connection = NULL;
 	stamp = 0;
-	
-	this->host = static_cast<char *>(malloc( (strlen(host)+1) * sizeof(Byte) ));
-	if (this->host == NULL) throw txNoMem(_WHERE("NoMem"));
-	strcpy(this->host, host);
-	
-	this->port = port;
-	
-	this->username = static_cast<char *>(malloc( (strlen(username)+1) * sizeof(Byte) ));
-	if (this->username == NULL) throw txNoMem(_WHERE("NoMem"));
-	strcpy(this->username, username);
-	
-	this->password = static_cast<char *>(malloc( (strlen(password)+1) * sizeof(Byte) ));
-	if (this->password == NULL) throw txNoMem(_WHERE("NoMem"));
-	strcpy(this->password, password);
-	
-	this->dbname = static_cast<char *>(malloc( (strlen(dbname)+1) * sizeof(Byte) ));
-	if (this->dbname == NULL) throw txNoMem(_WHERE("NoMem"));
-	strcpy(this->dbname, dbname);
 	
 	// initialize logging
 	sql = new tLog;
@@ -71,8 +54,8 @@ tSQL::tSQL(const char *host, U16 port, const char *username, const char *passwor
 		if (flags & SQL_LOGQ) {
 			sql->open("sql.log");
 			sql->log("MySQL driver loaded (%s)\n", __U_SQL_ID);
-			sql->print(" flags: %04X, host: %s, port: %d, user: %s, dbname: %s, using password: ", this->flags, this->host, this->port, this->username, this->dbname);
-			if (password != NULL) { sql->print("yes\n"); }
+			sql->print(" flags: %04X, host: %s, port: %d, user: %s, dbname: %s, using password: ", this->flags, this->host.c_str(), this->port, this->username.c_str(), this->dbname.c_str());
+			if (!password.isEmpty()) { sql->print("yes\n"); }
 			else { sql->print("no\n"); }
 			sql->print(" MySQL client: %s\n\n", mysql_get_client_info());
 			sql->flush();
@@ -87,10 +70,6 @@ tSQL::~tSQL(void)
 	disconnect();
 	delete sql;
 	if (err != alcGetMain()->err()) delete err;
-	free(host);
-	free(username);
-	free(password);
-	free(dbname);
 }
 
 void tSQL::printError(const char *msg)
@@ -111,7 +90,7 @@ bool tSQL::connect(bool openDatabase)
 		throw txNoMem(_WHERE("not enough memory to create MySQL handle"));
 	
 	stamp = time(NULL);
-	return mysql_real_connect(connection, host, username, password, openDatabase ? dbname : NULL, port, NULL, 0);
+	return mysql_real_connect(connection, host.c_str(), username.c_str(), password.isEmpty() ? NULL : password.c_str(), openDatabase ? dbname.c_str() : NULL, port, NULL, 0);
 }
 
 void tSQL::disconnect(void)
@@ -135,19 +114,21 @@ bool tSQL::prepare(void)
 		disconnect();
 		if (!connect(false)) return false; // not even that works, giving up
 		
-		char str[400];
-		snprintf(str, sizeof(str), "CREATE DATABASE %s", dbname);
-		if (!query(str, "create database", false)) // if we can't create it, stop
+		tString queryStr;
+		queryStr.printf("CREATE DATABASE %s", dbname.c_str());
+		if (!query(queryStr, "create database", false)) // if we can't create it, stop
 			return false;
-		snprintf(str, sizeof(str), "USE %s", dbname);
-		if (!query(str, "select database", false))
+		
+		queryStr.clear();
+		queryStr.printf("USE %s", dbname.c_str());
+		if (!query(queryStr, "select database", false))
 			return false;
 		return query("SET sql_mode=STRICT_ALL_TABLES", "set strict mode", false);
 	}
 	return false;
 }
 
-bool tSQL::query(const char *str, const char *desc, bool throwOnError)
+bool tSQL::query(const tString &str, const char *desc, bool throwOnError)
 {
 	if (connection == NULL) {
 		if (!prepare()) { // DANGER: possible endless loop (query calls prepare calls query...)
@@ -157,12 +138,12 @@ bool tSQL::query(const char *str, const char *desc, bool throwOnError)
 	}
 	
 	if (flags & SQL_LOGQ) {
-		sql->log("SQL query (%s): %s\n", desc, str);
+		sql->log("SQL query (%s): %s\n", desc, str.c_str());
 		sql->flush();
 	}
 	
 	stamp = time(NULL);
-	if (!mysql_query(connection, str)) return true; // if everything worked fine, we're done
+	if (!mysql_query(connection, str.c_str())) return true; // if everything worked fine, we're done
 
 	// there was an error - print it
 	printError(desc);
@@ -172,7 +153,7 @@ bool tSQL::query(const char *str, const char *desc, bool throwOnError)
 		sql->log("Reconnecting...\n"); sql->flush();
 		disconnect();
 		connect(true);
-		if (!mysql_query(connection, str)) return true; // it worked on the 2nd try
+		if (!mysql_query(connection, str.c_str())) return true; // it worked on the 2nd try
 		// failed again... print the error
 		printError(desc);
 	}
@@ -198,10 +179,14 @@ tString tSQL::escape(const char *str)
 	return tString(escaped_str);
 }
 
-void tSQL::escape(char *out, const Byte *data, int size)
+tString tSQL::escape(const Byte *data, int size)
 {
 	if (connection == NULL) throw txDatabaseError(_WHERE("can't escape a string"));
+	char *out = new char[2*size+1];
 	mysql_real_escape_string(connection, out, reinterpret_cast<const char *>(data), size);
+	tString res(out);
+	delete out;
+	return res;
 }
 
 int tSQL::insertId(void)
@@ -243,7 +228,7 @@ tSQL *tSQL::createFromConfig(void)
 	if (!var.isEmpty())
 		timeout = var.asU32();
 	
-	return new tSQL(host.c_str(), port, user.c_str(), password.c_str(), dbname.c_str(), flags, timeout);
+	return new tSQL(host, port, user, password, dbname, flags, timeout);
 }
 
 }

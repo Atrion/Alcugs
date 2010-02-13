@@ -52,7 +52,7 @@ public:
 	tUnetLobbyServerBase(Byte whoami);
 	
 	inline const Byte *getGuid() { return serverGuid; }
-	inline const char *getName() { return serverName; }
+	inline const tString &getName() { return serverName; }
 protected:
 	virtual void onStart(void);
 	virtual void onIdle(bool idle);
@@ -70,14 +70,14 @@ protected:
 	tNetSession *getServer(Byte dst);
 
 	Byte serverGuid[8]; //!< This system's guid (age guid) (in Hex)
-	char serverName[200]; //!< The system/server name, normally the age filename
+	tString serverName; //!< The system/server name, normally the age filename
 
 protected:
 	U16 spawnStart, spawnStop;
 	const U32 authedTimeout;
 
 private:
-	bool setActivePlayer(tNetSession *u, U32 ki, U32 x, const char *avatar);
+	bool setActivePlayer(tNetSession *u, U32 ki, U32 x, const tString &avatar);
 	tNetSessionIte reconnectPeer(Byte dst); //!< establishes a connection to that service (remember to set the corresponding gone variable to 0)
 
 	tNetSessionIte authIte, trackingIte, vaultIte;
@@ -88,7 +88,7 @@ private:
 
 	bool allowUU;
 	U32 loadingTimeout;
-	char linkLog[512];
+	tString linkLog;
 };
 	
 } //End alc namespace

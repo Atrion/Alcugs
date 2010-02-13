@@ -51,7 +51,6 @@ namespace alc {
 	tUnetLobbyServerBase::tUnetLobbyServerBase(Byte whoami) : tUnetServerBase(whoami), authedTimeout(30) /* 30seconds for authenticated clients */
 	{
 		memset(serverGuid, 0, 8);
-		serverName[0] = 0;
 		auth_gone = tracking_gone = vault_gone = 0;
 		vaultLogShort = false;
 	}
@@ -70,9 +69,7 @@ namespace alc {
 		
 		var = cfg->getVar("allow_uu_clients");
 		allowUU = (var.isEmpty() || var.asByte()); // per default, UU clients are allowed
-		var = cfg->getVar("tmp.link_log");
-		if (!var.isEmpty()) alcStrncpy(linkLog, var.c_str(), sizeof(linkLog)-1);
-		else linkLog[0] = 0;
+		linkLog = cfg->getVar("tmp.link_log");
 		
 		var = cfg->getVar("spawn.start");
 		if (var.isEmpty()) spawnStart = 5001;
@@ -115,7 +112,7 @@ namespace alc {
 		}
 	}
 	
-	bool tUnetLobbyServerBase::setActivePlayer(tNetSession *u, U32 ki, U32 x, const char *avatar)
+	bool tUnetLobbyServerBase::setActivePlayer(tNetSession *u, U32 ki, U32 x, const tString &avatar)
 	{
 		tNetSession *client = smgr->find(ki);
 		smgr->rewind();
@@ -126,7 +123,7 @@ namespace alc {
 				err->log("Active player is set twice for %s\n", u->str().c_str());
 		}
 		
-		if (whoami == KGame && avatar[0] == 0) // empty avatar names are not allowed in game server
+		if (whoami == KGame && !avatar.isEmpty()) // empty avatar names are not allowed in game server
 			throw txProtocolError(_WHERE("Someone with KI %d is trying to set an empty avatar name, but I\'m a game server. Kick him.", ki));
 	
 		tNetSession *trackingServer = getServer(KTracking);
@@ -136,7 +133,7 @@ namespace alc {
 		}
 		
 		// save the data
-		alcStrncpy(u->avatar, avatar, sizeof(u->avatar)-1);
+		u->avatar = avatar;
 		u->ki = ki;
 		
 		// tell tracking
@@ -227,8 +224,8 @@ namespace alc {
 		
 		if (dst == KTracking) {
 			tString var = cfg->getVar("public_address");
-			if (var.isEmpty()) log->log("WARNING: No public address set, using bind address %s\n", bindaddr);
-			tmCustomSetGuid setGuid(session, alcGetStrGuid(serverGuid).c_str(), serverName, var.c_str(), whoami == KGame ? 0 : spawnStart, whoami == KGame ? 0 : spawnStop);
+			if (var.isEmpty()) log->log("WARNING: No public address set, using bind address %s\n", bindaddr.c_str());
+			tmCustomSetGuid setGuid(session, alcGetStrGuid(serverGuid), serverName, var, whoami == KGame ? 0 : spawnStart, whoami == KGame ? 0 : spawnStop);
 			send(setGuid);
 		}
 		
@@ -324,7 +321,7 @@ namespace alc {
 				md5buffer.compute();
 		
 				// save data in session
-				alcStrncpy(u->name, authHello.account.c_str(), sizeof(u->name)-1);
+				u->name = authHello.account;
 				memcpy(u->challenge, md5buffer.read(16), 16);
 				u->buildType = authHello.release;
 				
@@ -374,7 +371,7 @@ namespace alc {
 				// find the client's session
 				tNetSession *client = smgr->get(authResponse.sid);
 				// verify account name and session state
-				if (!client || client->getAuthenticated() != 10 || client->getPeerType() != 0 || strncmp(client->name, authResponse.login.c_str(), 199) != 0) {
+				if (!client || client->getAuthenticated() != 10 || client->getPeerType() != 0 || client->name != authResponse.login) {
 					err->log("ERR: Got CustomAuthResponse for player %s but can't find his session.\n", authResponse.login.c_str());
 					return 1;
 				}
@@ -382,7 +379,7 @@ namespace alc {
 				// send NetMsgAccountAuthenticated to client
 				if (authResponse.result == AAuthSucceeded) {
 					memcpy(client->uid, authResponse.uid, 16);
-					client->setAuthData(authResponse.accessLevel, authResponse.passwd.c_str());
+					client->setAuthData(authResponse.accessLevel, authResponse.passwd);
 					client->setTimeout(loadingTimeout); // use higher timeout - the client might be in the lobby (waiting for the user to work with the GUI) or loading an age
 					
 					tmAccountAutheticated accountAuth(client, authResponse.x, AAuthSucceeded, serverGuid);
@@ -427,7 +424,7 @@ namespace alc {
 				}
 				
 				if (u->getAccessLevel() <= AcAdmin) {
-					setActivePlayer(u, setPlayer.ki, setPlayer.x, setPlayer.avatar.c_str());
+					setActivePlayer(u, setPlayer.ki, setPlayer.x, setPlayer.avatar);
 				}
 				else {
 					// ask the vault server about this KI
@@ -471,7 +468,7 @@ namespace alc {
 				}
 				
 				// it is correct, so tell everyone about it
-				setActivePlayer(client, kiChecked.ki, kiChecked.x, kiChecked.avatar.c_str());
+				setActivePlayer(client, kiChecked.ki, kiChecked.x, kiChecked.avatar);
 				
 				return 1;
 			}
@@ -566,10 +563,10 @@ namespace alc {
 					throw txProtocolError(_WHERE("Linking as CCR is not allowed"));
 				
 				// if asked to do so, log the linking
-				if (linkLog[0]) {
-					FILE *f = fopen(linkLog, "a");
+				if (!linkLog.isEmpty()) {
+					FILE *f = fopen(linkLog.c_str(), "a");
 					if (f) {
-						fprintf(f, "Player %s links from %s to: %s\n", u->name, serverName, ageLink.str().c_str());
+						fprintf(f, "Player %s links from %s to: %s\n", u->name.c_str(), serverName.c_str(), ageLink.str().c_str());
 						fclose(f);
 					}
 				}
