@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs H'uru server                                                       *
 *                                                                              *
-*    Copyright (C) 2004-2005  The Alcugs H'uru Server Team                     *
+*    Copyright (C) 2004-2010  The Alcugs H'uru Server Team                     *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -40,10 +40,29 @@
 
 namespace alc {
 
-class tParserBase :public tBaseType {
+class tStringTokenizer {
 public:
-	virtual void store(tString &t)=0;
-	virtual void stream(tString &t) const=0;
+	tStringTokenizer(const tString &text) : str(text), line(0), col(0), sep('=') { str.rewind(); }
+
+	inline U16 getLineNum() { return line; }
+	inline U16 getColumnNum() { return col; }
+	inline void setSeparator(char w) { sep=w; }
+	inline bool eof(void) { return str.eof(); }
+	
+	/** \brief returns a line
+			\param nl If true, it will also append the \\n if it's present
+			\param slash If false, a \\n followed by an slash will be ignored
+			\return A tString object
+	*/
+	const tString getLine(bool nl=false,bool slash=false);
+	/** \brief returns a token (newline, key, value, separator - but not a space)
+			\return A tStBuf object
+	*/
+	const tString getToken();
+private:
+	tString str;
+	U16 line, col;
+	char sep;
 };
 
 /**
@@ -53,13 +72,13 @@ public:
 	# comment
 	; comment
 */
-class tSimpleParser :public tParserBase {
+class tSimpleParser : public tBaseType {
 public:
 	tSimpleParser();
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	virtual void store(tString &t);
-	virtual void stream(tString &t) const;
+	virtual void store(const tString &str);
+	virtual void stream(tString &str) const;
 	/**
 		\brief Computes the size, runs the same code as stream
 	*/
@@ -68,7 +87,6 @@ public:
 	tConfig * getConfig() const { return cfg; }
 protected:
 	tConfig * cfg;
-	char sep;
 };
 
 /**
@@ -79,14 +97,14 @@ protected:
 	key = "value1",value2
 	key[1] = "var1","var2"
 */
-class tXParser :public tSimpleParser {
+class tXParser : public tSimpleParser {
 public:
 	tXParser(bool override = true);
 	virtual ~tXParser() {}
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	virtual void store(tString &t);
-	virtual void stream(tString &t) const;
+	virtual void store(const tString &str);
+	virtual void stream(tString &str) const;
 	void setBasePath(const tString & base);
 private:
 	bool override;

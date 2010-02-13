@@ -562,7 +562,8 @@ namespace alc {
 	14: find equal sign after DISPLAYOPTION
 	15: find displayoption data
 */
-		tString s(sdlContent), c;
+		tString c;
+		tStringTokenizer s = tString(sdlContent);
 		while (!s.eof()) {
 			c = s.getToken(); // getToken already skips comments for us, so we don't have to care about that
 			DBG(9, "Token: %s, state: %d\n", c.c_str(), state);

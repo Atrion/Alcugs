@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2006  The Alcugs Server Team                           *
+*    Copyright (C) 2004-2010  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -224,9 +224,8 @@ public:
 	void close();
 	void open(const char * path,const char * mode="rb");
 	void flush();
-protected:
-	void init();
 private:
+	void init();
 	FILE * f;
 	mutable U32 msize;
 	mutable Byte *xbuf;
@@ -318,22 +317,6 @@ public:
 		return compare("\n") == 0 || compare("\r") == 0 || compare("\n\r") == 0 || compare("\r\n") == 0;
 	}
 	
-	// parse functions
-	void decreaseLineNum();
-	U16 getLineNum();
-	U16 getColumnNum();
-	void setSeparator(char w) { sep=w; }
-	/** \brief returns a line
-			\param nl If true, it will also append the \\n if it's present
-			\param slash If false, a \\n followed by an slash will be ignored
-			\return A tString object
-	*/
-	const tString & getLine(bool nl=false,bool slash=false);
-	/** \brief returns a token (newline, key, value, separator - but not a space)
-			\return A tStBuf object
-	*/
-	const tString & getToken();
-	
 	// path functions
 	void convertSlashesFromWinToUnix();
 	void convertSlashesFromUnixToWin();
@@ -360,8 +343,6 @@ protected:
 	void copy(const char * str);
 	void copy(const tString &t);
 private:
-	U16 l,c;
-	char sep;
 	mutable tString * shot;
 	mutable tString * cache_lower;
 

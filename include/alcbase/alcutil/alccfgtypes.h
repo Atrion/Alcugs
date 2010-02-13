@@ -52,6 +52,7 @@ public:
 	void setVal(const tString & t,U16 x=0,U16 y=0);
 	const tString & getName() const;
 	const tString & getVal(U16 x=0,U16 y=0,bool *found = NULL) const; //!< found tells you whether the value exists
+	bool hasVal(U16 x=0,U16 y=0) const;
 	U16 getRows() const { return y; }
 	U16 getCols() const { return x; }
 	void copy(const tConfigVal & t);

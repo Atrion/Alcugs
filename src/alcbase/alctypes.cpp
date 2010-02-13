@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2006  The Alcugs Server Team                           *
+*    Copyright (C) 2004-2010  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -263,6 +263,7 @@ void tMBuf::getUniqueBuffer(U32 newsize) {
 }
 void tMBuf::copy(const tMBuf &t) {
 	DBG(9,"tMBuf::copy()\n");
+	if (&t == this) return;
 	clear();
 	buf=t.buf;
 	if(buf!=NULL) buf->inc();
@@ -519,11 +520,7 @@ tString::tString(const tMBuf &k) :tMBuf(k) {
 }
 tString::tString(const tString &k) :tMBuf(k) { 
 	DBG(9,"copy two\n");
-	if(this==&k) return;
 	init(); 
-	l=k.l; 
-	c=k.c;
-	sep=k.sep;
 }
 tString::~tString() {
 	delete shot;
@@ -531,18 +528,12 @@ tString::~tString() {
 }
 void tString::init() {
 	DBG(9,"tString::init\n");
-	l=c=0;
-	sep='=';
 	shot=NULL;
 	cache_lower=NULL;
 }
 void tString::copy(const tString &t) {
 	DBG(9,"tString::copy()\n");
-	if(this==&t) return;
 	tMBuf::copy(t);
-	l=t.l;
-	c=t.c;
-	sep=t.sep;
 	delete cache_lower;
 	cache_lower=NULL;
 	delete shot;
@@ -601,15 +592,6 @@ const char * tString::c_str() const {
 	if (shot) delete shot;
 	shot = new tString(*this);
 	return shot->c_str();
-}
-U16 tString::getLineNum() {
-	return l+1;
-}
-U16 tString::getColumnNum() {
-	return c;
-}
-void tString::decreaseLineNum() {
-	l--;
 }
 S32 tString::find(const char cat, bool reverse) const {
 	int i,max;
@@ -784,172 +766,6 @@ const tString & tString::dirname() const {
 	}
 	return *shot;
 }
-const tString & tString::getLine(bool nl,bool slash) {
-	Byte c=0;
-	Byte slashm=0;
-	tString out(255);
-
-	while(!eof()) {
-		c=getByte();
-		if(!slash) {
-			if(c=='\\') {
-				if(slashm) {
-					slashm=0;
-					out.putByte('\\');
-					out.putByte('\\');
-				} else {
-					slashm=1;
-				}
-			} else if(c=='\n') {
-				if(!eof() && getByte()!='\r') seek(-1);
-				this->l++;
-				this->c=0;
-				if(!slashm) {
-					break;
-				}
-				slashm=0;
-				c=' ';
-			} else if(c=='\r') {
-				if(!eof() && getByte()!='\n') seek(-1);
-				this->l++;
-				this->c=0;
-				if(!slashm) {
-					break;
-				}
-				slashm=0;
-				c=' ';
-			} else {
-				if(slashm) {
-					slashm=0;
-					out.putByte('\\');
-				}
-				out.putByte(c);
-			}
-		} else {
-			if(c=='\n') {
-				if(!eof() && getByte()!='\r') seek(-1);
-				this->l++;
-				this->c=0;
-				break;
-			} else if(c=='\r') {
-				if(!eof() && getByte()!='\n') seek(-1);
-				this->l++;
-				this->c=0;
-				break;
-			} else {
-				out.putByte(c);
-			}
-		}
-	}
-	if(nl) {
-		if(c=='\n' || c=='\r') {
-			out.putByte('\n');
-		}
-	}
-	
-	// use shot only now as functions above might use it, too
-	delete shot;
-	shot=new tString(out);
-	return *shot;
-}
-const tString & tString::getToken() {
-	DBG(9,"tString::getToken()\n");
-	Byte c;
-	Byte slash=0;
-	Byte quote=0;
-	Byte mode=0;
-	tString out(200);
-	//out.hasQuotes(true);
-	//assert(out.hasQuotes());
-	while(!eof()) {
-		c=getByte();
-		this->c++;
-		if(quote==0 && (c=='#' || c==';')) {
-			if (out.size()) { // we already have something in out, dont attach the newline to it but make it the next token
-				this->c--;
-				seek(-1);
-			} else {
-				getLine();
-				out.putByte('\n');
-			}
-			break;
-		} else if(slash==1) {
-			slash=0;
-			if(quote==1 && (c=='n' || c=='r')) {
-				if(c=='n') out.putByte('\n');
-				else out.putByte('\r');
-			} else if(c=='\n' || c=='\r') {
-				if(c=='\n') {
-					if(!eof() && getByte()!='\r') seek(-1);
-					this->l++;
-					this->c=0;
-				} else {
-					if(!eof() && getByte()!='\n') seek(-1);
-					this->l++;
-					this->c=0;
-				}
-			} else {
-				if(quote==1) {
-					out.putByte(c);
-				} else {
-					throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected '\\'\n",l,this->c));
-				}
-			}
-		} else if(c=='\"') {
-			if(quote==1) {
-				quote=0;
-				break;
-			} else {
-				quote=1;
-			}
-		} else if(c=='\n' || c=='\r') {
-			if(mode==1 && quote==0) {
-				seek(-1);
-				c=0;
-				break;
-			} else {
-				//out.putByte(c);
-				out.putByte('\n');
-				if(c=='\n') {
-					if(!eof() && getByte()!='\r') seek(-1);
-					//else out.putByte('\r');
-					this->l++;
-					this->c=0;
-				} else {
-					if(!eof() && getByte()!='\n') seek(-1);
-					//else out.putByte('\n');
-					this->l++;
-					this->c=0;
-				}
-				if(quote==0) {
-					break;
-				}
-			}
-		} else if(c=='\\') {
-			slash=1; 
-		} else if(quote==0 && (c==' ' || c==sep || c==',' || isblank(c))) {
-			if(mode==1) {
-				if(c==sep || c==',') seek(-1);
-				break;
-			} else {
-				if(c==sep || c==',') {
-					out.putByte(c);
-					break;
-				}
-			}
-		} else if(isalpha(c) || isprint(c) || alcIsAlpha(c)) {
-			out.putByte(c);
-			mode=1;
-		} else {
-			throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected character '%c'\n",l,this->c,c));
-		}
-	}
-	// use shot only now as functions above might use it, too
-	delete shot;
-	shot=new tString(out);
-	return *shot;
-}
-
 void tString::writeStr(const char * t) {
 	this->write(t,strlen(t));
 }

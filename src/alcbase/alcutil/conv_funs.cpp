@@ -223,6 +223,7 @@ void alcStrFilter(char * what) {
 
 /** \brief parses a "name[number]" kind of string, setting "t" to the name and returning the number */
 U16 alcParseKey(tString *t) {
+	DBG(9, "alcParseKey() for %s\n", t->c_str());
 	int pos;
 	pos=t->find('[');
 	tString offset;
@@ -230,10 +231,9 @@ U16 alcParseKey(tString *t) {
 	if(!t->endsWith("]")) {
 		throw txParseError(_WHERE("Parse error near %s, malformed var name.\n",t->c_str()));
 	}
-	offset=t->substring(pos,t->size()-pos);
-	offset=offset.strip('[');
-	offset=offset.strip(']');
+	offset=t->substring(pos+1,t->size()-pos-1);
 	*t = t->substring(0, pos);
+	DBG(9, "   result: %s[%s]\n", t->c_str(), offset.c_str());
 	return offset.asU16();
 }
 

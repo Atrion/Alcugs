@@ -118,17 +118,21 @@ const tString & tConfigVal::getName() const {
 	return name;
 }
 const tString & tConfigVal::getVal(U16 x,U16 y,bool *found) const {
+	if (hasVal(x, y)) {
+		if (found) *found = true;
+		return **(values+((this->x*y)+x));
+	}
+	if (found) *found = false;
+	return emptyString;
+}
+bool tConfigVal::hasVal(U16 x,U16 y) const {
 	if(values==NULL || x>=this->x || y>=this->y) {
-		if (found) *found = false;
-		return emptyString;
+		return false;
 	}
-	U16 nx=this->x;
-	if(*(values+((nx*y)+x))==NULL) {
-		if (found) *found = false;
-		return emptyString;
+	if(*(values+((this->x*y)+x))==NULL) {
+		return false;
 	}
-	if (found) *found = true;
-	return **(values+((nx*y)+x));
+	return true;
 }
 void tConfigVal::copy(const tConfigVal &t) {
 	U16 i;
