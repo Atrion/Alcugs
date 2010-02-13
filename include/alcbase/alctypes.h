@@ -138,7 +138,7 @@ public:
 };
 
 /** Buffer with reference control */
-class tRefBuf { // FIXME: merge into tMBuf?
+class tRefBuf {
 public:
 	tRefBuf(U32 csize=1024);
 	~tRefBuf();
@@ -149,7 +149,6 @@ public:
 	inline U32 getRefs() { return refs; }
 	inline Byte *buf() { return buffer; }
 	inline const Byte *buf() const { return buffer; }
-	inline void zero() { memset(buffer,0,msize); }
 private:
 	U32 refs;
 	U32 msize;
@@ -162,7 +161,6 @@ public:
 	tMBuf();
 	tMBuf(const tMBuf &t);
 	explicit tMBuf(tBBuf &t);
-	explicit tMBuf(U32 size);
 	virtual ~tMBuf();
 	
 	// implement interface
@@ -193,20 +191,24 @@ public:
 	inline const Byte *data() const { return msize ? buf->buf() : NULL; }
 	inline bool isEmpty(void) const { return !msize; }
 protected:
+	//! creates a buffer of the given size, with undefined content
+	explicit tMBuf(U32 size);
+	//! write-access to the buffer for sublcasses. Use with caution!
+	inline Byte *volatileData() { return msize ? buf->buf() : NULL; }
 	//! assignment
 	void copy(const tMBuf &t);
 	//! comparison
 	SByte compare(const tMBuf &t) const;
 	//! helper for tString::c_str - use only if msize is at least 1!
 	void addNullTerminator(void) const;
-	
-	// data FIXME private
-	tRefBuf *buf;
-	U32 off;
-	U32 msize; //!< this is the part of the buffer that is actually used, while buf->size() is the currently available size
 private:
 	void init();
 	void getUniqueBuffer(U32 newsize);
+	
+	// data
+	tRefBuf *buf;
+	U32 off;
+	U32 msize; //!< this is the part of the buffer that is actually used, while buf->size() is the currently available size
 };
 
 /** File buffer */
@@ -264,6 +266,8 @@ public:
 	tZBuf(const tMBuf &k) :tMBuf(k) {}
 	void compress();
 	void uncompress(U32 iosize);
+protected:
+	tZBuf(U32 size) : tMBuf(size) {}
 };
 
 /** Md5 buffer */
@@ -272,17 +276,18 @@ public:
 	tMD5Buf() :tMBuf() {}
 	tMD5Buf(tMBuf &k) :tMBuf(k) { this->compute(); }
 	void compute();
+protected:
+	tMD5Buf(U32 size) : tMBuf(size) {}
 };
 
 /** String buffer */
 class tString : public tMBuf {
 public:
-	tString() : tMBuf() {}
-	tString(const char * k);
-	explicit tString(U32 size) : tMBuf(size) {}
-	explicit tString(tBBuf &k) : tMBuf(k) {}
-	explicit tString(const tMBuf &k) : tMBuf(k) {}
-	virtual ~tString() {}
+	inline tString() : tMBuf() {}
+	inline tString(const char * k) : tMBuf() { writeStr(k); }
+	inline explicit tString(tBBuf &k) : tMBuf(k) {}
+	inline explicit tString(const tMBuf &k) : tMBuf(k) {}
+	inline virtual ~tString() {}
 	
 	// interface
 	virtual void store(tBBuf &t);
@@ -353,8 +358,8 @@ public:
 	inline bool operator<=(const char *t) const { return(compare(t)<=0); }
 protected:
 	//! assignment
-	void copy(const char * str);
-	void copy(const tString &t);
+	inline void copy(const char * str) { tMBuf::copy(tString(str)); }
+	inline void copy(const tString &t) { tMBuf::copy(t); }
 private:
 	//! comparison
 	inline SByte compare(const tString &t) const { return tMBuf::compare(t); }

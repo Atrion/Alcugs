@@ -49,52 +49,42 @@ namespace alc {
 
 /* wdys buff */
 void tWDYSBuf::encrypt() {
-	tRefBuf * aux=this->buf;
-	aux->dec();
-	this->buf = new tRefBuf(msize+12+4+8);
-	this->buf->zero();
-	U32 xsize=msize;
-	msize=0;
-	off=0;
-	
-	write("whatdoyousee",sizeof(char)*12);
-	putU32(xsize);
-	write(aux->buf(),xsize);
-	set(16);
-	msize=16;
-	
-	for (U32 i=0; i<xsize; i+=8) {
-		wdys::encodeQuad(reinterpret_cast<U32 *>(this->buf->buf()+off+i),reinterpret_cast<U32 *>(this->buf->buf()+off+i+4));
-		msize+=8;
+	// first, encrypt ourselves in-place (and make sure we are big enough for that by adding zeroes)
+	U32 dataSize = size(), newSize;
+	end();
+	putU32(0);
+	putU32(0);
+	for (newSize=0; newSize<dataSize; newSize+=8) {
+		wdys::encodeQuad(reinterpret_cast<U32 *>(volatileData()+newSize), reinterpret_cast<U32 *>(volatileData()+newSize+4)); // this function encrypts in-place, hence work on a copy
 	}
 	
-	if(aux->getRefs()<1) delete aux;
-	off=0;
+	// and now put it into a new buffer and assign that one to us
+	tWDYSBuf newBuf;
+	newBuf.write("whatdoyousee",sizeof(char)*12);
+	newBuf.putU32(dataSize);
+	newBuf.write(data(),newSize);
+	copy(newBuf);
+	rewind();
 }
 void tWDYSBuf::decrypt(bool mustBeWDYS) {
-	if(memcmp(this->buf->buf(),"whatdoyousee",12) != 0) {
+	// check header
+	if(memcmp(data(),"whatdoyousee",12) != 0) {
 		if (mustBeWDYS) throw txUnexpectedData(_WHERE("NotAWDYSFile!")); 
 		return;
 	}
 	set(12);
 	U32 dsize=getU32();
-	tRefBuf * aux=this->buf;
-	aux->dec();
-	this->buf = new tRefBuf(msize);
-	U32 xsize=msize;
-	msize=0;
-	off=0;
 	
-	write(aux->buf()+16,xsize-16);
-	msize=dsize;
-	off=0;
-	
-	for (U32 i=0; i<msize; i+=8) {
-		wdys::decodeQuad(reinterpret_cast<U32 *>(this->buf->buf()+off+i),reinterpret_cast<U32 *>(this->buf->buf()+off+i+4));
+	// decrypt ourselves in-place
+	for (U32 i=0; i<dsize; i+=8) {
+		wdys::decodeQuad(reinterpret_cast<U32 *>(volatileData()+16+i), reinterpret_cast<U32 *>(volatileData()+16+i+4));
 	}
 	
-	if(aux->getRefs()<1) delete aux;
-	off=0;
+	// put the decrypted data into a new buffer and assign it to us
+	tWDYSBuf newBuf;
+	newBuf.write(data()+16, dsize);
+	copy(newBuf);
+	rewind();
 }
 /* end wdys buff */
 
@@ -114,51 +104,39 @@ void tAESBuf::setM5Key() {
 	memcpy(this->key,key,16);
 }
 void tAESBuf::encrypt() {
-	tRefBuf * aux=this->buf;
-	aux->dec();
-	this->buf = new tRefBuf(msize+4+4+16);
-	this->buf->zero();
-	U32 xsize=msize;
-	msize=0;
-	off=0;
-	
-	putU32(0x0D874288);
-	putU32(xsize);
-	write(aux->buf(),xsize);
-	set(8);
-	msize=8;
-
+	// encrypt the buffer
+	U32 dataSize = size();
+	tAESBuf newBuf(dataSize+8);
 	Rijndael rin;
 	rin.init(Rijndael::ECB,Rijndael::Encrypt,key,Rijndael::Key16Bytes);
-	int res = rin.padEncrypt(aux->buf(),xsize,this->buf->buf()+off);
+	int res = rin.padEncrypt(data(),dataSize,newBuf.volatileData());
 	if(res<0) throw txUnkErr(_WHERE("Rijndael encrypt error"));
-	msize+=res;
 	
-	if(aux->getRefs()<1) delete aux;
-	off=0;
+	// res tells us how many Bytes were really used
+	clear();
+	putU32(0x0D874288);
+	putU32(dataSize);
+	write(newBuf.data(), res);
+	rewind();
 }
 void tAESBuf::decrypt() {
-	this->rewind();
-	if(this->getU32()!=0x0D874288) throw txUnexpectedData(_WHERE("NotAM5CryptedFile!")); 
-	tRefBuf * aux=this->buf;
-	aux->dec();
-	this->buf = new tRefBuf(msize);
-	U32 xsize=msize;
-	msize=0;
-	off=0;
-	
-	write(aux->buf()+8,xsize-8);
-	msize=*reinterpret_cast<U32 *>(aux->buf()+4);
-	off=0;
+	// get the data part
+	rewind();
+	if(getU32()!=0x0D874288) throw txUnexpectedData(_WHERE("NotAM5CryptedFile!"));
+	U32 dataSize = getU32();
+	tAESBuf newBuf(size()-8);
 
+	// decrypt it
 	Rijndael rin;
 	rin.init(Rijndael::ECB,Rijndael::Decrypt,key,Rijndael::Key16Bytes);
-
-	int res = rin.padDecrypt(aux->buf()+8,xsize-8,buf->buf()+off);
+	int res = rin.padDecrypt(data()+8,size()-8,newBuf.volatileData());
 	if(res<0) throw txUnkErr(_WHERE("Rijndael decrypt error %i",res));
+	if(static_cast<U32>(res) != size()-8) throw txUnkErr(_WHERE("Rijndael decrypt error: Size mismatch"));
 
-	if(aux->getRefs()<1) delete aux;
-	off=0;
+	// and use what we need
+	clear();
+	write(newBuf.data(), dataSize);
+	rewind();
 }
 /* end AES buff */
 
@@ -180,9 +158,9 @@ void tUruString::store(tBBuf &t) {
 	} */
 }
 void tUruString::stream(tBBuf &t) const {
-	t.putU16(msize|0xF000);
-	for(U32 i=0; i<msize; i++) {
-		t.putByte(~*(buf->buf()+i));
+	t.putU16(size()|0xF000);
+	for(U32 i=0; i<size(); i++) {
+		t.putByte(~*(data()+i));
 	}
 	
 	/* Myst V encryption

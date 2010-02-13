@@ -416,6 +416,7 @@ void alctypes_fbuf() {
 }
 
 void alctypes_part2() {
+	// tFBuf, tWDYSBuf, tAESBuf
 	tMBuf b1;
 	
 	b1.putU32(5);
@@ -459,9 +460,8 @@ void alctypes_part2() {
 	assert(w2==w1);
 	w2.decrypt();
 	
+	assert(w2.size()==9);
 	assert(b1==w2);
-	
-	b1.putByte(0);
 	
 	f2.open("out.raw");
 	b1.clear();
@@ -470,6 +470,20 @@ void alctypes_part2() {
 	
 	assert(b1==w2);
 	
+	// AES stuff
+	tAESBuf a1;
+	a1.setM5Key();
+	a1.put(b1);
+	a1.encrypt();
+	
+	assert(a1.size() == 24);
+	
+	tAESBuf a2;
+	a2.setM5Key();
+	a2.put(a1);
+	a2.decrypt();
+	
+	assert(a2==b1);
 }
 
 void alctypes_part3() {

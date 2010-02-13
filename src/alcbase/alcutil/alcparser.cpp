@@ -49,7 +49,7 @@ namespace alc {
 tString tStringTokenizer::getLine(bool nl,bool slash) {
 	Byte c=0;
 	Byte slashm=0;
-	tString out(255);
+	tString out;
 
 	while(!str.eof()) {
 		c=str.getByte();
@@ -117,7 +117,7 @@ tString tStringTokenizer::getToken() {
 	Byte slash=0;
 	Byte quote=0;
 	Byte mode=0;
-	tString out(200);
+	tString out;
 	//out.hasQuotes(true);
 	//assert(out.hasQuotes());
 	while(!str.eof()) {

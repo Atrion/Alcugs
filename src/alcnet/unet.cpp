@@ -677,7 +677,7 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 
 	//store message into buffer
 	tMBuf * mbuf;
-	mbuf = new tMBuf(msg->size());
+	mbuf = new tMBuf();
 	mbuf->put(*msg);
 
 	#ifdef ENABLE_MSGDEBUG

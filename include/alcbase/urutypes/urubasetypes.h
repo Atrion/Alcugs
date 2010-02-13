@@ -53,6 +53,8 @@ public:
 	void decrypt();
 	void setKey(const Byte * key);
 	void setM5Key();
+protected:
+	tAESBuf(U32 size) : tMBuf(size) {}
 private:
 	Byte key[16];
 };

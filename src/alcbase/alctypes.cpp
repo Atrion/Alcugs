@@ -53,6 +53,8 @@ namespace md5 {
 
 namespace alc {
 
+static const U32 bufferOversize = 512; // number of Bytes to reserve in addition to the actual need
+
 /* 
 	basicbuffer
 */
@@ -231,17 +233,17 @@ tMBuf::tMBuf(tBBuf &t) {
 	t.set(pos); // restore old pos
 	set(pos);
 }
-tMBuf::tMBuf(U32 size) {
-	DBG(9,"tMBuf(size:%i)\n",size);
-	buf = new tRefBuf(size);
-	msize=off=0;
-}
 tMBuf::tMBuf(const tMBuf &t) {
 	DBG(9,"tMBuf(tMBuf)\n");
 	buf = t.buf;
 	if (buf != NULL) buf->inc();
 	msize = t.msize;
 	off=t.off;
+}
+tMBuf::tMBuf(U32 size) {
+	init();
+	buf = new tRefBuf(size);
+	msize = size;
 }
 tMBuf::~tMBuf() {
 	DBG(9,"~tMBuf()\n");
@@ -250,11 +252,11 @@ tMBuf::~tMBuf() {
 void tMBuf::getUniqueBuffer(U32 newsize) {
 	DBG(6, "cur size: %d, new size: %d\n", msize, newsize);
 	if (buf != NULL && buf->getRefs() == 1) { // check if the buffer is large enough
-		if (buf->size() < newsize) buf->resize(newsize+1024);
+		if (buf->size() < newsize) buf->resize(newsize+bufferOversize);
 		return;
 	}
 	// make unique copy of us
-	tRefBuf *newbuf = new tRefBuf(std::max(msize,newsize+1024)); // don't shrink buffer
+	tRefBuf *newbuf = new tRefBuf(std::max(msize,newsize+bufferOversize)); // don't shrink buffer
 	if (buf) { // copy old buffer if there is one
 		memcpy(newbuf->buf(),buf->buf(),msize);
 		buf->dec(); // decrement old buffer's reference
@@ -468,56 +470,35 @@ void tSBuf::stream(tBBuf &buf) const {
 
 /* tZBuf */
 void tZBuf::compress() {
-	tRefBuf * aux=this->buf;
-	aux->dec();
-	zlib::uLongf comp_size;
-	comp_size=msize+(msize/10)+12;
-	this->buf = new tRefBuf(comp_size);
-	int ret=zlib::compress(this->buf->buf(),&comp_size,aux->buf(),msize);
+	zlib::uLongf comp_size = size()*1.1+12;
+	tZBuf newBuf(comp_size);
+	int ret=zlib::compress(newBuf.volatileData(),&comp_size,data(),size());
 	if(ret!=0) throw txBase(_WHERE("Something terrible happenened compressing the buffer"));
-	if(aux->getRefs()<1) delete aux; // we no longer need the old buffer
-	msize=comp_size; // use new size
-	this->buf->resize(msize);
-	off=0;
+	copy(newBuf);
+	rewind();
 }
 void tZBuf::uncompress(U32 iosize) {
-	tRefBuf * aux=this->buf;
-	aux->dec();
 	zlib::uLongf comp_size=iosize;
-	this->buf = new tRefBuf(comp_size);
-	int ret=zlib::uncompress(this->buf->buf(),&comp_size,aux->buf(),msize);
+	tZBuf newBuf(comp_size);
+	int ret=zlib::uncompress(newBuf.volatileData(),&comp_size,data(),size());
 	if(ret!=0) throw txBase(_WHERE("Something terrible happenened uncompressing the buffer"));
-	msize=comp_size;
-	if(aux->getRefs()<1) delete aux;
-	this->buf->resize(msize);
-	off=0;
 	if (iosize != comp_size)
 		throw txUnexpectedData(_WHERE("tZBuf size mismatch: %i != %i", iosize, comp_size));
+	copy(newBuf);
+	rewind();
 }
 /* end tZBuf */
 
 /* md5 buff */
 void tMD5Buf::compute() {
-	tRefBuf * aux=this->buf;
-	aux->dec();
-	this->buf = new tRefBuf(0x10);
-	md5::MD5(aux->buf(),msize,this->buf->buf());
-	msize=0x10;
-	if(aux->getRefs()<1) delete aux;
-	off=0;
+	tMD5Buf newBuf(0x10);
+	md5::MD5(data(),size(),newBuf.volatileData());
+	copy(newBuf);
+	rewind();
 }
 /* end md5 buf */
 
 /* String buffer */
-tString::tString(const char * k) : tMBuf(200) {
-	writeStr(k);
-}
-void tString::copy(const tString &t) {
-	tMBuf::copy(t);
-}
-void tString::copy(const char * str) {
-	copy(tString(str));
-}
 void tString::store(tBBuf &t)
 {
 	clear();
@@ -528,7 +509,7 @@ void tString::store(tBBuf &t)
 }
 void tString::stream(tBBuf &t) const
 {
-	t.putU16(msize);
+	t.putU16(size());
 	tMBuf::stream(t); // just puts the bytes into the buffer
 }
 SByte tString::compare(const char * str) const {
@@ -539,12 +520,12 @@ SByte tString::compare(const char * str) const {
 		else if (s1) return 1; // we empty
 		else return -1; // the other one empty
 	}
-	SByte out = memcmp(buf->buf(), str, std::min(s1, s2));
+	SByte out = memcmp(data(), str, std::min(s1, s2));
 	if (out != 0 || s1 == s2) return out;
 	return (s1 < s2) ? -1 : 1;
 }
 const char * tString::c_str() const {
-	if (!msize) return "";
+	if (!size()) return "";
 	addNullTerminator();
 	return reinterpret_cast<const char *>(data());
 }
@@ -565,7 +546,7 @@ S32 tString::find(const char cat, bool reverse) const {
 S32 tString::find(const char *str) const {
 	const char *c = strstr(c_str(), str);
 	if (c == NULL) return -1;
-	return (c-reinterpret_cast<const char *>(buf->buf()));
+	return (c-reinterpret_cast<const char *>(data()));
 }
 void tString::convertSlashesFromWinToUnix() {
 #if defined(__WIN32__) or defined(__CYGWIN__)
@@ -615,7 +596,7 @@ tString tString::stripped(Byte what,Byte how) const {
 		}
 		// end now points to the last character to be copied
 	}
-	aux.write(buf->buf()+start, end+1-start);
+	aux.write(data()+start, end+1-start);
 	return aux;
 }
 tString tString::escape() const {
@@ -664,7 +645,7 @@ tString tString::upper() const {
 tString tString::substring(U32 start,U32 len) const {
 	if (len == 0) len = remaining();
 	tString shot;
-	shot.write(buf->buf()+start,len);
+	shot.write(data()+start,len);
 	return shot;
 }
 bool tString::startsWith(const char * pat) const {
