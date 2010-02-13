@@ -177,20 +177,20 @@ namespace alc {
 				if (node->owner != u->ki)
 					throw txProtocolError(_WHERE("changing a foreign player info node is not allowed"));
 				if (u->getAccessLevel() > AcMod)
-					throw txProtocolError(_WHERE("%s is not allowed to change his player info node", u->str()));
+					throw txProtocolError(_WHERE("%s is not allowed to change his player info node", u->str().c_str()));
 				
 				tGameData *data = dynamic_cast<tGameData *>(u->data);
 				if (!u->joined || !data) throw txProtocolError(_WHERE("Player data must be set when player node is changed"));
 				if (node->flagB & MAgeName) { // the hidden/shown status changed
 					bool isHidden = node->ageName.size();
-					if (isHidden) log->log("Player %s just hid\n", u->str());
-					else log->log("Player %s just unhid\n", u->str());
+					if (isHidden) log->log("Player %s just hid\n", u->str().c_str());
+					else log->log("Player %s just unhid\n", u->str().c_str());
 					// update member list
 					data->isHidden = isHidden;
 					bcastMemberUpdate(u, /*isJoined*/true);
 				}
 				if (node->flagB & MlStr64_1) { // avatar name changed
-					log->log("%s is now called %s\n", u->str(), node->lStr1.c_str());
+					log->log("%s is now called %s\n", u->str().c_str(), node->lStr1.c_str());
 					// update member list
 					alcStrncpy(u->avatar, node->lStr1.c_str(), sizeof(u->avatar)-1);
 					bcastMemberUpdate(u, /*isJoined*/true);
@@ -198,7 +198,7 @@ namespace alc {
 				// update tracking server status
 				tNetSession *trackingServer = getServer(KTracking);
 				if (!trackingServer) {
-					err->log("ERR: I've got to set player %s to hidden, but tracking is unavailable.\n", u->str());
+					err->log("ERR: I've got to set player %s to hidden, but tracking is unavailable.\n", u->str().c_str());
 				}
 				else {
 					// tell tracking
@@ -210,7 +210,7 @@ namespace alc {
 				if (node->index != u->ki)
 					throw txProtocolError(_WHERE("changing a foreign player mgr node is not allowed"));
 				if (u->getAccessLevel() > AcMod)
-					throw txProtocolError(_WHERE("%s is not allowed to change his player mgr node", u->str()));
+					throw txProtocolError(_WHERE("%s is not allowed to change his player mgr node", u->str().c_str()));
 			}
 		}
 	}
@@ -274,7 +274,7 @@ namespace alc {
 		if (u->getPeerType() == KClient && u->ki != 0) { // if necessary, tell the others about it
 			tNetSession *vaultServer = getServer(KVault);
 			if (!vaultServer) {
-				err->log("ERR: I've got to update a player\'s (%s) status for the vault server, but it is unavailable.\n", u->str());
+				err->log("ERR: I've got to update a player\'s (%s) status for the vault server, but it is unavailable.\n", u->str().c_str());
 			}
 			else if (reason == RLeaving) { // the player is going on to another age, so he's not really offline
 				// update online time
@@ -303,7 +303,7 @@ namespace alc {
 			
 			// remove player from player list if he is still on there
 			if (u->data) {
-				log->log("WARN: Player %s did not log off correctly\n", u->str());
+				log->log("WARN: Player %s did not log off correctly\n", u->str().c_str());
 				bcastMemberUpdate(u, /*isJoined*/false);
 				delete u->data;
 				u->data = NULL;
@@ -450,7 +450,7 @@ namespace alc {
 			case NetMsgJoinReq:
 			{
 				if (!u->ki) {
-					err->log("ERR: %s sent a NetMsgJoinReq but did not yet set his KI. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgJoinReq but did not yet set his KI. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
 				
@@ -462,7 +462,7 @@ namespace alc {
 				// the player is joined - tell tracking and (perhaps) vault
 				tNetSession *trackingServer = getServer(KTracking), *vaultServer = getServer(KVault);
 				if (!trackingServer || !vaultServer) {
-					err->log("ERR: Player %s is joining, but vault or tracking is unavailable.\n", u->str());
+					err->log("ERR: Player %s is joining, but vault or tracking is unavailable.\n", u->str().c_str());
 					return 1;
 				}
 				tmCustomPlayerStatus trackingStatus(trackingServer, u, 2 /* visible */, RActive);
@@ -483,7 +483,7 @@ namespace alc {
 					send(joinAck);
 				}
 				// log the join
-				sec->log("%s joined\n", u->str());
+				sec->log("%s joined\n", u->str().c_str());
 				// now, it'll stat sending GameMessages
 				
 				return 1;
@@ -491,7 +491,7 @@ namespace alc {
 			case NetMsgGameStateRequest:
 			{
 				if (!u->joined) {
-					err->log("ERR: %s sent a NetMsgGameStateRequest but did not yet join the game. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgGameStateRequest but did not yet join the game. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
 				
@@ -516,7 +516,7 @@ namespace alc {
 			case NetMsgMembersListReq:
 			{
 				if (!u->joined) {
-					err->log("ERR: %s sent a NetMsgMembersListReq but did not yet join the game. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgMembersListReq but did not yet join the game. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
 				
@@ -547,7 +547,7 @@ namespace alc {
 			case NetMsgPagingRoom:
 			{
 				if (!u->joined) {
-					err->log("ERR: %s sent a NetMsgPagingRoom but did not yet join the game. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgPagingRoom but did not yet join the game. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
 				
@@ -588,7 +588,7 @@ namespace alc {
 			case NetMsgGameMessage:
 			{
 				if (!u->joined) {
-					log->log("WARN: %s sent a NetMsgGameMessage but did not yet join the game - ignore it.\n", u->str());
+					log->log("WARN: %s sent a NetMsgGameMessage but did not yet join the game - ignore it.\n", u->str().c_str());
 					// even the normal client sometimes does this, I don't know why, so just ignore this message
 					return 2; // ignored
 				}
@@ -609,7 +609,7 @@ namespace alc {
 			case NetMsgGameMessageDirected:
 			{
 				if (!u->ki) { // directed game messages are accepted from all players which have their KI set
-					err->log("ERR: %s sent a NetMsgGameMessageDirected but did not yet set the KI. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgGameMessageDirected but did not yet set the KI. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
 				
@@ -630,7 +630,7 @@ namespace alc {
 				// Relto one is in a GUI page with type 0x0004, books you find in the
 				// age have their PythonFileMod on a page with type 0x0000
 				if (noReltoShare && gameMsg.msgStream.getType() == plNotifyMsg && receiver.hasObj && receiver.obj.pageType != 0x000) {
-					log->log("INF: Throwing out relto book share notification from %s\n", u->str());
+					log->log("INF: Throwing out relto book share notification from %s\n", u->str().c_str());
 					sendKIMessage(tString("Ignoring the relto book share notification you just sent - it would crash people"), u);
 					return 1;
 				}
@@ -654,7 +654,7 @@ namespace alc {
 			case NetMsgCustomDirectedFwd:
 			{
 				if (u->getPeerType() != KTracking) {
-					err->log("ERR: %s sent a NetMsgCustomDirectedFwd but is not the tracking server. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgCustomDirectedFwd but is not the tracking server. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
 				
@@ -673,7 +673,7 @@ namespace alc {
 			case NetMsgSDLState:
 			{
 				if (!u->joined) {
-					err->log("ERR: %s sent a NetMsgSDLState but did not yet join the game. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgSDLState but did not yet join the game. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
 				
@@ -690,7 +690,7 @@ namespace alc {
 			case NetMsgSDLStateBCast:
 			{
 				if (!u->joined) {
-					err->log("ERR: %s sent a NetMsgSDLStateBCast but did not yet join the game. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgSDLStateBCast but did not yet join the game. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
 				
@@ -710,7 +710,7 @@ namespace alc {
 			case NetMsgLoadClone:
 			{
 				if (!u->joined) {
-					log->log("WARN: %s sent a NetMsgLoadClone but did not yet join the game - ignore it.\n", u->str());
+					log->log("WARN: %s sent a NetMsgLoadClone but did not yet join the game - ignore it.\n", u->str().c_str());
 					// even the normal client sometimes does this, I don't know why, so just ignore this message
 					return 2; // ignored
 				}
@@ -759,7 +759,7 @@ namespace alc {
 			case NetMsgCustomPlayerToCome:
 			{
 				if (u->getPeerType() != KTracking) {
-					err->log("ERR: %s sent a NetMsgCustomPlayerToCome but is not the tracking server. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgCustomPlayerToCome but is not the tracking server. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
 				
@@ -784,7 +784,7 @@ namespace alc {
 			case NetMsgSetTimeout:
 			{
 				if (!u->joined) {
-					err->log("ERR: %s sent a NetMsgSetTimeout but did not yet join the game. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgSetTimeout but did not yet join the game. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
 				
@@ -798,7 +798,7 @@ namespace alc {
 			case NetMsgPython:
 			{
 				if (!u->joined) {
-					err->log("ERR: %s sent a NetMsgPython but did not yet join the game. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgPython but did not yet join the game. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
 				
@@ -813,7 +813,7 @@ namespace alc {
 			case NetMsgTestAndSet:
 			{
 				if (!u->joined) {
-					err->log("ERR: %s sent a NetMsgTestAndSet but did not yet join the game. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgTestAndSet but did not yet join the game. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
 				
@@ -839,7 +839,7 @@ namespace alc {
 			case NetMsgPlayerPage:
 			{
 				if (!u->joined) {
-					err->log("ERR: %s sent a NetMsgPlayerPage but did not yet join the game. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgPlayerPage but did not yet join the game. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
 				
@@ -853,7 +853,7 @@ namespace alc {
 			case NetMsgRelevanceRegions:
 			{
 				if (!u->joined) {
-					err->log("ERR: %s sent a NetMsgRelevanceRegions but did not yet join the game. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgRelevanceRegions but did not yet join the game. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
 				

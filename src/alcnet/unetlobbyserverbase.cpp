@@ -123,7 +123,7 @@ namespace alc {
 			if (u != client) // it could be the same session for which the active player is set twice for some reason
 				terminate(client, RLoggedInElsewhere);
 			else
-				err->log("Active player is set twice for %s\n", u->str());
+				err->log("Active player is set twice for %s\n", u->str().c_str());
 		}
 		
 		if (whoami == KGame && avatar[0] == 0) // empty avatar names are not allowed in game server
@@ -131,7 +131,7 @@ namespace alc {
 	
 		tNetSession *trackingServer = getServer(KTracking);
 		if (!trackingServer) {
-			err->log("ERR: I've got to set player %s active, but tracking is unavailable.\n", u->str());
+			err->log("ERR: I've got to set player %s active, but tracking is unavailable.\n", u->str().c_str());
 			return false;
 		}
 		
@@ -147,7 +147,7 @@ namespace alc {
 		tmActivePlayerSet playerSet(u, x);
 		send(playerSet);
 		// and write to the logfile
-		sec->log("%s player set\n", u->str());
+		sec->log("%s player set\n", u->str().c_str());
 		return true;
 	}
 	
@@ -175,7 +175,7 @@ namespace alc {
 		else if (u->getPeerType() == KClient && u->ki != 0) {
 			tNetSession *trackingServer = getServer(KTracking);
 			if (!trackingServer) {
-				err->log("ERR: I've got to update a player\'s (%s) status for the tracking server, but it is unavailable.\n", u->str());
+				err->log("ERR: I've got to update a player\'s (%s) status for the tracking server, but it is unavailable.\n", u->str().c_str());
 			}
 			else if (reason != RLoggedInElsewhere) { // if the player went somewhere else, don't remove him from tracking
 				int state = (reason == RLeaving) ? 2 /* visible */ : 0 /* delete */; // if the player just goes on to another age, don't remove him from the list
@@ -288,7 +288,7 @@ namespace alc {
 			case NetMsgAuthenticateHello:
 			{
 				if (u->getPeerType() != 0 || u->getAuthenticated() != 0) { // this is impossible
-					err->log("ERR: %s player is already being authend and sent another AuthenticateHello, ignoring\n", u->str());
+					err->log("ERR: %s player is already being authend and sent another AuthenticateHello, ignoring\n", u->str().c_str());
 					return 2; // ignore, leave it unparsed
 				}
 				
@@ -298,7 +298,7 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, authHello.str());
 				
 				if (authHello.maxPacketSize != u->getMaxPacketSz()) {
-					err->log("UNX: Max packet size of %s is not %d, but %d, ignoring\n", u->str(), u->getMaxPacketSz(), authHello.maxPacketSize);
+					err->log("UNX: Max packet size of %s is not %d, but %d, ignoring\n", u->str().c_str(), u->getMaxPacketSz(), authHello.maxPacketSize);
 					return 1; // it was already parsed, so we can return 1
 				}
 				
@@ -338,7 +338,7 @@ namespace alc {
 			case NetMsgAuthenticateResponse:
 			{
 				if (u->getPeerType() != 0 || u->getAuthenticated() != 10) { // this is impossible
-					err->log("ERR: %s player sent an AuthenticateResponse and he is already being authend or he didn\'t yet send an AuthenticateHello, ignoring\n", u->str());
+					err->log("ERR: %s player sent an AuthenticateResponse and he is already being authend or he didn\'t yet send an AuthenticateHello, ignoring\n", u->str().c_str());
 					return 2; // ignore, leave it unparsed
 				}
 				
@@ -350,7 +350,7 @@ namespace alc {
 				// send authAsk to auth server
 				tNetSession *authServer = getServer(KAuth);
 				if (!authServer) {
-					err->log("ERR: I've got to ask the auth server about player %s, but it's unavailable.\n", u->str());
+					err->log("ERR: I've got to ask the auth server about player %s, but it's unavailable.\n", u->str().c_str());
 					return 1;
 				}
 				authResponse.hash.rewind();
@@ -362,7 +362,7 @@ namespace alc {
 			case NetMsgCustomAuthResponse:
 			{
 				if (u->getPeerType() != KAuth) {
-					err->log("ERR: %s sent a NetMsgCustomAuthResponse but is not the auth server. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgCustomAuthResponse but is not the auth server. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
 				
@@ -387,7 +387,7 @@ namespace alc {
 					
 					tmAccountAutheticated accountAuth(client, authResponse.x, AAuthSucceeded, serverGuid);
 					send(accountAuth);
-					sec->log("%s successful login\n", client->str());
+					sec->log("%s successful login\n", client->str().c_str());
 					onPlayerAuthed(client);
 				}
 				else {
@@ -396,7 +396,7 @@ namespace alc {
 					memset(client->uid, 0, 16);
 					tmAccountAutheticated accountAuth(client, authResponse.x, authResponse.result, zeroGuid);
 					send(accountAuth);
-					sec->log("%s failed login\n", client->str());
+					sec->log("%s failed login\n", client->str().c_str());
 					terminate(client, RNotAuthenticated);
 				}
 				return 1;
@@ -406,7 +406,7 @@ namespace alc {
 			case NetMsgSetMyActivePlayer:
 			{
 				if (u->getPeerType() != KClient) {
-					err->log("ERR: %s sent a NetMsgSetMyActivePlayer but is not yet authed. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgSetMyActivePlayer but is not yet authed. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
 				
@@ -417,11 +417,11 @@ namespace alc {
 				
 				if (u->ki != 0) {
 					if (u->ki == setPlayer.ki) {
-						log->log("%s set the same KI twice, ignoring the second try\n", u->str());
+						log->log("%s set the same KI twice, ignoring the second try\n", u->str().c_str());
 						return 1;
 					}
 					else {
-						err->log("ERR: %s sent a NetMsgSetMyActivePlayer but already set a different KI. I\'ll kick him.\n", u->str());
+						err->log("ERR: %s sent a NetMsgSetMyActivePlayer but already set a different KI. I\'ll kick him.\n", u->str().c_str());
 						return -2; // hack attempt
 					}
 				}
@@ -433,7 +433,7 @@ namespace alc {
 					// ask the vault server about this KI
 					tNetSession *vaultServer = getServer(KVault);
 					if (!vaultServer) {
-						err->log("ERR: I've got the ask the vault to verify a KI, but it's unavailable. I'll have to kick the player.\n", u->str());
+						err->log("ERR: I've got the ask the vault to verify a KI, but it's unavailable. I'll have to kick the player.\n", u->str().c_str());
 						// kick the player since we cant be sure he doesnt lie about the KI
 						return -1; // parse error
 					}
@@ -447,7 +447,7 @@ namespace alc {
 			case NetMsgCustomVaultKiChecked:
 			{
 				if (u->getPeerType() != KVault) {
-					err->log("ERR: %s sent a NetMsgCustomVaultKiChecked but is not the vault server. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgCustomVaultKiChecked but is not the vault server. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
 				
@@ -517,7 +517,7 @@ namespace alc {
 				}
 				else { // got it from a client
 					if (!u->ki) { // KI is necessary to know where to route it
-						err->log("ERR: %s sent a vault message but did not yet set his KI. I\'ll kick him.\n", u->str());
+						err->log("ERR: %s sent a vault message but did not yet set his KI. I\'ll kick him.\n", u->str().c_str());
 						return -2; // hack attempt
 					}
 					if (vaultMsg.hasFlags(plNetKi) && vaultMsg.ki != u->ki)
@@ -525,7 +525,7 @@ namespace alc {
 					// forward it to the vault server
 					tNetSession *vaultServer = getServer(KVault);
 					if (!vaultServer) {
-						err->log("ERR: I've got a vault message to forward to the vault server, but it's unavailable.\n", u->str());
+						err->log("ERR: I've got a vault message to forward to the vault server, but it's unavailable.\n", u->str().c_str());
 						return 1;
 					}
 					vaultMsg.message.get(parsedMsg);
@@ -545,7 +545,7 @@ namespace alc {
 			case NetMsgFindAge:
 			{
 				if (!u->ki) {
-					err->log("ERR: %s sent a NetMsgFindAge but did not yet set his KI. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgFindAge but did not yet set his KI. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
 				
@@ -588,7 +588,7 @@ namespace alc {
 			case NetMsgCustomFindServer:
 			{
 				if (u->getPeerType() != KVault) {
-					err->log("ERR: %s sent a NetMsgCustomFindServer but is not the vault server. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgCustomFindServer but is not the vault server. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
 				
@@ -612,7 +612,7 @@ namespace alc {
 			case NetMsgCustomServerFound:
 			{
 				if (u->getPeerType() != KTracking) {
-					err->log("ERR: %s sent a NetMsgCustomServerFound but is not the tracking server. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgCustomServerFound but is not the tracking server. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
 				
@@ -640,7 +640,7 @@ namespace alc {
 			case NetMsgPlayerTerminated:
 			{
 				if (u->getPeerType() != KTracking && u->getPeerType() != KVault) {
-					err->log("ERR: %s sent a NetMsgPlayerTerminated but is neither tracking nor vault server. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgPlayerTerminated but is neither tracking nor vault server. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
 				

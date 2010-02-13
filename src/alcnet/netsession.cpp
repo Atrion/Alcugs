@@ -133,8 +133,8 @@ inline SByte tNetSession::compareMsgNumbers(U32 sn1, Byte fr1, U32 sn2, Byte fr2
 	else if (sn1 == sn2 && fr1 == fr2) return 0;
 	else return 1;
 }
-const char * tNetSession::str(bool detail) {
-	dbg.clear();
+tString tNetSession::str(bool detail) {
+	tString dbg;
 	if (detail) dbg.printf("[%i]", sid);
 	dbg.printf("[%s:%i]",alcGetStrIp(ip).c_str(),ntohs(port));
 	if (!detail) return dbg.c_str();
@@ -150,7 +150,7 @@ const char * tNetSession::str(bool detail) {
 	else if (whoami != 0) {
 		dbg.printf("[%s]", alcUnetGetDestination(whoami));
 	}
-	return dbg.c_str();
+	return dbg;
 }
 
 U32 tNetSession::getHeaderSize() {
@@ -287,8 +287,8 @@ void tNetSession::send(tmBase &msg, U32 delay) {
 	n_pkts=(psize-1)/pkt_sz; //get number of fragments (0 means everything is sent in one packet, which must be the case if psize == pkt_sz)
 	DBG(5,"pkt_sz:%i n_pkts:%i\n",pkt_sz,n_pkts);
 	if(n_pkts>=256) {
-		net->err->log("%s ERR: Attempted to send a packet of size %i bytes, that don't fits inside an uru message\n",str(),psize);
-		throw txTooBig(_WHERE("%s packet of %i bytes don't fits inside an uru message\n",str(),psize));
+		net->err->log("%s ERR: Attempted to send a packet of size %i bytes, that don't fits inside an uru message\n",str().c_str(),psize);
+		throw txTooBig(_WHERE("%s packet of %i bytes don't fits inside an uru message\n",str().c_str(),psize));
 	}
 	if (n_pkts > 0 && ((flags & UNetNegotiation) || (flags & UNetAckReply)))
 		throw txProtocolError(_WHERE("Nego and ack packets must not be fragmented!"));
@@ -366,13 +366,13 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	
 	if(ret!=0 && (ret!=1 || net->flags & UNET_ECRC)) {
 		if(ret==1) {
-			net->err->log("ERR: %s Failed validating a message in validation level %d", str(), validation);
+			net->err->log("ERR: %s Failed validating a message in validation level %d", str().c_str(), validation);
 			if (authenticated==1 || authenticated==2)
 				net->err->print(" (authed)!\n");
 			else
 				net->err->print(" (not authed)!\n");
 		}
-		else net->err->log("ERR: %s Non-Uru protocol packet recieved!\n", str());
+		else net->err->log("ERR: %s Non-Uru protocol packet recieved!\n", str().c_str());
 		return;
 	}
 	
@@ -395,7 +395,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		#endif
 		msg->htmlDumpHeader(net->ack,0,ip,port);
 	} catch(txUnexpectedData &t) {
-		net->err->log("%s Unexpected Data %s\nBacktrace:%s\n",str(),t.what(),t.backtrace());
+		net->err->log("%s Unexpected Data %s\nBacktrace:%s\n",str().c_str(),t.what(),t.backtrace());
 		delete msg;
 		throw txProtocolError(_WHERE("Cannot parse a message"));
 	}
@@ -422,7 +422,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 				//  will not result in an endless loop of negos being exchanged)
 				resetMsgCounters();
 				if (msg->sn != 1 || msg->ps != 0) {
-					net->err->log("%s ERR: Got a nego with a sn of %d (expected 1) and a previous ack of %d (expected 0)\n", str(), msg->sn, msg->ps);
+					net->err->log("%s ERR: Got a nego with a sn of %d (expected 1) and a previous ack of %d (expected 0)\n", str().c_str(), msg->sn, msg->ps);
 					clientMsg.ps = msg->ps; // the nego marks the beginning of a new connection, so accept everything from here on
 					clientMsg.pfr = msg->pfr;
 				}
@@ -455,7 +455,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		}
 	} else if (!isConnected()) { // we did not yet negotiate
 		if(!negotiating) { // and we are not in the process of doing it - so start that process
-			net->log->log("%s WARN: Obviously a new connection was started with something different than a nego\n", str());
+			net->log->log("%s WARN: Obviously a new connection was started with something different than a nego\n", str().c_str());
 			nego_stamp=timestamp;
 			negotiate();
 			clientMsg.ps = msg->ps; // this message is the beginning of a new connection, so accept everything from here on
@@ -468,7 +468,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 	//fix the problem that happens every 15-30 days of server uptime (prefer doing that when the sndq is empty)
 	if((sndq->len() == 0 && (serverMsg.sn>=8378605 || msg->sn>=8378605)) || (serverMsg.sn>=8388605 || msg->sn>=8388605) ) {
 		// that's aproximately 2^23 (try to get the sndq empty first, but in doubt, flush it)
-		net->log->log("%s WARN: Congratulations! You have reached the maxium allowed sequence number, don't worry, this is not an error\n", str());
+		net->log->log("%s WARN: Congratulations! You have reached the maxium allowed sequence number, don't worry, this is not an error\n", str().c_str());
 		net->log->flush();
 		resetMsgCounters();
 		nego_stamp=timestamp;
@@ -866,7 +866,7 @@ void tNetSession::doWork()
 						sndq->deleteCurrent();
 						curmsg = sndq->getCurrent(); // this is the next one
 						//timeout event
-						net->sec->log("%s Timeout (didn't ack a packet)\n", str());
+						net->sec->log("%s Timeout (didn't ack a packet)\n", str().c_str());
 						tNetEvent *evt=new tNetEvent(getIte(),UNET_TIMEOUT);
 						net->events->add(evt);
 					} else {
@@ -881,9 +881,9 @@ void tNetSession::doWork()
 					//probabilistic drop (of voice, and other non-ack packets) - make sure we don't drop ack replies though!
 					if(curmsg->tf == 0x00 && net->net_time-curmsg->timestamp > 4*timeout) {
 						//Unacceptable - drop it
-						net->err->log("%s Dropped a 0x00 packet due to unaceptable msg time %i,%i,%i\n",str(),timeout,net->net_time-curmsg->timestamp,rtt);
+						net->err->log("%s Dropped a 0x00 packet due to unaceptable msg time %i,%i,%i\n",str().c_str(),timeout,net->net_time-curmsg->timestamp,rtt);
 					} else if(curmsg->tf == 0x00 && sndq->len() > minTH && (sndq->len() > (minTH + random()%(maxTH-minTH))) ) {
-						net->err->log("%s Dropped a 0x00 packet due to a big queue\n",str());
+						net->err->log("%s Dropped a 0x00 packet due to a big queue\n",str().c_str());
 					}
 					//end prob drop
 					else {

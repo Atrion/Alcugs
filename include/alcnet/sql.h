@@ -54,8 +54,8 @@ public:
 	void checkTimeout(void); //!< closes the connection on timeout
 	int insertId(void);
 	
-	char *escape(const char *str); //!< escapes the given string and returns the point to a static array. max string length is 1024
-	char *escape(char *out, const Byte *data, int size); //!< escapes the given data into the out array and returns that array (size must be at least 2*lengthOfData+1)
+	tString escape(const char *str); //!< escapes the given string
+	void escape(char *out, const Byte *data, int size); //!< escapes the given data into the out array and returns that array (size must be at least 2*lengthOfData+1)
 	MYSQL_RES *storeResult(void);
 	
 	static Byte allFlags(void) { return SQL_LOG | SQL_LOGQ | SQL_CREATEDB | SQL_STAYCONN | SQL_CREATABL; }

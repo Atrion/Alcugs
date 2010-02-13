@@ -253,7 +253,7 @@ void tUnetBase::terminateAll(bool playersOnly)
 
 void tUnetBase::removeConnection(tNetSession *u)
 {
-	sec->log("%s Ended\n",u->str());
+	sec->log("%s Ended\n",u->str().c_str());
 	tNetEvent * ev=new tNetEvent(u->getIte(),UNET_TERMINATED);
 	destroySession(ev->sid);
 	delete ev;
@@ -267,7 +267,7 @@ void tUnetBase::processEventQueue(bool shutdown)
 		if (u != NULL) {
 			switch(evt->id) {
 				case UNET_NEWCONN:
-					sec->log("%s New Connection\n",u->str());
+					sec->log("%s New Connection\n",u->str().c_str());
 					if (shutdown)
 						terminate(u);
 					else
@@ -283,10 +283,10 @@ void tUnetBase::processEventQueue(bool shutdown)
 					}
 					break;
 				case UNET_FLOOD:
-					sec->log("%s Flood Attack\n",u->str());
+					sec->log("%s Flood Attack\n",u->str().c_str());
 					if (shutdown || onConnectionFlood(u)) {
 						terminate(u);
-						alcGetMain()->err()->log("%s kicked due to a Flood Attack\n", u->str());
+						alcGetMain()->err()->log("%s kicked due to a Flood Attack\n", u->str().c_str());
 					}
 					break;
 				case UNET_MSGRCV:
@@ -302,46 +302,46 @@ void tUnetBase::processEventQueue(bool shutdown)
 						if (ret != 1 && !u->isTerminated() && !shutdown) // if this is an active connection, look for other messages
 							ret = onMsgRecieved(msg, u);
 						if (ret == 1 && !msg->data.eof() > 0) { // packet was processed and there are bytes left, obiously invalid, terminate the client
-							err->log("%s Recieved a message 0x%04X (%s) which was too long (%d Bytes remaining after parsing) - kicking player\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data.remaining());
+							err->log("%s Recieved a message 0x%04X (%s) which was too long (%d Bytes remaining after parsing) - kicking player\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data.remaining());
 							ret = -1;
 						}
 					}
 					catch (txBase &t) { // if there was an error parsing the message, kick the responsible player
-						err->log("%s Recieved invalid 0x%04X (%s) - kicking peer\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+						err->log("%s Recieved invalid 0x%04X (%s) - kicking peer\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
 						err->log(" Exception details: %s\n",t.what());
 						//err->log(" Backtrace: %s\n", t.backtrace());
 						ret=-1;
 					}
 					if(ret==0) {
 						if (u->isTerminated() || shutdown) {
-							err->log("%s is terminated and sent non-NetMsgLeave message 0x%04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+							err->log("%s is terminated and sent non-NetMsgLeave message 0x%04X (%s)\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
 							terminate(u);
 						}
 						else {
-							err->log("%s Unexpected message 0x%04X (%s) - kicking peer\n",u->str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
-							sec->log("%s Unexpected message 0x%04X (%s)\n",u->str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
+							err->log("%s Unexpected message 0x%04X (%s) - kicking peer\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
+							sec->log("%s Unexpected message 0x%04X (%s)\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
 							terminate(u, RUnimplemented);
 						}
 					}
 					else if(ret==-1) {
 						// the problem already got printed to the error log wherever this return value was set
-						sec->log("%s Kicked off due to a parse error in a previus message 0x%04X (%s)\n", u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+						sec->log("%s Kicked off due to a parse error in a previus message 0x%04X (%s)\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
 						terminate(u, RParseError);
 					}
 					else if(ret==-2) {
 						// the problem already got printed to the error log wherever this return value was set
-						sec->log("%s Kicked off due to cracking 0x%04X (%s)\n",u->str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+						sec->log("%s Kicked off due to cracking 0x%04X (%s)\n",u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
 						terminate(u, RHackAttempt);
 					}
 					else if (ret!=1 && ret!=2) {
-						err->log("%s Unknown error in 0x%04X (%s) - kicking peer\n",u->str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
-						sec->log("%s Unknown error in 0x%04X (%s)\n",u->str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
+						err->log("%s Unknown error in 0x%04X (%s) - kicking peer\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
+						sec->log("%s Unknown error in 0x%04X (%s)\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
 						terminate(u);
 					}
 					break;
 				}
 				default:
-					throw txBase(_WHERE("%s Unknown Event id %i\n",u->str(),evt->id));
+					throw txBase(_WHERE("%s Unknown Event id %i\n",u->str().c_str(),evt->id));
 			}
 		}
 		delete evt;

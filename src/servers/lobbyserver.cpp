@@ -94,7 +94,7 @@ namespace alc {
 			case NetMsgRequestMyVaultPlayerList:
 			{
 				if (u->getPeerType() != KClient) {
-					err->log("ERR: %s sent a NetMsgRequestMyVaultPlayerList but is not yet authed. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgRequestMyVaultPlayerList but is not yet authed. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
 			
@@ -106,7 +106,7 @@ namespace alc {
 				// forward it to the vault server
 				tNetSession *vaultServer = getServer(KVault);
 				if (!vaultServer) {
-					err->log("ERR: I've got to ask the vault server about player %s, but it's unavailable.\n", u->str());
+					err->log("ERR: I've got to ask the vault server about player %s, but it's unavailable.\n", u->str().c_str());
 					return 1;
 				}
 				tmCustomVaultAskPlayerList askList(vaultServer, requestList.x, u->getSid(), u->uid);
@@ -116,7 +116,7 @@ namespace alc {
 			case NetMsgCustomVaultPlayerList:
 			{
 				if (u->getPeerType() != KVault) {
-					err->log("ERR: %s sent a NetMsgCustomVaultPlayerList but is not the vault server. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgCustomVaultPlayerList but is not the vault server. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
 				
@@ -144,7 +144,7 @@ namespace alc {
 			case NetMsgCreatePlayer:
 			{
 				if (u->getPeerType() != KClient) {
-					err->log("ERR: %s sent a NetMsgCreatePlayer but is not yet authed. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgCreatePlayer but is not yet authed. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
 				
@@ -156,7 +156,7 @@ namespace alc {
 				// forward it to the vault server
 				tNetSession *vaultServer = getServer(KVault);
 				if (!vaultServer) {
-					err->log("ERR: I've got to ask the vault server to create a player, but it's unavailable.\n", u->str());
+					err->log("ERR: I've got to ask the vault server to create a player, but it's unavailable.\n", u->str().c_str());
 					return 1;
 				}
 				tmCustomVaultCreatePlayer vaultCreatePlayer(vaultServer, createPlayer.x, u->getSid(), u->uid, u->getAccessLevel(), u->name, createPlayer.avatar, createPlayer.gender, createPlayer.friendName, createPlayer.key);
@@ -167,7 +167,7 @@ namespace alc {
 			case NetMsgCustomVaultPlayerCreated:
 			{
 				if (u->getPeerType() != KVault) {
-					err->log("ERR: %s sent a NetMsgCustomVaultPlayerList but is not the vault server. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgCustomVaultPlayerList but is not the vault server. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
 				
@@ -193,7 +193,7 @@ namespace alc {
 			case NetMsgDeletePlayer:
 			{
 				if (u->getPeerType() != KClient) {
-					err->log("ERR: %s sent a NetMsgDeletePlayer but is not yet authed. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgDeletePlayer but is not yet authed. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
 				
@@ -205,7 +205,7 @@ namespace alc {
 				// forward it to the vault server
 				tNetSession *vaultServer = getServer(KVault);
 				if (!vaultServer) {
-					err->log("ERR: I've got to ask the vault server to delete a player, but it's unavailable.\n", u->str());
+					err->log("ERR: I've got to ask the vault server to delete a player, but it's unavailable.\n", u->str().c_str());
 					return 1;
 				}
 				tmCustomVaultDeletePlayer vaultDeletePlayer(vaultServer, deletePlayer.ki, deletePlayer.x, u->getSid(), u->uid, u->getAccessLevel());
@@ -218,7 +218,7 @@ namespace alc {
 			case NetMsgCustomForkServer:
 			{
 				if (u->getPeerType() != KTracking) {
-					err->log("ERR: %s sent a NetMsgCustomForkServer but is not the tracking server. I\'ll kick him.\n", u->str());
+					err->log("ERR: %s sent a NetMsgCustomForkServer but is not the tracking server. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
 				

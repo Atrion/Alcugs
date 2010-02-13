@@ -233,7 +233,7 @@ namespace alc {
 		tCloneList::iterator it = clones.begin();
 		while (it != clones.end()) {
 			if ((*it)->clonedObj.obj.clonePlayerId == player->ki) { // that clone is dead now, remove it and all of it's SDL states
-				log.log("Removing Clone [%s] as it belongs to player %s who just left us\n", (*it)->clonedObj.str().c_str(), player->str());
+				log.log("Removing Clone [%s] as it belongs to player %s who just left us\n", (*it)->clonedObj.str().c_str(), player->str().c_str());
 				if ((*it)->getType() == plLoadAvatarMsg) { // for avatars
 					// make sure that clone is in the idle state
 					net->bcastMessage(net->makePlayerIdle(player, (*it)->clonedObj.obj));
@@ -337,14 +337,14 @@ namespace alc {
 				else if (info && info->conditionalLoad) continue; // don't send this one, it's on an optional page
 			}
 			if (logDetailed) {
-				log.log("Sending SDL State to %s:\n", u->str());
+				log.log("Sending SDL State to %s:\n", u->str().c_str());
 				it->print(&log);
 			}
 			tmSDLState sdlMsg(u, it->obj, &*it, /*initial*/true);
 			net->send(sdlMsg);
 			++n;
 		}
-		log.log("Sent %d SDLState messages to %s\n", n, u->str());
+		log.log("Sent %d SDLState messages to %s\n", n, u->str().c_str());
 		log.flush();
 		return n;
 	}
@@ -408,12 +408,12 @@ namespace alc {
 	{
 		int n = 0;
 		for (tCloneList::iterator it = clones.begin(); it != clones.end(); ++it) {
-			if (logDetailed) log.log("Sending to %s: clone [%s]\n", u->str(), (*it)->clonedObj.str().c_str());
+			if (logDetailed) log.log("Sending to %s: clone [%s]\n", u->str().c_str(), (*it)->clonedObj.str().c_str());
 			tmLoadClone loadClone(u, *it, true/*isInitial*/);
 			net->send(loadClone);
 			++n;
 		}
-		log.log("Sent %d LoadClone messages to %s\n", n, u->str());
+		log.log("Sent %d LoadClone messages to %s\n", n, u->str().c_str());
 		return n;
 	}
 	

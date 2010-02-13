@@ -546,11 +546,11 @@ int tUnet::Recv() {
 		try {
 			session->processMsg(buf,n);
 		} catch(txProtocolError &t) {
-			this->err->log("%s Protocol Error %s\nBacktrace:%s\n",session->str(),t.what(),t.backtrace());
+			this->err->log("%s Protocol Error %s\nBacktrace:%s\n",session->str().c_str(),t.what(),t.backtrace());
 			return UNET_ERR;
 		} catch(txBase &t) {
 			this->err->log("%s FATAL ERROR (perhaps someone is attempting something nasty, or you have found a bug)\n\
-%s\nBacktrace:%s\n",session->str(),t.what(),t.backtrace());
+%s\nBacktrace:%s\n",session->str().c_str(),t.what(),t.backtrace());
 			return UNET_ERR;
 		}
 
@@ -579,7 +579,7 @@ void tUnet::doWork() {
 		if(ntime.seconds - cur->timestamp.seconds >= cur->conn_timeout) {
 			//timeout event
 			if (!cur->isTerminated())
-				sec->log("%s Timeout (didn't send a packet for %d seconds)\n",cur->str(),cur->conn_timeout);
+				sec->log("%s Timeout (didn't send a packet for %d seconds)\n",cur->str().c_str(),cur->conn_timeout);
 			tNetSessionIte ite(cur->ip,cur->port,cur->sid);
 			tNetEvent * evt=new tNetEvent(ite,UNET_TIMEOUT);
 			events->add(evt);

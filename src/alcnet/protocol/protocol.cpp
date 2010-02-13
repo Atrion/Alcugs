@@ -512,9 +512,9 @@ void tmNetClientComm::stream(tBBuf &t) const {
 const char * tmNetClientComm::str() {
 	static char cnt[1024]; // FIXME
 #ifdef ENABLE_MSGLOG
-	snprintf(cnt,sizeof(cnt),"(Re)Negotation (bandwidth: %i bps time: %s) on %s",bandwidth,timestamp.str().c_str(),u->str());
+	snprintf(cnt,sizeof(cnt),"(Re)Negotation (bandwidth: %i bps time: %s) on %s",bandwidth,timestamp.str().c_str(),u->str().c_str());
 #else
-	snprintf(cnt,sizeof(cnt),"(Re)Negotation on %s",u->str());
+	snprintf(cnt,sizeof(cnt),"(Re)Negotation on %s",u->str().c_str());
 #endif
 	return cnt;
 }
@@ -560,7 +560,7 @@ void tmNetAck::stream(tBBuf &t) const
 }
 const char * tmNetAck::str() {
 	dbg.clear();
-	dbg.printf("Ack on %s", u->str());
+	dbg.printf("Ack on %s", u->str().c_str());
 	#ifdef ENABLE_MSGLOG
 	bool firstOne = true;
 	for (tAckList::const_iterator it = ackq.begin(); it != ackq.end(); ++it) {
@@ -684,7 +684,7 @@ void tmMsgBase::store(tBBuf &t) {
 	
 	//now catch undocumented protocol flags
 	if (flags & ~(check))
-		throw txProtocolError(_WHERE("%s Problem parsing a plNetMsg header format mask %08X\n",u->str(),flags & ~(check)));
+		throw txProtocolError(_WHERE("%s Problem parsing a plNetMsg header format mask %08X\n",u->str().c_str(),flags & ~(check)));
 }
 void tmMsgBase::stream(tBBuf &t) const {
 	if (!u)  throw txProtocolError(_WHERE("attempt to send message without session being set"));
@@ -752,7 +752,7 @@ const char * tmMsgBase::str() {
 #ifdef ENABLE_MSGLOG
 	dbg.printf(" %04X %08X",cmd,flags);
 #endif
-	dbg.printf(" on %s", u->str());
+	dbg.printf(" on %s", u->str().c_str());
 #ifdef ENABLE_MSGLOG
 	dbg.printf("\n Flags:");
 	if(flags & plNetTimestamp) {

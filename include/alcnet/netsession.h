@@ -59,7 +59,7 @@ class tNetSession {
 public:
 	tNetSession(tUnet * net,U32 ip,U16 port,int sid); //ip, port in network order
 	~tNetSession();
-	const char * str(bool detail = true);
+	tString str(bool detail = true);
 	U32 getMaxFragmentSize();
 	U32 getMaxDataSize();
 	U32 getHeaderSize();
@@ -190,8 +190,6 @@ private:
 	
 	Byte whoami; //!< peer type
 	bool client; //!< it's a client or a server?
-	
-	tString dbg; //!< buffer for str function // FIXME
 };
 
 
