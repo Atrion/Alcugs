@@ -138,7 +138,7 @@ public:
 };
 
 /** Buffer with reference control */
-class tRefBuf {
+class tRefBuf { // FIXME: merge into tMBuf?
 public:
 	tRefBuf(U32 csize=1024);
 	~tRefBuf();
@@ -148,6 +148,7 @@ public:
 	inline U32 size() { return msize; }
 	inline U32 getRefs() { return refs; }
 	inline Byte *buf() { return buffer; }
+	inline const Byte *buf() const { return buffer; }
 	inline void zero() { memset(buffer,0,msize); }
 private:
 	U32 refs;
@@ -155,7 +156,7 @@ private:
 	Byte *buffer;
 };
 
-/** memory based buffer */
+/** memory based buffer with reference control */
 class tMBuf : public tBBuf {
 public:
 	tMBuf();
@@ -189,13 +190,17 @@ public:
 	void clear();
 	Byte getAt(U32 pos) const;
 	void setAt(U32 pos,const Byte what);
+	inline const Byte *data() const { return msize ? buf->buf() : NULL; }
+	inline bool isEmpty(void) const { return !msize; }
 protected:
 	//! assignment
 	void copy(const tMBuf &t);
 	//! comparison
 	SByte compare(const tMBuf &t) const;
+	//! helper for tString::c_str - use only if msize is at least 1!
+	void addNullTerminator(void) const;
 	
-	// data
+	// data FIXME private
 	tRefBuf *buf;
 	U32 off;
 	U32 msize; //!< this is the part of the buffer that is actually used, while buf->size() is the currently available size
@@ -270,33 +275,34 @@ public:
 };
 
 /** String buffer */
-class tString : public tMBuf { // FIXME: API cleanup
+class tString : public tMBuf {
 public:
-	tString();
+	tString() : tMBuf() {}
 	tString(const char * k);
-	explicit tString(U32 size);
-	explicit tString(tBBuf &k);
-	explicit tString(const tMBuf &k);
-	tString(const tString &k);
-	virtual ~tString();
+	explicit tString(U32 size) : tMBuf(size) {}
+	explicit tString(tBBuf &k) : tMBuf(k) {}
+	explicit tString(const tMBuf &k) : tMBuf(k) {}
+	virtual ~tString() {}
 	
 	// interface
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
 	
-	// string functions
+	// find functions
 	S32 find(const char cat, bool reverse=false) const;
 	S32 find(const char *str) const;
 	inline S32 find(const tString &str) const { return find(str.c_str()); }
+	
+	// string manipulation
+	tString escape() const;
+	tString lower() const;
+	tString upper() const;
+	tString substring(U32 start,U32 len=0) const;
+	tString dirname() const;
 	/** \brief strips the character from the beginning (when how=1 or 3) and/or from the end (how=2 or 3) of the string */
-	const tString & strip(Byte what,Byte how=0x03);
-	const tString & escape() const;
-	const tString & lower() const;
-	const tString & upper() const;
-	const tString & substring(U32 start,U32 len=0) const;
-	const tString & dirname() const;
-	bool startsWith(const char * pat) const;
-	bool endsWith(const char * pat) const;
+	tString stripped(Byte what,Byte how=0x03) const;
+	
+	// functions writing strings
 	void writeStr(const char * t);
 	void writeStr(const tString & val) { write(val.c_str(),val.size()); }
 	void writeStr(tString &val) { write(val.c_str(),val.size()); }
@@ -304,19 +310,25 @@ public:
 	void printBoolean(const char *desc, bool val) { writeStr(desc); printBoolean(val); }
 	void printBoolean(bool val);
 	void nl() { writeStr("\n"); }
+	
+	// functions to convert the string to a number
 	U32 asU32() const;
 	inline S32 asS32() const { return static_cast<S32>(asU32()); }
 	inline U16 asU16() const { return static_cast<U16>(asU32()); }
 	inline S16 asS16() const { return static_cast<S16>(asU32()); }
 	inline Byte asByte() const { return static_cast<Byte>(asU32()); }
 	inline SByte asSByte() const { return static_cast<SByte>(asU32()); }
-	const char * c_str();
-	const char * c_str() const;
-	inline bool isEmpty(void) const { return !msize; }
+	
+	// Functions checking something
 	inline bool isNewline(void) const
 	{
 		return compare("\n") == 0 || compare("\r") == 0 || compare("\n\r") == 0 || compare("\r\n") == 0;
 	}
+	bool startsWith(const char * pat) const;
+	bool endsWith(const char * pat) const;
+	
+	// C compatbility
+	const char * c_str() const;
 	
 	// path functions
 	void convertSlashesFromWinToUnix();
@@ -340,14 +352,11 @@ public:
 	inline bool operator<=(const tString &t) const { return(compare(t)<=0); }
 	inline bool operator<=(const char *t) const { return(compare(t)<=0); }
 protected:
-	// assignment
+	//! assignment
 	void copy(const char * str);
 	void copy(const tString &t);
 private:
-	mutable tString * shot;
-
-	void init();
-	// comparison
+	//! comparison
 	inline SByte compare(const tString &t) const { return tMBuf::compare(t); }
 	SByte compare(const char * str) const;
 };

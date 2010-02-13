@@ -41,14 +41,15 @@
    std::backtrace bug (?)
    Memcheck:Leak
    fun:malloc
-   obj:/lib/ld-2.9.so
-   obj:/lib/ld-2.9.so
-   obj:/lib/ld-2.9.so
-   obj:/lib/ld-2.9.so
-   obj:/lib/tls/i686/cmov/libc-2.9.so
-   obj:/lib/ld-2.9.so
+   fun:_dl_map_object_deps
+   fun:dl_open_worker
+   fun:_dl_catch_error
+   fun:_dl_open
+   fun:do_dlopen
+   fun:_dl_catch_error
+   fun:dlerror_run
    fun:__libc_dlopen_mode
-   obj:/lib/tls/i686/cmov/libc-2.9.so
+   fun:init
    fun:pthread_once
    fun:_ZN3alc6txBase17_preparebacktraceEv
 }

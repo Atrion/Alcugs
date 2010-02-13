@@ -338,6 +338,12 @@ char tMBuf::compare(const tMBuf &t) const {
 	if (out != 0 || s1 == s2) return out;
 	return (s1 < s2) ? -1 : 1;
 }
+void tMBuf::addNullTerminator(void) const
+{
+	tRefBuf *buf = const_cast<tRefBuf *>(this->buf); // yep, a hack - but we won't change the actual content
+	if (msize == buf->size()) buf->resize(msize+200);
+	*(buf->buf()+msize) = 0;
+}
 /* end tMBuf */
 
 /* 
@@ -503,43 +509,14 @@ void tMD5Buf::compute() {
 /* end md5 buf */
 
 /* String buffer */
-tString::tString(const char * k) :tMBuf(200) {
-	DBG(9,"ctor\n");
-	init();
+tString::tString(const char * k) : tMBuf(200) {
 	writeStr(k);
-	end();
-}
-tString::tString(U32 size) :tMBuf(size) { DBG(9,"ctor 2\n"); init(); }
-tString::tString() :tMBuf() { DBG(9,"ctor 3\n"); init(); }
-tString::tString(tBBuf &k) :tMBuf(k) {
-	DBG(9,"copy zero\n");
-	init();
-}
-tString::tString(const tMBuf &k) :tMBuf(k) { 
-	DBG(9,"copy one\n");
-	init(); 
-}
-tString::tString(const tString &k) :tMBuf(k) { 
-	DBG(9,"copy two\n");
-	init(); 
-}
-tString::~tString() {
-	delete shot;
-}
-void tString::init() {
-	DBG(9,"tString::init\n");
-	shot=NULL;
 }
 void tString::copy(const tString &t) {
-	DBG(1,"tString::copy() %s, %s\n", c_str(), t.c_str());
 	tMBuf::copy(t);
-	delete shot;
-	shot=NULL;
 }
 void tString::copy(const char * str) {
-	DBG(2,"cpy\n");
-	tString pat(str);
-	copy(pat);
+	copy(tString(str));
 }
 void tString::store(tBBuf &t)
 {
@@ -566,29 +543,10 @@ SByte tString::compare(const char * str) const {
 	if (out != 0 || s1 == s2) return out;
 	return (s1 < s2) ? -1 : 1;
 }
-const char * tString::c_str() {
-	DBG(2,"tString::c_str()\n");
-	if(msize == 0) {
-		DBG(2,"is null: %d\n", msize);
-		return "";
-	}
-	// add zero byte
-	U32 bsize = buf->size();
-	if(size()+1>bsize) {
-		buf->resize(bsize+128);
-	}
-	*(buf->buf()+size()) = 0;
-	return reinterpret_cast<const char *>(buf->buf());
-}
 const char * tString::c_str() const {
-	DBG(2,"tString::c_str()\n");
-	if(msize == 0) {
-		DBG(2,"is null: %d\n", msize);
-		return "";
-	}
-	if (shot) delete shot;
-	shot = new tString(*this);
-	return shot->c_str();
+	if (!msize) return "";
+	addNullTerminator();
+	return reinterpret_cast<const char *>(data());
 }
 S32 tString::find(const char cat, bool reverse) const {
 	int i,max;
@@ -633,98 +591,81 @@ void tString::convertSlashesFromUnixToWin() {
 #endif
 //noop on linux
 }
-const tString & tString::strip(Byte what,Byte how) {
+tString tString::stripped(Byte what,Byte how) const {
 	tString aux;
-	int i,max,start,end;
+	U32 i,max,start,end;
 	start=0;
 	i=0;
 	max=size();
 	end=max-1;
-	Byte ctrl=what;
+	Byte ctrl;
 	if(how & 0x01) {
-		while(i<max && ctrl==what) {
-			ctrl=getAt(i++);
+		while (start <= end) {
+			ctrl=getAt(start);
+			if (ctrl != what) break;
+			++start;
 		}
-		start=i-1;
-		if(start<0) start=0;
+		// start now points to the first character to be copied
 	}
-	if(how & 0x02) {
-		ctrl=what;
-		i=max-1;
-		while(i>=0 && ctrl==what) {
-			ctrl=getAt(i--);
+	if(how & 0x02) { // if there's still anything left to strip from
+		while (end >= start) {
+			ctrl = getAt(end);
+			if (ctrl != what || !end) break; // be acreful we don't count below 0
+			--end;
 		}
-		end=i+1;
-		if(end>=max) end=max-1;
+		// end now points to the last character to be copied
 	}
-	for(i=start; i<=end; i++) {
-		aux.putSByte(getAt(i));
-	}
-	copy(aux);
-	return *this;
+	aux.write(buf->buf()+start, end+1-start);
+	return aux;
 }
-const tString & tString::escape() const {
-	delete shot;
-	shot = new tString(size()*3/2); // nothing inside this function will use shot, so we can initialize it now
-
+tString tString::escape() const {
+	tString shot;
 	int i,max;
 	Byte ctrl; 
 	max=size();
 	for(i=0; i<max; i++) {
 		ctrl=getAt(i);
 		if(ctrl=='\n') {
-			shot->putByte('\\');
-			shot->putByte('n');
+			shot.putByte('\\');
+			shot.putByte('n');
 		} else if(ctrl=='\r') {
-			shot->putByte('\\');
-			shot->putByte('r');
+			shot.putByte('\\');
+			shot.putByte('r');
 		} else if(ctrl=='"') {
-			shot->putByte('\\');
-			shot->putByte('"');
+			shot.putByte('\\');
+			shot.putByte('"');
 		} else if(ctrl=='\\') {
-			shot->putByte('\\');
-			shot->putByte('\\');
+			shot.putByte('\\');
+			shot.putByte('\\');
 		} else {
-			shot->putByte(ctrl);
+			shot.putByte(ctrl);
 		}
 	}
-	
-	return *shot;
+	return shot;
 }
-
-const tString & tString::lower() const {
-	if (shot) delete shot;
-	shot = new tString(200); // nothing inside this function will use shot, so we can initialize it now
-	
+tString tString::lower() const {
+	tString shot;
 	int i,max;
 	max=size();
 	for(i=0; i<max; i++) {
-		shot->putByte(std::tolower(getAt(i)));
+		shot.putByte(std::tolower(getAt(i)));
 	}
-	
-	return *shot;
+	return shot;
 }
-
-const tString & tString::upper() const {
-	if (shot) delete shot;
-	shot = new tString(200); // nothing inside this function will use shot, so we can initialize it now
-	
+tString tString::upper() const {
+	tString shot;
 	int i,max;
 	max=size();
 	for(i=0; i<max; i++) {
-		shot->putByte(std::toupper(getAt(i)));
+		shot.putByte(std::toupper(getAt(i)));
 	}
-	
-	return *shot;
+	return shot;
 }
-
-
-const tString & tString::substring(U32 start,U32 len) const {
+tString tString::substring(U32 start,U32 len) const {
 	if (len == 0) len = remaining();
-	if (shot) delete shot;
-	shot = new tString(len); // nothing inside this function will use shot, so we can initialize it now
-	shot->write(buf->buf()+start,len);
-	return *shot;
+	tString shot;
+	shot.write(buf->buf()+start,len);
+	return shot;
 }
 bool tString::startsWith(const char * pat) const {
 	try {
@@ -742,20 +683,17 @@ bool tString::endsWith(const char * pat) const {
 		return false;
 	}
 }
-const tString & tString::dirname() const {
-	if (shot) delete shot;
-	shot = new tString(*this); // nothing inside this function will use shot, so we can initialize it now
-	shot->strip('/',0x02);
-	int pos=shot->find('/',1);
+tString tString::dirname() const {
+	tString shot = stripped('/',0x02);
+	int pos=shot.find('/',/*reverse*/true);
 	
 	if(pos==-1) {
-		*shot = ".";
+		return ".";
 	} else if(pos==0) {
-		*shot = "/";
+		return "/";
 	} else {
-		*shot = shot->substring(0,pos);
+		return shot.substring(0,pos);
 	}
-	return *shot;
 }
 void tString::writeStr(const char * t) {
 	this->write(t,strlen(t));

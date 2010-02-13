@@ -493,6 +493,7 @@ void alctypes_part3() {
 void alctypes_part4() {
 	DBG(5,"Helloooooo\n");
 	tString aa("hola");
+	assert(aa.eof());
 	DBG(4,"-%s-\n",aa.c_str());
 	assert(aa.eof());
 	tString bb(aa);
@@ -580,7 +581,43 @@ void alctypes_part5() {
 		dmalloc_verify(NULL);
 	}
 	dmalloc_verify(NULL);
+	
+	// stripped
+	tString due("///////");
+	due = due.stripped('/');
+	//printf("due:%s\n",due.c_str());
+	assert(due=="");
+	due="howhowhow ajfk fajf///////////////";
+	tString blah = due = due.stripped('/');
+	//printf("due:%s\n",due.c_str());
+	assert(due==blah);
+	assert(due=="howhowhow ajfk fajf");
+	due="///////////////howhowhow ajfk fajf///////////////";
+	due=due = due.stripped('/');
+	assert(due=="howhowhow ajfk fajf");
+	due="///////////////howhowhow ajfk fajf";
+	due = due.stripped('/');
+	assert(due=="howhowhow ajfk fajf");
+	due="// /////////////howh//////////owhow/////// aj////////fk fajf////// /////////";
+	due = due.stripped('/');
+	assert(due==" /////////////howh//////////owhow/////// aj////////fk fajf////// ");
+	due="/ /";
+	due = due.stripped('/');
+	assert(due==" ");
+	due=" / ";
+	due = due.stripped('/');
+	assert(due==" / ");
+	due="///////////////howhowhow ajfk fajf///////////////";
+	due = due.stripped('/',0x01);
+	//printf("due:%s\n",due.c_str());
+	assert(due=="howhowhow ajfk fajf///////////////");
+	due="///////////////howhowhow ajfk fajf///////////////";
+	due = due.stripped('/',0x02);
+	assert(due=="///////////////howhowhow ajfk fajf");
+	//abort();
+	dmalloc_verify(NULL);
 
+	// dirname
 	assert(test=="/path/to/something.txt");
 	assert(test!="/path/to");
 	dmalloc_verify(NULL);
@@ -617,54 +654,23 @@ void alctypes_part5() {
 	assert(test.dirname()=="/../../../usr/lib/kk/path");
 	dmalloc_verify(NULL);
 	
-	tString due("/////////");
-	due.strip('/');
-	//printf("due:%s\n",due.c_str());
-	assert(due=="");
-	due="howhowhow ajfk fajf///////////////";
-	tString blah = due.strip('/');
-	//printf("due:%s\n",due.c_str());
-	assert(due==blah);
-	assert(due=="howhowhow ajfk fajf");
-	due="///////////////howhowhow ajfk fajf///////////////";
-	due=due.strip('/');
-	assert(due=="howhowhow ajfk fajf");
-	due="///////////////howhowhow ajfk fajf";
-	due.strip('/');
-	assert(due=="howhowhow ajfk fajf");
-	due="// /////////////howh//////////owhow/////// aj////////fk fajf////// /////////";
-	due.strip('/');
-	assert(due==" /////////////howh//////////owhow/////// aj////////fk fajf////// ");
-	due="/ /";
-	due.strip('/');
-	assert(due==" ");
-	due=" / ";
-	due.strip('/');
-	assert(due==" / ");
-	due="///////////////howhowhow ajfk fajf///////////////";
-	due.strip('/',0x01);
-	//printf("due:%s\n",due.c_str());
-	assert(due=="howhowhow ajfk fajf///////////////");
-	due="///////////////howhowhow ajfk fajf///////////////";
-	due.strip('/',0x02);
-	assert(due=="///////////////howhowhow ajfk fajf");
-	//abort();
-	dmalloc_verify(NULL);
+	// stripped & dirname
+	tString sth,sth2;
+	sth="//some/thing//";
+	sth2=sth.stripped('/');
+	assert(sth2 == "some/thing");
+	sth2=sth2.dirname();
+	assert(sth2 == "some");
+	sth2 = sth.dirname();
+	printf("%s => %s\n", sth.c_str(), sth2.c_str());
+	assert(sth2=="//some");
+	assert(tString("ab").dirname() == ".");
+	assert(strcmp(tString("/ab").dirname().c_str(), "/") == 0);
 	
 	tString key("hello[23]");
 	U16 nr = alcParseKey(&key);
 	assert(key == "hello");
 	assert(nr == 23);
-}
-
-void alctypes_part6() {
-
-	tString sth,sth2;
-	sth="//some/thing//";
-	sth.strip('/');
-	assert(sth == "some/thing");
-	sth2=sth.dirname();
-	sth=sth.dirname();
 }
 
 void alctypes_part7()
@@ -759,7 +765,7 @@ void alctypes_tests() {
 	alctypes_part3();
 	alctypes_part4();
 	alctypes_part5();
-	alctypes_part6();
+	//alctypes_part6();
 	alctypes_part7();
 	alctypes_part8();
 }
