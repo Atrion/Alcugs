@@ -51,7 +51,6 @@ public:
 	tTime upTime(void);
 	inline U32 threadId(void) { return mainThreadId; }
 	inline tConfig *config(void) { return &cfg; }
-	void dumpConfig();
 	
 	inline tLog *std() { return stdLog; }
 	inline tLog *err() { return errLog; }
@@ -70,6 +69,7 @@ protected:
 	tLog *stdLog, *errLog;
 private:
 	void installBaseHandlers(bool install = true);
+	void dumpConfig();
 	
 	U32 mainThreadId;
 	tTime born;

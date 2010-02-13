@@ -346,7 +346,7 @@ namespace alc {
 	
 		tString query;
 		
-		query.printf("SELECT idx, lstr_1, int_2 FROM %s WHERE lstr_2 = '%s'", vaultTable, alcGetStrUid(uid));
+		query.printf("SELECT idx, lstr_1, int_2 FROM %s WHERE lstr_2 = '%s'", vaultTable, alcGetStrUid(uid).c_str());
 		sql->query(query.c_str(), "getting player list");
 		
 		MYSQL_RES *result = sql->storeResult();
@@ -374,7 +374,7 @@ namespace alc {
 		tString query;
 		avatar[0] = 0; // first emtpy the string
 		
-		query.printf("SELECT lstr_1 FROM %s WHERE lstr_2 = '%s' and idx='%d' LIMIT 1", vaultTable, alcGetStrUid(uid), ki);
+		query.printf("SELECT lstr_1 FROM %s WHERE lstr_2 = '%s' and idx='%d' LIMIT 1", vaultTable, alcGetStrUid(uid).c_str(), ki);
 		sql->query(query.c_str(), "checking ki");
 		
 		MYSQL_RES *result = sql->storeResult();
@@ -447,7 +447,7 @@ namespace alc {
 		}
 		if (node.flagB & MAgeGuid) {
 			if (comma) query.writeStr(commaStr);
-			query.printf("age_guid='%s'", sql->escape(alcGetStrGuid(node.ageGuid)));
+			query.printf("age_guid='%s'", sql->escape(alcGetStrGuid(node.ageGuid).c_str()));
 			comma = true;
 		}
 		if (node.flagB & MInt32_1) {
@@ -648,7 +648,7 @@ namespace alc {
 		}
 		if (node.flagB & MAgeGuid) {
 			query.writeStr(",age_guid");
-			values.printf(",'%s'", sql->escape(alcGetStrGuid(node.ageGuid)));
+			values.printf(",'%s'", sql->escape(alcGetStrGuid(node.ageGuid).c_str()));
 		}
 		if (node.flagB & MInt32_1) {
 			query.writeStr(",int_1");

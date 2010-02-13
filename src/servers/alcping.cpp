@@ -173,7 +173,7 @@ int tUnetPing::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 					current=alcGetCurrentTime();
 					rcv=current-ping.mtime;
 					printf("Pong from %s:%i x=%i dest=%i %s time=%0.3f ms\n",\
-					alcGetStrIp(u->getIp()),ntohs(u->getPort()),ping.x,ping.destination,\
+					alcGetStrIp(u->getIp()).c_str(),ntohs(u->getPort()),ping.x,ping.destination,\
 					alcUnetGetDestination(ping.destination),rcv*1000);
 					rcvn++;
 					avg+=rcv;
@@ -182,7 +182,7 @@ int tUnetPing::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 				}
 			} else {
 				printf("Ping from %s:%i x=%i dest=%i %s time=%0.3f ms .... pong....\n",\
-				alcGetStrIp(u->getIp()),ntohs(u->getPort()),ping.x,ping.destination,\
+				alcGetStrIp(u->getIp()).c_str(),ntohs(u->getPort()),ping.x,ping.destination,\
 				alcUnetGetDestination(ping.destination),ping.mtime*1000);
 				if(urgent) ping.setUrgent();
 				send(ping);
@@ -204,7 +204,7 @@ int tUnetPing::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 void tUnetPing::onLeave(Byte reason,tNetSession * u)
 {
 	if(listen!=0) {
-		printf("Leave from %s:%i reason=%i %s\n", alcGetStrIp(u->getIp()), ntohs(u->getPort()), reason, alcUnetGetReasonCode(reason));
+		printf("Leave from %s:%i reason=%i %s\n", alcGetStrIp(u->getIp()).c_str(), ntohs(u->getPort()), reason, alcUnetGetReasonCode(reason));
 	}
 }
 

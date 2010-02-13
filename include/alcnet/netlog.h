@@ -35,7 +35,7 @@
 
 namespace alc {
 
-const char * alcGetStrIp(U32 ip);
+tString alcGetStrIp(U32 ip);
 
 class txUnet : public txBase {
 public:

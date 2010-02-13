@@ -135,12 +135,11 @@ namespace alc {
 	}
 	
 	//// tpObject
-	const char *tpObject::str(void) const
+	tString tpObject::str(void) const
 	{
-		strBuf.clear();
+		tString strBuf;
 		strBuf.printf("%s (0x%04X)\n", alcGetPlasmaType(type), type);
-		toString();
-		return strBuf.c_str();
+		return strBuf;
 	}
 
 } //end namespace alc

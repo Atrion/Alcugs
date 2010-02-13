@@ -37,9 +37,9 @@ namespace alc {
 /**
   \brief Converts an hex guid to ascii
 */
-const char * alcGetStrGuid(const Byte * guid) {
+tString alcGetStrGuid(const Byte * guid) {
 	if(guid==NULL) return "null";
-	static char str_guid[17]; // FIXME
+	char str_guid[17];
 	alcHex2Ascii(str_guid,guid,8);
 	return str_guid;
 }
@@ -47,86 +47,64 @@ const char * alcGetStrGuid(const Byte * guid) {
 /**
   \brief Converts an hex uid to ascii.
 */
-const char * alcGetStrUid(const Byte * guid) {
+tString alcGetStrUid(const Byte * guid) {
 	if(guid==NULL) return "null";
 
 	char str_guid[33];
-	static char str_guid2[37]; // FIXME
+	tString str_guid2;
 
 	alcHex2Ascii(str_guid,guid,16);
 	
-	int off1=0;
-	int off2=0;
-	memcpy(str_guid2+off1,str_guid+off2,8); //ID1
-	off1+=8;
-	off2+=8;
-	memcpy(str_guid2+off1,"-",1);
-	off1++;
-	memcpy(str_guid2+off1,str_guid+off2,4); //ID2
-	off1+=4;
-	off2+=4;
-	memcpy(str_guid2+off1,"-",1);
-	off1++;
-	memcpy(str_guid2+off1,str_guid+off2,4); //ID3
-	off1+=4;
-	off2+=4;
-	memcpy(str_guid2+off1,"-",1);
-	off1++;
-	memcpy(str_guid2+off1,str_guid+off2,4); //ID4
-	off1+=4;
-	off2+=4;
-	memcpy(str_guid2+off1,"-",1);
-	off1++;
-	memcpy(str_guid2+off1,str_guid+off2,12); //ID5
-	off1+=12;
-	off2+=12;
-	str_guid2[off1]='\0';
-	assert(off1 == 36 && off2 == 32);
+	int off=0;
+	str_guid2.write(str_guid+off,8); //ID1
+	off+=8;
+	str_guid2 = str_guid2+"-";
+	str_guid2.write(str_guid+off,4); //ID2
+	off+=4;
+	str_guid2 = str_guid2+"-";
+	str_guid2.write(str_guid+off,4); //ID3
+	off+=4;
+	str_guid2 = str_guid2+"-";
+	str_guid2.write(str_guid+off,4); //ID4
+	off+=4;
+	str_guid2 = str_guid2+"-";
+	str_guid2.write(str_guid+off,12); //ID5
+	off+=12;
+	assert(str_guid2.size() == 36 && off == 32);
 	return str_guid2;
 }
 
 /**
   \brief Converts an Ascii uid to hex
 */
-const Byte * alcGetHexUid(const char * passed_guid) {
+tMBuf alcGetHexUid(tString guid) {
 	
-	if (strlen(passed_guid) != 36) throw txUnexpectedData(_WHERE("An UID string must be 36 characters long"));
+	if (guid.size() != 36) throw txUnexpectedData(_WHERE("An UID string must be 36 characters long"));
 
-	static Byte hex_guid[16]; // FIXME
-	char guid[36];
+	Byte hex_guid[16];
+	guid = guid.upper();
+	guid.rewind();
 
-	for(U32 i=0; i<36; i++) {
-		guid[i]=toupper(passed_guid[i]);
-	}
+	int off=0;
+	alcAscii2Hex(hex_guid+off,reinterpret_cast<const char *>(guid.read(8)),4); //ID1
+	off+=4;
+	guid.check("-", 1);
+	alcAscii2Hex(hex_guid+off,reinterpret_cast<const char *>(guid.read(4)),2); //ID2
+	off+=2;
+	guid.check("-", 1);
+	alcAscii2Hex(hex_guid+off,reinterpret_cast<const char *>(guid.read(4)),2); //ID3
+	off+=2;
+	guid.check("-", 1);
+	alcAscii2Hex(hex_guid+off,reinterpret_cast<const char *>(guid.read(4)),2); //ID4
+	off+=2;
+	guid.check("-", 1);
+	alcAscii2Hex(hex_guid+off,reinterpret_cast<const char *>(guid.read(12)),6); //ID5
+	off+=6;
+	assert(off == 16 && guid.tell() == 36);
 
-	int off1=0;
-	int off2=0;
-	alcAscii2Hex(hex_guid+off1,guid+off2,4); //ID1
-	off1+=4;
-	off2+=8;
-	if (guid[off2] != '-') throw txUnexpectedData(_WHERE("There must be a dash at position %d", off2));
-	++off2;
-	alcAscii2Hex(hex_guid+off1,guid+off2,2); //ID2
-	off1+=2;
-	off2+=4;
-	if (guid[off2] != '-') throw txUnexpectedData(_WHERE("There must be a dash at position %d", off2));
-	++off2;
-	alcAscii2Hex(hex_guid+off1,guid+off2,2); //ID3
-	off1+=2;
-	off2+=4;
-	if (guid[off2] != '-') throw txUnexpectedData(_WHERE("There must be a dash at position %d", off2));
-	++off2;
-	alcAscii2Hex(hex_guid+off1,guid+off2,2); //ID4
-	off1+=2;
-	off2+=4;
-	if (guid[off2] != '-') throw txUnexpectedData(_WHERE("There must be a dash at position %d", off2));
-	++off2;
-	alcAscii2Hex(hex_guid+off1,guid+off2,6); //ID5
-	off1+=6;
-	off2+=12;
-	assert(off1 == 16 && off2 == 36);
-
-	return hex_guid; //In hex
+	tMBuf res;
+	res.write(hex_guid, 16);
+	return res;
 }
 
 /**

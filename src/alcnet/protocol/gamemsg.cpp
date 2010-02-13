@@ -85,7 +85,7 @@ namespace alc {
 	const char *tMemberInfo::str(void)
 	{
 		dbg.clear();
-		dbg.printf("Avatar Name: %s, IP: %s:%i, Object reference: [%s]", avatar.c_str(), alcGetStrIp(ip), ntohs(port), obj.str());
+		dbg.printf("Avatar Name: %s, IP: %s:%i, Object reference: [%s]", avatar.c_str(), alcGetStrIp(ip).c_str(), ntohs(port), obj.str().c_str());
 		return dbg.c_str();
 	}
 
@@ -113,7 +113,7 @@ namespace alc {
 	void tmJoinReq::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" IP: %s:%i", alcGetStrIp(ip), ntohs(port));
+		dbg.printf(" IP: %s:%i", alcGetStrIp(ip).c_str(), ntohs(port));
 	}
 	
 	//// tmJoinAck
@@ -287,7 +287,7 @@ namespace alc {
 	void tmLoadClone::checkSubMsg(tpLoadCloneMsg *subMsg)
 	{
 		if (obj != subMsg->clonedObj.obj)
-			throw txProtocolError(_WHERE("LoadClone.obj must be the same as plLoadCloneMsg.clonedObj, but these are different: %s != %s", obj.str(), subMsg->clonedObj.str()));
+			throw txProtocolError(_WHERE("LoadClone.obj must be the same as plLoadCloneMsg.clonedObj, but these are different: %s != %s", obj.str().c_str(), subMsg->clonedObj.str().c_str()));
 		if (isLoad != subMsg->isLoad)
 			throw txProtocolError(_WHERE("LoadClone.isLoad must be the same as plLoadCloneMsg.isLoad, but these are different: %d != %d", isLoad, subMsg->isLoad));
 		if ( subMsg->getType() == plLoadAvatarMsg ) {
@@ -300,7 +300,7 @@ namespace alc {
 	void tmLoadClone::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" Object reference: [%s], player avatar: ", obj.str());
+		dbg.printf(" Object reference: [%s], player avatar: ", obj.str().c_str());
 		dbg.printBoolean(isPlayerAvatar);
 		dbg.printBoolean(", load: ", isLoad);
 		dbg.printBoolean(", initial age state: ", isInitial);
@@ -383,7 +383,7 @@ namespace alc {
 	{
 		dbg.nl();
 		dbg.printBoolean(" Paged out: ", isPageOut);
-		dbg.printf(", Object reference: [%s]", obj.str());
+		dbg.printf(", Object reference: [%s]", obj.str().c_str());
 	}
 	
 	//// tmGameStateRequest
@@ -477,7 +477,7 @@ namespace alc {
 	void tmStreamedObject::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" Object reference: [%s]", obj.str());
+		dbg.printf(" Object reference: [%s]", obj.str().c_str());
 	}
 	
 	//// tmTestAndSet (NetMsgTestAndSet and NetMsgSharedState are identical)

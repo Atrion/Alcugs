@@ -77,7 +77,7 @@ namespace alc {
 	{
 		dbg.nl();
 		challenge.rewind();
-		dbg.printf(" auth result: 0x%02X (%s), challenge: %s", authResult, alcUnetGetAuthCode(authResult), alcGetStrUid(challenge.read()));
+		dbg.printf(" auth result: 0x%02X (%s), challenge: %s", authResult, alcUnetGetAuthCode(authResult), alcGetStrUid(challenge.read()).c_str());
 	}
 	
 	//// tmAuthenticateResponse
@@ -96,7 +96,7 @@ namespace alc {
 	{
 		dbg.nl();
 		hash.rewind();
-		dbg.printf(" hash: %s", alcGetStrUid(hash.read()));
+		dbg.printf(" hash: %s", alcGetStrUid(hash.read()).c_str());
 	}
 	
 	//// tmAccountAutheticated	
@@ -121,7 +121,7 @@ namespace alc {
 	void tmAccountAutheticated::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" auth result: 0x%02X (%s), server guid: %s", authResult, alcUnetGetAuthCode(authResult), alcGetStrGuid(serverGuid));
+		dbg.printf(" auth result: 0x%02X (%s), server guid: %s", authResult, alcUnetGetAuthCode(authResult), alcGetStrGuid(serverGuid).c_str());
 	}
 	
 	//// tmSetMyActivePlayer
@@ -194,7 +194,7 @@ namespace alc {
 	void tmFindAgeReply::additionalFields()
 	{
 		dbg.nl();
-		dbg.printf(" Age filename: %s, IP: %s, Port: %d, GUID: %s", age.c_str(), ipStr.c_str(), serverPort, alcGetStrGuid(serverGuid));
+		dbg.printf(" Age filename: %s, IP: %s, Port: %d, GUID: %s", age.c_str(), ipStr.c_str(), serverPort, alcGetStrGuid(serverGuid).c_str());
 	}
 
 } //end namespace alc

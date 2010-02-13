@@ -250,9 +250,9 @@ namespace alc {
 		}
 		lowest += data->portStart;
 		// ok, telling the lobby to fork
-		tmCustomForkServer forkServer(lobby, lowest, alcGetStrGuid(guid), age);
+		tmCustomForkServer forkServer(lobby, lowest, alcGetStrGuid(guid).c_str(), age);
 		net->send(forkServer, delay);
-		log.log("Spawning new game server %s (Server GUID: %s, port: %d) on %s\n", age, alcGetStrGuid(guid), lowest, lobby->str());
+		log.log("Spawning new game server %s (Server GUID: %s, port: %d) on %s\n", age, alcGetStrGuid(guid).c_str(), lowest, lobby->str());
 	}
 	
 	void tTrackingBackend::notifyWaiting(tNetSession *server)
@@ -270,7 +270,7 @@ namespace alc {
 		tTrackingData *data = dynamic_cast<tTrackingData *>(server->data);
 		if (!data) throw txUnet(_WHERE("server passed in tTrackingBackend::serverFound is not a game/lobby server"));
 		// notifiy the player that it's server is available
-		tmCustomServerFound found(player->u, player->ki, player->awaiting_x, player->sid, ntohs(server->getPort()), data->externalIp, alcGetStrGuid(server->serverGuid), server->name);
+		tmCustomServerFound found(player->u, player->ki, player->awaiting_x, player->sid, ntohs(server->getPort()), data->externalIp, alcGetStrGuid(server->serverGuid).c_str(), server->name);
 		net->send(found);
 		log.log("Found age for player %s\n", player->str().c_str());
 		// no longer waiting
@@ -544,7 +544,7 @@ namespace alc {
 		fprintf(f, "<table border=\"1\"><tr><th>Avatar (Account)</th><th>KI</th><th>Age Name</th><th>Age GUID</th><th>Status</th></tr>\n");
 		for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
 			if (!dbg && it->flag != 2) continue;
-			fprintf(f, "<tr><td>%s (%s)%s</td><td>%d</td><td>%s</td><td>%s</td>", it->avatar, it->account, it->flag == 2 ? "" : " [hidden]", it->ki, it->u->name, alcGetStrGuid(it->u->serverGuid));
+			fprintf(f, "<tr><td>%s (%s)%s</td><td>%d</td><td>%s</td><td>%s</td>", it->avatar, it->account, it->flag == 2 ? "" : " [hidden]", it->ki, it->u->name, alcGetStrGuid(it->u->serverGuid).c_str());
 			if (it->awaiting_age[0] != 0) // if the age he wants to is saved, print it
 				fprintf(f, "<td>%s to %s</td>", alcUnetGetReasonCode(it->status), it->awaiting_age);
 			else fprintf(f, "<td>%s</td>", alcUnetGetReasonCode(it->status));
@@ -560,10 +560,10 @@ namespace alc {
 			while ((server = servers->getNext())) {
 				if (!server->data) {
 					fprintf(f, "<tr><td colspan=\"2\" style=\"color:red\">Unknown (not a game or lobby server)</td><td>%s:%d</td><tr>\n",
-						alcGetStrIp(server->getIp()), ntohs(server->getPort()));
+						alcGetStrIp(server->getIp()).c_str(), ntohs(server->getPort()));
 					continue;
 				}
-				fprintf(f, "<tr><td>%s</td><td>%s</td><td>%s:%d</td><tr>\n", server->name, alcGetStrGuid(server->serverGuid), alcGetStrIp(server->getIp()), ntohs(server->getPort()));
+				fprintf(f, "<tr><td>%s</td><td>%s</td><td>%s:%d</td><tr>\n", server->name, alcGetStrGuid(server->serverGuid).c_str(), alcGetStrIp(server->getIp()).c_str(), ntohs(server->getPort()));
 			}
 			fprintf(f, "</table><br />\n");
 		}
@@ -624,15 +624,15 @@ namespace alc {
 				fprintf(f, "<Name>Agent</Name>\n");
 				fprintf(f, "<Type>1</Type>\n");
 				if (lobby && data) {
-					fprintf(f, "<Addr>%s</Addr>\n", alcGetStrIp(lobby->getIp()));
+					fprintf(f, "<Addr>%s</Addr>\n", alcGetStrIp(lobby->getIp()).c_str());
 					fprintf(f, "<Port>%d</Port>\n", ntohs(lobby->getPort()));
 					data->agentGuid[7] = 0x00; // set last byte to 00 (to distinguish from Lobby)
-					fprintf(f, "<Guid>%s00</Guid>\n", alcGetStrGuid(data->agentGuid));
+					fprintf(f, "<Guid>%s00</Guid>\n", alcGetStrGuid(data->agentGuid).c_str());
 				}
 				else {
 					fprintf(f, "<Addr>Fake Agent</Addr>\n");
 					fprintf(f, "<Port>0</Port>\n");
-					fprintf(f, "<Guid>%s00</Guid>\n", alcGetStrGuid(fakeLobbyGuid));
+					fprintf(f, "<Guid>%s00</Guid>\n", alcGetStrGuid(fakeLobbyGuid).c_str());
 				}
 			fprintf(f, "</ServerInfo>\n");
 			// Lobby
@@ -642,10 +642,10 @@ namespace alc {
 						fprintf(f, "<ServerInfo>\n");
 							fprintf(f, "<Name>Lobby</Name>\n");
 							fprintf(f, "<Type>2</Type>\n");
-							fprintf(f, "<Addr>%s</Addr>\n", alcGetStrIp(lobby->getIp()));
+							fprintf(f, "<Addr>%s</Addr>\n", alcGetStrIp(lobby->getIp()).c_str());
 							fprintf(f, "<Port>%d</Port>\n", ntohs(lobby->getPort()));
 							data->agentGuid[7] = 0x02; // set last byte to 02 (to distinguish from Agent)
-							fprintf(f, "<Guid>%s02</Guid>\n", alcGetStrGuid(data->agentGuid));
+							fprintf(f, "<Guid>%s02</Guid>\n", alcGetStrGuid(data->agentGuid).c_str());
 						fprintf(f, "</ServerInfo>\n");
 					fprintf(f, "</Server>\n");
 					printPlayersXML(f, lobby);
@@ -696,7 +696,7 @@ namespace alc {
 			fprintf(f, "<AcctName>%s</AcctName>\n", player->account);
 			fprintf(f, "<PlayerID>%i</PlayerID>\n", player->ki);
 			fprintf(f, "<PlayerName>%s%s</PlayerName>\n", player->avatar, player->flag == 2 ? "" : " [hidden]");
-			fprintf(f, "<AccountUUID>%s</AccountUUID>\n", alcGetStrUid(player->uid));
+			fprintf(f, "<AccountUUID>%s</AccountUUID>\n", alcGetStrUid(player->uid).c_str());
 			if (player->awaiting_age[0] != 0)
 				// if the age he wants to is saved, print it
 				fprintf(f, "<State>%s to %s</State>\n", alcUnetGetReasonCode(player->status), player->awaiting_age);
@@ -713,9 +713,9 @@ namespace alc {
 					fprintf(f, "<ServerInfo>\n");
 						fprintf(f, "<Name>%s</Name>\n", game->name);
 						fprintf(f, "<Type>3</Type>\n");
-						fprintf(f, "<Addr>%s</Addr>\n", alcGetStrIp(game->getIp()));
+						fprintf(f, "<Addr>%s</Addr>\n", alcGetStrIp(game->getIp()).c_str());
 						fprintf(f, "<Port>%i</Port>\n", ntohs(game->getPort()));
-						fprintf(f, "<Guid>%s</Guid>\n", alcGetStrGuid(game->serverGuid));
+						fprintf(f, "<Guid>%s</Guid>\n", alcGetStrGuid(game->serverGuid).c_str());
 					fprintf(f, "</ServerInfo>\n");
 				fprintf(f, "</Server>\n");
 				printPlayersXML(f, game);
@@ -723,7 +723,7 @@ namespace alc {
 			fprintf(f, "<AgeLink>\n");
 				fprintf(f, "<AgeInfo>\n");
 					fprintf(f, "<AgeInstanceName>%s</AgeInstanceName>\n", game->name);
-					fprintf(f, "<AgeInstanceGuid>%s</AgeInstanceGuid>\n", alcGetStrGuid(game->serverGuid));
+					fprintf(f, "<AgeInstanceGuid>%s</AgeInstanceGuid>\n", alcGetStrGuid(game->serverGuid).c_str());
 				fprintf(f, "</AgeInfo>\n");
 			fprintf(f, "</AgeLink>\n");
 		fprintf(f, "</Game>\n");

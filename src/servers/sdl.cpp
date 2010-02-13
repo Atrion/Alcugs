@@ -113,7 +113,7 @@ namespace alc {
 			if (ageStateFile.isEmpty())
 				throw txUnet(_WHERE("You have to set the game.agestates to the directory for saving your agestate files"));
 			mkdir(ageStateFile.c_str(), 00750); // make sure the path exists
-			ageStateFile.printf("/%s-%s.state", net->getName(), alcGetStrGuid(net->getGuid()));
+			ageStateFile.printf("/%s-%s.state", net->getName(), alcGetStrGuid(net->getGuid()).c_str());
 			// check for old agestate location and migrate if necessary
 			tString alternativeStateFile = log.getDir() + "agestate.raw";
 			if (access(alternativeStateFile.c_str(), F_OK) == 0)
@@ -170,7 +170,7 @@ namespace alc {
 			tStreamedObject sdlStream;
 			file.get(sdlStream);
 			if (obj.hasCloneId || !age->validPage(obj.pageId)) {
-				log.log("Not loading state for object %s with clone ID or on a page not belonging to this age\n", obj.str());
+				log.log("Not loading state for object %s with clone ID or on a page not belonging to this age\n", obj.str().c_str());
 				continue;
 			}
 			if (sdlStream.getType() != plNull)
@@ -233,7 +233,7 @@ namespace alc {
 		tCloneList::iterator it = clones.begin();
 		while (it != clones.end()) {
 			if ((*it)->clonedObj.obj.clonePlayerId == player->ki) { // that clone is dead now, remove it and all of it's SDL states
-				log.log("Removing Clone [%s] as it belongs to player %s who just left us\n", (*it)->clonedObj.str(), player->str());
+				log.log("Removing Clone [%s] as it belongs to player %s who just left us\n", (*it)->clonedObj.str().c_str(), player->str());
 				if ((*it)->getType() == plLoadAvatarMsg) { // for avatars
 					// make sure that clone is in the idle state
 					net->bcastMessage(net->makePlayerIdle(player, (*it)->clonedObj.obj));
@@ -265,7 +265,7 @@ namespace alc {
 		}
 		// check if this state is allowed in this age
 		if (!sdl.obj.hasCloneId && !age->validPage(sdl.obj.pageId))
-			throw txProtocolError(_WHERE("Object %s is not in this age", sdl.obj.str()));
+			throw txProtocolError(_WHERE("Object %s is not in this age", sdl.obj.str().c_str()));
 		// check if state is already in list
 		tSdlList::iterator it = findSdlState(&sdl);
 		if (it == sdlStates.end()) {
@@ -333,7 +333,7 @@ namespace alc {
 			}
 			else if (!it->obj.hasCloneId) { // objects with CloneID are ok
 				tPageInfo *info = age->getPage(it->obj.pageId);
-				if (!info && !age->validPage(it->obj.pageId)) throw txUnet(_WHERE("How did this invalid state get here: %s", it->obj.str()));
+				if (!info && !age->validPage(it->obj.pageId)) throw txUnet(_WHERE("How did this invalid state get here: %s", it->obj.str().c_str()));
 				else if (info && info->conditionalLoad) continue; // don't send this one, it's on an optional page
 			}
 			if (logDetailed) {
@@ -368,7 +368,7 @@ namespace alc {
 	{
 		tCloneList::iterator it = findClone(clone->clonedObj.obj);
 		if (logDetailed) {
-			log.log("Got Message %s", clone->str());
+			log.log("Got Message %s", clone->str().c_str());
 		}
 		if (clone->isLoad) {
 			if (it != clones.end()) { // it is already in the list, remove old one
@@ -379,18 +379,18 @@ namespace alc {
 			else { // it's a new clone
 				log.log("Adding Clone ");
 			}
-			log.log("[%s]\n", clone->clonedObj.str());
+			log.log("[%s]\n", clone->clonedObj.str().c_str());
 			it = clones.insert(clones.end(), clone); // save the message we got
 		}
 		else { // remove clone if it was in list
-			log.log("Removing Clone [%s]\n", clone->clonedObj.str());
+			log.log("Removing Clone [%s]\n", clone->clonedObj.str().c_str());
 			// remove SDL states even if clone is not on list, just to be sure
 			removeCloneStates(clone->clonedObj.obj.clonePlayerId, clone->clonedObj.obj.cloneId);
 			if (it != clones.end()) {
 				delete *it;
 				clones.erase(it);
 			} else
-				log.log("WARN: Clone [%s] was not on our list!\n", clone->clonedObj.str());
+				log.log("WARN: Clone [%s] was not on our list!\n", clone->clonedObj.str().c_str());
 			delete clone; // remove the message we got
 		}
 		log.flush();
@@ -408,7 +408,7 @@ namespace alc {
 	{
 		int n = 0;
 		for (tCloneList::iterator it = clones.begin(); it != clones.end(); ++it) {
-			if (logDetailed) log.log("Sending to %s: clone [%s]\n", u->str(), (*it)->clonedObj.str());
+			if (logDetailed) log.log("Sending to %s: clone [%s]\n", u->str(), (*it)->clonedObj.str().c_str());
 			tmLoadClone loadClone(u, *it, true/*isInitial*/);
 			net->send(loadClone);
 			++n;

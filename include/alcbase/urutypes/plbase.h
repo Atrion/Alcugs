@@ -54,10 +54,7 @@ namespace alc {
 		
 		inline U16 getType(void) const { return type; }
 		inline bool isIncomplete(void) const { return incomplete; }
-		const char *str(void) const;
-	protected:
-		virtual void toString(void) const {}
-		mutable tString strBuf; // FIXME
+		virtual tString str(void) const;
 	private:
 		bool incomplete;
 		U16 type;

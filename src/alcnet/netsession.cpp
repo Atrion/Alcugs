@@ -136,7 +136,7 @@ inline SByte tNetSession::compareMsgNumbers(U32 sn1, Byte fr1, U32 sn2, Byte fr2
 const char * tNetSession::str(bool detail) {
 	dbg.clear();
 	if (detail) dbg.printf("[%i]", sid);
-	dbg.printf("[%s:%i]",alcGetStrIp(ip),ntohs(port));
+	dbg.printf("[%s:%i]",alcGetStrIp(ip).c_str(),ntohs(port));
 	if (!detail) return dbg.c_str();
 	// detailed string
 	if (name[0] != 0 && authenticated != 0) {
@@ -145,7 +145,7 @@ const char * tNetSession::str(bool detail) {
 		else dbg.printf("[%s]", name);
 	}
 	else if (name[0] != 0 && net->whoami == KTracking) { // we are tracking and this is a game server
-		dbg.printf("[%s:%s]", name, alcGetStrGuid(serverGuid));
+		dbg.printf("[%s:%s]", name, alcGetStrGuid(serverGuid).c_str());
 	}
 	else if (whoami != 0) {
 		dbg.printf("[%s]", alcUnetGetDestination(whoami));

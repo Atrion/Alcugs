@@ -169,7 +169,7 @@ namespace alc {
 					}
 				}
 				
-				tmCustomFindServer findServer(u, findAge, alcGetStrGuid(ageLink.ageInfo.guid), ageLink.ageInfo.filename);
+				tmCustomFindServer findServer(u, findAge, alcGetStrGuid(ageLink.ageInfo.guid).c_str(), ageLink.ageInfo.filename);
 				send(findServer);
 				
 				return 1;

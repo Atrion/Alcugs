@@ -807,7 +807,7 @@ void alcfuncs_tests() {
 	
 	//// Convenience
 	// with lower-case
-	assert(tString(alcGetStrUid(alcGetHexUid("3F207Cb7-3D85-41F8-B6E2-FAFA9C36B999"))) == tString("3F207CB7-3D85-41F8-B6E2-FAFA9C36B999"));
+	assert(alcGetStrUid(alcGetHexUid("3F207Cb7-3D85-41F8-B6E2-FAFA9C36B999").data()) == tString("3F207CB7-3D85-41F8-B6E2-FAFA9C36B999"));
 	try {
 		alcGetHexUid("3F207"); // too short
 		throw txBase(_WHERE("no exception?"));

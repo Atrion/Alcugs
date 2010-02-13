@@ -426,9 +426,9 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
 	log->print("%i %i,%i (%i) %i,%i ",pn,sn,frn,frt,ps,pfr);
 
 	if(flux==0) {
-		log->print(" &lt;- %s:%i</b> ",alcGetStrIp(ip),ntohs(port));
+		log->print(" &lt;- %s:%i</b> ",alcGetStrIp(ip).c_str(),ntohs(port));
 	} else {
-		log->print(" -&gt; %s:%i ",alcGetStrIp(ip),ntohs(port));
+		log->print(" -&gt; %s:%i ",alcGetStrIp(ip).c_str(),ntohs(port));
 	}
 
 	U32 i;
@@ -778,7 +778,7 @@ const char * tmMsgBase::str() {
 	if (flags & plNetRelRegions)
 		dbg.writeStr(" use relevance regions,");
 	if(flags & plNetUID)
-		dbg.printf(" uid: %s,",alcGetStrUid(uid));
+		dbg.printf(" uid: %s,",alcGetStrUid(uid).c_str());
 	if (flags & plNetDirected)
 		dbg.writeStr(" directed,");
 	if(flags & plNetVersion)

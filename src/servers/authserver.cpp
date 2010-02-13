@@ -57,7 +57,7 @@ namespace alc {
 			case NetMsgCustomAuthAsk:
 			{
 				tmCustomAuthAsk authAsk(u);
-				char guid[50], passwd[50], challenge[50], hash[50], ip[50];
+				char guid[50], passwd[50], challenge[50], hash[50];
 				Byte accessLevel;
 				int authResult;
 				
@@ -68,11 +68,10 @@ namespace alc {
 				// authenticate player
 				alcHex2Ascii(challenge, authAsk.challenge, 16);
 				alcHex2Ascii(hash, authAsk.hash, 16);
-				alcStrncpy(ip, alcGetStrIp(authAsk.ip), sizeof(ip)-1); // alcGetStrIp uses a local static array so we have to copy it
-				authResult = authBackend->authenticatePlayer(u, authAsk.login.c_str(), challenge, hash, authAsk.release, ip, passwd, guid, &accessLevel);
+				authResult = authBackend->authenticatePlayer(u, authAsk.login.c_str(), challenge, hash, authAsk.release, alcGetStrIp(authAsk.ip).c_str(), passwd, guid, &accessLevel);
 				
 				// send answer to client
-				tmCustomAuthResponse authResponse(u, authAsk, alcGetHexUid(guid), passwd, authResult, accessLevel);
+				tmCustomAuthResponse authResponse(u, authAsk, alcGetHexUid(guid).data(), passwd, authResult, accessLevel);
 				send(authResponse);
 				
 				return 1;

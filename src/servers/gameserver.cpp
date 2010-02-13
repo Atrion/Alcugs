@@ -278,7 +278,7 @@ namespace alc {
 			}
 			else if (reason == RLeaving) { // the player is going on to another age, so he's not really offline
 				// update online time
-				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, alcGetStrGuid(serverGuid), serverName, /* offline but will soon come back */ 2, u->onlineTime());
+				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, alcGetStrGuid(serverGuid).c_str(), serverName, /* offline but will soon come back */ 2, u->onlineTime());
 				send(vaultStatus);
 			}
 			else { // the player really went offline
@@ -467,7 +467,7 @@ namespace alc {
 				}
 				tmCustomPlayerStatus trackingStatus(trackingServer, u, 2 /* visible */, RActive);
 				send(trackingStatus);
-				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, alcGetStrGuid(serverGuid), serverName, 1 /* is online */, 0 /* don't increase online time now, do that on disconnect */);
+				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, alcGetStrGuid(serverGuid).c_str(), serverName, 1 /* is online */, 0 /* don't increase online time now, do that on disconnect */);
 				send(vaultStatus);
 				
 				// ok, tell the client he successfully joined

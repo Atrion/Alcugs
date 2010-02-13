@@ -196,7 +196,7 @@ namespace alc {
 		sql->query(query.c_str(), "Update player");
 	}
 
-	int tAuthBackend::authenticatePlayer(tNetSession *u, const char *login, const char *challenge, const char *hash, Byte release, char *ip, char *passwd,
+	int tAuthBackend::authenticatePlayer(tNetSession *u, const char *login, const char *challenge, const char *hash, Byte release, const char *ip, char *passwd,
 			char *guid, Byte *accessLevel)
 	{
 		char correctHash[50];
