@@ -78,7 +78,7 @@ public:
 	void setName(const tString & name);
 	const tString & getName() const { return name; }
 	tConfigVal * find(const char * what,bool create=false);
-	tConfigVal * find(const tString & what,bool create=false);
+	tConfigVal * find(tString what,bool create=false);
 	void copy(const tConfigKey & t);
 	void merge(tConfigKey & t);
 	void add(tConfigVal &t);
@@ -101,7 +101,7 @@ public:
 	tConfig();
 	~tConfig();
 	tConfigKey * findKey(const char * where="global",bool create=false);
-	tConfigKey * findKey(const tString & where,bool create=false);
+	tConfigKey * findKey(tString where,bool create=false);
 	tConfigVal * findVar(const char * what,const char * where="global",bool create=false);
 	const tString & getVar(const char * what,const char * where="global",U16 x=0,U16 y=0,bool *found = NULL); //!< found tells you whether the value exists
 	void setVar(const char * val,const char * what,const char * where="global",U16 x=0,U16 y=0);

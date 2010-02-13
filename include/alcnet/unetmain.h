@@ -42,6 +42,8 @@ namespace alc {
 
 ////DEFINITIONS
 
+// FIXME this should extend tAlcMain to tAlcUnetMain
+
 int alcUnetReloadConfig(bool firsttime=false);
 
 class tUnetSignalHandler :public tSignalHandler {

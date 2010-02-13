@@ -46,6 +46,7 @@
 
 namespace alc {
 
+// FIXME: avoid global variables if possible
 static volatile bool alcInitialized=false;
 static tConfig * alcGlobalConfig=NULL;
 static bool alcIngoreParseErrors=false;

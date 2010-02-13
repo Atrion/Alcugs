@@ -272,8 +272,9 @@ public:
 /** String buffer */
 class tString : public tMBuf { // FIXME: API cleanup
 public:
+	tString();
 	tString(const char * k);
-	explicit tString(U32 size=200);
+	explicit tString(U32 size);
 	explicit tString(tBBuf &k);
 	explicit tString(const tMBuf &k);
 	tString(const tString &k);
@@ -344,7 +345,6 @@ protected:
 	void copy(const tString &t);
 private:
 	mutable tString * shot;
-	mutable tString * cache_lower;
 
 	void init();
 	// comparison

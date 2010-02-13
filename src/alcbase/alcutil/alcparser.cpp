@@ -46,7 +46,7 @@
 
 namespace alc {
 
-const tString tStringTokenizer::getLine(bool nl,bool slash) {
+tString tStringTokenizer::getLine(bool nl,bool slash) {
 	Byte c=0;
 	Byte slashm=0;
 	tString out(255);
@@ -111,7 +111,7 @@ const tString tStringTokenizer::getLine(bool nl,bool slash) {
 	
 	return out;
 }
-const tString tStringTokenizer::getToken() {
+tString tStringTokenizer::getToken() {
 	DBG(9,"tStringTokenizer::getToken()\n");
 	Byte c;
 	Byte slash=0;
@@ -317,8 +317,7 @@ void tXParser::store(const tString &str) {
 			DBG(9,"Reading token %s\n",key.c_str());
 			//check for section
 			if(key.startsWith("[") && key.endsWith("]")) {
-				section=key.strip('[');
-				section=section.strip(']');
+				section=key.substring(1, key.size()-2);
 				DBG(5,">>Entering section %s\n",section.c_str());
 				continue;
 			}

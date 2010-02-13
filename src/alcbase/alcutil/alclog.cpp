@@ -45,10 +45,6 @@
 
 namespace alc {
 
-tLog * lstd=NULL;
-tLog * lerr=NULL;
-tLog * lnull=NULL;
-
 typedef struct {
 	//files
 	Byte silent; //!< set what to print to the console
@@ -96,6 +92,10 @@ typedef struct {
 	char protocol; //UDP, TCP <! 0x00 disabled, 0x01 udp, 0x02 tcp*/
 } tLogConfig;
 
+// FIXME: avoid global variables if possible
+tLog * lstd=NULL;
+tLog * lerr=NULL;
+tLog * lnull=NULL;
 static tLogConfig * tvLogConfig=NULL;
 
 void alcLogSetDefaults() {

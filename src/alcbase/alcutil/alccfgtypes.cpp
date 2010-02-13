@@ -175,10 +175,11 @@ void tConfigKey::setName(const char * name) {
 void tConfigKey::setName(const tString & name) {
 	this->name=name;
 }
-tConfigVal * tConfigKey::find(const tString & what,bool create) {
+tConfigVal * tConfigKey::find(tString what,bool create) {
 	U16 i;
+	what = what.lower(); // this also implicitly makes all added values lower-case as it's only here they are created
 	for(i=0; i<n; i++) {
-		if(values[i]->name.lower()==what.lower()) {
+		if(values[i]->name==what) {
 			return values[i];
 		}
 	}
@@ -246,11 +247,12 @@ tConfig::~tConfig() {
 		free(values);
 	}
 }
-tConfigKey * tConfig::findKey(const tString & where,bool create) {
+tConfigKey * tConfig::findKey(tString where,bool create) {
 	U16 i;
+	where = where.lower(); // this also implicitly makes all added keys lower-case as it's only here they are created
 	for(i=0; i<n; i++) {
-		DBG(9,"checking %s %s %s %s \n",values[i]->name.c_str(),where.c_str(),values[i]->name.lower().c_str(),where.lower().c_str());
-		if(values[i]->name.lower()==where.lower()) {
+		DBG(9,"checking %s %s %s %s \n",values[i]->name.c_str(),where.c_str(),values[i]->name.c_str(),where.c_str());
+		if(values[i]->name==where) {
 			return values[i];
 		}
 	}

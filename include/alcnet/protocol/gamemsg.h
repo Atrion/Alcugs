@@ -77,7 +77,7 @@ namespace alc {
 	
 	class tmJoinAck : public tmMsgBase {
 	public:
-		tmJoinAck(tNetSession *u, U32 x, tBaseType *sdl);
+		tmJoinAck(tNetSession *u, U32 x, const tBaseType *sdl);
 		virtual void stream(tBBuf &t) const;
 		// format
 		tStreamedObject sdlStream;
