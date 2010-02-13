@@ -840,7 +840,7 @@ namespace alc {
 	
 	void tvNode::blobAsHtml(tLog *log, const Byte *blob, U32 size)
 	{
-		char filename[512], path[1024];
+		tString filename, path;
 		if (type == KImageNode) { // the first 4 bytes are skipped so anything smaller than that would make problems
 			log->print("Image note:<br />\n");
 			if (size < 4) {
@@ -848,18 +848,17 @@ namespace alc {
 				return;
 			}
 			// get the file name
-			snprintf(filename, sizeof(filename), "%s.%s.%d.%s.jpg", ageName.c_str(), str1.c_str(), index, alcGetStrTime(modTime).c_str());
-			alcStrFilter(filename); // don't trust user input
-			alcStrncpy(path, log->getDir().c_str(), sizeof(path)-1);
-			strncat(path, "data/", sizeof(path)-strlen(path)-1);
-			mkdir(path, 00750); // make sure the path exists
-			strncat(path, filename, sizeof(path)-strlen(path)-1);
+			filename.printf("%s.%s.%d.%s.jpg", ageName.c_str(), str1.c_str(), index, alcGetStrTime(modTime).c_str());
+			filename = alcStrFiltered(filename); // don't trust user input
+			path = log->getDir() + "data/";
+			mkdir(path.c_str(), 00750); // make sure the path exists
+			path = path+filename;
 			// save the file
 			tFBuf file;
-			file.open(path, "wb");
+			file.open(path.c_str(), "wb");
 			file.write(blob+4, size-4); // skip the first 4 bytes to make it a valid picture
 			file.close();
-			log->print("<img src='data/%s' /><br />\n", filename);
+			log->print("<img src='data/%s' /><br />\n", filename.c_str());
 		}
 		else {
 			const char *suffix = "raw";
@@ -890,18 +889,17 @@ namespace alc {
 			log->print("</pre><br />\n");
 			// dump it to a file
 			// get the file name
-			snprintf(filename, sizeof(filename), "%s.%s.%d.%s.%s", ageName.c_str(), str1.c_str(), index, alcGetStrTime(modTime).c_str(), suffix);
-			alcStrFilter(filename); // don't trust user input
-			alcStrncpy(path, log->getDir().c_str(), sizeof(path)-1);
-			strncat(path, "data/", sizeof(path)-strlen(path)-1);
-			mkdir(path, 00750); // make sure the path exists
-			strncat(path, filename, sizeof(path)-strlen(path)-1);
+			filename.printf("%s.%s.%d.%s.%s", ageName.c_str(), str1.c_str(), index, alcGetStrTime(modTime).c_str(), suffix);
+			filename = alcStrFiltered(filename); // don't trust user input
+			path = log->getDir() + "data/";
+			mkdir(path.c_str(), 00750); // make sure the path exists
+			path = path+filename;
 			// save the file
 			tFBuf file;
-			file.open(path, "wb");
+			file.open(path.c_str(), "wb");
 			file.write(blob, size);
 			file.close();
-			log->print("<a href='data/%s'>%s</a><br />\n", filename, filename);
+			log->print("<a href='data/%s'>%s</a><br />\n", filename.c_str(), filename.c_str());
 		}
 	}
 	

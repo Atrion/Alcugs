@@ -785,9 +785,6 @@ tString tmMsgBase::str() const {
 		dbg.writeStr(" ack,");
 	if(flags & plNetSid)
 		dbg.printf(" sid: %i,",sid);
-
-	dbg.seek(-1); // remove the last comma
-	dbg.putByte(0); // this is necessary because of the seek() call
 #endif
 	return dbg;
 }

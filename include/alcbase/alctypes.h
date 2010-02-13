@@ -160,6 +160,7 @@ class tMBuf : public tBBuf {
 public:
 	tMBuf();
 	tMBuf(const tMBuf &t);
+	tMBuf(const Byte *d, U32 s);
 	explicit tMBuf(tBBuf &t);
 	virtual ~tMBuf();
 	

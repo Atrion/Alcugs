@@ -627,8 +627,9 @@ namespace alc {
 					err->log("ERR: I've got to tell player with KI %d about his game server, but can't find his session.\n", serverFound.ki);
 					return 1;
 				}
+				
 				Byte guid[8];
-				alcAscii2Hex(guid, serverFound.serverGuid.c_str(), 8);
+				alcGetHexGuid(guid, serverFound.serverGuid);
 				
 				tmFindAgeReply reply(client, serverFound.x, serverFound.ipStr, serverFound.serverPort, serverFound.age, guid);
 				send(reply);

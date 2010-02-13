@@ -147,17 +147,15 @@ namespace alc {
 				query.printf(ref_vault_table_init, refVaultTable);
 				sql->query(query.c_str(), "Prepare: Creating ref vault table");
 				// create the root folder
-				tMBuf folderName;
-				char asciiFolderName[17];
+				tString folderName;
 				folderName.putByte(0x0F);
 				folderName.putByte(0x13);
 				folderName.putByte(0x37);
 				folderName.putU32(alcGetTime());
 				folderName.putByte(random()%250);
-				folderName.rewind();
-				alcHex2Ascii(asciiFolderName, folderName.read(8), 8);
+				tString asciiFolderName = alcGetStrGuid(folderName.data());
 				query.clear();
-				query.printf("INSERT INTO %s (idx, type, int_1, str_1, str_2, text_1, text_2) VALUES ('%d', 6, '%d', '%s', '%s %s', 'You must never edit or delete this node!', '%s')", vaultTable, KVaultID, vaultVersion, asciiFolderName, alcNAME, alcSTR_VER, alcVersionTextShort());
+				query.printf("INSERT INTO %s (idx, type, int_1, str_1, str_2, text_1, text_2) VALUES ('%d', 6, '%d', '%s', '%s %s', 'You must never edit or delete this node!', '%s')", vaultTable, KVaultID, vaultVersion, asciiFolderName.c_str(), alcNAME, alcSTR_VER, alcVersionTextShort());
 				sql->query(query.c_str(), "Prepare: Creating vault folder");
 				// done!
 				log->log("Started VaultDB driver (%s)\n", __U_VAULTDB_ID);
@@ -1151,7 +1149,7 @@ namespace alc {
 			node->ageTime = atoi(row[8]);
 			node->ageName.writeStr(row[9]);
 			if (strlen(row[10]) == 16)
-				alcAscii2Hex(node->ageGuid, row[10], 8);
+				alcGetHexGuid(node->ageGuid, tString(row[10]));
 			else
 				memset(node->ageGuid, 0, 8);
 			node->int1 = atoi(row[11]);

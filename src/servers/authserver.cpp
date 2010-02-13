@@ -57,7 +57,8 @@ namespace alc {
 			case NetMsgCustomAuthAsk:
 			{
 				tmCustomAuthAsk authAsk(u);
-				char guid[50], passwd[50], challenge[50], hash[50];
+				tString passwd;
+				Byte hexUid[16];
 				Byte accessLevel;
 				int authResult;
 				
@@ -66,12 +67,12 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, authAsk.str().c_str());
 				
 				// authenticate player
-				alcHex2Ascii(challenge, authAsk.challenge, 16);
-				alcHex2Ascii(hash, authAsk.hash, 16);
-				authResult = authBackend->authenticatePlayer(u, authAsk.login.c_str(), challenge, hash, authAsk.release, alcGetStrIp(authAsk.ip).c_str(), passwd, guid, &accessLevel);
+				tString challenge = alcHex2Ascii(tMBuf(authAsk.challenge, 16));
+				tString hash = alcHex2Ascii(tMBuf(authAsk.hash, 16));
+				authResult = authBackend->authenticatePlayer(u, authAsk.login.c_str(), challenge.c_str(), hash.c_str(), authAsk.release, alcGetStrIp(authAsk.ip).c_str(), &passwd, hexUid, &accessLevel);
 				
 				// send answer to client
-				tmCustomAuthResponse authResponse(u, authAsk, alcGetHexUid(guid).data(), passwd, authResult, accessLevel);
+				tmCustomAuthResponse authResponse(u, authAsk, hexUid, passwd, authResult, accessLevel);
 				send(authResponse);
 				
 				return 1;

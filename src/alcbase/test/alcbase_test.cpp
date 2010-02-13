@@ -716,10 +716,9 @@ void alctypes_part7()
 	b.write(ustr5, 5);
 	b.rewind();
 	b.get(str);
-	char check[7];
 	str.rewind();
-	alcHex2Ascii(check, str.read(), 3);
-	assert(strcmp(check, "8B0016") == 0);
+	tString check = alcHex2Ascii(str);
+	assert(check == "8B0016");
 	
 	// write ustr tests
 	str.clear();
@@ -807,19 +806,21 @@ void alcfuncs_tests() {
 	
 	//// Convenience
 	// with lower-case
-	assert(alcGetStrUid(alcGetHexUid("3F207Cb7-3D85-41F8-B6E2-FAFA9C36B999").data()) == tString("3F207CB7-3D85-41F8-B6E2-FAFA9C36B999"));
+	Byte uid[16];
+	alcGetHexUid(uid, "3F207Cb7-3D85-41F8-B6E2-FAFA9C36B999");
+	assert(alcGetStrUid(uid) == tString("3F207CB7-3D85-41F8-B6E2-FAFA9C36B999"));
 	try {
-		alcGetHexUid("3F207"); // too short
+		alcGetHexUid(uid, "3F207"); // too short
 		throw txBase(_WHERE("no exception?"));
 	}
 	catch (txUnexpectedData &) {}
 	try {
-		alcGetHexUid("3F207CB--3D85-41F8-B6E2-FAFA9C36B999"); // invalid form
+		alcGetHexUid(uid, "3F207CB--3D85-41F8-B6E2-FAFA9C36B999"); // invalid form
 		throw txBase(_WHERE("no exception?"));
 	}
 	catch (txUnexpectedData &) {}
 	try {
-		alcGetHexUid("3F207CB783D85-41F8-B6E2-FAFA9C36B999"); // invalid form
+		alcGetHexUid(uid, "3F207CB783D85-41F8-B6E2-FAFA9C36B999"); // invalid form
 		throw txBase(_WHERE("no exception?"));
 	}
 	catch (txUnexpectedData &) {}

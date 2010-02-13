@@ -34,11 +34,34 @@
 
 namespace alc {
 
+/**
+		\returns a pointer to a formated time string
+*/
+tString alcGetStrTime(U32 timestamp, U32 microseconds);
+tString alcGetStrTime(double stamp=0, const char format='s');
+
+
+/** Gets an ascii string from hex values
+*/
+tString alcHex2Ascii(tMBuf in);
+
+/** Encodes in Hex, an hex string
+*/
+tMBuf alcAscii2Hex(tString in);
+
+
+// These are mostly special cases of the above to, for compatability with Byte arrays
 /** creates a 0000000000000000 valid guid
-		\param guid A hex guid
+		\param guid A hex guid (8 characters)
 		\return A str guid, twice as long as the hex guid
 */
 tString alcGetStrGuid(const Byte * guid);
+
+/** encodes a 16-character GUID into a 8-byte hex
+	\param out 8-byte array for the output
+	\param in 16-byte string
+*/
+void alcGetHexGuid(Byte *out, tString in);
 
 /** creates a 00000000-0000-0000-0000-000000000000 valid guid
 		\param guid A 16 bytes user id
@@ -49,34 +72,14 @@ tString alcGetStrUid(const Byte * guid);
 /** \param passed_guid A 36 bytes str user id
 	\return A 16 bytes hex user id
 */
-tMBuf alcGetHexUid(tString guid);
-
-/**
-		\returns a pointer to a formated time string
-*/
-tString alcGetStrTime(U32 timestamp, U32 microseconds);
-tString alcGetStrTime(double stamp=0, const char format='s');
-
-/** Gets an ascii string from hex values
-	\param out A buffer of at least 2*sizeof(in) bytes
-	\param in Input buffer
-	\param size size of the input buffer
-*/
-void alcHex2Ascii(char * out, const Byte * in, int size);
-
-/** Encodes in Hex, an hex string
-	\param out Output buffer of at least sizeof(in)/2 bytes
-	\param in Input buffer, must be 2*sizeof(out)
-	\param size size of the output buffer
-*/
-void alcAscii2Hex(Byte * out, const char * in, int size);
+void alcGetHexUid(Byte *out, const tString &passed_guid);
 
 
 /**
 	Strips out some characters that win32 doesn't like..
 	(Overwrittes what)
 */
-void alcStrFilter(char * what);
+tString alcStrFiltered(tString what);
 
 /** parses a "name[number]" kind of string, setting "t" to the name and returning the number */
 U16 alcParseKey(tString *t);

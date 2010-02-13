@@ -240,6 +240,10 @@ tMBuf::tMBuf(const tMBuf &t) {
 	msize = t.msize;
 	off=t.off;
 }
+tMBuf::tMBuf(const Byte *d, U32 s) {
+	init();
+	write(d, s);
+}
 tMBuf::tMBuf(U32 size) {
 	init();
 	buf = new tRefBuf(size);

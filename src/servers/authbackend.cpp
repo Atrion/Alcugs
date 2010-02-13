@@ -135,21 +135,22 @@ namespace alc {
 		return false;
 	}
 
-	void tAuthBackend::calculateHash(const char *login, const char *passwd, const char *challenge, char *hash)
+	tString tAuthBackend::calculateHash(const char *login, const char *passwd, const char *challenge)
 	{
 		tMD5Buf md5buffer;
 		md5buffer.write(challenge, strlen(challenge));
 		md5buffer.write(login, strlen(login));
 		md5buffer.write(passwd, strlen(passwd));
 		md5buffer.compute();
-		alcHex2Ascii(hash, md5buffer.read(16), 16);
+		return alcHex2Ascii(md5buffer);
 	}
 	
-	int tAuthBackend::queryPlayer(const char *login, char *passwd, char *guid, U32 *attempts, U32 *lastAttempt)
+	int tAuthBackend::queryPlayer(const char *login, tString *passwd, tString *guid, U32 *attempts, U32 *lastAttempt)
 	{
 		tString query;
-		*attempts = *lastAttempt = passwd[0] = 0; // ensure there's a valid value in there
-		alcStrncpy(guid, "00000000-0000-0000-0000-000000000000", 36);
+		*attempts = *lastAttempt = 0; // ensure there's a valid value in there
+		*passwd = "";
+		*guid = "00000000-0000-0000-0000-000000000000";
 		
 		// only query if we are connected properly
 		if (!prepare()) {
@@ -168,9 +169,9 @@ namespace alc {
 			MYSQL_ROW row = mysql_fetch_row(result);
 			if (row == NULL) ret = -1; // player doesn't exist
 			else { // read the columns
-				alcStrncpy(passwd, row[0], 49); // passwd
+				*passwd = row[0]; // passwd
 				ret = atoi(row[1]); // a_level
-				alcStrncpy(guid, row[2], 36); // guid
+				*guid = row[2]; // guid
 				*attempts = atoi(row[3]); // attempts
 				*lastAttempt = atoi(row[4]);
 			}
@@ -193,12 +194,13 @@ namespace alc {
 		sql->query(query.c_str(), "Update player");
 	}
 
-	int tAuthBackend::authenticatePlayer(tNetSession *u, const char *login, const char *challenge, const char *hash, Byte release, const char *ip, char *passwd,
-			char *guid, Byte *accessLevel)
+	int tAuthBackend::authenticatePlayer(tNetSession *u, const char *login, const char *challenge, const char *hash, Byte release, const char *ip, tString *passwd,
+			Byte *hexUid, Byte *accessLevel)
 	{
-		char correctHash[50];
 		U32 attempts, lastAttempt;
-		int queryResult = queryPlayer(login, passwd, guid, &attempts, &lastAttempt); // query password, access level and guid of this user
+		tString guid;
+		int queryResult = queryPlayer(login, passwd, &guid, &attempts, &lastAttempt); // query password, access level and guid of this user
+		alcGetHexGuid(hexUid, guid);
 		
 		log.log("AUTH: player %s (IP: %s, game server %s):\n ", login, ip, u->str().c_str());
 		if (queryResult < 0) { // that means: player not found
@@ -217,7 +219,7 @@ namespace alc {
 			int authResult;
 			Byte updateStamps = 1; // update only last attempt
 			*accessLevel = queryResult;
-			log.print("UID = %s, attempt %d/%d, access level = %d\n ", guid, attempts+1, maxAttempts, *accessLevel);
+			log.print("UID = %s, attempt %d/%d, access level = %d\n ", guid.c_str(), attempts+1, maxAttempts, *accessLevel);
 			
 			if (*accessLevel >= minAccess) { // the account doesn't have enough access for this shard (accessLevel = minAccess is rejected as well, for backward compatability)
 				log.print("access level is too big (must be lower than %d)\n", minAccess);
@@ -236,8 +238,7 @@ namespace alc {
 				++attempts;
 			}
 			else { // everythign seems fine... let's compare the password
-				calculateHash(login, passwd, challenge, correctHash);
-				if(strncmp(hash, correctHash, 49) != 0) { // wrong password :(
+				if(calculateHash(login, passwd->c_str(), challenge) != hash) { // wrong password :(
 					log.print("invalid password\n");
 					authResult = AInvalidPasswd;
 					++attempts;
@@ -252,7 +253,7 @@ namespace alc {
 			}
 			
 			// ok, now all we have to do is updating the player's last login and attempts and return the result
-			updatePlayer(guid, ip, attempts, updateStamps);
+			updatePlayer(guid.c_str(), ip, attempts, updateStamps);
 			log.flush();
 			return authResult;
 		}

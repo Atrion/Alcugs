@@ -34,14 +34,24 @@
 
 namespace alc {
 
-/**
-  \brief Converts an hex guid to ascii
+/** creates a 0000000000000000 valid guid
+	\param guid A hex guid (8 characters)
+	\return A str guid, twice as long as the hex guid
 */
 tString alcGetStrGuid(const Byte * guid) {
-	if(guid==NULL) return "null";
-	char str_guid[17];
-	alcHex2Ascii(str_guid,guid,8);
-	return str_guid;
+	return alcHex2Ascii(tMBuf(guid, 8));
+}
+
+/** encodes a 16-character GUID into a 8-byte hex
+	\param out 8-byte array for the output
+	\param in 16-byte string
+*/
+void alcGetHexGuid(Byte *out, tString in) {
+	if (in.size() != 16)
+		throw txUnexpectedData(_WHERE("A GUID string must be 16 characters long"));
+	tMBuf tmp = alcAscii2Hex(in);
+	assert(tmp.size() == 8);
+	memcpy(out, tmp.data(), 8);
 }
 
 /**
@@ -50,61 +60,36 @@ tString alcGetStrGuid(const Byte * guid) {
 tString alcGetStrUid(const Byte * guid) {
 	if(guid==NULL) return "null";
 
-	char str_guid[33];
-	tString str_guid2;
-
-	alcHex2Ascii(str_guid,guid,16);
+	tString str_guid = alcHex2Ascii(tMBuf(guid,16)), str_guid2;
+	str_guid.rewind();
 	
-	int off=0;
-	str_guid2.write(str_guid+off,8); //ID1
-	off+=8;
+	str_guid2.write(str_guid.read(8),8); //ID1
 	str_guid2 = str_guid2+"-";
-	str_guid2.write(str_guid+off,4); //ID2
-	off+=4;
+	str_guid2.write(str_guid.read(4),4); //ID2
 	str_guid2 = str_guid2+"-";
-	str_guid2.write(str_guid+off,4); //ID3
-	off+=4;
+	str_guid2.write(str_guid.read(4),4); //ID3
 	str_guid2 = str_guid2+"-";
-	str_guid2.write(str_guid+off,4); //ID4
-	off+=4;
+	str_guid2.write(str_guid.read(4),4); //ID4
 	str_guid2 = str_guid2+"-";
-	str_guid2.write(str_guid+off,12); //ID5
-	off+=12;
-	assert(str_guid2.size() == 36 && off == 32);
+	str_guid2.write(str_guid.read(12),12); //ID5
+	assert(str_guid2.size() == 36 && str_guid.tell() == 32);
 	return str_guid2;
 }
 
 /**
   \brief Converts an Ascii uid to hex
 */
-tMBuf alcGetHexUid(tString guid) {
-	
-	if (guid.size() != 36) throw txUnexpectedData(_WHERE("An UID string must be 36 characters long"));
+void alcGetHexUid(Byte *out, const tString &passed_guid) {
+	if (passed_guid.size() != 36) throw txUnexpectedData(_WHERE("An UID string must be 36 characters long"));
+	if (passed_guid.getAt(8) != '-' || passed_guid.getAt(13) != '-' || passed_guid.getAt(18) != '-' || passed_guid.getAt(23) != '-')
+		throw txUnexpectedData(_WHERE("There must be dashes between the UID parts"));
 
-	Byte hex_guid[16];
+	tString guid = passed_guid.substring(0, 8) + passed_guid.substring(9, 4) + passed_guid.substring(14, 4) + passed_guid.substring(19, 4) + passed_guid.substring(24, 12);
 	guid = guid.upper();
-	guid.rewind();
-
-	int off=0;
-	alcAscii2Hex(hex_guid+off,reinterpret_cast<const char *>(guid.read(8)),4); //ID1
-	off+=4;
-	guid.check("-", 1);
-	alcAscii2Hex(hex_guid+off,reinterpret_cast<const char *>(guid.read(4)),2); //ID2
-	off+=2;
-	guid.check("-", 1);
-	alcAscii2Hex(hex_guid+off,reinterpret_cast<const char *>(guid.read(4)),2); //ID3
-	off+=2;
-	guid.check("-", 1);
-	alcAscii2Hex(hex_guid+off,reinterpret_cast<const char *>(guid.read(4)),2); //ID4
-	off+=2;
-	guid.check("-", 1);
-	alcAscii2Hex(hex_guid+off,reinterpret_cast<const char *>(guid.read(12)),6); //ID5
-	off+=6;
-	assert(off == 16 && guid.tell() == 36);
-
-	tMBuf res;
-	res.write(hex_guid, 16);
-	return res;
+	assert(guid.size() == 32);
+	tMBuf tmp = alcAscii2Hex(guid);
+	assert(tmp.size() == 16);
+	memcpy(out, tmp.data(), 16);
 }
 
 /**
@@ -151,50 +136,47 @@ tString alcGetStrTime(double stamp, const char format) {
 
 /**
   \brief Converts hex data to an ASCII string
-  \param out pointer to the output buffer (must be 2*size)
-  \param in pointer to the input data
-  \param size size of the input data
 */
-void alcHex2Ascii(char * out, const Byte * in, int size) {
-	int i;
-	for(i=0; i<size; i++) {
-		out[2*i]=  ((in[i] & 0xF0)>>4);
-		out[2*i]= (out[2*i]<0x0A ? out[2*i]+0x30 : out[2*i]+(0x41-0x0A));
-		out[(2*i)+1] = ((in[i] & 0x0F)<0x0A ? (in[i] & 0x0F)+0x30 : (in[i] & 0x0F)+(0x41-0x0A));
+tString alcHex2Ascii(tMBuf in) {
+	tString str;
+	for(U32 n=0; n<in.size(); n++) {
+		Byte i = in.getAt(n);
+		Byte b = ((i & 0xF0)>>4);
+		str.putByte(b<0x0A ? b+0x30 : b+(0x41-0x0A));
+		str.putByte((i & 0x0F)<0x0A ? (i & 0x0F)+0x30 : (i & 0x0F)+(0x41-0x0A));
 	}
-	out[size*2]='\0';
+	return str;
 }
 
 /**
   \brief Converts an ASCII string to hex data
 */
-void alcAscii2Hex(Byte * out, const char * in, int size) {
-	//humm I will write it if i need it :D
-	int i;
-	for(i=0; i<size; i++) {
-		if ((in[2*i] < 0x41 || in[2*i] > 0x41+25) && (in[2*i] < 0x30 || in[2*i] > 0x30+9))
-			throw txUnexpectedData(_WHERE("There is an invalid character in the data: %c", in[2*i]));
-		if ((in[2*i+1] < 0x41 || in[2*i+1] > 0x41+25) && (in[2*i+1] < 0x30 || in[2*i+1] > 0x30+9))
-			throw txUnexpectedData(_WHERE("There is an invalid character in the data: %c", in[2*i+1]));
-		out[i]=  ((in[2*i])<0x3A ? (in[2*i] - 0x30) : (in[2*i] - (0x41-0x0A)));
-		out[i]= (0x10 * out[i]) + ((in[(2*i)+1])<0x3A ? (in[(2*i)+1] - 0x30) : (in[(2*i)+1] - (0x41-0x0A)));
+tMBuf alcAscii2Hex(tString in) {
+	tMBuf buf;
+	for(U32 n=0; n<in.size()/2; n++) {
+		Byte i1 = in.getAt(2*n), i2 = in.getAt(2*n+1);
+		if ((i1 < 0x41 || i1 > 0x41+25) && (i1 < 0x30 || i1 > 0x30+9))
+			throw txUnexpectedData(_WHERE("There is an invalid character in the data: %c", i1));
+		if ((i2 < 0x41 || i2 > 0x41+25) && (i2 < 0x30 || i2 > 0x30+9))
+			throw txUnexpectedData(_WHERE("There is an invalid character in the data: %c", i2));
+		Byte b =  ((i1)<0x3A ? (i1 - 0x30) : (i1 - (0x41-0x0A)));
+		buf.putByte((0x10 * b) + ((i2)<0x3A ? (i2 - 0x30) : (i2 - (0x41-0x0A))));
 	}
+	return buf;
 }
 
 /**
 	\brief Strips out some characters that win32 doesn't like in file names
 */
-void alcStrFilter(char * what) {
-	int i=0,e=0;
-	while(what[i]!=0) {
-		if(what[i]!='<' && what[i]!='>' && what[i]!=':' && what[i]!='#' && what[i]!='\\' && what[i]!='/' && what[i]!='*' && what[i]!='?' && what[i]!='"' && what[i]!='\'' && what[i]!='|') {
-			what[e]=what[i];
-			e++; i++;
-		} else {
-			i++;
+tString alcStrFiltered(tString what) {
+	tString result;
+	for (U32 i = 0; i < what.size(); ++i) {
+		Byte c = what.getAt(i);
+		if(c!='<' && c!='>' && c!=':' && c!='#' && c!='\\' && c!='/' && c!='*' && c!='?' && c!='"' && c!='\'' && c!='|') {
+			result.putByte(c);
 		}
 	}
-	what[e]='\0';
+	return result;
 }
 
 
