@@ -91,7 +91,7 @@ namespace alc {
 			{
 				tmCustomVaultAskPlayerList askPlayerList(u);
 				msg->data.get(askPlayerList);
-				log->log("<RCV> [%d] %s\n", msg->sn, askPlayerList.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, askPlayerList.str().c_str());
 				
 				vaultBackend.sendPlayerList(askPlayerList);
 				
@@ -101,7 +101,7 @@ namespace alc {
 			{
 				tmCustomVaultCreatePlayer createPlayer(u);
 				msg->data.get(createPlayer);
-				log->log("<RCV> [%d] %s\n", msg->sn, createPlayer.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, createPlayer.str().c_str());
 				
 				Byte result = AUnspecifiedServerError;
 				U32 ki = 0;
@@ -132,7 +132,7 @@ namespace alc {
 			{
 				tmCustomVaultDeletePlayer deletePlayer(u);
 				msg->data.get(deletePlayer);
-				log->log("<RCV> [%d] %s\n", msg->sn, deletePlayer.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, deletePlayer.str().c_str());
 				
 				vaultBackend.deletePlayer(deletePlayer);
 				
@@ -142,7 +142,7 @@ namespace alc {
 			{
 				tmCustomVaultCheckKi checkKi(u);
 				msg->data.get(checkKi);
-				log->log("<RCV> [%d] %s\n", msg->sn, checkKi.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, checkKi.str().c_str());
 				
 				vaultBackend.checkKi(checkKi);
 				
@@ -152,7 +152,7 @@ namespace alc {
 			{
 				tmCustomVaultFindAge findAge(u);
 				msg->data.get(findAge);
-				log->log("<RCV> [%d] %s\n", msg->sn, findAge.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, findAge.str().c_str());
 				
 				tvAgeLinkStruct ageLink;
 				findAge.data.rewind();
@@ -178,7 +178,7 @@ namespace alc {
 			{
 				tmCustomVaultPlayerStatus status(u);
 				msg->data.get(status);
-				log->log("<RCV> [%d] %s\n", msg->sn, status.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, status.str().c_str());
 				
 				vaultBackend.updatePlayerStatus(status);
 				
@@ -193,7 +193,7 @@ namespace alc {
 				// get the data out of the packet
 				tmVault vaultMsg(u);
 				msg->data.get(vaultMsg);
-				log->log("<RCV> [%d] %s\n", msg->sn, vaultMsg.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, vaultMsg.str().c_str());
 				if (!vaultMsg.hasFlags(plNetKi) || vaultMsg.ki == 0) throw txProtocolError(_WHERE("KI missing"));
 				if (isTask && !vaultMsg.hasFlags(plNetX))  throw txProtocolError(_WHERE("X flag missing"));
 				// parse the vault stuff

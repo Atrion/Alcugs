@@ -47,13 +47,12 @@ namespace alc {
 		tmCustomAuthAsk(tNetSession *u, U32 x, U32 sid, U32 ip, const char *login, const Byte *challenge, const Byte *hash, Byte release);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str() const;
 		// format
 		U32 ip; //network order
 		tString login;
 		Byte challenge[16], hash[16];
 		Byte release;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmCustomAuthResponse : public tmMsgBase {
@@ -62,11 +61,10 @@ namespace alc {
 		tmCustomAuthResponse(tNetSession *u, tmCustomAuthAsk &authAsk, const Byte *uid, const char *passwd, Byte result, Byte accessLevel);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str() const;
 		// format
 		tString login, passwd;
 		Byte result, accessLevel;
-	protected:
-		virtual void additionalFields();
 	};
 	
 } //End alc namespace

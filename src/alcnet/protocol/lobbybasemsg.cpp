@@ -49,10 +49,12 @@ namespace alc {
 		release = t.getByte();
 	}
 	
-	void tmAuthenticateHello::additionalFields(void)
+	tString tmAuthenticateHello::str(void) const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" account: %s, max packet size: %d, release: 0x%02X (%s)", account.c_str(), maxPacketSize, release, alcUnetGetRelease(release));
+		return dbg;
 	}
 	
 	//// tmAuthenticateChallenge	
@@ -73,11 +75,12 @@ namespace alc {
 		t.put(challenge); // challenge
 	}
 	
-	void tmAuthenticateChallenge::additionalFields()
+	tString tmAuthenticateChallenge::str(void) const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
-		challenge.rewind();
-		dbg.printf(" auth result: 0x%02X (%s), challenge: %s", authResult, alcUnetGetAuthCode(authResult), alcGetStrUid(challenge.read()).c_str());
+		dbg.printf(" auth result: 0x%02X (%s), challenge: %s", authResult, alcUnetGetAuthCode(authResult), alcGetStrUid(challenge.data()).c_str());
+		return dbg;
 	}
 	
 	//// tmAuthenticateResponse
@@ -92,11 +95,12 @@ namespace alc {
 		if (hash.size() != 16) throw txProtocolError(_WHERE("tmAuthenticateResponse.hash must be 16 characters long"));
 	}
 	
-	void tmAuthenticateResponse::additionalFields(void)
+	tString tmAuthenticateResponse::str(void) const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
-		hash.rewind();
-		dbg.printf(" hash: %s", alcGetStrUid(hash.read()).c_str());
+		dbg.printf(" hash: %s", alcGetStrUid(hash.data()).c_str());
+		return dbg;
 	}
 	
 	//// tmAccountAutheticated	
@@ -118,10 +122,12 @@ namespace alc {
 		t.write(serverGuid, 8); // server guid
 	}
 	
-	void tmAccountAutheticated::additionalFields()
+	tString tmAccountAutheticated::str() const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" auth result: 0x%02X (%s), server guid: %s", authResult, alcUnetGetAuthCode(authResult), alcGetStrGuid(serverGuid).c_str());
+		return dbg;
 	}
 	
 	//// tmSetMyActivePlayer
@@ -138,10 +144,12 @@ namespace alc {
 			throw txProtocolError(_WHERE("NetMsgSetMyActivePlayer.unk is not 0 but %d", unk));
 	}
 	
-	void tmSetMyActivePlayer::additionalFields(void)
+	tString tmSetMyActivePlayer::str() const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" avatar: %s", avatar.c_str());
+		return dbg;
 	}
 	
 	//// tmActivePlayerSet
@@ -191,10 +199,12 @@ namespace alc {
 		t.write(serverGuid, 8);
 	}
 	
-	void tmFindAgeReply::additionalFields()
+	tString tmFindAgeReply::str() const
 	{
+		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" Age filename: %s, IP: %s, Port: %d, GUID: %s", age.c_str(), ipStr.c_str(), serverPort, alcGetStrGuid(serverGuid).c_str());
+		return dbg;
 	}
 
 } //end namespace alc

@@ -38,10 +38,9 @@ namespace alc {
 		tmVault(tNetSession *u, U32 ki, U32 x, bool task, tBaseType *vaultMessage);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str() const;
 		// format
 		tMBuf message;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmCustomVaultAskPlayerList : public tmMsgBase {
@@ -57,11 +56,10 @@ namespace alc {
 		tmCustomVaultPlayerList(tNetSession *u, U32 x, U32 sid, const Byte *uid);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str() const;
 		// format
 		U16 numberPlayers;
 		tMBuf players;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmCustomVaultPlayerStatus : public tmMsgBase {
@@ -70,12 +68,11 @@ namespace alc {
 		tmCustomVaultPlayerStatus(tNetSession *u);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str() const;
 		// format
 		tString age, serverGuid;
 		Byte state;
 		U32 onlineTime;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmCustomVaultCreatePlayer : public tmMsgBase {
@@ -84,12 +81,11 @@ namespace alc {
 		tmCustomVaultCreatePlayer(tNetSession *u, U32 x, U32 sid, const Byte *uid, Byte accessLevel, const char *login, const tString &avatar, const tString &gender, const tString &friendName, const tString &key);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str() const;
 		// format
 		tUruString login;
 		tString avatar, gender, friendName, key;
 		Byte accessLevel;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmCustomVaultPlayerCreated : public tmMsgBase {
@@ -98,10 +94,9 @@ namespace alc {
 		tmCustomVaultPlayerCreated(tNetSession *u, U32 ki, U32 x, U32 sid, const Byte *uid, Byte result);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str() const;
 		// format
 		Byte result;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmCustomVaultDeletePlayer : public tmMsgBase {
@@ -110,10 +105,9 @@ namespace alc {
 		tmCustomVaultDeletePlayer(tNetSession *u, U32 ki, U32 x, U32 sid, const Byte *uid, Byte accessLevel);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str() const;
 		// format
 		Byte accessLevel;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmCustomVaultCheckKi : public tmMsgBase {
@@ -130,11 +124,10 @@ namespace alc {
 		tmCustomVaultKiChecked(tNetSession *u);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str() const;
 		// format
 		Byte status;
 		tString avatar;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmCustomVaultFindAge : public tmMsgBase {

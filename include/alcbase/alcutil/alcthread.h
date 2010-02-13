@@ -60,10 +60,6 @@ private:
 	HANDLE id;
 	#endif
 #endif
-	
-	// prevent copying
-	tThread(const tThread &);
-	const tThread &operator=(const tThread &);
 };
 
 class tMutex {
@@ -83,9 +79,7 @@ private:
 	#endif
 #endif
 	
-	// prevent copying
-	tMutex(const tMutex &);
-	const tMutex &operator=(const tMutex &);
+	FORBID_CLASS_COPY(tMutex)
 };
 
 class tMutexLock {
@@ -107,9 +101,7 @@ private:
 	tMutex *mutex;
 #endif
 	
-	// prevent copying
-	tMutexLock(const tMutexLock &);
-	const tMutexLock &operator=(const tMutexLock &);
+	FORBID_CLASS_COPY(tMutexLock)
 };
 
 

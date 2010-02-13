@@ -220,7 +220,7 @@ void tNetSession::send(tmBase &msg, U32 delay) {
 #ifndef ENABLE_ACKLOG
 	if (!(msg.bhflags & UNetAckReply))
 #endif
-	net->log->log("<SND> %s\n",msg.str());
+	net->log->log("<SND> %s\n",msg.str().c_str());
 	tMBuf buf;
 	U32 csize,psize,hsize,pkt_sz,n_pkts;
 	Byte flags=msg.bhflags, val, tf;
@@ -409,7 +409,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		tmNetClientComm comm(this);
 		msg->data.rewind();
 		msg->data.get(comm);
-		net->log->log("<RCV> [%d] %s",msg->sn,comm.str());
+		net->log->log("<RCV> [%d] %s",msg->sn,comm.str().c_str());
 		if(renego_stamp==comm.timestamp) { // it's a duplicate, we already got this message
 		    // It is necessary to do the check this way since the usual check by SN would treat a nego on an existing connection as
 		    //  "already parsed" since the SN is started from the beginning

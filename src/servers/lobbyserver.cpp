@@ -101,7 +101,7 @@ namespace alc {
 				// get the packet
 				tmRequestMyVaultPlayerList requestList(u);
 				msg->data.get(requestList);
-				log->log("<RCV> [%d] %s\n", msg->sn, requestList.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, requestList.str().c_str());
 				
 				// forward it to the vault server
 				tNetSession *vaultServer = getServer(KVault);
@@ -123,7 +123,7 @@ namespace alc {
 				// get the packet
 				tmCustomVaultPlayerList playerList(u);
 				msg->data.get(playerList);
-				log->log("<RCV> [%d] %s\n", msg->sn, playerList.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, playerList.str().c_str());
 				
 				// find the client's session
 				tNetSession *client = smgr->get(playerList.sid);
@@ -151,7 +151,7 @@ namespace alc {
 				// get the packet
 				tmCreatePlayer createPlayer(u);
 				msg->data.get(createPlayer);
-				log->log("<RCV> [%d] %s\n", msg->sn, createPlayer.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, createPlayer.str().c_str());
 				
 				// forward it to the vault server
 				tNetSession *vaultServer = getServer(KVault);
@@ -174,7 +174,7 @@ namespace alc {
 				// get the packet
 				tmCustomVaultPlayerCreated playerCreated(u);
 				msg->data.get(playerCreated);
-				log->log("<RCV> [%d] %s\n", msg->sn, playerCreated.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, playerCreated.str().c_str());
 				
 				// find the client's session
 				tNetSession *client = smgr->get(playerCreated.sid);
@@ -200,7 +200,7 @@ namespace alc {
 				// get the packet
 				tmDeletePlayer deletePlayer(u);
 				msg->data.get(deletePlayer);
-				log->log("<RCV> [%d] %s\n", msg->sn, deletePlayer.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, deletePlayer.str().c_str());
 				
 				// forward it to the vault server
 				tNetSession *vaultServer = getServer(KVault);
@@ -225,7 +225,7 @@ namespace alc {
 				// get the data out of the packet
 				tmCustomForkServer forkServer(u);
 				msg->data.get(forkServer);
-				log->log("<RCV> [%d] %s\n", msg->sn, forkServer.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, forkServer.str().c_str());
 				
 				if (!loadOnDemand) {
 					log->log("Ignoring fork request since I'm in manual mode\n");

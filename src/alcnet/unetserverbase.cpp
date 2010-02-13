@@ -58,7 +58,7 @@ namespace alc {
 			{
 				tmPing ping(u);
 				msg->data.get(ping);
-				log->log("<RCV> [%d] %s\n",msg->sn,ping.str());
+				log->log("<RCV> [%d] %s\n",msg->sn,ping.str().c_str());
 				if (ping.destination == whoami || ping.destination == KBcast) { // if it's for us or for everyone, answer
 					tmPing pingReply(u, ping);
 					send(pingReply);

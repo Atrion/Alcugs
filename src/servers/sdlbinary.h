@@ -117,7 +117,7 @@ namespace alc {
 		bool incompleteVars; //!< this state contains only a part of the full information and uses indices for the vars
 		bool incompleteStructs; //!< this state contains only a part of the full information and uses indices for the structs
 		
-		tString dbg;
+		tString dbg; // FIXME
 		tSdlStruct *sdlStruct;
 		tAgeStateManager *stateMgr;
 	};
@@ -139,7 +139,7 @@ namespace alc {
 		// format
 		tSdlStateBinary content;
 	private:
-		tString dbg;
+		tString dbg; // FIXME
 		tAgeStateManager *stateMgr;
 	};
 

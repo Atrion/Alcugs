@@ -207,7 +207,7 @@ namespace alc {
 		Byte guid[8];
 		tString userDefName, displayName;
 	private:
-		tString dbg;
+		tString dbg; // FIXME
 	};
 	
 	class tvSpawnPoint : public tvBase {
@@ -238,7 +238,7 @@ namespace alc {
 		Byte ccr;
 		tString parentAgeName;
 	private:
-		tString dbg;
+		tString dbg; // FIXME
 	};
 	
 	class tvManifest : public tvBase {
@@ -302,10 +302,7 @@ namespace alc {
 		U32 size;
 		Byte id;
 		Byte *data;
-	private:
-		// avoid copying it
-		tvCreatableStream(const tvCreatableStream &);
-		const tvCreatableStream &operator=(const tvCreatableStream &);
+		FORBID_CLASS_COPY(tvCreatableStream)
 	};
 	
 	class tvServerGuid : public tvBase {
@@ -354,10 +351,7 @@ namespace alc {
 	private:
 		void permissionsAsHtml(tLog *log);
 		void blobAsHtml(tLog *log, const Byte *blob, U32 size);
-	private:
-		// avoid copying it
-		tvNode(const tvNode &);
-		const tvNode &operator=(const tvNode &);
+		FORBID_CLASS_COPY(tvNode)
 	};
 	
 	class tvItem : public tvBase {
@@ -385,10 +379,7 @@ namespace alc {
 		Byte id;
 		U16 type;
 		tvBase *data;
-	private:
-		// forbid copying
-		tvItem(const tvItem &);
-		const tvItem &operator=(const tvItem &);
+		FORBID_CLASS_COPY(tvItem)
 	};
 	
 	class tvMessage : public tvBase {
@@ -401,6 +392,7 @@ namespace alc {
 		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
 		void print(tLog *log, bool clientToServer, tNetSession *client, bool shortLog, U32 ki = 0);
+		const tvMessage &operator=(const tvMessage &msg);
 		
 		typedef std::vector<tvItem *> tItemList; // to avoid re-allocating and since tvItems can't be copied, this is a vector of pointers
 		
@@ -413,9 +405,6 @@ namespace alc {
 		U16 context; //!< vault context; sub in VaultTask
 		U32 vmgr; //!< vault manager; client in VaultTask
 		U16 vn; //!< vault number
-	private:
-		// forbid assigning
-		const tvMessage &operator=(const tvMessage &);
 	};
 	
 	

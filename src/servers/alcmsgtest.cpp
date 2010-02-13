@@ -198,7 +198,7 @@ int tUnetSimpleFileServer::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 			if(listen!=0) {
 				tmData data(u);
 				msg->data.get(data);
-				log->log("<RCV> [%d] %s\n", msg->sn, data.str());
+				log->log("<RCV> [%d] %s\n", msg->sn, data.str().c_str());
 				printf("Saving file to rcvmsg.raw...\n");
 				tFBuf f1;
 				f1.open("rcvmsg.raw","wb");
@@ -287,7 +287,7 @@ int main(int argc,char * argv[]) {
 		
 		alcMain.std()->print(alcVersionText());
 
-		tUnetSimpleFileServer netcore=tUnetSimpleFileServer(l_hostname,l_port,listen);
+		tUnetSimpleFileServer netcore(l_hostname,l_port,listen);
 		if (!nlogs) netcore.unsetFlags(UNET_ELOG);
 
 		while(listen==0 && hostname.isEmpty()) {

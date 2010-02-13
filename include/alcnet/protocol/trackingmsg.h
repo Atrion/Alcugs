@@ -38,13 +38,12 @@ namespace alc {
 		tmCustomSetGuid(tNetSession *u, const char *serverGuid, const char *age, const char *externalIp, U16 spawnStart, U16 spawnStop);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str() const;
 		inline bool validSpawnPorts(void) { return spawnStart && spawnStop && spawnStart <= spawnStop; }
 		// format
 		tUruString serverGuid;
 		tString age, externalIp;
 		U16 spawnStart, spawnStop;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmCustomPlayerStatus : public tmMsgBase {
@@ -53,11 +52,10 @@ namespace alc {
 		tmCustomPlayerStatus(tNetSession *u, tNetSession *playerSession, Byte playerFlag, Byte playerStatus);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str() const;
 		// format
 		tString account, avatar;
 		Byte playerFlag, playerStatus;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmCustomFindServer : public tmMsgBase { // also used by vault
@@ -67,11 +65,10 @@ namespace alc {
 		tmCustomFindServer(tNetSession *u, const tmCustomFindServer &findServer);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str() const;
 		// format
 		tUruString serverGuid;
 		tString age;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmCustomForkServer : public tmMsgBase {
@@ -80,12 +77,11 @@ namespace alc {
 		tmCustomForkServer(tNetSession *u, U16 port, const char *serverGuid, const char *name);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str() const;
 		// format
 		U16 forkPort;
 		tUruString serverGuid;
 		tString age;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmCustomServerFound : public tmMsgBase {
@@ -94,13 +90,12 @@ namespace alc {
 		tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U32 sid, U16 port, const char *ipStr, const char *serverGuid, const char *name);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str() const;
 		// format
 		U16 serverPort;
 		tString ipStr;
 		tUruString serverGuid;
 		tString age;
-	protected:
-		virtual void additionalFields();
 	};
 	
 	class tmCustomDirectedFwd : public tmGameMessageDirected {

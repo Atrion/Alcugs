@@ -68,6 +68,10 @@ inline void alcStrncpy(char *dst, const char *str, int size)
  #define letoh32(x) htole32(x)
 #endif
 
+#define FORBID_CLASS_COPY(name) private: \
+	name(const name &); \
+	name operator=(const name &);
+
 }
 
 

@@ -509,14 +509,14 @@ void tmNetClientComm::stream(tBBuf &t) const {
 	t.putU32(bandwidth);
 	t.put(timestamp);
 }
-const char * tmNetClientComm::str() {
-	static char cnt[1024]; // FIXME
+tString tmNetClientComm::str() const {
+	tString str;
 #ifdef ENABLE_MSGLOG
-	snprintf(cnt,sizeof(cnt),"(Re)Negotation (bandwidth: %i bps time: %s) on %s",bandwidth,timestamp.str().c_str(),u->str().c_str());
+	str.printf("(Re)Negotation (bandwidth: %i bps time: %s) on %s",bandwidth,timestamp.str().c_str(),u->str().c_str());
 #else
-	snprintf(cnt,sizeof(cnt),"(Re)Negotation on %s",u->str().c_str());
+	str.printf("(Re)Negotation on %s",u->str().c_str());
 #endif
-	return cnt;
+	return str;
 }
 
 // Ack
@@ -558,8 +558,8 @@ void tmNetAck::stream(tBBuf &t) const
 			t.putU32(0);
 	}
 }
-const char * tmNetAck::str() {
-	dbg.clear();
+tString tmNetAck::str() const {
+	tString dbg;
 	dbg.printf("Ack on %s", u->str().c_str());
 	#ifdef ENABLE_MSGLOG
 	bool firstOne = true;
@@ -571,7 +571,7 @@ const char * tmNetAck::str() {
 		dbg.printf(" %i,%i %i,%i", (*it)->A >> 8, (*it)->A & 0x000000FF, (*it)->B >> 8, (*it)->B & 0x000000FF);
 	}
 	#endif
-	return dbg.c_str();
+	return dbg;
 }
 
 //Base message
@@ -746,8 +746,8 @@ void tmMsgBase::copyProps(tmMsgBase &t) {
 		sid=t.sid;
 	}
 }
-const char * tmMsgBase::str() {
-	dbg.clear();
+tString tmMsgBase::str() const {
+	tString dbg;
 	dbg.printf("%s",alcUnetGetMsgCode(cmd));
 #ifdef ENABLE_MSGLOG
 	dbg.printf(" %04X %08X",cmd,flags);
@@ -791,10 +791,9 @@ const char * tmMsgBase::str() {
 		dbg.printf(" sid: %i,",sid);
 
 	dbg.seek(-1); // remove the last comma
-	additionalFields();
 	dbg.putByte(0); // this is necessary because of the seek() call
 #endif
-	return dbg.c_str();
+	return dbg;
 }
 
 Byte alcUnetGetVarTypeFromName(tString type) {

@@ -1096,13 +1096,7 @@ namespace alc {
 	//// tvMessage
 	tvMessage::tvMessage(const tvMessage &msg) : tvBase()
 	{
-		tpots = 0;
-		task = msg.task;
-		cmd = msg.cmd;
-		compress = false;
-		context = msg.context;
-		vmgr = msg.vmgr;
-		vn = msg.vn;
+		operator=(msg);
 	}
 	
 	tvMessage::tvMessage(Byte cmd, bool task)
@@ -1121,6 +1115,18 @@ namespace alc {
 		for (tItemList::iterator it = items.begin(); it != items.end(); ++it) {
 			delete *it;
 		}
+	}
+	
+	const tvMessage &tvMessage::operator=(const tvMessage &msg)
+	{
+		tpots = 0;
+		task = msg.task;
+		cmd = msg.cmd;
+		compress = false;
+		context = msg.context;
+		vmgr = msg.vmgr;
+		vn = msg.vn;
+		return *this;
 	}
 	
 	void tvMessage::store(tBBuf &t)

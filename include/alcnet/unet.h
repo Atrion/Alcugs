@@ -208,6 +208,8 @@ private:
 	U32 unet_usec; //!< netcore timeout to do another loop (microseconds)
 	
 	tUnetMsgQ<tNetEvent> * events; //!< event queue
+
+	FORBID_CLASS_COPY(tUnet)
 };
 
 }

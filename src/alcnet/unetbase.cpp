@@ -400,7 +400,7 @@ int tUnetBase::parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown)
 			// accept it even if it is NOT a client - in that case, the peer obviously thinks it is a client, so lets respect its wish, it doesn't harm
 			tmLeave msgleave(u);
 			msg->data.get(msgleave);
-			log->log("<RCV> [%d] %s\n",msg->sn,msgleave.str());
+			log->log("<RCV> [%d] %s\n",msg->sn,msgleave.str().c_str());
 			/* The peer left, so there is nothing we have to do anymore, just remove it */
 			terminate(u, msgleave.reason, /*gotLeave*/true); // this will delete the session ASAP
 			return 1;
@@ -410,7 +410,7 @@ int tUnetBase::parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown)
 			// accept it even if it IS a client - in that case, the peer obviously thinks it is a server, so lets respect its wish, it doesn't harm
 			tmTerminated msgterminated(u);
 			msg->data.get(msgterminated);
-			log->log("<RCV> [%d] %s\n",msg->sn,msgterminated.str());
+			log->log("<RCV> [%d] %s\n",msg->sn,msgterminated.str().c_str());
 			/* The peer wants to terminate, so tell him we are ready to leave */
 			terminate(u);
 			return 1;
@@ -420,7 +420,7 @@ int tUnetBase::parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown)
 			if (u->isTerminated() || shutdown) return 0; // don't accept a NetMsgAlive on already terminated sessions
 			tmAlive alive(u);
 			msg->data.get(alive);
-			log->log("<RCV> [%d] %s\n",msg->sn,alive.str());
+			log->log("<RCV> [%d] %s\n",msg->sn,alive.str().c_str());
 			return 1;
 		}
 	}
