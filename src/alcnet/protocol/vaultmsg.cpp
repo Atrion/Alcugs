@@ -56,7 +56,7 @@ namespace alc {
 		tmMsgBase::store(t);
 		message.clear();
 		U32 remaining = t.remaining();
-		message.write(t.read(), remaining); // the rest is the message
+		message.write(t.readAll(), remaining); // the rest is the message
 	}
 	
 	void tmVault::stream(tBBuf &t) const
@@ -112,7 +112,7 @@ namespace alc {
 		numberPlayers = t.getU16();
 		players.clear();
 		U32 remaining = t.remaining();
-		players.write(t.read(), remaining); // the rest is the data about the players
+		players.write(t.readAll(), remaining); // the rest is the data about the players
 	}
 	
 	void tmCustomVaultPlayerList::stream(tBBuf &t) const
@@ -375,7 +375,7 @@ namespace alc {
 		// store the whole message
 		data.clear();
 		U32 remaining = t.remaining();
-		data.write(t.read(), remaining);
+		data.write(t.readAll(), remaining);
 	}
 	
 	void tmCustomVaultFindAge::stream(tBBuf &t) const

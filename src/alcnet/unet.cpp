@@ -624,9 +624,8 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 	DBG(5,"validation level is %i,%i\n",u->validation,msg->val);
 	
 	U32 msize=mbuf->size();
-	mbuf->rewind();
 	Byte * buf, * buf2=NULL;
-	buf=const_cast<Byte *>(mbuf->read()); // yes, we are writing directly into the tMBuf buffer... this saves us from copying everything
+	buf=const_cast<Byte *>(mbuf->data()); // yes, we are writing directly into the tMBuf buffer... this saves us from copying everything
 
 	if(msg->val==2) {
 		DBG(8,"Encoding validation 2 packet of %i bytes...\n",msize);

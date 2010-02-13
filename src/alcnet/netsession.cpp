@@ -564,13 +564,12 @@ void tNetSession::acceptMessage(tUnetUruMsg *t)
 		rcv->sn=t->sn;
 	}
 	else {
-		if (rcv->sn != t->sn) throw txProtocolError(_WHERE("I am assembling %d and received %d?!?", rcv->sn, t->sn));
+		if (rcv->sn != t->sn) throw txProtocolError(_WHERE("I am assembling message nr. %d and received nr. %d?!?", rcv->sn, t->sn));
 	}
 	if (t->frn != rcv->fr_count) throw txProtocolError(_WHERE("Expected fragment %d, got %d\n", rcv->fr_count, t->frn));
 
 	// Got the next one!
-	t->data.rewind();
-	rcv->data.write(t->data.read(),t->data.size());
+	rcv->data.put(t->data);
 
 	if(rcv->fr_count==t->frt) {
 		U32 size = t->frt * frg_size + t->data.size();

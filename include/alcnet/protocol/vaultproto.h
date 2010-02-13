@@ -293,12 +293,12 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
-		tMBuf *getData(void) const; //!< remember to delete the MBuf
+		tSBuf getData(void) const; //!< remember to delete the MBuf
 		// format
 		U32 size;
 		Byte id;
 		Byte *data;
-		FORBID_CLASS_COPY(tvCreatableStream)
+		FORBID_CLASS_COPY(tvCreatableStream) // the "data" would have to be copied manually
 	};
 	
 	class tvServerGuid : public tvBase {
@@ -317,7 +317,7 @@ namespace alc {
 		    will also be sent when their flag is off */
 		tvNode(U32 flagB = 0);
 		
-		virtual ~tvNode(void);
+		inline virtual ~tvNode(void) {}
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
@@ -341,13 +341,12 @@ namespace alc {
 		tString str1, str2, str3, str4, str5, str6;
 		tString lStr1, lStr2;
 		tString text1, text2;
-		U32 blob1Size;
-		Byte *blob1;
+		tMBuf blob1;
 
 	private:
 		void permissionsAsHtml(tLog *log);
-		void blobAsHtml(tLog *log, const Byte *blob, U32 size);
-		FORBID_CLASS_COPY(tvNode)
+		void blobAsHtml(tLog *log, const tMBuf &blob);
+		FORBID_CLASS_COPY(tvNode) // this is a huge class and there is no reason to copy it, so prevent it from happening accidently
 	};
 	
 	class tvItem : public tvBase {
@@ -358,7 +357,7 @@ namespace alc {
 		tvItem(tvCreatableStream *stream);
 		tvItem(Byte id, tvNodeRef *ref);
 		tvItem(Byte tpots) : tvBase() { this->tpots = tpots; data = NULL; }
-		virtual ~tvItem(void) { if (data) delete data; }
+		inline virtual ~tvItem(void) { if (data) delete data; }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
@@ -375,7 +374,7 @@ namespace alc {
 		Byte id;
 		U16 type;
 		tvBase *data;
-		FORBID_CLASS_COPY(tvItem)
+		FORBID_CLASS_COPY(tvItem) // the "data" would have to be copied manually
 	};
 	
 	class tvMessage : public tvBase {
@@ -388,7 +387,7 @@ namespace alc {
 		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
 		void print(tLog *log, bool clientToServer, tNetSession *client, bool shortLog, U32 ki = 0);
-		const tvMessage &operator=(const tvMessage &msg);
+		const tvMessage &operator=(const tvMessage &msg); //!< does not copy the items, just the "outer" data
 		
 		typedef std::vector<tvItem *> tItemList; // to avoid re-allocating and since tvItems can't be copied, this is a vector of pointers
 		

@@ -52,12 +52,7 @@ namespace alc {
 		virtual int onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u);
 		virtual void onApplyConfig(void);
 	private:
-		bool loadWithGame2(const char *age);
-		
-		char website[256];
-		char gameLogPath[256];
-		char gameConfig[256];
-		char gameBin[256];
+		tString website, gameLogPath, gameConfig, gameBin;
 		bool loadOnDemand;
 	};
 	

@@ -59,28 +59,22 @@ namespace alc {
 		tUnetLobbyServerBase::onApplyConfig();
 		tConfig *cfg = alcGetMain()->config();
 		
-		tString var = cfg->getVar("website");
-		alcStrncpy(website, var.c_str(), sizeof(website)-1);
+		website = cfg->getVar("website");
 		
-		var = cfg->getVar("game.log");
-		if (var.isEmpty()) throw txBase(_WHERE("game log directory is not defined"));
-		alcStrncpy(gameLogPath, var.c_str(), sizeof(gameLogPath)-1);
+		gameLogPath = cfg->getVar("game.log");
+		if (gameLogPath.isEmpty()) throw txBase(_WHERE("game log directory is not defined"));
 		
-		var = cfg->getVar("game.config");
-		if (var.isEmpty()) var = cfg->getVar("read_config", "cmdline");
-		alcStrncpy(gameConfig, var.c_str(), sizeof(gameConfig)-1);
+		gameConfig = cfg->getVar("game.config");
+		if (gameConfig.isEmpty()) gameConfig = cfg->getVar("read_config", "cmdline");
 		
-		var = cfg->getVar("game.bin");
-		if (var.isEmpty()) {
-			var = cfg->getVar("bin");
-			if (var.isEmpty()) throw txBase(_WHERE("game bin is not defined"));
-			alcStrncpy(gameBin, var.c_str(), sizeof(gameBin)-1);
-			strncat(gameBin, "/uru_game", sizeof(gameBin)-strlen(gameBin)-1);
+		gameBin = cfg->getVar("game.bin");
+		if (gameBin.isEmpty()) {
+			gameBin = cfg->getVar("bin");
+			if (gameBin.isEmpty()) throw txBase(_WHERE("game bin is not defined"));
+			gameBin += "/uru_game";
 		}
-		else
-			alcStrncpy(gameBin, var.c_str(), sizeof(gameBin)-1);
 		
-		var = cfg->getVar("load_on_demand");
+		tString var = cfg->getVar("load_on_demand");
 		loadOnDemand = (var.isEmpty() || var.asByte()); // on per default
 	}
 	
@@ -246,20 +240,20 @@ namespace alc {
 					tString gameName = alcStrFiltered(forkServer.age);
 					tString gameGuid = alcStrFiltered(forkServer.serverGuid);
 					tString gameLog, gamePort;
-					gameLog.printf("%s/%s/%s/", gameLogPath, gameName.c_str(), gameGuid.c_str());
+					gameLog.printf("%s/%s/%s/", gameLogPath.c_str(), gameName.c_str(), gameGuid.c_str());
 					gamePort.printf("%d", forkServer.forkPort);
 					
 					alcUnetGetMain()->onForked(); // will close sockets and logs
 					
 					// if the server was put in daemon mode, th lobby would get the SIGCHILD immediately after starting, so it'd
 					// be useless for debugging
-					execlp(gameBin, gameBin,"-p",gamePort.c_str(),"-guid",gameGuid.c_str(),"-name",gameName.c_str(),
-							"-log",gameLog.c_str(),"-c",gameConfig,"-v","0",NULL);
+					execlp(gameBin.c_str(), gameBin.c_str(),"-p",gamePort.c_str(),"-guid",gameGuid.c_str(),"-name",gameName.c_str(),
+							"-log",gameLog.c_str(),"-c",gameConfig.c_str(),"-v","0",NULL);
 					
 					// if we come here, there was an error in the execlp call (but we're still in the game server process!)
 					// our old logs are closed, but opening a new one should be ok
 					tLog *log = new tLog("fork_err.log", DF_APPEND);
-					log->log("There was an error starting the game server %s (GUID: %s, Port: %s)\n", gameBin, gameGuid.c_str(), gamePort.c_str());
+					log->log("There was an error starting the game server %s (GUID: %s, Port: %s)\n", gameBin.c_str(), gameGuid.c_str(), gamePort.c_str());
 					delete log; // make sure its properly closed and synced
 					exit(-1); // exit the game server process
 				}

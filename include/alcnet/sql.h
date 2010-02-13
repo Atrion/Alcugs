@@ -54,6 +54,7 @@ public:
 	int insertId(void);
 	
 	tString escape(const char *str); //!< escapes the given string
+	inline tString escape(const tString &str) { return escape(str.c_str()); }
 	tString escape(const Byte *data, int size); //!< escapes the given data into the out array and returns that array
 	MYSQL_RES *storeResult(void);
 	

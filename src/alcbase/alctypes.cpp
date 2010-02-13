@@ -229,7 +229,7 @@ tMBuf::tMBuf(tBBuf &t) {
 	this->init();
 	U32 pos=t.tell();
 	t.rewind();
-	this->write(t.read(), t.size());
+	this->write(t.read(t.size()), t.size());
 	t.set(pos); // restore old pos
 	set(pos);
 }
@@ -306,7 +306,6 @@ void tMBuf::write(const Byte * val,U32 n) {
 }
 const Byte * tMBuf::read(U32 n) {
 	U32 oldpos=off;
-	if(n==0) n=msize-off;
 	off+=n;
 	if(off>msize || buf==NULL) { 
 		DBG(8,"off:%u,msize:%u\n",off,msize);
@@ -350,6 +349,12 @@ void tMBuf::addNullTerminator(void) const
 	if (msize == buf->size()) buf->resize(msize+200);
 	*(buf->buf()+msize) = 0;
 }
+void tMBuf::cutEnd(U32 newSize)
+{
+	if (newSize > msize) throw txOutOfRange(_WHERE("cutEnd() can only decrease the size"));
+	msize = newSize;
+	if (off > newSize) end();
+}
 /* end tMBuf */
 
 /* 
@@ -383,54 +388,36 @@ void tFBuf::set(U32 pos) {
 }
 void tFBuf::write(const Byte * val,U32 n) {
 	DBG(9,"write(val:%s,n:%u)\n",val,n);
-	if(val==NULL) return;
+	if(n==0) return;
 	if(f==NULL) throw txNoFile(_WHERE("NoFile"));
-	U32 nn=fwrite(val,n,1,f);
-	if(nn!=1) throw txWriteErr(_WHERE("write error, only wrote %u of 1",nn));
+	if(fwrite(val,n,1,f)!=1) throw txWriteErr(_WHERE("write error"));
 }
 const Byte * tFBuf::read(U32 n) {
-	if(n==0) n=this->size();
 	if(f==NULL) throw txNoFile(_WHERE("NoFile"));
-	if(xbuf==NULL) {
+	if(xsize<n) {
+		free(xbuf);
 		xbuf=static_cast<Byte *>(malloc(n));
 		if(xbuf==NULL) throw txNoMem(_WHERE("NoMem"));
 		xsize=n;
 	}
-	if(xsize<n) {
-		xbuf=static_cast<Byte *>(realloc(xbuf,n));
-		if(xbuf==NULL) throw txNoMem(_WHERE("NoMem"));
-		xsize=n;
-	}
-	fread(xbuf,n,1,f);
+	if (fread(xbuf,n,1,f) != 1) throw txOutOfRange(_WHERE("error while reading"));
 	return xbuf;
 }
 void tFBuf::stream(tBBuf &b) const {
 	// make sure the position in the file is the same after the read
-	U32 pos = tell(), n = size();
+	U32 pos = tell();
 	fseek(f,0,SEEK_SET);
-	if(xbuf==NULL) {
-		xbuf=static_cast<Byte *>(malloc(n));
+	if(xsize<msize) {
+		free(xbuf);
+		xbuf=static_cast<Byte *>(malloc(msize));
 		if(xbuf==NULL) throw txNoMem(_WHERE("NoMem"));
-		xsize=n;
+		xsize=msize;
 	}
-	if(xsize<n) {
-		xbuf=static_cast<Byte *>(realloc(xbuf,n));
-		if(xbuf==NULL) throw txNoMem(_WHERE("NoMem"));
-		xsize=n;
-	}
-	fread(xbuf,n,1,f);
-	b.write(xbuf,n);
+	fread(xbuf,msize,1,f);
+	b.write(xbuf,msize);
 	fseek(f,pos,SEEK_SET);
 }
 U32 tFBuf::size() const {
-	if(msize==0) {
-		if (f==NULL) return 0;
-		int wtf=ftell(f);
-		fseek(f,0,SEEK_END);
-		msize=ftell(f);
-		fseek(f,wtf,SEEK_SET);
-	}
-	DBG(9,"msize:%i\n",msize);
 	return msize;
 }
 void tFBuf::open(const char * path,const char * mode) {
@@ -440,6 +427,10 @@ void tFBuf::open(const char * path,const char * mode) {
 		if(errno==ENOENT) throw txNotFound(path);
 		throw txUnkErr("Unknown error code: %i\n",errno);
 	}
+	// get size and seek back to beginning
+	fseek(f,0,SEEK_END);
+	msize=ftell(f);
+	fseek(f,0,SEEK_SET);
 }
 void tFBuf::close() {
 	if(f!=NULL) { fclose(f); }
@@ -462,13 +453,13 @@ void tSBuf::set(U32 pos) {
 	off=pos; 
 }
 const Byte * tSBuf::read(U32 n) {
-	const Byte * auxbuf=buf+off;
-	if(n) {
-		off+=n;
-		if(off >= msize) { off-=n; throw txOutOfRange(_WHERE("Cannot read pos %i,len:%i size %i\n",off,n,msize)); }
+	U32 oldpos=off;
+	off+=n;
+	if(off>msize) { 
+		off-=n; 
+		throw txOutOfRange(_WHERE("OutOfRange %i>%i",off+n,msize)); 
 	}
-	else off=msize;
-	return auxbuf;
+	return buf+oldpos;
 }
 void tSBuf::stream(tBBuf &buf) const {
 	buf.write(this->buf,msize);
@@ -682,6 +673,15 @@ tString tString::dirname() const {
 		return "/";
 	} else {
 		return shot.substring(0,pos);
+	}
+}
+tString tString::filename() const {
+	int pos=find('/',/*reverse*/true);
+	
+	if(pos==-1) {
+		return *this;
+	} else {
+		return substring(pos+1);
 	}
 }
 void tString::writeStr(const char * t) {

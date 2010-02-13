@@ -350,8 +350,7 @@ namespace alc {
 					err->log("ERR: I've got to ask the auth server about player %s, but it's unavailable.\n", u->str().c_str());
 					return 1;
 				}
-				authResponse.hash.rewind();
-				tmCustomAuthAsk authAsk(authServer, authResponse.x, u->getSid(), u->getIp(), u->name, u->challenge, authResponse.hash.read(), u->buildType);
+				tmCustomAuthAsk authAsk(authServer, authResponse.x, u->getSid(), u->getIp(), u->name, u->challenge, authResponse.hash.data(), u->buildType);
 				send(authAsk);
 				
 				return 1;

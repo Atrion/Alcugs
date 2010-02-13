@@ -306,21 +306,22 @@ void tUnetUruMsg::store(tBBuf &t) {
 	cps=t.getU32();
 	dsize=t.getU32();
 	if(dsize==0) throw txUnexpectedData(_WHERE("A zero sized message!?"));
-	U32 xdsize=dsize;
-	//check size
+	if (t.tell() != hsize) throw txUnexpectedData(_WHERE("Header size mismatch, %d != %d", t.tell(), hsize));
+	// done with the header - read data and check size
+	data.clear();
 	if(tf & UNetAckReply) {
+		U32 xdsize=dsize;
 		if(tf & UNetExt) {
 			xdsize=dsize*8;
-			if(t.size()-hsize!=xdsize) throw txUnexpectedData(_WHERE("Alcugs Protocol Ack reply incorrect size!\n"));
 		} else {
 			xdsize=(dsize*16)+2;
-			if(t.size()-hsize!=xdsize) throw txUnexpectedData(_WHERE("Uru Protocol Ack reply incorrect size!\n"));
 		}
+		data.write(t.read(xdsize),xdsize);
 	} else {
-		if(t.size()-hsize!=dsize) throw txUnexpectedData(_WHERE("Message size check failed %i!=%i\n",dsize,t.size()-hsize));
+		data.write(t.read(dsize),dsize);
 	}
-	data.clear();
-	data.write(t.read(),xdsize);
+	if (!t.eof()) throw txUnexpectedData(_WHERE("Message size mismatch"));
+	
 	frn=csn & 0x000000FF;
 	sn=csn >> 8;
 	pfr=cps & 0x000000FF;
@@ -768,6 +769,7 @@ tString tmMsgBase::str() const {
 		dbg.writeStr(" ack,");
 	if(flags & plNetSid)
 		dbg.printf(" sid: %i,",sid);
+	dbg.cutEnd(dbg.size()-1); // get rid of the last comma
 #endif
 	return dbg;
 }

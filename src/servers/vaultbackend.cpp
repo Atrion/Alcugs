@@ -156,10 +156,8 @@ namespace alc {
 		node = new tvNode(MType | MStr64_1 | MBlob1);
 		node->type = KTextNoteNode;
 		node->str1 = welcomeMsgTitle;
-		node->blob1Size = strlen(welcomeMsgText)+1;
-		node->blob1 = static_cast<Byte *>(malloc(node->blob1Size * sizeof(Byte)));
-		if (node->blob1 == NULL) throw txNoMem(_WHERE("NoMem"));
-		strcpy(reinterpret_cast<char *>(node->blob1), welcomeMsgText);
+		node->blob1.write(welcomeMsgText, strlen(welcomeMsgText));
+		node->blob1.putByte(0); // add terminator
 		vaultDB->createChildNode(KVaultID, globalInboxNode, *node);
 		delete node;
 	}
@@ -209,8 +207,8 @@ namespace alc {
 	
 	void tVaultBackend::checkKi(tmCustomVaultCheckKi &checkKi)
 	{
-		char avatar[256];
-		bool status = vaultDB->checkKi(checkKi.ki, checkKi.uid, avatar);
+		bool status;
+		tString avatar = vaultDB->checkKi(checkKi.ki, checkKi.uid, &status);
 		tmCustomVaultKiChecked checked(checkKi.getSession(), checkKi.ki, checkKi.x, checkKi.sid, checkKi.uid, status, avatar);
 		net->send(checked);
 	}
@@ -357,12 +355,10 @@ namespace alc {
 				case 10: // GenericStream: Stream containing a table of ints
 				{
 					if (itm->type != plCreatableStream) throw txProtocolError(_WHERE("a vault item with id 10 must always be a plCreatableStream"));
-					tMBuf *buf = static_cast<tvCreatableStream *>(itm->data)->getData();
-					tableSize = buf->getU16();
-					table.write(buf->read(tableSize*4), tableSize*4);
-					bool eof = buf->eof();
-					delete buf;
-					if (!eof) throw txProtocolError(_WHERE("the stream is too long"));
+					tSBuf buf = static_cast<tvCreatableStream *>(itm->data)->getData();
+					tableSize = buf.getU16();
+					table.write(buf.read(tableSize*4), tableSize*4);
+					if (!buf.eof()) throw txProtocolError(_WHERE("the stream is too long"));
 					table.rewind();
 					break;
 				}
@@ -886,8 +882,8 @@ namespace alc {
 		}
 		
 		// new spawn point info
-		char spawnPnt[512];
-		snprintf(spawnPnt, 512, "%s:%s:%s;", spawnPoint.title.c_str(), spawnPoint.name.c_str(), spawnPoint.cameraStack.c_str());
+		tString spawnPnt;
+		spawnPnt.printf("%s:%s:%s;", spawnPoint.title.c_str(), spawnPoint.name.c_str(), spawnPoint.cameraStack.c_str());
 		
 		// if the link node exists, fetch and update it, otherwise, create it
 		if (ageLinkNode) {
@@ -899,16 +895,14 @@ namespace alc {
 			if (nNodes != 1) throw txUnet(_WHERE("cant find age link even though I just found the reference?!?"));
 			tvNode *node = *nodes; // saves some * ;-)
 			assert(node->type == KAgeLinkNode);
-			assert(node->blob1 != NULL); // otherwise we would have to add a terminator...
+			assert(node->blob1.size()); // otherwise we would have to add a terminator...
 			node->flagB = MBlob1; // only save what is really necessary, so unset all flags
 			node->flagC = 0;
 			// add spawn point info
-			if (node->blob1Size != strlen(reinterpret_cast<char *>(node->blob1))+1)
-				throw txUnet(_WHERE("Size mismatch in link node"));
-			node->blob1Size += strlen(spawnPnt);
-			node->blob1 = static_cast<Byte *>(realloc(node->blob1, node->blob1Size*sizeof(Byte)));
-			if (node->blob1 == NULL) throw txNoMem(_WHERE("NoMem"));
-			strcat(reinterpret_cast<char *>(node->blob1), spawnPnt);
+			node->blob1.cutEnd(node->blob1.size()-1); // get rid of the terminator
+			node->blob1.end();
+			node->blob1.write(spawnPnt.data(), spawnPnt.size());
+			node->blob1.putByte(0); // add terminator
 			// update it and broadcast the update
 			vaultDB->updateNode(*node);
 			broadcastNodeUpdate(*node);
@@ -923,10 +917,8 @@ namespace alc {
 			node->int1 = 1; // locked status: 0 = unlocked, 1 = locked
 			node->int2 = 0; // volatile status: 0 = non-volatile, 1 = volatile
 			// add spawn point info
-			node->blob1Size = strlen(spawnPnt)+1; // one for the terminator
-			node->blob1 = static_cast<Byte *>(malloc(node->blob1Size*sizeof(Byte)));
-			if (node->blob1 == NULL) throw txNoMem(_WHERE("NoMem"));
-			strcpy(reinterpret_cast<char *>(node->blob1), spawnPnt);
+			node->blob1.write(spawnPnt.data(), spawnPnt.size());
+			node->blob1.putByte(0); // add terminator
 			// insert the age link node as child of the AgesIOwnFolder
 			ageLinkNode = createChildNodeBCasted(ki, linkedAgesFolder, *node);
 			// create link age link node -> age info node
