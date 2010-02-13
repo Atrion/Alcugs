@@ -112,7 +112,7 @@ namespace alc {
 			ageStateFile = cfg->getVar("game.agestates");
 			if (ageStateFile.isEmpty())
 				throw txUnet(_WHERE("You have to set the game.agestates to the directory for saving your agestate files"));
-			mkdir(ageStateFile.c_str(), 00750); // make sure the path exists
+			alcMkdir(ageStateFile, 00750); // make sure the path exists
 			ageStateFile.printf("/%s-%s.state", net->getName(), alcGetStrGuid(net->getGuid()).c_str());
 			// check for old agestate location and migrate if necessary
 			tString alternativeStateFile = log.getDir() + "agestate.raw";
@@ -467,13 +467,13 @@ namespace alc {
 		}
 	}
 	
-	U32 tAgeStateManager::findLatestStructVersion(const char *name, bool throwOnError)
+	U32 tAgeStateManager::findLatestStructVersion(const tString &name, bool throwOnError)
 	{
 		U32 version = 0;
 		for (tSdlStructList::iterator it = structs.begin(); it != structs.end(); ++it) {
 			if (it->name == name && it->version > version) version = it->version;
 		}
-		if (throwOnError && !version) throw txProtocolError(_WHERE("Could not find any SDL struct for %s", name));
+		if (throwOnError && !version) throw txProtocolError(_WHERE("Could not find any SDL struct for %s", name.c_str()));
 		return version;
 	}
 	

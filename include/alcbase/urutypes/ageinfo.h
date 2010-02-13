@@ -51,7 +51,7 @@ namespace alc {
 		bool hasPlayer(U32 ki) const;
 		bool removePlayer(U32 ki); //!< \returns false if that players was not on the list, true if it got removed
 		
-		char name[200];
+		tString name;
 		U16 number;
 		bool conditionalLoad;
 		
@@ -65,12 +65,12 @@ namespace alc {
 	class tAgeInfo
 	{
 	public:
-		tAgeInfo(const char *file, bool loadPages);
+		tAgeInfo(const tString &file, bool loadPages);
 		tPageInfo *getPage(U32 pageId);
 		bool validPage(U32 pageId) const;
 		
 		U32 seqPrefix; // it's actually 3 Bytes
-		char name[200];
+		tString name;
 	
 		typedef std::map<U16, tPageInfo> tPageList;
 		tPageList pages;

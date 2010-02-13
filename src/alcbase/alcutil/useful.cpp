@@ -113,11 +113,11 @@ double alcGetCurrentTime(const char format) {
  NOTE: I think that setlocale is going to be the way used in the future. The user will need to install
 	and set the prefered locales.
 */
-char alcIsAlpha(int c) {
+bool alcIsAlpha(char c) {
 #ifdef __WIN32__
 	return(IsCharAlpha(c));
 #else
-  return(index("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZáàâä\
+	return(index("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZáàâä\
 éèêëíìîïóòôöúùûüçÇñÑß", c)!=NULL); //<- Some characters are not visible on UTF systems, or under other codifications, so you may see garbage
 #endif
 }

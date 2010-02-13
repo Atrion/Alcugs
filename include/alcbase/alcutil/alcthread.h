@@ -60,6 +60,7 @@ private:
 	HANDLE id;
 	#endif
 #endif
+	FORBID_CLASS_COPY(tThread)
 };
 
 class tMutex {

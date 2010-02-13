@@ -62,22 +62,33 @@ tString alcGetExt(const tString & addr) {
 	
 }
 
-void alcStripExt(char * addr) {
-	U32 i=0;
-	for(i=strlen(addr); ; --i) {
-		if(addr[i]=='.') {
-			addr[i]='\0';
-			break;
+tString alcStripExt(const tString &addr) {
+	for(U32 i=addr.size()-1; ; --i) {
+		Byte c = addr.getAt(i);
+		if(c=='.') {
+			return addr.substring(0, i);
 		}
-		else if(addr[i]=='/' || addr[i]=='\\' || addr[i]==':' || i == 0) {
-			break;
+		else if(c=='/' || c=='\\' || c==':' || i == 0) {
+			return addr;
 		} 
+	}
+}
+
+/** creates a directory and its parent directories */
+void alcMkdir(const tString &path, mode_t mode)
+{
+	tString subpath;
+	for(U32 i=0; i<path.size(); i++) {
+		Byte c = path.getAt(i);
+		subpath.putByte(c);
+		if(c=='/' || c=='\\' || i == path.size()-1) {
+			mkdir(subpath.c_str(), mode);
+		}
 	}
 }
 
 /* dir entry */
 tDirEntry::tDirEntry() {
-	name=NULL;
 	entryType=0;
 }
 tDirEntry::~tDirEntry() {}
@@ -91,10 +102,10 @@ tDirectory::tDirectory() {
 tDirectory::~tDirectory() {
 	this->close();
 }
-void tDirectory::open(const char * path) {
-	dir=opendir(path);
+void tDirectory::open(const tString &path) {
+	dir=opendir(path.c_str());
 	if(dir==NULL) throw txBase(_WHERE("OpenDirFailed"));
-	alcStrncpy(this->path, path, 511);
+	this->path = path;
 }
 void tDirectory::close() {
 	if(dir!=NULL) closedir(dir);
@@ -105,12 +116,9 @@ tDirEntry * tDirectory::getEntry() {
 	ent.name=entry->d_name;
 	#if defined(__WIN32__) or defined(__CYGWIN__)
 	//ent.type=0;
-	char * kpath=(char *)malloc(sizeof(char) * (strlen(entry->d_name) + strlen(this->path) + 4));
-	strcpy(kpath,this->path);
-	strcat(kpath,"\\");
-	strcat(kpath,entry->d_name);
+	tString kpath = path + "\\" + entry->d_name;
 	struct stat buf;
-	stat(kpath,&buf);
+	stat(kpath.c_str(),&buf);
 	if(S_ISDIR(buf.st_mode)) ent.entryType=DT_DIR;
 	else ent.entryType=DT_REG;
 	//ent.type=buf.st_mode;

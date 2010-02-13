@@ -408,7 +408,7 @@ namespace alc {
 			tNetSession *session = smgr->find(newOwner);
 			if (!session) {
 				// very strange, the player is on the list but not connected anymore?
-				throw txUnet(_WHERE("Player %d is on list of players who loaded page %s, but not connected anymore", newOwner, page->name));
+				throw txUnet(_WHERE("Player %d is on list of players who loaded page %s, but not connected anymore", newOwner, page->name.c_str()));
 			}
 			page->owner = newOwner;
 			tmGroupOwner groupOwner(session, page, true/*is owner*/);

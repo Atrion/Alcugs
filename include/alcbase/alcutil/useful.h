@@ -37,7 +37,7 @@ bool alcGetLoginInfo(tString argv,tString * username,tString * hostname,U16 * po
 U32 alcGetTime();
 U32 alcGetMicroseconds();
 double alcGetCurrentTime(const char format='s');
-char alcIsAlpha(int c);
+bool alcIsAlpha(char c);
 
 
 /** This version of strncpy guarantees that a 0 is added at the end, even if the text is cut off */
@@ -70,7 +70,7 @@ inline void alcStrncpy(char *dst, const char *str, int size)
 
 #define FORBID_CLASS_COPY(name) private: \
 	name(const name &); \
-	name operator=(const name &);
+	void operator=(const name &);
 
 }
 

@@ -75,7 +75,7 @@ namespace alc {
 		void saveAgeState();
 		
 		void loadSdlStructs(const char *filename);
-		U32 findLatestStructVersion(const char *name, bool throwOnError = true); //!< returns the highest version number available for this struct
+		U32 findLatestStructVersion(const tString &name, bool throwOnError = true); //!< returns the highest version number available for this struct
 		tSdlList::iterator findAgeSDLHook(void);
 		
 		tCloneList::iterator findClone(const tUruObject &obj);

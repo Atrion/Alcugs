@@ -496,8 +496,8 @@ void alctypes_part3() {
 	bool foundDocs = false, foundGame = false;
 	
 	while((k=mdir.getEntry())!=NULL) {
-		if (k->isDir() && strcmp(k->name, "docs") == 0) foundDocs = true;
-		else if (k->isFile() && strcmp(k->name, "alcugs_game") == 0) foundGame = true;
+		if (k->isDir() && k->name == "docs") foundDocs = true;
+		else if (k->isFile() && k->name == "alcugs_game") foundGame = true;
 		//printf("%s - %u\n",k->name,k->type);
 	}
 	assert(foundDocs && foundGame);
@@ -844,6 +844,14 @@ void alcfuncs_tests() {
 	assert(port == 12345);
 	
 	assert(!alcGetLoginInfo(b, &user, &host, &port));
+	
+	// alcStripExt/alcGetExt
+	tString file1 = "/a/file.name/with./dots/.in/the/path/only", file2 = "filename.with.many.dots";
+	assert(alcGetExt(file1) == "");
+	assert(alcStripExt(file1) == file1);
+	
+	assert(alcGetExt(file2) == "dots");
+	assert(alcStripExt(file2)+"."+alcGetExt(file2) == file2);
 }
 
 void alcparser_tests() {
