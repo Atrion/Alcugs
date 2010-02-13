@@ -159,7 +159,7 @@ namespace alc {
 				folderName.rewind();
 				alcHex2Ascii(asciiFolderName, folderName.read(8), 8);
 				query.clear();
-				query.printf("INSERT INTO %s (idx, type, int_1, str_1, str_2, text_1, text_2) VALUES ('%d', 6, '%d', '%s', '%s %s', 'You must never edit or delete this node!', '%s')", vaultTable, KVaultID, vaultVersion, asciiFolderName, alcXSNAME, alcSTR_VER, alcVersionTextShort());
+				query.printf("INSERT INTO %s (idx, type, int_1, str_1, str_2, text_1, text_2) VALUES ('%d', 6, '%d', '%s', '%s %s', 'You must never edit or delete this node!', '%s')", vaultTable, KVaultID, vaultVersion, asciiFolderName, alcNAME, alcSTR_VER, alcVersionTextShort());
 				sql->query(query.c_str(), "Prepare: Creating vault folder");
 				// done!
 				log->log("Started VaultDB driver (%s)\n", __U_VAULTDB_ID);

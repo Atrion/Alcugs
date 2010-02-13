@@ -45,7 +45,7 @@
 
 namespace alc {
 
-tUnetBase::tUnetBase() :tUnet(), running(true) {
+tUnetBase::tUnetBase(Byte whoami) :tUnet(whoami), running(true) {
 	alcUnetGetMain()->setNet(this);
 	tString var;
 	tConfig * cfg;
@@ -63,6 +63,7 @@ tUnetBase::tUnetBase() :tUnet(), running(true) {
 
 tUnetBase::~tUnetBase() {
 	forcestop();
+	alcUnetGetMain()->setNet(NULL);
 }
 
 void tUnetBase::reconfigure() {

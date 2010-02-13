@@ -45,7 +45,7 @@ namespace alc {
 	////DEFINITIONS
 	class tUnetAuthServer : public tUnetServerBase {
 	public:
-		tUnetAuthServer() : tUnetServerBase() {  }
+		tUnetAuthServer() : tUnetServerBase(KAuth) {  }
 	protected:
 		virtual int onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u);
 		virtual void onIdle(bool /*idle*/) { authBackend->checkTimeout(); }

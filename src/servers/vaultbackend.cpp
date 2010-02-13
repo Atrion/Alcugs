@@ -564,7 +564,7 @@ namespace alc {
 					// reply to the sender
 					tvMessage reply(msg);
 					reply.items.push_back(new tvItem(/*id*/9, /*old node index*/oldIndex));
-					reply.items.push_back(new tvItem(/*id*/11, /*old node index*/newIndex));
+					reply.items.push_back(new tvItem(/*id*/11, /*new node index*/newIndex));
 					send(reply, u, ki);
 				}
 				else {
@@ -574,7 +574,7 @@ namespace alc {
 					
 					// create the reply to the sender
 					tvMessage reply(msg);
-					reply.items.push_back(new tvItem(/*id*/9, /*old node index*/savedNode->index));
+					reply.items.push_back(new tvItem(/*id*/9, /*new node index*/savedNode->index));
 					send(reply, u, ki);
 					// and the broadcast
 					broadcastNodeUpdate(*savedNode, ki, msg.vmgr);
@@ -597,7 +597,7 @@ namespace alc {
 					throw txProtocolError(_WHERE("got a VFindNode but can't find the node"));
 				// create and send the reply
 				tvMessage reply(msg);
-				reply.items.push_back(new tvItem(/*id*/9, /*old node index*/mfs.id));
+				reply.items.push_back(new tvItem(/*id*/9, /*node index*/mfs.id));
 				reply.items.push_back(new tvItem(/*id*/24, /*timestamp*/static_cast<double>(mfs.time)));
 				send(reply, u, ki);
 			}
@@ -1156,7 +1156,7 @@ namespace alc {
 	{
 		// create the broadcast message
 		tvMessage bcast(VSaveNode);
-		bcast.items.push_back(new tvItem(/*id*/9, /*old node index*/node.index));
+		bcast.items.push_back(new tvItem(/*id*/9, /*node index*/node.index));
 		bcast.items.push_back(new tvItem(/*id*/24, /*timestamp*/node.modTime));
 		// and send it
 		broadcast(bcast, node.index, origKi, origMgr);

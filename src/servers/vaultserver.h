@@ -49,7 +49,7 @@ namespace alc {
 
 	class tUnetVaultServer : public tUnetServerBase {
 	public:
-		tUnetVaultServer(void) : tUnetServerBase()
+		tUnetVaultServer(void) : tUnetServerBase(KVault)
 		{
 			vaultBackend = new tVaultBackend(this);
 		}

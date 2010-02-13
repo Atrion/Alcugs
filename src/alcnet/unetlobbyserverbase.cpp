@@ -48,7 +48,7 @@
 namespace alc {
 
 	////IMPLEMENTATION
-	tUnetLobbyServerBase::tUnetLobbyServerBase(void) : tUnetServerBase(), authedTimeout(30) // 30seconds for authenticated clients
+	tUnetLobbyServerBase::tUnetLobbyServerBase(Byte whoami) : tUnetServerBase(whoami), authedTimeout(30) // 30seconds for authenticated clients
 	{
 		memset(serverGuid, 0, 8);
 		serverName[0] = 0;

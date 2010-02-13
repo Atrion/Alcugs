@@ -42,7 +42,7 @@ void usage() {
 
 //main
 int main(int argc, char * argv[]) {
-	tAlcMain alcMain(/*global logfiles*/false);
+	tAlcMain alcMain;
 	int i;
 	if(argc<2) {
 		usage();

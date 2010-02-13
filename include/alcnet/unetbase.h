@@ -35,33 +35,16 @@
 
 namespace alc {
 
-/** Base abstract class, you need to derive your server/client app's from here */
+/** Base abstract class, you need to derive your server/client app's from here
+		This class registers against tAlcUnetMain to make sure there's never more than 1 instance! */
 class tUnetBase :public tUnet {
+	friend class tAlcUnetMain; // these classes have a tight relationship, e.g. you need exactly one of both 
+	
 public:
-	tUnetBase(); //port & host read from config (or by setBindPort(port) and setBindAddress(addr))
+	tUnetBase(Byte whoami); //port & host read from config (or by setBindPort(port) and setBindAddress(addr))
 	virtual ~tUnetBase();
 	/** Runs the netcore */
 	void run();
-	
-	/** Stops the netcore
-			\param timeout Sets the timeout to wait for closing the connection to all peers (<0 gets timeout from config file)
-	*/
-	void stop(SByte timeout=-1);
-	
-	inline void forcestop() { stop(0); /* stop with a timeout of 0 */ }
-	/** Terminates all connections to players */
-	inline void terminatePlayers() { terminateAll(/*playersOnly*/true); }
-	
-	/** Force a reload of the netcore settings (after changing the configuration for example) */
-	void reload()
-	{
-		onUnloadConfig();
-		closelogs();
-		reconfigure();
-		openlogs();
-		onReloadConfig();
-		onLoadConfig();
-	}
 	
 	/** terminate this session */
 	inline void terminate(tNetSession *u, Byte reason = 0) { terminate(u, reason, /*gotLeave*/false); }
@@ -127,9 +110,30 @@ protected:
 	
 	/** this is called while reloading the config */
 	virtual void onReloadConfig() {}
+	
+	
+	/** Stops the netcore in a sane way
+			\param timeout Sets the timeout to wait for closing the connection to all peers (<0 gets timeout from config file)	*/
+	void stop(SByte timeout=-1);
+	/** Stops the netcore in a sane way, but without waiting for the clients to properly quit */
+	inline void forcestop() { stop(0); /* stop with a timeout of 0 */ }
 private:
+	/** Just kills the socket - should only be used if the process was forked */
+	inline void kill() { stopOp(); }
+	/** Force a reload of the netcore settings (after changing the configuration for example) */
+	void reload()
+	{
+		onUnloadConfig();
+		closelogs();
+		reconfigure();
+		openlogs();
+		onReloadConfig();
+		onLoadConfig();
+	}
+	
 	void terminate(tNetSession *u, Byte reason, bool gotLeave);
 	void terminateAll(bool playersOnly = false);
+	inline void terminatePlayers() { terminateAll(/*playersOnly*/true); }
 	void removeConnection(tNetSession *u); //!< destroy that session
 	
 	void processEventQueue(bool shutdown);

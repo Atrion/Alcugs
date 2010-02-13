@@ -48,7 +48,7 @@
 namespace alc {
 
 
-tAlcUnetMain::tAlcUnetMain(bool globalLogfiles) : tAlcMain(globalLogfiles), stateRunning(2), alarmRunning(false), net(NULL)
+tAlcUnetMain::tAlcUnetMain(const char *netName) : tAlcMain(), stateRunning(2), alarmRunning(false), netName(netName), net(NULL)
 {
 	installUnetHandlers(true);
 }
@@ -56,6 +56,12 @@ tAlcUnetMain::tAlcUnetMain(bool globalLogfiles) : tAlcMain(globalLogfiles), stat
 tAlcUnetMain::~tAlcUnetMain(void)
 {
 	installUnetHandlers(false);
+}
+
+void tAlcUnetMain::setNet(tUnetBase *netcore)
+{
+	if (net && netcore) throw txBase(_WHERE("You can NEVER have several instances of tUnetBase around!"));
+	net = netcore;
 }
 
 void tAlcUnetMain::installUnetHandlers(bool install)
@@ -75,9 +81,9 @@ bool tAlcUnetMain::onSignal(int s) {
 	try {
 		switch (s) {
 			case SIGHUP: //reload configuration
-				lstd->log("INF: ReReading configuration\n\n");
+				lstd->log("INF: Re-reading configuration\n\n");
 				loadUnetConfig();
-				net->reload();
+				net->reload(); // FIXME do this in onApplyConfig, and re-think how the config stuff is propagated
 				return true;
 			case SIGALRM:
 			case SIGTERM:
@@ -124,28 +130,36 @@ bool tAlcUnetMain::onSignal(int s) {
 	return false;
 }
 
+void tAlcUnetMain::onForked(void)
+{
+	if (net) net->kill(); // kill the socket
+	tAlcMain::onForked();
+}
+
+void tAlcUnetMain::onApplyConfig()
+{
+	tAlcMain::onApplyConfig();
+	// maybe dump settings
+	tString var=cfg.getVar("cfg.dump","global");
+	if(!var.isEmpty() && var.asByte()) {
+		dumpConfig();
+	}
+}
+
 void tAlcUnetMain::loadUnetConfig(void) {
 	//Load and parse config files
 	tString var;
 	var=cfg.getVar("read_config","cmdline");
 	if(var.isEmpty()) {
 		var="uru.conf";
-		cfg.setVar(var.c_str(),"read_config","cmdline");
+		cfg.setVar(var.c_str(),"read_config","cmdline"); // lobbyserver relies on this being set
 	}
 	loadConfig(var);
-	//Set config settings
-	cfg.copyKey("global",alcNetName);
+	// put the current server into "global"
+	cfg.copyKey("global",netName.c_str());
 	cfg.copyKey("global","cmdline");
-	DBG(5,"setting config aliases...");
-	alcNetSetConfigAliases();
-	DBGM(5," done\n");
-	DBG(5,"applying config...");
+	// apply the config
 	onApplyConfig();
-	DBGM(5," done\n");
-	var=cfg.getVar("cfg.dump","global");
-	if(!var.isEmpty() && var.asByte()) {
-		dumpConfig();
-	}
 }
 
 } //end namespace alc

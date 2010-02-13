@@ -49,13 +49,9 @@
 namespace alc {
 
 	////IMPLEMENTATION
-	
-	const char * alcNetName="Lobby";
-	Byte alcWhoami=KLobby;
-	
-	tUnetLobbyServer::tUnetLobbyServer(void) : tUnetLobbyServerBase()
+	tUnetLobbyServer::tUnetLobbyServer(void) : tUnetLobbyServerBase(KLobby)
 	{
-		alcStrncpy(serverName, alcNetName, sizeof(serverName)-1);
+		strcpy(serverName, "Lobby");
 	}
 	
 	void tUnetLobbyServer::onLoadConfig(void)
@@ -255,8 +251,7 @@ namespace alc {
 					snprintf(gameLog, sizeof(gameLog), "%s/%s/%s/", gameLogPath, gameName, gameGuid);
 					snprintf(gamePort, sizeof(gamePort), "%d", forkServer.forkPort);
 					
-					stopOp(); // will close the alcnet logs as well as the socket (FIXME: put this in an overloaded tAlcUnetMain::forked)
-					alcUnetGetMain()->onForked(); // will close all logs
+					alcUnetGetMain()->onForked(); // will close sockets and logs
 					
 					// if the server was put in daemon mode, th lobby would get the SIGCHILD immediately after starting, so it'd
 					// be useless for debugging

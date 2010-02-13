@@ -41,26 +41,29 @@
 namespace alc {
 
 ////DEFINITIONS
+class tUnetBase;
 
 class tAlcUnetMain : public tAlcMain {
+	friend class tUnetBase; // these classes have a tight relationship, e.g.you need exactly one of both 
+
 public:
-	tAlcUnetMain(bool globalLogfiles);
+	tAlcUnetMain(const char *netName);
 	virtual ~tAlcUnetMain();
-	/* FIXME:
-	- Manage the one and only tUnetBase instance here
-	- overload applyConfig to also tell the tUnetBase about the change 
-	- re-think config (re-)load order and how it's propagated to the backends... and hopefully simplify */
 	
-	inline void setNet(tUnetBase *netcore) { net = netcore; }
-	void loadUnetConfig(void);
+	void loadUnetConfig(void); //!< convenience function to load the default unet config file and apply aliases
 	
 	virtual bool onSignal(int s);
+	virtual void onApplyConfig();
+	virtual void onForked(void);
+
 private:
 	void installUnetHandlers(bool install);
+	void setNet(tUnetBase *netcore);
 	
 	int stateRunning;
 	bool alarmRunning;
-	tUnetBase *net;
+	tString netName;
+	tUnetBase *net; //!< points to the one and only netcore instance if there is one
 };
 
 inline tAlcUnetMain *alcUnetGetMain(void) { return dynamic_cast<tAlcUnetMain *>(alcGetMain()); }

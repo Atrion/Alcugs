@@ -49,7 +49,7 @@ namespace alc {
 
 	class tUnetTrackingServer : public tUnetServerBase {
 	public:
-		tUnetTrackingServer(void) : tUnetServerBase() { }
+		tUnetTrackingServer(void) : tUnetServerBase(KTracking) { }
 	protected:
 		virtual void onStart(void) {
 			trackingBackend = new tTrackingBackend(this, smgr, bindaddr, bindport);

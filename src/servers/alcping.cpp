@@ -37,14 +37,11 @@
 
 using namespace alc;
 
-const char * alc::alcNetName="Client";
-Byte alc::alcWhoami=KClient;
-
 void parameters_usage() {
 	puts(alcVersionText());
 	printf("Usage: uruping server:port [options]\n\n\
  -val x: set validation level (0-3) (default 2)\n\
- -nl: enable netcore logs\n\
+ -nl: enable netcore log files\n\
  -t x: set the sleep time in seconds\n\
  -f x: Flooding multiplier\n\
  -n x: set the number of probes, 0=infinite (CTR+C stops), 5 if not set\n\
@@ -114,7 +111,7 @@ private:
 	bool urgent;
 };
 
-tUnetPing::tUnetPing(char * lhost,U16 lport,Byte listen,double time,int num,int flood) :tUnetBase() {
+tUnetPing::tUnetPing(char * lhost,U16 lport,Byte listen,double time,int num,int flood) :tUnetBase(KClient) {
 	this->setBindPort(lport);
 	this->setBindAddress(lhost);
 	this->listen=listen;
@@ -156,7 +153,7 @@ void tUnetPing::setValidation(Byte val) {
 }
 
 void tUnetPing::onStop() {
-	if(listen==0) {
+	if(listen==0 && count > 1) {
 		count=flood*count;
 		out->print("\nStats:\nrecieved %i packets of %i sent, %i%% packet loss, time: %0.3f ms\n",\
 		rcvn,count,(100-((rcvn*100)/count)),(current-startup)*1000);
@@ -327,9 +324,9 @@ int main(int argc,char * argv[]) {
 	}
 	
 	//start Alcugs library
-	tAlcUnetMain alcMain(/*global logfiles*/nlogs==1);
+	tAlcUnetMain alcMain("Client");
 	try {
-	
+		alcLogOpenStdLogs(!nlogs);
 		alcLogSetLogLevel(loglevel);
 		
 		//special mode

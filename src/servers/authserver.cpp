@@ -48,9 +48,6 @@
 namespace alc {
 
 	////IMPLEMENTATION
-	const char * alcNetName="Auth";
-	Byte alcWhoami=KAuth;
-	
 	int tUnetAuthServer::onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u)
 	{
 		int ret = tUnetServerBase::onMsgRecieved(msg, u); // first let tUnetServerBase process the message

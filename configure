@@ -4603,7 +4603,7 @@ esac
 fi
 
 
-CXXFLAGS="-Wall -Wextra -Wold-style-cast"
+CXXFLAGS="-Wall -Wextra -Werror -Wold-style-cast"
 
 if test x$RDYNAMIC = xtrue; then
 	CXXFLAGS="$CXXFLAGS -rdynamic"

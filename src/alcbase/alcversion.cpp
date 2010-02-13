@@ -52,10 +52,10 @@ void _alcVersionInitVars() {
 	char * p2=tvalcVerText;
 	char * p3=tvalcSystemInfo;
 	//short
-	sprintf(p1,"%s\nId: %s\n",alcXSNAME,alcXID);
-	sprintf(p,"Alcugs %s %s - Version %s\n",alcXBUILDINFO,_PLATFORM_,alcSTR_VER);
+	sprintf(p1,"%s\nId: %s\n",alcNAME,alcID);
+	sprintf(p,"Alcugs %s %s - Version %s\n",alcBUILDINFO,_PLATFORM_,alcSTR_VER);
 	strcat(p1,p);
-	sprintf(p,"Unet 3+ Protocol %i.%i\n",alcProtoMAX_VER,alcProtoMIN_VER);
+	sprintf(p,"Unet 3+ Protocol %i.%i\n",alcPROTO_MAX_VER,alcPROTO_MIN_VER);
 	strcat(p1,p);
 	//long
 	sprintf(p2,"%s",alcLicenseTextShort());
@@ -106,13 +106,13 @@ int alcGetBetVersion() {
 	return alcBET_VER;
 }
 int alcGetProtocolMaxVersion() {
-	return alcProtoMAX_VER;
+	return alcPROTO_MAX_VER;
 }
 int alcGetProtocolMinVersion() {
-	return alcProtoMIN_VER;
+	return alcPROTO_MIN_VER;
 }
 int alcGetProtocolVersion() {
-	return alcProtoVer;
+	return alcPROTO_VER;
 }
 
 const char * alcGetPlatform() {

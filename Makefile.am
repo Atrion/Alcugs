@@ -50,7 +50,6 @@ libalcnet1_a_SOURCES = \
  src/alcnet/protocol/protocol.cpp \
  src/alcnet/unetbase.cpp \
  src/alcnet/protocol/umsgbasic.cpp \
- src/alcnet/configalias.cpp \
  src/alcnet/unetmain.cpp \
  src/alcnet/unetserverbase.cpp \
  src/alcnet/unetlobbyserverbase.cpp \

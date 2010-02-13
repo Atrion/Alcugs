@@ -41,6 +41,7 @@ namespace alc {
 
 static const tString emptyString;
 
+//// tConfigVal
 tConfigVal::tConfigVal() { init(); }
 tConfigVal::tConfigVal(const char * name) {
 	init();
@@ -154,6 +155,7 @@ void tConfigVal::copy(const tConfigVal &t) {
 	}
 }
 
+//// tConfigKey
 tConfigKey::tConfigKey() {
 	//name=NULL;
 	off=n=0;
@@ -234,14 +236,14 @@ tConfigVal * tConfigKey::getNext() {
 	return values[off-1];
 }
 
+//// tConfig
 tConfig::tConfig() {
 	off=n=0;
 	values=NULL;
 }
 tConfig::~tConfig() {
-	U16 i;
 	if(values!=NULL) {
-		for(i=0; i<n; i++) {
+		for(U32 i=0; i<n; i++) {
 			delete values[i];
 		}
 		free(values);
