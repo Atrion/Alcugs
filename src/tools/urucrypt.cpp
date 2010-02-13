@@ -85,7 +85,7 @@ int main(int argc, char * argv[]) {
 	tWDYSBuf w1;
 #endif
 	
-	char xap[1024];
+	tString filename = argv[1];
 	
 	//new feature :)
 	if(argc==2) {
@@ -95,18 +95,16 @@ int main(int argc, char * argv[]) {
 		try {
 			w1.decrypt();
 			if(w1.size()>0) {
-				alcStrncpy(xap,argv[1],1000);
-				strcat(xap,".dec");
-				f1.open(xap,"wb");
+				filename += ".dec";
+				f1.open(filename.c_str(),"wb");
 				f1.put(w1);
 				f1.close();
 			}
 		} catch(txUnexpectedData &t) {
 			w1.encrypt();
 			if(w1.size()>0) {
-				alcStrncpy(xap,argv[1],1000);
-				strcat(xap,".cry"); //Jaffa CRE!!
-				f1.open(xap,"wb");
+				filename += ".cry"; //Jaffa CRE!!
+				f1.open(filename.c_str(),"wb");
 				f1.put(w1);
 				f1.close();
 			}

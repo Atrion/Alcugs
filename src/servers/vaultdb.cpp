@@ -216,11 +216,11 @@ namespace alc {
 		return version;
 	}
 	
-	void tVaultDB::getVaultFolderName(char *folder)
+	tString tVaultDB::getVaultFolderName(void)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
-		folder[0] = 0; // empty it
+		tString folder;
 		
 		tString query;
 		query.printf("SELECT idx, str_1 FROM %s WHERE type=6 LIMIT 1", vaultTable);
@@ -234,8 +234,9 @@ namespace alc {
 		MYSQL_ROW row = mysql_fetch_row(result);
 		if (atoi(row[0]) != KVaultID || strlen(row[1]) != 16)
 			throw txDatabaseError(_WHERE("invalid main vault folder found"));
-		alcStrncpy(folder, row[1], 16);
+		folder = row[1];
 		mysql_free_result(result);
+		return folder;
 	}
 	
 	void tVaultDB::convertIntToTimestamp(const char *table, const char *intColumn, const char *timestampColumn)

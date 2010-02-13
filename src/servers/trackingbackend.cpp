@@ -154,7 +154,7 @@ namespace alc {
 		player->sid = findServer.sid;
 		player->awaiting_x = findServer.x;
 		log.log("Player %s wants to link to %s (%s)\n", player->str().c_str(), findServer.age.c_str(), findServer.serverGuid.c_str());
-		if (strcmp(findServer.serverGuid.c_str(), "0000000000000000") == 0) // these are 16 zeroes
+		if (findServer.serverGuid == "0000000000000000") // these are 16 zeroes
 			throw txProtocolError(_WHERE("No age GUID set"));
 		// copy data to player
 		player->status = RInRoute;
@@ -265,7 +265,7 @@ namespace alc {
 		tTrackingData *data = dynamic_cast<tTrackingData *>(server->data);
 		if (!data) throw txUnet(_WHERE("server passed in tTrackingBackend::serverFound is not a game/lobby server"));
 		// notifiy the player that it's server is available
-		tmCustomServerFound found(player->u, player->ki, player->awaiting_x, player->sid, ntohs(server->getPort()), data->externalIp, alcGetStrGuid(server->serverGuid).c_str(), server->name);
+		tmCustomServerFound found(player->u, player->ki, player->awaiting_x, player->sid, ntohs(server->getPort()), data->externalIp, alcGetStrGuid(server->serverGuid), server->name);
 		net->send(found);
 		log.log("Found age for player %s\n", player->str().c_str());
 		// no longer waiting

@@ -1086,7 +1086,7 @@ void libc_tests() {
 	// and what abut strncat? Yes, but you have to substract the last byte from the allowed size
 	buf[5] = 0;
 	buf[9] = 'x';
-	strncat(buf, "these are mroe than 10 characters", sizeof(buf)-strlen(buf)-1);
+	strncat(buf, "these are more than 10 characters", sizeof(buf)-strlen(buf)-1);
 	assert(buf[8] == 's');
 	assert(buf[9] == 0);
 	// strncpy is... BAD. It does not add the final 0.
@@ -1094,11 +1094,6 @@ void libc_tests() {
 	strncpy(buf, "and once again this text is longer", sizeof(buf)-1);
 	assert(buf[8] == ' ');
 	assert(buf[9] == 'x');
-	// our alcStrncpy does it better
-	buf[9] = 'x';
-	alcStrncpy(buf, "we need a long text one final time", sizeof(buf)-1);
-	assert(buf[8] == 'a');
-	assert(buf[9] == 0);
 	
 }
 
