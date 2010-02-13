@@ -115,7 +115,7 @@ tUnetPing::tUnetPing(char * lhost,U16 lport,Byte listen,double time,int num,int 
 	this->setBindPort(lport);
 	this->setBindAddress(lhost);
 	this->listen=listen;
-	out=lstd;
+	out=alcGetMain()->std();
 	setIdleTimer(1);
 	this->time=time;
 	this->num=num;
@@ -326,12 +326,13 @@ int main(int argc,char * argv[]) {
 	//start Alcugs library
 	tAlcUnetMain alcMain("Client");
 	try {
-		alcLogOpenStdLogs(!nlogs);
-		alcLogSetLogLevel(loglevel);
+		alcMain.config()->setVar(tString::fromByte(nlogs).c_str(), "log.enabled");
+		alcMain.config()->setVar(tString::fromByte(loglevel).c_str(), "verbose_level");
+		alcMain.onApplyConfig();
 		
 		//special mode
 		if(mrtg==0) {
-			lstd->print(alcVersionText());
+			alcGetMain()->std()->print(alcVersionText());
 		}
 		
 		if(flood<=0) flood=1;

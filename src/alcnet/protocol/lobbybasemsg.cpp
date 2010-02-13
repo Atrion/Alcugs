@@ -134,10 +134,8 @@ namespace alc {
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing")); // VaultManager sends it without X
 		t.get(avatar);
 		Byte unk = t.getByte();
-		if (unk != 0) {
-			lerr->log("NetMsgSetMyActivePlayer.unk is not null but %d\n", unk);
-			throw txProtocolError(_WHERE("NetMsgSetMyActivePlayer.unk is not 0"));
-		}
+		if (unk != 0)
+			throw txProtocolError(_WHERE("NetMsgSetMyActivePlayer.unk is not 0 but %d", unk));
 	}
 	
 	void tmSetMyActivePlayer::additionalFields(void)

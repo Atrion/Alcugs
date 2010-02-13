@@ -1381,7 +1381,7 @@ namespace alc {
 					bool found = false;
 					for (int k = 0; k < *nRef; ++k) { // searching the already existing nodes is enough
 						if ((*ref)[k]->parent == parent && ((*ref)[k]->child == child)) {
-							lerr->log("tVaultDB::getReferences: loop in vault structure detected, found referece %d->%d twice\n", parent, child);
+							alcGetMain()->err()->log("tVaultDB::getReferences: loop in vault structure detected, found referece %d->%d twice\n", parent, child);
 							found = true;
 						}
 					}
@@ -1414,7 +1414,7 @@ namespace alc {
 		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get references with invalid parent"));
 		num = mysql_num_rows(result);
 		if (num > 0) {
-			lerr->log("WARNING: Found %d references with invalid parent - removing them...\n", num);
+			alcGetMain()->err()->log("WARNING: Found %d references with invalid parent - removing them...\n", num);
 			for (int i = 0; i < num; ++i) {
 				row = mysql_fetch_row(result);
 				query.clear();
@@ -1433,7 +1433,7 @@ namespace alc {
 		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get references with invalid son"));
 		num = mysql_num_rows(result);
 		if (num > 0) {
-			lerr->log("WARNING: Found %d references with invalid son - removing them...\n", num);
+			alcGetMain()->err()->log("WARNING: Found %d references with invalid son - removing them...\n", num);
 			for (int i = 0; i < num; ++i) {
 				row = mysql_fetch_row(result);
 				query.clear();
@@ -1496,7 +1496,7 @@ namespace alc {
 		// if enabled, remove lost ages
 		// NOTE: Ages linked to with KBasicLink are not referenced anywhere, so they are removed by this
 		if (cleanAges) {
-			lstd->log("Cleaning up: Looking for lost ages...\n");
+			alcGetMain()->std()->log("Cleaning up: Looking for lost ages...\n");
 		
 			query.clear();
 			query.printf("SELECT idx, str_1 FROM %s WHERE type = '%d'", vaultTable, KVNodeMgrAgeNode);
@@ -1510,7 +1510,7 @@ namespace alc {
 				row = mysql_fetch_row(result);
 				int id = atoi(row[0]);
 				if (isLostAge(id)) {
-					lstd->log("Age MGR %s is lost, removing it...\n", row[1]);
+					alcGetMain()->std()->log("Age MGR %s is lost, removing it...\n", row[1]);
 					removeNodeTree(id, /*cautious*/false);
 				}
 			}
@@ -1523,11 +1523,11 @@ namespace alc {
 		node.type = KVNodeMgrAdminNode;
 		int adminNode = findNode(node);
 		if (!adminNode) {
-			lerr->print("\n\nWARNING: You have no admin node in your vault, so I can't remove lost nodes as that would destroy your vault.\n");
-			lerr->print("Please log in once with the VaultManager (which will create that node) and try again.\n\n");
+			alcGetMain()->err()->print("\n\nWARNING: You have no admin node in your vault, so I can't remove lost nodes as that would destroy your vault.\n");
+			alcGetMain()->err()->print("Please log in once with the VaultManager (which will create that node) and try again.\n\n");
 		}
 		else {
-			lstd->log("Cleaning up: Looking for lost nodes...\n");
+			alcGetMain()->std()->log("Cleaning up: Looking for lost nodes...\n");
 			// find lost nodes and remove them
 			// a lost node is a node without a parent and which is not a mgr
 			query.clear();
@@ -1540,7 +1540,7 @@ namespace alc {
 			int num = mysql_num_rows(result);
 			
 			if (num > 0) {
-				lstd->log("Cleaning up: Removing %d lost nodes...\n", num);
+				alcGetMain()->std()->log("Cleaning up: Removing %d lost nodes...\n", num);
 				for (int i = 0; i < num; ++i) {
 					row = mysql_fetch_row(result);
 					removeNodeTree(atoi(row[0]), /*cautious*/false);
@@ -1550,7 +1550,7 @@ namespace alc {
 		}
 		
 		// optimize the tables
-		lstd->log("Cleaning up: Optimizing tables...\n");
+		alcGetMain()->std()->log("Cleaning up: Optimizing tables...\n");
 		query.clear();
 		query.printf("OPTIMIZE TABLE %s, %s", refVaultTable, vaultTable);
 		sql->query(query.c_str(), "Optimizing tables");

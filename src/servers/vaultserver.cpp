@@ -58,7 +58,7 @@ namespace alc {
 		bool clean = (!var.isEmpty() && var.asByte()); // disabled per default
 		if (clean) {
 			if (daemon) {
-				lerr->log("I will only clean the vault in interactive mode to give you more feedback\n");
+				alcGetMain()->err()->log("I will only clean the vault in interactive mode to give you more feedback\n");
 				return;
 			}
 			var = cfg->getVar("vault.clean.ages");

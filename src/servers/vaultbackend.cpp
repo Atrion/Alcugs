@@ -46,7 +46,7 @@ namespace alc {
 	tVaultBackend::tVaultBackend(tUnet *net)
 	{
 		this->net = net;
-		log = logHtml = lnull;
+		log = logHtml = alcUnetGetMain()->null();
 		vaultDB = NULL;
 		load();
 	}
@@ -60,6 +60,7 @@ namespace alc {
 	
 	void tVaultBackend::unload(void)
 	{
+		tLog *lnull = alcUnetGetMain()->null();
 		delete vaultDB;
 		vaultDB = NULL;
 		if (log != lnull) {

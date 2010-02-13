@@ -53,7 +53,7 @@ namespace alc {
 		memset(serverGuid, 0, 8);
 		serverName[0] = 0;
 		auth_gone = tracking_gone = vault_gone = 0;
-		lvault = lnull;
+		lvault = alcUnetGetMain()->null();
 		vaultLogShort = false;
 	}
 	
@@ -62,7 +62,7 @@ namespace alc {
 		tConfig *cfg = alcGetMain()->config();
 		tString var = cfg->getVar("vault.html.log");
 		if (var.isEmpty() || var.asByte()) { // logging enabled per default
-			if (lvault == lnull) lvault = new tLog("vault.html", 2, DF_HTML);
+			if (lvault == alcUnetGetMain()->null()) lvault = new tLog("vault.html", 2, DF_HTML);
 			var = cfg->getVar("vault.html.log.short");
 			vaultLogShort = (var.isEmpty() || var.asByte()); // per default, it *is* short
 		}
@@ -92,9 +92,9 @@ namespace alc {
 	
 	void tUnetLobbyServerBase::onUnloadConfig()
 	{
-		if (lvault != lnull) {
+		if (lvault != alcUnetGetMain()->null()) {
 			delete lvault;
-			lvault = lnull;
+			lvault = alcUnetGetMain()->null();
 		}
 	}
 	
@@ -129,7 +129,7 @@ namespace alc {
 			if (u != client) // it could be the same session for which the active player is set twice for some reason
 				terminate(client, RLoggedInElsewhere);
 			else
-				lerr->log("Active player is set twice for %s\n", u->str());
+				err->log("Active player is set twice for %s\n", u->str());
 		}
 		
 		if (whoami == KGame && avatar[0] == 0) // empty avatar names are not allowed in game server

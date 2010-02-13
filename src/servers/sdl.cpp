@@ -54,7 +54,7 @@ namespace alc {
 	{
 		this->net = net;
 		this->age = age;
-		log = lnull;
+		log = alcUnetGetMain()->null();
 		load();
 		
 		tConfig *cfg = alcGetMain()->config();
@@ -91,7 +91,7 @@ namespace alc {
 		mkdir(ageStateFile.c_str(), 00750); // make sure the path exists
 		ageStateFile.printf("/%s-%s.state", net->getName(), alcGetStrGuid(net->getGuid()));
 		// check for old agestate location and migrate if necessary
-		tString alternativeStateFile = alcLogGetLogPath() + "/agestate.raw";
+		tString alternativeStateFile = tString(log->getDir()) + "/agestate.raw";
 		if (access(alternativeStateFile.c_str(), F_OK) == 0)
 			rename(alternativeStateFile.c_str(), ageStateFile.c_str());
 		// ok, now go and load it - maybe
@@ -234,9 +234,9 @@ namespace alc {
 	
 	void tAgeStateManager::unload(void)
 	{
-		if (log != lnull) {
+		if (log != alcUnetGetMain()->null()) {
 			delete log;
-			log = lnull;
+			log = alcUnetGetMain()->null();
 		}
 	}
 	

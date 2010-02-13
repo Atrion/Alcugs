@@ -92,15 +92,11 @@ typedef struct {
 	char protocol; //UDP, TCP <! 0x00 disabled, 0x01 udp, 0x02 tcp*/
 } tLogConfig;
 
-// FIXME: avoid global variables if possible
-tLog * lstd=NULL;
-tLog * lerr=NULL;
-tLog * lnull=NULL;
 static tLogConfig * tvLogConfig=NULL;
 
-void alcLogSetDefaults() {
+static void alcLogSetDefaults() {
 	if(tvLogConfig==NULL) {
-		tvLogConfig=static_cast<tLogConfig *>(malloc(sizeof(tLogConfig) * 1));
+		tvLogConfig=new tLogConfig;
 	}
 	if(tvLogConfig!=NULL) {
 		//memset(tvLogConfig,0,sizeof(tvLogConfig));
@@ -137,10 +133,6 @@ void alcLogSetLogPath(const tString & path) {
 	*(tvLogConfig->path)=path;
 }
 
-tString alcLogGetLogPath(void) {
-	return *(tvLogConfig->path);
-}
-
 void alcLogSetLogLevel(Byte level) {
 	if(tvLogConfig!=NULL) {
 		if(level>3) level=3;
@@ -156,21 +148,6 @@ void alcLogSetFiles2Rotate(Byte n) {
 
 void alcLogShutdown(bool silent) {
 	int i;
-	if(lerr!=NULL) {
-		lerr->close(silent);
-		delete lerr;
-		lerr=NULL;
-	}
-	if(lstd!=NULL) {
-		lstd->close(silent);
-		delete lstd;
-		lstd=NULL;
-	}
-	if(lnull!=NULL) {
-		lnull->close(silent);
-		delete lnull;
-		lnull=NULL;
-	}
 	delete tvLogConfig->path;
 	tvLogConfig->path=NULL;
 	for(i=0; i<tvLogConfig->n_logs; i++) {
@@ -181,7 +158,7 @@ void alcLogShutdown(bool silent) {
 	}
 	free(tvLogConfig->logs);
 	tvLogConfig->logs=NULL;
-	free(tvLogConfig);
+	delete tvLogConfig;
 	tvLogConfig=NULL;
 }
 
@@ -192,29 +169,7 @@ void alcLogInit() {
 	}
 }
 
-void alcLogOpenStdLogs(bool shutup) {
-	// lerr and lstd must never be deleted here as tUnet or tSQL instances might have a copy, so just close and re-open in case of a re-configure
-	if(lerr!=NULL)
-		lerr->close();
-	else
-		lerr = new tLog();
-	if(shutup) lerr->open(NULL,2,DF_STDERR);
-	else lerr->open("error.log",2,DF_STDERR);
-	
-	if(lstd!=NULL)
-		lstd->close();
-	else
-		lstd = new tLog();
-	if(shutup) lstd->open(NULL,2,DF_STDOUT);
-	else lstd->open("alcugs.log",2,DF_STDOUT);
-	
-	if(lnull==NULL) {
-		lnull=new tLog();
-		lnull->open(NULL,0,0);
-	}
-}
-
-char * alcHtmlGenerateHead(char * title,char * powered) {
+static char * alcHtmlGenerateHead(char * title,char * powered) {
 	static char head[512];
 	//%s. Build %s - Version %s - Id: %s
 
@@ -228,7 +183,7 @@ char * alcHtmlGenerateHead(char * title,char * powered) {
 }
 
 
-/**
+/** tLog class
  Opens a log file to write,
  \return the log descriptor associated to the log file
  flags are detailed in the stdebug.h file
@@ -258,7 +213,8 @@ void tLog::open(const char * name, char level, U16 flags) {
 
 	int f,found=-1;
 	
-	if(this->flags & DF_OPEN) return;
+	
+	if(this->flags & DF_OPEN) close();
 
 	for(f=0; f<tvLogConfig->n_logs; f++) {
 		if(tvLogConfig->logs[f]==NULL) {
@@ -347,7 +303,7 @@ void tLog::open(const char * name, char level, U16 flags) {
 			}
 		}
 	}
-
+	if (!(this->flags & DF_OPEN)) return;
 	if(found==-1) {
 		tvLogConfig->n_logs++;
 		tLog ** aux=NULL;
@@ -490,7 +446,7 @@ void tLog::close(bool silent) {
 	}
 	if(this->name!=NULL) { DBG(1,"closing log %s...\n",this->name); }
 	if(this->dsc!=NULL && this->dsc!=stdout && this->dsc!=stderr) {
-		if(this->flags & DF_HTML && !silent) {
+		if(this->flags & DF_HTML && !silent) { // a silent close is used during forking - we must not write this line then
 			fprintf(this->dsc,"</body></html>\n");
 		}
 		fclose(this->dsc);
@@ -508,7 +464,7 @@ void tLog::close(bool silent) {
 	This don't sends messages to syslog, database, or socket
 	- there is no rotate check code -
 */
-void tLog::print(const char * msg, ...) {
+void tLog::print(const char * msg, ...) const {
 	va_list ap,ap2;
 
 	va_start(ap,msg);
@@ -641,7 +597,7 @@ void dblog(st_log * log, char * type, char * user, char * location, char * msg, 
 /**
 	flush all the streams
 */
-void tLog::flush() {
+void tLog::flush() const {
 	if(this->dsc!=NULL) {
 		fflush(this->dsc);
 	}
@@ -650,7 +606,7 @@ void tLog::flush() {
 }
 
 
-void tLog::dumpbuf(tBBuf & t, U32 n, U32 e, Byte how) {
+void tLog::dumpbuf(tBBuf & t, U32 n, U32 e, Byte how) const {
 	if(!this->level) return;
 	if(n==0) n=t.size();
 	U32 where=t.tell();
@@ -675,7 +631,7 @@ n = buffer size
 buf = The Buffer
 dsc = File descriptor where the packet will be dumped
  --------------------------------------------------------------*/
-void tLog::dumpbuf(const Byte * buf, U32 n, U32 e, Byte how) {
+void tLog::dumpbuf(const Byte * buf, U32 n, U32 e, Byte how) const {
 	unsigned int i=0,j=0,k=0;
 
 	if(!this->level) return;
@@ -777,7 +733,7 @@ void tLog::dumpbuf(const Byte * buf, U32 n, U32 e, Byte how) {
 	this->flush();
 }
 
-void tLog::nl() {
+void tLog::nl() const {
 	this->print("\n");
 }
 
@@ -795,7 +751,7 @@ bool tLog::doesPrint(void) const
 	// if the descriptor is set or neither of these flags is set, then the log actually prints something
 }
 
-const char *tLog::getDir(void) const
+const char *tLog::getDir(void) const // FIXME: what about tString::dirname?
 {
 	static char dir[512];
 	alcStrncpy(dir, fullpath, sizeof(dir)-1);

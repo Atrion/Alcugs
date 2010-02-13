@@ -706,6 +706,13 @@ U32 tString::asU32() const {
 	return atoi(c_str());
 }
 
+tString tString::fromByte(Byte val)
+{
+	tString str;
+	str.printf("%d", val);
+	return str;
+}
+
 tString operator+(const tString & str1, const tString & str2) {
 	tString out(str1);
 	out.writeStr(str2);

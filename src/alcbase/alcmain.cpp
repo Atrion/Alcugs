@@ -69,8 +69,11 @@ tAlcMain::tAlcMain(void)
 		mainThreadId = alcGetSelfThreadId();
 		born.setToNow();
 		alcLogInit();
-		alcLogOpenStdLogs(true); // don't (yet) create files
-
+		
+		// open logfiles
+		stdLog = new tLog(NULL,2,DF_STDOUT);
+		errLog = new tLog(NULL,2,DF_STDERR);
+		
 		//init entropy
 		srandom(alcGetMicroseconds() + (alcGetTime() % 10000));
 		
@@ -84,6 +87,8 @@ tAlcMain::tAlcMain(void)
 
 tAlcMain::~tAlcMain() {
 	installBaseHandlers(/*install*/false);
+	delete stdLog;
+	delete errLog;
 	alcLogShutdown();
 	alcMain = NULL;
 }
@@ -119,7 +124,14 @@ void tAlcMain::onApplyConfig() {
 	if(var.isEmpty()) {
 		var="1";
 	}
-	alcLogOpenStdLogs(!var.asByte());
+	if (var.asByte()) {
+		stdLog->open("alcugs.log",2,DF_STDOUT);
+		errLog->open("error.log",2,DF_STDERR);
+	}
+	else {
+		stdLog->open(NULL,2,DF_STDOUT);
+		errLog->open(NULL,2,DF_STDERR);
+	}
 }
 
 void tAlcMain::dumpConfig() {
@@ -127,7 +139,7 @@ void tAlcMain::dumpConfig() {
 	parser.setConfig(&cfg);
 	tString out;
 	out.put(parser);
-	lstd->print("Config Dump:\n%s\n",out.c_str());
+	stdLog->print("Config Dump:\n%s\n",out.c_str());
 }
 
 void tAlcMain::loadConfig(const tString &path) {
@@ -169,7 +181,7 @@ void tAlcMain::installHandler(int signum, bool install) {
 }
 
 bool tAlcMain::onSignal(int s) {
-	lstd->log("INF: Recieved signal %i\n",s);
+	stdLog->log("INF: Recieved signal %i\n",s);
 	installHandler(s);
 	#ifndef __WIN32__ // On windows, the signal handler runs on another thread
 	if (alcGetSelfThreadId() != mainThreadId) return true;
@@ -178,21 +190,21 @@ bool tAlcMain::onSignal(int s) {
 		switch (s) {
 #ifndef __WIN32__
 			case SIGCHLD:
-				lstd->log("INF: RECIEVED SIGCHLD: a child has exited.\n");
-				lstd->flush();
+				stdLog->log("INF: RECIEVED SIGCHLD: a child has exited.\n");
+				stdLog->flush();
 				wait(NULL); // properly exit child
 				return true;
 #endif
 			case SIGSEGV:
-				lerr->log("\n PANIC!!!\n");
-				lerr->log("TERRIBLE FATAL ERROR: SIGSEGV recieved!!!\n\n");
-				lerr->flush();
+				errLog->log("\n PANIC!!!\n");
+				errLog->log("TERRIBLE FATAL ERROR: SIGSEGV recieved!!!\n\n");
+				errLog->flush();
 				throw txBase("Panic: Segmentation Fault - dumping core",/*abort*/true,/*dump core*/true);
 		}
 	} catch(txBase &t) {
-		lerr->log("FATAL Exception %s\n%s\n",t.what(),t.backtrace()); return true;
+		errLog->log("FATAL Exception %s\n%s\n",t.what(),t.backtrace()); return true;
 	} catch(...) {
-		lerr->log("FATAL Unknown Exception\n"); return true;
+		errLog->log("FATAL Unknown Exception\n"); return true;
 	}
 	return false;
 }

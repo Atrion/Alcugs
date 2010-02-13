@@ -55,9 +55,9 @@ private:
 		for(i=0; i<num; i++) {
 			{
 				tMutexLock lock(gmutex);
-				lstd->log("I am a child thread %i: %i!\n",threadnum,i);
+				alcGetMain()->std()->log("I am a child thread %i: %i!\n",threadnum,i);
 				usleep(timer/4);
-				lstd->log("I am a child thread %i: %i!\n",threadnum,i);
+				alcGetMain()->std()->log("I am a child thread %i: %i!\n",threadnum,i);
 			}
 			usleep(timer);
 		}
@@ -69,7 +69,7 @@ int main(void) {
 	tAlcMain alcMain;
 	try {
 
-		lstd->log("Init...\n");
+		alcMain.std()->log("Init...\n");
 		
 		tmyfunc * thread;
 		thread = new tmyfunc(1,15,2000);
@@ -85,9 +85,9 @@ int main(void) {
 		for(i=0; i<10; i++) {
 			{
 				tMutexLock lock(gmutex);
-				lstd->log("I am the main thread: %i!\n",i);
+				alcGetMain()->std()->log("I am the main thread: %i!\n",i);
 				usleep(1000);
-				lstd->log("I am the main thread: %i!\n",i);
+				alcGetMain()->std()->log("I am the main thread: %i!\n",i);
 			}
 			usleep(5000);
 		}

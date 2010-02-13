@@ -285,7 +285,7 @@ void tUnetBase::processEventQueue(bool shutdown)
 					sec->log("%s Flood Attack\n",u->str());
 					if (shutdown || onConnectionFlood(u)) {
 						terminate(u);
-						lerr->log("%s kicked due to a Flood Attack\n", u->str());
+						alcGetMain()->err()->log("%s kicked due to a Flood Attack\n", u->str());
 					}
 					break;
 				case UNET_MSGRCV:

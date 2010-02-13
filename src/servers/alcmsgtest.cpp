@@ -137,7 +137,7 @@ tUnetSimpleFileServer::tUnetSimpleFileServer(char * lhost,U16 lport,Byte listen)
 	this->setBindPort(lport);
 	this->setBindAddress(lhost);
 	this->listen=listen;
-	out=lstd;
+	out=alcGetMain()->std();
 	setIdleTimer(1);
 	d_host=NULL;
 	d_port=5000;
@@ -287,10 +287,11 @@ int main(int argc,char * argv[]) {
 	//start Alcugs library
 	tAlcUnetMain alcMain("Client");
 	try {
-		alcLogOpenStdLogs(!nlogs);
-		alcLogSetLogLevel(loglevel);
+		alcMain.config()->setVar(tString::fromByte(nlogs).c_str(), "log.enabled");
+		alcMain.config()->setVar(tString::fromByte(loglevel).c_str(), "verbose_level");
+		alcMain.onApplyConfig();
 		
-		lstd->print(alcVersionText());
+		alcMain.std()->print(alcVersionText());
 
 		netcore=new tUnetSimpleFileServer(l_hostname,l_port,listen);
 		

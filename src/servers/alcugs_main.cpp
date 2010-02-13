@@ -226,7 +226,7 @@ int main(int argc, char * argv[]) {
 		tString var;
 		var=cfg->getVar("stop","global");
 		if(!var.isEmpty() && var.asByte()) {
-			lstd->log("INFO: Administratively disabled! Please read the Alcugs configuration file (usually uru.conf) carefully to solve this issue.\n");
+			alcMain.std()->log("INFO: Administratively disabled! Please read the Alcugs configuration file (usually uru.conf) carefully to solve this issue.\n");
 			return -1;
 		}
 		//daemon?
@@ -240,11 +240,10 @@ int main(int argc, char * argv[]) {
 		}
 		
 		// print basic version info
-		lstd->print(alcVersionText());
+		alcMain.std()->print(alcVersionText());
 		var=alcNetName;
-		lstd->print("<%s SERVER>\n",var.upper().c_str());
-		lstd->nl();
-		lstd->log("The Server is running...\n Press CTRL+C to kill the server.\n\n");
+		alcMain.std()->print("<%s SERVER>\n\n",var.upper().c_str());
+		alcMain.std()->log("The Server is running...\n Press CTRL+C to kill the server.\n\n");
 		
 		//Create the server
 		#if defined(I_AM_THE_LOBBY_SERVER)
@@ -285,34 +284,34 @@ int main(int argc, char * argv[]) {
 		service->run();
 		
 		delete service;
-		lstd->print("The service has succesfully terminated\n");
-		lstd->print("Born:    %s\n",alcGetMain()->bornTime().str());
+		alcMain.std()->print("The service has succesfully terminated\n");
+		alcMain.std()->print("Born:    %s\n",alcGetMain()->bornTime().str());
 		tTime now;
 		now.setToNow();
-		lstd->print("Defunct: %s\n",now.str());
-		lstd->print("Uptime:  %s\n",alcGetMain()->upTime().str(0x01));
-		lstd->print("========================================\n");
+		alcMain.std()->print("Defunct: %s\n",now.str());
+		alcMain.std()->print("Uptime:  %s\n",alcGetMain()->upTime().str(0x01));
+		alcMain.std()->print("========================================\n");
 	} catch(txBase &t) {
 		t.dump(false); // don't dump to stderr, we would get the backtrace twice
-		lerr->log("FATAL Server died: Exception %s\n%s\n",t.what(),t.backtrace());
-		lstd->print("The service has been unexpectely killed!!!\n");
-		lstd->print("Born:    %s\n",alcGetMain()->bornTime().str());
+		alcMain.err()->log("FATAL Server died: Exception %s\n%s\n",t.what(),t.backtrace());
+		alcMain.std()->print("The service has been unexpectely killed!!!\n");
+		alcMain.std()->print("Born:    %s\n",alcGetMain()->bornTime().str());
 		tTime now;
 		now.setToNow();
-		lstd->print("Defunct: %s\n",now.str());
-		lstd->print("Uptime:  %s\n",alcGetMain()->upTime().str(0x01));
-		lstd->print("========================================\n");
+		alcMain.std()->print("Defunct: %s\n",now.str());
+		alcMain.std()->print("Uptime:  %s\n",alcGetMain()->upTime().str(0x01));
+		alcMain.std()->print("========================================\n");
 		alcMain.onCrash();
 		return -1;
 	} catch(...) {
-		lerr->log("FATAL Server died: Unknown Exception\n");
-		lstd->print("The service has been unexpectely killed!!!\n");
-		lstd->print("Born:    %s\n",alcGetMain()->bornTime().str());
+		alcMain.err()->log("FATAL Server died: Unknown Exception\n");
+		alcMain.std()->print("The service has been unexpectely killed!!!\n");
+		alcMain.std()->print("Born:    %s\n",alcGetMain()->bornTime().str());
 		tTime now;
 		now.setToNow();
-		lstd->print("Defunct: %s\n",now.str());
-		lstd->print("Uptime:  %s\n",alcGetMain()->upTime().str(0x01));
-		lstd->print("========================================\n");
+		alcMain.std()->print("Defunct: %s\n",now.str());
+		alcMain.std()->print("Uptime:  %s\n",alcGetMain()->upTime().str(0x01));
+		alcMain.std()->print("========================================\n");
 		alcMain.onCrash();
 		return -1;
 	}

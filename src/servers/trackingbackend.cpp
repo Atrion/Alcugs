@@ -95,7 +95,7 @@ namespace alc {
 	//// tTrackingBackend
 	tTrackingBackend::tTrackingBackend(tUnetBase *net, tNetSessionList *servers, const char *host, U16 port)
 	{
-		log = lnull;
+		log = alcUnetGetMain()->null();
 		this->servers = servers;
 		this->net = net;
 		this->host = host;
@@ -109,14 +109,14 @@ namespace alc {
 	{
 		unload();
 		if (players.size())
-			lerr->log("ERR: The backend is quitting, and there were still %d players online\n", players.size());
+			alcGetMain()->err()->log("ERR: The backend is quitting, and there were still %d players online\n", players.size());
 	}
 	
 	void tTrackingBackend::unload(void)
 	{
-		if (log != lnull) {
+		if (log != alcUnetGetMain()->null()) {
 			delete log;
-			log = lnull;
+			log = alcUnetGetMain()->null();
 		}
 	}
 	
@@ -125,7 +125,7 @@ namespace alc {
 		tConfig *cfg = alcGetMain()->config();
 		
 		tString var = cfg->getVar("tracking.log");
-		if (log == lnull && (var.isEmpty() || var.asByte())) { // logging enabled per default
+		if (log == alcUnetGetMain()->null() && (var.isEmpty() || var.asByte())) { // logging enabled per default
 			log = new tLog("tracking.log", 4, 0);
 			log->log("Tracking driver started (%s)\n\n", __U_TRACKINGBACKEND_ID);
 			log->flush();
@@ -536,7 +536,7 @@ namespace alc {
 		
 		FILE *f = fopen(statusfile, "w");
 		if (!f) {
-			lerr->log("Can\'t open %s for writing - disabling HTML status page\n", statusfile);
+			alcGetMain()->err()->log("Can\'t open %s for writing - disabling HTML status page\n", statusfile);
 			if (dbg) statusHTMLdbg = false;
 			else statusHTML = false;
 			return;
@@ -593,7 +593,7 @@ namespace alc {
 		bool needFake = false;
 		FILE *f = fopen(statusXMLFile, "w");
 		if (!f) {
-			lerr->log("Can\'t open %s for writing - disabling XML status page\n", statusXMLFile);
+			alcGetMain()->err()->log("Can\'t open %s for writing - disabling XML status page\n", statusXMLFile);
 			statusXML = false;
 			return;
 		}
