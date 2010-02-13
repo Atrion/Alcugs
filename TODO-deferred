@@ -41,7 +41,6 @@ Game
 
 Generic Stuff
 ==================
-* Get rid of "static" variables and prefer tString over str[n]cpy/str[n]cat
 * MetaServer
 * Optimizations
 * Telnet builtin service

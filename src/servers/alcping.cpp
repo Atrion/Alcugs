@@ -93,7 +93,6 @@ public:
 	}
 private:
 	Byte listen;
-	tLog * out;
 	double time;
 	int num;
 	int flood;
@@ -115,7 +114,6 @@ tUnetPing::tUnetPing(char * lhost,U16 lport,Byte listen,double time,int num,int 
 	this->setBindPort(lport);
 	this->setBindAddress(lhost);
 	this->listen=listen;
-	out=alcGetMain()->std();
 	setIdleTimer(1);
 	this->time=time;
 	this->num=num;
@@ -155,9 +153,9 @@ void tUnetPing::setValidation(Byte val) {
 void tUnetPing::onStop() {
 	if(listen==0 && count > 1) {
 		count=flood*count;
-		out->print("\nStats:\nrecieved %i packets of %i sent, %i%% packet loss, time: %0.3f ms\n",\
+		printf("\nStats:\nrecieved %i packets of %i sent, %i%% packet loss, time: %0.3f ms\n",\
 		rcvn,count,(100-((rcvn*100)/count)),(current-startup)*1000);
-		out->print("min/avg/max times = %0.3f/%0.3f/%0.3f\n",min*1000,(avg/rcvn)*1000,max*1000);
+		printf("min/avg/max times = %0.3f/%0.3f/%0.3f\n",min*1000,(avg/rcvn)*1000,max*1000);
 	}
 }
 
@@ -174,7 +172,7 @@ int tUnetPing::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 				if(dstite==u) {
 					current=alcGetCurrentTime();
 					rcv=current-ping.mtime;
-					out->log("Pong from %s:%i x=%i dest=%i %s time=%0.3f ms\n",\
+					printf("Pong from %s:%i x=%i dest=%i %s time=%0.3f ms\n",\
 					alcGetStrIp(u->getIp()),ntohs(u->getPort()),ping.x,ping.destination,\
 					alcUnetGetDestination(ping.destination),rcv*1000);
 					rcvn++;
@@ -183,7 +181,7 @@ int tUnetPing::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 					if(rcv>max) max=rcv;
 				}
 			} else {
-				out->log("Ping from %s:%i x=%i dest=%i %s time=%0.3f ms .... pong....\n",\
+				printf("Ping from %s:%i x=%i dest=%i %s time=%0.3f ms .... pong....\n",\
 				alcGetStrIp(u->getIp()),ntohs(u->getPort()),ping.x,ping.destination,\
 				alcUnetGetDestination(ping.destination),ping.mtime*1000);
 				if(urgent) ping.setUrgent();
@@ -206,7 +204,7 @@ int tUnetPing::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 void tUnetPing::onLeave(Byte reason,tNetSession * u)
 {
 	if(listen!=0) {
-		out->log("Leave from %s:%i reason=%i %s\n", alcGetStrIp(u->getIp()), ntohs(u->getPort()), reason, alcUnetGetReasonCode(reason));
+		printf("Leave from %s:%i reason=%i %s\n", alcGetStrIp(u->getIp()), ntohs(u->getPort()), reason, alcUnetGetReasonCode(reason));
 	}
 }
 
@@ -360,14 +358,7 @@ int main(int argc,char * argv[]) {
 		if(mrtg==1) num=1;
 
 		netcore=new tUnetPing(l_hostname,l_port,listen,time,num,flood);
-		
-		netcore->setFlags(UNET_LQUIET);
-		if(nlogs) {
-			netcore->setFlags(UNET_ELOG | UNET_FLOG);
-		} else {
-			netcore->unsetFlags(UNET_ELOG | UNET_FLOG);
-		}
-		if(loglevel!=0) netcore->setFlags(UNET_ELOG);
+		if (!nlogs) netcore->unsetFlags(UNET_ELOG);
 		
 		if(bcast) netcore->setFlags(UNET_BCAST);
 		else netcore->unsetFlags(UNET_BCAST);

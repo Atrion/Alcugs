@@ -68,10 +68,11 @@ U32 alcGetSelfThreadId() {
 #ifndef __WIN32__
 #define THREAD_RET void *
 #else
-#define THREAD_RET static unsigned __stdcall
+#define THREAD_RET unsigned __stdcall
 #endif
 
-THREAD_RET _alcThreadSpawner(void * s) {
+#ifdef ENABLE_THREADS
+static THREAD_RET _alcThreadSpawner(void * s) {
 	tThread * t;
 	t=static_cast<tThread *>(s);
 	t->main();
@@ -81,6 +82,7 @@ THREAD_RET _alcThreadSpawner(void * s) {
 	return 0;
 	#endif
 }
+#endif
 
 tThread::tThread() {
 	spawned=false;

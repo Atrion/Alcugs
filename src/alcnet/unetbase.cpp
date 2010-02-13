@@ -129,17 +129,17 @@ void tUnetBase::applyConfig() {
 	var=cfg->getVar("net.noflood","global");
 	if(!var.isEmpty()) {
 		if(var.asByte()) {
-			setFlags(UNET_NOFLOOD);
+			setFlags(UNET_FLOODCTR);
 		} else {
-			unsetFlags(UNET_NOFLOOD);
+			unsetFlags(UNET_FLOODCTR);
 		}
 	}
 	var=cfg->getVar("net.log.ack","global");
 	if(!var.isEmpty()) {
 		if(var.asByte()) {
-			setFlags(UNET_ACKLOG);
+			setFlags(UNET_EACKLOG);
 		} else {
-			unsetFlags(UNET_ACKLOG);
+			unsetFlags(UNET_EACKLOG);
 		}
 	}
 	//Other DEVEL vars (dangerous to touch)
