@@ -158,7 +158,7 @@ namespace alc {
 				findAge.data.rewind();
 				findAge.data.get(ageLink);
 				if (!findAge.data.eof()) throw txProtocolError(_WHERE("Got a NetMsgFindAge which is too long"));
-				log->print(" %s\n", ageLink.str());
+				log->print(" %s\n", ageLink.str().c_str());
 				
 				if (!ageLink.ageInfo.hasGuid()) {
 					if (!vaultBackend.setAgeGuid(&ageLink, findAge.ki)) {
