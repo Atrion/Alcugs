@@ -71,19 +71,19 @@ namespace alc {
 	
 		tConfig *cfg = alcGetConfig();
 		tString var = cfg->getVar("auth.minalevel");
-		if (var.isNull()) minAccess = AcNotActivated;
+		if (var.isEmpty()) minAccess = AcNotActivated;
 		else minAccess = var.asU16();
 		
 		var = cfg->getVar("auth.att");
-		if (var.isNull()) maxAttempts = 10;
+		if (var.isEmpty()) maxAttempts = 10;
 		else maxAttempts = var.asU16();
 		
 		var = cfg->getVar("auth.distime");
-		if (var.isNull()) disTime = 5*60;
+		if (var.isEmpty()) disTime = 5*60;
 		else disTime = var.asU16();
 		
 		var = cfg->getVar("auth.log");
-		if (var.isNull() || var.asByte()) { // logging enabled per default
+		if (var.isEmpty() || var.asByte()) { // logging enabled per default
 			log = new tLog("auth.log", 4, 0);
 		}
 

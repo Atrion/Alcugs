@@ -57,16 +57,16 @@ namespace alc {
 		// check if we should clean the vault
 		tConfig *cfg = alcGetConfig();
 		tString var = cfg->getVar("daemon");
-		bool daemon = (!var.isNull() && var.asByte()); // disabled per default
+		bool daemon = (!var.isEmpty() && var.asByte()); // disabled per default
 		var = cfg->getVar("vault.clean", "cmdline"); // this can only be enabled via cmdline
-		bool clean = (!var.isNull() && var.asByte()); // disabled per default
+		bool clean = (!var.isEmpty() && var.asByte()); // disabled per default
 		if (clean) {
 			if (daemon) {
 				lerr->log("I will only clean the vault in interactive mode to give you more feedback\n");
 				return;
 			}
 			var = cfg->getVar("vault.clean.ages");
-			bool cleanAges = !var.isNull() && var.asByte(); // disabled per default
+			bool cleanAges = !var.isEmpty() && var.asByte(); // disabled per default
 			vaultBackend->cleanVault(cleanAges);
 			forcestop(); // don't let the server run, we started just for cleaning
 		}

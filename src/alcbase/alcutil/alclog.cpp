@@ -96,7 +96,7 @@ typedef struct {
 	char protocol; //UDP, TCP <! 0x00 disabled, 0x01 udp, 0x02 tcp*/
 } tLogConfig;
 
-tLogConfig * tvLogConfig=NULL;
+static tLogConfig * tvLogConfig=NULL;
 
 void alcLogSetDefaults() {
 	if(tvLogConfig==NULL) {

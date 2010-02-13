@@ -58,6 +58,7 @@ namespace alc {
 		load();
 		
 		tConfig *cfg = alcGetConfig();
+		bool found;
 		tString var = cfg->getVar("sdl");
 		if (var.size() < 2) throw txUnet(_WHERE("a sdl path must be set"));
 		if (!var.endsWith("/")) var.writeStr("/");
@@ -80,12 +81,12 @@ namespace alc {
 		}
 		
 		// Check if we should load the state
-		var = cfg->getVar("game.tmp.hacks.resetting_ages");
-		if (var.isNull()) var = "Kveer,Garden"; // see uru.conf.dist for explanation
+		var = cfg->getVar("game.tmp.hacks.resetting_ages", &found);
+		if (!found) var = "Kveer,Garden"; // see uru.conf.dist for explanation
 		bool ageLoadsState = doesAgeLoadState(var.c_str(), net->getName());
 		// load agestate from file (do the migration even if we should not load)
 		ageStateFile = cfg->getVar("game.agestates");
-		if (ageStateFile.isNull())
+		if (ageStateFile.isEmpty())
 			throw txUnet(_WHERE("You have to set the game.agestates to the directory for saving your agestate files"));
 		mkdir(ageStateFile.c_str(), 00750); // make sure the path exists
 		ageStateFile.printf("/%s-%s.state", net->getName(), alcGetStrGuid(net->getGuid()));
@@ -196,7 +197,7 @@ namespace alc {
 	
 	void tAgeStateManager::saveAgeState()
 	{
-		if (ageStateFile.isNull()) return;
+		if (ageStateFile.isEmpty()) return;
 		log->log("Saving age state to %s\n", ageStateFile.c_str());
 		// open file
 		tFBuf file;
@@ -220,10 +221,10 @@ namespace alc {
 		tConfig *cfg = alcGetConfig();
 		tString var = cfg->getVar("agestate.log");
 		logDetailed = false;
-		if (var.isNull() || var.asByte()) { // logging enabled per default
+		if (var.isEmpty() || var.asByte()) { // logging enabled per default
 			log = new tLog("agestate.log", 4, 0);
 			var = cfg->getVar("agestate.log.detailed");
-			if (!var.isNull() && var.asByte()) // detailed logging disabled per default
+			if (!var.isEmpty() && var.asByte()) // detailed logging disabled per default
 				logDetailed = true;
 		}
 		

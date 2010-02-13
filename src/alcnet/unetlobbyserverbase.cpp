@@ -61,23 +61,23 @@ namespace alc {
 	{
 		tConfig *cfg = alcGetConfig();
 		tString var = cfg->getVar("vault.html.log");
-		if (var.isNull() || var.asByte()) { // logging enabled per default
+		if (var.isEmpty() || var.asByte()) { // logging enabled per default
 			if (lvault == lnull) lvault = new tLog("vault.html", 2, DF_HTML);
 			var = cfg->getVar("vault.html.log.short");
-			vaultLogShort = (var.isNull() || var.asByte()); // per default, it *is* short
+			vaultLogShort = (var.isEmpty() || var.asByte()); // per default, it *is* short
 		}
 		var = cfg->getVar("allow_uu_clients");
-		allowUU = (var.isNull() || var.asByte()); // per default, UU clients are allowed
+		allowUU = (var.isEmpty() || var.asByte()); // per default, UU clients are allowed
 		var = cfg->getVar("tmp.link_log");
-		if (!var.isNull()) alcStrncpy(linkLog, var.c_str(), sizeof(linkLog)-1);
+		if (!var.isEmpty()) alcStrncpy(linkLog, var.c_str(), sizeof(linkLog)-1);
 		else linkLog[0] = 0;
 		
 		var = cfg->getVar("spawn.start");
-		if (var.isNull()) spawnStart = 5001;
+		if (var.isEmpty()) spawnStart = 5001;
 		else spawnStart = var.asU16();
 		
 		var = cfg->getVar("spawn.stop");
-		if (var.isNull()) spawnStop = 6000;
+		if (var.isEmpty()) spawnStop = 6000;
 		else spawnStop = var.asU16();
 		
 		if (spawnStop < spawnStart) {
@@ -86,7 +86,7 @@ namespace alc {
 		}
 		
 		var = cfg->getVar("net.timeout.loading");
-		if (var.isNull()) loadingTimeout = 90;
+		if (var.isEmpty()) loadingTimeout = 90;
 		else loadingTimeout = var.asU32();
 	}
 	
@@ -221,7 +221,7 @@ namespace alc {
 				err->log("ERR: Connection to unknown service %d requested\n", dst);
 				return tNetSessionIte();
 		}
-		if (host.isNull() || port.isNull()) {
+		if (host.isEmpty() || port.isEmpty()) {
 			err->log("ERR: Hostname or port for service %d (%s) is missing\n", dst, alcUnetGetDestination(dst));
 			return tNetSessionIte();
 		}
@@ -233,7 +233,7 @@ namespace alc {
 		
 		if (dst == KTracking) {
 			tString var = cfg->getVar("public_address");
-			if (var.isNull()) log->log("WARNING: No public address set, using bind address %s\n", bindaddr);
+			if (var.isEmpty()) log->log("WARNING: No public address set, using bind address %s\n", bindaddr);
 			tmCustomSetGuid setGuid(session, alcGetStrGuid(serverGuid), serverName, var.c_str(), whoami == KGame ? 0 : spawnStart, whoami == KGame ? 0 : spawnStop);
 			send(setGuid);
 		}

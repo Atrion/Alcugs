@@ -39,7 +39,7 @@
 
 namespace alc {
 
-const tString nullstr;
+static const tString emptyString;
 
 tConfigVal::tConfigVal() { init(); }
 tConfigVal::tConfigVal(const char * name) {
@@ -117,14 +117,17 @@ void tConfigVal::setVal(const char * val,U16 x,U16 y) {
 const tString & tConfigVal::getName() const {
 	return name;
 }
-const tString & tConfigVal::getVal(U16 x,U16 y) const {
+const tString & tConfigVal::getVal(U16 x,U16 y,bool *found) const {
 	if(values==NULL || x>=this->x || y>=this->y) {
-		return nullstr;
+		if (found) *found = false;
+		return emptyString;
 	}
 	U16 nx=this->x;
 	if(*(values+((nx*y)+x))==NULL) {
-		return nullstr;
+		if (found) *found = false;
+		return emptyString;
 	}
+	if (found) *found = true;
 	return **(values+((nx*y)+x));
 }
 void tConfigVal::copy(const tConfigVal &t) {
@@ -279,12 +282,14 @@ void tConfig::setVar(const tString &val, const tString &what, const tString &whe
 	DBGM(5," done\n");
 	myvar->setVal(val,x,y);
 }
-const tString & tConfig::getVar(const char * what,const char * where,U16 x,U16 y) {
+const tString & tConfig::getVar(const char * what,const char * where,U16 x,U16 y,bool *found) {
 	tConfigVal * myvar;
 	myvar=findVar(what,where,false);
-	if(myvar==NULL)
-		return nullstr;
-	return(myvar->getVal(x,y));
+	if(myvar==NULL) {
+		if (found) *found = false;
+		return emptyString;
+	}
+	return myvar->getVal(x,y, found);
 }
 void tConfig::rewind() {
 	off=0;

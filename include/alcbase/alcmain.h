@@ -76,11 +76,9 @@ void alcCrashAction();
 
 class tSignalHandler {
 public:
-	tSignalHandler() { this->install_handlers(); }
-	virtual ~tSignalHandler() { this->unistall_handlers(); }
+	virtual ~tSignalHandler() { }
 	virtual void handle_signal(int s);
-	virtual void install_handlers() {}
-	virtual void unistall_handlers() {}
+	virtual void install_handlers(bool install = true);
 };
 
 void alcInstallSignalHandler(tSignalHandler * t);

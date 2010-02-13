@@ -531,15 +531,13 @@ void alctypes_part4() {
 	assert(tString("a") > "");
 	assert(tString("") < tString("a"));
 	
-	// isNull
-	tString null;
-	assert(null.isNull());
-	null = "";
-	assert(!null.isNull());
-	null = "hi!";
-	assert(!null.isNull());
-	null.clear();
-	assert(null.isNull());
+	// isEmpty
+	tString emp;
+	assert(emp.isEmpty());
+	emp = "hi!";
+	assert(!emp.isEmpty());
+	emp.clear();
+	assert(emp.isEmpty());
 }
 
 void alctypes_part5() {
@@ -926,12 +924,15 @@ which is more than a line long\"\n\
 	b.rewind();
 	tXParser xparser2;
 	cfg1 = new tConfig();
+	bool found;
 	xparser2.setConfig(cfg1);
 	xparser2.store(b);
 	assert(cfg1->getVar("aname") == "a");
-	assert(!cfg1->getVar("aname").isNull());
+	assert(!cfg1->getVar("aname", &found).isEmpty());
+	assert(found);
 	assert(cfg1->getVar("aname", "global", 1, 0) == "b");
-	assert(cfg1->getVar("anarr").isNull());
+	assert(cfg1->getVar("anarr", &found).isEmpty());
+	assert(!found);
 	assert(cfg1->getVar("anarr", "asection", 0, 0) == "hi,ho");
 	assert(cfg1->getVar("anarr", "asection", 1, 0) == "hu");
 	assert(cfg1->getVar("anarr", "asection", 0, 4) == "another value\nwhich is more than a line long");

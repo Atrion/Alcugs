@@ -36,7 +36,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_UNETMAIN_ID "$Id$"
 
-//#define _DBG_LEVEL_ 10
+#define _DBG_LEVEL_ 10
 
 #include "alcnet.h"
 
@@ -52,7 +52,7 @@ int alcUnetReloadConfig(bool firsttime) {
 	tString var;
 	tConfig * cfg=alcGetConfig();
 	var=cfg->getVar("read_config","cmdline");
-	if(var.isNull()) {
+	if(var.isEmpty()) {
 		var="uru.conf";
 		cfg->setVar(var.c_str(),"read_config","cmdline");
 	}
@@ -74,18 +74,17 @@ int alcUnetReloadConfig(bool firsttime) {
 	alcReApplyConfig();
 	DBGM(5," done\n");
 	var=cfg->getVar("cfg.dump","global");
-	if(!var.isNull() && var.asByte()) {
+	if(!var.isEmpty() && var.asByte()) {
 		alcDumpConfig();
 	}
 	return 1;
 }
 
-tUnetSignalHandler::tUnetSignalHandler(tUnetBase * netcore) :tSignalHandler() {
+tUnetSignalHandler::tUnetSignalHandler(tUnetBase * netcore) : tSignalHandler() {
 	DBG(5,"tUnetSignalHandler()\n");
 	this->net=netcore;
 	__state_running=2;
 	st_alarm=0;
-	install_handlers();
 }
 tUnetSignalHandler::~tUnetSignalHandler() {
 
@@ -95,8 +94,10 @@ void tUnetSignalHandler::handle_signal(int s) {
 	try {
 		switch (s) {
 			case SIGHUP: //reload configuration
-				if(alcGetSelfThreadId()!=alcGetMainThreadId()) return;
 				alcSignal(SIGHUP,1);
+				#ifndef __WIN32__
+				if(alcGetSelfThreadId()!=alcGetMainThreadId()) return;
+				#endif
 				lstd->log("INF: ReReading configuration\n\n");
 				alcUnetReloadConfig(false);
 				net->reload();
@@ -129,6 +130,7 @@ void tUnetSignalHandler::handle_signal(int s) {
 				}
 				break;
 			case SIGUSR1:
+				alcSignal(SIGUSR1,1);
 				#ifndef __WIN32__
 				if(alcGetSelfThreadId()!=alcGetMainThreadId()) return;
 				#endif
@@ -144,15 +146,14 @@ void tUnetSignalHandler::handle_signal(int s) {
 					alcSignal(SIGALRM,1);
 					alarm(30);
 				}
-				alcSignal(SIGUSR1,1);
 				break;
 			case SIGUSR2:
+				alcSignal(SIGUSR2,1);
 				#ifndef __WIN32__
 				if(alcGetSelfThreadId()!=alcGetMainThreadId()) return;
 				#endif
 				lstd->log("INF: TERMINATED message sent to all players.\n\n");
 				net->terminatePlayers();
-				alcSignal(SIGUSR2,1);
 				break;
 		}
 	} catch(txBase &t) {
@@ -161,18 +162,16 @@ void tUnetSignalHandler::handle_signal(int s) {
 		lerr->log("FATAL Unknown Exception\n");
 	}
 }
-void tUnetSignalHandler::install_handlers() {
-	DBG(5,"installing handlers\n");
-	alcSignal(SIGTERM,1);
-	alcSignal(SIGINT,1);
+void tUnetSignalHandler::install_handlers(bool install)
+{
+	tSignalHandler::install_handlers(install);
+	alcSignal(SIGTERM,install);
+	alcSignal(SIGINT,install);
 #ifndef __WIN32__
-	alcSignal(SIGHUP,1);
-	alcSignal(SIGUSR1,1);
-	alcSignal(SIGUSR2,1);
+	alcSignal(SIGHUP,install);
+	alcSignal(SIGUSR1,install);
+	alcSignal(SIGUSR2,install);
 #endif
-}
-void tUnetSignalHandler::unistall_handlers() {
-
 }
 
 	

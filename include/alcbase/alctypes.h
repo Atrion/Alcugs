@@ -196,7 +196,7 @@ protected:
 	SByte compare(const tMBuf &t) const;
 	
 	//! called when content is modified
-	virtual void onmodify(bool /*clear*/ = false) {} // FIXME: remove this
+	virtual void onmodify() {} // FIXME: remove this
 	
 	// data
 	tRefBuf *buf;
@@ -291,7 +291,7 @@ public:
 	// string functions
 	S32 find(const char cat, bool reverse=false) const;
 	S32 find(const char *str) const;
-	S32 find(const tString &str) const { return find(str.c_str()); }
+	inline S32 find(const tString &str) const { return find(str.c_str()); }
 	/** \brief strips the character from the beginning (when how=1 or 3) and/or from the end (how=2 or 3) of the string */
 	const tString & strip(Byte what,Byte how=0x03);
 	const tString & escape() const;
@@ -309,14 +309,15 @@ public:
 	void printBoolean(bool val);
 	void nl() { writeStr("\n"); }
 	U32 asU32() const;
-	S32 asS32() const { return static_cast<S32>(asU32()); }
-	U16 asU16() const { return static_cast<U16>(asU32()); }
-	S16 asS16() const { return static_cast<S16>(asU32()); }
-	Byte asByte() const { return static_cast<Byte>(asU32()); }
-	SByte asSByte() const { return static_cast<SByte>(asU32()); }
+	inline S32 asS32() const { return static_cast<S32>(asU32()); }
+	inline U16 asU16() const { return static_cast<U16>(asU32()); }
+	inline S16 asS16() const { return static_cast<S16>(asU32()); }
+	inline Byte asByte() const { return static_cast<Byte>(asU32()); }
+	inline SByte asSByte() const { return static_cast<SByte>(asU32()); }
 	const char * c_str();
 	const char * c_str() const;
-	bool isNewline(void) const
+	inline bool isEmpty(void) const { return !msize; }
+	inline bool isNewline(void) const
 	{
 		return compare("\n") == 0 || compare("\r") == 0 || compare("\n\r") == 0 || compare("\r\n") == 0;
 	}
@@ -337,10 +338,9 @@ public:
 	*/
 	const tString & getToken();
 	
-	// helpful functions
+	// path functions
 	void convertSlashesFromWinToUnix();
 	void convertSlashesFromUnixToWin();
-	inline bool isNull() const { return null; }
 	
 	// assignment
 	inline const tString & operator=(const tString &t) { copy(t); return *this; }
@@ -360,16 +360,16 @@ public:
 	inline bool operator<=(const tString &t) const { return(compare(t)<=0); }
 	inline bool operator<=(const char *t) const { return(compare(t)<=0); }
 protected:
-	virtual void onmodify(bool clear = false); // FIXME
+	virtual void onmodify(); // FIXME
 	// assignment
 	void copy(const char * str);
 	void copy(const tString &t);
 private:
+	// FIXME: get rid of all of these...
 	U16 l,c;
 	char sep;
 	mutable tString * shot;
 	mutable tString * cache_lower;
-	bool null;
 
 	void init();
 	// comparison

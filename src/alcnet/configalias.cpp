@@ -72,13 +72,13 @@ void alcNetSetConfigAliases() {
 	cfg->copyValue("tracking.port","tracking_server_port","global","global");
 
 	val=cfg->getVar("bandwidth","global");
-	if(!val.isNull()) {
+	if(!val.isEmpty()) {
 		val=cfg->getVar("net.up","global");
-		if(val.isNull()) {
+		if(val.isEmpty()) {
 			cfg->copyValue("net.up","bandwidth","global","global");
 		}
 		val=cfg->getVar("net.down","global");
-		if(val.isNull()) {
+		if(val.isEmpty()) {
 			cfg->copyValue("net.down","bandwidth","global","global");
 		}
 	}
@@ -103,7 +103,9 @@ void alcNetSetConfigAliases() {
 	cfg->copyValue("vault.hood.desc","neighborhood_comment","global","global");
 
 	//game
-	if (cfg->getVar("game.tmp.hacks.resetting_ages", "global").isNull()) { // don't overwrite the new value if it exists
+	bool found;
+	cfg->getVar("game.tmp.hacks.resetting_ages", "global", &found);
+	if (!found) { // don't overwrite the new value if it exists
 		cfg->copyValue("game.tmp.hacks.resetting_ages", "tracking.tmp.hacks.resetting_ages", "global", "global");
 		cfg->copyValue("game.tmp.hacks.resetting_ages", "tracking.tmp.hacks.resetting_ages", "global", "tracking");
 	}

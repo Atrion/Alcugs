@@ -89,12 +89,12 @@ namespace alc {
 		
 		tConfig *cfg = alcGetConfig();
 		tString var = cfg->getVar("game.persistent");
-		if (!var.isNull() && var.asByte()) { // disabled per default
+		if (!var.isEmpty() && var.asByte()) { // disabled per default
 			lingerTime = 0;
 		}
 		else {
 			var = cfg->getVar("game.linger_time");
-			if (!var.isNull())
+			if (!var.isEmpty())
 				lingerTime = var.asU32();
 			else
 				lingerTime = 120; // default
@@ -103,10 +103,10 @@ namespace alc {
 		}
 		
 		var = cfg->getVar("game.tmp.hacks.noreltoshare");
-		noReltoShare = (!var.isNull() && var.asByte()); // disabled per default
+		noReltoShare = (!var.isEmpty() && var.asByte()); // disabled per default
 		
 		var = cfg->getVar("game.serversidecommands");
-		serverSideCommands = (var.isNull() || var.asByte()); // enabled per default
+		serverSideCommands = (var.isEmpty() || var.asByte()); // enabled per default
 	}
 	
 	void tUnetGameServer::onVaultMessageForward(tNetSession *u, tvMessage *msg)
