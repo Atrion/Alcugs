@@ -47,82 +47,51 @@
 
 namespace alc {
 
-int alcUnetReloadConfig(bool firsttime) {
-	//Load and parse config files
-	tString var;
-	tConfig * cfg=alcGetConfig();
-	var=cfg->getVar("read_config","cmdline");
-	if(var.isEmpty()) {
-		var="uru.conf";
-		cfg->setVar(var.c_str(),"read_config","cmdline");
-	}
-	if(!alcParseConfig(var)) {
-		if(firsttime) {
-			fprintf(stderr,"FATAL, reading configuration, please check the syntax\n");
-			return -1;
-		} else {
-			lerr->log("FATAL, reading configuration, please check the syntax\n");
-		}
-	}
-	//Set config settings
-	cfg->copyKey("global",alcNetName);
-	cfg->copyKey("global","cmdline");
-	DBG(5,"setting config aliases...");
-	alcNetSetConfigAliases();
-	DBGM(5," done\n");
-	DBG(5,"applying config...");
-	alcReApplyConfig();
-	DBGM(5," done\n");
-	var=cfg->getVar("cfg.dump","global");
-	if(!var.isEmpty() && var.asByte()) {
-		alcDumpConfig();
-	}
-	return 1;
+
+tAlcUnetMain::tAlcUnetMain(bool globalLogfiles) : tAlcMain(globalLogfiles), stateRunning(2), alarmRunning(false), net(NULL)
+{
+	installUnetHandlers(true);
 }
 
-tUnetSignalHandler::tUnetSignalHandler(tUnetBase * netcore) : tSignalHandler() {
-	DBG(5,"tUnetSignalHandler()\n");
-	this->net=netcore;
-	__state_running=2;
-	st_alarm=0;
+tAlcUnetMain::~tAlcUnetMain(void)
+{
+	installUnetHandlers(false);
 }
-tUnetSignalHandler::~tUnetSignalHandler() {
 
+void tAlcUnetMain::installUnetHandlers(bool install)
+{
+	installHandler(SIGTERM,install);
+	installHandler(SIGINT,install);
+#ifndef __WIN32__
+	installHandler(SIGHUP,install);
+	installHandler(SIGUSR1,install);
+	installHandler(SIGUSR2,install);
+#endif
 }
-void tUnetSignalHandler::handle_signal(int s) {
-	tSignalHandler::handle_signal(s);
+
+bool tAlcUnetMain::onSignal(int s) {
+	if (tAlcMain::onSignal(s)) return true; // done
+	if (!net) return false;
 	try {
 		switch (s) {
 			case SIGHUP: //reload configuration
-				alcSignal(SIGHUP,1);
-				#ifndef __WIN32__
-				if(alcGetSelfThreadId()!=alcGetMainThreadId()) return;
-				#endif
 				lstd->log("INF: ReReading configuration\n\n");
-				alcUnetReloadConfig(false);
+				loadUnetConfig();
 				net->reload();
-				break;
+				return true;
 			case SIGALRM:
 			case SIGTERM:
 			case SIGINT:
-				switch(__state_running) {
+				switch(stateRunning) {
 					case 2:
-						alcSignal(s,1);
-						#ifndef __WIN32__
-						if(alcGetSelfThreadId()!=alcGetMainThreadId()) return;
-						#endif
 						net->stop();
-						__state_running--;
-						break;
+						stateRunning--;
+						return true;
 					case 1:
-						alcSignal(s,1);
-						#ifndef __WIN32__
-						if(alcGetSelfThreadId()!=alcGetMainThreadId()) return;
-						#endif
 						net->forcestop();
-						__state_running--;
+						stateRunning--;
 						lstd->log("INF: Warning another CTRL+C will kill the server permanently causing data loss\n");
-						break;
+						return true;
 					default:
 						lstd->log("INF: Killed\n");
 						printf("Killed!\n");
@@ -130,50 +99,54 @@ void tUnetSignalHandler::handle_signal(int s) {
 				}
 				break;
 			case SIGUSR1:
-				alcSignal(SIGUSR1,1);
-				#ifndef __WIN32__
-				if(alcGetSelfThreadId()!=alcGetMainThreadId()) return;
-				#endif
-				if(st_alarm) {
+				if(alarmRunning) {
 					lstd->log("INF: Automatic -Emergency- Shutdown CANCELLED\n\n");
-					//net->bcast("NOTICE: The Server Shutdown sequence has been cancelled");
-					st_alarm=0;
+					alarmRunning=false;
+					installHandler(SIGALRM,false);
 					alarm(0);
 				} else {
 					lstd->log("INF: Automatic -Emergency- Shutdown In progress in 30 seconds\n\n");
-					//net->bcast("NOTICE: Server is going down in 30 seconds");
-					st_alarm=1;
-					alcSignal(SIGALRM,1);
+					alarmRunning=true;
+					installHandler(SIGALRM,true);
 					alarm(30);
 				}
-				break;
+				return true;
 			case SIGUSR2:
-				alcSignal(SIGUSR2,1);
-				#ifndef __WIN32__
-				if(alcGetSelfThreadId()!=alcGetMainThreadId()) return;
-				#endif
 				lstd->log("INF: TERMINATED message sent to all players.\n\n");
 				net->terminatePlayers();
-				break;
+				return true;
 		}
 	} catch(txBase &t) {
-		lerr->log("FATAL Exception %s\n%s\n",t.what(),t.backtrace());
+		lerr->log("FATAL Exception %s\n%s\n",t.what(),t.backtrace()); return true;
 	} catch(...) {
-		lerr->log("FATAL Unknown Exception\n");
+		lerr->log("FATAL Unknown Exception\n"); return true;
 	}
-}
-void tUnetSignalHandler::install_handlers(bool install)
-{
-	tSignalHandler::install_handlers(install);
-	alcSignal(SIGTERM,install);
-	alcSignal(SIGINT,install);
-#ifndef __WIN32__
-	alcSignal(SIGHUP,install);
-	alcSignal(SIGUSR1,install);
-	alcSignal(SIGUSR2,install);
-#endif
+	return false;
 }
 
-	
+void tAlcUnetMain::loadUnetConfig(void) {
+	//Load and parse config files
+	tString var;
+	var=cfg.getVar("read_config","cmdline");
+	if(var.isEmpty()) {
+		var="uru.conf";
+		cfg.setVar(var.c_str(),"read_config","cmdline");
+	}
+	loadConfig(var);
+	//Set config settings
+	cfg.copyKey("global",alcNetName);
+	cfg.copyKey("global","cmdline");
+	DBG(5,"setting config aliases...");
+	alcNetSetConfigAliases();
+	DBGM(5," done\n");
+	DBG(5,"applying config...");
+	onApplyConfig();
+	DBGM(5," done\n");
+	var=cfg.getVar("cfg.dump","global");
+	if(!var.isEmpty() && var.asByte()) {
+		dumpConfig();
+	}
+}
+
 } //end namespace alc
 

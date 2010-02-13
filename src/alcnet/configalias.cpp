@@ -53,7 +53,7 @@ void alcNetSetConfigAliases() {
 
 	tConfig * cfg;
 	tString val;
-	cfg=alcGetConfig();
+	cfg=alcGetMain()->config();
 	
 	// save the auth, tracking and vault host and port in global: [auth/tracking/vault] and global: [auth/tracking/vault].port
 	// use bind and port in the corresponding section

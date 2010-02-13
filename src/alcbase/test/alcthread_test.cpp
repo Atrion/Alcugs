@@ -66,8 +66,8 @@ private:
 
 int main(void) {
 	std::cout << std::endl << "Alcugs test suite - alcthread tests" <<std::endl;
+	tAlcMain alcMain(/*global logfiles*/false);
 	try {
-		alcInit();
 
 		lstd->log("Init...\n");
 		

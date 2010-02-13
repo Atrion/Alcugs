@@ -68,7 +68,6 @@ void parameters_usage() {
  -h: Show short help and end\n\
  -p 5000: select the listenning port\n\
  -c uru.conf: Set an alternate configuration file\n\
- -f : Force to start the servers including if parse errors occured\n\
  -guid XXXXXXXX: Set the server guid [game server only]\n\
  -name XXXXX: Set the age filename [game server only]\n\
  -log folder: Set the logging folder\n\
@@ -85,7 +84,7 @@ void parameters_usage() {
 int u_parse_arguments(int argc, char * argv[]) {
 	int i;
 	
-	tConfig * cfg=alcGetConfig();
+	tConfig * cfg=alcGetMain()->config();
 
 	for (i=1; i<argc; i++) {
 		if(!strcmp(argv[i],"-h")) {
@@ -101,8 +100,6 @@ int u_parse_arguments(int argc, char * argv[]) {
 			cfg->setVar("1","daemon","cmdline");
 		} else if(!strcmp(argv[i],"-nokill")) {
 			cfg->setVar("1","game.persistent","cmdline");
-		} else if(!strcmp(argv[i],"-f")) {
-			alcIngoreConfigParseErrors(1);
 		} else if(!strcmp(argv[i],"-v") && argc>i+1) {
 			i++;
 			cfg->setVar(argv[i],"verbose_level","cmdline");
@@ -144,21 +141,18 @@ int u_parse_arguments(int argc, char * argv[]) {
 }
 
 int main(int argc, char * argv[]) {
+	tAlcUnetMain alcMain(/*global logfiles*/true);
 	try {
-		//start Alcugs library
-		DBG(5,"alcInit...");
-		alcInit(true);
-		DBGM(5," done\n");
 		//Parse command line
 		DBG(5,"parsing cmd...");
 		if (u_parse_arguments(argc,argv)!=0) return -1;
 		DBGM(5," done\n");
 		DBG(5,"loading config...\n");
 		//Load and parse config files
-		if(alcUnetReloadConfig(true)<0) return -1;
+		alcMain.loadUnetConfig();
 		DBGM(5," done\n");
 		//stopped?
-		tConfig * cfg=alcGetConfig();
+		tConfig * cfg=alcMain.config();
 		tString var;
 		var=cfg->getVar("stop","global");
 		if(!var.isEmpty() && var.asByte()) {
@@ -221,34 +215,34 @@ int main(int argc, char * argv[]) {
 		
 		delete service;
 		lstd->print("The service has succesfully terminated\n");
-		lstd->print("Born:    %s\n",alcGetBornTime().str());
+		lstd->print("Born:    %s\n",alcGetMain()->bornTime().str());
 		tTime now;
 		now.setToNow();
 		lstd->print("Defunct: %s\n",now.str());
-		lstd->print("Uptime:  %s\n",alcGetUptime().str(0x01));
+		lstd->print("Uptime:  %s\n",alcGetMain()->upTime().str(0x01));
 		lstd->print("========================================\n");
 	} catch(txBase &t) {
 		t.dump(false); // don't dump to stderr, we would get the backtrace twice
 		lerr->log("FATAL Server died: Exception %s\n%s\n",t.what(),t.backtrace());
 		lstd->print("The service has been unexpectely killed!!!\n");
-		lstd->print("Born:    %s\n",alcGetBornTime().str());
+		lstd->print("Born:    %s\n",alcGetMain()->bornTime().str());
 		tTime now;
 		now.setToNow();
 		lstd->print("Defunct: %s\n",now.str());
-		lstd->print("Uptime:  %s\n",alcGetUptime().str(0x01));
+		lstd->print("Uptime:  %s\n",alcGetMain()->upTime().str(0x01));
 		lstd->print("========================================\n");
-		alcCrashAction();
+		alcMain.onCrash();
 		return -1;
 	} catch(...) {
 		lerr->log("FATAL Server died: Unknown Exception\n");
 		lstd->print("The service has been unexpectely killed!!!\n");
-		lstd->print("Born:    %s\n",alcGetBornTime().str());
+		lstd->print("Born:    %s\n",alcGetMain()->bornTime().str());
 		tTime now;
 		now.setToNow();
 		lstd->print("Defunct: %s\n",now.str());
-		lstd->print("Uptime:  %s\n",alcGetUptime().str(0x01));
+		lstd->print("Uptime:  %s\n",alcGetMain()->upTime().str(0x01));
 		lstd->print("========================================\n");
-		alcCrashAction();
+		alcMain.onCrash();
 		return -1;
 	}
 	return 0;

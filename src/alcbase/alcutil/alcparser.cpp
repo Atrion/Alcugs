@@ -341,9 +341,7 @@ void tXParser::store(const tString &str) {
 						key=path + "/" + val;
 					}
 				#endif
-				if(!alcParseConfig(key)) {
-					throw txParseError(_WHERE("Error attemting to read/parse the file %s found at line %i, column %i.\n",key.c_str(),t.getLineNum(),t.getColumnNum()));
-				}
+				alcGetMain()->loadConfig(key);
 				continue;
 			}
 			x=0; y=0;

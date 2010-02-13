@@ -122,7 +122,7 @@ namespace alc {
 	
 	void tTrackingBackend::load(void)
 	{
-		tConfig *cfg = alcGetConfig();
+		tConfig *cfg = alcGetMain()->config();
 		
 		tString var = cfg->getVar("tracking.log");
 		if (log == lnull && (var.isEmpty() || var.asByte())) { // logging enabled per default

@@ -41,49 +41,41 @@ extern const char * alcXID;
 
 namespace alc {
 
-// FIXME this definitely needs a global class... what about tAlcMain?
-
-/** 
-		\brief Start Alcugs library.
-		\param argc Number of args
-		\param argv args
-		\param shutup Enable logging subsystem?
-*/
-void alcInit(bool shutup=false);
-/** \brief Stop Alcugs library */
-void alcShutdown();
-/** \brief Call this after a fork() call */
-void alcOnFork();
-
-/** \brief Gets a pointer to the config object */
-tConfig * alcGetConfig();
-
-void alcDumpConfig();
-
-tTime alcGetUptime();
-tTime alcGetBornTime();
-
-void alcIngoreConfigParseErrors(bool val);
-
-/** \brief Parses the given configuration file */
-bool alcParseConfig(const tString & path);
-void alcReApplyConfig();
-
-/** \brief Interface for installing signals */
-void alcSignal(int signum,bool install=true);
-
-U32 alcGetMainThreadId();
-
-void alcCrashAction();
-
-class tSignalHandler {
+//! Global library management class - always create exactly one instance of this one!
+class tAlcMain {
 public:
-	virtual ~tSignalHandler() { }
-	virtual void handle_signal(int s);
-	virtual void install_handlers(bool install = true);
+	tAlcMain(bool globalLogFiles = false); //!< Run this directly in main(), not in a try...catch - it will deal with that itself
+	virtual ~tAlcMain(void);
+	
+	inline tTime bornTime(void) { return born; }
+	tTime upTime(void);
+	inline U32 threadId(void) { return mainThreadId; }
+	
+	inline tConfig *config(void) { return &cfg; }
+	void loadConfig(const tString & path); // FIXME: loadConfig should clear the old and apply the new config - but beware, the XParser also calls it!
+	void dumpConfig();
+	
+	// some global events
+	virtual void onApplyConfig(); // FIXME: should be protected
+	virtual void onCrash(void);
+	virtual void onForked();
+	virtual bool onSignal(int s); //!< returns whether the signal has been handled (true) or still needs handling (false)
+
+protected:
+	void installHandler(int signum, bool install = true);
+	
+	tConfig cfg;
+
+private:
+	void installBaseHandlers(bool install = true);
+	
+	U32 mainThreadId;
+	tTime born;
 };
 
-void alcInstallSignalHandler(tSignalHandler * t);
+//! Get global management class
+tAlcMain *alcGetMain(void);
+
 
 #if !defined(IN_ALC_LIBRARY) and defined(IN_ALC_PROGRAM)
 bool alcVerifyVersion() {
