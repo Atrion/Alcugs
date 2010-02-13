@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCMAIN_ID "$Id$"
 
-//#define _DBG_LEVEL_ 10
+#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
 
@@ -47,11 +47,11 @@
 namespace alc {
 
 static volatile bool alcInitialized=false;
-tConfig * alcGlobalConfig=NULL;
-bool alcIngoreParseErrors=false;
-tTime alcBorn;
-tSignalHandler * alcSignalHandler=NULL;
-U32 alcMainThreadId=0;
+static tConfig * alcGlobalConfig=NULL;
+static bool alcIngoreParseErrors=false;
+static tTime alcBorn;
+static tSignalHandler * alcSignalHandler=NULL;
+static U32 alcMainThreadId=0;
 
 
 U32 alcGetMainThreadId() {
@@ -80,7 +80,7 @@ void alcInit(bool shutup) {
 	delete alcGlobalConfig;
 	alcGlobalConfig = new tConfig();
 	tSignalHandler * h = new tSignalHandler();
-	DBG(7,"Installing default signal handler...");
+	DBG(7,"Installing default signal handler...\n");
 	alcInstallSignalHandler(h);
 	DBGM(7," done\n");
 	
@@ -123,34 +123,24 @@ void alcReApplyConfig() {
 	tString var;
 	tConfig * cfg=alcGetConfig();
 	var=cfg->getVar("verbose_level","global");
-	if(var.isNull()) {
+	if(var.isEmpty()) {
 		var="3";
 	}
 	alcLogSetLogLevel(var.asByte());
 	var=cfg->getVar("log_files_path","global");
-	if(var.isNull()) {
+	if(var.isEmpty()) {
 		var="log/";
 	}
 	alcLogSetLogPath(var);
 	var=cfg->getVar("log.n_rotate","global");
-	if(var.isNull()) {
+	if(var.isEmpty()) {
 		var="5";
 	}
 	alcLogSetFiles2Rotate(var.asByte());
 	var=cfg->getVar("log.enabled","global");
-	if(var.isNull()) {
+	if(var.isEmpty()) {
 		var="1";
 	}
-	alcLogOpenStdLogs(!var.asByte());
-	var=cfg->getVar("system.segfault_handler","global");
-	if(!var.isNull() && !var.asByte()) {
-		alcSignal(SIGSEGV,0);
-	} else {
-		alcSignal(SIGSEGV,1);
-	}
-	#ifndef __WIN32__
-	alcSignal(SIGCHLD,1);
-	#endif
 }
 
 void alcIngoreConfigParseErrors(bool val) {
@@ -201,8 +191,11 @@ bool alcParseConfig(const tString & path) {
 }
 
 void alcInstallSignalHandler(tSignalHandler * t) {
+	DBG(10, "Installung a new signal handler\n");
+	if (alcSignalHandler) alcSignalHandler->install_handlers(/*install*/false); // uninstall old handlers
 	delete alcSignalHandler;
 	alcSignalHandler = t;
+	if (alcSignalHandler) alcSignalHandler->install_handlers(); // install the new ones
 }
 
 void _alcHandleSignal(int s) {
@@ -212,7 +205,6 @@ void _alcHandleSignal(int s) {
 
 void alcSignal(int signum, bool install) {
 	DBG(5,"alcSignal()\n");
-	if(alcSignalHandler==NULL) return;
 	DBG(5,"%i - %i\n",signum,install);
 	if(install) {
 		signal(signum,_alcHandleSignal);
@@ -225,7 +217,7 @@ void alcCrashAction() {
 	tString var;
 	tConfig * cfg=alcGetConfig();
 	var=cfg->getVar("crash.action","global");
-	if(!var.isNull()) {
+	if(!var.isEmpty()) {
 		system(var.c_str());
 	}
 }
@@ -257,6 +249,14 @@ void tSignalHandler::handle_signal(int s) {
 	} catch(...) {
 		lerr->log("FATAL Unknown Exception\n");
 	}
+}
+void tSignalHandler::install_handlers(bool install)
+{
+	DBG(5,"(un)installing handlers\n");
+	alcSignal(SIGSEGV, install);
+#ifndef __WIN32__
+	alcSignal(SIGCHLD, install);
+#endif
 }
 
 } //end namespace

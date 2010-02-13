@@ -67,17 +67,17 @@ namespace alc {
 		alcStrncpy(website, var.c_str(), sizeof(website)-1);
 		
 		var = cfg->getVar("game.log");
-		if (var.isNull()) throw txBase(_WHERE("game log directory is not defined"));
+		if (var.isEmpty()) throw txBase(_WHERE("game log directory is not defined"));
 		alcStrncpy(gameLogPath, var.c_str(), sizeof(gameLogPath)-1);
 		
 		var = cfg->getVar("game.config");
-		if (var.isNull()) var = cfg->getVar("read_config", "cmdline");
+		if (var.isEmpty()) var = cfg->getVar("read_config", "cmdline");
 		alcStrncpy(gameConfig, var.c_str(), sizeof(gameConfig)-1);
 		
 		var = cfg->getVar("game.bin");
-		if (var.isNull()) {
+		if (var.isEmpty()) {
 			var = cfg->getVar("bin");
-			if (var.size() < 2) throw txBase(_WHERE("game bin is not defined"));
+			if (var.isEmpty()) throw txBase(_WHERE("game bin is not defined"));
 			alcStrncpy(gameBin, var.c_str(), sizeof(gameBin)-1);
 			strncat(gameBin, "/uru_game", sizeof(gameBin)-strlen(gameBin)-1);
 		}
@@ -85,7 +85,7 @@ namespace alc {
 			alcStrncpy(gameBin, var.c_str(), sizeof(gameBin)-1);
 		
 		var = cfg->getVar("load_on_demand");
-		loadOnDemand = (var.isNull() || var.asByte()); // on per default
+		loadOnDemand = (var.isEmpty() || var.asByte()); // on per default
 	}
 	
 	int tUnetLobbyServer::onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u)

@@ -51,7 +51,7 @@ public:
 	void setVal(const char * val,U16 x=0,U16 y=0);
 	void setVal(const tString & t,U16 x=0,U16 y=0);
 	const tString & getName() const;
-	const tString & getVal(U16 x=0,U16 y=0) const;
+	const tString & getVal(U16 x=0,U16 y=0,bool *found = NULL) const; //!< found tells you whether the value exists
 	U16 getRows() const { return y; }
 	U16 getCols() const { return x; }
 	void copy(const tConfigVal & t);
@@ -102,13 +102,21 @@ public:
 	tConfigKey * findKey(const char * where="global",bool create=false);
 	tConfigKey * findKey(const tString & where,bool create=false);
 	tConfigVal * findVar(const char * what,const char * where="global",bool create=false);
-	const tString & getVar(const char * what,const char * where="global",U16 x=0,U16 y=0);
+	const tString & getVar(const char * what,const char * where="global",U16 x=0,U16 y=0,bool *found = NULL); //!< found tells you whether the value exists
 	void setVar(const char * val,const char * what,const char * where="global",U16 x=0,U16 y=0);
 	void setVar(const tString &val,const tString &what,const tString &where,U16 x=0,U16 y=0);
 	void rewind();
 	tConfigKey * getNext();
 	void copyKey(const char * to,const char * from); //!< this will merge the key if the destination already exists
 	void copyValue(const char * tok,const char * fromk,const char * to="global",const char * from="global"); //!< this overwrites an already existing value - but only of the value which is copied exists!
+	
+	
+	inline const tString & getVar(const char * what,const char * where,bool *found) {//!< found tells you whether the value exists
+		return getVar(what, where, 0, 0, found);
+	}
+	inline const tString & getVar(const char * what,bool *found) {//!< found tells you whether the value exists
+		return getVar(what, "global", 0, 0, found);
+	}
 private:
 	U16 n,off;
 	tConfigKey ** values;

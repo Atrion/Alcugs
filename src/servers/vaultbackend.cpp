@@ -75,45 +75,46 @@ namespace alc {
 	void tVaultBackend::load(void)
 	{
 		tConfig *cfg = alcGetConfig();
+		bool found;
 		tString var = cfg->getVar("vault.log");
-		if (var.isNull() || var.asByte()) { // logging enabled per default
+		if (var.isEmpty() || var.asByte()) { // logging enabled per default
 			log = new tLog("vault.log", 4, 0);
 		}
 		var = cfg->getVar("vault.html.log");
-		if (var.isNull() || var.asByte()) { // logging enabled per default
+		if (var.isEmpty() || var.asByte()) { // logging enabled per default
 			logHtml = new tLog("vault.html", 2, DF_HTML);
 			var = cfg->getVar("vault.html.log.short");
-			shortHtml = (var.isNull() || var.asByte()); // per default, it *is* short
+			shortHtml = (var.isEmpty() || var.asByte()); // per default, it *is* short
 		}
 		
 		var = cfg->getVar("vault.maxplayers");
-		if (!var.isNull()) maxPlayers = var.asU32();
+		if (!var.isEmpty()) maxPlayers = var.asU32();
 		else maxPlayers = 5;
 		
-		var = cfg->getVar("vault.hood.name");
-		if (!var.isNull()) alcStrncpy(hoodName, var.c_str(), sizeof(hoodName)-1);
+		var = cfg->getVar("vault.hood.name", &found);
+		if (found) alcStrncpy(hoodName, var.c_str(), sizeof(hoodName)-1);
 		else alcStrncpy(hoodName, "Alcugs hood", sizeof(hoodName)-1);
-		var = cfg->getVar("vault.hood.desc");
-		if (!var.isNull()) alcStrncpy(hoodDesc, var.c_str(), sizeof(hoodDesc)-1);
+		var = cfg->getVar("vault.hood.desc", &found);
+		if (found) alcStrncpy(hoodDesc, var.c_str(), sizeof(hoodDesc)-1);
 		else alcStrncpy(hoodDesc, "This is a hood on an Alcugs server", sizeof(hoodDesc)-1);
 		
-		var = cfg->getVar("vault.wipe.msg.title");
-		if (!var.isNull()) alcStrncpy(welcomeMsgTitle, var.c_str(), sizeof(welcomeMsgTitle)-1);
+		var = cfg->getVar("vault.wipe.msg.title", &found);
+		if (found) alcStrncpy(welcomeMsgTitle, var.c_str(), sizeof(welcomeMsgTitle)-1);
 		else alcStrncpy(welcomeMsgTitle, defaultWelcomeMsgTitle, sizeof(welcomeMsgTitle)-1);
-		var = cfg->getVar("vault.wipe.msg");
-		if (!var.isNull()) alcStrncpy(welcomeMsgText, var.c_str(), sizeof(welcomeMsgText)-1);
+		var = cfg->getVar("vault.wipe.msg", &found);
+		if (found) alcStrncpy(welcomeMsgText, var.c_str(), sizeof(welcomeMsgText)-1);
 		else alcStrncpy(welcomeMsgText, defaultWelcomeMsgText, sizeof(welcomeMsgText)-1);
 		
 		var = cfg->getVar("vault.tmp.hacks.linkrules");
-		linkingRulesHack = (!var.isNull() && var.asByte()); // disabled per default
+		linkingRulesHack = (!var.isEmpty() && var.asByte()); // disabled per default
 		
 		// load the list of private ages
-		var = cfg->getVar("private_ages");
-		if (var.isNull()) alcStrncpy(privateAges, "AvatarCustomization,Personal,Nexus,BahroCave,BahroCave02,LiveBahroCaves,DniCityX2Finale,Cleft,Kadish,Gira,Garrison,Garden,Teledahn,Ercana,Minkata,Jalak", sizeof(privateAges)-1);
+		var = cfg->getVar("private_ages", &found);
+		if (!found) alcStrncpy(privateAges, "AvatarCustomization,Personal,Nexus,BahroCave,BahroCave02,LiveBahroCaves,DniCityX2Finale,Cleft,Kadish,Gira,Garrison,Garden,Teledahn,Ercana,Minkata,Jalak", sizeof(privateAges)-1);
 		else alcStrncpy(privateAges, var.c_str(), sizeof(privateAges)-1);
 		// load instance mode setting
 		var = cfg->getVar("instance_mode");
-		if (var.isNull()) instanceMode = 1;
+		if (var.isEmpty()) instanceMode = 1;
 		else instanceMode = var.asByte();
 		if (instanceMode != 0 && instanceMode != 1) throw txBase(_WHERE("instance_mode must be 0 or 1 but is %d", instanceMode));
 		

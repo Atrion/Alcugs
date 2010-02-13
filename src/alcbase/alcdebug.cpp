@@ -45,13 +45,13 @@ extern "C" {
 
 	typedef void(*_DBGorERR_pointer)(int a, char *msg, ...);
 
-	int g_dbglvl;
-	char *g_file;
+	static int g_dbglvl;
+	static char *g_file;
 	#if (_MSC_VER > 1200)
-		char *g_function; //only needed if MSVC Version > 6
+		static char *g_function; //only needed if MSVC Version > 6
 	#endif
-	int g_line;
-	int dbg_or_err; //0=>DBG, 1=>ERR
+	static int g_line;
+	static int dbg_or_err; //0=>DBG, 1=>ERR
 
 	#if (_MSC_VER <= 1200)
 		//MSVC Version 6 or lower (doesn't support __FUNCTION__)

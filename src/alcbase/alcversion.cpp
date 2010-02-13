@@ -39,9 +39,9 @@
 
 namespace alc {
 
-char tvalcVerTextShort[500];
-char tvalcVerText[1024];
-char tvalcSystemInfo[500];
+static char tvalcVerTextShort[500];
+static char tvalcVerText[1024];
+static char tvalcSystemInfo[500];
 
 static bool tvalcVerInit=false;
 

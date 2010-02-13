@@ -168,7 +168,7 @@ protected:
 	U32 max_flood_pkts;
 	U32 flood_check_sec;
 	
-	U32 receiveAhead; //!< time after which a message in the rcv buffer expires (in sec)
+	U32 receiveAhead; //!< number of future messages to receive and cache
 	
 	U32 ip_overhead;
 	//debugging stuff

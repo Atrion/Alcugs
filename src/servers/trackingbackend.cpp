@@ -125,28 +125,28 @@ namespace alc {
 		tConfig *cfg = alcGetConfig();
 		
 		tString var = cfg->getVar("tracking.log");
-		if (log == lnull && (var.isNull() || var.asByte())) { // logging enabled per default
+		if (log == lnull && (var.isEmpty() || var.asByte())) { // logging enabled per default
 			log = new tLog("tracking.log", 4, 0);
 			log->log("Tracking driver started (%s)\n\n", __U_TRACKINGBACKEND_ID);
 			log->flush();
 		}
 		
 		var = cfg->getVar("track.html");
-		statusHTML = (!var.isNull() && var.asByte());
+		statusHTML = (!var.isEmpty() && var.asByte());
 		var = cfg->getVar("track.html.path");
-		if (var.isNull()) statusHTML = false;
+		if (var.isEmpty()) statusHTML = false;
 		else alcStrncpy(statusHTMLFile, var.c_str(), sizeof(statusHTMLFile)-1);
 		
 		var = cfg->getVar("track.htmldbg");
-		statusHTMLdbg = (!var.isNull() && var.asByte());
+		statusHTMLdbg = (!var.isEmpty() && var.asByte());
 		var = cfg->getVar("track.htmldbg.path");
-		if (var.isNull()) statusHTMLdbg = false;
+		if (var.isEmpty()) statusHTMLdbg = false;
 		else alcStrncpy(statusHTMLdbgFile, var.c_str(), sizeof(statusHTMLdbgFile)-1);
 		
 		var = cfg->getVar("track.xml");
-		statusXML = (!var.isNull() && var.asByte());
+		statusXML = (!var.isEmpty() && var.asByte());
 		var = cfg->getVar("track.xml.path");
-		if (var.isNull()) statusXML = false;
+		if (var.isEmpty()) statusXML = false;
 		else alcStrncpy(statusXMLFile, var.c_str(), sizeof(statusXMLFile)-1);
 		statusFileUpdate = true;
 	}

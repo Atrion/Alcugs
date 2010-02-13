@@ -161,13 +161,13 @@ int main(int argc, char * argv[]) {
 		tConfig * cfg=alcGetConfig();
 		tString var;
 		var=cfg->getVar("stop","global");
-		if(!var.isNull() && var.asByte()) {
+		if(!var.isEmpty() && var.asByte()) {
 			lstd->log("INFO: Administratively disabled! Please read the Alcugs configuration file (usually uru.conf) carefully to solve this issue.\n");
 			return -1;
 		}
 		//daemon?
 		var=cfg->getVar("daemon","global");
-		if(var.isNull()) {
+		if(var.isEmpty()) {
 			var="0";
 			cfg->setVar("0","daemon","global");
 		}

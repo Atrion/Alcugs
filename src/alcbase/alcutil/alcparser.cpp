@@ -153,6 +153,7 @@ void tXParser::store(tString &t) {
 	DBG(4,"Store\n");
 	section="global";
 	U16 x,y;
+	bool found;
 
 	while(!t.eof()) {
 		key = t.getToken();
@@ -211,8 +212,13 @@ void tXParser::store(tString &t) {
 					if(val=="=") {
 						throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token '%s'. A valid variable value was expected.\n",t.getLineNum(),t.getColumnNum(),val.c_str()));
 					}
-					if (!override)
-						while (!cfg->getVar(key.c_str(),section.c_str(),x,y).isNull()) ++y; // if override is disabled, go to next row
+					if (!override) {
+						// find next empty row (overwriting is disabled)
+						do {
+							cfg->getVar(key.c_str(),section.c_str(),x,y,&found);
+							if (found) ++y;
+						} while (found);
+					}
 					if(val=="\n") {
 						val="";
 						cfg->setVar(val,key,section,x++,y);

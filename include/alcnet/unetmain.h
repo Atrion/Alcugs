@@ -49,8 +49,7 @@ public:
 	tUnetSignalHandler(tUnetBase * netcore);
 	virtual ~tUnetSignalHandler();
 	virtual void handle_signal(int s);
-	virtual void install_handlers();
-	virtual void unistall_handlers();
+	virtual void install_handlers(bool install = true);
 private:
 	int __state_running;
 	tUnetBase * net;

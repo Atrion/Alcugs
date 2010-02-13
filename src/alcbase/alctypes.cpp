@@ -326,7 +326,7 @@ void tMBuf::stream(tBBuf &b) const {
 void tMBuf::clear() {
 	off=0;
 	msize=0;
-	onmodify(/*clear*/true);
+	onmodify();
 }
 char tMBuf::compare(const tMBuf &t) const {
 	DBG(9,"tBBuf::compare()\n");
@@ -516,12 +516,10 @@ tString::tString(U32 size) :tMBuf(size) { DBG(9,"ctor 2\n"); init(); }
 tString::tString(tBBuf &k) :tMBuf(k) {
 	DBG(9,"copy zero\n");
 	init();
-	if(size()) null = false;
 }
 tString::tString(const tMBuf &k) :tMBuf(k) { 
 	DBG(9,"copy one\n");
 	init(); 
-	if(size()) null = false;
 }
 tString::tString(const tString &k) :tMBuf(k) { 
 	DBG(9,"copy two\n");
@@ -530,7 +528,6 @@ tString::tString(const tString &k) :tMBuf(k) {
 	l=k.l; 
 	c=k.c;
 	sep=k.sep;
-	null=k.null;
 }
 tString::~tString() {
 	delete shot;
@@ -542,14 +539,12 @@ void tString::init() {
 	sep='=';
 	shot=NULL;
 	cache_lower=NULL;
-	null = true;
 }
-void tString::onmodify(bool clear) {
+void tString::onmodify() {
 	DBG(7,"tString::onmodify()\n");
 	tMBuf::onmodify();
 	delete cache_lower;
 	cache_lower=NULL;
-	null = clear;
 }
 void tString::copy(const tString &t) {
 	DBG(9,"tString::copy()\n");
@@ -558,7 +553,6 @@ void tString::copy(const tString &t) {
 	l=t.l;
 	c=t.c;
 	sep=t.sep;
-	null=t.null;
 	delete cache_lower;
 	cache_lower=NULL;
 	delete shot;
@@ -596,7 +590,7 @@ SByte tString::compare(const char * str) const {
 }
 const char * tString::c_str() {
 	DBG(2,"tString::c_str()\n");
-	if(isNull() || msize == 0) {
+	if(msize == 0) {
 		DBG(2,"is null: %d\n", msize);
 		return "";
 	}
@@ -610,7 +604,7 @@ const char * tString::c_str() {
 }
 const char * tString::c_str() const {
 	DBG(2,"tString::c_str()\n");
-	if(isNull() || msize == 0) {
+	if(msize == 0) {
 		DBG(2,"is null: %d\n", msize);
 		return "";
 	}
