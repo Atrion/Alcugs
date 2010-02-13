@@ -122,7 +122,6 @@ public:
 	}
 private:
 	Byte listen;
-	tLog * out;
 	char * d_host;
 	U16 d_port;
 	Byte validation;
@@ -137,7 +136,6 @@ tUnetSimpleFileServer::tUnetSimpleFileServer(char * lhost,U16 lport,Byte listen)
 	this->setBindPort(lport);
 	this->setBindAddress(lhost);
 	this->listen=listen;
-	out=alcGetMain()->std();
 	setIdleTimer(1);
 	d_host=NULL;
 	d_port=5000;
@@ -294,14 +292,7 @@ int main(int argc,char * argv[]) {
 		alcMain.std()->print(alcVersionText());
 
 		netcore=new tUnetSimpleFileServer(l_hostname,l_port,listen);
-		
-		if(nlogs) {
-			netcore->setFlags(UNET_ELOG | UNET_FLOG);
-		} else {
-			netcore->unsetFlags(UNET_ELOG | UNET_FLOG);
-			netcore->setFlags(UNET_LQUIET);
-		}
-		if(loglevel!=0) netcore->setFlags(UNET_ELOG);
+		if (!nlogs) netcore->unsetFlags(UNET_ELOG);
 
 		while(listen==0 && !strcmp(hostname,"")) {
 			printf("\nHostname not set, please enter destination host: ");

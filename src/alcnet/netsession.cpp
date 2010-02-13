@@ -518,7 +518,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 		// if it is ok to parse the packet, do that
 		else if (ret == 0) {
 			//flood control
-			if((msg->tf & UNetAckReq) && (msg->frn==0) && (net->flags & UNET_NOFLOOD)) {
+			if((msg->tf & UNetAckReq) && (msg->frn==0) && (net->flags & UNET_FLOODCTR)) {
 				if(net->ntime.seconds - flood_last_check > net->flood_check_sec) {
 					flood_last_check=net->ntime.seconds;
 					flood_npkts=0;

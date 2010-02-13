@@ -42,7 +42,7 @@ namespace alc {
 --------------------------------*/
 
 static const char * tvalcLicenseTextShort ="\n\
-    Alcugs Server, Copyright (C) 2004-2009 The Alcugs Project Server Team\n\
+    Alcugs Server, Copyright (C) 2004-2010 The Alcugs Project Server Team\n\
     This program comes with ABSOLUTELY NO WARRANTY;\n\
     This is free software, and you are welcome to redistribute it\n\
     under certain conditions; for details see the files: COPYING\n\
@@ -52,7 +52,7 @@ static const char * tvalcLicenseTextShort ="\n\
 static const char * tvalcLicenseText = "\n\
     Alcugs Server\n\
 \n\
-    Copyright (C) 2004-2005  The Alcugs Project Server Team\n\
+    Copyright (C) 2004-2010  The Alcugs Project Server Team\n\
     See the file AUTHORS for more info about the team\n\
 \n\
     This program is free software; you can redistribute it and/or modify\n\

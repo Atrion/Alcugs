@@ -196,42 +196,34 @@ void tUnet::neterror(const char * msg) {
 }
 
 void tUnet::openLogfiles() {
-	//open unet log files (FIXME: get rid of the two net-log-files and most of the flags)
-	if(this->flags & UNET_ELOG) {
-		if(log != alcGetMain()->std()) delete log;
-		if(this->flags & UNET_LQUIET) {
-			if(this->flags & UNET_FLOG) {
-				this->log = new tLog("urunet.log");
-			} else {
-				this->log = new tLog;
-			}
-		} else {
-			this->log=alcGetMain()->std();
-		}
-		
-		if(err != alcGetMain()->err()) delete err;
-		if(this->flags & UNET_LQUIET) {
-			if(this->flags & UNET_FLOG) {
-				this->err = new tLog("uneterr.log");
-			} else {
-				this->err = new tLog;
-			}
-		} else {
-			this->err=alcGetMain()->err();
-		}
+	//open unet log files
+	bool elog = this->flags & UNET_ELOG;
+	
+	if (log != alcGetMain()->std()) delete log;
+	if (elog && !(this->flags & UNET_DSTDLOG)) {
+		log = alcGetMain()->std();
+	} else {
+		log = new tLog;
+	}
+	
+	if (err != alcGetMain()->err()) delete err;
+	if (elog && !(this->flags & UNET_DERRLOG)) {
+		err = alcGetMain()->err();
+	} else {
+		err = new tLog;
+	}
 
-		if((this->flags & UNET_FLOG) && (this->flags & UNET_ACKLOG)) {
-			this->ack->open("ack.html",DF_HTML);
-		} else {
-			this->ack->close();
-		}
-		
+	if(elog && (this->flags & UNET_EACKLOG)) {
+		this->ack->open("ack.html",DF_HTML);
+	} else {
+		this->ack->close();
+	}
+	
 
-		if((this->flags & UNET_FLOG) && !(this->flags & UNET_DLSEC)) {
-			this->sec->open("access.log");
-		} else {
-			this->sec->close();
-		}
+	if(elog && !(this->flags & UNET_DSECLOG)) {
+		this->sec->open("access.log");
+	} else {
+		this->sec->close();
 	}
 }
 

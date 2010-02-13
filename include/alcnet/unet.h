@@ -68,12 +68,12 @@ typedef U16 tUnetFlags;
 #define UNET_NBLOCK   0x0001 /* non-blocking socket */
 #define UNET_ELOG     0x0002 /* enable netcore logging */
 #define UNET_ECRC     0x0004 /* crc check enabled */
-#define UNET_NOFLOOD  0x0010 /* enable flooding control */
+#define UNET_FLOODCTR 0x0010 /* enable flooding control */
 #define UNET_BCAST    0x0020 /* enable broadcast */
-#define UNET_FLOG     0x0040 /* enable file based logging, (also, UNET_ELOG must be present) */
-#define UNET_ACKLOG   0x0100 /* Enable ack trace */
-#define UNET_DLSEC    0x0800 /* Disable sec log */
-#define UNET_LQUIET   0x1000 /* Disable dumping to the console */
+#define UNET_DSTDLOG  0x0040 /* Disable standard logging (even if ELOG is set) */
+#define UNET_EACKLOG  0x0100 /* Enable ack trace (ELOG must be set, too) */
+#define UNET_DSECLOG  0x0800 /* Disable sec log (even if ELOG is set) */
+#define UNET_DERRLOG  0x1000 /* Disable error logging (even if ELOG is set) */
 
 //#define UNET_AUTOSP   0x0008 /* auto speed correction */
 //#define UNET_NETAUTH  0x0080 /* Enable authentication through servers */
@@ -82,7 +82,7 @@ typedef U16 tUnetFlags;
 //#define UNET_DLUNE    0x0400 /* Disable une log */
 //#define UNET_NOCONN   0x2000 /* Non connected server */
 
-#define UNET_DEFAULT_FLAGS (UNET_NBLOCK | UNET_ELOG | UNET_ECRC | UNET_NOFLOOD | UNET_FLOG)
+#define UNET_DEFAULT_FLAGS (UNET_NBLOCK | UNET_ELOG | UNET_ECRC | UNET_FLOODCTR)
 
 
 class tUnet {
