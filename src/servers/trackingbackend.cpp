@@ -163,7 +163,7 @@ namespace alc {
 			throw txProtocolError(_WHERE("No age GUID set"));
 		// copy data to player
 		player->status = RInRoute;
-		alcAscii2Hex(player->awaiting_guid, findServer.serverGuid.c_str(), 8);
+		alcGetHexGuid(player->awaiting_guid, findServer.serverGuid);
 		alcStrncpy(player->awaiting_age, findServer.age.c_str(), sizeof(player->awaiting_age)-1);
 		player->waiting = true;
 		// search for the game server the player needs
@@ -290,7 +290,7 @@ namespace alc {
 	{
 		statusFileUpdate = true;
 		Byte serverGuid[8];
-		alcAscii2Hex(serverGuid, setGuid.serverGuid.c_str(), 8);
+		alcGetHexGuid(serverGuid, setGuid.serverGuid);
 		// search if another game server for that guid is already running. in that case, ignore this one
 		tNetSession *server;
 		while ((server = servers->getNext())) {

@@ -46,9 +46,9 @@ namespace alc {
 		tAuthBackend(void);
 		~tAuthBackend(void);
 		
-		void calculateHash(const char *login, const char *passwd, const char *challenge, char *hash); //!< calculate the hash needed to check the password
-		int authenticatePlayer(tNetSession *u, const char *login, const char *challenge, const char *hash, Byte release, const char *ip, char *passwd,
-			char *guid, Byte *accessLevel); //!< authenticates the player
+		tString calculateHash(const char *login, const char *passwd, const char *challenge); //!< calculate the hash needed to check the password
+		int authenticatePlayer(tNetSession *u, const char *login, const char *challenge, const char *hash, Byte release, const char *ip, tString *passwd,
+			Byte *hexUid, Byte *accessLevel); //!< authenticates the player
 		void checkTimeout(void) { if (sql) sql->checkTimeout(); }
 	private:
 		U16 minAccess, disTime, maxAttempts;
@@ -56,7 +56,7 @@ namespace alc {
 		tLog log;
 		
 		bool prepare(void); //!< prepares the connection \returns true when the connection is established, false when there was an error (the sql object will be deleted in that case)
-		int queryPlayer(const char *login, char *passwd, char *guid, U32 *attempts, U32 *lastAttempt);
+		int queryPlayer(const char *login, tString *passwd, tString *guid, U32 *attempts, U32 *lastAttempt);
 		void updatePlayer(const char *guid, const char *ip, U32 attempts, Byte updateStamps); // updateStamps can be: 0 = don't update any stamp, 1 = update only last attempt, 2 = update last attempt and last login
 	};
 	

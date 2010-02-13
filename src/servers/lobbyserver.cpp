@@ -243,25 +243,23 @@ namespace alc {
 					// BUT we have to close each file and socket as otherwise they will stay opened till the game server exits
 					
 					// get the arguments for starting the server
-					char gameName[128], gameGuid[17], gameLog[512], gamePort[16];
-					alcStrncpy(gameName, forkServer.age.c_str(), sizeof(gameName)-1);
-					alcStrFilter(gameName);
-					alcStrncpy(gameGuid, forkServer.serverGuid.c_str(), sizeof(gameGuid)-1);
-					alcStrFilter(gameGuid);
-					snprintf(gameLog, sizeof(gameLog), "%s/%s/%s/", gameLogPath, gameName, gameGuid);
-					snprintf(gamePort, sizeof(gamePort), "%d", forkServer.forkPort);
+					tString gameName = alcStrFiltered(forkServer.age);
+					tString gameGuid = alcStrFiltered(forkServer.serverGuid);
+					tString gameLog, gamePort;
+					gameLog.printf("%s/%s/%s/", gameLogPath, gameName.c_str(), gameGuid.c_str());
+					gamePort.printf("%d", forkServer.forkPort);
 					
 					alcUnetGetMain()->onForked(); // will close sockets and logs
 					
 					// if the server was put in daemon mode, th lobby would get the SIGCHILD immediately after starting, so it'd
 					// be useless for debugging
-					execlp(gameBin, gameBin,"-p",gamePort,"-guid",gameGuid,"-name",gameName,
-							"-log",gameLog,"-c",gameConfig,"-v","0",NULL);
+					execlp(gameBin, gameBin,"-p",gamePort.c_str(),"-guid",gameGuid.c_str(),"-name",gameName.c_str(),
+							"-log",gameLog.c_str(),"-c",gameConfig,"-v","0",NULL);
 					
 					// if we come here, there was an error in the execlp call (but we're still in the game server process!)
 					// our old logs are closed, but opening a new one should be ok
 					tLog *log = new tLog("fork_err.log", DF_APPEND);
-					log->log("There was an error starting the game server %s (GUID: %s, Port: %s)\n", gameBin, gamePort, gamePort);
+					log->log("There was an error starting the game server %s (GUID: %s, Port: %s)\n", gameBin, gameGuid.c_str(), gamePort.c_str());
 					delete log; // make sure its properly closed and synced
 					exit(-1); // exit the game server process
 				}

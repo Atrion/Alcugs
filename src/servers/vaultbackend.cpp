@@ -293,7 +293,7 @@ namespace alc {
 			//     solution for some people.
 		if (status.age == "Ahnonay" || status.age == "Neighborhood02" || status.age == "Myst") {
 			Byte guid[8];
-			alcAscii2Hex(guid, status.serverGuid.c_str(), 8);
+			alcGetHexGuid(guid, status.serverGuid);
 			tvAgeInfoStruct ageInfo(status.age.c_str(), guid);
 			tvSpawnPoint spawnPoint("Default", "LinkInPointDefault");
 			log.log("Linking rule hack: adding link to %s to player %d\n", ageInfo.filename.c_str(), status.ki);

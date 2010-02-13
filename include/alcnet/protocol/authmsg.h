@@ -44,7 +44,7 @@ namespace alc {
 	class tmCustomAuthAsk : public tmMsgBase {
 	public:
 		tmCustomAuthAsk(tNetSession *u);
-		tmCustomAuthAsk(tNetSession *u, U32 x, U32 sid, U32 ip, const char *login, const Byte *challenge, const Byte *hash, Byte release);
+		tmCustomAuthAsk(tNetSession *u, U32 x, U32 sid, U32 ip, tString login, const Byte *challenge, const Byte *hash, Byte release);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual tString str() const;
@@ -58,7 +58,7 @@ namespace alc {
 	class tmCustomAuthResponse : public tmMsgBase {
 	public:
 		tmCustomAuthResponse(tNetSession *u);
-		tmCustomAuthResponse(tNetSession *u, tmCustomAuthAsk &authAsk, const Byte *uid, const char *passwd, Byte result, Byte accessLevel);
+		tmCustomAuthResponse(tNetSession *u, tmCustomAuthAsk &authAsk, const Byte *uid, tString passwd, Byte result, Byte accessLevel);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual tString str() const;
