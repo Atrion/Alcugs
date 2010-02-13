@@ -185,7 +185,7 @@ tString tSQL::escape(const Byte *data, int size)
 	char *out = new char[2*size+1];
 	mysql_real_escape_string(connection, out, reinterpret_cast<const char *>(data), size);
 	tString res(out);
-	delete out;
+	delete []out;
 	return res;
 }
 

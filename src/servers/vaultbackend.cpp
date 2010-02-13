@@ -70,7 +70,7 @@ namespace alc {
 			shortHtml = (var.isEmpty() || var.asByte()); // per default, it *is* short
 		}
 		else
-			logHtml.close();
+			logHtml.open(DF_HTML);
 		
 		var = cfg->getVar("vault.maxplayers");
 		if (!var.isEmpty()) maxPlayers = var.asU32();

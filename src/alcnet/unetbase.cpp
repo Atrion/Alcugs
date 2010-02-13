@@ -213,31 +213,31 @@ void tUnetBase::stop(SByte timeout) {
 	running=false;
 }
 
-void tUnetBase::terminate(tNetSession *u, Byte reason, bool gotLeave)
+void tUnetBase::terminate(tNetSession *u, Byte reason, bool gotEndMsg)
 {
-	bool destroy = gotLeave || u->isTerminated();
+	bool wasTerminated = u->isTerminated(); // if the client was already terminated, go ahead and kill it quickly
 	if (!reason) reason = u->isClient() ? RKickedOff : RQuitting;
-	if (!destroy) { // don't send message again if we already sent it
-		if (u->isClient()) {
+	if (!wasTerminated && !gotEndMsg) { // don't send message again if we already sent it, or if we got the message from the other side
+		if (u->isClient() || u->getPeerType() == KClient) { // a KClient will ignore us sending a leave, so send a terminated even if the roles changed
 			tmTerminated terminated(u,u->ki,reason);
 			send(terminated);
-			/* We sent a NetMsgTerminated, the peer should answer with a NetMsgLeave which will correctly end the connection. */
 		}
 		else {
 			tmLeave leave(u,u->ki,reason);
 			send(leave);
-			/* We left, nothing to be done for us anymore */
-			destroy = true; // destroy this session ASAP
 		}
+		// Now taht we sent that message, the other side must ack it, then tNetSession will set the timeout to 0
 	}
 	
-	if (!u->isTerminated()) // don't trigger the event twice
+	if (!wasTerminated) // don't trigger the event twice
 		onConnectionClosing(u, reason);
 	
-	if (destroy) { // if the session should be destroyed, do that ASAP
+	if (wasTerminated) { // see above, we already sent the message, so don't wait any longer
+		log->log("%s This connection is already terminated, don't wait any longer", u->str().c_str());
 		u->terminate(0/*seconds*/);
-	} else { // otherwise, give the session one second to send remaining messages
-		u->terminate(1/*second*/);
+	} else { // otherwise, wait some time to send/receive the ack
+		u->terminate(2/*second*/);
+		// In the case that the leave is re-sent because the ack was not received, we are in trouble... the other side will see that as a new connection. tNetSession halves the timeout when the ack is sent, if we set it to 2, there is another second in which re-sends are accepted. */
 	}
 }
 
@@ -395,14 +395,19 @@ void tUnetBase::run() {
 int tUnetBase::parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown)
 {
 	switch(msg->cmd) {
+		/* I am not sure what the correct "end of connection" procedure is, but here are some observations:
+		- When the client leaves, it sends a NetMsgLeaves and expects an ack
+		- When I send the client a NetMsgTerminated, it sends an ack back and goes away 
+		- When I send the client a NetMsgLeave, it acks and ignores the message
+		So I conclude that the two are equal, but that the server must send a terminate, and the client a leave. Alcugs will treat both of them equally. */
 		case NetMsgLeave:
 		{
 			// accept it even if it is NOT a client - in that case, the peer obviously thinks it is a client, so lets respect its wish, it doesn't harm
 			tmLeave msgleave(u);
 			msg->data.get(msgleave);
 			log->log("<RCV> [%d] %s\n",msg->sn,msgleave.str().c_str());
-			/* The peer left, so there is nothing we have to do anymore, just remove it */
-			terminate(u, msgleave.reason, /*gotLeave*/true); // this will delete the session ASAP
+			/* Ack the current message adn terminate the connection */
+			terminate(u, msgleave.reason, /*gotEndMsg*/true); // this will delete the session ASAP
 			return 1;
 		}
 		case NetMsgTerminated:
@@ -411,8 +416,8 @@ int tUnetBase::parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown)
 			tmTerminated msgterminated(u);
 			msg->data.get(msgterminated);
 			log->log("<RCV> [%d] %s\n",msg->sn,msgterminated.str().c_str());
-			/* The peer wants to terminate, so tell him we are ready to leave */
-			terminate(u);
+			/* Ack the current message adn terminate the connection */
+			terminate(u, msgterminated.reason, /*gotEndMsg*/true);
 			return 1;
 		}
 		case NetMsgAlive:

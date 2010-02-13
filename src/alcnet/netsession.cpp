@@ -817,6 +817,7 @@ void tNetSession::doWork()
 	ackUpdate(); //generate ack messages (i.e. put them from the ackq to the sndq)
 
 	idle = (ackq->isEmpty() && sndq->isEmpty());
+	if (idle && terminated) conn_timeout /= 2; // we are done, completely done
 	
 	// for terminating session, make sure they are cleaned up on time
 	if (terminated)

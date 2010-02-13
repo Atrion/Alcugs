@@ -40,10 +40,6 @@ No sockets please
 
 #include "alcnet.h"
 
-namespace md5 {
-#include "alcutil/md5.h"
-}
-
 #include <alcdebug.h>
 
 namespace alc {
