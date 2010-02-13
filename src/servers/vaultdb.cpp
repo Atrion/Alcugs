@@ -38,10 +38,10 @@
 
 namespace alc {
 
-	const char *vaultTable = "vault";
-	const char *refVaultTable = "ref_vault";
+	static const char *vaultTable = "vault";
+	static const char *refVaultTable = "ref_vault";
 	
-	const char *vault_table_init = "\
+	static const char *vault_table_init = "\
 	CREATE TABLE `%s` (\
 		`idx` int NOT NULL auto_increment ,\
 		`type` tinyint unsigned NOT NULL default 0,\
@@ -87,7 +87,7 @@ namespace alc {
 	// observation shows that varchar is not enough for the text fields - and setting "NOT NULL" on it makes it mandatory for inserts
 	// "blob_1" has a length field of 4 byte, with "longblob" we can be sure the data will always fit
 	
-	const char *ref_vault_table_init = "\
+	static const char *ref_vault_table_init = "\
 	CREATE TABLE `%s` (\
 		`id1` int NOT NULL default 0,\
 		`id2` int NOT NULL default 0,\
@@ -100,7 +100,7 @@ namespace alc {
 		KEY `id3` (`id3`)\
 	) TYPE=MyISAM;";
 	
-	const int vaultVersion=4; // only change on major vault format changes, and be sure that there is a migration (see tVaultDB::prepare)
+	static const int vaultVersion=4; // only change on major vault format changes, and be sure that there is a migration (see tVaultDB::prepare)
 		/* Version history:
 			0 -> old very old format
 			1 -> old unet3 format

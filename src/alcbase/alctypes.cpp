@@ -245,21 +245,25 @@ tMBuf::tMBuf(const tMBuf &t) {
 }
 tMBuf::~tMBuf() {
 	DBG(9,"~tMBuf()\n");
-	if(buf!=NULL) {
-		buf->dec();
-		if(buf->getRefs()<=0) {
-			delete buf;
-		}
+	clear();
+}
+void tMBuf::getUniqueBuffer(U32 newsize) {
+	DBG(6, "cur size: %d, new size: %d\n", msize, newsize);
+	if (buf != NULL && buf->getRefs() == 1) { // check if the buffer is large enough
+		if (buf->size() < newsize) buf->resize(newsize+1024);
+		return;
 	}
+	// make unique copy of us
+	tRefBuf *newbuf = new tRefBuf(std::max(msize,newsize+1024)); // don't shrink buffer
+	if (buf) { // copy old buffer if there is one
+		memcpy(newbuf->buf(),buf->buf(),msize);
+		buf->dec(); // decrement old buffer's reference
+	}
+	buf = newbuf; // and use the new one
 }
 void tMBuf::copy(const tMBuf &t) {
 	DBG(9,"tMBuf::copy()\n");
-	if(buf!=NULL) {
-		buf->dec();
-		if(buf->getRefs()<=0) {
-			delete buf;
-		}
-	}
+	clear();
 	buf=t.buf;
 	if(buf!=NULL) buf->inc();
 	off=t.off;
@@ -283,32 +287,18 @@ Byte tMBuf::getAt(U32 pos) const {
 }
 void tMBuf::setAt(U32 pos,const Byte what) {
 	if(pos >= msize) throw txOutOfRange(_WHERE("OutOfRange %i>%i",pos,msize));
+	getUniqueBuffer(msize);
 	*(buf->buf()+pos)=what;
-	onmodify();
 }
 void tMBuf::write(const Byte * val,U32 n) {
-	if(val==NULL) return;
-	if(buf==NULL) buf = new tRefBuf(1024 + n);
-	else if(buf->getRefs()>1) {
-		buf->dec();
-		Byte * oldbuf=buf->buf();
-		U32 xsize=buf->size();
-		buf = new tRefBuf((xsize)+1024+n);
-		memcpy(buf->buf(),oldbuf,xsize);
-	}
-	U32 oldoff=off;
+	if(n==0) return;
+	getUniqueBuffer(off+n); // the buffer will never be shrunken
+	memcpy(buf->buf()+off,val,n);
 	off+=n;
-	U32 bsize=buf->size();
-	if(off>bsize) {
-		U32 newsize = ((off-bsize)>1024 ? off+1024 : bsize+1024);
-		buf->resize(newsize);
-	}
-	memcpy(buf->buf()+oldoff,val,n);
 	if(off>msize) msize=off;
-	onmodify();
 }
 const Byte * tMBuf::read(U32 n) {
-	U32 pos=off;
+	U32 oldpos=off;
 	if(n==0) n=msize-off;
 	off+=n;
 	if(off>msize || buf==NULL) { 
@@ -317,7 +307,7 @@ const Byte * tMBuf::read(U32 n) {
 		throw txOutOfRange(_WHERE("OutOfRange %i>%i",off+n,msize)); 
 		//return NULL;
 	}
-	return buf->buf()+pos;
+	return buf->buf()+oldpos;
 }
 void tMBuf::stream(tBBuf &b) const {
 	if (buf==NULL) return;
@@ -326,7 +316,13 @@ void tMBuf::stream(tBBuf &b) const {
 void tMBuf::clear() {
 	off=0;
 	msize=0;
-	onmodify();
+	if(buf!=NULL) {
+		buf->dec();
+		if(buf->getRefs()<=0) {
+			delete buf;
+		}
+		buf = NULL;
+	}
 }
 char tMBuf::compare(const tMBuf &t) const {
 	DBG(9,"tBBuf::compare()\n");
@@ -472,8 +468,8 @@ void tZBuf::compress() {
 	this->buf = new tRefBuf(comp_size);
 	int ret=zlib::compress(this->buf->buf(),&comp_size,aux->buf(),msize);
 	if(ret!=0) throw txBase(_WHERE("Something terrible happenened compressing the buffer"));
-	msize=comp_size;
-	if(aux->getRefs()<1) delete aux;
+	if(aux->getRefs()<1) delete aux; // we no longer need the old buffer
+	msize=comp_size; // use new size
 	this->buf->resize(msize);
 	off=0;
 }
@@ -538,12 +534,6 @@ void tString::init() {
 	l=c=0;
 	sep='=';
 	shot=NULL;
-	cache_lower=NULL;
-}
-void tString::onmodify() {
-	DBG(7,"tString::onmodify()\n");
-	tMBuf::onmodify();
-	delete cache_lower;
 	cache_lower=NULL;
 }
 void tString::copy(const tString &t) {
