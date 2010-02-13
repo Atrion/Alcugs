@@ -71,8 +71,8 @@ tAlcMain::tAlcMain(void)
 		alcLogInit();
 		
 		// open logfiles
-		stdLog = new tLog(NULL,2,DF_STDOUT);
-		errLog = new tLog(NULL,2,DF_STDERR);
+		stdLog = new tLog(NULL,DF_STDOUT);
+		errLog = new tLog(NULL,DF_STDERR);
 		
 		//init entropy
 		srandom(alcGetMicroseconds() + (alcGetTime() % 10000));
@@ -106,7 +106,7 @@ void tAlcMain::onApplyConfig() {
 	if(var.isEmpty()) {
 		var="3";
 	}
-	alcLogSetLogLevel(var.asByte());
+	alcLogSetLogVerboseLevel(var.asByte());
 	
 	var=cfg.getVar("log_files_path","global");
 	if(var.isEmpty()) {
@@ -125,12 +125,12 @@ void tAlcMain::onApplyConfig() {
 		var="1";
 	}
 	if (var.asByte()) {
-		stdLog->open("alcugs.log",2,DF_STDOUT);
-		errLog->open("error.log",2,DF_STDERR);
+		stdLog->open("alcugs.log",DF_STDOUT);
+		errLog->open("error.log",DF_STDERR);
 	}
 	else {
-		stdLog->open(NULL,2,DF_STDOUT);
-		errLog->open(NULL,2,DF_STDERR);
+		stdLog->open(NULL,DF_STDOUT);
+		errLog->open(NULL,DF_STDERR);
 	}
 }
 

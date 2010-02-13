@@ -261,7 +261,7 @@ namespace alc {
 					// if we come here, there was an error in the execlp call (but we're still in the game server process!)
 					// weve already shut down the logs, so we have to get them up again
 					alcLogInit();
-					tLog *log = new tLog("fork_err.log", 2, DF_APPEND);
+					tLog *log = new tLog("fork_err.log", DF_APPEND);
 					log->log("There was an error starting the game server %s (GUID: %s, Port: %s)\n", gameBin, gamePort, gamePort);
 					delete log;
 					exit(-1); // exit the game server process

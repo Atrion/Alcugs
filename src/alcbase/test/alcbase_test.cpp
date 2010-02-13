@@ -45,7 +45,6 @@ void alcdebug_tests() {
 	FILE * f;
 	f=fopen("this_file_does_not_exists_","rb");
 	assert(f==NULL);
-	ERR(0,"testing dbg ERR call\n");
 	//_DIE("testing die");
 }
 
@@ -1063,14 +1062,12 @@ void log_test() {
 
 	DBG(5,"attempting to open the log file\n");
 
-	log1.open("test",5,0);
-	system.open("sys",5,DF_SYSLOG);
+	log1.open("test");
+	system.open("sys");
 
 	//tvLogConfig->syslog_enabled=0x01;
 
 	system.log("Hello world\n");
-	system.logl(10,"This line will be not printed\n");
-	system.logl(1,"This one yes\n");
 
 	DBG(5,"attempting to print into the log file\n");
 
@@ -1083,7 +1080,7 @@ void log_test() {
 
 	log1.rotate(false);
 
-	log2.open("maika/sordida",4,DF_HTML);
+	log2.open("maika",DF_HTML);
 
 	log1.print("I'm going to continue writing here\n");
 

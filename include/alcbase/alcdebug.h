@@ -30,7 +30,6 @@
 	_WHERE(msg) returns filename,function,line and a message
 	DBG(level,args...) debug message
 	DBGM(level,args...) debug message (without line number)
-	ERR(level,args...) error message, also calls perror()
 	_DIE(msg) shows a message, and aborts
 
 */
@@ -73,10 +72,10 @@ typedef void(*_DBGorERR_pointer)(int a, char *msg, ...);
 
 
 	_DBGorERR_pointer _DBG_before(int dbglvl, char *file, int line);
-	_DBGorERR_pointer _ERR_before(int dbglvl, char *file, int line);
+	//_DBGorERR_pointer _ERR_before(int dbglvl, char *file, int line);
 
 	#define DBG _DBG_before(_DBG_LEVEL_,__FILE__,__LINE__) 
-	#define ERR _ERR_before(_DBG_LEVEL_,__FILE__,__LINE__) 
+	//#define ERR _ERR_before(_DBG_LEVEL_,__FILE__,__LINE__) 
 
 	#define _WHERE(a) __dbg_where(a,__FILE__,__LINE__)
 
@@ -86,10 +85,10 @@ typedef void(*_DBGorERR_pointer)(int a, char *msg, ...);
 	//MSVC Version > 6 (should support __FUNCTION__)
 
 	_DBGorERR_pointer _DBG_before(int dbglvl, char *file, char *function, int line);
-	_DBGorERR_pointer _ERR_before(int dbglvl, char *file, char *function, int line);
+	//_DBGorERR_pointer _ERR_before(int dbglvl, char *file, char *function, int line);
 
 	#define DBG _DBG_before(_DBG_LEVEL_,__FILE__,__FUNCTION__,__LINE__) 
-	#define ERR _ERR_before(_DBG_LEVEL_,__FILE__,__FUNCTION__,__LINE__) 
+	//#define ERR _ERR_before(_DBG_LEVEL_,__FILE__,__FUNCTION__,__LINE__) 
 
 	#define _WHERE(a) __dbg_where(a,__FILE__,__FUNCTION__,__LINE__)
 
@@ -105,8 +104,8 @@ fprintf(stderr, __VA_ARGS__); fflush(stderr); }
 
 #define DBGM(a,...)  if((a)<=_DBG_LEVEL_) { fprintf(stderr, __VA_ARGS__); fflush(stderr); }
 
-#define ERR(a,...) if((a)<=_DBG_LEVEL_) { fprintf(stderr,"DBG%i:%d:%s:%s:%i> ",a,alcGetSelfThreadId(),__FILE__,__FUNCTION__,__LINE__);\
-fprintf(stderr, __VA_ARGS__); perror(""); fflush(stderr); }
+/*#define ERR(a,...) if((a)<=_DBG_LEVEL_) { fprintf(stderr,"DBG%i:%d:%s:%s:%i> ",a,alcGetSelfThreadId(),__FILE__,__FUNCTION__,__LINE__);\
+fprintf(stderr, __VA_ARGS__); perror(""); fflush(stderr); } */
 
 #define _WHERE(...) __dbg_where(__FILE__,__FUNCTION__,__LINE__,__VA_ARGS__)
 
@@ -134,11 +133,11 @@ char * __dbg_where(const char * b,const char * c,int d,const char * a,...);
 #ifndef __MSVC__
 #define DBG(a,...)
 #define DBGM(a,...)
-#define ERR(a,...)
+//#define ERR(a,...)
 #else //__MSVC__
 #define DBG()
 #define DBGM()
-#define ERR()
+//#define ERR()
 #ifdef _MSC_VER
 #pragma warning(disable:4002) //disable warning "too many actual parameters for macro 'identifier'"
 #endif //_MSC_VER
