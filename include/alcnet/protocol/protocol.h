@@ -48,6 +48,7 @@ void alcDecodePacket(Byte* buf, int n);
 
 int alcUruValidatePacket(Byte * buf,int n,Byte * validation,bool authed=false,const char * phash=NULL);
 U32 alcUruChecksum(const Byte* buf, int size, int alg, const char * aux_hash);
+
 U16 alcFixUUNetMsgCommand(U16 cmd, const tNetSession *u);
 
 const char * alcUnetGetRelease(Byte rel);

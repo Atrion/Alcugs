@@ -42,13 +42,13 @@ namespace alc {
 
 ////DEFINITIONS
 
-#ifdef ENABLE_THREADS
+/*#ifdef ENABLE_THREADS
 #define alcBeginCriticalSection(a) { static tMutex a; a.lock(); }
 #define alcEndCriticalSection(a)   a.unlock()
 #else
 #define alcBeginCriticalSection(a)
 #define alcEndCriticalSection(a)
-#endif
+#endif*/
 
 U32 alcGetSelfThreadId();
 

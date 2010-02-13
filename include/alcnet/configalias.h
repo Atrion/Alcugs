@@ -41,7 +41,7 @@
 namespace alc {
 
 	////DEFINITIONS
-	void alcNetSetConfigAliases();
+	void alcNetSetConfigAliases(); // FIXME: get rid of this... maybe into tAlcUnetMain?
 
 } //End alc namespace
 

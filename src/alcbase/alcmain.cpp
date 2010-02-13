@@ -142,6 +142,7 @@ void alcReApplyConfig() {
 	if(var.isEmpty()) {
 		var="1";
 	}
+	alcLogOpenStdLogs(!var.asByte());
 }
 
 void alcIngoreConfigParseErrors(bool val) {
