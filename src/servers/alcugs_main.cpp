@@ -223,7 +223,7 @@ int main(int argc, char * argv[]) {
 		lstd->print("The service has succesfully terminated\n");
 		lstd->print("Born:    %s\n",alcGetBornTime().str());
 		tTime now;
-		now.now();
+		now.setToNow();
 		lstd->print("Defunct: %s\n",now.str());
 		lstd->print("Uptime:  %s\n",alcGetUptime().str(0x01));
 		lstd->print("========================================\n");
@@ -233,7 +233,7 @@ int main(int argc, char * argv[]) {
 		lstd->print("The service has been unexpectely killed!!!\n");
 		lstd->print("Born:    %s\n",alcGetBornTime().str());
 		tTime now;
-		now.now();
+		now.setToNow();
 		lstd->print("Defunct: %s\n",now.str());
 		lstd->print("Uptime:  %s\n",alcGetUptime().str(0x01));
 		lstd->print("========================================\n");
@@ -244,7 +244,7 @@ int main(int argc, char * argv[]) {
 		lstd->print("The service has been unexpectely killed!!!\n");
 		lstd->print("Born:    %s\n",alcGetBornTime().str());
 		tTime now;
-		now.now();
+		now.setToNow();
 		lstd->print("Defunct: %s\n",now.str());
 		lstd->print("Uptime:  %s\n",alcGetUptime().str(0x01));
 		lstd->print("========================================\n");

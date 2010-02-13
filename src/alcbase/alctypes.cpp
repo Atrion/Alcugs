@@ -987,20 +987,17 @@ U32 tString::asU32() const {
 }
 
 tString operator+(const tString & str1, const tString & str2) {
-	tString out;
-	out.writeStr(str1);
+	tString out(str1);
 	out.writeStr(str2);
 	return out;
 }
 tString operator+(const char * str1, const tString & str2) {
-	tString out;
-	out.writeStr(str1);
+	tString out(str1);
 	out.writeStr(str2);
 	return out;
 }
 tString operator+(const tString & str1, const char * str2) {
-	tString out;
-	out.writeStr(str1);
+	tString out(str1);
 	out.writeStr(str2);
 	return out;
 }
@@ -1094,7 +1091,7 @@ const char * tTime::str(Byte type) const {
 		return sth.c_str();
 	}
 }
-void tTime::now() {
+void tTime::setToNow() {
 	seconds=alcGetTime();
 	microseconds=alcGetMicroseconds();
 }

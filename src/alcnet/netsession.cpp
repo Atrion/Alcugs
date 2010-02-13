@@ -947,7 +947,7 @@ void tNetSession::terminate(int tout)
 	net->updateTimerRelative(tout*1000000);
 	terminated = true;
 	whoami = 0; // it's terminated, so it's no one special anymore
-	timestamp.now();
+	timestamp.setToNow();
 }
 
 void tNetSession::setAuthData(Byte accessLevel, const char *passwd)
