@@ -48,7 +48,7 @@
 namespace alc {
 	
 	// this only contains the columns needed for this auth server
-	const char * authTableInitScript = "\
+	static const char * authTableInitScript = "\
 	CREATE TABLE `accounts` (\
 		`uid` int unsigned NOT NULL auto_increment,\
 		`guid` varchar(50) NOT NULL default '',\

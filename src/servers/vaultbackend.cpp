@@ -39,8 +39,8 @@
 
 namespace alc {
 
-	const char *defaultWelcomeMsgTitle = "Shorah b'shehmtee";
-	const char *defaultWelcomeMsgText = "Shorah b'shehmtee, this Shard is running the Alcugs server software.\nThanks for your support!\n\nWelcome to the new adventure, feel free to explore Er'cana or any other age. Be careful if you see new books, some explorers have found some Kortee'nea and other ancient technology in a secret room in Kirel DRC neighborhood, and they are starting to learn the art of writting.\n";
+	static const char *defaultWelcomeMsgTitle = "Shorah b'shehmtee";
+	static const char *defaultWelcomeMsgText = "Shorah b'shehmtee, this Shard is running the Alcugs server software.\nThanks for your support!\n\nWelcome to the new adventure, feel free to explore Er'cana or any other age. Be careful if you see new books, some explorers have found some Kortee'nea and other ancient technology in a secret room in Kirel DRC neighborhood, and they are starting to learn the art of writting.\n";
 
 	////IMPLEMENTATION
 	tVaultBackend::tVaultBackend(tUnet *net)

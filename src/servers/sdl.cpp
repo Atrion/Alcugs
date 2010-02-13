@@ -458,7 +458,7 @@ namespace alc {
 		obj.objType = 0x0001; // SceneObject
 		obj.objName = "AgeSDLHook";
 		// now create the SDL state
-		sdlHook = sdlStates.insert(sdlStates.end(), tSdlState(this, obj, tUruString(age->name), ageSDLVersion, true/*init default*/));
+		sdlHook = sdlStates.insert(sdlStates.end(), tSdlState(this, obj, age->name, ageSDLVersion, true/*init default*/));
 		log->log("Set up default AgeSDLHook\n");
 		return sdlHook;
 	}

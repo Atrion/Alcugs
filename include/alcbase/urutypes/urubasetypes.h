@@ -62,8 +62,8 @@ class tUruString :public tString {
 public:
 	tUruString(void) : tString() {}
 	tUruString(const tUruString &t) : tString(t) {}
-	explicit tUruString(const char *k) : tString(k) {}
-	explicit tUruString(const tString &t) : tString(t) {}
+	tUruString(const char *k) : tString(k) {}
+	tUruString(const tString &t) : tString(t) {}
 	
 	// interface
 	virtual void store(tBBuf &t);

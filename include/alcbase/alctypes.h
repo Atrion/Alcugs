@@ -195,15 +195,13 @@ protected:
 	//! comparison
 	SByte compare(const tMBuf &t) const;
 	
-	//! called when content is modified
-	virtual void onmodify() {} // FIXME: remove this
-	
 	// data
 	tRefBuf *buf;
 	U32 off;
 	U32 msize; //!< this is the part of the buffer that is actually used, while buf->size() is the currently available size
 private:
 	void init();
+	void getUniqueBuffer(U32 newsize);
 };
 
 /** File buffer */
@@ -358,12 +356,10 @@ public:
 	inline bool operator<=(const tString &t) const { return(compare(t)<=0); }
 	inline bool operator<=(const char *t) const { return(compare(t)<=0); }
 protected:
-	virtual void onmodify(); // FIXME remove this
 	// assignment
 	void copy(const char * str);
 	void copy(const tString &t);
 private:
-	// FIXME: get rid of all of these...
 	U16 l,c;
 	char sep;
 	mutable tString * shot;

@@ -332,6 +332,20 @@ void alctypes_mbuf() {
 	floatTest.putFloat(test);
 	floatTest.rewind();
 	assert(floatTest.getFloat() == test);
+	
+	// check copy-on-write
+	tMBuf cow1;
+	cow1.write(bulk, 4);
+	assert(cow1.getAt(1) == 0x02);
+	tMBuf cow2(cow1);
+	cow2.set(1);
+	cow2.write(bulk, 2);
+	assert(cow1.getAt(1) == 0x02);
+	assert(cow2.getAt(1) == 0x01);
+	cow2 = cow1;
+	cow2.setAt(1, 0x01);
+	assert(cow1.getAt(1) == 0x02);
+	assert(cow2.getAt(1) == 0x01);
 }
 
 void alctypes_mbuf2() {
