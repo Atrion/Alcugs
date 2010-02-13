@@ -54,8 +54,8 @@ const Byte * alcGetHexUid(const char * passed_guid);
 /**
 		\returns a pointer to a formated time string
 */
-const char * alcGetStrTime(U32 timestamp, U32 microseconds);
-const char * alcGetStrTime(double stamp=0, const char format='s');
+tString alcGetStrTime(U32 timestamp, U32 microseconds);
+tString alcGetStrTime(double stamp=0, const char format='s');
 
 /** Gets an ascii string from hex values
 	\param out A buffer of at least 2*sizeof(in) bytes

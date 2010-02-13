@@ -304,7 +304,7 @@ namespace alc {
 	
 	void tvManifest::asHtml(tLog *log, bool /*shortLog*/)
 	{
-		log->print("ID: 0x%08X (%d), Stamp: %s<br />\n", id, id, time ? alcGetStrTime(time) : "0");
+		log->print("ID: 0x%08X (%d), Stamp: %s<br />\n", id, id, time ? alcGetStrTime(time).c_str() : "0");
 	}
 	
 	//// tvNodeRef
@@ -350,7 +350,7 @@ namespace alc {
 	void tvNodeRef::asHtml(tLog *log, bool /*shortLog*/)
 	{
 		log->print("Saver: 0x%08X (%d), Parent:  0x%08X (%d), Child: 0x%08X (%d), ", saver, saver, parent, parent, child, child);
-		log->print("Stamp: %s, Flags: 0x%02X<br />\n", time ? alcGetStrTime(time, microsec) : "0", flags);
+		log->print("Stamp: %s, Flags: 0x%02X<br />\n", time ? alcGetStrTime(time, microsec).c_str() : "0", flags);
 	}
 	
 	//// tvCreatableGenericValue
@@ -848,7 +848,7 @@ namespace alc {
 				return;
 			}
 			// get the file name
-			snprintf(filename, sizeof(filename), "%s.%s.%d.%s.jpg", ageName.c_str(), str1.c_str(), index, alcGetStrTime(modTime));
+			snprintf(filename, sizeof(filename), "%s.%s.%d.%s.jpg", ageName.c_str(), str1.c_str(), index, alcGetStrTime(modTime).c_str());
 			alcStrFilter(filename); // don't trust user input
 			alcStrncpy(path, log->getDir().c_str(), sizeof(path)-1);
 			strncat(path, "data/", sizeof(path)-strlen(path)-1);
@@ -890,7 +890,7 @@ namespace alc {
 			log->print("</pre><br />\n");
 			// dump it to a file
 			// get the file name
-			snprintf(filename, sizeof(filename), "%s.%s.%d.%s.%s", ageName.c_str(), str1.c_str(), index, alcGetStrTime(modTime), suffix);
+			snprintf(filename, sizeof(filename), "%s.%s.%d.%s.%s", ageName.c_str(), str1.c_str(), index, alcGetStrTime(modTime).c_str(), suffix);
 			alcStrFilter(filename); // don't trust user input
 			alcStrncpy(path, log->getDir().c_str(), sizeof(path)-1);
 			strncat(path, "data/", sizeof(path)-strlen(path)-1);
@@ -915,13 +915,13 @@ namespace alc {
 		permissionsAsHtml(log);
 		log->print("<b>Owner:</b> 0x%08X (%d)<br />\n", owner, owner);
 		log->print("<b>Group:</b> 0x%08X (%d)<br />\n", group, group);
-		log->print("<b>Modification time:</b> %s<br />\n", alcGetStrTime(modTime));
+		log->print("<b>Modification time:</b> %s<br />\n", alcGetStrTime(modTime).c_str());
 		// optional fields
 		if (!shortLog) { // only print this in long logs
 			if (flagB & MCreator) log->print("<b>Creator:</b> 0x%08X (%d)<br />\n", creator, creator);
-			if (flagB & MCrtTime) log->print("<b>Create time:</b> %s<br />\n", crtTime ? alcGetStrTime(crtTime) : "0");
+			if (flagB & MCrtTime) log->print("<b>Create time:</b> %s<br />\n", crtTime ? alcGetStrTime(crtTime).c_str() : "0");
 			if (flagB & MAgeCoords) log->print("<b>Age coords:</b> unused<br />\n");
-			if (flagB & MAgeTime) log->print("<b>Age time:</b> %s<br />\n", ageTime ? alcGetStrTime(ageTime) : "0");
+			if (flagB & MAgeTime) log->print("<b>Age time:</b> %s<br />\n", ageTime ? alcGetStrTime(ageTime).c_str() : "0");
 			if (flagB & MAgeName) log->print("<b>Age name:</b> %s<br />\n", ageName.c_str());
 			if (flagB & MAgeGuid) log->print("<b>Age guid:</b> %s<br />\n", alcGetStrGuid(ageGuid));
 			if (flagB & MInt32_1) {
@@ -1250,9 +1250,9 @@ namespace alc {
 		else
 			alcStrncpy(clientDesc, "?", sizeof(clientDesc)-1);
 		if (clientToServer)
-			log->print("<h2 style='color:blue'>%s: From client (%s) to vault</h2>\n", alcGetStrTime(), clientDesc);
+			log->print("<h2 style='color:blue'>%s: From client (%s) to vault</h2>\n", alcGetStrTime().c_str(), clientDesc);
 		else
-			log->print("<h2 style='color:green'>%s: From vault to client (%s)</h2>\n", alcGetStrTime(), clientDesc);
+			log->print("<h2 style='color:green'>%s: From vault to client (%s)</h2>\n", alcGetStrTime().c_str(), clientDesc);
 		asHtml(log, shortLog);
 		log->print("<hr>\n\n");
 		log->flush();

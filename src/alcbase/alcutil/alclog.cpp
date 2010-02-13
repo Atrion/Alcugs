@@ -258,14 +258,14 @@ void tLog::rotate(bool force) {
 				if(i-1==0) {
 					snprintf(croak,size+1+5,"%s",path);
 				} else {
-					if(strlen(alcGetExt(path))!=0) {
-						snprintf(croak,size+1+5,"%s.%i.%s",gustavo,i-1,alcGetExt(path));
+					if(alcGetExt(path).size()!=0) {
+						snprintf(croak,size+1+5,"%s.%i.%s",gustavo,i-1,alcGetExt(path).c_str());
 					} else {
 						snprintf(croak,size+1+5,"%s.%i",gustavo,i-1);
 					}
 				}
-				if(strlen(alcGetExt(path))!=0) {
-					snprintf(croak2,size+1+5,"%s.%i.%s",gustavo,i,alcGetExt(path));
+				if(alcGetExt(path).size()!=0) {
+					snprintf(croak2,size+1+5,"%s.%i.%s",gustavo,i,alcGetExt(path).c_str());
 				} else {
 					snprintf(croak2,size+1+5,"%s.%i",gustavo,i);
 				}
@@ -373,7 +373,7 @@ void tLog::stamp() {
 
 	if (this->flags & DF_NOSTAMP) { return; }
 
-	this->print("(%s)[%d] ",alcGetStrTime(),alcGetSelfThreadId());
+	this->print("(%s)[%d] ",alcGetStrTime().c_str(),alcGetSelfThreadId());
 }
 
 /**

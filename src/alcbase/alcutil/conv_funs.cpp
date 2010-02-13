@@ -33,15 +33,13 @@
 #include "alcdebug.h"
 
 namespace alc {
-	
-	// FIXME: get rid of the "static"s
 
 /**
   \brief Converts an hex guid to ascii
 */
 const char * alcGetStrGuid(const Byte * guid) {
 	if(guid==NULL) return "null";
-	static char str_guid[17];
+	static char str_guid[17]; // FIXME
 	alcHex2Ascii(str_guid,guid,8);
 	return str_guid;
 }
@@ -53,7 +51,7 @@ const char * alcGetStrUid(const Byte * guid) {
 	if(guid==NULL) return "null";
 
 	char str_guid[33];
-	static char str_guid2[37];
+	static char str_guid2[37]; // FIXME
 
 	alcHex2Ascii(str_guid,guid,16);
 	
@@ -94,7 +92,7 @@ const Byte * alcGetHexUid(const char * passed_guid) {
 	
 	if (strlen(passed_guid) != 36) throw txUnexpectedData(_WHERE("An UID string must be 36 characters long"));
 
-	static Byte hex_guid[16];
+	static Byte hex_guid[16]; // FIXME
 	char guid[36];
 
 	for(U32 i=0; i<36; i++) {
@@ -134,20 +132,19 @@ const Byte * alcGetHexUid(const char * passed_guid) {
 /**
   \brief returns a pointer to a formated time string
 */
-const char * alcGetStrTime(U32 timestamp, U32 microseconds) {
-	static char btime[50];
+tString alcGetStrTime(U32 timestamp, U32 microseconds) {
 	char tmptime[26];
 	struct tm * tptr;
 	time_t stamp = timestamp;
 
 	tptr=gmtime(&stamp);
 	strftime(tmptime,25,"%Y:%m:%d-%H:%M:%S",tptr);
-	snprintf(btime,sizeof(btime),"%s.%06d",tmptime,microseconds);
-
-	return btime;
+	tString str = tmptime;
+	str.printf(".%06d", microseconds);
+	return str;
 }
 
-const char * alcGetStrTime(double stamp, const char format) {
+tString alcGetStrTime(double stamp, const char format) {
 	U32 time,micros;
 	U32 stampInt = static_cast<U32>(stamp);
 	if(stamp!=0) {

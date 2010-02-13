@@ -44,27 +44,27 @@
 namespace alc {
 
 
-char * alcGetExt(const char * addr) {
-	static char ext[11]; // FIXME
+tString alcGetExt(const tString & addr) {
+	
 	U32 i;
-	for(i=strlen(addr); ; i--) {
-		if(addr[i]=='/' || addr[i]=='\\' || addr[i]==':' || addr[i]=='.' || i == 0) {
+	for(i=addr.size()-1; ; --i) {
+		char ch = addr.getAt(i);
+		if(ch=='/' || ch=='\\' || ch==':' || ch=='.' || i == 0) {
 			break;
 		}
 	}
 	
-	if(addr[i]=='.') {
-		alcStrncpy(ext,addr+(i+1),std::min(strlen(addr)-(i+1), sizeof(ext)-1));
+	if(addr.getAt(i)=='.') {
+		return addr.substring(i+1);
 	} else {
-		ext[0] = 0;
+		return tString();
 	}
-	//printf("ext:%s,%s,%i\n",addr,ext,sizeof(ext));
-	return ext;
+	
 }
 
 void alcStripExt(char * addr) {
 	U32 i=0;
-	for(i=strlen(addr); ; i--) {
+	for(i=strlen(addr); ; --i) {
 		if(addr[i]=='.') {
 			addr[i]='\0';
 			break;

@@ -31,8 +31,8 @@
 
 namespace alc {
 
-const char * alcConsoleAsk();
-int alcGetLoginInfo(const char * argv,char * hostname,char * username,U16 * port,char * avie);
+tString alcConsoleAsk();
+bool alcGetLoginInfo(tString argv,tString * username,tString * hostname,U16 * port); // username may be NULL, the rest not
 
 U32 alcGetTime();
 U32 alcGetMicroseconds();

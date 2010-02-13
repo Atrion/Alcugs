@@ -647,7 +647,7 @@ tString tString::upper() const {
 	return shot;
 }
 tString tString::substring(U32 start,U32 len) const {
-	if (len == 0) len = remaining();
+	if (len == 0) len = size()-start;
 	tString shot;
 	shot.write(data()+start,len);
 	return shot;
@@ -793,7 +793,7 @@ U32 tTime::asU32(char how) const {
 			return seconds;
 	}
 }
-const char * tTime::str(Byte type) const {
+tString tTime::str(Byte type) const {
 	if(type==0x00) {
 		return alcGetStrTime(seconds,microseconds);
 	} else {
@@ -807,7 +807,7 @@ const char * tTime::str(Byte type) const {
 		U32 weeks=days/7;
 		days %= 7;
 
-		static tString sth; // FIXME
+		tString sth;
 		if(weeks==1) sth.printf("1 week, ");
 		else if(weeks>1) sth.printf("%i weeks, ",weeks);
 		if(days==1) sth.printf("1 day, ");
@@ -817,7 +817,7 @@ const char * tTime::str(Byte type) const {
 		if(minutes==1) sth.printf("1 minute, ");
 		else if(minutes>1) sth.printf("%i minutes, ",minutes);
 		sth.printf("%.6f seconds.",seconds%60 + microseconds/1000000.0);
-		return sth.c_str();
+		return sth;
 	}
 }
 void tTime::setToNow() {
