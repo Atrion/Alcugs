@@ -558,7 +558,7 @@ namespace alc {
 				findAge.message.rewind();
 				findAge.message.get(ageLink);
 				if (!findAge.message.eof()) throw txProtocolError(_WHERE("Got a NetMsgFindAge which is too long"));
-				log->print(" %s\n", ageLink.str());
+				log->print(" %s\n", ageLink.str().c_str());
 				
 				if (ageLink.linkingRule != KOriginalBook && ageLink.linkingRule != KOwnedBook && ageLink.linkingRule != KBasicLink && ageLink.linkingRule != KVisitBook && ageLink.linkingRule != KSubAgeBook)
 					throw txProtocolError(_WHERE("Linking rule must be KSubAgeBook, KOriginalBook, KOwnedBook, KVisitBook or KBasicLink but is 0x%02X", ageLink.linkingRule));
@@ -569,7 +569,7 @@ namespace alc {
 				if (linkLog[0]) {
 					FILE *f = fopen(linkLog, "a");
 					if (f) {
-						fprintf(f, "Player %s links from %s to: %s\n", u->name, serverName, ageLink.str());
+						fprintf(f, "Player %s links from %s to: %s\n", u->name, serverName, ageLink.str().c_str());
 						fclose(f);
 					}
 				}

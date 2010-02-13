@@ -179,7 +179,7 @@ namespace alc {
 			tSdlState state(this, sdlStream, obj);
 			tSdlList::iterator it = findSdlState(&state);
 			if (it != sdlStates.end()) {
-				log.log("Got state duplicate: %s and %s. Keeping the one with higher version number.\n", state.str(), it->str());
+				log.log("Got state duplicate: %s and %s. Keeping the one with higher version number.\n", state.str().c_str(), it->str().c_str());
 				if (it->content.getVersion() >= state.content.getVersion()) // keep existing version
 					continue;
 				else // remove existing version
@@ -269,15 +269,15 @@ namespace alc {
 		// check if state is already in list
 		tSdlList::iterator it = findSdlState(&sdl);
 		if (it == sdlStates.end()) {
-			log.log("Adding %s\n", sdl.str());
+			log.log("Adding %s\n", sdl.str().c_str());
 			sdlStates.push_back(sdl);
 		}
 		else {
 			if (it->content.getVersion() != sdl.content.getVersion()) {
-				throw txProtocolError(_WHERE("SDL version mismatch: %s should be changed to %s", it->str(), sdl.str()));
+				throw txProtocolError(_WHERE("SDL version mismatch: %s should be changed to %s", it->str().c_str(), sdl.str().c_str()));
 			}
 			// update existing state
-			log.log("Updating %s\n", sdl.str());
+			log.log("Updating %s\n", sdl.str().c_str());
 			it->content.updateWith(&sdl.content);
 		}
 		log.flush();
@@ -299,8 +299,8 @@ namespace alc {
 		tSdlList::iterator sdlHook = findAgeSDLHook();
 		if (sdlHook != sdlStates.end()) { // found it - update it
 			if (sdlHook->content.getName() != sdl.content.getName() || sdlHook->content.getVersion() != sdl.content.getVersion())
-				throw txProtocolError(_WHERE("SDL version mismatch: %s should be changed to %s", sdlHook->str(), sdl.str()));
-			log.log("Updating %s\n", sdl.str());
+				throw txProtocolError(_WHERE("SDL version mismatch: %s should be changed to %s", sdlHook->str().c_str(), sdl.str().c_str()));
+			log.log("Updating %s\n", sdl.str().c_str());
 			sdlHook->content.updateWith(&sdl.content);
 			// send update to client (for some strange reason, it is enough to send the SDL update to the client who triggered it)
 			tmSDLState sdlMsg(u, sdlHook->obj, &*sdlHook, /*initial*/false);
@@ -355,7 +355,7 @@ namespace alc {
 		tSdlList::iterator it = sdlStates.begin();
 		while (it != sdlStates.end()) {
 			if (it->obj.hasCloneId && it->obj.clonePlayerId == ki && (cloneId == 0 || it->obj.cloneId == cloneId)) {
-				log.log("Removing %s because Clone was removed\n", it->str());
+				log.log("Removing %s because Clone was removed\n", it->str().c_str());
 				it = sdlStates.erase(it);
 			}
 			else

@@ -389,11 +389,7 @@ void tUnetUruMsg::dumpheader(tLog * f) {
 }
 //flux 0 client -> server, 1 server -> client
 void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
-	static int count=0; // FIXME
-	count++;
 	if (!log->doesPrint()) return;
-
-	log->print("%04i: ",count);
 	log->stamp();
 
 	switch(tf) {

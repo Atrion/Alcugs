@@ -117,7 +117,6 @@ namespace alc {
 		bool incompleteVars; //!< this state contains only a part of the full information and uses indices for the vars
 		bool incompleteStructs; //!< this state contains only a part of the full information and uses indices for the structs
 		
-		tString dbg; // FIXME
 		tSdlStruct *sdlStruct;
 		tAgeStateManager *stateMgr;
 	};
@@ -131,7 +130,7 @@ namespace alc {
 		tSdlState(void);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
-		const char *str(void);
+		tString str(void) const;
 		void print(tLog *log);
 		bool operator==(const tSdlState &state) const;
 		
@@ -139,7 +138,6 @@ namespace alc {
 		// format
 		tSdlStateBinary content;
 	private:
-		tString dbg; // FIXME
 		tAgeStateManager *stateMgr;
 	};
 

@@ -141,9 +141,9 @@ namespace alc {
 			t.putU32(0);
 	}
 	
-	const char *tvAgeInfoStruct::str(void)
+	tString tvAgeInfoStruct::str(void) const
 	{
-		dbg.clear();
+		tString dbg;
 		dbg.printf("Filename: %s", filename.c_str());
 		if (flags & 0x01) // instance name
 			dbg.printf(", Instance Name: %s", instanceName.c_str());
@@ -155,12 +155,12 @@ namespace alc {
 			dbg.printf(", Display name: %s", displayName.c_str());
 		if (flags & 0x40) // language
 			dbg.printf(", Language: 0");
-		return dbg.c_str();
+		return dbg;
 	}
 	
 	void tvAgeInfoStruct::asHtml(tLog *log, bool /*shortLog*/)
 	{
-		log->print("Age Info: %s<br />\n", str());
+		log->print("Age Info: %s<br />\n", str().c_str());
 	}
 	
 	//// tvSpawnPoint
@@ -195,16 +195,16 @@ namespace alc {
 		t.put(cameraStack);
 	}
 	
-	const char *tvSpawnPoint::str(void)
+	tString tvSpawnPoint::str(void) const
 	{
-		static char dbg[256]; // FIXME
-		snprintf(dbg, sizeof(dbg), "Title: %s, Name: %s, Camera Stack: %s", title.c_str(), name.c_str(), cameraStack.c_str());
+		tString dbg;
+		dbg.printf("Title: %s, Name: %s, Camera Stack: %s", title.c_str(), name.c_str(), cameraStack.c_str());
 		return dbg;
 	}
 	
 	void tvSpawnPoint::asHtml(tLog *log, bool /*shortLog*/)
 	{
-		log->print("Spawn Point: %s<br />\n", str());
+		log->print("Spawn Point: %s<br />\n", str().c_str());
 	}
 	
 	//// tvAgeLinkStruct
@@ -260,15 +260,15 @@ namespace alc {
 			t.put(parentAgeName);
 	}
 	
-	const char *tvAgeLinkStruct::str(void)
+	tString tvAgeLinkStruct::str(void) const
 	{
-		dbg.clear();
-		dbg.printf("Age Info [%s], Linking Rule: 0x%02X (%s), Spawn Point [%s]", ageInfo.str(), linkingRule, alcUnetGetLinkingRule(linkingRule), spawnPoint.str());
+		tString dbg;
+		dbg.printf("Age Info [%s], Linking Rule: 0x%02X (%s), Spawn Point [%s]", ageInfo.str().c_str(), linkingRule, alcUnetGetLinkingRule(linkingRule), spawnPoint.str().c_str());
 		if (flags & 0x0010) // CCR
 			dbg.printf(", CCR: 0x%02X", ccr);
 		if (flags & 0x0040) // parent age name
 			dbg.printf(", Parent Age: %s", parentAgeName.c_str());
-		return dbg.c_str();
+		return dbg;
 	}
 	
 	void tvAgeLinkStruct::asHtml(tLog *log, bool shortLog)
@@ -1239,14 +1239,7 @@ namespace alc {
 	
 	void tvMessage::print(tLog *log, bool clientToServer, tNetSession *client, bool shortLog, U32 ki)
 	{
-		static int count = 0; // FIXME
 		if (!log->doesPrint()) return; // don't do anything if log is disabled
-		// rotation check
-		++count;
-		if (count > 50) {
-			log->rotate(false); // rotate if file is too big
-			count = 0;
-		}
 		
 		char clientDesc[512];
 		if (ki) // we're in the vault server and the "client" is only forwarding

@@ -200,14 +200,12 @@ namespace alc {
 		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
 		inline bool hasGuid(void) { return (flags & 0x04); }
-		const char *str(void);
+		tString str(void) const;
 		// format
 		Byte flags;
 		tString filename, instanceName;
 		Byte guid[8];
 		tString userDefName, displayName;
-	private:
-		tString dbg; // FIXME
 	};
 	
 	class tvSpawnPoint : public tvBase {
@@ -217,7 +215,7 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
-		const char *str(void);
+		tString str(void) const;
 		// format
 		U32 flags;
 		tString title, name, cameraStack;
@@ -229,7 +227,7 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
-		const char *str(void);
+		tString str(void) const;
 		// format
 		U16 flags;
 		tvAgeInfoStruct ageInfo;
@@ -237,8 +235,6 @@ namespace alc {
 		tvSpawnPoint spawnPoint;
 		Byte ccr;
 		tString parentAgeName;
-	private:
-		tString dbg; // FIXME
 	};
 	
 	class tvManifest : public tvBase {

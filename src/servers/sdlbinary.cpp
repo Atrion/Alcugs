@@ -629,11 +629,11 @@ namespace alc {
 		return true;
 	}
 	
-	const char *tSdlState::str(void)
+	tString tSdlState::str(void) const
 	{
-		dbg.clear();
+		tString dbg;
 		dbg.printf("SDL State for [%s]: %s (version %d)", obj.str().c_str(), content.getName().c_str(), content.getVersion());
-		return dbg.c_str();
+		return dbg;
 	}
 	
 	void tSdlState::print(tLog *log)
