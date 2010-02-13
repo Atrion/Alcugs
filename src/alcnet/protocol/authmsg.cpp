@@ -86,9 +86,7 @@ namespace alc {
 	void tmCustomAuthAsk::additionalFields()
 	{
 		dbg.nl();
-		// use two printf commands as alcGetStrGuid uses a static array and when using one command it would seem as if challenge and hash would be the same
-		dbg.printf(" IP: %s, login: %s, challenge: %s, ", alcGetStrIp(ip), login.c_str(), alcGetStrUid(challenge));
-		dbg.printf("hash: %s, build: 0x%02X (%s)", alcGetStrUid(hash), release, alcUnetGetRelease(release));
+		dbg.printf(" IP: %s, login: %s, challenge: %s, hash: %s, build: 0x%02X (%s)", alcGetStrIp(ip).c_str(), login.c_str(), alcGetStrUid(challenge).c_str(), alcGetStrUid(hash).c_str(), release, alcUnetGetRelease(release));
 	}
 	
 	//// tmCustomAuthResponse

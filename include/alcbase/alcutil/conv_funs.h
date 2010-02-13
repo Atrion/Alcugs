@@ -38,18 +38,18 @@ namespace alc {
 		\param guid A hex guid
 		\return A str guid, twice as long as the hex guid
 */
-const char * alcGetStrGuid(const Byte * guid);
+tString alcGetStrGuid(const Byte * guid);
 
 /** creates a 00000000-0000-0000-0000-000000000000 valid guid
 		\param guid A 16 bytes user id
 		\return A 36 bytes str formated id
 */
-const char * alcGetStrUid(const Byte * guid);
+tString alcGetStrUid(const Byte * guid);
 
 /** \param passed_guid A 36 bytes str user id
 	\return A 16 bytes hex user id
 */
-const Byte * alcGetHexUid(const char * passed_guid);
+tMBuf alcGetHexUid(tString guid);
 
 /**
 		\returns a pointer to a formated time string

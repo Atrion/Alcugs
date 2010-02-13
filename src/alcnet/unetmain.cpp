@@ -139,11 +139,6 @@ void tAlcUnetMain::onForked(void)
 void tAlcUnetMain::onApplyConfig()
 {
 	tAlcMain::onApplyConfig();
-	// maybe dump settings
-	tString var=cfg.getVar("cfg.dump","global");
-	if(!var.isEmpty() && var.asByte()) {
-		dumpConfig();
-	}
 	if (net) net->applyConfig(); // trigger the apply process in the netcore
 }
 

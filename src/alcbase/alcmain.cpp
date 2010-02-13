@@ -131,6 +131,12 @@ void tAlcMain::onApplyConfig() {
 		stdLog->open(NULL,DF_STDOUT);
 		errLog->open(NULL,DF_STDERR);
 	}
+	
+	// maybe dump settings
+	var=cfg.getVar("cfg.dump","global");
+	if(!var.isEmpty() && var.asByte()) {
+		dumpConfig();
+	}
 }
 
 void tAlcMain::dumpConfig() {

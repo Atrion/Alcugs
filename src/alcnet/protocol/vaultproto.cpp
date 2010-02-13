@@ -148,7 +148,7 @@ namespace alc {
 		if (flags & 0x01) // instance name
 			dbg.printf(", Instance Name: %s", instanceName.c_str());
 		if (flags & 0x04) // GUID
-			dbg.printf(", GUID: %s", alcGetStrGuid(guid));
+			dbg.printf(", GUID: %s", alcGetStrGuid(guid).c_str());
 		if (flags & 0x08) // user defined name
 			dbg.printf(", User defined name: %s", userDefName.c_str());
 		if (flags & 0x20) // display name
@@ -574,7 +574,7 @@ namespace alc {
 	
 	void tvServerGuid::asHtml(tLog *log, bool /*shortLog*/)
 	{
-		log->print("%s<br />\n", alcGetStrGuid(guid));
+		log->print("%s<br />\n", alcGetStrGuid(guid).c_str());
 	}
 	
 	//// tvNode
@@ -923,7 +923,7 @@ namespace alc {
 			if (flagB & MAgeCoords) log->print("<b>Age coords:</b> unused<br />\n");
 			if (flagB & MAgeTime) log->print("<b>Age time:</b> %s<br />\n", ageTime ? alcGetStrTime(ageTime).c_str() : "0");
 			if (flagB & MAgeName) log->print("<b>Age name:</b> %s<br />\n", ageName.c_str());
-			if (flagB & MAgeGuid) log->print("<b>Age guid:</b> %s<br />\n", alcGetStrGuid(ageGuid));
+			if (flagB & MAgeGuid) log->print("<b>Age guid:</b> %s<br />\n", alcGetStrGuid(ageGuid).c_str());
 			if (flagB & MInt32_1) {
 				if (type == KFolderNode || type == KPlayerInfoListNode || type == KAgeInfoListNode)
 					log->print("<b>Int32_1:</b> 0x%08X (%s)<br />\n", int1, alcVaultGetFolderType(int1));

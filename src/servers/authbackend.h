@@ -47,7 +47,7 @@ namespace alc {
 		~tAuthBackend(void);
 		
 		void calculateHash(const char *login, const char *passwd, const char *challenge, char *hash); //!< calculate the hash needed to check the password
-		int authenticatePlayer(tNetSession *u, const char *login, const char *challenge, const char *hash, Byte release, char *ip, char *passwd,
+		int authenticatePlayer(tNetSession *u, const char *login, const char *challenge, const char *hash, Byte release, const char *ip, char *passwd,
 			char *guid, Byte *accessLevel); //!< authenticates the player
 		void checkTimeout(void) { if (sql) sql->checkTimeout(); }
 	private:

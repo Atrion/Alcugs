@@ -211,13 +211,13 @@ void tUruObject::stream(tBBuf &t) const
 	}
 }
 
-const char *tUruObject::str(void) const
+tString tUruObject::str(void) const
 {
-	dbg.clear();
+	tString dbg;
 	dbg.printf("Page ID: 0x%08X, Page Type: 0x%04X, Object: [0x%04X]%s", pageId, pageType, objType, objName.c_str());
 	if (hasCloneId)
 		dbg.printf(", Clone ID: %d, Clone Player ID: %d", cloneId, clonePlayerId);
-	return dbg.c_str();
+	return dbg;
 }
 
 bool tUruObject::operator==(const tUruObject &obj) const
@@ -259,7 +259,7 @@ void tUruObjectRef::stream(tBBuf &t) const
 	if (hasObj) t.put(obj);
 }
 
-const char *tUruObjectRef::str(void) const
+tString tUruObjectRef::str(void) const
 {
 	if (hasObj) return obj.str();
 	else return "null";

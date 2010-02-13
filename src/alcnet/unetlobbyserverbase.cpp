@@ -228,7 +228,7 @@ namespace alc {
 		if (dst == KTracking) {
 			tString var = cfg->getVar("public_address");
 			if (var.isEmpty()) log->log("WARNING: No public address set, using bind address %s\n", bindaddr);
-			tmCustomSetGuid setGuid(session, alcGetStrGuid(serverGuid), serverName, var.c_str(), whoami == KGame ? 0 : spawnStart, whoami == KGame ? 0 : spawnStop);
+			tmCustomSetGuid setGuid(session, alcGetStrGuid(serverGuid).c_str(), serverName, var.c_str(), whoami == KGame ? 0 : spawnStart, whoami == KGame ? 0 : spawnStop);
 			send(setGuid);
 		}
 		
@@ -460,7 +460,7 @@ namespace alc {
 				tNetSession *client = smgr->get(kiChecked.sid);
 				// verify GUID and session state
 				if (!client || client->getPeerType() != KClient || u->ki != 0 || memcmp(client->uid, kiChecked.uid, 16) != 0) {
-					err->log("ERR: Got NetMsgCustomVaultKiChecked for player with UID %s but can't find his session.\n", alcGetStrUid(kiChecked.uid));
+					err->log("ERR: Got NetMsgCustomVaultKiChecked for player with UID %s but can't find his session.\n", alcGetStrUid(kiChecked.uid).c_str());
 					return 1;
 				}
 				

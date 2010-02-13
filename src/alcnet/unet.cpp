@@ -518,12 +518,12 @@ int tUnet::Recv() {
 
 	if(n>0) { //we have a message
 		if(n>OUT_BUFFER_SIZE) {
-			this->err->log("[ip:%s:%i] ERR: Recieved a really big message of %i bytes\n",alcGetStrIp(client.sin_addr.s_addr),ntohs(client.sin_port),n);
+			this->err->log("[ip:%s:%i] ERR: Recieved a really big message of %i bytes\n",alcGetStrIp(client.sin_addr.s_addr).c_str(),ntohs(client.sin_port),n);
 			return UNET_TOOBIG;
 		} //catch up impossible big messages
 		/* Uru protocol check */
 		if(n<=20 || buf[0]!=0x03) { //not an Uru protocol packet don't waste an slot for it
-			this->err->log("[ip:%s:%i] ERR: Unexpected Non-Uru protocol packet found\n",alcGetStrIp(client.sin_addr.s_addr),ntohs(client.sin_port));
+			this->err->log("[ip:%s:%i] ERR: Unexpected Non-Uru protocol packet found\n",alcGetStrIp(client.sin_addr.s_addr).c_str(),ntohs(client.sin_port));
 			this->err->dumpbuf(buf,n);
 			this->err->nl();
 			return UNET_NONURU;

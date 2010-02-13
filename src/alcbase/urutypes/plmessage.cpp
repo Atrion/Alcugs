@@ -95,14 +95,16 @@ namespace alc {
 		t.putU32(flags);
 	}
 	
-	void tpMessage::toString() const
+	tString tpMessage::str(void) const
 	{
-		strBuf.printf(" Sender: [%s]\n", sender.str());
+		tString strBuf = tpObject::str();
+		strBuf.printf(" Sender: [%s]\n", sender.str().c_str());
 		int nr = 1;
 		for (tReceiverList::const_iterator it = receivers.begin(); it != receivers.end(); ++it, ++nr) {
-			strBuf.printf(" Receiver %d: [%s]\n", nr, it->str());
+			strBuf.printf(" Receiver %d: [%s]\n", nr, it->str().c_str());
 		}
 		strBuf.printf(" Flags: 0x%08X\n", flags);
+		return strBuf;
 	}
 	
 	//// tpLoadCloneMsg
@@ -168,15 +170,16 @@ namespace alc {
 		t.put(*subMessage);
 	}
 	
-	void tpLoadCloneMsg::toString() const
+	tString tpLoadCloneMsg::str(void) const
 	{
-		tpMessage::toString();
-		strBuf.printf(" Cloned object: [%s]\n", clonedObj.str());
-		strBuf.printf(" Unknown object 1: [%s]\n", unkObj1.str());
+		tString strBuf = tpMessage::str();
+		strBuf.printf(" Cloned object: [%s]\n", clonedObj.str().c_str());
+		strBuf.printf(" Unknown object 1: [%s]\n", unkObj1.str().c_str());
 		strBuf.printf(" Unk3: %d, Load: ", unk3);
 		strBuf.printBoolean(isLoad);
 		strBuf.nl();
-		strBuf.printf(" [[ Sub message:\n %s ]]\n", subMessage->str());
+		strBuf.printf(" [[ Sub message:\n %s ]]\n", subMessage->str().c_str());
+		return strBuf;
 	}
 	
 	//// tpLoadAvatarMsg
@@ -207,11 +210,12 @@ namespace alc {
 		t.putByte(0);
 	}
 	
-	void tpLoadAvatarMsg::toString() const
+	tString tpLoadAvatarMsg::str(void) const
 	{
-		tpLoadCloneMsg::toString();
+		tString strBuf = tpLoadCloneMsg::str();
 		strBuf.printBoolean(" Player avatar: ", isPlayerAvatar);
-		strBuf.printf(", Unknown object 2: [%s]\n", unkObj2.str());
+		strBuf.printf(", Unknown object 2: [%s]\n", unkObj2.str().c_str());
+		return strBuf;
 	}
 	
 	//// tpParticleTransferMsg
@@ -229,10 +233,11 @@ namespace alc {
 		t.putU16(count);
 	}
 	
-	void tpParticleTransferMsg::toString() const
+	tString tpParticleTransferMsg::str(void) const
 	{
-		tpMessage::toString();
-		strBuf.printf(" Unknown object: [%s], Count: %d\n", unkObj1.str(), count);
+		tString strBuf = tpMessage::str();
+		strBuf.printf(" Unknown object: [%s], Count: %d\n", unkObj1.str().c_str(), count);
+		return strBuf;
 	}
 	
 	//// tpAvBrainGenericMsg
@@ -264,10 +269,11 @@ namespace alc {
 		t.putFloat(unk9);
 	}
 	
-	void tpAvBrainGenericMsg::toString() const
+	tString tpAvBrainGenericMsg::str(void) const
 	{
-		tpAvatarMsg::toString();
+		tString strBuf = tpAvatarMsg::str();
 		strBuf.printf(" Unkonw 5: %d, Unknown 8: %d, Unknown 9: %f\n", unk5, unk8, unk9);
+		return strBuf;
 	}
 	
 	//// tpServerReplyMsg
@@ -283,10 +289,11 @@ namespace alc {
 		t.putU32(replyType);
 	}
 	
-	void tpServerReplyMsg::toString() const
+	tString tpServerReplyMsg::str(void) const
 	{
-		tpMessage::toString();
+		tString strBuf = tpMessage::str();
 		strBuf.printf(" Reply Type: %d\n", replyType);
+		return strBuf;
 	}
 	
 	//// tpKIMsg
@@ -330,11 +337,12 @@ namespace alc {
 		t.putU32(0); // unk5
 	}
 	
-	void tpKIMsg::toString() const
+	tString tpKIMsg::str(void) const
 	{
-		tpMessage::toString();
+		tString strBuf = tpMessage::str();
 		strBuf.printf(" Sender: %s (KI: %d)\n", senderName.c_str(), senderKi);
 		strBuf.printf(" Text: %s, Message Type: 0x%08X\n", text.c_str(), messageType);
+		return strBuf;
 	}
 	
 	//// tpAvatarInputStateMsg
@@ -350,10 +358,11 @@ namespace alc {
 		t.putU16(state);
 	}
 	
-	void tpAvatarInputStateMsg::toString() const
+	tString tpAvatarInputStateMsg::str(void) const
 	{
-		tpMessage::toString();
+		tString strBuf = tpMessage::str();
 		strBuf.printf(" State: %d\n", state);
+		return strBuf;
 	}
 
 } //end namespace alc

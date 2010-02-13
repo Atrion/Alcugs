@@ -83,7 +83,7 @@ public:
 	tUruObject(void);
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	const char *str(void) const;
+	tString str(void) const;
 	
 	bool operator==(const tUruObject &obj) const;
 	inline bool operator!=(const tUruObject &obj) const {
@@ -97,8 +97,6 @@ public:
 	tUruString objName;
 	U32 cloneId;
 	U32 clonePlayerId;
-private:
-	mutable tString dbg; // FIXME
 };
 
 class tUruObjectRef : public tBaseType { // equivalent to the key reader of the resource manager in Plasma
@@ -107,7 +105,7 @@ public:
 	tUruObjectRef(const tUruObject &obj);
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	const char *str(void) const;
+	tString str(void) const;
 
 	bool hasObj;
 	tUruObject obj;

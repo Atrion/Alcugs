@@ -131,6 +131,7 @@ public:
 	void close(bool silent=false);
 
 	void print(const char * msg, ...) const;
+	void print(const tString &str) const;
 	void stamp();
 	void log(const char * msg, ...);
 	void flush() const;

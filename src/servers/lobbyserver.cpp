@@ -129,7 +129,7 @@ namespace alc {
 				tNetSession *client = smgr->get(playerList.sid);
 				// verify UID and session state
 				if (!client || client->getPeerType() != KClient || memcmp(client->uid, playerList.uid, 16) != 0) {
-					err->log("ERR: Got NetMsgCustomVaultPlayerList for player with UID %s but can't find his session.\n", alcGetStrUid(playerList.uid));
+					err->log("ERR: Got NetMsgCustomVaultPlayerList for player with UID %s but can't find his session.\n", alcGetStrUid(playerList.uid).c_str());
 					return 1;
 				}
 				
@@ -180,7 +180,7 @@ namespace alc {
 				tNetSession *client = smgr->get(playerCreated.sid);
 				// verify UID and session state
 				if (!client || client->getPeerType() != KClient || memcmp(client->uid, playerCreated.uid, 16) != 0) {
-					err->log("ERR: Got NetMsgCustomVaultPlayerCreated for player with UID %s but can't find his session.\n", alcGetStrUid(playerCreated.uid));
+					err->log("ERR: Got NetMsgCustomVaultPlayerCreated for player with UID %s but can't find his session.\n", alcGetStrUid(playerCreated.uid).c_str());
 					return 1;
 				}
 				

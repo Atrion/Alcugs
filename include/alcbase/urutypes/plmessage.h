@@ -50,6 +50,7 @@ namespace alc {
 		tpMessage(U16 type, const tUruObjectRef &sender);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str(void) const;
 		
 		static tpMessage *create(U16 type, bool mustBeComplete = true);
 		
@@ -58,8 +59,6 @@ namespace alc {
 		tUruObjectRef sender;
 		tReceiverList receivers;
 		U32 flags;
-	protected:
-		virtual void toString(void) const;
 	};
 	
 	class tpAvatarMsg : public tpMessage {
@@ -76,6 +75,7 @@ namespace alc {
 		~tpLoadCloneMsg(void) { if (subMessage) delete subMessage; }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str(void) const;
 		
 		static tpLoadCloneMsg *create(U16 type, bool mustBeComplete = true);
 		
@@ -87,7 +87,6 @@ namespace alc {
 		tpObject *subMessage;
 	protected:
 		tpLoadCloneMsg(U16 type) : tpMessage(type) { subMessage = NULL; } // to be used by tpLoadAvatarMsg
-		virtual void toString(void) const;
 	private:
 		// forbid copying
 		tpLoadCloneMsg(const tpLoadCloneMsg &);
@@ -99,12 +98,11 @@ namespace alc {
 		tpLoadAvatarMsg(void) : tpLoadCloneMsg(plLoadAvatarMsg) {}
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str(void) const;
 		
 		// format
 		bool isPlayerAvatar;
 		tUruObjectRef unkObj2;
-	protected:
-		virtual void toString(void) const;
 	};
 	
 	class tpParticleTransferMsg : public tpMessage {
@@ -112,12 +110,11 @@ namespace alc {
 		tpParticleTransferMsg(void) : tpMessage(plParticleTransferMsg) {}
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str(void) const;
 		
 		// format
 		tUruObjectRef unkObj1;
 		U16 count;
-	protected:
-		virtual void toString(void) const;
 	};
 	
 	class tpAvBrainGenericMsg : public tpAvatarMsg {
@@ -127,13 +124,12 @@ namespace alc {
 			{ unk3 = unk4 = 2; unk5 = unk7 = unk8 = 0; unk9 = 0.0; }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str(void) const;
 		
 		// format
 		U32 unk3, unk4;
 		Byte unk5, unk7, unk8;
 		float unk9;
-	protected:
-		virtual void toString(void) const;
 	};
 	
 	class tpServerReplyMsg : public tpMessage {
@@ -142,11 +138,10 @@ namespace alc {
 		tpServerReplyMsg(const tUruObjectRef &sender) : tpMessage(plServerReplyMsg, sender), replyType(0) { }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str(void) const;
 		
 		// format
 		U32 replyType; // 0x00 = deny, 0x01 = affirm, 0xFF = uninit
-	protected:
-		virtual void toString(void) const;
 	};
 	
 	class tpKIMsg : public tpMessage {
@@ -155,14 +150,13 @@ namespace alc {
 		tpKIMsg(const tUruObjectRef &sender, const tString &senderName, U32 senderKi, const tString &text);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str(void) const;
 		
 		// format
 		tUruString senderName;
 		U32 senderKi;
 		tUruString text;
 		U32 messageType;
-	protected:
-		virtual void toString(void) const;
 	};
 	
 	class tpAvatarInputStateMsg : public tpMessage {
@@ -171,11 +165,10 @@ namespace alc {
 		tpAvatarInputStateMsg(const tUruObjectRef &sender) : tpMessage(plAvatarInputStateMsg, sender) { state = 0; }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
+		virtual tString str(void) const;
 		
 		// format
 		U16 state;
-	protected:
-		virtual void toString(void) const;
 	};
 
 } //End alc namespace

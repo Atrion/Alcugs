@@ -326,7 +326,7 @@ namespace alc {
 						log->print("%s", it->byteVal);
 						break;
 					case DPlKey:
-						log->print("%s", it->obj->str());
+						log->print("%s", it->obj->str().c_str());
 						break;
 					case DStruct:
 						if (it == elements.begin()) log->nl();
@@ -632,7 +632,7 @@ namespace alc {
 	const char *tSdlState::str(void)
 	{
 		dbg.clear();
-		dbg.printf("SDL State for [%s]: %s (version %d)", obj.str(), content.getName().c_str(), content.getVersion());
+		dbg.printf("SDL State for [%s]: %s (version %d)", obj.str().c_str(), content.getName().c_str(), content.getVersion());
 		return dbg.c_str();
 	}
 	
@@ -640,7 +640,7 @@ namespace alc {
 	{
 		if (!log->doesPrint()) return;
 		if (obj.objName.size())
-			log->print("SDL State for [%s]:\n", obj.str());
+			log->print("SDL State for [%s]:\n", obj.str().c_str());
 		else
 			log->print("SDL State:\n"); // other formats than 0x00 don't contain the object
 		content.print(log);

@@ -337,29 +337,31 @@ void tLog::printHtmlHead(const tString &generator) {
 	- there is no rotate check code -
 */
 void tLog::print(const char * msg, ...) const {
-	va_list ap,ap2;
-
+	va_list ap;
+	tString buf;
 	va_start(ap,msg);
-	va_start(ap2,msg);
-	
+	buf.vprintf(msg,ap);
+	va_end(ap);
+	print(buf);
+}
+
+void tLog::print(const tString &str) const
+{
 	//first print to the file
 	if(tvLogConfig->n_files2rotate && this->dsc!=NULL && this->dsc!=stdout && this->dsc!=stderr) {
-		vfprintf(this->dsc,msg,ap);
+		fputs(str.c_str(),this->dsc);
 	}
 
 	//then print to the specific device
 	if(!(this->flags & DF_HTML)) {
 		if(tvLogConfig->verboseLevel>=1 && (this->flags & DF_STDERR)) {
-			vfprintf(stderr,msg,ap2);     //stderr messages
+			fputs(str.c_str(),stderr);     //stderr messages
 		} else if(tvLogConfig->verboseLevel>=2 && (this->flags & DF_STDOUT)) {
-			vfprintf(stdout,msg,ap2);      //stdout messages
+			fputs(str.c_str(),stdout);      //stdout messages
 		} else if(tvLogConfig->verboseLevel==3) {
-			vfprintf(stdout,msg,ap2);      //print all (muhahahaha)
+			fputs(str.c_str(),stdout);      //print all (muhahahaha)
 		}
 	}
-
-	va_end(ap2);
-	va_end(ap);
 }
 
 /**
@@ -383,32 +385,31 @@ void tLog::stamp() {
 */
 void tLog::log(const char * msg, ...) {
 	va_list ap;
-	static char buf[2*1024]; // FIXME
-
+	tString buf;
 	va_start(ap,msg);
-	vsnprintf(buf,sizeof(buf),msg,ap);
+	buf.vprintf(msg,ap);
 	va_end(ap);
 
 	this->stamp();
-	this->print("%s",buf);
+	this->print(buf);
 
 #ifdef __WIN32__
 // implement here, windoze based syslog logging, if it has something similar.
 	if(this->flags & DF_ANOY) {
-		MessageBox(NULL,buf,tvLogConfig->syslogname,0);
+		MessageBox(NULL,buf.c_str(),tvLogConfig->syslogname,0);
 	}
 #elif 0
 	if(this->flags & DF_SYSLOG && tvLogConfig->syslog_enabled==0x01) {
 		//log to the syslog
 		openlog(tvLogConfig->syslogname, LOG_NDELAY | LOG_PID, LOG_AUTHPRIV); //LOG_USER
-		syslog(LOG_DEBUG,"%s",buf);
+		syslog(LOG_DEBUG,"%s",buf.c_str());
 		closelog();
 	}
 #endif
 
 #ifdef _DBLOGGING_
 	if(this->flags & DF_DB && tvLogConfig->db_enabled==0x01) {
-		dblog(log,"generic","system","system","%s",buf);
+		dblog(log,"generic","system","system","%s",buf.c_str());
 	}
 #endif
 }

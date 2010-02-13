@@ -1065,7 +1065,7 @@ namespace alc {
 		vaultDB->fetchNodes(&deletePlayer.ki, 1, &nodes, &nNodes);
 		if (nNodes != 1) throw txProtocolError(_WHERE("asked to remvoe non-existing player"));
 		
-		if (deletePlayer.accessLevel <= AcAdmin || strcmp((*nodes)->lStr2.c_str(), alcGetStrUid(deletePlayer.uid)) == 0) {
+		if (deletePlayer.accessLevel <= AcAdmin || ((*nodes)->lStr2 == alcGetStrUid(deletePlayer.uid))) {
 			U32 *table;
 			int tableSize;
 			// find the  info node
