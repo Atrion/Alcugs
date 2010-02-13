@@ -48,7 +48,7 @@
 namespace alc {
 
 	////IMPLEMENTATION
-	tUnetLobbyServerBase::tUnetLobbyServerBase(Byte whoami) : tUnetServerBase(whoami), authedTimeout(30) /* 30seconds for authenticated clients */, lvault(NULL,0,0)
+	tUnetLobbyServerBase::tUnetLobbyServerBase(Byte whoami) : tUnetServerBase(whoami), authedTimeout(30) /* 30seconds for authenticated clients */
 	{
 		memset(serverGuid, 0, 8);
 		serverName[0] = 0;
@@ -61,7 +61,7 @@ namespace alc {
 		tConfig *cfg = alcGetMain()->config();
 		tString var = cfg->getVar("vault.html.log");
 		if (var.isEmpty() || var.asByte()) { // logging enabled per default
-			lvault.open("vault.html", 2, DF_HTML);
+			lvault.open("vault.html", DF_HTML);
 			var = cfg->getVar("vault.html.log.short");
 			vaultLogShort = (var.isEmpty() || var.asByte()); // per default, it *is* short
 		}

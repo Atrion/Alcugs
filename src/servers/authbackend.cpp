@@ -64,7 +64,7 @@ namespace alc {
 		UNIQUE KEY `name` (`name`)\
 	) TYPE=MyISAM;";
 
-	tAuthBackend::tAuthBackend(void) : log(NULL,0,0)
+	tAuthBackend::tAuthBackend(void)
 	{
 		sql = NULL;
 	
@@ -83,7 +83,7 @@ namespace alc {
 		
 		var = cfg->getVar("auth.log");
 		if (var.isEmpty() || var.asByte()) { // logging enabled per default
-			log.open("auth.log", 4, 0);
+			log.open("auth.log");
 		}
 
 		prepare(); // initialize the database

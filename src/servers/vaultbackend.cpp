@@ -43,7 +43,7 @@ namespace alc {
 	static const char *defaultWelcomeMsgText = "Shorah b'shehmtee, this Shard is running the Alcugs server software.\nThanks for your support!\n\nWelcome to the new adventure, feel free to explore Er'cana or any other age. Be careful if you see new books, some explorers have found some Kortee'nea and other ancient technology in a secret room in Kirel DRC neighborhood, and they are starting to learn the art of writting.\n";
 
 	////IMPLEMENTATION
-	tVaultBackend::tVaultBackend(tUnet *net) : vaultDB(NULL), log(NULL,0,0), logHtml(NULL,0,0), net(net)
+	tVaultBackend::tVaultBackend(tUnet *net) : vaultDB(NULL), net(net)
 	{ }
 	
 	tVaultBackend::~tVaultBackend(void)
@@ -59,13 +59,13 @@ namespace alc {
 		bool found;
 		tString var = cfg->getVar("vault.log");
 		if (var.isEmpty() || var.asByte()) { // logging enabled per default
-			log.open("vault.log", 4, 0);
+			log.open("vault.log");
 		}
 		else
 			log.close();
 		var = cfg->getVar("vault.html.log");
 		if (var.isEmpty() || var.asByte()) { // logging enabled per default
-			logHtml.open("vault.html", 2, DF_HTML);
+			logHtml.open("vault.html", DF_HTML);
 			var = cfg->getVar("vault.html.log.short");
 			shortHtml = (var.isEmpty() || var.asByte()); // per default, it *is* short
 		}

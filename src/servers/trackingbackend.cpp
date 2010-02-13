@@ -93,7 +93,7 @@ namespace alc {
 	}
 	
 	//// tTrackingBackend
-	tTrackingBackend::tTrackingBackend(tUnetBase *net, tNetSessionList *servers, const char *host, U16 port) : log(NULL,0,0)
+	tTrackingBackend::tTrackingBackend(tUnetBase *net, tNetSessionList *servers, const char *host, U16 port)
 	{
 		this->servers = servers;
 		this->net = net;
@@ -115,7 +115,7 @@ namespace alc {
 		
 		tString var = cfg->getVar("tracking.log");
 		if (var.isEmpty() || var.asByte()) { // logging enabled per default
-			log.open("tracking.log", 4, 0);
+			log.open("tracking.log");
 			log.log("Tracking driver started (%s)\n\n", __U_TRACKINGBACKEND_ID);
 			log.flush();
 		}

@@ -118,10 +118,10 @@ void tUnet::init() {
 	receiveAhead=50; // Receive up to 50 not-yet acceptable packets "in the future"
 
 	//logs
-	log=new tLog(NULL,0,0);
-	err=new tLog(NULL,0,0);
-	ack=new tLog(NULL,0,0);
-	sec=new tLog(NULL,0,0);
+	log=new tLog;
+	err=new tLog;
+	ack=new tLog;
+	sec=new tLog;
 	
 	idle=false;
 
@@ -200,11 +200,10 @@ void tUnet::openLogfiles() {
 	if(this->flags & UNET_ELOG) {
 		if(log != alcGetMain()->std()) delete log;
 		if(this->flags & UNET_LQUIET) {
-			this->log=new tLog;
 			if(this->flags & UNET_FLOG) {
-				this->log->open("urunet.log",2,0);
+				this->log = new tLog("urunet.log");
 			} else {
-				this->log->open(NULL,2,0);
+				this->log = new tLog;
 			}
 		} else {
 			this->log=alcGetMain()->std();
@@ -212,27 +211,26 @@ void tUnet::openLogfiles() {
 		
 		if(err != alcGetMain()->err()) delete err;
 		if(this->flags & UNET_LQUIET) {
-			this->err=new tLog; //Leaks
 			if(this->flags & UNET_FLOG) {
-				this->err->open("uneterr.log",2,0);
+				this->err = new tLog("uneterr.log");
 			} else {
-				this->err->open(NULL,2,0);
+				this->err = new tLog;
 			}
 		} else {
 			this->err=alcGetMain()->err();
 		}
 
 		if((this->flags & UNET_FLOG) && (this->flags & UNET_ACKLOG)) {
-			this->ack->open("ack.html",4,DF_HTML);
+			this->ack->open("ack.html",DF_HTML);
 		} else {
-			this->ack->open(NULL,4,DF_HTML);
+			this->ack->close();
 		}
 		
 
 		if((this->flags & UNET_FLOG) && !(this->flags & UNET_DLSEC)) {
-			this->sec->open("access.log",4,0);
+			this->sec->open("access.log");
 		} else {
-			this->sec->open(NULL,4,0);
+			this->sec->close();
 		}
 	}
 }

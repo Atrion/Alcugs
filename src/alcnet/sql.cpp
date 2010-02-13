@@ -65,11 +65,11 @@ tSQL::tSQL(const char *host, U16 port, const char *username, const char *passwor
 	strcpy(this->dbname, dbname);
 	
 	// initialize logging
-	sql = new tLog(NULL,0,0);
+	sql = new tLog;
 	if (flags & SQL_LOG) {
 		err = alcGetMain()->err();
 		if (flags & SQL_LOGQ) {
-			sql->open("sql.log", 4, 0);
+			sql->open("sql.log");
 			sql->log("MySQL driver loaded (%s)\n", __U_SQL_ID);
 			sql->print(" flags: %04X, host: %s, port: %d, user: %s, dbname: %s, using password: ", this->flags, this->host, this->port, this->username, this->dbname);
 			if (password != NULL) { sql->print("yes\n"); }
@@ -79,7 +79,7 @@ tSQL::tSQL(const char *host, U16 port, const char *username, const char *passwor
 		}
 	}
 	else
-		err = new tLog(NULL,0,0);
+		err = new tLog;
 }
 
 tSQL::~tSQL(void)

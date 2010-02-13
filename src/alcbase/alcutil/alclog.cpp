@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2008  The Alcugs Server Team                           *
+*    Copyright (C) 2004-2010  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -47,18 +47,12 @@ namespace alc {
 
 typedef struct {
 	//files
-	Byte silent; //!< set what to print to the console
+	Byte verboseLevel; //!< set what to print to the console
 	//silent
-	// 0 - print all, ignoring if them have stdout or stderr flags, html are not print.
-	// 1 - print only msgs with stderr or stdout flags.
-	// 2 - print only msgs with stderr flags
-	// 3 - don't print nothing
-
-	//global verbose level vs silent
-	//  0 - 3
-	//  1 - 2
-	//  2 - 1
-	// >3 - 0
+	// 3 - print all, ignoring if them have stdout or stderr flags, html are not print.
+	// 2 - print only msgs with stderr or stdout flags.
+	// 1 - print only msgs with stderr flags
+	// 0 - don't print nothing
 
 	int n_files2rotate; //!< set number the files to rotate
 												/* 0 - logging disabled
@@ -68,8 +62,6 @@ typedef struct {
 	tString * path; //!<path to the log directory
 	int rotate_size; //!< maxium size of a file, if reached, file will be rotated
 	mode_t creation_mask; //!< default permissions mask
-	char level; //!< current logging level (0 - disabled, 1 minimal, 6 huge) FIXME - this is never actually used, get rid of it
-	U16 log_flags; //!< default flags assigned to a log file on creation
 	//build vars
 	char build[100]; //!< build
 	//track logs
@@ -100,13 +92,11 @@ static void alcLogSetDefaults() {
 	}
 	if(tvLogConfig!=NULL) {
 		//memset(tvLogConfig,0,sizeof(tvLogConfig));
-		tvLogConfig->silent=0;
+		tvLogConfig->verboseLevel=3;
 		tvLogConfig->n_files2rotate=5;
 		tvLogConfig->path=new tString("log/");
 		tvLogConfig->rotate_size=2*1024*1024;
 		tvLogConfig->creation_mask=00750;
-		tvLogConfig->level=6;
-		tvLogConfig->log_flags= DF_DEFSTDOUT | DF_STAMP | DF_IP; // | DF_ANOY;
 		alcStrncpy(tvLogConfig->build, "Alcugs logging system", sizeof(tvLogConfig->build)-1);
 		//track logs
 		tvLogConfig->n_logs=0;
@@ -133,10 +123,10 @@ void alcLogSetLogPath(const tString & path) {
 	*(tvLogConfig->path)=path;
 }
 
-void alcLogSetLogLevel(Byte level) {
+void alcLogSetLogVerboseLevel(Byte level) {
 	if(tvLogConfig!=NULL) {
 		if(level>3) level=3;
-		tvLogConfig->silent= 3-level;
+		tvLogConfig->verboseLevel = level;
 	}
 }
 
@@ -189,16 +179,15 @@ static char * alcHtmlGenerateHead(char * title,char * powered) {
  flags are detailed in the stdebug.h file
  \returns NULL if failed
 */
-tLog::tLog(const char * name, char level, U16 flags) {
+tLog::tLog(const char * name, U16 flags) {
 	this->name=NULL;
 	this->fullpath=NULL;
 	this->dsc=NULL;
 	this->bdsc=NULL;
-	this->level=0;
 	this->flags = 0;
 	this->facility = LOG_USER;
 	this->priority = LOG_DEBUG;
-	tLog::open(name,level,flags);
+	tLog::open(name,flags);
 }
 
 tLog::~tLog() {
@@ -206,118 +195,104 @@ tLog::~tLog() {
 	this->close();
 }
 
-void tLog::open(const char * name, char level, U16 flags) {
+void tLog::open(const char * name, U16 flags) {
 	char * path=NULL;
 	char * croak=NULL;
 	int i,e,size;
 
-	int f,found=-1;
-	
+	int f;
 	
 	if(this->flags & DF_OPEN) close();
-
-	for(f=0; f<tvLogConfig->n_logs; f++) {
-		if(tvLogConfig->logs[f]==NULL) {
-			found=f;
-			break;
-		}
-	}
 	
-	this->flags = tvLogConfig->log_flags | flags;
-	this->level = level;
+	this->flags = flags;
 
-	if(name!=NULL) {
+	if(name!=NULL && tvLogConfig->n_files2rotate > 0) {
 		assert(this->name==NULL);
 		this->name = static_cast<char *>(malloc(sizeof(char) * (strlen(name) + 1)));
 		if(this->name==NULL) { throw txNoMem(_WHERE("")); }
 		strcpy(this->name,name);
 		DBG(5,"cont...\n");
 
-		FILE * def=NULL;
-		if(this->flags & DF_DEFSTDOUT) def=stdout;
+		size=strlen(name) + tvLogConfig->path->size();
+		DBG(6,"size is:%i\n",size);
 
-		if(tvLogConfig->n_files2rotate<=0 || level==0) {
-			this->dsc=def;
+		croak=static_cast<char *>(malloc(sizeof(char) * (size+1+5)));
+		if(croak==NULL) throw txNoMem(_WHERE(""));
+		DBG(6,"im here\n");
+		path=static_cast<char *>(malloc(sizeof(char) * (size+1)));
+		if(path==NULL) { free(croak); throw txNoMem(_WHERE("")); }
+		DBG(7,"here too\n");
+
+		if(name[0]!='/') {
+			strcpy(path,tvLogConfig->path->c_str());
 		} else {
-			size=strlen(name) + tvLogConfig->path->size();
-			DBG(6,"size is:%i\n",size);
+			strcpy(path,"");
+			size=strlen(name);
+		}
+		strcat(path,name);
 
-			croak=static_cast<char *>(malloc(sizeof(char) * (size+1+5)));
-			if(croak==NULL) throw txNoMem(_WHERE(""));
-			DBG(6,"im here\n");
-			path=static_cast<char *>(malloc(sizeof(char) * (size+1)));
-			if(path==NULL) { free(croak); throw txNoMem(_WHERE("")); }
-			DBG(7,"here too\n");
+		DBG(5,"path is:%s\n",path);
 
-			if(name[0]!='/') {
-				strcpy(path,tvLogConfig->path->c_str());
-			} else {
-				strcpy(path,"");
-				size=strlen(name);
-			}
-			strcat(path,name);
-
-			DBG(5,"path is:%s\n",path);
-
-			e=0;
-			for(i=0; i<size; i++) {
-				croak[e]=path[i];
-				e++;
-				if(croak[e-1]=='/' || croak[e-1]=='\\') { // || croak[e-1]==':') {
-					croak[e]='\0';
-					DBG(6,"mkdir %s\n",croak);
-					mkdir(croak,tvLogConfig->creation_mask);
-					//e=0;
-				}
-			}
-
-			free(croak);
-
-			//rotation
-			if(!(this->flags & DF_APPEND) || (this->flags & DF_HTML)) {
-				this->rotate(true);
-			} else {
-				this->rotate();
-			}
-			
-			// preserve the path
-			free(fullpath);
-			fullpath=static_cast<char *>(malloc(sizeof(char) * (strlen(path)+1)));
-			if (!fullpath) throw txNoMem(_WHERE(""));
-			strcpy(fullpath, path);
-			free(path);
-
-			this->dsc=fopen(fullpath,"a");
-			if(this->dsc==NULL) {
-				DBG(5,"ERR: Fatal - Cannot Open %s to write ",fullpath);
-				ERR(6,"returned error");
-				this->dsc=def; //default standard output
-				if(def==stdout) {
-					DBG(6,"DBG: Sending debug messages to the stdout instead of %s\n",fullpath);
-				}
-			} else {
-				this->flags |= DF_OPEN;
-				if(this->flags & DF_HTML) {
-					fprintf(this->dsc,"%s",alcHtmlGenerateHead(this->name,tvLogConfig->build));
-				}
+		e=0;
+		for(i=0; i<size; i++) {
+			croak[e]=path[i];
+			e++;
+			if(croak[e-1]=='/' || croak[e-1]=='\\') { // || croak[e-1]==':') {
+				croak[e]='\0';
+				DBG(6,"mkdir %s\n",croak);
+				mkdir(croak,tvLogConfig->creation_mask);
+				//e=0;
 			}
 		}
-	}
-	if (!(this->flags & DF_OPEN)) return;
-	if(found==-1) {
-		tvLogConfig->n_logs++;
-		tLog ** aux=NULL;
-		aux=static_cast<tLog **>(realloc(tvLogConfig->logs,sizeof(tLog *) * tvLogConfig->n_logs));
-		if(aux==NULL) {
-			fprintf(stderr,"Failed allocating memory!\n");
-			throw txNoMem(_WHERE(""));
+
+		free(croak);
+
+		//rotation
+		if(!(this->flags & DF_APPEND) || (this->flags & DF_HTML)) {
+			this->rotate(true);
 		} else {
-			tvLogConfig->logs=aux;
-			tvLogConfig->logs[tvLogConfig->n_logs-1]=this;
+			this->rotate();
 		}
-	} else {
-		tvLogConfig->logs[found]=this;
+		
+		// preserve the path
+		free(fullpath);
+		fullpath=static_cast<char *>(malloc(sizeof(char) * (strlen(path)+1)));
+		if (!fullpath) throw txNoMem(_WHERE(""));
+		strcpy(fullpath, path);
+		free(path);
+
+		this->dsc=fopen(fullpath,"a");
+		if(this->dsc==NULL)
+			throw txNotFound(_WHERE("Can not open %s", fullpath));
+		this->flags |= DF_OPEN;
+		if(this->flags & DF_HTML) {
+			fprintf(this->dsc,"%s",alcHtmlGenerateHead(this->name,tvLogConfig->build));
+		}
+		
+		int found = -1;
+		for(f=0; f<tvLogConfig->n_logs; f++) {
+			if(tvLogConfig->logs[f]==NULL) {
+				found=f;
+				break;
+			}
+		}
+		if(found==-1) {
+			tvLogConfig->n_logs++;
+			tLog ** aux=NULL;
+			aux=static_cast<tLog **>(realloc(tvLogConfig->logs,sizeof(tLog *) * tvLogConfig->n_logs));
+			if(aux==NULL) {
+				fprintf(stderr,"Failed allocating memory!\n");
+				throw txNoMem(_WHERE(""));
+			} else {
+				tvLogConfig->logs=aux;
+				tvLogConfig->logs[tvLogConfig->n_logs-1]=this;
+			}
+		} else {
+			tvLogConfig->logs[found]=this;
+		}
 	}
+	else
+		this->dsc = NULL;
 }
 
 void tLog::rotate(bool force) {
@@ -336,7 +311,7 @@ void tLog::rotate(bool force) {
 
 	DBG(5,"2..\n");
 	
-	if(this->name==NULL || tvLogConfig->n_files2rotate<=0 || this->level==0) {
+	if(this->name==NULL || tvLogConfig->n_files2rotate<=0) {
 		return;
 	}
 	
@@ -472,22 +447,19 @@ void tLog::print(const char * msg, ...) const {
 	va_start(ap,msg);
 	va_start(ap2,msg);
 
-	if(tvLogConfig->level>=this->level && this->level!=0) {
+	//first print to the file
+	if(tvLogConfig->n_files2rotate && this->dsc!=NULL && this->dsc!=stdout && this->dsc!=stderr) {
+		vfprintf(this->dsc,msg,ap);
+	}
 
-		//first print to the file
-		if(tvLogConfig->n_files2rotate && this->dsc!=NULL && this->dsc!=stdout && this->dsc!=stderr) {
-			vfprintf(this->dsc,msg,ap);
-		}
-
-		//then print to the specific device
-		if(!(this->flags & DF_HTML) && !(this->flags & DF_NODUMP)) {
-			if(tvLogConfig->silent<=2 && (this->flags & DF_STDERR)) {
-				vfprintf(stderr,msg,ap2);     //stderr messages
-			} else if(tvLogConfig->silent<=1 && (this->flags & DF_STDOUT)) {
-				vfprintf(stdout,msg,ap2);      //stdout messages
-			} else if(tvLogConfig->silent==0) {
-				vfprintf(stdout,msg,ap2);      //print all (muhahahaha)
-			}
+	//then print to the specific device
+	if(!(this->flags & DF_HTML)) {
+		if(tvLogConfig->verboseLevel>=1 && (this->flags & DF_STDERR)) {
+			vfprintf(stderr,msg,ap2);     //stderr messages
+		} else if(tvLogConfig->verboseLevel>=2 && (this->flags & DF_STDOUT)) {
+			vfprintf(stdout,msg,ap2);      //stdout messages
+		} else if(tvLogConfig->verboseLevel==3) {
+			vfprintf(stdout,msg,ap2);      //print all (muhahahaha)
 		}
 	}
 
@@ -502,12 +474,11 @@ void tLog::print(const char * msg, ...) const {
 */
 void tLog::stamp() {
 	static Byte count=0;
-	if(!this->level) return;
 
 	count++;
 	if(count>250) { count=0; this->rotate(false); }
 
-	if(!(this->flags & DF_STAMP)) { return; }
+	if (this->flags & DF_NOSTAMP) { return; }
 
 	this->print("(%s)[%d] ",alcGetStrTime(),alcGetSelfThreadId());
 }
@@ -521,57 +492,32 @@ void tLog::log(const char * msg, ...) {
 	va_list ap;
 	static char buf[2*1024];
 
-	if(tvLogConfig->level>=this->level && this->level!=0) {
+	va_start(ap,msg);
+	vsnprintf(buf,sizeof(buf),msg,ap);
+	va_end(ap);
 
-		va_start(ap,msg);
-		vsnprintf(buf,sizeof(buf),msg,ap);
-		va_end(ap);
-
-		this->stamp();
-		this->print("%s",buf);
+	this->stamp();
+	this->print("%s",buf);
 
 #ifdef __WIN32__
-	// implement here, windoze based syslog logging, if it has something similar.
-		if(this->flags & DF_ANOY) {
-			MessageBox(NULL,buf,tvLogConfig->syslogname,0);
-		}
+// implement here, windoze based syslog logging, if it has something similar.
+	if(this->flags & DF_ANOY) {
+		MessageBox(NULL,buf,tvLogConfig->syslogname,0);
+	}
 #elif 0
-		if(this->flags & DF_SYSLOG && tvLogConfig->syslog_enabled==0x01) {
-			//log to the syslog
-			openlog(tvLogConfig->syslogname, LOG_NDELAY | LOG_PID, LOG_AUTHPRIV); //LOG_USER
-			syslog(LOG_DEBUG,"%s",buf);
-			closelog();
-		}
+	if(this->flags & DF_SYSLOG && tvLogConfig->syslog_enabled==0x01) {
+		//log to the syslog
+		openlog(tvLogConfig->syslogname, LOG_NDELAY | LOG_PID, LOG_AUTHPRIV); //LOG_USER
+		syslog(LOG_DEBUG,"%s",buf);
+		closelog();
+	}
 #endif
 
 #ifdef _DBLOGGING_
-		if(this->flags & DF_DB && tvLogConfig->db_enabled==0x01) {
-			dblog(log,"generic","system","system","%s",buf);
-		}
+	if(this->flags & DF_DB && tvLogConfig->db_enabled==0x01) {
+		dblog(log,"generic","system","system","%s",buf);
+	}
 #endif
-
-	}
-}
-
-//log with another loging level
-void tLog::logl(char level,const char * msg, ...) {
-	va_list ap;
-	static char buf[1024];
-	char tmp;
-
-	if(tvLogConfig->level>=level && this->level!=0) {
-
-		tmp=this->level;
-		this->level=level;
-
-		va_start(ap,msg);
-		vsnprintf(buf,sizeof(buf),msg,ap);
-		va_end(ap);
-
-		this->log("%s",buf);
-
-		this->level=tmp;
-	}
 }
 
 #ifdef WHEN_THE_COWS_FLY_AND_THE_FROGS_HAVE_HAIR
@@ -597,19 +543,18 @@ void dblog(st_log * log, char * type, char * user, char * location, char * msg, 
 #endif
 
 /**
-	flush all the streams
+	flush all the streams we write to
 */
 void tLog::flush() const {
 	if(this->dsc!=NULL) {
 		fflush(this->dsc);
 	}
-	if(this->flags & DF_STDERR && tvLogConfig->silent<=2) {  fflush(stderr); }
-	if((this->flags & DF_STDOUT && tvLogConfig->silent<=1) || tvLogConfig->silent==0) {  fflush(stdout); }
+	if(this->flags & DF_STDERR && tvLogConfig->verboseLevel>=1) {  fflush(stderr); }
+	if((this->flags & DF_STDOUT && tvLogConfig->verboseLevel>=2) || tvLogConfig->verboseLevel==3) {  fflush(stdout); }
 }
 
 
 void tLog::dumpbuf(tBBuf & t, U32 n, U32 e, Byte how) const {
-	if(!this->level) return;
 	if(n==0) n=t.size();
 	U32 where=t.tell();
 	t.rewind();
@@ -635,8 +580,6 @@ dsc = File descriptor where the packet will be dumped
  --------------------------------------------------------------*/
 void tLog::dumpbuf(const Byte * buf, U32 n, U32 e, Byte how) const {
 	unsigned int i=0,j=0,k=0;
-
-	if(!this->level) return;
 
 	if(n>2048) {
 		this->print("MESSAGE of %i bytes TOO BIG TO BE DUMPED!! cutting it\n",n);
@@ -749,8 +692,10 @@ void tLog::logerr(const char *msg) {
 
 bool tLog::doesPrint(void) const
 {
-	return level != 0 && (dsc!=NULL || (!(flags & DF_HTML) && !(flags & DF_NODUMP)));
-	// if the descriptor is set or neither of these flags is set, then the log actually prints something
+	if(this->dsc!=NULL) return true;
+	if(this->flags & DF_STDERR && tvLogConfig->verboseLevel>=1) return true;
+	if((this->flags & DF_STDOUT && tvLogConfig->verboseLevel>=2) || tvLogConfig->verboseLevel==3) return true;
+	return false;
 }
 
 const char *tLog::getDir(void) const // FIXME: what about tString::dirname?

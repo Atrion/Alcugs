@@ -50,7 +50,7 @@
 namespace alc {
 
 	//// tAgeStateManager
-	tAgeStateManager::tAgeStateManager(tUnetGameServer *net, tAgeInfo *age) : net(net), age(age), log(NULL,0,0), initialized(false)
+	tAgeStateManager::tAgeStateManager(tUnetGameServer *net, tAgeInfo *age) : net(net), age(age), initialized(false)
 	{}
 	
 	tAgeStateManager::~tAgeStateManager(void)
@@ -73,7 +73,7 @@ namespace alc {
 		tString var = cfg->getVar("agestate.log");
 		logDetailed = false;
 		if (var.isEmpty() || var.asByte()) { // logging enabled per default
-			log.open("agestate.log", 4, 0);
+			log.open("agestate.log");
 			var = cfg->getVar("agestate.log.detailed");
 			if (!var.isEmpty() && var.asByte()) // detailed logging disabled per default
 				logDetailed = true;
