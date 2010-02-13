@@ -32,7 +32,6 @@
 
 namespace alc {
 
-#define DF_OPEN      0x0001
 #define DF_HTML      0x0002
 #define DF_STDOUT    0x0008
 #define DF_STDERR    0x0010
@@ -122,9 +121,11 @@ private:
 
 class tLog {
 public:
-	tLog(const char * name=NULL,U16 flags=0);
+	tLog(const tString &name,U16 newFlags=0);
+	tLog(U16 newFlags=0);
 	~tLog();
-	void open(const char * name=NULL,U16 flags=0);
+	void open(const tString &name,U16 newFlags=0);
+	inline void open(U16 newFlags=0) { open(tString(), newFlags); }
 	void rotate(bool force=false);
 	void close(bool silent=false);
 
@@ -144,16 +145,15 @@ public:
 	tString getDir(void) const; //!< return directory of log file, or default directory if closed
 
 private:
+	void init(void);
 	void printHtmlHead(const tString &generator);
 	
 	tLogConfig *tvLogConfig;
-	char * name;
-	char *fullpath;
+	tString fullpath;
 	FILE * dsc;
-	tBBuf * bdsc;
 	U16 flags; //see above (DF_*)
-	int facility; //this params are passed to syslog
-	int priority; //this params are passed to syslog
+	//int facility; //this params are passed to syslog
+	//int priority; //this params are passed to syslog
 	Byte count;
 	
 	FORBID_CLASS_COPY(tLog)

@@ -95,18 +95,23 @@ void tLogConfig::forceCloseAllLogs(void) {
  Opens a log file to write,
  flags are detailed in the alclog.h file
 */
-tLog::tLog(const char * name, U16 flags) {
+tLog::tLog(const tString &name, U16 newFlags) {
+	init();
+	open(name,newFlags);
+}
+tLog::tLog(U16 newFlags) {
+	init();
+	open(newFlags);
+}
+void tLog::init(void)
+{
 	tvLogConfig = &(alcGetMain()->logCfg);
 	tvLogConfig->addLog(this);
-	this->name=NULL;
-	this->fullpath=NULL;
-	this->dsc=NULL;
-	this->bdsc=NULL;
-	this->flags = 0;
-	this->facility = LOG_USER;
-	this->priority = LOG_DEBUG;
+	dsc=NULL;
+	flags = 0;
+	//this->facility = LOG_USER;
+	//this->priority = LOG_DEBUG;
 	count = 0;
-	tLog::open(name,flags);
 }
 
 tLog::~tLog() {
@@ -114,212 +119,117 @@ tLog::~tLog() {
 	tvLogConfig->removeLog(this);
 }
 
-void tLog::open(const char * name, U16 flags) {
-	char * path=NULL;
-	char * croak=NULL;
-	int i,e,size;
-
-	if(this->flags & DF_OPEN) close();
+void tLog::open(const tString &name, U16 newFlags) {
+	if(dsc) close();
 	count = 0;
-	this->flags = flags;
+	flags = newFlags;
 
-	if(name!=NULL && tvLogConfig->n_files2rotate > 0) {
-		assert(this->name==NULL);
-		this->name = static_cast<char *>(malloc(sizeof(char) * (strlen(name) + 1)));
-		if(this->name==NULL) { throw txNoMem(_WHERE("")); }
-		strcpy(this->name,name);
-		DBG(5,"cont...\n");
-
-		size=strlen(name) + tvLogConfig->path.size();
-		DBG(6,"size is:%i\n",size);
-
-		croak=static_cast<char *>(malloc(sizeof(char) * (size+1+5)));
-		if(croak==NULL) throw txNoMem(_WHERE(""));
-		DBG(6,"im here\n");
-		path=static_cast<char *>(malloc(sizeof(char) * (size+1)));
-		if(path==NULL) { free(croak); throw txNoMem(_WHERE("")); }
-		DBG(7,"here too\n");
-
-		if(name[0]!='/') {
-			strcpy(path,tvLogConfig->path.c_str());
+	if(!name.isEmpty() && tvLogConfig->n_files2rotate > 0) {
+		if(name.getAt(0)!='/') {
+			fullpath = tvLogConfig->path + name; // a relative path, prepend the log directory
 		} else {
-			strcpy(path,"");
-			size=strlen(name);
+			fullpath = name;
 		}
-		strcat(path,name);
-
-		DBG(5,"path is:%s\n",path);
-
-		e=0;
-		for(i=0; i<size; i++) {
-			croak[e]=path[i];
-			e++;
-			if(croak[e-1]=='/' || croak[e-1]=='\\') { // || croak[e-1]==':') {
-				croak[e]='\0';
-				DBG(6,"mkdir %s\n",croak);
-				mkdir(croak,tvLogConfig->creation_mask);
-				//e=0;
-			}
-		}
-
-		free(croak);
+		alcMkdir(fullpath.dirname(), tvLogConfig->creation_mask);
+		DBG(5, "Full path is %s\n", fullpath.c_str());
 
 		//rotation
-		if(!(this->flags & DF_APPEND) || (this->flags & DF_HTML)) {
-			this->rotate(true);
+		if(!(flags & DF_APPEND) || (flags & DF_HTML)) {
+			rotate(true);
 		} else {
-			this->rotate();
+			rotate();
 		}
-		
-		// preserve the path
-		free(fullpath);
-		fullpath=static_cast<char *>(malloc(sizeof(char) * (strlen(path)+1)));
-		if (!fullpath) throw txNoMem(_WHERE(""));
-		strcpy(fullpath, path);
-		free(path);
 
-		this->dsc=fopen(fullpath,"a");
-		if(this->dsc==NULL)
-			throw txNotFound(_WHERE("Can not open %s", fullpath));
-		this->flags |= DF_OPEN;
-		if(this->flags & DF_HTML) {
+		dsc=fopen(fullpath.c_str(),"a");
+		if(dsc==NULL)
+			throw txNotFound(_WHERE("Can not open %s", fullpath.c_str()));
+		if(flags & DF_HTML) {
 			printHtmlHead(tvLogConfig->build);
 		}
 	}
-	else
-		this->dsc = NULL;
+	else {
+		fullpath = "";
+		dsc = NULL;
+	}
 }
 
 void tLog::rotate(bool force) {
-
-	char * path=NULL;
-	char * croak=NULL;
-	char * croak2=NULL;
-	char * gustavo=NULL;
-	U32 i,size;
-
 	struct stat file_stats;
 	
-	DBG(5,"init..\n");
+	if(fullpath.isEmpty() || tvLogConfig->n_files2rotate<=0) {
+		return;
+	}
 
-	//if(!(this->flags & DF_OPEN)) return 0;
-
-	DBG(5,"2..\n");
-	
-	if(this->name==NULL || tvLogConfig->n_files2rotate<=0) {
+	if(stat(fullpath.c_str(),&file_stats)!=0) {
+		DBG(6,"file not found, cannot rotate!\n");
+		return;
+	}
+	if(file_stats.st_size < tvLogConfig->rotate_size && !force) {
 		return;
 	}
 	
-	DBG(5,"3..\n");
-
-	size=strlen(this->name) + tvLogConfig->path.size();
-
-	croak=static_cast<char *>(malloc(sizeof(char) * (size+1+5)));
-	if(croak==NULL) return;
-	path=static_cast<char *>(malloc(sizeof(char) * (size+1)));
-	if(path==NULL) { free(croak); return; }
-	croak2=static_cast<char *>(malloc(sizeof(char) * (size+1+5)));
-	if(croak2==NULL) { free(path); free(croak); return; }
-	gustavo=static_cast<char *>(malloc(sizeof(char) * (size+1+5)));
-	if(gustavo==NULL) { free(path); free(croak);
-		free(croak2); return; }
-
-	DBG(5,"4..\n");
-
-	if(this->name[0]!='/') {
-		strcpy(path,tvLogConfig->path.c_str());
-	} else {
-		strcpy(path,"");
+	// ok, go ahead and rotate
+	bool wasOpen = (dsc != NULL);
+	if(dsc!=NULL) {
+		DBG(5,"closing file %s to rotate...\n",fullpath.c_str());
+		if(flags & DF_HTML) {
+			fprintf(dsc,"</body></html>\n");
+		}
+		fclose(dsc);
+		dsc = NULL;
 	}
-	strcat(path,this->name);
 
-	DBG(5,"path is:%s\n",path);
-
-	if(stat(path,&file_stats)!=0) {
-		DBG(6,"file not found, cannot rotate!\n");
-	} else {
-
-		if(file_stats.st_size<tvLogConfig->rotate_size && !force) {
-			;
-		} else {
-
-			if(this->flags & DF_OPEN && this->dsc!=NULL && this->dsc!=stdout && this->dsc!=stderr) {
-				DBG(5,"closing file %s...\n",path);
-				if(this->flags & DF_HTML) {
-					fprintf(this->dsc,"</body></html>\n");
-				}
-				fclose(this->dsc);
-			}
-
-			//rotation
-			for(i=tvLogConfig->n_files2rotate; i>0; i--) {
-				snprintf(gustavo,size+1+5,"%s",path);
-				alcStripExt(gustavo);
-				if(i-1==0) {
-					snprintf(croak,size+1+5,"%s",path);
-				} else {
-					if(alcGetExt(path).size()!=0) {
-						snprintf(croak,size+1+5,"%s.%i.%s",gustavo,i-1,alcGetExt(path).c_str());
-					} else {
-						snprintf(croak,size+1+5,"%s.%i",gustavo,i-1);
-					}
-				}
-				if(alcGetExt(path).size()!=0) {
-					snprintf(croak2,size+1+5,"%s.%i.%s",gustavo,i,alcGetExt(path).c_str());
-				} else {
-					snprintf(croak2,size+1+5,"%s.%i",gustavo,i);
-				}
-				if(stat(croak,&file_stats)==0) {
-					if(i==tvLogConfig->n_files2rotate) {
-						DBG(5,"deleting %s\n",croak);
-						unlink(croak);
-					} else {
-						DBG(5,"rename from %s to %s\n",croak,croak2);
-						rename(croak, croak2);
-					}
-				}
-			}
-
-			if(this->flags & DF_OPEN) {
-				DBG(5,"opening file %s...\n",path);
-				this->dsc=fopen(path,"w");
-				if(this->dsc==NULL) {
-					this->flags=this->flags & ~DF_OPEN;
-					throw txBase(_WHERE("fopen error"));
-				} else {
-					if(this->flags & DF_HTML) {
-						printHtmlHead(tvLogConfig->build);
-					}
-				}
+	//rotation
+	tString prefix = alcStripExt(fullpath), suffix = alcGetExt(fullpath);
+	if (suffix.size()) suffix = "."+suffix;
+	for(U32 i=tvLogConfig->n_files2rotate; i>0; i--) {
+		tString oldName = prefix;
+		if(i-1 != 0) {
+			oldName.printf(".%i", i-1);
+		}
+		oldName = oldName + suffix;
+		
+		tString newName = prefix;
+		newName.printf(".%i", i);
+		newName = newName+suffix;
+		
+		if(stat(oldName.c_str(),&file_stats)==0) {
+			if(i==tvLogConfig->n_files2rotate) {
+				DBG(5,"deleting %s\n",oldName.c_str());
+				unlink(oldName.c_str());
+			} else {
+				DBG(5,"rename from %s to %s\n",oldName.c_str(),newName.c_str());
+				rename(oldName.c_str(), newName.c_str());
 			}
 		}
 	}
 
-	free(croak);
-	free(path);
-	free(croak2);
-	free(gustavo);
-
-	//return ret;
+	if(wasOpen) {
+		DBG(5,"opening file %s...\n",fullpath.c_str());
+		dsc=fopen(fullpath.c_str(),"w");
+		if(dsc==NULL) {
+			txBase(_WHERE("fopen error"));
+		} else {
+			if(flags & DF_HTML) {
+				printHtmlHead(tvLogConfig->build);
+			}
+		}
+	}
 }
 
 /**
 	Close the log file
 */
 void tLog::close(bool silent) {
-	if(this->name!=NULL) { DBG(1,"closing log %s...\n",this->name); }
-	if(this->dsc!=NULL && this->dsc!=stdout && this->dsc!=stderr) {
-		if(this->flags & DF_HTML && !silent) { // a silent close is used during forking - we must not write this line then
-			fprintf(this->dsc,"</body></html>\n");
+	if(dsc!=NULL) {
+		DBG(5,"closing file %s...\n",fullpath.c_str());
+		if(flags & DF_HTML && !silent) { // a silent close is used during forking - we must not write this line then
+			fprintf(dsc,"</body></html>\n");
 		}
-		fclose(this->dsc);
-		this->dsc=NULL;
+		fclose(dsc);
+		dsc=NULL;
 	}
-	free(this->name);
-	free(this->fullpath);
-	this->name=NULL;
-	this->fullpath=NULL;
-	this->flags=0;
+	flags=0;
 }
 
 
@@ -328,7 +238,7 @@ void tLog::printHtmlHead(const tString &generator) {
 <html><head>\n<title>%s</title>\n\
 <meta HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=iso-8859-1\">\n\
 <meta HTTP-EQUIV=\"Generator\" CONTENT=\"%s\">\n\
-</head>\n<body>" ,name, generator.c_str());
+</head>\n<body>" ,fullpath.c_str(), generator.c_str());
 }
 
 /**
@@ -591,7 +501,7 @@ bool tLog::doesPrint(void) const
 
 tString tLog::getDir(void) const
 {
-	if (!fullpath) return tvLogConfig->path;
+	if (!dsc) return tvLogConfig->path;
 	return tString(fullpath).dirname()+"/";
 }
 

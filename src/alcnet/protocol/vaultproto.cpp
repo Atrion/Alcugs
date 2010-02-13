@@ -851,7 +851,7 @@ namespace alc {
 			filename.printf("%s.%s.%d.%s.jpg", ageName.c_str(), str1.c_str(), index, alcGetStrTime(modTime).c_str());
 			filename = alcStrFiltered(filename); // don't trust user input
 			path = log->getDir() + "data/";
-			mkdir(path.c_str(), 00750); // make sure the path exists
+			alcMkdir(path, 00750); // make sure the path exists
 			path = path+filename;
 			// save the file
 			tFBuf file;
@@ -892,7 +892,7 @@ namespace alc {
 			filename.printf("%s.%s.%d.%s.%s", ageName.c_str(), str1.c_str(), index, alcGetStrTime(modTime).c_str(), suffix);
 			filename = alcStrFiltered(filename); // don't trust user input
 			path = log->getDir() + "data/";
-			mkdir(path.c_str(), 00750); // make sure the path exists
+			alcMkdir(path, 00750); // make sure the path exists
 			path = path+filename;
 			// save the file
 			tFBuf file;

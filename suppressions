@@ -1,21 +1,4 @@
 {
-   mysql init bug (?)
-   Memcheck:Addr4
-   obj:/lib/ld-2.9.so
-   obj:/lib/tls/i686/cmov/libc-2.9.so
-   obj:/lib/ld-2.9.so
-   fun:__libc_dlopen_mode
-   fun:__nss_lookup_function
-   obj:/lib/tls/i686/cmov/libc-2.9.so
-   fun:__nss_services_lookup2
-   fun:getservbyname_r
-   fun:getservbyname
-   fun:mysql_server_init
-   fun:mysql_init
-   fun:_ZN3alc4tSQL7connectEb
-}
-
-{
    not freed by msql_free for some reason (bug ?)
    Memcheck:Leak
    fun:malloc
@@ -24,6 +7,7 @@
    fun:init_client_errs
    fun:mysql_server_init
    fun:mysql_init
+   fun:_ZN3alc4tSQL7connectEb
 }
 {
    not freed by msql_free for some reason (bug ?)
@@ -35,6 +19,7 @@
    fun:get_charset_by_csname
    fun:mysql_init_character_set
    fun:mysql_real_connect
+   fun:_ZN3alc4tSQL7connectEb
 }
 
 {

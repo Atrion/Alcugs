@@ -49,8 +49,8 @@ namespace alc {
 	////IMPLEMENTATION
 	tPageInfo::tPageInfo(tConfigVal *val, int row)
 	{
-		tString name = val->getVal(0, row), number = val->getVal(1, row), conditionalLoad = val->getVal(2, row);
-		alcStrncpy(this->name, name.c_str(), sizeof(this->name)-1);
+		tString number = val->getVal(1, row), conditionalLoad = val->getVal(2, row);
+		name = val->getVal(0, row);
 		this->number = number.asU16();
 		if (conditionalLoad.isEmpty()) this->conditionalLoad = false;
 		else {
@@ -76,7 +76,7 @@ namespace alc {
 		return true;
 	}
 	
-	tAgeInfo::tAgeInfo(const char *file, bool loadPages)
+	tAgeInfo::tAgeInfo(const tString &file, bool loadPages)
 	{
 		// load age file dir
 		tConfig *cfg = alcGetMain()->config();
@@ -84,11 +84,10 @@ namespace alc {
 		if (dir.size() < 2) throw txBase(_WHERE("age directory is not defined"));
 		if (!dir.endsWith("/")) dir.writeStr("/");
 		// get age name from file name
-		alcStrncpy(name, file, sizeof(name)-1);
-		alcStripExt(name);
+		name = alcStripExt(file);
 		// open and decrypt file
 		tFBuf ageFile;
-		ageFile.open((dir + file + ".age").c_str(), "r");
+		ageFile.open((dir + name + ".age").c_str(), "r");
 		tWDYSBuf ageContent;
 		ageContent.put(ageFile);
 		ageContent.decrypt(/*mustBeWDYS*/false);

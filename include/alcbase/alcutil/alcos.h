@@ -42,7 +42,10 @@ namespace alc {
 tString alcGetExt(const tString & addr);
 
 /** Strips the extension from a filename */
-void alcStripExt(char * addr);
+tString alcStripExt(const tString &addr);
+
+/** creates a directory and its parent directories */
+void alcMkdir(const tString &path, mode_t mode);
 
 
 /** A Directory entry */
@@ -50,7 +53,7 @@ class tDirEntry {
 public:
 	tDirEntry();
 	~tDirEntry();
-	char * name;
+	tString name;
 	int entryType;
 	inline bool isDir(void) { return entryType == DT_DIR; }
 	inline bool isFile(void) { return entryType == DT_REG || entryType == DT_UNKNOWN; } // for some reasons, some Linux systems give DT_UNKNOWN
@@ -61,7 +64,7 @@ class tDirectory {
 public:
 	tDirectory();
 	~tDirectory();
-	void open(const char * path);
+	void open(const tString &path);
 	void close();
 	tDirEntry * getEntry();
 	void rewind();
@@ -69,7 +72,7 @@ private:
 	DIR *dir;
 	struct dirent *entry;
 	tDirEntry ent;
-	char path[512];
+	tString path;
 };
 
 } //End alc namespace

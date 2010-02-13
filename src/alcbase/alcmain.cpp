@@ -70,8 +70,8 @@ tAlcMain::tAlcMain(void)
 		born.setToNow();
 		
 		// open logfiles
-		stdLog = new tLog(NULL,DF_STDOUT);
-		errLog = new tLog(NULL,DF_STDERR);
+		stdLog = new tLog(DF_STDOUT);
+		errLog = new tLog(DF_STDERR);
 		
 		//init entropy
 		srandom(alcGetMicroseconds() + (alcGetTime() % 10000));
@@ -128,8 +128,8 @@ void tAlcMain::onApplyConfig() {
 		errLog->open("error.log",DF_STDERR);
 	}
 	else {
-		stdLog->open(NULL,DF_STDOUT);
-		errLog->open(NULL,DF_STDERR);
+		stdLog->open(DF_STDOUT);
+		errLog->open(DF_STDERR);
 	}
 	
 	// maybe dump settings
