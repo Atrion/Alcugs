@@ -197,7 +197,7 @@ namespace alc {
 	
 	const char *tvSpawnPoint::str(void)
 	{
-		static char dbg[256];
+		static char dbg[256]; // FIXME
 		snprintf(dbg, sizeof(dbg), "Title: %s, Name: %s, Camera Stack: %s", title.c_str(), name.c_str(), cameraStack.c_str());
 		return dbg;
 	}
@@ -850,7 +850,7 @@ namespace alc {
 			// get the file name
 			snprintf(filename, sizeof(filename), "%s.%s.%d.%s.jpg", ageName.c_str(), str1.c_str(), index, alcGetStrTime(modTime));
 			alcStrFilter(filename); // don't trust user input
-			alcStrncpy(path, log->getDir(), sizeof(path)-1);
+			alcStrncpy(path, log->getDir().c_str(), sizeof(path)-1);
 			strncat(path, "data/", sizeof(path)-strlen(path)-1);
 			mkdir(path, 00750); // make sure the path exists
 			strncat(path, filename, sizeof(path)-strlen(path)-1);
@@ -892,7 +892,7 @@ namespace alc {
 			// get the file name
 			snprintf(filename, sizeof(filename), "%s.%s.%d.%s.%s", ageName.c_str(), str1.c_str(), index, alcGetStrTime(modTime), suffix);
 			alcStrFilter(filename); // don't trust user input
-			alcStrncpy(path, log->getDir(), sizeof(path)-1);
+			alcStrncpy(path, log->getDir().c_str(), sizeof(path)-1);
 			strncat(path, "data/", sizeof(path)-strlen(path)-1);
 			mkdir(path, 00750); // make sure the path exists
 			strncat(path, filename, sizeof(path)-strlen(path)-1);
@@ -1233,7 +1233,7 @@ namespace alc {
 	
 	void tvMessage::print(tLog *log, bool clientToServer, tNetSession *client, bool shortLog, U32 ki)
 	{
-		static int count = 0;
+		static int count = 0; // FIXME
 		if (!log->doesPrint()) return; // don't do anything if log is disabled
 		// rotation check
 		++count;

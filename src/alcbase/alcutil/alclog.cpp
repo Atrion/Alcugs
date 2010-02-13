@@ -105,6 +105,7 @@ tLog::tLog(const char * name, U16 flags) {
 	this->flags = 0;
 	this->facility = LOG_USER;
 	this->priority = LOG_DEBUG;
+	count = 0;
 	tLog::open(name,flags);
 }
 
@@ -119,7 +120,7 @@ void tLog::open(const char * name, U16 flags) {
 	int i,e,size;
 
 	if(this->flags & DF_OPEN) close();
-	
+	count = 0;
 	this->flags = flags;
 
 	if(name!=NULL && tvLogConfig->n_files2rotate > 0) {
@@ -367,9 +368,7 @@ void tLog::print(const char * msg, ...) const {
 	(the rotation check is done, every 250 calls to this function)
 */
 void tLog::stamp() {
-	static Byte count=0;
-
-	count++;
+	++count;
 	if(count>250) { count=0; this->rotate(false); }
 
 	if (this->flags & DF_NOSTAMP) { return; }
@@ -384,7 +383,7 @@ void tLog::stamp() {
 */
 void tLog::log(const char * msg, ...) {
 	va_list ap;
-	static char buf[2*1024];
+	static char buf[2*1024]; // FIXME
 
 	va_start(ap,msg);
 	vsnprintf(buf,sizeof(buf),msg,ap);
@@ -576,10 +575,7 @@ void tLog::nl() const {
 	this->print("\n");
 }
 
-/**
-error logging
-*/
-void tLog::logerr(const char *msg) {
+void tLog::logErr(const char *msg) {
 	this->log("%s\n",msg);
 	this->log(" errno %i: %s\n",errno,strerror(errno));
 }
@@ -592,19 +588,10 @@ bool tLog::doesPrint(void) const
 	return false;
 }
 
-const char *tLog::getDir(void) const // FIXME: what about tString::dirname?
+tString tLog::getDir(void) const
 {
-	static char dir[512];
-	alcStrncpy(dir, fullpath, sizeof(dir)-1);
-	// find the last seperator
-	char *lastSep, *lastSep2;
-	lastSep = strrchr(dir, '/');
-	lastSep2 = strrchr(dir, '\\');
-	if (lastSep2 > lastSep) lastSep = lastSep2;
-	// cut the string after it
-	if (lastSep == NULL) alcStrncpy(dir, "./", sizeof(dir)-1); // if no seperator was found, use working dir
-	else *(lastSep+1) = 0; // let the String end after the seperator
-	return dir;
+	if (!fullpath) return tvLogConfig->path;
+	return tString(fullpath).dirname()+"/";
 }
 
 

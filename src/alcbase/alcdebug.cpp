@@ -38,6 +38,8 @@ extern "C" {
 #include <cstdarg>
 
 #ifdef __MSVC__
+	#error MSVC debug support is outdated and buggy
+	#if 0
 	//this looks like crap, i know...
 	#include <stddef.h>
 	#include <stdarg.h>
@@ -138,19 +140,18 @@ extern "C" {
 		}
 
 	#endif //(_MSC_VER <= 1200)
-
+	#endif
 #else
 	//no MSVC
 
-	char * __dbg_where(const char * b,const char * c,int d,const char * a,...) {
+	alc::tString __dbg_where(const char * b,const char * c,int d,const char * a,...) {
 		va_list ap;
-		static char buffer[1024];
-		
+		alc::tString str;
 		va_start(ap,a);
-		snprintf(buffer,sizeof(buffer),"%d:%s:%s:%i:",alc::alcGetSelfThreadId(),b,c,d);
-		vsnprintf(buffer+strlen(buffer),sizeof(buffer) - strlen(buffer),a,ap);
+		str.printf("%d:%s:%s:%i:",alc::alcGetSelfThreadId(),b,c,d);
+		str.vprintf(a,ap);
 		va_end(ap);
-		return buffer;
+		return str;
 	}
 
 #endif

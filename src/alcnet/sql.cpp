@@ -190,7 +190,7 @@ void tSQL::checkTimeout(void)
 char *tSQL::escape(const char *str)
 {
 	const U32 maxLength = 1024;
-	static char escaped_str[maxLength*2+1]; // according to mysql doc
+	static char escaped_str[maxLength*2+1]; // according to mysql doc // FIXME
 	if (connection == NULL) throw txDatabaseError(_WHERE("can't escape a string"));
 	if (strlen(str) > maxLength)
 		throw txDatabaseError(_WHERE("string \"%s\" too long (max. length: %i), use the other escape function", str, maxLength));

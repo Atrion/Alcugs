@@ -43,7 +43,7 @@ namespace alc {
 	Waits for user input, blocks until user has not entered something followed by return
 */
 const char * alcConsoleAsk() {
-	static char what[500];
+	static char what[500]; // FIXME
 	int str_len;
 	fflush(0);
 	fgets(what,500,stdin);

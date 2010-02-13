@@ -138,12 +138,11 @@ public:
 	void dumpbuf(const Byte * buf, U32 n, U32 e=0,Byte how=7) const;
 	void dumpbuf(tBBuf &t, U32 n=0, U32 e=0,Byte how=7) const;
 
-	/** New Line */
-	void nl() const;
-	/** logs a std error */
-	void logerr(const char *msg);
+	void nl() const; //!< print newline
+	void logErr(const char *msg); //!< print last error
+
 	bool doesPrint(void) const;
-	const char *getDir(void) const;
+	tString getDir(void) const; //!< return directory of log file, or default directory if closed
 
 private:
 	void printHtmlHead(const tString &generator);
@@ -156,6 +155,7 @@ private:
 	U16 flags; //see above (DF_*)
 	int facility; //this params are passed to syslog
 	int priority; //this params are passed to syslog
+	Byte count;
 	
 	// prevent copying
 	tLog(const tLog &);

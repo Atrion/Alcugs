@@ -54,6 +54,7 @@
 #include "alcdebug.h"
 
 #if defined(__WIN32__) 
+#error get rid of the static...
 //or defined(__CYGWIN__) - I'm not going to waste more time on this shit, if someone wants to fix it there are two options: A) Use Linux that is superior to Windows. B) Find the problem and fix it.
 int gettimeofday(struct timeval *tv, struct timezone *tz) {
 
@@ -139,6 +140,7 @@ char *strsep(char **pcadena, const char *delim)
 	return what;
 }
 
+#error get rid of the static
 char *getpass( const char * prompt ) {
 	// I though that windows had something for asking passwords in the console.
 	puts(prompt);

@@ -40,7 +40,7 @@ void alcdebug_tests() {
 	for(i=0; i<100; i++) {
 		DBG(i,"Debug Level %i\n",i);
 	}
-	std::cout << "where:" <<_WHERE("hello") <<std::endl;
+	std::cout << "where:" << _WHERE("hello").c_str() <<std::endl;
 	
 	FILE * f;
 	f=fopen("this_file_does_not_exists_","rb");
@@ -1059,11 +1059,13 @@ void log_test() {
 	tLog log1;
 	tLog log2;
 	tLog system;
+	assert(log1.getDir() == "log/");
 
 	DBG(5,"attempting to open the log file\n");
 
 	log1.open("test");
 	system.open("sys");
+	assert(log1.getDir() == "log/");
 
 	//tvLogConfig->syslog_enabled=0x01;
 
@@ -1080,7 +1082,8 @@ void log_test() {
 
 	log1.rotate(false);
 
-	log2.open("maika",DF_HTML);
+	log2.open("subdir/blah",DF_HTML);
+	assert(log2.getDir() == "log/subdir/");
 
 	log1.print("I'm going to continue writing here\n");
 
@@ -1118,6 +1121,7 @@ void log_test() {
 
 	log1.close();
 	log2.close();
+	assert(log2.getDir() == "log/");
 	system.close();
 	
 	alcGetMain()->std()->log("Hi here\n");

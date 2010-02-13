@@ -85,22 +85,16 @@ static void alcWriteCoreDump(const char * name = "") {
 //Exceptions
 
 //Base class
-txBase::txBase(const char * msg,bool abort,bool core) {
-	this->name=NULL;
+txBase::txBase(const tString &msg,bool abort,bool core) : msg(msg) {
 	this->abort=abort;
 	this->core=core;
-	this->msg=msg;
 	this->bt=NULL;
-	this->imsg=NULL;
 	this->_preparebacktrace();
 }
-txBase::txBase(const char * name,const char * msg,bool abort,bool core) {
-	this->name=name;
-	this->imsg=static_cast<char *>(malloc(sizeof(char) * (strlen(name) + strlen(msg) + 2)));
-	if(this->imsg!=NULL) { strcpy(this->imsg,name); strcat(this->imsg,":"); strcat(this->imsg,msg); }
+txBase::txBase(const tString &name,const tString &msg,bool abort,bool core) {
+	this->msg = name + ": " + msg;
 	this->abort=abort;
 	this->core=core;
-	this->msg=this->imsg;
 	this->bt=NULL;
 	this->_preparebacktrace();
 }
@@ -109,14 +103,11 @@ txBase::txBase(const txBase &t) {
 }
 void txBase::copy(const txBase &t) {
 	DBG(5,"copy\n");
-	this->name=NULL;
 	this->abort=t.abort;
 	this->core=t.core;
-	this->msg=NULL;
+	this->msg=t.msg;
 	this->bt=static_cast<char *>(malloc(sizeof(char) * (strlen(t.bt)+1)));
 	strcpy(this->bt,t.bt);
-	this->imsg=static_cast<char *>(malloc(sizeof(char) * (strlen(t.imsg)+1)));
-	strcpy(this->imsg,t.imsg);
 }
 void txBase::_preparebacktrace() {
 // This needs porting - This code only works under Linux (it's part of the libc)
@@ -189,17 +180,16 @@ void txBase::dump(bool toStderr) {
 			fprintf(f,"Uptime:  %s\n",alcGetMain()->upTime().str(0x01));
 			fprintf(f,"Main thread id: %d\n",alcGetMain()->threadId());
 			fprintf(f,"This thread id: %d\n",alcGetSelfThreadId());
-			fprintf(f,"Exception %s:\n%s\n",this->what(),this->backtrace());
+			fprintf(f,"Exception %s:\n%s\n",msg.c_str(),bt);
 			fclose(f);
 		}
 		free(where);
 	}
 }
-const char * txBase::what() { return msg; }
-const char * txBase::backtrace() { return bt; }
+const char *txBase::what() { return msg.c_str(); }
+const char *txBase::backtrace() { return bt; }
 txBase::~txBase() {
 	free(bt);
-	free(imsg);
 }
 //End base
 

@@ -115,7 +115,7 @@ namespace alc {
 			mkdir(ageStateFile.c_str(), 00750); // make sure the path exists
 			ageStateFile.printf("/%s-%s.state", net->getName(), alcGetStrGuid(net->getGuid()));
 			// check for old agestate location and migrate if necessary
-			tString alternativeStateFile = tString(log.getDir()) + "/agestate.raw";
+			tString alternativeStateFile = log.getDir() + "agestate.raw";
 			if (access(alternativeStateFile.c_str(), F_OK) == 0)
 				rename(alternativeStateFile.c_str(), ageStateFile.c_str());
 			// ok, now go and load it - maybe
@@ -446,7 +446,6 @@ namespace alc {
 	
 	const tBaseType *tAgeStateManager::getAgeState(void)
 	{
-		static const tSdlState empty;
 		tSdlList::iterator sdlHook = findAgeSDLHook();
 		if (sdlHook != sdlStates.end()) { // found it - send it
 			if (sdlHook->content.isIndexed())
@@ -464,7 +463,7 @@ namespace alc {
 		else { // not found
 			log.log("No Age SDL hook found, send empty SDL\n");
 			log.flush();
-			return &empty;
+			return NULL;
 		}
 	}
 	

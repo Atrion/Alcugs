@@ -61,7 +61,7 @@ tUnet::~tUnet() {
 	stopOp();
 	delete events;
 	if (log != alcGetMain()->std()) delete log;
-	if (log != alcGetMain()->err()) delete err;
+	if (err != alcGetMain()->err()) delete err;
 	delete ack;
 	delete sec;
 }
@@ -191,7 +191,7 @@ void tUnet::neterror(const char * msg) {
 #ifdef __WIN32__
 	this->err->log("%s: winsock error code:%i\n",msg,WSAGetLastError());
 #else
-	this->err->logerr(msg);
+	this->err->logErr(msg);
 #endif
 }
 
@@ -271,7 +271,7 @@ void tUnet::startOp() {
 		//set non-blocking
 		long arg;
 		if((arg = fcntl(this->sock,F_GETFL, NULL))<0) {
-			this->err->logerr("ERR: Fatal setting socket as non-blocking (fnctl F_GETFL)\n");
+			this->err->logErr("ERR: Fatal setting socket as non-blocking (fnctl F_GETFL)\n");
 			throw txUnetIniErr(_WHERE("Failed setting a non-blocking socket"));
 		}
 		arg |= O_NONBLOCK;

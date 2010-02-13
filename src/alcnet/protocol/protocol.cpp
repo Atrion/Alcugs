@@ -389,7 +389,7 @@ void tUnetUruMsg::dumpheader(tLog * f) {
 }
 //flux 0 client -> server, 1 server -> client
 void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
-	static int count=0;
+	static int count=0; // FIXME
 	count++;
 	if (!log->doesPrint()) return;
 
@@ -510,7 +510,7 @@ void tmNetClientComm::stream(tBBuf &t) const {
 	t.put(timestamp);
 }
 const char * tmNetClientComm::str() {
-	static char cnt[1024];
+	static char cnt[1024]; // FIXME
 #ifdef ENABLE_MSGLOG
 	snprintf(cnt,sizeof(cnt),"(Re)Negotation (bandwidth: %i bps time: %s) on %s",bandwidth,timestamp.str(),u->str());
 #else

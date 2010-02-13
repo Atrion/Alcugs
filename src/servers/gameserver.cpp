@@ -472,8 +472,16 @@ namespace alc {
 				
 				// ok, tell the client he successfully joined
 				u->joined = true;
-				tmJoinAck joinAck(u, joinReq.x, ageState->getAgeState());
-				send(joinAck);
+				const tBaseType *ageSDLState = ageState->getAgeState();
+				if (ageSDLState) {
+					tmJoinAck joinAck(u, joinReq.x, ageSDLState);
+					send(joinAck);
+				}
+				else { // nothing found: send empty state
+					tSdlState empty;
+					tmJoinAck joinAck(u, joinReq.x, &empty);
+					send(joinAck);
+				}
 				// log the join
 				sec->log("%s joined\n", u->str());
 				// now, it'll stat sending GameMessages

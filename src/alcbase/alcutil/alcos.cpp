@@ -45,7 +45,7 @@ namespace alc {
 
 
 char * alcGetExt(const char * addr) {
-	static char ext[11];
+	static char ext[11]; // FIXME
 	U32 i;
 	for(i=strlen(addr); ; i--) {
 		if(addr[i]=='/' || addr[i]=='\\' || addr[i]==':' || addr[i]=='.' || i == 0) {
