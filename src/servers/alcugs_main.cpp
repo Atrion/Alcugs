@@ -34,14 +34,19 @@
 
 #if defined(I_AM_THE_LOBBY_SERVER)
 #include "lobbyserver.h"
+const char *alcNetName = "Lobby";
 #elif defined(I_AM_THE_GAME_SERVER)
 #include "gameserver.h"
+const char *alcNetName = "Game";
 #elif defined(I_AM_THE_AUTH_SERVER)
 #include "authserver.h"
+const char *alcNetName = "Auth";
 #elif defined(I_AM_THE_VAULT_SERVER)
 #include "vaultserver.h"
+const char *alcNetName = "Vault";
 #elif defined(I_AM_THE_TRACKING_SERVER)
 #include "trackingserver.h"
+const char *alcNetName = "Tracking";
 /*#elif defined(I_AM_THE_META_SERVER)
 #include "metaserver.h"
 #elif defined(I_AM_THE_DATA_SERVER)
@@ -140,8 +145,70 @@ int u_parse_arguments(int argc, char * argv[]) {
 	return 0;
 }
 
+/** apply compatbility aliases */
+void setConfigAliases(tConfig *cfg) {
+	tString val;
+	// NOTE: when copying a value and both source and destination exist, the source is used!
+	
+	// save the auth, tracking and vault host and port in global: [auth/tracking/vault] and global: [auth/tracking/vault].port
+	// use bind and port in the corresponding section
+	cfg->copyValue("auth","bind","global","auth");
+	cfg->copyValue("vault","bind","global","vault");
+	cfg->copyValue("tracking","bind","global","tracking");
+	cfg->copyValue("auth.port","port","global","auth");
+	cfg->copyValue("vault.port","port","global","vault");
+	cfg->copyValue("tracking.port","port","global","tracking");
+	// if available, prefer global: [auth/tracking/vault]_server and global: [auth/tracking/vault]_server_port
+	cfg->copyValue("auth","auth_server","global","global");
+	cfg->copyValue("vault","vault_server","global","global");
+	cfg->copyValue("tracking","tracking_server","global","global");
+	cfg->copyValue("auth.port","auth_server_port","global","global");
+	cfg->copyValue("vault.port","vault_server_port","global","global");
+	cfg->copyValue("tracking.port","tracking_server_port","global","global");
+
+	val=cfg->getVar("bandwidth","global");
+	if(!val.isEmpty()) {
+		val=cfg->getVar("net.up","global");
+		if(val.isEmpty()) {
+			cfg->copyValue("net.up","bandwidth","global","global");
+		}
+		val=cfg->getVar("net.down","global");
+		if(val.isEmpty()) {
+			cfg->copyValue("net.down","bandwidth","global","global");
+		}
+	}
+	
+	// Everything below here is legacy settings support!
+
+	//database
+	cfg->copyValue("db.host","db_server","global","global");
+	cfg->copyValue("db.name","db_name","global","global");
+	cfg->copyValue("db.username","db_username","global","global");
+	cfg->copyValue("db.passwd","db_passwd","global","global");
+	cfg->copyValue("db.passwd","db_password","global","global");
+	cfg->copyValue("db.passwd","db.password","global","global");
+	cfg->copyValue("db.port","db_port","global","global");
+
+	//unet
+	cfg->copyValue("net.timeout","connection_timeout","global","global");
+	cfg->copyValue("net.maxconnections","max_clients","global","global");
+
+	//vault
+	cfg->copyValue("vault.hood.name","neighborhood_name","global","global");
+	cfg->copyValue("vault.hood.desc","neighborhood_comment","global","global");
+
+	//game
+	bool found;
+	cfg->getVar("game.tmp.hacks.resetting_ages", "global", &found);
+	if (!found) { // don't overwrite the new value if it exists
+		cfg->copyValue("game.tmp.hacks.resetting_ages", "tracking.tmp.hacks.resetting_ages", "global", "global");
+		cfg->copyValue("game.tmp.hacks.resetting_ages", "tracking.tmp.hacks.resetting_ages", "global", "tracking");
+	}
+}
+
 int main(int argc, char * argv[]) {
-	tAlcUnetMain alcMain(/*global logfiles*/true);
+	// initialize
+	tAlcUnetMain alcMain(alcNetName);
 	try {
 		//Parse command line
 		DBG(5,"parsing cmd...");
@@ -150,7 +217,10 @@ int main(int argc, char * argv[]) {
 		DBG(5,"loading config...\n");
 		//Load and parse config files
 		alcMain.loadUnetConfig();
+		setConfigAliases(alcMain.config());
 		DBGM(5," done\n");
+		
+		// apply server settings
 		//stopped?
 		tConfig * cfg=alcMain.config();
 		tString var;
@@ -169,6 +239,7 @@ int main(int argc, char * argv[]) {
 			daemon(1,0);
 		}
 		
+		// print basic version info
 		lstd->print(alcVersionText());
 		var=alcNetName;
 		lstd->print("<%s SERVER>\n",var.upper().c_str());

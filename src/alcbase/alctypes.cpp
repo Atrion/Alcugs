@@ -354,6 +354,10 @@ void tMBuf::addNullTerminator(void) const
 tFBuf::tFBuf() {
 	this->init();
 }
+tFBuf::tFBuf(const char *file,const char * mode) {
+	this->init();
+	this->open(file,mode);
+}
 tFBuf::~tFBuf() {
 	this->close();
 	free(xbuf);

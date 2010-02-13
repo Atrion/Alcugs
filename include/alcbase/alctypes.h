@@ -215,6 +215,7 @@ private:
 class tFBuf : public tBBuf {
 public:
 	tFBuf();
+	explicit tFBuf(const char *file,const char * mode="rb");
 	virtual ~tFBuf();
 	
 	// implement interface

@@ -37,16 +37,13 @@
 
 using namespace alc;
 
-const char * alc::alcNetName="Client";
-Byte alc::alcWhoami=KClient;
-
 void parameters_usage() {
 	puts(alcVersionText());
 	printf("Usage: urumsgtest peer:port [options]\n\n\
  -f x: Set the file to upload\n\
  -z: Compress the file\n\
  -val x: set validation level (0-3) (default 2)\n\
- -nl: enable netcore logs\n\
+ -nl: enable netcore log files\n\
  -V: show version and end\n\
  -h: Show short help and end\n\
  -v x: Set the verbose level\n\
@@ -136,7 +133,7 @@ private:
 	tNetSessionIte dstite;
 };
 
-tUnetSimpleFileServer::tUnetSimpleFileServer(char * lhost,U16 lport,Byte listen) :tUnetBase() {
+tUnetSimpleFileServer::tUnetSimpleFileServer(char * lhost,U16 lport,Byte listen) :tUnetBase(KClient) {
 	this->setBindPort(lport);
 	this->setBindAddress(lhost);
 	this->listen=listen;
@@ -288,9 +285,9 @@ int main(int argc,char * argv[]) {
 	}
 
 	//start Alcugs library
-	tAlcUnetMain alcMain(/*global logfiles*/nlogs==1);
+	tAlcUnetMain alcMain("Client");
 	try {
-	
+		alcLogOpenStdLogs(!nlogs);
 		alcLogSetLogLevel(loglevel);
 		
 		lstd->print(alcVersionText());

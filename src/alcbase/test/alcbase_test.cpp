@@ -1128,7 +1128,7 @@ void log_test() {
 
 int main(void) {
 	std::cout << std::endl << "Alcugs test suite - alcbase tests" <<std::endl;
-	tAlcMain alcMain(/*global logs*/false);
+	tAlcMain alcMain;
 	try {
 		alcdebug_tests();
 		alcexception_tests();

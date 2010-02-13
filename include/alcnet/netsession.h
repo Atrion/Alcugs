@@ -53,7 +53,7 @@ public:
 };
 
 class tNetSession {
-	friend class tUnet;
+	friend class tUnet; // these two classes work together closely
 
 // methods
 public:

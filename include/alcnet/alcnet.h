@@ -35,12 +35,6 @@
 
 #include <alcugs.h>
 
-namespace alc {
-	// FIXME - better way to specifiy this?
-	extern const char * alcNetName;
-	extern Byte alcWhoami;
-}
-
 // system includes
 #ifndef __WIN32__
 #include <netdb.h>
@@ -58,7 +52,6 @@ namespace alc {
 #include "netlog.h"
 #include "unet.h"
 #include "unetbase.h"
-#include "configalias.h"
 #include "unetmain.h"
 #include "unetserverbase.h"
 #include "unetlobbyserverbase.h"

@@ -133,7 +133,6 @@ am_libalcnet1_a_OBJECTS = libalcnet1_a-unet.$(OBJEXT) \
 	libalcnet1_a-protocol.$(OBJEXT) \
 	libalcnet1_a-unetbase.$(OBJEXT) \
 	libalcnet1_a-umsgbasic.$(OBJEXT) \
-	libalcnet1_a-configalias.$(OBJEXT) \
 	libalcnet1_a-unetmain.$(OBJEXT) \
 	libalcnet1_a-unetserverbase.$(OBJEXT) \
 	libalcnet1_a-unetlobbyserverbase.$(OBJEXT) \
@@ -406,7 +405,6 @@ libalcnet1_a_SOURCES = \
  src/alcnet/protocol/protocol.cpp \
  src/alcnet/unetbase.cpp \
  src/alcnet/protocol/umsgbasic.cpp \
- src/alcnet/configalias.cpp \
  src/alcnet/unetmain.cpp \
  src/alcnet/unetserverbase.cpp \
  src/alcnet/unetlobbyserverbase.cpp \
@@ -728,7 +726,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcbase1_a-whatdoyousee.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcbase1_a-windoze.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcnet1_a-authmsg.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcnet1_a-configalias.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcnet1_a-gamemsg.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcnet1_a-lobbybasemsg.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libalcnet1_a-lobbymsg.Po@am__quote@
@@ -1154,20 +1151,6 @@ libalcnet1_a-umsgbasic.obj: src/alcnet/protocol/umsgbasic.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/alcnet/protocol/umsgbasic.cpp' object='libalcnet1_a-umsgbasic.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcnet1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libalcnet1_a-umsgbasic.obj `if test -f 'src/alcnet/protocol/umsgbasic.cpp'; then $(CYGPATH_W) 'src/alcnet/protocol/umsgbasic.cpp'; else $(CYGPATH_W) '$(srcdir)/src/alcnet/protocol/umsgbasic.cpp'; fi`
-
-libalcnet1_a-configalias.o: src/alcnet/configalias.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcnet1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libalcnet1_a-configalias.o -MD -MP -MF $(DEPDIR)/libalcnet1_a-configalias.Tpo -c -o libalcnet1_a-configalias.o `test -f 'src/alcnet/configalias.cpp' || echo '$(srcdir)/'`src/alcnet/configalias.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libalcnet1_a-configalias.Tpo $(DEPDIR)/libalcnet1_a-configalias.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/alcnet/configalias.cpp' object='libalcnet1_a-configalias.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcnet1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libalcnet1_a-configalias.o `test -f 'src/alcnet/configalias.cpp' || echo '$(srcdir)/'`src/alcnet/configalias.cpp
-
-libalcnet1_a-configalias.obj: src/alcnet/configalias.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcnet1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libalcnet1_a-configalias.obj -MD -MP -MF $(DEPDIR)/libalcnet1_a-configalias.Tpo -c -o libalcnet1_a-configalias.obj `if test -f 'src/alcnet/configalias.cpp'; then $(CYGPATH_W) 'src/alcnet/configalias.cpp'; else $(CYGPATH_W) '$(srcdir)/src/alcnet/configalias.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libalcnet1_a-configalias.Tpo $(DEPDIR)/libalcnet1_a-configalias.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/alcnet/configalias.cpp' object='libalcnet1_a-configalias.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcnet1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libalcnet1_a-configalias.obj `if test -f 'src/alcnet/configalias.cpp'; then $(CYGPATH_W) 'src/alcnet/configalias.cpp'; else $(CYGPATH_W) '$(srcdir)/src/alcnet/configalias.cpp'; fi`
 
 libalcnet1_a-unetmain.o: src/alcnet/unetmain.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libalcnet1_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libalcnet1_a-unetmain.o -MD -MP -MF $(DEPDIR)/libalcnet1_a-unetmain.Tpo -c -o libalcnet1_a-unetmain.o `test -f 'src/alcnet/unetmain.cpp' || echo '$(srcdir)/'`src/alcnet/unetmain.cpp

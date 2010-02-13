@@ -50,11 +50,7 @@
 namespace alc {
 
 	////IMPLEMENTATION
-	
-	const char * alcNetName="Game";
-	Byte alcWhoami=KGame;
-
-	tUnetGameServer::tUnetGameServer(void) : tUnetLobbyServerBase()
+	tUnetGameServer::tUnetGameServer(void) : tUnetLobbyServerBase(KGame)
 	{
 		// find out which age we are supposed to host
 		tConfig *cfg = alcGetMain()->config();

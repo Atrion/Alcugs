@@ -48,10 +48,6 @@
 namespace alc {
 
 	////IMPLEMENTATION
-	
-	const char * alcNetName="Tracking";
-	Byte alcWhoami=KTracking;
-	
 	int tUnetTrackingServer::onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u)
 	{
 		int ret = tUnetServerBase::onMsgRecieved(msg, u); // first let tUnetServerBase process the message

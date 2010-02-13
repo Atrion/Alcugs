@@ -49,7 +49,7 @@ namespace alc {
 
 class tUnetLobbyServerBase : public tUnetServerBase {
 public:
-	tUnetLobbyServerBase(void);
+	tUnetLobbyServerBase(Byte whoami);
 	
 	inline const Byte *getGuid() { return serverGuid; }
 	inline const char *getName() { return serverName; }

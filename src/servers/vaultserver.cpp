@@ -48,10 +48,6 @@
 namespace alc {
 
 	////IMPLEMENTATION
-	
-	const char * alcNetName="Vault";
-	Byte alcWhoami=KVault;
-	
 	void tUnetVaultServer::onLoadConfig(void)
 	{
 		// check if we should clean the vault

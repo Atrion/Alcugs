@@ -86,11 +86,11 @@ typedef U16 tUnetFlags;
 
 
 class tUnet {
-	friend class tNetSession;
+	friend class tNetSession; // these two classes work together closely
 
 // methods
 public:
-	tUnet(const char * lhost="0.0.0.0",U16 lport=0); //lport in host order
+	tUnet(Byte whoami,const char * lhost="0.0.0.0",U16 lport=0); //lport in host order
 	virtual ~tUnet();
 	void setFlags(tUnetFlags flags);
 	void unsetFlags(tUnetFlags flags);

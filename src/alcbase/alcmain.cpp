@@ -57,7 +57,7 @@ static void _alcHandleSignal(int s) {
 	if(alcMain != NULL) alcMain->onSignal(s);
 }
 
-tAlcMain::tAlcMain(bool globalLogFiles)
+tAlcMain::tAlcMain(void)
 {
 	try {
 		// global library management
@@ -69,7 +69,7 @@ tAlcMain::tAlcMain(bool globalLogFiles)
 		mainThreadId = alcGetSelfThreadId();
 		born.setToNow();
 		alcLogInit();
-		alcLogOpenStdLogs(!globalLogFiles);
+		alcLogOpenStdLogs(true); // don't (yet) create files
 
 		//init entropy
 		srandom(alcGetMicroseconds() + (alcGetTime() % 10000));
@@ -131,7 +131,6 @@ void tAlcMain::dumpConfig() {
 }
 
 void tAlcMain::loadConfig(const tString &path) {
-	cfg.clear();
 	tXParser parser;
 	parser.setConfig(&cfg);
 	parser.setBasePath(path.dirname());

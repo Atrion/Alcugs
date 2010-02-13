@@ -46,13 +46,13 @@
 #define alcTIME __TIME__
 #define alcBUILD_TIME alcDATE " " alcTIME
 
-#define alcXBUILDINFO "Rev: " alcREVISION " - Built: " alcBUILD_TIME
+#define alcBUILDINFO "Rev: " alcREVISION " - Built: " alcBUILD_TIME
 
 //Protocol version numbers
-#define alcProtoMAX_VER 1
-#define alcProtoMIN_VER 3
-#define alcProtoVer 1003
-//alcProtoMIN_VER+(1000*alcProtoMAX_VER)
+#define alcPROTO_MAX_VER 1
+#define alcPROTO_MIN_VER 3
+#define alcPROTO_VER 1003
+//alcPROTO_MIN_VER+(1000*alcPROTO_MAX_VER)
 
 /* NOTE:
 	* <= 1.1  - Unet2 and older versions of the servers

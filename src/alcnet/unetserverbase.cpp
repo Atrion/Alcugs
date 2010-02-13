@@ -47,7 +47,7 @@
 namespace alc {
 
 	////IMPLEMENTATION
-	tUnetServerBase::tUnetServerBase(void) : tUnetBase()
+	tUnetServerBase::tUnetServerBase(Byte whoami) : tUnetBase(whoami)
 	{ }
 	
 	int tUnetServerBase::onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u)

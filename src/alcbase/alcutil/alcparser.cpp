@@ -341,7 +341,11 @@ void tXParser::store(const tString &str) {
 						key=path + "/" + val;
 					}
 				#endif
-				alcGetMain()->loadConfig(key);
+				tString oldpath = path;
+				path = key.dirname();
+				tFBuf f(key.c_str());
+				f.get(*this);
+				path = oldpath;
 				continue;
 			}
 			x=0; y=0;

@@ -47,7 +47,7 @@
 
 namespace alc {
 
-tUnet::tUnet(const char * lhost,U16 lport) {
+tUnet::tUnet(Byte whoami,const char * lhost,U16 lport) : whoami(whoami) {
 	DBG(9,"tUnet()\n");
 	initialized=false;
 	this->init();
@@ -75,7 +75,6 @@ void tUnet::init() {
 	DBG(9,"tUnet::init()\n");
 	if(initialized) return;
 	flags=UNET_DEFAULT_FLAGS;
-	whoami=alcWhoami; // the server should know who it is
 
 	//netcore timeout < min(all RTT's), nope, it must be the min tts (stt)
 	unet_sec=1; //(seconds)
@@ -195,7 +194,7 @@ void tUnet::neterror(const char * msg) {
 }
 
 void tUnet::openlogs() {
-	//open unet log files
+	//open unet log files (FIXME: get rid of the two net-log-files and most of the flags)
 	if(this->flags & UNET_ELOG) {
 		if(this->log==lnull) {
 			if(this->flags & UNET_LQUIET) {

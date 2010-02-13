@@ -47,7 +47,7 @@ namespace alc {
 
 class tUnetServerBase : public tUnetBase {
 public:
-	tUnetServerBase(void);
+	tUnetServerBase(Byte whoami);
 	
 	// we're adding some default behaviour here and subclasses should call this one before doing their own processing
 	virtual int onMsgRecieved(alc::tUnetMsg*msg, alc::tNetSession*u);

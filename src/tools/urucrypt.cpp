@@ -65,7 +65,7 @@ int main(int argc, char * argv[]) {
 	printf("This is the Uru \"whatdoyousee\" encoder/decoder\n\n");
 #endif
 	
-	tAlcMain alcMain(/*global logfiles*/false);
+	tAlcMain alcMain;
 	try {
 	
 	puts(alcVersionText());
