@@ -69,7 +69,7 @@ namespace alc {
 		log = lnull;
 		sql = NULL;
 	
-		tConfig *cfg = alcGetConfig();
+		tConfig *cfg = alcGetMain()->config();
 		tString var = cfg->getVar("auth.minalevel");
 		if (var.isEmpty()) minAccess = AcNotActivated;
 		else minAccess = var.asU16();

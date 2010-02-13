@@ -67,7 +67,7 @@ public:
 	inline void terminate(tNetSession *u, Byte reason = 0) { terminate(u, reason, /*gotLeave*/false); }
 	
 	/** check whether the server is still running */
-	inline bool isRunning(void) { return state_running; }
+	inline bool isRunning(void) { return running; }
 protected:
 	/** This event is raised when we have a new connection
 			You need to override it in your derived classes with your implementation.
@@ -135,7 +135,7 @@ private:
 	void processEventQueue(bool shutdown);
 	int parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown);
 	void reconfigure();
-	bool state_running;
+	bool running;
 	Byte stop_timeout;
 #ifdef ENABLE_THREADS
 	Byte pool_size;

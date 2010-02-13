@@ -79,7 +79,7 @@ namespace alc {
 	tAgeInfo::tAgeInfo(const char *file, bool loadPages)
 	{
 		// load age file dir
-		tConfig *cfg = alcGetConfig();
+		tConfig *cfg = alcGetMain()->config();
 		tString dir = cfg->getVar("age");
 		if (dir.size() < 2) throw txBase(_WHERE("age directory is not defined"));
 		if (!dir.endsWith("/")) dir.writeStr("/");

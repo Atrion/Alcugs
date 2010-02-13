@@ -57,7 +57,7 @@ namespace alc {
 	tUnetGameServer::tUnetGameServer(void) : tUnetLobbyServerBase()
 	{
 		// find out which age we are supposed to host
-		tConfig *cfg = alcGetConfig();
+		tConfig *cfg = alcGetMain()->config();
 		tString var = cfg->getVar("age_filename");
 		if (var.size() < 2) throw txBase(_WHERE("an age name must be set"));
 		alcStrncpy(serverName, var.c_str(), sizeof(serverName)-1);
@@ -87,7 +87,7 @@ namespace alc {
 	{
 		tUnetLobbyServerBase::onLoadConfig();
 		
-		tConfig *cfg = alcGetConfig();
+		tConfig *cfg = alcGetMain()->config();
 		tString var = cfg->getVar("game.persistent");
 		if (!var.isEmpty() && var.asByte()) { // disabled per default
 			lingerTime = 0;

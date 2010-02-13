@@ -45,14 +45,11 @@
 
 namespace alc {
 
-tUnetBase::tUnetBase() :tUnet(), state_running(true) {
-	tUnetSignalHandler * h = new tUnetSignalHandler(this);
-	DBG(5,"tUnetBase - installing signal handler\n");
-	alcInstallSignalHandler(h);
-	
+tUnetBase::tUnetBase() :tUnet(), running(true) {
+	alcUnetGetMain()->setNet(this);
 	tString var;
 	tConfig * cfg;
-	cfg=alcGetConfig();
+	cfg=alcGetMain()->config();
 	var=cfg->getVar("port","global");
 	if(!var.isEmpty()) {
 		setBindPort(var.asU16());
@@ -72,7 +69,7 @@ void tUnetBase::reconfigure() {
 	// re-load configuration
 	tString var;
 	tConfig * cfg;
-	cfg=alcGetConfig();
+	cfg=alcGetMain()->config();
 	//Sets the idle timer
 	var=cfg->getVar("net.timer","global");
 	if(!var.isEmpty()) {
@@ -201,7 +198,7 @@ void tUnetBase::reconfigure() {
 void tUnetBase::stop(SByte timeout) {
 	if(timeout<0) {
 		tString var;
-		tConfig * cfg=alcGetConfig();
+		tConfig * cfg=alcGetMain()->config();
 		var=cfg->getVar("net.stop.timeout","global");
 		if(var.isEmpty()) {
 			stop_timeout=15;
@@ -211,7 +208,7 @@ void tUnetBase::stop(SByte timeout) {
 	}
 	else
 		stop_timeout=timeout;
-	state_running=false;
+	running=false;
 }
 
 void tUnetBase::terminate(tNetSession *u, Byte reason, bool gotLeave)
@@ -359,7 +356,7 @@ void tUnetBase::run() {
 	startOp();
 	onStart();
 
-	while(state_running) {
+	while(running) {
 		Recv();
 		processEventQueue(/*shutdown*/false);
 		onIdle(idle);

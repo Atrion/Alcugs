@@ -216,7 +216,7 @@ MYSQL_RES *tSQL::storeResult(void)
 
 tSQL *tSQL::createFromConfig(void)
 {
-	tConfig *cfg = alcGetConfig();
+	tConfig *cfg = alcGetMain()->config();
 	tString var;
 	// read basic connection info
 	tString host = cfg->getVar("db.host");

@@ -46,219 +46,156 @@
 
 namespace alc {
 
-// FIXME: avoid global variables if possible
-static volatile bool alcInitialized=false;
-static tConfig * alcGlobalConfig=NULL;
-static bool alcIngoreParseErrors=false;
-static tTime alcBorn;
-static tSignalHandler * alcSignalHandler=NULL;
-static U32 alcMainThreadId=0;
+static tAlcMain *alcMain = NULL; // this is a global singleton
 
-
-U32 alcGetMainThreadId() {
-	return alcMainThreadId;
+tAlcMain *alcGetMain(void)
+{
+	return alcMain;
 }
 
-void alcInit(bool shutup) {
-	if(alcInitialized) return;
-	alcMainThreadId=alcGetSelfThreadId();
-	alcInitialized=true;
-	DBG(5,"alcInit()\n");
-	alcBorn.setToNow();
-	DBG(6,"Starting log system...");
-	alcLogInit();
-	DBGM(6," done\n");
-	alcLogOpenStdLogs(shutup);
-	if(!alcVerifyVersion()) {
-		lerr->log("ERR: Alcugs Library version mismatch! %s!=%s\n",alcSTR_VER,alcVerifyVersionStr);
-		_DIE("ERR: Alcugs Library version mismatch");
+static void _alcHandleSignal(int s) {
+	if(alcMain != NULL) alcMain->onSignal(s);
+}
+
+tAlcMain::tAlcMain(bool globalLogFiles)
+{
+	try {
+		// global library management
+		if (alcMain) _DIE("You can NEVER create several instances of tAlcMain");
+		alcMain = this;
+		if(!alcVerifyVersion()) _DIE("ERR: Alcugs Library version mismatch")
+		
+		// initialization
+		mainThreadId = alcGetSelfThreadId();
+		born.setToNow();
+		alcLogInit();
+		alcLogOpenStdLogs(!globalLogFiles);
+
+		//init entropy
+		srandom(alcGetMicroseconds() + (alcGetTime() % 10000));
+		
+		//init signal handlers
+		installBaseHandlers();
 	}
-
-	//init entropy
-	srandom(alcGetMicroseconds() + (alcGetTime() % 10000));
-	
-	//init config system
-	delete alcGlobalConfig;
-	alcGlobalConfig = new tConfig();
-	tSignalHandler * h = new tSignalHandler();
-	DBG(7,"Installing default signal handler...\n");
-	alcInstallSignalHandler(h);
-	DBGM(7," done\n");
-	
-	atexit(&alcShutdown);
+	catch (...) {
+		_DIE("Error initializing Alcugs - can't even do proper error reporting....");
+	}
 }
 
-void alcShutdown() {
-	if(!alcInitialized) return;
-	alcInitialized=false;
-	DBG(5,"alcShutdown()\n");
-	DBG(5,"Stopping log system...");
+tAlcMain::~tAlcMain() {
+	installBaseHandlers(/*install*/false);
 	alcLogShutdown();
-	DBGM(5," done\n");
-	delete alcGlobalConfig;
-	alcGlobalConfig=NULL;
-	//the last thing
-	alcInstallSignalHandler(NULL);
+	alcMain = NULL;
 }
 
-void alcOnFork() {
-	DBG(5,"alcLogShutdown from a forked child...\n");
-	alcLogShutdown(true);
-}
-
-tConfig * alcGetConfig() {
-	return alcGlobalConfig;
-}
-
-tTime alcGetUptime() {
+tTime tAlcMain::upTime(void)
+{
 	tTime now;
 	now.setToNow();
-	return now-alcBorn;
+	return now-born;
 }
 
-tTime alcGetBornTime() {
-	return alcBorn;
-}
-
-void alcReApplyConfig() {
+void tAlcMain::onApplyConfig() {
 	tString var;
-	tConfig * cfg=alcGetConfig();
-	var=cfg->getVar("verbose_level","global");
+	var=cfg.getVar("verbose_level","global");
 	if(var.isEmpty()) {
 		var="3";
 	}
 	alcLogSetLogLevel(var.asByte());
-	var=cfg->getVar("log_files_path","global");
+	
+	var=cfg.getVar("log_files_path","global");
 	if(var.isEmpty()) {
 		var="log/";
 	}
 	alcLogSetLogPath(var);
-	var=cfg->getVar("log.n_rotate","global");
+	
+	var=cfg.getVar("log.n_rotate","global");
 	if(var.isEmpty()) {
 		var="5";
 	}
 	alcLogSetFiles2Rotate(var.asByte());
-	var=cfg->getVar("log.enabled","global");
+	
+	var=cfg.getVar("log.enabled","global");
 	if(var.isEmpty()) {
 		var="1";
 	}
 	alcLogOpenStdLogs(!var.asByte());
 }
 
-void alcIngoreConfigParseErrors(bool val) {
-	alcIngoreParseErrors=val;
-}
-
-void alcDumpConfig() {
+void tAlcMain::dumpConfig() {
 	tXParser parser;
-	parser.setConfig(alcGetConfig());
+	parser.setConfig(&cfg);
 	tString out;
 	out.put(parser);
 	lstd->print("Config Dump:\n%s\n",out.c_str());
 }
 
-bool alcParseConfig(const tString & path) {
+void tAlcMain::loadConfig(const tString &path) {
+	cfg.clear();
 	tXParser parser;
-	DBG(5,"setting config parser...");
-	parser.setConfig(alcGetConfig());
-	DBGM(5," done\n");
-	#if defined(__WIN32__) or defined(__CYGWIN__)
-	path.convertSlashesFromWinToUnix();
-	#endif
+	parser.setConfig(&cfg);
 	parser.setBasePath(path.dirname());
-	tFBuf f1;
-	
-	bool ok=true;
-	
-	try {
-		f1.open(path.c_str());
-		f1.rewind();
-		DBG(5,"f1.get(parser)...\n");
-		f1.get(parser);
-		DBGM(5," done\n");
-		f1.close();
-		
-		//tString out;
-		//out.put(parser);
-	} catch(txNotFound &t) {
-		fprintf(stderr,"Error: %s\n",t.what());
-		ok=false;
-	}
-	
-	if(alcIngoreParseErrors) {
-		ok=true;
-	}
-	
-	return ok;
+	tFBuf f1(path.c_str());
+	f1.get(parser);
 }
 
-void alcInstallSignalHandler(tSignalHandler * t) {
-	DBG(10, "Installung a new signal handler\n");
-	if (alcSignalHandler) alcSignalHandler->install_handlers(/*install*/false); // uninstall old handlers
-	delete alcSignalHandler;
-	alcSignalHandler = t;
-	if (alcSignalHandler) alcSignalHandler->install_handlers(); // install the new ones
-}
-
-void _alcHandleSignal(int s) {
-	if(alcSignalHandler!=NULL)
-		alcSignalHandler->handle_signal(s);
-}
-
-void alcSignal(int signum, bool install) {
-	DBG(5,"alcSignal()\n");
-	DBG(5,"%i - %i\n",signum,install);
-	if(install) {
-		signal(signum,_alcHandleSignal);
-	} else {
-		signal(signum,SIG_DFL);
-	}
-}
-
-void alcCrashAction() {
+void tAlcMain::onCrash() {
 	tString var;
-	tConfig * cfg=alcGetConfig();
-	var=cfg->getVar("crash.action","global");
+	var=cfg.getVar("crash.action","global");
 	if(!var.isEmpty()) {
 		system(var.c_str());
 	}
 }
 
-void tSignalHandler::handle_signal(int s) {
+void tAlcMain::onForked() {
+	DBG(5,"alcLogShutdown from a forked child...\n");
+	alcLogShutdown(true);
+}
+
+void tAlcMain::installBaseHandlers(bool install)
+{
+	installHandler(SIGSEGV, install);
+#ifndef __WIN32__
+	installHandler(SIGCHLD, install);
+#endif
+}
+
+void tAlcMain::installHandler(int signum, bool install) {
+	DBG(5,"(un)install signal handler %i - %i\n",signum,install);
+	if(install) {
+		signal(signum, _alcHandleSignal);
+	} else {
+		signal(signum, SIG_DFL);
+	}
+}
+
+bool tAlcMain::onSignal(int s) {
 	lstd->log("INF: Recieved signal %i\n",s);
+	installHandler(s);
+	#ifndef __WIN32__ // On windows, the signal handler runs on another thread
+	if (alcGetSelfThreadId() != mainThreadId) return true;
+	#endif
 	try {
 		switch (s) {
 #ifndef __WIN32__
 			case SIGCHLD:
 				lstd->log("INF: RECIEVED SIGCHLD: a child has exited.\n");
 				lstd->flush();
-				alcSignal(SIGCHLD);
 				wait(NULL); // properly exit child
-				break;
+				return true;
 #endif
 			case SIGSEGV:
 				lerr->log("\n PANIC!!!\n");
 				lerr->log("TERRIBLE FATAL ERROR: SIGSEGV recieved!!!\n\n");
 				lerr->flush();
-				//On windows, the signal handler runs on another thread
-				#ifndef __WIN32__
-				if(alcGetSelfThreadId()!=alcGetMainThreadId()) return;
-				#endif
-				throw txBase("Panic: Segmentation Fault - dumping core",1,1);
+				throw txBase("Panic: Segmentation Fault - dumping core",/*abort*/true,/*dump core*/true);
 		}
 	} catch(txBase &t) {
-		lerr->log("FATAL Exception %s\n%s\n",t.what(),t.backtrace());
+		lerr->log("FATAL Exception %s\n%s\n",t.what(),t.backtrace()); return true;
 	} catch(...) {
-		lerr->log("FATAL Unknown Exception\n");
+		lerr->log("FATAL Unknown Exception\n"); return true;
 	}
-}
-void tSignalHandler::install_handlers(bool install)
-{
-	DBG(5,"(un)installing handlers\n");
-	alcSignal(SIGSEGV, install);
-#ifndef __WIN32__
-	alcSignal(SIGCHLD, install);
-#endif
+	return false;
 }
 
 } //end namespace

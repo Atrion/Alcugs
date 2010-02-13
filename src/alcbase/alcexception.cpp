@@ -160,7 +160,7 @@ void txBase::_preparebacktrace() {
 	if(this->core) { alcWriteCoreDump(); }
 	if(this->abort) {
 		dump();
-		alcCrashAction();
+		alcGetMain()->onCrash();
 		fprintf(stderr,"An exception requested to abort\n");
 		::abort();
 	}
@@ -182,12 +182,12 @@ void txBase::dump(bool toStderr) {
 		if(f!=NULL) {
 			fprintf(f,"Servers Build info:\n%s\n",alcVersionTextShort());
 			fprintf(f,"System info: %s\n\n",alcSystemInfo());
-			fprintf(f,"Born:    %s\n",alcGetBornTime().str());
+			fprintf(f,"Born:    %s\n",alcGetMain()->bornTime().str());
 			tTime now;
 			now.setToNow();
 			fprintf(f,"Defunct: %s\n",now.str());
-			fprintf(f,"Uptime:  %s\n",alcGetUptime().str(0x01));
-			fprintf(f,"Main thread id: %d\n",alcGetMainThreadId());
+			fprintf(f,"Uptime:  %s\n",alcGetMain()->upTime().str(0x01));
+			fprintf(f,"Main thread id: %d\n",alcGetMain()->threadId());
 			fprintf(f,"This thread id: %d\n",alcGetSelfThreadId());
 			fprintf(f,"Exception %s:\n%s\n",this->what(),this->backtrace());
 			fclose(f);

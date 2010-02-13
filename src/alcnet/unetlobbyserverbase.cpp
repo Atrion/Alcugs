@@ -59,7 +59,7 @@ namespace alc {
 	
 	void tUnetLobbyServerBase::onLoadConfig(void)
 	{
-		tConfig *cfg = alcGetConfig();
+		tConfig *cfg = alcGetMain()->config();
 		tString var = cfg->getVar("vault.html.log");
 		if (var.isEmpty() || var.asByte()) { // logging enabled per default
 			if (lvault == lnull) lvault = new tLog("vault.html", 2, DF_HTML);
@@ -202,7 +202,7 @@ namespace alc {
 	tNetSessionIte tUnetLobbyServerBase::reconnectPeer(Byte dst)
 	{
 		tString host, port;
-		tConfig *cfg = alcGetConfig();
+		tConfig *cfg = alcGetMain()->config();
 		
 		switch (dst) {
 			case KAuth:
@@ -324,9 +324,9 @@ namespace alc {
 				md5buffer.putU32(alcGetTime());
 				md5buffer.putU32(alcGetMicroseconds());
 				md5buffer.putU32(random());
-				md5buffer.putU32(alcGetUptime().seconds);
+				md5buffer.putU32(alcGetMain()->upTime().seconds);
 				md5buffer.put(authHello.account);
-				md5buffer.putU32(alcGetBornTime().seconds);
+				md5buffer.putU32(alcGetMain()->bornTime().seconds);
 				md5buffer.compute();
 		
 				// save data in session

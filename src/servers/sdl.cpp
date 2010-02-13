@@ -57,7 +57,7 @@ namespace alc {
 		log = lnull;
 		load();
 		
-		tConfig *cfg = alcGetConfig();
+		tConfig *cfg = alcGetMain()->config();
 		bool found;
 		tString var = cfg->getVar("sdl");
 		if (var.size() < 2) throw txUnet(_WHERE("a sdl path must be set"));
@@ -218,7 +218,7 @@ namespace alc {
 	
 	void tAgeStateManager::load(void)
 	{
-		tConfig *cfg = alcGetConfig();
+		tConfig *cfg = alcGetMain()->config();
 		tString var = cfg->getVar("agestate.log");
 		logDetailed = false;
 		if (var.isEmpty() || var.asByte()) { // logging enabled per default

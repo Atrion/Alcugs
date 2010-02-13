@@ -325,11 +325,11 @@ int main(int argc,char * argv[]) {
 			}
 		}
 	}
-
+	
+	//start Alcugs library
+	tAlcUnetMain alcMain(/*global logfiles*/nlogs==1);
 	try {
 	
-		//start Alcugs library
-		alcInit(nlogs!=1);
 		alcLogSetLogLevel(loglevel);
 		
 		//special mode

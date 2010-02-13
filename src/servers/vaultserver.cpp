@@ -55,7 +55,7 @@ namespace alc {
 	void tUnetVaultServer::onLoadConfig(void)
 	{
 		// check if we should clean the vault
-		tConfig *cfg = alcGetConfig();
+		tConfig *cfg = alcGetMain()->config();
 		tString var = cfg->getVar("daemon");
 		bool daemon = (!var.isEmpty() && var.asByte()); // disabled per default
 		var = cfg->getVar("vault.clean", "cmdline"); // this can only be enabled via cmdline

@@ -42,21 +42,28 @@ namespace alc {
 
 ////DEFINITIONS
 
-// FIXME this should extend tAlcMain to tAlcUnetMain
-
-int alcUnetReloadConfig(bool firsttime=false);
-
-class tUnetSignalHandler :public tSignalHandler {
+class tAlcUnetMain : public tAlcMain {
 public:
-	tUnetSignalHandler(tUnetBase * netcore);
-	virtual ~tUnetSignalHandler();
-	virtual void handle_signal(int s);
-	virtual void install_handlers(bool install = true);
+	tAlcUnetMain(bool globalLogfiles);
+	virtual ~tAlcUnetMain();
+	/* FIXME:
+	- Manage the one and only tUnetBase instance here
+	- overload applyConfig to also tell the tUnetBase about the change 
+	- re-think config (re-)load order and how it's propagated to the backends... and hopefully simplify */
+	
+	inline void setNet(tUnetBase *netcore) { net = netcore; }
+	void loadUnetConfig(void);
+	
+	virtual bool onSignal(int s);
 private:
-	int __state_running;
-	tUnetBase * net;
-	int st_alarm;
+	void installUnetHandlers(bool install);
+	
+	int stateRunning;
+	bool alarmRunning;
+	tUnetBase *net;
 };
+
+inline tAlcUnetMain *alcUnetGetMain(void) { return dynamic_cast<tAlcUnetMain *>(alcGetMain()); }
 
 } //End alc namespace
 
