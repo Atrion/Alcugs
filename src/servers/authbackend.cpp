@@ -158,7 +158,7 @@ namespace alc {
 		}
 		
 		// query the database
-		query.printf("SELECT UCASE(passwd), a_level, guid, attempts, UNIX_TIMESTAMP(last_attempt) FROM accounts WHERE name='%s' LIMIT 1", sql->escape(login));
+		query.printf("SELECT UCASE(passwd), a_level, guid, attempts, UNIX_TIMESTAMP(last_attempt) FROM accounts WHERE name='%s' LIMIT 1", sql->escape(login).c_str());
 		sql->query(query.c_str(), "Query player");
 		
 		// read the result
@@ -182,17 +182,14 @@ namespace alc {
 
 	void tAuthBackend::updatePlayer(const char *guid, const char *ip, U32 attempts, Byte updateStamps)
 	{
-		char ip_escaped[50], guid_escaped[50];
 		tString query;
-		alcStrncpy(ip_escaped, sql->escape(ip), sizeof(ip_escaped)-1);
-		alcStrncpy(guid_escaped, sql->escape(guid), sizeof(guid_escaped)-1);
-		query.printf("UPDATE accounts SET attempts='%d', last_ip='%s'", attempts, ip_escaped);
+		query.printf("UPDATE accounts SET attempts='%d', last_ip='%s'", attempts, sql->escape(ip).c_str());
 		if (updateStamps == 1) // update only last attempt
 			query.printf(", last_attempt=NOW()");
 		else if (updateStamps == 2) // update last attempt and last login
 			query.printf(", last_attempt=NOW(), last_login=NOW()");
 		else {} // don't update any stamp
-		query.printf(" WHERE guid='%s'", guid_escaped);
+		query.printf(" WHERE guid='%s'", sql->escape(guid).c_str());
 		sql->query(query.c_str(), "Update player");
 	}
 
@@ -203,7 +200,7 @@ namespace alc {
 		U32 attempts, lastAttempt;
 		int queryResult = queryPlayer(login, passwd, guid, &attempts, &lastAttempt); // query password, access level and guid of this user
 		
-		log.log("AUTH: player %s (IP: %s, game server %s):\n ", login, ip, u->str());
+		log.log("AUTH: player %s (IP: %s, game server %s):\n ", login, ip, u->str().c_str());
 		if (queryResult < 0) { // that means: player not found
 			*accessLevel = AcNotRes;
 			log.print("Player not found\n");

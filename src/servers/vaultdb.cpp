@@ -442,12 +442,12 @@ namespace alc {
 		}
 		if (node.flagB & MAgeName) {
 			if (comma) query.writeStr(commaStr);
-			query.printf("age_name='%s'", sql->escape(node.ageName.c_str()));
+			query.printf("age_name='%s'", sql->escape(node.ageName.c_str()).c_str());
 			comma = true;
 		}
 		if (node.flagB & MAgeGuid) {
 			if (comma) query.writeStr(commaStr);
-			query.printf("age_guid='%s'", sql->escape(alcGetStrGuid(node.ageGuid).c_str()));
+			query.printf("age_guid='%s'", sql->escape(alcGetStrGuid(node.ageGuid).c_str()).c_str());
 			comma = true;
 		}
 		if (node.flagB & MInt32_1) {
@@ -492,52 +492,52 @@ namespace alc {
 		}
 		if (node.flagB & MStr64_1) {
 			if (comma) query.writeStr(commaStr);
-			query.printf("str_1='%s'", sql->escape(node.str1.c_str()));
+			query.printf("str_1='%s'", sql->escape(node.str1.c_str()).c_str());
 			comma = true;
 		}
 		if (node.flagB & MStr64_2) {
 			if (comma) query.writeStr(commaStr);
-			query.printf("str_2='%s'", sql->escape(node.str2.c_str()));
+			query.printf("str_2='%s'", sql->escape(node.str2.c_str()).c_str());
 			comma = true;
 		}
 		if (node.flagB & MStr64_3) {
 			if (comma) query.writeStr(commaStr);
-			query.printf("str_3='%s'", sql->escape(node.str3.c_str()));
+			query.printf("str_3='%s'", sql->escape(node.str3.c_str()).c_str());
 			comma = true;
 		}
 		if (node.flagB & MStr64_4) {
 			if (comma) query.writeStr(commaStr);
-			query.printf("str_4='%s'", sql->escape(node.str4.c_str()));
+			query.printf("str_4='%s'", sql->escape(node.str4.c_str()).c_str());
 			comma = true;
 		}
 		if (node.flagB & MStr64_5) {
 			if (comma) query.writeStr(commaStr);
-			query.printf("str_5='%s'", sql->escape(node.str5.c_str()));
+			query.printf("str_5='%s'", sql->escape(node.str5.c_str()).c_str());
 			comma = true;
 		}
 		if (node.flagB & MStr64_6) {
 			if (comma) query.writeStr(commaStr);
-			query.printf("str_6='%s'", sql->escape(node.str6.c_str()));
+			query.printf("str_6='%s'", sql->escape(node.str6.c_str()).c_str());
 			comma = true;
 		}
 		if (node.flagB & MlStr64_1) {
 			if (comma) query.writeStr(commaStr);
-			query.printf("lstr_1='%s'", sql->escape(node.lStr1.c_str()));
+			query.printf("lstr_1='%s'", sql->escape(node.lStr1.c_str()).c_str());
 			comma = true;
 		}
 		if (node.flagB & MlStr64_2) {
 			if (comma) query.writeStr(commaStr);
-			query.printf("lstr_2='%s'", sql->escape(node.lStr2.c_str()));
+			query.printf("lstr_2='%s'", sql->escape(node.lStr2.c_str()).c_str());
 			comma = true;
 		}
 		if (node.flagB & MText_1) {
 			if (comma) query.writeStr(commaStr);
-			query.printf("text_1='%s'", sql->escape(node.text1.c_str()));
+			query.printf("text_1='%s'", sql->escape(node.text1.c_str()).c_str());
 			comma = true;
 		}
 		if (node.flagB & MText_2) {
 			if (comma) query.writeStr(commaStr);
-			query.printf("text_2='%s'", sql->escape(node.text2.c_str()));
+			query.printf("text_2='%s'", sql->escape(node.text2.c_str()).c_str());
 			comma = true;
 		}
 		if (isUpdate && node.flagB & MBlob1) { // only insert this if it is an UPDATE
@@ -546,7 +546,8 @@ namespace alc {
 			if (node.blob1Size) {
 				escapedData = static_cast<char *>(malloc((node.blob1Size*2 + 2048)*sizeof(char)));
 				if (escapedData == NULL) throw txNoMem(_WHERE("NoMem"));
-				query.writeStr(sql->escape(escapedData, node.blob1, node.blob1Size));
+				sql->escape(escapedData, node.blob1, node.blob1Size);
+				query.writeStr(escapedData);
 				free(escapedData);
 			}
 			query.writeStr( "'");
@@ -644,11 +645,11 @@ namespace alc {
 		}
 		if (node.flagB & MAgeName) {
 			query.writeStr(",age_name");
-			values.printf(",'%s'", sql->escape(node.ageName.c_str()));
+			values.printf(",'%s'", sql->escape(node.ageName.c_str()).c_str());
 		}
 		if (node.flagB & MAgeGuid) {
 			query.writeStr(",age_guid");
-			values.printf(",'%s'", sql->escape(alcGetStrGuid(node.ageGuid).c_str()));
+			values.printf(",'%s'", sql->escape(alcGetStrGuid(node.ageGuid).c_str()).c_str());
 		}
 		if (node.flagB & MInt32_1) {
 			query.writeStr(",int_1");
@@ -684,50 +685,51 @@ namespace alc {
 		}
 		if (node.flagB & MStr64_1) {
 			query.writeStr(",str_1");
-			values.printf(",'%s'", sql->escape(node.str1.c_str()));
+			values.printf(",'%s'", sql->escape(node.str1.c_str()).c_str());
 		}
 		if (node.flagB & MStr64_2) {
 			query.writeStr(",str_2");
-			values.printf(",'%s'", sql->escape(node.str2.c_str()));
+			values.printf(",'%s'", sql->escape(node.str2.c_str()).c_str());
 		}
 		if (node.flagB & MStr64_3) {
 			query.writeStr(",str_3");
-			values.printf(",'%s'", sql->escape(node.str3.c_str()));
+			values.printf(",'%s'", sql->escape(node.str3.c_str()).c_str());
 		}
 		if (node.flagB & MStr64_4) {
 			query.writeStr(",str_4");
-			values.printf(",'%s'", sql->escape(node.str4.c_str()));
+			values.printf(",'%s'", sql->escape(node.str4.c_str()).c_str());
 		}
 		if (node.flagB & MStr64_5) {
 			query.writeStr(",str_5");
-			values.printf(",'%s'", sql->escape(node.str5.c_str()));
+			values.printf(",'%s'", sql->escape(node.str5.c_str()).c_str());
 		}
 		if (node.flagB & MStr64_6) {
 			query.writeStr(",str_6");
-			values.printf(",'%s'", sql->escape(node.str6.c_str()));
+			values.printf(",'%s'", sql->escape(node.str6.c_str()).c_str());
 		}
 		if (node.flagB & MlStr64_1) {
 			query.writeStr(",lstr_1");
-			values.printf(",'%s'", sql->escape(node.lStr1.c_str()));
+			values.printf(",'%s'", sql->escape(node.lStr1.c_str()).c_str());
 		}
 		if (node.flagB & MlStr64_2) {
 			query.writeStr(",lstr_2");
-			values.printf(",'%s'", sql->escape(node.lStr2.c_str()));
+			values.printf(",'%s'", sql->escape(node.lStr2.c_str()).c_str());
 		}
 		if (node.flagB & MText_1) {
 			query.writeStr(",text_1");
-			values.printf(",'%s'", sql->escape(node.text1.c_str()));
+			values.printf(",'%s'", sql->escape(node.text1.c_str()).c_str());
 		}
 		if (node.flagB & MText_2) {
 			query.writeStr(",text_2");
-			values.printf(",'%s'", sql->escape(node.text2.c_str()));
+			values.printf(",'%s'", sql->escape(node.text2.c_str()).c_str());
 		}
 		if (node.flagB & MBlob1) {
 			query.writeStr(",blob_1");
 			values.writeStr(",'");
 			if (node.blob1Size) {
 				char *helpStr = static_cast<char *>(malloc(2*node.blob1Size+1));
-				values.writeStr(sql->escape(helpStr, node.blob1, node.blob1Size));
+				sql->escape(helpStr, node.blob1, node.blob1Size);
+				values.writeStr(helpStr);
 				free(helpStr);
 			}
 			values.writeStr("'");

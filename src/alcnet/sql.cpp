@@ -187,22 +187,21 @@ void tSQL::checkTimeout(void)
 		disconnect();
 }
 
-char *tSQL::escape(const char *str)
+tString tSQL::escape(const char *str)
 {
 	const U32 maxLength = 1024;
-	static char escaped_str[maxLength*2+1]; // according to mysql doc // FIXME
+	char escaped_str[maxLength*2+1]; // according to mysql doc
 	if (connection == NULL) throw txDatabaseError(_WHERE("can't escape a string"));
 	if (strlen(str) > maxLength)
 		throw txDatabaseError(_WHERE("string \"%s\" too long (max. length: %i), use the other escape function", str, maxLength));
 	mysql_real_escape_string(connection, escaped_str, str, strlen(str));
-	return escaped_str;
+	return tString(escaped_str);
 }
 
-char *tSQL::escape(char *out, const Byte *data, int size)
+void tSQL::escape(char *out, const Byte *data, int size)
 {
 	if (connection == NULL) throw txDatabaseError(_WHERE("can't escape a string"));
 	mysql_real_escape_string(connection, out, reinterpret_cast<const char *>(data), size);
-	return out;
 }
 
 int tSQL::insertId(void)

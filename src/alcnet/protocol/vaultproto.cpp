@@ -1244,9 +1244,9 @@ namespace alc {
 		
 		char clientDesc[512];
 		if (ki) // we're in the vault server and the "client" is only forwarding
-			snprintf(clientDesc, sizeof(clientDesc), "KI %d, routed by %s", ki, client ? client->str() : "?");
+			snprintf(clientDesc, sizeof(clientDesc), "KI %d, routed by %s", ki, client ? client->str().c_str() : "?");
 		else if (client)
-			alcStrncpy(clientDesc, client->str(), sizeof(clientDesc)-1);
+			alcStrncpy(clientDesc, client->str().c_str(), sizeof(clientDesc)-1);
 		else
 			alcStrncpy(clientDesc, "?", sizeof(clientDesc)-1);
 		if (clientToServer)
