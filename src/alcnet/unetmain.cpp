@@ -55,6 +55,7 @@ tAlcUnetMain::tAlcUnetMain(const char *netName) : tAlcMain(), stateRunning(2), a
 
 tAlcUnetMain::~tAlcUnetMain(void)
 {
+	if (net) throw txUnet(_WHERE("the tUnetBase instance must be destroyed before the tAlcUnetMain instance"));
 	installUnetHandlers(false);
 }
 

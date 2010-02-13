@@ -685,16 +685,18 @@ void tString::writeStr(const char * t) {
 }
 void tString::printf(const char * msg, ...) {
 	va_list ap;
+	va_start(ap,msg);
+	vprintf(msg,ap);
+	va_end(ap);
+}
+void tString::vprintf(const char * msg, va_list ap)
+{
 	const int size = 2048;
 	char buffer[size];
-
-	va_start(ap,msg);
 	
 	if (vsnprintf(buffer,size,msg,ap) >= size) // "a return value of size or more means that the output was truncated"
 		throw txWriteErr(_WHERE("String is too long (max. %d)", size));
 	this->write(buffer,strlen(buffer));
-	
-	va_end(ap);
 }
 void tString::printBoolean(bool val)
 {
@@ -805,7 +807,7 @@ const char * tTime::str(Byte type) const {
 		U32 weeks=days/7;
 		days %= 7;
 
-		static tString sth;
+		static tString sth; // FIXME
 		if(weeks==1) sth.printf("1 week, ");
 		else if(weeks>1) sth.printf("%i weeks, ",weeks);
 		if(days==1) sth.printf("1 day, ");

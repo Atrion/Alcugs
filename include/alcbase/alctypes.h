@@ -313,6 +313,7 @@ public:
 	void writeStr(const tString & val) { write(val.c_str(),val.size()); }
 	void writeStr(tString &val) { write(val.c_str(),val.size()); }
 	void printf(const char * msg, ...);
+	void vprintf(const char * msg, va_list ap);
 	void printBoolean(const char *desc, bool val) { writeStr(desc); printBoolean(val); }
 	void printBoolean(bool val);
 	void nl() { writeStr("\n"); }

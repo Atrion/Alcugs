@@ -98,7 +98,7 @@ public:
 	U32 cloneId;
 	U32 clonePlayerId;
 private:
-	mutable tString dbg;
+	mutable tString dbg; // FIXME
 };
 
 class tUruObjectRef : public tBaseType { // equivalent to the key reader of the resource manager in Plasma

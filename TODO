@@ -14,7 +14,7 @@ Game
 
 Generic Stuff
 ==================
-* Get rid of "static" variables and prefer tString over str[n]cpy/str[n]cat
+* Prefer tString over str[n]cpy/str[n]cat
 * Implement server identification (this could also be used for the tNetSession::isAlcugsServer function)
 * Multithreading support
 * UU support

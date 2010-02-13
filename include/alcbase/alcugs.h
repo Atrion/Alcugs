@@ -107,8 +107,8 @@
 #include <dirent.h>
 
 //alcugs includes
-#include "alcexception.h"
 #include "alctypes.h"
+#include "alcexception.h"
 #include "alcversion.h"
 #include "alclicense.h"
 

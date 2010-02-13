@@ -50,7 +50,7 @@ namespace alc {
 const char * alcGetStrIp(U32 ip) {
 	// valgrind gives an error here about some malloc within inet_ntoa still being reachable. However I've got no idea what to do about that.
 	in_addr cip;
-	static char mip[16];
+	static char mip[16]; // FIXME
 	cip.s_addr=ip;
 	alcStrncpy(mip, inet_ntoa(cip), sizeof(mip)-1);
 	//print2log(f_uru,"DBGDBGDBG:<<<----->>>>%s:%08X\n",mip,ip);

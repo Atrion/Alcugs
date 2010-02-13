@@ -60,7 +60,7 @@ namespace alc {
 		void saveClone(tpLoadCloneMsg *clone);
 		int sendClones(tNetSession *u);
 		int sendSdlStates(tNetSession *u, tmGameStateRequest::tPageList *pages);
-		const tBaseType *getAgeState(void); //!< returns the AgeSDLHook or an empty object
+		const tBaseType *getAgeState(void); //!< returns the AgeSDLHook or NULL
 		void removePlayer(tNetSession *player);
 		void clearAllStates(void);//!< remove all SDL states and clones (only call if you are sure noone is in the age!)
 		

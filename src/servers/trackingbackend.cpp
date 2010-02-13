@@ -80,15 +80,15 @@ namespace alc {
 		waiting = false;
 	}
 	
-	char *tPlayer::str(void)
+	tString tPlayer::str(void)
 	{
-		static char cnt[1024];
+		tString cnt;
 		if (waiting)
-			snprintf(cnt, sizeof(cnt), "[%s@%s][%d@@%s]", avatar, account, ki, awaiting_age);
+			cnt.printf("[%s@%s][%d@@%s]", avatar, account, ki, awaiting_age);
 		else if (u)
-			snprintf(cnt, sizeof(cnt), "[%s@%s][%d@%s]", avatar, account, ki, u->name);
+			cnt.printf("[%s@%s][%d@%s]", avatar, account, ki, u->name);
 		else
-			snprintf(cnt, sizeof(cnt), "[%s@%s][%d]", avatar, account, ki);
+			cnt.printf("[%s@%s][%d]", avatar, account, ki);
 		return cnt;
 	}
 	
@@ -152,7 +152,7 @@ namespace alc {
 		}
 		player->sid = findServer.sid;
 		player->awaiting_x = findServer.x;
-		log.log("Player %s wants to link to %s (%s)\n", player->str(), findServer.age.c_str(), findServer.serverGuid.c_str());
+		log.log("Player %s wants to link to %s (%s)\n", player->str().c_str(), findServer.age.c_str(), findServer.serverGuid.c_str());
 		if (strcmp(findServer.serverGuid.c_str(), "0000000000000000") == 0) // these are 16 zeroes
 			throw txProtocolError(_WHERE("No age GUID set"));
 		// copy data to player
@@ -266,7 +266,7 @@ namespace alc {
 		// notifiy the player that it's server is available
 		tmCustomServerFound found(player->u, player->ki, player->awaiting_x, player->sid, ntohs(server->getPort()), data->externalIp, alcGetStrGuid(server->serverGuid), server->name);
 		net->send(found);
-		log.log("Found age for player %s\n", player->str());
+		log.log("Found age for player %s\n", player->str().c_str());
 		// no longer waiting
 		player->waiting = false;
 	}
@@ -354,7 +354,7 @@ namespace alc {
 		tPlayerList::iterator player = getPlayer(playerStatus.ki);
 		if (playerStatus.playerFlag == 0) {
 			if (player != players.end()) {
-				log.log("Player %s quit\n", player->str());
+				log.log("Player %s quit\n", player->str().c_str());
 				players.erase(player);
 				statusFileUpdate = true;
 			}
@@ -366,7 +366,7 @@ namespace alc {
 			else { // if it already exists, check if the avi is already logged in elsewhere
 				// to do so, we first check if the game server the player uses changed. if that's the case, and the player did not request to link, kick the old player
 				if (player->u != game && player->status != RLeaving) {
-					log.log("WARN: Kicking player %s at %s as it just logged in at %s\n", player->str(), player->u->str(), game->str());
+					log.log("WARN: Kicking player %s at %s as it just logged in at %s\n", player->str().c_str(), player->u->str(), game->str());
 					tmPlayerTerminated term(player->u, player->ki, RLoggedInElsewhere);
 					net->send(term);
 				}
@@ -387,7 +387,7 @@ namespace alc {
 				memset(player->awaiting_guid, 0, 8);
 				player->awaiting_x = 0;
 			}
-			log.log("Got status update for player %s: 0x%02X (%s)\n", player->str(), playerStatus.playerStatus,
+			log.log("Got status update for player %s: 0x%02X (%s)\n", player->str().c_str(), playerStatus.playerStatus,
 					alcUnetGetReasonCode(playerStatus.playerStatus));
 			statusFileUpdate = true;
 		}
@@ -412,7 +412,7 @@ namespace alc {
 		tPlayerList::iterator it = players.begin();
 		while (it != players.end()) {
 			if (it->u == game) {
-				log.log("WARN: Removing player %s as it was on a terminating server\n", it->str());
+				log.log("WARN: Removing player %s as it was on a terminating server\n", it->str().c_str());
 				it = players.erase(it);
 				statusFileUpdate = true;
 			}

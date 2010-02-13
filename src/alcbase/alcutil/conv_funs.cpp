@@ -33,6 +33,8 @@
 #include "alcdebug.h"
 
 namespace alc {
+	
+	// FIXME: get rid of the "static"s
 
 /**
   \brief Converts an hex guid to ascii

@@ -67,7 +67,7 @@ namespace alc {
 	class tPlayer {
 	public:
 		tPlayer(U32 ki);
-		char *str(void);
+		tString str(void);
 		U32 ki; //!< player's ki number
 		U32 sid; //!< player's sid in the lobby/game server
 		Byte uid[16]; //!< the player's account uid (hex)

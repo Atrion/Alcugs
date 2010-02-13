@@ -219,8 +219,6 @@ int tUnetSimpleFileServer::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 	return ret;
 }
 
-tUnetSimpleFileServer * netcore=NULL;
-
 int main(int argc,char * argv[]) {
 
 	int i;
@@ -291,8 +289,8 @@ int main(int argc,char * argv[]) {
 		
 		alcMain.std()->print(alcVersionText());
 
-		netcore=new tUnetSimpleFileServer(l_hostname,l_port,listen);
-		if (!nlogs) netcore->unsetFlags(UNET_ELOG);
+		tUnetSimpleFileServer netcore=tUnetSimpleFileServer(l_hostname,l_port,listen);
+		if (!nlogs) netcore.unsetFlags(UNET_ELOG);
 
 		while(listen==0 && !strcmp(hostname,"")) {
 			printf("\nHostname not set, please enter destination host: ");
@@ -311,21 +309,13 @@ int main(int argc,char * argv[]) {
 			printf("Waiting for messages... CTR+C stops\n");
 		}
 
-		//alcSignal(SIGTERM, s_handler);
-		//alcSignal(SIGINT, s_handler);
-
-		netcore->setValidation(val);
-		netcore->setDestinationAddress(hostname,port);
-		if(urgent==1) netcore->setUrgent();
-		if(compress==1) netcore->setCompressed();
-		netcore->setFile(file);
+		netcore.setValidation(val);
+		netcore.setDestinationAddress(hostname,port);
+		if(urgent==1) netcore.setUrgent();
+		if(compress==1) netcore.setCompressed();
+		netcore.setFile(file);
 		
-		netcore->run();
-	
-		delete netcore;
-
-		//stop Alcugs library (optional, not required)
-		//alcShutdown();
+		netcore.run();
 		
 	} catch(txBase &t) {
 		printf("Exception %s\n%s\n",t.what(),t.backtrace());

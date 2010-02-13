@@ -246,8 +246,6 @@ void tUnetPing::onIdle(bool /*idle*/) {
 }
 
 
-tUnetPing * netcore=NULL;
-
 int main(int argc,char * argv[]) {
 
 	int i;
@@ -357,11 +355,11 @@ int main(int argc,char * argv[]) {
 		
 		if(mrtg==1) num=1;
 
-		netcore=new tUnetPing(l_hostname,l_port,listen,time,num,flood);
-		if (!nlogs) netcore->unsetFlags(UNET_ELOG);
+		tUnetPing netcore=tUnetPing(l_hostname,l_port,listen,time,num,flood);
+		if (!nlogs) netcore.unsetFlags(UNET_ELOG);
 		
-		if(bcast) netcore->setFlags(UNET_BCAST);
-		else netcore->unsetFlags(UNET_BCAST);
+		if(bcast) netcore.setFlags(UNET_BCAST);
+		else netcore.unsetFlags(UNET_BCAST);
 
 		while(listen==0 && !strcmp(hostname,"")) {
 			printf("\nHostname not set, please enter destination host: ");
@@ -379,18 +377,13 @@ int main(int argc,char * argv[]) {
 		//alcSignal(SIGTERM, s_handler);
 		//alcSignal(SIGINT, s_handler);
 		
-		netcore->setSource(source);
-		netcore->setDestination(destination);
-		netcore->setDestinationAddress(hostname,port);
-		netcore->setValidation(val);
-		if(urgent==1) netcore->setUrgent();
+		netcore.setSource(source);
+		netcore.setDestination(destination);
+		netcore.setDestinationAddress(hostname,port);
+		netcore.setValidation(val);
+		if(urgent==1) netcore.setUrgent();
 		
-		netcore->run();
-	
-		delete netcore;
-	
-		//stop Alcugs library (optional, not required)
-		//alcShutdown();
+		netcore.run();
 		
 	} catch(txBase &t) {
 		printf("Exception %s\n%s\n",t.what(),t.backtrace());
