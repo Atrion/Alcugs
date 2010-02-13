@@ -45,141 +45,59 @@
 
 namespace alc {
 
-typedef struct {
-	//files
-	Byte verboseLevel; //!< set what to print to the console
-	//silent
-	// 3 - print all, ignoring if them have stdout or stderr flags, html are not print.
-	// 2 - print only msgs with stderr or stdout flags.
-	// 1 - print only msgs with stderr flags
-	// 0 - don't print nothing
-
-	int n_files2rotate; //!< set number the files to rotate
-												/* 0 - logging disabled
-												   1 - one file (old behaviour)
-													 >=2 - rotate logs
-												*/
-	tString * path; //!<path to the log directory
-	int rotate_size; //!< maxium size of a file, if reached, file will be rotated
-	mode_t creation_mask; //!< default permissions mask
-	//build vars
-	char build[100]; //!< build
-	//track logs
-	int n_logs; //How many log files are open
-	tLog ** logs; //Pointer to each one
+tLogConfig::tLogConfig(void) : path("log/"), build("Alcugs logging system")
+{
+	//memset(tvLogConfig,0,sizeof(tvLogConfig));
+	verboseLevel=3;
+	n_files2rotate=5;
+	rotate_size=2*1024*1024;
+	creation_mask=00750;
 	//syslog
-	/*char syslogname[100]; //!< the syslog name
-	char syslog_enabled; //!< enable syslog logging? (0x01 yes, 0x0 no)
+	/*alcStrncpy(syslogname, "alcugs", 99);
+	syslog_enabled=0x00;
 	//db
-	char dbhost[100]; //!<database params
-	U16 dbport;
-	char dbname[100];
-	char dbuser[100];
-	char dbpasswd[100];
-	char dbeventtable[100];
-	char db_enabled; //!< 0x01 enabled, 0x00 disabled
+	alcStrncpy(dbhost, "", 99);
+	dbport=0;
+	alcStrncpy(dbname, "uru_events", 99);
+	alcStrncpy(dbuser, "uru", 99);
+	alcStrncpy(dbpasswd, "", 99);
+	alcStrncpy(dbeventtable, "events", 99);
+	db_enabled=0x00;
 	//unet
-	char host[100]; //!< udp/tcp listener
-	U16 port;
-	char protocol; //UDP, TCP <! 0x00 disabled, 0x01 udp, 0x02 tcp*/
-} tLogConfig;
-
-static tLogConfig * tvLogConfig=NULL;
-
-static void alcLogSetDefaults() {
-	if(tvLogConfig==NULL) {
-		tvLogConfig=new tLogConfig;
-	}
-	if(tvLogConfig!=NULL) {
-		//memset(tvLogConfig,0,sizeof(tvLogConfig));
-		tvLogConfig->verboseLevel=3;
-		tvLogConfig->n_files2rotate=5;
-		tvLogConfig->path=new tString("log/");
-		tvLogConfig->rotate_size=2*1024*1024;
-		tvLogConfig->creation_mask=00750;
-		alcStrncpy(tvLogConfig->build, "Alcugs logging system", sizeof(tvLogConfig->build)-1);
-		//track logs
-		tvLogConfig->n_logs=0;
-		tvLogConfig->logs=NULL;
-		//syslog
-		/*alcStrncpy(tvLogConfig->syslogname, "alcugs", 99);
-		tvLogConfig->syslog_enabled=0x00;
-		//db
-		alcStrncpy(tvLogConfig->dbhost, "", 99);
-		tvLogConfig->dbport=0;
-		alcStrncpy(tvLogConfig->dbname, "uru_events", 99);
-		alcStrncpy(tvLogConfig->dbuser, "uru", 99);
-		alcStrncpy(tvLogConfig->dbpasswd, "", 99);
-		alcStrncpy(tvLogConfig->dbeventtable, "events", 99);
-		tvLogConfig->db_enabled=0x00;
-		//unet
-		alcStrncpy(tvLogConfig->host, "localhost", 99);
-		tvLogConfig->port=9000;
-		tvLogConfig->protocol=0x00;*/
-	}
+	alcStrncpy(host, "localhost", 99);
+	port=9000;
+	protocol=0x00;*/
 }
 
-void alcLogSetLogPath(const tString & path) {
-	*(tvLogConfig->path)=path;
+void tLogConfig::addLog(tLog *log)
+{
+	logs.push_back(log);
 }
 
-void alcLogSetLogVerboseLevel(Byte level) {
-	if(tvLogConfig!=NULL) {
-		if(level>3) level=3;
-		tvLogConfig->verboseLevel = level;
-	}
-}
-
-void alcLogSetFiles2Rotate(Byte n) {
-	if(tvLogConfig!=NULL) {
-		tvLogConfig->n_files2rotate = n;
-	}
-}
-
-void alcLogShutdown(bool silent) {
-	int i;
-	delete tvLogConfig->path;
-	tvLogConfig->path=NULL;
-	for(i=0; i<tvLogConfig->n_logs; i++) {
-		if(tvLogConfig->logs[i]!=NULL) {
-			tvLogConfig->logs[i]->close(silent);
-			//delete tvLogConfig->logs[i];
+void tLogConfig::removeLog(tLog *log)
+{
+	for (tLogList::iterator it = logs.begin(); it != logs.end(); ++it) {
+		if (*it == log) {
+			logs.erase(it);
+			return;
 		}
 	}
-	free(tvLogConfig->logs);
-	tvLogConfig->logs=NULL;
-	delete tvLogConfig;
-	tvLogConfig=NULL;
 }
 
-void alcLogInit() {
-	DBG(5,"alcLogInit()..\n");
-	if(tvLogConfig==NULL) {
-		alcLogSetDefaults();
-	}
+void tLogConfig::forceCloseAllLogs(void) {
+	for (tLogList::iterator it = logs.begin(); it != logs.end(); ++it)
+		(*it)->close();
 }
 
-static char * alcHtmlGenerateHead(char * title,char * powered) {
-	static char head[512];
-	//%s. Build %s - Version %s - Id: %s
-
-	snprintf(head,sizeof(head),"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\n\
-<html><head>\n<title>%s</title>\n\
-<meta HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=iso-8859-1\">\n\
-<meta HTTP-EQUIV=\"Generator\" CONTENT=\"%s\">\n\
-</head>\n<body>"\
-,title,powered);
-	return head;
-}
 
 
 /** tLog class
  Opens a log file to write,
- \return the log descriptor associated to the log file
- flags are detailed in the stdebug.h file
- \returns NULL if failed
+ flags are detailed in the alclog.h file
 */
 tLog::tLog(const char * name, U16 flags) {
+	tvLogConfig = &(alcGetMain()->logCfg);
+	tvLogConfig->addLog(this);
 	this->name=NULL;
 	this->fullpath=NULL;
 	this->dsc=NULL;
@@ -191,8 +109,8 @@ tLog::tLog(const char * name, U16 flags) {
 }
 
 tLog::~tLog() {
-	DBG(5,"~tLog()\n");
 	this->close();
+	tvLogConfig->removeLog(this);
 }
 
 void tLog::open(const char * name, U16 flags) {
@@ -200,8 +118,6 @@ void tLog::open(const char * name, U16 flags) {
 	char * croak=NULL;
 	int i,e,size;
 
-	int f;
-	
 	if(this->flags & DF_OPEN) close();
 	
 	this->flags = flags;
@@ -213,7 +129,7 @@ void tLog::open(const char * name, U16 flags) {
 		strcpy(this->name,name);
 		DBG(5,"cont...\n");
 
-		size=strlen(name) + tvLogConfig->path->size();
+		size=strlen(name) + tvLogConfig->path.size();
 		DBG(6,"size is:%i\n",size);
 
 		croak=static_cast<char *>(malloc(sizeof(char) * (size+1+5)));
@@ -224,7 +140,7 @@ void tLog::open(const char * name, U16 flags) {
 		DBG(7,"here too\n");
 
 		if(name[0]!='/') {
-			strcpy(path,tvLogConfig->path->c_str());
+			strcpy(path,tvLogConfig->path.c_str());
 		} else {
 			strcpy(path,"");
 			size=strlen(name);
@@ -266,29 +182,7 @@ void tLog::open(const char * name, U16 flags) {
 			throw txNotFound(_WHERE("Can not open %s", fullpath));
 		this->flags |= DF_OPEN;
 		if(this->flags & DF_HTML) {
-			fprintf(this->dsc,"%s",alcHtmlGenerateHead(this->name,tvLogConfig->build));
-		}
-		
-		int found = -1;
-		for(f=0; f<tvLogConfig->n_logs; f++) {
-			if(tvLogConfig->logs[f]==NULL) {
-				found=f;
-				break;
-			}
-		}
-		if(found==-1) {
-			tvLogConfig->n_logs++;
-			tLog ** aux=NULL;
-			aux=static_cast<tLog **>(realloc(tvLogConfig->logs,sizeof(tLog *) * tvLogConfig->n_logs));
-			if(aux==NULL) {
-				fprintf(stderr,"Failed allocating memory!\n");
-				throw txNoMem(_WHERE(""));
-			} else {
-				tvLogConfig->logs=aux;
-				tvLogConfig->logs[tvLogConfig->n_logs-1]=this;
-			}
-		} else {
-			tvLogConfig->logs[found]=this;
+			printHtmlHead(tvLogConfig->build);
 		}
 	}
 	else
@@ -301,7 +195,7 @@ void tLog::rotate(bool force) {
 	char * croak=NULL;
 	char * croak2=NULL;
 	char * gustavo=NULL;
-	int i,size;
+	U32 i,size;
 
 	struct stat file_stats;
 	
@@ -317,7 +211,7 @@ void tLog::rotate(bool force) {
 	
 	DBG(5,"3..\n");
 
-	size=strlen(this->name) + tvLogConfig->path->size();
+	size=strlen(this->name) + tvLogConfig->path.size();
 
 	croak=static_cast<char *>(malloc(sizeof(char) * (size+1+5)));
 	if(croak==NULL) return;
@@ -332,7 +226,7 @@ void tLog::rotate(bool force) {
 	DBG(5,"4..\n");
 
 	if(this->name[0]!='/') {
-		strcpy(path,tvLogConfig->path->c_str());
+		strcpy(path,tvLogConfig->path.c_str());
 	} else {
 		strcpy(path,"");
 	}
@@ -393,7 +287,7 @@ void tLog::rotate(bool force) {
 					throw txBase(_WHERE("fopen error"));
 				} else {
 					if(this->flags & DF_HTML) {
-						fprintf(this->dsc,"%s",alcHtmlGenerateHead(this->name,tvLogConfig->build));
+						printHtmlHead(tvLogConfig->build);
 					}
 				}
 			}
@@ -412,15 +306,6 @@ void tLog::rotate(bool force) {
 	Close the log file
 */
 void tLog::close(bool silent) {
-	int f;
-	if (tvLogConfig) {
-		for(f=0; f<tvLogConfig->n_logs; f++) {
-			if(tvLogConfig->logs[f]==this) {
-				tvLogConfig->logs[f]=NULL;
-				break;
-			}
-		}
-	}
 	if(this->name!=NULL) { DBG(1,"closing log %s...\n",this->name); }
 	if(this->dsc!=NULL && this->dsc!=stdout && this->dsc!=stderr) {
 		if(this->flags & DF_HTML && !silent) { // a silent close is used during forking - we must not write this line then
@@ -436,6 +321,15 @@ void tLog::close(bool silent) {
 	this->flags=0;
 }
 
+
+void tLog::printHtmlHead(const tString &generator) {
+	fprintf(dsc,"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\n\
+<html><head>\n<title>%s</title>\n\
+<meta HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=iso-8859-1\">\n\
+<meta HTTP-EQUIV=\"Generator\" CONTENT=\"%s\">\n\
+</head>\n<body>" ,name, generator.c_str());
+}
+
 /**
 	Allows to print big raw messages to the file and stdout descriptors.
 	This don't sends messages to syslog, database, or socket
@@ -446,7 +340,7 @@ void tLog::print(const char * msg, ...) const {
 
 	va_start(ap,msg);
 	va_start(ap2,msg);
-
+	
 	//first print to the file
 	if(tvLogConfig->n_files2rotate && this->dsc!=NULL && this->dsc!=stdout && this->dsc!=stderr) {
 		vfprintf(this->dsc,msg,ap);
