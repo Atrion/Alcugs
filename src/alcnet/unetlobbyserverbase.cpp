@@ -65,7 +65,7 @@ namespace alc {
 			vaultLogShort = (var.isEmpty() || var.asByte()); // per default, it *is* short
 		}
 		else
-			lvault.close();
+			lvault.open(DF_HTML);
 		
 		var = cfg->getVar("allow_uu_clients");
 		allowUU = (var.isEmpty() || var.asByte()); // per default, UU clients are allowed
@@ -123,7 +123,7 @@ namespace alc {
 				err->log("Active player is set twice for %s\n", u->str().c_str());
 		}
 		
-		if (whoami == KGame && !avatar.isEmpty()) // empty avatar names are not allowed in game server
+		if (whoami == KGame && avatar.isEmpty()) // empty avatar names are not allowed in game server
 			throw txProtocolError(_WHERE("Someone with KI %d is trying to set an empty avatar name, but I\'m a game server. Kick him.", ki));
 	
 		tNetSession *trackingServer = getServer(KTracking);

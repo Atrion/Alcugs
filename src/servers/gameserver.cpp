@@ -58,7 +58,9 @@ namespace alc {
 		if (serverName.size() < 2) throw txBase(_WHERE("an age name must be set"));
 		tString var = cfg->getVar("age_guid");
 		if (var.size() != 16) throw txBase(_WHERE("an age GUID must be set"));
-		alcGetHexUid(serverGuid, var);
+		tMBuf guid = alcAscii2Hex(var);
+		if (guid.size() != 8) throw txBase(_WHERE("invalid age GUID set"));
+		memcpy(serverGuid, guid.data(), 8);
 		
 		// load age file and SDL Manager
 		ageInfo = new tAgeInfo(serverName, /*loadPages*/true);

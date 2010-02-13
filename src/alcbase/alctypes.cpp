@@ -469,17 +469,36 @@ void tSBuf::stream(tBBuf &buf) const {
 
 /* tZBuf */
 void tZBuf::compress() {
-	zlib::uLongf comp_size = size()*1.1+12;
+	zlib::uLongf comp_size = zlib::compressBound(size());
 	tZBuf newBuf(comp_size);
 	int ret=zlib::compress(newBuf.volatileData(),&comp_size,data(),size());
+	/* zlib docu for compress:
+		int compress(Bytef *dest,   uLongf *destLen,
+					const Bytef *source, uLong sourceLen)
+		Compresses the source buffer into the destination buffer.  sourceLen is
+		the byte length of the source buffer. Upon entry, destLen is the total
+		size of the destination buffer, which must be at least the value returned
+		by compressBound(sourceLen). Upon exit, destLen is the actual size of the
+		compressed buffer.*/
 	if(ret!=0) throw txBase(_WHERE("Something terrible happenened compressing the buffer"));
 	copy(newBuf);
+	cutEnd(comp_size);
 	rewind();
 }
 void tZBuf::uncompress(U32 iosize) {
 	zlib::uLongf comp_size=iosize;
 	tZBuf newBuf(comp_size);
 	int ret=zlib::uncompress(newBuf.volatileData(),&comp_size,data(),size());
+	/* zlib docu for uncompress:
+		int uncompress(Bytef *dest,   uLongf *destLen,
+						const Bytef *source, uLong sourceLen)
+		Decompresses the source buffer into the destination buffer.  sourceLen is
+		the byte length of the source buffer. Upon entry, destLen is the total
+		size of the destination buffer, which must be large enough to hold the
+		entire uncompressed data. (The size of the uncompressed data must have
+		been saved previously by the compressor and transmitted to the decompressor
+		by some mechanism outside the scope of this compression library.)
+		Upon exit, destLen is the actual size of the compressed buffer. */
 	if(ret!=0) throw txBase(_WHERE("Something terrible happenened uncompressing the buffer"));
 	if (iosize != comp_size)
 		throw txUnexpectedData(_WHERE("tZBuf size mismatch: %i != %i", iosize, comp_size));

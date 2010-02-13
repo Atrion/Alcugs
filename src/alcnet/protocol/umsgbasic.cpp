@@ -59,8 +59,9 @@ tString tmTerminated::str() const {
 
 
 tmLeave::tmLeave(tNetSession * u,U32 ki,Byte reason)
- :tmMsgBase(NetMsgLeave,plNetKi,u) {
- // the connection will be dropped immediately after sending this message, the ack reply would already trigger a new one
+ :tmMsgBase(NetMsgLeave,plNetKi|plNetAck,u) {
+ /* The Uru client sends the leaves with the ack flag enabled, so we do it, too - but this is problematic:
+ The connection is dropped ASAP after sending this message, but the ack reply has to be sent, and it msut not trigger a new connection on the other end */
 	this->ki=ki;
 	this->reason=reason;
 	setUrgent(); // We can not wait long after sending the message, so do it quickly!

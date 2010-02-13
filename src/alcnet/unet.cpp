@@ -128,8 +128,8 @@ void tUnet::init() {
 
 	#ifdef ENABLE_NETDEBUG
 	// Noise and latency
-	in_noise=5; // percent of dropped packets (0-100)
-	out_noise=5; // percent of dropped packets (0-100)
+	in_noise=2; // percent of dropped packets (0-100)
+	out_noise=2; // percent of dropped packets (0-100)
 	latency=20000; // in usecs
 	// Bandwith: 10kB/0,66seconds = 15kB/second = 120kBit/second
 	lim_down_cap=10000; // in bytes
@@ -215,7 +215,7 @@ void tUnet::openLogfiles() {
 	if(elog && (this->flags & UNET_EACKLOG)) {
 		this->ack->open("ack.html",DF_HTML);
 	} else {
-		this->ack->close();
+		this->ack->open(DF_HTML);
 	}
 	
 

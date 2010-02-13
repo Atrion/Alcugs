@@ -116,10 +116,10 @@ void tLog::open(const tString &name, U16 newFlags) {
 			fullpath = name;
 		}
 		alcMkdir(fullpath.dirname(), tvLogConfig->creation_mask);
-		DBG(5, "Full path is %s\n", fullpath.c_str());
+		DBG(5, "Full path is %s, flags are 0x%08X\n", fullpath.c_str(), flags);
 
 		//rotation
-		if(!(flags & DF_APPEND) || (flags & DF_HTML)) {
+		if((!(flags & DF_APPEND)) || (flags & DF_HTML)) {
 			rotate(true);
 		} else {
 			rotate();
@@ -133,6 +133,7 @@ void tLog::open(const tString &name, U16 newFlags) {
 		}
 	}
 	else {
+		DBG(5, "No file opened, flags are 0x%08X\n", flags);
 		fullpath = "";
 		dsc = NULL;
 	}
@@ -243,15 +244,15 @@ void tLog::print(const char * msg, ...) const {
 void tLog::print(const tString &str) const
 {
 	//first print to the file
-	if(tvLogConfig->n_files2rotate && this->dsc!=NULL && this->dsc!=stdout && this->dsc!=stderr) {
-		fputs(str.c_str(),this->dsc);
+	if(tvLogConfig->n_files2rotate && dsc!=NULL) {
+		fputs(str.c_str(),dsc);
 	}
 
 	//then print to the specific device
-	if(!(this->flags & DF_HTML)) {
-		if(tvLogConfig->verboseLevel>=1 && (this->flags & DF_STDERR)) {
+	if(!(flags & DF_HTML)) {
+		if(tvLogConfig->verboseLevel>=1 && (flags & DF_STDERR)) {
 			fputs(str.c_str(),stderr);     //stderr messages
-		} else if(tvLogConfig->verboseLevel>=2 && (this->flags & DF_STDOUT)) {
+		} else if(tvLogConfig->verboseLevel>=2 && (flags & DF_STDOUT)) {
 			fputs(str.c_str(),stdout);      //stdout messages
 		} else if(tvLogConfig->verboseLevel==3) {
 			fputs(str.c_str(),stdout);      //print all (muhahahaha)
@@ -338,8 +339,10 @@ void tLog::flush() const {
 	if(this->dsc!=NULL) {
 		fflush(this->dsc);
 	}
-	if(this->flags & DF_STDERR && tvLogConfig->verboseLevel>=1) {  fflush(stderr); }
-	if((this->flags & DF_STDOUT && tvLogConfig->verboseLevel>=2) || tvLogConfig->verboseLevel==3) {  fflush(stdout); }
+	if(!(flags & DF_HTML)) {
+		if(this->flags & DF_STDERR && tvLogConfig->verboseLevel>=1) {  fflush(stderr); }
+		if((this->flags & DF_STDOUT && tvLogConfig->verboseLevel>=2) || tvLogConfig->verboseLevel==3) {  fflush(stdout); }
+	}
 }
 
 
@@ -479,8 +482,14 @@ void tLog::logErr(const char *msg) {
 bool tLog::doesPrint(void) const
 {
 	if(this->dsc!=NULL) return true;
-	if(this->flags & DF_STDERR && tvLogConfig->verboseLevel>=1) return true;
-	if((this->flags & DF_STDOUT && tvLogConfig->verboseLevel>=2) || tvLogConfig->verboseLevel==3) return true;
+	if(!(flags & DF_HTML)) {
+		DBG(7, "dsc is NULL, no HTML, checking stdout/stderr\n");
+		if(this->flags & DF_STDERR && tvLogConfig->verboseLevel>=1) return true;
+		if((this->flags & DF_STDOUT && tvLogConfig->verboseLevel>=2) || tvLogConfig->verboseLevel==3) return true;
+	}
+	else {
+		DBG(7, "dsc is NULL, and HTML flag set - no printing\n");
+	}
 	return false;
 }
 

@@ -47,7 +47,7 @@ public:
 	void run();
 	
 	/** terminate this session */
-	inline void terminate(tNetSession *u, Byte reason = 0) { terminate(u, reason, /*gotLeave*/false); }
+	inline void terminate(tNetSession *u, Byte reason = 0) { terminate(u, reason, /*gotEndMsg*/false); }
 	
 	/** check whether the server is still running */
 	inline bool isRunning(void) { return running; }
@@ -114,7 +114,7 @@ private:
 	/** Just kills the socket - should only be used if the process was forked */
 	inline void kill() { stopOp(); }
 	
-	void terminate(tNetSession *u, Byte reason, bool gotLeave);
+	void terminate(tNetSession *u, Byte reason, bool gotEndMsg);
 	void terminateAll(bool playersOnly = false);
 	inline void terminatePlayers() { terminateAll(/*playersOnly*/true); }
 	void removeConnection(tNetSession *u); //!< destroy that session

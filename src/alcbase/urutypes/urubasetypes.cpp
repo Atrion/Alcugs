@@ -72,17 +72,18 @@ void tWDYSBuf::decrypt(bool mustBeWDYS) {
 		if (mustBeWDYS) throw txUnexpectedData(_WHERE("NotAWDYSFile!")); 
 		return;
 	}
-	set(12);
+	set(12); // seek to the size
 	U32 dsize=getU32();
 	
 	// decrypt ourselves in-place
 	for (U32 i=0; i<dsize; i+=8) {
+		// 16 is the header size
 		wdys::decodeQuad(reinterpret_cast<U32 *>(volatileData()+16+i), reinterpret_cast<U32 *>(volatileData()+16+i+4));
 	}
 	
 	// put the decrypted data into a new buffer and assign it to us
 	tWDYSBuf newBuf;
-	newBuf.write(data()+16, dsize);
+	newBuf.write(data()+16, dsize); // 16 is the header size
 	copy(newBuf);
 	rewind();
 }
@@ -105,18 +106,17 @@ void tAESBuf::setM5Key() {
 }
 void tAESBuf::encrypt() {
 	// encrypt the buffer
-	U32 dataSize = size();
-	tAESBuf newBuf(dataSize+8);
+	tAESBuf newBuf(size()+16); // 8 bytes for the header, 8 bytes for AES
+	newBuf.putU32(0x0D874288);
+	newBuf.putU32(size());
 	Rijndael rin;
 	rin.init(Rijndael::ECB,Rijndael::Encrypt,key,Rijndael::Key16Bytes);
-	int res = rin.padEncrypt(data(),dataSize,newBuf.volatileData());
+	int res = rin.padEncrypt(data(),size(),newBuf.volatileData()+8);
 	if(res<0) throw txUnkErr(_WHERE("Rijndael encrypt error"));
 	
 	// res tells us how many Bytes were really used
-	clear();
-	putU32(0x0D874288);
-	putU32(dataSize);
-	write(newBuf.data(), res);
+	newBuf.cutEnd(res+8); // 8 bytes for the header
+	copy(newBuf);
 	rewind();
 }
 void tAESBuf::decrypt() {
@@ -134,8 +134,8 @@ void tAESBuf::decrypt() {
 	if(static_cast<U32>(res) != size()-8) throw txUnkErr(_WHERE("Rijndael decrypt error: Size mismatch"));
 
 	// and use what we need
-	clear();
-	write(newBuf.data(), dataSize);
+	newBuf.cutEnd(dataSize);
+	copy(newBuf);
 	rewind();
 }
 /* end AES buff */
