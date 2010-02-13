@@ -76,13 +76,13 @@ void tmData::store(tBBuf &t) {
 	U32 remaining = t.remaining();
 	if (hasFlags(plNetX)) {
 		tZBuf zdata;
-		zdata.write(t.read(), remaining);
+		zdata.write(t.readAll(), remaining);
 		zdata.uncompress(x);
 		data = zdata;
 		if (data.size() != x) throw txBase(_WHERE("size mismatch (%d != %d)", data.size(), x));
 	}
 	else
-		data.write(t.read(), remaining);
+		data.write(t.readAll(), remaining);
 }
 void tmData::stream(tBBuf &t) const {
 	tmMsgBase::stream(t);

@@ -112,9 +112,9 @@ void alctypes_mbuf() {
 	buf1.write(&c,1);
 	buf1.set(0);
 	assert(buf1.tell()==0);
-	std::cout<<"-"<< buf1.read()<<"-" <<std::endl;
+	std::cout<<"-"<< buf1.readAll()<<"-" <<std::endl;
 	buf1.rewind();
-	assert(!strcmp(reinterpret_cast<const char *>(buf1.read()),"Hello WorldBye cruel world"));
+	assert(!strcmp(reinterpret_cast<const char *>(buf1.readAll()),"Hello WorldBye cruel world"));
 	buf1.rewind();
 	assert(buf1.tell()==0);
 	buf1.end();
@@ -191,7 +191,7 @@ void alctypes_mbuf() {
 	buf1.putSByte(-2);
 	buf1.set(my);
 #if defined(WORDS_BIGENDIAN)
-	const Byte * rawbuf=buf1.read();
+	const Byte * rawbuf=buf1.data();
 	U32 tmp;
 	memcpy(&tmp,rawbuf,2);
 	assert(*((U16 *)&tmp)==(U16)letoh16((U16)23));
@@ -253,7 +253,7 @@ void alctypes_mbuf() {
 	buf6=new tMBuf();
 	U32 oldPos = buf1.tell();
 	buf1.set(1);
-	buf6->write(buf1.read(), buf1.size()-1);
+	buf6->write(buf1.readAll(), buf1.size()-1);
 	buf7=new tMBuf();
 	buf1.set(5);
 	buf7->write(buf1.read(10), 10);
@@ -278,8 +278,8 @@ void alctypes_mbuf() {
 
 	buf1.seek(1);
 	buf3.seek(5);
-	buf6->check(buf1.read(),buf6->size());
-	buf7->check(buf3.read(),buf7->size());
+	buf6->check(buf1.readAll(),buf6->size());
+	buf7->check(buf3.readAll(),buf7->size());
 	
 	assert(buf7->size()==10);
 	assert(buf6->size()==buf1.size()-1);
@@ -294,8 +294,8 @@ void alctypes_mbuf() {
 
 	buf1.seek(1);
 	buf3.seek(5);
-	buf6->check(buf1.read(),buf6->size()-4);
-	buf7->check(buf3.read(),buf7->size()-4);
+	buf6->check(buf1.readAll(),buf6->size()-4);
+	buf7->check(buf3.readAll(),buf7->size()-4);
 	
 	assert(buf7->size()==14);
 	assert(buf6->size()==buf1.size()+3);
@@ -641,36 +641,49 @@ void alctypes_part5() {
 	assert(test!="/path/to");
 	dmalloc_verify(NULL);
 	assert(test.dirname()=="/path/to");
+	assert(test.filename()=="something.txt");
 	dmalloc_verify(NULL);
 	test="/usr/lib";
 	assert(test.dirname()=="/usr");
+	assert(test.filename()=="lib");
 	test="/usr/";
 	//printf("-%s-\n",test.dirname().c_str());
 	assert(test.dirname()=="/");
+	assert(test.filename()=="");
 	test="usr";
 	assert(test.dirname()==".");
+	assert(test.filename()=="usr");
 	test="/";
 	assert(test.dirname()=="/");
+	assert(test.filename()=="");
 	test=".";
 	assert(test.dirname()==".");
+	assert(test.filename()==".");
 	test="..";
 	assert(test.dirname()==".");
+	assert(test.filename()=="..");
 	test="/usr/lib/";
 	assert(test.dirname()=="/usr");
+	assert(test.filename()=="");
 	test="usr/lib/";
 	//printf("-%s-\n",test.dirname().c_str());
 	assert(test.dirname()=="usr");
+	assert(test.filename()=="");
 	test="usr/";
 	assert(test.dirname()==".");
+	assert(test.filename()=="");
 	test="usr/lib/kk/path/something";
 	//printf("-%s-\n",test.dirname().c_str());
 	assert(test.dirname()=="usr/lib/kk/path");
-	test="../../../usr/lib/kk/path/something";
+	assert(test.filename()=="something");
+	test="../../../usr/lib/kk/path/something2";
 	//printf("-%s-\n",test.dirname().c_str());
 	assert(test.dirname()=="../../../usr/lib/kk/path");
-	test="/../../../usr/lib/kk/path/something";
+	assert(test.filename()=="something2");
+	test="/../../../usr/lib/kk/path/something22";
 	//printf("-%s-\n",test.dirname().c_str());
 	assert(test.dirname()=="/../../../usr/lib/kk/path");
+	assert(test.filename()=="something22");
 	dmalloc_verify(NULL);
 	
 	// stripped & dirname

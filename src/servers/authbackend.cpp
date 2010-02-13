@@ -113,7 +113,7 @@ namespace alc {
 			// check if the auth table exists
 			tString query;
 			query.printf("SHOW TABLES LIKE 'accounts'");
-			sql->query(query.c_str(), "Looking for accounts table");
+			sql->query(query, "Looking for accounts table");
 			MYSQL_RES *result = sql->storeResult();
 			bool exists = mysql_num_rows(result);
 			mysql_free_result(result);
@@ -135,17 +135,17 @@ namespace alc {
 		return false;
 	}
 
-	tString tAuthBackend::calculateHash(const char *login, const char *passwd, const char *challenge)
+	tString tAuthBackend::calculateHash(const tString &login, const tString &passwd, const tString &challenge)
 	{
 		tMD5Buf md5buffer;
-		md5buffer.write(challenge, strlen(challenge));
-		md5buffer.write(login, strlen(login));
-		md5buffer.write(passwd, strlen(passwd));
+		md5buffer.write(challenge.data(), challenge.size());
+		md5buffer.write(login.data(), login.size());
+		md5buffer.write(passwd.data(), passwd.size());
 		md5buffer.compute();
 		return alcHex2Ascii(md5buffer);
 	}
 	
-	int tAuthBackend::queryPlayer(const char *login, tString *passwd, tString *guid, U32 *attempts, U32 *lastAttempt)
+	int tAuthBackend::queryPlayer(const tString &login, tString *passwd, tString *guid, U32 *attempts, U32 *lastAttempt)
 	{
 		tString query;
 		*attempts = *lastAttempt = 0; // ensure there's a valid value in there
@@ -160,7 +160,7 @@ namespace alc {
 		
 		// query the database
 		query.printf("SELECT UCASE(passwd), a_level, guid, attempts, UNIX_TIMESTAMP(last_attempt) FROM accounts WHERE name='%s' LIMIT 1", sql->escape(login).c_str());
-		sql->query(query.c_str(), "Query player");
+		sql->query(query, "Query player");
 		
 		// read the result
 		MYSQL_RES *result = sql->storeResult();
@@ -181,7 +181,7 @@ namespace alc {
 		return ret;
 	}
 
-	void tAuthBackend::updatePlayer(const char *guid, const char *ip, U32 attempts, Byte updateStamps)
+	void tAuthBackend::updatePlayer(const tString &guid, const tString &ip, U32 attempts, Byte updateStamps)
 	{
 		tString query;
 		query.printf("UPDATE accounts SET attempts='%d', last_ip='%s'", attempts, sql->escape(ip).c_str());
@@ -191,18 +191,17 @@ namespace alc {
 			query.printf(", last_attempt=NOW(), last_login=NOW()");
 		else {} // don't update any stamp
 		query.printf(" WHERE guid='%s'", sql->escape(guid).c_str());
-		sql->query(query.c_str(), "Update player");
+		sql->query(query, "Update player");
 	}
 
-	int tAuthBackend::authenticatePlayer(tNetSession *u, const char *login, const char *challenge, const char *hash, Byte release, const char *ip, tString *passwd,
-			Byte *hexUid, Byte *accessLevel)
+	int tAuthBackend::authenticatePlayer(tNetSession *u, const tString &login, const tString &challenge, const tString &hash, Byte release, const tString &ip, tString *passwd, Byte *hexUid, Byte *accessLevel)
 	{
 		U32 attempts, lastAttempt;
 		tString guid;
 		int queryResult = queryPlayer(login, passwd, &guid, &attempts, &lastAttempt); // query password, access level and guid of this user
-		alcGetHexGuid(hexUid, guid);
+		alcGetHexUid(hexUid, guid);
 		
-		log.log("AUTH: player %s (IP: %s, game server %s):\n ", login, ip, u->str().c_str());
+		log.log("AUTH: player %s (IP: %s, game server %s):\n ", login.c_str(), ip.c_str(), u->str().c_str());
 		if (queryResult < 0) { // that means: player not found
 			*accessLevel = AcNotRes;
 			log.print("Player not found\n");

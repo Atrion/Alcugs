@@ -64,7 +64,6 @@ namespace alc {
 	{
 		isLobby = false;
 		parent = NULL;
-		externalIp[0] = 0;
 		portStart = portEnd = 0;
 		childs = new tNetSessionList;
 	}
@@ -74,21 +73,20 @@ namespace alc {
 	{
 		this->ki = ki;
 		this->sid = 0;
-		account[0] = avatar[0] = 0;
 		flag = status = 0;
 		u = NULL;
 		waiting = false;
 	}
 	
-	tString tPlayer::str(void)
+	tString tPlayer::str(void) const
 	{
 		tString cnt;
 		if (waiting)
-			cnt.printf("[%s@%s][%d@@%s]", avatar, account, ki, awaiting_age);
+			cnt.printf("[%s@%s][%d@@%s]", avatar.c_str(), account.c_str(), ki, awaiting_age.c_str());
 		else if (u)
-			cnt.printf("[%s@%s][%d@%s]", avatar, account, ki, u->name.c_str());
+			cnt.printf("[%s@%s][%d@%s]", avatar.c_str(), account.c_str(), ki, u->name.c_str());
 		else
-			cnt.printf("[%s@%s][%d]", avatar, account, ki);
+			cnt.printf("[%s@%s][%d]", avatar.c_str(), account.c_str(), ki);
 		return cnt;
 	}
 	
@@ -123,21 +121,19 @@ namespace alc {
 		
 		var = cfg->getVar("track.html");
 		statusHTML = (!var.isEmpty() && var.asByte());
-		var = cfg->getVar("track.html.path");
-		if (var.isEmpty()) statusHTML = false;
-		else alcStrncpy(statusHTMLFile, var.c_str(), sizeof(statusHTMLFile)-1);
+		statusHTMLFile = cfg->getVar("track.html.path");
+		if (statusHTMLFile.isEmpty()) statusHTML = false;
 		
 		var = cfg->getVar("track.htmldbg");
 		statusHTMLdbg = (!var.isEmpty() && var.asByte());
-		var = cfg->getVar("track.htmldbg.path");
-		if (var.isEmpty()) statusHTMLdbg = false;
-		else alcStrncpy(statusHTMLdbgFile, var.c_str(), sizeof(statusHTMLdbgFile)-1);
+		statusHTMLdbgFile = cfg->getVar("track.htmldbg.path");
+		if (statusHTMLdbgFile.isEmpty()) statusHTMLdbg = false;
 		
 		var = cfg->getVar("track.xml");
 		statusXML = (!var.isEmpty() && var.asByte());
-		var = cfg->getVar("track.xml.path");
-		if (var.isEmpty()) statusXML = false;
-		else alcStrncpy(statusXMLFile, var.c_str(), sizeof(statusXMLFile)-1);
+		statusXMLFile = cfg->getVar("track.xml.path");
+		if (statusXMLFile.isEmpty()) statusXML = false;
+		
 		statusFileUpdate = true;
 	}
 	
@@ -163,7 +159,7 @@ namespace alc {
 		// copy data to player
 		player->status = RInRoute;
 		alcGetHexGuid(player->awaiting_guid, findServer.serverGuid);
-		alcStrncpy(player->awaiting_age, findServer.age.c_str(), sizeof(player->awaiting_age)-1);
+		player->awaiting_age = findServer.age;
 		player->waiting = true;
 		// search for the game server the player needs
 		tNetSession *server = NULL, *game = NULL;
@@ -316,7 +312,7 @@ namespace alc {
 		else {
 			data->isLobby = false;
 		}
-		alcStrncpy(data->externalIp, setGuid.externalIp.c_str(), sizeof(data->externalIp)-1);
+		data->externalIp = setGuid.externalIp;
 		if (!data->isLobby) { // let's look to which lobby this server belongs
 			tNetSession *lobby = NULL;
 			server = NULL;
@@ -381,14 +377,14 @@ namespace alc {
 			player->u = game;
 			player->flag = playerStatus.playerFlag;
 			player->status = playerStatus.playerStatus;
-			alcStrncpy(player->avatar, playerStatus.avatar.c_str(), sizeof(player->avatar)-1);
-			alcStrncpy(player->account, playerStatus.account.c_str(), sizeof(player->account)-1);
+			player->avatar = playerStatus.avatar;
+			player->account = playerStatus.account;
 			memcpy(player->uid, playerStatus.uid, 16);
 			// no longer waiting
 			player->waiting = false;
 			if (player->status != RLeaving) {
 				// when he's leaving to another age, keep this info (to be shown on status page)
-				player->awaiting_age[0] = 0;
+				player->awaiting_age.clear();
 				memset(player->awaiting_guid, 0, 8);
 				player->awaiting_x = 0;
 			}
@@ -518,14 +514,11 @@ namespace alc {
 	
 	void tTrackingBackend::printStatusHTML(bool dbg)
 	{
-		char *statusfile = dbg ? statusHTMLdbgFile : statusHTMLFile;
-		char *filename = strrchr(statusfile, '/'); // get only the filename (for automatic reload)
-		if (filename) ++filename; // it points to the slash, but we want to start after it
-		else filename = statusfile; // no slash... it must be a relative filename then, containing no directory, so let's use that
+		tString statusfile = dbg ? statusHTMLdbgFile : statusHTMLFile;
 		
-		FILE *f = fopen(statusfile, "w");
+		FILE *f = fopen(statusfile.c_str(), "w");
 		if (!f) {
-			alcGetMain()->err()->log("Can\'t open %s for writing - disabling HTML status page\n", statusfile);
+			alcGetMain()->err()->log("Can\'t open %s for writing - disabling HTML status page\n", statusfile.c_str());
 			if (dbg) statusHTMLdbg = false;
 			else statusHTML = false;
 			return;
@@ -533,7 +526,7 @@ namespace alc {
 		
 		// header
 		fprintf(f, "<html><head><title>Shard Status</title>\n");
-		fprintf(f, "<meta http-equiv=\"refresh\" content=\"30;url=%s\" />\n", filename);
+		fprintf(f, "<meta http-equiv=\"refresh\" content=\"30;url=%s\" />\n", statusfile.filename().c_str());
 		fprintf(f, "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=ISO-8859-1\">");
 		fprintf(f, "</head><body>\n");
 		// player list
@@ -543,9 +536,9 @@ namespace alc {
 		fprintf(f, "<table border=\"1\"><tr><th>Avatar (Account)</th><th>KI</th><th>Age Name</th><th>Age GUID</th><th>Status</th></tr>\n");
 		for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
 			if (!dbg && it->flag != 2) continue;
-			fprintf(f, "<tr><td>%s (%s)%s</td><td>%d</td><td>%s</td><td>%s</td>", it->avatar, it->account, it->flag == 2 ? "" : " [hidden]", it->ki, it->u->name.c_str(), alcGetStrGuid(it->u->serverGuid).c_str());
-			if (it->awaiting_age[0] != 0) // if the age he wants to is saved, print it
-				fprintf(f, "<td>%s to %s</td>", alcUnetGetReasonCode(it->status), it->awaiting_age);
+			fprintf(f, "<tr><td>%s (%s)%s</td><td>%d</td><td>%s</td><td>%s</td>", it->avatar.c_str(), it->account.c_str(), it->flag == 2 ? "" : " [hidden]", it->ki, it->u->name.c_str(), alcGetStrGuid(it->u->serverGuid).c_str());
+			if (!it->awaiting_age.isEmpty()) // if the age he wants to is saved, print it
+				fprintf(f, "<td>%s to %s</td>", alcUnetGetReasonCode(it->status), it->awaiting_age.c_str());
 			else fprintf(f, "<td>%s</td>", alcUnetGetReasonCode(it->status));
 			fprintf(f, "</tr>\n");
 		}
@@ -580,9 +573,9 @@ namespace alc {
 	{
 		tNetSession *server;
 		bool needFake = false;
-		FILE *f = fopen(statusXMLFile, "w");
+		FILE *f = fopen(statusXMLFile.c_str(), "w");
 		if (!f) {
-			alcGetMain()->err()->log("Can\'t open %s for writing - disabling XML status page\n", statusXMLFile);
+			alcGetMain()->err()->log("Can\'t open %s for writing - disabling XML status page\n", statusXMLFile.c_str());
 			statusXML = false;
 			return;
 		}
@@ -692,13 +685,13 @@ namespace alc {
 	void tTrackingBackend::printPlayerXML(FILE *f, tPlayer *player)
 	{
 		fprintf(f, "<Player>\n");
-			fprintf(f, "<AcctName>%s</AcctName>\n", player->account);
+			fprintf(f, "<AcctName>%s</AcctName>\n", player->account.c_str());
 			fprintf(f, "<PlayerID>%i</PlayerID>\n", player->ki);
-			fprintf(f, "<PlayerName>%s%s</PlayerName>\n", player->avatar, player->flag == 2 ? "" : " [hidden]");
+			fprintf(f, "<PlayerName>%s%s</PlayerName>\n", player->avatar.c_str(), player->flag == 2 ? "" : " [hidden]");
 			fprintf(f, "<AccountUUID>%s</AccountUUID>\n", alcGetStrUid(player->uid).c_str());
-			if (player->awaiting_age[0] != 0)
+			if (!player->awaiting_age.isEmpty())
 				// if the age he wants to is saved, print it
-				fprintf(f, "<State>%s to %s</State>\n", alcUnetGetReasonCode(player->status), player->awaiting_age);
+				fprintf(f, "<State>%s to %s</State>\n", alcUnetGetReasonCode(player->status), player->awaiting_age.c_str());
 			else fprintf(f, "<State>%s</State>\n", alcUnetGetReasonCode(player->status));
 		fprintf(f, "</Player>\n");
 	}

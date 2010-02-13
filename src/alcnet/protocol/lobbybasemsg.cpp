@@ -171,7 +171,7 @@ namespace alc {
 		// store the whole message
 		message.clear();
 		U32 remaining = t.remaining();
-		message.write(t.read(), remaining);
+		message.write(t.readAll(), remaining);
 	}
 	
 	//// tmFindAgeReply

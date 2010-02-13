@@ -477,28 +477,28 @@ namespace alc {
 	void tvCreatableStream::asHtml(tLog *log, bool shortLog)
 	{
 		log->print("Size: %d<br />\n", size);
-		tMBuf *buf = getData();
+		tSBuf buf = getData();
 		// the format of the content depends on the ID
 		switch (id) {
 			case 6:
 				log->print("<table border='1'>\n");
-				while (!buf->eof()) {
+				while (!buf.eof()) {
 					tvNode node;
-					buf->get(node);
+					buf.get(node);
 					node.asHtml(log, shortLog);
 				}
 				log->print("</table>\n");
 				break;
 			case 10:
 			{
-				U16 num = buf->getU16();
+				U16 num = buf.getU16();
 				log->print("number of IDs: %d<br />\n", num);
 				if (num == 0) break;
 				// this is not printed in short log
 				// it is read anyway to verify the data
 				if (!shortLog) log->print("Value(s):");
 				for (U16 i = 0; i < num; ++i) {
-					U32 val = buf->getU32();
+					U32 val = buf.getU32();
 					if (shortLog) continue;
 					if (i > 0) log->print(",");
 					log->print(" 0x%08X (%d)", val, val);
@@ -508,11 +508,11 @@ namespace alc {
 			}
 			case 14:
 			{
-				U32 num = buf->getU32();
+				U32 num = buf.getU32();
 				log->print("number of manifests: %d<br />\n", num);
 				for (U32 i = 0; i < num; ++i) {
 					tvManifest manifest;
-					buf->get(manifest);
+					buf.get(manifest);
 					// this is not printed in short log
 					// it is read anyway to verify the data
 					if (!shortLog) {
@@ -524,11 +524,11 @@ namespace alc {
 			}
 			case 15:
 			{
-				U32 num = buf->getU32();
+				U32 num = buf.getU32();
 				log->print("number of VaultNodeRefs: %d<br />\n", num);
 				for (U32 i = 0; i < num; ++i) {
 					tvNodeRef nodeRef;
-					buf->get(nodeRef);
+					buf.get(nodeRef);
 					// this is not printed in short log
 					// it is read anyway to verify the data
 					if (!shortLog) nodeRef.asHtml(log, shortLog);
@@ -539,16 +539,14 @@ namespace alc {
 				log->print("<span style='color:red'>Unknown strange stream data type!</span><br />\n");
 				break;
 		}
-		if (!buf->eof())
+		if (!buf.eof())
 			log->print("<span style='color:red'>Strange, this stream has some bytes left where none are expected!</span><br />\n");
-		delete buf;
 	}
 	
-	tMBuf *tvCreatableStream::getData(void) const
+	tSBuf tvCreatableStream::getData(void) const
 	{
-		tMBuf *buf = new tMBuf;
-		buf->write(data, size);
-		buf->rewind();
+		tSBuf buf = tSBuf(data, size);
+		buf.rewind();
 		return buf;
 	}
 	
@@ -571,18 +569,10 @@ namespace alc {
 	//// tvNode
 	tvNode::tvNode(U32 flagB) : tvBase()
 	{
-		blob1Size = 0;
-		blob1 = NULL;
-		
 		// set flags to empty
 		this->flagA = 0x00000001; // this means that flagC is ignored
 		this->flagB = flagB;
 		this->flagC = 0x00000000;
-	}
-	
-	tvNode::~tvNode(void)
-	{
-		if (blob1) free(blob1);
 	}
 	
 	void tvNode::store(tBBuf &t)
@@ -715,20 +705,12 @@ namespace alc {
 		if (flagB & MText_2)
 			t.get(text2);
 		
-		if (blob1) {
-			free(blob1);
-			blob1 = NULL;
-		}
+		blob1.clear();
 		if (flagB & MBlob1) {
-			blob1Size = t.getU32();
-			if (blob1Size > 0) {
-				blob1 = static_cast<Byte *>(malloc(sizeof(Byte) * blob1Size));
-				if (blob1 == NULL) throw txNoMem(_WHERE("NoMem"));
-				memcpy(blob1, t.read(blob1Size), blob1Size);
-			}
+			U32 blob1Size = t.getU32();
+			if (blob1Size > 0)
+				blob1.write(t.read(blob1Size), blob1Size);
 		}
-		else
-			blob1Size = 0;
 		
 		if (flagB & MBlob2) {
 			U32 blob2Size = t.getU32();
@@ -803,8 +785,8 @@ namespace alc {
 		if (flagB & MText_1) t.put(text1);
 		if (flagB & MText_2) t.put(text2);
 		if (flagB & MBlob1) {
-			t.putU32(blob1Size);
-			if (blob1Size > 0) t.write(blob1, blob1Size);
+			t.putU32(blob1.size());
+			t.put(blob1);
 		}
 		if (flagB & MBlob2) {
 			t.putU32(0); // blob2 is always empty
@@ -829,12 +811,12 @@ namespace alc {
 		log->print("<b>Permissions:</b> 0x%08X (%s)<br />\n", permissions, permStr);
 	}
 	
-	void tvNode::blobAsHtml(tLog *log, const Byte *blob, U32 size)
+	void tvNode::blobAsHtml(tLog *log, const tMBuf &blob)
 	{
 		tString filename, path;
 		if (type == KImageNode) { // the first 4 bytes are skipped so anything smaller than that would make problems
 			log->print("Image note:<br />\n");
-			if (size < 4) {
+			if (blob1.size() < 4) {
 				log->print("<span style='color:red'>Too small to be a picture!</span><br />\n");
 				return;
 			}
@@ -847,7 +829,7 @@ namespace alc {
 			// save the file
 			tFBuf file;
 			file.open(path.c_str(), "wb");
-			file.write(blob+4, size-4); // skip the first 4 bytes to make it a valid picture
+			file.write(blob.data()+4, blob.size()-4); // skip the first 4 bytes to make it a valid picture
 			file.close();
 			log->print("<img src='data/%s' /><br />\n", filename.c_str());
 		}
@@ -876,7 +858,7 @@ namespace alc {
 					break;
 			}
 			log->print("<pre>");
-			log->dumpbuf(blob, size);
+			log->dumpbuf(blob.data(), blob.size());
 			log->print("</pre><br />\n");
 			// dump it to a file
 			// get the file name
@@ -888,7 +870,7 @@ namespace alc {
 			// save the file
 			tFBuf file;
 			file.open(path.c_str(), "wb");
-			file.write(blob, size);
+			file.put(blob);
 			file.close();
 			log->print("<a href='data/%s'>%s</a><br />\n", filename.c_str(), filename.c_str());
 		}
@@ -936,8 +918,8 @@ namespace alc {
 			if (flagB & MText_1) log->print("<b>Text_1:</b> %s<br />\n", text1.c_str());
 			if (flagB & MText_2) log->print("<b>Text_2:</b> %s<br />\n", text2.c_str());
 			if (flagB & MBlob1) {
-				log->print("<b>Blob1:</b> Size: %d<br />\n", blob1Size);
-				if (blob1Size > 0) blobAsHtml(log, blob1, blob1Size);
+				log->print("<b>Blob1:</b> Size: %d<br />\n", blob1.size());
+				if (!blob1.isEmpty()) blobAsHtml(log, blob1);
 			}
 			if (flagB & MBlob2) log->print("<b>Blob2:</b> Size: 0<br />\n"); // blob2 is always empty
 			// the blob guids are always zero

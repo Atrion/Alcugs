@@ -59,7 +59,7 @@ namespace alc {
 		tNetSession *parent; //!< saves the lobby of a game server, is NULL for lobbys
 		tNetSessionList *childs;
 		U16 portStart, portEnd;
-		char externalIp[100]; //!< the external IP (the ones palyers should use to connect to this server)
+		tString externalIp; //!< the external IP (the ones palyers should use to connect to this server)
 		Byte agentGuid[8]; //!< set when isLobby = true, saves the fake guid for UruVision
 		tPlayerList waitingPlayers;
 	};
@@ -67,18 +67,18 @@ namespace alc {
 	class tPlayer {
 	public:
 		tPlayer(U32 ki);
-		tString str(void);
+		tString str(void) const;
 		U32 ki; //!< player's ki number
 		U32 sid; //!< player's sid in the lobby/game server
 		Byte uid[16]; //!< the player's account uid (hex)
-		char avatar[200]; //!< the avatar's name
-		char account[200]; //!< the account the player is logged in with
+		tString avatar; //!< the avatar's name
+		tString account; //!< the account the player is logged in with
 		U16 flag; //!< the player's flag (see tTrackingBackend::updatePlayer)
 		U16 status; //!< the player's status
 		bool waiting; //!< true if the player is waiting for ServerFound, false if it isn't [only defined when waiting=true]
 		U32 awaiting_x; //!< the X alue the player requested the age with
 		Byte awaiting_guid[8]; //!< Age guid where the player wants to go (hex) [only defined when waiting=true]
-		char awaiting_age[200]; //!< Age name where the player wants to go [only defined when waiting=true]
+		tString awaiting_age; //!< Age name where the player wants to go [only defined when waiting=true]
 		tNetSession *u; //!< the lobby or game server the player is connected to
 	};
 	
@@ -124,7 +124,7 @@ namespace alc {
 		
 		bool statusFileUpdate;
 		bool statusHTML, statusHTMLdbg, statusXML;
-		char statusHTMLFile[256], statusHTMLdbgFile[256], statusXMLFile[256];
+		tString statusHTMLFile, statusHTMLdbgFile, statusXMLFile;
 		U32 lastUpdate;
 	};
 

@@ -161,12 +161,9 @@ namespace alc {
 			if (node->type == KSDLNode) {
 				/* this is a very dirty fix for the bahro poles, but as long as the game server doesn't subscribe to the vault to get it's 
 				own SDL node, we have to do it this way */
-				if (!node->blob1Size) return; // don't bother parsing empty messages
+				if (node->blob1.isEmpty()) return; // don't bother parsing empty messages
 				// got the node, and it is a SDL one... get the SDL binary stream
-				tMBuf data;
-				data.write(node->blob1, node->blob1Size);
-				data.rewind();
-				ageState->saveSdlVaultMessage(data, u); // process it
+				ageState->saveSdlVaultMessage(node->blob1, u); // process it
 			}
 			/* NOTE: These checks are not mainly security checks but are necessary to update the age list when a player changes his name or hides.
 			The KVNodeMgrPlayerNode check is meant to provided consistence in rejecting player name changes.

@@ -41,9 +41,8 @@ namespace alc {
 		/** queries the player list and saves it in the buffer if the point is not NULL \returns the number of players */
 		int getPlayerList(const Byte *uid, tMBuf *t = NULL);
 		
-		/** checks if this account (uid) owns that ki and saves the avatar name (array must be at least 256 Bytes)
-		    \returns true when the avatar belongs to that account, false otherwise */
-		bool checkKi(U32 ki, const Byte *uid, char *avatar);
+		/** checks if this account (uid) owns that ki and returns the avatar name. sets "ownAvatar" to true if the avatar belongs to the account, and to false if not */
+		tString checkKi(U32 ki, const Byte *uid, bool *ownAvatar);
 		
 		/** looks up a node in the database, using all fields which have their flag turned on (except for blobs)
 		    \returns the ID of the found/created node, 0 if neither found nor created */

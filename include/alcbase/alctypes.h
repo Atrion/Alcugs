@@ -76,7 +76,8 @@ public:
 	virtual void write(const Byte * val,U32 n)=0;
 	inline virtual void write(const SByte * val,U32 n) { this->write(reinterpret_cast<const Byte *>(val),n); }
 	//! Reads n bytes, if n=0 reads the entire buffer
-	virtual const Byte * read(U32 n=0)=0;
+	virtual const Byte * read(U32 n)=0;
+	inline const Byte *readAll(void) { return read(remaining()); } //!< reads all remaining Bytes
 	//!gets buffer size
 	virtual U32 size() const=0;
 	
@@ -100,7 +101,7 @@ public:
 	/** \return True if the pointer is at the end of the stream */
 	inline bool eof() const { return (this->tell() >= this->size()); }
 	/** \return the number of bytes remaining to the end of the stream */
-	inline int remaining() const { return (this->size() - this->tell()); }
+	inline U32 remaining() const { return (this->size() - this->tell()); }
 	
 	// Overlaoded Operators
 	inline void operator++(int) { this->seek(+1); }
@@ -171,7 +172,7 @@ public:
 	virtual void set(U32 pos);
 	virtual void write(const Byte * val,U32 n);
 	inline virtual void write(const SByte * val,U32 n) { this->write(reinterpret_cast<const Byte *>(val),n); }
-	virtual const Byte * read(U32 n=0);
+	virtual const Byte * read(U32 n);
 	inline virtual U32 size() const { return msize; }
 	
 	// assignment
@@ -191,6 +192,7 @@ public:
 	void setAt(U32 pos,const Byte what);
 	inline const Byte *data() const { return msize ? buf->buf() : NULL; }
 	inline bool isEmpty(void) const { return !msize; }
+	void cutEnd(U32 newSize); //!< reduces the size of the buffer to newSize by cutting of the last bytes
 protected:
 	//! creates a buffer of the given size, with undefined content
 	explicit tMBuf(U32 size);
@@ -224,7 +226,7 @@ public:
 	virtual void set(U32 pos);
 	virtual void write(const Byte * val,U32 n);
 	inline virtual void write(const SByte * val,U32 n) { this->write(reinterpret_cast<const Byte *>(val),n); }
-	virtual const Byte * read(U32 n=0);
+	virtual const Byte * read(U32 n);
 	virtual void stream(tBBuf &buf) const;
 	virtual void store(tBBuf &/*buf*/) {}
 	virtual U32 size() const;
@@ -236,12 +238,12 @@ public:
 private:
 	void init();
 	FILE * f;
-	mutable U32 msize;
+	U32 msize;
 	mutable Byte *xbuf;
 	mutable U32 xsize; // size of the xbuf
 };
 
-/** Static buffer */
+/** Static buffer, operatoring on external data */
 class tSBuf : public tBBuf {
 public:
 	explicit tSBuf(const Byte * buf,U32 msize);
@@ -251,7 +253,7 @@ public:
 	virtual void set(U32 pos);
 	virtual void write(const Byte * /*val*/,U32 /*n*/) {}
 	inline virtual void write(const SByte * /*val*/,U32 /*n*/) { }
-	virtual const Byte * read(U32 n=0);
+	virtual const Byte * read(U32 n);
 	virtual void stream(tBBuf &buf) const;
 	virtual void store(tBBuf &/*buf*/) {}
 	inline virtual U32 size() const { return msize; }
@@ -306,6 +308,7 @@ public:
 	tString upper() const;
 	tString substring(U32 start,U32 len=0) const;
 	tString dirname() const;
+	tString filename() const;
 	/** \brief strips the character from the beginning (when how=1 or 3) and/or from the end (how=2 or 3) of the string */
 	tString stripped(Byte what,Byte how=0x03) const;
 	
