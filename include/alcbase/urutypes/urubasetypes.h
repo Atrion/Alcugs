@@ -132,7 +132,6 @@ protected:
 	//! assignment
 	virtual void copy(const tStreamedObject &t);
 private:
-
 	const U32 maxSize;
 	
 	U32 realSize; // if flag is 0x02, this saves the uncompressed size, otherwise, it is zero
