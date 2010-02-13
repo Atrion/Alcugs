@@ -538,6 +538,12 @@ void alctypes_part4() {
 	assert(!emp.isEmpty());
 	emp.clear();
 	assert(emp.isEmpty());
+	
+	// concat
+	tString part1 = "hi world";
+	tString part2 = " out there";
+	assert(part1+part2 == "hi world out there");
+	assert("ouch "+part1+" oops" == "ouch hi world oops");
 }
 
 void alctypes_part5() {

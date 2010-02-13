@@ -31,7 +31,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCMAIN_ID "$Id$"
 
-#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
 
@@ -63,7 +63,7 @@ void alcInit(bool shutup) {
 	alcMainThreadId=alcGetSelfThreadId();
 	alcInitialized=true;
 	DBG(5,"alcInit()\n");
-	alcBorn.now();
+	alcBorn.setToNow();
 	DBG(6,"Starting log system...");
 	alcLogInit();
 	DBGM(6," done\n");
@@ -111,7 +111,7 @@ tConfig * alcGetConfig() {
 
 tTime alcGetUptime() {
 	tTime now;
-	now.now();
+	now.setToNow();
 	return now-alcBorn;
 }
 

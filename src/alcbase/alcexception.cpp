@@ -205,7 +205,7 @@ void txBase::dump(bool toStderr) {
 			fprintf(f,"System info: %s\n\n",alcSystemInfo());
 			fprintf(f,"Born:    %s\n",alcGetBornTime().str());
 			tTime now;
-			now.now();
+			now.setToNow();
 			fprintf(f,"Defunct: %s\n",now.str());
 			fprintf(f,"Uptime:  %s\n",alcGetUptime().str(0x01));
 			fprintf(f,"Main thread id: %d\n",alcGetMainThreadId());

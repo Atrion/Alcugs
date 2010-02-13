@@ -706,7 +706,7 @@ void tmMsgBase::stream(tBBuf &t) const {
 	if(flags & plNetTimestamp || (u->min_version<6 && u->max_version==12)) {
 		if(timestamp.seconds==0) {
 			tTime stamp;
-			stamp.now();
+			stamp.setToNow();
 			t.put(stamp);
 		}
 		else

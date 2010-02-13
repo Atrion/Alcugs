@@ -154,7 +154,7 @@ tUnetFlags tUnet::getFlags() { return this->flags; }
 
 void tUnet::updateNetTime() {
 	//set stamp
-	ntime.now();
+	ntime.setToNow();
 	net_time=(((ntime.seconds % 1000)*1000000)+ntime.microseconds);
 }
 

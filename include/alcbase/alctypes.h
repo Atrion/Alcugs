@@ -272,10 +272,8 @@ public:
 	void compute();
 };
 
-// API ok (except for FIXMEs) till here
-
 /** String buffer */
-class tString : public tMBuf {
+class tString : public tMBuf { // FIXME: API cleanup
 public:
 	tString(const char * k);
 	explicit tString(U32 size=200);
@@ -360,7 +358,7 @@ public:
 	inline bool operator<=(const tString &t) const { return(compare(t)<=0); }
 	inline bool operator<=(const char *t) const { return(compare(t)<=0); }
 protected:
-	virtual void onmodify(); // FIXME
+	virtual void onmodify(); // FIXME remove this
 	// assignment
 	void copy(const char * str);
 	void copy(const tString &t);
@@ -399,14 +397,14 @@ public:
 	bool operator<=(const tTime &t) const { return(this->compare(t)<=0); }
 	
 	// assignment
-	const tTime &operator=(const tTime &t) {
+	inline const tTime &operator=(const tTime &t) {
 		seconds=t.seconds;
 		microseconds=t.microseconds;
 		return *this;
 	}
 	
 	// convenience functions
-	void now();
+	void setToNow();
 	double asDouble(char how='s') const;
 	U32 asU32(char how='s') const;
 	const char * str(Byte type=0x00) const;
