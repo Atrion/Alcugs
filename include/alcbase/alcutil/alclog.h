@@ -75,18 +75,18 @@ public:
 	void rotate(bool force=false);
 	void close(bool silent=false);
 
-	void print(const char * msg, ...);
+	void print(const char * msg, ...) const;
 	void stamp();
 	void log(const char * msg, ...);
 	void logl(char level,const char * msg,...);
-	void flush();
+	void flush() const;
 
-	void dumpbuf(const Byte * buf, U32 n, U32 e=0,Byte how=7);
-	void dumpbuf(tBBuf &t, U32 n=0, U32 e=0,Byte how=7);
+	void dumpbuf(const Byte * buf, U32 n, U32 e=0,Byte how=7) const;
+	void dumpbuf(tBBuf &t, U32 n=0, U32 e=0,Byte how=7) const;
 
 	/** New Line */
-	void nl();
-	/** logs an std error */
+	void nl() const;
+	/** logs a std error */
 	void logerr(const char *msg);
 	bool doesPrint(void) const;
 	const char *getDir(void) const;
@@ -109,24 +109,13 @@ private:
 	int priority; //this params are passed to syslog
 };
 
-//basic log subsystems - FIXME import that differently, get rid of the global functions
-extern tLog * lerr;
-extern tLog * lstd;
-extern tLog * lnull;
-
+// FIXME: Get rid of these...
 void alcLogInit();
-void alcLogShutdown(bool silent=false);
+void alcLogShutdown(bool silent = false);
 
-void alcLogSetDefaults();
 void alcLogSetLogPath(const tString & path);
-tString alcLogGetLogPath(void);
-
-void alcLogOpenStdLogs(bool shutup=false);
-
 void alcLogSetLogLevel(Byte level);
 void alcLogSetFiles2Rotate(Byte n);
-
-char * alcHtmlGenerateHead(const char * title,const char * powered);
 
 }
 

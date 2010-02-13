@@ -1123,7 +1123,7 @@ void log_test() {
 	log2.close();
 	system.close();
 	
-	lstd->log("Hi here\n");
+	alcGetMain()->std()->log("Hi here\n");
 }
 
 int main(void) {

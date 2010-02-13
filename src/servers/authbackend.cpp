@@ -66,7 +66,7 @@ namespace alc {
 
 	tAuthBackend::tAuthBackend(void)
 	{
-		log = lnull;
+		log = alcUnetGetMain()->null();
 		sql = NULL;
 	
 		tConfig *cfg = alcGetMain()->config();
@@ -96,7 +96,7 @@ namespace alc {
 			DBG(5, "deleting SQL\n");
 			delete sql;
 		}
-		if (log != lnull) delete log;
+		if (log != alcUnetGetMain()->null()) delete log;
 	}
 	
 	bool tAuthBackend::prepare(void)
@@ -126,10 +126,10 @@ namespace alc {
 				log->flush();
 				return true;
 			}
-			lerr->log("ERR: Creating auth table failed\n");
+			alcGetMain()->err()->log("ERR: Creating auth table failed\n");
 		}
 		else
-			lerr->log("ERR: Connecting to the database failed\n");
+			alcGetMain()->err()->log("ERR: Connecting to the database failed\n");
 		// when we come here, it didn't work, so delete everything
 		DBG(6, "deleting sql\n");
 		delete sql;
@@ -155,7 +155,7 @@ namespace alc {
 		
 		// only query if we are connected properly
 		if (!prepare()) {
-			lerr->log("ERR: Can't start auth driver. Authenticate request will be rejected.\n");
+			alcGetMain()->err()->log("ERR: Can't start auth driver. Authenticate request will be rejected.\n");
 			return AcNotRes;
 		}
 		

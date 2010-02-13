@@ -52,6 +52,9 @@ public:
 	inline tConfig *config(void) { return &cfg; }
 	void dumpConfig();
 	
+	inline tLog *std() { return stdLog; }
+	inline tLog *err() { return errLog; }
+	
 	// some global events
 	virtual void onApplyConfig(); //!< applies the previously loaded config to all submodules. This enables file-logging per default!
 	virtual void onCrash(void);
@@ -63,12 +66,13 @@ protected:
 	void loadConfig(const tString & path);
 	
 	tConfig cfg;
-
+	tLog *stdLog, *errLog;
 private:
 	void installBaseHandlers(bool install = true);
 	
 	U32 mainThreadId;
 	tTime born;
+	
 };
 
 //! Get global management class

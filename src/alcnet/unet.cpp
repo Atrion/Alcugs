@@ -114,12 +114,12 @@ void tUnet::init() {
 	receiveAhead=50; // Receive up to 50 not-yet acceptable packets "in the future"
 
 	//logs
-	log=lnull;
-	err=lnull;
+	log=alcUnetGetMain()->null();
+	err=alcUnetGetMain()->null();
 	//unx=lnull;
-	ack=lnull;
+	ack=alcUnetGetMain()->null();
 	//chk=lnull;
-	sec=lnull;
+	sec=alcUnetGetMain()->null();
 	
 	idle=false;
 
@@ -194,6 +194,7 @@ void tUnet::neterror(const char * msg) {
 }
 
 void tUnet::openlogs() {
+	tLog *lnull = alcUnetGetMain()->null();
 	//open unet log files (FIXME: get rid of the two net-log-files and most of the flags)
 	if(this->flags & UNET_ELOG) {
 		if(this->log==lnull) {
@@ -205,7 +206,7 @@ void tUnet::openlogs() {
 					this->log->open(NULL,2,0);
 				}
 			} else {
-				this->log=lstd;
+				this->log=alcGetMain()->std();
 			}
 		}
 		if(this->err==lnull) {
@@ -217,7 +218,7 @@ void tUnet::openlogs() {
 					this->err->open(NULL,2,0);
 				}
 			} else {
-				this->err=lerr;
+				this->err=alcGetMain()->err();
 			}
 		}
 #if 0
@@ -256,13 +257,14 @@ void tUnet::openlogs() {
 }
 
 void tUnet::closelogs() {
-	if(this->log != lstd && this->log != lnull) {
+	tLog *lnull = alcUnetGetMain()->null();
+	if(this->log != alcGetMain()->std() && this->log != lnull) {
 		DBG(9, "deleting standard log\n");
 		this->log->close();
 		delete this->log;
 		this->log=lnull;
 	}
-	if(this->err != lerr && this->err != lnull) {
+	if(this->err != alcGetMain()->err() && this->err != lnull) {
 		DBG(9, "deleting error log\n");
 		this->err->close();
 		delete this->err;

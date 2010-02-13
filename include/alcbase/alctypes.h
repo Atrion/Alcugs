@@ -357,6 +357,9 @@ public:
 	inline bool operator>=(const char *t) const { return(compare(t)>=0); }
 	inline bool operator<=(const tString &t) const { return(compare(t)<=0); }
 	inline bool operator<=(const char *t) const { return(compare(t)<=0); }
+
+	// static creation functions
+	static tString fromByte(Byte val);
 protected:
 	//! assignment
 	inline void copy(const char * str) { tMBuf::copy(tString(str)); }

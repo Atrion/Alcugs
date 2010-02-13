@@ -268,7 +268,7 @@ namespace alc {
 				}
 				// this is the parent process
 				else if (pid < 0) {
-					lerr->log("Can't fork game server\n");
+					err->log("Can't fork game server\n");
 				}
 				else if (pid > 0) {
 					log->log("Successfully forked game server (GUID: %s, Port: %d)\n", forkServer.serverGuid.c_str(), forkServer.forkPort);

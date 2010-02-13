@@ -50,12 +50,14 @@ namespace alc {
 
 tAlcUnetMain::tAlcUnetMain(const char *netName) : tAlcMain(), stateRunning(2), alarmRunning(false), netName(netName), net(NULL)
 {
+	nullLog = new tLog(NULL,0,0);
 	installUnetHandlers(true);
 }
 
 tAlcUnetMain::~tAlcUnetMain(void)
 {
 	installUnetHandlers(false);
+	delete nullLog;
 }
 
 void tAlcUnetMain::setNet(tUnetBase *netcore)
@@ -81,7 +83,7 @@ bool tAlcUnetMain::onSignal(int s) {
 	try {
 		switch (s) {
 			case SIGHUP: //reload configuration
-				lstd->log("INF: Re-reading configuration\n\n");
+				stdLog->log("INF: Re-reading configuration\n\n");
 				loadUnetConfig();
 				net->reload(); // FIXME do this in onApplyConfig, and re-think how the config stuff is propagated
 				return true;
@@ -96,36 +98,36 @@ bool tAlcUnetMain::onSignal(int s) {
 					case 1:
 						net->forcestop();
 						stateRunning--;
-						lstd->log("INF: Warning another CTRL+C will kill the server permanently causing data loss\n");
+						stdLog->log("INF: Warning another CTRL+C will kill the server permanently causing data loss\n");
 						return true;
 					default:
-						lstd->log("INF: Killed\n");
+						stdLog->log("INF: Killed\n");
 						printf("Killed!\n");
 						exit(0);
 				}
 				break;
 			case SIGUSR1:
 				if(alarmRunning) {
-					lstd->log("INF: Automatic -Emergency- Shutdown CANCELLED\n\n");
+					stdLog->log("INF: Automatic -Emergency- Shutdown CANCELLED\n\n");
 					alarmRunning=false;
 					installHandler(SIGALRM,false);
 					alarm(0);
 				} else {
-					lstd->log("INF: Automatic -Emergency- Shutdown In progress in 30 seconds\n\n");
+					stdLog->log("INF: Automatic -Emergency- Shutdown In progress in 30 seconds\n\n");
 					alarmRunning=true;
 					installHandler(SIGALRM,true);
 					alarm(30);
 				}
 				return true;
 			case SIGUSR2:
-				lstd->log("INF: TERMINATED message sent to all players.\n\n");
+				stdLog->log("INF: TERMINATED message sent to all players.\n\n");
 				net->terminatePlayers();
 				return true;
 		}
 	} catch(txBase &t) {
-		lerr->log("FATAL Exception %s\n%s\n",t.what(),t.backtrace()); return true;
+		errLog->log("FATAL Exception %s\n%s\n",t.what(),t.backtrace()); return true;
 	} catch(...) {
-		lerr->log("FATAL Unknown Exception\n"); return true;
+		errLog->log("FATAL Unknown Exception\n"); return true;
 	}
 	return false;
 }

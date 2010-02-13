@@ -186,7 +186,7 @@ U32 alcUruChecksum(const Byte* buf, int size, int alg, const char * aux_hash) {
 			free(md5buffer);
 			break;
 		default:
-			lerr->log("ERR: Uru Checksum V%i is currently not supported in this version of the server.\n\n",alg);
+			alcGetMain()->err()->log("ERR: Uru Checksum V%i is currently not supported in this version of the server.\n\n",alg);
 			aux = 0xFFFFFFFF;
 	}
 	return aux;

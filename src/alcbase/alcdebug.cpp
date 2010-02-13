@@ -39,7 +39,6 @@ extern "C" {
 
 #ifdef __MSVC__
 	//this looks like crap, i know...
-	#error These debug functions for the MSVC are not thread-safe
 	#include <stddef.h>
 	#include <stdarg.h>
 
