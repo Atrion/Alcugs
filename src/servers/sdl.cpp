@@ -277,6 +277,7 @@ namespace alc {
 	void tAgeStateManager::saveSdlVaultMessage(tMBuf &data, tNetSession *u)
 	{
 		// get the content
+		data.rewind();
 		U16 type = data.getU16();
 		if (type != plNull)
 			throw txProtocolError(_WHERE("Plasma object type of an SDL must be plNull"));

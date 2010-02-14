@@ -708,8 +708,7 @@ namespace alc {
 		blob1.clear();
 		if (flagB & MBlob1) {
 			U32 blob1Size = t.getU32();
-			if (blob1Size > 0)
-				blob1.write(t.read(blob1Size), blob1Size);
+			blob1.write(t.read(blob1Size), blob1Size);
 		}
 		
 		if (flagB & MBlob2) {
