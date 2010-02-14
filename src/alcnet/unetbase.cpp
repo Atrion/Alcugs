@@ -233,7 +233,7 @@ void tUnetBase::terminate(tNetSession *u, Byte reason, bool gotEndMsg)
 		onConnectionClosing(u, reason);
 	
 	if (wasTerminated) { // see above, we already sent the message, so don't wait any longer
-		log->log("%s This connection is already terminated, don't wait any longer", u->str().c_str());
+		log->log("%s This connection is already terminated, don't wait any longer\n", u->str().c_str());
 		u->terminate(0/*seconds*/);
 	} else { // otherwise, wait some time to send/receive the ack
 		u->terminate(2/*second*/);
@@ -308,8 +308,7 @@ void tUnetBase::processEventQueue(bool shutdown)
 					}
 					catch (txBase &t) { // if there was an error parsing the message, kick the responsible player
 						err->log("%s Recieved invalid 0x%04X (%s) - kicking peer\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-						err->log(" Exception details: %s\n",t.what());
-						//err->log(" Backtrace: %s\n", t.backtrace());
+						err->log(" Exception %s\n%s\n",t.what(),t.backtrace());
 						ret=-1;
 					}
 					if(ret==0) {
