@@ -96,13 +96,13 @@ void tAESBuf::setKey(const Byte * key) {
 	memcpy(this->key,key,16);
 }
 void tAESBuf::setM5Key() {
-	Byte key[16];
 	U32 xorkey=0xCF092676;
-	*reinterpret_cast<U32 *>(key)    = 0xFC2C6B86 ^ xorkey;
-	*reinterpret_cast<U32 *>(key+4)  = 0x952E7BDA ^ xorkey;
-	*reinterpret_cast<U32 *>(key+8)  = 0xF1713EE8 ^ xorkey;
-	*reinterpret_cast<U32 *>(key+12) = 0xC7410A13 ^ xorkey;
-	memcpy(this->key,key,16);
+	tMBuf key;
+	key.putU32(0xFC2C6B86 ^ xorkey);
+	key.putU32(0x952E7BDA ^ xorkey);
+	key.putU32(0xF1713EE8 ^ xorkey);
+	key.putU32(0xC7410A13 ^ xorkey);
+	memcpy(this->key,key.data(),16);
 }
 void tAESBuf::encrypt() {
 	// encrypt the buffer

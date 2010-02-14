@@ -159,7 +159,8 @@ void tAlcMain::onCrash() {
 	tString var;
 	var=cfg.getVar("crash.action","global");
 	if(!var.isEmpty()) {
-		system(var.c_str());
+		int res = system(var.c_str());
+		if (res) errLog->log("Error: %s returned %d\n", var.c_str(), res);
 	}
 }
 

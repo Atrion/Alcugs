@@ -400,7 +400,7 @@ const Byte * tFBuf::read(U32 n) {
 		if(xbuf==NULL) throw txNoMem(_WHERE("NoMem"));
 		xsize=n;
 	}
-	if (fread(xbuf,n,1,f) != 1) throw txOutOfRange(_WHERE("error while reading"));
+	if (fread(xbuf,n,1,f) != 1) throw txReadErr(_WHERE("error while reading"));
 	return xbuf;
 }
 void tFBuf::stream(tBBuf &b) const {
@@ -413,7 +413,7 @@ void tFBuf::stream(tBBuf &b) const {
 		if(xbuf==NULL) throw txNoMem(_WHERE("NoMem"));
 		xsize=msize;
 	}
-	fread(xbuf,msize,1,f);
+	if (fread(xbuf,msize,1,f) != 1) throw txReadErr(_WHERE("error while reading"));
 	b.write(xbuf,msize);
 	fseek(f,pos,SEEK_SET);
 }
