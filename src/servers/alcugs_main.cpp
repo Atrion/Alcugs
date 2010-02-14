@@ -236,7 +236,7 @@ int main(int argc, char * argv[]) {
 			cfg->setVar("0","daemon","global");
 		}
 		if(var.asByte()) {
-			daemon(1,0);
+			if (daemon(1,0)) throw txBase(_WHERE("Error daemonizing myself"));
 		}
 		
 		// print basic version info

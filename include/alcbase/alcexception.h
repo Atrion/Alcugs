@@ -76,7 +76,7 @@ public:
 	txUnkFlags(const tString &msg,bool abort=false,bool core=false) :txBase("UnkFlags",msg,abort,core) {}
 	txUnkFlags(const txUnkFlags &t) :txBase(t) {}
 };
-/** unknown flags */
+/** unexpected data */
 class txUnexpectedData : public txBase {
 public:
 	txUnexpectedData(const tString &msg,bool abort=false,bool core=false) :txBase("UnexpectedData",msg,abort,core) {}
@@ -99,6 +99,12 @@ class txWriteErr : public txBase {
 public:
 	txWriteErr(const tString &msg,bool abort=false,bool core=false) :txBase("WriteErr",msg,abort,core) {}
 	txWriteErr(const txWriteErr &t) :txBase(t) {}
+};
+/** Read Err */
+class txReadErr : public txBase {
+public:
+	txReadErr(const tString &msg,bool abort=false,bool core=false) :txBase("ReadErr",msg,abort,core) {}
+	txReadErr(const txWriteErr &t) :txBase(t) {}
 };
 /** No File */
 class txNoFile : public txBase {

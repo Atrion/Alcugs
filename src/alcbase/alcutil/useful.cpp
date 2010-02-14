@@ -45,7 +45,7 @@ namespace alc {
 tString alcConsoleAsk() {
 	char what[501];
 	fflush(0);
-	fgets(what,500,stdin);
+	if (!fgets(what,500,stdin)) throw txReadErr(_WHERE("Error requesting user input"));
 	int str_len=strlen(what);
 	if(what[str_len-1]=='\n') {
 		what[str_len-1]='\0';
