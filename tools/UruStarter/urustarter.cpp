@@ -103,6 +103,12 @@ int main(int argc, char **argv)
 			while (!listStream.atEnd())
 				removeFile(listStream.readLine());
 		}
+		// On Windows 7, manually remove two problematic bik files
+		if (QSysInfo::windowsVersion() == QSysInfo::WV_6_1) {
+			log << "Running on Windows 7, removing problematic bik files\n";
+			removeFile("avi/direboWithAlpha.bik");
+			removeFile("avi/mystWithAlpha.bik");
+		}
 	}
 	
 	{ // do checksum checks, and put these files onto the Whitelist
