@@ -540,7 +540,7 @@ namespace alc {
 			if (comma) query.writeStr(commaStr);
 			query.writeStr("blob_1='");
 			if (node.blob1.size())
-				query.writeStr(sql->escape(node.blob1.data(), node.blob1.size()));
+				query.writeStr(sql->escape(node.blob1));
 			query.writeStr( "'");
 			comma = true;
 		}
@@ -718,7 +718,7 @@ namespace alc {
 			query.writeStr(",blob_1");
 			values.writeStr(",'");
 			if (node.blob1.size())
-				values.writeStr(sql->escape(node.blob1.data(), node.blob1.size()));
+				values.writeStr(sql->escape(node.blob1));
 			values.writeStr("'");
 		}
 		

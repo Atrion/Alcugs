@@ -55,7 +55,7 @@ public:
 	
 	tString escape(const char *str); //!< escapes the given string
 	inline tString escape(const tString &str) { return escape(str.c_str()); }
-	tString escape(const Byte *data, int size); //!< escapes the given data into the out array and returns that array
+	tString escape(const tMBuf &buf); //!< escapes the given data
 	MYSQL_RES *storeResult(void);
 	
 	static Byte allFlags(void) { return SQL_LOG | SQL_LOGQ | SQL_CREATEDB | SQL_STAYCONN | SQL_CREATABL; }

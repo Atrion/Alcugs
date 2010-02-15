@@ -372,6 +372,8 @@ protected:
 	//! assignment
 	inline void copy(const char * str) { tMBuf::copy(tString(str)); }
 	inline void copy(const tString &t) { tMBuf::copy(t); }
+	//! creates a buffer of the given size, with undefined content
+	inline explicit tString(U32 size) : tMBuf(size) {}
 private:
 	//! comparison
 	inline SByte compare(const tString &t) const { return tMBuf::compare(t); }
