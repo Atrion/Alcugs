@@ -179,11 +179,11 @@ tString tSQL::escape(const char *str)
 	return tString(escaped_str);
 }
 
-tString tSQL::escape(const Byte *data, int size)
+tString tSQL::escape(const tMBuf &buf)
 {
 	if (connection == NULL) throw txDatabaseError(_WHERE("can't escape a string"));
-	char *out = new char[2*size+1];
-	mysql_real_escape_string(connection, out, reinterpret_cast<const char *>(data), size);
+	char *out = new char[2*buf.size()+1];
+	mysql_real_escape_string(connection, out, reinterpret_cast<const char *>(buf.data()), buf.size());
 	tString res(out);
 	delete []out;
 	return res;

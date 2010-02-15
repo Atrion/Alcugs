@@ -643,20 +643,16 @@ tString tString::escape() const {
 	return shot;
 }
 tString tString::lower() const {
-	tString shot;
-	int i,max;
-	max=size();
-	for(i=0; i<max; i++) {
-		shot.putByte(std::tolower(getAt(i)));
+	tString shot(size());
+	for(U32 i=0; i<size(); i++) {
+		*(shot.volatileData()+i) = std::tolower(*(data()+i));
 	}
 	return shot;
 }
 tString tString::upper() const {
-	tString shot;
-	int i,max;
-	max=size();
-	for(i=0; i<max; i++) {
-		shot.putByte(std::toupper(getAt(i)));
+	tString shot(size());
+	for(U32 i=0; i<size(); i++) {
+		*(shot.volatileData()+i) = std::toupper(*(data()+i));
 	}
 	return shot;
 }
