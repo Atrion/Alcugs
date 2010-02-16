@@ -54,10 +54,10 @@ namespace alc {
 		typedef std::list<U32> tPlayerList;
 	
 		tTrackingData(void);
-		virtual ~tTrackingData(void) { delete childs; }
+		virtual ~tTrackingData(void) { delete children; }
 		bool isLobby;
 		tNetSession *parent; //!< saves the lobby of a game server, is NULL for lobbys
-		tNetSessionList *childs;
+		tNetSessionList *children;
 		U16 portStart, portEnd;
 		tString externalIp; //!< the external IP (the ones palyers should use to connect to this server)
 		Byte agentGuid[8]; //!< set when isLobby = true, saves the fake guid for UruVision
