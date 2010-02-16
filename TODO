@@ -14,7 +14,6 @@ Game
 
 Generic Stuff
 ==================
-* Use tString in alccfgtypes and alcparser (and completely remove char* there)
 * Implement server identification (this could also be used for the tNetSession::isAlcugsServer function)
 * Multithreading support
 * UU support

@@ -321,8 +321,8 @@ int main(int argc,char * argv[]) {
 	//start Alcugs library
 	tAlcUnetMain alcMain("Client");
 	try {
-		alcMain.config()->setVar(tString::fromByte(nlogs).c_str(), "log.enabled");
-		alcMain.config()->setVar(tString::fromByte(loglevel).c_str(), "verbose_level");
+		alcMain.config()->setVar(tString::fromByte(nlogs), "log.enabled", "global");
+		alcMain.config()->setVar(tString::fromByte(loglevel), "verbose_level", "global");
 		alcMain.onApplyConfig();
 		
 		//special mode

@@ -56,7 +56,7 @@ tUnetBase::tUnetBase(Byte whoami) :tUnet(whoami), running(true) {
 	}
 	var=cfg->getVar("bind","global");
 	if(!var.isEmpty()) {
-		setBindAddress(var.c_str());
+		setBindAddress(var);
 	}
 }
 

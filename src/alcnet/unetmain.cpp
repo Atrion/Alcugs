@@ -148,11 +148,11 @@ void tAlcUnetMain::loadUnetConfig(void) {
 	var=cfg.getVar("read_config","cmdline");
 	if(var.isEmpty()) {
 		var="uru.conf";
-		cfg.setVar(var.c_str(),"read_config","cmdline"); // lobbyserver relies on this being set
+		cfg.setVar(var,"read_config","cmdline"); // lobbyserver relies on this being set
 	}
 	loadConfig(var);
 	// put the current server into "global"
-	cfg.copyKey("global",netName.c_str());
+	cfg.copyKey("global",netName);
 	cfg.copyKey("global","cmdline");
 	// apply the config
 	onApplyConfig();

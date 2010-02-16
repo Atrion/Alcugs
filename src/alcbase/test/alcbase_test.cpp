@@ -957,7 +957,7 @@ empty3=""\n\
 	val1 = cfg1->findVar("kaka");
 	assert(val1==NULL);
 	dmalloc_verify(NULL);
-	cfg1->setVar("1","kaka");
+	cfg1->setVar("1","kaka","global");
 	dmalloc_verify(NULL);
 
 	val1 = cfg1->findVar("kaka");
@@ -1054,7 +1054,7 @@ empty=""\n\
 	
 	// copy tests
 	cfg1 = new tConfig();
-	cfg1->setVar("value1", "name1");
+	cfg1->setVar("value1", "name1","global");
 	assert(cfg1->getVar("name1") == "value1");
 	cfg1->copyKey("group", "global");
 	assert(cfg1->getVar("name1", "group") == "value1");
@@ -1067,7 +1067,7 @@ empty=""\n\
 	cfg1->copyValue("name1", "name3");
 	assert(cfg1->getVar("name1") == "value1");
 	// Copy value from existing to existing
-	cfg1->setVar("value2", "name2");
+	cfg1->setVar("value2", "name2","global");
 	cfg1->copyValue("name2", "name1");
 	assert(cfg1->getVar("name2") == "value1");
 	// from non-existing to existing

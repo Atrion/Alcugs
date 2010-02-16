@@ -43,12 +43,9 @@ class tConfigVal {
 public:
 	tConfigVal();
 	tConfigVal(const tConfigVal &t) { init(); copy(t); }
-	tConfigVal(const char * name);
 	tConfigVal(const tString & name);
 	~tConfigVal();
-	void setName(const char * name);
 	void setName(const tString & name);
-	void setVal(const char * val,U16 x=0,U16 y=0);
 	void setVal(const tString & t,U16 x=0,U16 y=0);
 	const tString & getName() const;
 	const tString & getVal(U16 x=0,U16 y=0,bool *found = NULL) const; //!< found tells you whether the value exists
@@ -74,10 +71,8 @@ class tConfigKey {
 public:
 	tConfigKey();
 	~tConfigKey();
-	void setName(const char * name);
 	void setName(const tString & name);
 	const tString & getName() const { return name; }
-	tConfigVal * find(const char * what,bool create=false);
 	tConfigVal * find(tString what,bool create=false);
 	void copy(const tConfigKey & t);
 	void merge(tConfigKey & t);
@@ -100,22 +95,20 @@ class tConfig {
 public:
 	tConfig();
 	~tConfig();
-	tConfigKey * findKey(const char * where="global",bool create=false);
-	tConfigKey * findKey(tString where,bool create=false);
-	tConfigVal * findVar(const char * what,const char * where="global",bool create=false);
-	const tString & getVar(const char * what,const char * where="global",U16 x=0,U16 y=0,bool *found = NULL); //!< found tells you whether the value exists
-	void setVar(const char * val,const char * what,const char * where="global",U16 x=0,U16 y=0);
+	tConfigKey * findKey(tString where="global",bool create=false);
+	tConfigVal * findVar(const tString & what,const tString & where="global",bool create=false);
+	const tString & getVar(const tString & what,const tString & where="global",U16 x=0,U16 y=0,bool *found = NULL); //!< found tells you whether the value exists
 	void setVar(const tString &val,const tString &what,const tString &where,U16 x=0,U16 y=0);
 	void rewind();
 	tConfigKey * getNext();
-	void copyKey(const char * to,const char * from); //!< this will merge the key if the destination already exists
-	void copyValue(const char * tok,const char * fromk,const char * to="global",const char * from="global"); //!< this overwrites an already existing value - but only of the value which is copied exists!
+	void copyKey(const tString & to,const tString & from); //!< this will merge the key if the destination already exists
+	void copyValue(const tString & tok,const tString & fromk,const tString & to="global",const tString & from="global"); //!< this overwrites an already existing value - but only of the value which is copied exists!
 	
 	
-	inline const tString & getVar(const char * what,const char * where,bool *found) {//!< found tells you whether the value exists
+	inline const tString & getVar(const tString & what,const tString & where,bool *found) {//!< found tells you whether the value exists
 		return getVar(what, where, 0, 0, found);
 	}
-	inline const tString & getVar(const char * what,bool *found) {//!< found tells you whether the value exists
+	inline const tString & getVar(const tString & what,bool *found) {//!< found tells you whether the value exists
 		return getVar(what, "global", 0, 0, found);
 	}
 private:
