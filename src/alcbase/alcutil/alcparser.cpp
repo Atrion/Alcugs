@@ -250,8 +250,6 @@ void tSimpleParser::store(const tString &str) {
 					throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected token: A newline was expected.\n",t.getLineNum(),t.getColumnNum()));
 				}
 			}
-			//cfg->setVar(val.c_str(),key.c_str(),"global");
-			//cfg->findVar(key.c_str(),"global",1);
 			cfg->setVar(val,key,"global");
 		}
 	}	
@@ -372,7 +370,7 @@ void tXParser::store(const tString &str) {
 					if (!override) {
 						// find next empty row (overwriting is disabled)
 						do {
-							cfg->getVar(key.c_str(),section.c_str(),x,y,&found);
+							cfg->getVar(key,section,x,y,&found);
 							if (found) ++y;
 						} while (found);
 					}

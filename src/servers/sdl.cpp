@@ -91,7 +91,7 @@ namespace alc {
 			log.log("Reading SDL files from %s...\n", var.c_str());
 			tDirectory sdlDir;
 			tDirEntry *file;
-			sdlDir.open(var.c_str());
+			sdlDir.open(var);
 			while( (file = sdlDir.getEntry()) != NULL) {
 				if (!file->isFile() || alcGetExt(file->name).lower() != "sdl") continue;
 				// load it

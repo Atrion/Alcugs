@@ -43,10 +43,6 @@ static const tString emptyString;
 
 //// tConfigVal
 tConfigVal::tConfigVal() { init(); }
-tConfigVal::tConfigVal(const char * name) {
-	init();
-	setName(name);
-}
 tConfigVal::tConfigVal(const tString & name) {
 	init();
 	setName(name);
@@ -66,9 +62,6 @@ tConfigVal::~tConfigVal() {
 		}
 		free(values);
 	}
-}
-void tConfigVal::setName(const char * name) {
-	this->name=name;
 }
 void tConfigVal::setName(const tString & name) {
 	this->name=name;
@@ -110,10 +103,6 @@ void tConfigVal::setVal(const tString & t,U16 x,U16 y) {
 	} else {
 		**myval = t;
 	}
-}
-void tConfigVal::setVal(const char * val,U16 x,U16 y) {
-	tString w(val);
-	setVal(w,x,y);
 }
 const tString & tConfigVal::getName() const {
 	return name;
@@ -171,9 +160,6 @@ tConfigKey::~tConfigKey() {
 		free(values);
 	}
 }
-void tConfigKey::setName(const char * name) {
-	this->name=name;
-}
 void tConfigKey::setName(const tString & name) {
 	this->name=name;
 }
@@ -190,10 +176,6 @@ tConfigVal * tConfigKey::find(tString what,bool create) {
 	values=static_cast<tConfigVal **>(realloc(values,sizeof(tConfigVal *) * n));
 	values[n-1]=new tConfigVal(what);
 	return values[n-1];
-}
-tConfigVal * tConfigKey::find(const char * what,bool create) {
-	tString name(what);
-	return find(name,create);
 }
 void tConfigKey::copy(const tConfigKey &t) {
 	U16 i;
@@ -253,7 +235,6 @@ tConfigKey * tConfig::findKey(tString where,bool create) {
 	U16 i;
 	where = where.lower(); // this also implicitly makes all added keys lower-case as it's only here they are created
 	for(i=0; i<n; i++) {
-		DBG(9,"checking %s %s %s %s \n",values[i]->name.c_str(),where.c_str(),values[i]->name.c_str(),where.c_str());
 		if(values[i]->name==where) {
 			return values[i];
 		}
@@ -265,32 +246,20 @@ tConfigKey * tConfig::findKey(tString where,bool create) {
 	values[n-1]->setName(where);
 	return values[n-1];
 }
-tConfigKey * tConfig::findKey(const char * where,bool create) {
-	tString name(where);
-	return findKey(name,create);
-}
-//This code needs to be optimized
-tConfigVal * tConfig::findVar(const char * what,const char * where,bool create) {
+tConfigVal * tConfig::findVar(const tString & what,const tString & where,bool create) {
 	tConfigKey * mykey;
 	mykey=findKey(where,create);
 	if(mykey==NULL) return NULL;
 	return(mykey->find(what,create));
 }
-void tConfig::setVar(const char * val,const char * what,const char * where,U16 x,U16 y) {
+void tConfig::setVar(const tString &val, const tString &what, const tString &where,U16 x,U16 y) {
 	tConfigVal * myvar;
 	DBG(5,"findVar...");
 	myvar=findVar(what,where,true);
 	DBGM(5," done\n");
 	myvar->setVal(val,x,y);
 }
-void tConfig::setVar(const tString &val, const tString &what, const tString &where,U16 x,U16 y) {
-	tConfigVal * myvar;
-	DBG(5,"findVar...");
-	myvar=findVar(what.c_str(),where.c_str(),true);
-	DBGM(5," done\n");
-	myvar->setVal(val,x,y);
-}
-const tString & tConfig::getVar(const char * what,const char * where,U16 x,U16 y,bool *found) {
+const tString & tConfig::getVar(const tString & what,const tString & where,U16 x,U16 y,bool *found) {
 	tConfigVal * myvar;
 	myvar=findVar(what,where,false);
 	if(myvar==NULL) {
@@ -307,7 +276,7 @@ tConfigKey * tConfig::getNext() {
 	off++;
 	return values[off-1];
 }
-void tConfig::copyKey(const char * to, const char * from) {
+void tConfig::copyKey(const tString & to, const tString & from) {
 	tConfigKey * dst;
 	tConfigKey * src;
 	src=findKey(from,0);
@@ -315,7 +284,7 @@ void tConfig::copyKey(const char * to, const char * from) {
 	dst=findKey(to,1);
 	dst->merge(*src);
 }
-void tConfig::copyValue(const char * tok, const char * fromk,const char * to, const char * from) {
+void tConfig::copyValue(const tString & tok, const tString & fromk,const tString & to, const tString & from) {
 	tConfigKey * dst;
 	tConfigKey * src;
 	src=findKey(from,0);

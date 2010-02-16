@@ -133,7 +133,7 @@ int u_parse_arguments(int argc, char * argv[]) {
 			i++;
 			tString val(argv[i]);
 			opt=opt.substring(2,opt.size()-2);
-			cfg->setVar(val.c_str(),opt.c_str(),"cmdline");
+			cfg->setVar(val,opt,"cmdline");
 		} else if(!strcmp(argv[i],"-L")) {
 			// we don't yet have the logging system
 			printf("The \"-L\" option is no longer supported and will be ignored.\n");

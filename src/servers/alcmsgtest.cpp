@@ -134,7 +134,7 @@ private:
 
 tUnetSimpleFileServer::tUnetSimpleFileServer(const tString &lhost,U16 lport,Byte listen) :tUnetBase(KClient) {
 	this->setBindPort(lport);
-	this->setBindAddress(lhost.c_str());
+	this->setBindAddress(lhost);
 	this->listen=listen;
 	setIdleTimer(1);
 	d_port=5000;
@@ -281,8 +281,8 @@ int main(int argc,char * argv[]) {
 	//start Alcugs library
 	tAlcUnetMain alcMain("Client");
 	try {
-		alcMain.config()->setVar(tString::fromByte(nlogs).c_str(), "log.enabled");
-		alcMain.config()->setVar(tString::fromByte(loglevel).c_str(), "verbose_level");
+		alcMain.config()->setVar(tString::fromByte(nlogs), "log.enabled", "global");
+		alcMain.config()->setVar(tString::fromByte(loglevel), "verbose_level", "global");
 		alcMain.onApplyConfig();
 		
 		alcMain.std()->print(alcVersionText());
