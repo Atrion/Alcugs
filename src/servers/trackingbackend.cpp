@@ -65,7 +65,7 @@ namespace alc {
 		isLobby = false;
 		parent = NULL;
 		portStart = portEnd = 0;
-		childs = new tNetSessionList;
+		children = new tNetSessionList;
 	}
 	
 	//// tPlayer
@@ -216,9 +216,9 @@ namespace alc {
 		servers->rewind();
 		while ((server = servers->getNext())) {
 			tTrackingData *data = dynamic_cast<tTrackingData*>(server->data);
-			if (data && data->isLobby && (load < 0 || data->childs->getCount() < load)) {
+			if (data && data->isLobby && (load < 0 || data->children->getCount() < load)) {
 				lobby = server;
-				load = data->childs->getCount();
+				load = data->children->getCount();
 			}
 		}
 		if (!lobby) {
@@ -231,15 +231,15 @@ namespace alc {
 		bool *freePorts = static_cast<bool *>(malloc(nPorts*sizeof(bool)));
 		if (freePorts == NULL) throw txNoMem(_WHERE("NoMem"));
 		for (int i = 0; i < nPorts; ++i) freePorts[i] = true;
-		data->childs->rewind();
-		while ((server = data->childs->getNext()))
+		data->children->rewind();
+		while ((server = data->children->getNext()))
 			freePorts[ntohs(server->getPort()) - data->portStart] = false; // this port is occupied
 		int lowest;
 		for (lowest = 0; lowest < nPorts; ++lowest) {
 			if (freePorts[lowest]) break; // we found a free one
 		}
 		free(freePorts);
-		if (lowest == nPorts) { // no free port on the lobby with the least childs
+		if (lowest == nPorts) { // no free port on the lobby with the least children
 			log.log("ERR: No free port on lobby %s, can't spawn game server\n", lobby->str().c_str());
 			return;
 		}
@@ -325,7 +325,7 @@ namespace alc {
 				}
 			}
 			if (lobby) { // we found the server's lobby
-				static_cast<tTrackingData *>(server->data)->childs->add(game); // add the game server to the list of children of that lobby
+				static_cast<tTrackingData *>(server->data)->children->add(game); // add the game server to the list of children of that lobby
 				data->parent = lobby;
 			}
 			else
@@ -415,19 +415,18 @@ namespace alc {
 			if (it->u == game) {
 				log.log("WARN: Removing player %s as it was on a terminating server\n", it->str().c_str());
 				it = players.erase(it);
-				statusFileUpdate = true;
 			}
 			else
 				++it; // we have to increment manually because above if block already increments
 		}
 		log.log("Server %s is leaving us\n", game->str().c_str());
 		log.flush();
-		// remove this server from the list of childs of its lobby/from the game server it is the lobby for
+		// remove this server from the list of children of its lobby/from the game server it is the lobby for
 		if (data->isLobby) {
-			// it's childs are lobbyless now
+			// it's children are lobbyless now
 			tNetSession *server;
-			data->childs->rewind();
-			while ((server = data->childs->getNext())) {
+			data->children->rewind();
+			while ((server = data->children->getNext())) {
 				tTrackingData *subData = dynamic_cast<tTrackingData *>(server->data);
 				if (!subData) throw txUnet(_WHERE("One child of the lobby I'm just deleting is not a game/lobby server"));
 				subData->parent = NULL;
@@ -436,7 +435,7 @@ namespace alc {
 		else if (data->parent) {
 			tTrackingData *parentData = dynamic_cast<tTrackingData *>(data->parent->data);
 			if (!parentData) throw txUnet(_WHERE("The parent of the game server I'm just deleting is not a game/lobby server"));
-			parentData->childs->remove(game);
+			parentData->children->remove(game);
 		}
 	}
 	
@@ -550,6 +549,7 @@ namespace alc {
 			fprintf(f, "<table border=\"1\"><tr><th>Age</th><th>GUID</th><th>IP and Port</th></tr>\n");
 			servers->rewind();
 			while ((server = servers->getNext())) {
+				if (server->isTerminated()) continue; // Don't print servers which we are currently disconnecting from
 				if (!server->data) {
 					fprintf(f, "<tr><td colspan=\"2\" style=\"color:red\">Unknown (not a game or lobby server)</td><td>%s:%d</td><tr>\n",
 						alcGetStrIp(server->getIp()).c_str(), ntohs(server->getPort()));
@@ -647,8 +647,8 @@ namespace alc {
 			fprintf(f, "<Games>\n");
 				tNetSession *server;
 				if (lobby && data) { // the lobby's children
-					data->childs->rewind();
-					while ((server = data->childs->getNext())) {
+					data->children->rewind();
+					while ((server = data->children->getNext())) {
 						tTrackingData *subData = dynamic_cast<tTrackingData *>(server->data);
 						if (!subData) continue;
 						printGameXML(f, server, subData);
