@@ -46,8 +46,9 @@ bool removeFile(QString file)
 
 void cleanDirectory(const QStringList &whitelist, QString dir, bool warnOnly = false)
 {
-	if (!dir.isEmpty() && !dir.endsWith("/")) dir += "/"; // it may also be necessary to clean the root directory, indicated by an empty string
+	if (!dir.endsWith("/")) dir += "/";
 	log << "Cleaning directory " << dir << "\n";
+	if (dir == "/") dir = ""; // it may also be necessary to clean the root directory, indicated by an empty string
 	// first, get the entries we are interested in
 	QString file;
 	QStringList list;
