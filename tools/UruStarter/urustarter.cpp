@@ -46,7 +46,7 @@ bool removeFile(QString file)
 
 void cleanDirectory(const QStringList &whitelist, QString dir, bool warnOnly = false)
 {
-	if (!dir.endsWith("/")) dir += "/";
+	if (!dir.isEmpty() && !dir.endsWith("/")) dir += "/"; // it may also be necessary to clean the root directory, indicated by an empty string
 	log << "Cleaning directory " << dir << "\n";
 	// first, get the entries we are interested in
 	QString file;
@@ -54,11 +54,11 @@ void cleanDirectory(const QStringList &whitelist, QString dir, bool warnOnly = f
 	QStringListIterator ite(whitelist);
 	while (ite.hasNext()) {
 		file = ite.next();
-		if (file.startsWith(dir, Qt::CaseInsensitive))
+		if (file.startsWith(dir, Qt::CaseInsensitive) && file.lastIndexOf("/")+1 == dir.length())
 			list << file;
 	}
 	if (list.size() == 0) {
-		log << "Found 0 whitelist entries for " << dir << " - not cleaning this directory\n";
+		log << "WARNING: Found 0 whitelist entries for " << dir << " - not cleaning this directory (I would have to empty it)\n";
 		return;
 	}
 	
@@ -122,7 +122,7 @@ int main(int argc, char **argv)
 			
 			while (!checkStream.atEnd()) {
 				QString line = checkStream.readLine();
-				if (line.startsWith("#"))
+				if (line.startsWith("#")) // skip comments
 					continue;
 				else if (line.startsWith("Age: ")) {
 					curAge = line.right(line.length()-5);
@@ -166,16 +166,29 @@ int main(int argc, char **argv)
 	{ // process whitelist
 		QFile listFile("whitelist.txt");
 		if (listFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+			// process whitelist file
+			const QString cleanDirPrefix = "cleandir:";
+			QStringList cleanDirs;
 			QTextStream listStream(&listFile);
-			while (!listStream.atEnd())
-				whitelist << listStream.readLine();
+			while (!listStream.atEnd()) {
+				QString line = listStream.readLine();
+				if (line.startsWith("#")) continue; // skip comments
+				if (line.startsWith(cleanDirPrefix))
+					cleanDirs << line.mid(cleanDirPrefix.length());
+				else
+					whitelist << line;
+			}
+			// add config files which can not be on the dataserver, and the whitelist file as it does not necessarily contain itself
+			whitelist << "whitelist.txt";
+			whitelist << "dev_mode.dat" << "plClientSetup.cfg" << "urustarter-checksums.txt" << "urustarter.ini";
 			// clean directories
-			cleanDirectory(whitelist, "python/system/");
-			cleanDirectory(whitelist, "python/");
-			cleanDirectory(whitelist, "sdl/");
-			cleanDirectory(whitelist, "dat/");
-			cleanDirectory(whitelist, "sfx/");
-			cleanDirectory(whitelist, "img/");
+			if (cleanDirs.isEmpty())
+				log << "WARNING: There is a whitelist.txt file, but no directory is set to be cleaned, so no cleanup will be done\n";
+			else {
+				QStringListIterator ite(cleanDirs);
+				while (ite.hasNext())
+					cleanDirectory(whitelist, ite.next());
+			}
 		}
 		else
 			log << "Failed to load whitelist\n";
