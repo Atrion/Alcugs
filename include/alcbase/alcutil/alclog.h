@@ -128,6 +128,10 @@ public:
 	inline void open(U16 newFlags=0) { open(tString(), newFlags); }
 	void rotate(bool force=false);
 	void close(bool silent=false);
+	inline void checkRotate(int maxCount) {
+		++count;
+		if(count>maxCount) { count=0; rotate(false); }
+	}
 
 	void print(const char * msg, ...) const;
 	void print(const tString &str) const;

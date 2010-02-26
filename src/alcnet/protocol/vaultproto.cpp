@@ -1210,7 +1210,8 @@ namespace alc {
 	void tvMessage::print(tLog *log, bool clientToServer, tNetSession *client, bool shortLog, U32 ki)
 	{
 		if (!log->doesPrint()) return; // don't do anything if log is disabled
-		
+		log->checkRotate(50); // check whether we should rotate each 50th packet
+			
 		tString clientDesc;
 		if (ki) // we're in the vault server and the "client" is only forwarding
 			clientDesc.printf("KI %d, routed by %s", ki, client ? client->str().c_str() : "?");
