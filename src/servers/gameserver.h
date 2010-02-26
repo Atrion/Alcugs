@@ -58,6 +58,8 @@ namespace alc {
 		inline tMemberInfo createInfo(void) {
 			return tMemberInfo(u, obj, isHidden);
 		}
+		
+		FORBID_CLASS_COPY(tGameData)
 	};
 
 	class tUnetGameServer : public tUnetLobbyServerBase {

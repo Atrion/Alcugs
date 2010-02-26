@@ -88,6 +88,11 @@
 	#endif
 #endif
 
+// this is used everywhere, there is no really useful place
+#define FORBID_CLASS_COPY(name) private: \
+	name(const name &); \
+	void operator=(const name &);
+
 //std includes
 #include <iostream>
 #include <vector>

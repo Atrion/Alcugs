@@ -189,6 +189,8 @@ private:
 	
 	Byte whoami; //!< peer type
 	bool client; //!< it's a client or a server?
+
+	FORBID_CLASS_COPY(tNetSession)
 };
 
 

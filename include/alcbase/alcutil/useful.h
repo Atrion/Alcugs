@@ -30,6 +30,8 @@
 #define __U_USEFUL_H_ID "$Id$"
 
 namespace alc {
+	
+class tString;
 
 tString alcConsoleAsk();
 bool alcGetLoginInfo(tString argv,tString * username,tString * hostname,U16 * port); // username may be NULL, the rest not
@@ -59,10 +61,6 @@ bool alcIsAlpha(char c);
  #define letoh16(x) htole16(x)
  #define letoh32(x) htole32(x)
 #endif
-
-#define FORBID_CLASS_COPY(name) private: \
-	name(const name &); \
-	void operator=(const name &);
 
 }
 

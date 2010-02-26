@@ -74,6 +74,8 @@ private:
 	U32 mainThreadId;
 	tTime born;
 	tLogConfig logCfg;
+	
+	FORBID_CLASS_COPY(tAlcMain)
 };
 
 //! Get global management class

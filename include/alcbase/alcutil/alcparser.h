@@ -87,6 +87,8 @@ public:
 	tConfig * getConfig() const { return cfg; }
 protected:
 	tConfig * cfg;
+	
+	FORBID_CLASS_COPY(tSimpleParser)
 };
 
 /**
