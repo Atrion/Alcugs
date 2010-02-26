@@ -47,7 +47,6 @@ namespace alc {
 
 tLogConfig::tLogConfig(void) : path("log/"), build("Alcugs logging system")
 {
-	//memset(tvLogConfig,0,sizeof(tvLogConfig));
 	verboseLevel=3;
 	n_files2rotate=5;
 	rotate_size=2*1024*1024;
@@ -266,11 +265,8 @@ void tLog::print(const tString &str) const
 	(the rotation check is done, every 250 calls to this function)
 */
 void tLog::stamp() {
-	++count;
-	if(count>250) { count=0; this->rotate(false); }
-
+	checkRotate(250);
 	if (this->flags & DF_NOSTAMP) { return; }
-
 	this->print("(%s)[%d] ",alcGetStrTime().c_str(),alcGetSelfThreadId());
 }
 
