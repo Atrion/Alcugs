@@ -241,6 +241,8 @@ private:
 	U32 msize;
 	mutable Byte *xbuf;
 	mutable U32 xsize; // size of the xbuf
+
+	FORBID_CLASS_COPY(tFBuf)
 };
 
 /** Static buffer, operatoring on external data */

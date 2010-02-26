@@ -73,6 +73,8 @@ private:
 	struct dirent *entry;
 	tDirEntry ent;
 	tString path;
+	
+	FORBID_CLASS_COPY(tDirectory)
 };
 
 } //End alc namespace

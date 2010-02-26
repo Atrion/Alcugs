@@ -64,6 +64,8 @@ private:
 	bool alarmRunning;
 	tString netName;
 	tUnetBase *net; //!< points to the one and only netcore instance if there is one
+	
+	FORBID_CLASS_COPY(tAlcUnetMain)
 };
 
 inline tAlcUnetMain *alcUnetGetMain(void) { return dynamic_cast<tAlcUnetMain *>(alcGetMain()); }

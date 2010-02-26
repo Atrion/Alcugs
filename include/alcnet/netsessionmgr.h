@@ -101,6 +101,8 @@ public:
 private:
 	int max;
 	tUnet * net;
+	
+	FORBID_CLASS_COPY(tNetSessionMgr)
 };
 
 class tNetEvent {
