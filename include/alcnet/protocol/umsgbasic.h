@@ -39,7 +39,7 @@ public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
 	tmTerminated(tNetSession * u,U32 ki=0,Byte reason=RKickedOff);
-	virtual tString str() const;
+	virtual tString additionalFields(tString dbg) const;
 	//format
 	Byte reason;
 };
@@ -50,7 +50,7 @@ public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
 	tmLeave(tNetSession * u,U32 ki=0,Byte reason=RQuitting);
-	virtual tString str() const;
+	virtual tString additionalFields(tString dbg) const;
 	//format
 	Byte reason;
 };
@@ -71,7 +71,7 @@ public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
 	tmPlayerTerminated(tNetSession * u,U32 ki=0,Byte reason=RKickedOff);
-	virtual tString str() const;
+	virtual tString additionalFields(tString dbg) const;
 	//format
 	Byte reason;
 };
@@ -83,7 +83,7 @@ public:
 	virtual void stream(tBBuf &t) const;
 	tmPing(tNetSession * u, Byte dst = KLobby);
 	tmPing(tNetSession *u, tmPing &ping);
-	virtual tString str() const;
+	virtual tString additionalFields(tString dbg) const;
 	void setRouteInfo(const tNetSessionIte &ite);
 	void unsetRouteInfo();
 	//format

@@ -47,7 +47,7 @@ namespace alc {
 		tmCustomAuthAsk(tNetSession *u, U32 x, U32 sid, U32 ip, tString login, const Byte *challenge, const Byte *hash, Byte release);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
-		virtual tString str() const;
+		virtual tString additionalFields(tString dbg) const;
 		// format
 		U32 ip; //network order
 		tString login;
@@ -61,7 +61,7 @@ namespace alc {
 		tmCustomAuthResponse(tNetSession *u, tmCustomAuthAsk &authAsk, const Byte *uid, tString passwd, Byte result, Byte accessLevel);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
-		virtual tString str() const;
+		virtual tString additionalFields(tString dbg) const;
 		// format
 		tString login, passwd;
 		Byte result, accessLevel;

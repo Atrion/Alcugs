@@ -51,8 +51,7 @@ void tmTerminated::stream(tBBuf &t) const {
 	tmMsgBase::stream(t);
 	t.putByte(reason);
 }
-tString tmTerminated::str() const {
-	tString dbg = tmMsgBase::str();
+tString tmTerminated::additionalFields(tString dbg) const {
 	dbg.printf("\n Reason [0x%02X] %s ",reason,alcUnetGetReasonCode(reason));
 	return dbg;
 }
@@ -74,8 +73,7 @@ void tmLeave::stream(tBBuf &t) const {
 	tmMsgBase::stream(t);
 	t.putByte(reason);
 }
-tString tmLeave::str() const {
-	tString dbg = tmMsgBase::str();
+tString tmLeave::additionalFields(tString dbg) const {
 	dbg.printf("\n Reason [0x%02X] %s ",reason,alcUnetGetReasonCode(reason));
 	return dbg;
 }
@@ -95,8 +93,7 @@ void tmPlayerTerminated::stream(tBBuf &t) const {
 	tmMsgBase::stream(t);
 	t.putByte(reason);
 }
-tString tmPlayerTerminated::str() const {
-	tString dbg = tmMsgBase::str();
+tString tmPlayerTerminated::additionalFields(tString dbg) const {
 	dbg.printf("\n Reason [0x%02X] %s ",reason,alcUnetGetReasonCode(reason));
 	return dbg;
 }
@@ -140,8 +137,7 @@ void tmPing::stream(tBBuf &t) const {
 	t.putDouble(mtime);
 	t.putByte(destination);
 }
-tString tmPing::str() const {
-	tString dbg = tmMsgBase::str();
+tString tmPing::additionalFields(tString dbg) const {
 	dbg.printf("\n t:%e, dst:%i %s ",mtime,destination,alcUnetGetDestination(destination));
 	return dbg;
 }

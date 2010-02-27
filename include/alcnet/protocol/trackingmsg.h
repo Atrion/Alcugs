@@ -38,7 +38,7 @@ namespace alc {
 		tmCustomSetGuid(tNetSession *u, const tString &serverGuid, const tString &age, const tString &externalIp, U16 spawnStart, U16 spawnStop);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
-		virtual tString str() const;
+		virtual tString additionalFields(tString dbg) const;
 		inline bool validSpawnPorts(void) { return spawnStart && spawnStop && spawnStart <= spawnStop; }
 		// format
 		tUruString serverGuid;
@@ -52,7 +52,7 @@ namespace alc {
 		tmCustomPlayerStatus(tNetSession *u, tNetSession *playerSession, Byte playerFlag, Byte playerStatus);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
-		virtual tString str() const;
+		virtual tString additionalFields(tString dbg) const;
 		// format
 		tString account, avatar;
 		Byte playerFlag, playerStatus;
@@ -65,7 +65,7 @@ namespace alc {
 		tmCustomFindServer(tNetSession *u, const tmCustomFindServer &findServer);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
-		virtual tString str() const;
+		virtual tString additionalFields(tString dbg) const;
 		// format
 		tUruString serverGuid;
 		tString age;
@@ -77,7 +77,7 @@ namespace alc {
 		tmCustomForkServer(tNetSession *u, U16 port, const tString &serverGuid, const tString &name);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
-		virtual tString str() const;
+		virtual tString additionalFields(tString dbg) const;
 		// format
 		U16 forkPort;
 		tUruString serverGuid;
@@ -90,7 +90,7 @@ namespace alc {
 		tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U32 sid, U16 port, const tString &ipStr, const tString &serverGuid, const tString &name);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
-		virtual tString str() const;
+		virtual tString additionalFields(tString dbg) const;
 		// format
 		U16 serverPort;
 		tString ipStr;

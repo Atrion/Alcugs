@@ -66,7 +66,7 @@ namespace alc {
 	public:
 		tmJoinReq(tNetSession *u);
 		virtual void store(tBBuf &t);
-		virtual tString str(void) const;
+		virtual tString additionalFields(tString dbg) const;
 		// format
 		U32 ip; //network order
 		U16 port; //network order
@@ -116,7 +116,7 @@ namespace alc {
 		tmLoadClone(tNetSession *u, tpLoadCloneMsg *subMsg, bool isInitial);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
-		virtual tString str(void) const;
+		virtual tString additionalFields(tString dbg) const;
 		
 		void checkSubMsg(tpLoadCloneMsg *subMsg);
 		// format
@@ -130,7 +130,7 @@ namespace alc {
 	public:
 		tmPagingRoom(tNetSession *u);
 		virtual void store(tBBuf &t);
-		virtual tString str(void) const;
+		virtual tString additionalFields(tString dbg) const;
 		// format
 		U32 pageId;
 		U16 pageType;
@@ -142,7 +142,7 @@ namespace alc {
 	public:
 		tmGroupOwner(tNetSession *u, tPageInfo *page, bool isOwner);
 		virtual void stream(tBBuf &t) const;
-		virtual tString str(void) const;
+		virtual tString additionalFields(tString dbg) const;
 		// format
 		U32 pageId;
 		U16 pageType;
@@ -153,7 +153,7 @@ namespace alc {
 	public:
 		tmPlayerPage(tNetSession *u);
 		virtual void store(tBBuf &t);
-		virtual tString str(void) const;
+		virtual tString additionalFields(tString dbg) const;
 		// format
 		bool isPageOut;
 		tUruObject obj;
@@ -163,7 +163,7 @@ namespace alc {
 	public:
 		tmGameStateRequest(tNetSession *u);
 		virtual void store(tBBuf &t);
-		virtual tString str(void) const;
+		virtual tString additionalFields(tString dbg) const;
 		// format
 		typedef std::vector<U32> tPageList;
 		tPageList pages;
@@ -173,7 +173,7 @@ namespace alc {
 	public:
 		tmInitialAgeStateSent(tNetSession *u, U32 num);
 		virtual void stream(tBBuf &t) const;
-		virtual tString str(void) const;
+		virtual tString additionalFields(tString dbg) const;
 		// format
 		U32 num;
 	};
@@ -189,7 +189,7 @@ namespace alc {
 		
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
-		virtual tString str(void) const;
+		virtual tString additionalFields(tString dbg) const;
 	
 		// format
 		tUruObject obj;
@@ -204,7 +204,7 @@ namespace alc {
 	public:
 		tmTestAndSet(tNetSession *u);
 		virtual void store(tBBuf &t);
-		virtual tString str(void) const;
+		virtual tString additionalFields(tString dbg) const;
 		// format
 		bool isLockReq;
 	};
@@ -216,7 +216,7 @@ namespace alc {
 		
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
-		virtual tString str(void) const;
+		virtual tString additionalFields(tString dbg) const;
 	
 		// format
 		bool isInitial;
@@ -243,7 +243,7 @@ namespace alc {
 	public:
 		tmSetTimeout(tNetSession *u);
 		virtual void store(tBBuf &t);
-		virtual tString str(void) const;
+		virtual tString additionalFields(tString dbg) const;
 		// format
 		float timeout;
 	};
@@ -252,7 +252,7 @@ namespace alc {
 	public:
 		tmMembersList(tNetSession *u);
 		virtual void stream(tBBuf &t) const;
-		virtual tString str(void) const;
+		virtual tString additionalFields(tString dbg) const;
 		// format
 		typedef std::vector<tMemberInfo> tMemberList;
 		tMemberList members;
@@ -262,7 +262,7 @@ namespace alc {
 	public:
 		tmMemberUpdate(tNetSession *u, const tMemberInfo &info, bool isJoined);
 		virtual void stream(tBBuf &t) const;
-		virtual tString str(void) const;
+		virtual tString additionalFields(tString dbg) const;
 		// format
 		tMemberInfo info;
 		bool isJoined;

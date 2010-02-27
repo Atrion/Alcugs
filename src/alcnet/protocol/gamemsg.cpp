@@ -110,9 +110,8 @@ namespace alc {
 		port=htons(t.getU16());
 	}
 	
-	tString tmJoinReq::str(void) const
+	tString tmJoinReq::additionalFields(tString dbg) const
 	{
-		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" IP: %s:%i", alcGetStrIp(ip).c_str(), ntohs(port));
 		return dbg;
@@ -299,9 +298,9 @@ namespace alc {
 		}
 	}
 	
-	tString tmLoadClone::str(void) const
+	tString tmLoadClone::additionalFields(tString dbg) const
 	{
-		tString dbg = tmGameMessage::str();
+		dbg = tmGameMessage::additionalFields(dbg);
 		dbg.nl();
 		dbg.printf(" Object reference: [%s], player avatar: ", obj.str().c_str());
 		dbg.printBoolean(isPlayerAvatar);
@@ -332,9 +331,8 @@ namespace alc {
 			throw txProtocolError(_WHERE("NetMsgPagingRoom.pageFlag must be 0x00 or 0x01 but is 0x%02X", pageFlag));
 	}
 	
-	tString tmPagingRoom::str(void) const
+	tString tmPagingRoom::additionalFields(tString dbg) const
 	{
-		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" Page ID: 0x%08X, Page Type: 0x%04X, Page Name: %s, Paged out: ", pageId, pageType, pageName.c_str());
 		dbg.printBoolean(isPageOut);
@@ -361,9 +359,8 @@ namespace alc {
 		t.putByte(isOwner);
 	}
 	
-	tString tmGroupOwner::str(void) const
+	tString tmGroupOwner::additionalFields(tString dbg) const
 	{
-		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" Page ID: 0x%08X, Page Type: 0x%04X, owner: ", pageId, pageType);
 		dbg.printBoolean(isOwner);
@@ -387,9 +384,8 @@ namespace alc {
 		t.get(obj);
 	}
 	
-	tString tmPlayerPage::str(void) const
+	tString tmPlayerPage::additionalFields(tString dbg) const
 	{
-		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printBoolean(" Paged out: ", isPageOut);
 		dbg.printf(", Object reference: [%s]", obj.str().c_str());
@@ -422,9 +418,8 @@ namespace alc {
 		}
 	}
 	
-	tString tmGameStateRequest::str(void) const
+	tString tmGameStateRequest::additionalFields(tString dbg) const
 	{
-		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" Explicitly requested pages: %d", pages.size());
 		return dbg;
@@ -442,9 +437,8 @@ namespace alc {
 		t.putU32(num);
 	}
 	
-	tString tmInitialAgeStateSent::str(void) const
+	tString tmInitialAgeStateSent::additionalFields(tString dbg) const
 	{
-		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" number of sent states: %d", num);
 		return dbg;
@@ -488,9 +482,8 @@ namespace alc {
 		t.put(content);
 	}
 	
-	tString tmStreamedObject::str(void) const
+	tString tmStreamedObject::additionalFields(tString dbg) const
 	{
-		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" Object reference: [%s]", obj.str().c_str());
 		return dbg;
@@ -545,9 +538,9 @@ namespace alc {
 			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet: varValue (0x%02X) and lockReq (0x%02X) must be equal", varValue, lockReq));
 	}
 	
-	tString tmTestAndSet::str(void) const
+	tString tmTestAndSet::additionalFields(tString dbg) const
 	{
-		tString dbg = tmStreamedObject::str();
+		dbg = tmStreamedObject::additionalFields(dbg);
 		dbg.printBoolean(", Lock requested: ", isLockReq);
 		return dbg;
 	}
@@ -587,9 +580,9 @@ namespace alc {
 		t.putByte(isInitial);
 	}
 	
-	tString tmSDLState::str(void) const
+	tString tmSDLState::additionalFields(tString dbg) const
 	{
-		tString dbg = tmStreamedObject::str();
+		dbg = tmStreamedObject::additionalFields(dbg);
 		dbg.printBoolean(", initial age state: ", isInitial);
 		return dbg;
 	}
@@ -645,9 +638,8 @@ namespace alc {
 		timeout = t.getFloat();
 	}
 	
-	tString tmSetTimeout::str(void) const
+	tString tmSetTimeout::additionalFields(tString dbg) const
 	{
-		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" Timeout: %f", timeout);
 		return dbg;
@@ -665,9 +657,8 @@ namespace alc {
 			t.put(*i);
 	}
 	
-	tString tmMembersList::str(void) const
+	tString tmMembersList::additionalFields(tString dbg) const
 	{
-		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" Number of other players: %d", members.size());
 		return dbg;
@@ -687,9 +678,8 @@ namespace alc {
 		t.putByte(isJoined);
 	}
 	
-	tString tmMemberUpdate::str(void) const
+	tString tmMemberUpdate::additionalFields(tString dbg) const
 	{
-		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" Member Info: [%s], is joined: ", info.str().c_str());
 		dbg.printBoolean(isJoined);

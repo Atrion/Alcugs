@@ -42,7 +42,7 @@ namespace alc {
 	public:
 		tmVaultPlayerList(tNetSession *u, U32 x, U16 numberPlayers, tMBuf players, const tString &url);
 		virtual void stream(tBBuf &t) const;
-		virtual tString str() const;
+		virtual tString additionalFields(tString dbg) const;
 		// format
 		U16 numberPlayers;
 		tMBuf players;
@@ -53,7 +53,7 @@ namespace alc {
 	public:
 		tmCreatePlayer(tNetSession *u);
 		virtual void store(tBBuf &t);
-		virtual tString str() const;
+		virtual tString additionalFields(tString dbg) const;
 		// format
 		tString avatar, gender, friendName, key;
 	};
@@ -62,7 +62,7 @@ namespace alc {
 	public:
 		tmPlayerCreated(tNetSession *u, U32 ki, U32 x, Byte result);
 		virtual void stream(tBBuf &t) const;
-		virtual tString str() const;
+		virtual tString additionalFields(tString dbg) const;
 		// format
 		Byte result;
 	};

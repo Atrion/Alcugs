@@ -757,8 +757,10 @@ tString tmMsgBase::str() const {
 	if(flags & plNetSid)
 		dbg.printf(" sid: %i,",sid);
 	dbg.cutEnd(dbg.size()-1); // get rid of the last comma
-#endif
+	return additionalFields(dbg);
+#else
 	return dbg;
+#endif
 }
 
 Byte alcUnetGetVarTypeFromName(tString type) {

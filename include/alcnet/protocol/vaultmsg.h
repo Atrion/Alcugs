@@ -38,7 +38,7 @@ namespace alc {
 		tmVault(tNetSession *u, U32 ki, U32 x, bool task, tBaseType *vaultMessage);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
-		virtual tString str() const;
+		virtual tString additionalFields(tString dbg) const;
 		// format
 		tMBuf message;
 	};
@@ -56,7 +56,7 @@ namespace alc {
 		tmCustomVaultPlayerList(tNetSession *u, U32 x, U32 sid, const Byte *uid);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
-		virtual tString str() const;
+		virtual tString additionalFields(tString dbg) const;
 		// format
 		U16 numberPlayers;
 		tMBuf players;
@@ -68,7 +68,7 @@ namespace alc {
 		tmCustomVaultPlayerStatus(tNetSession *u);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
-		virtual tString str() const;
+		virtual tString additionalFields(tString dbg) const;
 		// format
 		tString age, serverGuid;
 		Byte state;
@@ -81,7 +81,7 @@ namespace alc {
 		tmCustomVaultCreatePlayer(tNetSession *u, U32 x, U32 sid, const Byte *uid, Byte accessLevel, const tString &login, const tString &avatar, const tString &gender, const tString &friendName, const tString &key);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
-		virtual tString str() const;
+		virtual tString additionalFields(tString dbg) const;
 		// format
 		tUruString login;
 		tString avatar, gender, friendName, key;
@@ -94,7 +94,7 @@ namespace alc {
 		tmCustomVaultPlayerCreated(tNetSession *u, U32 ki, U32 x, U32 sid, const Byte *uid, Byte result);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
-		virtual tString str() const;
+		virtual tString additionalFields(tString dbg) const;
 		// format
 		Byte result;
 	};
@@ -105,7 +105,7 @@ namespace alc {
 		tmCustomVaultDeletePlayer(tNetSession *u, U32 ki, U32 x, U32 sid, const Byte *uid, Byte accessLevel);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
-		virtual tString str() const;
+		virtual tString additionalFields(tString dbg) const;
 		// format
 		Byte accessLevel;
 	};
@@ -124,7 +124,7 @@ namespace alc {
 		tmCustomVaultKiChecked(tNetSession *u);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
-		virtual tString str() const;
+		virtual tString additionalFields(tString dbg) const;
 		// format
 		Byte status;
 		tString avatar;
