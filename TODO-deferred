@@ -55,8 +55,3 @@ Clients
 * End the UruLoader
 * Do a GUI implementation for UruLoader
 * Finish the basic urucmd client for admins
-
-Feature-Requests list
-=======================
-* Be able to broadcast admin messages to all players
-* E-mail notifications on Ki mail
