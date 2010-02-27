@@ -68,9 +68,8 @@ namespace alc {
 		t.putU16(spawnStop);
 	}
 	
-	tString tmCustomSetGuid::str() const
+	tString tmCustomSetGuid::additionalFields(tString dbg) const
 	{
-		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" Server GUID: %s, Age filename: %s, external IP: %s", serverGuid.c_str(), age.c_str(), externalIp.c_str());
 		dbg.printf(", Spawn Start: %d, Spawn Stop: %d", spawnStart, spawnStop);
@@ -112,9 +111,8 @@ namespace alc {
 		t.putByte(playerStatus);
 	}
 	
-	tString tmCustomPlayerStatus::str() const
+	tString tmCustomPlayerStatus::additionalFields(tString dbg) const
 	{
-		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" Account: %s, Avatar: %s, Flag: 0x%02X, Status: 0x%02X (%s)", account.c_str(), avatar.c_str(), playerFlag, playerStatus, alcUnetGetReasonCode(playerStatus));
 		return dbg;
@@ -157,9 +155,8 @@ namespace alc {
 		t.put(age);
 	}
 	
-	tString tmCustomFindServer::str() const
+	tString tmCustomFindServer::additionalFields(tString dbg) const
 	{
-		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" Server GUID: %s, Age filename: %s", serverGuid.c_str(), age.c_str());
 		return dbg;
@@ -195,9 +192,8 @@ namespace alc {
 		t.put(age);
 	}
 	
-	tString tmCustomForkServer::str() const
+	tString tmCustomForkServer::additionalFields(tString dbg) const
 	{
-		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" Port: %d, Server GUID: %s, Age filename: %s", forkPort, serverGuid.c_str(), age.c_str());
 		return dbg;
@@ -237,9 +233,8 @@ namespace alc {
 		t.put(age);
 	}
 	
-	tString tmCustomServerFound::str() const
+	tString tmCustomServerFound::additionalFields(tString dbg) const
 	{
-		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" Port: %d, IP: %s, Server GUID: %s, Age filename: %s", serverPort, ipStr.c_str(), serverGuid.c_str(), age.c_str());
 		return dbg;

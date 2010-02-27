@@ -183,6 +183,8 @@ public:
 	U32 ki;
 	Byte uid[16];
 	U32 sid;
+protected:
+	virtual tString additionalFields(tString dbg) const { return dbg; } // this makes it much easier to disable message logging via #ifdef
 private:
 	void copyProps(tmMsgBase &t);
 };

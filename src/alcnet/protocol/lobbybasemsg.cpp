@@ -49,9 +49,8 @@ namespace alc {
 		release = t.getByte();
 	}
 	
-	tString tmAuthenticateHello::str(void) const
+	tString tmAuthenticateHello::additionalFields(tString dbg) const
 	{
-		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" account: %s, max packet size: %d, release: 0x%02X (%s)", account.c_str(), maxPacketSize, release, alcUnetGetRelease(release));
 		return dbg;
@@ -75,9 +74,8 @@ namespace alc {
 		t.put(challenge); // challenge
 	}
 	
-	tString tmAuthenticateChallenge::str(void) const
+	tString tmAuthenticateChallenge::additionalFields(tString dbg) const
 	{
-		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" auth result: 0x%02X (%s), challenge: %s", authResult, alcUnetGetAuthCode(authResult), alcGetStrUid(challenge.data()).c_str());
 		return dbg;
@@ -95,9 +93,8 @@ namespace alc {
 		if (hash.size() != 16) throw txProtocolError(_WHERE("tmAuthenticateResponse.hash must be 16 characters long"));
 	}
 	
-	tString tmAuthenticateResponse::str(void) const
+	tString tmAuthenticateResponse::additionalFields(tString dbg) const
 	{
-		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" hash: %s", alcGetStrUid(hash.data()).c_str());
 		return dbg;
@@ -122,9 +119,8 @@ namespace alc {
 		t.write(serverGuid, 8); // server guid
 	}
 	
-	tString tmAccountAutheticated::str() const
+	tString tmAccountAutheticated::additionalFields(tString dbg) const
 	{
-		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" auth result: 0x%02X (%s), server guid: %s", authResult, alcUnetGetAuthCode(authResult), alcGetStrGuid(serverGuid).c_str());
 		return dbg;
@@ -144,9 +140,8 @@ namespace alc {
 			throw txProtocolError(_WHERE("NetMsgSetMyActivePlayer.unk is not 0 but %d", unk));
 	}
 	
-	tString tmSetMyActivePlayer::str() const
+	tString tmSetMyActivePlayer::additionalFields(tString dbg) const
 	{
-		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" avatar: %s", avatar.c_str());
 		return dbg;
@@ -199,9 +194,8 @@ namespace alc {
 		t.write(serverGuid, 8);
 	}
 	
-	tString tmFindAgeReply::str() const
+	tString tmFindAgeReply::additionalFields(tString dbg) const
 	{
-		tString dbg = tmMsgBase::str();
 		dbg.nl();
 		dbg.printf(" Age filename: %s, IP: %s, Port: %d, GUID: %s", age.c_str(), ipStr.c_str(), serverPort, alcGetStrGuid(serverGuid).c_str());
 		return dbg;
