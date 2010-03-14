@@ -122,7 +122,6 @@ namespace alc {
 		tpMessage::store(t);
 		
 		Byte byteVal;
-		U16 u16Val;
 		U32 u32Val;
 		
 		t.get(clonedObj);
@@ -145,12 +144,12 @@ namespace alc {
 			throw txUnexpectedData(_WHERE("plLoadCloneMsg.isLoad must be 0x00 or 0x01 but is 0x%02X", byteVal));
 		isLoad = byteVal;
 		
-		u16Val = t.getU16();
-		if (u16Val != plNull && u16Val != plParticleTransferMsg)
-			throw txUnexpectedData(_WHERE("Invalid type of plLoadCloneMsg.subMsg: %s (0x%04X)", alcGetPlasmaType(u16Val), u16Val));
+		U16 subMsgType = t.getU16();
+		if (subMsgType != plNull && subMsgType != plParticleTransferMsg)
+			throw txUnexpectedData(_WHERE("Invalid type of plLoadCloneMsg.subMsg: %s (0x%04X)", alcGetPlasmaType(subMsgType), subMsgType));
 		if (subMessage) delete subMessage;
 		subMessage = NULL;
-		subMessage = alcCreatePlasmaObject(u16Val);
+		subMessage = alcCreatePlasmaObject(subMsgType);
 		t.get(*subMessage);
 	}
 	

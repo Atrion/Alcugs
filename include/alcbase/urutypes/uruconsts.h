@@ -372,6 +372,7 @@ unsilenced 29
 #define plBulletMsg                0x03A1
 #define plLoadAvatarMsg            0x03AC
 #define plSubWorldMsg              0x03BA
+#define pfMarkerMsg                0x0455
 #define plSetNetGroupIDMsg         0x045F
 #define plPseudoLinkEffectMsg      0x048F
 
