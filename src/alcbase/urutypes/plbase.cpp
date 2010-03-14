@@ -77,6 +77,7 @@ namespace alc {
 			case plBulletMsg: return "plBulletMsg";
 			case plLoadAvatarMsg: return "plLoadAvatarMsg";
 			case plSubWorldMsg: return "plSubWorldMsg";
+			case pfMarkerMsg: return "pfMarkerMsg";
 			case plSetNetGroupIDMsg: return "plSetNetGroupIDMsg";
 			case plPseudoLinkEffectMsg: return "plPseudoLinkEffectMsg";
 			// vault types
@@ -125,6 +126,7 @@ namespace alc {
 			case plMultistageModMsg:
 			case plBulletMsg:
 			case plSubWorldMsg:
+			case pfMarkerMsg:
 			case plSetNetGroupIDMsg:
 			case plPseudoLinkEffectMsg:
 				if (!mustBeComplete) return new tpMessage(type, /*incomplete*/true);
