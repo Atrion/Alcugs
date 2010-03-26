@@ -23,7 +23,7 @@ getPid(){
 		fi
 	else
 		# check if we can find the PID without the file
-		PID=`pidof alcugs_$prog`
+		PID=`pidof $bindir/alcugs_$prog`
 		if [[ $PID ]]; then
 			echo $PID > $basedir/$1.pid
 			echo $PID
