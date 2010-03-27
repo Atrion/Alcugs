@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2008  The Alcugs Server Team                           *
+*    Copyright (C) 2004-2010  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -570,7 +570,6 @@ namespace alc {
 	tvNode::tvNode(U32 flagB) : tvBase()
 	{
 		// set flags to empty
-		this->flagA = 0x00000001; // this means that flagC is ignored
 		this->flagB = flagB;
 		this->flagC = 0x00000000;
 	}
@@ -578,12 +577,12 @@ namespace alc {
 	void tvNode::store(tBBuf &t)
 	{
 		// get flags
-		flagA = t.getU32(); // I think this is something like a version number. version 1 contains only flagB, version 2 also flagC
-		if (flagA != 0x00000001 && flagA != 0x00000002) { // check for unknown values
-			throw txProtocolError(_WHERE("invalid flagA (0x%08X)", flagA));
+		U32 size = t.getU32(); // this is the number of U32 values in the bitvector. Seen 1 and 2 only.
+		if (size != 1 && size != 2) { // check for unknown values
+			throw txProtocolError(_WHERE("invalid bitvector size (%d)", size));
 		}
 		flagB = t.getU32(); // this is the main flag, all 32 bits are known
-		if (flagA == 0x00000002) { // it contains flagC
+		if (size == 2) { // it contains flagC
 			flagC = t.getU32();
 			U32 check = MBlob1Guid | MBlob2Guid | 0x00000004; // the latter is unknown and seems to be unused
 			if (flagC & ~(check)) { // check for unknown values
@@ -735,9 +734,9 @@ namespace alc {
 	void tvNode::stream(tBBuf &t) const
 	{
 		// write flags
-		t.putU32(flagA);
+		t.putU32(flagC != 0 ? 2 : 1); // the number of U32 values in the bitvector
 		t.putU32(flagB);
-		if (flagA == 0x00000002) {
+		if (flagC != 0) {
 			t.putU32(flagC);
 		}
 		
@@ -880,7 +879,7 @@ namespace alc {
 		// mandatory flieds
 		log->print("<tr><th style='background-color:yellow'>Vault Node %d</th></tr>\n", index, index);
 		log->print("<tr><td>\n");
-		log->print("<b>Flags:</b> 0x%08X (%d), 0x%08X (%d), 0x%08X (%d)<br />\n", flagA, flagA, flagB, flagB, flagC, flagC);
+		log->print("<b>Flags:</b> 0x%08X (%d), 0x%08X (%d)<br />\n", flagB, flagB, flagC, flagC);
 		log->print("<b>Type:</b> 0x%02X (%s)<br />\n", type, alcVaultGetNodeType(type));
 		permissionsAsHtml(log);
 		log->print("<b>Owner:</b> 0x%08X (%d)<br />\n", owner, owner);

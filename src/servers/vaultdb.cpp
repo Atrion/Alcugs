@@ -1123,7 +1123,6 @@ namespace alc {
 			lengths = mysql_fetch_lengths(result); //get the size of each column
 			
 			tvNode *node = new tvNode;
-			node->flagA = 0x00000002;
 			node->flagB = 0xFFFFFFFF; // everything enabled
 			node->flagC = 0x00000007; // everything enabled
 			// fill in the row
