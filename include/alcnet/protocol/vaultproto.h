@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2008  The Alcugs Server Team                           *
+*    Copyright (C) 2004-2010  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -323,7 +323,7 @@ namespace alc {
 		virtual void asHtml(tLog *log, bool shortLog);
 	
 		// format
-		U32 flagA, flagB, flagC;
+		U32 flagB, flagC;
 		// you can only rely on these being defined if the flag is set
 		U32 index;
 		Byte type;
