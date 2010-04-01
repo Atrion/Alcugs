@@ -19,6 +19,8 @@
 *    Please see the file COPYING for the full license.                         *
 *******************************************************************************/
 
+#include <windows.h>
+
 #include <QProcess>
 #include <QFile>
 #include <QDir>
@@ -103,6 +105,14 @@ int main(int argc, char **argv)
 			QTextStream listStream(&blacklistFile);
 			while (!listStream.atEnd())
 				removeFile(listStream.readLine());
+		}
+		// On Windows Vista and 7, try to write to the UruSetup.exe file - if that fails, the user obviously uses that file to start Uru, which he should not!
+		if (QSysInfo::windowsVersion() >= QSysInfo::WV_6_0) {
+			QFile uruSetup("UruSetup.exe");
+			if (!uruSetup.open(QIODevice::ReadWrite)) {
+				log << "It seems you are using the UruSetup.exe to start Uru\n";
+				MessageBox(NULL, L"You are currently using \"UruSetup.exe\" to start Uru. On Windows Vista and newer, this means that Uru will run with admin privileges. That is discouraged and can cause various problems.\n\nPlease use \"Uru.exe\", which can also be found in your Uru folder, to start Uru. Of course, you can also use a shortcut to that file.", L"Admin privileges", MB_ICONWARNING);
+			}
 		}
 		// On Windows 7, manually remove two problematic bik files
 		if (QSysInfo::windowsVersion() == QSysInfo::WV_6_1) {
