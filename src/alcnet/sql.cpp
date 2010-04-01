@@ -138,7 +138,9 @@ bool tSQL::query(const tString &str, const char *desc, bool throwOnError)
 	}
 	
 	if (flags & SQL_LOGQ) {
-		sql->log("SQL query (%s): %s\n", desc, str.c_str());
+		sql->log("SQL query (%s): ", desc);
+		sql->print(str);
+		sql->nl();
 		sql->flush();
 	}
 	
