@@ -857,7 +857,7 @@ void tNetSession::doWork()
 						// The server used to duplicate the timeout here - but since the timeout will be overwritten next time updateRTT
 						//  is called, that's of no use. So better make the RTT bigger - it is obviously at least the timeout
 						// This will result in a more long-term reduction of the timeout
-						updateRTT(3*timeout); // reduce this when mutli-threading is implemented
+						updateRTT(3*timeout); // this is necessary because the vault server blocks the netcore when doing SQL - reduce this when multi-threading is implemented
 					}
 					
 					if(curmsg->tryes>=10 || (curmsg->tryes>=2 && terminated)) { // max. 2 sends on terminated connections, max. 10 for the rest
@@ -880,7 +880,7 @@ void tNetSession::doWork()
 					if(curmsg->tf == 0x00 && net->net_time-curmsg->timestamp > 4*timeout) {
 						//Unacceptable - drop it
 						net->err->log("%s Dropped a 0x00 packet due to unaceptable msg time %i,%i,%i\n",str().c_str(),timeout,net->net_time-curmsg->timestamp,rtt);
-					} else if(curmsg->tf == 0x00 && sndq->len() > minTH && (sndq->len() > (minTH + random()%(maxTH-minTH))) ) {
+					} else if(curmsg->tf == 0x00 && (sndq->len() > (minTH + random()%(maxTH-minTH))) ) {
 						net->err->log("%s Dropped a 0x00 packet due to a big queue\n",str().c_str());
 					}
 					//end prob drop
@@ -902,10 +902,10 @@ void tNetSession::doWork()
 		DBG(8,"%s %d tts is now:%i quota:%i,cabal:%i\n",str(),net->net_time,tts,cur_quota,cabal);
 		next_msg_time=net->net_time + tts;
 	} else {
+		// Still wait before sending a message
 		DBG(8,"%s %d Too soon (%d) to check sndq\n",str(),net->net_time,next_msg_time-net->net_time);
-	}
-	if (next_msg_time > net->net_time) // only update the timer if we are waiting for the next_msg_time
 		net->updateTimerAbs(next_msg_time); // come back when we want to send the next message
+	}
 }
 
 /** send a negotiation to the peer */
