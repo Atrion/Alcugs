@@ -835,8 +835,8 @@ void tNetSession::doWork()
 		U32 quota_max=maxPacketSz;
 		U32 cur_quota=0;
 		
-		U32 minTH=15;
-		U32 maxTH=100;
+		const U32 minTH=15;
+		const U32 maxTH=100;
 		U32 tts;
 
 		while(curmsg!=NULL && (cur_quota<quota_max)) {
@@ -881,7 +881,7 @@ void tNetSession::doWork()
 						//Unacceptable - drop it
 						net->err->log("%s Dropped a 0x00 packet due to unaceptable msg time %i,%i,%i\n",str().c_str(),timeout,net->net_time-curmsg->timestamp,rtt);
 					} else if(curmsg->tf == 0x00 && (sndq->len() > (minTH + random()%(maxTH-minTH))) ) {
-						net->err->log("%s Dropped a 0x00 packet due to a big queue\n",str().c_str());
+						net->err->log("%s Dropped a 0x00 packet due to a big queue (%d messages)\n", str().c_str(), sndq->len());
 					}
 					//end prob drop
 					else {
@@ -898,9 +898,12 @@ void tNetSession::doWork()
 				curmsg = sndq->getNext(); // go on
 			}
 		} //end while
+		// calculate how long it will take us to send what we just sent
 		tts=timeToSend(cur_quota);
 		DBG(8,"%s %d tts is now:%i quota:%i,cabal:%i\n",str(),net->net_time,tts,cur_quota,cabal);
 		next_msg_time=net->net_time + tts;
+		// if there is still something to send, but the quota does not let us, do that ASAP
+		if (curmsg) net->updateTimerAbs(next_msg_time);
 	} else {
 		// Still wait before sending a message
 		DBG(8,"%s %d Too soon (%d) to check sndq\n",str(),net->net_time,next_msg_time-net->net_time);
