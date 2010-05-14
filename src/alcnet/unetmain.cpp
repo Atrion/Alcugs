@@ -130,12 +130,6 @@ bool tAlcUnetMain::onSignal(int s) {
 	return false;
 }
 
-void tAlcUnetMain::onForked(void)
-{
-	if (net) net->kill(); // kill the socket
-	tAlcMain::onForked();
-}
-
 void tAlcUnetMain::onApplyConfig()
 {
 	tAlcMain::onApplyConfig();

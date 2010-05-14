@@ -330,6 +330,7 @@ void tUnet::startOp() {
 				break; // we can't try another port
 		}
 	} while (error);
+	setCloseOnExec(sock); // close socket when forking a game server
 	if (error) {
 		this->err->log("ERR: Fatal - Failed binding to address %s:%i\n",bindaddr.c_str(),bindport);
 		neterror("bind() ");
@@ -399,7 +400,7 @@ tNetSessionIte tUnet::netConnect(const char * hostname,U16 port,Byte validation,
 	client.sin_family=AF_INET;
 	client.sin_addr.s_addr=ite.ip;
 	client.sin_port=ite.port;
-	memcpy(u->sock_array,&client,sizeof(struct sockaddr_in));
+	memcpy(u->sockaddr,&client,sizeof(struct sockaddr_in));
 	
 	u->timestamp.seconds=alcGetTime();
 	u->timestamp.microseconds=alcGetMicroseconds();
@@ -538,7 +539,7 @@ int tUnet::Recv() {
 		}
 		
 		//process the message, and do the correct things with it
-		memcpy(session->sock_array,&client,sizeof(struct sockaddr_in));
+		memcpy(session->sockaddr,&client,sizeof(struct sockaddr_in));
 		try {
 			session->processMsg(buf,n);
 		} catch(txProtocolError &t) {
@@ -593,7 +594,7 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 	struct sockaddr_in client; //client struct
 
 	//copy the inet struct
-	memcpy(&client,u->sock_array,sizeof(struct sockaddr_in));
+	memcpy(&client,u->sockaddr,sizeof(struct sockaddr_in));
 	client.sin_family=AF_INET; //UDP IP (????)
 	client.sin_addr.s_addr=u->ip; //address
 	client.sin_port=u->port; //port

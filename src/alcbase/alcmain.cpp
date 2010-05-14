@@ -164,11 +164,6 @@ void tAlcMain::onCrash() {
 	}
 }
 
-void tAlcMain::onForked() {
-	DBG(5,"alcLogShutdown from a forked child...\n");
-	logCfg.forceCloseAllLogs();
-}
-
 void tAlcMain::installBaseHandlers(bool install)
 {
 	installHandler(SIGSEGV, install);

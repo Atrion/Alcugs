@@ -53,26 +53,6 @@ tLogConfig::tLogConfig(void) : path("log/"), build("Alcugs logging system")
 	creation_mask=00750;
 }
 
-void tLogConfig::addLog(tLog *log)
-{
-	logs.push_back(log);
-}
-
-void tLogConfig::removeLog(tLog *log)
-{
-	for (tLogList::iterator it = logs.begin(); it != logs.end(); ++it) {
-		if (*it == log) {
-			logs.erase(it);
-			return;
-		}
-	}
-}
-
-void tLogConfig::forceCloseAllLogs(void) {
-	for (tLogList::iterator it = logs.begin(); it != logs.end(); ++it)
-		(*it)->close();
-}
-
 
 
 /** tLog class
@@ -90,7 +70,6 @@ tLog::tLog(U16 newFlags) {
 void tLog::init(void)
 {
 	tvLogConfig = &(alcGetMain()->logCfg);
-	tvLogConfig->addLog(this);
 	dsc=NULL;
 	flags = 0;
 	//this->facility = LOG_USER;
@@ -100,7 +79,6 @@ void tLog::init(void)
 
 tLog::~tLog() {
 	this->close();
-	tvLogConfig->removeLog(this);
 }
 
 void tLog::open(const tString &name, U16 newFlags) {
@@ -127,6 +105,7 @@ void tLog::open(const tString &name, U16 newFlags) {
 		dsc=fopen(fullpath.c_str(),"a");
 		if(dsc==NULL)
 			throw txNotFound(_WHERE("Can not open %s", fullpath.c_str()));
+		setCloseOnExec(fileno(dsc)); // close file when forking a game server
 		if(flags & DF_HTML) {
 			printHtmlHead(tvLogConfig->build);
 		}
@@ -192,12 +171,11 @@ void tLog::rotate(bool force) {
 	if(wasOpen) {
 		DBG(5,"opening file %s...\n",fullpath.c_str());
 		dsc=fopen(fullpath.c_str(),"w");
-		if(dsc==NULL) {
-			txBase(_WHERE("fopen error"));
-		} else {
-			if(flags & DF_HTML) {
-				printHtmlHead(tvLogConfig->build);
-			}
+		if(dsc==NULL)
+			throw txBase(_WHERE("fopen error"));
+		setCloseOnExec(fileno(dsc)); // close file when forking a game server
+		if(flags & DF_HTML) {
+			printHtmlHead(tvLogConfig->build);
 		}
 	}
 }

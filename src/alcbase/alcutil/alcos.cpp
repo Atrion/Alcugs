@@ -104,7 +104,7 @@ tDirectory::~tDirectory() {
 }
 void tDirectory::open(const tString &path) {
 	dir=opendir(path.c_str());
-	if(dir==NULL) throw txBase(_WHERE("OpenDirFailed"));
+	if(dir==NULL) throw txBase(_WHERE("OpenDirFailed for %s", path.c_str()));
 	this->path = path;
 }
 void tDirectory::close() {

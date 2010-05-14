@@ -71,9 +71,6 @@ class tLog;
 class tLogConfig {
 public:
 	tLogConfig(void); // Constructor - fills with default values
-	void forceCloseAllLogs(void);
-	void addLog(tLog *log);
-	void removeLog(tLog *log);
 	
 	//// settings
 	//files
@@ -112,10 +109,6 @@ public:
 	U16 port;
 	char protocol; //UDP, TCP <! 0x00 disabled, 0x01 udp, 0x02 tcp*/
 private:
-	//track logs (to close them all when forking)
-	typedef std::vector<tLog *> tLogList;
-	tLogList logs; //! save a pointer to each log (to able to shut them all down when forking)
-	
 	FORBID_CLASS_COPY(tLogConfig)
 };
 

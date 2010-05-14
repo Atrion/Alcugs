@@ -34,6 +34,7 @@
 #include "alcugs.h"
 
 #include <sys/time.h>
+#include <fcntl.h>
 
 #include "alcdebug.h"
 
@@ -120,6 +121,17 @@ bool alcIsAlpha(char c) {
 	return(index("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZáàâä\
 éèêëíìîïóòôöúùûüçÇñÑß", c)!=NULL); //<- Some characters are not visible on UTF systems, or under other codifications, so you may see garbage
 #endif
+}
+
+void setCloseOnExec(int fd)
+{
+	int flags;
+	flags = fcntl(fd, F_GETFD);
+	if (flags == -1)
+		throw txBase(_WHERE("Error reading flags of FD"));
+	flags |= FD_CLOEXEC;
+	if (fcntl(fd, F_SETFD, flags) == -1)
+		throw txBase(_WHERE("Error writing flags of FD"));
 }
 
 
