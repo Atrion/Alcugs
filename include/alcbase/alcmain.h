@@ -58,7 +58,6 @@ public:
 	// some global events
 	virtual void onApplyConfig(); //!< applies the previously loaded config to all submodules. This enables file-logging per default!
 	virtual void onCrash(void);
-	virtual void onForked();
 	virtual bool onSignal(int s); //!< returns whether the signal has been handled (true) or still needs handling (false)
 
 protected:

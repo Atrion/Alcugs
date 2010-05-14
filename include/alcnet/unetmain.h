@@ -54,7 +54,6 @@ public:
 	
 	virtual bool onSignal(int s);
 	virtual void onApplyConfig();
-	virtual void onForked(void);
 
 private:
 	void installUnetHandlers(bool install);

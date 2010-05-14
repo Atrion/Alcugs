@@ -427,6 +427,7 @@ void tFBuf::open(const char * path,const char * mode) {
 		if(errno==ENOENT) throw txNotFound(path);
 		throw txUnkErr("Unknown error code: %i\n",errno);
 	}
+	setCloseOnExec(fileno(f)); // close file when forking a game server
 	// get size and seek back to beginning
 	fseek(f,0,SEEK_END);
 	msize=ftell(f);

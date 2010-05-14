@@ -531,7 +531,7 @@ namespace alc {
 		// player list
 		fprintf(f, "<h2>Current Online Players</h2>\n");
 		if (dbg)
-			fprintf(f, "<b>Total population: %d</b><br /><br />\n", players.size());
+			fprintf(f, "<b>Total population: %i</b><br /><br />\n", static_cast<U32>(players.size()));
 		fprintf(f, "<table border=\"1\"><tr><th>Avatar (Account)</th><th>KI</th><th>Age Name</th><th>Age GUID</th><th>Status</th></tr>\n");
 		for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
 			if (!dbg && it->flag != 2) continue;

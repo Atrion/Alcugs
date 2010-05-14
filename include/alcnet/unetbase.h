@@ -111,9 +111,6 @@ protected:
 	/** Stops the netcore in a sane way, but without waiting for the clients to properly quit */
 	inline void forcestop() { stop(0); /* stop with a timeout of 0 */ }
 private:
-	/** Just kills the socket - should only be used if the process was forked */
-	inline void kill() { stopOp(); }
-	
 	void terminate(tNetSession *u, Byte reason, bool gotEndMsg);
 	void terminateAll(bool playersOnly = false);
 	inline void terminatePlayers() { terminateAll(/*playersOnly*/true); }

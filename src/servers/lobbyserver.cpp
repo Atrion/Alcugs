@@ -227,7 +227,8 @@ namespace alc {
 				}
 				
 				// flush all log files before forking because otherwise they will be flushed by both parent and child and messages will be printed twice
-				log->flush(); err->flush(); sec->flush();
+				// Further assume that the vault subsystem was flushed already... (tvMessage::print does it right)
+				log->flush(); err->flush(); sec->flush(); ack->flush();
 				
 				int pid = fork();
 				if (pid == 0) {
@@ -243,18 +244,14 @@ namespace alc {
 					gameLog.printf("%s/%s/%s/", gameLogPath.c_str(), gameName.c_str(), gameGuid.c_str());
 					gamePort.printf("%d", forkServer.forkPort);
 					
-					alcUnetGetMain()->onForked(); // will close sockets and logs
-					
 					// if the server was put in daemon mode, th lobby would get the SIGCHILD immediately after starting, so it'd
 					// be useless for debugging
 					execlp(gameBin.c_str(), gameBin.c_str(),"-p",gamePort.c_str(),"-guid",gameGuid.c_str(),"-name",gameName.c_str(),
 							"-log",gameLog.c_str(),"-c",gameConfig.c_str(),"-v","0",NULL);
 					
 					// if we come here, there was an error in the execlp call (but we're still in the game server process!)
-					// our old logs are closed, but opening a new one should be ok
-					tLog *log = new tLog("fork_err.log", DF_APPEND);
-					log->log("There was an error starting the game server %s (GUID: %s, Port: %s)\n", gameBin.c_str(), gameGuid.c_str(), gamePort.c_str());
-					delete log; // make sure its properly closed and synced
+					err->log("There was an error starting the game server %s (GUID: %s, Port: %s)\n", gameBin.c_str(), gameGuid.c_str(), gamePort.c_str());
+					err->flush(); // make sure the error is actually printed
 					exit(-1); // exit the game server process
 				}
 				// this is the parent process

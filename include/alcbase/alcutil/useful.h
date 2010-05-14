@@ -41,6 +41,8 @@ U32 alcGetMicroseconds();
 double alcGetCurrentTime(const char format='s');
 bool alcIsAlpha(char c);
 
+void setCloseOnExec(int fd);
+
 //These macros are the inverse of htonl() etc. They take little-endian
 // numbers and put them in host order or vice-versa. The htonl() macros
 // cannot be used because they are #defined to no-ops on big-endian machines.

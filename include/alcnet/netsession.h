@@ -137,7 +137,7 @@ private:
 	U32 ip; //network order
 	U16 port; //network order
 	int sid;
-	char sock_array[sizeof(struct sockaddr_in)]; // saves the socket of this peer
+	char sockaddr[sizeof(struct sockaddr_in)]; // saves the address information of this peer
 	struct { //server message counters
 		U32 pn; //!< the overall packet number
 		U32 sn; //!< the message number
