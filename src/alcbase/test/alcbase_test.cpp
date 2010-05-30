@@ -576,6 +576,19 @@ void alctypes_part4() {
 	assert(part2.substring(4) == " there");
 	part2 = part2.substring(3, 3);
 	assert(part2 == "t t");
+	
+	// starts with, ends with
+	part1.clear();
+	assert(part1.startsWith("something") == false);
+	assert(part1.endsWith("something") == false);
+	assert(part1.startsWith("") == true);
+	assert(part1.endsWith("") == true);
+	
+	part1.writeStr("Hello World");
+	assert(part1.startsWith("Hello") == true);
+	assert(part1.endsWith("World") == true);
+	assert(part1.startsWith("Hllo") == false);
+	assert(part1.endsWith("Wrld") == false);
 }
 
 void alctypes_part5() {

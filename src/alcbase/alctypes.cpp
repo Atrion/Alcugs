@@ -659,6 +659,7 @@ tString tString::upper() const {
 }
 tString tString::substring(U32 start,U32 len) const {
 	if (len == 0) len = size()-start;
+	else if (start+len > size()) throw txOutOfRange(_WHERE("Reading %d Bytes from position %d on - but there are just %d Bytes left", len, start, size()-start));
 	tString shot;
 	shot.write(data()+start,len);
 	return shot;
@@ -672,8 +673,10 @@ bool tString::startsWith(const char * pat) const {
 	}
 }
 bool tString::endsWith(const char * pat) const {
+	U32 len = strlen(pat);
+	if (len > size()) return false; // we would get a value <0 below, which would be converted to U32...
 	try {
-		return(substring(size()-strlen(pat),strlen(pat))==pat);
+		return(substring(size()-len,len)==pat);
 	}
 	catch (txOutOfRange &e) {
 		return false;
