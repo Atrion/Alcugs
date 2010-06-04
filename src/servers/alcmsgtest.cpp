@@ -37,6 +37,8 @@
 
 using namespace alc;
 
+static const U32 maxSize = 250*1000;
+
 void parameters_usage() {
 	puts(alcVersionText());
 	printf("Usage: urumsgtest peer:port [options]\n\n\
@@ -64,12 +66,24 @@ public:
 		setFlags(plNetX);
 		x = data.size();
 	}
+	void setFirstFragment() {
+		ki |= 1;
+	}
+	bool isFirstFragment() {
+		return ki & 1;
+	}
+	void setLastFragment() {
+		ki |= 2;
+	}
+	bool isLastFragment() {
+		return ki & 2;
+	}
 	//format
 	tMBuf data;
 };
 
 tmData::tmData(tNetSession * u)
- :tmMsgBase(NetMsgCustomTest,plNetTimestamp | plNetAck,u) { }
+ :tmMsgBase(NetMsgCustomTest,plNetTimestamp | plNetAck | plNetKi,u) { ki=0; }
 void tmData::store(tBBuf &t) {
 	tmMsgBase::store(t);
 	data.clear();
@@ -102,7 +116,6 @@ void tmData::stream(tBBuf &t) const {
 class tUnetSimpleFileServer :public tUnetBase {
 public:
 	tUnetSimpleFileServer(const tString &lhost,U16 lport=0,Byte listen=0);
-	virtual ~tUnetSimpleFileServer();
 	virtual int onMsgRecieved(tUnetMsg * msg,tNetSession * u);
 	virtual bool onConnectionFlood(tNetSession */*u*/) {
 		return false; // don't kick nobody
@@ -150,9 +163,7 @@ tUnetSimpleFileServer::tUnetSimpleFileServer(const tString &lhost,U16 lport,Byte
 	dstite.port=0;
 	dstite.sid=-1;
 }
-tUnetSimpleFileServer::~tUnetSimpleFileServer() {
 
-}
 
 void tUnetSimpleFileServer::setDestinationAddress(const tString &d,U16 port) {
 	d_host=d;
@@ -178,16 +189,24 @@ void tUnetSimpleFileServer::onIdle(bool idle) {
 				return;
 			}
 			if (!u->isConnected()) return;
-			tmData data(u);
-			if (urgent) data.setUrgent();
-			tFBuf f1;
-			f1.open(file.c_str());
-			data.data.clear();
-			data.data.put(f1);
-			f1.close();
-			if (compressed) data.setCompressed(); // do this *AFTER* the data is written to the buffer
-			else  sentBytes = data.data.size();
-			send(data);
+			tFBuf f1(file.c_str());
+			U32 size;
+			bool first = true;
+			while ((size = f1.remaining())) {
+				if (size > maxSize) size = maxSize;
+				tmData data(u);
+				if (urgent) data.setUrgent();
+				if (first) {
+					data.setFirstFragment();
+					first = false;
+				}
+				data.data.clear();
+				data.data.write(f1.read(size), size);
+				if (f1.eof()) data.setLastFragment();
+				if (compressed) data.setCompressed(); // do this *AFTER* the data is written to the buffer
+				send(data);
+			}
+			sentBytes = compressed ? 0 : f1.size();
 			sent=true;
 			startTime.setToNow();
 		} else if (idle) {
@@ -211,11 +230,14 @@ int tUnetSimpleFileServer::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 				tmData data(u);
 				msg->data.get(data);
 				log->log("<RCV> [%d] %s\n", msg->sn, data.str().c_str());
-				printf("Saving file to rcvmsg.raw...\n");
 				tFBuf f1;
-				f1.open("rcvmsg.raw","wb");
+				if (data.isFirstFragment())
+					f1.open("rcvmsg.raw","wb");
+				else
+					f1.open("rcvmsg.raw","ab");
 				f1.put(data.data);
 				f1.close();
+				if (data.isLastFragment()) printf("Saved received file to rcvmsg.raw\n");
 			}
 			ret=1;
 			break;

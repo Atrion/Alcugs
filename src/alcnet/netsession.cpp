@@ -172,10 +172,10 @@ void tNetSession::updateRTT(U32 newread) {
 	const S32 u=2;
 	const S32 delta=4;
 	const S32 diff=newread - rtt;
-	rtt=rtt+((alpha*diff)/1000);
-	deviation+=(alpha*(abs(diff)-deviation))/1000;
+	rtt       += (alpha*diff)/1000;
+	deviation += (alpha*(abs(diff)-deviation))/1000;
 	timeout=u*rtt + delta*deviation;
-	if (timeout > 4000000) timeout = 4000000;
+	if (timeout > 5000000) timeout = 5000000; // max. timeout: 5secs
 	DBG(5,"%s RTT update (sample rtt: %i) new rtt:%i, timeout:%i, deviation:%i\n", str(),newread,rtt,timeout,deviation);
 }
 void tNetSession::increaseCabal() {
@@ -599,7 +599,7 @@ void tNetSession::queueReceivedMessage(tUnetUruMsg *msg)
 	// the queue is sorted ascending
 	while ((cur = rcvq->getNext())) {
 		int ret = compareMsgNumbers(msg->sn, msg->frn, cur->sn, cur->frn);
-		if (ret < 0) {// we have to put it after the current one!
+		if (ret < 0) { // we have to put it after the current one!
 			rcvq->insertBefore(msg);
 			return;
 		}
@@ -788,7 +788,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 				if(msg->tryes<=1 && A1==A2) {
 					/* possible problem: since this is the last packet which was acked with this ack message, it could be combined
 					   with other packets and the ack could be sent almost immediately after the packet went in, without the
-					   usual delay  so the rtt is much smaller than the average. But I don't expect this to happen often, so I don't
+					   usual delay so the rtt is much smaller than the average. But I don't expect this to happen often, so I don't
 					   consider that a real problem. */
 					U32 crtt=net->net_time-msg->snd_timestamp;
 					#ifdef ENABLE_NETDEBUG
@@ -856,7 +856,7 @@ void tNetSession::doWork()
 						}
 						// The server used to duplicate the timeout here - but since the timeout will be overwritten next time updateRTT
 						//  is called, that's of no use. So better make the RTT bigger - it is obviously at least the timeout
-						// This will result in a more long-term reduction of the timeout
+						// This will result in a more long-term increase of the timeout
 						updateRTT(3*timeout); // this is necessary because the vault server blocks the netcore when doing SQL - reduce this when multi-threading is implemented
 					}
 					
