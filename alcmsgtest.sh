@@ -4,7 +4,7 @@ set -e
 FILE="config.status"
 PORT=5938
 if [ "$1" ]; then
-	PORT=$1
+	FILE=$1
 fi
 # cleanup
 rm rcvmsg.raw -rf
@@ -35,9 +35,8 @@ if [ ! -e rcvmsg.raw ] ; then
 	exit 1
 fi
 # compare files
-TEST=`diff rcvmsg.raw $FILE`
-if [ -n "$TEST" ] ; then
-	echo "sent file and recieved file differ"
+./bincomp rcvmsg.raw "$FILE" > /dev/null || (
+	echo "sent file and recieved file differ";
 	exit 1
-fi
+)
 echo "Ok, all went fine"

@@ -76,7 +76,7 @@ alcthread_test_LDADD = libalcbase1.a
 alcthread_test_SOURCES = src/alcbase/test/alcthread_test.cpp
 #End Test APPS
 
-bin_PROGRAMS = alcconfig urucrypt m5crypt alcping alcmsgtest alcugs_lobby alcugs_auth alcugs_tracking alcugs_vault alcugs_game
+bin_PROGRAMS = alcconfig urucrypt m5crypt bincomp alcping alcmsgtest alcugs_lobby alcugs_auth alcugs_tracking alcugs_vault alcugs_game
 
 #Tools
 urucrypt_SOURCES = src/tools/urucrypt.cpp
@@ -88,6 +88,9 @@ m5crypt_CPPFLAGS = -DM5CRYPT
 
 alcconfig_SOURCES = src/tools/alcconfig.cpp
 alcconfig_LDADD = libalcbase1.a
+
+bincomp_SOURCES = src/tools/bincomp.cpp
+bincomp_LDADD = libalcbase1.a
 #End tools
 
 #Server programs

@@ -255,7 +255,7 @@ U16 alcFixUUNetMsgCommand(U16 cmd, const tNetSession *u)
 	// we might have to fix the message type
 	if (u->tpots == 2
 			&& (cmd == NetMsgVault_UU || cmd == NetMsgPython_UU || cmd == NetMsgSetTimeout_UU || cmd == NetMsgActivePlayerSet_UU))
-		return cmd+1; // these values are incremented by 1 in TPOTS (remember to aslso update tmMsgBase::stream!)
+		return cmd+1; // these values are incremented by 1 in TPOTS (remember to also update tmMsgBase::stream!)
 	return cmd;
 }
 
