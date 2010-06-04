@@ -130,6 +130,9 @@ private:
 	tString file;
 	bool sent;
 	tNetSessionIte dstite;
+	// for speed measure
+	int sentBytes;
+	tTime startTime;
 };
 
 tUnetSimpleFileServer::tUnetSimpleFileServer(const tString &lhost,U16 lport,Byte listen) :tUnetBase(KClient) {
@@ -141,6 +144,7 @@ tUnetSimpleFileServer::tUnetSimpleFileServer(const tString &lhost,U16 lport,Byte
 	validation=2;
 	urgent=false;
 	sent=false;
+	sentBytes=0;
 	compressed=false;
 	dstite.ip=0;
 	dstite.port=0;
@@ -182,9 +186,17 @@ void tUnetSimpleFileServer::onIdle(bool idle) {
 			data.data.put(f1);
 			f1.close();
 			if (compressed) data.setCompressed(); // do this *AFTER* the data is written to the buffer
+			else  sentBytes = data.data.size();
 			send(data);
 			sent=true;
+			startTime.setToNow();
 		} else if (idle) {
+			if (sentBytes) {
+				tTime diff;
+				diff.setToNow();
+				diff = diff-startTime;
+				printf("Sent %d Bytes with %f kBit/s in %s\n", sentBytes, sentBytes*8/diff.asDouble()/1000, diff.str(0x01).c_str());
+			}
 			stop();
 		}
 	}
