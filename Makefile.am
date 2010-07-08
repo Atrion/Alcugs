@@ -1,11 +1,11 @@
+# Please remember to run autoreconf after changing this file and also commit all files necessary to compile Alcugs without having autotools!
+##############################################################################################################################################
+
 SUBDIRS = include docs
 
 INCLUDES = -I$(top_srcdir)/include/alcbase -I$(top_srcdir)/include/alcnet
 
 ACLOCAL_AMFLAGS = -I m4
-
-#AM_CXXFLAGS = -Wall -rdynamic -g3 -O0
-#CXXFLAGS=
 
 lib_LIBRARIES = libalcbase1.a libalcnet1.a
 
