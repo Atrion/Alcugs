@@ -54,11 +54,11 @@ EXTRAFLAGS="-g0 -O3"
 AC_ARG_ENABLE(debug,
 [  --enable-debug          Turn on debugging (default NO). Set to "opt" to have debugging and optimization enabled (e.g. for callgrind)],
 [case "${enableval}" in
-  yes) EXTRAFLAGS="-g3 -O0"
+  yes) EXTRAFLAGS="-g3 -O0 -Werror"
        RDYNAMIC=true
        AC_DEFINE([ENABLE_DEBUG],[],[Enable debugging])
        ;;
-  opt) EXTRAFLAGS="-g3 -O3"
+  opt) EXTRAFLAGS="-g3 -O3 -Werror"
        RDYNAMIC=true
        AC_DEFINE([ENABLE_DEBUG],[],[Enable debugging])
        ;;
@@ -66,7 +66,7 @@ AC_ARG_ENABLE(debug,
   *) AC_MSG_ERROR(bad value ${enableval} for --enable-debug) ;;
 esac])
 
-CXXFLAGS="-Wall -Wextra -Werror -Wold-style-cast"
+CXXFLAGS="-Wall -Wextra -Wold-style-cast"
 
 if test x$RDYNAMIC = xtrue; then
 	CXXFLAGS="$CXXFLAGS -rdynamic"

@@ -4612,13 +4612,13 @@ EXTRAFLAGS="-g0 -O3"
 # Check whether --enable-debug was given.
 if test "${enable_debug+set}" = set; then :
   enableval=$enable_debug; case "${enableval}" in
-  yes) EXTRAFLAGS="-g3 -O0"
+  yes) EXTRAFLAGS="-g3 -O0 -Werror"
        RDYNAMIC=true
 
 $as_echo "#define ENABLE_DEBUG /**/" >>confdefs.h
 
        ;;
-  opt) EXTRAFLAGS="-g3 -O3"
+  opt) EXTRAFLAGS="-g3 -O3 -Werror"
        RDYNAMIC=true
 
 $as_echo "#define ENABLE_DEBUG /**/" >>confdefs.h
@@ -4630,7 +4630,7 @@ esac
 fi
 
 
-CXXFLAGS="-Wall -Wextra -Werror -Wold-style-cast"
+CXXFLAGS="-Wall -Wextra -Wold-style-cast"
 
 if test x$RDYNAMIC = xtrue; then
 	CXXFLAGS="$CXXFLAGS -rdynamic"
