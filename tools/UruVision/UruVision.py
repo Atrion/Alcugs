@@ -167,8 +167,7 @@ class HoverWindow:
 
 
 
-gLookupServerAddr = socket.gethostbyname(gLookupHostName)
-gLookupServer = LookupServer(gCanvas, gLookupServerAddr, gLookupServerPort, gLookupServerUri)
+gLookupServer = LookupServer(gCanvas, gLookupHostName, gLookupServerPort, gLookupServerUri)
 gSystemView = SystemView(gCanvas)
 gHoverWindow = HoverWindow(gCanvas)
 
