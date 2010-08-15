@@ -57,7 +57,7 @@ namespace alc {
 			if (conditionalLoad != "1") throw txBase(_WHERE("if a conditional load value is specified, it must be set to 1"));
 			this->conditionalLoad = true;
 		}
-		DBG(9, "New Page %s: Number %d, conditionalLoad %d\n", this->name, this->number, this->conditionalLoad);
+		DBG(9, "New Page %s: Number %d, conditionalLoad %d\n", this->name.c_str(), this->number, this->conditionalLoad);
 		
 		owner = 0;
 		pageId = pageType = 0;
@@ -102,7 +102,7 @@ namespace alc {
 		seqPrefix = prefix.asU32();
 		if (seqPrefix > 0x00FFFFFF && seqPrefix < 0xFFFFFFF0) // allow only 3 Bytes (but allow negative prefixes)
 			throw txUnexpectedData(_WHERE("A sequence prefix of %d (higher than 0x00FFFFFF) is not allowed)", seqPrefix));
-		DBGM(9, "found sequence prefix %d for age %s\n", seqPrefix, name);
+		DBG(9, "found sequence prefix %d for age %s\n", seqPrefix, name.c_str());
 		// get pages
 		if (loadPages) {
 			tConfigVal *pageVal = cfg->findVar("Page");
@@ -120,6 +120,7 @@ namespace alc {
 	tPageInfo *tAgeInfo::getPage(U32 pageId)
 	{
 		U16 number = alcPageIdToNumber(seqPrefix, pageId);
+		DBG(9, "pageId 0x%08X => number %d, existing: %ld\n", pageId, number, pages.count(number));
 		tPageList::iterator it = pages.find(number);
 		return (it == pages.end() ? NULL : &it->second);
 	}
@@ -127,7 +128,8 @@ namespace alc {
 	bool tAgeInfo::validPage(U32 pageId) const
 	{
 		U16 number = alcPageIdToNumber(seqPrefix, pageId);
-		if (number == 254) return true; // BuiltIn page
+		DBG(9, "pageId 0x%08X => number %d, existing: %ld\n", pageId, number, pages.count(number));
+		if (number == 254) return true; // BuiltIn page (accept because we can get SDL states for it)
 		return pages.count(number);
 	}
 
