@@ -105,6 +105,8 @@ namespace alc {
 		var = cfg->getVar("game.serversidecommands");
 		serverSideCommands = (var.isEmpty() || var.asByte()); // enabled per default
 		
+		shardIdentifier = cfg->getVar("shard.identifier"); // default: empty
+		
 		ageState->applyConfig();
 	}
 	
@@ -240,6 +242,11 @@ namespace alc {
 		else if (text == "/!getauthlevel") {
 			tString text;
 			text.printf("/!authlevel %d", u->getAccessLevel());
+			sendKIMessage(text, u);
+		}
+		else if (text == "/!getshardidentifier") {
+			tString text;
+			text.printf("/!shardidentifier %s", shardIdentifier.c_str());
 			sendKIMessage(text, u);
 		}
 		else {
