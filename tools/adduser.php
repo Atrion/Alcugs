@@ -36,7 +36,7 @@ if ($_GET['action'] == 'go') {
       "back</a> and choose another login name.";
   } else {
     mysql_query("INSERT INTO accounts (name, passwd, a_level, guid) ".
-		"VALUES ('$login', '$hashpw', '15', UUID())");
+		"VALUES ('$login', '$hashpw', UUID())");
     echo "Congratulations, your account has been successfully created!";
   }
   mysql_close();

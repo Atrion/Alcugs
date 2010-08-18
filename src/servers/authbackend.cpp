@@ -54,15 +54,18 @@ namespace alc {
 		`guid` varchar(50) NOT NULL default '',\
 		`name` varchar(50) NOT NULL default '',\
 		`passwd` varchar(32) NOT NULL default '',\
-		`a_level` tinyint unsigned NOT NULL default 25,\
+		`a_level` tinyint unsigned NOT NULL default 15,\
 		`last_login` timestamp NOT NULL default 0,\
 		`last_ip` varchar(30) NOT NULL default '',\
 		`attempts` tinyint unsigned NOT NULL default 0,\
 		`last_attempt` timestamp NOT NULL default 0,\
+		`cgas_cache_time` timestamp NOT NULL default 0,\
 		PRIMARY KEY  (`uid`),\
 		UNIQUE KEY `guid` (`guid`),\
 		UNIQUE KEY `name` (`name`)\
 	) TYPE=MyISAM;";
+	
+	static const int httpBufferSize = 2048;
 
 	tAuthBackend::tAuthBackend(void)
 	{
@@ -85,6 +88,17 @@ namespace alc {
 		if (var.isEmpty() || var.asByte()) { // logging enabled per default
 			log.open("auth.log");
 		}
+		
+		cgasServer = cfg->getVar("auth.cgas.server"); // CGAS will be enabled if this one is not empty (aka set)
+		cgasPath = cfg->getVar("auth.cgas.path");
+		
+		var = cfg->getVar("auth.cgas.default_access");
+		if (var.isEmpty()) cgasDefaultAccess = 15;
+		else cgasDefaultAccess = var.asU16();
+		
+		var = cfg->getVar("auth.cgas.max_cache_time");
+		if (var.isEmpty()) cgasMaxCacheTime = 60*60*24; // 24 hours
+		else cgasMaxCacheTime = var.asU16();
 
 		prepare(); // initialize the database
 	}
@@ -110,21 +124,22 @@ namespace alc {
 		DBG(6, "creating sql\n");
 		sql = tSQL::createFromConfig();
 		if (sql->prepare()) {
-			// check if the auth table exists
-			tString query;
-			query.printf("SHOW TABLES LIKE 'accounts'");
-			sql->query(query, "Looking for accounts table");
-			MYSQL_RES *result = sql->storeResult();
-			bool exists = mysql_num_rows(result);
-			mysql_free_result(result);
-			// if it doesn't exist, create it
-			if (exists || sql->query(authTableInitScript, "Creating auth table", false)) {
-				log.log("Auth driver successfully started (%s)\n minimal access level: %d, max attempts: %d, disabled time: %d\n\n",
-						__U_AUTHBACKEND_ID, minAccess, maxAttempts, disTime);
-				log.flush();
-				return true;
+			// if auth table doesn't exist, create it
+			if (!sql->queryForNumber("SHOW TABLES LIKE 'accounts'", "Looking for accounts table")) {
+				sql->query(authTableInitScript, "Creating auth table");
 			}
-			alcGetMain()->err()->log("ERR: Creating auth table failed\n");
+			// if it does, check if an upgrade of the structure is necessary
+			else {
+				if (!sql->queryForNumber("SHOW COLUMNS FROM accounts LIKE 'cgas_cache_time'", "Check for cgas_cache_time column")) {
+					sql->query("ALTER TABLE accounts ADD cgas_cache_time timestamp NOT NULL default 0", "Adding cgas_cache_time column");
+					sql->query("UPDATE accounts SET cgas_cache_time=0", "Set cgas_cache_time to 0"); // fill with 0 time, sicne the column must not be NULL
+				}
+			}
+			
+			log.log("Auth driver successfully started (%s)\n minimal access level: %d, max attempts: %d, disabled time: %d\n\n",
+					__U_AUTHBACKEND_ID, minAccess, maxAttempts, disTime);
+			log.flush();
+			return true; // everything worked fine :)
 		}
 		else
 			alcGetMain()->err()->log("ERR: Connecting to the database failed\n");
@@ -145,35 +160,88 @@ namespace alc {
 		return alcHex2Ascii(md5buffer);
 	}
 	
-	int tAuthBackend::queryPlayer(const tString &login, tString *passwd, tString *guid, U32 *attempts, U32 *lastAttempt)
+	int tAuthBackend::sendCgasRequest(const tString &, const tString &, const tString &, Byte *, int)
+	{
+		return 0;
+	}
+	
+	tAuthBackend::tQueryResult tAuthBackend::parseCgasResponse(Byte *, int, tString *, tString *)
+	{
+		return kError;
+	}
+	
+	tAuthBackend::tQueryResult tAuthBackend::queryCgas(const tString &login, const tString &challenge, const tString &hash, bool hasCache, tString *passwd, tString *guid, Byte *accessLevel)
+	{
+		Byte cgasResponse[httpBufferSize];
+		// send reuqest and parse reponse
+		int size = sendCgasRequest(login, challenge, hash, cgasResponse, httpBufferSize);
+		tQueryResult replyStatus = size > 0 ? parseCgasResponse(cgasResponse, size, passwd, guid) : kError;
+		if (replyStatus == kError) return kError;
+		if (replyStatus == kNotFound) {
+			if (hasCache) {
+				// we can actually use what was queried, but the password is wrong, whatever we saved
+				*accessLevel = AcNotRes;
+				return kSuccess;
+			}
+			return kNotFound;
+		}
+		// okay, the server said the login is correct, put that into the cache
+		tString query;
+		if (hasCache) {
+			query.printf("UPDATE accounts SET passwd='%s', cgas_cache_time=NOW() WHERE name='%s' AND guid='%s'", passwd->c_str(), login.c_str(), guid->c_str());
+			sql->query(query, "Updating CGAS cache");
+			if (sql->affectedRows() != 1) {
+				log.log("ERROR: No player with name %s and GUID %s, even though I found it in the cache earlier - potential GUID change on CGAS", login.c_str(), guid->c_str());
+				return kError;
+			}
+			// use the access level that was queried earlier
+		}
+		else {
+			query.printf("INSERT INTO accounts (name, guid, passwd, a_level, cgas_cache_time) VALUES ('%s', '%s', '%s', '%d', NOW())", login.c_str(), guid->c_str(), passwd->c_str(), cgasDefaultAccess);
+			sql->query(query, "Insert CGAS reply into cache");
+			*accessLevel = cgasDefaultAccess;
+		}
+		return kSuccess;
+	}
+	
+	tAuthBackend::tQueryResult tAuthBackend::queryPlayer(const tString &login, tString *passwd, tString *guid, U32 *attempts, U32 *lastAttempt, Byte *accessLevel)
 	{
 		tString query;
 		*attempts = *lastAttempt = 0; // ensure there's a valid value in there
+		*accessLevel = AcNotRes;
 		*passwd = "";
 		*guid = "00000000-0000-0000-0000-000000000000";
 		
 		// only query if we are connected properly
 		if (!prepare()) {
 			alcGetMain()->err()->log("ERR: Can't start auth driver. Authenticate request will be rejected.\n");
-			return AcNotRes;
+			return kError;
 		}
 		
 		// query the database
-		query.printf("SELECT UCASE(passwd), a_level, guid, attempts, UNIX_TIMESTAMP(last_attempt) FROM accounts WHERE name='%s' LIMIT 1", sql->escape(login).c_str());
+		query.printf("SELECT UCASE(passwd), a_level, guid, attempts, UNIX_TIMESTAMP(last_attempt), UNIX_TIMESTAMP(cgas_cache_time) FROM accounts WHERE name='%s' LIMIT 1", sql->escape(login).c_str());
 		sql->query(query, "Query player");
 		
 		// read the result
 		MYSQL_RES *result = sql->storeResult();
-		int ret = AcNotRes;
+		tQueryResult ret = kNotFound;
 		if (result != NULL) {
 			MYSQL_ROW row = mysql_fetch_row(result);
-			if (row == NULL) ret = -1; // player doesn't exist
-			else { // read the columns
+			if (row != NULL)  { // read the columns
+				// player found :)
 				*passwd = row[0]; // passwd
-				ret = atoi(row[1]); // a_level
+				*accessLevel = atoi(row[1]); // a_level
 				*guid = row[2]; // guid
 				*attempts = atoi(row[3]); // attempts
-				*lastAttempt = atoi(row[4]);
+				*lastAttempt = atoi(row[4]); // last_attempt
+				U32 cgasCacheTime = atoi(row[5]); // cgas_cache_time
+				if (!cgasServer.isEmpty() && cgasCacheTime < time(NULL)-cgasMaxCacheTime) {
+					// the cache is too old, we can't use it - but still read the stuff to handle invalid login attempts
+					ret = kCacheTooOld;
+				}
+				else {
+					ret = kSuccess;
+				}
 			}
 		}
 		mysql_free_result(result);
@@ -198,18 +266,18 @@ namespace alc {
 	{
 		U32 attempts, lastAttempt;
 		tString guid;
-		int queryResult = queryPlayer(login, passwd, &guid, &attempts, &lastAttempt); // query password, access level and guid of this user
+		tQueryResult queryResult = queryPlayer(login, passwd, &guid, &attempts, &lastAttempt, accessLevel); // query password, access level and guid of this user
+		if (!cgasServer.isEmpty() && queryResult >= kNotFound) // query CGAS if it knows more (kNotFound or kCacheTooOld)
+			queryResult = queryCgas(login, challenge, hash, queryResult == kCacheTooOld, passwd, &guid, accessLevel);
 		alcGetHexUid(hexUid, guid);
 		
 		log.log("AUTH: player %s (IP: %s, game server %s):\n ", login.c_str(), ip.c_str(), u->str().c_str());
-		if (queryResult < 0) { // that means: player not found
-			*accessLevel = AcNotRes;
+		if (queryResult == kNotFound || queryResult == kCacheTooOld) {
 			log.print("Player not found\n");
 			log.flush();
 			return AInvalidUser;
 		}
-		else if (queryResult >= AcNotRes) { // that means: there was an error
-			*accessLevel = AcNotRes;
+		else if (queryResult == kError) {
 			log.print("unspecified server error\n");
 			log.flush();
 			return AUnspecifiedServerError;
@@ -217,7 +285,6 @@ namespace alc {
 		else { // we found a player, let's process it
 			int authResult;
 			Byte updateStamps = 1; // update only last attempt
-			*accessLevel = queryResult;
 			log.print("UID = %s, attempt %d/%d, access level = %d\n ", guid.c_str(), attempts+1, maxAttempts, *accessLevel);
 			
 			if (*accessLevel >= minAccess) { // the account doesn't have enough access for this shard (accessLevel = minAccess is rejected as well, for backward compatability)

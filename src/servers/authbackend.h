@@ -50,13 +50,22 @@ namespace alc {
 		void checkTimeout(void) { if (sql) sql->checkTimeout(); }
 	private:
 		U16 minAccess, disTime, maxAttempts;
+		tString cgasServer, cgasPath;
+		U32 cgasDefaultAccess, cgasMaxCacheTime;
 		tSQL *sql;
 		tLog log;
 		
+		typedef enum { kSuccess, kError, kNotFound, kCacheTooOld } tQueryResult;
+		
 		tString calculateHash(const tString &login, const tString &passwd, const tString &challenge); //!< calculate the hash needed to check the password
 		bool prepare(void); //!< prepares the connection \returns true when the connection is established, false when there was an error (the sql object will be deleted in that case)
-		int queryPlayer(const tString &login, tString *passwd, tString *guid, U32 *attempts, U32 *lastAttempt);
+		tQueryResult queryPlayer(const tString &login, tString *passwd, tString *guid, U32 *attempts, U32 *lastAttempt, Byte *accessLevel);
 		void updatePlayer(const tString &guid, const tString &ip, U32 attempts, Byte updateStamps); // updateStamps can be: 0 = don't update any stamp, 1 = update only last attempt, 2 = update last attempt and last login
+		tQueryResult queryCgas(const tString &login, const tString &challenge, const tString &hash, bool hasCache, tString *passwd, tString *guid, Byte *accessLevel);
+		
+		// CGAS internal functions
+		int sendCgasRequest(const tString &login, const tString &challenge, const tString &hash, Byte *data, int size); //!< send a CGAS request and save the reply into the data buffer, \return size of the reply, or 0 if there was none
+		tQueryResult parseCgasResponse(Byte *data, int size, tString *passwd, tString *guid); //!< parse the CGAS reply and \return true if the response was valid (it could still say that the login was wrong though!), false if not
 	};
 	
 } //End alc namespace
