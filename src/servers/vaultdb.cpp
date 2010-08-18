@@ -134,12 +134,8 @@ namespace alc {
 			// check if table exists
 			tString query;
 			query.printf("SHOW TABLES LIKE '%s'", vaultTable);
-			sql->query(query, "Prepare: Looking for vault table");
-			MYSQL_RES *result = sql->storeResult();
-			bool exists = mysql_num_rows(result);
-			mysql_free_result(result);
-			// if it doesn't exist, create it
-			if (!exists) {
+			// if vault table doesn't exist, create it
+			if (!sql->queryForNumber(query, "Prepare: Looking for vault table")) {
 				query.clear();
 				query.printf(vault_table_init, vaultTable, KVaultID);
 				sql->query(query, "Prepare: Creating vault table");
@@ -193,22 +189,18 @@ namespace alc {
 	{
 		// this is a private function, so the caller already did the prepare() check
 		
-		tString query;
+		tString numberQuery, versionQuery;
 		int version = 0;
-		query.printf("SHOW COLUMNS FROM %s LIKE 'torans'", vaultTable);
-		sql->query(query, "getVersion: Checking for torans column");
 		
-		MYSQL_RES *result = sql->storeResult();
-		bool exists = mysql_num_rows(result);
-		mysql_free_result(result);
-		query.clear();
-		if (exists)
-			query.printf("SELECT torans FROM %s WHERE type=6 LIMIT 1", vaultTable); // only the root node has type 6
+		// find out how to query for version number
+		numberQuery.printf("SHOW COLUMNS FROM %s LIKE 'torans'", vaultTable);
+		if (sql->queryForNumber(numberQuery, "getVersion: Checking for torans column"))
+			versionQuery.printf("SELECT torans FROM %s WHERE type=6 LIMIT 1", vaultTable); // only the root node has type 6
 		else
-			query.printf("SELECT int_1 FROM %s WHERE type=6 LIMIT 1", vaultTable); // only the root node has type 6
-		sql->query(query, "getVersion: Checking version number");
-		result = sql->storeResult();
-		if (result == NULL) throw txDatabaseError(_WHERE("couldn't check version number"));
+			versionQuery.printf("SELECT int_1 FROM %s WHERE type=6 LIMIT 1", vaultTable); // only the root node has type 6
+		// get version number
+		sql->query(versionQuery, "getVersion: Checking version number");
+		MYSQL_RES *result = sql->storeResult();
 		MYSQL_ROW row = mysql_fetch_row(result);
 		if (row) version = atoi(row[0]);
 		mysql_free_result(result);
@@ -227,7 +219,6 @@ namespace alc {
 		sql->query(query, "Getting vault folder name");
 		
 		MYSQL_RES *result = sql->storeResult();
-		if (result == NULL) throw txDatabaseError(_WHERE("couldn't query vault folder name"));
 		int number = mysql_num_rows(result);
 		
 		if (number == 0) throw txDatabaseError(_WHERE("could not find main vault folder"));
@@ -349,7 +340,6 @@ namespace alc {
 		sql->query(query, "getting player list");
 		
 		MYSQL_RES *result = sql->storeResult();
-		if (result == NULL) throw txDatabaseError(_WHERE("couldn't query player list"));
 		int number = mysql_num_rows(result);
 		
 		if (t) {
@@ -373,7 +363,6 @@ namespace alc {
 		sql->query(query, "checking ki");
 		
 		MYSQL_RES *result = sql->storeResult();
-		if (result == NULL) throw txDatabaseError(_WHERE("couldn't check ki"));
 		int number = mysql_num_rows(result);
 		
 		tString avatar;
@@ -560,7 +549,6 @@ namespace alc {
 		// now, let's execute it
 		sql->query(query, "finding node");
 		MYSQL_RES *result = sql->storeResult();
-		if (result == NULL) throw txDatabaseError(_WHERE("couldn't check ki"));
 		int number = mysql_num_rows(result);
 		if (number > 1) throw txDatabaseError(_WHERE("strange, I should NEVER have several results when asking for a node"));
 		
@@ -777,7 +765,6 @@ namespace alc {
 		sql->query(query, "getManifest: getting first node");
 		
 		result = sql->storeResult();
-		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get first node %d", baseNode));
 		int number = mysql_num_rows(result);
 		if (number > 1) throw txDatabaseError(_WHERE("strange, I should NEVER have several results when asking for a node"));
 		else if (number < 1) throw txDatabaseError(_WHERE("getManfiest: First node %d does not exist", baseNode));
@@ -874,7 +861,6 @@ namespace alc {
 			sql->query(query, "getManifest: getting child nodes");
 			
 			result = sql->storeResult();
-			if (result == NULL) throw txDatabaseError(_WHERE("couldn't get nodes"));
 			int number = mysql_num_rows(result);
 				
 			// the result goes into the feed table, and the refs are saved in their table as well
@@ -930,8 +916,6 @@ namespace alc {
 		query.printf("SELECT type FROM %s WHERE idx='%d' LIMIT 1", vaultTable, baseNode);
 		sql->query(query, "getMGRs: node type");
 		result = sql->storeResult();
-		
-		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get node type of %d", baseNode));
 		int num = mysql_num_rows(result);
 		if (num != 1) throw txDatabaseError(_WHERE("couldn't find base node %d", baseNode));
 		
@@ -1031,7 +1015,6 @@ namespace alc {
 			sql->query(query, "getMGRs: getting child nodes");
 			
 			result = sql->storeResult();
-			if (result == NULL) throw txDatabaseError(_WHERE("couldn't get nodes"));
 			U32 number = mysql_num_rows(result);
 			DBG(9, "Got %d child nodes, adding them to table\n", number);
 				
@@ -1113,7 +1096,6 @@ namespace alc {
 		sql->query(query, "fetching nodes");
 		
 		result = sql->storeResult();
-		if (result == NULL) throw txDatabaseError(_WHERE("couldn't fetch nodes"));
 		*nNodes = mysql_num_rows(result);
 		
 		*nodes = static_cast<tvNode **>(malloc((*nNodes)*sizeof(tvNode *)));
@@ -1170,17 +1152,8 @@ namespace alc {
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
 		tString query;
-		MYSQL_RES *result;
-		U32 nNodes;
-		
 		query.printf("SELECT idx FROM %s WHERE idx='%d'", vaultTable, node);
-		sql->query(query, "checkNode");
-		result = sql->storeResult();
-		if (result == NULL) throw txDatabaseError(_WHERE("couldn't check for node"));
-		nNodes = mysql_num_rows(result);
-		mysql_free_result(result);
-		
-		return (nNodes == 1);
+		return (sql->queryForNumber(query, "checkNode") == 1);
 	}
 	
 	bool tVaultDB::addNodeRef(tvNodeRef &ref)
@@ -1188,16 +1161,10 @@ namespace alc {
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
 		tString query;
-		MYSQL_RES *result;
 		
 		// first check if this ref already exists
 		query.printf("SELECT id1 FROM %s WHERE id2='%d' AND id3='%d' LIMIT 1", refVaultTable, ref.parent, ref.child);
-		sql->query(query, "addNodeRef: checking for ref");
-		result = sql->storeResult();
-		if (!result) throw txDatabaseError(_WHERE("couldn't check for ref"));
-		bool exists = mysql_num_rows(result);
-		mysql_free_result(result);
-		
+		bool exists = sql->queryForNumber(query, "addNodeRef: checking for ref");
 		if (exists) return false;
 		
 		// set current time
@@ -1223,8 +1190,6 @@ namespace alc {
 		query.printf("SELECT COUNT(*) FROM %s WHERE id3='%d'", refVaultTable, son);
 		sql->query(query, "removeNodeRef: number of parent nodes");
 		result = sql->storeResult();
-		
-		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get number of parent nodes of %d", son));
 		num = mysql_num_rows(result);
 		if (num != 1) throw txDatabaseError(_WHERE("couldn't get number of parent nodes of %d", son));
 		
@@ -1238,7 +1203,6 @@ namespace alc {
 		sql->query(query, "removeNodeRef: node type");
 		result = sql->storeResult();
 		
-		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get node type of %d", son));
 		num = mysql_num_rows(result);
 		if (num == 1) {
 			row = mysql_fetch_row(result);
@@ -1282,8 +1246,6 @@ namespace alc {
 		query.printf("SELECT id3 FROM %s WHERE id2='%d'", refVaultTable, node);
 		sql->query(query, "removeNodeTree: getting child nodes");
 		result = sql->storeResult();
-		
-		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get child nodes"));
 		num = mysql_num_rows(result);
 		
 		for (int i = 0; i < num; ++i) {
@@ -1316,8 +1278,6 @@ namespace alc {
 		query.printf("SELECT id2 FROM %s WHERE id3='%d'", refVaultTable, node);
 		sql->query(query, "getting parent nodes");
 		result = sql->storeResult();
-		
-		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get parent nodes of %d", node));
 		*tableSize = mysql_num_rows(result);
 		
 		*table = static_cast<U32 *>(malloc((*tableSize)*sizeof(U32)));
@@ -1348,8 +1308,6 @@ namespace alc {
 			query.printf("SELECT id1, id2, id3, UNIX_TIMESTAMP(timestamp), microseconds, flag FROM %s WHERE id2='%d'", refVaultTable, node);
 			sql->query(query, "getting references");
 			result = sql->storeResult();
-			
-			if (result == NULL) throw txDatabaseError(_WHERE("couldn't get references from %d", node));
 			int newSize = *nRef + mysql_num_rows(result);
 			
 			if (newSize > *nRef) {
@@ -1392,7 +1350,6 @@ namespace alc {
 		sql->query(query, "tVaultDB::removeInvalidRefs: Finding references with invalid parent");
 		result = sql->storeResult();
 		
-		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get references with invalid parent"));
 		num = mysql_num_rows(result);
 		if (num > 0) {
 			alcGetMain()->err()->log("WARNING: Found %d references with invalid parent - removing them...\n", num);
@@ -1411,7 +1368,6 @@ namespace alc {
 		sql->query(query, "tVaultDB::removeInvalidRefs: Finding references with invalid son");
 		result = sql->storeResult();
 		
-		if (result == NULL) throw txDatabaseError(_WHERE("couldn't get references with invalid son"));
 		num = mysql_num_rows(result);
 		if (num > 0) {
 			alcGetMain()->err()->log("WARNING: Found %d references with invalid son - removing them...\n", num);
@@ -1440,8 +1396,6 @@ namespace alc {
 		query.printf("SELECT n.idx FROM %s n LEFT JOIN %s r ON n.idx = r.id3 WHERE r.id2 = '%d' AND n.type='%d' LIMIT 1", vaultTable, refVaultTable, id, KAgeInfoNode);
 		sql->query(query, "tVaultDB::isLostAge: Looking for age info node");
 		result = sql->storeResult();
-		
-		if (result == NULL) throw txDatabaseError(_WHERE("couldn't look for age info node"));
 		int num = mysql_num_rows(result);
 		
 		if (num == 1) {
@@ -1454,13 +1408,8 @@ namespace alc {
 		// check if the age info node is referenced from anywhere else
 		query.clear();
 		query.printf("SELECT id2 FROM %s WHERE id3 = '%d' LIMIT 2", refVaultTable, ageInfo);
-		sql->query(query, "tVaultDB::isLostAge: Looking for references to age info node");
-		result = sql->storeResult();
-		
-		if (result == NULL) throw txDatabaseError(_WHERE("couldn't look for references to age info node"));
-		num = mysql_num_rows(result);
+		num = sql->queryForNumber(query, "tVaultDB::isLostAge: Looking for references to age info node");
 		if (num < 1) throw txDatabaseError(_WHERE("First I found the node, then there's no reference to it? This can't happen"));
-		mysql_free_result(result);
 		return (num == 1); // if there's only one reference, the age is lost, otherwise, it isn't
 	}
 	
@@ -1483,8 +1432,6 @@ namespace alc {
 			query.printf("SELECT idx, str_1 FROM %s WHERE type = '%d'", vaultTable, KVNodeMgrAgeNode);
 			sql->query(query, "tVaultDB::clean: Finding age MGRs");
 			result = sql->storeResult();
-			
-			if (result == NULL) throw txDatabaseError(_WHERE("couldn't get age MGRs"));
 			int num = mysql_num_rows(result);
 			
 			for (int i = 0; i < num; ++i) {
@@ -1516,8 +1463,6 @@ namespace alc {
 				"WHERE r.id2 IS NULL AND n.type > 7", vaultTable, refVaultTable);
 			sql->query(query, "tVaultDB::clean: Finding lost nodes");
 			result = sql->storeResult();
-			
-			if (result == NULL) throw txDatabaseError(_WHERE("couldn't get lost nodes"));
 			int num = mysql_num_rows(result);
 			
 			if (num > 0) {
