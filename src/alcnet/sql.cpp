@@ -191,16 +191,33 @@ tString tSQL::escape(const tMBuf &buf)
 	return res;
 }
 
+int tSQL::queryForNumber(const tString &str, const char *desc)
+{
+	query(str, desc);
+	MYSQL_RES *result = storeResult();
+	int num = mysql_num_rows(result);
+	mysql_free_result(result);
+	return num;
+}
+
 int tSQL::insertId(void)
 {
-	if (connection == NULL) throw txDatabaseError(_WHERE("can't get the inserted ID"));	
+	if (connection == NULL) throw txDatabaseError(_WHERE("can't get the inserted ID"));
 	return mysql_insert_id(connection);
+}
+
+int tSQL::affectedRows(void)
+{
+	if (connection == NULL) throw txDatabaseError(_WHERE("can't get the affected rows"));
+	return mysql_affected_rows(connection);
 }
 
 MYSQL_RES *tSQL::storeResult(void)
 {
 	if (connection == NULL) return NULL;
-	return mysql_store_result(connection);
+	MYSQL_RES *result = mysql_store_result(connection);
+	if (result == NULL) throw new txDatabaseError(_WHERE("Could not fetch result"));
+	return result;
 }
 
 tSQL *tSQL::createFromConfig(void)

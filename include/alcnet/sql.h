@@ -50,8 +50,10 @@ public:
 	
 	bool prepare(void); //!< this must be called before each query. it establishes the connection and creates the database if necessary \return true on success, false on error
 	bool query(const tString &str, const char *desc, bool throwOnError = true); //!< query the database \return true on success, false on error
+	int queryForNumber(const tString &str, const char *desc); //!< query the database (must be a SELECT or SHOW) \return number of resulting rows
 	void checkTimeout(void); //!< closes the connection on timeout
 	int insertId(void);
+	int affectedRows(void);
 	
 	tString escape(const char *str); //!< escapes the given string
 	inline tString escape(const tString &str) { return escape(str.c_str()); }
