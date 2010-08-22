@@ -138,8 +138,10 @@ namespace alc {
 				}
 			}
 			
-			log.log("Auth driver successfully started (%s)\n minimal access level: %d, max attempts: %d, disabled time: %d\n\n",
+			log.log("Auth driver successfully started (%s)\n minimal access level: %d, max attempts: %d, disabled time: %d\n",
 					__U_AUTHBACKEND_ID, minAccess, maxAttempts, disTime);
+			if (!cgasServer.isEmpty()) log.print(" Using CGAS at http://%s:%d%s\n", cgasServer.c_str(), cgasPort, cgasPath.c_str());
+			log.nl();
 			log.flush();
 			return true; // everything worked fine :)
 		}
@@ -224,14 +226,27 @@ namespace alc {
 		return result;
 	}
 	
-	tAuthBackend::tQueryResult tAuthBackend::parseCgasResponse(const tString &response, tString *, tString *)
+	tAuthBackend::tQueryResult tAuthBackend::parseCgasResponse(const tString &response, tString *passwd, tString *guid)
 	{
 		// Tokenize the response
 		tStringTokenizer s = tString(response);
-		while (!s.eof()) {
-			log.log("Next token: %s\n", s.getToken().c_str());
+		tString lastToken;
+		bool foundPasswd = false, foundGuid = false;
+		while (!s.eof() && !(foundPasswd && foundGuid)) {
+			tString token = s.getToken();
+			// check for the headers we want
+			if (!foundPasswd && lastToken == "X-plPassword:") {
+				foundPasswd = true;
+				*passwd = token;
+			}
+			else if (!foundGuid && lastToken == "X-plGuid:") {
+				*guid = token;
+				foundGuid = true;
+			}
+			// save current token for next check
+			lastToken = token;
 		}
-		return kError;
+		return (foundPasswd && foundGuid) ? kSuccess : kNotFound;
 	}
 	
 	tAuthBackend::tQueryResult tAuthBackend::queryCgas(const tString &login, const tString &challenge, const tString &hash, bool hasCache, tString *passwd, tString *guid, Byte *accessLevel)
@@ -242,8 +257,8 @@ namespace alc {
 		if (replyStatus == kError) return kError;
 		if (replyStatus == kNotFound) {
 			if (hasCache) {
-				// we can actually use what was queried, but the password is wrong, whatever we saved
-				*accessLevel = AcNotRes;
+				// we can actually use what was queried, but the password is wrong, whatever we saved (kSuccess only means we have something about this user in the DB)
+				passwd->clear();
 				return kSuccess;
 			}
 			return kNotFound;
@@ -254,7 +269,7 @@ namespace alc {
 			query.printf("UPDATE accounts SET passwd='%s', cgas_cache_time=NOW() WHERE name='%s' AND guid='%s'", passwd->c_str(), login.c_str(), guid->c_str());
 			sql->query(query, "Updating CGAS cache");
 			if (sql->affectedRows() != 1) {
-				log.log("ERROR: No player with name %s and GUID %s, even though I found it in the cache earlier - potential GUID change on CGAS", login.c_str(), guid->c_str());
+				log.log("ERROR: No player with name %s and GUID %s, even though I found it in the cache earlier - potential GUID change on CGAS\n", login.c_str(), guid->c_str());
 				return kError;
 			}
 			// use the access level that was queried earlier
@@ -282,7 +297,7 @@ namespace alc {
 		}
 		
 		// query the database
-		query.printf("SELECT UCASE(passwd), a_level, guid, attempts, UNIX_TIMESTAMP(last_attempt), UNIX_TIMESTAMP(cgas_cache_time) FROM accounts WHERE name='%s' LIMIT 1", sql->escape(login).c_str());
+		query.printf("SELECT UCASE(passwd), a_level, UCASE(guid), attempts, UNIX_TIMESTAMP(last_attempt), UNIX_TIMESTAMP(cgas_cache_time) FROM accounts WHERE name='%s' LIMIT 1", sql->escape(login).c_str());
 		sql->query(query, "Query player");
 		
 		// read the result
