@@ -51,6 +51,7 @@ namespace alc {
 	private:
 		U16 minAccess, disTime, maxAttempts;
 		tString cgasServer, cgasPath;
+		U16 cgasPort;
 		U32 cgasDefaultAccess, cgasMaxCacheTime;
 		tSQL *sql;
 		tLog log;
@@ -64,8 +65,8 @@ namespace alc {
 		tQueryResult queryCgas(const tString &login, const tString &challenge, const tString &hash, bool hasCache, tString *passwd, tString *guid, Byte *accessLevel);
 		
 		// CGAS internal functions
-		int sendCgasRequest(const tString &login, const tString &challenge, const tString &hash, Byte *data, int size); //!< send a CGAS request and save the reply into the data buffer, \return size of the reply, or 0 if there was none
-		tQueryResult parseCgasResponse(Byte *data, int size, tString *passwd, tString *guid); //!< parse the CGAS reply and \return true if the response was valid (it could still say that the login was wrong though!), false if not
+		tString sendCgasRequest(const tString &login, const tString &challenge, const tString &hash); //!< send a CGAS request and \return the reply or an empty String in case of an error
+		tQueryResult parseCgasResponse(const tString &response, tString *passwd, tString *guid); //!< parse the CGAS reply and \return true if the response was valid (it could still say that the login was wrong though!), false if not
 	};
 	
 } //End alc namespace
