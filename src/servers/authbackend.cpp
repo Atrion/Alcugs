@@ -203,7 +203,7 @@ namespace alc {
 		}
 		
 		//Send the msg to the server
-		if (send(sock, message.c_str(), message.size(), 0) != message.size()) {
+		if (send(sock, message.c_str(), message.size(), 0) != static_cast<S32>(message.size())) {
 			log.log("Error sending data to CGAS\n");
 			close(sock);
 			return tString();
