@@ -64,8 +64,6 @@ namespace alc {
 		UNIQUE KEY `guid` (`guid`),\
 		UNIQUE KEY `name` (`name`)\
 	) TYPE=MyISAM;";
-	
-	static const int httpBufferSize = 2048;
 
 	tAuthBackend::tAuthBackend(void)
 	{
@@ -92,13 +90,17 @@ namespace alc {
 		cgasServer = cfg->getVar("auth.cgas.server"); // CGAS will be enabled if this one is not empty (aka set)
 		cgasPath = cfg->getVar("auth.cgas.path");
 		
+		var = cfg->getVar("auth.cgas.port");
+		if (var.isEmpty()) cgasPort = 80;
+		else cgasPort = var.asU16();
+		
 		var = cfg->getVar("auth.cgas.default_access");
 		if (var.isEmpty()) cgasDefaultAccess = 15;
-		else cgasDefaultAccess = var.asU16();
+		else cgasDefaultAccess = var.asU32();
 		
 		var = cfg->getVar("auth.cgas.max_cache_time");
 		if (var.isEmpty()) cgasMaxCacheTime = 60*60*24; // 24 hours
-		else cgasMaxCacheTime = var.asU16();
+		else cgasMaxCacheTime = var.asU32();
 
 		prepare(); // initialize the database
 	}
@@ -160,22 +162,83 @@ namespace alc {
 		return alcHex2Ascii(md5buffer);
 	}
 	
-	int tAuthBackend::sendCgasRequest(const tString &, const tString &, const tString &, Byte *, int)
+	tString tAuthBackend::sendCgasRequest(const tString &login, const tString &challenge, const tString &hash)
 	{
-		return 0;
+		tString message;
+		message.printf("GET %s HTTP/1.1\r\n"
+					   "Host: %s\r\n"
+					   "Connection: close\r\n"
+					   "User-Agent: AlcugsHTTP\r\n"
+					   "X-plLogin: %s\r\n"
+					   "X-plHash: %s\r\n"
+					   "X-plChallenge: %s\r\n\r\n",
+					   cgasPath.c_str(), cgasServer.c_str(), login.c_str(), hash.c_str(), challenge.c_str());
+		
+		// The server (destination) struct
+		struct sockaddr_in server; // server address struct
+		memset(&server,0,sizeof(server)); //Delete it (zero it)
+		server.sin_family = AF_INET; //The family
+		// Set host an port
+		struct hostent *host = gethostbyname(cgasServer.c_str());
+		if(host==NULL) {
+			log.log("Error resolving CGAS address: %s\n", cgasServer.c_str());
+			return tString();
+		}
+		server.sin_addr.s_addr=*reinterpret_cast<U32 *>(host->h_addr_list[0]);
+		server.sin_port=htons(cgasPort); //The port
+		
+		// Create a TCP socket
+		int sock; //the socket
+		if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP))<0) {
+			log.log("Error creating socket for CGAS\n");
+			return tString();
+		}
+
+		// Start connection to the auth gateway
+		if(connect(sock,reinterpret_cast<struct sockaddr *>(&server),sizeof(server))<0) {
+			log.log("Error connecting to CGAS\n");
+			return tString();
+		}
+		
+		//Send the msg to the server
+		if (send(sock, message.c_str(), message.size(), 0) != message.size()) {
+			log.log("Error sending data to CGAS\n");
+			close(sock);
+			return tString();
+		}
+		
+		//Recieve the response
+		const int bufferSize = 2048;
+		int receivedSize;
+		Byte response[bufferSize];
+		if((receivedSize = recv(sock, response, bufferSize, 0)) <= 0) {
+			log.log("Error receiving data from CGAS\n");
+			close(sock);
+			return tString();
+		}
+		
+		// close socket and be done
+		close(sock);
+		tString result;
+		result.write(response, receivedSize);
+		return result;
 	}
 	
-	tAuthBackend::tQueryResult tAuthBackend::parseCgasResponse(Byte *, int, tString *, tString *)
+	tAuthBackend::tQueryResult tAuthBackend::parseCgasResponse(const tString &response, tString *, tString *)
 	{
+		// Tokenize the response
+		tStringTokenizer s = tString(response);
+		while (!s.eof()) {
+			log.log("Next token: %s\n", s.getToken().c_str());
+		}
 		return kError;
 	}
 	
 	tAuthBackend::tQueryResult tAuthBackend::queryCgas(const tString &login, const tString &challenge, const tString &hash, bool hasCache, tString *passwd, tString *guid, Byte *accessLevel)
 	{
-		Byte cgasResponse[httpBufferSize];
 		// send reuqest and parse reponse
-		int size = sendCgasRequest(login, challenge, hash, cgasResponse, httpBufferSize);
-		tQueryResult replyStatus = size > 0 ? parseCgasResponse(cgasResponse, size, passwd, guid) : kError;
+		tString response = sendCgasRequest(login, challenge, hash);
+		tQueryResult replyStatus = response.isEmpty() ? kError : parseCgasResponse(response, passwd, guid);
 		if (replyStatus == kError) return kError;
 		if (replyStatus == kNotFound) {
 			if (hasCache) {
