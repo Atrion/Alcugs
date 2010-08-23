@@ -89,6 +89,7 @@ namespace alc {
 		
 		cgasServer = cfg->getVar("auth.cgas.server"); // CGAS will be enabled if this one is not empty (aka set)
 		cgasPath = cfg->getVar("auth.cgas.path");
+		if (cgasPath.isEmpty()) cgasPath = "/";
 		
 		var = cfg->getVar("auth.cgas.port");
 		if (var.isEmpty()) cgasPort = 80;
