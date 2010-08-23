@@ -528,22 +528,20 @@ namespace alc {
 		fprintf(f, "<meta http-equiv=\"refresh\" content=\"30;url=%s\" />\n", statusfile.filename().c_str());
 		fprintf(f, "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=ISO-8859-1\">");
 		fprintf(f, "</head><body>\n");
-		// player list
 		fprintf(f, "<h2>Current Online Players</h2>\n");
-		if (dbg)
-			fprintf(f, "<b>Total population: %i</b><br /><br />\n", static_cast<U32>(players.size()));
-		fprintf(f, "<table border=\"1\"><tr><th>Avatar (Account)</th><th>KI</th><th>Age Name</th><th>Age GUID</th><th>Status</th></tr>\n");
-		for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
-			if (!dbg && it->flag != 2) continue;
-			fprintf(f, "<tr><td>%s (%s)%s</td><td>%d</td><td>%s</td><td>%s</td>", it->avatar.c_str(), it->account.c_str(), it->flag == 2 ? "" : " [hidden]", it->ki, it->u->name.c_str(), alcGetStrGuid(it->u->serverGuid).c_str());
-			if (!it->awaiting_age.isEmpty()) // if the age he wants to is saved, print it
-				fprintf(f, "<td>%s to %s</td>", alcUnetGetReasonCode(it->status), it->awaiting_age.c_str());
-			else fprintf(f, "<td>%s</td>", alcUnetGetReasonCode(it->status));
-			fprintf(f, "</tr>\n");
-		}
-		fprintf(f, "</table><br />\n");
-		// server list
 		if (dbg) {
+			// player list (dbg)
+			fprintf(f, "<b>Total population: %i</b><br /><br />\n", static_cast<U32>(players.size()));
+			fprintf(f, "<table border=\"1\"><tr><th>Avatar (Account)</th><th>KI</th><th>Age Name</th><th>Age GUID</th><th>Status</th></tr>\n");
+			for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
+				fprintf(f, "<tr><td>%s (%s)%s</td><td>%d</td><td>%s</td><td>%s</td>", it->avatar.c_str(), it->account.c_str(), it->flag == 2 ? "" : " [hidden]", it->ki, it->u->name.c_str(), alcGetStrGuid(it->u->serverGuid).c_str());
+				if (!it->awaiting_age.isEmpty()) // if the age he wants to is saved, print it
+					fprintf(f, "<td>%s to %s</td>", alcUnetGetReasonCode(it->status), it->awaiting_age.c_str());
+				else fprintf(f, "<td>%s</td>", alcUnetGetReasonCode(it->status));
+				fprintf(f, "</tr>\n");
+			}
+			fprintf(f, "</table><br />\n");
+			// server list
 			tNetSession *server;
 			fprintf(f,"<h2>Current Server Instances</h2>");
 			fprintf(f, "<table border=\"1\"><tr><th>Age</th><th>GUID</th><th>IP and Port</th></tr>\n");
@@ -556,6 +554,15 @@ namespace alc {
 					continue;
 				}
 				fprintf(f, "<tr><td>%s</td><td>%s</td><td>%s:%d</td><tr>\n", server->name.c_str(), alcGetStrGuid(server->serverGuid).c_str(), alcGetStrIp(server->getIp()).c_str(), ntohs(server->getPort()));
+			}
+			fprintf(f, "</table><br />\n");
+		}
+		else {
+			// player list (normal)
+			fprintf(f, "<table border=\"1\"><tr><th>Avatar</th><th>KI</th><th>Age Name</th></tr>\n");
+			for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
+				if (it->flag != 2) continue;
+				fprintf(f, "<tr><td>%s</td><td>%d</td><td>%s</td></tr>", it->avatar.c_str(), it->ki, it->u->name.c_str());
 			}
 			fprintf(f, "</table><br />\n");
 		}
