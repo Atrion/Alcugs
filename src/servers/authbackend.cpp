@@ -247,7 +247,15 @@ namespace alc {
 			// save current token for next check
 			lastToken = token;
 		}
-		return (foundPasswd && foundGuid) ? kSuccess : kNotFound;
+		if (foundPasswd && foundGuid) return kSuccess;
+		
+		// Let's see if we can find a message from the server
+		S32 idx = response.find("\r\n\r\n");
+		if (idx >= 0) {
+			tString msg = response.substring(idx+4);
+			if (!msg.isEmpty()) log.log("CGAS error message: %s\n", msg.c_str());
+		}
+		return kNotFound;
 	}
 	
 	tAuthBackend::tQueryResult tAuthBackend::queryCgas(const tString &login, const tString &challenge, const tString &hash, bool hasCache, tString *passwd, tString *guid, Byte *accessLevel)
