@@ -63,6 +63,7 @@ namespace alc {
 		memcpy(serverGuid, guid.data(), 8);
 		
 		// load age file and SDL Manager
+		resetStateWhenEmpty = false;
 		ageInfo = new tAgeInfo(serverName, /*loadPages*/true);
 		ageState = new tAgeStateManager(this, ageInfo);
 		
@@ -130,19 +131,12 @@ namespace alc {
 			if (ageLink->ageInfo.filename != serverName || memcmp(serverGuid, ageLink->ageInfo.guid, 8) != 0)
 				return; // this is another age!
 			// ok, the player definitely wants to reset us, check if this is a public age
-			if (ageLink->ageInfo.guid[1] == 0) // it's public (since no KI is set in the GUID)
+			if (ageLink->ageInfo.guid[1] == 0 && ageLink->ageInfo.guid[2] == 0 && ageLink->ageInfo.guid[3] == 0 && ageLink->ageInfo.guid[4] == 0) {
+				// it's public (since no KI is set in the GUID)
 				return;
-			// check there is someone else in here
-			bool playerFound = false;
-			tNetSession *session;
-			smgr->rewind();
-			while ((session = smgr->getNext())) {
-				if (session->joined) {
-					playerFound = true;
-					break;
-				}
 			}
-			if (playerFound) { // there is someone else here, do not reset
+			// check there is someone else in here
+			if (!checkIfOnlyPlayer(NULL)) { // there is someone else here, do not reset
 				sendKIMessage("Sorry, but someone else is already in this age, so I can not reset it", u);
 				return;
 			}
@@ -249,6 +243,19 @@ namespace alc {
 			text.printf("/!shardidentifier %s", shardIdentifier.c_str());
 			sendKIMessage(text, u);
 		}
+		else if (text == "/!resetage") {
+			if (ageInfo->seqPrefix <= 99) { // Cyan age
+				sendKIMessage("You can not reset Cyan ages this way", u);
+			}
+			else if (!checkIfOnlyPlayer(u)) {
+				sendKIMessage("You have to be the only player in an age to reset it", u);
+			}
+			else {
+				sendKIMessage("Re-linking you to complete age reset...", u);
+				sendKIMessage("/!relink", u);
+				resetStateWhenEmpty = true;
+			}
+		}
 		else {
 			tString error;
 			error.printf("Unknown server-side command: \"%s\"", text.c_str());
@@ -292,16 +299,8 @@ namespace alc {
 			}
 			
 			// check if this was the last player
-			bool playerFound = false;
-			tNetSession *session;
-			smgr->rewind();
-			while ((session = smgr->getNext())) {
-				if (session->getPeerType() == KClient && session != u) {
-					playerFound = true;
-					break;
-				}
-			}
-			lastPlayerLeft = playerFound ? 0 : alcGetTime();
+			bool lastPlayer = checkIfOnlyPlayer(u);
+			lastPlayerLeft = lastPlayer ? alcGetTime() : 0;
 			
 			// remove leftovers of this player from the age state
 			ageState->removePlayer(u);
@@ -320,6 +319,11 @@ namespace alc {
 			
 			// this player is no longer joined
 			u->joined = false;
+			
+			if (lastPlayer && resetStateWhenEmpty) { // reset age state, this was the last player
+				resetStateWhenEmpty = false;
+				ageState->clearAllStates();
+			}
 		}
 	
 		tUnetLobbyServerBase::onConnectionClosing(u, reason); // forward event (this sets the KI to zero, so do it at the end)
@@ -400,6 +404,18 @@ namespace alc {
 			stop(); // no player for some time, so go down
 		}
 		tUnetLobbyServerBase::onIdle(idle);
+	}
+	
+	bool tUnetGameServer::checkIfOnlyPlayer(tNetSession *u)
+	{
+		tNetSession *session;
+		smgr->rewind();
+		while ((session = smgr->getNext())) {
+			if (session->getPeerType() == KClient && session != u) {
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	void tUnetGameServer::removePlayerFromPage(tPageInfo *page, U32 ki)
