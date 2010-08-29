@@ -136,7 +136,7 @@ namespace alc {
 				return;
 			}
 			// check there is someone else in here
-			if (!checkIfOnlyPlayer(NULL)) { // there is someone else here, do not reset
+			if (!checkIfOnlyPlayer(u)) { // there is someone else here, do not reset
 				sendKIMessage("Sorry, but someone else is already in this age, so I can not reset it", u);
 				return;
 			}
