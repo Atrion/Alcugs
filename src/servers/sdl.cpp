@@ -225,7 +225,7 @@ namespace alc {
 		while (it != clones.end()) {
 			if ((*it)->clonedObj.obj.clonePlayerId == player->ki) { // that clone is dead now, remove it and all of it's SDL states
 				log.log("Removing Clone [%s] as it belongs to player %s who just left us\n", (*it)->clonedObj.str().c_str(), player->str().c_str());
-				if ((*it)->getType() == plLoadAvatarMsg) { // for avatars
+				if (net->getLinkingOutIdle() && (*it)->getType() == plLoadAvatarMsg) { // make avatars idle
 					// make sure that clone is in the idle state
 					net->bcastMessage(net->makePlayerIdle(player, (*it)->clonedObj.obj));
 					// make sure the clone does not run an animation
@@ -237,7 +237,7 @@ namespace alc {
 				// remove avatar from age (a delay of < 2700msecs is likely to cause crashes when the avatar just left the sitting state)
 				(*it)->isLoad = false;
 				tmLoadClone loadClone(player, *it, false/*isInitial*/);
-				net->bcastMessage(loadClone, /*delay*/ 3000);
+				net->bcastMessage(loadClone, /*delay*/ net->getLinkingOutIdle() ? 3000 : 0);
 				delete *it;
 				it = clones.erase(it);
 			}
