@@ -103,6 +103,9 @@ namespace alc {
 		var = cfg->getVar("game.tmp.hacks.noreltoshare");
 		noReltoShare = (!var.isEmpty() && var.asByte()); // disabled per default
 		
+		var = cfg->getVar("game.tmp.hacks.linkidle");
+		linkingOutIdle = (var.isEmpty() || var.asByte()); // enabled per default
+		
 		var = cfg->getVar("game.serversidecommands");
 		serverSideCommands = (var.isEmpty() || var.asByte()); // enabled per default
 		
@@ -443,7 +446,7 @@ namespace alc {
 
 	int tUnetGameServer::onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u)
 	{
-		if (msg->cmd == NetMsgFindAge) {
+		if (linkingOutIdle && msg->cmd == NetMsgFindAge) {
 			// he is going to leave soon - make sure everyone is idle for him
 			tNetSession *session;
 			smgr->rewind();
@@ -747,7 +750,8 @@ namespace alc {
 				loadClone.msgStream.eofCheck();
 				loadClone.checkSubMsg(loadCloneMsg);
 				
-				if (loadClone.isPlayerAvatar && !loadClone.isLoad) {
+				bool makeIdle = linkingOutIdle && loadClone.isPlayerAvatar && !loadClone.isLoad;
+				if (makeIdle) {
 					// he leaves - make him idle
 					bcastMessage(makePlayerIdle(u, loadCloneMsg->clonedObj.obj));
 					// It is too late to make others idle for him - if he linked out, that was already done when we got the NetMsgFindAge.
@@ -758,7 +762,7 @@ namespace alc {
 				ageState->saveClone(loadCloneMsg);
 				
 				// broadcast message. A delay of less than 2700msecs is likely to cause crashes when the avatar just left the sitting state.
-				bcastMessage(loadClone, /*delay*/ (loadClone.isPlayerAvatar && !loadClone.isLoad) ? 3000 : 0 );
+				bcastMessage(loadClone, /*delay*/ makeIdle ? 3000 : 0 );
 				
 				// if it's an (un)load of the player's avatar, do the member list update
 				if (loadClone.isPlayerAvatar) {
