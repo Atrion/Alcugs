@@ -146,7 +146,7 @@ log.n_rotate = 2 # keep only one old version of the game server logfiles (to avo
 game.linger_time = 120 # default: 120
 
 # game server behaviour
-;game.tmp.hacks.linkidle = 1 # enable a hack that tries to around crashed occuring when linking out while someone is aniamting, on a ladder, or sitting (default 1)
+;game.tmp.hacks.linkidle = 1 # enable a hack that tries to work around crashes occurring when linking out while someone is animating, on a ladder, or sitting (default 1)
 ;game.tmp.hacks.noreltoshare = 1 # enable a hack which prevents a crash when trying to share a Relto book (default 0)
 
 # client settings
