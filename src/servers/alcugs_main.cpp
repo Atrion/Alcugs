@@ -30,6 +30,7 @@
 #define ALC_PROGRAM_ID "$Id$"
 #define ALC_PROGRAM_NAME "Alcugs Server"
 
+#include <cerrno>
 #include <alcnet.h>
 
 #if defined(I_AM_THE_LOBBY_SERVER)
@@ -236,7 +237,7 @@ int main(int argc, char * argv[]) {
 			cfg->setVar("0","daemon","global");
 		}
 		if(var.asByte()) {
-			if (daemon(1,0)) throw txBase(_WHERE("Error daemonizing myself"));
+			if (daemon(1,0)) throw txBase(_WHERE("Error daemonizing myself (%s)", strerror(errno)));
 		}
 		
 		// print basic version info
