@@ -114,12 +114,6 @@ int main(int argc, char **argv)
 				MessageBox(NULL, L"You are currently using \"UruSetup.exe\" to start Uru. On Windows Vista and newer, this means that Uru will run with admin privileges. That is discouraged and can cause various problems.\n\nPlease use \"Uru.exe\", which can also be found in your Uru folder, to start Uru. Of course, you can also use a shortcut to that file.", L"Admin privileges", MB_ICONWARNING);
 			}
 		}
-		// On Windows 7, manually remove two problematic bik files
-		if (QSysInfo::windowsVersion() == QSysInfo::WV_6_1) {
-			log << "Running on Windows 7, removing problematic bik files\n";
-			removeFile("avi/direboWithAlpha.bik");
-			removeFile("avi/mystWithAlpha.bik");
-		}
 	}
 	
 	{ // do checksum checks, and put these files onto the Whitelist
