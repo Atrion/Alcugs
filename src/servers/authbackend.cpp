@@ -275,7 +275,7 @@ namespace alc {
 		// okay, the server said the login is correct, put that into the cache
 		tString query;
 		if (hasCache) {
-			query.printf("UPDATE accounts SET passwd='%s', cgas_cache_time=NOW() WHERE name='%s' AND guid='%s'", passwd->c_str(), login.c_str(), guid->c_str());
+			query.printf("UPDATE accounts SET passwd='%s', cgas_cache_time=NOW() WHERE name='%s' AND guid='%s'", sql->escape(*passwd).c_str(), sql->escape(login).c_str(), sql->escape(*guid).c_str());
 			sql->query(query, "Updating CGAS cache");
 			if (sql->affectedRows() != 1) {
 				log.log("ERROR: No player with name %s and GUID %s, even though I found it in the cache earlier - potential GUID change on CGAS\n", login.c_str(), guid->c_str());
@@ -284,7 +284,7 @@ namespace alc {
 			// use the access level that was queried earlier
 		}
 		else {
-			query.printf("INSERT INTO accounts (name, guid, passwd, a_level, cgas_cache_time) VALUES ('%s', '%s', '%s', '%d', NOW())", login.c_str(), guid->c_str(), passwd->c_str(), cgasDefaultAccess);
+			query.printf("INSERT INTO accounts (name, guid, passwd, a_level, cgas_cache_time) VALUES ('%s', '%s', '%s', '%d', NOW())", sql->escape(login).c_str(), sql->escape(*guid).c_str(), sql->escape(*passwd).c_str(), cgasDefaultAccess);
 			sql->query(query, "Insert CGAS reply into cache");
 			*accessLevel = cgasDefaultAccess;
 		}
