@@ -189,9 +189,8 @@ int main(int argc, char **argv)
 				else
 					whitelist << line;
 			}
-			// add config files which can not be on the dataserver, and the whitelist file as it does not necessarily contain itself
+			// add the whitelist file as it does not usually contain itself
 			whitelist << "whitelist.txt";
-			whitelist << "dev_mode.dat" << "plClientSetup.cfg" << "urustarter-checksums.txt" << "urustarter.ini";
 			// clean directories
 			if (cleanDirs.isEmpty())
 				log << "WARNING: There is a whitelist.txt file, but no directory is set to be cleaned, so no cleanup will be done\n";
