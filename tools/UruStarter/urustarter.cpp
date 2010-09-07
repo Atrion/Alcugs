@@ -19,18 +19,21 @@
 *    Please see the file COPYING for the full license.                         *
 *******************************************************************************/
 
-#include <windows.h>
-
 #include <QProcess>
 #include <QFile>
 #include <QDir>
 #include <QTextStream>
 #include <QSettings>
+#include <QApplication>
+#include <QMessageBox>
+#include <QLabel>
+#include <QDesktopWidget>
 
 #include "checksum-cache.h"
 #include "resolution-patcher.h"
 
 QTextStream log;
+QLabel *display;
 
 bool removeFile(QString file)
 {
@@ -83,15 +86,32 @@ void cleanDirectory(const QStringList &whitelist, QString dir, bool warnOnly = f
 	}
 }
 
+void setDisplayText(QString text)
+{
+	display->setText(text);
+	display->update();
+	QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+	display->repaint();
+}
+
 int main(int argc, char **argv)
 {
+	QApplication app(argc, argv); // for GUI stuff, but never used locally
 	QStringList whitelist;
 	// open logfile
 	QFile logFile("log/UruStarter.log");
 	if (!logFile.open(QIODevice::WriteOnly | QIODevice::Text))
 		return 1;
 	log.setDevice(&logFile);
-	log << "UruStarter initialized\n";
+	log << "UruStarter initialized in " << QCoreApplication::applicationDirPath() << "\n";
+	
+	// open disaplay
+	display = new QLabel("UruStarter is preparing your Uru installation...");
+	display->setWindowFlags(Qt::Dialog);
+	QPoint center = QDesktopWidget().availableGeometry().center();
+	display->show();
+	display->move(center.x() - display->width()/2, center.y() - display->height()/2);
+	setDisplayText(display->text()); // make sure it is shown
 	
 	// check if we are in an Uru installation
 	if (!QFile::exists("UruExplorer.exe")) {
@@ -106,14 +126,18 @@ int main(int argc, char **argv)
 			while (!listStream.atEnd())
 				removeFile(listStream.readLine());
 		}
+#ifdef Q_WS_WIN
 		// On Windows Vista and 7, try to write to the UruSetup.exe file - if that fails, the user obviously uses that file to start Uru, which he should not!
 		if (QSysInfo::windowsVersion() >= QSysInfo::WV_6_0) {
 			QFile uruSetup("UruSetup.exe");
 			if (!uruSetup.open(QIODevice::ReadWrite)) {
 				log << "It seems you are using the UruSetup.exe to start Uru\n";
-				MessageBox(NULL, L"You are currently using \"UruSetup.exe\" to start Uru. On Windows Vista and newer, this means that Uru will run with admin privileges. That is discouraged and can cause various problems.\n\nPlease use \"Uru.exe\", which can also be found in your Uru folder, to start Uru. Of course, you can also use a shortcut to that file.", L"Admin privileges", MB_ICONWARNING);
+ 				QMessageBox::warning(display, "Admin privileges", "You are currently using \"UruSetup.exe\" to start Uru. On Windows Vista and newer, "
+ 					"this means that Uru will run with admin privileges. That is discouraged and can cause various problems.\n\nPlease use \"Uru.exe\", "
+ 					"which can also be found in your Uru folder, to start Uru. Of course, you can also use a shortcut to that file.");
 			}
 		}
+#endif
 	}
 	
 	{ // do checksum checks, and put these files onto the Whitelist
@@ -131,6 +155,7 @@ int main(int argc, char **argv)
 					continue;
 				else if (line.startsWith("Age: ")) {
 					curAge = line.right(line.length()-5);
+					setDisplayText("Checking "+curAge+"...");
 					if (QFile::exists(curAge) && curAge.endsWith(".age"))
 						log << "Doing checksum check for age " << curAge << "\n";
 					else
@@ -152,7 +177,7 @@ int main(int argc, char **argv)
 					// files must all be in the dat directory
 					if (!file.startsWith("dat/")) continue;
 					// check checksum
-					if (!cache.checkFileChecksum(file, sum, size, options)) {
+					if (!cache.checkFileChecksum(file, sum, size, options)) { // FIXME notify user via GUI
 						removeFile(file);
 						removeFile(curAge); // also remove the age file so that you can't link there
 						curAge = QString(); // don't put remaining files of this age on the whitelist - they will be removed
@@ -171,6 +196,7 @@ int main(int argc, char **argv)
 	{ // process whitelist
 		QFile listFile("whitelist.txt");
 		if (listFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+			setDisplayText("Cleaning up your client...");
 			// process whitelist file
 			const QString cleanDirPrefix = "cleandir:";
 			QStringList cleanDirs;
@@ -231,5 +257,8 @@ int main(int argc, char **argv)
 		else
 			log << "Error starting Uru\n";
 	}
+	
+	// close display, and be done
+	delete display;
 	return 0;
 }
