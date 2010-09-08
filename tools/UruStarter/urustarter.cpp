@@ -89,9 +89,7 @@ void cleanDirectory(const QStringList &whitelist, QString dir, bool warnOnly = f
 void setDisplayText(QString text)
 {
 	display->setText(text);
-	display->update();
 	QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-	display->repaint();
 }
 
 int main(int argc, char **argv)
@@ -126,7 +124,6 @@ int main(int argc, char **argv)
 			while (!listStream.atEnd())
 				removeFile(listStream.readLine());
 		}
-#ifdef Q_WS_WIN
 		// On Windows Vista and 7, try to write to the UruSetup.exe file - if that fails, the user obviously uses that file to start Uru, which he should not!
 		if (QSysInfo::windowsVersion() >= QSysInfo::WV_6_0) {
 			QFile uruSetup("UruSetup.exe");
@@ -137,29 +134,38 @@ int main(int argc, char **argv)
  					"which can also be found in your Uru folder, to start Uru. Of course, you can also use a shortcut to that file.");
 			}
 		}
-#endif
 	}
 	
 	{ // do checksum checks, and put these files onto the Whitelist
 		QFile checksumFile("whitelist-checksums.txt");
 		if (checksumFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+			QStringList deletedAges;
 			// start our cache
 			ChecksumCache cache("urustarter-checksums.txt");
 			
 			QTextStream checkStream(&checksumFile);
 			QString curAge;
+			bool curAgeRequired = true;
 			
 			while (!checkStream.atEnd()) {
 				QString line = checkStream.readLine();
 				if (line.startsWith("#")) // skip comments
 					continue;
-				else if (line.startsWith("Age: ")) {
-					curAge = line.right(line.length()-5);
+				else if (line.startsWith("Age: ") || line.startsWith("AgeRequired: ")) {
+					curAgeRequired = line.startsWith("AgeRequired: ");
+					if (curAgeRequired) curAge = line.right(line.length()-13);
+					else curAge = line.right(line.length()-5);
 					setDisplayText("Checking "+curAge+"...");
 					if (QFile::exists(curAge) && curAge.endsWith(".age"))
 						log << "Doing checksum check for age " << curAge << "\n";
-					else
+					else {
+						if (curAgeRequired) {
+							QMessageBox::critical(display, "Age missing", "The age "+curAge+" is not installed, but required to log in. "
+									"Uru can not be started.");
+							return 1;
+						}
 						curAge = QString(); // this age is not installed, we don't have to check it (won't be on the whitelist either)
+					}
 				}
 				else if (curAge.length()) {
 					QStringList curFile = line.split("  ");
@@ -177,9 +183,15 @@ int main(int argc, char **argv)
 					// files must all be in the dat directory
 					if (!file.startsWith("dat/")) continue;
 					// check checksum
-					if (!cache.checkFileChecksum(file, sum, size, options)) { // FIXME notify user via GUI
+					if (!cache.checkFileChecksum(file, sum, size, options)) {
+						if (curAgeRequired) {
+							QMessageBox::critical(display, "Age invalid", "The age "+curAge+" has an invalid version, but is required to log in. "
+									"Uru can not be started.");
+							return 1;
+						}
 						removeFile(file);
 						removeFile(curAge); // also remove the age file so that you can't link there
+						deletedAges << curAge; // show it to the user
 						curAge = QString(); // don't put remaining files of this age on the whitelist - they will be removed
 					}
 					else {
@@ -189,6 +201,11 @@ int main(int argc, char **argv)
 							whitelist << (file.left(file.length()-3) + "sum");
 					}
 				}
+			}
+			
+			if (!deletedAges.isEmpty()) {
+				QMessageBox::information(display, "Ages removed", "The following ages were found to have an invalid version and were therefore removed"
+					" from your Uru installation:\n\n"+deletedAges.join("\n"));
 			}
 		}
 	}
