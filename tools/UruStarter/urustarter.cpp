@@ -88,7 +88,7 @@ void cleanDirectory(const QStringList &whitelist, QString dir, bool warnOnly = f
 
 void setDisplayText(QString text)
 {
-	display->setText(text);
+	display->setText(" "+text);
 	QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 }
 
@@ -108,6 +108,7 @@ int main(int argc, char **argv)
 	display->setWindowFlags(Qt::Dialog);
 	QPoint center = QDesktopWidget().availableGeometry().center();
 	display->show();
+	display->resize(display->width()+20, display->height()+20);
 	display->move(center.x() - display->width()/2, center.y() - display->height()/2);
 	setDisplayText(display->text()); // make sure it is shown
 	
