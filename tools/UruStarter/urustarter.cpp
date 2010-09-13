@@ -161,9 +161,13 @@ int main(int argc, char **argv)
 						log << "Doing checksum check for age " << curAge << "\n";
 					else {
 						if (curAgeRequired) {
+							log << "Could not find required age " << curAge << "\n";
 							QMessageBox::critical(display, "Age missing", "The age "+curAge+" is not installed, but required to log in. "
 									"Uru can not be started.");
 							return 1;
+						}
+						else {
+							log << "Skipping checksum check for age " << curAge << "\n";
 						}
 						curAge = QString(); // this age is not installed, we don't have to check it (won't be on the whitelist either)
 					}
@@ -185,6 +189,7 @@ int main(int argc, char **argv)
 					if (!file.startsWith("dat/")) continue;
 					// check checksum
 					if (!cache.checkFileChecksum(file, sum, size, options)) {
+						log << "File " << file << " is invalid\n";
 						if (curAgeRequired) {
 							QMessageBox::critical(display, "Age invalid", "The age "+curAge+" has an invalid version, but is required to log in. "
 									"Uru can not be started.");
