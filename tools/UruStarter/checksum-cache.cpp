@@ -25,6 +25,7 @@
 #include <QFileInfo>
 #include <QDateTime>
 #include <QStringList>
+#include <stdexcept>
 
 #include "checksum-cache.h"
 
@@ -36,7 +37,7 @@ ChecksumCache::ChecksumCache(QString filename) : filename(filename)
 {
 	// load from file
 	QFile file(filename);
-	if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) return;
+	if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) return; // could be that the file does not exist at all
 	QTextStream text;
 	text.setDevice(&file);
 	uint versionKontrolle = 0;
@@ -60,7 +61,7 @@ ChecksumCache::~ChecksumCache(void)
 {
 	// we have to save the cache to the file
 	QFile file(filename);
-	if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) return;
+	if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) throw std::runtime_error("Could not write cache file");
 	QTextStream text;
 	text.setDevice(&file);
 	text << version << "\n";
