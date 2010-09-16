@@ -115,9 +115,14 @@ int main(int argc, char **argv)
 	setDisplayText(display->text()); // make sure it is shown
 	
 	try {
-		// check if we are in an Uru installation
+		// check if we are in an Uru installation and can write it
 		if (!QFile::exists("UruExplorer.exe")) {
 			throw std::runtime_error("This is NOT an Uru installation - UruExplorer.exe not found");
+		}
+		else {
+			QFile uruExplorer("UruExplorer.exe");
+			if (!uruExplorer.open(QIODevice::ReadWrite))
+				throw std::runtime_error("I need full access to the Uru folder which I currently do not have. Please move your Uru installation to your user profile folder.");
 		}
 		
 		{  // Process blacklist
@@ -278,7 +283,7 @@ int main(int argc, char **argv)
 				log << "Error starting Uru\n";
 		}
 	}
-	catch (std::exception err) {
+	catch (std::exception &err) {
 		log << err.what() << "\n";
 		QMessageBox::critical(display, "Error while running UruStarter", err.what());
 		return 1;
