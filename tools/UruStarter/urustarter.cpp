@@ -194,7 +194,7 @@ int main(int argc, char **argv)
 						if (!cache.checkFileChecksum(file, sum, size, options)) {
 							log << "File " << file << " is invalid\n";
 							if (curAgeRequired) {
-								throw std::runtime_error(("The age "+curAge+" has an invalid version, but is required to log in. "
+								throw std::runtime_error(("The file "+file+" has an invalid version, but is required to log in. "
 										"Uru can not be started.").toStdString());
 							}
 							removeFile(file);
