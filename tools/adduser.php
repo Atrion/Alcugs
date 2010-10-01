@@ -35,9 +35,13 @@ if ($_GET['action'] == 'go') {
       "is not your account, please go <a href=\"javascript:history.back()\">".
       "back</a> and choose another login name.";
   } else {
-    mysql_query("INSERT INTO accounts (name, passwd, a_level, guid) ".
-		"VALUES ('$login', '$hashpw', UUID())");
+    if (!mysql_query("INSERT INTO accounts (name, passwd, guid) ".
+		"VALUES ('$login', '$hashpw', UUID())")) {
+	echo "There was a MySQL-error: ".mysql_error();
+    }
+    else {
     echo "Congratulations, your account has been successfully created!";
+   }
   }
   mysql_close();
 } else {
