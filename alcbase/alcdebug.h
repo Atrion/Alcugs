@@ -110,13 +110,6 @@ extern "C" {
 
 #endif //__MSVC__
 
-#if defined(HAVE_DMALLOC_H)
-#include <dmalloc.h>
-#define dmalloc_verify(a) { DBG(5,"dmalloc_verify()\n"); dmalloc_verify(a); }
-#else //_DMALLOC_DBG_
-#define dmalloc_verify(a)
-#endif //_DMALLOC_DBG_
-
 #else //ENABLE_DEBUG
 //NO DEBUG - make all these macros NO-OPs
 
@@ -135,8 +128,6 @@ extern "C" {
 	#pragma warning(disable:4002) //disable warning "too many actual parameters for macro 'identifier'"
 	#endif //_MSC_VER
 #endif //__MSVC__
-
-#define dmalloc_verify(a)
 
 #endif //ENABLE_DEBUG
 

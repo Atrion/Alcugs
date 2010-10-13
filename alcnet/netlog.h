@@ -39,33 +39,33 @@ tString alcGetStrIp(U32 ip);
 
 class txUnet : public txBase {
 public:
-	txUnet(const tString &name,const tString &msg,bool abort=false,bool core=false) :txBase(name,msg,abort,core) {}
-	txUnet(const tString &msg,bool abort=false,bool core=false) :txBase("unet",msg,abort,core) {}
+	txUnet(const tString &name,const tString &msg,bool abort=false) :txBase(name,msg,abort) {}
+	txUnet(const tString &msg,bool abort=false) :txBase("unet",msg,abort) {}
 };
 
 class txUnetIniErr : public txUnet {
 public:
-	txUnetIniErr(const tString &msg,bool abort=false,bool core=false) :txUnet("UnetIniError",msg,abort,core) {}
+	txUnetIniErr(const tString &msg,bool abort=false) :txUnet("UnetIniError",msg,abort) {}
 };
 
 class txToMCons : public txUnet {
 public:
-	txToMCons(const tString &msg,bool abort=false,bool core=false) :txUnet("txToMCons",msg,abort,core) {}
+	txToMCons(const tString &msg,bool abort=false) :txUnet("txToMCons",msg,abort) {}
 };
 
 class txTooBig : public txUnet {
 public:
-	txTooBig(const tString &msg,bool abort=false,bool core=false) :txUnet("txTooBig",msg,abort,core) {}
+	txTooBig(const tString &msg,bool abort=false) :txUnet("txTooBig",msg,abort) {}
 };
 
 class txProtocolError : public txUnet {
 public:
-	txProtocolError(const tString &msg,bool abort=false,bool core=false) :txUnet("txProtocolError",msg,abort,core) {}
+	txProtocolError(const tString &msg,bool abort=false) :txUnet("txProtocolError",msg,abort) {}
 };
 
 class txDatabaseError : public txUnet {
 public:
-	txDatabaseError(const tString &msg,bool abort=false,bool core=false) :txUnet("txDatabaseError",msg,abort,core) {}
+	txDatabaseError(const tString &msg,bool abort=false) :txUnet("txDatabaseError",msg,abort) {}
 };
 
 

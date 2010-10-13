@@ -45,8 +45,8 @@ public:
 			\param abort If true, this exception will always stop execution
 			\param core If true, it will try to generate a coredump (requires the google Coredumper library), and of course, only works on a real operating system.
 	*/
-	txBase(const tString &msg,bool abort=false,bool core=false);
-	txBase(const tString &name,const tString &msg,bool abort=false,bool core=false);
+	txBase(const tString &msg,bool abort=false);
+	txBase(const tString &name,const tString &msg,bool abort=false);
 	txBase(const txBase &t);
 	void copy(const txBase &t);
 	const txBase & operator=(txBase &t) { this->copy(t); return *this; }
@@ -60,80 +60,79 @@ private:
 	void _preparebacktrace();
 	tString msg, bt;
 	bool abort;
-	bool core;
 };
 //End Exception
 
 /** Out Of Range */
 class txOutOfRange : public txBase {
 public:
-	txOutOfRange(const tString &msg,bool abort=false,bool core=false) :txBase("OutOfRange",msg,abort,core) {}
+	txOutOfRange(const tString &msg,bool abort=false) :txBase("OutOfRange",msg,abort) {}
 	txOutOfRange(const txOutOfRange &t) :txBase(t) {}
 };
 /** unknown flags */
 class txUnkFlags : public txBase {
 public:
-	txUnkFlags(const tString &msg,bool abort=false,bool core=false) :txBase("UnkFlags",msg,abort,core) {}
+	txUnkFlags(const tString &msg,bool abort=false) :txBase("UnkFlags",msg,abort) {}
 	txUnkFlags(const txUnkFlags &t) :txBase(t) {}
 };
 /** unexpected data */
 class txUnexpectedData : public txBase {
 public:
-	txUnexpectedData(const tString &msg,bool abort=false,bool core=false) :txBase("UnexpectedData",msg,abort,core) {}
+	txUnexpectedData(const tString &msg,bool abort=false) :txBase("UnexpectedData",msg,abort) {}
 	txUnexpectedData(const txUnexpectedData &t) :txBase(t) {}
 };
 /** No Mem */
 class txNoMem : public txBase {
 public:
-	txNoMem(const tString &msg,bool abort=false,bool core=false) :txBase("NoMem",msg,abort,core) {}
+	txNoMem(const tString &msg,bool abort=false) :txBase("NoMem",msg,abort) {}
 	txNoMem(const txNoMem &t) :txBase(t) {}
 };
 /** Ref Err */
 class txRefErr : public txBase {
 public:
-	txRefErr(const tString &msg,bool abort=false,bool core=false) :txBase("RefErr",msg,abort,core) {}
+	txRefErr(const tString &msg,bool abort=false) :txBase("RefErr",msg,abort) {}
 	txRefErr(const txRefErr &t) :txBase(t) {}
 };
 /** Write Err */
 class txWriteErr : public txBase {
 public:
-	txWriteErr(const tString &msg,bool abort=false,bool core=false) :txBase("WriteErr",msg,abort,core) {}
+	txWriteErr(const tString &msg,bool abort=false) :txBase("WriteErr",msg,abort) {}
 	txWriteErr(const txWriteErr &t) :txBase(t) {}
 };
 /** Read Err */
 class txReadErr : public txBase {
 public:
-	txReadErr(const tString &msg,bool abort=false,bool core=false) :txBase("ReadErr",msg,abort,core) {}
+	txReadErr(const tString &msg,bool abort=false) :txBase("ReadErr",msg,abort) {}
 	txReadErr(const txWriteErr &t) :txBase(t) {}
 };
 /** No File */
 class txNoFile : public txBase {
 public:
-	txNoFile(const tString &msg,bool abort=false,bool core=false) :txBase("NoFile",msg,abort,core) {}
+	txNoFile(const tString &msg,bool abort=false) :txBase("NoFile",msg,abort) {}
 	txNoFile(const txNoFile &t) :txBase(t) {}
 };
 /** Unk Err */
 class txUnkErr : public txBase {
 public:
-	txUnkErr(const tString &msg,bool abort=false,bool core=false) :txBase("UnkErr",msg,abort,core) {}
+	txUnkErr(const tString &msg,bool abort=false) :txBase("UnkErr",msg,abort) {}
 	txUnkErr(const txUnkErr &t) :txBase(t) {}
 };
 /** No File */
 class txNotFound : public txBase {
 public:
-	txNotFound(const tString &msg,bool abort=false,bool core=false) :txBase("NotFound",msg,abort,core) {}
+	txNotFound(const tString &msg,bool abort=false) :txBase("NotFound",msg,abort) {}
 	txNotFound(const txNotFound &t) :txBase(t) {}
 };
 /** No File */
 class txNoAccess : public txBase {
 public:
-	txNoAccess(const tString &msg,bool abort=false,bool core=false) :txBase("NoAccess",msg,abort,core) {}
+	txNoAccess(const tString &msg,bool abort=false) :txBase("NoAccess",msg,abort) {}
 	txNoAccess(const txNoAccess &t) :txBase(t) {}
 };
 /** Parse error */
 class txParseError : public txBase {
 public:
-	txParseError(const tString &msg,bool abort=false,bool core=false) :txBase("ParseError",msg,abort,core) {}
+	txParseError(const tString &msg,bool abort=false) :txBase("ParseError",msg,abort) {}
 	txParseError(const txParseError &t) :txBase(t) {}
 };
 

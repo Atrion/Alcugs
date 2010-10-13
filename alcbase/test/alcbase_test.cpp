@@ -29,6 +29,8 @@
 #define IN_ALC_PROGRAM
 #define ALC_PROGRAM_ID "$Id$"
 
+//#define _DBG_LEVEL_ 10
+
 #include <alcugs.h>
 
 #include <alcdebug.h>
@@ -70,12 +72,6 @@ void alcexception_tests() {
 	}
 	DBG(2,"Continuing...\n");
 	
-	try {
-		throw txBase("generate a core",0,1);
-	} catch (txBase &t) {
-		std::cout<< "Caught Exception " << t.what() << std::endl;
-		//std::cout<< t.backtrace() << std::endl;
-	}
 
 	try {
 		//throw txBase("generate a core and abort",1,1);
@@ -133,37 +129,24 @@ void alctypes_mbuf() {
 	assert(buf1.tell()==buf1.size());
 	buf1.seek(-static_cast<S32>(buf1.size()));
 	assert(buf1.tell()==0);
-	dmalloc_verify(NULL);
 	try {
 		buf1.seek(-100);
-		dmalloc_verify(NULL);
 		throw txBase("expected txOutOfRange",1);
 	} catch( txOutOfRange &t) {
-		dmalloc_verify(NULL);
 		//std::cout<< "Caught Exception " << t.what() << std::endl;
-		dmalloc_verify(NULL);
 		//std::cout<< t.backtrace() << std::endl;
-		dmalloc_verify(NULL);
 	}
-	dmalloc_verify(NULL);
 	buf1.check(a,strlen(a));
 	buf1.check(b,strlen(b));
 	buf1.check(&c,1);
-	dmalloc_verify(NULL);
 	try {
-		dmalloc_verify(NULL);
 		buf1.check(&c,1);
-		dmalloc_verify(NULL);
 		throw txBase("expected txUnexpectedData",1);
 	} catch( txUnexpectedData &t) {
-		dmalloc_verify(NULL);
 		std::cout<< "Caught Exception " << t.what() << std::endl;
-		dmalloc_verify(NULL);
 		//std::cout<< t.backtrace() << std::endl;
 	}
-	dmalloc_verify(NULL);
 	buf1.rewind();
-	dmalloc_verify(NULL);
 	try {
 		buf1.check(&c,1);
 		throw txBase("expected txUnexpectedData");
@@ -602,17 +585,11 @@ void alctypes_part5() {
 	assert(test.getAt(1)=='p');
 	assert(test.getAt(3)=='t');
 	assert(test.getAt(0)=='/');
-	dmalloc_verify(NULL);
 	try {
-		dmalloc_verify(NULL);
 		mychar=test.getAt(100);
-		dmalloc_verify(NULL);
 		throw txBase("Expected OutofRange");
-		dmalloc_verify(NULL);
 	} catch(txOutOfRange) {
-		dmalloc_verify(NULL);
 	}
-	dmalloc_verify(NULL);
 	
 	// stripped
 	tString due("///////");
@@ -647,15 +624,12 @@ void alctypes_part5() {
 	due = due.stripped('/',0x02);
 	assert(due=="///////////////howhowhow ajfk fajf");
 	//abort();
-	dmalloc_verify(NULL);
 
 	// dirname
 	assert(test=="/path/to/something.txt");
 	assert(test!="/path/to");
-	dmalloc_verify(NULL);
 	assert(test.dirname()=="/path/to");
 	assert(test.filename()=="something.txt");
-	dmalloc_verify(NULL);
 	test="/usr/lib";
 	assert(test.dirname()=="/usr");
 	assert(test.filename()=="lib");
@@ -697,7 +671,6 @@ void alctypes_part5() {
 	//printf("-%s-\n",test.dirname().c_str());
 	assert(test.dirname()=="/../../../usr/lib/kk/path");
 	assert(test.filename()=="something22");
-	dmalloc_verify(NULL);
 	
 	// stripped & dirname
 	tString sth,sth2;
@@ -960,18 +933,13 @@ empty3=""\n\
 	tConfigKey * key1;
 	key1 = cfg1->findKey("global");
 	assert(key1==NULL);
-	dmalloc_verify(NULL);
 	key1 = cfg1->findKey("global",1); //<--BOUM
-	dmalloc_verify(NULL);
 	assert(key1!=NULL);
-	dmalloc_verify(NULL);
 
 	tConfigVal * val1;
 	val1 = cfg1->findVar("kaka");
 	assert(val1==NULL);
-	dmalloc_verify(NULL);
 	cfg1->setVar("1","kaka","global");
-	dmalloc_verify(NULL);
 
 	val1 = cfg1->findVar("kaka");
 	assert(val1!=NULL);
@@ -979,7 +947,6 @@ empty3=""\n\
 
 	delete cfg1;
 	delete cfg2;
-	dmalloc_verify(NULL);
 	
 	//parser (store and stream)
 	bool found;
@@ -1173,7 +1140,6 @@ void log_test() {
 
 	log1.print("The test log ends _here_\n");
 	
-	dmalloc_verify(NULL);
 
 	log1.close();
 	log2.close();

@@ -200,7 +200,7 @@ bool tAlcMain::onSignal(int s) {
 				errLog->log("\n PANIC!!!\n");
 				errLog->log("TERRIBLE FATAL ERROR: SIGSEGV recieved!!!\n\n");
 				errLog->flush();
-				throw txBase("Panic: Segmentation Fault - dumping core",/*abort*/true,/*dump core*/true);
+				throw txBase("Panic: Segmentation Fault - dumping core",/*abort*/true);
 		}
 	} catch(txBase &t) {
 		errLog->log("FATAL Exception %s\n%s\n",t.what(),t.backtrace()); return true;
