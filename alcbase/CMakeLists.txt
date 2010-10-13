@@ -1,6 +1,9 @@
 find_package(ZLIB REQUIRED)
 include_directories(${ZLIB_INCLUDE_DIR})
 
+include(CheckIncludeFile)
+check_include_file("execinfo.h" HAVE_EXECINFO_H)
+
 
 set(ALCBASE_ALCUTIL_FILES
 	alcutil/alccfgtypes.cpp
@@ -55,3 +58,12 @@ set(ALCBASE_BASE_FILES
 
 add_library(alcbase SHARED ${ALCBASE_ALCUTIL_FILES} ${ALCBASE_BASE_FILES} ${ALCBASE_URUTYPES_FILES})
 target_link_libraries(alcbase ${ZLIB_LIBRARIES})
+
+# tests
+add_executable(alcbase_test test/alcbase_test.cpp)
+target_link_libraries(alcbase_test alcbase)
+add_test("AlcbaseTests" alcbase_test "${PROJECT_SOURCE_DIR}")
+
+add_executable(alcthread_test test/alcthread_test.cpp)
+target_link_libraries(alcthread_test alcbase)
+add_test("AlcthreadTests" alcthread_test)

@@ -485,22 +485,22 @@ void alctypes_part2() {
 	assert(a2==b1);
 }
 
-void alctypes_part3() {
+void alctypes_part3(tString srcdir) {
 
-	DBG(5,"opening current directory...\n");
+	DBG(5,"opening source directory: %s\n", srcdir.c_str());
 	
 	tDirectory mdir;
-	mdir.open(".");
+	mdir.open(srcdir);
 	tDirEntry * k;
 	
-	bool foundDocs = false, foundGame = false;
+	bool foundDir = false, foundFile = false;
 	
 	while((k=mdir.getEntry())!=NULL) {
-		if (k->isDir() && k->name == "docs") foundDocs = true;
-		else if (k->isFile() && k->name == "alcugs_game") foundGame = true;
-		//printf("%s - %u\n",k->name,k->type);
+		if (k->isDir() && k->name == "docs") foundDir = true;
+		else if (k->isFile() && k->name == "COPYING") foundFile = true;
+		//printf("%s\n",k->name.c_str());
 	}
-	assert(foundDocs && foundGame);
+	assert(foundDir && foundFile);
 }
 
 void alctypes_part4() {
@@ -801,12 +801,12 @@ void alctypes_part8()
 	assert(!(t2 > t1));
 }
 
-void alctypes_tests() {
+void alctypes_tests(tString srcdir) {
 	alctypes_mbuf();
 	alctypes_mbuf2();
 	alctypes_fbuf();
 	alctypes_part2();
-	alctypes_part3();
+	alctypes_part3(srcdir);
 	alctypes_part4();
 	alctypes_part5();
 	//alctypes_part6();
@@ -1183,13 +1183,14 @@ void log_test() {
 	alcGetMain()->std()->log("Hi here\n");
 }
 
-int main(void) {
+int main(int argc, char **argv) {
+	if (argc < 2) return 1;
 	std::cout << std::endl << "Alcugs test suite - alcbase tests" <<std::endl;
 	tAlcMain alcMain;
 	try {
 		alcdebug_tests();
 		alcexception_tests();
-		alctypes_tests();
+		alctypes_tests(argv[1]);
 		alcfuncs_tests();
 		log_test();
 		libc_tests();

@@ -1,6 +1,8 @@
 cmake_minimum_required (VERSION 2.6)
 project (Alcugs)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake")
+enable_testing()
+
 
 # compiler flags
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wold-style-cast ${CMAKE_CXX_FLAGS}")
