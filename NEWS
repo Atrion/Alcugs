@@ -8,6 +8,23 @@
 | Home: http://alcugs.almlys.org                                            |
 -----------------------------------------------------------------------------
 
+13/Oct/2010 - Switched to CMake build system
+===========================================================================0
+The build system switched from Automake to CMake. As a consequence, I do
+not only finally understand the build system, but Alcugs now also uses
+shared libraries instead of static linking.
+The best way to upgrade is to start with a new clean checkout, and then do
+(assuming you have the source in ~/alcugs-trunk and the startup script and
+links to the binaries in ~/bin):
+cd ~/alcugs-trunk
+mkdir build # cmake requires a dedicated build directory
+cd build
+cmake .. # add "-DCMAKE_BUILD_TYPE=Debug" for a debugging build
+make
+cd ~/bin
+rm alcugs_* # remove old broken links
+ln -s ../alcugs-trunk/build/alc*/libalc*.so ../alcugs-trunk/build/servers/alcugs_* ./
+
 10/Apr/2009 - Release 1.3.5
 ===========================================================================0
 There were a bunch of fixes and improvements since the last version, which

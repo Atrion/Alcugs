@@ -26,7 +26,9 @@ include_directories ("${PROJECT_SOURCE_DIR}/alcbase")
 include_directories ("${PROJECT_BINARY_DIR}/alcbase") # we need to find the configure file
 add_subdirectory (alcbase)
 
+# alcnet
 include_directories ("${PROJECT_SOURCE_DIR}/alcnet")
 add_subdirectory (alcnet)
 
+# servers
 add_subdirectory (servers)
