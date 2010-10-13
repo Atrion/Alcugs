@@ -3,6 +3,7 @@ set -e
 
 # configuration
 source ${0%/*}/control-config.sh # the file has to be in the same directory as the script
+export LD_LIBRARY_PATH="$bindir"
 
 # Borrowed from LSB init-functions
 # define the output string colors and text
