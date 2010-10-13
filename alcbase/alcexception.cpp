@@ -43,47 +43,23 @@
 //}
 #endif
 
-#if defined(HAVE_GOOGLE_COREDUMPER_H)
-namespace google {
-#include <google/coredumper.h>
-}
-#endif
-
 //alcexception already included in alcugs.h
 
 #include "alcdebug.h"
 
 namespace alc {
 
-static void alcWriteCoreDump(void) {
-	DBG(5,"alcWriteCoreDump ");
-	#if !(defined(__WIN32__) or defined(__CYGWIN__)) and defined(HAVE_GOOGLE_COREDUMPER_H)
-	DBG(5,"is enabled\n");
-	
-	tString filename;
-	filename.printf("core-%06i-%08X.core",getpid(),time(NULL));
-	google::WriteCoreDump(filename.c_str());
-	#else
-	DBG(5,"is not enabled\n");
-	#ifdef __WIN32__
-	DBG(5,"and you should get a better OS, bacause the one that you are using now, sucks :(\n");
-	#endif
-	#endif
-}
-
 
 //Exceptions
 
 //Base class
-txBase::txBase(const tString &msg,bool abort,bool core) : msg(msg) {
+txBase::txBase(const tString &msg,bool abort) : msg(msg) {
 	this->abort=abort;
-	this->core=core;
 	this->_preparebacktrace();
 }
-txBase::txBase(const tString &name,const tString &msg,bool abort,bool core) {
+txBase::txBase(const tString &name,const tString &msg,bool abort) {
 	this->msg = name + ": " + msg;
 	this->abort=abort;
-	this->core=core;
 	this->_preparebacktrace();
 }
 txBase::txBase(const txBase &t) {
@@ -92,7 +68,6 @@ txBase::txBase(const txBase &t) {
 void txBase::copy(const txBase &t) {
 	DBG(5,"copy\n");
 	this->abort=t.abort;
-	this->core=t.core;
 	this->msg=t.msg;
 	this->bt=t.bt;
 }
@@ -124,7 +99,6 @@ void txBase::_preparebacktrace() {
 #else
 	bt = "Backtrace not implemented in your OS\n";
 #endif
-	if(this->core) { alcWriteCoreDump(); }
 	if(this->abort) {
 		dump();
 		alcGetMain()->onCrash();

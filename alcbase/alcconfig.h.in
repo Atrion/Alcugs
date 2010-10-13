@@ -1,1 +1,2 @@
 #cmakedefine HAVE_EXECINFO_H
+#cmakedefine HAVE_PTHREAD_H
