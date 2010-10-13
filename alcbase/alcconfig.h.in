@@ -1,2 +1,10 @@
 #cmakedefine HAVE_EXECINFO_H
 #cmakedefine HAVE_PTHREAD_H
+
+#cmakedefine ENABLE_ADMIN
+#cmakedefine ENABLE_MSGLOG
+#cmakedefine ENABLE_ACKLOG
+#cmakedefine ENABLE_ACKDEBUG
+#cmakedefine ENABLE_NETDEBUG
+#cmakedefine ENABLE_MSGDEBUG
+
