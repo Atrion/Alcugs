@@ -3,7 +3,6 @@ include_directories(${ZLIB_INCLUDE_DIR})
 
 include(CheckIncludeFile)
 check_include_file("execinfo.h" HAVE_EXECINFO_H)
-check_include_file("pthread.h" HAVE_PTHREAD_H)
 
 
 set(ALCBASE_ALCUTIL_FILES

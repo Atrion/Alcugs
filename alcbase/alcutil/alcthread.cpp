@@ -41,9 +41,7 @@
 #include "alcugs.h"
 
 #ifdef ENABLE_THREADS
-#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
-#endif
 #endif
 
 #include <cerrno>
@@ -58,7 +56,7 @@ U32 alcGetSelfThreadId() {
 		#ifdef __WIN32__
 			return GetCurrentThreadId();
 		#else
-			return (U32)pthread_self();
+			return pthread_self();
 		#endif
 	#else
 	return 0;
@@ -94,7 +92,7 @@ void tThread::spawn() {
 #ifdef ENABLE_THREADS
 	if(spawned) return;
 	#ifndef __WIN32__
-	if(pthread_create(&id, NULL, _alcThreadSpawner,(void *)this)!=0) {
+	if(pthread_create(&id, NULL, _alcThreadSpawner,this)!=0) {
 		throw txBase(_WHERE("Cannot create thread"));
 	}
 	#else
