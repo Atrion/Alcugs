@@ -45,4 +45,5 @@ fi
 	echo "sent file and recieved file differ";
 	exit 1
 )
+rm -rf "$tmpdir"
 echo "Ok, all went fine"
