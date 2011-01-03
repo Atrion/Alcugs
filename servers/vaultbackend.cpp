@@ -105,7 +105,7 @@ namespace alc {
 		log.nl();
 		log.flush();
 		vaultFolderName = vaultDB->getVaultFolderName();
-		DBG(5, "global vault folder name is %s\n", vaultFolderName);
+		DBG(5, "global vault folder name is %s\n", vaultFolderName.c_str());
 		checkMainNodes();
 	}
 	

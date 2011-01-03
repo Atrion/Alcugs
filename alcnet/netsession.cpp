@@ -108,7 +108,7 @@ void tNetSession::init() {
 	data = NULL;
 	joined = false;
 	
-	DBG(5, "%s Initial timeout: %d\n", str(), timeout);
+	DBG(5, "%s Initial timeout: %d\n", str().c_str(), timeout);
 }
 void tNetSession::resetMsgCounters(void) {
 	DBG(3, "tNetSession::resetMsgCounters\n");
@@ -176,7 +176,7 @@ void tNetSession::updateRTT(U32 newread) {
 	deviation += (alpha*(abs(diff)-deviation))/1000;
 	timeout=u*rtt + delta*deviation;
 	if (timeout > 5000000) timeout = 5000000; // max. timeout: 5secs
-	DBG(5,"%s RTT update (sample rtt: %i) new rtt:%i, timeout:%i, deviation:%i\n", str(),newread,rtt,timeout,deviation);
+	DBG(5,"%s RTT update (sample rtt: %i) new rtt:%i, timeout:%i, deviation:%i\n", str().c_str(),newread,rtt,timeout,deviation);
 }
 void tNetSession::increaseCabal() {
 	if(!cabal) return;
@@ -184,7 +184,7 @@ void tNetSession::increaseCabal() {
 	if(cabal+inc > minBandwidth) inc /= 4;
 	cabal+=inc;
 	if(cabal > maxBandwidth) cabal = maxBandwidth;
-	DBG(5,"%s +Cabal is now %i\n",str(),cabal);
+	DBG(5,"%s +Cabal is now %i\n",str().c_str(),cabal);
 }
 void tNetSession::decreaseCabal(bool small) {
 	if(!cabal) return;
@@ -193,7 +193,7 @@ void tNetSession::decreaseCabal(bool small) {
 	if (cabal-dec < minBandwidth) dec /= 4;
 	cabal -= dec;
 	if(cabal < maxPacketSz) cabal = maxPacketSz;
-	DBG(5,"%s -Cabal is now %i\n",str(),cabal);
+	DBG(5,"%s -Cabal is now %i\n",str().c_str(),cabal);
 }
 
 /** computes the time we have to wait after sending the given amount of bytes */
@@ -327,7 +327,7 @@ void tNetSession::send(tmBase &msg, U32 delay) {
 			//update time to send next message according to cabal
 			if (next_msg_time) next_msg_time += timeToSend(pmsg->size());
 			else next_msg_time = net->net_time + timeToSend(pmsg->size());
-			DBG(5, "%s Packet sent urgently, next one in %d\n", str(), next_msg_time-net->net_time);
+			DBG(5, "%s Packet sent urgently, next one in %d\n", str().c_str(), next_msg_time-net->net_time);
 			// if necessary, put in queue as "sent once"
 			if(flags & UNetAckReq) {
 				pmsg->snd_timestamp=net->net_time;
@@ -448,7 +448,7 @@ void tNetSession::processMsg(Byte * buf,int size) {
 			maxBandwidth = std::max(cabal, comm.bandwidth);
 			minBandwidth = std::min(cabal, comm.bandwidth);
 			cabal=minBandwidth;
-			DBG(5, "%s Initial cabal is %i\n",str(),cabal);
+			DBG(5, "%s Initial cabal is %i\n",str().c_str(),cabal);
 			negotiating=false;
 		}
 	} else if (!isConnected()) { // we did not yet negotiate
@@ -841,14 +841,14 @@ void tNetSession::doWork()
 
 		while(curmsg!=NULL && (cur_quota<quota_max)) {
 			if(curmsg->timestamp<=net->net_time) {
-				DBG(8, "%s %d ok to send a message\n",str(),net->net_time);
+				DBG(8, "%s %d ok to send a message\n",str().c_str(),net->net_time);
 				//we can send the message
 				if(curmsg->tf & UNetAckReq) {
 					//send packet
 					
 					// check if we need to resend
 					if(curmsg->tryes!=0) {
-						DBG(3, "%s Re-sending a message\n", str());
+						DBG(3, "%s Re-sending a message\n", str().c_str());
 						if(curmsg->tryes==1) {
 							decreaseCabal(true); // true = small
 						} else {
@@ -894,19 +894,19 @@ void tNetSession::doWork()
 			} //end time check
 			else {
 				net->updateTimerAbs(curmsg->timestamp); // come back when we want to send this message
-				DBG(8,"%s %d Too soon (%d) to send a message\n",str(),net->net_time,curmsg->timestamp-net->net_time);
+				DBG(8,"%s %d Too soon (%d) to send a message\n",str().c_str(),net->net_time,curmsg->timestamp-net->net_time);
 				curmsg = sndq->getNext(); // go on
 			}
 		} //end while
 		// calculate how long it will take us to send what we just sent
 		tts=timeToSend(cur_quota);
-		DBG(8,"%s %d tts is now:%i quota:%i,cabal:%i\n",str(),net->net_time,tts,cur_quota,cabal);
+		DBG(8,"%s %d tts is now:%i quota:%i,cabal:%i\n",str().c_str(),net->net_time,tts,cur_quota,cabal);
 		next_msg_time=net->net_time + tts;
 		// if there is still something to send, but the quota does not let us, do that ASAP
 		if (curmsg) net->updateTimerAbs(next_msg_time);
 	} else {
 		// Still wait before sending a message
-		DBG(8,"%s %d Too soon (%d) to check sndq\n",str(),net->net_time,next_msg_time-net->net_time);
+		DBG(8,"%s %d Too soon (%d) to check sndq\n",str().c_str(),net->net_time,next_msg_time-net->net_time);
 		net->updateTimerAbs(next_msg_time); // come back when we want to send the next message
 	}
 }
