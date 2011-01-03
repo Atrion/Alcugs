@@ -29,6 +29,7 @@
 #define IN_ALC_PROGRAM
 #define ALC_PROGRAM_ID "$Id$"
 
+#undef NDEBUG // always enable asserts etc. in tests
 //#define _DBG_LEVEL_ 10
 
 #include <alcugs.h>
