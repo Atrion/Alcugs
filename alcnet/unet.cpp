@@ -442,14 +442,14 @@ int tUnet::Recv() {
 	tv.tv_sec = this->unet_sec;
 	tv.tv_usec = this->unet_usec;
 
-#if defined(ENABLE_DEBUG) && _DBG_LEVEL_ >= 8
+#if _DBG_LEVEL_ >= 8
 	DBG(8,"waiting for incoming messages (%u.%06u)...\n", unet_sec, unet_usec);
 	tTime start; start.now();
 #endif
 	valret = select(this->sock+1, &rfds, NULL, NULL, &tv); // this is the command taking the time - now lets process what we got
 	// update stamp, since we spent some time in the select function, and doWork() [see below] needs the current time
 	updateNetTime();
-#if defined(ENABLE_DEBUG) && _DBG_LEVEL_ >= 8
+#if _DBG_LEVEL_ >= 8
 	start = ntime-start;
 	DBG(8,"waited %u.%06u\n",diff.seconds,diff.microseconds);
 #endif

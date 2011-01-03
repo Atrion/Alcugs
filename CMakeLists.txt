@@ -9,7 +9,7 @@ enable_testing()
 
 # compiler flags
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wold-style-cast ${CMAKE_CXX_FLAGS}")
-set(CMAKE_CXX_FLAGS_DEBUG "-Werror -DENABLE_DEBUG ${CMAKE_CXX_FLAGS_DEBUG}")
+set(CMAKE_CXX_FLAGS_DEBUG "-Werror ${CMAKE_CXX_FLAGS_DEBUG}")
 
 # options
 option(ENABLE_ADMIN "Enables possibly dangerous admin options in alcping (default OFF)" OFF)

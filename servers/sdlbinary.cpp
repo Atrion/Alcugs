@@ -514,11 +514,11 @@ namespace alc {
 		
 		DBG(8, "Updating %s.%d\n", sdlStruct->name.c_str(), sdlStruct->version);
 		// first merge the vars
-		DBG(8, "Merging %d current with %d new vars\n", vars.size(), newState->vars.size());
+		DBG(8, "Merging %li current with %li new vars\n", vars.size(), newState->vars.size());
 		mergeData(&vars, &newState->vars);
 		
 		// then the structs (if we have indexed sub-structs here, they are not recursively merged but overwritten as I see no way to decide which structs to merge if their number is dynamic and old and new number don't match)
-		DBG(8, "Merging %d current with %d new structs\n", structs.size(), newState->structs.size());
+		DBG(8, "Merging %li current with %li new structs\n", structs.size(), newState->structs.size());
 		mergeData(&structs, &newState->structs);
 	}
 	
