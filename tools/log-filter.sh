@@ -49,12 +49,6 @@ doaction(){
 		;;
 		error|errors)
 			catfiles "error"
-			echo
-			if [ -f fork_err.log ]; then
-				echo "Fork error log"
-				cat fork_err.log
-				echo
-			fi
 		;;
 		warning|warnings)
 			logfilter "warn|[^a-z]err|unx|unexpect|fatal" | grep -v " INF: " # remove INF lines like "Dropped unexpected packet"
@@ -70,7 +64,7 @@ doaction(){
 
 recurse(){
 	if [ ! -f alcugs.log ]; then # no log found so far, go on searching
-		if `ls -d */ &> /dev/null`; then
+		if $(ls -d */ &> /dev/null); then
 			ls -d */ | while read dir; do
 				cd "$dir"
 				recurse
