@@ -35,11 +35,10 @@
 
 #include "alcnet.h"
 
-#ifndef __WIN32__
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#endif
+#include <cassert>
 
 #include <alcdebug.h>
 

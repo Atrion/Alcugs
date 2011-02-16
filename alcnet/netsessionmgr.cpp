@@ -34,7 +34,7 @@
 //#define _DBG_LEVEL_ 10
 
 #include "alcnet.h"
-
+#include <cassert>
 #include <alcdebug.h>
 
 namespace alc {

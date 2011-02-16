@@ -37,10 +37,11 @@
 #define __U_TRACKINGBACKEND_ID "$Id$"
 
 //#define _DBG_LEVEL_ 10
-
+#include <cstring>
 #include <alcnet.h>
 
 ////extra includes
+#include <ctime>
 #include <set>
 #include "trackingbackend.h"
 

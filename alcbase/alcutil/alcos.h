@@ -33,6 +33,9 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCOS_H_ID "$Id$"
 
+#include <dirent.h>
+#include <cstdlib>
+
 namespace alc {
 
 /** 

@@ -30,12 +30,15 @@
 #define __U_ALCLOG_ID $Id$
 
 //#define _DBG_LEVEL_ 10
-
+#include <cstdlib>
+#include <cstring>
 #include "alcugs.h"
 
+#include <iostream>
 #include <sys/stat.h>
 #include <cerrno>
 #include <cstdarg>
+
 
 #ifndef __WIN32__
 #include <syslog.h>

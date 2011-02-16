@@ -41,7 +41,8 @@
 #include "alcnet.h"
 
 ////extra includes
-
+#include <csignal>
+#include <unistd.h>
 #include <alcdebug.h>
 
 

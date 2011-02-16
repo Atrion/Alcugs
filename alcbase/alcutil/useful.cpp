@@ -32,7 +32,8 @@
 //#define _DBG_LEVEL_ 10
 
 #include "alcugs.h"
-
+#include <ctime>
+#include <cstring>
 #include <sys/time.h>
 #include <fcntl.h>
 

@@ -34,9 +34,10 @@
 //#define _DBG_LEVEL_ 6
 
 #include "alcugs.h"
-
+#include <iostream>
 #include <cerrno>
 #include <cstdarg>
+#include <cstring>
 
 
 namespace zlib {

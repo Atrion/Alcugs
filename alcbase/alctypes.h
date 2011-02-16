@@ -33,6 +33,9 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCTYPES_H_ID "$Id$"
 
+
+#include <cstdio>
+
 namespace alc {
 
 //basic types

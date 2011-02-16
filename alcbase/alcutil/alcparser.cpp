@@ -41,6 +41,7 @@
 #include "alcugs.h"
 
 ////extra includes
+#include <iostream>
 
 #include "alcdebug.h"
 

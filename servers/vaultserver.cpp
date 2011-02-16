@@ -39,7 +39,7 @@
 //#define _DBG_LEVEL_ 10
 
 #include <alcnet.h>
-
+#include <iostream>
 ////extra includes
 #include "vaultserver.h"
 

@@ -35,6 +35,9 @@
 
 #include "alcugs.h"
 
+#include <unistd.h>
+#include <ctime>
+
 #if !(defined(__WIN32__) or defined(__CYGWIN__)) and defined(HAVE_EXECINFO_H)
 //namespace std {
 //extern "C" {

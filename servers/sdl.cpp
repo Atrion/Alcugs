@@ -41,6 +41,7 @@
 #include <alcnet.h>
 
 ////extra includes
+#include <iostream>
 #include <sys/stat.h>
 #include "sdl.h"
 #include "gameserver.h"

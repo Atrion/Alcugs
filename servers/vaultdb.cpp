@@ -33,7 +33,7 @@
 
 ////extra includes
 #include "vaultdb.h"
-
+#include <cstring>
 #include <alcdebug.h>
 
 namespace alc {

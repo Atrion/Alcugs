@@ -27,8 +27,9 @@
 
 #include <cerrno>
 #include <alcnet.h>
-
+#include <unistd.h>
 #include <alcdebug.h>
+#include <cstring>
 
 using namespace alc;
 

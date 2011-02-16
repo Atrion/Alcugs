@@ -39,7 +39,8 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <cerrno>
-
+#include <unistd.h>
+#include <cstring>
 #include <alcdebug.h>
 
 // Some of the macros implie an old-style cast

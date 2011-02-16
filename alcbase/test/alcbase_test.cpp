@@ -30,7 +30,9 @@
 //#define _DBG_LEVEL_ 10
 
 #include <alcugs.h>
-
+#include <iostream>
+#include <cassert>
+#include <cstring>
 #include <alcdebug.h>
 
 using namespace alc;
