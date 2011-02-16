@@ -31,10 +31,6 @@
 
 #include "alcugs.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <cstdarg>
 
 #ifdef __MSVC__
@@ -154,9 +150,5 @@ extern "C" {
 		return str;
 	}
 
-#endif
-
-#ifdef __cplusplus
-}
 #endif
 

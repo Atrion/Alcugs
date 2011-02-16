@@ -25,11 +25,6 @@
 *******************************************************************************/
 //#define _DBG_LEVEL_ 10
 
-//Program vars
-#define IN_ALC_PROGRAM
-#define ALC_PROGRAM_ID "$Id$"
-#define ALC_PROGRAM_NAME "Alcugs Server"
-
 #include <cerrno>
 #include <alcnet.h>
 
@@ -219,9 +214,7 @@ int main(int argc, char * argv[]) {
 		
 		// print basic version info
 		alcMain.std()->print(alcVersionText());
-		var=alcNetName;
-		alcMain.std()->print("<%s SERVER>\n\n",var.upper().c_str());
-		alcMain.std()->log("The Server is running...\n Press CTRL+C to kill the server.\n\n");
+		alcMain.std()->log("The Server is running...\n Press CTRL+C to kill it\n\n");
 		
 		//Create the server
 		tUnetServerBase *service = alcServerInstance();

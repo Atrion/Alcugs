@@ -39,37 +39,36 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCDEBUG_H_ID "$Id$"
 
-#include "alctypes.h"
+#include "alctypes.h" // for tString
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #ifndef NDEBUG
-    // debugging enabled
+	#include "alcutil/alcthread.h"
+	
+	// debugging enabled
 
-    // make sure _DBG_LEVEL_ is set
-    #ifndef _DBG_LEVEL_
-        #define _DBG_LEVEL_ 0
-    #endif //_DBG_LEVEL_
+	// make sure _DBG_LEVEL_ is set
+	#ifndef _DBG_LEVEL_
+		#define _DBG_LEVEL_ 0
+	#endif //_DBG_LEVEL_
 
-    // make DBG macros
-    #define DBG(a,...)  if((a)<=_DBG_LEVEL_) { fprintf(stderr,"DBG%i:%d:%s:%s:%i> ",a,alcGetSelfThreadId(),__FILE__,__FUNCTION__,__LINE__);\
-    fprintf(stderr, __VA_ARGS__); fflush(stderr); }
+	// make DBG macros
+	#define DBG(a,...)  if((a)<=_DBG_LEVEL_) { fprintf(stderr,"DBG%i:%d:%s:%s:%i> ",a,alcGetSelfThreadId(),__FILE__,__FUNCTION__,__LINE__);\
+	fprintf(stderr, __VA_ARGS__); fflush(stderr); }
 
-    #define DBGM(a,...)  if((a)<=_DBG_LEVEL_) { fprintf(stderr, __VA_ARGS__); fflush(stderr); }
+	#define DBGM(a,...)  if((a)<=_DBG_LEVEL_) { fprintf(stderr, __VA_ARGS__); fflush(stderr); }
 
 #else //NDEBUG
 
-    // force _DBG_LEVEL_ to be 0 (for those preprocessor conditions checking this that are spread in the files)
-    #ifdef _DBG_LEVEL_
-        #undef _DBG_LEVEL_
-    #endif //_DBG_LEVEL_
-    #define _DBG_LEVEL_ 0
-    
-    // make DBG macros NO-OPs
-    #define DBG(a,...)
-    #define DBGM(a,...)
+	// force _DBG_LEVEL_ to be 0 (for those preprocessor conditions checking this that are spread in the files)
+	#ifdef _DBG_LEVEL_
+		#undef _DBG_LEVEL_
+	#endif //_DBG_LEVEL_
+	#define _DBG_LEVEL_ 0
+
+	// make DBG macros NO-OPs
+	#define DBG(a,...)
+	#define DBGM(a,...)
 
 #endif //NDEBUG
 
@@ -80,9 +79,5 @@ alc::tString __dbg_where(const char * b,const char * c,int d,const char * a,...)
 #define _DIE(a) { fprintf(stderr,"ABORT: %s\n",_WHERE(a).c_str()); abort(); }
 //NOTE: _DIE must always stop the execution of the program, if not, unexpected results
 // that could end on massive data loss could happen.
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif //__U_ALCDEBUG_H

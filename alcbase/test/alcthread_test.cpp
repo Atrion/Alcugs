@@ -26,9 +26,6 @@
 
 //#define _DBG_LEVEL_ 10
 
-#define IN_ALC_PROGRAM
-#define ALC_PROGRAM_ID "$Id$"
-
 #undef NDEBUG // always enable asserts etc. in tests
 
 #include <alcugs.h>
@@ -68,7 +65,7 @@ private:
 
 int main(void) {
 	std::cout << std::endl << "Alcugs test suite - alcthread tests" <<std::endl;
-	tAlcMain alcMain;
+	tAlcMain alcMain("Alcthread Test");
 	try {
 
 		alcMain.std()->log("Init...\n");

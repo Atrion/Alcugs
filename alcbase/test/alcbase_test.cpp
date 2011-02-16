@@ -26,9 +26,6 @@
 
 //#define _DBG_LEVEL_ 10
 
-#define IN_ALC_PROGRAM
-#define ALC_PROGRAM_ID "$Id$"
-
 #undef NDEBUG // always enable asserts etc. in tests
 //#define _DBG_LEVEL_ 10
 
@@ -1153,7 +1150,7 @@ void log_test() {
 int main(int argc, char **argv) {
 	if (argc < 2) return 1;
 	std::cout << std::endl << "Alcugs test suite - alcbase tests" <<std::endl;
-	tAlcMain alcMain;
+	tAlcMain alcMain("Alcbase Test");
 	try {
 		alcdebug_tests();
 		alcexception_tests();

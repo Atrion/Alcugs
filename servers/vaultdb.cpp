@@ -151,7 +151,8 @@ namespace alc {
 				folderName.putByte(random()%250);
 				tString asciiFolderName = alcGetStrGuid(folderName.data());
 				query.clear();
-				query.printf("INSERT INTO %s (idx, type, int_1, str_1, str_2, text_1, text_2) VALUES ('%d', 6, '%d', '%s', '%s %s', 'You must never edit or delete this node!', '%s')", vaultTable, KVaultID, vaultVersion, asciiFolderName.c_str(), alcNAME, alcSTR_VER, alcVersionTextShort());
+				query.printf("INSERT INTO %s (idx, type, int_1, str_1, str_2, text_1, text_2) VALUES ('%d', 6, '%d', '%s', '%s', 'You must never edit or delete this node!', '%s')",
+								vaultTable, KVaultID, vaultVersion, asciiFolderName.c_str(), alcGetMain()->name().c_str(), alcVersionTextShort());
 				sql->query(query, "Prepare: Creating vault folder");
 				// done!
 				log->log("Started VaultDB driver (%s)\n", __U_VAULTDB_ID);
