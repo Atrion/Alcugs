@@ -26,15 +26,16 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_VAULTDB_ID "$Id$"
-
 //#define _DBG_LEVEL_ 10
-
-#include <alcnet.h>
-
-////extra includes
+#include <alcdefs.h>
 #include "vaultdb.h"
+
+#include <sql.h>
+#include <netlog.h>
+#include <alcmain.h>
+#include <alcversion.h>
+
 #include <cstring>
-#include <alcdebug.h>
 
 namespace alc {
 
@@ -117,6 +118,9 @@ namespace alc {
 		sql = NULL;
 		this->log = log;
 	}
+	
+	tVaultDB::~tVaultDB()
+	 { delete sql; }
 	
 	bool tVaultDB::prepare(void)
 	{

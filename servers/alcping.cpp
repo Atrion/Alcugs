@@ -24,11 +24,16 @@
 *                                                                              *
 *******************************************************************************/
 
-//#define _DBG_LEVEL_ 10
+#include <alcdefs.h>
+#include <unetbase.h>
+#include <unetmain.h>
+#include <alcversion.h>
+#include <alclicense.h>
+#include <netsessionmgr.h>
+#include <protocol/umsgbasic.h>
+#include <netlog.h>
 
-#include <alcnet.h>
 #include <cstring>
-#include <alcdebug.h>
 
 using namespace alc;
 

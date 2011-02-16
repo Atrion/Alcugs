@@ -33,6 +33,8 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETLOG_H_ID "$Id$"
 
+#include <alcexception.h>
+
 namespace alc {
 
 tString alcGetStrIp(U32 ip);

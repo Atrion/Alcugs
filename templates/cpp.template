@@ -35,14 +35,8 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_FILENAME_ID "$Id$"
-
 //#define _DBG_LEVEL_ 10
-
-#include <alcugs.h>
-
-////extra includes
-
-#include <alcdebug.h>
+#include <alcdefs.h>
 
 namespace alc {
 

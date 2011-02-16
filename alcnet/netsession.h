@@ -24,21 +24,21 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	URUNET 3+
-*/
-
 #ifndef __U_NETSESSION_H
 #define __U_NETSESSION_H
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETSESSION_H_ID "$Id$"
+
+#include "protocol/protocol.h"
+#include "netmsgq.h"
+
+#include <netinet/in.h>
 
 namespace alc {
 
 class tNetSessionIte;
 class tNetSessionMgr;
 class tUnet;
-class tUnetLobbyServerBase;
 
 typedef Byte tNetSessionFlags;
 

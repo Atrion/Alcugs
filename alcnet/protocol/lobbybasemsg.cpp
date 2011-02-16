@@ -26,13 +26,14 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_LOBBYBASEMSG_ID "$Id$"
-
 //#define _DBG_LEVEL_ 10
+#include <alcdefs.h>
+#include "lobbybasemsg.h"
 
-#include "alcnet.h"
-#include "protocol/ext-protocol.h"
+#include "netsession.h"
+#include "netlog.h"
+
 #include <cstring>
-#include <alcdebug.h>
 
 namespace alc {
 

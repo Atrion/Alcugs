@@ -41,7 +41,13 @@
 #define SQL_STAYCONN 0x08   // Always stay connected to the database (maintains a persistent link)
 #define SQL_CREATABL 0x10   // Allow to create tables if they don't exist
 
+#include <alctypes.h>
+
+#include <mysql/mysql.h>
+
 namespace alc {
+	
+	class tLog;
 
 class tSQL {
 public:

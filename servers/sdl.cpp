@@ -35,20 +35,21 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_SDL_ID "$Id$"
-
 //#define _DBG_LEVEL_ 10
+#include <alcdefs.h>
+#include "sdl.h"
 
-#include <alcnet.h>
-
-////extra includes
-#include <iostream>
-#include <sys/stat.h>
 #include "sdl.h"
 #include "gameserver.h"
 #include <alcutil/alcos.h>
 #include <alcutil/alcparser.h>
+#include <urutypes/plmessage.h>
+#include <urutypes/ageinfo.h>
+#include <alcmain.h>
+#include <netlog.h>
 
-#include <alcdebug.h>
+#include <iostream>
+#include <sys/stat.h>
 
 namespace alc {
 

@@ -24,16 +24,25 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	URUNET 3+
-*/
-
 #ifndef __U_UNET_H
 #define __U_UNET_H
 /* CVS tag - DON'T TOUCH*/
 #define __U_UNET_H_ID "$Id$"
 
+#include "netmsgq.h"
+
+#include <netinet/in.h>
+
 namespace alc {
+	
+	class tLog;
+	class tNetSessionIte;
+	class tNetEvent;
+	class tmBase;
+	class tUnetUruMsg;
+	class tNetSessionMgr;
+	class tNetSession;
+	class tmMsgBase;
 
 //udp packet max buffer size (0xFFFF) - any packet should be bigger.
 #define INC_BUF_SIZE 65535
@@ -105,7 +114,7 @@ public:
 	}
 	void setBindPort(U16 lport); //lport in host order
 	void setBindAddress(const tString & lhost);
-	inline void send(tmMsgBase &m, U32 delay = 0) { m.getSession()->send(m, delay); } //!< delay is in msecs
+	void send(tmMsgBase &m, U32 delay = 0); //!< delay is in msecs
 
 protected:
 	void openLogfiles();

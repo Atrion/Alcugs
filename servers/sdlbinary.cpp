@@ -24,27 +24,16 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
-*/
-
 /* CVS tag - DON'T TOUCH*/
 #define __U_SDLBINARY_ID "$Id$"
-
 //#define _DBG_LEVEL_ 10
-
-#include <alcnet.h>
-#include <cstring>
-////extra includes
+#include <alcdefs.h>
 #include "sdlbinary.h"
-#include "sdl.h"
 
-#include <alcdebug.h>
+#include "sdl.h"
+#include <netlog.h>
+
+#include <cstring>
 
 namespace alc {
 

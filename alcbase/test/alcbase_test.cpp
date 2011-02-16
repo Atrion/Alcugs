@@ -28,11 +28,9 @@
 //#define _DBG_LEVEL_ 10
 #include <alcdefs.h>
 
-#include <alctypes.h>
 #include <alcexception.h>
 #include <alcutil/alcparser.h>
 #include <alcutil/alcos.h>
-#include <alcutil/alclog.h>
 #include <alcmain.h>
 #include <urutypes/urubasetypes.h>
 

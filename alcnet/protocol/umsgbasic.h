@@ -31,7 +31,11 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_UMSGBASIC_H_ID "$Id$"
 
+#include "protocol.h"
+
 namespace alc {
+	
+	class tNetSessionIte;
 
 /** TERMINATED message */
 class tmTerminated :public tmMsgBase {

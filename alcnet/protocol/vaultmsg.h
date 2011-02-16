@@ -29,6 +29,8 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_VAULTMSG_H_H_ID "$Id$"
 
+#include "protocol.h"
+
 namespace alc {
 
 	////DEFINITIONS

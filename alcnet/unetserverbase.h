@@ -24,26 +24,18 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
-*/
-
 #ifndef __U_UNETSERVERBASE_H
 #define __U_UNETSERVERBASE_H
 /* CVS tag - DON'T TOUCH*/
 #define __U_UNETSERVERBASE_H_ID "$Id$"
 
+#include "unetbase.h"
+
 namespace alc {
+	
+	class tmPing;
 
 	////DEFINITIONS
-	/**
-		If we want to do it well and nice, we should add pre and post conditions here.
-	*/
 
 class tUnetServerBase : public tUnetBase {
 public:

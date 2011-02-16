@@ -38,8 +38,12 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_AUTHBACKEND_H_ID "$Id$"
 
-namespace alc {
+#include <alcutil/alclog.h>
+#include <sql.h>
+#include <netsession.h>
 
+namespace alc {
+	
 	////DEFINITIONS
 	class tAuthBackend {
 	public:

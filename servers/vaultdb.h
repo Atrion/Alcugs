@@ -29,13 +29,17 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_VAULTDB_H_ID "$Id$"
 
+#include <protocol/vaultproto.h>
+
 namespace alc {
+	
+	class tSQL;
 
 	////DEFINITIONS
 	class tVaultDB {
 	public:
 		tVaultDB(tLog *log);
-		~tVaultDB(void) { delete sql; }
+		~tVaultDB(void);
 		tString getVaultFolderName(void);
 		
 		/** queries the player list and saves it in the buffer if the point is not NULL \returns the number of players */

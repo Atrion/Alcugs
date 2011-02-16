@@ -35,17 +35,21 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_GAMESERVER_ID "$Id$"
-
 //#define _DBG_LEVEL_ 10
-#include <cstring>
-#include <alcnet.h>
-#include <protocol/ext-protocol.h>
-
-////extra includes
+#include <alcdefs.h>
 #include "gameserver.h"
-#include "sdl.h"
 
-#include <alcdebug.h>
+#include "sdl.h"
+#include <netlog.h>
+#include <protocol/gamemsg.h>
+#include <protocol/trackingmsg.h>
+#include <protocol/vaultmsg.h>
+#include <protocol/vaultproto.h>
+#include <urutypes/ageinfo.h>
+#include <urutypes/plmessage.h>
+#include <alcmain.h>
+
+#include <cstring>
 
 namespace alc {
 	

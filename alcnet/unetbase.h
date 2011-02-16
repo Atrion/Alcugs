@@ -24,16 +24,16 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	URUNET 3+
-*/
-
 #ifndef __U_UNETBASE_H
 #define __U_UNETBASE_H
 /* CVS tag - DON'T TOUCH*/
 #define __U_UNETBASE_H_ID "$Id$"
 
+#include "unet.h"
+
 namespace alc {
+	
+	class tUnetMsg;
 
 /** Base abstract class, you need to derive your server/client app's from here
 		This class registers against tAlcUnetMain to make sure there's never more than 1 instance! */

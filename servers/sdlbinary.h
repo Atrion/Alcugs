@@ -38,8 +38,11 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_SDLBINARY_H_ID "$Id$"
 
+#include <urutypes/urubasetypes.h>
+
 #include <list>
 #include <memory>
+#include <vector>
 
 namespace alc {
 
@@ -48,6 +51,8 @@ namespace alc {
 	class tSdlStructVar;
 	class tSdlStateBinary;
 	class tAgeStateManager;
+	class tLog;
+	class tElementList;
 	
 	/** parses a signel SDL var */
 	class tSdlStateVar : public tBaseType {

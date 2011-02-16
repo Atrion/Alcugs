@@ -24,23 +24,20 @@
 *                                                                              *
 *******************************************************************************/
 
-/* The Uru protocol, is here */
-
-/*
-
-Uru Protocol
-No sockets please
-
- --*/
+/** The Uru protocol, is here */
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_PROTOCOL_ID "$Id$"
-
 //#define _DBG_LEVEL_ 10
+#include <alcdefs.h>
+#include "protocol.h"
 
-#include "alcnet.h"
+#include "netsession.h"
+#include "netlog.h"
+#include <alcmain.h>
+
 #include <cstring>
-#include <alcdebug.h>
+
 
 namespace alc {
 

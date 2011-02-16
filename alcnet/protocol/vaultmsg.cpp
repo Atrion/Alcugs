@@ -26,13 +26,13 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_TRACKINGMSG_ID "$Id$"
-
 //#define _DBG_LEVEL_ 10
+#include <alcdefs.h>
+#include "vaultmsg.h"
 
-#include "alcnet.h"
-#include "protocol/ext-protocol.h"
+#include "netlog.h"
+
 #include <cstring>
-#include <alcdebug.h>
 
 namespace alc {
 

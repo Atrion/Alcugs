@@ -24,26 +24,17 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
-*/
-
 /* CVS tag - DON'T TOUCH*/
 #define __U_GAMEMSG_ID "$Id$"
-
 //#define _DBG_LEVEL_ 10
+#include <alcdefs.h>
+#include "gamemsg.h"
 
-#include "alcnet.h"
-#include "protocol/ext-protocol.h"
+#include "netsession.h"
+#include "netlog.h"
+#include <urutypes/plmessage.h>
+#include <urutypes/ageinfo.h>
 
-////extra includes
-
-#include <alcdebug.h>
 
 namespace alc {
 

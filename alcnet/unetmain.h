@@ -24,19 +24,12 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
-*/
-
 #ifndef __U_UNETMAIN_H
 #define __U_UNETMAIN_H
 /* CVS tag - DON'T TOUCH*/
 #define __U_UNETMAIN_H_ID "$Id$"
+
+#include <alcmain.h>
 
 namespace alc {
 

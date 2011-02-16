@@ -36,12 +36,15 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_PROTOCOL_H_ID "$Id$"
 
-//disable checksum checks
-//#define _NO_CHECKSUM
+#include <urutypes/uruconsts.h>
+#include <urutypes/urubasetypes.h>
+
+#include <vector>
 
 namespace alc {
 
 class tNetSession;
+class tLog;
 
 void alcEncodePacket(Byte* buf2,const Byte* buf, int n);
 void alcDecodePacket(Byte* buf, int n);

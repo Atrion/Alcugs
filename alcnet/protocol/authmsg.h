@@ -24,19 +24,12 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
-*/
-
 #ifndef __U_AUTHMSG_H
 #define __U_AUTHMSG_H
 /* CVS tag - DON'T TOUCH*/
 #define __U_AUTHMSG_H_ID "$Id$"
+
+#include "protocol.h"
 
 namespace alc {
 

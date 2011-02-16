@@ -24,28 +24,21 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
-*/
-
 #ifndef __U_UNETLOBBYSERVERBASE_H
 #define __U_UNETLOBBYSERVERBASE_H
 /* CVS tag - DON'T TOUCH*/
 #define __U_UNETLOBBYSERVERBASE_H_ID "$Id$"
 
-#include "protocol/ext-protocol.h"
+#include "netsessionmgr.h"
+#include "unetserverbase.h"
+
+#include <alcutil/alclog.h>
 
 namespace alc {
+	
+	class tvMessage;
 
 	////DEFINITIONS
-	/**
-		If we want to do it well and nice, we should add pre and post conditions here.
-	*/
 
 class tUnetLobbyServerBase : public tUnetServerBase {
 public:
