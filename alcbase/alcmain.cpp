@@ -57,13 +57,12 @@ static void _alcHandleSignal(int s) {
 	if(alcMain != NULL) alcMain->onSignal(s);
 }
 
-tAlcMain::tAlcMain(void)
+tAlcMain::tAlcMain(const tString& appName) : appName(appName)
 {
 	try {
 		// global library management
 		if (alcMain) _DIE("You can NEVER create several instances of tAlcMain");
 		alcMain = this;
-		if(!alcVerifyVersion()) _DIE("ERR: Alcugs Library version mismatch")
 		
 		// initialization
 		mainThreadId = alcGetSelfThreadId();

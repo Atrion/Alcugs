@@ -51,8 +51,6 @@
 	own alcugs directory. For example: "/usr/include/alcugs/" or "/usr/local/include/alcugs".
 	Remember to pass the -I/usr/include/alcugs parameter to your compiler.
 	
-	You can choose to provide the global Alcugs information yourself with #define ALC_PROGRAM_VARS
-	
 */
 
 #ifndef __U_ALCUGS_H_
@@ -61,32 +59,6 @@
 
 #include "alcconfig.h"
 #include "alcxversion.h"
-
-#ifdef VERSION
-#undef VERSION
-#endif
-//#define VERSION alcSTR_VER
-
-#ifndef IN_ALC_LIBRARY
-	#ifdef IN_ALC_PROGRAM
-		#ifndef ALC_PROGRAM_VARS
-			#define ALC_PROGRAM_VARS
-			#ifndef ALC_PROGRAM_ID
-				#define ALC_PROGRAM_ID __U_ALCUGS_H_ID
-			#endif
-			#ifndef ALC_PROGRAM_NAME
-				#define ALC_PROGRAM_NAME "Alcugs"
-			#endif
-			#ifndef ALC_PROGRAM_VERSION
-				#define ALC_PROGRAM_VERSION alcSTR_VER
-			#endif
-			const char * alcID = ALC_PROGRAM_ID;
-			const char * alcBUILD =  alcBUILD_TIME;
-			const char * alcNAME = ALC_PROGRAM_NAME;
-			const char * alcVERSION = ALC_PROGRAM_VERSION;
-		#endif
-	#endif
-#endif
 
 // this is used everywhere, there is no really useful place
 #define FORBID_CLASS_COPY(name) private: \

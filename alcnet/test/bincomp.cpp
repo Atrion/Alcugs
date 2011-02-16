@@ -26,12 +26,6 @@
  
 /** Tiny helper application to check whether two binary files are equal */
 
-//Program vars
-#define IN_ALC_PROGRAM
-#define ALC_PROGRAM_ID "$Id$"
-#define ALC_PROGRAM_NAME "BinComp"
-#define ALC_PROGRAM_VERSION "2.1"
-
 #include<alcugs.h>
 
 #include<alcdebug.h>
@@ -48,7 +42,7 @@ int main(int argc, char * argv[])
 {
 	printf("This is the Alcugs binary compare helper\n\n");
 	
-	tAlcMain alcMain;
+	tAlcMain alcMain("BinComp");
 	try {
 	
 	puts(alcVersionText());

@@ -49,7 +49,7 @@ static void _alcVersionInitVars() {
 	if(tvalcVerInit) return;
 	char p[200];
 	//short
-	sprintf(tvalcVerTextShort,"%s\nId: %s\n",alcNAME,alcID);
+	sprintf(tvalcVerTextShort,"%s\n",alcGetMain()->name().c_str());
 	
 	sprintf(p,"Alcugs %s - Version %s\n",alcBUILDINFO,alcSTR_VER);
 	strcat(tvalcVerTextShort,p);

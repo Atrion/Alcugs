@@ -33,10 +33,8 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCMAIN_H_ID "$Id$"
 
-extern const char * alcNAME;
-extern const char * alcBUILD;
-extern const char * alcVERSION;
-extern const char * alcID;
+#include "alcversion.h"
+#include "alctypes.h"
 
 namespace alc {
 
@@ -44,13 +42,14 @@ namespace alc {
 class tAlcMain {
 	friend class tLog; // tLog has to acces the log config
 public:
-	tAlcMain(void); //!< Run this directly in main(), not in a try...catch - it will deal with that itself
+	tAlcMain(const tString &appName); //!< Run this directly in main(), not in a try...catch - it will deal with that itself
 	virtual ~tAlcMain(void);
 	
 	inline tTime bornTime(void) { return born; }
 	tTime upTime(void);
 	inline U32 threadId(void) { return mainThreadId; }
 	inline tConfig *config(void) { return &cfg; }
+	inline tString name(void) { return appName; }
 	
 	inline tLog *std() { return stdLog; }
 	inline tLog *err() { return errLog; }
@@ -73,28 +72,13 @@ private:
 	U32 mainThreadId;
 	tTime born;
 	tLogConfig logCfg;
+	tString appName;
 	
 	FORBID_CLASS_COPY(tAlcMain)
 };
 
 //! Get global management class
 tAlcMain *alcGetMain(void);
-
-// Magic to detect version mismatch
-#if !defined(IN_ALC_LIBRARY) and defined(IN_ALC_PROGRAM)
-bool alcVerifyVersion() {
-	return(alcGetMaxVersion()==alcMAX_VER &&
-	alcGetMinVersion()==alcMIN_VER &&
-	alcGetRelVersion()==alcREL_VER &&
-	alcGetBetVersion()==alcBET_VER &&
-	alcGetProtocolVersion()==alcPROTO_VER);
-}
-const char * alcVerifyVersionStr = alcSTR_VER;
-#else
-extern bool alcVerifyVersion();
-extern char * alcVerifyVersionStr;
-#endif
-
 
 }
 
