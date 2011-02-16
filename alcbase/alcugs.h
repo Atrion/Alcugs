@@ -73,7 +73,6 @@
 
 #include "alcutil/alccfgtypes.h"
 #include "alcutil/alcos.h"
-#include "alcutil/conv_funs.h"
 #include "alcutil/useful.h"
 #include "alcutil/alcthread.h"
 #include "alcutil/alclog.h"

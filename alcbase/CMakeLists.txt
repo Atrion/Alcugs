@@ -11,7 +11,6 @@ set(ALCBASE_ALCUTIL_FILES
 	alcutil/alcos.cpp
 	alcutil/alcparser.cpp
 	alcutil/alcthread.cpp
-	alcutil/conv_funs.cpp
 	alcutil/md5.cpp
 	alcutil/rijndael.cpp
 	alcutil/useful.cpp)
