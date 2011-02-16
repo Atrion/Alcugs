@@ -24,11 +24,16 @@
 *                                                                              *
 *******************************************************************************/
 
-/* UNET 3 debbuging system */
+/** Alcugs logging system
+*/
 
 #ifndef __U_ALCLOG_H
 #define __U_ALCLOG_H
 #define __U_ALCLOG_H_ID $Id$
+
+#include "alctypes.h"
+
+#include <cstdlib>
 
 namespace alc {
 

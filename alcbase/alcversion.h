@@ -29,6 +29,8 @@
 #define __U_ALCVERSION_H
 #define __U_ALCVERSION_H_ID "$Id$"
 
+#include "alcxversion.h"
+
 namespace alc {
 
 /** \brief Returns short version info

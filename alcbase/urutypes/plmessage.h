@@ -24,19 +24,15 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
-*/
-
 #ifndef __U_PLMESSAGE_H
 #define __U_PLMESSAGE_H
 /* CVS tag - DON'T TOUCH*/
 #define __U_PLMESSAGE_H_ID "$Id$"
+
+#include "urubasetypes.h"
+#include "plbase.h"
+
+#include <vector>
 
 namespace alc {
 

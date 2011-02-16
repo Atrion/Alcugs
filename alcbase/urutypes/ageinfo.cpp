@@ -24,25 +24,19 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
-*/
-
 /* CVS tag - DON'T TOUCH*/
 #define __U_AGEINFO_ID "$Id$"
-
 //#define _DBG_LEVEL_ 10
+#include "alcdefs.h"
+#include "ageinfo.h"
 
-#include "alcugs.h"
+#include "alcmain.h"
+#include "alcexception.h"
+#include "alcutil/alcos.h"
+#include "urubasetypes.h"
+#include "alcutil/alcparser.h"
 
 #include <algorithm>
-
-#include "alcdebug.h"
 
 namespace alc {
 

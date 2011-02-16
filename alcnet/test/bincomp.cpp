@@ -26,9 +26,11 @@
  
 /** Tiny helper application to check whether two binary files are equal */
 
-#include<alcugs.h>
+#include <alcmain.h>
+#include <alclicense.h>
+#include <alcversion.h>
+#include <alcexception.h>
 #include <cstring>
-#include<alcdebug.h>
 
 using namespace alc;
 

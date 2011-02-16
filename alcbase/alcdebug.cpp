@@ -28,127 +28,34 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_DEGUB_ID "$Id$"
+#include "alcdefs.h"
+#include "alcdebug.h"
 
-#include "alcugs.h"
+#include "alctypes.h"
+#include "alcutil/alcthread.h"
 
 #include <cstdarg>
 
-#ifdef __MSVC__
-	#error MSVC debug support is outdated and buggy
-	#if 0
-	//this looks like crap, i know...
-	#include <stddef.h>
-	#include <stdarg.h>
-
-	typedef void(*_DBGorERR_pointer)(int a, char *msg, ...);
-
-	static int g_dbglvl;
-	static char *g_file;
-	#if (_MSC_VER > 1200)
-		static char *g_function; //only needed if MSVC Version > 6
-	#endif
-	static int g_line;
-	static int dbg_or_err; //0=>DBG, 1=>ERR
+namespace alc {
+	void alcPrintDbgHeader(int lvl, const char * b, const char * c, int d) {
+		fprintf(stderr,"DBG%i:%d:%s:%s:%i> ",lvl,alcGetSelfThreadId(),b,c,d);
+	}
 	
-
-	#if (_MSC_VER <= 1200)
-		//MSVC Version 6 or lower (doesn't support __FUNCTION__)
-
-		void _DBGorERR(int a, char *text, ...)
-		{
-			if(a<=g_dbglvl)
-			{
-				va_list args;
-				va_start(args, text);
-				fprintf(stderr,dbg_or_err?"ERR":"DBG");
-				fprintf(stderr,"%i:%s:%i> ",/*g_dbglvl*/ a,g_file,g_line);
-				vfprintf(stderr, text, args);
-				fflush(stderr);
-				va_end(args);
-			}
-		}
-
-		_DBGorERR_pointer _DBG_before(int dbglvl, char *file, int line)
-		{
-			g_dbglvl=dbglvl;
-			g_file=file;
-			g_line=line;
-			dbg_or_err = 0;
-			return &_DBGorERR;
-		}
-
-		_DBGorERR_pointer _ERR_before(int dbglvl, char *file, int line)
-		{
-			g_dbglvl=dbglvl;
-			g_file=file;
-			g_line=line;
-			dbg_or_err = 1;
-			return &_DBGorERR;
-		}
-
-		char * __dbg_where(const char * a,const char * b,int d) {
-			static char buffer[500];
-			snprintf(buffer,sizeof(buffer),"%s:%i:%s",b,d,a);
-			return buffer;
-		}
-
-	#else
-		//MSVC Version > 6 (should support __FUNCTION__)
-
-		void _DBGorERR(int a, char *text, ...)
-		{
-			if(a<=g_dbglvl)
-			{
-				va_list b;
-				va_start(b,text);
-				fprintf(stderr,dbg_or_err?"ERR":"DBG");
-				fprintf(stderr,"%i:%s:%s:%i> ",/*g_dbglvl*/ a,g_file,g_function,g_line);
-				vfprintf(stderr, text, b);
-				fflush(stderr);
-				va_end(b);
-			}
-		}
-
-		_DBGorERR_pointer _DBG_before(int dbglvl, char *file, char *function, int line)
-		{
-			g_dbglvl=dbglvl;
-			g_file=file;
-			g_function=function;
-			g_line=line;
-			dbg_or_err = 0;
-			return &_DBGorERR;
-		}
-
-		_DBGorERR_pointer _ERR_before(int dbglvl, char *file, char *function, int line)
-		{
-			g_dbglvl=dbglvl;
-			g_file=file;
-			g_function=function;
-			g_line=line;
-			dbg_or_err = 1;
-			return &_DBGorERR;
-		}
-
-		char * __dbg_where(const char * a,const char * b,const char * c,int d) {
-			static char buffer[500];
-			snprintf(buffer,sizeof(buffer),"%s:%s:%i:%s",b,c,d,a);
-			return buffer;
-		}
-
-	#endif //(_MSC_VER <= 1200)
-	#endif
-#else
-	//no MSVC
-
-	alc::tString __dbg_where(const char * b,const char * c,int d,const char * a,...) {
+	tString alcDbgWhere(const char * b,const char * c,int d,const char * a,...) {
 		va_list ap;
-		alc::tString str;
+		tString str;
 		va_start(ap,a);
-		str.printf("%d:%s:%s:%i:",alc::alcGetSelfThreadId(),b,c,d);
+		str.printf("%d:%s:%s:%i:",alcGetSelfThreadId(),b,c,d);
 		str.vprintf(a,ap);
 		va_end(ap);
 		return str;
 	}
+	
+	void alcDbgPrntAbort(const char * b,const char * c,int d,const char * a) {
+		tString where = alcDbgWhere(b, c, d, a);
+		fprintf(stderr,"ABORT: %s\n",where.c_str());
+	}
+	
+}
 
-#endif
 

@@ -26,16 +26,17 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCVERSION_ID "$Id$"
-
 //#define _DBG_LEVEL_ 10
-#include <cstring>
-#include "alcugs.h"
+#include "alcdefs.h"
+#include "alcversion.h"
+
+#include "alcmain.h"
+#include "alclicense.h"
 
 #ifndef __WIN32__
 #include <sys/utsname.h>
 #endif
-
-#include "alcdebug.h"
+#include <cstring>
 
 namespace alc {
 

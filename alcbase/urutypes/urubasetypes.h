@@ -24,14 +24,13 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Alcugs Basic data types, and buffer classes.
-*/
-
 #ifndef __U_URUBASETYPES_H
 #define __U_URUBASETYPES_H
 /* CVS tag - DON'T TOUCH*/
 #define __U_URUBASETYPES_H_ID "$Id$"
+
+#include "alctypes.h"
+#include "uruconsts.h"
 
 namespace alc {
 

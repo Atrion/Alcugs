@@ -33,8 +33,8 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCMAIN_H_ID "$Id$"
 
-#include "alcversion.h"
-#include "alctypes.h"
+#include "alcutil/alclog.h"
+#include "alcutil/alccfgtypes.h"
 
 namespace alc {
 

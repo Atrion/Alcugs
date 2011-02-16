@@ -33,11 +33,15 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCTYPES_H_ID "$Id$"
 
-
 #include <cstdio>
 
-namespace alc {
+// FIXME move to useful (when the types below are gone)
+#define FORBID_CLASS_COPY(name) private: \
+	name(const name &); \
+	void operator=(const name &);
 
+namespace alc {
+	
 //basic types
 typedef unsigned char Byte;
 typedef char SByte;
@@ -432,5 +436,7 @@ tTime operator- (const tTime &a,const tTime &b);
 
 
 } //End alc namespace
+
+#include "alcutil/useful.h" // FIXME move this up later on
 
 #endif
