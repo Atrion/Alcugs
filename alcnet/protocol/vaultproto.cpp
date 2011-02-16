@@ -35,17 +35,20 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_VAULTROUTER_ID "$Id$"
-
 //#define _DBG_LEVEL_ 10
+#include <alcdefs.h>
+#include "vaultproto.h"
 
-#include "alcnet.h"
-#include "protocol/ext-protocol.h"
+#include "netlog.h"
+#include "netsession.h"
+#include "protocol.h"
 #include <alcutil/alcos.h>
+#include <alcutil/alclog.h>
+#include <urutypes/plbase.h>
+
 #include <cstring>
-////extra includes
 #include <sys/stat.h>
 
-#include <alcdebug.h>
 
 namespace alc {
 
@@ -458,6 +461,9 @@ namespace alc {
 		buf.rewind();
 		memcpy(data, buf.read(size), size);
 	}
+	
+	tvCreatableStream::~tvCreatableStream()
+	 { if (data) free(data); }
 	
 	void tvCreatableStream::store(tBBuf &t)
 	{

@@ -37,9 +37,6 @@
 namespace alc {
 
 	////DEFINITIONS
-	/**
-		If we want to do it well and nice, we should add pre and post conditions here.
-	*/
 	class tpMessage : public tpObject {
 	public:
 		tpMessage(U16 type, bool incomplete = false) : tpObject(type, incomplete) {}

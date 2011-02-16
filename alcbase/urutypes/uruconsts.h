@@ -25,7 +25,7 @@
 *******************************************************************************/
 
 /* Globally needed Uru constants */
-/* Most of the vault constants can be found in include/alcnet/protocol/vaultproto.h */
+/* Most of the vault constants can be found in alcnet/protocol/vaultproto.h */
 
 #ifndef __U_PROT_H
 #define __U_PROT_H

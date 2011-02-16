@@ -29,7 +29,11 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_TRACKINGMSG_H_ID "$Id$"
 
+#include "gamemsg.h"
+
 namespace alc {
+	
+	class tmCustomVaultFindAge;
 
 	////DEFINITIONS
 	class tmCustomSetGuid : public tmMsgBase {

@@ -24,26 +24,19 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
-*/
-
 /* CVS tag - DON'T TOUCH*/
 #define __U_VAULTSERVER_ID "$Id$"
-
 //#define _DBG_LEVEL_ 10
-
-#include <alcnet.h>
-#include <iostream>
-////extra includes
+#include <alcdefs.h>
 #include "vaultserver.h"
 
-#include <alcdebug.h>
+#include <netlog.h>
+#include <protocol/umsgbasic.h>
+#include <protocol/trackingmsg.h>
+#include <alcmain.h>
+
+#include <iostream>
+
 
 namespace alc {
 	

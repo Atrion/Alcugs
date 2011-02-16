@@ -24,25 +24,16 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
-*/
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_UNETSERVERBASE_ID "$Id$"
-
 //#define _DBG_LEVEL_ 10
+#include <alcdefs.h>
+#include "unetserverbase.h"
 
-#include "alcnet.h"
+#include "protocol/umsgbasic.h"
+#include <alcutil/alclog.h>
 
-////extra includes
-
-#include <alcdebug.h>
 
 namespace alc {
 

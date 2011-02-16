@@ -30,6 +30,9 @@
 #define __U_VAULTBACKEND_H_ID "$Id$"
 
 #include "vaultdb.h"
+#include <netsessionmgr.h>
+#include <protocol/vaultmsg.h>
+#include <alcutil/alclog.h>
 
 #include <list>
 

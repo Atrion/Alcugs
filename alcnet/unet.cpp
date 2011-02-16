@@ -30,10 +30,13 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_UNET_ID "$Id$"
+//#define _DBG_LEVEL_ 10
+#include <alcdefs.h>
+#include "unet.h"
 
-//#define _DBG_LEVEL_ 3
-
-#include "alcnet.h"
+#include "netsessionmgr.h"
+#include "netlog.h"
+#include <alcmain.h>
 
 #include <fcntl.h>
 #include <sys/time.h>
@@ -41,7 +44,7 @@
 #include <cerrno>
 #include <unistd.h>
 #include <cstring>
-#include <alcdebug.h>
+#include <netdb.h>
 
 // Some of the macros implie an old-style cast
 #pragma GCC diagnostic ignored "-Wold-style-cast"
@@ -695,6 +698,9 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 	delete mbuf;
 	DBG(8,"returning from uru_net_send RET:%i\n",msize);
 }
+
+void tUnet::send(tmMsgBase &m, U32 delay)
+	{ m.getSession()->send(m, delay); }
 
 /**
 	Dumps all data structures, with the address and the contents in hex

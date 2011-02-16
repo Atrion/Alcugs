@@ -24,16 +24,17 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	URUNET 3+
-*/
-
 #ifndef __U_NETSESSIONMGR_H
 #define __U_NETSESSIONMGR_H
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETSESSIONMGR_H_ID "$Id$"
 
+#include "netsession.h"
+
 namespace alc {
+	
+	class tUnet;
+	class tUnetMsg;
 
 class tNetSessionIte {
 public:

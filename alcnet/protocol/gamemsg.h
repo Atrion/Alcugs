@@ -24,26 +24,19 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
-*/
-
 #ifndef __U_FILENAME_H
 #define __U_FILENAME_H
 /* CVS tag - DON'T TOUCH*/
 #define __U_FILENAME_H_ID "$Id$"
 
+#include "protocol.h"
+
 namespace alc {
+	
+	class tpLoadCloneMsg;
+	class tPageInfo;
 
 	////DEFINITIONS
-	/**
-		If we want to do it well and nice, we should add pre and post conditions here.
-	*/
 	
 	// Helper class for the member list messages
 	class tMemberInfo : public tBaseType {

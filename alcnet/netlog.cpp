@@ -30,18 +30,11 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETLOG_ID "$Id$"
-
 //#define _DBG_LEVEL_ 10
+#include <alcdefs.h>
+#include "netlog.h"
 
-#include "alcnet.h"
-
-#ifndef __WIN32__
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
-#endif
-
-#include <alcdebug.h>
 
 namespace alc {
 

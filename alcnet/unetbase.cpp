@@ -30,17 +30,21 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_UNETBASE_ID "$Id$"
-
 //#define _DBG_LEVEL_ 10
+#include <alcdefs.h>
+#include "unetbase.h"
 
-#include "alcnet.h"
+#include "unetmain.h"
+#include "netlog.h"
+#include "netsessionmgr.h"
+#include "protocol/umsgbasic.h"
 
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <cassert>
+#include <netdb.h>
 
-#include <alcdebug.h>
 
 namespace alc {
 

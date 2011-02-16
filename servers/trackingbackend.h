@@ -38,16 +38,17 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_TRACKINGBACKEND_H_ID "$Id$"
 
+#include <protocol/trackingmsg.h>
+#include <netsession.h>
+#include <netsessionmgr.h>
+#include <alcutil/alclog.h>
 
 #include <list>
 
 namespace alc {
 
 	////DEFINITIONS
-	/**
-		If we want to do it well and nice, we should add pre and post conditions here.
-	*/
-	
+	class tUnetBase;
 		
 	class tTrackingData : public tNetSessionData {
 	public:

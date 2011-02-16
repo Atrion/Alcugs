@@ -24,26 +24,17 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
-*/
-
 /* CVS tag - DON'T TOUCH*/
 #define __U_AUTHSERVER_ID "$Id$"
 
 //#define _DBG_LEVEL_ 10
 
-#include <alcnet.h>
+#include <unetserverbase.h>
 
 ////extra includes
 #include "authserver.h"
-
-#include <alcdebug.h>
+#include <protocol/authmsg.h>
+#include <netlog.h>
 
 namespace alc {
 	

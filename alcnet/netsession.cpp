@@ -30,12 +30,17 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETSESSION_ID "$Id$"
+//#define _DBG_LEVEL_ 10
+#include <alcdefs.h>
+#include "netsession.h"
 
-//#define _DBG_LEVEL_ 3
+#include "netsessionmgr.h"
+#include "unet.h"
+#include "netlog.h"
+#include "protocol/umsgbasic.h"
+#include <alcutil/alclog.h>
 
-#include "alcnet.h"
 #include <cassert>
-#include <alcdebug.h>
 
 namespace alc {
 

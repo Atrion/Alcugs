@@ -35,18 +35,19 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_AUTHBACKEND_ID "$Id$"
-
 //#define _DBG_LEVEL_ 10
+#include <alcdefs.h>
+#include "authbackend.h"
 
-#include <alcnet.h>
 #include <unistd.h>
 #include <ctime>
 #include <cstring>
+#include <alcmain.h>
 ////extra includes
 #include <alcutil/alcparser.h>
+#include <netdb.h>
 #include "authbackend.h"
 
-#include <alcdebug.h>
 
 namespace alc {
 	

@@ -39,13 +39,11 @@
 #define __U_TRACKINGSERVER_H_ID "$Id$"
 
 #include "trackingbackend.h"
+#include <unetserverbase.h>
 
 namespace alc {
 
 	////DEFINITIONS
-	/**
-		If we want to do it well and nice, we should add pre and post conditions here.
-	*/
 
 	class tUnetTrackingServer : public tUnetServerBase {
 	public:

@@ -39,15 +39,16 @@
 #define __U_GAMESERVER_H_ID "$Id$"
 
 #include "sdl.h"
+#include <netsession.h>
+#include <unetlobbyserverbase.h>
 
 namespace alc {
 
 	class tmGameMessageDirected;
+	class tMemberInfo;
+	class tmGameMessage;
 
 	////DEFINITIONS
-	/**
-		If we want to do it well and nice, we should add pre and post conditions here.
-	*/
 	class tGameData : public tNetSessionData {
 	public:
 		tGameData(const tUruObject &obj, tNetSession *u) : obj(obj) { isHidden = false; this->u = u; }

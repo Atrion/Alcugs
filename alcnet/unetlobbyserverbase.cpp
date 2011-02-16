@@ -24,26 +24,23 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
-*/
-
 /* CVS tag - DON'T TOUCH*/
 #define __U_UNETLOBBYSERVERBASE_ID "$Id$"
-
 //#define _DBG_LEVEL_ 10
+#include <alcdefs.h>
+#include "unetlobbyserverbase.h"
+
+#include "protocol/umsgbasic.h"
+#include "protocol/trackingmsg.h"
+#include "protocol/lobbybasemsg.h"
+#include "protocol/authmsg.h"
+#include "protocol/vaultmsg.h"
+#include "protocol/vaultproto.h"
+#include "netlog.h"
+#include <alcmain.h>
+
 #include <cstring>
-#include "alcnet.h"
-#include "protocol/ext-protocol.h"
 
-////extra includes
-
-#include <alcdebug.h>
 
 namespace alc {
 

@@ -35,15 +35,11 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_TRACKINGSERVER_ID "$Id$"
-
 //#define _DBG_LEVEL_ 10
-
-#include <alcnet.h>
-
-////extra includes
+#include <alcdefs.h>
 #include "trackingserver.h"
 
-#include <alcdebug.h>
+#include <alcmain.h>
 
 namespace alc {
 	

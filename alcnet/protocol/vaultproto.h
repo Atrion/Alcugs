@@ -38,7 +38,15 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_VAULTROUTER_H_ID "$Id$"
 
+#include <urutypes/urubasetypes.h>
+
+#include <vector>
+
 namespace alc {
+	
+	class tLog;
+	class tvItem;
+	class tNetSession;
 
 //vault node flag masks                             (Vault Manager names)
 #define MIndex     0x00000001 //00000001 (flagB 1) [Index]
@@ -181,7 +189,6 @@ namespace alc {
 	const char *alcVaultGetNodeType(Byte type);
 	const char *alcVaultGetFolderType(U32 type);
 	
-	class tvItem;
 
 	////DEFINITIONS
 	class tvBase : public tBaseType {
@@ -289,7 +296,7 @@ namespace alc {
 		tvCreatableStream(Byte id, tvBase **dataList, int nData);
 		tvCreatableStream(Byte id, tMBuf &buf);
 		tvCreatableStream(Byte id) : tvBase() { this->id = id; size = 0; data = NULL; }
-		virtual ~tvCreatableStream(void) { if (data) free(data); }
+		virtual ~tvCreatableStream(void);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
