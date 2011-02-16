@@ -24,16 +24,21 @@
 *                                                                              *
 *******************************************************************************/
 
-//#define _DBG_LEVEL_ 10
-
 #undef NDEBUG // always enable asserts etc. in tests
 //#define _DBG_LEVEL_ 10
+#include <alcdefs.h>
 
-#include <alcugs.h>
+#include <alctypes.h>
+#include <alcexception.h>
+#include <alcutil/alcparser.h>
+#include <alcutil/alcos.h>
+#include <alcutil/alclog.h>
+#include <alcmain.h>
+#include <urutypes/urubasetypes.h>
+
 #include <iostream>
 #include <cassert>
 #include <cstring>
-#include <alcdebug.h>
 
 using namespace alc;
 

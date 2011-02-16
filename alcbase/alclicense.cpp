@@ -27,13 +27,9 @@
 // License file
 
 #define __U_ALCLICENSE_ID "$Id$"
-
 //#define _DBG_LEVEL_ 10
-
-#include "alcugs.h"
-
-
-#include "alcdebug.h"
+#include "alcdefs.h"
+#include "alclicense.h"
 
 namespace alc {
 

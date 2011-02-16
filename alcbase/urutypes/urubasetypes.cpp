@@ -24,26 +24,21 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Alcugs Basic data types, and buffer classes.
-*/
-
 /* CVS tag - DON'T TOUCH*/
 #define __U_URUBASICTYPES_ID "$Id$"
-
 //#define _DBG_LEVEL_ 10
-#include <cstring>
-#include "alcugs.h"
+#include "alcdefs.h"
+#include "urubasetypes.h"
 
 namespace wdys {
-#include "urutypes/whatdoyousee.h"
+	#include "urutypes/whatdoyousee.h"
 }
-
 #include "alcutil/rijndael.h"
+#include "alcexception.h"
+#include "plbase.h"
 
-//alctypes already included in alcugs.h
+#include <cstring>
 
-#include "alcdebug.h"
 
 namespace alc {
 

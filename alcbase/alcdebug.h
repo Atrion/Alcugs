@@ -39,12 +39,16 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCDEBUG_H_ID "$Id$"
 
-#include "alctypes.h" // for tString
-
+namespace alc {
+	class tString;
+	
+	// functions doing the actual work
+	void alcPrintDbgHeader(int lvl, const char * b, const char * c, int d);
+	tString alcDbgWhere(const char * b,const char * c,int d,const char * a,...);
+	void alcDbgPrntAbort(const char * b,const char * c,int d,const char * a);
+}
 
 #ifndef NDEBUG
-	#include "alcutil/alcthread.h"
-	
 	// debugging enabled
 
 	// make sure _DBG_LEVEL_ is set
@@ -53,7 +57,7 @@
 	#endif //_DBG_LEVEL_
 
 	// make DBG macros
-	#define DBG(a,...)  if((a)<=_DBG_LEVEL_) { fprintf(stderr,"DBG%i:%d:%s:%s:%i> ",a,alcGetSelfThreadId(),__FILE__,__FUNCTION__,__LINE__);\
+	#define DBG(a,...)  if((a)<=_DBG_LEVEL_) { alcPrintDbgHeader(a,__FILE__,__FUNCTION__,__LINE__);\
 	fprintf(stderr, __VA_ARGS__); fflush(stderr); }
 
 	#define DBGM(a,...)  if((a)<=_DBG_LEVEL_) { fprintf(stderr, __VA_ARGS__); fflush(stderr); }
@@ -73,11 +77,11 @@
 #endif //NDEBUG
 
 // stuff which is always the same (with and without debug)
-#define _WHERE(...) __dbg_where(__FILE__,__FUNCTION__,__LINE__,__VA_ARGS__)
-alc::tString __dbg_where(const char * b,const char * c,int d,const char * a,...);
+#define _WHERE(...) alcDbgWhere(__FILE__,__FUNCTION__,__LINE__,__VA_ARGS__)
 
-#define _DIE(a) { fprintf(stderr,"ABORT: %s\n",_WHERE(a).c_str()); abort(); }
+#define _DIE(a) { alcDbgPrntAbort(__FILE__, __FUNCTION__, __LINE__, a); abort(); }
 //NOTE: _DIE must always stop the execution of the program, if not, unexpected results
 // that could end on massive data loss could happen.
+	
 
 #endif //__U_ALCDEBUG_H

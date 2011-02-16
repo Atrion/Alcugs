@@ -45,6 +45,8 @@
 #include <sys/stat.h>
 #include "sdl.h"
 #include "gameserver.h"
+#include <alcutil/alcos.h>
+#include <alcutil/alcparser.h>
 
 #include <alcdebug.h>
 

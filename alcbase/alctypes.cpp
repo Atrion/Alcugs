@@ -30,27 +30,25 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCTYPES_ID "$Id$"
+//#define _DBG_LEVEL_ 10
+#include "alcdefs.h"
+#include "alctypes.h"
 
-//#define _DBG_LEVEL_ 6
+#include "alcexception.h"
+namespace md5 {
+#include "alcutil/md5.h"
+}
 
-#include "alcugs.h"
 #include <iostream>
 #include <cerrno>
 #include <cstdarg>
 #include <cstring>
+#include <cstdlib>
 
 
 namespace zlib {
 #include <zlib.h>
 }
-
-namespace md5 {
-#include "alcutil/md5.h"
-}
-
-//alctypes already included in alcugs.h
-
-#include "alcdebug.h"
 
 namespace alc {
 

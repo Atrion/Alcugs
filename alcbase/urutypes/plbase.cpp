@@ -24,25 +24,14 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
-*/
-
 /* CVS tag - DON'T TOUCH*/
 #define __U_PLBASE_ID "$Id$"
-
 //#define _DBG_LEVEL_ 10
+#include "alcdefs.h"
+#include "plbase.h"
 
-#include "alcugs.h"
-
-////extra includes
-
-#include "alcdebug.h"
+#include "plmessage.h"
+#include "alcexception.h"
 
 namespace alc {
 

@@ -24,14 +24,21 @@
 *                                                                              *
 *******************************************************************************/
 
+/**
+	Useful helper functions
+*/
+
 #ifndef __U_USEFUL_H
 #define __U_USEFUL_H
 /* CVS tag - DON'T TOUCH*/
 #define __U_USEFUL_H_ID "$Id$"
 
+#include "alctypes.h"
+
 namespace alc {
 	
 	class tString;
+	class tMBuf;
 
 	tString alcConsoleAsk();
 	bool alcGetLoginInfo(tString argv,tString * username,tString * hostname,U16 * port); // username may be NULL, the rest not

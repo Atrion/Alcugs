@@ -33,6 +33,8 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCCFGTYPES_H_ID "$Id$"
 
+#include "alctypes.h"
+
 namespace alc {
 
 class tConfigKey;

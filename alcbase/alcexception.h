@@ -33,9 +33,10 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCEXCEPTION_H_ID "$Id$"
 
+#include "alctypes.h"
+
 namespace alc {
 
-#define txExcLevels 20
 
 /** \brief Exception, Base virtual class. */
 class txBase {

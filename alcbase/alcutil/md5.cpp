@@ -58,6 +58,7 @@
 
 #include "alcconfig.h"
 #include "alcutil/md5.h"
+
 #include <string.h>
 
 // This is a 3rd-party file, ingore warnings

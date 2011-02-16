@@ -25,18 +25,15 @@
 *******************************************************************************/
 
 /**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
+	Threading classes
 */
 
 #ifndef __U_ALCTHREAD_H
 #define __U_ALCTHREAD_H
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCTHREAD_H_ID "$Id$"
+
+#include "alctypes.h"
 
 namespace alc {
 

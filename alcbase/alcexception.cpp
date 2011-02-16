@@ -30,27 +30,27 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCEXCEPTION_ID "$Id$"
-
 //#define _DBG_LEVEL_ 10
+#include "alcdefs.h"
+#include "alcexception.h"
 
-#include "alcugs.h"
+#include "alcmain.h"
+#include "alcversion.h"
+#include "alcutil/alcthread.h"
 
 #include <unistd.h>
 #include <ctime>
+#include <cstdlib>
 
-#if !(defined(__WIN32__) or defined(__CYGWIN__)) and defined(HAVE_EXECINFO_H)
-//namespace std {
-//extern "C" {
-#include <execinfo.h>
-//}
-//}
+#if defined(HAVE_EXECINFO_H)
+	#include <execinfo.h>
 #endif
 
-//alcexception already included in alcugs.h
-
-#include "alcdebug.h"
 
 namespace alc {
+	
+	
+const int txExcLevels = 20;
 
 
 //Exceptions

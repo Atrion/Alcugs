@@ -43,6 +43,7 @@
 #include <ctime>
 #include <cstring>
 ////extra includes
+#include <alcutil/alcparser.h>
 #include "authbackend.h"
 
 #include <alcdebug.h>

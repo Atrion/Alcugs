@@ -25,12 +25,7 @@
 *******************************************************************************/
 
 /**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
+	Parsers for config files
 */
 
 #ifndef __U_ALCPARSER_H
@@ -38,7 +33,11 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCPARSER_H_ID "$Id$"
 
+#include "alctypes.h"
+
 namespace alc {
+	
+	class tConfig;
 
 class tStringTokenizer {
 public:

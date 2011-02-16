@@ -25,28 +25,22 @@
 *******************************************************************************/
 
 /**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
+	Threading classes
 */
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCTHREAD_ID "$Id$"
-
 //#define _DBG_LEVEL_ 10
+#include "alcdefs.h"
+#include "alcthread.h"
 
-#include "alcugs.h"
+#include <cerrno>
 
 #ifdef ENABLE_THREADS
 #include <pthread.h>
 #endif
 
-#include <cerrno>
 
-#include "alcdebug.h"
 
 namespace alc {
 

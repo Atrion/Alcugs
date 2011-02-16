@@ -24,25 +24,20 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
-*/
-
 #ifndef __U_AGEINFO_H
 #define __U_AGEINFO_H
 /* CVS tag - DON'T TOUCH*/
 #define __U_AGEINFO_H_ID "$Id$"
+
+#include "alctypes.h"
 
 #include <vector>
 #include <map>
 
 
 namespace alc {
+	
+	class tConfigVal;
 
 	////DEFINITIONS
 	class tPageInfo

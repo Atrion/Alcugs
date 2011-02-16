@@ -30,13 +30,14 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCCFGTYPES_ID "$Id$"
-
 //#define _DBG_LEVEL_ 5
+#include "alcdefs.h"
+#include "alccfgtypes.h"
+
+#include "alcexception.h"
+
 #include <cstdlib>
 #include <cstring>
-#include "alcugs.h"
-
-#include "alcdebug.h"
 
 namespace alc {
 

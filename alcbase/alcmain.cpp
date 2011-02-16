@@ -30,16 +30,17 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCMAIN_ID "$Id$"
-
 //#define _DBG_LEVEL_ 10
+#include "alcdefs.h"
+#include "alcmain.h"
 
-#include "alcugs.h"
+#include "alcutil/alcthread.h"
+#include "alcutil/alcparser.h"
+#include "alcexception.h"
 
 #ifndef __WIN32__
 #include <sys/wait.h>
 #endif
-
-#include "alcdebug.h"
 
 // We are using SIG_DFL here which implies an old-style cast
 #pragma GCC diagnostic ignored "-Wold-style-cast"

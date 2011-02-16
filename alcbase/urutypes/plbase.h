@@ -24,19 +24,12 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
-*/
-
 #ifndef __U_PLBASE_H
 #define __U_PLBASE_H
 /* CVS tag - DON'T TOUCH*/
 #define __U_PLBASE_H_ID "$Id$"
+
+#include "alctypes.h"
 
 namespace alc {
 

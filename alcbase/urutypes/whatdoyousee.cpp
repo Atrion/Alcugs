@@ -1,9 +1,9 @@
 
 #define __U_WHATDOYOUSEE_ID "$Id$"
+#include "alcdefs.h"
+#include "whatdoyousee.h"
 
-
-#include "urutypes/whatdoyousee.h"
-#include "alcugs.h"
+#include "alcutil/useful.h"
 
 //xTEA (Tiny encryption algorithm)
 //Decode function, thanks to Anonymous54321 for it

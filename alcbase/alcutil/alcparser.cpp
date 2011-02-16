@@ -25,25 +25,20 @@
 *******************************************************************************/
 
 /**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
+	Parsers for config files
 */
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCPARSER_ID "$Id$"
-
 //#define _DBG_LEVEL_ 10
+#include "alcdefs.h"
+#include "alcparser.h"
 
-#include "alcugs.h"
+#include "alccfgtypes.h"
+#include "alcexception.h"
 
-////extra includes
 #include <iostream>
 
-#include "alcdebug.h"
 
 namespace alc {
 

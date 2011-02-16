@@ -24,21 +24,23 @@
 *                                                                              *
 *******************************************************************************/
 
-#ifndef __U_USEFUL_
-#define __U_USEFUL_
+/**
+	Useful helper functions
+*/
+
 /* CVS tag - DON'T TOUCH*/
 #define __U_USEFUL_ID "$Id$"
+//#define _DBG_LEVEL_ 10#include "alcdefs.h"
+#include "alcdefs.h"
+#include "useful.h"
 
-//#define _DBG_LEVEL_ 10
+#include "alcexception.h"
 
-#include "alcugs.h"
 #include <ctime>
 #include <cstring>
 #include <sys/time.h>
 #include <fcntl.h>
 #include <cassert>
-
-#include "alcdebug.h"
 
 namespace alc {
 
@@ -301,6 +303,4 @@ U16 alcParseKey(tString *t) {
 
 
 }
-
-#endif
 

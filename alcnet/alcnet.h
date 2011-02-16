@@ -33,7 +33,20 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCNET_H_ID "$Id$"
 
-#include <alcugs.h>
+#include "alcdefs.h"
+//alcugs includes
+#include "alctypes.h"
+#include "alcexception.h"
+#include "alcversion.h"
+#include "alclicense.h"
+
+#include "urutypes/uruconsts.h"
+#include "urutypes/urubasetypes.h"
+#include "urutypes/ageinfo.h"
+#include "urutypes/plbase.h"
+#include "urutypes/plmessage.h"
+
+#include "alcmain.h"
 
 // system includes
 #ifndef __WIN32__

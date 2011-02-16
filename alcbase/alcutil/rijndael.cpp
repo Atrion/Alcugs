@@ -34,6 +34,7 @@
 
 #define _RIJNDAEL_CPP_
 
+#include "alcconfig.h"
 #include "alcutil/rijndael.h"
 
 #include <stdio.h>
