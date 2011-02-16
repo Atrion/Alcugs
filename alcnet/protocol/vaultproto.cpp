@@ -40,7 +40,7 @@
 
 #include "alcnet.h"
 #include "protocol/ext-protocol.h"
-
+#include <cstring>
 ////extra includes
 #include <sys/stat.h>
 

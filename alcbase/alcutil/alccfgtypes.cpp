@@ -32,7 +32,8 @@
 #define __U_ALCCFGTYPES_ID "$Id$"
 
 //#define _DBG_LEVEL_ 5
-
+#include <cstdlib>
+#include <cstring>
 #include "alcugs.h"
 
 #include "alcdebug.h"

@@ -29,7 +29,7 @@
 #undef NDEBUG // always enable asserts etc. in tests
 
 #include <alcugs.h>
-
+#include <iostream>
 #include <alcdebug.h>
 
 using namespace alc;

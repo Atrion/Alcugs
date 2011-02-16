@@ -65,24 +65,6 @@
 	name(const name &); \
 	void operator=(const name &);
 
-//std includes
-#include <iostream>
-#include <vector>
-#include <map>
-#include <cstdio>
-#include <cstring>
-#include <csignal>
-#include <cstdlib>
-#include <cassert>
-
-//system includes
-
-#if defined(__WIN32__) or defined(__CYGWIN__)
-#include "alcutil/windoze.h"
-#endif
-
-#include <dirent.h>
-
 //alcugs includes
 #include "alctypes.h"
 #include "alcexception.h"

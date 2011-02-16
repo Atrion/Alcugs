@@ -28,7 +28,7 @@
 #define __U_TRACKINGMSG_ID "$Id$"
 
 //#define _DBG_LEVEL_ 10
-
+#include <cstring>
 #include "alcnet.h"
 #include "protocol/ext-protocol.h"
 

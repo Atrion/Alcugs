@@ -28,7 +28,7 @@
 #define __U_ALCVERSION_ID "$Id$"
 
 //#define _DBG_LEVEL_ 10
-
+#include <cstring>
 #include "alcugs.h"
 
 #ifndef __WIN32__

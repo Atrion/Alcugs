@@ -37,10 +37,10 @@
 #define __U_LOBBYSERVER_ID "$Id$"
 
 //#define _DBG_LEVEL_ 10
-
+#include <cstring>
 #include <alcnet.h>
 #include <protocol/ext-protocol.h>
-
+#include <unistd.h>
 ////extra includes
 #include "lobbyserver.h"
 

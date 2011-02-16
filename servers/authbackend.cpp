@@ -39,7 +39,9 @@
 //#define _DBG_LEVEL_ 10
 
 #include <alcnet.h>
-
+#include <unistd.h>
+#include <ctime>
+#include <cstring>
 ////extra includes
 #include "authbackend.h"
 

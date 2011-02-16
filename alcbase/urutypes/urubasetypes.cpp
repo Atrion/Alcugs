@@ -32,7 +32,7 @@
 #define __U_URUBASICTYPES_ID "$Id$"
 
 //#define _DBG_LEVEL_ 10
-
+#include <cstring>
 #include "alcugs.h"
 
 namespace wdys {
