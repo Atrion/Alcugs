@@ -24,15 +24,6 @@
 *                                                                              *
 *******************************************************************************/
 
-/**
-	Description:
-		This does this, and that.
-	ChangeLog:
-		Initial
-	Bugs:
-		Several
-*/
-
 #ifndef __U_VAULTSERVER_H
 #define __U_VAULTSERVER_H
 /* CVS tag - DON'T TOUCH*/
