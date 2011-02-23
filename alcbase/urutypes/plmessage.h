@@ -36,7 +36,6 @@
 
 namespace alc {
 
-	////DEFINITIONS
 	class tpMessage : public tpObject {
 	public:
 		tpMessage(U16 type, bool incomplete = false) : tpObject(type, incomplete) {}

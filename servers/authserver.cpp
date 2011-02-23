@@ -26,13 +26,10 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_AUTHSERVER_ID "$Id$"
-
 //#define _DBG_LEVEL_ 10
-
-#include <unetserverbase.h>
-
-////extra includes
+#include <alcdefs.h>
 #include "authserver.h"
+
 #include <protocol/authmsg.h>
 #include <netlog.h>
 
@@ -41,7 +38,6 @@ namespace alc {
 	const char *alcNetName = "Auth";
 	tUnetServerBase *alcServerInstance(void) { return new tUnetAuthServer(); }
 
-	////IMPLEMENTATION
 	int tUnetAuthServer::onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u)
 	{
 		int ret = tUnetServerBase::onMsgRecieved(msg, u); // first let tUnetServerBase process the message

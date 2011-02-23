@@ -44,7 +44,6 @@ namespace alc {
 	const char *alcNetName = "Lobby";
 	tUnetServerBase *alcServerInstance(void) { return new tUnetLobbyServer(); }
 
-	////IMPLEMENTATION
 	tUnetLobbyServer::tUnetLobbyServer(void) : tUnetLobbyServerBase(KLobby)
 	{
 		serverName = "Lobby";

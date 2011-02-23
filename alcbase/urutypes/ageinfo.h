@@ -39,7 +39,6 @@ namespace alc {
 	
 	class tConfigVal;
 
-	////DEFINITIONS
 	class tPageInfo
 	{
 	public:

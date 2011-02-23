@@ -36,8 +36,6 @@
 #include <vector>
 
 namespace alc {
-
-	////DEFINITIONS
 	class tSdlStruct;
 	class tSdlStructVar;
 	class tSdlStateBinary;

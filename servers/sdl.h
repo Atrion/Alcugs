@@ -29,16 +29,16 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_SDL_H_ID "$Id$"
 
+#include "sdlbinary.h"
+
 #include <protocol/gamemsg.h>
 #include <alcutil/alclog.h>
 
 #include <list>
 #include <vector>
-#include "sdlbinary.h"
 
 namespace alc {
 
-	////DEFINITIONS
 	class tmLoadClone;
 	class tUnetGameServer;
 	class tAgeInfo;

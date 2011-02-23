@@ -36,7 +36,6 @@
 
 namespace alc {
 
-	////IMPLEMENTATION
 	tUnetServerBase::tUnetServerBase(Byte whoami) : tUnetBase(whoami)
 	{ }
 	

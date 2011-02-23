@@ -33,7 +33,6 @@
 
 namespace alc {
 
-////DEFINITIONS
 class tUnetBase;
 
 class tAlcUnetMain : public tAlcMain {

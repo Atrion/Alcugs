@@ -38,8 +38,6 @@ namespace alc {
 	
 	class tvMessage;
 
-	////DEFINITIONS
-
 class tUnetLobbyServerBase : public tUnetServerBase {
 public:
 	tUnetLobbyServerBase(Byte whoami);

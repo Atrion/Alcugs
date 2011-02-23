@@ -35,7 +35,6 @@ namespace alc {
 	
 	class tmCustomVaultFindAge;
 
-	////DEFINITIONS
 	class tmCustomSetGuid : public tmMsgBase {
 	public:
 		tmCustomSetGuid(tNetSession *u);

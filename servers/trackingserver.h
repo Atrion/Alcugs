@@ -30,11 +30,11 @@
 #define __U_TRACKINGSERVER_H_ID "$Id$"
 
 #include "trackingbackend.h"
+
 #include <unetserverbase.h>
+#include <netsessionmgr.h>
 
 namespace alc {
-
-	////DEFINITIONS
 
 	class tUnetTrackingServer : public tUnetServerBase {
 	public:

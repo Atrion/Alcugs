@@ -33,7 +33,6 @@
 
 namespace alc {
 
-	////DEFINITIONS
 	class tmAuthenticateHello : public tmMsgBase {
 	public:
 		tmAuthenticateHello(tNetSession *u);

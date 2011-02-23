@@ -33,7 +33,6 @@
 
 namespace alc {
 
-	////DEFINITIONS
 	class tpObject;
 	
 	const char *alcGetPlasmaType(U16 type);

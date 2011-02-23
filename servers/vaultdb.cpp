@@ -112,7 +112,6 @@ namespace alc {
 			4 -> use text instead of varchar for the text columns - varchar is not long enough
 		*/
 
-	////IMPLEMENTATION
 	tVaultDB::tVaultDB(tLog *log)
 	{
 		sql = NULL;

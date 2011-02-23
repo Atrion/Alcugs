@@ -35,7 +35,6 @@
 
 namespace alc {
 
-	////IMPLEMENTATION
 	const char *alcGetPlasmaType(U16 type)
 	{
 		switch(type) {

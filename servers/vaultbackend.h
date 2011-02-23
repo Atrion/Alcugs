@@ -29,8 +29,8 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_VAULTBACKEND_H_ID "$Id$"
 
-#include "vaultdb.h"
 #include <netsessionmgr.h>
+#include <protocol/vaultproto.h>
 #include <protocol/vaultmsg.h>
 #include <alcutil/alclog.h>
 
@@ -39,7 +39,7 @@
 namespace alc {
 
 	class tvAgeLink;
-	////DEFINITIONS
+	class tVaultDB;
 	
 	class tVaultBackend {
 	public:
@@ -55,9 +55,7 @@ namespace alc {
 		void deletePlayer(tmCustomVaultDeletePlayer &deletePlayer);
 		U32 createPlayer(tmCustomVaultCreatePlayer &createPlayer); //!< \returns KI number of created player or 0 if name already exists
 		void cleanVault(bool cleanAges);
-		inline int getNumberOfPlayers(const Byte *uid) {
-			return vaultDB->getPlayerList(uid);
-		}
+		int getNumberOfPlayers(const Byte *uid);
 		inline int getMaxPlayers(void) { return maxPlayers; }
 		bool setAgeGuid(tvAgeLinkStruct *link, U32 ownerKi);
 	private:

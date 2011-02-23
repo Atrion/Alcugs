@@ -33,7 +33,6 @@
 
 namespace alc {
 
-	////DEFINITIONS
 	class tmRequestMyVaultPlayerList : public tmMsgBase {
 	public:
 		tmRequestMyVaultPlayerList(tNetSession *u);

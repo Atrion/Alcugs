@@ -47,7 +47,6 @@ namespace alc {
 	const char *alcNetName = "Game";
 	tUnetServerBase *alcServerInstance(void) { return new tUnetGameServer(); }
 
-	////IMPLEMENTATION
 	tUnetGameServer::tUnetGameServer(void) : tUnetLobbyServerBase(KGame)
 	{
 		// find out which age we are supposed to host

@@ -40,7 +40,6 @@
 
 namespace alc {
 
-	////IMPLEMENTATION
 	tPageInfo::tPageInfo(tConfigVal *val, int row)
 	{
 		tString number = val->getVal(1, row), conditionalLoad = val->getVal(2, row);

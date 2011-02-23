@@ -29,17 +29,17 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_GAMESERVER_H_ID "$Id$"
 
-#include "sdl.h"
 #include <netsession.h>
 #include <unetlobbyserverbase.h>
+#include <protocol/gamemsg.h>
 
 namespace alc {
 
 	class tmGameMessageDirected;
-	class tMemberInfo;
 	class tmGameMessage;
+	class tAgeStateManager;
+	class tAgeInfo;
 
-	////DEFINITIONS
 	class tGameData : public tNetSessionData {
 	public:
 		tGameData(const tUruObject &obj, tNetSession *u) : obj(obj) { isHidden = false; this->u = u; }

@@ -30,15 +30,16 @@
 #include <alcdefs.h>
 #include "authbackend.h"
 
+#include <sql.h>
+#include <alcmain.h>
+#include <netsession.h>
+#include <alcutil/alcparser.h>
+#include <protocol/protocol.h>
+
 #include <unistd.h>
 #include <ctime>
 #include <cstring>
-#include <alcmain.h>
-////extra includes
-#include <alcutil/alcparser.h>
 #include <netdb.h>
-#include "authbackend.h"
-
 
 namespace alc {
 	
@@ -107,6 +108,11 @@ namespace alc {
 			DBG(5, "deleting SQL\n");
 			delete sql;
 		}
+	}
+	
+	void tAuthBackend::checkTimeout(void)
+	{
+		if (sql) sql->checkTimeout();
 	}
 	
 	bool tAuthBackend::prepare(void)

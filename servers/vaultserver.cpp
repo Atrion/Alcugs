@@ -43,7 +43,6 @@ namespace alc {
 	const char *alcNetName = "Vault";
 	tUnetServerBase *alcServerInstance(void) { return new tUnetVaultServer(); }
 
-	////IMPLEMENTATION
 	void tUnetVaultServer::onApplyConfig(void)
 	{
 		// check if we should clean the vault
