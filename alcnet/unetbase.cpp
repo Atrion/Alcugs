@@ -48,14 +48,14 @@
 
 namespace alc {
 
-tUnetBase::tUnetBase(Byte whoami) :tUnet(whoami), running(true) {
+tUnetBase::tUnetBase(uint8_t whoami) :tUnet(whoami), running(true) {
 	alcUnetGetMain()->setNet(this);
 	tString var;
 	tConfig * cfg;
 	cfg=alcGetMain()->config();
 	var=cfg->getVar("port","global");
 	if(!var.isEmpty()) {
-		setBindPort(var.asU16());
+		setBindPort(var.asUInt());
 	}
 	var=cfg->getVar("bind","global");
 	if(!var.isEmpty()) {
@@ -77,7 +77,7 @@ void tUnetBase::applyConfig() {
 	//Sets the idle timer
 	var=cfg->getVar("net.timer","global");
 	if(!var.isEmpty()) {
-		setIdleTimer(var.asByte());
+		setIdleTimer(var.asUInt());
 	}
 #ifdef ENABLE_THREADS
 	//Set pool size
@@ -85,33 +85,33 @@ void tUnetBase::applyConfig() {
 	if(var.isEmpty()) {
 		pool_size=4; //Set up 4 worker threads by default (may be changed)
 	} else {
-		pool_size=var.asByte();
+		pool_size=var.asUInt();
 		if(pool_size<=0) pool_size=1;
 	}
 #endif
 	var=cfg->getVar("net.maxconnections","global");
 	if(!var.isEmpty()) {
-		max=var.getU32();
+		max=var.get32();
 	}
 	var=cfg->getVar("net.timeout","global");
 	if(!var.isEmpty()) {
-		conn_timeout=var.asU32();
+		conn_timeout=var.asUInt();
 	}
 	var=cfg->getVar("net.up","global");
 	if(!var.isEmpty()) {
-		nat_up=var.asU32();
+		nat_up=var.asUInt();
 	}
 	var=cfg->getVar("net.down","global");
 	if(!var.isEmpty()) {
-		nat_down=var.asU32();
+		nat_down=var.asUInt();
 	}
 	var=cfg->getVar("net.lan.up","global");
 	if(!var.isEmpty()) {
-		lan_up=var.asU32();
+		lan_up=var.asUInt();
 	}
 	var=cfg->getVar("net.lan.down","global");
 	if(!var.isEmpty()) {
-		lan_down=var.asU32();
+		lan_down=var.asUInt();
 	}
 	var=cfg->getVar("private_mask","global");
 	if(!var.isEmpty()) {
@@ -131,7 +131,7 @@ void tUnetBase::applyConfig() {
 	}
 	var=cfg->getVar("net.noflood","global");
 	if(!var.isEmpty()) {
-		if(var.asByte()) {
+		if(var.asUInt()) {
 			setFlags(UNET_FLOODCTR);
 		} else {
 			unsetFlags(UNET_FLOODCTR);
@@ -139,7 +139,7 @@ void tUnetBase::applyConfig() {
 	}
 	var=cfg->getVar("net.log.ack","global");
 	if(!var.isEmpty()) {
-		if(var.asByte()) {
+		if(var.asUInt()) {
 			setFlags(UNET_EACKLOG);
 		} else {
 			unsetFlags(UNET_EACKLOG);
@@ -148,7 +148,7 @@ void tUnetBase::applyConfig() {
 	//Other DEVEL vars (dangerous to touch)
 	var=cfg->getVar("broadcast","global");
 	if(!var.isEmpty()) {
-		if(var.asByte()) {
+		if(var.asUInt()) {
 			unsetFlags(UNET_BCAST);
 		} else {
 			setFlags(UNET_BCAST);
@@ -156,51 +156,51 @@ void tUnetBase::applyConfig() {
 	}
 	var=cfg->getVar("net.flood_check_sec","global");
 	if(!var.isEmpty()) {
-		flood_check_sec=var.asU32();
+		flood_check_sec=var.asUInt();
 	}
 	var=cfg->getVar("net.max_flood_pkts","global");
 	if(!var.isEmpty()) {
-		max_flood_pkts=var.asU32();
+		max_flood_pkts=var.asUInt();
 	}
 	var=cfg->getVar("net.receive_ahead","global");
 	if(!var.isEmpty()) {
-		receiveAhead=var.asU32();
+		receiveAhead=var.asUInt();
 	}
 	#ifdef ENABLE_NETDEBUG
 	var=cfg->getVar("net.lim_down_cap","global");
 	if(!var.isEmpty()) {
-		lim_down_cap=var.asU32();
+		lim_down_cap=var.asUInt();
 	}
 	var=cfg->getVar("net.lim_up_cap","global");
 	if(!var.isEmpty()) {
-		lim_up_cap=var.asU32();
+		lim_up_cap=var.asUInt();
 	}
 	var=cfg->getVar("net.in_noise","global");
 	if(!var.isEmpty()) {
-		in_noise=var.asU32();
+		in_noise=var.asUInt();
 	}
 	var=cfg->getVar("net.out_noise","global");
 	if(!var.isEmpty()) {
-		out_noise=var.asU32();
+		out_noise=var.asUInt();
 	}
 	var=cfg->getVar("net.latency","global");
 	if(!var.isEmpty()) {
-		latency=var.asU32();
+		latency=var.asUInt();
 	}
 	var=cfg->getVar("net.quota_check_sec","global");
 	if(!var.isEmpty()) {
-		quota_check_sec=var.asU32();
+		quota_check_sec=var.asUInt();
 	}
 	var=cfg->getVar("net.quota_check_usec","global");
 	if(!var.isEmpty()) {
-		quota_check_usec=var.asU32();
+		quota_check_usec=var.asUInt();
 	}
 	#endif
 	// forward to sub-classes
 	onApplyConfig();
 }
 
-void tUnetBase::stop(SByte timeout) {
+void tUnetBase::stop(time_t timeout) {
 	if(timeout<0) {
 		tString var;
 		tConfig * cfg=alcGetMain()->config();
@@ -208,7 +208,7 @@ void tUnetBase::stop(SByte timeout) {
 		if(var.isEmpty()) {
 			stop_timeout=15;
 		} else {
-			stop_timeout=var.asU32();
+			stop_timeout=var.asUInt();
 		}
 	}
 	else
@@ -216,7 +216,7 @@ void tUnetBase::stop(SByte timeout) {
 	running=false;
 }
 
-void tUnetBase::terminate(tNetSession *u, Byte reason, bool gotEndMsg)
+void tUnetBase::terminate(tNetSession *u, uint8_t reason, bool gotEndMsg)
 {
 	bool wasTerminated = u->isTerminated(); // if the client was already terminated, go ahead and kill it quickly
 	if (!reason) reason = u->isClient() ? RKickedOff : RQuitting;
@@ -373,8 +373,8 @@ void tUnetBase::run() {
 	//terminating the service
 	terminateAll();
 	
-	U32 startup=getTime();
-	while(!smgr->empty() && (getTime()-startup)<stop_timeout) {
+	time_t shutdownInitTime=getTime();
+	while(!smgr->empty() && (getTime()-shutdownInitTime)<stop_timeout) {
 		updateTimerRelative(100000); // make sure we don't wait longer than this (0.1 seconds)
 		Recv();
 		processEventQueue(/*shutdown*/true);

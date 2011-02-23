@@ -46,7 +46,7 @@ namespace alc {
 	}
 	
 	//// tmVaultPlayerList
-	tmVaultPlayerList::tmVaultPlayerList(tNetSession *u, U32 x, U16 numberPlayers, tMBuf players, const tString &url)
+	tmVaultPlayerList::tmVaultPlayerList(tNetSession *u, uint32_t x, uint16_t numberPlayers, tMBuf players, const tString &url)
 	: tmMsgBase(NetMsgVaultPlayerList, plNetAck | plNetX | plNetKi, u), url(url)
 	{
 		this->x = x;
@@ -59,7 +59,7 @@ namespace alc {
 	void tmVaultPlayerList::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
-		t.putU16(numberPlayers);
+		t.put16(numberPlayers);
 		t.put(players);
 		t.put(url);
 	}
@@ -84,7 +84,7 @@ namespace alc {
 		t.get(gender);
 		t.get(friendName);
 		t.get(key);
-		U32 unk = t.getU32();
+		uint32_t unk = t.get32();
 		if (unk != 0) {
 			throw txProtocolError(_WHERE("NetMsgCreatePlayer.unk is not 0 but 0x%08X", unk));
 		}
@@ -98,7 +98,7 @@ namespace alc {
 	}
 	
 	//// tmPlayerCreated
-	tmPlayerCreated::tmPlayerCreated(tNetSession *u, U32 ki, U32 x, Byte result)
+	tmPlayerCreated::tmPlayerCreated(tNetSession *u, uint32_t ki, uint32_t x, uint8_t result)
 	 : tmMsgBase(NetMsgPlayerCreated, plNetX | plNetKi | plNetAck, u)
 	{
 		this->x = x;
@@ -109,7 +109,7 @@ namespace alc {
 	void tmPlayerCreated::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
-		t.putByte(result);
+		t.put8(result);
 	}
 	
 	tString tmPlayerCreated::additionalFields(tString dbg) const
@@ -127,7 +127,7 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
-		U16 unk = t.getU16();
+		uint16_t unk = t.get16();
 		if (unk != 0) {
 			throw txProtocolError(_WHERE("NetMsgDeletePlayer.unk is not 0 but 0x%08X", unk));
 		}

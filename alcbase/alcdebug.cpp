@@ -38,7 +38,7 @@
 
 namespace alc {
 	void alcPrintDbgHeader(int lvl, const char * b, const char * c, int d) {
-		fprintf(stderr,"DBG%i:%d:%s:%s:%i> ",lvl,alcGetSelfThreadId(),b,c,d);
+		fprintf(stderr,"DBG%i:%li:%s:%s:%i> ",lvl,alcGetSelfThreadId(),b,c,d);
 	}
 	
 	tString alcDbgWhere(const char * b,const char * c,int d,const char * a,...) {

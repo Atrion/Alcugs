@@ -203,7 +203,7 @@ int main(int argc, char * argv[]) {
 		tConfig * cfg=alcMain.config();
 		tString var;
 		var=cfg->getVar("stop","global");
-		if(!var.isEmpty() && var.asByte()) {
+		if(!var.isEmpty() && var.asUInt()) {
 			alcMain.std()->log("INFO: Administratively disabled! Please read the Alcugs configuration file (usually uru.conf) carefully to solve this issue.\n");
 			return -1;
 		}
@@ -213,7 +213,7 @@ int main(int argc, char * argv[]) {
 			var="0";
 			cfg->setVar("0","daemon","global");
 		}
-		if(var.asByte()) {
+		if(var.asUInt()) {
 			if (daemon(1,0)) throw txBase(_WHERE("Error daemonizing myself (%s)", strerror(errno)));
 		}
 		

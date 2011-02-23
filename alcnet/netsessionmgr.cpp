@@ -52,9 +52,9 @@ tNetSessionList::~tNetSessionList()
 {
 	free(table);
 }
-tNetSession *tNetSessionList::search(U32 ip, U16 port)
+tNetSession *tNetSessionList::search(uint32_t ip, uint16_t port)
 {
-	for(int i=0; i<size; i++) {
+	for(size_t i=0; i<size; i++) {
 		if(table[i]!=NULL && table[i]->getIp()==ip && table[i]->getPort()==port)
 			return table[i];
 	}
@@ -69,7 +69,7 @@ int tNetSessionList::add(tNetSession *u)
 		return empty;
 	}
 	// we have to resize the table
-	DBG(5, "growing to %d\n", size+1);
+	DBG(5, "growing to %ld\n", size+1);
 	tNetSession **ntable=static_cast<tNetSession **>(realloc(table,sizeof(tNetSession*) * (size+1)));
 	if(ntable==NULL) throw txNoMem(_WHERE(""));
 	table=ntable;
@@ -78,18 +78,18 @@ int tNetSessionList::add(tNetSession *u)
 	table[size-1] = u;
 	return size-1;
 }
-int tNetSessionList::findFreeSlot(void)
+size_t tNetSessionList::findFreeSlot(void)
 {
-	for (int i = 0; i < size; ++i) {
+	for (size_t i = 0; i < size; ++i) {
 		if (!table[i]) return i;
 	}
 	assert(size == count); // when we get here (i.e. there's no free slot), size and count must be the same
-	return -1;
+	return npos;
 }
 void tNetSessionList::remove(tNetSession *u)
 {
-	int found = -1;
-	for (int i = 0; i < size; ++i) {
+	size_t found = npos;
+	for (size_t i = 0; i < size; ++i) {
 		if (table[i] && table[i] == u) {
 			table[i] = NULL;
 			--count;
@@ -97,15 +97,15 @@ void tNetSessionList::remove(tNetSession *u)
 			break;
 		}
 	}
-	if (found < 0) return; // session is not part of the list
+	if (found == npos) return; // session is not part of the list
 	// let's look if we can shrink... search for NULL entries before this one
 	while (found > 0 && table[found-1] == NULL) --found;
 	// look if all session after the found one have been destroyed
-	for(int i=found; i<size; i++) {
+	for(size_t i=found; i<size; i++) {
 		if(table[i]!=NULL) return; // we can't shrink :(
 	}
-	if(found!=-1) { // if that's the case, shrink
-		DBG(5, "shrinking to %d\n", found);
+	if(found!=npos) { // if that's the case, shrink
+		DBG(5, "shrinking to %ld\n", found);
 		table=static_cast<tNetSession **>(realloc(table,sizeof(tNetSession*) * found));
 		if (found && table==NULL) throw txNoMem(_WHERE("NoMem"));
 		size=found;
@@ -127,32 +127,29 @@ tNetSession * tNetSessionList::getNext() {
 	
 	return k;
 }
-tNetSession *tNetSessionList::find(U32 ki)
+tNetSession *tNetSessionList::findByKi(uint32_t ki)
 {
 	if (ki == 0) return NULL;
-	for (int i = 0; i < size; ++i) {
+	for (size_t i = 0; i < size; ++i) {
 		if (table[i] && table[i]->ki == ki) return table[i];
 	}
 	return NULL;
 }
 
 /* Sesion Mgr */
-tNetSessionMgr::tNetSessionMgr(tUnet * net,int limit) : tNetSessionList()
-{
-	this->max=limit;
-	this->net=net;
-}
+tNetSessionMgr::tNetSessionMgr(tUnet * net,size_t limit) : tNetSessionList(), max(limit), net(net)
+{}
 tNetSessionMgr::~tNetSessionMgr()
 {
 	if(table!=NULL) {
-		for(int i=0; i<size; i++) {
+		for(size_t i=0; i<size; i++) {
 			delete table[i];
 		}
 	}
 	// the table itself will be freed in ~tNetSessionList
 }
 tNetSession * tNetSessionMgr::search(tNetSessionIte &ite,bool create) {
-	if(ite.sid!=-1 && ite.sid<size && table[ite.sid]!=NULL) {
+	if(ite.sid!=nosid && ite.sid<size && table[ite.sid]!=NULL) {
 		if(table[ite.sid]->getIp()==ite.ip && table[ite.sid]->getPort()==ite.port) {
 			return table[ite.sid];
 		}

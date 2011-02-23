@@ -33,7 +33,8 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_USEFUL_H_ID "$Id$"
 
-#include "alctypes.h"
+#include <stdint.h>
+#include <ctime>
 
 namespace alc {
 	
@@ -41,10 +42,10 @@ namespace alc {
 	class tMBuf;
 
 	tString alcConsoleAsk();
-	bool alcGetLoginInfo(tString argv,tString * username,tString * hostname,U16 * port); // username may be NULL, the rest not
+	bool alcGetLoginInfo(tString argv,tString * username,tString * hostname,uint16_t * port); // username may be NULL, the rest not
 
-	U32 alcGetTime();
-	U32 alcGetMicroseconds();
+	time_t alcGetTime();
+	unsigned int alcGetMicroseconds();
 	double alcGetCurrentTime(const char format='s');
 	bool alcIsAlpha(char c);
 
@@ -53,7 +54,7 @@ namespace alc {
 	/**
 			\returns a pointer to a formated time string
 	*/
-	tString alcGetStrTime(U32 timestamp, U32 microseconds);
+	tString alcGetStrTime(time_t timestamp, unsigned int microseconds);
 	tString alcGetStrTime(double stamp=0, const char format='s');
 
 
@@ -71,24 +72,24 @@ namespace alc {
 			\param guid A hex guid (8 characters)
 			\return A str guid, twice as long as the hex guid
 	*/
-	tString alcGetStrGuid(const Byte * guid);
+	tString alcGetStrGuid(const void * guid);
 
 	/** encodes a 16-character GUID into a 8-byte hex
 		\param out 8-byte array for the output
 		\param in 16-byte string
 	*/
-	void alcGetHexGuid(Byte *out, tString in);
+	void alcGetHexGuid(void *out, tString in);
 
 	/** creates a 00000000-0000-0000-0000-000000000000 valid guid
 			\param guid A 16 bytes user id
 			\return A 36 bytes str formated id
 	*/
-	tString alcGetStrUid(const Byte * guid);
+	tString alcGetStrUid(const void * guid);
 
 	/** \param passed_guid A 36 bytes str user id
 		\return A 16 bytes hex user id
 	*/
-	void alcGetHexUid(Byte *out, const tString &passed_guid);
+	void alcGetHexUid(void *out, const tString &passed_guid);
 
 
 	/**
@@ -98,18 +99,18 @@ namespace alc {
 	tString alcStrFiltered(tString what);
 
 	/** parses a "name[number]" kind of string, setting "t" to the name and returning the number */
-	U16 alcParseKey(tString *t);
+	unsigned int alcParseKey(tString *t);
 
 	/** Convert an IP-address to a string */
-	tString alcGetStrIp(U32 ip);
+	tString alcGetStrIp(uint32_t ip);
 
 
 	/** convert pageIDs to pageNumbers and the other way around - wired, but whatever... */
-	inline U16 alcPageIdToNumber(U32 seqPrefix, U32 pageId)
+	inline uint16_t alcPageIdToNumber(uint32_t seqPrefix, uint32_t pageId)
 	{
 		return pageId - (seqPrefix << 8) - 33;
 	}
-	inline U32 alcPageNumberToId(U32 seqPrefix, U16 number)
+	inline uint32_t alcPageNumberToId(uint32_t seqPrefix, uint16_t number)
 	{
 		return (seqPrefix << 8) + 33 + number;
 	}
@@ -134,7 +135,11 @@ namespace alc {
 		#define letoh16(x) htole16(x)
 		#define letoh32(x) htole32(x)
 	#endif
-
+	
+	// macro to make copying a class impossible
+	#define FORBID_CLASS_COPY(name) private: \
+		name(const name &); \
+		void operator=(const name &);
 }
 
 

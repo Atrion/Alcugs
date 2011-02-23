@@ -147,11 +147,11 @@ namespace alc {
 				sql->query(query, "Prepare: Creating ref vault table");
 				// create the root folder
 				tString folderName;
-				folderName.putByte(0x0F);
-				folderName.putByte(0x13);
-				folderName.putByte(0x37);
-				folderName.putU32(alcGetTime());
-				folderName.putByte(random()%250);
+				folderName.put8(0x0F);
+				folderName.put8(0x13);
+				folderName.put8(0x37);
+				folderName.put32(alcGetTime());
+				folderName.put8(random()%250);
 				tString asciiFolderName = alcGetStrGuid(folderName.data());
 				query.clear();
 				query.printf("INSERT INTO %s (idx, type, int_1, str_1, str_2, text_1, text_2) VALUES ('%d', 6, '%d', '%s', '%s', 'You must never edit or delete this node!', '%s')",
@@ -333,7 +333,7 @@ namespace alc {
 		sql->query(query, "migrateVersion3to4: setting version number");
 	}
 	
-	int tVaultDB::getPlayerList(const Byte *uid, tMBuf *t)
+	int tVaultDB::getPlayerList(const uint8_t *uid, tMBuf *t)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		if (t) t->clear(); // t may be NULL if we just check the number of players
@@ -349,16 +349,16 @@ namespace alc {
 		if (t) {
 			for (int i = 0; i < number; ++i) {
 				MYSQL_ROW row = mysql_fetch_row(result);
-				t->putU32(atoi(row[0])); // KI
+				t->put32(atoi(row[0])); // KI
 				t->put(tString(row[1])); // Avatar
-				t->putByte(atoi(row[2])); // flags
+				t->put8(atoi(row[2])); // flags
 			}
 		}
 		mysql_free_result(result);
 		return number;
 	}
 	
-	tString tVaultDB::checkKi(U32 ki, const Byte *uid, bool *status)
+	tString tVaultDB::checkKi(uint32_t ki, const uint8_t* uid, bool* ownAvatar)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
@@ -367,14 +367,14 @@ namespace alc {
 		sql->query(query, "checking ki");
 		
 		MYSQL_RES *result = sql->storeResult();
-		int number = mysql_num_rows(result);
+		size_t number = mysql_num_rows(result);
 		
 		tString avatar;
 		if (number == 1) {
 			MYSQL_ROW row = mysql_fetch_row(result);
 			avatar = row[0];
 		}
-		*status = (number == 1);
+		*ownAvatar = (number == 1);
 		mysql_free_result(result);
 		return avatar;
 	}
@@ -541,7 +541,7 @@ namespace alc {
 		return query;
 	}
 	
-	U32 tVaultDB::findNode(tvNode &node, bool create, tvManifest *mfs)
+	uint32_t tVaultDB::findNode(tvNode &node, bool create, tvManifest *mfs)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
@@ -556,7 +556,7 @@ namespace alc {
 		int number = mysql_num_rows(result);
 		if (number > 1) throw txDatabaseError(_WHERE("strange, I should NEVER have several results when asking for a node"));
 		
-		U32 id = 0;
+		uint32_t id = 0;
 		if (number == 1) {
 			MYSQL_ROW row = mysql_fetch_row(result);
 			id = atoi(row[0]);
@@ -582,7 +582,7 @@ namespace alc {
 		return id;
 	}
 	
-	U32 tVaultDB::createNode(tvNode &node)
+	uint32_t tVaultDB::createNode(tvNode &node)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
@@ -722,9 +722,9 @@ namespace alc {
 		return sql->insertId();
 	}
 	
-	U32 tVaultDB::createChildNode(U32 saver, U32 parent, tvNode &node)
+	uint32_t tVaultDB::createChildNode(uint32_t saver, uint32_t parent, alc::tvNode& node)
 	{
-		U32 nodeId = createNode(node);
+		uint32_t nodeId = createNode(node);
 		tvNodeRef ref(saver, parent, nodeId);
 		addNodeRef(ref);
 		return nodeId;
@@ -747,7 +747,7 @@ namespace alc {
 		sql->query(query, "Updating vault node", true);
 	}
 	
-	void tVaultDB::getManifest(U32 baseNode, tvManifest ***mfs, int *nMfs, tvNodeRef ***ref, int *nRef)
+	void tVaultDB::getManifest(uint32_t baseNode, alc::tvManifest*** mfs, size_t* nMfs, alc::tvNodeRef*** ref, size_t* nRef)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
@@ -757,19 +757,19 @@ namespace alc {
 		*nRef = 0;
 	
 		tvManifest **feed = NULL, **aux = NULL, **final = NULL;
-		int          nFeed = 0,     nAux = 0,     nFinal = 0;
+		size_t      nFeed = 0,     nAux = 0,     nFinal = 0;
 		tString query;
 		MYSQL_RES *result;
 		MYSQL_ROW row;
 		bool comma;
-		int auxIndex, feedIndex;
+		size_t auxIndex, feedIndex;
 		
 		// get base node
 		query.printf("SELECT idx, mod_time FROM %s WHERE idx='%d' LIMIT 1", vaultTable, baseNode);
 		sql->query(query, "getManifest: getting first node");
 		
 		result = sql->storeResult();
-		int number = mysql_num_rows(result);
+		size_t number = mysql_num_rows(result);
 		if (number > 1) throw txDatabaseError(_WHERE("strange, I should NEVER have several results when asking for a node"));
 		else if (number < 1) throw txDatabaseError(_WHERE("getManfiest: First node %d does not exist", baseNode));
 		
@@ -865,7 +865,7 @@ namespace alc {
 			sql->query(query, "getManifest: getting child nodes");
 			
 			result = sql->storeResult();
-			int number = mysql_num_rows(result);
+			size_t number = mysql_num_rows(result);
 				
 			// the result goes into the feed table, and the refs are saved in their table as well
 			feed = static_cast<tvManifest **>(malloc(number*sizeof(tvManifest *)));
@@ -874,7 +874,7 @@ namespace alc {
 			while (nFeed < number) {
 				row = mysql_fetch_row(result);
 				// save manifest
-				U32 idx = atoi(row[0]);
+				uint32_t idx = atoi(row[0]);
 				feed[nFeed] = new tvManifest(idx, atof(row[1]));
 				++nFeed;
 				// and reference
@@ -895,23 +895,23 @@ namespace alc {
 		*nMfs = nFinal;
 	}
 	
-	void tVaultDB::getMGRs(U32 baseNode, U32 **table, U32 *tableSize)
+	void tVaultDB::getMGRs(uint32_t baseNode, uint32_t** table, size_t* tableSize)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
 		*table = NULL;
 		*tableSize = 0;
 	
-		U32 *feed = NULL, *aux = NULL, *final = NULL;
-		U32  nFeed = 0,    nAux = 0,    nFinal = 0;
+		uint32_t *feed = NULL, *aux = NULL, *final = NULL;
+		size_t   nFeed = 0,    nAux = 0,    nFinal = 0;
 		tString query;
 		MYSQL_RES *result;
 		MYSQL_ROW row;
 		bool comma;
-		U32 auxIndex, feedIndex;
+		size_t auxIndex, feedIndex;
 		
 		// put base node in the feed
-		feed = static_cast<U32 *>(malloc(sizeof(U32)));
+		feed = static_cast<uint32_t *>(malloc(sizeof(uint32_t)));
 		if (feed == NULL) throw txNoMem(_WHERE("NoMem"));
 		feed[0] = baseNode;
 		nFeed = 1;
@@ -920,7 +920,7 @@ namespace alc {
 		query.printf("SELECT type FROM %s WHERE idx='%d' LIMIT 1", vaultTable, baseNode);
 		sql->query(query, "getMGRs: node type");
 		result = sql->storeResult();
-		int num = mysql_num_rows(result);
+		size_t num = mysql_num_rows(result);
 		if (num != 1) throw txDatabaseError(_WHERE("couldn't find base node %d", baseNode));
 		
 		row = mysql_fetch_row(result);
@@ -929,7 +929,7 @@ namespace alc {
 		if (type <= 7) {
 			// it's a MGR, add it to the list
 			*tableSize = 1;
-			*table = static_cast<U32 *>(malloc(sizeof(U32)));
+			*table = static_cast<uint32_t *>(malloc(sizeof(uint32_t)));
 			if (*table == NULL) throw txNoMem(_WHERE("NoMem"));
 			(*table)[0] = baseNode;
 		}
@@ -940,7 +940,7 @@ namespace alc {
 			aux = final;
 			nAux = nFinal;
 			// get space for the new final list - it will contain all elements of the so-far final list and the feed
-			final = static_cast<U32 *>(malloc((nFinal+nFeed)*sizeof(U32)));
+			final = static_cast<uint32_t *>(malloc((nFinal+nFeed)*sizeof(uint32_t)));
 			if (final == NULL) throw txNoMem(_WHERE("NoMem"));
 			nFinal = 0;
 			
@@ -1019,22 +1019,22 @@ namespace alc {
 			sql->query(query, "getMGRs: getting child nodes");
 			
 			result = sql->storeResult();
-			U32 number = mysql_num_rows(result);
-			DBG(9, "Got %d child nodes, adding them to table\n", number);
+			size_t number = mysql_num_rows(result);
+			DBG(9, "Got %ld child nodes, adding them to table\n", number);
 				
 			// the result goes into the feed table
-			feed = static_cast<U32 *>(malloc(number*sizeof(U32)));
+			feed = static_cast<uint32_t *>(malloc(number*sizeof(uint32_t)));
 			if (feed == NULL) throw txNoMem(_WHERE("NoMem"));
 			while (nFeed < number) {
 				row = mysql_fetch_row(result);
 				// save ID
-				U32 idx = atoi(row[0]);
+				uint32_t idx = atoi(row[0]);
 				feed[nFeed] = idx;
 				++nFeed;
 				if (atoi(row[1]) <= 7) { // it's a MGR so lets save it - and keep the table in order!
 					DBG(9, "%d is a MGR, adding it\n", idx);
-					U32 insertVal = idx, tmp;
-					for (U32 i = 0; i < *tableSize; ++i) {
+					uint32_t insertVal = idx, tmp;
+					for (size_t i = 0; i < *tableSize; ++i) {
 						if ((*table)[i] == insertVal) break;
 						if ((*table)[i] > insertVal) {
 							// put the insertVal in the current place and save the current one to be inserted later
@@ -1045,7 +1045,7 @@ namespace alc {
 					}
 					if (*tableSize == 0 || (*table)[*tableSize-1] < insertVal) { // if a value still has to be inserted, grow the table
 						++(*tableSize);
-						*table = static_cast<U32 *>(realloc((*table), (*tableSize)*sizeof(U32)));
+						*table = static_cast<uint32_t *>(realloc(*table, (*tableSize)*sizeof(uint32_t)));
 						if (*table == NULL) throw txNoMem(_WHERE("NoMem"));
 						(*table)[*tableSize-1] = insertVal;
 					}
@@ -1064,19 +1064,19 @@ namespace alc {
 		final = NULL;
 	}
 	
-	void tVaultDB::fetchNodes(tMBuf &buf, int tableSize, tvNode ***nodes, int *nNodes)
+	void tVaultDB::fetchNodes(alc::tMBuf& buf, size_t tableSize, alc::tvNode*** nodes, size_t* nNodes)
 	{
 		if (!tableSize)
 			throw txDatabaseError(_WHERE("There must be at least one node to fetch"));
-		U32 *table = static_cast<U32 *>(malloc(tableSize*sizeof(U32)));
+		uint32_t *table = static_cast<uint32_t *>(malloc(tableSize*sizeof(uint32_t)));
 		if (table == NULL) throw txNoMem(_WHERE("NoMem"));
 		buf.rewind();
-		for (int i = 0; i < tableSize; ++i) table[i] = buf.getU32();
+		for (size_t i = 0; i < tableSize; ++i) table[i] = buf.get32();
 		fetchNodes(table, tableSize, nodes, nNodes);
 		free(table);
 	}
 	
-	void tVaultDB::fetchNodes(U32 *table, int tableSize, tvNode ***nodes, int *nNodes)
+	void tVaultDB::fetchNodes(uint32_t* table, size_t tableSize, alc::tvNode*** nodes, size_t* nNodes)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		if (!tableSize)
@@ -1091,7 +1091,7 @@ namespace alc {
 		
 		query.printf("SELECT idx, type, permissions, owner, grp, mod_time, creator, UNIX_TIMESTAMP(crt_time), UNIX_TIMESTAMP(age_time), age_name, age_guid, int_1, int_2, int_3, int_4, uint_1, uint_2, uint_3, uint_4, str_1, str_2, str_3, str_4, str_5, str_6, lstr_1, lstr_2, text_1, text_2, blob_1 FROM %s WHERE idx IN(", vaultTable);
 		
-		for (int i = 0; i < tableSize; ++i) {
+		for (size_t i = 0; i < tableSize; ++i) {
 			if (i > 0) query.writeStr(",");
 			query.printf("%d", table[i]);
 		}
@@ -1104,7 +1104,7 @@ namespace alc {
 		
 		*nodes = static_cast<tvNode **>(malloc((*nNodes)*sizeof(tvNode *)));
 		if (*nodes == NULL) throw txNoMem(_WHERE("NoMem"));
-		for (int i = 0; i < *nNodes; ++i) {
+		for (size_t i = 0; i < *nNodes; ++i) {
 			row = mysql_fetch_row(result);
 			lengths = mysql_fetch_lengths(result); //get the size of each column
 			
@@ -1151,7 +1151,7 @@ namespace alc {
 		mysql_free_result(result);
 	}
 	
-	bool tVaultDB::checkNode(U32 node)
+	bool tVaultDB::checkNode(uint32_t node)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
@@ -1181,7 +1181,7 @@ namespace alc {
 		return true;
 	}
 	
-	void tVaultDB::removeNodeRef(U32 parent, U32 son, bool cautious)
+	void tVaultDB::removeNodeRef(uint32_t parent, uint32_t son, bool cautious)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
@@ -1228,7 +1228,7 @@ namespace alc {
 		}
 	}
 	
-	void tVaultDB::removeNodeTree(U32 node, bool cautious)
+	void tVaultDB::removeNodeTree(uint32_t node, bool cautious)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
@@ -1259,7 +1259,7 @@ namespace alc {
 		mysql_free_result(result);
 	}
 	
-	void tVaultDB::setSeen(U32 parent, U32 son, Byte seen)
+	void tVaultDB::setSeen(uint32_t parent, uint32_t son, uint32_t seen)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
@@ -1268,7 +1268,7 @@ namespace alc {
 		sql->query(query, "Updating seen flag");
 	}
 	
-	void tVaultDB::getParentNodes(U32 node, U32 **table, int *tableSize)
+	void tVaultDB::getParentNodes(uint32_t node, uint32_t** table, size_t* tableSize)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
@@ -1284,16 +1284,16 @@ namespace alc {
 		result = sql->storeResult();
 		*tableSize = mysql_num_rows(result);
 		
-		*table = static_cast<U32 *>(malloc((*tableSize)*sizeof(U32)));
+		*table = static_cast<uint32_t *>(malloc((*tableSize)*sizeof(uint32_t)));
 		if (*table == NULL) throw txNoMem(_WHERE("NoMem"));
-		for (int i = 0; i < *tableSize; ++i) {
+		for (size_t i = 0; i < *tableSize; ++i) {
 			row = mysql_fetch_row(result);
 			(*table)[i] = atoi(row[0]);
 		}
 		mysql_free_result(result);
 	}
 	
-	void tVaultDB::getReferences(U32 node, tvNodeRef ***ref, int *nRef)
+	void tVaultDB::getReferences(uint32_t node, alc::tvNodeRef*** ref, size_t* nRef)
 	{
 		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
@@ -1304,25 +1304,23 @@ namespace alc {
 		*ref = NULL;
 		*nRef = 0;
 		
-		int i = -1;
-		while (i < *nRef) {
-			if (i >= 0) node = (*ref)[i]->child; // this is the next one
-			
+		size_t i = 0;
+		while (true) { // condition is at the end
 			query.clear();
 			query.printf("SELECT id1, id2, id3, UNIX_TIMESTAMP(timestamp), microseconds, flag FROM %s WHERE id2='%d'", refVaultTable, node);
 			sql->query(query, "getting references");
 			result = sql->storeResult();
-			int newSize = *nRef + mysql_num_rows(result);
+			size_t newSize = *nRef + mysql_num_rows(result);
 			
-			if (newSize > *nRef) {
+			if (newSize > *nRef) { // found new references, add to input
 				*ref = static_cast<tvNodeRef **>(realloc(*ref, newSize*sizeof(tvNodeRef *)));
 				if (*ref == NULL) throw txNoMem(_WHERE("NoMem"));
-				for (int j = *nRef; j < newSize; ++j) {
+				for (size_t j = *nRef; j < newSize; ++j) {
 					row = mysql_fetch_row(result);
-					U32 parent = atoi(row[1]), child = atoi(row[2]);
+					uint32_t parent = atoi(row[1]), child = atoi(row[2]);
 					// check for duplicate (i.e. anti-loop-protection)
 					bool found = false;
-					for (int k = 0; k < *nRef; ++k) { // searching the already existing nodes is enough
+					for (size_t k = 0; k < *nRef; ++k) { // searching the already existing nodes is enough
 						if ((*ref)[k]->parent == parent && ((*ref)[k]->child == child)) {
 							alcGetMain()->err()->log("tVaultDB::getReferences: loop in vault structure detected, found referece %d->%d twice\n", parent, child);
 							found = true;
@@ -1335,6 +1333,9 @@ namespace alc {
 				}
 			}
 			mysql_free_result(result);
+			
+			if (i >= *nRef) break; // all references done
+			node = (*ref)[i]->child; // this is the next one
 			++i;
 		}
 	}

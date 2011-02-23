@@ -37,8 +37,6 @@
 
 namespace alc {
 
-tString alcGetStrIp(U32 ip);
-
 class txUnet : public txBase {
 public:
 	txUnet(const tString &name,const tString &msg,bool abort=false) :txBase(name,msg,abort) {}

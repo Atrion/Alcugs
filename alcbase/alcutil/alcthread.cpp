@@ -45,7 +45,7 @@
 namespace alc {
 
 
-U32 alcGetSelfThreadId() {
+uint64_t alcGetSelfThreadId() {
 	#ifdef ENABLE_THREADS
 		#ifdef __WIN32__
 			return GetCurrentThreadId();

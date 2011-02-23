@@ -38,27 +38,27 @@ namespace alc {
 
 	class tpMessage : public tpObject {
 	public:
-		tpMessage(U16 type, bool incomplete = false) : tpObject(type, incomplete) {}
-		tpMessage(U16 type, const tUruObjectRef &sender);
+		tpMessage(uint16_t type, bool incomplete = false) : tpObject(type, incomplete) {}
+		tpMessage(uint16_t type, const tUruObjectRef &sender);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual tString str(void) const;
 		
-		static tpMessage *create(U16 type, bool mustBeComplete = true);
+		static tpMessage *create(uint16_t type, bool mustBeComplete = true);
 		
 		typedef std::vector<tUruObjectRef> tReceiverList;
 		// format
 		tUruObjectRef sender;
 		tReceiverList receivers;
-		U32 flags;
+		uint32_t flags;
 	};
 	
 	class tpAvatarMsg : public tpMessage {
 	public:
 		tpAvatarMsg(void) : tpMessage(plAvatarMsg) {}
 	protected:
-		tpAvatarMsg(U16 type) : tpMessage(type) {}
-		tpAvatarMsg(U16 type, const tUruObjectRef &sender) : tpMessage(type, sender) {}
+		tpAvatarMsg(uint16_t type) : tpMessage(type) {}
+		tpAvatarMsg(uint16_t type, const tUruObjectRef &sender) : tpMessage(type, sender) {}
 	};
 	
 	class tpLoadCloneMsg : public tpMessage {
@@ -69,16 +69,16 @@ namespace alc {
 		virtual void stream(tBBuf &t) const;
 		virtual tString str(void) const;
 		
-		static tpLoadCloneMsg *create(U16 type, bool mustBeComplete = true);
+		static tpLoadCloneMsg *create(uint16_t type, bool mustBeComplete = true);
 		
 		// format
 		tUruObjectRef clonedObj;
 		tUruObjectRef unkObj1;
-		U32 unk3;
+		uint32_t unk3;
 		bool isLoad;
 		tpObject *subMessage;
 	protected:
-		tpLoadCloneMsg(U16 type) : tpMessage(type) { subMessage = NULL; } // to be used by tpLoadAvatarMsg
+		tpLoadCloneMsg(uint16_t type) : tpMessage(type) { subMessage = NULL; } // to be used by tpLoadAvatarMsg
 		FORBID_CLASS_COPY(tpLoadCloneMsg)
 	};
 	
@@ -103,7 +103,7 @@ namespace alc {
 		
 		// format
 		tUruObjectRef unkObj1;
-		U16 count;
+		uint16_t count;
 	};
 	
 	class tpAvBrainGenericMsg : public tpAvatarMsg {
@@ -116,8 +116,8 @@ namespace alc {
 		virtual tString str(void) const;
 		
 		// format
-		U32 unk3, unk4;
-		Byte unk5, unk7, unk8;
+		uint32_t unk3, unk4;
+		uint8_t unk5, unk7, unk8;
 		float unk9;
 	};
 	
@@ -130,22 +130,22 @@ namespace alc {
 		virtual tString str(void) const;
 		
 		// format
-		U32 replyType; // 0x00 = deny, 0x01 = affirm, 0xFF = uninit
+		uint32_t replyType; // 0x00 = deny, 0x01 = affirm, 0xFF = uninit
 	};
 	
 	class tpKIMsg : public tpMessage {
 	public:
 		tpKIMsg(void) : tpMessage(pfKIMsg) {}
-		tpKIMsg(const tUruObjectRef &sender, const tString &senderName, U32 senderKi, const tString &text);
+		tpKIMsg(const tUruObjectRef &sender, const tString &senderName, uint32_t senderKi, const tString &text);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual tString str(void) const;
 		
 		// format
 		tUruString senderName;
-		U32 senderKi;
+		uint32_t senderKi;
 		tUruString text;
-		U32 messageType;
+		uint32_t messageType;
 	};
 	
 	class tpAvatarInputStateMsg : public tpMessage {
@@ -157,7 +157,7 @@ namespace alc {
 		virtual tString str(void) const;
 		
 		// format
-		U16 state;
+		uint16_t state;
 	};
 
 } //End alc namespace

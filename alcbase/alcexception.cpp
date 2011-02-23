@@ -94,7 +94,7 @@ void txBase::_preparebacktrace() {
 	bt.clear();
 	
 	bt.printf("Backtrace with %u levels:\n",size);
-	for(U32 i=0; i<size; i++) {
+	for(size_t i=0; i<size; i++) {
 		bt.printf("  %s\n", strings[i]);
 	}
 	bt += "c++filt and addr2line may be useful\n";
@@ -125,8 +125,8 @@ void txBase::dump(bool toStderr) {
 		now.setToNow();
 		fprintf(f,"Defunct: %s\n",now.str().c_str());
 		fprintf(f,"Uptime:  %s\n",alcGetMain()->upTime().str(0x01).c_str());
-		fprintf(f,"Main thread id: %d\n",alcGetMain()->threadId());
-		fprintf(f,"This thread id: %d\n",alcGetSelfThreadId());
+		fprintf(f,"Main thread id: %li\n",alcGetMain()->threadId());
+		fprintf(f,"This thread id: %li\n",alcGetSelfThreadId());
 		fprintf(f,"Exception %s:\n%s\n",msg.c_str(),bt.c_str());
 		fclose(f);
 	}

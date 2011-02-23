@@ -37,7 +37,7 @@
 namespace alc {
 
 	//// tmCustomAuthAsk
-	tmCustomAuthAsk::tmCustomAuthAsk(tNetSession *u, U32 x, U32 sid, U32 ip, tString login, const Byte *challenge, const Byte *hash, Byte release)
+	tmCustomAuthAsk::tmCustomAuthAsk(tNetSession *u, uint32_t x, uint32_t sid, uint32_t ip, tString login, const uint8_t *challenge, const uint8_t *hash, uint8_t release)
 	: tmMsgBase(NetMsgCustomAuthAsk, plNetAck | plNetX | plNetVersion | plNetSid, u), login(login)
 	{
 		this->sid = sid; // this is the SID the lobby uses for the connection to the client to be authed
@@ -57,21 +57,21 @@ namespace alc {
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX | plNetSid)) throw txProtocolError(_WHERE("X or Sid flag missing"));
 
-		ip = letoh32(t.getU32());
+		ip = letoh32(t.get32());
 		t.get(login);
 		memcpy(challenge, t.read(16), 16);
 		memcpy(hash, t.read(16), 16);
-		release = t.getByte();
+		release = t.get8();
 	}
 	
 	void tmCustomAuthAsk::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
-		t.putU32(htole32(ip));
+		t.put32(htole32(ip));
 		t.put(login);
 		t.write(challenge, 16);
 		t.write(hash, 16);
-		t.putByte(release);
+		t.put8(release);
 	}
 	
 	tString tmCustomAuthAsk::additionalFields(tString dbg) const
@@ -82,7 +82,7 @@ namespace alc {
 	}
 	
 	//// tmCustomAuthResponse
-	tmCustomAuthResponse::tmCustomAuthResponse(tNetSession *u, tmCustomAuthAsk &authAsk, const Byte *uid, tString passwd, Byte result, Byte accessLevel)
+	tmCustomAuthResponse::tmCustomAuthResponse(tNetSession *u, tmCustomAuthAsk &authAsk, const uint8_t *uid, tString passwd, uint8_t result, uint8_t accessLevel)
 	 : tmMsgBase(NetMsgCustomAuthResponse, plNetAck | plNetX | plNetVersion | plNetSid | plNetUID, u), login(authAsk.login), passwd(passwd)
 	 {
 		// copy stuff from the authAsk
@@ -103,18 +103,18 @@ namespace alc {
 		if (!hasFlags(plNetX | plNetUID | plNetSid)) throw txProtocolError(_WHERE("X, UID or Sid flag missing"));
 		
 		t.get(login);
-		result = t.getByte();
+		result = t.get8();
 		t.get(passwd);
-		accessLevel = t.getByte();
+		accessLevel = t.get8();
 	}
 	
 	void tmCustomAuthResponse::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
 		t.put(login); // login
-		t.putByte(result); // result
+		t.put8(result); // result
 		t.put(passwd); // passwd
-		t.putByte(accessLevel); // acess level
+		t.put8(accessLevel); // acess level
 	}
 	
 	tString tmCustomAuthResponse::additionalFields(tString dbg) const

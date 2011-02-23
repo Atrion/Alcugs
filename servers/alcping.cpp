@@ -75,31 +75,31 @@ void parameters_usage() {
 
 class tUnetPing :public tUnetBase {
 public:
-	tUnetPing(const tString & lhost,U16 lport=0,Byte listen=0,double time=1,int num=5,int flood=1);
+	tUnetPing(const tString & lhost,uint16_t lport=0,bool listen=false,double time=1,int num=5,int flood=1);
 	virtual ~tUnetPing();
 	virtual int onMsgRecieved(tUnetMsg * msg,tNetSession * u);
 	virtual bool onConnectionFlood(tNetSession */*u*/) {
 		return false; // don't kick nobody
 	}
-	virtual void onLeave(Byte reason,tNetSession * u);
+	virtual void onLeave(uint8_t reason,tNetSession * u);
 	virtual void onIdle(bool idle);
 	virtual void onStop();
-	void setSource(Byte s);
-	void setDestination(Byte d);
-	void setDestinationAddress(const tString &d,U16 port);
-	void setValidation(Byte val);
+	void setSource(uint8_t s);
+	void setDestination(uint8_t d);
+	void setDestinationAddress(const tString &d,uint16_t port);
+	void setValidation(uint8_t val);
 	void setUrgent() {
 		urgent=true;
 	}
 private:
-	Byte listen;
+	bool listen;
 	double time;
 	int num;
 	int flood;
-	Byte destination;
+	uint8_t destination;
 	tString d_host;
-	U16 d_port;
-	Byte validation;
+	uint16_t d_port;
+	uint8_t validation;
 	int count;
 	tNetSessionIte dstite;
 	double current;
@@ -110,7 +110,7 @@ private:
 	bool urgent;
 };
 
-tUnetPing::tUnetPing(const tString &lhost,U16 lport,Byte listen,double time,int num,int flood) :tUnetBase(KClient) {
+tUnetPing::tUnetPing(const tString &lhost,uint16_t lport,bool listen,double time,int num,int flood) :tUnetBase(KClient) {
 	this->setBindPort(lport);
 	this->setBindAddress(lhost);
 	this->listen=listen;
@@ -135,17 +135,17 @@ tUnetPing::~tUnetPing() {
 
 }
 
-void tUnetPing::setSource(Byte s) {
+void tUnetPing::setSource(uint8_t s) {
 	whoami=s;
 }
-void tUnetPing::setDestination(Byte d) {
+void tUnetPing::setDestination(uint8_t d) {
 	destination=d;
 }
-void tUnetPing::setDestinationAddress(const tString &d,U16 port) {
+void tUnetPing::setDestinationAddress(const tString &d,uint16_t port) {
 	d_host=d;
 	d_port=port;
 }
-void tUnetPing::setValidation(Byte val) {
+void tUnetPing::setValidation(uint8_t val) {
 	validation=val;
 }
 
@@ -159,7 +159,6 @@ void tUnetPing::onStop() {
 }
 
 int tUnetPing::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
-	int ret=0;
 
 	switch(msg->cmd) {
 		case NetMsgPing:
@@ -186,21 +185,14 @@ int tUnetPing::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 				if(urgent) ping.setUrgent();
 				send(ping);
 			}
-			ret=1;
-			break;
+			return 1;
 		}
 		default:
-			if(listen==0) {
-				ret=1;
-			} else {
-				ret=0;
-			}
-			break;
+			return !listen;
 	}
-	return ret;
 }
 
-void tUnetPing::onLeave(Byte reason,tNetSession * u)
+void tUnetPing::onLeave(uint8_t reason, tNetSession* u)
 {
 	if(listen!=0) {
 		printf("Leave from %s:%i reason=%i %s\n", alcGetStrIp(u->getIp()).c_str(), ntohs(u->getPort()), reason, alcUnetGetReasonCode(reason));
@@ -246,51 +238,49 @@ void tUnetPing::onIdle(bool /*idle*/) {
 
 
 int main(int argc,char * argv[]) {
-
-	int i;
 	
-	Byte loglevel=2;
+	uint8_t loglevel=2;
 	//local settings
 	tString l_hostname="0.0.0.0";
-	U16 l_port=0;
+	uint16_t l_port=0;
 	//remote settings
 	tString hostname="";
-	U16 port=5000;
+	uint16_t port=5000;
 	
-	Byte val=2; //validation level
+	uint8_t val=2; //validation level
 	
 	double time=1; //time
-	Byte destination=KLobby,source=0;
+	uint8_t destination=KLobby,source=0;
 #ifdef ENABLE_ADMIN
-	Byte admin=0;
+	uint8_t admin=0;
 #endif
 	
 	//options
 	int num=5,flood=1; //num probes & flood multiplier
-	Byte bcast=0,listen=0,mrtg=0,nlogs=0,urgent=0;
+	bool bcast=false,listen=false,mrtg=false,nlogs=false,urgent=false;
 	
 	//parse parameters
-	for (i=1; i<argc; i++) {
+	for (int i=1; i<argc; i++) {
 		if(!strcmp(argv[i],"-h")) { parameters_usage(); return -1; }
 		else if(!strcmp(argv[i],"-V")) {
 			puts(alcVersionText());
 			return -1;
 		} else if(!strcmp(argv[i],"-lp") && argc>i+1) { i++; l_port=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-rp") && argc>i+1) { i++; port=atoi(argv[i]); }
-		else if(!strcmp(argv[i],"-b")) { bcast=1; }
-		else if(!strcmp(argv[i],"-lm")) { listen=1; }
+		else if(!strcmp(argv[i],"-b")) { bcast=true; }
+		else if(!strcmp(argv[i],"-lm")) { listen=true; }
 #ifdef ENABLE_ADMIN
-		else if(!strcmp(argv[i],"-i_know_what_i_am_doing")) { admin=1; }
+		else if(!strcmp(argv[i],"-i_know_what_i_am_doing")) { admin=true; }
 #endif
-		else if(!strcmp(argv[i],"-nl")) { nlogs=1; }
+		else if(!strcmp(argv[i],"-nl")) { nlogs=true; }
 		else if(!strcmp(argv[i],"-t") && argc>i+1) { i++; time=atof(argv[i]); }
 		else if(!strcmp(argv[i],"-n") && argc>i+1) { i++; num=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-d") && argc>i+1) { i++; destination=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-s") && argc>i+1) { i++; source=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-val") && argc>i+1) { i++; val=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-f") && argc>i+1) { i++; flood=atoi(argv[i]); }
-		else if(!strcmp(argv[i],"-one")) { mrtg=1; }
-		else if(!strcmp(argv[i],"-u")) { urgent=1; }
+		else if(!strcmp(argv[i],"-one")) { mrtg=true; }
+		else if(!strcmp(argv[i],"-u")) { urgent=true; }
 		else if(!strcmp(argv[i],"-v") && argc>i+1) { i++; loglevel=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-lh") && argc>i+1) {
 			i++;
@@ -321,23 +311,23 @@ int main(int argc,char * argv[]) {
 	//start Alcugs library
 	tAlcUnetMain alcMain("Client");
 	try {
-		alcMain.config()->setVar(tString::fromByte(nlogs), "log.enabled", "global");
-		alcMain.config()->setVar(tString::fromByte(loglevel), "verbose_level", "global");
+		alcMain.config()->setVar(tString::fromUInt(nlogs), "log.enabled", "global");
+		alcMain.config()->setVar(tString::fromUInt(loglevel), "verbose_level", "global");
 		alcMain.onApplyConfig();
 		
 		//special mode
-		if(mrtg==0) {
+		if(!mrtg) {
 			alcGetMain()->std()->print(alcVersionText());
 		}
 		
 		if(flood<=0) flood=1;
 		
 #ifdef ENABLE_ADMIN
-		if(time<0.2 && admin==0) {
+		if(time<0.2 && !admin) {
 			printf("\nOnly the administrator can set less than 0.2 seconds\n Setting up to 1 second. (enable admin mode with -i_know_what_i_am_doing)\n");
 			time=1;
 		}
-		if(flood>1 && admin==0) {
+		if(flood>1 && !admin) {
 			printf("\nOnly the administrator can perform stressing flood tests to the server.\n Disabling flooding. (enable admin mode with -i_know_what_i_am_doing)\n");
 			flood=1;
 		}
@@ -352,7 +342,7 @@ int main(int argc,char * argv[]) {
 		}
 #endif
 		
-		if(mrtg==1) num=1;
+		if(mrtg) num=1;
 
 		tUnetPing netcore(l_hostname,l_port,listen,time,num,flood);
 		if (!nlogs) netcore.unsetFlags(UNET_ELOG);
@@ -360,27 +350,24 @@ int main(int argc,char * argv[]) {
 		if(bcast) netcore.setFlags(UNET_BCAST);
 		else netcore.unsetFlags(UNET_BCAST);
 
-		while(listen==0 && hostname.isEmpty()) {
+		while(!listen && hostname.isEmpty()) {
 			printf("\nHostname not set, please enter destination host: ");
 			hostname = alcConsoleAsk();
 		}
 
-		if(listen==0 && mrtg==0) {
+		if(!listen && !mrtg) {
 			printf("Connecting to %s:%i...\n",hostname.c_str(),port);
 			printf("Sending ping probe to %i %s...\n",destination,alcUnetGetDestination(destination));
 		}
-		if(listen!=0) {
+		if(listen) {
 			printf("Waiting for messages... CTR+C stops\n");
 		}
-
-		//alcSignal(SIGTERM, s_handler);
-		//alcSignal(SIGINT, s_handler);
 		
 		netcore.setSource(source);
 		netcore.setDestination(destination);
 		netcore.setDestinationAddress(hostname,port);
 		netcore.setValidation(val);
-		if(urgent==1) netcore.setUrgent();
+		if(urgent) netcore.setUrgent();
 		
 		netcore.run();
 		

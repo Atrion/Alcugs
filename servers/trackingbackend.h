@@ -41,40 +41,40 @@ namespace alc {
 		
 	class tTrackingData : public tNetSessionData {
 	public:
-		typedef std::list<U32> tPlayerList;
+		typedef std::list<uint32_t> tPlayerList;
 	
 		tTrackingData(void);
 		virtual ~tTrackingData(void);
 		bool isLobby;
 		tNetSession *parent; //!< saves the lobby of a game server, is NULL for lobbys
 		tNetSessionList *children;
-		U16 portStart, portEnd;
+		uint16_t portStart, portEnd;
 		tString externalIp; //!< the external IP (the ones palyers should use to connect to this server)
-		Byte agentGuid[8]; //!< set when isLobby = true, saves the fake guid for UruVision
+		uint8_t agentGuid[8]; //!< set when isLobby = true, saves the fake guid for UruVision
 		tPlayerList waitingPlayers;
 	};
 	
 	class tPlayer {
 	public:
-		tPlayer(U32 ki);
+		tPlayer(uint32_t ki);
 		tString str(void) const;
-		U32 ki; //!< player's ki number
-		U32 sid; //!< player's sid in the lobby/game server
-		Byte uid[16]; //!< the player's account uid (hex)
+		uint32_t ki; //!< player's ki number
+		uint32_t sid; //!< player's sid in the lobby/game server
+		uint8_t uid[16]; //!< the player's account uid (hex)
 		tString avatar; //!< the avatar's name
 		tString account; //!< the account the player is logged in with
-		U16 flag; //!< the player's flag (see tTrackingBackend::updatePlayer)
-		U16 status; //!< the player's status
+		uint16_t flag; //!< the player's flag (see tTrackingBackend::updatePlayer)
+		uint16_t status; //!< the player's status
 		bool waiting; //!< true if the player is waiting for ServerFound, false if it isn't [only defined when waiting=true]
-		U32 awaiting_x; //!< the X alue the player requested the age with
-		Byte awaiting_guid[8]; //!< Age guid where the player wants to go (hex) [only defined when waiting=true]
+		uint32_t awaiting_x; //!< the X alue the player requested the age with
+		uint8_t awaiting_guid[8]; //!< Age guid where the player wants to go (hex) [only defined when waiting=true]
 		tString awaiting_age; //!< Age name where the player wants to go [only defined when waiting=true]
 		tNetSession *u; //!< the lobby or game server the player is connected to
 	};
 	
 	class tTrackingBackend {
 	public:
-		tTrackingBackend(tUnetBase *net, const tString &host, U16 port);
+		tTrackingBackend(tUnetBase *net, const tString &host, uint16_t port);
 		~tTrackingBackend(void);
 		void applyConfig(void);
 		void setServerManager(tNetSessionList *smgr);
@@ -87,13 +87,13 @@ namespace alc {
 		void removeServer(tNetSession *game);
 		void findServer(tmCustomFindServer &findServer);
 		void forwardMessage(tmCustomDirectedFwd &directedFwd);
-		void playerCanCome(tNetSession *game, U32 ki);
+		void playerCanCome(tNetSession *game, uint32_t ki);
 	private:
 		
 		typedef std::list<tPlayer> tPlayerList;
 		
-		tPlayerList::iterator getPlayer(U32 ki);
-		void spawnServer(const tString &age, const Byte *guid, U32 delay = 0);
+		tPlayerList::iterator getPlayer(uint32_t ki);
+		void spawnServer(const tString &age, const uint8_t *guid, uint32_t delay = 0);
 		void notifyWaiting(tNetSession *server);
 		void serverFound(tPlayer *player, tNetSession *server);
 		void printStatusHTML(bool dbg = false);
@@ -102,20 +102,20 @@ namespace alc {
 		void printPlayersXML(FILE *f, tNetSession *server);
 		void printPlayerXML(FILE *f, tPlayer *player);
 		void printGameXML(FILE *f, tNetSession *game, tTrackingData *data);
-		void generateFakeGuid(Byte *guid); //!< generates a random 7 bytes fake guid for UruVision
+		void generateFakeGuid(uint8_t *guid); //!< generates a random 7 bytes fake guid for UruVision
 
 		tPlayerList players;
 		tUnetBase *net;
 		tNetSessionList *servers;
 		tLog log;
 		tString host;
-		U16 port;
-		Byte fakeLobbyGuid[8]; //!< saves the GUID for the fake lobby (for UruVision)
+		uint16_t port;
+		uint8_t fakeLobbyGuid[8]; //!< saves the GUID for the fake lobby (for UruVision)
 		
 		bool statusFileUpdate;
 		bool statusHTML, statusHTMLdbg, statusXML;
 		tString statusHTMLFile, statusHTMLdbgFile, statusXMLFile;
-		U32 lastUpdate;
+		time_t lastUpdate;
 	};
 
 } //End alc namespace

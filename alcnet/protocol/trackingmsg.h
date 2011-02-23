@@ -38,7 +38,7 @@ namespace alc {
 	class tmCustomSetGuid : public tmMsgBase {
 	public:
 		tmCustomSetGuid(tNetSession *u);
-		tmCustomSetGuid(tNetSession *u, const tString &serverGuid, const tString &age, const tString &externalIp, U16 spawnStart, U16 spawnStop);
+		tmCustomSetGuid(tNetSession *u, const tString &serverGuid, const tString &age, const tString &externalIp, uint16_t spawnStart, uint16_t spawnStop);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual tString additionalFields(tString dbg) const;
@@ -46,19 +46,19 @@ namespace alc {
 		// format
 		tUruString serverGuid;
 		tString age, externalIp;
-		U16 spawnStart, spawnStop;
+		uint16_t spawnStart, spawnStop;
 	};
 	
 	class tmCustomPlayerStatus : public tmMsgBase {
 	public:
 		tmCustomPlayerStatus(tNetSession *u);
-		tmCustomPlayerStatus(tNetSession *u, tNetSession *playerSession, Byte playerFlag, Byte playerStatus);
+		tmCustomPlayerStatus(tNetSession *u, tNetSession *playerSession, uint8_t playerFlag, uint8_t playerStatus);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual tString additionalFields(tString dbg) const;
 		// format
 		tString account, avatar;
-		Byte playerFlag, playerStatus;
+		uint8_t playerFlag, playerStatus;
 	};
 	
 	class tmCustomFindServer : public tmMsgBase { // also used by vault
@@ -77,12 +77,12 @@ namespace alc {
 	class tmCustomForkServer : public tmMsgBase {
 	public:
 		tmCustomForkServer(tNetSession *u);
-		tmCustomForkServer(tNetSession *u, U16 port, const tString &serverGuid, const tString &name);
+		tmCustomForkServer(tNetSession *u, uint16_t port, const tString &serverGuid, const tString &name);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual tString additionalFields(tString dbg) const;
 		// format
-		U16 forkPort;
+		uint16_t forkPort;
 		tUruString serverGuid;
 		tString age;
 	};
@@ -90,12 +90,12 @@ namespace alc {
 	class tmCustomServerFound : public tmMsgBase {
 	public:
 		tmCustomServerFound(tNetSession *u);
-		tmCustomServerFound(tNetSession *u, U32 ki, U32 x, U32 sid, U16 port, const tString &ipStr, const tString &serverGuid, const tString &name);
+		tmCustomServerFound(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, uint16_t port, const tString &ipStr, const tString &serverGuid, const tString &name);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual tString additionalFields(tString dbg) const;
 		// format
-		U16 serverPort;
+		uint16_t serverPort;
 		tString ipStr;
 		tUruString serverGuid;
 		tString age;
@@ -105,13 +105,13 @@ namespace alc {
 	public:
 		tmCustomDirectedFwd(tNetSession *u);
 		tmCustomDirectedFwd(tNetSession *u, tmGameMessageDirected &msg);
-		tmCustomDirectedFwd(tNetSession *u, U32 ki, tpObject *obj);
+		tmCustomDirectedFwd(tNetSession *u, uint32_t ki, tpObject *obj);
 	};
 	
 	class tmCustomPlayerToCome : public tmMsgBase {
 	public:
 		tmCustomPlayerToCome(tNetSession *u);
-		tmCustomPlayerToCome(tNetSession *u, U32 ki);
+		tmCustomPlayerToCome(tNetSession *u, uint32_t ki);
 		virtual void store(tBBuf &t);
 	};
 	

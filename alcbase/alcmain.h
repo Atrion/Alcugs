@@ -47,7 +47,7 @@ public:
 	
 	inline tTime bornTime(void) { return born; }
 	tTime upTime(void);
-	inline U32 threadId(void) { return mainThreadId; }
+	inline uint64_t threadId(void) { return mainThreadId; }
 	inline tConfig *config(void) { return &cfg; }
 	inline tString name(void) { return appName; }
 	
@@ -69,7 +69,7 @@ private:
 	void installBaseHandlers(bool install = true);
 	void dumpConfig();
 	
-	U32 mainThreadId;
+	uint64_t mainThreadId;
 	tTime born;
 	tLogConfig logCfg;
 	tString appName;

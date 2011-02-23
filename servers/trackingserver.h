@@ -43,7 +43,7 @@ namespace alc {
 		virtual void onStart(void) {
 			trackingBackend.setServerManager(smgr);
 		}
-		virtual void onConnectionClosing(tNetSession * u, Byte /*reason*/) {
+		virtual void onConnectionClosing(tNetSession * u, uint8_t /*reason*/) {
 			trackingBackend.removeServer(u);
 		}
 		virtual void onApplyConfig(void) {

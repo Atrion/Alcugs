@@ -51,7 +51,7 @@
 
 namespace alc {
 
-tUnet::tUnet(Byte whoami,const tString & lhost,U16 lport) : whoami(whoami) {
+tUnet::tUnet(uint8_t whoami,const tString & lhost,uint16_t lport) : whoami(whoami) {
 	DBG(9,"tUnet()\n");
 	initialized=false;
 	this->init();
@@ -68,7 +68,7 @@ tUnet::~tUnet() {
 	delete ack;
 	delete sec;
 }
-void tUnet::setBindPort(U16 lport) {
+void tUnet::setBindPort(uint16_t lport) {
 	bindport=lport;
 }
 void tUnet::setBindAddress(const tString & lhost) {
@@ -84,9 +84,8 @@ void tUnet::init() {
 	flags=UNET_DEFAULT_FLAGS;
 
 	//netcore timeout < min(all RTT's), nope, it must be the min tts (stt)
-	unet_sec=1; //(seconds)
-	unet_usec=0; //(microseconds)
 	idle_timer=5; // should be max. 10 seconds, may be overwritten by tUnetBase
+	unet_timeout=idle_timer*1000*1000; //(microseconds)
 
 	conn_timeout=5*60; // default timeout for new sessions (seconds)
 	/* This sets the timeout for unet servers from both sides
@@ -95,7 +94,7 @@ void tUnet::init() {
 	to 30sec after the client got authed.
 	I put this here and not in tUnetServerBase as tUnetBase must be able to override it */
 	
-	timeout=1000000; //1 second (time till re-transmission)
+	msg_timeout=1000*1000; //1 second (time till re-transmission)
 
 	//initial server timestamp
 	updateNetTime();
@@ -148,13 +147,13 @@ void tUnet::init() {
 	#endif
 	
 }
-void tUnet::setFlags(tUnetFlags flags) {
+void tUnet::setFlags(uint16_t flags) {
 	this->flags |= flags;
 }
-void tUnet::unsetFlags(tUnetFlags flags) {
+void tUnet::unsetFlags(uint16_t flags) {
 	this->flags &= ~flags;
 }
-tUnetFlags tUnet::getFlags() { return this->flags; }
+uint16_t tUnet::getFlags() { return this->flags; }
 
 void tUnet::updateNetTime() {
 	//set stamp
@@ -162,16 +161,13 @@ void tUnet::updateNetTime() {
 	net_time=(((ntime.seconds % 1000)*1000000)+ntime.microseconds);
 }
 
-void tUnet::updateTimerRelative(U32 usec) {
-	U32 min_timer=200; // minimum interval to be used
-	U32 sec = usec/1000000;
-	usec %= 1000000;
-	if (sec < unet_sec || (sec == unet_sec && usec < unet_usec)) {
-		unet_sec = sec;
-		unet_usec = usec;
+void tUnet::updateTimerRelative(unsigned int usec) {
+	unsigned int min_timer=200; // minimum interval to be used
+	if (usec < unet_timeout) {
+		unet_timeout = usec;
 		
-		if(unet_sec == 0 && unet_usec<min_timer) unet_usec=min_timer;
-		DBG(8,"Timer is now %i.%06i secs (wanted: %i usecs)\n",unet_sec,unet_usec,usec);
+		if(unet_timeout<min_timer) unet_timeout=min_timer;
+		DBG(8,"Timer is now %i usecs (wanted: %i usecs)\n",unet_timeout,usec);
 	}
 }
 
@@ -316,7 +312,7 @@ void tUnet::startOp() {
 			this->err->log("ERR: Fatal cannot resolve address %s:%i\n",bindaddr.c_str(),bindport);
 			throw txUnetIniErr(_WHERE("Cannot resolve address %s:%i",bindaddr.c_str(),bindport));
 		}
-		this->server.sin_addr.s_addr=*reinterpret_cast<U32 *>(host->h_addr_list[0]);
+		this->server.sin_addr.s_addr=*reinterpret_cast<in_addr_t *>(host->h_addr_list[0]);
 	}
 	this->server.sin_port=htons(bindport); //port 5000 default
 
@@ -378,7 +374,7 @@ void tUnet::stopOp() {
 	initialized=false;
 }
 
-tNetSessionIte tUnet::netConnect(const char * hostname,U16 port,Byte validation,Byte flags,Byte peerType) {
+tNetSessionIte tUnet::netConnect(const char * hostname,uint16_t port,uint8_t validation,uint8_t flags,uint8_t peerType) {
 	tNetSessionIte ite;
 	
 	struct sockaddr_in client;
@@ -387,7 +383,7 @@ tNetSessionIte tUnet::netConnect(const char * hostname,U16 port,Byte validation,
 	
 	if(host==NULL) throw txBase(_WHERE("Cannot resolve host: %s",hostname));
 	
-	ite.ip=*reinterpret_cast<U32 *>(host->h_addr_list[0]);
+	ite.ip=*reinterpret_cast<uint32_t *>(host->h_addr_list[0]);
 	ite.port=htons(port);
 	ite.sid=-1;
 	
@@ -425,8 +421,8 @@ This function recieves new packets and passes them to the correct session, and
 it also is responsible for the timer: It will wait exactly unet_sec seconds and unet_usec microseconds
 before it asks each session to do what it has to do (tUnet::doWork) */
 int tUnet::Recv() {
-	int n;
-	Byte buf[INC_BUF_SIZE]; //internal rcv buffer
+	ssize_t n;
+	uint8_t buf[INC_BUF_SIZE]; //internal rcv buffer
 	
 	tNetSessionIte ite;
 	tNetSession * session=NULL;
@@ -443,11 +439,11 @@ int tUnet::Recv() {
 	FD_ZERO(&rfds);
 	FD_SET(this->sock, &rfds);
 	/* Set timeout */
-	tv.tv_sec = this->unet_sec;
-	tv.tv_usec = this->unet_usec;
+	tv.tv_sec = unet_timeout / (1000*1000);
+	tv.tv_usec = unet_timeout % (1000*1000);
 
 #if _DBG_LEVEL_ >= 8
-	DBG(8,"waiting for incoming messages (%u.%06u)...\n", unet_sec, unet_usec);
+	DBG(8,"waiting for incoming messages (%u)...\n", unet_timeout);
 	tTime start; start.now();
 #endif
 	valret = select(this->sock+1, &rfds, NULL, NULL, &tv); // this is the command taking the time - now lets process what we got
@@ -569,8 +565,7 @@ If all sessions are idle, the netcore is it as well */
 void tUnet::doWork() {
 	idle=true;
 	// reset the timer
-	unet_sec=idle_timer;
-	unet_usec=0;
+	unet_timeout=idle_timer*1000*1000;
 	
 	tNetSession * cur;
 	smgr->rewind();
@@ -628,30 +623,30 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 	
 	DBG(5,"validation level is %i,%i\n",u->validation,msg->val);
 	
-	U32 msize=mbuf->size();
-	Byte * buf, * buf2=NULL;
-	buf=const_cast<Byte *>(mbuf->data()); // yes, we are writing directly into the tMBuf buffer... this saves us from copying everything
+	size_t msize=mbuf->size();
+	uint8_t * buf, * buf2=NULL;
+	buf=const_cast<uint8_t *>(mbuf->data()); // yes, we are writing directly into the tMBuf buffer... this saves us from copying everything
 
 	if(msg->val==2) {
-		DBG(8,"Encoding validation 2 packet of %i bytes...\n",msize);
-		buf2=static_cast<Byte *>(malloc(sizeof(Byte) * msize));
+		DBG(8,"Encoding validation 2 packet of %li bytes...\n",msize);
+		buf2=static_cast<uint8_t *>(malloc(msize));
 		if(buf2==NULL) { throw txNoMem(_WHERE("")); }
 		alcEncodePacket(buf2,buf,msize);
 		buf=buf2; //don't need to decode again
 		if(u->authenticated==1) {
 			DBG(8,"Client is authenticated, doing checksum...\n");
-			U32 val=alcUruChecksum(buf,msize,2,u->passwd.c_str());
+			uint32_t val=alcUruChecksum(buf,msize,2,u->passwd.c_str());
 			memcpy(buf+2,&val,4);
 			DBG(8,"Checksum done!...\n");
 		} else {
 			DBG(8,"Client is not authenticated, doing checksum...\n");
-			U32 val=alcUruChecksum(buf,msize,1,NULL);
+			uint32_t val=alcUruChecksum(buf,msize,1,NULL);
 			memcpy(buf+2,&val,4);
 			DBG(8,"Checksum done!...\n");
 		}
 		buf[1]=0x02;
 	} else if(msg->val==1) {
-		U32 val=alcUruChecksum(buf,msize,0,NULL);
+		uint32_t val=alcUruChecksum(buf,msize,0,NULL);
 		memcpy(buf+2,&val,4);
 		buf[1]=0x01;
 	} else {
@@ -696,10 +691,10 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 	DBG(9,"After the Sendto call...\n");
 	free(buf2);
 	delete mbuf;
-	DBG(8,"returning from uru_net_send RET:%i\n",msize);
+	DBG(8,"returning from uru_net_send RET:%li\n",msize);
 }
 
-void tUnet::send(tmMsgBase &m, U32 delay)
+void tUnet::send(tmMsgBase &m, unsigned int delay)
 	{ m.getSession()->send(m, delay); }
 
 /**
@@ -707,7 +702,7 @@ void tUnet::send(tmMsgBase &m, U32 delay)
 	flags
 	0x01 append to the last log file (elsewhere destroy the last one)
 */
-void tUnet::dump(tLog * sf,Byte flags) {
+void tUnet::dump(tLog * sf,uint8_t flags) {
 #if _DBG_LEVEL_ > 2
 	tLog * f;
 	if(sf==NULL) {

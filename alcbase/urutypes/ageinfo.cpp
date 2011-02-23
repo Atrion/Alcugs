@@ -44,7 +44,7 @@ namespace alc {
 	{
 		tString number = val->getVal(1, row), conditionalLoad = val->getVal(2, row);
 		name = val->getVal(0, row);
-		this->number = number.asU16();
+		this->number = number.asUInt();
 		if (conditionalLoad.isEmpty()) this->conditionalLoad = false;
 		else {
 			if (conditionalLoad != "1") throw txBase(_WHERE("if a conditional load value is specified, it must be set to 1"));
@@ -56,12 +56,12 @@ namespace alc {
 		pageId = pageType = 0;
 	}
 	
-	bool tPageInfo::hasPlayer(U32 ki) const
+	bool tPageInfo::hasPlayer(uint32_t ki) const
 	{
 		return std::find(players.begin(), players.end(), ki) != players.end();
 	}
 	
-	bool tPageInfo::removePlayer(U32 ki)
+	bool tPageInfo::removePlayer(uint32_t ki)
 	{
 		tPlayerList::iterator it = std::find(players.begin(), players.end(), ki);
 		if (it == players.end()) return false;
@@ -92,7 +92,7 @@ namespace alc {
 		// get sequence prefix
 		tString prefix = cfg->getVar("SequencePrefix");
 		if (prefix.isEmpty()) throw txUnexpectedData(_WHERE("can\'t find the ages SequencePrefix"));
-		seqPrefix = prefix.asU32();
+		seqPrefix = prefix.asUInt();
 		if (seqPrefix > 0x00FFFFFF && seqPrefix < 0xFFFFFFF0) // allow only 3 Bytes (but allow negative prefixes)
 			throw txUnexpectedData(_WHERE("A sequence prefix of %d (higher than 0x00FFFFFF) is not allowed)", seqPrefix));
 		DBG(9, "found sequence prefix %d for age %s\n", seqPrefix, name.c_str());
@@ -103,24 +103,24 @@ namespace alc {
 			if (!nPages) throw txBase(_WHERE("an age without pages? This is not possible"));
 			for (int i = 0; i < nPages; ++i) {
 				tPageInfo pageInfo(pageVal, i);
-				pages.insert(std::pair<U32, tPageInfo>(pageInfo.number, pageInfo));
+				pages.insert(std::pair<uint32_t, tPageInfo>(pageInfo.number, pageInfo));
 			}
 		}
 		// done!
 		delete cfg;
 	}
 	
-	tPageInfo *tAgeInfo::getPage(U32 pageId)
+	tPageInfo *tAgeInfo::getPage(uint32_t pageId)
 	{
-		U16 number = alcPageIdToNumber(seqPrefix, pageId);
+		uint16_t number = alcPageIdToNumber(seqPrefix, pageId);
 		DBG(9, "pageId 0x%08X => number %d, existing: %ld\n", pageId, number, pages.count(number));
 		tPageList::iterator it = pages.find(number);
 		return (it == pages.end() ? NULL : &it->second);
 	}
 	
-	bool tAgeInfo::validPage(U32 pageId) const
+	bool tAgeInfo::validPage(uint32_t pageId) const
 	{
-		U16 number = alcPageIdToNumber(seqPrefix, pageId);
+		uint16_t number = alcPageIdToNumber(seqPrefix, pageId);
 		DBG(9, "pageId 0x%08X => number %d, existing: %ld\n", pageId, number, pages.count(number));
 		if (number == 254) return true; // BuiltIn page (accept because we can get SDL states for it)
 		return pages.count(number);

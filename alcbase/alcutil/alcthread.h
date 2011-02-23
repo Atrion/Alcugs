@@ -37,7 +37,7 @@
 
 namespace alc {
 
-U32 alcGetSelfThreadId();
+uint64_t alcGetSelfThreadId(); // the actual type is pthread_t, which might not be available
 
 class tThread {
 public:

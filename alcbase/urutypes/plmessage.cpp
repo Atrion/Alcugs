@@ -35,13 +35,13 @@
 namespace alc {
 
 	//// tpMessage
-	tpMessage::tpMessage(U16 type, const tUruObjectRef &sender) : tpObject(type), sender(sender)
+	tpMessage::tpMessage(uint16_t type, const tUruObjectRef &sender) : tpObject(type), sender(sender)
 	{
 		// the reference list stays empty
 		flags = 0;
 	}
 	
-	tpMessage *tpMessage::create(U16 type, bool mustBeComplete)
+	tpMessage *tpMessage::create(uint16_t type, bool mustBeComplete)
 	{
 		tpObject *obj = alcCreatePlasmaObject(type, mustBeComplete);
 		tpMessage *specificObj = dynamic_cast<tpMessage *>(obj);
@@ -52,35 +52,35 @@ namespace alc {
 	
 	void tpMessage::store(tBBuf &t)
 	{
-		U32 u32Val;
+		uint32_t tmpVal;
 		
 		t.get(sender);
-		U32 refCount = t.getU32();
+		uint32_t refCount = t.get32();
 		// read array of receivers - perhaps put this into a helper function?
 		receivers.clear();
 		receivers.reserve(refCount);
 		tReceiverList::iterator it;
-		for (U32 i = 0; i < refCount; ++i) {
+		for (uint32_t i = 0; i < refCount; ++i) {
 			it = receivers.insert(receivers.end(), tUruObjectRef());
 			t.get(*it);
 		}
 		// remaining values
-		u32Val = t.getU32();
-		if (u32Val != 0) throw txUnexpectedData(_WHERE("plMessage.unk1 must be 0 but is %d", u32Val));
-		u32Val = t.getU32();
-		if (u32Val != 0) throw txUnexpectedData(_WHERE("plMessage.unk2 must be 0 but is %d", u32Val));
-		flags = t.getU32();
+		tmpVal = t.get32();
+		if (tmpVal != 0) throw txUnexpectedData(_WHERE("plMessage.unk1 must be 0 but is %d", tmpVal));
+		tmpVal = t.get32();
+		if (tmpVal != 0) throw txUnexpectedData(_WHERE("plMessage.unk2 must be 0 but is %d", tmpVal));
+		flags = t.get32();
 	}
 	
 	void tpMessage::stream(tBBuf &t) const
 	{
 		t.put(sender);
-		t.putU32(receivers.size());
+		t.put32(receivers.size());
 		for (tReceiverList::const_iterator it = receivers.begin(); it != receivers.end(); ++it)
 			t.put(*it);
-		t.putU32(0); // unk1
-		t.putU32(0); // unk2
-		t.putU32(flags);
+		t.put32(0); // unk1
+		t.put32(0); // unk2
+		t.put32(flags);
 	}
 	
 	tString tpMessage::str(void) const
@@ -96,7 +96,7 @@ namespace alc {
 	}
 	
 	//// tpLoadCloneMsg
-	tpLoadCloneMsg *tpLoadCloneMsg::create(U16 type, bool mustBeComplete)
+	tpLoadCloneMsg *tpLoadCloneMsg::create(uint16_t type, bool mustBeComplete)
 	{
 		tpObject *obj = alcCreatePlasmaObject(type, mustBeComplete);
 		tpLoadCloneMsg *specificObj = dynamic_cast<tpLoadCloneMsg *>(obj);
@@ -109,30 +109,29 @@ namespace alc {
 	{
 		tpMessage::store(t);
 		
-		Byte byteVal;
-		U32 u32Val;
+		uint32_t tmpVal;
 		
 		t.get(clonedObj);
 		if (!clonedObj.hasObj) throw txUnexpectedData(_WHERE("plLoadCloneMsg.clonedObj must not be null"));
 		t.get(unkObj1);
 		
-		u32Val = t.getU32();
-		if (u32Val != clonedObj.obj.clonePlayerId)
-			throw txUnexpectedData(_WHERE("plLoadCloneMsg.id (%d) must be the same as the clonedObj.clonePlayerId (%d)", u32Val, clonedObj.obj.clonePlayerId));
+		tmpVal = t.get32();
+		if (tmpVal != clonedObj.obj.clonePlayerId)
+			throw txUnexpectedData(_WHERE("plLoadCloneMsg.id (%d) must be the same as the clonedObj.clonePlayerId (%d)", tmpVal, clonedObj.obj.clonePlayerId));
 		
-		unk3 = t.getU32(); // when loading an avatar, this is the avatar KI; for the bugs, it's zero
+		unk3 = t.get32(); // when loading an avatar, this is the avatar KI; for the bugs, it's zero
 		if (unk3 != 0 && unk3 != clonedObj.obj.clonePlayerId)
 			throw txUnexpectedData(_WHERE("plLoadCloneMsg.unk3 (%d) must be 0 or the same as the clonedObj.clonePlayerId (%d)", unk3, clonedObj.obj.clonePlayerId));
 		
-		byteVal = t.getByte();
-		if (byteVal != 0x01) throw txUnexpectedData(_WHERE("plLoadCloneMsg.unk4 must be 0x01 but is 0x%02X", byteVal));
+		tmpVal = t.get8();
+		if (tmpVal != 0x01) throw txUnexpectedData(_WHERE("plLoadCloneMsg.unk4 must be 0x01 but is 0x%02X", tmpVal));
 		
-		byteVal = t.getByte();
-		if (byteVal != 0x00 && byteVal != 0x01)
-			throw txUnexpectedData(_WHERE("plLoadCloneMsg.isLoad must be 0x00 or 0x01 but is 0x%02X", byteVal));
-		isLoad = byteVal;
+		tmpVal = t.get8();
+		if (tmpVal != 0x00 && tmpVal != 0x01)
+			throw txUnexpectedData(_WHERE("plLoadCloneMsg.isLoad must be 0x00 or 0x01 but is 0x%02X", tmpVal));
+		isLoad = tmpVal;
 		
-		U16 subMsgType = t.getU16();
+		uint16_t subMsgType = t.get16();
 		if (subMsgType != plNull && subMsgType != plParticleTransferMsg)
 			throw txUnexpectedData(_WHERE("Invalid type of plLoadCloneMsg.subMsg: %s (0x%04X)", alcGetPlasmaType(subMsgType), subMsgType));
 		if (subMessage) delete subMessage;
@@ -149,11 +148,11 @@ namespace alc {
 		t.put(clonedObj);
 		t.put(unkObj1);
 		
-		t.putU32(clonedObj.obj.clonePlayerId);
-		t.putU32(unk3);
-		t.putByte(1);
-		t.putByte(isLoad);
-		t.putU16(subMessage->getType());
+		t.put32(clonedObj.obj.clonePlayerId);
+		t.put32(unk3);
+		t.put8(1);
+		t.put8(isLoad);
+		t.put16(subMessage->getType());
 		t.put(*subMessage);
 	}
 	
@@ -174,27 +173,27 @@ namespace alc {
 	{
 		tpLoadCloneMsg::store(t);
 		
-		Byte byteVal;
+		uint32_t tmpVal;
 		
-		byteVal = t.getByte();
-		if (byteVal != 0x00 && byteVal != 0x01)
-			throw txUnexpectedData(_WHERE("plLoadAvatarMsg.isPlayerAvatar must be 0x00 or 0x01 but is 0x%02X", byteVal));
-		isPlayerAvatar = byteVal;
+		tmpVal = t.get8();
+		if (tmpVal != 0x00 && tmpVal != 0x01)
+			throw txUnexpectedData(_WHERE("plLoadAvatarMsg.isPlayerAvatar must be 0x00 or 0x01 but is 0x%02X", tmpVal));
+		isPlayerAvatar = tmpVal;
 		
 		t.get(unkObj2);
 		
-		byteVal = t.getByte();
-		if (byteVal != 0x00)
-			throw txUnexpectedData(_WHERE("plLoadAvatarMsg.unk5 must be 0x00 but is 0x%02X", byteVal));
+		tmpVal = t.get8();
+		if (tmpVal != 0x00)
+			throw txUnexpectedData(_WHERE("plLoadAvatarMsg.unk5 must be 0x00 but is 0x%02X", tmpVal));
 	}
 	
 	void tpLoadAvatarMsg::stream(tBBuf &t) const
 	{
 		tpLoadCloneMsg::stream(t);
 		
-		t.putByte(isPlayerAvatar);
+		t.put8(isPlayerAvatar);
 		t.put(unkObj2);
-		t.putByte(0);
+		t.put8(0);
 	}
 	
 	tString tpLoadAvatarMsg::str(void) const
@@ -210,14 +209,14 @@ namespace alc {
 	{
 		tpMessage::store(t);
 		t.get(unkObj1);
-		count = t.getU16();
+		count = t.get16();
 	}
 	
 	void tpParticleTransferMsg::stream(tBBuf &t) const
 	{
 		tpMessage::stream(t);
 		t.put(unkObj1);
-		t.putU16(count);
+		t.put16(count);
 	}
 	
 	tString tpParticleTransferMsg::str(void) const
@@ -232,27 +231,27 @@ namespace alc {
 	{
 		tpAvatarMsg::store(t);
 		
-		unk3 = t.getU32();
-		unk4 = t.getU32();
-		unk5 = t.getByte();
+		unk3 = t.get32();
+		unk4 = t.get32();
+		unk5 = t.get8();
 		
 		float varFloat = t.getFloat();
 		if (varFloat != 0.0) throw txUnexpectedData(_WHERE("plAvBrainGenericMsg.unk6 must be 0.0, not %f", varFloat));
 		
-		unk7 = t.getByte();
-		unk8 = t.getByte();
+		unk7 = t.get8();
+		unk8 = t.get8();
 		unk9 = t.getFloat();
 	}
 	
 	void tpAvBrainGenericMsg::stream(tBBuf &t) const
 	{
 		tpAvatarMsg::stream(t);
-		t.putU32(unk3);
-		t.putU32(unk4);
-		t.putByte(unk5);
+		t.put32(unk3);
+		t.put32(unk4);
+		t.put8(unk5);
 		t.putFloat(0.0); // unk6
-		t.putByte(unk7);
-		t.putByte(unk8);
+		t.put8(unk7);
+		t.put8(unk8);
 		t.putFloat(unk9);
 	}
 	
@@ -267,13 +266,13 @@ namespace alc {
 	void tpServerReplyMsg::store(tBBuf &t)
 	{
 		tpMessage::store(t);
-		replyType = t.getU32();
+		replyType = t.get32();
 	}
 	
 	void tpServerReplyMsg::stream(tBBuf &t) const
 	{
 		tpMessage::stream(t);
-		t.putU32(replyType);
+		t.put32(replyType);
 	}
 	
 	tString tpServerReplyMsg::str(void) const
@@ -284,7 +283,7 @@ namespace alc {
 	}
 	
 	//// tpKIMsg
-	tpKIMsg::tpKIMsg(const tUruObjectRef &sender, const tString &senderName, U32 senderKi, const tString &text)
+	tpKIMsg::tpKIMsg(const tUruObjectRef &sender, const tString &senderName, uint32_t senderKi, const tString &text)
 	 : tpMessage(pfKIMsg, sender), senderName(senderName), senderKi(senderKi), text(text)
 	{
 		messageType = 0;
@@ -294,34 +293,33 @@ namespace alc {
 	{
 		tpMessage::store(t);
 		
-		Byte byteVal;
-		float floatVal;
-		U32 u32Val;
+		uint32_t tmpIntVal;
+		float tmpFloatVal;
 		
-		byteVal = t.getByte();
-		if (byteVal != 0) throw txUnexpectedData(_WHERE("pfKIMsg.unk3 must be 0 but is %d", byteVal));
+		tmpIntVal = t.get8();
+		if (tmpIntVal != 0) throw txUnexpectedData(_WHERE("pfKIMsg.unk3 must be 0 but is %d", tmpIntVal));
 		
 		t.get(senderName);
-		senderKi = t.getU32();
+		senderKi = t.get32();
 		t.get(text);
-		messageType = t.getU32();
+		messageType = t.get32();
 		
-		floatVal = t.getFloat();
-		if (floatVal != 0.0) throw txUnexpectedData(_WHERE("pfKIMsg.unk4 must be 0.0 but is %f", floatVal));
-		u32Val = t.getU32();
-		if (u32Val != 0) throw txUnexpectedData(_WHERE("pfKIMsg.unk5 must be 0 but is %d", u32Val));
+		tmpFloatVal = t.getFloat();
+		if (tmpFloatVal != 0.0) throw txUnexpectedData(_WHERE("pfKIMsg.unk4 must be 0.0 but is %f", tmpFloatVal));
+		tmpIntVal = t.get32();
+		if (tmpIntVal != 0) throw txUnexpectedData(_WHERE("pfKIMsg.unk5 must be 0 but is %d", tmpIntVal));
 	}
 	
 	void tpKIMsg::stream(tBBuf &t) const
 	{
 		tpMessage::stream(t);
-		t.putByte(0); // unk3
+		t.put8(0); // unk3
 		t.put(senderName);
-		t.putU32(senderKi);
+		t.put32(senderKi);
 		t.put(text);
-		t.putU32(messageType);
+		t.put32(messageType);
 		t.putFloat(0.0); // unk4
-		t.putU32(0); // unk5
+		t.put32(0); // unk5
 	}
 	
 	tString tpKIMsg::str(void) const
@@ -336,13 +334,13 @@ namespace alc {
 	void tpAvatarInputStateMsg::store(tBBuf &t)
 	{
 		tpMessage::store(t);
-		state = t.getU16();
+		state = t.get16();
 	}
 	
 	void tpAvatarInputStateMsg::stream(tBBuf &t) const
 	{
 		tpMessage::stream(t);
-		t.putU16(state);
+		t.put16(state);
 	}
 	
 	tString tpAvatarInputStateMsg::str(void) const

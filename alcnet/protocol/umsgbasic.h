@@ -42,10 +42,10 @@ class tmTerminated :public tmMsgBase {
 public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	tmTerminated(tNetSession * u,U32 ki=0,Byte reason=RKickedOff);
+	tmTerminated(tNetSession * u,uint32_t ki=0,uint8_t reason=RKickedOff);
 	virtual tString additionalFields(tString dbg) const;
 	//format
-	Byte reason;
+	uint8_t reason;
 };
 
 /** Leave */
@@ -53,16 +53,16 @@ class tmLeave :public tmMsgBase {
 public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	tmLeave(tNetSession * u,U32 ki=0,Byte reason=RQuitting);
+	tmLeave(tNetSession * u,uint32_t ki=0,uint8_t reason=RQuitting);
 	virtual tString additionalFields(tString dbg) const;
 	//format
-	Byte reason;
+	uint8_t reason;
 };
 
 /** Alive */
 class tmAlive :public tmMsgBase {
 public:
-	tmAlive(tNetSession * u,U32 ki=0)
+	tmAlive(tNetSession * u,uint32_t ki=0)
 	: tmMsgBase(NetMsgAlive, plNetKi | plNetAck | plNetTimestamp, u)
 	{
 		this->ki=ki;
@@ -74,10 +74,10 @@ class tmPlayerTerminated :public tmMsgBase {
 public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	tmPlayerTerminated(tNetSession * u,U32 ki=0,Byte reason=RKickedOff);
+	tmPlayerTerminated(tNetSession * u,uint32_t ki=0,uint8_t reason=RKickedOff);
 	virtual tString additionalFields(tString dbg) const;
 	//format
-	Byte reason;
+	uint8_t reason;
 };
 
 /** Ping */
@@ -85,14 +85,14 @@ class tmPing :public tmMsgBase {
 public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	tmPing(tNetSession * u, Byte dst = KLobby);
+	tmPing(tNetSession * u, uint8_t dst = KLobby);
 	tmPing(tNetSession *u, tmPing &ping);
 	virtual tString additionalFields(tString dbg) const;
 	void setRouteInfo(const tNetSessionIte &ite);
 	void unsetRouteInfo();
 	//format
 	double mtime;
-	Byte destination;
+	uint8_t destination;
 };
 
 }

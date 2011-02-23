@@ -41,11 +41,11 @@ namespace alc {
 	
 	class tmVaultPlayerList : public tmMsgBase {
 	public:
-		tmVaultPlayerList(tNetSession *u, U32 x, U16 numberPlayers, tMBuf players, const tString &url);
+		tmVaultPlayerList(tNetSession *u, uint32_t x, uint16_t numberPlayers, tMBuf players, const tString &url);
 		virtual void stream(tBBuf &t) const;
 		virtual tString additionalFields(tString dbg) const;
 		// format
-		U16 numberPlayers;
+		uint16_t numberPlayers;
 		tMBuf players;
 		tString url;
 	};
@@ -61,11 +61,11 @@ namespace alc {
 	
 	class tmPlayerCreated : public tmMsgBase {
 	public:
-		tmPlayerCreated(tNetSession *u, U32 ki, U32 x, Byte result);
+		tmPlayerCreated(tNetSession *u, uint32_t ki, uint32_t x, uint8_t result);
 		virtual void stream(tBBuf &t) const;
 		virtual tString additionalFields(tString dbg) const;
 		// format
-		Byte result;
+		uint8_t result;
 	};
 	
 	class tmDeletePlayer : public tmMsgBase {

@@ -40,7 +40,7 @@ namespace alc {
 	tmVault::tmVault(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
-	tmVault::tmVault(tNetSession *u, U32 ki, U32 x, bool task, tBaseType *vaultMessage) : tmMsgBase(NetMsgVault, plNetAck | plNetKi, u)
+	tmVault::tmVault(tNetSession *u, uint32_t ki, uint32_t x, bool task, tBaseType *vaultMessage) : tmMsgBase(NetMsgVault, plNetAck | plNetKi, u)
 	{
 		message.put(*vaultMessage);
 		this->ki = ki;
@@ -55,7 +55,7 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		message.clear();
-		U32 remaining = t.remaining();
+		size_t remaining = t.remaining();
 		message.write(t.readAll(), remaining); // the rest is the message
 	}
 	
@@ -73,7 +73,7 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultAskPlayerList
-	tmCustomVaultAskPlayerList::tmCustomVaultAskPlayerList(tNetSession *u, U32 x, U32 sid, const Byte *uid)
+	tmCustomVaultAskPlayerList::tmCustomVaultAskPlayerList(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid)
 	: tmMsgBase(NetMsgCustomVaultAskPlayerList, plNetAck | plNetX | plNetVersion | plNetUID | plNetSid, u)
 	{
 		this->x = x;
@@ -94,7 +94,7 @@ namespace alc {
 	tmCustomVaultPlayerList::tmCustomVaultPlayerList(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
-	tmCustomVaultPlayerList::tmCustomVaultPlayerList(tNetSession *u, U32 x, U32 sid, const Byte *uid)
+	tmCustomVaultPlayerList::tmCustomVaultPlayerList(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid)
 	: tmMsgBase(NetMsgCustomVaultPlayerList, plNetAck | plNetX | plNetVersion | plNetUID | plNetSid, u)
 	{
 		this->x = x;
@@ -108,16 +108,16 @@ namespace alc {
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX | plNetUID | plNetSid)) throw txProtocolError(_WHERE("X, UID or Sid flag missing"));
 	
-		numberPlayers = t.getU16();
+		numberPlayers = t.get16();
 		players.clear();
-		U32 remaining = t.remaining();
+		size_t remaining = t.remaining();
 		players.write(t.readAll(), remaining); // the rest is the data about the players
 	}
 	
 	void tmCustomVaultPlayerList::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
-		t.putU16(numberPlayers);
+		t.put16(numberPlayers);
 		t.put(players);
 	}
 	
@@ -132,7 +132,7 @@ namespace alc {
 	tmCustomVaultPlayerStatus::tmCustomVaultPlayerStatus(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
-	tmCustomVaultPlayerStatus::tmCustomVaultPlayerStatus(tNetSession *u, U32 ki, const tString &serverGuid, const tString &age, Byte state, U32 onlineTime)
+	tmCustomVaultPlayerStatus::tmCustomVaultPlayerStatus(tNetSession *u, uint32_t ki, const tString &serverGuid, const tString &age, uint8_t state, uint32_t onlineTime)
 	 : tmMsgBase(NetMsgCustomVaultPlayerStatus, plNetAck | plNetVersion | plNetKi, u), age(age), serverGuid(serverGuid)
 	{
 		this->ki = ki;
@@ -147,8 +147,8 @@ namespace alc {
 		if (!hasFlags(plNetKi))  throw txProtocolError(_WHERE("KI flag missing"));
 		t.get(age);
 		t.get(serverGuid);
-		state = t.getByte();
-		onlineTime = t.getU32();
+		state = t.get8();
+		onlineTime = t.get32();
 	}
 	
 	void tmCustomVaultPlayerStatus::stream(tBBuf &t) const
@@ -156,8 +156,8 @@ namespace alc {
 		tmMsgBase::stream(t);
 		t.put(age);
 		t.put(serverGuid);
-		t.putByte(state);
-		t.putU32(onlineTime);
+		t.put8(state);
+		t.put32(onlineTime);
 	}
 	
 	tString tmCustomVaultPlayerStatus::additionalFields(tString dbg) const
@@ -171,8 +171,8 @@ namespace alc {
 	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
-	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u, U32 x, U32 sid, const Byte *uid,
-	  Byte accessLevel, const tString &login, const tString &avatar, const tString &gender, const tString &friendName, const tString &key)
+	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid,
+	  uint8_t accessLevel, const tString &login, const tString &avatar, const tString &gender, const tString &friendName, const tString &key)
 	 : tmMsgBase(NetMsgCustomVaultCreatePlayer, plNetX | plNetUID | plNetVersion | plNetAck | plNetSid, u), login(login),
 	   avatar(avatar), gender(gender), friendName(friendName), key(key)
 	{
@@ -188,12 +188,12 @@ namespace alc {
 		if (!hasFlags(plNetX | plNetUID | plNetSid)) throw txProtocolError(_WHERE("X, UID or Sid flag missing"));
 		
 		t.get(login);
-		accessLevel = t.getByte();
+		accessLevel = t.get8();
 		t.get(avatar);
 		t.get(gender);
 		t.get(friendName);
 		t.get(key);
-		U32 unk = t.getU32();
+		uint32_t unk = t.get32();
 		if (unk != 0) throw txProtocolError(_WHERE("NetMsgCustomVaultCreatePlayer.unk must always be 0"));
 	}
 	
@@ -201,12 +201,12 @@ namespace alc {
 	{
 		tmMsgBase::stream(t);
 		t.put(login);
-		t.putByte(accessLevel);
+		t.put8(accessLevel);
 		t.put(avatar);
 		t.put(gender);
 		t.put(friendName);
 		t.put(key);
-		t.putU32(0);
+		t.put32(0);
 	}
 	
 	tString tmCustomVaultCreatePlayer::additionalFields(tString dbg) const
@@ -221,7 +221,7 @@ namespace alc {
 	tmCustomVaultPlayerCreated::tmCustomVaultPlayerCreated(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
-	tmCustomVaultPlayerCreated::tmCustomVaultPlayerCreated(tNetSession *u, U32 ki, U32 x, U32 sid, const Byte *uid, Byte result)
+	tmCustomVaultPlayerCreated::tmCustomVaultPlayerCreated(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, const uint8_t *uid, uint8_t result)
 	 : tmMsgBase(NetMsgCustomVaultPlayerCreated, plNetKi | plNetX | plNetAck | plNetUID | plNetSid, u)
 	{
 		this->ki = ki;
@@ -236,13 +236,13 @@ namespace alc {
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX | plNetKi | plNetUID | plNetSid)) throw txProtocolError(_WHERE("X, KI, UID or Sid flag missing"));
 		
-		result = t.getByte();
+		result = t.get8();
 	}
 	
 	void tmCustomVaultPlayerCreated::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
-		t.putByte(result);
+		t.put8(result);
 	}
 	
 	tString tmCustomVaultPlayerCreated::additionalFields(tString dbg) const
@@ -257,7 +257,7 @@ namespace alc {
 	 : tmMsgBase(NetMsgCustomVaultDeletePlayer, plNetX | plNetKi | plNetUID | plNetAck | plNetVersion, u)
 	{ }
 	
-	tmCustomVaultDeletePlayer::tmCustomVaultDeletePlayer(tNetSession *u, U32 ki, U32 x, U32 sid, const Byte *uid, Byte accessLevel)
+	tmCustomVaultDeletePlayer::tmCustomVaultDeletePlayer(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, const uint8_t *uid, uint8_t accessLevel)
 	 : tmMsgBase(NetMsgCustomVaultDeletePlayer, plNetX | plNetKi | plNetUID | plNetAck | plNetVersion | plNetSid, u)
 	{
 		this->x = x;
@@ -271,13 +271,13 @@ namespace alc {
 	{
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX | plNetKi | plNetUID | plNetSid)) throw txProtocolError(_WHERE("X, KI, UID or Sid flag missing"));
-		accessLevel = t.getByte();
+		accessLevel = t.get8();
 	}
 	
 	void tmCustomVaultDeletePlayer::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
-		t.putByte(accessLevel);
+		t.put8(accessLevel);
 	}
 	
 	tString tmCustomVaultDeletePlayer::additionalFields(tString dbg) const
@@ -288,7 +288,7 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultCheckKi
-	tmCustomVaultCheckKi::tmCustomVaultCheckKi(tNetSession *u, U32 ki, U32 x, U32 sid, const Byte *uid)
+	tmCustomVaultCheckKi::tmCustomVaultCheckKi(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, const uint8_t *uid)
 	 : tmMsgBase(NetMsgCustomVaultCheckKi, plNetX | plNetKi | plNetUID | plNetAck | plNetVersion | plNetSid, u)
 	{
 		this->x = x;
@@ -313,7 +313,7 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultKiChecked
-	tmCustomVaultKiChecked::tmCustomVaultKiChecked(tNetSession *u, U32 ki, U32 x, U32 sid, const Byte *uid, Byte status, const tString &avatar)
+	tmCustomVaultKiChecked::tmCustomVaultKiChecked(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, const uint8_t *uid, uint8_t status, const tString &avatar)
 	: tmMsgBase(NetMsgCustomVaultKiChecked, plNetX | plNetKi | plNetUID | plNetAck | plNetVersion | plNetSid, u), avatar(avatar)
 	{
 		this->ki = ki;
@@ -331,14 +331,14 @@ namespace alc {
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetX | plNetKi | plNetUID | plNetSid)) throw txProtocolError(_WHERE("X, KI, UID or Sid flag missing"));
 		
-		status = t.getByte();
+		status = t.get8();
 		t.get(avatar);
 	}
 	
 	void tmCustomVaultKiChecked::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
-		t.putByte(status);
+		t.put8(status);
 		t.put(avatar);
 	}
 	
@@ -350,7 +350,7 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultFindAge
-	tmCustomVaultFindAge::tmCustomVaultFindAge(tNetSession *u, U32 ki, U32 x, U32 sid, const tMBuf &data)
+	tmCustomVaultFindAge::tmCustomVaultFindAge(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, const tMBuf &data)
 	 : tmMsgBase(NetMsgCustomVaultFindAge, plNetX | plNetKi | plNetAck | plNetSid, u), data(data)
 	{
 		this->ki = ki;
@@ -367,7 +367,7 @@ namespace alc {
 		if (!hasFlags(plNetX | plNetKi | plNetSid)) throw txProtocolError(_WHERE("X, KI or Sid flag missing"));
 		// store the whole message
 		data.clear();
-		U32 remaining = t.remaining();
+		size_t remaining = t.remaining();
 		data.write(t.readAll(), remaining);
 	}
 	

@@ -44,7 +44,7 @@ namespace alc {
 
 tString alcGetExt(const tString & addr) {
 	
-	U32 i;
+	size_t i;
 	for(i=addr.size()-1; ; --i) {
 		char ch = addr.getAt(i);
 		if(ch=='/' || ch=='\\' || ch==':' || ch=='.' || i == 0) {
@@ -61,8 +61,8 @@ tString alcGetExt(const tString & addr) {
 }
 
 tString alcStripExt(const tString &addr) {
-	for(U32 i=addr.size()-1; ; --i) {
-		Byte c = addr.getAt(i);
+	for(size_t i=addr.size()-1; ; --i) {
+		uint8_t c = addr.getAt(i);
 		if(c=='.') {
 			return addr.substring(0, i);
 		}
@@ -76,9 +76,9 @@ tString alcStripExt(const tString &addr) {
 void alcMkdir(const tString &path, mode_t mode)
 {
 	tString subpath;
-	for(U32 i=0; i<path.size(); i++) {
-		Byte c = path.getAt(i);
-		subpath.putByte(c);
+	for(size_t i=0; i<path.size(); i++) {
+		uint8_t c = path.getAt(i);
+		subpath.put8(c);
 		if(c=='/' || c=='\\' || i == path.size()-1) {
 			mkdir(subpath.c_str(), mode);
 		}
