@@ -30,7 +30,7 @@
 #include <alcdefs.h>
 #include "lobbymsg.h"
 
-#include "netlog.h"
+#include "netexception.h"
 
 namespace alc {
 

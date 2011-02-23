@@ -32,7 +32,7 @@
 
 #include "vaultdb.h"
 #include <alcmain.h>
-#include <netlog.h>
+#include <netexception.h>
 #include <unet.h>
 #include <urutypes/ageinfo.h>
 

@@ -31,7 +31,7 @@
 #include "gamemsg.h"
 
 #include "netsession.h"
-#include "netlog.h"
+#include "netexception.h"
 #include <urutypes/plmessage.h>
 #include <urutypes/ageinfo.h>
 

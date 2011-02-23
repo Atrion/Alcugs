@@ -30,7 +30,7 @@
 #include <alcdefs.h>
 #include "trackingbackend.h"
 
-#include <netlog.h>
+#include <netexception.h>
 #include <unetbase.h>
 #include <netsessionmgr.h>
 #include <alcmain.h>

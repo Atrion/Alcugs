@@ -36,7 +36,7 @@
 #include "protocol/authmsg.h"
 #include "protocol/vaultmsg.h"
 #include "protocol/vaultproto.h"
-#include "netlog.h"
+#include "netexception.h"
 #include <alcmain.h>
 
 #include <cstring>

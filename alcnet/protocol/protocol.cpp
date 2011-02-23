@@ -33,7 +33,7 @@
 #include "protocol.h"
 
 #include "netsession.h"
-#include "netlog.h"
+#include "netexception.h"
 #include <alcmain.h>
 
 #include <cstring>

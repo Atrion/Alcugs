@@ -35,7 +35,7 @@
 #include "unetbase.h"
 
 #include "unetmain.h"
-#include "netlog.h"
+#include "netexception.h"
 #include "netsessionmgr.h"
 #include "protocol/umsgbasic.h"
 

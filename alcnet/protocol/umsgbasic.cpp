@@ -32,7 +32,7 @@
 #include <alcdefs.h>
 #include "umsgbasic.h"
 
-#include "netlog.h"
+#include "netexception.h"
 #include "netsessionmgr.h"
 
 namespace alc {

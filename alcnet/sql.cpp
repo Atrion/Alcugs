@@ -34,7 +34,7 @@
 #include <alcdefs.h>
 #include "sql.h"
 
-#include "netlog.h"
+#include "netexception.h"
 #include <alcmain.h>
 
 #include <ctime>

@@ -19,7 +19,6 @@ set (ALCNET_BASE_FILES
 	unetlobbyserverbase.cpp
 	unetmain.cpp
 	unetserverbase.cpp
-	netlog.cpp
 	netsession.cpp
 	netsessionmgr.cpp)
 

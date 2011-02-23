@@ -100,6 +100,9 @@ namespace alc {
 	/** parses a "name[number]" kind of string, setting "t" to the name and returning the number */
 	U16 alcParseKey(tString *t);
 
+	/** Convert an IP-address to a string */
+	tString alcGetStrIp(U32 ip);
+
 
 	/** convert pageIDs to pageNumbers and the other way around - wired, but whatever... */
 	inline U16 alcPageIdToNumber(U32 seqPrefix, U32 pageId)

@@ -36,7 +36,7 @@
 
 #include "netsessionmgr.h"
 #include "unet.h"
-#include "netlog.h"
+#include "netexception.h"
 #include "protocol/umsgbasic.h"
 #include <alcutil/alclog.h>
 

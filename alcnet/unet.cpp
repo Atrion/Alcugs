@@ -35,7 +35,7 @@
 #include "unet.h"
 
 #include "netsessionmgr.h"
-#include "netlog.h"
+#include "netexception.h"
 #include <alcmain.h>
 
 #include <fcntl.h>

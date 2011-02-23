@@ -31,7 +31,7 @@
 #include "gameserver.h"
 
 #include "sdl.h"
-#include <netlog.h>
+#include <netexception.h>
 #include <protocol/gamemsg.h>
 #include <protocol/trackingmsg.h>
 #include <protocol/vaultmsg.h>
