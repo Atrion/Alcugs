@@ -30,7 +30,7 @@
 #include <alcdefs.h>
 #include "unetmain.h"
 
-#include "netlog.h"
+#include "netexception.h"
 #include "unetbase.h"
 
 #include <csignal>

@@ -34,7 +34,7 @@
 #include <alcdefs.h>
 #include "netsessionmgr.h"
 
-#include "netlog.h"
+#include "netexception.h"
 
 #include <cassert>
 #include <cstdlib>

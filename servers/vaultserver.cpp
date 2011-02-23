@@ -30,7 +30,7 @@
 #include <alcdefs.h>
 #include "vaultserver.h"
 
-#include <netlog.h>
+#include <netexception.h>
 #include <protocol/umsgbasic.h>
 #include <protocol/trackingmsg.h>
 #include <alcmain.h>

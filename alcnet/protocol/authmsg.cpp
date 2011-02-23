@@ -30,7 +30,7 @@
 #include <alcdefs.h>
 #include "authmsg.h"
 
-#include "netlog.h"
+#include "netexception.h"
 
 #include <cstring>
 

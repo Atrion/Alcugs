@@ -31,7 +31,7 @@
 #include "vaultdb.h"
 
 #include <sql.h>
-#include <netlog.h>
+#include <netexception.h>
 #include <alcmain.h>
 #include <alcversion.h>
 

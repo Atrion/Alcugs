@@ -30,7 +30,7 @@
 #include <alcdefs.h>
 #include "lobbyserver.h"
 
-#include <netlog.h>
+#include <netexception.h>
 #include <protocol/trackingmsg.h>
 #include <protocol/vaultmsg.h>
 #include <protocol/lobbymsg.h>

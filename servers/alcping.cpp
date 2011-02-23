@@ -31,7 +31,7 @@
 #include <alclicense.h>
 #include <netsessionmgr.h>
 #include <protocol/umsgbasic.h>
-#include <netlog.h>
+#include <netexception.h>
 
 #include <cstring>
 

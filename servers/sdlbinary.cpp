@@ -31,7 +31,7 @@
 #include "sdlbinary.h"
 
 #include "sdl.h"
-#include <netlog.h>
+#include <netexception.h>
 
 #include <cstring>
 

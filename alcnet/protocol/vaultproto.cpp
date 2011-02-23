@@ -30,7 +30,7 @@
 #include <alcdefs.h>
 #include "vaultproto.h"
 
-#include "netlog.h"
+#include "netexception.h"
 #include "netsession.h"
 #include "protocol.h"
 #include <alcutil/alcos.h>

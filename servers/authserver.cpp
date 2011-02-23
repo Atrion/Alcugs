@@ -31,7 +31,7 @@
 #include "authserver.h"
 
 #include <protocol/authmsg.h>
-#include <netlog.h>
+#include <netexception.h>
 
 namespace alc {
 	

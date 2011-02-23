@@ -31,7 +31,7 @@
 #include "lobbybasemsg.h"
 
 #include "netsession.h"
-#include "netlog.h"
+#include "netexception.h"
 
 #include <cstring>
 

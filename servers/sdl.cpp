@@ -37,7 +37,7 @@
 #include <urutypes/plmessage.h>
 #include <urutypes/ageinfo.h>
 #include <alcmain.h>
-#include <netlog.h>
+#include <netexception.h>
 
 #include <iostream>
 #include <sys/stat.h>

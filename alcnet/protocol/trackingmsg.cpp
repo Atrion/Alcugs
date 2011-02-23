@@ -30,7 +30,7 @@
 #include <alcdefs.h>
 #include "trackingmsg.h"
 
-#include "netlog.h"
+#include "netexception.h"
 #include "netsession.h"
 #include "vaultmsg.h"
 

@@ -29,7 +29,7 @@
 #include <unetmain.h>
 #include <alcversion.h>
 #include <alclicense.h>
-#include <netlog.h>
+#include <netexception.h>
 
 #include <cerrno>
 #include <unistd.h>

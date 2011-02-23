@@ -41,6 +41,7 @@
 #include <sys/time.h>
 #include <fcntl.h>
 #include <cassert>
+#include <arpa/inet.h>
 
 namespace alc {
 
@@ -300,6 +301,15 @@ U16 alcParseKey(tString *t) {
 	return offset.asU16();
 }
 
+
+
+/** gets the ip address string of a host ip in network byte order
+*/
+tString alcGetStrIp(U32 ip) {
+	in_addr cip;
+	cip.s_addr=ip;
+	return tString(inet_ntoa(cip));
+}
 
 
 }
