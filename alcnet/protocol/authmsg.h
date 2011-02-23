@@ -36,27 +36,27 @@ namespace alc {
 	class tmCustomAuthAsk : public tmMsgBase {
 	public:
 		tmCustomAuthAsk(tNetSession *u);
-		tmCustomAuthAsk(tNetSession *u, U32 x, U32 sid, U32 ip, tString login, const Byte *challenge, const Byte *hash, Byte release);
+		tmCustomAuthAsk(tNetSession *u, uint32_t x, uint32_t sid, uint32_t ip, tString login, const uint8_t *challenge, const uint8_t *hash, uint8_t release);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual tString additionalFields(tString dbg) const;
 		// format
-		U32 ip; //network order
+		uint32_t ip; //network order
 		tString login;
-		Byte challenge[16], hash[16];
-		Byte release;
+		uint8_t challenge[16], hash[16];
+		uint8_t release;
 	};
 	
 	class tmCustomAuthResponse : public tmMsgBase {
 	public:
 		tmCustomAuthResponse(tNetSession *u);
-		tmCustomAuthResponse(tNetSession *u, tmCustomAuthAsk &authAsk, const Byte *uid, tString passwd, Byte result, Byte accessLevel);
+		tmCustomAuthResponse(tNetSession *u, tmCustomAuthAsk &authAsk, const uint8_t *uid, tString passwd, uint8_t result, uint8_t accessLevel);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual tString additionalFields(tString dbg) const;
 		// format
 		tString login, passwd;
-		Byte result, accessLevel;
+		uint8_t result, accessLevel;
 	};
 	
 } //End alc namespace

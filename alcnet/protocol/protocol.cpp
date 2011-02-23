@@ -46,7 +46,7 @@ namespace alc {
    k = offset MOD 8
    enc: c = x * 2 ^ k MOD 255
 */
-void alcEncodePacket(Byte* buf2,const Byte* buf, int n) {
+void alcEncodePacket(uint8_t* buf2,const uint8_t* buf, int n) {
 	int i;
 	for(i=0; i<n; i++) {
 		buf2[i] = buf[i] << (i%8) | buf[i] >> (8-(i%8));
@@ -58,7 +58,7 @@ void alcEncodePacket(Byte* buf2,const Byte* buf, int n) {
    k = offset MOD 8
    dec: x = c * 2 ^ (8-k) MOD 255
 */
-void alcDecodePacket(Byte* buf, int n) {
+void alcDecodePacket(uint8_t* buf, int n) {
 	int i;
 	for(i=0; i<n; i++) {
 		buf[i] = buf[i] >> (i%8) | buf[i] << (8-(i%8));
@@ -113,17 +113,17 @@ U32 alcUruChecksum1Trace(Byte * buf, int size) {
   \param aux_hash Password hash for algorithm 2
   \note REMEMBER THAT aux_hash must be 32 bytes and contain an ascii hash
 */
-U32 alcUruChecksum(const Byte* buf, int size, int alg, const char * aux_hash) {
+uint32_t alcUruChecksum(const uint8_t* buf, int size, int alg, const char * aux_hash) {
 
 	DBG(4,"Checksum %i requested, packet size is %i...\n",alg,size);
 	switch(alg) {
 		case 0:
 		{
 			int i;
-			U32 aux=0; //little-endian order when returned
+			uint32_t aux=0; //little-endian order when returned
 			int whoi=0;
 			for(i=6; i<(size-4); i=i+4) {
-				U32 val;
+				uint32_t val;
 				memcpy(&val, buf+i, 4);
 				aux = aux + letoh32(val); //V1 - working Checksum algorithm
 			}
@@ -131,7 +131,7 @@ U32 alcUruChecksum(const Byte* buf, int size, int alg, const char * aux_hash) {
 			if(whoi==1 || whoi==2) {
 				aux += *(buf+size-1);
 			} else if(whoi==0) {
-				U32 val;
+				uint32_t val;
 				memcpy(&val, buf+size-4, 4);
 				aux += letoh32(val);
 			} //else if whoi==3 Noop
@@ -148,7 +148,7 @@ U32 alcUruChecksum(const Byte* buf, int size, int alg, const char * aux_hash) {
 				md5buf.write(aux_hash, 32);
 			}
 			md5buf.compute();
-			return md5buf.getU32();
+			return md5buf.get32();
 		}
 	}
 	alcGetMain()->err()->log("ERR: Uru Checksum V%i is currently not supported in this version of the server.\n\n",alg);
@@ -172,10 +172,10 @@ U32 alcUruChecksum(const Byte* buf, int size, int alg, const char * aux_hash) {
 	 2 -> Validation level too high
 	 3 -> Bogus packet!!
 */
-int alcUruValidatePacket(Byte * buf,int n,Byte * validation,bool authed,const char * phash) {
-	U32 checksum;
+int alcUruValidatePacket(uint8_t * buf,int n,uint8_t * validation,bool authed,const char * phash) {
+	uint32_t checksum;
 #ifndef _NO_CHECKSUM
-	U32 aux_checksum;
+	uint32_t aux_checksum;
 #endif
 	if(n>=6 && buf[0]==0x03) { //magic uru number
 		if(buf[1]!=0) {
@@ -235,7 +235,7 @@ int alcUruValidatePacket(Byte * buf,int n,Byte * validation,bool authed,const ch
 	return 3; //aiieee!!!
 }
 
-U16 alcFixUUNetMsgCommand(U16 cmd, const tNetSession *u)
+uint16_t alcFixUUNetMsgCommand(uint16_t cmd, const tNetSession *u)
 {
 	// we might have to fix the message type
 	if (u->tpots == 2
@@ -246,43 +246,43 @@ U16 alcFixUUNetMsgCommand(U16 cmd, const tNetSession *u)
 
 //Unet Uru Message
 void tUnetUruMsg::store(tBBuf &t) {
-	U32 hsize=28;
+	size_t hsize=28;
 	t.seek(1);
-	val=t.getByte();
+	val=t.get8();
 	if(val>0) {
 		t.seek(4);
 		hsize+=4; //32
 	}
-	pn=t.getU32();
-	tf=t.getByte();
+	pn=t.get32();
+	tf=t.get8();
 	// Catch unknown or unhandled flags
-	Byte check = UNetNegotiation | UNetAckReq | UNetAckReply | UNetExt;
+	uint8_t check = UNetNegotiation | UNetAckReq | UNetAckReply | UNetExt;
 	if (tf & ~(check)) throw txUnexpectedData(_WHERE("Problem parsing uru msg flag %08X\n",tf & ~(check)));
 	// Catch invalid Flag combinations
 	if((tf & UNetNegotiation) && (tf & UNetAckReply)) throw txUnexpectedData(_WHERE("That must be a maliciusly crafted paquet, flags UNetAckReply and UNetNegotiation cannot be set at the same time"));
 	if((tf & UNetAckReq) && (tf & UNetAckReply)) throw txUnexpectedData(_WHERE("That must be a maliciusly crafted paquet, flags UNetAckReply and UNetAckReq cannot be set at the same time"));
 	if(tf & UNetExt) {
 		hsize-=8; //20 - 24
-		csn=t.getU32();
-		frt=t.getByte();
+		csn=t.get32();
+		frt=t.get8();
 	} else {
-		if(t.getU32()!=0) throw txUnexpectedData(_WHERE("Non-zero unk1"));
-		csn=t.getU32();
-		frt=t.getByte();
-		if(t.getU32()!=0) throw txUnexpectedData(_WHERE("Non-zero unk2"));
+		if(t.get32()!=0) throw txUnexpectedData(_WHERE("Non-zero unk1"));
+		csn=t.get32();
+		frt=t.get8();
+		if(t.get32()!=0) throw txUnexpectedData(_WHERE("Non-zero unk2"));
 	}
 	if (frt > 0 && ((tf & UNetNegotiation) || (tf & UNetAckReply)))
 		throw txProtocolError(_WHERE("Nego and ack packets must not be fragmented!"));
 	if (frt > 0 && !(tf & UNetAckReq))
 		throw txProtocolError(_WHERE("Non-acked packets must not be fragmented!"));
-	cps=t.getU32();
-	dsize=t.getU32();
+	cps=t.get32();
+	dsize=t.get32();
 	if(dsize==0) throw txUnexpectedData(_WHERE("A zero sized message!?"));
 	if (t.tell() != hsize) throw txUnexpectedData(_WHERE("Header size mismatch, %d != %d", t.tell(), hsize));
 	// done with the header - read data and check size
 	data.clear();
 	if(tf & UNetAckReply) {
-		U32 xdsize=dsize;
+		uint32_t xdsize=dsize;
 		if(tf & UNetExt) {
 			xdsize=dsize*8;
 		} else {
@@ -302,30 +302,30 @@ void tUnetUruMsg::store(tBBuf &t) {
 }
 void tUnetUruMsg::stream(tBBuf &t) const {
 	DBG(5,"[%i] ->%02X<- {%i,%i (%i) %i,%i} - %02X|%i bytes\n",pn,tf,sn,frn,frt,ps,pfr,dsize,dsize);
-	t.putByte(0x03); //already done by the sender ()
-	t.putByte(val);
-	if(val>0) t.putU32(0xFFFFFFFF);
-	t.putU32(pn); //generic pkg counter (re-written by the sender() )
+	t.put8(0x03); //already done by the sender ()
+	t.put8(val);
+	if(val>0) t.put32(0xFFFFFFFF);
+	t.put32(pn); //generic pkg counter (re-written by the sender() )
 	//next part is not touched by the sender
-	t.putByte(tf);
+	t.put8(tf);
 	if(tf & UNetExt) {
-		t.putU32(csn);
-		t.putByte(frt);
+		t.put32(csn);
+		t.put8(frt);
 	} else {
-		t.putU32(0); //4 blanks
-		t.putU32(csn);
-		t.putByte(frt);
-		t.putU32(0);
+		t.put32(0); //4 blanks
+		t.put32(csn);
+		t.put8(frt);
+		t.put32(0);
 	}
-	t.putU32(cps);
-	t.putU32(dsize);
+	t.put32(cps);
+	t.put32(dsize);
 	t.put(data);
 }
-U32 tUnetUruMsg::size() {
+size_t tUnetUruMsg::size() {
 	return data.size() + hSize();
 }
-U32 tUnetUruMsg::hSize() {
-	U32 hsize=28;
+size_t tUnetUruMsg::hSize() {
+	size_t hsize=28;
 	if(val>0) hsize+=4;
 	if(tf & UNetExt) hsize-=8;
 	return hsize;
@@ -348,7 +348,7 @@ void tUnetUruMsg::dumpheader(tLog * f) {
 	f->print("[%i] ->%02X<- {%i,%i (%i) %i,%i} - %02X|%i bytes",pn,tf,sn,frn,frt,ps,pfr,data.size(),data.size());
 }
 //flux 0 client -> server, 1 server -> client
-void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
+void tUnetUruMsg::htmlDumpHeader(tLog * log,uint8_t flux,uint32_t ip,uint16_t port) {
 	if (!log->doesPrint()) return;
 	log->stamp();
 
@@ -387,42 +387,41 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
 		log->print(" -&gt; %s:%i ",alcGetStrIp(ip).c_str(),ntohs(port));
 	}
 
-	U32 i;
 	data.rewind();
 
 	switch(tf) {
 		case UNetAckReply: //0x80
 			log->print("ack");
 			data.seek(2);
-			for(i=0; i<dsize; i++) {
+			for(uint32_t i=0; i<dsize; i++) {
 				if(i!=0) { log->print(" |"); }
-				Byte i1=data.getByte();
-				U32 i2=data.getU32();
+				uint8_t i1=data.get8();
+				uint32_t i2=data.get32();
 				data.seek(3);
-				Byte i3=data.getByte();
+				uint8_t i3=data.get8();
 				data.seek(-1);
-				U32 i4=data.getU32();
+				uint32_t i4=data.get32();
 				log->print(" %i,%i %i,%i",i2,i1,i4>>8,i3);
 				data.seek(3);
 			}
 			break;
 		case UNetAckReply | UNetExt:
 			log->print("aack");
-			for(i=0; i<dsize; i++) {
+			for(uint32_t i=0; i<dsize; i++) {
 				if(i!=0) { log->print(" |"); }
-				Byte i1=data.getByte();
+				uint8_t i1=data.get8();
 				data.seek(-1);
-				U32 i2=data.getU32();
-				Byte i3=data.getByte();
+				uint32_t i2=data.get32();
+				uint8_t i3=data.get8();
 				data.seek(-1);
-				U32 i4=data.getU32();
+				uint32_t i4=data.get32();
 				log->print(" %i,%i %i,%i",i2>>8,i1,i4>>8,i3);
 			}
 			break;
 		case UNetNegotiation | UNetAckReq: //0x42
 		case UNetNegotiation | UNetAckReq | UNetExt:
 			log->print("Negotiation ");
-			log->print("%i bps, %s",data.getU32(),alcGetStrTime(data.getU32()).c_str(),data.getU32());
+			log->print("%i bps, %s",data.get32(),alcGetStrTime(data.get32()).c_str(),data.get32());
 			break;
 		case 0x00: //0x00
 		case UNetExt:
@@ -441,9 +440,9 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
 
 	if((tf==0x00 || tf==UNetAckReq || tf==UNetExt || tf==(UNetAckReq | UNetExt))) {
 		if(frn==0) {
-			U32 msgcode=data.getU16();
+			uint16_t msgcode=data.get16();
 			//log->print("(%04X) %s %08X",*(U16 *)(buf),alcUnetGetMsgCode(*(U16 *)(buf)),*(U32 *)(buf+2));
-			log->print("(%04X) %s %08X",msgcode,alcUnetGetMsgCode(msgcode),data.getU32());
+			log->print("(%04X) %s %08X",msgcode,alcUnetGetMsgCode(msgcode),data.get32());
 		} else {
 			log->print("frg..");
 		}
@@ -454,12 +453,12 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port) {
 
 //Negotiation
 void tmNetClientComm::store(tBBuf &t) {
-	bandwidth=t.getU32();
+	bandwidth=t.get32();
 	t.get(timestamp);
 	if (!t.eof()) throw txUnexpectedData(_WHERE("Nego is too long"));
 }
 void tmNetClientComm::stream(tBBuf &t) const {
-	t.putU32(bandwidth);
+	t.put32(bandwidth);
 	t.put(timestamp);
 }
 tString tmNetClientComm::str() const {
@@ -485,30 +484,30 @@ void tmNetAck::store(tBBuf &t)
 {
 	ackq.clear();
 	if (!(bhflags & UNetExt)) {
-		if(t.getU16() != 0) throw txUnexpectedData(_WHERE("ack unknown data"));
+		if(t.get16() != 0) throw txUnexpectedData(_WHERE("ack unknown data"));
 	}
 	while (!t.eof()) {
 		tUnetAck *ack = new tUnetAck;
-		ack->A=t.getU32();
+		ack->A=t.get32();
 		if(!(bhflags & UNetExt))
-			if(t.getU32()!=0) throw txUnexpectedData(_WHERE("ack unknown data"));
-		ack->B=t.getU32();
+			if(t.get32()!=0) throw txUnexpectedData(_WHERE("ack unknown data"));
+		ack->B=t.get32();
 		if(!(bhflags & UNetExt))
-			if(t.getU32()!=0) throw txUnexpectedData(_WHERE("ack unknown data"));
+			if(t.get32()!=0) throw txUnexpectedData(_WHERE("ack unknown data"));
 		ackq.push_back(ack);
 	}
 	// no need to check for eof, the loop already does that
 }
 void tmNetAck::stream(tBBuf &t) const
 {
-	if (!(bhflags & UNetExt)) t.putU16(0);
+	if (!(bhflags & UNetExt)) t.put16(0);
 	for (tAckList::const_iterator it = ackq.begin(); it != ackq.end(); ++it) {
-		t.putU32((*it)->A);
+		t.put32((*it)->A);
 		if(!(bhflags & UNetExt))
-			t.putU32(0);
-		t.putU32((*it)->B);
+			t.put32(0);
+		t.put32((*it)->B);
 		if(!(bhflags & UNetExt))
-			t.putU32(0);
+			t.put32(0);
 	}
 }
 tString tmNetAck::str() const {
@@ -528,7 +527,7 @@ tString tmNetAck::str() const {
 }
 
 //Base message
-tmMsgBase::tmMsgBase(U16 cmd,U32 flags,tNetSession * u) : tmBase(0, u) {
+tmMsgBase::tmMsgBase(uint16_t cmd,uint32_t flags,tNetSession * u) : tmBase(0, u) {
 	DBG(5,"tmMsgBase()\n");
 	this->cmd=cmd;
 	this->flags=flags;
@@ -548,20 +547,20 @@ tmMsgBase::tmMsgBase(tNetSession * u) : tmBase(0, u) {
 	this->flags=0;
 	this->timestamp.seconds=0; // the timestamp is unitialized per default (this removes a valgrind error)
 }
-void tmMsgBase::setFlags(U32 f) {
+void tmMsgBase::setFlags(uint32_t f) {
 	this->flags |= f;
 	if(f & plNetAck)
 		bhflags |= UNetAckReq;
 }
-void tmMsgBase::unsetFlags(U32 f) {
+void tmMsgBase::unsetFlags(uint32_t f) {
 	this->flags &= ~f;
 	if(f & plNetAck)
 		bhflags &= ~UNetAckReq;
 }
-U32 tmMsgBase::getFlags() const {
+uint32_t tmMsgBase::getFlags() const {
 	return flags;
 }
-bool tmMsgBase::hasFlags(U32 f) const {
+bool tmMsgBase::hasFlags(uint32_t f) const {
 	return (flags | f) == flags; // there can be several flags enabled in f, so a simple & is not enough
 }
 void tmMsgBase::setUrgent() {
@@ -573,11 +572,11 @@ void tmMsgBase::unsetUrgent() {
 void tmMsgBase::store(tBBuf &t) {
 	if (!u)  throw txProtocolError(_WHERE("attempt to save message without session being set"));
 	//base
-	cmd=alcFixUUNetMsgCommand(t.getU16(), u);
-	flags=t.getU32();
+	cmd=alcFixUUNetMsgCommand(t.get16(), u);
+	flags=t.get32();
 	if(flags & plNetVersion) {
-		max_version=t.getByte();
-		min_version=t.getByte();
+		max_version=t.get8();
+		min_version=t.get8();
 		// this overrides existing values
 		u->max_version=max_version;
 		u->min_version=min_version;
@@ -597,12 +596,12 @@ void tmMsgBase::store(tBBuf &t) {
 		timestamp.microseconds=0;
 	}
 	if(flags & plNetX) {
-		x=t.getU32();
+		x=t.get32();
 	} else {
 		x=0;
 	}
 	if(flags & plNetKi) {
-		ki=t.getU32();
+		ki=t.get32();
 	} else {
 		ki=0;
 	}
@@ -612,11 +611,11 @@ void tmMsgBase::store(tBBuf &t) {
 		memset(uid,0,16);
 	}
 	if(flags & plNetSid) {
-		sid=t.getU32();
+		sid=t.get32();
 	}
 	else sid = 0;
 
-	U32 check = plNetAck | plNetVersion | plNetTimestamp | plNetX | plNetKi | plNetUID | plNetSystem /*unknown purpose*/;
+	uint32_t check = plNetAck | plNetVersion | plNetTimestamp | plNetX | plNetKi | plNetUID | plNetSystem /*unknown purpose*/;
 	// message-specific flags
 	if (cmd == NetMsgGameMessageDirected || cmd == NetMsgCustomDirectedFwd)
 		check |= plNetDirected; // Alcugs uses the message type to check if the msg needs to be forwarded to tracking
@@ -647,14 +646,14 @@ void tmMsgBase::stream(tBBuf &t) const {
 	
 	// fix for UU clients
 	if (u->tpots == 2 && (cmd == NetMsgVault || cmd == NetMsgPython || cmd == NetMsgSetTimeout || cmd == NetMsgActivePlayerSet))
-		t.putU16(cmd-1); // these are incremented by 1 in POTS (remember to also update alcFixUUNetMsgCommand!)
+		t.put16(cmd-1); // these are incremented by 1 in POTS (remember to also update alcFixUUNetMsgCommand!)
 	else
-		t.putU16(cmd);
+		t.put16(cmd);
 	
-	t.putU32(flags);
+	t.put32(flags);
 	if(flags & plNetVersion) {
-		t.putByte(max_version);
-		t.putByte(min_version);
+		t.put8(max_version);
+		t.put8(min_version);
 	}
 	if(flags & plNetTimestamp || (u->min_version<6 && u->max_version==12)) {
 		if(timestamp.seconds==0) {
@@ -666,16 +665,16 @@ void tmMsgBase::stream(tBBuf &t) const {
 			t.put(timestamp);
 	}
 	if(flags & plNetX) {
-		t.putU32(x);
+		t.put32(x);
 	}
 	if(flags & plNetKi) {
-		t.putU32(ki);
+		t.put32(ki);
 	}
 	if(flags & plNetUID) {
 		t.write(uid,16);
 	}
 	if(flags & plNetSid) {
-		t.putU32(sid);
+		t.put32(sid);
 	}
 }
 void tmMsgBase::copyProps(tmMsgBase &t) {
@@ -748,7 +747,7 @@ tString tmMsgBase::str() const {
 #endif
 }
 
-Byte alcUnetGetVarTypeFromName(tString type) {
+uint8_t alcUnetGetVarTypeFromName(tString type) {
 	if (type == "INT") return DInteger;
 	else if (type == "FLOAT") return DFloat;
 	else if (type == "BOOL") return DBool;
@@ -766,7 +765,7 @@ Byte alcUnetGetVarTypeFromName(tString type) {
 	else throw txUnexpectedData(_WHERE("Unknown SDL VAR type %s", type.c_str()));
 }
 
-const char * alcUnetGetVarType(Byte type) {
+const char * alcUnetGetVarType(uint8_t type) {
 	switch(type) {
 		case DInteger: return "INT";
 		case DFloat: return "FLOAT";
@@ -787,7 +786,7 @@ const char * alcUnetGetVarType(Byte type) {
 	}
 }
 
-const char * alcUnetGetRelease(Byte rel) {
+const char * alcUnetGetRelease(uint8_t rel) {
 	switch(rel) {
 		case TExtRel: return "ExtRel";
 		case TIntRel: return "IntRel";
@@ -796,7 +795,7 @@ const char * alcUnetGetRelease(Byte rel) {
 	}
 }
 
-const char * alcUnetGetDestination(Byte dest) {
+const char * alcUnetGetDestination(uint8_t dest) {
 	switch(dest) {
 		case KAgent: return "KAgent";
 		case KLobby: return "KLobby";
@@ -816,7 +815,7 @@ const char * alcUnetGetDestination(Byte dest) {
 	}
 }
 
-const char * alcUnetGetReasonCode(Byte code) {
+const char * alcUnetGetReasonCode(uint8_t code) {
 	switch(code) {
 		case RStopResponding: return "StopResponding";
 		case RActive: return "Active";
@@ -839,7 +838,7 @@ const char * alcUnetGetReasonCode(Byte code) {
 	}
 }
 
-const char * alcUnetGetAuthCode(Byte code) {
+const char * alcUnetGetAuthCode(uint8_t code) {
 	switch(code) {
 		case AAuthSucceeded: return "AuthSucceeded";
 		case AAuthHello: return "AuthHello";
@@ -854,7 +853,7 @@ const char * alcUnetGetAuthCode(Byte code) {
 	}
 }
 
-const char * alcUnetGetAvatarCode(Byte code) {
+const char * alcUnetGetAvatarCode(uint8_t code) {
 	switch(code) {
 		case AOK: return "Ok";
 		case AUnknown: return "UnknownReason";
@@ -870,7 +869,7 @@ const char * alcUnetGetAvatarCode(Byte code) {
 	}
 }
 
-const char * alcUnetGetLinkingRule(Byte rule)
+const char * alcUnetGetLinkingRule(uint8_t rule)
 {
 	switch (rule) {
 		case KBasicLink: return "KBasicLink";
@@ -883,7 +882,7 @@ const char * alcUnetGetLinkingRule(Byte rule)
 	}
 }
 
-const char * alcUnetGetMsgCode(U16 code) {
+const char * alcUnetGetMsgCode(uint16_t code) {
 	switch(code) {
 		case NetMsgPagingRoom: return "NetMsgPagingRoom";
 		case NetMsgJoinReq: return "NetMsgJoinReq";

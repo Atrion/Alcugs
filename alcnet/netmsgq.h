@@ -133,13 +133,13 @@ public:
 	inline bool isEmpty() {
 		return(first==NULL);
 	}
-	inline U32 len() { return n; }
+	inline size_t len() { return n; }
 private:
 	T* first;
 	T* last;
 	T* current;
 	T* prev;
-	U32 n;
+	size_t n;
 };
 
 }

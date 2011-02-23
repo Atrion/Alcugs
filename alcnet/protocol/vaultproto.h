@@ -175,10 +175,10 @@ namespace alc {
 #define TUnRegisterVisitAge 0x0C
 #define TFriendInvite 0x0D
 
-	const char *alcVaultGetCmd(Byte cmd);
-	const char *alcVaultGetTask(Byte cmd);
-	const char *alcVaultGetNodeType(Byte type);
-	const char *alcVaultGetFolderType(U32 type);
+	const char *alcVaultGetCmd(uint8_t cmd);
+	const char *alcVaultGetTask(uint8_t cmd);
+	const char *alcVaultGetNodeType(uint8_t type);
+	const char *alcVaultGetFolderType(uint32_t type);
 	
 	class tvBase : public tBaseType {
 	public:
@@ -188,8 +188,8 @@ namespace alc {
 	
 	class tvAgeInfoStruct : public tvBase {
 	public:
-		tvAgeInfoStruct(const tString &filename, const tString &instanceName, const tString &userDefName, const tString &displayName, const Byte *guid);
-		tvAgeInfoStruct(const tString &filename, const Byte *guid);
+		tvAgeInfoStruct(const tString &filename, const tString &instanceName, const tString &userDefName, const tString &displayName, const uint8_t *guid);
+		tvAgeInfoStruct(const tString &filename, const uint8_t *guid);
 		tvAgeInfoStruct(const tvAgeInfoStruct &);
 		tvAgeInfoStruct(void) : tvBase() { }
 		virtual void store(tBBuf &t);
@@ -198,9 +198,9 @@ namespace alc {
 		inline bool hasGuid(void) { return (flags & 0x04); }
 		tString str(void) const;
 		// format
-		Byte flags;
+		uint8_t flags;
 		tString filename, instanceName;
-		Byte guid[8];
+		uint8_t guid[8];
 		tString userDefName, displayName;
 	};
 	
@@ -213,7 +213,7 @@ namespace alc {
 		virtual void asHtml(tLog *log, bool shortLog);
 		tString str(void) const;
 		// format
-		U32 flags;
+		uint32_t flags;
 		tString title, name, cameraStack;
 	};
 	
@@ -225,43 +225,43 @@ namespace alc {
 		virtual void asHtml(tLog *log, bool shortLog);
 		tString str(void) const;
 		// format
-		U16 flags;
+		uint16_t flags;
 		tvAgeInfoStruct ageInfo;
-		Byte linkingRule;
+		uint8_t linkingRule;
 		tvSpawnPoint spawnPoint;
-		Byte ccr;
+		uint8_t ccr;
 		tString parentAgeName;
 	};
 	
 	class tvManifest : public tvBase {
 	public:
-		tvManifest(U32 id, double timestamp);
+		tvManifest(uint32_t id, double timestamp);
 		tvManifest(void) : tvBase() {}
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
 		// format
-		U32 id;
+		uint32_t id;
 		double time;
 	};
 	
 	class tvNodeRef : public tvBase {
 	public:
-		tvNodeRef(U32 saver, U32 parent, U32 child, U32 time, U32 microsec,  Byte flags);
-		tvNodeRef(U32 saver, U32 parent, U32 child);
+		tvNodeRef(uint32_t saver, uint32_t parent, uint32_t child, uint32_t time, uint32_t microsec,  uint8_t flags);
+		tvNodeRef(uint32_t saver, uint32_t parent, uint32_t child);
 		tvNodeRef(void) : tvBase() { }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
 		// format
-		U32 saver, parent, child;
-		U32 time, microsec;
-		Byte flags; // 0x00 not seen; 0x01 seen
+		uint32_t saver, parent, child;
+		uint32_t time, microsec;
+		uint8_t flags; // 0x00 not seen; 0x01 seen
 	};
 	
 	class tvCreatableGenericValue : public tvBase {
 	public:
-		tvCreatableGenericValue(U32 integer);
+		tvCreatableGenericValue(uint32_t integer);
 		tvCreatableGenericValue(double time);
 		tvCreatableGenericValue(const tString &str);
 		tvCreatableGenericValue(void) : tvBase() { }
@@ -269,12 +269,12 @@ namespace alc {
 		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
 		
-		U32 asInt(void) const;
+		uint32_t asInt(void) const;
 		const tString &asString(void) const;
 		
 		// format
-		Byte format;
-		U32 integer;
+		uint8_t format;
+		uint32_t integer;
 		tUruString str;
 		double time;
 	};
@@ -282,18 +282,18 @@ namespace alc {
 	class tvCreatableStream : public tvBase {
 	public:
 		 /** create a stream with a list of vault objects. These must be tvManifest or tvNodeRef, otherwise that's not a valid stream! */
-		tvCreatableStream(Byte id, tvBase **dataList, int nData);
-		tvCreatableStream(Byte id, tMBuf &buf);
-		tvCreatableStream(Byte id) : tvBase() { this->id = id; size = 0; data = NULL; }
+		tvCreatableStream(uint8_t id, tvBase **dataList, int nData);
+		tvCreatableStream(uint8_t id, tMBuf &buf);
+		tvCreatableStream(uint8_t id) : tvBase() { this->id = id; size = 0; data = NULL; }
 		virtual ~tvCreatableStream(void);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
 		tSBuf getData(void) const; //!< remember to delete the MBuf
 		// format
-		U32 size;
-		Byte id;
-		Byte *data;
+		size_t size;
+		uint8_t id;
+		void *data;
 		FORBID_CLASS_COPY(tvCreatableStream) // the "data" would have to be copied manually
 	};
 	
@@ -304,14 +304,14 @@ namespace alc {
 		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
 		// format
-		Byte guid[8];
+		uint8_t guid[8];
 	};
 	
 	class tvNode : public tvBase {
 	public:
 		/** initializes a vault node. make sure you initialize the first fields (up to modMicrosec) before sending since they
 		    will also be sent when their flag is off */
-		tvNode(U32 flagB = 0);
+		tvNode(uint32_t flagB = 0);
 		
 		inline virtual ~tvNode(void) {}
 		virtual void store(tBBuf &t);
@@ -319,21 +319,21 @@ namespace alc {
 		virtual void asHtml(tLog *log, bool shortLog);
 	
 		// format
-		U32 flagB, flagC;
+		uint32_t flagB, flagC;
 		// you can only rely on these being defined if the flag is set
-		U32 index;
-		Byte type;
-		U32 permissions;
-		U32 owner;
-		U32 group;
+		uint32_t index;
+		uint8_t type;
+		uint32_t permissions;
+		uint32_t owner;
+		uint32_t group;
 		double modTime;
-		U32 creator;
-		U32 crtTime;
-		U32 ageTime;
+		uint32_t creator;
+		uint32_t crtTime;
+		uint32_t ageTime;
 		tString ageName;
-		Byte ageGuid[8];
-		U32 int1, int2, int3, int4;
-		U32 uInt1, uInt2, uInt3, uInt4;
+		uint8_t ageGuid[8];
+		uint32_t int1, int2, int3, int4;
+		uint32_t uInt1, uInt2, uInt3, uInt4;
 		tString str1, str2, str3, str4, str5, str6;
 		tString lStr1, lStr2;
 		tString text1, text2;
@@ -347,28 +347,28 @@ namespace alc {
 	
 	class tvItem : public tvBase {
 	public:
-		tvItem(Byte id, U32 integer);
-		tvItem(Byte id, double time);
-		tvItem(Byte id, const tString &str);
+		tvItem(uint8_t id, uint32_t integer);
+		tvItem(uint8_t id, double time);
+		tvItem(uint8_t id, const tString &str);
 		tvItem(tvCreatableStream *stream);
-		tvItem(Byte id, tvNodeRef *ref);
-		tvItem(Byte tpots) : tvBase() { this->tpots = tpots; data = NULL; }
+		tvItem(uint8_t id, tvNodeRef *ref);
+		tvItem(uint8_t tpots) : tvBase() { this->tpots = tpots; data = NULL; }
 		inline virtual ~tvItem(void) { if (data) delete data; }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
 		
-		U32 asInt(void) const;
+		uint32_t asInt(void) const;
 		const tString &asString(void) const;
-		const Byte *asGuid(void) const;
+		const uint8_t *asGuid(void) const;
 		tvNode *asNode(void) const;
 		tvNodeRef *asNodeRef(void) const;
 		tvAgeLinkStruct *asAgeLink(void) const;
 		
-		Byte tpots; // 2: generate/parse for non-TPOTS client, everything else: for TPOTS client or the vault server
+		uint8_t tpots; // 2: generate/parse for non-TPOTS client, everything else: for TPOTS client or the vault server
 		// format
-		Byte id;
-		U16 type;
+		uint8_t id;
+		uint16_t type;
 		tvBase *data;
 		FORBID_CLASS_COPY(tvItem) // the "data" would have to be copied manually
 	};
@@ -376,26 +376,26 @@ namespace alc {
 	class tvMessage : public tvBase {
 	public:
 		tvMessage(const tvMessage &msg);
-		tvMessage(Byte cmd, bool task = false);
-		tvMessage(bool isTask, Byte tpots) : tvBase() { task = isTask; this->tpots = tpots; }
+		tvMessage(uint8_t cmd, bool task = false);
+		tvMessage(bool isTask, uint8_t tpots) : tvBase() { task = isTask; this->tpots = tpots; }
 		virtual ~tvMessage(void);
 		virtual void store(tBBuf &t); //!< unpacks the message
 		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
-		void print(tLog *log, bool clientToServer, tNetSession *client, bool shortLog, U32 ki = 0);
+		void print(tLog *log, bool clientToServer, tNetSession *client, bool shortLog, uint32_t ki = 0);
 		const tvMessage &operator=(const tvMessage &msg); //!< does not copy the items, just the "outer" data
 		
 		typedef std::vector<tvItem *> tItemList; // to avoid re-allocating and since tvItems can't be copied, this is a vector of pointers
 		
-		Byte tpots; // 2: generate/parse for non-TPOTS client, everything else: for TPOTS client or the vault server
+		uint8_t tpots; // 2: generate/parse for non-TPOTS client, everything else: for TPOTS client or the vault server
 		// format
 		bool task;
-		Byte cmd; //!< the vault command
+		uint8_t cmd; //!< the vault command
 		bool compress;
 		tItemList items;
-		U16 context; //!< vault context; sub in VaultTask
-		U32 vmgr; //!< vault manager; client in VaultTask
-		U16 vn; //!< vault number
+		uint16_t context; //!< vault context; sub in VaultTask
+		uint32_t vmgr; //!< vault manager; client in VaultTask
+		uint16_t vn; //!< vault number
 	};
 	
 	

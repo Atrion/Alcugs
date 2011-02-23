@@ -67,10 +67,10 @@ namespace alc {
 		tConfig *cfg = alcGetMain()->config();
 		tString var = cfg->getVar("agestate.log");
 		logDetailed = false;
-		if (var.isEmpty() || var.asByte()) { // logging enabled per default
+		if (var.isEmpty() || var.asUInt()) { // logging enabled per default
 			log.open("agestate.log");
 			var = cfg->getVar("agestate.log.detailed");
-			if (!var.isEmpty() && var.asByte()) // detailed logging disabled per default
+			if (!var.isEmpty() && var.asUInt()) // detailed logging disabled per default
 				logDetailed = true;
 		}
 		else
@@ -132,7 +132,7 @@ namespace alc {
 	bool tAgeStateManager::doesAgeLoadState(const tString &resettingAges, const tString &age)
 	{
 		tString ages = ","+resettingAges+",";
-		return ages.find(","+age+",") == -1;
+		return ages.find(","+age+",") == npos;
 	}
 	
 	void tAgeStateManager::loadAgeState()
@@ -149,8 +149,8 @@ namespace alc {
 		}
 		
 		// read it
-		U32 nState = file.getU32();
-		for (U32 i = 0; i < nState; ++i) {
+		uint32_t nState = file.get32();
+		for (uint32_t i = 0; i < nState; ++i) {
 			tUruObject obj;
 			file.get(obj);
 			tStreamedObject sdlStream;
@@ -176,7 +176,7 @@ namespace alc {
 				state.print(&log);
 			}
 			// check if that struct can be updated
-			U32 structVersion = findLatestStructVersion(state.content.getName());
+			uint16_t structVersion = findLatestStructVersion(state.content.getName());
 			if (structVersion > state.content.getVersion()) {
 				state.content.updateTo(findStruct(state.content.getName(), structVersion));
 				if (logDetailed) {
@@ -201,7 +201,7 @@ namespace alc {
 		file.open(ageStateFile.c_str(), "wb");
 		
 		// write to it
-		file.putU32(sdlStates.size());
+		file.put32(sdlStates.size());
 		for (tSdlList::iterator it = sdlStates.begin(); it != sdlStates.end(); ++it) {
 			file.put(it->obj);
 			
@@ -273,7 +273,7 @@ namespace alc {
 	{
 		// get the content
 		data.rewind();
-		U16 type = data.getU16();
+		uint16_t type = data.get16();
 		if (type != plNull)
 			throw txProtocolError(_WHERE("Plasma object type of an SDL must be plNull"));
 		tSdlState sdl(this, data);
@@ -336,7 +336,7 @@ namespace alc {
 		return n;
 	}
 	
-	void tAgeStateManager::removeCloneStates(U32 ki, U32 cloneId)
+	void tAgeStateManager::removeCloneStates(uint32_t ki, uint32_t cloneId)
 	{
 		// remove all SDL states which belong the the object with the clonePlayerId which was passed
 		tSdlList::iterator it = sdlStates.begin();
@@ -416,7 +416,7 @@ namespace alc {
 		}
 		if (sdlHook != sdlStates.end()) return sdlHook;
 		// ok, there is none, let's try to create it
-		U32 ageSDLVersion = findLatestStructVersion(age->name, false/*don't throw exception if no struct found*/);
+		uint16_t ageSDLVersion = findLatestStructVersion(age->name, false/*don't throw exception if no struct found*/);
 		if (!ageSDLVersion) // no way, nothing to be done
 			return sdlStates.end();
 		// first make up the UruObject
@@ -454,9 +454,9 @@ namespace alc {
 		}
 	}
 	
-	U32 tAgeStateManager::findLatestStructVersion(const tString &name, bool throwOnError)
+	uint16_t tAgeStateManager::findLatestStructVersion(const tString &name, bool throwOnError)
 	{
-		U32 version = 0;
+		uint16_t version = 0;
 		for (tSdlStructList::iterator it = structs.begin(); it != structs.end(); ++it) {
 			if (it->name == name && it->version > version) version = it->version;
 		}
@@ -464,7 +464,7 @@ namespace alc {
 		return version;
 	}
 	
-	tSdlStruct *tAgeStateManager::findStruct(tString name, U32 version, bool throwOnError)
+	tSdlStruct *tAgeStateManager::findStruct(tString name, uint16_t version, bool throwOnError)
 	{
 		for (tSdlStructList::iterator it = structs.begin(); it != structs.end(); ++it) {
 			if (name == it->name && it->version == version) return &(*it);
@@ -504,7 +504,7 @@ namespace alc {
 		sdlContent.decrypt(/*mustBeWDYS*/false);
 		sdlFile.close();
 		
-		Byte state = 0;
+		unsigned int state = 0;
 /*
 	states:
 	0: out of a statedesc block, wait for one
@@ -563,7 +563,7 @@ namespace alc {
 					break;
 				case 4: // in a statedesc block after VERSION, search version number
 				{
-					U32 version = c.asU32();
+					unsigned int version = c.asUInt();
 					if (!version)
 						throw txParseError(_WHERE("Parse error at %s line %d, column %d: Unexpected token %s", filename, s.getLineNum(), s.getColumnNum(), c.c_str()));
 					sdlStruct.version = version;
@@ -595,7 +595,7 @@ namespace alc {
 				case 8: // search for var name
 				{
 					bool dynSize =  c.endsWith("[]");
-					U32 size = alcParseKey(&c);
+					unsigned int size = alcParseKey(&c);
 					if (!size && !dynSize)
 						throw txParseError(_WHERE("Parse error at %s line %d, column %d: Invalid key %s", filename, s.getLineNum(), s.getColumnNum(), c.c_str()));
 					sdlVar.name = c;
@@ -720,9 +720,9 @@ namespace alc {
 		DBG(7, "%s version %d has %d vars and %d structs\n", name.c_str(), version, nVar, nStruct);
 	}
 	
-	tSdlStructVar *tSdlStruct::getElement(int nr, bool var)
+	tSdlStructVar *tSdlStruct::getElement(unsigned int nr, bool var)
 	{
-		int curNr = 0;
+		unsigned int curNr = 0;
 		for (tVarList::iterator it = vars.begin(); it != vars.end(); ++it) {
 			if ((var && it->type != DStruct) || (!var && it->type == DStruct)) {
 				if (nr == curNr) return &(*it);

@@ -41,13 +41,13 @@ class tUnetBase :public tUnet {
 	friend class tAlcUnetMain; // these classes have a tight relationship, e.g. you need exactly one of both 
 	
 public:
-	tUnetBase(Byte whoami); //port & host read from config (or by setBindPort(port) and setBindAddress(addr))
+	tUnetBase(uint8_t whoami); //port & host read from config (or by setBindPort(port) and setBindAddress(addr))
 	virtual ~tUnetBase();
 	/** Runs the netcore */
 	void run();
 	
 	/** terminate this session */
-	inline void terminate(tNetSession *u, Byte reason = 0) { terminate(u, reason, /*gotEndMsg*/false); }
+	inline void terminate(tNetSession *u, uint8_t reason = 0) { terminate(u, reason, /*gotEndMsg*/false); }
 	
 	/** check whether the server is still running */
 	inline bool isRunning(void) { return running; }
@@ -70,7 +70,7 @@ protected:
 			\param u The peer session object
 			\param reason the reason for which the client left/was kicked
 	*/
-	virtual void onConnectionClosing(tNetSession * /*u*/, Byte /*reason*/) {}
+	virtual void onConnectionClosing(tNetSession * /*u*/, uint8_t /*reason*/) {}
 	
 	/** This event is raised when a peer is sending too many messages per second.
 			Disabling this protection, your server will be vulnerable to DoS attacks.
@@ -107,11 +107,11 @@ protected:
 	
 	/** Stops the netcore in a sane way
 			\param timeout Sets the timeout to wait for closing the connection to all peers (<0 gets timeout from config file)	*/
-	void stop(SByte timeout=-1);
+	void stop(time_t timeout=-1);
 	/** Stops the netcore in a sane way, but without waiting for the clients to properly quit */
 	inline void forcestop() { stop(0); /* stop with a timeout of 0 */ }
 private:
-	void terminate(tNetSession *u, Byte reason, bool gotEndMsg);
+	void terminate(tNetSession *u, uint8_t reason, bool gotEndMsg);
 	void terminateAll(bool playersOnly = false);
 	inline void terminatePlayers() { terminateAll(/*playersOnly*/true); }
 	void removeConnection(tNetSession *u); //!< destroy that session
@@ -120,10 +120,7 @@ private:
 	int parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown);
 	void applyConfig();
 	bool running;
-	Byte stop_timeout;
-#ifdef ENABLE_THREADS
-	Byte pool_size;
-#endif
+	time_t stop_timeout;
 };
 
 

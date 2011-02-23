@@ -62,7 +62,7 @@ tString alcConsoleAsk() {
 /**
 	\brief "Transforms a  username@host:port into username, hostname and port"
 */
-bool alcGetLoginInfo(tString argv,tString * username,tString * hostname,U16 *port)
+bool alcGetLoginInfo(tString argv,tString * username,tString * hostname,uint16_t *port)
 {
 	if (username) { // don't look for username if its not requested
 		int at = argv.find('@');
@@ -79,7 +79,7 @@ bool alcGetLoginInfo(tString argv,tString * username,tString * hostname,U16 *por
 	if (colon >= 0) {
 		*hostname = argv.substring(0, colon);
 		argv = argv.substring(colon+1);
-		*port = argv.asU16();
+		*port = argv.asUInt();
 	}
 	else return false;
 	return true;
@@ -88,14 +88,14 @@ bool alcGetLoginInfo(tString argv,tString * username,tString * hostname,U16 *por
 /**
 	Quick way to get microseconds
 */
-U32 alcGetMicroseconds() {
+unsigned int alcGetMicroseconds() {
 	struct timeval tv;
 
 	gettimeofday(&tv,NULL);
 	return tv.tv_usec;
 }
 
-U32 alcGetTime() {
+time_t alcGetTime() {
 	return time(NULL);
 }
 
@@ -143,7 +143,7 @@ void setCloseOnExec(int fd)
 	\param guid A hex guid (8 characters)
 	\return A str guid, twice as long as the hex guid
 */
-tString alcGetStrGuid(const Byte * guid) {
+tString alcGetStrGuid(const void * guid) {
 	return alcHex2Ascii(tMBuf(guid, 8));
 }
 
@@ -151,7 +151,7 @@ tString alcGetStrGuid(const Byte * guid) {
 	\param out 8-byte array for the output
 	\param in 16-byte string
 */
-void alcGetHexGuid(Byte *out, tString in) {
+void alcGetHexGuid(void *out, tString in) {
 	if (in.size() != 16)
 		throw txUnexpectedData(_WHERE("A GUID string must be 16 characters long"));
 	tMBuf tmp = alcAscii2Hex(in);
@@ -162,7 +162,7 @@ void alcGetHexGuid(Byte *out, tString in) {
 /**
   \brief Converts an hex uid to ascii.
 */
-tString alcGetStrUid(const Byte * guid) {
+tString alcGetStrUid(const void* guid) {
 	if(guid==NULL) return "null";
 
 	tString str_guid = alcHex2Ascii(tMBuf(guid,16)), str_guid2;
@@ -184,7 +184,7 @@ tString alcGetStrUid(const Byte * guid) {
 /**
   \brief Converts an Ascii uid to hex
 */
-void alcGetHexUid(Byte *out, const tString &passed_guid) {
+void alcGetHexUid(void *out, const tString &passed_guid) {
 	if (passed_guid.size() != 36) throw txUnexpectedData(_WHERE("An UID string must be 36 characters long"));
 	if (passed_guid.getAt(8) != '-' || passed_guid.getAt(13) != '-' || passed_guid.getAt(18) != '-' || passed_guid.getAt(23) != '-')
 		throw txUnexpectedData(_WHERE("There must be dashes between the UID parts"));
@@ -200,12 +200,11 @@ void alcGetHexUid(Byte *out, const tString &passed_guid) {
 /**
   \brief returns a pointer to a formated time string
 */
-tString alcGetStrTime(U32 timestamp, U32 microseconds) {
+tString alcGetStrTime(time_t timestamp, unsigned int microseconds) {
 	char tmptime[26];
 	struct tm * tptr;
-	time_t stamp = timestamp;
 
-	tptr=gmtime(&stamp);
+	tptr=gmtime(&timestamp);
 	strftime(tmptime,25,"%Y:%m:%d-%H:%M:%S",tptr);
 	tString str = tmptime;
 	str.printf(".%06d", microseconds);
@@ -213,8 +212,9 @@ tString alcGetStrTime(U32 timestamp, U32 microseconds) {
 }
 
 tString alcGetStrTime(double stamp, const char format) {
-	U32 time,micros;
-	U32 stampInt = static_cast<U32>(stamp);
+	time_t time;
+	unsigned int micros;
+	time_t stampInt = static_cast<time_t>(stamp);
 	if(stamp!=0) {
 		switch(format) {
 			case 'u':
@@ -229,7 +229,7 @@ tString alcGetStrTime(double stamp, const char format) {
 			default:
 				time = (stampInt);
 				micros = ((stampInt-time)*1000000);
-				DBG(5, "%f = %d . %d\n", stamp, time, micros);
+				DBG(5, "%f = %ld . %i\n", stamp, time, micros);
 				break;
 		}
 	} else {
@@ -244,11 +244,11 @@ tString alcGetStrTime(double stamp, const char format) {
 */
 tString alcHex2Ascii(tMBuf in) {
 	tString str;
-	for(U32 n=0; n<in.size(); n++) {
-		Byte i = in.getAt(n);
-		Byte b = ((i & 0xF0)>>4);
-		str.putByte(b<0x0A ? b+0x30 : b+(0x41-0x0A));
-		str.putByte((i & 0x0F)<0x0A ? (i & 0x0F)+0x30 : (i & 0x0F)+(0x41-0x0A));
+	for(size_t n=0; n<in.size(); n++) {
+		uint8_t i = in.getAt(n);
+		uint8_t b = ((i & 0xF0)>>4);
+		str.put8(b<0x0A ? b+0x30 : b+(0x41-0x0A));
+		str.put8((i & 0x0F)<0x0A ? (i & 0x0F)+0x30 : (i & 0x0F)+(0x41-0x0A));
 	}
 	return str;
 }
@@ -258,14 +258,14 @@ tString alcHex2Ascii(tMBuf in) {
 */
 tMBuf alcAscii2Hex(tString in) {
 	tMBuf buf;
-	for(U32 n=0; n<in.size()/2; n++) {
-		Byte i1 = in.getAt(2*n), i2 = in.getAt(2*n+1);
+	for(size_t n=0; n<in.size()/2; n++) {
+		uint8_t i1 = in.getAt(2*n), i2 = in.getAt(2*n+1);
 		if ((i1 < 0x41 || i1 > 0x41+25) && (i1 < 0x30 || i1 > 0x30+9))
 			throw txUnexpectedData(_WHERE("There is an invalid character in the data: %c", i1));
 		if ((i2 < 0x41 || i2 > 0x41+25) && (i2 < 0x30 || i2 > 0x30+9))
 			throw txUnexpectedData(_WHERE("There is an invalid character in the data: %c", i2));
-		Byte b =  ((i1)<0x3A ? (i1 - 0x30) : (i1 - (0x41-0x0A)));
-		buf.putByte((0x10 * b) + ((i2)<0x3A ? (i2 - 0x30) : (i2 - (0x41-0x0A))));
+		uint8_t b =  ((i1)<0x3A ? (i1 - 0x30) : (i1 - (0x41-0x0A)));
+		buf.put8((0x10 * b) + ((i2)<0x3A ? (i2 - 0x30) : (i2 - (0x41-0x0A))));
 	}
 	return buf;
 }
@@ -275,10 +275,10 @@ tMBuf alcAscii2Hex(tString in) {
 */
 tString alcStrFiltered(tString what) {
 	tString result;
-	for (U32 i = 0; i < what.size(); ++i) {
-		Byte c = what.getAt(i);
+	for (size_t i = 0; i < what.size(); ++i) {
+		uint8_t c = what.getAt(i);
 		if(c!='<' && c!='>' && c!=':' && c!='#' && c!='\\' && c!='/' && c!='*' && c!='?' && c!='"' && c!='\'' && c!='|') {
-			result.putByte(c);
+			result.put8(c);
 		}
 	}
 	return result;
@@ -286,7 +286,7 @@ tString alcStrFiltered(tString what) {
 
 
 /** \brief parses a "name[number]" kind of string, setting "t" to the name and returning the number */
-U16 alcParseKey(tString *t) {
+unsigned int alcParseKey(tString *t) {
 	DBG(9, "alcParseKey() for %s\n", t->c_str());
 	int pos;
 	pos=t->find('[');
@@ -298,14 +298,14 @@ U16 alcParseKey(tString *t) {
 	offset=t->substring(pos+1,t->size()-pos-1);
 	*t = t->substring(0, pos);
 	DBG(9, "   result: %s[%s]\n", t->c_str(), offset.c_str());
-	return offset.asU16();
+	return offset.asUInt();
 }
 
 
 
 /** gets the ip address string of a host ip in network byte order
 */
-tString alcGetStrIp(U32 ip) {
+tString alcGetStrIp(uint32_t ip) {
 	in_addr cip;
 	cip.s_addr=ip;
 	return tString(inet_ntoa(cip));

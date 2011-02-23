@@ -51,7 +51,7 @@ namespace alc {
 
 class tSQL {
 public:
-	tSQL(const tString &host, U16 port, const tString &username, const tString &password, const tString &dbname, Byte flags, U32 timeout);
+	tSQL(const tString &host, uint16_t port, const tString &username, const tString &password, const tString &dbname, uint8_t flags, time_t timeout);
 	~tSQL(void);
 	
 	bool prepare(void); //!< this must be called before each query. it establishes the connection and creates the database if necessary \return true on success, false on error
@@ -66,17 +66,17 @@ public:
 	tString escape(const tMBuf &buf); //!< escapes the given data
 	MYSQL_RES *storeResult(void);
 	
-	static Byte allFlags(void) { return SQL_LOG | SQL_LOGQ | SQL_CREATEDB | SQL_STAYCONN | SQL_CREATABL; }
+	static uint8_t allFlags(void) { return SQL_LOG | SQL_LOGQ | SQL_CREATEDB | SQL_STAYCONN | SQL_CREATABL; }
 	static tSQL *createFromConfig(void);
 private:
 	void printError(const char *msg); //!< print the last MySQL error (with the given desctiption) to the error protocol
 	
-	Byte flags;
-	U32 timeout, stamp;
+	uint8_t flags;
+	time_t timeout, stamp;
 	tLog *sql, *err;
 	// connection info
 	tString host, username, password, dbname;
-	U16 port;
+	uint16_t port;
 	
 	MYSQL *connection;
 	

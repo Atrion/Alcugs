@@ -68,18 +68,18 @@ namespace alc {
 		tConfig *cfg = alcGetMain()->config();
 		tString var = cfg->getVar("auth.minalevel");
 		if (var.isEmpty()) minAccess = AcNotActivated;
-		else minAccess = var.asU16();
+		else minAccess = var.asUInt();
 		
 		var = cfg->getVar("auth.att");
 		if (var.isEmpty()) maxAttempts = 10;
-		else maxAttempts = var.asU16();
+		else maxAttempts = var.asUInt();
 		
 		var = cfg->getVar("auth.distime");
 		if (var.isEmpty()) disTime = 5*60;
-		else disTime = var.asU16();
+		else disTime = var.asUInt();
 		
 		var = cfg->getVar("auth.log");
-		if (var.isEmpty() || var.asByte()) { // logging enabled per default
+		if (var.isEmpty() || var.asUInt()) { // logging enabled per default
 			log.open("auth.log");
 		}
 		
@@ -89,15 +89,15 @@ namespace alc {
 		
 		var = cfg->getVar("auth.cgas.port");
 		if (var.isEmpty()) cgasPort = 80;
-		else cgasPort = var.asU16();
+		else cgasPort = var.asUInt();
 		
 		var = cfg->getVar("auth.cgas.default_access");
 		if (var.isEmpty()) cgasDefaultAccess = 15;
-		else cgasDefaultAccess = var.asU32();
+		else cgasDefaultAccess = var.asUInt();
 		
 		var = cfg->getVar("auth.cgas.max_cache_time");
 		if (var.isEmpty()) cgasMaxCacheTime = 60*60*24; // 24 hours
-		else cgasMaxCacheTime = var.asU32();
+		else cgasMaxCacheTime = var.asUInt();
 
 		prepare(); // initialize the database
 	}
@@ -188,7 +188,7 @@ namespace alc {
 			log.log("Error resolving CGAS address: %s\n", cgasServer.c_str());
 			return tString();
 		}
-		server.sin_addr.s_addr=*reinterpret_cast<U32 *>(host->h_addr_list[0]);
+		server.sin_addr.s_addr=*reinterpret_cast<in_addr_t *>(host->h_addr_list[0]);
 		server.sin_port=htons(cgasPort); //The port
 		
 		// Create a TCP socket
@@ -205,16 +205,16 @@ namespace alc {
 		}
 		
 		//Send the msg to the server
-		if (send(sock, message.c_str(), message.size(), 0) != static_cast<S32>(message.size())) {
+		if (send(sock, message.c_str(), message.size(), 0) != static_cast<ssize_t>(message.size())) {
 			log.log("Error sending data to CGAS\n");
 			close(sock);
 			return tString();
 		}
 		
 		//Recieve the response
-		const int bufferSize = 2048;
-		int receivedSize;
-		Byte response[bufferSize];
+		const size_t bufferSize = 2048;
+		ssize_t receivedSize;
+		uint8_t response[bufferSize];
 		if((receivedSize = recv(sock, response, bufferSize, 0)) <= 0) {
 			log.log("Error receiving data from CGAS\n");
 			close(sock);
@@ -251,15 +251,15 @@ namespace alc {
 		if (foundPasswd && foundGuid) return kSuccess;
 		
 		// Let's see if we can find a message from the server
-		S32 idx = response.find("\r\n\r\n");
-		if (idx >= 0) {
+		size_t idx = response.find("\r\n\r\n");
+		if (idx != npos) {
 			tString msg = response.substring(idx+4);
 			if (!msg.isEmpty()) log.log("CGAS error message: %s\n", msg.c_str());
 		}
 		return kNotFound;
 	}
 	
-	tAuthBackend::tQueryResult tAuthBackend::queryCgas(const tString &login, const tString &challenge, const tString &hash, bool hasCache, tString *passwd, tString *guid, Byte *accessLevel)
+	tAuthBackend::tQueryResult tAuthBackend::queryCgas(const alc::tString& login, const alc::tString& challenge, const alc::tString& hash, bool hasCache, alc::tString* passwd, alc::tString* guid, uint8_t* accessLevel)
 	{
 		// send reuqest and parse reponse
 		tString response = sendCgasRequest(login, challenge, hash);
@@ -292,7 +292,7 @@ namespace alc {
 		return kSuccess;
 	}
 	
-	tAuthBackend::tQueryResult tAuthBackend::queryPlayer(const tString &login, tString *passwd, tString *guid, U32 *attempts, U32 *lastAttempt, Byte *accessLevel)
+	tAuthBackend::tQueryResult tAuthBackend::queryPlayer(const alc::tString& login, alc::tString* passwd, alc::tString* guid, uint32_t* attempts, uint32_t* lastAttempt, uint8_t* accessLevel)
 	{
 		tString query;
 		*attempts = *lastAttempt = 0; // ensure there's a valid value in there
@@ -322,7 +322,7 @@ namespace alc {
 				*guid = row[2]; // guid
 				*attempts = atoi(row[3]); // attempts
 				*lastAttempt = atoi(row[4]); // last_attempt
-				U32 cgasCacheTime = atoi(row[5]); // cgas_cache_time
+				int cgasCacheTime = atoi(row[5]); // cgas_cache_time
 				if (!cgasServer.isEmpty() && cgasCacheTime < time(NULL)-cgasMaxCacheTime) {
 					// the cache is too old, we can't use it - but still read the stuff to handle invalid login attempts
 					ret = kCacheTooOld;
@@ -337,7 +337,7 @@ namespace alc {
 		return ret;
 	}
 
-	void tAuthBackend::updatePlayer(const tString &guid, const tString &ip, U32 attempts, Byte updateStamps)
+	void tAuthBackend::updatePlayer(const alc::tString& guid, const alc::tString& ip, uint32_t attempts, uint8_t updateStamps)
 	{
 		tString query;
 		query.printf("UPDATE accounts SET attempts='%d', last_ip='%s'", attempts, sql->escape(ip).c_str());
@@ -350,9 +350,9 @@ namespace alc {
 		sql->query(query, "Update player");
 	}
 
-	int tAuthBackend::authenticatePlayer(tNetSession *u, const tString &login, const tString &challenge, const tString &hash, Byte release, const tString &ip, tString *passwd, Byte *hexUid, Byte *accessLevel)
+	int tAuthBackend::authenticatePlayer(alc::tNetSession* u, const alc::tString& login, const alc::tString& challenge, const alc::tString& hash, uint8_t release, const alc::tString& ip, alc::tString* passwd, uint8_t* hexUid, uint8_t* accessLevel)
 	{
-		U32 attempts, lastAttempt;
+		unsigned int attempts, lastAttempt;
 		tString guid;
 		tQueryResult queryResult = queryPlayer(login, passwd, &guid, &attempts, &lastAttempt, accessLevel); // query password, access level and guid of this user
 		if (!cgasServer.isEmpty() && queryResult >= kNotFound) // query CGAS if it knows more (kNotFound or kCacheTooOld)
@@ -372,7 +372,7 @@ namespace alc {
 		}
 		else { // we found a player, let's process it
 			int authResult;
-			Byte updateStamps = 1; // update only last attempt
+			uint8_t updateStamps = 1; // update only last attempt
 			log.print("UID = %s, attempt %d/%d, access level = %d\n ", guid.c_str(), attempts+1, maxAttempts, *accessLevel);
 			
 			if (*accessLevel >= minAccess) { // the account doesn't have enough access for this shard (accessLevel = minAccess is rejected as well, for backward compatability)
@@ -381,7 +381,7 @@ namespace alc {
 			}
 			// check number of attempts
 			else if (attempts+1 >= maxAttempts && time(NULL)-lastAttempt < disTime) {
-				log.print("too many attempts, login disabled for %d seconds (till %s)\n", disTime, alcGetStrTime(lastAttempt+disTime, 0).c_str());
+				log.print("too many attempts, login disabled for %d seconds (till %s)\n", disTime, alcGetStrTime(lastAttempt+disTime, 0U).c_str());
 				updateStamps = 0; // don't update the last attempt time when we're already dissing
 				authResult = AAccountDisabled;
 			}

@@ -98,7 +98,7 @@ void alctypes_mbuf() {
 		//std::cout<< t.backtrace() << std::endl;
 	}
 	const char * a="Hello World";
-	const SByte * b="Bye cruel world";
+	const char * b="Bye cruel world";
 	buf1.write(a,strlen(a));
 	buf1.write(b,strlen(b));
 	//std::cout<< "tell():" << buf1.tell() << ",len:" << strlen(a) + strlen(b) << std::endl;
@@ -107,7 +107,7 @@ void alctypes_mbuf() {
 	assert(buf1.tell()==1);
 	buf1.set(strlen(a) + strlen(b));
 	assert(buf1.tell()==strlen(a) + strlen(b));
-	SByte c=0;
+	uint8_t c=0;
 	buf1.write(&c,1);
 	buf1.set(0);
 	assert(buf1.tell()==0);
@@ -130,7 +130,7 @@ void alctypes_mbuf() {
 	assert(buf1.tell()==0);
 	buf1.seek(0,SEEK_END);
 	assert(buf1.tell()==buf1.size());
-	buf1.seek(-static_cast<S32>(buf1.size()));
+	buf1.seek(-static_cast<int32_t>(buf1.size()));
 	assert(buf1.tell()==0);
 	try {
 		buf1.seek(-100);
@@ -168,37 +168,37 @@ void alctypes_mbuf() {
 	assert(letoh16(0xdef0) == 0xdef0);
 	assert(htole16(0xdef0) == 0xdef0);
 #endif
-	U32 my=buf1.tell();
-	buf1.putU16(23);
-	buf1.putS16(-123);
-	buf1.putU32(789);
-	buf1.putS32(-399);
-	buf1.putByte(255);
-	buf1.putSByte(-2);
+	size_t my=buf1.tell();
+	buf1.put16(23);
+	buf1.put16(-123);
+	buf1.put32(789);
+	buf1.put32(-399);
+	buf1.put8(255);
+	buf1.put8(-2);
 	buf1.set(my);
 #if defined(WORDS_BIGENDIAN)
 	const Byte * rawbuf=buf1.data();
 	U32 tmp;
 	memcpy(&tmp,rawbuf,2);
-	assert(*((U16 *)&tmp)==(U16)letoh16((U16)23));
+	assert(*((uint16_t *)&tmp)==(uint16_t)letoh16((uint16_t)23));
 	memcpy(&tmp,rawbuf+2,2);
-	assert(*((S16 *)&tmp)==(S16)letoh16((S16)-123));
+	assert(*((int16_t *)&tmp)==(int16_t)letoh16((int16_t)-123));
 	memcpy(&tmp,rawbuf+4,4);
-	assert(*((U32 *)&tmp)==(U32)letoh32((U32)789));
+	assert(*((uint32_t *)&tmp)==(uint32_t)letoh32(uint32_t)789));
 	memcpy(&tmp,rawbuf+8,4);
-	assert(*((S32 *)&tmp)==(S32)letoh32((S32)-399));
+	assert(*((int32_t *)&tmp)==(int32_t)letoh32((int32_t)-399));
 	rawbuf+=12;
-	assert(*(rawbuf)==(Byte)255);
+	assert(*(rawbuf)==(uint8_t)255);
 	rawbuf+=1;
-	assert(*((rawbuf)==(SByte)-2);
+	assert(*((rawbuf)==(int8_t)-2);
 	buf1.set(my);
 #endif
-	assert(buf1.getU16()==23);
-	assert(buf1.getS16()==-123);
-	assert(buf1.getU32()==789);
-	assert(buf1.getS32()==-399);
-	assert(buf1.getByte()==255);
-	assert(buf1.getSByte()==-2);
+	assert(buf1.get16()==23);
+	assert(static_cast<int16_t>(buf1.get16())==-123);
+	assert(buf1.get32()==789);
+	assert(static_cast<int32_t>(buf1.get32())==-399);
+	assert(buf1.get8()==255);
+	assert(static_cast<int8_t>(buf1.get8())==-2);
 	
 	tMBuf buf2=buf1;
 	
@@ -237,7 +237,7 @@ void alctypes_mbuf() {
 	buf4=new tMBuf();
 	buf5=new tMBuf(buf3);
 	buf6=new tMBuf();
-	U32 oldPos = buf1.tell();
+	size_t oldPos = buf1.tell();
 	buf1.set(1);
 	buf6->write(buf1.readAll(), buf1.size()-1);
 	buf7=new tMBuf();
@@ -270,8 +270,8 @@ void alctypes_mbuf() {
 	assert(buf7->size()==10);
 	assert(buf6->size()==buf1.size()-1);
 	
-	buf6->putU32(123456);
-	buf7->putU32(654321);
+	buf6->put32(123456);
+	buf7->put32(654321);
 	buf6->rewind();
 	buf7->rewind();
 
@@ -286,8 +286,8 @@ void alctypes_mbuf() {
 	assert(buf7->size()==14);
 	assert(buf6->size()==buf1.size()+3);
 
-	assert(buf6->getU32()==123456);
-	assert(buf7->getU32()==654321);
+	assert(buf6->get32()==123456);
+	assert(buf7->get32()==654321);
 	
 	delete buf4;
 	delete buf5;
@@ -299,7 +299,7 @@ void alctypes_mbuf() {
 	tMBuf emptyBuf2(emptyBuf);
 	
 	// check writing from somehwere before the end over the end
-	Byte bulk[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
+	uint8_t bulk[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
 	tMBuf writeTest;
 	writeTest.write(bulk, 4);
 	writeTest.seek(-2);
@@ -340,7 +340,7 @@ void alctypes_mbuf2() {
 	k2=k1;
 	assert(k2==k1);
 	
-	k1.putU32(123);
+	k1.put32(123);
 	assert(k2!=k1);
 	k2=k1;
 	assert(k2==k1);
@@ -364,10 +364,10 @@ void alctypes_fbuf() {
 	tMBuf b1;
 	const char * a="Hello world";
 	b1.write(a,strlen(a));
-	b1.putByte(0);
+	b1.put8(0);
 	f1.put(b1);
 	f1.write(a,strlen(a));
-	f1.putByte(0);
+	f1.put8(0);
 	f1.flush();
 	f1.close();
 	
@@ -379,12 +379,12 @@ void alctypes_fbuf() {
 	
 	f2.open("garbagedump2.raw","wb");
 	f2.put(b1);
-	f2.putS32(-1);
-	f2.putU32(5);
+	f2.put32(-1);
+	f2.put32(5);
 	f2.close();
 	
-	b1.putS32(-1);
-	b1.putU32(5);
+	b1.put32(-1);
+	b1.put32(5);
 	
 	f1.open("garbagedump2.raw");
 	assert(tMBuf(f1)==b1);
@@ -404,7 +404,7 @@ void alctypes_part2() {
 	// tFBuf, tWDYSBuf, tAESBuf
 	tMBuf b1;
 	
-	b1.putU32(5);
+	b1.put32(5);
 	const char * a="Hello";
 	b1.write(a,strlen(a));
 	char md5hash[16]={0x78, 0x86, 0x70, 0xf9, 0x99, 0xaa, 0x0b, 0x0c,
@@ -528,9 +528,10 @@ void alctypes_part4() {
 	assert(test2.size() == 4);
 	
 	// find
+	printf("%li\n", tString("hiWorld").find("iW"));
 	assert(tString("hiWorld").find("iW") == 1);
 	assert(tString("hiWorldW").find("W") == 2);
-	assert(tString("hiWorldW").find("Wdgdg") == -1);
+	assert(tString("hiWorldW").find("Wdgdg") == npos);
 	
 	// comparsion
 	assert(tString("aa") != "z");
@@ -689,7 +690,7 @@ void alctypes_part5() {
 	assert(strcmp(tString("/ab").dirname().c_str(), "/") == 0);
 	
 	tString key("hello[23]");
-	U16 nr = alcParseKey(&key);
+	unsigned int nr = alcParseKey(&key);
 	assert(key == "hello");
 	assert(nr == 23);
 }
@@ -698,7 +699,7 @@ void alctypes_part7()
 {
 	// read ustr tests
 	tString str;
-	Byte ustr1[10] = {0x08, 0x00, 'H', 'i', ' ', 'W', 'o', 'r', 'l', 'd'};
+	uint8_t ustr1[10] = {0x08, 0x00, 'H', 'i', ' ', 'W', 'o', 'r', 'l', 'd'};
 	tMBuf b;
 	b.write(ustr1, 10);
 	b.rewind();
@@ -706,14 +707,14 @@ void alctypes_part7()
 	assert(strcmp(str.c_str(), "Hi World") == 0);
 	
 	tUruString str2;
-	Byte ustr2[17] = {0x0F, 0xF0, 0x8B, 0x97, 0x96, 0x8C, 0xDF, 0x96, 0x8C, 0xDF, 0x9E, 0xDF, 0x8B, 0x9A, 0x87, 0x8B, 0xDA};
+	uint8_t ustr2[17] = {0x0F, 0xF0, 0x8B, 0x97, 0x96, 0x8C, 0xDF, 0x96, 0x8C, 0xDF, 0x9E, 0xDF, 0x8B, 0x9A, 0x87, 0x8B, 0xDA};
 	b.clear();
 	b.write(ustr2, 17);
 	b.rewind();
 	b.get(str2);
 	assert(strcmp(str2.c_str(), "this is a text%") == 0);
 	
-	Byte ustr5[5] = {0x03, 0x00, 0x8B, 0x00, 0x16};
+	uint8_t ustr5[5] = {0x03, 0x00, 0x8B, 0x00, 0x16};
 	b.clear();
 	b.write(ustr5, 5);
 	b.rewind();
@@ -725,7 +726,7 @@ void alctypes_part7()
 	// write ustr tests
 	str.clear();
 	str.writeStr("Hallo");
-	Byte ustr3[7] = {0x05, 0x00, 'H', 'a', 'l', 'l', 'o'};
+	uint8_t ustr3[7] = {0x05, 0x00, 'H', 'a', 'l', 'l', 'o'};
 	b.clear();
 	b.put(str);
 	b.rewind();
@@ -733,7 +734,7 @@ void alctypes_part7()
 	
 	str2.clear();
 	str2.writeStr("Doh$");
-	Byte ustr4[6] = {0x04, 0xF0, 0xBB, 0x90, 0x97, 0xDB};
+	uint8_t ustr4[6] = {0x04, 0xF0, 0xBB, 0x90, 0x97, 0xDB};
 	b.clear();
 	b.put(str2);
 	b.rewind();
@@ -808,7 +809,7 @@ void alcfuncs_tests() {
 	
 	//// Convenience
 	// with lower-case
-	Byte uid[16];
+	uint8_t uid[16];
 	alcGetHexUid(uid, "3F207Cb7-3D85-41F8-B6E2-FAFA9C36B999");
 	assert(alcGetStrUid(uid) == tString("3F207CB7-3D85-41F8-B6E2-FAFA9C36B999"));
 	try {
@@ -830,7 +831,7 @@ void alcfuncs_tests() {
 	// alcGetLoginInfo
 	const char *a = "username@host:23", *b = "serv:er:12345";
 	tString user, host;
-	U16 port;
+	uint16_t port;
 	
 	assert(alcGetLoginInfo(a, &user, &host, &port));
 	assert(host == "host");
@@ -1135,10 +1136,10 @@ void log_test() {
 
 	const char * kk3="hola whola ";
 
-	log1.dumpbuf(reinterpret_cast<const Byte *>(kk),strlen(kk));
+	log1.dumpbuf(kk,strlen(kk));
 	log1.nl();
 
-	log1.dumpbuf(reinterpret_cast<const Byte *>(kk3),strlen(kk3));
+	log1.dumpbuf(kk3,strlen(kk3));
 	log1.nl();
 
 	log1.print("The test log ends _here_\n");

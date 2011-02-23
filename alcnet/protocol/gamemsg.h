@@ -45,12 +45,12 @@ namespace alc {
 		virtual void stream(tBBuf &t) const;
 		tString str(void) const;
 	private:
-		U32 ki;
+		uint32_t ki;
 		tString avatar;
 		bool hidePlayer;
-		Byte buildType;
-		U32 ip;
-		U16 port;
+		uint8_t buildType;
+		uint32_t ip;
+		uint16_t port;
 		tUruObject obj;
 	};
 	
@@ -60,13 +60,13 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual tString additionalFields(tString dbg) const;
 		// format
-		U32 ip; //network order
-		U16 port; //network order
+		uint32_t ip; //network order
+		uint16_t port; //network order
 	};
 	
 	class tmJoinAck : public tmMsgBase {
 	public:
-		tmJoinAck(tNetSession *u, U32 x, const tBaseType *sdl);
+		tmJoinAck(tNetSession *u, uint32_t x, const tBaseType *sdl);
 		virtual void stream(tBBuf &t) const;
 		// format
 		tStreamedObject sdlStream;
@@ -76,29 +76,29 @@ namespace alc {
 	public:
 		tmGameMessage(tNetSession *u);
 		tmGameMessage(tNetSession *u, const tmGameMessage &msg);
-		tmGameMessage(tNetSession *u, U32 ki, tpObject *obj);
+		tmGameMessage(tNetSession *u, uint32_t ki, tpObject *obj);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		// format
 		tStreamedObject msgStream;
 	protected:
-		tmGameMessage(U16 cmd, tNetSession *u, const tmGameMessage &msg);
-		tmGameMessage(U16 cmd, tNetSession *u, U32 ki, tpObject *obj);
+		tmGameMessage(uint16_t cmd, tNetSession *u, const tmGameMessage &msg);
+		tmGameMessage(uint16_t cmd, tNetSession *u, uint32_t ki, tpObject *obj);
 	};
 	
 	class tmGameMessageDirected : public tmGameMessage {
 	public:
 		tmGameMessageDirected(tNetSession *u);
 		tmGameMessageDirected(tNetSession *u, const tmGameMessageDirected &msg);
-		tmGameMessageDirected(tNetSession *u, U32 ki, tpObject *obj);
+		tmGameMessageDirected(tNetSession *u, uint32_t ki, tpObject *obj);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		// format
-		typedef std::vector<U32> tRecList;
+		typedef std::vector<uint32_t> tRecList;
 		tRecList recipients;
 	protected:
-		tmGameMessageDirected(U16 cmd, tNetSession *u, const tmGameMessageDirected &msg);
-		tmGameMessageDirected(U16 cmd, tNetSession *u, U32 ki, tpObject *obj);
+		tmGameMessageDirected(uint16_t cmd, tNetSession *u, const tmGameMessageDirected &msg);
+		tmGameMessageDirected(uint16_t cmd, tNetSession *u, uint32_t ki, tpObject *obj);
 	};
 	
 	class tmLoadClone : public tmGameMessage {
@@ -124,8 +124,8 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual tString additionalFields(tString dbg) const;
 		// format
-		U32 pageId;
-		U16 pageType;
+		uint32_t pageId;
+		uint16_t pageType;
 		tString pageName;
 		bool isPageOut;
 	};
@@ -136,8 +136,8 @@ namespace alc {
 		virtual void stream(tBBuf &t) const;
 		virtual tString additionalFields(tString dbg) const;
 		// format
-		U32 pageId;
-		U16 pageType;
+		uint32_t pageId;
+		uint16_t pageType;
 		bool isOwner;
 	};
 	
@@ -157,17 +157,17 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual tString additionalFields(tString dbg) const;
 		// format
-		typedef std::vector<U32> tPageList;
+		typedef std::vector<uint32_t> tPageList;
 		tPageList pages;
 	};
 	
 	class tmInitialAgeStateSent : public tmMsgBase {
 	public:
-		tmInitialAgeStateSent(tNetSession *u, U32 num);
+		tmInitialAgeStateSent(tNetSession *u, uint32_t num);
 		virtual void stream(tBBuf &t) const;
 		virtual tString additionalFields(tString dbg) const;
 		// format
-		U32 num;
+		uint32_t num;
 	};
 	
 	class tmMembersListReq : public tmMsgBase {
@@ -188,8 +188,8 @@ namespace alc {
 		tStreamedObject content;
 		
 	protected:
-		tmStreamedObject(U16 cmd, tNetSession *u, const tmStreamedObject &msg);
-		tmStreamedObject(U16 cmd, tNetSession *u, const tUruObject &obj, tBaseType *content);
+		tmStreamedObject(uint16_t cmd, tNetSession *u, const tmStreamedObject &msg);
+		tmStreamedObject(uint16_t cmd, tNetSession *u, const tUruObject &obj, tBaseType *content);
 	};
 	
 	class tmTestAndSet : public tmStreamedObject {
@@ -214,7 +214,7 @@ namespace alc {
 		bool isInitial;
 		
 	protected:
-		tmSDLState(U16 cmd, tNetSession *u, const tmSDLState &msg);
+		tmSDLState(uint16_t cmd, tNetSession *u, const tmSDLState &msg);
 	};
 	
 	class tmSDLStateBCast : public tmSDLState {

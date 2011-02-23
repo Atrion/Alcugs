@@ -71,8 +71,6 @@ namespace alc {
 // a new incoming message (from the affected peer), if the size of it is non-zero.
 //other events don't contain an incomming message, and the message size will be always zero
 
-typedef U16 tUnetFlags;
-
 //! Urunet flags
 #define UNET_NBLOCK   0x0001 /* non-blocking socket */
 #define UNET_ELOG     0x0002 /* enable netcore logging */
@@ -99,36 +97,36 @@ class tUnet {
 
 // methods
 public:
-	tUnet(Byte whoami,const tString & lhost="",U16 lport=0); //lport in host order
+	tUnet(uint8_t whoami,const tString & lhost="",uint16_t lport=0); //lport in host order
 	virtual ~tUnet();
-	void setFlags(tUnetFlags flags);
-	void unsetFlags(tUnetFlags flags);
-	tUnetFlags getFlags();
+	void setFlags(uint16_t flags);
+	void unsetFlags(uint16_t flags);
+	uint16_t getFlags();
 	void startOp();
 	void stopOp();
-	void dump(tLog * f=NULL,Byte flags=0x01);
+	void dump(tLog * f=NULL,uint8_t flags=0x01);
 	tNetSession * getSession(tNetSessionIte &t);
 	//
-	void setIdleTimer(Byte timer) {
+	void setIdleTimer(unsigned int timer) {
 		if(timer!=0) this->idle_timer=timer;
 	}
-	void setBindPort(U16 lport); //lport in host order
+	void setBindPort(uint16_t lport); //lport in host order
 	void setBindAddress(const tString & lhost);
-	void send(tmMsgBase &m, U32 delay = 0); //!< delay is in msecs
+	void send(alc::tmMsgBase& m, unsigned int delay = 0); //!< delay is in msecs
 
 protected:
 	void openLogfiles();
 	void destroySession(tNetSessionIte &t);
-	void updateTimerRelative(U32 usecs);
-	inline void updateTimerAbs(U32 usecs) { updateTimerRelative(usecs-net_time); }
-	tNetSessionIte netConnect(const char * hostname,U16 port,Byte validation,Byte flags,Byte peerType=0);
+	void updateTimerRelative(unsigned int usecs);
+	inline void updateTimerAbs(unsigned int usecs) { updateTimerRelative(usecs-net_time); }
+	tNetSessionIte netConnect(const char * hostname,uint16_t port,uint8_t validation,uint8_t flags,uint8_t peerType=0);
 	int Recv();
-	U32 getTime() { return ntime.seconds; }
+	time_t getTime() { return ntime.seconds; }
 	//max resolution 15 minutes
-	U32 getNetTime() { return net_time; }
+	uint32_t getNetTime() { return net_time; }
 	tNetEvent * getEvent();
 	
-	virtual bool canPortBeUsed(U16 /*port*/) { return false; }
+	virtual bool canPortBeUsed(uint16_t /*port*/) { return false; }
 
 private:
 	void init();
@@ -145,24 +143,24 @@ private:
 protected:
 	bool idle; //!< true if all session are idle
 
-	U32 conn_timeout; //!< default timeout (to disconnect a session) (seconds) [5 secs]
-	U32 timeout; //!< default timeout when the send clock expires (re-transmission) (microseconds)
+	unsigned int conn_timeout; //!< default timeout (to disconnect a session) (seconds) [5 secs]
+	unsigned int msg_timeout; //!< default timeout when the send clock expires (re-transmission) (microseconds)
 
-	U32 max; //!< Maxium number of connections (default 0, unlimited)
+	unsigned int max; //!< Maxium number of connections (default 0, unlimited)
 	tNetSessionMgr * smgr; //!< session MGR
 
-	int whoami; //!< type of _this_ server
+	uint8_t whoami; //!< type of _this_ server
 
-	U32 lan_addr; //!< LAN address, in network byte order
-	U32 lan_mask; //!< LAN mask, in network byte order (default 255.255.255.0)
+	uint32_t lan_addr; //!< LAN address, in network byte order
+	uint32_t lan_mask; //!< LAN mask, in network byte order (default 255.255.255.0)
 	// Bandwidth speed (lo interface -> maxium)
-	U32 lan_up; //!< upstream to the LAN
-	U32 lan_down; //!< downstream from the LAN
-	U32 nat_up; //!< upstream to the WAN
-	U32 nat_down; //!< downstream from the WAN
+	unsigned int lan_up; //!< upstream to the LAN
+	unsigned int lan_down; //!< downstream from the LAN
+	unsigned int nat_up; //!< upstream to the WAN
+	unsigned int nat_down; //!< downstream from the WAN
 
 	tString bindaddr; //!< Server bind address
-	U16 bindport; //!< Server bind port, in host order
+	uint16_t bindport; //!< Server bind port, in host order
 
 	//!logging subsystem
 	tLog * log; //!< stdout
@@ -171,12 +169,12 @@ protected:
 	tLog * sec; //!< security and access log
 	
 	//flood control
-	U32 max_flood_pkts;
-	U32 flood_check_sec;
+	unsigned int max_flood_pkts;
+	unsigned int flood_check_sec;
 	
-	U32 receiveAhead; //!< number of future messages to receive and cache
+	unsigned int receiveAhead; //!< number of future messages to receive and cache
 	
-	U32 ip_overhead;
+	unsigned int ip_overhead;
 	//debugging stuff
 	#ifdef ENABLE_NETDEBUG
 	U32 lim_down_cap; //in bytes
@@ -195,12 +193,12 @@ protected:
 private:	
 	bool initialized;
 	
-	Byte max_version; //!< default protocol version
-	Byte min_version; //!< default protocol version
+	uint8_t max_version; //!< default protocol version
+	uint8_t min_version; //!< default protocol version
 
 	tTime ntime; //!< current time
-	U32 net_time; //!< current time (in usecs) [resolution of 15 minutes] (relative)
-	Byte idle_timer; //!< maximum time between two odle operations (sec)
+	unsigned int net_time; //!< current time (in usecs) [resolution of 15 minutes] (relative)
+	unsigned int idle_timer; //!< maximum time between two odle operations (sec)
 	
 #ifdef __WIN32__
 	WSADATA ws; //!< The winsock stack
@@ -212,9 +210,8 @@ private:
 	int opt;
 	struct sockaddr_in server; //!< Server sockaddr
 	
-	tUnetFlags flags; //!< unet flags, explained -^
-	U16 unet_sec; //!< netcore timeout to do another loop (seconds)
-	U32 unet_usec; //!< netcore timeout to do another loop (microseconds)
+	uint16_t flags; //!< unet flags, explained -^
+	unsigned int unet_timeout; //!< netcore timeout to do another loop (microseconds)
 	
 	tUnetMsgQ<tNetEvent> * events; //!< event queue
 

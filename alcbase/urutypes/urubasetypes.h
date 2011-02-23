@@ -50,12 +50,12 @@ public:
 	tAESBuf() :tMBuf() {}
 	void encrypt();
 	void decrypt();
-	void setKey(const Byte * key);
+	void setKey(const void * key);
 	void setM5Key();
 protected:
-	tAESBuf(U32 size) : tMBuf(size) {}
+	tAESBuf(size_t size) : tMBuf(size) {}
 private:
-	Byte key[16];
+	uint8_t key[16];
 };
 
 /** Urustring */
@@ -90,12 +90,12 @@ public:
 	}
 
 	bool hasCloneId;
-	U32 pageId;
-	U16 pageType;
-	U16 objType;
+	uint32_t pageId;
+	uint16_t pageType;
+	uint16_t objType;
 	tUruString objName;
-	U32 cloneId;
-	U32 clonePlayerId;
+	uint32_t cloneId;
+	uint32_t clonePlayerId;
 };
 
 class tUruObjectRef : public tBaseType { // equivalent to the key reader of the resource manager in Plasma
@@ -113,13 +113,13 @@ public:
 /** StreamedObject */
 class tStreamedObject : public tMBuf {
 public:
-	tStreamedObject(U16 type = plNull) : tMBuf(), maxSize(256), type(type) // make sure this is the same maxSize as in urubasetypes.cpp
+	tStreamedObject(uint16_t type = plNull) : tMBuf(), maxSize(256), type(type) // make sure this is the same maxSize as in urubasetypes.cpp
 		{ format = 0x00; realSize = 0; }
 	tStreamedObject(tpObject *obj);
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
 	
-	inline U16 getType(void) { return type; }
+	inline uint16_t getType(void) { return type; }
 	void uncompress(void); //!< call this before using it
 	void compress(void); //!< call this before streaming or sending it
 	void eofCheck(void);
@@ -131,11 +131,11 @@ protected:
 	//! assignment
 	virtual void copy(const tStreamedObject &t);
 private:
-	const U32 maxSize;
+	const size_t maxSize;
 	
-	U32 realSize; // if flag is 0x02, this saves the uncompressed size, otherwise, it is zero
-	Byte format; // 0x00, 0x03: uncompressed, 0x02: compressed
-	U16 type;
+	size_t realSize; // if flag is 0x02, this saves the uncompressed size, otherwise, it is zero
+	uint8_t format; // 0x00, 0x03: uncompressed, 0x02: compressed
+	uint16_t type;
 };
 
 } //End alc namespace

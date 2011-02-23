@@ -35,21 +35,21 @@ namespace alc {
 
 	class tpObject;
 	
-	const char *alcGetPlasmaType(U16 type);
-	tpObject *alcCreatePlasmaObject(U16 type, bool mustBeComplete = true);
+	const char *alcGetPlasmaType(uint16_t type);
+	tpObject *alcCreatePlasmaObject(uint16_t type, bool mustBeComplete = true);
 	
 	class tpObject : public tBaseType {
 	public:
-		tpObject(U16 type, bool incomplete = false) : tBaseType(), incomplete(incomplete), type(type) {}
+		tpObject(uint16_t type, bool incomplete = false) : tBaseType(), incomplete(incomplete), type(type) {}
 		virtual void store(tBBuf &/*t*/) {}
 		virtual void stream(tBBuf &/*t*/) const {}
 		
-		inline U16 getType(void) const { return type; }
+		inline uint16_t getType(void) const { return type; }
 		inline bool isIncomplete(void) const { return incomplete; }
 		virtual tString str(void) const;
 	private:
 		bool incomplete;
-		U16 type;
+		uint16_t type;
 	};
 
 } //End alc namespace

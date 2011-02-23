@@ -43,65 +43,65 @@
 namespace alc {
 
 tString tStringTokenizer::getLine(bool nl,bool slash) {
-	Byte c=0;
-	Byte slashm=0;
+	char c=0;
+	bool slashEscape = false;
 	tString out;
 
 	while(!str.eof()) {
-		c=str.getByte();
+		c=str.getChar();
 		if(!slash) {
 			if(c=='\\') {
-				if(slashm) {
-					slashm=0;
-					out.putByte('\\');
-					out.putByte('\\');
+				if(slashEscape) {
+					slashEscape=false;
+					out.putChar('\\');
+					out.putChar('\\');
 				} else {
-					slashm=1;
+					slashEscape=true;
 				}
 			} else if(c=='\n') {
-				if(!str.eof() && str.getByte()!='\r') str.seek(-1);
+				if(!str.eof() && str.getChar()!='\r') str.seek(-1);
 				line++;
 				col=0;
-				if(!slashm) {
+				if(!slashEscape) {
 					break;
 				}
-				slashm=0;
+				slashEscape=false;
 				c=' ';
 			} else if(c=='\r') {
-				if(!str.eof() && str.getByte()!='\n') str.seek(-1);
+				if(!str.eof() && str.getChar()!='\n') str.seek(-1);
 				line++;
 				col=0;
-				if(!slashm) {
+				if(!slashEscape) {
 					break;
 				}
-				slashm=0;
+				slashEscape=false;
 				c=' ';
 			} else {
-				if(slashm) {
-					slashm=0;
-					out.putByte('\\');
+				if(slashEscape) {
+					slashEscape=false;
+					out.putChar('\\');
 				}
-				out.putByte(c);
+				out.putChar(c);
 			}
 		} else {
 			if(c=='\n') {
-				if(!str.eof() && str.getByte()!='\r') str.seek(-1);
+				if(!str.eof() && str.getChar()!='\r') str.seek(-1);
 				line++;
 				col=0;
 				break;
 			} else if(c=='\r') {
-				if(!str.eof() && str.getByte()!='\n') str.seek(-1);
+				if(!str.eof() && str.getChar()!='\n') str.seek(-1);
 				line++;
 				col=0;
 				break;
 			} else {
-				out.putByte(c);
+				out.putChar(c);
 			}
 		}
 	}
 	if(nl) {
 		if(c=='\n' || c=='\r') {
-			out.putByte('\n');
+			out.putChar('\n');
 		}
 	}
 	
@@ -109,92 +109,92 @@ tString tStringTokenizer::getLine(bool nl,bool slash) {
 }
 tString tStringTokenizer::getToken() {
 	DBG(9,"tStringTokenizer::getToken()\n");
-	Byte c;
-	Byte slash=0;
-	Byte quote=0;
-	Byte mode=0;
+	char c;
+	bool slashEscape=false;
+	bool inQuote=false;
+	bool foundChars=false;
 	tString out;
 	//out.hasQuotes(true);
 	//assert(out.hasQuotes());
 	while(!str.eof()) {
-		c=str.getByte();
+		c=str.getChar();
 		col++;
-		if(quote==0 && (c=='#' || c==';')) {
+		if(!inQuote && (c=='#' || c==';')) {
 			if (out.size()) { // we already have something in out, dont attach the newline to it but make it the next token
 				col--;
 				str.seek(-1);
 			} else {
 				getLine();
-				out.putByte('\n');
+				out.putChar('\n');
 			}
 			break;
-		} else if(slash==1) {
-			slash=0;
-			if(quote==1 && (c=='n' || c=='r')) {
-				if(c=='n') out.putByte('\n');
-				else out.putByte('\r');
+		} else if(slashEscape) {
+			slashEscape=false;
+			if(inQuote && (c=='n' || c=='r')) {
+				if(c=='n') out.putChar('\n');
+				else out.putChar('\r');
 			} else if(c=='\n' || c=='\r') {
 				if(c=='\n') {
-					if(!str.eof() && str.getByte()!='\r') str.seek(-1);
+					if(!str.eof() && str.getChar()!='\r') str.seek(-1);
 					line++;
 					col=0;
 				} else {
-					if(!str.eof() && str.getByte()!='\n') str.seek(-1);
+					if(!str.eof() && str.getChar()!='\n') str.seek(-1);
 					line++;
 					col=0;
 				}
 			} else {
-				if(quote==1) {
-					out.putByte(c);
+				if(inQuote) {
+					out.putChar(c);
 				} else {
 					throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected '\\'\n",line,col));
 				}
 			}
 		} else if(c=='\"') {
-			if(quote==1) {
-				quote=0;
+			if(inQuote) {
+				inQuote = false;
 				break;
 			} else {
-				quote=1;
+				inQuote = true;
 			}
 		} else if(c=='\n' || c=='\r') {
-			if(mode==1 && quote==0) {
+			if(foundChars && !inQuote) {
 				str.seek(-1);
 				c=0;
 				break;
 			} else {
-				//out.putByte(c);
-				out.putByte('\n');
+				//out.putChar(c);
+				out.putChar('\n');
 				if(c=='\n') {
-					if(!str.eof() && str.getByte()!='\r') str.seek(-1);
-					//else out.putByte('\r');
+					if(!str.eof() && str.getChar()!='\r') str.seek(-1);
+					//else out.putChar('\r');
 					line++;
 					col=0;
 				} else {
-					if(!str.eof() && str.getByte()!='\n') str.seek(-1);
-					//else out.putByte('\n');
+					if(!str.eof() && str.getChar()!='\n') str.seek(-1);
+					//else out.putChar('\n');
 					line++;
 					col=0;
 				}
-				if(quote==0) {
+				if(!inQuote) {
 					break;
 				}
 			}
 		} else if(c=='\\') {
-			slash=1; 
-		} else if(quote==0 && (c==' ' || c==sep || c==',' || isblank(c))) {
-			if(mode==1) {
+			slashEscape=true; 
+		} else if(!inQuote && (c==' ' || c==sep || c==',' || isblank(c))) {
+			if(foundChars) {
 				if(c==sep || c==',') str.seek(-1);
 				break;
 			} else {
 				if(c==sep || c==',') {
-					out.putByte(c);
+					out.putChar(c);
 					break;
 				}
 			}
 		} else if(isalpha(c) || isprint(c) || alcIsAlpha(c)) {
-			out.putByte(c);
-			mode=1;
+			out.putChar(c);
+			foundChars=true;
 		} else {
 			throw txParseError(_WHERE("Parse error at line %i, column %i, unexpected character '%c'\n",line,col,c));
 		}
@@ -206,7 +206,7 @@ tString tStringTokenizer::getToken() {
 tSimpleParser::tSimpleParser() {
 	cfg=NULL;
 }
-U32 tSimpleParser::size() const {
+size_t tSimpleParser::size() const {
 	tString s;
 	stream(s);
 	return s.size();
@@ -264,7 +264,7 @@ void tSimpleParser::stream(tString &str) const {
 			DBG(5,"key->getNext()\n");
 			str.writeStr(val->getName());
 			//t.writeStr(" ");
-			str.putByte(' ');
+			str.putChar(' ');
 			//t.writeStr(" ");
 			str.writeStr("\"");
 			str.writeStr(val->getVal().escape());
@@ -302,7 +302,7 @@ void tXParser::store(const tString &str) {
 	tString section,key,val;
 	DBG(4,"Store\n");
 	section="global";
-	U16 x,y;
+	unsigned int x,y;
 	bool found;
 
 	while(!t.eof()) {
@@ -398,7 +398,7 @@ void tXParser::stream(tString &str) const {
 		str.writeStr("\n[" + key->getName() + "]\n");
 		while((val=key->getNext())) {
 			DBG(5,"key->getNext()\n");
-			U16 x,y,mx,my;
+			unsigned int x,y,mx,my;
 			mx=val->getCols();
 			my=val->getRows();
 

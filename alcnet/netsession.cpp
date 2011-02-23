@@ -45,7 +45,7 @@
 namespace alc {
 
 /* Session */
-tNetSession::tNetSession(tUnet * net,U32 ip,U16 port,int sid) {
+tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t sid) {
 	DBG(5,"tNetSession()\n");
 	this->net=net;
 	this->ip=ip;
@@ -62,7 +62,7 @@ tNetSession::tNetSession(tUnet * net,U32 ip,U16 port,int sid) {
 	net->events->add(evt);
 }
 tNetSession::~tNetSession() {
-	DBG(5,"~tNetSession() (sndq: %d)\n", sndq->len());
+	DBG(5,"~tNetSession() (sndq: %ld)\n", sndq->len());
 	delete data;
 	delete rcv;
 	delete sndq;
@@ -93,7 +93,7 @@ void tNetSession::init() {
 	next_msg_time=0;
 	rtt=0;
 	deviation=0;
-	timeout=net->timeout;
+	msg_timeout=net->msg_timeout;
 	conn_timeout=net->conn_timeout;
 	nego_stamp.seconds=0;
 	nego_stamp.microseconds=0;
@@ -113,7 +113,7 @@ void tNetSession::init() {
 	data = NULL;
 	joined = false;
 	
-	DBG(5, "%s Initial timeout: %d\n", str().c_str(), timeout);
+	DBG(5, "%s Initial msg_timeout: %d\n", str().c_str(), msg_timeout);
 }
 void tNetSession::resetMsgCounters(void) {
 	DBG(3, "tNetSession::resetMsgCounters\n");
@@ -130,7 +130,7 @@ void tNetSession::resetMsgCounters(void) {
 	delete rcv;
 	rcv = NULL;
 }
-inline SByte tNetSession::compareMsgNumbers(U32 sn1, Byte fr1, U32 sn2, Byte fr2)
+inline int8_t tNetSession::compareMsgNumbers(uint32_t sn1, uint8_t fr1, uint32_t sn2, uint8_t fr2)
 {
 	if (sn1 < sn2 || (sn1 == sn2 && fr1 < fr2)) return -1;
 	else if (sn1 == sn2 && fr1 == fr2) return 0;
@@ -156,36 +156,36 @@ tString tNetSession::str(bool detail) {
 	return dbg;
 }
 
-U32 tNetSession::getHeaderSize() {
-	U32 my=28;
+size_t tNetSession::getHeaderSize() {
+	size_t my=28;
 	if(validation>0) my+=4;
 	if(cflags & UNetUpgraded) my-=8;
 	return my;
 }
-U32 tNetSession::getMaxFragmentSize() {
-	return(maxPacketSz-getHeaderSize());
+size_t tNetSession::getMaxFragmentSize() {
+	return(static_cast<size_t>(maxPacketSz)-getHeaderSize());
 }
-U32 tNetSession::getMaxDataSize() {
+size_t tNetSession::getMaxDataSize() {
 	return(getMaxFragmentSize() * 256);
 }
 
 // functions to calculate cabal and rtt
-void tNetSession::updateRTT(U32 newread) {
+void tNetSession::updateRTT(unsigned int newread) {
 	if(rtt==0) rtt=newread;
 	//Jacobson/Karels
-	const S32 alpha=125; // this is effectively 0.125
-	const S32 u=2;
-	const S32 delta=4;
-	const S32 diff=newread - rtt;
+	const int alpha=125; // this is effectively 0.125
+	const int u=2;
+	const int delta=4;
+	const int diff=newread - rtt;
 	rtt       += (alpha*diff)/1000;
 	deviation += (alpha*(abs(diff)-deviation))/1000;
-	timeout=u*rtt + delta*deviation;
-	if (timeout > 5000000) timeout = 5000000; // max. timeout: 5secs
-	DBG(5,"%s RTT update (sample rtt: %i) new rtt:%i, timeout:%i, deviation:%i\n", str().c_str(),newread,rtt,timeout,deviation);
+	msg_timeout=u*rtt + delta*deviation;
+	if (msg_timeout > 5000000) msg_timeout = 5000000; // max. timeout: 5secs
+	DBG(5,"%s RTT update (sample rtt: %i) new rtt:%i, msg_timeout:%i, deviation:%i\n", str().c_str(),newread,rtt,msg_timeout,deviation);
 }
 void tNetSession::increaseCabal() {
 	if(!cabal) return;
-	U32 inc = 5000;
+	unsigned int inc = 5000;
 	if(cabal+inc > minBandwidth) inc /= 4;
 	cabal+=inc;
 	if(cabal > maxBandwidth) cabal = maxBandwidth;
@@ -193,8 +193,8 @@ void tNetSession::increaseCabal() {
 }
 void tNetSession::decreaseCabal(bool small) {
 	if(!cabal) return;
-	const U32 delta = small ? 200 : 333;
-	U32 dec = (delta*cabal)/1000;
+	const unsigned int delta = small ? 200 : 333;
+	unsigned int dec = (delta*cabal)/1000;
 	if (cabal-dec < minBandwidth) dec /= 4;
 	cabal -= dec;
 	if(cabal < maxPacketSz) cabal = maxPacketSz;
@@ -202,7 +202,7 @@ void tNetSession::decreaseCabal(bool small) {
 }
 
 /** computes the time we have to wait after sending the given amount of bytes */
-U32 tNetSession::timeToSend(U32 psize) {
+unsigned int tNetSession::timeToSend(size_t psize) {
 	if(psize<4000) {
 		if (cabal) return((psize*1000000)/cabal);
 		return((psize*1000000)/4098);
@@ -219,14 +219,15 @@ tNetSessionIte tNetSession::getIte() {
 /**
 	puts the message in the session's send queue
 */
-void tNetSession::send(tmBase &msg, U32 delay) {
+void tNetSession::send(tmBase &msg, unsigned int delay) {
 #ifndef ENABLE_ACKLOG
 	if (!(msg.bhflags & UNetAckReply))
 #endif
 	net->log->log("<SND> %s\n",msg.str().c_str());
 	tMBuf buf;
-	U32 csize,psize,hsize,pkt_sz,n_pkts;
-	Byte flags=msg.bhflags, val, tf;
+	size_t csize,psize,hsize,pkt_sz;
+	unsigned int n_pkts;
+	uint8_t flags=msg.bhflags, val, tf;
 	
 	net->updateNetTime(); // in order for the send time to be correct
 	
@@ -236,7 +237,7 @@ void tNetSession::send(tmBase &msg, U32 delay) {
 	buf.put(msg);
 	psize=buf.size();
 	buf.rewind();
-	DBG(7,"Ok, I'm going to send a packet of %i bytes, for peer %i, with flags %02X\n",psize,sid,msg.bhflags);
+	DBG(7,"Ok, I'm going to send a packet of %li bytes, for peer %i, with flags %02X\n",psize,sid,msg.bhflags);
 
 	//now update the other fields
 	serverMsg.sn++;
@@ -288,7 +289,7 @@ void tNetSession::send(tmBase &msg, U32 delay) {
 
 	pkt_sz=maxPacketSz - hsize; //get maxium message size
 	n_pkts=(psize-1)/pkt_sz; //get number of fragments (0 means everything is sent in one packet, which must be the case if psize == pkt_sz)
-	DBG(5,"pkt_sz:%i n_pkts:%i\n",pkt_sz,n_pkts);
+	DBG(5,"pkt_sz:%li n_pkts:%i\n",pkt_sz,n_pkts);
 	if(n_pkts>=256) {
 		net->err->log("%s ERR: Attempted to send a packet of size %i bytes, that don't fits inside an uru message\n",str().c_str(),psize);
 		throw txTooBig(_WHERE("%s packet of %i bytes don't fits inside an uru message\n",str().c_str(),psize));
@@ -296,10 +297,9 @@ void tNetSession::send(tmBase &msg, U32 delay) {
 	if (n_pkts > 0 && ((flags & UNetNegotiation) || (flags & UNetAckReply)))
 		throw txProtocolError(_WHERE("Nego and ack packets must not be fragmented!"));
 	
-	U32 i;
 	
 	delay *= 1000; // make it usecs
-	for(i=0; i<=n_pkts; i++) {
+	for(unsigned int i=0; i<=n_pkts; i++) {
 		//get current paquet size
 		if(i==n_pkts) csize=psize - (i*pkt_sz);
 		else csize=pkt_sz;
@@ -336,7 +336,7 @@ void tNetSession::send(tmBase &msg, U32 delay) {
 			// if necessary, put in queue as "sent once"
 			if(flags & UNetAckReq) {
 				pmsg->snd_timestamp=net->net_time;
-				pmsg->timestamp+=timeout;
+				pmsg->timestamp+=msg_timeout;
 				++pmsg->tryes;
 				sndq->add(pmsg);
 			}
@@ -357,15 +357,15 @@ void tNetSession::send(tmBase &msg, U32 delay) {
 }
 
 /** process a recieved msg: put it in the rcvq, assemble fragments, create akcs */
-void tNetSession::processMsg(Byte * buf,int size) {
-	DBG(5,"Message of %i bytes\n",size);
+void tNetSession::processMsg(void * buf,size_t size) {
+	DBG(5,"Message of %li bytes\n",size);
 	//stamp
 	timestamp=net->ntime;
 	
 	// when authenticated == 2, we don't expect an encoded packet, but sometimes, we get one. Since alcUruValidatePacket will try to
 	// validate the packet both with and without passwd if possible, we tell it to use the passwd whenever we have one - as a result,
 	// even if the client for some reason decides to encode a packet while authenticated == 2, we don't care
-	int ret=alcUruValidatePacket(buf,size,&validation,authenticated==1 || authenticated==2,passwd.c_str());
+	int ret=alcUruValidatePacket(static_cast<uint8_t*>(buf),size,&validation,authenticated==1 || authenticated==2,passwd.c_str());
 	
 	if(ret!=0 && (ret!=1 || net->flags & UNET_ECRC)) {
 		if(ret==1) {
@@ -563,7 +563,7 @@ void tNetSession::acceptMessage(tUnetUruMsg *t)
 		return; // These are already processed
 	}
 
-	U32 frg_size = maxPacketSz - t->hSize();
+	size_t frg_size = maxPacketSz - t->hSize();
 	if (!rcv) { // this is a brand new message
 		rcv=new tUnetMsg();
 		rcv->sn=t->sn;
@@ -577,12 +577,12 @@ void tNetSession::acceptMessage(tUnetUruMsg *t)
 	rcv->data.put(t->data);
 
 	if(rcv->fr_count==t->frt) {
-		U32 size = t->frt * frg_size + t->data.size();
+		size_t size = t->frt * frg_size + t->data.size();
 		if (rcv->data.size() != size)
 			throw txProtocolError(_WHERE("Expected a size of %d, got %d\n", size, rcv->data.size()));
 		// We are done!
 		rcv->data.rewind();
-		rcv->cmd=alcFixUUNetMsgCommand(rcv->data.getU16(), this);
+		rcv->cmd=alcFixUUNetMsgCommand(rcv->data.get16(), this);
 		rcv->data.rewind();
 
 		tNetEvent *evt=new tNetEvent(getIte(), UNET_MSGRCV, rcv);
@@ -633,7 +633,7 @@ void tNetSession::checkQueuedMessages(void)
 /** creates an ack in the ackq */
 void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	tUnetAck * ack,* cack;
-	U32 A,B;
+	uint32_t A,B;
 	
 	#ifdef ENABLE_ACKDEBUG
 	net->log->log("stacking ack %i,%i %i,%i\n",msg.sn,msg.frn,msg.ps,msg.pfr);
@@ -647,8 +647,8 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	ack->B=msg.cps;
 	
 	//we must delay either none or all messages, otherwise the rtt will vary too much
-	U32 ackWaitTime=timeToSend((msg.frt-msg.frn+1) * maxPacketSz); // this is how long transmitting the whole packet will approximately take
-	if(ackWaitTime > timeout/4) ackWaitTime=timeout/4; // don't use the rtt as basis, it is 0 at the beginning, resulting in a much too quick first answer, a much too low rtt on the other side and thus the packets being re-sent too early
+	unsigned int ackWaitTime=timeToSend((msg.frt-msg.frn+1) * maxPacketSz); // this is how long transmitting the whole packet will approximately take
+	if(ackWaitTime > msg_timeout/4) ackWaitTime=msg_timeout/4; // don't use the rtt as basis, it is 0 at the beginning, resulting in a much too quick first answer, a much too low rtt on the other side and thus the packets being re-sent too early
 	ack->timestamp=net->net_time + ackWaitTime;
 	// the net timer will be updated when the ackq is checked (which is done since processMsg will call doWork after calling createAckReply)
 	DBG(5, "ack tts: %i, %i, %i\n",msg.frt,ackWaitTime,cabal);
@@ -739,7 +739,7 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 
 /** puts acks from the ackq in the sndq */
 void tNetSession::ackUpdate() {
-	U32 maxacks=30;
+	const size_t maxacks=30;
 	if (ackq->len() == 0) return;
 	
 	ackq->rewind();
@@ -765,7 +765,7 @@ void tNetSession::ackUpdate() {
 /** parse the ack and remove the messages it acks from the sndq */
 void tNetSession::ackCheck(tUnetUruMsg &t) {
 
-	U32 A1,A2,A3;
+	uint32_t A1,A2,A3;
 	tmNetAck ackMsg(this);
 	if (t.tf & UNetExt) ackMsg.bhflags |= UNetExt; // tmNetAck has to know that it reads an extended packet
 	t.data.rewind();
@@ -795,7 +795,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 					   with other packets and the ack could be sent almost immediately after the packet went in, without the
 					   usual delay so the rtt is much smaller than the average. But I don't expect this to happen often, so I don't
 					   consider that a real problem. */
-					U32 crtt=net->net_time-msg->snd_timestamp;
+					unsigned int crtt=net->net_time-msg->snd_timestamp;
 					#ifdef ENABLE_NETDEBUG
 					crtt+=net->latency;
 					#endif
@@ -837,12 +837,11 @@ void tNetSession::doWork()
 		sndq->rewind();
 		tUnetUruMsg * curmsg = sndq->getNext();
 		
-		U32 quota_max=maxPacketSz;
-		U32 cur_quota=0;
+		unsigned int quota_max=maxPacketSz;
+		unsigned int cur_quota=0;
 		
-		const U32 minTH=15;
-		const U32 maxTH=100;
-		U32 tts;
+		const unsigned int minTH=15;
+		const unsigned int maxTH=100;
 
 		while(curmsg!=NULL && (cur_quota<quota_max)) {
 			if(curmsg->timestamp<=net->net_time) {
@@ -862,7 +861,7 @@ void tNetSession::doWork()
 						// The server used to duplicate the timeout here - but since the timeout will be overwritten next time updateRTT
 						//  is called, that's of no use. So better make the RTT bigger - it is obviously at least the timeout
 						// This will result in a more long-term increase of the timeout
-						updateRTT(3*timeout); // this is necessary because the vault server blocks the netcore when doing SQL - reduce this when multi-threading is implemented
+						updateRTT(3*msg_timeout); // this is necessary because the vault server blocks the netcore when doing SQL - reduce this when multi-threading is implemented
 					}
 					
 					if(curmsg->tryes>=10 || (curmsg->tryes>=2 && terminated)) { // max. 2 sends on terminated connections, max. 10 for the rest
@@ -876,16 +875,16 @@ void tNetSession::doWork()
 						cur_quota+=curmsg->size();
 						curmsg->snd_timestamp=net->net_time;
 						net->rawsend(this,curmsg);
-						curmsg->timestamp=net->net_time+timeout;
+						curmsg->timestamp=net->net_time+msg_timeout;
 						curmsg->tryes++;
 						curmsg = sndq->getNext(); // go on
 					}
 				} else {
 					//probabilistic drop (of voice, and other non-ack packets) - make sure we don't drop ack replies though!
-					if(curmsg->tf == 0x00 && net->net_time-curmsg->timestamp > 4*timeout) {
+					if(curmsg->tf == 0x00 && net->net_time-curmsg->timestamp > 4*msg_timeout) {
 						//Unacceptable - drop it
-						net->err->log("%s Dropped a 0x00 packet due to unaceptable msg time %i,%i,%i\n",str().c_str(),timeout,net->net_time-curmsg->timestamp,rtt);
-					} else if(curmsg->tf == 0x00 && (sndq->len() > (minTH + random()%(maxTH-minTH))) ) {
+						net->err->log("%s Dropped a 0x00 packet due to unaceptable msg time %i,%i,%i\n",str().c_str(),msg_timeout,net->net_time-curmsg->timestamp,rtt);
+					} else if(curmsg->tf == 0x00 && (sndq->len() > static_cast<size_t>((minTH + random()%(maxTH-minTH)))) ) {
 						net->err->log("%s Dropped a 0x00 packet due to a big queue (%d messages)\n", str().c_str(), sndq->len());
 					}
 					//end prob drop
@@ -904,7 +903,7 @@ void tNetSession::doWork()
 			}
 		} //end while
 		// calculate how long it will take us to send what we just sent
-		tts=timeToSend(cur_quota);
+		unsigned int tts=timeToSend(cur_quota);
 		DBG(8,"%s %d tts is now:%i quota:%i,cabal:%i\n",str().c_str(),net->net_time,tts,cur_quota,cabal);
 		next_msg_time=net->net_time + tts;
 		// if there is still something to send, but the quota does not let us, do that ASAP
@@ -918,7 +917,7 @@ void tNetSession::doWork()
 
 /** send a negotiation to the peer */
 void tNetSession::negotiate() {
-	U32 sbw;
+	unsigned int sbw;
 	// send server downstream (for the peer to know how fast it can send packets)
 	DBG(9,"%08X %08X %08X\n",ip,net->lan_mask,net->lan_addr);
 	if((ntohl(ip) & 0xFFFFFF00) == 0x7F000000) { //lo
@@ -942,7 +941,7 @@ void tNetSession::checkAlive(void)
 	}
 }
 
-U32 tNetSession::onlineTime(void)
+time_t tNetSession::onlineTime(void)
 {
 	return alcGetTime()-nego_stamp.seconds;
 }
@@ -956,7 +955,7 @@ void tNetSession::terminate(int tout)
 	timestamp.setToNow();
 }
 
-void tNetSession::setAuthData(Byte accessLevel, const tString &passwd)
+void tNetSession::setAuthData(uint8_t accessLevel, const tString &passwd)
 {
 	this->client = true; // no matter how this connection was established, the peer definitely acts like a client
 	this->whoami = KClient; // it's a real client now

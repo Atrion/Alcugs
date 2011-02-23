@@ -68,7 +68,7 @@ namespace alc {
 	}
 	
 	//// tPlayer
-	tPlayer::tPlayer(U32 ki)
+	tPlayer::tPlayer(uint32_t ki)
 	{
 		this->ki = ki;
 		this->sid = 0;
@@ -90,7 +90,7 @@ namespace alc {
 	}
 	
 	//// tTrackingBackend
-	tTrackingBackend::tTrackingBackend(tUnetBase *net, const tString &host, U16 port) : host(host)
+	tTrackingBackend::tTrackingBackend(tUnetBase *net, const tString &host, uint16_t port) : host(host)
 	{
 		// the smgr is created during startOp(), so it can't be set in the constructor or in applyConfig
 		this->servers = NULL;
@@ -111,7 +111,7 @@ namespace alc {
 		tConfig *cfg = alcGetMain()->config();
 		
 		tString var = cfg->getVar("tracking.log");
-		if (var.isEmpty() || var.asByte()) { // logging enabled per default
+		if (var.isEmpty() || var.asUInt()) { // logging enabled per default
 			log.open("tracking.log");
 			log.log("Tracking driver started (%s)\n\n", __U_TRACKINGBACKEND_ID);
 			log.flush();
@@ -119,17 +119,17 @@ namespace alc {
 		else log.close();
 		
 		var = cfg->getVar("track.html");
-		statusHTML = (!var.isEmpty() && var.asByte());
+		statusHTML = (!var.isEmpty() && var.asUInt());
 		statusHTMLFile = cfg->getVar("track.html.path");
 		if (statusHTMLFile.isEmpty()) statusHTML = false;
 		
 		var = cfg->getVar("track.htmldbg");
-		statusHTMLdbg = (!var.isEmpty() && var.asByte());
+		statusHTMLdbg = (!var.isEmpty() && var.asUInt());
 		statusHTMLdbgFile = cfg->getVar("track.htmldbg.path");
 		if (statusHTMLdbgFile.isEmpty()) statusHTMLdbg = false;
 		
 		var = cfg->getVar("track.xml");
-		statusXML = (!var.isEmpty() && var.asByte());
+		statusXML = (!var.isEmpty() && var.asUInt());
 		statusXMLFile = cfg->getVar("track.xml.path");
 		if (statusXMLFile.isEmpty()) statusXML = false;
 		
@@ -183,7 +183,7 @@ namespace alc {
 		log.flush();
 	}
 	
-	void tTrackingBackend::playerCanCome(tNetSession *game, U32 ki)
+	void tTrackingBackend::playerCanCome(alc::tNetSession* game, uint32_t ki)
 	{
 		tTrackingData *data = dynamic_cast<tTrackingData*>(game->data);
 		if (!data) throw txUnet(_WHERE("server passed in tTrackingBackend::playerCanCome is not a game/lobby server"));
@@ -207,15 +207,15 @@ namespace alc {
 		log.flush();
 	}
 	
-	void tTrackingBackend::spawnServer(const tString &age, const Byte *guid, U32 delay)
+	void tTrackingBackend::spawnServer(const alc::tString& age, const uint8_t* guid, uint32_t delay)
 	{
 		// search for the lobby with the least load
 		tNetSession *lobby = NULL, *server;
-		int load = -1;
+		size_t load = 0;
 		servers->rewind();
 		while ((server = servers->getNext())) {
 			tTrackingData *data = dynamic_cast<tTrackingData*>(server->data);
-			if (data && data->isLobby && (load < 0 || data->children->getCount() < load)) {
+			if (data && data->isLobby && data->children->getCount() <= load) {
 				lobby = server;
 				load = data->children->getCount();
 			}
@@ -271,7 +271,7 @@ namespace alc {
 		player->waiting = false;
 	}
 	
-	tTrackingBackend::tPlayerList::iterator tTrackingBackend::getPlayer(U32 ki)
+	tTrackingBackend::tPlayerList::iterator tTrackingBackend::getPlayer(uint32_t ki)
 	{
 		for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
 			if (it->ki == ki)
@@ -283,7 +283,7 @@ namespace alc {
 	void tTrackingBackend::updateServer(tNetSession *game, tmCustomSetGuid &setGuid)
 	{
 		statusFileUpdate = true;
-		Byte serverGuid[8];
+		uint8_t serverGuid[8];
 		alcGetHexGuid(serverGuid, setGuid.serverGuid);
 		// search if another game server for that guid is already running. in that case, ignore this one
 		tNetSession *server;
@@ -488,13 +488,13 @@ namespace alc {
 		}
 	}
 	
-	void tTrackingBackend::generateFakeGuid(Byte *guid)
+	void tTrackingBackend::generateFakeGuid(uint8_t* guid)
 	{
 		tMBuf buf;
-		buf.putU16(0xFFFF);
-		buf.putU32(random());
-		buf.putByte(alcGetMicroseconds());
-		buf.putByte(0x00);
+		buf.put16(0xFFFF);
+		buf.put32(random());
+		buf.put8(alcGetMicroseconds());
+		buf.put8(0x00);
 		buf.rewind();
 		memcpy(guid, buf.read(8), 8);
 	}
@@ -530,7 +530,7 @@ namespace alc {
 		fprintf(f, "<h2>Current Online Players</h2>\n");
 		if (dbg) {
 			// player list (dbg)
-			fprintf(f, "<b>Total population: %i</b><br /><br />\n", static_cast<U32>(players.size()));
+			fprintf(f, "<b>Total population: %li</b><br /><br />\n", players.size());
 			fprintf(f, "<table border=\"1\"><tr><th>Avatar (Account)</th><th>KI</th><th>Age Name</th><th>Age GUID</th><th>Status</th></tr>\n");
 			for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
 				fprintf(f, "<tr><td>%s (%s)%s</td><td>%d</td><td>%s</td><td>%s</td>", it->avatar.c_str(), it->account.c_str(), it->flag == 2 ? "" : " [hidden]", it->ki, it->u->name.c_str(), alcGetStrGuid(it->u->serverGuid).c_str());

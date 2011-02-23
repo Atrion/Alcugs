@@ -42,7 +42,7 @@
 
 namespace alc {
 
-tSQL::tSQL(const tString &host, U16 port, const tString &username, const tString &password, const tString &dbname, Byte flags, U32 timeout)
+tSQL::tSQL(const tString &host, uint16_t port, const tString &username, const tString &password, const tString &dbname, uint8_t flags, time_t timeout)
  :host(host), username(username), password(password), dbname(dbname),  port(port)
 {
 	this->flags = flags;
@@ -168,14 +168,14 @@ bool tSQL::query(const tString &str, const char *desc, bool throwOnError)
 
 void tSQL::checkTimeout(void)
 {
-	U32 now = time(NULL);
+	time_t now = time(NULL);
 	if (!(flags & SQL_STAYCONN) && timeout > 0 && (now-stamp) > timeout)
 		disconnect();
 }
 
 tString tSQL::escape(const char *str)
 {
-	const U32 maxLength = 1024;
+	const size_t maxLength = 1024;
 	char escaped_str[maxLength*2+1]; // according to mysql doc
 	if (connection == NULL) throw txDatabaseError(_WHERE("can't escape a string"));
 	if (strlen(str) > maxLength)
@@ -229,26 +229,26 @@ tSQL *tSQL::createFromConfig(void)
 	tString var;
 	// read basic connection info
 	tString host = cfg->getVar("db.host");
-	U16 port = cfg->getVar("db.port").asU16();
+	uint16_t port = cfg->getVar("db.port").asUInt();
 	tString user = cfg->getVar("db.username");
 	tString password = cfg->getVar("db.passwd");
 	tString dbname = cfg->getVar("db.name");
 	
 	// additional options
-	U32 timeout = 15*60; // default is 15 minutes
-	Byte flags = allFlags();
+	time_t timeout = 15*60; // default is 15 minutes
+	uint8_t flags = allFlags();
 	var = cfg->getVar("db.log");
-	if (!var.isEmpty() && !var.asByte()) // on per default
+	if (!var.isEmpty() && !var.asUInt()) // on per default
 		flags &= ~SQL_LOG; // disable logging
 	var = cfg->getVar("db.sql.log");
-	if (var.isEmpty() || !var.asByte()) // off per default
+	if (var.isEmpty() || !var.asUInt()) // off per default
 		flags &= ~SQL_LOGQ; // disable logging sql statements
 	var = cfg->getVar("db.persinstent");
-	if (!var.isEmpty() && !var.asByte()) // on per default
+	if (!var.isEmpty() && !var.asUInt()) // on per default
 		flags &= ~SQL_STAYCONN; // disable staying always connected
 	var = cfg->getVar("db.timeout");
 	if (!var.isEmpty())
-		timeout = var.asU32();
+		timeout = var.asUInt();
 	
 	return new tSQL(host, port, user, password, dbname, flags, timeout);
 }

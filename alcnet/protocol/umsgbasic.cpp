@@ -37,7 +37,7 @@
 
 namespace alc {
 
-tmTerminated::tmTerminated(tNetSession * u,U32 who,Byte what)
+tmTerminated::tmTerminated(tNetSession * u,uint32_t who,uint8_t what)
  :tmMsgBase(NetMsgTerminated,plNetKi | plNetAck,u) {
 	DBG(5,"tmTerminated() who:%i,what:%i\n",who,what);
 	ki=who;
@@ -45,11 +45,11 @@ tmTerminated::tmTerminated(tNetSession * u,U32 who,Byte what)
 }
 void tmTerminated::store(tBBuf &t) {
 	tmMsgBase::store(t);
-	reason=t.getByte();
+	reason=t.get8();
 }
 void tmTerminated::stream(tBBuf &t) const {
 	tmMsgBase::stream(t);
-	t.putByte(reason);
+	t.put8(reason);
 }
 tString tmTerminated::additionalFields(tString dbg) const {
 	dbg.printf("\n Reason [0x%02X] %s ",reason,alcUnetGetReasonCode(reason));
@@ -57,7 +57,7 @@ tString tmTerminated::additionalFields(tString dbg) const {
 }
 
 
-tmLeave::tmLeave(tNetSession * u,U32 ki,Byte reason)
+tmLeave::tmLeave(tNetSession * u,uint32_t ki,uint8_t reason)
  :tmMsgBase(NetMsgLeave,plNetKi|plNetAck,u) {
  /* The Uru client sends the leaves with the ack flag enabled, so we do it, too - but this is problematic:
  The connection is dropped ASAP after sending this message, but the ack reply has to be sent, and it msut not trigger a new connection on the other end */
@@ -67,11 +67,11 @@ tmLeave::tmLeave(tNetSession * u,U32 ki,Byte reason)
 }
 void tmLeave::store(tBBuf &t) {
 	tmMsgBase::store(t);
-	reason=t.getByte();
+	reason=t.get8();
 }
 void tmLeave::stream(tBBuf &t) const {
 	tmMsgBase::stream(t);
-	t.putByte(reason);
+	t.put8(reason);
 }
 tString tmLeave::additionalFields(tString dbg) const {
 	dbg.printf("\n Reason [0x%02X] %s ",reason,alcUnetGetReasonCode(reason));
@@ -79,7 +79,7 @@ tString tmLeave::additionalFields(tString dbg) const {
 }
 
 
-tmPlayerTerminated::tmPlayerTerminated(tNetSession * u,U32 ki,Byte reason)
+tmPlayerTerminated::tmPlayerTerminated(tNetSession * u,uint32_t ki,uint8_t reason)
  :tmMsgBase(NetMsgPlayerTerminated,plNetKi | plNetAck,u) {
 	this->ki=ki;
 	this->reason=reason;
@@ -87,11 +87,11 @@ tmPlayerTerminated::tmPlayerTerminated(tNetSession * u,U32 ki,Byte reason)
 void tmPlayerTerminated::store(tBBuf &t) {
 	tmMsgBase::store(t);
 	if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
-	reason=t.getByte();
+	reason=t.get8();
 }
 void tmPlayerTerminated::stream(tBBuf &t) const {
 	tmMsgBase::stream(t);
-	t.putByte(reason);
+	t.put8(reason);
 }
 tString tmPlayerTerminated::additionalFields(tString dbg) const {
 	dbg.printf("\n Reason [0x%02X] %s ",reason,alcUnetGetReasonCode(reason));
@@ -99,7 +99,7 @@ tString tmPlayerTerminated::additionalFields(tString dbg) const {
 }
 
 
-tmPing::tmPing(tNetSession * u, Byte dst)
+tmPing::tmPing(tNetSession * u, uint8_t dst)
  : tmMsgBase(NetMsgPing,plNetKi | plNetX | plNetAck,u)
  // indeed acking a ping does not make much sense... however, this gives us some really good data when a player connects to a game server (there are pings exchanged then) to estimate bandwidth and latency of the user's connection
 {
@@ -123,7 +123,7 @@ tmPing::tmPing(tNetSession *u, tmPing &ping)
 void tmPing::store(tBBuf &t) {
 	tmMsgBase::store(t);
 	mtime=t.getDouble();
-	destination=t.getByte();
+	destination=t.get8();
 }
 void tmPing::setRouteInfo(const tNetSessionIte &ite) {
 	sid=ite.sid;
@@ -135,7 +135,7 @@ void tmPing::unsetRouteInfo() {
 void tmPing::stream(tBBuf &t) const {
 	tmMsgBase::stream(t);
 	t.putDouble(mtime);
-	t.putByte(destination);
+	t.put8(destination);
 }
 tString tmPing::additionalFields(tString dbg) const {
 	dbg.printf("\n t:%e, dst:%i %s ",mtime,destination,alcUnetGetDestination(destination));

@@ -40,17 +40,17 @@ namespace alc {
 		virtual tString additionalFields(tString dbg) const;
 		// format
 		tString account;
-		U16 maxPacketSize;
-		Byte release;
+		uint16_t maxPacketSize;
+		uint8_t release;
 	};
 	
 	class tmAuthenticateChallenge : public tmMsgBase {
 	public:
-		tmAuthenticateChallenge(tNetSession *u, U32 x, Byte authResult, const Byte *challenge);
+		tmAuthenticateChallenge(tNetSession *u, uint32_t x, uint8_t authResult, const uint8_t *challenge);
 		virtual void stream(tBBuf &t) const;
 		virtual tString additionalFields(tString dbg) const;
 		// format
-		Byte authResult;
+		uint8_t authResult;
 		tString challenge;
 	};
 	
@@ -65,12 +65,12 @@ namespace alc {
 	
 	class tmAccountAutheticated : public tmMsgBase {
 	public:
-		tmAccountAutheticated(tNetSession *u, U32 x, Byte authResult, const Byte *serverGuid);
+		tmAccountAutheticated(tNetSession *u, uint32_t x, uint8_t authResult, const uint8_t *serverGuid);
 		virtual void stream(tBBuf &t) const;
 		virtual tString additionalFields(tString dbg) const;
 		// format
-		Byte authResult;
-		Byte serverGuid[8];
+		uint8_t authResult;
+		uint8_t serverGuid[8];
 	};
 	
 	class tmSetMyActivePlayer : public tmMsgBase {
@@ -84,7 +84,7 @@ namespace alc {
 	
 	class tmActivePlayerSet : public tmMsgBase {
 	public:
-		tmActivePlayerSet(tNetSession *u, U32 x);
+		tmActivePlayerSet(tNetSession *u, uint32_t x);
 	};
 	
 	class tmFindAge : public tmMsgBase {
@@ -97,13 +97,13 @@ namespace alc {
 	
 	class tmFindAgeReply : public tmMsgBase {
 	public:
-		tmFindAgeReply(tNetSession *u, U32 x, const tString &ipStr, U16 port, const tString &age, const Byte *guid);
+		tmFindAgeReply(tNetSession *u, uint32_t x, const tString &ipStr, uint16_t port, const tString &age, const uint8_t *guid);
 		virtual void stream(tBBuf &t) const;
 		virtual tString additionalFields(tString dbg) const;
 		// format
 		tString age, ipStr;
-		U16 serverPort;
-		Byte serverGuid[8];
+		uint16_t serverPort;
+		uint8_t serverGuid[8];
 	};
 	
 } //End alc namespace

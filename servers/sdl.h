@@ -61,7 +61,7 @@ namespace alc {
 		void removePlayer(tNetSession *player);
 		void clearAllStates(void);//!< remove all SDL states and clones (only call if you are sure noone is in the age!)
 		
-		tSdlStruct *findStruct(tString name, U32 version, bool throwOnError = true);
+		tSdlStruct *findStruct(tString name, uint16_t version, bool throwOnError = true);
 	private:
 		
 		typedef std::vector<tpLoadCloneMsg *> tCloneList;
@@ -72,12 +72,12 @@ namespace alc {
 		void saveAgeState();
 		
 		void loadSdlStructs(const char *filename);
-		U32 findLatestStructVersion(const tString &name, bool throwOnError = true); //!< returns the highest version number available for this struct
+		uint16_t findLatestStructVersion(const tString &name, bool throwOnError = true); //!< returns the highest version number available for this struct
 		tSdlList::iterator findAgeSDLHook(void);
 		
 		tCloneList::iterator findClone(const tUruObject &obj);
 		tSdlList::iterator findSdlState(tSdlState *state);
-		void removeCloneStates(U32 ki, U32 cloneId = 0);
+		void removeCloneStates(uint32_t ki, uint32_t cloneId = 0);
 	
 		tCloneList clones;
 		tSdlList sdlStates;
@@ -97,13 +97,13 @@ namespace alc {
 		typedef enum { DVault = 0x01, DHidden = 0x02, DRed = 0x04 } tSdlStructVarFlags;
 		
 		// these are public, I would have to add write functions for them anyway or make many classes "friend"
-		Byte type;
-		U32 size; // "0" means dynamic size
+		uint8_t type;
+		size_t size; // "0" means dynamic size
 		tString name;
 		tString structName;
-		U32 structVersion;
+		uint32_t structVersion;
 		tString defaultVal;
-		Byte flags; // see tSdlStructVarFlags
+		uint8_t flags; // see tSdlStructVarFlags
 	};
 	
 	class tSdlStruct {
@@ -111,14 +111,14 @@ namespace alc {
 		tSdlStruct(tAgeStateManager *stateMgr, tString name = tString());
 		void count(void);
 		
-		tSdlStructVar *getElement(int nr, bool var); //!< returns the nth variable (if var == true) or the nth struct (if var == false)
+		tSdlStructVar *getElement(unsigned int nr, bool var); //!< returns the nth variable (if var == true) or the nth struct (if var == false)
 	
 		typedef std::vector<tSdlStructVar> tVarList;
 		// these are public, I would have to add write functions for them anyway or make many classes "friend"
 		tString name;
-		U32 version;
+		uint16_t version;
 		tVarList vars;
-		U32 nVar, nStruct;
+		uint32_t nVar, nStruct;
 	private:
 		tAgeStateManager *stateMgr;
 	};

@@ -60,11 +60,11 @@ tLogConfig::tLogConfig(void) : path("log/"), build("Alcugs logging system")
  Opens a log file to write,
  flags are detailed in the alclog.h file
 */
-tLog::tLog(const tString &name, U16 newFlags) {
+tLog::tLog(const tString &name, uint16_t newFlags) {
 	init();
 	open(name,newFlags);
 }
-tLog::tLog(U16 newFlags) {
+tLog::tLog(uint16_t newFlags) {
 	init();
 	open(newFlags);
 }
@@ -82,7 +82,7 @@ tLog::~tLog() {
 	this->close();
 }
 
-void tLog::open(const tString &name, U16 newFlags) {
+void tLog::open(const tString &name, uint16_t newFlags) {
 	if(dsc) close();
 	count = 0;
 	flags = newFlags;
@@ -147,7 +147,7 @@ void tLog::rotate(bool force) {
 	//rotation
 	tString prefix = alcStripExt(fullpath), suffix = alcGetExt(fullpath);
 	if (suffix.size()) suffix = "."+suffix;
-	for(U32 i=tvLogConfig->n_files2rotate; i>0; i--) {
+	for(unsigned int i=tvLogConfig->n_files2rotate; i>0; i--) {
 		tString oldName = prefix;
 		if(i-1 != 0) {
 			oldName.printf(".%i", i-1);
@@ -321,9 +321,9 @@ void tLog::flush() const {
 }
 
 
-void tLog::dumpbuf(tBBuf & t, U32 n, U32 e, Byte how) const {
+void tLog::dumpbuf(tBBuf & t, size_t n, size_t e, uint8_t how) const {
 	if(n==0) n=t.size();
-	U32 where=t.tell();
+	size_t where=t.tell();
 	t.rewind();
 	this->dumpbuf(t.read(n),n,e,how);
 	t.set(where);
@@ -345,13 +345,15 @@ n = buffer size
 buf = The Buffer
 dsc = File descriptor where the packet will be dumped
  --------------------------------------------------------------*/
-void tLog::dumpbuf(const Byte * buf, U32 n, U32 e, Byte how) const {
+void tLog::dumpbuf(const void * bufv, size_t n, size_t e, uint8_t how) const {
 	unsigned int i=0,j=0,k=0;
 
 	if(n>2048) {
 		this->print("MESSAGE of %i bytes TOO BIG TO BE DUMPED!! cutting it\n",n);
 		n=2048;
 	}
+	
+	const uint8_t *buf = reinterpret_cast<const uint8_t*>(bufv); // acess the buffer byte-wise
 
 	switch(how) {
 		case 0:

@@ -48,21 +48,21 @@ public:
 	tConfigVal(const tString & name);
 	~tConfigVal();
 	void setName(const tString & name);
-	void setVal(const tString & t,U16 x=0,U16 y=0);
+	void setVal(const tString & t,unsigned int x=0,unsigned int y=0);
 	const tString & getName() const;
-	const tString & getVal(U16 x=0,U16 y=0,bool *found = NULL) const; //!< found tells you whether the value exists
-	bool hasVal(U16 x=0,U16 y=0) const;
-	U16 getRows() const { return y; }
-	U16 getCols() const { return x; }
+	const tString & getVal(unsigned int x=0,unsigned int y=0,bool *found = NULL) const; //!< found tells you whether the value exists
+	bool hasVal(unsigned int x=0,unsigned int y=0) const;
+	unsigned int getRows() const { return y; }
+	unsigned int getCols() const { return x; }
 	void copy(const tConfigVal & t);
 	const tConfigVal &operator=(const tConfigVal & t) { copy(t); return *this; }
 private:
 	void init();
 	tString name;
 	tString ** values;
-	U16 x; //columns
-	U16 y; //rows
-	Byte flags; // 0x01 - with quotes
+	unsigned int x; //columns
+	unsigned int y; //rows
+	uint8_t flags; // 0x01 - with quotes
 	            // 0x02 - without quotes
 	friend class tConfigKey; // for more efficient searching, tConfigKey needs direct access to the var name
 	
@@ -84,7 +84,7 @@ public:
 	tConfigVal * getNext();
 private:
 	tString name;
-	U16 n,off;
+	unsigned int n,off;
 	tConfigVal ** values;
 	friend class tConfig; // for more efficient searching, tConfig needs direct access to the key name
 	
@@ -99,8 +99,8 @@ public:
 	~tConfig();
 	tConfigKey * findKey(tString where="global",bool create=false);
 	tConfigVal * findVar(const tString & what,const tString & where="global",bool create=false);
-	const tString & getVar(const tString & what,const tString & where="global",U16 x=0,U16 y=0,bool *found = NULL); //!< found tells you whether the value exists
-	void setVar(const tString &val,const tString &what,const tString &where,U16 x=0,U16 y=0);
+	const tString & getVar(const tString & what,const tString & where="global",unsigned int x=0,unsigned int y=0,bool *found = NULL); //!< found tells you whether the value exists
+	void setVar(const tString &val,const tString &what,const tString &where,unsigned int x=0,unsigned int y=0);
 	void rewind();
 	tConfigKey * getNext();
 	void copyKey(const tString & to,const tString & from); //!< this will merge the key if the destination already exists
@@ -114,7 +114,7 @@ public:
 		return getVar(what, "global", 0, 0, found);
 	}
 private:
-	U16 n,off;
+	unsigned int n,off;
 	tConfigKey ** values;
 	
 	tConfig(const tConfig &); // prevent copying

@@ -45,18 +45,18 @@ namespace alc {
 /* wdys buff */
 void tWDYSBuf::encrypt() {
 	// first, encrypt ourselves in-place (and make sure we are big enough for that by adding zeroes)
-	U32 dataSize = size(), newSize;
+	size_t dataSize = size(), newSize;
 	end();
-	putU32(0);
-	putU32(0);
+	put32(0);
+	put32(0);
 	for (newSize=0; newSize<dataSize; newSize+=8) {
-		wdys::encodeQuad(reinterpret_cast<U32 *>(volatileData()+newSize), reinterpret_cast<U32 *>(volatileData()+newSize+4)); // this function encrypts in-place, hence work on a copy
+		wdys::encodeQuad(reinterpret_cast<unsigned int *>(volatileData()+newSize), reinterpret_cast<unsigned int *>(volatileData()+newSize+4)); // this function encrypts in-place, hence work on a copy
 	}
 	
 	// and now put it into a new buffer and assign that one to us
 	tWDYSBuf newBuf;
 	newBuf.write("whatdoyousee",sizeof(char)*12);
-	newBuf.putU32(dataSize);
+	newBuf.put32(dataSize);
 	newBuf.write(data(),newSize);
 	copy(newBuf);
 	rewind();
@@ -68,12 +68,12 @@ void tWDYSBuf::decrypt(bool mustBeWDYS) {
 		return;
 	}
 	set(12); // seek to the size
-	U32 dsize=getU32();
+	uint32_t dsize=get32();
 	
 	// decrypt ourselves in-place
-	for (U32 i=0; i<dsize; i+=8) {
+	for (size_t i=0; i<dsize; i+=8) {
 		// 16 is the header size
-		wdys::decodeQuad(reinterpret_cast<U32 *>(volatileData()+16+i), reinterpret_cast<U32 *>(volatileData()+16+i+4));
+		wdys::decodeQuad(reinterpret_cast<unsigned int *>(volatileData()+16+i), reinterpret_cast<unsigned int *>(volatileData()+16+i+4));
 	}
 	
 	// put the decrypted data into a new buffer and assign it to us
@@ -87,23 +87,23 @@ void tWDYSBuf::decrypt(bool mustBeWDYS) {
 
 
 /* AES buff */
-void tAESBuf::setKey(const Byte * key) {
+void tAESBuf::setKey(const void * key) {
 	memcpy(this->key,key,16);
 }
 void tAESBuf::setM5Key() {
-	U32 xorkey=0xCF092676;
+	uint32_t xorkey=0xCF092676;
 	tMBuf key;
-	key.putU32(0xFC2C6B86 ^ xorkey);
-	key.putU32(0x952E7BDA ^ xorkey);
-	key.putU32(0xF1713EE8 ^ xorkey);
-	key.putU32(0xC7410A13 ^ xorkey);
+	key.put32(0xFC2C6B86 ^ xorkey);
+	key.put32(0x952E7BDA ^ xorkey);
+	key.put32(0xF1713EE8 ^ xorkey);
+	key.put32(0xC7410A13 ^ xorkey);
 	memcpy(this->key,key.data(),16);
 }
 void tAESBuf::encrypt() {
 	// encrypt the buffer
 	tAESBuf newBuf(size()+16); // 8 bytes for the header, 8 bytes for AES
-	newBuf.putU32(0x0D874288);
-	newBuf.putU32(size());
+	newBuf.put32(0x0D874288);
+	newBuf.put32(size());
 	Rijndael rin;
 	rin.init(Rijndael::ECB,Rijndael::Encrypt,key,Rijndael::Key16Bytes);
 	int res = rin.padEncrypt(data(),size(),newBuf.volatileData()+8);
@@ -117,8 +117,8 @@ void tAESBuf::encrypt() {
 void tAESBuf::decrypt() {
 	// get the data part
 	rewind();
-	if(getU32()!=0x0D874288) throw txUnexpectedData(_WHERE("NotAM5CryptedFile!"));
-	U32 dataSize = getU32();
+	if(get32()!=0x0D874288) throw txUnexpectedData(_WHERE("NotAM5CryptedFile!"));
+	uint32_t dataSize = get32();
 	tAESBuf newBuf(size()-8);
 
 	// decrypt it
@@ -126,7 +126,7 @@ void tAESBuf::decrypt() {
 	rin.init(Rijndael::ECB,Rijndael::Decrypt,key,Rijndael::Key16Bytes);
 	int res = rin.padDecrypt(data()+8,size()-8,newBuf.volatileData());
 	if(res<0) throw txUnkErr(_WHERE("Rijndael decrypt error %i",res));
-	if(static_cast<U32>(res) != size()-8) throw txUnkErr(_WHERE("Rijndael decrypt error: Size mismatch"));
+	if(static_cast<size_t>(res) != size()-8) throw txUnkErr(_WHERE("Rijndael decrypt error: Size mismatch"));
 
 	// and use what we need
 	newBuf.cutEnd(dataSize);
@@ -139,11 +139,11 @@ void tAESBuf::decrypt() {
 /* tUruString */
 void tUruString::store(tBBuf &t) {
 	clear();
-	U32 bufSize = t.getU16();
+	uint16_t bufSize = t.get16();
 	if (!(bufSize & 0xF000)) throw txUnexpectedData(_WHERE("This is not an inverted string!"));
 	bufSize &= ~0xF000; // remove highest bit
-	for(U32 i=0; i<bufSize; i++) {
-		putByte(~t.getByte());
+	for(uint16_t i=0; i<bufSize; i++) {
+		put8(~t.get8());
 	}
 	
 	/* Myst V decryption
@@ -153,9 +153,10 @@ void tUruString::store(tBBuf &t) {
 	} */
 }
 void tUruString::stream(tBBuf &t) const {
-	t.putU16(size()|0xF000);
-	for(U32 i=0; i<size(); i++) {
-		t.putByte(~*(data()+i));
+	if (size() >= 0xF000) throw txUnexpectedData(_WHERE("Uru string is too long"));
+	t.put16(size()|0xF000);
+	for(size_t i=0; i<size(); i++) {
+		t.put8(~*(data()+i));
 	}
 	
 	/* Myst V encryption
@@ -177,32 +178,32 @@ tUruObject::tUruObject(void) : tBaseType()
 
 void tUruObject::store(tBBuf &t)
 {
-	Byte cloneIdFlag = t.getByte();
+	uint8_t cloneIdFlag = t.get8();
 	if (cloneIdFlag != 0x00 && cloneIdFlag != 0x01)
 		throw txUnexpectedData(_WHERE("the clone ID flag of an UruObject must be 0x00 or 0x01, not 0x%02X", cloneIdFlag));
 	else hasCloneId = cloneIdFlag;
-	pageId = t.getU32();
-	pageType = t.getU16();
-	objType = t.getU16();
+	pageId = t.get32();
+	pageType = t.get16();
+	objType = t.get16();
 	t.get(objName);
 	
 	// if contained, read the client ID
 	if (hasCloneId) {
-		cloneId = t.getU32();
-		clonePlayerId = t.getU32();
+		cloneId = t.get32();
+		clonePlayerId = t.get32();
 	}
 }
 
 void tUruObject::stream(tBBuf &t) const
 {
-	t.putByte(hasCloneId);
-	t.putU32(pageId);
-	t.putU16(pageType);
-	t.putU16(objType);
+	t.put8(hasCloneId);
+	t.put32(pageId);
+	t.put16(pageType);
+	t.put16(objType);
 	t.put(objName);
 	if (hasCloneId) {
-		t.putU32(cloneId);
-		t.putU32(clonePlayerId);
+		t.put32(cloneId);
+		t.put32(clonePlayerId);
 	}
 }
 
@@ -241,7 +242,7 @@ tUruObjectRef::tUruObjectRef(const tUruObject &obj) : obj(obj)
 
 void tUruObjectRef::store(tBBuf &t)
 {
-	Byte hasObjFlag = t.getByte();
+	uint8_t hasObjFlag = t.get8();
 	if (hasObjFlag != 0x00 && hasObjFlag != 0x01)
 		throw txUnexpectedData(_WHERE("the hasObjFlag of an UruObjectRef must be 0x00 or 0x01, not 0x%02X", hasObjFlag));
 	hasObj = hasObjFlag;
@@ -250,7 +251,7 @@ void tUruObjectRef::store(tBBuf &t)
 
 void tUruObjectRef::stream(tBBuf &t) const
 {
-	t.putByte(hasObj);
+	t.put8(hasObj);
 	if (hasObj) t.put(obj);
 }
 
@@ -275,13 +276,13 @@ void tStreamedObject::store(tBBuf &t)
 	DBG(8, "tStreamedObject::store\n");
 	clear();
 	
-	realSize = t.getU32();
-	format = t.getByte();
+	realSize = t.get32();
+	format = t.get8();
 	if (format != 0x00 && format != 0x02 && format != 0x03)
 		throw txUnexpectedData(_WHERE("Invalid stream format 0x%02X", format));
 	if (format != 0x02 && realSize)
 		throw txUnexpectedData(_WHERE("Uncompressed stream must not have real size set"));
-	U32 sentSize = t.getU32();
+	uint32_t sentSize = t.get32();
 	if (sentSize == 0) {
 		type = plNull;
 		return;
@@ -290,7 +291,7 @@ void tStreamedObject::store(tBBuf &t)
 	realSize -= 2;
 	sentSize -= 2;
 	
-	type = t.getU16();
+	type = t.get16();
 	write(t.read(sentSize), sentSize);
 	
 	uncompress();
@@ -301,19 +302,19 @@ void tStreamedObject::stream(tBBuf &t) const
 	DBG(8, "tStreamedObject::stream\n");
 	if (!size()) {
 		// write an empty stream
-		t.putU32(0); // real size
-		t.putByte(0x00); // compression flag
-		t.putU32(0); // sent size
+		t.put32(0); // real size
+		t.put8(0x00); // compression flag
+		t.put32(0); // sent size
 		return;
 	}
 	else if (size() > maxSize && format == 0x00) // an uncompressed stream of that size?
 		throw txBase(_WHERE("Someone forgot to call tStreamedObject::compress()"));
 	
 	// it's not yet empty, so we have to write something
-	t.putU32(format == 0x02 ? realSize+2 : 0); // add the two type bytes
-	t.putByte(format);
-	t.putU32(size()+2); // add the two type bytes
-	t.putU16(type);
+	t.put32(format == 0x02 ? realSize+2 : 0); // add the two type bytes
+	t.put8(format);
+	t.put32(size()+2); // add the two type bytes
+	t.put16(type);
 	tMBuf::stream(t);
 }
 
@@ -351,7 +352,7 @@ tMBuf tStreamedObject::fullContent(void)
 {
 	uncompress();
 	tMBuf res;
-	res.putU16(type);
+	res.put16(type);
 	tMBuf::stream(res);
 	res.rewind();
 	return res;

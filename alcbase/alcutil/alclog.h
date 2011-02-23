@@ -79,14 +79,14 @@ public:
 	
 	//// settings
 	//files
-	Byte verboseLevel; //!< set what to print to the console
+	unsigned short int verboseLevel; //!< set what to print to the console
 	//silent
 	// 3 - print all, ignoring if them have stdout or stderr flags, html are not print.
 	// 2 - print only msgs with stderr or stdout flags.
 	// 1 - print only msgs with stderr flags
 	// 0 - don't print nothing
 
-	U32 n_files2rotate; //!< set number the files to rotate
+	unsigned int n_files2rotate; //!< set number the files to rotate
 	/*  0 - logging disabled
 		1 - one file (old behaviour)
 			>=2 - rotate logs
@@ -94,7 +94,7 @@ public:
 	
 	// general stuff
 	tString path; //!<path to the log directory
-	int rotate_size; //!< maxium size of a file, if reached, file will be rotated
+	unsigned int rotate_size; //!< maxium size of a file, if reached, file will be rotated
 	mode_t creation_mask; //!< default permissions mask
 	//build vars
 	tString build;
@@ -119,14 +119,14 @@ private:
 
 class tLog {
 public:
-	tLog(const tString &name,U16 newFlags=0);
-	tLog(U16 newFlags=0);
+	tLog(const tString &name,uint16_t newFlags=0);
+	tLog(uint16_t newFlags=0);
 	~tLog();
-	void open(const tString &name,U16 newFlags=0);
-	inline void open(U16 newFlags=0) { open(tString(), newFlags); }
+	void open(const tString &name,uint16_t newFlags=0);
+	inline void open(uint16_t newFlags=0) { open(tString(), newFlags); }
 	void rotate(bool force=false);
 	void close(bool silent=false);
-	inline void checkRotate(int maxCount) {
+	inline void checkRotate(unsigned int maxCount) {
 		++count;
 		if(count>maxCount) { count=0; rotate(false); }
 	}
@@ -137,8 +137,8 @@ public:
 	void log(const char * msg, ...);
 	void flush() const;
 
-	void dumpbuf(const Byte * buf, U32 n, U32 e=0,Byte how=7) const;
-	void dumpbuf(tBBuf &t, U32 n=0, U32 e=0,Byte how=7) const;
+	void dumpbuf(const void * buf, size_t n, size_t e=0,uint8_t how=7) const;
+	void dumpbuf(tBBuf &t, size_t n=0, size_t e=0,uint8_t how=7) const;
 
 	void nl() const; //!< print newline
 	void logErr(const char *msg); //!< print last error
@@ -153,10 +153,10 @@ private:
 	tLogConfig *tvLogConfig;
 	tString fullpath;
 	FILE * dsc;
-	U16 flags; //see above (DF_*)
+	uint16_t flags; //see above (DF_*)
 	//int facility; //this params are passed to syslog
 	//int priority; //this params are passed to syslog
-	Byte count;
+	unsigned int count; // counter used for rotate checking
 	
 	FORBID_CLASS_COPY(tLog)
 };

@@ -44,7 +44,7 @@
 
 namespace alc {
 
-	tUnetLobbyServerBase::tUnetLobbyServerBase(Byte whoami) : tUnetServerBase(whoami), authedTimeout(30) /* 30seconds for authenticated clients */
+	tUnetLobbyServerBase::tUnetLobbyServerBase(uint8_t whoami) : tUnetServerBase(whoami), authedTimeout(30) /* 30seconds for authenticated clients */
 	{
 		memset(serverGuid, 0, 8);
 		auth_gone = tracking_gone = vault_gone = 0;
@@ -55,25 +55,25 @@ namespace alc {
 	{
 		tConfig *cfg = alcGetMain()->config();
 		tString var = cfg->getVar("vault.html.log");
-		if (var.isEmpty() || var.asByte()) { // logging enabled per default
+		if (var.isEmpty() || var.asUInt()) { // logging enabled per default
 			lvault.open("vault.html", DF_HTML);
 			var = cfg->getVar("vault.html.log.short");
-			vaultLogShort = (var.isEmpty() || var.asByte()); // per default, it *is* short
+			vaultLogShort = (var.isEmpty() || var.asUInt()); // per default, it *is* short
 		}
 		else
 			lvault.open(DF_HTML);
 		
 		var = cfg->getVar("allow_uu_clients");
-		allowUU = (var.isEmpty() || var.asByte()); // per default, UU clients are allowed
+		allowUU = (var.isEmpty() || var.asUInt()); // per default, UU clients are allowed
 		linkLog = cfg->getVar("tmp.link_log");
 		
 		var = cfg->getVar("spawn.start");
 		if (var.isEmpty()) spawnStart = 5001;
-		else spawnStart = var.asU16();
+		else spawnStart = var.asUInt();
 		
 		var = cfg->getVar("spawn.stop");
 		if (var.isEmpty()) spawnStop = 6000;
-		else spawnStop = var.asU16();
+		else spawnStop = var.asUInt();
 		
 		if (spawnStop < spawnStart) {
 			log->log("WARN: spawnStop (%d) lower than spawnStart (%d), setting both to %d\n", spawnStop, spawnStart, spawnStart);
@@ -82,7 +82,7 @@ namespace alc {
 		
 		var = cfg->getVar("net.timeout.loading");
 		if (var.isEmpty()) loadingTimeout = 90;
-		else loadingTimeout = var.asU32();
+		else loadingTimeout = var.asUInt();
 	}
 	
 	void tUnetLobbyServerBase::onForwardPing(tmPing &ping, tNetSession *u)
@@ -108,9 +108,9 @@ namespace alc {
 		}
 	}
 	
-	bool tUnetLobbyServerBase::setActivePlayer(tNetSession *u, U32 ki, U32 x, const tString &avatar)
+	bool tUnetLobbyServerBase::setActivePlayer(tNetSession *u, uint32_t ki, uint32_t x, const tString &avatar)
 	{
-		tNetSession *client = smgr->find(ki);
+		tNetSession *client = smgr->findByKi(ki);
 		smgr->rewind();
 		if (client && client->getPeerType() == KClient) { // an age cannot host the same avatar multiple times
 			if (u != client) // it could be the same session for which the active player is set twice for some reason
@@ -144,7 +144,7 @@ namespace alc {
 		return true;
 	}
 	
-	void tUnetLobbyServerBase::onConnectionClosing(tNetSession *u, Byte reason)
+	void tUnetLobbyServerBase::onConnectionClosing(tNetSession *u, uint8_t reason)
 	{
 		// if it was one of our servers, save the time it went (it will be reconnected later)
 		if (authIte == u) {
@@ -186,7 +186,7 @@ namespace alc {
 		vaultIte = reconnectPeer(KVault);
 	}
 	
-	tNetSessionIte tUnetLobbyServerBase::reconnectPeer(Byte dst)
+	tNetSessionIte tUnetLobbyServerBase::reconnectPeer(uint8_t dst)
 	{
 		tString host, port;
 		tConfig *cfg = alcGetMain()->config();
@@ -213,7 +213,7 @@ namespace alc {
 			return tNetSessionIte();
 		}
 		
-		tNetSessionIte ite = netConnect(host.c_str(), port.asU16(), 3 /* Alcugs upgraded protocol */, 0, dst);
+		tNetSessionIte ite = netConnect(host.c_str(), port.asUInt(), 3 /* Alcugs upgraded protocol */, 0, dst);
 		tNetSession *session = getSession(ite);
 		
 		// sending a NetMsgAlive is not necessary, the netConnect will already start the negotiation process
@@ -228,7 +228,7 @@ namespace alc {
 		return ite;
 	}
 	
-	tNetSession *tUnetLobbyServerBase::getServer(Byte dst)
+	tNetSession *tUnetLobbyServerBase::getServer(uint8_t dst)
 	{
 		tNetSession *session = NULL;
 		switch (dst) {
@@ -254,7 +254,7 @@ namespace alc {
 	{
 		if (!isRunning()) return;
 		
-		U32 time = alcGetTime();
+		time_t time = alcGetTime();
 		if (auth_gone && auth_gone+5 < time) { // if it went more than 5 sec ago, reconnect
 			authIte = reconnectPeer(KAuth);
 			auth_gone = 0;
@@ -308,12 +308,12 @@ namespace alc {
 				
 				// init the challenge to the MD5 of the current system time and other garbage
 				tMD5Buf md5buffer;
-				md5buffer.putU32(alcGetTime());
-				md5buffer.putU32(alcGetMicroseconds());
-				md5buffer.putU32(random());
-				md5buffer.putU32(alcGetMain()->upTime().seconds);
+				md5buffer.put32(alcGetTime());
+				md5buffer.put32(alcGetMicroseconds());
+				md5buffer.put32(random());
+				md5buffer.put32(alcGetMain()->upTime().seconds);
 				md5buffer.put(authHello.account);
-				md5buffer.putU32(alcGetMain()->bornTime().seconds);
+				md5buffer.put32(alcGetMain()->bornTime().seconds);
 				md5buffer.compute();
 		
 				// save data in session
@@ -383,7 +383,7 @@ namespace alc {
 					onPlayerAuthed(client);
 				}
 				else {
-					Byte zeroGuid[8]; // only send zero-filled GUIDs to non-authed players
+					uint8_t zeroGuid[8]; // only send zero-filled GUIDs to non-authed players
 					memset(zeroGuid, 0, 8);
 					memset(client->uid, 0, 16);
 					tmAccountAutheticated accountAuth(client, authResponse.x, authResponse.result, zeroGuid);
@@ -492,7 +492,7 @@ namespace alc {
 					
 					vaultMsg.message.get(parsedMsg);
 					
-					tNetSession *client = smgr->find(vaultMsg.ki);
+					tNetSession *client = smgr->findByKi(vaultMsg.ki);
 					if (!client || client->getPeerType() != KClient) {
 						lvault.print("<h2 style='color:red'>Packet for unknown client</h2>\n");
 						parsedMsg.print(&lvault, /*clientToServer:*/false, NULL, vaultLogShort);
@@ -620,7 +620,7 @@ namespace alc {
 					return 1;
 				}
 				
-				Byte guid[8];
+				uint8_t guid[8];
 				alcGetHexGuid(guid, serverFound.serverGuid);
 				
 				tmFindAgeReply reply(client, serverFound.x, serverFound.ipStr, serverFound.serverPort, serverFound.age, guid);
@@ -642,7 +642,7 @@ namespace alc {
 				msg->data.get(playerTerminated);
 				log->log("<RCV> [%d] %s\n", msg->sn, playerTerminated.str().c_str());
 				
-				tNetSession *client = smgr->find(playerTerminated.ki);
+				tNetSession *client = smgr->findByKi(playerTerminated.ki);
 				if (!client || (client->getPeerType() != KClient && client->getPeerType() != 0)) {
 					err->log("ERR: I've got to kick the player with KI %d but can\'t find his session.\n", playerTerminated.ki);
 					return 1;

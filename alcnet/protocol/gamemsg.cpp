@@ -55,20 +55,20 @@ namespace alc {
 	
 	void tMemberInfo::stream(tBBuf &t) const
 	{
-		t.putU32(0x00000020); // unknown, seen 0x20 and 0x22 - a flag
+		t.put32(0x00000020); // unknown, seen 0x20 and 0x22 - a flag
 		// begin of the plClientGuid
-		t.putU16(0x03EA); // a flag defining the content
+		t.put16(0x03EA); // a flag defining the content
 		/* according to libPlasma, 0x03EA is the combination of:
 		  KI = 0x0002, CCR Level = 0x0008,
 		  Build Type = 0x0020, Player Name = 0x0040, Source Address = 0x0080,
 		  Source Port = 0x0100, Reserved = 0x0200 */
-		t.putU32(ki);
+		t.put32(ki);
 		t.put(avatar);
-		t.putByte(hidePlayer); // CCR flag - when set to 1, the player is hidden on the age list
-		t.putByte(buildType);
-		t.putU32(ntohl(ip));
-		t.putU16(ntohs(port));
-		t.putByte(0x00); // always seen that value - might be the reserved field, but according to libPlasma that would be two bytes...
+		t.put8(hidePlayer); // CCR flag - when set to 1, the player is hidden on the age list
+		t.put8(buildType);
+		t.put32(ntohl(ip));
+		t.put16(ntohs(port));
+		t.put8(0x00); // always seen that value - might be the reserved field, but according to libPlasma that would be two bytes...
 		// end of the plClientGuid
 		t.put(obj);
 	}
@@ -91,14 +91,14 @@ namespace alc {
 		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		
 		//Unfortunately it looks like the IP address is transmitted in
-		// network byte order. This means that if we just use getU32(),
+		// network byte order. This means that if we just use get32(),
 		// on little-endian systems ip will be in network order and on
 		// big-endian systems it will be byte-swapped from *both*
 		// network and host order (which are the same).
-		ip=letoh32(t.getU32()); // this is the internal IP of the client, not the external one of the router
+		ip=letoh32(t.get32()); // this is the internal IP of the client, not the external one of the router
 		//The port is transmitted in little-endian order, so is in host
-		// order after getU16().
-		port=htons(t.getU16());
+		// order after get16().
+		port=htons(t.get16());
 	}
 	
 	tString tmJoinReq::additionalFields(tString dbg) const
@@ -109,7 +109,7 @@ namespace alc {
 	}
 	
 	//// tmJoinAck
-	tmJoinAck::tmJoinAck(tNetSession *u, U32 x, const tBaseType *sdl)
+	tmJoinAck::tmJoinAck(tNetSession *u, uint32_t x, const tBaseType *sdl)
 	 : tmMsgBase(NetMsgJoinAck, plNetAck | plNetKi | plNetX, u)
 	{
 		this->x = x;
@@ -122,7 +122,7 @@ namespace alc {
 	{
 		tmMsgBase::stream(t);
 		
-		t.putU16(0); // unknown ("joinOrder" and "ExpLevel")
+		t.put16(0); // unknown ("joinOrder" and "ExpLevel")
 		t.put(sdlStream);
 	}
 	
@@ -138,19 +138,19 @@ namespace alc {
 		msgStream.compress();
 	}
 	
-	tmGameMessage::tmGameMessage(tNetSession *u, U32 ki, tpObject *obj)
+	tmGameMessage::tmGameMessage(tNetSession *u, uint32_t ki, tpObject *obj)
 	 : tmMsgBase(NetMsgGameMessage, plNetAck | plNetKi, u), msgStream(obj) // this already compresses the stream
 	{ this->ki = ki; }
 	
 	// constructors for sub-classes
-	tmGameMessage::tmGameMessage(U16 cmd, tNetSession *u, const tmGameMessage &msg)
+	tmGameMessage::tmGameMessage(uint16_t cmd, tNetSession *u, const tmGameMessage &msg)
 	 : tmMsgBase(cmd, msg.flags, u), msgStream(msg.msgStream)
 	{
 		ki = msg.ki;
 		msgStream.compress();
 	}
 	
-	tmGameMessage::tmGameMessage(U16 cmd, tNetSession *u, U32 ki, tpObject *obj)
+	tmGameMessage::tmGameMessage(uint16_t cmd, tNetSession *u, uint32_t ki, tpObject *obj)
 	 : tmMsgBase(cmd, plNetAck | plNetKi, u), msgStream(obj) // this already compresses the stream
 	{ this->ki = ki; }
 	
@@ -164,7 +164,7 @@ namespace alc {
 		
 		t.get(msgStream);
 		
-		Byte hasTime = t.getByte();
+		uint8_t hasTime = t.get8();
 		if (hasTime != 0x00)
 			throw txProtocolError(_WHERE("Unexpected NetMsgGameMessage.hasTime of 0x%02X (should be 0x00)", hasTime));
 	}
@@ -173,7 +173,7 @@ namespace alc {
 	{
 		tmMsgBase::stream(t);
 		t.put(msgStream);
-		t.putByte(0); // hasTime
+		t.put8(0); // hasTime
 	}
 	
 	//// tmGameMessageDirected
@@ -185,16 +185,16 @@ namespace alc {
 	 : tmGameMessage(NetMsgGameMessageDirected, u, msg), recipients(msg.recipients)
 	{ }
 	
-	tmGameMessageDirected::tmGameMessageDirected(tNetSession *u, U32 ki, tpObject *obj)
+	tmGameMessageDirected::tmGameMessageDirected(tNetSession *u, uint32_t ki, tpObject *obj)
 	 : tmGameMessage(NetMsgGameMessageDirected, u, ki, obj)
 	{ }
 	
 	// constructors for sub-classes
-	tmGameMessageDirected::tmGameMessageDirected(U16 cmd, tNetSession *u, const tmGameMessageDirected &msg)
+	tmGameMessageDirected::tmGameMessageDirected(uint16_t cmd, tNetSession *u, const tmGameMessageDirected &msg)
 	 : tmGameMessage(cmd, u, msg), recipients(msg.recipients)
 	{ }
 	
-	tmGameMessageDirected::tmGameMessageDirected(U16 cmd, tNetSession *u, U32 ki, tpObject *obj)
+	tmGameMessageDirected::tmGameMessageDirected(uint16_t cmd, tNetSession *u, uint32_t ki, tpObject *obj)
 	 : tmGameMessage(cmd, u, ki, obj)
 	{ }
 	
@@ -204,18 +204,18 @@ namespace alc {
 		tmGameMessage::store(t);
 		
 		// get list of recipients
-		Byte nRecipients = t.getByte();
+		uint8_t nRecipients = t.get8();
 		recipients.clear();
 		recipients.reserve(nRecipients); // avoid re-allocating memory
-		for (int i = 0; i < nRecipients; ++i) recipients.push_back(t.getU32());
+		for (int i = 0; i < nRecipients; ++i) recipients.push_back(t.get32());
 	}
 	
 	void tmGameMessageDirected::stream(tBBuf &t) const
 	{
 		tmGameMessage::stream(t);
-		t.putByte(recipients.size());
+		t.put8(recipients.size());
 		for (tRecList::const_iterator it = recipients.begin(); it != recipients.end(); ++it)
-			t.putU32(*it);
+			t.put32(*it);
 	}
 	
 	//// tmLoadClone
@@ -251,17 +251,17 @@ namespace alc {
 		if (obj.clonePlayerId != ki)
 			throw txProtocolError(_WHERE("ClonePlayerID of loaded clone must be the same as Player KI (%d) but is %d", ki, obj.clonePlayerId));
 		
-		Byte playerAvatar = t.getByte();
+		uint8_t playerAvatar = t.get8();
 		if (playerAvatar != 0x00 && playerAvatar != 0x01)
 			throw txProtocolError(_WHERE("Unexpected NetMsgLoadClone.playerAvatar of 0x%02X (should be 0x00 or 0x01)", playerAvatar));
 		isPlayerAvatar = playerAvatar;
 		
-		Byte load = t.getByte();
+		uint8_t load = t.get8();
 		if (load != 0x00 && load != 0x01)
 			throw txProtocolError(_WHERE("Unexpected NetMsgLoadClone.load of 0x%02X (should be 0x00 or 0x01)", load));
 		isLoad = load;
 		
-		Byte initial = t.getByte();
+		uint8_t initial = t.get8();
 		if (initial != 0x00 && initial != 0x01)
 			throw txProtocolError(_WHERE("Unexpected NetMsgLoadClone.initial of 0x%02X (should be 0x00 or 0x01)", initial));
 		isInitial = initial;
@@ -271,9 +271,9 @@ namespace alc {
 	{
 		tmGameMessage::stream(t);
 		t.put(obj);
-		t.putByte(isPlayerAvatar);
-		t.putByte(isLoad);
-		t.putByte(isInitial);
+		t.put8(isPlayerAvatar);
+		t.put8(isLoad);
+		t.put8(isInitial);
 	}
 	
 	void tmLoadClone::checkSubMsg(tpLoadCloneMsg *subMsg)
@@ -310,13 +310,13 @@ namespace alc {
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
 		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		
-		U32 n = t.getU32(); // the number of stored rooms
+		uint32_t n = t.get32(); // the number of stored rooms
 		if (n != 1)
 			throw txProtocolError(_WHERE("NetMsgPagingRoom.n must be 1, but is %d", n));
-		pageId = t.getU32();
-		pageType = t.getU16();
+		pageId = t.get32();
+		pageType = t.get16();
 		t.get(pageName);
-		Byte pageFlag = t.getByte();
+		uint8_t pageFlag = t.get8();
 		if (pageFlag == 0x00 || pageFlag == 0x01) isPageOut = pageFlag;
 		else
 			throw txProtocolError(_WHERE("NetMsgPagingRoom.pageFlag must be 0x00 or 0x01 but is 0x%02X", pageFlag));
@@ -341,13 +341,13 @@ namespace alc {
 	void tmGroupOwner::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
-		t.putU32(1); // number of sent blocks (Alcugs does not support sending several of them at once)
+		t.put32(1); // number of sent blocks (Alcugs does not support sending several of them at once)
 		// begin of the plNetGroupId
-		t.putU32(pageId);
-		t.putU16(pageType);
-		t.putByte(0x00); // the flags of a plNetGroupId
+		t.put32(pageId);
+		t.put16(pageType);
+		t.put8(0x00); // the flags of a plNetGroupId
 		// end of the plNetGroupId
-		t.putByte(isOwner);
+		t.put8(isOwner);
 	}
 	
 	tString tmGroupOwner::additionalFields(tString dbg) const
@@ -368,7 +368,7 @@ namespace alc {
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
 		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		
-		Byte pageFlag = t.getByte();
+		uint8_t pageFlag = t.get8();
 		if (pageFlag == 0x00 || pageFlag == 0x01) isPageOut = pageFlag;
 		else
 			throw txProtocolError(_WHERE("NetMsgPlayerPage.pageFlag must be 0x00 or 0x01 but is 0x%02X", pageFlag));
@@ -393,7 +393,7 @@ namespace alc {
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
 		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		
-		U32 nPages = t.getU32();
+		uint32_t nPages = t.get32();
 		if (nPages == 0 && !hasFlags(plNetStateReq1))
 			throw txProtocolError(_WHERE("StateReq flag missing"));
 		else if (nPages != 0 && hasFlags(plNetStateReq1))
@@ -402,9 +402,9 @@ namespace alc {
 		pages.clear();
 		pages.reserve(nPages);
 		tString pageName;
-		for (U32 i = 0; i < nPages; ++i) {
-			pages.push_back(t.getU32());
-			t.getU16(); // ignore pageType
+		for (uint32_t i = 0; i < nPages; ++i) {
+			pages.push_back(t.get32());
+			t.get16(); // ignore pageType
 			t.get(pageName); // ignore pageName
 		}
 	}
@@ -417,7 +417,7 @@ namespace alc {
 	}
 	
 	//// tmInitialAgeStateSent
-	tmInitialAgeStateSent::tmInitialAgeStateSent(tNetSession *u, U32 num) : tmMsgBase(NetMsgInitialAgeStateSent, plNetAck, u)
+	tmInitialAgeStateSent::tmInitialAgeStateSent(tNetSession *u, uint32_t num) : tmMsgBase(NetMsgInitialAgeStateSent, plNetAck, u)
 	{
 		this->num = num;
 	}
@@ -425,7 +425,7 @@ namespace alc {
 	void tmInitialAgeStateSent::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
-		t.putU32(num);
+		t.put32(num);
 	}
 	
 	tString tmInitialAgeStateSent::additionalFields(tString dbg) const
@@ -443,13 +443,13 @@ namespace alc {
 	tmStreamedObject::tmStreamedObject(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
-	tmStreamedObject::tmStreamedObject(U16 cmd, tNetSession *u, const tmStreamedObject &msg)
+	tmStreamedObject::tmStreamedObject(uint16_t cmd, tNetSession *u, const tmStreamedObject &msg)
 	: tmMsgBase(cmd, msg.flags, u), obj(msg.obj), content(msg.content)
 	{
 		content.compress();
 	}
 	
-	tmStreamedObject::tmStreamedObject(U16 cmd, tNetSession *u, const tUruObject &obj, tBaseType *content)
+	tmStreamedObject::tmStreamedObject(uint16_t cmd, tNetSession *u, const tUruObject &obj, tBaseType *content)
 	: tmMsgBase(cmd, plNetAck, u), obj(obj)
 	{
 		this->content.put(*content);
@@ -492,32 +492,32 @@ namespace alc {
 		// Verify state
 		tString stateName;
 		tUruString varName;
-		U32 count;
-		Byte mayDelete, varType, varValue;
+		uint32_t count;
+		uint8_t mayDelete, varType, varValue;
 		state.get(stateName);
 		if (stateName != "TrigState")
 			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.stateName of %s (should be \"TrigState\")", stateName.c_str()));
-		count = state.getU32();
+		count = state.get32();
 		if (count != 1)
 			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.count of %d (should be 1)", count));
-		mayDelete = state.getByte();
+		mayDelete = state.get8();
 		if (mayDelete != 0x00 && mayDelete != 0x01)
 			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.mayDelete of 0x%02X (should be 0x00 or 0x01)", mayDelete));
 		// This is now the first and only variable in that state
 		state.get(varName);
 		if (varName != "Triggered")
 			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.varName of %s (should be \"Triggered\")", varName.c_str()));
-		varType = state.getByte();
+		varType = state.get8();
 		if (varType != 0x02) // 2 is a boolean value
 			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.varType of %d (should be 2)", varType));
-		varValue = state.getByte();
+		varValue = state.get8();
 		if (varValue != 0x00 && varValue != 0x01)
 			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.varValue of 0x%02X (should be 0x00 or 0x01)", varValue));
 		if (!state.eof())
 			throw txUnexpectedData(_WHERE("Got a state description which is too long: %d bytes remaining after parsing", state.remaining()));
 		// End of state
 		
-		Byte lockReq = t.getByte();
+		uint8_t lockReq = t.get8();
 		if (lockReq != 0x00 && lockReq != 0x01)
 			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.lockReq of 0x%02X (should be 0x00 or 0x01)", lockReq));
 		isLockReq = lockReq;
@@ -547,7 +547,7 @@ namespace alc {
 		
 	}
 	
-	tmSDLState::tmSDLState(U16 cmd, tNetSession *u, const tmSDLState &msg)
+	tmSDLState::tmSDLState(uint16_t cmd, tNetSession *u, const tmSDLState &msg)
 	 : tmStreamedObject(cmd, u, msg), isInitial(msg.isInitial)
 	{
 		isInitial = msg.isInitial;
@@ -559,7 +559,7 @@ namespace alc {
 		if (content.getType() != plNull)
 			throw txProtocolError(_WHERE("Plasma object type of an SDL must be plNull"));
 		
-		Byte initial = t.getByte();
+		uint8_t initial = t.get8();
 		if (initial != 0x00 && initial != 0x01)
 			throw txProtocolError(_WHERE("NetMsgSDLState.initial must be 0x00 or 0x01 but is 0x%02X", initial));
 		isInitial = initial;
@@ -568,7 +568,7 @@ namespace alc {
 	void tmSDLState::stream(tBBuf &t) const
 	{
 		tmStreamedObject::stream(t);
-		t.putByte(isInitial);
+		t.put8(isInitial);
 	}
 	
 	tString tmSDLState::additionalFields(tString dbg) const
@@ -591,7 +591,7 @@ namespace alc {
 	void tmSDLStateBCast::store(tBBuf &t)
 	{
 		tmSDLState::store(t);
-		Byte persistentOnServer = t.getByte();
+		uint8_t persistentOnServer = t.get8();
 		if (persistentOnServer != 0x01)
 			throw txProtocolError(_WHERE("NetMsgSDLStateBCast.persistentOnServer must be 0x01 but is 0x%02X", persistentOnServer));
 	}
@@ -599,7 +599,7 @@ namespace alc {
 	void tmSDLStateBCast::stream(tBBuf &t) const
 	{
 		tmSDLState::stream(t);
-		t.putByte(0x01); // persistentOnServer
+		t.put8(0x01); // persistentOnServer
 	}
 	
 	//// tmRelevanceRegions
@@ -643,7 +643,7 @@ namespace alc {
 	void tmMembersList::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
-		t.putU16(members.size());
+		t.put16(members.size());
 		for (tMemberList::const_iterator i = members.begin(); i != members.end(); ++i)
 			t.put(*i);
 	}
@@ -666,7 +666,7 @@ namespace alc {
 	{
 		tmMsgBase::stream(t);
 		t.put(info);
-		t.putByte(isJoined);
+		t.put8(isJoined);
 	}
 	
 	tString tmMemberUpdate::additionalFields(tString dbg) const

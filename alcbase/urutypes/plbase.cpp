@@ -35,7 +35,7 @@
 
 namespace alc {
 
-	const char *alcGetPlasmaType(U16 type)
+	const char *alcGetPlasmaType(uint16_t type)
 	{
 		switch(type) {
 			// message types
@@ -81,7 +81,7 @@ namespace alc {
 		}
 	}
 	
-	tpObject *alcCreatePlasmaObject(U16 type, bool mustBeComplete)
+	tpObject *alcCreatePlasmaObject(uint16_t type, bool mustBeComplete)
 	{
 		switch (type) {
 			// known message types

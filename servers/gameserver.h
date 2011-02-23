@@ -59,7 +59,7 @@ namespace alc {
 		tUnetGameServer(void);
 		~tUnetGameServer(void);
 		
-		template <class T> void bcastMessage(const T &msg, U32 delay = 0) //!< delay is in msecs
+		template <class T> void bcastMessage(const T &msg, unsigned int delay = 0) //!< delay is in msecs
 		{ // template functions must be in the header so they can be instanciated properly
 			// broadcast message
 			tNetSession *session;
@@ -74,23 +74,23 @@ namespace alc {
 		
 		/** creates a message to bring that player into the idle state. When inputState is < 0, generate a plAvBrainGenericMsg which
 		gets the avatar out of afk/KI state. When it is >= 0, send a plAvatarInputStateMsg with the given state to get it out of animations */
-		tmGameMessage makePlayerIdle(tNetSession *u, tUruObject rec, S32 inputState = -1);
+		tmGameMessage makePlayerIdle(tNetSession *u, tUruObject rec, int inputState = -1);
 		inline bool getLinkingOutIdle() { return linkingOutIdle; }
 	protected:
 		virtual int onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u);
 		virtual void onIdle(bool idle);
-		virtual void onConnectionClosing(tNetSession *u, Byte reason);
+		virtual void onConnectionClosing(tNetSession *u, uint8_t reason);
 		virtual void onApplyConfig(void);
 
 		virtual void onVaultMessageForward(tNetSession *u, tvMessage *msg);
 		virtual void onPlayerAuthed(tNetSession *u);
 		
-		virtual bool canPortBeUsed(U16 port);
+		virtual bool canPortBeUsed(uint16_t port);
 	private:
 		void fwdDirectedGameMsg(tmGameMessageDirected &msg);
 		void bcastMemberUpdate(tNetSession *u, bool isJoined);
 		
-		void removePlayerFromPage(tPageInfo *page, U32 ki);
+		void removePlayerFromPage(tPageInfo *page, uint32_t ki);
 		bool checkIfOnlyPlayer(tNetSession *u);
 		
 		bool processGameMessage(tStreamedObject *msg, tNetSession *u, tUruObjectRef *receiver = NULL); //!< returns true if the message was processed and should not be broadcasted or forwarded
@@ -101,8 +101,8 @@ namespace alc {
 		tAgeStateManager *ageState;
 		bool resetStateWhenEmpty; //!< used by /!resetage
 		
-		U32 lastPlayerLeft;
-		U32 lingerTime;
+		uint32_t lastPlayerLeft;
+		unsigned int lingerTime;
 		bool noReltoShare, serverSideCommands, linkingOutIdle;
 		tString shardIdentifier;
 	};

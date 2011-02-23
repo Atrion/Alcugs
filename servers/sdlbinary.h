@@ -46,38 +46,38 @@ namespace alc {
 	/** parses a signel SDL var */
 	class tSdlStateVar : public tBaseType {
 	public:
-		tSdlStateVar(tSdlStructVar *sdlVar, tAgeStateManager *stateMgr, Byte num);
-		tSdlStateVar(tSdlStructVar *sdlVar, const tSdlStateVar &var, Byte num);
+		tSdlStateVar(tSdlStructVar *sdlVar, tAgeStateManager *stateMgr, uint8_t num);
+		tSdlStateVar(tSdlStructVar *sdlVar, const tSdlStateVar &var, uint8_t num);
 		tSdlStateVar(const tSdlStateVar &var);
 		const tSdlStateVar &operator=(const tSdlStateVar &var);
 		~tSdlStateVar(void);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
-		void print(tLog *log, Byte indentSize);
-		inline Byte getNum(void) const { return num; }
-		inline bool hasFlags(Byte f) const {
+		void print(alc::tLog* log, unsigned int indentSize);
+		inline uint32_t getNum(void) const { return num; }
+		inline bool hasFlags(uint8_t f) const {
 			return (flags | f) == flags; // there can be several flags enabled in f, so a simple & is not enough
 		}
-		Byte getType(void) const;
+		uint8_t getType(void) const;
 		tString getName(void) const;
-		U32 getSize(void) const;
+		size_t getSize(void) const;
 	private:
 		void clear(void);
 	
 		typedef union {
-			Byte byteVal[32]; // also used to store the STRING32
-			U16 shortVal;
-			U32 intVal[2];
+			uint8_t byteVal[32]; // also used to store the STRING32
+			uint16_t shortVal;
+			uint32_t intVal[2];
 			float floatVal[4];
 			tSdlStateBinary *sdlState; // we have to use a pointer here - classes are not allowed in unions
 			tUruObject *obj;
 		} tElement;
 		typedef std::vector<tElement> tElementList;
 	
-		Byte num; //!< this is the nth var/struct of the SDL, starting with 0
+		uint32_t num; //!< this is the nth var/struct of the SDL, starting with 0
 		
 		tUruString str; //!< details about how the state was changed
-		Byte flags;
+		uint8_t flags;
 		tElementList elements;
 		
 		tSdlStructVar *sdlVar;
@@ -88,13 +88,13 @@ namespace alc {
 	class tSdlStateBinary : public tBaseType {
 	public:
 		tSdlStateBinary(void);
-		tSdlStateBinary(tAgeStateManager *stateMgr, tString name, U32 version, bool initDefault = false);
+		tSdlStateBinary(tAgeStateManager *stateMgr, tString name, uint16_t version, bool initDefault = false);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
-		void print(tLog *log, Byte indentSize = 1);
+		void print(tLog *log, unsigned int indentSize = 1);
 		
 		tUruString getName(void) const;
-		U16 getVersion(void) const;
+		uint16_t getVersion(void) const;
 		inline bool isIndexed(void) const { return incompleteVars || incompleteStructs; }
 		
 		void updateWith(tSdlStateBinary *newState); //!< updates the current state with the additional information from the new one
@@ -118,7 +118,7 @@ namespace alc {
 	/** parses the SDL state */
 	class tSdlState : public tBaseType {
 	public:
-		tSdlState(tAgeStateManager *stateMgr, const tUruObject &obj, tUruString name, U16 version, bool initDefault = false);
+		tSdlState(tAgeStateManager *stateMgr, const tUruObject &obj, tUruString name, uint16_t version, bool initDefault = false);
 		tSdlState(tAgeStateManager *stateMgr, tMBuf &t, const tUruObject &obj);
 		tSdlState(tAgeStateManager *stateMgr, tMBuf &t);
 		tSdlState(void);

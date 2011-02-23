@@ -40,16 +40,16 @@ namespace alc {
 
 class tUnetLobbyServerBase : public tUnetServerBase {
 public:
-	tUnetLobbyServerBase(Byte whoami);
+	tUnetLobbyServerBase(uint8_t whoami);
 	
-	inline const Byte *getGuid() { return serverGuid; }
+	inline const uint8_t *getGuid() { return serverGuid; }
 	inline const tString &getName() { return serverName; }
 protected:
 	virtual void onStart(void);
 	virtual void onIdle(bool idle);
 	virtual int onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u);
 	virtual void onForwardPing(tmPing &ping, tNetSession *u);
-	virtual void onConnectionClosing(tNetSession *u, Byte reason);
+	virtual void onConnectionClosing(tNetSession *u, uint8_t reason);
 	virtual void onApplyConfig(void);
 
 	/** This event is triggered when a vault message is forwarded to or from the vault server */
@@ -58,27 +58,27 @@ protected:
 	/** This event is triggered when a player authenticated itself against the server */
 	virtual void onPlayerAuthed(tNetSession */*u*/) {}
 	
-	tNetSession *getServer(Byte dst);
+	tNetSession *getServer(uint8_t dst);
 
-	Byte serverGuid[8]; //!< This system's guid (age guid) (in Hex)
+	uint8_t serverGuid[8]; //!< This system's guid (age guid) (in Hex)
 	tString serverName; //!< The system/server name, normally the age filename
 
 protected:
-	U16 spawnStart, spawnStop;
-	const U32 authedTimeout;
+	uint16_t spawnStart, spawnStop;
+	const time_t authedTimeout;
 
 private:
-	bool setActivePlayer(tNetSession *u, U32 ki, U32 x, const tString &avatar);
-	tNetSessionIte reconnectPeer(Byte dst); //!< establishes a connection to that service (remember to set the corresponding gone variable to 0)
+	bool setActivePlayer(tNetSession *u, uint32_t ki, uint32_t x, const tString &avatar);
+	tNetSessionIte reconnectPeer(uint8_t dst); //!< establishes a connection to that service (remember to set the corresponding gone variable to 0)
 
 	tNetSessionIte authIte, trackingIte, vaultIte;
-	U32 auth_gone, tracking_gone, vault_gone; // saves when this server got disconnected. wait 10sec before trying to connect again
+	time_t auth_gone, tracking_gone, vault_gone; // saves when this server got disconnected. wait 10sec before trying to connect again
 
 	tLog lvault;
 	bool vaultLogShort;
 
 	bool allowUU;
-	U32 loadingTimeout;
+	time_t loadingTimeout;
 	tString linkLog;
 };
 	

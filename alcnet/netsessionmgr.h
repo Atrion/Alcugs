@@ -35,16 +35,18 @@ namespace alc {
 	
 	class tUnet;
 	class tUnetMsg;
+	
+	const uint32_t nosid = -1;
 
 class tNetSessionIte {
 public:
-	U32 ip; //network order
-	U16 port; //network order
-	int sid;
+	uint32_t ip; //network order
+	uint16_t port; //network order
+	uint32_t sid;
 	tNetSessionIte() {
-		ip=0; port=0; sid=-1;
+		ip=0; port=0; sid=nosid;
 	}
-	tNetSessionIte(U32 ip,U16 port,int sid=-1) {
+	tNetSessionIte(uint32_t ip,uint16_t port,uint32_t sid=nosid) {
 		this->ip=ip;
 		this->port=port;
 		this->sid=sid;
@@ -64,29 +66,29 @@ public:
 	virtual ~tNetSessionList();
 	
 	//! find the session with the given ip and port and return it
-	tNetSession *search(U32 ip, U16 port);
+	tNetSession *search(uint32_t ip, uint16_t port);
 	//! add that session and return the place where it's saved (to be used by tNetSessionMgr::search)
 	int add(tNetSession *u);
 	//! removes the given session from the table and shrinks if possible
 	void remove(tNetSession *u);
 	//! return the nth session of our table
-	tNetSession *get(int n) {
+	tNetSession *get(size_t n) {
 		if (n < size) return table[n];
 		return NULL;
 	}
 	//! find a session by it's ki
-	tNetSession *find(U32 ki);
+	tNetSession *findByKi(uint32_t ki);
 	void rewind();
 	void end();
 	tNetSession * getNext();
 	bool empty() { return count==0; }
-	inline int getCount() { return count; }
+	inline size_t getCount() { return count; }
 protected:
-	int findFreeSlot(void);
+	size_t findFreeSlot(void);
 
-	int off;
-	int size; //!< the size of the table
-	int count; //!< the number of session stored in the table (there can be holes, so it can be smaller than size)
+	size_t off; //!< current offset/position
+	size_t size; //!< the size of the table
+	size_t count; //!< the number of session stored in the table (there can be holes, so it can be smaller than size)
 	tNetSession ** table;
 };
 
@@ -95,12 +97,12 @@ it's global sid. It uses tNetSessionIte for searching and for "caching" the sid.
 (in fact, it's the only part of alcugs which does that) and it implements a limit for a max. number of sessions */
 class tNetSessionMgr : public tNetSessionList {
 public:
-	tNetSessionMgr(tUnet * net,int limit=0);
+	tNetSessionMgr(tUnet * net,size_t limit=0);
 	virtual ~tNetSessionMgr();
 	tNetSession * search(tNetSessionIte &ite,bool create = false);
 	void destroy(tNetSessionIte &ite);
 private:
-	int max;
+	size_t max;
 	tUnet * net;
 	
 	FORBID_CLASS_COPY(tNetSessionMgr)

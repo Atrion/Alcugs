@@ -40,7 +40,7 @@ namespace alc {
 	/** SDL binary processing classes */
 	
 	//// tSdlStateVar (Plasma: plStateVariable and subclasses)
-	tSdlStateVar::tSdlStateVar(tSdlStructVar *sdlVar, tAgeStateManager *stateMgr, Byte num)
+	tSdlStateVar::tSdlStateVar(tSdlStructVar *sdlVar, tAgeStateManager *stateMgr, uint8_t num)
 	{
 		this->num = num;
 		this->sdlVar = sdlVar;
@@ -48,7 +48,7 @@ namespace alc {
 		flags = 0x18; // default non-struct var
 	}
 	
-	tSdlStateVar::tSdlStateVar(tSdlStructVar *sdlVar, const tSdlStateVar &var, Byte num)
+	tSdlStateVar::tSdlStateVar(alc::tSdlStructVar* sdlVar, const alc::tSdlStateVar& var, uint8_t num)
 	{
 		operator=(var); // first, copy the old one
 		// now we need to change some properties as this is updated to a new version
@@ -104,22 +104,22 @@ namespace alc {
 	
 	void tSdlStateVar::store(tBBuf &t)
 	{
-		Byte type = t.getByte(); // type 2 = has notification info
+		uint8_t type = t.get8(); // type 2 = has notification info
 		if (type != 0x02) throw txProtocolError(_WHERE("sdlBinaryVar.type must be 0x02 not 0x%02X", type));
 		// read notification info
-		Byte null = t.getByte();
+		uint8_t null = t.get8();
 		if (null != 0x00) // this is just ignored by Plasma...
 			throw txProtocolError(_WHERE("Unexpected sdlBinary.null of 0x%02X (expected 0x00)", null));
 		t.get(str);
 		// now comes the "real" variable, starting with the flags
-		flags = t.getByte();
+		flags = t.get8();
 		DBG(9, "Flags are 0x%02X\n", flags);
 		//Supposicions meaning:
 		// 0x04: Timestamp is present (a plUnifiedTime)
 		// 0x08: Default value
 		// 0x10: The value overwrites the current age status (if unset, it is ignored while merging) - seen only on vars, not on structs
 		// 0x20: "want timestamp": Asks the server to set the current timestamp (which we currently don't do)
-		Byte check = 0x04 | 0x08 | 0x10 | 0x20;
+		uint8_t check = 0x04 | 0x08 | 0x10 | 0x20;
 		if (flags & ~(check))
 			throw txProtocolError(_WHERE("unknown flag 0x%02X for sdlBinaryVar", flags));
 		if (flags & 0x10 && sdlVar->type == DStruct)
@@ -133,28 +133,28 @@ namespace alc {
 			// don't read anything, it's still the default
 		} else {
 			// it's not a default var, we have to do something
-			U32 n = sdlVar->size;
+			size_t n = sdlVar->size;
 			if (!n) // a var with dynamic size
-				n = t.getU32();
-			DBG(7, "Reading %d values for %s\n", n, sdlVar->name.c_str());
+				n = t.get32();
+			DBG(7, "Reading %ld values for %s\n", n, sdlVar->name.c_str());
 			if (sdlVar->type == DStruct) {
 				// it seems for structs the number of structs to be parsed is saved again before the first struct
-				Byte num = t.getByte();
+				uint8_t num = t.get8();
 				if (num != n) throw txProtocolError(_WHERE("Unexpected number of structs to be parsed - expected %d, got %d", n, num));
 			}
-			for (U32 i = 0; i < n; ++i) {
+			for (size_t i = 0; i < n; ++i) {
 				tElementList::iterator it = elements.insert(elements.end(), tElement());
 				// parse the variable and save it in the union
 				switch (sdlVar->type) {
 					case DInteger:
-						it->intVal[0] = t.getU32();
+						it->intVal[0] = t.get32();
 						break;
 					case DFloat:
 						it->floatVal[0] = t.getFloat();
 						break;
 					case DBool:
 					case DByte:
-						it->byteVal[0] = t.getByte();
+						it->byteVal[0] = t.get8();
 						if (sdlVar->type == DBool && it->byteVal[0] != 0 && it->byteVal[0] != 1)
 							throw txProtocolError(_WHERE("Unexpected BOOL var, must be 0 or 1 but is %d\n", it->byteVal));
 						break;
@@ -174,11 +174,11 @@ namespace alc {
 						break;
 					}
 					case DTime:
-						it->intVal[0] = t.getU32(); // seconds
-						it->intVal[1] = t.getU32(); // microseconds
+						it->intVal[0] = t.get32(); // seconds
+						it->intVal[1] = t.get32(); // microseconds
 						break;
 					case DShort:
-						it->shortVal = t.getU16();
+						it->shortVal = t.get16();
 						break;
 					case DVector3:
 					case DPoint3:
@@ -193,9 +193,9 @@ namespace alc {
 						it->floatVal[3] = t.getFloat();
 						break;
 					case DRGB8:
-						it->byteVal[0] = t.getByte();
-						it->byteVal[1] = t.getByte();
-						it->byteVal[2] = t.getByte();
+						it->byteVal[0] = t.get8();
+						it->byteVal[1] = t.get8();
+						it->byteVal[2] = t.get8();
 						break;
 					default:
 						// DTimestamp is only used in vault messages (generic creatable value), not in SDL files
@@ -209,15 +209,15 @@ namespace alc {
 	
 	void tSdlStateVar::stream(tBBuf &t) const
 	{
-		t.putByte(0x02); // type (2 = has notification info)
+		t.put8(0x02); // type (2 = has notification info)
 		// notification info
-		t.putByte(0x00); // ignored by Plasma
+		t.put8(0x00); // ignored by Plasma
 		t.put(str);
 		// SDL state
 		if (flags & 0x10 && sdlVar->type == DStruct)
 			throw txProtocolError(_WHERE("Structs must not have the 0x10 flag set"));
 		// write flags and var
-		t.putByte(flags);
+		t.put8(flags);
 		if (flags & 0x04)
 			throw txProtocolError(_WHERE("Writing the timestamp is not yet supported"));
 		if (flags & 0x08) { // default value
@@ -227,22 +227,22 @@ namespace alc {
 		}
 		else {
 			// we have to write the value
-			if (!sdlVar->size) t.putU32(elements.size());
+			if (!sdlVar->size) t.put32(elements.size());
 			else if (elements.size() != sdlVar->size)
 				throw txProtocolError(_WHERE("Element count mismatch, must be %d, is %d", sdlVar->size, elements.size()));
 			if (sdlVar->type == DStruct) // for some reason, this needs the size again
-				t.putByte(elements.size());
+				t.put8(elements.size());
 			for (tElementList::const_iterator it = elements.begin(); it != elements.end(); ++it) {
 				switch (sdlVar->type) {
 					case DInteger:
-						t.putU32(it->intVal[0]);
+						t.put32(it->intVal[0]);
 						break;
 					case DFloat:
 						t.putFloat(it->floatVal[0]);
 						break;
 					case DBool:
 					case DByte:
-						t.putByte(it->byteVal[0]);
+						t.put8(it->byteVal[0]);
 						break;
 					case DUruString:
 						t.write(it->byteVal, 32);
@@ -254,11 +254,11 @@ namespace alc {
 						t.put(*it->sdlState);
 						break;
 					case DTime:
-						t.putU32(it->intVal[0]); // seconds
-						t.putU32(it->intVal[1]); // microseconds
+						t.put32(it->intVal[0]); // seconds
+						t.put32(it->intVal[1]); // microseconds
 						break;
 					case DShort:
-						t.putU16(it->shortVal);
+						t.put16(it->shortVal);
 						break;
 					case DVector3:
 					case DPoint3:
@@ -273,9 +273,9 @@ namespace alc {
 						t.putFloat(it->floatVal[3]);
 						break;
 					case DRGB8:
-						t.putByte(it->byteVal[0]);
-						t.putByte(it->byteVal[1]);
-						t.putByte(it->byteVal[2]);
+						t.put8(it->byteVal[0]);
+						t.put8(it->byteVal[1]);
+						t.put8(it->byteVal[2]);
 						break;
 					default:
 						throw txProtocolError(_WHERE("Unable to write SDL var of type %s (0x%02X)", alcUnetGetVarType(sdlVar->type), sdlVar->type));
@@ -284,7 +284,7 @@ namespace alc {
 		}
 	}
 	
-	void tSdlStateVar::print(tLog *log, Byte indentSize)
+	void tSdlStateVar::print(alc::tLog* log, unsigned int indentSize)
 	{
 		char indent[] = "                        ";
 		if (indentSize < strlen(indent)) indent[indentSize] = 0; // let the string end there
@@ -348,13 +348,13 @@ namespace alc {
 		}
 	}
 	
-	Byte tSdlStateVar::getType(void) const
+	uint8_t tSdlStateVar::getType(void) const
 	{ return sdlVar->type; }
 	
 	tString tSdlStateVar::getName(void) const
 	{ return sdlVar->name; }
 	
-	U32 tSdlStateVar::getSize(void) const
+	size_t tSdlStateVar::getSize(void) const
 	{ return sdlVar->size; }
 	
 	//// tSdlStateBinary (Plasma: plStateDataRecord)
@@ -365,7 +365,7 @@ namespace alc {
 		incompleteVars = incompleteStructs = false;
 	}
 	
-	tSdlStateBinary::tSdlStateBinary(tAgeStateManager *stateMgr, tString name, U32 version, bool initDefault) : volatileState(true)
+	tSdlStateBinary::tSdlStateBinary(tAgeStateManager *stateMgr, tString name, uint16_t version, bool initDefault) : volatileState(true)
 	{
 		this->stateMgr = stateMgr;
 		sdlStruct = stateMgr->findStruct(name, version);
@@ -389,16 +389,16 @@ namespace alc {
 		DBG(5, "Parsing a %s version %d\n", sdlStruct->name.c_str(), sdlStruct->version);
 		
 		// parse the unknown header information
-		U16 flags = t.getU16();
+		uint16_t flags = t.get16();
 		if (flags != 0x0000 && flags != 0x0001)
 			throw txProtocolError(_WHERE("Unexpected sdlBinary.flags of 0x%04X (expected 0x0000)", flags));
 		volatileState = flags; // this is the only known flag value: 0x0001 = volatile
-		Byte version = t.getByte();
+		uint8_t version = t.get8();
 		if (version != 0x06)
 			throw txProtocolError(_WHERE("Unexpected sdlBinary.version of 0x%02X (expected 0x06)", version));
 		
 		// get number of values
-		Byte nValues = t.getByte();
+		uint8_t nValues = t.get8();
 		DBG(7, "nValues: %d, struct contains: %d\n", nValues, sdlStruct->nVar);
 		if (nValues != sdlStruct->nVar) {
 			incompleteVars = true;
@@ -406,14 +406,14 @@ namespace alc {
 				throw txProtocolError(_WHERE("size mismatch, expected maximal %d values, got %d values", sdlStruct->nVar, nValues));
 		}
 		// parse those values
-		for (int i = 0; i < nValues; ++i) {
-			int nr = incompleteVars ? t.getByte() : i;
+		for (uint8_t i = 0; i < nValues; ++i) {
+			uint8_t nr = incompleteVars ? t.get8() : i;
 			tVarList::iterator it = vars.insert(vars.end(), tSdlStateVar(sdlStruct->getElement(nr, true/*search for a var*/), stateMgr, nr));
 			t.get(*it); // parse this var
 		}
 		
 		// get number of structs
-		Byte nStructs = t.getByte();
+		uint8_t nStructs = t.get8();
 		if (!nStructs) return;
 		DBG(7, "nStructs: %d, struct contains: %d\n", nStructs, sdlStruct->nStruct);
 		if (nStructs != sdlStruct->nStruct) {
@@ -422,8 +422,8 @@ namespace alc {
 				throw txProtocolError(_WHERE("size mismatch, expected maximal %d structs, got %d structs", sdlStruct->nStruct, nStructs));
 		}
 		// parse those structs
-		for (int i = 0; i < nStructs; ++i) {
-			int nr = incompleteStructs ? t.getByte() : i;
+		for (uint8_t i = 0; i < nStructs; ++i) {
+			uint8_t nr = incompleteStructs ? t.get8() : i;
 			tVarList::iterator it = structs.insert(structs.end(), tSdlStateVar(sdlStruct->getElement(nr, false/*search for a struct*/),
 					stateMgr, nr));
 			t.get(*it); // parse this struct
@@ -435,8 +435,8 @@ namespace alc {
 		if (sdlStruct == NULL)
 			throw txUnet(_WHERE("You have to set a sdlStruct before streaming a sdlBinary"));
 		// write unknown header information
-		t.putU16(volatileState);
-		t.putByte(0x06); // version
+		t.put16(volatileState);
+		t.put8(0x06); // version
 		
 		// check number of values
 		bool writeIndex = incompleteVars;
@@ -447,10 +447,10 @@ namespace alc {
 		else
 			writeIndex = false;
 		// write values
-		t.putByte(vars.size());
+		t.put8(vars.size());
 		for (tVarList::const_iterator it = vars.begin(); it != vars.end(); ++it) {
 			if (it->getType() == DStruct) throw txProtocolError(_WHERE("There's a struct in the vars!"));
-			if (writeIndex) t.putByte(it->getNum());
+			if (writeIndex) t.put8(it->getNum());
 			t.put(*it);
 		}
 		
@@ -463,15 +463,15 @@ namespace alc {
 		else
 			writeIndex = false;
 		// write structs
-		t.putByte(structs.size());
+		t.put8(structs.size());
 		for (tVarList::const_iterator it = structs.begin(); it != structs.end(); ++it) {
 			if (it->getType() != DStruct) throw txProtocolError(_WHERE("There's a var in the structs!"));
-			if (writeIndex) t.putByte(it->getNum());
+			if (writeIndex) t.put8(it->getNum());
 			t.put(*it);
 		}
 	}
 	
-	void tSdlStateBinary::print(tLog *log, Byte indentSize)
+	void tSdlStateBinary::print(tLog *log, unsigned int indentSize)
 	{
 		char indent[] = "                        ";
 		if (indentSize < strlen(indent)) indent[indentSize] = 0; // let the string end there
@@ -490,7 +490,7 @@ namespace alc {
 	tUruString tSdlStateBinary::getName(void) const {
 		return sdlStruct ? tUruString(sdlStruct->name) : tUruString();
 	}
-	U16 tSdlStateBinary::getVersion(void) const {
+	uint16_t tSdlStateBinary::getVersion(void) const {
 		return sdlStruct ? sdlStruct->version : 0;
 	}
 	
@@ -564,7 +564,7 @@ namespace alc {
 	}
 	
 	//// tSdlState
-	tSdlState::tSdlState(tAgeStateManager *stateMgr, const tUruObject &obj, tUruString name, U16 version, bool initDefault)
+	tSdlState::tSdlState(alc::tAgeStateManager* stateMgr, const alc::tUruObject& obj, alc::tUruString name, uint16_t version, bool initDefault)
 	 : obj(obj), content(stateMgr, name, version, initDefault)
 	{
 		this->stateMgr = stateMgr;
@@ -594,7 +594,7 @@ namespace alc {
 		// parse "header data"
 		tUruString name;
 		t.get(name);
-		U16 version = t.getU16();
+		uint16_t version = t.get16();
 		// parse binary content
 		content = tSdlStateBinary(stateMgr, name, version);
 		t.get(content);
@@ -609,7 +609,7 @@ namespace alc {
 		if (content.getVersion() && content.getName().size()) {
 			tUruString name(content.getName());
 			t.put(name);
-			t.putU16(content.getVersion());
+			t.put16(content.getVersion());
 			t.put(content);
 		}
 	}

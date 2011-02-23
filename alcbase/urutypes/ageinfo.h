@@ -42,20 +42,20 @@ namespace alc {
 	class tPageInfo
 	{
 	public:
-		typedef std::vector<U32> tPlayerList;
+		typedef std::vector<uint32_t> tPlayerList;
 		
 		tPageInfo(tConfigVal *val, int row);
-		bool hasPlayer(U32 ki) const;
-		bool removePlayer(U32 ki); //!< \returns false if that players was not on the list, true if it got removed
+		bool hasPlayer(uint32_t ki) const;
+		bool removePlayer(uint32_t ki); //!< \returns false if that players was not on the list, true if it got removed
 		
 		tString name;
-		U16 number;
+		uint16_t number;
 		bool conditionalLoad;
 		
 		// data for the messages (filled when we get a NetMsgPagingRom for this page)
-		U32 owner;
-		U32 pageId; // this and the next one are used when we send a NetMsgGroupOwner
-		U16 pageType;
+		uint32_t owner;
+		uint32_t pageId; // this and the next one are used when we send a NetMsgGroupOwner
+		uint16_t pageType;
 		tPlayerList players;
 	};
 	
@@ -63,13 +63,13 @@ namespace alc {
 	{
 	public:
 		tAgeInfo(const tString &file, bool loadPages);
-		tPageInfo *getPage(U32 pageId);
-		bool validPage(U32 pageId) const;
+		tPageInfo *getPage(uint32_t pageId);
+		bool validPage(uint32_t pageId) const;
 		
-		U32 seqPrefix; // it's actually 3 Bytes
+		uint32_t seqPrefix; // it's actually 3 Bytes
 		tString name;
 	
-		typedef std::map<U16, tPageInfo> tPageList;
+		typedef std::map<uint16_t, tPageInfo> tPageList;
 		tPageList pages;
 	};
 

@@ -43,8 +43,8 @@ class tStringTokenizer {
 public:
 	tStringTokenizer(const tString &text) : str(text), line(0), col(0), sep('=') { str.rewind(); }
 
-	inline U16 getLineNum() { return line; }
-	inline U16 getColumnNum() { return col; }
+	inline unsigned int getLineNum() { return line; }
+	inline unsigned int getColumnNum() { return col; }
 	inline void setSeparator(char w) { sep=w; }
 	inline bool eof(void) { return str.eof(); }
 	
@@ -60,7 +60,7 @@ public:
 	tString getToken();
 private:
 	tString str;
-	U16 line, col;
+	unsigned int line, col;
 	char sep;
 };
 
@@ -81,7 +81,7 @@ public:
 	/**
 		\brief Computes the size, runs the same code as stream
 	*/
-	U32 size() const;
+	size_t size() const;
 	void setConfig(tConfig * c);
 	tConfig * getConfig() const { return cfg; }
 protected:

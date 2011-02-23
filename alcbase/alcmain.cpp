@@ -104,8 +104,8 @@ void tAlcMain::onApplyConfig() {
 	if(var.isEmpty()) {
 		var="3";
 	}
-	if (var.asByte() >= 3) logCfg.verboseLevel = 3;
-	else logCfg.verboseLevel = var.asByte();
+	if (var.asUInt() >= 3) logCfg.verboseLevel = 3;
+	else logCfg.verboseLevel = var.asUInt();
 	
 	var=cfg.getVar("log_files_path","global");
 	if(var.isEmpty()) {
@@ -117,13 +117,13 @@ void tAlcMain::onApplyConfig() {
 	if(var.isEmpty()) {
 		var="5";
 	}
-	logCfg.n_files2rotate = var.asByte();
+	logCfg.n_files2rotate = var.asUInt();
 	
 	var=cfg.getVar("log.enabled","global");
 	if(var.isEmpty()) {
 		var="1";
 	}
-	if (var.asByte()) {
+	if (var.asUInt()) {
 		stdLog->open("alcugs.log",DF_STDOUT);
 		errLog->open("error.log",DF_STDERR);
 	}
@@ -134,7 +134,7 @@ void tAlcMain::onApplyConfig() {
 	
 	// maybe dump settings
 	var=cfg.getVar("cfg.dump","global");
-	if(!var.isEmpty() && var.asByte()) {
+	if(!var.isEmpty() && var.asUInt()) {
 		dumpConfig();
 	}
 }

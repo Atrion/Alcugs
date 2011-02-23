@@ -46,24 +46,24 @@ namespace alc {
 class tNetSession;
 class tLog;
 
-void alcEncodePacket(Byte* buf2,const Byte* buf, int n);
-void alcDecodePacket(Byte* buf, int n);
+void alcEncodePacket(uint8_t* buf2,const uint8_t* buf, int n);
+void alcDecodePacket(uint8_t* buf, int n);
 
-int alcUruValidatePacket(Byte * buf,int n,Byte * validation,bool authed=false,const char * phash=NULL);
-U32 alcUruChecksum(const Byte* buf, int size, int alg, const char * aux_hash);
+int alcUruValidatePacket(uint8_t * buf,int n,uint8_t * validation,bool authed=false,const char * phash=NULL);
+uint32_t alcUruChecksum(const uint8_t* buf, int size, int alg, const char * aux_hash);
 
-U16 alcFixUUNetMsgCommand(U16 cmd, const tNetSession *u);
+uint16_t alcFixUUNetMsgCommand(uint16_t cmd, const tNetSession *u);
 
-const char * alcUnetGetRelease(Byte rel);
-const char * alcUnetGetDestination(Byte dest);
-const char * alcUnetGetReasonCode(Byte code);
-const char * alcUnetGetAuthCode(Byte code);
-const char * alcUnetGetAvatarCode(Byte code);
-const char * alcUnetGetLinkingRule(Byte rule);
-const char * alcUnetGetMsgCode(U16 code);
+const char * alcUnetGetRelease(uint8_t rel);
+const char * alcUnetGetDestination(uint8_t dest);
+const char * alcUnetGetReasonCode(uint8_t code);
+const char * alcUnetGetAuthCode(uint8_t code);
+const char * alcUnetGetAvatarCode(uint8_t code);
+const char * alcUnetGetLinkingRule(uint8_t rule);
+const char * alcUnetGetMsgCode(uint16_t code);
 
-const char * alcUnetGetVarType(Byte type);
-Byte alcUnetGetVarTypeFromName(tString type);
+const char * alcUnetGetVarType(uint8_t type);
+uint8_t alcUnetGetVarTypeFromName(tString type);
 
 /** this class is used to save incoming NetMsgs and collect their fragments */
 class tUnetMsg {
@@ -71,9 +71,9 @@ public:
 	tUnetMsg() { next=NULL; fr_count=0; }
 	//virtual ~tUnetMsg() { delete data; }
 	tUnetMsg * next;
-	U16 cmd;
-	U32 sn;
-	Byte fr_count; //Number of fragments we already got
+	uint16_t cmd;
+	uint32_t sn;
+	uint8_t fr_count; //Number of fragments we already got
 	tMBuf data;
 	FORBID_CLASS_COPY(tUnetMsg)
 };
@@ -82,9 +82,9 @@ public:
 class tUnetAck {
 public:
 	tUnetAck() { next=NULL; timestamp=0; }
-	U32 timestamp;
-	U32 A;
-	U32 B;
+	unsigned int timestamp;
+	uint32_t A;
+	uint32_t B;
 	tUnetAck * next;
 	FORBID_CLASS_COPY(tUnetAck)
 };
@@ -96,43 +96,43 @@ public:
 	virtual ~tUnetUruMsg() {}
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	virtual U32 size();
+	virtual size_t size();
 	/** Get header size */
-	U32 hSize();
+	size_t hSize();
 	void dumpheader(tLog * f);
-	void htmlDumpHeader(tLog * log,Byte flux,U32 ip,U16 port); //ip, port in network order
+	void htmlDumpHeader(tLog * log,uint8_t flux,uint32_t ip,uint16_t port); //ip, port in network order
 	tUnetUruMsg * next;
 
 	void _update();
-	U32 timestamp; //message stamp in usecs (to send)
-	U32 snd_timestamp; //original send stamp
-	Byte tryes;
+	unsigned int timestamp; //message stamp in usecs (to send) - this is in unet->net_time units
+	unsigned int snd_timestamp; //original send stamp
+	unsigned int tryes;
 	//Uru protocol
 	//Byte vid 0x03
-	Byte val; // 0x00,0x01,0x02
+	uint8_t val; // 0x00,0x01,0x02
 	//U32 cs (only if val>0)
-	U32 pn; //!< packet number
-	Byte tf; //!< message type/flags
+	uint32_t pn; //!< packet number
+	uint8_t tf; //!< message type/flags
 	//U32 unkA
-	Byte frn; //!< num fragment(1 byte)
-	U32 sn; //!< seq num (3 bytes)
-	U32 csn; //!< combined fragment and seq num
-	Byte frt; //!< total fragments (1 Byte)
+	uint8_t frn; //!< num fragment(1 byte)
+	uint32_t sn; //!< seq num (3 bytes)
+	uint32_t csn; //!< combined fragment and seq num
+	uint8_t frt; //!< total fragments (1 Byte)
 	//U32 unkB
-	Byte pfr; //!< last acked fragment
-	U32 ps; //!< last acked seq num
-	U32 cps; //!< combined last acked fragment and seq num
-	U32 dsize; //!< size of data / number of acks in the packet
+	uint8_t pfr; //!< last acked fragment
+	uint32_t ps; //!< last acked seq num
+	uint32_t cps; //!< combined last acked fragment and seq num
+	uint32_t dsize; //!< size of data / number of acks in the packet
 	tMBuf data;
 	FORBID_CLASS_COPY(tUnetUruMsg)
 };
 
 class tmBase :public tBaseType {
 public:
-	tmBase(Byte bhflags, tNetSession *u) : bhflags(bhflags), u(u) { }
+	tmBase(uint8_t bhflags, tNetSession *u) : bhflags(bhflags), u(u) { }
 	virtual tString str() const=0;
 	inline tNetSession *getSession(void) const { return u; }
-	Byte bhflags;
+	uint8_t bhflags;
 protected:
 	tNetSession * u; //!< associated session (source for incoming, destination for outgoing)
 };
@@ -142,10 +142,10 @@ public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
 	tmNetClientComm(tNetSession *u) : tmBase(UNetNegotiation|UNetAckReq|UNetUrgent, u) { }
-	tmNetClientComm(tTime &t,U32 bw, tNetSession *u) : tmBase(UNetNegotiation|UNetAckReq|UNetUrgent, u) { timestamp=t; bandwidth=bw; }
+	tmNetClientComm(tTime &t,uint32_t bw, tNetSession *u) : tmBase(UNetNegotiation|UNetAckReq|UNetUrgent, u) { timestamp=t; bandwidth=bw; }
 	virtual tString str() const;
 	tTime timestamp;
-	U32 bandwidth;
+	uint32_t bandwidth;
 };
 
 class tmNetAck :public tmBase {
@@ -166,26 +166,26 @@ class tmMsgBase :public tmBase {
 public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	tmMsgBase(U16 cmd,U32 flags,tNetSession * u);
+	tmMsgBase(uint16_t cmd,uint32_t flags,tNetSession * u);
 	tmMsgBase(tNetSession * u);
 	virtual ~tmMsgBase() {};
-	void setFlags(U32 f);
-	void unsetFlags(U32 f);
+	void setFlags(uint32_t f);
+	void unsetFlags(uint32_t f);
 	void setUrgent();
 	void unsetUrgent();
-	U32 getFlags() const;
-	bool hasFlags(U32 f) const;
+	uint32_t getFlags() const;
+	bool hasFlags(uint32_t f) const;
 	virtual tString str() const;
 	
-	U16 cmd;
-	U32 flags;
-	Byte max_version;
-	Byte min_version;
+	uint16_t cmd;
+	uint32_t flags;
+	uint8_t max_version;
+	uint8_t min_version;
 	tTime timestamp;
-	U32 x;
-	U32 ki;
-	Byte uid[16];
-	U32 sid;
+	uint32_t x;
+	uint32_t ki;
+	uint8_t uid[16];
+	uint32_t sid;
 protected:
 	virtual tString additionalFields(tString dbg) const { return dbg; } // this makes it much easier to disable message logging via #ifdef
 private:

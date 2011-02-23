@@ -55,7 +55,7 @@ void tConfigVal::init() {
 	x=y=0;
 }
 tConfigVal::~tConfigVal() {
-	int i;
+	unsigned int i;
 	//if(name!=NULL) free((void *)name);
 	if(values!=NULL) {
 		for(i=0; i<x*y; i++) {
@@ -68,9 +68,9 @@ tConfigVal::~tConfigVal() {
 void tConfigVal::setName(const tString & name) {
 	this->name=name;
 }
-void tConfigVal::setVal(const tString & t,U16 x,U16 y) {
+void tConfigVal::setVal(const tString & t,unsigned int x,unsigned int y) {
 	DBG(9,"x: %i,y: %i\n",x,y);
-	U16 ox,oy,my,j,k;
+	unsigned int ox,oy,my,j,k;
 	tString ** ovalues=this->values;
 	ox = this->x;
 	oy = this->y;
@@ -109,7 +109,7 @@ void tConfigVal::setVal(const tString & t,U16 x,U16 y) {
 const tString & tConfigVal::getName() const {
 	return name;
 }
-const tString & tConfigVal::getVal(U16 x,U16 y,bool *found) const {
+const tString & tConfigVal::getVal(unsigned int x,unsigned int y,bool *found) const {
 	if (hasVal(x, y)) {
 		if (found) *found = true;
 		return **(values+((this->x*y)+x));
@@ -117,7 +117,7 @@ const tString & tConfigVal::getVal(U16 x,U16 y,bool *found) const {
 	if (found) *found = false;
 	return emptyString;
 }
-bool tConfigVal::hasVal(U16 x,U16 y) const {
+bool tConfigVal::hasVal(unsigned int x,unsigned int y) const {
 	if(values==NULL || x>=this->x || y>=this->y) {
 		return false;
 	}
@@ -127,7 +127,7 @@ bool tConfigVal::hasVal(U16 x,U16 y) const {
 	return true;
 }
 void tConfigVal::copy(const tConfigVal &t) {
-	U16 i;
+	unsigned int i;
 	setName(t.getName());
 	if(values!=NULL) {
 		for(i=0; i<x*y; i++) {
@@ -153,7 +153,7 @@ tConfigKey::tConfigKey() {
 	values=NULL;
 }
 tConfigKey::~tConfigKey() {
-	U16 i;
+	unsigned int i;
 	//if(name!=NULL) free((void *)name);
 	if(values!=NULL) {
 		for(i=0; i<n; i++) {
@@ -166,7 +166,7 @@ void tConfigKey::setName(const tString & name) {
 	this->name=name;
 }
 tConfigVal * tConfigKey::find(tString what,bool create) {
-	U16 i;
+	unsigned int i;
 	what = what.lower(); // this also implicitly makes all added values lower-case as it's only here they are created
 	for(i=0; i<n; i++) {
 		if(values[i]->name==what) {
@@ -180,7 +180,7 @@ tConfigVal * tConfigKey::find(tString what,bool create) {
 	return values[n-1];
 }
 void tConfigKey::copy(const tConfigKey &t) {
-	U16 i;
+	unsigned int i;
 	setName(t.getName());
 	if(values!=NULL) {
 		for(i=0; i<n; i++) {
@@ -227,14 +227,14 @@ tConfig::tConfig() {
 }
 tConfig::~tConfig() {
 	if(values!=NULL) {
-		for(U32 i=0; i<n; i++) {
+		for(unsigned int i=0; i<n; i++) {
 			delete values[i];
 		}
 		free(values);
 	}
 }
 tConfigKey * tConfig::findKey(tString where,bool create) {
-	U16 i;
+	unsigned int i;
 	where = where.lower(); // this also implicitly makes all added keys lower-case as it's only here they are created
 	for(i=0; i<n; i++) {
 		if(values[i]->name==where) {
@@ -254,14 +254,14 @@ tConfigVal * tConfig::findVar(const tString & what,const tString & where,bool cr
 	if(mykey==NULL) return NULL;
 	return(mykey->find(what,create));
 }
-void tConfig::setVar(const tString &val, const tString &what, const tString &where,U16 x,U16 y) {
+void tConfig::setVar(const tString &val, const tString &what, const tString &where,unsigned int x,unsigned int y) {
 	tConfigVal * myvar;
 	DBG(5,"findVar...");
 	myvar=findVar(what,where,true);
 	DBGM(5," done\n");
 	myvar->setVal(val,x,y);
 }
-const tString & tConfig::getVar(const tString & what,const tString & where,U16 x,U16 y,bool *found) {
+const tString & tConfig::getVar(const tString & what,const tString & where,unsigned int x,unsigned int y,bool *found) {
 	tConfigVal * myvar;
 	myvar=findVar(what,where,false);
 	if(myvar==NULL) {

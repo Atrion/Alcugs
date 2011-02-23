@@ -48,8 +48,8 @@ namespace alc {
 			{
 				tmCustomAuthAsk authAsk(u);
 				tString passwd;
-				Byte hexUid[16];
-				Byte accessLevel;
+				uint8_t hexUid[16];
+				uint8_t accessLevel;
 				int authResult;
 				
 				// get the data out of the packet

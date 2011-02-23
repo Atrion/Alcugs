@@ -42,59 +42,59 @@ namespace alc {
 		tString getVaultFolderName(void);
 		
 		/** queries the player list and saves it in the buffer if the point is not NULL \returns the number of players */
-		int getPlayerList(const Byte *uid, tMBuf *t = NULL);
+		int getPlayerList(const uint8_t *uid, tMBuf *t = NULL);
 		
 		/** checks if this account (uid) owns that ki and returns the avatar name. sets "ownAvatar" to true if the avatar belongs to the account, and to false if not */
-		tString checkKi(U32 ki, const Byte *uid, bool *ownAvatar);
+		tString checkKi(uint32_t ki, const uint8_t *uid, bool *ownAvatar);
 		
 		/** looks up a node in the database, using all fields which have their flag turned on (except for blobs)
 		    \returns the ID of the found/created node, 0 if neither found nor created */
-		U32 findNode(tvNode &node, bool create = false, tvManifest *mfs = NULL);
+		uint32_t findNode(tvNode &node, bool create = false, tvManifest *mfs = NULL);
 		
 		/** creates a new node and returns its ID */
-		U32 createNode(tvNode &node);
+		uint32_t createNode(tvNode &node);
 		
 		/** creates a new node and a ref to it
 		    \returns the ID of the node */
-		U32 createChildNode(U32 saver, U32 parent, tvNode &node);
+		uint32_t createChildNode(uint32_t saver, uint32_t parent, tvNode &node);
 		
 		/** updates a given vault node */
 		void updateNode(tvNode &node);
 		
 		/** queries all direct and indirect child nodes of the given base node and saves their manifest as well as the refs connecting them.
 		    Remember to free the tables and delete all their elements! */
-		void getManifest(U32 baseNode, tvManifest ***mfs, int *nMfs, tvNodeRef ***ref, int *nRef); // these are pointers to an array of pointers
+		void getManifest(uint32_t baseNode, tvManifest ***mfs, size_t *nMfs, tvNodeRef ***ref, size_t *nRef); // these are pointers to an array of pointers
 		
 		/** get all the nodes whose IDs are in the table (saved as tableSize U32 values) and put them in the array.
 		    Remember to free the node table and delete all its elements! */
-		void fetchNodes(U32 *table, int tableSize, tvNode ***nodes, int *nNodes); // this is a pointer to an array of pointers
-		void fetchNodes(tMBuf &table, int tableSize, tvNode ***nodes, int *nNodes); // this is a pointer to an array of pointers
+		void fetchNodes(uint32_t* table, size_t tableSize, alc::tvNode*** nodes, size_t* nNodes); // this is a pointer to an array of pointers
+		void fetchNodes(alc::tMBuf& buf, size_t tableSize, alc::tvNode*** nodes, size_t* nNodes); // this is a pointer to an array of pointers
 		
 		/** checks if this node exists */
-		bool checkNode(U32 node);
+		bool checkNode(uint32_t node);
 		
 		/** gets a list of all direct and indirect MGRS (parent nodes with a type <= 7) of this node
 		    Remember to free the table */
-		void getMGRs(U32 baseNode, U32 **table, U32 *tableSize);
+		void getMGRs(uint32_t baseNode, uint32_t **table, size_t *tableSize);
 		
 		/** removes a node ref */
-		void removeNodeRef(U32 parent, U32 son, bool cautious = true);
+		void removeNodeRef(uint32_t parent, uint32_t son, bool cautious = true);
 		
 		/** remove a node and all sub-nodes which are not used elsewhere */
-		void removeNodeTree(U32 node, bool cautious = true);
+		void removeNodeTree(uint32_t node, bool cautious = true);
 		
 		/** creates a node ref
 		    \returns true if the ref was added, false when this is a duplicate */
 		bool addNodeRef(tvNodeRef &ref);
 		
 		/** updates the "seen" flag of that ref */
-		void setSeen(U32 parent, U32 son, Byte seen);
+		void setSeen(uint32_t parent, uint32_t son, uint32_t seen);
 		
 		/** saves a list of direct parent nodes */
-		void getParentNodes(U32 node, U32 **table, int *tableSize);
+		void getParentNodes(uint32_t node, uint32_t **table, size_t *tableSize);
 		
 		/** get all references (direct and indirect) of this node */
-		void getReferences(U32 node, tvNodeRef ***ref, int *nRef); // this is a pointer to an array of pointers
+		void getReferences(uint32_t node, tvNodeRef ***ref, size_t *nRef); // this is a pointer to an array of pointers
 		
 		/** removes all lost nodes and their subnodes */
 		void clean(bool cleanAges);

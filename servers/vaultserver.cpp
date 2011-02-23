@@ -48,16 +48,16 @@ namespace alc {
 		// check if we should clean the vault
 		tConfig *cfg = alcGetMain()->config();
 		tString var = cfg->getVar("daemon");
-		bool daemon = (!var.isEmpty() && var.asByte()); // disabled per default
+		bool daemon = (!var.isEmpty() && var.asUInt()); // disabled per default
 		var = cfg->getVar("vault.clean", "cmdline"); // this can only be enabled via cmdline
-		bool clean = (!var.isEmpty() && var.asByte()); // disabled per default
+		bool clean = (!var.isEmpty() && var.asUInt()); // disabled per default
 		if (clean) {
 			if (daemon) {
 				alcGetMain()->err()->log("I will only clean the vault in interactive mode to give you more feedback\n");
 				return;
 			}
 			var = cfg->getVar("vault.clean.ages");
-			bool cleanAges = !var.isEmpty() && var.asByte(); // disabled per default
+			bool cleanAges = !var.isEmpty() && var.asUInt(); // disabled per default
 			vaultBackend.cleanVault(cleanAges);
 			forcestop(); // don't let the server run, we started just for cleaning
 			return;
@@ -68,8 +68,8 @@ namespace alc {
 	
 	bool tUnetVaultServer::isValidAvatarName(const tString &avatar)
 	{
-		for (U32 i = 0; i < avatar.size(); ++i) {
-			Byte c = avatar.getAt(i);
+		for (size_t i = 0; i < avatar.size(); ++i) {
+			char c = avatar.getAt(i);
 			if (!isprint(c) && !isalpha(c) && !alcIsAlpha(c)) return false;
 			if (c == '\n' || c == '\t') return false;
 		}
@@ -98,8 +98,8 @@ namespace alc {
 				msg->data.get(createPlayer);
 				log->log("<RCV> [%d] %s\n", msg->sn, createPlayer.str().c_str());
 				
-				Byte result = AUnspecifiedServerError;
-				U32 ki = 0;
+				uint8_t result = AUnspecifiedServerError;
+				uint32_t ki = 0;
 				int num = 0;
 				if (createPlayer.accessLevel > AcMod) num = vaultBackend.getNumberOfPlayers(createPlayer.uid);
 				if (num >= vaultBackend.getMaxPlayers()) result = AMaxNumberPerAccountReached;

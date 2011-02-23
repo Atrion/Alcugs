@@ -46,8 +46,8 @@ namespace alc {
 		tmMsgBase::store(t);
 		// the vault manager sends these without X and KI, and the game server gets it with a KI set (which we ignore)
 		t.get(account);
-		maxPacketSize = t.getU16();
-		release = t.getByte();
+		maxPacketSize = t.get16();
+		release = t.get8();
 	}
 	
 	tString tmAuthenticateHello::additionalFields(tString dbg) const
@@ -58,7 +58,7 @@ namespace alc {
 	}
 	
 	//// tmAuthenticateChallenge	
-	tmAuthenticateChallenge::tmAuthenticateChallenge(tNetSession *u, U32 x, Byte authResult, const Byte *challenge)
+	tmAuthenticateChallenge::tmAuthenticateChallenge(tNetSession *u, uint32_t x, uint8_t authResult, const uint8_t *challenge)
 	: tmMsgBase(NetMsgAuthenticateChallenge, plNetKi | plNetAck | plNetX | plNetVersion, u)
 	{
 		ki = 0; // we're not yet logged in, so no KI can be set
@@ -71,7 +71,7 @@ namespace alc {
 	void tmAuthenticateChallenge::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
-		t.putByte(authResult); // auth result
+		t.put8(authResult); // auth result
 		t.put(challenge); // challenge
 	}
 	
@@ -102,7 +102,7 @@ namespace alc {
 	}
 	
 	//// tmAccountAutheticated	
-	tmAccountAutheticated::tmAccountAutheticated(tNetSession *u, U32 x, Byte authResult, const Byte *serverGuid)
+	tmAccountAutheticated::tmAccountAutheticated(tNetSession *u, uint32_t x, uint8_t authResult, const uint8_t *serverGuid)
 	: tmMsgBase(NetMsgAccountAuthenticated, plNetKi | plNetAck | plNetX | plNetUID, u)
 	{
 		memcpy(uid, u->uid, 16);
@@ -116,7 +116,7 @@ namespace alc {
 	void tmAccountAutheticated::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
-		t.putByte(authResult); // auth result
+		t.put8(authResult); // auth result
 		t.write(serverGuid, 8); // server guid
 	}
 	
@@ -136,7 +136,7 @@ namespace alc {
 		tmMsgBase::store(t);
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing")); // VaultManager sends it without X
 		t.get(avatar);
-		Byte unk = t.getByte();
+		uint8_t unk = t.get8();
 		if (unk != 0)
 			throw txProtocolError(_WHERE("NetMsgSetMyActivePlayer.unk is not 0 but %d", unk));
 	}
@@ -149,7 +149,7 @@ namespace alc {
 	}
 	
 	//// tmActivePlayerSet
-	tmActivePlayerSet::tmActivePlayerSet(tNetSession *u, U32 x) : tmMsgBase(NetMsgActivePlayerSet, plNetAck | plNetKi | plNetX, u)
+	tmActivePlayerSet::tmActivePlayerSet(tNetSession *u, uint32_t x) : tmMsgBase(NetMsgActivePlayerSet, plNetAck | plNetKi | plNetX, u)
 	{
 		this->x = x;
 		ki = u->ki;
@@ -166,12 +166,12 @@ namespace alc {
 		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		// store the whole message
 		message.clear();
-		U32 remaining = t.remaining();
+		size_t remaining = t.remaining();
 		message.write(t.readAll(), remaining);
 	}
 	
 	//// tmFindAgeReply
-	tmFindAgeReply::tmFindAgeReply(tNetSession *u, U32 x, const tString &ipStr, U16 port, const tString &age, const Byte *guid)
+	tmFindAgeReply::tmFindAgeReply(tNetSession *u, uint32_t x, const tString &ipStr, uint16_t port, const tString &age, const uint8_t *guid)
 	 : tmMsgBase(NetMsgFindAgeReply, plNetAck | plNetKi | plNetX, u), age(age), ipStr(ipStr)
 	{
 		this->x = x;
@@ -184,14 +184,14 @@ namespace alc {
 	void tmFindAgeReply::stream(tBBuf &t) const
 	{
 		tmMsgBase::stream(t);
-		t.putByte(0x1F); // the flag to define the following structure
+		t.put8(0x1F); // the flag to define the following structure
 		/* this is a combination of:
 		  Server Name = 0x01, Server Type = 0x02, Server Address = 0x04,
 		  Server Port = 0x08, Server GUID = 0x10 */
 		t.put(age);
-		t.putByte(KGame); // server type
+		t.put8(KGame); // server type
 		t.put(ipStr);
-		t.putU16(serverPort);
+		t.put16(serverPort);
 		t.write(serverGuid, 8);
 	}
 	

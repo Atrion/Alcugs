@@ -68,7 +68,7 @@ namespace alc {
 		lastPlayerLeft = alcGetTime();
 	}
 	
-	bool tUnetGameServer::canPortBeUsed(U16 port) {
+	bool tUnetGameServer::canPortBeUsed(uint16_t port) {
 		return (port >= spawnStart && port <= spawnStop);
 	}
 
@@ -84,13 +84,13 @@ namespace alc {
 		
 		tConfig *cfg = alcGetMain()->config();
 		tString var = cfg->getVar("game.persistent");
-		if (!var.isEmpty() && var.asByte()) { // disabled per default
+		if (!var.isEmpty() && var.asUInt()) { // disabled per default
 			lingerTime = 0;
 		}
 		else {
 			var = cfg->getVar("game.linger_time");
 			if (!var.isEmpty())
-				lingerTime = var.asU32();
+				lingerTime = var.asUInt();
 			else
 				lingerTime = 120; // default
 			if (lingerTime && lingerTime < 20)
@@ -98,13 +98,13 @@ namespace alc {
 		}
 		
 		var = cfg->getVar("game.tmp.hacks.noreltoshare");
-		noReltoShare = (!var.isEmpty() && var.asByte()); // disabled per default
+		noReltoShare = (!var.isEmpty() && var.asUInt()); // disabled per default
 		
 		var = cfg->getVar("game.tmp.hacks.linkidle");
-		linkingOutIdle = (var.isEmpty() || var.asByte()); // enabled per default
+		linkingOutIdle = (var.isEmpty() || var.asUInt()); // enabled per default
 		
 		var = cfg->getVar("game.serversidecommands");
-		serverSideCommands = (var.isEmpty() || var.asByte()); // enabled per default
+		serverSideCommands = (var.isEmpty() || var.asUInt()); // enabled per default
 		
 		shardIdentifier = cfg->getVar("shard.identifier"); // default: empty
 		
@@ -281,7 +281,7 @@ namespace alc {
 		lastPlayerLeft = 0;
 	}
 	
-	void tUnetGameServer::onConnectionClosing(tNetSession *u, Byte reason)
+	void tUnetGameServer::onConnectionClosing(alc::tNetSession* u, uint8_t reason)
 	{
 		if (u->getPeerType() == KClient && u->ki != 0) { // if necessary, tell the others about it
 			tNetSession *vaultServer = getServer(KVault);
@@ -335,7 +335,7 @@ namespace alc {
 		tNetSession *session;
 		tmCustomDirectedFwd::tRecList::iterator it = msg.recipients.begin();
 		while (it != msg.recipients.end()) {
-			session = smgr->find(*it);
+			session = smgr->findByKi(*it);
 			if (session && session->ki) { // forward messages to all players which have their KI set - even if they are still linking
 				if (session->ki != msg.ki) { // don't send it back to the sender
 					tmGameMessageDirected fwdMsg(session, msg);
@@ -363,7 +363,7 @@ namespace alc {
 		}
 	}
 	
-	tmGameMessage tUnetGameServer::makePlayerIdle(tNetSession *u, tUruObject rec, S32 inputState)
+	tmGameMessage tUnetGameServer::makePlayerIdle(alc::tNetSession* u, alc::tUruObject rec, int inputState)
 	{
 		// get the right object for the receiver
 		if (rec.pageId == 0xFFFF0304) { // Yeesha
@@ -418,15 +418,15 @@ namespace alc {
 		return true;
 	}
 	
-	void tUnetGameServer::removePlayerFromPage(tPageInfo *page, U32 ki)
+	void tUnetGameServer::removePlayerFromPage(alc::tPageInfo* page, uint32_t ki)
 	{
 		bool removed = page->removePlayer(ki); // remove player from list of players who loaded that age
 		if (!removed) return; // player did not even load that age
 		if (page->owner != ki) return; // he is not the owner, we are done
 		// search for another owner
 		if (page->players.size()) {
-			U32 newOwner = *page->players.begin();
-			tNetSession *session = smgr->find(newOwner);
+			uint32_t newOwner = *page->players.begin();
+			tNetSession *session = smgr->findByKi(newOwner);
 			if (!session) {
 				// very strange, the player is on the list but not connected anymore?
 				throw txUnet(_WHERE("Player %d is on list of players who loaded page %s, but not connected anymore", newOwner, page->name.c_str()));
