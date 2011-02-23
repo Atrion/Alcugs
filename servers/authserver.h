@@ -31,9 +31,10 @@
 
 #include "authbackend.h"
 
+#include <unetlobbyserverbase.h>
+
 namespace alc {
 
-	////DEFINITIONS
 	class tUnetAuthServer : public tUnetServerBase {
 	public:
 		tUnetAuthServer() : tUnetServerBase(KAuth), authBackend(NULL) {  }

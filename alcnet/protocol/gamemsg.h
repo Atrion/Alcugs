@@ -36,7 +36,6 @@ namespace alc {
 	class tpLoadCloneMsg;
 	class tPageInfo;
 
-	////DEFINITIONS
 	
 	// Helper class for the member list messages
 	class tMemberInfo : public tBaseType {

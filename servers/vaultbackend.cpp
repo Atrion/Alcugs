@@ -30,6 +30,7 @@
 #include <alcdefs.h>
 #include "vaultbackend.h"
 
+#include "vaultdb.h"
 #include <alcmain.h>
 #include <netlog.h>
 #include <unet.h>
@@ -43,7 +44,6 @@ namespace alc {
 	static const char *defaultWelcomeMsgTitle = "Shorah b'shehmtee";
 	static const char *defaultWelcomeMsgText = "Shorah b'shehmtee, this Shard is running the Alcugs server software.\nThanks for your support!\n\nWelcome to the new adventure, feel free to explore Er'cana or any other age. Be careful if you see new books, some explorers have found some Kortee'nea and other ancient technology in a secret room in Kirel DRC neighborhood, and they are starting to learn the art of writting.\n";
 
-	////IMPLEMENTATION
 	tVaultBackend::tVaultBackend(tUnet *net) : vaultDB(NULL), net(net)
 	{ }
 	
@@ -1184,6 +1184,10 @@ namespace alc {
 	{
 		log.log("Cleaning up the vault. I hope you did a backup first! Now it's too late though...\n");
 		vaultDB->clean(cleanAges);
+	}
+	
+	int tVaultBackend::getNumberOfPlayers(const Byte *uid) {
+		return vaultDB->getPlayerList(uid);
 	}
 	
 	bool tVaultBackend::isAgePrivate(const tString &age) const

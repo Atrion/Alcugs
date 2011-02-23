@@ -32,6 +32,7 @@
 
 #include <netlog.h>
 #include <unetbase.h>
+#include <netsessionmgr.h>
 #include <alcmain.h>
 #include <protocol/umsgbasic.h>
 #include <urutypes/plmessage.h>
@@ -52,7 +53,6 @@ A game server is going down => Check if there is anyone waiting for this server
 
 namespace alc {
 
-	////IMPLEMENTATION
 	//// tTrackingData
 	tTrackingData::tTrackingData()
 	{
@@ -60,6 +60,11 @@ namespace alc {
 		parent = NULL;
 		portStart = portEnd = 0;
 		children = new tNetSessionList;
+	}
+	
+	tTrackingData::~tTrackingData(void)
+	{
+		delete children;
 	}
 	
 	//// tPlayer

@@ -43,7 +43,6 @@
 
 namespace alc {
 
-	////IMPLEMENTATION
 	
 	//// tvAgeInfoStruct
 	tvAgeInfoStruct::tvAgeInfoStruct(const tString &filename, const tString &instanceName, const tString &userDefName, const tString &displayName, const Byte *guid) : tvBase(), filename(filename), instanceName(instanceName), userDefName(userDefName), displayName(displayName)

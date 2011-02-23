@@ -180,8 +180,6 @@ namespace alc {
 	const char *alcVaultGetNodeType(Byte type);
 	const char *alcVaultGetFolderType(U32 type);
 	
-
-	////DEFINITIONS
 	class tvBase : public tBaseType {
 	public:
 		tvBase(void) : tBaseType() {}

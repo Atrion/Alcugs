@@ -33,7 +33,6 @@
 
 namespace alc {
 
-	////DEFINITIONS
 	class tmVault : public tmMsgBase { // this is both a vault and a lobbybase msg, but the vault server includes only this file so the class is defined here
 	public:
 		tmVault(tNetSession *u);

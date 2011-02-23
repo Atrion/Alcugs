@@ -33,8 +33,6 @@
 
 namespace alc {
 
-	////DEFINITIONS
-
 	class tUnetLobbyServer : public tUnetLobbyServerBase {
 	public:
 		tUnetLobbyServer(void);

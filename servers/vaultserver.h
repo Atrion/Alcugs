@@ -30,11 +30,10 @@
 #define __U_VAULTSERVER_H_ID "$Id$"
 
 #include "vaultbackend.h"
+
 #include <unetserverbase.h>
 
 namespace alc {
-
-	////DEFINITIONS
 
 	class tUnetVaultServer : public tUnetServerBase {
 	public:

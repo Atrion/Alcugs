@@ -35,8 +35,6 @@ namespace alc {
 	
 	class tmPing;
 
-	////DEFINITIONS
-
 class tUnetServerBase : public tUnetBase {
 public:
 	tUnetServerBase(Byte whoami);

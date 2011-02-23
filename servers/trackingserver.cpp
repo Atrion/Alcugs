@@ -37,7 +37,6 @@ namespace alc {
 	const char *alcNetName = "Tracking";
 	tUnetServerBase *alcServerInstance(void) { return new tUnetTrackingServer(); }
 
-	////IMPLEMENTATION
 	int tUnetTrackingServer::onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u)
 	{
 		int ret = tUnetServerBase::onMsgRecieved(msg, u); // first let tUnetServerBase process the message

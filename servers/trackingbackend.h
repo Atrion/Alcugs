@@ -31,22 +31,20 @@
 
 #include <protocol/trackingmsg.h>
 #include <netsession.h>
-#include <netsessionmgr.h>
 #include <alcutil/alclog.h>
 
 #include <list>
 
 namespace alc {
-
-	////DEFINITIONS
 	class tUnetBase;
+	class tNetSessionList;
 		
 	class tTrackingData : public tNetSessionData {
 	public:
 		typedef std::list<U32> tPlayerList;
 	
 		tTrackingData(void);
-		virtual ~tTrackingData(void) { delete children; }
+		virtual ~tTrackingData(void);
 		bool isLobby;
 		tNetSession *parent; //!< saves the lobby of a game server, is NULL for lobbys
 		tNetSessionList *children;

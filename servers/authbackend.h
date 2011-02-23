@@ -30,19 +30,19 @@
 #define __U_AUTHBACKEND_H_ID "$Id$"
 
 #include <alcutil/alclog.h>
-#include <sql.h>
-#include <netsession.h>
 
 namespace alc {
 	
-	////DEFINITIONS
+	class tSQL;
+	class tNetSession;
+	
 	class tAuthBackend {
 	public:
 		tAuthBackend(void);
 		~tAuthBackend(void);
 		
 		int authenticatePlayer(tNetSession *u, const tString &login, const tString &challenge, const tString &hash, Byte release, const tString &ip, tString *passwd, Byte *hexUid, Byte *accessLevel); //!< authenticates the player
-		void checkTimeout(void) { if (sql) sql->checkTimeout(); }
+		void checkTimeout(void);
 	private:
 		U16 minAccess, disTime, maxAttempts;
 		tString cgasServer, cgasPath;

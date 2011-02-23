@@ -35,7 +35,6 @@ namespace alc {
 	
 	class tSQL;
 
-	////DEFINITIONS
 	class tVaultDB {
 	public:
 		tVaultDB(tLog *log);

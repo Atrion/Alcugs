@@ -37,8 +37,6 @@
 
 namespace alc {
 
-////DEFINITIONS
-
 U32 alcGetSelfThreadId();
 
 class tThread {

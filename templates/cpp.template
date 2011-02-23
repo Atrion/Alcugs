@@ -30,8 +30,5 @@
 #include <alcdefs.h>
 
 namespace alc {
-
-	////IMPLEMENTATION
-
-} //end namespace alc
-
+	
+}

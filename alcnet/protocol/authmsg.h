@@ -33,7 +33,6 @@
 
 namespace alc {
 
-	////DEFINITIONS
 	class tmCustomAuthAsk : public tmMsgBase {
 	public:
 		tmCustomAuthAsk(tNetSession *u);

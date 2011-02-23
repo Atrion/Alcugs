@@ -30,9 +30,7 @@
 #define __U_FILENAME_H_ID "$Id$"
 
 namespace alc {
-
-	////DEFINITIONS
-
-} //End alc namespace
+	
+}
 
 #endif

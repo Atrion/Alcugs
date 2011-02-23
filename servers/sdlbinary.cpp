@@ -37,7 +37,6 @@
 
 namespace alc {
 
-	////IMPLEMENTATION
 	/** SDL binary processing classes */
 	
 	//// tSdlStateVar (Plasma: plStateVariable and subclasses)
