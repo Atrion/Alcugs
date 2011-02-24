@@ -94,7 +94,7 @@ public:
 	
 	// general stuff
 	tString path; //!<path to the log directory
-	unsigned int rotate_size; //!< maxium size of a file, if reached, file will be rotated
+	__off_t rotate_size; //!< maxium size of a file, if reached, file will be rotated (__off_t is "type of file sizes")
 	mode_t creation_mask; //!< default permissions mask
 	//build vars
 	tString build;

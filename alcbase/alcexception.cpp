@@ -38,9 +38,11 @@
 #include "alcversion.h"
 #include "alcutil/alcthread.h"
 
+#define __STDC_FORMAT_MACROS
 #include <unistd.h>
 #include <ctime>
 #include <cstdlib>
+#include <inttypes.h>
 
 #if defined(HAVE_EXECINFO_H)
 	#include <execinfo.h>
@@ -125,8 +127,8 @@ void txBase::dump(bool toStderr) {
 		now.setToNow();
 		fprintf(f,"Defunct: %s\n",now.str().c_str());
 		fprintf(f,"Uptime:  %s\n",alcGetMain()->upTime().str(0x01).c_str());
-		fprintf(f,"Main thread id: %li\n",alcGetMain()->threadId());
-		fprintf(f,"This thread id: %li\n",alcGetSelfThreadId());
+		fprintf(f,"Main thread id: %"PRIu64"\n",alcGetMain()->threadId());
+		fprintf(f,"This thread id: %"PRIu64"\n",alcGetSelfThreadId());
 		fprintf(f,"Exception %s:\n%s\n",msg.c_str(),bt.c_str());
 		fclose(f);
 	}

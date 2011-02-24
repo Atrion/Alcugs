@@ -530,7 +530,7 @@ namespace alc {
 		fprintf(f, "<h2>Current Online Players</h2>\n");
 		if (dbg) {
 			// player list (dbg)
-			fprintf(f, "<b>Total population: %li</b><br /><br />\n", players.size());
+			fprintf(f, "<b>Total population: %Zi</b><br /><br />\n", players.size());
 			fprintf(f, "<table border=\"1\"><tr><th>Avatar (Account)</th><th>KI</th><th>Age Name</th><th>Age GUID</th><th>Status</th></tr>\n");
 			for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
 				fprintf(f, "<tr><td>%s (%s)%s</td><td>%d</td><td>%s</td><td>%s</td>", it->avatar.c_str(), it->account.c_str(), it->flag == 2 ? "" : " [hidden]", it->ki, it->u->name.c_str(), alcGetStrGuid(it->u->serverGuid).c_str());

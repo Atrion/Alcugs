@@ -33,6 +33,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_USEFUL_H_ID "$Id$"
 
+#include <sys/types.h> // necessary on some systems to get ssize_t
 #include <stdint.h>
 #include <ctime>
 
