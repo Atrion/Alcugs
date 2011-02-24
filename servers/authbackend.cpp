@@ -322,7 +322,7 @@ namespace alc {
 				*guid = row[2]; // guid
 				*attempts = atoi(row[3]); // attempts
 				*lastAttempt = atoi(row[4]); // last_attempt
-				int cgasCacheTime = atoi(row[5]); // cgas_cache_time
+				time_t cgasCacheTime = atoi(row[5]); // cgas_cache_time
 				if (!cgasServer.isEmpty() && cgasCacheTime < time(NULL)-cgasMaxCacheTime) {
 					// the cache is too old, we can't use it - but still read the stuff to handle invalid login attempts
 					ret = kCacheTooOld;

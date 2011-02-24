@@ -528,7 +528,7 @@ void alctypes_part4() {
 	assert(test2.size() == 4);
 	
 	// find
-	printf("%li\n", tString("hiWorld").find("iW"));
+	printf("%Zi\n", tString("hiWorld").find("iW"));
 	assert(tString("hiWorld").find("iW") == 1);
 	assert(tString("hiWorldW").find("W") == 2);
 	assert(tString("hiWorldW").find("Wdgdg") == npos);

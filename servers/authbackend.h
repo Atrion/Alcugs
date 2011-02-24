@@ -47,7 +47,8 @@ namespace alc {
 		uint16_t minAccess, disTime, maxAttempts;
 		tString cgasServer, cgasPath;
 		uint16_t cgasPort;
-		uint32_t cgasDefaultAccess, cgasMaxCacheTime;
+		uint8_t cgasDefaultAccess;
+		time_t cgasMaxCacheTime;
 		tSQL *sql;
 		tLog log;
 		

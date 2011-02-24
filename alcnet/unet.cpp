@@ -569,7 +569,7 @@ void tUnet::doWork() {
 	while((cur=smgr->getNext())) {
 		/* Also create the timeout when it's exactly the same time.
 		  This way the time from a session being marked as deleteable till it is deleted is kept short */
-		if(ntime.seconds - cur->timestamp.seconds >= cur->conn_timeout) {
+		if(static_cast<unsigned int>(ntime.seconds) >= cur->conn_timeout + cur->timestamp.seconds) {
 			//timeout event
 			if (!cur->isTerminated())
 				sec->log("%s Timeout (didn't send a packet for %d seconds)\n",cur->str().c_str(),cur->conn_timeout);

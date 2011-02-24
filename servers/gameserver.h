@@ -101,8 +101,7 @@ namespace alc {
 		tAgeStateManager *ageState;
 		bool resetStateWhenEmpty; //!< used by /!resetage
 		
-		uint32_t lastPlayerLeft;
-		unsigned int lingerTime;
+		time_t lastPlayerLeft, lingerTime;
 		bool noReltoShare, serverSideCommands, linkingOutIdle;
 		tString shardIdentifier;
 	};

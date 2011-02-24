@@ -935,7 +935,7 @@ void tNetSession::negotiate() {
 
 void tNetSession::checkAlive(void)
 {	// when we are talking to a non-terminated server, send alive messages
-	if (!client && !terminated && (net->ntime.seconds - timestamp.seconds) > conn_timeout/2) {
+	if (!client && !terminated && (net->ntime.seconds - timestamp.seconds) > static_cast<time_t>(conn_timeout/2)) {
 		tmAlive alive(this);
 		send(alive);
 	}

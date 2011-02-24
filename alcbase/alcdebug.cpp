@@ -34,11 +34,13 @@
 #include "alctypes.h"
 #include "alcutil/alcthread.h"
 
+#define __STDC_FORMAT_MACROS
 #include <cstdarg>
+#include <inttypes.h>
 
 namespace alc {
 	void alcPrintDbgHeader(int lvl, const char * b, const char * c, int d) {
-		fprintf(stderr,"DBG%i:%li:%s:%s:%i> ",lvl,alcGetSelfThreadId(),b,c,d);
+		fprintf(stderr,"DBG%i:%"PRIu64":%s:%s:%i> ",lvl,alcGetSelfThreadId(),b,c,d);
 	}
 	
 	tString alcDbgWhere(const char * b,const char * c,int d,const char * a,...) {
