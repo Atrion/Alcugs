@@ -1,0 +1,6 @@
+/build/
+/docs/source/
+/tools/UruStarter/*.o
+/tools/UruStarter/*.exe
+/tools/UruStarter/Makefile
+/tools/UruVision/*.pyc
