@@ -137,13 +137,11 @@ void tUnet::init() {
 	// Bandwith: 10kB/0,66seconds = 15kB/second = 120kBit/second
 	lim_down_cap=10000; // in bytes
 	lim_up_cap=10000; // in bytes
-	quota_check_sec=0;
-	quota_check_usec=666666;
+	quota_check_interval=666666; // 2/3 of a second
 	// the rest are controlling vairables, do not touch!
 	cur_down_quota=0;
 	cur_up_quota=0;
-	time_quota_check_sec=ntime.seconds;
-	time_quota_check_usec=ntime.microseconds;
+	last_quota_check = ntime;
 	#endif
 	
 }
@@ -491,15 +489,14 @@ int tUnet::Recv() {
 			n=0;
 		}
 		//check quotas
-		if(ntime.seconds-time_quota_check_sec>quota_check_sec || ntime.microseconds-time_quota_check_usec>=quota_check_usec) {
+		if((ntime-last_quota_check).asNumber('u') > quota_check_interval) {
 			cur_up_quota=0;
 			cur_down_quota=0;
-			time_quota_check_sec=ntime.seconds;
-			time_quota_check_usec=ntime.microseconds;
+			last_quota_check = ntime;
 		}
 		if(n>0 && lim_down_cap) {
 			if((cur_down_quota+n+ip_overhead)>lim_down_cap) {
-				DBG(5,"Paquet dropped by quotas, in use:%i,req:%i, max:%i\n",cur_down_quota,n+ip_overhead,lim_down_cap);
+				DBG(5,"Paquet dropped by quotas, in use:%i,req:%li, max:%i\n",cur_down_quota,n+ip_overhead,lim_down_cap);
 				log->log("Incomming paquet dropped by quotas, in use:%i,req:%i, max:%i\n",cur_down_quota,n+ip_overhead,lim_down_cap);
 				n=0;
 			} else {
@@ -663,15 +660,14 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 		msize=0;
 	}
 	//check quotas
-	if(ntime.seconds-time_quota_check_sec>quota_check_sec || ntime.microseconds-time_quota_check_usec>=quota_check_usec) {
+	if((ntime-last_quota_check).asNumber('u') > quota_check_interval) {
 		cur_up_quota=0;
 		cur_down_quota=0;
-		time_quota_check_sec=ntime.seconds;
-		time_quota_check_usec=ntime.microseconds;
+		last_quota_check = ntime;
 	}
 	if(msize>0 && lim_up_cap) {
 		if((cur_up_quota+msize+ip_overhead)>lim_up_cap) {
-			DBG(5,"Paquet dropped by quotas, in use:%i,req:%i, max:%i\n",cur_up_quota,msize+ip_overhead,lim_up_cap);
+			DBG(5,"Paquet dropped by quotas, in use:%i,req:%li, max:%i\n",cur_up_quota,msize+ip_overhead,lim_up_cap);
 			log->log("Paquet dropped by quotas, in use:%i,req:%i, max:%i\n",cur_up_quota,msize+ip_overhead,lim_up_cap);
 			msize=0;
 		} else {

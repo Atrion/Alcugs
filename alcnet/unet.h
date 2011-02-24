@@ -177,17 +177,15 @@ protected:
 	unsigned int ip_overhead;
 	//debugging stuff
 	#ifdef ENABLE_NETDEBUG
-	U32 lim_down_cap; //in bytes
-	U32 lim_up_cap; //in bytes
-	Byte in_noise; //(0-100)
-	Byte out_noise; //(0-100)
-	U32 latency; //(in msecs)
-	U32 cur_down_quota;
-	U32 cur_up_quota;
-	Byte quota_check_sec; //(in seconds)
-	U32 quota_check_usec; //(useconds)
-	U32 time_quota_check_sec; //last quota check (in seconds)
-	U32 time_quota_check_usec;
+	unsigned int lim_down_cap; //in bytes
+	unsigned int lim_up_cap; //in bytes
+	unsigned int in_noise; //(0-100)
+	unsigned int out_noise; //(0-100)
+	unsigned int latency; //(in msecs)
+	unsigned int cur_down_quota;
+	unsigned int cur_up_quota;
+	unsigned int quota_check_interval; //(useconds)
+	tTime last_quota_check;
 	#endif
 
 private:	

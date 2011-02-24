@@ -771,7 +771,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 	t.data.rewind();
 	t.data.get(ackMsg);
 #ifdef ENABLE_ACKLOG
-	net->log->log("<RCV> [%d] %s\n", t.sn, ackMsg.str());
+	net->log->log("<RCV> [%d] %s\n", t.sn, ackMsg.str().c_str());
 #endif
 	tUnetAck *ack;
 	for (tmNetAck::tAckList::iterator it = ackMsg.ackq.begin(); it != ackMsg.ackq.end(); ++it) {
