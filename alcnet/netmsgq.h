@@ -33,7 +33,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETMSGQ_H_ID "$Id$"
 
-#include <alctypes.h> // FIXME remove when U32 is gone
+#include <alcutil/useful.h>
 
 namespace alc {
 

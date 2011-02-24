@@ -30,6 +30,7 @@
 #define __U_UNET_H_ID "$Id$"
 
 #include "netmsgq.h"
+#include <alctypes.h>
 
 #include <netinet/in.h>
 
