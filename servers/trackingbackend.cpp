@@ -211,11 +211,11 @@ namespace alc {
 	{
 		// search for the lobby with the least load
 		tNetSession *lobby = NULL, *server;
-		size_t load = 0;
+		size_t load = -1; // biggest existing integer, any real load will be smaller
 		servers->rewind();
 		while ((server = servers->getNext())) {
 			tTrackingData *data = dynamic_cast<tTrackingData*>(server->data);
-			if (data && data->isLobby && data->children->getCount() <= load) {
+			if (data && data->isLobby && data->children->getCount() < load) {
 				lobby = server;
 				load = data->children->getCount();
 			}
