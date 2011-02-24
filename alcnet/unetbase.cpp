@@ -187,13 +187,9 @@ void tUnetBase::applyConfig() {
 	if(!var.isEmpty()) {
 		latency=var.asUInt();
 	}
-	var=cfg->getVar("net.quota_check_sec","global");
+	var=cfg->getVar("net.quota_check_interval","global");
 	if(!var.isEmpty()) {
-		quota_check_sec=var.asUInt();
-	}
-	var=cfg->getVar("net.quota_check_usec","global");
-	if(!var.isEmpty()) {
-		quota_check_usec=var.asUInt();
+		quota_check_interval=var.asUInt();
 	}
 	#endif
 	// forward to sub-classes
@@ -297,7 +293,7 @@ void tUnetBase::processEventQueue(bool shutdown)
 					tUnetMsg * msg = evt->msg;
 					int ret = 0; // 0 - non parsed; 1 - parsed; 2 - ignored; -1 - parse error; -2 - hack attempt
 					#ifdef ENABLE_MSGDEBUG
-					log->log("%s New MSG Recieved\n",u->str());
+					log->log("%s New MSG Recieved\n",u->str().c_str());
 					#endif
 					assert(msg!=NULL);
 					try {
