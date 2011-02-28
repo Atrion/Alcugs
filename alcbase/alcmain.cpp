@@ -38,9 +38,7 @@
 #include "alcutil/alcparser.h"
 #include "alcexception.h"
 
-#ifndef __WIN32__
 #include <sys/wait.h>
-#endif
 
 // We are using SIG_DFL here which implies an old-style cast
 #pragma GCC diagnostic ignored "-Wold-style-cast"
@@ -167,9 +165,7 @@ void tAlcMain::onCrash() {
 void tAlcMain::installBaseHandlers(bool install)
 {
 	installHandler(SIGSEGV, install);
-#ifndef __WIN32__
 	installHandler(SIGCHLD, install);
-#endif
 }
 
 void tAlcMain::installHandler(int signum, bool install) {
@@ -184,18 +180,13 @@ void tAlcMain::installHandler(int signum, bool install) {
 bool tAlcMain::onSignal(int s) {
 	stdLog->log("INF: Recieved signal %i\n",s);
 	installHandler(s);
-	#ifndef __WIN32__ // On windows, the signal handler runs on another thread
-	if (alcGetSelfThreadId() != mainThreadId) return true;
-	#endif
 	try {
 		switch (s) {
-#ifndef __WIN32__
 			case SIGCHLD:
 				stdLog->log("INF: RECIEVED SIGCHLD: a child has exited.\n");
 				stdLog->flush();
 				wait(NULL); // properly exit child
 				return true;
-#endif
 			case SIGSEGV:
 				errLog->log("\n PANIC!!!\n");
 				errLog->log("TERRIBLE FATAL ERROR: SIGSEGV recieved!!!\n\n");

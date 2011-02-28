@@ -78,7 +78,7 @@ void txBase::copy(const txBase &t) {
 }
 void txBase::_preparebacktrace() {
 // This needs porting - This code only works under Linux (it's part of the libc)
-#if !(defined(__WIN32__) or defined(__CYGWIN__)) and defined(HAVE_EXECINFO_H)
+#ifdef HAVE_EXECINFO_H
 	//get the backtrace
 	void * btArray[txExcLevels];
 	char **strings;
@@ -102,7 +102,7 @@ void txBase::_preparebacktrace() {
 	bt += "c++filt and addr2line may be useful\n";
 	free(strings);
 #else
-	bt = "Backtrace not implemented in your OS\n";
+	bt = "Backtrace not implemented in your OS, or execinfo.h not found\n";
 #endif
 	if(this->abort) {
 		dump();

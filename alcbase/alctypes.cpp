@@ -521,30 +521,6 @@ size_t tString::find(const char *str) const {
 	if (c == NULL) return npos;
 	return (c-data());
 }
-void tString::convertSlashesFromWinToUnix() {
-#if defined(__WIN32__) or defined(__CYGWIN__)
-	int i,max;
-	max=size();
-	for(i=0; i<max; i++) {
-		if(getAt(i)=='\\') {
-			setAt(i,'/');
-		}
-	}
-#endif
-//noop on linux
-}
-void tString::convertSlashesFromUnixToWin() {
-#if defined(__WIN32__) or defined(__CYGWIN__)
-	int i,max;
-	max=size();
-	for(i=0; i<max; i++) {
-		if(getAt(i)=='/') {
-			setAt(i,'\\');
-		}
-	}
-#endif
-//noop on linux
-}
 tString tString::stripped(char what,uint8_t how) const {
 	tString aux;
 	size_t i,max,start,end;

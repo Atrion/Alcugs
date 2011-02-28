@@ -94,8 +94,7 @@ namespace alc {
 
 
 	/**
-		Strips out some characters that win32 doesn't like..
-		(Overwrittes what)
+		Strips out some characters that win32 doesn't like.
 	*/
 	tString alcStrFiltered(tString what);
 

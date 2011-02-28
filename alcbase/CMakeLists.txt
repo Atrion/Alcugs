@@ -31,7 +31,7 @@ set(ALCBASE_BASE_FILES
 	alcversion.cpp)
 
 add_library(alcbase SHARED ${ALCBASE_ALCUTIL_FILES} ${ALCBASE_BASE_FILES} ${ALCBASE_URUTYPES_FILES})
-target_link_libraries(alcbase ${ZLIB_LIBRARIES})
+target_link_libraries(alcbase ${ZLIB_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 # tests
 add_executable(alcbase_test test/alcbase_test.cpp)

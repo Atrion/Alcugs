@@ -86,9 +86,7 @@ void alcMkdir(const tString &path, mode_t mode)
 }
 
 /* dir entry */
-tDirEntry::tDirEntry() {
-	entryType=0;
-}
+tDirEntry::tDirEntry(alc::tString name, int entryType) : name(name), entryType(entryType) {}
 tDirEntry::~tDirEntry() {}
 /* end dir entry */
 
@@ -108,22 +106,10 @@ void tDirectory::open(const tString &path) {
 void tDirectory::close() {
 	if(dir!=NULL) closedir(dir);
 }
-tDirEntry * tDirectory::getEntry() {
+tDirEntry tDirectory::getEntry() {
 	entry=readdir(dir);
-	if(entry==NULL) return NULL;
-	ent.name=entry->d_name;
-	#if defined(__WIN32__) or defined(__CYGWIN__)
-	//ent.type=0;
-	tString kpath = path + "\\" + entry->d_name;
-	struct stat buf;
-	stat(kpath.c_str(),&buf);
-	if(S_ISDIR(buf.st_mode)) ent.entryType=DT_DIR;
-	else ent.entryType=DT_REG;
-	//ent.type=buf.st_mode;
-	#else
-	ent.entryType=entry->d_type;
-	#endif
-	return &ent;
+	if(entry==NULL) return tDirEntry();
+	return tDirEntry(entry->d_name, entry->d_type);
 }
 void tDirectory::rewind() {
 	rewinddir(dir);

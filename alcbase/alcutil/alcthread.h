@@ -37,7 +37,7 @@
 
 namespace alc {
 
-uint64_t alcGetSelfThreadId(); // the actual type is pthread_t, which might not be available
+pthread_t alcGetSelfThreadId(); // the actual type is pthread_t, which might not be available
 
 class tThread {
 public:
@@ -48,13 +48,8 @@ public:
 	virtual void main()=0;
 private:
 	bool spawned;
-#ifdef ENABLE_THREADS
-	#ifndef __WIN32__
 	pthread_t id;
-	#else
-	HANDLE id;
-	#endif
-#endif
+	
 	FORBID_CLASS_COPY(tThread)
 };
 
@@ -66,14 +61,7 @@ public:
 	bool trylock();
 	void unlock();
 private:
-#ifdef ENABLE_THREADS
-	bool islocked;
-	#ifndef __WIN32__
 	pthread_mutex_t id;
-	#else
-	HANDLE id;
-	#endif
-#endif
 	
 	FORBID_CLASS_COPY(tMutex)
 };
@@ -81,21 +69,14 @@ private:
 class tMutexLock {
 public:
 	inline tMutexLock(tMutex &mutex) {
-#ifdef ENABLE_THREADS
 		this->mutex = &mutex;
 		this->mutex->lock();
-#endif
-		(void)mutex; // mark as used
 	}
 	inline ~tMutexLock(void) {
-#ifdef ENABLE_THREADS
 		mutex->unlock();
-#endif
 	}
 private:
-#ifdef ENABLE_THREADS
 	tMutex *mutex;
-#endif
 	
 	FORBID_CLASS_COPY(tMutexLock)
 };
