@@ -60,6 +60,8 @@ public:
 	void lock();
 	bool trylock();
 	void unlock();
+	
+	pthread_mutex_t *getMutex() { return &id; }
 private:
 	pthread_mutex_t id;
 	

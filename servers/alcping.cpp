@@ -39,7 +39,7 @@ using namespace alc;
 
 void parameters_usage() {
 	puts(alcVersionText());
-	printf("Usage: uruping server:port [options]\n\n\
+	printf("Usage: alcping server:port [options]\n\n\
  -val x: set validation level (0-3) (default 2)\n\
  -nl: enable netcore log files\n\
  -t x: set the sleep time in seconds\n\
@@ -209,7 +209,7 @@ void tUnetPing::onIdle() {
 		}
 
 		tNetSession * u=NULL;
-		u=getSession(dstite);
+		u=sessionByIte(dstite);
 		if(u==NULL) {
 			stop();
 			return;
@@ -257,6 +257,9 @@ int main(int argc,char * argv[]) {
 	//options
 	int num=5,flood=1; //num probes & flood multiplier
 	bool bcast=false,listen=false,mrtg=false,nlogs=false,urgent=false;
+	
+	//start Alcugs library (before parameters, for the license text!)
+	tAlcUnetMain alcMain("Client");
 	
 	//parse parameters
 	for (int i=1; i<argc; i++) {
@@ -307,8 +310,6 @@ int main(int argc,char * argv[]) {
 		}
 	}
 	
-	//start Alcugs library
-	tAlcUnetMain alcMain("Client");
 	try {
 		alcMain.config()->setVar(tString::fromUInt(nlogs), "log.enabled", "global");
 		alcMain.config()->setVar(tString::fromUInt(loglevel), "verbose_level", "global");

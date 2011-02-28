@@ -82,7 +82,7 @@ public:
 class tUnetAck {
 public:
 	tUnetAck() { next=NULL; timestamp=0; }
-	unsigned int timestamp;
+	tNetTime timestamp;
 	uint32_t A;
 	uint32_t B;
 	tUnetAck * next;
@@ -104,8 +104,8 @@ public:
 	tUnetUruMsg * next;
 
 	void _update();
-	unsigned int timestamp; //message stamp in usecs (to send) - this is in unet->net_time units
-	unsigned int snd_timestamp; //original send stamp
+	tNetTime timestamp; //message stamp in usecs (to send) - this is in unet->net_time units
+	tNetTime snd_timestamp; //original send stamp
 	unsigned int tryes;
 	//Uru protocol
 	//Byte vid 0x03

@@ -49,7 +49,7 @@ public:
 	virtual void main(void);
 private:
 	
-	tUnetBase *unet;
+	tUnetBase *net;
 };
 
 /** Base abstract class, you need to derive your server/client app's from here
@@ -114,7 +114,7 @@ protected:
 	
 	/** This event is raised each time after the event queue got emtpied.
 			You need to override it in your derived classes with your implementation.
-			Called in worker thread!
+			Called in main thread!
 	*/
 	virtual void onIdle() {}
 	
@@ -138,19 +138,24 @@ protected:
 	inline void forcestop() { stop(0); /* stop with a timeout of 0 */ }
 private:
 	void terminate(tNetSession *u, uint8_t reason, bool gotEndMsg); //! may be called in worker thread
-	void terminateAll(bool playersOnly = false);
-	inline void terminatePlayers() { terminateAll(/*playersOnly*/true); }
+	bool terminateAll(bool playersOnly = false); //!< \returns if a session was terminated
+	inline bool terminatePlayers() { return terminateAll(/*playersOnly*/true); }
 	void removeConnection(tNetSession *u); //!< destroy that session, may be called in worker thread
 	void applyConfig();
+	virtual void addEvent(tNetEvent *evt);
 	
 	
 	int parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown); //!< called in worker thread
-	void processEventQueue(bool shutdown); //! dispatches most recent event, called in worker thread!
+	void processEvent(tNetEvent *evt, bool shutdown); //! dispatches most recent event, called in worker thread!
 	
 	
 	bool running;
-	time_t stop_timeout;
+	tNetTimeDiff stop_timeout;
 	tUnetWorkerThread workerThread;
+	
+	bool workerWaiting; //!< stores whether the worker thread is waiting for messages - protected by below mutex
+	pthread_cond_t eventAddedCond; //!< condition used to signal the worker thread that it can wake up, protected by belwo mutex
+	tMutex eventAddedMutex;
 };
 
 

@@ -1168,7 +1168,7 @@ namespace alc {
 		// now let's see who gets notified
 		for (tVmgrList::iterator it = vmgrs.begin(); it != vmgrs.end(); ++it) {
 			if (it->mgr == 0 || (it->ki == origKi && it->mgr == origMgr)) continue;
-			session = net->getSession(it->session);
+			session = net->sessionByIte(it->session);
 			if (!session) continue;
 			for (size_t j = 0; j < tableSize; ++j) {
 				if (table[j] > it->mgr) break; // the list is in order, we will not find this node in there

@@ -37,11 +37,13 @@
 #include "alcexception.h"
 #include "alcmain.h"
 
+#define __STDC_FORMAT_MACROS
 #include <iostream>
 #include <sys/stat.h>
 #include <cerrno>
 #include <cstdarg>
 #include <cstring>
+#include <inttypes.h>
 
 
 namespace alc {
@@ -246,7 +248,7 @@ void tLog::print(const tString &str) const
 void tLog::stamp() {
 	checkRotate(250);
 	if (this->flags & DF_NOSTAMP) { return; }
-	this->print("(%s)[%d] ",alcGetStrTime().c_str(),alcGetSelfThreadId());
+	this->print("(%s)[%"PRIu64"] ",alcGetStrTime().c_str(),alcGetSelfThreadId());
 }
 
 /**
