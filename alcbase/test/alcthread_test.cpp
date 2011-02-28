@@ -53,50 +53,60 @@ private:
 	virtual void main() {
 		int i;
 		std::cout<<"Child thread "<<threadnum<<": "<<alcGetSelfThreadId()<<std::endl;
-		for(i=0; i<num; i++) {
+		for(i=1; i <= num; i++) {
 			{
 				tMutexLock lock(gmutex);
-				alcGetMain()->std()->log("I am a child thread %i: %i!\n",threadnum,i);
+				alcGetMain()->std()->log("I am a child thread %i: %i begin\n",threadnum,i);
 				usleep(timer/4);
-				alcGetMain()->std()->log("I am a child thread %i: %i!\n",threadnum,i);
+				alcGetMain()->std()->log("I am a child thread %i: %i end\n",threadnum,i);
 			}
 			usleep(timer);
 		}
 	}
 };
 
+void test_startSomeThreads() {
+	DBG(1, "Init...\n");
+	tmyfunc * thread;
+	thread = new tmyfunc(1,15,1000);
+	thread->spawn();
+	
+	tmyfunc * thread2;
+	thread2 = new tmyfunc(2,5,2000);
+	thread2->spawn();
+
+	thread2->join();
+	int i;
+	std::cout<<"Main thread: "<<alcGetSelfThreadId()<<std::endl;
+	for(i=0; i<10; i++) {
+		{
+			tMutexLock lock(gmutex);
+			alcGetMain()->std()->log("I am the main thread: %i!\n",i);
+			usleep(2000/4);
+			alcGetMain()->std()->log("I am the main thread: %i!\n",i);
+		}
+		usleep(2000);
+	}
+	thread->join();
+	delete thread;
+	delete thread2;
+}
+
+void test_mutex(void)
+{
+	tMutex test1;
+	test1.lock();
+	test1.unlock();
+}
+
 int main(void) {
 	std::cout << std::endl << "Alcugs test suite - alcthread tests" <<std::endl;
 	tAlcMain alcMain("Alcthread Test");
 	try {
 
-		alcMain.std()->log("Init...\n");
+		test_startSomeThreads();
+		test_mutex();
 		
-		tmyfunc * thread;
-		thread = new tmyfunc(1,15,2000);
-		thread->spawn();
-		
-		tmyfunc * thread2;
-		thread2 = new tmyfunc(2,5,1000);
-		thread2->spawn();
-
-		thread2->join();
-		int i;
-		std::cout<<"Main thread: "<<alcGetSelfThreadId()<<std::endl;
-		for(i=0; i<10; i++) {
-			{
-				tMutexLock lock(gmutex);
-				alcGetMain()->std()->log("I am the main thread: %i!\n",i);
-				usleep(1000);
-				alcGetMain()->std()->log("I am the main thread: %i!\n",i);
-			}
-			usleep(5000);
-		}
-		thread->join();
-		delete thread;
-		delete thread2;
-
-		//alcShutdown();
 		std::cout<< "Success!!" << std::endl;
 	} catch (txBase &t) {
 		std::cout<< "Cauth Exception " << t.what() << std::endl;

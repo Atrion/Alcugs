@@ -59,7 +59,7 @@ tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t s
 	//new conn event
 	tNetSessionIte ite(ip,port,sid);
 	tNetEvent * evt=new tNetEvent(ite,UNET_NEWCONN);
-	net->events->add(evt);
+	net->addEvent(evt);
 }
 tNetSession::~tNetSession() {
 	DBG(5,"~tNetSession() (sndq: %ld)\n", sndq->len());
@@ -101,7 +101,6 @@ void tNetSession::init() {
 	negotiating=false;
 	resetMsgCounters();
 	assert(serverMsg.pn==0);
-	idle=false;
 	rejectMessages=false;
 	whoami=0;
 	max_version=0;
@@ -229,8 +228,6 @@ void tNetSession::send(tmBase &msg, unsigned int delay) {
 	unsigned int n_pkts;
 	uint8_t flags=msg.bhflags, val, tf;
 	
-	net->updateNetTime(); // in order for the send time to be correct
-	
 	tUnetUruMsg * pmsg=NULL;
 	
 	if((cflags & UNetUpgraded)) msg.bhflags |= UNetExt; // tmNetAck has to know that it writes an extended packet
@@ -327,7 +324,7 @@ void tNetSession::send(tmBase &msg, unsigned int delay) {
 		pmsg->snd_timestamp=pmsg->timestamp;
 		
 		//Urgent!?
-		if(flags & UNetUrgent) {
+		if(flags & UNetUrgent) { // FIXME this will break when called in worker
 			net->rawsend(this,pmsg);
 			//update time to send next message according to cabal
 			if (next_msg_time) next_msg_time += timeToSend(pmsg->size());
@@ -353,11 +350,11 @@ void tNetSession::send(tmBase &msg, unsigned int delay) {
 		}
 	}
 	
-	doWork(); //send messages
+	// FIXME cancel the wait in the main thread
 }
 
 /** process a recieved msg: put it in the rcvq, assemble fragments, create akcs */
-void tNetSession::processMsg(void * buf,size_t size) {
+void tNetSession::processIncomingMsg(void * buf,size_t size) {
 	DBG(5,"Message of %li bytes\n",size);
 	//stamp
 	timestamp=net->ntime;
@@ -531,7 +528,7 @@ void tNetSession::processMsg(void * buf,size_t size) {
 						// send UNET_FLOOD event
 						tNetSessionIte ite(ip,port,sid);
 						tNetEvent * evt=new tNetEvent(ite,UNET_FLOOD);
-						net->events->add(evt);
+						net->addEvent(evt);
 					}
 				}
 			}
@@ -546,8 +543,6 @@ void tNetSession::processMsg(void * buf,size_t size) {
 		}
 	}
 	delete msg;
-	
-	doWork();
 }
 
 /** add this to the received message and put fragments together - this deletes the passed message! */
@@ -586,7 +581,7 @@ void tNetSession::acceptMessage(tUnetUruMsg *t)
 		rcv->data.rewind();
 
 		tNetEvent *evt=new tNetEvent(getIte(), UNET_MSGRCV, rcv);
-		net->events->add(evt);
+		net->addEvent(evt);
 		rcv = NULL;
 	}
 	else {
@@ -738,9 +733,10 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 }
 
 /** puts acks from the ackq in the sndq */
-void tNetSession::ackUpdate() {
+unsigned int tNetSession::ackUpdate() {
 	const size_t maxacks=30;
-	if (ackq->len() == 0) return;
+	unsigned int timeout = -1; // -1 is biggest possible value
+	if (ackq->len() == 0) return timeout;
 	
 	ackq->rewind();
 	tUnetAck *ack = ackq->getNext();
@@ -748,7 +744,7 @@ void tNetSession::ackUpdate() {
 		tmNetAck ackMsg(this);
 		while (ack) {
 			if (ack->timestamp > net->net_time) {
-				net->updateTimerAbs(ack->timestamp); // come back when we want to process this ack
+				timeout = std::min(timeout, ack->timestamp - net->net_time); // come back when we want to process this ack
 				ack = ackq->getNext();
 			}
 			else {
@@ -760,6 +756,7 @@ void tNetSession::ackUpdate() {
 		if (ackMsg.ackq.size() > 0)
 			send(ackMsg);
 	}
+	return timeout;
 }
 
 /** parse the ack and remove the messages it acks from the sndq */
@@ -817,20 +814,20 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 }
 
 /** Send, and re-send messages, update idle state and set netcore timeout (the last is NECESSARY - otherwise, the idle timer will be used) */
-void tNetSession::doWork()
+unsigned int tNetSession::processSendQueues()
 {
-	ackUpdate(); //generate ack messages (i.e. put them from the ackq to the sndq)
+	checkAlive(); // generate alive messages
+	unsigned int timeout = ackUpdate(); //generate ack messages (i.e. put them from the ackq to the sndq)
 
-	idle = (ackq->isEmpty() && sndq->isEmpty());
-	if (idle && terminated) conn_timeout /= 2; // we are done, completely done
+	if ((ackq->isEmpty() && sndq->isEmpty()) && terminated) conn_timeout /= 2; // we are done, completely done
 	
 	// for terminating session, make sure they are cleaned up on time
 	if (terminated)
-	   net->updateTimerRelative(conn_timeout*1000000);
+	   timeout = std::min(timeout, conn_timeout*1000000);
 	
 	if(sndq->isEmpty()) {
 		next_msg_time=0;
-		return;
+		return timeout;
 	}
 	
 	if(net->net_time>=next_msg_time) {
@@ -870,7 +867,7 @@ void tNetSession::doWork()
 						//timeout event
 						net->sec->log("%s Timeout (didn't ack a packet)\n", str().c_str());
 						tNetEvent *evt=new tNetEvent(getIte(),UNET_TIMEOUT);
-						net->events->add(evt);
+						net->addEvent(evt);
 					} else {
 						cur_quota+=curmsg->size();
 						curmsg->snd_timestamp=net->net_time;
@@ -897,7 +894,7 @@ void tNetSession::doWork()
 				}
 			} //end time check
 			else {
-				net->updateTimerAbs(curmsg->timestamp); // come back when we want to send this message
+				timeout = std::min(timeout, curmsg->timestamp - net->net_time); // come back when we want to send this message
 				DBG(8,"%s %d Too soon (%d) to send a message\n",str().c_str(),net->net_time,curmsg->timestamp-net->net_time);
 				curmsg = sndq->getNext(); // go on
 			}
@@ -907,12 +904,13 @@ void tNetSession::doWork()
 		DBG(8,"%s %d tts is now:%i quota:%i,cabal:%i\n",str().c_str(),net->net_time,tts,cur_quota,cabal);
 		next_msg_time=net->net_time + tts;
 		// if there is still something to send, but the quota does not let us, do that ASAP
-		if (curmsg) net->updateTimerAbs(next_msg_time);
+		if (curmsg && tts < timeout) timeout = tts;
 	} else {
 		// Still wait before sending a message
 		DBG(8,"%s %d Too soon (%d) to check sndq\n",str().c_str(),net->net_time,next_msg_time-net->net_time);
-		net->updateTimerAbs(next_msg_time); // come back when we want to send the next message
+		timeout = std::min(timeout, next_msg_time - net->net_time); // come back when we want to send the next message
 	}
+	return timeout;
 }
 
 /** send a negotiation to the peer */
@@ -949,7 +947,7 @@ time_t tNetSession::onlineTime(void)
 void tNetSession::terminate(int tout)
 {
 	conn_timeout = tout;
-	net->updateTimerRelative(tout*1000000);
+	// FIXME somehow make sure we do not sleep too long?
 	terminated = true;
 	whoami = 0; // it's terminated, so it's no one special anymore
 	timestamp.setToNow();

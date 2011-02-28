@@ -62,9 +62,8 @@ public:
 	size_t getMaxDataSize();
 	size_t getHeaderSize();
 	tNetSessionIte getIte();
-	void checkAlive(void);
 	time_t onlineTime(void);
-	void send(tmBase &msg, unsigned int delay = 0); //!< delay is in msecs
+	void send(tmBase &msg, unsigned int delay = 0); //!< delay is in msecs - may be called in worker thread
 	void terminate(int tout);
 	void setAuthData(uint8_t accessLevel, const tString &passwd);
 	
@@ -90,16 +89,17 @@ public:
 private:
 	void init();
 	inline void resetMsgCounters(void);
-	void processMsg(void * buf,size_t size);
-	void doWork();
+	void processIncomingMsg(void * buf,size_t size); //!< we received a message
+	unsigned int processSendQueues(); //!< send what is in our queues
 
 	void createAckReply(tUnetUruMsg &msg);
-	void ackUpdate();
+	unsigned int ackUpdate(); //!< return the maximum wait time before we have to check again
 	void ackCheck(tUnetUruMsg &msg);
 	
 	void acceptMessage(tUnetUruMsg *msg);
 	void queueReceivedMessage(tUnetUruMsg *msg);
 	void checkQueuedMessages(void);
+	void checkAlive(void);
 
 	inline int8_t compareMsgNumbers(uint32_t sn1, uint8_t fr1, uint32_t sn2, uint8_t fr2);
 	void updateRTT(unsigned int newread);
@@ -180,7 +180,6 @@ private:
 	tUnetMsgQ<tUnetUruMsg> *rcvq; //!< received, but not yet accepted messages
 	
 	// other status variables
-	bool idle; //!< true when the session has nothing to do (all queue emtpy)
 	bool rejectMessages; //!< when set to true, messages are rejected (the other side has to send them again)
 	
 	bool terminated; //!< false: connection is established; true: a NetMsgTerminated was sent (and we expect a NetMsgLeave), or a NetMsgLeave was sent

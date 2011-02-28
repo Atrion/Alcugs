@@ -84,8 +84,7 @@ void tUnet::init() {
 	flags=UNET_DEFAULT_FLAGS;
 
 	//netcore timeout < min(all RTT's), nope, it must be the min tts (stt)
-	idle_timer=5; // should be max. 10 seconds, may be overwritten by tUnetBase
-	unet_timeout=idle_timer*1000*1000; //(microseconds)
+	max_sleep=5*1000*1000; // wait no more than 5 seconds in select() call
 
 	conn_timeout=5*60; // default timeout for new sessions (seconds)
 	/* This sets the timeout for unet servers from both sides
@@ -94,7 +93,7 @@ void tUnet::init() {
 	to 30sec after the client got authed.
 	I put this here and not in tUnetServerBase as tUnetBase must be able to override it */
 	
-	msg_timeout=1000*1000; //1 second (time till re-transmission)
+	msg_timeout=1000*1000; // 1 second (default time till re-transmission)
 
 	//initial server timestamp
 	updateNetTime();
@@ -124,8 +123,6 @@ void tUnet::init() {
 	err=new tLog;
 	ack=new tLog;
 	sec=new tLog;
-	
-	idle=false;
 
 	ip_overhead=20+8;
 
@@ -159,20 +156,18 @@ void tUnet::updateNetTime() {
 	net_time=(((ntime.seconds % 1000)*1000000)+ntime.microseconds);
 }
 
-void tUnet::updateTimerRelative(unsigned int usec) {
-	unsigned int min_timer=200; // minimum interval to be used
-	if (usec < unet_timeout) {
-		unet_timeout = usec;
-		
-		if(unet_timeout<min_timer) unet_timeout=min_timer;
-		DBG(8,"Timer is now %i usecs (wanted: %i usecs)\n",unet_timeout,usec);
-	}
-}
 
 tNetEvent * tUnet::getEvent() {
+	tMutexLock lock(eventMutex);
 	events->rewind();
 	if(events->getNext()==NULL) return NULL;
 	return events->unstackCurrent();
+}
+
+void tUnet::addEvent(tNetEvent *evt)
+{
+	tMutexLock lock(eventMutex);
+	events->add(evt);
 }
 
 tNetSession * tUnet::getSession(tNetSessionIte &t) {
@@ -418,7 +413,11 @@ tNetSessionIte tUnet::netConnect(const char * hostname,uint16_t port,uint8_t val
 This function recieves new packets and passes them to the correct session, and
 it also is responsible for the timer: It will wait exactly unet_sec seconds and unet_usec microseconds
 before it asks each session to do what it has to do (tUnet::doWork) */
-int tUnet::Recv() {
+int tUnet::sendAndWait() {
+	// send old messages and calulate timeout
+	unsigned int unet_timeout = processSendQueues();
+	if (unet_timeout < 500) unet_timeout = 500; // don't sleep less than 0.5 milliseconds
+	
 	ssize_t n;
 	uint8_t buf[INC_BUF_SIZE]; //internal rcv buffer
 	
@@ -468,9 +467,6 @@ int tUnet::Recv() {
 	if (valret) { DBG(9,"Data recieved...\n"); } 
 	else { DBG(9,"No data recieved...\n"); }
 #endif
-	
-	//Here, the old netcore performed some work (ack check, retransmission, timeout, pending paquets to send...)
-	doWork(); // this will also set the idle state and the timeout for the next round
 
 	DBG(9,"Before recvfrom\n");
 #ifdef __WIN32__
@@ -538,7 +534,7 @@ int tUnet::Recv() {
 		//process the message, and do the correct things with it
 		memcpy(session->sockaddr,&client,sizeof(struct sockaddr_in));
 		try {
-			session->processMsg(buf,n);
+			session->processIncomingMsg(buf,n);
 		} catch(txProtocolError &t) {
 			this->err->log("%s Protocol Error %s\nBacktrace:%s\n",session->str().c_str(),t.what(),t.backtrace());
 			return UNET_ERR;
@@ -549,20 +545,17 @@ int tUnet::Recv() {
 		}
 
 	}
-	if(!events->isEmpty()) idle=false; // we are not really idle if we still have stuff to do
 	
 	//END CRITICAL REGION
 	
 	return UNET_OK;
 }
 
-/** give each session the possibility to do some stuff and to set the timeout and the idle state
-Each session HAS to set the timeout it needs because it is reset prior to asking them.
-If all sessions are idle, the netcore is it as well */
-void tUnet::doWork() {
-	idle=true;
+/** give each session the possibility to do some stuff and to set the timeout
+Each session HAS to set the timeout it needs because it is reset prior to asking them. */
+unsigned int tUnet::processSendQueues() {
 	// reset the timer
-	unet_timeout=idle_timer*1000*1000;
+	unsigned int unet_timeout=max_sleep;
 	
 	tNetSession * cur;
 	smgr->rewind();
@@ -575,13 +568,12 @@ void tUnet::doWork() {
 				sec->log("%s Timeout (didn't send a packet for %d seconds)\n",cur->str().c_str(),cur->conn_timeout);
 			tNetSessionIte ite(cur->ip,cur->port,cur->sid);
 			tNetEvent * evt=new tNetEvent(ite,UNET_TIMEOUT);
-			events->add(evt);
+			addEvent(evt);
 		} else {
-			cur->doWork();
-			if(!cur->idle) idle=false;
-			else cur->checkAlive();
+			unet_timeout = std::min(cur->processSendQueues(), unet_timeout);
 		}
 	}
+	return unet_timeout;
 }
 
 /** sends the message (internal use only)

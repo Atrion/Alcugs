@@ -31,6 +31,7 @@
 
 #include "netmsgq.h"
 #include <alctypes.h>
+#include <alcutil/alcthread.h>
 
 #include <netinet/in.h>
 
@@ -103,49 +104,40 @@ public:
 	void setFlags(uint16_t flags);
 	void unsetFlags(uint16_t flags);
 	uint16_t getFlags();
-	void startOp();
-	void stopOp();
 	void dump(tLog * f=NULL,uint8_t flags=0x01);
 	tNetSession * getSession(tNetSessionIte &t);
-	//
-	void setIdleTimer(unsigned int timer) {
-		if(timer!=0) this->idle_timer=timer;
-	}
 	void setBindPort(uint16_t lport); //lport in host order
 	void setBindAddress(const tString & lhost);
-	void send(alc::tmMsgBase& m, unsigned int delay = 0); //!< delay is in msecs
+	void send(alc::tmMsgBase& m, unsigned int delay = 0); //!< delay is in msecs - may be called in worker thread
 
 protected:
+	void startOp();
+	void stopOp();
 	void openLogfiles();
 	void destroySession(tNetSessionIte &t);
-	void updateTimerRelative(unsigned int usecs);
-	inline void updateTimerAbs(unsigned int usecs) { updateTimerRelative(usecs-net_time); }
 	tNetSessionIte netConnect(const char * hostname,uint16_t port,uint8_t validation,uint8_t flags,uint8_t peerType=0);
-	int Recv();
+	int sendAndWait(); //!< send enqueued messages, wait, and receive packets and enqueue them (wait time must be set by processQueues()!)
 	time_t getTime() { return ntime.seconds; }
-	//max resolution 15 minutes
-	uint32_t getNetTime() { return net_time; }
 	tNetEvent * getEvent();
 	
 	virtual bool canPortBeUsed(uint16_t /*port*/) { return false; }
 
 private:
 	void init();
-	void doWork();
+	unsigned int processSendQueues(); //!< send messages from the sessions' send queues - also updates the timeouts for the next wait \return the time in usec we should wait before processing again
 	
 	void neterror(const char * msg);
 	
 	void updateNetTime();
 	
-	void basesend(tNetSession * u,tmBase & m);
+	void addEvent(tNetEvent *evt);
 	void rawsend(tNetSession * u,tUnetUruMsg * m);
 
 // properties
 protected:
-	bool idle; //!< true if all session are idle
-
 	unsigned int conn_timeout; //!< default timeout (to disconnect a session) (seconds) [5 secs]
 	unsigned int msg_timeout; //!< default timeout when the send clock expires (re-transmission) (microseconds)
+	unsigned int max_sleep; //!< maximum time we sleep in the receive function (microseconds)
 
 	unsigned int max; //!< Maxium number of connections (default 0, unlimited)
 	tNetSessionMgr * smgr; //!< session MGR
@@ -197,7 +189,6 @@ private:
 
 	tTime ntime; //!< current time
 	unsigned int net_time; //!< current time (in usecs) [resolution of 15 minutes] (relative)
-	unsigned int idle_timer; //!< maximum time between two odle operations (sec)
 	
 #ifdef __WIN32__
 	WSADATA ws; //!< The winsock stack
@@ -210,9 +201,9 @@ private:
 	struct sockaddr_in server; //!< Server sockaddr
 	
 	uint16_t flags; //!< unet flags, explained -^
-	unsigned int unet_timeout; //!< netcore timeout to do another loop (microseconds)
 	
 	tUnetMsgQ<tNetEvent> * events; //!< event queue
+	tMutex eventMutex;
 
 	FORBID_CLASS_COPY(tUnet)
 };

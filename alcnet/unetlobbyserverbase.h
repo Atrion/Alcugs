@@ -46,7 +46,7 @@ public:
 	inline const tString &getName() { return serverName; }
 protected:
 	virtual void onStart(void);
-	virtual void onIdle(bool idle);
+	virtual void onIdle();
 	virtual int onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u);
 	virtual void onForwardPing(tmPing &ping, tNetSession *u);
 	virtual void onConnectionClosing(tNetSession *u, uint8_t reason);

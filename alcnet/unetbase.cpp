@@ -48,7 +48,7 @@
 
 namespace alc {
 
-tUnetBase::tUnetBase(uint8_t whoami) :tUnet(whoami), running(true) {
+tUnetBase::tUnetBase(uint8_t whoami) :tUnet(whoami), running(true), workerThread(this) {
 	alcUnetGetMain()->setNet(this);
 	tString var;
 	tConfig * cfg;
@@ -77,7 +77,7 @@ void tUnetBase::applyConfig() {
 	//Sets the idle timer
 	var=cfg->getVar("net.timer","global");
 	if(!var.isEmpty()) {
-		setIdleTimer(var.asUInt());
+		max_sleep = var.asUInt()*1000*1000;
 	}
 #ifdef ENABLE_THREADS
 	//Set pool size
@@ -258,6 +258,46 @@ void tUnetBase::removeConnection(tNetSession *u)
 	delete ev;
 }
 
+// main thread loop: handles the socket, fills the working queue, starts and stops threads
+void tUnetBase::run() {
+	applyConfig();
+	startOp();
+	onStart();
+	
+	workerThread.spawn();
+	
+	while(running) {
+		sendAndWait();
+	}
+
+	// Uru clients need to be kicked first - messages might be sent to other servers as a reaction
+	terminatePlayers();
+	sendAndWait(); // do one round of waiting
+	
+	//terminating the service
+	terminateAll();
+	
+	time_t shutdownInitTime=getTime();
+	max_sleep = std::min(max_sleep, 500u*1000); // do not wait longer than 0.5 seconds so that we do not miss the stop timeout
+	while(!smgr->empty() && (getTime()-shutdownInitTime)<stop_timeout) {
+		sendAndWait();
+	}
+	
+	if(!smgr->empty()) {
+		err->log("ERR: Session manager is not empty!\n");
+		smgr->rewind();
+		tNetSession * u;
+		while((u=smgr->getNext())) {
+			removeConnection(u);
+		}
+	}
+	
+	onStop();
+	stopOp();
+	log->log("INF: Service sanely terminated\n");
+}
+
+// worker thread dispatch function
 void tUnetBase::processEventQueue(bool shutdown)
 {
 	tNetEvent *evt;
@@ -350,46 +390,6 @@ void tUnetBase::processEventQueue(bool shutdown)
 	sec->flush();
 }
 
-// main event processing loop - blocks
-void tUnetBase::run() {
-	applyConfig();
-	startOp();
-	onStart();
-
-	while(running) {
-		Recv();
-		processEventQueue(/*shutdown*/false);
-		onIdle(idle);
-	}
-
-	// Uru clients need to be kicked first - messages might be sent to other servers as a reaction
-	terminatePlayers();
-	processEventQueue(/*shutdown*/true);
-	
-	//terminating the service
-	terminateAll();
-	
-	time_t shutdownInitTime=getTime();
-	while(!smgr->empty() && (getTime()-shutdownInitTime)<stop_timeout) {
-		updateTimerRelative(100000); // make sure we don't wait longer than this (0.1 seconds)
-		Recv();
-		processEventQueue(/*shutdown*/true);
-	}
-	
-	if(!smgr->empty()) {
-		err->log("ERR: Session manager is not empty!\n");
-		smgr->rewind();
-		tNetSession * u;
-		while((u=smgr->getNext())) {
-			removeConnection(u);
-		}
-	}
-	
-	onStop();
-	stopOp();
-	log->log("INF: Service sanely terminated\n");
-}
-
 int tUnetBase::parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown)
 {
 	switch(msg->cmd) {
@@ -429,5 +429,19 @@ int tUnetBase::parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown)
 	}
 	return 0;
 }
+
+tUnetWorkerThread::tUnetWorkerThread(tUnetBase* unet): tThread(), unet(unet)
+{
+
+}
+
+void tUnetWorkerThread::main(void)
+{
+	while (true) { // FIXME: sleep when queue is empty
+		unet->processEventQueue(false); // FIXME shutdown?
+		unet->onIdle();
+	}
+}
+
 
 } //end namespace

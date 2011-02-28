@@ -41,7 +41,7 @@ namespace alc {
 		virtual ~tUnetAuthServer() { delete authBackend; }
 	protected:
 		virtual int onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u);
-		virtual void onIdle(bool /*idle*/) { authBackend->checkTimeout(); }
+		virtual void onIdle() { authBackend->checkTimeout(); }
 		virtual void onApplyConfig() {
 			delete authBackend;
 			authBackend = new tAuthBackend;
