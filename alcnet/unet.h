@@ -69,9 +69,9 @@ namespace alc {
 #define UNET_TIMEOUT 3 /* !< Connection to peer has ended the timer */
 #define UNET_TERMINATED 4 /* !< Connection to peer terminated */
 #define UNET_FLOOD 5 /* !< This event occurs when a player is flooding the server */
-//note events UNET_FLOOD, UNET_TERMINATED, UNET_NEWCONN, and UNET_MSGRCV always contain
-// a new incoming message (from the affected peer), if the size of it is non-zero.
-//other events don't contain an incomming message, and the message size will be always zero
+#define UNET_SHUTDOWN_MODE 6 // internal use: tells the worker thread that server shutdown began
+#define UNET_KILL_WORKER 7 // internal use: tells the worker thread that it should exit
+// only event UNET_MSGRCV will contain a new incoming message (from the affected peer).
 
 //! Urunet flags
 #define UNET_NBLOCK   0x0001 /* non-blocking socket */
@@ -105,10 +105,10 @@ public:
 	void unsetFlags(uint16_t flags);
 	uint16_t getFlags();
 	void dump(tLog * f=NULL,uint8_t flags=0x01);
-	tNetSession * getSession(tNetSessionIte &t);
+	tNetSession * sessionByIte(tNetSessionIte &t);
 	void setBindPort(uint16_t lport); //lport in host order
 	void setBindAddress(const tString & lhost);
-	void send(alc::tmMsgBase& m, unsigned int delay = 0); //!< delay is in msecs - may be called in worker thread
+	void send(alc::tmMsgBase& m, tNetTimeDiff delay = 0); //!< delay is in msecs - may be called in worker thread
 
 protected:
 	void startOp();
@@ -117,30 +117,36 @@ protected:
 	void destroySession(tNetSessionIte &t);
 	tNetSessionIte netConnect(const char * hostname,uint16_t port,uint8_t validation,uint8_t flags,uint8_t peerType=0);
 	int sendAndWait(); //!< send enqueued messages, wait, and receive packets and enqueue them (wait time must be set by processQueues()!)
-	time_t getTime() { return ntime.seconds; }
 	tNetEvent * getEvent();
+	virtual void addEvent(tNetEvent *evt);
+	void clearEventQueue(); // use this only if you really know what you do - will loose incoming messages and whatnot!
+	tNetTime getNetTime() { return net_time; }
 	
 	virtual bool canPortBeUsed(uint16_t /*port*/) { return false; }
+	
+	tNetSession *sessionBySid(size_t n);
+	tNetSession *sessionByKi(uint32_t ki);
+	bool sessionListEmpty();
 
 private:
 	void init();
-	unsigned int processSendQueues(); //!< send messages from the sessions' send queues - also updates the timeouts for the next wait \return the time in usec we should wait before processing again
+	tNetTimeDiff processSendQueues(); //!< send messages from the sessions' send queues - also updates the timeouts for the next wait \return the time in usec we should wait before processing again
 	
 	void neterror(const char * msg);
 	
 	void updateNetTime();
 	
-	void addEvent(tNetEvent *evt);
 	void rawsend(tNetSession * u,tUnetUruMsg * m);
 
 // properties
 protected:
 	unsigned int conn_timeout; //!< default timeout (to disconnect a session) (seconds) [5 secs]
-	unsigned int msg_timeout; //!< default timeout when the send clock expires (re-transmission) (microseconds)
-	unsigned int max_sleep; //!< maximum time we sleep in the receive function (microseconds)
+	tNetTimeDiff msg_timeout; //!< default timeout when the send clock expires (re-transmission) (microseconds)
+	tNetTimeDiff max_sleep; //!< maximum time we sleep in the receive function (microseconds)
 
 	unsigned int max; //!< Maxium number of connections (default 0, unlimited)
-	tNetSessionMgr * smgr; //!< session MGR
+	tNetSessionMgr * smgr; //!< session MGR - get below mutex before accessing it! FIXME: apply this everywhere
+	tMutex smgrMutex; //!< must never be taken when event list is already taken!
 
 	uint8_t whoami; //!< type of _this_ server
 
@@ -163,7 +169,7 @@ protected:
 	
 	//flood control
 	unsigned int max_flood_pkts;
-	unsigned int flood_check_sec;
+	tNetTimeDiff flood_check_interval;
 	
 	unsigned int receiveAhead; //!< number of future messages to receive and cache
 	
@@ -187,8 +193,7 @@ private:
 	uint8_t max_version; //!< default protocol version
 	uint8_t min_version; //!< default protocol version
 
-	tTime ntime; //!< current time
-	unsigned int net_time; //!< current time (in usecs) [resolution of 15 minutes] (relative)
+	tNetTime net_time; //!< current netcore time (in usecs) [resolution of 15 minutes] (relative)
 	
 #ifdef __WIN32__
 	WSADATA ws; //!< The winsock stack
@@ -202,8 +207,8 @@ private:
 	
 	uint16_t flags; //!< unet flags, explained -^
 	
-	tUnetMsgQ<tNetEvent> * events; //!< event queue
-	tMutex eventMutex;
+	tUnetMsgQ<tNetEvent> * events; //!< event queue - get below mutex before accessing it!
+	tMutex eventsMutex;
 
 	FORBID_CLASS_COPY(tUnet)
 };

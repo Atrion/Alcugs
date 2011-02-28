@@ -24,6 +24,7 @@
 *                                                                              *
 *******************************************************************************/
 
+#define _DBG_LEVEL_ 10
 #include <alcdefs.h>
 #include <unetbase.h>
 #include <unetmain.h>
@@ -40,7 +41,7 @@ static const size_t maxSize = 250*1000;
 
 void parameters_usage() {
 	puts(alcVersionText());
-	printf("Usage: urumsgtest peer:port [options]\n\n\
+	printf("Usage: alcmsgtest peer:port [options]\n\n\
  -f x: Set the file to upload\n\
  -z: Compress the file\n\
  -val x: set validation level (0-3) (default 2)\n\
@@ -151,7 +152,7 @@ tUnetSimpleFileServer::tUnetSimpleFileServer(const tString &lhost,uint16_t lport
 	this->setBindPort(lport);
 	this->setBindAddress(lhost);
 	this->listen=listen;
-	max_sleep = 500*1000; // set down max_sleep timer (FIXME: why?)
+	//max_sleep = 500*1000; // set down max_sleep timer (FIXME: why?)
 	d_port=5000;
 	validation=2;
 	urgent=false;
@@ -180,14 +181,16 @@ void tUnetSimpleFileServer::onStart() {
 
 void tUnetSimpleFileServer::onIdle() {
 	if (!listen) {
+		DBG(5, "OnIdle called\n");
+		tNetSession * u=NULL;
+		u=sessionByIte(dstite);
+		if (u==NULL) {
+			stop();
+			return;
+		}
 		if (!sent) {
-			tNetSession * u=NULL;
-			u=getSession(dstite);
-			if (u==NULL) {
-				stop();
-				return;
-			}
 			if (!u->isConnected()) return;
+			DBG(5, "Starting to send\n");
 			tFBuf f1(file.c_str());
 			size_t size;
 			bool first = true;
@@ -208,13 +211,14 @@ void tUnetSimpleFileServer::onIdle() {
 			sentBytes = compressed ? 0 : f1.size();
 			sent=true;
 			startTime.setToNow();
-		} else { // FIXME only really stop if completely done
+		} else if (!u->anythingToSend()) { // message sent, and nothing more left in the buffers
 			if (sentBytes) {
 				tTime diff;
 				diff.setToNow();
 				diff = diff-startTime;
 				printf("Sent %d Bytes with %f kBit/s in %s\n", sentBytes, sentBytes*8/diff.asDouble()/1000, diff.str(0x01).c_str());
 			}
+			DBG(5, "Finished, going down\n");
 			stop();
 		}
 	}
@@ -269,6 +273,9 @@ int main(int argc,char * argv[]) {
 	
 	//options
 	bool listen=false,nlogs=false,urgent=false,compress=false;
+	
+	//start Alcugs library (before parsing params, or license text won't work!)
+	tAlcUnetMain alcMain("Client");
 
 	//parse parameters
 	for (i=1; i<argc; i++) {
@@ -311,8 +318,6 @@ int main(int argc,char * argv[]) {
 		}
 	}
 
-	//start Alcugs library
-	tAlcUnetMain alcMain("Client");
 	try {
 		alcMain.config()->setVar(tString::fromUInt(nlogs), "log.enabled", "global");
 		alcMain.config()->setVar(tString::fromUInt(loglevel), "verbose_level", "global");

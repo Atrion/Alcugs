@@ -63,17 +63,17 @@ public:
 	size_t getHeaderSize();
 	tNetSessionIte getIte();
 	time_t onlineTime(void);
-	void send(tmBase &msg, unsigned int delay = 0); //!< delay is in msecs - may be called in worker thread
+	void send(tmBase &msg, tNetTimeDiff delay = 0); //!< delay is in msecs - may be called in worker thread
 	void terminate(int tout);
 	void setAuthData(uint8_t accessLevel, const tString &passwd);
 	
-	inline void setTimeout(unsigned int tout) { conn_timeout=tout; }
+	inline void setTimeout(unsigned int tout) { conn_timeout=tout*1000*1000; } //!< set timeout (in seconds)
 	inline void challengeSent(void) { if (authenticated == 0) authenticated = 10; }
 	inline void setRejectMessages(bool reject) { rejectMessages = reject; }
 	
 	inline int getSid(void) { return sid; }
 	inline uint8_t getPeerType() { return whoami; }
-	inline unsigned int getRTT() { return rtt; }
+	inline tNetTimeDiff getRTT() { return rtt; }
 	inline bool isConnected() { return cabal!=0; }
 	inline uint32_t getIp(void) { return ip; }
 	inline uint16_t getPort(void) { return port; }
@@ -85,27 +85,27 @@ public:
 	inline void setTypeToGame() { whoami = KGame; }
 	inline bool isAlcugsServer()
 		{ return whoami == KLobby || whoami == KGame || whoami == KVault || whoami == KAuth || whoami == KTracking; }
+	inline bool anythingToSend() { return !ackq->isEmpty() || !sndq->isEmpty(); }
 
 private:
 	void init();
 	inline void resetMsgCounters(void);
 	void processIncomingMsg(void * buf,size_t size); //!< we received a message
-	unsigned int processSendQueues(); //!< send what is in our queues
+	tNetTimeDiff processSendQueues(); //!< send what is in our queues
 
 	void createAckReply(tUnetUruMsg &msg);
-	unsigned int ackUpdate(); //!< return the maximum wait time before we have to check again
+	tNetTimeDiff ackUpdate(); //!< return the maximum wait time before we have to check again
 	void ackCheck(tUnetUruMsg &msg);
 	
 	void acceptMessage(tUnetUruMsg *msg);
 	void queueReceivedMessage(tUnetUruMsg *msg);
 	void checkQueuedMessages(void);
-	void checkAlive(void);
 
 	inline int8_t compareMsgNumbers(uint32_t sn1, uint8_t fr1, uint32_t sn2, uint8_t fr2);
-	void updateRTT(unsigned int newread);
+	void updateRTT(tNetTimeDiff newread);
 	void increaseCabal();
 	void decreaseCabal(bool small);
-	unsigned int timeToSend(size_t psize);
+	tNetTimeDiff timeToSend(size_t psize);
 	
 	void negotiate();
 
@@ -153,13 +153,13 @@ private:
 	tUnetMsg *rcv; //!< The place to assemble a fragmented message
 
 	//flood control
-	unsigned int flood_last_check;
+	tNetTime flood_last_check;
 	unsigned int flood_npkts;
 	
-	tTime timestamp; //!< last time we got something from this client
-	tTime nego_stamp; //!< initial negotiation stamp
+	tNetTime activity_stamp; //!< last time we got something from this client
+	tTime nego_stamp; //!< initial negotiation stamp (FIXME: use tNetTime for this and the next? does the resolution suffice?)
 	tTime renego_stamp; //!< remote nego stamp (stamp of last nego we got)
-	unsigned int conn_timeout; //!< time after which the session will timeout (in secs)
+	tNetTimeDiff conn_timeout; //!< time after which the session will timeout (in microseconds)
 	bool negotiating; //!< set to true when we are waiting for the answer of a negotiate we sent
 	
 	tString passwd; //!< peer passwd hash (used in V2) (string)
@@ -169,10 +169,10 @@ private:
 	unsigned int minBandwidth, maxBandwidth; //!< min(client's upstream, our downstream) and max(client's upstream, our downstream) in bytes/s
 	unsigned int cabal; //!< cur avg bandwidth (in bytes per second), can't be > maxBandwidth, will grow slower when > minBandwith
 	
-	unsigned int next_msg_time; //!< time to send next msg in usecs (referring to tUnet::net_time)
-	unsigned int rtt; //!< round trip time, used to caluclate timeout
+	tNetTime next_msg_time; //!< time to send next msg in usecs (referring to tUnet::net_time)
+	tNetTimeDiff rtt; //!< round trip time, used to caluclate timeout
 	int deviation; //!< used to calculate timeout
-	unsigned int msg_timeout; //!< time after which a message is re-sent
+	tNetTimeDiff msg_timeout; //!< time after which a message is re-sent
 	
 	// queues
 	tUnetMsgQ<tUnetAck> *ackq; //!< ack queue, saves acks to be packed

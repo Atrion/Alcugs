@@ -44,7 +44,7 @@ namespace alc {
 }
 
 void parameters_usage() {
-	printf("Usage: uru_service [-VDhfl] [-v n] [-p 5000] [-c uru.conf] [-name AvatarCustomization] [-guid 0000000000000010] [-log logs] [-bcast 1] [-nokill] [-clean] [-oOption1 value1] [-oOption2 value2] ...\n\n\
+	printf("Usage: alcugs_service [-VDhfl] [-v n] [-p 5000] [-c uru.conf] [-name AvatarCustomization] [-guid 0000000000000010] [-log logs] [-bcast 1] [-nokill] [-clean] [-oOption1 value1] [-oOption2 value2] ...\n\n\
  -V: show version and end\n\
  -D: Daemon mode\n\
  -v 3: Set Verbose level\n\

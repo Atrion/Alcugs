@@ -89,7 +89,7 @@ namespace alc {
 	{
 		if (u->getPeerType() == KAuth || u->getPeerType() == KTracking || u->getPeerType() == KVault) { // we got a ping reply from one of our servers, let's forward it to the client it came from
 			if (!ping.hasFlags(plNetSid)) throw txProtocolError(_WHERE("SID flag missing"));
-			tNetSession *client = smgr->get(ping.sid);
+			tNetSession *client = sessionBySid(ping.sid);
 			if (client) {
 				tmPing pingFwd(client, ping);
 				pingFwd.unsetRouteInfo();
@@ -110,8 +110,7 @@ namespace alc {
 	
 	bool tUnetLobbyServerBase::setActivePlayer(tNetSession *u, uint32_t ki, uint32_t x, const tString &avatar)
 	{
-		tNetSession *client = smgr->findByKi(ki);
-		smgr->rewind();
+		tNetSession *client = sessionByKi(ki);
 		if (client && client->getPeerType() == KClient) { // an age cannot host the same avatar multiple times
 			if (u != client) // it could be the same session for which the active player is set twice for some reason
 				terminate(client, RLoggedInElsewhere);
@@ -214,7 +213,7 @@ namespace alc {
 		}
 		
 		tNetSessionIte ite = netConnect(host.c_str(), port.asUInt(), 3 /* Alcugs upgraded protocol */, 0, dst);
-		tNetSession *session = getSession(ite);
+		tNetSession *session = sessionByIte(ite);
 		
 		// sending a NetMsgAlive is not necessary, the netConnect will already start the negotiation process
 		
@@ -233,13 +232,13 @@ namespace alc {
 		tNetSession *session = NULL;
 		switch (dst) {
 			case KAuth:
-				session = getSession(authIte);
+				session = sessionByIte(authIte);
 				break;
 			case KTracking:
-				session = getSession(trackingIte);
+				session = sessionByIte(trackingIte);
 				break;
 			case KVault:
-				session = getSession(vaultIte);
+				session = sessionByIte(vaultIte);
 				break;
 		}
 		if (session && !session->isTerminated()) {
@@ -364,7 +363,7 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, authResponse.str().c_str());
 				
 				// find the client's session
-				tNetSession *client = smgr->get(authResponse.sid);
+				tNetSession *client = sessionBySid(authResponse.sid);
 				// verify account name and session state
 				if (!client || client->getAuthenticated() != 10 || client->getPeerType() != 0 || client->name != authResponse.login) {
 					err->log("ERR: Got CustomAuthResponse for player %s but can't find his session.\n", authResponse.login.c_str());
@@ -449,7 +448,7 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, kiChecked.str().c_str());
 				
 				// find the client's session
-				tNetSession *client = smgr->get(kiChecked.sid);
+				tNetSession *client = sessionBySid(kiChecked.sid);
 				// verify GUID and session state
 				if (!client || client->getPeerType() != KClient || u->ki != 0 || memcmp(client->uid, kiChecked.uid, 16) != 0) {
 					err->log("ERR: Got NetMsgCustomVaultKiChecked for player with UID %s but can't find his session.\n", alcGetStrUid(kiChecked.uid).c_str());
@@ -492,7 +491,7 @@ namespace alc {
 					
 					vaultMsg.message.get(parsedMsg);
 					
-					tNetSession *client = smgr->findByKi(vaultMsg.ki);
+					tNetSession *client = sessionByKi(vaultMsg.ki);
 					if (!client || client->getPeerType() != KClient) {
 						lvault.print("<h2 style='color:red'>Packet for unknown client</h2>\n");
 						parsedMsg.print(&lvault, /*clientToServer:*/false, NULL, vaultLogShort);
@@ -614,7 +613,7 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, serverFound.str().c_str());
 				
 				// find the client
-				tNetSession *client = smgr->get(serverFound.sid);
+				tNetSession *client = sessionBySid(serverFound.sid);
 				if (!client || client->getPeerType() != KClient || client->ki != serverFound.ki) {
 					err->log("ERR: I've got to tell player with KI %d about his game server, but can't find his session.\n", serverFound.ki);
 					return 1;
@@ -642,7 +641,7 @@ namespace alc {
 				msg->data.get(playerTerminated);
 				log->log("<RCV> [%d] %s\n", msg->sn, playerTerminated.str().c_str());
 				
-				tNetSession *client = smgr->findByKi(playerTerminated.ki);
+				tNetSession *client = sessionByKi(playerTerminated.ki);
 				if (!client || (client->getPeerType() != KClient && client->getPeerType() != 0)) {
 					err->log("ERR: I've got to kick the player with KI %d but can\'t find his session.\n", playerTerminated.ki);
 					return 1;

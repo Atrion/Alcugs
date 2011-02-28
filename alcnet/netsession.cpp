@@ -30,7 +30,7 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETSESSION_ID "$Id$"
-//#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 3
 #include <alcdefs.h>
 #include "netsession.h"
 
@@ -39,6 +39,8 @@
 #include "netexception.h"
 #include "protocol/umsgbasic.h"
 #include <alcutil/alclog.h>
+#include <alcutil/alcthread.h>
+#include <alcmain.h>
 
 #include <cassert>
 
@@ -47,6 +49,7 @@ namespace alc {
 /* Session */
 tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t sid) {
 	DBG(5,"tNetSession()\n");
+	assert(alcGetSelfThreadId() == alcGetMain()->threadId()); // FIXME is this correct?
 	this->net=net;
 	this->ip=ip;
 	this->port=port;
@@ -94,7 +97,7 @@ void tNetSession::init() {
 	rtt=0;
 	deviation=0;
 	msg_timeout=net->msg_timeout;
-	conn_timeout=net->conn_timeout;
+	conn_timeout=net->conn_timeout*1000*1000;
 	nego_stamp.seconds=0;
 	nego_stamp.microseconds=0;
 	renego_stamp=nego_stamp;
@@ -169,12 +172,12 @@ size_t tNetSession::getMaxDataSize() {
 }
 
 // functions to calculate cabal and rtt
-void tNetSession::updateRTT(unsigned int newread) {
+void tNetSession::updateRTT(tNetTimeDiff newread) {
 	if(rtt==0) rtt=newread;
 	//Jacobson/Karels
-	const int alpha=125; // this is effectively 0.125
-	const int u=2;
-	const int delta=4;
+	const unsigned int alpha=125; // this is effectively 0.125
+	const unsigned int u=2;
+	const unsigned int delta=4;
 	const int diff=newread - rtt;
 	rtt       += (alpha*diff)/1000;
 	deviation += (alpha*(abs(diff)-deviation))/1000;
@@ -201,7 +204,7 @@ void tNetSession::decreaseCabal(bool small) {
 }
 
 /** computes the time we have to wait after sending the given amount of bytes */
-unsigned int tNetSession::timeToSend(size_t psize) {
+tNetTimeDiff tNetSession::timeToSend(size_t psize) {
 	if(psize<4000) {
 		if (cabal) return((psize*1000000)/cabal);
 		return((psize*1000000)/4098);
@@ -218,7 +221,7 @@ tNetSessionIte tNetSession::getIte() {
 /**
 	puts the message in the session's send queue
 */
-void tNetSession::send(tmBase &msg, unsigned int delay) {
+void tNetSession::send(tmBase &msg, tNetTimeDiff delay) { // FIXME make thread-safe
 #ifndef ENABLE_ACKLOG
 	if (!(msg.bhflags & UNetAckReply))
 #endif
@@ -329,7 +332,7 @@ void tNetSession::send(tmBase &msg, unsigned int delay) {
 			//update time to send next message according to cabal
 			if (next_msg_time) next_msg_time += timeToSend(pmsg->size());
 			else next_msg_time = net->net_time + timeToSend(pmsg->size());
-			DBG(5, "%s Packet sent urgently, next one in %d\n", str().c_str(), next_msg_time-net->net_time);
+			DBG(5, "%s Packet sent urgently, next one in %ld\n", str().c_str(), next_msg_time-net->net_time);
 			// if necessary, put in queue as "sent once"
 			if(flags & UNetAckReq) {
 				pmsg->snd_timestamp=net->net_time;
@@ -357,7 +360,7 @@ void tNetSession::send(tmBase &msg, unsigned int delay) {
 void tNetSession::processIncomingMsg(void * buf,size_t size) {
 	DBG(5,"Message of %li bytes\n",size);
 	//stamp
-	timestamp=net->ntime;
+	activity_stamp = net->net_time;
 	
 	// when authenticated == 2, we don't expect an encoded packet, but sometimes, we get one. Since alcUruValidatePacket will try to
 	// validate the packet both with and without passwd if possible, we tell it to use the passwd whenever we have one - as a result,
@@ -426,7 +429,7 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 					clientMsg.ps = msg->ps; // the nego marks the beginning of a new connection, so accept everything from here on
 					clientMsg.pfr = msg->pfr;
 				}
-				if(nego_stamp.seconds==0) nego_stamp=timestamp;
+				if(nego_stamp.seconds==0) nego_stamp.setToNow();
 				negotiate();
 			}
 			cabal=0; // re-determine cabal with the new bandwidth
@@ -456,7 +459,7 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 	} else if (!isConnected()) { // we did not yet negotiate
 		if(!negotiating) { // and we are not in the process of doing it - so start that process
 			net->log->log("%s WARN: Obviously a new connection was started with something different than a nego\n", str().c_str());
-			nego_stamp=timestamp;
+			nego_stamp.setToNow();
 			negotiate();
 			clientMsg.ps = msg->ps; // this message is the beginning of a new connection, so accept everything from here on
 			clientMsg.pfr = msg->pfr;
@@ -471,7 +474,7 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 		net->log->log("%s WARN: Congratulations! You have reached the maxium allowed sequence number, don't worry, this is not an error\n", str().c_str());
 		net->log->flush();
 		resetMsgCounters();
-		nego_stamp=timestamp;
+		nego_stamp.setToNow();
 		renego_stamp.seconds=0;
 		negotiate();
 	}
@@ -519,8 +522,8 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 		else if (ret == 0) {
 			//flood control
 			if((msg->tf & UNetAckReq) && (msg->frn==0) && (net->flags & UNET_FLOODCTR)) {
-				if(net->ntime.seconds - flood_last_check > net->flood_check_sec) {
-					flood_last_check=net->ntime.seconds;
+				if(net->net_time - flood_last_check > net->flood_check_interval) {
+					flood_last_check=net->net_time;
 					flood_npkts=0;
 				} else {
 					flood_npkts++;
@@ -642,7 +645,7 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	ack->B=msg.cps;
 	
 	//we must delay either none or all messages, otherwise the rtt will vary too much
-	unsigned int ackWaitTime=timeToSend((msg.frt-msg.frn+1) * maxPacketSz); // this is how long transmitting the whole packet will approximately take
+	tNetTimeDiff ackWaitTime=timeToSend((msg.frt-msg.frn+1) * maxPacketSz); // this is how long transmitting the whole packet will approximately take
 	if(ackWaitTime > msg_timeout/4) ackWaitTime=msg_timeout/4; // don't use the rtt as basis, it is 0 at the beginning, resulting in a much too quick first answer, a much too low rtt on the other side and thus the packets being re-sent too early
 	ack->timestamp=net->net_time + ackWaitTime;
 	// the net timer will be updated when the ackq is checked (which is done since processMsg will call doWork after calling createAckReply)
@@ -733,9 +736,9 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 }
 
 /** puts acks from the ackq in the sndq */
-unsigned int tNetSession::ackUpdate() {
+tNetTimeDiff tNetSession::ackUpdate() {
 	const size_t maxacks=30;
-	unsigned int timeout = -1; // -1 is biggest possible value
+	tNetTimeDiff timeout = -1; // -1 is biggest possible value
 	if (ackq->len() == 0) return timeout;
 	
 	ackq->rewind();
@@ -744,7 +747,7 @@ unsigned int tNetSession::ackUpdate() {
 		tmNetAck ackMsg(this);
 		while (ack) {
 			if (ack->timestamp > net->net_time) {
-				timeout = std::min(timeout, ack->timestamp - net->net_time); // come back when we want to process this ack
+				timeout = std::min(timeout, static_cast<tNetTimeDiff>(ack->timestamp - net->net_time)); // come back when we want to process this ack
 				ack = ackq->getNext();
 			}
 			else {
@@ -792,7 +795,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 					   with other packets and the ack could be sent almost immediately after the packet went in, without the
 					   usual delay so the rtt is much smaller than the average. But I don't expect this to happen often, so I don't
 					   consider that a real problem. */
-					unsigned int crtt=net->net_time-msg->snd_timestamp;
+					tNetTimeDiff crtt=net->net_time-msg->snd_timestamp;
 					#ifdef ENABLE_NETDEBUG
 					crtt+=net->latency;
 					#endif
@@ -814,16 +817,24 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 }
 
 /** Send, and re-send messages, update idle state and set netcore timeout (the last is NECESSARY - otherwise, the idle timer will be used) */
-unsigned int tNetSession::processSendQueues()
+tNetTimeDiff tNetSession::processSendQueues()
 {
-	checkAlive(); // generate alive messages
-	unsigned int timeout = ackUpdate(); //generate ack messages (i.e. put them from the ackq to the sndq)
+	// when we are talking to a non-terminated server, send alive messages
+	if (!client && !terminated && (net->net_time - activity_stamp) > (conn_timeout/2)) {
+		tmAlive alive(this);
+		send(alive);
+	}
+	
+	
+	tNetTimeDiff timeout = ackUpdate(); //generate ack messages (i.e. put them from the ackq to the sndq)
 
-	if ((ackq->isEmpty() && sndq->isEmpty()) && terminated) conn_timeout /= 2; // we are done, completely done
+	if (!anythingToSend() && terminated) conn_timeout /= 5; // we are done, completely done - but wait some little more time for possible re-sends
 	
 	// for terminating session, make sure they are cleaned up on time
-	if (terminated)
-	   timeout = std::min(timeout, conn_timeout*1000000);
+	if (terminated) {
+	   timeout = std::min(timeout, conn_timeout);
+	   DBG(3, "Terminated session %s setting timeout %d\n", str().c_str(), timeout);
+	}
 	
 	if(sndq->isEmpty()) {
 		next_msg_time=0;
@@ -842,7 +853,7 @@ unsigned int tNetSession::processSendQueues()
 
 		while(curmsg!=NULL && (cur_quota<quota_max)) {
 			if(curmsg->timestamp<=net->net_time) {
-				DBG(8, "%s %d ok to send a message\n",str().c_str(),net->net_time);
+				DBG(8, "%s %ld ok to send a message\n",str().c_str(),net->net_time);
 				//we can send the message
 				if(curmsg->tf & UNetAckReq) {
 					//send packet
@@ -894,21 +905,21 @@ unsigned int tNetSession::processSendQueues()
 				}
 			} //end time check
 			else {
-				timeout = std::min(timeout, curmsg->timestamp - net->net_time); // come back when we want to send this message
-				DBG(8,"%s %d Too soon (%d) to send a message\n",str().c_str(),net->net_time,curmsg->timestamp-net->net_time);
+				timeout = std::min(timeout, static_cast<tNetTimeDiff>(curmsg->timestamp - net->net_time)); // come back when we want to send this message
+				DBG(8,"%s %ld Too soon (%ld) to send a message\n",str().c_str(),net->net_time,curmsg->timestamp-net->net_time);
 				curmsg = sndq->getNext(); // go on
 			}
 		} //end while
 		// calculate how long it will take us to send what we just sent
-		unsigned int tts=timeToSend(cur_quota);
-		DBG(8,"%s %d tts is now:%i quota:%i,cabal:%i\n",str().c_str(),net->net_time,tts,cur_quota,cabal);
+		tNetTimeDiff tts=timeToSend(cur_quota);
+		DBG(8,"%s %ld tts is now:%i quota:%i,cabal:%i\n",str().c_str(),net->net_time,tts,cur_quota,cabal);
 		next_msg_time=net->net_time + tts;
 		// if there is still something to send, but the quota does not let us, do that ASAP
 		if (curmsg && tts < timeout) timeout = tts;
 	} else {
 		// Still wait before sending a message
-		DBG(8,"%s %d Too soon (%d) to check sndq\n",str().c_str(),net->net_time,next_msg_time-net->net_time);
-		timeout = std::min(timeout, next_msg_time - net->net_time); // come back when we want to send the next message
+		DBG(8,"%s %ld Too soon (%ld) to check sndq\n",str().c_str(),net->net_time,next_msg_time-net->net_time);
+		timeout = std::min(timeout, static_cast<tNetTimeDiff>(next_msg_time - net->net_time)); // come back when we want to send the next message
 	}
 	return timeout;
 }
@@ -931,14 +942,6 @@ void tNetSession::negotiate() {
 	negotiating = true;
 }
 
-void tNetSession::checkAlive(void)
-{	// when we are talking to a non-terminated server, send alive messages
-	if (!client && !terminated && (net->ntime.seconds - timestamp.seconds) > static_cast<time_t>(conn_timeout/2)) {
-		tmAlive alive(this);
-		send(alive);
-	}
-}
-
 time_t tNetSession::onlineTime(void)
 {
 	return alcGetTime()-nego_stamp.seconds;
@@ -946,11 +949,11 @@ time_t tNetSession::onlineTime(void)
 
 void tNetSession::terminate(int tout)
 {
-	conn_timeout = tout;
+	conn_timeout = tout*1000*1000;
 	// FIXME somehow make sure we do not sleep too long?
 	terminated = true;
 	whoami = 0; // it's terminated, so it's no one special anymore
-	timestamp.setToNow();
+	activity_stamp = net->net_time; // FIXME called in worker thread
 }
 
 void tNetSession::setAuthData(uint8_t accessLevel, const tString &passwd)

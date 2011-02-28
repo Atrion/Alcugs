@@ -30,7 +30,7 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_UNET_ID "$Id$"
-//#define _DBG_LEVEL_ 10
+#define _DBG_LEVEL_ 3
 #include <alcdefs.h>
 #include "unet.h"
 
@@ -45,6 +45,7 @@
 #include <unistd.h>
 #include <cstring>
 #include <netdb.h>
+#include <cassert>
 
 // Some of the macros implie an old-style cast
 #pragma GCC diagnostic ignored "-Wold-style-cast"
@@ -112,7 +113,7 @@ void tUnet::init() {
 	nat_up=128 * 1000;
 	nat_down=512 * 1000;
 	
-	flood_check_sec=10;
+	flood_check_interval=10*1000*1000;
 	max_flood_pkts=600; // when first launching a client for an emtpy vault, there are about 100 packets within about 2.5 seconds
 	                    // linking to Noloben is a good testcase (500 per 10 seconds was not enough)
 
@@ -152,13 +153,12 @@ uint16_t tUnet::getFlags() { return this->flags; }
 
 void tUnet::updateNetTime() {
 	//set stamp
-	ntime.setToNow();
-	net_time=(((ntime.seconds % 1000)*1000000)+ntime.microseconds);
+	net_time=static_cast<tNetTime>(alcGetTime())*1000000+alcGetMicroseconds();
 }
 
 
 tNetEvent * tUnet::getEvent() {
-	tMutexLock lock(eventMutex);
+	tMutexLock lock(eventsMutex);
 	events->rewind();
 	if(events->getNext()==NULL) return NULL;
 	return events->unstackCurrent();
@@ -166,17 +166,45 @@ tNetEvent * tUnet::getEvent() {
 
 void tUnet::addEvent(tNetEvent *evt)
 {
-	tMutexLock lock(eventMutex);
+	tMutexLock lock(eventsMutex);
 	events->add(evt);
 }
 
-tNetSession * tUnet::getSession(tNetSessionIte &t) {
-	return(smgr->search(t,false));
+void tUnet::clearEventQueue()
+{
+	tMutexLock lock(eventsMutex);
+	events->clear();
+}
+
+tNetSession *tUnet::sessionBySid(size_t sid)
+{
+	tMutexLock lock(smgrMutex);
+	return smgr->get(sid);
+}
+
+tNetSession *tUnet::sessionByKi(uint32_t ki)
+{
+	tMutexLock lock(smgrMutex);
+	return smgr->findByKi(ki);
+}
+
+tNetSession * tUnet::sessionByIte(tNetSessionIte &t)
+{
+	tMutexLock lock(smgrMutex);
+	return (smgr->search(t,false));
 }
 
 void tUnet::destroySession(tNetSessionIte &t) {
+	tMutexLock lock(smgrMutex);
 	smgr->destroy(t);
 }
+
+bool tUnet::sessionListEmpty()
+{
+	tMutexLock lock(smgrMutex);
+	return smgr->empty();
+}
+
 
 void tUnet::neterror(const char * msg) {
 	if(!initialized) return;
@@ -208,7 +236,7 @@ void tUnet::openLogfiles() {
 	if(elog && (this->flags & UNET_EACKLOG)) {
 		this->ack->open("ack.html",DF_HTML);
 	} else {
-		this->ack->open(DF_HTML);
+		this->ack->open(DF_HTML); // still set correctly flag, so it does not get printed on stdout
 	}
 	
 
@@ -380,7 +408,11 @@ tNetSessionIte tUnet::netConnect(const char * hostname,uint16_t port,uint8_t val
 	ite.port=htons(port);
 	ite.sid=-1;
 	
-	tNetSession * u=smgr->search(ite, true);
+	tNetSession * u;
+	{
+		tMutexLock lock(smgrMutex);
+		u=smgr->search(ite, true);
+	}
 	
 	u->validation=validation;
 	u->cflags |= flags;
@@ -395,15 +427,14 @@ tNetSessionIte tUnet::netConnect(const char * hostname,uint16_t port,uint8_t val
 	client.sin_port=ite.port;
 	memcpy(u->sockaddr,&client,sizeof(struct sockaddr_in));
 	
-	u->timestamp.seconds=alcGetTime();
-	u->timestamp.microseconds=alcGetMicroseconds();
+	u->activity_stamp = net_time;
 	u->client=false;
 	if (peerType) u->whoami = peerType;
 	
 	u->max_version=max_version;
 	u->min_version=min_version;
 	
-	u->nego_stamp=u->timestamp;
+	u->nego_stamp.setToNow();;
 	u->negotiate();
 	
 	return ite;
@@ -415,7 +446,7 @@ it also is responsible for the timer: It will wait exactly unet_sec seconds and 
 before it asks each session to do what it has to do (tUnet::doWork) */
 int tUnet::sendAndWait() {
 	// send old messages and calulate timeout
-	unsigned int unet_timeout = processSendQueues();
+	tNetTimeDiff unet_timeout = processSendQueues();
 	if (unet_timeout < 500) unet_timeout = 500; // don't sleep less than 0.5 milliseconds
 	
 	ssize_t n;
@@ -439,8 +470,10 @@ int tUnet::sendAndWait() {
 	tv.tv_sec = unet_timeout / (1000*1000);
 	tv.tv_usec = unet_timeout % (1000*1000);
 
+#if _DBG_LEVEL_ >= 2
+	log->log("Waiting for %d microseconds...\n", unet_timeout);
+#endif
 #if _DBG_LEVEL_ >= 8
-	DBG(8,"waiting for incoming messages (%u)...\n", unet_timeout);
 	tTime start; start.now();
 #endif
 	valret = select(this->sock+1, &rfds, NULL, NULL, &tv); // this is the command taking the time - now lets process what we got
@@ -526,6 +559,7 @@ int tUnet::sendAndWait() {
 		ite.sid=-1;
 		
 		try {
+			tMutexLock lock(smgrMutex);
 			session=smgr->search(ite, true);
 		} catch(txToMCons) {
 			return UNET_TOMCONS;
@@ -553,16 +587,17 @@ int tUnet::sendAndWait() {
 
 /** give each session the possibility to do some stuff and to set the timeout
 Each session HAS to set the timeout it needs because it is reset prior to asking them. */
-unsigned int tUnet::processSendQueues() {
+tNetTimeDiff tUnet::processSendQueues() {
 	// reset the timer
-	unsigned int unet_timeout=max_sleep;
+	tNetTimeDiff unet_timeout=max_sleep;
 	
 	tNetSession * cur;
+	tMutexLock lock(smgrMutex);
 	smgr->rewind();
 	while((cur=smgr->getNext())) {
 		/* Also create the timeout when it's exactly the same time.
 		  This way the time from a session being marked as deleteable till it is deleted is kept short */
-		if(static_cast<unsigned int>(ntime.seconds) >= cur->conn_timeout + cur->timestamp.seconds) {
+		if(net_time - cur->activity_stamp > cur->conn_timeout) {
 			//timeout event
 			if (!cur->isTerminated())
 				sec->log("%s Timeout (didn't send a packet for %d seconds)\n",cur->str().c_str(),cur->conn_timeout);
@@ -579,6 +614,7 @@ unsigned int tUnet::processSendQueues() {
 /** sends the message (internal use only)
 An uru message can only be 253952 bytes in V0x01 & V0x02 and 254976 in V0x00 */
 void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
+	assert(alcGetSelfThreadId() == alcGetMain()->threadId());
 	struct sockaddr_in client; //client struct
 
 	//copy the inet struct
@@ -682,7 +718,7 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 	DBG(8,"returning from uru_net_send RET:%li\n",msize);
 }
 
-void tUnet::send(tmMsgBase &m, unsigned int delay)
+void tUnet::send(tmMsgBase &m, tNetTimeDiff delay)
 	{ m.getSession()->send(m, delay); }
 
 /**
@@ -696,9 +732,9 @@ void tUnet::dump(tLog * sf,uint8_t flags) {
 	if(sf==NULL) {
 		f=new tLog;
 		if(flags & 0x01) {
-			f->open("memdump.log",5,DF_APPEND);
+			f->open("memdump.log",DF_APPEND);
 		} else {
-			f->open("memdump.log",5,0);
+			f->open("memdump.log",0);
 		}
 		if(f==NULL) return;
 	} else {
@@ -708,27 +744,24 @@ void tUnet::dump(tLog * sf,uint8_t flags) {
 	//well dump all
 	f->log("Starting up Netcore memory report\n\n");
 
-	f->print("Unet at 0x%08X\n",(int)this);
-	f->dumpbuf((Byte *)this,sizeof(*this));
+	f->print("Unet\n");
+	f->dumpbuf(static_cast<const void *>(this),sizeof(*this));
 	f->nl();
 	#ifndef __WIN32__
 	f->print("net->sock:%i\n",this->sock);
 	#endif
 	f->print("net->server.sin_family:%02X\n",this->server.sin_family);
 	f->print("net->server.sin_port:%02X (%i)\n",this->server.sin_port,ntohs(this->server.sin_port));
-	f->print("net->server.sin_addr:%s\n",alcGetStrIp(this->server.sin_addr.s_addr));
+	f->print("net->server.sin_addr:%s\n",alcGetStrIp(this->server.sin_addr.s_addr).c_str());
 	f->print("net->flags:%i\n",this->flags);
-	f->print("net->unet_sec:%i\n",this->unet_sec);
-	f->print("net->unet_usec:%i\n",this->unet_usec);
 	f->print("net->max_version:%i\n",this->max_version);
 	f->print("net->min_version:%i\n",this->min_version);
-	f->print("net->timestamp:%s\n",this->ntime.str());
+	f->print("net->net_time:%ld\n",this->net_time);
 	f->print("net->conn_timeout:%i\n",this->conn_timeout);
-	f->print("net->timeout:%i\n",this->timeout);
 	f->print("net->max:%i\n",this->max);
 	f->print("net->whoami:%i\n",this->whoami);
-	f->print("net->lan_addr:%i %s\n",this->lan_addr,alcGetStrIp(this->lan_addr));
-	f->print("net->lan_mask:%i %s\n",this->lan_mask,alcGetStrIp(this->lan_mask));
+	f->print("net->lan_addr:%i %s\n",this->lan_addr,alcGetStrIp(this->lan_addr).c_str());
+	f->print("net->lan_mask:%i %s\n",this->lan_mask,alcGetStrIp(this->lan_mask).c_str());
 	f->print("net->lan_up:%i\n",this->lan_up);
 	f->print("net->lan_down:%i\n",this->lan_down);
 	f->print("net->nat_up:%i\n",this->nat_up);

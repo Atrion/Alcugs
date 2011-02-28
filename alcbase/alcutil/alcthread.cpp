@@ -81,17 +81,17 @@ void tThread::join() {
 }
 
 tMutex::tMutex() {
-	if(pthread_mutex_init(&id,NULL)!=0) {
+	if(pthread_mutex_init(&id,NULL)) {
 		throw txBase(_WHERE("error creating mutex"));
 	}
 }
 tMutex::~tMutex() {
-	if(pthread_mutex_destroy(&id)!=0) {
+	if(pthread_mutex_destroy(&id)) {
 		throw txBase(_WHERE("error destroying mutex"));
 	}
 }
 void tMutex::lock() {
-	if(pthread_mutex_lock(&id)!=0) {
+	if(pthread_mutex_lock(&id)) {
 		throw txBase(_WHERE("cannot lock mutex"));
 	}
 }
@@ -105,7 +105,7 @@ bool tMutex::trylock() {
 	return true;
 }
 void tMutex::unlock() {
-	if(pthread_mutex_unlock(&id)!=0) {
+	if(pthread_mutex_unlock(&id)) {
 		throw txBase(_WHERE("cannot unlock mutex"));
 	}
 }

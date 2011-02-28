@@ -30,7 +30,7 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_UNETBASE_ID "$Id$"
-//#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 5
 #include <alcdefs.h>
 #include "unetbase.h"
 
@@ -44,11 +44,12 @@
 #include <arpa/inet.h>
 #include <cassert>
 #include <netdb.h>
+#include <pthread.h>
 
 
 namespace alc {
 
-tUnetBase::tUnetBase(uint8_t whoami) :tUnet(whoami), running(true), workerThread(this) {
+tUnetBase::tUnetBase(uint8_t whoami) :tUnet(whoami), running(true), workerThread(this), workerWaiting(false) {
 	alcUnetGetMain()->setNet(this);
 	tString var;
 	tConfig * cfg;
@@ -61,11 +62,16 @@ tUnetBase::tUnetBase(uint8_t whoami) :tUnet(whoami), running(true), workerThread
 	if(!var.isEmpty()) {
 		setBindAddress(var);
 	}
+	
+	if (pthread_cond_init(&eventAddedCond, NULL))
+		throw txBase(_WHERE("Error initializing condition"));
 }
 
 tUnetBase::~tUnetBase() {
 	forcestop();
 	alcUnetGetMain()->setNet(NULL);
+	if (pthread_cond_destroy(&eventAddedCond))
+		throw txBase(_WHERE("Error destroying condition"));
 }
 
 void tUnetBase::applyConfig() {
@@ -156,7 +162,7 @@ void tUnetBase::applyConfig() {
 	}
 	var=cfg->getVar("net.flood_check_sec","global");
 	if(!var.isEmpty()) {
-		flood_check_sec=var.asUInt();
+		flood_check_interval=var.asUInt()*1000*1000;
 	}
 	var=cfg->getVar("net.max_flood_pkts","global");
 	if(!var.isEmpty()) {
@@ -202,14 +208,15 @@ void tUnetBase::stop(time_t timeout) {
 		tConfig * cfg=alcGetMain()->config();
 		var=cfg->getVar("net.stop.timeout","global");
 		if(var.isEmpty()) {
-			stop_timeout=15;
+			stop_timeout=15*1000*1000;
 		} else {
-			stop_timeout=var.asUInt();
+			stop_timeout=var.asUInt()*1000*1000;
 		}
 	}
 	else
-		stop_timeout=timeout;
+		stop_timeout=timeout*1000*1000;
 	running=false;
+	addEvent(new tNetEvent(UNET_SHUTDOWN_MODE));
 }
 
 void tUnetBase::terminate(tNetSession *u, uint8_t reason, bool gotEndMsg)
@@ -225,7 +232,7 @@ void tUnetBase::terminate(tNetSession *u, uint8_t reason, bool gotEndMsg)
 			tmLeave leave(u,u->ki,reason);
 			send(leave);
 		}
-		// Now taht we sent that message, the other side must ack it, then tNetSession will set the timeout to 0
+		// Now that we sent that message, the other side must ack it, then tNetSession will set the timeout to 0
 	}
 	
 	if (!wasTerminated) // don't trigger the event twice
@@ -235,19 +242,24 @@ void tUnetBase::terminate(tNetSession *u, uint8_t reason, bool gotEndMsg)
 		log->log("%s This connection is already terminated, don't wait any longer\n", u->str().c_str());
 		u->terminate(0/*seconds*/);
 	} else { // otherwise, wait some time to send/receive the ack
-		u->terminate(2/*second*/);
-		// In the case that the leave is re-sent because the ack was not received, we are in trouble... the other side will see that as a new connection. tNetSession halves the timeout when the ack is sent, if we set it to 2, there is another second in which re-sends are accepted. */
+		u->terminate(2/*seconds*/);
+		// In the case that the leave is re-sent because the ack was not received, we are in trouble... the other side will see that as a new connection. tNetSession shrinks the timeout when the ack is sent, the rest is waiting time for re-sends */
 	}
 }
 
-void tUnetBase::terminateAll(bool playersOnly)
+bool tUnetBase::terminateAll(bool playersOnly)
 {
+	bool anyTerminated = false;
 	tNetSession *u;
+	tMutexLock lock(smgrMutex);
 	smgr->rewind();
 	while ((u=smgr->getNext())) { // double brackets to suppress gcc warning
-		if (!u->isTerminated() && (!playersOnly ||  u->getPeerType() == KClient)) // avoid sending a NetMsgLeave or NetMsgTerminate to terminated peers
+		if (!u->isTerminated() && (!playersOnly ||  u->getPeerType() == KClient)) { // avoid sending a NetMsgLeave or NetMsgTerminate to terminated peers
 			terminate(u);
+			anyTerminated = true;
+		}
 	}
+	return anyTerminated;
 }
 
 void tUnetBase::removeConnection(tNetSession *u)
@@ -268,26 +280,35 @@ void tUnetBase::run() {
 	
 	while(running) {
 		sendAndWait();
+		onIdle(); // not really "idle"... but called from time to time, and at least every max_sleep microseconds, the latter being important
 	}
-
-	// Uru clients need to be kicked first - messages might be sent to other servers as a reaction
-	terminatePlayers();
-	sendAndWait(); // do one round of waiting
+	max_sleep = std::min(max_sleep, 100u*1000); // from now on, do not wait longer than 0.1 seconds so that we do not miss the stop timeout, and to speed up session deletion
 	
-	//terminating the service
+	// Uru clients need to be kicked first - messages might be sent to other servers as a reaction
+	if (terminatePlayers()) {
+		sendAndWait(); // do one round of sending waiting
+		sendAndWait(); // and another round of sending, so that the messages to the other servers actually go out
+	}
+	
+	// kick remaining peers
 	terminateAll();
 	
-	time_t shutdownInitTime=getTime();
-	max_sleep = std::min(max_sleep, 500u*1000); // do not wait longer than 0.5 seconds so that we do not miss the stop timeout
-	while(!smgr->empty() && (getTime()-shutdownInitTime)<stop_timeout) {
+	tNetTime shutdownInitTime = getNetTime();
+	while(!sessionListEmpty() && (getNetTime()-shutdownInitTime)<stop_timeout) {
 		sendAndWait();
 	}
 	
+	// quit the worker thread
+	clearEventQueue();
+	addEvent(new tNetEvent(UNET_KILL_WORKER));
+	workerThread.join();
+	
+	// cleanup (we are the only thread left, so no locking required anymore)
 	if(!smgr->empty()) {
 		err->log("ERR: Session manager is not empty!\n");
 		smgr->rewind();
 		tNetSession * u;
-		while((u=smgr->getNext())) {
+		while((u=smgr->getNext()) != NULL) {
 			removeConnection(u);
 		}
 	}
@@ -298,96 +319,88 @@ void tUnetBase::run() {
 }
 
 // worker thread dispatch function
-void tUnetBase::processEventQueue(bool shutdown)
+void tUnetBase::processEvent(tNetEvent *evt, bool shutdown)
 {
-	tNetEvent *evt;
-	while ((evt=getEvent())) {
-		tNetSession *u=getSession(evt->sid);
-		if (u != NULL) {
-			switch(evt->id) {
-				case UNET_NEWCONN:
-					sec->log("%s New Connection\n",u->str().c_str());
-					if (shutdown)
+	tNetSession *u=sessionByIte(evt->sid);
+	if (u != NULL) {
+		switch(evt->id) {
+			case UNET_NEWCONN:
+				sec->log("%s New Connection\n",u->str().c_str());
+				if (shutdown)
+					terminate(u);
+				else
+					onNewConnection(u);
+				break;
+			case UNET_TIMEOUT:
+				if (u->isTerminated()) { // a destroyed session, close it
+					removeConnection(u);
+				}
+				else {
+					if (shutdown || onConnectionTimeout(u))
+						terminate(u, RTimedOut);
+				}
+				break;
+			case UNET_FLOOD:
+				sec->log("%s Flood Attack\n",u->str().c_str());
+				if (shutdown || onConnectionFlood(u)) {
+					terminate(u);
+					alcGetMain()->err()->log("%s kicked due to a Flood Attack\n", u->str().c_str());
+				}
+				break;
+			case UNET_MSGRCV:
+			{
+				tUnetMsg * msg = evt->msg;
+				int ret = 0; // 0 - non parsed; 1 - parsed; 2 - ignored; -1 - parse error; -2 - hack attempt
+				#ifdef ENABLE_MSGDEBUG
+				log->log("%s New MSG Recieved\n",u->str().c_str());
+				#endif
+				assert(msg!=NULL);
+				try {
+					ret = parseBasicMsg(msg, u, shutdown);
+					if (ret != 1 && !u->isTerminated() && !shutdown) // if this is an active connection, look for other messages
+						ret = onMsgRecieved(msg, u);
+					if (ret == 1 && !msg->data.eof() > 0) { // packet was processed and there are bytes left, obiously invalid, terminate the client
+						err->log("%s Recieved a message 0x%04X (%s) which was too long (%d Bytes remaining after parsing) - kicking player\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data.remaining());
+						ret = -1;
+					}
+				}
+				catch (txBase &t) { // if there was an error parsing the message, kick the responsible player
+					err->log("%s Recieved invalid 0x%04X (%s) - kicking peer\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+					err->log(" Exception %s\n%s\n",t.what(),t.backtrace());
+					ret=-1;
+				}
+				if(ret==0) {
+					if (u->isTerminated() || shutdown) {
+						err->log("%s is terminated and sent non-NetMsgLeave message 0x%04X (%s)\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
 						terminate(u);
-					else
-						onNewConnection(u);
-					break;
-				case UNET_TIMEOUT:
-					if (u->isTerminated()) { // a destroyed session, close it
-						removeConnection(u);
 					}
 					else {
-						if (shutdown || onConnectionTimeout(u))
-							terminate(u, RTimedOut);
+						err->log("%s Unexpected message 0x%04X (%s) - kicking peer\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
+						sec->log("%s Unexpected message 0x%04X (%s)\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
+						terminate(u, RUnimplemented);
 					}
-					break;
-				case UNET_FLOOD:
-					sec->log("%s Flood Attack\n",u->str().c_str());
-					if (shutdown || onConnectionFlood(u)) {
-						terminate(u);
-						alcGetMain()->err()->log("%s kicked due to a Flood Attack\n", u->str().c_str());
-					}
-					break;
-				case UNET_MSGRCV:
-				{
-					tUnetMsg * msg = evt->msg;
-					int ret = 0; // 0 - non parsed; 1 - parsed; 2 - ignored; -1 - parse error; -2 - hack attempt
-					#ifdef ENABLE_MSGDEBUG
-					log->log("%s New MSG Recieved\n",u->str().c_str());
-					#endif
-					assert(msg!=NULL);
-					try {
-						ret = parseBasicMsg(msg, u, shutdown);
-						if (ret != 1 && !u->isTerminated() && !shutdown) // if this is an active connection, look for other messages
-							ret = onMsgRecieved(msg, u);
-						if (ret == 1 && !msg->data.eof() > 0) { // packet was processed and there are bytes left, obiously invalid, terminate the client
-							err->log("%s Recieved a message 0x%04X (%s) which was too long (%d Bytes remaining after parsing) - kicking player\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data.remaining());
-							ret = -1;
-						}
-					}
-					catch (txBase &t) { // if there was an error parsing the message, kick the responsible player
-						err->log("%s Recieved invalid 0x%04X (%s) - kicking peer\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-						err->log(" Exception %s\n%s\n",t.what(),t.backtrace());
-						ret=-1;
-					}
-					if(ret==0) {
-						if (u->isTerminated() || shutdown) {
-							err->log("%s is terminated and sent non-NetMsgLeave message 0x%04X (%s)\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-							terminate(u);
-						}
-						else {
-							err->log("%s Unexpected message 0x%04X (%s) - kicking peer\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
-							sec->log("%s Unexpected message 0x%04X (%s)\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
-							terminate(u, RUnimplemented);
-						}
-					}
-					else if(ret==-1) {
-						// the problem already got printed to the error log wherever this return value was set
-						sec->log("%s Kicked off due to a parse error in a previus message 0x%04X (%s)\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-						terminate(u, RParseError);
-					}
-					else if(ret==-2) {
-						// the problem already got printed to the error log wherever this return value was set
-						sec->log("%s Kicked off due to cracking 0x%04X (%s)\n",u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-						terminate(u, RHackAttempt);
-					}
-					else if (ret!=1 && ret!=2) {
-						err->log("%s Unknown error in 0x%04X (%s) - kicking peer\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
-						sec->log("%s Unknown error in 0x%04X (%s)\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
-						terminate(u);
-					}
-					break;
 				}
-				default:
-					throw txBase(_WHERE("%s Unknown Event id %i\n",u->str().c_str(),evt->id));
+				else if(ret==-1) {
+					// the problem already got printed to the error log wherever this return value was set
+					sec->log("%s Kicked off due to a parse error in a previus message 0x%04X (%s)\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+					terminate(u, RParseError);
+				}
+				else if(ret==-2) {
+					// the problem already got printed to the error log wherever this return value was set
+					sec->log("%s Kicked off due to cracking 0x%04X (%s)\n",u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+					terminate(u, RHackAttempt);
+				}
+				else if (ret!=1 && ret!=2) {
+					err->log("%s Unknown error in 0x%04X (%s) - kicking peer\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
+					sec->log("%s Unknown error in 0x%04X (%s)\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
+					terminate(u);
+				}
+				break;
 			}
+			default:
+				throw txBase(_WHERE("%s Unknown Event id %i\n",u->str().c_str(),evt->id));
 		}
-		delete evt;
 	}
-	// I don't know how much perforcmance this costs, but without flushing it's not possible to follow the server logs using tail -F
-	log->flush();
-	err->flush();
-	sec->flush();
 }
 
 int tUnetBase::parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown)
@@ -404,7 +417,7 @@ int tUnetBase::parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown)
 			tmLeave msgleave(u);
 			msg->data.get(msgleave);
 			log->log("<RCV> [%d] %s\n",msg->sn,msgleave.str().c_str());
-			/* Ack the current message adn terminate the connection */
+			/* Ack the current message and terminate the connection */
 			terminate(u, msgleave.reason, /*gotEndMsg*/true); // this will delete the session ASAP
 			return 1;
 		}
@@ -414,7 +427,7 @@ int tUnetBase::parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown)
 			tmTerminated msgterminated(u);
 			msg->data.get(msgterminated);
 			log->log("<RCV> [%d] %s\n",msg->sn,msgterminated.str().c_str());
-			/* Ack the current message adn terminate the connection */
+			/* Ack the current message and terminate the connection */
 			terminate(u, msgterminated.reason, /*gotEndMsg*/true);
 			return 1;
 		}
@@ -430,18 +443,52 @@ int tUnetBase::parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown)
 	return 0;
 }
 
-tUnetWorkerThread::tUnetWorkerThread(tUnetBase* unet): tThread(), unet(unet)
+void tUnetBase::addEvent(tNetEvent *evt)
+{
+	tUnet::addEvent(evt);
+	tMutexLock lock(eventAddedMutex);
+	if (workerWaiting) {
+		if (pthread_cond_signal(&eventAddedCond))
+			throw txBase(_WHERE("Error signalling condition"));
+	}
+}
+
+tUnetWorkerThread::tUnetWorkerThread(tUnetBase* unet): tThread(), net(unet)
 {
 
 }
 
 void tUnetWorkerThread::main(void)
 {
-	while (true) { // FIXME: sleep when queue is empty
-		unet->processEventQueue(false); // FIXME shutdown?
-		unet->onIdle();
+	tNetEvent *evt;
+	bool shutdown = false;
+	while (true) {
+		while ((evt=net->getEvent())) {
+			switch (evt->id) {
+				case UNET_SHUTDOWN_MODE:
+					shutdown = true;
+					break;
+				case UNET_KILL_WORKER:
+					delete evt; // do not leak memory
+					pthread_exit(NULL);
+					return;
+				default:
+					net->processEvent(evt, shutdown);
+			}
+			delete evt;
+		}
+		// I don't know how much perforcmance this costs, but without flushing it's not possible to follow the server logs using tail -F
+		net->log->flush();
+		net->err->flush();
+		net->sec->flush();
+		// wait till e got events again
+		tMutexLock lock(net->eventAddedMutex);
+		net->workerWaiting = true;
+		DBG(5, "Worker waiting\n");
+		pthread_cond_wait(&net->eventAddedCond, net->eventAddedMutex.getMutex());
+		DBG(5, "Worker finished waiting\n");
+		net->workerWaiting = false;
 	}
 }
-
 
 } //end namespace

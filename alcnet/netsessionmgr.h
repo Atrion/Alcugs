@@ -111,6 +111,7 @@ private:
 class tNetEvent {
 public:
 	tNetEvent(tNetSessionIte who,int what,tUnetMsg *mymsg=NULL) { sid=who; id=what; next=NULL; msg=mymsg; }
+	tNetEvent(int what) { id=what; next=NULL; msg=NULL; }
 	tNetEvent() { next=NULL; id=0; msg=NULL; }
 	~tNetEvent() { if (msg) delete msg; }
 	tNetSessionIte sid;
