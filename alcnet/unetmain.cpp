@@ -32,9 +32,11 @@
 
 #include "netexception.h"
 #include "unetbase.h"
+#include <alcutil/alcthread.h>
 
 #include <csignal>
 #include <unistd.h>
+#include <cassert>
 
 
 namespace alc {
@@ -75,12 +77,14 @@ bool tAlcUnetMain::onSignal(int s) {
 	try {
 		switch (s) {
 			case SIGHUP: //reload configuration
+				assert(alcGetSelfThreadId() == threadId()); // should only occur in main thread
 				stdLog->log("INF: Re-reading configuration\n\n");
 				loadUnetConfig();
 				return true;
 			case SIGALRM:
 			case SIGTERM:
 			case SIGINT:
+				assert(alcGetSelfThreadId() == threadId()); // should only occur in main thread
 				switch(stateRunning) {
 					case 2:
 						net->stop();
@@ -98,6 +102,7 @@ bool tAlcUnetMain::onSignal(int s) {
 				}
 				break;
 			case SIGUSR1:
+				assert(alcGetSelfThreadId() == threadId()); // should only occur in main thread
 				if(alarmRunning) {
 					stdLog->log("INF: Automatic -Emergency- Shutdown CANCELLED\n\n");
 					alarmRunning=false;
@@ -111,6 +116,7 @@ bool tAlcUnetMain::onSignal(int s) {
 				}
 				return true;
 			case SIGUSR2:
+				assert(alcGetSelfThreadId() == threadId()); // should only occur in main thread
 				stdLog->log("INF: TERMINATED message sent to all players.\n\n");
 				net->terminatePlayers();
 				return true;

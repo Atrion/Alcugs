@@ -34,47 +34,25 @@
 #include "alcdefs.h"
 #include "alcthread.h"
 
+#include <alcexception.h>
+
 #include <cerrno>
-
-#ifdef ENABLE_THREADS
 #include <pthread.h>
-#endif
-
 
 
 namespace alc {
 
 
-uint64_t alcGetSelfThreadId() {
-	#ifdef ENABLE_THREADS
-		#ifdef __WIN32__
-			return GetCurrentThreadId();
-		#else
-			return pthread_self();
-		#endif
-	#else
-	return 0;
-	#endif
+pthread_t alcGetSelfThreadId() {
+	return pthread_self();
 }
 
-#ifndef __WIN32__
-#define THREAD_RET void *
-#else
-#define THREAD_RET unsigned __stdcall
-#endif
-
-#ifdef ENABLE_THREADS
-static THREAD_RET _alcThreadSpawner(void * s) {
+static void* _alcThreadSpawner(void * s) {
 	tThread * t;
 	t=static_cast<tThread *>(s);
 	t->main();
-	#ifndef __WIN32__
 	return (NULL);
-	#else
-	return 0;
-	#endif
 }
-#endif
 
 tThread::tThread() {
 	spawned=false;
@@ -83,117 +61,49 @@ tThread::~tThread() {
 	join();
 }
 void tThread::spawn() {
-#ifdef ENABLE_THREADS
 	if(spawned) return;
-	#ifndef __WIN32__
 	if(pthread_create(&id, NULL, _alcThreadSpawner,this)!=0) {
 		throw txBase(_WHERE("Cannot create thread"));
 	}
-	#else
-	id = (HANDLE)_beginthreadex(NULL,0,_alcThreadSpawner,(void *)this,0,NULL);
-	if((int)id==-1) throw txBase(_WHERE("Cannot create thread"));
-	#endif
 	spawned=true;
-#else //enable thread
-	main();
-#endif
 }
 void tThread::join() {
-#ifdef ENABLE_THREADS
 	if(!spawned) return;
-	#ifndef __WIN32__
 	if(pthread_join(id,NULL)!=0) {
 		throw txBase(_WHERE("error joining thread"));
 	}
-	#else
-	if(WaitForSingleObject(id,INFINITE)==WAIT_FAILED) {
-		throw txBase(_WHERE("error joining thread"));
-	}
-	if(CloseHandle(id)==0) {
-		throw txBase(_WHERE("error joining thread (CloseHandle)"));
-	}
-	#endif
 	spawned=false;
-#else //enable threads
-	//Noop
-#endif
 }
 
 tMutex::tMutex() {
-#ifdef ENABLE_THREADS
-	#ifndef __WIN32__
 	if(pthread_mutex_init(&id,NULL)!=0) {
 		throw txBase(_WHERE("error creating mutex"));
 	}
-	#else
-	id=CreateMutex(NULL,FALSE,NULL);
-	if(id==NULL) throw txBase(_WHERE("error creating mutex"));
-	#endif
-	islocked=false;
-#endif
 }
 tMutex::~tMutex() {
-#ifdef ENABLE_THREADS
 	unlock();
-	#ifndef __WIN32__
 	if(pthread_mutex_destroy(&id)!=0) {
 		throw txBase(_WHERE("error destroying mutex"));
 	}
-	#else
-	if(CloseHandle(id)==0) {
-		throw txBase(_WHERE("error destroying mutex"));
-	}
-	#endif
-#endif
 }
 void tMutex::lock() {
-#ifdef ENABLE_THREADS
-	#ifndef __WIN32__
 	if(pthread_mutex_lock(&id)!=0) {
 		throw txBase(_WHERE("cannot lock mutex"));
 	}
-	#else
-	if(WaitForSingleObject(id,INFINITE)==WAIT_FAILED) {
-		throw txBase(_WHERE("cannot lock mutex"));
-	}
-	#endif
-	islocked=true;
-#endif
 }
 bool tMutex::trylock() {
-#ifdef ENABLE_THREADS
 	int retval;
-	#ifndef __WIN32__
 	retval=pthread_mutex_trylock(&id);
-	if(retval==EBUSY) return 0;
+	if(retval==EBUSY) return false;
 	if(retval!=0) {
 		throw txBase(_WHERE("cannot trylock mutex"));
 	}
-	#else
-	retval=WaitForSingleObject(id,0);
-	if(retval==WAIT_TIMEOUT) return 0;
-	if(retval==WAIT_FAILED) {
-		throw txBase(_WHERE("cannot trylock mutex"));
-	}
-	#endif
-	islocked=true;
-#endif
-	return 1;
+	return true;
 }
 void tMutex::unlock() {
-#ifdef ENABLE_THREADS
-	if(!islocked) return; // we must never unlock an unlocked mutex, or destroying it will fail
-	islocked=false;
-	#ifndef __WIN32__
 	if(pthread_mutex_unlock(&id)!=0) {
 		throw txBase(_WHERE("cannot unlock mutex"));
 	}
-	#else
-	if(ReleaseMutex(id)==0) {
-		throw txBase(_WHERE("cannot unlock mutex"));
-	}
-	#endif
-#endif
 }
 
 } //end namespace alc

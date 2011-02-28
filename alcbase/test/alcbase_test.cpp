@@ -477,13 +477,13 @@ void alctypes_part3(tString srcdir) {
 	
 	tDirectory mdir;
 	mdir.open(srcdir);
-	tDirEntry * k;
+	tDirEntry k;
 	
 	bool foundDir = false, foundFile = false;
 	
-	while((k=mdir.getEntry())!=NULL) {
-		if (k->isDir() && k->name == "docs") foundDir = true;
-		else if (k->isFile() && k->name == "COPYING") foundFile = true;
+	while(!(k=mdir.getEntry()).isNull()) {
+		if (k.isDir() && k.name == "docs") foundDir = true;
+		else if (k.isFile() && k.name == "COPYING") foundFile = true;
 		//printf("%s\n",k->name.c_str());
 	}
 	assert(foundDir && foundFile);

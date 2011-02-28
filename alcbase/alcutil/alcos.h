@@ -56,10 +56,12 @@ void alcMkdir(const tString &path, mode_t mode);
 /** A Directory entry */
 class tDirEntry {
 public:
-	tDirEntry();
+	tDirEntry(tString name, int entryType);
+	tDirEntry() {}
 	~tDirEntry();
 	tString name;
 	int entryType;
+	inline bool isNull(void) { return name.isEmpty(); }
 	inline bool isDir(void) { return entryType == DT_DIR; }
 	inline bool isFile(void) { return entryType == DT_REG || entryType == DT_UNKNOWN; } // for some reasons, some Linux systems give DT_UNKNOWN
 };
@@ -71,12 +73,11 @@ public:
 	~tDirectory();
 	void open(const tString &path);
 	void close();
-	tDirEntry * getEntry();
+	tDirEntry getEntry();
 	void rewind();
 private:
 	DIR *dir;
 	struct dirent *entry;
-	tDirEntry ent;
 	tString path;
 	
 	FORBID_CLASS_COPY(tDirectory)

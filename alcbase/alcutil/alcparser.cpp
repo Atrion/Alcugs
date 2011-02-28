@@ -321,20 +321,13 @@ void tXParser::store(const tString &str) {
 				if(val=="=") {
 					t.getToken();
 				}
-				#if defined(__WIN32__) or defined(__CYGWIN__)
-					val.convertSlashesFromWinToUnix();
-					if(val.getAt(1)==':' || val.getAt(0)=='/') {
-						key=val;
-					} else {
-						key=path + "/" + val;
-					}
-				#else
-					if(val.getAt(0)=='/') {
-						key=val;
-					} else {
-						key=path + "/" + val;
-					}
-				#endif
+				// complete relative path
+				if(val.getAt(0)=='/') {
+					key=val;
+				} else {
+					key=path + "/" + val;
+				}
+				// load file, with new relative path
 				tString oldpath = path;
 				path = key.dirname();
 				tFBuf f(key.c_str());

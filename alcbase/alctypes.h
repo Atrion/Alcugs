@@ -324,10 +324,6 @@ public:
 	// C compatbility
 	const char * c_str() const;
 	
-	// path functions
-	void convertSlashesFromWinToUnix();
-	void convertSlashesFromUnixToWin();
-	
 	// assignment
 	inline const tString & operator=(const tString &t) { copy(t); return *this; }
 	inline const tString & operator=(const char * str) { copy(str); return *this; }
