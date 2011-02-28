@@ -119,7 +119,7 @@ public:
 	virtual bool onConnectionFlood(tNetSession */*u*/) {
 		return false; // don't kick nobody
 	}
-	virtual void onIdle(bool idle);
+	virtual void onIdle();
 	virtual void onStart();
 	void setDestinationAddress(const tString & d,uint16_t port);
 	void setValidation(uint8_t val);
@@ -151,7 +151,7 @@ tUnetSimpleFileServer::tUnetSimpleFileServer(const tString &lhost,uint16_t lport
 	this->setBindPort(lport);
 	this->setBindAddress(lhost);
 	this->listen=listen;
-	setIdleTimer(1);
+	max_sleep = 500*1000; // set down max_sleep timer (FIXME: why?)
 	d_port=5000;
 	validation=2;
 	urgent=false;
@@ -178,7 +178,7 @@ void tUnetSimpleFileServer::onStart() {
 	}
 }
 
-void tUnetSimpleFileServer::onIdle(bool idle) {
+void tUnetSimpleFileServer::onIdle() {
 	if (!listen) {
 		if (!sent) {
 			tNetSession * u=NULL;
@@ -208,7 +208,7 @@ void tUnetSimpleFileServer::onIdle(bool idle) {
 			sentBytes = compressed ? 0 : f1.size();
 			sent=true;
 			startTime.setToNow();
-		} else if (idle) {
+		} else { // FIXME only really stop if completely done
 			if (sentBytes) {
 				tTime diff;
 				diff.setToNow();

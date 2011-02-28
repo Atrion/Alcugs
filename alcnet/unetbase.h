@@ -30,15 +30,33 @@
 #define __U_UNETBASE_H_ID "$Id$"
 
 #include "unet.h"
+#include <alcutil/alcthread.h>
 
 namespace alc {
+
 	
 	class tUnetMsg;
+	class tUnetWorkerThread;
+	class tUnetBase;
+	
+	
+
+class tUnetWorkerThread : public tThread
+{
+public:
+	tUnetWorkerThread(tUnetBase *unet);
+	
+	virtual void main(void);
+private:
+	
+	tUnetBase *unet;
+};
 
 /** Base abstract class, you need to derive your server/client app's from here
 		This class registers against tAlcUnetMain to make sure there's never more than 1 instance! */
 class tUnetBase :public tUnet {
 	friend class tAlcUnetMain; // these classes have a tight relationship, e.g. you need exactly one of both 
+	friend class tUnetWorkerThread; // dispatching the work, calling event handlers
 	
 public:
 	tUnetBase(uint8_t whoami); //port & host read from config (or by setBindPort(port) and setBindAddress(addr))
@@ -54,12 +72,14 @@ public:
 protected:
 	/** This event is raised when we have a new connection
 			You need to override it in your derived classes with your implementation.
+			Called in worker thread!
 			\param u The peer session object
 	*/
 	virtual void onNewConnection(tNetSession * /*u*/) {}
 	
 	/** This event is raised when we recieve a new message
 			You need to override it in your derived classes with your implementation.
+			Called in worker thread!
 			\param msg The message object
 			\param u The peer session object
 	*/
@@ -67,6 +87,7 @@ protected:
 	
 	/** This event is raised when a connection is being terminated
 			You need to override it in your derived classes with your implementation.
+			Called in worker thread!
 			\param u The peer session object
 			\param reason the reason for which the client left/was kicked
 	*/
@@ -76,6 +97,7 @@ protected:
 			Disabling this protection, your server will be vulnerable to DoS attacks.
 			You need to override it in your derived classes with your implementation.
 			If it is not vetoed, it will terminate the connection.
+			Called in worker thread!
 			\param u The peer session object
 			\return true if it's ok to kick the player, false if not
 	*/
@@ -84,6 +106,7 @@ protected:
 	/** This event is raised when a peer timed out as the connection dropped.
 			You need to override it in your derived classes with your implementation.
 			If it is not vetoed, it will terminate the connection.
+			Called in worker thread!
 			\param u The peer session object
 			\return true if it's ok to kick the player, false if not
 	*/
@@ -91,19 +114,22 @@ protected:
 	
 	/** This event is raised each time after the event queue got emtpied.
 			You need to override it in your derived classes with your implementation.
-			\param idle Set to true if the core is idle (no messages remaining to be sent or parsed)
+			Called in worker thread!
 	*/
-	virtual void onIdle(bool /*idle*/=false) {}
+	virtual void onIdle() {}
 	
-	/** This is called before entering the event loop */
+	/** This is called before entering the event loop. Called in main thread! */
 	virtual void onStart() {}
 	
-	/** This is called after leaving the event loop and closing all connections */
+	/** This is called after leaving the event loop and closing all connections Called in main thread! */
 	virtual void onStop() {}
 	
 	/** This is called after loading and reloading the config (the first time is BEFORE onStart was called).
-		You can rely on this being called, so put everything dealing with reading the config and opening logfiles here! */
+		You can rely on this being called, so put everything dealing with reading the config and opening logfiles here!
+		Called in main thread! */
 	virtual void onApplyConfig() {}
+	
+	
 	
 	/** Stops the netcore in a sane way
 			\param timeout Sets the timeout to wait for closing the connection to all peers (<0 gets timeout from config file)	*/
@@ -111,16 +137,20 @@ protected:
 	/** Stops the netcore in a sane way, but without waiting for the clients to properly quit */
 	inline void forcestop() { stop(0); /* stop with a timeout of 0 */ }
 private:
-	void terminate(tNetSession *u, uint8_t reason, bool gotEndMsg);
+	void terminate(tNetSession *u, uint8_t reason, bool gotEndMsg); //! may be called in worker thread
 	void terminateAll(bool playersOnly = false);
 	inline void terminatePlayers() { terminateAll(/*playersOnly*/true); }
-	void removeConnection(tNetSession *u); //!< destroy that session
-	
-	void processEventQueue(bool shutdown);
-	int parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown);
+	void removeConnection(tNetSession *u); //!< destroy that session, may be called in worker thread
 	void applyConfig();
+	
+	
+	int parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown); //!< called in worker thread
+	void processEventQueue(bool shutdown); //! dispatches most recent event, called in worker thread!
+	
+	
 	bool running;
 	time_t stop_timeout;
+	tUnetWorkerThread workerThread;
 };
 
 

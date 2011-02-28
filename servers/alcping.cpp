@@ -82,7 +82,7 @@ public:
 		return false; // don't kick nobody
 	}
 	virtual void onLeave(uint8_t reason,tNetSession * u);
-	virtual void onIdle(bool idle);
+	virtual void onIdle();
 	virtual void onStop();
 	void setSource(uint8_t s);
 	void setDestination(uint8_t d);
@@ -114,7 +114,7 @@ tUnetPing::tUnetPing(const tString &lhost,uint16_t lport,bool listen,double time
 	this->setBindPort(lport);
 	this->setBindAddress(lhost);
 	this->listen=listen;
-	setIdleTimer(1);
+	max_sleep = 5*1000; // set down max_sleep timer (FIXME: why?)
 	this->time=time;
 	this->num=num;
 	this->flood=flood;
@@ -199,11 +199,10 @@ void tUnetPing::onLeave(uint8_t reason, tNetSession* u)
 	}
 }
 
-void tUnetPing::onIdle(bool /*idle*/) {
+void tUnetPing::onIdle() {
 	int i;
 	if(listen==0) {
 
-		updateTimerRelative(100);
 		if(count==0) {
 			dstite=netConnect(d_host.c_str(),d_port,validation,0);
 			current=startup=alcGetCurrentTime();

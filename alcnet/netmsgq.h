@@ -59,7 +59,7 @@ public:
 		n=0;
 	}
 	T* getNext() {
-		if(current==NULL) prev=current=first;
+		if(current==NULL) current=first;
 		else {
 			prev=current;
 			current=current->next;
@@ -73,7 +73,8 @@ public:
 		if(current) {
 			T* oldCurrent = current;
 			if(current==first) {
-				current=prev=first=first->next;
+				// prev == NULL
+				current=first=first->next;
 			} else {
 				prev->next=current->next;
 				if(current==last) last=prev;
@@ -85,13 +86,11 @@ public:
 		return NULL;
 	}
 	void deleteCurrent() {
-		if(current) {
-			delete unstackCurrent();
-		}
+		delete unstackCurrent();
 	}
 	void add(T * msg) {
 		msg->next = NULL;
-		if(first==NULL) { 
+		if(first==NULL) {
 			first=msg;
 		} else {
 			last->next=msg;
@@ -99,20 +98,7 @@ public:
 		last=msg;
 		n++;
 	}
-	void insert(T * msg) {
-		msg->next = NULL;
-		if(first==NULL) {
-			prev=current=first=msg;
-		} else {
-			prev=current;
-			msg->next=prev->next;
-			prev->next=msg;
-			current=msg;
-		}
-		if(msg->next==NULL) last=msg;
-		n++;
-	}
-	void insertBefore(T * msg) {
+	void insertBefore(T * msg) { // FIXME is this correct?
 		msg->next = NULL;
 		if(first==NULL) {
 			prev=first=last=msg;

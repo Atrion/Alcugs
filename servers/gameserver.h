@@ -78,7 +78,7 @@ namespace alc {
 		inline bool getLinkingOutIdle() { return linkingOutIdle; }
 	protected:
 		virtual int onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u);
-		virtual void onIdle(bool idle);
+		virtual void onIdle();
 		virtual void onConnectionClosing(tNetSession *u, uint8_t reason);
 		virtual void onApplyConfig(void);
 

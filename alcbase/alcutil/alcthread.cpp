@@ -38,6 +38,7 @@
 
 #include <cerrno>
 #include <pthread.h>
+#include <signal.h>
 
 
 namespace alc {
@@ -48,23 +49,27 @@ pthread_t alcGetSelfThreadId() {
 }
 
 static void* _alcThreadSpawner(void * s) {
-	tThread * t;
-	t=static_cast<tThread *>(s);
-	t->main();
+	static_cast<tThread *>(s)->main();
 	return (NULL);
 }
 
-tThread::tThread() {
-	spawned=false;
-}
+tThread::tThread() : spawned(false) {}
 tThread::~tThread() {
-	join();
+	if (spawned) throw txBase(_WHERE("Attempting to delete a running thread!"));
 }
 void tThread::spawn() {
 	if(spawned) return;
-	if(pthread_create(&id, NULL, _alcThreadSpawner,this)!=0) {
-		throw txBase(_WHERE("Cannot create thread"));
-	}
+	bool fail = false;
+	// make sure all signals are blocked
+	sigset_t set, oldset;
+	sigfillset(&set);
+	fail = pthread_sigmask(SIG_BLOCK, &set, &oldset);
+	// launch thread
+	fail = fail || pthread_create(&id, NULL, _alcThreadSpawner,this); // don't even launch thread if we failed eaely
+	// restore signal mask
+	fail = pthread_sigmask(SIG_SETMASK, &oldset, NULL) || fail;// restore sigmask in any case
+	if (fail) throw txBase(_WHERE("Something went wrong during thread spawn!"));
+	// done!
 	spawned=true;
 }
 void tThread::join() {
@@ -81,7 +86,6 @@ tMutex::tMutex() {
 	}
 }
 tMutex::~tMutex() {
-	unlock();
 	if(pthread_mutex_destroy(&id)!=0) {
 		throw txBase(_WHERE("error destroying mutex"));
 	}

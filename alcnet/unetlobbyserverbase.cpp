@@ -250,7 +250,7 @@ namespace alc {
 		return NULL;
 	}
 	
-	void tUnetLobbyServerBase::onIdle(bool /*idle*/)
+	void tUnetLobbyServerBase::onIdle()
 	{
 		if (!isRunning()) return;
 		
