@@ -158,7 +158,7 @@ private:
 	
 	tNetTime activity_stamp; //!< last time we got something from this client
 	tTime nego_stamp; //!< initial negotiation stamp (FIXME: use tNetTime for this and the next? does the resolution suffice?)
-	tTime renego_stamp; //!< remote nego stamp (stamp of last nego we got)
+	tTime renego_stamp; //!< remote/received nego stamp (stamp of last nego we got)
 	tNetTimeDiff conn_timeout; //!< time after which the session will timeout (in microseconds)
 	bool negotiating; //!< set to true when we are waiting for the answer of a negotiate we sent
 	
