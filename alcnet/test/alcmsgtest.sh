@@ -1,28 +1,33 @@
 #!/bin/bash
 set -e
 # save source and build dir
-builddir="$(pwd)/.."
-srcdir="$1"
+if [[ -f "CMakeCache.txt" ]]; then
+	builddir="$(pwd)"
+else # assume we are run by the testsuite
+	builddir="$(pwd)/.."
+fi
+srcdir="$(dirname $0)/../../"
+# get source file
+FILE="$srcdir/Doxyfile"
+PORT=5938
+if [ "$1" ]; then
+	FILE=$1
+fi
+FILE=$(readlink "$FILE" -e) # get absolute filename
+echo "Using test file $FILE"
 # get us a clean directory to work in
 tmpdir="/tmp/alctest"
 rm -rf "$tmpdir"
 mkdir "$tmpdir"
 cd "$tmpdir"
-# do it!
-FILE="$srcdir/Doxyfile"
-PORT=5938
-if [ "$2" ]; then
-	FILE=$2
-fi
 # start server
-"$builddir/servers/alcmsgtest" -lm -lh localhost -lp "$PORT" -nl &
-sleep 0.5
+"$builddir/servers/alcmsgtest" -lm -lh localhost -lp "$PORT" -nl -v 0 &
+sleep 0.1 # give it some time to get up
 # send file
-"$builddir/servers/alcmsgtest" "localhost:$PORT" -f "$FILE" -v 1 ; # wait till it finished
-sleep 0.5
+"$builddir/servers/alcmsgtest" "localhost:$PORT" -f "$FILE" -v 3 ; # wait till it finished
 # kill server
 killall -s INT alcmsgtest
-sleep 1.5
+sleep 0.5 # give it time to go down
 TEST="$(pidof alcmsgtest || exit 0)" # avoid stopping the script if pidof fails
 if [ -n "$TEST" ]; then
 	echo "alcmsgtest did not exit within 1.5s"

@@ -28,4 +28,4 @@ target_link_libraries(alcnet alcbase ${MYSQL_LIBRARY} ${MYSQL_EXTRA_LIBRARIES})
 # tests
 add_executable(bincomp test/bincomp.cpp)
 target_link_libraries(bincomp alcbase)
-add_test("NetworkTest" "${PROJECT_SOURCE_DIR}/alcnet/test/alcmsgtest.sh" "${PROJECT_SOURCE_DIR}")
+add_test("NetworkTest" "${PROJECT_SOURCE_DIR}/alcnet/test/alcmsgtest.sh")
