@@ -81,7 +81,7 @@ public:
 	void rewind();
 	void end();
 	tNetSession * getNext();
-	bool empty() { return count==0; }
+	bool isEmpty() { return count==0; }
 	inline size_t getCount() { return count; }
 protected:
 	size_t findFreeSlot(void);

@@ -49,7 +49,7 @@ namespace alc {
 /* Session */
 tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t sid) {
 	DBG(5,"tNetSession()\n");
-	assert(alcGetSelfThreadId() == alcGetMain()->threadId()); // FIXME is this correct?
+	assert(alcGetSelfThreadId() == alcGetMain()->threadId()); // FIXME is this correct? will choke if netConnect is called in worker
 	this->net=net;
 	this->ip=ip;
 	this->port=port;

@@ -69,8 +69,7 @@ namespace alc {
 #define UNET_TIMEOUT 3 /* !< Connection to peer has ended the timer */
 #define UNET_TERMINATED 4 /* !< Connection to peer terminated */
 #define UNET_FLOOD 5 /* !< This event occurs when a player is flooding the server */
-#define UNET_SHUTDOWN_MODE 6 // internal use: tells the worker thread that server shutdown began
-#define UNET_KILL_WORKER 7 // internal use: tells the worker thread that it should exit
+#define UNET_KILL_WORKER 6 // internal use: tells the worker thread that it should exit
 // only event UNET_MSGRCV will contain a new incoming message (from the affected peer).
 
 //! Urunet flags
@@ -105,7 +104,7 @@ public:
 	void unsetFlags(uint16_t flags);
 	uint16_t getFlags();
 	void dump(tLog * f=NULL,uint8_t flags=0x01);
-	tNetSession * sessionByIte(tNetSessionIte &t);
+	tNetSession * sessionByIte(tNetSessionIte &t); //!< (thread-safe)
 	void setBindPort(uint16_t lport); //lport in host order
 	void setBindAddress(const tString & lhost);
 	void send(alc::tmMsgBase& m, tNetTimeDiff delay = 0); //!< delay is in msecs - may be called in worker thread
@@ -117,16 +116,16 @@ protected:
 	void destroySession(tNetSessionIte &t);
 	tNetSessionIte netConnect(const char * hostname,uint16_t port,uint8_t validation,uint8_t flags,uint8_t peerType=0);
 	int sendAndWait(); //!< send enqueued messages, wait, and receive packets and enqueue them (wait time must be set by processQueues()!)
-	tNetEvent * getEvent();
-	virtual void addEvent(tNetEvent *evt);
-	void clearEventQueue(); // use this only if you really know what you do - will loose incoming messages and whatnot!
+	tNetEvent * getEvent(); //!<  (thread-safe)
+	void addEvent(tNetEvent *evt); //!<  (thread-safe)
+	void clearEventQueue(); //!< use this only if you really know what you do - will loose incoming messages and whatnot! (thread-safe)
 	tNetTime getNetTime() { return net_time; }
 	
 	virtual bool canPortBeUsed(uint16_t /*port*/) { return false; }
 	
-	tNetSession *sessionBySid(size_t n);
-	tNetSession *sessionByKi(uint32_t ki);
-	bool sessionListEmpty();
+	tNetSession *sessionBySid(size_t n); //!< (thread-safe)
+	tNetSession *sessionByKi(uint32_t ki); //!< (thread-safe)
+	bool sessionListEmpty(); //!< (thread-safe)
 
 private:
 	void init();
@@ -142,7 +141,7 @@ private:
 protected:
 	unsigned int conn_timeout; //!< default timeout (to disconnect a session) (seconds) [5 secs]
 	tNetTimeDiff msg_timeout; //!< default timeout when the send clock expires (re-transmission) (microseconds)
-	tNetTimeDiff max_sleep; //!< maximum time we sleep in the receive function (microseconds)
+	tNetTimeDiff max_sleep; //!< maximum time we sleep in the receive function (microseconds) - this is also the maximum time between two OnIdle() callbacks
 
 	unsigned int max; //!< Maxium number of connections (default 0, unlimited)
 	tNetSessionMgr * smgr; //!< session MGR - get below mutex before accessing it! FIXME: apply this everywhere
@@ -186,6 +185,12 @@ protected:
 	unsigned int quota_check_interval; //(useconds)
 	tTime last_quota_check;
 	#endif
+	
+	
+	tUnetMsgQ<tNetEvent> * events; //!< event queue - get below mutex before accessing it!
+	tMutex eventsMutex;
+	bool workerWaiting; //!< signals whether a worker is waiting for an event using below condition, protected by above mutex
+	pthread_cond_t eventAddedCond; //!< condition used to signal the worker thread that it can wake up, protected by above mutex
 
 private:	
 	bool initialized;
@@ -207,8 +212,6 @@ private:
 	
 	uint16_t flags; //!< unet flags, explained -^
 	
-	tUnetMsgQ<tNetEvent> * events; //!< event queue - get below mutex before accessing it!
-	tMutex eventsMutex;
 
 	FORBID_CLASS_COPY(tUnet)
 };

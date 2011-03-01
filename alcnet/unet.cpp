@@ -30,7 +30,7 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_UNET_ID "$Id$"
-#define _DBG_LEVEL_ 3
+//#define _DBG_LEVEL_ 3
 #include <alcdefs.h>
 #include "unet.h"
 
@@ -46,6 +46,7 @@
 #include <cstring>
 #include <netdb.h>
 #include <cassert>
+#include <pthread.h>
 
 // Some of the macros implie an old-style cast
 #pragma GCC diagnostic ignored "-Wold-style-cast"
@@ -58,7 +59,11 @@ tUnet::tUnet(uint8_t whoami,const tString & lhost,uint16_t lport) : whoami(whoam
 	this->init();
 	setBindAddress(lhost);
 	bindport=lport;
+	
 	events=new tUnetMsgQ<tNetEvent>;
+	workerWaiting = false;
+	if (pthread_cond_init(&eventAddedCond, NULL))
+		throw txBase(_WHERE("Error initializing condition"));
 }
 tUnet::~tUnet() {
 	DBG(9,"~tUnet()\n");
@@ -68,6 +73,10 @@ tUnet::~tUnet() {
 	if (err != alcGetMain()->err()) delete err;
 	delete ack;
 	delete sec;
+	
+	
+	if (pthread_cond_destroy(&eventAddedCond))
+		throw txBase(_WHERE("Error destroying condition"));
 }
 void tUnet::setBindPort(uint16_t lport) {
 	bindport=lport;
@@ -168,6 +177,10 @@ void tUnet::addEvent(tNetEvent *evt)
 {
 	tMutexLock lock(eventsMutex);
 	events->add(evt);
+	if (workerWaiting) {
+		if (pthread_cond_signal(&eventAddedCond))
+			throw txBase(_WHERE("Error signalling condition"));
+	}
 }
 
 void tUnet::clearEventQueue()
@@ -202,7 +215,7 @@ void tUnet::destroySession(tNetSessionIte &t) {
 bool tUnet::sessionListEmpty()
 {
 	tMutexLock lock(smgrMutex);
-	return smgr->empty();
+	return smgr->isEmpty();
 }
 
 
@@ -581,7 +594,10 @@ int tUnet::sendAndWait() {
 	}
 	
 	//END CRITICAL REGION
-	
+	// I don't know how much perforcmance this costs, but without flushing it's not possible to follow the server logs using tail -F
+	log->flush();
+	err->flush();
+	sec->flush();
 	return UNET_OK;
 }
 

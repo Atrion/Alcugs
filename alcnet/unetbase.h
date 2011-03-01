@@ -67,8 +67,8 @@ public:
 	/** terminate this session */
 	inline void terminate(tNetSession *u, uint8_t reason = 0) { terminate(u, reason, /*gotEndMsg*/false); }
 	
-	/** check whether the server is still running */
-	inline bool isRunning(void) { return running; }
+	/** check whether the server is still running (thread-safe) */
+	bool isRunning(void);
 protected:
 	/** This event is raised when we have a new connection
 			You need to override it in your derived classes with your implementation.
@@ -142,20 +142,17 @@ private:
 	inline bool terminatePlayers() { return terminateAll(/*playersOnly*/true); }
 	void removeConnection(tNetSession *u); //!< destroy that session, may be called in worker thread
 	void applyConfig();
-	virtual void addEvent(tNetEvent *evt);
 	
 	
 	int parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown); //!< called in worker thread
-	void processEvent(tNetEvent *evt, bool shutdown); //! dispatches most recent event, called in worker thread!
+	void processEvent(tNetEvent *evt); //!< dispatches most recent event, called in worker thread!
 	
 	
-	bool running;
-	tNetTimeDiff stop_timeout;
+	bool running; //!< stores whether the server is running or shutting down, protected by below mutex
+	tNetTimeDiff stop_timeout; //!< stores the timeout till the server shuts off
+	tMutex runModeMutex;
+	
 	tUnetWorkerThread workerThread;
-	
-	bool workerWaiting; //!< stores whether the worker thread is waiting for messages - protected by below mutex
-	pthread_cond_t eventAddedCond; //!< condition used to signal the worker thread that it can wake up, protected by belwo mutex
-	tMutex eventAddedMutex;
 };
 
 

@@ -49,7 +49,7 @@
 
 namespace alc {
 
-tUnetBase::tUnetBase(uint8_t whoami) :tUnet(whoami), running(true), workerThread(this), workerWaiting(false) {
+tUnetBase::tUnetBase(uint8_t whoami) :tUnet(whoami), running(true), workerThread(this) {
 	alcUnetGetMain()->setNet(this);
 	tString var;
 	tConfig * cfg;
@@ -63,15 +63,12 @@ tUnetBase::tUnetBase(uint8_t whoami) :tUnet(whoami), running(true), workerThread
 		setBindAddress(var);
 	}
 	
-	if (pthread_cond_init(&eventAddedCond, NULL))
-		throw txBase(_WHERE("Error initializing condition"));
+	
 }
 
 tUnetBase::~tUnetBase() {
 	forcestop();
 	alcUnetGetMain()->setNet(NULL);
-	if (pthread_cond_destroy(&eventAddedCond))
-		throw txBase(_WHERE("Error destroying condition"));
 }
 
 void tUnetBase::applyConfig() {
@@ -203,6 +200,7 @@ void tUnetBase::applyConfig() {
 }
 
 void tUnetBase::stop(time_t timeout) {
+	tMutexLock lock(runModeMutex);
 	if(timeout<0) {
 		tString var;
 		tConfig * cfg=alcGetMain()->config();
@@ -216,7 +214,12 @@ void tUnetBase::stop(time_t timeout) {
 	else
 		stop_timeout=timeout*1000*1000;
 	running=false;
-	addEvent(new tNetEvent(UNET_SHUTDOWN_MODE));
+}
+
+bool tUnetBase::isRunning(void)
+{
+	tMutexLock lock(runModeMutex);
+	return running;
 }
 
 void tUnetBase::terminate(tNetSession *u, uint8_t reason, bool gotEndMsg)
@@ -278,7 +281,7 @@ void tUnetBase::run() {
 	
 	workerThread.spawn();
 	
-	while(running) {
+	while(isRunning()) {
 		sendAndWait();
 		onIdle(); // not really "idle"... but called from time to time, and at least every max_sleep microseconds, the latter being important
 	}
@@ -304,7 +307,7 @@ void tUnetBase::run() {
 	workerThread.join();
 	
 	// cleanup (we are the only thread left, so no locking required anymore)
-	if(!smgr->empty()) {
+	if(!smgr->isEmpty()) {
 		err->log("ERR: Session manager is not empty!\n");
 		smgr->rewind();
 		tNetSession * u;
@@ -319,14 +322,14 @@ void tUnetBase::run() {
 }
 
 // worker thread dispatch function
-void tUnetBase::processEvent(tNetEvent *evt, bool shutdown)
+void tUnetBase::processEvent(tNetEvent *evt)
 {
 	tNetSession *u=sessionByIte(evt->sid);
 	if (u != NULL) {
 		switch(evt->id) {
 			case UNET_NEWCONN:
 				sec->log("%s New Connection\n",u->str().c_str());
-				if (shutdown)
+				if (!isRunning())
 					terminate(u);
 				else
 					onNewConnection(u);
@@ -336,13 +339,13 @@ void tUnetBase::processEvent(tNetEvent *evt, bool shutdown)
 					removeConnection(u);
 				}
 				else {
-					if (shutdown || onConnectionTimeout(u))
+					if (!isRunning() || onConnectionTimeout(u))
 						terminate(u, RTimedOut);
 				}
 				break;
 			case UNET_FLOOD:
 				sec->log("%s Flood Attack\n",u->str().c_str());
-				if (shutdown || onConnectionFlood(u)) {
+				if (!isRunning() || onConnectionFlood(u)) {
 					terminate(u);
 					alcGetMain()->err()->log("%s kicked due to a Flood Attack\n", u->str().c_str());
 				}
@@ -355,6 +358,7 @@ void tUnetBase::processEvent(tNetEvent *evt, bool shutdown)
 				log->log("%s New MSG Recieved\n",u->str().c_str());
 				#endif
 				assert(msg!=NULL);
+				bool shutdown = !isRunning();
 				try {
 					ret = parseBasicMsg(msg, u, shutdown);
 					if (ret != 1 && !u->isTerminated() && !shutdown) // if this is an active connection, look for other messages
@@ -443,16 +447,6 @@ int tUnetBase::parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown)
 	return 0;
 }
 
-void tUnetBase::addEvent(tNetEvent *evt)
-{
-	tUnet::addEvent(evt);
-	tMutexLock lock(eventAddedMutex);
-	if (workerWaiting) {
-		if (pthread_cond_signal(&eventAddedCond))
-			throw txBase(_WHERE("Error signalling condition"));
-	}
-}
-
 tUnetWorkerThread::tUnetWorkerThread(tUnetBase* unet): tThread(), net(unet)
 {
 
@@ -461,19 +455,15 @@ tUnetWorkerThread::tUnetWorkerThread(tUnetBase* unet): tThread(), net(unet)
 void tUnetWorkerThread::main(void)
 {
 	tNetEvent *evt;
-	bool shutdown = false;
 	while (true) {
 		while ((evt=net->getEvent())) {
 			switch (evt->id) {
-				case UNET_SHUTDOWN_MODE:
-					shutdown = true;
-					break;
 				case UNET_KILL_WORKER:
 					delete evt; // do not leak memory
 					pthread_exit(NULL);
 					return;
 				default:
-					net->processEvent(evt, shutdown);
+					net->processEvent(evt);
 			}
 			delete evt;
 		}
@@ -482,10 +472,12 @@ void tUnetWorkerThread::main(void)
 		net->err->flush();
 		net->sec->flush();
 		// wait till e got events again
-		tMutexLock lock(net->eventAddedMutex);
+		tMutexLock lock(net->eventsMutex);
+		if (!net->events->isEmpty()) continue; // an event got added since we last checked, fine!
+		// queue is empty, so wait for an event to be added
 		net->workerWaiting = true;
 		DBG(5, "Worker waiting\n");
-		pthread_cond_wait(&net->eventAddedCond, net->eventAddedMutex.getMutex());
+		pthread_cond_wait(&net->eventAddedCond, net->eventsMutex.getMutex());
 		DBG(5, "Worker finished waiting\n");
 		net->workerWaiting = false;
 	}
