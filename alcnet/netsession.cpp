@@ -468,9 +468,8 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 	else
 		assert(maxBandwidth && minBandwidth); // we are connected, so these *must* be set
 	
-	//fix the problem that happens every 15-30 days of server uptime (prefer doing that when the sndq is empty)
-	if((sndq->len() == 0 && (serverMsg.sn>=8378605 || msg->sn>=8378605)) || (serverMsg.sn>=8388605 || msg->sn>=8388605) ) {
-		// that's aproximately 2^23 (try to get the sndq empty first, but in doubt, flush it)
+	// fix the problem that happens every 15-30 days of server uptime - but only if sndq is empty, or we will loose packets
+	if (!anythingToSend() && (serverMsg.sn>=8378608 || msg->sn>=8378608)) { // 8378608 = 2^23 - 10000
 		net->log->log("%s WARN: Congratulations! You have reached the maxium allowed sequence number, don't worry, this is not an error\n", str().c_str());
 		net->log->flush();
 		resetMsgCounters();
