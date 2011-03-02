@@ -36,6 +36,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_PROTOCOL_H_ID "$Id$"
 
+#include "unet.h"
 #include <urutypes/uruconsts.h>
 #include <urutypes/urubasetypes.h>
 
@@ -104,8 +105,8 @@ public:
 	tUnetUruMsg * next;
 
 	void _update();
-	tNetTime timestamp; //message stamp in usecs (to send) - this is in unet->net_time units
-	tNetTime snd_timestamp; //original send stamp
+	tNetTime timestamp; //!< message stamp in usecs (to send) - this is in unet->net_time units
+	tNetTime snt_timestamp; //!< time when message was sent
 	unsigned int tryes;
 	//Uru protocol
 	//Byte vid 0x03

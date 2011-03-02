@@ -36,10 +36,6 @@
 
 namespace alc {
 
-class tNetSessionIte;
-class tNetSessionMgr;
-class tUnet;
-
 #define UNetUpgraded 0x01
 //#define UNetNoConn   0x02
 

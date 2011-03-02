@@ -405,10 +405,6 @@ private:
 tTime operator+ (const tTime &a,const tTime &b);
 tTime operator- (const tTime &a,const tTime &b);
 
-typedef unsigned long int tNetTime; // timestamp used by netcore (don't want to carry those tTimes around there), microseconds
-typedef unsigned int tNetTimeDiff; // time difference between two net times, microseconds
-
-
 } //End alc namespace
 
 #endif

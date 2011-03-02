@@ -45,6 +45,12 @@ namespace alc {
 	class tNetSessionMgr;
 	class tNetSession;
 	class tmMsgBase;
+	
+	// unet time types
+	typedef unsigned long int tNetTime; // timestamp used by netcore (don't want to carry those tTimes around there), microseconds. this may overflow, to use with caution!
+	typedef signed long int tNetTimeSigned; // must be the same as tNetTime, but signed - to be used only by the overdue check!
+	typedef unsigned int tNetTimeDiff; // time difference between two net times, microseconds
+
 
 //udp packet max buffer size (0xFFFF) - any packet should be bigger.
 #define INC_BUF_SIZE 65535
@@ -103,7 +109,6 @@ public:
 	void setFlags(uint16_t flags);
 	void unsetFlags(uint16_t flags);
 	uint16_t getFlags();
-	void dump(tLog * f=NULL,uint8_t flags=0x01);
 	tNetSession * sessionByIte(tNetSessionIte &t); //!< (thread-safe)
 	void setBindPort(uint16_t lport); //lport in host order
 	void setBindAddress(const tString & lhost);
@@ -120,6 +125,9 @@ protected:
 	void addEvent(tNetEvent *evt); //!<  (thread-safe)
 	void clearEventQueue(); //!< use this only if you really know what you do - will loose incoming messages and whatnot! (thread-safe)
 	tNetTime getNetTime() { return net_time; }
+	bool timeOverdue(tNetTime timeout); //!< returns whether the timout is overdue
+	tNetTimeDiff remainingTimeTill(tNetTime time); //!< returns time remaining till given timestamp
+	tNetTimeDiff passedTimeSince(tNetTime time); //!< returns time passed since given timestamp
 	
 	virtual bool canPortBeUsed(uint16_t /*port*/) { return false; }
 	
@@ -161,10 +169,10 @@ protected:
 	uint16_t bindport; //!< Server bind port, in host order
 
 	//!logging subsystem
-	tLog * log; //!< stdout
-	tLog * err; //!< stderr
-	tLog * ack; //!< ack drawing
-	tLog * sec; //!< security and access log
+	tLog *log; //!< stdout
+	tLog *err; //!< stderr
+	tLog *ack; //!< ack drawing
+	tLog *sec; //!< security and access log
 	
 	//flood control
 	unsigned int max_flood_pkts;
@@ -198,7 +206,9 @@ private:
 	uint8_t max_version; //!< default protocol version
 	uint8_t min_version; //!< default protocol version
 
-	tNetTime net_time; //!< current netcore time (in usecs) [resolution of 15 minutes] (relative)
+	/** current netcore time (in usecs) [resolution of 15 minutes] (relative). You can add and substract as you wish, but:
+	 * Do NOT compare this with anything, but use the overdue(), passedTime() and remainingTime() functions instead! */
+	tNetTime net_time;
 	
 #ifdef __WIN32__
 	WSADATA ws; //!< The winsock stack
