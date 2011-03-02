@@ -30,7 +30,7 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_UNET_ID "$Id$"
-//#define _DBG_LEVEL_ 3
+//#define _DBG_LEVEL_ 6
 #include <alcdefs.h>
 #include "unet.h"
 
@@ -165,6 +165,23 @@ void tUnet::updateNetTime() {
 	net_time=static_cast<tNetTime>(alcGetTime())*1000000+alcGetMicroseconds();
 }
 
+bool tUnet::timeOverdue(tNetTime timeout)
+{
+	DBG(6, "Time overdue check: net_time %ld, timeout %ld\n", net_time, timeout);
+	return static_cast<tNetTimeSigned>(net_time-timeout) >= 0; // casting to signed will magically do the right thing, even if the time overflowed! Twoth complement is awesome :D
+}
+
+tNetTimeDiff tUnet::remainingTimeTill(tNetTime time)
+{
+	assert(!timeOverdue(time)); // make sure time is in the future
+	return time-net_time;
+}
+
+tNetTimeDiff tUnet::passedTimeSince(tNetTime time)
+{
+	assert(timeOverdue(time));
+	return net_time-time;
+}
 
 tNetEvent * tUnet::getEvent() {
 	tMutexLock lock(eventsMutex);
@@ -411,7 +428,6 @@ void tUnet::stopOp() {
 tNetSessionIte tUnet::netConnect(const char * hostname,uint16_t port,uint8_t validation,uint8_t flags,uint8_t peerType) {
 	tNetSessionIte ite;
 	
-	struct sockaddr_in client;
 	struct hostent *host;
 	host=gethostbyname(hostname);
 	
@@ -435,19 +451,19 @@ tNetSessionIte tUnet::netConnect(const char * hostname,uint16_t port,uint8_t val
 		u->cflags |= UNetUpgraded;
 	}
 	
+	struct sockaddr_in client;
 	client.sin_family=AF_INET;
 	client.sin_addr.s_addr=ite.ip;
 	client.sin_port=ite.port;
 	memcpy(u->sockaddr,&client,sizeof(struct sockaddr_in));
 	
-	u->activity_stamp = net_time;
 	u->client=false;
 	if (peerType) u->whoami = peerType;
 	
 	u->max_version=max_version;
 	u->min_version=min_version;
 	
-	u->nego_stamp.setToNow();;
+	u->nego_stamp.setToNow();
 	u->negotiate();
 	
 	return ite;
@@ -613,7 +629,7 @@ tNetTimeDiff tUnet::processSendQueues() {
 	while((cur=smgr->getNext())) {
 		/* Also create the timeout when it's exactly the same time.
 		  This way the time from a session being marked as deleteable till it is deleted is kept short */
-		if(net_time - cur->activity_stamp > cur->conn_timeout) {
+		if(passedTimeSince(cur->activity_stamp) > cur->conn_timeout) {
 			//timeout event
 			if (!cur->isTerminated())
 				sec->log("%s Timeout (didn't send a packet for %d seconds)\n",cur->str().c_str(),cur->conn_timeout);
@@ -629,7 +645,8 @@ tNetTimeDiff tUnet::processSendQueues() {
 
 /** sends the message (internal use only)
 An uru message can only be 253952 bytes in V0x01 & V0x02 and 254976 in V0x00 */
-void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
+void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg)
+{
 	assert(alcGetSelfThreadId() == alcGetMain()->threadId());
 	struct sockaddr_in client; //client struct
 
@@ -736,65 +753,6 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg) {
 
 void tUnet::send(tmMsgBase &m, tNetTimeDiff delay)
 	{ m.getSession()->send(m, delay); }
-
-/**
-	Dumps all data structures, with the address and the contents in hex
-	flags
-	0x01 append to the last log file (elsewhere destroy the last one)
-*/
-void tUnet::dump(tLog * sf,uint8_t flags) {
-#if _DBG_LEVEL_ > 2
-	tLog * f;
-	if(sf==NULL) {
-		f=new tLog;
-		if(flags & 0x01) {
-			f->open("memdump.log",DF_APPEND);
-		} else {
-			f->open("memdump.log",0);
-		}
-		if(f==NULL) return;
-	} else {
-		f=sf;
-	}
-
-	//well dump all
-	f->log("Starting up Netcore memory report\n\n");
-
-	f->print("Unet\n");
-	f->dumpbuf(static_cast<const void *>(this),sizeof(*this));
-	f->nl();
-	#ifndef __WIN32__
-	f->print("net->sock:%i\n",this->sock);
-	#endif
-	f->print("net->server.sin_family:%02X\n",this->server.sin_family);
-	f->print("net->server.sin_port:%02X (%i)\n",this->server.sin_port,ntohs(this->server.sin_port));
-	f->print("net->server.sin_addr:%s\n",alcGetStrIp(this->server.sin_addr.s_addr).c_str());
-	f->print("net->flags:%i\n",this->flags);
-	f->print("net->max_version:%i\n",this->max_version);
-	f->print("net->min_version:%i\n",this->min_version);
-	f->print("net->net_time:%ld\n",this->net_time);
-	f->print("net->conn_timeout:%i\n",this->conn_timeout);
-	f->print("net->max:%i\n",this->max);
-	f->print("net->whoami:%i\n",this->whoami);
-	f->print("net->lan_addr:%i %s\n",this->lan_addr,alcGetStrIp(this->lan_addr).c_str());
-	f->print("net->lan_mask:%i %s\n",this->lan_mask,alcGetStrIp(this->lan_mask).c_str());
-	f->print("net->lan_up:%i\n",this->lan_up);
-	f->print("net->lan_down:%i\n",this->lan_down);
-	f->print("net->nat_up:%i\n",this->nat_up);
-	f->print("net->nat_down:%i\n",this->nat_down);
-	f->print("net->nat_up:%i\n",this->nat_up);
-	f->print("net->nat_down:%i\n",this->nat_down);
-	f->print("Session table\n");
-	//session table
-	
-	f->log("Ending memory report\n");
-	if(sf==NULL) {
-		f->close();
-		delete f;
-	}
-#endif
-	(void)sf; (void)flags; // mark as used
-}
 
 
 } //end namespace

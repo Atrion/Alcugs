@@ -81,25 +81,17 @@ void tNetSession::init() {
 	authenticated=0;
 	accessLevel=0;
 	cflags=0; //default flags
-	/*if(net->flags & UNET_NOCONN) {
-		cflags |= UNetNoConn;
-		maxBandwidth=4096*2;
-		minBandwidth=4096;
-		cabal=minBandwidth;
-	}
-	else {*/
-		maxBandwidth=minBandwidth=cabal=0;
-	//}
+	maxBandwidth=minBandwidth=cabal=0;
 	maxPacketSz=1024;
-	flood_last_check=0;
+	flood_last_check=net->net_time;
 	flood_npkts=0;
+	activity_stamp = net->net_time;
 	next_msg_time=0;
 	rtt=0;
 	deviation=0;
 	msg_timeout=net->msg_timeout;
 	conn_timeout=net->conn_timeout*1000*1000;
 	nego_stamp.seconds=0;
-	nego_stamp.microseconds=0;
 	renego_stamp=nego_stamp;
 	negotiating=false;
 	resetMsgCounters();
@@ -324,8 +316,6 @@ void tNetSession::send(tmBase &msg, tNetTimeDiff delay) { // FIXME make thread-s
 		pmsg->timestamp+=net->latency;
 		#endif
 		
-		pmsg->snd_timestamp=pmsg->timestamp;
-		
 		//Urgent!?
 		if(flags & UNetUrgent) { // FIXME this will break when called in worker
 			net->rawsend(this,pmsg);
@@ -335,7 +325,7 @@ void tNetSession::send(tmBase &msg, tNetTimeDiff delay) { // FIXME make thread-s
 			DBG(5, "%s Packet sent urgently, next one in %ld\n", str().c_str(), next_msg_time-net->net_time);
 			// if necessary, put in queue as "sent once"
 			if(flags & UNetAckReq) {
-				pmsg->snd_timestamp=net->net_time;
+				pmsg->snt_timestamp=net->net_time;
 				pmsg->timestamp+=msg_timeout;
 				++pmsg->tryes;
 				sndq->add(pmsg);
@@ -359,6 +349,7 @@ void tNetSession::send(tmBase &msg, tNetTimeDiff delay) { // FIXME make thread-s
 /** process a recieved msg: put it in the rcvq, assemble fragments, create akcs */
 void tNetSession::processIncomingMsg(void * buf,size_t size) {
 	DBG(5,"Message of %li bytes\n",size);
+	assert(alcGetSelfThreadId() == alcGetMain()->threadId());
 	//stamp
 	activity_stamp = net->net_time;
 	
@@ -521,15 +512,14 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 		else if (ret == 0) {
 			//flood control
 			if((msg->tf & UNetAckReq) && (msg->frn==0) && (net->flags & UNET_FLOODCTR)) {
-				if(net->net_time - flood_last_check > net->flood_check_interval) {
+				if(net->passedTimeSince(flood_last_check) > net->flood_check_interval) {
 					flood_last_check=net->net_time;
 					flood_npkts=0;
 				} else {
 					flood_npkts++;
 					if(flood_npkts>net->max_flood_pkts) {
 						// send UNET_FLOOD event
-						tNetSessionIte ite(ip,port,sid);
-						tNetEvent * evt=new tNetEvent(ite,UNET_FLOOD);
+						tNetEvent * evt=new tNetEvent(getIte(),UNET_FLOOD);
 						net->addEvent(evt);
 					}
 				}
@@ -745,8 +735,8 @@ tNetTimeDiff tNetSession::ackUpdate() {
 	while(ack) {
 		tmNetAck ackMsg(this);
 		while (ack) {
-			if (ack->timestamp > net->net_time) {
-				timeout = std::min(timeout, static_cast<tNetTimeDiff>(ack->timestamp - net->net_time)); // come back when we want to process this ack
+			if (!net->timeOverdue(ack->timestamp)) {
+				timeout = std::min(timeout, net->remainingTimeTill(ack->timestamp)); // come back when we want to process this ack
 				ack = ackq->getNext();
 			}
 			else {
@@ -794,7 +784,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 					   with other packets and the ack could be sent almost immediately after the packet went in, without the
 					   usual delay so the rtt is much smaller than the average. But I don't expect this to happen often, so I don't
 					   consider that a real problem. */
-					tNetTimeDiff crtt=net->net_time-msg->snd_timestamp;
+					tNetTimeDiff crtt=net->passedTimeSince(msg->snt_timestamp);
 					#ifdef ENABLE_NETDEBUG
 					crtt+=net->latency;
 					#endif
@@ -818,8 +808,9 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 /** Send, and re-send messages, update idle state and set netcore timeout (the last is NECESSARY - otherwise, the idle timer will be used) */
 tNetTimeDiff tNetSession::processSendQueues()
 {
+	assert(alcGetSelfThreadId() == alcGetMain()->threadId());
 	// when we are talking to a non-terminated server, send alive messages
-	if (!client && !terminated && (net->net_time - activity_stamp) > (conn_timeout/2)) {
+	if (!client && !terminated && (net->passedTimeSince(activity_stamp) > (conn_timeout/2))) {
 		tmAlive alive(this);
 		send(alive);
 	}
@@ -840,7 +831,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 		return timeout;
 	}
 	
-	if(net->net_time>=next_msg_time) {
+	if(net->timeOverdue(next_msg_time)) {
 		sndq->rewind();
 		tUnetUruMsg * curmsg = sndq->getNext();
 		
@@ -851,8 +842,8 @@ tNetTimeDiff tNetSession::processSendQueues()
 		const unsigned int maxTH=100;
 
 		while(curmsg!=NULL && (cur_quota<quota_max)) {
-			if(curmsg->timestamp<=net->net_time) {
-				DBG(8, "%s %ld ok to send a message\n",str().c_str(),net->net_time);
+			if(net->timeOverdue(curmsg->timestamp)) {
+				DBG(8, "%s ok to send a message\n",str().c_str());
 				//we can send the message
 				if(curmsg->tf & UNetAckReq) {
 					//send packet
@@ -880,7 +871,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 						net->addEvent(evt);
 					} else {
 						cur_quota+=curmsg->size();
-						curmsg->snd_timestamp=net->net_time;
+						curmsg->snt_timestamp=net->net_time;
 						net->rawsend(this,curmsg);
 						curmsg->timestamp=net->net_time+msg_timeout;
 						curmsg->tryes++;
@@ -888,9 +879,9 @@ tNetTimeDiff tNetSession::processSendQueues()
 					}
 				} else {
 					//probabilistic drop (of voice, and other non-ack packets) - make sure we don't drop ack replies though!
-					if(curmsg->tf == 0x00 && net->net_time-curmsg->timestamp > 4*msg_timeout) {
+					if(curmsg->tf == 0x00 && net->passedTimeSince(curmsg->timestamp) > 4*msg_timeout) {
 						//Unacceptable - drop it
-						net->err->log("%s Dropped a 0x00 packet due to unaceptable msg time %i,%i,%i\n",str().c_str(),msg_timeout,net->net_time-curmsg->timestamp,rtt);
+						net->err->log("%s Dropped a 0x00 packet due to unaceptable msg time %i,%i,%i\n",str().c_str(),msg_timeout,net->passedTimeSince(curmsg->timestamp),rtt);
 					} else if(curmsg->tf == 0x00 && (sndq->len() > static_cast<size_t>((minTH + random()%(maxTH-minTH)))) ) {
 						net->err->log("%s Dropped a 0x00 packet due to a big queue (%d messages)\n", str().c_str(), sndq->len());
 					}
@@ -904,8 +895,8 @@ tNetTimeDiff tNetSession::processSendQueues()
 				}
 			} //end time check
 			else {
-				timeout = std::min(timeout, static_cast<tNetTimeDiff>(curmsg->timestamp - net->net_time)); // come back when we want to send this message
-				DBG(8,"%s %ld Too soon (%ld) to send a message\n",str().c_str(),net->net_time,curmsg->timestamp-net->net_time);
+				timeout = std::min(timeout, net->remainingTimeTill(curmsg->timestamp)); // come back when we want to send this message
+				DBG(8,"%s Too soon (%d) to send a message\n",str().c_str(),net->remainingTimeTill(curmsg->timestamp));
 				curmsg = sndq->getNext(); // go on
 			}
 		} //end while
@@ -917,8 +908,8 @@ tNetTimeDiff tNetSession::processSendQueues()
 		if (curmsg && tts < timeout) timeout = tts;
 	} else {
 		// Still wait before sending a message
-		DBG(8,"%s %ld Too soon (%ld) to check sndq\n",str().c_str(),net->net_time,next_msg_time-net->net_time);
-		timeout = std::min(timeout, static_cast<tNetTimeDiff>(next_msg_time - net->net_time)); // come back when we want to send the next message
+		DBG(8,"%s Too soon (%d) to check sndq\n",str().c_str(),net->remainingTimeTill(next_msg_time));
+		timeout = std::min(timeout, net->remainingTimeTill(next_msg_time)); // come back when we want to send the next message
 	}
 	return timeout;
 }
