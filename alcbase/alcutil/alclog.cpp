@@ -62,14 +62,6 @@ tLogConfig::tLogConfig(void) : path("log/"), build("Alcugs logging system")
  Opens a log file to write,
  flags are detailed in the alclog.h file
 */
-tLog::tLog(const tString &name, uint16_t newFlags) {
-	init();
-	open(name,newFlags);
-}
-tLog::tLog(uint16_t newFlags) {
-	init();
-	open(newFlags);
-}
 void tLog::init(void)
 {
 	tvLogConfig = &(alcGetMain()->logCfg);
@@ -78,10 +70,6 @@ void tLog::init(void)
 	//this->facility = LOG_USER;
 	//this->priority = LOG_DEBUG;
 	count = 0;
-}
-
-tLog::~tLog() {
-	this->close();
 }
 
 void tLog::open(const tString &name, uint16_t newFlags) {

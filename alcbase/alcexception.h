@@ -52,11 +52,11 @@ public:
 	void copy(const txBase &t);
 	const txBase & operator=(txBase &t) { this->copy(t); return *this; }
 	/** \brief Returns the description message */
-	inline const char *what() const { return msg.c_str(); }
+	const char *what() const { return msg.c_str(); }
 	/** \brief Returns a backtrace (Only on Linux) */
-	inline const char *backtrace() const { return bt.c_str(); }
+	const char *backtrace() const { return bt.c_str(); }
 	void dump(bool toStderr = true);
-	inline virtual ~txBase() {}
+	virtual ~txBase() {}
 private:
 	void _preparebacktrace();
 	tString msg, bt;

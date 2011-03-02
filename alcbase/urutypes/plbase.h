@@ -44,8 +44,8 @@ namespace alc {
 		virtual void store(tBBuf &/*t*/) {}
 		virtual void stream(tBBuf &/*t*/) const {}
 		
-		inline uint16_t getType(void) const { return type; }
-		inline bool isIncomplete(void) const { return incomplete; }
+		uint16_t getType(void) const { return type; }
+		bool isIncomplete(void) const { return incomplete; }
 		virtual tString str(void) const;
 	private:
 		bool incomplete;

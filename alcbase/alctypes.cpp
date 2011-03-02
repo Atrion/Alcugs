@@ -42,7 +42,6 @@ namespace md5 {
 #include <iostream>
 #include <cerrno>
 #include <cstdarg>
-#include <cstring>
 #include <cstdlib>
 
 
@@ -61,18 +60,8 @@ static const unsigned int bufferOversize = 512; // number of Bytes to reserve in
 // all writes and reads to any network/file buffer must be
 // correctly swapped.
 
-//For these put* functions DO NOT change val to a reference (though I don't
-// know why anyone would). If you do, the byte-swapping will hurt you!
-void tBBuf::put16(uint16_t val) {
-	val = htole16(val);
-	this->write(&val,2);
-}
-void tBBuf::put32(uint32_t val) {
-	val = htole32(val);
-	this->write(&val,4);
-}
-void tBBuf::put8(uint8_t val) {
-	this->write(&val,1);
+void tBBuf::putFloat(float val) { // Does this work on big-endian?
+	this->write((&val),4);
 }
 void tBBuf::putDouble(double val) {
 #if defined(WORDS_BIGENDIAN)
@@ -87,21 +76,11 @@ void tBBuf::putDouble(double val) {
 #endif
 	this->write((&val),8);
 }
-void tBBuf::putFloat(float val) { // Does this work on big-endian?
-	this->write((&val),4);
-}
-uint16_t tBBuf::get16() {
-	uint16_t val;
-	memcpy(&val, this->read(2), 2);
-	return(letoh16(val));
-}
-uint32_t tBBuf::get32() {
-	uint32_t val;
+
+float tBBuf::getFloat() { // Does this work on big-endian?
+	float val;
 	memcpy(&val, this->read(4), 4);
-	return(letoh32(val));
-}
-uint8_t tBBuf::get8() {
-	return *static_cast<const uint8_t*>(this->read(1));
+	return(val);
 }
 double tBBuf::getDouble() {
 	double val;
@@ -116,11 +95,6 @@ double tBBuf::getDouble() {
 	valAsArray[0] = lo;
 	valAsArray[1] = hi;
 #endif
-	return(val);
-}
-float tBBuf::getFloat() { // Does this work on big-endian?
-	float val;
-	memcpy(&val, this->read(4), 4);
 	return(val);
 }
 void tBBuf::seek(ssize_t n, uint8_t flags) {
@@ -311,9 +285,6 @@ void tMBuf::cutEnd(size_t newSize)
 /* 
 	File Buffer 
 */
-tFBuf::tFBuf() {
-	this->init();
-}
 tFBuf::tFBuf(const char *file,const char * mode) {
 	this->init();
 	this->open(file,mode);
@@ -388,9 +359,6 @@ void tFBuf::close() {
 	if(f!=NULL) { fclose(f); }
 	f=NULL;
 	msize=0;
-}
-void tFBuf::flush() {
-	if (f != NULL) fflush(f);
 }
 /* end File buffer */
 
@@ -668,22 +636,6 @@ tString tString::fromUInt(unsigned int val)
 	return str;
 }
 
-tString operator+(const tString & str1, const tString & str2) {
-	tString out(str1);
-	out.writeStr(str2);
-	return out;
-}
-tString operator+(const char * str1, const tString & str2) {
-	tString out(str1);
-	out.writeStr(str2);
-	return out;
-}
-tString operator+(const tString & str1, const char * str2) {
-	tString out(str1);
-	out.writeStr(str2);
-	return out;
-}
-
 
 void tTime::store(tBBuf &t) {
 	DBG(9,"Buffer status size:%li,offset:%li\n",t.size(),t.tell());
@@ -772,10 +724,6 @@ tString tTime::str(uint8_t type) const {
 		sth.printf("%.6f seconds.",seconds%60 + microseconds/1000000.0);
 		return sth;
 	}
-}
-void tTime::setToNow() {
-	seconds=alcGetTime();
-	microseconds=alcGetMicroseconds();
 }
 
 } //end namespace alc

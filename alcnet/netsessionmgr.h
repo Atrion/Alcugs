@@ -78,11 +78,11 @@ public:
 	}
 	//! find a session by it's ki
 	tNetSession *findByKi(uint32_t ki);
-	void rewind();
-	void end();
+	void rewind() { off=0; }
+	void end() { off=size; }
 	tNetSession * getNext();
 	bool isEmpty() { return count==0; }
-	inline size_t getCount() { return count; }
+	size_t getCount() { return count; }
 protected:
 	size_t findFreeSlot(void);
 
@@ -97,7 +97,7 @@ it's global sid. It uses tNetSessionIte for searching and for "caching" the sid.
 (in fact, it's the only part of alcugs which does that) and it implements a limit for a max. number of sessions */
 class tNetSessionMgr : public tNetSessionList {
 public:
-	tNetSessionMgr(tUnet * net,size_t limit=0);
+	tNetSessionMgr(tUnet * net,size_t limit=0) : tNetSessionList(), max(limit), net(net) {}
 	virtual ~tNetSessionMgr();
 	tNetSession * search(tNetSessionIte &ite,bool create = false);
 	void destroy(tNetSessionIte &ite);

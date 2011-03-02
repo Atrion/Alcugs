@@ -65,7 +65,7 @@ public:
 	void run();
 	
 	/** terminate this session */
-	inline void terminate(tNetSession *u, uint8_t reason = 0) { terminate(u, reason, /*gotEndMsg*/false); }
+	void terminate(tNetSession *u, uint8_t reason = 0) { terminate(u, reason, /*gotEndMsg*/false); }
 	
 	/** check whether the server is still running (thread-safe) */
 	bool isRunning(void);
@@ -135,11 +135,11 @@ protected:
 			\param timeout Sets the timeout to wait for closing the connection to all peers (<0 gets timeout from config file)	*/
 	void stop(time_t timeout=-1);
 	/** Stops the netcore in a sane way, but without waiting for the clients to properly quit */
-	inline void forcestop() { stop(0); /* stop with a timeout of 0 */ }
+	void forcestop() { stop(0); /* stop with a timeout of 0 */ }
 private:
 	void terminate(tNetSession *u, uint8_t reason, bool gotEndMsg); //! may be called in worker thread
 	bool terminateAll(bool playersOnly = false); //!< \returns if a session was terminated
-	inline bool terminatePlayers() { return terminateAll(/*playersOnly*/true); }
+	bool terminatePlayers() { return terminateAll(/*playersOnly*/true); }
 	void removeConnection(tNetSession *u); //!< destroy that session, may be called in worker thread
 	void applyConfig();
 	

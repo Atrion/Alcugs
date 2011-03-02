@@ -56,7 +56,7 @@ namespace alc {
 		uint32_t createPlayer(tmCustomVaultCreatePlayer &createPlayer); //!< \returns KI number of created player or 0 if name already exists
 		void cleanVault(bool cleanAges);
 		int getNumberOfPlayers(const uint8_t *uid);
-		inline int getMaxPlayers(void) { return maxPlayers; }
+		int getMaxPlayers(void) { return maxPlayers; }
 		bool setAgeGuid(tvAgeLinkStruct *link, uint32_t ownerKi);
 	private:
 		// first the new types

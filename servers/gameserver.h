@@ -47,7 +47,7 @@ namespace alc {
 		bool isHidden;
 		tNetSession *u;
 		
-		inline tMemberInfo createInfo(void) {
+		tMemberInfo createInfo(void) {
 			return tMemberInfo(u, obj, isHidden);
 		}
 		
@@ -75,7 +75,7 @@ namespace alc {
 		/** creates a message to bring that player into the idle state. When inputState is < 0, generate a plAvBrainGenericMsg which
 		gets the avatar out of afk/KI state. When it is >= 0, send a plAvatarInputStateMsg with the given state to get it out of animations */
 		tmGameMessage makePlayerIdle(tNetSession *u, tUruObject rec, int inputState = -1);
-		inline bool getLinkingOutIdle() { return linkingOutIdle; }
+		bool getLinkingOutIdle() { return linkingOutIdle; }
 	protected:
 		virtual int onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u);
 		virtual void onIdle();

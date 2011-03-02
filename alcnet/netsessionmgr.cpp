@@ -113,8 +113,6 @@ void tNetSessionList::remove(tNetSession *u)
 	if (count == 0) { assert(size == 0); }
 }
 
-void tNetSessionList::rewind() { off=0; }
-void tNetSessionList::end() { off=size; }
 tNetSession * tNetSessionList::getNext() {
 	tNetSession * k=NULL;
 	if(off>=size) { off=0; return NULL; }
@@ -137,8 +135,6 @@ tNetSession *tNetSessionList::findByKi(uint32_t ki)
 }
 
 /* Sesion Mgr */
-tNetSessionMgr::tNetSessionMgr(tUnet * net,size_t limit) : tNetSessionList(), max(limit), net(net)
-{}
 tNetSessionMgr::~tNetSessionMgr()
 {
 	if(table!=NULL) {

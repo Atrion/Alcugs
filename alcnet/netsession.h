@@ -35,6 +35,9 @@
 #include <netinet/in.h>
 
 namespace alc {
+	
+	class tNetSessionIte;
+	class tUnet;
 
 #define UNetUpgraded 0x01
 //#define UNetNoConn   0x02
@@ -54,38 +57,38 @@ public:
 	tNetSession(tUnet * net,uint32_t ip,uint16_t port,uint32_t sid); //ip, port in network order
 	~tNetSession();
 	tString str(bool detail = true);
-	size_t getMaxFragmentSize();
-	size_t getMaxDataSize();
+	size_t getMaxFragmentSize() { return(static_cast<size_t>(maxPacketSz)-getHeaderSize()); }
+	size_t getMaxDataSize() { return(getMaxFragmentSize() * 256); }
 	size_t getHeaderSize();
 	tNetSessionIte getIte();
-	time_t onlineTime(void);
+	time_t onlineTime(void) { return alcGetTime()-nego_stamp.seconds; }
 	void send(tmBase &msg, tNetTimeDiff delay = 0); //!< delay is in msecs - may be called in worker thread
 	void terminate(int tout);
 	void setAuthData(uint8_t accessLevel, const tString &passwd);
 	
-	inline void setTimeout(unsigned int tout) { conn_timeout=tout*1000*1000; } //!< set timeout (in seconds)
-	inline void challengeSent(void) { if (authenticated == 0) authenticated = 10; }
-	inline void setRejectMessages(bool reject) { rejectMessages = reject; }
+	void setTimeout(unsigned int tout) { conn_timeout=tout*1000*1000; } //!< set timeout (in seconds)
+	void challengeSent(void) { if (authenticated == 0) authenticated = 10; }
+	void setRejectMessages(bool reject) { rejectMessages = reject; }
 	
-	inline int getSid(void) { return sid; }
-	inline uint8_t getPeerType() { return whoami; }
-	inline tNetTimeDiff getRTT() { return rtt; }
-	inline bool isConnected() { return cabal!=0; }
-	inline uint32_t getIp(void) { return ip; }
-	inline uint16_t getPort(void) { return port; }
-	inline uint8_t getAccessLevel(void) { return accessLevel; }
-	inline uint8_t getAuthenticated(void) { return authenticated; }
-	inline size_t getMaxPacketSz(void) { return maxPacketSz; }
-	inline bool isClient() { return client; }
-	inline bool isTerminated() { return terminated; }
-	inline void setTypeToGame() { whoami = KGame; }
-	inline bool isAlcugsServer()
+	int getSid(void) { return sid; }
+	uint8_t getPeerType() { return whoami; }
+	tNetTimeDiff getRTT() { return rtt; }
+	bool isConnected() { return cabal!=0; }
+	uint32_t getIp(void) { return ip; }
+	uint16_t getPort(void) { return port; }
+	uint8_t getAccessLevel(void) { return accessLevel; }
+	uint8_t getAuthenticated(void) { return authenticated; }
+	size_t getMaxPacketSz(void) { return maxPacketSz; }
+	bool isClient() { return client; }
+	bool isTerminated() { return terminated; }
+	void setTypeToGame() { whoami = KGame; }
+	bool isAlcugsServer()
 		{ return whoami == KLobby || whoami == KGame || whoami == KVault || whoami == KAuth || whoami == KTracking; }
-	inline bool anythingToSend() { return !ackq->isEmpty() || !sndq->isEmpty(); }
+	bool anythingToSend() { return !ackq->isEmpty() || !sndq->isEmpty(); }
 
 private:
 	void init();
-	inline void resetMsgCounters(void);
+	void resetMsgCounters(void);
 	void processIncomingMsg(void * buf,size_t size); //!< we received a message
 	tNetTimeDiff processSendQueues(); //!< send what is in our queues
 
@@ -97,7 +100,7 @@ private:
 	void queueReceivedMessage(tUnetUruMsg *msg);
 	void checkQueuedMessages(void);
 
-	inline int8_t compareMsgNumbers(uint32_t sn1, uint8_t fr1, uint32_t sn2, uint8_t fr2);
+	int8_t compareMsgNumbers(uint32_t sn1, uint8_t fr1, uint32_t sn2, uint8_t fr2);
 	void updateRTT(tNetTimeDiff newread);
 	void increaseCabal();
 	void decreaseCabal(bool small);

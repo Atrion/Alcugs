@@ -66,7 +66,7 @@ public:
 		}
 		return current;
 	}
-	inline T* getCurrent() {
+	T* getCurrent() {
 		return current;
 	}
 	T* unstackCurrent() {
@@ -113,13 +113,13 @@ public:
 		}
 		n++;
 	}
-	inline void rewind() {
+	void rewind() {
 		prev=current=NULL;
 	}
-	inline bool isEmpty() {
+	bool isEmpty() {
 		return(first==NULL);
 	}
-	inline size_t len() { return n; }
+	size_t len() { return n; }
 private:
 	T* first;
 	T* last;
