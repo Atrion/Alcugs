@@ -45,14 +45,14 @@ public:
 	tAlcMain(const tString &appName); //!< Run this directly in main(), not in a try...catch - it will deal with that itself
 	virtual ~tAlcMain(void);
 	
-	inline tTime bornTime(void) { return born; }
+	tTime bornTime(void) { return born; }
 	tTime upTime(void);
-	inline uint64_t threadId(void) { return mainThreadId; }
-	inline tConfig *config(void) { return &cfg; }
-	inline tString name(void) { return appName; }
+	uint64_t threadId(void) { return mainThreadId; }
+	tConfig *config(void) { return &cfg; }
+	tString name(void) { return appName; }
 	
-	inline tLog *std() { return stdLog; }
-	inline tLog *err() { return errLog; }
+	tLog *std() { return stdLog; }
+	tLog *err() { return errLog; }
 	
 	// some global events
 	virtual void onApplyConfig(); //!< applies the previously loaded config to all submodules. This enables file-logging per default!

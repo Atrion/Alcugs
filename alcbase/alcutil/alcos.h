@@ -61,9 +61,9 @@ public:
 	~tDirEntry();
 	tString name;
 	int entryType;
-	inline bool isNull(void) { return name.isEmpty(); }
-	inline bool isDir(void) { return entryType == DT_DIR; }
-	inline bool isFile(void) { return entryType == DT_REG || entryType == DT_UNKNOWN; } // for some reasons, some Linux systems give DT_UNKNOWN
+	bool isNull(void) { return name.isEmpty(); }
+	bool isDir(void) { return entryType == DT_DIR; }
+	bool isFile(void) { return entryType == DT_REG || entryType == DT_UNKNOWN; } // for some reasons, some Linux systems give DT_UNKNOWN
 };
 
 /** Directory */

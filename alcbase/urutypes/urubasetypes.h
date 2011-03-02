@@ -71,9 +71,9 @@ public:
 	virtual void stream(tBBuf &t) const;
 	
 	// assignment
-	inline const tUruString & operator=(const tUruString &t) { copy(t); return *this; }
-	inline const tString & operator=(const tString &t) { copy(t); return *this; }
-	inline const tString & operator=(const char *t) { copy(t); return *this; }
+	const tUruString & operator=(const tUruString &t) { copy(t); return *this; }
+	const tString & operator=(const tString &t) { copy(t); return *this; }
+	const tString & operator=(const char *t) { copy(t); return *this; }
 };
 
 /** UruObject */
@@ -85,7 +85,7 @@ public:
 	tString str(void) const;
 	
 	bool operator==(const tUruObject &obj) const;
-	inline bool operator!=(const tUruObject &obj) const {
+	bool operator!=(const tUruObject &obj) const {
 		return !(*this == obj);
 	}
 
@@ -119,7 +119,7 @@ public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
 	
-	inline uint16_t getType(void) { return type; }
+	uint16_t getType(void) { return type; }
 	void uncompress(void); //!< call this before using it
 	void compress(void); //!< call this before streaming or sending it
 	void eofCheck(void);

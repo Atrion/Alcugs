@@ -30,6 +30,7 @@
 #define __U_UNET_H_ID "$Id$"
 
 #include "netmsgq.h"
+#include "netsessionmgr.h"
 #include <alctypes.h>
 #include <alcutil/alcthread.h>
 
@@ -38,18 +39,10 @@
 namespace alc {
 	
 	class tLog;
-	class tNetSessionIte;
 	class tNetEvent;
 	class tmBase;
 	class tUnetUruMsg;
-	class tNetSessionMgr;
-	class tNetSession;
 	class tmMsgBase;
-	
-	// unet time types
-	typedef unsigned long int tNetTime; // timestamp used by netcore (don't want to carry those tTimes around there), microseconds. this may overflow, to use with caution!
-	typedef signed long int tNetTimeSigned; // must be the same as tNetTime, but signed - to be used only by the overdue check!
-	typedef unsigned int tNetTimeDiff; // time difference between two net times, microseconds
 
 
 //udp packet max buffer size (0xFFFF) - any packet should be bigger.
@@ -106,34 +99,55 @@ class tUnet {
 public:
 	tUnet(uint8_t whoami,const tString & lhost="",uint16_t lport=0); //lport in host order
 	virtual ~tUnet();
-	void setFlags(uint16_t flags);
-	void unsetFlags(uint16_t flags);
-	uint16_t getFlags();
-	tNetSession * sessionByIte(tNetSessionIte &t); //!< (thread-safe)
-	void setBindPort(uint16_t lport); //lport in host order
-	void setBindAddress(const tString & lhost);
-	void send(alc::tmMsgBase& m, tNetTimeDiff delay = 0); //!< delay is in msecs - may be called in worker thread
+	void setFlags(uint16_t flags) { this->flags |= flags; }
+	void unsetFlags(uint16_t flags) { this->flags &= ~flags; }
+	uint16_t getFlags() { return this->flags; }
+	tNetSession * sessionByIte(tNetSessionIte &t) { //!< (thread-safe)
+		tMutexLock lock(smgrMutex);
+		return (smgr->search(t,false));
+	}
+	void setBindPort(uint16_t lport) { bindport=lport; } //lport in host order
+	void setBindAddress(const tString & lhost) {
+		if(lhost.isEmpty()) bindaddr = "0.0.0.0";
+		else bindaddr = lhost;
+	}
+	void send(alc::tmMsgBase& m, tNetTimeDiff delay = 0) { m.getSession()->send(m, delay); } //!< delay is in msecs - may be called in worker thread
 
 protected:
 	void startOp();
 	void stopOp();
 	void openLogfiles();
-	void destroySession(tNetSessionIte &t);
+	void destroySession(tNetSessionIte &t) {
+		tMutexLock lock(smgrMutex);
+		smgr->destroy(t);
+	}
 	tNetSessionIte netConnect(const char * hostname,uint16_t port,uint8_t validation,uint8_t flags,uint8_t peerType=0);
 	int sendAndWait(); //!< send enqueued messages, wait, and receive packets and enqueue them (wait time must be set by processQueues()!)
 	tNetEvent * getEvent(); //!<  (thread-safe)
 	void addEvent(tNetEvent *evt); //!<  (thread-safe)
 	void clearEventQueue(); //!< use this only if you really know what you do - will loose incoming messages and whatnot! (thread-safe)
 	tNetTime getNetTime() { return net_time; }
-	bool timeOverdue(tNetTime timeout); //!< returns whether the timout is overdue
+	bool timeOverdue(tNetTime timeout) { //!< returns whether the timout is overdue
+		return static_cast<tNetTimeSigned>(net_time-timeout) >= 0; // casting to signed will magically do the right thing, even if the time overflowed! Twoth complement is awesome :D
+	}
 	tNetTimeDiff remainingTimeTill(tNetTime time); //!< returns time remaining till given timestamp
 	tNetTimeDiff passedTimeSince(tNetTime time); //!< returns time passed since given timestamp
 	
 	virtual bool canPortBeUsed(uint16_t /*port*/) { return false; }
 	
-	tNetSession *sessionBySid(size_t n); //!< (thread-safe)
-	tNetSession *sessionByKi(uint32_t ki); //!< (thread-safe)
-	bool sessionListEmpty(); //!< (thread-safe)
+	tNetSession *sessionBySid(size_t sid) //!< (thread-safe)
+	{
+		tMutexLock lock(smgrMutex);
+		return smgr->get(sid);
+	}
+	tNetSession *sessionByKi(uint32_t ki) { //!< (thread-safe)
+		tMutexLock lock(smgrMutex);
+		return smgr->findByKi(ki);
+	}
+	bool sessionListEmpty() { //!< (thread-safe)
+		tMutexLock lock(smgrMutex);
+		return smgr->isEmpty();
+	}
 
 private:
 	void init();

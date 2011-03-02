@@ -107,10 +107,10 @@ public:
 	void copyValue(const tString & tok,const tString & fromk,const tString & to="global",const tString & from="global"); //!< this overwrites an already existing value - but only of the value which is copied exists!
 	
 	
-	inline const tString & getVar(const tString & what,const tString & where,bool *found) {//!< found tells you whether the value exists
+	const tString & getVar(const tString & what,const tString & where,bool *found) {//!< found tells you whether the value exists
 		return getVar(what, where, 0, 0, found);
 	}
-	inline const tString & getVar(const tString & what,bool *found) {//!< found tells you whether the value exists
+	const tString & getVar(const tString & what,bool *found) {//!< found tells you whether the value exists
 		return getVar(what, "global", 0, 0, found);
 	}
 private:

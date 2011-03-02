@@ -62,7 +62,7 @@ public:
 	int affectedRows(void);
 	
 	tString escape(const char *str); //!< escapes the given string
-	inline tString escape(const tString &str) { return escape(str.c_str()); }
+	tString escape(const tString &str) { return escape(str.c_str()); }
 	tString escape(const tMBuf &buf); //!< escapes the given data
 	MYSQL_RES *storeResult(void);
 	

@@ -195,7 +195,7 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
-		inline bool hasGuid(void) { return (flags & 0x04); }
+		bool hasGuid(void) { return (flags & 0x04); }
 		tString str(void) const;
 		// format
 		uint8_t flags;
@@ -313,7 +313,7 @@ namespace alc {
 		    will also be sent when their flag is off */
 		tvNode(uint32_t flagB = 0);
 		
-		inline virtual ~tvNode(void) {}
+		virtual ~tvNode(void) {}
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
@@ -353,7 +353,7 @@ namespace alc {
 		tvItem(tvCreatableStream *stream);
 		tvItem(uint8_t id, tvNodeRef *ref);
 		tvItem(uint8_t tpots) : tvBase() { this->tpots = tpots; data = NULL; }
-		inline virtual ~tvItem(void) { if (data) delete data; }
+		virtual ~tvItem(void) { if (data) delete data; }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);

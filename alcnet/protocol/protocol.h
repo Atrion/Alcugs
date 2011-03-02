@@ -36,13 +36,17 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_PROTOCOL_H_ID "$Id$"
 
-#include "unet.h"
 #include <urutypes/uruconsts.h>
 #include <urutypes/urubasetypes.h>
 
 #include <vector>
 
 namespace alc {
+	
+	// unet time types
+	typedef unsigned long int tNetTime; // timestamp used by netcore (don't want to carry those tTimes around there), microseconds. this may overflow, to use with caution!
+	typedef signed long int tNetTimeSigned; // must be the same as tNetTime, but signed - to be used only by the overdue check!
+	typedef unsigned int tNetTimeDiff; // time difference between two net times, microseconds
 
 class tNetSession;
 class tLog;
@@ -132,7 +136,7 @@ class tmBase :public tBaseType {
 public:
 	tmBase(uint8_t bhflags, tNetSession *u) : bhflags(bhflags), u(u) { }
 	virtual tString str() const=0;
-	inline tNetSession *getSession(void) const { return u; }
+	tNetSession *getSession(void) const { return u; }
 	uint8_t bhflags;
 protected:
 	tNetSession * u; //!< associated session (source for incoming, destination for outgoing)

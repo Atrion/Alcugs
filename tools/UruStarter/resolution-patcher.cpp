@@ -24,12 +24,12 @@
 
 extern QTextStream log;
 
-static inline void seek(QFile *file, int size)
+static void seek(QFile *file, int size)
 {
 	file->seek(file->pos()+size);
 }
 
-static inline int getChar(QFile *file)
+static int getChar(QFile *file)
 {
 	char res;
 	if (!file->getChar(&res)) {
@@ -39,7 +39,7 @@ static inline int getChar(QFile *file)
 	return res;
 }
 
-static inline int getInt(QFile *file)
+static int getInt(QFile *file)
 {
 	int res = getChar(file);
 	res += getChar(file)*256;
@@ -48,7 +48,7 @@ static inline int getInt(QFile *file)
 	return res;
 }
 
-static inline void putInt(QFile *file, int val)
+static void putInt(QFile *file, int val)
 {
 	file->putChar(val % 256); val /= 256;
 	file->putChar(val % 256); val /= 256;

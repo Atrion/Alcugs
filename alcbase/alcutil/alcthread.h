@@ -70,11 +70,10 @@ private:
 
 class tMutexLock {
 public:
-	inline tMutexLock(tMutex &mutex) {
-		this->mutex = &mutex;
+	tMutexLock(tMutex &mutex) : mutex(&mutex) {
 		this->mutex->lock();
 	}
-	inline ~tMutexLock(void) {
+	~tMutexLock(void) {
 		mutex->unlock();
 	}
 private:

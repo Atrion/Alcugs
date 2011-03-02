@@ -43,10 +43,10 @@ class tStringTokenizer {
 public:
 	tStringTokenizer(const tString &text) : str(text), line(0), col(0), sep('=') { str.rewind(); }
 
-	inline unsigned int getLineNum() { return line; }
-	inline unsigned int getColumnNum() { return col; }
-	inline void setSeparator(char w) { sep=w; }
-	inline bool eof(void) { return str.eof(); }
+	unsigned int getLineNum() { return line; }
+	unsigned int getColumnNum() { return col; }
+	void setSeparator(char w) { sep=w; }
+	bool eof(void) { return str.eof(); }
 	
 	/** \brief returns a line
 			\param nl If true, it will also append the \\n if it's present

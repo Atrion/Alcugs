@@ -124,7 +124,7 @@ void tNetSession::resetMsgCounters(void) {
 	delete rcv;
 	rcv = NULL;
 }
-inline int8_t tNetSession::compareMsgNumbers(uint32_t sn1, uint8_t fr1, uint32_t sn2, uint8_t fr2)
+int8_t tNetSession::compareMsgNumbers(uint32_t sn1, uint8_t fr1, uint32_t sn2, uint8_t fr2)
 {
 	if (sn1 < sn2 || (sn1 == sn2 && fr1 < fr2)) return -1;
 	else if (sn1 == sn2 && fr1 == fr2) return 0;
@@ -155,12 +155,6 @@ size_t tNetSession::getHeaderSize() {
 	if(validation>0) my+=4;
 	if(cflags & UNetUpgraded) my-=8;
 	return my;
-}
-size_t tNetSession::getMaxFragmentSize() {
-	return(static_cast<size_t>(maxPacketSz)-getHeaderSize());
-}
-size_t tNetSession::getMaxDataSize() {
-	return(getMaxFragmentSize() * 256);
 }
 
 // functions to calculate cabal and rtt
@@ -930,11 +924,6 @@ void tNetSession::negotiate() {
 	tmNetClientComm comm(nego_stamp,sbw,this);
 	send(comm);
 	negotiating = true;
-}
-
-time_t tNetSession::onlineTime(void)
-{
-	return alcGetTime()-nego_stamp.seconds;
 }
 
 void tNetSession::terminate(int tout)

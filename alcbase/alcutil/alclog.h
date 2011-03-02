@@ -119,14 +119,20 @@ private:
 
 class tLog {
 public:
-	tLog(const tString &name,uint16_t newFlags=0);
-	tLog(uint16_t newFlags=0);
-	~tLog();
+	tLog(const tString &name,uint16_t newFlags=0) {
+		init();
+		open(name,newFlags);
+	}
+	tLog(uint16_t newFlags=0) {
+		init();
+		open(newFlags);
+	}
+	~tLog() { close(); }
 	void open(const tString &name,uint16_t newFlags=0);
-	inline void open(uint16_t newFlags=0) { open(tString(), newFlags); } // useful if you only want to open stdout/stderr
+	void open(uint16_t newFlags=0) { open(tString(), newFlags); } // useful if you only want to open stdout/stderr
 	void rotate(bool force=false);
 	void close(bool silent=false);
-	inline void checkRotate(unsigned int maxCount) {
+	void checkRotate(unsigned int maxCount) {
 		++count;
 		if(count>maxCount) { count=0; rotate(false); }
 	}

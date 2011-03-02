@@ -54,8 +54,8 @@ namespace alc {
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		void print(alc::tLog* log, unsigned int indentSize);
-		inline uint32_t getNum(void) const { return num; }
-		inline bool hasFlags(uint8_t f) const {
+		uint32_t getNum(void) const { return num; }
+		bool hasFlags(uint8_t f) const {
 			return (flags | f) == flags; // there can be several flags enabled in f, so a simple & is not enough
 		}
 		uint8_t getType(void) const;
@@ -95,7 +95,7 @@ namespace alc {
 		
 		tUruString getName(void) const;
 		uint16_t getVersion(void) const;
-		inline bool isIndexed(void) const { return incompleteVars || incompleteStructs; }
+		bool isIndexed(void) const { return incompleteVars || incompleteStructs; }
 		
 		void updateWith(tSdlStateBinary *newState); //!< updates the current state with the additional information from the new one
 		void updateTo(tSdlStruct *newSdlStruct); //!< updates the struct the data is saved in

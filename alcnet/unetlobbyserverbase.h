@@ -42,8 +42,8 @@ class tUnetLobbyServerBase : public tUnetServerBase {
 public:
 	tUnetLobbyServerBase(uint8_t whoami);
 	
-	inline const uint8_t *getGuid() { return serverGuid; }
-	inline const tString &getName() { return serverName; }
+	const uint8_t *getGuid() { return serverGuid; }
+	const tString &getName() { return serverName; }
 protected:
 	virtual void onStart(void);
 	virtual void onIdle();

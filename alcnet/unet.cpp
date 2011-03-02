@@ -78,13 +78,6 @@ tUnet::~tUnet() {
 	if (pthread_cond_destroy(&eventAddedCond))
 		throw txBase(_WHERE("Error destroying condition"));
 }
-void tUnet::setBindPort(uint16_t lport) {
-	bindport=lport;
-}
-void tUnet::setBindAddress(const tString & lhost) {
-	if(lhost.isEmpty()) bindaddr = "0.0.0.0";
-	else bindaddr = lhost;
-}
 /**
 	Fills the unet struct with the default values
 */
@@ -152,23 +145,10 @@ void tUnet::init() {
 	#endif
 	
 }
-void tUnet::setFlags(uint16_t flags) {
-	this->flags |= flags;
-}
-void tUnet::unsetFlags(uint16_t flags) {
-	this->flags &= ~flags;
-}
-uint16_t tUnet::getFlags() { return this->flags; }
 
 void tUnet::updateNetTime() {
 	//set stamp
 	net_time=static_cast<tNetTime>(alcGetTime())*1000000+alcGetMicroseconds();
-}
-
-bool tUnet::timeOverdue(tNetTime timeout)
-{
-	DBG(6, "Time overdue check: net_time %ld, timeout %ld\n", net_time, timeout);
-	return static_cast<tNetTimeSigned>(net_time-timeout) >= 0; // casting to signed will magically do the right thing, even if the time overflowed! Twoth complement is awesome :D
 }
 
 tNetTimeDiff tUnet::remainingTimeTill(tNetTime time)
@@ -204,35 +184,6 @@ void tUnet::clearEventQueue()
 {
 	tMutexLock lock(eventsMutex);
 	events->clear();
-}
-
-tNetSession *tUnet::sessionBySid(size_t sid)
-{
-	tMutexLock lock(smgrMutex);
-	return smgr->get(sid);
-}
-
-tNetSession *tUnet::sessionByKi(uint32_t ki)
-{
-	tMutexLock lock(smgrMutex);
-	return smgr->findByKi(ki);
-}
-
-tNetSession * tUnet::sessionByIte(tNetSessionIte &t)
-{
-	tMutexLock lock(smgrMutex);
-	return (smgr->search(t,false));
-}
-
-void tUnet::destroySession(tNetSessionIte &t) {
-	tMutexLock lock(smgrMutex);
-	smgr->destroy(t);
-}
-
-bool tUnet::sessionListEmpty()
-{
-	tMutexLock lock(smgrMutex);
-	return smgr->isEmpty();
 }
 
 
@@ -624,7 +575,7 @@ tNetTimeDiff tUnet::processSendQueues() {
 	tNetTimeDiff unet_timeout=max_sleep;
 	
 	tNetSession * cur;
-	tMutexLock lock(smgrMutex);
+	tMutexLock lock(smgrMutex); // FIXME this is not good, holding the lock too long
 	smgr->rewind();
 	while((cur=smgr->getNext())) {
 		/* Also create the timeout when it's exactly the same time.
@@ -750,9 +701,6 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg)
 	delete mbuf;
 	DBG(8,"returning from uru_net_send RET:%li\n",msize);
 }
-
-void tUnet::send(tmMsgBase &m, tNetTimeDiff delay)
-	{ m.getSession()->send(m, delay); }
 
 
 } //end namespace
