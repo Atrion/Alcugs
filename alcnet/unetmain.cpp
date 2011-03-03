@@ -79,7 +79,9 @@ bool tAlcUnetMain::onSignal(int s) {
 			case SIGHUP: //reload configuration
 				assert(alcGetSelfThreadId() == threadId()); // should only occur in main thread
 				stdLog->log("INF: Re-reading configuration\n\n");
-				loadUnetConfig();
+				net->workerThread.stop(); // make sure we can safely modify the config
+				applyConfig();
+				net->workerThread.spawn();
 				return true;
 			case SIGALRM:
 			case SIGTERM:
@@ -129,26 +131,21 @@ bool tAlcUnetMain::onSignal(int s) {
 	return false;
 }
 
-void tAlcUnetMain::onApplyConfig()
+void tAlcUnetMain::applyConfig()
 {
-	tAlcMain::onApplyConfig();
-	if (net) net->applyConfig(); // trigger the apply process in the netcore
-}
-
-void tAlcUnetMain::loadUnetConfig(void) {
+	assert(alcGetSelfThreadId() == threadId()); // should only occur in main thread
 	//Load and parse config files
 	tString var;
 	var=cfg.getVar("read_config","cmdline");
-	if(var.isEmpty()) {
-		var="uru.conf";
-		cfg.setVar(var,"read_config","cmdline"); // lobbyserver relies on this being set
+	if(!var.isEmpty()) {
+		loadConfig(var);
 	}
-	loadConfig(var);
 	// put the current server into "global"
 	cfg.copyKey("global",netName);
 	cfg.copyKey("global","cmdline");
-	// apply the config
-	onApplyConfig();
+	// apply configuration
+	tAlcMain::applyConfig();
+	if (net) net->applyConfig(); // trigger the apply process in the netcore
 }
 
 } //end namespace alc

@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2008  The Alcugs Server Team                           *
+*    Copyright (C) 2004-2011  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -190,11 +190,12 @@ int main(int argc, char * argv[]) {
 	try {
 		//Parse command line
 		DBG(5,"parsing cmd...");
+		alcMain.config()->setVar("uru.conf","read_config","cmdline"); // default config filename
 		if (u_parse_arguments(argc,argv)!=0) return -1;
 		DBGM(5," done\n");
 		DBG(5,"loading config...\n");
 		//Load and parse config files
-		alcMain.loadUnetConfig();
+		alcMain.applyConfig();
 		setConfigAliases(alcMain.config());
 		DBGM(5," done\n");
 		

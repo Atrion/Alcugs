@@ -48,14 +48,14 @@ public:
 	tTime bornTime(void) { return born; }
 	tTime upTime(void);
 	uint64_t threadId(void) { return mainThreadId; }
-	tConfig *config(void) { return &cfg; }
+	tConfig *config(void); //!< returns the configuration manager - must only be used in main thread! (FIXME: is this really done correctly?)
 	tString name(void) { return appName; }
 	
 	tLog *std() { return stdLog; }
 	tLog *err() { return errLog; }
 	
 	// some global events
-	virtual void onApplyConfig(); //!< applies the previously loaded config to all submodules. This enables file-logging per default!
+	virtual void applyConfig(); //!< applies the previously loaded config to all submodules. This enables file-logging per default! Call after you set up the configuration
 	virtual void onCrash(void);
 	virtual bool onSignal(int s); //!< returns whether the signal has been handled (true) or still needs handling (false)
 

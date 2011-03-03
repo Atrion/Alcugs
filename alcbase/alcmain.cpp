@@ -39,6 +39,7 @@
 #include "alcexception.h"
 
 #include <sys/wait.h>
+#include <cassert>
 
 // We are using SIG_DFL here which implies an old-style cast
 #pragma GCC diagnostic ignored "-Wold-style-cast"
@@ -89,6 +90,12 @@ tAlcMain::~tAlcMain() {
 	alcMain = NULL; // the last thing
 }
 
+tConfig* tAlcMain::config(void)
+{
+	assert(alcGetSelfThreadId() == mainThreadId);
+	return &cfg;
+}
+
 tTime tAlcMain::upTime(void)
 {
 	tTime now;
@@ -96,7 +103,7 @@ tTime tAlcMain::upTime(void)
 	return now-born;
 }
 
-void tAlcMain::onApplyConfig() {
+void tAlcMain::applyConfig() {
 	tString var;
 	var=cfg.getVar("verbose_level","global");
 	if(var.isEmpty()) {

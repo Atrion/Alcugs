@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2010  The Alcugs Server Team                           *
+*    Copyright (C) 2004-2011  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -49,7 +49,7 @@
 
 namespace alc {
 
-tUnetBase::tUnetBase(uint8_t whoami) :tUnet(whoami), running(true), workerThread(this) {
+tUnetBase::tUnetBase(uint8_t whoami) :tUnet(whoami), configured(false), running(true), workerThread(this) {
 	alcUnetGetMain()->setNet(this);
 	tString var;
 	tConfig * cfg;
@@ -72,6 +72,7 @@ tUnetBase::~tUnetBase() {
 }
 
 void tUnetBase::applyConfig() {
+	configured = true;
 	openLogfiles(); // (re-)open basic logfiles
 	// re-load configuration
 	tString var;
@@ -82,16 +83,6 @@ void tUnetBase::applyConfig() {
 	if(!var.isEmpty()) {
 		max_sleep = var.asUInt()*1000*1000;
 	}
-#ifdef ENABLE_THREADS
-	//Set pool size
-	var=cfg->getVar("net.pool.size","global");
-	if(var.isEmpty()) {
-		pool_size=4; //Set up 4 worker threads by default (may be changed)
-	} else {
-		pool_size=var.asUInt();
-		if(pool_size<=0) pool_size=1;
-	}
-#endif
 	var=cfg->getVar("net.maxconnections","global");
 	if(!var.isEmpty()) {
 		max=var.get32();
@@ -275,7 +266,7 @@ void tUnetBase::removeConnection(tNetSession *u)
 
 // main thread loop: handles the socket, fills the working queue, starts and stops threads
 void tUnetBase::run() {
-	applyConfig();
+	if (!configured) applyConfig(); // make sure applyConfig() was called at least once
 	startOp();
 	onStart();
 	
@@ -301,10 +292,9 @@ void tUnetBase::run() {
 		sendAndWait();
 	}
 	
-	// quit the worker thread
+	// stop the worker thread
 	clearEventQueue();
-	addEvent(new tNetEvent(UNET_KILL_WORKER));
-	workerThread.join();
+	workerThread.stop();
 	
 	// cleanup (we are the only thread left, so no locking required anymore)
 	if(!smgr->isEmpty()) {
@@ -325,85 +315,84 @@ void tUnetBase::run() {
 void tUnetBase::processEvent(tNetEvent *evt)
 {
 	tNetSession *u=sessionByIte(evt->sid);
-	if (u != NULL) {
-		switch(evt->id) {
-			case UNET_NEWCONN:
-				sec->log("%s New Connection\n",u->str().c_str());
-				if (!isRunning())
+if (u == NULL) return; // maybe the session expired since we got the event
+	switch(evt->id) {
+		case UNET_NEWCONN:
+			sec->log("%s New Connection\n",u->str().c_str());
+			if (!isRunning())
+				terminate(u);
+			else
+				onNewConnection(u);
+			break;
+		case UNET_TIMEOUT:
+			if (u->isTerminated()) { // a destroyed session, close it
+				removeConnection(u);
+			}
+			else {
+				if (!isRunning() || onConnectionTimeout(u))
+					terminate(u, RTimedOut);
+			}
+			break;
+		case UNET_FLOOD:
+			sec->log("%s Flood Attack\n",u->str().c_str());
+			if (!isRunning() || onConnectionFlood(u)) {
+				terminate(u);
+				alcGetMain()->err()->log("%s kicked due to a Flood Attack\n", u->str().c_str());
+			}
+			break;
+		case UNET_MSGRCV:
+		{
+			tUnetMsg * msg = evt->msg;
+			int ret = 0; // 0 - non parsed; 1 - parsed; 2 - ignored; -1 - parse error; -2 - hack attempt
+			#ifdef ENABLE_MSGDEBUG
+			log->log("%s New MSG Recieved\n",u->str().c_str());
+			#endif
+			assert(msg!=NULL);
+			bool shutdown = !isRunning();
+			try {
+				ret = parseBasicMsg(msg, u, shutdown);
+				if (ret != 1 && !u->isTerminated() && !shutdown) // if this is an active connection, look for other messages
+					ret = onMsgRecieved(msg, u);
+				if (ret == 1 && !msg->data.eof() > 0) { // packet was processed and there are bytes left, obiously invalid, terminate the client
+					err->log("%s Recieved a message 0x%04X (%s) which was too long (%d Bytes remaining after parsing) - kicking player\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data.remaining());
+					ret = -1;
+				}
+			}
+			catch (txBase &t) { // if there was an error parsing the message, kick the responsible player
+				err->log("%s Recieved invalid 0x%04X (%s) - kicking peer\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+				err->log(" Exception %s\n%s\n",t.what(),t.backtrace());
+				ret=-1;
+			}
+			if(ret==0) {
+				if (u->isTerminated() || shutdown) {
+					err->log("%s is terminated and sent non-NetMsgLeave message 0x%04X (%s)\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
 					terminate(u);
-				else
-					onNewConnection(u);
-				break;
-			case UNET_TIMEOUT:
-				if (u->isTerminated()) { // a destroyed session, close it
-					removeConnection(u);
 				}
 				else {
-					if (!isRunning() || onConnectionTimeout(u))
-						terminate(u, RTimedOut);
+					err->log("%s Unexpected message 0x%04X (%s) - kicking peer\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
+					sec->log("%s Unexpected message 0x%04X (%s)\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
+					terminate(u, RUnimplemented);
 				}
-				break;
-			case UNET_FLOOD:
-				sec->log("%s Flood Attack\n",u->str().c_str());
-				if (!isRunning() || onConnectionFlood(u)) {
-					terminate(u);
-					alcGetMain()->err()->log("%s kicked due to a Flood Attack\n", u->str().c_str());
-				}
-				break;
-			case UNET_MSGRCV:
-			{
-				tUnetMsg * msg = evt->msg;
-				int ret = 0; // 0 - non parsed; 1 - parsed; 2 - ignored; -1 - parse error; -2 - hack attempt
-				#ifdef ENABLE_MSGDEBUG
-				log->log("%s New MSG Recieved\n",u->str().c_str());
-				#endif
-				assert(msg!=NULL);
-				bool shutdown = !isRunning();
-				try {
-					ret = parseBasicMsg(msg, u, shutdown);
-					if (ret != 1 && !u->isTerminated() && !shutdown) // if this is an active connection, look for other messages
-						ret = onMsgRecieved(msg, u);
-					if (ret == 1 && !msg->data.eof() > 0) { // packet was processed and there are bytes left, obiously invalid, terminate the client
-						err->log("%s Recieved a message 0x%04X (%s) which was too long (%d Bytes remaining after parsing) - kicking player\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data.remaining());
-						ret = -1;
-					}
-				}
-				catch (txBase &t) { // if there was an error parsing the message, kick the responsible player
-					err->log("%s Recieved invalid 0x%04X (%s) - kicking peer\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-					err->log(" Exception %s\n%s\n",t.what(),t.backtrace());
-					ret=-1;
-				}
-				if(ret==0) {
-					if (u->isTerminated() || shutdown) {
-						err->log("%s is terminated and sent non-NetMsgLeave message 0x%04X (%s)\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-						terminate(u);
-					}
-					else {
-						err->log("%s Unexpected message 0x%04X (%s) - kicking peer\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
-						sec->log("%s Unexpected message 0x%04X (%s)\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
-						terminate(u, RUnimplemented);
-					}
-				}
-				else if(ret==-1) {
-					// the problem already got printed to the error log wherever this return value was set
-					sec->log("%s Kicked off due to a parse error in a previus message 0x%04X (%s)\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-					terminate(u, RParseError);
-				}
-				else if(ret==-2) {
-					// the problem already got printed to the error log wherever this return value was set
-					sec->log("%s Kicked off due to cracking 0x%04X (%s)\n",u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-					terminate(u, RHackAttempt);
-				}
-				else if (ret!=1 && ret!=2) {
-					err->log("%s Unknown error in 0x%04X (%s) - kicking peer\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
-					sec->log("%s Unknown error in 0x%04X (%s)\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
-					terminate(u);
-				}
-				break;
 			}
-			default:
-				throw txBase(_WHERE("%s Unknown Event id %i\n",u->str().c_str(),evt->id));
+			else if(ret==-1) {
+				// the problem already got printed to the error log wherever this return value was set
+				sec->log("%s Kicked off due to a parse error in a previus message 0x%04X (%s)\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+				terminate(u, RParseError);
+			}
+			else if(ret==-2) {
+				// the problem already got printed to the error log wherever this return value was set
+				sec->log("%s Kicked off due to cracking 0x%04X (%s)\n",u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+				terminate(u, RHackAttempt);
+			}
+			else if (ret!=1 && ret!=2) {
+				err->log("%s Unknown error in 0x%04X (%s) - kicking peer\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
+				sec->log("%s Unknown error in 0x%04X (%s)\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
+				terminate(u);
+			}
+			break;
 		}
+		default:
+			throw txBase(_WHERE("%s Unknown Event id %i\n",u->str().c_str(),evt->id));
 	}
 }
 
@@ -447,20 +436,23 @@ int tUnetBase::parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown)
 	return 0;
 }
 
-tUnetWorkerThread::tUnetWorkerThread(tUnetBase* unet): tThread(), net(unet)
+void tUnetWorkerThread::stop()
 {
-
+	DBG(5, "Stopping worker...\n");
+	net->addEvent(new tNetEvent(UNET_KILL_WORKER));
+	join(); // wait till thread really stopped
+	DBG(5, "Worker stopped\n");
 }
 
 void tUnetWorkerThread::main(void)
 {
+	DBG(5, "Worker spawned\n");
 	tNetEvent *evt;
 	while (true) {
 		while ((evt=net->getEvent())) {
 			switch (evt->id) {
 				case UNET_KILL_WORKER:
 					delete evt; // do not leak memory
-					pthread_exit(NULL);
 					return;
 				default:
 					net->processEvent(evt);
