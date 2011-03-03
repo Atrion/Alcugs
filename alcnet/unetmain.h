@@ -42,10 +42,8 @@ public:
 	tAlcUnetMain(const tString &netName);
 	virtual ~tAlcUnetMain();
 	
-	void loadUnetConfig(void); //!< convenience function to load the default unet config file and apply aliases
-	
 	virtual bool onSignal(int s);
-	virtual void onApplyConfig();
+	virtual void applyConfig();
 
 private:
 	void installUnetHandlers(bool install);

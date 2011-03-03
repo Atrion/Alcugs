@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs H'uru server                                                       *
 *                                                                              *
-*    Copyright (C) 2004-2005  The Alcugs H'uru Server Team                     *
+*    Copyright (C) 2004-2011  The Alcugs H'uru Server Team                     *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -39,6 +39,7 @@
 #include <cerrno>
 #include <pthread.h>
 #include <signal.h>
+#include <stdlib.h>
 
 
 namespace alc {
@@ -49,7 +50,15 @@ pthread_t alcGetSelfThreadId() {
 }
 
 static void* _alcThreadSpawner(void * s) {
-	static_cast<tThread *>(s)->main();
+	try {
+		static_cast<tThread *>(s)->main();
+	}
+	catch (txBase &t) {
+		_DIE(_WHERE("FATAL Exception in thread: %s. Nothing I can do, aborting.", t.what()).c_str());
+	}
+	catch (...) {
+		_DIE("FATAL Unknown exception in thread, nothing I can do, aborting.");
+	}
 	return (NULL);
 }
 
@@ -80,10 +89,21 @@ void tThread::join() {
 	spawned=false;
 }
 
-tMutex::tMutex() {
-	if(pthread_mutex_init(&id,NULL)) {
-		throw txBase(_WHERE("error creating mutex"));
+tMutex::tMutex() 
+{
+	static pthread_mutexattr_t attr;
+	static bool attrInited = false;
+	if (!attrInited) {
+		if (pthread_mutexattr_init (&attr))
+			throw txBase(_WHERE("error creating mutex attribute"));
+#ifndef NDEBUG
+		if (pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK_NP))
+			throw txBase(_WHERE("error setting mutex attribute"));
+#endif
+		attrInited = true;
 	}
+	if (pthread_mutex_init(&id, &attr))
+		throw txBase(_WHERE("error creating mutex"));
 }
 tMutex::~tMutex() {
 	if(pthread_mutex_destroy(&id)) {

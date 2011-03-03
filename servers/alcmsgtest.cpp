@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2006  The Alcugs Server Team                           *
+*    Copyright (C) 2004-2011  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -225,11 +225,9 @@ void tUnetSimpleFileServer::onIdle() {
 }
 
 int tUnetSimpleFileServer::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
-	int ret=0;
-
 	switch(msg->cmd) {
 		case NetMsgCustomTest:
-			if(listen!=0) {
+			if (listen) {
 				tmData data(u);
 				msg->data.get(data);
 				log->log("<RCV> [%d] %s\n", msg->sn, data.str().c_str());
@@ -242,17 +240,11 @@ int tUnetSimpleFileServer::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 				f1.close();
 				if (data.isLastFragment()) printf("Saved received file to rcvmsg.raw\n");
 			}
-			ret=1;
+			return 1;
 			break;
 		default:
-			if(listen==0) {
-				ret=1;
-			} else {
-				ret=0;
-			}
-			break;
+			return !listen;
 	}
-	return ret;
 }
 
 int main(int argc,char * argv[]) {
@@ -321,7 +313,7 @@ int main(int argc,char * argv[]) {
 	try {
 		alcMain.config()->setVar(tString::fromUInt(nlogs), "log.enabled", "global");
 		alcMain.config()->setVar(tString::fromUInt(loglevel), "verbose_level", "global");
-		alcMain.onApplyConfig();
+		alcMain.applyConfig();
 		
 		alcMain.std()->print(alcVersionText());
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2010  The Alcugs Server Team                           *
+*    Copyright (C) 2004-2011  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -44,11 +44,13 @@ namespace alc {
 class tUnetWorkerThread : public tThread
 {
 public:
-	tUnetWorkerThread(tUnetBase *unet);
+	tUnetWorkerThread(tUnetBase *unet): tThread(), net(unet) {}
+	virtual ~tUnetWorkerThread() { stop(); }
 	
 	virtual void main(void);
-private:
+	void stop();
 	
+private:
 	tUnetBase *net;
 };
 
@@ -118,15 +120,15 @@ protected:
 	*/
 	virtual void onIdle() {}
 	
-	/** This is called before entering the event loop. Called in main thread! */
+	/** This is called before entering the event loop. Called in main thread, and worker is not running! */
 	virtual void onStart() {}
 	
-	/** This is called after leaving the event loop and closing all connections Called in main thread! */
+	/** This is called after leaving the event loop and closing all connections Called in main thread, and worker is not running! */
 	virtual void onStop() {}
 	
 	/** This is called after loading and reloading the config (the first time is BEFORE onStart was called).
 		You can rely on this being called, so put everything dealing with reading the config and opening logfiles here!
-		Called in main thread! */
+		Called in main thread, and worker is not running! */
 	virtual void onApplyConfig() {}
 	
 	
@@ -147,7 +149,7 @@ private:
 	int parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown); //!< called in worker thread
 	void processEvent(tNetEvent *evt); //!< dispatches most recent event, called in worker thread!
 	
-	
+	bool configured; //!< stores whether applyConfig() has been called at least once
 	bool running; //!< stores whether the server is running or shutting down, protected by below mutex
 	tNetTimeDiff stop_timeout; //!< stores the timeout till the server shuts off
 	tMutex runModeMutex;
