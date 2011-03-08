@@ -110,18 +110,15 @@ private:
 
 class tNetEvent {
 public:
-	tNetEvent(tNetSessionIte who,int what,tUnetMsg *mymsg=NULL) { sid=who; id=what; next=NULL; msg=mymsg; }
-	tNetEvent(int what) { id=what; next=NULL; msg=NULL; }
-	tNetEvent() { next=NULL; id=0; msg=NULL; }
+	tNetEvent(tNetSessionIte who,int what,tUnetMsg *mymsg=NULL) { sid=who; id=what; msg=mymsg; }
+	tNetEvent(int what) { id=what; msg=NULL; }
+	tNetEvent() { id=0; msg=NULL; }
 	~tNetEvent() { if (msg) delete msg; }
 	tNetSessionIte sid;
 	int id;
-	tNetEvent * next;
 	tUnetMsg *msg;
-private:
-	// make copying impossible
-	tNetEvent(const tNetEvent &);
-	const tNetEvent &operator=(const tNetEvent &);
+
+	FORBID_CLASS_COPY(tNetEvent)
 };
 
 }

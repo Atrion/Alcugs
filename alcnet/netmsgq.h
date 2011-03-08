@@ -33,99 +33,29 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETMSGQ_H_ID "$Id$"
 
-#include <alcutil/useful.h>
+#include <list>
 
 namespace alc {
 
-template <class T>
-class tUnetMsgQ
+template <typename T> class tPointerList : public std::list<T *>
 {
 public:
-	tUnetMsgQ() {
-		first=last=current=prev=NULL;
-		n=0;
-	}
-	~tUnetMsgQ() {
-		clear();
-	}
-	void clear() {
-		current=first;
-		while(current) {
-			first=first->next;
-			delete current;
-			current=first;
+	~tPointerList() { clear(); }
+	void clear(void) {
+		for (typename std::list<T *>::iterator it = std::list<T *>::begin(); it != std::list<T *>::end(); ++it) {
+			//delete *it;
 		}
-		first=last=current=prev=NULL;
-		n=0;
+		std::list<T *>::clear();
 	}
-	T* getNext() {
-		if(current==NULL) current=first;
-		else {
-			prev=current;
-			current=current->next;
-		}
-		return current;
+	T *pop_front(void) {
+		T *t = std::list<T *>::front();
+		std::list<T *>::pop_front();
+		return t;
 	}
-	T* getCurrent() {
-		return current;
+	typename std::list<T *>::iterator eraseAndDelete(typename std::list<T *>::iterator it) {
+		delete *it;
+		return std::list<T *>::erase(it);
 	}
-	T* unstackCurrent() {
-		if(current) {
-			T* oldCurrent = current;
-			if(current==first) {
-				// prev == NULL
-				current=first=first->next;
-			} else {
-				prev->next=current->next;
-				if(current==last) last=prev;
-				current=prev->next;
-			}
-			n--;
-			return oldCurrent;
-		}
-		return NULL;
-	}
-	void deleteCurrent() {
-		delete unstackCurrent();
-	}
-	void add(T * msg) {
-		msg->next = NULL;
-		if(first==NULL) {
-			first=msg;
-		} else {
-			last->next=msg;
-		}
-		last=msg;
-		n++;
-	}
-	void insertBefore(T * msg) { // FIXME is this correct?
-		msg->next = NULL;
-		if(first==NULL) {
-			prev=first=last=msg;
-			current=NULL;
-		} else if(current==NULL || current==first) {
-			msg->next=first;
-			prev=first=msg;
-		} else {
-			msg->next=current;
-			prev->next=msg;
-			prev=msg;
-		}
-		n++;
-	}
-	void rewind() {
-		prev=current=NULL;
-	}
-	bool isEmpty() {
-		return(first==NULL);
-	}
-	size_t len() { return n; }
-private:
-	T* first;
-	T* last;
-	T* current;
-	T* prev;
-	size_t n;
 };
 
 }

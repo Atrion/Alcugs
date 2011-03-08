@@ -71,8 +71,8 @@ namespace alc {
 	#define _DBG_LEVEL_ 0
 
 	// make DBG macros NO-OPs
-	#define DBG(a,...)
-	#define DBGM(a,...)
+	#define DBG(a,...) ;
+	#define DBGM(a,...) ;
 
 #endif //NDEBUG
 

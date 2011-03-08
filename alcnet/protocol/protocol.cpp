@@ -487,14 +487,14 @@ void tmNetAck::store(tBBuf &t)
 		if(t.get16() != 0) throw txUnexpectedData(_WHERE("ack unknown data"));
 	}
 	while (!t.eof()) {
-		tUnetAck *ack = new tUnetAck;
-		ack->A=t.get32();
+		uint32_t A, B;
+		A=t.get32();
 		if(!(bhflags & UNetExt))
 			if(t.get32()!=0) throw txUnexpectedData(_WHERE("ack unknown data"));
-		ack->B=t.get32();
+		B=t.get32();
 		if(!(bhflags & UNetExt))
 			if(t.get32()!=0) throw txUnexpectedData(_WHERE("ack unknown data"));
-		ackq.push_back(ack);
+		ackq.push_back(new tUnetAck(A, B));
 	}
 	// no need to check for eof, the loop already does that
 }

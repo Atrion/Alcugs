@@ -30,13 +30,13 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_UNETBASE_ID "$Id$"
-//#define _DBG_LEVEL_ 5
+#define _DBG_LEVEL_ 5
 #include <alcdefs.h>
 #include "unetbase.h"
 
 #include "unetmain.h"
 #include "netexception.h"
-#include "netsessionmgr.h"
+#include "netmsgq.h"
 #include "protocol/umsgbasic.h"
 
 #include <sys/socket.h>
@@ -465,7 +465,7 @@ void tUnetWorkerThread::main(void)
 		net->sec->flush();
 		// wait till e got events again
 		tMutexLock lock(net->eventsMutex);
-		if (!net->events->isEmpty()) continue; // an event got added since we last checked, fine!
+		if (!net->events.empty()) continue; // an event got added since we last checked, fine!
 		// queue is empty, so wait for an event to be added
 		net->workerWaiting = true;
 		DBG(5, "Worker waiting\n");

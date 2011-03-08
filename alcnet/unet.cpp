@@ -30,11 +30,11 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_UNET_ID "$Id$"
-//#define _DBG_LEVEL_ 6
+#define _DBG_LEVEL_ 5
 #include <alcdefs.h>
 #include "unet.h"
 
-#include "netsessionmgr.h"
+#include "netmsgq.h"
 #include "netexception.h"
 #include <alcmain.h>
 
@@ -51,6 +51,8 @@
 // Some of the macros implie an old-style cast
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 
+
+
 namespace alc {
 
 tUnet::tUnet(uint8_t whoami,const tString & lhost,uint16_t lport) : whoami(whoami) {
@@ -60,7 +62,6 @@ tUnet::tUnet(uint8_t whoami,const tString & lhost,uint16_t lport) : whoami(whoam
 	setBindAddress(lhost);
 	bindport=lport;
 	
-	events=new tUnetMsgQ<tNetEvent>;
 	workerWaiting = false;
 	if (pthread_cond_init(&eventAddedCond, NULL))
 		throw txBase(_WHERE("Error initializing condition"));
@@ -68,7 +69,6 @@ tUnet::tUnet(uint8_t whoami,const tString & lhost,uint16_t lport) : whoami(whoam
 tUnet::~tUnet() {
 	DBG(9,"~tUnet()\n");
 	stopOp();
-	delete events;
 	if (log != alcGetMain()->std()) delete log;
 	if (err != alcGetMain()->err()) delete err;
 	delete ack;
@@ -165,15 +165,14 @@ tNetTimeDiff tUnet::passedTimeSince(tNetTime time)
 
 tNetEvent * tUnet::getEvent() {
 	tMutexLock lock(eventsMutex);
-	events->rewind();
-	if(events->getNext()==NULL) return NULL;
-	return events->unstackCurrent();
+	if (events.empty()) return NULL;
+	return events.pop_front();
 }
 
 void tUnet::addEvent(tNetEvent *evt)
 {
 	tMutexLock lock(eventsMutex);
-	events->add(evt);
+	events.push_back(evt);
 	if (workerWaiting) {
 		if (pthread_cond_signal(&eventAddedCond))
 			throw txBase(_WHERE("Error signalling condition"));
@@ -183,7 +182,10 @@ void tUnet::addEvent(tNetEvent *evt)
 void tUnet::clearEventQueue()
 {
 	tMutexLock lock(eventsMutex);
-	events->clear();
+	for (std::list<tNetEvent *>::iterator it = events.begin(); it != events.end(); ++it) {
+		delete *it;
+	}
+	events.clear();
 }
 
 
@@ -427,7 +429,10 @@ before it asks each session to do what it has to do (tUnet::doWork) */
 int tUnet::sendAndWait() {
 	// send old messages and calulate timeout
 	tNetTimeDiff unet_timeout = processSendQueues();
-	if (unet_timeout < 500) unet_timeout = 500; // don't sleep less than 0.5 milliseconds
+	if (unet_timeout < 100) {
+		DBG(3, "Timeout %d too low, increasing to 100\n", unet_timeout);
+		unet_timeout = 100; // don't sleep less than 0.1 milliseconds
+	}
 	
 	ssize_t n;
 	uint8_t buf[INC_BUF_SIZE]; //internal rcv buffer
@@ -630,7 +635,7 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg)
 	log->nl();
 	#endif
 	
-	DBG(5,"validation level is %i,%i\n",u->validation,msg->val);
+	DBG(9,"validation level is %i,%i\n",u->validation,msg->val);
 	
 	size_t msize=mbuf->size();
 	uint8_t * buf, * buf2=NULL;
