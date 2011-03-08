@@ -494,6 +494,7 @@ void tmNetAck::store(tBBuf &t)
 		B=t.get32();
 		if(!(bhflags & UNetExt))
 			if(t.get32()!=0) throw txUnexpectedData(_WHERE("ack unknown data"));
+		if (A < B) throw txUnexpectedData(_WHERE("ack A value is lower than B value: %d < %d", A, B));
 		ackq.push_back(new tUnetAck(A, B));
 	}
 	// no need to check for eof, the loop already does that

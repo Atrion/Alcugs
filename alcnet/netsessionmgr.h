@@ -100,7 +100,7 @@ public:
 	tNetSessionMgr(tUnet * net,size_t limit=0) : tNetSessionList(), max(limit), net(net) {}
 	virtual ~tNetSessionMgr();
 	tNetSession * search(tNetSessionIte &ite,bool create = false);
-	void destroy(tNetSessionIte &ite);
+	void destroy(tNetSessionIte ite);
 private:
 	size_t max;
 	tUnet * net;

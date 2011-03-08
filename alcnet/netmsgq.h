@@ -43,7 +43,7 @@ public:
 	~tPointerList() { clear(); }
 	void clear(void) {
 		for (typename std::list<T *>::iterator it = std::list<T *>::begin(); it != std::list<T *>::end(); ++it) {
-			//delete *it;
+			delete *it;
 		}
 		std::list<T *>::clear();
 	}

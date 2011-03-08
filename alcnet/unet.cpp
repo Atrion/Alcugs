@@ -129,7 +129,7 @@ void tUnet::init() {
 
 	ip_overhead=20+8;
 
-	#ifdef ENABLE_NETDEBUG
+	#ifdef ENABLE_NETDEBUG // FIXME do some testing with this when threading works
 	// Noise and latency
 	in_noise=2; // percent of dropped packets (0-100)
 	out_noise=2; // percent of dropped packets (0-100)
@@ -182,9 +182,6 @@ void tUnet::addEvent(tNetEvent *evt)
 void tUnet::clearEventQueue()
 {
 	tMutexLock lock(eventsMutex);
-	for (std::list<tNetEvent *>::iterator it = events.begin(); it != events.end(); ++it) {
-		delete *it;
-	}
 	events.clear();
 }
 
@@ -358,6 +355,8 @@ void tUnet::startOp() {
 */
 void tUnet::stopOp() {
 	if(!initialized) return;
+	assert(events.empty());
+	assert(smgr->isEmpty());
 	delete smgr;
 	smgr = NULL;
 
