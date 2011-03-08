@@ -72,7 +72,6 @@ namespace alc {
 // only event UNET_MSGRCV will contain a new incoming message (from the affected peer).
 
 //! Urunet flags
-#define UNET_NBLOCK   0x0001 /* non-blocking socket */
 #define UNET_ELOG     0x0002 /* enable netcore logging */
 #define UNET_ECRC     0x0004 /* crc check enabled */
 #define UNET_FLOODCTR 0x0010 /* enable flooding control */
@@ -89,7 +88,7 @@ namespace alc {
 //#define UNET_DLUNE    0x0400 /* Disable une log */
 //#define UNET_NOCONN   0x2000 /* Non connected server */
 
-#define UNET_DEFAULT_FLAGS (UNET_NBLOCK | UNET_ELOG | UNET_ECRC | UNET_FLOODCTR)
+#define UNET_DEFAULT_FLAGS (UNET_ELOG | UNET_ECRC | UNET_FLOODCTR)
 
 
 class tUnet {
