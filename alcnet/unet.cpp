@@ -30,7 +30,7 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_UNET_ID "$Id$"
-#define _DBG_LEVEL_ 5
+//#define _DBG_LEVEL_ 5
 #include <alcdefs.h>
 #include "unet.h"
 
@@ -261,33 +261,28 @@ void tUnet::startOp() {
 	}
 	DBG(1, "Socket created\n");
 
-	if(this->flags & UNET_NBLOCK) {
-
 #ifdef __WIN32__
-		//set non-blocking
-		this->nNoBlock = 1;
-		if(ioctlsocket(this->sock, FIONBIO, &this->nNoBlock)!=0) {
-			neterror("ERR: Fatal setting socket as non-blocking\n");
-			throw txUnetIniErr(_WHERE("Failed setting a non-blocking socket"));
-		}
-#else
-		//set non-blocking
-		long arg;
-		if((arg = fcntl(this->sock,F_GETFL, NULL))<0) {
-			this->err->logErr("ERR: Fatal setting socket as non-blocking (fnctl F_GETFL)\n");
-			throw txUnetIniErr(_WHERE("Failed setting a non-blocking socket"));
-		}
-		arg |= O_NONBLOCK;
-
-		if(fcntl(this->sock, F_SETFL, arg)<0) {
-			this->err->log("ERR: Fatal setting socket as non-blocking\n");
-			throw txUnetIniErr(_WHERE("Failed setting a non-blocking socket"));
-		}
-#endif
-		DBG(1, "Non-blocking socket set\n");
-	} else {
-		DBG(1, "blocking socket set\n");
+	//set non-blocking
+	this->nNoBlock = 1;
+	if(ioctlsocket(this->sock, FIONBIO, &this->nNoBlock)!=0) {
+		neterror("ERR: Fatal setting socket as non-blocking\n");
+		throw txUnetIniErr(_WHERE("Failed setting a non-blocking socket"));
 	}
+#else
+	//set non-blocking
+	long arg;
+	if((arg = fcntl(this->sock,F_GETFL, NULL))<0) {
+		this->err->logErr("ERR: Fatal setting socket as non-blocking (fnctl F_GETFL)\n");
+		throw txUnetIniErr(_WHERE("Failed setting a non-blocking socket"));
+	}
+	arg |= O_NONBLOCK;
+
+	if(fcntl(this->sock, F_SETFL, arg)<0) {
+		this->err->log("ERR: Fatal setting socket as non-blocking\n");
+		throw txUnetIniErr(_WHERE("Failed setting a non-blocking socket"));
+	}
+#endif
+	DBG(1, "Non-blocking socket set\n");
 
 	//broadcast ?
 	if(this->flags & UNET_BCAST) {
@@ -462,7 +457,7 @@ int tUnet::sendAndWait() {
 	tTime start; start.now();
 #endif
 	valret = select(this->sock+1, &rfds, NULL, NULL, &tv); // this is the command taking the time - now lets process what we got
-	// update stamp, since we spent some time in the select function, and doWork() [see below] needs the current time
+	// update stamp, since we spent some time in the select function
 	updateNetTime();
 #if _DBG_LEVEL_ >= 8
 	start = ntime-start;
@@ -486,83 +481,86 @@ int tUnet::sendAndWait() {
 	else { DBG(9,"No data recieved...\n"); }
 #endif
 
-	DBG(9,"Before recvfrom\n");
-#ifdef __WIN32__
-	n = recvfrom(this->sock,reinterpret_cast<char *>(buf),INC_BUF_SIZE,0,reinterpret_cast<struct sockaddr *>(&client),&client_len);
-#else
-	n = recvfrom(this->sock,buf,INC_BUF_SIZE,0,reinterpret_cast<struct sockaddr *>(&client),&client_len);
-#endif
-	DBG(9,"After recvfrom\n");
-	
-#ifdef ENABLE_NETDEBUG
-	if(n>0) {
-		if(!in_noise || (random() % 100) >= in_noise) {
-			DBG(8,"Incomming Packet accepted\n");
-		} else {
-			DBG(5,"Incomming Packet dropped\n");
-			n=0;
-		}
-		//check quotas
-		if((ntime-last_quota_check).asNumber('u') > quota_check_interval) {
-			cur_up_quota=0;
-			cur_down_quota=0;
-			last_quota_check = ntime;
-		}
-		if(n>0 && lim_down_cap) {
-			if((cur_down_quota+n+ip_overhead)>lim_down_cap) {
-				DBG(5,"Paquet dropped by quotas, in use:%i,req:%li, max:%i\n",cur_down_quota,n+ip_overhead,lim_down_cap);
-				log->log("Incomming paquet dropped by quotas, in use:%i,req:%i, max:%i\n",cur_down_quota,n+ip_overhead,lim_down_cap);
-				n=0;
+	while(true) { // receive all messages we got
+
+		DBG(9,"Before recvfrom\n");
+	#ifdef __WIN32__
+		n = recvfrom(this->sock,reinterpret_cast<char *>(buf),INC_BUF_SIZE,0,reinterpret_cast<struct sockaddr *>(&client),&client_len);
+	#else
+		n = recvfrom(this->sock,buf,INC_BUF_SIZE,0,reinterpret_cast<struct sockaddr *>(&client),&client_len);
+	#endif
+		DBG(9,"After recvfrom\n");
+		
+	#ifdef ENABLE_NETDEBUG
+		if(n>0) {
+			if(!in_noise || (random() % 100) >= in_noise) {
+				DBG(8,"Incomming Packet accepted\n");
 			} else {
-				cur_down_quota+=n+ip_overhead;
+				DBG(5,"Incomming Packet dropped\n");
+				n=0;
+			}
+			//check quotas
+			if((ntime-last_quota_check).asNumber('u') > quota_check_interval) {
+				cur_up_quota=0;
+				cur_down_quota=0;
+				last_quota_check = ntime;
+			}
+			if(n>0 && lim_down_cap) {
+				if((cur_down_quota+n+ip_overhead)>lim_down_cap) {
+					DBG(5,"Paquet dropped by quotas, in use:%i,req:%li, max:%i\n",cur_down_quota,n+ip_overhead,lim_down_cap);
+					log->log("Incomming paquet dropped by quotas, in use:%i,req:%i, max:%i\n",cur_down_quota,n+ip_overhead,lim_down_cap);
+					n=0;
+				} else {
+					cur_down_quota+=n+ip_overhead;
+				}
 			}
 		}
-	}
-#endif
+	#endif
 
-	if(n<0 && valret) { //problems?
-		neterror("ERR: Fatal recieving a message... ");
-		return UNET_ERR;
-	}
-
-	if(n>0) { //we have a message
-		if(n>OUT_BUFFER_SIZE) {
-			this->err->log("[ip:%s:%i] ERR: Recieved a really big message of %i bytes\n",alcGetStrIp(client.sin_addr.s_addr).c_str(),ntohs(client.sin_port),n);
-			return UNET_TOOBIG;
-		} //catch up impossible big messages
-		/* Uru protocol check */
-		if(n<=20 || buf[0]!=0x03) { //not an Uru protocol packet don't waste an slot for it
-			this->err->log("[ip:%s:%i] ERR: Unexpected Non-Uru protocol packet found\n",alcGetStrIp(client.sin_addr.s_addr).c_str(),ntohs(client.sin_port));
-			this->err->dumpbuf(buf,n);
-			this->err->nl();
-			return UNET_NONURU;
-		}
-
-		DBG(8,"Search session...\n");
-		ite.ip=client.sin_addr.s_addr;
-		ite.port=client.sin_port;
-		ite.sid=-1;
-		
-		try {
-			tMutexLock lock(smgrMutex);
-			session=smgr->search(ite, true);
-		} catch(txToMCons) {
-			return UNET_TOMCONS;
-		}
-		
-		//process the message, and do the correct things with it
-		memcpy(session->sockaddr,&client,sizeof(struct sockaddr_in));
-		try {
-			session->processIncomingMsg(buf,n);
-		} catch(txProtocolError &t) {
-			this->err->log("%s Protocol Error %s\nBacktrace:%s\n",session->str().c_str(),t.what(),t.backtrace());
-			return UNET_ERR;
-		} catch(txBase &t) {
-			this->err->log("%s FATAL ERROR (perhaps someone is attempting something nasty, or you have found a bug)\n\
-%s\nBacktrace:%s\n",session->str().c_str(),t.what(),t.backtrace());
+		if (n<0 && (errno == EAGAIN || errno == EWOULDBLOCK)) break; // no more messages left
+		if (n<0) { //problems?
+			neterror("ERR: Fatal recieving a message... ");
 			return UNET_ERR;
 		}
 
+		if(n>0) { //we have a message
+			if(n>OUT_BUFFER_SIZE) {
+				this->err->log("[ip:%s:%i] ERR: Recieved a really big message of %i bytes\n",alcGetStrIp(client.sin_addr.s_addr).c_str(),ntohs(client.sin_port),n);
+				return UNET_TOOBIG;
+			} //catch up impossible big messages
+			/* Uru protocol check */
+			if(n<=20 || buf[0]!=0x03) { //not an Uru protocol packet don't waste an slot for it
+				this->err->log("[ip:%s:%i] ERR: Unexpected Non-Uru protocol packet found\n",alcGetStrIp(client.sin_addr.s_addr).c_str(),ntohs(client.sin_port));
+				this->err->dumpbuf(buf,n);
+				this->err->nl();
+				return UNET_NONURU;
+			}
+
+			DBG(8,"Search session...\n");
+			ite.ip=client.sin_addr.s_addr;
+			ite.port=client.sin_port;
+			ite.sid=-1;
+			
+			try {
+				tMutexLock lock(smgrMutex);
+				session=smgr->search(ite, true);
+			} catch(txToMCons) {
+				return UNET_TOMCONS;
+			}
+			
+			//process the message, and do the correct things with it
+			memcpy(session->sockaddr,&client,sizeof(struct sockaddr_in));
+			try {
+				session->processIncomingMsg(buf,n);
+			} catch(txProtocolError &t) {
+				this->err->log("%s Protocol Error %s\nBacktrace:%s\n",session->str().c_str(),t.what(),t.backtrace());
+				return UNET_ERR;
+			} catch(txBase &t) {
+				this->err->log("%s FATAL ERROR (perhaps someone is attempting something nasty, or you have found a bug)\n\
+	%s\nBacktrace:%s\n",session->str().c_str(),t.what(),t.backtrace());
+				return UNET_ERR;
+			}
+		}
 	}
 	
 	//END CRITICAL REGION
