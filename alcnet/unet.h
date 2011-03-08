@@ -65,8 +65,7 @@ namespace alc {
 #define UNET_OK 0 /* !< Successfull operation (or netcore timeout loop) */
 #define UNET_MSGRCV 1 /* !< A new message has been recieved */
 #define UNET_NEWCONN 2 /* !< New incomming connection stablished */
-#define UNET_TIMEOUT 3 /* !< Connection to peer has ended the timer */
-#define UNET_TERMINATED 4 /* !< Connection to peer terminated */
+#define UNET_TIMEOUT 3 /* !< Connection to peer has ended the timer (this also happens during normal connection shutdown!) */
 #define UNET_FLOOD 5 /* !< This event occurs when a player is flooding the server */
 #define UNET_KILL_WORKER 6 // internal use: tells the worker thread that it should exit
 // only event UNET_MSGRCV will contain a new incoming message (from the affected peer).
@@ -116,10 +115,6 @@ protected:
 	void startOp();
 	void stopOp();
 	void openLogfiles();
-	void destroySession(tNetSessionIte &t) {
-		tMutexLock lock(smgrMutex);
-		smgr->destroy(t);
-	}
 	tNetSessionIte netConnect(const char * hostname,uint16_t port,uint8_t validation,uint8_t flags,uint8_t peerType=0);
 	int sendAndWait(); //!< send enqueued messages, wait, and receive packets and enqueue them (wait time must be set by processQueues()!)
 	tNetEvent * getEvent(); //!<  (thread-safe)

@@ -259,9 +259,8 @@ bool tUnetBase::terminateAll(bool playersOnly)
 void tUnetBase::removeConnection(tNetSession *u)
 {
 	sec->log("%s Ended\n",u->str().c_str());
-	tNetEvent * ev=new tNetEvent(u->getIte(),UNET_TERMINATED);
-	destroySession(ev->sid);
-	delete ev;
+	tMutexLock lock(smgrMutex);
+	smgr->destroy(u->getIte());
 }
 
 // main thread loop: handles the socket, fills the working queue, starts and stops threads
@@ -438,6 +437,7 @@ int tUnetBase::parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown)
 
 void tUnetWorkerThread::stop()
 {
+	if (!isSpawned()) return; // worker not even running
 	DBG(5, "Stopping worker...\n");
 	net->addEvent(new tNetEvent(UNET_KILL_WORKER));
 	join(); // wait till thread really stopped

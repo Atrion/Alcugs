@@ -46,6 +46,7 @@ public:
 	void spawn();
 	void join();
 	virtual void main()=0;
+	bool isSpawned() { return spawned; }
 private:
 	bool spawned;
 	pthread_t id;

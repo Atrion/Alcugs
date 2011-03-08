@@ -560,9 +560,8 @@ void tNetSession::acceptMessage(tUnetUruMsg *t)
 void tNetSession::queueReceivedMessage(tUnetUruMsg *msg)
 {
 	net->log->log("Queuing %d.%d for future use (can not yet accept it - last ack: %d.%d, expected: %d.%d)\n", msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
-	tPointerList<tUnetUruMsg>::iterator it = rcvq.begin();
 	// the queue is sorted ascending
-	while (it != rcvq.end()) {
+	for (tPointerList<tUnetUruMsg>::iterator it = rcvq.begin(); it != rcvq.end(); ++it) {
 		tUnetUruMsg *cur = *it;
 		int ret = compareMsgNumbers(msg->sn, msg->frn, cur->sn, cur->frn);
 		if (ret < 0) { // we have to put it after the current one!
@@ -584,9 +583,9 @@ void tNetSession::checkQueuedMessages(void)
 	while (it != rcvq.end()) {
 		tUnetUruMsg *cur = *it;
 		int ret = compareMsgNumbers(cur->ps, cur->pfr, clientMsg.ps, clientMsg.pfr);
-		if (ret < 0) rcvq.eraseAndDelete(it); // old packet
+		if (ret < 0) it = rcvq.eraseAndDelete(it); // old packet
 		else if (ret == 0) {
-			rcvq.erase(it); // do not delete!
+			it = rcvq.erase(it); // do not delete!
 			acceptMessage(cur);
 		}
 		else return; // These can still not be accepted
@@ -644,7 +643,7 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 }
 
 /** puts acks from the ackq in the sndq */
-tNetTimeDiff tNetSession::ackUpdate() {
+tNetTimeDiff tNetSession::ackSend() {
 	tNetTimeDiff timeout = -1; // -1 is biggest possible value
 	
 	tPointerList<tUnetAck>::iterator it = ackq.begin();
@@ -659,7 +658,7 @@ tNetTimeDiff tNetSession::ackUpdate() {
 			 * sequence of packets (which is the only occasion in which there would be several acks in a message), the connection
 			 * is already problematic. */
 			tmNetAck ackMsg(this);
-			it = ackq.erase(it); // remove ack from queue
+			it = ackq.erase(it); // remove ack from queue, but do not delete it
 			ackMsg.ackq.push_back(ack); // and put it into message
 			send(ackMsg);
 		}
@@ -683,9 +682,9 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 		A1 = ack->A;
 		A3 = ack->B;
 		//well, do it
-		tPointerList<tUnetUruMsg>::iterator it = sndq.begin();
-		while (it != sndq.end()) {
-			tUnetUruMsg *msg = *it;
+		tPointerList<tUnetUruMsg>::iterator jt = sndq.begin();
+		while (jt != sndq.end()) {
+			tUnetUruMsg *msg = *jt;
 			A2=msg->csn;
 			
 			if(A1>=A2 && A2>A3) {
@@ -706,12 +705,12 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 					increaseCabal();
 				}
 				if(msg->tf & UNetAckReq) {
-					it = sndq.erase(it);
+					jt = sndq.eraseAndDelete(jt);
 				} else {
-					++it;
+					++jt;
 				}
 			} else {
-				++it;
+				++jt;
 			}
 		}
 	}
@@ -727,8 +726,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 		send(alive);
 	}
 	
-	
-	tNetTimeDiff timeout = ackUpdate(); //generate ack messages (i.e. put them from the ackq to the sndq)
+	tNetTimeDiff timeout = ackSend(); //generate ack messages (i.e. put them from the ackq to the sndq)
 
 	if (!anythingToSend() && terminated) conn_timeout /= 5; // we are done, completely done - but wait some little more time for possible re-sends
 	
@@ -783,7 +781,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 				}
 				
 				if(curmsg->tryes>=10 || (curmsg->tryes>=2 && terminated)) { // max. 2 sends on terminated connections, max. 10 for the rest
-					it = sndq.erase(it); // this is the next one
+					it = sndq.eraseAndDelete(it); // this is the next one
 					//timeout event
 					net->sec->log("%s Timeout (didn't ack a packet)\n", str().c_str());
 					tNetEvent *evt=new tNetEvent(getIte(),UNET_TIMEOUT);
@@ -811,7 +809,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 					cur_tts+=timeToSend(curmsg->size());
 					net->rawsend(this,curmsg);
 				}
-				it = sndq.erase(it); // this is the next one
+				it = sndq.eraseAndDelete(it); // go to next message, delete this one
 			}
 		} //end time check
 		else {

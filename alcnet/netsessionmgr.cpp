@@ -168,7 +168,7 @@ tNetSession * tNetSessionMgr::search(tNetSessionIte &ite,bool create) {
 	return table[sid];
 }
 
-void tNetSessionMgr::destroy(tNetSessionIte &ite) {
+void tNetSessionMgr::destroy(alc::tNetSessionIte ite) {
 	tNetSession *u = search(ite, false);
 	if (!u) return;
 	delete u;

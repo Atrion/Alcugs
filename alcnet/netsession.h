@@ -93,7 +93,7 @@ private:
 	tNetTimeDiff processSendQueues(); //!< send what is in our queues
 
 	void createAckReply(tUnetUruMsg &msg);
-	tNetTimeDiff ackUpdate(); //!< return the maximum wait time before we have to check again
+	tNetTimeDiff ackSend(); //!< return the maximum wait time before we have to check again
 	void ackCheck(tUnetUruMsg &msg);
 	
 	void acceptMessage(tUnetUruMsg *msg);
