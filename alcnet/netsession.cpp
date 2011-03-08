@@ -30,11 +30,11 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETSESSION_ID "$Id$"
-//#define _DBG_LEVEL_ 3
+#define _DBG_LEVEL_ 5
 #include <alcdefs.h>
 #include "netsession.h"
 
-#include "netsessionmgr.h"
+#include "netmsgq.h"
 #include "unet.h"
 #include "netexception.h"
 #include "protocol/umsgbasic.h"
@@ -54,9 +54,6 @@ tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t s
 	this->ip=ip;
 	this->port=port;
 	this->sid=sid;
-	sndq = new tUnetMsgQ<tUnetUruMsg>;
-	ackq = new tUnetMsgQ<tUnetAck>;
-	rcvq = new tUnetMsgQ<tUnetUruMsg>;
 	rcv = NULL;
 	init();
 	//new conn event
@@ -65,12 +62,9 @@ tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t s
 	net->addEvent(evt);
 }
 tNetSession::~tNetSession() {
-	DBG(5,"~tNetSession() (sndq: %ld)\n", sndq->len());
+	DBG(5,"~tNetSession() (sndq: %ld)\n", sndq.size());
 	delete data;
 	delete rcv;
-	delete sndq;
-	delete ackq;
-	delete rcvq;
 }
 void tNetSession::init() {
 	DBG(5,"init()\n");
@@ -118,9 +112,9 @@ void tNetSession::resetMsgCounters(void) {
 	serverMsg.pfr=0;
 	serverMsg.ps=0;
 	// empty queues
-	sndq->clear();
-	ackq->clear();
-	rcvq->clear();
+	sndq.clear();
+	ackq.clear();
+	rcvq.clear();
 	delete rcv;
 	rcv = NULL;
 }
@@ -161,13 +155,13 @@ size_t tNetSession::getHeaderSize() {
 void tNetSession::updateRTT(tNetTimeDiff newread) {
 	if(rtt==0) rtt=newread;
 	//Jacobson/Karels
-	const unsigned int alpha=125; // this is effectively 0.125
-	const unsigned int u=2;
-	const unsigned int delta=4;
+	const int alpha=125; // this is effectively 0.125
+	const int u=2;
+	const int delta=4;
 	const int diff=newread - rtt;
 	rtt       += (alpha*diff)/1000;
 	deviation += (alpha*(abs(diff)-deviation))/1000;
-	msg_timeout=u*rtt + delta*deviation;
+	msg_timeout= u*rtt + delta*deviation;
 	if (msg_timeout > 5000000) msg_timeout = 5000000; // max. timeout: 5secs
 	DBG(5,"%s RTT update (sample rtt: %i) new rtt:%i, msg_timeout:%i, deviation:%i\n", str().c_str(),newread,rtt,msg_timeout,deviation);
 }
@@ -290,7 +284,7 @@ void tNetSession::send(tmBase &msg, tNetTimeDiff delay) { // FIXME make thread-s
 		if(i==n_pkts) csize=psize - (i*pkt_sz);
 		else csize=pkt_sz;
 		
-		pmsg=new tUnetUruMsg();
+		pmsg=new tUnetUruMsg(flags & UNetUrgent);
 		pmsg->val=val;
 		//pmsg.pn NOT in this layer (done in the msg sender, tUnet::rawsend)
 		//since urgent messages are put at the top of the sndq, the pn would be wrong if we did it differently
@@ -304,31 +298,17 @@ void tNetSession::send(tmBase &msg, tNetTimeDiff delay) { // FIXME make thread-s
 		pmsg->data.write(buf.read(csize),csize);
 		pmsg->_update();
 		
-		pmsg->timestamp=net->net_time+delay; // no need to take tts into account now, the send queue worker does that
+		pmsg->timestamp=net->net_time+delay; // no need to take tts into account now, the send queue worker does that (and our tts estimate might change till this packet is actually sent)
 		
 		#ifdef ENABLE_NETDEBUG
 		pmsg->timestamp+=net->latency;
 		#endif
 		
-		//Urgent!?
-		if(flags & UNetUrgent) { // FIXME this will break when called in worker
-			net->rawsend(this,pmsg);
-			//update time to send next message according to cabal
-			if (next_msg_time) next_msg_time += timeToSend(pmsg->size());
-			else next_msg_time = net->net_time + timeToSend(pmsg->size());
-			DBG(5, "%s Packet sent urgently, next one in %ld\n", str().c_str(), next_msg_time-net->net_time);
-			// if necessary, put in queue as "sent once"
-			if(flags & UNetAckReq) {
-				pmsg->snt_timestamp=net->net_time;
-				pmsg->timestamp+=msg_timeout;
-				++pmsg->tryes;
-				sndq->add(pmsg);
-			}
-			else
-				delete pmsg;
+		// Urgent messages are added at the top of the send queue, the rest at the back
+		if(flags & UNetUrgent) {
+			sndq.push_front(pmsg);
 		} else {
-			//put pmsg to the qeue
-			sndq->add(pmsg);
+			sndq.push_back(pmsg);
 		}
 		
 		if(tf & UNetAckReq) { // if this packet has the ack flag on, save it's number
@@ -485,7 +465,7 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 			net->log->log("WARN: Dropping re-sent old packet %d.%d (last ack: %d.%d, expected: %d.%d)\n", msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
 		}
 		else if (ret > 0) {
-			if (!(msg->tf & UNetNegotiation) && !rejectMessages && rcvq->len() < net->receiveAhead)
+			if (!(msg->tf & UNetNegotiation) && !rejectMessages && rcvq.size() < net->receiveAhead)
 				ret = 2; // preserve for future use - but don't do this for negos (we can not get here for ack replies)
 			else
 				net->log->log("WARN: Dropped packet I can not yet parse: %d.%d (last ack: %d.%d, expected: %d.%d)\n", msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
@@ -580,13 +560,13 @@ void tNetSession::acceptMessage(tUnetUruMsg *t)
 void tNetSession::queueReceivedMessage(tUnetUruMsg *msg)
 {
 	net->log->log("Queuing %d.%d for future use (can not yet accept it - last ack: %d.%d, expected: %d.%d)\n", msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
-	tUnetUruMsg *cur;
-	rcvq->rewind();
+	tPointerList<tUnetUruMsg>::iterator it = rcvq.begin();
 	// the queue is sorted ascending
-	while ((cur = rcvq->getNext())) {
+	while (it != rcvq.end()) {
+		tUnetUruMsg *cur = *it;
 		int ret = compareMsgNumbers(msg->sn, msg->frn, cur->sn, cur->frn);
 		if (ret < 0) { // we have to put it after the current one!
-			rcvq->insertBefore(msg);
+			rcvq.insert(it, msg);
 			return;
 		}
 		else if (ret == 0) { // the message is already in the queue
@@ -594,110 +574,73 @@ void tNetSession::queueReceivedMessage(tUnetUruMsg *msg)
 			return;
 		}
 	}
-	rcvq->add(msg); // insert it at the end
+	rcvq.push_back(msg); // insert it at the end
 }
 
 /** Checks if messages saved by queueReceivedMessage can now be used */
 void tNetSession::checkQueuedMessages(void)
 {
-	rcvq->rewind();
-	tUnetUruMsg *cur = rcvq->getNext();
-	while (cur) {
+	tPointerList<tUnetUruMsg>::iterator it = rcvq.begin();
+	while (it != rcvq.end()) {
+		tUnetUruMsg *cur = *it;
 		int ret = compareMsgNumbers(cur->ps, cur->pfr, clientMsg.ps, clientMsg.pfr);
-		if (ret < 0) rcvq->deleteCurrent(); // old packet
-		else if (ret == 0) acceptMessage(rcvq->unstackCurrent());
+		if (ret < 0) rcvq.eraseAndDelete(it); // old packet
+		else if (ret == 0) {
+			rcvq.erase(it); // do not delete!
+			acceptMessage(cur);
+		}
 		else return; // These can still not be accepted
-		cur = rcvq->getCurrent();
 	 }
 }
 
 /** creates an ack in the ackq */
 void tNetSession::createAckReply(tUnetUruMsg &msg) {
-	tUnetAck * ack,* cack;
 	uint32_t A,B;
 	
 	#ifdef ENABLE_ACKDEBUG
 	net->log->log("stacking ack %i,%i %i,%i\n",msg.sn,msg.frn,msg.ps,msg.pfr);
 	#endif
 	
+	// we can ack everything between B and A
 	A=msg.csn;
 	B=msg.cps;
-	
-	ack=new tUnetAck();
-	ack->A=msg.csn;
-	ack->B=msg.cps;
+	assert(A >= B);
 	
 	//we must delay either none or all messages, otherwise the rtt will vary too much
-	tNetTimeDiff ackWaitTime=timeToSend((msg.frt-msg.frn+1) * maxPacketSz); // this is how long transmitting the whole packet will approximately take
-	if(ackWaitTime > msg_timeout/4) ackWaitTime=msg_timeout/4; // don't use the rtt as basis, it is 0 at the beginning, resulting in a much too quick first answer, a much too low rtt on the other side and thus the packets being re-sent too early
-	ack->timestamp=net->net_time + ackWaitTime;
+	tNetTimeDiff ackWaitTime=std::max(3*timeToSend(maxPacketSz), 500u); // wait for some batches of packets, but at least 0.5 ms
+	if (ackWaitTime > msg_timeout/4) ackWaitTime=msg_timeout/4; // don't use the rtt as basis, it is 0 at the beginning, resulting in a much too quick first answer, a much too low rtt on the other side and thus the packets being re-sent too early
+	tNetTime timestamp=net->net_time + ackWaitTime;
 	// the net timer will be updated when the ackq is checked (which is done since processMsg will call doWork after calling createAckReply)
 	DBG(5, "ack tts: %i, %i, %i\n",msg.frt,ackWaitTime,cabal);
-	
-	int i=0;
 
 #if 0
 	//Non-Plasma like ack's
 	ackq->add(ack);
 #else
 	//Plasma like ack's (acks are retarded, and packed)
-	ackq->rewind();
-	if(ackq->getNext()==NULL) {
-		ackq->add(ack);
-		ack=NULL;
-	} else {
-		ackq->rewind();
-		while((cack=ackq->getNext())!=NULL) {
-			#ifdef ENABLE_ACKDEBUG
-			net->log->log("2store[%i] %i,%i %i,%i\n",i,(ack->A & 0x000000FF),(ack->A >> 8),(ack->B & 0x000000FF),(ack->B >> 8));
-			net->log->log("2check[%i] %i,%i %i,%i\n",i,(cack->A & 0x000000FF),(cack->A >> 8),(cack->B & 0x000000FF),(cack->B >> 8));
-			#endif
+	bool inserted = false;
+	tPointerList<tUnetAck>::iterator it = ackq.begin();
+	while(it != ackq.end()) {
+		tUnetAck *cack = *it;
 
-			i++;
-			if(A>=cack->A && B<=cack->A) {
-				#ifdef ENABLE_ACKDEBUG
-				net->log->log("A\n");
-				#endif
-				if(cack->next==NULL) {
-					cack->A=A;
-					cack->B=(cack->B > B ? B : cack->B);
-					break;
-				} else {
-					B=ack->B=(cack->B > B ? B : cack->B);
-					ack->timestamp=cack->timestamp;
-					ackq->deleteCurrent();
-					ackq->rewind();
-					continue;
-				}
-			} else if(B>cack->A) {
-				#ifdef ENABLE_ACKDEBUG
-				net->log->log("B\n");
-				#endif
-				if(cack->next==NULL) { ackq->add(ack); ack=NULL; break; }
-				else continue;
-			} if(A<cack->B) {
-				#ifdef ENABLE_ACKDEBUG
-				net->log->log("C\n");
-				#endif
-				ackq->insertBefore(ack);
-				ack=NULL;
-				break;
-			} else if(A<=cack->A && A>=cack->B) {
-				#ifdef ENABLE_ACKDEBUG
-				net->log->log("D\n");
-				#endif
-				A=ack->A=cack->A;
-				B=ack->B=(cack->B > B ? B : cack->B);
-				ack->timestamp=cack->timestamp;
-				bool isNull=(cack->next==NULL);
-				ackq->deleteCurrent();
-				ackq->rewind();
-				if(isNull) { ackq->add(ack); ack=NULL; break; }
-				else continue;
-			}
+		if(A>=cack->B && B<=cack->A) { // the two acks intersect, merge them
+			// calculate new bounds
+			if (cack->A > A) A = cack->A;
+			if (cack->B < B) B = cack->B;
+			// remove existing ack and complete merge
+			if (cack->timestamp < timestamp) timestamp = cack->timestamp; // use smaller timestamp
+			ackq.eraseAndDelete(it); // remove old ack (we merged it into ours)
+			it = ackq.begin(); // and restart
+			continue;
+		} else if(B>cack->A) { // we are completely after this ack
+			continue; // go on searching and looking
+		} else if(A<cack->B) { // we are completely before this ack
+			ackq.insert(it, new tUnetAck(A, B, timestamp)); // insert ourselves in the list at the right position, and be done
+			inserted = true;
+			break;
 		}
 	}
-	delete ack;
+	if (!inserted) ackq.push_back(new tUnetAck(A, B, timestamp));
 	
 	#ifdef ENABLE_ACKDEBUG
 	net->log->log("ack stack TAIL looks like:\n");
@@ -720,27 +663,24 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 
 /** puts acks from the ackq in the sndq */
 tNetTimeDiff tNetSession::ackUpdate() {
-	const size_t maxacks=30;
 	tNetTimeDiff timeout = -1; // -1 is biggest possible value
-	if (ackq->len() == 0) return timeout;
 	
-	ackq->rewind();
-	tUnetAck *ack = ackq->getNext();
-	while(ack) {
-		tmNetAck ackMsg(this);
-		while (ack) {
-			if (!net->timeOverdue(ack->timestamp)) {
-				timeout = std::min(timeout, net->remainingTimeTill(ack->timestamp)); // come back when we want to process this ack
-				ack = ackq->getNext();
-			}
-			else {
-				ackMsg.ackq.push_back(ackq->unstackCurrent()); // will switch to the next one
-				ack = ackq->getCurrent();
-				if (ackMsg.ackq.size() >= maxacks) break;
-			}
+	tPointerList<tUnetAck>::iterator it = ackq.begin();
+	while(it != ackq.end()) {
+		tUnetAck *ack = *it;
+		if (!net->timeOverdue(ack->timestamp)) {
+			timeout = std::min(timeout, net->remainingTimeTill(ack->timestamp)); // come back when we want to process this ack
+			++it;
 		}
-		if (ackMsg.ackq.size() > 0)
+		else {
+			/* send one message per ack: we do not want to be too pwned if that apcket got lost. And if we have "holes" in the
+			 * sequence of packets (which is the only occasion in which there would be several acks in a message), the connection
+			 * is already problematic. */
+			tmNetAck ackMsg(this);
+			it = ackq.erase(it); // remove ack from queue
+			ackMsg.ackq.push_back(ack); // and put it into message
 			send(ackMsg);
+		}
 	}
 	return timeout;
 }
@@ -762,10 +702,9 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 		A1 = ack->A;
 		A3 = ack->B;
 		//well, do it
-		tUnetUruMsg * msg=NULL;
-		sndq->rewind();
-		msg=sndq->getNext();
-		while((msg!=NULL)) {
+		tPointerList<tUnetUruMsg>::iterator it = sndq.begin();
+		while (it != sndq.end()) {
+			tUnetUruMsg *msg = *it;
 			A2=msg->csn;
 			
 			if(A1>=A2 && A2>A3) {
@@ -786,13 +725,12 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 					increaseCabal();
 				}
 				if(msg->tf & UNetAckReq) {
-					sndq->deleteCurrent();
-					msg=sndq->getCurrent();
+					it = sndq.erase(it);
 				} else {
-					msg=sndq->getNext();
+					++it;
 				}
 			} else {
-				msg=sndq->getNext();
+				++it;
 			}
 		}
 	}
@@ -820,91 +758,91 @@ tNetTimeDiff tNetSession::processSendQueues()
 	   DBG(3, "Terminated session %s setting timeout %d\n", str().c_str(), timeout);
 	}
 	
-	if(sndq->isEmpty()) {
+	if(sndq.empty()) {
 		next_msg_time=0;
 		return timeout;
 	}
 	
-	if(net->timeOverdue(next_msg_time)) {
-		sndq->rewind();
-		tUnetUruMsg * curmsg = sndq->getNext();
-		
-		unsigned int quota_max=maxPacketSz;
-		unsigned int cur_quota=0;
-		
-		const unsigned int minTH=15;
-		const unsigned int maxTH=100;
-
-		while(curmsg!=NULL && (cur_quota<quota_max)) {
-			if(net->timeOverdue(curmsg->timestamp)) {
-				DBG(8, "%s ok to send a message\n",str().c_str());
-				//we can send the message
-				if(curmsg->tf & UNetAckReq) {
-					//send packet
-					
-					// check if we need to resend
-					if(curmsg->tryes!=0) {
-						DBG(3, "%s Re-sending a message\n", str().c_str());
-						if(curmsg->tryes==1) {
-							decreaseCabal(true); // true = small
-						} else {
-							decreaseCabal(false); // false = big
-						}
-						// The server used to duplicate the timeout here - but since the timeout will be overwritten next time updateRTT
-						//  is called, that's of no use. So better make the RTT bigger - it is obviously at least the timeout
-						// This will result in a more long-term increase of the timeout
-						updateRTT(3*msg_timeout); // this is necessary because the vault server blocks the netcore when doing SQL - reduce this when multi-threading is implemented
-					}
-					
-					if(curmsg->tryes>=10 || (curmsg->tryes>=2 && terminated)) { // max. 2 sends on terminated connections, max. 10 for the rest
-						sndq->deleteCurrent();
-						curmsg = sndq->getCurrent(); // this is the next one
-						//timeout event
-						net->sec->log("%s Timeout (didn't ack a packet)\n", str().c_str());
-						tNetEvent *evt=new tNetEvent(getIte(),UNET_TIMEOUT);
-						net->addEvent(evt);
-					} else {
-						cur_quota+=curmsg->size();
-						curmsg->snt_timestamp=net->net_time;
-						net->rawsend(this,curmsg);
-						curmsg->timestamp=net->net_time+msg_timeout;
-						curmsg->tryes++;
-						curmsg = sndq->getNext(); // go on
-					}
-				} else {
-					//probabilistic drop (of voice, and other non-ack packets) - make sure we don't drop ack replies though!
-					if(curmsg->tf == 0x00 && net->passedTimeSince(curmsg->timestamp) > 4*msg_timeout) {
-						//Unacceptable - drop it
-						net->err->log("%s Dropped a 0x00 packet due to unaceptable msg time %i,%i,%i\n",str().c_str(),msg_timeout,net->passedTimeSince(curmsg->timestamp),rtt);
-					} else if(curmsg->tf == 0x00 && (sndq->len() > static_cast<size_t>((minTH + random()%(maxTH-minTH)))) ) {
-						net->err->log("%s Dropped a 0x00 packet due to a big queue (%d messages)\n", str().c_str(), sndq->len());
-					}
-					//end prob drop
-					else {
-						cur_quota+=curmsg->size();
-						net->rawsend(this,curmsg);
-					}
-					sndq->deleteCurrent();
-					curmsg = sndq->getCurrent(); // this is the next one
-				}
-			} //end time check
-			else {
-				timeout = std::min(timeout, net->remainingTimeTill(curmsg->timestamp)); // come back when we want to send this message
-				DBG(8,"%s Too soon (%d) to send a message\n",str().c_str(),net->remainingTimeTill(curmsg->timestamp));
-				curmsg = sndq->getNext(); // go on
-			}
-		} //end while
-		// calculate how long it will take us to send what we just sent
-		tNetTimeDiff tts=timeToSend(cur_quota);
-		DBG(8,"%s %ld tts is now:%i quota:%i,cabal:%i\n",str().c_str(),net->net_time,tts,cur_quota,cabal);
-		next_msg_time=net->net_time + tts;
-		// if there is still something to send, but the quota does not let us, do that ASAP
-		if (curmsg && tts < timeout) timeout = tts;
-	} else {
-		// Still wait before sending a message
+	// wait till we may send again (this is enforced even for urgent messages!)
+	if (!net->timeOverdue(next_msg_time)) {
 		DBG(8,"%s Too soon (%d) to check sndq\n",str().c_str(),net->remainingTimeTill(next_msg_time));
-		timeout = std::min(timeout, net->remainingTimeTill(next_msg_time)); // come back when we want to send the next message
+		return std::min(timeout, net->remainingTimeTill(next_msg_time)); // come back when we want to send the next message
 	}
+	
+	// tts control (don't send too fast!)
+	const tNetTimeDiff tts_max = timeToSend(maxPacketSz); // FIXME: setting this to at least 500 has alcmsgtest go crazy for larger messages
+	tNetTimeDiff cur_tts=0;
+	// control for auto-drop of old non-acked messages
+	const unsigned int minTH=15;
+	const unsigned int maxTH=100;
+	
+	// urgent packets
+	tPointerList<tUnetUruMsg>::iterator it = sndq.begin();
+	while (it != sndq.end()) {
+		tUnetUruMsg *curmsg = *it;
+		if (!curmsg->urgent && cur_tts >= tts_max) break; // sent too much (but don't stop urgent messages by tts)
+		
+		if(net->timeOverdue(curmsg->timestamp)) {
+			DBG(8, "%s ok to send a message\n",str().c_str());
+			//we can send the message
+			if(curmsg->tf & UNetAckReq) {
+				//send packet
+				
+				// check if we need to resend
+				if(curmsg->tryes!=0) {
+					DBG(3, "%s Re-sending a message\n", str().c_str());
+					if(curmsg->tryes==1) {
+						decreaseCabal(true); // true = small
+					} else {
+						decreaseCabal(false); // false = big
+					}
+					// The server used to duplicate the timeout here - but since the timeout will be overwritten next time updateRTT
+					//  is called, that's of no use. So better make the RTT bigger - it is obviously at least the timeout
+					// This will result in a more long-term increase of the timeout
+					updateRTT(3*msg_timeout); // this is necessary because the vault server blocks the netcore when doing SQL - reduce this when multi-threading is implemented
+				}
+				
+				if(curmsg->tryes>=10 || (curmsg->tryes>=2 && terminated)) { // max. 2 sends on terminated connections, max. 10 for the rest
+					it = sndq.erase(it); // this is the next one
+					//timeout event
+					net->sec->log("%s Timeout (didn't ack a packet)\n", str().c_str());
+					tNetEvent *evt=new tNetEvent(getIte(),UNET_TIMEOUT);
+					net->addEvent(evt);
+				} else {
+					cur_tts+=timeToSend(curmsg->size());
+					curmsg->snt_timestamp=net->net_time;
+					net->rawsend(this,curmsg);
+					curmsg->timestamp=net->net_time+msg_timeout;
+					curmsg->tryes++;
+					++it; // go on
+				}
+			} else {
+				//probabilistic drop (of voice, and other non-ack packets) - make sure we don't drop ack replies though!
+				if(curmsg->tf == 0x00 && net->passedTimeSince(curmsg->timestamp) > 4*msg_timeout) {
+					//Unacceptable - drop it
+					net->err->log("%s Dropped a 0x00 packet due to unaceptable msg time %i,%i,%i\n",str().c_str(),msg_timeout,net->passedTimeSince(curmsg->timestamp),rtt);
+				} else if(curmsg->tf == 0x00 && (sndq.size() > static_cast<size_t>((minTH + random()%(maxTH-minTH)))) ) {
+					net->err->log("%s Dropped a 0x00 packet due to a big queue (%d messages)\n", str().c_str(), sndq.size());
+				}
+				//end prob drop
+				else {
+					cur_tts+=timeToSend(curmsg->size());
+					net->rawsend(this,curmsg);
+				}
+				it = sndq.erase(it); // this is the next one
+			}
+		} //end time check
+		else {
+			timeout = std::min(timeout, net->remainingTimeTill(curmsg->timestamp)); // come back when we want to send this message
+			DBG(8,"%s Too soon (%d) to send a message\n",str().c_str(),net->remainingTimeTill(curmsg->timestamp));
+			++it; // go on
+		}
+	} //end while
+	// calculate how long it will take us to send what we just sent
+	DBG(5, "%s sent packets for %d of %d us\n", str().c_str(), cur_tts, tts_max);
+	DBG(8,"%s %ld tts is now:%i cabal:%i\n",str().c_str(),net->net_time,cur_tts,cabal);
+	next_msg_time=net->net_time + cur_tts;
+	if (it != sndq.end() && cur_tts < timeout) return cur_tts; // if there is still something to send, but the quota does not let us, do that ASAP
 	return timeout;
 }
 

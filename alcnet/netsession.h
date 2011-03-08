@@ -84,7 +84,7 @@ public:
 	void setTypeToGame() { whoami = KGame; }
 	bool isAlcugsServer()
 		{ return whoami == KLobby || whoami == KGame || whoami == KVault || whoami == KAuth || whoami == KTracking; }
-	bool anythingToSend() { return !ackq->isEmpty() || !sndq->isEmpty(); }
+	bool anythingToSend() { return !ackq.empty() || !sndq.empty(); }
 
 private:
 	void init();
@@ -174,9 +174,9 @@ private:
 	tNetTimeDiff msg_timeout; //!< time after which a message is re-sent
 	
 	// queues
-	tUnetMsgQ<tUnetAck> *ackq; //!< ack queue, saves acks to be packed
-	tUnetMsgQ<tUnetUruMsg> *sndq; //!<outcomming message queue
-	tUnetMsgQ<tUnetUruMsg> *rcvq; //!< received, but not yet accepted messages
+	tPointerList<tUnetAck> ackq; //!< ack queue, saves acks to be packed - acks do not intersect here, and are sorted by the SNs they ack
+	tPointerList<tUnetUruMsg> sndq; //!<outcomming message queue
+	tPointerList<tUnetUruMsg> rcvq; //!< received, but not yet accepted messages
 	
 	// other status variables
 	bool rejectMessages; //!< when set to true, messages are rejected (the other side has to send them again)

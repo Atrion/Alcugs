@@ -86,18 +86,19 @@ public:
 /** this class is used to save acks in an ackq */
 class tUnetAck {
 public:
-	tUnetAck() { next=NULL; timestamp=0; }
+	tUnetAck(uint32_t A, uint32_t B, tNetTime timestamp) : timestamp(timestamp), A(A), B(B) { }
+	tUnetAck(uint32_t A, uint32_t B) : timestamp(0), A(A), B(B) { }
 	tNetTime timestamp;
 	uint32_t A;
 	uint32_t B;
-	tUnetAck * next;
 	FORBID_CLASS_COPY(tUnetAck)
 };
 
 /** this is the class responsible for the UruMsg header. The data must be filled with a class derived from tmBase. */
 class tUnetUruMsg : public tBaseType {
 public:
-	tUnetUruMsg() { next=NULL; tryes=0; }
+	tUnetUruMsg() : tryes(0), urgent(false) {}
+	tUnetUruMsg(bool urgent) : tryes(0), urgent(urgent) {}
 	virtual ~tUnetUruMsg() {}
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
@@ -106,12 +107,12 @@ public:
 	size_t hSize();
 	void dumpheader(tLog * f);
 	void htmlDumpHeader(tLog * log,uint8_t flux,uint32_t ip,uint16_t port); //ip, port in network order
-	tUnetUruMsg * next;
 
 	void _update();
 	tNetTime timestamp; //!< message stamp in usecs (to send) - this is in unet->net_time units
 	tNetTime snt_timestamp; //!< time when message was sent
 	unsigned int tryes;
+	const bool urgent;
 	//Uru protocol
 	//Byte vid 0x03
 	uint8_t val; // 0x00,0x01,0x02
