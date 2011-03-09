@@ -584,6 +584,7 @@ tNetTimeDiff tUnet::processSendQueues() {
 	tMutexLock lock(smgrMutex); // FIXME this is not good, holding the lock too long
 	smgr->rewind();
 	while((cur=smgr->getNext())) {
+		updateNetTime(); // let the session calculate its timestamps correctly
 		/* Also create the timeout when it's exactly the same time.
 		  This way the time from a session being marked as deleteable till it is deleted is kept short */
 		if(passedTimeSince(cur->activity_stamp) > cur->conn_timeout) {
@@ -594,7 +595,6 @@ tNetTimeDiff tUnet::processSendQueues() {
 			tNetEvent * evt=new tNetEvent(ite,UNET_TIMEOUT);
 			addEvent(evt);
 		} else {
-			updateNetTime(); // let the session calculate its timestamps correctly
 			unet_timeout = std::min(cur->processSendQueues(), unet_timeout);
 		}
 	}
