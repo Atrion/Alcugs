@@ -87,7 +87,7 @@ void tUnet::init() {
 	flags=UNET_DEFAULT_FLAGS;
 
 	//netcore timeout < min(all RTT's), nope, it must be the min tts (stt)
-	max_sleep=5*1000*1000; // wait no more than 5 seconds in select() call
+	max_sleep=10*1000*1000; // wait no more than 10 seconds in select() call
 
 	conn_timeout=5*60; // default timeout for new sessions (seconds)
 	/* This sets the timeout for unet servers from both sides
@@ -119,7 +119,7 @@ void tUnet::init() {
 	max_flood_pkts=600; // when first launching a client for an emtpy vault, there are about 100 packets within about 2.5 seconds
 	                    // linking to Noloben is a good testcase (500 per 10 seconds was not enough)
 
-	receiveAhead=50; // Receive up to 50 not-yet acceptable packets "in the future"
+	receiveAhead=100; // Receive up to 100 not-yet acceptable packets "in the future"
 
 	//logs
 	log=new tLog;
@@ -550,6 +550,7 @@ int tUnet::sendAndWait() {
 			//process the message, and do the correct things with it
 			memcpy(session->sockaddr,&client,sizeof(struct sockaddr_in));
 			try {
+				// the net time might be a bit too low, but that's not a large problem - packets might just be sent a bit too early
 				session->processIncomingMsg(buf,n);
 			} catch(txProtocolError &t) {
 				this->err->log("%s Protocol Error %s\nBacktrace:%s\n",session->str().c_str(),t.what(),t.backtrace());
@@ -590,6 +591,7 @@ tNetTimeDiff tUnet::processSendQueues() {
 			tNetEvent * evt=new tNetEvent(ite,UNET_TIMEOUT);
 			addEvent(evt);
 		} else {
+			updateNetTime(); // let the session calculate its timestamps correctly
 			unet_timeout = std::min(cur->processSendQueues(), unet_timeout);
 		}
 	}

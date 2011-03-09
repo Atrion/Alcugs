@@ -114,7 +114,7 @@ tUnetPing::tUnetPing(const tString &lhost,uint16_t lport,bool listen,double time
 	this->setBindPort(lport);
 	this->setBindAddress(lhost);
 	this->listen=listen;
-	max_sleep = 5*1000; // set down max_sleep timer (FIXME: why?)
+	max_sleep = 100*1000; // set down max_sleep timer to send pings in one-second intervals
 	this->time=time;
 	this->num=num;
 	this->flood=flood;

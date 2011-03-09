@@ -152,7 +152,6 @@ tUnetSimpleFileServer::tUnetSimpleFileServer(const tString &lhost,uint16_t lport
 	this->setBindPort(lport);
 	this->setBindAddress(lhost);
 	this->listen=listen;
-	//max_sleep = 500*1000; // set down max_sleep timer (FIXME: why?)
 	d_port=5000;
 	validation=2;
 	urgent=false;
