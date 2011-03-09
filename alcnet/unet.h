@@ -45,10 +45,6 @@ namespace alc {
 	class tmMsgBase;
 
 
-//udp packet max buffer size (0xFFFF) - any packet should be bigger.
-#define INC_BUF_SIZE 65535
-#define OUT_BUFFER_SIZE 1024
-
 //! Urunet event table <0 errors, 0 ok, >0 events
 #define UNET_PARSEERR -12 /* !< Error parsing a plNet Msg */
 #define UNET_OUTOFRANGE -11 /* !<  Out of range */
@@ -116,7 +112,7 @@ protected:
 	void stopOp();
 	void openLogfiles();
 	tNetSessionIte netConnect(const char * hostname,uint16_t port,uint8_t validation,uint8_t flags,uint8_t peerType=0);
-	int sendAndWait(); //!< send enqueued messages, wait, and receive packets and enqueue them (wait time must be set by processQueues()!)
+	int sendAndWait(); //!< send enqueued messages, wait, and receive packets and enqueue them (wait time must be set by processQueues()!) FIXME get rid of return value, it is ignored anyway
 	tNetEvent * getEvent(); //!<  (thread-safe)
 	void addEvent(tNetEvent *evt); //!<  (thread-safe)
 	void clearEventQueue(); //!< use this only if you really know what you do - will loose incoming messages and whatnot! (thread-safe)

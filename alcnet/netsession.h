@@ -148,7 +148,7 @@ private:
 	uint8_t validation; //!< store the validation level (0,1,2)
 	uint8_t authenticated; //!< is the peer authed? 0 = no, 1 = yes, 2 = it just got authed, 10 = the client got an auth challenge
 	uint8_t cflags; //!< session flags
-	uint16_t maxPacketSz; //!< maxium size of the packets. Must be 1024 (always)
+	const uint16_t maxPacketSz; //!< maxium size of the packets. Must be 1024 (always)
 	tUnetMsg *rcv; //!< The place to assemble a fragmented message
 
 	//flood control
@@ -156,7 +156,7 @@ private:
 	unsigned int flood_npkts;
 	
 	tNetTime activity_stamp; //!< last time we got something from this client
-	tTime nego_stamp; //!< initial negotiation stamp (FIXME: use tNetTime for this and the next? does the resolution suffice?)
+	tTime nego_stamp; //!< initial negotiation stamp
 	tTime renego_stamp; //!< remote/received nego stamp (stamp of last nego we got)
 	tNetTimeDiff conn_timeout; //!< time after which the session will timeout (in microseconds)
 	bool negotiating; //!< set to true when we are waiting for the answer of a negotiate we sent
@@ -168,7 +168,7 @@ private:
 	unsigned int minBandwidth, maxBandwidth; //!< min(client's upstream, our downstream) and max(client's upstream, our downstream) in bytes/s
 	unsigned int cabal; //!< cur avg bandwidth (in bytes per second), can't be > maxBandwidth, will grow slower when > minBandwith
 	
-	tNetTime next_msg_time; //!< time to send next msg in usecs (referring to tUnet::net_time)
+	tNetTime next_msg_time; //!< time to send next msg in usecs (referring to tUnet::net_time) - if this is 0, we do not have to wait
 	tNetTimeDiff rtt; //!< round trip time, used to caluclate timeout
 	int deviation; //!< used to calculate timeout
 	tNetTimeDiff msg_timeout; //!< time after which a message is re-sent
