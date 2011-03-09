@@ -732,12 +732,10 @@ tNetTimeDiff tNetSession::processSendQueues()
 	}
 	
 	tNetTimeDiff timeout = ackSend(); //generate ack messages (i.e. put them from the ackq to the sndq)
+	timeout = std::min(timeout, net->remainingTimeTill(activity_stamp+conn_timeout)); // do not miss our timeout
 
 	// for terminating session, make sure they are cleaned up on time
-	if (terminated) {
-		if (!anythingToSend()) conn_timeout /= 5; // we are done, completely done - but wait some little more time for possible re-sends
-		if (timeout > conn_timeout) timeout = conn_timeout; // do not miss our timeout
-	}
+	if (terminated && !anythingToSend()) conn_timeout /= 5; // we are done, completely done - but wait some little more time for possible re-sends
 	
 	if(sndq.empty()) {
 		next_msg_time=0;
