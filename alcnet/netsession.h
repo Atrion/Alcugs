@@ -100,7 +100,7 @@ private:
 	void queueReceivedMessage(tUnetUruMsg *msg);
 	void checkQueuedMessages(void);
 
-	int8_t compareMsgNumbers(uint32_t sn1, uint8_t fr1, uint32_t sn2, uint8_t fr2);
+	static int8_t compareMsgNumbers(uint32_t sn1, uint8_t fr1, uint32_t sn2, uint8_t fr2);
 	void updateRTT(tNetTimeDiff newread);
 	void increaseCabal();
 	void decreaseCabal(bool small);

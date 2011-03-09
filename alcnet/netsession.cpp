@@ -156,19 +156,18 @@ void tNetSession::updateRTT(tNetTimeDiff newread) {
 	if(rtt==0) rtt=newread;
 	//Jacobson/Karels
 	const int alpha=125; // this is effectively 0.125
-	const int u=2;
 	const int delta=4;
 	const int diff=newread - rtt;
 	rtt       += (alpha*diff)/1000;
 	deviation += (alpha*(abs(diff)-deviation))/1000;
-	msg_timeout= u*rtt + delta*deviation;
+	msg_timeout= rtt + delta*deviation;
 	if (msg_timeout > 5000000) msg_timeout = 5000000; // max. timeout: 5secs
 	DBG(5,"%s RTT update (sample rtt: %i) new rtt:%i, msg_timeout:%i, deviation:%i\n", str().c_str(),newread,rtt,msg_timeout,deviation);
 }
 void tNetSession::increaseCabal() {
 	if(!cabal) return;
 	unsigned int inc = 1 << 15; // 2^15
-	if(cabal+inc > minBandwidth) inc >>= 1; // inc /= 2
+	if(cabal+inc > minBandwidth) inc /= 3;
 	cabal+=inc;
 	if(cabal > maxBandwidth) cabal = maxBandwidth;
 	DBG(5,"%s +Cabal is now %i\n",str().c_str(),cabal);
@@ -210,8 +209,6 @@ void tNetSession::send(tmBase &msg, tNetTimeDiff delay) { // FIXME make thread-s
 	size_t csize,psize,hsize,pkt_sz;
 	unsigned int n_pkts;
 	uint8_t flags=msg.bhflags, val, tf;
-	
-	tUnetUruMsg * pmsg=NULL;
 	
 	if((cflags & UNetUpgraded)) msg.bhflags |= UNetExt; // tmNetAck has to know that it writes an extended packet
 	buf.put(msg);
@@ -284,7 +281,7 @@ void tNetSession::send(tmBase &msg, tNetTimeDiff delay) { // FIXME make thread-s
 		if(i==n_pkts) csize=psize - (i*pkt_sz);
 		else csize=pkt_sz;
 		
-		pmsg=new tUnetUruMsg(flags & UNetUrgent);
+		tUnetUruMsg * pmsg=new tUnetUruMsg(flags & UNetUrgent);
 		pmsg->val=val;
 		//pmsg.pn NOT in this layer (done in the msg sender, tUnet::rawsend)
 		//since urgent messages are put at the top of the sndq, the pn would be wrong if we did it differently
@@ -304,16 +301,25 @@ void tNetSession::send(tmBase &msg, tNetTimeDiff delay) { // FIXME make thread-s
 		pmsg->timestamp+=net->latency;
 		#endif
 		
-		// Urgent messages are added at the top of the send queue, the rest at the back
-		if(flags & UNetUrgent) {
-			sndq.push_front(pmsg);
-		} else {
-			sndq.push_back(pmsg);
-		}
-		
 		if(tf & UNetAckReq) { // if this packet has the ack flag on, save it's number
 			serverMsg.ps=pmsg->sn;
 			serverMsg.pfr=pmsg->frn;
+		}
+		
+		// Urgent messages are added at the top of the send queue but BEHIND other urgent packets, the rest at the back
+		// this is important, or the first ack might be sent before the first nego!
+		if(flags & UNetUrgent) {
+			// search for the first non-urgent message
+			for (tPointerList<tUnetUruMsg>::iterator it = sndq.begin(); it != sndq.end(); ++it) {
+				if (!(*it)->urgent) {
+					sndq.insert(it, pmsg);
+					pmsg = NULL;
+					break;
+				}
+			}
+		}
+		if (pmsg) { // non-urgent packets or a totally urgent sndq
+			sndq.push_back(pmsg);
 		}
 	}
 	
@@ -455,8 +461,8 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 		// Negotiation (processed above, but we have to do the ack checking) and normal packets
 
 		//check uplicates
-		ret = compareMsgNumbers(msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
 		if (rejectMessages) ret = 1; // we curently don't accept messages - please come back later
+		else ret = compareMsgNumbers(msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
 		/* ret values:
 		  <0: This is an old packet, ack, but don't accept
 		   0: This is what we need
@@ -608,27 +614,26 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 #else
 	// retard and collect acks
 	//we must delay either none or all messages, otherwise the rtt will vary too much
-	tNetTimeDiff ackWaitTime=std::max(3*timeToSend(maxPacketSz), 500u); // wait for some batches of packets, but at least 0.5 ms
+	tNetTimeDiff ackWaitTime=std::max(2*timeToSend(maxPacketSz), 500u); // wait for some batches of packets, but at least 0.5 ms
 	if (ackWaitTime > msg_timeout/4) ackWaitTime=msg_timeout/4; // don't use the rtt as basis, it is 0 at the beginning, resulting in a much too quick first answer, a much too low rtt on the other side and thus the packets being re-sent too early
 	tNetTime timestamp=net->net_time + ackWaitTime;
 	// the net timer will be updated when the ackq is checked (which is done since processMsg will call doWork after calling createAckReply)
-	DBG(7, "ack tts: %i, %i, %i\n",msg.frt,ackWaitTime,cabal);
+	DBG(5, "new ack, wait time: %i\n",ackWaitTime);
 
 	//Plasma like ack's (acks are retarded, and packed)
 	tPointerList<tUnetAck>::iterator it = ackq.begin();
 	while(it != ackq.end()) {
 		tUnetAck *cack = *it;
-		DBG(9, "Merging A:%d B:%d with cack->A:%d cack->B:%d?\n", A, B, cack->A, cack->B);
 
 		if(A>=cack->B && B<=cack->A) { // the two acks intersect, merge them
-			// calculate new bounds
+			// calculate new bounds and timestamp
 			if (cack->A > A) A = cack->A;
 			if (cack->B < B) B = cack->B;
-			// remove existing ack and complete merge
 			if (cack->timestamp < timestamp) timestamp = cack->timestamp; // use smaller timestamp
+			// remove existing ack and complete merge
 			ackq.eraseAndDelete(it); // remove old ack (we merged it into ours)
 			it = ackq.begin(); // and restart
-			DBG(9, "restarting ack search\n");
+			DBG(9, "merged two acks, restarting ack search\n");
 			continue;
 		} else if(B>cack->A) { // we are completely after this ack
 			++it;
@@ -654,6 +659,7 @@ tNetTimeDiff tNetSession::ackSend() {
 			++it;
 		}
 		else {
+			DBG(5, "%s Sending an ack, %d after time\n", str().c_str(), net->passedTimeSince(ack->timestamp));
 			/* send one message per ack: we do not want to be too pwned if that apcket got lost. And if we have "holes" in the
 			 * sequence of packets (which is the only occasion in which there would be several acks in a message), the connection
 			 * is already problematic. */
@@ -771,13 +777,15 @@ tNetTimeDiff tNetSession::processSendQueues()
 					DBG(3, "%s Re-sending a message\n", str().c_str());
 					if(curmsg->tryes==1) {
 						decreaseCabal(true); // true = small
+						/* The server used to duplicate the timeout here - but since the timeout will be overwritten next time updateRTT
+						*  is called, that's of no use. So better make the RTT bigger - it is obviously at least the timeout
+						* This will result in a more long-term increase of the timeout.
+						* Of course, we do not actually have a new sample rtt - but we have to increase it here, because the oly
+						* other change only occures when an ack comes in for a not-yet re-sent packet */
+						updateRTT(msg_timeout);
 					} else {
 						decreaseCabal(false); // false = big
 					}
-					// The server used to duplicate the timeout here - but since the timeout will be overwritten next time updateRTT
-					//  is called, that's of no use. So better make the RTT bigger - it is obviously at least the timeout
-					// This will result in a more long-term increase of the timeout
-					updateRTT(msg_timeout);
 				}
 				
 				if(curmsg->tryes>=10 || (curmsg->tryes>=2 && terminated)) { // max. 2 sends on terminated connections, max. 10 for the rest

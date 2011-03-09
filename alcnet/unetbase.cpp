@@ -275,7 +275,7 @@ void tUnetBase::run() {
 		sendAndWait();
 		onIdle(); // not really "idle"... but called from time to time, and at least every max_sleep microseconds, the latter being important
 	}
-	max_sleep = std::min(max_sleep, 100u*1000); // from now on, do not wait longer than 0.1 seconds so that we do not miss the stop timeout, and to speed up session deletion
+	max_sleep = 100*1000; // from now on, do not wait longer than 0.1 seconds so that we do not miss the stop timeout, and to speed up session deletion
 	
 	// Uru clients need to be kicked first - messages might be sent to other servers as a reaction
 	if (terminatePlayers()) {
