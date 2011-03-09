@@ -290,8 +290,7 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, authHello.str().c_str());
 				
 				if (authHello.maxPacketSize != u->getMaxPacketSz()) {
-					err->log("UNX: Max packet size of %s is not %d, but %d, ignoring\n", u->str().c_str(), u->getMaxPacketSz(), authHello.maxPacketSize);
-					return 1; // it was already parsed, so we can return 1
+					throw txUnexpectedData(_WHERE("UNX: Max packet size of %s is not %d, but %d, ignoring\n", u->str().c_str(), u->getMaxPacketSz(), authHello.maxPacketSize));
 				}
 				
 				// determine auth result

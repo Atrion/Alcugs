@@ -47,7 +47,7 @@
 namespace alc {
 
 /* Session */
-tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t sid) {
+tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t sid) : maxPacketSz(1024) {
 	DBG(5,"tNetSession()\n");
 	assert(alcGetSelfThreadId() == alcGetMain()->threadId()); // FIXME is this correct? will choke if netConnect is called in worker
 	this->net=net;
@@ -76,7 +76,6 @@ void tNetSession::init() {
 	accessLevel=0;
 	cflags=0; //default flags
 	maxBandwidth=minBandwidth=cabal=0;
-	maxPacketSz=1024;
 	flood_last_check=net->net_time;
 	flood_npkts=0;
 	activity_stamp = net->net_time;
@@ -734,12 +733,10 @@ tNetTimeDiff tNetSession::processSendQueues()
 	
 	tNetTimeDiff timeout = ackSend(); //generate ack messages (i.e. put them from the ackq to the sndq)
 
-	if (!anythingToSend() && terminated) conn_timeout /= 5; // we are done, completely done - but wait some little more time for possible re-sends
-	
 	// for terminating session, make sure they are cleaned up on time
 	if (terminated) {
-	   timeout = std::min(timeout, conn_timeout);
-	   DBG(3, "Terminated session %s setting timeout %d\n", str().c_str(), timeout);
+		if (!anythingToSend()) conn_timeout /= 5; // we are done, completely done - but wait some little more time for possible re-sends
+		if (timeout > conn_timeout) timeout = conn_timeout; // do not miss our timeout
 	}
 	
 	if(sndq.empty()) {
@@ -760,7 +757,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 	while (it != sndq.end()) {
 		tUnetUruMsg *curmsg = *it;
 		if (urgentSend && !curmsg->urgent) { // fist non-urgent messages, check next_msg_time
-			if (!net->timeOverdue(next_msg_time)) break; // stop here if we are not really supposed to send messages
+			if (next_msg_time && !net->timeOverdue(next_msg_time)) break; // stop here if we are not really supposed to send messages
 			urgentSend = false;
 		}
 		assert(urgentSend == curmsg->urgent);
@@ -829,7 +826,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 	// calculate how long it will take us to send what we just sent
 	DBG(5, "%s sent packets for %d of %d us\n", str().c_str(), cur_tts, tts_max);
 	DBG(8,"%s %ld tts is now:%i cabal:%i\n",str().c_str(),net->net_time,cur_tts,cabal);
-	if (net->timeOverdue(next_msg_time)) {
+	if (!next_msg_time || net->timeOverdue(next_msg_time)) {
 		// "regular" send
 		next_msg_time=net->net_time + cur_tts;
 		if (it != sndq.end() && cur_tts < timeout) return cur_tts; // if there is still something to send, but the quota does not let us, do that ASAP
@@ -864,7 +861,6 @@ void tNetSession::negotiate() {
 void tNetSession::terminate(int tout)
 {
 	conn_timeout = tout*1000*1000;
-	// FIXME somehow make sure we do not sleep too long?
 	terminated = true;
 	whoami = 0; // it's terminated, so it's no one special anymore
 	activity_stamp = net->net_time; // FIXME called in worker thread

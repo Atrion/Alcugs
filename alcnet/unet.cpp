@@ -52,6 +52,8 @@
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 
 
+//udp packet max buffer size (0xFFFF) - no packet should be bigger.
+#define INC_BUF_SIZE 65535
 
 namespace alc {
 
@@ -281,7 +283,7 @@ void tUnet::startOp() {
 #endif
 	DBG(1, "Non-blocking socket set\n");
 
-	//broadcast ?
+	//broadcast ? FIXME what does this do?
 	if(this->flags & UNET_BCAST) {
 		this->opt = 1;
 		#ifdef __WIN32__
@@ -523,10 +525,6 @@ int tUnet::sendAndWait() {
 		}
 
 		if(n>0) { //we have a message
-			if(n>OUT_BUFFER_SIZE) {
-				this->err->log("[ip:%s:%i] ERR: Recieved a really big message of %i bytes\n",alcGetStrIp(client.sin_addr.s_addr).c_str(),ntohs(client.sin_port),n);
-				return UNET_TOOBIG;
-			} //catch up impossible big messages
 			/* Uru protocol check */
 			if(n<=20 || buf[0]!=0x03) { //not an Uru protocol packet don't waste an slot for it
 				this->err->log("[ip:%s:%i] ERR: Unexpected Non-Uru protocol packet found\n",alcGetStrIp(client.sin_addr.s_addr).c_str(),ntohs(client.sin_port));
@@ -545,6 +543,11 @@ int tUnet::sendAndWait() {
 				session=smgr->search(ite, true);
 			} catch(txToMCons) {
 				return UNET_TOMCONS;
+			}
+			
+			if (n > session->maxPacketSz) { // catch impossible big messages
+				this->err->log("[%s] ERR: Recieved a really big message of %i bytes\n",session->str().c_str(),n);
+				return UNET_TOOBIG;
 			}
 			
 			//process the message, and do the correct things with it
