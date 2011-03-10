@@ -43,6 +43,7 @@
 #include <alcmain.h>
 
 #include <cassert>
+#include <unistd.h>
 
 namespace alc {
 
@@ -322,7 +323,12 @@ void tNetSession::send(tmBase &msg, tNetTimeDiff delay) { // FIXME make thread-s
 		}
 	}
 	
-	// FIXME cancel the wait in the main thread
+	if (alcGetSelfThreadId() != alcGetMain()->threadId()) {
+		// we are in the worker thread... send a byte to the pipe so that the main thread wakes up and conciders this new packet
+		uint8_t data = 0;
+		if (write(net->sndPipeWriteEnd, &data, 1) != 1)
+			throw txUnet(_WHERE("Failed to write the pipe?"));
+	}
 }
 
 /** process a recieved msg: put it in the rcvq, assemble fragments, create akcs */

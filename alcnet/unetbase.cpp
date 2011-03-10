@@ -140,14 +140,6 @@ void tUnetBase::applyConfig() {
 		}
 	}
 	//Other DEVEL vars (dangerous to touch)
-	var=cfg->getVar("broadcast","global");
-	if(!var.isEmpty()) {
-		if(var.asUInt()) {
-			unsetFlags(UNET_BCAST);
-		} else {
-			setFlags(UNET_BCAST);
-		}
-	}
 	var=cfg->getVar("net.flood_check_sec","global");
 	if(!var.isEmpty()) {
 		flood_check_interval=var.asUInt()*1000*1000;
