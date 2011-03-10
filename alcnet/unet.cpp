@@ -136,19 +136,19 @@ void tUnet::init() {
 
 	ip_overhead=20+8;
 
-	#ifdef ENABLE_NETDEBUG // FIXME do some testing with this when threading works
+	#ifdef ENABLE_NETDEBUG
 	// Noise and latency
 	in_noise=2; // percent of dropped packets (0-100)
 	out_noise=2; // percent of dropped packets (0-100)
 	latency=20000; // in usecs
-	// Bandwith: 10kB/0,66seconds = 15kB/second = 120kBit/second
-	lim_down_cap=10000; // in bytes
-	lim_up_cap=10000; // in bytes
-	quota_check_interval=666666; // 2/3 of a second
+	// Bandwith: 5kB/10ms = 500kB/second = 4MBit/second
+	lim_down_cap=5*1000; // in bytes
+	lim_up_cap=5*1000; // in bytes
+	quota_check_interval=10*1000; // 10ms
 	// the rest are controlling vairables, do not touch!
 	cur_down_quota=0;
 	cur_up_quota=0;
-	last_quota_check = ntime;
+	last_quota_check = net_time;
 	#endif
 	
 }
@@ -444,14 +444,7 @@ void tUnet::sendAndWait() {
 #endif
 
 	while(true) { // receive all messages we got
-
-		DBG(9,"Before recvfrom\n");
-	#ifdef __WIN32__
-		n = recvfrom(this->sock,reinterpret_cast<char *>(buf),INC_BUF_SIZE,0,reinterpret_cast<struct sockaddr *>(&client),&client_len);
-	#else
 		n = recvfrom(this->sock,buf,INC_BUF_SIZE,0,reinterpret_cast<struct sockaddr *>(&client),&client_len);
-	#endif
-		DBG(9,"After recvfrom\n");
 		
 	#ifdef ENABLE_NETDEBUG
 		if(n>0) {
@@ -462,10 +455,10 @@ void tUnet::sendAndWait() {
 				n=0;
 			}
 			//check quotas
-			if((ntime-last_quota_check).asNumber('u') > quota_check_interval) {
+			if(passedTimeSince(last_quota_check) > quota_check_interval) {
 				cur_up_quota=0;
 				cur_down_quota=0;
-				last_quota_check = ntime;
+				last_quota_check = net_time;
 			}
 			if(n>0 && lim_down_cap) {
 				if((cur_down_quota+n+ip_overhead)>lim_down_cap) {
@@ -621,10 +614,10 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg)
 		msize=0;
 	}
 	//check quotas
-	if((ntime-last_quota_check).asNumber('u') > quota_check_interval) {
+	if(passedTimeSince(last_quota_check) > quota_check_interval) {
 		cur_up_quota=0;
 		cur_down_quota=0;
-		last_quota_check = ntime;
+		last_quota_check = net_time;
 	}
 	if(msize>0 && lim_up_cap) {
 		if((cur_up_quota+msize+ip_overhead)>lim_up_cap) {
@@ -638,11 +631,7 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg)
 #endif
 
 	if(msize>0) {
-#ifdef __WIN32__
-		msize = sendto(sock,reinterpret_cast<const char *>(buf),msize,0,reinterpret_cast<struct sockaddr *>(&client),sizeof(struct sockaddr));
-#else
 		msize = sendto(sock,reinterpret_cast<char *>(buf),msize,0,reinterpret_cast<struct sockaddr *>(&client),sizeof(struct sockaddr));
-#endif
 	}
 
 	DBG(9,"After the Sendto call...\n");
