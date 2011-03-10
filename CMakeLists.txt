@@ -15,7 +15,6 @@ set(CMAKE_CXX_FLAGS_DEBUG "-Werror ${CMAKE_CXX_FLAGS_DEBUG}")
 # options
 option(ENABLE_ADMIN "Enables possibly dangerous admin options in alcping (default OFF)" OFF)
 option(ENABLE_MSGLOG "Enables detailed logs about incoming and outgoing messages (default ON)" ON)
-option(ENABLE_ACKDEBUG "Enables detailed logs about the ack stack (default OFF)" OFF)
 option(ENABLE_NETDEBUG "Enables noise and latency debuging tests (default NO)" OFF)
 option(ENABLE_MSGDEBUG "Enables (byte-level) logging of message content (default OFF)" OFF)
 

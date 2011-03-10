@@ -98,21 +98,6 @@ public:
 	mode_t creation_mask; //!< default permissions mask
 	//build vars
 	tString build;
-	//syslog
-	/*char syslogname[100]; //!< the syslog name
-	char syslog_enabled; //!< enable syslog logging? (0x01 yes, 0x0 no)
-	//db
-	char dbhost[100]; //!<database params
-	U16 dbport;
-	char dbname[100];
-	char dbuser[100];
-	char dbpasswd[100];
-	char dbeventtable[100];
-	char db_enabled; //!< 0x01 enabled, 0x00 disabled
-	//unet
-	char host[100]; //!< udp/tcp listener
-	U16 port;
-	char protocol; //UDP, TCP <! 0x00 disabled, 0x01 udp, 0x02 tcp*/
 private:
 	FORBID_CLASS_COPY(tLogConfig)
 };
@@ -159,8 +144,6 @@ private:
 	tString fullpath;
 	FILE * dsc;
 	uint16_t flags; //see above (DF_*)
-	//int facility; //this params are passed to syslog
-	//int priority; //this params are passed to syslog
 	unsigned int count; // counter used for rotate checking
 	
 	FORBID_CLASS_COPY(tLog)

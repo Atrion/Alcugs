@@ -64,11 +64,9 @@ void tAlcUnetMain::installUnetHandlers(bool install)
 {
 	installHandler(SIGTERM,install);
 	installHandler(SIGINT,install);
-#ifndef __WIN32__
 	installHandler(SIGHUP,install);
 	installHandler(SIGUSR1,install);
 	installHandler(SIGUSR2,install);
-#endif
 }
 
 bool tAlcUnetMain::onSignal(int s) {

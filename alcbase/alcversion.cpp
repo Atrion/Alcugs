@@ -33,9 +33,7 @@
 #include "alcmain.h"
 #include "alclicense.h"
 
-#ifndef __WIN32__
 #include <sys/utsname.h>
-#endif
 #include <cstring>
 
 namespace alc {
@@ -61,19 +59,16 @@ static void _alcVersionInitVars() {
 	strcpy(tvalcVerText,alcLicenseTextShort());
 	strcat(tvalcVerText,"Alcugs Project - ");
 	strcat(tvalcVerText,tvalcVerTextShort);
-	#ifndef __WIN32__
-		struct utsname buf;
-		uname(&buf);
-		char *domainname;
-		#ifdef _GNU_SOURCE // this from the linux uname(2) man page
-		domainname = buf.domainname;
-		#else
-		domainname = "";
-		#endif
-		sprintf(tvalcSystemInfo,"%s %s %s %s %s %s",buf.sysname,buf.nodename,buf.release,buf.version,buf.machine,domainname);
+	
+	struct utsname buf;
+	uname(&buf);
+	char *domainname;
+	#ifdef _GNU_SOURCE // this from the linux uname(2) man page
+	domainname = buf.domainname;
 	#else
-		sprintf(tvalcSystemInfo,"Unable to determine system info");
+	domainname = "";
 	#endif
+	sprintf(tvalcSystemInfo,"%s %s %s %s %s %s",buf.sysname,buf.nodename,buf.release,buf.version,buf.machine,domainname);
 	tvalcVerInit = true;
 }
 
