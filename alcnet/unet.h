@@ -111,7 +111,7 @@ protected:
 	void stopOp();
 	void openLogfiles();
 	tNetSessionIte netConnect(const char * hostname,uint16_t port,uint8_t validation,uint8_t flags,uint8_t peerType=0);
-	int sendAndWait(); //!< send enqueued messages, wait, and receive packets and enqueue them (wait time must be set by processQueues()!) FIXME get rid of return value, it is ignored anyway
+	void sendAndWait(); //!< send enqueued messages, wait, and receive packets and enqueue them (wait time must be set by processQueues()!)
 	tNetEvent * getEvent(); //!<  (thread-safe)
 	void addEvent(tNetEvent *evt); //!<  (thread-safe)
 	void clearEventQueue(); //!< use this only if you really know what you do - will loose incoming messages and whatnot! (thread-safe)
@@ -141,8 +141,6 @@ protected:
 private:
 	void init();
 	tNetTimeDiff processSendQueues(); //!< send messages from the sessions' send queues - also updates the timeouts for the next wait \return the time in usec we should wait before processing again
-	
-	void neterror(const char * msg);
 	
 	void updateNetTime();
 	

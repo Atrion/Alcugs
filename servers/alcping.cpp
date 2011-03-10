@@ -77,9 +77,6 @@ public:
 	tUnetPing(const tString & lhost,uint16_t lport=0,bool listen=false,double time=1,int num=5,int flood=1);
 	virtual ~tUnetPing();
 	virtual int onMsgRecieved(tUnetMsg * msg,tNetSession * u);
-	virtual bool onConnectionFlood(tNetSession */*u*/) {
-		return false; // don't kick nobody
-	}
 	virtual void onLeave(uint8_t reason,tNetSession * u);
 	virtual void onIdle();
 	virtual void onStop();
@@ -113,6 +110,7 @@ tUnetPing::tUnetPing(const tString &lhost,uint16_t lport,bool listen,double time
 	this->setBindPort(lport);
 	this->setBindAddress(lhost);
 	this->listen=listen;
+	this->unsetFlags(UNET_FLOODCTR); // disable flood protection
 	max_sleep = 100*1000; // set down max_sleep timer to send pings in one-second intervals
 	this->time=time;
 	this->num=num;

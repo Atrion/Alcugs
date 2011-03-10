@@ -56,6 +56,11 @@
 #define INC_BUF_SIZE 65535
 
 namespace alc {
+	
+static txUnet txUnetWithErrno(tString msg) {
+	msg.printf(" Errno %i: %s\n",errno,strerror(errno));
+	return txUnet(msg);
+}
 
 tUnet::tUnet(uint8_t whoami,const tString & lhost,uint16_t lport) : whoami(whoami) {
 	DBG(9,"tUnet()\n");
@@ -187,12 +192,6 @@ void tUnet::clearEventQueue()
 	events.clear();
 }
 
-
-void tUnet::neterror(const char * msg) {
-	if(!initialized) return;
-	this->err->logErr(msg);
-}
-
 void tUnet::openLogfiles() {
 	//open unet log files
 	bool elog = this->flags & UNET_ELOG;
@@ -233,16 +232,14 @@ void tUnet::startOp() {
 
 	if(this->sock<0)
 	{
-		neterror("ERR: Fatal - Failed Creating socket ");
-		throw txUnetIniErr(_WHERE("cannot create socket"));
+		throw txUnetWithErrno("ERR: Fatal - Failed Creating socket ");
 	}
 	DBG(1, "Socket created\n");
 
 	//set non-blocking
 	long arg;
 	if((arg = fcntl(this->sock,F_GETFL, NULL))<0) {
-		this->err->logErr("ERR: Fatal setting socket as non-blocking (fnctl F_GETFL)\n");
-		throw txUnetIniErr(_WHERE("Failed setting a non-blocking socket"));
+		throw txUnetWithErrno(_WHERE("ERR: Fatal setting socket as non-blocking (fnctl F_GETFL)\n"));
 	}
 	arg |= O_NONBLOCK;
 
@@ -286,8 +283,7 @@ void tUnet::startOp() {
 	setCloseOnExec(sock); // close socket when forking a game server
 	if (error) {
 		this->err->log("ERR: Fatal - Failed binding to address %s:%i\n",bindaddr.c_str(),bindport);
-		neterror("bind() ");
-		throw txUnetIniErr(_WHERE("Cannot bind to address %s:%i",bindaddr.c_str(),bindport));
+		throw txUnetWithErrno(_WHERE("Cannot bind to address %s:%i",bindaddr.c_str(),bindport));
 	}
 	// 10 February 2004 - Alcugs development starts from scratch.
 	// 10 February 2005 - Alcugs development continues..
@@ -325,14 +321,7 @@ void tUnet::stopOp() {
 	delete smgr;
 	smgr = NULL;
 
-#ifdef __WIN32__
-	closesocket(this->sock);
-	if(WSACleanup()!=0) {
-		neterror("WSACleanup() ");
-	}
-#else
 	close(this->sock);
-#endif
 	DBG(1, "Socket closed\n");
 	close(sndPipeReadEnd);
 	close(sndPipeWriteEnd);
@@ -387,7 +376,7 @@ tNetSessionIte tUnet::netConnect(const char * hostname,uint16_t port,uint8_t val
 This function recieves new packets and passes them to the correct session, and
 it also is responsible for the timer: It will wait exactly unet_sec seconds and unet_usec microseconds
 before it asks each session to do what it has to do (tUnet::doWork) */
-int tUnet::sendAndWait() {
+void tUnet::sendAndWait() {
 	// send old messages and calulate timeout
 	tNetTimeDiff unet_timeout = processSendQueues();
 	if (unet_timeout < 100) {
@@ -437,17 +426,16 @@ int tUnet::sendAndWait() {
 	if(valret<0) {
 		if (errno == EINTR) {
 			// simply go around again, a signal was probably delivered
-			return UNET_OK;
+			return;
 		}
-		neterror("ERR in select() ");
-		return UNET_ERR;
+		throw txUnetWithErrno(_WHERE("ERR in select() "));
 	}
 	
 	// empty the pipe (only in rare occasions where sends happen REALLY fast, there will be several bytes here)
 	if (FD_ISSET(this->sndPipeReadEnd, &rfds)) {
 		uint8_t data;
 		if (read(this->sndPipeReadEnd, &data, 1) != 1)
-			throw txUnet(_WHERE("Error reading from the pipe"));
+			throw txUnetWithErrno(_WHERE("Error reading from the pipe"));
 	}
 
 #if _DBG_LEVEL_>7
@@ -493,8 +481,7 @@ int tUnet::sendAndWait() {
 
 		if (n<0 && (errno == EAGAIN || errno == EWOULDBLOCK)) break; // no more messages left
 		if (n<0) { //problems?
-			neterror("ERR: Fatal recieving a message... ");
-			return UNET_ERR;
+			throw txUnetWithErrno(_WHERE("ERR: Fatal recieving a message... "));
 		}
 
 		if(n>0) { //we have a message
@@ -503,7 +490,7 @@ int tUnet::sendAndWait() {
 				this->err->log("[ip:%s:%i] ERR: Unexpected Non-Uru protocol packet found\n",alcGetStrIp(client.sin_addr.s_addr).c_str(),ntohs(client.sin_port));
 				this->err->dumpbuf(buf,n);
 				this->err->nl();
-				return UNET_NONURU;
+				continue; // read next message
 			}
 
 			DBG(8,"Search session...\n");
@@ -515,12 +502,7 @@ int tUnet::sendAndWait() {
 				tMutexLock lock(smgrMutex);
 				session=smgr->search(ite, true);
 			} catch(txToMCons) {
-				return UNET_TOMCONS;
-			}
-			
-			if (n > session->maxPacketSz) { // catch impossible big messages
-				this->err->log("[%s] ERR: Recieved a really big message of %i bytes\n",session->str().c_str(),n);
-				return UNET_TOOBIG;
+				continue; // read next message
 			}
 			
 			//process the message, and do the correct things with it
@@ -528,13 +510,12 @@ int tUnet::sendAndWait() {
 			try {
 				// the net time might be a bit too low, but that's not a large problem - packets might just be sent a bit too early
 				session->processIncomingMsg(buf,n);
-			} catch(txProtocolError &t) {
-				this->err->log("%s Protocol Error %s\nBacktrace:%s\n",session->str().c_str(),t.what(),t.backtrace());
-				return UNET_ERR;
 			} catch(txBase &t) {
-				this->err->log("%s FATAL ERROR (perhaps someone is attempting something nasty, or you have found a bug)\n\
-	%s\nBacktrace:%s\n",session->str().c_str(),t.what(),t.backtrace());
-				return UNET_ERR;
+				err->log("%s Recieved invalid Uru message - kicking peer\n", session->str().c_str());
+				err->log(" Exception %s\n%s\n",t.what(),t.backtrace());
+				sec->log("%s Kicked hard due to parse error in Uru message", session->str().c_str());
+				tMutexLock lock(smgrMutex);
+				smgr->destroy(session->getIte()); // no goodbye message or anything, this error was deep on the protocol stack
 			}
 		}
 	}
@@ -544,7 +525,6 @@ int tUnet::sendAndWait() {
 	log->flush();
 	err->flush();
 	sec->flush();
-	return UNET_OK;
 }
 
 /** give each session the possibility to do some stuff and to set the timeout
@@ -558,18 +538,7 @@ tNetTimeDiff tUnet::processSendQueues() {
 	smgr->rewind();
 	while((cur=smgr->getNext())) {
 		updateNetTime(); // let the session calculate its timestamps correctly
-		/* Also create the timeout when it's exactly the same time.
-		  This way the time from a session being marked as deleteable till it is deleted is kept short */
-		if(passedTimeSince(cur->activity_stamp) > cur->conn_timeout) {
-			//timeout event
-			if (!cur->isTerminated())
-				sec->log("%s Timeout (didn't send a packet for %d seconds)\n",cur->str().c_str(),cur->conn_timeout);
-			tNetSessionIte ite(cur->ip,cur->port,cur->sid);
-			tNetEvent * evt=new tNetEvent(ite,UNET_TIMEOUT);
-			addEvent(evt);
-		} else {
-			unet_timeout = std::min(cur->processSendQueues(), unet_timeout);
-		}
+		unet_timeout = std::min(cur->processSendQueues(), unet_timeout);
 	}
 	return unet_timeout;
 }

@@ -325,7 +325,6 @@ if (u == NULL) return; // maybe the session expired since we got the event
 			}
 			break;
 		case UNET_FLOOD:
-			sec->log("%s Flood Attack\n",u->str().c_str());
 			if (!isRunning() || onConnectionFlood(u)) {
 				terminate(u);
 				alcGetMain()->err()->log("%s kicked due to a Flood Attack\n", u->str().c_str());
