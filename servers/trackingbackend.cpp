@@ -493,7 +493,7 @@ namespace alc {
 		tMBuf buf;
 		buf.put16(0xFFFF);
 		buf.put32(random());
-		buf.put8(alcGetMicroseconds());
+		buf.put8(alcGetTime());
 		buf.put8(0x00);
 		buf.rewind();
 		memcpy(guid, buf.read(8), 8);

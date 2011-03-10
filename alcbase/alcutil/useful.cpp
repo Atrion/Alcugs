@@ -30,7 +30,7 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_USEFUL_ID "$Id$"
-//#define _DBG_LEVEL_ 10#include "alcdefs.h"
+//#define _DBG_LEVEL_ 10
 #include "alcdefs.h"
 #include "useful.h"
 
@@ -85,31 +85,16 @@ bool alcGetLoginInfo(tString argv,tString * username,tString * hostname,uint16_t
 	return true;
 }
 
-/**
-	Quick way to get microseconds
-*/
-unsigned int alcGetMicroseconds() {
-	struct timeval tv;
-
-	gettimeofday(&tv,NULL);
-	return tv.tv_usec;
-}
-
 time_t alcGetTime() {
 	return time(NULL);
 }
 
 /** Gets the current time as double*/
-double alcGetCurrentTime(const char format) {
-	switch(format) {
-		case 'u':
-			return (time(NULL) * 1000000.0) + alcGetMicroseconds();
-		case 'm':
-			return (time(NULL) * 1000.0) + (alcGetMicroseconds() / 1000.0);
-		case 's':
-		default:
-			return time(NULL) + (alcGetMicroseconds() / 1000000.0);
-	}
+double alcGetCurrentTime()
+{
+	struct timeval tv;
+	gettimeofday(&tv,NULL);
+	return tv.tv_sec + (tv.tv_usec / 1000000.0);
 }
 
 
@@ -195,48 +180,6 @@ void alcGetHexUid(void *out, const tString &passed_guid) {
 	tMBuf tmp = alcAscii2Hex(guid);
 	assert(tmp.size() == 16);
 	memcpy(out, tmp.data(), 16);
-}
-
-/**
-  \brief returns a pointer to a formated time string
-*/
-tString alcGetStrTime(time_t timestamp, unsigned int microseconds) {
-	char tmptime[26];
-	struct tm * tptr;
-
-	tptr=gmtime(&timestamp);
-	strftime(tmptime,25,"%Y:%m:%d-%H:%M:%S",tptr);
-	tString str = tmptime;
-	str.printf(".%06d", microseconds);
-	return str;
-}
-
-tString alcGetStrTime(double stamp, const char format) {
-	time_t time;
-	unsigned int micros;
-	time_t stampInt = static_cast<time_t>(stamp);
-	if(stamp!=0) {
-		switch(format) {
-			case 'u':
-				micros = stampInt % 1000000;
-				time = (stampInt/1000000);
-				break;
-			case 'm':
-				micros = (stampInt*1000) % 1000000;
-				time = (stampInt/1000);
-				break;
-			case 's':
-			default:
-				time = (stampInt);
-				micros = ((stampInt-time)*1000000);
-				DBG(5, "%f = %ld . %i\n", stamp, time, micros);
-				break;
-		}
-	} else {
-		time=alcGetTime();
-		micros=alcGetMicroseconds();
-	}
-	return alcGetStrTime(time,micros);
 }
 
 /**

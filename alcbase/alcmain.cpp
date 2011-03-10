@@ -73,7 +73,8 @@ tAlcMain::tAlcMain(const tString& appName) : appName(appName)
 		errLog = new tLog(DF_STDERR);
 		
 		//init entropy
-		srandom(alcGetMicroseconds() + (alcGetTime() % 10000));
+		tTime t = tTime::now();
+		srandom(t.microseconds + (t.seconds % 10000));
 		
 		//init signal handlers
 		installBaseHandlers();
@@ -98,9 +99,7 @@ tConfig* tAlcMain::config(void)
 
 tTime tAlcMain::upTime(void)
 {
-	tTime now;
-	now.setToNow();
-	return now-born;
+	return tTime::now()-born;
 }
 
 void tAlcMain::applyConfig() {

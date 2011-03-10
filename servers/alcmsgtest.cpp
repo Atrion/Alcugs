@@ -182,6 +182,7 @@ void tUnetSimpleFileServer::onIdle() {
 		tNetSession * u=NULL;
 		u=sessionByIte(dstite);
 		if (u==NULL) {
+			DBG(5, "seems we lost the connection, ouch - going down\n");
 			stop();
 			return;
 		}
@@ -210,10 +211,9 @@ void tUnetSimpleFileServer::onIdle() {
 			startTime.setToNow();
 		} else if (!u->anythingToSend()) { // message sent, and nothing more left in the buffers
 			if (sentBytes) {
-				tTime diff;
-				diff.setToNow();
+				tTime diff = tTime::now();
 				diff = diff-startTime;
-				printf("Sent %d Bytes with %f kBit/s in %s\n", sentBytes, sentBytes*8/diff.asDouble()/1000, diff.str(0x01).c_str());
+				printf("Sent %d Bytes with %f kBit/s in %s\n", sentBytes, sentBytes*8/diff.asDouble()/1000, diff.str(/*relative*/true).c_str());
 			}
 			DBG(5, "Finished, going down\n");
 			stop();

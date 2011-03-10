@@ -305,9 +305,10 @@ namespace alc {
 					result = AProtocolOlder;
 				
 				// init the challenge to the MD5 of the current system time and other garbage
+				tTime t = tTime::now();
 				tMD5Buf md5buffer;
-				md5buffer.put32(alcGetTime());
-				md5buffer.put32(alcGetMicroseconds());
+				md5buffer.put32(t.seconds);
+				md5buffer.put32(t.microseconds);
 				md5buffer.put32(random());
 				md5buffer.put32(alcGetMain()->upTime().seconds);
 				md5buffer.put(authHello.account);

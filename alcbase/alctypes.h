@@ -399,7 +399,16 @@ inline tString operator+(const tString & str1, const char * str2) {
 /** Time */
 class tTime : public tBaseType {
 public:
-	tTime(void) : tBaseType() { seconds = microseconds = 0; }
+	tTime(void) : seconds(0), microseconds(0) {}
+	tTime(time_t seconds) : seconds(seconds), microseconds(0) {}
+	tTime(uint32_t seconds) : seconds(seconds), microseconds(0) {}
+	tTime(time_t seconds, unsigned int microseconds) : seconds(seconds), microseconds(microseconds) {}
+	tTime(double seconds);
+	static tTime now() {
+		tTime t;
+		t.setToNow();
+		return t;
+	}
 	
 	// Interface
 	virtual void store(tBBuf &t);
@@ -421,13 +430,10 @@ public:
 	}
 	
 	// convenience functions
-	void setToNow() {
-		seconds=alcGetTime();
-		microseconds=alcGetMicroseconds();
-	}
+	void setToNow();
 	double asDouble(char how='s') const;
 	time_t asNumber(char how='s') const;
-	tString str(uint8_t type=0x00) const;
+	tString str(bool relative = false) const;
 	
 	// data
 	time_t seconds;

@@ -155,12 +155,13 @@ void tUnet::init() {
 
 void tUnet::updateNetTime() {
 	//set stamp
-	net_time=static_cast<tNetTime>(alcGetTime())*1000000+alcGetMicroseconds();
+	tTime t = tTime::now();
+	net_time=static_cast<tNetTime>(t.seconds)*1000000+t.microseconds;
 }
 
 tNetTimeDiff tUnet::remainingTimeTill(tNetTime time)
 {
-	assert(!timeOverdue(time)); // make sure time is in the future
+	assert(time == net_time || !timeOverdue(time)); // make sure time is in the future
 	return time-net_time;
 }
 
@@ -316,8 +317,7 @@ void tUnet::startOp() {
 */
 void tUnet::stopOp() {
 	if(!initialized) return;
-	assert(events.empty());
-	assert(smgr->isEmpty());
+	// we could be called because of an exception, so there might still be tons of dirt around - don't assert a clean state!
 	delete smgr;
 	smgr = NULL;
 
@@ -513,7 +513,7 @@ void tUnet::sendAndWait() {
 			} catch(txBase &t) {
 				err->log("%s Recieved invalid Uru message - kicking peer\n", session->str().c_str());
 				err->log(" Exception %s\n%s\n",t.what(),t.backtrace());
-				sec->log("%s Kicked hard due to parse error in Uru message", session->str().c_str());
+				sec->log("%s Kicked hard due to error in Uru message\n", session->str().c_str());
 				tMutexLock lock(smgrMutex);
 				smgr->destroy(session->getIte()); // no goodbye message or anything, this error was deep on the protocol stack
 			}

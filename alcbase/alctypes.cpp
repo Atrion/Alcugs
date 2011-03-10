@@ -43,6 +43,7 @@ namespace md5 {
 #include <cerrno>
 #include <cstdarg>
 #include <cstdlib>
+#include <sys/time.h>
 
 
 namespace zlib {
@@ -637,6 +638,10 @@ tString tString::fromUInt(unsigned int val)
 }
 
 
+tTime::tTime(double seconds) : seconds(seconds) // round down
+{
+	microseconds = (seconds - this->seconds)*1000*1000; // difference times 10^6 = usecs
+}
 void tTime::store(tBBuf &t) {
 	DBG(9,"Buffer status size:%li,offset:%li\n",t.size(),t.tell());
 	seconds=t.get32();
@@ -687,6 +692,13 @@ double tTime::asDouble(char how) const {
 			return seconds + (microseconds / 1000000.0);
 	}
 }
+void tTime::setToNow()
+{
+	struct timeval tv;
+	gettimeofday(&tv,NULL);
+	seconds=tv.tv_sec;
+	microseconds=tv.tv_usec;
+}
 time_t tTime::asNumber(char how) const {
 	switch(how) {
 		case 'u':
@@ -698,9 +710,16 @@ time_t tTime::asNumber(char how) const {
 			return seconds;
 	}
 }
-tString tTime::str(uint8_t type) const {
-	if(type==0x00) {
-		return alcGetStrTime(seconds,microseconds);
+tString tTime::str(bool relative) const {
+	if(!relative) {
+		char tmptime[32];
+		struct tm * tptr;
+
+		tptr=gmtime(&seconds);
+		strftime(tmptime,30,"%Y:%m:%d-%H:%M:%S",tptr);
+		tString str = tmptime;
+		str.printf(".%06d", microseconds);
+		return str;
 	} else {
 		time_t minutes=seconds/60;
 		time_t hours=minutes/60;
