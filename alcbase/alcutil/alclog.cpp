@@ -253,49 +253,7 @@ void tLog::log(const char * msg, ...) {
 
 	this->stamp();
 	this->print(buf);
-
-#ifdef __WIN32__
-// implement here, windoze based syslog logging, if it has something similar.
-	if(this->flags & DF_ANOY) {
-		MessageBox(NULL,buf.c_str(),tvLogConfig->syslogname,0);
-	}
-#elif 0
-	if(this->flags & DF_SYSLOG && tvLogConfig->syslog_enabled==0x01) {
-		//log to the syslog
-		openlog(tvLogConfig->syslogname, LOG_NDELAY | LOG_PID, LOG_AUTHPRIV); //LOG_USER
-		syslog(LOG_DEBUG,"%s",buf.c_str());
-		closelog();
-	}
-#endif
-
-#ifdef _DBLOGGING_
-	if(this->flags & DF_DB && tvLogConfig->db_enabled==0x01) {
-		dblog(log,"generic","system","system","%s",buf.c_str());
-	}
-#endif
 }
-
-#ifdef WHEN_THE_COWS_FLY_AND_THE_FROGS_HAVE_HAIR
-/**
-	Database based logging system
-
-	type -> event type (column type)
-	user -> who has generated the event? - object or user that generated the event
-	location -> user ip address, or object location
-	msg -> the message to register
-
-*/
-void dblog(st_log * log, char * type, char * user, char * location, char * msg, ...) {
-#ifdef _DBLOGGING_
-		//database based log system
-		//will work only, if the user compiles this module with the _DBLOGGING_ option
-#endif
-}
-/**
-	socket based logging, send all debugging messages to an udp listener, or spawn
-	a new thread to listen to incoming tcp connections.
-*/
-#endif
 
 /**
 	flush all the streams we write to

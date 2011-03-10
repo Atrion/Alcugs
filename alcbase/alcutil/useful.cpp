@@ -105,12 +105,8 @@ double alcGetCurrentTime()
 	and set the prefered locales.
 */
 bool alcIsAlpha(char c) {
-#ifdef __WIN32__
-	return(IsCharAlpha(c));
-#else
 	return(index("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZáàâä\
 éèêëíìîïóòôöúùûüçÇñÑß", c)!=NULL); //<- Some characters are not visible on UTF systems, or under other codifications, so you may see garbage
-#endif
 }
 
 void setCloseOnExec(int fd)
