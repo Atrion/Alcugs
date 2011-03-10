@@ -168,7 +168,7 @@ private:
 	unsigned int minBandwidth, maxBandwidth; //!< min(client's upstream, our downstream) and max(client's upstream, our downstream) in bytes/s
 	unsigned int cabal; //!< cur avg bandwidth (in bytes per second), can't be > maxBandwidth, will grow slower when > minBandwith
 	
-	tNetTime next_msg_time; //!< time to send next msg in usecs (referring to tUnet::net_time) - if this is 0, we do not have to wait
+	tNetTime next_msg_time; //!< time to send next msg in usecs (referring to tUnet::net_time)
 	tNetTimeDiff rtt; //!< round trip time, used to caluclate timeout
 	int deviation; //!< used to calculate timeout
 	tNetTimeDiff msg_timeout; //!< time after which a message is re-sent

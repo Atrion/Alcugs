@@ -147,7 +147,6 @@ public:
 	void dumpbuf(tBBuf &t, size_t n=0, size_t e=0,uint8_t how=7) const;
 
 	void nl() const; //!< print newline
-	void logErr(const char *msg); //!< print last error
 
 	bool doesPrint(void) const;
 	tString getDir(void) const; //!< return directory of log file, or default directory if closed

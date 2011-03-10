@@ -441,11 +441,6 @@ void tLog::nl() const {
 	this->print("\n");
 }
 
-void tLog::logErr(const char *msg) {
-	this->log("%s\n",msg);
-	this->log(" errno %i: %s\n",errno,strerror(errno));
-}
-
 bool tLog::doesPrint(void) const
 {
 	if(this->dsc!=NULL) return true;

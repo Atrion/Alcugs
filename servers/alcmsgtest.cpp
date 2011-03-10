@@ -117,9 +117,6 @@ class tUnetSimpleFileServer :public tUnetBase {
 public:
 	tUnetSimpleFileServer(const tString &lhost,uint16_t lport=0,bool listen=false);
 	virtual int onMsgRecieved(tUnetMsg * msg,tNetSession * u);
-	virtual bool onConnectionFlood(tNetSession */*u*/) {
-		return false; // don't kick nobody
-	}
 	virtual void onIdle();
 	virtual void onStart();
 	void setDestinationAddress(const tString & d,uint16_t port);
@@ -152,6 +149,7 @@ tUnetSimpleFileServer::tUnetSimpleFileServer(const tString &lhost,uint16_t lport
 	this->setBindPort(lport);
 	this->setBindAddress(lhost);
 	this->listen=listen;
+	this->unsetFlags(UNET_FLOODCTR); // disable flood protection
 	d_port=5000;
 	validation=2;
 	urgent=false;

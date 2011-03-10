@@ -172,6 +172,9 @@ void tNetSessionMgr::destroy(alc::tNetSessionIte ite) {
 	tNetSession *u = search(ite, false);
 	if (!u) return;
 	delete u;
+	/* FIXME somehow make sure another thread is not currently doing something with this session! One way would be to keep the 
+	 * session mgr lock in main thread while session->processIcomingMsg() is called. Then, with the smgr lock held in the worker,
+	 * deletion would be safe. But that would make the smgr lock quite a bottleneck... */
 	remove(u);
 }
 /* End session mgr */
