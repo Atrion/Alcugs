@@ -192,7 +192,7 @@ protected:
 	unsigned int cur_down_quota;
 	unsigned int cur_up_quota;
 	unsigned int quota_check_interval; //(useconds)
-	tTime last_quota_check;
+	tNetTime last_quota_check;
 	#endif
 	
 	
