@@ -30,7 +30,7 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETSESSION_ID "$Id$"
-//#define _DBG_LEVEL_ 5
+//#define _DBG_LEVEL_ 3
 #include <alcdefs.h>
 #include "netsession.h"
 
@@ -162,7 +162,7 @@ void tNetSession::updateRTT(tNetTimeDiff newread) {
 	deviation += (alpha*(abs(diff)-deviation))/1000;
 	msg_timeout= rtt + delta*deviation;
 	if (msg_timeout > 5000000) msg_timeout = 5000000; // max. timeout: 5secs
-	DBG(5,"%s RTT update (sample rtt: %i) new rtt:%i, msg_timeout:%i, deviation:%i\n", str().c_str(),newread,rtt,msg_timeout,deviation);
+	DBG(3,"%s RTT update (sample rtt: %i) new rtt:%i, msg_timeout:%i, deviation:%i\n", str().c_str(),newread,rtt,msg_timeout,deviation);
 }
 void tNetSession::increaseCabal() {
 	if(!cabal) return;
@@ -170,7 +170,7 @@ void tNetSession::increaseCabal() {
 	if(cabal+inc > minBandwidth) inc /= 3;
 	cabal+=inc;
 	if(cabal > maxBandwidth) cabal = maxBandwidth;
-	DBG(5,"%s +Cabal is now %i\n",str().c_str(),cabal);
+	DBG(3,"%s +Cabal is now %i\n",str().c_str(),cabal);
 }
 void tNetSession::decreaseCabal(bool small) {
 	if(!cabal) return;
@@ -179,17 +179,17 @@ void tNetSession::decreaseCabal(bool small) {
 	if (cabal-dec < minBandwidth) dec /= 4;
 	cabal -= dec;
 	if(cabal < maxPacketSz) cabal = maxPacketSz;
-	DBG(5,"%s -Cabal is now %i\n",str().c_str(),cabal);
+	DBG(3,"%s -Cabal is now %i\n",str().c_str(),cabal);
 }
 
 /** computes the time we have to wait after sending the given amount of bytes */
 tNetTimeDiff tNetSession::timeToSend(size_t psize) {
 	if(psize<4000) {
 		if (cabal) return((psize*1000000)/cabal);
-		return((psize*1000000)/4098);
+		return((psize*1000000)/maxPacketSz);
 	} else {
 		if (cabal) return(((psize*1000)/cabal)*1000);
-		return(((psize*1000)/4098)*1000);
+		return(((psize*1000)/maxPacketSz)*1000);
 	}
 }
 
@@ -707,11 +707,11 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 				#ifdef ENABLE_ACKDEBUG
 				net->log->log("Deleting packet %i,%i\n",msg->sn,msg->frn);
 				#endif
-				if(msg->tryes<=1 && A1==A2) {
+				if(msg->tries <= 1 && A1==A2) {
 					/* possible problem: since this is the last packet which was acked with this ack message, it could be combined
-					   with other packets and the ack could be sent almost immediately after the packet went in, without the
-					   usual delay so the rtt is much smaller than the average. But I don't expect this to happen often, so I don't
-					   consider that a real problem. */
+					with other packets and the ack could be sent almost immediately after the packet went in, without the
+					usual delay so the rtt is much smaller than the average. But I don't expect this to happen often, so I don't
+					consider that a real problem. */
 					tNetTimeDiff crtt=net->passedTimeSince(msg->snt_timestamp);
 					#ifdef ENABLE_NETDEBUG
 					crtt+=net->latency;
@@ -770,9 +770,9 @@ tNetTimeDiff tNetSession::processSendQueues()
 					//send packet
 					
 					// check if we need to resend
-					if(curmsg->tryes!=0) {
+					if(curmsg->tries!=0) {
 						DBG(3, "%s Re-sending a message\n", str().c_str());
-						if(curmsg->tryes==1) {
+						if(curmsg->tries==1) {
 							decreaseCabal(true); // true = small
 							/* The server used to duplicate the timeout here - but since the timeout will be overwritten next time updateRTT
 							*  is called, that's of no use. So better make the RTT bigger - it is obviously at least the timeout
@@ -785,7 +785,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 						}
 					}
 					
-					if(curmsg->tryes>=10 || (curmsg->tryes>=2 && terminated)) { // max. 2 sends on terminated connections, max. 10 for the rest
+					if(curmsg->tries>=10 || (curmsg->tries>=2 && terminated)) { // max. 2 sends on terminated connections, max. 10 for the rest
 						it = sndq.eraseAndDelete(it); // this is the next one
 						//timeout event
 						net->sec->log("%s Timeout (didn't ack a packet)\n", str().c_str());
@@ -797,7 +797,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 						curmsg->snt_timestamp=net->net_time;
 						net->rawsend(this,curmsg);
 						curmsg->timestamp=net->net_time+msg_timeout;
-						curmsg->tryes++;
+						curmsg->tries++;
 						++it; // go on
 					}
 				} else {
@@ -863,7 +863,7 @@ void tNetSession::negotiate() {
 	// send server downstream (for the peer to know how fast it can send packets)
 	DBG(9,"%08X %08X %08X\n",ip,net->lan_mask,net->lan_addr);
 	if((ntohl(ip) & 0xFFFFFF00) == 0x7F000000) { //lo
-		sbw=100000000;
+		sbw=100*1000*1000;
 	} else if((ip & net->lan_mask) == net->lan_addr) { //LAN
 		sbw=net->lan_down;
 	} else {

@@ -46,17 +46,10 @@ namespace alc {
 	bool alcGetLoginInfo(tString argv,tString * username,tString * hostname,uint16_t * port); // username may be NULL, the rest not
 
 	time_t alcGetTime();
-	unsigned int alcGetMicroseconds();
-	double alcGetCurrentTime(const char format='s');
+	double alcGetCurrentTime();
 	bool alcIsAlpha(char c);
 
 	void setCloseOnExec(int fd);
-
-	/**
-			\returns a pointer to a formated time string
-	*/
-	tString alcGetStrTime(time_t timestamp, unsigned int microseconds);
-	tString alcGetStrTime(double stamp=0, const char format='s');
 
 
 	/** Gets an ascii string from hex values

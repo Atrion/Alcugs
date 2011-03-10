@@ -1172,8 +1172,9 @@ namespace alc {
 		if (exists) return false;
 		
 		// set current time
-		ref.time = alcGetTime();
-		ref.microsec = alcGetMicroseconds();
+		tTime t = tTime::now();
+		ref.time = t.seconds;
+		ref.microsec = t.microseconds;
 		
 		query.clear();
 		query.printf("INSERT INTO %s (id1, id2, id3, timestamp, microseconds, flag) VALUES('%d', '%d', '%d', FROM_UNIXTIME('%d'), '%d', '%d')", refVaultTable, ref.saver, ref.parent, ref.child, ref.time, ref.microsec, ref.flags);

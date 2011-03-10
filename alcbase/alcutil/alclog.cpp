@@ -236,7 +236,7 @@ void tLog::print(const tString &str) const
 void tLog::stamp() {
 	checkRotate(250);
 	if (this->flags & DF_NOSTAMP) { return; }
-	this->print("(%s)[%"PRIu64"] ",alcGetStrTime().c_str(),alcGetSelfThreadId());
+	this->print("(%s)[%"PRIu64"] ",tTime::now().str().c_str(),alcGetSelfThreadId());
 }
 
 /**

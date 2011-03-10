@@ -421,7 +421,7 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,uint8_t flux,uint32_t ip,uint16_t po
 		case UNetNegotiation | UNetAckReq: //0x42
 		case UNetNegotiation | UNetAckReq | UNetExt:
 			log->print("Negotiation ");
-			log->print("%i bps, %s",data.get32(),alcGetStrTime(data.get32()).c_str(),data.get32());
+			log->print("%i bps, %s",data.get32(),tTime(data.get32()).str().c_str(),data.get32());
 			break;
 		case 0x00: //0x00
 		case UNetExt:
@@ -658,8 +658,7 @@ void tmMsgBase::stream(tBBuf &t) const {
 	}
 	if(flags & plNetTimestamp || (u->min_version<6 && u->max_version==12)) {
 		if(timestamp.seconds==0) {
-			tTime stamp;
-			stamp.setToNow();
+			tTime stamp = tTime::now();
 			t.put(stamp);
 		}
 		else

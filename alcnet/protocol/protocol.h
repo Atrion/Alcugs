@@ -97,8 +97,8 @@ public:
 /** this is the class responsible for the UruMsg header. The data must be filled with a class derived from tmBase. */
 class tUnetUruMsg : public tBaseType {
 public:
-	tUnetUruMsg() : tryes(0), urgent(false) {}
-	tUnetUruMsg(bool urgent) : tryes(0), urgent(urgent) {}
+	tUnetUruMsg() : tries(0), urgent(false) {}
+	tUnetUruMsg(bool urgent) : tries(0), urgent(urgent) {}
 	virtual ~tUnetUruMsg() {}
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
@@ -111,7 +111,7 @@ public:
 	void _update();
 	tNetTime timestamp; //!< message stamp in usecs (to send) - this is in unet->net_time units
 	tNetTime snt_timestamp; //!< time when message was sent
-	unsigned int tryes;
+	unsigned int tries;
 	const bool urgent;
 	//Uru protocol
 	//Byte vid 0x03

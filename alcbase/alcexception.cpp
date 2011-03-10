@@ -123,10 +123,9 @@ void txBase::dump(bool toStderr) {
 		fprintf(f,"Servers Build info:\n%s\n",alcVersionTextShort());
 		fprintf(f,"System info: %s\n\n",alcSystemInfo());
 		fprintf(f,"Born:    %s\n",alcGetMain()->bornTime().str().c_str());
-		tTime now;
-		now.setToNow();
+		tTime now = tTime::now();
 		fprintf(f,"Defunct: %s\n",now.str().c_str());
-		fprintf(f,"Uptime:  %s\n",alcGetMain()->upTime().str(0x01).c_str());
+		fprintf(f,"Uptime:  %s\n",alcGetMain()->upTime().str(/*relative*/true).c_str());
 		fprintf(f,"Main thread id: %"PRIu64"\n",alcGetMain()->threadId());
 		fprintf(f,"This thread id: %"PRIu64"\n",alcGetSelfThreadId());
 		fprintf(f,"Exception %s:\n%s\n",msg.c_str(),bt.c_str());

@@ -67,7 +67,7 @@ tUnetBase::tUnetBase(uint8_t whoami) :tUnet(whoami), configured(false), running(
 }
 
 tUnetBase::~tUnetBase() {
-	forcestop();
+	forcestop(); // could happen if an exception is flying... but we wont be of much help then
 	alcUnetGetMain()->setNet(NULL);
 }
 
@@ -284,6 +284,7 @@ void tUnetBase::run() {
 	}
 	
 	// stop the worker thread
+	DBG(5, "Worker sanely terminating\n");
 	clearEventQueue();
 	workerThread.stop();
 	
