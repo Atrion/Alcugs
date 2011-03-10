@@ -54,7 +54,6 @@ void parameters_usage() {
  -rh x: Set the remote host\n\
  -lm: Set listenning mode\n\
  -one: Does only one ping probe and displays that value\n\
- -b: Pings to the broadcast\n\
  -d x: Set the destination.\n\
  -s x: Set the source.\n\
  -u:   Set Urgent flag.\n\
@@ -256,7 +255,7 @@ int main(int argc,char * argv[]) {
 	
 	//options
 	int num=5,flood=1; //num probes & flood multiplier
-	bool bcast=false,listen=false,mrtg=false,nlogs=false,urgent=false;
+	bool listen=false,mrtg=false,nlogs=false,urgent=false;
 	
 	//start Alcugs library (before parameters, for the license text!)
 	tAlcUnetMain alcMain("Client");
@@ -269,7 +268,6 @@ int main(int argc,char * argv[]) {
 			return -1;
 		} else if(!strcmp(argv[i],"-lp") && argc>i+1) { i++; l_port=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-rp") && argc>i+1) { i++; port=atoi(argv[i]); }
-		else if(!strcmp(argv[i],"-b")) { bcast=true; }
 		else if(!strcmp(argv[i],"-lm")) { listen=true; }
 #ifdef ENABLE_ADMIN
 		else if(!strcmp(argv[i],"-i_know_what_i_am_doing")) { admin=true; }
@@ -346,9 +344,6 @@ int main(int argc,char * argv[]) {
 
 		tUnetPing netcore(l_hostname,l_port,listen,time,num,flood);
 		if (!nlogs) netcore.unsetFlags(UNET_ELOG);
-		
-		if(bcast) netcore.setFlags(UNET_BCAST);
-		else netcore.unsetFlags(UNET_BCAST);
 
 		while(!listen && hostname.isEmpty()) {
 			printf("\nHostname not set, please enter destination host: ");

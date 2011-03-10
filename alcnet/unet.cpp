@@ -190,11 +190,7 @@ void tUnet::clearEventQueue()
 
 void tUnet::neterror(const char * msg) {
 	if(!initialized) return;
-#ifdef __WIN32__
-	this->err->log("%s: winsock error code:%i\n",msg,WSAGetLastError());
-#else
 	this->err->logErr(msg);
-#endif
 }
 
 void tUnet::openLogfiles() {
@@ -232,42 +228,16 @@ void tUnet::openLogfiles() {
 void tUnet::startOp() {
 	if(initialized) return;
 	//create an udp (17) socket
-#ifdef __WIN32__
-	memset(&this->ws,0,sizeof(this->ws));
-	log->log("INF: Hasecorp Windoze sockets XP...\n");
-	if(WSAStartup(MAKEWORD(1,1),&this->ws)!=0) {
-		neterror("ERR: Cannot start up winsock ");
-		throw txUnetIniErr(_WHERE("cannot start winsock"));
-	}
-	this->log->print(" Winsock Version %d, %d\n",this->ws.wHighVersion,this->ws.wVersion);
-	this->log->print(" %s - %s\n",this->ws.szDescription,this->ws.szSystemStatus);
-	this->log->print(" maxsockets:%i, maxUdpDg:%i\n",this->ws.iMaxSockets,\
-	this->ws.iMaxUdpDg);
-	this->log->print(" vendor: %s\n",this->ws.lpVendorInfo);
-#else
 	DBG(1, "DBG: Linux sockets...\n");
-#endif
 	this->sock=socket(AF_INET,SOCK_DGRAM,0);
 
-#ifdef __WIN32__
-	if(this->sock==INVALID_SOCKET)
-#else
 	if(this->sock<0)
-#endif
 	{
 		neterror("ERR: Fatal - Failed Creating socket ");
 		throw txUnetIniErr(_WHERE("cannot create socket"));
 	}
 	DBG(1, "Socket created\n");
 
-#ifdef __WIN32__
-	//set non-blocking
-	this->nNoBlock = 1;
-	if(ioctlsocket(this->sock, FIONBIO, &this->nNoBlock)!=0) {
-		neterror("ERR: Fatal setting socket as non-blocking\n");
-		throw txUnetIniErr(_WHERE("Failed setting a non-blocking socket"));
-	}
-#else
 	//set non-blocking
 	long arg;
 	if((arg = fcntl(this->sock,F_GETFL, NULL))<0) {
@@ -280,22 +250,7 @@ void tUnet::startOp() {
 		this->err->log("ERR: Fatal setting socket as non-blocking\n");
 		throw txUnetIniErr(_WHERE("Failed setting a non-blocking socket"));
 	}
-#endif
 	DBG(1, "Non-blocking socket set\n");
-
-	//broadcast ? FIXME what does this do?
-	if(this->flags & UNET_BCAST) {
-		this->opt = 1;
-		#ifdef __WIN32__
-		if(setsockopt(this->sock, SOL_SOCKET, SO_BROADCAST, (const char *)&this->opt, sizeof(int))!=0)
-		#else
-		if(setsockopt(this->sock, SOL_SOCKET, SO_BROADCAST, &this->opt, sizeof(int))!=0)
-		#endif
-		{
-			neterror("ERR: Fatal - Failed setting BCAST socket ");
-			throw txUnetIniErr(_WHERE("Failed setting a BCAST socket"));
-		}
-	}
 	
 	//chk?
 	//set network specific options
@@ -348,6 +303,14 @@ void tUnet::startOp() {
 	} else {
 		this->log->log("INF: Accepting unlimited connections\n",this->max);
 	}
+	
+	// create the pipe
+	int pipeEnds[2];
+	if (pipe(pipeEnds)) throw txUnetIniErr(_WHERE("Failed to create pipe"));
+	sndPipeReadEnd = pipeEnds[0];
+	sndPipeWriteEnd = pipeEnds[1];
+	
+	// done!
 	this->log->flush();
 	initialized=true;
 }
@@ -371,6 +334,8 @@ void tUnet::stopOp() {
 	close(this->sock);
 #endif
 	DBG(1, "Socket closed\n");
+	close(sndPipeReadEnd);
+	close(sndPipeWriteEnd);
 	initialized=false;
 }
 
@@ -447,6 +412,7 @@ int tUnet::sendAndWait() {
 	/* Check socket for new messages */
 	FD_ZERO(&rfds);
 	FD_SET(this->sock, &rfds);
+	FD_SET(this->sndPipeReadEnd, &rfds);
 	/* Set timeout */
 	tv.tv_sec = unet_timeout / (1000*1000);
 	tv.tv_usec = unet_timeout % (1000*1000);
@@ -457,7 +423,7 @@ int tUnet::sendAndWait() {
 #if _DBG_LEVEL_ >= 8
 	tTime start; start.now();
 #endif
-	valret = select(this->sock+1, &rfds, NULL, NULL, &tv); // this is the command taking the time - now lets process what we got
+	valret = select(std::max(this->sock, this->sndPipeReadEnd)+1, &rfds, NULL, NULL, &tv); // this is the command taking the time - now lets process what we got
 	// update stamp, since we spent some time in the select function
 	updateNetTime();
 #if _DBG_LEVEL_ >= 8
@@ -475,6 +441,13 @@ int tUnet::sendAndWait() {
 		}
 		neterror("ERR in select() ");
 		return UNET_ERR;
+	}
+	
+	// empty the pipe (only in rare occasions where sends happen REALLY fast, there will be several bytes here)
+	if (FD_ISSET(this->sndPipeReadEnd, &rfds)) {
+		uint8_t data;
+		if (read(this->sndPipeReadEnd, &data, 1) != 1)
+			throw txUnet(_WHERE("Error reading from the pipe"));
 	}
 
 #if _DBG_LEVEL_>7

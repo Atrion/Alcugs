@@ -70,7 +70,6 @@ namespace alc {
 #define UNET_ELOG     0x0002 /* enable netcore logging */
 #define UNET_ECRC     0x0004 /* crc check enabled */
 #define UNET_FLOODCTR 0x0010 /* enable flooding control */
-#define UNET_BCAST    0x0020 /* enable broadcast */
 #define UNET_DSTDLOG  0x0040 /* Disable standard logging (even if ELOG is set) */
 #define UNET_EACKLOG  0x0100 /* Enable ack trace (ELOG must be set, too) */
 #define UNET_DSECLOG  0x0800 /* Disable sec log (even if ELOG is set) */
@@ -214,15 +213,9 @@ private:
 	 * Do NOT compare this with anything, but use the overdue(), passedTime() and remainingTime() functions instead! */
 	tNetTime net_time;
 	
-#ifdef __WIN32__
-	WSADATA ws; //!< The winsock stack
-	SOCKET sock; //!< The socket
-	u_long nNoBlock; //!< non-blocking
-#else
 	int sock; //!< The socket
-#endif
-	int opt;
 	struct sockaddr_in server; //!< Server sockaddr
+	int sndPipeReadEnd, sndPipeWriteEnd; //!< the ends of the pipe used to signal a packet wants to be sent
 	
 	uint16_t flags; //!< unet flags, explained -^
 	
