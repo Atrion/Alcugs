@@ -155,7 +155,8 @@ private:
 	tNetTime flood_last_check;
 	unsigned int flood_npkts;
 	
-	tNetTime activity_stamp; //!< last time we got something from this client
+	tNetTime receive_stamp; //!< last time we got something from this client
+	tNetTime send_stamp; //!< last time we sent something to this client
 	tTime nego_stamp; //!< initial negotiation stamp
 	tTime renego_stamp; //!< remote/received nego stamp (stamp of last nego we got)
 	tNetTimeDiff conn_timeout; //!< time after which the session will timeout (in microseconds)

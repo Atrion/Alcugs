@@ -79,7 +79,7 @@ void tNetSession::init() {
 	cabal=0;
 	flood_last_check=net->net_time;
 	flood_npkts=0;
-	activity_stamp = net->net_time;
+	receive_stamp = send_stamp = net->net_time;
 	next_msg_time=net->net_time;
 	rtt=0;
 	deviation=0;
@@ -350,7 +350,7 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 		throw txProtocolError(_WHERE("[%s] Recieved a too big message of %i bytes\n",str().c_str(),size));
 	}
 	//stamp
-	activity_stamp = net->net_time;
+	receive_stamp = net->net_time;
 	
 	// when authenticated == 2, we don't expect an encoded packet, but sometimes, we get one. Since alcUruValidatePacket will try to
 	// validate the packet both with and without passwd if possible, we tell it to use the passwd whenever we have one - as a result,
@@ -632,7 +632,7 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	// we must delay either none or all messages, otherwise the rtt will vary too much
 	// do not use the rtt as basis for the delay, or the rtts of both sides will wind up endlessly
 	tNetTimeDiff ackWaitTime = 3*timeToSend(maxPacketSz); // wait for some batches of packets
-	if (ackWaitTime > msg_timeout) ackWaitTime=msg_timeout; // but do not wait too long
+	if (ackWaitTime > msg_timeout/3) ackWaitTime=msg_timeout/3; // but do not wait too long
 	tNetTime timestamp=net->net_time + ackWaitTime;
 	// the net timer will be updated when the ackq is checked (which is done since processMsg will call doWork after calling createAckReply)
 	DBG(5, "new ack, wait time: %i\n",ackWaitTime);
@@ -734,7 +734,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 {
 	assert(alcGetSelfThreadId() == alcGetMain()->threadId());
 	// when we are talking to a non-terminated server, send alive messages
-	if (!client && !terminated && (net->passedTimeSince(activity_stamp) > (conn_timeout/2))) {
+	if (!client && !terminated && (net->passedTimeSince(send_stamp) > (conn_timeout/2))) {
 		tmAlive alive(this);
 		send(alive);
 	}
@@ -783,7 +783,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 					} else {
 						DBG(5, "%s sending a %Zi byte acked message %d after time\n", str().c_str(), curmsg->size(), net->passedTimeSince(curmsg->timestamp));
 						cur_tts+=timeToSend(curmsg->size());
-						curmsg->snt_timestamp=net->net_time;
+						send_stamp=curmsg->snt_timestamp=net->net_time;
 						net->rawsend(this,curmsg);
 						curmsg->tries++;
 						curmsg->timestamp=net->net_time + msg_timeout*curmsg->tries; // increase the additional wait time with each re-send
@@ -802,6 +802,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 						DBG(5, "%s sending a %Zi byte non-acked message %d after time\n", str().c_str(), curmsg->size(), net->passedTimeSince(curmsg->timestamp));
 						cur_tts+=timeToSend(curmsg->size());
 						net->rawsend(this,curmsg);
+						send_stamp=net->net_time;
 					}
 					it = sndq.eraseAndDelete(it); // go to next message, delete this one
 				}
@@ -835,7 +836,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 	}
 	
 	// check this session's timeout
-	if (net->timeOverdue(activity_stamp+conn_timeout)) {
+	if (net->timeOverdue(receive_stamp+conn_timeout)) {
 		// create timeout event
 		if (!isTerminated())
 			net->sec->log("%s Timeout (didn't send a packet for %d seconds)\n",str().c_str(),conn_timeout);
@@ -843,7 +844,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 		return timeout;
 	}
 	else
-		return std::min(timeout, net->remainingTimeTill(activity_stamp+conn_timeout)); // do not miss our timeout - *after* reducing it, of course
+		return std::min(timeout, net->remainingTimeTill(receive_stamp+conn_timeout)); // do not miss our timeout - *after* reducing it, of course
 }
 
 void tNetSession::terminate(int tout)
@@ -851,7 +852,6 @@ void tNetSession::terminate(int tout)
 	conn_timeout = tout*1000*1000;
 	terminated = true;
 	whoami = 0; // it's terminated, so it's no one special anymore
-	activity_stamp = net->net_time; // FIXME called in worker thread
 	if (alcGetSelfThreadId() != alcGetMain()->threadId()) {
 		// we are in the worker thread... send a byte to the pipe so that the main thread wakes up and re-schedules its timeout
 		uint8_t data = 0;

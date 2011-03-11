@@ -96,7 +96,7 @@ void tUnet::init() {
 	//netcore timeout < min(all RTT's), nope, it must be the min tts (stt)
 	max_sleep=10*1000*1000; // wait no more than 10 seconds in select() call
 
-	conn_timeout=5*60; // default timeout for new sessions (seconds)
+	conn_timeout=60; // default timeout for new sessions (seconds)
 	/* This sets the timeout for unet servers from both sides
 	It also sets the timeout for Uru clients, where a high timeout is necessary since the connection is already established when changing
 	the server in the shard list and when the timeout is only 5 seconds the client gets kicked off too fast. It will be changed
