@@ -30,7 +30,7 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETSESSION_ID "$Id$"
-#define _DBG_LEVEL_ 3
+//#define _DBG_LEVEL_ 3
 #include <alcdefs.h>
 #include "netsession.h"
 
@@ -169,15 +169,15 @@ void tNetSession::updateRTT(tNetTimeDiff newread) {
 void tNetSession::increaseCabal() {
 	if(!cabal) return;
 	++consecutiveCabalIncreases;
-	cabal += maxPacketSz/5.0*log(consecutiveCabalIncreases);
+	cabal += maxPacketSz/7.5*log(consecutiveCabalIncreases);
 	DBG(3,"%s +Cabal is now %i\n",str().c_str(),cabal);
 }
 void tNetSession::decreaseCabal(bool emergency) {
 	consecutiveCabalIncreases = 0;
 	if(!cabal) return;
-	const unsigned int delta = emergency ? 222 : 22;
-	cabal -= (delta*cabal)/1000;
-	if(cabal < maxPacketSz) cabal = maxPacketSz;
+	const unsigned int delta = emergency ? 25 : 2;
+	cabal -= (delta*cabal)/100;
+	if(cabal < 5*maxPacketSz) cabal = 5*maxPacketSz; // don't drop below 5kByte/s
 	DBG(3,"%s %sCabal is now %i\n",str().c_str(),emergency ? "--" : "-",cabal);
 }
 
@@ -639,7 +639,7 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	if (ackWaitTime > msg_timeout/4) ackWaitTime=msg_timeout/4; // but do not wait too long
 	tNetTime timestamp=net->net_time + ackWaitTime;
 	// the net timer will be updated when the ackq is checked (which is done since processMsg will call doWork after calling createAckReply)
-	DBG(5, "new ack, wait time: %i\n",ackWaitTime);
+	DBG(3, "%s Enqueueing new ack, wait time: %i\n",str().c_str(),ackWaitTime);
 
 	//Plasma like ack's (acks are retarded, and packed)
 	tPointerList<tUnetAck>::iterator it = ackq.begin();
