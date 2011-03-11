@@ -177,7 +177,7 @@ void tNetSession::decreaseCabal(bool emergency) {
 	if(!cabal) return;
 	const unsigned int delta = emergency ? 25 : 2;
 	cabal -= (delta*cabal)/100;
-	if(cabal < 5*maxPacketSz) cabal = 5*maxPacketSz; // don't drop below 5kByte/s
+	if(cabal < 5u*maxPacketSz) cabal = 5u*maxPacketSz; // don't drop below 5kByte/s
 	DBG(3,"%s %sCabal is now %i\n",str().c_str(),emergency ? "--" : "-",cabal);
 }
 
@@ -444,7 +444,7 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 			comm.bandwidth /= 8; // we want bytes per second
 			unsigned int maxBandwidth = std::max(cabal, comm.bandwidth);
 			unsigned int minBandwidth = std::min(cabal, comm.bandwidth);
-			cabal=std::min(minBandwidth, maxBandwidth/5); // don't start too fast, the nego just gives us an estimate!
+			cabal=std::min(minBandwidth, maxBandwidth/4); // don't start too fast, the nego just gives us an estimate!
 			if (cabal < maxPacketSz) cabal = maxPacketSz;
 			DBG(5, "%s Initial cabal is %i\n",str().c_str(),cabal);
 			negotiating=false;
