@@ -116,11 +116,11 @@ void tUnet::init() {
 
 	lan_addr=htonl(0xAC1A0000);
 	lan_mask=htonl(0xFFFFFF00); // LAN mask, in network byte order (default 255.255.255.0)
-	//! Bandwidth speed (lo interface -> maxium)
+	// Bandwidth speed (lo interface -> maxium), all in Bit/s
 	lan_up=100 * 1000 * 1000;
 	lan_down=100 * 1000 * 1000;
-	nat_up=128 * 1000;
-	nat_down=512 * 1000;
+	nat_up=500 * 1000;
+	nat_down=500 * 1000;
 	
 	flood_check_interval=10*1000*1000;
 	max_flood_pkts=600; // when first launching a client for an emtpy vault, there are about 100 packets within about 2.5 seconds
@@ -379,9 +379,9 @@ before it asks each session to do what it has to do (tUnet::doWork) */
 void tUnet::sendAndWait() {
 	// send old messages and calulate timeout
 	tNetTimeDiff unet_timeout = processSendQueues();
-	if (unet_timeout < 100) {
-		DBG(3, "Timeout %d too low, increasing to 100\n", unet_timeout);
-		unet_timeout = 100; // don't sleep less than 0.1 milliseconds
+	if (unet_timeout < 250) {
+		DBG(3, "Timeout %d too low, increasing to 250\n", unet_timeout);
+		unet_timeout = 250; // don't sleep less than 0.25 milliseconds
 	}
 	
 	ssize_t n;
