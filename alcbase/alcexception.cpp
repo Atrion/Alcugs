@@ -127,7 +127,7 @@ void txBase::dump(bool toStderr) {
 		fprintf(f,"Defunct: %s\n",now.str().c_str());
 		fprintf(f,"Uptime:  %s\n",alcGetMain()->upTime().str(/*relative*/true).c_str());
 		fprintf(f,"Main thread id: %"PRIu64"\n",alcGetMain()->threadId());
-		fprintf(f,"This thread id: %"PRIu64"\n",alcGetSelfThreadId());
+		fprintf(f,"This thread id: %"PRIu64"\n",static_cast<uint64_t>(alcGetSelfThreadId()));
 		fprintf(f,"Exception %s:\n%s\n",msg.c_str(),bt.c_str());
 		fclose(f);
 	}

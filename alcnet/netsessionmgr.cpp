@@ -69,7 +69,7 @@ int tNetSessionList::add(tNetSession *u)
 		return empty;
 	}
 	// we have to resize the table
-	DBG(5, "growing to %ld\n", size+1);
+	DBG(5, "growing to %Zd\n", size+1);
 	tNetSession **ntable=static_cast<tNetSession **>(realloc(table,sizeof(tNetSession*) * (size+1)));
 	if(ntable==NULL) throw txNoMem(_WHERE(""));
 	table=ntable;
@@ -105,7 +105,7 @@ void tNetSessionList::remove(tNetSession *u)
 		if(table[i]!=NULL) return; // we can't shrink :(
 	}
 	if(found!=npos) { // if that's the case, shrink
-		DBG(5, "shrinking to %ld\n", found);
+		DBG(5, "shrinking to %Zd\n", found);
 		table=static_cast<tNetSession **>(realloc(table,sizeof(tNetSession*) * found));
 		if (found && table==NULL) throw txNoMem(_WHERE("NoMem"));
 		size=found;

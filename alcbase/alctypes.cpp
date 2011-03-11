@@ -180,7 +180,7 @@ tMBuf::~tMBuf() {
 	clear();
 }
 void tMBuf::getUniqueBuffer(size_t newsize) {
-	DBG(6, "cur size: %li, new size: %li\n", msize, newsize);
+	DBG(6, "cur size: %Zi, new size: %Zi\n", msize, newsize);
 	if (buf != NULL && buf->getRefs() == 1) { // check if the buffer is large enough
 		if (buf->size() < newsize) buf->resize(newsize+bufferOversize);
 		return;
@@ -234,7 +234,7 @@ const void * tMBuf::read(size_t n) {
 	size_t oldpos=off;
 	off+=n;
 	if(off>msize || buf==NULL) { 
-		DBG(8,"off:%lu,msize:%lu\n",off,msize);
+		DBG(8,"off:%Zu,msize:%Zu\n",off,msize);
 		off-=n; 
 		throw txOutOfRange(_WHERE("OutOfRange %i>%i",off+n,msize)); 
 		//return NULL;
@@ -310,7 +310,6 @@ void tFBuf::set(size_t pos) {
 	}
 }
 void tFBuf::write(const void * val,size_t n) {
-	DBG(9,"write(n:%lu)\n",n);
 	if(n==0) return;
 	if(f==NULL) throw txNoFile(_WHERE("NoFile"));
 	if(fwrite(val,n,1,f)!=1) throw txWriteErr(_WHERE("write error"));
@@ -643,7 +642,6 @@ tTime::tTime(double seconds) : seconds(seconds) // round down
 	microseconds = (seconds - this->seconds)*1000*1000; // difference times 10^6 = usecs
 }
 void tTime::store(tBBuf &t) {
-	DBG(9,"Buffer status size:%li,offset:%li\n",t.size(),t.tell());
 	seconds=t.get32();
 	microseconds=t.get32();
 }

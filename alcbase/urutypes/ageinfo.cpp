@@ -113,7 +113,7 @@ namespace alc {
 	tPageInfo *tAgeInfo::getPage(uint32_t pageId)
 	{
 		uint16_t number = alcPageIdToNumber(seqPrefix, pageId);
-		DBG(9, "pageId 0x%08X => number %d, existing: %ld\n", pageId, number, pages.count(number));
+		DBG(9, "pageId 0x%08X => number %d, existing: %Zd\n", pageId, number, pages.count(number));
 		tPageList::iterator it = pages.find(number);
 		return (it == pages.end() ? NULL : &it->second);
 	}
@@ -121,7 +121,7 @@ namespace alc {
 	bool tAgeInfo::validPage(uint32_t pageId) const
 	{
 		uint16_t number = alcPageIdToNumber(seqPrefix, pageId);
-		DBG(9, "pageId 0x%08X => number %d, existing: %ld\n", pageId, number, pages.count(number));
+		DBG(9, "pageId 0x%08X => number %d, existing: %Zd\n", pageId, number, pages.count(number));
 		if (number == 254) return true; // BuiltIn page (accept because we can get SDL states for it)
 		return pages.count(number);
 	}
