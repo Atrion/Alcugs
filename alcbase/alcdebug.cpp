@@ -40,14 +40,14 @@
 
 namespace alc {
 	void alcPrintDbgHeader(int lvl, const char * b, const char * c, int d) {
-		fprintf(stderr,"DBG%i:%"PRIu64":%s:%s:%i> ",lvl,alcGetSelfThreadId(),b,c,d);
+		fprintf(stderr,"DBG%i:%"PRIu64":%s:%s:%i> ",lvl,static_cast<uint64_t>(alcGetSelfThreadId()),b,c,d);
 	}
 	
 	tString alcDbgWhere(const char * b,const char * c,int d,const char * a,...) {
 		va_list ap;
 		tString str;
 		va_start(ap,a);
-		str.printf("%d:%s:%s:%i:",alcGetSelfThreadId(),b,c,d);
+		str.printf("%"PRIu64":%s:%s:%i:",static_cast<uint64_t>(alcGetSelfThreadId()),b,c,d);
 		str.vprintf(a,ap);
 		va_end(ap);
 		return str;

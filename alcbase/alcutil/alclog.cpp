@@ -67,8 +67,6 @@ void tLog::init(void)
 	tvLogConfig = &(alcGetMain()->logCfg);
 	dsc=NULL;
 	flags = 0;
-	//this->facility = LOG_USER;
-	//this->priority = LOG_DEBUG;
 	count = 0;
 }
 
@@ -236,7 +234,7 @@ void tLog::print(const tString &str) const
 void tLog::stamp() {
 	checkRotate(250);
 	if (this->flags & DF_NOSTAMP) { return; }
-	this->print("(%s)[%"PRIu64"] ",tTime::now().str().c_str(),alcGetSelfThreadId());
+	this->print("(%s)[%"PRIu64"] ",tTime::now().str().c_str(),static_cast<uint64_t>(alcGetSelfThreadId()));
 }
 
 /**

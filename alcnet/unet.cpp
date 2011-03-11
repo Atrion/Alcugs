@@ -579,7 +579,7 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg)
 	buf=const_cast<uint8_t *>(mbuf->data()); // yes, we are writing directly into the tMBuf buffer... this saves us from copying everything
 
 	if(msg->val==2) {
-		DBG(8,"Encoding validation 2 packet of %li bytes...\n",msize);
+		DBG(8,"Encoding validation 2 packet of %Zi bytes...\n",msize);
 		buf2=static_cast<uint8_t *>(malloc(msize));
 		if(buf2==NULL) { throw txNoMem(_WHERE("")); }
 		alcEncodePacket(buf2,buf,msize);
@@ -637,7 +637,7 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg)
 	DBG(9,"After the Sendto call...\n");
 	free(buf2);
 	delete mbuf;
-	DBG(8,"returning from uru_net_send RET:%li\n",msize);
+	DBG(8,"returning from uru_net_send RET:%Zi\n",msize);
 }
 
 
