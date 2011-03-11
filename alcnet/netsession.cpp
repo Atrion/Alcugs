@@ -265,10 +265,8 @@ void tNetSession::send(tmBase &msg, tNetTimeDiff delay) { // FIXME make thread-s
 
 	pkt_sz=maxPacketSz - hsize; //get maxium message size
 	n_pkts=(psize-1)/pkt_sz; //get number of fragments (0 means everything is sent in one packet, which must be the case if psize == pkt_sz)
-	if(n_pkts>=256) {
-		net->err->log("%s ERR: Attempted to send a packet of size %i bytes, that don't fits inside an uru message\n",str().c_str(),psize);
-		throw txTooBig(_WHERE("%s packet of %i bytes don't fits inside an uru message\n",str().c_str(),psize));
-	}
+	if(n_pkts>=256)
+		throw txTooBig(_WHERE("%s packet of %i bytes doesn't fit inside an Uru message\n",str().c_str(),psize));
 	if (n_pkts > 0 && ((flags & UNetNegotiation) || (flags & UNetAckReply)))
 		throw txProtocolError(_WHERE("Nego and ack packets must not be fragmented!"));
 	
@@ -668,31 +666,6 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 #endif
 }
 
-/** puts acks from the ackq in the sndq */
-tNetTimeDiff tNetSession::ackSend() {
-	tNetTimeDiff timeout = -1; // -1 is biggest possible value
-	
-	tPointerList<tUnetAck>::iterator it = ackq.begin();
-	while(it != ackq.end()) {
-		tUnetAck *ack = *it;
-		if (!net->timeOverdue(ack->timestamp)) {
-			timeout = std::min(timeout, net->remainingTimeTill(ack->timestamp)); // come back when we want to process this ack
-			++it;
-		}
-		else {
-			DBG(5, "%s Sending an ack, %d after time\n", str().c_str(), net->passedTimeSince(ack->timestamp));
-			/* send one message per ack: we do not want to be too pwned if that apcket got lost. And if we have "holes" in the
-			 * sequence of packets (which is the only occasion in which there would be several acks in a message), the connection
-			 * is already problematic. */
-			tmNetAck ackMsg(this);
-			it = ackq.erase(it); // remove ack from queue, but do not delete it
-			ackMsg.ackq.push_back(ack); // and put it into message
-			send(ackMsg);
-		}
-	}
-	return timeout;
-}
-
 /** parse the ack and remove the messages it acks from the sndq */
 void tNetSession::ackCheck(tUnetUruMsg &t) {
 	uint32_t A1,A2,A3;
@@ -731,6 +704,31 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 				++jt;
 		}
 	}
+}
+
+/** puts acks from the ackq in the sndq */
+tNetTimeDiff tNetSession::ackSend() {
+	tNetTimeDiff timeout = -1; // -1 is biggest possible value
+	
+	tPointerList<tUnetAck>::iterator it = ackq.begin();
+	while(it != ackq.end()) {
+		tUnetAck *ack = *it;
+		if (!net->timeOverdue(ack->timestamp)) {
+			timeout = std::min(timeout, net->remainingTimeTill(ack->timestamp)); // come back when we want to process this ack
+			++it;
+		}
+		else {
+			DBG(5, "%s Sending an ack, %d after time\n", str().c_str(), net->passedTimeSince(ack->timestamp));
+			/* send one message per ack: we do not want to be too pwned if that apcket got lost. And if we have "holes" in the
+			 * sequence of packets (which is the only occasion in which there would be several acks in a message), the connection
+			 * is already problematic. */
+			tmNetAck ackMsg(this);
+			it = ackq.erase(it); // remove ack from queue, but do not delete it
+			ackMsg.ackq.push_back(ack); // and put it into message
+			send(ackMsg);
+		}
+	}
+	return timeout;
 }
 
 /** Send, and re-send messages, update idle state and set netcore timeout (the last is NECESSARY - otherwise, the idle timer will be used) */
