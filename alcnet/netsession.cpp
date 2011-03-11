@@ -47,8 +47,6 @@
 
 namespace alc {
 
-const unsigned int loopbackSpeed = 100*1000*1000; // speed of the loopback interface, in Bit/s
-
 /* Session */
 tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t sid) : maxPacketSz(1024) {
 	DBG(5,"tNetSession()\n");
@@ -65,7 +63,7 @@ tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t s
 	net->addEvent(evt);
 }
 tNetSession::~tNetSession() {
-	DBG(5,"~tNetSession() (sndq: %ld)\n", sndq.size());
+	DBG(5,"~tNetSession() (sndq: %Zd messages left)\n", sndq.size());
 	delete data;
 	delete rcv;
 }
@@ -211,7 +209,7 @@ void tNetSession::send(tmBase &msg, tNetTimeDiff delay) { // FIXME make thread-s
 	buf.put(msg);
 	psize=buf.size();
 	buf.rewind();
-	DBG(7,"Ok, I'm going to send a packet of %li bytes, for peer %i, with flags %02X\n",psize,sid,msg.bhflags);
+	DBG(7,"Ok, I'm going to send a packet of %Zi bytes, for peer %i, with flags %02X\n",psize,sid,msg.bhflags);
 
 	//now update the other fields
 	serverMsg.sn++;
@@ -263,7 +261,6 @@ void tNetSession::send(tmBase &msg, tNetTimeDiff delay) { // FIXME make thread-s
 
 	pkt_sz=maxPacketSz - hsize; //get maxium message size
 	n_pkts=(psize-1)/pkt_sz; //get number of fragments (0 means everything is sent in one packet, which must be the case if psize == pkt_sz)
-	DBG(6,"pkt_sz:%li n_pkts:%i\n",pkt_sz,n_pkts);
 	if(n_pkts>=256) {
 		net->err->log("%s ERR: Attempted to send a packet of size %i bytes, that don't fits inside an uru message\n",str().c_str(),psize);
 		throw txTooBig(_WHERE("%s packet of %i bytes don't fits inside an uru message\n",str().c_str(),psize));
@@ -333,12 +330,10 @@ void tNetSession::negotiate() {
 	unsigned int sbw;
 	// send server downstream (for the peer to know how fast it can send packets)
 	DBG(9,"%08X %08X %08X\n",ip,net->lan_mask,net->lan_addr);
-	if((ntohl(ip) & 0xFFFFFF00) == 0x7F000000) { //lo
-		sbw=loopbackSpeed;
-	} else if((ip & net->lan_mask) == net->lan_addr) { //LAN
+	if((ntohl(ip) & 0xFFFFFF00) == 0x7F000000 || (ip & net->lan_mask) == net->lan_addr) { //lo or LAN
 		sbw=net->lan_down;
 	} else {
-		sbw=net->nat_down; //WAN
+		sbw=net->nat_down; // WAN
 	}
 
 	tmNetClientComm comm(nego_stamp,sbw,this);
@@ -348,7 +343,7 @@ void tNetSession::negotiate() {
 
 /** process a recieved msg: put it in the rcvq, assemble fragments, create akcs */
 void tNetSession::processIncomingMsg(void * buf,size_t size) {
-	DBG(5,"Message of %li bytes\n",size);
+	DBG(7,"Message of %Zi bytes\n",size);
 	assert(alcGetSelfThreadId() == alcGetMain()->threadId());
 	// check max packet size
 	if (size > maxPacketSz) { // catch impossible big messages
@@ -436,9 +431,7 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 			//  (this is the last part of the negotiationg process)
 			
 			// save our upstream in cabal (in bytes per second)
-			if((ntohl(ip) & 0xFFFFFF00) == 0x7F000000) { //lo
-				cabal=loopbackSpeed/8;
-			} else if((ip & net->lan_mask) == net->lan_addr) { //LAN
+			if((ntohl(ip) & 0xFFFFFF00) == 0x7F000000 || (ip & net->lan_mask) == net->lan_addr) { //lo/LAN
 				cabal=net->lan_up / 8;
 			} else { //WAN
 				cabal=net->nat_up / 8;

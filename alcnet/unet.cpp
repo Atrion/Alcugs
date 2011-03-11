@@ -126,7 +126,7 @@ void tUnet::init() {
 	max_flood_pkts=600; // when first launching a client for an emtpy vault, there are about 100 packets within about 2.5 seconds
 	                    // linking to Noloben is a good testcase (500 per 10 seconds was not enough)
 
-	receiveAhead=100; // Receive up to 100 not-yet acceptable packets "in the future"
+	receiveAhead=256; // Receive up to 256 not-yet acceptable packets "in the future" (one complete message, in worst-case)
 
 	//logs
 	log=new tLog;
