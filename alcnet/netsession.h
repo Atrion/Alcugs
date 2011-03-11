@@ -103,7 +103,7 @@ private:
 	static int8_t compareMsgNumbers(uint32_t sn1, uint8_t fr1, uint32_t sn2, uint8_t fr2);
 	void updateRTT(tNetTimeDiff newread);
 	void increaseCabal();
-	void decreaseCabal(bool small);
+	void decreaseCabal();
 	tNetTimeDiff timeToSend(size_t psize);
 	
 	void negotiate();
@@ -165,9 +165,7 @@ private:
 	uint8_t accessLevel; //!< peer access level
 
 	//flux control (bandwidth and latency)
-	unsigned int minBandwidth, maxBandwidth; //!< min(client's upstream, our downstream) and max(client's upstream, our downstream) in bytes/s
 	unsigned int cabal; //!< cur avg bandwidth (in bytes per second), can't be > maxBandwidth, will grow slower when > minBandwith
-	
 	tNetTime next_msg_time; //!< time to send next msg in usecs (referring to tUnet::net_time)
 	tNetTimeDiff rtt; //!< round trip time, used to caluclate timeout
 	int deviation; //!< used to calculate timeout

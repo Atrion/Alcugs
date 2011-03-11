@@ -30,7 +30,7 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETSESSION_ID "$Id$"
-//#define _DBG_LEVEL_ 3
+#define _DBG_LEVEL_ 3
 #include <alcdefs.h>
 #include "netsession.h"
 
@@ -78,7 +78,7 @@ void tNetSession::init() {
 	authenticated=0;
 	accessLevel=0;
 	cflags=0; //default flags
-	maxBandwidth=minBandwidth=cabal=0;
+	cabal=0;
 	flood_last_check=net->net_time;
 	flood_npkts=0;
 	activity_stamp = net->net_time;
@@ -168,18 +168,13 @@ void tNetSession::updateRTT(tNetTimeDiff newread) {
 }
 void tNetSession::increaseCabal() {
 	if(!cabal) return;
-	unsigned int inc = 1 << 16; // 2^16
-	if(cabal+inc > minBandwidth) inc /= 4;
-	cabal+=inc;
-	if(cabal > maxBandwidth) cabal = maxBandwidth;
+	cabal+=maxPacketSz;
 	DBG(3,"%s +Cabal is now %i\n",str().c_str(),cabal);
 }
-void tNetSession::decreaseCabal(bool small) {
+void tNetSession::decreaseCabal() {
 	if(!cabal) return;
-	const unsigned int delta = small ? 3 : 12;
-	unsigned int dec = (delta*cabal)/100;
-	if (cabal-dec < minBandwidth) dec /= 4;
-	cabal -= dec;
+	const unsigned int delta = 45;
+	cabal -= (delta*cabal)/1000;
 	if(cabal < maxPacketSz) cabal = maxPacketSz;
 	DBG(3,"%s -Cabal is now %i\n",str().c_str(),cabal);
 }
@@ -203,7 +198,7 @@ tNetSessionIte tNetSession::getIte() {
 	puts the message in the session's send queue
 */
 void tNetSession::send(tmBase &msg, tNetTimeDiff delay) { // FIXME make thread-safe
-#if _DBG_LEVEL_ < 3
+#if _DBG_LEVEL_ < 1
 	if (!(msg.bhflags & UNetAckReply))
 #endif
 		net->log->log("<SND> %s\n",msg.str().c_str());
@@ -450,9 +445,9 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 			}
 			// determine connection limits
 			comm.bandwidth /= 8; // we want bytes per second
-			maxBandwidth = std::max(cabal, comm.bandwidth);
-			minBandwidth = std::min(cabal, comm.bandwidth);
-			cabal=std::min(minBandwidth, maxBandwidth/8); // don't start too fast, the nego just gives us an estimate!
+			unsigned int maxBandwidth = std::max(cabal, comm.bandwidth);
+			unsigned int minBandwidth = std::min(cabal, comm.bandwidth);
+			cabal=std::min(minBandwidth, maxBandwidth/5); // don't start too fast, the nego just gives us an estimate!
 			if (cabal < maxPacketSz) cabal = maxPacketSz;
 			DBG(5, "%s Initial cabal is %i\n",str().c_str(),cabal);
 			negotiating=false;
@@ -466,8 +461,6 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 			clientMsg.pfr = msg->pfr;
 		}
 	}
-	else
-		assert(maxBandwidth && minBandwidth); // we are connected, so these *must* be set
 	
 	// fix the problem that happens every 15-30 days of server uptime - but only if sndq is empty, or we will loose packets
 	if (!anythingToSend() && (serverMsg.sn>=8378608 || msg->sn>=8378608)) { // 8378608 = 2^23 - 10000
@@ -635,7 +628,7 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	// we can ack everything between B and A
 	A=msg.csn;
 	B=msg.cps;
-	assert(A >= B);
+	assert(A > B);
 #if 0
 	// send acks directly
 	tmNetAck ackMsg(this);
@@ -643,9 +636,10 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	send(ackMsg);
 #else
 	// retard and collect acks
-	//we must delay either none or all messages, otherwise the rtt will vary too much
-	tNetTimeDiff ackWaitTime=std::max(2*timeToSend(maxPacketSz), 500u); // wait for some batches of packets, but at least 0.5 ms
-	if (ackWaitTime > msg_timeout/4) ackWaitTime=msg_timeout/4; // don't use the rtt as basis, it is 0 at the beginning, resulting in a much too quick first answer, a much too low rtt on the other side and thus the packets being re-sent too early
+	// we must delay either none or all messages, otherwise the rtt will vary too much
+	// do not use the rtt as basis for the delay, or the rtts of both sides will wind up endlessly
+	tNetTimeDiff ackWaitTime = 3*timeToSend(maxPacketSz); // wait for some batches of packets
+	if (ackWaitTime > msg_timeout) ackWaitTime=msg_timeout; // but do not wait too long
 	tNetTime timestamp=net->net_time + ackWaitTime;
 	// the net timer will be updated when the ackq is checked (which is done since processMsg will call doWork after calling createAckReply)
 	DBG(5, "new ack, wait time: %i\n",ackWaitTime);
@@ -709,7 +703,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 	if (t.tf & UNetExt) ackMsg.bhflags |= UNetExt; // tmNetAck has to know that it reads an extended packet
 	t.data.rewind();
 	t.data.get(ackMsg);
-#if _DBG_LEVEL_ >= 3
+#if _DBG_LEVEL_ >= 1
 	net->log->log("<RCV> [%d] %s\n",t.sn,ackMsg.str().c_str());
 #endif
 	tUnetAck *ack;
@@ -723,30 +717,21 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 			tUnetUruMsg *msg = *jt;
 			A2=msg->csn;
 			
-			if(A1>=A2 && A2>A3) {
-				//then delete
-				if(A1==A2) {
-					increaseCabal(); // also increase cabal for properly transmitted messages later on
-					if (msg->tries <= 1) { // only update rtt for a first-time success
-						/* possible problem: since this is the last packet which was acked with this ack message, it could be combined
-						with other packets and the ack could be sent almost immediately after the packet went in, without the
-						usual delay so the rtt is much smaller than the average. But I don't expect this to happen often, so I don't
-						consider that a real problem. */
-						tNetTimeDiff crtt=net->passedTimeSince(msg->snt_timestamp);
-						#ifdef ENABLE_NETDEBUG
-						crtt+=net->latency;
-						#endif
-						updateRTT(crtt);
-					}
+			if(msg->tf & UNetAckReq && A1>=A2 && A2>A3) {
+				// this packet got acked, delete it
+				increaseCabal(); // a packet was properly delivered
+				if(msg->tries == 1) { // only update rtt for a first-time success
+					// calculate the time it took to ack this packet
+					tNetTimeDiff crtt=net->passedTimeSince(msg->snt_timestamp);
+					#ifdef ENABLE_NETDEBUG
+					crtt+=net->latency;
+					#endif
+					updateRTT(crtt);
 				}
-				if(msg->tf & UNetAckReq) {
-					jt = sndq.eraseAndDelete(jt);
-				} else {
-					++jt;
-				}
-			} else {
-				++jt;
+				jt = sndq.eraseAndDelete(jt);
 			}
+			else
+				++jt;
 		}
 	}
 }
@@ -792,16 +777,11 @@ tNetTimeDiff tNetSession::processSendQueues()
 					// check if we need to resend
 					if(curmsg->tries!=0) {
 						DBG(3, "%s Re-sending a message\n", str().c_str());
-						decreaseCabal(curmsg->tries==1); // true = small
-						/* The server used to duplicate the timeout here - but since the timeout will be overwritten next time updateRTT
-						*  is called, that's of no use. So better make the RTT bigger - it is obviously at least the timeout
-						* This will result in a more long-term increase of the timeout.
-						* Of course, we do not actually have a new sample rtt - but we have to increase it here, because the oly
-						* other change only occures when an ack comes in for a not-yet re-sent packet */
-						updateRTT(msg_timeout);
+						decreaseCabal();
+						if (curmsg->tries > 1) decreaseCabal(); // this is not normal, even the re-send got lost, so slow down NOW!
 					}
 					
-					if(curmsg->tries>=10 || (curmsg->tries>=2 && terminated)) { // max. 2 sends on terminated connections, max. 10 for the rest
+					if(curmsg->tries>=5 || (curmsg->tries>=2 && terminated)) { // max. 2 sends on terminated connections, max. 5 for the rest
 						it = sndq.eraseAndDelete(it); // this is the next one
 						//timeout event
 						net->sec->log("%s Timeout (didn't ack a packet)\n", str().c_str());
@@ -812,8 +792,8 @@ tNetTimeDiff tNetSession::processSendQueues()
 						cur_tts+=timeToSend(curmsg->size());
 						curmsg->snt_timestamp=net->net_time;
 						net->rawsend(this,curmsg);
-						curmsg->timestamp=net->net_time+msg_timeout;
 						curmsg->tries++;
+						curmsg->timestamp=net->net_time + msg_timeout*curmsg->tries; // increase the additional wait time with each re-send
 						++it; // go on
 					}
 				} else {
