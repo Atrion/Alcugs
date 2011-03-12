@@ -372,7 +372,7 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 	}
 	
 	#ifdef ENABLE_MSGDEBUG
-	net->log->log("<RCV> RAW Packet follows: \n");
+	net->log->log("<RCV> %s RAW Packet follows: \n", str().c_str());
 	net->log->dumpbuf(buf,size);
 	net->log->nl();
 	#endif
@@ -486,13 +486,13 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 		   0: This is what we need
 		  >0: This is a future packet (1: Drop it, 2: Cache it) */
 		if (ret < 0) {
-			net->log->log("WARN: Dropping re-sent old packet %d.%d (last ack: %d.%d, expected: %d.%d)\n", msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
+			net->log->log("%s WARN: Dropping re-sent old packet %d.%d (last ack: %d.%d, expected: %d.%d)\n", str().c_str(), msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
 		}
 		else if (ret > 0) {
 			if (!(msg->tf & UNetNegotiation) && !rejectMessages && rcvq.size() < net->receiveAhead)
 				ret = 2; // preserve for future use - but don't do this for negos (we can not get here for ack replies)
 			else
-				net->log->log("WARN: Dropped packet I can not yet parse: %d.%d (last ack: %d.%d, expected: %d.%d)\n", msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
+				net->log->log("%s WARN: Dropped packet I can not yet parse: %d.%d (last ack: %d.%d, expected: %d.%d)\n", str().c_str(), msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
 		}
 
 		// if the packet requires it and the above check told us that'd be ok, send an ack
@@ -583,7 +583,7 @@ void tNetSession::acceptMessage(tUnetUruMsg *t)
 /** Saves a received, not-yet accepted message for future use */
 void tNetSession::queueReceivedMessage(tUnetUruMsg *msg)
 {
-	net->log->log("Queuing %d.%d for future use (can not yet accept it - last ack: %d.%d, expected: %d.%d)\n", msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
+	net->log->log("%s Queuing %d.%d for future use (can not yet accept it - last ack: %d.%d, expected: %d.%d)\n", str().c_str(), msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
 	// the queue is sorted ascending
 	for (tPointerList<tUnetUruMsg>::iterator it = rcvq.begin(); it != rcvq.end(); ++it) {
 		tUnetUruMsg *cur = *it;
