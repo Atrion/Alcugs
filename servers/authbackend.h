@@ -42,7 +42,6 @@ namespace alc {
 		~tAuthBackend(void);
 		
 		int authenticatePlayer(tNetSession *u, const tString &login, const tString &challenge, const tString &hash, uint8_t release, const tString &ip, tString *passwd, uint8_t *hexUid, uint8_t *accessLevel); //!< authenticates the player
-		void checkTimeout(void);
 	private:
 		uint16_t minAccess, disTime, maxAttempts;
 		tString cgasServer, cgasPath;

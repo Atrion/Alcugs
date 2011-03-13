@@ -293,8 +293,11 @@ namespace alc {
 			}
 		}
 		
-		memcpy(game->serverGuid, serverGuid, 8);
-		game->name = setGuid.age;
+		{
+			tWriteLock lock(game->pubDataMutex);
+			memcpy(game->serverGuid, serverGuid, 8);
+			game->name = setGuid.age;
+		}
 		
 		
 		if (game->data) return; // ignore the rest of the info if we already got it. IP and Port can't change.

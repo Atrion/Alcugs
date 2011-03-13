@@ -110,11 +110,6 @@ namespace alc {
 		}
 	}
 	
-	void tAuthBackend::checkTimeout(void)
-	{
-		if (sql) sql->checkTimeout();
-	}
-	
 	bool tAuthBackend::prepare(void)
 	{
 		// establish database connection
