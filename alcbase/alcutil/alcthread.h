@@ -39,6 +39,21 @@ namespace alc {
 
 pthread_t alcGetSelfThreadId(); // the actual type is pthread_t, which might not be available
 
+#define DECLARE_LOCK(ExName, ExLockFunc, LockName) \
+	class LockName { \
+	public: \
+		LockName(ExName &ex) : ex(&ex) { \
+			this->ex->ExLockFunc(); \
+		} \
+		~LockName(void) { \
+			ex->unlock(); \
+		} \
+	private: \
+		ExName *ex; \
+		\
+		FORBID_CLASS_COPY(LockName) \
+	}
+
 class tThread {
 public:
 	tThread();
@@ -69,20 +84,23 @@ private:
 	FORBID_CLASS_COPY(tMutex)
 };
 
-class tMutexLock {
+class tReadWriteEx {
 public:
-	tMutexLock(tMutex &mutex) : mutex(&mutex) {
-		this->mutex->lock();
-	}
-	~tMutexLock(void) {
-		mutex->unlock();
-	}
-private:
-	tMutex *mutex;
+	tReadWriteEx();
+	~tReadWriteEx();
 	
-	FORBID_CLASS_COPY(tMutexLock)
+	void read();
+	void write();
+	void unlock();
+private:
+	pthread_rwlock_t id;
+	
+	FORBID_CLASS_COPY(tReadWriteEx);
 };
 
+DECLARE_LOCK(tMutex, lock, tMutexLock);
+DECLARE_LOCK(tReadWriteEx, read, tReadLock);
+DECLARE_LOCK(tReadWriteEx, write, tWriteLock);
 
 
 } //End alc namespace
