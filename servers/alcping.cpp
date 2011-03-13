@@ -97,7 +97,7 @@ private:
 	uint16_t d_port;
 	uint8_t validation;
 	int count;
-	tNetSessionIte dstite;
+	tNetSessionRef dstSession;
 	double current;
 	double startup;
 	double rcv;
@@ -118,9 +118,6 @@ tUnetPing::tUnetPing(const tString &lhost,uint16_t lport,bool listen,double time
 	destination=KLobby;
 	d_port=5000;
 	count=0;
-	dstite.ip=0;
-	dstite.port=0;
-	dstite.sid=-1;
 	validation=2;
 	min=10000;
 	max=0;
@@ -164,7 +161,7 @@ int tUnetPing::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 			msg->data.get(ping);
 			log->log("<RCV> [%d] %s\n", msg->sn, ping.str().c_str());
 			if(listen==0) {
-				if(dstite==u) {
+				if(*dstSession==u) {
 					current=alcGetCurrentTime();
 					rcv=current-ping.mtime;
 					printf("Pong from %s:%i x=%i dest=%i %s time=%0.3f ms\n",\
@@ -201,13 +198,11 @@ void tUnetPing::onIdle() {
 	if(listen==0) {
 
 		if(count==0) {
-			dstite=netConnect(d_host.c_str(),d_port,validation,0);
+			dstSession=netConnect(d_host.c_str(),d_port,validation,0);
 			current=startup=alcGetCurrentTime();
 		}
 
-		tNetSession * u=NULL;
-		u=sessionByIte(dstite);
-		if(u==NULL) {
+		if(dstSession->isTerminated()) {
 			stop();
 			return;
 		}
@@ -216,7 +211,7 @@ void tUnetPing::onIdle() {
 		if((rcv-current)>time || count==0) {
 			if(count<num || num==0 || count==0) {
 				//snd ping message
-				tmPing ping(u, destination);
+				tmPing ping(*dstSession, destination);
 				if(urgent) ping.setUrgent();
 
 				count++;
@@ -225,7 +220,7 @@ void tUnetPing::onIdle() {
 					ping.mtime = current = alcGetCurrentTime();
 					send(ping);
 				}
-			} else if((rcv-current) > (4*time) || (u && (rcv-current) > ((u->getRTT()+(u->getRTT()/2))/1000000))) {
+			} else if((rcv-current) > (4*time) || (*dstSession && (rcv-current) > ((dstSession->getRTT()+(dstSession->getRTT()/2))/1000000))) {
 				stop();
 			}
 		}

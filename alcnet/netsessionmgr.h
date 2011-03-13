@@ -38,39 +38,47 @@ namespace alc {
 	
 	const uint32_t nosid = -1;
 
-class tNetSessionIte {
+class tNetSessionRef {
 public:
-	uint32_t ip; //network order
-	uint16_t port; //network order
-	uint32_t sid;
-	tNetSessionIte() {
-		ip=0; port=0; sid=nosid;
+	tNetSession *u;
+	tNetSessionRef(tNetSession *u) : u(u) {
+		if (u) u->incRefs();
 	}
-	tNetSessionIte(uint32_t ip,uint16_t port,uint32_t sid=nosid) {
-		this->ip=ip;
-		this->port=port;
-		this->sid=sid;
+	tNetSessionRef() : u(NULL) {}
+	tNetSessionRef(const tNetSessionRef &r) : u(r.u) {
+		if (u) u->incRefs();
 	}
-	bool operator==(const tNetSessionIte &t) const {
-		return(ip==t.ip && port==t.port);
+	~tNetSessionRef() {
+		if (u) u->decRefs();
 	}
-	bool operator==(tNetSession *u) const {
-		return(ip==u->getIp() && port==u->getPort());
+	tNetSession *operator->() {
+		return u;
+	}
+	tNetSession *operator*() {
+		return u;
+	}
+	void operator=(tNetSession *u) {
+		if (this->u) u->decRefs();
+		this->u = u;
+		if (u) u->incRefs();
+	}
+	void operator=(const tNetSessionRef &r) {
+		if (u) u->decRefs();
+		u = r.u;
+		if (u) u->incRefs();
 	}
 };
 
-/** tNetSessionList saves a list of sessions */
-class tNetSessionList {
+/** tNetSessionMgr is meant to be THE one and only session manager of a server. The number of a session in it's table defines
+it's global sid. It uses tNetSessionIte for searching and for "caching" the sid. It can also create new and delete existing sessions
+(in fact, it's the only part of alcugs which does that) and it implements a limit for a max. number of sessions */
+class tNetSessionMgr {
 public:
-	tNetSessionList(void);
-	virtual ~tNetSessionList();
+	tNetSessionMgr(tUnet * net,size_t limit=0);
+	~tNetSessionMgr();
 	
-	//! find the session with the given ip and port and return it
-	tNetSession *search(uint32_t ip, uint16_t port);
-	//! add that session and return the place where it's saved (to be used by tNetSessionMgr::search)
-	int add(tNetSession *u);
-	//! removes the given session from the table and shrinks if possible
-	void remove(tNetSession *u);
+	//! find the session with the given ip and port and return it, creating it if necessary
+	tNetSession *searchAndCreate(uint32_t ip, uint16_t port);
 	//! return the nth session of our table
 	tNetSession *get(size_t n) {
 		if (n < size) return table[n];
@@ -78,30 +86,26 @@ public:
 	}
 	//! find a session by it's ki
 	tNetSession *findByKi(uint32_t ki);
-	void rewind() { off=0; }
-	void end() { off=size; }
-	tNetSession * getNext();
+	//! remove a session
+	void destroy(tNetSession *u);
+	// small helpers
 	bool isEmpty() { return count==0; }
 	size_t getCount() { return count; }
-protected:
+	// iteration
+	void rewind() { off=0; }
+	void end() { off=size; }
+	tNetSession *getNext();
+private:
+	//! find a free slot, resizing the table if necessary
 	size_t findFreeSlot(void);
+	//! removes the given session from the table and shrinks if possible
+	void remove(tNetSession *u);
 
-	size_t off; //!< current offset/position
+	size_t off; //!< currently selected session (offset)
 	size_t size; //!< the size of the table
 	size_t count; //!< the number of session stored in the table (there can be holes, so it can be smaller than size)
 	tNetSession ** table;
-};
-
-/** tNetSessionMgr is meant to be the one and only session manager of a server. The number of a session in it's table defines
-it's global sid. It uses tNetSessionIte for searching and for "caching" the sid. It can also create new and delete existing sessions
-(in fact, it's the only part of alcugs which does that) and it implements a limit for a max. number of sessions */
-class tNetSessionMgr : public tNetSessionList {
-public:
-	tNetSessionMgr(tUnet * net,size_t limit=0) : tNetSessionList(), max(limit), net(net) {}
-	virtual ~tNetSessionMgr();
-	tNetSession * search(tNetSessionIte &ite,bool create = false);
-	void destroy(tNetSessionIte ite);
-private:
+	
 	size_t max;
 	tUnet * net;
 	
@@ -110,11 +114,11 @@ private:
 
 class tNetEvent {
 public:
-	tNetEvent(tNetSessionIte who,int what,tUnetMsg *mymsg=NULL) { sid=who; id=what; msg=mymsg; }
+	tNetEvent(tNetSession *u,int what,tUnetMsg *msg=NULL) : u(u), id(what), msg(msg) {}
 	tNetEvent(int what) { id=what; msg=NULL; }
 	tNetEvent() { id=0; msg=NULL; }
 	~tNetEvent() { if (msg) delete msg; }
-	tNetSessionIte sid;
+	tNetSessionRef u;
 	int id;
 	tUnetMsg *msg;
 

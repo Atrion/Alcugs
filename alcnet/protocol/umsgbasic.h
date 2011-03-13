@@ -34,8 +34,6 @@
 #include "protocol.h"
 
 namespace alc {
-	
-	class tNetSessionIte;
 
 /** TERMINATED message */
 class tmTerminated :public tmMsgBase {
@@ -88,7 +86,7 @@ public:
 	tmPing(tNetSession * u, uint8_t dst = KLobby);
 	tmPing(tNetSession *u, tmPing &ping);
 	virtual tString additionalFields(tString dbg) const;
-	void setRouteInfo(const tNetSessionIte &ite);
+	void setRouteInfo(const tNetSession *u);
 	void unsetRouteInfo();
 	//format
 	double mtime;

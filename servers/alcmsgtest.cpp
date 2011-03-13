@@ -139,7 +139,7 @@ private:
 	bool compressed;
 	tString file;
 	bool sent;
-	tNetSessionIte dstite;
+	tNetSessionRef dstSession;
 	// for speed measure
 	int sentBytes;
 	tTime startTime;
@@ -156,9 +156,6 @@ tUnetSimpleFileServer::tUnetSimpleFileServer(const tString &lhost,uint16_t lport
 	sent=false;
 	sentBytes=0;
 	compressed=false;
-	dstite.ip=0;
-	dstite.port=0;
-	dstite.sid=-1;
 }
 
 
@@ -172,29 +169,27 @@ void tUnetSimpleFileServer::setValidation(uint8_t val) {
 
 void tUnetSimpleFileServer::onStart() {
 	if(!listen) {
-		dstite=netConnect(d_host.c_str(),d_port,validation,0);
+		dstSession=netConnect(d_host.c_str(),d_port,validation,0);
 	}
 }
 
 void tUnetSimpleFileServer::onIdle() {
 	if (!listen) {
 		DBG(5, "OnIdle called\n");
-		tNetSession * u=NULL;
-		u=sessionByIte(dstite);
-		if (u==NULL) {
+		if (dstSession->isTerminated()) {
 			DBG(5, "seems we lost the connection, ouch - going down\n");
 			stop();
 			return;
 		}
 		if (!sent) {
-			if (!u->isConnected()) return;
+			if (!dstSession->isConnected()) return;
 			DBG(5, "Starting to send\n");
 			tFBuf f1(file.c_str());
 			size_t size;
 			bool first = true;
 			while ((size = f1.remaining())) {
 				if (size > maxSize) size = maxSize;
-				tmData data(u);
+				tmData data(*dstSession);
 				if (urgent) data.setUrgent();
 				if (first) {
 					data.setFirstFragment();
@@ -209,7 +204,7 @@ void tUnetSimpleFileServer::onIdle() {
 			sentBytes = compressed ? 0 : f1.size();
 			sent=true;
 			startTime.setToNow();
-		} else if (!u->anythingToSend()) { // message sent, and nothing more left in the buffers
+		} else if (!dstSession->anythingToSend()) { // message sent, and nothing more left in the buffers
 			if (sentBytes) {
 				tTime diff = tTime::now();
 				diff = diff-startTime;

@@ -29,15 +29,12 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETSESSION_H_ID "$Id$"
 
-#include <alcutil/alcthread.h>
 #include "protocol/protocol.h"
 #include "netmsgq.h"
 
 #include <netinet/in.h>
 
 namespace alc {
-	
-	class tNetSessionIte;
 	class tUnet;
 
 #define UNetUpgraded 0x01
@@ -61,7 +58,6 @@ public:
 	size_t getMaxFragmentSize() { return(static_cast<size_t>(maxPacketSz)-getHeaderSize()); }
 	size_t getMaxDataSize() { return(getMaxFragmentSize() * 256); }
 	size_t getHeaderSize();
-	tNetSessionIte getIte();
 	time_t onlineTime(void) { return alcGetTime()-nego_stamp.seconds; }
 	void send(tmBase &msg, tNetTimeDiff delay = 0); //!< delay is in msecs - may be called in worker thread
 	void terminate(int tout);
@@ -71,21 +67,24 @@ public:
 	void challengeSent(void) { if (authenticated == 0) authenticated = 10; }
 	void setRejectMessages(bool reject) { rejectMessages = reject; }
 	
-	int getSid(void) { return sid; }
-	uint8_t getPeerType() { return whoami; }
-	tNetTimeDiff getRTT() { return rtt; }
-	bool isConnected() { return cabal!=0; }
-	uint32_t getIp(void) { return ip; }
-	uint16_t getPort(void) { return port; }
-	uint8_t getAccessLevel(void) { return accessLevel; }
-	uint8_t getAuthenticated(void) { return authenticated; }
-	size_t getMaxPacketSz(void) { return maxPacketSz; }
-	bool isClient() { return client; }
-	bool isTerminated() { return terminated; }
+	uint32_t getSid(void) const { return sid; }
+	uint8_t getPeerType() const { return whoami; }
+	tNetTimeDiff getRTT() const { return rtt; }
+	bool isConnected() const { return cabal!=0; }
+	uint32_t getIp(void) const { return ip; }
+	uint16_t getPort(void) const { return port; }
+	uint8_t getAccessLevel(void) const { return accessLevel; }
+	uint8_t getAuthenticated(void) const { return authenticated; }
+	size_t getMaxPacketSz(void) const { return maxPacketSz; }
+	bool isClient() const { return client; }
+	bool isTerminated() const { return terminated; }
 	void setTypeToGame() { whoami = KGame; }
-	bool isAlcugsServer()
+	bool isAlcugsServer() const
 		{ return whoami == KLobby || whoami == KGame || whoami == KVault || whoami == KAuth || whoami == KTracking; }
-	bool anythingToSend() { return !ackq.empty() || !sndq.empty(); }
+	bool anythingToSend() const { return !ackq.empty() || !sndq.empty(); }
+	
+	void incRefs() { __sync_add_and_fetch(&refs, 1); }
+	void decRefs();
 
 private:
 	void init();
@@ -189,6 +188,9 @@ private:
 	
 	// mutexes
 	tMutex sendMutex; //!< protecting serverMsg and sndq
+	
+	// reference counting
+	int refs;
 
 	FORBID_CLASS_COPY(tNetSession)
 };

@@ -42,32 +42,37 @@
 namespace alc {
 
 /* Session List */
-tNetSessionList::tNetSessionList(void)
+tNetSessionMgr::tNetSessionMgr(tUnet * net,size_t limit) : off(0), size(0), count(0), table(NULL), max(limit), net(net)
+{}
+tNetSessionMgr::~tNetSessionMgr()
 {
-	off=0;
-	size=count=0;
-	table=NULL;
-}
-tNetSessionList::~tNetSessionList()
-{
+	if(table!=NULL) {
+		for(size_t i=0; i<size; i++) {
+			delete table[i];
+		}
+	}
 	free(table);
 }
-tNetSession *tNetSessionList::search(uint32_t ip, uint16_t port)
+tNetSession *tNetSessionMgr::searchAndCreate(uint32_t ip, uint16_t port)
 {
 	for(size_t i=0; i<size; i++) {
 		if(table[i]!=NULL && table[i]->getIp()==ip && table[i]->getPort()==port)
 			return table[i];
 	}
-	return NULL; // not found
+	// not found, create and add
+	if (max != 0 && count >= max) // too many connections, ouch
+		throw txToMCons(_WHERE("Too many connections (already having the maximum of %i)",max));
+	// find a place for us
+	size_t sid = findFreeSlot();
+	table[sid] = new tNetSession(net,ip,port,sid);
+	return table[sid];
 }
-int tNetSessionList::add(tNetSession *u)
+size_t tNetSessionMgr::findFreeSlot(void)
 {
-	int empty = findFreeSlot();
-	if (empty >= 0) {
-		table[empty] = u;
-		++count;
-		return empty;
+	for (size_t i = 0; i < size; ++i) {
+		if (!table[i]) return i;
 	}
+	assert(size == count); // when we get here (i.e. there's no free slot), size and count must be the same
 	// we have to resize the table
 	DBG(5, "growing to %Zd\n", size+1);
 	tNetSession **ntable=static_cast<tNetSession **>(realloc(table,sizeof(tNetSession*) * (size+1)));
@@ -75,18 +80,9 @@ int tNetSessionList::add(tNetSession *u)
 	table=ntable;
 	++size;
 	++count;
-	table[size-1] = u;
-	return size-1;
+	return size-1; // == table-1
 }
-size_t tNetSessionList::findFreeSlot(void)
-{
-	for (size_t i = 0; i < size; ++i) {
-		if (!table[i]) return i;
-	}
-	assert(size == count); // when we get here (i.e. there's no free slot), size and count must be the same
-	return npos;
-}
-void tNetSessionList::remove(tNetSession *u)
+void tNetSessionMgr::remove(tNetSession *u)
 {
 	size_t found = npos;
 	for (size_t i = 0; i < size; ++i) {
@@ -113,7 +109,7 @@ void tNetSessionList::remove(tNetSession *u)
 	if (count == 0) { assert(size == 0); }
 }
 
-tNetSession * tNetSessionList::getNext() {
+tNetSession * tNetSessionMgr::getNext() {
 	tNetSession * k=NULL;
 	if(off>=size) { off=0; return NULL; }
 
@@ -125,7 +121,7 @@ tNetSession * tNetSessionList::getNext() {
 	
 	return k;
 }
-tNetSession *tNetSessionList::findByKi(uint32_t ki)
+tNetSession *tNetSessionMgr::findByKi(uint32_t ki)
 {
 	if (ki == 0) return NULL;
 	for (size_t i = 0; i < size; ++i) {
@@ -134,48 +130,12 @@ tNetSession *tNetSessionList::findByKi(uint32_t ki)
 	return NULL;
 }
 
-/* Sesion Mgr */
-tNetSessionMgr::~tNetSessionMgr()
-{
-	if(table!=NULL) {
-		for(size_t i=0; i<size; i++) {
-			delete table[i];
-		}
-	}
-	// the table itself will be freed in ~tNetSessionList
-}
-tNetSession * tNetSessionMgr::search(tNetSessionIte &ite,bool create) {
-	if(ite.sid!=nosid && ite.sid<size && table[ite.sid]!=NULL) {
-		if(table[ite.sid]->getIp()==ite.ip && table[ite.sid]->getPort()==ite.port) {
-			return table[ite.sid];
-		}
-	}
-	//then search
-	tNetSession *u = tNetSessionList::search(ite.ip, ite.port);
-	if (u) {
-		ite.sid=u->getSid();
-		return u;
-	}
-	if(!create) return NULL;
 
-	// not found, create and add
-	if (max != 0 && count >= max) // too many connections, ouch
-		throw txToMCons(_WHERE("Too many connections (already having the maximum of %i)",max));
-	// use add with a NULL pointer. That'll reserve the place for us and we can still create the new session witht the correct sid
-	int sid = add(NULL);
-	ite.sid = sid;
-	table[sid] = new tNetSession(net,ite.ip,ite.port,ite.sid);
-	return table[sid];
-}
 
-void tNetSessionMgr::destroy(alc::tNetSessionIte ite) {
-	tNetSession *u = search(ite, false);
-	if (!u) return;
-	delete u;
-	/* FIXME somehow make sure another thread is not currently doing something with this session! One way would be to keep the 
-	 * session mgr lock in main thread while session->processIcomingMsg() is called. Then, with the smgr lock held in the worker,
-	 * deletion would be safe. But that would make the smgr lock quite a bottleneck... */
+void tNetSessionMgr::destroy(tNetSession *u) {
+	assert(u && u->getSid() < size && table[u->getSid()] == u);
 	remove(u);
+	u->decRefs();
 }
 /* End session mgr */
 

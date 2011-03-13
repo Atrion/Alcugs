@@ -328,22 +328,18 @@ void tUnet::stopOp() {
 	initialized=false;
 }
 
-tNetSessionIte tUnet::netConnect(const char * hostname,uint16_t port,uint8_t validation,uint8_t flags,uint8_t peerType) {
-	tNetSessionIte ite;
-	
+tNetSessionRef tUnet::netConnect(const char * hostname,uint16_t port,uint8_t validation,uint8_t flags,uint8_t peerType) {
 	struct hostent *host;
 	host=gethostbyname(hostname);
 	
 	if(host==NULL) throw txBase(_WHERE("Cannot resolve host: %s",hostname));
 	
-	ite.ip=*reinterpret_cast<uint32_t *>(host->h_addr_list[0]);
-	ite.port=htons(port);
-	ite.sid=-1;
+	uint32_t ip = *reinterpret_cast<uint32_t *>(host->h_addr_list[0]);
 	
-	tNetSession * u;
+	tNetSessionRef u;
 	{
 		tMutexLock lock(smgrMutex);
-		u=smgr->search(ite, true);
+		u=smgr->searchAndCreate(ip, htons(port));
 	}
 	
 	u->validation=validation;
@@ -356,8 +352,8 @@ tNetSessionIte tUnet::netConnect(const char * hostname,uint16_t port,uint8_t val
 	
 	struct sockaddr_in client;
 	client.sin_family=AF_INET;
-	client.sin_addr.s_addr=ite.ip;
-	client.sin_port=ite.port;
+	client.sin_addr.s_addr=u->ip;
+	client.sin_port=u->port;
 	memcpy(u->sockaddr,&client,sizeof(struct sockaddr_in));
 	
 	u->client=false;
@@ -369,7 +365,7 @@ tNetSessionIte tUnet::netConnect(const char * hostname,uint16_t port,uint8_t val
 	u->nego_stamp.setToNow();
 	u->negotiate();
 	
-	return ite;
+	return u;
 }
 
 /** Urunet the netcore, it's the heart of the server 
@@ -383,15 +379,6 @@ void tUnet::sendAndWait() {
 		DBG(3, "Timeout %d too low, increasing to 250\n", unet_timeout);
 		unet_timeout = 250; // don't sleep less than 0.25 milliseconds
 	}
-	
-	ssize_t n;
-	uint8_t buf[INC_BUF_SIZE]; //internal rcv buffer
-	
-	tNetSessionIte ite;
-	tNetSession * session=NULL;
-
-	struct sockaddr_in client; //client struct
-	socklen_t client_len=sizeof(struct sockaddr_in); //get client struct size (for recvfrom)
 
 	//waiting for packets - timeout
 	fd_set rfds;
@@ -444,6 +431,14 @@ void tUnet::sendAndWait() {
 #endif
 
 	while(true) { // receive all messages we got
+		ssize_t n;
+		uint8_t buf[INC_BUF_SIZE]; //internal rcv buffer
+		
+		tNetSessionRef session;
+
+		struct sockaddr_in client; //client struct
+		socklen_t client_len=sizeof(struct sockaddr_in); //get client struct size (for recvfrom)
+		
 		n = recvfrom(this->sock,buf,INC_BUF_SIZE,0,reinterpret_cast<struct sockaddr *>(&client),&client_len);
 		
 	#ifdef ENABLE_NETDEBUG
@@ -487,13 +482,10 @@ void tUnet::sendAndWait() {
 			}
 
 			DBG(8,"Search session...\n");
-			ite.ip=client.sin_addr.s_addr;
-			ite.port=client.sin_port;
-			ite.sid=-1;
 			
 			try {
 				tMutexLock lock(smgrMutex);
-				session=smgr->search(ite, true);
+				session=smgr->searchAndCreate(client.sin_addr.s_addr, client.sin_port);
 			} catch(txToMCons) {
 				continue; // read next message
 			}
@@ -508,7 +500,7 @@ void tUnet::sendAndWait() {
 				err->log(" Exception %s\n%s\n",t.what(),t.backtrace());
 				sec->log("%s Kicked hard due to error in Uru message\n", session->str().c_str());
 				tMutexLock lock(smgrMutex);
-				smgr->destroy(session->getIte()); // no goodbye message or anything, this error was deep on the protocol stack
+				smgr->destroy(*session); // no goodbye message or anything, this error was deep on the protocol stack
 			}
 		}
 	}
