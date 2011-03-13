@@ -1154,7 +1154,10 @@ void log_test() {
 }
 
 int main(int argc, char **argv) {
-	if (argc < 2) return 1;
+	if (argc < 2) {
+		std::cerr << "Please pass source dir as first argument." << std::endl;
+		return 1;
+	}
 	std::cout << std::endl << "Alcugs test suite - alcbase tests" <<std::endl;
 	tAlcMain alcMain("Alcbase Test");
 	try {

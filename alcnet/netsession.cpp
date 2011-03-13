@@ -106,6 +106,7 @@ void tNetSession::init() {
 	DBG(5, "%s Initial msg_timeout: %d\n", str().c_str(), msg_timeout);
 }
 void tNetSession::resetMsgCounters(void) {
+	tMutexLock lock(sendMutex);
 	DBG(3, "tNetSession::resetMsgCounters\n");
 	clientMsg.pfr=0;
 	clientMsg.ps=0;
@@ -199,7 +200,8 @@ tNetSessionIte tNetSession::getIte() {
 /**
 	puts the message in the session's send queue
 */
-void tNetSession::send(tmBase &msg, tNetTimeDiff delay) { // FIXME make thread-safe
+void tNetSession::send(tmBase &msg, tNetTimeDiff delay) {
+	tMutexLock lock(sendMutex);
 #if _DBG_LEVEL_ < 1
 	if (!(msg.bhflags & UNetAckReply))
 #endif
@@ -458,13 +460,18 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 	}
 	
 	// fix the problem that happens every 15-30 days of server uptime - but only if sndq is empty, or we will loose packets
-	if (!anythingToSend() && (serverMsg.sn>=8378608 || msg->sn>=8378608)) { // 8378608 = 2^23 - 10000
-		net->log->log("%s WARN: Congratulations! You have reached the maxium allowed sequence number, don't worry, this is not an error\n", str().c_str());
-		net->log->flush();
-		resetMsgCounters();
-		nego_stamp.setToNow();
-		renego_stamp.seconds=0;
-		negotiate();
+	{
+		sendMutex.lock();
+		uint32_t sn = serverMsg.sn;
+		sendMutex.unlock(); // unlock here, because resetMsgCounters will lock again
+		if (!anythingToSend() && (sn>=8378608 || msg->sn>=8378608)) { // 8378608 = 2^23 - 10000
+			net->log->log("%s WARN: Congratulations! You have reached the maxium allowed sequence number, don't worry, this is not an error\n", str().c_str());
+			net->log->flush();
+			resetMsgCounters();
+			nego_stamp.setToNow();
+			renego_stamp.seconds=0;
+			negotiate();
+		}
 	}
 
 	if (msg->tf & UNetAckReply) {
@@ -677,6 +684,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 	net->log->log("<RCV> [%d] %s\n",t.sn,ackMsg.str().c_str());
 #endif
 	tUnetAck *ack;
+	tMutexLock lock(sendMutex);
 	for (tmNetAck::tAckList::iterator it = ackMsg.ackq.begin(); it != ackMsg.ackq.end(); ++it) {
 		ack = *it;
 		A1 = ack->A;
@@ -743,6 +751,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 	
 	tNetTimeDiff timeout = ackSend(); //generate ack messages (i.e. put them from the ackq to the sndq)
 	
+	tMutexLock lock(sendMutex);
 	if (!sndq.empty()) {
 		// cabal control (don't send too muczh at once!)
 		tNetTimeDiff cur_size=0;

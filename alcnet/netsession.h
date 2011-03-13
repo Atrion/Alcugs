@@ -29,6 +29,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETSESSION_H_ID "$Id$"
 
+#include <alcutil/alcthread.h>
 #include "protocol/protocol.h"
 #include "netmsgq.h"
 
@@ -135,7 +136,7 @@ private:
 	uint16_t port; //network order
 	uint32_t sid;
 	char sockaddr[sizeof(struct sockaddr_in)]; // saves the address information of this peer
-	struct { //server message counters
+	struct { //server message counters, protected by send mutex
 		uint32_t pn; //!< the overall packet number
 		uint32_t sn; //!< the message number
 		uint8_t pfr; //!< the fragment number of the last packet I sent which required an ack
@@ -175,7 +176,7 @@ private:
 	
 	// queues
 	tPointerList<tUnetAck> ackq; //!< ack queue, saves acks to be packed - acks do not intersect here, and are sorted by the SNs they ack
-	tPointerList<tUnetUruMsg> sndq; //!<outcomming message queue
+	tPointerList<tUnetUruMsg> sndq; //!<outcomming message queue, protected by send mutex
 	tPointerList<tUnetUruMsg> rcvq; //!< received, but not yet accepted messages
 	
 	// other status variables
@@ -185,6 +186,9 @@ private:
 	
 	uint8_t whoami; //!< peer type
 	bool client; //!< it's a client or a server?
+	
+	// mutexes
+	tMutex sendMutex; //!< protecting serverMsg and sndq
 
 	FORBID_CLASS_COPY(tNetSession)
 };

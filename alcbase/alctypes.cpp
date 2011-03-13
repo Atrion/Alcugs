@@ -43,6 +43,7 @@ namespace md5 {
 #include <cerrno>
 #include <cstdarg>
 #include <cstdlib>
+#include <cassert>
 #include <sys/time.h>
 
 
@@ -136,10 +137,31 @@ void tRefBuf::resize(size_t newsize) {
 	if(b2==NULL) throw txNoMem(_WHERE("NoMem"));
 	buffer=b2;
 }
-void tRefBuf::inc() { refs++; }
+void tRefBuf::inc() { tMutexLock lock(mutex); refs++; }
 void tRefBuf::dec() {
-	if(refs==0) throw txRefErr(_WHERE("RefErr %i-1",refs));
-	refs--;
+	mutex.lock();
+	if(this->refs==0) {
+		mutex.unlock();
+		throw txRefErr(_WHERE("RefErr %i-1",refs));
+	}
+	--this->refs;
+	if(refs==0) {
+		mutex.unlock();
+		delete this; // nobody wants us anymore :( but be sure not to hold the lock when deleting!
+	}
+	else
+		mutex.unlock();
+}
+tRefBuf* tRefBuf::unique(size_t l)
+{
+	tMutexLock lock(mutex);
+	assert(l <= msize);
+	if (refs == 1) return this; // easy case
+	// got to create a new one and copy the data, and decrease our own refcount
+	tRefBuf *newBuf = new tRefBuf(msize);
+	memcpy(newBuf->buffer, buffer, l);
+	--this->refs;
+	return newBuf;
 }
 /* end tRefBuf */
 
@@ -181,17 +203,14 @@ tMBuf::~tMBuf() {
 }
 void tMBuf::getUniqueBuffer(size_t newsize) {
 	DBG(6, "cur size: %Zi, new size: %Zi\n", msize, newsize);
-	if (buf != NULL && buf->getRefs() == 1) { // check if the buffer is large enough
+	if (!buf) {
+		assert(msize == 0);
+		buf = new tRefBuf(newsize+bufferOversize); // get us a new buffer
+	}
+	else {
+		buf = buf->unique(msize); // make sure we are the only ones accessing it
 		if (buf->size() < newsize) buf->resize(newsize+bufferOversize);
-		return;
 	}
-	// make unique copy of us
-	tRefBuf *newbuf = new tRefBuf(std::max(msize,newsize+bufferOversize)); // don't shrink buffer
-	if (buf) { // copy old buffer if there is one
-		memcpy(newbuf->buf(),buf->buf(),msize);
-		buf->dec(); // decrement old buffer's reference
-	}
-	buf = newbuf; // and use the new one
 }
 void tMBuf::copy(const tMBuf &t) {
 	DBG(9,"tMBuf::copy()\n");
@@ -249,10 +268,7 @@ void tMBuf::clear() {
 	off=0;
 	msize=0;
 	if(buf!=NULL) {
-		buf->dec();
-		if(buf->getRefs()<=0) {
-			delete buf;
-		}
+		buf->dec(); // will delete if we are the last
 		buf = NULL;
 	}
 }
