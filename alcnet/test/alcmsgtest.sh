@@ -27,7 +27,7 @@ sleep 0.1 # give it some time to get up
 "$builddir/servers/alcmsgtest" "localhost:$PORT" -f "$FILE" -v 3 ; # wait till it finished
 # kill server
 killall -s INT alcmsgtest
-sleep 0.5 # give it time to go down
+sleep 0.1 # give it time to go down
 TEST="$(pidof alcmsgtest || exit 0)" # avoid stopping the script if pidof fails
 if [ -n "$TEST" ]; then
 	echo "alcmsgtest did not exit within 1.5s"

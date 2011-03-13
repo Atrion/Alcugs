@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2006  The Alcugs Server Team                           *
+*    Copyright (C) 2004-2011  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -110,6 +110,7 @@ namespace alc {
 	
 	bool tUnetLobbyServerBase::setActivePlayer(tNetSession *u, uint32_t ki, uint32_t x, const tString &avatar)
 	{
+		// worker thread only
 		tNetSessionRef client = sessionByKi(ki);
 		if (*client && client->getPeerType() == KClient) { // an age cannot host the same avatar multiple times
 			if (u != *client) // it could be the same session for which the active player is set twice for some reason
@@ -127,8 +128,11 @@ namespace alc {
 		}
 		
 		// save the data
-		u->avatar = avatar;
-		u->ki = ki;
+		{
+			tWriteLock lock(u->pubDataMutex); // don't hold this later on, it'd block the str() function!
+			u->avatar = avatar;
+			u->ki = ki;
+		}
 		
 		// tell tracking
 		tmCustomPlayerStatus trackingStatus(*trackingServer, u, 2 /* visible */, (u->buildType == TIntRel) ? RActive : RJoining); // show the VaultManager as active (it's the only IntRel we have)
@@ -174,6 +178,7 @@ namespace alc {
 				tmCustomPlayerStatus trackingStatus(*trackingServer, u, state, reason);
 				send(trackingStatus);
 			}
+			tWriteLock lock(u->pubDataMutex);
 			u->ki = 0; // this avoids sending the messages twice
 		}
 	}
@@ -220,6 +225,7 @@ namespace alc {
 		if (dst == KTracking) {
 			tString var = cfg->getVar("public_address");
 			if (var.isEmpty()) log->log("WARNING: No public address set, using bind address %s\n", bindaddr.c_str());
+			tReadLock lock(u->pubDataMutex); // we are in main thread
 			tmCustomSetGuid setGuid(*u, alcGetStrGuid(serverGuid), serverName, var, whoami == KGame ? 0 : spawnStart, whoami == KGame ? 0 : spawnStop);
 			send(setGuid);
 		}
@@ -286,32 +292,35 @@ namespace alc {
 				
 				// determine auth result
 				int result = AAuthHello;
-				if (u->max_version < 12) result = AProtocolNewer; // servers are newer
-				else if (u->max_version > 12) result = AProtocolOlder; // servers are older
-				else if (u->min_version > 7) result = AProtocolOlder; // servers are older
-				else if (u->min_version != 6) u->tpots = 2; // it's not TPOTS
-				else if (u->min_version == 6) u->tpots = 1; // it *is* TPOTS
-				// block UU if we're told to do so
-				if (!allowUU && u->tpots == 2) // it's UU, and we are told not to allow that, so tell him the servers are older
-					result = AProtocolOlder;
+				{
+					tWriteLock lock(u->pubDataMutex);
+					if (u->max_version < 12) result = AProtocolNewer; // servers are newer
+					else if (u->max_version > 12) result = AProtocolOlder; // servers are older
+					else if (u->min_version > 7) result = AProtocolOlder; // servers are older
+					else if (u->min_version != 6) u->tpots = 2; // it's not TPOTS
+					else if (u->min_version == 6) u->tpots = 1; // it *is* TPOTS
+					// block UU if we're told to do so
+					if (!allowUU && u->tpots == 2) // it's UU, and we are told not to allow that, so tell him the servers are older
+						result = AProtocolOlder;
+					
+					// init the challenge to the MD5 of the current system time and other garbage
+					tTime t = tTime::now();
+					tMD5Buf md5buffer;
+					md5buffer.put32(t.seconds);
+					md5buffer.put32(t.microseconds);
+					md5buffer.put32(random());
+					md5buffer.put32(alcGetMain()->upTime().seconds);
+					md5buffer.put(authHello.account);
+					md5buffer.put32(alcGetMain()->bornTime().seconds);
+					md5buffer.compute();
+			
+					// save data in session
+					u->name = authHello.account;
+					memcpy(u->challenge, md5buffer.read(16), 16);
+					u->buildType = authHello.release;
+				}
 				
-				// init the challenge to the MD5 of the current system time and other garbage
-				tTime t = tTime::now();
-				tMD5Buf md5buffer;
-				md5buffer.put32(t.seconds);
-				md5buffer.put32(t.microseconds);
-				md5buffer.put32(random());
-				md5buffer.put32(alcGetMain()->upTime().seconds);
-				md5buffer.put(authHello.account);
-				md5buffer.put32(alcGetMain()->bornTime().seconds);
-				md5buffer.compute();
-		
-				// save data in session
-				u->name = authHello.account;
-				memcpy(u->challenge, md5buffer.read(16), 16);
-				u->buildType = authHello.release;
-				
-				// reply with AuthenticateChallenge
+				// reply with AuthenticateChallenge´
 				tmAuthenticateChallenge authChallenge(u, authHello.x, result, u->challenge);
 				send(authChallenge);
 				u->challengeSent();
@@ -363,9 +372,12 @@ namespace alc {
 				
 				// send NetMsgAccountAuthenticated to client
 				if (authResponse.result == AAuthSucceeded) {
-					memcpy(client->uid, authResponse.uid, 16);
-					client->setAuthData(authResponse.accessLevel, authResponse.passwd);
-					client->setTimeout(loadingTimeout); // use higher timeout - the client might be in the lobby (waiting for the user to work with the GUI) or loading an age
+					{
+						tWriteLock lock(client->pubDataMutex);
+						memcpy(client->uid, authResponse.uid, 16);
+						client->setAuthData(authResponse.accessLevel, authResponse.passwd);
+						client->setTimeout(loadingTimeout); // use higher timeout - the client might be in the lobby (waiting for the user to work with the GUI) or loading an age
+					}
 					
 					tmAccountAutheticated accountAuth(*client, authResponse.x, AAuthSucceeded, serverGuid);
 					send(accountAuth);
@@ -375,7 +387,10 @@ namespace alc {
 				else {
 					uint8_t zeroGuid[8]; // only send zero-filled GUIDs to non-authed players
 					memset(zeroGuid, 0, 8);
-					memset(client->uid, 0, 16);
+					{
+						tWriteLock lock(client->pubDataMutex);
+						memset(client->uid, 0, 16); // FIXME is this necessary?
+					}
 					tmAccountAutheticated accountAuth(*client, authResponse.x, authResponse.result, zeroGuid);
 					send(accountAuth);
 					sec->log("%s failed login\n", client->str().c_str());
@@ -409,7 +424,7 @@ namespace alc {
 				}
 				
 				if (u->getAccessLevel() <= AcAdmin) {
-					setActivePlayer(u, setPlayer.ki, setPlayer.x, setPlayer.avatar);
+					setActivePlayer(u, setPlayer.ki, setPlayer.x, setPlayer.avatar); // dont hold the public data lock when calling this!
 				}
 				else {
 					// ask the vault server about this KI
@@ -515,7 +530,7 @@ namespace alc {
 					// do additional processing
 					onVaultMessageForward(u, &parsedMsg);
 					// send it on to vault
-					parsedMsg.tpots = vaultServer->tpots;
+					parsedMsg.tpots = vaultServer->tpots; // be sure to normalize to POTS format
 					tmVault vaultMsgFwd(*vaultServer, u->ki, vaultMsg.x, isTask, &parsedMsg);
 					send(vaultMsgFwd);
 				}
@@ -612,7 +627,6 @@ namespace alc {
 				
 				uint8_t guid[8];
 				alcGetHexGuid(guid, serverFound.serverGuid);
-				
 				tmFindAgeReply reply(*client, serverFound.x, serverFound.ipStr, serverFound.serverPort, serverFound.age, guid);
 				send(reply);
 				

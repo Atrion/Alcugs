@@ -120,7 +120,7 @@ namespace alc {
 	
 	class tmPagingRoom : public tmMsgBase {
 	public:
-		tmPagingRoom(tNetSession *u);
+		tmPagingRoom(tNetSession *u) : tmMsgBase(u) {}
 		virtual void store(tBBuf &t);
 		virtual tString additionalFields(tString dbg) const;
 		// format

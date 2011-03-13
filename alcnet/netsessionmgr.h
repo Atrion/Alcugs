@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2008  The Alcugs Server Team                           *
+*    Copyright (C) 2004-2011  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -114,13 +114,12 @@ private:
 
 class tNetEvent {
 public:
-	tNetEvent(tNetSession *u,int what,tUnetMsg *msg=NULL) : u(u), id(what), msg(msg) {}
-	tNetEvent(int what) { id=what; msg=NULL; }
-	tNetEvent() { id=0; msg=NULL; }
-	~tNetEvent() { if (msg) delete msg; }
+	tNetEvent(tNetSession *u,int what,void *data=NULL) : u(u), id(what), data(data) {}
+	tNetEvent(int what) { id=what; data=NULL; }
+	tNetEvent() { id=0; data=NULL; }
 	tNetSessionRef u;
 	int id;
-	tUnetMsg *msg;
+	void *data;
 
 	FORBID_CLASS_COPY(tNetEvent)
 };

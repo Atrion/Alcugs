@@ -35,9 +35,6 @@
 namespace alc {
 
 	//// tmRequestMyVaultPlayerList
-	tmRequestMyVaultPlayerList::tmRequestMyVaultPlayerList(tNetSession *u) : tmMsgBase(u) // it's not capable of sending
-	{ }
-	
 	void tmRequestMyVaultPlayerList::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);

@@ -114,11 +114,6 @@ bool tAlcUnetMain::onSignal(int s) {
 					alarm(30);
 				}
 				return true;
-			case SIGUSR2:
-				assert(alcGetSelfThreadId() == threadId()); // should only occur in main thread
-				stdLog->log("INF: TERMINATED message sent to all players.\n\n");
-				net->terminatePlayers();
-				return true;
 		}
 	} catch(txBase &t) {
 		errLog->log("FATAL Exception %s\n%s\n",t.what(),t.backtrace()); return true;

@@ -37,10 +37,9 @@
 
 namespace alc {
 
-tmTerminated::tmTerminated(tNetSession * u,uint32_t who,uint8_t what)
- :tmMsgBase(NetMsgTerminated,plNetKi | plNetAck,u) {
-	DBG(5,"tmTerminated() who:%i,what:%i\n",who,what);
-	ki=who;
+tmTerminated::tmTerminated(tNetSession * u,uint8_t what)
+ : tmMsgBase(NetMsgTerminated,plNetKi | plNetAck,u) {
+	ki=u->ki;
 	reason=what;
 }
 void tmTerminated::store(tBBuf &t) {
@@ -57,11 +56,11 @@ tString tmTerminated::additionalFields(tString dbg) const {
 }
 
 
-tmLeave::tmLeave(tNetSession * u,uint32_t ki,uint8_t reason)
+tmLeave::tmLeave(tNetSession * u,uint8_t reason)
  :tmMsgBase(NetMsgLeave,plNetKi|plNetAck,u) {
  /* The Uru client sends the leaves with the ack flag enabled, so we do it, too - but this is problematic:
  The connection is dropped ASAP after sending this message, but the ack reply has to be sent, and it msut not trigger a new connection on the other end */
-	this->ki=ki;
+	this->ki=u->ki;
 	this->reason=reason;
 	setUrgent(); // We can not wait long after sending the message, so do it quickly!
 }

@@ -35,7 +35,7 @@ namespace alc {
 
 	class tmRequestMyVaultPlayerList : public tmMsgBase {
 	public:
-		tmRequestMyVaultPlayerList(tNetSession *u);
+		tmRequestMyVaultPlayerList(tNetSession *u) : tmMsgBase(u) {}
 		virtual void store(tBBuf &t);
 	};
 	

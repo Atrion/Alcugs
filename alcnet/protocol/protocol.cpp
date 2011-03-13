@@ -579,6 +579,7 @@ void tmMsgBase::store(tBBuf &t) {
 		max_version=t.get8();
 		min_version=t.get8();
 		// this overrides existing values
+		tWriteLock lock(u->pubDataMutex);
 		u->max_version=max_version;
 		u->min_version=min_version;
 	} else {

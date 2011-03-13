@@ -207,30 +207,32 @@ bool tUnetBase::isRunning(void)
 
 void tUnetBase::terminate(tNetSession *u, uint8_t reason, bool gotEndMsg)
 {
-	bool wasTerminated = u->isTerminated(); // if the client was already terminated, go ahead and kill it quickly
+	if (u->isTerminated()) {
+		log->log("%s This connection is already terminated, don't wait any longer\n", u->str().c_str());
+		u->terminate(0/*milliseconds*/);
+		return;
+	}
 	if (!reason) reason = u->isClient() ? RKickedOff : RQuitting;
-	if (!wasTerminated && !gotEndMsg) { // don't send message again if we already sent it, or if we got the message from the other side
+	if (!gotEndMsg) { // don't send message again if we already sent it, or if we got the message from the other side
 		if (u->isClient() || u->getPeerType() == KClient) { // a KClient will ignore us sending a leave, so send a terminated even if the roles changed
-			tmTerminated terminated(u,u->ki,reason);
+			tReadLock lock(u->pubDataMutex); // we might be in main thread
+			tmTerminated terminated(u,reason);
 			send(terminated);
 		}
 		else {
-			tmLeave leave(u,u->ki,reason);
+			tReadLock lock(u->pubDataMutex); // we might be in main thread
+			tmLeave leave(u,reason);
 			send(leave);
 		}
 		// Now that we sent that message, the other side must ack it, then tNetSession will set the timeout to 0
 	}
 	
-	if (!wasTerminated) // don't trigger the event twice
-		onConnectionClosing(u, reason);
+	addEvent(new tNetEvent(u, UNET_CONNCLS, new uint8_t(reason)));
 	
-	if (wasTerminated) { // see above, we already sent the message, so don't wait any longer
-		log->log("%s This connection is already terminated, don't wait any longer\n", u->str().c_str());
-		u->terminate(0/*seconds*/);
-	} else { // otherwise, wait some time to send/receive the ack
-		u->terminate(2/*seconds*/);
-		// In the case that the leave is re-sent because the ack was not received, we are in trouble... the other side will see that as a new connection. tNetSession shrinks the timeout when the ack is sent, the rest is waiting time for re-sends */
-	}
+	// wait some time to send/receive the ack
+	u->terminate(500/*milliseconds*/);
+	/* In the case that the leave is re-sent because the ack was not received, we are in trouble... the other side 
+	 * will see that as a new connection. But half a second without incoming msgs should be enough. */
 }
 
 bool tUnetBase::terminateAll(bool playersOnly)
@@ -314,25 +316,30 @@ void tUnetBase::processEvent(tNetEvent *evt)
 				terminate(u);
 			else
 				onNewConnection(u);
-			break;
+			return;
 		case UNET_TIMEOUT:
 			if (u->isTerminated()) { // a destroyed session, close it
 				removeConnection(u);
 			}
-			else {
-				if (!isRunning() || onConnectionTimeout(u))
-					terminate(u, RTimedOut);
-			}
-			break;
+			else if (!isRunning() || onConnectionTimeout(u))
+				terminate(u, RTimedOut);
+			return;
 		case UNET_FLOOD:
 			if (!isRunning() || onConnectionFlood(u)) {
 				terminate(u);
 				alcGetMain()->err()->log("%s kicked due to a Flood Attack\n", u->str().c_str());
 			}
-			break;
+			return;
+		case UNET_CONNCLS:
+		{
+			uint8_t *reason = static_cast<uint8_t *>(evt->data);
+			onConnectionClosing(u, *reason);
+			delete reason;
+			return;
+		}
 		case UNET_MSGRCV:
 		{
-			tUnetMsg * msg = evt->msg;
+			tUnetMsg * msg = static_cast<tUnetMsg *>(evt->data);
 			int ret = 0; // 0 - non parsed; 1 - parsed; 2 - ignored; -1 - parse error; -2 - hack attempt
 			#ifdef ENABLE_MSGDEBUG
 			log->log("%s New MSG Recieved\n",u->str().c_str());
@@ -379,7 +386,8 @@ void tUnetBase::processEvent(tNetEvent *evt)
 				sec->log("%s Unknown error in 0x%04X (%s)\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
 				terminate(u);
 			}
-			break;
+			delete msg; // tNetEvent doesn't know what it is and can not delete it
+			return;
 		}
 		default:
 			throw txBase(_WHERE("%s Unknown Event id %i\n",u->str().c_str(),evt->id));
