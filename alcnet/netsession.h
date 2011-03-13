@@ -119,10 +119,10 @@ public:
 	uint8_t serverGuid[8]; //!< hex; server guid in tracking server
 	tNetSessionData *data; //!< save additional data (e.g. tracking information)
 	
-	// used by lobbybase
+	// used by lobbybase (lobby and game)
 	uint8_t tpots; //!< tpots version 0=undefined, 1=tpots client, 2=non-tpots client
 	uint32_t ki; //!< player set and valid id, otherwise 0
-	uint8_t uid[16]; //!< hex; player uid
+	uint8_t uid[16]; //!< hex; player uid - only set for whoami == KClient
 	tString avatar; //!< peer avatar name if set
 	uint8_t challenge[16]; //!< peer challenge (hex)
 	uint8_t buildType; //!< type of client (internal/external)

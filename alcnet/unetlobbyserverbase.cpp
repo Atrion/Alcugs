@@ -387,10 +387,6 @@ namespace alc {
 				else {
 					uint8_t zeroGuid[8]; // only send zero-filled GUIDs to non-authed players
 					memset(zeroGuid, 0, 8);
-					{
-						tWriteLock lock(client->pubDataMutex);
-						memset(client->uid, 0, 16); // FIXME is this necessary?
-					}
 					tmAccountAutheticated accountAuth(*client, authResponse.x, authResponse.result, zeroGuid);
 					send(accountAuth);
 					sec->log("%s failed login\n", client->str().c_str());

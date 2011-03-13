@@ -38,7 +38,6 @@
 #define SQL_LOG      0x01   // Enable logging
 #define SQL_LOGQ     0x02   // Log sql querys
 #define SQL_CREATEDB 0x04   // Allow db creation if not exists?
-#define SQL_STAYCONN 0x08   // Always stay connected to the database (maintains a persistent link)
 #define SQL_CREATABL 0x10   // Allow to create tables if they don't exist
 
 #include <alctypes.h>
@@ -66,7 +65,7 @@ public:
 	tString escape(const tMBuf &buf); //!< escapes the given data
 	MYSQL_RES *storeResult(void);
 	
-	static uint8_t allFlags(void) { return SQL_LOG | SQL_LOGQ | SQL_CREATEDB | SQL_STAYCONN | SQL_CREATABL; }
+	static uint8_t allFlags(void) { return SQL_LOG | SQL_LOGQ | SQL_CREATEDB | SQL_CREATABL; }
 	static tSQL *createFromConfig(void);
 private:
 	void printError(const char *msg); //!< print the last MySQL error (with the given desctiption) to the error protocol

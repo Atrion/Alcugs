@@ -47,7 +47,7 @@ namespace alc {
 		virtual void onApplyConfig(void) {
 			trackingBackend.applyConfig();
 		}
-		virtual void onIdle() {
+		virtual void onWorkerIdle() {
 			trackingBackend.updateStatusFile();
 		}
 		virtual void onNewConnection(tNetSession * u) {

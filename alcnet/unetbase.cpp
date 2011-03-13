@@ -458,6 +458,8 @@ void tUnetWorkerThread::main(void)
 			}
 			delete evt;
 		}
+		// emptied event queue
+		net->onWorkerIdle();
 		// I don't know how much perforcmance this costs, but without flushing it's not possible to follow the server logs using tail -F
 		net->log->flush();
 		net->err->flush();

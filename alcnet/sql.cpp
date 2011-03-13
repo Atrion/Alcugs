@@ -166,13 +166,6 @@ bool tSQL::query(const tString &str, const char *desc, bool throwOnError)
 	return false;
 }
 
-void tSQL::checkTimeout(void)
-{
-	time_t now = time(NULL);
-	if (!(flags & SQL_STAYCONN) && timeout > 0 && (now-stamp) > timeout)
-		disconnect();
-}
-
 tString tSQL::escape(const char *str)
 {
 	const size_t maxLength = 1024;
@@ -243,9 +236,6 @@ tSQL *tSQL::createFromConfig(void)
 	var = cfg->getVar("db.sql.log");
 	if (var.isEmpty() || !var.asUInt()) // off per default
 		flags &= ~SQL_LOGQ; // disable logging sql statements
-	var = cfg->getVar("db.persinstent");
-	if (!var.isEmpty() && !var.asUInt()) // on per default
-		flags &= ~SQL_STAYCONN; // disable staying always connected
 	var = cfg->getVar("db.timeout");
 	if (!var.isEmpty())
 		timeout = var.asUInt();
