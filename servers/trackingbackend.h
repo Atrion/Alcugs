@@ -38,7 +38,7 @@
 namespace alc {
 	class tUnetBase;
 	class tNetSessionList;
-		
+	
 	class tTrackingData : public tNetSessionData {
 	public:
 		typedef std::list<uint32_t> tPlayerList;
@@ -47,7 +47,7 @@ namespace alc {
 		virtual ~tTrackingData(void);
 		bool isLobby;
 		tNetSession *parent; //!< saves the lobby of a game server, is NULL for lobbys
-		tNetSessionList *children;
+		std::list<tNetSession *> children;
 		uint16_t portStart, portEnd;
 		tString externalIp; //!< the external IP (the ones palyers should use to connect to this server)
 		uint8_t agentGuid[8]; //!< set when isLobby = true, saves the fake guid for UruVision
@@ -106,7 +106,7 @@ namespace alc {
 
 		tPlayerList players;
 		tUnetBase *net;
-		tNetSessionList *servers;
+		std::list<tNetSession *>servers;
 		tLog log;
 		tString host;
 		uint16_t port;

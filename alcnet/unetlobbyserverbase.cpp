@@ -89,18 +89,18 @@ namespace alc {
 	{
 		if (u->getPeerType() == KAuth || u->getPeerType() == KTracking || u->getPeerType() == KVault) { // we got a ping reply from one of our servers, let's forward it to the client it came from
 			if (!ping.hasFlags(plNetSid)) throw txProtocolError(_WHERE("SID flag missing"));
-			tNetSession *client = sessionBySid(ping.sid);
-			if (client) {
-				tmPing pingFwd(client, ping);
+			tNetSessionRef client = sessionBySid(ping.sid);
+			if (*client) {
+				tmPing pingFwd(*client, ping);
 				pingFwd.unsetRouteInfo();
 				send(pingFwd);
 			}
 		}
 		else { // ok, let's forward the ping to the right server
-			tNetSession *server = getServer(ping.destination);
-			if (server) {
-				tmPing pingFwd(server, ping);
-				pingFwd.setRouteInfo(u->getIte());
+			tNetSessionRef server = getServer(ping.destination);
+			if (*server) {
+				tmPing pingFwd(*server, ping);
+				pingFwd.setRouteInfo(u);
 				send(pingFwd);
 			}
 			else
@@ -110,19 +110,18 @@ namespace alc {
 	
 	bool tUnetLobbyServerBase::setActivePlayer(tNetSession *u, uint32_t ki, uint32_t x, const tString &avatar)
 	{
-		tNetSession *client = sessionByKi(ki);
-		if (client && client->getPeerType() == KClient) { // an age cannot host the same avatar multiple times
-			if (u != client) // it could be the same session for which the active player is set twice for some reason
-				terminate(client, RLoggedInElsewhere);
+		tNetSessionRef client = sessionByKi(ki);
+		if (*client && client->getPeerType() == KClient) { // an age cannot host the same avatar multiple times
+			if (u != *client) // it could be the same session for which the active player is set twice for some reason
+				terminate(*client, RLoggedInElsewhere);
 			else
 				err->log("Active player is set twice for %s\n", u->str().c_str());
 		}
 		
 		if (whoami == KGame && avatar.isEmpty()) // empty avatar names are not allowed in game server
 			throw txProtocolError(_WHERE("Someone with KI %d is trying to set an empty avatar name, but I\'m a game server. Kick him.", ki));
-	
-		tNetSession *trackingServer = getServer(KTracking);
-		if (!trackingServer) {
+
+		if (!*trackingServer) {
 			err->log("ERR: I've got to set player %s active, but tracking is unavailable.\n", u->str().c_str());
 			return false;
 		}
@@ -132,7 +131,7 @@ namespace alc {
 		u->ki = ki;
 		
 		// tell tracking
-		tmCustomPlayerStatus trackingStatus(trackingServer, u, 2 /* visible */, (u->buildType == TIntRel) ? RActive : RJoining); // show the VaultManager as active (it's the only IntRel we have)
+		tmCustomPlayerStatus trackingStatus(*trackingServer, u, 2 /* visible */, (u->buildType == TIntRel) ? RActive : RJoining); // show the VaultManager as active (it's the only IntRel we have)
 		send(trackingStatus);
 		
 		// now, tell the client
@@ -145,11 +144,12 @@ namespace alc {
 	
 	void tUnetLobbyServerBase::onConnectionClosing(tNetSession *u, uint8_t reason)
 	{
+		tMutexLock lock(serversMutex);
 		// if it was one of our servers, save the time it went (it will be reconnected later)
-		if (authIte == u) {
-			auth_gone = alcGetTime(); authIte = tNetSessionIte();
+		if (*authServer == u) {
+			auth_gone = alcGetTime(); authServer = NULL;
 		}
-		else if (trackingIte == u) {
+		else if (*trackingServer == u) {
 			if (whoami == KGame && isRunning()) {
 				err->log("ERR: I lost the connection to the tracking server, so I will go down\n");
 				/* The game server should go down when it looses the connection to tracking. This way, you can easily
@@ -157,21 +157,21 @@ namespace alc {
 				stop();
 			}
 			else {
-				tracking_gone = alcGetTime(); trackingIte = tNetSessionIte();
+				tracking_gone = alcGetTime(); trackingServer = NULL;
 			}
 		}
-		else if (vaultIte == u) {
-			vault_gone = alcGetTime(); vaultIte = tNetSessionIte();
+		else if (*vaultServer == u) {
+			vault_gone = alcGetTime(); vaultServer = NULL;
 		}
 		// If it was a client, tell the others it left
 		else if (u->getPeerType() == KClient && u->ki != 0) {
-			tNetSession *trackingServer = getServer(KTracking);
-			if (!trackingServer) {
+			tNetSessionRef trackingServer = getServer(KTracking);
+			if (!*trackingServer) {
 				err->log("ERR: I've got to update a player\'s (%s) status for the tracking server, but it is unavailable.\n", u->str().c_str());
 			}
 			else if (reason != RLoggedInElsewhere) { // if the player went somewhere else, don't remove him from tracking
 				int state = (reason == RLeaving) ? 2 /* visible */ : 0 /* delete */; // if the player just goes on to another age, don't remove him from the list
-				tmCustomPlayerStatus trackingStatus(trackingServer, u, state, reason);
+				tmCustomPlayerStatus trackingStatus(*trackingServer, u, state, reason);
 				send(trackingStatus);
 			}
 			u->ki = 0; // this avoids sending the messages twice
@@ -180,12 +180,13 @@ namespace alc {
 	
 	void tUnetLobbyServerBase::onStart(void)
 	{
-		authIte = reconnectPeer(KAuth);
-		trackingIte = reconnectPeer(KTracking);
-		vaultIte = reconnectPeer(KVault);
+		tMutexLock lock(serversMutex);
+		authServer = reconnectPeer(KAuth);
+		trackingServer = reconnectPeer(KTracking);
+		vaultServer = reconnectPeer(KVault);
 	}
 	
-	tNetSessionIte tUnetLobbyServerBase::reconnectPeer(uint8_t dst)
+	tNetSessionRef tUnetLobbyServerBase::reconnectPeer(uint8_t dst)
 	{
 		tString host, port;
 		tConfig *cfg = alcGetMain()->config();
@@ -205,46 +206,35 @@ namespace alc {
 				break;
 			default:
 				err->log("ERR: Connection to unknown service %d requested\n", dst);
-				return tNetSessionIte();
+				return NULL;
 		}
 		if (host.isEmpty() || port.isEmpty()) {
 			err->log("ERR: Hostname or port for service %d (%s) is missing\n", dst, alcUnetGetDestination(dst));
-			return tNetSessionIte();
+			return NULL;
 		}
 		
-		tNetSessionIte ite = netConnect(host.c_str(), port.asUInt(), 3 /* Alcugs upgraded protocol */, 0, dst);
-		tNetSession *session = sessionByIte(ite);
+		tNetSessionRef u = netConnect(host.c_str(), port.asUInt(), 3 /* Alcugs upgraded protocol */, 0, dst);
 		
 		// sending a NetMsgAlive is not necessary, the netConnect will already start the negotiation process
 		
 		if (dst == KTracking) {
 			tString var = cfg->getVar("public_address");
 			if (var.isEmpty()) log->log("WARNING: No public address set, using bind address %s\n", bindaddr.c_str());
-			tmCustomSetGuid setGuid(session, alcGetStrGuid(serverGuid), serverName, var, whoami == KGame ? 0 : spawnStart, whoami == KGame ? 0 : spawnStop);
+			tmCustomSetGuid setGuid(*u, alcGetStrGuid(serverGuid), serverName, var, whoami == KGame ? 0 : spawnStart, whoami == KGame ? 0 : spawnStop);
 			send(setGuid);
 		}
 		
-		return ite;
+		return u;
 	}
 	
-	tNetSession *tUnetLobbyServerBase::getServer(uint8_t dst)
+	tNetSessionRef tUnetLobbyServerBase::getServer(uint8_t dst)
 	{
-		tNetSession *session = NULL;
+		tMutexLock lock(serversMutex);
+		tNetSessionRef session;
 		switch (dst) {
-			case KAuth:
-				session = sessionByIte(authIte);
-				break;
-			case KTracking:
-				session = sessionByIte(trackingIte);
-				break;
-			case KVault:
-				session = sessionByIte(vaultIte);
-				break;
-		}
-		if (session && !session->isTerminated()) {
-			if (session->getPeerType() == dst) return session;
-			// strange, the session doesn't have the right whoami?? temrinate it!
-			terminate(session);
+			case KAuth: return authServer;
+			case KTracking: return trackingServer;
+			case KVault: return vaultServer;
 		}
 		return NULL;
 	}
@@ -253,19 +243,20 @@ namespace alc {
 	{
 		if (!isRunning()) return;
 		
+		tMutexLock lock(serversMutex);
 		time_t time = alcGetTime();
 		if (auth_gone && auth_gone+5 < time) { // if it went more than 5 sec ago, reconnect
-			authIte = reconnectPeer(KAuth);
+			authServer = reconnectPeer(KAuth);
 			auth_gone = 0;
 		}
 		
 		if (tracking_gone && tracking_gone+5 < time) { // if it went more than 5 sec ago, reconnect
-			trackingIte = reconnectPeer(KTracking);
+			trackingServer = reconnectPeer(KTracking);
 			tracking_gone = 0;
 		}
 		
 		if (vault_gone && vault_gone+5 < time) { // if it went more than 5 sec ago, reconnect
-			vaultIte = reconnectPeer(KVault);
+			vaultServer = reconnectPeer(KVault);
 			vault_gone = 0;
 		}
 	}
@@ -340,12 +331,12 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, authResponse.str().c_str());
 				
 				// send authAsk to auth server
-				tNetSession *authServer = getServer(KAuth);
-				if (!authServer) {
+				tNetSessionRef authServer = getServer(KAuth);
+				if (!*authServer) {
 					err->log("ERR: I've got to ask the auth server about player %s, but it's unavailable.\n", u->str().c_str());
 					return 1;
 				}
-				tmCustomAuthAsk authAsk(authServer, authResponse.x, u->getSid(), u->getIp(), u->name, u->challenge, authResponse.hash.data(), u->buildType);
+				tmCustomAuthAsk authAsk(*authServer, authResponse.x, u->getSid(), u->getIp(), u->name, u->challenge, authResponse.hash.data(), u->buildType);
 				send(authAsk);
 				
 				return 1;
@@ -363,9 +354,9 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, authResponse.str().c_str());
 				
 				// find the client's session
-				tNetSession *client = sessionBySid(authResponse.sid);
+				tNetSessionRef client = sessionBySid(authResponse.sid);
 				// verify account name and session state
-				if (!client || client->getAuthenticated() != 10 || client->getPeerType() != 0 || client->name != authResponse.login) {
+				if (!*client || client->getAuthenticated() != 10 || client->getPeerType() != 0 || client->name != authResponse.login) {
 					err->log("ERR: Got CustomAuthResponse for player %s but can't find his session.\n", authResponse.login.c_str());
 					return 1;
 				}
@@ -376,19 +367,19 @@ namespace alc {
 					client->setAuthData(authResponse.accessLevel, authResponse.passwd);
 					client->setTimeout(loadingTimeout); // use higher timeout - the client might be in the lobby (waiting for the user to work with the GUI) or loading an age
 					
-					tmAccountAutheticated accountAuth(client, authResponse.x, AAuthSucceeded, serverGuid);
+					tmAccountAutheticated accountAuth(*client, authResponse.x, AAuthSucceeded, serverGuid);
 					send(accountAuth);
 					sec->log("%s successful login\n", client->str().c_str());
-					onPlayerAuthed(client);
+					onPlayerAuthed(*client);
 				}
 				else {
 					uint8_t zeroGuid[8]; // only send zero-filled GUIDs to non-authed players
 					memset(zeroGuid, 0, 8);
 					memset(client->uid, 0, 16);
-					tmAccountAutheticated accountAuth(client, authResponse.x, authResponse.result, zeroGuid);
+					tmAccountAutheticated accountAuth(*client, authResponse.x, authResponse.result, zeroGuid);
 					send(accountAuth);
 					sec->log("%s failed login\n", client->str().c_str());
-					terminate(client, RNotAuthenticated);
+					terminate(*client, RNotAuthenticated);
 				}
 				return 1;
 			}
@@ -422,14 +413,14 @@ namespace alc {
 				}
 				else {
 					// ask the vault server about this KI
-					tNetSession *vaultServer = getServer(KVault);
-					if (!vaultServer) {
+					tNetSessionRef vaultServer = getServer(KVault);
+					if (!*vaultServer) {
 						err->log("ERR: I've got the ask the vault to verify a KI, but it's unavailable. I'll have to kick the player.\n", u->str().c_str());
 						// kick the player since we cant be sure he doesnt lie about the KI
 						return -1; // parse error
 					}
 					u->setRejectMessages(true); // dont process any further messages till we verified the KI
-					tmCustomVaultCheckKi checkKi(vaultServer, setPlayer.ki, setPlayer.x, u->getSid(), u->uid);
+					tmCustomVaultCheckKi checkKi(*vaultServer, setPlayer.ki, setPlayer.x, u->getSid(), u->uid);
 					send(checkKi);
 				}
 				
@@ -448,21 +439,21 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, kiChecked.str().c_str());
 				
 				// find the client's session
-				tNetSession *client = sessionBySid(kiChecked.sid);
+				tNetSessionRef client = sessionBySid(kiChecked.sid);
 				// verify GUID and session state
-				if (!client || client->getPeerType() != KClient || u->ki != 0 || memcmp(client->uid, kiChecked.uid, 16) != 0) {
+				if (!*client || client->getPeerType() != KClient || u->ki != 0 || memcmp(client->uid, kiChecked.uid, 16) != 0) {
 					err->log("ERR: Got NetMsgCustomVaultKiChecked for player with UID %s but can't find his session.\n", alcGetStrUid(kiChecked.uid).c_str());
 					return 1;
 				}
 				
 				client->setRejectMessages(false); // KI is checked, so we can process messages
 				if (kiChecked.status != 1) { // the avatar is NOT correct - kick the player
-					terminate(client, RNotAuthenticated);
+					terminate(*client, RNotAuthenticated);
 					return 1;
 				}
 				
 				// it is correct, so tell everyone about it
-				setActivePlayer(client, kiChecked.ki, kiChecked.x, kiChecked.avatar);
+				setActivePlayer(*client, kiChecked.ki, kiChecked.x, kiChecked.avatar);
 				
 				return 1;
 			}
@@ -491,19 +482,19 @@ namespace alc {
 					
 					vaultMsg.message.get(parsedMsg);
 					
-					tNetSession *client = sessionByKi(vaultMsg.ki);
-					if (!client || client->getPeerType() != KClient) {
+					tNetSessionRef client = sessionByKi(vaultMsg.ki);
+					if (!*client || client->getPeerType() != KClient) {
 						lvault.print("<h2 style='color:red'>Packet for unknown client</h2>\n");
 						parsedMsg.print(&lvault, /*clientToServer:*/false, NULL, vaultLogShort);
 						log->log("WARN: I've got a vault message to forward to player with KI %d but can\'t find the session.\n", vaultMsg.ki);
 						return 1;
 					}
-					parsedMsg.print(&lvault, /*clientToServer:*/false, client, vaultLogShort);
+					parsedMsg.print(&lvault, /*clientToServer:*/false, *client, vaultLogShort);
 					// do additional processing
 					onVaultMessageForward(u, &parsedMsg);
 					// send it on to client
 					parsedMsg.tpots = client->tpots;
-					tmVault vaultMsgFwd(client, vaultMsg.ki, vaultMsg.x, isTask, &parsedMsg);
+					tmVault vaultMsgFwd(*client, vaultMsg.ki, vaultMsg.x, isTask, &parsedMsg);
 					send(vaultMsgFwd);
 				}
 				else { // got it from a client
@@ -514,8 +505,8 @@ namespace alc {
 					if (vaultMsg.hasFlags(plNetKi) && vaultMsg.ki != u->ki)
 						throw txProtocolError(_WHERE("KI mismatch (%d != %d)", vaultMsg.ki, u->ki));
 					// forward it to the vault server
-					tNetSession *vaultServer = getServer(KVault);
-					if (!vaultServer) {
+					tNetSessionRef vaultServer = getServer(KVault);
+					if (!*vaultServer) {
 						err->log("ERR: I've got a vault message to forward to the vault server, but it's unavailable.\n", u->str().c_str());
 						return 1;
 					}
@@ -525,7 +516,7 @@ namespace alc {
 					onVaultMessageForward(u, &parsedMsg);
 					// send it on to vault
 					parsedMsg.tpots = vaultServer->tpots;
-					tmVault vaultMsgFwd(vaultServer, u->ki, vaultMsg.x, isTask, &parsedMsg);
+					tmVault vaultMsgFwd(*vaultServer, u->ki, vaultMsg.x, isTask, &parsedMsg);
 					send(vaultMsgFwd);
 				}
 				
@@ -566,12 +557,12 @@ namespace alc {
 				}
 				
 				// Let's ask vault
-				tNetSession *vaultServer = getServer(KVault);
-				if (!vaultServer) {
+				tNetSessionRef vaultServer = getServer(KVault);
+				if (!*vaultServer) {
 					err->log("ERR: I've got the ask the vault server to check an age for me, but it's unavailable.\n");
 					return 1;
 				}
-				tmCustomVaultFindAge vaultFindAge(vaultServer, u->ki, findAge.x, u->getSid(), findAge.message);
+				tmCustomVaultFindAge vaultFindAge(*vaultServer, u->ki, findAge.x, u->getSid(), findAge.message);
 				send(vaultFindAge);
 				
 				return 1;
@@ -589,13 +580,13 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, findServer.str().c_str());
 			
 				// let's ask the tracking server
-				tNetSession *trackingServer = getServer(KTracking);
-				if (!trackingServer) {
+				tNetSessionRef trackingServer = getServer(KTracking);
+				if (!*trackingServer) {
 					err->log("ERR: I've got the ask the tracking server to find an age for me, but it's unavailable.\n");
 					return 1;
 				}
 				
-				tmCustomFindServer trackingFindServer(trackingServer, findServer);
+				tmCustomFindServer trackingFindServer(*trackingServer, findServer);
 				send(trackingFindServer);
 				
 				return 1;
@@ -613,8 +604,8 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, serverFound.str().c_str());
 				
 				// find the client
-				tNetSession *client = sessionBySid(serverFound.sid);
-				if (!client || client->getPeerType() != KClient || client->ki != serverFound.ki) {
+				tNetSessionRef client = sessionBySid(serverFound.sid);
+				if (!*client || client->getPeerType() != KClient || client->ki != serverFound.ki) {
 					err->log("ERR: I've got to tell player with KI %d about his game server, but can't find his session.\n", serverFound.ki);
 					return 1;
 				}
@@ -622,7 +613,7 @@ namespace alc {
 				uint8_t guid[8];
 				alcGetHexGuid(guid, serverFound.serverGuid);
 				
-				tmFindAgeReply reply(client, serverFound.x, serverFound.ipStr, serverFound.serverPort, serverFound.age, guid);
+				tmFindAgeReply reply(*client, serverFound.x, serverFound.ipStr, serverFound.serverPort, serverFound.age, guid);
 				send(reply);
 				
 				return 1;
@@ -641,13 +632,13 @@ namespace alc {
 				msg->data.get(playerTerminated);
 				log->log("<RCV> [%d] %s\n", msg->sn, playerTerminated.str().c_str());
 				
-				tNetSession *client = sessionByKi(playerTerminated.ki);
-				if (!client || (client->getPeerType() != KClient && client->getPeerType() != 0)) {
+				tNetSessionRef client = sessionByKi(playerTerminated.ki);
+				if (!*client || (client->getPeerType() != KClient && client->getPeerType() != 0)) {
 					err->log("ERR: I've got to kick the player with KI %d but can\'t find his session.\n", playerTerminated.ki);
 					return 1;
 				}
 				
-				terminate(client, playerTerminated.reason);
+				terminate(*client, playerTerminated.reason);
 				
 				return 1;
 			}

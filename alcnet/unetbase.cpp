@@ -252,7 +252,7 @@ void tUnetBase::removeConnection(tNetSession *u)
 {
 	sec->log("%s Ended\n",u->str().c_str());
 	tMutexLock lock(smgrMutex);
-	smgr->destroy(u->getIte());
+	smgr->destroy(u);
 }
 
 // main thread loop: handles the socket, fills the working queue, starts and stops threads
@@ -306,8 +306,7 @@ void tUnetBase::run() {
 // worker thread dispatch function
 void tUnetBase::processEvent(tNetEvent *evt)
 {
-	tNetSession *u=sessionByIte(evt->sid);
-if (u == NULL) return; // maybe the session expired since we got the event
+	tNetSession *u=*evt->u;
 	switch(evt->id) {
 		case UNET_NEWCONN:
 			sec->log("%s New Connection\n",u->str().c_str());

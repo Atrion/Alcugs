@@ -39,7 +39,6 @@
 #include "netexception.h"
 #include "protocol/umsgbasic.h"
 #include <alcutil/alclog.h>
-#include <alcutil/alcthread.h>
 #include <alcmain.h>
 
 #include <cassert>
@@ -49,7 +48,7 @@
 namespace alc {
 
 /* Session */
-tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t sid) : maxPacketSz(1024) {
+tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t sid) : maxPacketSz(1024), refs(1) {
 	DBG(5,"tNetSession()\n");
 	assert(alcGetSelfThreadId() == alcGetMain()->threadId()); // FIXME is this correct? will choke if netConnect is called in worker
 	this->net=net;
@@ -59,9 +58,7 @@ tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t s
 	rcv = NULL;
 	init();
 	//new conn event
-	tNetSessionIte ite(ip,port,sid);
-	tNetEvent * evt=new tNetEvent(ite,UNET_NEWCONN);
-	net->addEvent(evt);
+	net->addEvent(new tNetEvent(this,UNET_NEWCONN));
 }
 tNetSession::~tNetSession() {
 	DBG(5,"~tNetSession() (sndq: %Zd messages left)\n", sndq.size());
@@ -191,10 +188,6 @@ tNetTimeDiff tNetSession::timeToSend(size_t psize) {
 		if (cabal) return(((psize*1000)/cabal)*1000);
 		return(((psize*1000)/maxPacketSz)*1000);
 	}
-}
-
-tNetSessionIte tNetSession::getIte() {
-	return(tNetSessionIte(ip,port,sid));
 }
 
 /**
@@ -525,7 +518,7 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 					if(flood_npkts>net->max_flood_pkts) {
 						// send UNET_FLOOD event
 						net->sec->log("%s Flood Attack\n",str().c_str());
-						net->addEvent(new tNetEvent(getIte(),UNET_FLOOD));
+						net->addEvent(new tNetEvent(this,UNET_FLOOD));
 					}
 				}
 			}
@@ -577,7 +570,7 @@ void tNetSession::acceptMessage(tUnetUruMsg *t)
 		rcv->cmd=alcFixUUNetMsgCommand(rcv->data.get16(), this);
 		rcv->data.rewind();
 
-		tNetEvent *evt=new tNetEvent(getIte(), UNET_MSGRCV, rcv);
+		tNetEvent *evt=new tNetEvent(this, UNET_MSGRCV, rcv);
 		net->addEvent(evt);
 		rcv = NULL;
 	}
@@ -787,7 +780,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 						it = sndq.eraseAndDelete(it); // this is the next one
 						//timeout event
 						net->sec->log("%s Timeout (didn't ack a packet)\n", str().c_str());
-						tNetEvent *evt=new tNetEvent(getIte(),UNET_TIMEOUT);
+						tNetEvent *evt=new tNetEvent(this,UNET_TIMEOUT);
 						net->addEvent(evt);
 					} else {
 						DBG(5, "%s sending a %Zi byte acked message %d after time\n", str().c_str(), curmsg->size(), net->passedTimeSince(curmsg->timestamp));
@@ -849,7 +842,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 		// create timeout event
 		if (!isTerminated())
 			net->sec->log("%s Timeout (didn't send a packet for %d seconds)\n",str().c_str(),conn_timeout);
-		net->addEvent(new tNetEvent(getIte(),UNET_TIMEOUT));
+		net->addEvent(new tNetEvent(this,UNET_TIMEOUT));
 		return timeout;
 	}
 	else
@@ -876,6 +869,12 @@ void tNetSession::setAuthData(uint8_t accessLevel, const tString &passwd)
 	this->authenticated = 2; // the player is authenticated!
 	this->accessLevel = accessLevel;
 	this->passwd = passwd; // passwd is needed for validating packets
+}
+
+void tNetSession::decRefs()
+{
+	int refs = __sync_sub_and_fetch(&this->refs, 1);
+	if (refs == 0) delete this; // we are alone :(
 }
 
 /* End session */

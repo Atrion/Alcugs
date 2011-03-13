@@ -58,7 +58,7 @@ protected:
 	/** This event is triggered when a player authenticated itself against the server */
 	virtual void onPlayerAuthed(tNetSession */*u*/) {}
 	
-	tNetSession *getServer(uint8_t dst);
+	tNetSessionRef getServer(uint8_t dst);
 
 	uint8_t serverGuid[8]; //!< This system's guid (age guid) (in Hex)
 	tString serverName; //!< The system/server name, normally the age filename
@@ -69,9 +69,10 @@ protected:
 
 private:
 	bool setActivePlayer(tNetSession *u, uint32_t ki, uint32_t x, const tString &avatar);
-	tNetSessionIte reconnectPeer(uint8_t dst); //!< establishes a connection to that service (remember to set the corresponding gone variable to 0)
+	tNetSessionRef reconnectPeer(uint8_t dst); //!< establishes a connection to that service (remember to set the corresponding gone variable to 0)
 
-	tNetSessionIte authIte, trackingIte, vaultIte;
+	tMutex serversMutex; //!< this protects below server variables
+	tNetSessionRef authServer, trackingServer, vaultServer;
 	time_t auth_gone, tracking_gone, vault_gone; // saves when this server got disconnected. wait 10sec before trying to connect again
 
 	tLog lvault;

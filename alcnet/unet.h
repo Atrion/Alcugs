@@ -32,7 +32,6 @@
 #include "netsessionmgr.h"
 #include "netmsgq.h"
 #include <alctypes.h>
-#include <alcutil/alcthread.h>
 
 #include <netinet/in.h>
 
@@ -95,10 +94,6 @@ public:
 	void setFlags(uint16_t flags) { this->flags |= flags; }
 	void unsetFlags(uint16_t flags) { this->flags &= ~flags; }
 	uint16_t getFlags() { return this->flags; }
-	tNetSession * sessionByIte(tNetSessionIte &t) { //!< (thread-safe)
-		tMutexLock lock(smgrMutex);
-		return (smgr->search(t,false));
-	}
 	void setBindPort(uint16_t lport) { bindport=lport; } //lport in host order
 	void setBindAddress(const tString & lhost) {
 		if(lhost.isEmpty()) bindaddr = "0.0.0.0";
@@ -110,7 +105,7 @@ protected:
 	void startOp();
 	void stopOp();
 	void openLogfiles();
-	tNetSessionIte netConnect(const char * hostname,uint16_t port,uint8_t validation,uint8_t flags,uint8_t peerType=0);
+	tNetSessionRef netConnect(const char * hostname,uint16_t port,uint8_t validation,uint8_t flags,uint8_t peerType=0);
 	void sendAndWait(); //!< send enqueued messages, wait, and receive packets and enqueue them (wait time must be set by processQueues()!)
 	tNetEvent * getEvent(); //!<  (thread-safe)
 	void addEvent(tNetEvent *evt); //!<  (thread-safe)
@@ -124,12 +119,12 @@ protected:
 	
 	virtual bool canPortBeUsed(uint16_t /*port*/) { return false; }
 	
-	tNetSession *sessionBySid(size_t sid) //!< (thread-safe)
+	tNetSessionRef sessionBySid(size_t sid) //!< (thread-safe)
 	{
 		tMutexLock lock(smgrMutex);
 		return smgr->get(sid);
 	}
-	tNetSession *sessionByKi(uint32_t ki) { //!< (thread-safe)
+	tNetSessionRef sessionByKi(uint32_t ki) { //!< (thread-safe)
 		tMutexLock lock(smgrMutex);
 		return smgr->findByKi(ki);
 	}
@@ -153,8 +148,8 @@ protected:
 	tNetTimeDiff max_sleep; //!< maximum time we sleep in the receive function (microseconds) - this is also the maximum time between two OnIdle() callbacks
 
 	unsigned int max; //!< Maxium number of connections (default 0, unlimited)
-	tNetSessionMgr * smgr; //!< session MGR - get below mutex before accessing it! FIXME: apply this everywhere
-	tMutex smgrMutex; //!< must never be taken when event list is already taken!
+	tNetSessionMgr * smgr; //!< session MGR - get below mutex before accessing it, and keep a tNetSessionRef to session pointers you keep after releasing the mutex! FIXME: apply this everywhere
+	tMutex smgrMutex; //!< must never be taken when event list is already taken! Also, if you got a pointer to a session without this lock hold, be sure to have a tNetSessionRef to it, so that it is not deleted
 
 	uint8_t whoami; //!< type of _this_ server
 
