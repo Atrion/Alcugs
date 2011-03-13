@@ -301,9 +301,6 @@ namespace alc {
 	}
 	
 	//// tmPagingRoom
-	tmPagingRoom::tmPagingRoom(tNetSession *u) : tmMsgBase(u)
-	{ }
-	
 	void tmPagingRoom::store(tBBuf &t)
 	{
 		tmMsgBase::store(t);

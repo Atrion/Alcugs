@@ -74,13 +74,11 @@ void parameters_usage() {
 
 class tUnetPing :public tUnetBase {
 public:
-	tUnetPing(const tString & lhost,uint16_t lport=0,bool listen=false,double time=1,int num=5,int flood=1);
+	tUnetPing(const tString & lhost,uint16_t lport,bool listen=false,double time=1,int num=5,int flood=1,uint8_t source=KClient);
 	virtual ~tUnetPing();
 	virtual int onMsgRecieved(tUnetMsg * msg,tNetSession * u);
-	virtual void onLeave(uint8_t reason,tNetSession * u);
 	virtual void onIdle();
 	virtual void onStop();
-	void setSource(uint8_t s);
 	void setDestination(uint8_t d);
 	void setDestinationAddress(const tString &d,uint16_t port);
 	void setValidation(uint8_t val);
@@ -100,13 +98,14 @@ private:
 	tNetSessionRef dstSession;
 	double current;
 	double startup;
-	double rcv;
 	double min,max,avg;
 	int rcvn;
 	bool urgent;
+	
+	tMutex mutex; //!< for all the counting and stuff
 };
 
-tUnetPing::tUnetPing(const tString &lhost,uint16_t lport,bool listen,double time,int num,int flood) :tUnetBase(KClient) {
+tUnetPing::tUnetPing(const tString &lhost,uint16_t lport,bool listen,double time,int num,int flood,uint8_t source) :tUnetBase(source) {
 	this->setBindPort(lport);
 	this->setBindAddress(lhost);
 	this->listen=listen;
@@ -129,9 +128,6 @@ tUnetPing::~tUnetPing() {
 
 }
 
-void tUnetPing::setSource(uint8_t s) {
-	whoami=s;
-}
 void tUnetPing::setDestination(uint8_t d) {
 	destination=d;
 }
@@ -160,12 +156,13 @@ int tUnetPing::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 			tmPing ping(u);
 			msg->data.get(ping);
 			log->log("<RCV> [%d] %s\n", msg->sn, ping.str().c_str());
+			tMutexLock lock(mutex);
 			if(listen==0) {
 				if(*dstSession==u) {
 					current=alcGetCurrentTime();
-					rcv=current-ping.mtime;
-					printf("Pong from %s:%i x=%i dest=%i %s time=%0.3f ms\n",\
-						alcGetStrIp(u->getIp()).c_str(),ntohs(u->getPort()),ping.x,ping.destination,\
+					double rcv=current-ping.mtime;
+					printf("Pong from %s:%i x=%i dest=%i %s time=%0.3f ms\n",
+						alcGetStrIp(u->getIp()).c_str(),ntohs(u->getPort()),ping.x,ping.destination,
 						alcUnetGetDestination(ping.destination),rcv*1000);
 					rcvn++;
 					avg+=rcv;
@@ -173,8 +170,8 @@ int tUnetPing::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 					if(rcv>max) max=rcv;
 				}
 			} else {
-				printf("Ping from %s:%i x=%i dest=%i %s time=%0.3f ms .... pong....\n",\
-					alcGetStrIp(u->getIp()).c_str(),ntohs(u->getPort()),ping.x,ping.destination,\
+				printf("Ping from %s:%i x=%i dest=%i %s time=%0.3f ms .... pong....\n",
+					alcGetStrIp(u->getIp()).c_str(),ntohs(u->getPort()),ping.x,ping.destination,
 					alcUnetGetDestination(ping.destination),ping.mtime*1000);
 				if(urgent) ping.setUrgent();
 				send(ping);
@@ -186,17 +183,11 @@ int tUnetPing::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 	}
 }
 
-void tUnetPing::onLeave(uint8_t reason, tNetSession* u)
-{
-	if(listen!=0) {
-		printf("Leave from %s:%i reason=%i %s\n", alcGetStrIp(u->getIp()).c_str(), ntohs(u->getPort()), reason, alcUnetGetReasonCode(reason));
-	}
-}
-
 void tUnetPing::onIdle() {
 	int i;
 	if(listen==0) {
 
+		tMutexLock lock(mutex);
 		if(count==0) {
 			dstSession=netConnect(d_host.c_str(),d_port,validation,0);
 			current=startup=alcGetCurrentTime();
@@ -207,7 +198,7 @@ void tUnetPing::onIdle() {
 			return;
 		}
 
-		rcv=alcGetCurrentTime();
+		double rcv=alcGetCurrentTime();
 		if((rcv-current)>time || count==0) {
 			if(count<num || num==0 || count==0) {
 				//snd ping message
@@ -335,7 +326,7 @@ int main(int argc,char * argv[]) {
 		
 		if(mrtg) num=1;
 
-		tUnetPing netcore(l_hostname,l_port,listen,time,num,flood);
+		tUnetPing netcore(l_hostname,l_port,listen,time,num,flood,source);
 		if (!nlogs) netcore.unsetFlags(UNET_ELOG);
 
 		while(!listen && hostname.isEmpty()) {
@@ -351,7 +342,6 @@ int main(int argc,char * argv[]) {
 			printf("Waiting for messages... CTR+C stops\n");
 		}
 		
-		netcore.setSource(source);
 		netcore.setDestination(destination);
 		netcore.setDestinationAddress(hostname,port);
 		netcore.setValidation(val);

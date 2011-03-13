@@ -329,6 +329,7 @@ void tUnet::stopOp() {
 }
 
 tNetSessionRef tUnet::netConnect(const char * hostname,uint16_t port,uint8_t validation,uint8_t flags,uint8_t peerType) {
+	assert(alcGetSelfThreadId() == alcGetMain()->threadId());
 	struct hostent *host;
 	host=gethostbyname(hostname);
 	
@@ -499,7 +500,10 @@ void tUnet::sendAndWait() {
 				err->log("%s Recieved invalid Uru message - kicking peer\n", session->str().c_str());
 				err->log(" Exception %s\n%s\n",t.what(),t.backtrace());
 				sec->log("%s Kicked hard due to error in Uru message\n", session->str().c_str());
-				session->terminated = true;
+				{
+					tWriteLock lock(session->prvDataMutex);
+					session->terminated = true;
+				}
 				tMutexLock lock(smgrMutex);
 				smgr->destroy(*session); // no goodbye message or anything, this error was deep on the protocol stack
 			}

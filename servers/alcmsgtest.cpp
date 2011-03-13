@@ -61,11 +61,8 @@ class tmData :public tmMsgBase {
 public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	tmData(tNetSession * u);
-	void setCompressed(void) {
-		setFlags(plNetX);
-		x = data.size();
-	}
+	tmData(tNetSession *u) : tmMsgBase(u) {}
+	tmData(tNetSession * u, bool compressed);
 	void setFirstFragment() {
 		ki |= 1;
 	}
@@ -82,9 +79,14 @@ public:
 	tMBuf data;
 };
 
-tmData::tmData(tNetSession * u)
- :tmMsgBase(NetMsgCustomTest,plNetTimestamp | plNetAck | plNetKi,u) { ki=0; }
+tmData::tmData(tNetSession* u, bool compressed)
+ :tmMsgBase(NetMsgCustomTest,plNetTimestamp | plNetAck | plNetKi,u)
+ {
+	 ki=0;
+	 if (compressed) setFlags(plNetX);
+}
 void tmData::store(tBBuf &t) {
+	x = data.size(); // used when compressed
 	tmMsgBase::store(t);
 	data.clear();
 	size_t remaining = t.remaining();
@@ -158,7 +160,6 @@ tUnetSimpleFileServer::tUnetSimpleFileServer(const tString &lhost,uint16_t lport
 	compressed=false;
 }
 
-
 void tUnetSimpleFileServer::setDestinationAddress(const tString &d,uint16_t port) {
 	d_host=d;
 	d_port=port;
@@ -174,68 +175,69 @@ void tUnetSimpleFileServer::onStart() {
 }
 
 void tUnetSimpleFileServer::onIdle() {
-	if (!listen) {
-		DBG(5, "OnIdle called\n");
-		if (dstSession->isTerminated()) {
-			DBG(5, "seems we lost the connection, ouch - going down\n");
-			stop();
-			return;
-		}
-		if (!sent) {
-			if (!dstSession->isConnected()) return;
-			DBG(5, "Starting to send\n");
-			tFBuf f1(file.c_str());
-			size_t size;
-			bool first = true;
-			while ((size = f1.remaining())) {
-				if (size > maxSize) size = maxSize;
-				tmData data(*dstSession);
-				if (urgent) data.setUrgent();
-				if (first) {
-					data.setFirstFragment();
-					first = false;
-				}
-				data.data.clear();
-				data.data.write(f1.read(size), size);
-				if (f1.eof()) data.setLastFragment();
-				if (compressed) data.setCompressed(); // do this *AFTER* the data is written to the buffer
-				send(data);
+	// onMsgReceive and onIdle are not both processed in the same instance (one for listener, one for sender), so no locking required
+	if (listen) return;
+	DBG(5, "OnIdle called\n");
+	if (dstSession->isTerminated()) {
+		DBG(5, "seems we lost the connection, ouch - going down\n");
+		stop();
+		return;
+	}
+	if (!sent) {
+		if (!dstSession->isConnected()) return;
+		DBG(5, "Starting to send\n");
+		tFBuf f1(file.c_str());
+		size_t size;
+		bool first = true;
+		tReadLock lock(dstSession->pubDataMutex);
+		while ((size = f1.remaining())) {
+			if (size > maxSize) size = maxSize;
+			tmData data(*dstSession, compressed);
+			if (urgent) data.setUrgent();
+			if (first) {
+				data.setFirstFragment();
+				first = false;
 			}
-			sentBytes = compressed ? 0 : f1.size();
-			sent=true;
-			startTime.setToNow();
-		} else if (!dstSession->anythingToSend()) { // message sent, and nothing more left in the buffers
-			if (sentBytes) {
-				tTime diff = tTime::now();
-				diff = diff-startTime;
-				printf("Sent %d Bytes with %f kBit/s in %s\n", sentBytes, sentBytes*8/diff.asDouble()/1000, diff.str(/*relative*/true).c_str());
-			}
-			DBG(5, "Finished, going down\n");
-			stop();
+			data.data.clear();
+			data.data.write(f1.read(size), size);
+			if (f1.eof()) data.setLastFragment();
+			send(data);
 		}
+		sentBytes = compressed ? 0 : f1.size();
+		sent=true;
+		startTime.setToNow();
+	} else if (!dstSession->anythingToSend()) { // message sent, and nothing more left in the buffers
+		if (sentBytes) {
+			tTime diff = tTime::now();
+			diff = diff-startTime;
+			printf("Sent %d Bytes with %f kBit/s in %s\n", sentBytes, sentBytes*8/diff.asDouble()/1000, diff.str(/*relative*/true).c_str());
+		}
+		DBG(5, "Finished, going down\n");
+		stop();
 	}
 }
 
 int tUnetSimpleFileServer::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
+	// onMsgReceive and onIdle are not both processed in the same instance (one for listener, one for sender), so no locking required
+	if (!listen) return 0;
 	switch(msg->cmd) {
 		case NetMsgCustomTest:
-			if (listen) {
-				tmData data(u);
-				msg->data.get(data);
-				log->log("<RCV> [%d] %s\n", msg->sn, data.str().c_str());
-				tFBuf f1;
-				if (data.isFirstFragment())
-					f1.open("rcvmsg.raw","wb");
-				else
-					f1.open("rcvmsg.raw","ab");
-				f1.put(data.data);
-				f1.close();
-				if (data.isLastFragment()) printf("Saved received file to rcvmsg.raw\n");
-			}
+		{
+			tmData data(u);
+			msg->data.get(data);
+			log->log("<RCV> [%d] %s\n", msg->sn, data.str().c_str());
+			tFBuf f1;
+			if (data.isFirstFragment())
+				f1.open("rcvmsg.raw","wb");
+			else
+				f1.open("rcvmsg.raw","ab");
+			f1.put(data.data);
+			f1.close();
+			if (data.isLastFragment()) printf("Saved received file to rcvmsg.raw\n");
 			return 1;
-			break;
+		}
 		default:
-			return !listen;
+			return 0;
 	}
 }
 

@@ -170,11 +170,13 @@ public:
 
 class tmMsgBase :public tmBase {
 public:
-	virtual void store(tBBuf &t);
-	virtual void stream(tBBuf &t) const;
-	tmMsgBase(uint16_t cmd,uint32_t flags,tNetSession * u);
-	tmMsgBase(tNetSession * u);
+	// the comments also apply for the two versions of every sublcass
+	tmMsgBase(uint16_t cmd,uint32_t flags,tNetSession * u); //!< when calling this version of the constructor, hold the public data read lock of the session
+	tmMsgBase(tNetSession * u); //!< thread-safe
 	virtual ~tmMsgBase() {};
+	
+	virtual void store(tBBuf &t); //!< public data read lock must NOT be hold, or it will deadlock!
+	virtual void stream(tBBuf &t) const;
 	void setFlags(uint32_t f);
 	void unsetFlags(uint32_t f);
 	void setUrgent();

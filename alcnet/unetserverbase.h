@@ -1,7 +1,7 @@
 /*******************************************************************************
 *    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2008  The Alcugs Server Team                           *
+*    Copyright (C) 2004-2011  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -42,8 +42,9 @@ public:
 	// we're adding some default behaviour here and subclasses should call this one before doing their own processing
 	virtual int onMsgRecieved(alc::tUnetMsg*msg, alc::tNetSession*u);
 	
-	/** This event is triggered when there is a ping which is not for the current server and could be forwarded */
-	virtual void onForwardPing(tmPing &/*ping*/, tNetSession */*u*/) { }
+	/** This event is triggered when there is a ping which is not for the current server and could be forwarded.
+	 Called in worker thread. */
+	virtual void onForwardPing(tmPing &/*ping*/, tNetSession */*u*/) {}
 };
 
 } //End alc namespace
