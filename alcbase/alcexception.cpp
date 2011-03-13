@@ -36,7 +36,6 @@
 
 #include "alcmain.h"
 #include "alcversion.h"
-#include "alcutil/alcthread.h"
 
 #define __STDC_FORMAT_MACROS
 #include <unistd.h>

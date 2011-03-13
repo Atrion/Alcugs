@@ -61,14 +61,10 @@ namespace alc {
 	private:
 		// first the new types
 		struct tVmgr {
-			tVmgr(uint32_t ki, uint32_t mgr, tNetSessionIte session) {
-				this->ki = ki;
-				this->mgr = mgr;
-				this->session = session;
-			}
+			tVmgr(uint32_t ki, uint32_t mgr, tNetSession* session) : ki(ki), mgr(mgr), session(session) { }
 			uint32_t ki;
 			uint32_t mgr;
-			tNetSessionIte session;
+			tNetSessionRef session;
 		};
 		
 		typedef std::list<tVmgr> tVmgrList;

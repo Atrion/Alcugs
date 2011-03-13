@@ -34,7 +34,6 @@
 #include "alcdefs.h"
 #include "alcmain.h"
 
-#include "alcutil/alcthread.h"
 #include "alcutil/alcparser.h"
 #include "alcexception.h"
 

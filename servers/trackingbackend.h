@@ -36,7 +36,7 @@
 #include <list>
 
 namespace alc {
-	class tUnetBase;
+	class tUnetTrackingServer;
 	class tNetSessionList;
 	
 	class tTrackingData : public tNetSessionData {
@@ -44,7 +44,6 @@ namespace alc {
 		typedef std::list<uint32_t> tPlayerList;
 	
 		tTrackingData(void);
-		virtual ~tTrackingData(void);
 		bool isLobby;
 		tNetSession *parent; //!< saves the lobby of a game server, is NULL for lobbys
 		std::list<tNetSession *> children;
@@ -74,10 +73,9 @@ namespace alc {
 	
 	class tTrackingBackend {
 	public:
-		tTrackingBackend(tUnetBase *net, const tString &host, uint16_t port);
+		tTrackingBackend(tUnetTrackingServer *net, const tString &host, uint16_t port);
 		~tTrackingBackend(void);
 		void applyConfig(void);
-		void setServerManager(tNetSessionList *smgr);
 		
 		void updateStatusFile(void);
 		
@@ -105,8 +103,7 @@ namespace alc {
 		void generateFakeGuid(uint8_t *guid); //!< generates a random 7 bytes fake guid for UruVision
 
 		tPlayerList players;
-		tUnetBase *net;
-		std::list<tNetSession *>servers;
+		tUnetTrackingServer *net;
 		tLog log;
 		tString host;
 		uint16_t port;

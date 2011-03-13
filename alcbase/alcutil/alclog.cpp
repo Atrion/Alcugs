@@ -33,7 +33,6 @@
 #include "alclog.h"
 
 #include "alcos.h"
-#include "alcthread.h"
 #include "alcexception.h"
 #include "alcmain.h"
 

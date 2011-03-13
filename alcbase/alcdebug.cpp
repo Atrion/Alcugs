@@ -32,7 +32,6 @@
 #include "alcdebug.h"
 
 #include "alctypes.h"
-#include "alcutil/alcthread.h"
 
 #define __STDC_FORMAT_MACROS
 #include <cstdarg>
