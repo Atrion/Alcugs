@@ -148,7 +148,7 @@ protected:
 	tNetTimeDiff max_sleep; //!< maximum time we sleep in the receive function (microseconds) - this is also the maximum time between two OnIdle() callbacks
 
 	unsigned int max; //!< Maxium number of connections (default 0, unlimited)
-	tNetSessionMgr * smgr; //!< session MGR - get below mutex before accessing it, and keep a tNetSessionRef to session pointers you keep after releasing the mutex! FIXME: apply this everywhere
+	tNetSessionMgr * smgr; //!< session MGR - get below mutex before accessing it, and keep a tNetSessionRef to session pointers you keep after releasing the mutex!
 	tMutex smgrMutex; //!< must never be taken when event list is already taken! Also, if you got a pointer to a session without this lock hold, be sure to have a tNetSessionRef to it, so that it is not deleted
 
 	uint8_t whoami; //!< type of _this_ server

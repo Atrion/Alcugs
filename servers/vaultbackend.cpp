@@ -218,7 +218,7 @@ namespace alc {
 		tVmgrList::iterator it = vmgrs.begin();
 		while (it != vmgrs.end()) {
 			if (it->ki == status.ki) {
-				if (status.state) it->session = status.getSession()->getIte();
+				if (status.state) it->session = status.getSession();
 				else {
 					it = vmgrs.erase(it);
 					log.log("WARN: Player with KI %d just went offline but still had a vmgr registered... removing it\n", status.ki);
@@ -301,7 +301,7 @@ namespace alc {
 	{
 		for (tVmgrList::iterator it = vmgrs.begin(); it != vmgrs.end(); ++it) {
 			if (it->ki == ki && it->mgr == mgr) {
-				it->session = u->getIte();
+				it->session = u;
 				return it;
 			}
 		}
@@ -451,7 +451,7 @@ namespace alc {
 				if (it != vmgrs.end()) // it is already registered, and findVmgr updated the session, so we have nothing to do
 					break;
 				// if that's not the case, add a new one
-				vmgrs.push_back(tVmgr(ki, mgr, u->getIte()));
+				vmgrs.push_back(tVmgr(ki, mgr, u));
 				break;
 			}
 			case VDisconnect:
@@ -1162,19 +1162,20 @@ namespace alc {
 	{
 		uint32_t *table;
 		size_t tableSize;
-		tNetSession *session;
 		vaultDB->getMGRs(node, &table, &tableSize);
 		DBG(9, "Got interested MGRs\n");
 		// now let's see who gets notified
 		for (tVmgrList::iterator it = vmgrs.begin(); it != vmgrs.end(); ++it) {
 			if (it->mgr == 0 || (it->ki == origKi && it->mgr == origMgr)) continue;
-			session = net->sessionByIte(it->session);
-			if (!session) continue;
+			if (!*it->session || it->session->isTerminated()) {
+				it->session = NULL; // drop the reference to the unusable session
+				continue;
+			}
 			for (size_t j = 0; j < tableSize; ++j) {
 				if (table[j] > it->mgr) break; // the list is in order, we will not find this node in there
 				else if (table[j] < it->mgr) continue;
 				msg.vmgr = it->mgr;
-				send(msg, session, it->ki);
+				send(msg, *it->session, it->ki);
 				break;
 			}
 		}

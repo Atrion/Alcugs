@@ -30,9 +30,8 @@
 #include <alcdefs.h>
 #include "trackingbackend.h"
 
+#include "trackingserver.h"
 #include <netexception.h>
-#include <unetbase.h>
-#include <netsessionmgr.h>
 #include <alcmain.h>
 #include <protocol/umsgbasic.h>
 #include <urutypes/plmessage.h>
@@ -59,12 +58,6 @@ namespace alc {
 		isLobby = false;
 		parent = NULL;
 		portStart = portEnd = 0;
-		children = new tNetSessionList;
-	}
-	
-	tTrackingData::~tTrackingData(void)
-	{
-		delete children;
 	}
 	
 	//// tPlayer
@@ -90,10 +83,9 @@ namespace alc {
 	}
 	
 	//// tTrackingBackend
-	tTrackingBackend::tTrackingBackend(tUnetBase *net, const tString &host, uint16_t port) : host(host)
+	tTrackingBackend::tTrackingBackend(tUnetTrackingServer *net, const tString &host, uint16_t port) : host(host)
 	{
 		// the smgr is created during startOp(), so it can't be set in the constructor or in applyConfig
-		this->servers = NULL;
 		this->net = net;
 		this->port = port;
 		lastUpdate = 0;
@@ -136,11 +128,6 @@ namespace alc {
 		statusFileUpdate = true;
 	}
 	
-	void tTrackingBackend::setServerManager(tNetSessionList *smgr)
-	{
-		servers = smgr;
-	}
-	
 	void tTrackingBackend::findServer(tmCustomFindServer &findServer)
 	{
 		statusFileUpdate = true;
@@ -162,11 +149,14 @@ namespace alc {
 		player->waiting = true;
 		// search for the game server the player needs
 		tNetSession *server = NULL, *game = NULL;
-		servers->rewind();
-		while ((server = servers->getNext())) {
-			if (server->data && memcmp(server->serverGuid, player->awaiting_guid, 8) == 0 && server->name == player->awaiting_age) {
-				game = server; // we found it
-				break;
+		{
+			tMutexLock lock(net->smgrMutex);
+			net->smgr->rewind();
+			while ((server = net->smgr->getNext())) {
+				if (server->data && memcmp(server->serverGuid, player->awaiting_guid, 8) == 0 && server->name == player->awaiting_age) {
+					game = server; // we found it
+					break;
+				}
 			}
 		}
 		if (!game) {
@@ -212,12 +202,15 @@ namespace alc {
 		// search for the lobby with the least load
 		tNetSession *lobby = NULL, *server;
 		size_t load = -1; // biggest existing integer, any real load will be smaller
-		servers->rewind();
-		while ((server = servers->getNext())) {
-			tTrackingData *data = dynamic_cast<tTrackingData*>(server->data);
-			if (data && data->isLobby && data->children->getCount() < load) {
-				lobby = server;
-				load = data->children->getCount();
+		{
+			tMutexLock lock(net->smgrMutex);
+			net->smgr->rewind();
+			while ((server = net->smgr->getNext())) {
+				tTrackingData *data = dynamic_cast<tTrackingData*>(server->data);
+				if (data && data->isLobby && data->children.size() < load) {
+					lobby = server;
+					load = data->children.size();
+				}
 			}
 		}
 		if (!lobby) {
@@ -230,9 +223,8 @@ namespace alc {
 		bool *freePorts = static_cast<bool *>(malloc(nPorts*sizeof(bool)));
 		if (freePorts == NULL) throw txNoMem(_WHERE("NoMem"));
 		for (int i = 0; i < nPorts; ++i) freePorts[i] = true;
-		data->children->rewind();
-		while ((server = data->children->getNext()))
-			freePorts[ntohs(server->getPort()) - data->portStart] = false; // this port is occupied
+		for (std::list<tNetSession *>::iterator it = data->children.begin(); it != data->children.end(); ++it)
+			freePorts[ntohs((*it)->getPort()) - data->portStart] = false; // this port is occupied
 		int lowest;
 		for (lowest = 0; lowest < nPorts; ++lowest) {
 			if (freePorts[lowest]) break; // we found a free one
@@ -287,13 +279,17 @@ namespace alc {
 		alcGetHexGuid(serverGuid, setGuid.serverGuid);
 		// search if another game server for that guid is already running. in that case, ignore this one
 		tNetSession *server;
-		while ((server = servers->getNext())) {
-			if (server == game || !server->data) continue;
-			if (memcmp(server->serverGuid, serverGuid, 8) == 0) {
-				log.log("ERR: There already is a server for guid %s, kicking the new one %s\n", setGuid.serverGuid.c_str(), game->str().c_str());
-				net->terminate(game); // this should usually result in the game server going down
-				log.flush();
-				return;
+		{
+			tMutexLock lock(net->smgrMutex);
+			net->smgr->rewind();
+			while ((server = net->smgr->getNext())) {
+				if (server == game || !server->data) continue;
+				if (memcmp(server->serverGuid, serverGuid, 8) == 0) {
+					log.log("ERR: There already is a server for guid %s, kicking the new one %s\n", setGuid.serverGuid.c_str(), game->str().c_str());
+					net->terminate(game); // this should usually result in the game server going down
+					log.flush();
+					return;
+				}
 			}
 		}
 		
@@ -315,16 +311,19 @@ namespace alc {
 		if (!data->isLobby) { // let's look to which lobby this server belongs
 			tNetSession *lobby = NULL;
 			server = NULL;
-			servers->rewind();
-			while ((server = servers->getNext())) {
-				tTrackingData *data = dynamic_cast<tTrackingData *>(server->data);
-				if (data && data->isLobby && server->getIp() == game->getIp()) {
-					lobby = server;
-					break;
+			{
+				tMutexLock lock(net->smgrMutex);
+				net->smgr->rewind();
+				while ((server = net->smgr->getNext())) {
+					tTrackingData *data = dynamic_cast<tTrackingData *>(server->data);
+					if (data && data->isLobby && server->getIp() == game->getIp()) {
+						lobby = server;
+						break;
+					}
 				}
 			}
 			if (lobby) { // we found the server's lobby
-				static_cast<tTrackingData *>(server->data)->children->add(game); // add the game server to the list of children of that lobby
+				static_cast<tTrackingData *>(server->data)->children.push_back(game); // add the game server to the list of children of that lobby
 				data->parent = lobby;
 			}
 			else
@@ -423,10 +422,8 @@ namespace alc {
 		// remove this server from the list of children of its lobby/from the game server it is the lobby for
 		if (data->isLobby) {
 			// it's children are lobbyless now
-			tNetSession *server;
-			data->children->rewind();
-			while ((server = data->children->getNext())) {
-				tTrackingData *subData = dynamic_cast<tTrackingData *>(server->data);
+			for (std::list<tNetSession *>::iterator it = data->children.begin(); it != data->children.end(); ++it) {
+				tTrackingData *subData = dynamic_cast<tTrackingData *>((*it)->data);
 				if (!subData) throw txUnet(_WHERE("One child of the lobby I'm just deleting is not a game/lobby server"));
 				subData->parent = NULL;
 			}
@@ -434,7 +431,7 @@ namespace alc {
 		else if (data->parent) {
 			tTrackingData *parentData = dynamic_cast<tTrackingData *>(data->parent->data);
 			if (!parentData) throw txUnet(_WHERE("The parent of the game server I'm just deleting is not a game/lobby server"));
-			parentData->children->remove(game);
+			parentData->children.remove(game);
 		}
 	}
 	
@@ -544,8 +541,9 @@ namespace alc {
 			tNetSession *server;
 			fprintf(f,"<h2>Current Server Instances</h2>");
 			fprintf(f, "<table border=\"1\"><tr><th>Age</th><th>GUID</th><th>IP and Port</th></tr>\n");
-			servers->rewind();
-			while ((server = servers->getNext())) {
+			tMutexLock lock(net->smgrMutex);
+			net->smgr->rewind();
+			while ((server = net->smgr->getNext())) {
 				if (server->isTerminated()) continue; // Don't print servers which we are currently disconnecting from
 				if (!server->data) {
 					fprintf(f, "<tr><td colspan=\"2\" style=\"color:red\">Unknown (not a game or lobby server)</td><td>%s:%d</td><tr>\n",
@@ -600,8 +598,9 @@ namespace alc {
 					fprintf(f, "</ServerInfo>\n");
 				fprintf(f, "</Server>\n");
 				fprintf(f, "<Agents>\n");
-				servers->rewind();
-				while ((server = servers->getNext())) {
+				tMutexLock lock(net->smgrMutex);
+				net->smgr->rewind();
+				while ((server = net->smgr->getNext())) {
 					tTrackingData *data = dynamic_cast<tTrackingData *>(server->data);
 					if (!data) continue;
 					if (!data->isLobby && !data->parent) needFake = true;
@@ -651,18 +650,18 @@ namespace alc {
 			}
 			// Game Servers
 			fprintf(f, "<Games>\n");
-				tNetSession *server;
 				if (lobby && data) { // the lobby's children
-					data->children->rewind();
-					while ((server = data->children->getNext())) {
-						tTrackingData *subData = dynamic_cast<tTrackingData *>(server->data);
+					for (std::list<tNetSession *>::iterator it = data->children.begin(); it != data->children.end(); ++it) {
+						tTrackingData *subData = dynamic_cast<tTrackingData *>((*it)->data);
 						if (!subData) continue;
-						printGameXML(f, server, subData);
+						printGameXML(f, *it, subData);
 					}
 				}
 				else { // all game server without lobby
-					servers->rewind();
-					while ((server = servers->getNext())) {
+					tNetSession *server;
+					tMutexLock lock(net->smgrMutex);
+					net->smgr->rewind();
+					while ((server = net->smgr->getNext())) {
 						tTrackingData *subData = dynamic_cast<tTrackingData *>(server->data);
 						if (!subData) continue;
 						if (!subData->isLobby && !subData->parent) printGameXML(f, server, subData);

@@ -32,7 +32,6 @@
 
 #include "netexception.h"
 #include "unetbase.h"
-#include <alcutil/alcthread.h>
 
 #include <csignal>
 #include <unistd.h>

@@ -30,7 +30,6 @@
 
 #include <alcmain.h>
 #include <alcexception.h>
-#include <alcutil/alcthread.h>
 
 #include <iostream>
 

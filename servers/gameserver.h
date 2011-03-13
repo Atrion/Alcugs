@@ -63,6 +63,7 @@ namespace alc {
 		{ // template functions must be in the header so they can be instanciated properly
 			// broadcast message
 			tNetSession *session;
+			tMutexLock lock(smgrMutex);
 			smgr->rewind();
 			while ((session = smgr->getNext())) {
 				if (session->joined && session->ki != msg.ki) {

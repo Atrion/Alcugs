@@ -190,13 +190,13 @@ namespace alc {
 					bcastMemberUpdate(u, /*isJoined*/true);
 				}
 				// update tracking server status
-				tNetSession *trackingServer = getServer(KTracking);
-				if (!trackingServer) {
+				tNetSessionRef trackingServer = getServer(KTracking);
+				if (!*trackingServer) {
 					err->log("ERR: I've got to set player %s to hidden, but tracking is unavailable.\n", u->str().c_str());
 				}
 				else {
 					// tell tracking
-					tmCustomPlayerStatus trackingStatus(trackingServer, u, data->isHidden ? 1 /* invisible */ : 2 /* visible */, RActive);
+					tmCustomPlayerStatus trackingStatus(*trackingServer, u, data->isHidden ? 1 /* invisible */ : 2 /* visible */, RActive);
 					send(trackingStatus);
 				}
 			}
@@ -284,17 +284,17 @@ namespace alc {
 	void tUnetGameServer::onConnectionClosing(alc::tNetSession* u, uint8_t reason)
 	{
 		if (u->getPeerType() == KClient && u->ki != 0) { // if necessary, tell the others about it
-			tNetSession *vaultServer = getServer(KVault);
-			if (!vaultServer) {
+			tNetSessionRef vaultServer = getServer(KVault);
+			if (!*vaultServer) {
 				err->log("ERR: I've got to update a player\'s (%s) status for the vault server, but it is unavailable.\n", u->str().c_str());
 			}
 			else if (reason == RLeaving) { // the player is going on to another age, so he's not really offline
 				// update online time
-				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, alcGetStrGuid(serverGuid), serverName, /* offline but will soon come back */ 2, u->onlineTime());
+				tmCustomVaultPlayerStatus vaultStatus(*vaultServer, u->ki, alcGetStrGuid(serverGuid), serverName, /* offline but will soon come back */ 2, u->onlineTime());
 				send(vaultStatus);
 			}
 			else { // the player really went offline
-				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, "0000000000000000" /* these are 16 zeroes */, "", /* player is offline */0, u->onlineTime());
+				tmCustomVaultPlayerStatus vaultStatus(*vaultServer, u->ki, "0000000000000000" /* these are 16 zeroes */, "", /* player is offline */0, u->onlineTime());
 				send(vaultStatus);
 			}
 			
@@ -332,13 +332,12 @@ namespace alc {
 	void tUnetGameServer::fwdDirectedGameMsg(tmGameMessageDirected &msg)
 	{
 		// look for all recipients
-		tNetSession *session;
 		tmCustomDirectedFwd::tRecList::iterator it = msg.recipients.begin();
 		while (it != msg.recipients.end()) {
-			session = smgr->findByKi(*it);
-			if (session && session->ki) { // forward messages to all players which have their KI set - even if they are still linking
+			tNetSessionRef session = sessionByKi(*it);
+			if (*session && session->ki) { // forward messages to all players which have their KI set - even if they are still linking
 				if (session->ki != msg.ki) { // don't send it back to the sender
-					tmGameMessageDirected fwdMsg(session, msg);
+					tmGameMessageDirected fwdMsg(*session, msg);
 					send(fwdMsg);
 				}
 				it = msg.recipients.erase(it); // next one
@@ -353,6 +352,7 @@ namespace alc {
 		tGameData *data = dynamic_cast<tGameData *>(u->data);
 		if (!data) return;
 		tNetSession *session;
+		tMutexLock lock(smgrMutex);
 		smgr->rewind();
 		while ((session = smgr->getNext())) {
 			if (session == u) continue;
@@ -409,6 +409,7 @@ namespace alc {
 	bool tUnetGameServer::checkIfOnlyPlayer(tNetSession *u)
 	{
 		tNetSession *session;
+		tMutexLock lock(smgrMutex);
 		smgr->rewind();
 		while ((session = smgr->getNext())) {
 			if (session->getPeerType() == KClient && session != u) {
@@ -426,13 +427,13 @@ namespace alc {
 		// search for another owner
 		if (page->players.size()) {
 			uint32_t newOwner = *page->players.begin();
-			tNetSession *session = smgr->findByKi(newOwner);
-			if (!session) {
+			tNetSessionRef session = sessionByKi(newOwner);
+			if (!*session) {
 				// very strange, the player is on the list but not connected anymore?
 				throw txUnet(_WHERE("Player %d is on list of players who loaded page %s, but not connected anymore", newOwner, page->name.c_str()));
 			}
 			page->owner = newOwner;
-			tmGroupOwner groupOwner(session, page, true/*is owner*/);
+			tmGroupOwner groupOwner(*session, page, true/*is owner*/);
 			send(groupOwner);
 		}
 		else {
@@ -446,6 +447,7 @@ namespace alc {
 		if (linkingOutIdle && msg->cmd == NetMsgFindAge) {
 			// he is going to leave soon - make sure everyone is idle for him
 			tNetSession *session;
+			tMutexLock lock(smgrMutex);
 			smgr->rewind();
 			while ((session = smgr->getNext())) {
 				if (session == u) continue;
@@ -481,14 +483,14 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, joinReq.str().c_str());
 				
 				// the player is joined - tell tracking and (perhaps) vault
-				tNetSession *trackingServer = getServer(KTracking), *vaultServer = getServer(KVault);
-				if (!trackingServer || !vaultServer) {
+				tNetSessionRef trackingServer = getServer(KTracking), vaultServer = getServer(KVault);
+				if (!*trackingServer || !*vaultServer) {
 					err->log("ERR: Player %s is joining, but vault or tracking is unavailable.\n", u->str().c_str());
 					return 1;
 				}
-				tmCustomPlayerStatus trackingStatus(trackingServer, u, 2 /* visible */, RActive);
+				tmCustomPlayerStatus trackingStatus(*trackingServer, u, 2 /* visible */, RActive);
 				send(trackingStatus);
-				tmCustomVaultPlayerStatus vaultStatus(vaultServer, u->ki, alcGetStrGuid(serverGuid), serverName, 1 /* is online */, 0 /* don't increase online time now, do that on disconnect */);
+				tmCustomVaultPlayerStatus vaultStatus(*vaultServer, u->ki, alcGetStrGuid(serverGuid), serverName, 1 /* is online */, 0 /* don't increase online time now, do that on disconnect */);
 				send(vaultStatus);
 				
 				// ok, tell the client he successfully joined
@@ -548,6 +550,7 @@ namespace alc {
 				
 				// send members list
 				tmMembersList list(u);
+				tMutexLock lock(smgrMutex);
 				list.members.reserve(smgr->getCount()); // avoid moving the member info structs
 				tNetSession *session;
 				smgr->rewind();
@@ -661,12 +664,12 @@ namespace alc {
 				
 				if (gameMsg.recipients.size()) { // we did not yet reach all recipients
 					// this is a more reliable method to know whether to forward messages to tracking - the alternative would be the plNetDirected flag
-					tNetSession *trackingServer = getServer(KTracking);
-					if (!trackingServer) {
+					tNetSessionRef trackingServer = getServer(KTracking);
+					if (!*trackingServer) {
 						err->log("ERR: I've got to to forward a message through the tracking server, but it's unavailable.\n");
 						return 1;
 					}
-					tmCustomDirectedFwd fwdMsg(trackingServer, gameMsg);
+					tmCustomDirectedFwd fwdMsg(*trackingServer, gameMsg);
 					send(fwdMsg);
 				}
 				

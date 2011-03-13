@@ -134,6 +134,7 @@ tNetSession *tNetSessionMgr::findByKi(uint32_t ki)
 
 void tNetSessionMgr::destroy(tNetSession *u) {
 	assert(u && u->getSid() < size && table[u->getSid()] == u);
+	assert(u->isTerminated());
 	remove(u);
 	u->decRefs();
 }

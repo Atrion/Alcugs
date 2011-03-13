@@ -30,7 +30,6 @@
 #define __U_UNETBASE_H_ID "$Id$"
 
 #include "unet.h"
-#include <alcutil/alcthread.h>
 
 namespace alc {
 
