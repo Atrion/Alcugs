@@ -82,10 +82,8 @@ void tThread::spawn() {
 	spawned=true;
 }
 void tThread::join() {
-	if(!spawned) return;
-	if(pthread_join(id,NULL)!=0) {
-		throw txBase(_WHERE("error joining thread"));
-	}
+	if (!spawned) return;
+	if (pthread_join(id,NULL)!=0) throw txBase(_WHERE("error joining thread"));
 	spawned=false;
 }
 
@@ -94,41 +92,52 @@ tMutex::tMutex()
 	static pthread_mutexattr_t attr;
 	static bool attrInited = false;
 	if (!attrInited) {
-		if (pthread_mutexattr_init (&attr))
-			throw txBase(_WHERE("error creating mutex attribute"));
+		if (pthread_mutexattr_init (&attr)) throw txBase(_WHERE("error creating mutex attribute"));
 #ifndef NDEBUG
-		if (pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK_NP))
-			throw txBase(_WHERE("error setting mutex attribute"));
+		if (pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK_NP)) throw txBase(_WHERE("error setting mutex attribute"));
 #endif
 		attrInited = true;
 	}
-	if (pthread_mutex_init(&id, &attr))
-		throw txBase(_WHERE("error creating mutex"));
+	if (pthread_mutex_init(&id, &attr)) throw txBase(_WHERE("error creating mutex"));
 }
 tMutex::~tMutex() {
-	if(pthread_mutex_destroy(&id)) {
-		throw txBase(_WHERE("error destroying mutex"));
-	}
+	if(pthread_mutex_destroy(&id)) throw txBase(_WHERE("error destroying mutex"));
 }
 void tMutex::lock() {
-	if(pthread_mutex_lock(&id)) {
-		throw txBase(_WHERE("cannot lock mutex"));
-	}
+	if(pthread_mutex_lock(&id)) throw txBase(_WHERE("cannot lock mutex"));
 }
 bool tMutex::trylock() {
 	int retval;
 	retval=pthread_mutex_trylock(&id);
 	if(retval==EBUSY) return false;
-	if(retval!=0) {
-		throw txBase(_WHERE("cannot trylock mutex"));
-	}
+	if(retval!=0) throw txBase(_WHERE("cannot trylock mutex"));
 	return true;
 }
 void tMutex::unlock() {
-	if(pthread_mutex_unlock(&id)) {
-		throw txBase(_WHERE("cannot unlock mutex"));
-	}
+	if(pthread_mutex_unlock(&id)) throw txBase(_WHERE("cannot unlock mutex"));
 }
+
+tReadWriteEx::tReadWriteEx()
+{
+	if (pthread_rwlock_init(&id, NULL)) throw txBase(_WHERE("Error creating read-write lock"));
+}
+tReadWriteEx::~tReadWriteEx()
+{
+	if (pthread_rwlock_destroy(&id)) throw txBase(_WHERE("Error destroying read-write lock"));
+}
+void tReadWriteEx::read()
+{
+	if (pthread_rwlock_rdlock(&id)) throw txBase(_WHERE("Error read-locking"));
+}
+void tReadWriteEx::write()
+{
+	if (pthread_rwlock_wrlock(&id)) throw txBase(_WHERE("Error write-locking"));
+}
+void tReadWriteEx::unlock()
+{
+	if (pthread_rwlock_unlock(&id)) throw txBase(_WHERE("Error unlocking read-write lock"));
+}
+
 
 } //end namespace alc
 
