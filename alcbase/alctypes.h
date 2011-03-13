@@ -34,6 +34,7 @@
 #define __U_ALCTYPES_H_ID "$Id$"
 
 #include "alcutil/useful.h"
+#include "alcutil/alcthread.h"
 
 #include <cstdio>
 #include <cstring>
@@ -155,10 +156,11 @@ public:
 	void inc();
 	void dec();
 	size_t size() { return msize; }
-	unsigned int getRefs() { return refs; }
 	uint8_t *buf() { return static_cast<uint8_t*>(buffer); }
 	const uint8_t *buf() const { return static_cast<const uint8_t*>(buffer); }
+	tRefBuf *unique(size_t l); //!< returns a pointer to a ref buf with the same conent as this one, but not shared with anyone else. The parameter says how many bytes of the content are really interesting, i.e. need to be copied.
 private:
+	tMutex mutex;
 	unsigned int refs;
 	size_t msize;
 	void *buffer;

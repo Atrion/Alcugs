@@ -537,7 +537,8 @@ tNetTimeDiff tUnet::processSendQueues() {
 }
 
 /** sends the message (internal use only)
-An uru message can only be 253952 bytes in V0x01 & V0x02 and 254976 in V0x00 */
+An uru message can only be 253952 bytes in V0x01 & V0x02 and 254976 in V0x00
+Call only with the sendMutex of that session locked! */
 void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg)
 {
 	assert(alcGetSelfThreadId() == alcGetMain()->threadId());

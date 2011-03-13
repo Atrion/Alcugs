@@ -33,7 +33,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_ALCTHREAD_H_ID "$Id$"
 
-#include "alctypes.h"
+#include "useful.h"
 
 namespace alc {
 
