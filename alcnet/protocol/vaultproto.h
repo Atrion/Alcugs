@@ -351,8 +351,8 @@ namespace alc {
 		tvItem(uint8_t id, const tString &str);
 		tvItem(tvCreatableStream *stream);
 		tvItem(uint8_t id, tvNodeRef *ref);
-		tvItem(uint8_t tpots) : tvBase() { this->tpots = tpots; data = NULL; }
-		virtual ~tvItem(void) { if (data) delete data; }
+		tvItem(bool UUFormat) : tvBase(), UUFormat(UUFormat), data(NULL) {}
+		virtual ~tvItem(void) { delete data; }
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual void asHtml(tLog *log, bool shortLog);
@@ -364,7 +364,7 @@ namespace alc {
 		tvNodeRef *asNodeRef(void) const;
 		tvAgeLinkStruct *asAgeLink(void) const;
 		
-		uint8_t tpots; // 2: generate/parse for non-TPOTS client, everything else: for TPOTS client or the vault server
+		bool UUFormat; //!< stores whether the packet is stored and streamed in POTS or UU format
 		// format
 		uint8_t id;
 		uint16_t type;
@@ -376,7 +376,7 @@ namespace alc {
 	public:
 		tvMessage(const tvMessage &msg);
 		tvMessage(uint8_t cmd, bool task = false);
-		tvMessage(bool isTask, uint8_t tpots) : tvBase() { task = isTask; this->tpots = tpots; }
+		tvMessage(bool isTask, bool UUFormat) : tvBase(), UUFormat(UUFormat), task(isTask) {}
 		virtual ~tvMessage(void);
 		virtual void store(tBBuf &t); //!< unpacks the message
 		virtual void stream(tBBuf &t) const;
@@ -386,7 +386,7 @@ namespace alc {
 		
 		typedef std::vector<tvItem *> tItemList; // to avoid re-allocating and since tvItems can't be copied, this is a vector of pointers
 		
-		uint8_t tpots; // 2: generate/parse for non-TPOTS client, everything else: for TPOTS client or the vault server
+		bool UUFormat; //!< stores whether the packet is stored and streamed in POTS or UU format
 		// format
 		bool task;
 		uint8_t cmd; //!< the vault command

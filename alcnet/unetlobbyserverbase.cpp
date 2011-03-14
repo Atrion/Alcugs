@@ -294,10 +294,10 @@ namespace alc {
 					if (u->max_version < 12) result = AProtocolNewer; // servers are newer
 					else if (u->max_version > 12) result = AProtocolOlder; // servers are older
 					else if (u->min_version > 7) result = AProtocolOlder; // servers are older
-					else if (u->min_version != 6) u->tpots = 2; // it's not TPOTS
-					else if (u->min_version == 6) u->tpots = 1; // it *is* TPOTS
+					else if (u->min_version != 6) u->gameType = tNetSession::UUGame; // it's not TPOTS (assume UU)
+					else if (u->min_version == 6) u->gameType = tNetSession::POTSGame; // it *is* TPOTS
 					// block UU if we're told to do so
-					if (!allowUU && u->tpots == 2) // it's UU, and we are told not to allow that, so tell him the servers are older
+					if (!allowUU && u->gameType == tNetSession::UUGame) // it's UU, and we are told not to allow that, so tell him the servers are older
 						result = AProtocolOlder;
 					
 					// init the challenge to the MD5 of the current system time and other garbage
@@ -480,7 +480,7 @@ namespace alc {
 				else vaultMsg.x = 0; // make sure it is set
 				
 				// prepare for parsing the message (actual parsing is only done when the packet is really forwarded)
-				tvMessage parsedMsg(/*isTask:*/isTask, u->tpots);
+				tvMessage parsedMsg(/*isTask:*/isTask, u->gameType == tNetSession::UUGame);
 				vaultMsg.message.rewind();
 				
 				if (u->getPeerType() == KVault) { // got it from the vault - send it to the client
@@ -499,7 +499,7 @@ namespace alc {
 					// do additional processing
 					onVaultMessageForward(u, &parsedMsg);
 					// send it on to client
-					parsedMsg.tpots = client->tpots;
+					parsedMsg.UUFormat = client->gameType == tNetSession::UUGame;
 					tmVault vaultMsgFwd(*client, vaultMsg.ki, vaultMsg.x, isTask, &parsedMsg);
 					send(vaultMsgFwd);
 				}
@@ -520,7 +520,7 @@ namespace alc {
 					// do additional processing
 					onVaultMessageForward(u, &parsedMsg);
 					// send it on to vault
-					parsedMsg.tpots = vaultServer->tpots; // be sure to normalize to POTS format
+					parsedMsg.UUFormat = false; // be sure to normalize to POTS format
 					tmVault vaultMsgFwd(*vaultServer, u->ki, vaultMsg.x, isTask, &parsedMsg);
 					send(vaultMsgFwd);
 				}

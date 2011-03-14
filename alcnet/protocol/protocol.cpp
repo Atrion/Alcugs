@@ -238,7 +238,7 @@ int alcUruValidatePacket(uint8_t * buf,int n,uint8_t * validation,bool authed,co
 uint16_t alcFixUUNetMsgCommand(uint16_t cmd, const tNetSession *u)
 {
 	// we might have to fix the message type
-	if (u->tpots == 2
+	if (u->gameType == tNetSession::UUGame
 			&& (cmd == NetMsgVault_UU || cmd == NetMsgPython_UU || cmd == NetMsgSetTimeout_UU || cmd == NetMsgActivePlayerSet_UU))
 		return cmd+1; // these values are incremented by 1 in TPOTS (remember to also update tmMsgBase::stream!)
 	return cmd;
@@ -647,7 +647,7 @@ void tmMsgBase::stream(tBBuf &t) const {
 		throw txProtocolError(_WHERE("Custom flags must only be sent to Alcugs servers"));
 	
 	// fix for UU clients
-	if (u->tpots == 2 && (cmd == NetMsgVault || cmd == NetMsgPython || cmd == NetMsgSetTimeout || cmd == NetMsgActivePlayerSet))
+	if (u->gameType == tNetSession::UUGame && (cmd == NetMsgVault || cmd == NetMsgPython || cmd == NetMsgSetTimeout || cmd == NetMsgActivePlayerSet))
 		t.put16(cmd-1); // these are incremented by 1 in POTS (remember to also update alcFixUUNetMsgCommand!)
 	else
 		t.put16(cmd);

@@ -56,20 +56,7 @@ tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t s
 	this->port=port;
 	this->sid=sid;
 	rcv = NULL;
-	init();
-	//new conn event
-	net->addEvent(new tNetEvent(this,UNET_NEWCONN));
-}
-tNetSession::~tNetSession() {
-	DBG(5,"~tNetSession() (sndq: %Zd messages left)\n", sndq.size());
-	delete data;
-	delete rcv;
-}
-void tNetSession::init() {
-	DBG(5,"init()\n");
-	/*ip=0;
-	port=0;
-	sid=-1;*/
+	// fill in default values
 	validation=0;
 	authenticated=0;
 	accessLevel=0;
@@ -91,16 +78,25 @@ void tNetSession::init() {
 	assert(serverMsg.pn==0);
 	rejectMessages=false;
 	whoami=0;
-	max_version=0;
-	min_version=0;
-	tpots=0;
-	ki=0;
 	client = true;
 	terminated = false;
+	
+	// public data
+	max_version=0;
+	min_version=0;
+	gameType=UnknownGame;
+	ki=0;
 	data = NULL;
 	joined = false;
 	
 	DBG(5, "%s Initial msg_timeout: %d\n", str().c_str(), msg_timeout);
+	//new conn event
+	net->addEvent(new tNetEvent(this,UNET_NEWCONN));
+}
+tNetSession::~tNetSession() {
+	DBG(5,"~tNetSession() (sndq: %Zd messages left)\n", sndq.size());
+	delete data;
+	delete rcv;
 }
 void tNetSession::resetMsgCounters(void) {
 	tMutexLock lock(sendMutex);

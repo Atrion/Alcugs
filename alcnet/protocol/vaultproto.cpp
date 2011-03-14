@@ -970,7 +970,7 @@ namespace alc {
 		}
 		type = t.get16();
 		// it's Until Uru, use other type IDs (some are incremented by 1 in POTS) - remember to also update tvItem::stream!
-		if (tpots == 2 && (type == plVaultNode_UU || type == plVaultNodeRef_UU)) ++type;
+		if (UUFormat && (type == plVaultNode_UU || type == plVaultNodeRef_UU)) ++type;
 		
 		if (data) delete data;
 		switch (type) {
@@ -1005,7 +1005,7 @@ namespace alc {
 		t.put8(0); // unknown
 		uint16_t sentType = type;
 		// it's Until Uru, use other type IDs (some are incremented by 1 in POTS) - remember to also update tvItem::store!
-		if (tpots == 2 && (sentType == plVaultNode || sentType == plVaultNodeRef)) --sentType;
+		if (UUFormat && (sentType == plVaultNode || sentType == plVaultNodeRef)) --sentType;
 		t.put16(sentType);
 		t.put(*data);
 	}
@@ -1068,7 +1068,7 @@ namespace alc {
 	
 	tvMessage::tvMessage(uint8_t cmd, bool task)
 	{
-		tpots = 0;
+		UUFormat = false;
 		this->task = task;
 		this->cmd = cmd;
 		compress = false;
@@ -1086,7 +1086,7 @@ namespace alc {
 	
 	const tvMessage &tvMessage::operator=(const tvMessage &msg)
 	{
-		tpots = 0;
+		UUFormat = false;
 		task = msg.task;
 		cmd = msg.cmd;
 		compress = false;
@@ -1131,7 +1131,7 @@ namespace alc {
 		items.clear();
 		items.reserve(numItems);
 		for (uint16_t i = 0; i < numItems; ++i) {
-			tvItem *item = new tvItem(tpots);
+			tvItem *item = new tvItem(UUFormat);
 			buf->get(*item);
 			items.push_back(item);
 		}
@@ -1173,7 +1173,7 @@ namespace alc {
 		tMBuf buf; // this should be created on the stack to avoid leaks when there's an exception
 		buf.put16(items.size());
 		for (tItemList::const_iterator it = items.begin(); it != items.end(); ++it) {
-			(*it)->tpots = tpots; // make sure the right TPOTS value is used
+			(*it)->UUFormat = UUFormat; // make sure the right TPOTS value is used
 			buf.put(**it);
 		}
 		

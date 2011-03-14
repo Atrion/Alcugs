@@ -277,6 +277,7 @@ namespace alc {
 	{
 		// a new player connected, so we are no longer alone
 		// we have to do this when the player authenticates because it will download the age before joining, in which time the auto-kill could already stop the server
+		tMutexLock lock(autoShutdownMutex);
 		lastPlayerLeft = 0;
 	}
 	
@@ -298,7 +299,10 @@ namespace alc {
 			
 			// check if this was the last player
 			bool lastPlayer = checkIfOnlyPlayer(u);
-			lastPlayerLeft = lastPlayer ? alcGetTime() : 0;
+			{
+				tMutexLock lock(autoShutdownMutex);
+				lastPlayerLeft = lastPlayer ? alcGetTime() : 0;
+			}
 			
 			// remove leftovers of this player from the age state
 			ageState->removePlayer(u);
@@ -316,7 +320,10 @@ namespace alc {
 				removePlayerFromPage(&it->second, u->ki);
 			
 			// this player is no longer joined
-			u->joined = false;
+			{
+				tWriteLock lock(u->pubDataMutex);
+				u->joined = false;
+			}
 			
 			if (lastPlayer && resetStateWhenEmpty) { // reset age state, this was the last player
 				resetStateWhenEmpty = false;
@@ -395,9 +402,12 @@ namespace alc {
 
 	void tUnetGameServer::onIdle()
 	{
-		if (lingerTime && lastPlayerLeft && lastPlayerLeft + lingerTime < alcGetTime()) {
-			log->log("The last player left more than %d sec ago, so I will go down.\n", lingerTime);
-			stop(); // no player for some time, so go down
+		{
+			tMutexLock lock(autoShutdownMutex);
+			if (lingerTime && lastPlayerLeft && lastPlayerLeft + lingerTime < alcGetTime()) {
+				log->log("The last player left more than %d sec ago, so I will go down.\n", lingerTime);
+				stop(); // no player for some time, so go down
+			}
 		}
 		tUnetLobbyServerBase::onIdle();
 	}
@@ -485,7 +495,10 @@ namespace alc {
 				send(vaultStatus);
 				
 				// ok, tell the client he successfully joined
-				u->joined = true;
+				{
+					tWriteLock lock(u->pubDataMutex);
+					u->joined = true;
+				}
 				const tStreamable *ageSDLState = ageState->getAgeState();
 				if (ageSDLState) {
 					tmJoinAck joinAck(u, joinReq.x, ageSDLState);
@@ -541,8 +554,8 @@ namespace alc {
 				
 				// send members list
 				tmMembersList list(u);
-				tReadLock lock(smgrMutex);
 				list.members.reserve(smgr->getCount()); // avoid moving the member info structs
+				tReadLock lock(smgrMutex);
 				for (tNetSessionMgr::tIterator it(smgr); it.next();) {
 					if (*it == u) continue;
 					tGameData *data = dynamic_cast<tGameData *>(it->data);
@@ -612,10 +625,10 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, gameMsg.str().c_str());
 				
 				// process contained plasma message
-				if (processGameMessage(&gameMsg.msgStream, u)) return 1;
-				
-				// broadcast message
-				bcastMessage(gameMsg);
+				if (!processGameMessage(&gameMsg.msgStream, u)) {
+					// broadcast message
+					bcastMessage(gameMsg);
+				}
 				
 				return 1;
 			}
@@ -781,9 +794,12 @@ namespace alc {
 				msg->data.get(playerToCome);
 				log->log("<RCV> [%d] %s\n", msg->sn, playerToCome.str().c_str());
 				
-				if (lastPlayerLeft) {
-					// stay up as if the last player left now, that should be long enough for the new player to join
-					lastPlayerLeft = alcGetTime();
+				{
+					tMutexLock lock(autoShutdownMutex);
+					if (lastPlayerLeft) {
+						// stay up as if the last player left now, that should be long enough for the new player to join
+						lastPlayerLeft = alcGetTime();
+					}
 				}
 				
 				// Send the reply back
@@ -860,7 +876,7 @@ namespace alc {
 				tmPlayerPage playerPage(u);
 				msg->data.get(playerPage);
 				log->log("<RCV> [%d] %s\n", msg->sn, playerPage.str().c_str());
-				// And now we just have to find out why we should care that the avatar is paged in or out - this occurs only when the agme is started or quit
+				// And now we just have to find out why we should care that the avatar is paged in or out - this occurs only when the game is started or quit
 				return 1;
 			}
 			case NetMsgRelevanceRegions:

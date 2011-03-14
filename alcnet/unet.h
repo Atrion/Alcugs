@@ -135,7 +135,6 @@ protected:
 	}
 
 private:
-	void init();
 	tNetTimeDiff processSendQueues(); //!< send messages from the sessions' send queues - also updates the timeouts for the next wait \return the time in usec we should wait before processing again
 	
 	void updateNetTime();

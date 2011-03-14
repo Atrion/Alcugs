@@ -87,7 +87,6 @@ public:
 	void decRefs();
 
 private:
-	void init();
 	void resetMsgCounters(void);
 	void processIncomingMsg(void * buf,size_t size); //!< we received a message
 	tNetTimeDiff processSendQueues(); //!< send what is in our queues
@@ -120,7 +119,8 @@ public:
 	tNetSessionData *data; //!< save additional data (e.g. tracking information)
 	
 	// used by lobbybase (lobby and game)
-	uint8_t tpots; //!< tpots version 0=undefined, 1=tpots client, 2=non-tpots client
+	typedef enum { UnknownGame, POTSGame, UUGame } tGameType;
+	tGameType gameType;
 	uint32_t ki; //!< player set and valid id, otherwise 0
 	uint8_t uid[16]; //!< hex; player uid - only set for whoami == KClient
 	tString avatar; //!< peer avatar name if set
