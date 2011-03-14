@@ -21,7 +21,7 @@ rm -rf "$tmpdir"
 mkdir "$tmpdir"
 cd "$tmpdir"
 # start server
-"$builddir/servers/alcmsgtest" -lm -lh localhost -lp "$PORT" -nl -v 0 &
+"$builddir/servers/alcmsgtest" -lh localhost -lp "$PORT" -nl -v 0 &
 sleep 0.1 # give it some time to get up
 # send file
 "$builddir/servers/alcmsgtest" "localhost:$PORT" -f "$FILE" -v 3 ; # wait till it finished
