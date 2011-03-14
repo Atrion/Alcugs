@@ -238,12 +238,10 @@ void tUnetBase::terminate(tNetSession *u, uint8_t reason, bool gotEndMsg)
 bool tUnetBase::terminateAll(bool playersOnly)
 {
 	bool anyTerminated = false;
-	tNetSession *u;
-	tMutexLock lock(smgrMutex);
-	smgr->rewind();
-	while ((u=smgr->getNext())) { // double brackets to suppress gcc warning
-		if (!u->isTerminated() && (!playersOnly ||  u->getPeerType() == KClient)) { // avoid sending a NetMsgLeave or NetMsgTerminate to terminated peers
-			terminate(u);
+	tReadLock lock(smgrMutex);
+	for (tNetSessionMgr::tIterator it(smgr); it.next();) {
+		if (!it->isTerminated() && (!playersOnly ||  it->getPeerType() == KClient)) { // avoid sending a NetMsgLeave or NetMsgTerminate to terminated peers
+			terminate(*it);
 			anyTerminated = true;
 		}
 	}
@@ -253,7 +251,7 @@ bool tUnetBase::terminateAll(bool playersOnly)
 void tUnetBase::removeConnection(tNetSession *u)
 {
 	sec->log("%s Ended\n",u->str().c_str());
-	tMutexLock lock(smgrMutex);
+	tWriteLock lock(smgrMutex);
 	smgr->destroy(u);
 }
 
@@ -290,16 +288,7 @@ void tUnetBase::run() {
 	clearEventQueue();
 	workerThread.stop();
 	
-	// cleanup (we are the only thread left, so no locking required anymore)
-	if(!smgr->isEmpty()) {
-		err->log("ERR: Session manager is not empty!\n");
-		smgr->rewind();
-		tNetSession * u;
-		while((u=smgr->getNext()) != NULL) {
-			removeConnection(u);
-		}
-	}
-	
+	// shutdown
 	onStop();
 	stopOp();
 	log->log("INF: Service sanely terminated\n");

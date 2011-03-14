@@ -41,14 +41,13 @@
 
 namespace alc {
 
-/* Session List */
-tNetSessionMgr::tNetSessionMgr(tUnet * net,size_t limit) : off(0), size(0), count(0), table(NULL), max(limit), net(net)
+tNetSessionMgr::tNetSessionMgr(tUnet * net,size_t limit) : size(0), count(0), table(NULL), max(limit), net(net)
 {}
 tNetSessionMgr::~tNetSessionMgr()
 {
 	if(table!=NULL) {
 		for(size_t i=0; i<size; i++) {
-			delete table[i];
+			if (table[i]) table[i]->decRefs(); // no longer referenced here
 		}
 	}
 	free(table);
@@ -109,19 +108,13 @@ void tNetSessionMgr::remove(tNetSession *u)
 	if (count == 0) { assert(size == 0); }
 }
 
-tNetSession * tNetSessionMgr::getNext() {
-	tNetSession * k=NULL;
-	if(off>=size) { off=0; return NULL; }
-
-	while((k=table[off])==NULL) {
-		off++;
-		if(off>=size) { off=0; return NULL; }
-	}
-	k=table[off]; off++;
-	
-	return k;
+bool tNetSessionMgr::tIterator::next() {
+	do {
+		++pos;
+	} while(pos < smgr->size && smgr->table[pos] == NULL);
+	return pos < smgr->size;
 }
-tNetSession *tNetSessionMgr::findByKi(uint32_t ki)
+tNetSession *tNetSessionMgr::findByKi(uint32_t ki) const
 {
 	if (ki == 0) return NULL;
 	for (size_t i = 0; i < size; ++i) {
@@ -129,16 +122,12 @@ tNetSession *tNetSessionMgr::findByKi(uint32_t ki)
 	}
 	return NULL;
 }
-
-
-
 void tNetSessionMgr::destroy(tNetSession *u) {
 	assert(u && u->getSid() < size && table[u->getSid()] == u);
 	assert(u->isTerminated());
 	remove(u);
 	u->decRefs();
 }
-/* End session mgr */
 
 }
 

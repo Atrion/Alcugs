@@ -351,13 +351,11 @@ namespace alc {
 	{
 		tGameData *data = dynamic_cast<tGameData *>(u->data);
 		if (!data) return;
-		tNetSession *session;
-		tMutexLock lock(smgrMutex);
-		smgr->rewind();
-		while ((session = smgr->getNext())) {
-			if (session == u) continue;
-			if (session->data) {
-				tmMemberUpdate memberUpdate(session, data->createInfo(), isJoined);
+		tReadLock lock(smgrMutex);
+		for (tNetSessionMgr::tIterator it(smgr); it.next();) {
+			if (*it == u) continue;
+			if (it->data) {
+				tmMemberUpdate memberUpdate(*it, data->createInfo(), isJoined);
 				send(memberUpdate);
 			}
 		}
@@ -408,11 +406,9 @@ namespace alc {
 	
 	bool tUnetGameServer::checkIfOnlyPlayer(tNetSession *u)
 	{
-		tNetSession *session;
-		tMutexLock lock(smgrMutex);
-		smgr->rewind();
-		while ((session = smgr->getNext())) {
-			if (session->getPeerType() == KClient && session != u) {
+		tReadLock lock(smgrMutex);
+		for (tNetSessionMgr::tIterator it(smgr); it.next();) {
+			if (it->getPeerType() == KClient && *it != u) {
 				return false;
 			}
 		}
@@ -446,15 +442,13 @@ namespace alc {
 	{
 		if (linkingOutIdle && msg->cmd == NetMsgFindAge) {
 			// he is going to leave soon - make sure everyone is idle for him
-			tNetSession *session;
-			tMutexLock lock(smgrMutex);
-			smgr->rewind();
-			while ((session = smgr->getNext())) {
-				if (session == u) continue;
-				tGameData *data = dynamic_cast<tGameData *>(session->data);
+			tReadLock lock(smgrMutex);
+			for (tNetSessionMgr::tIterator it(smgr); it.next();) {
+				if (*it == u) continue;
+				tGameData *data = dynamic_cast<tGameData *>(it->data);
 				if (data) {
 					// make sure noone else is sitting/has his KI open
-					tmGameMessage msg(u, makePlayerIdle(session, data->obj));
+					tmGameMessage msg(u, makePlayerIdle(*it, data->obj));
 					send(msg);
 					// make sure noone else is just running an animation
 					tmGameMessage msgWalk(makePlayerIdle(u, data->obj, 1)); // let it walk forwards
@@ -550,13 +544,11 @@ namespace alc {
 				
 				// send members list
 				tmMembersList list(u);
-				tMutexLock lock(smgrMutex);
+				tReadLock lock(smgrMutex);
 				list.members.reserve(smgr->getCount()); // avoid moving the member info structs
-				tNetSession *session;
-				smgr->rewind();
-				while ((session = smgr->getNext())) {
-					if (session == u) continue;
-					tGameData *data = dynamic_cast<tGameData *>(session->data);
+				for (tNetSessionMgr::tIterator it(smgr); it.next();) {
+					if (*it == u) continue;
+					tGameData *data = dynamic_cast<tGameData *>(it->data);
 					if (data) {
 						list.members.push_back(data->createInfo());
 					}

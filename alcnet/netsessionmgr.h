@@ -35,8 +35,6 @@ namespace alc {
 	
 	class tUnet;
 	class tUnetMsg;
-	
-	const uint32_t nosid = -1;
 
 class tNetSessionRef {
 public:
@@ -80,28 +78,35 @@ public:
 	//! find the session with the given ip and port and return it, creating it if necessary
 	tNetSession *searchAndCreate(uint32_t ip, uint16_t port);
 	//! return the nth session of our table
-	tNetSession *get(size_t n) {
+	tNetSession *get(size_t n) const {
 		if (n < size) return table[n];
 		return NULL;
 	}
 	//! find a session by it's ki
-	tNetSession *findByKi(uint32_t ki);
+	tNetSession *findByKi(uint32_t ki) const;
 	//! remove a session
 	void destroy(tNetSession *u);
 	// small helpers
-	bool isEmpty() { return count==0; }
-	size_t getCount() { return count; }
-	// iteration
-	void rewind() { off=0; }
-	void end() { off=size; }
-	tNetSession *getNext();
+	bool isEmpty() const { return count==0; }
+	size_t getCount() const { return count; }
+	
+	// iteration: Manager must not be modified during iteration, or behaviour is undefined!
+	class tIterator {
+	public:
+		tIterator(const tNetSessionMgr *smgr) : smgr(smgr), pos(npos) {}
+		bool next();
+		tNetSession *operator->() { return smgr->table[pos]; }
+		tNetSession *operator*() { return smgr->table[pos]; }
+	private:
+		const tNetSessionMgr *smgr;
+		size_t pos;
+	};
 private:
 	//! find a free slot, resizing the table if necessary
 	size_t findFreeSlot(void);
 	//! removes the given session from the table and shrinks if possible
 	void remove(tNetSession *u);
 
-	size_t off; //!< currently selected session (offset)
 	size_t size; //!< the size of the table
 	size_t count; //!< the number of session stored in the table (there can be holes, so it can be smaller than size)
 	tNetSession ** table;

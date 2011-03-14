@@ -62,12 +62,10 @@ namespace alc {
 		template <typename T> void bcastMessage(const T &msg, unsigned int delay = 0) //!< delay is in msecs
 		{ // template functions must be in the header so they can be instanciated properly
 			// broadcast message
-			tNetSession *session;
-			tMutexLock lock(smgrMutex);
-			smgr->rewind();
-			while ((session = smgr->getNext())) {
-				if (session->joined && session->ki != msg.ki) {
-					T fwdMsg(session, msg);
+			tReadLock lock(smgrMutex);
+			for (tNetSessionMgr::tIterator it(smgr); it.next();) {
+				if (it->joined && it->ki != msg.ki) {
+					T fwdMsg(*it, msg);
 					send(fwdMsg, delay);
 				}
 			}
