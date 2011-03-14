@@ -1,7 +1,7 @@
 /*******************************************************************************
-*    Alcugs H'uru server                                                       *
+*    Alcugs Server                                                             *
 *                                                                              *
-*    Copyright (C) 2004-2005  The Alcugs H'uru Server Team                     *
+*    Copyright (C) 2004-2011  The Alcugs Server Team                           *
 *    See the file AUTHORS for more info about the team                         *
 *                                                                              *
 *    This program is free software; you can redistribute it and/or modify      *
@@ -38,7 +38,7 @@ namespace alc {
 --------------------------------*/
 
 static const char * tvalcLicenseTextShort ="\n\
-    Alcugs Server, Copyright (C) 2004-2010 The Alcugs Project Server Team\n\
+    Alcugs Server, Copyright (C) 2004-2011  The Alcugs Server Team\n\
     This program comes with ABSOLUTELY NO WARRANTY;\n\
     This is free software, and you are welcome to redistribute it\n\
     under certain conditions; for details see the files: COPYING\n\
@@ -48,7 +48,7 @@ static const char * tvalcLicenseTextShort ="\n\
 static const char * tvalcLicenseText = "\n\
     Alcugs Server\n\
 \n\
-    Copyright (C) 2004-2010  The Alcugs Project Server Team\n\
+    Copyright (C) 2004-2011  The Alcugs Server Team\n\
     See the file AUTHORS for more info about the team\n\
 \n\
     This program is free software; you can redistribute it and/or modify\n\
@@ -422,7 +422,7 @@ Public License instead of this License.\n\
     arrangements between Cyan and this project. This project was created WITHOUT\n\
     aid from Cyan.\n\
     Your game or machine can crash or be damaged if you host or connect to a\n\
-    shard running the Alcugs H'uru server software.\n\
+    shard running the Alcugs Server software.\n\
     This software is not the plasma server, is not a modification of the plasma\n\
     server, and It don't contains any source code of the plasma server.\n\
     It's a completely different server software written from scratch.\n\
@@ -436,7 +436,7 @@ Public License instead of this License.\n\
     of the service, intrussion, or anything else with illicit results to any\n\
     client running any version of the Uru Clients.\n\
     All exploits, and security holes discovered must be immediatly notificated\n\
-    to the Alcugs H'uru server team for the immediate creation of a fix for\n\
+    to the Alcugs Server team for the immediate creation of a fix for\n\
     the especific hole.\n\
 \n\
 \n\
