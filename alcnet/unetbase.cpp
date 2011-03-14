@@ -30,7 +30,7 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_UNETBASE_ID "$Id$"
-//#define _DBG_LEVEL_ 5
+#define _DBG_LEVEL_ 5
 #include <alcdefs.h>
 #include "unetbase.h"
 
@@ -78,6 +78,12 @@ void tUnetBase::applyConfig() {
 	tString var;
 	tConfig * cfg;
 	cfg=alcGetMain()->config();
+	var=cfg->getVar("net.stop.timeout","global");
+	if(var.isEmpty()) {
+		stop_timeout=15*1000*1000;
+	} else {
+		stop_timeout=var.asUInt()*1000*1000;
+	}
 	//Sets the idle timer
 	var=cfg->getVar("net.timer","global");
 	if(!var.isEmpty()) {
@@ -182,19 +188,9 @@ void tUnetBase::applyConfig() {
 	onApplyConfig();
 }
 
-void tUnetBase::stop(time_t timeout) {
+void tUnetBase::stop(tNetTimeDiff timeout) {
 	tMutexLock lock(runModeMutex);
-	if(timeout<0) {
-		tString var;
-		tConfig * cfg=alcGetMain()->config();
-		var=cfg->getVar("net.stop.timeout","global");
-		if(var.isEmpty()) {
-			stop_timeout=15*1000*1000;
-		} else {
-			stop_timeout=var.asUInt()*1000*1000;
-		}
-	}
-	else
+	if(timeout != static_cast<tNetTimeDiff>(-1))
 		stop_timeout=timeout*1000*1000;
 	running=false;
 }
@@ -207,7 +203,10 @@ bool tUnetBase::isRunning(void)
 
 void tUnetBase::terminate(tNetSession *u, uint8_t reason, bool gotEndMsg)
 {
-	if (u->isTerminated()) return; // nothing left to do
+	if (u->isTerminated()) {
+		u->setTimeout(0); // make sure this session goes down ASAP
+		return;
+	}
 	if (!reason) reason = u->isClient() ? RKickedOff : RQuitting;
 	if (!gotEndMsg) { // don't send message again if we already sent it, or if we got the message from the other side
 		if (u->isClient() || u->getPeerType() == KClient) { // a KClient will ignore us sending a leave, so send a terminated even if the roles changed
@@ -223,12 +222,10 @@ void tUnetBase::terminate(tNetSession *u, uint8_t reason, bool gotEndMsg)
 		// Now that we sent that message, the other side must ack it, then tNetSession will set the timeout to 0
 	}
 	
-	addEvent(new tNetEvent(u, UNET_CONNCLS, new tContainer<uint8_t>(reason)));
+	addEvent(new tNetEvent(u, UNET_CONNCLS, new tContainer<uint8_t>(reason))); // trigger the event in the worker
 	
-	// wait some time to send/receive the ack
-	u->terminating(500/*milliseconds*/);
-	/* In the case that the leave is re-sent because the ack was not received, we are in trouble... the other side 
-	 * will see that as a new connection. But half a second without incoming msgs should be enough. */
+	// tell the session it's terminating
+	u->terminating();
 }
 
 bool tUnetBase::terminateAll(bool playersOnly)
@@ -244,13 +241,6 @@ bool tUnetBase::terminateAll(bool playersOnly)
 	return anyTerminated;
 }
 
-void tUnetBase::removeConnection(tNetSession *u)
-{
-	sec->log("%s Ended\n",u->str().c_str());
-	tWriteLock lock(smgrMutex);
-	smgr->destroy(u);
-}
-
 // main thread loop: handles the socket, fills the working queue, starts and stops threads
 void tUnetBase::run() {
 	if (!configured) applyConfig(); // make sure applyConfig() was called at least once
@@ -262,6 +252,7 @@ void tUnetBase::run() {
 	while(isRunning()) {
 		if (sendAndWait())
 			onIdle();
+		flushLogs();
 	}
 	max_sleep = 100*1000; // from now on, do not wait longer than 0.1 seconds so that we do not miss the stop timeout, and to speed up session deletion
 	
@@ -269,6 +260,7 @@ void tUnetBase::run() {
 	if (terminatePlayers()) {
 		sendAndWait(); // do one round of sending waiting
 		sendAndWait(); // and another round of sending, so that the messages to the other servers actually go out
+		flushLogs();
 	}
 	
 	// kick remaining peers
@@ -277,6 +269,7 @@ void tUnetBase::run() {
 	tNetTime shutdownInitTime = getNetTime();
 	while(!sessionListEmpty() && (getNetTime()-shutdownInitTime)<stop_timeout) {
 		sendAndWait();
+		flushLogs();
 	}
 	
 	// stop the worker thread
@@ -294,6 +287,7 @@ void tUnetBase::run() {
 void tUnetBase::processEvent(tNetEvent *evt)
 {
 	tNetSession *u=*evt->u;
+	DBG(5, "Processing event %d for %s\n", evt->id, u->str().c_str());
 	switch(evt->id) {
 		case UNET_NEWCONN:
 			sec->log("%s New Connection\n",u->str().c_str());
@@ -303,9 +297,7 @@ void tUnetBase::processEvent(tNetEvent *evt)
 				onNewConnection(u);
 			return;
 		case UNET_TIMEOUT:
-			if (u->isTerminated()) // a destroyed session, close it
-				removeConnection(u);
-			else if (!isRunning() || onConnectionTimeout(u))
+			if (!isRunning() || u->isTerminated() || onConnectionTimeout(u))
 				terminate(u, RTimedOut);
 			return;
 		case UNET_FLOOD:
@@ -415,6 +407,13 @@ int tUnetBase::parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown)
 	return 0;
 }
 
+void tUnetBase::flushLogs()
+{
+	log->flush();
+	err->flush();
+	sec->flush();
+}
+
 void tUnetBase::tUnetWorkerThread::stop()
 {
 	if (!isSpawned()) return; // worker not even running
@@ -442,9 +441,7 @@ void tUnetBase::tUnetWorkerThread::main(void)
 		// emptied event queue
 		net->onWorkerIdle();
 		// I don't know how much perforcmance this costs, but without flushing it's not possible to follow the server logs using tail -F
-		net->log->flush();
-		net->err->flush();
-		net->sec->flush();
+		net->flushLogs();
 		// wait till e got events again
 		tMutexLock lock(net->eventsMutex);
 		if (!net->events.empty()) continue; // an event got added since we last checked, fine!

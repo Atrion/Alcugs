@@ -60,7 +60,7 @@ namespace alc {
 #define UNET_OK 0 /* !< Successfull operation (or netcore timeout loop) */
 #define UNET_MSGRCV 1 /* !< A new message has been recieved */
 #define UNET_NEWCONN 2 /* !< New connection created (still in contructor) */
-#define UNET_TIMEOUT 3 /* !< Connection to peer has ended the timer (this also happens during normal connection shutdown!) */
+#define UNET_TIMEOUT 3 /* !< Connection to peer has ended the timer (no activity for too long, or a packet was not acked) */
 #define UNET_CONNCLS 4 /* !< connection is closing - i.e., terminate() was called on it */
 #define UNET_FLOOD 5 /* !< This event occurs when a player is flooding the server */
 #define UNET_KILL_WORKER 6 // internal use: tells the worker thread that it should exit
@@ -136,10 +136,9 @@ protected:
 
 private:
 	std::pair<tNetTimeDiff, bool> processSendQueues(); //!< send messages from the sessions' send queues - also updates the timeouts for the next wait \return the time in usec we should wait before processing again, and a bool saying whether any session has anything to send
-	
 	void updateNetTime();
-	
 	void rawsend(tNetSession * u,tUnetUruMsg * m); //!< call with the session prvDataMutex hold
+	void removeConnection(tNetSession *u); //!< destroy that session, must be called in main thread
 
 // properties
 protected:

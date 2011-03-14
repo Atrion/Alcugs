@@ -119,16 +119,15 @@ protected:
 	
 	/** Stops the netcore in a sane way
 			\param timeout Sets the timeout to wait for closing the connection to all peers (<0 gets timeout from config file)	*/
-	void stop(time_t timeout=-1);
+	void stop(tNetTimeDiff timeout=-1);
 	/** Stops the netcore in a sane way, but without waiting for the clients to properly quit */
 	void forcestop() { stop(0); /* stop with a timeout of 0 */ }
 private:
 	void terminate(tNetSession *u, uint8_t reason, bool gotEndMsg); //! may be called in worker thread
 	bool terminateAll(bool playersOnly = false); //!< \returns if a session was terminated
 	bool terminatePlayers() { return terminateAll(/*playersOnly*/true); }
-	void removeConnection(tNetSession *u); //!< destroy that session, may be called in worker thread
 	void applyConfig();
-	
+	void flushLogs();
 	
 	int parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown); //!< called in worker thread
 	void processEvent(tNetEvent *evt); //!< dispatches most recent event, called in worker thread!

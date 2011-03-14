@@ -53,16 +53,14 @@ public:
 	size_t getHeaderSize();
 	time_t onlineTime(void) { return alcGetTime()-created_stamp.seconds; }
 	void send(tmBase &msg, tNetTimeDiff delay = 0); //!< delay is in msecs - may be called in worker thread
-	void terminating(int tout); //!< timeout in milliseconds
+	void terminating(); //!< timeout in milliseconds
 	void setAuthData(uint8_t accessLevel, const tString &passwd);
 	
 	void setTimeout(unsigned int tout) { tWriteLock lock(prvDataMutex); conn_timeout=tout*1000*1000; } //!< set timeout (in seconds)
 	void challengeSent(void) { tWriteLock lock(prvDataMutex); if (authenticated == 0) authenticated = 10; }
 	void setRejectMessages(bool reject) { tWriteLock lock(prvDataMutex); rejectMessages = reject; }
 	
-	uint32_t getSid(void) { tReadLock lock(prvDataMutex); return sid; } //!< thread-safe
-	void removedFromSmgr(void) { tWriteLock lock(prvDataMutex); sid = -1; }
-	bool isRemovedFromSmgr(void) { tReadLock lock(prvDataMutex); return sid == static_cast<uint32_t>(-1); }
+	uint32_t getSid(void) { return sid; } //!< sid will never change, so this is thread-safe
 	
 	uint8_t getPeerType() { tReadLock lock(prvDataMutex); return whoami; } //!< thread-safe
 	uint32_t getIp(void) const { return ip; }
@@ -131,7 +129,7 @@ private:
 	tUnet * net;
 	uint32_t ip; //!< network order
 	uint16_t port; //!< network order
-	uint32_t sid; //!< protected by prvDataMutex
+	const uint32_t sid;
 	char sockaddr[sizeof(struct sockaddr_in)]; // saves the address information of this peer
 	struct { //server message counters, protected by send mutex
 		uint32_t pn; //!< the overall packet number
@@ -186,7 +184,7 @@ private:
 	
 	// mutexes
 	tMutex sendMutex; //!< protecting serverMsg and sndq
-	tReadWriteEx prvDataMutex; //!< protecting sid, terminated, whoami, conn_timeout, rejectMessages, authenticated, accessLevel, passwd - inside of pubDataMutex
+	tReadWriteEx prvDataMutex; //!< protecting terminated, whoami, conn_timeout, rejectMessages, authenticated, accessLevel, passwd - inside of pubDataMutex
 	
 	// reference counting
 	int refs;
