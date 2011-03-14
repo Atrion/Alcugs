@@ -42,7 +42,7 @@ namespace alc {
 
 	class tGameData : public tNetSessionData {
 	public:
-		tGameData(const tUruObject &obj, tNetSession *u) : obj(obj) { isHidden = false; this->u = u; }
+		tGameData(const tUruObject &obj, tNetSession *u) : obj(obj), isHidden(false), u(u) {}
 		tUruObject obj;
 		bool isHidden;
 		tNetSession *u;
@@ -100,7 +100,9 @@ namespace alc {
 		tAgeStateManager *ageState;
 		bool resetStateWhenEmpty; //!< used by /!resetage
 		
-		time_t lastPlayerLeft, lingerTime;
+		time_t lastPlayerLeft, lingerTime; //!< protected by below mutex
+		tMutex autoShutdownMutex; //!< protecting above variables FIXME use spinnlock
+		
 		bool noReltoShare, serverSideCommands, linkingOutIdle;
 		tString shardIdentifier;
 	};

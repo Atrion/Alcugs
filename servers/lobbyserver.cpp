@@ -227,7 +227,6 @@ namespace alc {
 					// This is the forked process. That means it is exactly the same as the lobby we just left.
 					// We don't have to properly free each variable as this process will soon be completely
 					//  replaced by the game server (this is was execlp does)
-					// BUT we have to close each file and socket as otherwise they will stay opened till the game server exits
 					
 					// get the arguments for starting the server
 					tString gameName = alcStrFiltered(forkServer.age);
@@ -236,7 +235,7 @@ namespace alc {
 					gameLog.printf("%s/%s/%s/", gameLogPath.c_str(), gameName.c_str(), gameGuid.c_str());
 					gamePort.printf("%d", forkServer.forkPort);
 					
-					// if the server was put in daemon mode, th lobby would get the SIGCHILD immediately after starting, so it'd
+					// if the server was put in daemon mode, the lobby would get the SIGCHILD immediately after starting, so it'd
 					// be useless for debugging
 					execlp(gameBin.c_str(), gameBin.c_str(),"-p",gamePort.c_str(),"-guid",gameGuid.c_str(),"-name",gameName.c_str(),
 							"-log",gameLog.c_str(),"-c",gameConfig.c_str(),"-v","0",NULL);

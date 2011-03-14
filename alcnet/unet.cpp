@@ -63,30 +63,14 @@ static txUnet txUnetWithErrno(tString msg) {
 }
 
 tUnet::tUnet(uint8_t whoami,const tString & lhost,uint16_t lport) : smgr(NULL), whoami(whoami) {
-	this->init();
 	setBindAddress(lhost);
 	bindport=lport;
 	
 	workerWaiting = false;
 	if (pthread_cond_init(&eventAddedCond, NULL))
 		throw txBase(_WHERE("Error initializing condition"));
-}
-tUnet::~tUnet() {
-	DBG(9,"~tUnet()\n");
-	if (smgr) stopOp();
-	if (log != alcGetMain()->std()) delete log;
-	if (err != alcGetMain()->err()) delete err;
-	delete ack;
-	delete sec;
 	
-	
-	if (pthread_cond_destroy(&eventAddedCond))
-		throw txBase(_WHERE("Error destroying condition"));
-}
-/**
-	Fills the unet struct with the default values
-*/
-void tUnet::init() {
+	// fill in default values
 	flags=UNET_DEFAULT_FLAGS;
 
 	//netcore timeout < min(all RTT's), nope, it must be the min tts (stt)
@@ -146,7 +130,18 @@ void tUnet::init() {
 	cur_up_quota=0;
 	last_quota_check = net_time;
 	#endif
+}
+tUnet::~tUnet() {
+	DBG(9,"~tUnet()\n");
+	if (smgr) stopOp();
+	if (log != alcGetMain()->std()) delete log;
+	if (err != alcGetMain()->err()) delete err;
+	delete ack;
+	delete sec;
 	
+	
+	if (pthread_cond_destroy(&eventAddedCond))
+		throw txBase(_WHERE("Error destroying condition"));
 }
 
 void tUnet::updateNetTime() {
