@@ -46,10 +46,8 @@ public:
 	const tString &getName() { return serverName; }
 protected:
 	virtual void onStart(void);
-	virtual void onIdle();
 	virtual int onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u);
 	virtual void onForwardPing(tmPing &ping, tNetSession *u);
-	virtual void onNewConnection(tNetSession * u);
 	virtual void onConnectionClosing(tNetSession *u, uint8_t reason);
 	virtual void onApplyConfig(void);
 
@@ -66,12 +64,11 @@ protected:
 	uint16_t spawnStart, spawnStop;
 	const time_t authedTimeout;
 	
-	tMutex serversMutex; //!< this protects below server variables
-	tNetSessionRef authServer, trackingServer, vaultServer; //!< reading from worker is safe, the rest must be protected
+	tNetSessionRef authServer, trackingServer, vaultServer; //!< only accessed in worker, and never NULL (will immediately re-connect on disconnect)
 
 private:
 	bool setActivePlayer(tNetSession *u, uint32_t ki, uint32_t x, const tString &avatar);
-	void reconnectPeer(uint8_t dst); //!< establishes a connection to that service
+	tNetSessionRef connectPeer(uint8_t dst); //!< establishes a connection to that service
 
 	tLog lvault;
 	bool vaultLogShort;

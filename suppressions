@@ -4,7 +4,17 @@
    fun:malloc
    fun:my_malloc
    fun:my_error_register
-   fun:init_client_errs
+   fun:mysql_server_init
+   fun:mysql_init
+   fun:_ZN3alc4tSQL7connectEb
+}
+{
+   not freed by msql_free for some reason (bug ?)
+   Memcheck:Leak
+   fun:calloc
+   fun:my_thread_init
+   fun:my_thread_global_init
+   fun:my_init
    fun:mysql_server_init
    fun:mysql_init
    fun:_ZN3alc4tSQL7connectEb
@@ -14,13 +24,34 @@
    Memcheck:Leak
    fun:malloc
    fun:my_once_alloc
-   obj:/usr/lib/libmysqlclient.so.15.0.0
-   obj:/usr/lib/libmysqlclient.so.15.0.0
+   obj:/usr/lib/libmysqlclient_r.so.16.0.0
+   obj:/usr/lib/libmysqlclient_r.so.16.0.0
+   fun:pthread_once
    fun:get_charset_by_csname
    fun:mysql_init_character_set
    fun:mysql_real_connect
    fun:_ZN3alc4tSQL7connectEb
 }
+{
+   not freed by msql_free for some reason (bug ?)
+   Memcheck:Leak
+   fun:malloc
+   fun:_dl_map_object_deps
+   fun:dl_open_worker
+   fun:_dl_catch_error
+   fun:_dl_open
+   fun:do_dlopen
+   fun:_dl_catch_error
+   fun:__libc_dlopen_mode
+   fun:pthread_cancel_init
+   fun:_Unwind_ForcedUnwind
+   fun:__pthread_unwind
+   fun:pthread_exit
+   obj:/usr/lib/libmysqlclient_r.so.16.0.0
+   fun:start_thread
+   fun:clone
+}
+
 
 {
    std::backtrace bug (?)
