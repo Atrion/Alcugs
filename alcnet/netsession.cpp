@@ -67,9 +67,9 @@ tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t s
 	flood_npkts=0;
 	receive_stamp = send_stamp = net->net_time;
 	next_msg_time=net->net_time;
-	rtt=0;
 	deviation=0;
 	msg_timeout=net->msg_timeout;
+	rtt=0;
 	conn_timeout=net->conn_timeout*1000*1000;
 	negotiating=false;
 	resetMsgCounters();
@@ -88,6 +88,9 @@ tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t s
 	joined = false;
 	
 	DBG(5, "%s Initial msg_timeout: %d\n", str().c_str(), msg_timeout);
+	// session created
+	created_stamp.setToNow();
+	net->addEvent(new tNetEvent(this,UNET_NEWCONN));
 }
 tNetSession::~tNetSession() {
 	DBG(5,"~tNetSession() (sndq: %Zd messages left)\n", sndq.size());
@@ -144,7 +147,7 @@ size_t tNetSession::getHeaderSize() {
 
 // functions to calculate cabal and rtt
 void tNetSession::updateRTT(tNetTimeDiff newread) {
-	if(rtt==0) rtt=newread;
+	if(rtt==0) rtt=4*newread; // start with a large deviation, in case this was like an "early shot"
 	//Jacobson/Karels
 	const int alpha=125; // this is effectively 0.125
 	const int delta=4;
@@ -395,11 +398,6 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 		msg->data.rewind();
 		msg->data.get(comm);
 		net->log->log("<RCV> [%d] %s",msg->sn,comm.str().c_str());
-		if (created_stamp.isNull()) { // first nego we got, connection is hereby established
-			created_stamp.setToNow();;
-			//new conn event
-			net->addEvent(new tNetEvent(this,UNET_NEWCONN));
-		}
 		if(renego_stamp==comm.timestamp) { // it's a duplicate, we already got this message
 		    // It is necessary to do the check this way since the usual check by SN would treat a nego on an existing connection as
 		    //  "already parsed" since the SN is started from the beginning
@@ -731,7 +729,7 @@ tNetTimeDiff tNetSession::ackSend() {
 	return timeout;
 }
 
-/** Send, and re-send messages, update idle state and set netcore timeout (the last is NECESSARY - otherwise, the idle timer will be used) */
+/** Send, and re-send messages */
 tNetTimeDiff tNetSession::processSendQueues()
 {
 	tReadLock lock(prvDataMutex);
@@ -845,7 +843,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 		return std::min(timeout, net->remainingTimeTill(receive_stamp+conn_timeout)); // do not miss our timeout - *after* reducing it, of course
 }
 
-void tNetSession::terminate(int tout)
+void tNetSession::terminating(int tout)
 {
 	tWriteLock lock(prvDataMutex);
 	conn_timeout = tout*1000; // convert ms to us

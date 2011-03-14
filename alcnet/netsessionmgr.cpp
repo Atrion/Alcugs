@@ -123,9 +123,11 @@ tNetSession *tNetSessionMgr::findByKi(uint32_t ki) const
 	return NULL;
 }
 void tNetSessionMgr::destroy(tNetSession *u) {
+	if (u->isRemovedFromSmgr()) return;
 	assert(u && u->getSid() < size && table[u->getSid()] == u);
 	assert(u->isTerminated());
 	remove(u);
+	u->removedFromSmgr();
 	u->decRefs();
 }
 

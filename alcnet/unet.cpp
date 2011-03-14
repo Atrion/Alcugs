@@ -62,7 +62,9 @@ static txUnet txUnetWithErrno(tString msg) {
 	return txUnet(msg);
 }
 
-tUnet::tUnet(uint8_t whoami,const tString & lhost,uint16_t lport) : smgr(NULL), whoami(whoami) {
+tUnet::tUnet(uint8_t whoami,const tString & lhost,uint16_t lport) : smgr(NULL), whoami(whoami), ip_overhead(20+8),
+		max_version(12), min_version(7)
+{
 	setBindAddress(lhost);
 	bindport=lport;
 	
@@ -87,9 +89,6 @@ tUnet::tUnet(uint8_t whoami,const tString & lhost,uint16_t lport) : smgr(NULL), 
 
 	//initial server timestamp
 	updateNetTime();
-	
-	max_version=12;
-	min_version=7;
 
 	max=0; // Maxium number of connections (default 0, unlimited)
 	smgr=NULL;
@@ -113,8 +112,6 @@ tUnet::tUnet(uint8_t whoami,const tString & lhost,uint16_t lport) : smgr(NULL), 
 	err=new tLog;
 	ack=new tLog;
 	sec=new tLog;
-
-	ip_overhead=20+8;
 
 	#ifdef ENABLE_NETDEBUG
 	// Noise and latency
@@ -228,20 +225,7 @@ void tUnet::startOp() {
 	}
 	DBG(1, "Socket created\n");
 
-	//set non-blocking
-	long arg;
-	if((arg = fcntl(this->sock,F_GETFL, NULL))<0) {
-		throw txUnetWithErrno(_WHERE("ERR: Fatal setting socket as non-blocking (fnctl F_GETFL)\n"));
-	}
-	arg |= O_NONBLOCK;
 
-	if(fcntl(this->sock, F_SETFL, arg)<0) {
-		this->err->log("ERR: Fatal setting socket as non-blocking\n");
-		throw txUnetIniErr(_WHERE("Failed setting a non-blocking socket"));
-	}
-	DBG(1, "Non-blocking socket set\n");
-	
-	//chk?
 	//set network specific options
 	this->server.sin_family=AF_INET; //UDP IP
 
@@ -359,12 +343,12 @@ tNetSessionRef tUnet::netConnect(const char * hostname,uint16_t port,uint8_t val
 }
 
 /** Urunet the netcore, it's the heart of the server 
-This function recieves new packets and passes them to the correct session, and
-it also is responsible for the timer: It will wait exactly unet_sec seconds and unet_usec microseconds
-before it asks each session to do what it has to do (tUnet::doWork) */
-void tUnet::sendAndWait() {
+This function recieves new packets and passes them to the correct session */
+bool tUnet::sendAndWait() {
 	// send old messages and calulate timeout
-	tNetTimeDiff unet_timeout = processSendQueues();
+	std::pair<tNetTimeDiff, bool> result = processSendQueues();
+	tNetTimeDiff unet_timeout = result.first;
+	bool idle = !result.second; // we are idle if there is nothing to send
 	if (unet_timeout < 250) {
 		DBG(3, "Timeout %d too low, increasing to 250\n", unet_timeout);
 		unet_timeout = 250; // don't sleep less than 0.25 milliseconds
@@ -403,7 +387,7 @@ void tUnet::sendAndWait() {
 	if(valret<0) {
 		if (errno == EINTR) {
 			// simply go around again, a signal was probably delivered
-			return;
+			return idle;
 		}
 		throw txUnetWithErrno(_WHERE("ERR in select() "));
 	}
@@ -415,111 +399,98 @@ void tUnet::sendAndWait() {
 			throw txUnetWithErrno(_WHERE("Error reading from the pipe"));
 	}
 
-#if _DBG_LEVEL_>7
-	if (valret) { DBG(9,"Data recieved...\n"); } 
-	else { DBG(9,"No data recieved...\n"); }
+	// check if we can read a packet
+	if (!FD_ISSET(this->sock, &rfds)) return idle; // nothing to do
+
+	// receive the message we got
+	ssize_t n;
+	uint8_t buf[INC_BUF_SIZE]; //internal rcv buffer
+
+	struct sockaddr_in client; //client struct
+	socklen_t client_len=sizeof(struct sockaddr_in); //get client struct size (for recvfrom)
+	n = recvfrom(this->sock,buf,INC_BUF_SIZE,0,reinterpret_cast<struct sockaddr *>(&client),&client_len);
+	
+	if (n <= 0) { //problems or no message? select promised us data!
+		throw txUnetWithErrno(_WHERE("ERR: Fatal recieving a message... "));
+	}
+	
+#ifdef ENABLE_NETDEBUG
+	if(!in_noise || (random() % 100) >= in_noise) {
+		DBG(8,"Incomming Packet accepted\n");
+	} else {
+		return idle; // nothing to do
+	}
+	//check quotas
+	if(passedTimeSince(last_quota_check) > quota_check_interval) {
+		cur_up_quota=0;
+		cur_down_quota=0;
+		last_quota_check = net_time;
+	}
+	if(lim_down_cap) {
+		if((cur_down_quota+n+ip_overhead)>lim_down_cap) {
+			DBG(5,"Paquet dropped by quotas, in use:%i,req:%li, max:%i\n",cur_down_quota,n+ip_overhead,lim_down_cap);
+			log->log("Incomming paquet dropped by quotas, in use:%i,req:%i, max:%i\n",cur_down_quota,n+ip_overhead,lim_down_cap);
+			n=0;
+		} else {
+			cur_down_quota+=n+ip_overhead;
+		}
+	}
 #endif
 
-	while(true) { // receive all messages we got
-		ssize_t n;
-		uint8_t buf[INC_BUF_SIZE]; //internal rcv buffer
-		
-		tNetSessionRef session;
+	/* Uru protocol check */
+	if(n<=20 || buf[0]!=0x03) { //not an Uru protocol packet don't waste an slot for it
+		this->err->log("[ip:%s:%i] ERR: Unexpected Non-Uru protocol packet found\n",alcGetStrIp(client.sin_addr.s_addr).c_str(),ntohs(client.sin_port));
+		this->err->dumpbuf(buf,n);
+		this->err->nl();
+		return idle; // nothing to do
+	}
 
-		struct sockaddr_in client; //client struct
-		socklen_t client_len=sizeof(struct sockaddr_in); //get client struct size (for recvfrom)
-		
-		n = recvfrom(this->sock,buf,INC_BUF_SIZE,0,reinterpret_cast<struct sockaddr *>(&client),&client_len);
-		
-	#ifdef ENABLE_NETDEBUG
-		if(n>0) {
-			if(!in_noise || (random() % 100) >= in_noise) {
-				DBG(8,"Incomming Packet accepted\n");
-			} else {
-				DBG(5,"Incomming Packet dropped\n");
-				n=0;
-			}
-			//check quotas
-			if(passedTimeSince(last_quota_check) > quota_check_interval) {
-				cur_up_quota=0;
-				cur_down_quota=0;
-				last_quota_check = net_time;
-			}
-			if(n>0 && lim_down_cap) {
-				if((cur_down_quota+n+ip_overhead)>lim_down_cap) {
-					DBG(5,"Paquet dropped by quotas, in use:%i,req:%li, max:%i\n",cur_down_quota,n+ip_overhead,lim_down_cap);
-					log->log("Incomming paquet dropped by quotas, in use:%i,req:%i, max:%i\n",cur_down_quota,n+ip_overhead,lim_down_cap);
-					n=0;
-				} else {
-					cur_down_quota+=n+ip_overhead;
-				}
-			}
+	tNetSessionRef session;
+	try {
+		tWriteLock lock(smgrMutex);
+		session=smgr->searchAndCreate(client.sin_addr.s_addr, client.sin_port);
+	} catch(txToMCons) {
+		return idle; // nothing to do
+	}
+	
+	//process the message, and do the correct things with it
+	memcpy(session->sockaddr,&client,sizeof(struct sockaddr_in));
+	try {
+		// the net time might be a bit too low, but that's not a large problem - packets might just be sent a bit too early
+		session->processIncomingMsg(buf,n);
+	} catch(txBase &t) {
+		err->log("%s Recieved invalid Uru message - kicking peer\n", session->str().c_str());
+		err->log(" Exception %s\n%s\n",t.what(),t.backtrace());
+		sec->log("%s Kicked hard due to error in Uru message\n", session->str().c_str());
+		{
+			tWriteLock lock(session->prvDataMutex);
+			session->terminated = true;
 		}
-	#endif
-
-		if (n<0 && (errno == EAGAIN || errno == EWOULDBLOCK)) break; // no more messages left
-		if (n<0) { //problems?
-			throw txUnetWithErrno(_WHERE("ERR: Fatal recieving a message... "));
-		}
-
-		if(n>0) { //we have a message
-			/* Uru protocol check */
-			if(n<=20 || buf[0]!=0x03) { //not an Uru protocol packet don't waste an slot for it
-				this->err->log("[ip:%s:%i] ERR: Unexpected Non-Uru protocol packet found\n",alcGetStrIp(client.sin_addr.s_addr).c_str(),ntohs(client.sin_port));
-				this->err->dumpbuf(buf,n);
-				this->err->nl();
-				continue; // read next message
-			}
-
-			DBG(8,"Search session...\n");
-			
-			try {
-				tWriteLock lock(smgrMutex);
-				session=smgr->searchAndCreate(client.sin_addr.s_addr, client.sin_port);
-			} catch(txToMCons) {
-				continue; // read next message
-			}
-			
-			//process the message, and do the correct things with it
-			memcpy(session->sockaddr,&client,sizeof(struct sockaddr_in));
-			try {
-				// the net time might be a bit too low, but that's not a large problem - packets might just be sent a bit too early
-				session->processIncomingMsg(buf,n);
-			} catch(txBase &t) {
-				err->log("%s Recieved invalid Uru message - kicking peer\n", session->str().c_str());
-				err->log(" Exception %s\n%s\n",t.what(),t.backtrace());
-				sec->log("%s Kicked hard due to error in Uru message\n", session->str().c_str());
-				{
-					tWriteLock lock(session->prvDataMutex);
-					session->terminated = true;
-				}
-				{
-					tWriteLock lock(smgrMutex);
-					smgr->destroy(*session); // no goodbye message or anything, this error was deep on the protocol stack
-				}
-			}
+		{
+			tWriteLock lock(smgrMutex);
+			smgr->destroy(*session); // no goodbye message or anything, this error was deep on the protocol stack
 		}
 	}
 	
 	//END CRITICAL REGION
-	// I don't know how much perforcmance this costs, but without flushing it's not possible to follow the server logs using tail -F
-	log->flush();
-	err->flush();
-	sec->flush();
+	
+	return false; // we accepted a message, not idle
 }
 
 /** give each session the possibility to do some stuff and to set the timeout
 Each session HAS to set the timeout it needs because it is reset prior to asking them. */
-tNetTimeDiff tUnet::processSendQueues() {
+std::pair<tNetTimeDiff, bool> tUnet::processSendQueues() {
 	// reset the timer
 	tNetTimeDiff unet_timeout=max_sleep;
+	bool anythingToSend = false;
 	
 	tReadLock lock(smgrMutex);
 	for (tNetSessionMgr::tIterator it(smgr); it.next();) {
 		updateNetTime(); // let the session calculate its timestamps correctly
 		unet_timeout = std::min(it->processSendQueues(), unet_timeout);
+		anythingToSend = anythingToSend || it->anythingToSend();
 	}
-	return unet_timeout;
+	return std::pair<tNetTimeDiff, bool>(unet_timeout, anythingToSend);
 }
 
 /** sends the message (internal use only)

@@ -91,7 +91,7 @@ public:
 	tmPing(tNetSession * u, uint8_t dst);
 	tmPing(tNetSession *u, tmPing &ping);
 	virtual tString additionalFields(tString dbg) const;
-	void setRouteInfo(const tNetSession *u);
+	void setRouteInfo(tNetSession *u);
 	void unsetRouteInfo();
 	//format
 	double mtime;

@@ -59,7 +59,7 @@ namespace alc {
 #define UNET_FINIT -1  /* !< Cannot initizalize the netcore */
 #define UNET_OK 0 /* !< Successfull operation (or netcore timeout loop) */
 #define UNET_MSGRCV 1 /* !< A new message has been recieved */
-#define UNET_NEWCONN 2 /* !< New connection established (incoming or outgoing) */
+#define UNET_NEWCONN 2 /* !< New connection created (still in contructor) */
 #define UNET_TIMEOUT 3 /* !< Connection to peer has ended the timer (this also happens during normal connection shutdown!) */
 #define UNET_CONNCLS 4 /* !< connection is closing - i.e., terminate() was called on it */
 #define UNET_FLOOD 5 /* !< This event occurs when a player is flooding the server */
@@ -107,8 +107,8 @@ protected:
 	void stopOp();
 	void openLogfiles();
 	tNetSessionRef netConnect(const char * hostname,uint16_t port,uint8_t validation,uint8_t flags,uint8_t peerType=0);
-	void sendAndWait(); //!< send enqueued messages, wait, and receive packets and enqueue them (wait time must be set by processQueues()!)
-	tNetEvent * getEvent(); //!<  (thread-safe)
+	bool sendAndWait(); //!< send enqueued messages, wait, and receive packets and enqueue them (wait time must be set by processQueues()!) \return if the netcode is idle
+	tNetEvent *getEvent(); //!<  (thread-safe)
 	void addEvent(tNetEvent *evt); //!<  (thread-safe)
 	void clearEventQueue(); //!< use this only if you really know what you do - will loose incoming messages and whatnot! (thread-safe)
 	tNetTime getNetTime() { return net_time; }
@@ -135,7 +135,7 @@ protected:
 	}
 
 private:
-	tNetTimeDiff processSendQueues(); //!< send messages from the sessions' send queues - also updates the timeouts for the next wait \return the time in usec we should wait before processing again
+	std::pair<tNetTimeDiff, bool> processSendQueues(); //!< send messages from the sessions' send queues - also updates the timeouts for the next wait \return the time in usec we should wait before processing again, and a bool saying whether any session has anything to send
 	
 	void updateNetTime();
 	
@@ -145,7 +145,7 @@ private:
 protected:
 	unsigned int conn_timeout; //!< default timeout (to disconnect a session) (seconds) [5 secs]
 	tNetTimeDiff msg_timeout; //!< default timeout when the send clock expires (re-transmission) (microseconds)
-	tNetTimeDiff max_sleep; //!< maximum time we sleep in the receive function (microseconds) - this is also the maximum time between two OnIdle() callbacks
+	tNetTimeDiff max_sleep; //!< maximum time we sleep in the receive function (microseconds)
 
 	unsigned int max; //!< Maxium number of connections (default 0, unlimited)
 	tNetSessionMgr * smgr; //!< session MGR - get below mutex before accessing it, and keep a tNetSessionRef to session pointers you keep after releasing the mutex!
@@ -176,7 +176,7 @@ protected:
 	
 	unsigned int receiveAhead; //!< number of future messages to receive and cache
 	
-	unsigned int ip_overhead;
+	const unsigned int ip_overhead;
 	//debugging stuff
 	#ifdef ENABLE_NETDEBUG
 	unsigned int lim_down_cap; //in bytes
@@ -197,8 +197,8 @@ protected:
 	pthread_cond_t eventAddedCond; //!< condition used to signal the worker thread that it can wake up, protected by above mutex
 
 private:
-	uint8_t max_version; //!< default protocol version
-	uint8_t min_version; //!< default protocol version
+	const uint8_t max_version; //!< default protocol version
+	const uint8_t min_version; //!< default protocol version
 
 	/** current netcore time (in usecs) [resolution of 15 minutes] (relative). You can add and substract as you wish, but:
 	 * Do NOT compare this with anything, but use the overdue(), passedTime() and remainingTime() functions instead! */

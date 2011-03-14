@@ -157,6 +157,8 @@ tUnetSimpleFileServer::tUnetSimpleFileServer(const tString &lhost,uint16_t lport
 	sent=false;
 	sentBytes=0;
 	compressed=false;
+	// don't miss anything
+	if (!listen) max_sleep = 100*1000;
 }
 
 void tUnetSimpleFileServer::setDestinationAddress(const tString &d,uint16_t port) {
@@ -175,7 +177,7 @@ void tUnetSimpleFileServer::onStart() {
 
 void tUnetSimpleFileServer::onIdle() {
 	// onMsgReceive and onIdle are not both processed in the same instance (one for listener, one for sender), so no locking required
-	if (listen) return;
+	if (listen || !*dstSession) return;
 	DBG(5, "OnIdle called\n");
 	if (dstSession->isTerminated()) {
 		DBG(5, "seems we lost the connection, ouch - going down\n");
@@ -183,7 +185,6 @@ void tUnetSimpleFileServer::onIdle() {
 		return;
 	}
 	if (!sent) {
-		if (!dstSession->isConnected()) return;
 		DBG(5, "Starting to send\n");
 		tFBuf f1(file.c_str());
 		size_t size;

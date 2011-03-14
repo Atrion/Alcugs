@@ -33,31 +33,13 @@
 
 namespace alc {
 
-	
 	class tUnetMsg;
-	class tUnetWorkerThread;
-	class tUnetBase;
-	
-	
 
-class tUnetWorkerThread : public tThread
-{
-public:
-	tUnetWorkerThread(tUnetBase *unet): tThread(), net(unet) {}
-	virtual ~tUnetWorkerThread() { stop(); }
-	
-	virtual void main(void);
-	void stop();
-	
-private:
-	tUnetBase *net;
-};
 
 /** Base abstract class, you need to derive your server/client app's from here
 		This class registers against tAlcUnetMain to make sure there's never more than 1 instance! */
 class tUnetBase :public tUnet {
 	friend class tAlcUnetMain; // these classes have a tight relationship, e.g. you need exactly one of both 
-	friend class tUnetWorkerThread; // dispatching the work, calling event handlers
 	
 public:
 	tUnetBase(uint8_t whoami); //port & host read from config (or by setBindPort(port) and setBindAddress(addr))
@@ -117,7 +99,6 @@ protected:
 	virtual void onWorkerIdle() {}
 	
 	/** This event is raised each time after the incoming messages were processed.
-			The function is guaranteed to be called at least once per max_timout microseconds.
 			You need to override it in your derived classes with your implementation.
 			Called in main thread!
 	*/
@@ -157,6 +138,18 @@ private:
 	tNetTimeDiff stop_timeout; //!< stores the timeout till the server shuts off
 	tMutex runModeMutex; // FIXME use spinnlock
 	
+	class tUnetWorkerThread : public tThread
+	{
+	public:
+		tUnetWorkerThread(tUnetBase *unet): tThread(), net(unet) {}
+		virtual ~tUnetWorkerThread() { stop(); }
+		
+		virtual void main(void);
+		void stop();
+		
+	private:
+		tUnetBase *net;
+	};
 	tUnetWorkerThread workerThread;
 };
 

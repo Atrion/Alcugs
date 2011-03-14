@@ -207,11 +207,7 @@ bool tUnetBase::isRunning(void)
 
 void tUnetBase::terminate(tNetSession *u, uint8_t reason, bool gotEndMsg)
 {
-	if (u->isTerminated()) {
-		log->log("%s This connection is already terminated, don't wait any longer\n", u->str().c_str());
-		u->terminate(0/*milliseconds*/);
-		return;
-	}
+	if (u->isTerminated()) return; // nothing left to do
 	if (!reason) reason = u->isClient() ? RKickedOff : RQuitting;
 	if (!gotEndMsg) { // don't send message again if we already sent it, or if we got the message from the other side
 		if (u->isClient() || u->getPeerType() == KClient) { // a KClient will ignore us sending a leave, so send a terminated even if the roles changed
@@ -230,7 +226,7 @@ void tUnetBase::terminate(tNetSession *u, uint8_t reason, bool gotEndMsg)
 	addEvent(new tNetEvent(u, UNET_CONNCLS, new tContainer<uint8_t>(reason)));
 	
 	// wait some time to send/receive the ack
-	u->terminate(500/*milliseconds*/);
+	u->terminating(500/*milliseconds*/);
 	/* In the case that the leave is re-sent because the ack was not received, we are in trouble... the other side 
 	 * will see that as a new connection. But half a second without incoming msgs should be enough. */
 }
@@ -264,8 +260,8 @@ void tUnetBase::run() {
 	workerThread.spawn();
 	
 	while(isRunning()) {
-		sendAndWait();
-		onIdle(); // not really "idle"... but called from time to time, and at least every max_sleep microseconds, the latter being important
+		if (sendAndWait())
+			onIdle();
 	}
 	max_sleep = 100*1000; // from now on, do not wait longer than 0.1 seconds so that we do not miss the stop timeout, and to speed up session deletion
 	
@@ -307,9 +303,8 @@ void tUnetBase::processEvent(tNetEvent *evt)
 				onNewConnection(u);
 			return;
 		case UNET_TIMEOUT:
-			if (u->isTerminated()) { // a destroyed session, close it
+			if (u->isTerminated()) // a destroyed session, close it
 				removeConnection(u);
-			}
 			else if (!isRunning() || onConnectionTimeout(u))
 				terminate(u, RTimedOut);
 			return;
@@ -420,7 +415,7 @@ int tUnetBase::parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown)
 	return 0;
 }
 
-void tUnetWorkerThread::stop()
+void tUnetBase::tUnetWorkerThread::stop()
 {
 	if (!isSpawned()) return; // worker not even running
 	DBG(5, "Stopping worker...\n");
@@ -429,7 +424,7 @@ void tUnetWorkerThread::stop()
 	DBG(5, "Worker stopped\n");
 }
 
-void tUnetWorkerThread::main(void)
+void tUnetBase::tUnetWorkerThread::main(void)
 {
 	DBG(5, "Worker spawned\n");
 	tNetEvent *evt;

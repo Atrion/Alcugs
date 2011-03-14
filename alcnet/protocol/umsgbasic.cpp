@@ -124,7 +124,7 @@ void tmPing::store(tBBuf &t) {
 	mtime=t.getDouble();
 	destination=t.get8();
 }
-void tmPing::setRouteInfo(const tNetSession *u) {
+void tmPing::setRouteInfo(tNetSession *u) {
 	sid=u->getSid();
 	setFlags(plNetSid);
 }

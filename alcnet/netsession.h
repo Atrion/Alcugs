@@ -53,21 +53,22 @@ public:
 	size_t getHeaderSize();
 	time_t onlineTime(void) { return alcGetTime()-created_stamp.seconds; }
 	void send(tmBase &msg, tNetTimeDiff delay = 0); //!< delay is in msecs - may be called in worker thread
-	void terminate(int tout); //!< timeout in milliseconds
+	void terminating(int tout); //!< timeout in milliseconds
 	void setAuthData(uint8_t accessLevel, const tString &passwd);
 	
 	void setTimeout(unsigned int tout) { tWriteLock lock(prvDataMutex); conn_timeout=tout*1000*1000; } //!< set timeout (in seconds)
 	void challengeSent(void) { tWriteLock lock(prvDataMutex); if (authenticated == 0) authenticated = 10; }
 	void setRejectMessages(bool reject) { tWriteLock lock(prvDataMutex); rejectMessages = reject; }
 	
-	uint32_t getSid(void) const { return sid; } //!< never changing for a running session, so thread-safe
+	uint32_t getSid(void) { tReadLock lock(prvDataMutex); return sid; } //!< thread-safe
+	void removedFromSmgr(void) { tWriteLock lock(prvDataMutex); sid = -1; }
+	bool isRemovedFromSmgr(void) { tReadLock lock(prvDataMutex); return sid == static_cast<uint32_t>(-1); }
+	
 	uint8_t getPeerType() { tReadLock lock(prvDataMutex); return whoami; } //!< thread-safe
-	tNetTimeDiff getRTT() const { return rtt; }
-	bool isConnected() const { return cabal!=0; }
 	uint32_t getIp(void) const { return ip; }
 	uint16_t getPort(void) const { return port; }
 	uint8_t getAccessLevel(void) { tReadLock lock(prvDataMutex); return accessLevel; }
-	uint8_t getAuthenticated(void) const { return authenticated; }
+	uint8_t getAuthenticated(void) { tReadLock lock(prvDataMutex); return authenticated; } //!< thread-safe
 	size_t getMaxPacketSz(void) const { return maxPacketSz; }
 	bool isClient() const { return client; } //!< client is only written to on session creation, so thread-safe
 	bool isTerminated() { tReadLock lock(prvDataMutex); return terminated; } //!< thread-safe
@@ -92,6 +93,7 @@ private:
 	void queueReceivedMessage(tUnetUruMsg *msg);
 	void checkQueuedMessages(void);
 
+	bool isConnected() const { return cabal!=0; }
 	static int8_t compareMsgNumbers(uint32_t sn1, uint8_t fr1, uint32_t sn2, uint8_t fr2);
 	void updateRTT(tNetTimeDiff newread);
 	void increaseCabal();
@@ -127,9 +129,9 @@ public:
 	tReadWriteEx pubDataMutex; //!< protecting above public variables - take it when accessing from main thread, or writing from worker thread (reading from worker is safe always)
 private:
 	tUnet * net;
-	uint32_t ip; //network order
-	uint16_t port; //network order
-	uint32_t sid;
+	uint32_t ip; //!< network order
+	uint16_t port; //!< network order
+	uint32_t sid; //!< protected by prvDataMutex
 	char sockaddr[sizeof(struct sockaddr_in)]; // saves the address information of this peer
 	struct { //server message counters, protected by send mutex
 		uint32_t pn; //!< the overall packet number
@@ -142,7 +144,7 @@ private:
 		uint32_t ps;
 	} clientMsg;
 	uint8_t validation; //!< store the validation level (0,1,2)
-	uint8_t authenticated; //!< is the peer authed? 0 = no, 1 = yes, 2 = it just got authed, 10 = the client got an auth challenge; protected by dataMutex
+	uint8_t authenticated; //!< is the peer authed? 0 = no, 1 = yes, 2 = it just got authed, 10 = the client got an auth challenge; protected by prvDataMutex
 	uint8_t cflags; //!< session flags
 	const uint16_t maxPacketSz; //!< maxium size of the packets. Must be 1024 (always)
 	tUnetMsg *rcv; //!< The place to assemble a fragmented message
@@ -155,11 +157,11 @@ private:
 	tNetTime send_stamp; //!< last time we sent something to this client
 	tTime created_stamp; //!< timestamp of session creation (to be more prcise, time when connection is established: We received a nego)
 	tTime renego_stamp; //!< remote/received nego stamp (stamp of last nego we got)
-	tNetTimeDiff conn_timeout; //!< time after which the session will timeout (in microseconds); protected by dataMutex
+	tNetTimeDiff conn_timeout; //!< time after which the session will timeout (in microseconds); protected by prvDataMutex
 	bool negotiating; //!< set to true when we are waiting for the answer of a negotiate we sent
 	
-	tString passwd; //!< peer passwd hash (used in V2) (string); protected by dataMutex
-	uint8_t accessLevel; //!< peer access level; protected by dataMutex
+	tString passwd; //!< peer passwd hash (used in V2) (string); protected by prvDataMutex
+	uint8_t accessLevel; //!< peer access level; protected by prvDataMutex
 
 	//flux control (bandwidth and latency)
 	unsigned int cabal; //!< cur avg bandwidth (in bytes per second), can't be > maxBandwidth, will grow slower when > minBandwith
@@ -175,16 +177,16 @@ private:
 	tPointerList<tUnetUruMsg> rcvq; //!< received, but not yet accepted messages
 	
 	// other status variables
-	bool rejectMessages; //!< when set to true, messages are rejected (the other side has to send them again); protected by dataMutex
+	bool rejectMessages; //!< when set to true, messages are rejected (the other side has to send them again); protected by prvDataMutex
 	
-	bool terminated; //!< false: connection is established; true: a NetMsgTerminated was sent (and we expect a NetMsgLeave), or a NetMsgLeave was sent; protected by dataMutex
+	bool terminated; //!< false: connection is established; true: a NetMsgTerminated was sent (and we expect a NetMsgLeave), or a NetMsgLeave was sent; protected by prvDataMutex
 	
-	uint8_t whoami; //!< peer type; protected by dataMutex
+	uint8_t whoami; //!< peer type; protected by prvDataMutex
 	bool client; //!< it's a client or a server? Written only on session creatin, so safe to read in any thread
 	
 	// mutexes
 	tMutex sendMutex; //!< protecting serverMsg and sndq
-	tReadWriteEx prvDataMutex; //!< protecting terminated, whoami, conn_timeout, rejectMessages, authenticated, accessLevel, passwd - inside of pubDataMutex
+	tReadWriteEx prvDataMutex; //!< protecting sid, terminated, whoami, conn_timeout, rejectMessages, authenticated, accessLevel, passwd - inside of pubDataMutex
 	
 	// reference counting
 	int refs;
