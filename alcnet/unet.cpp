@@ -62,9 +62,7 @@ static txUnet txUnetWithErrno(tString msg) {
 	return txUnet(msg);
 }
 
-tUnet::tUnet(uint8_t whoami,const tString & lhost,uint16_t lport) : whoami(whoami) {
-	DBG(9,"tUnet()\n");
-	initialized=false;
+tUnet::tUnet(uint8_t whoami,const tString & lhost,uint16_t lport) : smgr(NULL), whoami(whoami) {
 	this->init();
 	setBindAddress(lhost);
 	bindport=lport;
@@ -75,7 +73,7 @@ tUnet::tUnet(uint8_t whoami,const tString & lhost,uint16_t lport) : whoami(whoam
 }
 tUnet::~tUnet() {
 	DBG(9,"~tUnet()\n");
-	stopOp();
+	if (smgr) stopOp();
 	if (log != alcGetMain()->std()) delete log;
 	if (err != alcGetMain()->err()) delete err;
 	delete ack;
@@ -89,8 +87,6 @@ tUnet::~tUnet() {
 	Fills the unet struct with the default values
 */
 void tUnet::init() {
-	DBG(9,"tUnet::init()\n");
-	if(initialized) return;
 	flags=UNET_DEFAULT_FLAGS;
 
 	//netcore timeout < min(all RTT's), nope, it must be the min tts (stt)
@@ -226,7 +222,7 @@ void tUnet::openLogfiles() {
 }
 
 void tUnet::startOp() {
-	if(initialized) return;
+	assert(smgr == NULL);
 	//create an udp (17) socket
 	DBG(1, "DBG: Linux sockets...\n");
 	this->sock=socket(AF_INET,SOCK_DGRAM,0);
@@ -309,14 +305,14 @@ void tUnet::startOp() {
 	
 	// done!
 	this->log->flush();
-	initialized=true;
 }
 
 /**
 	Stops the network operation
 */
 void tUnet::stopOp() {
-	if(!initialized) return;
+	if (!smgr->isEmpty())
+		err->log("ERR: Session manager is not empty!\n");
 	// we could be called because of an exception, so there might still be tons of dirt around - don't assert a clean state!
 	delete smgr;
 	smgr = NULL;
@@ -325,7 +321,6 @@ void tUnet::stopOp() {
 	DBG(1, "Socket closed\n");
 	close(sndPipeReadEnd);
 	close(sndPipeWriteEnd);
-	initialized=false;
 }
 
 tNetSessionRef tUnet::netConnect(const char * hostname,uint16_t port,uint8_t validation,uint8_t flags,uint8_t peerType) {
@@ -339,7 +334,7 @@ tNetSessionRef tUnet::netConnect(const char * hostname,uint16_t port,uint8_t val
 	
 	tNetSessionRef u;
 	{
-		tMutexLock lock(smgrMutex);
+		tWriteLock lock(smgrMutex);
 		u=smgr->searchAndCreate(ip, htons(port));
 	}
 	
@@ -485,7 +480,7 @@ void tUnet::sendAndWait() {
 			DBG(8,"Search session...\n");
 			
 			try {
-				tMutexLock lock(smgrMutex);
+				tWriteLock lock(smgrMutex);
 				session=smgr->searchAndCreate(client.sin_addr.s_addr, client.sin_port);
 			} catch(txToMCons) {
 				continue; // read next message
@@ -504,8 +499,10 @@ void tUnet::sendAndWait() {
 					tWriteLock lock(session->prvDataMutex);
 					session->terminated = true;
 				}
-				tMutexLock lock(smgrMutex);
-				smgr->destroy(*session); // no goodbye message or anything, this error was deep on the protocol stack
+				{
+					tWriteLock lock(smgrMutex);
+					smgr->destroy(*session); // no goodbye message or anything, this error was deep on the protocol stack
+				}
 			}
 		}
 	}
@@ -523,12 +520,10 @@ tNetTimeDiff tUnet::processSendQueues() {
 	// reset the timer
 	tNetTimeDiff unet_timeout=max_sleep;
 	
-	tNetSession * cur;
-	tMutexLock lock(smgrMutex); // FIXME this is not good, holding the lock too long
-	smgr->rewind();
-	while((cur=smgr->getNext())) {
+	tReadLock lock(smgrMutex);
+	for (tNetSessionMgr::tIterator it(smgr); it.next();) {
 		updateNetTime(); // let the session calculate its timestamps correctly
-		unet_timeout = std::min(cur->processSendQueues(), unet_timeout);
+		unet_timeout = std::min(it->processSendQueues(), unet_timeout);
 	}
 	return unet_timeout;
 }

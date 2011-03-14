@@ -215,7 +215,7 @@ private:
 		const uint8_t *buf() const { return static_cast<const uint8_t*>(buffer); }
 		tRefBuf *unique(size_t l); //!< returns a pointer to a ref buf with the same conent as this one, but not shared with anyone else. The parameter says how many bytes of the content are really interesting, i.e. need to be copied.
 	private:
-		tMutex mutex;
+		tMutex mutex; // FIXME use spinnlock
 		unsigned int refs;
 		size_t msize;
 		void *buffer;

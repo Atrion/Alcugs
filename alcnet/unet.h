@@ -122,15 +122,15 @@ protected:
 	
 	tNetSessionRef sessionBySid(size_t sid) //!< (thread-safe)
 	{
-		tMutexLock lock(smgrMutex);
+		tReadLock lock(smgrMutex);
 		return smgr->get(sid);
 	}
 	tNetSessionRef sessionByKi(uint32_t ki) { //!< (thread-safe)
-		tMutexLock lock(smgrMutex);
+		tReadLock lock(smgrMutex);
 		return smgr->findByKi(ki);
 	}
 	bool sessionListEmpty() { //!< (thread-safe)
-		tMutexLock lock(smgrMutex);
+		tReadLock lock(smgrMutex);
 		return smgr->isEmpty();
 	}
 
@@ -150,7 +150,7 @@ protected:
 
 	unsigned int max; //!< Maxium number of connections (default 0, unlimited)
 	tNetSessionMgr * smgr; //!< session MGR - get below mutex before accessing it, and keep a tNetSessionRef to session pointers you keep after releasing the mutex!
-	tMutex smgrMutex; //!< must never be taken when event list is already taken! Also, if you got a pointer to a session without this lock hold, be sure to have a tNetSessionRef to it, so that it is not deleted
+	tReadWriteEx smgrMutex; //!< must never be taken when event list is already taken! Also, if you got a pointer to a session without this lock hold, be sure to have a tNetSessionRef to it, so that it is not deleted
 
 	const uint8_t whoami; //!< type of _this_ server
 
@@ -197,15 +197,13 @@ protected:
 	bool workerWaiting; //!< signals whether a worker is waiting for an event using below condition, protected by above mutex
 	pthread_cond_t eventAddedCond; //!< condition used to signal the worker thread that it can wake up, protected by above mutex
 
-private:	
-	bool initialized;
-	
+private:
 	uint8_t max_version; //!< default protocol version
 	uint8_t min_version; //!< default protocol version
 
 	/** current netcore time (in usecs) [resolution of 15 minutes] (relative). You can add and substract as you wish, but:
 	 * Do NOT compare this with anything, but use the overdue(), passedTime() and remainingTime() functions instead! */
-	tNetTime net_time;
+	tNetTime net_time; // FIXME: protect by a spinlock
 	
 	int sock; //!< The socket
 	struct sockaddr_in server; //!< Server sockaddr
