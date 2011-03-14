@@ -149,8 +149,8 @@ class tmNetClientComm :public tmBase {
 public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	tmNetClientComm(tNetSession *u) : tmBase(UNetNegotiation|UNetAckReq|UNetUrgent, u) { }
-	tmNetClientComm(tTime &t,uint32_t bw, tNetSession *u) : tmBase(UNetNegotiation|UNetAckReq|UNetUrgent, u) { timestamp=t; bandwidth=bw; }
+	tmNetClientComm(tNetSession *u) : tmBase(UNetNegotiation|UNetAckReq|UNetUrgent, u) {}
+	tmNetClientComm(const tTime &t,uint32_t bw, tNetSession *u) : tmBase(UNetNegotiation|UNetAckReq|UNetUrgent, u), timestamp(t), bandwidth(bw) {}
 	virtual tString str() const;
 	tTime timestamp;
 	uint32_t bandwidth;

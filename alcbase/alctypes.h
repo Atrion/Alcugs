@@ -443,6 +443,7 @@ public:
 	double asDouble(char how='s') const;
 	time_t asNumber(char how='s') const;
 	tString str(bool relative = false) const;
+	bool isNull() const { return seconds == 0; }
 	
 	// data
 	time_t seconds;
