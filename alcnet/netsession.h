@@ -51,7 +51,7 @@ public:
 	size_t getMaxFragmentSize() { return(static_cast<size_t>(maxPacketSz)-getHeaderSize()); }
 	size_t getMaxDataSize() { return(getMaxFragmentSize() * 256); }
 	size_t getHeaderSize();
-	time_t onlineTime(void) { return alcGetTime()-nego_stamp.seconds; }
+	time_t onlineTime(void) { return alcGetTime()-created_stamp.seconds; }
 	void send(tmBase &msg, tNetTimeDiff delay = 0); //!< delay is in msecs - may be called in worker thread
 	void terminate(int tout); //!< timeout in milliseconds
 	void setAuthData(uint8_t accessLevel, const tString &passwd);
@@ -153,7 +153,7 @@ private:
 	
 	tNetTime receive_stamp; //!< last time we got something from this client
 	tNetTime send_stamp; //!< last time we sent something to this client
-	tTime nego_stamp; //!< initial negotiation stamp
+	tTime created_stamp; //!< timestamp of session creation (to be more prcise, time when connection is established: We received a nego)
 	tTime renego_stamp; //!< remote/received nego stamp (stamp of last nego we got)
 	tNetTimeDiff conn_timeout; //!< time after which the session will timeout (in microseconds); protected by dataMutex
 	bool negotiating; //!< set to true when we are waiting for the answer of a negotiate we sent

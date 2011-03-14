@@ -59,7 +59,7 @@ namespace alc {
 #define UNET_FINIT -1  /* !< Cannot initizalize the netcore */
 #define UNET_OK 0 /* !< Successfull operation (or netcore timeout loop) */
 #define UNET_MSGRCV 1 /* !< A new message has been recieved */
-#define UNET_NEWCONN 2 /* !< New incomming connection stablished */
+#define UNET_NEWCONN 2 /* !< New connection established (incoming or outgoing) */
 #define UNET_TIMEOUT 3 /* !< Connection to peer has ended the timer (this also happens during normal connection shutdown!) */
 #define UNET_CONNCLS 4 /* !< connection is closing - i.e., terminate() was called on it */
 #define UNET_FLOOD 5 /* !< This event occurs when a player is flooding the server */

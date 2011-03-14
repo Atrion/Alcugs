@@ -532,7 +532,6 @@ tmMsgBase::tmMsgBase(uint16_t cmd,uint32_t flags,tNetSession * u) : tmBase(0, u)
 	DBG(5,"tmMsgBase()\n");
 	this->cmd=cmd;
 	this->flags=flags;
-	this->timestamp.seconds=0; // the timestamp is unitialized per default (this removes a valgrind error)
 	//set bhflags
 	if(this->flags & plNetAck)
 		bhflags |= UNetAckReq;
@@ -546,7 +545,6 @@ tmMsgBase::tmMsgBase(tNetSession * u) : tmBase(0, u) {
 	DBG(5,"tmMsgBase()\n");
 	this->cmd=0;
 	this->flags=0;
-	this->timestamp.seconds=0; // the timestamp is unitialized per default (this removes a valgrind error)
 }
 void tmMsgBase::setFlags(uint32_t f) {
 	this->flags |= f;
@@ -594,8 +592,7 @@ void tmMsgBase::store(tBBuf &t) {
 	if(flags & plNetTimestamp || (u->min_version<6 && u->max_version==12)) {
 		t.get(timestamp);
 	} else {
-		timestamp.seconds=0;
-		timestamp.microseconds=0;
+		timestamp = tTime();
 	}
 	if(flags & plNetX) {
 		x=t.get32();
@@ -658,7 +655,7 @@ void tmMsgBase::stream(tBBuf &t) const {
 		t.put8(min_version);
 	}
 	if(flags & plNetTimestamp || (u->min_version<6 && u->max_version==12)) {
-		if(timestamp.seconds==0) {
+		if(timestamp.isNull()) {
 			tTime stamp = tTime::now();
 			t.put(stamp);
 		}
@@ -709,7 +706,7 @@ tString tmMsgBase::str() const {
 	dbg.printf("\n Flags:");
 	if(flags & plNetTimestamp) {
 		dbg.writeStr(" timestamp ");
-		if (timestamp.seconds == 0) // the timestamp will be set on sending, so we can't print it now
+		if (timestamp.isNull()) // the timestamp will be set on sending, so we can't print it now
 			dbg.writeStr("(now)");
 		else
 			dbg.writeStr(timestamp.str());

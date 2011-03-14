@@ -353,7 +353,6 @@ tNetSessionRef tUnet::netConnect(const char * hostname,uint16_t port,uint8_t val
 	u->max_version=max_version;
 	u->min_version=min_version;
 	
-	u->nego_stamp.setToNow();
 	u->negotiate();
 	
 	return u;

@@ -71,8 +71,6 @@ tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t s
 	deviation=0;
 	msg_timeout=net->msg_timeout;
 	conn_timeout=net->conn_timeout*1000*1000;
-	nego_stamp.seconds=0;
-	renego_stamp=nego_stamp;
 	negotiating=false;
 	resetMsgCounters();
 	assert(serverMsg.pn==0);
@@ -90,8 +88,6 @@ tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t s
 	joined = false;
 	
 	DBG(5, "%s Initial msg_timeout: %d\n", str().c_str(), msg_timeout);
-	//new conn event
-	net->addEvent(new tNetEvent(this,UNET_NEWCONN));
 }
 tNetSession::~tNetSession() {
 	DBG(5,"~tNetSession() (sndq: %Zd messages left)\n", sndq.size());
@@ -328,7 +324,7 @@ void tNetSession::negotiate() {
 		sbw=net->nat_down; // WAN
 	}
 
-	tmNetClientComm comm(nego_stamp,sbw,this);
+	tmNetClientComm comm(tTime::now(),sbw,this);
 	send(comm);
 	negotiating = true;
 }
@@ -399,6 +395,11 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 		msg->data.rewind();
 		msg->data.get(comm);
 		net->log->log("<RCV> [%d] %s",msg->sn,comm.str().c_str());
+		if (created_stamp.isNull()) { // first nego we got, connection is hereby established
+			created_stamp.setToNow();;
+			//new conn event
+			net->addEvent(new tNetEvent(this,UNET_NEWCONN));
+		}
 		if(renego_stamp==comm.timestamp) { // it's a duplicate, we already got this message
 		    // It is necessary to do the check this way since the usual check by SN would treat a nego on an existing connection as
 		    //  "already parsed" since the SN is started from the beginning
@@ -415,7 +416,6 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 					clientMsg.ps = msg->ps; // the nego marks the beginning of a new connection, so accept everything from here on
 					clientMsg.pfr = msg->pfr;
 				}
-				if(nego_stamp.seconds==0) nego_stamp.setToNow();
 				negotiate();
 			}
 			cabal=0; // re-determine cabal with the new bandwidth
@@ -444,7 +444,6 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 	} else if (!isConnected()) { // we did not yet negotiate
 		if(!negotiating) { // and we are not in the process of doing it - so start that process
 			net->log->log("%s WARN: Obviously a new connection was started with something different than a nego\n", str().c_str());
-			nego_stamp.setToNow();
 			negotiate();
 			clientMsg.ps = msg->ps; // this message is the beginning of a new connection, so accept everything from here on
 			clientMsg.pfr = msg->pfr;
@@ -460,8 +459,7 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 			net->log->log("%s WARN: Congratulations! You have reached the maxium allowed sequence number, don't worry, this is not an error\n", str().c_str());
 			net->log->flush();
 			resetMsgCounters();
-			nego_stamp.setToNow();
-			renego_stamp.seconds=0;
+			renego_stamp = tTime();
 			negotiate();
 		}
 	}
