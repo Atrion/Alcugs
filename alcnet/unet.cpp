@@ -30,7 +30,7 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_UNET_ID "$Id$"
-#define _DBG_LEVEL_ 3
+//#define _DBG_LEVEL_ 3
 #include <alcdefs.h>
 #include "unet.h"
 
@@ -291,8 +291,8 @@ void tUnet::startOp() {
 	Stops the network operation
 */
 void tUnet::stopOp() {
-	if (!smgr->isEmpty())
-		err->log("ERR: Session manager is not empty!\n");
+	for (tNetSessionMgr::tIterator it(smgr); it.next();)
+		err->log("ERR: %s is still connected, but we are going down ultimatively\n", it->str().c_str());
 	// we could be called because of an exception, so there might still be tons of dirt around - don't assert a clean state!
 	delete smgr;
 	smgr = NULL;
@@ -476,7 +476,7 @@ bool tUnet::sendAndWait() {
 	
 	//END CRITICAL REGION
 	
-	return false; // we accepted a message, not idle
+	return idle; // actually, we might no longer be idle - but we *were* idle before we got the nw message, that's good enough (after all, we want the idle signal to be triggered from time to time...)
 }
 
 /** give each session the possibility to do some stuff and to set the timeout
