@@ -55,9 +55,9 @@ public:
 	tNetSession *operator*() {
 		return u;
 	}
-	void operator=(tNetSession *u) {
-		if (this->u) u->decRefs();
-		this->u = u;
+	void operator=(tNetSession *new_u) {
+		if (u) u->decRefs();
+		u = new_u;
 		if (u) u->incRefs();
 	}
 	void operator=(const tNetSessionRef &r) {
@@ -104,8 +104,6 @@ public:
 private:
 	//! find a free slot, resizing the table if necessary
 	size_t findFreeSlot(void);
-	//! removes the given session from the table and shrinks if possible
-	void remove(tNetSession *u);
 
 	size_t size; //!< the size of the table
 	size_t count; //!< the number of session stored in the table (there can be holes, so it can be smaller than size)

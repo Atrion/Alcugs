@@ -142,7 +142,7 @@ private:
 		uint32_t ps;
 	} clientMsg;
 	uint8_t validation; //!< store the validation level (0,1,2)
-	uint8_t authenticated; //!< is the peer authed? 0 = no, 1 = yes, 2 = it just got authed, 10 = the client got an auth challenge; protected by prvDataMutex
+	uint8_t authenticated; //!< is the peer authed? 0 = no, 1 = yes, 2 = it just got authed, 10 = the client got an auth challenge; protected by prvDataMutex (FIXME really necessary?)
 	uint8_t cflags; //!< session flags
 	const uint16_t maxPacketSz; //!< maxium size of the packets. Must be 1024 (always)
 	tUnetMsg *rcv; //!< The place to assemble a fragmented message

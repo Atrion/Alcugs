@@ -203,7 +203,9 @@ bool tUnetBase::isRunning(void)
 
 void tUnetBase::terminate(tNetSession *u, uint8_t reason, bool gotEndMsg)
 {
+	DBG(5, "%s is being terminated\n", u->str().c_str());
 	if (u->isTerminated()) {
+		log->log("%s is already terminated, speeding up disconnect...\n", u->str().c_str());
 		u->setTimeout(0); // make sure this session goes down ASAP
 		return;
 	}
@@ -219,7 +221,7 @@ void tUnetBase::terminate(tNetSession *u, uint8_t reason, bool gotEndMsg)
 			tmLeave leave(u,reason);
 			send(leave);
 		}
-		// Now that we sent that message, the other side must ack it, then tNetSession will set the timeout to 0
+		// Now that we sent that message, the other side must ack it, then tNetSession will be deleted
 	}
 	
 	addEvent(new tNetEvent(u, UNET_CONNCLS, new tContainer<uint8_t>(reason))); // trigger the event in the worker
