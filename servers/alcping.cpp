@@ -71,10 +71,9 @@ void parameters_usage() {
   [255] Broadcast\n\n");
 }
 
-class tUnetPing :public tUnetBase {
+class tUnetPing : public tUnetBase {
 public:
 	tUnetPing(const tString & lhost,uint16_t lport,bool listen=false,double time=1,int num=5,int flood=1,uint8_t source=KClient);
-	virtual ~tUnetPing();
 	virtual int onMsgRecieved(tUnetMsg * msg,tNetSession * u);
 	virtual void onIdle();
 	virtual void onStop();
@@ -109,7 +108,7 @@ tUnetPing::tUnetPing(const tString &lhost,uint16_t lport,bool listen,double time
 	this->setBindAddress(lhost);
 	this->listen=listen;
 	this->unsetFlags(UNET_FLOODCTR); // disable flood protection
-	max_sleep = 100*1000; // set down max_sleep timer to send pings in one-second intervals
+	if (!listen) max_sleep = 100*1000; // set down max_sleep timer to send pings in one-second intervals
 	this->time=time;
 	this->num=num;
 	this->flood=flood;
@@ -122,9 +121,6 @@ tUnetPing::tUnetPing(const tString &lhost,uint16_t lport,bool listen,double time
 	avg=0;
 	rcvn=0;
 	urgent=false;
-}
-tUnetPing::~tUnetPing() {
-
 }
 
 void tUnetPing::setDestination(uint8_t d) {
@@ -183,36 +179,34 @@ int tUnetPing::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 }
 
 void tUnetPing::onIdle() {
-	int i;
-	if(listen==0) {
+	if(listen) return;
 
-		tMutexLock lock(mutex);
-		if(count==0) {
-			dstSession=netConnect(d_host.c_str(),d_port,validation,0);
-			current=startup=alcGetCurrentTime();
-		}
+	tMutexLock lock(mutex);
+	if(count==0) {
+		dstSession=netConnect(d_host.c_str(),d_port,validation,0);
+		current=startup=alcGetCurrentTime();
+	}
 
-		if(dstSession->isTerminated()) {
-			stop();
-			return;
-		}
+	if(dstSession->isTerminated()) {
+		stop();
+		return;
+	}
 
-		double rcv=alcGetCurrentTime();
-		if((rcv-current)>time || count==0) {
-			if(count<num || num==0 || count==0) {
-				//snd ping message
-				tmPing ping(*dstSession, destination);
-				if(urgent) ping.setUrgent();
+	double rcv=alcGetCurrentTime();
+	if((rcv-current)>time || count==0) {
+		if(count<num || num==0 || count==0) {
+			//snd ping message
+			tmPing ping(*dstSession, destination);
+			if(urgent) ping.setUrgent();
 
-				count++;
-				for(i=0; i<flood; i++) {
-					ping.x = (flood * (count-1)) + i;
-					ping.mtime = current = alcGetCurrentTime();
-					send(ping);
-				}
-			} else if((rcv-current) > (4*time) || (*dstSession && (rcv-current) > ((dstSession->getRTT()+(dstSession->getRTT()/2))/1000000))) {
-				stop();
+			count++;
+			for(int i=0; i<flood; i++) {
+				ping.x = (flood * (count-1)) + i;
+				ping.mtime = current = alcGetCurrentTime();
+				send(ping);
 			}
+		} else if ((rcv-current) > (4*time) || !dstSession->anythingToSend()) {
+			stop();
 		}
 	}
 }
