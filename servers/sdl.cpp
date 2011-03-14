@@ -431,7 +431,7 @@ namespace alc {
 		return sdlHook;
 	}
 	
-	const tBaseType *tAgeStateManager::getAgeState(void)
+	const tStreamable *tAgeStateManager::getAgeState(void)
 	{
 		tSdlList::iterator sdlHook = findAgeSDLHook();
 		if (sdlHook != sdlStates.end()) { // found it - send it

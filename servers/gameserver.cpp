@@ -495,7 +495,7 @@ namespace alc {
 				
 				// ok, tell the client he successfully joined
 				u->joined = true;
-				const tBaseType *ageSDLState = ageState->getAgeState();
+				const tStreamable *ageSDLState = ageState->getAgeState();
 				if (ageSDLState) {
 					tmJoinAck joinAck(u, joinReq.x, ageSDLState);
 					send(joinAck);

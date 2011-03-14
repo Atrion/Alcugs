@@ -36,7 +36,7 @@ namespace alc {
 	class tmVault : public tmMsgBase { // this is both a vault and a lobbybase msg, but the vault server includes only this file so the class is defined here
 	public:
 		tmVault(tNetSession *u);
-		tmVault(tNetSession *u, uint32_t ki, uint32_t x, bool task, tBaseType *vaultMessage);
+		tmVault(tNetSession *u, uint32_t ki, uint32_t x, bool task, tStreamable *vaultMessage);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual tString additionalFields(tString dbg) const;

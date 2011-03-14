@@ -109,7 +109,7 @@ namespace alc {
 	}
 	
 	//// tmJoinAck
-	tmJoinAck::tmJoinAck(tNetSession *u, uint32_t x, const tBaseType *sdl)
+	tmJoinAck::tmJoinAck(tNetSession *u, uint32_t x, const tStreamable *sdl)
 	 : tmMsgBase(NetMsgJoinAck, plNetAck | plNetKi | plNetX, u)
 	{
 		this->x = x;
@@ -446,7 +446,7 @@ namespace alc {
 		content.compress();
 	}
 	
-	tmStreamedObject::tmStreamedObject(uint16_t cmd, tNetSession *u, const tUruObject &obj, tBaseType *content)
+	tmStreamedObject::tmStreamedObject(uint16_t cmd, tNetSession *u, const tUruObject &obj, tStreamable *content)
 	: tmMsgBase(cmd, plNetAck, u), obj(obj)
 	{
 		this->content.put(*content);
@@ -537,7 +537,7 @@ namespace alc {
 	tmSDLState::tmSDLState(tNetSession *u) : tmStreamedObject(u)
 	{ }
 	
-	tmSDLState::tmSDLState(tNetSession *u, const tUruObject &obj, tBaseType *content, bool isInitial)
+	tmSDLState::tmSDLState(tNetSession *u, const tUruObject &obj, tStreamable *content, bool isInitial)
 	 : tmStreamedObject(NetMsgSDLState, u, obj, content)
 	{
 		this->isInitial = isInitial;

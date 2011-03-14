@@ -168,7 +168,7 @@ void tUruString::stream(tBBuf &t) const {
 /* end tUruString */
 
 /* tUruObject (Plasma: plUoid) */
-tUruObject::tUruObject(void) : tBaseType()
+tUruObject::tUruObject(void)
 {
 	hasCloneId = 0;
 	pageId = 0;
@@ -230,7 +230,7 @@ bool tUruObject::operator==(const tUruObject &obj) const
 /* end tUruObject */
 
 /* tUruObjectRef (Plasma: plKey) */
-tUruObjectRef::tUruObjectRef(void) : tBaseType()
+tUruObjectRef::tUruObjectRef(void)
 {
 	hasObj = false;
 }

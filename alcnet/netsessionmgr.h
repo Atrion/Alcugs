@@ -114,12 +114,13 @@ private:
 
 class tNetEvent {
 public:
-	tNetEvent(tNetSession *u,int what,void *data=NULL) : u(u), id(what), data(data) {}
+	tNetEvent(tNetSession *u,int what,tBaseType *data=NULL) : u(u), id(what), data(data) {}
 	tNetEvent(int what) { id=what; data=NULL; }
 	tNetEvent() { id=0; data=NULL; }
+	~tNetEvent() { delete data; }
 	tNetSessionRef u;
 	int id;
-	void *data;
+	tBaseType *data;
 
 	FORBID_CLASS_COPY(tNetEvent)
 };

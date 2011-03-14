@@ -44,7 +44,7 @@ namespace alc {
 	class tElementList;
 	
 	/** parses a signel SDL var */
-	class tSdlStateVar : public tBaseType {
+	class tSdlStateVar : public tStreamable {
 	public:
 		tSdlStateVar(tSdlStructVar *sdlVar, tAgeStateManager *stateMgr, uint8_t num);
 		tSdlStateVar(tSdlStructVar *sdlVar, const tSdlStateVar &var, uint8_t num);
@@ -85,7 +85,7 @@ namespace alc {
 	};
 	
 	/** parses a SDL state binary, which is a list of vars and can recursively contain other state binaries */
-	class tSdlStateBinary : public tBaseType {
+	class tSdlStateBinary : public tStreamable {
 	public:
 		tSdlStateBinary(void);
 		tSdlStateBinary(tAgeStateManager *stateMgr, tString name, uint16_t version, bool initDefault = false);
@@ -116,7 +116,7 @@ namespace alc {
 	};
 
 	/** parses the SDL state */
-	class tSdlState : public tBaseType {
+	class tSdlState : public tStreamable {
 	public:
 		tSdlState(tAgeStateManager *stateMgr, const tUruObject &obj, tUruString name, uint16_t version, bool initDefault = false);
 		tSdlState(tAgeStateManager *stateMgr, tMBuf &t, const tUruObject &obj);
