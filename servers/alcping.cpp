@@ -48,11 +48,10 @@ void parameters_usage() {
  -V: show version and end\n\
  -h: Show short help and end\n\
  -v x: Set the verbose level\n\
- -lp x: Set the local port\n\
+ -lp x: Set the local port (enables listen mode)\n\
  -rp x: Set the remote port\n\
- -lh x: Set the local host\n\
+ -lh x: Set the local host (enables listen mode)\n\
  -rh x: Set the remote host\n\
- -lm: Set listenning mode\n\
  -one: Does only one ping probe and displays that value\n\
  -d x: Set the destination.\n\
  -s x: Set the source.\n\
@@ -250,9 +249,8 @@ int main(int argc,char * argv[]) {
 		else if(!strcmp(argv[i],"-V")) {
 			puts(alcVersionText());
 			return -1;
-		} else if(!strcmp(argv[i],"-lp") && argc>i+1) { i++; l_port=atoi(argv[i]); }
+		} else if(!strcmp(argv[i],"-lp") && argc>i+1) { i++; listen=true; l_port=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-rp") && argc>i+1) { i++; port=atoi(argv[i]); }
-		else if(!strcmp(argv[i],"-lm")) { listen=true; }
 #ifdef ENABLE_ADMIN
 		else if(!strcmp(argv[i],"-i_know_what_i_am_doing")) { admin=true; }
 #endif
@@ -268,6 +266,7 @@ int main(int argc,char * argv[]) {
 		else if(!strcmp(argv[i],"-v") && argc>i+1) { i++; loglevel=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-lh") && argc>i+1) {
 			i++;
+			listen=true;
 			l_hostname = argv[i];
 		}
 		else if(!strcmp(argv[i],"-l")) {
