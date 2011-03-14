@@ -30,7 +30,7 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETSESSION_ID "$Id$"
-//#define _DBG_LEVEL_ 3
+#define _DBG_LEVEL_ 3
 #include <alcdefs.h>
 #include "netsession.h"
 
@@ -48,13 +48,12 @@
 namespace alc {
 
 /* Session */
-tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t sid) : maxPacketSz(1024), refs(1) {
+tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t sid) : sid(sid), maxPacketSz(1024), refs(1) {
 	DBG(5,"tNetSession()\n");
 	assert(alcGetSelfThreadId() == alcGetMain()->threadId());
 	this->net=net;
 	this->ip=ip;
 	this->port=port;
-	this->sid=sid;
 	rcv = NULL;
 	// fill in default values
 	validation=0;
@@ -259,7 +258,7 @@ void tNetSession::send(tmBase &msg, tNetTimeDiff delay) {
 	if (n_pkts > 0 && ((flags & UNetNegotiation) || (flags & UNetAckReply)))
 		throw txProtocolError(_WHERE("Nego and ack packets must not be fragmented!"));
 	
-	
+	net->updateNetTime(); // make sure we got correct time reference
 	delay *= 1000; // make it usecs
 	for(unsigned int i=0; i<=n_pkts; i++) {
 		//get current paquet size
@@ -736,7 +735,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 	assert(alcGetSelfThreadId() == alcGetMain()->threadId());
 	// when we are talking to a non-terminated server, send alive messages
 	if (!client && !terminated && (net->passedTimeSince(send_stamp) > (conn_timeout/2))) {
-		tmAlive alive(this);
+		tmAlive alive(this, ki);
 		send(alive);
 	}
 	
@@ -788,6 +787,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 							net->rawsend(this,curmsg);
 							curmsg->tries++;
 							curmsg->timestamp=net->net_time + msg_timeout;
+							if (timeout > msg_timeout) timeout = msg_timeout; // be sure to check this message on time
 							++it; // go on
 						}
 					} else {
@@ -816,7 +816,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 			} //end while
 			// calculate how long it will take us to send what we just sent
 			DBG(5, "%s sent packets with %d bytes\n", str().c_str(), cur_size);
-			if (!next_msg_time || net->timeOverdue(next_msg_time)) {
+			if (net->timeOverdue(next_msg_time)) {
 				// "regular" send
 				tNetTimeDiff cur_tts = timeToSend(cur_size);
 				next_msg_time=net->net_time + cur_tts;
@@ -833,20 +833,27 @@ tNetTimeDiff tNetSession::processSendQueues()
 	
 	// check this session's timeout
 	if (net->timeOverdue(receive_stamp+conn_timeout)) {
-		// create timeout event
-		if (!isTerminated())
-			net->sec->log("%s Timeout (didn't send a packet for %d seconds)\n",str().c_str(),conn_timeout);
-		net->addEvent(new tNetEvent(this,UNET_TIMEOUT));
+		// timeout while terminating? Scrap this session, get away with it
+		if (isTerminated()) {
+			tMutexLock lock(sendMutex);
+			sndq.clear();
+			ackq.clear();
+			// this should suffice to convince the netcore to terminate us
+		}
+		else {
+			// create timeout event
+			net->sec->log("%s Timeout (didn't send a packet for %d microseconds)\n",str().c_str(),conn_timeout);
+			net->addEvent(new tNetEvent(this,UNET_TIMEOUT));
+		}
 		return timeout;
 	}
 	else
 		return std::min(timeout, net->remainingTimeTill(receive_stamp+conn_timeout)); // do not miss our timeout - *after* reducing it, of course
 }
 
-void tNetSession::terminating(int tout)
+void tNetSession::terminating()
 {
 	tWriteLock lock(prvDataMutex);
-	conn_timeout = tout*1000; // convert ms to us
 	terminated = true;
 	whoami = 0; // it's terminated, so it's no one special anymore
 	if (alcGetSelfThreadId() != alcGetMain()->threadId()) {

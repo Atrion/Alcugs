@@ -30,7 +30,7 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_UNET_ID "$Id$"
-//#define _DBG_LEVEL_ 5
+#define _DBG_LEVEL_ 3
 #include <alcdefs.h>
 #include "unet.h"
 
@@ -78,8 +78,8 @@ tUnet::tUnet(uint8_t whoami,const tString & lhost,uint16_t lport) : smgr(NULL), 
 	//netcore timeout < min(all RTT's), nope, it must be the min tts (stt)
 	max_sleep=10*1000*1000; // wait no more than 10 seconds in select() call
 
-	conn_timeout=60; // default timeout for new sessions (seconds)
-	/* This sets the timeout for unet servers from both sides
+	conn_timeout=120; // default timeout for new sessions (seconds)
+	/* This sets the timeout for unet servers from both sides.
 	It also sets the timeout for Uru clients, where a high timeout is necessary since the connection is already established when changing
 	the server in the shard list and when the timeout is only 5 seconds the client gets kicked off too fast. It will be changed
 	to 30sec after the client got authed.
@@ -167,6 +167,7 @@ tNetEvent * tUnet::getEvent() {
 
 void tUnet::addEvent(tNetEvent *evt)
 {
+	DBG(5, "Enqueuing event %d for %s\n", evt->id, *evt->u ? evt->u->str().c_str() : "<>");
 	tMutexLock lock(eventsMutex);
 	events.push_back(evt);
 	if (workerWaiting) {
@@ -342,6 +343,14 @@ tNetSessionRef tUnet::netConnect(const char * hostname,uint16_t port,uint8_t val
 	return u;
 }
 
+void tUnet::removeConnection(tNetSession *u)
+{
+	assert(alcGetSelfThreadId() == alcGetMain()->threadId());
+	sec->log("%s Ended\n",u->str().c_str());
+	tWriteLock lock(smgrMutex);
+	smgr->destroy(u);
+}
+
 /** Urunet the netcore, it's the heart of the server 
 This function recieves new packets and passes them to the correct session */
 bool tUnet::sendAndWait() {
@@ -349,9 +358,9 @@ bool tUnet::sendAndWait() {
 	std::pair<tNetTimeDiff, bool> result = processSendQueues();
 	tNetTimeDiff unet_timeout = result.first;
 	bool idle = !result.second; // we are idle if there is nothing to send
-	if (unet_timeout < 250) {
-		DBG(3, "Timeout %d too low, increasing to 250\n", unet_timeout);
-		unet_timeout = 250; // don't sleep less than 0.25 milliseconds
+	if (unet_timeout < 500) {
+		DBG(3, "Timeout %d too low, increasing to 500\n", unet_timeout);
+		unet_timeout = 500; // don't sleep less than 0.5 milliseconds
 	}
 
 	//waiting for packets - timeout
@@ -462,14 +471,7 @@ bool tUnet::sendAndWait() {
 		err->log("%s Recieved invalid Uru message - kicking peer\n", session->str().c_str());
 		err->log(" Exception %s\n%s\n",t.what(),t.backtrace());
 		sec->log("%s Kicked hard due to error in Uru message\n", session->str().c_str());
-		{
-			tWriteLock lock(session->prvDataMutex);
-			session->terminated = true;
-		}
-		{
-			tWriteLock lock(smgrMutex);
-			smgr->destroy(*session); // no goodbye message or anything, this error was deep on the protocol stack
-		}
+		removeConnection(*session); // no goodbye message or anything, this error was deep on the protocol stack
 	}
 	
 	//END CRITICAL REGION
@@ -483,13 +485,29 @@ std::pair<tNetTimeDiff, bool> tUnet::processSendQueues() {
 	// reset the timer
 	tNetTimeDiff unet_timeout=max_sleep;
 	bool anythingToSend = false;
+	std::list<tNetSession *> sessionsToDelete;
 	
-	tReadLock lock(smgrMutex);
-	for (tNetSessionMgr::tIterator it(smgr); it.next();) {
-		updateNetTime(); // let the session calculate its timestamps correctly
-		unet_timeout = std::min(it->processSendQueues(), unet_timeout);
-		anythingToSend = anythingToSend || it->anythingToSend();
+	// do the main work, with only a read lock
+	{
+		tReadLock lock(smgrMutex);
+		for (tNetSessionMgr::tIterator it(smgr); it.next();) {
+			updateNetTime(); // let the session calculate its timestamps correctly
+			unet_timeout = std::min(it->processSendQueues(), unet_timeout);
+			if (!it->anythingToSend()) {
+				if (it->isTerminated()) {
+					sessionsToDelete.push_back(*it); // can't delete now: we are iterating, and we hold the read lock
+				}
+			}
+			else
+				anythingToSend = true;
+		}
 	}
+	
+	// now check for the session to be deleted, with a write lock
+	for (std::list<tNetSession *>::iterator it = sessionsToDelete.begin(); it != sessionsToDelete.end(); ++it)
+		removeConnection(*it);
+	
+	// return what we found
 	return std::pair<tNetTimeDiff, bool>(unet_timeout, anythingToSend);
 }
 
