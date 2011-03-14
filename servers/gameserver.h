@@ -29,7 +29,6 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_GAMESERVER_H_ID "$Id$"
 
-#include <netsession.h>
 #include <unetlobbyserverbase.h>
 #include <protocol/gamemsg.h>
 
@@ -40,7 +39,7 @@ namespace alc {
 	class tAgeStateManager;
 	class tAgeInfo;
 
-	class tGameData : public tNetSessionData {
+	class tGameData : public tBaseType {
 	public:
 		tGameData(const tUruObject &obj, tNetSession *u) : obj(obj), isHidden(false), u(u) {}
 		tUruObject obj;

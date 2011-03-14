@@ -40,13 +40,6 @@ namespace alc {
 #define UNetUpgraded 0x01
 //#define UNetNoConn   0x02
 
-/** base class for data associated to a session */
-class tNetSessionData {
-public:
-	tNetSessionData() {}
-	virtual ~tNetSessionData() {}
-};
-
 class tNetSession {
 	friend class tUnet; // these two classes work together closely
 
@@ -116,7 +109,7 @@ public:
 	// used only by some servers
 	tString name; //!< peer age name in tracking server, peer account name in lobby and game
 	uint8_t serverGuid[8]; //!< hex; server guid in tracking server
-	tNetSessionData *data; //!< save additional data (e.g. tracking information)
+	tBaseType *data; //!< save additional data (e.g. tracking information)
 	
 	// used by lobbybase (lobby and game)
 	typedef enum { UnknownGame, POTSGame, UUGame } tGameType;

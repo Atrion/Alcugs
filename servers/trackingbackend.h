@@ -39,7 +39,7 @@ namespace alc {
 	class tUnetTrackingServer;
 	class tNetSessionList;
 	
-	class tTrackingData : public tNetSessionData {
+	class tTrackingData : public tBaseType {
 	public:
 		typedef std::list<uint32_t> tPlayerList;
 	
