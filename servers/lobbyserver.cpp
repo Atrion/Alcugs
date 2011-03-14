@@ -93,7 +93,6 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, requestList.str().c_str());
 				
 				// forward it to the vault server
-				tNetSessionRef vaultServer = getServer(KVault);
 				if (!*vaultServer) {
 					err->log("ERR: I've got to ask the vault server about player %s, but it's unavailable.\n", u->str().c_str());
 					return 1;
@@ -143,7 +142,6 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, createPlayer.str().c_str());
 				
 				// forward it to the vault server
-				tNetSessionRef vaultServer = getServer(KVault);
 				if (!*vaultServer) {
 					err->log("ERR: I've got to ask the vault server to create a player, but it's unavailable.\n", u->str().c_str());
 					return 1;
@@ -192,7 +190,6 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, deletePlayer.str().c_str());
 				
 				// forward it to the vault server
-				tNetSessionRef vaultServer = getServer(KVault);
 				if (!*vaultServer) {
 					err->log("ERR: I've got to ask the vault server to delete a player, but it's unavailable.\n", u->str().c_str());
 					return 1;

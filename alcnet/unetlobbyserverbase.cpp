@@ -47,7 +47,6 @@ namespace alc {
 	tUnetLobbyServerBase::tUnetLobbyServerBase(uint8_t whoami) : tUnetServerBase(whoami), authedTimeout(30) /* 30seconds for authenticated clients */
 	{
 		memset(serverGuid, 0, 8);
-		auth_gone = tracking_gone = vault_gone = 0;
 		vaultLogShort = false;
 	}
 	
@@ -97,14 +96,18 @@ namespace alc {
 			}
 		}
 		else { // ok, let's forward the ping to the right server
-			tNetSessionRef server = getServer(ping.destination);
-			if (*server) {
-				tmPing pingFwd(*server, ping);
-				pingFwd.setRouteInfo(u);
-				send(pingFwd);
+			tNetSession *server = NULL;
+			switch (ping.destination) {
+				case KAuth: server = *authServer; break;
+				case KTracking: server = *trackingServer; break;
+				case KVault: server = *vaultServer; break;
+				default:
+					err->log("ERR: Connection to unknown service %d requested by ping\n", ping.destination);
+					return;
 			}
-			else
-				err->log("ERR: Connection to unknown service %d requested by ping\n", ping.destination);
+			tmPing pingFwd(server, ping);
+			pingFwd.setRouteInfo(u);
+			send(pingFwd);
 		}
 	}
 	
@@ -121,7 +124,7 @@ namespace alc {
 		
 		if (whoami == KGame && avatar.isEmpty()) // empty avatar names are not allowed in game server
 			throw txProtocolError(_WHERE("Someone with KI %d is trying to set an empty avatar name, but I\'m a game server. Kick him.", ki));
-
+		
 		if (!*trackingServer) {
 			err->log("ERR: I've got to set player %s active, but tracking is unavailable.\n", u->str().c_str());
 			return false;
@@ -146,30 +149,44 @@ namespace alc {
 		return true;
 	}
 	
-	void tUnetLobbyServerBase::onConnectionClosing(tNetSession *u, uint8_t reason)
+	void tUnetLobbyServerBase::onNewConnection(tNetSession* u)
 	{
 		tMutexLock lock(serversMutex);
-		// if it was one of our servers, save the time it went (it will be reconnected later)
-		if (*authServer == u) {
-			auth_gone = alcGetTime(); authServer = NULL;
+		switch (u->getPeerType()) {
+			case KAuth: authServer = u; return;
+			case KTracking: trackingServer = u; return;
+			case KVault: vaultServer = u; return;
 		}
-		else if (*trackingServer == u) {
-			if (whoami == KGame && isRunning()) {
-				err->log("ERR: I lost the connection to the tracking server, so I will go down\n");
-				/* The game server should go down when it looses the connection to tracking. This way, you can easily
-				shut down all game servers. In addition, it won't get any new peers anyway without the tracking server */
-				stop();
+	}
+
+	void tUnetLobbyServerBase::onConnectionClosing(tNetSession *u, uint8_t reason)
+	{
+		{
+			tMutexLock lock(serversMutex);
+			// if it was one of our servers, save the time it went (it will be reconnected later)
+			if (*authServer == u) {
+				authServer = NULL;
+				return;
 			}
-			else {
-				tracking_gone = alcGetTime(); trackingServer = NULL;
+			else if (*trackingServer == u) {
+				if (whoami == KGame && isRunning()) {
+					err->log("ERR: I lost the connection to the tracking server, so I will go down\n");
+					/* The game server should go down when it looses the connection to tracking. This way, you can easily
+					shut down all game servers. In addition, it won't get any new peers anyway without the tracking server */
+					stop();
+				}
+				else {
+					trackingServer = NULL;
+				}
+				return;
 			}
-		}
-		else if (*vaultServer == u) {
-			vault_gone = alcGetTime(); vaultServer = NULL;
+			else if (*vaultServer == u) {
+				vaultServer = NULL;
+				return;
+			}
 		}
 		// If it was a client, tell the others it left
-		else if (u->getPeerType() == KClient && u->ki != 0) {
-			tNetSessionRef trackingServer = getServer(KTracking);
+		if (u->getPeerType() == KClient && u->ki != 0) {
 			if (!*trackingServer) {
 				err->log("ERR: I've got to update a player\'s (%s) status for the tracking server, but it is unavailable.\n", u->str().c_str());
 			}
@@ -185,13 +202,12 @@ namespace alc {
 	
 	void tUnetLobbyServerBase::onStart(void)
 	{
-		tMutexLock lock(serversMutex);
-		authServer = reconnectPeer(KAuth);
-		trackingServer = reconnectPeer(KTracking);
-		vaultServer = reconnectPeer(KVault);
+		reconnectPeer(KAuth);
+		reconnectPeer(KTracking);
+		reconnectPeer(KVault);
 	}
 	
-	tNetSessionRef tUnetLobbyServerBase::reconnectPeer(uint8_t dst)
+	void tUnetLobbyServerBase::reconnectPeer(uint8_t dst)
 	{
 		tString host, port;
 		tConfig *cfg = alcGetMain()->config();
@@ -211,11 +227,11 @@ namespace alc {
 				break;
 			default:
 				err->log("ERR: Connection to unknown service %d requested\n", dst);
-				return NULL;
+				return;
 		}
 		if (host.isEmpty() || port.isEmpty()) {
 			err->log("ERR: Hostname or port for service %d (%s) is missing\n", dst, alcUnetGetDestination(dst));
-			return NULL;
+			return;
 		}
 		
 		tNetSessionRef u = netConnect(host.c_str(), port.asUInt(), 3 /* Alcugs upgraded protocol */, 0, dst);
@@ -229,20 +245,6 @@ namespace alc {
 			tmCustomSetGuid setGuid(*u, alcGetStrGuid(serverGuid), serverName, var, whoami == KGame ? 0 : spawnStart, whoami == KGame ? 0 : spawnStop);
 			send(setGuid);
 		}
-		
-		return u;
-	}
-	
-	tNetSessionRef tUnetLobbyServerBase::getServer(uint8_t dst)
-	{
-		tMutexLock lock(serversMutex);
-		tNetSessionRef session;
-		switch (dst) {
-			case KAuth: return authServer;
-			case KTracking: return trackingServer;
-			case KVault: return vaultServer;
-		}
-		return NULL;
 	}
 	
 	void tUnetLobbyServerBase::onIdle()
@@ -250,20 +252,15 @@ namespace alc {
 		if (!isRunning()) return;
 		
 		tMutexLock lock(serversMutex);
-		time_t time = alcGetTime();
-		if (auth_gone && auth_gone+5 < time) { // if it went more than 5 sec ago, reconnect
-			authServer = reconnectPeer(KAuth);
-			auth_gone = 0;
+		// make sure we have a connection to the servers
+		if (!*authServer) {
+			reconnectPeer(KAuth);
 		}
-		
-		if (tracking_gone && tracking_gone+5 < time) { // if it went more than 5 sec ago, reconnect
-			trackingServer = reconnectPeer(KTracking);
-			tracking_gone = 0;
+		if (!*trackingServer) {
+			reconnectPeer(KTracking);
 		}
-		
-		if (vault_gone && vault_gone+5 < time) { // if it went more than 5 sec ago, reconnect
-			vaultServer = reconnectPeer(KVault);
-			vault_gone = 0;
+		if (!*vaultServer) {
+			reconnectPeer(KVault);
 		}
 	}
 	
@@ -340,7 +337,6 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, authResponse.str().c_str());
 				
 				// send authAsk to auth server
-				tNetSessionRef authServer = getServer(KAuth);
 				if (!*authServer) {
 					err->log("ERR: I've got to ask the auth server about player %s, but it's unavailable.\n", u->str().c_str());
 					return 1;
@@ -424,7 +420,6 @@ namespace alc {
 				}
 				else {
 					// ask the vault server about this KI
-					tNetSessionRef vaultServer = getServer(KVault);
 					if (!*vaultServer) {
 						err->log("ERR: I've got the ask the vault to verify a KI, but it's unavailable. I'll have to kick the player.\n", u->str().c_str());
 						// kick the player since we cant be sure he doesnt lie about the KI
@@ -516,7 +511,6 @@ namespace alc {
 					if (vaultMsg.hasFlags(plNetKi) && vaultMsg.ki != u->ki)
 						throw txProtocolError(_WHERE("KI mismatch (%d != %d)", vaultMsg.ki, u->ki));
 					// forward it to the vault server
-					tNetSessionRef vaultServer = getServer(KVault);
 					if (!*vaultServer) {
 						err->log("ERR: I've got a vault message to forward to the vault server, but it's unavailable.\n", u->str().c_str());
 						return 1;
@@ -568,7 +562,6 @@ namespace alc {
 				}
 				
 				// Let's ask vault
-				tNetSessionRef vaultServer = getServer(KVault);
 				if (!*vaultServer) {
 					err->log("ERR: I've got the ask the vault server to check an age for me, but it's unavailable.\n");
 					return 1;
@@ -591,7 +584,6 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, findServer.str().c_str());
 			
 				// let's ask the tracking server
-				tNetSessionRef trackingServer = getServer(KTracking);
 				if (!*trackingServer) {
 					err->log("ERR: I've got the ask the tracking server to find an age for me, but it's unavailable.\n");
 					return 1;

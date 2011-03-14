@@ -190,7 +190,6 @@ namespace alc {
 					bcastMemberUpdate(u, /*isJoined*/true);
 				}
 				// update tracking server status
-				tNetSessionRef trackingServer = getServer(KTracking);
 				if (!*trackingServer) {
 					err->log("ERR: I've got to set player %s to hidden, but tracking is unavailable.\n", u->str().c_str());
 				}
@@ -284,7 +283,6 @@ namespace alc {
 	void tUnetGameServer::onConnectionClosing(alc::tNetSession* u, uint8_t reason)
 	{
 		if (u->getPeerType() == KClient && u->ki != 0) { // if necessary, tell the others about it
-			tNetSessionRef vaultServer = getServer(KVault);
 			if (!*vaultServer) {
 				err->log("ERR: I've got to update a player\'s (%s) status for the vault server, but it is unavailable.\n", u->str().c_str());
 			}
@@ -477,7 +475,6 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, joinReq.str().c_str());
 				
 				// the player is joined - tell tracking and (perhaps) vault
-				tNetSessionRef trackingServer = getServer(KTracking), vaultServer = getServer(KVault);
 				if (!*trackingServer || !*vaultServer) {
 					err->log("ERR: Player %s is joining, but vault or tracking is unavailable.\n", u->str().c_str());
 					return 1;
@@ -656,7 +653,6 @@ namespace alc {
 				
 				if (gameMsg.recipients.size()) { // we did not yet reach all recipients
 					// this is a more reliable method to know whether to forward messages to tracking - the alternative would be the plNetDirected flag
-					tNetSessionRef trackingServer = getServer(KTracking);
 					if (!*trackingServer) {
 						err->log("ERR: I've got to to forward a message through the tracking server, but it's unavailable.\n");
 						return 1;

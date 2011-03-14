@@ -49,6 +49,7 @@ protected:
 	virtual void onIdle();
 	virtual int onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u);
 	virtual void onForwardPing(tmPing &ping, tNetSession *u);
+	virtual void onNewConnection(tNetSession * u);
 	virtual void onConnectionClosing(tNetSession *u, uint8_t reason);
 	virtual void onApplyConfig(void);
 
@@ -57,8 +58,6 @@ protected:
 	
 	/** This event is triggered when a player authenticated itself against the server */
 	virtual void onPlayerAuthed(tNetSession */*u*/) {}
-	
-	tNetSessionRef getServer(uint8_t dst);
 
 	uint8_t serverGuid[8]; //!< This system's guid (age guid) (in Hex)
 	tString serverName; //!< The system/server name, normally the age filename
@@ -66,14 +65,13 @@ protected:
 protected:
 	uint16_t spawnStart, spawnStop;
 	const time_t authedTimeout;
+	
+	tMutex serversMutex; //!< this protects below server variables
+	tNetSessionRef authServer, trackingServer, vaultServer; //!< reading from worker is safe, the rest must be protected
 
 private:
 	bool setActivePlayer(tNetSession *u, uint32_t ki, uint32_t x, const tString &avatar);
-	tNetSessionRef reconnectPeer(uint8_t dst); //!< establishes a connection to that service (remember to set the corresponding gone variable to 0)
-
-	tMutex serversMutex; //!< this protects below server variables
-	tNetSessionRef authServer, trackingServer, vaultServer;
-	time_t auth_gone, tracking_gone, vault_gone; // saves when this server got disconnected. wait 10sec before trying to connect again
+	void reconnectPeer(uint8_t dst); //!< establishes a connection to that service
 
 	tLog lvault;
 	bool vaultLogShort;
