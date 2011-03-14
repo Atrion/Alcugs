@@ -71,7 +71,7 @@ private:
 	# comment
 	; comment
 */
-class tSimpleParser : public tBaseType {
+class tSimpleParser : public tStreamable {
 public:
 	tSimpleParser();
 	virtual void store(tBBuf &t);

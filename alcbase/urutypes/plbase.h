@@ -38,9 +38,9 @@ namespace alc {
 	const char *alcGetPlasmaType(uint16_t type);
 	tpObject *alcCreatePlasmaObject(uint16_t type, bool mustBeComplete = true);
 	
-	class tpObject : public tBaseType {
+	class tpObject : public tStreamable {
 	public:
-		tpObject(uint16_t type, bool incomplete = false) : tBaseType(), incomplete(incomplete), type(type) {}
+		tpObject(uint16_t type, bool incomplete = false) : incomplete(incomplete), type(type) {}
 		virtual void store(tBBuf &/*t*/) {}
 		virtual void stream(tBBuf &/*t*/) const {}
 		

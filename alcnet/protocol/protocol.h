@@ -71,10 +71,12 @@ const char * alcUnetGetVarType(uint8_t type);
 uint8_t alcUnetGetVarTypeFromName(tString type);
 
 /** this class is used to save incoming NetMsgs and collect their fragments */
-class tUnetMsg {
+class tUnetMsg : public tBaseType {
 public:
 	tUnetMsg() { next=NULL; fr_count=0; }
 	//virtual ~tUnetMsg() { delete data; }
+	virtual void store(tBBuf &/*t*/) {}
+	virtual void stream(tBBuf &/*t*/) const {}
 	tUnetMsg * next;
 	uint16_t cmd;
 	uint32_t sn;
@@ -84,7 +86,7 @@ public:
 };
 
 /** this class is used to save acks in an ackq */
-class tUnetAck {
+class tUnetAck : public tBaseType {
 public:
 	tUnetAck(uint32_t A, uint32_t B, tNetTime timestamp) : timestamp(timestamp), A(A), B(B) { }
 	tUnetAck(uint32_t A, uint32_t B) : timestamp(0), A(A), B(B) { }
@@ -95,7 +97,7 @@ public:
 };
 
 /** this is the class responsible for the UruMsg header. The data must be filled with a class derived from tmBase. */
-class tUnetUruMsg : public tBaseType {
+class tUnetUruMsg : public tStreamable {
 public:
 	tUnetUruMsg() : tries(0), urgent(false) {}
 	tUnetUruMsg(bool urgent) : tries(0), urgent(urgent) {}
@@ -133,7 +135,7 @@ public:
 	FORBID_CLASS_COPY(tUnetUruMsg)
 };
 
-class tmBase :public tBaseType {
+class tmBase :public tStreamable {
 public:
 	tmBase(uint8_t bhflags, tNetSession *u) : bhflags(bhflags), u(u) { }
 	virtual tString str() const=0;

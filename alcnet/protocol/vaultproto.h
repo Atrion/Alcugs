@@ -180,9 +180,8 @@ namespace alc {
 	const char *alcVaultGetNodeType(uint8_t type);
 	const char *alcVaultGetFolderType(uint32_t type);
 	
-	class tvBase : public tBaseType {
+	class tvBase : public tStreamable {
 	public:
-		tvBase(void) : tBaseType() {}
 		virtual void asHtml(tLog *log, bool shortLog) = 0; //!< print the data as HTML. Also does further verification for some types.
 	};
 	

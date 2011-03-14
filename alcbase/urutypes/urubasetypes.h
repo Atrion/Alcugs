@@ -77,7 +77,7 @@ public:
 };
 
 /** UruObject */
-class tUruObject : public tBaseType { // equivalent to plUoid in Plasma
+class tUruObject : public tStreamable { // equivalent to plUoid in Plasma
 public:
 	tUruObject(void);
 	virtual void store(tBBuf &t);
@@ -98,7 +98,7 @@ public:
 	uint32_t clonePlayerId;
 };
 
-class tUruObjectRef : public tBaseType { // equivalent to the key reader of the resource manager in Plasma
+class tUruObjectRef : public tStreamable { // equivalent to the key reader of the resource manager in Plasma
 public:
 	tUruObjectRef(void);
 	tUruObjectRef(const tUruObject &obj);

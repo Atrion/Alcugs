@@ -50,23 +50,30 @@ class tMBuf;
 
 /** Base type */
 class tBaseType {
+public: virtual ~tBaseType() {}
+};
+
+/** Put any type into a base type */
+template <typename T> class tContainer : public tBaseType {
 public:
-	//!(de)constructors
-	virtual ~tBaseType() {}
+	tContainer(T data) : data(data) {}
+	T getData() { return data; }
+private:
+	T data;
+};
+
+/** Basic streamable type */
+class tStreamable : public tBaseType {
+public:
 	//!stores from a buffer
 	virtual void store(tBBuf &t)=0;
 	//!streams to a buffer
 	virtual void stream(tBBuf &t) const=0;
 };
-//end base type
 
 /** Basic buffer */
-class tBBuf : public tBaseType {
+class tBBuf : public tStreamable {
 public:
-	//!(de)constructors
-	tBBuf() {}
-	virtual ~tBBuf() {}
-	
 	//You must implement the next ones on derived buffer classes, plus the tBaseType ones.
 	//! Gets absolute offset
 	virtual size_t tell() const=0;
@@ -93,9 +100,9 @@ public:
 	void seek(ssize_t n,uint8_t flags=SEEK_CUR);
 	
 	/** Puts an object into the buffer (streams the object) */
-	void put(const tBaseType &t) { t.stream(*this); }
+	void put(const tStreamable &t) { t.stream(*this); }
 	/** Gets an object from the buffer (stores object from stream) */
-	void get(tBaseType &t) { t.store(*this); }
+	void get(tStreamable &t) { t.store(*this); }
 	
 	/** \return True if the pointer is at the end of the stream */
 	bool eof() const { return (this->tell() >= this->size()); }
@@ -147,25 +154,6 @@ public:
 	void check(const void * what,size_t n); //!< \throws txUnexpectedData if pattern don't matches buffer contents
 };
 
-/** Buffer with reference control */
-class tRefBuf {
-public:
-	tRefBuf(size_t csize=1024);
-	~tRefBuf();
-	void resize(size_t newsize);
-	void inc();
-	void dec();
-	size_t size() { return msize; }
-	uint8_t *buf() { return static_cast<uint8_t*>(buffer); }
-	const uint8_t *buf() const { return static_cast<const uint8_t*>(buffer); }
-	tRefBuf *unique(size_t l); //!< returns a pointer to a ref buf with the same conent as this one, but not shared with anyone else. The parameter says how many bytes of the content are really interesting, i.e. need to be copied.
-private:
-	tMutex mutex;
-	unsigned int refs;
-	size_t msize;
-	void *buffer;
-};
-
 /** memory based buffer with reference control */
 class tMBuf : public tBBuf {
 public:
@@ -177,7 +165,7 @@ public:
 	
 	// implement interface
 	virtual void stream(tBBuf &buf) const;
-	virtual void store(tBBuf &/*buf*/) {}
+	virtual void store(tBBuf &buf);
 	virtual size_t tell() const { return off; }
 	virtual void set(size_t pos);
 	virtual void write(const void* val,size_t n);
@@ -214,6 +202,25 @@ protected:
 	//! helper for tString::c_str - use only if msize is at least 1!
 	void addNullTerminator(void) const;
 private:
+	/** Buffer with reference control */
+	class tRefBuf {
+	public:
+		tRefBuf(size_t csize=1024);
+		~tRefBuf();
+		void resize(size_t newsize);
+		void inc();
+		void dec();
+		size_t size() { return msize; }
+		uint8_t *buf() { return static_cast<uint8_t*>(buffer); }
+		const uint8_t *buf() const { return static_cast<const uint8_t*>(buffer); }
+		tRefBuf *unique(size_t l); //!< returns a pointer to a ref buf with the same conent as this one, but not shared with anyone else. The parameter says how many bytes of the content are really interesting, i.e. need to be copied.
+	private:
+		tMutex mutex;
+		unsigned int refs;
+		size_t msize;
+		void *buffer;
+	};
+	
 	void init();
 	void getUniqueBuffer(size_t newsize);
 	
@@ -236,7 +243,7 @@ public:
 	virtual void write(const void * val,size_t n);
 	virtual const void * read(size_t n);
 	virtual void stream(tBBuf &buf) const;
-	virtual void store(tBBuf &/*buf*/) {}
+	virtual void store(tBBuf &buf);
 	virtual size_t size() const;
 	
 	// additional functions
@@ -261,10 +268,10 @@ public:
 	// implement interface
 	virtual size_t tell() const { return off; }
 	virtual void set(size_t pos);
-	virtual void write(const void * /*val*/,size_t /*n*/) {}
+	virtual void write(const void * val,size_t n);
 	virtual const void * read(size_t n);
 	virtual void stream(tBBuf &buf) const;
-	virtual void store(tBBuf &/*buf*/) {}
+	virtual void store(tBBuf &buf);
 	virtual size_t size() const { return msize; }
 private:
 	const void * buf;
@@ -275,8 +282,8 @@ private:
 /** Zlib buffer */
 class tZBuf : public tMBuf {
 public:
-	tZBuf() :tMBuf() {}
-	tZBuf(const tMBuf &k) :tMBuf(k) {}
+	tZBuf() : tMBuf() {}
+	tZBuf(const tMBuf &k) : tMBuf(k) {}
 	void compress();
 	void uncompress(size_t iosize);
 protected:
@@ -399,7 +406,7 @@ inline tString operator+(const tString & str1, const char * str2) {
 }
 
 /** Time */
-class tTime : public tBaseType {
+class tTime : public tStreamable {
 public:
 	tTime(void) : seconds(0), microseconds(0) {}
 	tTime(time_t seconds) : seconds(seconds), microseconds(0) {}

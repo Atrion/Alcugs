@@ -122,23 +122,23 @@ void tBBuf::check(const void * what,size_t n) {
 /* 
 	tRefBuf 
 */
-tRefBuf::tRefBuf(size_t csize) {
+tMBuf::tRefBuf::tRefBuf(size_t csize) {
 	refs=1;
 	msize=csize;
 	buffer=malloc(csize);
 	if(buffer==NULL) throw txNoMem(_WHERE("NoMem"));
 }
-tRefBuf::~tRefBuf() {
+tMBuf::tRefBuf::~tRefBuf() {
 	free(buffer);
 }
-void tRefBuf::resize(size_t newsize) {
+void tMBuf::tRefBuf::resize(size_t newsize) {
 	msize=newsize;
 	void * b2 =realloc(buffer,newsize);
 	if(b2==NULL) throw txNoMem(_WHERE("NoMem"));
 	buffer=b2;
 }
-void tRefBuf::inc() { tMutexLock lock(mutex); refs++; }
-void tRefBuf::dec() {
+void tMBuf::tRefBuf::inc() { tMutexLock lock(mutex); refs++; }
+void tMBuf::tRefBuf::dec() {
 	mutex.lock();
 	if(this->refs==0) {
 		mutex.unlock();
@@ -152,7 +152,7 @@ void tRefBuf::dec() {
 	else
 		mutex.unlock();
 }
-tRefBuf* tRefBuf::unique(size_t l)
+tMBuf::tRefBuf* tMBuf::tRefBuf::unique(size_t l)
 {
 	tMutexLock lock(mutex);
 	assert(l <= msize);
@@ -264,6 +264,10 @@ void tMBuf::stream(tBBuf &b) const {
 	if (buf==NULL) return;
 	b.write(buf->buf(),msize);
 }
+void tMBuf::store(tBBuf&)
+{
+	throw txBase(_WHERE("storing a tMBuf is not supported"));
+}
 void tMBuf::clear() {
 	off=0;
 	msize=0;
@@ -355,6 +359,10 @@ void tFBuf::stream(tBBuf &b) const {
 	b.write(xbuf,msize);
 	fseek(f,pos,SEEK_SET);
 }
+void tFBuf::store(tBBuf&)
+{
+	throw txBase(_WHERE("storing a tFBuf is not supported"));
+}
 size_t tFBuf::size() const {
 	return msize;
 }
@@ -399,6 +407,14 @@ const void * tSBuf::read(size_t n) {
 }
 void tSBuf::stream(tBBuf &buf) const {
 	buf.write(this->buf,msize);
+}
+void tSBuf::store(tBBuf&)
+{
+	throw txBase(_WHERE("storing a tSBuf is not supported"));
+}
+void tSBuf::write(const void*, size_t)
+{
+	throw txBase(_WHERE("writing to a tSBuf is not supported"));
 }
 
 /* end static buffer */

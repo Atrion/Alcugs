@@ -38,7 +38,7 @@ namespace alc {
 
 	
 	// Helper class for the member list messages
-	class tMemberInfo : public tBaseType {
+	class tMemberInfo : public tStreamable {
 	public:
 		tMemberInfo(tNetSession *u, const tUruObject &obj, bool hidePlayer);
 		virtual void store(tBBuf &t);
@@ -66,7 +66,7 @@ namespace alc {
 	
 	class tmJoinAck : public tmMsgBase {
 	public:
-		tmJoinAck(tNetSession *u, uint32_t x, const tBaseType *sdl);
+		tmJoinAck(tNetSession *u, uint32_t x, const tStreamable *sdl);
 		virtual void stream(tBBuf &t) const;
 		// format
 		tStreamedObject sdlStream;
@@ -189,7 +189,7 @@ namespace alc {
 		
 	protected:
 		tmStreamedObject(uint16_t cmd, tNetSession *u, const tmStreamedObject &msg);
-		tmStreamedObject(uint16_t cmd, tNetSession *u, const tUruObject &obj, tBaseType *content);
+		tmStreamedObject(uint16_t cmd, tNetSession *u, const tUruObject &obj, tStreamable *content);
 	};
 	
 	class tmTestAndSet : public tmStreamedObject {
@@ -204,7 +204,7 @@ namespace alc {
 	class tmSDLState : public tmStreamedObject {
 	public:
 		tmSDLState(tNetSession *u);
-		tmSDLState(tNetSession *u, const tUruObject &obj, tBaseType *content, bool isInitial);
+		tmSDLState(tNetSession *u, const tUruObject &obj, tStreamable *content, bool isInitial);
 		
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;

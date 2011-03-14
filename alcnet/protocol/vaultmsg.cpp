@@ -40,7 +40,7 @@ namespace alc {
 	tmVault::tmVault(tNetSession *u) : tmMsgBase(u)
 	{ }
 	
-	tmVault::tmVault(tNetSession *u, uint32_t ki, uint32_t x, bool task, tBaseType *vaultMessage) : tmMsgBase(NetMsgVault, plNetAck | plNetKi, u)
+	tmVault::tmVault(tNetSession *u, uint32_t ki, uint32_t x, bool task, tStreamable *vaultMessage) : tmMsgBase(NetMsgVault, plNetAck | plNetKi, u)
 	{
 		message.put(*vaultMessage);
 		this->ki = ki;

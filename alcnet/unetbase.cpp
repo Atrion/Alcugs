@@ -227,7 +227,7 @@ void tUnetBase::terminate(tNetSession *u, uint8_t reason, bool gotEndMsg)
 		// Now that we sent that message, the other side must ack it, then tNetSession will set the timeout to 0
 	}
 	
-	addEvent(new tNetEvent(u, UNET_CONNCLS, new uint8_t(reason)));
+	addEvent(new tNetEvent(u, UNET_CONNCLS, new tContainer<uint8_t>(reason)));
 	
 	// wait some time to send/receive the ack
 	u->terminate(500/*milliseconds*/);
@@ -332,23 +332,21 @@ void tUnetBase::processEvent(tNetEvent *evt)
 			return;
 		case UNET_CONNCLS:
 		{
-			uint8_t *reason = static_cast<uint8_t *>(evt->data);
-			onConnectionClosing(u, *reason);
-			delete reason;
+			uint8_t reason = dynamic_cast<tContainer<uint8_t> *>(evt->data)->getData();
+			onConnectionClosing(u, reason);
 			return;
 		}
 		case UNET_MSGRCV:
 		{
-			tUnetMsg * msg = static_cast<tUnetMsg *>(evt->data);
+			tUnetMsg * msg = dynamic_cast<tUnetMsg *>(evt->data);
+			assert(msg!=NULL);
 			int ret = 0; // 0 - non parsed; 1 - parsed; 2 - ignored; -1 - parse error; -2 - hack attempt
 			#ifdef ENABLE_MSGDEBUG
 			log->log("%s New MSG Recieved\n",u->str().c_str());
 			#endif
-			assert(msg!=NULL);
-			bool shutdown = !isRunning();
 			try {
-				ret = parseBasicMsg(msg, u, shutdown);
-				if (ret != 1 && !u->isTerminated() && !shutdown) // if this is an active connection, look for other messages
+				ret = parseBasicMsg(msg, u, !isRunning());
+				if (ret != 1 && !u->isTerminated()) // if this is an active connection, look for other messages
 					ret = onMsgRecieved(msg, u);
 				if (ret == 1 && !msg->data.eof() > 0) { // packet was processed and there are bytes left, obiously invalid, terminate the client
 					err->log("%s Recieved a message 0x%04X (%s) which was too long (%d Bytes remaining after parsing) - kicking player\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data.remaining());
@@ -361,7 +359,7 @@ void tUnetBase::processEvent(tNetEvent *evt)
 				ret=-1;
 			}
 			if(ret==0) {
-				if (u->isTerminated() || shutdown) {
+				if (u->isTerminated()) {
 					err->log("%s is terminated and sent non-NetMsgLeave message 0x%04X (%s)\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
 					terminate(u);
 				}
@@ -386,7 +384,6 @@ void tUnetBase::processEvent(tNetEvent *evt)
 				sec->log("%s Unknown error in 0x%04X (%s)\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
 				terminate(u);
 			}
-			delete msg; // tNetEvent doesn't know what it is and can not delete it
 			return;
 		}
 		default:
