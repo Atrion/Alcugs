@@ -190,14 +190,8 @@ namespace alc {
 					bcastMemberUpdate(u, /*isJoined*/true);
 				}
 				// update tracking server status
-				if (!*trackingServer) {
-					err->log("ERR: I've got to set player %s to hidden, but tracking is unavailable.\n", u->str().c_str());
-				}
-				else {
-					// tell tracking
-					tmCustomPlayerStatus trackingStatus(*trackingServer, u, data->isHidden ? 1 /* invisible */ : 2 /* visible */, RActive);
-					send(trackingStatus);
-				}
+				tmCustomPlayerStatus trackingStatus(*trackingServer, u, data->isHidden ? 1 /* invisible */ : 2 /* visible */, RActive);
+				send(trackingStatus);
 			}
 			else if (node->type == KVNodeMgrPlayerNode) {
 				if (node->index != u->ki)
@@ -284,10 +278,7 @@ namespace alc {
 	void tUnetGameServer::onConnectionClosing(alc::tNetSession* u, uint8_t reason)
 	{
 		if (u->getPeerType() == KClient && u->ki != 0) { // if necessary, tell the others about it
-			if (!*vaultServer) {
-				err->log("ERR: I've got to update a player\'s (%s) status for the vault server, but it is unavailable.\n", u->str().c_str());
-			}
-			else if (reason == RLeaving) { // the player is going on to another age, so he's not really offline
+			if (reason == RLeaving) { // the player is going on to another age, so he's not really offline
 				// update online time
 				tmCustomVaultPlayerStatus vaultStatus(*vaultServer, u->ki, alcGetStrGuid(serverGuid), serverName, /* offline but will soon come back */ 2, u->onlineTime());
 				send(vaultStatus);
@@ -485,10 +476,6 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, joinReq.str().c_str());
 				
 				// the player is joined - tell tracking and (perhaps) vault
-				if (!*trackingServer || !*vaultServer) {
-					err->log("ERR: Player %s is joining, but vault or tracking is unavailable.\n", u->str().c_str());
-					return 1;
-				}
 				tmCustomPlayerStatus trackingStatus(*trackingServer, u, 2 /* visible */, RActive);
 				send(trackingStatus);
 				tmCustomVaultPlayerStatus vaultStatus(*vaultServer, u->ki, alcGetStrGuid(serverGuid), serverName, 1 /* is online */, 0 /* don't increase online time now, do that on disconnect */);
@@ -666,10 +653,6 @@ namespace alc {
 				
 				if (gameMsg.recipients.size()) { // we did not yet reach all recipients
 					// this is a more reliable method to know whether to forward messages to tracking - the alternative would be the plNetDirected flag
-					if (!*trackingServer) {
-						err->log("ERR: I've got to to forward a message through the tracking server, but it's unavailable.\n");
-						return 1;
-					}
 					tmCustomDirectedFwd fwdMsg(*trackingServer, gameMsg);
 					send(fwdMsg);
 				}

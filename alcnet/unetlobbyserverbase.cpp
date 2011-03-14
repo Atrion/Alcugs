@@ -125,11 +125,6 @@ namespace alc {
 		if (whoami == KGame && avatar.isEmpty()) // empty avatar names are not allowed in game server
 			throw txProtocolError(_WHERE("Someone with KI %d is trying to set an empty avatar name, but I\'m a game server. Kick him.", ki));
 		
-		if (!*trackingServer) {
-			err->log("ERR: I've got to set player %s active, but tracking is unavailable.\n", u->str().c_str());
-			return false;
-		}
-		
 		// save the data
 		{
 			tWriteLock lock(u->pubDataMutex); // don't hold this later on, it'd block the str() function!
@@ -148,49 +143,21 @@ namespace alc {
 		sec->log("%s player set\n", u->str().c_str());
 		return true;
 	}
-	
-	void tUnetLobbyServerBase::onNewConnection(tNetSession* u)
-	{
-		tMutexLock lock(serversMutex);
-		switch (u->getPeerType()) {
-			case KAuth: authServer = u; return;
-			case KTracking: trackingServer = u; return;
-			case KVault: vaultServer = u; return;
-		}
-	}
 
 	void tUnetLobbyServerBase::onConnectionClosing(tNetSession *u, uint8_t reason)
 	{
-		{
-			tMutexLock lock(serversMutex);
-			// if it was one of our servers, save the time it went (it will be reconnected later)
-			if (*authServer == u) {
-				authServer = NULL;
-				return;
-			}
-			else if (*trackingServer == u) {
-				if (whoami == KGame && isRunning()) {
-					err->log("ERR: I lost the connection to the tracking server, so I will go down\n");
-					/* The game server should go down when it looses the connection to tracking. This way, you can easily
-					shut down all game servers. In addition, it won't get any new peers anyway without the tracking server */
-					stop();
-				}
-				else {
-					trackingServer = NULL;
-				}
-				return;
-			}
-			else if (*vaultServer == u) {
-				vaultServer = NULL;
-				return;
+		// if it was one of our servers, go down - those servers hold a state that got lost, all players have to leave anyway
+		if (*authServer == u || *trackingServer == u || *vaultServer == 0) {
+			if (isRunning()) {
+				err->log("ERR: I lost the connection to the another server, so I will go down\n");
+				/* The game server should go down when it looses the connection to tracking. This way, you can easily
+				shut down all game servers. In addition, it won't get any new peers anyway without the tracking server */
+				stop();
 			}
 		}
 		// If it was a client, tell the others it left
-		if (u->getPeerType() == KClient && u->ki != 0) {
-			if (!*trackingServer) {
-				err->log("ERR: I've got to update a player\'s (%s) status for the tracking server, but it is unavailable.\n", u->str().c_str());
-			}
-			else if (reason != RLoggedInElsewhere) { // if the player went somewhere else, don't remove him from tracking
+		else if (u->getPeerType() == KClient && u->ki != 0) {
+			if (reason != RLoggedInElsewhere) { // if the player went somewhere else, don't remove him from tracking
 				int state = (reason == RLeaving) ? 2 /* visible */ : 0 /* delete */; // if the player just goes on to another age, don't remove him from the list
 				tmCustomPlayerStatus trackingStatus(*trackingServer, u, state, reason);
 				send(trackingStatus);
@@ -202,12 +169,13 @@ namespace alc {
 	
 	void tUnetLobbyServerBase::onStart(void)
 	{
-		reconnectPeer(KAuth);
-		reconnectPeer(KTracking);
-		reconnectPeer(KVault);
+		// no other thread running yet
+		authServer = connectPeer(KAuth);
+		trackingServer = connectPeer(KTracking);
+		vaultServer = connectPeer(KVault);
 	}
 	
-	void tUnetLobbyServerBase::reconnectPeer(uint8_t dst)
+	tNetSessionRef tUnetLobbyServerBase::connectPeer(uint8_t dst)
 	{
 		tString host, port;
 		tConfig *cfg = alcGetMain()->config();
@@ -227,11 +195,11 @@ namespace alc {
 				break;
 			default:
 				err->log("ERR: Connection to unknown service %d requested\n", dst);
-				return;
+				return NULL;
 		}
 		if (host.isEmpty() || port.isEmpty()) {
 			err->log("ERR: Hostname or port for service %d (%s) is missing\n", dst, alcUnetGetDestination(dst));
-			return;
+			return NULL;
 		}
 		
 		tNetSessionRef u = netConnect(host.c_str(), port.asUInt(), 3 /* Alcugs upgraded protocol */, 0, dst);
@@ -245,23 +213,8 @@ namespace alc {
 			tmCustomSetGuid setGuid(*u, alcGetStrGuid(serverGuid), serverName, var, whoami == KGame ? 0 : spawnStart, whoami == KGame ? 0 : spawnStop);
 			send(setGuid);
 		}
-	}
-	
-	void tUnetLobbyServerBase::onIdle()
-	{
-		if (!isRunning()) return;
 		
-		tMutexLock lock(serversMutex);
-		// make sure we have a connection to the servers
-		if (!*authServer) {
-			reconnectPeer(KAuth);
-		}
-		if (!*trackingServer) {
-			reconnectPeer(KTracking);
-		}
-		if (!*vaultServer) {
-			reconnectPeer(KVault);
-		}
+		return u;
 	}
 	
 	int tUnetLobbyServerBase::onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u)
@@ -337,10 +290,6 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, authResponse.str().c_str());
 				
 				// send authAsk to auth server
-				if (!*authServer) {
-					err->log("ERR: I've got to ask the auth server about player %s, but it's unavailable.\n", u->str().c_str());
-					return 1;
-				}
 				tmCustomAuthAsk authAsk(*authServer, authResponse.x, u->getSid(), u->getIp(), u->name, u->challenge, authResponse.hash.data(), u->buildType);
 				send(authAsk);
 				
@@ -420,11 +369,6 @@ namespace alc {
 				}
 				else {
 					// ask the vault server about this KI
-					if (!*vaultServer) {
-						err->log("ERR: I've got the ask the vault to verify a KI, but it's unavailable. I'll have to kick the player.\n", u->str().c_str());
-						// kick the player since we cant be sure he doesnt lie about the KI
-						return -1; // parse error
-					}
 					u->setRejectMessages(true); // dont process any further messages till we verified the KI
 					tmCustomVaultCheckKi checkKi(*vaultServer, setPlayer.ki, setPlayer.x, u->getSid(), u->uid);
 					send(checkKi);
@@ -511,10 +455,6 @@ namespace alc {
 					if (vaultMsg.hasFlags(plNetKi) && vaultMsg.ki != u->ki)
 						throw txProtocolError(_WHERE("KI mismatch (%d != %d)", vaultMsg.ki, u->ki));
 					// forward it to the vault server
-					if (!*vaultServer) {
-						err->log("ERR: I've got a vault message to forward to the vault server, but it's unavailable.\n", u->str().c_str());
-						return 1;
-					}
 					vaultMsg.message.get(parsedMsg);
 					parsedMsg.print(&lvault, /*clientToServer:*/true, u, vaultLogShort);
 					// do additional processing
@@ -562,10 +502,6 @@ namespace alc {
 				}
 				
 				// Let's ask vault
-				if (!*vaultServer) {
-					err->log("ERR: I've got the ask the vault server to check an age for me, but it's unavailable.\n");
-					return 1;
-				}
 				tmCustomVaultFindAge vaultFindAge(*vaultServer, u->ki, findAge.x, u->getSid(), findAge.message);
 				send(vaultFindAge);
 				
@@ -584,11 +520,6 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, findServer.str().c_str());
 			
 				// let's ask the tracking server
-				if (!*trackingServer) {
-					err->log("ERR: I've got the ask the tracking server to find an age for me, but it's unavailable.\n");
-					return 1;
-				}
-				
 				tmCustomFindServer trackingFindServer(*trackingServer, findServer);
 				send(trackingFindServer);
 				

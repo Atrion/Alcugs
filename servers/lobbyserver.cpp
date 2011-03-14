@@ -93,10 +93,6 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, requestList.str().c_str());
 				
 				// forward it to the vault server
-				if (!*vaultServer) {
-					err->log("ERR: I've got to ask the vault server about player %s, but it's unavailable.\n", u->str().c_str());
-					return 1;
-				}
 				tmCustomVaultAskPlayerList askList(*vaultServer, requestList.x, u->getSid(), u->uid);
 				send(askList);
 				return 1;
@@ -142,10 +138,6 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, createPlayer.str().c_str());
 				
 				// forward it to the vault server
-				if (!*vaultServer) {
-					err->log("ERR: I've got to ask the vault server to create a player, but it's unavailable.\n", u->str().c_str());
-					return 1;
-				}
 				tmCustomVaultCreatePlayer vaultCreatePlayer(*vaultServer, createPlayer.x, u->getSid(), u->uid, u->getAccessLevel(), u->name, createPlayer.avatar, createPlayer.gender, createPlayer.friendName, createPlayer.key);
 				send(vaultCreatePlayer);
 				
@@ -190,10 +182,6 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, deletePlayer.str().c_str());
 				
 				// forward it to the vault server
-				if (!*vaultServer) {
-					err->log("ERR: I've got to ask the vault server to delete a player, but it's unavailable.\n", u->str().c_str());
-					return 1;
-				}
 				tmCustomVaultDeletePlayer vaultDeletePlayer(*vaultServer, deletePlayer.ki, deletePlayer.x, u->getSid(), u->uid, u->getAccessLevel());
 				send(vaultDeletePlayer);
 				
