@@ -595,22 +595,16 @@ tString tString::substring(size_t start,size_t len) const {
 	return shot;
 }
 bool tString::startsWith(const char * pat) const {
-	try {
-		return(substring(0,strlen(pat))==pat);
-	}
-	catch (txOutOfRange &e) {
-		return false;
-	}
+	size_t len = strlen(pat);
+	if (len == 0) return true; // substring() treats a 0 length special
+	if (len > size()) return false;
+	return(substring(0,len)==pat);
 }
 bool tString::endsWith(const char * pat) const {
 	size_t len = strlen(pat);
-	if (len > size()) return false; // we would get a value <0 below, which would be converted to U32...
-	try {
-		return(substring(size()-len,len)==pat);
-	}
-	catch (txOutOfRange &e) {
-		return false;
-	}
+	if (len == 0) return true; // substring() treats a 0 length special
+	if (len > size()) return false;
+	return(substring(size()-len,len)==pat);
 }
 tString tString::dirname() const {
 	tString shot = stripped('/',0x02);
