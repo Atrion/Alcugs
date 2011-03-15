@@ -103,7 +103,6 @@ namespace alc {
 		    \returns a pointer to the query which you have to free */
 		tString createNodeQuery(const tvNode &node, bool isUpdate);
 		
-		bool prepare(void);
 		int getVersion(void);
 		void migrateVersion2to3(void);
 		void migrateVersion3to4(void);

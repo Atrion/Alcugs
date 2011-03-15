@@ -32,6 +32,7 @@
 
 #include <sql.h>
 #include <alcmain.h>
+#include <netexception.h>
 #include <netsession.h>
 #include <alcutil/alcparser.h>
 #include <protocol/protocol.h>
@@ -63,8 +64,6 @@ namespace alc {
 
 	tAuthBackend::tAuthBackend(void)
 	{
-		sql = NULL;
-	
 		tConfig *cfg = alcGetMain()->config();
 		tString var = cfg->getVar("auth.minalevel");
 		if (var.isEmpty()) minAccess = AcNotActivated;
@@ -99,7 +98,31 @@ namespace alc {
 		if (var.isEmpty()) cgasMaxCacheTime = 60*60*24; // 24 hours
 		else cgasMaxCacheTime = var.asUInt();
 
-		prepare(); // initialize the database
+		// initialize the database
+		sql = tSQL::createFromConfig();
+		if (!sql->prepare()) {
+			// it didn't work, so delete everything
+			delete sql;
+			sql = NULL;
+			throw txDatabaseError(_WHERE("Error connecting to auth DB"));
+		}
+		// if auth table doesn't exist, create it
+		if (!sql->queryForNumber("SHOW TABLES LIKE 'accounts'", "Looking for accounts table")) {
+			sql->query(authTableInitScript, "Creating auth table");
+		}
+		// if it does, check if an upgrade of the structure is necessary
+		else {
+			if (!sql->queryForNumber("SHOW COLUMNS FROM accounts LIKE 'cgas_cache_time'", "Check for cgas_cache_time column")) {
+				sql->query("ALTER TABLE accounts ADD cgas_cache_time timestamp NOT NULL default 0", "Adding cgas_cache_time column");
+				sql->query("UPDATE accounts SET cgas_cache_time=0", "Set cgas_cache_time to 0"); // fill with 0 time, sicne the column must not be NULL
+			}
+		}
+		
+		log.log("Auth driver successfully started (%s)\n minimal access level: %d, max attempts: %d, disabled time: %d\n",
+				__U_AUTHBACKEND_ID, minAccess, maxAttempts, disTime);
+		if (!cgasServer.isEmpty()) log.print(" Using CGAS at http://%s:%d%s\n", cgasServer.c_str(), cgasPort, cgasPath.c_str());
+		log.nl();
+		log.flush();
 	}
 	
 	tAuthBackend::~tAuthBackend(void)
@@ -108,47 +131,6 @@ namespace alc {
 			DBG(5, "deleting SQL\n");
 			delete sql;
 		}
-	}
-	
-	bool tAuthBackend::prepare(void)
-	{
-		// establish database connection
-		if (sql) { // the connection is already established?
-			if (sql->prepare()) // when we're still connected or recoonnection works, everything is fine
-				return true;
-			// otherwise, delete the connection and try again
-			DBG(6, "deleting sql\n");
-			delete sql;
-		}
-		DBG(6, "creating sql\n");
-		sql = tSQL::createFromConfig();
-		if (sql->prepare()) {
-			// if auth table doesn't exist, create it
-			if (!sql->queryForNumber("SHOW TABLES LIKE 'accounts'", "Looking for accounts table")) {
-				sql->query(authTableInitScript, "Creating auth table");
-			}
-			// if it does, check if an upgrade of the structure is necessary
-			else {
-				if (!sql->queryForNumber("SHOW COLUMNS FROM accounts LIKE 'cgas_cache_time'", "Check for cgas_cache_time column")) {
-					sql->query("ALTER TABLE accounts ADD cgas_cache_time timestamp NOT NULL default 0", "Adding cgas_cache_time column");
-					sql->query("UPDATE accounts SET cgas_cache_time=0", "Set cgas_cache_time to 0"); // fill with 0 time, sicne the column must not be NULL
-				}
-			}
-			
-			log.log("Auth driver successfully started (%s)\n minimal access level: %d, max attempts: %d, disabled time: %d\n",
-					__U_AUTHBACKEND_ID, minAccess, maxAttempts, disTime);
-			if (!cgasServer.isEmpty()) log.print(" Using CGAS at http://%s:%d%s\n", cgasServer.c_str(), cgasPort, cgasPath.c_str());
-			log.nl();
-			log.flush();
-			return true; // everything worked fine :)
-		}
-		else
-			alcGetMain()->err()->log("ERR: Connecting to the database failed\n");
-		// when we come here, it didn't work, so delete everything
-		DBG(6, "deleting sql\n");
-		delete sql;
-		sql = NULL;
-		return false;
 	}
 
 	tString tAuthBackend::calculateHash(const tString &login, const tString &passwd, const tString &challenge)
@@ -296,8 +278,8 @@ namespace alc {
 		*guid = "00000000-0000-0000-0000-000000000000";
 		
 		// only query if we are connected properly
-		if (!prepare()) {
-			alcGetMain()->err()->log("ERR: Can't start auth driver. Authenticate request will be rejected.\n");
+		if (!sql->prepare()) {
+			alcGetMain()->err()->log("ERR: Can't access DB. Authenticate request will be rejected.\n");
 			return kError;
 		}
 		
