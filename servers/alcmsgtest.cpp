@@ -171,7 +171,7 @@ void tUnetSimpleFileServer::setValidation(uint8_t val) {
 
 void tUnetSimpleFileServer::onStart() {
 	if(!listen) {
-		dstSession=netConnect(d_host.c_str(),d_port,validation,0);
+		dstSession=netConnect(d_host.c_str(),d_port,validation);
 	}
 }
 

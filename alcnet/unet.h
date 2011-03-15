@@ -106,7 +106,7 @@ protected:
 	void startOp();
 	void stopOp();
 	void openLogfiles();
-	tNetSessionRef netConnect(const char * hostname,uint16_t port,uint8_t validation,uint8_t flags,uint8_t peerType=0);
+	tNetSessionRef netConnect(const char * hostname,uint16_t port,uint8_t validation);
 	bool sendAndWait(); //!< send enqueued messages, wait, and receive packets and enqueue them (wait time must be set by processQueues()!) \return if the netcode is idle
 	tNetEvent *getEvent(); //!<  (thread-safe)
 	void addEvent(tNetEvent *evt); //!<  (thread-safe)

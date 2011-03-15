@@ -614,7 +614,7 @@ void tmMsgBase::store(tBBuf &t) {
 	}
 	else sid = 0;
 
-	uint32_t check = plNetAck | plNetVersion | plNetTimestamp | plNetX | plNetKi | plNetUID | plNetSystem /*unknown purpose*/;
+	uint32_t check = plNetAck | plNetVersion | plNetTimestamp | plNetX | plNetKi | plNetUID | plNetSid | plNetSystem /*unknown purpose*/;
 	// message-specific flags
 	if (cmd == NetMsgGameMessageDirected || cmd == NetMsgCustomDirectedFwd)
 		check |= plNetDirected; // Alcugs uses the message type to check if the msg needs to be forwarded to tracking
@@ -629,9 +629,6 @@ void tmMsgBase::store(tBBuf &t) {
 		check |= plNetMsgRecvrs; // whatever the purpose of this flag is, the message type is more reliable - this also set for message which don't have a receiver list
 	if (cmd == NetMsgJoinReq)
 		check |= plNetTimeoutOk;
-	// accept custom types from Alcugs servers only
-	if (u->isAlcugsServer())
-		check |= plNetSid;
 	
 	//now catch undocumented protocol flags
 	if (flags & ~(check))
@@ -640,8 +637,6 @@ void tmMsgBase::store(tBBuf &t) {
 void tmMsgBase::stream(tBBuf &t) const {
 	if (!u)  throw txProtocolError(_WHERE("attempt to send message without session being set"));
 	if (!cmd) throw txProtocolError(_WHERE("attempt to send message without cmd"));
-	if (!u->isAlcugsServer() && (flags & plNetSid)) // check for internal flags
-		throw txProtocolError(_WHERE("Custom flags must only be sent to Alcugs servers"));
 	
 	// fix for UU clients
 	if (u->gameType == tNetSession::UUGame && (cmd == NetMsgVault || cmd == NetMsgPython || cmd == NetMsgSetTimeout || cmd == NetMsgActivePlayerSet))

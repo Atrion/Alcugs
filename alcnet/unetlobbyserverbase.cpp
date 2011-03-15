@@ -86,7 +86,7 @@ namespace alc {
 	
 	void tUnetLobbyServerBase::onForwardPing(tmPing &ping, tNetSession *u)
 	{
-		if (u->getPeerType() == KAuth || u->getPeerType() == KTracking || u->getPeerType() == KVault) { // we got a ping reply from one of our servers, let's forward it to the client it came from
+		if (u == *authServer || u == *trackingServer || u == *vaultServer) { // we got a ping reply from one of our servers, let's forward it to the client it came from
 			if (!ping.hasFlags(plNetSid)) throw txProtocolError(_WHERE("SID flag missing"));
 			tNetSessionRef client = sessionBySid(ping.sid);
 			if (*client) {
@@ -115,7 +115,7 @@ namespace alc {
 	{
 		// worker thread only
 		tNetSessionRef client = sessionByKi(ki);
-		if (*client && client->getPeerType() == KClient) { // an age cannot host the same avatar multiple times
+		if (*client) { // an age cannot host the same avatar multiple times
 			if (u != *client) // it could be the same session for which the active player is set twice for some reason
 				terminate(*client, RLoggedInElsewhere);
 			else
@@ -202,7 +202,7 @@ namespace alc {
 			return NULL;
 		}
 		
-		tNetSessionRef u = netConnect(host.c_str(), port.asUInt(), 3 /* Alcugs upgraded protocol */, 0, dst);
+		tNetSessionRef u = netConnect(host.c_str(), port.asUInt(), 3 /* Alcugs upgraded protocol */);
 		
 		// sending a NetMsgAlive is not necessary, the netConnect will already start the negotiation process
 		
@@ -226,7 +226,7 @@ namespace alc {
 			//// messages regarding authentication
 			case NetMsgAuthenticateHello:
 			{
-				if (u->getPeerType() != 0 || u->getAuthenticated() != 0) { // this is impossible
+				if (!u->name.isEmpty() || u->isUruClient()) { // this is impossible
 					err->log("ERR: %s player is already being authend and sent another AuthenticateHello, ignoring\n", u->str().c_str());
 					return 2; // ignore, leave it unparsed
 				}
@@ -273,13 +273,12 @@ namespace alc {
 				// reply with AuthenticateChallenge´
 				tmAuthenticateChallenge authChallenge(u, authHello.x, result, u->challenge);
 				send(authChallenge);
-				u->challengeSent();
 				
 				return 1;
 			}
 			case NetMsgAuthenticateResponse:
 			{
-				if (u->getPeerType() != 0 || u->getAuthenticated() != 10) { // this is impossible
+				if (u->name.isEmpty() || u->isUruClient()) { // this is impossible
 					err->log("ERR: %s player sent an AuthenticateResponse and he is already being authend or he didn\'t yet send an AuthenticateHello, ignoring\n", u->str().c_str());
 					return 2; // ignore, leave it unparsed
 				}
@@ -297,7 +296,7 @@ namespace alc {
 			}
 			case NetMsgCustomAuthResponse:
 			{
-				if (u->getPeerType() != KAuth) {
+				if (u != *authServer) {
 					err->log("ERR: %s sent a NetMsgCustomAuthResponse but is not the auth server. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
@@ -310,7 +309,7 @@ namespace alc {
 				// find the client's session
 				tNetSessionRef client = sessionBySid(authResponse.sid);
 				// verify account name and session state
-				if (!*client || client->getAuthenticated() != 10 || client->getPeerType() != 0 || client->name != authResponse.login) {
+				if (!*client || u->isUruClient() || client->name != authResponse.login) {
 					err->log("ERR: Got CustomAuthResponse for player %s but can't find his session.\n", authResponse.login.c_str());
 					return 1;
 				}
@@ -343,7 +342,7 @@ namespace alc {
 			//// messages regarding setting the avatar
 			case NetMsgSetMyActivePlayer:
 			{
-				if (u->getPeerType() != KClient) {
+				if (!u->isUruClient()) {
 					err->log("ERR: %s sent a NetMsgSetMyActivePlayer but is not yet authed. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
@@ -378,7 +377,7 @@ namespace alc {
 			}
 			case NetMsgCustomVaultKiChecked:
 			{
-				if (u->getPeerType() != KVault) {
+				if (u != *vaultServer) {
 					err->log("ERR: %s sent a NetMsgCustomVaultKiChecked but is not the vault server. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
@@ -391,7 +390,7 @@ namespace alc {
 				// find the client's session
 				tNetSessionRef client = sessionBySid(kiChecked.sid);
 				// verify GUID and session state
-				if (!*client || client->getPeerType() != KClient || u->ki != 0 || memcmp(client->uid, kiChecked.uid, 16) != 0) {
+				if (!*client || !client->isUruClient() || u->ki != 0 || memcmp(client->uid, kiChecked.uid, 16) != 0) {
 					err->log("ERR: Got NetMsgCustomVaultKiChecked for player with UID %s but can't find his session.\n", alcGetStrUid(kiChecked.uid).c_str());
 					return 1;
 				}
@@ -427,13 +426,13 @@ namespace alc {
 				tvMessage parsedMsg(/*isTask:*/isTask, u->gameType == tNetSession::UUGame);
 				vaultMsg.message.rewind();
 				
-				if (u->getPeerType() == KVault) { // got it from the vault - send it to the client
+				if (u == *vaultServer) { // got it from the vault - send it to the client
 					if (!vaultMsg.hasFlags(plNetKi) || vaultMsg.ki == 0) throw txProtocolError(_WHERE("KI missing"));
 					
 					vaultMsg.message.get(parsedMsg);
 					
 					tNetSessionRef client = sessionByKi(vaultMsg.ki);
-					if (!*client || client->getPeerType() != KClient) {
+					if (!*client) {
 						lvault.print("<h2 style='color:red'>Packet for unknown client</h2>\n");
 						parsedMsg.print(&lvault, /*clientToServer:*/false, NULL, vaultLogShort);
 						log->log("WARN: I've got a vault message to forward to player with KI %d but can\'t find the session.\n", vaultMsg.ki);
@@ -509,7 +508,7 @@ namespace alc {
 			}
 			case NetMsgCustomFindServer:
 			{
-				if (u->getPeerType() != KVault) {
+				if (u != *vaultServer) {
 					err->log("ERR: %s sent a NetMsgCustomFindServer but is not the vault server. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
@@ -527,7 +526,7 @@ namespace alc {
 			}
 			case NetMsgCustomServerFound:
 			{
-				if (u->getPeerType() != KTracking) {
+				if (u != *trackingServer) {
 					err->log("ERR: %s sent a NetMsgCustomServerFound but is not the tracking server. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
@@ -539,7 +538,7 @@ namespace alc {
 				
 				// find the client
 				tNetSessionRef client = sessionBySid(serverFound.sid);
-				if (!*client || client->getPeerType() != KClient || client->ki != serverFound.ki) {
+				if (!*client || !client->isUruClient() || client->ki != serverFound.ki) {
 					err->log("ERR: I've got to tell player with KI %d about his game server, but can't find his session.\n", serverFound.ki);
 					return 1;
 				}
@@ -555,7 +554,7 @@ namespace alc {
 			// terminating a player
 			case NetMsgPlayerTerminated:
 			{
-				if (u->getPeerType() != KTracking && u->getPeerType() != KVault) {
+				if (u != *trackingServer && u != *vaultServer) {
 					err->log("ERR: %s sent a NetMsgPlayerTerminated but is neither tracking nor vault server. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
@@ -566,7 +565,7 @@ namespace alc {
 				log->log("<RCV> [%d] %s\n", msg->sn, playerTerminated.str().c_str());
 				
 				tNetSessionRef client = sessionByKi(playerTerminated.ki);
-				if (!*client || (client->getPeerType() != KClient && client->getPeerType() != 0)) {
+				if (!*client) {
 					err->log("ERR: I've got to kick the player with KI %d but can\'t find his session.\n", playerTerminated.ki);
 					return 1;
 				}

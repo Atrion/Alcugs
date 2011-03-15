@@ -57,7 +57,7 @@ tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t s
 	rcv = NULL;
 	// fill in default values
 	validation=0;
-	authenticated=0;
+	authenticated=false;
 	accessLevel=0;
 	cflags=0; //default flags
 	cabal=0;
@@ -74,7 +74,6 @@ tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t s
 	resetMsgCounters();
 	assert(serverMsg.pn==0);
 	rejectMessages=false;
-	whoami=0;
 	client = true;
 	terminated = false;
 	
@@ -124,16 +123,12 @@ tString tNetSession::str() {
 	dbg.printf("[%i][%s:%i]",sid,alcGetStrIp(ip).c_str(),ntohs(port));
 	tReadLock lockPub(pubDataMutex);
 	tReadLock lockPrv(prvDataMutex);
-	if (!name.isEmpty() && authenticated != 0) {
-		if (authenticated == 10) dbg.printf("[%s?]", name.c_str()); // if the auth server didn't yet confirm that, add a question mark
-		else if (whoami == KClient && ki != 0) dbg.printf("[%s:%s,%d]", name.c_str(), avatar.c_str(), ki);
+	if (!name.isEmpty() && authenticated) {
+		if (ki != 0) dbg.printf("[%s:%s,%d]", name.c_str(), avatar.c_str(), ki);
 		else dbg.printf("[%s]", name.c_str());
 	}
 	else if (!name.isEmpty() && net->whoami == KTracking) { // we are tracking and this is a game server
 		dbg.printf("[%s:%s]", name.c_str(), alcGetStrGuid(serverGuid).c_str());
-	}
-	else if (whoami != 0) {
-		dbg.printf("[%s]", alcUnetGetDestination(whoami));
 	}
 	return dbg;
 }
@@ -188,6 +183,8 @@ tNetTimeDiff tNetSession::timeToSend(size_t psize) {
 	puts the message in the session's send queue
 */
 void tNetSession::send(tmBase &msg, tNetTimeDiff delay) {
+	if (msg.getSession() != this)
+		throw txUnexpectedData(_WHERE("Message sent for wrong session!"));
 #if _DBG_LEVEL_ < 1
 	if (!(msg.bhflags & UNetAckReply))
 #endif
@@ -345,19 +342,20 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 	//stamp
 	receive_stamp = net->net_time;
 	
-	// when authenticated == 2, we don't expect an encoded packet, but sometimes, we get one. Since alcUruValidatePacket will try to
-	// validate the packet both with and without passwd if possible, we tell it to use the passwd whenever we have one - as a result,
-	// even if the client for some reason decides to encode a packet while authenticated == 2, we don't care
+	/* when authenticated is false, but passwd already set, we don't expect an encoded packet, but sometimes, we get one. Since
+	 * alcUruValidatePacket will try to validate the packet both with and without passwd if possible, we tell it to use the passwd
+	 * whenever we have one - as a result, even if the client for some reason decides to encode a packet before we actually know
+	 * the passwd, that's fine. */
 	int ret;
 	{
 		tReadLock lock(prvDataMutex);
-		ret=alcUruValidatePacket(static_cast<uint8_t*>(buf),size,&validation,authenticated==1 || authenticated==2,passwd.c_str());
+		ret=alcUruValidatePacket(static_cast<uint8_t*>(buf),size,&validation,!passwd.isEmpty(),passwd.c_str());
 	}
 	
 	if(ret!=0 && (ret!=1 || net->flags & UNET_ECRC)) {
 		if(ret==1) {
 			net->err->log("ERR: %s Failed validating a message in validation level %d", str().c_str(), validation);
-			if (authenticated==1 || authenticated==2)
+			if (!passwd.isEmpty())
 				net->err->print(" (authed)!\n");
 			else
 				net->err->print(" (not authed)!\n");
@@ -469,8 +467,9 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 		if (isConnected()) {
 			// don't parse acks before we are connected (if we do, we might get SN confusion if connections don't start with a Nego)
 			ackCheck(*msg);
+			// authentication confirmed?
 			tWriteLock lock(prvDataMutex);
-			if(authenticated==2) authenticated=1;
+			if (!authenticated && !passwd.isEmpty()) authenticated = true;
 		}
 	}
 	else {
@@ -698,6 +697,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 					#endif
 					updateRTT(crtt);
 				}
+				// remvoe message from queue
 				jt = sndq.eraseAndDelete(jt);
 			}
 			else
@@ -752,7 +752,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 		const unsigned int minTH=15;
 		const unsigned int maxTH=100;
 		// max. number of allowed re-sends before timeout
-		const unsigned int resendLimit = terminated ? 3 : (whoami == KClient ? 10 : 5); // Uru clients get more resends due to their missing multi-threading
+		const unsigned int resendLimit = terminated ? 3 : (authenticated ? 10 : 5); // Uru clients get more resends due to their missing multi-threading
 		
 		// urgent packets
 		tPointerList<tUnetUruMsg>::iterator it = sndq.begin();
@@ -791,7 +791,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 						net->rawsend(this,curmsg);
 						curmsg->tries++;
 						curmsg->timestamp=net->net_time + msg_timeout;
-						if (whoami == KClient) curmsg->timestamp += curmsg->tries*msg_timeout; // choose much higher timeout for client connections and icnrease it during re-sends - the clients netcore sometimes seems to be blocked long beyond any reasonable time
+						if (authenticated) curmsg->timestamp += curmsg->tries*msg_timeout; // choose much higher timeout for client connections and icnrease it during re-sends - the clients netcore sometimes seems to be blocked long beyond any reasonable time
 						if (timeout > msg_timeout) timeout = msg_timeout; // be sure to check this message on time
 						++it; // go on
 					}
@@ -858,15 +858,12 @@ void tNetSession::terminating()
 {
 	tWriteLock lock(prvDataMutex);
 	terminated = true;
-	whoami = 0; // it's terminated, so it's no one special anymore
 }
 
 void tNetSession::setAuthData(uint8_t accessLevel, const tString &passwd)
 {
 	tWriteLock lockPrv(prvDataMutex);
 	this->client = true; // no matter how this connection was established, the peer definitely acts like a client
-	this->whoami = KClient; // it's a real client now
-	this->authenticated = 2; // the player is authenticated!
 	this->accessLevel = accessLevel;
 	this->passwd = passwd; // passwd is needed for validating packets
 }
