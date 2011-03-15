@@ -86,7 +86,7 @@ namespace alc {
 
 
 class tUnet {
-	friend class tNetSession; // these two classes work together closely
+	friend class tNetSession; // needs to send messages, print logs, access the net_time, and so on
 
 // methods
 public:
@@ -117,7 +117,7 @@ protected:
 	}
 	tNetTimeDiff remainingTimeTill(tNetTime time); //!< returns time remaining till given timestamp
 	tNetTimeDiff passedTimeSince(tNetTime time); //!< returns time passed since given timestamp
-	
+	void wakeUpMainThread(void); //!< call this from worker to wake up the main thread from its sleep
 	virtual bool canPortBeUsed(uint16_t /*port*/) { return false; }
 	
 	tNetSessionRef sessionBySid(size_t sid) //!< (thread-safe)
@@ -137,7 +137,6 @@ protected:
 private:
 	std::pair<tNetTimeDiff, bool> processSendQueues(); //!< send messages from the sessions' send queues - also updates the timeouts for the next wait \return the time in usec we should wait before processing again, and a bool saying whether any session has anything to send
 	void updateNetTime();
-	void rawsend(tNetSession * u,tUnetUruMsg * m); //!< call with the session prvDataMutex hold
 	void removeConnection(tNetSession *u); //!< destroy that session, must be called in main thread
 
 // properties

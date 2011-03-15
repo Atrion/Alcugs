@@ -41,11 +41,9 @@ namespace alc {
 //#define UNetNoConn   0x02
 
 class tNetSession {
-	friend class tUnet; // these two classes work together closely
-
 // methods
 public:
-	tNetSession(tUnet * net,uint32_t ip,uint16_t port,uint32_t sid); //ip, port in network order
+	tNetSession(tUnet * net,uint32_t ip,uint16_t port,uint32_t sid,bool client,uint8_t validation); //ip, port in network order
 	~tNetSession();
 	tString str();
 	size_t getMaxFragmentSize() { return(static_cast<size_t>(maxPacketSz)-getHeaderSize()); }
@@ -72,11 +70,13 @@ public:
 	
 	void incRefs() { __sync_add_and_fetch(&refs, 1); }
 	void decRefs();
+	
+	void processIncomingMsg(void * buf,size_t size); //!< we received a message
+	tNetTimeDiff processSendQueues(); //!< send what is in our queues
 
 private:
 	void resetMsgCounters(void);
-	void processIncomingMsg(void * buf,size_t size); //!< we received a message
-	tNetTimeDiff processSendQueues(); //!< send what is in our queues
+	void rawsend(tUnetUruMsg *msg);
 
 	void createAckReply(tUnetUruMsg &msg);
 	tNetTimeDiff ackSend(); //!< return the maximum wait time before we have to check again
@@ -125,7 +125,7 @@ private:
 	uint32_t ip; //!< network order
 	uint16_t port; //!< network order
 	const uint32_t sid;
-	char sockaddr[sizeof(struct sockaddr_in)]; // saves the address information of this peer
+	struct sockaddr_in sockaddr; //!< saves the address information of this peer
 	struct { //server message counters, protected by send mutex
 		uint32_t pn; //!< the overall packet number
 		uint32_t sn; //!< the message number

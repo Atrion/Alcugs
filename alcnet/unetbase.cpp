@@ -193,6 +193,8 @@ void tUnetBase::stop(tNetTimeDiff timeout) {
 	if(timeout != static_cast<tNetTimeDiff>(-1))
 		stop_timeout=timeout*1000*1000;
 	running=false;
+	
+	if (alcGetSelfThreadId() != alcGetMain()->threadId()) wakeUpMainThread();
 }
 
 bool tUnetBase::isRunning(void)

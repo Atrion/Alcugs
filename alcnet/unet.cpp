@@ -287,6 +287,14 @@ void tUnet::startOp() {
 	this->log->flush();
 }
 
+void tUnet::wakeUpMainThread(void )
+{
+	// we are in the worker thread... send a byte to the pipe so that the main thread wakes up and conciders this new packet
+	uint8_t data = 0;
+	if (write(sndPipeWriteEnd, &data, 1) != 1)
+		throw txUnet(_WHERE("Failed to write the pipe?"));
+}
+
 /**
 	Stops the network operation
 */
@@ -305,40 +313,12 @@ void tUnet::stopOp() {
 
 tNetSessionRef tUnet::netConnect(const char * hostname,uint16_t port,uint8_t validation) {
 	assert(alcGetSelfThreadId() == alcGetMain()->threadId());
-	struct hostent *host;
-	host=gethostbyname(hostname);
-	
+	struct hostent *host=gethostbyname(hostname);
 	if(host==NULL) throw txBase(_WHERE("Cannot resolve host: %s",hostname));
-	
 	uint32_t ip = *reinterpret_cast<uint32_t *>(host->h_addr_list[0]);
 	
-	tNetSessionRef u;
-	{
-		tWriteLock lock(smgrMutex);
-		u=smgr->searchAndCreate(ip, htons(port));
-	}
-	
-	u->validation=validation;
-	
-	if(validation>=3) {
-		u->validation=0;
-		u->cflags |= UNetUpgraded;
-	}
-	
-	struct sockaddr_in client;
-	client.sin_family=AF_INET;
-	client.sin_addr.s_addr=u->ip;
-	client.sin_port=u->port;
-	memcpy(u->sockaddr,&client,sizeof(struct sockaddr_in));
-	
-	u->client=false;
-	
-	u->max_version=max_version;
-	u->min_version=min_version;
-	
-	u->negotiate();
-	
-	return u;
+	tWriteLock lock(smgrMutex);
+	return smgr->searchAndCreate(ip, htons(port), /*client*/false, validation);
 }
 
 void tUnet::removeConnection(tNetSession *u)
@@ -461,7 +441,6 @@ bool tUnet::sendAndWait() {
 	}
 	
 	//process the message, and do the correct things with it
-	memcpy(session->sockaddr,&client,sizeof(struct sockaddr_in));
 	try {
 		// the net time might be a bit too low, but that's not a large problem - packets might just be sent a bit too early
 		session->processIncomingMsg(buf,n);
@@ -507,111 +486,6 @@ std::pair<tNetTimeDiff, bool> tUnet::processSendQueues() {
 	
 	// return what we found
 	return std::pair<tNetTimeDiff, bool>(unet_timeout, anythingToSend);
-}
-
-/** sends the message (internal use only)
-An uru message can only be 253952 bytes in V0x01 & V0x02 and 254976 in V0x00
-Call only with the sendMutex of that session locked! */
-void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg)
-{
-	assert(alcGetSelfThreadId() == alcGetMain()->threadId());
-	struct sockaddr_in client; //client struct
-
-	//copy the inet struct
-	memcpy(&client,u->sockaddr,sizeof(struct sockaddr_in));
-	client.sin_family=AF_INET; //UDP IP (????)
-	client.sin_addr.s_addr=u->ip; //address
-	client.sin_port=u->port; //port
-
-	DBG(9,"Server pn is %08X\n",u->serverMsg.pn);
-	DBG(9,"Server sn is %08X,%08X\n",u->serverMsg.sn,msg->sn);
-	u->serverMsg.pn++;
-	msg->pn=u->serverMsg.pn;
-	
-	#ifdef ENABLE_MSGDEBUG
-	log->log("<SND> ");
-	msg->dumpheader(log);
-	log->nl();
-	#endif
-	msg->htmlDumpHeader(ack,1,u->ip,u->port);
-
-	//store message into buffer
-	tMBuf * mbuf;
-	mbuf = new tMBuf();
-	mbuf->put(*msg);
-
-	#ifdef ENABLE_MSGDEBUG
-	log->log("<SND> RAW Packet follows: \n");
-	log->dumpbuf(*mbuf);
-	log->nl();
-	#endif
-	
-	DBG(9,"validation level is %i,%i\n",u->validation,msg->val);
-	
-	size_t msize=mbuf->size();
-	uint8_t * buf, * buf2=NULL;
-	buf=const_cast<uint8_t *>(mbuf->data()); // yes, we are writing directly into the tMBuf buffer... this saves us from copying everything
-
-	if(msg->val==2) {
-		DBG(8,"Encoding validation 2 packet of %Zi bytes...\n",msize);
-		buf2=static_cast<uint8_t *>(malloc(msize));
-		if(buf2==NULL) { throw txNoMem(_WHERE("")); }
-		alcEncodePacket(buf2,buf,msize);
-		buf=buf2; //don't need to decode again
-		if(u->authenticated) {
-			DBG(8,"Client is authenticated, doing checksum...\n");
-			uint32_t val=alcUruChecksum(buf,msize,2,u->passwd.c_str());
-			memcpy(buf+2,&val,4);
-			DBG(8,"Checksum done!...\n");
-		} else {
-			DBG(8,"Client is not authenticated, doing checksum...\n");
-			uint32_t val=alcUruChecksum(buf,msize,1,NULL);
-			memcpy(buf+2,&val,4);
-			DBG(8,"Checksum done!...\n");
-		}
-		buf[1]=0x02;
-	} else if(msg->val==1) {
-		uint32_t val=alcUruChecksum(buf,msize,0,NULL);
-		memcpy(buf+2,&val,4);
-		buf[1]=0x01;
-	} else {
-		buf[1]=0x00;
-	}
-	buf[0]=0x03; //magic number
-	DBG(9,"Before the Sendto call...\n");
-	//
-#ifdef ENABLE_NETDEBUG
-	if(!out_noise || (random() % 100) >= out_noise) {
-		DBG(8,"Outcomming Packet accepted\n");
-	} else {
-		DBG(5,"Outcomming Packet dropped\n");
-		msize=0;
-	}
-	//check quotas
-	if(passedTimeSince(last_quota_check) > quota_check_interval) {
-		cur_up_quota=0;
-		cur_down_quota=0;
-		last_quota_check = net_time;
-	}
-	if(msize>0 && lim_up_cap) {
-		if((cur_up_quota+msize+ip_overhead)>lim_up_cap) {
-			DBG(5,"Paquet dropped by quotas, in use:%i,req:%li, max:%i\n",cur_up_quota,msize+ip_overhead,lim_up_cap);
-			log->log("Paquet dropped by quotas, in use:%i,req:%i, max:%i\n",cur_up_quota,msize+ip_overhead,lim_up_cap);
-			msize=0;
-		} else {
-			cur_up_quota+=msize+ip_overhead;
-		}
-	}
-#endif
-
-	if(msize>0) {
-		msize = sendto(sock,reinterpret_cast<char *>(buf),msize,0,reinterpret_cast<struct sockaddr *>(&client),sizeof(struct sockaddr));
-	}
-
-	DBG(9,"After the Sendto call...\n");
-	free(buf2);
-	delete mbuf;
-	DBG(8,"returning from uru_net_send RET:%Zi\n",msize);
 }
 
 
