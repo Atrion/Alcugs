@@ -33,13 +33,13 @@
 
 namespace alc {
 
-	class tmRequestMyVaultPlayerList : public tmMsgBase {
+	class tmRequestMyVaultPlayerList : public tmNetMsg {
 	public:
-		tmRequestMyVaultPlayerList(tNetSession *u) : tmMsgBase(u) {}
+		tmRequestMyVaultPlayerList(tNetSession *u) : tmNetMsg(u) {}
 		virtual void store(tBBuf &t);
 	};
 	
-	class tmVaultPlayerList : public tmMsgBase {
+	class tmVaultPlayerList : public tmNetMsg {
 	public:
 		tmVaultPlayerList(tNetSession *u, uint32_t x, uint16_t numberPlayers, tMBuf players, const tString &url);
 		virtual void stream(tBBuf &t) const;
@@ -50,7 +50,7 @@ namespace alc {
 		tString url;
 	};
 	
-	class tmCreatePlayer : public tmMsgBase {
+	class tmCreatePlayer : public tmNetMsg {
 	public:
 		tmCreatePlayer(tNetSession *u);
 		virtual void store(tBBuf &t);
@@ -59,7 +59,7 @@ namespace alc {
 		tString avatar, gender, friendName, key;
 	};
 	
-	class tmPlayerCreated : public tmMsgBase {
+	class tmPlayerCreated : public tmNetMsg {
 	public:
 		tmPlayerCreated(tNetSession *u, uint32_t ki, uint32_t x, uint8_t result);
 		virtual void stream(tBBuf &t) const;
@@ -68,7 +68,7 @@ namespace alc {
 		uint8_t result;
 	};
 	
-	class tmDeletePlayer : public tmMsgBase {
+	class tmDeletePlayer : public tmNetMsg {
 	public:
 		tmDeletePlayer(tNetSession *u);
 		virtual void store(tBBuf &t);

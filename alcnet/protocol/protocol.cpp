@@ -240,7 +240,7 @@ uint16_t alcFixUUNetMsgCommand(uint16_t cmd, const tNetSession *u)
 	// we might have to fix the message type
 	if (u->gameType == tNetSession::UUGame
 			&& (cmd == NetMsgVault_UU || cmd == NetMsgPython_UU || cmd == NetMsgSetTimeout_UU || cmd == NetMsgActivePlayerSet_UU))
-		return cmd+1; // these values are incremented by 1 in TPOTS (remember to also update tmMsgBase::stream!)
+		return cmd+1; // these values are incremented by 1 in TPOTS (remember to also update tmNetMsg::stream!)
 	return cmd;
 }
 
@@ -254,14 +254,14 @@ void tUnetUruMsg::store(tBBuf &t) {
 		hsize+=4; //32
 	}
 	pn=t.get32();
-	tf=t.get8();
+	bhflags=t.get8();
 	// Catch unknown or unhandled flags
 	uint8_t check = UNetNegotiation | UNetAckReq | UNetAckReply | UNetExt;
-	if (tf & ~(check)) throw txUnexpectedData(_WHERE("Problem parsing uru msg flag %08X\n",tf & ~(check)));
+	if (bhflags & ~(check)) throw txUnexpectedData(_WHERE("Problem parsing uru msg flag %08X\n",bhflags & ~(check)));
 	// Catch invalid Flag combinations
-	if((tf & UNetNegotiation) && (tf & UNetAckReply)) throw txUnexpectedData(_WHERE("That must be a maliciusly crafted paquet, flags UNetAckReply and UNetNegotiation cannot be set at the same time"));
-	if((tf & UNetAckReq) && (tf & UNetAckReply)) throw txUnexpectedData(_WHERE("That must be a maliciusly crafted paquet, flags UNetAckReply and UNetAckReq cannot be set at the same time"));
-	if(tf & UNetExt) {
+	if((bhflags & UNetNegotiation) && (bhflags & UNetAckReply)) throw txUnexpectedData(_WHERE("That must be a maliciusly crafted paquet, flags UNetAckReply and UNetNegotiation cannot be set at the same time"));
+	if((bhflags & UNetAckReq) && (bhflags & UNetAckReply)) throw txUnexpectedData(_WHERE("That must be a maliciusly crafted paquet, flags UNetAckReply and UNetAckReq cannot be set at the same time"));
+	if(bhflags & UNetExt) {
 		hsize-=8; //20 - 24
 		csn=t.get32();
 		frt=t.get8();
@@ -271,9 +271,9 @@ void tUnetUruMsg::store(tBBuf &t) {
 		frt=t.get8();
 		if(t.get32()!=0) throw txUnexpectedData(_WHERE("Non-zero unk2"));
 	}
-	if (frt > 0 && ((tf & UNetNegotiation) || (tf & UNetAckReply)))
+	if (frt > 0 && ((bhflags & UNetNegotiation) || (bhflags & UNetAckReply)))
 		throw txProtocolError(_WHERE("Nego and ack packets must not be fragmented!"));
-	if (frt > 0 && !(tf & UNetAckReq))
+	if (frt > 0 && !(bhflags & UNetAckReq))
 		throw txProtocolError(_WHERE("Non-acked packets must not be fragmented!"));
 	cps=t.get32();
 	dsize=t.get32();
@@ -281,9 +281,9 @@ void tUnetUruMsg::store(tBBuf &t) {
 	if (t.tell() != hsize) throw txUnexpectedData(_WHERE("Header size mismatch, %d != %d", t.tell(), hsize));
 	// done with the header - read data and check size
 	data.clear();
-	if(tf & UNetAckReply) {
+	if(bhflags & UNetAckReply) {
 		uint32_t xdsize=dsize;
-		if(tf & UNetExt) {
+		if(bhflags & UNetExt) {
 			xdsize=dsize*8;
 		} else {
 			xdsize=(dsize*16)+2;
@@ -293,6 +293,7 @@ void tUnetUruMsg::store(tBBuf &t) {
 		data.write(t.read(dsize),dsize);
 	}
 	if (!t.eof()) throw txUnexpectedData(_WHERE("Message size mismatch"));
+	data.rewind();
 	
 	frn=csn & 0x000000FF;
 	sn=csn >> 8;
@@ -301,14 +302,15 @@ void tUnetUruMsg::store(tBBuf &t) {
 	if (frn > frt) throw txProtocolError(_WHERE("A message must not have more fragments than it says it would have"));
 }
 void tUnetUruMsg::stream(tBBuf &t) const {
-	DBG(5,"[%i] ->%02X<- {%i,%i (%i) %i,%i} - %02X|%i bytes\n",pn,tf,sn,frn,frt,ps,pfr,dsize,dsize);
+	DBG(5,"[%i] ->%02X<- {%i,%i (%i) %i,%i} - %02X|%i bytes\n",pn,bhflags,sn,frn,frt,ps,pfr,dsize,dsize);
+	// this will be overwritten by sender
 	t.put8(0x03); //already done by the sender ()
 	t.put8(val);
 	if(val>0) t.put32(0xFFFFFFFF);
 	t.put32(pn); //generic pkg counter (re-written by the sender() )
 	//next part is not touched by the sender
-	t.put8(tf);
-	if(tf & UNetExt) {
+	t.put8(bhflags);
+	if(bhflags & UNetExt) {
 		t.put32(csn);
 		t.put8(frt);
 	} else {
@@ -327,13 +329,13 @@ size_t tUnetUruMsg::size() {
 size_t tUnetUruMsg::hSize() {
 	size_t hsize=28;
 	if(val>0) hsize+=4;
-	if(tf & UNetExt) hsize-=8;
+	if(bhflags & UNetExt) hsize-=8;
 	return hsize;
 }
 void tUnetUruMsg::_update() {
 	// update dsize
-	if(tf & UNetAckReply) {
-		if(tf & UNetExt)
+	if(bhflags & UNetAckReply) {
+		if(bhflags & UNetExt)
 			dsize=data.size()/8;
 		else
 			dsize=(data.size()-2)/16;
@@ -345,14 +347,14 @@ void tUnetUruMsg::_update() {
 	cps=pfr | ps<<8;
 }
 void tUnetUruMsg::dumpheader(tLog * f) {
-	f->print("[%i] ->%02X<- {%i,%i (%i) %i,%i} - %02X|%i bytes",pn,tf,sn,frn,frt,ps,pfr,data.size(),data.size());
+	f->print("[%i] ->%02X<- {%i,%i (%i) %i,%i} - %02X|%i bytes",pn,bhflags,sn,frn,frt,ps,pfr,data.size(),data.size());
 }
 //flux 0 client -> server, 1 server -> client
 void tUnetUruMsg::htmlDumpHeader(tLog * log,uint8_t flux,uint32_t ip,uint16_t port) {
 	if (!log->doesPrint()) return;
 	log->stamp();
 
-	switch(tf) {
+	switch(bhflags) {
 		case UNetAckReply: //0x80
 		case UNetAckReply | UNetExt:
 			log->print("<font color=red>");
@@ -389,7 +391,7 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,uint8_t flux,uint32_t ip,uint16_t po
 
 	data.rewind();
 
-	switch(tf) {
+	switch(bhflags) {
 		case UNetAckReply: //0x80
 			log->print("ack");
 			data.seek(2);
@@ -438,7 +440,7 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,uint8_t flux,uint32_t ip,uint16_t po
 
 	log->print("</font>");
 
-	if((tf==0x00 || tf==UNetAckReq || tf==UNetExt || tf==(UNetAckReq | UNetExt))) {
+	if((bhflags==0x00 || bhflags==UNetAckReq || bhflags==UNetExt || bhflags==(UNetAckReq | UNetExt))) {
 		if(frn==0) {
 			uint16_t msgcode=data.get16();
 			//log->print("(%04X) %s %08X",*(U16 *)(buf),alcUnetGetMsgCode(*(U16 *)(buf)),*(U32 *)(buf+2));
@@ -472,42 +474,49 @@ tString tmNetClientComm::str() const {
 }
 
 // Ack
+tmNetAck::tmNetAck(tNetSession *u, tUnetAck *ack) : tmBase(u)
+{
+	urgent = true;
+	acks.push_back(ack);
+}
 tmNetAck::~tmNetAck()
 {
-	tAckList::iterator it = ackq.begin();
-	while (it != ackq.end()) {
+	tAckList::iterator it = acks.begin();
+	while (it != acks.end()) {
 		delete *it;
-		it = ackq.erase(it);
+		it = acks.erase(it);
 	}
 }
 void tmNetAck::store(tBBuf &t)
 {
-	ackq.clear();
-	if (!(bhflags & UNetExt)) {
+	bool upgraded = u->useUpdatedProtocol();
+	acks.clear();
+	if (!upgraded) {
 		if(t.get16() != 0) throw txUnexpectedData(_WHERE("ack unknown data"));
 	}
 	while (!t.eof()) {
 		uint32_t A, B;
 		A=t.get32();
-		if(!(bhflags & UNetExt))
+		if(!upgraded)
 			if(t.get32()!=0) throw txUnexpectedData(_WHERE("ack unknown data"));
 		B=t.get32();
-		if(!(bhflags & UNetExt))
+		if(!upgraded)
 			if(t.get32()!=0) throw txUnexpectedData(_WHERE("ack unknown data"));
 		if (A <= B) throw txUnexpectedData(_WHERE("ack A value is <= B value: %d <= %d", A, B));
-		ackq.push_back(new tUnetAck(A, B));
+		acks.push_back(new tUnetAck(A, B));
 	}
 	// no need to check for eof, the loop already does that
 }
 void tmNetAck::stream(tBBuf &t) const
 {
-	if (!(bhflags & UNetExt)) t.put16(0);
-	for (tAckList::const_iterator it = ackq.begin(); it != ackq.end(); ++it) {
+	bool upgraded = u->useUpdatedProtocol();
+	if (!upgraded) t.put16(0);
+	for (tAckList::const_iterator it = acks.begin(); it != acks.end(); ++it) {
 		t.put32((*it)->A);
-		if(!(bhflags & UNetExt))
+		if(!upgraded)
 			t.put32(0);
 		t.put32((*it)->B);
-		if(!(bhflags & UNetExt))
+		if(!upgraded)
 			t.put32(0);
 	}
 }
@@ -516,7 +525,7 @@ tString tmNetAck::str() const {
 	dbg.printf("Ack on %s", u->str().c_str());
 	#ifdef ENABLE_MSGLOG
 	bool firstOne = true;
-	for (tAckList::const_iterator it = ackq.begin(); it != ackq.end(); ++it) {
+	for (tAckList::const_iterator it = acks.begin(); it != acks.end(); ++it) {
 		if (firstOne)
 			firstOne = false;
 		else
@@ -528,47 +537,22 @@ tString tmNetAck::str() const {
 }
 
 //Base message
-tmMsgBase::tmMsgBase(uint16_t cmd,uint32_t flags,tNetSession * u) : tmBase(0, u) {
-	DBG(5,"tmMsgBase()\n");
+tmNetMsg::tmNetMsg(uint16_t cmd,uint32_t flags,tNetSession * u) : tmBase(u) {
+	DBG(5,"tmNetMsg()\n");
 	this->cmd=cmd;
 	this->flags=flags;
-	//set bhflags
-	if(this->flags & plNetAck)
-		bhflags |= UNetAckReq;
 	// get version froms session
 	if (this->flags & plNetVersion) {
 		max_version = u->max_version;
 		min_version = u->min_version;
 	}
 }
-tmMsgBase::tmMsgBase(tNetSession * u) : tmBase(0, u) {
-	DBG(5,"tmMsgBase()\n");
+tmNetMsg::tmNetMsg(tNetSession * u) : tmBase(u) {
+	DBG(5,"tmNetMsg()\n");
 	this->cmd=0;
 	this->flags=0;
 }
-void tmMsgBase::setFlags(uint32_t f) {
-	this->flags |= f;
-	if(f & plNetAck)
-		bhflags |= UNetAckReq;
-}
-void tmMsgBase::unsetFlags(uint32_t f) {
-	this->flags &= ~f;
-	if(f & plNetAck)
-		bhflags &= ~UNetAckReq;
-}
-uint32_t tmMsgBase::getFlags() const {
-	return flags;
-}
-bool tmMsgBase::hasFlags(uint32_t f) const {
-	return (flags | f) == flags; // there can be several flags enabled in f, so a simple & is not enough
-}
-void tmMsgBase::setUrgent() {
-	bhflags |= UNetUrgent;
-}
-void tmMsgBase::unsetUrgent() {
-	bhflags &= ~UNetUrgent;
-}
-void tmMsgBase::store(tBBuf &t) {
+void tmNetMsg::store(tBBuf &t) {
 	if (!u)  throw txProtocolError(_WHERE("attempt to save message without session being set"));
 	//base
 	cmd=alcFixUUNetMsgCommand(t.get16(), u);
@@ -634,7 +618,7 @@ void tmMsgBase::store(tBBuf &t) {
 	if (flags & ~(check))
 		throw txProtocolError(_WHERE("%s Problem parsing a plNetMsg header format mask %08X\n",u->str().c_str(),flags & ~(check)));
 }
-void tmMsgBase::stream(tBBuf &t) const {
+void tmNetMsg::stream(tBBuf &t) const {
 	if (!u)  throw txProtocolError(_WHERE("attempt to send message without session being set"));
 	if (!cmd) throw txProtocolError(_WHERE("attempt to send message without cmd"));
 	
@@ -670,7 +654,7 @@ void tmMsgBase::stream(tBBuf &t) const {
 		t.put32(sid);
 	}
 }
-void tmMsgBase::copyProps(tmMsgBase &t) {
+void tmNetMsg::copyProps(tmNetMsg &t) {
 	if(flags & plNetVersion) {
 		max_version=t.max_version;
 		min_version=t.min_version;
@@ -691,7 +675,7 @@ void tmMsgBase::copyProps(tmMsgBase &t) {
 		sid=t.sid;
 	}
 }
-tString tmMsgBase::str() const {
+tString tmNetMsg::str() const {
 	tString dbg = alcUnetGetMsgCode(cmd);
 #ifdef ENABLE_MSGLOG
 	dbg.printf(" %04X %08X",cmd,flags);

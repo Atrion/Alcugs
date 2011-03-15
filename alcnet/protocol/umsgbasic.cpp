@@ -38,16 +38,17 @@
 namespace alc {
 
 tmTerminated::tmTerminated(tNetSession * u,uint8_t what)
- : tmMsgBase(NetMsgTerminated,plNetKi | plNetAck,u) {
+ : tmNetMsg(NetMsgTerminated,plNetKi | plNetAck,u) {
 	ki=u->ki;
 	reason=what;
+	urgent = true; // We can not wait long after sending the message, so do it quickly!
 }
 void tmTerminated::store(tBBuf &t) {
-	tmMsgBase::store(t);
+	tmNetMsg::store(t);
 	reason=t.get8();
 }
 void tmTerminated::stream(tBBuf &t) const {
-	tmMsgBase::stream(t);
+	tmNetMsg::stream(t);
 	t.put8(reason);
 }
 tString tmTerminated::additionalFields(tString dbg) const {
@@ -57,19 +58,19 @@ tString tmTerminated::additionalFields(tString dbg) const {
 
 
 tmLeave::tmLeave(tNetSession * u,uint8_t reason)
- :tmMsgBase(NetMsgLeave,plNetKi|plNetAck,u) {
+ :tmNetMsg(NetMsgLeave,plNetKi|plNetAck,u) {
  /* The Uru client sends the leaves with the ack flag enabled, so we do it, too - but this is problematic:
  The connection is dropped ASAP after sending this message, but the ack reply has to be sent, and it msut not trigger a new connection on the other end */
 	this->ki=u->ki;
 	this->reason=reason;
-	setUrgent(); // We can not wait long after sending the message, so do it quickly!
+	urgent = true; // We can not wait long after sending the message, so do it quickly!
 }
 void tmLeave::store(tBBuf &t) {
-	tmMsgBase::store(t);
+	tmNetMsg::store(t);
 	reason=t.get8();
 }
 void tmLeave::stream(tBBuf &t) const {
-	tmMsgBase::stream(t);
+	tmNetMsg::stream(t);
 	t.put8(reason);
 }
 tString tmLeave::additionalFields(tString dbg) const {
@@ -79,17 +80,17 @@ tString tmLeave::additionalFields(tString dbg) const {
 
 
 tmPlayerTerminated::tmPlayerTerminated(tNetSession * u,uint32_t ki,uint8_t reason)
- :tmMsgBase(NetMsgPlayerTerminated,plNetKi | plNetAck,u) {
+ :tmNetMsg(NetMsgPlayerTerminated,plNetKi | plNetAck,u) {
 	this->ki=ki;
 	this->reason=reason;
 }
 void tmPlayerTerminated::store(tBBuf &t) {
-	tmMsgBase::store(t);
+	tmNetMsg::store(t);
 	if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
 	reason=t.get8();
 }
 void tmPlayerTerminated::stream(tBBuf &t) const {
-	tmMsgBase::stream(t);
+	tmNetMsg::stream(t);
 	t.put8(reason);
 }
 tString tmPlayerTerminated::additionalFields(tString dbg) const {
@@ -99,7 +100,7 @@ tString tmPlayerTerminated::additionalFields(tString dbg) const {
 
 
 tmPing::tmPing(tNetSession * u, uint8_t dst)
- : tmMsgBase(NetMsgPing,plNetKi | plNetX | plNetAck,u)
+ : tmNetMsg(NetMsgPing,plNetKi | plNetX | plNetAck,u)
  // indeed acking a ping does not make much sense... however, this gives us some really good data when a player connects to a game server (there are pings exchanged then) to estimate bandwidth and latency of the user's connection
 {
 	ki = x = 0;
@@ -110,7 +111,7 @@ tmPing::tmPing(tNetSession * u, uint8_t dst)
 	}
 }
 tmPing::tmPing(tNetSession *u, tmPing &ping)
- : tmMsgBase(NetMsgPing,ping.flags,u)
+ : tmNetMsg(NetMsgPing,ping.flags,u)
 {
 	ki = ping.ki;
 	x = ping.x;
@@ -120,7 +121,7 @@ tmPing::tmPing(tNetSession *u, tmPing &ping)
 		sid = ping.sid;
 }
 void tmPing::store(tBBuf &t) {
-	tmMsgBase::store(t);
+	tmNetMsg::store(t);
 	mtime=t.getDouble();
 	destination=t.get8();
 }
@@ -132,7 +133,7 @@ void tmPing::unsetRouteInfo() {
 	unsetFlags(plNetSid);
 }
 void tmPing::stream(tBBuf &t) const {
-	tmMsgBase::stream(t);
+	tmNetMsg::stream(t);
 	t.putDouble(mtime);
 	t.put8(destination);
 }

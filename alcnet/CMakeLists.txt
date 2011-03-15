@@ -2,13 +2,13 @@ find_package(MySQL REQUIRED)
 include_directories(${MYLIB_INCLUDE_DIR})
 
 set (ALCNET_PROTOCOL_FILES
+	protocol/protocol.cpp
+	protocol/umsgbasic.cpp
 	protocol/authmsg.cpp
 	protocol/gamemsg.cpp
 	protocol/lobbybasemsg.cpp
 	protocol/lobbymsg.cpp
-	protocol/protocol.cpp
 	protocol/trackingmsg.cpp
-	protocol/umsgbasic.cpp
 	protocol/vaultmsg.cpp
 	protocol/vaultproto.cpp)
 

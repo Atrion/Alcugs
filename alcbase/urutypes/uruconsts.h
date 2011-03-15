@@ -38,10 +38,7 @@
 #define UNetNegotiation 0x40
 #define UNetAckReq      0x02
 //custom
-#define UNetForce0      0x20
 #define UNetExt         0x10 //Alcugs extension request - Validation 3 (reduced header)
-#define UNetUrgent      0x04 //Urgent message
-#define UNetExp         0x01 //Additional flags byte
 
 //// plNetMsg flags. Text in [brackets] is the Plasma name for that flag. A '*' indicates this flags adds a new data field
 //currently handled by the netcore

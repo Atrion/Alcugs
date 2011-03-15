@@ -56,11 +56,11 @@ void parameters_usage() {
  -u:   Set Urgent flag.\n\n");
 }
 
-class tmData :public tmMsgBase {
+class tmData :public tmNetMsg {
 public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	tmData(tNetSession *u) : tmMsgBase(u) {}
+	tmData(tNetSession *u) : tmNetMsg(u) {}
 	tmData(tNetSession * u, bool compressed);
 	void setFirstFragment() {
 		ki |= 1;
@@ -79,14 +79,14 @@ public:
 };
 
 tmData::tmData(tNetSession* u, bool compressed)
- :tmMsgBase(NetMsgCustomTest,plNetTimestamp | plNetAck | plNetKi,u)
+ :tmNetMsg(NetMsgCustomTest,plNetTimestamp | plNetAck | plNetKi,u)
  {
 	 ki=0;
 	 if (compressed) setFlags(plNetX);
 }
 void tmData::store(tBBuf &t) {
 	x = data.size(); // used when compressed
-	tmMsgBase::store(t);
+	tmNetMsg::store(t);
 	data.clear();
 	size_t remaining = t.remaining();
 	if (hasFlags(plNetX)) {
@@ -100,7 +100,7 @@ void tmData::store(tBBuf &t) {
 		data.write(t.readAll(), remaining);
 }
 void tmData::stream(tBBuf &t) const {
-	tmMsgBase::stream(t);
+	tmNetMsg::stream(t);
 	if (hasFlags(plNetX)) {
 		tZBuf zdata;
 		zdata.put(data);
@@ -193,7 +193,7 @@ void tUnetSimpleFileServer::onIdle() {
 		while ((size = f1.remaining())) {
 			if (size > maxSize) size = maxSize;
 			tmData data(*dstSession, compressed);
-			if (urgent) data.setUrgent();
+			if (urgent) data.urgent = true;
 			if (first) {
 				data.setFirstFragment();
 				first = false;

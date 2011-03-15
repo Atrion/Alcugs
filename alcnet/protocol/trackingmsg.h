@@ -35,7 +35,7 @@ namespace alc {
 	
 	class tmCustomVaultFindAge;
 
-	class tmCustomSetGuid : public tmMsgBase {
+	class tmCustomSetGuid : public tmNetMsg {
 	public:
 		tmCustomSetGuid(tNetSession *u);
 		tmCustomSetGuid(tNetSession *u, const tString &serverGuid, const tString &age, const tString &externalIp, uint16_t spawnStart, uint16_t spawnStop);
@@ -49,7 +49,7 @@ namespace alc {
 		uint16_t spawnStart, spawnStop;
 	};
 	
-	class tmCustomPlayerStatus : public tmMsgBase {
+	class tmCustomPlayerStatus : public tmNetMsg {
 	public:
 		tmCustomPlayerStatus(tNetSession *u);
 		tmCustomPlayerStatus(tNetSession *u, tNetSession *playerSession, uint8_t playerFlag, uint8_t playerStatus);
@@ -61,7 +61,7 @@ namespace alc {
 		uint8_t playerFlag, playerStatus;
 	};
 	
-	class tmCustomFindServer : public tmMsgBase { // also used by vault
+	class tmCustomFindServer : public tmNetMsg { // also used by vault
 	public:
 		tmCustomFindServer(tNetSession *u);
 		tmCustomFindServer(tNetSession *u, const tmCustomVaultFindAge &findAge, const tString &serverGuid, const tString &age);
@@ -74,7 +74,7 @@ namespace alc {
 		tString age;
 	};
 	
-	class tmCustomForkServer : public tmMsgBase {
+	class tmCustomForkServer : public tmNetMsg {
 	public:
 		tmCustomForkServer(tNetSession *u);
 		tmCustomForkServer(tNetSession *u, uint16_t port, const tString &serverGuid, const tString &name);
@@ -87,7 +87,7 @@ namespace alc {
 		tString age;
 	};
 	
-	class tmCustomServerFound : public tmMsgBase {
+	class tmCustomServerFound : public tmNetMsg {
 	public:
 		tmCustomServerFound(tNetSession *u);
 		tmCustomServerFound(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, uint16_t port, const tString &ipStr, const tString &serverGuid, const tString &name);
@@ -108,7 +108,7 @@ namespace alc {
 		tmCustomDirectedFwd(tNetSession *u, uint32_t ki, tpObject *obj);
 	};
 	
-	class tmCustomPlayerToCome : public tmMsgBase {
+	class tmCustomPlayerToCome : public tmNetMsg {
 	public:
 		tmCustomPlayerToCome(tNetSession *u);
 		tmCustomPlayerToCome(tNetSession *u, uint32_t ki);

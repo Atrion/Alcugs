@@ -33,7 +33,7 @@
 
 namespace alc {
 
-	class tmVault : public tmMsgBase { // this is both a vault and a lobbybase msg, but the vault server includes only this file so the class is defined here
+	class tmVault : public tmNetMsg { // this is both a vault and a lobbybase msg, but the vault server includes only this file so the class is defined here
 	public:
 		tmVault(tNetSession *u);
 		tmVault(tNetSession *u, uint32_t ki, uint32_t x, bool task, tStreamable *vaultMessage);
@@ -44,14 +44,14 @@ namespace alc {
 		tMBuf message;
 	};
 	
-	class tmCustomVaultAskPlayerList : public tmMsgBase {
+	class tmCustomVaultAskPlayerList : public tmNetMsg {
 	public:
 		tmCustomVaultAskPlayerList(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid);
 		tmCustomVaultAskPlayerList(tNetSession *u);
 		virtual void store(tBBuf &t);
 	};
 	
-	class tmCustomVaultPlayerList : public tmMsgBase {
+	class tmCustomVaultPlayerList : public tmNetMsg {
 	public:
 		tmCustomVaultPlayerList(tNetSession *u);
 		tmCustomVaultPlayerList(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid);
@@ -63,7 +63,7 @@ namespace alc {
 		tMBuf players;
 	};
 	
-	class tmCustomVaultPlayerStatus : public tmMsgBase {
+	class tmCustomVaultPlayerStatus : public tmNetMsg {
 	public:
 		tmCustomVaultPlayerStatus(tNetSession *u, uint32_t ki, const tString &serverGuid, const tString &age, uint8_t state, uint32_t onlineTime);
 		tmCustomVaultPlayerStatus(tNetSession *u);
@@ -76,7 +76,7 @@ namespace alc {
 		uint32_t onlineTime;
 	};
 	
-	class tmCustomVaultCreatePlayer : public tmMsgBase {
+	class tmCustomVaultCreatePlayer : public tmNetMsg {
 	public:
 		tmCustomVaultCreatePlayer(tNetSession *u);
 		tmCustomVaultCreatePlayer(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid, uint8_t accessLevel, const tString &login, const tString &avatar, const tString &gender, const tString &friendName, const tString &key);
@@ -89,7 +89,7 @@ namespace alc {
 		uint8_t accessLevel;
 	};
 	
-	class tmCustomVaultPlayerCreated : public tmMsgBase {
+	class tmCustomVaultPlayerCreated : public tmNetMsg {
 	public:
 		tmCustomVaultPlayerCreated(tNetSession *u);
 		tmCustomVaultPlayerCreated(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, const uint8_t *uid, uint8_t result);
@@ -100,7 +100,7 @@ namespace alc {
 		uint8_t result;
 	};
 	
-	class tmCustomVaultDeletePlayer : public tmMsgBase {
+	class tmCustomVaultDeletePlayer : public tmNetMsg {
 	public:
 		tmCustomVaultDeletePlayer(tNetSession *u);
 		tmCustomVaultDeletePlayer(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, const uint8_t *uid, uint8_t accessLevel);
@@ -111,7 +111,7 @@ namespace alc {
 		uint8_t accessLevel;
 	};
 	
-	class tmCustomVaultCheckKi : public tmMsgBase {
+	class tmCustomVaultCheckKi : public tmNetMsg {
 	public:
 		tmCustomVaultCheckKi(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, const uint8_t *uid);
 		tmCustomVaultCheckKi(tNetSession *u);
@@ -119,7 +119,7 @@ namespace alc {
 		virtual void stream(tBBuf &t) const;
 	};
 	
-	class tmCustomVaultKiChecked : public tmMsgBase {
+	class tmCustomVaultKiChecked : public tmNetMsg {
 	public:
 		tmCustomVaultKiChecked(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, const uint8_t *uid, uint8_t status, const tString &avatar);
 		tmCustomVaultKiChecked(tNetSession *u);
@@ -131,7 +131,7 @@ namespace alc {
 		tString avatar;
 	};
 	
-	class tmCustomVaultFindAge : public tmMsgBase {
+	class tmCustomVaultFindAge : public tmNetMsg {
 	public:
 		tmCustomVaultFindAge(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, const tMBuf &data);
 		tmCustomVaultFindAge(tNetSession *u);

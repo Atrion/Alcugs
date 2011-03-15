@@ -116,17 +116,13 @@ public:
 	unsigned int tries;
 	const bool urgent;
 	//Uru protocol
-	//Byte vid 0x03
-	uint8_t val; // 0x00,0x01,0x02
-	//U32 cs (only if val>0)
+	uint8_t val;
 	uint32_t pn; //!< packet number
-	uint8_t tf; //!< message type/flags
-	//U32 unkA
+	uint8_t bhflags; //!< message type/flags
 	uint8_t frn; //!< num fragment(1 byte)
 	uint32_t sn; //!< seq num (3 bytes)
 	uint32_t csn; //!< combined fragment and seq num
 	uint8_t frt; //!< total fragments (1 Byte)
-	//U32 unkB
 	uint8_t pfr; //!< last acked fragment
 	uint32_t ps; //!< last acked seq num
 	uint32_t cps; //!< combined last acked fragment and seq num
@@ -137,10 +133,12 @@ public:
 
 class tmBase :public tStreamable {
 public:
-	tmBase(uint8_t bhflags, tNetSession *u) : bhflags(bhflags), u(u) { }
+	tmBase(tNetSession *u) : urgent(false), u(u) {}
 	virtual tString str() const=0;
+	virtual uint8_t bhflags() const=0; //!< returns the correct send flags for this packet
 	tNetSession *getSession(void) const { return u; }
-	uint8_t bhflags;
+	
+	bool urgent;
 protected:
 	tNetSession * u; //!< associated session (source for incoming, destination for outgoing)
 };
@@ -149,46 +147,50 @@ class tmNetClientComm :public tmBase {
 public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	tmNetClientComm(tNetSession *u) : tmBase(UNetNegotiation|UNetAckReq|UNetUrgent, u) {}
-	tmNetClientComm(const tTime &t,uint32_t bw, tNetSession *u) : tmBase(UNetNegotiation|UNetAckReq|UNetUrgent, u), timestamp(t), bandwidth(bw) {}
+	tmNetClientComm(tNetSession *u, tUnetUruMsg *msg) : tmBase(u) { tmNetClientComm::store(msg->data); }
+	tmNetClientComm(const tTime &t,uint32_t bw, tNetSession *u) : tmBase(u), timestamp(t), bandwidth(bw)
+			{ urgent = true; }
 	virtual tString str() const;
+	virtual uint8_t bhflags() const { return UNetNegotiation|UNetAckReq; }
 	tTime timestamp;
 	uint32_t bandwidth;
 };
 
 class tmNetAck :public tmBase {
 public:
-	tmNetAck(tNetSession *u) : tmBase(UNetAckReply|UNetUrgent, u) { }
+	tmNetAck(tNetSession *u, tUnetUruMsg *msg) : tmBase(u) { tmNetAck::store(msg->data); }
+	tmNetAck(tNetSession *u, tUnetAck *ack);
 	virtual ~tmNetAck();
 	
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
 	virtual tString str() const;
+	virtual uint8_t bhflags() const { return UNetAckReply; }
 	
 	typedef std::vector<tUnetAck *> tAckList;
-	tAckList ackq;
+	tAckList acks;
 	FORBID_CLASS_COPY(tmNetAck)
 };
 
-class tmMsgBase :public tmBase {
+class tmNetMsg :public tmBase {
 public:
 	// the comments also apply for the two versions of every sublcass
-	tmMsgBase(uint16_t cmd,uint32_t flags,tNetSession * u); //!< when calling this version of the constructor, hold the public data read lock of the session
-	tmMsgBase(tNetSession * u); //!< thread-safe
-	virtual ~tmMsgBase() {};
+	tmNetMsg(uint16_t cmd,uint32_t flags,tNetSession * u); //!< when calling this version of the constructor, hold the public data read lock of the session
+	tmNetMsg(tNetSession * u); //!< thread-safe
+	virtual ~tmNetMsg() {};
 	
 	virtual void store(tBBuf &t); //!< public data read lock must NOT be hold, or it will deadlock!
 	virtual void stream(tBBuf &t) const;
-	void setFlags(uint32_t f);
-	void unsetFlags(uint32_t f);
-	void setUrgent();
-	void unsetUrgent();
-	uint32_t getFlags() const;
-	bool hasFlags(uint32_t f) const;
+	
+	virtual uint8_t bhflags() const { return flags & plNetAck ? UNetAckReq : 0; }
+	void setFlags(uint32_t f) { this->flags |= f; }
+	void unsetFlags(uint32_t f) { this->flags &= ~f; }
+	uint32_t getFlags() const { return flags; }
+	bool hasFlags(uint32_t f) const { return (flags | f) == flags; } // there can be several flags enabled in f, so a simple & is not enough
 	virtual tString str() const;
 	
 	uint16_t cmd;
-	uint32_t flags;
+	uint32_t flags; //!< flags of net msg
 	uint8_t max_version;
 	uint8_t min_version;
 	tTime timestamp;
@@ -199,7 +201,7 @@ public:
 protected:
 	virtual tString additionalFields(tString dbg) const { return dbg; } // this makes it much easier to disable message logging via #ifdef
 private:
-	void copyProps(tmMsgBase &t);
+	void copyProps(tmNetMsg &t);
 };
 
 /* You must derive any message from the above class, e.g:
