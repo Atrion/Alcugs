@@ -69,23 +69,16 @@ namespace alc {
 		return true;
 	}
 	
-	tAgeInfo::tAgeInfo(const tString &file, bool loadPages)
+	tAgeInfo::tAgeInfo(tString dir, const tString &name, bool loadPages)
 	{
-		// load age file dir
-		tConfig *cfg = alcGetMain()->config();
-		tString dir = cfg->getVar("age");
-		if (dir.size() < 2) throw txBase(_WHERE("age directory is not defined"));
-		if (!dir.endsWith("/")) dir.writeStr("/");
-		// get age name from file name
-		name = alcStripExt(file);
 		// open and decrypt file
 		tFBuf ageFile;
-		ageFile.open((dir + name + ".age").c_str(), "r");
+		ageFile.open((dir + "/" + name + ".age").c_str(), "r");
 		tWDYSBuf ageContent;
 		ageContent.put(ageFile);
 		ageContent.decrypt(/*mustBeWDYS*/false);
 		// parse file
-		cfg = new tConfig;
+		tConfig *cfg = new tConfig;
 		tXParser parser(/*override*/false);
 		parser.setConfig(cfg);
 		ageContent.get(parser);

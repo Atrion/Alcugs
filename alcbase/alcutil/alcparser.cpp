@@ -260,6 +260,7 @@ void tSimpleParser::stream(tString &str) const {
 	while((key=cfg->getNext())) {
 		DBG(5,"cfg->getNext()\n");
 		tConfigVal * val;
+		key->rewind();
 		while((val=key->getNext())) {
 			DBG(5,"key->getNext()\n");
 			str.writeStr(val->getName());

@@ -145,6 +145,7 @@ namespace alc {
 		
 		int instanceMode;
 		tString privateAges; // msut start and end with a comma
+		tString ageFileDir;
 		
 		tLog log, logHtml;
 		bool shortHtml;

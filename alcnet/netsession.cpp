@@ -89,6 +89,7 @@ tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t s
 	DBG(5, "%s Initial msg_timeout: %d\n", str().c_str(), msg_timeout);
 	// session created
 	created_stamp.setToNow();
+	net->sec->log("%s New Connection\n",str().c_str());
 	net->addEvent(new tNetEvent(this,UNET_NEWCONN));
 }
 tNetSession::~tNetSession() {
@@ -855,12 +856,6 @@ void tNetSession::terminating()
 	tWriteLock lock(prvDataMutex);
 	terminated = true;
 	whoami = 0; // it's terminated, so it's no one special anymore
-	if (alcGetSelfThreadId() != alcGetMain()->threadId()) {
-		// we are in the worker thread... send a byte to the pipe so that the main thread wakes up and re-schedules its timeout
-		uint8_t data = 0;
-		if (write(net->sndPipeWriteEnd, &data, 1) != 1)
-			throw txUnet(_WHERE("Failed to write the pipe?"));
-	}
 }
 
 void tNetSession::setAuthData(uint8_t accessLevel, const tString &passwd)

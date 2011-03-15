@@ -156,7 +156,7 @@ namespace alc {
 			}
 		}
 		// If it was a client, tell the others it left
-		else if (u->getPeerType() == KClient && u->ki != 0) {
+		else if (u->ki != 0) {
 			if (reason != RLoggedInElsewhere) { // if the player went somewhere else, don't remove him from tracking
 				int state = (reason == RLeaving) ? 2 /* visible */ : 0 /* delete */; // if the player just goes on to another age, don't remove him from the list
 				tmCustomPlayerStatus trackingStatus(*trackingServer, u, state, reason);

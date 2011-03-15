@@ -1016,11 +1016,11 @@ namespace alc {
 			// ok... now we can query (if there's anything)
 			if (!comma) break;
 			query.writeStr(") ORDER BY n.idx ASC");
-			sql->query(query, "getMGRs: getting child nodes");
+			sql->query(query, "getMGRs: getting parent nodes");
 			
 			result = sql->storeResult();
 			size_t number = mysql_num_rows(result);
-			DBG(9, "Got %Zd child nodes, adding them to table\n", number);
+			DBG(9, "Got %Zd parent nodes, adding them to table\n", number);
 				
 			// the result goes into the feed table
 			feed = static_cast<uint32_t *>(malloc(number*sizeof(uint32_t)));

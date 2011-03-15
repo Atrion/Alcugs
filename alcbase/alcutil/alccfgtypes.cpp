@@ -106,9 +106,6 @@ void tConfigVal::setVal(const tString & t,unsigned int x,unsigned int y) {
 		**myval = t;
 	}
 }
-const tString & tConfigVal::getName() const {
-	return name;
-}
 const tString & tConfigVal::getVal(unsigned int x,unsigned int y,bool *found) const {
 	if (hasVal(x, y)) {
 		if (found) *found = true;
@@ -162,9 +159,6 @@ tConfigKey::~tConfigKey() {
 		free(values);
 	}
 }
-void tConfigKey::setName(const tString & name) {
-	this->name=name;
-}
 tConfigVal * tConfigKey::find(tString what,bool create) {
 	unsigned int i;
 	what = what.lower(); // this also implicitly makes all added values lower-case as it's only here they are created
@@ -209,9 +203,6 @@ void tConfigKey::merge(tConfigKey &t) {
 	while((val=t.getNext())) {
 		add(*val);
 	}
-}
-void tConfigKey::rewind() {
-	off=0;
 }
 tConfigVal * tConfigKey::getNext() {
 	DBG(9,"n:%i,off:%i\n",n,off);
@@ -269,9 +260,6 @@ const tString & tConfig::getVar(const tString & what,const tString & where,unsig
 		return emptyString;
 	}
 	return myvar->getVal(x,y, found);
-}
-void tConfig::rewind() {
-	off=0;
 }
 tConfigKey * tConfig::getNext() {
 	if(off>=n) { off=0; return NULL; }
