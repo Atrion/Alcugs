@@ -358,10 +358,18 @@ namespace alc {
 			if (player == players.end()) { // it doesn't exist, create it
 				player = players.insert(players.end(), tPlayer(playerStatus.ki));
 			}
-			else { // if it already exists, check if the avi is already logged in elsewhere
+			else if (player->u != game) { // if it already exists, check if the avi is already logged in elsewhere
+				// ignore a RLeaving message from the old game server that we got after the RJoining from the new
+				if (playerStatus.playerStatus == RLeaving) {
+					log.log("WARN: Got RLeaving from %s, but player is already logged in at %s. Ignoring.\n",
+							game->str().c_str(), player->u->str().c_str());
+					log.flush();
+					return;
+				}
 				// to do so, we first check if the game server the player uses changed. if that's the case, and the player did not request to link, kick the old player
-				if (player->u != game && player->status != RLeaving) {
-					log.log("WARN: Kicking player %s at %s as it just logged in at %s\n", player->str().c_str(), player->u->str().c_str(), game->str().c_str());
+				if (player->status != RLeaving) {
+					log.log("WARN: Kicking player %s at %s as it just logged in at %s\n", player->str().c_str(),
+							player->u->str().c_str(), game->str().c_str());
 					tmPlayerTerminated term(player->u, player->ki, RLoggedInElsewhere);
 					net->send(term);
 				}
