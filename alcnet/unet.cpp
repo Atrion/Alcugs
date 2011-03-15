@@ -142,6 +142,7 @@ tUnet::~tUnet() {
 }
 
 void tUnet::updateNetTime() {
+	tSpinLock lock(net_time_mutex);
 	//set stamp
 	tTime t = tTime::now();
 	net_time=static_cast<tNetTime>(t.seconds)*1000000+t.microseconds;
@@ -149,13 +150,15 @@ void tUnet::updateNetTime() {
 
 tNetTimeDiff tUnet::remainingTimeTill(tNetTime time)
 {
-	assert(time == net_time || !timeOverdue(time)); // make sure time is in the future
+	tSpinLock lock(net_time_mutex);
+	assert(static_cast<tNetTimeSigned>(net_time-time) <= 0); // make sure time is in the future
 	return time-net_time;
 }
 
 tNetTimeDiff tUnet::passedTimeSince(tNetTime time)
 {
-	assert(timeOverdue(time));
+	tSpinLock lock(net_time_mutex);
+	assert(static_cast<tNetTimeSigned>(net_time-time) >= 0); // make sure time is in the future
 	return net_time-time;
 }
 
@@ -411,7 +414,7 @@ bool tUnet::sendAndWait() {
 	if(passedTimeSince(last_quota_check) > quota_check_interval) {
 		cur_up_quota=0;
 		cur_down_quota=0;
-		last_quota_check = net_time;
+		last_quota_check = getNetTime();
 	}
 	if(lim_down_cap) {
 		if((cur_down_quota+n+ip_overhead)>lim_down_cap) {

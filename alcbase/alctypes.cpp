@@ -137,13 +137,9 @@ void tMBuf::tRefBuf::resize(size_t newsize) {
 	if(b2==NULL) throw txNoMem(_WHERE("NoMem"));
 	buffer=b2;
 }
-void tMBuf::tRefBuf::inc() { tMutexLock lock(mutex); refs++; }
+void tMBuf::tRefBuf::inc() { tSpinLock lock(mutex); refs++; }
 void tMBuf::tRefBuf::dec() {
 	mutex.lock();
-	if(this->refs==0) {
-		mutex.unlock();
-		throw txRefErr(_WHERE("RefErr %i-1",refs));
-	}
 	--this->refs;
 	if(refs==0) {
 		mutex.unlock();
@@ -152,14 +148,24 @@ void tMBuf::tRefBuf::dec() {
 	else
 		mutex.unlock();
 }
-tMBuf::tRefBuf* tMBuf::tRefBuf::unique(size_t l)
+void tMBuf::tRefBuf::resizeLocked(size_t newsize)
 {
-	tMutexLock lock(mutex);
-	assert(l <= msize);
-	if (refs == 1) return this; // easy case
+	assert(newsize >= msize);
+	tSpinLock lock(mutex);
+	resize(newsize);
+}
+tMBuf::tRefBuf* tMBuf::tRefBuf::uniqueWithSize(size_t newsize)
+{
+	assert(newsize >= msize);
+	tSpinLock lock(mutex);
+	if (refs == 1) {
+		// nobody else can access this, so holing the spinlock doesn't even harm
+		if (newsize > msize) resize(newsize);
+		return this; // easy case
+	}
 	// got to create a new one and copy the data, and decrease our own refcount
-	tRefBuf *newBuf = new tRefBuf(msize);
-	memcpy(newBuf->buffer, buffer, l);
+	tRefBuf *newBuf = new tRefBuf(newsize);
+	memcpy(newBuf->buffer, buffer, msize);
 	--this->refs;
 	return newBuf;
 }
@@ -208,9 +214,11 @@ void tMBuf::getUniqueBuffer(size_t newsize) {
 		buf = new tRefBuf(newsize+bufferOversize); // get us a new buffer
 	}
 	else {
-		buf = buf->unique(msize); // make sure we are the only ones accessing it
-		if (buf->size() < newsize) buf->resize(newsize+bufferOversize);
+		if (buf->size() < newsize) buf = buf->uniqueWithSize(newsize+bufferOversize);
+		else buf = buf->uniqueWithSize(buf->size()); // don't shrink buffer
+		
 	}
+	assert(buf->size() >= newsize);
 }
 void tMBuf::copy(const tMBuf &t) {
 	DBG(9,"tMBuf::copy()\n");
@@ -292,7 +300,7 @@ int8_t tMBuf::compare(const tMBuf &t) const {
 void tMBuf::addNullTerminator(void) const
 {
 	tRefBuf *buf = const_cast<tRefBuf *>(this->buf); // yep, a hack - but we won't change the actual content
-	if (msize == buf->size()) buf->resize(msize+200);
+	if (msize == buf->size()) buf->resizeLocked(msize+bufferOversize);
 	*(buf->buf()+msize) = 0;
 }
 void tMBuf::cutEnd(size_t newSize)
