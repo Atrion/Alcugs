@@ -106,16 +106,27 @@ tMutex::~tMutex() {
 void tMutex::lock() {
 	if(pthread_mutex_lock(&id)) throw txBase(_WHERE("cannot lock mutex"));
 }
-bool tMutex::trylock() {
-	int retval;
-	retval=pthread_mutex_trylock(&id);
-	if(retval==EBUSY) return false;
-	if(retval!=0) throw txBase(_WHERE("cannot trylock mutex"));
-	return true;
-}
 void tMutex::unlock() {
 	if(pthread_mutex_unlock(&id)) throw txBase(_WHERE("cannot unlock mutex"));
 }
+
+tSpinEx::tSpinEx()
+{
+	if (pthread_spin_init(&id, NULL)) throw txBase(_WHERE("Error creating spinlock"));
+}
+tSpinEx::~tSpinEx()
+{
+	if (pthread_spin_destroy(&id)) throw txBase(_WHERE("Error destroying spinlock"));
+}
+void tSpinEx::lock()
+{
+	if (pthread_spin_lock(&id)) throw txBase(_WHERE("Error locking spinlock"));
+}
+void tSpinEx::unlock()
+{
+	if (pthread_spin_unlock(&id)) throw txBase(_WHERE("Error unlocking spinlock"));
+}
+
 
 tReadWriteEx::tReadWriteEx()
 {

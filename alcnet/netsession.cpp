@@ -63,10 +63,8 @@ tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t s
 	accessLevel=0;
 	cabal=0;
 	consecutiveCabalIncreases = 0;
-	flood_last_check=net->net_time;
 	flood_npkts=0;
-	receive_stamp = send_stamp = net->net_time;
-	next_msg_time=net->net_time;
+	flood_last_check = next_msg_time = receive_stamp = send_stamp = net->getNetTime();
 	deviation=0;
 	msg_timeout=net->msg_timeout;
 	rtt=0;
@@ -260,7 +258,7 @@ void tNetSession::send(const tmBase &msg, tNetTimeDiff delay) {
 			pmsg->data.write(buf.read(csize),csize);
 			pmsg->_update();
 			
-			pmsg->timestamp=net->net_time+delay; // no need to take tts into account now, the send queue worker does that (and our tts estimate might change till this packet is actually sent)
+			pmsg->timestamp=net->getNetTime()+delay; // no need to take tts into account now, the send queue worker does that (and our tts estimate might change till this packet is actually sent)
 			
 			#ifdef ENABLE_NETDEBUG
 			pmsg->timestamp+=net->latency;
@@ -370,7 +368,7 @@ void tNetSession::rawsend(tUnetUruMsg *msg)
 	if(net->passedTimeSince(net->last_quota_check) > net->quota_check_interval) {
 		net->cur_up_quota=0;
 		net->cur_down_quota=0;
-		net->last_quota_check = net->net_time;
+		net->last_quota_check = net->getNetTime();
 	}
 	if(msize>0 && net->lim_up_cap) {
 		if((net->cur_up_quota+msize+net->ip_overhead)>net->lim_up_cap) {
@@ -417,7 +415,7 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 		throw txProtocolError(_WHERE("[%s] Recieved a too big message of %i bytes\n",str().c_str(),size));
 	}
 	//stamp
-	receive_stamp = net->net_time;
+	receive_stamp = net->getNetTime();
 	
 	/* when authenticated is false, but passwd already set, we don't expect an encoded packet, but sometimes, we get one. Since
 	 * alcUruValidatePacket will try to validate the packet both with and without passwd if possible, we tell it to use the passwd
@@ -586,7 +584,7 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 			//flood control
 			if((msg->bhflags & UNetAckReq) && (msg->frn==0) && (net->flags & UNET_FLOODCTR)) {
 				if(net->passedTimeSince(flood_last_check) > net->flood_check_interval) {
-					flood_last_check=net->net_time;
+					flood_last_check=net->getNetTime();
 					flood_npkts=0;
 				} else {
 					flood_npkts++;
@@ -708,7 +706,7 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	// do not use the rtt as basis for the delay, or the rtts of both sides will wind up endlessly
 	tNetTimeDiff ackWaitTime = 2*timeToSend(maxPacketSz); // wait for some batches of packets
 	if (ackWaitTime > msg_timeout/4) ackWaitTime=msg_timeout/4; // but do not wait too long
-	tNetTime timestamp=net->net_time + ackWaitTime;
+	tNetTime timestamp=net->getNetTime() + ackWaitTime;
 	// the net timer will be updated when the ackq is checked (which is done since processMsg will call doWork after calling createAckReply)
 	DBG(3, "%s Enqueueing new ack, wait time: %i\n",str().c_str(),ackWaitTime);
 
@@ -856,10 +854,10 @@ tNetTimeDiff tNetSession::processSendQueues()
 					} else {
 						DBG(5, "%s sending a %Zi byte acked message %d after time\n", str().c_str(), curmsg->size(), net->passedTimeSince(curmsg->timestamp));
 						cur_size += curmsg->size();
-						send_stamp=curmsg->snt_timestamp=net->net_time;
+						send_stamp=curmsg->snt_timestamp=net->getNetTime();
 						rawsend(curmsg);
 						curmsg->tries++;
-						curmsg->timestamp=net->net_time + msg_timeout;
+						curmsg->timestamp=net->getNetTime() + msg_timeout;
 						if (authenticated) curmsg->timestamp += curmsg->tries*msg_timeout/2; // choose much higher timeout for client connections and icnrease it during re-sends - the clients netcore sometimes seems to be blocked long beyond any reasonable time
 						if (timeout > msg_timeout) timeout = msg_timeout; // be sure to check this message on time
 						++it; // go on
@@ -877,7 +875,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 						DBG(5, "%s sending a %Zi byte non-acked message %d after time\n", str().c_str(), curmsg->size(), net->passedTimeSince(curmsg->timestamp));
 						cur_size += curmsg->size();
 						rawsend(curmsg);
-						send_stamp=net->net_time;
+						send_stamp=net->getNetTime();
 					}
 					it = sndq.eraseAndDelete(it); // go to next message, delete this one
 				}
@@ -893,7 +891,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 		if (net->timeOverdue(next_msg_time)) {
 			// "regular" send
 			tNetTimeDiff cur_tts = timeToSend(cur_size);
-			next_msg_time=net->net_time + cur_tts;
+			next_msg_time=net->getNetTime() + cur_tts;
 			if (it != sndq.end() && cur_tts < timeout) timeout = cur_tts; // if there is still something to send, but the quota does not let us, do that ASAP
 		}
 		else {

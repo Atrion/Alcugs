@@ -188,18 +188,21 @@ void tUnetBase::applyConfig() {
 	onApplyConfig();
 }
 
-void tUnetBase::stop(tNetTimeDiff timeout) {
-	tMutexLock lock(runModeMutex);
-	if(timeout != static_cast<tNetTimeDiff>(-1))
-		stop_timeout=timeout*1000*1000;
-	running=false;
+void tUnetBase::stop(tNetTimeDiff timeout)
+{
+	{
+		tSpinLock lock(runModeMutex);
+		if(timeout != static_cast<tNetTimeDiff>(-1))
+			stop_timeout=timeout*1000*1000;
+		running=false;
+	}
 	
 	if (alcGetSelfThreadId() != alcGetMain()->threadId()) wakeUpMainThread();
 }
 
 bool tUnetBase::isRunning(void)
 {
-	tMutexLock lock(runModeMutex);
+	tSpinLock lock(runModeMutex);
 	return running;
 }
 

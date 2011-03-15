@@ -72,9 +72,8 @@ private:
 class tMutex {
 public:
 	tMutex();
-	virtual ~tMutex();
+	~tMutex();
 	void lock();
-	bool trylock();
 	void unlock();
 	
 	pthread_mutex_t *getMutex() { return &id; }
@@ -82,6 +81,16 @@ private:
 	pthread_mutex_t id;
 	
 	FORBID_CLASS_COPY(tMutex)
+};
+
+class tSpinEx {
+public:
+	tSpinEx();
+	~tSpinEx();
+	void lock();
+	void unlock();
+private:
+	pthread_spinlock_t id;
 };
 
 class tReadWriteEx {
@@ -99,6 +108,7 @@ private:
 };
 
 DECLARE_LOCK(tMutex, lock, tMutexLock);
+DECLARE_LOCK(tSpinEx, lock, tSpinLock);
 DECLARE_LOCK(tReadWriteEx, read, tReadLock);
 DECLARE_LOCK(tReadWriteEx, write, tWriteLock);
 

@@ -135,7 +135,7 @@ private:
 	bool configured; //!< stores whether applyConfig() has been called at least once
 	bool running; //!< stores whether the server is running or shutting down, protected by below mutex
 	tNetTimeDiff stop_timeout; //!< stores the timeout till the server shuts off
-	tMutex runModeMutex; // FIXME use spinnlock
+	tSpinEx runModeMutex;
 	
 	class tUnetWorkerThread : public tThread
 	{

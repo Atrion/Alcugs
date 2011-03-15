@@ -83,7 +83,7 @@ namespace alc {
 
 
 class tUnet {
-	friend class tNetSession; // needs to send messages, print logs, access the net_time, and so on
+	friend class tNetSession; // needs to send messages, print logs, do the NETDEBUG stuff, and so on
 
 // methods
 public:
@@ -108,9 +108,9 @@ protected:
 	tNetEvent *getEvent(); //!<  (thread-safe)
 	void addEvent(tNetEvent *evt); //!<  (thread-safe)
 	void clearEventQueue(); //!< use this only if you really know what you do - will loose incoming messages and whatnot! (thread-safe)
-	tNetTime getNetTime() { return net_time; }
+	tNetTime getNetTime() { tSpinLock lock(net_time_mutex); return net_time; }
 	bool timeOverdue(tNetTime timeout) { //!< returns whether the timout is overdue
-		return static_cast<tNetTimeSigned>(net_time-timeout) >= 0; // casting to signed will magically do the right thing, even if the time overflowed! Twoth complement is awesome :D
+		return static_cast<tNetTimeSigned>(getNetTime()-timeout) >= 0; // casting to signed will magically do the right thing, even if the time overflowed! Twoth complement is awesome :D
 	}
 	tNetTimeDiff remainingTimeTill(tNetTime time); //!< returns time remaining till given timestamp
 	tNetTimeDiff passedTimeSince(tNetTime time); //!< returns time passed since given timestamp
@@ -197,7 +197,8 @@ private:
 
 	/** current netcore time (in usecs) [resolution of 15 minutes] (relative). You can add and substract as you wish, but:
 	 * Do NOT compare this with anything, but use the overdue(), passedTime() and remainingTime() functions instead! */
-	tNetTime net_time; // FIXME: protect by a spinlock
+	tNetTime net_time; //!< protected by below spinlock
+	tSpinEx net_time_mutex;
 	
 	int sock; //!< The socket
 	struct sockaddr_in server; //!< Server sockaddr

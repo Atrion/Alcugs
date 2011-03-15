@@ -100,7 +100,7 @@ namespace alc {
 		bool resetStateWhenEmpty; //!< used by /!resetage
 		
 		time_t lastPlayerLeft, lingerTime; //!< protected by below mutex
-		tMutex autoShutdownMutex; //!< protecting above variables FIXME use spinnlock
+		tSpinEx autoShutdownMutex;
 		
 		bool noReltoShare, serverSideCommands, linkingOutIdle;
 		tString shardIdentifier;

@@ -207,15 +207,17 @@ private:
 	public:
 		tRefBuf(size_t csize=1024);
 		~tRefBuf();
-		void resize(size_t newsize);
 		void inc();
 		void dec();
 		size_t size() { return msize; }
 		uint8_t *buf() { return static_cast<uint8_t*>(buffer); }
 		const uint8_t *buf() const { return static_cast<const uint8_t*>(buffer); }
-		tRefBuf *unique(size_t l); //!< returns a pointer to a ref buf with the same conent as this one, but not shared with anyone else. The parameter says how many bytes of the content are really interesting, i.e. need to be copied.
+		tRefBuf *uniqueWithSize(size_t newsize); //!< returns a pointer to a ref buf with the same conent as this one, but not shared with anyone else. The parameter says how large we need the buffer (doing a resize of necessary)
+		void resizeLocked(size_t newsize); //!< will resize the buffer without checking if we are the only user - use with care!
 	private:
-		tMutex mutex; // FIXME use spinnlock
+		void resize(size_t newsize);
+		
+		tSpinEx mutex;
 		unsigned int refs;
 		size_t msize;
 		void *buffer;

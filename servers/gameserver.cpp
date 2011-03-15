@@ -271,7 +271,7 @@ namespace alc {
 	{
 		// a new player connected, so we are no longer alone
 		// we have to do this when the player authenticates because it will download the age before joining, in which time the auto-kill could already stop the server
-		tMutexLock lock(autoShutdownMutex);
+		tSpinLock lock(autoShutdownMutex);
 		lastPlayerLeft = 0;
 	}
 	
@@ -291,7 +291,7 @@ namespace alc {
 			// check if this was the last player
 			bool lastPlayer = checkIfOnlyPlayer(u);
 			{
-				tMutexLock lock(autoShutdownMutex);
+				tSpinLock lock(autoShutdownMutex);
 				lastPlayerLeft = lastPlayer ? alcGetTime() : 0;
 			}
 			
@@ -393,12 +393,14 @@ namespace alc {
 
 	void tUnetGameServer::onIdle()
 	{
+		bool goDownIdle;
 		{
-			tMutexLock lock(autoShutdownMutex);
-			if (lingerTime && lastPlayerLeft && lastPlayerLeft + lingerTime < alcGetTime()) {
-				log->log("The last player left more than %d sec ago, so I will go down.\n", lingerTime);
-				stop(); // no player for some time, so go down
-			}
+			tSpinLock lock(autoShutdownMutex);
+			goDownIdle = lingerTime && lastPlayerLeft && lastPlayerLeft + lingerTime < alcGetTime();
+		}
+		if (goDownIdle) {
+			log->log("The last player left more than %d sec ago, so I will go down.\n", lingerTime);
+			stop(); // no player for some time, so go down
 		}
 		tUnetLobbyServerBase::onIdle();
 	}
@@ -756,7 +758,7 @@ namespace alc {
 				tmCustomPlayerToCome playerToCome(u, msg);
 				
 				{
-					tMutexLock lock(autoShutdownMutex);
+					tSpinLock lock(autoShutdownMutex);
 					if (lastPlayerLeft) {
 						// stay up as if the last player left now, that should be long enough for the new player to join
 						lastPlayerLeft = alcGetTime();
