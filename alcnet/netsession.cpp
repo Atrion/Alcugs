@@ -48,18 +48,19 @@
 namespace alc {
 
 /* Session */
-tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t sid) : sid(sid), maxPacketSz(1024), refs(1) {
+tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t sid, bool client, uint8_t validation)
+: net(net), ip(ip), port(port), sid(sid), validation(validation), maxPacketSz(1024), rcv(NULL), client(client), refs(1) {
 	DBG(5,"tNetSession()\n");
 	assert(alcGetSelfThreadId() == alcGetMain()->threadId());
-	this->net=net;
-	this->ip=ip;
-	this->port=port;
-	rcv = NULL;
+	// validation, session flags
+	this->cflags=0; //default flags
+	if(this->validation>=3) {
+		this->validation=0;
+		this->cflags |= UNetUpgraded;
+	}
 	// fill in default values
-	validation=0;
 	authenticated=false;
 	accessLevel=0;
-	cflags=0; //default flags
 	cabal=0;
 	consecutiveCabalIncreases = 0;
 	flood_last_check=net->net_time;
@@ -74,12 +75,16 @@ tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t s
 	resetMsgCounters();
 	assert(serverMsg.pn==0);
 	rejectMessages=false;
-	client = true;
 	terminated = false;
 	
+	// socket data
+	sockaddr.sin_family=AF_INET;
+	sockaddr.sin_addr.s_addr=ip;
+	sockaddr.sin_port=port;
+	
 	// public data
-	max_version=0;
-	min_version=0;
+	max_version=client ? 0 : net->max_version;
+	min_version=client ? 0 : net->min_version;
 	gameType=UnknownGame;
 	ki=0;
 	data = NULL;
@@ -90,6 +95,9 @@ tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t s
 	created_stamp.setToNow();
 	net->sec->log("%s New Connection\n",str().c_str());
 	net->addEvent(new tNetEvent(this,UNET_NEWCONN));
+	
+	// start negotating of we are a talking to a server
+	if (!client) negotiate();
 }
 tNetSession::~tNetSession() {
 	DBG(5,"~tNetSession() (sndq: %Zd messages left)\n", sndq.size());
@@ -307,12 +315,105 @@ void tNetSession::send(tmBase &msg, tNetTimeDiff delay) {
 		}
 	}
 	
-	if (alcGetSelfThreadId() != alcGetMain()->threadId()) {
-		// we are in the worker thread... send a byte to the pipe so that the main thread wakes up and conciders this new packet
-		uint8_t data = 0;
-		if (write(net->sndPipeWriteEnd, &data, 1) != 1)
-			throw txUnet(_WHERE("Failed to write the pipe?"));
+	if (alcGetSelfThreadId() != alcGetMain()->threadId()) net->wakeUpMainThread();
+}
+
+/** sends the message (internal use only)
+An uru message can only be 253952 bytes in V0x01 & V0x02 and 254976 in V0x00
+Call only with the sendMutex locked! */
+void tNetSession::rawsend(tUnetUruMsg *msg)
+{
+	assert(alcGetSelfThreadId() == alcGetMain()->threadId());
+
+	DBG(9,"Server pn is %08X\n",serverMsg.pn);
+	DBG(9,"Server sn is %08X,%08X\n",serverMsg.sn,msg->sn);
+	serverMsg.pn++;
+	msg->pn=serverMsg.pn;
+	
+	#ifdef ENABLE_MSGDEBUG
+	net->log->log("<SND> ");
+	msg->dumpheader(net->log);
+	net->log->nl();
+	#endif
+	msg->htmlDumpHeader(net->ack,1,ip,port);
+
+	//store message into buffer
+	tMBuf * mbuf;
+	mbuf = new tMBuf();
+	mbuf->put(*msg);
+
+	#ifdef ENABLE_MSGDEBUG
+	net->log->log("<SND> RAW Packet follows: \n");
+	net->log->dumpbuf(*mbuf);
+	net->log->nl();
+	#endif
+	
+	DBG(9,"validation level is %i,%i\n",validation,msg->val);
+	
+	size_t msize=mbuf->size();
+	uint8_t * buf, * buf2=NULL;
+	buf=const_cast<uint8_t *>(mbuf->data()); // yes, we are writing directly into the tMBuf buffer... this saves us from copying everything
+
+	if(msg->val==2) {
+		DBG(8,"Encoding validation 2 packet of %Zi bytes...\n",msize);
+		buf2=static_cast<uint8_t *>(malloc(msize));
+		if(buf2==NULL) { throw txNoMem(_WHERE("")); }
+		alcEncodePacket(buf2,buf,msize);
+		buf=buf2; //don't need to decode again
+		if(authenticated) {
+			DBG(8,"Client is authenticated, doing checksum...\n");
+			uint32_t val=alcUruChecksum(buf,msize,2,passwd.c_str());
+			memcpy(buf+2,&val,4);
+			DBG(8,"Checksum done!...\n");
+		} else {
+			DBG(8,"Client is not authenticated, doing checksum...\n");
+			uint32_t val=alcUruChecksum(buf,msize,1,NULL);
+			memcpy(buf+2,&val,4);
+			DBG(8,"Checksum done!...\n");
+		}
+		buf[1]=0x02;
+	} else if(msg->val==1) {
+		uint32_t val=alcUruChecksum(buf,msize,0,NULL);
+		memcpy(buf+2,&val,4);
+		buf[1]=0x01;
+	} else {
+		buf[1]=0x00;
 	}
+	buf[0]=0x03; //magic number
+	DBG(9,"Before the Sendto call...\n");
+	//
+#ifdef ENABLE_NETDEBUG
+	if(!net->out_noise || (random() % 100) >= net->out_noise) {
+		DBG(8,"Outcomming Packet accepted\n");
+	} else {
+		DBG(5,"Outcomming Packet dropped\n");
+		msize=0;
+	}
+	//check quotas
+	if(net->passedTimeSince(net->last_quota_check) > net->quota_check_interval) {
+		net->cur_up_quota=0;
+		net->cur_down_quota=0;
+		net->last_quota_check = net->net_time;
+	}
+	if(msize>0 && net->lim_up_cap) {
+		if((net->cur_up_quota+msize+net->ip_overhead)>net->lim_up_cap) {
+			DBG(5,"Paquet dropped by quotas, in use:%i,req:%li, max:%i\n",net->cur_up_quota,msize+net->ip_overhead,net->lim_up_cap);
+			net->log->log("Paquet dropped by quotas, in use:%i,req:%i, max:%i\n",net->cur_up_quota,msize+net->ip_overhead,net->lim_up_cap);
+			msize=0;
+		} else {
+			net->cur_up_quota+=msize+net->ip_overhead;
+		}
+	}
+#endif
+
+	if(msize>0) {
+		msize = sendto(net->sock,reinterpret_cast<char *>(buf),msize,0,reinterpret_cast<struct sockaddr *>(&sockaddr),sizeof(struct sockaddr));
+	}
+
+	DBG(9,"After the Sendto call...\n");
+	free(buf2);
+	delete mbuf;
+	DBG(8,"returning from uru_net_send RET:%Zi\n",msize);
 }
 
 /** send a negotiation to the peer */
@@ -788,7 +889,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 						DBG(5, "%s sending a %Zi byte acked message %d after time\n", str().c_str(), curmsg->size(), net->passedTimeSince(curmsg->timestamp));
 						cur_size += curmsg->size();
 						send_stamp=curmsg->snt_timestamp=net->net_time;
-						net->rawsend(this,curmsg);
+						rawsend(curmsg);
 						curmsg->tries++;
 						curmsg->timestamp=net->net_time + msg_timeout;
 						if (authenticated) curmsg->timestamp += curmsg->tries*msg_timeout; // choose much higher timeout for client connections and icnrease it during re-sends - the clients netcore sometimes seems to be blocked long beyond any reasonable time
@@ -807,7 +908,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 					else {
 						DBG(5, "%s sending a %Zi byte non-acked message %d after time\n", str().c_str(), curmsg->size(), net->passedTimeSince(curmsg->timestamp));
 						cur_size += curmsg->size();
-						net->rawsend(this,curmsg);
+						rawsend(curmsg);
 						send_stamp=net->net_time;
 					}
 					it = sndq.eraseAndDelete(it); // go to next message, delete this one

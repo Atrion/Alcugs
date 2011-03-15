@@ -204,8 +204,6 @@ namespace alc {
 		
 		tNetSessionRef u = netConnect(host.c_str(), port.asUInt(), 3 /* Alcugs upgraded protocol */);
 		
-		// sending a NetMsgAlive is not necessary, the netConnect will already start the negotiation process
-		
 		if (dst == KTracking) {
 			tString var = cfg->getVar("public_address");
 			if (var.isEmpty()) log->log("WARNING: No public address set, using bind address %s\n", bindaddr.c_str());

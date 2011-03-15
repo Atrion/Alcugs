@@ -76,7 +76,7 @@ public:
 	~tNetSessionMgr();
 	
 	//! find the session with the given ip and port and return it, creating it if necessary
-	tNetSession *searchAndCreate(uint32_t ip, uint16_t port);
+	tNetSession *searchAndCreate(uint32_t ip, uint16_t port, bool client = true, uint8_t validation = 0);
 	//! return the nth session of our table
 	tNetSession *get(size_t n) const {
 		if (n < size) return table[n];

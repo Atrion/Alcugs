@@ -52,7 +52,7 @@ tNetSessionMgr::~tNetSessionMgr()
 	}
 	free(table);
 }
-tNetSession *tNetSessionMgr::searchAndCreate(uint32_t ip, uint16_t port)
+tNetSession *tNetSessionMgr::searchAndCreate(uint32_t ip, uint16_t port, bool client, uint8_t validation)
 {
 	for(size_t i=0; i<size; i++) {
 		if(table[i]!=NULL && table[i]->getIp()==ip && table[i]->getPort()==port)
@@ -63,7 +63,7 @@ tNetSession *tNetSessionMgr::searchAndCreate(uint32_t ip, uint16_t port)
 		throw txToMCons(_WHERE("Too many connections (already having the maximum of %i)",max));
 	// find a place for us
 	size_t sid = findFreeSlot();
-	table[sid] = new tNetSession(net,ip,port,sid);
+	table[sid] = new tNetSession(net,ip,port,sid,client,validation);
 	++count;
 	return table[sid];
 }
