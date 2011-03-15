@@ -102,7 +102,7 @@ tUnet::tUnet(uint8_t whoami,const tString & lhost,uint16_t lport) : smgr(NULL), 
 	nat_down=500 * 1000;
 	
 	flood_check_interval=10*1000*1000;
-	max_flood_pkts=600; // when first launching a client for an emtpy vault, there are about 100 packets within about 2.5 seconds
+	max_flood_pkts=1000; // when first launching a client for an emtpy vault, there are about 100 packets within about 2.5 seconds
 	                    // linking to Noloben is a good testcase (500 per 10 seconds was not enough)
 
 	receiveAhead=256; // Receive up to 256 not-yet acceptable packets "in the future" (one complete message, in worst-case)

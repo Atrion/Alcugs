@@ -30,7 +30,7 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETSESSION_ID "$Id$"
-//#define _DBG_LEVEL_ 3
+//#define _DBG_LEVEL_ 5
 #include <alcdefs.h>
 #include "netsession.h"
 
@@ -147,7 +147,7 @@ size_t tNetSession::getHeaderSize() {
 
 // functions to calculate cabal and rtt
 void tNetSession::updateRTT(tNetTimeDiff newread) {
-	if(rtt==0) rtt=4*newread; // start with a large deviation, in case this was like an "early shot"
+	if(rtt==0) rtt=2*newread; // start with a large deviation, in case this was like an "early shot"
 	//Jacobson/Karels
 	const int alpha=125; // this is effectively 0.125
 	const int delta=4;
@@ -751,6 +751,8 @@ tNetTimeDiff tNetSession::processSendQueues()
 		// control for auto-drop of old non-acked messages
 		const unsigned int minTH=15;
 		const unsigned int maxTH=100;
+		// max. number of allowed re-sends before timeout
+		const unsigned int resendLimit = terminated ? 3 : (whoami == KClient ? 10 : 5); // Uru clients get more resends due to their missing multi-threading
 		
 		// urgent packets
 		tPointerList<tUnetUruMsg>::iterator it = sndq.begin();
@@ -776,7 +778,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 						decreaseCabal(curmsg->tries > 1); // if even a re-send got lost, pull the emergency break!
 					}
 					
-					if(curmsg->tries>=5 || (curmsg->tries>=2 && terminated)) { // max. 2 sends on terminated connections, max. 5 for the rest
+					if (curmsg->tries >= resendLimit) {
 						it = sndq.eraseAndDelete(it); // this is the next one
 						//timeout event
 						net->sec->log("%s Timeout (didn't ack a packet)\n", str().c_str());
@@ -789,6 +791,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 						net->rawsend(this,curmsg);
 						curmsg->tries++;
 						curmsg->timestamp=net->net_time + msg_timeout;
+						if (whoami == KClient) curmsg->timestamp += curmsg->tries*msg_timeout; // choose much higher timeout for client connections and icnrease it during re-sends - the clients netcore sometimes seems to be blocked long beyond any reasonable time
 						if (timeout > msg_timeout) timeout = msg_timeout; // be sure to check this message on time
 						++it; // go on
 					}
