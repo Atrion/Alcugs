@@ -88,9 +88,7 @@ namespace alc {
 				}
 			
 				// get the packet
-				tmRequestMyVaultPlayerList requestList(u);
-				msg->data.get(requestList);
-				log->log("<RCV> [%d] %s\n", msg->sn, requestList.str().c_str());
+				tmRequestMyVaultPlayerList requestList(u, msg);
 				
 				// forward it to the vault server
 				tmCustomVaultAskPlayerList askList(*vaultServer, requestList.x, u->getSid(), u->uid);
@@ -105,9 +103,7 @@ namespace alc {
 				}
 				
 				// get the packet
-				tmCustomVaultPlayerList playerList(u);
-				msg->data.get(playerList);
-				log->log("<RCV> [%d] %s\n", msg->sn, playerList.str().c_str());
+				tmCustomVaultPlayerList playerList(u, msg);
 				
 				// find the client's session
 				tNetSessionRef client = sessionBySid(playerList.sid);
@@ -133,9 +129,7 @@ namespace alc {
 				}
 				
 				// get the packet
-				tmCreatePlayer createPlayer(u);
-				msg->data.get(createPlayer);
-				log->log("<RCV> [%d] %s\n", msg->sn, createPlayer.str().c_str());
+				tmCreatePlayer createPlayer(u, msg);
 				
 				// forward it to the vault server
 				tmCustomVaultCreatePlayer vaultCreatePlayer(*vaultServer, createPlayer.x, u->getSid(), u->uid, u->getAccessLevel(), u->name, createPlayer.avatar, createPlayer.gender, createPlayer.friendName, createPlayer.key);
@@ -151,9 +145,7 @@ namespace alc {
 				}
 				
 				// get the packet
-				tmCustomVaultPlayerCreated playerCreated(u);
-				msg->data.get(playerCreated);
-				log->log("<RCV> [%d] %s\n", msg->sn, playerCreated.str().c_str());
+				tmCustomVaultPlayerCreated playerCreated(u, msg);
 				
 				// find the client's session
 				tNetSessionRef client = sessionBySid(playerCreated.sid);
@@ -177,9 +169,7 @@ namespace alc {
 				}
 				
 				// get the packet
-				tmDeletePlayer deletePlayer(u);
-				msg->data.get(deletePlayer);
-				log->log("<RCV> [%d] %s\n", msg->sn, deletePlayer.str().c_str());
+				tmDeletePlayer deletePlayer(u, msg);
 				
 				// forward it to the vault server
 				tmCustomVaultDeletePlayer vaultDeletePlayer(*vaultServer, deletePlayer.ki, deletePlayer.x, u->getSid(), u->uid, u->getAccessLevel());
@@ -197,9 +187,7 @@ namespace alc {
 				}
 				
 				// get the data out of the packet
-				tmCustomForkServer forkServer(u);
-				msg->data.get(forkServer);
-				log->log("<RCV> [%d] %s\n", msg->sn, forkServer.str().c_str());
+				tmCustomForkServer forkServer(u, msg);
 				
 				if (!loadOnDemand) {
 					log->log("Ignoring fork request since I'm in manual mode\n");

@@ -46,9 +46,7 @@ namespace alc {
 			case NetMsgCustomSetGuid:
 			{
 				// get the data out of the packet
-				tmCustomSetGuid setGuid(u);
-				msg->data.get(setGuid);
-				log->log("<RCV> [%d] %s\n", msg->sn, setGuid.str().c_str());
+				tmCustomSetGuid setGuid(u, msg);
 				
 				// save the data for the session
 				trackingBackend.updateServer(u, setGuid);
@@ -58,9 +56,7 @@ namespace alc {
 			case NetMsgCustomPlayerStatus:
 			{
 				// get the data out of the packet
-				tmCustomPlayerStatus playerStatus(u);
-				msg->data.get(playerStatus);
-				log->log("<RCV> [%d] %s\n", msg->sn, playerStatus.str().c_str());
+				tmCustomPlayerStatus playerStatus(u, msg);
 				
 				// update the player's data
 				trackingBackend.updatePlayer(u, playerStatus);
@@ -70,9 +66,7 @@ namespace alc {
 			case NetMsgCustomFindServer:
 			{
 				// get the data out of the packet
-				tmCustomFindServer findServer(u);
-				msg->data.get(findServer);
-				log->log("<RCV> [%d] %s\n", msg->sn, findServer.str().c_str());
+				tmCustomFindServer findServer(u, msg);
 				
 				trackingBackend.findServer(findServer);
 				
@@ -81,9 +75,7 @@ namespace alc {
 			case NetMsgCustomDirectedFwd:
 			{
 				// get the data out of the packet
-				tmCustomDirectedFwd directedFwd(u);
-				msg->data.get(directedFwd);
-				log->log("<RCV> [%d] %s\n", msg->sn, directedFwd.str().c_str());
+				tmCustomDirectedFwd directedFwd(u, msg);
 				
 				trackingBackend.forwardMessage(directedFwd);
 				
@@ -92,9 +84,7 @@ namespace alc {
 			case NetMsgCustomPlayerToCome:
 			{
 				// get the data out of the packet
-				tmCustomPlayerToCome playerToCome(u);
-				msg->data.get(playerToCome);
-				log->log("<RCV> [%d] %s\n", msg->sn, playerToCome.str().c_str());
+				tmCustomPlayerToCome playerToCome(u, msg);
 				
 				trackingBackend.playerCanCome(u, playerToCome.ki);
 				

@@ -547,11 +547,6 @@ tmNetMsg::tmNetMsg(uint16_t cmd,uint32_t flags,tNetSession * u) : tmBase(u) {
 		min_version = u->min_version;
 	}
 }
-tmNetMsg::tmNetMsg(tNetSession * u) : tmBase(u) {
-	DBG(5,"tmNetMsg()\n");
-	this->cmd=0;
-	this->flags=0;
-}
 void tmNetMsg::store(tBBuf &t) {
 	if (!u)  throw txProtocolError(_WHERE("attempt to save message without session being set"));
 	//base

@@ -31,7 +31,7 @@
 
 #include "netsessionmgr.h"
 #include "netmsgq.h"
-#include <alctypes.h>
+#include "protocol/protocol.h"
 
 #include <netinet/in.h>
 
@@ -39,9 +39,6 @@ namespace alc {
 
 	class tLog;
 	class tNetEvent;
-	class tmBase;
-	class tUnetUruMsg;
-	class tmMsgBase;
 
 
 //! Urunet event table <0 errors, 0 ok, >0 events
@@ -100,7 +97,7 @@ public:
 		if(lhost.isEmpty()) bindaddr = "0.0.0.0";
 		else bindaddr = lhost;
 	}
-	void send(alc::tmNetMsg& m, tNetTimeDiff delay = 0) { m.getSession()->send(m, delay); } //!< delay is in msecs - may be called in worker thread
+	void send(const tmNetMsg& m, tNetTimeDiff delay = 0) { m.getSession()->send(m, delay); } //!< delay is in msecs - may be called in worker thread
 
 protected:
 	void startOp();

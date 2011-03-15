@@ -38,7 +38,6 @@
 #include "unet.h"
 #include "netexception.h"
 #include "protocol/umsgbasic.h"
-#include <alcutil/alclog.h>
 #include <alcmain.h>
 
 #include <cassert>
@@ -126,6 +125,10 @@ int8_t tNetSession::compareMsgNumbers(uint32_t sn1, uint8_t fr1, uint32_t sn2, u
 	if (sn1 < sn2 || (sn1 == sn2 && fr1 < fr2)) return -1;
 	else if (sn1 == sn2 && fr1 == fr2) return 0;
 	else return 1;
+}
+tLog* tNetSession::getLog(void)
+{
+	return net->log;
 }
 tString tNetSession::str() {
 	tString dbg;
@@ -285,6 +288,7 @@ void tNetSession::send(const tmBase &msg, tNetTimeDiff delay) {
 			}
 		}
 	}
+	assert(buf.eof());
 	
 	if (alcGetSelfThreadId() != alcGetMain()->threadId()) net->wakeUpMainThread();
 }
@@ -400,8 +404,7 @@ void tNetSession::negotiate() {
 		sbw=net->nat_down; // WAN
 	}
 
-	tmNetClientComm comm(tTime::now(),sbw,this);
-	send(comm);
+	send(tmNetClientComm(tTime::now(),sbw,this));
 	negotiating = true;
 }
 
@@ -698,9 +701,7 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 	assert(A > B);
 #if 0
 	// send acks directly
-	tmNetAck ackMsg(this);
-	ackMsg.ackq.push_back(new tUnetAck(A, B)); // put it into message
-	send(ackMsg);
+	send(tmNetAck(this, new tUnetAck(A, B)));
 #else
 	// retard and collect acks
 	// we must delay either none or all messages, otherwise the rtt will vary too much
@@ -793,9 +794,8 @@ tNetTimeDiff tNetSession::ackSend() {
 			/* send one message per ack: we do not want to be too pwned if that apcket got lost. And if we have "holes" in the
 			 * sequence of packets (which is the only occasion in which there would be several acks in a message), the connection
 			 * is already problematic. */
-			tmNetAck ackMsg(this, ack);
 			it = ackq.erase(it); // remove ack from queue, but do not delete it
-			send(ackMsg);
+			send(tmNetAck(this, ack));
 		}
 	}
 	return timeout;
@@ -808,8 +808,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 	assert(alcGetSelfThreadId() == alcGetMain()->threadId());
 	// when we are talking to a non-terminated server, send alive messages
 	if (!client && !terminated && (net->passedTimeSince(send_stamp) > (conn_timeout/2))) {
-		tmAlive alive(this, ki);
-		send(alive);
+		send(tmAlive(this, ki));
 	}
 	
 	tNetTimeDiff timeout = ackSend(); //generate ack messages (i.e. put them from the ackq to the sndq)

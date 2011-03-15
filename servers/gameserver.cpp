@@ -471,9 +471,7 @@ namespace alc {
 				}
 				
 				// get the data out of the packet
-				tmJoinReq joinReq(u);
-				msg->data.get(joinReq);
-				log->log("<RCV> [%d] %s\n", msg->sn, joinReq.str().c_str());
+				tmJoinReq joinReq(u, msg);
 				
 				// the player is joined - tell tracking and (perhaps) vault
 				tmCustomPlayerStatus trackingStatus(*trackingServer, u, 2 /* visible */, RActive);
@@ -510,9 +508,7 @@ namespace alc {
 				}
 				
 				// get the data out of the packet
-				tmGameStateRequest gameStateRequest(u);
-				msg->data.get(gameStateRequest);
-				log->log("<RCV> [%d] %s\n", msg->sn, gameStateRequest.str().c_str());
+				tmGameStateRequest gameStateRequest(u, msg);
 				
 				int n = 0;
 				if (gameStateRequest.hasFlags(plNetStateReq1))
@@ -535,9 +531,7 @@ namespace alc {
 				}
 				
 				// get the data out of the packet
-				tmMembersListReq membersListReq(u);
-				msg->data.get(membersListReq);
-				log->log("<RCV> [%d] %s\n", msg->sn, membersListReq.str().c_str());
+				tmMembersListReq membersListReq(u, msg);
 				
 				// send members list
 				tmMembersList list(u);
@@ -565,9 +559,7 @@ namespace alc {
 				}
 				
 				// get the data out of the packet
-				tmPagingRoom pagingRoom(u);
-				msg->data.get(pagingRoom);
-				log->log("<RCV> [%d] %s\n", msg->sn, pagingRoom.str().c_str());
+				tmPagingRoom pagingRoom(u, msg);
 				
 				tPageInfo *page = ageInfo->getPage(pagingRoom.pageId);
 				if (!page)
@@ -607,9 +599,7 @@ namespace alc {
 				}
 				
 				// get the data out of the packet
-				tmGameMessage gameMsg(u);
-				msg->data.get(gameMsg);
-				log->log("<RCV> [%d] %s\n", msg->sn, gameMsg.str().c_str());
+				tmGameMessage gameMsg(u, msg);
 				
 				// process contained plasma message
 				if (!processGameMessage(&gameMsg.msgStream, u)) {
@@ -627,9 +617,7 @@ namespace alc {
 				}
 				
 				// get the data out of the packet
-				tmGameMessageDirected gameMsg(u);
-				msg->data.get(gameMsg);
-				log->log("<RCV> [%d] %s\n", msg->sn, gameMsg.str().c_str());
+				tmGameMessageDirected gameMsg(u, msg);
 				
 				// process contained plasma message
 				tUruObjectRef receiver;
@@ -667,9 +655,7 @@ namespace alc {
 				}
 				
 				// get the data out of the packet
-				tmCustomDirectedFwd gameMsg(u);
-				msg->data.get(gameMsg);
-				log->log("<RCV> [%d] %s\n", msg->sn, gameMsg.str().c_str());
+				tmCustomDirectedFwd gameMsg(u, msg);
 				
 				// forward it
 				fwdDirectedGameMsg(gameMsg);
@@ -686,9 +672,7 @@ namespace alc {
 				}
 				
 				// get the data out of the packet
-				tmSDLState SDLState(u);
-				msg->data.get(SDLState);
-				log->log("<RCV> [%d] %s\n", msg->sn, SDLState.str().c_str());
+				tmSDLState SDLState(u, msg);
 				
 				// save SDL state
 				ageState->saveSdlState(SDLState.content, SDLState.obj);
@@ -703,9 +687,7 @@ namespace alc {
 				}
 				
 				// get the data out of the packet
-				tmSDLStateBCast SDLStateBCast(u);
-				msg->data.get(SDLStateBCast);
-				log->log("<RCV> [%d] %s\n", msg->sn, SDLStateBCast.str().c_str());
+				tmSDLStateBCast SDLStateBCast(u, msg);
 				
 				// save SDL state
 				ageState->saveSdlState(SDLStateBCast.content, SDLStateBCast.obj);
@@ -724,9 +706,7 @@ namespace alc {
 				}
 				
 				// get the data out of the packet
-				tmLoadClone loadClone(u);
-				msg->data.get(loadClone);
-				log->log("<RCV> [%d] %s\n", msg->sn, loadClone.str().c_str());
+				tmLoadClone loadClone(u, msg);
 				
 				// parse contained plasma message
 				tpLoadCloneMsg *loadCloneMsg = tpLoadCloneMsg::create(loadClone.msgStream.getType());
@@ -773,9 +753,7 @@ namespace alc {
 				}
 				
 				// get the data out of the packet
-				tmCustomPlayerToCome playerToCome(u);
-				msg->data.get(playerToCome);
-				log->log("<RCV> [%d] %s\n", msg->sn, playerToCome.str().c_str());
+				tmCustomPlayerToCome playerToCome(u, msg);
 				
 				{
 					tMutexLock lock(autoShutdownMutex);
@@ -801,9 +779,7 @@ namespace alc {
 				}
 				
 				// get the data out of the packet
-				tmSetTimeout setTimeout(u);
-				msg->data.get(setTimeout);
-				log->log("<RCV> [%d] %s\n", msg->sn, setTimeout.str().c_str());
+				tmSetTimeout setTimeout(u, msg);
 				// let's ignore this - I don't think the client should tell the server what the timeout is, nor does 180 seconds seem a good choice to me
 				return 1;
 			}
@@ -814,9 +790,7 @@ namespace alc {
 					return -2; // hack attempt
 				}
 				
-				tmPython python(u);
-				msg->data.get(python);
-				log->log("<RCV> [%d] %s\n", msg->sn, python.str().c_str());
+				tmPython python(u, msg);
 				// Just ignore it, server-side Python is not supported
 				return 1;
 			}
@@ -830,9 +804,7 @@ namespace alc {
 				}
 				
 				// get the data out of the packet
-				tmTestAndSet testAndSet(u);
-				msg->data.get(testAndSet);
-				log->log("<RCV> [%d] %s\n", msg->sn, testAndSet.str().c_str());
+				tmTestAndSet testAndSet(u, msg);
 				
 				// if required, send a reply - this is simply copied from the old game server, don't ask me what it means
 				if (testAndSet.isLockReq) {
@@ -856,9 +828,7 @@ namespace alc {
 				}
 				
 				// get the data out of the packet
-				tmPlayerPage playerPage(u);
-				msg->data.get(playerPage);
-				log->log("<RCV> [%d] %s\n", msg->sn, playerPage.str().c_str());
+				tmPlayerPage playerPage(u, msg);
 				// And now we just have to find out why we should care that the avatar is paged in or out - this occurs only when the game is started or quit
 				return 1;
 			}
@@ -870,9 +840,7 @@ namespace alc {
 				}
 				
 				// get the data out of the packet
-				tmRelevanceRegions relevanceRegions(u);
-				msg->data.get(relevanceRegions);
-				log->log("<RCV> [%d] %s\n", msg->sn, relevanceRegions.str().c_str());
+				tmRelevanceRegions relevanceRegions(u, msg);
 				// I have no clue what this message is supposed to do, and things work without reacting to it
 				return 1;
 			}

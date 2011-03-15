@@ -81,9 +81,6 @@ namespace alc {
 	}
 
 	//// tmJoinReq
-	tmJoinReq::tmJoinReq(tNetSession *u) : tmNetMsg(u)
-	{ }
-	
 	void tmJoinReq::store(tBBuf &t)
 	{
 		tmNetMsg::store(t);
@@ -128,9 +125,6 @@ namespace alc {
 	
 	//// tmGameMessage
 	// public constructors
-	tmGameMessage::tmGameMessage(tNetSession *u) : tmNetMsg(u)
-	{ }
-	
 	tmGameMessage::tmGameMessage(tNetSession *u, const tmGameMessage &msg)
 	 : tmNetMsg(NetMsgGameMessage, msg.flags, u), msgStream(msg.msgStream)
 	{
@@ -178,9 +172,6 @@ namespace alc {
 	
 	//// tmGameMessageDirected
 	// public constructors
-	tmGameMessageDirected::tmGameMessageDirected(tNetSession *u) : tmGameMessage(u)
-	{ }
-	
 	tmGameMessageDirected::tmGameMessageDirected(tNetSession *u, const tmGameMessageDirected &msg)
 	 : tmGameMessage(NetMsgGameMessageDirected, u, msg), recipients(msg.recipients)
 	{ }
@@ -219,9 +210,6 @@ namespace alc {
 	}
 	
 	//// tmLoadClone
-	tmLoadClone::tmLoadClone(tNetSession *u) : tmGameMessage(u)
-	{ }
-	
 	tmLoadClone::tmLoadClone(tNetSession *u, const tmLoadClone &msg)
 	 : tmGameMessage(NetMsgLoadClone, u, msg), obj(msg.obj)
 	{
@@ -356,9 +344,6 @@ namespace alc {
 	}
 	
 	//// tmPlayerPage
-	tmPlayerPage::tmPlayerPage(tNetSession *u) : tmNetMsg(u)
-	{ }
-	
 	void tmPlayerPage::store(tBBuf &t)
 	{
 		tmNetMsg::store(t);
@@ -381,9 +366,6 @@ namespace alc {
 	}
 	
 	//// tmGameStateRequest
-	tmGameStateRequest::tmGameStateRequest(tNetSession *u) : tmNetMsg(u)
-	{ }
-	
 	void tmGameStateRequest::store(tBBuf &t)
 	{
 		tmNetMsg::store(t);
@@ -431,15 +413,8 @@ namespace alc {
 		dbg.printf(" number of sent states: %d", num);
 		return dbg;
 	}
-	
-	//// tmMembersListReq
-	tmMembersListReq::tmMembersListReq(tNetSession *u) : tmNetMsg(u)
-	{ }
-	
+
 	//// tmStreamedObject
-	tmStreamedObject::tmStreamedObject(tNetSession *u) : tmNetMsg(u)
-	{ }
-	
 	tmStreamedObject::tmStreamedObject(uint16_t cmd, tNetSession *u, const tmStreamedObject &msg)
 	: tmNetMsg(cmd, msg.flags, u), obj(msg.obj), content(msg.content)
 	{
@@ -478,9 +453,6 @@ namespace alc {
 	}
 	
 	//// tmTestAndSet (NetMsgTestAndSet and NetMsgSharedState are identical)
-	tmTestAndSet::tmTestAndSet(tNetSession *u) : tmStreamedObject(u)
-	{ }
-	
 	void tmTestAndSet::store(tBBuf &t)
 	{
 		tmStreamedObject::store(t);
@@ -534,9 +506,6 @@ namespace alc {
 	}
 	
 	//// tmSDLState
-	tmSDLState::tmSDLState(tNetSession *u) : tmStreamedObject(u)
-	{ }
-	
 	tmSDLState::tmSDLState(tNetSession *u, const tUruObject &obj, tStreamable *content, bool isInitial)
 	 : tmStreamedObject(NetMsgSDLState, u, obj, content)
 	{
@@ -576,9 +545,6 @@ namespace alc {
 	}
 	
 	//// tmSDLStateBCast
-	tmSDLStateBCast::tmSDLStateBCast(tNetSession *u) : tmSDLState(u)
-	{ }
-	
 	tmSDLStateBCast::tmSDLStateBCast(tNetSession *u, const tmSDLStateBCast & msg)
 	 : tmSDLState(NetMsgSDLStateBCast, u, msg)
 	{
@@ -600,9 +566,6 @@ namespace alc {
 	}
 	
 	//// tmRelevanceRegions
-	tmRelevanceRegions::tmRelevanceRegions(tNetSession *u) : tmNetMsg(u)
-	{ }
-	
 	void tmRelevanceRegions::store(tBBuf &t)
 	{
 		tmNetMsg::store(t);
@@ -614,9 +577,6 @@ namespace alc {
 	}
 	
 	//// tmSetTimeout
-	tmSetTimeout::tmSetTimeout(tNetSession *u) : tmNetMsg(u)
-	{ }
-	
 	void tmSetTimeout::store(tBBuf &t)
 	{
 		tmNetMsg::store(t);
@@ -675,8 +635,6 @@ namespace alc {
 	}
 	
 	//// tmPython
-	tmPython::tmPython(tNetSession *u) : tmNetMsg(u) {}
-	
 	void tmPython::store(tBBuf &t)
 	{
 		tmNetMsg::store(t);

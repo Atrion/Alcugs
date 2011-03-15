@@ -39,9 +39,6 @@
 namespace alc {
 
 	//// tmCustomSetGuid
-	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u) : tmNetMsg(u)
-	{ }
-	
 	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u, const tString &serverGuid, const tString &age, const tString &externalIp, uint16_t spawnStart, uint16_t spawnStop)
 	 : tmNetMsg(NetMsgCustomSetGuid, plNetAck | plNetVersion, u), serverGuid(serverGuid), age(age), externalIp(externalIp)
 	{
@@ -79,9 +76,6 @@ namespace alc {
 	}
 	
 	//// tmCustomPlayerStatus
-	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *u) : tmNetMsg(u)
-	{ }
-	
 	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *u, tNetSession *playerSession, uint8_t playerFlag, uint8_t playerStatus)
 	 : tmNetMsg(NetMsgCustomPlayerStatus, plNetAck | plNetVersion | plNetKi | plNetUID | plNetSid, u), account(playerSession->name), avatar(playerSession->avatar)
 	{
@@ -121,9 +115,6 @@ namespace alc {
 	}
 	
 	//// tmCustomFindServer
-	tmCustomFindServer::tmCustomFindServer(tNetSession *u) : tmNetMsg(u)
-	{ }
-	
 	tmCustomFindServer::tmCustomFindServer(tNetSession *u, const tmCustomVaultFindAge &findAge, const tString &serverGuid, const tString &age)
 	 : tmNetMsg(NetMsgCustomFindServer, plNetX | plNetKi | plNetAck | plNetSid, u), serverGuid(serverGuid), age(age)
 	{
@@ -165,9 +156,6 @@ namespace alc {
 	}
 	
 	//// tmCustomForkServer
-	tmCustomForkServer::tmCustomForkServer(tNetSession *u) : tmNetMsg(u)
-	{ }
-	
 	tmCustomForkServer::tmCustomForkServer(tNetSession *u, uint16_t port, const tString &serverGuid, const tString &name)
 	: tmNetMsg(NetMsgCustomForkServer, plNetAck | plNetVersion, u), serverGuid(serverGuid), age(name)
 	{
@@ -202,9 +190,6 @@ namespace alc {
 	}
 	
 	//// tmCustomServerFound
-	tmCustomServerFound::tmCustomServerFound(tNetSession *u) : tmNetMsg(u)
-	{ }
-	
 	tmCustomServerFound::tmCustomServerFound(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, uint16_t port, const tString &ipStr, const tString &serverGuid, const tString &name)
 	: tmNetMsg(NetMsgCustomServerFound, plNetAck | plNetX | plNetKi | plNetVersion | plNetSid, u), ipStr(ipStr), serverGuid(serverGuid), age(name)
 	{
@@ -242,22 +227,7 @@ namespace alc {
 		return dbg;
 	}
 	
-	////tmCustomDirectedFwd
-	tmCustomDirectedFwd::tmCustomDirectedFwd(tNetSession *u) : tmGameMessageDirected(u)
-	{ }
-	
-	tmCustomDirectedFwd::tmCustomDirectedFwd(tNetSession *u, tmGameMessageDirected &msg)
-	 : tmGameMessageDirected(NetMsgCustomDirectedFwd, u, msg)
-	{ }
-	
-	tmCustomDirectedFwd::tmCustomDirectedFwd(tNetSession *u, uint32_t ki, tpObject *obj)
-	 : tmGameMessageDirected(NetMsgCustomDirectedFwd, u, ki, obj)
-	{ }
-	
 	//// tmCustomPlayerToCome
-	tmCustomPlayerToCome::tmCustomPlayerToCome(tNetSession *u) : tmNetMsg(u)
-	{ }
-	
 	tmCustomPlayerToCome::tmCustomPlayerToCome(tNetSession *u, uint32_t ki)
 	 : tmNetMsg(NetMsgCustomPlayerToCome, plNetAck | plNetVersion | plNetKi, u)
 	{

@@ -129,7 +129,7 @@ private:
 	void applyConfig();
 	void flushLogs();
 	
-	int parseBasicMsg(tUnetMsg * msg, tNetSession * u, bool shutdown); //!< called in worker thread
+	int parseBasicMsg(tUnetMsg * msg, tNetSession * u); //!< called in worker thread
 	void processEvent(tNetEvent *evt); //!< dispatches most recent event, called in worker thread!
 	
 	bool configured; //!< stores whether applyConfig() has been called at least once

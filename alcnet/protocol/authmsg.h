@@ -34,8 +34,8 @@
 namespace alc {
 
 	class tmCustomAuthAsk : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmCustomAuthAsk, tmNetMsg)
 	public:
-		tmCustomAuthAsk(tNetSession *u);
 		tmCustomAuthAsk(tNetSession *u, uint32_t x, uint32_t sid, uint32_t ip, tString login, const uint8_t *challenge, const uint8_t *hash, uint8_t release);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
@@ -48,8 +48,8 @@ namespace alc {
 	};
 	
 	class tmCustomAuthResponse : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmCustomAuthResponse, tmNetMsg)
 	public:
-		tmCustomAuthResponse(tNetSession *u);
 		tmCustomAuthResponse(tNetSession *u, tmCustomAuthAsk &authAsk, const uint8_t *uid, tString passwd, uint8_t result, uint8_t accessLevel);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;

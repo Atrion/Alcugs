@@ -133,12 +133,10 @@ namespace alc {
 		}
 		
 		// tell tracking
-		tmCustomPlayerStatus trackingStatus(*trackingServer, u, 2 /* visible */, (u->buildType == TIntRel) ? RActive : RJoining); // show the VaultManager as active (it's the only IntRel we have)
-		send(trackingStatus);
+		send(tmCustomPlayerStatus(*trackingServer, u, 2 /* visible */, (u->buildType == TIntRel) ? RActive : RJoining)); // show the VaultManager as active (it's the only IntRel we have)
 		
 		// now, tell the client
-		tmActivePlayerSet playerSet(u, x);
-		send(playerSet);
+		send(tmActivePlayerSet(u, x));
 		// and write to the logfile
 		sec->log("%s player set\n", u->str().c_str());
 		return true;
@@ -159,8 +157,7 @@ namespace alc {
 		else if (u->ki != 0) {
 			if (reason != RLoggedInElsewhere) { // if the player went somewhere else, don't remove him from tracking
 				int state = (reason == RLeaving) ? 2 /* visible */ : 0 /* delete */; // if the player just goes on to another age, don't remove him from the list
-				tmCustomPlayerStatus trackingStatus(*trackingServer, u, state, reason);
-				send(trackingStatus);
+				send(tmCustomPlayerStatus(*trackingServer, u, state, reason));
 			}
 			tWriteLock lock(u->pubDataMutex);
 			u->ki = 0; // this avoids sending the messages twice
@@ -208,8 +205,7 @@ namespace alc {
 			tString var = cfg->getVar("public_address");
 			if (var.isEmpty()) log->log("WARNING: No public address set, using bind address %s\n", bindaddr.c_str());
 			tReadLock lock(u->pubDataMutex); // we are in main thread
-			tmCustomSetGuid setGuid(*u, alcGetStrGuid(serverGuid), serverName, var, whoami == KGame ? 0 : spawnStart, whoami == KGame ? 0 : spawnStop);
-			send(setGuid);
+			send(tmCustomSetGuid(*u, alcGetStrGuid(serverGuid), serverName, var, whoami == KGame ? 0 : spawnStart, whoami == KGame ? 0 : spawnStop));
 		}
 		
 		return u;
@@ -230,9 +226,7 @@ namespace alc {
 				}
 				
 				// get the data out of the packet
-				tmAuthenticateHello authHello(u);
-				msg->data.get(authHello);
-				log->log("<RCV> [%d] %s\n", msg->sn, authHello.str().c_str());
+				tmAuthenticateHello authHello(u, msg);
 				
 				if (authHello.maxPacketSize != u->getMaxPacketSz()) {
 					throw txUnexpectedData(_WHERE("UNX: Max packet size of %s is not %d, but %d, ignoring\n", u->str().c_str(), u->getMaxPacketSz(), authHello.maxPacketSize));
@@ -268,9 +262,8 @@ namespace alc {
 					u->buildType = authHello.release;
 				}
 				
-				// reply with AuthenticateChallenge´
-				tmAuthenticateChallenge authChallenge(u, authHello.x, result, u->challenge);
-				send(authChallenge);
+				// reply with AuthenticateChallenge
+				send(tmAuthenticateChallenge(u, authHello.x, result, u->challenge));
 				
 				return 1;
 			}
@@ -282,13 +275,10 @@ namespace alc {
 				}
 				
 				// get the data out of the packet
-				tmAuthenticateResponse authResponse(u);
-				msg->data.get(authResponse);
-				log->log("<RCV> [%d] %s\n", msg->sn, authResponse.str().c_str());
+				tmAuthenticateResponse authResponse(u, msg);
 				
 				// send authAsk to auth server
-				tmCustomAuthAsk authAsk(*authServer, authResponse.x, u->getSid(), u->getIp(), u->name, u->challenge, authResponse.hash.data(), u->buildType);
-				send(authAsk);
+				send(tmCustomAuthAsk(*authServer, authResponse.x, u->getSid(), u->getIp(), u->name, u->challenge, authResponse.hash.data(), u->buildType));
 				
 				return 1;
 			}
@@ -300,9 +290,7 @@ namespace alc {
 				}
 				
 				// get the data out of the packet
-				tmCustomAuthResponse authResponse(u);
-				msg->data.get(authResponse);
-				log->log("<RCV> [%d] %s\n", msg->sn, authResponse.str().c_str());
+				tmCustomAuthResponse authResponse(u, msg);
 				
 				// find the client's session
 				tNetSessionRef client = sessionBySid(authResponse.sid);
@@ -321,16 +309,14 @@ namespace alc {
 						client->setTimeout(loadingTimeout); // use higher timeout - the client might be in the lobby (waiting for the user to work with the GUI) or loading an age
 					}
 					
-					tmAccountAutheticated accountAuth(*client, authResponse.x, AAuthSucceeded, serverGuid);
-					send(accountAuth);
+					send(tmAccountAutheticated(*client, authResponse.x, AAuthSucceeded, serverGuid));
 					sec->log("%s successful login\n", client->str().c_str());
 					onPlayerAuthed(*client);
 				}
 				else {
 					uint8_t zeroGuid[8]; // only send zero-filled GUIDs to non-authed players
 					memset(zeroGuid, 0, 8);
-					tmAccountAutheticated accountAuth(*client, authResponse.x, authResponse.result, zeroGuid);
-					send(accountAuth);
+					send(tmAccountAutheticated(*client, authResponse.x, authResponse.result, zeroGuid));
 					sec->log("%s failed login\n", client->str().c_str());
 					terminate(*client, RNotAuthenticated);
 				}
@@ -346,9 +332,7 @@ namespace alc {
 				}
 				
 				// get the data out of the packet
-				tmSetMyActivePlayer setPlayer(u);
-				msg->data.get(setPlayer);
-				log->log("<RCV> [%d] %s\n", msg->sn, setPlayer.str().c_str());
+				tmSetMyActivePlayer setPlayer(u, msg);
 				
 				if (u->ki != 0) {
 					if (u->ki == setPlayer.ki) {
@@ -366,9 +350,8 @@ namespace alc {
 				}
 				else {
 					// ask the vault server about this KI
-					u->setRejectMessages(true); // dont process any further messages till we verified the KI
-					tmCustomVaultCheckKi checkKi(*vaultServer, setPlayer.ki, setPlayer.x, u->getSid(), u->uid);
-					send(checkKi);
+					u->setRejectMessages(true); // dont process any further messages till we verified the KI (yeah, further messages might already be in the queue - little we can do about that)
+					send(tmCustomVaultCheckKi(*vaultServer, setPlayer.ki, setPlayer.x, u->getSid(), u->uid));
 				}
 				
 				return 1;
@@ -381,9 +364,7 @@ namespace alc {
 				}
 				
 				// get the data out of the packet
-				tmCustomVaultKiChecked kiChecked(u);
-				msg->data.get(kiChecked);
-				log->log("<RCV> [%d] %s\n", msg->sn, kiChecked.str().c_str());
+				tmCustomVaultKiChecked kiChecked(u, msg);
 				
 				// find the client's session
 				tNetSessionRef client = sessionBySid(kiChecked.sid);
@@ -412,9 +393,7 @@ namespace alc {
 				bool isTask = (msg->cmd == NetMsgVaultTask);
 				
 				// get the data out of the packet
-				tmVault vaultMsg(u);
-				msg->data.get(vaultMsg);
-				log->log("<RCV> [%d] %s\n", msg->sn, vaultMsg.str().c_str());
+				tmVault vaultMsg(u, msg);
 				if (isTask) {
 					if (!vaultMsg.hasFlags(plNetX))  throw txProtocolError(_WHERE("X flag missing"));
 				}
@@ -441,8 +420,7 @@ namespace alc {
 					onVaultMessageForward(u, &parsedMsg);
 					// send it on to client
 					parsedMsg.UUFormat = client->gameType == tNetSession::UUGame;
-					tmVault vaultMsgFwd(*client, vaultMsg.ki, vaultMsg.x, isTask, &parsedMsg);
-					send(vaultMsgFwd);
+					send(tmVault(*client, vaultMsg.ki, vaultMsg.x, isTask, &parsedMsg));
 				}
 				else { // got it from a client
 					if (!u->ki) { // KI is necessary to know where to route it
@@ -458,8 +436,7 @@ namespace alc {
 					onVaultMessageForward(u, &parsedMsg);
 					// send it on to vault
 					parsedMsg.UUFormat = false; // be sure to normalize to POTS format
-					tmVault vaultMsgFwd(*vaultServer, u->ki, vaultMsg.x, isTask, &parsedMsg);
-					send(vaultMsgFwd);
+					send(tmVault(*vaultServer, u->ki, vaultMsg.x, isTask, &parsedMsg));
 				}
 				
 				return 1;
@@ -474,9 +451,7 @@ namespace alc {
 				}
 				
 				// get the data out of the packet
-				tmFindAge findAge(u);
-				msg->data.get(findAge);
-				log->log("<RCV> [%d] %s\n", msg->sn, findAge.str().c_str());
+				tmFindAge findAge(u, msg);
 				
 				tvAgeLinkStruct ageLink;
 				findAge.message.rewind();
@@ -499,8 +474,7 @@ namespace alc {
 				}
 				
 				// Let's ask vault
-				tmCustomVaultFindAge vaultFindAge(*vaultServer, u->ki, findAge.x, u->getSid(), findAge.message);
-				send(vaultFindAge);
+				send(tmCustomVaultFindAge(*vaultServer, u->ki, findAge.x, u->getSid(), findAge.message));
 				
 				return 1;
 			}
@@ -512,13 +486,10 @@ namespace alc {
 				}
 				
 				// get the data out of the packet
-				tmCustomFindServer findServer(u);
-				msg->data.get(findServer);
-				log->log("<RCV> [%d] %s\n", msg->sn, findServer.str().c_str());
+				tmCustomFindServer findServer(u, msg);
 			
 				// let's ask the tracking server
-				tmCustomFindServer trackingFindServer(*trackingServer, findServer);
-				send(trackingFindServer);
+				send(tmCustomFindServer(*trackingServer, findServer));
 				
 				return 1;
 			}
@@ -530,9 +501,7 @@ namespace alc {
 				}
 				
 				// get the data out of the packet
-				tmCustomServerFound serverFound(u);
-				msg->data.get(serverFound);
-				log->log("<RCV> [%d] %s\n", msg->sn, serverFound.str().c_str());
+				tmCustomServerFound serverFound(u, msg);
 				
 				// find the client
 				tNetSessionRef client = sessionBySid(serverFound.sid);
@@ -543,8 +512,7 @@ namespace alc {
 				
 				uint8_t guid[8];
 				alcGetHexGuid(guid, serverFound.serverGuid);
-				tmFindAgeReply reply(*client, serverFound.x, serverFound.ipStr, serverFound.serverPort, serverFound.age, guid);
-				send(reply);
+				send(tmFindAgeReply(*client, serverFound.x, serverFound.ipStr, serverFound.serverPort, serverFound.age, guid));
 				
 				return 1;
 			}
@@ -558,9 +526,7 @@ namespace alc {
 				}
 				
 				// get the data out of the packet
-				tmPlayerTerminated playerTerminated(u);
-				msg->data.get(playerTerminated);
-				log->log("<RCV> [%d] %s\n", msg->sn, playerTerminated.str().c_str());
+				tmPlayerTerminated playerTerminated(u, msg);
 				
 				tNetSessionRef client = sessionByKi(playerTerminated.ki);
 				if (!*client) {

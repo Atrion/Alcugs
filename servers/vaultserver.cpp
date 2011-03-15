@@ -84,9 +84,7 @@ namespace alc {
 		switch(msg->cmd) {
 			case NetMsgCustomVaultAskPlayerList:
 			{
-				tmCustomVaultAskPlayerList askPlayerList(u);
-				msg->data.get(askPlayerList);
-				log->log("<RCV> [%d] %s\n", msg->sn, askPlayerList.str().c_str());
+				tmCustomVaultAskPlayerList askPlayerList(u, msg);
 				
 				vaultBackend.sendPlayerList(askPlayerList);
 				
@@ -94,9 +92,7 @@ namespace alc {
 			}
 			case NetMsgCustomVaultCreatePlayer:
 			{
-				tmCustomVaultCreatePlayer createPlayer(u);
-				msg->data.get(createPlayer);
-				log->log("<RCV> [%d] %s\n", msg->sn, createPlayer.str().c_str());
+				tmCustomVaultCreatePlayer createPlayer(u, msg);
 				
 				uint8_t result = AUnspecifiedServerError;
 				uint32_t ki = 0;
@@ -125,9 +121,7 @@ namespace alc {
 			}
 			case NetMsgCustomVaultDeletePlayer:
 			{
-				tmCustomVaultDeletePlayer deletePlayer(u);
-				msg->data.get(deletePlayer);
-				log->log("<RCV> [%d] %s\n", msg->sn, deletePlayer.str().c_str());
+				tmCustomVaultDeletePlayer deletePlayer(u, msg);
 				
 				vaultBackend.deletePlayer(deletePlayer);
 				
@@ -135,9 +129,7 @@ namespace alc {
 			}
 			case NetMsgCustomVaultCheckKi:
 			{
-				tmCustomVaultCheckKi checkKi(u);
-				msg->data.get(checkKi);
-				log->log("<RCV> [%d] %s\n", msg->sn, checkKi.str().c_str());
+				tmCustomVaultCheckKi checkKi(u, msg);
 				
 				vaultBackend.checkKi(checkKi);
 				
@@ -145,9 +137,7 @@ namespace alc {
 			}
 			case NetMsgCustomVaultFindAge:
 			{
-				tmCustomVaultFindAge findAge(u);
-				msg->data.get(findAge);
-				log->log("<RCV> [%d] %s\n", msg->sn, findAge.str().c_str());
+				tmCustomVaultFindAge findAge(u, msg);
 				
 				tvAgeLinkStruct ageLink;
 				findAge.data.rewind();
@@ -171,9 +161,7 @@ namespace alc {
 			}
 			case NetMsgCustomVaultPlayerStatus:
 			{
-				tmCustomVaultPlayerStatus status(u);
-				msg->data.get(status);
-				log->log("<RCV> [%d] %s\n", msg->sn, status.str().c_str());
+				tmCustomVaultPlayerStatus status(u, msg);
 				
 				vaultBackend.updatePlayerStatus(status);
 				
@@ -186,9 +174,7 @@ namespace alc {
 				tvMessage parsedMsg(isTask, /* UUFormat */false);
 				
 				// get the data out of the packet
-				tmVault vaultMsg(u);
-				msg->data.get(vaultMsg);
-				log->log("<RCV> [%d] %s\n", msg->sn, vaultMsg.str().c_str());
+				tmVault vaultMsg(u, msg);
 				if (!vaultMsg.hasFlags(plNetKi) || vaultMsg.ki == 0) throw txProtocolError(_WHERE("KI missing"));
 				if (isTask && !vaultMsg.hasFlags(plNetX))  throw txProtocolError(_WHERE("X flag missing"));
 				// parse the vault stuff
@@ -202,8 +188,7 @@ namespace alc {
 				catch (txBase &t) { // don't kick the lobby/game server we are talking to but let it kick the client
 					err->log("%s Recieved invalid vault message from player %d\n", u->str().c_str(), vaultMsg.ki);
 					err->log(" Exception %s\n%s\n",t.what(),t.backtrace());
-					tmPlayerTerminated term(u, vaultMsg.ki, RParseError);
-					send(term);
+					send(tmPlayerTerminated(u, vaultMsg.ki, RParseError));
 				}
 				
 				return 1;

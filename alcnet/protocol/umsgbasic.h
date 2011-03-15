@@ -37,10 +37,10 @@ namespace alc {
 
 /** TERMINATED message */
 class tmTerminated :public tmNetMsg {
+	NETMSG_RECEIVE_CONSTRUCTORS(tmTerminated, tmNetMsg)
 public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	tmTerminated(tNetSession *u) : tmNetMsg(u) {}
 	tmTerminated(tNetSession * u,uint8_t reason);
 	virtual tString additionalFields(tString dbg) const;
 	//format
@@ -49,10 +49,10 @@ public:
 
 /** Leave */
 class tmLeave :public tmNetMsg {
+	NETMSG_RECEIVE_CONSTRUCTORS(tmLeave, tmNetMsg)
 public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	tmLeave(tNetSession *u) : tmNetMsg(u) {}
 	tmLeave(tNetSession * u,uint8_t reason);
 	virtual tString additionalFields(tString dbg) const;
 	//format
@@ -61,8 +61,8 @@ public:
 
 /** Alive */
 class tmAlive :public tmNetMsg {
+	NETMSG_RECEIVE_CONSTRUCTORS(tmAlive, tmNetMsg)
 public:
-	tmAlive(tNetSession *u) : tmNetMsg(u) {}
 	tmAlive(tNetSession * u,uint32_t ki)
 	: tmNetMsg(NetMsgAlive, plNetKi | plNetAck | plNetTimestamp, u)
 	{
@@ -72,10 +72,10 @@ public:
 
 /** Player terminated */
 class tmPlayerTerminated :public tmNetMsg {
+	NETMSG_RECEIVE_CONSTRUCTORS(tmPlayerTerminated, tmNetMsg)
 public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	tmPlayerTerminated(tNetSession* u) : tmNetMsg(u) {}
 	tmPlayerTerminated(tNetSession * u,uint32_t ki,uint8_t reason);
 	virtual tString additionalFields(tString dbg) const;
 	//format
@@ -84,10 +84,10 @@ public:
 
 /** Ping */
 class tmPing :public tmNetMsg {
+	NETMSG_RECEIVE_CONSTRUCTORS(tmPing, tmNetMsg)
 public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	tmPing(tNetSession *u) : tmNetMsg(u) {}
 	tmPing(tNetSession * u, uint8_t dst);
 	tmPing(tNetSession *u, tmPing &ping);
 	virtual tString additionalFields(tString dbg) const;

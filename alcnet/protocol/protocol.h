@@ -36,17 +36,14 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_PROTOCOL_H_ID "$Id$"
 
+#include "netsession.h"
 #include <urutypes/uruconsts.h>
 #include <urutypes/urubasetypes.h>
+#include <alcutil/alclog.h>
 
 #include <vector>
 
 namespace alc {
-	
-	// unet time types
-	typedef unsigned long int tNetTime; // timestamp used by netcore (don't want to carry those tTimes around there), microseconds. this may overflow, to use with caution!
-	typedef signed long int tNetTimeSigned; // must be the same as tNetTime, but signed - to be used only by the overdue check!
-	typedef unsigned int tNetTimeDiff; // time difference between two net times, microseconds
 
 class tNetSession;
 class tLog;
@@ -73,11 +70,10 @@ uint8_t alcUnetGetVarTypeFromName(tString type);
 /** this class is used to save incoming NetMsgs and collect their fragments */
 class tUnetMsg : public tBaseType {
 public:
-	tUnetMsg() { next=NULL; fr_count=0; }
+	tUnetMsg() { fr_count=0; }
 	//virtual ~tUnetMsg() { delete data; }
 	virtual void store(tBBuf &/*t*/) {}
 	virtual void stream(tBBuf &/*t*/) const {}
-	tUnetMsg * next;
 	uint16_t cmd;
 	uint32_t sn;
 	uint8_t fr_count; //Number of fragments we already got
@@ -173,10 +169,11 @@ public:
 };
 
 class tmNetMsg :public tmBase {
-public:
+protected:
 	// the comments also apply for the two versions of every sublcass
 	tmNetMsg(uint16_t cmd,uint32_t flags,tNetSession * u); //!< when calling this version of the constructor, hold the public data read lock of the session
-	tmNetMsg(tNetSession * u); //!< thread-safe
+	tmNetMsg(tNetSession * u) : tmBase(u), cmd(0) {} //!< thread-safe
+public:
 	virtual ~tmNetMsg() {};
 	
 	virtual void store(tBBuf &t); //!< public data read lock must NOT be hold, or it will deadlock!
@@ -204,16 +201,10 @@ private:
 	void copyProps(tmNetMsg &t);
 };
 
-/* You must derive any message from the above class, e.g:
-class tmAuthenticateHello :public tmMsgBase {
-public:
-	//...
-	String Login;
-	U32 maxpaquetsize;
-	Byte release;
-};
-
-*/
+#define NETMSG_RECEIVE_CONSTRUCTORS(Type, ParentType) \
+	protected: Type(tNetSession *u) : ParentType(u) {} \
+	public: Type(tNetSession *u, tUnetMsg *msg) : ParentType(u) \
+			{ Type::store(msg->data); u->getLog()->log("<RCV> [%d] %s\n", msg->sn, Type::str().c_str()); }
 
 }
 
