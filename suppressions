@@ -52,7 +52,6 @@
    fun:clone
 }
 
-
 {
    std::backtrace bug (?)
    Memcheck:Leak
@@ -63,9 +62,20 @@
    fun:_dl_open
    fun:do_dlopen
    fun:_dl_catch_error
-   fun:dlerror_run
    fun:__libc_dlopen_mode
    fun:init
    fun:pthread_once
+   fun:backtrace
    fun:_ZN3alc6txBase17_preparebacktraceEv
 }
+
+
+{
+   zlib false positive, see http://bugs.debian.org/577135
+   Memcheck:Cond
+   fun:inflateReset2
+   fun:inflateInit2_
+   fun:uncompress
+   fun:_ZN3alc5tZBuf10uncompressEm
+}
+
