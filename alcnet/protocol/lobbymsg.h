@@ -34,8 +34,8 @@
 namespace alc {
 
 	class tmRequestMyVaultPlayerList : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmRequestMyVaultPlayerList, tmNetMsg)
 	public:
-		tmRequestMyVaultPlayerList(tNetSession *u) : tmNetMsg(u) {}
 		virtual void store(tBBuf &t);
 	};
 	
@@ -51,8 +51,8 @@ namespace alc {
 	};
 	
 	class tmCreatePlayer : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmCreatePlayer, tmNetMsg)
 	public:
-		tmCreatePlayer(tNetSession *u);
 		virtual void store(tBBuf &t);
 		virtual tString additionalFields(tString dbg) const;
 		// format
@@ -69,8 +69,8 @@ namespace alc {
 	};
 	
 	class tmDeletePlayer : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmDeletePlayer, tmNetMsg)
 	public:
-		tmDeletePlayer(tNetSession *u);
 		virtual void store(tBBuf &t);
 	};
 	

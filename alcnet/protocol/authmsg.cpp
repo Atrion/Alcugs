@@ -49,9 +49,6 @@ namespace alc {
 		this->release = release;
 	}
 	
-	tmCustomAuthAsk::tmCustomAuthAsk(tNetSession *u) : tmNetMsg(u)
-	{ }
-	
 	void tmCustomAuthAsk::store(tBBuf &t)
 	{
 		tmNetMsg::store(t);
@@ -93,9 +90,6 @@ namespace alc {
 		this->result = result;
 		this->accessLevel = accessLevel;
 	}
-	
-	tmCustomAuthResponse::tmCustomAuthResponse(tNetSession *u) : tmNetMsg(u)
-	{ }
 	
 	void tmCustomAuthResponse::store(tBBuf &t)
 	{

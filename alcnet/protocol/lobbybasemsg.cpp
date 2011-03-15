@@ -38,9 +38,6 @@
 namespace alc {
 
 	//// tmAuthenticateHello
-	tmAuthenticateHello::tmAuthenticateHello(tNetSession *u) : tmNetMsg(u) // it's not capable of sending
-	{ }
-	
 	void tmAuthenticateHello::store(tBBuf &t)
 	{
 		tmNetMsg::store(t);
@@ -83,9 +80,6 @@ namespace alc {
 	}
 	
 	//// tmAuthenticateResponse
-	tmAuthenticateResponse::tmAuthenticateResponse(tNetSession *u) : tmNetMsg(u) // it's not capable of sending
-	{ }
-	
 	void tmAuthenticateResponse::store(tBBuf &t)
 	{
 		tmNetMsg::store(t);
@@ -128,9 +122,6 @@ namespace alc {
 	}
 	
 	//// tmSetMyActivePlayer
-	tmSetMyActivePlayer::tmSetMyActivePlayer(tNetSession *u) : tmNetMsg(u) // it's not capable of sending
-	{ }
-	
 	void tmSetMyActivePlayer::store(tBBuf &t)
 	{
 		tmNetMsg::store(t);
@@ -156,9 +147,6 @@ namespace alc {
 	}
 	
 	//// tmFindAge
-	tmFindAge::tmFindAge(tNetSession *u) : tmNetMsg(u) // it's not capable of sending
-	 { }
-	
 	void tmFindAge::store(tBBuf &t)
 	{
 		tmNetMsg::store(t);

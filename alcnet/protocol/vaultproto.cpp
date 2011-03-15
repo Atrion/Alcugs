@@ -34,7 +34,6 @@
 #include "netsession.h"
 #include "protocol.h"
 #include <alcutil/alcos.h>
-#include <alcutil/alclog.h>
 #include <urutypes/plbase.h>
 
 #include <cstring>

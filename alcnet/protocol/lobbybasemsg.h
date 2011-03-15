@@ -34,8 +34,8 @@
 namespace alc {
 
 	class tmAuthenticateHello : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmAuthenticateHello, tmNetMsg)
 	public:
-		tmAuthenticateHello(tNetSession *u);
 		virtual void store(tBBuf &t);
 		virtual tString additionalFields(tString dbg) const;
 		// format
@@ -55,8 +55,8 @@ namespace alc {
 	};
 	
 	class tmAuthenticateResponse : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmAuthenticateResponse, tmNetMsg)
 	public:
-		tmAuthenticateResponse(tNetSession *u);
 		virtual void store(tBBuf &t);
 		virtual tString additionalFields(tString dbg) const;
 		// format
@@ -74,8 +74,8 @@ namespace alc {
 	};
 	
 	class tmSetMyActivePlayer : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmSetMyActivePlayer, tmNetMsg)
 	public:
-		tmSetMyActivePlayer(tNetSession *u);
 		virtual void store(tBBuf &t);
 		virtual tString additionalFields(tString dbg) const;
 		// format
@@ -83,13 +83,14 @@ namespace alc {
 	};
 	
 	class tmActivePlayerSet : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmActivePlayerSet, tmNetMsg)
 	public:
 		tmActivePlayerSet(tNetSession *u, uint32_t x);
 	};
 	
 	class tmFindAge : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmFindAge, tmNetMsg)
 	public:
-		tmFindAge(tNetSession *u);
 		virtual void store(tBBuf &t);
 		// format
 		tMBuf message;

@@ -69,9 +69,6 @@ namespace alc {
 	}
 	
 	//// tmCreatePlayer
-	tmCreatePlayer::tmCreatePlayer(tNetSession *u) : tmNetMsg(u) // it's not capable of sending
-	{ }
-	
 	void tmCreatePlayer::store(tBBuf &t)
 	{
 		tmNetMsg::store(t);
@@ -117,9 +114,6 @@ namespace alc {
 	}
 	
 	//// tmDeletePlayer
-	tmDeletePlayer::tmDeletePlayer(tNetSession *u) : tmNetMsg(u) // it's not capable of sending
-	{ }
-	
 	void tmDeletePlayer::store(tBBuf &t)
 	{
 		tmNetMsg::store(t);

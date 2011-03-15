@@ -31,7 +31,6 @@
 #include "unetserverbase.h"
 
 #include "protocol/umsgbasic.h"
-#include <alcutil/alclog.h>
 
 
 namespace alc {
@@ -45,12 +44,9 @@ namespace alc {
 			// answer to pings
 			case NetMsgPing:
 			{
-				tmPing ping(u);
-				msg->data.get(ping);
-				log->log("<RCV> [%d] %s\n",msg->sn,ping.str().c_str());
+				tmPing ping(u, msg);
 				if (ping.destination == whoami || ping.destination == KBcast) { // if it's for us or for everyone, answer
-					tmPing pingReply(u, ping);
-					send(pingReply);
+					send(tmPing(u, ping));
 				}
 				else onForwardPing(ping, u); // if not, forward it (only implemented by lobby and game)
 				return 1;

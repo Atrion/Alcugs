@@ -46,24 +46,20 @@ namespace alc {
 		switch(msg->cmd) {
 			case NetMsgCustomAuthAsk:
 			{
-				tmCustomAuthAsk authAsk(u);
+				// get the data out of the packet
+				tmCustomAuthAsk authAsk(u, msg);
+				
+				// authenticate player
 				tString passwd;
 				uint8_t hexUid[16];
 				uint8_t accessLevel;
 				int authResult;
-				
-				// get the data out of the packet
-				msg->data.get(authAsk);
-				log->log("<RCV> [%d] %s\n", msg->sn, authAsk.str().c_str());
-				
-				// authenticate player
 				tString challenge = alcHex2Ascii(tMBuf(authAsk.challenge, 16));
 				tString hash = alcHex2Ascii(tMBuf(authAsk.hash, 16));
 				authResult = authBackend->authenticatePlayer(u, authAsk.login, challenge, hash, authAsk.release, alcGetStrIp(authAsk.ip), &passwd, hexUid, &accessLevel);
 				
 				// send answer to client
-				tmCustomAuthResponse authResponse(u, authAsk, hexUid, passwd, authResult, accessLevel);
-				send(authResponse);
+				send(tmCustomAuthResponse(u, authAsk, hexUid, passwd, authResult, accessLevel));
 				
 				return 1;
 			}

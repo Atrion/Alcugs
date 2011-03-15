@@ -36,8 +36,8 @@ namespace alc {
 	class tmCustomVaultFindAge;
 
 	class tmCustomSetGuid : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmCustomSetGuid, tmNetMsg)
 	public:
-		tmCustomSetGuid(tNetSession *u);
 		tmCustomSetGuid(tNetSession *u, const tString &serverGuid, const tString &age, const tString &externalIp, uint16_t spawnStart, uint16_t spawnStop);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
@@ -50,8 +50,8 @@ namespace alc {
 	};
 	
 	class tmCustomPlayerStatus : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmCustomPlayerStatus, tmNetMsg)
 	public:
-		tmCustomPlayerStatus(tNetSession *u);
 		tmCustomPlayerStatus(tNetSession *u, tNetSession *playerSession, uint8_t playerFlag, uint8_t playerStatus);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
@@ -62,8 +62,8 @@ namespace alc {
 	};
 	
 	class tmCustomFindServer : public tmNetMsg { // also used by vault
+		NETMSG_RECEIVE_CONSTRUCTORS(tmCustomFindServer, tmNetMsg)
 	public:
-		tmCustomFindServer(tNetSession *u);
 		tmCustomFindServer(tNetSession *u, const tmCustomVaultFindAge &findAge, const tString &serverGuid, const tString &age);
 		tmCustomFindServer(tNetSession *u, const tmCustomFindServer &findServer);
 		virtual void store(tBBuf &t);
@@ -75,8 +75,8 @@ namespace alc {
 	};
 	
 	class tmCustomForkServer : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmCustomForkServer, tmNetMsg)
 	public:
-		tmCustomForkServer(tNetSession *u);
 		tmCustomForkServer(tNetSession *u, uint16_t port, const tString &serverGuid, const tString &name);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
@@ -88,8 +88,8 @@ namespace alc {
 	};
 	
 	class tmCustomServerFound : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmCustomServerFound, tmNetMsg)
 	public:
-		tmCustomServerFound(tNetSession *u);
 		tmCustomServerFound(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, uint16_t port, const tString &ipStr, const tString &serverGuid, const tString &name);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
@@ -102,15 +102,15 @@ namespace alc {
 	};
 	
 	class tmCustomDirectedFwd : public tmGameMessageDirected {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmCustomDirectedFwd, tmGameMessageDirected)
 	public:
-		tmCustomDirectedFwd(tNetSession *u);
-		tmCustomDirectedFwd(tNetSession *u, tmGameMessageDirected &msg);
-		tmCustomDirectedFwd(tNetSession *u, uint32_t ki, tpObject *obj);
+		tmCustomDirectedFwd(tNetSession *u, tmGameMessageDirected &msg) : tmGameMessageDirected(NetMsgCustomDirectedFwd, u, msg) {}
+		tmCustomDirectedFwd(tNetSession *u, uint32_t ki, tpObject *obj) : tmGameMessageDirected(NetMsgCustomDirectedFwd, u, ki, obj) {}
 	};
 	
 	class tmCustomPlayerToCome : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmCustomPlayerToCome, tmNetMsg)
 	public:
-		tmCustomPlayerToCome(tNetSession *u);
 		tmCustomPlayerToCome(tNetSession *u, uint32_t ki);
 		virtual void store(tBBuf &t);
 	};

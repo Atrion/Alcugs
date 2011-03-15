@@ -32,8 +32,6 @@
 #include "netsessionmgr.h"
 #include "unetserverbase.h"
 
-#include <alcutil/alclog.h>
-
 namespace alc {
 	
 	class tvMessage;

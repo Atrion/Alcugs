@@ -55,8 +55,8 @@ namespace alc {
 	};
 	
 	class tmJoinReq : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmJoinReq, tmNetMsg)
 	public:
-		tmJoinReq(tNetSession *u);
 		virtual void store(tBBuf &t);
 		virtual tString additionalFields(tString dbg) const;
 		// format
@@ -73,8 +73,8 @@ namespace alc {
 	};
 	
 	class tmGameMessage : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmGameMessage, tmNetMsg)
 	public:
-		tmGameMessage(tNetSession *u);
 		tmGameMessage(tNetSession *u, const tmGameMessage &msg);
 		tmGameMessage(tNetSession *u, uint32_t ki, tpObject *obj);
 		virtual void store(tBBuf &t);
@@ -87,8 +87,8 @@ namespace alc {
 	};
 	
 	class tmGameMessageDirected : public tmGameMessage {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmGameMessageDirected, tmGameMessage)
 	public:
-		tmGameMessageDirected(tNetSession *u);
 		tmGameMessageDirected(tNetSession *u, const tmGameMessageDirected &msg);
 		tmGameMessageDirected(tNetSession *u, uint32_t ki, tpObject *obj);
 		virtual void store(tBBuf &t);
@@ -102,8 +102,8 @@ namespace alc {
 	};
 	
 	class tmLoadClone : public tmGameMessage {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmLoadClone, tmGameMessage)
 	public:
-		tmLoadClone(tNetSession *u);
 		tmLoadClone(tNetSession *u, const tmLoadClone &msg);
 		tmLoadClone(tNetSession *u, tpLoadCloneMsg *subMsg, bool isInitial);
 		virtual void store(tBBuf &t);
@@ -119,8 +119,8 @@ namespace alc {
 	};
 	
 	class tmPagingRoom : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmPagingRoom, tmNetMsg)
 	public:
-		tmPagingRoom(tNetSession *u) : tmNetMsg(u) {}
 		virtual void store(tBBuf &t);
 		virtual tString additionalFields(tString dbg) const;
 		// format
@@ -142,8 +142,8 @@ namespace alc {
 	};
 	
 	class tmPlayerPage : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmPlayerPage, tmNetMsg)
 	public:
-		tmPlayerPage(tNetSession *u);
 		virtual void store(tBBuf &t);
 		virtual tString additionalFields(tString dbg) const;
 		// format
@@ -152,8 +152,8 @@ namespace alc {
 	};
 	
 	class tmGameStateRequest : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmGameStateRequest, tmNetMsg)
 	public:
-		tmGameStateRequest(tNetSession *u);
 		virtual void store(tBBuf &t);
 		virtual tString additionalFields(tString dbg) const;
 		// format
@@ -171,14 +171,12 @@ namespace alc {
 	};
 	
 	class tmMembersListReq : public tmNetMsg {
-	public:
-		tmMembersListReq(tNetSession *u);
+		NETMSG_RECEIVE_CONSTRUCTORS(tmMembersListReq, tmNetMsg)
 	};
 	
 	class tmStreamedObject : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmStreamedObject, tmNetMsg)
 	public:
-		tmStreamedObject(tNetSession *u);
-		
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual tString additionalFields(tString dbg) const;
@@ -193,8 +191,8 @@ namespace alc {
 	};
 	
 	class tmTestAndSet : public tmStreamedObject {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmTestAndSet, tmStreamedObject)
 	public:
-		tmTestAndSet(tNetSession *u);
 		virtual void store(tBBuf &t);
 		virtual tString additionalFields(tString dbg) const;
 		// format
@@ -202,8 +200,8 @@ namespace alc {
 	};
 	
 	class tmSDLState : public tmStreamedObject {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmSDLState, tmStreamedObject)
 	public:
-		tmSDLState(tNetSession *u);
 		tmSDLState(tNetSession *u, const tUruObject &obj, tStreamable *content, bool isInitial);
 		
 		virtual void store(tBBuf &t);
@@ -218,22 +216,22 @@ namespace alc {
 	};
 	
 	class tmSDLStateBCast : public tmSDLState {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmSDLStateBCast, tmSDLState)
 	public:
-		tmSDLStateBCast(tNetSession *u);
 		tmSDLStateBCast(tNetSession *u, const tmSDLStateBCast & msg);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 	};
 	
 	class tmRelevanceRegions : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmRelevanceRegions, tmNetMsg)
 	public:
-		tmRelevanceRegions(tNetSession *u);
 		virtual void store(tBBuf &t);
 	};
 	
 	class tmSetTimeout : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmSetTimeout, tmNetMsg)
 	public:
-		tmSetTimeout(tNetSession *u);
 		virtual void store(tBBuf &t);
 		virtual tString additionalFields(tString dbg) const;
 		// format
@@ -261,8 +259,8 @@ namespace alc {
 	};
 	
 	class tmPython: public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmPython, tmNetMsg)
 	public:
-		tmPython(tNetSession *u);
 		virtual void store(tBBuf &t);
 	};
 

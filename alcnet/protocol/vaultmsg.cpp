@@ -37,9 +37,6 @@
 namespace alc {
 
 	//// tmVault
-	tmVault::tmVault(tNetSession *u) : tmNetMsg(u)
-	{ }
-	
 	tmVault::tmVault(tNetSession *u, uint32_t ki, uint32_t x, bool task, tStreamable *vaultMessage) : tmNetMsg(NetMsgVault, plNetAck | plNetKi, u)
 	{
 		message.put(*vaultMessage);
@@ -81,9 +78,6 @@ namespace alc {
 		memcpy(this->uid, uid, 16);
 	}
 	
-	tmCustomVaultAskPlayerList::tmCustomVaultAskPlayerList(tNetSession *u) : tmNetMsg(u)
-	{ }
-	
 	void tmCustomVaultAskPlayerList::store(tBBuf &t)
 	{
 		tmNetMsg::store(t);
@@ -91,9 +85,6 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultPlayerList
-	tmCustomVaultPlayerList::tmCustomVaultPlayerList(tNetSession *u) : tmNetMsg(u)
-	{ }
-	
 	tmCustomVaultPlayerList::tmCustomVaultPlayerList(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid)
 	: tmNetMsg(NetMsgCustomVaultPlayerList, plNetAck | plNetX | plNetVersion | plNetUID | plNetSid, u)
 	{
@@ -129,9 +120,6 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultPlayerStatus
-	tmCustomVaultPlayerStatus::tmCustomVaultPlayerStatus(tNetSession *u) : tmNetMsg(u)
-	{ }
-	
 	tmCustomVaultPlayerStatus::tmCustomVaultPlayerStatus(tNetSession *u, uint32_t ki, const tString &serverGuid, const tString &age, uint8_t state, uint32_t onlineTime)
 	 : tmNetMsg(NetMsgCustomVaultPlayerStatus, plNetAck | plNetVersion | plNetKi, u), age(age), serverGuid(serverGuid)
 	{
@@ -168,9 +156,6 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultCreatePlayer
-	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u) : tmNetMsg(u)
-	{ }
-	
 	tmCustomVaultCreatePlayer::tmCustomVaultCreatePlayer(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid,
 	  uint8_t accessLevel, const tString &login, const tString &avatar, const tString &gender, const tString &friendName, const tString &key)
 	 : tmNetMsg(NetMsgCustomVaultCreatePlayer, plNetX | plNetUID | plNetVersion | plNetAck | plNetSid, u), login(login),
@@ -218,9 +203,6 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultPlayerCreated
-	tmCustomVaultPlayerCreated::tmCustomVaultPlayerCreated(tNetSession *u) : tmNetMsg(u)
-	{ }
-	
 	tmCustomVaultPlayerCreated::tmCustomVaultPlayerCreated(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, const uint8_t *uid, uint8_t result)
 	 : tmNetMsg(NetMsgCustomVaultPlayerCreated, plNetKi | plNetX | plNetAck | plNetUID | plNetSid, u)
 	{
@@ -253,10 +235,6 @@ namespace alc {
 	}
 	
 	//// tmCustomVaultDeletePlayer
-	tmCustomVaultDeletePlayer::tmCustomVaultDeletePlayer(tNetSession *u)
-	 : tmNetMsg(NetMsgCustomVaultDeletePlayer, plNetX | plNetKi | plNetUID | plNetAck | plNetVersion, u)
-	{ }
-	
 	tmCustomVaultDeletePlayer::tmCustomVaultDeletePlayer(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, const uint8_t *uid, uint8_t accessLevel)
 	 : tmNetMsg(NetMsgCustomVaultDeletePlayer, plNetX | plNetKi | plNetUID | plNetAck | plNetVersion | plNetSid, u)
 	{
@@ -297,10 +275,6 @@ namespace alc {
 		memcpy(this->uid, uid, 16);
 	}
 	
-	tmCustomVaultCheckKi::tmCustomVaultCheckKi(tNetSession *u)
-	 : tmNetMsg(NetMsgCustomVaultCheckKi, plNetX | plNetKi | plNetUID | plNetAck | plNetVersion, u)
-	{ }
-
 	void tmCustomVaultCheckKi::store(tBBuf &t)
 	{
 		tmNetMsg::store(t);
@@ -322,9 +296,6 @@ namespace alc {
 		memcpy(this->uid, uid, 16);
 		this->status = status;
 	}
-	
-	tmCustomVaultKiChecked::tmCustomVaultKiChecked(tNetSession *u) : tmNetMsg(u)
-	{ }
 	
 	void tmCustomVaultKiChecked::store(tBBuf &t)
 	{
@@ -357,9 +328,6 @@ namespace alc {
 		this->x = x;
 		this->sid = sid;
 	}
-	
-	tmCustomVaultFindAge::tmCustomVaultFindAge(tNetSession *u) : tmNetMsg(u)
-	{ }
 	
 	void tmCustomVaultFindAge::store(tBBuf &t)
 	{

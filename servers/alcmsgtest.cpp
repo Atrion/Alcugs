@@ -57,10 +57,10 @@ void parameters_usage() {
 }
 
 class tmData :public tmNetMsg {
+	NETMSG_RECEIVE_CONSTRUCTORS(tmData, tmNetMsg)
 public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	tmData(tNetSession *u) : tmNetMsg(u) {}
 	tmData(tNetSession * u, bool compressed);
 	void setFirstFragment() {
 		ki |= 1;
@@ -223,9 +223,7 @@ int tUnetSimpleFileServer::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 	switch(msg->cmd) {
 		case NetMsgCustomTest:
 		{
-			tmData data(u);
-			msg->data.get(data);
-			log->log("<RCV> [%d] %s\n", msg->sn, data.str().c_str());
+			tmData data(u, msg);
 			tFBuf f1;
 			if (data.isFirstFragment())
 				f1.open("rcvmsg.raw","wb");

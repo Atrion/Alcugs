@@ -29,13 +29,24 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETSESSION_H_ID "$Id$"
 
-#include "protocol/protocol.h"
 #include "netmsgq.h"
+#include <alctypes.h>
 
 #include <netinet/in.h>
 
 namespace alc {
+	
+	// unet time types
+	typedef unsigned long int tNetTime; // timestamp used by netcore (don't want to carry those tTimes around there), microseconds. this may overflow, to use with caution!
+	typedef signed long int tNetTimeSigned; // must be the same as tNetTime, but signed - to be used only by the overdue check!
+	typedef unsigned int tNetTimeDiff; // time difference between two net times, microseconds
+	
 	class tUnet;
+	class tmBase;
+	class tUnetUruMsg;
+	class tLog;
+	class tUnetMsg;
+	class tUnetAck;
 
 class tNetSession {
 // methods
@@ -55,7 +66,6 @@ public:
 	void setRejectMessages(bool reject) { tWriteLock lock(prvDataMutex); rejectMessages = reject; }
 	
 	uint32_t getSid(void) { return sid; } //!< sid will never change, so this is thread-safe
-	
 	uint32_t getIp(void) const { return ip; }
 	uint16_t getPort(void) const { return port; }
 	size_t getMaxPacketSz(void) const { return maxPacketSz; }
@@ -65,6 +75,7 @@ public:
 	bool isTerminated(void) { tReadLock lock(prvDataMutex); return terminated; } //!< thread-safe
 	bool anythingToSend(void) { tMutexLock lock(sendMutex); return !ackq.empty() || !sndq.empty(); } //!< thread-safe
 	bool useUpdatedProtocol(void) { tReadLock lock(prvDataMutex); return upgradedProtocol; } //!< thread-safe
+	tLog *getLog(void);
 	
 	void incRefs() { __sync_add_and_fetch(&refs, 1); }
 	void decRefs();
@@ -119,9 +130,9 @@ public:
 	// synchronization
 	tReadWriteEx pubDataMutex; //!< protecting above public variables - take it when accessing from main thread, or writing from worker thread (reading from worker is safe always)
 private:
-	tUnet * net;
-	uint32_t ip; //!< network order
-	uint16_t port; //!< network order
+	tUnet *net;
+	const uint32_t ip; //!< network order
+	const uint16_t port; //!< network order
 	const uint32_t sid;
 	struct sockaddr_in sockaddr; //!< saves the address information of this peer
 	struct { //server message counters, protected by send mutex

@@ -148,9 +148,7 @@ int tUnetPing::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 	switch(msg->cmd) {
 		case NetMsgPing:
 		{
-			tmPing ping(u);
-			msg->data.get(ping);
-			log->log("<RCV> [%d] %s\n", msg->sn, ping.str().c_str());
+			tmPing ping(u, msg);
 			tMutexLock lock(mutex);
 			if(listen==0) {
 				if(*dstSession==u) {
