@@ -52,12 +52,13 @@ tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t s
 : net(net), ip(ip), port(port), sid(sid), validation(validation), maxPacketSz(1024), rcv(NULL), client(client), refs(1) {
 	DBG(5,"tNetSession()\n");
 	assert(alcGetSelfThreadId() == alcGetMain()->threadId());
-	// validation, session flags
-	this->cflags=0; //default flags
-	if(this->validation>=3) {
-		this->validation=0;
-		this->cflags |= UNetUpgraded;
+	// validation and upgraded protocol hack
+	if (validation >= 3) {
+		this->validation = 0;
+		upgradedProtocol = true;
 	}
+	else
+		upgradedProtocol = false;
 	// fill in default values
 	authenticated=false;
 	accessLevel=0;
@@ -144,7 +145,7 @@ tString tNetSession::str() {
 size_t tNetSession::getHeaderSize() {
 	size_t my=28;
 	if(validation>0) my+=4;
-	if(cflags & UNetUpgraded) my-=8;
+	if(upgradedProtocol) my-=8;
 	return my;
 }
 
@@ -190,70 +191,40 @@ tNetTimeDiff tNetSession::timeToSend(size_t psize) {
 /**
 	puts the message in the session's send queue
 */
-void tNetSession::send(tmBase &msg, tNetTimeDiff delay) {
+void tNetSession::send(const tmBase &msg, tNetTimeDiff delay) {
 	if (msg.getSession() != this)
 		throw txUnexpectedData(_WHERE("Message sent for wrong session!"));
+	uint8_t flags = msg.bhflags(), val = validation;
 #if _DBG_LEVEL_ < 1
-	if (!(msg.bhflags & UNetAckReply))
+	if (!(flags & UNetAckReply))
 #endif
 		net->log->log("<SND> %s\n",msg.str().c_str());
 	tMBuf buf;
 	size_t csize,psize,hsize,pkt_sz;
 	unsigned int n_pkts;
-	uint8_t flags=msg.bhflags, val, tf;
 	
-	if((cflags & UNetUpgraded)) msg.bhflags |= UNetExt; // tmNetAck has to know that it writes an extended packet
 	buf.put(msg);
 	psize=buf.size();
 	buf.rewind();
-	DBG(7,"Ok, I'm going to send a packet of %Zi bytes, for peer %i, with flags %02X\n",psize,sid,msg.bhflags);
+	DBG(7,"Ok, I'm going to send a packet of %Zi bytes, for peer %i, with flags %02X\n",psize,sid,flags);
 
-	//now update the other fields
-	tf=0x00;
 
 	if((flags & UNetNegotiation) && (flags & UNetAckReply))
 		throw txUnexpectedData(_WHERE("Flags UNetAckReply and UNetNegotiation cannot be set at the same time"));
 	if((flags & UNetAckReq) && (flags & UNetAckReply))
 		throw txUnexpectedData(_WHERE("Flags UNetAckReply and UNetAckReq cannot be set at the same time"));
-	if(flags & UNetAckReq) {
-		tf |= UNetAckReq; //ack flag on
-		DBG(7,"ack flag on\n");
-	}
-	if(flags & UNetNegotiation) {
-		tf |= UNetNegotiation; //negotiation packet
-		DBG(7,"It's a negotation packet\n");
-	}
-	if(flags & UNetAckReply) {
-		tf |= UNetAckReply; //ack packet
-		DBG(7,"It's an ack packet\n");
-	}
-
-	if(flags & UNetForce0) {
-		val=0x00;
-		DBG(7,"forced validation 0\n");
-	} else {
-		val=validation;
-		DBG(7,"validation level is %i\n",val);
-	}
-	
-	//check if we are using alcugs upgraded protocol
-	if((cflags & UNetUpgraded) || (flags & UNetExt)) {
-		val=0x00;
-		tf |= UNetExt;
-		DBG(7,"Sending an Alcugs Extended packet\n");
-	}
 
 	//On validation level 1 - ack and negotiations don't have checksum verification
 	/* I still don't understand wtf was thinking the network dessigner with doing a MD5 of each
 		packet?
 	*/
-	if((tf & (UNetNegotiation | UNetAckReply)) && (val==0x01)) { val=0x00; }
+	if((flags & (UNetNegotiation | UNetAckReply)) && (val==0x01)) { val=0x00; }
 	DBG(6,"Sending a packet of validation level %i\n",val);
 
 	//fragment the messages and put them in to the send qeue
 	
 	if(val==0x00) { hsize=28; } else { hsize=32; }
-	if(tf & UNetExt) { hsize-=8; }
+	if(upgradedProtocol) { hsize-=8; flags |= UNetExt; }
 
 	pkt_sz=maxPacketSz - hsize; //get maxium message size
 	n_pkts=(psize-1)/pkt_sz; //get number of fragments (0 means everything is sent in one packet, which must be the case if psize == pkt_sz)
@@ -272,11 +243,11 @@ void tNetSession::send(tmBase &msg, tNetTimeDiff delay) {
 			if(i==n_pkts) csize=psize - (i*pkt_sz);
 			else csize=pkt_sz;
 			
-			tUnetUruMsg * pmsg=new tUnetUruMsg(flags & UNetUrgent);
+			tUnetUruMsg * pmsg=new tUnetUruMsg(msg.urgent);
 			pmsg->val=val;
 			//pmsg.pn NOT in this layer (done in the msg sender, tUnet::rawsend)
 			//since urgent messages are put at the top of the sndq, the pn would be wrong if we did it differently
-			pmsg->tf=tf;
+			pmsg->bhflags=flags;
 			pmsg->frn=i;
 			pmsg->sn=serverMsg.sn;
 			pmsg->frt=n_pkts;
@@ -292,14 +263,14 @@ void tNetSession::send(tmBase &msg, tNetTimeDiff delay) {
 			pmsg->timestamp+=net->latency;
 			#endif
 			
-			if(tf & UNetAckReq) { // if this packet has the ack flag on, save it's number
+			if(flags & UNetAckReq) { // if this packet has the ack flag on, save it's number
 				serverMsg.ps=pmsg->sn;
 				serverMsg.pfr=pmsg->frn;
 			}
 			
 			// Urgent messages are added at the top of the send queue but BEHIND other urgent packets, the rest at the back
 			// this is important, or the first ack might be sent before the first nego!
-			if(flags & UNetUrgent) {
+			if(pmsg->urgent) {
 				// search for the first non-urgent message
 				for (tPointerList<tUnetUruMsg>::iterator it = sndq.begin(); it != sndq.end(); ++it) {
 					if (!(*it)->urgent) {
@@ -376,9 +347,11 @@ void tNetSession::rawsend(tUnetUruMsg *msg)
 		uint32_t val=alcUruChecksum(buf,msize,0,NULL);
 		memcpy(buf+2,&val,4);
 		buf[1]=0x01;
-	} else {
+	} else if(msg->val==0) {
 		buf[1]=0x00;
 	}
+	else
+		throw txUnexpectedData(_WHERE("Invalid validation level %d", msg->val));
 	buf[0]=0x03; //magic number
 	DBG(9,"Before the Sendto call...\n");
 	//
@@ -490,14 +463,14 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 	}
 	
 	//Protocol Upgrade
-	if(msg->tf & UNetExt) {
-		cflags |= UNetUpgraded;
+	if(msg->bhflags & UNetExt) {
+		tWriteLock lock(prvDataMutex);
+		upgradedProtocol = true;
 	}
 
-	if(msg->tf & UNetNegotiation) {
-		tmNetClientComm comm(this);
-		msg->data.rewind();
-		msg->data.get(comm);
+	// process negotation
+	if(msg->bhflags & UNetNegotiation) {
+		tmNetClientComm comm(this, msg);
 		net->log->log("<RCV> [%d] %s",msg->sn,comm.str().c_str());
 		if(renego_stamp==comm.timestamp) { // it's a duplicate, we already got this message
 		    // It is necessary to do the check this way since the usual check by SN would treat a nego on an existing connection as
@@ -563,7 +536,7 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 		}
 	}
 
-	if (msg->tf & UNetAckReply) {
+	if (msg->bhflags & UNetAckReply) {
 		// Process ack replies, no matter whether they are out of roder or not
 		if (isConnected()) {
 			// don't parse acks before we are connected (if we do, we might get SN confusion if connections don't start with a Nego)
@@ -588,14 +561,14 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 			net->log->log("%s WARN: Dropping re-sent old packet %d.%d (last ack: %d.%d, expected: %d.%d)\n", str().c_str(), msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
 		}
 		else if (ret > 0) {
-			if (!(msg->tf & UNetNegotiation) && !rejectMessages && rcvq.size() < net->receiveAhead)
+			if (!(msg->bhflags & UNetNegotiation) && !rejectMessages && rcvq.size() < net->receiveAhead)
 				ret = 2; // preserve for future use - but don't do this for negos (we can not get here for ack replies)
 			else
 				net->log->log("%s WARN: Dropped packet I can not yet parse: %d.%d (last ack: %d.%d, expected: %d.%d)\n", str().c_str(), msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
 		}
 
 		// if the packet requires it and the above check told us that'd be ok, send an ack
-		if (ret != 1 && (msg->tf & UNetAckReq)) {
+		if (ret != 1 && (msg->bhflags & UNetAckReq)) {
 			//ack reply
 			createAckReply(*msg);
 		}
@@ -608,7 +581,7 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 		// if it is ok to parse the packet, do that
 		else if (ret == 0) {
 			//flood control
-			if((msg->tf & UNetAckReq) && (msg->frn==0) && (net->flags & UNET_FLOODCTR)) {
+			if((msg->bhflags & UNetAckReq) && (msg->frn==0) && (net->flags & UNET_FLOODCTR)) {
 				if(net->passedTimeSince(flood_last_check) > net->flood_check_interval) {
 					flood_last_check=net->net_time;
 					flood_npkts=0;
@@ -638,11 +611,11 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 void tNetSession::acceptMessage(tUnetUruMsg *t)
 {
 	DBG(5, "Accepting %d.%d\n", t->sn, t->frn);
-	if (t->tf & UNetAckReq) {
+	if (t->bhflags & UNetAckReq) {
 		clientMsg.ps = t->sn;
 		clientMsg.pfr = t->frn;
 	}
-	if (t->tf & UNetNegotiation) {
+	if (t->bhflags & UNetNegotiation) {
 		delete t;
 		return; // These are already processed
 	}
@@ -768,16 +741,13 @@ void tNetSession::createAckReply(tUnetUruMsg &msg) {
 /** parse the ack and remove the messages it acks from the sndq */
 void tNetSession::ackCheck(tUnetUruMsg &t) {
 	uint32_t A1,A2,A3;
-	tmNetAck ackMsg(this);
-	if (t.tf & UNetExt) ackMsg.bhflags |= UNetExt; // tmNetAck has to know that it reads an extended packet
-	t.data.rewind();
-	t.data.get(ackMsg);
+	tmNetAck ackMsg(this, &t);
 #if _DBG_LEVEL_ >= 1
 	net->log->log("<RCV> [%d] %s\n",t.sn,ackMsg.str().c_str());
 #endif
 	tUnetAck *ack;
 	tMutexLock lock(sendMutex);
-	for (tmNetAck::tAckList::iterator it = ackMsg.ackq.begin(); it != ackMsg.ackq.end(); ++it) {
+	for (tmNetAck::tAckList::iterator it = ackMsg.acks.begin(); it != ackMsg.acks.end(); ++it) {
 		ack = *it;
 		A1 = ack->A;
 		A3 = ack->B;
@@ -787,7 +757,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 			tUnetUruMsg *msg = *jt;
 			A2=msg->csn;
 			
-			if(msg->tf & UNetAckReq && A1>=A2 && A2>A3) {
+			if(msg->bhflags & UNetAckReq && A1>=A2 && A2>A3) {
 				// this packet got acked, delete it
 				increaseCabal(); // a packet was properly delivered
 				if(msg->tries == 1) { // only update rtt for a first-time success
@@ -823,9 +793,8 @@ tNetTimeDiff tNetSession::ackSend() {
 			/* send one message per ack: we do not want to be too pwned if that apcket got lost. And if we have "holes" in the
 			 * sequence of packets (which is the only occasion in which there would be several acks in a message), the connection
 			 * is already problematic. */
-			tmNetAck ackMsg(this);
+			tmNetAck ackMsg(this, ack);
 			it = ackq.erase(it); // remove ack from queue, but do not delete it
-			ackMsg.ackq.push_back(ack); // and put it into message
 			send(ackMsg);
 		}
 	}
@@ -870,7 +839,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 			if(net->timeOverdue(curmsg->timestamp)) {
 				DBG(8, "%s ok to send a message\n",str().c_str());
 				//we can send the message
-				if(curmsg->tf & UNetAckReq) {
+				if(curmsg->bhflags & UNetAckReq) {
 					//send packet
 					
 					// check if we need to resend
@@ -892,16 +861,16 @@ tNetTimeDiff tNetSession::processSendQueues()
 						rawsend(curmsg);
 						curmsg->tries++;
 						curmsg->timestamp=net->net_time + msg_timeout;
-						if (authenticated) curmsg->timestamp += curmsg->tries*msg_timeout; // choose much higher timeout for client connections and icnrease it during re-sends - the clients netcore sometimes seems to be blocked long beyond any reasonable time
+						if (authenticated) curmsg->timestamp += curmsg->tries*msg_timeout/2; // choose much higher timeout for client connections and icnrease it during re-sends - the clients netcore sometimes seems to be blocked long beyond any reasonable time
 						if (timeout > msg_timeout) timeout = msg_timeout; // be sure to check this message on time
 						++it; // go on
 					}
 				} else {
 					//probabilistic drop (of voice, and other non-ack packets) - make sure we don't drop ack replies though!
-					if(curmsg->tf == 0x00 && net->passedTimeSince(curmsg->timestamp) > 4*msg_timeout) {
+					if(curmsg->bhflags == 0x00 && net->passedTimeSince(curmsg->timestamp) > 4*msg_timeout) {
 						//Unacceptable - drop it
 						net->err->log("%s Dropped a 0x00 packet due to unaceptable msg time %i,%i,%i\n",str().c_str(),msg_timeout,net->passedTimeSince(curmsg->timestamp),rtt);
-					} else if(curmsg->tf == 0x00 && (sndq.size() > static_cast<size_t>((minTH + random()%(maxTH-minTH)))) ) {
+					} else if(curmsg->bhflags == 0x00 && (sndq.size() > static_cast<size_t>((minTH + random()%(maxTH-minTH)))) ) {
 						net->err->log("%s Dropped a 0x00 packet due to a big queue (%d messages)\n", str().c_str(), sndq.size());
 					}
 					//end prob drop

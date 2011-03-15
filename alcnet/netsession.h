@@ -37,9 +37,6 @@
 namespace alc {
 	class tUnet;
 
-#define UNetUpgraded 0x01
-//#define UNetNoConn   0x02
-
 class tNetSession {
 // methods
 public:
@@ -50,7 +47,7 @@ public:
 	size_t getMaxDataSize() { return(getMaxFragmentSize() * 256); }
 	size_t getHeaderSize();
 	time_t onlineTime(void) { return alcGetTime()-created_stamp.seconds; }
-	void send(tmBase &msg, tNetTimeDiff delay = 0); //!< delay is in msecs - may be called in worker thread
+	void send(const tmBase &msg, tNetTimeDiff delay = 0); //!< delay is in msecs - may be called in worker thread
 	void terminating(); //!< timeout in milliseconds
 	void setAuthData(uint8_t accessLevel, const tString &passwd);
 	
@@ -67,6 +64,7 @@ public:
 	bool isClient(void) { tReadLock lock(prvDataMutex); return client; } //!< thread-safe
 	bool isTerminated(void) { tReadLock lock(prvDataMutex); return terminated; } //!< thread-safe
 	bool anythingToSend(void) { tMutexLock lock(sendMutex); return !ackq.empty() || !sndq.empty(); } //!< thread-safe
+	bool useUpdatedProtocol(void) { tReadLock lock(prvDataMutex); return upgradedProtocol; } //!< thread-safe
 	
 	void incRefs() { __sync_add_and_fetch(&refs, 1); }
 	void decRefs();
@@ -137,7 +135,7 @@ private:
 		uint32_t ps;
 	} clientMsg;
 	uint8_t validation; //!< store the validation level (0,1,2)
-	uint8_t cflags; //!< session flags
+	bool upgradedProtocol; //!< use the alcugs upgraded protocol; protected by prvDataMutex
 	const uint16_t maxPacketSz; //!< maxium size of the packets. Must be 1024 (always)
 	tUnetMsg *rcv; //!< The place to assemble a fragmented message
 

@@ -37,14 +37,14 @@ namespace alc {
 	//// tmRequestMyVaultPlayerList
 	void tmRequestMyVaultPlayerList::store(tBBuf &t)
 	{
-		tmMsgBase::store(t);
+		tmNetMsg::store(t);
 		// the vault manager sends these without X and KI
 		if (hasFlags(plNetKi) && ki != 0) throw txProtocolError(_WHERE("KI must be 0 in NetMsgRequestMyVaultPlayerList but is %d", ki));
 	}
 	
 	//// tmVaultPlayerList
 	tmVaultPlayerList::tmVaultPlayerList(tNetSession *u, uint32_t x, uint16_t numberPlayers, tMBuf players, const tString &url)
-	: tmMsgBase(NetMsgVaultPlayerList, plNetAck | plNetX | plNetKi, u), url(url)
+	: tmNetMsg(NetMsgVaultPlayerList, plNetAck | plNetX | plNetKi, u), url(url)
 	{
 		this->x = x;
 		ki = 0; // we're not yet logged in, so no KI can be set
@@ -55,7 +55,7 @@ namespace alc {
 	
 	void tmVaultPlayerList::stream(tBBuf &t) const
 	{
-		tmMsgBase::stream(t);
+		tmNetMsg::stream(t);
 		t.put16(numberPlayers);
 		t.put(players);
 		t.put(url);
@@ -69,12 +69,12 @@ namespace alc {
 	}
 	
 	//// tmCreatePlayer
-	tmCreatePlayer::tmCreatePlayer(tNetSession *u) : tmMsgBase(u) // it's not capable of sending
+	tmCreatePlayer::tmCreatePlayer(tNetSession *u) : tmNetMsg(u) // it's not capable of sending
 	{ }
 	
 	void tmCreatePlayer::store(tBBuf &t)
 	{
-		tmMsgBase::store(t);
+		tmNetMsg::store(t);
 		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
 		// a KI value might be set here, but it should be ignored
 		t.get(avatar);
@@ -96,7 +96,7 @@ namespace alc {
 	
 	//// tmPlayerCreated
 	tmPlayerCreated::tmPlayerCreated(tNetSession *u, uint32_t ki, uint32_t x, uint8_t result)
-	 : tmMsgBase(NetMsgPlayerCreated, plNetX | plNetKi | plNetAck, u)
+	 : tmNetMsg(NetMsgPlayerCreated, plNetX | plNetKi | plNetAck, u)
 	{
 		this->x = x;
 		this->ki = ki; // the KI of the newly created player, not the one set for the session
@@ -105,7 +105,7 @@ namespace alc {
 	
 	void tmPlayerCreated::stream(tBBuf &t) const
 	{
-		tmMsgBase::stream(t);
+		tmNetMsg::stream(t);
 		t.put8(result);
 	}
 	
@@ -117,12 +117,12 @@ namespace alc {
 	}
 	
 	//// tmDeletePlayer
-	tmDeletePlayer::tmDeletePlayer(tNetSession *u) : tmMsgBase(u) // it's not capable of sending
+	tmDeletePlayer::tmDeletePlayer(tNetSession *u) : tmNetMsg(u) // it's not capable of sending
 	{ }
 	
 	void tmDeletePlayer::store(tBBuf &t)
 	{
-		tmMsgBase::store(t);
+		tmNetMsg::store(t);
 		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
 		uint16_t unk = t.get16();
 		if (unk != 0) {

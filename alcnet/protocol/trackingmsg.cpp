@@ -39,11 +39,11 @@
 namespace alc {
 
 	//// tmCustomSetGuid
-	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u) : tmMsgBase(u)
+	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u) : tmNetMsg(u)
 	{ }
 	
 	tmCustomSetGuid::tmCustomSetGuid(tNetSession *u, const tString &serverGuid, const tString &age, const tString &externalIp, uint16_t spawnStart, uint16_t spawnStop)
-	 : tmMsgBase(NetMsgCustomSetGuid, plNetAck | plNetVersion, u), serverGuid(serverGuid), age(age), externalIp(externalIp)
+	 : tmNetMsg(NetMsgCustomSetGuid, plNetAck | plNetVersion, u), serverGuid(serverGuid), age(age), externalIp(externalIp)
 	{
 		this->spawnStart = spawnStart;
 		this->spawnStop = spawnStop;
@@ -51,7 +51,7 @@ namespace alc {
 	
 	void tmCustomSetGuid::store(tBBuf &t)
 	{
-		tmMsgBase::store(t);
+		tmNetMsg::store(t);
 		t.get(serverGuid);
 		if (serverGuid.size() != 16) throw txProtocolError(_WHERE("NetMsgCustomSetGuid.serverGuid must be 16 characters long"));
 		t.get(age);
@@ -62,7 +62,7 @@ namespace alc {
 	
 	void tmCustomSetGuid::stream(tBBuf &t) const
 	{
-		tmMsgBase::stream(t);
+		tmNetMsg::stream(t);
 		t.put(serverGuid);
 		t.put(age);
 		t.put(externalIp);
@@ -79,11 +79,11 @@ namespace alc {
 	}
 	
 	//// tmCustomPlayerStatus
-	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *u) : tmMsgBase(u)
+	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *u) : tmNetMsg(u)
 	{ }
 	
 	tmCustomPlayerStatus::tmCustomPlayerStatus(tNetSession *u, tNetSession *playerSession, uint8_t playerFlag, uint8_t playerStatus)
-	 : tmMsgBase(NetMsgCustomPlayerStatus, plNetAck | plNetVersion | plNetKi | plNetUID | plNetSid, u), account(playerSession->name), avatar(playerSession->avatar)
+	 : tmNetMsg(NetMsgCustomPlayerStatus, plNetAck | plNetVersion | plNetKi | plNetUID | plNetSid, u), account(playerSession->name), avatar(playerSession->avatar)
 	{
 		this->sid = playerSession->getSid();
 		this->ki = playerSession->ki;
@@ -95,7 +95,7 @@ namespace alc {
 	
 	void tmCustomPlayerStatus::store(tBBuf &t)
 	{
-		tmMsgBase::store(t);
+		tmNetMsg::store(t);
 		if (!hasFlags(plNetKi | plNetUID | plNetSid)) throw txProtocolError(_WHERE("KI, UID or Sid flag missing"));
 		
 		t.get(account);
@@ -106,7 +106,7 @@ namespace alc {
 	
 	void tmCustomPlayerStatus::stream(tBBuf &t) const
 	{
-		tmMsgBase::stream(t);
+		tmNetMsg::stream(t);
 		t.put(account);
 		t.put(avatar);
 		t.put8(playerFlag);
@@ -121,11 +121,11 @@ namespace alc {
 	}
 	
 	//// tmCustomFindServer
-	tmCustomFindServer::tmCustomFindServer(tNetSession *u) : tmMsgBase(u)
+	tmCustomFindServer::tmCustomFindServer(tNetSession *u) : tmNetMsg(u)
 	{ }
 	
 	tmCustomFindServer::tmCustomFindServer(tNetSession *u, const tmCustomVaultFindAge &findAge, const tString &serverGuid, const tString &age)
-	 : tmMsgBase(NetMsgCustomFindServer, plNetX | plNetKi | plNetAck | plNetSid, u), serverGuid(serverGuid), age(age)
+	 : tmNetMsg(NetMsgCustomFindServer, plNetX | plNetKi | plNetAck | plNetSid, u), serverGuid(serverGuid), age(age)
 	{
 		this->ki = findAge.ki;
 		this->x = findAge.x;
@@ -133,7 +133,7 @@ namespace alc {
 	}
 	
 	tmCustomFindServer::tmCustomFindServer(tNetSession *u, const tmCustomFindServer &findServer)
-	 : tmMsgBase(NetMsgCustomFindServer, plNetX | plNetKi | plNetAck | plNetSid, u), serverGuid(findServer.serverGuid), age(findServer.age)
+	 : tmNetMsg(NetMsgCustomFindServer, plNetX | plNetKi | plNetAck | plNetSid, u), serverGuid(findServer.serverGuid), age(findServer.age)
 	{
 		this->ki = findServer.ki;
 		this->x = findServer.x;
@@ -142,7 +142,7 @@ namespace alc {
 	
 	void tmCustomFindServer::store(tBBuf &t)
 	{
-		tmMsgBase::store(t);
+		tmNetMsg::store(t);
 		if (!hasFlags(plNetX | plNetKi | plNetSid)) throw txProtocolError(_WHERE("X, KI or Sid flag missing"));
 		
 		t.get(serverGuid);
@@ -152,7 +152,7 @@ namespace alc {
 	
 	void tmCustomFindServer::stream(tBBuf &t) const
 	{
-		tmMsgBase::stream(t);
+		tmNetMsg::stream(t);
 		t.put(serverGuid);
 		t.put(age);
 	}
@@ -165,11 +165,11 @@ namespace alc {
 	}
 	
 	//// tmCustomForkServer
-	tmCustomForkServer::tmCustomForkServer(tNetSession *u) : tmMsgBase(u)
+	tmCustomForkServer::tmCustomForkServer(tNetSession *u) : tmNetMsg(u)
 	{ }
 	
 	tmCustomForkServer::tmCustomForkServer(tNetSession *u, uint16_t port, const tString &serverGuid, const tString &name)
-	: tmMsgBase(NetMsgCustomForkServer, plNetAck | plNetVersion, u), serverGuid(serverGuid), age(name)
+	: tmNetMsg(NetMsgCustomForkServer, plNetAck | plNetVersion, u), serverGuid(serverGuid), age(name)
 	{
 		this->x = 0;
 		this->ki = 0;
@@ -179,7 +179,7 @@ namespace alc {
 	
 	void tmCustomForkServer::store(tBBuf &t)
 	{
-		tmMsgBase::store(t);
+		tmNetMsg::store(t);
 		forkPort = t.get16();
 		t.get(serverGuid);
 		if (serverGuid.size() != 16) throw txProtocolError(_WHERE("NetMsgCustomForkServer.serverGuid must be 16 characters long"));
@@ -188,7 +188,7 @@ namespace alc {
 	
 	void tmCustomForkServer::stream(tBBuf &t) const
 	{
-		tmMsgBase::stream(t);
+		tmNetMsg::stream(t);
 		t.put16(forkPort);
 		t.put(serverGuid);
 		t.put(age);
@@ -202,11 +202,11 @@ namespace alc {
 	}
 	
 	//// tmCustomServerFound
-	tmCustomServerFound::tmCustomServerFound(tNetSession *u) : tmMsgBase(u)
+	tmCustomServerFound::tmCustomServerFound(tNetSession *u) : tmNetMsg(u)
 	{ }
 	
 	tmCustomServerFound::tmCustomServerFound(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, uint16_t port, const tString &ipStr, const tString &serverGuid, const tString &name)
-	: tmMsgBase(NetMsgCustomServerFound, plNetAck | plNetX | plNetKi | plNetVersion | plNetSid, u), ipStr(ipStr), serverGuid(serverGuid), age(name)
+	: tmNetMsg(NetMsgCustomServerFound, plNetAck | plNetX | plNetKi | plNetVersion | plNetSid, u), ipStr(ipStr), serverGuid(serverGuid), age(name)
 	{
 		this->x = x;
 		this->ki = ki;
@@ -216,7 +216,7 @@ namespace alc {
 	
 	void tmCustomServerFound::store(tBBuf &t)
 	{
-		tmMsgBase::store(t);
+		tmNetMsg::store(t);
 		if (!hasFlags(plNetSid)) throw txProtocolError(_WHERE("Sid flag missing"));
 		
 		serverPort = t.get16();
@@ -228,7 +228,7 @@ namespace alc {
 	
 	void tmCustomServerFound::stream(tBBuf &t) const
 	{
-		tmMsgBase::stream(t);
+		tmNetMsg::stream(t);
 		t.put16(serverPort);
 		t.put(ipStr);
 		t.put(serverGuid);
@@ -255,18 +255,18 @@ namespace alc {
 	{ }
 	
 	//// tmCustomPlayerToCome
-	tmCustomPlayerToCome::tmCustomPlayerToCome(tNetSession *u) : tmMsgBase(u)
+	tmCustomPlayerToCome::tmCustomPlayerToCome(tNetSession *u) : tmNetMsg(u)
 	{ }
 	
 	tmCustomPlayerToCome::tmCustomPlayerToCome(tNetSession *u, uint32_t ki)
-	 : tmMsgBase(NetMsgCustomPlayerToCome, plNetAck | plNetVersion | plNetKi, u)
+	 : tmNetMsg(NetMsgCustomPlayerToCome, plNetAck | plNetVersion | plNetKi, u)
 	{
 		this->ki = ki;
 	}
 	
 	void tmCustomPlayerToCome::store(tBBuf &t)
 	{
-		tmMsgBase::store(t);
+		tmNetMsg::store(t);
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
 	}
 

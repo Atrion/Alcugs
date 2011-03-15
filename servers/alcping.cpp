@@ -168,7 +168,7 @@ int tUnetPing::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 				printf("Ping from %s:%i x=%i dest=%i %s time=%0.3f ms .... pong....\n",
 					alcGetStrIp(u->getIp()).c_str(),ntohs(u->getPort()),ping.x,ping.destination,
 					alcUnetGetDestination(ping.destination),ping.mtime*1000);
-				if(urgent) ping.setUrgent();
+				ping.urgent = urgent;
 				send(ping);
 			}
 			return 1;
@@ -197,7 +197,7 @@ void tUnetPing::onIdle() {
 		if(count<num || num==0 || count==0) {
 			//snd ping message
 			tmPing ping(*dstSession, destination);
-			if(urgent) ping.setUrgent();
+			ping.urgent = urgent;
 
 			count++;
 			for(int i=0; i<flood; i++) {

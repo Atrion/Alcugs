@@ -81,12 +81,12 @@ namespace alc {
 	}
 
 	//// tmJoinReq
-	tmJoinReq::tmJoinReq(tNetSession *u) : tmMsgBase(u)
+	tmJoinReq::tmJoinReq(tNetSession *u) : tmNetMsg(u)
 	{ }
 	
 	void tmJoinReq::store(tBBuf &t)
 	{
-		tmMsgBase::store(t);
+		tmNetMsg::store(t);
 		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
 		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		
@@ -110,7 +110,7 @@ namespace alc {
 	
 	//// tmJoinAck
 	tmJoinAck::tmJoinAck(tNetSession *u, uint32_t x, const tStreamable *sdl)
-	 : tmMsgBase(NetMsgJoinAck, plNetAck | plNetKi | plNetX, u)
+	 : tmNetMsg(NetMsgJoinAck, plNetAck | plNetKi | plNetX, u)
 	{
 		this->x = x;
 		ki = u->ki;
@@ -120,7 +120,7 @@ namespace alc {
 	
 	void tmJoinAck::stream(tBBuf &t) const
 	{
-		tmMsgBase::stream(t);
+		tmNetMsg::stream(t);
 		
 		t.put16(0); // unknown ("joinOrder" and "ExpLevel")
 		t.put(sdlStream);
@@ -128,36 +128,36 @@ namespace alc {
 	
 	//// tmGameMessage
 	// public constructors
-	tmGameMessage::tmGameMessage(tNetSession *u) : tmMsgBase(u)
+	tmGameMessage::tmGameMessage(tNetSession *u) : tmNetMsg(u)
 	{ }
 	
 	tmGameMessage::tmGameMessage(tNetSession *u, const tmGameMessage &msg)
-	 : tmMsgBase(NetMsgGameMessage, msg.flags, u), msgStream(msg.msgStream)
+	 : tmNetMsg(NetMsgGameMessage, msg.flags, u), msgStream(msg.msgStream)
 	{
 		ki = msg.ki;
 		msgStream.compress();
 	}
 	
 	tmGameMessage::tmGameMessage(tNetSession *u, uint32_t ki, tpObject *obj)
-	 : tmMsgBase(NetMsgGameMessage, plNetAck | plNetKi, u), msgStream(obj) // this already compresses the stream
+	 : tmNetMsg(NetMsgGameMessage, plNetAck | plNetKi, u), msgStream(obj) // this already compresses the stream
 	{ this->ki = ki; }
 	
 	// constructors for sub-classes
 	tmGameMessage::tmGameMessage(uint16_t cmd, tNetSession *u, const tmGameMessage &msg)
-	 : tmMsgBase(cmd, msg.flags, u), msgStream(msg.msgStream)
+	 : tmNetMsg(cmd, msg.flags, u), msgStream(msg.msgStream)
 	{
 		ki = msg.ki;
 		msgStream.compress();
 	}
 	
 	tmGameMessage::tmGameMessage(uint16_t cmd, tNetSession *u, uint32_t ki, tpObject *obj)
-	 : tmMsgBase(cmd, plNetAck | plNetKi, u), msgStream(obj) // this already compresses the stream
+	 : tmNetMsg(cmd, plNetAck | plNetKi, u), msgStream(obj) // this already compresses the stream
 	{ this->ki = ki; }
 	
 	// methods
 	void tmGameMessage::store(tBBuf &t)
 	{
-		tmMsgBase::store(t);
+		tmNetMsg::store(t);
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
 		if (cmd != NetMsgCustomDirectedFwd && (ki == 0 || ki != u->ki)) // don't kick connection game <-> tracking
 			throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
@@ -171,7 +171,7 @@ namespace alc {
 	
 	void tmGameMessage::stream(tBBuf &t) const
 	{
-		tmMsgBase::stream(t);
+		tmNetMsg::stream(t);
 		t.put(msgStream);
 		t.put8(0); // hasTime
 	}
@@ -303,7 +303,7 @@ namespace alc {
 	//// tmPagingRoom
 	void tmPagingRoom::store(tBBuf &t)
 	{
-		tmMsgBase::store(t);
+		tmNetMsg::store(t);
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
 		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		
@@ -328,7 +328,7 @@ namespace alc {
 	}
 	
 	//// tmGroupOwner
-	tmGroupOwner::tmGroupOwner(tNetSession *u, tPageInfo *page, bool isOwner) : tmMsgBase(NetMsgGroupOwner, plNetAck, u)
+	tmGroupOwner::tmGroupOwner(tNetSession *u, tPageInfo *page, bool isOwner) : tmNetMsg(NetMsgGroupOwner, plNetAck, u)
 	{
 		this->pageId = page->pageId;
 		this->pageType = page->pageType;
@@ -337,7 +337,7 @@ namespace alc {
 	
 	void tmGroupOwner::stream(tBBuf &t) const
 	{
-		tmMsgBase::stream(t);
+		tmNetMsg::stream(t);
 		t.put32(1); // number of sent blocks (Alcugs does not support sending several of them at once)
 		// begin of the plNetGroupId
 		t.put32(pageId);
@@ -356,12 +356,12 @@ namespace alc {
 	}
 	
 	//// tmPlayerPage
-	tmPlayerPage::tmPlayerPage(tNetSession *u) : tmMsgBase(u)
+	tmPlayerPage::tmPlayerPage(tNetSession *u) : tmNetMsg(u)
 	{ }
 	
 	void tmPlayerPage::store(tBBuf &t)
 	{
-		tmMsgBase::store(t);
+		tmNetMsg::store(t);
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
 		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		
@@ -381,12 +381,12 @@ namespace alc {
 	}
 	
 	//// tmGameStateRequest
-	tmGameStateRequest::tmGameStateRequest(tNetSession *u) : tmMsgBase(u)
+	tmGameStateRequest::tmGameStateRequest(tNetSession *u) : tmNetMsg(u)
 	{ }
 	
 	void tmGameStateRequest::store(tBBuf &t)
 	{
-		tmMsgBase::store(t);
+		tmNetMsg::store(t);
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
 		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		
@@ -414,14 +414,14 @@ namespace alc {
 	}
 	
 	//// tmInitialAgeStateSent
-	tmInitialAgeStateSent::tmInitialAgeStateSent(tNetSession *u, uint32_t num) : tmMsgBase(NetMsgInitialAgeStateSent, plNetAck, u)
+	tmInitialAgeStateSent::tmInitialAgeStateSent(tNetSession *u, uint32_t num) : tmNetMsg(NetMsgInitialAgeStateSent, plNetAck, u)
 	{
 		this->num = num;
 	}
 	
 	void tmInitialAgeStateSent::stream(tBBuf &t) const
 	{
-		tmMsgBase::stream(t);
+		tmNetMsg::stream(t);
 		t.put32(num);
 	}
 	
@@ -433,21 +433,21 @@ namespace alc {
 	}
 	
 	//// tmMembersListReq
-	tmMembersListReq::tmMembersListReq(tNetSession *u) : tmMsgBase(u)
+	tmMembersListReq::tmMembersListReq(tNetSession *u) : tmNetMsg(u)
 	{ }
 	
 	//// tmStreamedObject
-	tmStreamedObject::tmStreamedObject(tNetSession *u) : tmMsgBase(u)
+	tmStreamedObject::tmStreamedObject(tNetSession *u) : tmNetMsg(u)
 	{ }
 	
 	tmStreamedObject::tmStreamedObject(uint16_t cmd, tNetSession *u, const tmStreamedObject &msg)
-	: tmMsgBase(cmd, msg.flags, u), obj(msg.obj), content(msg.content)
+	: tmNetMsg(cmd, msg.flags, u), obj(msg.obj), content(msg.content)
 	{
 		content.compress();
 	}
 	
 	tmStreamedObject::tmStreamedObject(uint16_t cmd, tNetSession *u, const tUruObject &obj, tStreamable *content)
-	: tmMsgBase(cmd, plNetAck, u), obj(obj)
+	: tmNetMsg(cmd, plNetAck, u), obj(obj)
 	{
 		this->content.put(*content);
 		this->content.compress();
@@ -455,7 +455,7 @@ namespace alc {
 	
 	void tmStreamedObject::store(tBBuf &t)
 	{
-		tmMsgBase::store(t);
+		tmNetMsg::store(t);
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
 		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		
@@ -465,7 +465,7 @@ namespace alc {
 	
 	void tmStreamedObject::stream(tBBuf &t) const
 	{
-		tmMsgBase::stream(t);
+		tmNetMsg::stream(t);
 		t.put(obj);
 		t.put(content);
 	}
@@ -600,12 +600,12 @@ namespace alc {
 	}
 	
 	//// tmRelevanceRegions
-	tmRelevanceRegions::tmRelevanceRegions(tNetSession *u) : tmMsgBase(u)
+	tmRelevanceRegions::tmRelevanceRegions(tNetSession *u) : tmNetMsg(u)
 	{ }
 	
 	void tmRelevanceRegions::store(tBBuf &t)
 	{
-		tmMsgBase::store(t);
+		tmNetMsg::store(t);
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
 		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		
@@ -614,12 +614,12 @@ namespace alc {
 	}
 	
 	//// tmSetTimeout
-	tmSetTimeout::tmSetTimeout(tNetSession *u) : tmMsgBase(u)
+	tmSetTimeout::tmSetTimeout(tNetSession *u) : tmNetMsg(u)
 	{ }
 	
 	void tmSetTimeout::store(tBBuf &t)
 	{
-		tmMsgBase::store(t);
+		tmNetMsg::store(t);
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
 		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
 		
@@ -634,12 +634,12 @@ namespace alc {
 	}
 	
 	//// tmMembersList
-	tmMembersList::tmMembersList(tNetSession *u) : tmMsgBase(NetMsgMembersList, plNetAck, u)
+	tmMembersList::tmMembersList(tNetSession *u) : tmNetMsg(NetMsgMembersList, plNetAck, u)
 	{ }
 	
 	void tmMembersList::stream(tBBuf &t) const
 	{
-		tmMsgBase::stream(t);
+		tmNetMsg::stream(t);
 		t.put16(members.size());
 		for (tMemberList::const_iterator i = members.begin(); i != members.end(); ++i)
 			t.put(*i);
@@ -654,14 +654,14 @@ namespace alc {
 	
 	//// tmMemberUpdate
 	tmMemberUpdate::tmMemberUpdate(tNetSession *u, const tMemberInfo &info, bool isJoined)
-	 : tmMsgBase(NetMsgMemberUpdate, plNetAck, u), info(info)
+	 : tmNetMsg(NetMsgMemberUpdate, plNetAck, u), info(info)
 	{
 		this->isJoined = isJoined;
 	}
 	
 	void tmMemberUpdate::stream(tBBuf &t) const
 	{
-		tmMsgBase::stream(t);
+		tmNetMsg::stream(t);
 		t.put(info);
 		t.put8(isJoined);
 	}
@@ -675,11 +675,11 @@ namespace alc {
 	}
 	
 	//// tmPython
-	tmPython::tmPython(tNetSession *u) : tmMsgBase(u) {}
+	tmPython::tmPython(tNetSession *u) : tmNetMsg(u) {}
 	
 	void tmPython::store(tBBuf &t)
 	{
-		tmMsgBase::store(t);
+		tmNetMsg::store(t);
 		t.end(); // just ignore everything
 	}
 

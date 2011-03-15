@@ -36,11 +36,11 @@
 namespace alc {
 
 /** TERMINATED message */
-class tmTerminated :public tmMsgBase {
+class tmTerminated :public tmNetMsg {
 public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	tmTerminated(tNetSession *u) : tmMsgBase(u) {}
+	tmTerminated(tNetSession *u) : tmNetMsg(u) {}
 	tmTerminated(tNetSession * u,uint8_t reason);
 	virtual tString additionalFields(tString dbg) const;
 	//format
@@ -48,11 +48,11 @@ public:
 };
 
 /** Leave */
-class tmLeave :public tmMsgBase {
+class tmLeave :public tmNetMsg {
 public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	tmLeave(tNetSession *u) : tmMsgBase(u) {}
+	tmLeave(tNetSession *u) : tmNetMsg(u) {}
 	tmLeave(tNetSession * u,uint8_t reason);
 	virtual tString additionalFields(tString dbg) const;
 	//format
@@ -60,22 +60,22 @@ public:
 };
 
 /** Alive */
-class tmAlive :public tmMsgBase {
+class tmAlive :public tmNetMsg {
 public:
-	tmAlive(tNetSession *u) : tmMsgBase(u) {}
+	tmAlive(tNetSession *u) : tmNetMsg(u) {}
 	tmAlive(tNetSession * u,uint32_t ki)
-	: tmMsgBase(NetMsgAlive, plNetKi | plNetAck | plNetTimestamp, u)
+	: tmNetMsg(NetMsgAlive, plNetKi | plNetAck | plNetTimestamp, u)
 	{
 		this->ki=ki;
 	}
 };
 
 /** Player terminated */
-class tmPlayerTerminated :public tmMsgBase {
+class tmPlayerTerminated :public tmNetMsg {
 public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	tmPlayerTerminated(tNetSession* u) : tmMsgBase(u) {}
+	tmPlayerTerminated(tNetSession* u) : tmNetMsg(u) {}
 	tmPlayerTerminated(tNetSession * u,uint32_t ki,uint8_t reason);
 	virtual tString additionalFields(tString dbg) const;
 	//format
@@ -83,11 +83,11 @@ public:
 };
 
 /** Ping */
-class tmPing :public tmMsgBase {
+class tmPing :public tmNetMsg {
 public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	tmPing(tNetSession *u) : tmMsgBase(u) {}
+	tmPing(tNetSession *u) : tmNetMsg(u) {}
 	tmPing(tNetSession * u, uint8_t dst);
 	tmPing(tNetSession *u, tmPing &ping);
 	virtual tString additionalFields(tString dbg) const;

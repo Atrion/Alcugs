@@ -54,7 +54,7 @@ namespace alc {
 		tUruObject obj;
 	};
 	
-	class tmJoinReq : public tmMsgBase {
+	class tmJoinReq : public tmNetMsg {
 	public:
 		tmJoinReq(tNetSession *u);
 		virtual void store(tBBuf &t);
@@ -64,7 +64,7 @@ namespace alc {
 		uint16_t port; //network order
 	};
 	
-	class tmJoinAck : public tmMsgBase {
+	class tmJoinAck : public tmNetMsg {
 	public:
 		tmJoinAck(tNetSession *u, uint32_t x, const tStreamable *sdl);
 		virtual void stream(tBBuf &t) const;
@@ -72,7 +72,7 @@ namespace alc {
 		tStreamedObject sdlStream;
 	};
 	
-	class tmGameMessage : public tmMsgBase {
+	class tmGameMessage : public tmNetMsg {
 	public:
 		tmGameMessage(tNetSession *u);
 		tmGameMessage(tNetSession *u, const tmGameMessage &msg);
@@ -118,9 +118,9 @@ namespace alc {
 		bool isInitial;
 	};
 	
-	class tmPagingRoom : public tmMsgBase {
+	class tmPagingRoom : public tmNetMsg {
 	public:
-		tmPagingRoom(tNetSession *u) : tmMsgBase(u) {}
+		tmPagingRoom(tNetSession *u) : tmNetMsg(u) {}
 		virtual void store(tBBuf &t);
 		virtual tString additionalFields(tString dbg) const;
 		// format
@@ -130,7 +130,7 @@ namespace alc {
 		bool isPageOut;
 	};
 	
-	class tmGroupOwner : public tmMsgBase {
+	class tmGroupOwner : public tmNetMsg {
 	public:
 		tmGroupOwner(tNetSession *u, tPageInfo *page, bool isOwner);
 		virtual void stream(tBBuf &t) const;
@@ -141,7 +141,7 @@ namespace alc {
 		bool isOwner;
 	};
 	
-	class tmPlayerPage : public tmMsgBase {
+	class tmPlayerPage : public tmNetMsg {
 	public:
 		tmPlayerPage(tNetSession *u);
 		virtual void store(tBBuf &t);
@@ -151,7 +151,7 @@ namespace alc {
 		tUruObject obj;
 	};
 	
-	class tmGameStateRequest : public tmMsgBase {
+	class tmGameStateRequest : public tmNetMsg {
 	public:
 		tmGameStateRequest(tNetSession *u);
 		virtual void store(tBBuf &t);
@@ -161,7 +161,7 @@ namespace alc {
 		tPageList pages;
 	};
 	
-	class tmInitialAgeStateSent : public tmMsgBase {
+	class tmInitialAgeStateSent : public tmNetMsg {
 	public:
 		tmInitialAgeStateSent(tNetSession *u, uint32_t num);
 		virtual void stream(tBBuf &t) const;
@@ -170,12 +170,12 @@ namespace alc {
 		uint32_t num;
 	};
 	
-	class tmMembersListReq : public tmMsgBase {
+	class tmMembersListReq : public tmNetMsg {
 	public:
 		tmMembersListReq(tNetSession *u);
 	};
 	
-	class tmStreamedObject : public tmMsgBase {
+	class tmStreamedObject : public tmNetMsg {
 	public:
 		tmStreamedObject(tNetSession *u);
 		
@@ -225,13 +225,13 @@ namespace alc {
 		virtual void stream(tBBuf &t) const;
 	};
 	
-	class tmRelevanceRegions : public tmMsgBase {
+	class tmRelevanceRegions : public tmNetMsg {
 	public:
 		tmRelevanceRegions(tNetSession *u);
 		virtual void store(tBBuf &t);
 	};
 	
-	class tmSetTimeout : public tmMsgBase {
+	class tmSetTimeout : public tmNetMsg {
 	public:
 		tmSetTimeout(tNetSession *u);
 		virtual void store(tBBuf &t);
@@ -240,7 +240,7 @@ namespace alc {
 		float timeout;
 	};
 	
-	class tmMembersList : public tmMsgBase {
+	class tmMembersList : public tmNetMsg {
 	public:
 		tmMembersList(tNetSession *u);
 		virtual void stream(tBBuf &t) const;
@@ -250,7 +250,7 @@ namespace alc {
 		tMemberList members;
 	};
 	
-	class tmMemberUpdate : public tmMsgBase {
+	class tmMemberUpdate : public tmNetMsg {
 	public:
 		tmMemberUpdate(tNetSession *u, const tMemberInfo &info, bool isJoined);
 		virtual void stream(tBBuf &t) const;
@@ -260,7 +260,7 @@ namespace alc {
 		bool isJoined;
 	};
 	
-	class tmPython: public tmMsgBase {
+	class tmPython: public tmNetMsg {
 	public:
 		tmPython(tNetSession *u);
 		virtual void store(tBBuf &t);

@@ -38,7 +38,7 @@ namespace alc {
 
 	//// tmCustomAuthAsk
 	tmCustomAuthAsk::tmCustomAuthAsk(tNetSession *u, uint32_t x, uint32_t sid, uint32_t ip, tString login, const uint8_t *challenge, const uint8_t *hash, uint8_t release)
-	: tmMsgBase(NetMsgCustomAuthAsk, plNetAck | plNetX | plNetVersion | plNetSid, u), login(login)
+	: tmNetMsg(NetMsgCustomAuthAsk, plNetAck | plNetX | plNetVersion | plNetSid, u), login(login)
 	{
 		this->sid = sid; // this is the SID the lobby uses for the connection to the client to be authed
 		this->x = x; // the X value the client sent to the lobby
@@ -49,12 +49,12 @@ namespace alc {
 		this->release = release;
 	}
 	
-	tmCustomAuthAsk::tmCustomAuthAsk(tNetSession *u) : tmMsgBase(u)
+	tmCustomAuthAsk::tmCustomAuthAsk(tNetSession *u) : tmNetMsg(u)
 	{ }
 	
 	void tmCustomAuthAsk::store(tBBuf &t)
 	{
-		tmMsgBase::store(t);
+		tmNetMsg::store(t);
 		if (!hasFlags(plNetX | plNetSid)) throw txProtocolError(_WHERE("X or Sid flag missing"));
 
 		ip = letoh32(t.get32());
@@ -66,7 +66,7 @@ namespace alc {
 	
 	void tmCustomAuthAsk::stream(tBBuf &t) const
 	{
-		tmMsgBase::stream(t);
+		tmNetMsg::stream(t);
 		t.put32(htole32(ip));
 		t.put(login);
 		t.write(challenge, 16);
@@ -83,7 +83,7 @@ namespace alc {
 	
 	//// tmCustomAuthResponse
 	tmCustomAuthResponse::tmCustomAuthResponse(tNetSession *u, tmCustomAuthAsk &authAsk, const uint8_t *uid, tString passwd, uint8_t result, uint8_t accessLevel)
-	 : tmMsgBase(NetMsgCustomAuthResponse, plNetAck | plNetX | plNetVersion | plNetSid | plNetUID, u), login(authAsk.login), passwd(passwd)
+	 : tmNetMsg(NetMsgCustomAuthResponse, plNetAck | plNetX | plNetVersion | plNetSid | plNetUID, u), login(authAsk.login), passwd(passwd)
 	 {
 		// copy stuff from the authAsk
 		sid = authAsk.sid; // this is the SID the lobby uses for the connection to the client to be authed
@@ -94,12 +94,12 @@ namespace alc {
 		this->accessLevel = accessLevel;
 	}
 	
-	tmCustomAuthResponse::tmCustomAuthResponse(tNetSession *u) : tmMsgBase(u)
+	tmCustomAuthResponse::tmCustomAuthResponse(tNetSession *u) : tmNetMsg(u)
 	{ }
 	
 	void tmCustomAuthResponse::store(tBBuf &t)
 	{
-		tmMsgBase::store(t);
+		tmNetMsg::store(t);
 		if (!hasFlags(plNetX | plNetUID | plNetSid)) throw txProtocolError(_WHERE("X, UID or Sid flag missing"));
 		
 		t.get(login);
@@ -110,7 +110,7 @@ namespace alc {
 	
 	void tmCustomAuthResponse::stream(tBBuf &t) const
 	{
-		tmMsgBase::stream(t);
+		tmNetMsg::stream(t);
 		t.put(login); // login
 		t.put8(result); // result
 		t.put(passwd); // passwd

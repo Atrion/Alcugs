@@ -33,7 +33,7 @@
 
 namespace alc {
 
-	class tmAuthenticateHello : public tmMsgBase {
+	class tmAuthenticateHello : public tmNetMsg {
 	public:
 		tmAuthenticateHello(tNetSession *u);
 		virtual void store(tBBuf &t);
@@ -44,7 +44,7 @@ namespace alc {
 		uint8_t release;
 	};
 	
-	class tmAuthenticateChallenge : public tmMsgBase {
+	class tmAuthenticateChallenge : public tmNetMsg {
 	public:
 		tmAuthenticateChallenge(tNetSession *u, uint32_t x, uint8_t authResult, const uint8_t *challenge);
 		virtual void stream(tBBuf &t) const;
@@ -54,7 +54,7 @@ namespace alc {
 		tString challenge;
 	};
 	
-	class tmAuthenticateResponse : public tmMsgBase {
+	class tmAuthenticateResponse : public tmNetMsg {
 	public:
 		tmAuthenticateResponse(tNetSession *u);
 		virtual void store(tBBuf &t);
@@ -63,7 +63,7 @@ namespace alc {
 		tString hash;
 	};
 	
-	class tmAccountAutheticated : public tmMsgBase {
+	class tmAccountAutheticated : public tmNetMsg {
 	public:
 		tmAccountAutheticated(tNetSession *u, uint32_t x, uint8_t authResult, const uint8_t *serverGuid);
 		virtual void stream(tBBuf &t) const;
@@ -73,7 +73,7 @@ namespace alc {
 		uint8_t serverGuid[8];
 	};
 	
-	class tmSetMyActivePlayer : public tmMsgBase {
+	class tmSetMyActivePlayer : public tmNetMsg {
 	public:
 		tmSetMyActivePlayer(tNetSession *u);
 		virtual void store(tBBuf &t);
@@ -82,12 +82,12 @@ namespace alc {
 		tString avatar;
 	};
 	
-	class tmActivePlayerSet : public tmMsgBase {
+	class tmActivePlayerSet : public tmNetMsg {
 	public:
 		tmActivePlayerSet(tNetSession *u, uint32_t x);
 	};
 	
-	class tmFindAge : public tmMsgBase {
+	class tmFindAge : public tmNetMsg {
 	public:
 		tmFindAge(tNetSession *u);
 		virtual void store(tBBuf &t);
@@ -95,7 +95,7 @@ namespace alc {
 		tMBuf message;
 	};
 	
-	class tmFindAgeReply : public tmMsgBase {
+	class tmFindAgeReply : public tmNetMsg {
 	public:
 		tmFindAgeReply(tNetSession *u, uint32_t x, const tString &ipStr, uint16_t port, const tString &age, const uint8_t *guid);
 		virtual void stream(tBBuf &t) const;

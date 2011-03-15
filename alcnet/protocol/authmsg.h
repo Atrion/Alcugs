@@ -33,7 +33,7 @@
 
 namespace alc {
 
-	class tmCustomAuthAsk : public tmMsgBase {
+	class tmCustomAuthAsk : public tmNetMsg {
 	public:
 		tmCustomAuthAsk(tNetSession *u);
 		tmCustomAuthAsk(tNetSession *u, uint32_t x, uint32_t sid, uint32_t ip, tString login, const uint8_t *challenge, const uint8_t *hash, uint8_t release);
@@ -47,7 +47,7 @@ namespace alc {
 		uint8_t release;
 	};
 	
-	class tmCustomAuthResponse : public tmMsgBase {
+	class tmCustomAuthResponse : public tmNetMsg {
 	public:
 		tmCustomAuthResponse(tNetSession *u);
 		tmCustomAuthResponse(tNetSession *u, tmCustomAuthAsk &authAsk, const uint8_t *uid, tString passwd, uint8_t result, uint8_t accessLevel);

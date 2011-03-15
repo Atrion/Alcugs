@@ -100,7 +100,7 @@ public:
 		if(lhost.isEmpty()) bindaddr = "0.0.0.0";
 		else bindaddr = lhost;
 	}
-	void send(alc::tmMsgBase& m, tNetTimeDiff delay = 0) { m.getSession()->send(m, delay); } //!< delay is in msecs - may be called in worker thread
+	void send(alc::tmNetMsg& m, tNetTimeDiff delay = 0) { m.getSession()->send(m, delay); } //!< delay is in msecs - may be called in worker thread
 
 protected:
 	void startOp();
