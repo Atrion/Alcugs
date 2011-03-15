@@ -211,7 +211,7 @@ void tUnetBase::terminate(tNetSession *u, uint8_t reason, bool gotEndMsg)
 	}
 	if (!reason) reason = u->isClient() ? RKickedOff : RQuitting;
 	if (!gotEndMsg) { // don't send message again if we already sent it, or if we got the message from the other side
-		if (u->isClient() || u->getPeerType() == KClient) { // a KClient will ignore us sending a leave, so send a terminated even if the roles changed
+		if (u->isClient()) {
 			tReadLock lock(u->pubDataMutex); // we might be in main thread
 			tmTerminated terminated(u,reason);
 			send(terminated);
@@ -235,7 +235,7 @@ bool tUnetBase::terminateAll(bool playersOnly)
 	bool anyTerminated = false;
 	tReadLock lock(smgrMutex);
 	for (tNetSessionMgr::tIterator it(smgr); it.next();) {
-		if (!it->isTerminated() && (!playersOnly ||  it->getPeerType() == KClient)) { // avoid sending a NetMsgLeave or NetMsgTerminate to terminated peers
+		if (!it->isTerminated() && (!playersOnly ||  it->isUruClient())) { // avoid sending a NetMsgLeave or NetMsgTerminate to terminated peers
 			terminate(*it);
 			anyTerminated = true;
 		}

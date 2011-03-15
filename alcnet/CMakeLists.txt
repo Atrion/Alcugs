@@ -15,11 +15,11 @@ set (ALCNET_PROTOCOL_FILES
 set (ALCNET_BASE_FILES
 	sql.cpp
 	unet.cpp
+	netsession.cpp
 	unetbase.cpp
 	unetlobbyserverbase.cpp
 	unetmain.cpp
 	unetserverbase.cpp
-	netsession.cpp
 	netsessionmgr.cpp)
 
 add_library(alcnet SHARED ${ALCNET_BASE_FILES} ${ALCNET_PROTOCOL_FILES})

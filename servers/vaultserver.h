@@ -41,9 +41,6 @@ namespace alc {
 	protected:
 		virtual void onApplyConfig(void);
 		virtual int onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u);
-		virtual void onNewConnection(tNetSession * u) {
-			u->setTypeToGame(); // assume everyone connecting to us is a game (could also be a lobby though)
-		}
 	private:
 		bool isValidAvatarName(const tString &avatar);
 	

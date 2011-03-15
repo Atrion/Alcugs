@@ -115,7 +115,7 @@ namespace alc {
 	{
 		// FIXME: This whole function is a bad hack - eventually, everything done here should be properly implemented elsewhere
 		// first of all, we are only interested in VSaveNodes sent from client to vault
-		if (u->getPeerType() == KVault) return; // we care only about messages from the client
+		if (u == *vaultServer) return; // we care only about messages from the client
 		if (msg->task) { // it is a vault task
 			if (msg->cmd != TRegisterOwnedAge) return; // we are only interested in these messages which are sent when an age is reset
 			// now, find the age link struct
@@ -407,7 +407,7 @@ namespace alc {
 	{
 		tReadLock lock(smgrMutex);
 		for (tNetSessionMgr::tIterator it(smgr); it.next();) {
-			if (it->getPeerType() == KClient && *it != u) {
+			if (it->isUruClient() && *it != u) {
 				return false;
 			}
 		}
@@ -661,7 +661,7 @@ namespace alc {
 			}
 			case NetMsgCustomDirectedFwd:
 			{
-				if (u->getPeerType() != KTracking) {
+				if (u != *trackingServer) {
 					err->log("ERR: %s sent a NetMsgCustomDirectedFwd but is not the tracking server. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
@@ -767,7 +767,7 @@ namespace alc {
 			//// message to prevent the server from going down while someone joins
 			case NetMsgCustomPlayerToCome:
 			{
-				if (u->getPeerType() != KTracking) {
+				if (u != *trackingServer) {
 					err->log("ERR: %s sent a NetMsgCustomPlayerToCome but is not the tracking server. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}

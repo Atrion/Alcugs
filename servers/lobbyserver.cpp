@@ -82,7 +82,7 @@ namespace alc {
 			//// messages regarding the player list
 			case NetMsgRequestMyVaultPlayerList:
 			{
-				if (u->getPeerType() != KClient) {
+				if (!u->isUruClient()) {
 					err->log("ERR: %s sent a NetMsgRequestMyVaultPlayerList but is not yet authed. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
@@ -99,7 +99,7 @@ namespace alc {
 			}
 			case NetMsgCustomVaultPlayerList:
 			{
-				if (u->getPeerType() != KVault) {
+				if (u != *vaultServer) {
 					err->log("ERR: %s sent a NetMsgCustomVaultPlayerList but is not the vault server. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
@@ -112,7 +112,7 @@ namespace alc {
 				// find the client's session
 				tNetSessionRef client = sessionBySid(playerList.sid);
 				// verify UID and session state
-				if (!*client || client->getPeerType() != KClient || memcmp(client->uid, playerList.uid, 16) != 0) {
+				if (!*client || !client->isUruClient() || memcmp(client->uid, playerList.uid, 16) != 0) {
 					err->log("ERR: Got NetMsgCustomVaultPlayerList for player with UID %s but can't find his session.\n", alcGetStrUid(playerList.uid).c_str());
 					return 1;
 				}
@@ -127,7 +127,7 @@ namespace alc {
 			//// messages regarding creating and deleting avatars
 			case NetMsgCreatePlayer:
 			{
-				if (u->getPeerType() != KClient) {
+				if (!u->isUruClient()) {
 					err->log("ERR: %s sent a NetMsgCreatePlayer but is not yet authed. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
@@ -145,7 +145,7 @@ namespace alc {
 			}
 			case NetMsgCustomVaultPlayerCreated:
 			{
-				if (u->getPeerType() != KVault) {
+				if (u != *vaultServer) {
 					err->log("ERR: %s sent a NetMsgCustomVaultPlayerList but is not the vault server. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
@@ -158,7 +158,7 @@ namespace alc {
 				// find the client's session
 				tNetSessionRef client = sessionBySid(playerCreated.sid);
 				// verify UID and session state
-				if (!*client || client->getPeerType() != KClient || memcmp(client->uid, playerCreated.uid, 16) != 0) {
+				if (!*client || !client->isUruClient() || memcmp(client->uid, playerCreated.uid, 16) != 0) {
 					err->log("ERR: Got NetMsgCustomVaultPlayerCreated for player with UID %s but can't find his session.\n", alcGetStrUid(playerCreated.uid).c_str());
 					return 1;
 				}
@@ -171,7 +171,7 @@ namespace alc {
 			}
 			case NetMsgDeletePlayer:
 			{
-				if (u->getPeerType() != KClient) {
+				if (!u->isUruClient()) {
 					err->log("ERR: %s sent a NetMsgDeletePlayer but is not yet authed. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
@@ -191,7 +191,7 @@ namespace alc {
 			//// message for forking game servers
 			case NetMsgCustomForkServer:
 			{
-				if (u->getPeerType() != KTracking) {
+				if (u != *trackingServer) {
 					err->log("ERR: %s sent a NetMsgCustomForkServer but is not the tracking server. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}

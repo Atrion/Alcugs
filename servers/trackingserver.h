@@ -50,9 +50,6 @@ namespace alc {
 		virtual void onWorkerIdle() {
 			trackingBackend.updateStatusFile();
 		}
-		virtual void onNewConnection(tNetSession * u) {
-			u->setTypeToGame(); // assume everyone connecting to us is a game (could also be a lobby though)
-		}
 		
 		virtual int onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u);
 	private:

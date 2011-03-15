@@ -183,7 +183,7 @@ void tUnetPing::onIdle() {
 
 	tMutexLock lock(mutex);
 	if(count==0) {
-		dstSession=netConnect(d_host.c_str(),d_port,validation,0);
+		dstSession=netConnect(d_host.c_str(),d_port,validation);
 		current=startup=alcGetCurrentTime();
 	}
 

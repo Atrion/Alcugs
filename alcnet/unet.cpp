@@ -303,7 +303,7 @@ void tUnet::stopOp() {
 	close(sndPipeWriteEnd);
 }
 
-tNetSessionRef tUnet::netConnect(const char * hostname,uint16_t port,uint8_t validation,uint8_t flags,uint8_t peerType) {
+tNetSessionRef tUnet::netConnect(const char * hostname,uint16_t port,uint8_t validation) {
 	assert(alcGetSelfThreadId() == alcGetMain()->threadId());
 	struct hostent *host;
 	host=gethostbyname(hostname);
@@ -319,7 +319,6 @@ tNetSessionRef tUnet::netConnect(const char * hostname,uint16_t port,uint8_t val
 	}
 	
 	u->validation=validation;
-	u->cflags |= flags;
 	
 	if(validation>=3) {
 		u->validation=0;
@@ -333,7 +332,6 @@ tNetSessionRef tUnet::netConnect(const char * hostname,uint16_t port,uint8_t val
 	memcpy(u->sockaddr,&client,sizeof(struct sockaddr_in));
 	
 	u->client=false;
-	if (peerType) u->whoami = peerType;
 	
 	u->max_version=max_version;
 	u->min_version=min_version;
@@ -560,7 +558,7 @@ void tUnet::rawsend(tNetSession * u,tUnetUruMsg * msg)
 		if(buf2==NULL) { throw txNoMem(_WHERE("")); }
 		alcEncodePacket(buf2,buf,msize);
 		buf=buf2; //don't need to decode again
-		if(u->authenticated==1) {
+		if(u->authenticated) {
 			DBG(8,"Client is authenticated, doing checksum...\n");
 			uint32_t val=alcUruChecksum(buf,msize,2,u->passwd.c_str());
 			memcpy(buf+2,&val,4);

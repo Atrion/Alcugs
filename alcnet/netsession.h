@@ -57,23 +57,18 @@ public:
 	void setAuthData(uint8_t accessLevel, const tString &passwd);
 	
 	void setTimeout(unsigned int tout) { tWriteLock lock(prvDataMutex); conn_timeout=tout*1000*1000; } //!< set timeout (in seconds)
-	void challengeSent(void) { tWriteLock lock(prvDataMutex); if (authenticated == 0) authenticated = 10; }
 	void setRejectMessages(bool reject) { tWriteLock lock(prvDataMutex); rejectMessages = reject; }
 	
 	uint32_t getSid(void) { return sid; } //!< sid will never change, so this is thread-safe
 	
-	uint8_t getPeerType() { tReadLock lock(prvDataMutex); return whoami; } //!< thread-safe
 	uint32_t getIp(void) const { return ip; }
 	uint16_t getPort(void) const { return port; }
-	uint8_t getAccessLevel(void) { tReadLock lock(prvDataMutex); return accessLevel; }
-	uint8_t getAuthenticated(void) { tReadLock lock(prvDataMutex); return authenticated; } //!< thread-safe
 	size_t getMaxPacketSz(void) const { return maxPacketSz; }
-	bool isClient() const { return client; } //!< client is only written to on session creation, so thread-safe
-	bool isTerminated() { tReadLock lock(prvDataMutex); return terminated; } //!< thread-safe
-	void setTypeToGame() { tWriteLock lock(prvDataMutex); whoami = KGame; } //!< thread-safe
-	bool isAlcugsServer() //!< thread-safe
-		{ tReadLock lock(prvDataMutex); return whoami == KLobby || whoami == KGame || whoami == KVault || whoami == KAuth || whoami == KTracking; }
-	bool anythingToSend() { tMutexLock lock(sendMutex); return !ackq.empty() || !sndq.empty(); } //!< thread-safe
+	uint8_t getAccessLevel(void) { tReadLock lock(prvDataMutex); return accessLevel; }
+	bool isUruClient(void) { tReadLock lock(prvDataMutex); return authenticated; } //!< thread-safe
+	bool isClient(void) { tReadLock lock(prvDataMutex); return client; } //!< thread-safe
+	bool isTerminated(void) { tReadLock lock(prvDataMutex); return terminated; } //!< thread-safe
+	bool anythingToSend(void) { tMutexLock lock(sendMutex); return !ackq.empty() || !sndq.empty(); } //!< thread-safe
 	
 	void incRefs() { __sync_add_and_fetch(&refs, 1); }
 	void decRefs();
@@ -142,7 +137,6 @@ private:
 		uint32_t ps;
 	} clientMsg;
 	uint8_t validation; //!< store the validation level (0,1,2)
-	uint8_t authenticated; //!< is the peer authed? 0 = no, 1 = yes, 2 = it just got authed, 10 = the client got an auth challenge; protected by prvDataMutex (FIXME really necessary?)
 	uint8_t cflags; //!< session flags
 	const uint16_t maxPacketSz; //!< maxium size of the packets. Must be 1024 (always)
 	tUnetMsg *rcv; //!< The place to assemble a fragmented message
@@ -159,6 +153,7 @@ private:
 	bool negotiating; //!< set to true when we are waiting for the answer of a negotiate we sent
 	
 	tString passwd; //!< peer passwd hash (used in V2) (string); protected by prvDataMutex
+	bool authenticated; //!< set to true when the peer acked the "you got authed" message (obviously we can't use the passwd for that one yet)
 	uint8_t accessLevel; //!< peer access level; protected by prvDataMutex
 
 	//flux control (bandwidth and latency)
@@ -176,15 +171,12 @@ private:
 	
 	// other status variables
 	bool rejectMessages; //!< when set to true, messages are rejected (the other side has to send them again); protected by prvDataMutex
-	
 	bool terminated; //!< false: connection is established; true: a NetMsgTerminated was sent (and we expect a NetMsgLeave), or a NetMsgLeave was sent; protected by prvDataMutex
-	
-	uint8_t whoami; //!< peer type; protected by prvDataMutex
-	bool client; //!< it's a client or a server? Written only on session creatin, so safe to read in any thread
+	bool client; //!< it's a client or a server?
 	
 	// mutexes
 	tMutex sendMutex; //!< protecting serverMsg and sndq
-	tReadWriteEx prvDataMutex; //!< protecting terminated, whoami, conn_timeout, rejectMessages, authenticated, accessLevel, passwd - inside of pubDataMutex
+	tReadWriteEx prvDataMutex; //!< protecting terminated, conn_timeout, rejectMessages, client, authenticated, accessLevel, passwd - inside of pubDataMutex
 	
 	// reference counting
 	int refs;
