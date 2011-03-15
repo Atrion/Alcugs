@@ -514,7 +514,11 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 			DBG(5, "%s Initial cabal is %i\n",str().c_str(),cabal);
 			negotiating=false;
 		}
-	} else if (!isConnected()) { // we did not yet negotiate
+		// make sure we ack this packet
+		createAckReply(*msg);
+		return;
+	}
+	if (!isConnected()) { // we did not yet negotiate, go ahead and DO IT
 		if(!negotiating) { // and we are not in the process of doing it - so start that process
 			net->log->log("%s WARN: Obviously a new connection was started with something different than a nego\n", str().c_str());
 			negotiate();
@@ -522,9 +526,8 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 			clientMsg.pfr = msg->pfr;
 		}
 	}
-	
 	// fix the problem that happens every 15-30 days of server uptime - but only if sndq is empty, or we will loose packets
-	{
+	else {
 		sendMutex.lock();
 		uint32_t sn = serverMsg.sn;
 		sendMutex.unlock(); // unlock here, because anythingToSend and resetMsgCounters will lock again
@@ -537,6 +540,7 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 		}
 	}
 
+	// Acks
 	if (msg->bhflags & UNetAckReply) {
 		// Process ack replies, no matter whether they are out of roder or not
 		if (isConnected()) {
@@ -546,66 +550,71 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 			tWriteLock lock(prvDataMutex);
 			if (!authenticated && !passwd.isEmpty()) authenticated = true;
 		}
+		return;
 	}
+	
+	// Normal packets
+	tReadLock lock(prvDataMutex);
+	
+	if (rejectMessages) {
+		net->log->log("%s WARN: Rejecting messages currently, dropping packet");
+		delete msg;
+		return;
+	}
+
+	//check uplicates
+	ret = compareMsgNumbers(msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
+	/* ret values:
+		<0: This is an old packet, ack, but don't accept
+		0: This is what we need
+		>0: This is a future packet */
+	if (ret > 0 && rcvq.size() > net->receiveAhead) {
+		net->log->log("%s WARN: Dropped packet I can not yet parse: %d.%d (last ack: %d.%d, expected: %d.%d)\n", str().c_str(), msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
+		delete msg;
+		return;
+	}
+
+	// if the packet requires it, send an ack
+	if (msg->bhflags & UNetAckReq) {
+		//ack reply
+		createAckReply(*msg);
+	}
+	
+	// We may be able to cache it
+	if (ret > 0) {
+		queueReceivedMessage(msg);
+	}
+	// or we already aprsed it, so we drop it
+	else if (ret < 0) {
+		net->log->log("%s Dropping re-sent old packet %d.%d (last ack: %d.%d, expected: %d.%d)\n", str().c_str(), msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
+		delete msg;
+		return;
+	}
+	// or we parse it
 	else {
-		tReadLock lock(prvDataMutex);
-		// Negotiation (processed above, but we have to do the ack checking) and normal packets
-
-		//check uplicates
-		if (rejectMessages) ret = 1; // we curently don't accept messages - please come back later
-		else ret = compareMsgNumbers(msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
-		/* ret values:
-		  <0: This is an old packet, ack, but don't accept
-		   0: This is what we need
-		  >0: This is a future packet (1: Drop it, 2: Cache it) */
-		if (ret < 0) {
-			net->log->log("%s WARN: Dropping re-sent old packet %d.%d (last ack: %d.%d, expected: %d.%d)\n", str().c_str(), msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
-		}
-		else if (ret > 0) {
-			if (!(msg->bhflags & UNetNegotiation) && !rejectMessages && rcvq.size() < net->receiveAhead)
-				ret = 2; // preserve for future use - but don't do this for negos (we can not get here for ack replies)
-			else
-				net->log->log("%s WARN: Dropped packet I can not yet parse: %d.%d (last ack: %d.%d, expected: %d.%d)\n", str().c_str(), msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
-		}
-
-		// if the packet requires it and the above check told us that'd be ok, send an ack
-		if (ret != 1 && (msg->bhflags & UNetAckReq)) {
-			//ack reply
-			createAckReply(*msg);
-		}
-		
-		// We may be able to cache it
-		if (ret == 2) {
-			queueReceivedMessage(msg);
-			msg = NULL; // don't delete
-		}
-		// if it is ok to parse the packet, do that
-		else if (ret == 0) {
-			//flood control
-			if((msg->bhflags & UNetAckReq) && (msg->frn==0) && (net->flags & UNET_FLOODCTR)) {
-				if(net->passedTimeSince(flood_last_check) > net->flood_check_interval) {
-					flood_last_check=net->getNetTime();
-					flood_npkts=0;
-				} else {
-					flood_npkts++;
-					if(flood_npkts>net->max_flood_pkts) {
-						// send UNET_FLOOD event
-						net->sec->log("%s Flood Attack\n",str().c_str());
-						net->addEvent(new tNetEvent(this,UNET_FLOOD));
-					}
+		//flood control
+		if((msg->bhflags & UNetAckReq) && (msg->frn==0) && (net->flags & UNET_FLOODCTR)) {
+			if(net->passedTimeSince(flood_last_check) > net->flood_check_interval) {
+				flood_last_check=net->getNetTime();
+				flood_npkts=0;
+			} else {
+				flood_npkts++;
+				if(flood_npkts>net->max_flood_pkts) {
+					// send UNET_FLOOD event
+					net->sec->log("%s Flood Attack\n",str().c_str());
+					net->addEvent(new tNetEvent(this,UNET_FLOOD));
 				}
 			}
-			// end flood control
-			
-			// We can use it!
-			acceptMessage(msg);
-			msg = NULL; // acceptMessage will delete it
-
-			// We might be able to accept cached messages now
-			checkQueuedMessages();
 		}
+		// end flood control
+		
+		// We can use it!
+		acceptMessage(msg);
+		msg = NULL; // acceptMessage will delete it
+
+		// We might be able to accept cached messages now
+		checkQueuedMessages();
 	}
-	delete msg;
 }
 
 /** add this to the received message and put fragments together - this deletes the passed message! */
