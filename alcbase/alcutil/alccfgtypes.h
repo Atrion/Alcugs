@@ -49,7 +49,7 @@ public:
 	~tConfigVal();
 	void setName(const tString & name);
 	void setVal(const tString & t,unsigned int x=0,unsigned int y=0);
-	const tString & getName() const;
+	const tString & getName() const { return name; }
 	const tString & getVal(unsigned int x=0,unsigned int y=0,bool *found = NULL) const; //!< found tells you whether the value exists
 	bool hasVal(unsigned int x=0,unsigned int y=0) const;
 	unsigned int getRows() const { return y; }
@@ -73,14 +73,14 @@ class tConfigKey {
 public:
 	tConfigKey();
 	~tConfigKey();
-	void setName(const tString & name);
+	void setName(const tString & name) { this->name=name; }
 	const tString & getName() const { return name; }
 	tConfigVal * find(tString what,bool create=false);
 	void copy(const tConfigKey & t);
 	void merge(tConfigKey & t);
 	void add(tConfigVal &t);
 	const tConfigKey &operator=(const tConfigKey & t) { copy(t); return *this; }
-	void rewind();
+	void rewind() { off=0; }
 	tConfigVal * getNext();
 private:
 	tString name;
@@ -101,7 +101,7 @@ public:
 	tConfigVal * findVar(const tString & what,const tString & where="global",bool create=false);
 	const tString & getVar(const tString & what,const tString & where="global",unsigned int x=0,unsigned int y=0,bool *found = NULL); //!< found tells you whether the value exists
 	void setVar(const tString &val,const tString &what,const tString &where,unsigned int x=0,unsigned int y=0);
-	void rewind();
+	void rewind() { off=0; }
 	tConfigKey * getNext();
 	void copyKey(const tString & to,const tString & from); //!< this will merge the key if the destination already exists
 	void copyValue(const tString & tok,const tString & fromk,const tString & to="global",const tString & from="global"); //!< this overwrites an already existing value - but only of the value which is copied exists!

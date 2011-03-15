@@ -292,7 +292,6 @@ void tUnetBase::processEvent(tNetEvent *evt)
 	DBG(5, "Processing event %d for %s\n", evt->id, u->str().c_str());
 	switch(evt->id) {
 		case UNET_NEWCONN:
-			sec->log("%s New Connection\n",u->str().c_str());
 			if (!isRunning())
 				terminate(u);
 			else
@@ -304,8 +303,8 @@ void tUnetBase::processEvent(tNetEvent *evt)
 			return;
 		case UNET_FLOOD:
 			if (!isRunning() || onConnectionFlood(u)) {
-				terminate(u);
 				alcGetMain()->err()->log("%s kicked due to a Flood Attack\n", u->str().c_str());
+				terminate(u);
 			}
 			return;
 		case UNET_CONNCLS:

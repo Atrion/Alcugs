@@ -62,7 +62,7 @@ namespace alc {
 	class tAgeInfo
 	{
 	public:
-		tAgeInfo(const tString &file, bool loadPages);
+		tAgeInfo(tString dir, const tString &name, bool loadPages);
 		tPageInfo *getPage(uint32_t pageId);
 		bool validPage(uint32_t pageId) const;
 		

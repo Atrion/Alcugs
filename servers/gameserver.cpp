@@ -61,7 +61,7 @@ namespace alc {
 		
 		// load age file and SDL Manager
 		resetStateWhenEmpty = false;
-		ageInfo = new tAgeInfo(serverName, /*loadPages*/true);
+		ageInfo = new tAgeInfo(cfg->getVar("age"), serverName, /*loadPages*/true);
 		ageState = new tAgeStateManager(this, ageInfo);
 		
 		// make sure we quit if noone comes
@@ -277,7 +277,7 @@ namespace alc {
 	
 	void tUnetGameServer::onConnectionClosing(alc::tNetSession* u, uint8_t reason)
 	{
-		if (u->getPeerType() == KClient && u->ki != 0) { // if necessary, tell the others about it
+		if (u->ki != 0) { // if necessary, tell the others about it (don't rely on peer type, that will already be reset)
 			if (reason == RLeaving) { // the player is going on to another age, so he's not really offline
 				// update online time
 				tmCustomVaultPlayerStatus vaultStatus(*vaultServer, u->ki, alcGetStrGuid(serverGuid), serverName, /* offline but will soon come back */ 2, u->onlineTime());

@@ -99,6 +99,7 @@ namespace alc {
 		if (var.isEmpty()) instanceMode = 1;
 		else instanceMode = var.asUInt();
 		if (instanceMode != 0 && instanceMode != 1) throw txBase(_WHERE("instance_mode must be 0 or 1 but is %d", instanceMode));
+		ageFileDir = cfg->getVar("age");
 		
 		log.log("Started VaultBackend (%s)\n", __U_VAULTBACKEND_ID);
 		delete vaultDB;
@@ -1200,7 +1201,7 @@ namespace alc {
 	bool tVaultBackend::generateGuid(uint8_t* guid, const alc::tString& age, uint32_t ki)
 	{
 		try {
-			tAgeInfo ageInfo = tAgeInfo(age, /*loadPages*/false);
+			tAgeInfo ageInfo = tAgeInfo(ageFileDir, age, /*loadPages*/false);
 			if (ageInfo.seqPrefix > 0x00FFFFFF) return false; // obviously he wants to link to an age like GlobalMarkers
 			bool isPrivate = (instanceMode == 1) ? isAgePrivate(age) : false;
 			if (isPrivate && ki > 0x0FFFFFFF) throw txBase(_WHERE("KI is too big!")); // ensure 1st bit of the 4 byte is 0 (see comment below)
