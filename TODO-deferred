@@ -2,53 +2,30 @@ The ToDo items in here are either deferred or unclear to me (i.e. I don't know w
 
 NetCore
 ============
-* Implement the save Bandwidth thingy
 * Implement a firewall
 * Fix the 256KBytes max message size problem
-* Fix some exploits
 
 Auth
 ========
 * Allow admins to select wich client versions they want
 * Implement additional cryptographic asimetric authentication extension
 
-Tracking
-========
-* Optimizations
-
 Vault
 ===========
-* Optimizations
+* Optimizations (for example, caching MGRs nodes for a node?)
 * Implement permissions
-* Fix some vault server based exploits
 * Implement vault server side limits
 * WorkAround against invalid SDL nodes
 * Finish the Postgres driver
 * Finish the filesystem driver
-
-Lobby
-========
-* Optimizations
-* Fix some exploits, and clean the code
 
 Game
 ======
 * Fix the LoadClone issue
 * End the SDL parser
 * Fix the members list problem
-* Optimizations
+* Treat TestAndSet correctly
 * Some thoughts about the LAG
-
-Generic Stuff
-==================
-* MetaServer
-* Optimizations
-* Telnet builtin service
-* Http builtin service
-* Debug port/service
-* P2P tech
-* Database based logging
-* Socket based logging
 
 Clients
 ========

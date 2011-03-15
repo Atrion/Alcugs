@@ -14,9 +14,7 @@ Game
 
 Generic Stuff
 ==================
-* Improve network throughput
-* Implement server identification (this could also be used for the tNetSession::isAlcugsServer function)
-* Multithreading support
+* Implement server identification
 * UU support
 * Public ages
 
