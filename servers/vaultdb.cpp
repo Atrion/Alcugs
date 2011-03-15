@@ -114,80 +114,65 @@ namespace alc {
 
 	tVaultDB::tVaultDB(tLog *log)
 	{
-		sql = NULL;
 		this->log = log;
+		
+		// init SQL
+		sql = tSQL::createFromConfig();
+		if (!sql->prepare()) {
+			// it didn't work, so delete everything
+			delete sql;
+			sql = NULL;
+			throw txDatabaseError(_WHERE("Error connecting to vault DB"));
+		}
+		// check if table exists
+		tString query;
+		query.printf("SHOW TABLES LIKE '%s'", vaultTable);
+		// if vault table doesn't exist, create it
+		if (!sql->queryForNumber(query, "Prepare: Looking for vault table")) {
+			query.clear();
+			query.printf(vault_table_init, vaultTable, KVaultID);
+			sql->query(query, "Prepare: Creating vault table");
+			query.clear();
+			query.printf(ref_vault_table_init, refVaultTable);
+			sql->query(query, "Prepare: Creating ref vault table");
+			// create the root folder
+			tString folderName;
+			folderName.put8(0x0F);
+			folderName.put8(0x13);
+			folderName.put8(0x37);
+			folderName.put32(alcGetTime());
+			folderName.put8(random()%250);
+			tString asciiFolderName = alcGetStrGuid(folderName.data());
+			query.clear();
+			query.printf("INSERT INTO %s (idx, type, int_1, str_1, str_2, text_1, text_2) VALUES ('%d', 6, '%d', '%s', '%s', 'You must never edit or delete this node!', '%s')",
+							vaultTable, KVaultID, vaultVersion, asciiFolderName.c_str(), alcGetMain()->name().c_str(), alcVersionTextShort());
+			sql->query(query, "Prepare: Creating vault folder");
+			// done!
+			log->log("Started VaultDB driver (%s)\n", __U_VAULTDB_ID);
+		}
+		else {
+			int version = getVersion();
+			if (version < 2 || version > vaultVersion) throw txDatabaseError(_WHERE("only vault DB version 2 to %d are supported, not %d", vaultVersion, version));
+			if (version == 2) {
+				log->log("Converting DB from version 2 to 3... \n");
+				migrateVersion2to3();
+				log->log("Done converting DB from version 2 to 3!\n");
+				version = 3;
+			}
+			if (version == 3) {
+				log->log("Converting DB from version 3 to 4... \n");
+				migrateVersion3to4();
+				log->log("Done converting DB from version 3 to 4!\n");
+				version = 4;
+			}
+			if (version != vaultVersion)
+				throw txDatabaseError(_WHERE("Migration function missing!"));
+			log->log("Started VaultDB driver (%s)\n", __U_VAULTDB_ID);
+		}
 	}
 	
 	tVaultDB::~tVaultDB()
 	 { delete sql; }
-	
-	bool tVaultDB::prepare(void)
-	{
-		// establish database connection
-		if (sql) { // the connection is already established?
-			if (sql->prepare()) // when we're still connected or reconnection works, everything is fine
-				return true;
-			// otherwise, delete the connection and try again
-			DBG(6, "deleting sql\n");
-			delete sql;
-		}
-		DBG(6, "creating sql\n");
-		sql = tSQL::createFromConfig();
-		if (sql->prepare()) {
-			// check if table exists
-			tString query;
-			query.printf("SHOW TABLES LIKE '%s'", vaultTable);
-			// if vault table doesn't exist, create it
-			if (!sql->queryForNumber(query, "Prepare: Looking for vault table")) {
-				query.clear();
-				query.printf(vault_table_init, vaultTable, KVaultID);
-				sql->query(query, "Prepare: Creating vault table");
-				query.clear();
-				query.printf(ref_vault_table_init, refVaultTable);
-				sql->query(query, "Prepare: Creating ref vault table");
-				// create the root folder
-				tString folderName;
-				folderName.put8(0x0F);
-				folderName.put8(0x13);
-				folderName.put8(0x37);
-				folderName.put32(alcGetTime());
-				folderName.put8(random()%250);
-				tString asciiFolderName = alcGetStrGuid(folderName.data());
-				query.clear();
-				query.printf("INSERT INTO %s (idx, type, int_1, str_1, str_2, text_1, text_2) VALUES ('%d', 6, '%d', '%s', '%s', 'You must never edit or delete this node!', '%s')",
-								vaultTable, KVaultID, vaultVersion, asciiFolderName.c_str(), alcGetMain()->name().c_str(), alcVersionTextShort());
-				sql->query(query, "Prepare: Creating vault folder");
-				// done!
-				log->log("Started VaultDB driver (%s)\n", __U_VAULTDB_ID);
-				return true;
-			}
-			else {
-				int version = getVersion();
-				if (version < 2 || version > vaultVersion) throw txDatabaseError(_WHERE("only vault DB version 2 to %d are supported, not %d", vaultVersion, version));
-				if (version == 2) {
-					log->log("Converting DB from version 2 to 3... \n");
-					migrateVersion2to3();
-					log->log("Done converting DB from version 2 to 3!\n");
-					version = 3;
-				}
-				if (version == 3) {
-					log->log("Converting DB from version 3 to 4... \n");
-					migrateVersion3to4();
-					log->log("Done converting DB from version 3 to 4!\n");
-					version = 4;
-				}
-				if (version != vaultVersion)
-					throw txDatabaseError(_WHERE("Migration function missing!"));
-				log->log("Started VaultDB driver (%s)\n", __U_VAULTDB_ID);
-				return true;
-			}
-		}
-		// when we come here, it didn't work, so delete everything
-		DBG(6, "deleting sql\n");
-		delete sql;
-		sql = NULL;
-		return false;
-	}
 	
 	int tVaultDB::getVersion(void)
 	{
@@ -214,7 +199,7 @@ namespace alc {
 	
 	tString tVaultDB::getVaultFolderName(void)
 	{
-		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		if (!sql->prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
 		tString folder;
 		
@@ -335,7 +320,7 @@ namespace alc {
 	
 	int tVaultDB::getPlayerList(const uint8_t *uid, tMBuf *t)
 	{
-		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		if (!sql->prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		if (t) t->clear(); // t may be NULL if we just check the number of players
 	
 		tString query;
@@ -360,7 +345,7 @@ namespace alc {
 	
 	tString tVaultDB::checkKi(uint32_t ki, const uint8_t* uid, bool* ownAvatar)
 	{
-		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		if (!sql->prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
 		tString query;
 		query.printf("SELECT lstr_1 FROM %s WHERE lstr_2 = '%s' and idx='%d' LIMIT 1", vaultTable, alcGetStrUid(uid).c_str(), ki);
@@ -543,7 +528,7 @@ namespace alc {
 	
 	uint32_t tVaultDB::findNode(tvNode &node, bool create, tvManifest *mfs)
 	{
-		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		if (!sql->prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
 		tString query;
 		// first, we have to create the query...
@@ -584,7 +569,7 @@ namespace alc {
 	
 	uint32_t tVaultDB::createNode(tvNode &node)
 	{
-		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		if (!sql->prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
 		if (!(node.flagB & MType)) throw txDatabaseError(_WHERE("type must be set for all new nodes"));
 		
@@ -732,7 +717,7 @@ namespace alc {
 	
 	void tVaultDB::updateNode(tvNode &node)
 	{
-		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		if (!sql->prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
 		// set current time
 		node.flagB |= MModTime;
@@ -749,7 +734,7 @@ namespace alc {
 	
 	void tVaultDB::getManifest(uint32_t baseNode, alc::tvManifest*** mfs, size_t* nMfs, alc::tvNodeRef*** ref, size_t* nRef)
 	{
-		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		if (!sql->prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
 		*mfs = NULL;
 		*nMfs = 0;
@@ -897,7 +882,7 @@ namespace alc {
 	
 	void tVaultDB::getMGRs(uint32_t baseNode, uint32_t** table, size_t* tableSize)
 	{
-		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		if (!sql->prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
 		*table = NULL;
 		*tableSize = 0;
@@ -1078,7 +1063,7 @@ namespace alc {
 	
 	void tVaultDB::fetchNodes(uint32_t* table, size_t tableSize, alc::tvNode*** nodes, size_t* nNodes)
 	{
-		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		if (!sql->prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		if (!tableSize)
 			throw txDatabaseError(_WHERE("There must be at least one node to fetch"));
 	
@@ -1153,7 +1138,7 @@ namespace alc {
 	
 	bool tVaultDB::checkNode(uint32_t node)
 	{
-		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		if (!sql->prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
 		tString query;
 		query.printf("SELECT idx FROM %s WHERE idx='%d'", vaultTable, node);
@@ -1162,7 +1147,7 @@ namespace alc {
 	
 	bool tVaultDB::addNodeRef(tvNodeRef &ref)
 	{
-		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		if (!sql->prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
 		tString query;
 		
@@ -1184,7 +1169,7 @@ namespace alc {
 	
 	void tVaultDB::removeNodeRef(uint32_t parent, uint32_t son, bool cautious)
 	{
-		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		if (!sql->prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
 		tString query;
 		MYSQL_RES *result;
@@ -1231,7 +1216,7 @@ namespace alc {
 	
 	void tVaultDB::removeNodeTree(uint32_t node, bool cautious)
 	{
-		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		if (!sql->prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
 		tString query;
 		MYSQL_RES *result;
@@ -1262,7 +1247,7 @@ namespace alc {
 	
 	void tVaultDB::setSeen(uint32_t parent, uint32_t son, uint32_t seen)
 	{
-		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		if (!sql->prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
 		tString query;
 		query.printf("UPDATE %s SET flag='%d' WHERE id2='%d' AND id3='%d'", refVaultTable, seen, parent, son);
@@ -1271,7 +1256,7 @@ namespace alc {
 	
 	void tVaultDB::getParentNodes(uint32_t node, uint32_t** table, size_t* tableSize)
 	{
-		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		if (!sql->prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
 		tString query;
 		MYSQL_RES *result;
@@ -1296,7 +1281,7 @@ namespace alc {
 	
 	void tVaultDB::getReferences(uint32_t node, alc::tvNodeRef*** ref, size_t* nRef)
 	{
-		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		if (!sql->prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
 		tString query;
 		MYSQL_RES *result;
@@ -1421,7 +1406,7 @@ namespace alc {
 	
 	void tVaultDB::clean(bool cleanAges)
 	{
-		if (!prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		if (!sql->prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 		
 		tString query;
 		MYSQL_RES *result;

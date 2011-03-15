@@ -48,7 +48,7 @@ public:
 	tTime bornTime(void) { return born; }
 	tTime upTime(void);
 	uint64_t threadId(void) { return mainThreadId; }
-	tConfig *config(void); //!< returns the configuration manager - must only be used in main thread! (FIXME: is this really done correctly?)
+	tConfig *config(void); //!< returns the configuration manager - must only be used in main thread!
 	tString name(void) { return appName; }
 	
 	tLog *std() { return stdLog; }
