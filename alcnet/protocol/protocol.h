@@ -76,7 +76,7 @@ public:
 	virtual void stream(tBBuf &/*t*/) const {}
 	uint16_t cmd;
 	uint32_t sn;
-	uint8_t fr_count; //Number of fragments we already got
+	uint8_t fr_count; //!< Number of fragments we already got
 	tMBuf data;
 	FORBID_CLASS_COPY(tUnetMsg)
 };
@@ -104,25 +104,26 @@ public:
 	/** Get header size */
 	size_t hSize();
 	void dumpheader(tLog * f);
-	void htmlDumpHeader(tLog * log,uint8_t flux,uint32_t ip,uint16_t port); //ip, port in network order
+	void htmlDumpHeader(tLog * log,uint8_t flux,uint32_t ip,uint16_t port) const; //ip, port in network order
+	
+	uint32_t sn(void) const { return csn >> 8; }
+	uint8_t fr(void) const { return csn & 0xFF; }
+	uint32_t psn(void) const { return cps >> 8; }
+	uint8_t pfr(void) const { return cps & 0xFF; }
+	void set_csn(uint32_t sn, uint8_t fr) { csn=fr | sn<<8; }
+	void set_cps(uint32_t psn, uint8_t pfr) { cps=pfr | psn<<8; }
 
-	void _update();
 	tNetTime timestamp; //!< message stamp in usecs (to send) - this is in unet->net_time units
 	tNetTime snt_timestamp; //!< time when message was sent
 	unsigned int tries;
 	const bool urgent;
-	//Uru protocol
-	uint8_t val;
+	// Uru protocol
+	uint8_t val; //!< validation level
 	uint32_t pn; //!< packet number
 	uint8_t bhflags; //!< message type/flags
-	uint8_t frn; //!< num fragment(1 byte)
-	uint32_t sn; //!< seq num (3 bytes)
 	uint32_t csn; //!< combined fragment and seq num
 	uint8_t frt; //!< total fragments (1 Byte)
-	uint8_t pfr; //!< last acked fragment
-	uint32_t ps; //!< last acked seq num
 	uint32_t cps; //!< combined last acked fragment and seq num
-	uint32_t dsize; //!< size of data / number of acks in the packet
 	tMBuf data;
 	FORBID_CLASS_COPY(tUnetUruMsg)
 };

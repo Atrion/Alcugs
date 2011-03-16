@@ -30,7 +30,7 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETSESSION_ID "$Id$"
-//#define _DBG_LEVEL_ 5
+#define _DBG_LEVEL_ 3
 #include <alcdefs.h>
 #include "netsession.h"
 
@@ -70,8 +70,6 @@ tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t s
 	rtt=0;
 	conn_timeout=net->conn_timeout*1000*1000;
 	negotiating=false;
-	resetMsgCounters();
-	assert(serverMsg.pn==0);
 	rejectMessages=false;
 	terminated = false;
 	
@@ -94,8 +92,9 @@ tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t s
 	net->sec->log("%s New Connection\n",str().c_str());
 	net->addEvent(new tNetEvent(this,UNET_NEWCONN));
 	
-	// start negotating of we are a talking to a server
+	// start negotating if we are talking to a server - for a client, parse the first message, to know the validation type!
 	if (!client) negotiate();
+	else resetMsgCounters();
 }
 tNetSession::~tNetSession() {
 	DBG(5,"~tNetSession() (sndq: %Zd messages left)\n", sndq.size());
@@ -105,24 +104,16 @@ tNetSession::~tNetSession() {
 void tNetSession::resetMsgCounters(void) {
 	tMutexLock lock(sendMutex);
 	DBG(3, "tNetSession::resetMsgCounters\n");
-	clientMsg.pfr=0;
-	clientMsg.ps=0;
+	clientMsg.cps=0;
 	serverMsg.pn=0;
 	serverMsg.sn=0;
-	serverMsg.pfr=0;
-	serverMsg.ps=0;
+	serverMsg.cps=0;
 	// empty queues
 	sndq.clear();
 	ackq.clear();
 	rcvq.clear();
 	delete rcv;
 	rcv = NULL;
-}
-int8_t tNetSession::compareMsgNumbers(uint32_t sn1, uint8_t fr1, uint32_t sn2, uint8_t fr2)
-{
-	if (sn1 < sn2 || (sn1 == sn2 && fr1 < fr2)) return -1;
-	else if (sn1 == sn2 && fr1 == fr2) return 0;
-	else return 1;
 }
 tLog* tNetSession::getLog(void)
 {
@@ -249,14 +240,11 @@ void tNetSession::send(const tmBase &msg, tNetTimeDiff delay) {
 			//pmsg.pn NOT in this layer (done in the msg sender, tUnet::rawsend)
 			//since urgent messages are put at the top of the sndq, the pn would be wrong if we did it differently
 			pmsg->bhflags=flags;
-			pmsg->frn=i;
-			pmsg->sn=serverMsg.sn;
+			pmsg->set_csn(serverMsg.sn, i);
 			pmsg->frt=n_pkts;
-			pmsg->pfr=serverMsg.pfr;
-			pmsg->ps=serverMsg.ps;
+			pmsg->cps=serverMsg.cps;
 			
 			pmsg->data.write(buf.read(csize),csize);
-			pmsg->_update();
 			
 			pmsg->timestamp=net->getNetTime()+delay; // no need to take tts into account now, the send queue worker does that (and our tts estimate might change till this packet is actually sent)
 			
@@ -265,8 +253,7 @@ void tNetSession::send(const tmBase &msg, tNetTimeDiff delay) {
 			#endif
 			
 			if(flags & UNetAckReq) { // if this packet has the ack flag on, save it's number
-				serverMsg.ps=pmsg->sn;
-				serverMsg.pfr=pmsg->frn;
+				serverMsg.cps=pmsg->csn;
 			}
 			
 			// Urgent messages are added at the top of the send queue but BEHIND other urgent packets, the rest at the back
@@ -299,7 +286,7 @@ void tNetSession::rawsend(tUnetUruMsg *msg)
 	assert(alcGetSelfThreadId() == alcGetMain()->threadId());
 
 	DBG(9,"Server pn is %08X\n",serverMsg.pn);
-	DBG(9,"Server sn is %08X,%08X\n",serverMsg.sn,msg->sn);
+	DBG(9,"Server sn is %08X,%08X\n",serverMsg.sn,msg->sn());
 	serverMsg.pn++;
 	msg->pn=serverMsg.pn;
 	
@@ -371,12 +358,12 @@ void tNetSession::rawsend(tUnetUruMsg *msg)
 		net->last_quota_check = net->getNetTime();
 	}
 	if(msize>0 && net->lim_up_cap) {
-		if((net->cur_up_quota+msize+net->ip_overhead)>net->lim_up_cap) {
-			DBG(5,"Paquet dropped by quotas, in use:%i,req:%li, max:%i\n",net->cur_up_quota,msize+net->ip_overhead,net->lim_up_cap);
-			net->log->log("Paquet dropped by quotas, in use:%i,req:%i, max:%i\n",net->cur_up_quota,msize+net->ip_overhead,net->lim_up_cap);
+		if((net->cur_up_quota+msize)>net->lim_up_cap) {
+			DBG(5,"Paquet dropped by quotas, in use:%i,req:%li, max:%i\n",net->cur_up_quota,msize,net->lim_up_cap);
+			net->log->log("Paquet dropped by quotas, in use:%i,req:%i, max:%i\n",net->cur_up_quota,msize,net->lim_up_cap);
 			msize=0;
 		} else {
-			net->cur_up_quota+=msize+net->ip_overhead;
+			net->cur_up_quota+=msize;
 		}
 	}
 #endif
@@ -395,13 +382,13 @@ void tNetSession::rawsend(tUnetUruMsg *msg)
 void tNetSession::negotiate() {
 	unsigned int sbw;
 	// send server downstream (for the peer to know how fast it can send packets)
-	DBG(9,"%08X %08X %08X\n",ip,net->lan_mask,net->lan_addr);
 	if((ntohl(ip) & 0xFFFFFF00) == 0x7F000000 || (ip & net->lan_mask) == net->lan_addr) { //lo or LAN
 		sbw=net->lan_down;
 	} else {
 		sbw=net->nat_down; // WAN
 	}
 
+	resetMsgCounters();
 	send(tmNetClientComm(tTime::now(),sbw,this));
 	negotiating = true;
 }
@@ -421,22 +408,22 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 	 * alcUruValidatePacket will try to validate the packet both with and without passwd if possible, we tell it to use the passwd
 	 * whenever we have one - as a result, even if the client for some reason decides to encode a packet before we actually know
 	 * the passwd, that's fine. */
-	int ret;
 	{
+		int ret;
 		tReadLock lock(prvDataMutex);
 		ret=alcUruValidatePacket(static_cast<uint8_t*>(buf),size,&validation,!passwd.isEmpty(),passwd.c_str());
-	}
 	
-	if(ret!=0 && (ret!=1 || net->flags & UNET_ECRC)) {
-		if(ret==1) {
-			net->err->log("ERR: %s Failed validating a message in validation level %d", str().c_str(), validation);
-			if (!passwd.isEmpty())
-				net->err->print(" (authed)!\n");
-			else
-				net->err->print(" (not authed)!\n");
+		if(ret!=0 && (ret!=1 || net->flags & UNET_ECRC)) {
+			if(ret==1) {
+				net->err->log("ERR: %s Failed validating a message in validation level %d", str().c_str(), validation);
+				if (!passwd.isEmpty())
+					net->err->print(" (authed)!\n");
+				else
+					net->err->print(" (not authed)!\n");
+			}
+			else net->err->log("ERR: %s Non-Uru protocol packet recieved!\n", str().c_str());
+			return;
 		}
-		else net->err->log("ERR: %s Non-Uru protocol packet recieved!\n", str().c_str());
-		return;
 	}
 	
 	#ifdef ENABLE_MSGDEBUG
@@ -469,75 +456,59 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 		upgradedProtocol = true;
 	}
 
-	// process negotation
+	// process negotation (will always require an ack)
 	if(msg->bhflags & UNetNegotiation) {
 		tmNetClientComm comm(this, msg);
-		net->log->log("<RCV> [%d] %s",msg->sn,comm.str().c_str());
+		net->log->log("<RCV> [%d] %s",msg->sn(),comm.str().c_str());
+		// check what to do
 		if(renego_stamp==comm.timestamp) { // it's a duplicate, we already got this message
-		    // It is necessary to do the check this way since the usual check by SN would treat a nego on an existing connection as
-		    //  "already parsed" since the SN is started from the beginning
+			/* It is necessary to do the check this way since the usual check by SN would treat a re-nego on an existing connection as
+			 * "already parsed" since the SN is started from the beginning */
+			if (msg->cps == clientMsg.cps) // messgae has correct SN
+				clientMsg.cps = msg->csn; // accept it
+			send(tmNetAck(this, new tUnetAck(msg->csn, msg->cps))); // ack it
+			delete msg; // and be done
 			net->log->print(" (ignored)\n");
-		} else {
-			net->log->nl();
-			renego_stamp=comm.timestamp;
-			if(!negotiating) {
-				// if this nego came unexpectedly, reset everything and send a nego back (since the other peer expects our answer, this
-				//  will not result in an endless loop of negos being exchanged)
-				resetMsgCounters();
-				if (msg->sn != 1 || msg->ps != 0) {
-					net->err->log("%s ERR: Got a nego with a sn of %d (expected 1) and a previous ack of %d (expected 0)\n", str().c_str(), msg->sn, msg->ps);
-					clientMsg.ps = msg->ps; // the nego marks the beginning of a new connection, so accept everything from here on
-					clientMsg.pfr = msg->pfr;
-				}
-				negotiate();
-			}
-			cabal=0; // re-determine cabal with the new bandwidth
+			return;
 		}
+		net->log->nl();
+		renego_stamp=comm.timestamp;
+		if(!negotiating) {
+			// if this nego came unexpectedly, reset everything and send a nego back (since the other peer expects our answer, this
+			//  will not result in an endless loop of negos being exchanged)
+			if (msg->sn() != 1 || msg->psn() != 0) {
+				net->err->log("%s ERR: Got a nego with a sn of %d (expected 1) and a previous ack of %d (expected 0)\n", str().c_str(), msg->sn(), msg->psn());
+			}
+			negotiate();
+		}
+		clientMsg.cps = msg->csn; // the nego marks the beginning of a new connection, so accept everything from here on
+		send(tmNetAck(this, new tUnetAck(msg->csn, msg->cps))); // ack it after sending the nego!
+		delete msg;
 		
 		// calculate connection bandwidth
-		if (!isConnected()) {
-			// if we know the downstream of the peer, set avg cabal using what is smaller: our upstream or the peers downstream
-			//  (this is the last part of the negotiationg process)
-			
-			// save our upstream in cabal (in bytes per second)
-			if((ntohl(ip) & 0xFFFFFF00) == 0x7F000000 || (ip & net->lan_mask) == net->lan_addr) { //lo/LAN
-				cabal=net->lan_up / 8;
-			} else { //WAN
-				cabal=net->nat_up / 8;
-			}
-			// determine connection limits
-			comm.bandwidth /= 8; // we want bytes per second
-			unsigned int maxBandwidth = std::max(cabal, comm.bandwidth);
-			unsigned int minBandwidth = std::min(cabal, comm.bandwidth);
-			cabal=std::min(minBandwidth, maxBandwidth/4); // don't start too fast, the nego just gives us an estimate!
-			if (cabal < maxPacketSz) cabal = maxPacketSz;
-			DBG(5, "%s Initial cabal is %i\n",str().c_str(),cabal);
-			negotiating=false;
+		// if we know the downstream of the peer, set avg cabal using what is smaller: our upstream or the peers downstream
+		//  (this is the last part of the negotiationg process)
+		
+		// save our upstream in cabal (in bytes per second)
+		if((ntohl(ip) & 0xFFFFFF00) == 0x7F000000 || (ip & net->lan_mask) == net->lan_addr) { //lo/LAN
+			cabal=net->lan_up / 8;
+		} else { //WAN
+			cabal=net->nat_up / 8;
 		}
-		// make sure we ack this packet
-		createAckReply(*msg);
+		// determine connection limits
+		comm.bandwidth /= 8; // we want bytes per second
+		unsigned int maxBandwidth = std::max(cabal, comm.bandwidth);
+		unsigned int minBandwidth = std::min(cabal, comm.bandwidth);
+		cabal=std::min(minBandwidth, maxBandwidth/4); // don't start too fast, the nego just gives us an estimate!
+		if (cabal < maxPacketSz) cabal = maxPacketSz;
+		DBG(5, "%s Initial cabal is %i\n",str().c_str(),cabal);
+		negotiating=false;
 		return;
 	}
-	if (!isConnected()) { // we did not yet negotiate, go ahead and DO IT
-		if(!negotiating) { // and we are not in the process of doing it - so start that process
-			net->log->log("%s WARN: Obviously a new connection was started with something different than a nego\n", str().c_str());
-			negotiate();
-			clientMsg.ps = msg->ps; // this message is the beginning of a new connection, so accept everything from here on
-			clientMsg.pfr = msg->pfr;
-		}
-	}
-	// fix the problem that happens every 15-30 days of server uptime - but only if sndq is empty, or we will loose packets
-	else {
-		sendMutex.lock();
-		uint32_t sn = serverMsg.sn;
-		sendMutex.unlock(); // unlock here, because anythingToSend and resetMsgCounters will lock again
-		if (!anythingToSend() && (sn>=8378608 || msg->sn>=8378608)) { // 8378608 = 2^23 - 10000
-			net->log->log("%s WARN: Congratulations! You have reached the maxium allowed sequence number, don't worry, this is not an error\n", str().c_str());
-			net->log->flush();
-			resetMsgCounters();
-			renego_stamp = tTime();
-			negotiate();
-		}
+	else if (!isConnected() && !negotiating) { // we did not yet negotiate, go ahead and DO IT
+		net->log->log("%s WARN: Obviously a new connection was started with something different than a nego\n", str().c_str());
+		negotiate();
+		clientMsg.cps = msg->cps; // this message is the beginning of a new connection, so make below code accept it
 	}
 
 	// Acks
@@ -550,6 +521,7 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 			tWriteLock lock(prvDataMutex);
 			if (!authenticated && !passwd.isEmpty()) authenticated = true;
 		}
+		delete msg;
 		return;
 	}
 	
@@ -562,14 +534,12 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 		return;
 	}
 
-	//check uplicates
-	ret = compareMsgNumbers(msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
 	/* ret values:
 		<0: This is an old packet, ack, but don't accept
 		0: This is what we need
 		>0: This is a future packet */
-	if (ret > 0 && rcvq.size() > net->receiveAhead) {
-		net->log->log("%s WARN: Dropped packet I can not yet parse: %d.%d (last ack: %d.%d, expected: %d.%d)\n", str().c_str(), msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
+	if (msg->cps > clientMsg.cps && rcvq.size() > net->receiveAhead) {
+		net->log->log("%s WARN: Dropped packet I can not yet parse: %d.%d (last ack: %d.%d, expected: %d.%d)\n", str().c_str(), msg->sn(), msg->fr(), msg->psn(), msg->pfr(), clientMsg.psn(), clientMsg.pfr());
 		delete msg;
 		return;
 	}
@@ -577,23 +547,23 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 	// if the packet requires it, send an ack
 	if (msg->bhflags & UNetAckReq) {
 		//ack reply
-		createAckReply(*msg);
+		createAckReply(msg);
 	}
 	
 	// We may be able to cache it
-	if (ret > 0) {
+	if (msg->cps > clientMsg.cps) {
 		queueReceivedMessage(msg);
 	}
 	// or we already aprsed it, so we drop it
-	else if (ret < 0) {
-		net->log->log("%s Dropping re-sent old packet %d.%d (last ack: %d.%d, expected: %d.%d)\n", str().c_str(), msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
+	else if (msg->cps < clientMsg.cps) {
+		net->log->log("%s Dropping re-sent old packet %d.%d (last ack: %d.%d, expected: %d.%d)\n", str().c_str(), msg->sn(), msg->fr(), msg->psn(), msg->pfr(), clientMsg.psn(), clientMsg.pfr());
 		delete msg;
 		return;
 	}
 	// or we parse it
 	else {
 		//flood control
-		if((msg->bhflags & UNetAckReq) && (msg->frn==0) && (net->flags & UNET_FLOODCTR)) {
+		if((msg->bhflags & UNetAckReq) && (msg->fr()==0) && (net->flags & UNET_FLOODCTR)) {
 			if(net->passedTimeSince(flood_last_check) > net->flood_check_interval) {
 				flood_last_check=net->getNetTime();
 				flood_npkts=0;
@@ -609,8 +579,7 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 		// end flood control
 		
 		// We can use it!
-		acceptMessage(msg);
-		msg = NULL; // acceptMessage will delete it
+		acceptMessage(msg); // will delete the message
 
 		// We might be able to accept cached messages now
 		checkQueuedMessages();
@@ -620,25 +589,21 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 /** add this to the received message and put fragments together - this deletes the passed message! */
 void tNetSession::acceptMessage(tUnetUruMsg *t)
 {
-	DBG(5, "Accepting %d.%d\n", t->sn, t->frn);
+	assert(!(t->bhflags & UNetNegotiation));
+	DBG(5, "Accepting %d.%d\n", t->sn(), t->fr());
 	if (t->bhflags & UNetAckReq) {
-		clientMsg.ps = t->sn;
-		clientMsg.pfr = t->frn;
-	}
-	if (t->bhflags & UNetNegotiation) {
-		delete t;
-		return; // These are already processed
+		clientMsg.cps = t->csn;
 	}
 
 	size_t frg_size = maxPacketSz - t->hSize();
 	if (!rcv) { // this is a brand new message
 		rcv=new tUnetMsg();
-		rcv->sn=t->sn;
+		rcv->sn=t->sn();
 	}
 	else {
-		if (rcv->sn != t->sn) throw txProtocolError(_WHERE("I am assembling message nr. %d and received nr. %d?!?", rcv->sn, t->sn));
+		if (rcv->sn != t->sn()) throw txProtocolError(_WHERE("I am assembling message nr. %d and received nr. %d?!?", rcv->sn, t->sn()));
 	}
-	if (t->frn != rcv->fr_count) throw txProtocolError(_WHERE("Expected fragment %d, got %d\n", rcv->fr_count, t->frn));
+	if (t->fr() != rcv->fr_count) throw txProtocolError(_WHERE("Expected fragment %d, got %d\n", rcv->fr_count, t->fr()));
 
 	// Got the next one!
 	rcv->data.put(t->data);
@@ -665,16 +630,14 @@ void tNetSession::acceptMessage(tUnetUruMsg *t)
 /** Saves a received, not-yet accepted message for future use */
 void tNetSession::queueReceivedMessage(tUnetUruMsg *msg)
 {
-	net->log->log("%s Queuing %d.%d for future use (can not yet accept it - last ack: %d.%d, expected: %d.%d)\n", str().c_str(), msg->sn, msg->frn, msg->ps, msg->pfr, clientMsg.ps, clientMsg.pfr);
+	net->log->log("%s Queuing %d.%d for future use (can not yet accept it - last ack: %d.%d, expected: %d.%d)\n", str().c_str(), msg->sn(), msg->fr(), msg->psn(), msg->pfr(), clientMsg.psn(), clientMsg.pfr());
 	// the queue is sorted ascending
 	for (tPointerList<tUnetUruMsg>::iterator it = rcvq.begin(); it != rcvq.end(); ++it) {
-		tUnetUruMsg *cur = *it;
-		int ret = compareMsgNumbers(msg->sn, msg->frn, cur->sn, cur->frn);
-		if (ret < 0) { // we have to put it after the current one!
+		if ((*it)->csn > msg->csn) { // we have to put it before the current one! (it's the first one to be bigger)
 			rcvq.insert(it, msg);
 			return;
 		}
-		else if (ret == 0) { // the message is already in the queue
+		else if (msg->csn == (*it)->csn) { // the message is already in the queue
 			delete msg;
 			return;
 		}
@@ -687,24 +650,23 @@ void tNetSession::checkQueuedMessages(void)
 {
 	tPointerList<tUnetUruMsg>::iterator it = rcvq.begin();
 	while (it != rcvq.end()) {
-		tUnetUruMsg *cur = *it;
-		int ret = compareMsgNumbers(cur->ps, cur->pfr, clientMsg.ps, clientMsg.pfr);
-		if (ret < 0) it = rcvq.eraseAndDelete(it); // old packet
-		else if (ret == 0) {
+		if ((*it)->cps < clientMsg.cps) it = rcvq.eraseAndDelete(it); // old packet
+		else if ((*it)->cps == clientMsg.cps) {
+			DBG(5, "%s can now accept queued message %d.%d\n", str().c_str(), (*it)->sn(), (*it)->fr());
+			acceptMessage(*it);
 			it = rcvq.erase(it); // do not delete!
-			acceptMessage(cur);
 		}
 		else return; // These can still not be accepted
 	 }
 }
 
 /** creates an ack in the ackq */
-void tNetSession::createAckReply(tUnetUruMsg &msg) {
+void tNetSession::createAckReply(const tUnetUruMsg *msg) {
 	uint32_t A,B;
 	
 	// we can ack everything between B and A
-	A=msg.csn;
-	B=msg.cps;
+	A=msg->csn;
+	B=msg->cps;
 	assert(A > B);
 #if 0
 	// send acks directly
@@ -751,7 +713,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 	uint32_t A1,A2,A3;
 	tmNetAck ackMsg(this, &t);
 #if _DBG_LEVEL_ >= 1
-	net->log->log("<RCV> [%d] %s\n",t.sn,ackMsg.str().c_str());
+	net->log->log("<RCV> [%d] %s\n",t.sn(),ackMsg.str().c_str());
 #endif
 	tUnetAck *ack;
 	tMutexLock lock(sendMutex);
@@ -821,6 +783,18 @@ tNetTimeDiff tNetSession::processSendQueues()
 	tNetTimeDiff timeout = ackSend(); //generate ack messages (i.e. put them from the ackq to the sndq)
 	
 	tMutexLock sendLock(sendMutex);
+	if (!isUruClient() && sndq.empty() && ackq.empty()) { // send and ack queue empty (the Uru client accepts a re-nego but will not decrease the numbers)
+		// fix the problem that happens every 15-30 days of server uptime - but only if sndq is empty, or we will loose packets
+		if (serverMsg.sn >= (1 << 22) || clientMsg.psn() >= (1 << 22)) { // = 2^22
+			net->log->log("%s WARN: Congratulations! You have reached the maxium allowed sequence number, don't worry, this is not an error\n", str().c_str());
+			net->log->flush();
+			renego_stamp = tTime();
+			sendMutex.unlock(); // unlock here, because negotiate will lock again
+			negotiate();
+			sendMutex.lock(); // and relock
+			// do this before the send queue check, so that the nego has a chance to be sent immediately
+		}
+	}
 	if (!sndq.empty()) {
 		// cabal control (don't send too muczh at once!)
 		tNetTimeDiff cur_size=0;
@@ -868,7 +842,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 						curmsg->tries++;
 						curmsg->timestamp=net->getNetTime() + msg_timeout;
 						if (authenticated) curmsg->timestamp += curmsg->tries*msg_timeout/2; // choose much higher timeout for client connections and icnrease it during re-sends - the clients netcore sometimes seems to be blocked long beyond any reasonable time
-						if (timeout > msg_timeout) timeout = msg_timeout; // be sure to check this message on time
+						timeout = std::min(timeout, net->remainingTimeTill(curmsg->timestamp)); // be sure to check this message on time
 						++it; // go on
 					}
 				} else {

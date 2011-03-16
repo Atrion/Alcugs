@@ -62,7 +62,7 @@ static txUnet txUnetWithErrno(tString msg) {
 	return txUnet(msg);
 }
 
-tUnet::tUnet(uint8_t whoami,const tString & lhost,uint16_t lport) : smgr(NULL), whoami(whoami), ip_overhead(20+8),
+tUnet::tUnet(uint8_t whoami,const tString & lhost,uint16_t lport) : smgr(NULL), whoami(whoami),
 		max_version(12), min_version(7)
 {
 	setBindAddress(lhost);
@@ -417,12 +417,12 @@ bool tUnet::sendAndWait() {
 		last_quota_check = getNetTime();
 	}
 	if(lim_down_cap) {
-		if((cur_down_quota+n+ip_overhead)>lim_down_cap) {
-			DBG(5,"Paquet dropped by quotas, in use:%i,req:%li, max:%i\n",cur_down_quota,n+ip_overhead,lim_down_cap);
-			log->log("Incomming paquet dropped by quotas, in use:%i,req:%i, max:%i\n",cur_down_quota,n+ip_overhead,lim_down_cap);
+		if((cur_down_quota+n)>lim_down_cap) {
+			DBG(5,"Paquet dropped by quotas, in use:%i,req:%li, max:%i\n",cur_down_quota,n,lim_down_cap);
+			log->log("Incomming paquet dropped by quotas, in use:%i,req:%i, max:%i\n",cur_down_quota,n,lim_down_cap);
 			n=0;
 		} else {
-			cur_down_quota+=n+ip_overhead;
+			cur_down_quota+=n;
 		}
 	}
 #endif

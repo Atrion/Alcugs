@@ -259,6 +259,7 @@ void tUnetUruMsg::store(tBBuf &t) {
 	uint8_t check = UNetNegotiation | UNetAckReq | UNetAckReply | UNetExt;
 	if (bhflags & ~(check)) throw txUnexpectedData(_WHERE("Problem parsing uru msg flag %08X\n",bhflags & ~(check)));
 	// Catch invalid Flag combinations
+	if((bhflags & UNetNegotiation) && !(bhflags & UNetAckReq)) throw txProtocolError(_WHERE("Negos must require an ack"));
 	if((bhflags & UNetNegotiation) && (bhflags & UNetAckReply)) throw txUnexpectedData(_WHERE("That must be a maliciusly crafted paquet, flags UNetAckReply and UNetNegotiation cannot be set at the same time"));
 	if((bhflags & UNetAckReq) && (bhflags & UNetAckReply)) throw txUnexpectedData(_WHERE("That must be a maliciusly crafted paquet, flags UNetAckReply and UNetAckReq cannot be set at the same time"));
 	if(bhflags & UNetExt) {
@@ -275,34 +276,24 @@ void tUnetUruMsg::store(tBBuf &t) {
 		throw txProtocolError(_WHERE("Nego and ack packets must not be fragmented!"));
 	if (frt > 0 && !(bhflags & UNetAckReq))
 		throw txProtocolError(_WHERE("Non-acked packets must not be fragmented!"));
+	if (fr() > frt)
+		throw txProtocolError(_WHERE("Packet has more fragments than it should?"));
 	cps=t.get32();
-	dsize=t.get32();
+	uint32_t dsize=t.get32();
 	if(dsize==0) throw txUnexpectedData(_WHERE("A zero sized message!?"));
 	if (t.tell() != hsize) throw txUnexpectedData(_WHERE("Header size mismatch, %d != %d", t.tell(), hsize));
 	// done with the header - read data and check size
 	data.clear();
 	if(bhflags & UNetAckReply) {
-		uint32_t xdsize=dsize;
-		if(bhflags & UNetExt) {
-			xdsize=dsize*8;
-		} else {
-			xdsize=(dsize*16)+2;
-		}
+		uint32_t xdsize= (bhflags & UNetExt) ? dsize*8 : (dsize*16)+2;
 		data.write(t.read(xdsize),xdsize);
 	} else {
 		data.write(t.read(dsize),dsize);
 	}
-	if (!t.eof()) throw txUnexpectedData(_WHERE("Message size mismatch"));
 	data.rewind();
-	
-	frn=csn & 0x000000FF;
-	sn=csn >> 8;
-	pfr=cps & 0x000000FF;
-	ps=cps >> 8;
-	if (frn > frt) throw txProtocolError(_WHERE("A message must not have more fragments than it says it would have"));
+	if (!t.eof()) throw txUnexpectedData(_WHERE("Message size mismatch"));
 }
 void tUnetUruMsg::stream(tBBuf &t) const {
-	DBG(5,"[%i] ->%02X<- {%i,%i (%i) %i,%i} - %02X|%i bytes\n",pn,bhflags,sn,frn,frt,ps,pfr,dsize,dsize);
 	// this will be overwritten by sender
 	t.put8(0x03); //already done by the sender ()
 	t.put8(val);
@@ -320,7 +311,15 @@ void tUnetUruMsg::stream(tBBuf &t) const {
 		t.put32(0);
 	}
 	t.put32(cps);
-	t.put32(dsize);
+	// write dsize
+	if(bhflags & UNetAckReply) {
+		if(bhflags & UNetExt)
+			t.put32(data.size()/8);
+		else
+			t.put32((data.size()-2)/16);
+	} else {
+		t.put32(data.size());
+	}
 	t.put(data);
 }
 size_t tUnetUruMsg::size() {
@@ -332,25 +331,11 @@ size_t tUnetUruMsg::hSize() {
 	if(bhflags & UNetExt) hsize-=8;
 	return hsize;
 }
-void tUnetUruMsg::_update() {
-	// update dsize
-	if(bhflags & UNetAckReply) {
-		if(bhflags & UNetExt)
-			dsize=data.size()/8;
-		else
-			dsize=(data.size()-2)/16;
-	} else {
-		dsize=data.size();
-	}
-	// update combined message counters
-	csn=frn | sn<<8;
-	cps=pfr | ps<<8;
-}
 void tUnetUruMsg::dumpheader(tLog * f) {
-	f->print("[%i] ->%02X<- {%i,%i (%i) %i,%i} - %02X|%i bytes",pn,bhflags,sn,frn,frt,ps,pfr,data.size(),data.size());
+	f->print("[%i] ->%02X<- {%i,%i (%i) %i,%i} - %02X|%i bytes",pn,bhflags,sn(),fr(),frt,psn(),pfr(),data.size(),data.size());
 }
 //flux 0 client -> server, 1 server -> client
-void tUnetUruMsg::htmlDumpHeader(tLog * log,uint8_t flux,uint32_t ip,uint16_t port) {
+void tUnetUruMsg::htmlDumpHeader(tLog * log,uint8_t flux,uint32_t ip,uint16_t port) const {
 	if (!log->doesPrint()) return;
 	log->stamp();
 
@@ -381,7 +366,7 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,uint8_t flux,uint32_t ip,uint16_t po
 	} else {
 		log->print(" me -&gt; ");
 	}
-	log->print("%i %i,%i (%i) %i,%i ",pn,sn,frn,frt,ps,pfr);
+	log->print("%i %i,%i (%i) %i,%i ",pn,sn(),fr(),frt,psn(),pfr());
 
 	if(flux==0) {
 		log->print(" &lt;- %s:%i</b> ",alcGetStrIp(ip).c_str(),ntohs(port));
@@ -389,41 +374,16 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,uint8_t flux,uint32_t ip,uint16_t po
 		log->print(" -&gt; %s:%i ",alcGetStrIp(ip).c_str(),ntohs(port));
 	}
 
-	data.rewind();
-
 	switch(bhflags) {
 		case UNetAckReply: //0x80
 			log->print("ack");
-			data.seek(2);
-			for(uint32_t i=0; i<dsize; i++) {
-				if(i!=0) { log->print(" |"); }
-				uint8_t i1=data.get8();
-				uint32_t i2=data.get32();
-				data.seek(3);
-				uint8_t i3=data.get8();
-				data.seek(-1);
-				uint32_t i4=data.get32();
-				log->print(" %i,%i %i,%i",i2,i1,i4>>8,i3);
-				data.seek(3);
-			}
 			break;
 		case UNetAckReply | UNetExt:
 			log->print("aack");
-			for(uint32_t i=0; i<dsize; i++) {
-				if(i!=0) { log->print(" |"); }
-				uint8_t i1=data.get8();
-				data.seek(-1);
-				uint32_t i2=data.get32();
-				uint8_t i3=data.get8();
-				data.seek(-1);
-				uint32_t i4=data.get32();
-				log->print(" %i,%i %i,%i",i2>>8,i1,i4>>8,i3);
-			}
 			break;
 		case UNetNegotiation | UNetAckReq: //0x42
 		case UNetNegotiation | UNetAckReq | UNetExt:
 			log->print("Negotiation ");
-			log->print("%i bps, %s",data.get32(),tTime(data.get32()).str().c_str(),data.get32());
 			break;
 		case 0x00: //0x00
 		case UNetExt:
@@ -440,15 +400,6 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,uint8_t flux,uint32_t ip,uint16_t po
 
 	log->print("</font>");
 
-	if((bhflags==0x00 || bhflags==UNetAckReq || bhflags==UNetExt || bhflags==(UNetAckReq | UNetExt))) {
-		if(frn==0) {
-			uint16_t msgcode=data.get16();
-			//log->print("(%04X) %s %08X",*(U16 *)(buf),alcUnetGetMsgCode(*(U16 *)(buf)),*(U32 *)(buf+2));
-			log->print("(%04X) %s %08X",msgcode,alcUnetGetMsgCode(msgcode),data.get32());
-		} else {
-			log->print("frg..");
-		}
-	}
 	log->print("<br>\n");
 	log->flush();
 }
