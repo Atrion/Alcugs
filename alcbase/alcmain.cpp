@@ -63,6 +63,11 @@ tAlcMain::tAlcMain(const tString& appName) : appName(appName)
 		if (alcMain) _DIE("You can NEVER create several instances of tAlcMain");
 		alcMain = this;
 		
+		// be sure to receive all signals (if we are forked from the lobby server worker thread, we inherit its blick mask!)
+		sigset_t set;
+		sigfillset(&set);
+		if (pthread_sigmask(SIG_UNBLOCK, &set, NULL)) _DIE("Failed to unlock signals");
+		
 		// initialization
 		mainThreadId = alcGetSelfThreadId();
 		born.setToNow();
