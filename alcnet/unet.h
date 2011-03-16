@@ -171,7 +171,6 @@ protected:
 	
 	unsigned int receiveAhead; //!< number of future messages to receive and cache
 	
-	const unsigned int ip_overhead;
 	//debugging stuff
 	#ifdef ENABLE_NETDEBUG
 	unsigned int lim_down_cap; //in bytes

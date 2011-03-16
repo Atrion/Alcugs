@@ -87,7 +87,7 @@ private:
 	void resetMsgCounters(void);
 	void rawsend(tUnetUruMsg *msg);
 
-	void createAckReply(tUnetUruMsg &msg);
+	void createAckReply(const tUnetUruMsg* msg);
 	tNetTimeDiff ackSend(); //!< return the maximum wait time before we have to check again
 	void ackCheck(tUnetUruMsg &msg);
 	
@@ -96,7 +96,6 @@ private:
 	void checkQueuedMessages(void);
 
 	bool isConnected() const { return cabal!=0; }
-	static int8_t compareMsgNumbers(uint32_t sn1, uint8_t fr1, uint32_t sn2, uint8_t fr2);
 	void updateRTT(tNetTimeDiff newread);
 	void increaseCabal();
 	void decreaseCabal(bool emergency);
@@ -138,12 +137,12 @@ private:
 	struct { //server message counters, protected by send mutex
 		uint32_t pn; //!< the overall packet number
 		uint32_t sn; //!< the message number
-		uint8_t pfr; //!< the fragment number of the last packet I sent which required an ack
-		uint32_t ps; //!< the msg number of the last packet I sent which required an ack
+		uint32_t cps; //!< the msg and fragment number of the last packet I sent which required an ack
 	} serverMsg;
 	struct { // client message counters
-		uint8_t pfr;
-		uint32_t ps;
+		uint32_t cps; //!< msg and fragment number of last acked message I got
+		uint32_t psn(void) const { return cps >> 8; }
+		uint8_t pfr(void) const { return cps & 0xFF; }
 	} clientMsg;
 	uint8_t validation; //!< store the validation level (0,1,2)
 	bool upgradedProtocol; //!< use the alcugs upgraded protocol; protected by prvDataMutex
