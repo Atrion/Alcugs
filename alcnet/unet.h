@@ -82,6 +82,11 @@ namespace alc {
 #define UNET_DEFAULT_FLAGS (UNET_ELOG | UNET_ECRC | UNET_FLOODCTR)
 
 
+/**
+ * The netcore: Opening and closing the socket, offering functionality to establish a connection,
+ * and manage the list of active sessions. Forwarding incoming messages to the correct session.
+ * It offers a function to be called in a loop, that gives all messages a chance to send messages
+ * and then sleeps for as long as sessions said they want. */
 class tUnet {
 	friend class tNetSession; // needs to send messages, print logs, do the NETDEBUG stuff, and so on
 
@@ -132,7 +137,7 @@ protected:
 	}
 
 private:
-	std::pair<tNetTimeDiff, bool> processSendQueues(); //!< send messages from the sessions' send queues - also updates the timeouts for the next wait \return the time in usec we should wait before processing again, and a bool saying whether any session has anything to send
+	tNetTimeBoolPair processSendQueues(); //!< send messages from the sessions' send queues - also updates the timeouts for the next wait \return the time in usec we should wait before processing again, and a bool saying whether any session has anything to send
 	void updateNetTime();
 	void removeConnection(tNetSession *u); //!< destroy that session, must be called in main thread
 

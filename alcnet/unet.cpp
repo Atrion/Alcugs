@@ -336,7 +336,7 @@ void tUnet::removeConnection(tNetSession *u)
 This function recieves new packets and passes them to the correct session */
 bool tUnet::sendAndWait() {
 	// send old messages and calulate timeout
-	std::pair<tNetTimeDiff, bool> result = processSendQueues();
+	tNetTimeBoolPair result = processSendQueues();
 	tNetTimeDiff unet_timeout = result.first;
 	bool idle = !result.second; // we are idle if there is nothing to send
 	if (unet_timeout < 500) {
@@ -461,7 +461,7 @@ bool tUnet::sendAndWait() {
 
 /** give each session the possibility to do some stuff and to set the timeout
 Each session HAS to set the timeout it needs because it is reset prior to asking them. */
-std::pair<tNetTimeDiff, bool> tUnet::processSendQueues() {
+tNetTimeBoolPair tUnet::processSendQueues() {
 	// reset the timer
 	tNetTimeDiff unet_timeout=max_sleep;
 	bool anythingToSend = false;
@@ -472,14 +472,12 @@ std::pair<tNetTimeDiff, bool> tUnet::processSendQueues() {
 		tReadLock lock(smgrMutex);
 		for (tNetSessionMgr::tIterator it(smgr); it.next();) {
 			updateNetTime(); // let the session calculate its timestamps correctly
-			unet_timeout = std::min(it->processSendQueues(), unet_timeout);
-			if (!it->anythingToSend()) {
-				if (it->isTerminated()) {
-					sessionsToDelete.push_back(*it); // can't delete now: we are iterating, and we hold the read lock
-				}
-			}
+			tNetTimeBoolPair result = it->processSendQueues();
+			unet_timeout = std::min(result.first, unet_timeout);
+			if (result.second)
+				sessionsToDelete.push_back(*it); // can't delete now: we are iterating, and we hold the read lock
 			else
-				anythingToSend = true;
+				anythingToSend = anythingToSend || it->anythingToSend();
 		}
 	}
 	
@@ -488,7 +486,7 @@ std::pair<tNetTimeDiff, bool> tUnet::processSendQueues() {
 		removeConnection(*it);
 	
 	// return what we found
-	return std::pair<tNetTimeDiff, bool>(unet_timeout, anythingToSend);
+	return tNetTimeBoolPair(unet_timeout, anythingToSend);
 }
 
 

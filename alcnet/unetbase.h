@@ -37,7 +37,11 @@ namespace alc {
 
 
 /** Base abstract class, you need to derive your server/client app's from here
-		This class registers against tAlcUnetMain to make sure there's never more than 1 instance! */
+ * This class registers against tAlcUnetMain to make sure there's never more than 1 instance!
+ * The class offers a loop function and ways to shut the server down sanely, and spawns a 
+ * worker thread that processes events from the event queue and dispatches them to virtual functions
+ * that you msut override in your subclasses.
+ */
 class tUnetBase :public tUnet {
 	friend class tAlcUnetMain; // these classes have a tight relationship, e.g. you need exactly one of both 
 	
@@ -46,9 +50,6 @@ public:
 	virtual ~tUnetBase();
 	/** Runs the netcore */
 	void run();
-	
-	/** terminate this session */
-	void terminate(tNetSession *u, uint8_t reason = 0) { terminate(u, reason, /*gotEndMsg*/false); }
 	
 	/** check whether the server is still running (thread-safe) */
 	bool isRunning(void);
@@ -123,13 +124,11 @@ protected:
 	/** Stops the netcore in a sane way, but without waiting for the clients to properly quit */
 	void forcestop() { stop(0); /* stop with a timeout of 0 */ }
 private:
-	void terminate(tNetSession *u, uint8_t reason, bool gotEndMsg); //! may be called in worker thread
 	bool terminateAll(bool playersOnly = false); //!< \returns if a session was terminated
 	bool terminatePlayers() { return terminateAll(/*playersOnly*/true); }
 	void applyConfig();
 	void flushLogs();
 	
-	int parseBasicMsg(tUnetMsg * msg, tNetSession * u); //!< called in worker thread
 	void processEvent(tNetEvent *evt); //!< dispatches most recent event, called in worker thread!
 	
 	bool configured; //!< stores whether applyConfig() has been called at least once

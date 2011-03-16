@@ -39,6 +39,7 @@
 #include <ctime>
 #include <set>
 #include <cstring>
+#include <cassert>
 
 /* The process of finding an age for a player works as follows:
 
@@ -130,6 +131,7 @@ namespace alc {
 	
 	void tTrackingBackend::findServer(tmCustomFindServer &findServer)
 	{
+		assert(alcGetSelfThreadId() != alcGetMain()->threadId());
 		statusFileUpdate = true;
 		
 		tPlayerList::iterator player = getPlayer(findServer.ki);
@@ -174,6 +176,7 @@ namespace alc {
 	
 	void tTrackingBackend::playerCanCome(alc::tNetSession* game, uint32_t ki)
 	{
+		assert(alcGetSelfThreadId() != alcGetMain()->threadId());
 		tTrackingData *data = dynamic_cast<tTrackingData*>(game->data);
 		if (!data) throw txUnet(_WHERE("server passed in tTrackingBackend::playerCanCome is not a game/lobby server"));
 		log.log("Game server %s tells us that player %d can join\n", game->str().c_str(), ki);
@@ -218,8 +221,7 @@ namespace alc {
 		// search for free ports
 		tTrackingData *data = static_cast<tTrackingData*>(lobby->data); // we already checked the type above
 		int nPorts = data->portEnd - data->portStart + 1;
-		bool *freePorts = static_cast<bool *>(malloc(nPorts*sizeof(bool)));
-		if (freePorts == NULL) throw txNoMem(_WHERE("NoMem"));
+		bool *freePorts = new bool[nPorts];
 		for (int i = 0; i < nPorts; ++i) freePorts[i] = true;
 		for (std::list<tNetSession *>::iterator it = data->children.begin(); it != data->children.end(); ++it)
 			freePorts[ntohs((*it)->getPort()) - data->portStart] = false; // this port is occupied
@@ -227,7 +229,7 @@ namespace alc {
 		for (lowest = 0; lowest < nPorts; ++lowest) {
 			if (freePorts[lowest]) break; // we found a free one
 		}
-		free(freePorts);
+		delete []freePorts;
 		if (lowest == nPorts) { // no free port on the lobby with the least children
 			log.log("ERR: No free port on lobby %s, can't spawn game server\n", lobby->str().c_str());
 			return;
@@ -272,6 +274,7 @@ namespace alc {
 	
 	void tTrackingBackend::updateServer(tNetSession *game, tmCustomSetGuid &setGuid)
 	{
+		assert(alcGetSelfThreadId() != alcGetMain()->threadId());
 		tReadLock lock(net->smgrMutex);
 		statusFileUpdate = true;
 		uint8_t serverGuid[8];
@@ -282,7 +285,7 @@ namespace alc {
 				if (*it == game || !it->data) continue;
 				if (memcmp(it->serverGuid, serverGuid, 8) == 0) {
 					log.log("ERR: There already is a server for guid %s, kicking the new one %s\n", setGuid.serverGuid.c_str(), game->str().c_str());
-					net->terminate(game); // this should usually result in the game server going down
+					game->terminate(); // this should usually result in the game server going down
 					log.flush();
 					return;
 				}
@@ -336,9 +339,9 @@ namespace alc {
 	
 	void tTrackingBackend::updatePlayer(tNetSession *game, tmCustomPlayerStatus &playerStatus)
 	{
+		assert(alcGetSelfThreadId() != alcGetMain()->threadId());
 		if (!game->data)
 			// throwing this error will terminate the connection to this server, which in term should result in the server going down
-			//  (game servers should quit when they loose the connection to the tracking server)
 			throw txProtocolError(_WHERE("server passed in tTrackingBackend::updatePlayer is not a game/lobby server"));
 		statusFileUpdate = true;
 		/* Flags:
@@ -402,6 +405,7 @@ namespace alc {
 	
 	void tTrackingBackend::removeServer(tNetSession *game)
 	{
+		assert(alcGetSelfThreadId() != alcGetMain()->threadId());
 		tTrackingData *data = dynamic_cast<tTrackingData *>(game->data);
 		if (!data) return;
 		statusFileUpdate = true;
@@ -441,6 +445,7 @@ namespace alc {
 	
 	void tTrackingBackend::forwardMessage(tmCustomDirectedFwd &directedFwd)
 	{
+		assert(alcGetSelfThreadId() != alcGetMain()->threadId());
 		// for each player, check if we can reach it, and save which game server we need to send the message to
 		typedef std::set<tNetSession *> tSessionList;
 		tTrackingData *data;
@@ -502,6 +507,7 @@ namespace alc {
 	
 	void tTrackingBackend::updateStatusFile(void)
 	{
+		assert(alcGetSelfThreadId() != alcGetMain()->threadId());
 		if (!statusFileUpdate && lastUpdate > alcGetTime()-5*60) return; // update at least every 5 minutes
 		
 		tReadLock lock(net->smgrMutex);

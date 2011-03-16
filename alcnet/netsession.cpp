@@ -25,12 +25,12 @@
 *******************************************************************************/
 
 /**
-	URUNET 3
+	URUNET 3+
 */
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETSESSION_ID "$Id$"
-#define _DBG_LEVEL_ 3
+//#define _DBG_LEVEL_ 3
 #include <alcdefs.h>
 #include "netsession.h"
 
@@ -69,9 +69,8 @@ tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t s
 	msg_timeout=net->msg_timeout;
 	rtt=0;
 	conn_timeout=net->conn_timeout*1000*1000;
-	negotiating=false;
+	state = Unknown;
 	rejectMessages=false;
-	terminated = false;
 	
 	// socket data
 	sockaddr.sin_family=AF_INET;
@@ -123,8 +122,7 @@ tString tNetSession::str() {
 	tString dbg;
 	dbg.printf("[%i][%s:%i]",sid,alcGetStrIp(ip).c_str(),ntohs(port));
 	tReadLock lockPub(pubDataMutex);
-	tReadLock lockPrv(prvDataMutex);
-	if (!name.isEmpty() && authenticated) {
+	if (!name.isEmpty()) {
 		if (ki != 0) dbg.printf("[%s:%s,%d]", name.c_str(), avatar.c_str(), ki);
 		else dbg.printf("[%s]", name.c_str());
 	}
@@ -187,10 +185,14 @@ void tNetSession::send(const tmBase &msg, tNetTimeDiff delay) {
 	if (msg.getSession() != this)
 		throw txUnexpectedData(_WHERE("Message sent for wrong session!"));
 	uint8_t flags = msg.bhflags(), val = validation;
+	if (getState() == Left && !(flags & (UNetAckReply|UNetNegotiation))) { // only allow negos and acks on left sessions
+		net->err->log("%s is already down, will not send a message to it.\n", str().c_str());
+		return;
+	}
 #if _DBG_LEVEL_ < 1
 	if (!(flags & UNetAckReply))
 #endif
-		net->log->log("<SND> %s\n",msg.str().c_str());
+		net->log->log("<SND> %s %s\n",str().c_str(),msg.str().c_str());
 	tMBuf buf;
 	size_t csize,psize,hsize,pkt_sz;
 	unsigned int n_pkts;
@@ -390,7 +392,8 @@ void tNetSession::negotiate() {
 
 	resetMsgCounters();
 	send(tmNetClientComm(tTime::now(),sbw,this));
-	negotiating = true;
+	tWriteLock lock(prvDataMutex);
+	state = Negotiating;
 }
 
 /** process a recieved msg: put it in the rcvq, assemble fragments, create akcs */
@@ -459,7 +462,7 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 	// process negotation (will always require an ack)
 	if(msg->bhflags & UNetNegotiation) {
 		tmNetClientComm comm(this, msg);
-		net->log->log("<RCV> [%d] %s",msg->sn(),comm.str().c_str());
+		net->log->log("<RCV> %s [%d] %s",str().c_str(),msg->sn(),comm.str().c_str());
 		// check what to do
 		if(renego_stamp==comm.timestamp) { // it's a duplicate, we already got this message
 			/* It is necessary to do the check this way since the usual check by SN would treat a re-nego on an existing connection as
@@ -473,7 +476,7 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 		}
 		net->log->nl();
 		renego_stamp=comm.timestamp;
-		if(!negotiating) {
+		if(getState() != Negotiating) {
 			// if this nego came unexpectedly, reset everything and send a nego back (since the other peer expects our answer, this
 			//  will not result in an endless loop of negos being exchanged)
 			if (msg->sn() != 1 || msg->psn() != 0) {
@@ -502,19 +505,15 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 		cabal=std::min(minBandwidth, maxBandwidth/4); // don't start too fast, the nego just gives us an estimate!
 		if (cabal < maxPacketSz) cabal = maxPacketSz;
 		DBG(5, "%s Initial cabal is %i\n",str().c_str(),cabal);
-		negotiating=false;
+		tWriteLock lock(prvDataMutex);
+		state = Connected;
 		return;
-	}
-	else if (!isConnected() && !negotiating) { // we did not yet negotiate, go ahead and DO IT
-		net->log->log("%s WARN: Obviously a new connection was started with something different than a nego\n", str().c_str());
-		negotiate();
-		clientMsg.cps = msg->cps; // this message is the beginning of a new connection, so make below code accept it
 	}
 
 	// Acks
 	if (msg->bhflags & UNetAckReply) {
 		// Process ack replies, no matter whether they are out of roder or not
-		if (isConnected()) {
+		if (getState() >= Connected) {
 			// don't parse acks before we are connected (if we do, we might get SN confusion if connections don't start with a Nego)
 			ackCheck(*msg);
 			// authentication confirmed?
@@ -525,26 +524,31 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 		return;
 	}
 	
-	// Normal packets
-	tReadLock lock(prvDataMutex);
-	
-	if (rejectMessages) {
-		net->log->log("%s WARN: Rejecting messages currently, dropping packet");
-		delete msg;
-		return;
+	// Be sure to be in the right state
+	if (getState() < Connected) { // we did not yet negotiate, go ahead and DO IT
+		net->log->log("%s WARN: Obviously a new connection was started with something different than a nego\n", str().c_str());
+		negotiate();
+		clientMsg.cps = msg->cps; // this message is the beginning of a new connection, so make below code accept it
 	}
-
-	/* ret values:
-		<0: This is an old packet, ack, but don't accept
-		0: This is what we need
-		>0: This is a future packet */
+	
+	// Normal packets
+	{
+		tReadLock lock(prvDataMutex);
+		
+		if (rejectMessages) {
+			net->log->log("%s WARN: Rejecting messages currently, dropping packet");
+			delete msg;
+			return;
+		}
+	}
+	// future packet and queue is full - drop
 	if (msg->cps > clientMsg.cps && rcvq.size() > net->receiveAhead) {
 		net->log->log("%s WARN: Dropped packet I can not yet parse: %d.%d (last ack: %d.%d, expected: %d.%d)\n", str().c_str(), msg->sn(), msg->fr(), msg->psn(), msg->pfr(), clientMsg.psn(), clientMsg.pfr());
 		delete msg;
 		return;
 	}
 
-	// if the packet requires it, send an ack
+	// We will accept the packet, so if send an ack if required
 	if (msg->bhflags & UNetAckReq) {
 		//ack reply
 		createAckReply(msg);
@@ -554,14 +558,13 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 	if (msg->cps > clientMsg.cps) {
 		queueReceivedMessage(msg);
 	}
-	// or we already aprsed it, so we drop it
+	// or we already parsed it, so we drop it
 	else if (msg->cps < clientMsg.cps) {
 		net->log->log("%s Dropping re-sent old packet %d.%d (last ack: %d.%d, expected: %d.%d)\n", str().c_str(), msg->sn(), msg->fr(), msg->psn(), msg->pfr(), clientMsg.psn(), clientMsg.pfr());
 		delete msg;
-		return;
 	}
-	// or we parse it
 	else {
+		// or we parse it now
 		//flood control
 		if((msg->bhflags & UNetAckReq) && (msg->fr()==0) && (net->flags & UNET_FLOODCTR)) {
 			if(net->passedTimeSince(flood_last_check) > net->flood_check_interval) {
@@ -616,10 +619,14 @@ void tNetSession::acceptMessage(tUnetUruMsg *t)
 		rcv->data.rewind();
 		rcv->cmd=alcFixUUNetMsgCommand(rcv->data.get16(), this);
 		rcv->data.rewind();
-
-		tNetEvent *evt=new tNetEvent(this, UNET_MSGRCV, rcv);
-		net->addEvent(evt);
-		rcv = NULL;
+		
+		if (parseBasicMsg(rcv))
+			delete rcv; // we dealt with the message ourselves
+		else {
+			tNetEvent *evt=new tNetEvent(this, UNET_MSGRCV, rcv);
+			net->addEvent(evt);
+		}
+		rcv = NULL; // this packet is finished, don't deal with it any longer
 	}
 	else {
 		rcv->fr_count++;
@@ -713,7 +720,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 	uint32_t A1,A2,A3;
 	tmNetAck ackMsg(this, &t);
 #if _DBG_LEVEL_ >= 1
-	net->log->log("<RCV> [%d] %s\n",t.sn(),ackMsg.str().c_str());
+	net->log->log("<RCV> %s [%d] %s\n",str().c_str(),t.sn(),ackMsg.str().c_str());
 #endif
 	tUnetAck *ack;
 	tMutexLock lock(sendMutex);
@@ -747,6 +754,44 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 	}
 }
 
+/** Deals with messages that are actually part of the netcore: keep-alive and connection shutdown. */
+bool tNetSession::parseBasicMsg(tUnetMsg * msg)
+{
+	switch(msg->cmd) {
+		/* I am not sure what the correct "end of connection" procedure is, but here are some observations:
+		- When the client leaves, it sends a NetMsgLeaves and expects an ack
+		- When I send the client a NetMsgTerminated, it sends an ack back and then starts the normal leave (i.e., it sends a NetMsgLeave)
+		- When I send the client a NetMsgLeave, it acks and ignores the message
+		So I conclude that only the client can actually terminate a connection, the server must ask the client to get away.
+		Which is of course crazy, so we remember that we sent a terminate and generally treat this session as terminated. */
+		case NetMsgLeave:
+		{
+			// accept it even if it is NOT a client - in that case, the peer obviously thinks it is a client, so lets respect its wish, it doesn't harm
+			tmLeave msgleave(this, msg);
+			/* Ack the current message, then terminate the connection */
+			tWriteLock lock(prvDataMutex);
+			if (state == Connected)
+				net->addEvent(new tNetEvent(this, UNET_CONNCLS, new tContainer<uint8_t>(msgleave.reason))); // trigger the event in the worker
+			state = Left;
+			return true;
+		}
+		case NetMsgTerminated:
+		{
+			// accept it even if it IS a client - in that case, the peer obviously thinks it is a server, so lets respect its wish, it doesn't harm
+			tmTerminated msgterminated(this, msg);
+			/* Ack the current message and terminate the connection */
+			terminate(msgterminated.reason);
+			return true;
+		}
+		case NetMsgAlive:
+		{
+			tmAlive alive(this, msg);
+			return true;
+		}
+	}
+	return false;
+}
+
 /** puts acks from the ackq in the sndq */
 tNetTimeDiff tNetSession::ackSend() {
 	tNetTimeDiff timeout = -1; // -1 is biggest possible value
@@ -771,12 +816,12 @@ tNetTimeDiff tNetSession::ackSend() {
 }
 
 /** Send, and re-send messages */
-tNetTimeDiff tNetSession::processSendQueues()
+tNetTimeBoolPair tNetSession::processSendQueues()
 {
 	tReadLock dataLock(prvDataMutex);
 	assert(alcGetSelfThreadId() == alcGetMain()->threadId());
 	// when we are talking to a non-terminated server, send alive messages
-	if (!client && !terminated && (net->passedTimeSince(send_stamp) > (conn_timeout/2))) {
+	if (!client && state == Connected && (net->passedTimeSince(send_stamp) > (conn_timeout/2))) {
 		send(tmAlive(this, ki));
 	}
 	
@@ -786,7 +831,8 @@ tNetTimeDiff tNetSession::processSendQueues()
 	if (!isUruClient() && sndq.empty() && ackq.empty()) { // send and ack queue empty (the Uru client accepts a re-nego but will not decrease the numbers)
 		// fix the problem that happens every 15-30 days of server uptime - but only if sndq is empty, or we will loose packets
 		if (serverMsg.sn >= (1 << 22) || clientMsg.psn() >= (1 << 22)) { // = 2^22
-			net->log->log("%s WARN: Congratulations! You have reached the maxium allowed sequence number, don't worry, this is not an error\n", str().c_str());
+			net->log->log("%s WARN: Congratulations! You have reached the maxium allowed sequence number. "
+						  "Don't worry, this is not an error\n", str().c_str());
 			net->log->flush();
 			renego_stamp = tTime();
 			sendMutex.unlock(); // unlock here, because negotiate will lock again
@@ -802,7 +848,7 @@ tNetTimeDiff tNetSession::processSendQueues()
 		const unsigned int minTH=15;
 		const unsigned int maxTH=100;
 		// max. number of allowed re-sends before timeout
-		const unsigned int resendLimit = terminated ? 3 : (authenticated ? 10 : 5); // Uru clients get more resends due to their missing multi-threading
+		const unsigned int resendLimit = (state > Connected) ? 3 : (authenticated ? 10 : 5); // Uru clients get more resends due to their missing multi-threading
 		
 		// urgent packets
 		tPointerList<tUnetUruMsg>::iterator it = sndq.begin();
@@ -841,7 +887,9 @@ tNetTimeDiff tNetSession::processSendQueues()
 						rawsend(curmsg);
 						curmsg->tries++;
 						curmsg->timestamp=net->getNetTime() + msg_timeout;
-						if (authenticated) curmsg->timestamp += curmsg->tries*msg_timeout/2; // choose much higher timeout for client connections and icnrease it during re-sends - the clients netcore sometimes seems to be blocked long beyond any reasonable time
+						/* choose much higher timeout for client connections and icnrease it during re-sends - the clients netcore sometimes seems
+						 * to be blocked long beyond any reasonable time (half of this time is NOT enough!) */
+						if (authenticated) curmsg->timestamp += curmsg->tries*msg_timeout;
 						timeout = std::min(timeout, net->remainingTimeTill(curmsg->timestamp)); // be sure to check this message on time
 						++it; // go on
 					}
@@ -849,7 +897,8 @@ tNetTimeDiff tNetSession::processSendQueues()
 					//probabilistic drop (of voice, and other non-ack packets) - make sure we don't drop ack replies though!
 					if(curmsg->bhflags == 0x00 && net->passedTimeSince(curmsg->timestamp) > 4*msg_timeout) {
 						//Unacceptable - drop it
-						net->err->log("%s Dropped a 0x00 packet due to unaceptable msg time %i,%i,%i\n",str().c_str(),msg_timeout,net->passedTimeSince(curmsg->timestamp),rtt);
+						net->err->log("%s Dropped a 0x00 packet due to unaceptable msg time %i,%i,%i\n",
+									  str().c_str(),msg_timeout,net->passedTimeSince(curmsg->timestamp),rtt);
 					} else if(curmsg->bhflags == 0x00 && (sndq.size() > static_cast<size_t>((minTH + random()%(maxTH-minTH)))) ) {
 						net->err->log("%s Dropped a 0x00 packet due to a big queue (%d messages)\n", str().c_str(), sndq.size());
 					}
@@ -884,30 +933,63 @@ tNetTimeDiff tNetSession::processSendQueues()
 			if (it != sndq.end()) timeout = std::min(timeout, net->remainingTimeTill(next_msg_time)); // come back when we want to send the next message
 		}
 	}
+	else if (ackq.empty() && state == Left) { // we are totaly idle and got nothing to do
+		prvDataMutex.unlock();
+		prvDataMutex.write(); // will be unlocked by destructor of the prvLock
+		conn_timeout = msg_timeout; // wait for some time in case we get retarded acks etc.
+	}
 	
 	// check this session's timeout
 	if (net->timeOverdue(receive_stamp+conn_timeout)) {
-		// timeout while terminating? Scrap this session, get away with it
-		if (isTerminated()) {
-			sndq.clear();
-			ackq.clear();
-			// this should suffice to convince the netcore to terminate us
+		// timeout while terminating? We are done!
+		if (state >= Terminating) {
+			prvDataMutex.unlock();
+			prvDataMutex.write(); // will be unlocked by destructor of the prvLock
+			state = Left; // just in case someone still has a reference and tries to send something
+			return tNetTimeBoolPair(timeout, true);
 		}
 		else {
 			// create timeout event
 			net->sec->log("%s Timeout (didn't send a packet for %d microseconds)\n",str().c_str(),conn_timeout);
 			net->addEvent(new tNetEvent(this,UNET_TIMEOUT));
 		}
-		return timeout;
+		return tNetTimeBoolPair(timeout, false);
 	}
-	else
-		return std::min(timeout, net->remainingTimeTill(receive_stamp+conn_timeout)); // do not miss our timeout - *after* reducing it, of course
+	return tNetTimeBoolPair(std::min(timeout, net->remainingTimeTill(receive_stamp+conn_timeout)), false); // do not miss our timeout - *after* reducing it, of course
 }
 
-void tNetSession::terminating()
+void tNetSession::terminate(uint8_t reason)
 {
-	tWriteLock lock(prvDataMutex);
-	terminated = true;
+	DBG(5, "%s is being terminated\n", str().c_str());
+	tReadLock lock(prvDataMutex);
+	if (state >= Terminating) { // 2nd attempt to terminate, its enough
+		net->log->log("%s WARN: Is already terminated, speeding up disconnect...\n", str().c_str());
+		prvDataMutex.unlock();
+		prvDataMutex.write(); // will be unlocked by destructor of lock
+		conn_timeout = 0; // make sure this session goes down ASAP
+		state = Left;
+		return;
+	}
+	else if (state == Connected)
+		net->addEvent(new tNetEvent(this, UNET_CONNCLS, new tContainer<uint8_t>(reason))); // trigger the event in the worker
+	// it's our wish for that client to get away, so try to do it nice and polite
+	if (!reason) reason = client ? RKickedOff : RQuitting;
+	if (client) {
+		tReadLock lock(pubDataMutex); // we might be in main thread
+		send(tmTerminated(this,reason));
+		// we expect a NetMsgLeave from the other side, then we can go down
+		prvDataMutex.unlock();
+		prvDataMutex.write(); // will be unlocked by destructor of lock
+		state = Terminating;
+	}
+	else {
+		tReadLock lock(pubDataMutex); // we might be in main thread
+		send(tmLeave(this,reason));
+		// Now that we sent that message, the other side must ack it, then tNetSession will be deleted
+		prvDataMutex.unlock();
+		prvDataMutex.write(); // will be unlocked by destructor of lock
+		state = Left;
+	}
 }
 
 void tNetSession::setAuthData(uint8_t accessLevel, const tString &passwd)

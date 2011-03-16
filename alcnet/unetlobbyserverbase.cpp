@@ -117,7 +117,7 @@ namespace alc {
 		tNetSessionRef client = sessionByKi(ki);
 		if (*client) { // an age cannot host the same avatar multiple times
 			if (u != *client) // it could be the same session for which the active player is set twice for some reason
-				terminate(*client, RLoggedInElsewhere);
+				client->terminate(RLoggedInElsewhere);
 			else
 				err->log("Active player is set twice for %s\n", u->str().c_str());
 		}
@@ -318,7 +318,7 @@ namespace alc {
 					memset(zeroGuid, 0, 8);
 					send(tmAccountAutheticated(*client, authResponse.x, authResponse.result, zeroGuid));
 					sec->log("%s failed login\n", client->str().c_str());
-					terminate(*client, RNotAuthenticated);
+					client->terminate(RNotAuthenticated);
 				}
 				return 1;
 			}
@@ -376,7 +376,7 @@ namespace alc {
 				
 				client->setRejectMessages(false); // KI is checked, so we can process messages
 				if (kiChecked.status != 1) { // the avatar is NOT correct - kick the player
-					terminate(*client, RNotAuthenticated);
+					client->terminate(RNotAuthenticated);
 					return 1;
 				}
 				
@@ -534,7 +534,7 @@ namespace alc {
 					return 1;
 				}
 				
-				terminate(*client, playerTerminated.reason);
+				client->terminate(playerTerminated.reason);
 				
 				return 1;
 			}
