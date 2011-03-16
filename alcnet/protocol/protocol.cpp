@@ -417,9 +417,9 @@ void tmNetClientComm::stream(tBBuf &t) const {
 tString tmNetClientComm::str() const {
 	tString str;
 #ifdef ENABLE_MSGLOG
-	str.printf("(Re)Negotation (bandwidth: %i bps time: %s) on %s",bandwidth,timestamp.str().c_str(),u->str().c_str());
+	str.printf("(Re)Negotation (bandwidth: %i bps time: %s)",bandwidth,timestamp.str().c_str());
 #else
-	str.printf("(Re)Negotation on %s",u->str().c_str());
+	str.printf("(Re)Negotatio",u->str());
 #endif
 	return str;
 }
@@ -473,7 +473,7 @@ void tmNetAck::stream(tBBuf &t) const
 }
 tString tmNetAck::str() const {
 	tString dbg;
-	dbg.printf("Ack on %s", u->str().c_str());
+	dbg.printf("Ack");
 	#ifdef ENABLE_MSGLOG
 	bool firstOne = true;
 	for (tAckList::const_iterator it = acks.begin(); it != acks.end(); ++it) {

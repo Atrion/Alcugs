@@ -40,6 +40,7 @@ namespace alc {
 	typedef unsigned long int tNetTime; // timestamp used by netcore (don't want to carry those tTimes around there), microseconds. this may overflow, to use with caution!
 	typedef signed long int tNetTimeSigned; // must be the same as tNetTime, but signed - to be used only by the overdue check!
 	typedef unsigned int tNetTimeDiff; // time difference between two net times, microseconds
+	typedef std::pair<tNetTimeDiff, bool> tNetTimeBoolPair;
 	
 	class tUnet;
 	class tmBase;
@@ -48,7 +49,15 @@ namespace alc {
 	class tUnetMsg;
 	class tUnetAck;
 
+/**
+ * This class manages a session.
+ * It is responsible for the startup (negotation) and shutdown of a connection, for receiving and (re-)sending messages.
+ * Events for the upper layers are added to the unet event queue. */
 class tNetSession {
+// Types
+public:
+	typedef enum { Unknown, Negotiating, Connected, Terminating, Left } tConnectionState;
+	typedef enum { UnknownGame, POTSGame, UUGame } tGameType;
 // methods
 public:
 	tNetSession(tUnet * net,uint32_t ip,uint16_t port,uint32_t sid,bool client,uint8_t validation); //ip, port in network order
@@ -59,7 +68,7 @@ public:
 	size_t getHeaderSize();
 	time_t onlineTime(void) { return alcGetTime()-created_stamp.seconds; }
 	void send(const tmBase &msg, tNetTimeDiff delay = 0); //!< delay is in msecs - may be called in worker thread
-	void terminating(); //!< timeout in milliseconds
+	void terminate(uint8_t reason = 0);
 	void setAuthData(uint8_t accessLevel, const tString &passwd);
 	
 	void setTimeout(unsigned int tout) { tWriteLock lock(prvDataMutex); conn_timeout=tout*1000*1000; } //!< set timeout (in seconds)
@@ -72,7 +81,8 @@ public:
 	uint8_t getAccessLevel(void) { tReadLock lock(prvDataMutex); return accessLevel; }
 	bool isUruClient(void) { tReadLock lock(prvDataMutex); return authenticated; } //!< thread-safe
 	bool isClient(void) { tReadLock lock(prvDataMutex); return client; } //!< thread-safe
-	bool isTerminated(void) { tReadLock lock(prvDataMutex); return terminated; } //!< thread-safe
+	bool isTerminated(void) { tReadLock lock(prvDataMutex); return state >= Terminating; } //!< thread-safe
+	bool isLeft(void) { tReadLock lock(prvDataMutex); return state == Left; }
 	bool anythingToSend(void) { tMutexLock lock(sendMutex); return !ackq.empty() || !sndq.empty(); } //!< thread-safe
 	bool useUpdatedProtocol(void) { tReadLock lock(prvDataMutex); return upgradedProtocol; } //!< thread-safe
 	tLog *getLog(void);
@@ -81,7 +91,7 @@ public:
 	void decRefs();
 	
 	void processIncomingMsg(void * buf,size_t size); //!< we received a message
-	tNetTimeDiff processSendQueues(); //!< send what is in our queues
+	tNetTimeBoolPair processSendQueues(); //!< send what is in our queues, returning the sleep timeout and a boolean which is true if we want to be deleted
 
 private:
 	void resetMsgCounters(void);
@@ -94,8 +104,9 @@ private:
 	void acceptMessage(tUnetUruMsg *msg);
 	void queueReceivedMessage(tUnetUruMsg *msg);
 	void checkQueuedMessages(void);
+	bool parseBasicMsg(tUnetMsg * msg);
 
-	bool isConnected() const { return cabal!=0; }
+	tConnectionState getState() { tReadLock lock(prvDataMutex); return state; }
 	void updateRTT(tNetTimeDiff newread);
 	void increaseCabal();
 	void decreaseCabal(bool emergency);
@@ -115,7 +126,6 @@ public:
 	tBaseType *data; //!< save additional data (e.g. tracking information)
 	
 	// used by lobbybase (lobby and game)
-	typedef enum { UnknownGame, POTSGame, UUGame } tGameType;
 	tGameType gameType;
 	uint32_t ki; //!< player set and valid id, otherwise 0
 	uint8_t uid[16]; //!< hex; player uid - only set for whoami == KClient
@@ -158,10 +168,9 @@ private:
 	tTime created_stamp; //!< timestamp of session creation (to be more prcise, time when connection is established: We received a nego)
 	tTime renego_stamp; //!< remote/received nego stamp (stamp of last nego we got)
 	tNetTimeDiff conn_timeout; //!< time after which the session will timeout (in microseconds); protected by prvDataMutex
-	bool negotiating; //!< set to true when we are waiting for the answer of a negotiate we sent
 	
 	tString passwd; //!< peer passwd hash (used in V2) (string); protected by prvDataMutex
-	bool authenticated; //!< set to true when the peer acked the "you got authed" message (obviously we can't use the passwd for that one yet)
+	bool authenticated; //!< set to true when the peer acked the "you got authed" message (obviously we can't use the passwd for that one yet); protected by prvDataMutex
 	uint8_t accessLevel; //!< peer access level; protected by prvDataMutex
 
 	//flux control (bandwidth and latency)
@@ -178,8 +187,8 @@ private:
 	tPointerList<tUnetUruMsg> rcvq; //!< received, but not yet accepted messages
 	
 	// other status variables
+	tConnectionState state; //!< current connection state, protected by prvDataMutex
 	bool rejectMessages; //!< when set to true, messages are rejected (the other side has to send them again); protected by prvDataMutex
-	bool terminated; //!< false: connection is established; true: a NetMsgTerminated was sent (and we expect a NetMsgLeave), or a NetMsgLeave was sent; protected by prvDataMutex
 	bool client; //!< it's a client or a server?
 	
 	// mutexes

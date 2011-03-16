@@ -206,40 +206,13 @@ bool tUnetBase::isRunning(void)
 	return running;
 }
 
-void tUnetBase::terminate(tNetSession *u, uint8_t reason, bool gotEndMsg)
-{
-	DBG(5, "%s is being terminated\n", u->str().c_str());
-	if (u->isTerminated()) {
-		log->log("%s is already terminated, speeding up disconnect...\n", u->str().c_str());
-		u->setTimeout(0); // make sure this session goes down ASAP
-		return;
-	}
-	if (!reason) reason = u->isClient() ? RKickedOff : RQuitting;
-	if (!gotEndMsg) { // don't send message again if we already sent it, or if we got the message from the other side
-		if (u->isClient()) {
-			tReadLock lock(u->pubDataMutex); // we might be in main thread
-			send(tmTerminated(u,reason));
-		}
-		else {
-			tReadLock lock(u->pubDataMutex); // we might be in main thread
-			send(tmLeave(u,reason));
-		}
-		// Now that we sent that message, the other side must ack it, then tNetSession will be deleted
-	}
-	
-	addEvent(new tNetEvent(u, UNET_CONNCLS, new tContainer<uint8_t>(reason))); // trigger the event in the worker
-	
-	// tell the session it's terminating
-	u->terminating();
-}
-
 bool tUnetBase::terminateAll(bool playersOnly)
 {
 	bool anyTerminated = false;
 	tReadLock lock(smgrMutex);
 	for (tNetSessionMgr::tIterator it(smgr); it.next();) {
 		if (!it->isTerminated() && (!playersOnly ||  it->isUruClient())) { // avoid sending a NetMsgLeave or NetMsgTerminate to terminated peers
-			terminate(*it);
+			it->terminate();
 			anyTerminated = true;
 		}
 	}
@@ -296,18 +269,18 @@ void tUnetBase::processEvent(tNetEvent *evt)
 	switch(evt->id) {
 		case UNET_NEWCONN:
 			if (!isRunning())
-				terminate(u);
+				u->terminate();
 			else
 				onNewConnection(u);
 			return;
 		case UNET_TIMEOUT:
-			if (!isRunning() || u->isTerminated() || onConnectionTimeout(u))
-				terminate(u, RTimedOut);
+			if (!isRunning() || onConnectionTimeout(u))
+				u->terminate(RTimedOut);
 			return;
 		case UNET_FLOOD:
 			if (!isRunning() || onConnectionFlood(u)) {
 				alcGetMain()->err()->log("%s kicked due to a Flood Attack\n", u->str().c_str());
-				terminate(u);
+				u->terminate();
 			}
 			return;
 		case UNET_CONNCLS:
@@ -324,10 +297,12 @@ void tUnetBase::processEvent(tNetEvent *evt)
 			#ifdef ENABLE_MSGDEBUG
 			log->log("%s New MSG Recieved\n",u->str().c_str());
 			#endif
+			if (u->isTerminated()) {
+				err->log("%s is terminated and sent non-NetMsgLeave message 0x%04X (%s) - ignoring\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
+				return;
+			}
 			try {
-				ret = parseBasicMsg(msg, u);
-				if (ret != 1 && !u->isTerminated()) // if this is an active connection, look for other messages
-					ret = onMsgRecieved(msg, u);
+				ret = onMsgRecieved(msg, u);
 				if (ret == 1 && !msg->data.eof() > 0) { // packet was processed and there are bytes left, obiously invalid, terminate the client
 					err->log("%s Recieved a message 0x%04X (%s) which was too long (%d Bytes remaining after parsing) - kicking player\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data.remaining());
 					ret = -1;
@@ -339,69 +314,30 @@ void tUnetBase::processEvent(tNetEvent *evt)
 				ret=-1;
 			}
 			if(ret==0) {
-				if (u->isTerminated()) {
-					err->log("%s is terminated and sent non-NetMsgLeave message 0x%04X (%s)\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-					terminate(u);
-				}
-				else {
-					err->log("%s Unexpected message 0x%04X (%s) - kicking peer\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
-					sec->log("%s Unexpected message 0x%04X (%s)\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
-					terminate(u, RUnimplemented);
-				}
+				err->log("%s Unexpected message 0x%04X (%s) - kicking peer\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
+				sec->log("%s Unexpected message 0x%04X (%s)\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
+				u->terminate(RUnimplemented);
 			}
 			else if(ret==-1) {
 				// the problem already got printed to the error log wherever this return value was set
 				sec->log("%s Kicked off due to a parse error in a previus message 0x%04X (%s)\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-				terminate(u, RParseError);
+				u->terminate(RParseError);
 			}
 			else if(ret==-2) {
 				// the problem already got printed to the error log wherever this return value was set
 				sec->log("%s Kicked off due to cracking 0x%04X (%s)\n",u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
-				terminate(u, RHackAttempt);
+				u->terminate(RHackAttempt);
 			}
 			else if (ret!=1 && ret!=2) {
 				err->log("%s Unknown error in 0x%04X (%s) - kicking peer\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
 				sec->log("%s Unknown error in 0x%04X (%s)\n",u->str().c_str(),msg->cmd,alcUnetGetMsgCode(msg->cmd));
-				terminate(u);
+				u->terminate();
 			}
 			return;
 		}
 		default:
 			throw txBase(_WHERE("%s Unknown Event id %i\n",u->str().c_str(),evt->id));
 	}
-}
-
-int tUnetBase::parseBasicMsg(tUnetMsg * msg, tNetSession * u)
-{
-	switch(msg->cmd) {
-		/* I am not sure what the correct "end of connection" procedure is, but here are some observations:
-		- When the client leaves, it sends a NetMsgLeaves and expects an ack
-		- When I send the client a NetMsgTerminated, it sends an ack back and goes away 
-		- When I send the client a NetMsgLeave, it acks and ignores the message
-		So I conclude that the two are equal, but that the server must send a terminate, and the client a leave. Alcugs will treat both of them equally. */
-		case NetMsgLeave:
-		{
-			// accept it even if it is NOT a client - in that case, the peer obviously thinks it is a client, so lets respect its wish, it doesn't harm
-			tmLeave msgleave(u, msg);
-			/* Ack the current message and terminate the connection */
-			terminate(u, msgleave.reason, /*gotEndMsg*/true); // this will delete the session ASAP
-			return 1;
-		}
-		case NetMsgTerminated:
-		{
-			// accept it even if it IS a client - in that case, the peer obviously thinks it is a server, so lets respect its wish, it doesn't harm
-			tmTerminated msgterminated(u, msg);
-			/* Ack the current message and terminate the connection */
-			terminate(u, msgterminated.reason, /*gotEndMsg*/true);
-			return 1;
-		}
-		case NetMsgAlive:
-		{
-			tmAlive alive(u, msg);
-			return 1;
-		}
-	}
-	return 0;
 }
 
 void tUnetBase::flushLogs()

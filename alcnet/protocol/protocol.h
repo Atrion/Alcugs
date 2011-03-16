@@ -205,7 +205,7 @@ private:
 #define NETMSG_RECEIVE_CONSTRUCTORS(Type, ParentType) \
 	protected: Type(tNetSession *u) : ParentType(u) {} \
 	public: Type(tNetSession *u, tUnetMsg *msg) : ParentType(u) \
-			{ Type::store(msg->data); u->getLog()->log("<RCV> [%d] %s\n", msg->sn, Type::str().c_str()); }
+			{ Type::store(msg->data); u->getLog()->log("%s <RCV> [%d] %s\n", u->str().c_str(), msg->sn, Type::str().c_str()); }
 
 }
 
