@@ -140,7 +140,7 @@ namespace alc {
 			folderName.put8(0x0F);
 			folderName.put8(0x13);
 			folderName.put8(0x37);
-			folderName.put32(alcGetTime());
+			folderName.put32(time(NULL));
 			folderName.put8(random()%250);
 			tString asciiFolderName = alcGetStrGuid(folderName.data());
 			query.clear();
@@ -578,7 +578,7 @@ namespace alc {
 		// set current time
 		node.flagB |= (MModTime | MCrtTime | MAgeTime);
 		node.modTime = alcGetCurrentTime();
-		node.crtTime = node.ageTime = alcGetTime();
+		node.crtTime = node.ageTime = time(NULL);
 		
 		query.printf("INSERT INTO %s (type", vaultTable);
 		values.printf(") VALUES ('%d'", node.type);

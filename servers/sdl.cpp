@@ -224,15 +224,15 @@ namespace alc {
 					// make sure that clone is in the idle state
 					net->bcastMessage(net->makePlayerIdle(player, (*it)->clonedObj.obj));
 					// make sure the clone does not run an animation
-					net->bcastMessage(net->makePlayerIdle(player, (*it)->clonedObj.obj, 1), 200); // 200msecs later, let it walk forwards
-					net->bcastMessage(net->makePlayerIdle(player, (*it)->clonedObj.obj, 0), 200+100); // again 100msecs later, it stops walking
+					net->bcastMessage(net->makePlayerIdle(player, (*it)->clonedObj.obj, 1), 0.2); // 200msecs later, let it walk forwards
+					net->bcastMessage(net->makePlayerIdle(player, (*it)->clonedObj.obj, 0), 0.2+0.1); // again 100msecs later, it stops walking
 				}
 				// remove states from our list
 				removeCloneStates((*it)->clonedObj.obj.clonePlayerId);
 				// remove avatar from age (a delay of < 2700msecs is likely to cause crashes when the avatar just left the sitting state)
 				(*it)->isLoad = false;
 				tmLoadClone loadClone(player, *it, false/*isInitial*/);
-				net->bcastMessage(loadClone, /*delay*/ net->getLinkingOutIdle() ? 3000 : 0);
+				net->bcastMessage(loadClone, /*delay*/ net->getLinkingOutIdle() ? 3 : 0);
 				delete *it;
 				it = clones.erase(it);
 			}

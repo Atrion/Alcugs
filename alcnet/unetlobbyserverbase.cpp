@@ -253,7 +253,7 @@ namespace alc {
 					md5buffer.put32(random());
 					md5buffer.put32(alcGetMain()->upTime().seconds);
 					md5buffer.put(authHello.account);
-					md5buffer.put32(alcGetMain()->bornTime().seconds);
+					md5buffer.put32(alcGetMain()->bornTime().microseconds);
 					md5buffer.compute();
 			
 					// save data in session

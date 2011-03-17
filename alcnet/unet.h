@@ -102,7 +102,7 @@ public:
 		if(lhost.isEmpty()) bindaddr = "0.0.0.0";
 		else bindaddr = lhost;
 	}
-	void send(const tmNetMsg& m, tNetTimeDiff delay = 0) { m.getSession()->send(m, delay); } //!< delay is in msecs - may be called in worker thread
+	void send(const tmNetMsg& m, tNetTime delay = 0) { m.getSession()->send(m, delay); } //!< delay is in secs - may be called in worker thread
 
 protected:
 	void startOp();
@@ -115,10 +115,10 @@ protected:
 	void clearEventQueue(); //!< use this only if you really know what you do - will loose incoming messages and whatnot! (thread-safe)
 	tNetTime getNetTime() { tSpinLock lock(net_time_mutex); return net_time; }
 	bool timeOverdue(tNetTime timeout) { //!< returns whether the timout is overdue
-		return static_cast<tNetTimeSigned>(getNetTime()-timeout) >= 0; // casting to signed will magically do the right thing, even if the time overflowed! Twoth complement is awesome :D
+		return getNetTime() >= timeout;
 	}
-	tNetTimeDiff remainingTimeTill(tNetTime time); //!< returns time remaining till given timestamp
-	tNetTimeDiff passedTimeSince(tNetTime time); //!< returns time passed since given timestamp
+	tNetTime remainingTimeTill(tNetTime time); //!< returns time remaining till given timestamp
+	tNetTime passedTimeSince(tNetTime time); //!< returns time passed since given timestamp
 	void wakeUpMainThread(void); //!< call this from worker to wake up the main thread from its sleep
 	virtual bool canPortBeUsed(uint16_t /*port*/) { return false; }
 	
@@ -143,9 +143,9 @@ private:
 
 // properties
 protected:
-	unsigned int conn_timeout; //!< default timeout (to disconnect a session) (seconds) [5 secs]
-	tNetTimeDiff msg_timeout; //!< default timeout when the send clock expires (re-transmission) (microseconds)
-	tNetTimeDiff max_sleep; //!< maximum time we sleep in the receive function (microseconds)
+	tNetTime conn_timeout; //!< default timeout (to disconnect a session) (seconds) [5 secs]
+	tNetTime msg_timeout; //!< default timeout when the send clock expires (re-transmission) (microseconds)
+	tNetTime max_sleep; //!< maximum time we sleep in the receive function (microseconds)
 
 	unsigned int max; //!< Maxium number of connections (default 0, unlimited)
 	tNetSessionMgr * smgr; //!< session MGR - get below mutex before accessing it, and keep a tNetSessionRef to session pointers you keep after releasing the mutex!
@@ -172,7 +172,7 @@ protected:
 	
 	//flood control
 	unsigned int max_flood_pkts;
-	tNetTimeDiff flood_check_interval;
+	tNetTime flood_check_interval;
 	
 	unsigned int receiveAhead; //!< number of future messages to receive and cache
 	
@@ -182,10 +182,10 @@ protected:
 	unsigned int lim_up_cap; //in bytes
 	unsigned int in_noise; //(0-100)
 	unsigned int out_noise; //(0-100)
-	unsigned int latency; //(in msecs)
+	tNetTime latency; //(in secs)
 	unsigned int cur_down_quota;
 	unsigned int cur_up_quota;
-	unsigned int quota_check_interval; //(useconds)
+	tNetTime quota_check_interval; //(seconds)
 	tNetTime last_quota_check;
 	#endif
 	
@@ -199,9 +199,8 @@ private:
 	const uint8_t max_version; //!< default protocol version
 	const uint8_t min_version; //!< default protocol version
 
-	/** current netcore time (in usecs) [resolution of 15 minutes] (relative). You can add and substract as you wish, but:
-	 * Do NOT compare this with anything, but use the overdue(), passedTime() and remainingTime() functions instead! */
-	tNetTime net_time; //!< protected by below spinlock
+	/** current netcore time (in secs). Protected by the spinlock, */
+	tNetTime net_time;
 	tSpinEx net_time_mutex;
 	
 	int sock; //!< The socket

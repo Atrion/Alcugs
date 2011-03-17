@@ -117,23 +117,22 @@ protected:
 	virtual void onApplyConfig() {}
 	
 	
-	
-	/** Stops the netcore in a sane way
-			\param timeout Sets the timeout to wait for closing the connection to all peers (<0 gets timeout from config file)	*/
-	void stop(tNetTimeDiff timeout=-1);
+	/** Stops the netcore in a sane way */
+	void stop();
 	/** Stops the netcore in a sane way, but without waiting for the clients to properly quit */
-	void forcestop() { stop(0); /* stop with a timeout of 0 */ }
+	void forcestop();
 private:
 	bool terminateAll(bool playersOnly = false); //!< \returns if a session was terminated
 	bool terminatePlayers() { return terminateAll(/*playersOnly*/true); }
 	void applyConfig();
 	void flushLogs();
+	tNetTime getStopTimeout() { tSpinLock lock(runModeMutex); return stop_timeout; }
 	
 	void processEvent(tNetEvent *evt); //!< dispatches most recent event, called in worker thread!
 	
 	bool configured; //!< stores whether applyConfig() has been called at least once
 	bool running; //!< stores whether the server is running or shutting down, protected by below mutex
-	tNetTimeDiff stop_timeout; //!< stores the timeout till the server shuts off
+	tNetTime stop_timeout; //!< stores the timeout till the server shuts off, protected by below mutex
 	tSpinEx runModeMutex;
 	
 	class tUnetWorkerThread : public tThread

@@ -45,8 +45,8 @@ namespace alc {
 	tString alcConsoleAsk();
 	bool alcGetLoginInfo(tString argv,tString * username,tString * hostname,uint16_t * port); // username may be NULL, the rest not
 
-	time_t alcGetTime();
 	double alcGetCurrentTime();
+	
 	bool alcIsAlpha(char c);
 
 	void setCloseOnExec(int fd);

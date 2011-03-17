@@ -108,7 +108,7 @@ tUnetPing::tUnetPing(const tString &lhost,uint16_t lport,bool listen,double time
 	this->setBindAddress(lhost);
 	this->listen=listen;
 	this->unsetFlags(UNET_FLOODCTR); // disable flood protection
-	if (!listen) max_sleep = 100*1000; // set down max_sleep timer to send pings in one-second intervals
+	if (!listen) max_sleep = 0.1; // set down max_sleep timer to send pings in one-second intervals
 	this->time=time;
 	this->num=num;
 	this->flood=flood;

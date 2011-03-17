@@ -76,16 +76,16 @@ tUnet::tUnet(uint8_t whoami,const tString & lhost,uint16_t lport) : smgr(NULL), 
 	flags=UNET_DEFAULT_FLAGS;
 
 	//netcore timeout < min(all RTT's), nope, it must be the min tts (stt)
-	max_sleep=10*1000*1000; // wait no more than 10 seconds in select() call
+	max_sleep=10; // wait no more than 10 seconds in select() call
 
-	conn_timeout=120; // default timeout for new sessions (seconds)
+	conn_timeout=150; // default timeout for new sessions (seconds)
 	/* This sets the timeout for unet servers from both sides.
 	It also sets the timeout for Uru clients, where a high timeout is necessary since the connection is already established when changing
 	the server in the shard list and when the timeout is only 5 seconds the client gets kicked off too fast. It will be changed
 	to 30sec after the client got authed.
 	I put this here and not in tUnetServerBase as tUnetBase must be able to override it */
 	
-	msg_timeout=1000*1000; // 1 second (default time till re-transmission)
+	msg_timeout=1; // 1 second (default time till re-transmission)
 
 	//initial server timestamp
 	updateNetTime();
@@ -101,7 +101,7 @@ tUnet::tUnet(uint8_t whoami,const tString & lhost,uint16_t lport) : smgr(NULL), 
 	nat_up=500 * 1000;
 	nat_down=500 * 1000;
 	
-	flood_check_interval=10*1000*1000;
+	flood_check_interval=10;
 	max_flood_pkts=1000; // when first launching a client for an emtpy vault, there are about 100 packets within about 2.5 seconds
 	                    // linking to Noloben is a good testcase (500 per 10 seconds was not enough)
 
@@ -117,11 +117,11 @@ tUnet::tUnet(uint8_t whoami,const tString & lhost,uint16_t lport) : smgr(NULL), 
 	// Noise and latency
 	in_noise=2; // percent of dropped packets (0-100)
 	out_noise=2; // percent of dropped packets (0-100)
-	latency=20000; // in usecs
+	latency=0.05; // in secs
 	// Bandwith: 5kB/10ms = 500kB/second = 4MBit/second
 	lim_down_cap=5*1000; // in bytes
 	lim_up_cap=5*1000; // in bytes
-	quota_check_interval=10*1000; // 10ms
+	quota_check_interval=0.01; // 10ms
 	// the rest are controlling vairables, do not touch!
 	cur_down_quota=0;
 	cur_up_quota=0;
@@ -144,21 +144,20 @@ tUnet::~tUnet() {
 void tUnet::updateNetTime() {
 	tSpinLock lock(net_time_mutex);
 	//set stamp
-	tTime t = tTime::now();
-	net_time=static_cast<tNetTime>(t.seconds)*1000000+t.microseconds;
+	net_time=alcGetCurrentTime();
 }
 
-tNetTimeDiff tUnet::remainingTimeTill(tNetTime time)
+tNetTime tUnet::remainingTimeTill(tNetTime time)
 {
 	tSpinLock lock(net_time_mutex);
-	assert(static_cast<tNetTimeSigned>(net_time-time) <= 0); // make sure time is in the future
+	assert(net_time <= time); // make sure time is in the future
 	return time-net_time;
 }
 
-tNetTimeDiff tUnet::passedTimeSince(tNetTime time)
+tNetTime tUnet::passedTimeSince(tNetTime time)
 {
 	tSpinLock lock(net_time_mutex);
-	assert(static_cast<tNetTimeSigned>(net_time-time) >= 0); // make sure time is in the future
+	assert(net_time >= time); // make sure time is in the past
 	return net_time-time;
 }
 
@@ -337,11 +336,11 @@ This function recieves new packets and passes them to the correct session */
 bool tUnet::sendAndWait() {
 	// send old messages and calulate timeout
 	tNetTimeBoolPair result = processSendQueues();
-	tNetTimeDiff unet_timeout = result.first;
+	tNetTime unet_timeout = result.first;
 	bool idle = !result.second; // we are idle if there is nothing to send
-	if (unet_timeout < 500) {
-		DBG(3, "Timeout %d too low, increasing to 500\n", unet_timeout);
-		unet_timeout = 500; // don't sleep less than 0.5 milliseconds
+	if (unet_timeout < 0.0005) {
+		DBG(3, "Timeout %f too low, increasing to 500 microseconds\n", unet_timeout);
+		unet_timeout = 0.0005; // don't sleep less than 0.5 milliseconds
 	}
 
 	//waiting for packets - timeout
@@ -354,20 +353,20 @@ bool tUnet::sendAndWait() {
 	FD_SET(this->sock, &rfds);
 	FD_SET(this->sndPipeReadEnd, &rfds);
 	/* Set timeout */
-	tv.tv_sec = unet_timeout / (1000*1000);
-	tv.tv_usec = unet_timeout % (1000*1000);
+	tv.tv_sec = unet_timeout; // round down to seconds
+	tv.tv_usec = (unet_timeout-tv.tv_sec) * (1000*1000); // get the microseconds part
 
 #if _DBG_LEVEL_ >= 2
-	log->log("Waiting for %d microseconds...\n", unet_timeout);
+	log->log("Waiting for %f seconds...\n", unet_timeout);
 #endif
 #if _DBG_LEVEL_ >= 8
-	tTime start; start.now();
+	tTime start = tTime::now();
 #endif
 	valret = select(std::max(this->sock, this->sndPipeReadEnd)+1, &rfds, NULL, NULL, &tv); // this is the command taking the time - now lets process what we got
 	// update stamp, since we spent some time in the select function
 	updateNetTime();
 #if _DBG_LEVEL_ >= 8
-	start = ntime-start;
+	start = tTime::now()-start;
 	DBG(8,"waited %u.%06u\n",diff.seconds,diff.microseconds);
 #endif
 	/* Don't trust tv value after the call */
@@ -463,7 +462,7 @@ bool tUnet::sendAndWait() {
 Each session HAS to set the timeout it needs because it is reset prior to asking them. */
 tNetTimeBoolPair tUnet::processSendQueues() {
 	// reset the timer
-	tNetTimeDiff unet_timeout=max_sleep;
+	tNetTime unet_timeout=max_sleep;
 	bool anythingToSend = false;
 	std::list<tNetSession *> sessionsToDelete;
 	
