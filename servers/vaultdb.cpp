@@ -577,7 +577,7 @@ namespace alc {
 		
 		// set current time
 		node.flagB |= (MModTime | MCrtTime | MAgeTime);
-		node.modTime = alcGetCurrentTime();
+		node.modTime = tTime::now().asDouble();
 		node.crtTime = node.ageTime = time(NULL);
 		
 		query.printf("INSERT INTO %s (type", vaultTable);
@@ -721,7 +721,7 @@ namespace alc {
 		
 		// set current time
 		node.flagB |= MModTime;
-		node.modTime = alcGetCurrentTime();
+		node.modTime = tTime::now().asDouble();
 		
 		// create the query
 		tString query;

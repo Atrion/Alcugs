@@ -144,7 +144,9 @@ tUnet::~tUnet() {
 void tUnet::updateNetTime() {
 	tSpinLock lock(net_time_mutex);
 	//set stamp
-	net_time=alcGetCurrentTime();
+	struct timeval tv;
+	gettimeofday(&tv,NULL);
+	net_time=(tv.tv_sec - alcGetMain()->bornTime().seconds) + (tv.tv_usec / 1000000.0);
 }
 
 tNetTime tUnet::remainingTimeTill(tNetTime time)

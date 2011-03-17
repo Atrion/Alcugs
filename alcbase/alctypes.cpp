@@ -713,34 +713,12 @@ tTime operator-(const tTime &a,const tTime &b) {
 	}
 	return r;
 }
-double tTime::asDouble(char how) const {
-	switch(how) {
-		case 'u':
-			return (seconds * 1000000.0) + microseconds;
-		case 'm':
-			return (seconds * 1000.0) + (microseconds / 1000.0);
-		case 's':
-		default:
-			return seconds + (microseconds / 1000000.0);
-	}
-}
 void tTime::setToNow()
 {
 	struct timeval tv;
 	gettimeofday(&tv,NULL);
 	seconds=tv.tv_sec;
 	microseconds=tv.tv_usec;
-}
-time_t tTime::asNumber(char how) const {
-	switch(how) {
-		case 'u':
-			return ((seconds %1000) * 1000000) + microseconds;
-		case 'm':
-			return ((seconds %1000000) * 1000) + (microseconds / 1000);
-		case 's':
-		default:
-			return seconds;
-	}
 }
 tString tTime::str(bool relative) const {
 	if(!relative) {

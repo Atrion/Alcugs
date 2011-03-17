@@ -85,15 +85,6 @@ bool alcGetLoginInfo(tString argv,tString * username,tString * hostname,uint16_t
 	return true;
 }
 
-/** Gets the current time as double */
-double alcGetCurrentTime()
-{
-	struct timeval tv;
-	gettimeofday(&tv,NULL);
-	return tv.tv_sec + (tv.tv_usec / 1000000.0);
-}
-
-
 /** Handle nicely foreign languages. setlocale() is not sufficient on systems which didn't installed all locales,
  so we better use our own function. Feel free to add other accents according to your language.
  

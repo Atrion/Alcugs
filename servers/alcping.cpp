@@ -24,6 +24,7 @@
 *                                                                              *
 *******************************************************************************/
 
+//#define _DBG_LEVEL_ 10
 #include <alcdefs.h>
 #include <unetbase.h>
 #include <unetmain.h>
@@ -34,6 +35,7 @@
 #include <netexception.h>
 
 #include <cstring>
+#include <limits>
 
 using namespace alc;
 
@@ -86,16 +88,15 @@ public:
 private:
 	bool listen;
 	double time;
-	int num;
+	int num; //!< total number of pings to be sent
 	int flood;
 	uint8_t destination;
 	tString d_host;
 	uint16_t d_port;
 	uint8_t validation;
-	int count;
+	int count; //!< number of pings sent so far
 	tNetSessionRef dstSession;
-	double current;
-	double startup;
+	tTime lastSend;
 	double min,max,avg;
 	int rcvn;
 	bool urgent;
@@ -116,7 +117,7 @@ tUnetPing::tUnetPing(const tString &lhost,uint16_t lport,bool listen,double time
 	d_port=5000;
 	count=0;
 	validation=2;
-	min=10000;
+	min=std::numeric_limits<double>::max();
 	max=0;
 	avg=0;
 	rcvn=0;
@@ -137,8 +138,8 @@ void tUnetPing::setValidation(uint8_t val) {
 void tUnetPing::onStop() {
 	if(listen==0 && count > 1) {
 		count=flood*count;
-		printf("\nStats:\nrecieved %i packets of %i sent, %i%% packet loss, time: %0.3f ms\n",\
-		rcvn,count,(100-((rcvn*100)/count)),(current-startup)*1000);
+		printf("\nStats:\nrecieved %i packets of %i sent, %i%% packet loss\n",
+				rcvn,count,(100-((rcvn*100)/count)));
 		printf("min/avg/max times = %0.3f/%0.3f/%0.3f\n",min*1000,(avg/rcvn)*1000,max*1000);
 	}
 }
@@ -152,15 +153,14 @@ int tUnetPing::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 			tMutexLock lock(mutex);
 			if(listen==0) {
 				if(*dstSession==u) {
-					current=alcGetCurrentTime();
-					double rcv=current-ping.mtime;
+					double rtt=tTime::now().asDouble()-ping.mtime;
 					printf("Pong from %s:%i x=%i dest=%i %s time=%0.3f ms\n",
 						alcGetStrIp(u->getIp()).c_str(),ntohs(u->getPort()),ping.x,ping.destination,
-						alcUnetGetDestination(ping.destination),rcv*1000);
+						alcUnetGetDestination(ping.destination),rtt*1000);
 					rcvn++;
-					avg+=rcv;
-					if(rcv<min) min=rcv;
-					if(rcv>max) max=rcv;
+					avg+=rtt;
+					if(rtt<min) min=rtt;
+					if(rtt>max) max=rtt;
 				}
 			} else {
 				printf("Ping from %s:%i x=%i dest=%i %s time=%0.3f ms .... pong....\n",
@@ -178,33 +178,41 @@ int tUnetPing::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 
 void tUnetPing::onIdle() {
 	if(listen) return;
+	DBG(9, "Sender is idle\n");
 
 	tMutexLock lock(mutex);
-	if(count==0) {
+	if (*dstSession == NULL) {
+		DBG(5, "Establishing connection\n");
 		dstSession=netConnect(d_host.c_str(),d_port,validation);
-		current=startup=alcGetCurrentTime();
-	}
-
-	if(dstSession->isTerminated()) {
-		stop();
 		return;
 	}
 
-	double rcv=alcGetCurrentTime();
-	if((rcv-current)>time || count==0) {
-		if(count<num || num==0 || count==0) {
-			//snd ping message
-			tmPing ping(*dstSession, destination);
-			ping.urgent = urgent;
-
-			count++;
-			for(int i=0; i<flood; i++) {
-				ping.x = (flood * (count-1)) + i;
-				ping.mtime = current = alcGetCurrentTime();
-				send(ping);
-			}
-		} else if ((rcv-current) > (4*time) || !dstSession->anythingToSend()) {
+	if(dstSession->isTerminated()) {
+		DBG(5, "Lost peer, going down\n");
+		stop();
+		return;
+	}
+	
+	if (num != 0 && count >= num) {
+		if (!dstSession->anythingToSend()) {
+			DBG(5, "Done sending, going down\n");
 			stop();
+		}
+		return;
+	}
+
+	if ((tTime::now() - lastSend).asDouble() > time) {
+		DBG(5, "Time to send again\n");
+		//snd ping message
+		tmPing ping(*dstSession, destination);
+		ping.urgent = urgent;
+
+		count++;
+		lastSend.setToNow();
+		for(int i=0; i<flood; i++) {
+			ping.x = (flood * (count-1)) + i;
+			ping.mtime = lastSend.asDouble();
+			send(ping);
 		}
 	}
 }
@@ -296,18 +304,18 @@ int main(int argc,char * argv[]) {
 		if(flood<=0) flood=1;
 		
 #ifdef ENABLE_ADMIN
-		if(time<0.2 && !admin) {
-			printf("\nOnly the administrator can set less than 0.2 seconds\n Setting up to 1 second. (enable admin mode with -i_know_what_i_am_doing)\n");
-			time=1;
+		if(time<0.1 && !admin) {
+			printf("\nOnly the administrator can set less than 0.1 seconds. Setting up to 0.1 seconds. (enable admin mode with -i_know_what_i_am_doing)\n");
+			time=0.1;
 		}
 		if(flood>1 && !admin) {
 			printf("\nOnly the administrator can perform stressing flood tests to the server.\n Disabling flooding. (enable admin mode with -i_know_what_i_am_doing)\n");
 			flood=1;
 		}
 #else
-		if(time<0.2) {
-			printf("\nTime must be bigger than 0.2 seconds\n Setting up to 1 second.\n");
-			time=1;
+		if(time<0.1) {
+			printf("\nTime must be no less than than 0.1 seconds. Setting up to 0.1 seconds.\n");
+			time=0.1;
 		}
 		if(flood>1) {
 			printf("\nCannot perform stressing flood tests to the server.\n Disabling flooding\n");

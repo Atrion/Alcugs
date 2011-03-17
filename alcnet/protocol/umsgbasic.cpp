@@ -101,7 +101,7 @@ tString tmPlayerTerminated::additionalFields(tString dbg) const {
 
 tmPing::tmPing(tNetSession * u, uint8_t dst)
  : tmNetMsg(NetMsgPing,plNetKi | plNetX | plNetAck,u)
- // indeed acking a ping does not make much sense... however, this gives us some really good data when a player connects to a game server (there are pings exchanged then) to estimate bandwidth and latency of the user's connection
+ // indeed acking a ping does not make much sense... however, this gives us some really good data when a player connects to a game server (there are pings exchanged then) to estimate the latency of the user's connection
 {
 	ki = x = 0;
 	mtime = 0;
