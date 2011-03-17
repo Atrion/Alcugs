@@ -626,7 +626,6 @@ tString tmNetMsg::str() const {
 #ifdef ENABLE_MSGLOG
 	dbg.printf(" %04X %08X",cmd,flags);
 #endif
-	dbg.printf(" on %s", u->str().c_str());
 #ifdef ENABLE_MSGLOG
 	dbg.printf("\n Flags:");
 	if(flags & plNetTimestamp) {
