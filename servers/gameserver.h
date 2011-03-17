@@ -41,12 +41,11 @@ namespace alc {
 
 	class tGameData : public tBaseType {
 	public:
-		tGameData(const tUruObject &obj, tNetSession *u) : obj(obj), isHidden(false), u(u) {}
+		tGameData(const tUruObject &obj) : obj(obj), isHidden(false) {}
 		tUruObject obj;
 		bool isHidden;
-		tNetSession *u;
 		
-		tMemberInfo createInfo(void) {
+		tMemberInfo createInfo(tNetSession *u) {
 			return tMemberInfo(u, obj, isHidden);
 		}
 		
