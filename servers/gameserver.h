@@ -58,7 +58,7 @@ namespace alc {
 		tUnetGameServer(void);
 		~tUnetGameServer(void);
 		
-		template <typename T> void bcastMessage(const T &msg, unsigned int delay = 0) //!< delay is in msecs
+		template <typename T> void bcastMessage(const T &msg, tNetTime delay = 0) //!< delay is in secs
 		{ // template functions must be in the header so they can be instanciated properly
 			// broadcast message
 			tReadLock lock(smgrMutex);

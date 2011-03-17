@@ -80,14 +80,14 @@ void tUnetBase::applyConfig() {
 	cfg=alcGetMain()->config();
 	var=cfg->getVar("net.stop.timeout","global");
 	if(var.isEmpty()) {
-		stop_timeout=15*1000*1000;
+		stop_timeout=10;
 	} else {
-		stop_timeout=var.asUInt()*1000*1000;
+		stop_timeout=var.asUInt();
 	}
 	//Sets the idle timer
 	var=cfg->getVar("net.timer","global");
 	if(!var.isEmpty()) {
-		max_sleep = var.asUInt()*1000*1000;
+		max_sleep = var.asUInt();
 	}
 	var=cfg->getVar("net.maxconnections","global");
 	if(!var.isEmpty()) {
@@ -148,7 +148,7 @@ void tUnetBase::applyConfig() {
 	//Other DEVEL vars (dangerous to touch)
 	var=cfg->getVar("net.flood_check_sec","global");
 	if(!var.isEmpty()) {
-		flood_check_interval=var.asUInt()*1000*1000;
+		flood_check_interval=var.asUInt();
 	}
 	var=cfg->getVar("net.max_flood_pkts","global");
 	if(!var.isEmpty()) {
@@ -177,7 +177,7 @@ void tUnetBase::applyConfig() {
 	}
 	var=cfg->getVar("net.latency","global");
 	if(!var.isEmpty()) {
-		latency=var.asUInt();
+		latency=var.asUInt()/1000.0/1000.0;
 	}
 	var=cfg->getVar("net.quota_check_interval","global");
 	if(!var.isEmpty()) {
@@ -188,12 +188,21 @@ void tUnetBase::applyConfig() {
 	onApplyConfig();
 }
 
-void tUnetBase::stop(tNetTimeDiff timeout)
+void tUnetBase::stop()
 {
 	{
 		tSpinLock lock(runModeMutex);
-		if(timeout != static_cast<tNetTimeDiff>(-1))
-			stop_timeout=timeout*1000*1000;
+		running=false;
+	}
+	
+	if (alcGetSelfThreadId() != alcGetMain()->threadId()) wakeUpMainThread();
+}
+
+void tUnetBase::forcestop()
+{
+	{
+		tSpinLock lock(runModeMutex);
+		stop_timeout = 0; // don't wait
 		running=false;
 	}
 	
@@ -232,7 +241,7 @@ void tUnetBase::run() {
 			onIdle();
 		flushLogs();
 	}
-	max_sleep = 100*1000; // from now on, do not wait longer than 0.1 seconds so that we do not miss the stop timeout, and to speed up session deletion
+	max_sleep = 0.1; // from now on, do not wait longer than 0.1 seconds so that we do not miss the stop timeout, and to speed up session deletion
 	
 	// Uru clients need to be kicked first - messages might be sent to other servers as a reaction
 	if (terminatePlayers()) {
@@ -245,7 +254,7 @@ void tUnetBase::run() {
 	terminateAll();
 	
 	tNetTime shutdownInitTime = getNetTime();
-	while(!sessionListEmpty() && (getNetTime()-shutdownInitTime)<stop_timeout) {
+	while(!sessionListEmpty() && (getNetTime()-shutdownInitTime)<getStopTimeout()) {
 		sendAndWait();
 		flushLogs();
 	}

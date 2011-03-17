@@ -42,13 +42,11 @@
 
 namespace alc {
 
-tSQL::tSQL(const tString &host, uint16_t port, const tString &username, const tString &password, const tString &dbname, uint8_t flags, time_t timeout)
+tSQL::tSQL(const tString &host, uint16_t port, const tString &username, const tString &password, const tString &dbname, uint8_t flags)
  :host(host), username(username), password(password), dbname(dbname),  port(port)
 {
 	this->flags = flags;
-	this->timeout = timeout;
 	connection = NULL;
-	stamp = 0;
 	
 	// initialize logging
 	sql = new tLog;
@@ -92,7 +90,6 @@ bool tSQL::connect(bool openDatabase)
 	if (connection == NULL)
 		throw txNoMem(_WHERE("not enough memory to create MySQL handle"));
 	
-	stamp = time(NULL);
 	return mysql_real_connect(connection, host.c_str(), username.c_str(), password.isEmpty() ? NULL : password.c_str(), openDatabase ? dbname.c_str() : NULL, port, NULL, 0);
 }
 
@@ -147,7 +144,6 @@ bool tSQL::query(const tString &str, const char *desc, bool throwOnError)
 		sql->flush();
 	}
 	
-	stamp = time(NULL);
 	if (!mysql_query(connection, str.c_str())) return true; // if everything worked fine, we're done
 
 	// there was an error - print it
@@ -228,7 +224,6 @@ tSQL *tSQL::createFromConfig(void)
 	tString dbname = cfg->getVar("db.name");
 	
 	// additional options
-	time_t timeout = 15*60; // default is 15 minutes
 	uint8_t flags = allFlags();
 	var = cfg->getVar("db.log");
 	if (!var.isEmpty() && !var.asUInt()) // on per default
@@ -236,11 +231,8 @@ tSQL *tSQL::createFromConfig(void)
 	var = cfg->getVar("db.sql.log");
 	if (var.isEmpty() || !var.asUInt()) // off per default
 		flags &= ~SQL_LOGQ; // disable logging sql statements
-	var = cfg->getVar("db.timeout");
-	if (!var.isEmpty())
-		timeout = var.asUInt();
 	
-	return new tSQL(host, port, user, password, dbname, flags, timeout);
+	return new tSQL(host, port, user, password, dbname, flags);
 }
 
 }

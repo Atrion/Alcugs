@@ -36,11 +36,9 @@
 
 namespace alc {
 	
-	// unet time types
-	typedef unsigned long int tNetTime; // timestamp used by netcore (don't want to carry those tTimes around there), microseconds. this may overflow, to use with caution!
-	typedef signed long int tNetTimeSigned; // must be the same as tNetTime, but signed - to be used only by the overdue check!
-	typedef unsigned int tNetTimeDiff; // time difference between two net times, microseconds
-	typedef std::pair<tNetTimeDiff, bool> tNetTimeBoolPair;
+	// unet helper types
+	typedef double tNetTime; // always in seconds
+	typedef std::pair<tNetTime, bool> tNetTimeBoolPair;
 	
 	class tUnet;
 	class tmBase;
@@ -56,7 +54,7 @@ namespace alc {
 class tNetSession {
 // Types
 public:
-	typedef enum { Unknown, Negotiating, Connected, Terminating, Left } tConnectionState;
+	typedef enum { Unknown, Negotiating, Connected, Terminating, Leaving, Gone } tConnectionState;
 	typedef enum { UnknownGame, POTSGame, UUGame } tGameType;
 // methods
 public:
@@ -66,12 +64,12 @@ public:
 	size_t getMaxFragmentSize() { return(static_cast<size_t>(maxPacketSz)-getHeaderSize()); }
 	size_t getMaxDataSize() { return(getMaxFragmentSize() * 256); }
 	size_t getHeaderSize();
-	time_t onlineTime(void) { return alcGetTime()-created_stamp.seconds; }
-	void send(const tmBase &msg, tNetTimeDiff delay = 0); //!< delay is in msecs - may be called in worker thread
+	time_t onlineTime(void) { return time(NULL) - created_stamp; }
+	void send(const tmBase &msg, tNetTime delay = 0); //!< delay is in msecs - may be called in worker thread
 	void terminate(uint8_t reason = 0);
 	void setAuthData(uint8_t accessLevel, const tString &passwd);
 	
-	void setTimeout(unsigned int tout) { tWriteLock lock(prvDataMutex); conn_timeout=tout*1000*1000; } //!< set timeout (in seconds)
+	void setTimeout(tNetTime tout) { tWriteLock lock(prvDataMutex); conn_timeout=tout; } //!< set timeout (in seconds)
 	void setRejectMessages(bool reject) { tWriteLock lock(prvDataMutex); rejectMessages = reject; }
 	
 	uint32_t getSid(void) { return sid; } //!< sid will never change, so this is thread-safe
@@ -82,7 +80,6 @@ public:
 	bool isUruClient(void) { tReadLock lock(prvDataMutex); return authenticated; } //!< thread-safe
 	bool isClient(void) { tReadLock lock(prvDataMutex); return client; } //!< thread-safe
 	bool isTerminated(void) { tReadLock lock(prvDataMutex); return state >= Terminating; } //!< thread-safe
-	bool isLeft(void) { tReadLock lock(prvDataMutex); return state == Left; }
 	bool anythingToSend(void) { tMutexLock lock(sendMutex); return !ackq.empty() || !sndq.empty(); } //!< thread-safe
 	bool useUpdatedProtocol(void) { tReadLock lock(prvDataMutex); return upgradedProtocol; } //!< thread-safe
 	tLog *getLog(void);
@@ -98,7 +95,7 @@ private:
 	void rawsend(tUnetUruMsg *msg);
 
 	void createAckReply(const tUnetUruMsg* msg);
-	tNetTimeDiff ackSend(); //!< return the maximum wait time before we have to check again
+	tNetTime ackSend(); //!< return the maximum wait time before we have to check again
 	void ackCheck(tUnetUruMsg &msg);
 	
 	void acceptMessage(tUnetUruMsg *msg);
@@ -107,10 +104,10 @@ private:
 	bool parseBasicMsg(tUnetMsg * msg);
 
 	tConnectionState getState() { tReadLock lock(prvDataMutex); return state; }
-	void updateRTT(tNetTimeDiff newread);
+	void updateRTT(tNetTime newread);
 	void increaseCabal();
 	void decreaseCabal(bool emergency);
-	tNetTimeDiff timeToSend(size_t psize);
+	tNetTime timeToSend(size_t psize) { return static_cast<double>(psize)/(cabal ? cabal : maxPacketSz); }
 	
 	void negotiate();
 
@@ -165,9 +162,9 @@ private:
 	
 	tNetTime receive_stamp; //!< last time we got something from this client
 	tNetTime send_stamp; //!< last time we sent something to this client
-	tTime created_stamp; //!< timestamp of session creation (to be more prcise, time when connection is established: We received a nego)
+	tNetTime conn_timeout; //!< time after which the session will timeout (in microseconds); protected by prvDataMutex
+	time_t created_stamp; //!< timestamp of session creation (to be more prcise, time when connection is established: We received a nego)
 	tTime renego_stamp; //!< remote/received nego stamp (stamp of last nego we got)
-	tNetTimeDiff conn_timeout; //!< time after which the session will timeout (in microseconds); protected by prvDataMutex
 	
 	tString passwd; //!< peer passwd hash (used in V2) (string); protected by prvDataMutex
 	bool authenticated; //!< set to true when the peer acked the "you got authed" message (obviously we can't use the passwd for that one yet); protected by prvDataMutex
@@ -177,9 +174,9 @@ private:
 	unsigned int cabal; //!< cur avg bandwidth (in bytes per second), can't be > maxBandwidth, will grow slower when > minBandwith
 	unsigned int consecutiveCabalIncreases; //!< count how often in a row we increased the cabal - reset to 0 when decreasing
 	tNetTime next_msg_time; //!< time to send next msg in usecs (referring to tUnet::net_time)
-	tNetTimeDiff rtt; //!< round trip time, used to caluclate timeout
-	int deviation; //!< used to calculate timeout
-	tNetTimeDiff msg_timeout; //!< time after which a message is re-sent
+	tNetTime rtt; //!< round trip time, used to caluclate timeout
+	tNetTime deviation; //!< used to calculate timeout
+	tNetTime msg_timeout; //!< time after which a message is re-sent
 	
 	// queues
 	tPointerList<tUnetAck> ackq; //!< ack queue, saves acks to be packed - acks do not intersect here, and are sorted by the SNs they ack

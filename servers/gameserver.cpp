@@ -65,7 +65,7 @@ namespace alc {
 		ageState = new tAgeStateManager(this, ageInfo);
 		
 		// make sure we quit if noone comes
-		lastPlayerLeft = alcGetTime();
+		lastPlayerLeft = time(NULL);
 	}
 	
 	bool tUnetGameServer::canPortBeUsed(uint16_t port) {
@@ -292,7 +292,7 @@ namespace alc {
 			bool lastPlayer = checkIfOnlyPlayer(u);
 			{
 				tSpinLock lock(autoShutdownMutex);
-				lastPlayerLeft = lastPlayer ? alcGetTime() : 0;
+				lastPlayerLeft = lastPlayer ? time(NULL) : 0;
 			}
 			
 			// remove leftovers of this player from the age state
@@ -396,7 +396,7 @@ namespace alc {
 		bool goDownIdle;
 		{
 			tSpinLock lock(autoShutdownMutex);
-			goDownIdle = lingerTime && lastPlayerLeft && lastPlayerLeft + lingerTime < alcGetTime();
+			goDownIdle = lingerTime && lastPlayerLeft && lastPlayerLeft + lingerTime < time(NULL);
 		}
 		if (goDownIdle) {
 			log->log("The last player left more than %d sec ago, so I will go down.\n", lingerTime);
@@ -453,9 +453,9 @@ namespace alc {
 					send(msg);
 					// make sure noone else is just running an animation
 					tmGameMessage msgWalk(makePlayerIdle(u, data->obj, 1)); // let it walk forwards
-					send(msgWalk, 200); // 200msecs after the sit/KI state message
+					send(msgWalk, 0.2); // 200msecs after the sit/KI state message
 					tmGameMessage msgStop(makePlayerIdle(u, data->obj, 0)); // let it walk forwards
-					send(msgStop, 200+100); // 100msecs after the walk message (don't make this lower than 50msecs!)
+					send(msgStop, 0.2+0.1); // 100msecs after the walk message (don't make this lower than 50msecs!)
 				}
 			}
 		}
@@ -728,7 +728,7 @@ namespace alc {
 				ageState->saveClone(loadCloneMsg);
 				
 				// broadcast message. A delay of less than 2700msecs is likely to cause crashes when the avatar just left the sitting state.
-				bcastMessage(loadClone, /*delay*/ makeIdle ? 3000 : 0 );
+				bcastMessage(loadClone, /*delay*/ makeIdle ? 3 : 0 );
 				
 				// if it's an (un)load of the player's avatar, do the member list update
 				if (loadClone.isPlayerAvatar) {
@@ -761,7 +761,7 @@ namespace alc {
 					tSpinLock lock(autoShutdownMutex);
 					if (lastPlayerLeft) {
 						// stay up as if the last player left now, that should be long enough for the new player to join
-						lastPlayerLeft = alcGetTime();
+						lastPlayerLeft = time(NULL);
 					}
 				}
 				

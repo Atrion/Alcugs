@@ -85,11 +85,7 @@ bool alcGetLoginInfo(tString argv,tString * username,tString * hostname,uint16_t
 	return true;
 }
 
-time_t alcGetTime() {
-	return time(NULL);
-}
-
-/** Gets the current time as double*/
+/** Gets the current time as double */
 double alcGetCurrentTime()
 {
 	struct timeval tv;

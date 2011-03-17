@@ -50,7 +50,7 @@ namespace alc {
 
 class tSQL {
 public:
-	tSQL(const tString &host, uint16_t port, const tString &username, const tString &password, const tString &dbname, uint8_t flags, time_t timeout);
+	tSQL(const tString &host, uint16_t port, const tString &username, const tString &password, const tString &dbname, uint8_t flags);
 	~tSQL(void);
 	
 	bool prepare(void); //!< this must be called before each query. it establishes the connection and creates the database if necessary \return true on success, false on error
@@ -71,7 +71,6 @@ private:
 	void printError(const char *msg); //!< print the last MySQL error (with the given desctiption) to the error protocol
 	
 	uint8_t flags;
-	time_t timeout, stamp;
 	tLog *sql, *err;
 	// connection info
 	tString host, username, password, dbname;

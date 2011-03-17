@@ -499,7 +499,7 @@ namespace alc {
 		tMBuf buf;
 		buf.put16(0xFFFF);
 		buf.put32(random());
-		buf.put8(alcGetTime());
+		buf.put8(time(NULL));
 		buf.put8(0x00);
 		buf.rewind();
 		memcpy(guid, buf.read(8), 8);
@@ -508,14 +508,14 @@ namespace alc {
 	void tTrackingBackend::updateStatusFile(void)
 	{
 		assert(alcGetSelfThreadId() != alcGetMain()->threadId());
-		if (!statusFileUpdate && lastUpdate > alcGetTime()-5*60) return; // update at least every 5 minutes
+		if (!statusFileUpdate && lastUpdate > time(NULL)-5*60) return; // update at least every 5 minutes
 		
 		tReadLock lock(net->smgrMutex);
 		if (statusHTML) printStatusHTML();
 		if (statusHTMLdbg) printStatusHTML(true);
 		if (statusXML) printStatusXML();
 		statusFileUpdate = false;
-		lastUpdate = alcGetTime();
+		lastUpdate = time(NULL);
 	}
 	
 	void tTrackingBackend::printStatusHTML(bool dbg)

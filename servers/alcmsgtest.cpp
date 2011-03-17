@@ -158,7 +158,7 @@ tUnetSimpleFileServer::tUnetSimpleFileServer(const tString &lhost,uint16_t lport
 	sentBytes=0;
 	compressed=false;
 	// don't miss anything
-	if (!listen) max_sleep = 100*1000;
+	if (!listen) max_sleep = 0.1;
 }
 
 void tUnetSimpleFileServer::setDestinationAddress(const tString &d,uint16_t port) {
