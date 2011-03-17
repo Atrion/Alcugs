@@ -151,6 +151,7 @@ void tNetSession::updateRTT(tNetTime newread) {
 	deviation += alpha*(fabs(diff)-deviation);
 	msg_timeout= rtt + delta*deviation;
 	if (msg_timeout > 5) msg_timeout = 5; // max. timeout: 5secs
+	else if (msg_timeout < 0.001) msg_timeout = 0.001; // min. timeout: 1 millisecond
 	DBG(3,"%s RTT update (sample rtt: %f) new rtt:%f, msg_timeout:%f, deviation:%f\n", str().c_str(),newread,rtt,msg_timeout,deviation);
 }
 void tNetSession::increaseCabal() {
@@ -441,13 +442,13 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 			return;
 		}
 		if(renego_stamp==comm.timestamp) { // it's a duplicate, we already got this message
+			net->log->print(" (ignored)\n");
 			/* It is necessary to do the check this way since the usual check by SN would treat a re-nego on an existing connection as
 			 * "already parsed" since the SN is started from the beginning */
 			if (msg->cps == clientMsg.cps) // messgae has correct SN
 				clientMsg.cps = msg->csn; // accept it
 			send(tmNetAck(this, new tUnetAck(msg->csn, msg->cps))); // ack it
 			delete msg; // and be done
-			net->log->print(" (ignored)\n");
 			return;
 		}
 		net->log->nl();

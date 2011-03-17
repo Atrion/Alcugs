@@ -340,9 +340,9 @@ bool tUnet::sendAndWait() {
 	tNetTimeBoolPair result = processSendQueues();
 	tNetTime unet_timeout = result.first;
 	bool idle = !result.second; // we are idle if there is nothing to send
-	if (unet_timeout < 0.0005) {
-		DBG(3, "Timeout %f too low, increasing to 500 microseconds\n", unet_timeout);
-		unet_timeout = 0.0005; // don't sleep less than 0.5 milliseconds
+	if (unet_timeout < 0.001) {
+		DBG(3, "Timeout %f too low, increasing to 1 millisecond\n", unet_timeout);
+		unet_timeout = 0.001; // don't sleep less than 1 millisecond
 	}
 
 	//waiting for packets - timeout
