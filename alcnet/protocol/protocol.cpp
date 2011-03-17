@@ -331,8 +331,10 @@ size_t tUnetUruMsg::hSize() {
 	if(bhflags & UNetExt) hsize-=8;
 	return hsize;
 }
-void tUnetUruMsg::dumpheader(tLog * f) {
-	f->print("[%i] ->%02X<- {%i,%i (%i) %i,%i} - %02X|%i bytes",pn,bhflags,sn(),fr(),frt,psn(),pfr(),data.size(),data.size());
+tString tUnetUruMsg::header() {
+	tString result;
+	result.printf("[%i] ->%02X<- {%i,%i (%i) %i,%i} - %i bytes",pn,bhflags,sn(),fr(),frt,psn(),pfr(),data.size());
+	return result;
 }
 //flux 0 client -> server, 1 server -> client
 void tUnetUruMsg::htmlDumpHeader(tLog * log,uint8_t flux,uint32_t ip,uint16_t port) const {

@@ -177,7 +177,7 @@ void tNetSession::send(const tmBase &msg, tNetTime delay) {
 		net->log->log("%s ERR: Connection already down, will not send a message to it.\n", str().c_str());
 		return;
 	}
-#if _DBG_LEVEL_ < 1
+#ifndef ENABLE_MSGDEBUG
 	if (!(flags & UNetAckReply))
 #endif
 		net->log->log("<SND> %s %s\n",str().c_str(),msg.str().c_str());
@@ -280,9 +280,7 @@ void tNetSession::rawsend(tUnetUruMsg *msg)
 	msg->pn=serverMsg.pn;
 	
 	#ifdef ENABLE_MSGDEBUG
-	net->log->log("<SND> ");
-	msg->dumpheader(net->log);
-	net->log->nl();
+	net->log->log("<SND> %s %s \n", str().c_str(), msg->header().c_str());
 	#endif
 	msg->htmlDumpHeader(net->ack,1,ip,port);
 
@@ -290,12 +288,6 @@ void tNetSession::rawsend(tUnetUruMsg *msg)
 	tMBuf * mbuf;
 	mbuf = new tMBuf();
 	mbuf->put(*msg);
-
-	#ifdef ENABLE_MSGDEBUG
-	net->log->log("<SND> RAW Packet follows: \n");
-	net->log->dumpbuf(*mbuf);
-	net->log->nl();
-	#endif
 	
 	DBG(9,"validation level is %i,%i\n",validation,msg->val);
 	
@@ -416,12 +408,6 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 		}
 	}
 	
-	#ifdef ENABLE_MSGDEBUG
-	net->log->log("<RCV> %s RAW Packet follows: \n", str().c_str());
-	net->log->dumpbuf(buf,size);
-	net->log->nl();
-	#endif
-	
 	tSBuf mbuf(buf,size);
 	
 	tUnetUruMsg *msg = new tUnetUruMsg;
@@ -429,9 +415,7 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 	try {
 		mbuf.get(*msg);
 		#ifdef ENABLE_MSGDEBUG
-		net->log->log("<RCV> ");
-		msg->dumpheader(net->log);
-		net->log->nl();
+		net->log->log("<RCV> %s %s \n", str().c_str(), msg->header().c_str());
 		#endif
 		msg->htmlDumpHeader(net->ack,0,ip,port);
 	} catch(txUnexpectedData &t) {
@@ -586,6 +570,7 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 void tNetSession::acceptMessage(tUnetUruMsg *t)
 {
 	assert(!(t->bhflags & UNetNegotiation));
+	assert(t->cps == clientMsg.cps);
 	DBG(5, "Accepting %d.%d\n", t->sn(), t->fr());
 	if (t->bhflags & UNetAckReq) {
 		clientMsg.cps = t->csn;
@@ -712,7 +697,7 @@ void tNetSession::createAckReply(const tUnetUruMsg *msg) {
 void tNetSession::ackCheck(tUnetUruMsg &t) {
 	uint32_t A1,A2,A3;
 	tmNetAck ackMsg(this, &t);
-#if _DBG_LEVEL_ >= 1
+#ifdef ENABLE_MSGDEBUG
 	net->log->log("<RCV> %s [%d] %s\n",str().c_str(),t.sn(),ackMsg.str().c_str());
 #endif
 	tUnetAck *ack;

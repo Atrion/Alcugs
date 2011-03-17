@@ -303,9 +303,6 @@ void tUnetBase::processEvent(tNetEvent *evt)
 			tUnetMsg * msg = dynamic_cast<tUnetMsg *>(evt->data);
 			assert(msg!=NULL);
 			int ret = 0; // 0 - non parsed; 1 - parsed; 2 - ignored; -1 - parse error; -2 - hack attempt
-			#ifdef ENABLE_MSGDEBUG
-			log->log("%s New MSG Recieved\n",u->str().c_str());
-			#endif
 			if (u->isTerminated()) {
 				err->log("%s is terminated and sent non-NetMsgLeave message 0x%04X (%s) - ignoring\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd));
 				return;
