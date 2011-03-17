@@ -106,7 +106,7 @@ private:
 	void updateRTT(tNetTime newread);
 	void increaseCabal();
 	void decreaseCabal(bool emergency);
-	tNetTime timeToSend(size_t psize) { return static_cast<double>(psize)/cabal; }
+	tNetTime timeToSend(size_t size) { return static_cast<double>(size)/cabal; }
 	
 	void negotiate();
 
