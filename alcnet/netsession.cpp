@@ -156,7 +156,7 @@ void tNetSession::updateRTT(tNetTime newread) {
 }
 void tNetSession::increaseCabal() {
 	++consecutiveCabalIncreases;
-	cabal += maxPacketSz/5*log(consecutiveCabalIncreases);
+	cabal += maxPacketSz/log(consecutiveCabalIncreases)*5.0;
 	DBG(3,"%s +Cabal is now %i\n",str().c_str(),cabal);
 }
 void tNetSession::decreaseCabal(bool emergency) {
@@ -826,8 +826,8 @@ tNetTimeBoolPair tNetSession::processSendQueues()
 		// control for auto-drop of old non-acked messages
 		const unsigned int minTH=15;
 		const unsigned int maxTH=100;
-		// max. number of allowed re-sends before timeout: Uru clients get more resends due to their missing multi-threading (also see timeout comment below)
-		const unsigned int resendLimit = (state != Connected) ? 3 : (authenticated ? 10 : 5);
+		// max. number of allowed re-sends before timeout: Give terminated clients less time
+		const unsigned int resendLimit = (state != Connected) ? 3 : 10;
 		
 		// urgent packets
 		tPointerList<tUnetUruMsg>::iterator it = sndq.begin();
