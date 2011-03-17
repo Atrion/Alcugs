@@ -156,14 +156,14 @@ void tNetSession::updateRTT(tNetTime newread) {
 }
 void tNetSession::increaseCabal() {
 	++consecutiveCabalIncreases;
-	cabal += maxPacketSz/log(consecutiveCabalIncreases)*5.0;
-	DBG(3,"%s +Cabal is now %i\n",str().c_str(),cabal);
+	cabal += maxPacketSz*log(consecutiveCabalIncreases)/10.0;
+	DBG(3,"%s +Cabal is now %i (%i consecutive increases)\n",str().c_str(),cabal,consecutiveCabalIncreases);
 }
 void tNetSession::decreaseCabal(bool emergency) {
 	consecutiveCabalIncreases = 0;
 	const unsigned int delta = emergency ? 25 : 5;
 	cabal -= (delta*cabal)/100;
-	if(cabal < 5u*maxPacketSz) cabal = 5u*maxPacketSz; // don't drop below 5kByte/s
+	if(cabal < maxPacketSz) cabal = maxPacketSz; // don't drop below one packet per second
 	DBG(3,"%s %sCabal is now %i\n",str().c_str(),emergency ? "--" : "-",cabal);
 }
 
@@ -900,7 +900,7 @@ tNetTimeBoolPair tNetSession::processSendQueues()
 			}
 		} //end while
 		// calculate how long it will take us to send what we just sent
-		DBG(5, "%s sent packets with %d bytes\n", str().c_str(), cur_size);
+		DBG(5, "%s sent packets with %d bytes at cabal %d\n", str().c_str(), cur_size, cabal);
 		if (net->timeOverdue(next_msg_time)) {
 			// "regular" send
 			tNetTime cur_tts = timeToSend(cur_size);
