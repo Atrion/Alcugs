@@ -333,7 +333,7 @@ size_t tUnetUruMsg::hSize() {
 }
 tString tUnetUruMsg::header() {
 	tString result;
-	result.printf("[%i] ->%02X<- {%i,%i (%i) %i,%i} - %i bytes",pn,bhflags,sn(),fr(),frt,psn(),pfr(),data.size());
+	result.printf("  %i ->%02X<- {%i,%i (%i) %i,%i} - %i bytes",pn,bhflags,sn(),fr(),frt,psn(),pfr(),data.size());
 	return result;
 }
 //flux 0 client -> server, 1 server -> client
