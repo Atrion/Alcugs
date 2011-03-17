@@ -64,7 +64,6 @@ public:
 	size_t getMaxFragmentSize() { return(static_cast<size_t>(maxPacketSz)-getHeaderSize()); }
 	size_t getMaxDataSize() { return(getMaxFragmentSize() * 256); }
 	size_t getHeaderSize();
-	time_t onlineTime(void) { return time(NULL) - created_stamp; }
 	void send(const tmBase &msg, tNetTime delay = 0); //!< delay is in msecs - may be called in worker thread
 	void terminate(uint8_t reason = 0);
 	void setAuthData(uint8_t accessLevel, const tString &passwd);
@@ -132,6 +131,7 @@ public:
 	
 	// used by game
 	bool joined;
+	time_t joinedTime;
 	
 	// synchronization
 	tReadWriteEx pubDataMutex; //!< protecting above public variables - take it when accessing from main thread, or writing from worker thread (reading from worker is safe always)
@@ -163,7 +163,6 @@ private:
 	tNetTime receive_stamp; //!< last time we got something from this client
 	tNetTime send_stamp; //!< last time we sent something to this client
 	tNetTime conn_timeout; //!< time after which the session will timeout (in microseconds); protected by prvDataMutex
-	time_t created_stamp; //!< timestamp of session creation (to be more prcise, time when connection is established: We received a nego)
 	tTime renego_stamp; //!< remote/received nego stamp (stamp of last nego we got)
 	
 	tString passwd; //!< peer passwd hash (used in V2) (string); protected by prvDataMutex

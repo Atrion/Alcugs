@@ -89,7 +89,6 @@ tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t s
 	
 	DBG(5, "%s Initial msg_timeout: %f\n", str().c_str(), msg_timeout);
 	// session created
-	created_stamp = time(NULL);
 	net->sec->log("%s New Connection\n",str().c_str());
 	net->addEvent(new tNetEvent(this,UNET_NEWCONN));
 	

@@ -278,13 +278,16 @@ namespace alc {
 	void tUnetGameServer::onConnectionClosing(alc::tNetSession* u, uint8_t reason)
 	{
 		if (u->ki != 0) { // if necessary, tell the others about it (don't rely on peer type, that will already be reset)
+			time_t onlineTime = u->joined ? time(NULL)-u->joinedTime : 0;
 			if (reason == RLeaving) { // the player is going on to another age, so he's not really offline
 				// update online time
-				tmCustomVaultPlayerStatus vaultStatus(*vaultServer, u->ki, alcGetStrGuid(serverGuid), serverName, /* offline but will soon come back */ 2, u->onlineTime());
+				tmCustomVaultPlayerStatus vaultStatus(*vaultServer, u->ki, alcGetStrGuid(serverGuid), serverName,
+													  /* offline but will soon come back */ 2, onlineTime);
 				send(vaultStatus);
 			}
 			else { // the player really went offline
-				tmCustomVaultPlayerStatus vaultStatus(*vaultServer, u->ki, "0000000000000000" /* these are 16 zeroes */, "", /* player is offline */0, u->onlineTime());
+				tmCustomVaultPlayerStatus vaultStatus(*vaultServer, u->ki, "0000000000000000" /* these are 16 zeroes */, "",
+													  /* player is offline */0, onlineTime);
 				send(vaultStatus);
 			}
 			
@@ -351,7 +354,7 @@ namespace alc {
 		for (tNetSessionMgr::tIterator it(smgr); it.next();) {
 			if (*it == u) continue;
 			if (it->data) {
-				tmMemberUpdate memberUpdate(*it, data->createInfo(), isJoined);
+				tmMemberUpdate memberUpdate(*it, data->createInfo(u), isJoined);
 				send(memberUpdate);
 			}
 		}
@@ -485,6 +488,7 @@ namespace alc {
 				{
 					tWriteLock lock(u->pubDataMutex);
 					u->joined = true;
+					u->joinedTime = time(NULL);
 				}
 				const tStreamable *ageSDLState = ageState->getAgeState();
 				if (ageSDLState) {
@@ -543,7 +547,7 @@ namespace alc {
 					if (*it == u) continue;
 					tGameData *data = dynamic_cast<tGameData *>(it->data);
 					if (data) {
-						list.members.push_back(data->createInfo());
+						list.members.push_back(data->createInfo(*it));
 					}
 				}
 				send(list);
@@ -738,7 +742,7 @@ namespace alc {
 						u->data = NULL;
 					}
 					else if (loadClone.isLoad && !u->data) {
-						u->data = new tGameData(loadClone.obj, u);
+						u->data = new tGameData(loadClone.obj);
 						bcastMemberUpdate(u, /*isJoined*/true);
 					}
 				}
