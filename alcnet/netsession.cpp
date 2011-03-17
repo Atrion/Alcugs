@@ -30,7 +30,7 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETSESSION_ID "$Id$"
-//#define _DBG_LEVEL_ 5
+//#define _DBG_LEVEL_ 3
 #include <alcdefs.h>
 #include "netsession.h"
 
@@ -63,7 +63,7 @@ tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t s
 	// fill in default values
 	authenticated=false;
 	accessLevel=0;
-	cabal=0;
+	cabal=maxPacketSz;
 	consecutiveCabalIncreases = 0;
 	flood_npkts=0;
 	flood_last_check = next_msg_time = receive_stamp = send_stamp = net->getNetTime();
@@ -143,26 +143,24 @@ size_t tNetSession::getHeaderSize() {
 // functions to calculate cabal and rtt
 void tNetSession::updateRTT(tNetTime newread) {
 	if(rtt==0) rtt=2*newread; // start with a large deviation, in case this was like an "early shot"
-	//Jacobson/Karels
+	//Jacobson/Karels - also see https://csel.cs.colorado.edu/~netsys03/CSCI_4273_5273_Spring_2003/Lecture_Slides/Chapter6.1.ppt
 	const double alpha=0.125;
 	const double delta=4;
 	const double diff=newread - rtt;
 	rtt       += alpha*diff;
-	deviation += (alpha*(fabs(diff)-deviation));
+	deviation += alpha*(fabs(diff)-deviation);
 	msg_timeout= rtt + delta*deviation;
 	if (msg_timeout > 5) msg_timeout = 5; // max. timeout: 5secs
 	DBG(3,"%s RTT update (sample rtt: %f) new rtt:%f, msg_timeout:%f, deviation:%f\n", str().c_str(),newread,rtt,msg_timeout,deviation);
 }
 void tNetSession::increaseCabal() {
-	if(!cabal) return;
 	++consecutiveCabalIncreases;
-	cabal += maxPacketSz/7.5*log(consecutiveCabalIncreases);
+	cabal += maxPacketSz/5*log(consecutiveCabalIncreases);
 	DBG(3,"%s +Cabal is now %i\n",str().c_str(),cabal);
 }
 void tNetSession::decreaseCabal(bool emergency) {
 	consecutiveCabalIncreases = 0;
-	if(!cabal) return;
-	const unsigned int delta = emergency ? 25 : 2;
+	const unsigned int delta = emergency ? 25 : 5;
 	cabal -= (delta*cabal)/100;
 	if(cabal < 5u*maxPacketSz) cabal = 5u*maxPacketSz; // don't drop below 5kByte/s
 	DBG(3,"%s %sCabal is now %i\n",str().c_str(),emergency ? "--" : "-",cabal);
@@ -176,7 +174,7 @@ void tNetSession::send(const tmBase &msg, tNetTime delay) {
 		throw txUnexpectedData(_WHERE("Message sent for wrong session!"));
 	uint8_t flags = msg.bhflags(), val = validation;
 	if (getState() >= Leaving && !(flags & (UNetAckReply|UNetNegotiation))) { // on left sessions, only allow negos and acks
-		net->err->log("%s is already down, will not send a message to it.\n", str().c_str());
+		net->log->log("%s ERR: Connection already down, will not send a message to it.\n", str().c_str());
 		return;
 	}
 #if _DBG_LEVEL_ < 1
@@ -842,8 +840,8 @@ tNetTimeBoolPair tNetSession::processSendQueues()
 		// control for auto-drop of old non-acked messages
 		const unsigned int minTH=15;
 		const unsigned int maxTH=100;
-		// max. number of allowed re-sends before timeout
-		const unsigned int resendLimit = (state > Connected) ? 3 : (authenticated ? 10 : 5); // Uru clients get more resends due to their missing multi-threading
+		// max. number of allowed re-sends before timeout: Uru clients get more resends due to their missing multi-threading (also see timeout comment below)
+		const unsigned int resendLimit = (state != Connected) ? 3 : (authenticated ? 10 : 5);
 		
 		// urgent packets
 		tPointerList<tUnetUruMsg>::iterator it = sndq.begin();
@@ -881,11 +879,13 @@ tNetTimeBoolPair tNetSession::processSendQueues()
 						send_stamp=curmsg->snt_timestamp=net->getNetTime();
 						rawsend(curmsg);
 						curmsg->tries++;
-						curmsg->timestamp=net->getNetTime() + msg_timeout;
-						/* choose much higher timeout for client connections and icnrease it during re-sends - the clients netcore sometimes seems
-						 * to be blocked long beyond any reasonable time (half of this time is NOT enough!) */
-						if (authenticated) curmsg->timestamp += curmsg->tries*msg_timeout;
-						timeout = std::min(timeout, net->remainingTimeTill(curmsg->timestamp)); // be sure to check this message on time
+						double curmsg_timeout = msg_timeout*curmsg->tries; // increase timeout for further re-sends
+						/* choose higher timeout for client connections - the clients netcore sometimes seems
+						 * to be blocked long beyond any reasonable time (even when *sending* a whole lot of
+						 * packets, e.g. when linking to Noloben, it does not reply to acks). */
+						if (authenticated) curmsg_timeout *= 1.5;
+						curmsg->timestamp=net->getNetTime() + curmsg_timeout;
+						if (timeout > curmsg_timeout) timeout = curmsg_timeout; // be sure to check this message on time
 						++it; // go on
 					}
 				} else {
