@@ -442,10 +442,9 @@ public:
 	
 	// convenience functions
 	void setToNow();
-	double asDouble(char how='s') const;
-	time_t asNumber(char how='s') const;
+	double asDouble() const { return seconds + (microseconds / 1000000.0); }
 	tString str(bool relative = false) const;
-	bool isNull() const { return seconds == 0; }
+	bool isNull() const { return seconds == 0 && microseconds == 0; }
 	
 	// data
 	time_t seconds;

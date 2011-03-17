@@ -45,7 +45,7 @@ public:
 	tAlcMain(const tString &appName); //!< Run this directly in main(), not in a try...catch - it will deal with that itself
 	virtual ~tAlcMain(void);
 	
-	tTime bornTime(void) { return born; }
+	const tTime &bornTime(void) { return born; }
 	tTime upTime(void);
 	uint64_t threadId(void) { return mainThreadId; }
 	tConfig *config(void); //!< returns the configuration manager - must only be used in main thread!
