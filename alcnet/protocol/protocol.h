@@ -103,7 +103,7 @@ public:
 	virtual size_t size();
 	/** Get header size */
 	size_t hSize();
-	void dumpheader(tLog * f);
+	tString header();
 	void htmlDumpHeader(tLog * log,uint8_t flux,uint32_t ip,uint16_t port) const; //ip, port in network order
 	
 	uint32_t sn(void) const { return csn >> 8; }
