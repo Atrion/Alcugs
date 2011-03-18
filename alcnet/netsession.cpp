@@ -216,7 +216,10 @@ void tNetSession::send(const tmBase &msg, tNetTime delay) {
 	if (n_pkts > 0 && ((flags & UNetNegotiation) || (flags & UNetAckReply)))
 		throw txProtocolError(_WHERE("Nego and ack packets must not be fragmented!"));
 	
-	net->updateNetTime(); // make sure we got correct time reference
+	#ifdef ENABLE_NETDEBUG
+	delay += net->latency;
+	#endif
+	net->updateNetTime(); // make sure we got correct time reference (this is also required for non-delayed packages, e.g. for dropping too old non-acked messages)
 	{
 		tMutexLock lock(sendMutex);
 		serverMsg.sn++;
@@ -233,14 +236,8 @@ void tNetSession::send(const tmBase &msg, tNetTime delay) {
 			pmsg->set_csn(serverMsg.sn, i);
 			pmsg->frt=n_pkts;
 			pmsg->cps=serverMsg.cps;
-			
-			pmsg->data.write(buf.read(csize),csize);
-			
 			pmsg->timestamp=net->getNetTime()+delay; // no need to take tts into account now, the send queue worker does that (and our tts estimate might change till this packet is actually sent)
-			
-			#ifdef ENABLE_NETDEBUG
-			pmsg->timestamp+=net->latency;
-			#endif
+			pmsg->data.write(buf.read(csize),csize);
 			
 			if(flags & UNetAckReq) { // if this packet has the ack flag on, save it's number
 				serverMsg.cps=pmsg->csn;

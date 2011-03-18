@@ -365,7 +365,7 @@ bool tUnet::sendAndWait() {
 	tTime start = tTime::now();
 #endif
 	valret = select(std::max(this->sock, this->sndPipeReadEnd)+1, &rfds, NULL, NULL, &tv); // this is the command taking the time - now lets process what we got
-	// update stamp, since we spent some time in the select function
+	// update stamp, since we spent some time in the select function (processIncomingMsg needs this for the receive_stamp)
 	updateNetTime();
 #if _DBG_LEVEL_ >= 8
 	start = tTime::now()-start;
