@@ -1009,36 +1009,15 @@ namespace alc {
 		uint32_t infoNode = vaultDB->createChildNode(ki, ki, *node);
 		delete node;
 		
-		// link that player with Ae'gura, the hood and DniCityX2Final
+		// link that player with the (default) hood
 		uint8_t guid[8];
-		{
-			if (!generateGuid(guid, "city", ki)) throw txProtocolError(_WHERE("error creating GUID"));
-			tvAgeInfoStruct ageInfo("city", "Ae'gura", "Ae'gura", "Ae'gura", guid);
-			tvSpawnPoint spawnPoint("FerryTerminal", "LinkInPointFerry");
-			
-			uint32_t ageNode = getAge(ageInfo);
-			addAgeLinkToPlayer(ki, ageNode, spawnPoint);
-		}
+		if (!generateGuid(guid, "Neighborhood", ki)) throw txProtocolError(_WHERE("error creating hood GUID"));
+		tvAgeInfoStruct ageInfo("Neighborhood", "Neighborhood", hoodName, hoodDesc, guid);
+		tvSpawnPoint spawnPoint("Default", "LinkInPointDefault");
 		
-		{
-			if (!generateGuid(guid, "Neighborhood", ki)) throw txProtocolError(_WHERE("error creating GUID"));
-			tvAgeInfoStruct ageInfo("Neighborhood", "Neighborhood", hoodName, hoodDesc, guid);
-			tvSpawnPoint spawnPoint("Default", "LinkInPointDefault");
-			
-			uint32_t ageNode = getAge(ageInfo);
-			addAgeLinkToPlayer(ki, ageNode, spawnPoint);
-			addRemovePlayerToAge(ageNode, ki);
-		}
-		
-		{
-			if (!generateGuid(guid, "DniCityX2Finale", ki)) throw txProtocolError(_WHERE("error creating GUID"));
-			tvAgeInfoStruct ageInfo("DniCityX2Finale", "DniCityX2Finale", "", "", guid);
-			tvSpawnPoint spawnPoint("Default", "LinkInPointDefault");
-			
-			uint32_t ageNode = getAge(ageInfo);
-			addAgeLinkToPlayer(ki, ageNode, spawnPoint);
-			// I don't know why, but the NEWS file clearly says that DniCityX2Finale should not have an owner *shrug*
-		}
+		uint32_t ageNode = getAge(ageInfo);
+		addAgeLinkToPlayer(ki, ageNode, spawnPoint);
+		addRemovePlayerToAge(ageNode, ki);
 		
 		// create link AllPlayersFolder -> info node (broadcasted)
 		addRefBCasted(ki, allPlayers, infoNode);
