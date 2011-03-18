@@ -96,7 +96,7 @@ private:
 	uint8_t validation;
 	int count; //!< number of pings sent so far
 	tNetSessionRef dstSession;
-	tTime lastSend;
+	tNetTime lastSend;
 	double min,max,avg;
 	int rcvn;
 	bool urgent;
@@ -153,7 +153,7 @@ int tUnetPing::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 			tMutexLock lock(mutex);
 			if(listen==0) {
 				if(*dstSession==u) {
-					double rtt=tTime::now().asDouble()-ping.mtime;
+					double rtt=getNetTime()-ping.mtime;
 					printf("Pong from %s:%i x=%i dest=%i %s time=%0.3f ms\n",
 						alcGetStrIp(u->getIp()).c_str(),ntohs(u->getPort()),ping.x,ping.destination,
 						alcUnetGetDestination(ping.destination),rtt*1000);
@@ -201,17 +201,17 @@ void tUnetPing::onIdle() {
 		return;
 	}
 
-	if ((tTime::now() - lastSend).asDouble() > time) {
+	if (timeOverdue(lastSend+time)) {
 		DBG(5, "Time to send again\n");
 		//snd ping message
 		tmPing ping(*dstSession, destination);
 		ping.urgent = urgent;
 
 		count++;
-		lastSend.setToNow();
+		lastSend = getNetTime();
 		for(int i=0; i<flood; i++) {
 			ping.x = (flood * (count-1)) + i;
-			ping.mtime = lastSend.asDouble();
+			ping.mtime = lastSend;
 			send(ping);
 		}
 	}
