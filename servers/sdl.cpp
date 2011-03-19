@@ -26,7 +26,7 @@
 
 /* CVS tag - DON'T TOUCH*/
 #define __U_SDL_ID "$Id$"
-//#define _DBG_LEVEL_ 10
+//#define _DBG_LEVEL_ 8
 #include <alcdefs.h>
 #include "sdl.h"
 
@@ -456,9 +456,13 @@ namespace alc {
 	
 	uint16_t tAgeStateManager::findLatestStructVersion(const tString &name, bool throwOnError)
 	{
+		DBG(6, "Looking for latest version of %s\n", name.c_str());
 		uint16_t version = 0;
 		for (tSdlStructList::iterator it = structs.begin(); it != structs.end(); ++it) {
-			if (it->name == name && it->version > version) version = it->version;
+			if (it->name == name && it->version > version) {
+				version = it->version;
+				DBG(6, "Found version %d\n", version);
+			}
 		}
 		if (throwOnError && !version) throw txProtocolError(_WHERE("Could not find any SDL struct for %s", name.c_str()));
 		return version;
@@ -581,6 +585,7 @@ namespace alc {
 				case 6: // in a statedesc block, search for VAR or the curly bracket
 					if (c == "}") {
 						sdlStruct.count(); // count vars and structs
+						DBG(4, "Found SDL struct %s, version %d\n", sdlStruct.name.c_str(), sdlStruct.version);
 						structs.push_back(sdlStruct); // the STATEDESC is finished now
 						state = 0; // go back to state 0 and wait for EOF or next statedesc
 					} else if (c == "VAR")
