@@ -69,7 +69,7 @@ namespace alc {
 		return true;
 	}
 	
-	tAgeInfo::tAgeInfo(tString dir, const tString &name, bool loadPages)
+	tAgeInfo::tAgeInfo(tString dir, const tString &name, bool loadPages) : name(name)
 	{
 		// open and decrypt file
 		tFBuf ageFile;
