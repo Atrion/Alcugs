@@ -34,19 +34,26 @@
 namespace alc {
 
 	class tpObject;
+	class tStreamedObject;
 	
 	const char *alcGetPlasmaType(uint16_t type);
-	tpObject *alcCreatePlasmaObject(uint16_t type, bool mustBeComplete = true);
 	
 	class tpObject : public tStreamable {
 	public:
-		tpObject(uint16_t type, bool incomplete = false) : incomplete(incomplete), type(type) {}
 		virtual void store(tBBuf &/*t*/) {}
 		virtual void stream(tBBuf &/*t*/) const {}
+
+		static tpObject *createFromStream(tStreamedObject *stream, bool UUFormat, bool mustBeComplete = true);
 		
+		void setUUFormat(bool UUFormat) { this->UUFormat = UUFormat; }
 		uint16_t getType(void) const { return type; }
 		bool isIncomplete(void) const { return incomplete; }
 		virtual tString str(void) const;
+	protected:
+		tpObject(uint16_t type, bool incomplete = false) : incomplete(incomplete), type(type) {}
+		
+		static tpObject *createByType(uint16_t type, bool mustBeComplete = true);
+		bool UUFormat;
 	private:
 		bool incomplete;
 		uint16_t type;

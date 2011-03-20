@@ -969,7 +969,7 @@ namespace alc {
 		}
 		type = t.get16();
 		// it's Until Uru, use other type IDs (some are incremented by 1 in POTS) - remember to also update tvItem::stream!
-		if (UUFormat && (type == plVaultNode_UU || type == plVaultNodeRef_UU)) ++type;
+		if (UUFormat) type = alcOpcodeUU2POTS(type);
 		
 		if (data) delete data;
 		switch (type) {
@@ -1004,7 +1004,7 @@ namespace alc {
 		t.put8(0); // unknown
 		uint16_t sentType = type;
 		// it's Until Uru, use other type IDs (some are incremented by 1 in POTS) - remember to also update tvItem::store!
-		if (UUFormat && (sentType == plVaultNode || sentType == plVaultNodeRef)) --sentType;
+		if (UUFormat) sentType = alcOpcodePOTS2UU(type);
 		t.put16(sentType);
 		t.put(*data);
 	}

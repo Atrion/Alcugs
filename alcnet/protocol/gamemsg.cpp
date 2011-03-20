@@ -133,7 +133,7 @@ namespace alc {
 	}
 	
 	tmGameMessage::tmGameMessage(tNetSession *u, uint32_t ki, tpObject *obj)
-	 : tmNetMsg(NetMsgGameMessage, plNetAck | plNetKi, u), msgStream(obj) // this already compresses the stream
+	 : tmNetMsg(NetMsgGameMessage, plNetAck | plNetKi, u), msgStream(obj, u->gameType == tNetSession::UUGame) // this already compresses the stream
 	{ this->ki = ki; }
 	
 	// constructors for sub-classes
@@ -145,7 +145,7 @@ namespace alc {
 	}
 	
 	tmGameMessage::tmGameMessage(uint16_t cmd, tNetSession *u, uint32_t ki, tpObject *obj)
-	 : tmNetMsg(cmd, plNetAck | plNetKi, u), msgStream(obj) // this already compresses the stream
+	 : tmNetMsg(cmd, plNetAck | plNetKi, u), msgStream(obj, u->gameType == tNetSession::UUGame) // this already compresses the stream
 	{ this->ki = ki; }
 	
 	// methods
@@ -154,7 +154,7 @@ namespace alc {
 		tmNetMsg::store(t);
 		if (!hasFlags(plNetKi)) throw txProtocolError(_WHERE("KI flag missing"));
 		if (cmd != NetMsgCustomDirectedFwd && (ki == 0 || ki != u->ki)) // don't kick connection game <-> tracking
-			throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
+			throw txProtocolError(_WHERE("KI mismatch (%d != %d) or 0 KI", ki, u->ki));
 		
 		t.get(msgStream);
 		

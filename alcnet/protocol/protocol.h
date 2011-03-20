@@ -54,8 +54,6 @@ void alcDecodePacket(uint8_t* buf, int n);
 int alcUruValidatePacket(uint8_t * buf,int n,uint8_t * validation,bool authed=false,const char * phash=NULL);
 uint32_t alcUruChecksum(const uint8_t* buf, int size, int alg, const char * aux_hash);
 
-uint16_t alcFixUUNetMsgCommand(uint16_t cmd, const tNetSession *u);
-
 const char * alcUnetGetRelease(uint8_t rel);
 const char * alcUnetGetDestination(uint8_t dest);
 const char * alcUnetGetReasonCode(uint8_t code);

@@ -39,18 +39,19 @@ namespace alc {
 	class tpMessage : public tpObject {
 	public:
 		tpMessage(uint16_t type, bool incomplete = false) : tpObject(type, incomplete) {}
-		tpMessage(uint16_t type, const tUruObjectRef &sender);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual tString str(void) const;
 		
-		static tpMessage *create(uint16_t type, bool mustBeComplete = true);
+		static tpMessage *createFromStream(tStreamedObject *stream, bool UUFormat, bool mustBeComplete = true);
 		
 		typedef std::vector<tUruObjectRef> tReceiverList;
 		// format
 		tUruObjectRef sender;
 		tReceiverList receivers;
 		uint32_t flags;
+	protected:
+		tpMessage(uint16_t type, const tUruObjectRef &sender);
 	};
 	
 	class tpAvatarMsg : public tpMessage {
@@ -69,7 +70,7 @@ namespace alc {
 		virtual void stream(tBBuf &t) const;
 		virtual tString str(void) const;
 		
-		static tpLoadCloneMsg *create(uint16_t type, bool mustBeComplete = true);
+		static tpLoadCloneMsg *createFromStream(tStreamedObject *stream, bool UUFormat, bool mustBeComplete = true);
 		
 		// format
 		tUruObjectRef clonedObj;

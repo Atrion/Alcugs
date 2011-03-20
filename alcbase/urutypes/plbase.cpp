@@ -81,7 +81,8 @@ namespace alc {
 		}
 	}
 	
-	tpObject *alcCreatePlasmaObject(uint16_t type, bool mustBeComplete)
+	//// tpObject
+	tpObject *tpObject::createByType(uint16_t type, bool mustBeComplete)
 	{
 		switch (type) {
 			// known message types
@@ -117,6 +118,7 @@ namespace alc {
 			case pfMarkerMsg:
 			case plSetNetGroupIDMsg:
 			case plPseudoLinkEffectMsg:
+			case pfClimbingWallMsg:
 				if (!mustBeComplete) return new tpMessage(type, /*incomplete*/true);
 				// if mustBeComplete is true, go on with the default behaviour
 			default:
@@ -124,7 +126,15 @@ namespace alc {
 		}
 	}
 	
-	//// tpObject
+	tpObject* tpObject::createFromStream(alc::tStreamedObject* stream, bool UUFormat, bool mustBeComplete)
+	{
+		tpObject *obj = createByType(UUFormat ? alcOpcodeUU2POTS(stream->getType()) : stream->getType(), mustBeComplete);
+		obj->setUUFormat(UUFormat);
+		stream->get(*obj);
+		if (!obj->isIncomplete()) stream->eofCheck();
+		return obj;
+	}
+	
 	tString tpObject::str(void) const
 	{
 		tString strBuf;
