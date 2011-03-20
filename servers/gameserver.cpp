@@ -249,6 +249,11 @@ namespace alc {
 				resetStateWhenEmpty = true;
 			}
 		}
+#ifndef NDEBUG
+		else if (text == "/!quit") {
+			u->terminate();
+		}
+#endif
 		else {
 			tString error;
 			error.printf("Unknown server-side command: \"%s\"", text.c_str());
