@@ -917,13 +917,12 @@ tNetTimeBoolPair tNetSession::processSendQueues()
 		prvDataMutex.unlock();
 		prvDataMutex.write(); // will be unlocked by destructor of the prvLock
 		conn_timeout = msg_timeout; // wait for some time in case we get retarded acks etc.
-		state = Gone;
 	}
 	
 	// check this session's timeout
 	if (net->timeOverdue(receive_stamp+conn_timeout)) {
 		// timeout while terminating? We are done!
-		if (state >= Leaving) {
+		if (state == Leaving) {
 			return tNetTimeBoolPair(timeout, true);
 		}
 		else {
@@ -945,7 +944,7 @@ void tNetSession::terminate(uint8_t reason)
 		prvDataMutex.unlock();
 		prvDataMutex.write(); // will be unlocked by destructor of lock
 		state = Leaving; // make sure this session goes down ASAP
-		net->wakeUpMainThread(); // in case this was triggered from another thread
+		if (alcGetSelfThreadId() != alcGetMain()->threadId()) net->wakeUpMainThread(); // in case this was triggered from another thread
 		return;
 	}
 	else

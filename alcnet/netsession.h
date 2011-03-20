@@ -54,7 +54,7 @@ namespace alc {
 class tNetSession {
 // Types
 public:
-	typedef enum { Unknown, Negotiating, Connected, Terminating, Leaving, Gone } tConnectionState;
+	typedef enum { Unknown, Negotiating, Connected, Terminating, Leaving } tConnectionState;
 	typedef enum { UnknownGame, POTSGame, UUGame } tGameType;
 // methods
 public:

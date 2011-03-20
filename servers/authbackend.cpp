@@ -67,18 +67,18 @@ namespace alc {
 		tConfig *cfg = alcGetMain()->config();
 		tString var = cfg->getVar("auth.minalevel");
 		if (var.isEmpty()) minAccess = AcNotActivated;
-		else minAccess = var.asUInt();
+		else minAccess = var.asInt();
 		
 		var = cfg->getVar("auth.att");
 		if (var.isEmpty()) maxAttempts = 10;
-		else maxAttempts = var.asUInt();
+		else maxAttempts = var.asInt();
 		
 		var = cfg->getVar("auth.distime");
 		if (var.isEmpty()) disTime = 5*60;
-		else disTime = var.asUInt();
+		else disTime = var.asInt();
 		
 		var = cfg->getVar("auth.log");
-		if (var.isEmpty() || var.asUInt()) { // logging enabled per default
+		if (var.isEmpty() || var.asInt()) { // logging enabled per default
 			log.open("auth.log");
 		}
 		
@@ -88,15 +88,15 @@ namespace alc {
 		
 		var = cfg->getVar("auth.cgas.port");
 		if (var.isEmpty()) cgasPort = 80;
-		else cgasPort = var.asUInt();
+		else cgasPort = var.asInt();
 		
 		var = cfg->getVar("auth.cgas.default_access");
 		if (var.isEmpty()) cgasDefaultAccess = 15;
-		else cgasDefaultAccess = var.asUInt();
+		else cgasDefaultAccess = var.asInt();
 		
 		var = cfg->getVar("auth.cgas.max_cache_time");
 		if (var.isEmpty()) cgasMaxCacheTime = 60*60*24; // 24 hours
-		else cgasMaxCacheTime = var.asUInt();
+		else cgasMaxCacheTime = var.asInt();
 
 		// initialize the database
 		sql = tSQL::createFromConfig();

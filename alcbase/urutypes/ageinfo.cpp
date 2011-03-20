@@ -44,7 +44,7 @@ namespace alc {
 	{
 		tString number = val->getVal(1, row), conditionalLoad = val->getVal(2, row);
 		name = val->getVal(0, row);
-		this->number = number.asUInt();
+		this->number = number.asInt();
 		if (conditionalLoad.isEmpty()) this->conditionalLoad = false;
 		else {
 			if (conditionalLoad != "1") throw txBase(_WHERE("if a conditional load value is specified, it must be set to 1"));
@@ -85,7 +85,7 @@ namespace alc {
 		// get sequence prefix
 		tString prefix = cfg->getVar("SequencePrefix");
 		if (prefix.isEmpty()) throw txUnexpectedData(_WHERE("can\'t find the ages SequencePrefix"));
-		seqPrefix = prefix.asUInt();
+		seqPrefix = prefix.asInt();
 		if (seqPrefix > 0x00FFFFFF && seqPrefix < 0xFFFFFFF0) // allow only 3 Bytes (but allow negative prefixes)
 			throw txUnexpectedData(_WHERE("A sequence prefix of %d (higher than 0x00FFFFFF) is not allowed)", seqPrefix));
 		DBG(9, "found sequence prefix %d for age %s\n", seqPrefix, name.c_str());
