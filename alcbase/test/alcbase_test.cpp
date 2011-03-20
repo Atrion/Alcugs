@@ -514,6 +514,10 @@ void alctypes_part4() {
 	assert(bb==cc);
 	cc=cc;
 	assert(bb==cc);
+	assert(tString("42").asInt() == 42);
+	assert(tString("-42").asInt() == -42);
+	assert(tString("").asInt() == 0);
+	assert(tString("z").asInt() == 0);
 	
 	
 	// check tString::len()

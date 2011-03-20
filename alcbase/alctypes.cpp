@@ -658,8 +658,7 @@ void tString::printBoolean(bool val)
 	if (val) writeStr("yes");
 	else writeStr("no");
 }
-unsigned int tString::asUInt() const {
-	if(size()==0) return 0;
+int tString::asInt() const {
 	return atoi(c_str());
 }
 

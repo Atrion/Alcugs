@@ -67,10 +67,10 @@ namespace alc {
 		tConfig *cfg = alcGetMain()->config();
 		tString var = cfg->getVar("agestate.log");
 		logDetailed = false;
-		if (var.isEmpty() || var.asUInt()) { // logging enabled per default
+		if (var.isEmpty() || var.asInt()) { // logging enabled per default
 			log.open("agestate.log");
 			var = cfg->getVar("agestate.log.detailed");
-			if (!var.isEmpty() && var.asUInt()) // detailed logging disabled per default
+			if (!var.isEmpty() && var.asInt()) // detailed logging disabled per default
 				logDetailed = true;
 		}
 		else
@@ -567,7 +567,7 @@ namespace alc {
 					break;
 				case 4: // in a statedesc block after VERSION, search version number
 				{
-					unsigned int version = c.asUInt();
+					unsigned int version = c.asInt();
 					if (!version)
 						throw txParseError(_WHERE("Parse error at %s line %d, column %d: Unexpected token %s", filename.c_str(), s.getLineNum(), s.getColumnNum(), c.c_str()));
 					sdlStruct.version = version;

@@ -70,7 +70,7 @@ namespace alc {
 		}
 		
 		tString var = cfg->getVar("load_on_demand");
-		loadOnDemand = (var.isEmpty() || var.asUInt()); // on per default
+		loadOnDemand = (var.isEmpty() || var.asInt()); // on per default
 	}
 	
 	int tUnetLobbyServer::onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u)

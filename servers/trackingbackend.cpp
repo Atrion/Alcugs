@@ -104,7 +104,7 @@ namespace alc {
 		tConfig *cfg = alcGetMain()->config();
 		
 		tString var = cfg->getVar("tracking.log");
-		if (var.isEmpty() || var.asUInt()) { // logging enabled per default
+		if (var.isEmpty() || var.asInt()) { // logging enabled per default
 			log.open("tracking.log");
 			log.log("Tracking driver started (%s)\n\n", __U_TRACKINGBACKEND_ID);
 			log.flush();
@@ -112,17 +112,17 @@ namespace alc {
 		else log.close();
 		
 		var = cfg->getVar("track.html");
-		statusHTML = (!var.isEmpty() && var.asUInt());
+		statusHTML = (!var.isEmpty() && var.asInt());
 		statusHTMLFile = cfg->getVar("track.html.path");
 		if (statusHTMLFile.isEmpty()) statusHTML = false;
 		
 		var = cfg->getVar("track.htmldbg");
-		statusHTMLdbg = (!var.isEmpty() && var.asUInt());
+		statusHTMLdbg = (!var.isEmpty() && var.asInt());
 		statusHTMLdbgFile = cfg->getVar("track.htmldbg.path");
 		if (statusHTMLdbgFile.isEmpty()) statusHTMLdbg = false;
 		
 		var = cfg->getVar("track.xml");
-		statusXML = (!var.isEmpty() && var.asUInt());
+		statusXML = (!var.isEmpty() && var.asInt());
 		statusXMLFile = cfg->getVar("track.xml.path");
 		if (statusXMLFile.isEmpty()) statusXML = false;
 		
