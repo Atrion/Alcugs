@@ -218,7 +218,7 @@ tSQL *tSQL::createFromConfig(void)
 	tString var;
 	// read basic connection info
 	tString host = cfg->getVar("db.host");
-	uint16_t port = cfg->getVar("db.port").asUInt();
+	uint16_t port = cfg->getVar("db.port").asInt();
 	tString user = cfg->getVar("db.username");
 	tString password = cfg->getVar("db.passwd");
 	tString dbname = cfg->getVar("db.name");
@@ -226,10 +226,10 @@ tSQL *tSQL::createFromConfig(void)
 	// additional options
 	uint8_t flags = allFlags();
 	var = cfg->getVar("db.log");
-	if (!var.isEmpty() && !var.asUInt()) // on per default
+	if (!var.isEmpty() && !var.asInt()) // on per default
 		flags &= ~SQL_LOG; // disable logging
 	var = cfg->getVar("db.sql.log");
-	if (var.isEmpty() || !var.asUInt()) // off per default
+	if (var.isEmpty() || !var.asInt()) // off per default
 		flags &= ~SQL_LOGQ; // disable logging sql statements
 	
 	return new tSQL(host, port, user, password, dbname, flags);

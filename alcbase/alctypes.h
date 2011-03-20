@@ -342,7 +342,7 @@ public:
 	char getChar(void) { return static_cast<char>(get8()); }
 	
 	// functions to convert the string to a number
-	unsigned int asUInt() const;
+	int asInt() const;
 	
 	// Functions checking something
 	bool isNewline(void) const

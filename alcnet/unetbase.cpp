@@ -56,7 +56,7 @@ tUnetBase::tUnetBase(uint8_t whoami) :tUnet(whoami), configured(false), running(
 	cfg=alcGetMain()->config();
 	var=cfg->getVar("port","global");
 	if(!var.isEmpty()) {
-		setBindPort(var.asUInt());
+		setBindPort(var.asInt());
 	}
 	var=cfg->getVar("bind","global");
 	if(!var.isEmpty()) {
@@ -82,12 +82,12 @@ void tUnetBase::applyConfig() {
 	if(var.isEmpty()) {
 		stop_timeout=10;
 	} else {
-		stop_timeout=var.asUInt();
+		stop_timeout=var.asInt();
 	}
 	//Sets the idle timer
 	var=cfg->getVar("net.timer","global");
 	if(!var.isEmpty()) {
-		max_sleep = var.asUInt();
+		max_sleep = var.asInt();
 	}
 	var=cfg->getVar("net.maxconnections","global");
 	if(!var.isEmpty()) {
@@ -95,23 +95,23 @@ void tUnetBase::applyConfig() {
 	}
 	var=cfg->getVar("net.timeout","global");
 	if(!var.isEmpty()) {
-		conn_timeout=var.asUInt();
+		conn_timeout=var.asInt();
 	}
 	var=cfg->getVar("net.up","global");
 	if(!var.isEmpty()) {
-		nat_up=var.asUInt();
+		nat_up=var.asInt();
 	}
 	var=cfg->getVar("net.down","global");
 	if(!var.isEmpty()) {
-		nat_down=var.asUInt();
+		nat_down=var.asInt();
 	}
 	var=cfg->getVar("net.lan.up","global");
 	if(!var.isEmpty()) {
-		lan_up=var.asUInt();
+		lan_up=var.asInt();
 	}
 	var=cfg->getVar("net.lan.down","global");
 	if(!var.isEmpty()) {
-		lan_down=var.asUInt();
+		lan_down=var.asInt();
 	}
 	var=cfg->getVar("private_mask","global");
 	if(!var.isEmpty()) {
@@ -131,7 +131,7 @@ void tUnetBase::applyConfig() {
 	}
 	var=cfg->getVar("net.noflood","global");
 	if(!var.isEmpty()) {
-		if(var.asUInt()) {
+		if(var.asInt()) {
 			setFlags(UNET_FLOODCTR);
 		} else {
 			unsetFlags(UNET_FLOODCTR);
@@ -139,7 +139,7 @@ void tUnetBase::applyConfig() {
 	}
 	var=cfg->getVar("net.log.ack","global");
 	if(!var.isEmpty()) {
-		if(var.asUInt()) {
+		if(var.asInt()) {
 			setFlags(UNET_EACKLOG);
 		} else {
 			unsetFlags(UNET_EACKLOG);
@@ -148,40 +148,40 @@ void tUnetBase::applyConfig() {
 	//Other DEVEL vars (dangerous to touch)
 	var=cfg->getVar("net.flood_check_sec","global");
 	if(!var.isEmpty()) {
-		flood_check_interval=var.asUInt();
+		flood_check_interval=var.asInt();
 	}
 	var=cfg->getVar("net.max_flood_pkts","global");
 	if(!var.isEmpty()) {
-		max_flood_pkts=var.asUInt();
+		max_flood_pkts=var.asInt();
 	}
 	var=cfg->getVar("net.receive_ahead","global");
 	if(!var.isEmpty()) {
-		receiveAhead=var.asUInt();
+		receiveAhead=var.asInt();
 	}
 	#ifdef ENABLE_NETDEBUG
 	var=cfg->getVar("net.lim_down_cap","global");
 	if(!var.isEmpty()) {
-		lim_down_cap=var.asUInt();
+		lim_down_cap=var.asInt();
 	}
 	var=cfg->getVar("net.lim_up_cap","global");
 	if(!var.isEmpty()) {
-		lim_up_cap=var.asUInt();
+		lim_up_cap=var.asInt();
 	}
 	var=cfg->getVar("net.in_noise","global");
 	if(!var.isEmpty()) {
-		in_noise=var.asUInt();
+		in_noise=var.asInt();
 	}
 	var=cfg->getVar("net.out_noise","global");
 	if(!var.isEmpty()) {
-		out_noise=var.asUInt();
+		out_noise=var.asInt();
 	}
 	var=cfg->getVar("net.latency","global");
 	if(!var.isEmpty()) {
-		latency=var.asUInt()/1000.0/1000.0;
+		latency=var.asInt()/1000.0/1000.0;
 	}
 	var=cfg->getVar("net.quota_check_interval","global");
 	if(!var.isEmpty()) {
-		quota_check_interval=var.asUInt();
+		quota_check_interval=var.asInt();
 	}
 	#endif
 	// forward to sub-classes

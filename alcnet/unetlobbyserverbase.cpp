@@ -54,25 +54,25 @@ namespace alc {
 	{
 		tConfig *cfg = alcGetMain()->config();
 		tString var = cfg->getVar("vault.html.log");
-		if (var.isEmpty() || var.asUInt()) { // logging enabled per default
+		if (var.isEmpty() || var.asInt()) { // logging enabled per default
 			lvault.open("vault.html", DF_HTML);
 			var = cfg->getVar("vault.html.log.short");
-			vaultLogShort = (var.isEmpty() || var.asUInt()); // per default, it *is* short
+			vaultLogShort = (var.isEmpty() || var.asInt()); // per default, it *is* short
 		}
 		else
 			lvault.open(DF_HTML);
 		
 		var = cfg->getVar("allow_uu_clients");
-		allowUU = (var.isEmpty() || var.asUInt()); // per default, UU clients are allowed
+		allowUU = (var.isEmpty() || var.asInt()); // per default, UU clients are allowed
 		linkLog = cfg->getVar("tmp.link_log");
 		
 		var = cfg->getVar("spawn.start");
 		if (var.isEmpty()) spawnStart = 5001;
-		else spawnStart = var.asUInt();
+		else spawnStart = var.asInt();
 		
 		var = cfg->getVar("spawn.stop");
 		if (var.isEmpty()) spawnStop = 6000;
-		else spawnStop = var.asUInt();
+		else spawnStop = var.asInt();
 		
 		if (spawnStop < spawnStart) {
 			log->log("WARN: spawnStop (%d) lower than spawnStart (%d), setting both to %d\n", spawnStop, spawnStart, spawnStart);
@@ -81,7 +81,7 @@ namespace alc {
 		
 		var = cfg->getVar("net.timeout.loading");
 		if (var.isEmpty()) loadingTimeout = 90;
-		else loadingTimeout = var.asUInt();
+		else loadingTimeout = var.asInt();
 	}
 	
 	void tUnetLobbyServerBase::onForwardPing(tmPing &ping, tNetSession *u)
@@ -199,7 +199,7 @@ namespace alc {
 			return NULL;
 		}
 		
-		tNetSessionRef u = netConnect(host.c_str(), port.asUInt(), 3 /* Alcugs upgraded protocol */);
+		tNetSessionRef u = netConnect(host.c_str(), port.asInt(), 3 /* Alcugs upgraded protocol */);
 		
 		if (dst == KTracking) {
 			tString var = cfg->getVar("public_address");

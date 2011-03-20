@@ -59,22 +59,22 @@ namespace alc {
 		tConfig *cfg = alcGetMain()->config();
 		bool found;
 		tString var = cfg->getVar("vault.log");
-		if (var.isEmpty() || var.asUInt()) { // logging enabled per default
+		if (var.isEmpty() || var.asInt()) { // logging enabled per default
 			log.open("vault.log");
 		}
 		else
 			log.close();
 		var = cfg->getVar("vault.html.log");
-		if (var.isEmpty() || var.asUInt()) { // logging enabled per default
+		if (var.isEmpty() || var.asInt()) { // logging enabled per default
 			logHtml.open("vault.html", DF_HTML);
 			var = cfg->getVar("vault.html.log.short");
-			shortHtml = (var.isEmpty() || var.asUInt()); // per default, it *is* short
+			shortHtml = (var.isEmpty() || var.asInt()); // per default, it *is* short
 		}
 		else
 			logHtml.open(DF_HTML);
 		
 		var = cfg->getVar("vault.maxplayers");
-		if (!var.isEmpty()) maxPlayers = var.asUInt();
+		if (!var.isEmpty()) maxPlayers = var.asInt();
 		else maxPlayers = 5;
 		
 		hoodName = cfg->getVar("vault.hood.name", &found);
@@ -88,7 +88,7 @@ namespace alc {
 		if (!found) welcomeMsgText = defaultWelcomeMsgText;
 		
 		var = cfg->getVar("vault.tmp.hacks.linkrules");
-		linkingRulesHack = (!var.isEmpty() && var.asUInt()); // disabled per default
+		linkingRulesHack = (!var.isEmpty() && var.asInt()); // disabled per default
 		
 		// load the list of private ages
 		privateAges = cfg->getVar("private_ages", &found);
@@ -97,7 +97,7 @@ namespace alc {
 		// load instance mode setting
 		var = cfg->getVar("instance_mode");
 		if (var.isEmpty()) instanceMode = 1;
-		else instanceMode = var.asUInt();
+		else instanceMode = var.asInt();
 		if (instanceMode != 0 && instanceMode != 1) throw txBase(_WHERE("instance_mode must be 0 or 1 but is %d", instanceMode));
 		ageFileDir = cfg->getVar("age");
 		

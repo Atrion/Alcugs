@@ -84,13 +84,13 @@ namespace alc {
 		
 		tConfig *cfg = alcGetMain()->config();
 		tString var = cfg->getVar("game.persistent");
-		if (!var.isEmpty() && var.asUInt()) { // disabled per default
+		if (!var.isEmpty() && var.asInt()) { // disabled per default
 			lingerTime = 0;
 		}
 		else {
 			var = cfg->getVar("game.linger_time");
 			if (!var.isEmpty())
-				lingerTime = var.asUInt();
+				lingerTime = var.asInt();
 			else
 				lingerTime = 120; // default
 			if (lingerTime && lingerTime < 20)
@@ -98,13 +98,13 @@ namespace alc {
 		}
 		
 		var = cfg->getVar("game.tmp.hacks.noreltoshare");
-		noReltoShare = (!var.isEmpty() && var.asUInt()); // disabled per default
+		noReltoShare = (!var.isEmpty() && var.asInt()); // disabled per default
 		
 		var = cfg->getVar("game.tmp.hacks.linkidle");
-		linkingOutIdle = (var.isEmpty() || var.asUInt()); // enabled per default
+		linkingOutIdle = (var.isEmpty() || var.asInt()); // enabled per default
 		
 		var = cfg->getVar("game.serversidecommands");
-		serverSideCommands = (var.isEmpty() || var.asUInt()); // enabled per default
+		serverSideCommands = (var.isEmpty() || var.asInt()); // enabled per default
 		
 		shardIdentifier = cfg->getVar("shard.identifier"); // default: empty
 		
