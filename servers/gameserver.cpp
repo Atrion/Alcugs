@@ -81,6 +81,10 @@ namespace alc {
 	void tUnetGameServer::onApplyConfig(void)
 	{
 		tUnetLobbyServerBase::onApplyConfig();
+		if (allowedGames == tNetSession::UnknownGame) { // a game server can not deal with both clients at the same time
+			log->log("WARN: According to your configuration, both UU and TPOTS clients are allowed, but the game server does not support that. Setting to TPOTS only.\n");
+			allowedGames = tNetSession::POTSGame;
+		}
 		
 		tConfig *cfg = alcGetMain()->config();
 		tString var = cfg->getVar("game.persistent");

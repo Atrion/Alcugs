@@ -62,9 +62,18 @@ namespace alc {
 		else
 			lvault.open(DF_HTML);
 		
-		var = cfg->getVar("allow_uu_clients");
-		allowUU = (var.isEmpty() || var.asUInt()); // per default, UU clients are allowed
-		linkLog = cfg->getVar("tmp.link_log");
+		allowedGames = tNetSession::UnknownGame;
+		var = cfg->getVar("allowed_games"); // sets which kinds of clients are allowed: 1 = UU, 2 = TPOTS, 3 = both (default)
+		if (!var.isEmpty()) {
+			unsigned int i = var.asUInt();
+			if (i == 1) allowedGames = tNetSession::UUGame;
+			else if (i == 2) allowedGames = tNetSession::POTSGame;
+		}
+		else {
+			var = cfg->getVar("allow_uu_clients");
+			if (!var.isEmpty() && !var.asUInt())
+				allowedGames = tNetSession::POTSGame;
+		}
 		
 		var = cfg->getVar("spawn.start");
 		if (var.isEmpty()) spawnStart = 5001;
@@ -242,8 +251,8 @@ namespace alc {
 					else if (u->min_version != 6) u->gameType = tNetSession::UUGame; // it's not TPOTS (assume UU)
 					else if (u->min_version == 6) u->gameType = tNetSession::POTSGame; // it *is* TPOTS
 					// block UU if we're told to do so
-					if (!allowUU && u->gameType == tNetSession::UUGame) // it's UU, and we are told not to allow that, so tell him the servers are older
-						result = AProtocolOlder;
+					if (allowedGames != tNetSession::UnknownGame && u->gameType != allowedGames) // it's not what we want, so reject authentication
+						result = AUnspecifiedServerError;
 					
 					// init the challenge to the MD5 of the current system time and other garbage
 					tTime t = tTime::now();

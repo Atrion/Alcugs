@@ -63,7 +63,7 @@ protected:
 	const time_t authedTimeout;
 	
 	tNetSessionRef authServer, trackingServer, vaultServer; //!< only accessed in worker, and never NULL (will immediately re-connect on disconnect)
-
+	tNetSession::tGameType allowedGames; //!< controls which kinds of clients are allowed to log in: UU, TPOTS or both
 private:
 	bool setActivePlayer(tNetSession *u, uint32_t ki, uint32_t x, const tString &avatar);
 	tNetSessionRef connectPeer(uint8_t dst); //!< establishes a connection to that service
@@ -71,7 +71,6 @@ private:
 	tLog lvault;
 	bool vaultLogShort;
 
-	bool allowUU;
 	time_t loadingTimeout;
 	tString linkLog;
 };
