@@ -33,6 +33,26 @@
 #include "uruconsts.h"
 
 namespace alc {
+	
+// helper fucntions
+inline uint16_t alcOpcodeUU2POTS(uint16_t opcode)
+{
+	return opcode > 0x0400 && opcode < 0x500 ? opcode+1 : opcode;
+}
+inline uint16_t alcOpcodePOTS2UU(uint16_t opcode)
+{
+	return opcode > 0x0400 && opcode < 0x0500 ? opcode-1 : opcode;
+}
+
+/** convert pageIDs to pageNumbers and the other way around - wired, but whatever... */
+inline uint16_t alcPageIdToNumber(uint32_t seqPrefix, uint32_t pageId)
+{
+	return pageId - (seqPrefix << 8) - 33;
+}
+inline uint32_t alcPageNumberToId(uint32_t seqPrefix, uint16_t number)
+{
+	return (seqPrefix << 8) + 33 + number;
+}
 
 class tpObject;
 
@@ -113,9 +133,9 @@ public:
 /** StreamedObject */
 class tStreamedObject : public tMBuf {
 public:
-	tStreamedObject(uint16_t type = plNull) : tMBuf(), maxSize(256), type(type) // make sure this is the same maxSize as in urubasetypes.cpp
+	tStreamedObject() : tMBuf(), maxSize(256), type(plNull) // make sure this is the same maxSize as in urubasetypes.cpp
 		{ format = 0x00; realSize = 0; }
-	tStreamedObject(tpObject *obj);
+	tStreamedObject(tpObject *obj, bool UUFormat);
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
 	
@@ -135,7 +155,7 @@ private:
 	
 	size_t realSize; // if flag is 0x02, this saves the uncompressed size, otherwise, it is zero
 	uint8_t format; // 0x00, 0x03: uncompressed, 0x02: compressed
-	uint16_t type;
+	uint16_t type; //!< the sent type - not canonized to TPOTS!
 };
 
 } //End alc namespace

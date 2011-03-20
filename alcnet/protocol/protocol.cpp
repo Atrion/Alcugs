@@ -235,15 +235,6 @@ int alcUruValidatePacket(uint8_t * buf,int n,uint8_t * validation,bool authed,co
 	return 3; //aiieee!!!
 }
 
-uint16_t alcFixUUNetMsgCommand(uint16_t cmd, const tNetSession *u)
-{
-	// we might have to fix the message type
-	if (u->gameType == tNetSession::UUGame
-			&& (cmd == NetMsgVault_UU || cmd == NetMsgPython_UU || cmd == NetMsgSetTimeout_UU || cmd == NetMsgActivePlayerSet_UU))
-		return cmd+1; // these values are incremented by 1 in TPOTS (remember to also update tmNetMsg::stream!)
-	return cmd;
-}
-
 //Unet Uru Message
 void tUnetUruMsg::store(tBBuf &t) {
 	size_t hsize=28;
@@ -503,7 +494,8 @@ tmNetMsg::tmNetMsg(uint16_t cmd,uint32_t flags,tNetSession * u) : tmBase(u) {
 void tmNetMsg::store(tBBuf &t) {
 	if (!u)  throw txProtocolError(_WHERE("attempt to save message without session being set"));
 	//base
-	cmd=alcFixUUNetMsgCommand(t.get16(), u);
+	cmd=t.get16();
+	if (u->gameType == tNetSession::UUGame) cmd = alcOpcodeUU2POTS(cmd);
 	flags=t.get32();
 	if(flags & plNetVersion) {
 		max_version=t.get8();
@@ -570,9 +562,9 @@ void tmNetMsg::stream(tBBuf &t) const {
 	if (!u)  throw txProtocolError(_WHERE("attempt to send message without session being set"));
 	if (!cmd) throw txProtocolError(_WHERE("attempt to send message without cmd"));
 	
-	// fix for UU clients
-	if (u->gameType == tNetSession::UUGame && (cmd == NetMsgVault || cmd == NetMsgPython || cmd == NetMsgSetTimeout || cmd == NetMsgActivePlayerSet))
-		t.put16(cmd-1); // these are incremented by 1 in POTS (remember to also update alcFixUUNetMsgCommand!)
+	// fix opcode for UU clients
+	if (u->gameType == tNetSession::UUGame)
+		t.put16(alcOpcodePOTS2UU(cmd));
 	else
 		t.put16(cmd);
 	

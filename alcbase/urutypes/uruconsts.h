@@ -290,19 +290,14 @@ unsilenced 29
 #define NetMsgLoadClone                0x03AE
 #define NetMsgPlayerPage               0x03AF
 
-#define NetMsgVault_UU                 0x0428 // UntilUru
 #define NetMsgVault                    0x0429
 
-#define NetMsgPython_UU                0x0460 // UntilUru
 #define NetMsgPython                   0x0461
 
-#define NetMsgSetTimeout_UU            0x0464 // UntilUru
 #define NetMsgSetTimeout               0x0465
-#define NetMsgActivePlayerSet_UU       0x0465 // UntilUru
 #define NetMsgActivePlayerSet          0x0466
 
 //tpots note
-//type 0x02BC is now 0x03BC
 //All types that are >0x03BC are incremented +1 in TPOTS (compared to UU)
 //thx to ngilb120
 
@@ -372,15 +367,14 @@ unsilenced 29
 #define pfMarkerMsg                0x0455
 #define plSetNetGroupIDMsg         0x045F
 #define plPseudoLinkEffectMsg      0x048F
+#define pfClimbingWallMsg          0x0492
 
 // vault types
 #define plAgeLinkStruct            0x02BF
 #define plCreatableGenericValue    0x0387
 #define plCreatableStream          0x0389
 #define plServerGuid               0x034D
-#define plVaultNodeRef_UU          0x0438 // UntilUru
 #define plVaultNodeRef             0x0439
-#define plVaultNode_UU             0x0439 // UntilUru
 #define plVaultNode                0x043A
 
 // NULL type

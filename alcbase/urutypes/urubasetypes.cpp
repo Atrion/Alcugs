@@ -262,9 +262,10 @@ tString tUruObjectRef::str(void) const
 }
 
 /* tStreamedObject (Plasma: plNetMsgStreamHelper) */
-tStreamedObject::tStreamedObject(tpObject *obj) : tMBuf(), maxSize(256) // make sure this is the same maxSize as in urubasetypes.h
+tStreamedObject::tStreamedObject(tpObject *obj, bool UUFormat) : tMBuf(), maxSize(256) // make sure this is the same maxSize as in urubasetypes.h
 {
-	type = obj->getType();
+	obj->setUUFormat(UUFormat);
+	type = UUFormat ? alcOpcodePOTS2UU(obj->getType()) : obj->getType();
 	format = 0x00;
 	realSize = 0;
 	put(*obj);

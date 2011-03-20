@@ -593,7 +593,8 @@ void tNetSession::acceptMessage(tUnetUruMsg *t)
 			throw txProtocolError(_WHERE("Expected a size of %d, got %d\n", size, rcv->data.size()));
 		// We are done!
 		rcv->data.rewind();
-		rcv->cmd=alcFixUUNetMsgCommand(rcv->data.get16(), this);
+		rcv->cmd=rcv->data.get16();
+		if (gameType == UUGame) rcv->cmd = alcOpcodeUU2POTS(rcv->cmd);
 		rcv->data.rewind();
 		
 		if (parseBasicMsg(rcv))

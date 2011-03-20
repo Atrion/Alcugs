@@ -205,17 +205,13 @@ namespace alc {
 	bool tUnetGameServer::processGameMessage(tStreamedObject *msg, tNetSession *u, tUruObjectRef *receiver)
 	{
 		bool processed = false;
-		tpMessage *subMsg = tpMessage::create(msg->getType(), /*mustBeComplete*/false);
-		msg->get(*subMsg);
+		tpMessage *subMsg = tpMessage::createFromStream(msg, u->gameType == tNetSession::UUGame, /*mustBeComplete*/false);
 		if (receiver && subMsg->receivers.size()) *receiver = subMsg->receivers.at(0);
-		if (!subMsg->isIncomplete()) {
-			msg->eofCheck();
-			// check for chat messages
-			tpKIMsg *kiMsg = dynamic_cast<tpKIMsg*>(subMsg);
-			if (serverSideCommands && kiMsg && kiMsg->messageType == 0 && kiMsg->text.startsWith("/!")) { // if it is a command
-				processKICommand(kiMsg->text, u);
-				processed = true;
-			}
+		// check for chat messages
+		tpKIMsg *kiMsg = dynamic_cast<tpKIMsg*>(subMsg);
+		if (serverSideCommands && kiMsg && kiMsg->messageType == 0 && kiMsg->text.startsWith("/!")) { // if it is a command
+			processKICommand(kiMsg->text, u);
+			processed = true;
 		}
 		delete subMsg;
 		return processed;
@@ -715,9 +711,7 @@ namespace alc {
 				tmLoadClone loadClone(u, msg);
 				
 				// parse contained plasma message
-				tpLoadCloneMsg *loadCloneMsg = tpLoadCloneMsg::create(loadClone.msgStream.getType());
-				loadClone.msgStream.get(*loadCloneMsg);
-				loadClone.msgStream.eofCheck();
+				tpLoadCloneMsg *loadCloneMsg = tpLoadCloneMsg::createFromStream(&loadClone.msgStream, u->gameType == tNetSession::UUGame);
 				loadClone.checkSubMsg(loadCloneMsg);
 				
 				bool makeIdle = linkingOutIdle && loadClone.isPlayerAvatar && !loadClone.isLoad;
