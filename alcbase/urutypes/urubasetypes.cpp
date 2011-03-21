@@ -421,7 +421,7 @@ void tAgeInfoStruct::store(tBBuf &t)
 	// 0x20: DisplayName (Desc's name)
 	// 0x40: Language
 	flags = t.get8();
-	uint8_t check = 0x02 | 0x01 | 0x04 | 0x08 | 0x20 | 0x40;
+	uint8_t check = 0x02 | 0x01 | 0x04 | 0x08 | 0x10 | 0x20 | 0x40;
 	if (flags & ~(check))
 		throw txUnexpectedData(_WHERE("unknown flag 0x%02X for AgeInfoStruct", flags));
 	if (!(flags & 0x02)) // this must always be set (filename)
@@ -473,6 +473,9 @@ void tAgeInfoStruct::stream(tBBuf &t) const
 	
 	if (flags & 0x08) // user defined name
 		t.put(userDefName);
+	
+	if (flags & 0x10) // sequence number
+		t.put32(sequenceNumber);
 	
 	if (flags & 0x20) // display name
 		t.put(displayName);
