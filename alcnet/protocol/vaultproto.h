@@ -88,6 +88,8 @@ namespace alc {
 #define KVNodeMgrServerNode 0x06
 #define KVNodeMgrCCRNode 0x07
 
+#define KVNodeMgrMAX 0x07
+
 #define KFolderNode 0x16 // 22
 #define KPlayerInfoNode 0x17 // 23
 #define KSystem 0x18 // 24

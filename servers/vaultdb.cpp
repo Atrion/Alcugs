@@ -34,6 +34,8 @@
 #include <netexception.h>
 #include <alcmain.h>
 #include <alcversion.h>
+#include <protocol/vaultproto.h>
+#include <protocol/vaultmsg.h>
 
 #include <cstring>
 
@@ -204,11 +206,11 @@ namespace alc {
 		tString folder;
 		
 		tString query;
-		query.printf("SELECT idx, str_1 FROM %s WHERE type=6 LIMIT 1", vaultTable);
+		query.printf("SELECT idx, str_1 FROM %s WHERE type='%d' LIMIT 1", vaultTable, KVNodeMgrServerNode);
 		sql->query(query, "Getting vault folder name");
 		
 		MYSQL_RES *result = sql->storeResult();
-		int number = mysql_num_rows(result);
+		size_t number = mysql_num_rows(result);
 		
 		if (number == 0) throw txDatabaseError(_WHERE("could not find main vault folder"));
 		MYSQL_ROW row = mysql_fetch_row(result);
@@ -325,14 +327,14 @@ namespace alc {
 		
 		tString query;
 		
-		query.printf("SELECT idx, lstr_1, int_2 FROM %s WHERE lstr_2 = '%s'", vaultTable, alcGetStrUid(uid).c_str());
+		query.printf("SELECT idx, lstr_1, int_2 FROM %s WHERE type = '%d' and lstr_2 = '%s'", vaultTable, KVNodeMgrPlayerNode, alcGetStrUid(uid).c_str());
 		sql->query(query, "getting player list");
 		
 		MYSQL_RES *result = sql->storeResult();
-		int number = mysql_num_rows(result);
+		size_t number = mysql_num_rows(result);
 		
 		if (list) {
-			for (int i = 0; i < number; ++i) {
+			for (size_t i = 0; i < number; ++i) {
 				MYSQL_ROW row = mysql_fetch_row(result);
 				list->avatars.push_back(tmVaultPlayerList::tAvatar(atoi(row[0]), tString(row[1]), atoi(row[2]))); // KI, Avatar name, flags
 			}
@@ -346,7 +348,8 @@ namespace alc {
 		if (!sql->prepare()) throw txDatabaseError(_WHERE("no access to DB"));
 	
 		tString query;
-		query.printf("SELECT lstr_1 FROM %s WHERE lstr_2 = '%s' and idx='%d' LIMIT 1", vaultTable, alcGetStrUid(uid).c_str(), ki);
+		query.printf("SELECT lstr_1 FROM %s WHERE type = '%d' and lstr_2 = '%s' and idx='%d' LIMIT 1",
+					 vaultTable, KVNodeMgrPlayerNode, alcGetStrUid(uid).c_str(), ki);
 		sql->query(query, "checking ki");
 		
 		MYSQL_RES *result = sql->storeResult();
@@ -536,7 +539,7 @@ namespace alc {
 		// now, let's execute it
 		sql->query(query, "finding node");
 		MYSQL_RES *result = sql->storeResult();
-		int number = mysql_num_rows(result);
+		size_t number = mysql_num_rows(result);
 		if (number > 1) throw txDatabaseError(_WHERE("strange, I should NEVER have several results when asking for a node"));
 		
 		uint32_t id = 0;
@@ -1014,7 +1017,7 @@ namespace alc {
 				uint32_t idx = atoi(row[0]);
 				feed[nFeed] = idx;
 				++nFeed;
-				if (atoi(row[1]) <= 7) { // it's a MGR so lets save it - and keep the table in order!
+				if (atoi(row[1]) <= KVNodeMgrMAX) { // it's a MGR so lets save it - and keep the table in order!
 					DBG(9, "%d is a MGR, adding it\n", idx);
 					uint32_t insertVal = idx, tmp;
 					for (size_t i = 0; i < *tableSize; ++i) {
@@ -1051,12 +1054,11 @@ namespace alc {
 	{
 		if (!tableSize)
 			throw txDatabaseError(_WHERE("There must be at least one node to fetch"));
-		uint32_t *table = static_cast<uint32_t *>(malloc(tableSize*sizeof(uint32_t)));
-		if (table == NULL) throw txNoMem(_WHERE("NoMem"));
+		uint32_t *table = new uint32_t[tableSize];
 		buf.rewind();
 		for (size_t i = 0; i < tableSize; ++i) table[i] = buf.get32();
 		fetchNodes(table, tableSize, nodes, nNodes);
-		free(table);
+		delete[] table;
 	}
 	
 	void tVaultDB::fetchNodes(uint32_t* table, size_t tableSize, alc::tvNode*** nodes, size_t* nNodes)
@@ -1172,7 +1174,8 @@ namespace alc {
 		tString query;
 		MYSQL_RES *result;
 		MYSQL_ROW row;
-		int numParent, type, num;
+		int numParent, type;
+		size_t num;
 		
 		// get number of parent nodes
 		query.printf("SELECT COUNT(*) FROM %s WHERE id3='%d'", refVaultTable, son);
@@ -1219,7 +1222,7 @@ namespace alc {
 		tString query;
 		MYSQL_RES *result;
 		MYSQL_ROW row;
-		int num;
+		size_t num;
 		
 		// remove the node and all references to it
 		query.printf("DELETE FROM %s WHERE idx='%d'", vaultTable, node);
@@ -1236,7 +1239,7 @@ namespace alc {
 		result = sql->storeResult();
 		num = mysql_num_rows(result);
 		
-		for (int i = 0; i < num; ++i) {
+		for (size_t i = 0; i < num; ++i) {
 			row = mysql_fetch_row(result);
 			removeNodeRef(node, atoi(row[0]), cautious);
 		}
@@ -1322,6 +1325,36 @@ namespace alc {
 			node = (*ref)[i]->child; // this is the next one
 			++i;
 		}
+	}
+	
+	void tVaultDB::getAgeInfos(uint32_t parent, tString ageName, tvNode ***nodes, size_t *size)
+	{
+		if (!sql->prepare()) throw txDatabaseError(_WHERE("no access to DB"));
+		
+		*nodes = NULL;
+		*size = 0;
+		
+		tString query;
+		MYSQL_RES *result;
+		MYSQL_ROW row;
+		
+		// get age info nodes with this age
+		query.printf("SELECT n.idx FROM %s r JOIN %s n ON n.idx = r.id3 WHERE r.id2 = '%d' and n.type = '%d' and n.str_1 = '%s'",
+					 refVaultTable, vaultTable, parent, KAgeInfoNode, sql->escape(ageName).c_str());
+		sql->query(query, "getAgeInfos: Finding ages");
+		result = sql->storeResult();
+		size_t n = mysql_num_rows(result);
+		uint32_t *table = new uint32_t[n];
+		for (size_t i = 0; i < n; ++i) {
+			row = mysql_fetch_row(result);
+			table[i] = atoi(row[0]);
+		}
+		mysql_free_result(result);
+		
+		// fetch node conents (fetching zero nodes is an error)
+		if (n > 0)
+			fetchNodes(table, n, nodes, size);
+		delete[] table;
 	}
 	
 	void tVaultDB::removeInvalidRefs(void)

@@ -120,23 +120,8 @@ namespace alc {
 		uint32_t adminNode = vaultDB->createNode(*node);
 		delete node;
 		
-		// create AllPlayersFolder
-		node = new tvNode(MType | MInt32_1);
-		node->type = KFolderNode;
-		node->int1 = KAllPlayersFolder;
-		vaultDB->createChildNode(KVaultID, adminNode, *node);
-		delete node;
-		
-#if 0
-		// create PublicAgesFolder
-		node = new tvNode(MType | MInt32_1);
-		node->type = KFolderNode;
-		node->int1 = KPublicAgesFolder;
-		vaultDB->createChildNode(KVaultID, adminNode, *node);
-		delete node;
-#endif
-		
-		// create System node
+		// create System node with global inbox and welcome message, since we are initializing a new vault
+		// we do not have to create the other main nodes, checkMainNodes() will do that
 		node = new tvNode(MType);
 		node->type = KSystem;
 		uint32_t systemNode = vaultDB->createChildNode(KVaultID, adminNode, *node);
@@ -173,11 +158,18 @@ namespace alc {
 		delete node;
 		if (!adminNode) throw txDatabaseError(_WHERE("No admin node found"));
 		
-		// find the two main nodes and ensure they are connected to this one
+		// find the main nodes and ensure they are connected to this one
 		// AllPlayersFolder
 		node = new tvNode(MType | MInt32_1);
 		node->type = KFolderNode;
 		node->int1 = KAllPlayersFolder;
+		getChildNodeBCasted(KVaultID, adminNode, *node);
+		delete node;
+		
+		// PublicAgesFolder
+		node = new tvNode(MType | MInt32_1);
+		node->type = KFolderNode;
+		node->int1 = KPublicAgesFolder;
 		getChildNodeBCasted(KVaultID, adminNode, *node);
 		delete node;
 		
@@ -204,7 +196,36 @@ namespace alc {
 	void tVaultBackend::sendAgeList(tmGetPublicAgeList &getAgeList)
 	{
 		tmPublicAgeList ageList(getAgeList.getSession(), getAgeList.ki, getAgeList.x, getAgeList.sid);
-		// FIXME fill in data
+		// find public age list
+		tvNode *node = new tvNode(MType | MInt32_1);
+		node->type = KFolderNode;
+		node->int1 = KPublicAgesFolder;
+		uint32_t publicAgesFolder = vaultDB->findNode(*node);
+		delete node;
+		// fetch age info nodes
+		tvNode **nodes;
+		size_t size;
+		vaultDB->getAgeInfos(publicAgesFolder, getAgeList.age, &nodes, &size);
+		// put info into message
+		for (size_t i = 0; i < size; ++i) {
+			assert(nodes[i]->str1 == getAgeList.age);
+			uint8_t guid[8];
+			alcGetHexGuid(guid, nodes[i]->str4);
+			ageList.ages.push_back(tAgeInfoStruct(nodes[i]->str1, nodes[i]->str2, guid, i+1));
+			delete nodes[i];
+		}
+		free(nodes);
+		// the UU client expects at least one item in the list when asking for cities, and that kinda makes sense - add the global one (according to our GUID schema)
+		if (getAgeList.age == "city" && ageList.ages.empty()) {
+			uint8_t guid[8];
+			if (!generateGuid(guid, "city", 0)) throw txProtocolError(_WHERE("error creating GUID"));
+			tAgeInfoStruct ageInfo("city", "Ae'gura", "Ae'gura", "Ae'gura", guid);
+			
+			uint32_t ageNode = getAge(ageInfo);
+			addRefBCasted(KVaultID, publicAgesFolder, ageNode);
+			ageList.ages.push_back(tAgeInfoStruct(ageInfo.filename, ageInfo.instanceName, guid, 1));
+		}
+		// done!
 		net->send(ageList);
 	}
 	
@@ -1015,15 +1036,25 @@ namespace alc {
 		uint32_t infoNode = vaultDB->createChildNode(ki, ki, *node);
 		delete node;
 		
-		// link that player with the (default) hood
+		// link that player with the (default) hood and the city (like UU does it)
 		uint8_t guid[8];
-		if (!generateGuid(guid, "Neighborhood", ki)) throw txProtocolError(_WHERE("error creating hood GUID"));
-		tAgeInfoStruct ageInfo("Neighborhood", "Neighborhood", hoodName, hoodDesc, guid);
-		tSpawnPoint spawnPoint("Default", "LinkInPointDefault");
-		
-		uint32_t ageNode = getAge(ageInfo);
-		addAgeLinkToPlayer(ki, ageNode, spawnPoint);
-		addRemovePlayerToAge(ageNode, ki);
+		{
+			if (!generateGuid(guid, "city", ki)) throw txProtocolError(_WHERE("error creating GUID"));
+			tAgeInfoStruct ageInfo("city", "Ae'gura", "Ae'gura", "Ae'gura", guid);
+			tSpawnPoint spawnPoint("FerryTerminal", "LinkInPointFerry");
+			
+			uint32_t ageNode = getAge(ageInfo);
+			addAgeLinkToPlayer(ki, ageNode, spawnPoint);
+		}
+		{
+			if (!generateGuid(guid, "Neighborhood", ki)) throw txProtocolError(_WHERE("error creating hood GUID"));
+			tAgeInfoStruct ageInfo("Neighborhood", "Neighborhood", hoodName, hoodDesc, guid);
+			tSpawnPoint spawnPoint("Default", "LinkInPointDefault");
+			
+			uint32_t ageNode = getAge(ageInfo);
+			addAgeLinkToPlayer(ki, ageNode, spawnPoint);
+			addRemovePlayerToAge(ageNode, ki);
+		}
 		
 		// create link AllPlayersFolder -> info node (broadcasted)
 		addRefBCasted(ki, allPlayers, infoNode);

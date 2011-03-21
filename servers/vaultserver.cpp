@@ -45,6 +45,8 @@ namespace alc {
 
 	void tUnetVaultServer::onApplyConfig(void)
 	{
+		// (re)load vault backend
+		vaultBackend.applyConfig();
 		// check if we should clean the vault
 		tConfig *cfg = alcGetMain()->config();
 		tString var = cfg->getVar("daemon");
@@ -62,8 +64,6 @@ namespace alc {
 			forcestop(); // don't let the server run, we started just for cleaning
 			return;
 		}
-		// (re)load vault backend
-		vaultBackend.applyConfig();
 	}
 	
 	bool tUnetVaultServer::isValidAvatarName(const tString &avatar)
