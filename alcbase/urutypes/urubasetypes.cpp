@@ -394,6 +394,13 @@ tAgeInfoStruct::tAgeInfoStruct(const tString &filename, const uint8_t *guid) : f
 	memcpy(this->guid, guid, 8);
 }
 
+tAgeInfoStruct::tAgeInfoStruct(const tString &filename, const tString &instanceName, const uint8_t *guid, uint32_t sequenceNumber)
+: filename(filename), instanceName(instanceName), sequenceNumber(sequenceNumber)
+{
+	flags =  0x01 | 0x02 | 0x04 | 0x10; // filename, instance name, GUID, sequence number
+	memcpy(this->guid, guid, 8);
+}
+
 void tAgeInfoStruct::store(tBBuf &t)
 {
 	//AgeInfoStruct flags
@@ -402,6 +409,7 @@ void tAgeInfoStruct::store(tBBuf &t)
 	// 0x03 filename,instance name
 	// 0x0B filename,instance name,user name
 	// 0x0F filename,instance name,guid,user name
+	// 0x17 filename,instance name,guid,sequence number
 	// 0x2F filename,instance name,guid,user name,display name
 	// 0x6F filename,instance name,guid,user name,display name,language
 	//Supposicions:
@@ -409,6 +417,7 @@ void tAgeInfoStruct::store(tBBuf &t)
 	// 0x02: filename (must always be set)
 	// 0x04: The Age Guid
 	// 0x08: The user defined name
+	// 0x10: Sequence number (only seen in public age list)
 	// 0x20: DisplayName (Desc's name)
 	// 0x40: Language
 	flags = t.get8();
@@ -433,6 +442,11 @@ void tAgeInfoStruct::store(tBBuf &t)
 	
 	if (flags & 0x08) // user defined name
 		t.get(userDefName);
+	
+	if (flags & 0x10) // sequence number
+		sequenceNumber = t.get32();
+	else
+		sequenceNumber = 0;
 	
 	if (flags & 0x20) // display name
 		t.get(displayName);

@@ -127,17 +127,6 @@ namespace alc {
 		this->ki = ageList.ki;
 	}
 	
-	void tmPublicAgeList::tPublicAge::store(tBBuf& t)
-	{
-		uint8_t tmp = t.get8();
-		if (tmp != 0x17) // age info struct flags: 0x01 = instanceName, 0x02 = filename, 0x04 = guid, 0x10 = sequence number
-			throw txProtocolError(_WHERE("tPublicAge.flags has invalid value 0x%02X != 0x17", tmp));
-		t.get(filename);
-		t.get(instanceName);
-		memcpy(guid, t.read(8), 8);
-		sequenceNumber = t.get32();
-	}
-	
 	void tmPublicAgeList::store(tBBuf& t)
 	{
 		alc::tmNetMsg::store(t);
@@ -147,22 +136,13 @@ namespace alc {
 		ages.clear();
 		ages.reserve(count);
 		for (int i = 0; i < count; ++i) {
-			t.get(*ages.insert(ages.end(), tPublicAge())); // first insert, then fill with data
+			t.get(*ages.insert(ages.end(), tAgeInfoStruct())); // first insert, then fill with data
 		}
 		count = t.get16();
 		populations.clear();
 		populations.reserve(count);
 		for (int i = 0; i < count; ++i)
 			populations.push_back(t.get32());
-	}
-	
-	void tmPublicAgeList::tPublicAge::stream(tBBuf& t) const
-	{
-		t.put8(0x17);
-		t.put(filename);
-		t.put(instanceName);
-		t.write(guid, 8);
-		t.put32(sequenceNumber);
 	}
 
 	void tmPublicAgeList::stream(tBBuf& t) const
