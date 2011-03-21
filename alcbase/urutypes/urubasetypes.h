@@ -54,6 +54,8 @@ inline uint32_t alcPageNumberToId(uint32_t seqPrefix, uint16_t number)
 	return (seqPrefix << 8) + 33 + number;
 }
 
+const char * alcGetLinkingRule(uint8_t rule);
+
 class tpObject;
 
 /** Wdys buffer */
@@ -156,6 +158,50 @@ private:
 	size_t realSize; // if flag is 0x02, this saves the uncompressed size, otherwise, it is zero
 	uint8_t format; // 0x00, 0x03: uncompressed, 0x02: compressed
 	uint16_t type; //!< the sent type - not canonized to TPOTS!
+};
+
+class tAgeInfoStruct : public tStreamable {
+public:
+	tAgeInfoStruct(const tString &filename, const tString &instanceName, const tString &userDefName, const tString &displayName, const uint8_t *guid);
+	tAgeInfoStruct(const tString &filename, const uint8_t *guid);
+	tAgeInfoStruct(const tAgeInfoStruct &);
+	tAgeInfoStruct(void) {}
+	virtual void store(tBBuf &t);
+	virtual void stream(tBBuf &t) const;
+	bool hasGuid(void) { return (flags & 0x04); }
+	tString str(void) const;
+	// format
+	uint8_t flags;
+	tString filename, instanceName;
+	uint8_t guid[8];
+	tString userDefName, displayName;
+};
+
+class tSpawnPoint : public tStreamable {
+public:
+	tSpawnPoint(const tString &title, const tString &name, const tString &cameraStack = "");
+	tSpawnPoint(void) {}
+	virtual void store(tBBuf &t);
+	virtual void stream(tBBuf &t) const;
+	tString str(void) const;
+	// format
+	uint32_t flags;
+	tString title, name, cameraStack;
+};
+
+class tAgeLinkStruct : public tStreamable {
+public:
+	tAgeLinkStruct(void) {}
+	virtual void store(tBBuf &t);
+	virtual void stream(tBBuf &t) const;
+	tString str(void) const;
+	// format
+	uint16_t flags;
+	tAgeInfoStruct ageInfo;
+	uint8_t linkingRule;
+	tSpawnPoint spawnPoint;
+	uint8_t ccr;
+	tString parentAgeName;
 };
 
 } //End alc namespace

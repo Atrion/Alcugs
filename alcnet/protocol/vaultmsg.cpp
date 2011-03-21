@@ -130,8 +130,8 @@ namespace alc {
 	void tmPublicAgeList::tPublicAge::store(tBBuf& t)
 	{
 		uint8_t tmp = t.get8();
-		if (tmp != 0x17)
-			throw txProtocolError(_WHERE("tPublicAge.unk has invalid value 0x%02X != 0x17", tmp));
+		if (tmp != 0x17) // age info struct flags: 0x01 = instanceName, 0x02 = filename, 0x04 = guid, 0x10 = sequence number
+			throw txProtocolError(_WHERE("tPublicAge.flags has invalid value 0x%02X != 0x17", tmp));
 		t.get(filename);
 		t.get(instanceName);
 		memcpy(guid, t.read(8), 8);

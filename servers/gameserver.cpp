@@ -123,7 +123,7 @@ namespace alc {
 		if (msg->task) { // it is a vault task
 			if (msg->cmd != TRegisterOwnedAge) return; // we are only interested in these messages which are sent when an age is reset
 			// now, find the age link struct
-			tvAgeLinkStruct *ageLink = NULL;
+			tAgeLinkStruct *ageLink = NULL;
 			for (tvMessage::tItemList::iterator it = msg->items.begin(); it != msg->items.end(); ++it) {
 				if ((*it)->id != 11) continue;
 				ageLink = (*it)->asAgeLink(); // we don't have to free it, tvMessage does that

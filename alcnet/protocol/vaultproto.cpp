@@ -41,233 +41,6 @@
 
 
 namespace alc {
-
-	
-	//// tvAgeInfoStruct
-	tvAgeInfoStruct::tvAgeInfoStruct(const tString &filename, const tString &instanceName, const tString &userDefName, const tString &displayName, const uint8_t *guid)
-	: tvBase(), filename(filename), instanceName(instanceName), userDefName(userDefName), displayName(displayName)
-	{
-		flags = 0x01 | 0x02 | 0x04 | 0x08 | 0x20; // instanceName, filename, GUID, user defined name, display name
-		memcpy(this->guid, guid, 8);
-	}
-	
-	tvAgeInfoStruct::tvAgeInfoStruct(const tString &filename, const uint8_t *guid) : tvBase(), filename(filename)
-	{
-		flags =  0x02 | 0x04; // filename, GUID
-		memcpy(this->guid, guid, 8);
-	}
-	
-	void tvAgeInfoStruct::store(tBBuf &t)
-	{
-		//AgeInfoStruct flags
-		//Found:
-		// 0x02 filename
-		// 0x03 filename,instance name
-		// 0x0B filename,instance name,user name
-		// 0x0F filename,instance name,guid,user name
-		// 0x2F filename,instance name,guid,user name,display name
-		// 0x6F filename,instance name,guid,user name,display name,language
-		//Supposicions:
-		// 0x01: instance name
-		// 0x02: filename (must always be set)
-		// 0x04: The Age Guid
-		// 0x08: The user defined name
-		// 0x20: DisplayName (Desc's name)
-		// 0x40: Language
-		flags = t.get8();
-		uint8_t check = 0x02 | 0x01 | 0x04 | 0x08 | 0x20 | 0x40;
-		if (flags & ~(check))
-			throw txProtocolError(_WHERE("unknown flag 0x%02X for AgeInfoStruct", flags));
-		if (!(flags & 0x02)) // this must always be set (filename)
-			throw txProtocolError(_WHERE("the 0x02 flag must always be set in AgeInfoStruct"));
-		
-		t.get(filename);
-		
-		if (flags & 0x01) // instance name
-			t.get(instanceName);
-		else { // instance name disabled
-			throw txProtocolError(_WHERE("instance name flag not set... what to do?"));
-		}
-		
-		if (flags & 0x04) // GUID
-			memcpy(guid, t.read(8), 8);
-		else
-			memset(guid, 0, 8); // some parts of the server rely on this being all zero when no GUID is set
-		
-		if (flags & 0x08) // user defined name
-			t.get(userDefName);
-		
-		if (flags & 0x20) // display name
-			t.get(displayName);
-		
-		if (flags & 0x40) { // language
-			// this is not the language of the client, but something else
-			uint32_t language = t.get32(); // always seen 0
-			if (language != 0) throw txProtocolError(_WHERE("Language value of an AgeInfoStruct is 0x%08X instead of 0\n", language));
-		}
-	}
-	
-	void tvAgeInfoStruct::stream(tBBuf &t) const
-	{
-		// see store for description of flags
-		t.put8(flags);
-		
-		t.put(filename);
-		
-		if (flags & 0x01) // instance name
-			t.put(instanceName);
-		
-		if (flags & 0x04) // GUID
-			t.write(guid, 8);
-		
-		if (flags & 0x08) // user defined name
-			t.put(userDefName);
-		
-		if (flags & 0x20) // display name
-			t.put(displayName);
-		
-		if (flags & 0x40) // language
-			t.put32(0);
-	}
-	
-	tString tvAgeInfoStruct::str(void) const
-	{
-		tString dbg;
-		dbg.printf("Filename: %s", filename.c_str());
-		if (flags & 0x01) // instance name
-			dbg.printf(", Instance Name: %s", instanceName.c_str());
-		if (flags & 0x04) // GUID
-			dbg.printf(", GUID: %s", alcGetStrGuid(guid).c_str());
-		if (flags & 0x08) // user defined name
-			dbg.printf(", User defined name: %s", userDefName.c_str());
-		if (flags & 0x20) // display name
-			dbg.printf(", Display name: %s", displayName.c_str());
-		if (flags & 0x40) // language
-			dbg.printf(", Language: 0");
-		return dbg;
-	}
-	
-	void tvAgeInfoStruct::asHtml(tLog *log, bool /*shortLog*/)
-	{
-		log->print("Age Info: %s<br />\n", str().c_str());
-	}
-	
-	//// tvSpawnPoint
-	tvSpawnPoint::tvSpawnPoint(const tString &title, const tString &name, const tString &cameraStack) : title(title), name(name), cameraStack(cameraStack)
-	{
-		flags = 0x00000007;
-	}
-	
-	void tvSpawnPoint::store(tBBuf &t)
-	{
-		//tvSpawnPoint flags
-		//Found:
-		// always 0x00000007
-		//Supposicions:
-		// 0x00000007: 3 bits for title, name and cameraStack
-		flags = t.get32();
-		if (flags != 0x00000007) throw txProtocolError(_WHERE("The SpawnPoint flag must always be 0x00000007 (it is 0x%08X)", flags));
-		t.get(title);
-		t.get(name);
-		t.get(cameraStack);
-	}
-	
-	void tvSpawnPoint::stream(tBBuf &t) const
-	{
-		// see store for description of flags
-		t.put32(flags);
-		t.put(title);
-		t.put(name);
-		t.put(cameraStack);
-	}
-	
-	tString tvSpawnPoint::str(void) const
-	{
-		tString dbg;
-		dbg.printf("Title: %s, Name: %s, Camera Stack: %s", title.c_str(), name.c_str(), cameraStack.c_str());
-		return dbg;
-	}
-	
-	void tvSpawnPoint::asHtml(tLog *log, bool /*shortLog*/)
-	{
-		log->print("Spawn Point: %s<br />\n", str().c_str());
-	}
-	
-	//// tvAgeLinkStruct
-	void tvAgeLinkStruct::store(tBBuf &t)
-	{
-		//AgeLinkStruct flags
-		//Found:
-		// 0x0023 In VaultTasks
-		// 0x0033 In FindAge msg's
-		// 0x0073 Found when linking to Ahnonay (temple) from Restoration Guild
-		//Supposicions:
-		// 0x0023: 3 bits for AgeInfoStruct LinkingRules and SpawnPoint (must always be set)
-		// 0x0010: CCR flag
-		// 0x0040: Parent age name (according to libPlasma)
-		flags = t.get16();
-		uint16_t check = 0x0023 | 0x0010 | 0x0040;
-		if (flags & ~(check))
-			throw txProtocolError(_WHERE("unknown flag 0x%04X for AgeLinkStruct", flags));
-		if (!(flags & 0x0023)) // this must always be set (AgeInfoStruct, LinkingRules and SpawnPoint)
-			throw txProtocolError(_WHERE("the 0x0023 flag must always be set in AgeLinkStruct"));
-		
-		t.get(ageInfo);
-		linkingRule = t.get8();
-		uint32_t unk = t.get32(); // unknown, always seen 0x00000001
-		if (unk != 0x00000001)
-			throw txProtocolError(_WHERE("unknown unk value for AgeLinkStruct, must always be 0x00000001 but is 0x%08X", unk));
-		t.get(spawnPoint);
-		
-		// now come the optional fields
-		if (flags & 0x0010) // CCR
-			ccr = t.get8();
-		else
-			ccr = 0;
-		
-		if (flags & 0x0040) // parent age name
-			t.get(parentAgeName);
-	}
-	
-	void tvAgeLinkStruct::stream(tBBuf &t) const
-	{
-		// see store for description of flags
-		t.put16(flags);
-		
-		t.put(ageInfo);
-		t.put8(linkingRule);
-		t.put32(0x00000001); // unknown
-		t.put(spawnPoint);
-		
-		// optional fields
-		if (flags & 0x0010) // CCR
-			t.put8(ccr);
-		if (flags & 0x0040) // parent age name
-			t.put(parentAgeName);
-	}
-	
-	tString tvAgeLinkStruct::str(void) const
-	{
-		tString dbg;
-		dbg.printf("Age Info [%s], Linking Rule: 0x%02X (%s), Spawn Point [%s]", ageInfo.str().c_str(), linkingRule, alcUnetGetLinkingRule(linkingRule), spawnPoint.str().c_str());
-		if (flags & 0x0010) // CCR
-			dbg.printf(", CCR: 0x%02X", ccr);
-		if (flags & 0x0040) // parent age name
-			dbg.printf(", Parent Age: %s", parentAgeName.c_str());
-		return dbg;
-	}
-	
-	void tvAgeLinkStruct::asHtml(tLog *log, bool shortLog)
-	{
-		log->print("Flags: 0x%04X<br />\n", flags);
-		ageInfo.asHtml(log, shortLog);
-		log->print("Linking rule: 0x%02X<br />\n", linkingRule);
-		spawnPoint.asHtml(log, shortLog);
-		if (flags & 0x0010) // CCR
-			log->print("CCR: 0x%02X<br />\n", ccr);
-		if (flags & 0x0040) // parent age name
-			log->print("Parent Age: %s<br />\n", parentAgeName.c_str());
-	}
 	
 	//// tvManifest
 	tvManifest::tvManifest(uint32_t id, double timestamp)
@@ -974,7 +747,7 @@ namespace alc {
 		if (data) delete data;
 		switch (type) {
 			case plAgeLinkStruct:
-				data = new tvAgeLinkStruct;
+				data = new tAgeLinkStruct;
 				break;
 			case plCreatableGenericValue:
 				data = new tvCreatableGenericValue;
@@ -1044,18 +817,24 @@ namespace alc {
 		return static_cast<tvNodeRef *>(data);
 	}
 	
-	tvAgeLinkStruct *tvItem::asAgeLink(void) const
+	tAgeLinkStruct *tvItem::asAgeLink(void) const
 	{
 		if (type != plAgeLinkStruct)
 			throw txProtocolError(_WHERE("vault item with id %d is a %s, but I expected a plAgeLinkStruct", id, alcGetPlasmaType(type)));
-		return static_cast<tvAgeLinkStruct *>(data);
+		return static_cast<tAgeLinkStruct *>(data);
 	}
 	
 	void tvItem::asHtml(tLog *log, bool shortLog)
 	{
 		log->print("Id: <b>0x%02X (%d)</b>, type: 0x%04X (%s)<br />\n", id, id, type, alcGetPlasmaType(type));
 		if (type == plVaultNode) log->print("<table border='1'>\n");
-		data->asHtml(log, shortLog);
+		tvBase *asBase = dynamic_cast<tvBase*>(data);
+		if (asBase) asBase->asHtml(log, shortLog);
+		else {
+			// must be an age link struct
+			tAgeLinkStruct *ageLink = static_cast<tAgeLinkStruct*>(data);
+			log->print("Age Link: %s<br />\n", ageLink->str().c_str());
+		}
 		if (type == plVaultNode) log->print("</table>\n");
 	}
 	
