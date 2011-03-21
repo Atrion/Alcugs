@@ -494,6 +494,22 @@ namespace alc {
 		}
 	}
 	
+	void tTrackingBackend::getPopulationCounts(tmPublicAgeList& ageList)
+	{
+		ageList.populations.clear();
+		for (tmPublicAgeList::tAgeList::iterator it = ageList.ages.begin(); it != ageList.ages.end(); ++it) {
+			// search for players on this age
+			int count = 0;
+			for (tPlayerList::iterator jt = players.begin(); jt != players.end(); ++jt) {
+				if (memcmp(jt->u->serverGuid, it->guid, 8) == 0) {
+					++count;
+				}
+			}
+			ageList.populations.push_back(count);
+		}
+		net->send(ageList);
+	}
+	
 	void tTrackingBackend::generateFakeGuid(uint8_t* guid)
 	{
 		tMBuf buf;

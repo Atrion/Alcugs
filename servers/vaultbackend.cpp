@@ -191,8 +191,7 @@ namespace alc {
 	void tVaultBackend::send(tvMessage &msg, tNetSession *u, uint32_t ki, uint32_t x)
 	{
 		msg.print(&logHtml, /*clientToServer:*/false, u, shortHtml, ki);
-		tmVault vaultMsg(u, ki, x, msg.task, &msg);
-		net->send(vaultMsg);
+		net->send(tmVault(u, ki, x, msg.task, &msg));
 	}
 	
 	void tVaultBackend::sendPlayerList(tmCustomVaultAskPlayerList &askPlayerList)
@@ -200,6 +199,13 @@ namespace alc {
 		tmCustomVaultPlayerList list(askPlayerList.getSession(), askPlayerList.x, askPlayerList.sid, askPlayerList.uid);
 		list.numberPlayers = vaultDB->getPlayerList(askPlayerList.uid, &list.players);
 		net->send(list);
+	}
+	
+	void tVaultBackend::sendAgeList(tmGetPublicAgeList &getAgeList)
+	{
+		tmPublicAgeList ageList(getAgeList.getSession(), getAgeList.ki, getAgeList.x, getAgeList.sid);
+		// FIXME fill in data
+		net->send(ageList);
 	}
 	
 	void tVaultBackend::checkKi(tmCustomVaultCheckKi &checkKi)

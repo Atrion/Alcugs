@@ -44,6 +44,42 @@ namespace alc {
 		tMBuf message;
 	};
 	
+	class tmGetPublicAgeList : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmGetPublicAgeList, tmNetMsg)
+	public:
+		tmGetPublicAgeList(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, tString age);
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
+		virtual tString additionalFields(tString dbg) const;
+		// format
+		tString age;
+	};
+	
+	class tmPublicAgeList : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmPublicAgeList, tmNetMsg)
+	public:
+		tmPublicAgeList(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid);
+		tmPublicAgeList(tNetSession *u, const tmPublicAgeList &ageList);
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
+		virtual tString additionalFields(tString dbg) const;
+		
+		class tPublicAge : public tStreamable {
+		public:
+			virtual void store(tBBuf &t);
+			virtual void stream(tBBuf &t) const;
+			
+			tString filename, instanceName;
+			uint8_t guid[8];
+			uint32_t sequenceNumber;
+		};
+		
+		typedef std::vector<tPublicAge> tAgeList;
+		tAgeList ages;
+		typedef std::vector<uint32_t> tPopulationList;
+		tPopulationList populations;
+	};
+	
 	class tmCustomVaultAskPlayerList : public tmNetMsg {
 		NETMSG_RECEIVE_CONSTRUCTORS(tmCustomVaultAskPlayerList, tmNetMsg)
 	public:

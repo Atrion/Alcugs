@@ -69,6 +69,110 @@ namespace alc {
 		return dbg;
 	}
 	
+	//// tmGetPublicAgeList
+	tmGetPublicAgeList::tmGetPublicAgeList(tNetSession* u, uint32_t ki, uint32_t x, uint32_t sid, tString age)
+	: tmNetMsg(NetMsgGetPublicAgeList, plNetAck | plNetX | plNetKi | plNetVersion | plNetSid, u), age(age)
+	{
+		this->x = x;
+		this->sid = sid;
+		this->ki = ki;
+	}
+	
+	void tmGetPublicAgeList::store(tBBuf& t)
+	{
+		tmNetMsg::store(t);
+		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("Ki or X flag missing")); // when coming from a client, it won't have the sid flag set
+		if (u->isUruClient() && (ki == 0 || u->ki != ki)) // don't kick game server if we are the vault and got this message
+			throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
+		t.get(age);
+	}
+	
+	void tmGetPublicAgeList::stream(tBBuf& t) const
+	{
+		tmNetMsg::stream(t);
+		t.put(age);
+	}
+	
+	tString tmGetPublicAgeList::additionalFields(tString dbg) const
+	{
+		dbg.nl();
+		dbg.printf(" Age: %s", age.c_str());
+		return dbg;
+	}
+	
+	//// tmPublicAgeList
+	tmPublicAgeList::tmPublicAgeList(tNetSession* u, uint32_t ki, uint32_t x, uint32_t sid)
+	: tmNetMsg(NetMsgPublicAgeList, plNetAck | plNetX | plNetKi | plNetVersion | plNetSid, u)
+	{
+		this->x = x;
+		this->sid = sid;
+		this->ki = ki;
+	}
+	
+	tmPublicAgeList::tmPublicAgeList(tNetSession *u, const tmPublicAgeList &ageList)
+	: tmNetMsg(NetMsgPublicAgeList, plNetAck | plNetX | plNetKi | plNetVersion | plNetSid, u), ages(ageList.ages), populations(ageList.populations)
+	{
+		this->x = ageList.x;
+		this->sid = ageList.sid;
+		this->ki = ageList.ki;
+	}
+	
+	void tmPublicAgeList::tPublicAge::store(tBBuf& t)
+	{
+		uint8_t tmp = t.get8();
+		if (tmp != 0x17)
+			throw txProtocolError(_WHERE("tPublicAge.unk has invalid value 0x%02X != 0x17", tmp));
+		t.get(filename);
+		t.get(instanceName);
+		memcpy(guid, t.read(8), 8);
+		sequenceNumber = t.get32();
+	}
+	
+	void tmPublicAgeList::store(tBBuf& t)
+	{
+		alc::tmNetMsg::store(t);
+		if (!hasFlags(plNetX | plNetSid)) throw txProtocolError(_WHERE("X or Sid flag missing"));
+		
+		int count = t.get16();
+		ages.clear();
+		ages.reserve(count);
+		for (int i = 0; i < count; ++i) {
+			t.get(*ages.insert(ages.end(), tPublicAge())); // first insert, then fill with data
+		}
+		count = t.get16();
+		populations.clear();
+		populations.reserve(count);
+		for (int i = 0; i < count; ++i)
+			populations.push_back(t.get32());
+	}
+	
+	void tmPublicAgeList::tPublicAge::stream(tBBuf& t) const
+	{
+		t.put8(0x17);
+		t.put(filename);
+		t.put(instanceName);
+		t.write(guid, 8);
+		t.put32(sequenceNumber);
+	}
+
+	void tmPublicAgeList::stream(tBBuf& t) const
+	{
+		alc::tmNetMsg::stream(t);
+		t.put16(ages.size());
+		for (tAgeList::const_iterator it = ages.begin(); it != ages.end(); ++it)
+			t.put(*it);
+		t.put16(populations.size());
+		for (tPopulationList::const_iterator it = populations.begin(); it != populations.end(); ++it)
+			t.put32(*it);
+	}
+	
+	tString tmPublicAgeList::additionalFields(tString dbg) const
+	{
+		dbg.nl();
+		dbg.printf(" Number of ages: %d", ages.size());
+		return dbg;
+	}
+	
 	//// tmCustomVaultAskPlayerList
 	tmCustomVaultAskPlayerList::tmCustomVaultAskPlayerList(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid)
 	: tmNetMsg(NetMsgCustomVaultAskPlayerList, plNetAck | plNetX | plNetVersion | plNetUID | plNetSid, u)

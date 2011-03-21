@@ -297,6 +297,9 @@ unsilenced 29
 #define NetMsgSetTimeout               0x0465
 #define NetMsgActivePlayerSet          0x0466
 
+#define NetMsgGetPublicAgeList         0x0469
+#define NetMsgPublicAgeList            0x046A
+
 //tpots note
 //All types that are >0x03BC are incremented +1 in TPOTS (compared to UU)
 //thx to ngilb120

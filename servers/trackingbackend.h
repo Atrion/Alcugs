@@ -30,6 +30,7 @@
 #define __U_TRACKINGBACKEND_H_ID "$Id$"
 
 #include <protocol/trackingmsg.h>
+#include <protocol/vaultmsg.h>
 #include <netsession.h>
 #include <alcutil/alclog.h>
 
@@ -86,6 +87,7 @@ namespace alc {
 		void findServer(tmCustomFindServer &findServer);
 		void forwardMessage(tmCustomDirectedFwd &directedFwd);
 		void playerCanCome(tNetSession *game, uint32_t ki);
+		void getPopulationCounts(tmPublicAgeList &ageList);
 	private:
 		
 		typedef std::list<tPlayer> tPlayerList;

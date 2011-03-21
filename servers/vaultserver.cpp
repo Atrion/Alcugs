@@ -162,9 +162,13 @@ namespace alc {
 			case NetMsgCustomVaultPlayerStatus:
 			{
 				tmCustomVaultPlayerStatus status(u, msg);
-				
 				vaultBackend.updatePlayerStatus(status);
-				
+				return 1;
+			}
+			case NetMsgGetPublicAgeList:
+			{
+				tmGetPublicAgeList getAgeList(u, msg);
+				vaultBackend.sendAgeList(getAgeList);
 				return 1;
 			}
 			case NetMsgVault:
