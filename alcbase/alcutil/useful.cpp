@@ -92,8 +92,8 @@ bool alcGetLoginInfo(tString argv,tString * username,tString * hostname,uint16_t
 	and set the prefered locales.
 */
 bool alcIsAlpha(char c) {
-	return(index("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZáàâä\
-éèêëíìîïóòôöúùûüçÇñÑß", c)!=NULL); //<- Some characters are not visible on UTF systems, or under other codifications, so you may see garbage
+	return index("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZáàâä"
+		"éèêëíìîïóòôöúùûüçÇñÑß", c) != NULL; //<- Some characters are not visible on UTF systems, or under other codifications, so you may see garbage
 }
 
 void setCloseOnExec(int fd)

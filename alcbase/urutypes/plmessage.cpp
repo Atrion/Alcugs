@@ -62,10 +62,8 @@ namespace alc {
 		// read array of receivers - perhaps put this into a helper function?
 		receivers.clear();
 		receivers.reserve(refCount);
-		tReceiverList::iterator it;
 		for (uint32_t i = 0; i < refCount; ++i) {
-			it = receivers.insert(receivers.end(), tUruObjectRef());
-			t.get(*it);
+			t.get(*receivers.insert(receivers.end(), tUruObjectRef())); // first insert, then fill with data
 		}
 		// remaining values
 		tmpVal = t.get32();

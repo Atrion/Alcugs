@@ -753,7 +753,44 @@ namespace alc {
 				return 1;
 			}
 			
-			//// message to prevent the server from going down while someone joins
+			//// age management messages
+			case NetMsgGetPublicAgeList:
+			{
+				if (!u->joined) {
+					err->log("ERR: %s sent a NetMsgGetPublicAgeList but did not yet join the game. I\'ll kick him.\n", u->str().c_str());
+					return -2; // hack attempt
+				}
+				
+				tmGetPublicAgeList getAgeList(u, msg);
+				// forward to vault server
+				send(tmGetPublicAgeList(*vaultServer, u->ki, getAgeList.x, u->getSid(), getAgeList.age));
+				return 1;
+			}
+			case NetMsgPublicAgeList:
+				if (u == *vaultServer) {
+					tmPublicAgeList ageList(u, msg);
+					// now let tracking fill in the population counts
+					send(tmPublicAgeList(*trackingServer, ageList));
+					return 1;
+				}
+				else if (u == *trackingServer) {
+					tmPublicAgeList ageList(u, msg);
+					// it's ready, forward to client
+					tNetSessionRef client = sessionBySid(ageList.sid);
+					if (!*client || !client->isUruClient() || client->ki != ageList.ki) {
+						err->log("ERR: I've got to tell player with KI %d about public ages, but can't find his session.\n", ageList.ki);
+						return 1;
+					}
+					tmPublicAgeList ageListFwd(*client, ageList);
+					ageListFwd.unsetFlags(plNetSid); // don't send sid flag to client
+					send(ageListFwd);
+					return 1;
+				}
+				else {
+					err->log("ERR: %s sent a NetMsgPublicAgeList but is not the vault or tracking server. I\'ll kick him.\n", u->str().c_str());
+					return -2; // hack attempt
+				}
+			//// Server control messages
 			case NetMsgCustomPlayerToCome:
 			{
 				if (u != *trackingServer) {
@@ -773,13 +810,10 @@ namespace alc {
 				}
 				
 				// Send the reply back
-				tmCustomPlayerToCome reply(u, playerToCome.ki);
-				send(reply);
+				send(tmCustomPlayerToCome(u, playerToCome.ki));
 				
 				return 1;
 			}
-			
-			//// Server control messages
 			case NetMsgSetTimeout:
 			{
 				if (!u->joined) {
