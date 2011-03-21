@@ -318,11 +318,11 @@ namespace alc {
 		sql->query(query, "migrateVersion3to4: setting version number");
 	}
 	
-	int tVaultDB::getPlayerList(const uint8_t *uid, tMBuf *t)
+	int tVaultDB::getPlayerList(const uint8_t *uid, tmVaultPlayerList *list)
 	{
 		if (!sql->prepare()) throw txDatabaseError(_WHERE("no access to DB"));
-		if (t) t->clear(); // t may be NULL if we just check the number of players
-	
+		if (list) list->avatars.clear(); // t may be NULL if we just check the number of players
+		
 		tString query;
 		
 		query.printf("SELECT idx, lstr_1, int_2 FROM %s WHERE lstr_2 = '%s'", vaultTable, alcGetStrUid(uid).c_str());
@@ -331,12 +331,10 @@ namespace alc {
 		MYSQL_RES *result = sql->storeResult();
 		int number = mysql_num_rows(result);
 		
-		if (t) {
+		if (list) {
 			for (int i = 0; i < number; ++i) {
 				MYSQL_ROW row = mysql_fetch_row(result);
-				t->put32(atoi(row[0])); // KI
-				t->put(tString(row[1])); // Avatar
-				t->put8(atoi(row[2])); // flags
+				list->avatars.push_back(tmVaultPlayerList::tAvatar(atoi(row[0]), tString(row[1]), atoi(row[2]))); // KI, Avatar name, flags
 			}
 		}
 		mysql_free_result(result);

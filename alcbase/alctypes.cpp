@@ -189,10 +189,8 @@ tMBuf::tMBuf(tBBuf &t) {
 }
 tMBuf::tMBuf(const tMBuf &t) {
 	DBG(9,"tMBuf(tMBuf)\n");
-	buf = t.buf;
-	if (buf != NULL) buf->inc();
-	msize = t.msize;
-	off=t.off;
+	init();
+	copy(t); // yes, it can happen that &t == this... if a class constructor initializes a value with itself
 }
 tMBuf::tMBuf(const void *d, size_t s) {
 	init();

@@ -770,7 +770,7 @@ namespace alc {
 				if (u == *vaultServer) {
 					tmPublicAgeList ageList(u, msg);
 					// now let tracking fill in the population counts
-					send(tmPublicAgeList(*trackingServer, ageList));
+					send(tmPublicAgeList(*trackingServer, ageList.ki, ageList.x, ageList.sid, ageList.ages));
 					return 1;
 				}
 				else if (u == *trackingServer) {
@@ -781,9 +781,7 @@ namespace alc {
 						err->log("ERR: I've got to tell player with KI %d about public ages, but can't find his session.\n", ageList.ki);
 						return 1;
 					}
-					tmPublicAgeList ageListFwd(*client, ageList);
-					ageListFwd.unsetFlags(plNetSid); // don't send sid flag to client
-					send(ageListFwd);
+					send(tmPublicAgeList(*client, ageList));
 					return 1;
 				}
 				else {

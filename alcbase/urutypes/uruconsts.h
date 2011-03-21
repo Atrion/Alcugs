@@ -307,8 +307,8 @@ unsilenced 29
 //custom
 #define NetMsgCustomAuthAsk            0x1001
 #define NetMsgCustomAuthResponse       0x1002
-#define NetMsgCustomVaultAskPlayerList 0x1003
-#define NetMsgCustomVaultPlayerList    0x1004
+#define NetMsgCustomVaultAskPlayerList 0x1003 // like NetMsgVaultAskPlayerList
+#define NetMsgCustomVaultPlayerList    0x1004 // like NetMsgVaultPlayerList without the URL
 #define NetMsgCustomVaultCreatePlayer  0x1005
 #define NetMsgCustomVaultPlayerCreated 0x1006
 #define NetMsgCustomVaultDeletePlayer  0x1007

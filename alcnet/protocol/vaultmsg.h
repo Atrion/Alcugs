@@ -58,12 +58,6 @@ namespace alc {
 	class tmPublicAgeList : public tmNetMsg {
 		NETMSG_RECEIVE_CONSTRUCTORS(tmPublicAgeList, tmNetMsg)
 	public:
-		tmPublicAgeList(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid);
-		tmPublicAgeList(tNetSession *u, const tmPublicAgeList &ageList);
-		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t) const;
-		virtual tString additionalFields(tString dbg) const;
-		
 		class tPublicAge : public tStreamable {
 		public:
 			virtual void store(tBBuf &t);
@@ -73,30 +67,53 @@ namespace alc {
 			uint8_t guid[8];
 			uint32_t sequenceNumber;
 		};
-		
 		typedef std::vector<tPublicAge> tAgeList;
-		tAgeList ages;
 		typedef std::vector<uint32_t> tPopulationList;
-		tPopulationList populations;
-	};
-	
-	class tmCustomVaultAskPlayerList : public tmNetMsg {
-		NETMSG_RECEIVE_CONSTRUCTORS(tmCustomVaultAskPlayerList, tmNetMsg)
-	public:
-		tmCustomVaultAskPlayerList(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid);
-		virtual void store(tBBuf &t);
-	};
-	
-	class tmCustomVaultPlayerList : public tmNetMsg {
-		NETMSG_RECEIVE_CONSTRUCTORS(tmCustomVaultPlayerList, tmNetMsg)
-	public:
-		tmCustomVaultPlayerList(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid);
+		
+		tmPublicAgeList(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid);
+		tmPublicAgeList(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, tAgeList ages);
+		tmPublicAgeList(tNetSession *u, const tmPublicAgeList &ageList);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual tString additionalFields(tString dbg) const;
+		
 		// format
-		uint16_t numberPlayers;
-		tMBuf players;
+		tAgeList ages;
+		tPopulationList populations;
+	};
+	
+	class tmRequestMyVaultPlayerList : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmRequestMyVaultPlayerList, tmNetMsg)
+	public:
+		tmRequestMyVaultPlayerList(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid);
+		virtual void store(tBBuf &t);
+	};
+	
+	class tmVaultPlayerList : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmVaultPlayerList, tmNetMsg)
+	public:
+		class tAvatar : public tStreamable {
+		public:
+			tAvatar(uint32_t ki, tString name, uint8_t flags) : ki(ki), name(name), flags(flags) {}
+			tAvatar() {}
+			virtual void store(tBBuf &t);
+			virtual void stream(tBBuf &t) const;
+			
+			uint32_t ki;
+			tString name;
+			uint8_t flags;
+		};
+		typedef std::vector<tAvatar> tAvatarList;
+		
+		tmVaultPlayerList(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid);
+		tmVaultPlayerList(tNetSession *u, const tmVaultPlayerList &playerList, const tString &url);
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
+		virtual tString additionalFields(tString dbg) const;
+		
+		// format
+		tAvatarList avatars;
+		tString url;
 	};
 	
 	class tmCustomVaultPlayerStatus : public tmNetMsg {

@@ -47,7 +47,7 @@ namespace alc {
 		~tVaultBackend(void);
 		void applyConfig(void);
 		
-		void sendPlayerList(tmCustomVaultAskPlayerList &askPlayerList);
+		void sendPlayerList(tmRequestMyVaultPlayerList &askPlayerList);
 		void sendAgeList(tmGetPublicAgeList &getAgeList);
 		void checkKi(tmCustomVaultCheckKi &checkKi);
 		void updatePlayerStatus(tmCustomVaultPlayerStatus &status);
