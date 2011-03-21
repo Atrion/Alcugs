@@ -139,7 +139,7 @@ namespace alc {
 			{
 				tmCustomVaultFindAge findAge(u, msg);
 				
-				tvAgeLinkStruct ageLink;
+				tAgeLinkStruct ageLink;
 				findAge.data.rewind();
 				findAge.data.get(ageLink);
 				if (!findAge.data.eof()) throw txProtocolError(_WHERE("Got a NetMsgFindAge which is too long"));

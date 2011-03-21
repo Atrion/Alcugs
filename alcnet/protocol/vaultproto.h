@@ -185,53 +185,6 @@ namespace alc {
 		virtual void asHtml(tLog *log, bool shortLog) = 0; //!< print the data as HTML. Also does further verification for some types.
 	};
 	
-	class tvAgeInfoStruct : public tvBase {
-	public:
-		tvAgeInfoStruct(const tString &filename, const tString &instanceName, const tString &userDefName, const tString &displayName, const uint8_t *guid);
-		tvAgeInfoStruct(const tString &filename, const uint8_t *guid);
-		tvAgeInfoStruct(const tvAgeInfoStruct &);
-		tvAgeInfoStruct(void) : tvBase() { }
-		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t) const;
-		virtual void asHtml(tLog *log, bool shortLog);
-		bool hasGuid(void) { return (flags & 0x04); }
-		tString str(void) const;
-		// format
-		uint8_t flags;
-		tString filename, instanceName;
-		uint8_t guid[8];
-		tString userDefName, displayName;
-	};
-	
-	class tvSpawnPoint : public tvBase {
-	public:
-		tvSpawnPoint(const tString &title, const tString &name, const tString &cameraStack = "");
-		tvSpawnPoint(void) : tvBase() { }
-		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t) const;
-		virtual void asHtml(tLog *log, bool shortLog);
-		tString str(void) const;
-		// format
-		uint32_t flags;
-		tString title, name, cameraStack;
-	};
-	
-	class tvAgeLinkStruct : public tvBase {
-	public:
-		tvAgeLinkStruct(void) : tvBase() { }
-		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t) const;
-		virtual void asHtml(tLog *log, bool shortLog);
-		tString str(void) const;
-		// format
-		uint16_t flags;
-		tvAgeInfoStruct ageInfo;
-		uint8_t linkingRule;
-		tvSpawnPoint spawnPoint;
-		uint8_t ccr;
-		tString parentAgeName;
-	};
-	
 	class tvManifest : public tvBase {
 	public:
 		tvManifest(uint32_t id, double timestamp);
@@ -362,13 +315,13 @@ namespace alc {
 		const uint8_t *asGuid(void) const;
 		tvNode *asNode(void) const;
 		tvNodeRef *asNodeRef(void) const;
-		tvAgeLinkStruct *asAgeLink(void) const;
+		tAgeLinkStruct *asAgeLink(void) const;
 		
 		bool UUFormat; //!< stores whether the packet is stored and streamed in POTS or UU format
 		// format
 		uint8_t id;
 		uint16_t type;
-		tvBase *data;
+		tStreamable *data;
 		FORBID_CLASS_COPY(tvItem) // the "data" would have to be copied manually
 	};
 	

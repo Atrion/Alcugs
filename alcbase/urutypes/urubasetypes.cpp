@@ -42,6 +42,19 @@ namespace wdys {
 
 namespace alc {
 
+const char * alcGetLinkingRule(uint8_t rule)
+{
+	switch (rule) {
+		case KBasicLink: return "KBasicLink";
+		case KOriginalBook: return "KOriginalBook";
+		case KSubAgeBook: return "KSubAgeBook";
+		case KOwnedBook: return "KOwnedBook";
+		case KVisitBook: return "KVisitBook";
+		case KChildAgeBook: return "KChildAgeBook";
+		default: return "Unknown";
+	}
+}
+
 /* wdys buff */
 void tWDYSBuf::encrypt() {
 	// first, encrypt ourselves in-place (and make sure we are big enough for that by adding zeroes)
@@ -365,6 +378,211 @@ void tStreamedObject::copy(const tStreamedObject &t)
 	tMBuf::copy(t);
 	format = t.format;
 	type = t.type;
+}
+
+//// tAgeInfoStruct
+tAgeInfoStruct::tAgeInfoStruct(const tString &filename, const tString &instanceName, const tString &userDefName, const tString &displayName, const uint8_t *guid)
+: filename(filename), instanceName(instanceName), userDefName(userDefName), displayName(displayName)
+{
+	flags = 0x01 | 0x02 | 0x04 | 0x08 | 0x20; // instanceName, filename, GUID, user defined name, display name
+	memcpy(this->guid, guid, 8);
+}
+
+tAgeInfoStruct::tAgeInfoStruct(const tString &filename, const uint8_t *guid) : filename(filename)
+{
+	flags =  0x02 | 0x04; // filename, GUID
+	memcpy(this->guid, guid, 8);
+}
+
+void tAgeInfoStruct::store(tBBuf &t)
+{
+	//AgeInfoStruct flags
+	//Found:
+	// 0x02 filename
+	// 0x03 filename,instance name
+	// 0x0B filename,instance name,user name
+	// 0x0F filename,instance name,guid,user name
+	// 0x2F filename,instance name,guid,user name,display name
+	// 0x6F filename,instance name,guid,user name,display name,language
+	//Supposicions:
+	// 0x01: instance name
+	// 0x02: filename (must always be set)
+	// 0x04: The Age Guid
+	// 0x08: The user defined name
+	// 0x20: DisplayName (Desc's name)
+	// 0x40: Language
+	flags = t.get8();
+	uint8_t check = 0x02 | 0x01 | 0x04 | 0x08 | 0x20 | 0x40;
+	if (flags & ~(check))
+		throw txUnexpectedData(_WHERE("unknown flag 0x%02X for AgeInfoStruct", flags));
+	if (!(flags & 0x02)) // this must always be set (filename)
+		throw txUnexpectedData(_WHERE("the 0x02 flag must always be set in AgeInfoStruct"));
+	
+	t.get(filename);
+	
+	if (flags & 0x01) // instance name
+		t.get(instanceName);
+	else { // instance name disabled
+		throw txUnexpectedData(_WHERE("instance name flag not set... what to do?"));
+	}
+	
+	if (flags & 0x04) // GUID
+		memcpy(guid, t.read(8), 8);
+	else
+		memset(guid, 0, 8); // some parts of the server rely on this being all zero when no GUID is set
+	
+	if (flags & 0x08) // user defined name
+		t.get(userDefName);
+	
+	if (flags & 0x20) // display name
+		t.get(displayName);
+	
+	if (flags & 0x40) { // language
+		// this is not the language of the client, but something else
+		uint32_t language = t.get32(); // always seen 0
+		if (language != 0) throw txUnexpectedData(_WHERE("Language value of an AgeInfoStruct is 0x%08X instead of 0\n", language));
+	}
+}
+
+void tAgeInfoStruct::stream(tBBuf &t) const
+{
+	// see store for description of flags
+	t.put8(flags);
+	
+	t.put(filename);
+	
+	if (flags & 0x01) // instance name
+		t.put(instanceName);
+	
+	if (flags & 0x04) // GUID
+		t.write(guid, 8);
+	
+	if (flags & 0x08) // user defined name
+		t.put(userDefName);
+	
+	if (flags & 0x20) // display name
+		t.put(displayName);
+	
+	if (flags & 0x40) // language
+		t.put32(0);
+}
+
+tString tAgeInfoStruct::str(void) const
+{
+	tString dbg;
+	dbg.printf("Filename: %s", filename.c_str());
+	if (flags & 0x01) // instance name
+		dbg.printf(", Instance Name: %s", instanceName.c_str());
+	if (flags & 0x04) // GUID
+		dbg.printf(", GUID: %s", alcGetStrGuid(guid).c_str());
+	if (flags & 0x08) // user defined name
+		dbg.printf(", User defined name: %s", userDefName.c_str());
+	if (flags & 0x20) // display name
+		dbg.printf(", Display name: %s", displayName.c_str());
+	if (flags & 0x40) // language
+		dbg.printf(", Language: 0");
+	return dbg;
+}
+
+//// tSpawnPoint
+tSpawnPoint::tSpawnPoint(const tString &title, const tString &name, const tString &cameraStack) : title(title), name(name), cameraStack(cameraStack)
+{
+	flags = 0x00000007;
+}
+
+void tSpawnPoint::store(tBBuf &t)
+{
+	//tSpawnPoint flags
+	//Found:
+	// always 0x00000007
+	//Supposicions:
+	// 0x00000007: 3 bits for title, name and cameraStack
+	flags = t.get32();
+	if (flags != 0x00000007) throw txUnexpectedData(_WHERE("The SpawnPoint flag must always be 0x00000007 (it is 0x%08X)", flags));
+	t.get(title);
+	t.get(name);
+	t.get(cameraStack);
+}
+
+void tSpawnPoint::stream(tBBuf &t) const
+{
+	// see store for description of flags
+	t.put32(flags);
+	t.put(title);
+	t.put(name);
+	t.put(cameraStack);
+}
+
+tString tSpawnPoint::str(void) const
+{
+	tString dbg;
+	dbg.printf("Title: %s, Name: %s, Camera Stack: %s", title.c_str(), name.c_str(), cameraStack.c_str());
+	return dbg;
+}
+
+//// tAgeLinkStruct
+void tAgeLinkStruct::store(tBBuf &t)
+{
+	//AgeLinkStruct flags
+	//Found:
+	// 0x0023 In VaultTasks
+	// 0x0033 In FindAge msg's
+	// 0x0073 Found when linking to Ahnonay (temple) from Restoration Guild
+	//Supposicions:
+	// 0x0023: 3 bits for AgeInfoStruct LinkingRules and SpawnPoint (must always be set)
+	// 0x0010: CCR flag
+	// 0x0040: Parent age name (according to libPlasma)
+	flags = t.get16();
+	uint16_t check = 0x0023 | 0x0010 | 0x0040;
+	if (flags & ~(check))
+		throw txUnexpectedData(_WHERE("unknown flag 0x%04X for AgeLinkStruct", flags));
+	if (!(flags & 0x0023)) // this must always be set (AgeInfoStruct, LinkingRules and SpawnPoint)
+		throw txUnexpectedData(_WHERE("the 0x0023 flag must always be set in AgeLinkStruct"));
+	
+	t.get(ageInfo);
+	linkingRule = t.get8();
+	uint32_t unk = t.get32(); // unknown, always seen 0x00000001
+	if (unk != 0x00000001)
+		throw txUnexpectedData(_WHERE("unknown unk value for AgeLinkStruct, must always be 0x00000001 but is 0x%08X", unk));
+	t.get(spawnPoint);
+	
+	// now come the optional fields
+	if (flags & 0x0010) // CCR
+		ccr = t.get8();
+	else
+		ccr = 0;
+	
+	if (flags & 0x0040) // parent age name
+		t.get(parentAgeName);
+}
+
+void tAgeLinkStruct::stream(tBBuf &t) const
+{
+	// see store for description of flags
+	t.put16(flags);
+	
+	t.put(ageInfo);
+	t.put8(linkingRule);
+	t.put32(0x00000001); // unknown
+	t.put(spawnPoint);
+	
+	// optional fields
+	if (flags & 0x0010) // CCR
+		t.put8(ccr);
+	if (flags & 0x0040) // parent age name
+		t.put(parentAgeName);
+}
+
+tString tAgeLinkStruct::str(void) const
+{
+	tString dbg;
+	dbg.printf("Age Info [%s], Linking Rule: 0x%02X (%s), Spawn Point [%s]", ageInfo.str().c_str(),
+			   linkingRule, alcGetLinkingRule(linkingRule), spawnPoint.str().c_str());
+	if (flags & 0x0010) // CCR
+		dbg.printf(", CCR: 0x%02X", ccr);
+	if (flags & 0x0040) // parent age name
+		dbg.printf(", Parent Age: %s", parentAgeName.c_str());
+	return dbg;
 }
 
 } //end namespace alc

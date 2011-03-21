@@ -462,7 +462,7 @@ namespace alc {
 				// get the data out of the packet
 				tmFindAge findAge(u, msg);
 				
-				tvAgeLinkStruct ageLink;
+				tAgeLinkStruct ageLink;
 				findAge.message.rewind();
 				findAge.message.get(ageLink);
 				if (!findAge.message.eof()) throw txProtocolError(_WHERE("Got a NetMsgFindAge which is too long"));

@@ -785,19 +785,6 @@ const char * alcUnetGetAvatarCode(uint8_t code) {
 	}
 }
 
-const char * alcUnetGetLinkingRule(uint8_t rule)
-{
-	switch (rule) {
-		case KBasicLink: return "KBasicLink";
-		case KOriginalBook: return "KOriginalBook";
-		case KSubAgeBook: return "KSubAgeBook";
-		case KOwnedBook: return "KOwnedBook";
-		case KVisitBook: return "KVisitBook";
-		case KChildAgeBook: return "KChildAgeBook";
-		default: return "Unknown";
-	}
-}
-
 const char * alcUnetGetMsgCode(uint16_t code) {
 	switch(code) {
 		case NetMsgPagingRoom: return "NetMsgPagingRoom";

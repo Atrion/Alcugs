@@ -59,7 +59,6 @@ const char * alcUnetGetDestination(uint8_t dest);
 const char * alcUnetGetReasonCode(uint8_t code);
 const char * alcUnetGetAuthCode(uint8_t code);
 const char * alcUnetGetAvatarCode(uint8_t code);
-const char * alcUnetGetLinkingRule(uint8_t rule);
 const char * alcUnetGetMsgCode(uint16_t code);
 
 const char * alcUnetGetVarType(uint8_t type);
