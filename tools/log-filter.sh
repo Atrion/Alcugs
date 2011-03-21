@@ -51,7 +51,8 @@ doaction(){
 			catfiles "error"
 		;;
 		warning|warnings)
-			logfilter "warn|err|unx|unexp|fatal" | grep -v " INF: " # remove INF lines like "Dropped unexpected packet"
+			# remove INF lines like "Dropped unexpected packet", and messages containing words like "ferry", "SpkerRotation"
+			logfilter "warn|[^a-z]err|unx|unexp|fatal" | grep -v " INF: "
 		;;
 		*)
 			echo "Usage: log-filter.sh {errors|warnings|problems}"
