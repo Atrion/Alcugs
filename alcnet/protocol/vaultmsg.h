@@ -58,16 +58,7 @@ namespace alc {
 	class tmPublicAgeList : public tmNetMsg {
 		NETMSG_RECEIVE_CONSTRUCTORS(tmPublicAgeList, tmNetMsg)
 	public:
-		class tPublicAge : public tStreamable { // this is actually an age info struct
-		public:
-			virtual void store(tBBuf &t);
-			virtual void stream(tBBuf &t) const;
-			
-			tString filename, instanceName;
-			uint8_t guid[8];
-			uint32_t sequenceNumber;
-		};
-		typedef std::vector<tPublicAge> tAgeList;
+		typedef std::vector<tAgeInfoStruct> tAgeList;
 		typedef std::vector<uint32_t> tPopulationList;
 		
 		tmPublicAgeList(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid);

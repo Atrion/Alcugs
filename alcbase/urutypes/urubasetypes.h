@@ -163,8 +163,8 @@ private:
 class tAgeInfoStruct : public tStreamable {
 public:
 	tAgeInfoStruct(const tString &filename, const tString &instanceName, const tString &userDefName, const tString &displayName, const uint8_t *guid);
+	tAgeInfoStruct(const tString &filename, const tString &instanceName, const uint8_t *guid, uint32_t sequenceNumber);
 	tAgeInfoStruct(const tString &filename, const uint8_t *guid);
-	tAgeInfoStruct(const tAgeInfoStruct &);
 	tAgeInfoStruct(void) {}
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
@@ -175,6 +175,7 @@ public:
 	tString filename, instanceName;
 	uint8_t guid[8];
 	tString userDefName, displayName;
+	uint32_t sequenceNumber;
 };
 
 class tSpawnPoint : public tStreamable {
