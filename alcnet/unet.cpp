@@ -85,7 +85,7 @@ tUnet::tUnet(uint8_t whoami,const tString & lhost,uint16_t lport) : smgr(NULL), 
 	to 30sec after the client got authed.
 	I put this here and not in tUnetServerBase as tUnetBase must be able to override it */
 	
-	msg_timeout=1; // 1 second (default time till re-transmission)
+	msg_timeout=0.5; // 0.5 seconds (default time till re-transmission)
 
 	//initial server timestamp
 	updateNetTime();

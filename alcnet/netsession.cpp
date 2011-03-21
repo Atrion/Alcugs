@@ -67,9 +67,8 @@ tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t s
 	consecutiveCabalIncreases = 0;
 	flood_npkts=0;
 	flood_last_check = next_msg_time = receive_stamp = send_stamp = net->getNetTime();
-	deviation=0;
+	rtt=deviation=0;
 	msg_timeout=net->msg_timeout;
-	rtt=0;
 	conn_timeout=net->conn_timeout;
 	state = Unknown;
 	rejectMessages=false;
@@ -144,14 +143,13 @@ size_t tNetSession::getHeaderSize() {
 void tNetSession::updateRTT(tNetTime newread) {
 	if(rtt==0) rtt=2*newread; // start with a large deviation, in case this was like an "early shot"
 	//Jacobson/Karels - also see https://csel.cs.colorado.edu/~netsys03/CSCI_4273_5273_Spring_2003/Lecture_Slides/Chapter6.1.ppt
-	const double alpha=0.125;
-	const double delta=4;
+	const double alpha=0.125, delta=4;
 	const double diff=newread - rtt;
 	rtt       += alpha*diff;
 	deviation += alpha*(fabs(diff)-deviation);
 	msg_timeout= rtt + delta*deviation;
 	if (msg_timeout > 5) msg_timeout = 5; // max. timeout: 5secs
-	else if (msg_timeout < 0.001) msg_timeout = 0.001; // min. timeout: 1 millisecond
+	else if (msg_timeout < 0.005) msg_timeout = 0.005; // min. timeout: 5 milliseconds
 	DBG(3,"%s RTT update (sample rtt: %f) new rtt:%f, msg_timeout:%f, deviation:%f\n", str().c_str(),newread,rtt,msg_timeout,deviation);
 }
 void tNetSession::increaseCabal() {
