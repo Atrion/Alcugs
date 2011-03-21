@@ -279,8 +279,16 @@ namespace alc {
 		statusFileUpdate = true;
 		uint8_t serverGuid[8];
 		alcGetHexGuid(serverGuid, setGuid.serverGuid);
-		// search if another game server for that guid is already running. in that case, ignore this one
-		{
+		bool isLobby = setGuid.validSpawnPorts();
+		if (isLobby) {
+			// Lobbies msut have an all-zero GUID
+			uint8_t zeroGuid[8];
+			memset(zeroGuid, 0, 8);
+			if (memcmp(serverGuid, zeroGuid, 8))
+				throw txProtocolError(_WHERE("Invalid non-zero lobby GUID %s", setGuid.serverGuid.c_str()));
+		}
+		else {
+			// search if another game server for that guid is already running. in that case, ignore this one
 			for (tNetSessionMgr::tIterator it(net->smgr); it.next();) {
 				if (*it == game || !it->data) continue;
 				if (memcmp(it->serverGuid, serverGuid, 8) == 0) {
@@ -299,15 +307,17 @@ namespace alc {
 		}
 		
 		
-		if (game->data) return; // ignore the rest of the info if we already got it. IP and Port can't change.
+		if (game->data) {
+			if (dynamic_cast<tTrackingData*>(game->data)->isLobby != isLobby)
+				throw txProtocolError(_WHERE("%s changed from lobby to non-lobby or vice versa?!?", game->str().c_str()));
+			return; // ignore the rest of the info if we already got it. IP and Port can't change.
+		}
 		tTrackingData *data = new tTrackingData;
-		if (setGuid.validSpawnPorts()) {
+		data->isLobby = isLobby;
+		if (isLobby) {
 			data->isLobby = true;
 			data->portStart = setGuid.spawnStart;
 			data->portEnd = setGuid.spawnStop;
-		}
-		else {
-			data->isLobby = false;
 		}
 		data->externalIp = setGuid.externalIp;
 		if (!data->isLobby) { // let's look to which lobby this server belongs
