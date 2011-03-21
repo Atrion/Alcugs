@@ -30,6 +30,7 @@
 #define __U_VAULTDB_H_ID "$Id$"
 
 #include <protocol/vaultproto.h>
+#include <protocol/vaultmsg.h>
 
 namespace alc {
 	
@@ -42,7 +43,7 @@ namespace alc {
 		tString getVaultFolderName(void);
 		
 		/** queries the player list and saves it in the buffer if the point is not NULL \returns the number of players */
-		int getPlayerList(const uint8_t *uid, tMBuf *t = NULL);
+		int getPlayerList(const uint8_t *uid, tmVaultPlayerList *t = NULL);
 		
 		/** checks if this account (uid) owns that ki and returns the avatar name. sets "ownAvatar" to true if the avatar belongs to the account, and to false if not */
 		tString checkKi(uint32_t ki, const uint8_t *uid, bool *ownAvatar);

@@ -101,6 +101,7 @@ namespace alc {
 	}
 	
 	//// tmPublicAgeList
+	/** Sending to other server */
 	tmPublicAgeList::tmPublicAgeList(tNetSession* u, uint32_t ki, uint32_t x, uint32_t sid)
 	: tmNetMsg(NetMsgPublicAgeList, plNetAck | plNetX | plNetKi | plNetVersion | plNetSid, u)
 	{
@@ -109,11 +110,20 @@ namespace alc {
 		this->ki = ki;
 	}
 	
+	/** Sending to other server */
+	tmPublicAgeList::tmPublicAgeList(tNetSession* u, uint32_t ki, uint32_t x, uint32_t sid, tAgeList ages)
+	: tmNetMsg(NetMsgPublicAgeList, plNetAck | plNetX | plNetKi | plNetVersion | plNetSid, u), ages(ages)
+	{
+		this->x = x;
+		this->sid = sid;
+		this->ki = ki;
+	}
+	
+	/** Sending to client */
 	tmPublicAgeList::tmPublicAgeList(tNetSession *u, const tmPublicAgeList &ageList)
-	: tmNetMsg(NetMsgPublicAgeList, plNetAck | plNetX | plNetKi | plNetVersion | plNetSid, u), ages(ageList.ages), populations(ageList.populations)
+	: tmNetMsg(NetMsgPublicAgeList, plNetAck | plNetX | plNetKi | plNetSystem, u), ages(ageList.ages), populations(ageList.populations)
 	{
 		this->x = ageList.x;
-		this->sid = ageList.sid;
 		this->ki = ageList.ki;
 	}
 	
@@ -173,53 +183,79 @@ namespace alc {
 		return dbg;
 	}
 	
-	//// tmCustomVaultAskPlayerList
-	tmCustomVaultAskPlayerList::tmCustomVaultAskPlayerList(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid)
-	: tmNetMsg(NetMsgCustomVaultAskPlayerList, plNetAck | plNetX | plNetVersion | plNetUID | plNetSid, u)
+	//// tmRequestMyVaultPlayerList
+	/** Sending to other server */
+	tmRequestMyVaultPlayerList::tmRequestMyVaultPlayerList(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid)
+	: tmNetMsg(NetMsgRequestMyVaultPlayerList, plNetAck | plNetX | plNetVersion | plNetUID | plNetSid, u)
 	{
 		this->x = x;
 		this->sid = sid;
 		memcpy(this->uid, uid, 16);
 	}
 	
-	void tmCustomVaultAskPlayerList::store(tBBuf &t)
+	void tmRequestMyVaultPlayerList::store(tBBuf &t)
 	{
 		tmNetMsg::store(t);
-		if (!hasFlags(plNetX | plNetUID | plNetSid)) throw txProtocolError(_WHERE("X, UID or Sid flag missing"));
+		// the vault manager sends these without X and KI
+		if (hasFlags(plNetKi) && ki != 0) throw txProtocolError(_WHERE("KI must be 0 in NetMsgRequestMyVaultPlayerList but is %d", ki));
 	}
 	
-	//// tmCustomVaultPlayerList
-	tmCustomVaultPlayerList::tmCustomVaultPlayerList(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid)
-	: tmNetMsg(NetMsgCustomVaultPlayerList, plNetAck | plNetX | plNetVersion | plNetUID | plNetSid, u)
+	//// tmVaultPlayerList
+	/** Sending to other server */
+	tmVaultPlayerList::tmVaultPlayerList(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid)
+	: tmNetMsg(NetMsgVaultPlayerList, plNetAck | plNetX | plNetVersion | plNetUID | plNetSid, u)
 	{
 		this->x = x;
 		this->sid = sid;
 		memcpy(this->uid, uid, 16);
-		numberPlayers = 0;
 	}
 	
-	void tmCustomVaultPlayerList::store(tBBuf &t)
+	/** Sending to client */
+	tmVaultPlayerList::tmVaultPlayerList(tNetSession *u, const tmVaultPlayerList &playerList, const tString &url)
+	: tmNetMsg(NetMsgVaultPlayerList, plNetAck | plNetX | plNetKi, u), avatars(playerList.avatars), url(url)
+	{
+		this->x = playerList.x;
+		ki = 0; // we're not yet logged in, so no KI can be set
+	}
+	
+	void tmVaultPlayerList::tAvatar::store(tBBuf& t)
+	{
+		ki = t.get32();
+		t.get(name);
+		flags = t.get8();
+	}
+	
+	void tmVaultPlayerList::store(tBBuf& t)
 	{
 		tmNetMsg::store(t);
-		if (!hasFlags(plNetX | plNetUID | plNetSid)) throw txProtocolError(_WHERE("X, UID or Sid flag missing"));
-	
-		numberPlayers = t.get16();
-		players.clear();
-		size_t remaining = t.remaining();
-		players.write(t.readAll(), remaining); // the rest is the data about the players
+		int count = t.get16();
+		avatars.clear();
+		avatars.reserve(count);
+		for (int i = 0; i < count; ++i)
+			t.get(*avatars.insert(avatars.end(), tAvatar())); // first insert, then read
+		t.get(url);
 	}
 	
-	void tmCustomVaultPlayerList::stream(tBBuf &t) const
+	void tmVaultPlayerList::tAvatar::stream(tBBuf& t) const
+	{
+		t.put32(ki);
+		t.put(name);
+		t.put8(flags);
+	}
+	
+	void tmVaultPlayerList::stream(tBBuf &t) const
 	{
 		tmNetMsg::stream(t);
-		t.put16(numberPlayers);
-		t.put(players);
+		t.put16(avatars.size());
+		for (tAvatarList::const_iterator it = avatars.begin(); it != avatars.end(); ++it)
+			t.put(*it);
+		t.put(url);
 	}
 	
-	tString tmCustomVaultPlayerList::additionalFields(tString dbg) const
+	tString tmVaultPlayerList::additionalFields(tString dbg) const
 	{
 		dbg.nl();
-		dbg.printf(" number of players: %d", numberPlayers);
+		dbg.printf(" number of avatars: %d, URL: %s", avatars.size(), url.c_str());
 		return dbg;
 	}
 	

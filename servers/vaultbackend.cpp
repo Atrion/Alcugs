@@ -194,10 +194,10 @@ namespace alc {
 		net->send(tmVault(u, ki, x, msg.task, &msg));
 	}
 	
-	void tVaultBackend::sendPlayerList(tmCustomVaultAskPlayerList &askPlayerList)
+	void tVaultBackend::sendPlayerList(tmRequestMyVaultPlayerList &askPlayerList)
 	{
-		tmCustomVaultPlayerList list(askPlayerList.getSession(), askPlayerList.x, askPlayerList.sid, askPlayerList.uid);
-		list.numberPlayers = vaultDB->getPlayerList(askPlayerList.uid, &list.players);
+		tmVaultPlayerList list(askPlayerList.getSession(), askPlayerList.x, askPlayerList.sid, askPlayerList.uid);
+		vaultDB->getPlayerList(askPlayerList.uid, &list);
 		net->send(list);
 	}
 	

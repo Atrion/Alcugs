@@ -91,11 +91,10 @@ namespace alc {
 				tmRequestMyVaultPlayerList requestList(u, msg);
 				
 				// forward it to the vault server
-				tmCustomVaultAskPlayerList askList(*vaultServer, requestList.x, u->getSid(), u->uid);
-				send(askList);
+				send(tmRequestMyVaultPlayerList(*vaultServer, requestList.x, u->getSid(), u->uid));
 				return 1;
 			}
-			case NetMsgCustomVaultPlayerList:
+			case NetMsgVaultPlayerList:
 			{
 				if (u != *vaultServer) {
 					err->log("ERR: %s sent a NetMsgCustomVaultPlayerList but is not the vault server. I\'ll kick him.\n", u->str().c_str());
@@ -103,7 +102,7 @@ namespace alc {
 				}
 				
 				// get the packet
-				tmCustomVaultPlayerList playerList(u, msg);
+				tmVaultPlayerList playerList(u, msg);
 				
 				// find the client's session
 				tNetSessionRef client = sessionBySid(playerList.sid);
@@ -114,8 +113,7 @@ namespace alc {
 				}
 				
 				// forward player list to client
-				tmVaultPlayerList playerListClient(*client, playerList.x, playerList.numberPlayers, playerList.players, website);
-				send(playerListClient);
+				send(tmVaultPlayerList(*client, playerList, website));
 				
 				return 1;
 			}

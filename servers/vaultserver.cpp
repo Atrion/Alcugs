@@ -82,9 +82,9 @@ namespace alc {
 		if (ret != 0) return ret; // cancel if it was processed, otherwise it's our turn
 		
 		switch(msg->cmd) {
-			case NetMsgCustomVaultAskPlayerList:
+			case NetMsgRequestMyVaultPlayerList:
 			{
-				tmCustomVaultAskPlayerList askPlayerList(u, msg);
+				tmRequestMyVaultPlayerList askPlayerList(u, msg);
 				
 				vaultBackend.sendPlayerList(askPlayerList);
 				
