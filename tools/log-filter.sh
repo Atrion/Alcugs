@@ -1,9 +1,9 @@
 #!/bin/bash
+set -e
 
 # called with the parameter "errors", this script shows the full error log
 # called with "warnings", it also shows warnings (and errors) from other logfiles
 # called with "problems", it also shows the output of both "warnings" and "errors"
-# called with "infos", it shows everything marked as information
 # The 2nd parameter can be "rec" or "recursive" to tell the script to search recursively in subdirectories (useful for game server logs)
 
 catfiles(){
@@ -51,13 +51,11 @@ doaction(){
 			catfiles "error"
 		;;
 		warning|warnings)
-			logfilter "warn|[^a-z]err|unx|unexpect|fatal" | grep -v " INF: " # remove INF lines like "Dropped unexpected packet"
-		;;
-		info|infos)
-			logfilter "[^e]\sinf"
+			logfilter "warn|err|unx|unexp|fatal" | grep -v " INF: " # remove INF lines like "Dropped unexpected packet"
 		;;
 		*)
-			echo "Usage: log-filter.sh {errors|warnings|problems|infos}"
+			echo "Usage: log-filter.sh {errors|warnings|problems}"
+			exit 1
 		;;
 	esac
 }

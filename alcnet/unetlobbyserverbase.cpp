@@ -147,7 +147,7 @@ namespace alc {
 		// if it was one of our servers, go down - those servers hold a state that got lost, all players have to leave anyway
 		if (*authServer == u || *trackingServer == u || *vaultServer == u) {
 			if (isRunning()) {
-				log->log("ERR: I lost the connection to the another server, so I will go down\n");
+				err->log("ERR: I lost the connection to the another server, so I will go down\n");
 				/* The game server should go down when it looses the connection to tracking. This way, you can easily
 				shut down all game servers. In addition, it won't get any new peers anyway without the tracking server */
 				stop();
@@ -220,8 +220,8 @@ namespace alc {
 			//// messages regarding authentication
 			case NetMsgAuthenticateHello:
 			{
-				if (!u->name.isEmpty() || u->isUruClient()) { // this is impossible
-					err->log("ERR: %s player is already being authend and sent another AuthenticateHello, ignoring\n", u->str().c_str());
+				if (!u->name.isEmpty() || u->isUruClient()) { // most likely a re-send (this is a non-acked message)
+					log->log("WARN: %s player is already being authend and sent another AuthenticateHello, ignoring\n", u->str().c_str());
 					return 2; // ignore, leave it unparsed
 				}
 				
@@ -269,8 +269,8 @@ namespace alc {
 			}
 			case NetMsgAuthenticateResponse:
 			{
-				if (u->name.isEmpty() || u->isUruClient()) { // this is impossible
-					err->log("ERR: %s player sent an AuthenticateResponse and he is already being authend or he didn\'t yet send an AuthenticateHello, ignoring\n", u->str().c_str());
+				if (u->name.isEmpty() || u->isUruClient()) { // resend?
+					log->log("WARN: %s player sent an AuthenticateResponse and he is already being authend or he didn\'t yet send an AuthenticateHello, ignoring\n", u->str().c_str());
 					return 2; // ignore, leave it unparsed
 				}
 				
