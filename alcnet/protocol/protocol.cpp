@@ -333,34 +333,35 @@ size_t tUnetUruMsg::hSize() {
 }
 void tUnetUruMsg::htmlDump(tLog * log, bool outgoing, tNetSession *u) {
 	if (!log->doesPrint()) return;
-	log->stamp();
+	log->checkRotate(250);
+	log->print(tTime::now().str());
 
 	switch(bhflags) {
 		case UNetAckReply: //0x80
 		case UNetAckReply | UNetExt:
-			log->print("<font color=red>");
+			log->print(": <font color=red>");
 			break;
 		case UNetNegotiation | UNetAckReq: //0x42
 		case UNetNegotiation | UNetAckReq | UNetExt:
-			log->print("<font color=green>");
+			log->print(": <font color=green>");
 			break;
 		case 0x00: //0x00
 		case UNetExt:
-			log->print("<font color=blue>");
+			log->print(": <font color=blue>");
 			break;
 		case UNetAckReq: //0x02
 		case UNetAckReq | UNetExt:
-			log->print("<font color=black>");
+			log->print(": <font color=black>");
 			break;
 		default:
-			log->print("<font color=pink>");
+			log->print(": <font color=pink>");
 			break;
 	}
 
 	if(!outgoing) {
-		log->print("<b> me &lt;- "); // incoming
+		log->print("<b>me &lt;- "); // incoming
 	} else {
-		log->print(" me -&gt; ");
+		log->print("me -&gt; ");
 	}
 	log->print("%i {%i,%i (%i) %i,%i} ",pn,sn(),fr(),frt,psn(),pfr());
 
@@ -389,20 +390,20 @@ void tUnetUruMsg::htmlDump(tLog * log, bool outgoing, tNetSession *u) {
 			break;
 	}
 
-	log->print("</font>");
+	log->print("</font>: ");
 	
 	if (fr() == 0) {
+		data.rewind(); // in case we are outgoing, we might not be rewinded
 		switch (bhflags) {
 			case 0x00: //0x00
 			case UNetExt:
 			case UNetAckReq: //0x02
 			case UNetAckReq | UNetExt:
-				log->print(": %s",alcUnetGetMsgCode(data.get16()));
+				log->print("%s",alcUnetGetMsgCode(data.get16()));
 				break;
 			case UNetAckReply: //0x80
 			case UNetAckReply | UNetExt:
 			{
-				log->print(": ");
 				tmNetAck ack(u, this);
 				for (tmNetAck::tAckList::iterator it = ack.acks.begin(); it != ack.acks.end(); ++it) {
 					if (it != ack.acks.begin()) log->print("| ");
