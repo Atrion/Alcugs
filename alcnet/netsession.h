@@ -77,7 +77,7 @@ public:
 	bool isUruClient(void) { tReadLock lock(prvDataMutex); return authenticated; } //!< thread-safe
 	bool isClient(void) { tReadLock lock(prvDataMutex); return client; } //!< thread-safe
 	bool isTerminated(void) { tReadLock lock(prvDataMutex); return state >= Terminating; } //!< thread-safe
-	bool anythingToSend(void) { tMutexLock lock(sendMutex); return !ackq.empty() || !sndq.empty(); } //!< thread-safe
+	bool anythingToSend(void) { tMutexLock lock(sendMutex); return acksToSend() || !sndq.empty(); } //!< thread-safe
 	bool useUpdatedProtocol(void) { tReadLock lock(prvDataMutex); return upgradedProtocol; } //!< thread-safe
 	tLog *getLog(void);
 	
@@ -92,7 +92,12 @@ private:
 	void rawsend(tUnetUruMsg *msg);
 
 	void createAckReply(const tUnetUruMsg* msg);
+#ifdef ENABLE_ACKCACHE
 	tNetTime ackSend(); //!< return the maximum wait time before we have to check again
+	bool acksToSend() { return !ackq.empty(); }
+#else
+	bool acksToSend() { return false; }
+#endif
 	void ackCheck(tUnetUruMsg &msg);
 	
 	void acceptMessage(tUnetUruMsg *msg);
@@ -176,8 +181,10 @@ private:
 	tNetTime msg_timeout; //!< time after which a message is re-sent
 	
 	// queues
+#ifdef ENABLE_ACKCACHE
 	typedef std::list<tUnetAck> tAckList;
 	tAckList ackq; //!< ack queue, saves acks to be packed - acks do not intersect here, and are sorted by the SNs they ack
+#endif
 	tNetQeue<tUnetUruMsg> sndq; //!< outgoing message queue, protected by send mutex
 	tNetQeue<tUnetUruMsg> rcvq; //!< received, but not yet accepted messages
 	
