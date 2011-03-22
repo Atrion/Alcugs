@@ -98,10 +98,12 @@ public:
 	void unsetFlags(uint16_t flags) { this->flags &= ~flags; }
 	uint16_t getFlags() { return this->flags; }
 	void setBindPort(uint16_t lport) { bindport=lport; } //lport in host order
+	uint16_t getBindPort(void) { return bindport; }
 	void setBindAddress(const tString & lhost) {
 		if(lhost.isEmpty()) bindaddr = "0.0.0.0";
 		else bindaddr = lhost;
 	}
+	tString getBindAddress(void) { return bindaddr; }
 	void send(const tmNetMsg& m, tNetTime delay = 0) { m.getSession()->send(m, delay); } //!< delay is in secs - may be called in worker thread
 
 protected:

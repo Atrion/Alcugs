@@ -39,7 +39,7 @@ namespace alc {
 	class tUnetTrackingServer : public tUnetServerBase {
 		friend class tTrackingBackend; // it needs access to the server manager
 	public:
-		tUnetTrackingServer(void) : tUnetServerBase(KTracking), trackingBackend(this, bindaddr, bindport) {}
+		tUnetTrackingServer(void) : tUnetServerBase(KTracking), trackingBackend(this) {}
 	protected:
 		virtual void onConnectionClosing(tNetSession * u, uint8_t /*reason*/) {
 			trackingBackend.removeServer(u);
