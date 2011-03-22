@@ -242,7 +242,7 @@ void tNetSession::send(const tmBase &msg, tNetTime delay) {
 			// this is important, or the first ack might be sent before the first nego!
 			if(pmsg->urgent) {
 				// search for the first non-urgent message
-				for (tPointerList<tUnetUruMsg>::iterator it = sndq.begin(); it != sndq.end(); ++it) {
+				for (tNetQeue<tUnetUruMsg>::iterator it = sndq.begin(); it != sndq.end(); ++it) {
 					if (!(*it)->urgent) {
 						sndq.insert(it, pmsg);
 						pmsg = NULL;
@@ -603,7 +603,7 @@ void tNetSession::queueReceivedMessage(tUnetUruMsg *msg)
 {
 	net->log->log("%s Queuing %d.%d for future use (can not yet accept it - last ack: %d.%d, expected: %d.%d)\n", str().c_str(), msg->sn(), msg->fr(), msg->psn(), msg->pfr(), clientMsg.psn(), clientMsg.pfr());
 	// the queue is sorted ascending
-	for (tPointerList<tUnetUruMsg>::iterator it = rcvq.begin(); it != rcvq.end(); ++it) {
+	for (tNetQeue<tUnetUruMsg>::iterator it = rcvq.begin(); it != rcvq.end(); ++it) {
 		if ((*it)->csn > msg->csn) { // we have to put it before the current one! (it's the first one to be bigger)
 			rcvq.insert(it, msg);
 			return;
@@ -619,7 +619,7 @@ void tNetSession::queueReceivedMessage(tUnetUruMsg *msg)
 /** Checks if messages saved by queueReceivedMessage can now be used */
 void tNetSession::checkQueuedMessages(void)
 {
-	tPointerList<tUnetUruMsg>::iterator it = rcvq.begin();
+	tNetQeue<tUnetUruMsg>::iterator it = rcvq.begin();
 	while (it != rcvq.end()) {
 		if ((*it)->cps < clientMsg.cps) it = rcvq.eraseAndDelete(it); // old packet
 		else if ((*it)->cps == clientMsg.cps) {
@@ -687,7 +687,7 @@ void tNetSession::ackCheck(tUnetUruMsg &t) {
 		A1 = it->A;
 		A3 = it->B;
 		//well, do it
-		tPointerList<tUnetUruMsg>::iterator jt = sndq.begin();
+		tNetQeue<tUnetUruMsg>::iterator jt = sndq.begin();
 		while (jt != sndq.end()) {
 			tUnetUruMsg *msg = *jt;
 			A2=msg->csn;
@@ -808,7 +808,7 @@ tNetTimeBoolPair tNetSession::processSendQueues()
 		const unsigned int resendLimit = (state != Connected) ? 3 : 10;
 		
 		// urgent packets
-		tPointerList<tUnetUruMsg>::iterator it = sndq.begin();
+		tNetQeue<tUnetUruMsg>::iterator it = sndq.begin();
 		bool urgentSend = true; // urgent messages are founda t the beginning of the queue, special mode for them
 		while (it != sndq.end()) {
 			tUnetUruMsg *curmsg = *it;

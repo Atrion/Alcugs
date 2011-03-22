@@ -29,7 +29,7 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_NETSESSION_H_ID "$Id$"
 
-#include "netmsgq.h"
+#include "netqueue.h"
 #include "protocol/protocol.h"
 #include <alctypes.h>
 
@@ -178,8 +178,8 @@ private:
 	// queues
 	typedef std::list<tUnetAck> tAckList;
 	tAckList ackq; //!< ack queue, saves acks to be packed - acks do not intersect here, and are sorted by the SNs they ack
-	tPointerList<tUnetUruMsg> sndq; //!< outgoing message queue, protected by send mutex
-	tPointerList<tUnetUruMsg> rcvq; //!< received, but not yet accepted messages
+	tNetQeue<tUnetUruMsg> sndq; //!< outgoing message queue, protected by send mutex
+	tNetQeue<tUnetUruMsg> rcvq; //!< received, but not yet accepted messages
 	
 	// other status variables
 	tConnectionState state; //!< current connection state, protected by prvDataMutex

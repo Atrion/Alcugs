@@ -191,7 +191,7 @@ protected:
 	#endif
 	
 	
-	tPointerList<tNetEvent> events; //!< event queue - get below mutex before accessing it!
+	tNetQeue<tNetEvent> events; //!< event queue - get below mutex before accessing it!
 	tMutex eventsMutex;
 	bool workerWaiting; //!< signals whether a worker is waiting for an event using below condition, protected by above mutex
 	pthread_cond_t eventAddedCond; //!< condition used to signal the worker thread that it can wake up, protected by above mutex
