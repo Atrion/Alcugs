@@ -36,7 +36,6 @@
 
 #include "unetmain.h"
 #include "netexception.h"
-#include "netmsgq.h"
 #include "protocol/umsgbasic.h"
 
 #include <sys/socket.h>

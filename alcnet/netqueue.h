@@ -37,10 +37,10 @@
 
 namespace alc {
 
-template <typename T> class tPointerList : public std::list<T *>
+template <typename T> class tNetQeue : public std::list<T *>
 {
 public:
-	~tPointerList() { clear(); }
+	~tNetQeue() { clear(); }
 	void clear(void) {
 		for (typename std::list<T *>::iterator it = std::list<T *>::begin(); it != std::list<T *>::end(); ++it) {
 			delete *it;
