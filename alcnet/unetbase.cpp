@@ -73,7 +73,6 @@ tUnetBase::~tUnetBase() {
 
 void tUnetBase::applyConfig() {
 	configured = true;
-	openLogfiles(); // (re-)open basic logfiles
 	// re-load configuration
 	tString var;
 	tConfig * cfg;
@@ -184,6 +183,8 @@ void tUnetBase::applyConfig() {
 		quota_check_interval=var.asInt();
 	}
 	#endif
+	// (re-)open basic logfiles
+	openLogfiles();
 	// forward to sub-classes
 	onApplyConfig();
 }

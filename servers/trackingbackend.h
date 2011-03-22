@@ -74,7 +74,7 @@ namespace alc {
 	
 	class tTrackingBackend {
 	public:
-		tTrackingBackend(tUnetTrackingServer *net, const tString &host, uint16_t port);
+		tTrackingBackend(tUnetTrackingServer *net);
 		~tTrackingBackend(void);
 		void applyConfig(void);
 		
@@ -106,8 +106,6 @@ namespace alc {
 		tPlayerList players;
 		tUnetTrackingServer *net;
 		tLog log;
-		tString host;
-		uint16_t port;
 		uint8_t fakeLobbyGuid[8]; //!< saves the GUID for the fake lobby (for UruVision)
 		
 		bool statusFileUpdate;

@@ -57,7 +57,6 @@ namespace alc {
 	tTrackingData::tTrackingData()
 	{
 		isLobby = false;
-		parent = NULL;
 		portStart = portEnd = 0;
 	}
 	
@@ -67,7 +66,6 @@ namespace alc {
 		this->ki = ki;
 		this->sid = 0;
 		flag = status = 0;
-		u = NULL;
 		waiting = false;
 	}
 	
@@ -84,11 +82,8 @@ namespace alc {
 	}
 	
 	//// tTrackingBackend
-	tTrackingBackend::tTrackingBackend(tUnetTrackingServer *net, const tString &host, uint16_t port) : host(host)
+	tTrackingBackend::tTrackingBackend(tUnetTrackingServer *net) : net(net)
 	{
-		// the smgr is created during startOp(), so it can't be set in the constructor or in applyConfig
-		this->net = net;
-		this->port = port;
 		lastUpdate = 0;
 		generateFakeGuid(fakeLobbyGuid);
 	}
@@ -445,14 +440,14 @@ namespace alc {
 				if (!subData) throw txUnet(_WHERE("One child of the lobby I'm just deleting is not a game/lobby server"));
 				subData->parent = NULL;
 			}
-			data->children.clear();
 		}
 		else if (*data->parent) {
 			tTrackingData *parentData = dynamic_cast<tTrackingData *>(data->parent->data);
 			if (!parentData) throw txUnet(_WHERE("The parent of the game server I'm just deleting is not a game/lobby server"));
 			parentData->children.remove(tNetSessionRef(game));
-			data->parent = NULL;
 		}
+		delete game->data;
+		game->data = NULL;
 	}
 	
 	void tTrackingBackend::forwardMessage(tmCustomDirectedFwd &directedFwd)
@@ -610,8 +605,8 @@ namespace alc {
 					fprintf(f, "<ServerInfo>\n");
 						fprintf(f, "<Name>Tracking</Name>\n");
 						fprintf(f, "<Type>7</Type>\n");
-						fprintf(f, "<Addr>%s</Addr>\n", host.c_str());
-						fprintf(f, "<Port>%i</Port>\n", port);
+						fprintf(f, "<Addr>%s</Addr>\n", net->getBindAddress().c_str());
+						fprintf(f, "<Port>%i</Port>\n", net->getBindPort());
 						fprintf(f, "<Guid>0000000000000000</Guid>\n");
 					fprintf(f, "</ServerInfo>\n");
 				fprintf(f, "</Server>\n");
