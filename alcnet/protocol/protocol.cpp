@@ -392,35 +392,36 @@ void tUnetUruMsg::htmlDump(tLog * log, bool outgoing, tNetSession *u) {
 
 	log->print("</font>: ");
 	
-	if (fr() == 0) {
-		data.rewind(); // in case we are outgoing, we might not be rewinded
-		switch (bhflags) {
-			case 0x00: //0x00
-			case UNetExt:
-			case UNetAckReq: //0x02
-			case UNetAckReq | UNetExt:
+	data.rewind(); // in case we are outgoing, we might not be rewinded
+	switch (bhflags) {
+		case 0x00: //0x00
+		case UNetExt:
+		case UNetAckReq: //0x02
+		case UNetAckReq | UNetExt:
+			if (fr() == 0)
 				log->print("%s",alcUnetGetMsgCode(data.get16()));
-				break;
-			case UNetAckReply: //0x80
-			case UNetAckReply | UNetExt:
-			{
-				tmNetAck ack(u, this);
-				for (tmNetAck::tAckList::iterator it = ack.acks.begin(); it != ack.acks.end(); ++it) {
-					if (it != ack.acks.begin()) log->print("| ");
-					log->print("%i,%i %i,%i", it->snA(), it->frA(), it->snB(), it->frB());
-				}
-				break;
+			else
+				log->print("Fragment...");
+			break;
+		case UNetAckReply: //0x80
+		case UNetAckReply | UNetExt:
+		{
+			tmNetAck ack(u, this);
+			for (tmNetAck::tAckList::iterator it = ack.acks.begin(); it != ack.acks.end(); ++it) {
+				if (it != ack.acks.begin()) log->print("| ");
+				log->print("%i,%i %i,%i", it->snA(), it->frA(), it->snB(), it->frB());
 			}
-			case UNetNegotiation | UNetAckReq: //0x42
-			case UNetNegotiation | UNetAckReq | UNetExt:
-			{
-				tmNetClientComm nego(u, this);
-				log->print("Bandwidth: %i bps, time: %s",nego.bandwidth,nego.timestamp.str().c_str());
-				break;
-			}
+			break;
 		}
-		data.rewind();
+		case UNetNegotiation | UNetAckReq: //0x42
+		case UNetNegotiation | UNetAckReq | UNetExt:
+		{
+			tmNetClientComm nego(u, this);
+			log->print("Bandwidth: %i bps, time: %s",nego.bandwidth,nego.timestamp.str().c_str());
+			break;
+		}
 	}
+	data.rewind();
 
 	log->print("<br>\n");
 	log->flush();
