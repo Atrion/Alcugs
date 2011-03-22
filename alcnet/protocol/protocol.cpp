@@ -639,10 +639,7 @@ void tmNetMsg::copyProps(tmNetMsg &t) {
 tString tmNetMsg::str() const {
 	tString dbg = alcUnetGetMsgCode(cmd);
 #ifdef ENABLE_MSGLOG
-	dbg.printf(" %04X %08X",cmd,flags);
-#endif
-#ifdef ENABLE_MSGLOG
-	dbg.printf("\n Flags:");
+	dbg.printf(" %04X %08X\n Flags:",cmd,flags);
 	if(flags & plNetTimestamp) {
 		dbg.writeStr(" timestamp ");
 		if (timestamp.isNull()) // the timestamp will be set on sending, so we can't print it now
