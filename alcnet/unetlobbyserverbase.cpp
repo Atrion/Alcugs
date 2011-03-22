@@ -487,7 +487,7 @@ namespace alc {
 				
 				// get the data out of the packet
 				tmCustomFindServer findServer(u, msg);
-			
+				
 				// let's ask the tracking server
 				send(tmCustomFindServer(*trackingServer, findServer));
 				

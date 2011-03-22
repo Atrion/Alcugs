@@ -14,7 +14,8 @@ set(CMAKE_CXX_FLAGS_DEBUG "-Werror ${CMAKE_CXX_FLAGS_DEBUG}")
 
 # options
 option(ENABLE_MSGLOG "Enables detailed logs about incoming and outgoing messages (default ON)" ON)
-option(ENABLE_NETDEBUG "Enables noise and latency debuging tests (default NO)" OFF)
+option(ENABLE_NETDEBUG "Enables noise and latency debuging tests (default OFF)" OFF)
+option(ENABLE_ACKCACHE "Enables caching and collecting acks (default ON)" ON)
 
 
 # alcbase

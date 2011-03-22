@@ -107,8 +107,10 @@ void tNetSession::resetMsgCounters(void) {
 	serverMsg.sn=0;
 	serverMsg.cps=0;
 	// empty queues
-	sndq.clear();
+#ifdef ENABLE_ACKCACHE
 	ackq.clear();
+#endif
+	sndq.clear();
 	rcvq.clear();
 	delete rcv;
 	rcv = NULL;
@@ -639,9 +641,9 @@ void tNetSession::createAckReply(const tUnetUruMsg *msg) {
 	A=msg->csn;
 	B=msg->cps;
 	assert(A > B);
-#if 0
+#ifndef ENABLE_ACKCACHE
 	// send acks directly
-	send(tmNetAck(this, new tUnetAck(A, B)));
+	send(tmNetAck(this, tUnetAck(A, B)));
 #else
 	// retard and collect acks
 	// we must delay either none or all messages, otherwise the rtt will vary too much
@@ -654,9 +656,8 @@ void tNetSession::createAckReply(const tUnetUruMsg *msg) {
 
 	//Plasma like ack's (acks are retarded, and packed)
 	tAckList::iterator it = ackq.begin();
-	while(it != ackq.end()) {
-
-		if(A>=it->B && B<=it->A) { // the two acks intersect, merge them
+	while (it != ackq.end()) {
+		if (A>=it->B && B<=it->A) { // the two acks intersect, merge them
 			// calculate new bounds and timestamp
 			if (it->A > A) A = it->A;
 			if (it->B < B) B = it->B;
@@ -666,12 +667,14 @@ void tNetSession::createAckReply(const tUnetUruMsg *msg) {
 			it = ackq.begin(); // and restart
 			DBG(9, "merged two acks, restarting ack search\n");
 			continue;
-		} else if(B>it->A) { // we are completely after this ack
+		} else if (B>it->A) { // we are completely after this ack
 			++it;
 			continue; // go on searching and looking
-		} else if(A<it->B) { // we are completely before this ack
+		} else if (A<it->B) { // we are completely before this ack
 			ackq.insert(it, tUnetAck(A, B, timestamp)); // insert ourselves in the list at the right position, and be done
 			return; // done!
+		} else {
+			throw txBase(_WHERE("The impossible happened"));
 		}
 	}
 	ackq.push_back(tUnetAck(A, B, timestamp));
@@ -750,12 +753,13 @@ bool tNetSession::parseBasicMsg(tUnetMsg * msg)
 	return false;
 }
 
+#ifdef ENABLE_ACKCACHE
 /** puts acks from the ackq in the sndq */
 tNetTime tNetSession::ackSend() {
-	tNetTime timeout = std::numeric_limits<double>::max(); // -1 is biggest possible value
+	tNetTime timeout = std::numeric_limits<double>::max();
 	
 	tAckList::iterator it = ackq.begin();
-	while(it != ackq.end()) {
+	while (it != ackq.end()) {
 		if (!net->timeOverdue(it->timestamp)) {
 			timeout = std::min(timeout, net->remainingTimeTill(it->timestamp)); // come back when we want to process this ack
 			++it;
@@ -771,6 +775,7 @@ tNetTime tNetSession::ackSend() {
 	}
 	return timeout;
 }
+#endif
 
 /** Send, and re-send messages */
 tNetTimeBoolPair tNetSession::processSendQueues()
@@ -782,10 +787,14 @@ tNetTimeBoolPair tNetSession::processSendQueues()
 		send(tmAlive(this, ki));
 	}
 	
+#ifdef ENABLE_ACKCACHE
 	tNetTime timeout = ackSend(); //generate ack messages (i.e. put them from the ackq to the sndq)
+#else
+	tNetTime timeout = std::numeric_limits<double>::max();
+#endif
 	
 	tMutexLock sendLock(sendMutex);
-	if (!isUruClient() && sndq.empty() && ackq.empty()) { // send and ack queue empty (the Uru client accepts a re-nego but will not decrease the numbers)
+	if (!isUruClient() && sndq.empty() && !acksToSend()) { // send and ack queue empty (the Uru client accepts a re-nego but will not decrease the numbers)
 		// fix the problem that happens every 15-30 days of server uptime - but only if sndq is empty, or we will loose packets
 		if (serverMsg.sn >= (1 << 22) || clientMsg.psn() >= (1 << 22)) { // = 2^22
 			net->log->log("%s WARN: Congratulations! You have reached the maxium allowed sequence number. "
@@ -799,7 +808,7 @@ tNetTimeBoolPair tNetSession::processSendQueues()
 		}
 	}
 	if (!sndq.empty()) {
-		// cabal control (don't send too muczh at once!)
+		// cabal control (don't send too much at once!)
 		unsigned int cur_size=0;
 		// control for auto-drop of old non-acked messages
 		const unsigned int minTH=15;
@@ -809,7 +818,7 @@ tNetTimeBoolPair tNetSession::processSendQueues()
 		
 		// urgent packets
 		tNetQeue<tUnetUruMsg>::iterator it = sndq.begin();
-		bool urgentSend = true; // urgent messages are founda t the beginning of the queue, special mode for them
+		bool urgentSend = true; // urgent messages are found at the beginning of the queue, special mode for them
 		while (it != sndq.end()) {
 			tUnetUruMsg *curmsg = *it;
 			if (urgentSend && !curmsg->urgent) { // fist non-urgent messages, check next_msg_time
@@ -892,7 +901,7 @@ tNetTimeBoolPair tNetSession::processSendQueues()
 			if (it != sndq.end()) timeout = std::min(timeout, net->remainingTimeTill(next_msg_time)); // come back when we want to send the next message
 		}
 	}
-	if (sndq.empty() && ackq.empty() && state == Leaving) { // we are totaly idle and got nothing to do
+	if (sndq.empty() && !acksToSend() && state == Leaving) { // we are totaly idle and got nothing to do
 		DBG(5, "Session isleft and queues are empty, waiting only a little longer\n");
 		prvDataMutex.unlock();
 		prvDataMutex.write(); // will be unlocked by destructor of the prvLock
