@@ -125,11 +125,11 @@ protected:
 	tNetSessionRef sessionBySid(size_t sid) //!< (thread-safe)
 	{
 		tReadLock lock(smgrMutex);
-		return smgr->get(sid);
+		return tNetSessionRef(smgr->get(sid));
 	}
 	tNetSessionRef sessionByKi(uint32_t ki) { //!< (thread-safe)
 		tReadLock lock(smgrMutex);
-		return smgr->findByKi(ki);
+		return tNetSessionRef(smgr->findByKi(ki));
 	}
 	bool sessionListEmpty() { //!< (thread-safe)
 		tReadLock lock(smgrMutex);

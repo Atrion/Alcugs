@@ -322,7 +322,7 @@ tNetSessionRef tUnet::netConnect(const char * hostname,uint16_t port,uint8_t val
 	uint32_t ip = *reinterpret_cast<uint32_t *>(host->h_addr_list[0]);
 	
 	tWriteLock lock(smgrMutex);
-	return smgr->searchAndCreate(ip, htons(port), /*client*/false, validation);
+	return tNetSessionRef(smgr->searchAndCreate(ip, htons(port), /*client*/false, validation));
 }
 
 void tUnet::removeConnection(tNetSession *u)

@@ -332,7 +332,7 @@ namespace alc {
 				}
 			}
 			if (lobby) { // we found the server's lobby
-				static_cast<tTrackingData *>(lobby->data)->children.push_back(game); // add the game server to the list of children of that lobby
+				static_cast<tTrackingData *>(lobby->data)->children.push_back(tNetSessionRef(game)); // add the game server to the list of children of that lobby
 				data->parent = lobby;
 			}
 			else

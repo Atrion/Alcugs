@@ -40,7 +40,7 @@ class tNetSessionRef {
 private:
 	tNetSession *u;
 public:
-	tNetSessionRef(tNetSession *u) : u(u) {
+	explicit tNetSessionRef(tNetSession *u) : u(u) {
 		if (u) u->incRefs();
 	}
 	tNetSessionRef() : u(NULL) {}

@@ -192,11 +192,11 @@ namespace alc {
 				break;
 			default:
 				err->log("ERR: Connection to unknown service %d requested\n", dst);
-				return NULL;
+				return tNetSessionRef();
 		}
 		if (host.isEmpty() || port.isEmpty()) {
 			err->log("ERR: Hostname or port for service %d (%s) is missing\n", dst, alcUnetGetDestination(dst));
-			return NULL;
+			return tNetSessionRef();
 		}
 		
 		tNetSessionRef u = netConnect(host.c_str(), port.asInt(), 3 /* Alcugs upgraded protocol */);
