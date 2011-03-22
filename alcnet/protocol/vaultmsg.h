@@ -30,6 +30,7 @@
 #define __U_VAULTMSG_H_H_ID "$Id$"
 
 #include "protocol.h"
+#include "netsession.h"
 
 namespace alc {
 

@@ -30,7 +30,6 @@
 #define __U_UNET_H_ID "$Id$"
 
 #include "netsessionmgr.h"
-#include "netmsgq.h"
 #include "protocol/protocol.h"
 
 #include <netinet/in.h>
