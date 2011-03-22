@@ -34,7 +34,6 @@
 #include <alcdefs.h>
 #include "unet.h"
 
-#include "netmsgq.h"
 #include "netexception.h"
 #include <alcmain.h>
 

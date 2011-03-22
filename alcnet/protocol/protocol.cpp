@@ -331,13 +331,7 @@ size_t tUnetUruMsg::hSize() {
 	if(bhflags & UNetExt) hsize-=8;
 	return hsize;
 }
-tString tUnetUruMsg::header() {
-	tString result;
-	result.printf("  %i ->%02X<- {%i,%i (%i) %i,%i} - %i bytes",pn,bhflags,sn(),fr(),frt,psn(),pfr(),data.size());
-	return result;
-}
-//flux 0 client -> server, 1 server -> client
-void tUnetUruMsg::htmlDumpHeader(tLog * log,uint8_t flux,uint32_t ip,uint16_t port) const {
+void tUnetUruMsg::htmlDump(tLog * log, bool outgoing, tNetSession *u) {
 	if (!log->doesPrint()) return;
 	log->stamp();
 
@@ -363,44 +357,69 @@ void tUnetUruMsg::htmlDumpHeader(tLog * log,uint8_t flux,uint32_t ip,uint16_t po
 			break;
 	}
 
-	if(flux==0) {
-		log->print("<b> me &lt;- ");
+	if(!outgoing) {
+		log->print("<b> me &lt;- "); // incoming
 	} else {
 		log->print(" me -&gt; ");
 	}
-	log->print("%i %i,%i (%i) %i,%i ",pn,sn(),fr(),frt,psn(),pfr());
+	log->print("%i {%i,%i (%i) %i,%i} ",pn,sn(),fr(),frt,psn(),pfr());
 
-	if(flux==0) {
-		log->print(" &lt;- %s:%i</b> ",alcGetStrIp(ip).c_str(),ntohs(port));
+	if(!outgoing) {
+		log->print(" &lt;- %s</b> ", u->str().c_str());
 	} else {
-		log->print(" -&gt; %s:%i ",alcGetStrIp(ip).c_str(),ntohs(port));
+		log->print(" -&gt; %s ", u->str().c_str());
 	}
 
 	switch(bhflags) {
 		case UNetAckReply: //0x80
-			log->print("ack");
-			break;
 		case UNetAckReply | UNetExt:
-			log->print("aack");
+			log->print("Ack");
 			break;
 		case UNetNegotiation | UNetAckReq: //0x42
 		case UNetNegotiation | UNetAckReq | UNetExt:
-			log->print("Negotiation ");
+			log->print("Negotiation");
 			break;
 		case 0x00: //0x00
 		case UNetExt:
-			log->print("plNetMsg0 ");
+			log->print("plNetMsg (non-acked)");
 			break;
 		case UNetAckReq: //0x02
 		case UNetAckReq | UNetExt:
-			log->print("plNetMsg1 ");
-			break;
-		default:
-			log->print("ERROR! ");
+			log->print("plNetMsg (acked)");
 			break;
 	}
 
 	log->print("</font>");
+	
+	if (fr() == 0) {
+		switch (bhflags) {
+			case 0x00: //0x00
+			case UNetExt:
+			case UNetAckReq: //0x02
+			case UNetAckReq | UNetExt:
+				log->print(": %s",alcUnetGetMsgCode(data.get16()));
+				break;
+			case UNetAckReply: //0x80
+			case UNetAckReply | UNetExt:
+			{
+				log->print(": ");
+				tmNetAck ack(u, this);
+				for (tmNetAck::tAckList::iterator it = ack.acks.begin(); it != ack.acks.end(); ++it) {
+					if (it != ack.acks.begin()) log->print("| ");
+					log->print("%i,%i %i,%i", it->snA(), it->frA(), it->snB(), it->frB());
+				}
+				break;
+			}
+			case UNetNegotiation | UNetAckReq: //0x42
+			case UNetNegotiation | UNetAckReq | UNetExt:
+			{
+				tmNetClientComm nego(u, this);
+				log->print("Bandwidth: %i bps, time: %s",nego.bandwidth,nego.timestamp.str().c_str());
+				break;
+			}
+		}
+		data.rewind();
+	}
 
 	log->print("<br>\n");
 	log->flush();
@@ -419,7 +438,7 @@ void tmNetClientComm::stream(tBBuf &t) const {
 tString tmNetClientComm::str() const {
 	tString str;
 #ifdef ENABLE_MSGLOG
-	str.printf("(Re)Negotation (bandwidth: %i bps time: %s)",bandwidth,timestamp.str().c_str());
+	str.printf("(Re)Negotation (bandwidth: %i bps, time: %s)",bandwidth,timestamp.str().c_str());
 #else
 	str.printf("(Re)Negotatio",u->str());
 #endif
@@ -427,18 +446,10 @@ tString tmNetClientComm::str() const {
 }
 
 // Ack
-tmNetAck::tmNetAck(tNetSession *u, tUnetAck *ack) : tmBase(u)
+tmNetAck::tmNetAck(tNetSession *u, const tUnetAck &ack) : tmBase(u)
 {
 	urgent = true;
 	acks.push_back(ack);
-}
-tmNetAck::~tmNetAck()
-{
-	tAckList::iterator it = acks.begin();
-	while (it != acks.end()) {
-		delete *it;
-		it = acks.erase(it);
-	}
 }
 void tmNetAck::store(tBBuf &t)
 {
@@ -456,7 +467,7 @@ void tmNetAck::store(tBBuf &t)
 		if(!upgraded)
 			if(t.get32()!=0) throw txUnexpectedData(_WHERE("ack unknown data"));
 		if (A <= B) throw txUnexpectedData(_WHERE("ack A value is <= B value: %d <= %d", A, B));
-		acks.push_back(new tUnetAck(A, B));
+		acks.push_back(tUnetAck(A, B));
 	}
 	// no need to check for eof, the loop already does that
 }
@@ -465,10 +476,10 @@ void tmNetAck::stream(tBBuf &t) const
 	bool upgraded = u->useUpdatedProtocol();
 	if (!upgraded) t.put16(0);
 	for (tAckList::const_iterator it = acks.begin(); it != acks.end(); ++it) {
-		t.put32((*it)->A);
+		t.put32(it->A);
 		if(!upgraded)
 			t.put32(0);
-		t.put32((*it)->B);
+		t.put32(it->B);
 		if(!upgraded)
 			t.put32(0);
 	}
@@ -483,7 +494,7 @@ tString tmNetAck::str() const {
 			firstOne = false;
 		else
 			dbg.printf(" |");
-		dbg.printf(" %i,%i %i,%i", (*it)->A >> 8, (*it)->A & 0x000000FF, (*it)->B >> 8, (*it)->B & 0x000000FF);
+		dbg.printf(" %i,%i %i,%i", it->snA(), it->frA(), it->snB(), it->frB());
 	}
 	#endif
 	return dbg;

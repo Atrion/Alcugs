@@ -34,7 +34,6 @@
 #include <alcdefs.h>
 #include "netsession.h"
 
-#include "netmsgq.h"
 #include "unet.h"
 #include "netexception.h"
 #include "protocol/umsgbasic.h"
@@ -176,9 +175,7 @@ void tNetSession::send(const tmBase &msg, tNetTime delay) {
 		net->log->log("%s ERR: Connection already down, will not send a message to it.\n", str().c_str());
 		return;
 	}
-#ifndef ENABLE_MSGDEBUG
 	if (!(flags & UNetAckReply))
-#endif
 		net->log->log("<SND> %s %s\n",str().c_str(),msg.str().c_str());
 	tMBuf buf;
 	size_t csize,psize,hsize,pkt_sz;
@@ -275,10 +272,7 @@ void tNetSession::rawsend(tUnetUruMsg *msg)
 	serverMsg.pn++;
 	msg->pn=serverMsg.pn;
 	
-	#ifdef ENABLE_MSGDEBUG
-	net->log->log("<SND> %s %s \n", str().c_str(), msg->header().c_str());
-	#endif
-	msg->htmlDumpHeader(net->ack,1,ip,port);
+	msg->htmlDump(net->ack,/*outgoing*/true,this);
 
 	//store message into buffer
 	tMBuf * mbuf;
@@ -410,20 +404,16 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 	
 	try {
 		mbuf.get(*msg);
-		#ifdef ENABLE_MSGDEBUG
-		net->log->log("<RCV> %s %s \n", str().c_str(), msg->header().c_str());
-		#endif
-		msg->htmlDumpHeader(net->ack,0,ip,port);
+		//Protocol Upgrade (BEFORE dumping!)
+		if(msg->bhflags & UNetExt) {
+			tWriteLock lock(prvDataMutex);
+			upgradedProtocol = true;
+		}
+		msg->htmlDump(net->ack,/*outgoing*/false,this);
 	} catch(txUnexpectedData &t) {
 		net->err->log("%s Unexpected Data %s\nBacktrace:%s\n",str().c_str(),t.what(),t.backtrace());
 		delete msg;
 		throw txProtocolError(_WHERE("Cannot parse a message"));
-	}
-	
-	//Protocol Upgrade
-	if(msg->bhflags & UNetExt) {
-		tWriteLock lock(prvDataMutex);
-		upgradedProtocol = true;
 	}
 
 	// process negotation (will always require an ack)
@@ -442,7 +432,7 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 			 * "already parsed" since the SN is started from the beginning */
 			if (msg->cps == clientMsg.cps) // messgae has correct SN
 				clientMsg.cps = msg->csn; // accept it
-			send(tmNetAck(this, new tUnetAck(msg->csn, msg->cps))); // ack it
+			send(tmNetAck(this, tUnetAck(msg->csn, msg->cps))); // ack it
 			delete msg; // and be done
 			return;
 		}
@@ -458,7 +448,7 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 			negotiate();
 		}
 		clientMsg.cps = msg->csn; // the nego marks the beginning of a new connection, so accept everything from here on
-		send(tmNetAck(this, new tUnetAck(msg->csn, msg->cps))); // ack it after sending the nego!
+		send(tmNetAck(this, tUnetAck(msg->csn, msg->cps))); // ack it after sending the nego!
 		delete msg;
 		
 		// calculate connection bandwidth
@@ -663,29 +653,28 @@ void tNetSession::createAckReply(const tUnetUruMsg *msg) {
 	DBG(3, "%s Enqueueing new ack, wait time: %f\n",str().c_str(),ackWaitTime);
 
 	//Plasma like ack's (acks are retarded, and packed)
-	tPointerList<tUnetAck>::iterator it = ackq.begin();
+	tAckList::iterator it = ackq.begin();
 	while(it != ackq.end()) {
-		tUnetAck *cack = *it;
 
-		if(A>=cack->B && B<=cack->A) { // the two acks intersect, merge them
+		if(A>=it->B && B<=it->A) { // the two acks intersect, merge them
 			// calculate new bounds and timestamp
-			if (cack->A > A) A = cack->A;
-			if (cack->B < B) B = cack->B;
-			if (cack->timestamp < timestamp) timestamp = cack->timestamp; // use smaller timestamp
+			if (it->A > A) A = it->A;
+			if (it->B < B) B = it->B;
+			if (it->timestamp < timestamp) timestamp = it->timestamp; // use smaller timestamp
 			// remove existing ack and complete merge
-			ackq.eraseAndDelete(it); // remove old ack (we merged it into ours)
+			ackq.erase(it); // remove old ack (we merged it into ours)
 			it = ackq.begin(); // and restart
 			DBG(9, "merged two acks, restarting ack search\n");
 			continue;
-		} else if(B>cack->A) { // we are completely after this ack
+		} else if(B>it->A) { // we are completely after this ack
 			++it;
 			continue; // go on searching and looking
-		} else if(A<cack->B) { // we are completely before this ack
-			ackq.insert(it, new tUnetAck(A, B, timestamp)); // insert ourselves in the list at the right position, and be done
+		} else if(A<it->B) { // we are completely before this ack
+			ackq.insert(it, tUnetAck(A, B, timestamp)); // insert ourselves in the list at the right position, and be done
 			return; // done!
 		}
 	}
-	ackq.push_back(new tUnetAck(A, B, timestamp));
+	ackq.push_back(tUnetAck(A, B, timestamp));
 #endif
 }
 
@@ -693,15 +682,10 @@ void tNetSession::createAckReply(const tUnetUruMsg *msg) {
 void tNetSession::ackCheck(tUnetUruMsg &t) {
 	uint32_t A1,A2,A3;
 	tmNetAck ackMsg(this, &t);
-#ifdef ENABLE_MSGDEBUG
-	net->log->log("<RCV> %s [%d] %s\n",str().c_str(),t.sn(),ackMsg.str().c_str());
-#endif
-	tUnetAck *ack;
 	tMutexLock lock(sendMutex);
 	for (tmNetAck::tAckList::iterator it = ackMsg.acks.begin(); it != ackMsg.acks.end(); ++it) {
-		ack = *it;
-		A1 = ack->A;
-		A3 = ack->B;
+		A1 = it->A;
+		A3 = it->B;
 		//well, do it
 		tPointerList<tUnetUruMsg>::iterator jt = sndq.begin();
 		while (jt != sndq.end()) {
@@ -770,20 +754,19 @@ bool tNetSession::parseBasicMsg(tUnetMsg * msg)
 tNetTime tNetSession::ackSend() {
 	tNetTime timeout = std::numeric_limits<double>::max(); // -1 is biggest possible value
 	
-	tPointerList<tUnetAck>::iterator it = ackq.begin();
+	tAckList::iterator it = ackq.begin();
 	while(it != ackq.end()) {
-		tUnetAck *ack = *it;
-		if (!net->timeOverdue(ack->timestamp)) {
-			timeout = std::min(timeout, net->remainingTimeTill(ack->timestamp)); // come back when we want to process this ack
+		if (!net->timeOverdue(it->timestamp)) {
+			timeout = std::min(timeout, net->remainingTimeTill(it->timestamp)); // come back when we want to process this ack
 			++it;
 		}
 		else {
-			DBG(5, "%s Sending an ack, %f after time\n", str().c_str(), net->passedTimeSince(ack->timestamp));
+			DBG(5, "%s Sending an ack, %f after time\n", str().c_str(), net->passedTimeSince(it->timestamp));
 			/* send one message per ack: we do not want to be too pwned if that apcket got lost. And if we have "holes" in the
 			 * sequence of packets (which is the only occasion in which there would be several acks in a message), the connection
 			 * is already problematic. */
-			it = ackq.erase(it); // remove ack from queue, but do not delete it
-			send(tmNetAck(this, ack));
+			send(tmNetAck(this, *it));
+			it = ackq.erase(it); // remove ack from queue
 		}
 	}
 	return timeout;

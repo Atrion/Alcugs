@@ -30,6 +30,7 @@
 #define __U_FILENAME_H_ID "$Id$"
 
 #include "protocol.h"
+#include "netsession.h"
 
 namespace alc {
 	

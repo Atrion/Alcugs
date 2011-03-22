@@ -30,6 +30,7 @@
 #define __U_AUTHMSG_H_ID "$Id$"
 
 #include "protocol.h"
+#include "netsession.h"
 
 namespace alc {
 

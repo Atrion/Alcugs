@@ -36,7 +36,6 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_PROTOCOL_H_ID "$Id$"
 
-#include "netsession.h"
 #include <urutypes/uruconsts.h>
 #include <urutypes/urubasetypes.h>
 #include <alcutil/alclog.h>
@@ -45,8 +44,15 @@
 
 namespace alc {
 
+
 class tNetSession;
 class tLog;
+class tUnetAck;
+
+// unet helper types
+typedef double tNetTime; // always in seconds
+typedef std::pair<tNetTime, bool> tNetTimeBoolPair;
+
 
 void alcEncodePacket(uint8_t* buf2,const uint8_t* buf, int n);
 void alcDecodePacket(uint8_t* buf, int n);
@@ -89,7 +95,11 @@ public:
 	tNetTime timestamp;
 	uint32_t A;
 	uint32_t B;
-	FORBID_CLASS_COPY(tUnetAck)
+	
+	uint32_t snA(void) const { return A >> 8; }
+	uint8_t frA(void) const { return A & 0xFF; }
+	uint32_t snB(void) const { return B >> 8; }
+	uint8_t frB(void) const { return B & 0xFF; }
 };
 
 /** this is the class responsible for the UruMsg header. The data must be filled with a class derived from tmBase. */
@@ -103,8 +113,7 @@ public:
 	virtual size_t size();
 	/** Get header size */
 	size_t hSize();
-	tString header();
-	void htmlDumpHeader(tLog * log,uint8_t flux,uint32_t ip,uint16_t port) const; //ip, port in network order
+	void htmlDump(tLog * log, bool outgoing, tNetSession *u);
 	
 	uint32_t sn(void) const { return csn >> 8; }
 	uint8_t fr(void) const { return csn & 0xFF; }
@@ -127,6 +136,8 @@ public:
 	tMBuf data;
 	FORBID_CLASS_COPY(tUnetUruMsg)
 };
+
+//// End of low-level protocl classes, here comes the higher level
 
 class tmBase :public tStreamable {
 public:
@@ -156,15 +167,14 @@ public:
 class tmNetAck :public tmBase {
 public:
 	tmNetAck(tNetSession *u, tUnetUruMsg *msg) : tmBase(u) { tmNetAck::store(msg->data); }
-	tmNetAck(tNetSession *u, tUnetAck *ack);
-	virtual ~tmNetAck();
+	tmNetAck(tNetSession *u, const tUnetAck &ack);
 	
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
 	virtual tString str() const;
 	virtual uint8_t bhflags() const { return UNetAckReply; }
 	
-	typedef std::vector<tUnetAck *> tAckList;
+	typedef std::vector<tUnetAck> tAckList;
 	tAckList acks;
 	FORBID_CLASS_COPY(tmNetAck)
 };
