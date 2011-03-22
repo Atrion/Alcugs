@@ -232,9 +232,7 @@ int main(int argc,char * argv[]) {
 	
 	double time=1; //time
 	uint8_t destination=KLobby,source=0;
-#ifdef ENABLE_ADMIN
 	uint8_t admin=0;
-#endif
 	
 	//options
 	int num=5,flood=1; //num probes & flood multiplier
@@ -251,9 +249,7 @@ int main(int argc,char * argv[]) {
 			return -1;
 		} else if(!strcmp(argv[i],"-lp") && argc>i+1) { i++; listen=true; l_port=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-rp") && argc>i+1) { i++; port=atoi(argv[i]); }
-#ifdef ENABLE_ADMIN
 		else if(!strcmp(argv[i],"-i_know_what_i_am_doing")) { admin=true; }
-#endif
 		else if(!strcmp(argv[i],"-nl")) { nlogs=true; }
 		else if(!strcmp(argv[i],"-t") && argc>i+1) { i++; time=atof(argv[i]); }
 		else if(!strcmp(argv[i],"-n") && argc>i+1) { i++; num=atoi(argv[i]); }
@@ -303,25 +299,14 @@ int main(int argc,char * argv[]) {
 		
 		if(flood<=0) flood=1;
 		
-#ifdef ENABLE_ADMIN
 		if(time<0.1 && !admin) {
-			printf("\nOnly the administrator can set less than 0.1 seconds. Setting up to 0.1 seconds. (enable admin mode with -i_know_what_i_am_doing)\n");
+			printf("\nOnly the administrator can set less than 0.1 seconds. Setting up to 0.1 seconds (enable admin mode with -i_know_what_i_am_doing).\n");
 			time=0.1;
 		}
 		if(flood>1 && !admin) {
-			printf("\nOnly the administrator can perform stressing flood tests to the server.\n Disabling flooding. (enable admin mode with -i_know_what_i_am_doing)\n");
+			printf("\nOnly the administrator can perform stressing flood tests to the server.\n Disabling flooding (enable admin mode with -i_know_what_i_am_doing).\n");
 			flood=1;
 		}
-#else
-		if(time<0.1) {
-			printf("\nTime must be no less than than 0.1 seconds. Setting up to 0.1 seconds.\n");
-			time=0.1;
-		}
-		if(flood>1) {
-			printf("\nCannot perform stressing flood tests to the server.\n Disabling flooding\n");
-			flood=1;
-		}
-#endif
 		
 		if(mrtg) num=1;
 

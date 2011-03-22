@@ -1,5 +1,4 @@
 #cmakedefine HAVE_EXECINFO_H
 
-#cmakedefine ENABLE_ADMIN
 #cmakedefine ENABLE_MSGLOG
 #cmakedefine ENABLE_NETDEBUG
