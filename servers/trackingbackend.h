@@ -30,7 +30,7 @@
 #define __U_TRACKINGBACKEND_H_ID "$Id$"
 
 #include <protocol/trackingmsg.h>
-#include <netsession.h>
+#include <netsessionmgr.h>
 #include <alcutil/alclog.h>
 
 #include <list>
@@ -42,11 +42,12 @@ namespace alc {
 	class tTrackingData : public tBaseType {
 	public:
 		typedef std::list<uint32_t> tPlayerList;
+		typedef std::list<tNetSessionRef> tSessionList;
 	
 		tTrackingData(void);
 		bool isLobby;
-		tNetSession *parent; //!< saves the lobby of a game server, is NULL for lobbys
-		std::list<tNetSession *> children;
+		tNetSessionRef parent; //!< saves the lobby of a game server, is NULL for lobbys
+		tSessionList children;
 		uint16_t portStart, portEnd;
 		tString externalIp; //!< the external IP (the ones palyers should use to connect to this server)
 		uint8_t agentGuid[8]; //!< set when isLobby = true, saves the fake guid for UruVision
@@ -68,7 +69,7 @@ namespace alc {
 		uint32_t awaiting_x; //!< the X alue the player requested the age with
 		uint8_t awaiting_guid[8]; //!< Age guid where the player wants to go (hex) [only defined when waiting=true]
 		tString awaiting_age; //!< Age name where the player wants to go [only defined when waiting=true]
-		tNetSession *u; //!< the lobby or game server the player is connected to
+		tNetSessionRef u; //!< the lobby or game server the player is connected to
 	};
 	
 	class tTrackingBackend {
@@ -91,7 +92,7 @@ namespace alc {
 		typedef std::list<tPlayer> tPlayerList;
 		
 		tPlayerList::iterator getPlayer(uint32_t ki);
-		void spawnServer(const tString &age, const uint8_t *guid, uint32_t delay = 0);
+		void spawnServer(const tString &age, const uint8_t *guid, double delay = 0);
 		void notifyWaiting(tNetSession *server);
 		void serverFound(tPlayer *player, tNetSession *server);
 		void printStatusHTML(bool dbg = false);

@@ -76,7 +76,7 @@ namespace alc {
 		tString cnt;
 		if (waiting)
 			cnt.printf("[%s@%s][%d@@%s]", avatar.c_str(), account.c_str(), ki, awaiting_age.c_str());
-		else if (u)
+		else if (*u)
 			cnt.printf("[%s@%s][%d@%s]", avatar.c_str(), account.c_str(), ki, u->name.c_str());
 		else
 			cnt.printf("[%s@%s][%d]", avatar.c_str(), account.c_str(), ki);
@@ -199,7 +199,7 @@ namespace alc {
 		log.flush();
 	}
 	
-	void tTrackingBackend::spawnServer(const alc::tString& age, const uint8_t* guid, uint32_t delay)
+	void tTrackingBackend::spawnServer(const alc::tString& age, const uint8_t* guid, double delay)
 	{
 		// search for the lobby with the least load
 		tNetSession *lobby = NULL;
@@ -223,7 +223,7 @@ namespace alc {
 		int nPorts = data->portEnd - data->portStart + 1;
 		bool *freePorts = new bool[nPorts];
 		for (int i = 0; i < nPorts; ++i) freePorts[i] = true;
-		for (std::list<tNetSession *>::iterator it = data->children.begin(); it != data->children.end(); ++it)
+		for (tTrackingData::tSessionList::iterator it = data->children.begin(); it != data->children.end(); ++it)
 			freePorts[ntohs((*it)->getPort()) - data->portStart] = false; // this port is occupied
 		int lowest;
 		for (lowest = 0; lowest < nPorts; ++lowest) {
@@ -256,7 +256,7 @@ namespace alc {
 		tTrackingData *data = dynamic_cast<tTrackingData *>(server->data);
 		if (!data) throw txUnet(_WHERE("server passed in tTrackingBackend::serverFound is not a game/lobby server"));
 		// notifiy the player that it's server is available
-		tmCustomServerFound found(player->u, player->ki, player->awaiting_x, player->sid, ntohs(server->getPort()), data->externalIp, alcGetStrGuid(server->serverGuid), server->name);
+		tmCustomServerFound found(*player->u, player->ki, player->awaiting_x, player->sid, ntohs(server->getPort()), data->externalIp, alcGetStrGuid(server->serverGuid), server->name);
 		net->send(found);
 		log.log("Found age for player %s\n", player->str().c_str());
 		// no longer waiting
@@ -371,7 +371,7 @@ namespace alc {
 			if (player == players.end()) { // it doesn't exist, create it
 				player = players.insert(players.end(), tPlayer(playerStatus.ki));
 			}
-			else if (player->u != game) { // if it already exists, check if the avi is already logged in elsewhere
+			else if (*player->u != game) { // if it already exists, check if the avi is already logged in elsewhere
 				// ignore a RLeaving message from the old game server that we got after the RJoining from the new
 				if (playerStatus.playerStatus == RLeaving) {
 					log.log("WARN: Got RLeaving from %s, but player is already logged in at %s. Ignoring.\n",
@@ -383,7 +383,7 @@ namespace alc {
 				if (player->status != RLeaving) {
 					log.log("WARN: Kicking player %s at %s as it just logged in at %s\n", player->str().c_str(),
 							player->u->str().c_str(), game->str().c_str());
-					tmPlayerTerminated term(player->u, player->ki, RLoggedInElsewhere);
+					tmPlayerTerminated term(*player->u, player->ki, RLoggedInElsewhere);
 					net->send(term);
 				}
 			}
@@ -422,13 +422,13 @@ namespace alc {
 		// if players are waiting for this server, we have a problem - we need it! But we can't stop it from going down, so instead launch it again after a second
 		if (data->waitingPlayers.size()) {
 			log.log("I need to respawn %s\n", game->str().c_str());
-			spawnServer(game->name, game->serverGuid, /*delay*/1000);
+			spawnServer(game->name, game->serverGuid, /*delay*/1.0);
 			
 		}
 		// remove all players which were still on this server
 		tPlayerList::iterator it = players.begin();
 		while (it != players.end()) {
-			if (it->u == game) {
+			if (*it->u == game) {
 				log.log("WARN: Removing player %s as it was on a terminating server\n", it->str().c_str());
 				it = players.erase(it);
 			}
@@ -440,16 +440,18 @@ namespace alc {
 		// remove this server from the list of children of its lobby/from the game server it is the lobby for
 		if (data->isLobby) {
 			// it's children are lobbyless now
-			for (std::list<tNetSession *>::iterator it = data->children.begin(); it != data->children.end(); ++it) {
+			for (tTrackingData::tSessionList::iterator it = data->children.begin(); it != data->children.end(); ++it) {
 				tTrackingData *subData = dynamic_cast<tTrackingData *>((*it)->data);
 				if (!subData) throw txUnet(_WHERE("One child of the lobby I'm just deleting is not a game/lobby server"));
 				subData->parent = NULL;
 			}
+			data->children.clear();
 		}
-		else if (data->parent) {
+		else if (*data->parent) {
 			tTrackingData *parentData = dynamic_cast<tTrackingData *>(data->parent->data);
 			if (!parentData) throw txUnet(_WHERE("The parent of the game server I'm just deleting is not a game/lobby server"));
-			parentData->children.remove(game);
+			parentData->children.remove(tNetSessionRef(game));
+			data->parent = NULL;
 		}
 	}
 	
@@ -457,25 +459,24 @@ namespace alc {
 	{
 		assert(alcGetSelfThreadId() != alcGetMain()->threadId());
 		// for each player, check if we can reach it, and save which game server we need to send the message to
-		typedef std::set<tNetSession *> tSessionList;
 		tTrackingData *data;
-		tSessionList receivers; // to save where we already sent it
+		std::set<tNetSession*> receivers; // to save where we already sent it
 		tmCustomDirectedFwd::tRecList::iterator it = directedFwd.recipients.begin();
 		while (it != directedFwd.recipients.end()) {
 			bool removed = false;
 			for (tPlayerList::iterator jt = players.begin(); jt != players.end(); ++jt) {
 				if (*it != jt->ki) continue; // next one
 				// ok, this player should get this message
-				if (jt->u == directedFwd.getSession()) break; // don't send it back to where it comes from
+				if (*jt->u == directedFwd.getSession()) break; // don't send it back to where it comes from
 				if (jt->status == RLeaving) break; // the player is not connected
 				data = dynamic_cast<tTrackingData *>(jt->u->data);
 				if (!data || data->isLobby) break; // don't send messages to the lobby
 				// ok, let's go - check if we already sent the message there
-				if (!receivers.count(jt->u)) {
+				if (!receivers.count(*jt->u)) {
 					// no, we didn't - do it! and save that
-					tmCustomDirectedFwd forwardedMsg(jt->u, directedFwd);
+					tmCustomDirectedFwd forwardedMsg(*jt->u, directedFwd);
 					net->send(forwardedMsg);
-					receivers.insert(jt->u);
+					receivers.insert(*jt->u);
 				}
 				removed = true;
 				it = directedFwd.recipients.erase(it); // since we already sent the message for this player we can remove it from our list
@@ -618,7 +619,7 @@ namespace alc {
 				for (tNetSessionMgr::tIterator it(net->smgr); it.next();) {
 					tTrackingData *data = dynamic_cast<tTrackingData *>(it->data);
 					if (!data) continue;
-					if (!data->isLobby && !data->parent) needFake = true;
+					if (!data->isLobby && !*data->parent) needFake = true;
 					else if (data->isLobby) printLobbyXML(f, *it, data);
 				}
 				if (needFake) printLobbyXML(f, NULL, NULL);
@@ -666,17 +667,17 @@ namespace alc {
 			// Game Servers
 			fprintf(f, "<Games>\n");
 				if (lobby && data) { // the lobby's children
-					for (std::list<tNetSession *>::iterator it = data->children.begin(); it != data->children.end(); ++it) {
+					for (tTrackingData::tSessionList::iterator it = data->children.begin(); it != data->children.end(); ++it) {
 						tTrackingData *subData = dynamic_cast<tTrackingData *>((*it)->data);
 						if (!subData) continue;
-						printGameXML(f, *it, subData);
+						printGameXML(f, **it, subData);
 					}
 				}
 				else { // all game server without lobby
 					for (tNetSessionMgr::tIterator it(net->smgr); it.next();) {
 						tTrackingData *subData = dynamic_cast<tTrackingData *>(it->data);
 						if (!subData) continue;
-						if (!subData->isLobby && !subData->parent) printGameXML(f, *it, subData);
+						if (!subData->isLobby && !*subData->parent) printGameXML(f, *it, subData);
 					}
 				}
 			fprintf(f, "</Games>\n");
@@ -687,13 +688,13 @@ namespace alc {
 	{
 		fprintf(f, "<Players>\n");
 		for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
-			if (it->u != server || it->status != RActive) continue;
+			if (*it->u != server || it->status != RActive) continue;
 			printPlayerXML(f, &*it);
 		}
 		fprintf(f, "</Players>\n");
 		fprintf(f, "<InRoutePlayers>\n");
 		for (tPlayerList::iterator it = players.begin(); it != players.end(); ++it) {
-			if (it->u != server || it->status == RActive) continue;
+			if (*it->u != server || it->status == RActive) continue;
 			printPlayerXML(f, &*it);
 		}
 		fprintf(f, "</InRoutePlayers>\n");

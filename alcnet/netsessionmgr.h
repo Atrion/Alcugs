@@ -37,8 +37,9 @@ namespace alc {
 	class tUnetMsg;
 
 class tNetSessionRef {
-public:
+private:
 	tNetSession *u;
+public:
 	tNetSessionRef(tNetSession *u) : u(u) {
 		if (u) u->incRefs();
 	}
@@ -55,6 +56,12 @@ public:
 	tNetSession *operator*() {
 		return u;
 	}
+	const tNetSession *operator->() const {
+		return u;
+	}
+	const tNetSession *operator*() const {
+		return u;
+	}
 	void operator=(tNetSession *new_u) {
 		if (u) u->decRefs();
 		u = new_u;
@@ -64,6 +71,9 @@ public:
 		if (u) u->decRefs();
 		u = r.u;
 		if (u) u->incRefs();
+	}
+	friend bool operator==(const tNetSessionRef &r1, const tNetSessionRef &r2) {
+		return r1.u == r2.u;
 	}
 };
 
