@@ -26,7 +26,7 @@ getPid(){
 		fi
 	else
 		# check if we can find the PID without the file
-		PID=$(ps -u "$USER" | grep alcugs_$1 | cut -f 1 -d ' ')
+		PID=$(ps -u "$USER" | grep alcugs_$1 | sed 's/^ *//' | cut -f 1 -d ' ') # sed is required for cases where ps prints a space before the PID
 		if [[ $PID ]]; then
 			echo $PID > $basedir/$1.pid
 			echo $PID
