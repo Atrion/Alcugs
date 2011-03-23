@@ -147,7 +147,7 @@ namespace alc {
 		// if it was one of our servers, go down - those servers hold a state that got lost, all players have to leave anyway
 		if (*authServer == u || *trackingServer == u || *vaultServer == u) {
 			if (isRunning()) {
-				err->log("ERR: I lost the connection to the another server, so I will go down\n");
+				err->log("ERR: I lost the connection to another server, so I will go down\n");
 				/* The game server should go down when it looses the connection to tracking. This way, you can easily
 				shut down all game servers. In addition, it won't get any new peers anyway without the tracking server */
 				stop();
