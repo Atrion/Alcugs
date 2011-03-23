@@ -19,14 +19,14 @@ getPid(){
 	if [[ -f "$basedir/$1.pid"  ]]; then
 		PID=$(cat "$basedir/$1.pid")
 		# check if the process is still running with the same name
-		if [[ ( -n "$PID" ) && ( -n $(ps -p $PID -u "$USER" | grep alcugs_$1) ) ]]; then
+		if [[ ( -n "$PID" ) && ( -n $(ps -p $PID -u "$(whoami)" | grep alcugs_$1) ) ]]; then
 			echo $PID
 		else
 			rm "$basedir/$1.pid"
 		fi
 	else
 		# check if we can find the PID without the file
-		PID=$(ps -u "$USER" | grep alcugs_$1 | sed 's/^ *//' | cut -f 1 -d ' ') # sed is required for cases where ps prints a space before the PID
+		PID=$(ps -u "$(whoami)" | grep alcugs_$1 | sed 's/^ *//' | cut -f 1 -d ' ') # sed is required for cases where ps prints a space before the PID
 		if [[ $PID ]]; then
 			echo $PID > $basedir/$1.pid
 			echo $PID
@@ -108,8 +108,16 @@ case $1 in
 		$0 start
 	;;
 	
+	check)
+		for prog in $start_servers; do
+			if [[ ! $(getPid $prog) ]]; then
+				echo "$prog not running!"
+			fi
+		done
+	;;
+	
 	*)
-		echo "Usage: $0 {start|stop|restart|status}"
+		echo "Usage: $0 {start|stop|restart|status|check}"
 	;;
 	
 esac
