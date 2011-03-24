@@ -94,7 +94,7 @@ void tmData::store(tBBuf &t) {
 		zdata.write(t.readAll(), remaining);
 		zdata.uncompress(x);
 		data = zdata;
-		if (data.size() != x) throw txBase(_WHERE("size mismatch (%d != %d)", data.size(), x));
+		if (data.size() != x) throw txBase(_WHERE("size mismatch (%Zd != %d)", data.size(), x));
 	}
 	else
 		data.write(t.readAll(), remaining);
@@ -307,7 +307,7 @@ int main(int argc,char * argv[]) {
 		alcMain.config()->setVar(tString::fromUInt(loglevel), "verbose_level", "global");
 		alcMain.applyConfig();
 		
-		alcMain.std()->print(alcVersionText());
+		alcMain.std()->print(tString(alcVersionText()));
 
 		tUnetSimpleFileServer netcore(l_hostname,l_port,listen);
 		if (!nlogs) netcore.unsetFlags(UNET_ELOG);

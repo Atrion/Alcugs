@@ -131,6 +131,19 @@ namespace alc {
 	#define FORBID_CLASS_COPY(name) private: \
 		name(const name &); \
 		void operator=(const name &);
+	
+	/** GNUC has the ability to check format strings that follow the syntax used in printf and others.
+	Hide the differences between different compilers in this GNUC_FORMAT_CHECK macro.
+	@param archetype one of: printf, scanf, strftime or strfmon
+	@param string_index specifies which argument is the format string argument (starting from 1)
+	@param first_to_check is the number of the first argument to check against the format string
+	Copied from Wireshark sources. */
+	#if __GNUC__ >= 2
+		#define GNUC_FORMAT_CHECK(archetype, string_index, first_to_check) __attribute__((format (archetype, string_index, first_to_check)))
+	#else
+		#define GNUC_FORMAT_CHECK(archetype, string_index, first_to_check)
+	#endif
+
 }
 
 

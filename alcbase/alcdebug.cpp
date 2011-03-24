@@ -53,7 +53,7 @@ namespace alc {
 	}
 	
 	void alcDbgPrntAbort(const char * b,const char * c,int d,const char * a) {
-		tString where = alcDbgWhere(b, c, d, a);
+		tString where = alcDbgWhere(b, c, d, "%s", a);
 		fprintf(stderr,"ABORT: %s\n",where.c_str());
 	}
 	

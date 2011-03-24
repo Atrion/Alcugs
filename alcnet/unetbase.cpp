@@ -310,7 +310,7 @@ void tUnetBase::processEvent(tNetEvent *evt)
 			try {
 				ret = onMsgRecieved(msg, u);
 				if (ret == 1 && !msg->data.eof() > 0) { // packet was processed and there are bytes left, obiously invalid, terminate the client
-					err->log("%s Recieved a message 0x%04X (%s) which was too long (%d Bytes remaining after parsing) - kicking player\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data.remaining());
+					err->log("%s Recieved a message 0x%04X (%s) which was too long (%Zd Bytes remaining after parsing) - kicking player\n", u->str().c_str(), msg->cmd, alcUnetGetMsgCode(msg->cmd), msg->data.remaining());
 					ret = -1;
 				}
 			}

@@ -168,7 +168,7 @@ tString tSQL::escape(const char *str)
 	char escaped_str[maxLength*2+1]; // according to mysql doc
 	if (connection == NULL) throw txDatabaseError(_WHERE("can't escape a string"));
 	if (strlen(str) > maxLength)
-		throw txDatabaseError(_WHERE("string \"%s\" too long (max. length: %i), use the other escape function", str, maxLength));
+		throw txDatabaseError(_WHERE("string \"%s\" too long (max. length: %Zi), use the other escape function", str, maxLength));
 	mysql_real_escape_string(connection, escaped_str, str, strlen(str));
 	return tString(escaped_str);
 }

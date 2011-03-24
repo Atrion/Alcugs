@@ -209,7 +209,7 @@ void tNetSession::send(const tmBase &msg, tNetTime delay) {
 	pkt_sz=maxPacketSz - hsize; //get maxium message size
 	n_pkts=(psize-1)/pkt_sz; //get number of fragments (0 means everything is sent in one packet, which must be the case if psize == pkt_sz)
 	if(n_pkts>=256)
-		throw txTooBig(_WHERE("%s packet of %i bytes doesn't fit inside an Uru message\n",str().c_str(),psize));
+		throw txTooBig(_WHERE("%s packet of %Zi bytes doesn't fit inside an Uru message\n",str().c_str(),psize));
 	if (n_pkts > 0 && ((flags & UNetNegotiation) || (flags & UNetAckReply)))
 		throw txProtocolError(_WHERE("Nego and ack packets must not be fragmented!"));
 	
@@ -290,7 +290,7 @@ void tNetSession::rawsend(tUnetUruMsg *msg)
 	if(msg->val==2) {
 		DBG(8,"Encoding validation 2 packet of %Zi bytes...\n",msize);
 		buf2=static_cast<uint8_t *>(malloc(msize));
-		if(buf2==NULL) { throw txNoMem(_WHERE("")); }
+		if(buf2==NULL) { throw txNoMem(_WHERE("OOM")); }
 		alcEncodePacket(buf2,buf,msize);
 		buf=buf2; //don't need to decode again
 		if(authenticated) {
@@ -373,7 +373,7 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 	assert(alcGetSelfThreadId() == alcGetMain()->threadId());
 	// check max packet size
 	if (size > maxPacketSz) { // catch impossible big messages
-		throw txProtocolError(_WHERE("[%s] Recieved a too big message of %i bytes\n",str().c_str(),size));
+		throw txProtocolError(_WHERE("[%s] Recieved a too big message of %Zi bytes\n",str().c_str(),size));
 	}
 	//stamp
 	receive_stamp = net->getNetTime();
@@ -501,7 +501,7 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 		tReadLock lock(prvDataMutex);
 		
 		if (rejectMessages) {
-			net->log->log("%s WARN: Rejecting messages currently, dropping packet");
+			net->log->log("%s WARN: Rejecting messages currently, dropping packet", str().c_str());
 			delete msg;
 			return;
 		}
@@ -580,7 +580,7 @@ void tNetSession::acceptMessage(tUnetUruMsg *t)
 	if(rcv->fr_count==t->frt) {
 		size_t size = t->frt * frg_size + t->data.size();
 		if (rcv->data.size() != size)
-			throw txProtocolError(_WHERE("Expected a size of %d, got %d\n", size, rcv->data.size()));
+			throw txProtocolError(_WHERE("Expected a size of %Zd, got %Zd\n", size, rcv->data.size()));
 		// We are done!
 		rcv->data.rewind();
 		rcv->cmd=alcFixUUNetMsgCommand(rcv->data.get16(), this);
@@ -868,7 +868,7 @@ tNetTimeBoolPair tNetSession::processSendQueues()
 						net->err->log("%s Dropped a 0x00 packet due to unaceptable msg time %f,%f,%f\n",
 									  str().c_str(),msg_timeout,net->passedTimeSince(curmsg->timestamp),rtt);
 					} else if(curmsg->bhflags == 0x00 && (sndq.size() > static_cast<size_t>((minTH + random()%(maxTH-minTH)))) ) {
-						net->err->log("%s Dropped a 0x00 packet due to a big queue (%d messages)\n", str().c_str(), sndq.size());
+						net->err->log("%s Dropped a 0x00 packet due to a big queue (%Zd messages)\n", str().c_str(), sndq.size());
 					}
 					//end prob drop
 					else {

@@ -473,7 +473,7 @@ namespace alc {
 	
 	void tvCreatableStream::asHtml(tLog *log, bool shortLog)
 	{
-		log->print("Size: %d<br />\n", size);
+		log->print("Size: %Zd<br />\n", size);
 		tSBuf buf = getData();
 		// the format of the content depends on the ID
 		switch (id) {
@@ -874,7 +874,7 @@ namespace alc {
 	void tvNode::asHtml(tLog *log, bool shortLog)
 	{
 		// mandatory flieds
-		log->print("<tr><th style='background-color:yellow'>Vault Node %d</th></tr>\n", index, index);
+		log->print("<tr><th style='background-color:yellow'>Vault Node %d</th></tr>\n", index);
 		log->print("<tr><td>\n");
 		log->print("<b>Flags:</b> 0x%08X (%d), 0x%08X (%d)<br />\n", flagB, flagB, flagC, flagC);
 		log->print("<b>Type:</b> 0x%02X (%s)<br />\n", type, alcVaultGetNodeType(type));
@@ -913,7 +913,7 @@ namespace alc {
 			if (flagB & MText_1) log->print("<b>Text_1:</b> %s<br />\n", text1.c_str());
 			if (flagB & MText_2) log->print("<b>Text_2:</b> %s<br />\n", text2.c_str());
 			if (flagB & MBlob1) {
-				log->print("<b>Blob1:</b> Size: %d<br />\n", blob1.size());
+				log->print("<b>Blob1:</b> Size: %Zd<br />\n", blob1.size());
 				if (!blob1.isEmpty()) blobAsHtml(log, blob1);
 			}
 			if (flagB & MBlob2) log->print("<b>Blob2:</b> Size: 0<br />\n"); // blob2 is always empty
@@ -1140,7 +1140,7 @@ namespace alc {
 			delete buf;
 		}
 		else if (t.tell()-startPos != realSize)
-			throw txProtocolError(_WHERE("Size mismatch (the packet says %d but it is %d)",realSize,t.tell()-startPos));
+			throw txProtocolError(_WHERE("Size mismatch (the packet says %d but it is %Zd)",realSize,t.tell()-startPos));
 		
 		// get remaining info (which is always uncompressed)
 		if (task) {

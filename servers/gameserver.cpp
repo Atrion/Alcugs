@@ -94,7 +94,7 @@ namespace alc {
 			else
 				lingerTime = 120; // default
 			if (lingerTime && lingerTime < 20)
-				log->log("WARN: You set a linger time of only %d, which could result in the game server going down before the player even has the chance to join it - I recommend to set it to at least 20\n", lingerTime);
+				log->log("WARN: You set a linger time of only %ld, which could result in the game server going down before the player even has the chance to join it - I recommend to set it to at least 20\n", lingerTime);
 		}
 		
 		var = cfg->getVar("game.tmp.hacks.noreltoshare");
@@ -407,7 +407,7 @@ namespace alc {
 			goDownIdle = lingerTime && lastPlayerLeft && lastPlayerLeft + lingerTime < time(NULL);
 		}
 		if (goDownIdle) {
-			log->log("The last player left more than %d sec ago, so I will go down.\n", lingerTime);
+			log->log("The last player left more than %ld sec ago, so I will go down.\n", lingerTime);
 			stop(); // no player for some time, so go down
 		}
 		tUnetLobbyServerBase::onIdle();

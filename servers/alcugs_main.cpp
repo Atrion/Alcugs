@@ -219,7 +219,7 @@ int main(int argc, char * argv[]) {
 		}
 		
 		// print basic version info
-		alcMain.std()->print(alcVersionText());
+		alcMain.std()->print(tString(alcVersionText()));
 		alcMain.std()->log("The Server is running...\n Press CTRL+C to kill it\n\n");
 		
 		//Create the server

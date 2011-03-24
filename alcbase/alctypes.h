@@ -333,7 +333,7 @@ public:
 	// functions writing strings and characters
 	void writeStr(const char * t);
 	void writeStr(const tString & val) { write(val.c_str(),val.size()); }
-	void printf(const char * msg, ...);
+	void printf(const char * msg, ...) GNUC_FORMAT_CHECK(printf, 2, 3);
 	void vprintf(const char * msg, va_list ap);
 	void printBoolean(const char *desc, bool val) { writeStr(desc); printBoolean(val); }
 	void printBoolean(bool val);

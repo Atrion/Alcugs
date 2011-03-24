@@ -229,7 +229,7 @@ namespace alc {
 				tmAuthenticateHello authHello(u, msg);
 				
 				if (authHello.maxPacketSize != u->getMaxPacketSz()) {
-					throw txUnexpectedData(_WHERE("UNX: Max packet size of %s is not %d, but %d, ignoring\n", u->str().c_str(), u->getMaxPacketSz(), authHello.maxPacketSize));
+					throw txUnexpectedData(_WHERE("UNX: Max packet size of %s is not %Zd, but %d, ignoring\n", u->str().c_str(), u->getMaxPacketSz(), authHello.maxPacketSize));
 				}
 				
 				// determine auth result

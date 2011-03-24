@@ -236,17 +236,17 @@ void tMBuf::init() {
 }
 void tMBuf::set(size_t pos) { 
 	if(pos > msize) // allow pos == msize for EOF
-		throw txOutOfRange(_WHERE("OutOfRange, must be 0<=%i<%i",pos,msize));
+		throw txOutOfRange(_WHERE("OutOfRange, must be 0<=%Zi<%Zi",pos,msize));
 	off=pos;
 }
 uint8_t tMBuf::getAt(size_t pos) const {
 	if(pos >= msize) {
-		throw txOutOfRange(_WHERE("OutOfRange %i>%i",pos,msize));
+		throw txOutOfRange(_WHERE("OutOfRange %Zi>%Zi",pos,msize));
 	}
 	return *(buf->buf()+pos);
 }
 void tMBuf::setAt(size_t pos,const uint8_t what) {
-	if(pos >= msize) throw txOutOfRange(_WHERE("OutOfRange %i>%i",pos,msize));
+	if(pos >= msize) throw txOutOfRange(_WHERE("OutOfRange %Zi>%Zi",pos,msize));
 	getUniqueBuffer(msize);
 	*(buf->buf()+pos)=what;
 }
@@ -263,7 +263,7 @@ const void * tMBuf::read(size_t n) {
 	if(off>msize || buf==NULL) { 
 		DBG(8,"off:%Zu,msize:%Zu\n",off,msize);
 		off-=n; 
-		throw txOutOfRange(_WHERE("OutOfRange %i>%i",off+n,msize)); 
+		throw txOutOfRange(_WHERE("OutOfRange %Zi>%Zi",off+n,msize)); 
 		//return NULL;
 	}
 	return buf->buf()+oldpos;
@@ -401,7 +401,7 @@ tSBuf::tSBuf(const void * buf,size_t msize) {
 	this->buf=buf;
 }
 void tSBuf::set(size_t pos) {
-	if (pos >= msize) throw txOutOfRange(_WHERE("Cannot access pos %i, size %i\n",pos,msize));
+	if (pos >= msize) throw txOutOfRange(_WHERE("Cannot access pos %Zi, size %Zi\n",pos,msize));
 	off=pos; 
 }
 const void * tSBuf::read(size_t n) {
@@ -409,7 +409,7 @@ const void * tSBuf::read(size_t n) {
 	off+=n;
 	if(off>msize) { 
 		off-=n; 
-		throw txOutOfRange(_WHERE("OutOfRange %i>%i",off+n,msize)); 
+		throw txOutOfRange(_WHERE("OutOfRange %Zi>%Zi",off+n,msize)); 
 	}
 	return static_cast<const uint8_t*>(buf)+oldpos;
 }
@@ -463,7 +463,7 @@ void tZBuf::uncompress(size_t iosize) {
 		Upon exit, destLen is the actual size of the compressed buffer. */
 	if(ret!=0) throw txBase(_WHERE("Something terrible happenened uncompressing the buffer"));
 	if (iosize != comp_size)
-		throw txUnexpectedData(_WHERE("tZBuf size mismatch: %i != %i", iosize, comp_size));
+		throw txUnexpectedData(_WHERE("tZBuf size mismatch: %Zi != %Zi", iosize, comp_size));
 	copy(newBuf);
 	rewind();
 }
@@ -597,7 +597,7 @@ tString tString::upper() const {
 }
 tString tString::substring(size_t start,size_t len) const {
 	if (len == 0) len = size()-start;
-	else if (start+len > size()) throw txOutOfRange(_WHERE("Reading %d Bytes from position %d on - but there are just %d Bytes left", len, start, size()-start));
+	else if (start+len > size()) throw txOutOfRange(_WHERE("Reading %Zd Bytes from position %Zd on - but there are just %Zd Bytes left", len, start, size()-start));
 	tString shot;
 	shot.write(data()+start,len);
 	return shot;

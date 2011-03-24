@@ -51,7 +51,7 @@ namespace alc {
 	{
 		delete vaultDB;
 		if (vmgrs.size() > 0)
-			log.log("ERR: The vault server is quitting and I still have %d vmgrs left\n", vmgrs.size());
+			log.log("ERR: The vault server is quitting and I still have %Zd vmgrs left\n", vmgrs.size());
 	}
 	
 	void tVaultBackend::applyConfig(void)
@@ -445,7 +445,7 @@ namespace alc {
 					send(reply, u, ki);
 				}
 				else // wrong or no node type at all
-					throw txProtocolError(_WHERE("Connect request for unknown node type %d from KI %d\n", nodeType));
+					throw txProtocolError(_WHERE("Connect request for unknown node type %d from KI %d\n", nodeType, ki));
 				// now let's see where we save this... first look if we already have this one registered
 				tVmgrList::iterator it = findVmgr(u, ki, mgr);
 				if (it != vmgrs.end()) // it is already registered, and findVmgr updated the session, so we have nothing to do
@@ -501,7 +501,7 @@ namespace alc {
 			case VNegotiateManifest:
 			{
 				if (tableSize != 1)
-					throw txProtocolError(_WHERE("Getting %d manifests at once is not supported\n", tableSize));
+					throw txProtocolError(_WHERE("Getting %Zd manifests at once is not supported\n", tableSize));
 				uint32_t mgr = table.get32();
 				log.log("Vault Negoiate Manifest (MGR: %d) for %d\n", mgr, ki);
 				log.flush();
@@ -577,7 +577,7 @@ namespace alc {
 			case VFetchNode:
 			{
 				if (tableSize <= 0) break;
-				log.log("Vault Fetch Node (fetching %d nodes) for %d\n", tableSize, ki);
+				log.log("Vault Fetch Node (fetching %Zd nodes) for %d\n", tableSize, ki);
 				log.flush();
 				tvNode **nodes;
 				size_t nNodes;
