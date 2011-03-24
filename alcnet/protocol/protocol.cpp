@@ -37,6 +37,7 @@
 #include <alcmain.h>
 
 #include <cstring>
+#include <cassert>
 
 
 namespace alc {
@@ -561,6 +562,7 @@ void tmNetMsg::store(tBBuf &t) {
 void tmNetMsg::stream(tBBuf &t) const {
 	if (!u)  throw txProtocolError(_WHERE("attempt to send message without session being set"));
 	if (!cmd) throw txProtocolError(_WHERE("attempt to send message without cmd"));
+	assert(!u->isUruClient() || !hasFlags(plNetSid));
 	
 	// fix opcode for UU clients
 	if (u->gameType == tNetSession::UUGame)

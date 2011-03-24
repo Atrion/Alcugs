@@ -70,12 +70,12 @@ namespace alc {
 	}
 	
 	//// tmGetPublicAgeList
-	tmGetPublicAgeList::tmGetPublicAgeList(tNetSession* u, uint32_t ki, uint32_t x, uint32_t sid, tString age)
-	: tmNetMsg(NetMsgGetPublicAgeList, plNetAck | plNetX | plNetKi | plNetVersion | plNetSid, u), age(age)
+	tmGetPublicAgeList::tmGetPublicAgeList(alc::tNetSession* u, uint32_t sid, const alc::tmGetPublicAgeList& getAgeList)
+	: tmNetMsg(NetMsgGetPublicAgeList, plNetAck | plNetX | plNetKi | plNetVersion | plNetSid, u), age(getAgeList.age)
 	{
-		this->x = x;
+		this->x = getAgeList.x;
 		this->sid = sid;
-		this->ki = ki;
+		this->ki = getAgeList.ki;
 	}
 	
 	void tmGetPublicAgeList::store(tBBuf& t)
@@ -101,30 +101,23 @@ namespace alc {
 	}
 	
 	//// tmPublicAgeList
-	/** Sending to other server */
-	tmPublicAgeList::tmPublicAgeList(tNetSession* u, uint32_t ki, uint32_t x, uint32_t sid)
+	tmPublicAgeList::tmPublicAgeList(tNetSession *u, const tmGetPublicAgeList &getAgeList)
 	: tmNetMsg(NetMsgPublicAgeList, plNetAck | plNetX | plNetKi | plNetVersion | plNetSid, u)
 	{
-		this->x = x;
-		this->sid = sid;
-		this->ki = ki;
+		this->x = getAgeList.x;
+		this->ki = getAgeList.ki;
+		this->sid = getAgeList.sid;
 	}
 	
-	/** Sending to other server */
-	tmPublicAgeList::tmPublicAgeList(tNetSession* u, uint32_t ki, uint32_t x, uint32_t sid, tAgeList ages)
-	: tmNetMsg(NetMsgPublicAgeList, plNetAck | plNetX | plNetKi | plNetVersion | plNetSid, u), ages(ages)
-	{
-		this->x = x;
-		this->sid = sid;
-		this->ki = ki;
-	}
-	
-	/** Sending to client */
 	tmPublicAgeList::tmPublicAgeList(tNetSession *u, const tmPublicAgeList &ageList)
-	: tmNetMsg(NetMsgPublicAgeList, plNetAck | plNetX | plNetKi | plNetSystem, u), ages(ageList.ages), populations(ageList.populations)
+	: tmNetMsg(NetMsgPublicAgeList, plNetAck | plNetX | plNetKi | plNetVersion, u), ages(ageList.ages), populations(ageList.populations)
 	{
 		this->x = ageList.x;
 		this->ki = ageList.ki;
+		if (!u->isUruClient()) { // yes, this can happen - when game is forwarding this message from vault to tracking
+			setFlags(plNetSid);
+			this->sid = ageList.sid;
+		}
 	}
 	
 	void tmPublicAgeList::store(tBBuf& t)
@@ -164,11 +157,11 @@ namespace alc {
 	}
 	
 	//// tmCreatePublicAge
-	tmCreatePublicAge::tmCreatePublicAge(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, const tAgeInfoStruct &age)
-	 : tmNetMsg(NetMsgCreatePublicAge, plNetX | plNetKi | plNetAck | plNetSystem | plNetSid, u), age(age)
+	tmCreatePublicAge::tmCreatePublicAge(tNetSession* u, uint32_t sid, const tmCreatePublicAge& createAge)
+	 : tmNetMsg(NetMsgCreatePublicAge, plNetX | plNetKi | plNetAck | plNetSystem | plNetSid, u), age(createAge.age)
 	{
-		this->ki = ki;
-		this->x = x;
+		this->ki = createAge.ki;
+		this->x = createAge.x;
 		this->sid = sid;
 	}
 	
@@ -197,22 +190,20 @@ namespace alc {
 	}
 
 	//// tmPublicAgeCreated
-	/** Send to other server */
-	tmPublicAgeCreated::tmPublicAgeCreated(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, const tAgeInfoStruct &age)
-	 : tmNetMsg(NetMsgPublicAgeCreated, plNetX | plNetKi | plNetAck | plNetSystem | plNetSid, u), age(age)
-	{
-		this->ki = ki;
-		this->x = x;
-		this->sid = sid;
-	}
+	tmPublicAgeCreated::tmPublicAgeCreated(tNetSession *u, const tmCreatePublicAge &createAge)
+	 : tmNetMsg(NetMsgPublicAgeCreated, plNetX | plNetKi | plNetAck | plNetSystem | plNetSid, u), age(createAge.age)
+	 {
+		 this->ki = createAge.ki;
+		 this->x = createAge.x;
+		 this->sid = createAge.sid;
+	 }
 	
-	/** Send to client */
 	tmPublicAgeCreated::tmPublicAgeCreated(tNetSession *u, const tmPublicAgeCreated &ageCreated)
 	 : tmNetMsg(NetMsgPublicAgeCreated, plNetX | plNetKi | plNetAck | plNetSystem, u), age(ageCreated.age)
-	 {
-		this->x = ageCreated.x;
+	{
 		this->ki = ageCreated.ki;
-	 }
+		this->x = ageCreated.x;
+	}
 	
 	void tmPublicAgeCreated::store(tBBuf& t)
 	{
@@ -235,7 +226,6 @@ namespace alc {
 	}
 	
 	//// tmRequestMyVaultPlayerList
-	/** Sending to other server */
 	tmRequestMyVaultPlayerList::tmRequestMyVaultPlayerList(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid)
 	: tmNetMsg(NetMsgRequestMyVaultPlayerList, plNetAck | plNetX | plNetVersion | plNetUID | plNetSid, u)
 	{
@@ -252,7 +242,6 @@ namespace alc {
 	}
 	
 	//// tmVaultPlayerList
-	/** Sending to other server */
 	tmVaultPlayerList::tmVaultPlayerList(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid)
 	: tmNetMsg(NetMsgVaultPlayerList, plNetAck | plNetX | plNetVersion | plNetUID | plNetSid, u)
 	{
@@ -261,7 +250,6 @@ namespace alc {
 		memcpy(this->uid, uid, 16);
 	}
 	
-	/** Sending to client */
 	tmVaultPlayerList::tmVaultPlayerList(tNetSession *u, const tmVaultPlayerList &playerList, const tString &url)
 	: tmNetMsg(NetMsgVaultPlayerList, plNetAck | plNetX | plNetKi, u), avatars(playerList.avatars), url(url)
 	{
