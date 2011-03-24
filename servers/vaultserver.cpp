@@ -33,6 +33,7 @@
 #include <netexception.h>
 #include <protocol/umsgbasic.h>
 #include <protocol/trackingmsg.h>
+#include <protocol/lobbybasemsg.h>
 #include <alcmain.h>
 
 #include <iostream>
@@ -133,27 +134,20 @@ namespace alc {
 				
 				return 1;
 			}
-			case NetMsgCustomVaultFindAge:
+			case NetMsgFindAge:
 			{
-				tmCustomVaultFindAge findAge(u, msg);
+				tmFindAge findAge(u, msg);
 				
-				tAgeLinkStruct ageLink;
-				findAge.data.rewind();
-				findAge.data.get(ageLink);
-				if (!findAge.data.eof()) throw txProtocolError(_WHERE("Got a NetMsgFindAge which is too long"));
-				log->print(" %s\n", ageLink.str().c_str());
-				
-				if (!ageLink.ageInfo.hasGuid()) {
-					if (!vaultBackend.setAgeGuid(&ageLink, findAge.ki)) {
-						err->log("ERR: Request to link to unknown age %s - kicking player %d\n", ageLink.ageInfo.filename.c_str(), findAge.ki);
+				if (!findAge.link.ageInfo.hasGuid()) {
+					if (!vaultBackend.setAgeGuid(&findAge.link, findAge.ki)) {
+						err->log("ERR: Request to link to unknown age %s - kicking player %d\n", findAge.link.ageInfo.filename.c_str(), findAge.ki);
 						tmPlayerTerminated term(u, findAge.ki, RKickedOff);
 						send(term);
 						return 1;
 					}
 				}
 				
-				tmCustomFindServer findServer(u, findAge, alcGetStrGuid(ageLink.ageInfo.guid), ageLink.ageInfo.filename);
-				send(findServer);
+				send(tmCustomFindServer(u, findAge));
 				
 				return 1;
 			}

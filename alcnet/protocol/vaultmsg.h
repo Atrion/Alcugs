@@ -200,16 +200,6 @@ namespace alc {
 		tString avatar;
 	};
 	
-	class tmCustomVaultFindAge : public tmNetMsg {
-		NETMSG_RECEIVE_CONSTRUCTORS(tmCustomVaultFindAge, tmNetMsg)
-	public:
-		tmCustomVaultFindAge(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, const tMBuf &data);
-		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t) const;
-		// format
-		tMBuf data;
-	};
-	
 } //End alc namespace
 
 #endif

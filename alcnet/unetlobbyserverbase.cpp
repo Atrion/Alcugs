@@ -462,28 +462,24 @@ namespace alc {
 				// get the data out of the packet
 				tmFindAge findAge(u, msg);
 				
-				tAgeLinkStruct ageLink;
-				findAge.message.rewind();
-				findAge.message.get(ageLink);
-				if (!findAge.message.eof()) throw txProtocolError(_WHERE("Got a NetMsgFindAge which is too long"));
-				log->print(" %s\n", ageLink.str().c_str());
-				
-				if (ageLink.linkingRule != KOriginalBook && ageLink.linkingRule != KOwnedBook && ageLink.linkingRule != KBasicLink && ageLink.linkingRule != KVisitBook && ageLink.linkingRule != KSubAgeBook)
-					throw txProtocolError(_WHERE("Linking rule must be KSubAgeBook, KOriginalBook, KOwnedBook, KVisitBook or KBasicLink but is 0x%02X", ageLink.linkingRule));
-				if (ageLink.ccr)
+				if (findAge.link.linkingRule != KOriginalBook && findAge.link.linkingRule != KOwnedBook &&
+						findAge.link.linkingRule != KBasicLink && findAge.link.linkingRule != KVisitBook &&
+						findAge.link.linkingRule != KSubAgeBook)
+					throw txProtocolError(_WHERE("Linking rule must be KSubAgeBook, KOriginalBook, KOwnedBook, KVisitBook or KBasicLink but is 0x%02X", findAge.link.linkingRule));
+				if (findAge.link.ccr)
 					throw txProtocolError(_WHERE("Linking as CCR is not allowed"));
 				
 				// if asked to do so, log the linking
 				if (!linkLog.isEmpty()) {
 					FILE *f = fopen(linkLog.c_str(), "a");
 					if (f) {
-						fprintf(f, "Player %s links from %s to: %s\n", u->name.c_str(), serverName.c_str(), ageLink.str().c_str());
+						fprintf(f, "Player %s links from %s to: %s\n", u->name.c_str(), serverName.c_str(), findAge.link.str().c_str());
 						fclose(f);
 					}
 				}
 				
-				// Let's ask vault
-				send(tmCustomVaultFindAge(*vaultServer, u->ki, findAge.x, u->getSid(), findAge.message));
+				// Let's ask vault (will reply with a CustomFindServer)
+				send(tmFindAge(*vaultServer, u->getSid(), findAge));
 				
 				return 1;
 			}

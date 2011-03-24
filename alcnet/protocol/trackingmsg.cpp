@@ -32,7 +32,7 @@
 
 #include "netexception.h"
 #include "netsession.h"
-#include "vaultmsg.h"
+#include "lobbybasemsg.h"
 
 #include <cstring>
 
@@ -115,8 +115,9 @@ namespace alc {
 	}
 	
 	//// tmCustomFindServer
-	tmCustomFindServer::tmCustomFindServer(tNetSession *u, const tmCustomVaultFindAge &findAge, const tString &serverGuid, const tString &age)
-	 : tmNetMsg(NetMsgCustomFindServer, plNetX | plNetKi | plNetAck | plNetSid, u), serverGuid(serverGuid), age(age)
+	tmCustomFindServer::tmCustomFindServer(tNetSession *u, const tmFindAge &findAge)
+	 : tmNetMsg(NetMsgCustomFindServer, plNetX | plNetKi | plNetAck | plNetSid, u),
+	   serverGuid(alcGetStrGuid(findAge.link.ageInfo.guid)), age(findAge.link.ageInfo.filename)
 	{
 		this->ki = findAge.ki;
 		this->x = findAge.x;
