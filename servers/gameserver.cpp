@@ -788,6 +788,35 @@ namespace alc {
 					err->log("ERR: %s sent a NetMsgPublicAgeList but is not the vault or tracking server. I\'ll kick him.\n", u->str().c_str());
 					return -2; // hack attempt
 				}
+			case NetMsgCreatePublicAge:
+			{
+				if (!u->joined) {
+					err->log("ERR: %s sent a NetMsgCreatePublicAge but did not yet join the game. I\'ll kick him.\n", u->str().c_str());
+					return -2; // hack attempt
+				}
+				
+				tmCreatePublicAge createAge(u, msg);
+				send(tmCreatePublicAge(*vaultServer, createAge.ki, createAge.x, u->getSid(), createAge.age));
+				return 1;
+			}
+			case NetMsgPublicAgeCreated:
+			{
+				if (u != *vaultServer) {
+					err->log("ERR: %s sent a NetMsgPublicAgeCreated but is not the vault server. I\'ll kick him.\n", u->str().c_str());
+					return -2; // hack attempt
+				}
+				
+				tmPublicAgeCreated ageCreated(u, msg);
+				// forward to client
+				tNetSessionRef client = sessionBySid(ageCreated.sid);
+				if (!*client || !client->isUruClient() || client->ki != ageCreated.ki) {
+					err->log("ERR: I've got to tell player with KI %d about his created public age, but can't find his session.\n", ageCreated.ki);
+					return 1;
+				}
+				send(tmPublicAgeCreated(*client, ageCreated));
+				return 1;
+			}
+			
 			//// Server control messages
 			case NetMsgCustomPlayerToCome:
 			{

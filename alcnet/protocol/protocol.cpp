@@ -826,6 +826,12 @@ const char * alcUnetGetMsgCode(uint16_t code) {
 		case NetMsgPython: return "plNetMsgPython";
 		case NetMsgSetTimeout: return "NetMsgSetTimeout";
 		case NetMsgActivePlayerSet: return "NetMsgActivePlayerSet";
+		case NetMsgGetPublicAgeList: return "NetMsgGetPublicAgeList";
+		case NetMsgPublicAgeList: return "NetMsgPublicAgeList";
+		case NetMsgCreatePublicAge: return "NetMsgCreatePublicAge";
+		case NetMsgPublicAgeCreated: return "NetMsgPublicAgeCreated";
+		case NetMsgRemovePublicAge: return "NetMsgRemovePublicAge";
+		case NetMsgPublicAgeRemoved: return "NetMsgPublicAgeRemoved";
 		// Custom messages
 		case NetMsgCustomAuthAsk: return "NetMsgCustomAuthAsk";
 		case NetMsgCustomAuthResponse: return "NetMsgCustomAuthResponse";

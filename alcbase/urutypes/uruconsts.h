@@ -299,6 +299,11 @@ unsilenced 29
 
 #define NetMsgGetPublicAgeList         0x0469
 #define NetMsgPublicAgeList            0x046A
+#define NetMsgCreatePublicAge          0x046B
+#define NetMsgPublicAgeCreated         0x046C
+
+#define NetMsgRemovePublicAge          0x047F
+#define NetMsgPublicAgeRemoved         0x0480
 
 //tpots note
 //All types that are >0x03BC are incremented +1 in TPOTS (compared to UU)

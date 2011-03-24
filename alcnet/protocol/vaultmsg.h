@@ -73,6 +73,31 @@ namespace alc {
 		tPopulationList populations;
 	};
 	
+	class tmCreatePublicAge : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmCreatePublicAge, tmNetMsg)
+	public:
+		tmCreatePublicAge(alc::tNetSession* u, uint32_t ki, uint32_t x, uint32_t sid, const alc::tAgeInfoStruct& age);
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
+		virtual tString additionalFields(tString dbg) const;
+		
+		// format
+		tAgeInfoStruct age;
+	};
+	
+	class tmPublicAgeCreated : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmPublicAgeCreated, tmNetMsg)
+	public:
+		tmPublicAgeCreated(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, const tAgeInfoStruct &age);
+		tmPublicAgeCreated(tNetSession *u, const tmPublicAgeCreated &ageCreated);
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
+		virtual tString additionalFields(tString dbg) const;
+		
+		// format
+		tAgeInfoStruct age;
+	};
+	
 	class tmRequestMyVaultPlayerList : public tmNetMsg {
 		NETMSG_RECEIVE_CONSTRUCTORS(tmRequestMyVaultPlayerList, tmNetMsg)
 	public:

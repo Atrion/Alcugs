@@ -229,6 +229,21 @@ namespace alc {
 		net->send(ageList);
 	}
 	
+	void tVaultBackend::createPublicAge(tmCreatePublicAge& createAge)
+	{
+		// find public age list
+		tvNode *node = new tvNode(MType | MInt32_1);
+		node->type = KFolderNode;
+		node->int1 = KPublicAgesFolder;
+		uint32_t publicAgesFolder = vaultDB->findNode(*node);
+		delete node;
+		// add the age to it
+		uint32_t ageNode = getAge(createAge.age);
+		addRefBCasted(KVaultID, publicAgesFolder, ageNode);
+		// and send reply
+		net->send(tmPublicAgeCreated(createAge.getSession(), createAge.ki, createAge.x, createAge.sid, createAge.age));
+	}
+	
 	void tVaultBackend::checkKi(tmCustomVaultCheckKi &checkKi)
 	{
 		bool status;
@@ -826,6 +841,7 @@ namespace alc {
 	
 	uint32_t tVaultBackend::getAge(tAgeInfoStruct &ageInfo, bool create)
 	{
+		if (!ageInfo.hasGuid()) throw txUnet(_WHERE("Can not find nor create age without GUID"));
 		tvNode *node;
 		// search for the age
 		node = new tvNode(MType | MStr64_4);
@@ -855,7 +871,7 @@ namespace alc {
 		uint32_t ageMgrNode = vaultDB->createNode(*node);
 		delete node;
 		
-		// now create the age info node as child of the age mgr
+		// now create the age info node as child of the age mgr (not broadcasted: Nobody can have a ref to this anyway yet)
 		node = new tvNode(MType | MUInt32_1 | MStr64_1 | MStr64_2 | MStr64_3 | MStr64_4 | MText_1);
 		node->type = KAgeInfoNode;
 		node->uInt1 = ageMgrNode;

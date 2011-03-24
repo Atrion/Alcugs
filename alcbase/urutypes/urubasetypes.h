@@ -33,11 +33,11 @@
 #include "uruconsts.h"
 
 namespace alc {
-	
+
 // helper fucntions
 inline uint16_t alcOpcodeUU2POTS(uint16_t opcode)
 {
-	return opcode > 0x0400 && opcode < 0x500 ? opcode+1 : opcode;
+	return opcode > 0x0400 && opcode < 0x0500 ? opcode+1 : opcode;
 }
 inline uint16_t alcOpcodePOTS2UU(uint16_t opcode)
 {
