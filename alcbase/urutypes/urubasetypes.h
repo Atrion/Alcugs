@@ -165,10 +165,12 @@ public:
 	tAgeInfoStruct(const tString &filename, const tString &instanceName, const tString &userDefName, const tString &displayName, const uint8_t *guid);
 	tAgeInfoStruct(const tString &filename, const tString &instanceName, const uint8_t *guid, uint32_t sequenceNumber);
 	tAgeInfoStruct(const tString &filename, const uint8_t *guid);
+	tAgeInfoStruct(const uint8_t *guid);
 	tAgeInfoStruct(void) {}
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
-	bool hasGuid(void) { return (flags & 0x04); }
+	bool hasGuid(void) const { return (flags & 0x04); }
+	bool hasFilename(void) const { return (flags & 0x02); }
 	tString str(void) const;
 	// format
 	uint8_t flags;

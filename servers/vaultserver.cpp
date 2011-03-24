@@ -169,6 +169,12 @@ namespace alc {
 				vaultBackend.createPublicAge(createAge);
 				return 1;
 			}
+			case NetMsgRemovePublicAge:
+			{
+				tmRemovePublicAge removeAge(u, msg);
+				vaultBackend.removePublicAge(removeAge);
+				return 1;
+			}
 			case NetMsgVault:
 			case NetMsgVaultTask:
 			{

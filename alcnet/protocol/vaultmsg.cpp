@@ -225,6 +225,78 @@ namespace alc {
 		return dbg;
 	}
 	
+	//// tmRemovePublicAge
+	tmRemovePublicAge::tmRemovePublicAge(tNetSession* u, uint32_t sid, const alc::tmRemovePublicAge& removeAge)
+	: tmNetMsg(NetMsgRemovePublicAge, plNetX | plNetKi | plNetSystem | plNetAck | plNetSid, u)
+	{
+		this->x = removeAge.x;
+		this->ki = removeAge.ki;
+		this->sid = sid;
+		memcpy(this->guid, removeAge.guid, 8);
+	}
+
+	void tmRemovePublicAge::store(tBBuf& t)
+	{
+		alc::tmNetMsg::store(t);
+		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("Ki or X flag missing")); // when coming from a client, it won't have the sid flag set
+		if (u->isUruClient() && (ki == 0 || u->ki != ki)) // don't kick game server if we are the vault and got this message
+			throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
+		memcpy(guid, t.read(8), 8);
+	}
+
+	void tmRemovePublicAge::stream(tBBuf& t) const
+	{
+		alc::tmNetMsg::stream(t);
+		t.write(guid, 8);
+	}
+
+	tString tmRemovePublicAge::additionalFields(tString dbg) const
+	{
+		dbg.nl();
+		dbg.printf(" GUID: %s", alcGetStrGuid(guid).c_str());
+		return dbg;
+	}
+
+
+	
+	//// tmPublicAgeRemoved
+	tmPublicAgeRemoved::tmPublicAgeRemoved(tNetSession* u, const alc::tmRemovePublicAge& removeAge)
+	: tmNetMsg(NetMsgPublicAgeRemoved, plNetX | plNetKi | plNetSystem | plNetAck | plNetSid, u)
+	{
+		this->x = removeAge.x;
+		this->ki = removeAge.ki;
+		this->sid = removeAge.sid;
+		memcpy(this->guid, removeAge.guid, 8);
+	}
+	
+	tmPublicAgeRemoved::tmPublicAgeRemoved(tNetSession* u, const alc::tmPublicAgeRemoved& ageRemoved)
+	: tmNetMsg(NetMsgPublicAgeRemoved, plNetX | plNetKi | plNetSystem | plNetAck, u)
+	{
+		this->x = ageRemoved.x;
+		this->ki = ageRemoved.ki;
+		memcpy(this->guid, ageRemoved.guid, 8);
+	}
+
+	void tmPublicAgeRemoved::store(tBBuf& t)
+	{
+		alc::tmNetMsg::store(t);
+		if (!hasFlags(plNetX | plNetKi | plNetSid)) throw txProtocolError(_WHERE("Ki, Sid or X flag missing"));
+		memcpy(guid, t.read(8), 8);
+	}
+
+	void tmPublicAgeRemoved::stream(tBBuf& t) const
+	{
+		alc::tmNetMsg::stream(t);
+		t.write(guid, 8);
+	}
+
+	tString tmPublicAgeRemoved::additionalFields(tString dbg) const
+	{
+		dbg.nl();
+		dbg.printf(" GUID: %s", alcGetStrGuid(guid).c_str());
+		return dbg;
+	}
+	
 	//// tmRequestMyVaultPlayerList
 	tmRequestMyVaultPlayerList::tmRequestMyVaultPlayerList(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid)
 	: tmNetMsg(NetMsgRequestMyVaultPlayerList, plNetAck | plNetX | plNetVersion | plNetUID | plNetSid, u)

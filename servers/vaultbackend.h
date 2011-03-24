@@ -50,6 +50,7 @@ namespace alc {
 		void sendPlayerList(tmRequestMyVaultPlayerList &askPlayerList);
 		void sendAgeList(tmGetPublicAgeList &getAgeList);
 		void createPublicAge(tmCreatePublicAge &createAge);
+		void removePublicAge(tmRemovePublicAge &removeAge);
 		void checkKi(tmCustomVaultCheckKi &checkKi);
 		void updatePlayerStatus(tmCustomVaultPlayerStatus &status);
 		void processVaultMsg(tvMessage &msg, tNetSession *u, uint32_t ki);
@@ -88,10 +89,10 @@ namespace alc {
 		
 		/** searches the age by filename and creates it if necessary and wished, returns the ID of the age info node.
 		    If the age should not be created and it is not found, returns 0 */
-		uint32_t getAge(tAgeInfoStruct &ageInfo, bool create = true);
+		uint32_t getAge(const tAgeInfoStruct &ageInfo, bool create = true);
 		
 		/** creates an age, returns the ID of the age info node */
-		uint32_t createAge(tAgeInfoStruct &ageInfo);
+		uint32_t createAge(const tAgeInfoStruct &ageInfo);
 		
 		/** finds this age in the list of ages this player owns/can visit. The ID of the folder the link is in is saved in linkedAgesFolder
 		    \returns the ID of the link or 0 if not found */

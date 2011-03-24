@@ -394,6 +394,12 @@ tAgeInfoStruct::tAgeInfoStruct(const tString &filename, const uint8_t *guid) : f
 	memcpy(this->guid, guid, 8);
 }
 
+tAgeInfoStruct::tAgeInfoStruct(const uint8_t *guid)
+{
+	flags =  0x04; // GUID
+	memcpy(this->guid, guid, 8);
+}
+
 tAgeInfoStruct::tAgeInfoStruct(const tString &filename, const tString &instanceName, const uint8_t *guid, uint32_t sequenceNumber)
 : filename(filename), instanceName(instanceName), sequenceNumber(sequenceNumber)
 {
@@ -460,6 +466,7 @@ void tAgeInfoStruct::store(tBBuf &t)
 
 void tAgeInfoStruct::stream(tBBuf &t) const
 {
+	if (!hasFilename()) throw txUnexpectedData(_WHERE("Can not stream a tAgeInfoStruct without filename"));
 	// see store for description of flags
 	t.put8(flags);
 	

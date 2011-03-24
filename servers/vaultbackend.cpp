@@ -244,6 +244,23 @@ namespace alc {
 		net->send(tmPublicAgeCreated(createAge.getSession(), createAge));
 	}
 	
+	void tVaultBackend::removePublicAge(tmRemovePublicAge& removeAge)
+	{
+		// find public age list
+		tvNode *node = new tvNode(MType | MInt32_1);
+		node->type = KFolderNode;
+		node->int1 = KPublicAgesFolder;
+		uint32_t publicAgesFolder = vaultDB->findNode(*node);
+		delete node;
+		// remove the age from it
+		uint32_t ageInfoNode = getAge(tAgeInfoStruct(removeAge.guid), /*create*/false);
+		if (ageInfoNode) { // if there is anything to remove
+			vaultDB->removeNodeRef(publicAgesFolder, ageInfoNode);
+			broadcastNodeRefUpdate(new tvNodeRef(0, publicAgesFolder, ageInfoNode), /*removal*/true);
+		}
+		net->send(tmPublicAgeRemoved(removeAge.getSession(), removeAge));
+	}
+	
 	void tVaultBackend::checkKi(tmCustomVaultCheckKi &checkKi)
 	{
 		bool status;
@@ -781,8 +798,7 @@ namespace alc {
 					throw txProtocolError(_WHERE("could not generate GUID"));
 				
 				// find age info node
-				tAgeInfoStruct ageInfo(ageName, guid);
-				uint32_t ageInfoNode = getAge(ageInfo, /*create*/false);
+				uint32_t ageInfoNode = getAge(tAgeInfoStruct(ageName, guid), /*create*/false);
 				if (!ageInfoNode) throw txProtocolError(_WHERE("I should remove a non-existing owned age"));
 				// remove the link from the player
 				removeAgeLinkFromPlayer(msg.vmgr, ageInfoNode);
@@ -822,8 +838,7 @@ namespace alc {
 				// msg.vmgr is the reciever's KI, ki the sender's one
 				
 				// now find the age info node of the age we're looking for
-				tAgeInfoStruct ageInfo("", ageGuid); // filename is unknown
-				uint32_t ageInfoNode = getAge(ageInfo, /*create*/false);
+				uint32_t ageInfoNode = getAge(tAgeInfoStruct(ageGuid), /*create*/false);
 				if (!ageInfoNode) throw txProtocolError(_WHERE("I should remove an invite for a non-existing age"));
 				// remove the link from the player
 				removeAgeLinkFromPlayer(msg.vmgr, ageInfoNode, /*visitedAge*/true);
@@ -839,14 +854,15 @@ namespace alc {
 		}
 	}
 	
-	uint32_t tVaultBackend::getAge(tAgeInfoStruct &ageInfo, bool create)
+	uint32_t tVaultBackend::getAge(const tAgeInfoStruct &ageInfo, bool create)
 	{
 		if (!ageInfo.hasGuid()) throw txUnet(_WHERE("Can not find nor create age without GUID"));
 		tvNode *node;
 		// search for the age
 		node = new tvNode(MType | MStr64_4);
 		node->type = KAgeInfoNode;
-		if (ageInfo.filename.size() > 0) {
+		if (ageInfo.hasFilename()) { // we have some GUID-only requests
+			assert(ageInfo.filename.size() > 0);
 			node->flagB |= MStr64_1;
 			node->str1 = ageInfo.filename;
 		}
@@ -861,7 +877,7 @@ namespace alc {
 		return createAge(ageInfo);
 	}
 	
-	uint32_t tVaultBackend::createAge(tAgeInfoStruct &ageInfo)
+	uint32_t tVaultBackend::createAge(const tAgeInfoStruct &ageInfo)
 	{
 		tvNode *node;
 		// first create the age mgr node

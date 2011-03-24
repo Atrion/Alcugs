@@ -97,6 +97,31 @@ namespace alc {
 		tAgeInfoStruct age;
 	};
 	
+	class tmRemovePublicAge : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmRemovePublicAge, tmNetMsg)
+	public:
+		tmRemovePublicAge(tNetSession *u, uint32_t sid, const tmRemovePublicAge &removeAge);
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
+		virtual tString additionalFields(tString dbg) const;
+		
+		// format
+		uint8_t guid[8];
+	};
+	
+	class tmPublicAgeRemoved : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmPublicAgeRemoved, tmNetMsg)
+	public:
+		tmPublicAgeRemoved(tNetSession *u, const tmRemovePublicAge &removeAge);
+		tmPublicAgeRemoved(tNetSession *u, const tmPublicAgeRemoved &ageRemoved);
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
+		virtual tString additionalFields(tString dbg) const;
+		
+		// format
+		uint8_t guid[8];
+	};
+	
 	class tmRequestMyVaultPlayerList : public tmNetMsg {
 		NETMSG_RECEIVE_CONSTRUCTORS(tmRequestMyVaultPlayerList, tmNetMsg)
 	public:
