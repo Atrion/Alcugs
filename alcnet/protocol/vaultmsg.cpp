@@ -511,29 +511,4 @@ namespace alc {
 		return dbg;
 	}
 	
-	//// tmCustomVaultFindAge
-	tmCustomVaultFindAge::tmCustomVaultFindAge(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, const tMBuf &data)
-	 : tmNetMsg(NetMsgCustomVaultFindAge, plNetX | plNetKi | plNetAck | plNetSid, u), data(data)
-	{
-		this->ki = ki;
-		this->x = x;
-		this->sid = sid;
-	}
-	
-	void tmCustomVaultFindAge::store(tBBuf &t)
-	{
-		tmNetMsg::store(t);
-		if (!hasFlags(plNetX | plNetKi | plNetSid)) throw txProtocolError(_WHERE("X, KI or Sid flag missing"));
-		// store the whole message
-		data.clear();
-		size_t remaining = t.remaining();
-		data.write(t.readAll(), remaining);
-	}
-	
-	void tmCustomVaultFindAge::stream(tBBuf &t) const
-	{
-		tmNetMsg::stream(t);
-		t.put(data);
-	}
-	
 } //end namespace alc

@@ -91,9 +91,12 @@ namespace alc {
 	class tmFindAge : public tmNetMsg {
 		NETMSG_RECEIVE_CONSTRUCTORS(tmFindAge, tmNetMsg)
 	public:
+		tmFindAge(alc::tNetSession* u, uint32_t sid, const alc::tmFindAge& findAge);
 		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
+		virtual tString additionalFields(tString dbg) const;
 		// format
-		tMBuf message;
+		tAgeLinkStruct link;
 	};
 	
 	class tmFindAgeReply : public tmNetMsg {
