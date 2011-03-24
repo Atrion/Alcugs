@@ -391,7 +391,7 @@ namespace alc {
 	tString tmGameStateRequest::additionalFields(tString dbg) const
 	{
 		dbg.nl();
-		dbg.printf(" Explicitly requested pages: %d", pages.size());
+		dbg.printf(" Explicitly requested pages: %Zd", pages.size());
 		return dbg;
 	}
 	
@@ -483,7 +483,7 @@ namespace alc {
 		if (varValue != 0x00 && varValue != 0x01)
 			throw txProtocolError(_WHERE("Unexpected NetMsgTestAndSet.varValue of 0x%02X (should be 0x00 or 0x01)", varValue));
 		if (!state.eof())
-			throw txUnexpectedData(_WHERE("Got a state description which is too long: %d bytes remaining after parsing", state.remaining()));
+			throw txUnexpectedData(_WHERE("Got a state description which is too long: %Zd bytes remaining after parsing", state.remaining()));
 		// End of state
 		
 		uint8_t lockReq = t.get8();
@@ -608,7 +608,7 @@ namespace alc {
 	tString tmMembersList::additionalFields(tString dbg) const
 	{
 		dbg.nl();
-		dbg.printf(" Number of other players: %d", members.size());
+		dbg.printf(" Number of other players: %Zd", members.size());
 		return dbg;
 	}
 	

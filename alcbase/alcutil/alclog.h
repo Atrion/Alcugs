@@ -122,10 +122,10 @@ public:
 		if(count>maxCount) { count=0; rotate(false); }
 	}
 
-	void print(const char * msg, ...) const;
+	void print(const char * msg, ...) const GNUC_FORMAT_CHECK(printf, 2, 3);
 	void print(const tString &str) const;
 	void stamp();
-	void log(const char * msg, ...);
+	void log(const char * msg, ...) GNUC_FORMAT_CHECK(printf, 2, 3);
 	void flush() const;
 
 	void dumpbuf(const void * buf, size_t n, size_t e=0,uint8_t how=7) const;

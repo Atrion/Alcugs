@@ -91,7 +91,7 @@ namespace alc {
 	tTrackingBackend::~tTrackingBackend(void)
 	{
 		if (players.size())
-			alcGetMain()->err()->log("ERR: The backend is quitting, and there were still %d players online\n", players.size());
+			alcGetMain()->err()->log("ERR: The backend is quitting, and there were still %Zd players online\n", players.size());
 	}
 	
 	void tTrackingBackend::applyConfig(void)

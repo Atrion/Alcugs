@@ -115,7 +115,7 @@ void txBase::dump(bool toStderr) {
 		fprintf(stderr,"Exception %s:\n%s\n",msg.c_str(),bt.c_str());
 
 	tString filename;
-	filename.printf("BackTrace-%06i-%08X.txt",getpid(),time(NULL));
+	filename.printf("BackTrace-%06i-%08X.txt",getpid(),static_cast<uint32_t>(time(NULL)));
 	FILE * f=NULL;
 	f=fopen(filename.c_str(),"w");
 	if(f!=NULL) {

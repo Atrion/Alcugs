@@ -65,7 +65,7 @@ namespace alc {
 	tString tmVault::additionalFields(tString dbg) const
 	{
 		dbg.nl();
-		dbg.printf(" Size of attached message: %d Bytes", message.size());
+		dbg.printf(" Size of attached message: %Zd Bytes", message.size());
 		return dbg;
 	}
 	

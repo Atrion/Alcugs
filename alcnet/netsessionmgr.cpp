@@ -60,7 +60,7 @@ tNetSession *tNetSessionMgr::searchAndCreate(uint32_t ip, uint16_t port, bool cl
 	}
 	// not found, create and add
 	if (max != 0 && count >= max) // too many connections, ouch
-		throw txToMCons(_WHERE("Too many connections (already having the maximum of %i)",max));
+		throw txToMCons(_WHERE("Too many connections (already having the maximum of %Zi)",max));
 	// find a place for us
 	size_t sid = findFreeSlot();
 	table[sid] = new tNetSession(net,ip,port,sid,client,validation);
@@ -76,7 +76,7 @@ size_t tNetSessionMgr::findFreeSlot(void)
 	// we have to resize the table
 	DBG(5, "growing to %Zd\n", size+1);
 	tNetSession **ntable=static_cast<tNetSession **>(realloc(table,sizeof(tNetSession*) * (size+1)));
-	if(ntable==NULL) throw txNoMem(_WHERE(""));
+	if(ntable==NULL) throw txNoMem(_WHERE("OOM"));
 	table=ntable;
 	++size;
 	return size-1;

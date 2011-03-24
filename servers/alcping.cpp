@@ -294,7 +294,7 @@ int main(int argc,char * argv[]) {
 		
 		//special mode
 		if(!mrtg) {
-			alcGetMain()->std()->print(alcVersionText());
+			alcGetMain()->std()->print(tString(alcVersionText()));
 		}
 		
 		if(flood<=0) flood=1;

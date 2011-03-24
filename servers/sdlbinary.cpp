@@ -140,7 +140,7 @@ namespace alc {
 			if (sdlVar->type == DStruct) {
 				// it seems for structs the number of structs to be parsed is saved again before the first struct
 				uint8_t num = t.get8();
-				if (num != n) throw txProtocolError(_WHERE("Unexpected number of structs to be parsed - expected %d, got %d", n, num));
+				if (num != n) throw txProtocolError(_WHERE("Unexpected number of structs to be parsed - expected %Zd, got %d", n, num));
 			}
 			for (size_t i = 0; i < n; ++i) {
 				tElementList::iterator it = elements.insert(elements.end(), tElement());
@@ -156,7 +156,7 @@ namespace alc {
 					case DByte:
 						it->byteVal[0] = t.get8();
 						if (sdlVar->type == DBool && it->byteVal[0] != 0 && it->byteVal[0] != 1)
-							throw txProtocolError(_WHERE("Unexpected BOOL var, must be 0 or 1 but is %d\n", it->byteVal));
+							throw txProtocolError(_WHERE("Unexpected BOOL var, must be 0 or 1 but is %d\n", it->byteVal[0]));
 						break;
 					case DUruString:
 						memcpy(it->byteVal, t.read(32), 32);
@@ -229,7 +229,7 @@ namespace alc {
 			// we have to write the value
 			if (!sdlVar->size) t.put32(elements.size());
 			else if (elements.size() != sdlVar->size)
-				throw txProtocolError(_WHERE("Element count mismatch, must be %d, is %d", sdlVar->size, elements.size()));
+				throw txProtocolError(_WHERE("Element count mismatch, must be %Zd, is %Zd", sdlVar->size, elements.size()));
 			if (sdlVar->type == DStruct) // for some reason, this needs the size again
 				t.put8(elements.size());
 			for (tElementList::const_iterator it = elements.begin(); it != elements.end(); ++it) {
@@ -288,7 +288,7 @@ namespace alc {
 	{
 		char indent[] = "                        ";
 		if (indentSize < strlen(indent)) indent[indentSize] = 0; // let the string end there
-		log->print("%s%s[%d] (", indent, sdlVar->name.c_str(), elements.size());
+		log->print("%s%s[%Zd] (", indent, sdlVar->name.c_str(), elements.size());
 		if (str.size()) log->print("str: %s, ", str.c_str());
 		log->print("flags: 0x%02X) = ", flags);
 		if (flags & 0x08) {
@@ -442,7 +442,7 @@ namespace alc {
 		bool writeIndex = incompleteVars;
 		if (vars.size() != sdlStruct->nVar) {
 			if (!incompleteVars || vars.size() > sdlStruct->nVar)
-				throw txProtocolError(_WHERE("Size mismatch: %d vars to be stored, %d vars in struct, incomplete: %d", vars.size(), sdlStruct->nVar, incompleteVars));
+				throw txProtocolError(_WHERE("Size mismatch: %Zd vars to be stored, %d vars in struct, incomplete: %d", vars.size(), sdlStruct->nVar, incompleteVars));
 		}
 		else
 			writeIndex = false;
@@ -458,7 +458,7 @@ namespace alc {
 		writeIndex = incompleteStructs;
 		if (structs.size() != sdlStruct->nStruct) {
 			if (!incompleteStructs || structs.size() > sdlStruct->nStruct)
-				throw txProtocolError(_WHERE("Size mismatch: %d structs to be stored, %d structs in struct, incomplete: %d", structs.size(), sdlStruct->nStruct, incompleteStructs));
+				throw txProtocolError(_WHERE("Size mismatch: %Zd structs to be stored, %d structs in struct, incomplete: %d", structs.size(), sdlStruct->nStruct, incompleteStructs));
 		}
 		else
 			writeIndex = false;
@@ -600,7 +600,7 @@ namespace alc {
 		t.get(content);
 		
 		if (!t.eof()) {
-			throw txProtocolError(_WHERE("The SDL struct is too long (%d Bytes remaining after parsing)", t.remaining()));
+			throw txProtocolError(_WHERE("The SDL struct is too long (%Zd Bytes remaining after parsing)", t.remaining()));
 		}
 	}
 	

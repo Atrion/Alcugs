@@ -44,7 +44,7 @@ namespace alc {
 	
 	// functions doing the actual work
 	void alcPrintDbgHeader(int lvl, const char * b, const char * c, int d);
-	tString alcDbgWhere(const char * b,const char * c,int d,const char * a,...);
+	tString alcDbgWhere(const char * b,const char * c,int d,const char * a,...) __attribute__((format (printf, 4, 5)));
 	void alcDbgPrntAbort(const char * b,const char * c,int d,const char * a);
 }
 

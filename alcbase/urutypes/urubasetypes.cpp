@@ -345,7 +345,7 @@ void tStreamedObject::compress(void)
 void tStreamedObject::eofCheck(void)
 {
 	if (!eof())
-		throw txUnexpectedData(_WHERE("Got a %s which is too long: %d bytes remaining after parsing", alcGetPlasmaType(type), remaining()));
+		throw txUnexpectedData(_WHERE("Got a %s which is too long: %Zd bytes remaining after parsing", alcGetPlasmaType(type), remaining()));
 }
 
 tMBuf tStreamedObject::fullContent(void)

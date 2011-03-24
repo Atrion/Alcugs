@@ -277,7 +277,7 @@ void tUnet::startOp() {
 	if(this->max!=0) {
 		this->log->log("INF: Accepting up to %i connections\n",this->max);
 	} else {
-		this->log->log("INF: Accepting unlimited connections\n",this->max);
+		this->log->log("INF: Accepting unlimited connections\n");
 	}
 	
 	// create the pipe
