@@ -163,6 +163,77 @@ namespace alc {
 		return dbg;
 	}
 	
+	//// tmCreatePublicAge
+	tmCreatePublicAge::tmCreatePublicAge(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, const tAgeInfoStruct &age)
+	 : tmNetMsg(NetMsgCreatePublicAge, plNetX | plNetKi | plNetAck | plNetSystem | plNetSid, u), age(age)
+	{
+		this->ki = ki;
+		this->x = x;
+		this->sid = sid;
+	}
+	
+	void tmCreatePublicAge::store(tBBuf& t)
+	{
+		tmNetMsg::store(t);
+		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("Ki or X flag missing")); // when coming from a client, it won't have the sid flag set
+		if (u->isUruClient() && (ki == 0 || u->ki != ki)) // don't kick game server if we are the vault and got this message
+			throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
+		t.get(age);
+		if (!age.hasGuid())
+			throw txProtocolError(_WHERE("The createPublicAge request must have the GUID set"));
+	}
+	
+	void tmCreatePublicAge::stream(tBBuf& t) const
+	{
+		alc::tmNetMsg::stream(t);
+		t.put(age);
+	}
+	
+	tString tmCreatePublicAge::additionalFields(tString dbg) const
+	{
+		dbg.nl();
+		dbg.printf(" Age: %s", age.str().c_str());
+		return dbg;
+	}
+
+	//// tmPublicAgeCreated
+	/** Send to other server */
+	tmPublicAgeCreated::tmPublicAgeCreated(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, const tAgeInfoStruct &age)
+	 : tmNetMsg(NetMsgPublicAgeCreated, plNetX | plNetKi | plNetAck | plNetSystem | plNetSid, u), age(age)
+	{
+		this->ki = ki;
+		this->x = x;
+		this->sid = sid;
+	}
+	
+	/** Send to client */
+	tmPublicAgeCreated::tmPublicAgeCreated(tNetSession *u, const tmPublicAgeCreated &ageCreated)
+	 : tmNetMsg(NetMsgPublicAgeCreated, plNetX | plNetKi | plNetAck | plNetSystem, u), age(ageCreated.age)
+	 {
+		this->x = ageCreated.x;
+		this->ki = ageCreated.ki;
+	 }
+	
+	void tmPublicAgeCreated::store(tBBuf& t)
+	{
+		tmNetMsg::store(t);
+		if (!hasFlags(plNetX | plNetKi | plNetSid)) throw txProtocolError(_WHERE("Sid, Ki or X flag missing")); // when coming from a client, it won't have the sid flag set
+		t.get(age);
+	}
+	
+	void tmPublicAgeCreated::stream(tBBuf& t) const
+	{
+		alc::tmNetMsg::stream(t);
+		t.put(age);
+	}
+	
+	tString tmPublicAgeCreated::additionalFields(tString dbg) const
+	{
+		dbg.nl();
+		dbg.printf(" Age: %s", age.str().c_str());
+		return dbg;
+	}
+	
 	//// tmRequestMyVaultPlayerList
 	/** Sending to other server */
 	tmRequestMyVaultPlayerList::tmRequestMyVaultPlayerList(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid)

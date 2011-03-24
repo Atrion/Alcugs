@@ -122,9 +122,7 @@ namespace alc {
 			case NetMsgCustomVaultDeletePlayer:
 			{
 				tmCustomVaultDeletePlayer deletePlayer(u, msg);
-				
 				vaultBackend.deletePlayer(deletePlayer);
-				
 				return 1;
 			}
 			case NetMsgCustomVaultCheckKi:
@@ -169,6 +167,12 @@ namespace alc {
 			{
 				tmGetPublicAgeList getAgeList(u, msg);
 				vaultBackend.sendAgeList(getAgeList);
+				return 1;
+			}
+			case NetMsgCreatePublicAge:
+			{
+				tmCreatePublicAge createAge(u, msg);
+				vaultBackend.createPublicAge(createAge);
 				return 1;
 			}
 			case NetMsgVault:

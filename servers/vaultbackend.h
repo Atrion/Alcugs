@@ -49,6 +49,7 @@ namespace alc {
 		
 		void sendPlayerList(tmRequestMyVaultPlayerList &askPlayerList);
 		void sendAgeList(tmGetPublicAgeList &getAgeList);
+		void createPublicAge(tmCreatePublicAge &createAge);
 		void checkKi(tmCustomVaultCheckKi &checkKi);
 		void updatePlayerStatus(tmCustomVaultPlayerStatus &status);
 		void processVaultMsg(tvMessage &msg, tNetSession *u, uint32_t ki);
