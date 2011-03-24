@@ -47,7 +47,7 @@ namespace alc {
 	class tmGetPublicAgeList : public tmNetMsg {
 		NETMSG_RECEIVE_CONSTRUCTORS(tmGetPublicAgeList, tmNetMsg)
 	public:
-		tmGetPublicAgeList(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, tString age);
+		tmGetPublicAgeList(tNetSession *u, uint32_t sid, const tmGetPublicAgeList &getAgeList);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual tString additionalFields(tString dbg) const;
@@ -61,8 +61,7 @@ namespace alc {
 		typedef std::vector<tAgeInfoStruct> tAgeList;
 		typedef std::vector<uint32_t> tPopulationList;
 		
-		tmPublicAgeList(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid);
-		tmPublicAgeList(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, tAgeList ages);
+		tmPublicAgeList(tNetSession *u, const tmGetPublicAgeList &getAgeList);
 		tmPublicAgeList(tNetSession *u, const tmPublicAgeList &ageList);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
@@ -76,7 +75,7 @@ namespace alc {
 	class tmCreatePublicAge : public tmNetMsg {
 		NETMSG_RECEIVE_CONSTRUCTORS(tmCreatePublicAge, tmNetMsg)
 	public:
-		tmCreatePublicAge(alc::tNetSession* u, uint32_t ki, uint32_t x, uint32_t sid, const alc::tAgeInfoStruct& age);
+		tmCreatePublicAge(alc::tNetSession* u, uint32_t sid, const alc::tmCreatePublicAge& createAge);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual tString additionalFields(tString dbg) const;
@@ -88,7 +87,7 @@ namespace alc {
 	class tmPublicAgeCreated : public tmNetMsg {
 		NETMSG_RECEIVE_CONSTRUCTORS(tmPublicAgeCreated, tmNetMsg)
 	public:
-		tmPublicAgeCreated(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, const tAgeInfoStruct &age);
+		tmPublicAgeCreated(tNetSession *u, const tmCreatePublicAge &createAge);
 		tmPublicAgeCreated(tNetSession *u, const tmPublicAgeCreated &ageCreated);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;

@@ -195,7 +195,7 @@ namespace alc {
 	
 	void tVaultBackend::sendAgeList(tmGetPublicAgeList &getAgeList)
 	{
-		tmPublicAgeList ageList(getAgeList.getSession(), getAgeList.ki, getAgeList.x, getAgeList.sid);
+		tmPublicAgeList ageList(getAgeList.getSession(), getAgeList);
 		// find public age list
 		tvNode *node = new tvNode(MType | MInt32_1);
 		node->type = KFolderNode;
@@ -241,7 +241,7 @@ namespace alc {
 		uint32_t ageNode = getAge(createAge.age);
 		addRefBCasted(KVaultID, publicAgesFolder, ageNode);
 		// and send reply
-		net->send(tmPublicAgeCreated(createAge.getSession(), createAge.ki, createAge.x, createAge.sid, createAge.age));
+		net->send(tmPublicAgeCreated(createAge.getSession(), createAge));
 	}
 	
 	void tVaultBackend::checkKi(tmCustomVaultCheckKi &checkKi)

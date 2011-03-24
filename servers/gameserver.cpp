@@ -763,14 +763,14 @@ namespace alc {
 				
 				tmGetPublicAgeList getAgeList(u, msg);
 				// forward to vault server
-				send(tmGetPublicAgeList(*vaultServer, u->ki, getAgeList.x, u->getSid(), getAgeList.age));
+				send(tmGetPublicAgeList(*vaultServer, u->getSid(), getAgeList));
 				return 1;
 			}
 			case NetMsgPublicAgeList:
 				if (u == *vaultServer) {
 					tmPublicAgeList ageList(u, msg);
 					// now let tracking fill in the population counts
-					send(tmPublicAgeList(*trackingServer, ageList.ki, ageList.x, ageList.sid, ageList.ages));
+					send(tmPublicAgeList(*trackingServer, ageList));
 					return 1;
 				}
 				else if (u == *trackingServer) {
@@ -796,7 +796,7 @@ namespace alc {
 				}
 				
 				tmCreatePublicAge createAge(u, msg);
-				send(tmCreatePublicAge(*vaultServer, createAge.ki, createAge.x, u->getSid(), createAge.age));
+				send(tmCreatePublicAge(*vaultServer, u->getSid(), createAge));
 				return 1;
 			}
 			case NetMsgPublicAgeCreated:

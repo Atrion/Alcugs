@@ -189,8 +189,9 @@ tMBuf::tMBuf(tBBuf &t) {
 }
 tMBuf::tMBuf(const tMBuf &t) {
 	DBG(9,"tMBuf(tMBuf)\n");
+	assert(this != &t); // yes, it can happen that &t == this... if a class constructor initializes a value with itself
 	init();
-	copy(t); // yes, it can happen that &t == this... if a class constructor initializes a value with itself
+	copy(t);
 }
 tMBuf::tMBuf(const void *d, size_t s) {
 	init();
