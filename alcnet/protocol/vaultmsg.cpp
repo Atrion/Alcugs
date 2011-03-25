@@ -69,53 +69,304 @@ namespace alc {
 		return dbg;
 	}
 	
-	//// tmCustomVaultAskPlayerList
-	tmCustomVaultAskPlayerList::tmCustomVaultAskPlayerList(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid)
-	: tmNetMsg(NetMsgCustomVaultAskPlayerList, plNetAck | plNetX | plNetVersion | plNetUID | plNetSid, u)
+	//// tmGetPublicAgeList
+	tmGetPublicAgeList::tmGetPublicAgeList(alc::tNetSession* u, uint32_t sid, const alc::tmGetPublicAgeList& getAgeList)
+	: tmNetMsg(NetMsgGetPublicAgeList, plNetAck | plNetX | plNetKi | plNetVersion | plNetSid, u), age(getAgeList.age)
 	{
-		this->x = x;
+		this->x = getAgeList.x;
 		this->sid = sid;
-		memcpy(this->uid, uid, 16);
+		this->ki = getAgeList.ki;
 	}
 	
-	void tmCustomVaultAskPlayerList::store(tBBuf &t)
+	void tmGetPublicAgeList::store(tBBuf& t)
 	{
 		tmNetMsg::store(t);
-		if (!hasFlags(plNetX | plNetUID | plNetSid)) throw txProtocolError(_WHERE("X, UID or Sid flag missing"));
+		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("Ki or X flag missing")); // when coming from a client, it won't have the sid flag set
+		if (u->isUruClient() && (ki == 0 || u->ki != ki)) // don't kick game server if we are the vault and got this message
+			throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
+		t.get(age);
 	}
 	
-	//// tmCustomVaultPlayerList
-	tmCustomVaultPlayerList::tmCustomVaultPlayerList(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid)
-	: tmNetMsg(NetMsgCustomVaultPlayerList, plNetAck | plNetX | plNetVersion | plNetUID | plNetSid, u)
-	{
-		this->x = x;
-		this->sid = sid;
-		memcpy(this->uid, uid, 16);
-		numberPlayers = 0;
-	}
-	
-	void tmCustomVaultPlayerList::store(tBBuf &t)
-	{
-		tmNetMsg::store(t);
-		if (!hasFlags(plNetX | plNetUID | plNetSid)) throw txProtocolError(_WHERE("X, UID or Sid flag missing"));
-	
-		numberPlayers = t.get16();
-		players.clear();
-		size_t remaining = t.remaining();
-		players.write(t.readAll(), remaining); // the rest is the data about the players
-	}
-	
-	void tmCustomVaultPlayerList::stream(tBBuf &t) const
+	void tmGetPublicAgeList::stream(tBBuf& t) const
 	{
 		tmNetMsg::stream(t);
-		t.put16(numberPlayers);
-		t.put(players);
+		t.put(age);
 	}
 	
-	tString tmCustomVaultPlayerList::additionalFields(tString dbg) const
+	tString tmGetPublicAgeList::additionalFields(tString dbg) const
 	{
 		dbg.nl();
-		dbg.printf(" number of players: %d", numberPlayers);
+		dbg.printf(" Age: %s", age.c_str());
+		return dbg;
+	}
+	
+	//// tmPublicAgeList
+	tmPublicAgeList::tmPublicAgeList(tNetSession *u, const tmGetPublicAgeList &getAgeList)
+	: tmNetMsg(NetMsgPublicAgeList, plNetAck | plNetX | plNetKi | plNetVersion | plNetSid, u)
+	{
+		this->x = getAgeList.x;
+		this->ki = getAgeList.ki;
+		this->sid = getAgeList.sid;
+	}
+	
+	tmPublicAgeList::tmPublicAgeList(tNetSession *u, const tmPublicAgeList &ageList)
+	: tmNetMsg(NetMsgPublicAgeList, plNetAck | plNetX | plNetKi | plNetVersion, u), ages(ageList.ages), populations(ageList.populations)
+	{
+		this->x = ageList.x;
+		this->ki = ageList.ki;
+		if (!u->isUruClient()) { // yes, this can happen - when game is forwarding this message from vault to tracking
+			setFlags(plNetSid);
+			this->sid = ageList.sid;
+		}
+	}
+	
+	void tmPublicAgeList::store(tBBuf& t)
+	{
+		alc::tmNetMsg::store(t);
+		if (!hasFlags(plNetX | plNetSid)) throw txProtocolError(_WHERE("X or Sid flag missing"));
+		
+		int count = t.get16();
+		ages.clear();
+		ages.reserve(count);
+		for (int i = 0; i < count; ++i) {
+			t.get(*ages.insert(ages.end(), tAgeInfoStruct())); // first insert, then fill with data
+		}
+		count = t.get16();
+		populations.clear();
+		populations.reserve(count);
+		for (int i = 0; i < count; ++i)
+			populations.push_back(t.get32());
+	}
+
+	void tmPublicAgeList::stream(tBBuf& t) const
+	{
+		alc::tmNetMsg::stream(t);
+		t.put16(ages.size());
+		for (tAgeList::const_iterator it = ages.begin(); it != ages.end(); ++it)
+			t.put(*it);
+		t.put16(populations.size());
+		for (tPopulationList::const_iterator it = populations.begin(); it != populations.end(); ++it)
+			t.put32(*it);
+	}
+	
+	tString tmPublicAgeList::additionalFields(tString dbg) const
+	{
+		dbg.nl();
+		dbg.printf(" Number of ages: %Zd", ages.size());
+		return dbg;
+	}
+	
+	//// tmCreatePublicAge
+	tmCreatePublicAge::tmCreatePublicAge(tNetSession* u, uint32_t sid, const tmCreatePublicAge& createAge)
+	 : tmNetMsg(NetMsgCreatePublicAge, plNetX | plNetKi | plNetAck | plNetSystem | plNetSid, u), age(createAge.age)
+	{
+		this->ki = createAge.ki;
+		this->x = createAge.x;
+		this->sid = sid;
+	}
+	
+	void tmCreatePublicAge::store(tBBuf& t)
+	{
+		tmNetMsg::store(t);
+		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("Ki or X flag missing")); // when coming from a client, it won't have the sid flag set
+		if (u->isUruClient() && (ki == 0 || u->ki != ki)) // don't kick game server if we are the vault and got this message
+			throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
+		t.get(age);
+		if (!age.hasGuid())
+			throw txProtocolError(_WHERE("The createPublicAge request must have the GUID set"));
+	}
+	
+	void tmCreatePublicAge::stream(tBBuf& t) const
+	{
+		alc::tmNetMsg::stream(t);
+		t.put(age);
+	}
+	
+	tString tmCreatePublicAge::additionalFields(tString dbg) const
+	{
+		dbg.nl();
+		dbg.printf(" Age: %s", age.str().c_str());
+		return dbg;
+	}
+
+	//// tmPublicAgeCreated
+	tmPublicAgeCreated::tmPublicAgeCreated(tNetSession *u, const tmCreatePublicAge &createAge)
+	 : tmNetMsg(NetMsgPublicAgeCreated, plNetX | plNetKi | plNetAck | plNetSystem | plNetSid, u), age(createAge.age)
+	 {
+		 this->ki = createAge.ki;
+		 this->x = createAge.x;
+		 this->sid = createAge.sid;
+	 }
+	
+	tmPublicAgeCreated::tmPublicAgeCreated(tNetSession *u, const tmPublicAgeCreated &ageCreated)
+	 : tmNetMsg(NetMsgPublicAgeCreated, plNetX | plNetKi | plNetAck | plNetSystem, u), age(ageCreated.age)
+	{
+		this->ki = ageCreated.ki;
+		this->x = ageCreated.x;
+	}
+	
+	void tmPublicAgeCreated::store(tBBuf& t)
+	{
+		tmNetMsg::store(t);
+		if (!hasFlags(plNetX | plNetKi | plNetSid)) throw txProtocolError(_WHERE("Sid, Ki or X flag missing")); // when coming from a client, it won't have the sid flag set
+		t.get(age);
+	}
+	
+	void tmPublicAgeCreated::stream(tBBuf& t) const
+	{
+		alc::tmNetMsg::stream(t);
+		t.put(age);
+	}
+	
+	tString tmPublicAgeCreated::additionalFields(tString dbg) const
+	{
+		dbg.nl();
+		dbg.printf(" Age: %s", age.str().c_str());
+		return dbg;
+	}
+	
+	//// tmRemovePublicAge
+	tmRemovePublicAge::tmRemovePublicAge(tNetSession* u, uint32_t sid, const alc::tmRemovePublicAge& removeAge)
+	: tmNetMsg(NetMsgRemovePublicAge, plNetX | plNetKi | plNetSystem | plNetAck | plNetSid, u)
+	{
+		this->x = removeAge.x;
+		this->ki = removeAge.ki;
+		this->sid = sid;
+		memcpy(this->guid, removeAge.guid, 8);
+	}
+
+	void tmRemovePublicAge::store(tBBuf& t)
+	{
+		alc::tmNetMsg::store(t);
+		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("Ki or X flag missing")); // when coming from a client, it won't have the sid flag set
+		if (u->isUruClient() && (ki == 0 || u->ki != ki)) // don't kick game server if we are the vault and got this message
+			throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
+		memcpy(guid, t.read(8), 8);
+	}
+
+	void tmRemovePublicAge::stream(tBBuf& t) const
+	{
+		alc::tmNetMsg::stream(t);
+		t.write(guid, 8);
+	}
+
+	tString tmRemovePublicAge::additionalFields(tString dbg) const
+	{
+		dbg.nl();
+		dbg.printf(" GUID: %s", alcGetStrGuid(guid).c_str());
+		return dbg;
+	}
+
+
+	
+	//// tmPublicAgeRemoved
+	tmPublicAgeRemoved::tmPublicAgeRemoved(tNetSession* u, const alc::tmRemovePublicAge& removeAge)
+	: tmNetMsg(NetMsgPublicAgeRemoved, plNetX | plNetKi | plNetSystem | plNetAck | plNetSid, u)
+	{
+		this->x = removeAge.x;
+		this->ki = removeAge.ki;
+		this->sid = removeAge.sid;
+		memcpy(this->guid, removeAge.guid, 8);
+	}
+	
+	tmPublicAgeRemoved::tmPublicAgeRemoved(tNetSession* u, const alc::tmPublicAgeRemoved& ageRemoved)
+	: tmNetMsg(NetMsgPublicAgeRemoved, plNetX | plNetKi | plNetSystem | plNetAck, u)
+	{
+		this->x = ageRemoved.x;
+		this->ki = ageRemoved.ki;
+		memcpy(this->guid, ageRemoved.guid, 8);
+	}
+
+	void tmPublicAgeRemoved::store(tBBuf& t)
+	{
+		alc::tmNetMsg::store(t);
+		if (!hasFlags(plNetX | plNetKi | plNetSid)) throw txProtocolError(_WHERE("Ki, Sid or X flag missing"));
+		memcpy(guid, t.read(8), 8);
+	}
+
+	void tmPublicAgeRemoved::stream(tBBuf& t) const
+	{
+		alc::tmNetMsg::stream(t);
+		t.write(guid, 8);
+	}
+
+	tString tmPublicAgeRemoved::additionalFields(tString dbg) const
+	{
+		dbg.nl();
+		dbg.printf(" GUID: %s", alcGetStrGuid(guid).c_str());
+		return dbg;
+	}
+	
+	//// tmRequestMyVaultPlayerList
+	tmRequestMyVaultPlayerList::tmRequestMyVaultPlayerList(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid)
+	: tmNetMsg(NetMsgRequestMyVaultPlayerList, plNetAck | plNetX | plNetVersion | plNetUID | plNetSid, u)
+	{
+		this->x = x;
+		this->sid = sid;
+		memcpy(this->uid, uid, 16);
+	}
+	
+	void tmRequestMyVaultPlayerList::store(tBBuf &t)
+	{
+		tmNetMsg::store(t);
+		// the vault manager sends these without X and KI
+		if (hasFlags(plNetKi) && ki != 0) throw txProtocolError(_WHERE("KI must be 0 in NetMsgRequestMyVaultPlayerList but is %d", ki));
+	}
+	
+	//// tmVaultPlayerList
+	tmVaultPlayerList::tmVaultPlayerList(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid)
+	: tmNetMsg(NetMsgVaultPlayerList, plNetAck | plNetX | plNetVersion | plNetUID | plNetSid, u)
+	{
+		this->x = x;
+		this->sid = sid;
+		memcpy(this->uid, uid, 16);
+	}
+	
+	tmVaultPlayerList::tmVaultPlayerList(tNetSession *u, const tmVaultPlayerList &playerList, const tString &url)
+	: tmNetMsg(NetMsgVaultPlayerList, plNetAck | plNetX | plNetKi, u), avatars(playerList.avatars), url(url)
+	{
+		this->x = playerList.x;
+		ki = 0; // we're not yet logged in, so no KI can be set
+	}
+	
+	void tmVaultPlayerList::tAvatar::store(tBBuf& t)
+	{
+		ki = t.get32();
+		t.get(name);
+		flags = t.get8();
+	}
+	
+	void tmVaultPlayerList::store(tBBuf& t)
+	{
+		tmNetMsg::store(t);
+		int count = t.get16();
+		avatars.clear();
+		avatars.reserve(count);
+		for (int i = 0; i < count; ++i)
+			t.get(*avatars.insert(avatars.end(), tAvatar())); // first insert, then read
+		t.get(url);
+	}
+	
+	void tmVaultPlayerList::tAvatar::stream(tBBuf& t) const
+	{
+		t.put32(ki);
+		t.put(name);
+		t.put8(flags);
+	}
+	
+	void tmVaultPlayerList::stream(tBBuf &t) const
+	{
+		tmNetMsg::stream(t);
+		t.put16(avatars.size());
+		for (tAvatarList::const_iterator it = avatars.begin(); it != avatars.end(); ++it)
+			t.put(*it);
+		t.put(url);
+	}
+	
+	tString tmVaultPlayerList::additionalFields(tString dbg) const
+	{
+		dbg.nl();
+		dbg.printf(" number of avatars: %Zd, URL: %s", avatars.size(), url.c_str());
 		return dbg;
 	}
 	
@@ -318,31 +569,6 @@ namespace alc {
 		dbg.nl();
 		dbg.printf(" status: 0x%02X, avatar: %s", status, avatar.c_str());
 		return dbg;
-	}
-	
-	//// tmCustomVaultFindAge
-	tmCustomVaultFindAge::tmCustomVaultFindAge(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, const tMBuf &data)
-	 : tmNetMsg(NetMsgCustomVaultFindAge, plNetX | plNetKi | plNetAck | plNetSid, u), data(data)
-	{
-		this->ki = ki;
-		this->x = x;
-		this->sid = sid;
-	}
-	
-	void tmCustomVaultFindAge::store(tBBuf &t)
-	{
-		tmNetMsg::store(t);
-		if (!hasFlags(plNetX | plNetKi | plNetSid)) throw txProtocolError(_WHERE("X, KI or Sid flag missing"));
-		// store the whole message
-		data.clear();
-		size_t remaining = t.remaining();
-		data.write(t.readAll(), remaining);
-	}
-	
-	void tmCustomVaultFindAge::stream(tBBuf &t) const
-	{
-		tmNetMsg::stream(t);
-		t.put(data);
 	}
 	
 } //end namespace alc

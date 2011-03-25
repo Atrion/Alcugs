@@ -31,6 +31,7 @@
 
 #include <protocol/trackingmsg.h>
 #include <netsessionmgr.h>
+#include <protocol/vaultmsg.h>
 #include <alcutil/alclog.h>
 
 #include <list>
@@ -87,6 +88,7 @@ namespace alc {
 		void findServer(tmCustomFindServer &findServer);
 		void forwardMessage(tmCustomDirectedFwd &directedFwd);
 		void playerCanCome(tNetSession *game, uint32_t ki);
+		void getPopulationCounts(tmPublicAgeList &ageList);
 	private:
 		
 		typedef std::list<tPlayer> tPlayerList;

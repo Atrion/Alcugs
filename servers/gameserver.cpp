@@ -81,6 +81,10 @@ namespace alc {
 	void tUnetGameServer::onApplyConfig(void)
 	{
 		tUnetLobbyServerBase::onApplyConfig();
+		if (allowedGames == tNetSession::UnknownGame) { // a game server can not deal with both clients at the same time
+			log->log("WARN: According to your configuration, both UU and TPOTS clients are allowed, but the game server does not support that. Setting to TPOTS only.\n");
+			allowedGames = tNetSession::POTSGame;
+		}
 		
 		tConfig *cfg = alcGetMain()->config();
 		tString var = cfg->getVar("game.persistent");
@@ -119,7 +123,7 @@ namespace alc {
 		if (msg->task) { // it is a vault task
 			if (msg->cmd != TRegisterOwnedAge) return; // we are only interested in these messages which are sent when an age is reset
 			// now, find the age link struct
-			tvAgeLinkStruct *ageLink = NULL;
+			tAgeLinkStruct *ageLink = NULL;
 			for (tvMessage::tItemList::iterator it = msg->items.begin(); it != msg->items.end(); ++it) {
 				if ((*it)->id != 11) continue;
 				ageLink = (*it)->asAgeLink(); // we don't have to free it, tvMessage does that
@@ -205,17 +209,13 @@ namespace alc {
 	bool tUnetGameServer::processGameMessage(tStreamedObject *msg, tNetSession *u, tUruObjectRef *receiver)
 	{
 		bool processed = false;
-		tpMessage *subMsg = tpMessage::create(msg->getType(), /*mustBeComplete*/false);
-		msg->get(*subMsg);
+		tpMessage *subMsg = tpMessage::createFromStream(msg, u->gameType == tNetSession::UUGame, /*mustBeComplete*/false);
 		if (receiver && subMsg->receivers.size()) *receiver = subMsg->receivers.at(0);
-		if (!subMsg->isIncomplete()) {
-			msg->eofCheck();
-			// check for chat messages
-			tpKIMsg *kiMsg = dynamic_cast<tpKIMsg*>(subMsg);
-			if (serverSideCommands && kiMsg && kiMsg->messageType == 0 && kiMsg->text.startsWith("/!")) { // if it is a command
-				processKICommand(kiMsg->text, u);
-				processed = true;
-			}
+		// check for chat messages
+		tpKIMsg *kiMsg = dynamic_cast<tpKIMsg*>(subMsg);
+		if (serverSideCommands && kiMsg && kiMsg->messageType == 0 && kiMsg->text.startsWith("/!")) { // if it is a command
+			processKICommand(kiMsg->text, u);
+			processed = true;
 		}
 		delete subMsg;
 		return processed;
@@ -720,9 +720,7 @@ namespace alc {
 				tmLoadClone loadClone(u, msg);
 				
 				// parse contained plasma message
-				tpLoadCloneMsg *loadCloneMsg = tpLoadCloneMsg::create(loadClone.msgStream.getType());
-				loadClone.msgStream.get(*loadCloneMsg);
-				loadClone.msgStream.eofCheck();
+				tpLoadCloneMsg *loadCloneMsg = tpLoadCloneMsg::createFromStream(&loadClone.msgStream, u->gameType == tNetSession::UUGame);
 				loadClone.checkSubMsg(loadCloneMsg);
 				
 				bool makeIdle = linkingOutIdle && loadClone.isPlayerAvatar && !loadClone.isLoad;
@@ -755,7 +753,99 @@ namespace alc {
 				return 1;
 			}
 			
-			//// message to prevent the server from going down while someone joins
+			//// age management messages
+			case NetMsgGetPublicAgeList:
+			{
+				if (!u->joined) {
+					err->log("ERR: %s sent a NetMsgGetPublicAgeList but did not yet join the game. I\'ll kick him.\n", u->str().c_str());
+					return -2; // hack attempt
+				}
+				
+				tmGetPublicAgeList getAgeList(u, msg);
+				// forward to vault server
+				send(tmGetPublicAgeList(*vaultServer, u->getSid(), getAgeList));
+				return 1;
+			}
+			case NetMsgPublicAgeList:
+				if (u == *vaultServer) {
+					tmPublicAgeList ageList(u, msg);
+					// now let tracking fill in the population counts
+					send(tmPublicAgeList(*trackingServer, ageList));
+					return 1;
+				}
+				else if (u == *trackingServer) {
+					tmPublicAgeList ageList(u, msg);
+					// it's ready, forward to client
+					tNetSessionRef client = sessionBySid(ageList.sid);
+					if (!*client || !client->isUruClient() || client->ki != ageList.ki) {
+						err->log("ERR: I've got to tell player with KI %d about public ages, but can't find his session.\n", ageList.ki);
+						return 1;
+					}
+					send(tmPublicAgeList(*client, ageList));
+					return 1;
+				}
+				else {
+					err->log("ERR: %s sent a NetMsgPublicAgeList but is not the vault or tracking server. I\'ll kick him.\n", u->str().c_str());
+					return -2; // hack attempt
+				}
+			case NetMsgCreatePublicAge:
+			{
+				if (!u->joined) {
+					err->log("ERR: %s sent a NetMsgCreatePublicAge but did not yet join the game. I\'ll kick him.\n", u->str().c_str());
+					return -2; // hack attempt
+				}
+				
+				tmCreatePublicAge createAge(u, msg);
+				send(tmCreatePublicAge(*vaultServer, u->getSid(), createAge));
+				return 1;
+			}
+			case NetMsgPublicAgeCreated:
+			{
+				if (u != *vaultServer) {
+					err->log("ERR: %s sent a NetMsgPublicAgeCreated but is not the vault server. I\'ll kick him.\n", u->str().c_str());
+					return -2; // hack attempt
+				}
+				
+				tmPublicAgeCreated ageCreated(u, msg);
+				// forward to client
+				tNetSessionRef client = sessionBySid(ageCreated.sid);
+				if (!*client || !client->isUruClient() || client->ki != ageCreated.ki) {
+					err->log("ERR: I've got to tell player with KI %d about his created public age, but can't find his session.\n", ageCreated.ki);
+					return 1;
+				}
+				send(tmPublicAgeCreated(*client, ageCreated));
+				return 1;
+			}
+			case NetMsgRemovePublicAge:
+			{
+				if (!u->joined) {
+					err->log("ERR: %s sent a NetMsgRemovePublicAge but did not yet join the game. I\'ll kick him.\n", u->str().c_str());
+					return -2; // hack attempt
+				}
+				
+				tmRemovePublicAge removeAge(u, msg);
+				send(tmRemovePublicAge(*vaultServer, u->getSid(), removeAge));
+				return 1;
+			}
+			case NetMsgPublicAgeRemoved:
+			{
+				if (u != *vaultServer) {
+					err->log("ERR: %s sent a NetMsgPublicAgeRemoved but is not the vault server. I\'ll kick him.\n", u->str().c_str());
+					return -2; // hack attempt
+				}
+				
+				tmPublicAgeRemoved ageRemoved(u, msg);
+				// forward to client
+				tNetSessionRef client = sessionBySid(ageRemoved.sid);
+				if (!*client || !client->isUruClient() || client->ki != ageRemoved.ki) {
+					err->log("ERR: I've got to tell player with KI %d about his created public age, but can't find his session.\n", ageRemoved.ki);
+					return 1;
+				}
+				send(tmPublicAgeRemoved(*client, ageRemoved));
+				return 1;
+			}
+			
+			//// Server control messages
 			case NetMsgCustomPlayerToCome:
 			{
 				if (u != *trackingServer) {
@@ -775,13 +865,10 @@ namespace alc {
 				}
 				
 				// Send the reply back
-				tmCustomPlayerToCome reply(u, playerToCome.ki);
-				send(reply);
+				send(tmCustomPlayerToCome(u, playerToCome.ki));
 				
 				return 1;
 			}
-			
-			//// Server control messages
 			case NetMsgSetTimeout:
 			{
 				if (!u->joined) {

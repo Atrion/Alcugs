@@ -137,8 +137,6 @@ namespace alc {
 		player->sid = findServer.sid;
 		player->awaiting_x = findServer.x;
 		log.log("Player %s wants to link to %s (%s)\n", player->str().c_str(), findServer.age.c_str(), findServer.serverGuid.c_str());
-		if (findServer.serverGuid == "0000000000000000") // these are 16 zeroes
-			throw txProtocolError(_WHERE("No age GUID set"));
 		// copy data to player
 		player->status = RInRoute;
 		alcGetHexGuid(player->awaiting_guid, findServer.serverGuid);
@@ -498,6 +496,22 @@ namespace alc {
 			msg.recipients.push_back(directedFwd.ki);
 			net->send(msg);
 		}
+	}
+	
+	void tTrackingBackend::getPopulationCounts(tmPublicAgeList& ageList)
+	{
+		ageList.populations.clear();
+		for (tmPublicAgeList::tAgeList::iterator it = ageList.ages.begin(); it != ageList.ages.end(); ++it) {
+			// search for players on this age
+			int count = 0;
+			for (tPlayerList::iterator jt = players.begin(); jt != players.end(); ++jt) {
+				if (memcmp(jt->u->serverGuid, it->guid, 8) == 0) {
+					++count;
+				}
+			}
+			ageList.populations.push_back(count);
+		}
+		net->send(ageList);
 	}
 	
 	void tTrackingBackend::generateFakeGuid(uint8_t* guid)

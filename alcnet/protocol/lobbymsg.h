@@ -33,23 +33,6 @@
 #include "netsession.h"
 
 namespace alc {
-
-	class tmRequestMyVaultPlayerList : public tmNetMsg {
-		NETMSG_RECEIVE_CONSTRUCTORS(tmRequestMyVaultPlayerList, tmNetMsg)
-	public:
-		virtual void store(tBBuf &t);
-	};
-	
-	class tmVaultPlayerList : public tmNetMsg {
-	public:
-		tmVaultPlayerList(tNetSession *u, uint32_t x, uint16_t numberPlayers, tMBuf players, const tString &url);
-		virtual void stream(tBBuf &t) const;
-		virtual tString additionalFields(tString dbg) const;
-		// format
-		uint16_t numberPlayers;
-		tMBuf players;
-		tString url;
-	};
 	
 	class tmCreatePlayer : public tmNetMsg {
 		NETMSG_RECEIVE_CONSTRUCTORS(tmCreatePlayer, tmNetMsg)

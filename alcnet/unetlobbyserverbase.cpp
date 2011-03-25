@@ -62,9 +62,18 @@ namespace alc {
 		else
 			lvault.open(DF_HTML);
 		
-		var = cfg->getVar("allow_uu_clients");
-		allowUU = (var.isEmpty() || var.asInt()); // per default, UU clients are allowed
-		linkLog = cfg->getVar("tmp.link_log");
+		allowedGames = tNetSession::UnknownGame;
+		var = cfg->getVar("allowed_games"); // sets which kinds of clients are allowed: 1 = UU, 2 = TPOTS, 3 = both (default)
+		if (!var.isEmpty()) {
+			unsigned int i = var.asInt();
+			if (i == 1) allowedGames = tNetSession::UUGame;
+			else if (i == 2) allowedGames = tNetSession::POTSGame;
+		}
+		else {
+			var = cfg->getVar("allow_uu_clients");
+			if (!var.isEmpty() && !var.asInt())
+				allowedGames = tNetSession::POTSGame;
+		}
 		
 		var = cfg->getVar("spawn.start");
 		if (var.isEmpty()) spawnStart = 5001;
@@ -242,8 +251,8 @@ namespace alc {
 					else if (u->min_version != 6) u->gameType = tNetSession::UUGame; // it's not TPOTS (assume UU)
 					else if (u->min_version == 6) u->gameType = tNetSession::POTSGame; // it *is* TPOTS
 					// block UU if we're told to do so
-					if (!allowUU && u->gameType == tNetSession::UUGame) // it's UU, and we are told not to allow that, so tell him the servers are older
-						result = AProtocolOlder;
+					if (allowedGames != tNetSession::UnknownGame && u->gameType != allowedGames) // it's not what we want, so reject authentication
+						result = AUnspecifiedServerError;
 					
 					// init the challenge to the MD5 of the current system time and other garbage
 					tTime t = tTime::now();
@@ -453,28 +462,24 @@ namespace alc {
 				// get the data out of the packet
 				tmFindAge findAge(u, msg);
 				
-				tvAgeLinkStruct ageLink;
-				findAge.message.rewind();
-				findAge.message.get(ageLink);
-				if (!findAge.message.eof()) throw txProtocolError(_WHERE("Got a NetMsgFindAge which is too long"));
-				log->print(" %s\n", ageLink.str().c_str());
-				
-				if (ageLink.linkingRule != KOriginalBook && ageLink.linkingRule != KOwnedBook && ageLink.linkingRule != KBasicLink && ageLink.linkingRule != KVisitBook && ageLink.linkingRule != KSubAgeBook)
-					throw txProtocolError(_WHERE("Linking rule must be KSubAgeBook, KOriginalBook, KOwnedBook, KVisitBook or KBasicLink but is 0x%02X", ageLink.linkingRule));
-				if (ageLink.ccr)
+				if (findAge.link.linkingRule != KOriginalBook && findAge.link.linkingRule != KOwnedBook &&
+						findAge.link.linkingRule != KBasicLink && findAge.link.linkingRule != KVisitBook &&
+						findAge.link.linkingRule != KSubAgeBook)
+					throw txProtocolError(_WHERE("Linking rule must be KSubAgeBook, KOriginalBook, KOwnedBook, KVisitBook or KBasicLink but is 0x%02X", findAge.link.linkingRule));
+				if (findAge.link.ccr)
 					throw txProtocolError(_WHERE("Linking as CCR is not allowed"));
 				
 				// if asked to do so, log the linking
 				if (!linkLog.isEmpty()) {
 					FILE *f = fopen(linkLog.c_str(), "a");
 					if (f) {
-						fprintf(f, "Player %s links from %s to: %s\n", u->name.c_str(), serverName.c_str(), ageLink.str().c_str());
+						fprintf(f, "Player %s links from %s to: %s\n", u->name.c_str(), serverName.c_str(), findAge.link.str().c_str());
 						fclose(f);
 					}
 				}
 				
-				// Let's ask vault
-				send(tmCustomVaultFindAge(*vaultServer, u->ki, findAge.x, u->getSid(), findAge.message));
+				// Let's ask vault (will reply with a CustomFindServer)
+				send(tmFindAge(*vaultServer, u->getSid(), findAge));
 				
 				return 1;
 			}

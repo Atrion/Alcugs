@@ -150,7 +150,6 @@ game.linger_time = 120 # default: 120
 ;game.tmp.hacks.noreltoshare = 1 # enable a hack which prevents a crash when trying to share a Relto book (default 0)
 
 # client settings
-allow_uu_clients = 0 # this controls whether UU clients are allowed to connect to the game server (default: 1)
-# This should NOT be set to 0 in [lobby] as the UruSetup.exe everyone uses is an UU client. For game servers however, it's a good mean to
-# prevent SDL confusion to be caused by UU clients. Also note that UU client support is untested.
+allowed_games = 2 # this controls which kinds of clients are allowed to connect to the server: 1 = UU, 2 = TPOTS
+# Your Shard can not support both at the same time, and changing this later when the avatar are already created will most likely cause issues!
 stop = 1

@@ -95,17 +95,6 @@ namespace alc {
 	/** Convert an IP-address to a string */
 	tString alcGetStrIp(uint32_t ip);
 
-
-	/** convert pageIDs to pageNumbers and the other way around - wired, but whatever... */
-	inline uint16_t alcPageIdToNumber(uint32_t seqPrefix, uint32_t pageId)
-	{
-		return pageId - (seqPrefix << 8) - 33;
-	}
-	inline uint32_t alcPageNumberToId(uint32_t seqPrefix, uint16_t number)
-	{
-		return (seqPrefix << 8) + 33 + number;
-	}
-
 	//These macros are the inverse of htonl() etc. They take little-endian
 	// numbers and put them in host order or vice-versa. The htonl() macros
 	// cannot be used because they are #defined to no-ops on big-endian machines.

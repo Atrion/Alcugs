@@ -33,7 +33,7 @@
 
 namespace alc {
 	
-	class tmCustomVaultFindAge;
+	class tmFindAge;
 
 	class tmCustomSetGuid : public tmNetMsg {
 		NETMSG_RECEIVE_CONSTRUCTORS(tmCustomSetGuid, tmNetMsg)
@@ -64,7 +64,7 @@ namespace alc {
 	class tmCustomFindServer : public tmNetMsg { // also used by vault
 		NETMSG_RECEIVE_CONSTRUCTORS(tmCustomFindServer, tmNetMsg)
 	public:
-		tmCustomFindServer(tNetSession *u, const tmCustomVaultFindAge &findAge, const tString &serverGuid, const tString &age);
+		tmCustomFindServer(tNetSession *u, const tmFindAge &findAge);
 		tmCustomFindServer(tNetSession *u, const tmCustomFindServer &findServer);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;

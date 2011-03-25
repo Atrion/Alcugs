@@ -37,6 +37,7 @@
 #include <alcmain.h>
 
 #include <cstring>
+#include <cassert>
 
 
 namespace alc {
@@ -233,15 +234,6 @@ int alcUruValidatePacket(uint8_t * buf,int n,uint8_t * validation,bool authed,co
 #endif
 	}
 	return 3; //aiieee!!!
-}
-
-uint16_t alcFixUUNetMsgCommand(uint16_t cmd, const tNetSession *u)
-{
-	// we might have to fix the message type
-	if (u->gameType == tNetSession::UUGame
-			&& (cmd == NetMsgVault_UU || cmd == NetMsgPython_UU || cmd == NetMsgSetTimeout_UU || cmd == NetMsgActivePlayerSet_UU))
-		return cmd+1; // these values are incremented by 1 in TPOTS (remember to also update tmNetMsg::stream!)
-	return cmd;
 }
 
 //Unet Uru Message
@@ -516,7 +508,8 @@ tmNetMsg::tmNetMsg(uint16_t cmd,uint32_t flags,tNetSession * u) : tmBase(u) {
 void tmNetMsg::store(tBBuf &t) {
 	if (!u)  throw txProtocolError(_WHERE("attempt to save message without session being set"));
 	//base
-	cmd=alcFixUUNetMsgCommand(t.get16(), u);
+	cmd=t.get16();
+	if (u->gameType == tNetSession::UUGame) cmd = alcOpcodeUU2POTS(cmd);
 	flags=t.get32();
 	if(flags & plNetVersion) {
 		max_version=t.get8();
@@ -582,10 +575,11 @@ void tmNetMsg::store(tBBuf &t) {
 void tmNetMsg::stream(tBBuf &t) const {
 	if (!u)  throw txProtocolError(_WHERE("attempt to send message without session being set"));
 	if (!cmd) throw txProtocolError(_WHERE("attempt to send message without cmd"));
+	assert(!u->isUruClient() || !hasFlags(plNetSid));
 	
-	// fix for UU clients
-	if (u->gameType == tNetSession::UUGame && (cmd == NetMsgVault || cmd == NetMsgPython || cmd == NetMsgSetTimeout || cmd == NetMsgActivePlayerSet))
-		t.put16(cmd-1); // these are incremented by 1 in POTS (remember to also update alcFixUUNetMsgCommand!)
+	// fix opcode for UU clients
+	if (u->gameType == tNetSession::UUGame)
+		t.put16(alcOpcodePOTS2UU(cmd));
 	else
 		t.put16(cmd);
 	
@@ -803,19 +797,6 @@ const char * alcUnetGetAvatarCode(uint8_t code) {
 	}
 }
 
-const char * alcUnetGetLinkingRule(uint8_t rule)
-{
-	switch (rule) {
-		case KBasicLink: return "KBasicLink";
-		case KOriginalBook: return "KOriginalBook";
-		case KSubAgeBook: return "KSubAgeBook";
-		case KOwnedBook: return "KOwnedBook";
-		case KVisitBook: return "KVisitBook";
-		case KChildAgeBook: return "KChildAgeBook";
-		default: return "Unknown";
-	}
-}
-
 const char * alcUnetGetMsgCode(uint16_t code) {
 	switch(code) {
 		case NetMsgPagingRoom: return "NetMsgPagingRoom";
@@ -857,6 +838,12 @@ const char * alcUnetGetMsgCode(uint16_t code) {
 		case NetMsgPython: return "plNetMsgPython";
 		case NetMsgSetTimeout: return "NetMsgSetTimeout";
 		case NetMsgActivePlayerSet: return "NetMsgActivePlayerSet";
+		case NetMsgGetPublicAgeList: return "NetMsgGetPublicAgeList";
+		case NetMsgPublicAgeList: return "NetMsgPublicAgeList";
+		case NetMsgCreatePublicAge: return "NetMsgCreatePublicAge";
+		case NetMsgPublicAgeCreated: return "NetMsgPublicAgeCreated";
+		case NetMsgRemovePublicAge: return "NetMsgRemovePublicAge";
+		case NetMsgPublicAgeRemoved: return "NetMsgPublicAgeRemoved";
 		// Custom messages
 		case NetMsgCustomAuthAsk: return "NetMsgCustomAuthAsk";
 		case NetMsgCustomAuthResponse: return "NetMsgCustomAuthResponse";

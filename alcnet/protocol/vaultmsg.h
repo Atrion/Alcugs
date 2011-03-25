@@ -45,23 +45,116 @@ namespace alc {
 		tMBuf message;
 	};
 	
-	class tmCustomVaultAskPlayerList : public tmNetMsg {
-		NETMSG_RECEIVE_CONSTRUCTORS(tmCustomVaultAskPlayerList, tmNetMsg)
+	class tmGetPublicAgeList : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmGetPublicAgeList, tmNetMsg)
 	public:
-		tmCustomVaultAskPlayerList(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid);
-		virtual void store(tBBuf &t);
-	};
-	
-	class tmCustomVaultPlayerList : public tmNetMsg {
-		NETMSG_RECEIVE_CONSTRUCTORS(tmCustomVaultPlayerList, tmNetMsg)
-	public:
-		tmCustomVaultPlayerList(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid);
+		tmGetPublicAgeList(tNetSession *u, uint32_t sid, const tmGetPublicAgeList &getAgeList);
 		virtual void store(tBBuf &t);
 		virtual void stream(tBBuf &t) const;
 		virtual tString additionalFields(tString dbg) const;
 		// format
-		uint16_t numberPlayers;
-		tMBuf players;
+		tString age;
+	};
+	
+	class tmPublicAgeList : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmPublicAgeList, tmNetMsg)
+	public:
+		typedef std::vector<tAgeInfoStruct> tAgeList;
+		typedef std::vector<uint32_t> tPopulationList;
+		
+		tmPublicAgeList(tNetSession *u, const tmGetPublicAgeList &getAgeList);
+		tmPublicAgeList(tNetSession *u, const tmPublicAgeList &ageList);
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
+		virtual tString additionalFields(tString dbg) const;
+		
+		// format
+		tAgeList ages;
+		tPopulationList populations;
+	};
+	
+	class tmCreatePublicAge : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmCreatePublicAge, tmNetMsg)
+	public:
+		tmCreatePublicAge(alc::tNetSession* u, uint32_t sid, const alc::tmCreatePublicAge& createAge);
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
+		virtual tString additionalFields(tString dbg) const;
+		
+		// format
+		tAgeInfoStruct age;
+	};
+	
+	class tmPublicAgeCreated : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmPublicAgeCreated, tmNetMsg)
+	public:
+		tmPublicAgeCreated(tNetSession *u, const tmCreatePublicAge &createAge);
+		tmPublicAgeCreated(tNetSession *u, const tmPublicAgeCreated &ageCreated);
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
+		virtual tString additionalFields(tString dbg) const;
+		
+		// format
+		tAgeInfoStruct age;
+	};
+	
+	class tmRemovePublicAge : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmRemovePublicAge, tmNetMsg)
+	public:
+		tmRemovePublicAge(tNetSession *u, uint32_t sid, const tmRemovePublicAge &removeAge);
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
+		virtual tString additionalFields(tString dbg) const;
+		
+		// format
+		uint8_t guid[8];
+	};
+	
+	class tmPublicAgeRemoved : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmPublicAgeRemoved, tmNetMsg)
+	public:
+		tmPublicAgeRemoved(tNetSession *u, const tmRemovePublicAge &removeAge);
+		tmPublicAgeRemoved(tNetSession *u, const tmPublicAgeRemoved &ageRemoved);
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
+		virtual tString additionalFields(tString dbg) const;
+		
+		// format
+		uint8_t guid[8];
+	};
+	
+	class tmRequestMyVaultPlayerList : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmRequestMyVaultPlayerList, tmNetMsg)
+	public:
+		tmRequestMyVaultPlayerList(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid);
+		virtual void store(tBBuf &t);
+	};
+	
+	class tmVaultPlayerList : public tmNetMsg {
+		NETMSG_RECEIVE_CONSTRUCTORS(tmVaultPlayerList, tmNetMsg)
+	public:
+		class tAvatar : public tStreamable {
+		public:
+			tAvatar(uint32_t ki, tString name, uint8_t flags) : ki(ki), name(name), flags(flags) {}
+			tAvatar() {}
+			virtual void store(tBBuf &t);
+			virtual void stream(tBBuf &t) const;
+			
+			uint32_t ki;
+			tString name;
+			uint8_t flags;
+		};
+		typedef std::vector<tAvatar> tAvatarList;
+		
+		tmVaultPlayerList(tNetSession *u, uint32_t x, uint32_t sid, const uint8_t *uid);
+		tmVaultPlayerList(tNetSession *u, const tmVaultPlayerList &playerList, const tString &url);
+		virtual void store(tBBuf &t);
+		virtual void stream(tBBuf &t) const;
+		virtual tString additionalFields(tString dbg) const;
+		
+		// format
+		tAvatarList avatars;
+		tString url;
 	};
 	
 	class tmCustomVaultPlayerStatus : public tmNetMsg {
@@ -130,16 +223,6 @@ namespace alc {
 		// format
 		uint8_t status;
 		tString avatar;
-	};
-	
-	class tmCustomVaultFindAge : public tmNetMsg {
-		NETMSG_RECEIVE_CONSTRUCTORS(tmCustomVaultFindAge, tmNetMsg)
-	public:
-		tmCustomVaultFindAge(tNetSession *u, uint32_t ki, uint32_t x, uint32_t sid, const tMBuf &data);
-		virtual void store(tBBuf &t);
-		virtual void stream(tBBuf &t) const;
-		// format
-		tMBuf data;
 	};
 	
 } //End alc namespace
