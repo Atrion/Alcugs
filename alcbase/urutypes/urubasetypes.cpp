@@ -434,6 +434,7 @@ void tAgeInfoStruct::store(tBBuf &t)
 		throw txUnexpectedData(_WHERE("the 0x02 flag must always be set in AgeInfoStruct"));
 	
 	t.get(filename);
+	if (filename.isEmpty()) throw txUnexpectedData(_WHERE("An empty age filename is not allowed"));
 	
 	if (flags & 0x01) // instance name
 		t.get(instanceName);

@@ -106,7 +106,7 @@ namespace alc {
 		vaultDB = new tVaultDB(&log);
 		vaultFolderName = vaultDB->getVaultFolderName();
 		DBG(5, "global vault folder name is %s\n", vaultFolderName.c_str());
-		checkMainNodes();
+		checkMainNodes(); // must be called here: Be sure to also have those referencs around when cleaning the vault!
 		log.flush();
 	}
 	
@@ -170,8 +170,23 @@ namespace alc {
 		node = new tvNode(MType | MInt32_1);
 		node->type = KFolderNode;
 		node->int1 = KPublicAgesFolder;
-		getChildNodeBCasted(KVaultID, adminNode, *node);
+		publicAgesFolder = getChildNodeBCasted(KVaultID, adminNode, *node);
 		delete node;
+		
+		// public ages that must be in PublicAgesFolder
+		uint8_t guid[8];
+		{
+			if (!generateGuid(guid, "city", 0)) throw txProtocolError(_WHERE("error creating city GUID"));
+			tAgeInfoStruct ageInfo("city", "Ae'gura", "Ae'gura", "Ae'gura", guid);
+			uint32_t ageNode = getAge(ageInfo);
+			addRefBCasted(KVaultID, publicAgesFolder, ageNode);
+		}
+		{
+			if (!generateGuid(guid, "Neighborhood", 0)) throw txProtocolError(_WHERE("error creating hood GUID"));
+			tAgeInfoStruct ageInfo("Neighborhood", "Neighborhood", hoodName, hoodDesc, guid);
+			uint32_t ageNode = getAge(ageInfo);
+			addRefBCasted(KVaultID, publicAgesFolder, ageNode);
+		}
 		
 		// System node
 		node = new tvNode(MType);
@@ -196,12 +211,6 @@ namespace alc {
 	void tVaultBackend::sendAgeList(tmGetPublicAgeList &getAgeList)
 	{
 		tmPublicAgeList ageList(getAgeList.getSession(), getAgeList);
-		// find public age list
-		tvNode *node = new tvNode(MType | MInt32_1);
-		node->type = KFolderNode;
-		node->int1 = KPublicAgesFolder;
-		uint32_t publicAgesFolder = vaultDB->findNode(*node);
-		delete node;
 		// fetch age info nodes
 		tvNode **nodes;
 		size_t size;
@@ -215,28 +224,12 @@ namespace alc {
 			delete nodes[i];
 		}
 		free(nodes);
-		// the UU client expects at least one item in the list when asking for cities, and that kinda makes sense - add the global one (according to our GUID schema)
-		if (getAgeList.age == "city" && ageList.ages.empty()) {
-			uint8_t guid[8];
-			if (!generateGuid(guid, "city", 0)) throw txProtocolError(_WHERE("error creating GUID"));
-			tAgeInfoStruct ageInfo("city", "Ae'gura", "Ae'gura", "Ae'gura", guid);
-			
-			uint32_t ageNode = getAge(ageInfo);
-			addRefBCasted(KVaultID, publicAgesFolder, ageNode);
-			ageList.ages.push_back(tAgeInfoStruct(ageInfo.filename, ageInfo.instanceName, guid, 1));
-		}
 		// done!
 		net->send(ageList);
 	}
 	
 	void tVaultBackend::createPublicAge(tmCreatePublicAge& createAge)
 	{
-		// find public age list
-		tvNode *node = new tvNode(MType | MInt32_1);
-		node->type = KFolderNode;
-		node->int1 = KPublicAgesFolder;
-		uint32_t publicAgesFolder = vaultDB->findNode(*node);
-		delete node;
 		// add the age to it
 		uint32_t ageNode = getAge(createAge.age);
 		addRefBCasted(KVaultID, publicAgesFolder, ageNode);
@@ -246,12 +239,6 @@ namespace alc {
 	
 	void tVaultBackend::removePublicAge(tmRemovePublicAge& removeAge)
 	{
-		// find public age list
-		tvNode *node = new tvNode(MType | MInt32_1);
-		node->type = KFolderNode;
-		node->int1 = KPublicAgesFolder;
-		uint32_t publicAgesFolder = vaultDB->findNode(*node);
-		delete node;
 		// remove the age from it
 		uint32_t ageInfoNode = getAge(tAgeInfoStruct(removeAge.guid), /*create*/false);
 		if (ageInfoNode) { // if there is anything to remove
@@ -862,7 +849,6 @@ namespace alc {
 		node = new tvNode(MType | MStr64_4);
 		node->type = KAgeInfoNode;
 		if (ageInfo.hasFilename()) { // we have some GUID-only requests
-			assert(ageInfo.filename.size() > 0);
 			node->flagB |= MStr64_1;
 			node->str1 = ageInfo.filename;
 		}
@@ -879,6 +865,8 @@ namespace alc {
 	
 	uint32_t tVaultBackend::createAge(const tAgeInfoStruct &ageInfo)
 	{
+		if (!ageInfo.hasFilename() || !ageInfo.hasGuid())
+			throw txUnet(_WHERE("An age to be created MUST have filename and GUID set"));
 		tvNode *node;
 		// first create the age mgr node
 		node = new tvNode(MType | MStr64_1);
@@ -993,7 +981,7 @@ namespace alc {
 		if (!ageLinkNode) return; // the player does not have a link to this age
 		
 		// and now remove that node and broadcast the removal
-		vaultDB->removeNodeRef(linkedAgesFolder, ageLinkNode, /*cautious*/false); // this will remove the node if this was the only ref
+		vaultDB->removeNodeRef(linkedAgesFolder, ageLinkNode);
 		broadcastNodeRefUpdate(new tvNodeRef(0, linkedAgesFolder, ageLinkNode), /*removal*/true);
 	}
 	
@@ -1071,19 +1059,21 @@ namespace alc {
 		// link that player with the (default) hood and the city (like UU does it)
 		uint8_t guid[8];
 		{
-			if (!generateGuid(guid, "city", ki)) throw txProtocolError(_WHERE("error creating GUID"));
-			tAgeInfoStruct ageInfo("city", "Ae'gura", "Ae'gura", "Ae'gura", guid);
+			if (!generateGuid(guid, "city", 0)) throw txProtocolError(_WHERE("error creating city GUID"));
+			tAgeInfoStruct ageInfo("city", guid);
 			tSpawnPoint spawnPoint("FerryTerminal", "LinkInPointFerry");
 			
-			uint32_t ageNode = getAge(ageInfo);
+			uint32_t ageNode = getAge(ageInfo, /*create*/false);
+			if (!ageNode) throw txProtocolError(_WHERE("Could not find the one and only city?"));
 			addAgeLinkToPlayer(ki, ageNode, spawnPoint);
 		}
 		{
-			if (!generateGuid(guid, "Neighborhood", ki)) throw txProtocolError(_WHERE("error creating hood GUID"));
-			tAgeInfoStruct ageInfo("Neighborhood", "Neighborhood", hoodName, hoodDesc, guid);
+			if (!generateGuid(guid, "Neighborhood", 0)) throw txProtocolError(_WHERE("error creating hood GUID"));
+			tAgeInfoStruct ageInfo("Neighborhood", guid);
 			tSpawnPoint spawnPoint("Default", "LinkInPointDefault");
 			
-			uint32_t ageNode = getAge(ageInfo);
+			uint32_t ageNode = getAge(ageInfo, /*create*/false);
+			if (!ageNode) throw txProtocolError(_WHERE("Could not find the one and only hood?"));
 			addAgeLinkToPlayer(ki, ageNode, spawnPoint);
 			addRemovePlayerToAge(ageNode, ki);
 		}

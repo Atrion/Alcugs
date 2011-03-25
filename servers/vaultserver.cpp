@@ -86,9 +86,7 @@ namespace alc {
 			case NetMsgRequestMyVaultPlayerList:
 			{
 				tmRequestMyVaultPlayerList askPlayerList(u, msg);
-				
 				vaultBackend.sendPlayerList(askPlayerList);
-				
 				return 1;
 			}
 			case NetMsgCustomVaultCreatePlayer:
@@ -129,9 +127,7 @@ namespace alc {
 			case NetMsgCustomVaultCheckKi:
 			{
 				tmCustomVaultCheckKi checkKi(u, msg);
-				
 				vaultBackend.checkKi(checkKi);
-				
 				return 1;
 			}
 			case NetMsgFindAge:

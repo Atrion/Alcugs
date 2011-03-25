@@ -145,6 +145,7 @@ namespace alc {
 	
 		tVaultDB *vaultDB;
 		tString vaultFolderName;
+		uint32_t publicAgesFolder;
 		
 		int instanceMode;
 		tString privateAges; // msut start and end with a comma
