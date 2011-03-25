@@ -751,13 +751,12 @@ namespace alc {
 				log.log("TRegisterOwnedAge (age filename: %s) from %d\n", ageLink->ageInfo.filename.c_str(), msg.vmgr);
 				
 				// if necessary, generate the guid
-				uint8_t zeroGuid[8];
-				memset(zeroGuid, 0, 8);
-				if (memcmp(ageLink->ageInfo.guid, zeroGuid, 8) == 0) {
+				if (!ageLink->ageInfo.hasGuid()) {
 					// this happens for the Watcher's Guild link which is created "on the fly" as Relto expects it, and
 					// for the links to the 4 Ahnonay spheres which are created when linking to the Cathedral
 					if (!generateGuid(ageLink->ageInfo.guid, ageLink->ageInfo.filename, msg.vmgr))
 						throw txProtocolError(_WHERE("could not generate GUID"));
+					ageLink->ageInfo.flags |= 0x04; // GUID flag
 				}
 				
 				// now find the age info node of the age we're looking for
