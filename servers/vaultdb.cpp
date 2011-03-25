@@ -1203,7 +1203,8 @@ namespace alc {
 			type = KInvalidNode; // don't fail when son of a ref we have to remove doesn't exist - this seems to happen sometimes
 		mysql_free_result(result);
 		
-		bool safeType = cautious ? (type == KImageNode || type == KTextNoteNode || type == KChronicleNode || type == KMarkerListNode || type == KMarkerNode) : (type > 7);
+		bool safeType = cautious ? (type == KImageNode || type == KTextNoteNode || type == KChronicleNode
+				|| type == KMarkerListNode || type == KMarkerNode) : (type > KVNodeMgrMAX);
 		if (type != KInvalidNode && numParent <= 1 && safeType) {
 			// there are no more references to this node, and it's a safe node to remove
 			removeNodeTree(son, cautious);
