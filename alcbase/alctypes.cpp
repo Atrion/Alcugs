@@ -462,7 +462,7 @@ void tZBuf::uncompress(size_t iosize) {
 		Upon exit, destLen is the actual size of the compressed buffer. */
 	if(ret!=0) throw txBase(_WHERE("Something terrible happenened uncompressing the buffer"));
 	if (iosize != comp_size)
-		throw txUnexpectedData(_WHERE("tZBuf size mismatch: %Zi != %Zi", iosize, comp_size));
+		throw txUnexpectedData(_WHERE("tZBuf size mismatch: %Zi != %li", iosize, comp_size));
 	copy(newBuf);
 	rewind();
 }
