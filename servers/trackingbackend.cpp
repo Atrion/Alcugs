@@ -142,8 +142,6 @@ namespace alc {
 		player->sid = findServer.sid;
 		player->awaiting_x = findServer.x;
 		log.log("Player %s wants to link to %s (%s)\n", player->str().c_str(), findServer.age.c_str(), findServer.serverGuid.c_str());
-		if (findServer.serverGuid == "0000000000000000") // these are 16 zeroes
-			throw txProtocolError(_WHERE("No age GUID set"));
 		// copy data to player
 		player->status = RInRoute;
 		alcGetHexGuid(player->awaiting_guid, findServer.serverGuid);

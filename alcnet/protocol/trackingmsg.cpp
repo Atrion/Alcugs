@@ -139,6 +139,8 @@ namespace alc {
 		
 		t.get(serverGuid);
 		if (serverGuid.size() != 16) throw txProtocolError(_WHERE("NetMsgCustomFindServer.serverGuid must be 16 characters long"));
+		if (serverGuid == "0000000000000000") // these are 16 zeroes
+			throw txProtocolError(_WHERE("NetMsgCustomFindServer.serverGuid must not be all zero"));
 		t.get(age);
 	}
 	
@@ -172,6 +174,8 @@ namespace alc {
 		forkPort = t.get16();
 		t.get(serverGuid);
 		if (serverGuid.size() != 16) throw txProtocolError(_WHERE("NetMsgCustomForkServer.serverGuid must be 16 characters long"));
+		if (serverGuid == "0000000000000000") // these are 16 zeroes
+			throw txProtocolError(_WHERE("NetMsgCustomForkServer.serverGuid must not be all zero"));
 		t.get(age);
 	}
 	
@@ -209,6 +213,8 @@ namespace alc {
 		t.get(ipStr);
 		t.get(serverGuid);
 		if (serverGuid.size() != 16) throw txProtocolError(_WHERE("NetMsgCustomServerFound.serverGuid must be 16 characters long"));
+		if (serverGuid == "0000000000000000") // these are 16 zeroes
+			throw txProtocolError(_WHERE("NetMsgCustomServerFound.serverGuid must not be all zero"));
 		t.get(age);
 	}
 	
