@@ -442,7 +442,6 @@ tString tmNetClientComm::str() const {
 // Ack
 tmNetAck::tmNetAck(tNetSession *u, const tUnetAck &ack) : tmBase(u)
 {
-	urgent = true;
 	acks.push_back(ack);
 }
 void tmNetAck::store(tBBuf &t)

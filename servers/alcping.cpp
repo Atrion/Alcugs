@@ -57,7 +57,6 @@ void parameters_usage() {
  -one: Does only one ping probe and displays that value\n\
  -d x: Set the destination.\n\
  -s x: Set the source.\n\
- -u:   Set Urgent flag.\n\
  Valid source/destination addresses are:\n\
   [1]   Agent\n\
   [2]   Lobby\n\
@@ -82,9 +81,6 @@ public:
 	void setDestination(uint8_t d);
 	void setDestinationAddress(const tString &d,uint16_t port);
 	void setValidation(uint8_t val);
-	void setUrgent() {
-		urgent=true;
-	}
 private:
 	bool listen;
 	double time;
@@ -99,7 +95,6 @@ private:
 	tNetTime lastSend;
 	double min,max,avg;
 	int rcvn;
-	bool urgent;
 	
 	tMutex mutex; //!< for all the counting and stuff
 };
@@ -121,7 +116,6 @@ tUnetPing::tUnetPing(const tString &lhost,uint16_t lport,bool listen,double time
 	max=0;
 	avg=0;
 	rcvn=0;
-	urgent=false;
 }
 
 void tUnetPing::setDestination(uint8_t d) {
@@ -166,7 +160,6 @@ int tUnetPing::onMsgRecieved(tUnetMsg * msg,tNetSession * u) {
 				printf("Ping from %s:%i x=%i dest=%i %s time=%0.3f ms .... pong....\n",
 					alcGetStrIp(u->getIp()).c_str(),ntohs(u->getPort()),ping.x,ping.destination,
 					alcUnetGetDestination(ping.destination),ping.mtime*1000);
-				ping.urgent = urgent;
 				send(ping);
 			}
 			return 1;
@@ -205,7 +198,6 @@ void tUnetPing::onIdle() {
 		DBG(5, "Time to send again\n");
 		//snd ping message
 		tmPing ping(*dstSession, destination);
-		ping.urgent = urgent;
 
 		count++;
 		lastSend = getNetTime();
@@ -236,7 +228,7 @@ int main(int argc,char * argv[]) {
 	
 	//options
 	int num=5,flood=1; //num probes & flood multiplier
-	bool listen=false,mrtg=false,nlogs=false,urgent=false;
+	bool listen=false,mrtg=false,nlogs=false;
 	
 	//start Alcugs library (before parameters, for the license text!)
 	tAlcUnetMain alcMain("Client");
@@ -258,7 +250,6 @@ int main(int argc,char * argv[]) {
 		else if(!strcmp(argv[i],"-val") && argc>i+1) { i++; val=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-f") && argc>i+1) { i++; flood=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-one")) { mrtg=true; }
-		else if(!strcmp(argv[i],"-u")) { urgent=true; }
 		else if(!strcmp(argv[i],"-v") && argc>i+1) { i++; loglevel=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-lh") && argc>i+1) {
 			i++;
@@ -329,7 +320,6 @@ int main(int argc,char * argv[]) {
 		netcore.setDestination(destination);
 		netcore.setDestinationAddress(hostname,port);
 		netcore.setValidation(val);
-		if(urgent) netcore.setUrgent();
 		
 		netcore.run();
 		

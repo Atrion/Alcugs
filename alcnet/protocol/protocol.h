@@ -138,12 +138,11 @@ public:
 
 class tmBase :public tStreamable {
 public:
-	tmBase(tNetSession *u) : urgent(false), u(u) {}
+	tmBase(tNetSession *u) : u(u) {}
 	virtual tString str() const=0;
 	virtual uint8_t bhflags() const=0; //!< returns the correct send flags for this packet
+	virtual bool urgent() const=0; //!< returns whether this packet should be put at the top of the sendqueue (only do this for small packages as they will be sent even against cabal limits)
 	tNetSession *getSession(void) const { return u; }
-	
-	bool urgent;
 protected:
 	tNetSession * u; //!< associated session (source for incoming, destination for outgoing)
 };
@@ -153,10 +152,10 @@ public:
 	virtual void store(tBBuf &t);
 	virtual void stream(tBBuf &t) const;
 	tmNetClientComm(tNetSession *u, tUnetUruMsg *msg) : tmBase(u) { tmNetClientComm::store(msg->data); }
-	tmNetClientComm(const tTime &t,uint32_t bw, tNetSession *u) : tmBase(u), timestamp(t), bandwidth(bw)
-			{ urgent = true; }
+	tmNetClientComm(const tTime &t,uint32_t bw, tNetSession *u) : tmBase(u), timestamp(t), bandwidth(bw) {}
 	virtual tString str() const;
 	virtual uint8_t bhflags() const { return UNetNegotiation|UNetAckReq; }
+	virtual bool urgent() const { return true; }
 	tTime timestamp;
 	uint32_t bandwidth;
 };
@@ -170,6 +169,7 @@ public:
 	virtual void stream(tBBuf &t) const;
 	virtual tString str() const;
 	virtual uint8_t bhflags() const { return UNetAckReply; }
+	virtual bool urgent() const { return true; }
 	
 	typedef std::vector<tUnetAck> tAckList;
 	tAckList acks;
@@ -188,6 +188,7 @@ public:
 	virtual void stream(tBBuf &t) const;
 	
 	virtual uint8_t bhflags() const { return flags & plNetAck ? UNetAckReq : 0; }
+	virtual bool urgent() const { return false; }
 	void setFlags(uint32_t f) { this->flags |= f; }
 	void unsetFlags(uint32_t f) { this->flags &= ~f; }
 	uint32_t getFlags() const { return flags; }
