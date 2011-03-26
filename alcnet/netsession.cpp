@@ -225,7 +225,7 @@ void tNetSession::send(const tmBase &msg, tNetTime delay) {
 			if(i==n_pkts) csize=psize - (i*pkt_sz);
 			else csize=pkt_sz;
 			
-			tUnetUruMsg * pmsg=new tUnetUruMsg(msg.urgent);
+			tUnetUruMsg * pmsg=new tUnetUruMsg(msg.urgent());
 			pmsg->val=val;
 			//pmsg.pn NOT in this layer (done in the msg sender, tUnet::rawsend)
 			//since urgent messages are put at the top of the sndq, the pn would be wrong if we did it differently
@@ -814,8 +814,13 @@ tNetTimeBoolPair tNetSession::processSendQueues()
 		// control for auto-drop of old non-acked messages
 		const unsigned int minTH=15;
 		const unsigned int maxTH=100;
-		// max. number of allowed re-sends before timeout: Give terminated clients less time
-		const unsigned int resendLimit = (state != Connected) ? 3 : 10;
+		/* Max. number of allowed re-sends before timeout:
+		 * In production, I have the weird issue of the whole server being "asleep" for 0.5 to 0.7 seconds, and the connections to
+		 * other servers dropping in that time. So do as many resends as are necessary to wait one second:
+		 * n*(n+1)/2*t = 1  <=>  n = -0.5 + sqrt(-0.25 + 2/t)
+		 * And add 0.5 for proper rounding, and do not try less than 10 resends, with less time for terminated
+		 * clients (so, in end-effect, that calulation will be used only for localhost connections). */
+		const unsigned int resendLimit = std::max((state != Connected) ? 5u : 10u, static_cast<unsigned int>(sqrt(2.0/msg_timeout - 0.25)));
 		
 		// urgent packets
 		tNetQeue<tUnetUruMsg>::iterator it = sndq.begin();

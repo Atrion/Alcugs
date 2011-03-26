@@ -52,8 +52,7 @@ void parameters_usage() {
  -lp x: Set the local port (enables listen mode)\n\
  -rp x: Set the remote port\n\
  -lh x: Set the local host (enables listen mode)\n\
- -rh x: Set the remote host\n\
- -u:   Set Urgent flag.\n\n");
+ -rh x: Set the remote host\n\n");
 }
 
 class tmData :public tmNetMsg {
@@ -122,9 +121,6 @@ public:
 	virtual void onStart();
 	void setDestinationAddress(const tString & d,uint16_t port);
 	void setValidation(uint8_t val);
-	void setUrgent() {
-		urgent=true;
-	}
 	void setFile(const tString &file) {
 		this->file = file;
 	}
@@ -136,7 +132,6 @@ private:
 	tString d_host;
 	uint16_t d_port;
 	uint8_t validation;
-	bool urgent;
 	bool compressed;
 	tString file;
 	bool sent;
@@ -153,7 +148,6 @@ tUnetSimpleFileServer::tUnetSimpleFileServer(const tString &lhost,uint16_t lport
 	this->unsetFlags(UNET_FLOODCTR); // disable flood protection
 	d_port=5000;
 	validation=2;
-	urgent=false;
 	sent=false;
 	sentBytes=0;
 	compressed=false;
@@ -193,7 +187,6 @@ void tUnetSimpleFileServer::onIdle() {
 		while ((size = f1.remaining())) {
 			if (size > maxSize) size = maxSize;
 			tmData data(*dstSession, compressed);
-			if (urgent) data.urgent = true;
 			if (first) {
 				data.setFirstFragment();
 				first = false;
@@ -256,7 +249,7 @@ int main(int argc,char * argv[]) {
 	uint8_t val=2; //validation level
 	
 	//options
-	bool listen=false,nlogs=false,urgent=false,compress=false;
+	bool listen=false,nlogs=false,compress=false;
 	
 	//start Alcugs library (before parsing params, or license text won't work!)
 	tAlcUnetMain alcMain("Client");
@@ -272,7 +265,6 @@ int main(int argc,char * argv[]) {
 		else if(!strcmp(argv[i],"-f") && argc>i+1) { i++; file = argv[i]; }
 		else if(!strcmp(argv[i],"-nl")) { nlogs=true; }
 		else if(!strcmp(argv[i],"-val") && argc>i+1) { i++; val=atoi(argv[i]); }
-		else if(!strcmp(argv[i],"-u")) { urgent=true; }
 		else if(!strcmp(argv[i],"-z")) { compress=true; }
 		else if(!strcmp(argv[i],"-v") && argc>i+1) { i++; loglevel=atoi(argv[i]); }
 		else if(!strcmp(argv[i],"-lh") && argc>i+1) {
@@ -331,7 +323,6 @@ int main(int argc,char * argv[]) {
 
 		netcore.setValidation(val);
 		netcore.setDestinationAddress(hostname,port);
-		if (urgent) netcore.setUrgent();
 		if (compress) netcore.setCompressed();
 		netcore.setFile(file);
 		

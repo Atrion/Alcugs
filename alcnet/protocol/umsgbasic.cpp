@@ -41,7 +41,6 @@ tmTerminated::tmTerminated(tNetSession * u,uint8_t what)
  : tmNetMsg(NetMsgTerminated,plNetKi | plNetAck,u) {
 	ki=u->ki;
 	reason=what;
-	urgent = true; // We can not wait long after sending the message, so do it quickly!
 }
 void tmTerminated::store(tBBuf &t) {
 	tmNetMsg::store(t);
@@ -63,7 +62,6 @@ tmLeave::tmLeave(tNetSession * u,uint8_t reason)
  The connection is dropped ASAP after sending this message, but the ack reply has to be sent, and it msut not trigger a new connection on the other end */
 	this->ki=u->ki;
 	this->reason=reason;
-	urgent = true; // We can not wait long after sending the message, so do it quickly!
 }
 void tmLeave::store(tBBuf &t) {
 	tmNetMsg::store(t);
