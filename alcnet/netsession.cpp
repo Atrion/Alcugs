@@ -45,11 +45,14 @@
 #include <math.h>
 #include <limits>
 
+static const unsigned int maxPacketSz = 1024; //!< maxium size of the packets
+static const unsigned int minCabal = 5*maxPacketSz; //!< send at least 5 packets per second
+
 namespace alc {
 
 /* Session */
 tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t sid, bool client, uint8_t validation)
-: net(net), ip(ip), port(port), sid(sid), validation(validation), maxPacketSz(1024), rcv(NULL), client(client), refs(1) {
+: net(net), ip(ip), port(port), sid(sid), validation(validation), rcv(NULL), client(client), refs(1) {
 	DBG(5,"tNetSession()\n");
 	assert(alcGetSelfThreadId() == alcGetMain()->threadId());
 	// validation and upgraded protocol hack
@@ -62,7 +65,7 @@ tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t s
 	// fill in default values
 	authenticated=false;
 	accessLevel=0;
-	cabal=maxPacketSz;
+	cabal=minCabal;
 	consecutiveCabalIncreases = 0;
 	flood_npkts=0;
 	flood_last_check = next_msg_time = receive_stamp = send_stamp = net->getNetTime();
@@ -133,11 +136,9 @@ tString tNetSession::str() {
 	return dbg;
 }
 
-size_t tNetSession::getHeaderSize() {
-	size_t my=28;
-	if(validation>0) my+=4;
-	if(upgradedProtocol) my-=8;
-	return my;
+size_t tNetSession::getMaxPacketSz(void) const
+{
+	return maxPacketSz;
 }
 
 // functions to calculate cabal and rtt
@@ -162,7 +163,7 @@ void tNetSession::decreaseCabal(bool emergency) {
 	consecutiveCabalIncreases = 0;
 	const unsigned int delta = emergency ? 25 : 5;
 	cabal -= (delta*cabal)/100;
-	if(cabal < maxPacketSz) cabal = maxPacketSz; // don't drop below one packet per second
+	if(cabal < minCabal) cabal = minCabal; // don't drop below minCabal
 	DBG(3,"%s %sCabal is now %i\n",str().c_str(),emergency ? "--" : "-",cabal);
 }
 
