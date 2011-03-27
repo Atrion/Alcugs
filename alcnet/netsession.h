@@ -59,9 +59,6 @@ public:
 	tNetSession(tUnet * net,uint32_t ip,uint16_t port,uint32_t sid,bool client,uint8_t validation); //ip, port in network order
 	~tNetSession();
 	tString str();
-	size_t getMaxFragmentSize() { return(static_cast<size_t>(maxPacketSz)-getHeaderSize()); }
-	size_t getMaxDataSize() { return(getMaxFragmentSize() * 256); }
-	size_t getHeaderSize();
 	void send(const tmBase &msg, tNetTime delay = 0); //!< delay is in msecs - may be called in worker thread
 	void terminate(uint8_t reason = 0);
 	void setAuthData(uint8_t accessLevel, const tString &passwd);
@@ -72,7 +69,7 @@ public:
 	uint32_t getSid(void) { return sid; } //!< sid will never change, so this is thread-safe
 	uint32_t getIp(void) const { return ip; }
 	uint16_t getPort(void) const { return port; }
-	size_t getMaxPacketSz(void) const { return maxPacketSz; }
+	size_t getMaxPacketSz(void) const;
 	uint8_t getAccessLevel(void) { tReadLock lock(prvDataMutex); return accessLevel; }
 	bool isUruClient(void) { tReadLock lock(prvDataMutex); return authenticated; } //!< thread-safe
 	bool isClient(void) { tReadLock lock(prvDataMutex); return client; } //!< thread-safe
@@ -156,7 +153,6 @@ private:
 	} clientMsg;
 	uint8_t validation; //!< store the validation level (0,1,2)
 	bool upgradedProtocol; //!< use the alcugs upgraded protocol; protected by prvDataMutex
-	const uint16_t maxPacketSz; //!< maxium size of the packets. Must be 1024 (always)
 	tUnetMsg *rcv; //!< The place to assemble a fragmented message
 
 	//flood control

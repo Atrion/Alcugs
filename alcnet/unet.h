@@ -204,6 +204,8 @@ private:
 	tNetTime net_time;
 	tSpinEx net_time_mutex;
 	
+	tNetTime wakeup_time; //!< used to check whether something took way too long
+	
 	int sock; //!< The socket
 	struct sockaddr_in server; //!< Server sockaddr
 	int sndPipeReadEnd, sndPipeWriteEnd; //!< the ends of the pipe used to signal a packet wants to be sent

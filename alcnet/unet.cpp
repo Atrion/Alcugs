@@ -51,8 +51,10 @@
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 
 
-//udp packet max buffer size (0xFFFF) - no packet should be bigger.
-#define INC_BUF_SIZE 65535
+//udp packet max buffer size (0xFFFF = 65535) - no packet should be bigger.
+static const size_t INC_BUF_SIZE = 0xFFFF;
+
+static const double timeTolerance = 0.05; // the non-sleeping operations may take up to 50 milliseconds
 
 namespace alc {
 	
@@ -288,6 +290,8 @@ void tUnet::startOp() {
 	
 	// done!
 	this->log->flush();
+	updateNetTime();
+	wakeup_time = getNetTime();
 }
 
 void tUnet::wakeUpMainThread(void )
@@ -343,6 +347,15 @@ bool tUnet::sendAndWait() {
 		DBG(3, "Timeout %f too low, increasing to 1 millisecond\n", unet_timeout);
 		unet_timeout = 0.001; // don't sleep less than 1 millisecond
 	}
+	
+	// check how much time passed since we woke up
+#ifndef NDEBUG
+	updateNetTime();
+	if (passedTimeSince(wakeup_time) > timeTolerance) {
+		log->log("WARN: Message sending and idle processing took %f seconds\n", passedTimeSince(wakeup_time));
+	}
+	wakeup_time = getNetTime();
+#endif
 
 	//waiting for packets - timeout
 	fd_set rfds;
@@ -357,18 +370,14 @@ bool tUnet::sendAndWait() {
 	tv.tv_sec = unet_timeout; // round down to seconds
 	tv.tv_usec = (unet_timeout-tv.tv_sec) * (1000*1000); // get the microseconds part
 
-#if _DBG_LEVEL_ >= 2
-	log->log("Waiting for %f seconds...\n", unet_timeout);
-#endif
-#if _DBG_LEVEL_ >= 8
-	tTime start = tTime::now();
-#endif
 	valret = select(std::max(this->sock, this->sndPipeReadEnd)+1, &rfds, NULL, NULL, &tv); // this is the command taking the time - now lets process what we got
 	// update stamp, since we spent some time in the select function (processIncomingMsg needs this for the receive_stamp)
 	updateNetTime();
-#if _DBG_LEVEL_ >= 8
-	start = tTime::now()-start;
-	DBG(8,"waited %u.%06u\n",diff.seconds,diff.microseconds);
+#ifndef NDEBUG
+	if (passedTimeSince(wakeup_time) > unet_timeout + timeTolerance) {
+		log->log("WARN: Slept %f seconds longer than requested\n", passedTimeSince(wakeup_time)-unet_timeout);
+	}
+	wakeup_time = getNetTime();
 #endif
 	/* Don't trust tv value after the call */
 	
