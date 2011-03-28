@@ -296,13 +296,6 @@ namespace alc {
 				send(vaultStatus);
 			}
 			
-			// check if this was the last player
-			bool lastPlayer = checkIfOnlyPlayer(u);
-			{
-				tSpinLock lock(autoShutdownMutex);
-				lastPlayerLeft = lastPlayer ? time(NULL) : 0;
-			}
-			
 			// remove leftovers of this player from the age state
 			ageState->removePlayer(u);
 			
@@ -323,13 +316,20 @@ namespace alc {
 				tWriteLock lock(u->pubDataMutex);
 				u->joined = false;
 			}
-			
+		}
+		if (u->isUruClient()) { // the player may have left before it proeprly connected, so we have to set the player left timer for all auther clinets (not just for those that set a KI)
+			// check if this was the last player
+			bool lastPlayer = checkIfOnlyPlayer(u);
+			{
+				tSpinLock lock(autoShutdownMutex);
+				lastPlayerLeft = lastPlayer ? time(NULL) : 0;
+			}
 			if (lastPlayer && resetStateWhenEmpty) { // reset age state, this was the last player
 				resetStateWhenEmpty = false;
 				ageState->clearAllStates();
 			}
 		}
-	
+		
 		tUnetLobbyServerBase::onConnectionClosing(u, reason); // forward event (this sets the KI to zero, so do it at the end)
 	}
 	
