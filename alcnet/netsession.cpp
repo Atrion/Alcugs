@@ -818,7 +818,7 @@ tNetTimeBoolPair tNetSession::processSendQueues()
 		/* Max. number of allowed re-sends before timeout:
 		 * In production, I have the weird issue of the whole server being "asleep" for 0.5 to 0.7 seconds, and the connections to
 		 * other servers dropping in that time. So do as many resends as are necessary to wait one second:
-		 * n*(n+1)/2*t = 1  <=>  n = -0.5 + sqrt(-0.25 + 2/t)
+		 * n*(n+1)/2*timeout = waittime  <=>  n^2 + n - 2*waittime/timeout = 0  <=>  n = -0.5 + sqrt(-0.25 + 2*waittime/timeout)
 		 * And add 0.5 for proper rounding, and do not try less than 10 resends, with less time for terminated
 		 * clients (so, in end-effect, that calulation will be used only for localhost connections). */
 		const unsigned int resendLimit = std::max((state != Connected) ? 5u : 10u, static_cast<unsigned int>(sqrt(2.0/msg_timeout - 0.25)));
@@ -912,7 +912,7 @@ tNetTimeBoolPair tNetSession::processSendQueues()
 		DBG(5, "Session isleft and queues are empty, waiting only a little longer\n");
 		prvDataMutex.unlock();
 		prvDataMutex.write(); // will be unlocked by destructor of the prvLock
-		conn_timeout = msg_timeout; // wait for some time in case we get retarded acks etc.
+		conn_timeout = 5*msg_timeout; // wait for some time in case we get retarded acks etc.
 	}
 	
 	// check this session's timeout
