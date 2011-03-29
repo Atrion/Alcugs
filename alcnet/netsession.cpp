@@ -344,6 +344,8 @@ void tNetSession::rawsend(tUnetUruMsg *msg)
 
 	if(msize>0) {
 		msize = sendto(net->sock,reinterpret_cast<char *>(buf),msize,0,reinterpret_cast<struct sockaddr *>(&sockaddr),sizeof(struct sockaddr));
+		if (msize != mbuf->size())
+			throw txUnet(_WHERE("Error sending a message"));
 	}
 
 	DBG(9,"After the Sendto call...\n");
