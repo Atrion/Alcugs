@@ -119,8 +119,6 @@ namespace alc {
 		statusXML = (!var.isEmpty() && var.asInt());
 		statusXMLFile = cfg->getVar("track.xml.path");
 		if (statusXMLFile.isEmpty()) statusXML = false;
-		
-		updateStatusFile(); // no other thread is running, so this is safe to do
 	}
 	
 	void tTrackingBackend::findServer(tmCustomFindServer &findServer)
