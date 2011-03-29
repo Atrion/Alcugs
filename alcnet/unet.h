@@ -33,6 +33,7 @@
 #include "protocol/protocol.h"
 
 #include <netinet/in.h>
+#include <semaphore.h>
 
 namespace alc {
 
@@ -111,7 +112,7 @@ protected:
 	void openLogfiles();
 	tNetSessionRef netConnect(const char * hostname,uint16_t port,uint8_t validation);
 	bool sendAndWait(); //!< send enqueued messages, wait, and receive packets and enqueue them (wait time must be set by processQueues()!) \return if the netcode is idle
-	tNetEvent *getEvent(); //!<  (thread-safe)
+	tNetEvent *getEvent(bool block); //!<  (thread-safe)
 	void addEvent(tNetEvent *evt); //!<  (thread-safe)
 	void clearEventQueue(); //!< use this only if you really know what you do - will loose incoming messages and whatnot! (thread-safe)
 	tNetTime getNetTime() { tSpinLock lock(net_time_mutex); return net_time; }
@@ -191,10 +192,9 @@ protected:
 	#endif
 	
 	
-	tNetQeue<tNetEvent> events; //!< event queue - get below mutex before accessing it!
+	tNetQeue<tNetEvent> events; //!< event queue - the semaphore below is counting, the mutex protects the actual data structure
 	tMutex eventsMutex;
-	bool workerWaiting; //!< signals whether a worker is waiting for an event using below condition, protected by above mutex
-	pthread_cond_t eventAddedCond; //!< condition used to signal the worker thread that it can wake up, protected by above mutex
+	sem_t eventsSemaphore;
 
 private:
 	const uint8_t max_version; //!< default protocol version

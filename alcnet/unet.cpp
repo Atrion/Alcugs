@@ -69,9 +69,8 @@ tUnet::tUnet(uint8_t whoami,const tString & lhost,uint16_t lport) : smgr(NULL), 
 	setBindAddress(lhost);
 	bindport=lport;
 	
-	workerWaiting = false;
-	if (pthread_cond_init(&eventAddedCond, NULL))
-		throw txBase(_WHERE("Error initializing condition"));
+	if (sem_init(&eventsSemaphore, 0, 0))
+		throw txBase(_WHERE("Error initializing semaphore"));
 	
 	// fill in default values
 	flags=UNET_DEFAULT_FLAGS;
@@ -138,7 +137,7 @@ tUnet::~tUnet() {
 	delete sec;
 	
 	
-	if (pthread_cond_destroy(&eventAddedCond))
+	if (sem_destroy(&eventsSemaphore))
 		throw txBase(_WHERE("Error destroying condition"));
 }
 
@@ -164,21 +163,31 @@ tNetTime tUnet::passedTimeSince(tNetTime time)
 	return net_time-time;
 }
 
-tNetEvent * tUnet::getEvent() {
+tNetEvent * tUnet::getEvent(bool block)
+{
+	// make sure there is an event in the queue
+	if (block) {
+		if (sem_wait(&eventsSemaphore))
+			throw txBase(_WHERE("Error waiting for semaphore"));
+	} else {
+		if (sem_trywait(&eventsSemaphore)) {
+			if (errno == EAGAIN) return NULL; // queue empty
+			throw txBase(_WHERE("Error trywaiting for semaphore"));
+		}
+	}
 	tMutexLock lock(eventsMutex);
-	if (events.empty()) return NULL;
+	assert(!events.empty());
 	return events.pop_front();
 }
 
 void tUnet::addEvent(tNetEvent *evt)
 {
 	DBG(5, "Enqueuing event %d for %s\n", evt->id, *evt->u ? evt->u->str().c_str() : "<>");
-	tMutexLock lock(eventsMutex);
+	eventsMutex.lock();
 	events.push_back(evt);
-	if (workerWaiting) {
-		if (pthread_cond_signal(&eventAddedCond))
-			throw txBase(_WHERE("Error signalling condition"));
-	}
+	eventsMutex.unlock();
+	if (sem_post(&eventsSemaphore))
+		throw txBase(_WHERE("Error posting to semaphore"));
 }
 
 void tUnet::clearEventQueue()
