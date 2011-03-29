@@ -101,7 +101,7 @@ void txBase::_preparebacktrace() {
 	bt += "c++filt and addr2line may be useful\n";
 	free(strings);
 #else
-	bt = "Backtrace not implemented in your OS, or execinfo.h not found\n";
+	bt = "execinfo.h not found\n";
 #endif
 	if(this->abort) {
 		dump();
