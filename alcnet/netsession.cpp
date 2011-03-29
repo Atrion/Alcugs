@@ -795,120 +795,122 @@ tNetTimeBoolPair tNetSession::processSendQueues()
 	tNetTime timeout = std::numeric_limits<double>::max();
 #endif
 	
-	tMutexLock sendLock(sendMutex);
-	if (!isUruClient() && sndq.empty() && !acksToSend()) { // send and ack queue empty (the Uru client accepts a re-nego but will not decrease the numbers)
-		// fix the problem that happens every 15-30 days of server uptime - but only if sndq is empty, or we will loose packets
-		if (serverMsg.sn >= (1 << 22) || clientMsg.psn() >= (1 << 22)) { // = 2^22
-			net->log->log("%s WARN: Congratulations! You have reached the maxium allowed sequence number. "
-						  "Don't worry, this is not an error\n", str().c_str());
-			net->log->flush();
-			renego_stamp = tTime();
-			sendMutex.unlock(); // unlock here, because negotiate will lock again
-			negotiate();
-			sendMutex.lock(); // and relock
-			// do this before the send queue check, so that the nego has a chance to be sent immediately
-		}
-	}
-	if (!sndq.empty()) {
-		// cabal control (don't send too much at once!)
-		unsigned int cur_size=0;
-		// control for auto-drop of old non-acked messages
-		const unsigned int minTH=15;
-		const unsigned int maxTH=100;
-		/* Max. number of allowed re-sends before timeout:
-		 * In production, I have the weird issue of the whole server being "asleep" for 0.5 to 0.7 seconds, and the connections to
-		 * other servers dropping in that time. So do as many resends as are necessary to wait one second:
-		 * n*(n+1)/2*timeout = waittime  <=>  n^2 + n - 2*waittime/timeout = 0  <=>  n = -0.5 + sqrt(-0.25 + 2*waittime/timeout)
-		 * And add 0.5 for proper rounding, and do not try less than 10 resends, with less time for terminated
-		 * clients (so, in end-effect, that calulation will be used only for localhost connections). */
-		const unsigned int resendLimit = std::max((state != Connected) ? 5u : 10u, static_cast<unsigned int>(sqrt(2.0/msg_timeout - 0.25)));
-		
-		// urgent packets
-		tNetQeue<tUnetUruMsg>::iterator it = sndq.begin();
-		bool urgentSend = true; // urgent messages are found at the beginning of the queue, special mode for them
-		while (it != sndq.end()) {
-			tUnetUruMsg *curmsg = *it;
-			if (urgentSend && !curmsg->urgent) { // fist non-urgent messages, check next_msg_time
-				if (!net->timeOverdue(next_msg_time)) break; // stop here if we are not really supposed to send messages
-				urgentSend = false;
+	{
+		tMutexLock sendLock(sendMutex);
+		if (!isUruClient() && sndq.empty() && !acksToSend()) { // send and ack queue empty (the Uru client accepts a re-nego but will not decrease the numbers)
+			// fix the problem that happens every 15-30 days of server uptime - but only if sndq is empty, or we will loose packets
+			if (serverMsg.sn >= (1 << 22) || clientMsg.psn() >= (1 << 22)) { // = 2^22
+				net->log->log("%s WARN: Congratulations! You have reached the maxium allowed sequence number. "
+							"Don't worry, this is not an error\n", str().c_str());
+				net->log->flush();
+				renego_stamp = tTime();
+				sendMutex.unlock(); // unlock here, because negotiate will lock again
+				negotiate();
+				sendMutex.lock(); // and relock
+				// do this before the send queue check, so that the nego has a chance to be sent immediately
 			}
-			assert(urgentSend == curmsg->urgent);
-			if (!urgentSend && cur_size >= maxPacketSz) break; // sent too much already (but don't stop urgent messages by tts)
+		}
+		if (!sndq.empty()) {
+			// cabal control (don't send too much at once!)
+			unsigned int cur_size=0;
+			// control for auto-drop of old non-acked messages
+			const unsigned int minTH=15;
+			const unsigned int maxTH=100;
+			/* Max. number of allowed re-sends before timeout:
+			* In production, I have the weird issue of the whole server being "asleep" for 0.5 to 0.7 seconds, and the connections to
+			* other servers dropping in that time. So do as many resends as are necessary to wait one second:
+			* n*(n+1)/2*timeout = waittime  <=>  n^2 + n - 2*waittime/timeout = 0  <=>  n = -0.5 + sqrt(-0.25 + 2*waittime/timeout)
+			* And add 0.5 for proper rounding, and do not try less than 10 resends, with less time for terminated
+			* clients (so, in end-effect, that calulation will be used only for localhost connections). */
+			const unsigned int resendLimit = std::max((state != Connected) ? 5u : 10u, static_cast<unsigned int>(sqrt(2.0/msg_timeout - 0.25)));
 			
-			if(net->timeOverdue(curmsg->timestamp)) {
-				DBG(8, "%s ok to send a message\n",str().c_str());
-				//we can send the message
-				if(curmsg->bhflags & UNetAckReq) {
-					//send packet
-					
-					// check if we need to resend
-					if(curmsg->tries) {
-						DBG(3, "%s Re-sending a message (%d tries so far)\n", str().c_str(), curmsg->tries);
-						decreaseCabal(curmsg->tries > 1); // if even a re-send got lost, pull the emergency break!
-					}
-					
-					if (curmsg->tries >= resendLimit) {
-						it = sndq.eraseAndDelete(it); // this is the next one
-						//timeout event
-						net->sec->log("%s Timeout (didn't ack a packet)\n", str().c_str());
-						tNetEvent *evt=new tNetEvent(this,UNET_TIMEOUT);
-						net->addEvent(evt);
-					} else {
-						DBG(5, "%s sending a %Zi byte acked message %f after time\n", str().c_str(), curmsg->size(), net->passedTimeSince(curmsg->timestamp));
-						cur_size += curmsg->size();
-						send_stamp=curmsg->snt_timestamp=net->getNetTime();
-						rawsend(curmsg);
-						curmsg->tries++;
-						double curmsg_timeout = msg_timeout*curmsg->tries; // increase timeout for further re-sends
-						/* choose higher timeout for client connections - the clients netcore sometimes seems
-						 * to be blocked long beyond any reasonable time (even when *sending* a whole lot of
-						 * packets, e.g. when linking to Noloben, it does not reply to acks). */
-						if (authenticated) curmsg_timeout *= 1.5;
-						curmsg->timestamp=net->getNetTime() + curmsg_timeout;
-						if (timeout > curmsg_timeout) timeout = curmsg_timeout; // be sure to check this message on time
-						++it; // go on
-					}
-				} else {
-					//probabilistic drop (of voice, and other non-ack packets) - make sure we don't drop ack replies though!
-					if(curmsg->bhflags == 0x00 && net->passedTimeSince(curmsg->timestamp) > 4*msg_timeout) {
-						//Unacceptable - drop it
-						net->err->log("%s Dropped a 0x00 packet due to unaceptable msg time %f,%f,%f\n",
-									  str().c_str(),msg_timeout,net->passedTimeSince(curmsg->timestamp),rtt);
-					} else if(curmsg->bhflags == 0x00 && (sndq.size() > static_cast<size_t>((minTH + random()%(maxTH-minTH)))) ) {
-						net->err->log("%s Dropped a 0x00 packet due to a big queue (%Zd messages)\n", str().c_str(), sndq.size());
-					}
-					//end prob drop
-					else {
-						DBG(5, "%s sending a %Zi byte non-acked message %f after time\n", str().c_str(), curmsg->size(), net->passedTimeSince(curmsg->timestamp));
-						cur_size += curmsg->size();
-						rawsend(curmsg);
-						send_stamp=net->getNetTime();
-					}
-					it = sndq.eraseAndDelete(it); // go to next message, delete this one
+			// urgent packets
+			tNetQeue<tUnetUruMsg>::iterator it = sndq.begin();
+			bool urgentSend = true; // urgent messages are found at the beginning of the queue, special mode for them
+			while (it != sndq.end()) {
+				tUnetUruMsg *curmsg = *it;
+				if (urgentSend && !curmsg->urgent) { // fist non-urgent messages, check next_msg_time
+					if (!net->timeOverdue(next_msg_time)) break; // stop here if we are not really supposed to send messages
+					urgentSend = false;
 				}
-			} //end time check
-			else {
-				timeout = std::min(timeout, net->remainingTimeTill(curmsg->timestamp)); // come back when we want to send this message
-				DBG(8,"%s Too soon (%f) to send a message\n",str().c_str(),net->remainingTimeTill(curmsg->timestamp));
-				++it; // go on
+				assert(urgentSend == curmsg->urgent);
+				if (!urgentSend && cur_size >= maxPacketSz) break; // sent too much already (but don't stop urgent messages by tts)
+				
+				if(net->timeOverdue(curmsg->timestamp)) {
+					DBG(8, "%s ok to send a message\n",str().c_str());
+					//we can send the message
+					if(curmsg->bhflags & UNetAckReq) {
+						//send packet
+						
+						// check if we need to resend
+						if(curmsg->tries) {
+							DBG(3, "%s Re-sending a message (%d tries so far)\n", str().c_str(), curmsg->tries);
+							decreaseCabal(curmsg->tries > 1); // if even a re-send got lost, pull the emergency break!
+						}
+						
+						if (curmsg->tries >= resendLimit) {
+							it = sndq.eraseAndDelete(it); // this is the next one
+							//timeout event
+							net->sec->log("%s Timeout (didn't ack a packet)\n", str().c_str());
+							tNetEvent *evt=new tNetEvent(this,UNET_TIMEOUT);
+							net->addEvent(evt);
+						} else {
+							DBG(5, "%s sending a %Zi byte acked message %f after time\n", str().c_str(), curmsg->size(), net->passedTimeSince(curmsg->timestamp));
+							cur_size += curmsg->size();
+							send_stamp=curmsg->snt_timestamp=net->getNetTime();
+							rawsend(curmsg);
+							curmsg->tries++;
+							double curmsg_timeout = msg_timeout*curmsg->tries; // increase timeout for further re-sends
+							/* choose higher timeout for client connections - the clients netcore sometimes seems
+							* to be blocked long beyond any reasonable time (even when *sending* a whole lot of
+							* packets, e.g. when linking to Noloben, it does not reply to acks). */
+							if (authenticated) curmsg_timeout *= 1.5;
+							curmsg->timestamp=net->getNetTime() + curmsg_timeout;
+							if (timeout > curmsg_timeout) timeout = curmsg_timeout; // be sure to check this message on time
+							++it; // go on
+						}
+					} else {
+						//probabilistic drop (of voice, and other non-ack packets) - make sure we don't drop ack replies though!
+						if(curmsg->bhflags == 0x00 && net->passedTimeSince(curmsg->timestamp) > 4*msg_timeout) {
+							//Unacceptable - drop it
+							net->err->log("%s Dropped a 0x00 packet due to unaceptable msg time %f,%f,%f\n",
+										str().c_str(),msg_timeout,net->passedTimeSince(curmsg->timestamp),rtt);
+						} else if(curmsg->bhflags == 0x00 && (sndq.size() > static_cast<size_t>((minTH + random()%(maxTH-minTH)))) ) {
+							net->err->log("%s Dropped a 0x00 packet due to a big queue (%Zd messages)\n", str().c_str(), sndq.size());
+						}
+						//end prob drop
+						else {
+							DBG(5, "%s sending a %Zi byte non-acked message %f after time\n", str().c_str(), curmsg->size(), net->passedTimeSince(curmsg->timestamp));
+							cur_size += curmsg->size();
+							rawsend(curmsg);
+							send_stamp=net->getNetTime();
+						}
+						it = sndq.eraseAndDelete(it); // go to next message, delete this one
+					}
+				} //end time check
+				else {
+					timeout = std::min(timeout, net->remainingTimeTill(curmsg->timestamp)); // come back when we want to send this message
+					DBG(8,"%s Too soon (%f) to send a message\n",str().c_str(),net->remainingTimeTill(curmsg->timestamp));
+					++it; // go on
+				}
+			} //end while
+			// calculate how long it will take us to send what we just sent
+			DBG(5, "%s sent packets with %d bytes at cabal %d\n", str().c_str(), cur_size, cabal);
+			if (net->timeOverdue(next_msg_time)) {
+				// "regular" send
+				tNetTime cur_tts = timeToSend(cur_size);
+				next_msg_time=net->getNetTime() + cur_tts;
+				if (it != sndq.end() && cur_tts < timeout) timeout = cur_tts; // if there is still something to send, but the quota does not let us, do that ASAP
 			}
-		} //end while
-		// calculate how long it will take us to send what we just sent
-		DBG(5, "%s sent packets with %d bytes at cabal %d\n", str().c_str(), cur_size, cabal);
-		if (net->timeOverdue(next_msg_time)) {
-			// "regular" send
-			tNetTime cur_tts = timeToSend(cur_size);
-			next_msg_time=net->getNetTime() + cur_tts;
-			if (it != sndq.end() && cur_tts < timeout) timeout = cur_tts; // if there is still something to send, but the quota does not let us, do that ASAP
+			else {
+				// sending before we should
+				DBG(5,"%s Too soon (%f) to check sndq completely\n",str().c_str(),net->remainingTimeTill(next_msg_time));
+				next_msg_time += timeToSend(cur_size); // we might have sent urgent messages, account for that
+				if (it != sndq.end()) timeout = std::min(timeout, net->remainingTimeTill(next_msg_time)); // come back when we want to send the next message
+			}
 		}
-		else {
-			// sending before we should
-			DBG(5,"%s Too soon (%f) to check sndq completely\n",str().c_str(),net->remainingTimeTill(next_msg_time));
-			next_msg_time += timeToSend(cur_size); // we might have sent urgent messages, account for that
-			if (it != sndq.end()) timeout = std::min(timeout, net->remainingTimeTill(next_msg_time)); // come back when we want to send the next message
-		}
-	}
-	if (sndq.empty() && !acksToSend() && state == Leaving) { // we are totaly idle and got nothing to do
+	} // unlock the send mutex: it is *within* the prvDatMutex
+	if (state == Leaving && !anythingToSend()) { // we are totaly idle and got nothing to do
 		DBG(5, "Session isleft and queues are empty, waiting only a little longer\n");
 		prvDataMutex.unlock();
 		prvDataMutex.write(); // will be unlocked by destructor of the prvLock
@@ -948,16 +950,20 @@ void tNetSession::terminate(uint8_t reason)
 	// it's our wish for that client to get away, so try to do it nice and polite
 	if (!reason) reason = client ? RKickedOff : RQuitting;
 	if (client) {
-		tReadLock lock(pubDataMutex); // we might be in main thread
-		send(tmTerminated(this,reason));
+		{
+			tReadLock lock(pubDataMutex); // we might be in main thread
+			send(tmTerminated(this,reason));
+		}
 		// we expect a NetMsgLeave from the other side, then we can go down
 		prvDataMutex.unlock();
 		prvDataMutex.write(); // will be unlocked by destructor of lock
 		state = Terminating;
 	}
 	else {
-		tReadLock lock(pubDataMutex); // we might be in main thread
-		send(tmLeave(this,reason));
+		{
+			tReadLock lock(pubDataMutex); // we might be in main thread
+			send(tmLeave(this,reason));
+		}
 		// Now that we sent that message, the other side must ack it, then tNetSession will be deleted
 		prvDataMutex.unlock();
 		prvDataMutex.write(); // will be unlocked by destructor of lock

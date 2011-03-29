@@ -118,8 +118,14 @@ public:
 	void rotate(bool force=false);
 	void close(bool silent=false);
 	void checkRotate(unsigned int maxCount) {
+		countEx.lock();
 		++count;
-		if(count>maxCount) { count=0; rotate(false); }
+		if(count>maxCount) {
+			count=0;
+			countEx.unlock();
+			rotate(false);
+		}
+		else countEx.unlock();
 	}
 
 	void print(const char * msg, ...) const GNUC_FORMAT_CHECK(printf, 2, 3);
@@ -144,7 +150,8 @@ private:
 	tString fullpath;
 	FILE * dsc;
 	uint16_t flags; //see above (DF_*)
-	unsigned int count; // counter used for rotate checking
+	unsigned int count; // counter used for rotate checking, protected by spinlock
+	tSpinEx countEx;
 	
 	FORBID_CLASS_COPY(tLog)
 };

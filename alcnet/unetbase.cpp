@@ -365,31 +365,22 @@ void tUnetBase::tUnetWorkerThread::stop()
 void tUnetBase::tUnetWorkerThread::main(void)
 {
 	DBG(5, "Worker spawned\n");
-	tNetEvent *evt;
 	while (true) {
-		while ((evt=net->getEvent())) {
-			switch (evt->id) {
-				case UNET_KILL_WORKER:
-					delete evt; // do not leak memory
-					return;
-				default:
-					net->processEvent(evt);
-			}
-			delete evt;
+		tNetEvent *evt = net->getEvent(/*block*/false);
+		if (evt == NULL) { // nothing to do currently
+			net->onWorkerIdle();
+			net->flushLogs();
+			evt = net->getEvent(/*block*/true); // come back when there is something to do
 		}
-		// emptied event queue
-		net->onWorkerIdle();
-		// I don't know how much perforcmance this costs, but without flushing it's not possible to follow the server logs using tail -F
-		net->flushLogs();
-		// wait till e got events again
-		tMutexLock lock(net->eventsMutex);
-		if (!net->events.empty()) continue; // an event got added since we last checked, fine!
-		// queue is empty, so wait for an event to be added
-		net->workerWaiting = true;
-		DBG(5, "Worker waiting\n");
-		pthread_cond_wait(&net->eventAddedCond, net->eventsMutex.getMutex());
-		DBG(5, "Worker finished waiting\n");
-		net->workerWaiting = false;
+		assert(evt != NULL);
+		switch (evt->id) {
+			case UNET_KILL_WORKER:
+				delete evt; // do not leak memory
+				return;
+			default:
+				net->processEvent(evt);
+		}
+		delete evt;
 	}
 }
 
