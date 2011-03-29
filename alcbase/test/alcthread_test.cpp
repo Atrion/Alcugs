@@ -89,13 +89,44 @@ void test_startSomeThreads() {
 	thread->join();
 	delete thread;
 	delete thread2;
+	std::cout << std::endl;
 }
 
 void test_mutex(void)
 {
 	tMutex test1;
+	std::cout << "Locking Mutex\n";
 	test1.lock();
+	std::cout << "Unlocking Mutex\n";
 	test1.unlock();
+	std::cout << "Mutex done\n" << std::endl;
+}
+
+void test_rwlock(void)
+{
+	tReadWriteEx test;
+/*	pthreads rwlocks do not support nesting :(
+	// test nesting writes within reads
+	{
+		std::cout << "Read-locking\n";
+		test.read();
+		std::cout << "Write-locking\n";
+		test.write();
+		std::cout << "Unlocking\n";
+		test.unlock();
+		test.unlock();
+	}
+	// test nesting reads within writes
+	{
+		std::cout << "Write-locking\n";
+		test.write();
+		std::cout << "Read-locking\n";
+		test.read();
+		std::cout << "Unlocking\n";
+		test.unlock(); // will unlock the write lock first!
+		test.unlock();
+	}
+	std::cout << "Read-write done\n" << std::endl;*/
 }
 
 int main(void) {
@@ -105,6 +136,7 @@ int main(void) {
 
 		test_startSomeThreads();
 		test_mutex();
+		test_rwlock();
 		
 		std::cout<< "Success!!" << std::endl;
 	} catch (txBase &t) {
