@@ -112,7 +112,7 @@ protected:
 	void openLogfiles();
 	tNetSessionRef netConnect(const char * hostname,uint16_t port,uint8_t validation);
 	bool sendAndWait(); //!< send enqueued messages, wait, and receive packets and enqueue them (wait time must be set by processQueues()!) \return if the netcode is idle
-	tNetEvent *getEvent(bool block); //!<  (thread-safe)
+	tNetEvent *getEvent(); //!<  (thread-safe)
 	void addEvent(tNetEvent *evt); //!<  (thread-safe)
 	void clearEventQueue(); //!< use this only if you really know what you do - will loose incoming messages and whatnot! (thread-safe)
 	tNetTime getNetTime() { tSpinLock lock(net_time_mutex); return net_time; }

@@ -96,9 +96,6 @@ protected:
 	*/
 	virtual bool onConnectionTimeout(tNetSession * /*u*/) { return true; }
 	
-	/** This even is raiesed when the event queue was emptied. The worker is going down to sleep for as long as he can afterwards. */
-	virtual void onWorkerIdle() {}
-	
 	/** This event is raised each time after the incoming messages were processed.
 			You need to override it in your derived classes with your implementation.
 			Called in main thread!

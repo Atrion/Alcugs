@@ -84,7 +84,6 @@ namespace alc {
 	//// tTrackingBackend
 	tTrackingBackend::tTrackingBackend(tUnetTrackingServer *net) : net(net)
 	{
-		lastUpdate = 0;
 		generateFakeGuid(fakeLobbyGuid);
 	}
 	
@@ -121,13 +120,12 @@ namespace alc {
 		statusXMLFile = cfg->getVar("track.xml.path");
 		if (statusXMLFile.isEmpty()) statusXML = false;
 		
-		statusFileUpdate = true;
+		updateStatusFile(); // no other thread is running, so this is safe to do
 	}
 	
 	void tTrackingBackend::findServer(tmCustomFindServer &findServer)
 	{
 		assert(alcGetSelfThreadId() != alcGetMain()->threadId());
-		statusFileUpdate = true;
 		
 		tPlayerList::iterator player = getPlayer(findServer.ki);
 		if (player == players.end()) {
@@ -165,6 +163,7 @@ namespace alc {
 			net->send(playerToCome);
 		}
 		log.flush();
+		updateStatusFile();
 	}
 	
 	void tTrackingBackend::playerCanCome(alc::tNetSession* game, uint32_t ki)
@@ -269,7 +268,6 @@ namespace alc {
 	{
 		assert(alcGetSelfThreadId() != alcGetMain()->threadId());
 		tReadLock lock(net->smgrMutex);
-		statusFileUpdate = true;
 		uint8_t serverGuid[8];
 		alcGetHexGuid(serverGuid, setGuid.serverGuid);
 		bool isLobby = setGuid.validSpawnPorts();
@@ -338,6 +336,7 @@ namespace alc {
 		
 		notifyWaiting(game);
 		log.flush();
+		updateStatusFile();
 	}
 	
 	void tTrackingBackend::updatePlayer(tNetSession *game, tmCustomPlayerStatus &playerStatus)
@@ -346,7 +345,6 @@ namespace alc {
 		if (!game->data)
 			// throwing this error will terminate the connection to this server, which in term should result in the server going down
 			throw txProtocolError(_WHERE("server passed in tTrackingBackend::updatePlayer is not a game/lobby server"));
-		statusFileUpdate = true;
 		/* Flags:
 		0: delete
 		1: set invisible
@@ -357,7 +355,6 @@ namespace alc {
 			if (player != players.end()) {
 				log.log("Player %s quit\n", player->str().c_str());
 				players.erase(player);
-				statusFileUpdate = true;
 			}
 		}
 		else if (playerStatus.playerFlag == 1 || playerStatus.playerFlag == 2) {
@@ -398,12 +395,12 @@ namespace alc {
 			}
 			log.log("Got status update for player %s: 0x%02X (%s)\n", player->str().c_str(), playerStatus.playerStatus,
 					alcUnetGetReasonCode(playerStatus.playerStatus));
-			statusFileUpdate = true;
 		}
 		else {
 			log.log("ERR: Got unknown flag 0x%02X for player with KI %d\n", playerStatus.playerFlag, playerStatus.ki);
 		}
 		log.flush();
+		updateStatusFile();
 	}
 	
 	void tTrackingBackend::removeServer(tNetSession *game)
@@ -411,7 +408,6 @@ namespace alc {
 		assert(alcGetSelfThreadId() != alcGetMain()->threadId());
 		tTrackingData *data = dynamic_cast<tTrackingData *>(game->data);
 		if (!data) return;
-		statusFileUpdate = true;
 		// if players are waiting for this server, we have a problem - we need it! But we can't stop it from going down, so instead launch it again after a second
 		if (data->waitingPlayers.size()) {
 			log.log("I need to respawn %s\n", game->str().c_str());
@@ -429,7 +425,6 @@ namespace alc {
 				++it; // we have to increment manually because above if block already increments
 		}
 		log.log("Server %s is leaving us\n", game->str().c_str());
-		log.flush();
 		// remove this server from the list of children of its lobby/from the game server it is the lobby for
 		if (data->isLobby) {
 			// it's children are lobbyless now
@@ -446,6 +441,9 @@ namespace alc {
 		}
 		delete game->data;
 		game->data = NULL;
+		// done
+		log.flush();
+		updateStatusFile();
 	}
 	
 	void tTrackingBackend::forwardMessage(tmCustomDirectedFwd &directedFwd)
@@ -527,15 +525,10 @@ namespace alc {
 	
 	void tTrackingBackend::updateStatusFile(void)
 	{
-		assert(alcGetSelfThreadId() != alcGetMain()->threadId());
-		if (!statusFileUpdate && lastUpdate > time(NULL)-5*60) return; // update at least every 5 minutes
-		
 		tReadLock lock(net->smgrMutex);
-		if (statusHTML) printStatusHTML();
-		if (statusHTMLdbg) printStatusHTML(true);
+		if (statusHTML) printStatusHTML(/*dbg*/false);
+		if (statusHTMLdbg) printStatusHTML(/*dbg*/true);
 		if (statusXML) printStatusXML();
-		statusFileUpdate = false;
-		lastUpdate = time(NULL);
 	}
 	
 	void tTrackingBackend::printStatusHTML(bool dbg)

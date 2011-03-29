@@ -163,18 +163,12 @@ tNetTime tUnet::passedTimeSince(tNetTime time)
 	return net_time-time;
 }
 
-tNetEvent * tUnet::getEvent(bool block)
+tNetEvent * tUnet::getEvent()
 {
 	// make sure there is an event in the queue
-	if (block) {
-		if (sem_wait(&eventsSemaphore))
-			throw txBase(_WHERE("Error waiting for semaphore"));
-	} else {
-		if (sem_trywait(&eventsSemaphore)) {
-			if (errno == EAGAIN) return NULL; // queue empty
-			throw txBase(_WHERE("Error trywaiting for semaphore"));
-		}
-	}
+	if (sem_wait(&eventsSemaphore))
+		throw txBase(_WHERE("Error waiting for semaphore"));
+	// fetch it!
 	tMutexLock lock(eventsMutex);
 	assert(!events.empty());
 	return events.pop_front();
