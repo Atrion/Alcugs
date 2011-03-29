@@ -7,6 +7,9 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake")
 enable_testing()
 find_package (Threads REQUIRED)
 
+# included files
+include(CheckIncludeFile)
+check_include_file("execinfo.h" HAVE_EXECINFO_H)
 
 # compiler flags
 set(CMAKE_CXX_FLAGS "-pthread -Wall -Wextra -Wold-style-cast ${CMAKE_CXX_FLAGS}")
