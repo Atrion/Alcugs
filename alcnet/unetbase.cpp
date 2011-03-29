@@ -366,13 +366,7 @@ void tUnetBase::tUnetWorkerThread::main(void)
 {
 	DBG(5, "Worker spawned\n");
 	while (true) {
-		tNetEvent *evt = net->getEvent(/*block*/false);
-		if (evt == NULL) { // nothing to do currently
-			net->onWorkerIdle();
-			net->flushLogs();
-			evt = net->getEvent(/*block*/true); // come back when there is something to do
-		}
-		assert(evt != NULL);
+		tNetEvent *evt = net->getEvent();
 		switch (evt->id) {
 			case UNET_KILL_WORKER:
 				delete evt; // do not leak memory

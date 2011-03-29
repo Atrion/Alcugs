@@ -79,8 +79,6 @@ namespace alc {
 		~tTrackingBackend(void);
 		void applyConfig(void);
 		
-		void updateStatusFile(void);
-		
 		void updatePlayer(tNetSession *game, tmCustomPlayerStatus &playerStatus);
 		
 		void updateServer(tNetSession *game, tmCustomSetGuid &setGuid);
@@ -97,7 +95,8 @@ namespace alc {
 		void spawnServer(const tString &age, const uint8_t *guid, double delay = 0);
 		void notifyWaiting(tNetSession *server);
 		void serverFound(tPlayer *player, tNetSession *server);
-		void printStatusHTML(bool dbg = false);
+		void updateStatusFile(void);
+		void printStatusHTML(bool dbg);
 		void printStatusXML(void);
 		void printLobbyXML(FILE *f, tNetSession *lobby, tTrackingData *data);
 		void printPlayersXML(FILE *f, tNetSession *server);
@@ -110,10 +109,8 @@ namespace alc {
 		tLog log;
 		uint8_t fakeLobbyGuid[8]; //!< saves the GUID for the fake lobby (for UruVision)
 		
-		bool statusFileUpdate;
 		bool statusHTML, statusHTMLdbg, statusXML;
 		tString statusHTMLFile, statusHTMLdbgFile, statusXMLFile;
-		time_t lastUpdate;
 	};
 
 } //End alc namespace

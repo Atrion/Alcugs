@@ -47,9 +47,6 @@ namespace alc {
 		virtual void onApplyConfig(void) {
 			trackingBackend.applyConfig();
 		}
-		virtual void onWorkerIdle() {
-			trackingBackend.updateStatusFile();
-		}
 		
 		virtual int onMsgRecieved(alc::tUnetMsg *msg, alc::tNetSession *u);
 	private:
