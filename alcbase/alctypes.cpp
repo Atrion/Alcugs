@@ -53,7 +53,7 @@ namespace zlib {
 
 namespace alc {
 
-static const unsigned int bufferOversize = 512; // number of Bytes to reserve in addition to the actual need
+static const unsigned int bufferOversize = 256; // number of Bytes to reserve in addition to the actual need
 
 /* 
 	basicbuffer
@@ -148,12 +148,6 @@ void tMBuf::tRefBuf::dec() {
 	else
 		mutex.unlock();
 }
-void tMBuf::tRefBuf::resizeLocked(size_t newsize)
-{
-	assert(newsize >= msize);
-	tSpinLock lock(mutex);
-	resize(newsize);
-}
 tMBuf::tRefBuf* tMBuf::tRefBuf::uniqueWithSize(size_t newsize)
 {
 	assert(newsize >= msize);
@@ -199,7 +193,7 @@ tMBuf::tMBuf(const void *d, size_t s) {
 }
 tMBuf::tMBuf(size_t size) {
 	init();
-	buf = new tRefBuf(size);
+	buf = new tRefBuf(size+1); // one byte more, for the null terminator
 	msize = size;
 }
 tMBuf::~tMBuf() {
@@ -213,11 +207,11 @@ void tMBuf::getUniqueBuffer(size_t newsize) {
 		buf = new tRefBuf(newsize+bufferOversize); // get us a new buffer
 	}
 	else {
-		if (buf->size() < newsize) buf = buf->uniqueWithSize(newsize+bufferOversize);
+		if (buf->size() < newsize+1) buf = buf->uniqueWithSize(newsize+bufferOversize); // be sure that the null terminator byte still fits in
 		else buf = buf->uniqueWithSize(buf->size()); // don't shrink buffer
 		
 	}
-	assert(buf->size() >= newsize);
+	assert(buf->size() > newsize); // make sure the null terminator byte is present
 }
 void tMBuf::copy(const tMBuf &t) {
 	DBG(9,"tMBuf::copy()\n");
@@ -298,9 +292,10 @@ int8_t tMBuf::compare(const tMBuf &t) const {
 }
 void tMBuf::addNullTerminator(void) const
 {
+	// getUniqueBuffer makes sure there always is at least one byte more space than we need
+	assert(buf != NULL && msize > 0 && msize < buf->size());
 	tRefBuf *buf = const_cast<tRefBuf *>(this->buf); // yep, a hack - but we won't change the actual content
-	if (msize == buf->size()) buf->resizeLocked(msize+bufferOversize);
-	*(buf->buf()+msize) = 0;
+	*(buf->buf()+msize) = 0; // this might race with null terminator addition in another thread - but that's fine!
 }
 void tMBuf::cutEnd(size_t newSize)
 {

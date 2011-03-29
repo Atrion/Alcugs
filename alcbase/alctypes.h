@@ -213,7 +213,6 @@ private:
 		uint8_t *buf() { return static_cast<uint8_t*>(buffer); }
 		const uint8_t *buf() const { return static_cast<const uint8_t*>(buffer); }
 		tRefBuf *uniqueWithSize(size_t newsize); //!< returns a pointer to a ref buf with the same conent as this one, but not shared with anyone else. The parameter says how large we need the buffer (doing a resize of necessary)
-		void resizeLocked(size_t newsize); //!< will resize the buffer without checking if we are the only user - use with care!
 	private:
 		void resize(size_t newsize);
 		
@@ -318,7 +317,7 @@ public:
 	// find functions
 	size_t find(const char cat, bool reverse=false) const;
 	size_t find(const char *str) const;
-	size_t find(const tString &str) const { return find(str.c_str()); }
+	size_t find(const tString &str) const { return find(str.c_str()); } // find is using strstr, so we definitely need a c_str
 	
 	// string manipulation
 	tString escape() const;
@@ -332,7 +331,7 @@ public:
 	
 	// functions writing strings and characters
 	void writeStr(const char * t);
-	void writeStr(const tString & val) { write(val.c_str(),val.size()); }
+	void writeStr(const tString & val) { write(val.data(),val.size()); }
 	void printf(const char * msg, ...) GNUC_FORMAT_CHECK(printf, 2, 3);
 	void vprintf(const char * msg, va_list ap);
 	void printBoolean(const char *desc, bool val) { writeStr(desc); printBoolean(val); }

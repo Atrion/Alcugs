@@ -84,14 +84,6 @@ void txBase::_preparebacktrace() {
 	unsigned int size=::backtrace(btArray,txExcLevels);
 	strings=backtrace_symbols(btArray,size);
 	
-	/*
-	int f;
-	f=creat("backtrace.txt",0640);
-	if(f!=-1) {
-		std::backtrace_symbols_fd(btArray,size,f);
-		close(f);
-	}*/
-	
 	bt.clear();
 	
 	bt.printf("Backtrace with %u levels:\n",size);
