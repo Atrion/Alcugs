@@ -7,4 +7,4 @@ bindir=$root/bin/
 config=$root/etc/uru.conf
 waittime=0.5 # time to wait after a server was started
 start_servers="tracking vault auth lobby"
-stop_servers="lobby tracking vault auth"
+stop_servers="lobby auth tracking vault"
