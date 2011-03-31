@@ -7,9 +7,14 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake")
 enable_testing()
 find_package (Threads REQUIRED)
 
-# included files
+# include file checking
 include(CheckIncludeFile)
-check_include_file("execinfo.h" HAVE_EXECINFO_H)
+function(require_include FILE)
+	check_include_file(${FILE} "HAVE_${FILE}")
+	if(NOT "HAVE_${FILE}")
+		message(FATAL_ERROR "Required header file ${FILE} not found!")
+	endif()
+endfunction(require_include)
 
 # compiler flags
 set(CMAKE_CXX_FLAGS "-pthread -Wall -Wextra -Wold-style-cast ${CMAKE_CXX_FLAGS}")

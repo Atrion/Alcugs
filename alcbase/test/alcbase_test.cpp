@@ -81,7 +81,7 @@ void alcexception_tests() {
 		my_func();
 	} catch (txBase &t) {
 		std::cout<< "Caught Exception " << t.what() << std::endl;
-		//std::cout<< t.backtrace() << std::endl;
+		std::cout<< t.backtrace() << std::endl;
 	}
 }
 
@@ -92,7 +92,7 @@ void alctypes_mbuf() {
 	assert(buf1.tell()==0);
 	try {
 		buf1.set(2);
-		throw txBase("Verification Test Failed - expected txOutOfRange",1);
+		throw txBase("Verification Test Failed - expected txOutOfRange");
 	} catch( txOutOfRange &t) {
 		//std::cout<< "Caught Exception " << t.what() << std::endl;
 		//std::cout<< t.backtrace() << std::endl;
@@ -121,7 +121,7 @@ void alctypes_mbuf() {
 	assert(buf1.eof());
 	try {
 		buf1.seek(1);
-		throw txBase("expected txOutOfRange",1);
+		throw txBase("expected txOutOfRange");
 	} catch( txOutOfRange &t) {
 		//std::cout<< "Caught Exception " << t.what() << std::endl;
 		//std::cout<< t.backtrace() << std::endl;
@@ -134,7 +134,7 @@ void alctypes_mbuf() {
 	assert(buf1.tell()==0);
 	try {
 		buf1.seek(-100);
-		throw txBase("expected txOutOfRange",1);
+		throw txBase("expected txOutOfRange");
 	} catch( txOutOfRange &t) {
 		//std::cout<< "Caught Exception " << t.what() << std::endl;
 		//std::cout<< t.backtrace() << std::endl;
@@ -144,7 +144,7 @@ void alctypes_mbuf() {
 	buf1.check(&c,1);
 	try {
 		buf1.check(&c,1);
-		throw txBase("expected txUnexpectedData",1);
+		throw txBase("expected txUnexpectedData");
 	} catch( txUnexpectedData &t) {
 		std::cout<< "Caught Exception " << t.what() << std::endl;
 		//std::cout<< t.backtrace() << std::endl;
@@ -216,7 +216,7 @@ void alctypes_mbuf() {
 		
 	try {
 		buf1++;
-		throw txBase("expected txOutOfRange",1);
+		throw txBase("expected txOutOfRange");
 	} catch( txOutOfRange &t) {
 		//std::cout<< "Caught Exception " << t.what() << std::endl;
 		//std::cout<< t.backtrace() << std::endl;
@@ -351,7 +351,7 @@ void alctypes_fbuf() {
 	
 	try {
 		f1.open("one");
-		throw txBase("expected txNotFound",1);
+		throw txBase("expected txNotFound");
 	} catch( txNotFound &t) {
 		//std::cout<< "Caught Exception " << t.what() << std::endl;
 		//std::cout<< t.backtrace() << std::endl;
@@ -1162,7 +1162,7 @@ int main(int argc, char **argv) {
 		std::cerr << "Please pass source dir as first argument." << std::endl;
 		return 1;
 	}
-	std::cout << std::endl << "Alcugs test suite - alcbase tests" <<std::endl;
+	std::cout << std::endl << "Alcugs test suite - alcbase tests" << std::endl;
 	tAlcMain alcMain("Alcbase Test");
 	try {
 		alcdebug_tests();
@@ -1179,7 +1179,7 @@ int main(int argc, char **argv) {
 		std::cout<< t.backtrace() << std::endl;
 		return -1;
 	} catch (...) {
-		std::cout<< "Caught Unknown Exception" <<std::endl;
+		std::cout<< "Caught Unknown Exception" << std::endl;
 		return -1;
 	}
 	

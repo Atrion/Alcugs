@@ -39,33 +39,33 @@ namespace alc {
 
 class txUnet : public txBase {
 public:
-	txUnet(const tString &name,const tString &msg,bool abort=false) :txBase(name,msg,abort) {}
-	txUnet(const tString &msg,bool abort=false) :txBase("unet",msg,abort) {}
+	txUnet(const tString &name,const tString &msg) :txBase(name,msg) {}
+	txUnet(const tString &msg) :txBase("unet",msg) {}
 };
 
 class txUnetIniErr : public txUnet {
 public:
-	txUnetIniErr(const tString &msg,bool abort=false) :txUnet("UnetIniError",msg,abort) {}
+	txUnetIniErr(const tString &msg) :txUnet("UnetIniError",msg) {}
 };
 
 class txToMCons : public txUnet {
 public:
-	txToMCons(const tString &msg,bool abort=false) :txUnet("txToMCons",msg,abort) {}
+	txToMCons(const tString &msg) :txUnet("txToMCons",msg) {}
 };
 
 class txTooBig : public txUnet {
 public:
-	txTooBig(const tString &msg,bool abort=false) :txUnet("txTooBig",msg,abort) {}
+	txTooBig(const tString &msg) :txUnet("txTooBig",msg) {}
 };
 
 class txProtocolError : public txUnet {
 public:
-	txProtocolError(const tString &msg,bool abort=false) :txUnet("txProtocolError",msg,abort) {}
+	txProtocolError(const tString &msg) :txUnet("txProtocolError",msg) {}
 };
 
 class txDatabaseError : public txUnet {
 public:
-	txDatabaseError(const tString &msg,bool abort=false) :txUnet("txDatabaseError",msg,abort) {}
+	txDatabaseError(const tString &msg) :txUnet("txDatabaseError",msg) {}
 };
 
 

@@ -1,5 +1,3 @@
-#cmakedefine HAVE_EXECINFO_H
-
 #cmakedefine ENABLE_MSGLOG
 #cmakedefine ENABLE_NETDEBUG
 #cmakedefine ENABLE_ACKCACHE

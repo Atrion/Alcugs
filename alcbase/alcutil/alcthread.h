@@ -54,6 +54,14 @@ pthread_t alcGetSelfThreadId(); // the actual type is pthread_t, which might not
 		FORBID_CLASS_COPY(LockName) \
 	}
 
+class tSignalSetter {
+public:
+	tSignalSetter(bool block); //!< when true, blocks all signals, otherwise allows all signals
+	~tSignalSetter();
+private:
+	sigset_t oldset;
+};
+
 class tThread {
 public:
 	tThread();

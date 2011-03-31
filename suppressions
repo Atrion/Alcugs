@@ -6,7 +6,6 @@
    fun:my_error_register
    fun:mysql_server_init
    fun:mysql_init
-   fun:_ZN3alc4tSQL7connectEb
 }
 {
    not freed by msql_free for some reason (bug ?)
@@ -17,7 +16,6 @@
    fun:my_init
    fun:mysql_server_init
    fun:mysql_init
-   fun:_ZN3alc4tSQL7connectEb
 }
 {
    not freed by msql_free for some reason (bug ?)
@@ -30,7 +28,6 @@
    fun:get_charset_by_csname
    fun:mysql_init_character_set
    fun:mysql_real_connect
-   fun:_ZN3alc4tSQL7connectEb
 }
 {
    not freed by msql_free for some reason (bug ?)
@@ -66,7 +63,6 @@
    fun:init
    fun:pthread_once
    fun:backtrace
-   fun:_ZN3alc6txBase17_preparebacktraceEv
 }
 
 
@@ -76,6 +72,5 @@
    fun:inflateReset2
    fun:inflateInit2_
    fun:uncompress
-   fun:_ZN3alc5tZBuf10uncompressEm
 }
 

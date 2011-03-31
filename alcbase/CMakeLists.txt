@@ -1,6 +1,9 @@
 find_package(ZLIB REQUIRED)
 include_directories(${ZLIB_INCLUDE_DIR})
 
+require_include("execinfo.h")
+require_include("dlfcn.h")
+require_include("arpa/inet.h")
 
 set(ALCBASE_ALCUTIL_FILES
 	alcutil/alccfgtypes.cpp
@@ -28,7 +31,7 @@ set(ALCBASE_BASE_FILES
 	alcversion.cpp)
 
 add_library(alcbase SHARED ${ALCBASE_ALCUTIL_FILES} ${ALCBASE_BASE_FILES} ${ALCBASE_URUTYPES_FILES})
-target_link_libraries(alcbase ${ZLIB_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(alcbase ${ZLIB_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} "dl")
 
 # tests
 add_executable(alcbase_test test/alcbase_test.cpp)

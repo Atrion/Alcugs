@@ -37,6 +37,8 @@
 #include "alcutil/alccfgtypes.h"
 
 namespace alc {
+	
+	class txBase;
 
 //! Global library management class - always create exactly one instance of this one!
 class tAlcMain {
@@ -54,9 +56,12 @@ public:
 	tLog *std() { return stdLog; }
 	tLog *err() { return errLog; }
 	
+	// signal handling
+	void installSigchildHandler(bool install = true);
+	
 	// some global events
 	virtual void applyConfig(); //!< applies the previously loaded config to all submodules. This enables file-logging per default! Call after you set up the configuration
-	virtual void onCrash(void);
+	virtual void onCrash(const txBase &e) __attribute__ ((noreturn));
 	virtual bool onSignal(int s); //!< returns whether the signal has been handled (true) or still needs handling (false)
 
 protected:

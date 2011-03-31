@@ -43,7 +43,7 @@
 
 // This is a 3rd-party file, ingore warnings
 #pragma GCC diagnostic ignored "-Wold-style-cast"
-
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 
 
 static const UINT8 S[256]=
