@@ -59,7 +59,7 @@ static const double timeTolerance = 0.05; // the non-sleeping operations may tak
 namespace alc {
 	
 static txUnet txUnetWithErrno(tString msg) {
-	msg.printf(" Errno %i: %s\n",errno,strerror(errno));
+	msg.printf(", Errno %i: %s",errno,strerror(errno));
 	return txUnet(msg);
 }
 

@@ -61,6 +61,7 @@ void tAlcUnetMain::setNet(tUnetBase *netcore)
 
 void tAlcUnetMain::installUnetHandlers(bool install)
 {
+	installHandler(SIGALRM,install);
 	installHandler(SIGTERM,install);
 	installHandler(SIGINT,install);
 	installHandler(SIGHUP,install);

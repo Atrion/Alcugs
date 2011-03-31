@@ -39,6 +39,7 @@
 
 #include <sys/wait.h>
 #include <cassert>
+#include <exception>
 
 // We are using SIG_DFL here which implies an old-style cast
 #pragma GCC diagnostic ignored "-Wold-style-cast"
@@ -56,17 +57,16 @@ static void _alcHandleSignal(int s) {
 	if(alcMain != NULL) alcMain->onSignal(s);
 }
 
+static void _alcHandleTerminate(void) {
+	if (alcMain != NULL) alcMain->onCrash(txBase("Error during exception handling"));
+}
+
 tAlcMain::tAlcMain(const tString& appName) : appName(appName)
 {
 	try {
 		// global library management
 		if (alcMain) _DIE("You can NEVER create several instances of tAlcMain");
 		alcMain = this;
-		
-		// be sure to receive all signals (if we are forked from the lobby server worker thread, we inherit its blick mask!)
-		sigset_t set;
-		sigfillset(&set);
-		if (pthread_sigmask(SIG_UNBLOCK, &set, NULL)) _DIE("Failed to unlock signals");
 		
 		// initialization
 		mainThreadId = alcGetSelfThreadId();
@@ -89,7 +89,6 @@ tAlcMain::tAlcMain(const tString& appName) : appName(appName)
 }
 
 tAlcMain::~tAlcMain() {
-	installBaseHandlers(/*install*/false);
 	delete stdLog;
 	delete errLog;
 	alcMain = NULL; // the last thing
@@ -163,18 +162,26 @@ void tAlcMain::loadConfig(const tString &path) {
 	f1.get(parser);
 }
 
-void tAlcMain::onCrash() {
+void tAlcMain::onCrash(const txBase &e) {
+	e.dump();
 	tString var;
 	var=cfg.getVar("crash.action","global");
 	if(!var.isEmpty()) {
 		int res = system(var.c_str());
 		if (res) errLog->log("Error: %s returned %d\n", var.c_str(), res);
 	}
+	::abort();
 }
 
 void tAlcMain::installBaseHandlers(bool install)
 {
 	installHandler(SIGSEGV, install);
+	installHandler(SIGCHLD, install);
+	std::set_terminate(_alcHandleTerminate);
+}
+
+void tAlcMain::installSigchildHandler(bool install)
+{
 	installHandler(SIGCHLD, install);
 }
 
@@ -198,10 +205,7 @@ bool tAlcMain::onSignal(int s) {
 				wait(NULL); // properly exit child
 				return true;
 			case SIGSEGV:
-				errLog->log("\n PANIC!!!\n");
-				errLog->log("TERRIBLE FATAL ERROR: SIGSEGV recieved!!!\n\n");
-				errLog->flush();
-				throw txBase("Panic: Segmentation Fault - dumping core",/*abort*/true);
+				onCrash(txBase("Panic: Segmentation Fault - dumping core"));
 		}
 	} catch(txBase &t) {
 		errLog->log("FATAL Exception %s\n%s\n",t.what(),t.backtrace()); return true;

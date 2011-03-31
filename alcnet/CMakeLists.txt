@@ -1,6 +1,10 @@
 find_package(MySQL REQUIRED)
 include_directories(${MYLIB_INCLUDE_DIR})
 
+require_include("netdb.h")
+require_include("sys/socket.h")
+require_include("netinet/in.h")
+
 set (ALCNET_PROTOCOL_FILES
 	protocol/protocol.cpp
 	protocol/umsgbasic.cpp

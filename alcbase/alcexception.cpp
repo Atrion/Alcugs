@@ -38,73 +38,95 @@
 #include "alcversion.h"
 
 #define __STDC_FORMAT_MACROS
+#include <cassert>
 #include <unistd.h>
 #include <ctime>
 #include <cstdlib>
 #include <inttypes.h>
-
-#if defined(HAVE_EXECINFO_H)
-	#include <execinfo.h>
-#endif
+#include <dlfcn.h>
+#include <execinfo.h>
+#include <cxxabi.h>
 
 
 namespace alc {
-	
-	
-const int txExcLevels = 20;
 
+const int txExcLevels = 20;
 
 //Exceptions
 
 //Base class
-txBase::txBase(const tString &msg,bool abort) : msg(msg) {
-	this->abort=abort;
-	this->_preparebacktrace();
+static tString getReadableAddress(void *address)
+{
+	// what we can always do: just print the plain address
+	tString result;
+	result.printf("%p", address);
+	// get library information
+	Dl_info info;
+	dladdr( address, &info );
+	assert(static_cast<uint8_t*>(address) >= static_cast<uint8_t*>(info.dli_fbase));
+	
+	// create addr2line query
+	char buf[1024];
+	tString filename = info.dli_fname[0] == '/' ? info.dli_fname : ("$(which "+tString(info.dli_fname)+")"); // get a WD-independant name
+	bool sharedLib = filename.find(".so") != npos || filename.find(".sl") != npos; // the base program does not get the offset substracted, so detect it
+	long unsigned int offset = sharedLib ? static_cast<uint8_t*>(address)-static_cast<uint8_t*>(info.dli_fbase) : reinterpret_cast<long unsigned int>(address);
+	snprintf(buf, 1023, "addr2line -e %s 0x%lX", filename.c_str(), offset);
+	
+	// get addr2line answer
+	FILE *pf = popen(buf, "r");
+	if (!pf) return result;
+	if (fgets(buf, 1023, pf)) {
+		if (strlen(buf) > 2 && strncmp(buf, "??", 2) != 0) { // a usable address :)
+			result = tString(buf).stripped('\n');
+		}
+	}
+	pclose(pf);
+	return result;
 }
-txBase::txBase(const tString &name,const tString &msg,bool abort) {
-	this->msg = name + ": " + msg;
-	this->abort=abort;
-	this->_preparebacktrace();
+static tString getReadableFunctionName(tString symbol)
+{
+	// get mangled function name, if existing
+	size_t endFunction = symbol.find(' ');
+	if (endFunction == npos) return symbol; // this is really weird, should never happen
+	symbol = symbol.substring(0, endFunction);
+	size_t beginName = symbol.find('(');
+	size_t endName = symbol.find('+');
+	if (beginName == npos ||endName == npos || endName <= beginName+1) return symbol; // it could not find the function name
+	symbol = symbol.substring(beginName+1, endName-beginName-1);
+	
+	// demangle function name
+	int status;
+	char *buf = abi::__cxa_demangle(symbol.c_str(), NULL, NULL, &status);
+	if (status == 0) {
+		// hooray, we got a demangled name!
+		symbol = buf;
+	}
+	free(buf);
+	return symbol;
 }
-txBase::txBase(const txBase &t) {
-	copy(t);
-}
-void txBase::copy(const txBase &t) {
-	DBG(5,"copy\n");
-	this->abort=t.abort;
-	this->msg=t.msg;
-	this->bt=t.bt;
-}
-void txBase::_preparebacktrace() {
-// This needs porting - This code only works under Linux (it's part of the libc)
-#ifdef HAVE_EXECINFO_H
+tString txBase::getBacktrace(unsigned int ignoredLevels) {
+	alcGetMain()->installSigchildHandler(false);
 	//get the backtrace
-	void * btArray[txExcLevels];
-	char **strings;
-	unsigned int size=::backtrace(btArray,txExcLevels);
-	strings=backtrace_symbols(btArray,size);
+	void *btAddresses[txExcLevels];
+	char **btStrings;
+	unsigned int size=::backtrace(btAddresses,txExcLevels);
+	btStrings=backtrace_symbols(btAddresses,size);
 	
-	bt.clear();
-	
+	tString bt;
 	bt.printf("Backtrace with %u levels:\n",size);
-	for(size_t i=0; i<size; i++) {
-		bt.printf("  %s\n", strings[i]);
+	if (ignoredLevels > 0)
+		bt.writeStr("     [Backtrace Catcher]\n");
+	for(size_t i=ignoredLevels; i<size; i++) { // skip uppermost two frames: _preparebacktrace and the exception constructor
+		bt.printf("#%02Zd  %s at %s\n", i, getReadableFunctionName(btStrings[i]).c_str(), getReadableAddress(btAddresses[i]).c_str());
 	}
-	bt += "c++filt and addr2line may be useful\n";
-	free(strings);
-#else
-	bt = "execinfo.h not found\n";
-#endif
-	if(this->abort) {
-		dump();
-		alcGetMain()->onCrash();
-		fprintf(stderr,"An exception requested to abort\n");
-		::abort();
-	}
+	free(btStrings);
+	
+	// restore signal handling
+	alcGetMain()->installSigchildHandler();
+	return bt;
 }
-void txBase::dump(bool toStderr) {
-	if (toStderr)
-		fprintf(stderr,"Exception %s:\n%s\n",msg.c_str(),bt.c_str());
+void txBase::dump() const {
+	fprintf(stderr,"Exception %s:\n%s\n",msg.c_str(),bt.c_str());
 
 	tString filename;
 	filename.printf("BackTrace-%06i-%08X.txt",getpid(),static_cast<uint32_t>(time(NULL)));

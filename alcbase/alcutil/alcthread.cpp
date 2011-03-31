@@ -38,8 +38,8 @@
 
 #include <cerrno>
 #include <pthread.h>
-#include <signal.h>
 #include <stdlib.h>
+#include <signal.h>
 
 
 namespace alc {
@@ -62,22 +62,30 @@ static void* _alcThreadSpawner(void * s) {
 	return (NULL);
 }
 
+tSignalSetter::tSignalSetter(bool block)
+{
+	sigset_t set;
+	sigfillset(&set);
+	if (pthread_sigmask(block ? SIG_BLOCK : SIG_UNBLOCK, &set, &oldset))
+		throw txBase(_WHERE("Error setting sigmask"));
+}
+tSignalSetter::~tSignalSetter()
+{
+	if (pthread_sigmask(SIG_SETMASK, &oldset, NULL))
+		throw txBase(_WHERE("Error setting sigmask"));
+}
+
 tThread::tThread() : spawned(false) {}
 tThread::~tThread() {
 	if (spawned) throw txBase(_WHERE("Attempting to delete a running thread!"));
 }
 void tThread::spawn() {
 	if(spawned) return;
-	bool fail = false;
-	// make sure all signals are blocked
-	sigset_t set, oldset;
-	sigfillset(&set);
-	fail = pthread_sigmask(SIG_BLOCK, &set, &oldset);
+	// make sure all signals are blocked (this is inherited to the child thread)
+	tSignalSetter doNotDisturb(/*block*/true);
 	// launch thread
-	fail = fail || pthread_create(&id, NULL, _alcThreadSpawner,this); // don't even launch thread if we failed eaely
-	// restore signal mask
-	fail = pthread_sigmask(SIG_SETMASK, &oldset, NULL) || fail;// restore sigmask in any case
-	if (fail) throw txBase(_WHERE("Something went wrong during thread spawn!"));
+	if (pthread_create(&id, NULL, _alcThreadSpawner,this))
+		throw txBase(_WHERE("Something went wrong during thread spawn!"));
 	// done!
 	spawned=true;
 }

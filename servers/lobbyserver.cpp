@@ -201,6 +201,7 @@ namespace alc {
 					// This is the forked process. That means it is exactly the same as the lobby we just left.
 					// We don't have to properly free each variable as this process will soon be completely
 					//  replaced by the game server (this is was execlp does)
+					tSignalSetter unblocker(/*block*/false); // don't block signals in game server process (the worker thread did)
 					
 					// get the arguments for starting the server
 					tString gameName = alcStrFiltered(forkServer.age);
