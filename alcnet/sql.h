@@ -52,7 +52,7 @@ public:
 	~tSQL(void);
 	
 	bool prepare(void); //!< this must be called before each query. it establishes the connection and creates the database if necessary \return true on success, false on error
-	bool query(const tString &str, const char *desc, bool throwOnError = true); //!< query the database \return true on success, false on error
+	bool query(const tString &str, const tString &desc, bool throwOnError = true); //!< query the database \return true on success, false on error
 	int queryForNumber(const tString &str, const char *desc); //!< query the database (must be a SELECT or SHOW) \return number of resulting rows
 	void checkTimeout(void); //!< closes the connection on timeout
 	int insertId(void);
@@ -66,7 +66,7 @@ public:
 	static uint8_t allFlags(void) { return SQL_LOG | SQL_LOGQ | SQL_CREATEDB | SQL_CREATABL; }
 	static tSQL *createFromConfig(void);
 private:
-	void printError(const char *msg); //!< print the last MySQL error (with the given desctiption) to the error protocol
+	void printError(const tString &msg); //!< print the last MySQL error (with the given desctiption) to the error protocol
 	
 	uint8_t flags;
 	tLog *sql, *err;

@@ -71,9 +71,9 @@ tSQL::~tSQL(void)
 	if (err != alcGetMain()->err()) delete err;
 }
 
-void tSQL::printError(const char *msg)
+void tSQL::printError(const tString &msg)
 {
-	err->log("ERR (MySQL): %s: %u %s\n", msg, mysql_errno(connection), mysql_error(connection));
+	err->log("ERR (MySQL): %s: %u %s\n", msg.c_str(), mysql_errno(connection), mysql_error(connection));
 }
 
 bool tSQL::connect(bool openDatabase)
@@ -126,17 +126,17 @@ bool tSQL::prepare(void)
 	return false;
 }
 
-bool tSQL::query(const tString &str, const char *desc, bool throwOnError)
+bool tSQL::query(const tString &str, const tString &desc, bool throwOnError)
 {
 	if (connection == NULL) {
 		if (!prepare()) { // DANGER: possible endless loop (query calls prepare calls query...)
-			if (throwOnError) throw txDatabaseError(_WHERE("No connection to DB for \"%s\"", desc));
+			if (throwOnError) throw txDatabaseError(_WHERE("No connection to DB for \"%s\"", desc.c_str()));
 			return false;
 		}
 	}
 	
 	if (flags & SQL_LOGQ) {
-		sql->log("SQL query (%s): ", desc);
+		sql->log("SQL query (%s): ", desc.c_str());
 		sql->print(str);
 		sql->nl();
 		sql->flush();
@@ -144,19 +144,18 @@ bool tSQL::query(const tString &str, const char *desc, bool throwOnError)
 	
 	if (!mysql_query(connection, str.c_str())) return true; // if everything worked fine, we're done
 
-	// there was an error - print it
-	printError(desc);
 	// if there's an error, it might be necessary to reconnect
 	if (mysql_errno(connection) == 2013 || mysql_errno(connection) == 2006) { // 2013 = Lost connection to MySQL server during query, 2006 = MySQL server has gone away
+		printError(desc+" (first attempt, trying again)");
 		// reconnect and try again if the connection was lost
 		sql->log("Reconnecting...\n"); sql->flush();
 		disconnect();
 		connect(true);
 		if (!mysql_query(connection, str.c_str())) return true; // it worked on the 2nd try
-		// failed again... print the error
-		printError(desc);
 	}
-	if (throwOnError) throw txDatabaseError(_WHERE("SQL error while \"%s\"", desc));
+	// failed irrecoverably... print the error
+	printError(desc);
+	if (throwOnError) throw txDatabaseError(_WHERE("SQL error while \"%s\"", desc.c_str()));
 	return false;
 }
 
