@@ -66,18 +66,7 @@ void my_func() {
 }
 
 void alcexception_tests() {
-	DBG(1,"Generating an exception...\n");
 	try {
-		throw txBase("ooops");
-	} catch (txBase &t) {
-		std::cout<< "Caught Exception " << t.what() << std::endl;
-		std::cout<< t.backtrace() << std::endl;
-	}
-	DBG(2,"Continuing...\n");
-	
-
-	try {
-		//throw txBase("generate a core and abort",1,1);
 		my_func();
 	} catch (txBase &t) {
 		std::cout<< "Caught Exception " << t.what() << std::endl;

@@ -44,21 +44,31 @@ public:
 			\param abort If true, this exception will always stop execution
 			\param core If true, it will try to generate a coredump (requires the google Coredumper library), and of course, only works on a real operating system.
 	*/
-	txBase(const tString &msg) : msg(msg), bt(getBacktrace()) {}
-	txBase(const tString &name, const tString &msg) : msg(name + ": " + msg), bt(getBacktrace()) {}
+	txBase(const tString &msg) : msg(msg) { storeBacktrace(); }
+	txBase(const tString &name, const tString &msg) : msg(name + ": " + msg) { storeBacktrace(); }
 	virtual ~txBase() {}
 	
 	/** Returns the description message */
 	const char *what() const { return msg.c_str(); }
 	/** Returns a backtrace (Only on Linux) */
-	const char *backtrace() const { return bt.c_str(); }
+	const char *backtrace() const {
+		if (btPrinted.isEmpty())
+			btPrinted = printBacktrace(bt, size);
+		return btPrinted.c_str();
+	}
 	/** Dumps exception information to a BackTrace file */
 	void dump() const;
 	
-	
-	static tString getBacktrace(unsigned int ignoredLevels = 2); //!< return a current backtrace, per default, ignore this function and the caller
+	static tString printBacktrace(void*const* bt, unsigned int size); //!< return a readable version of bt
 private:
-	tString msg, bt;
+	enum { txExcLevels = 20 };
+	
+	tString msg; //!< exception message
+	mutable tString btPrinted; //!< the printed backtrace (as a cache, will only be calculated once when needed)
+	void *bt[txExcLevels];
+	unsigned int size;
+	
+	void storeBacktrace();
 };
 //End Exception
 
