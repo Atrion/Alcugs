@@ -26,8 +26,6 @@
 
 #ifndef __U_UNET_H
 #define __U_UNET_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_UNET_H_ID "$Id$"
 
 #include "netsessionmgr.h"
 #include "protocol/protocol.h"

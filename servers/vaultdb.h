@@ -26,8 +26,6 @@
 
 #ifndef __U_VAULTDB_H
 #define __U_VAULTDB_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_VAULTDB_H_ID "$Id$"
 
 #include <alctypes.h>
 

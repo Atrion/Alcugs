@@ -28,8 +28,6 @@
 	URUNET 3+
 */
 
-/* CVS tag - DON'T TOUCH*/
-#define __U_SQL_ID "$Id$"
 //#define _DBG_LEVEL_ 10
 #include <alcdefs.h>
 #include "sql.h"
@@ -54,7 +52,7 @@ tSQL::tSQL(const tString &host, uint16_t port, const tString &username, const tS
 		err = alcGetMain()->err();
 		if (flags & SQL_LOGQ) {
 			sql->open("sql.log");
-			sql->log("MySQL driver loaded (%s)\n", __U_SQL_ID);
+			sql->log("MySQL driver loaded\n");
 			sql->print(" flags: %04X, host: %s, port: %d, user: %s, dbname: %s, using password: ", this->flags, this->host.c_str(), this->port, this->username.c_str(), this->dbname.c_str());
 			if (!password.isEmpty()) { sql->print("yes\n"); }
 			else { sql->print("no\n"); }

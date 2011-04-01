@@ -28,8 +28,6 @@
 	URUNET 3+
 */
 
-/* CVS tag - DON'T TOUCH*/
-#define __U_UNETBASE_ID "$Id$"
 //#define _DBG_LEVEL_ 5
 #include <alcdefs.h>
 #include "unetbase.h"

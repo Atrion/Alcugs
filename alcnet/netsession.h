@@ -26,8 +26,6 @@
 
 #ifndef __U_NETSESSION_H
 #define __U_NETSESSION_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_NETSESSION_H_ID "$Id$"
 
 #include "netqueue.h"
 #include "protocol/protocol.h"

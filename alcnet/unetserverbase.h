@@ -26,8 +26,6 @@
 
 #ifndef __U_UNETSERVERBASE_H
 #define __U_UNETSERVERBASE_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_UNETSERVERBASE_H_ID "$Id$"
 
 #include "unetbase.h"
 

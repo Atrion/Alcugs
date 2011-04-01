@@ -26,8 +26,6 @@
 
 #ifndef __U_GAMESERVER_H
 #define __U_GAMESERVER_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_GAMESERVER_H_ID "$Id$"
 
 #include <unetlobbyserverbase.h>
 #include <protocol/gamemsg.h>

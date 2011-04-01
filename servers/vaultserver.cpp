@@ -24,8 +24,6 @@
 *                                                                              *
 *******************************************************************************/
 
-/* CVS tag - DON'T TOUCH*/
-#define __U_VAULTSERVER_ID "$Id$"
 //#define _DBG_LEVEL_ 10
 #include <alcdefs.h>
 #include "vaultserver.h"

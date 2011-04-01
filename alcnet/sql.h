@@ -30,8 +30,6 @@
 
 #ifndef __U_SQL_H
 #define __U_SQL_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_SQL_H_ID "$Id$"
 
 
 //flags

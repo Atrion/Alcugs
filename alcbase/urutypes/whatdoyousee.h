@@ -1,8 +1,6 @@
 #ifndef __U_WHATDOYOUSEE_H
 #define __U_WHATDOYOUSEE_H
 
-#define __U_WHATDOYOUSEE_H_ID "$Id$"
-
 #ifdef __cplusplus
 extern "C" {
 #endif

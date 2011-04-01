@@ -24,8 +24,6 @@
 *                                                                              *
 *******************************************************************************/
 
-/* CVS tag - DON'T TOUCH*/
-#define __U_AUTHBACKEND_ID "$Id$"
 //#define _DBG_LEVEL_ 10
 #include <alcdefs.h>
 #include "authbackend.h"
@@ -118,8 +116,8 @@ namespace alc {
 			}
 		}
 		
-		log.log("Auth driver successfully started (%s)\n minimal access level: %d, max attempts: %d, disabled time: %d\n",
-				__U_AUTHBACKEND_ID, minAccess, maxAttempts, disTime);
+		log.log("Auth driver successfully started\n minimal access level: %d, max attempts: %d, disabled time: %d\n",
+				minAccess, maxAttempts, disTime);
 		if (!cgasServer.isEmpty()) log.print(" Using CGAS at http://%s:%d%s\n", cgasServer.c_str(), cgasPort, cgasPath.c_str());
 		log.nl();
 		log.flush();

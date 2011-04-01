@@ -26,8 +26,6 @@
 
 #ifndef __U_UNETLOBBYSERVERBASE_H
 #define __U_UNETLOBBYSERVERBASE_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_UNETLOBBYSERVERBASE_H_ID "$Id$"
 
 #include "netsessionmgr.h"
 #include "unetserverbase.h"

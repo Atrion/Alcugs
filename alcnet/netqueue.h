@@ -28,10 +28,8 @@
 	URUNET 3+
 */
 
-#ifndef __U_NETMSGQ_H
-#define __U_NETMSGQ_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_NETMSGQ_H_ID "$Id$"
+#ifndef __U_NETQUEUE_H
+#define __U_NETQUEUE_H
 
 #include <list>
 

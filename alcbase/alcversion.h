@@ -24,10 +24,8 @@
 *                                                                              *
 *******************************************************************************/
 
-/* CVS tag - DON'T TOUCH*/
 #ifndef __U_ALCVERSION_H
 #define __U_ALCVERSION_H
-#define __U_ALCVERSION_H_ID "$Id$"
 
 #include "alcxversion.h"
 

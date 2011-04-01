@@ -30,8 +30,6 @@
 
 #ifndef __U_ALCPARSER_H
 #define __U_ALCPARSER_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_ALCPARSER_H_ID "$Id$"
 
 #include "alctypes.h"
 

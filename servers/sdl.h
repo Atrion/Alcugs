@@ -26,8 +26,6 @@
 
 #ifndef __U_SDL_H
 #define __U_SDL_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_SDL_H_ID "$Id$"
 
 #include "sdlbinary.h"
 

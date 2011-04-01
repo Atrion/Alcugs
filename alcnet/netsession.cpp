@@ -28,8 +28,6 @@
 	URUNET 3+
 */
 
-/* CVS tag - DON'T TOUCH*/
-#define __U_NETSESSION_ID "$Id$"
 //#define _DBG_LEVEL_ 3
 #include <alcdefs.h>
 #include "netsession.h"

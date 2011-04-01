@@ -26,8 +26,6 @@
 
 /** for debugging */
 
-/* CVS tag - DON'T TOUCH*/
-#define __U_DEGUB_ID "$Id$"
 #include "alcdefs.h"
 #include "alcdebug.h"
 

@@ -26,8 +26,6 @@
 
 #ifndef __U_AUTHMSG_H
 #define __U_AUTHMSG_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_AUTHMSG_H_ID "$Id$"
 
 #include "protocol.h"
 #include "netsession.h"

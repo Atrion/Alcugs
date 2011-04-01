@@ -33,8 +33,6 @@
 
 #ifndef __U_PROTOCOL_H
 #define __U_PROTOCOL_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_PROTOCOL_H_ID "$Id$"
 
 #include <urutypes/uruconsts.h>
 #include <urutypes/urubasetypes.h>

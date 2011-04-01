@@ -28,8 +28,6 @@
 	Alcugs Basic data types, and buffer classes.
 */
 
-/* CVS tag - DON'T TOUCH*/
-#define __U_ALCCFGTYPES_ID "$Id$"
 //#define _DBG_LEVEL_ 5
 #include "alcdefs.h"
 #include "alccfgtypes.h"

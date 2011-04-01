@@ -26,8 +26,6 @@
 
 /** The Uru protocol, is here */
 
-/* CVS tag - DON'T TOUCH*/
-#define __U_PROTOCOL_ID "$Id$"
 //#define _DBG_LEVEL_ 10
 #include <alcdefs.h>
 #include "protocol.h"

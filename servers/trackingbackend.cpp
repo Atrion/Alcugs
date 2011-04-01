@@ -24,8 +24,6 @@
 *                                                                              *
 *******************************************************************************/
 
-/* CVS tag - DON'T TOUCH*/
-#define __U_TRACKINGBACKEND_ID "$Id$"
 //#define _DBG_LEVEL_ 10
 #include <alcdefs.h>
 #include "trackingbackend.h"
@@ -100,7 +98,7 @@ namespace alc {
 		tString var = cfg->getVar("tracking.log");
 		if (var.isEmpty() || var.asInt()) { // logging enabled per default
 			log.open("tracking.log");
-			log.log("Tracking driver started (%s)\n\n", __U_TRACKINGBACKEND_ID);
+			log.log("Tracking driver started\n\n");
 			log.flush();
 		}
 		else log.close();

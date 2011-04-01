@@ -26,8 +26,6 @@
 
 #ifndef __U_SDLBINARY_H
 #define __U_SDLBINARY_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_SDLBINARY_H_ID "$Id$"
 
 #include <urutypes/urubasetypes.h>
 

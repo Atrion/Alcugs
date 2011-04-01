@@ -28,8 +28,6 @@
 
 #ifndef __U_UMSGBASIC_H
 #define __U_UMSGBASIC_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_UMSGBASIC_H_ID "$Id$"
 
 #include "protocol.h"
 #include "netsession.h"

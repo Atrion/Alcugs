@@ -28,8 +28,6 @@
 	Useful helper functions
 */
 
-/* CVS tag - DON'T TOUCH*/
-#define __U_USEFUL_ID "$Id$"
 //#define _DBG_LEVEL_ 10
 #include "alcdefs.h"
 #include "useful.h"
