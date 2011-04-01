@@ -26,8 +26,6 @@
 
 #ifndef __U_TRACKINGBACKEND_H
 #define __U_TRACKINGBACKEND_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_TRACKINGBACKEND_H_ID "$Id$"
 
 #include <protocol/trackingmsg.h>
 #include <netsessionmgr.h>

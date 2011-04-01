@@ -28,8 +28,6 @@
 	Parsers for config files
 */
 
-/* CVS tag - DON'T TOUCH*/
-#define __U_ALCPARSER_ID "$Id$"
 //#define _DBG_LEVEL_ 10
 #include "alcdefs.h"
 #include "alcparser.h"

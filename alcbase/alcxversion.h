@@ -29,10 +29,8 @@
 	to the syntax.
 */
 
-/* CVS tag - DON'T TOUCH*/
 #ifndef __U_XVERSION_H_
 #define __U_XVERSION_H_
-#define __U_XVERSION_H_ID "$Id$"
 
 //Alcugs version numbers
 #define alcMAX_VER 1
@@ -40,13 +38,8 @@
 #define alcREL_VER 5
 #define alcBET_VER 0
 #define alcSTR_VER "1.3.5"
-#define alcREVISION "$Revision$"
 
-#define alcDATE __DATE__
-#define alcTIME __TIME__
-#define alcBUILD_TIME alcDATE " " alcTIME
-
-#define alcBUILDINFO "Rev: " alcREVISION " - Built: " alcBUILD_TIME
+#define alcBUILD_TIME __DATE__ " " __TIME__
 
 //Protocol version numbers
 #define alcPROTO_MAX_VER 1

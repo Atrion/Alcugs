@@ -26,8 +26,6 @@
 
 #ifndef __U_VAULTSERVER_H
 #define __U_VAULTSERVER_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_VAULTSERVER_H_ID "$Id$"
 
 #include "vaultbackend.h"
 

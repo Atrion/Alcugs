@@ -29,7 +29,6 @@
 
 #ifndef __U_ALCLOG_H
 #define __U_ALCLOG_H
-#define __U_ALCLOG_H_ID $Id$
 
 #include "alctypes.h"
 

@@ -26,8 +26,6 @@
 
 #ifndef __U_AGEINFO_H
 #define __U_AGEINFO_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_AGEINFO_H_ID "$Id$"
 
 #include "alctypes.h"
 

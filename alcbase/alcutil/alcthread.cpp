@@ -28,8 +28,6 @@
 	Threading classes
 */
 
-/* CVS tag - DON'T TOUCH*/
-#define __U_ALCTHREAD_ID "$Id$"
 //#define _DBG_LEVEL_ 10
 #include "alcdefs.h"
 #include "alcthread.h"

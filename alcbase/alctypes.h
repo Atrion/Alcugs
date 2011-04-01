@@ -30,8 +30,6 @@
 
 #ifndef __U_ALCTYPES_H
 #define __U_ALCTYPES_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_ALCTYPES_H_ID "$Id$"
 
 #include "alcutil/useful.h"
 #include "alcutil/alcthread.h"

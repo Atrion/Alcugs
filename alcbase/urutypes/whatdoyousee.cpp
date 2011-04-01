@@ -1,5 +1,4 @@
 
-#define __U_WHATDOYOUSEE_ID "$Id$"
 #include "alcdefs.h"
 #include "whatdoyousee.h"
 

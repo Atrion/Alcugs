@@ -24,8 +24,6 @@
 *                                                                              *
 *******************************************************************************/
 
-/* CVS tag - DON'T TOUCH*/
-#define __U_VAULTDB_ID "$Id$"
 //#define _DBG_LEVEL_ 10
 #include <alcdefs.h>
 #include "vaultdb.h"
@@ -149,8 +147,6 @@ namespace alc {
 			query.printf("INSERT INTO %s (idx, type, int_1, str_1, str_2, text_1, text_2) VALUES ('%d', 6, '%d', '%s', '%s', 'You must never edit or delete this node!', '%s')",
 							vaultTable, KVaultID, vaultVersion, asciiFolderName.c_str(), alcGetMain()->name().c_str(), alcVersionTextShort());
 			sql->query(query, "Prepare: Creating vault folder");
-			// done!
-			log->log("Started VaultDB driver (%s)\n", __U_VAULTDB_ID);
 		}
 		else {
 			int version = getVersion();
@@ -169,8 +165,9 @@ namespace alc {
 			}
 			if (version != vaultVersion)
 				throw txDatabaseError(_WHERE("Migration function missing!"));
-			log->log("Started VaultDB driver (%s)\n", __U_VAULTDB_ID);
 		}
+		// done!
+		log->log("Started VaultDB driver\n");
 	}
 	
 	tVaultDB::~tVaultDB()

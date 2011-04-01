@@ -26,8 +26,6 @@
 
 #ifndef __U_VAULTBACKEND_H
 #define __U_VAULTBACKEND_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_VAULTBACKEND_H_ID "$Id$"
 
 #include <netsessionmgr.h>
 #include <protocol/vaultproto.h>

@@ -24,8 +24,6 @@
 *                                                                              *
 *******************************************************************************/
 
-/* CVS tag - DON'T TOUCH*/
-#define __U_ALCVERSION_ID "$Id$"
 //#define _DBG_LEVEL_ 10
 #include "alcdefs.h"
 #include "alcversion.h"
@@ -50,7 +48,7 @@ static void _alcVersionInitVars() {
 	//short
 	sprintf(tvalcVerTextShort,"%s\n",alcGetMain()->name().c_str());
 	
-	sprintf(p,"Alcugs %s - Version %s\n",alcBUILDINFO,alcSTR_VER);
+	sprintf(p,"Alcugs Version %s, built %s\n",alcSTR_VER,alcBUILD_TIME);
 	strcat(tvalcVerTextShort,p);
 	
 	sprintf(p,"Unet 3+ Protocol %i.%i\n",alcPROTO_MAX_VER,alcPROTO_MIN_VER);

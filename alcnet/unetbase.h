@@ -26,8 +26,6 @@
 
 #ifndef __U_UNETBASE_H
 #define __U_UNETBASE_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_UNETBASE_H_ID "$Id$"
 
 #include "unet.h"
 

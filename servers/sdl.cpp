@@ -24,8 +24,6 @@
 *                                                                              *
 *******************************************************************************/
 
-/* CVS tag - DON'T TOUCH*/
-#define __U_SDL_ID "$Id$"
 //#define _DBG_LEVEL_ 8
 #include <alcdefs.h>
 #include "sdl.h"
@@ -125,7 +123,7 @@ namespace alc {
 			initialized = true;
 		}
 		
-		log.log("AgeState backend started (%s)\n", __U_SDL_ID);
+		log.log("AgeState backend started\n");
 		log.flush();
 	}
 	

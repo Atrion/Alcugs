@@ -24,8 +24,6 @@
 *                                                                              *
 *******************************************************************************/
 
-/* CVS tag - DON'T TOUCH*/
-#define __U_VAULTBACKEND_ID "$Id$"
 //#define _DBG_LEVEL_ 10
 #include <alcdefs.h>
 #include "vaultbackend.h"
@@ -101,7 +99,7 @@ namespace alc {
 		if (instanceMode != 0 && instanceMode != 1) throw txBase(_WHERE("instance_mode must be 0 or 1 but is %d", instanceMode));
 		ageFileDir = cfg->getVar("age");
 		
-		log.log("Started VaultBackend (%s)\n\n", __U_VAULTBACKEND_ID);
+		log.log("Started VaultBackend\n\n");
 		delete vaultDB;
 		vaultDB = new tVaultDB(&log);
 		vaultFolderName = vaultDB->getVaultFolderName();

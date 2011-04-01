@@ -36,8 +36,6 @@
 
 #ifndef __U_ALCDEBUG_H
 #define __U_ALCDEBUG_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_ALCDEBUG_H_ID "$Id$"
 
 namespace alc {
 	class tString;

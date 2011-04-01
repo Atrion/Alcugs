@@ -26,8 +26,6 @@
 
 #ifndef __U_TRACKINGMSG_H
 #define __U_TRACKINGMSG_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_TRACKINGMSG_H_ID "$Id$"
 
 #include "gamemsg.h"
 

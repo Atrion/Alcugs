@@ -26,8 +26,6 @@
 
 #ifndef __U_TRACKINGSERVER_H
 #define __U_TRACKINGSERVER_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_TRACKINGSERVER_H_ID "$Id$"
 
 #include "trackingbackend.h"
 

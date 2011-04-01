@@ -26,8 +26,6 @@
 
 #ifndef __U_LOBBYBASEMSG_H
 #define __U_LOBBYBASEMSG_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_LOBBYBASEMSG_H_ID "$Id$"
 
 #include "protocol.h"
 #include "netsession.h"

@@ -30,8 +30,6 @@
 
 #ifndef __U_ALCOS_H
 #define __U_ALCOS_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_ALCOS_H_ID "$Id$"
 
 #include "alctypes.h"
 

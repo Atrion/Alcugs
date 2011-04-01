@@ -27,7 +27,6 @@
 /** Alcugs logging system
 */
 
-#define __U_ALCLOG_ID $Id$
 //#define _DBG_LEVEL_ 10
 #include "alcdefs.h"
 #include "alclog.h"

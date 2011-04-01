@@ -26,8 +26,6 @@
 
 #ifndef __U_UNETMAIN_H
 #define __U_UNETMAIN_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_UNETMAIN_H_ID "$Id$"
 
 #include <alcmain.h>
 

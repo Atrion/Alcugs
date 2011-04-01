@@ -30,8 +30,6 @@
 
 #ifndef __U_ALCEXCEPTION_H
 #define __U_ALCEXCEPTION_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_ALCEXCEPTION_H_ID "$Id$"
 
 #include "alctypes.h"
 

@@ -26,8 +26,6 @@
 
 #ifndef __U_AUTHSERVER_H
 #define __U_AUTHSERVER_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_AUTHSERVER_H_ID "$Id$"
 
 #include "authbackend.h"
 

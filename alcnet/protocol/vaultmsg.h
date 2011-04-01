@@ -26,8 +26,6 @@
 
 #ifndef __U_VAULTMSG_H
 #define __U_VAULTMSG_H
-/* CVS tag - DON'T TOUCH*/
-#define __U_VAULTMSG_H_H_ID "$Id$"
 
 #include "protocol.h"
 #include "netsession.h"

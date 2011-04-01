@@ -27,8 +27,6 @@
 #ifndef __U_ALCLICENSE_H
 #define __U_ALCLICENSE_H
 
-#define __U_ALCLICENSE_H_ID "$Id$"
-
 namespace alc {
 	const char * alcLicenseTextShort();
 	const char * alcLicenseText();
