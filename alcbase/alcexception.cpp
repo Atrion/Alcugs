@@ -48,11 +48,14 @@
 
 namespace alc {
 
-const int txExcLevels = 20;
-
 //Exceptions
 
 //Base class
+void txBase::storeBacktrace()
+{
+	size=::backtrace(bt,txExcLevels);
+}
+
 static tString getReadableAddress(void *address)
 {
 	// what we can always do: just print the plain address
@@ -102,29 +105,25 @@ static tString getReadableFunctionName(tString symbol)
 	free(buf);
 	return symbol;
 }
-tString txBase::getBacktrace(unsigned int ignoredLevels) {
+tString txBase::printBacktrace(void *const* bt, unsigned int size) {
 	alcGetMain()->installSigchildHandler(false);
 	//get the backtrace
-	void *btAddresses[txExcLevels];
-	char **btStrings;
-	unsigned int size=::backtrace(btAddresses,txExcLevels);
-	btStrings=backtrace_symbols(btAddresses,size);
+	char **btStrings=backtrace_symbols(bt,size);
 	
-	tString bt;
-	bt.printf("Backtrace with %u levels:\n",size);
-	if (ignoredLevels > 0)
-		bt.writeStr("     [Backtrace Catcher]\n");
-	for(size_t i=ignoredLevels; i<size; i++) { // skip uppermost two frames: _preparebacktrace and the exception constructor
-		bt.printf("#%02Zd  %s at %s\n", i, getReadableFunctionName(btStrings[i]).c_str(), getReadableAddress(btAddresses[i]).c_str());
+	tString btPrinted;
+	btPrinted.printf("Backtrace with %u levels:\n",size);
+	for(size_t i=0; i<size; i++) {
+		btPrinted.printf("#%02Zd  %s at %s\n", i, getReadableFunctionName(btStrings[i]).c_str(), getReadableAddress(bt[i]).c_str());
 	}
 	free(btStrings);
 	
 	// restore signal handling
 	alcGetMain()->installSigchildHandler();
-	return bt;
+	return btPrinted;
 }
+
 void txBase::dump() const {
-	fprintf(stderr,"Exception %s:\n%s\n",msg.c_str(),bt.c_str());
+	fprintf(stderr,"Exception %s:\n%s\n",what(),backtrace());
 
 	tString filename;
 	filename.printf("BackTrace-%06i-%08X.txt",getpid(),static_cast<uint32_t>(time(NULL)));
@@ -139,7 +138,7 @@ void txBase::dump() const {
 		fprintf(f,"Uptime:  %s\n",alcGetMain()->upTime().str(/*relative*/true).c_str());
 		fprintf(f,"Main thread id: %"PRIu64"\n",alcGetMain()->threadId());
 		fprintf(f,"This thread id: %"PRIu64"\n",static_cast<uint64_t>(alcGetSelfThreadId()));
-		fprintf(f,"Exception %s:\n%s\n",msg.c_str(),bt.c_str());
+		fprintf(f,"Exception %s:\n%s\n",what(),backtrace());
 		fclose(f);
 	}
 }
