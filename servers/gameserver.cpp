@@ -39,6 +39,7 @@
 #include <alcmain.h>
 
 #include <cstring>
+#include <ctime>
 
 namespace alc {
 	

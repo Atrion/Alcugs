@@ -35,7 +35,8 @@
 #include <protocol/vaultproto.h>
 #include <protocol/vaultmsg.h>
 
-#include <cstring>
+#include <cstdlib>
+#include <ctime>
 
 namespace alc {
 

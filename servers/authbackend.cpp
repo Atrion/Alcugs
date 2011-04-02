@@ -35,9 +35,9 @@
 #include <alcutil/alcparser.h>
 #include <protocol/protocol.h>
 
-#include <unistd.h>
 #include <ctime>
-#include <cstring>
+#include <cstdlib>
+#include <unistd.h>
 #include <netdb.h>
 
 namespace alc {

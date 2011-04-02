@@ -33,7 +33,7 @@
 #include <alcexception.h>
 #include <netsessionmgr.h>
 
-#include <cstring>
+#include <cstdlib>
 
 using namespace alc;
 

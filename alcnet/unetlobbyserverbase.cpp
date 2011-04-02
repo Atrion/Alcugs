@@ -37,7 +37,7 @@
 #include "netexception.h"
 #include <alcmain.h>
 
-#include <cstring>
+#include <cstdlib>
 
 
 namespace alc {

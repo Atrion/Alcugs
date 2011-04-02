@@ -35,7 +35,6 @@
 #include "alcexception.h"
 
 #include <cstdlib>
-#include <cstring>
 
 namespace alc {
 

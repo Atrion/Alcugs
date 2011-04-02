@@ -35,9 +35,10 @@
 #include "alcutil/alcparser.h"
 #include "alcexception.h"
 
-#include <sys/wait.h>
 #include <cassert>
+#include <cstdlib>
 #include <exception>
+#include <sys/wait.h>
 
 // We are using SIG_DFL here which implies an old-style cast
 #pragma GCC diagnostic ignored "-Wold-style-cast"

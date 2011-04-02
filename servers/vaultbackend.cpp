@@ -34,7 +34,7 @@
 #include <unet.h>
 #include <urutypes/ageinfo.h>
 
-#include <cstring>
+#include <cstdlib>
 #include <cassert>
 
 namespace alc {
