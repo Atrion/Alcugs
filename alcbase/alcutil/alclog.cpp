@@ -37,10 +37,8 @@
 
 #define __STDC_FORMAT_MACROS
 #include <iostream>
-#include <sys/stat.h>
-#include <cerrno>
 #include <cstdarg>
-#include <cstring>
+#include <sys/stat.h>
 #include <inttypes.h>
 
 

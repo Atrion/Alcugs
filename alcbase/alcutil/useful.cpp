@@ -34,11 +34,10 @@
 
 #include "alcexception.h"
 
-#include <ctime>
 #include <cstring>
-#include <sys/time.h>
-#include <fcntl.h>
 #include <cassert>
+
+#include <fcntl.h>
 #include <arpa/inet.h>
 
 namespace alc {

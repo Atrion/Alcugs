@@ -36,8 +36,8 @@
 
 #include <cerrno>
 #include <pthread.h>
-#include <stdlib.h>
-#include <signal.h>
+#include <cstdlib>
+#include <csignal>
 
 
 namespace alc {

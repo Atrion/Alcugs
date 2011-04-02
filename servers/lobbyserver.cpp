@@ -34,8 +34,8 @@
 #include <protocol/lobbymsg.h>
 #include <alcmain.h>
 
+#include <cstdlib>
 #include <unistd.h>
-#include <cstring>
 
 namespace alc {
 	

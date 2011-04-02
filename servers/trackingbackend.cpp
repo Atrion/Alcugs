@@ -36,7 +36,7 @@
 
 #include <ctime>
 #include <set>
-#include <cstring>
+#include <cstdlib>
 #include <cassert>
 
 /* The process of finding an age for a player works as follows:

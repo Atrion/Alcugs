@@ -38,10 +38,10 @@
 #include <alcmain.h>
 
 #include <cassert>
-#include <unistd.h>
+#include <cmath>
 #include <cstdlib>
-#include <math.h>
 #include <limits>
+#include <unistd.h>
 
 static const unsigned int maxPacketSz = 1024; //!< maxium size of the packets
 static const unsigned int minCabal = 5*maxPacketSz; //!< send at least 5 packets per second
@@ -288,8 +288,7 @@ void tNetSession::rawsend(tUnetUruMsg *msg)
 
 	if(msg->val==2) {
 		DBG(8,"Encoding validation 2 packet of %Zi bytes...\n",msize);
-		buf2=static_cast<uint8_t *>(malloc(msize));
-		if(buf2==NULL) { throw txNoMem(_WHERE("OOM")); }
+		buf2=new uint8_t[msize];
 		alcEncodePacket(buf2,buf,msize);
 		buf=buf2; //don't need to decode again
 		if(authenticated) {
@@ -347,7 +346,7 @@ void tNetSession::rawsend(tUnetUruMsg *msg)
 	}
 
 	DBG(9,"After the Sendto call...\n");
-	free(buf2);
+	delete[] buf2;
 	delete mbuf;
 	DBG(8,"returning from uru_net_send RET:%Zi\n",msize);
 }

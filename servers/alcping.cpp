@@ -34,7 +34,7 @@
 #include <protocol/umsgbasic.h>
 #include <netexception.h>
 
-#include <cstring>
+#include <cstdlib>
 #include <limits>
 
 using namespace alc;

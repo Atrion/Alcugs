@@ -32,8 +32,6 @@
 
 #include "alctypes.h"
 
-#include <cstdlib>
-
 namespace alc {
 
 #define DF_HTML      0x0002

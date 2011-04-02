@@ -32,8 +32,9 @@
 #include "unetbase.h"
 
 #include <csignal>
-#include <unistd.h>
 #include <cassert>
+#include <cstdlib>
+#include <unistd.h>
 
 
 namespace alc {
