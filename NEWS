@@ -8,6 +8,36 @@
 | Home: http://alcugs.almlys.org                                            |
 -----------------------------------------------------------------------------
 
+08/Apr/2011 - Release 1.3.6
+===========================================================================0
+Alcugs Development did not stand still at all, and I think it's finally time
+to call this a "stable release" again. In addition, due to the recent
+release of Plasma's source code by Cyan, Alcugs will only receive bugfixes
+from now on. The future in Uru online playing is definitely with the
+CyanWorlds.com Engine.
+Here are the most important changes since the last release from two years ago
+(as usual, check the changelog for more details):
+- Offline KI (at least version 3.6.1) is required for the server to work
+  properly - using Alcugs without it is possible, but unsupported
+- Switched to CMake build system (see below)
+- Multi-threading: The netcore runs in a different thread than message
+  processing, to avoid server halt during larger backend work
+- basic UU and public age list support
+- The age states are now saved in the directory specified by game.agestates
+- Congestion control is now actually working and Alcugs can achieve a fairly
+  good bandwidth (concidering how broken the protocol is)
+- In case of exceptions or crashes, the server prints a readable backtrace
+  (demangled function names, decoded file names and line numbers)
+- Removed legacy unet2 and unet3 protocol support (migration from old servers
+  is still possible though)
+- age and sdl files can now also be plain text
+- Both age and sdl files can now just be copied into the appropriate
+  folders - no need to reload or even restart any server anymore
+- Add support for kSubAgeBook links
+- The authserver can now use a CGAS gateway as backend for the accounts
+  (using a different protocol than Cyan though, since that one was completely broken)
+- Many bugfixes
+
 13/Oct/2010 - Switched to CMake build system
 ===========================================================================0
 The build system switched from Automake to CMake. As a consequence, I do

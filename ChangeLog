@@ -1,6 +1,7 @@
-Version 1.3.6 (??)
+Version 1.3.6 (08/Apr/2011)
 ===============================
 Improvements and Changes:
+- Offline KI (at least version 3.6.1) is required for the server to work properly - using Alcugs without it is possible, but unsupported
 - Switched to CMake build system
 - Multi-threading: The netcore (receiving and sending messages and acks, managing re-sends and so on) runs in a different thread than message processing (like vault DB queries), to avoid server halt during larger backend work
 - Code refactoring to be more readable and reasonable

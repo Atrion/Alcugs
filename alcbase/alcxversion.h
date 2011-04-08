@@ -35,9 +35,9 @@
 //Alcugs version numbers
 #define alcMAX_VER 1
 #define alcMIN_VER 3
-#define alcREL_VER 5
+#define alcREL_VER 6
 #define alcBET_VER 0
-#define alcSTR_VER "1.3.5"
+#define alcSTR_VER "1.3.6"
 
 #define alcBUILD_TIME __DATE__ " " __TIME__
 
