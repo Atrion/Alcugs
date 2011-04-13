@@ -816,12 +816,14 @@ tNetTimeBoolPair tNetSession::processSendQueues()
 			const unsigned int minTH=15;
 			const unsigned int maxTH=100;
 			/* Max. number of allowed re-sends before timeout:
-			* In production, I have the weird issue of the whole server being "asleep" for 0.5 to 0.7 seconds, and the connections to
-			* other servers dropping in that time. So do as many resends as are necessary to wait one second:
+			* In production, I have the weird issue of the whole server being "asleep" for 0.5 to 1.0 seconds, and the connections to
+			* other servers dropping in that time. So do as many resends as are necessary to wait 2 seconds:
 			* n*(n+1)/2*timeout = waittime  <=>  n^2 + n - 2*waittime/timeout = 0  <=>  n = -0.5 + sqrt(-0.25 + 2*waittime/timeout)
-			* And add 0.5 for proper rounding, and do not try less than 10 resends, with less time for terminated
-			* clients (so, in end-effect, that calulation will be used only for localhost connections). */
-			const unsigned int resendLimit = std::max((state != Connected) ? 5u : 10u, static_cast<unsigned int>(sqrt(2.0/msg_timeout - 0.25)));
+			* Also, do not try less than 10 resends, with less time for terminated clients (so, in end-effect, that
+			* calulation will be used only for localhost connections). */
+			const tNetTime minWaitTime = 2.0;
+			const double numResends = ceil(sqrt(2.0*minWaitTime/msg_timeout - 0.25) - 0.5);
+			const unsigned int resendLimit = std::max((state != Connected) ? 5u : 10u, static_cast<unsigned int>(numResends));
 			
 			// urgent packets
 			tNetQeue<tUnetUruMsg>::iterator it = sndq.begin();
