@@ -242,6 +242,8 @@ int main(int argc, char * argv[]) {
 		alcMain.std()->print("Defunct: %s\n",now.str().c_str());
 		alcMain.std()->print("Uptime:  %s\n",alcGetMain()->upTime().str(/*relative*/true).c_str());
 		alcMain.std()->print("========================================\n");
+		
+		alcMain.err()->print("Server killed by Exception %s\n%s\n",t.what(),t.backtrace());
 		alcMain.onCrash(t);
 	} catch(...) {
 		alcMain.std()->print("The service has been unexpectely killed!!!\n");
@@ -250,6 +252,8 @@ int main(int argc, char * argv[]) {
 		alcMain.std()->print("Defunct: %s\n",now.str().c_str());
 		alcMain.std()->print("Uptime:  %s\n",alcGetMain()->upTime().str(/*relative*/true).c_str());
 		alcMain.std()->print("========================================\n");
+		
+		alcMain.err()->print("Server killed by unknown exception\n");
 		alcMain.onCrash(txBase("Unknown exception"));
 	}
 	return 0;

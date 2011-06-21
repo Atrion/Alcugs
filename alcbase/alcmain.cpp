@@ -79,7 +79,7 @@ tAlcMain::tAlcMain(const tString& appName) : appName(appName)
 		tTime t = tTime::now();
 		srandom(t.microseconds + (t.seconds % 10000));
 		
-		//init signal handlers
+		// init signal handlers
 		installBaseHandlers();
 	}
 	catch (...) {
