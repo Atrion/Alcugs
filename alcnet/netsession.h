@@ -159,7 +159,7 @@ private:
 	
 	tNetTime receive_stamp; //!< last time we got something from this client
 	tNetTime send_stamp; //!< last time we sent something to this client
-	tNetTime conn_timeout; //!< time after which the session will timeout (in microseconds); protected by prvDataMutex
+	tNetTime conn_timeout; //!< time after which the session will timeout; protected by prvDataMutex
 	tTime renego_stamp; //!< remote/received nego stamp (stamp of last nego we got)
 	
 	tString passwd; //!< peer passwd hash (used in V2) (string); protected by prvDataMutex
