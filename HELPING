@@ -17,23 +17,3 @@ Please note that any patches/bug-fixes to actual code will be licensed under
 
 Please also note that all contributions (plugins, new modules, new libraries), must
  be Licensed under a GNU GPL compatible license. (LGPL, Public Domain, etc...).
- If no license is stated, then it will be licensed under the GPL.
-
-====================
-
-If you want to be an active developer with write access to the SVN
- repository, then PLEASE send me this information:
-
-* Full Name: (OPTIONAL, You can send me your alias if you want to remain as an
- anonymous user)
-* Alias: (nickname, alias, call-name, whatever)
-* E-mail: (It's supposed that it will be the same as the originating address,
- supposing that you are not going to use a re-mailer). [We need to be in
- contact in some way]
-* Your skills: (Which skills do you have, For Example: C/C++ coder, Java coder,
- PHP coder, website designer, SQL expert, MAC OS programmer...)
-* What do you want to do: (Write a list, of what type of contributions do you
- want to do, For Example: Translate to Fable, Port to Solaris, create a based
- Java/Python/Elsewhere language client/server GUI, work in the website layout,
- add X feature to the sources, fix X things.)
-
