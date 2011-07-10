@@ -1,0 +1,225 @@
+Part 1: Preparations 
+        ===== You will need a MySQL Server =====
+        Use a recent version if possible.
+        You should set a password for the mysql root user and create a separate mysql user for the alcugs servers so that they don't access the MySQL-Database with root privileges.:
+        <bash># to set the root password - you need to run this only once, but don't skip it!
+        mysql_secure_installation
+        # this will ask you for the root password you set above and log you in to the mysql server
+        # run this whenever you need to issue mysql commands
+        mysql -u root -p</bash>
+        Then create the databases and the mysql user with the following commands (fill in some random password):
+        <sql>
+        CREATE DATABASE alcugs_auth;
+        CREATE DATABASE alcugs_vault;
+        CREATE USER 'alcugs'@'localhost' IDENTIFIED BY 'change_this_password';
+        GRANT ALL PRIVILEGES ON alcugs_auth.* TO 'alcugs'@'localhost';
+        GRANT ALL PRIVILEGES ON alcugs_vault.* TO 'alcugs'@'localhost';
+        </sql>
+
+        ===== Required tools =====
+        Make sure you have the standard development tools plus cmake installed, and git to download the source code. A hopefully complete list of tools you will need is:
+        * g++, make (Debian packet: build-essential)
+        * cmake (Debian packet: cmake)
+        * git (Debian packet: git-core)
+
+        ===== Dependencies =====
+        You will also need development packages for:
+        * mysql (Debian packet: libmysqlclient15-dev)
+        * zlib (Debian packet: zlib1g-dev)
+
+        ===== Alcugs user =====
+        This software should not be run as a privileged user (root). If you do not already have a non-root user to run the shard as, create one, or plan to use something like "nobody" or "mysql". The Alcugs files refer to "alcugs", and you can create such a user as follows:
+        <bash>adduser alcugs</bash>
+
+        After the packages and user are set up, no further use of root privileges is required. Log in as the user, or su to it:
+        <bash>su alcugs</bash>
+        Everything following now has to be done as low-privileged alcugs user, otherwise you will open serious security holes!
+
+Part 2: Building the servers
+        ===== Downloading the source code =====
+        First, fetch the sources:
+        <bash>cd # switch to our home directory
+        git clone git://gitorious.org/alcugs/alcugs.git alcugs-src</bash>
+
+        ===== Compiling it =====
+        Now that we got the sources, let's compile them (cmake requires us to do that in a different directory)
+        <bash>cd alcugs-src
+        mkdir build
+        cd build
+        cmake ..
+        make</bash>
+        That's it, really!
+
+Part 3: Configuring the servers
+        ===== Creating directories =====
+        Set up the directories used by the startup script and the server.
+        <bash>
+        cd # switch to our home directory
+        mkdir bin var etc age sdl
+        </bash>
+
+        ===== Age and SDL files =====
+        Get the .age and .sdl files from a clean Complete Chronicles/Path of the Shell install. Put them in the age and sdl directories.
+
+        Some more manual work needs to be done here as Cyan for some reason has duplicate definitions of some SDL structs in their files, which the Alcugs server does not accept. However, this applies only to some TPOTS installations
+        * First, check if you have the "grsnClimb.sdl" file. If yes, follow these steps:
+        ** You have to manually edit the file "Garrison.sdl" using [http://www.guildofwriters.com/wiki/Free_and_useful_tools_to_help_in_Age_writing#PRP_Tools PlasmaShop or UruFun]
+        ** Scroll down to the line saying "sdl for climbing to 2nd floor in grsn"
+        ** Remove everything below this line, save the file and upload it
+
+        If when you copy them they are not owned by the user that will run the server, change them
+        <bash>
+        su # switch to super-user-privileges (you will be asked for the root password)
+        chown -R alcugs:alcugs ~alcugs/age ~alcugs/sdl # "~alcugs/" is the home directory of the user alcugs
+        exit # go back to low privileges (this is IMPORTANT to do!)
+        </bash>
+
+        ===== Server files =====
+        Copy the server binaries, config file, and startup script.
+        <bash>
+        cd ~/bin # "~" is the home directory of the current user 
+        ln -s ../alcugs-src/build/servers/alcugs_* ./ # link to binaries so that they are updated upon re-compiling
+        ln -s ../alcugs-src/tools/control-servers.sh ./
+        cp ../alcugs-src/tools/control-config.sh ./
+        cd # switch to our home directory
+        cp alcugs-src/uru.conf.dist etc/uru.conf
+        chmod 600 etc/uru.conf # this makes the file readable only for us, since it contains passwords
+        </bash>
+
+        <bash>nano bin/control-config.sh # or your favourite editor</bash>
+        The second line has to be changed to contain your base bath:
+        <bash># Configuration file for control-servers.sh
+        root=/home/alcugs/ # change this to the path you work in</bash>
+
+        ===== Server configuration =====
+        You will have to hand-edit the uru.conf file:
+        <bash>nano etc/uru.conf # or your favourite editor</bash>
+
+        Change the settings in each section as follows. In this file ";" is a comment character in addition to "#". You will have to uncomment some things if you want to overwrite the default value. Of course you can also change configuration options which are not listed here (see the [[AlcugsConfig|full configuration option list]] - but make sure you <b>know what you do</b>! I will only explain what is mandatory to get the Shard running.
+
+        First, the IP settings in [global]:
+        <alcugs>
+        # the bind adress for lobby and game servers (i.e. the IP of the interface to the router)
+        bind = "127.0.0.1"
+        # the address others use to connect to your server (i.e. your external address - can be a hostname)
+        public_address = "127.0.0.1"
+        ;net.up = 128000 # upstream to the internet (default: 128 kBits)
+        ;net.down = 512000 # downstram from the internet (default: 512 kBits)
+        # recommended if you connect to the server via LAN: network and network mask of your LAN (to determine the connection speed)
+        ;private_network = "192.168.0.0"
+        ;private_mask = "255.255.255.0"
+        </alcugs>
+        The setup is a bit different here depending whether you want the server to be in the public internet or just in your LAN, firewalled by a router doing [http://en.wikipedia.org/wiki/Network_address_translation NAT]:
+        * For a public server, change <tt>bind</tt> and <tt>public_address</tt> accordingly to your setup. If you know what bandwidth your server has to the internet, remove the ";" commenting the <tt>net.up</tt> and <tt>net.down</tt> lines out and enter the bandwidth (in bits per second).
+        * For a LAN server, <tt>public_address</tt> has to be the IP of the server as well, the same as <tt>bind</tt>. Set <tt>private_network</tt> to the base address of your LAN and <tt>private_mask</tt> to your LAN's subnet mask and remove the ";" commenting these options out.
+
+        The database settings in [global]:
+        <alcugs>
+        # global database connection data
+        # (the vault database should be local because otherwise the latency is too big and lobby/game might get confused)
+        db.host = "127.0.0.1" # note: set db.host to nothing to use the local unix socket (untested with unet3+)
+        ;db.port = 0 # sets the MySQL port (default 0 = let mysql decide which port to use)
+        db.username = "alcugs"
+        db.passwd = "yourpassword"
+        </alcugs>
+        Most of these should already be correct, so just enter the password of the SQL user you created at the beginning in <tt>db.passwd</tt>.
+
+        The final [global] setting are the paths:
+        <alcugs>
+        # paths (grouped here to make it easier to find and edit them)
+        age = "/home/alcugs/age/" # directory containing the age files (for game and vault)
+        sdl = "/home/alcugs/sdl/" # directory containing the sdl files (for game)
+        game.agestates = "/home/alcugs/agestates/" # directory the agestates should be saved in (for game)
+        </alcugs>
+        Just set them to the full name of the directory you put the age and sdl files in as well as the directory you want the agestates to be saved in.
+
+        You also have to change some settings in the [lobby] section:
+        <alcugs>
+        # Set the website which is displayed when the user logs into your shard
+        website = "http://server/info.html"
+
+        # game server settings
+        game.log = "../game/" # the path where the game log files will be saved
+        game.bin = "/home/alcugs/bin/alcugs_game" # full path and name of game server binary
+        </alcugs>
+        <tt>website</tt> sets the URL of the page which is displayed after the user logged in, and <tt>game.bin</tt> is the full path to the game server binary (<tt>game.log</tt> can be left the way it is).
+
+        If you do not plan to use the Offline KI, you should enable <tt>game.tmp.hacks.noreltoshare</tt> and <tt>vault.tmp.hacks.linkrules</tt>. In addition, you should also have a look at the <tt>game.tmp.hacks.resetting_ages</tt> setting - the Offline KI fixes some issues so that I could remove some ages from that list.
+
+        If you plan to change <tt>private_ages</tt> and do use the Offline KI, be sure you also update the xxConfig file so that the KI knows where to display an owner and where not.
+
+
+
+Part 4: Setting up the client
+        No matter which way you choose, you will need:
+        * A clean TPOTS or CC installation (no hacks or patches applied)
+        * A clean UU installation (just the UU patcher and maybe D'mala updates applied, but no further hacks like the UserKI)
+        ** To get such an installation, install ABM without TPOTS, and then apply the UU patcher for ABM (http://www.the-deep-island.de/uru-tools/UU-Patcher_v0.38.9_for_Uru_ABM.7z, http://www.zibland.com/stuff/uuabm.exe)
+
+        ==== Using the Offline KI ====
+
+        Installing the Offline KI version 3.0 or later (http://www.guildofwriters.com/wiki/Offline_KI) on your Alcugs Client as it fixes a lot of issues you would encounter with a bare Alcugs Patcher installation. To actually make your POTS installation an Alcugs Client, copy the file "UruSetup.exe" from your UU installation to the POTS folder.
+
+        ==== Using the Alcugs Patcher ====
+
+        In case you don't want the Offline KI in your client, you can use Alcugs Patcher (http://www.the-deep-island.de/uru-tools/AlcugsPatcher_v1.0d.zip), which is a simple application copying and patching some files from UU to POTS to bring the latter online. After preparing the two installations, just run it and follow the steps as described by the wizard.
+
+Part 5: Setting up the dataserver
+        Unfortunately, you are still not done with the setup. The client needs a bare minimal dataserver or it will refuse to start up.
+        First of all, you have to disable the "big" dataserver in the client. Use an application like PlasmaShop (http://guildofwriters.com/wiki/PlasmaShop) to edit the "plClientSetup.cfg" file. You will find a line in there starting with "UseDataserver" which you change to "UseDataserver false". That does not completely disable the usage of the dataserver though, it is just reduced a lot.
+        To make your client use the dataserver you are about to create, open "serverconfig.ini" and enter the host name or IP adress of your dataserver.
+
+        To set up the dataserver, which is just a certain folder structure available via http, you first need a webserver like apache. I suggest installing the "apache2" packet which usually does what you want. Afterwards, log in to your server, and do the following:
+        <bash>
+        cd /var/www # this is usually the webserver root directory
+        mkdir -p install/Expanded # create the necessary directory
+        touch install/Expanded/ClientSetupNew.mfs # create an empty file
+        </bash>
+        That should be enough to let your client getting past the initial dataserver check, so that you can log in to your alcugs server.
+
+Part 6: Starting the servers
+        Finally, you are nearing the point where you can log in to your Shard :)
+
+        ===== Start up the server =====
+        <bash>~/bin/control-servers.sh start # "~" is the home directory of the current user</bash>
+
+        If everything is working, you will see:
+                Starting tracking...                                         [   OK   ]
+                Starting vault...                                            [   OK   ]
+                Starting auth...                                             [   OK   ]
+                Starting lobby...                                            [   OK   ]
+        To confirm, I always check the process listings:
+        <bash>ps -Af | grep alcugs_</bash>
+        and it should list all four servers running.
+
+        ===== Create an alcugs account for you to be able to log in =====
+
+        Alternative a) You can use Zrax' script which you find in alcugs-src/tools/adduser.php. However, you have to install apache to do that, and I suggest also installing phpmyadmin (Debian packets: appache2, phpmyadmin). Choose a place somewhere where you can access it with a webserver (if you installed apache2, it is /var/www on Debian), and after cd'ing there:
+        <bash>
+        ln -s /home/alcugs/alcugs-src/tools/adduser.php ./
+        cp /home/alcugs/alcugs-src/tools/adduser-config.php ./
+        nano adduser-config.php
+        </bash>
+        The last command will open the config file where you have to enter the login data for your mysql server. After doing that, just open adduser.php in your browser and you can easily add accounts.
+
+        If you want that account to be an admin (so that it can access the vault using the VaultManager), you have to do that manually: Using phpmydmin (which should be available on <nowiki>http://yourserver/phpmyadmin/</nowiki>), go to the "alcugs_auth" table, select the table "accounts", look for the account you just created and set it's "a_level" to 0, which means full access. You should not change anything else here!
+
+        Alternative b) If you don't want a full-blown webserver in that machine or for some other reason want to create the account manually, you can do that, too. First log in to the database (just like when you create the databases and the mysql user), and run these commands:
+        <sql>
+        USE alcugs_auth;
+        INSERT INTO accounts (guid, name, passwd, a_level)
+        VALUES (UPPER(UUID()), '<accountname>', UPPER(CONVERT(MD5('<accountpassword>') USING latin1)), '<accesslevel>');
+        </sql>
+        With the following data:
+        * Account name: The account login name.
+        * Account password: The password necessary to log in with this account
+        * Access level: 15 = standard user, 0 = admin user
+
+        ===== Starting the client =====
+        Start up the client, and put your IP address into "Server Address:" box.
+
+        Now try logging in. If it does not work, please check the configuration file.
+
+        Try to make a new player and start the game (please note that importing an offline savegame is not supported!). If you can't get to your initial avatar customization from here, but "Fetching Player" and "Finding Age" work fine, you are probably having issues with creating the game server.
+
+        If nothing helps, you can ask for help at http://forum.almlys.org/ . Please describe in detail what you did, what happened and what you expected to happen instead!

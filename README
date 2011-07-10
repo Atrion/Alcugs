@@ -18,7 +18,7 @@ Congratulations, you have arrived here, now continue reading! :)
 Installation
 ------------
 
-The installation is described at http://alcugs.almlys.org/AlcugsInstall
+The installation is described at http://alcugs.almlys.org/AlcugsInstall and in the INSTALL file.
 
 
 Configuring
@@ -48,7 +48,6 @@ What is required?
 * Well, mainly C/C++ programmers to code the server.
 * Write documentation. This is basic, the programmers do the code, and then the user write the
  documentation, you can rewrite this README and make it more clear for some people.
- I REALLY NEED SOMEONE TO WRITE DOCUMENTATION. DO YOU KNOW HOW MANY TIME CONSUMES TO WRITE THESE DOCS?
 * Porting to other OSes.
 
 
