@@ -4,4 +4,67 @@ Diafero <diafero AT arcor.de> is the author of this tool - however, I got the id
 
 To build it, you will need Qt: http://qt.nokia.com/
 
-For more details, see: http://alcugs.almlys.org/UruStarter
+You can find more detailed documentation below and at http://alcugs.almlys.org/UruStarter
+
+= Building UruStarter =
+
+You can find the sources in the "tools/UruStarter" directory of Alcugs (http://gitorious.org/alcugs/alcugs). Obviously, this is a Windows application, since Uru runs on Windows only (UruStarter will work fine with Wine though, just like Uru itself). To compile it, download and install the Windows version of the latest Qt (http://qt.nokia.com/). Then use the "Qt Command Prompt" in the directory of the UruStarter sources, run "qmake" and then "mingw32-make".
+
+= Using it =
+
+To ship the application, you need to put not only UruStarter.exe, but also QtCore4.dll and QtGui4.dll (from QTDIR\qt\bin) as well as mingwm10.dll and libgcc_s_dw2-1.dll (from QTDIR\mingw\bin) on your dataserver. Since UruStarter is intended to be launched by UruSetup, make sure it is the first file mentioned in the [others] section of game_clients/drcExplorer/client.mfs (see the DATASERVER file in the Alcugs sources). It will then take care of running UruExplorer, the main game executable.
+
+When being executed, UruStarter will create a file called "UruStarter.log" in Uru's log directory - that's where you should start debugging.
+
+== Blacklist ==
+
+UruStarter can read a blacklist containing a list of files to be removed when it is run. This can, for example, be used to cleanup the game root without removing custom files like Jalak pillar positions. Simply put a file called "blacklist.txt" in the Uru root of your dataserver and put each file to be removed in its own line (the filenames are case-insensitive).
+
+== Whitelist ==
+
+For some directories, it is a very good idea to have a whitelist of allowed files as each additional file can cause serious trouble without being touched by the dataserver at all. These directories are "dat", "Python", "Python/system" and "sdl". If you intend to use the whitelist feature of UruStarter, create a file called "whitelist.txt" in your dataserver, again with one list entry per line. In addition, you have to tell UruStarter which directories it should clean. For each of those, add a line starting with "cleandir:" and then the directory to clean. A little example file may look like this:
+ cleandir:Python/
+ cleandir:Python/system/
+ Python/python.pak
+ Python/journal.pak
+ Python/system/_sre.pyd
+(as usual, all these file names are case-insensitive)
+Which will clean these two directories and remove all the other (non-whitelisted) files from it. All the other directories will not be looked at. If you want UruStarter to clean the Uru root directory, add a line looking like this:
+ cleandir:/
+
+== Whitelist with checksums ==
+
+There are some situations where you would want an age to be allowed on the Shard, but you don't want to put it on the dataserver. An example would be the Myst V, Crowthistle and Hex Isle ages which players should convert themselves for copyright reasons. However, it'd be great if we could still verify the age, so that players don't crash because of different age versions. UruStarter can do exactly that. You should still put the age and fni files on the dataserver - after all, they are just text files and the age files has to be on the server anyway for Alcugs to be able to host it. In addition, you need a file called "whitelist-checksums.txt" as part of your dataserver. The content for the MarshScene age from Crowthistle could look like this:
+ # Format:
+ # Each new age is started with "Age: dat/agename.age"
+ # Then there are the checksums:
+ # MD5Checksum[  Options]  Filename
+ # Currently, "Options" are ignored
+ 
+ Age: dat/MarshScene.age
+ 5439344e937f9cbab07839dbf9f9d858,22663623  dat/MarshScene_District_Exterior.prp
+ 66056da2ffb2575a7c94705a1e971b08,453338  dat/MarshScene_District_Extras.prp
+ 179e0caab07758391e49d7040e850ff2,140534  dat/MarshScene_District_MWInterior.prp
+ 831122aa1e9e7bf7e21d426afffd0220,43656111  dat/MarshScene_District_Textures.prp
+ db04c4fb915f9ac5c4998645ee667c62,16146  dat/MarshScene_District_TourCamera.prp
+ fbf1ce5918986630ab5d37446a8331f1,17977141  dat/MarshScene_District_WaterHorses.prp
+The mentioned files will automatically be added to the whitelist and don't need to be put into whitelist.txt again.
+
+If any of the files does not exist, has the wrong size or the wrong checksum, the MarshScene.age file and all the prp files will be removed from the client, making it impossible for the player to link there and cause trouble. A message box will tell the player about this. Offline KI checks if the age file of an age exists before linking there, unless the age is marked to be on the dataserver (check your AvailableLinks.inf file). If you use your own way to link there, make sure it checks this, too - otherwise, the client might fetch the age file from the dataserver and link there with an incomplete set of prp files.
+
+If, instead of "Age", the file says "AgeRequired: dat/agename.age", UruStarter will show an error message and refuse to start Uru if any of the files is missing or invalid.
+
+UruStarter will create a cache of checked files and only re-calculate the checksum if the "last changed" date of the file or its size changes. That means that even checking all the prp files from POTS and all converted ages will delay startup by only one or two seconds.
+
+To aid in creating the whitelist-checksums.txt file, there is a script called "whitelist-gen.sh" in the UruStarter directory which prints an entry in the correct syntax for each passed file. It can be used like this:
+ ./whitelist-gen.sh /path/to/Uru/dat/MarshScene*.prp
+
+== Widescreen resolutions ==
+
+Uru does not support widescreen resolutions, and the POTS version of the engine never will - the GUI code expects the aspect ratio to be 4:3. However, there is a way to make Uru render to the screen in a widescreen resolution. The game will still look stretched, but there will be no blurriness due to your screen or video card scaling the image.
+
+UruStarter is in the perfect position of doing this since it runs directly before the UruExplorer, so I added a widescreen patch to it. To use it, the user has to create a file called "urustarter.ini" in the Uru directory (obviously, this file should not be on the dataserver, or everyone will get that resolution ;-). It should for example, look like this:
+ width=1650
+ height=1050
+ colourDepth=32
+To make UruStarter patch your resolution, choose "800x600" as resolution in the Uru setup application. When UruStarter is run, it will then replace that resolution with the one specified in the ini file. The colour depth does not have to be specified, but on some systems, it keeps resetting to 16bit - in which case the above configuration will force it back to 32. If however you want to use windowed mode with a custom resolution, you have to remove the "colourDepth" line and enable windowed mode in UruSetup as usual.

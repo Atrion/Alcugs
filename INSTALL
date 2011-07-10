@@ -177,6 +177,8 @@ Part 5: Setting up the dataserver
         </bash>
         That should be enough to let your client getting past the initial dataserver check, so that you can log in to your alcugs server.
 
+        If you want to learn more about Dataservers and use them to auto-upate your explorers' clients, check the DATASERVER file.
+
 Part 6: Starting the servers
         Finally, you are nearing the point where you can log in to your Shard :)
 

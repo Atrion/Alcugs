@@ -1,0 +1,76 @@
+This is some information about what else can be done with a dataserver. All this is getting very complicated quickly, so you should usually stick with the basic one describe above. However, if you want to go on, here is where you can start.
+
+== Manifest files ==
+
+To extend your dataserver, you will need to create Manifest files with the following format:
+
+ [version]
+ format=5 
+ 
+ [base]
+ dat/agename.age,size,date,MD5,flag[,CompressedSize]
+ dat/agename.fni,size,date,MD5,flag[,CompressedSize]
+ 
+ [pages]
+ agename_District_pagename.prp,size,date,MD5,flag[,CompressedSize]
+ 
+ [other]
+ sfx/test.ogg,size,date,MD5,flag[,CompressedSize]
+
+* size is the size of the file in bytes
+* date is in the following format: "05/26/04 15:38:32"
+* There are the following flags, also defining the presence of CompressedSize
+** If flag is 8, then CompressedSize is specified and the file is GZipped on the server and stored on disk as filename.ext.gz (ex: UruExplorer.exe.gz)
+** If flag is 0, then the file is stored on disk as is (ex: UruExplorer.exe)
+** If flag is 1, then it is a dual channel ogg file. When this flag is set the ogg data is decompressed by setup to separate left and right channel .wav files (PrpShop: Either "Left Channel Only" or "Right Channel Only" selected in the plSoundBuffer).
+** If flag is 2, then it is a normal ogg file. Files carrying this flag will not be decompressed, one of the rare cases where the client streams the ogg directly. Generally used in long speeches and some long loops etc. (PrpShop: "Stream Compressed" enabled in the plSoundBuffer).
+** If flag is 4, then it is a ogg file that is decompressed to a single .wav file, be it mono or joint stereo (PrpShop: neither "Left Channel Only" nor "Right Channel Only" selected).
+
+The [base] section contains age-related files, like agenname.age, agename.fni and agename.csv. [pages] contains the prp files, and it is the only section in which you must not give the full path relative to the Uru base directory, but just the filename. [other] contains, well, all the other files, like sound files, python, SDL, executables, just everything.
+
+== Sum file bug ==
+When there are ages on the dataserver containing stuff in the [pages] section, there's a problem: The generated sum file contains these files without the dat/ prefix, so you can't start this client without the dataserver being enabled afterwards - UruExplorer will not accept the sum files anymore.
+
+The [[Offline KI]] contains sum files that are always valid for all ages shipped with POTS. So if you want to disable the dataserver on a client, you can then copy these sum files into your dat folder to get into the POTS ages. For other ages, just make a copy of any of these sum files and rename it to overwrite the other age's sum file.
+
+== Adding welcome pages ==
+
+These pages are shown at the bottom of the login window. Create a directory called "status" in your web root (so it will usually be /var/www/status). In there, create the three files index_eng.html (shown for English clients), index_ger.html (German clients), index_fra.html (French clients).
+
+== Creating a lobby list ==
+
+This is a convenience function: Instead of manually entering the IP address of the shard you want to connect you, the dataserver can define a list of available lobbies which the client will show in the login window so that users can easily choose where to connect. Create a directory called "status" in your web root (so it will usually be /var/www/status). In there, create a file named "lobbylist.txt" which has the following format:
+ your.external.address Main Shard
+ 127.0.0.1 Local Testing Shard
+Addresses can be both IP addresses and hostnames. It should be the same one as the public_address setting in your alcugs configuration file.
+
+== Directory tree ==
+
+This is the full directory tree of the dataserver:
+
+ |-- install
+ |   `-- Expanded
+ |       |-- ClientSetup.mfs (UruSetup from Uru:ABM and older beta clients)
+ |       |-- ClientSetupNew.mfs (UruSetup from Until Uru and Live clients)
+ |       `-- (optional) All files listed on the ClientSetup manifest file.
+ |
+ |-- status
+ |   |-- index_eng.html, index_ger.html, index_fra.html (status page: one per different language)
+ |   `-- lobbylist.txt
+ |
+ |-- game_clients
+ |   `-- drcExplorer
+ |       |-- client.mfs (it MUST contain at least one exe file - the first one in the list will be started after finishing the update)
+ |       `-- (optional) All files listed on client.mfs 
+ |
+ `-- game_data (Same basic structure as the game's root folder)
+     |-- dat
+     |   |-- agelist.txt
+     |   |-- age.mfs (one manifest file for each age listed in agelist.txt)
+     |   |-- (optional) All files listed on the manifest files
+     |   `-- patches
+     |       `-- prp patches for the client (format unknown)
+     `-- sfx
+         `-- (optional) All the sfx (.ogg) files from the manifest files in the .dat directory
+
+Usually, the first file in the [others] section of game_clients/drcExplorer/client.mfs should be UruExplorer.exe as that is what UruSetup is intended to launch. However, you can specify your own starter there, intercepting the startup process - for example, UruStarter is intended for this purpose.
