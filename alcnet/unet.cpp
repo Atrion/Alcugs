@@ -474,31 +474,31 @@ bool tUnet::sendAndWait() {
 /** give each session the possibility to do some stuff and to set the timeout
 Each session HAS to set the timeout it needs because it is reset prior to asking them. */
 tNetTimeBoolPair tUnet::processSendQueues() {
-    // reset the timer
-    tNetTime unet_timeout = max_sleep;
-    bool anythingToSend = false;
-    std::list<tNetSession *> sessionsToDelete;
-    
-    // do the main work, with only a read lock (we must not modify it while we traverse it)
-    {
-        tReadLock lock(smgrMutex);
-        for (tNetSessionMgr::tIterator it(smgr); it.next();) {
-            updateNetTime(); // let the session calculate its timestamps correctly
-            tNetTimeBoolPair result = it->processSendQueues();
-            unet_timeout = std::min(result.first, unet_timeout);
-            if (result.second)
-                sessionsToDelete.push_back(*it); // can't delete now: we are iterating, and we hold just the read lock
-            else
-                anythingToSend = anythingToSend || it->anythingToSend();
-        }
-    }
-    
-    // now check for the session to be deleted, removeConnection will take a write lock
-    for (std::list<tNetSession *>::iterator it = sessionsToDelete.begin(); it != sessionsToDelete.end(); ++it)
-        removeConnection(*it);
-    
-    // return what we found
-    return tNetTimeBoolPair(unet_timeout, anythingToSend);
+	// reset the timer
+	tNetTime unet_timeout = max_sleep;
+	bool anythingToSend = false;
+	std::list<tNetSession *> sessionsToDelete;
+	
+	// do the main work, with only a read lock (we must not modify it while we traverse it)
+	{
+		tReadLock lock(smgrMutex);
+		for (tNetSessionMgr::tIterator it(smgr); it.next();) {
+			updateNetTime(); // let the session calculate its timestamps correctly
+			tNetTimeBoolPair result = it->processSendQueues();
+			unet_timeout = std::min(result.first, unet_timeout);
+			if (result.second)
+				sessionsToDelete.push_back(*it); // can't delete now: we are iterating, and we hold just the read lock
+			else
+				anythingToSend = anythingToSend || it->anythingToSend();
+		}
+	}
+	
+	// now check for the session to be deleted, removeConnection will take a write lock
+	for (std::list<tNetSession *>::iterator it = sessionsToDelete.begin(); it != sessionsToDelete.end(); ++it)
+		removeConnection(*it);
+	
+	// return what we found
+	return tNetTimeBoolPair(unet_timeout, anythingToSend);
 }
 
 
