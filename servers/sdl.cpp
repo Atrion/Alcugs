@@ -124,7 +124,6 @@ namespace alc {
 		}
 		
 		log.log("AgeState backend started\n");
-		log.flush();
 	}
 	
 	bool tAgeStateManager::doesAgeLoadState(const tString &resettingAges, const tString &age)
@@ -237,7 +236,6 @@ namespace alc {
 			else
 				++it;
 		}
-		log.flush();
 	}
 	
 	void tAgeStateManager::saveSdlState(tMBuf &data, const tUruObject &obj)
@@ -264,7 +262,6 @@ namespace alc {
 			log.log("Updating %s\n", sdl.str().c_str());
 			it->content.updateWith(&sdl.content);
 		}
-		log.flush();
 	}
 	
 	void tAgeStateManager::saveSdlVaultMessage(tMBuf &data, tNetSession *u)
@@ -330,7 +327,6 @@ namespace alc {
 			++n;
 		}
 		log.log("Sent %d SDLState messages to %s\n", n, u->str().c_str());
-		log.flush();
 		return n;
 	}
 	
@@ -346,7 +342,6 @@ namespace alc {
 			else
 				++it;
 		}
-		log.flush();
 	}
 	
 	void tAgeStateManager::saveClone(tpLoadCloneMsg *clone)
@@ -378,7 +373,6 @@ namespace alc {
 				log.log("WARN: Clone [%s] was not on our list!\n", clone->clonedObj.str().c_str());
 			delete clone; // remove the message we got
 		}
-		log.flush();
 	}
 	
 	tAgeStateManager::tCloneList::iterator tAgeStateManager::findClone(const tUruObject &obj)
@@ -442,12 +436,10 @@ namespace alc {
 			}
 			else
 				log.nl();
-			log.flush();
 			return &*sdlHook;
 		}
 		else { // not found
 			log.log("No Age SDL hook found, send empty SDL\n");
-			log.flush();
 			return NULL;
 		}
 	}
@@ -488,7 +480,6 @@ namespace alc {
 		sdlStates.clear();
 		// done
 		log.log("Cleared the complete age state\n");
-		log.flush();
 	}
 	
 	/** This is the SDL file parser */

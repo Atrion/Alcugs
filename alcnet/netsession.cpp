@@ -801,7 +801,6 @@ tNetTimeBoolPair tNetSession::processSendQueues()
 			if (serverMsg.sn >= (1 << 22) || clientMsg.psn() >= (1 << 22)) { // = 2^22
 				net->log->log("%s WARN: Congratulations! You have reached the maxium allowed sequence number. "
 							"Don't worry, this is not an error\n", str().c_str());
-				net->log->flush();
 				renego_stamp = tTime();
 				sendMutex.unlock(); // unlock here, because negotiate will lock again
 				negotiate();

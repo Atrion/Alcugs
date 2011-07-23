@@ -120,7 +120,6 @@ namespace alc {
 				minAccess, maxAttempts, disTime);
 		if (!cgasServer.isEmpty()) log.print(" Using CGAS at http://%s:%d%s\n", cgasServer.c_str(), cgasPort, cgasPath.c_str());
 		log.nl();
-		log.flush();
 	}
 	
 	tAuthBackend::~tAuthBackend(void)
@@ -337,12 +336,10 @@ namespace alc {
 		log.log("AUTH: player %s (IP: %s, game server %s):\n ", login.c_str(), ip.c_str(), u->str().c_str());
 		if (queryResult == kNotFound || queryResult == kCacheTooOld) {
 			log.print("Player not found\n");
-			log.flush();
 			return AInvalidUser;
 		}
 		else if (queryResult == kError) {
 			log.print("unspecified server error\n");
-			log.flush();
 			return AUnspecifiedServerError;
 		}
 		else { // we found a player, let's process it
@@ -383,7 +380,6 @@ namespace alc {
 			
 			// ok, now all we have to do is updating the player's last login and attempts and return the result
 			updatePlayer(guid, ip, attempts, updateStamps);
-			log.flush();
 			return authResult;
 		}
 	}

@@ -57,7 +57,6 @@ tSQL::tSQL(const tString &host, uint16_t port, const tString &username, const tS
 			if (!password.isEmpty()) { sql->print("yes\n"); }
 			else { sql->print("no\n"); }
 			sql->print(" MySQL client: %s\n\n", mysql_get_client_info());
-			sql->flush();
 		}
 	}
 	else
@@ -139,7 +138,6 @@ bool tSQL::query(const tString &str, const tString &desc, bool throwOnError)
 		sql->log("SQL query (%s): ", desc.c_str());
 		sql->print(str);
 		sql->nl();
-		sql->flush();
 	}
 	
 	if (!mysql_query(connection, str.c_str())) return true; // if everything worked fine, we're done
@@ -148,7 +146,7 @@ bool tSQL::query(const tString &str, const tString &desc, bool throwOnError)
 	if (mysql_errno(connection) == 2013 || mysql_errno(connection) == 2006) { // 2013 = Lost connection to MySQL server during query, 2006 = MySQL server has gone away
 		printError(desc+" (first attempt, trying again)");
 		// reconnect and try again if the connection was lost
-		sql->log("Reconnecting...\n"); sql->flush();
+		sql->log("Reconnecting...\n");
 		disconnect();
 		connect(true);
 		if (!mysql_query(connection, str.c_str())) return true; // it worked on the 2nd try

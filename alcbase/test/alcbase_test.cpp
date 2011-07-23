@@ -1119,7 +1119,6 @@ void log_test() {
 	log2.print("Now, I'm generating an <b>html</b> file\n");
 
 	log1.print("ABDCADFADSFASDFASFDDASFDASFASDFASFSAASDFASDFASDFASDFASDFASDFADFAS\n");
-	log1.flush();
 
 	log1.rotate();
 

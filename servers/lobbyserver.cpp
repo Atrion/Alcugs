@@ -192,7 +192,7 @@ namespace alc {
 				
 				// flush all log files before forking because otherwise they will be flushed by both parent and child and messages will be printed twice
 				// Further assume that the vault subsystem was flushed already... (tvMessage::print does it right)
-				log->flush(); err->flush(); sec->flush(); ack->flush();
+				tLog::flushAllFiles();
 				
 				int pid = fork();
 				if (pid == 0) {
@@ -215,7 +215,6 @@ namespace alc {
 					
 					// if we come here, there was an error in the execlp call (but we're still in the game server process!)
 					err->log("There was an error starting the game server %s (GUID: %s, Port: %s)\n", gameBin.c_str(), gameGuid.c_str(), gamePort.c_str());
-					err->flush(); // make sure the error is actually printed
 					exit(-1); // exit the game server process
 				}
 				// this is the parent process

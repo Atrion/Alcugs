@@ -252,16 +252,9 @@ void tLog::log(const char * msg, ...) {
 /**
 	flush all the streams we write to
 */
-void tLog::flush() const {
-	if(this->dsc!=NULL) {
-		fflush(this->dsc);
-	}
-	if(!(flags & DF_HTML)) {
-		if(this->flags & DF_STDERR && tvLogConfig->verboseLevel>=1) {  fflush(stderr); }
-		if((this->flags & DF_STDOUT && tvLogConfig->verboseLevel>=2) || tvLogConfig->verboseLevel==3) {  fflush(stdout); }
-	}
+void tLog::flushAllFiles() {
+	fflush(NULL);
 }
-
 
 void tLog::dumpbuf(tBBuf & t, size_t n, size_t e, uint8_t how) const {
 	if(n==0) n=t.size();
@@ -386,7 +379,6 @@ void tLog::dumpbuf(const void * bufv, size_t n, size_t e, uint8_t how) const {
 				}
 			}
 	}
-	this->flush();
 }
 
 void tLog::nl() const {
