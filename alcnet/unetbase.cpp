@@ -184,6 +184,8 @@ void tUnetBase::applyConfig() {
 	openLogfiles();
 	// forward to sub-classes
 	onApplyConfig();
+	// dump log files in case something useful was printed
+	tLog::flushAllFiles();
 }
 
 void tUnetBase::stop()
@@ -237,7 +239,6 @@ void tUnetBase::run() {
 	while(isRunning()) {
 		if (sendAndWait())
 			onIdle();
-		flushLogs();
 	}
 	max_sleep = 0.1; // from now on, do not wait longer than 0.1 seconds so that we do not miss the stop timeout, and to speed up session deletion
 	
@@ -245,7 +246,6 @@ void tUnetBase::run() {
 	if (terminatePlayers()) {
 		sendAndWait(); // do one round of sending waiting
 		sendAndWait(); // and another round of sending, so that the messages to the other servers actually go out
-		flushLogs();
 	}
 	
 	// kick remaining peers
@@ -254,7 +254,6 @@ void tUnetBase::run() {
 	tNetTime shutdownInitTime = getNetTime();
 	while(!sessionListEmpty() && (getNetTime()-shutdownInitTime)<getStopTimeout()) {
 		sendAndWait();
-		flushLogs();
 	}
 	
 	// stop the worker thread
@@ -266,6 +265,7 @@ void tUnetBase::run() {
 	onStop();
 	stopOp();
 	log->log("INF: Service sanely terminated\n");
+	tLog::flushAllFiles();
 }
 
 // worker thread dispatch function
@@ -342,13 +342,6 @@ void tUnetBase::processEvent(tNetEvent *evt)
 		default:
 			throw txBase(_WHERE("%s Unknown Event id %i\n",u->str().c_str(),evt->id));
 	}
-}
-
-void tUnetBase::flushLogs()
-{
-	log->flush();
-	err->flush();
-	sec->flush();
 }
 
 void tUnetBase::tUnetWorkerThread::stop()

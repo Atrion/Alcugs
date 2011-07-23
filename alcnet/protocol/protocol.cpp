@@ -414,7 +414,6 @@ void tUnetUruMsg::htmlDump(tLog * log, bool outgoing, tNetSession *u) {
 	data.rewind();
 
 	log->print("<br>\n");
-	log->flush();
 }
 
 //Negotiation

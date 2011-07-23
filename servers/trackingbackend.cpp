@@ -99,7 +99,6 @@ namespace alc {
 		if (var.isEmpty() || var.asInt()) { // logging enabled per default
 			log.open("tracking.log");
 			log.log("Tracking driver started\n\n");
-			log.flush();
 		}
 		else log.close();
 		
@@ -158,7 +157,6 @@ namespace alc {
 			tmCustomPlayerToCome playerToCome(game, player->ki);
 			net->send(playerToCome);
 		}
-		log.flush();
 		updateStatusFile();
 	}
 	
@@ -168,7 +166,6 @@ namespace alc {
 		tTrackingData *data = dynamic_cast<tTrackingData*>(game->data);
 		if (!data) throw txUnet(_WHERE("server passed in tTrackingBackend::playerCanCome is not a game/lobby server"));
 		log.log("Game server %s tells us that player %d can join\n", game->str().c_str(), ki);
-		log.flush();
 		for (tTrackingData::tPlayerList::iterator it = data->waitingPlayers.begin(); it != data->waitingPlayers.end(); ++it) {
 			if (*it == ki) {
 				// it is indeed in the list
@@ -178,13 +175,11 @@ namespace alc {
 				else
 					log.log("ERR: Game server %s told us that player %d can come, but the player no longer exists\n", game->str().c_str(), ki);
 				data->waitingPlayers.erase(it);
-				log.flush();
 				return;
 			}
 		}
 		// The player is not in the list of waiting players - weird
 		log.log("ERR: Game server %s told us that player %d can come, but the player doesn't even wait for this server\n", game->str().c_str(), ki);
-		log.flush();
 	}
 	
 	void tTrackingBackend::spawnServer(const alc::tString& age, const uint8_t* guid, double delay)
@@ -281,7 +276,6 @@ namespace alc {
 				if (memcmp(it->serverGuid, serverGuid, 8) == 0) {
 					log.log("ERR: There already is a server for guid %s, kicking the new one %s\n", setGuid.serverGuid.c_str(), game->str().c_str());
 					game->terminate(); // this should usually result in the game server going down
-					log.flush();
 					return;
 				}
 			}
@@ -331,7 +325,6 @@ namespace alc {
 		log.log("Found server at %s\n", game->str().c_str());
 		
 		notifyWaiting(game);
-		log.flush();
 		updateStatusFile();
 	}
 	
@@ -362,7 +355,6 @@ namespace alc {
 				if (playerStatus.playerStatus == RLeaving) {
 					log.log("WARN: Got RLeaving from %s, but player is already logged in at %s. Ignoring.\n",
 							game->str().c_str(), player->u->str().c_str());
-					log.flush();
 					return;
 				}
 				// to do so, we first check if the game server the player uses changed. if that's the case, and the player did not request to link, kick the old player
@@ -395,7 +387,6 @@ namespace alc {
 		else {
 			log.log("ERR: Got unknown flag 0x%02X for player with KI %d\n", playerStatus.playerFlag, playerStatus.ki);
 		}
-		log.flush();
 		updateStatusFile();
 	}
 	
@@ -438,7 +429,6 @@ namespace alc {
 		delete game->data;
 		game->data = NULL;
 		// done
-		log.flush();
 		updateStatusFile();
 	}
 	

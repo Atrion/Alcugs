@@ -105,7 +105,6 @@ namespace alc {
 		vaultFolderName = vaultDB->getVaultFolderName();
 		DBG(5, "global vault folder name is %s\n", vaultFolderName.c_str());
 		checkMainNodes(); // must be called here: Be sure to also have those referencs around when cleaning the vault!
-		log.flush();
 	}
 	
 	void tVaultBackend::createVault(void)
@@ -319,7 +318,6 @@ namespace alc {
 		}
 		
 		log.log("Status update for KI %d: %d\n", status.ki, status.state);
-		log.flush();
 		
 		if (!linkingRulesHack || status.state != 1) return;
 		// linking rules hack
@@ -448,7 +446,6 @@ namespace alc {
 				if (nodeType == unset)
 					throw txProtocolError(_WHERE("got a VConnect where node type has not been set"));
 				log.log("Vault Connect request for %d (Type: %d)\n", ki, nodeType);
-				log.flush();
 				uint32_t mgr;
 				
 				// we can be sure that the vault has already been initialized (main folders and the welcome message are created) since
@@ -503,7 +500,6 @@ namespace alc {
 				if (nodeType == unset)
 					throw txProtocolError(_WHERE("got a VDisconnect where the node type has not been set"));
 				log.log("Vault Disconnect request for %d (Type: %d)\n", ki, nodeType);
-				log.flush();
 				if (nodeType != KVNodeMgrAdminNode) { // VaultManager sometimes leaves too fast, and it doesn't need the VDisconnect reply
 					// send reply
 					tvMessage reply(msg);
@@ -518,7 +514,6 @@ namespace alc {
 			{
 				if (!savedNodeRef) throw txProtocolError(_WHERE("got a VAddNodeRef without a node ref attached"));
 				log.log("Vault Add Node Ref from %d to %d for %d\n", savedNodeRef->parent, savedNodeRef->child, ki);
-				log.flush();
 				
 				// check if both nodes exist
 				if (!vaultDB->checkNode(savedNodeRef->parent) || !vaultDB->checkNode(savedNodeRef->child))
@@ -535,7 +530,6 @@ namespace alc {
 				if (nodeSon == unset || nodeParent == unset)
 					throw txProtocolError(_WHERE("got a VRemoveNodeRef where parent or son have not been set"));
 				log.log("Vault Remove Node Ref from %d to %d for %d\n", nodeParent, nodeSon, ki);
-				log.flush();
 				vaultDB->removeNodeRef(nodeParent, nodeSon);
 				
 				// broadcast the change
@@ -548,7 +542,6 @@ namespace alc {
 					throw txProtocolError(_WHERE("Getting %Zd manifests at once is not supported\n", tableSize));
 				uint32_t mgr = table.get32();
 				log.log("Vault Negoiate Manifest (MGR: %d) for %d\n", mgr, ki);
-				log.flush();
 				tvManifest **mfs;
 				tvNodeRef **ref;
 				size_t nMfs, nRef;
@@ -576,7 +569,6 @@ namespace alc {
 					uint32_t oldIndex = savedNode->index;
 					uint32_t newIndex = vaultDB->createNode(*savedNode);
 					log.log("Vault Save Node (created new node %d) for %d\n", newIndex, ki);
-					log.flush();
 					
 					// reply to the sender
 					tvMessage reply(msg);
@@ -587,7 +579,6 @@ namespace alc {
 				else {
 					vaultDB->updateNode(*savedNode);
 					log.log("Vault Save Node (updated node %d) for %d\n", savedNode->index, ki);
-					log.flush();
 					
 					// create the reply to the sender
 					tvMessage reply(msg);
@@ -602,7 +593,6 @@ namespace alc {
 			{
 				if (!savedNode) throw txProtocolError(_WHERE("got a find node request without the node attached"));
 				log.log("Vault Find Node (looking for node %d) for %d\n", savedNode->index, ki);
-				log.flush();
 				tvManifest mfs;
 				bool create = (savedNode->type == KPlayerInfoNode || savedNode->type == KFolderNode || savedNode->type == KPlayerInfoListNode || savedNode->type == KSDLNode || savedNode->type == KAgeInfoNode);
 				// It's necessary to allow creating these
@@ -622,7 +612,6 @@ namespace alc {
 			{
 				if (tableSize <= 0) break;
 				log.log("Vault Fetch Node (fetching %Zd nodes) for %d\n", tableSize, ki);
-				log.flush();
 				tvNode **nodes;
 				size_t nNodes;
 				vaultDB->fetchNodes(table, tableSize, &nodes, &nNodes);
@@ -656,7 +645,6 @@ namespace alc {
 			{
 				if (rcvPlayer == unset || !savedNode) throw txProtocolError(_WHERE("Got a VSendNode without the reciever or the node"));
 				log.log("Sending node %d from player %d to %d\n", savedNode->index, ki, rcvPlayer);
-				log.flush();
 				tvNode *node;
 				tvNode **nodes;
 				size_t nNodes;
@@ -672,7 +660,6 @@ namespace alc {
 				free(nodes);
 				if (nNodes == 0) {
 					log.log("ERR: I should send a message to the non-existing player %d\n", rcvPlayer);
-					log.flush();
 					break;
 				}
 				

@@ -120,7 +120,6 @@ private:
 	bool terminateAll(bool playersOnly = false); //!< \returns if a session was terminated
 	bool terminatePlayers() { return terminateAll(/*playersOnly*/true); }
 	void applyConfig();
-	void flushLogs();
 	tNetTime getStopTimeout() { tSpinLock lock(runModeMutex); return stop_timeout; }
 	
 	void processEvent(tNetEvent *evt); //!< dispatches most recent event, called in worker thread!

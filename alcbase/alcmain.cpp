@@ -200,7 +200,6 @@ bool tAlcMain::onSignal(int s) {
 		switch (s) {
 			case SIGCHLD:
 				stdLog->log("INF: RECIEVED SIGCHLD: a child has exited.\n");
-				stdLog->flush();
 				wait(NULL); // properly exit child
 				return true;
 			case SIGSEGV:

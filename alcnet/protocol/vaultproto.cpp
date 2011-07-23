@@ -998,7 +998,6 @@ namespace alc {
 			log->print("<h2 style='color:green'>%s: From vault to client (%s)</h2>\n", tTime::now().str().c_str(), clientDesc.c_str());
 		asHtml(log, shortLog);
 		log->print("<hr>\n\n");
-		log->flush();
 	}
 	
 	void tvMessage::asHtml(tLog *log, bool shortLog)

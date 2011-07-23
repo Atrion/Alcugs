@@ -129,7 +129,6 @@ public:
 	void print(const tString &str) const;
 	void stamp();
 	void log(const char * msg, ...) GNUC_FORMAT_CHECK(printf, 2, 3);
-	void flush() const;
 
 	void dumpbuf(const void * buf, size_t n, size_t e=0,uint8_t how=7) const;
 	void dumpbuf(tBBuf &t, size_t n=0, size_t e=0,uint8_t how=7) const;
@@ -138,6 +137,8 @@ public:
 
 	bool doesPrint(void) const;
 	tString getDir(void) const; //!< return directory of log file, or default directory if closed
+	
+	static void flushAllFiles(); //!< utility function to flush all opened files
 
 private:
 	void init(void);
