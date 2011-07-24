@@ -34,19 +34,10 @@
 
 namespace alc {
 
-#define DF_HTML      0x0002
-#define DF_STDOUT    0x0008
-#define DF_STDERR    0x0010
-#define DF_APPEND    0x0040
-#define DF_NOSTAMP   0x0800
-//#define DF_SYSLOG    0x0004
-//#define DF_DB        0x0080
-//#define DF_LOGD      0x0100
-//#define DF_UDP       0x0200
-//#define DF_TCP       0x0400
-//#define DF_IP        0x1000
-//#define DF_ANOY      0x2000
-//#define DF_NODUMP    0x4000
+#define DF_HTML      0x0002 // HTML files (disables console dumping, forces rotation on open, uses full instead of line buffering)
+#define DF_STDOUT    0x0008 // mirror to stdout if verboseLevel is high enough
+#define DF_STDERR    0x0010 // mirror to stderr if verboseLevel is high enough
+#define DF_APPEND    0x0040 // append to existing file on open
 /* 
 	0x01 file is open, (internal flag)
 	0x02 is an html file,
@@ -137,8 +128,6 @@ public:
 
 	bool doesPrint(void) const;
 	tString getDir(void) const; //!< return directory of log file, or default directory if closed
-	
-	static void flushAllFiles(); //!< utility function to flush all opened files
 
 private:
 	void init(void);

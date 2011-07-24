@@ -191,8 +191,7 @@ namespace alc {
 				}
 				
 				// flush all log files before forking because otherwise they will be flushed by both parent and child and messages will be printed twice
-				// Further assume that the vault subsystem was flushed already... (tvMessage::print does it right)
-				tLog::flushAllFiles();
+				fflush(NULL);
 				
 				int pid = fork();
 				if (pid == 0) {

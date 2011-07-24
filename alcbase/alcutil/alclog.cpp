@@ -41,6 +41,9 @@
 #include <sys/stat.h>
 #include <inttypes.h>
 
+static const int lineBufferSize = 1024;
+static const int fullBufferSize = 16*1024;
+
 
 namespace alc {
 
@@ -92,7 +95,11 @@ void tLog::open(const tString &name, uint16_t newFlags) {
 			throw txNotFound(_WHERE("Can not open %s", fullpath.c_str()));
 		setCloseOnExec(fileno(dsc)); // close file when forking a game server
 		if(flags & DF_HTML) {
+			setvbuf(dsc, NULL, _IOFBF, fullBufferSize); // full buffering
 			printHtmlHead(tvLogConfig->build);
+		}
+		else {
+			setvbuf(dsc, NULL, _IOLBF, lineBufferSize); // line-based buffering
 		}
 	}
 	else {
@@ -229,7 +236,6 @@ void tLog::print(const tString &str) const
 */
 void tLog::stamp() {
 	checkRotate(250);
-	if (this->flags & DF_NOSTAMP) { return; }
 	this->print("(%s)[%"PRIu64"] ",tTime::now().str().c_str(),static_cast<uint64_t>(alcGetSelfThreadId()));
 }
 
@@ -247,13 +253,6 @@ void tLog::log(const char * msg, ...) {
 
 	this->stamp();
 	this->print(buf);
-}
-
-/**
-	flush all the streams we write to
-*/
-void tLog::flushAllFiles() {
-	fflush(NULL);
 }
 
 void tLog::dumpbuf(tBBuf & t, size_t n, size_t e, uint8_t how) const {
