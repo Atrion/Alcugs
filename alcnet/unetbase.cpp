@@ -184,8 +184,6 @@ void tUnetBase::applyConfig() {
 	openLogfiles();
 	// forward to sub-classes
 	onApplyConfig();
-	// dump log files in case something useful was printed
-	tLog::flushAllFiles();
 }
 
 void tUnetBase::stop()
@@ -265,7 +263,6 @@ void tUnetBase::run() {
 	onStop();
 	stopOp();
 	log->log("INF: Service sanely terminated\n");
-	tLog::flushAllFiles();
 }
 
 // worker thread dispatch function

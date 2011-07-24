@@ -196,14 +196,14 @@ void tUnet::openLogfiles() {
 	if (elog && !(this->flags & UNET_DSTDLOG)) {
 		log = alcGetMain()->std();
 	} else {
-		log = new tLog;
+		log = new tLog; // null logger
 	}
 	
 	if (err != alcGetMain()->err()) delete err;
 	if (elog && !(this->flags & UNET_DERRLOG)) {
 		err = alcGetMain()->err();
 	} else {
-		err = new tLog;
+		err = new tLog; // null logger
 	}
 
 	if(elog && (this->flags & UNET_EACKLOG)) {
@@ -346,9 +346,6 @@ bool tUnet::sendAndWait() {
 	if (unet_timeout < 0.001) {
 		DBG(3, "Timeout %f too low, increasing to 1 millisecond\n", unet_timeout);
 		unet_timeout = 0.001; // don't sleep less than 1 millisecond
-	}
-	else { // plenty of time... before sleeping, flush logfiles
-		tLog::flushAllFiles();
 	}
 	
 	// check how much time passed since we woke up
