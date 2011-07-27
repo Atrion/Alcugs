@@ -308,7 +308,7 @@ void tMBuf::cutEnd(size_t newSize)
 */
 tFBuf::tFBuf(const char *file,const char * mode) {
 	this->init();
-	this->open(file,mode);
+	open(file,mode);
 }
 tFBuf::~tFBuf() {
 	this->close();
@@ -523,9 +523,8 @@ size_t tString::find(const char *str) const {
 }
 tString tString::stripped(char what,uint8_t how) const {
 	tString aux;
-	size_t i,max,start,end;
+	size_t max,start,end;
 	start=0;
-	i=0;
 	max=size();
 	end=max-1;
 	uint8_t ctrl;
