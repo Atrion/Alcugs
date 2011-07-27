@@ -584,7 +584,7 @@ void alctypes_part5() {
 	assert(test.getAt(0)=='/');
 	try {
 		mychar=test.getAt(100);
-		throw txBase("Expected OutofRange");
+		throw txBase("Expected OutofRange got "+mychar);
 	} catch(txOutOfRange) {
 	}
 	

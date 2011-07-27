@@ -118,7 +118,7 @@ void tMutex::unlock() {
 
 tSpinEx::tSpinEx()
 {
-	if (pthread_spin_init(&id, NULL)) throw txBase(_WHERE("Error creating spinlock"));
+	if (pthread_spin_init(&id, 0)) throw txBase(_WHERE("Error creating spinlock"));
 }
 tSpinEx::~tSpinEx()
 {
