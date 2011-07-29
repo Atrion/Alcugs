@@ -79,7 +79,7 @@ bool alcGetLoginInfo(tString argv,tString * username,tString * hostname,uint16_t
 	if (colon >= 0) {
 		*hostname = argv.substring(0, colon);
 		argv = argv.substring(colon+1);
-		*port = argv.asUInt();
+		*port = argv.asInt();
 	}
 	else return false;
 	return true;
@@ -224,7 +224,7 @@ unsigned int alcParseKey(tString *t) {
 	offset=t->substring(pos+1,t->size()-pos-1);
 	*t = t->substring(0, pos);
 	DBG(9, "   result: %s[%s]\n", t->c_str(), offset.c_str());
-	return offset.asUInt();
+	return offset.asInt();
 }
 
 
