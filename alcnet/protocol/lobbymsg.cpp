@@ -33,40 +33,6 @@
 #include "netexception.h"
 
 namespace alc {
-
-	//// tmRequestMyVaultPlayerList
-	void tmRequestMyVaultPlayerList::store(tBBuf &t)
-	{
-		tmNetMsg::store(t);
-		// the vault manager sends these without X and KI
-		if (hasFlags(plNetKi) && ki != 0) throw txProtocolError(_WHERE("KI must be 0 in NetMsgRequestMyVaultPlayerList but is %d", ki));
-	}
-	
-	//// tmVaultPlayerList
-	tmVaultPlayerList::tmVaultPlayerList(tNetSession *u, uint32_t x, uint16_t numberPlayers, tMBuf players, const tString &url)
-	: tmNetMsg(NetMsgVaultPlayerList, plNetAck | plNetX | plNetKi, u), url(url)
-	{
-		this->x = x;
-		ki = 0; // we're not yet logged in, so no KI can be set
-		
-		this->numberPlayers = numberPlayers;
-		this->players = players;
-	}
-	
-	void tmVaultPlayerList::stream(tBBuf &t) const
-	{
-		tmNetMsg::stream(t);
-		t.put16(numberPlayers);
-		t.put(players);
-		t.put(url);
-	}
-	
-	tString tmVaultPlayerList::additionalFields(tString dbg) const
-	{
-		dbg.nl();
-		dbg.printf(" number of avatars: %d, URL: %s", numberPlayers, url.c_str());
-		return dbg;
-	}
 	
 	//// tmCreatePlayer
 	void tmCreatePlayer::store(tBBuf &t)

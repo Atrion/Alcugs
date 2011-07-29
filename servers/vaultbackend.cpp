@@ -106,7 +106,7 @@ namespace alc {
 		vaultDB = new tVaultDB(&log);
 		vaultFolderName = vaultDB->getVaultFolderName();
 		DBG(5, "global vault folder name is %s\n", vaultFolderName.c_str());
-		checkMainNodes();
+		checkMainNodes(); // must be called here: Be sure to also have those referencs around when cleaning the vault!
 		log.flush();
 	}
 	
@@ -120,23 +120,8 @@ namespace alc {
 		uint32_t adminNode = vaultDB->createNode(*node);
 		delete node;
 		
-		// create AllPlayersFolder
-		node = new tvNode(MType | MInt32_1);
-		node->type = KFolderNode;
-		node->int1 = KAllPlayersFolder;
-		vaultDB->createChildNode(KVaultID, adminNode, *node);
-		delete node;
-		
-#if 0
-		// create PublicAgesFolder
-		node = new tvNode(MType | MInt32_1);
-		node->type = KFolderNode;
-		node->int1 = KPublicAgesFolder;
-		vaultDB->createChildNode(KVaultID, adminNode, *node);
-		delete node;
-#endif
-		
-		// create System node
+		// create System node with global inbox and welcome message, since we are initializing a new vault
+		// we do not have to create the other main nodes, checkMainNodes() will do that
 		node = new tvNode(MType);
 		node->type = KSystem;
 		uint32_t systemNode = vaultDB->createChildNode(KVaultID, adminNode, *node);
@@ -173,13 +158,35 @@ namespace alc {
 		delete node;
 		if (!adminNode) throw txDatabaseError(_WHERE("No admin node found"));
 		
-		// find the two main nodes and ensure they are connected to this one
+		// find the main nodes and ensure they are connected to this one
 		// AllPlayersFolder
 		node = new tvNode(MType | MInt32_1);
 		node->type = KFolderNode;
 		node->int1 = KAllPlayersFolder;
 		getChildNodeBCasted(KVaultID, adminNode, *node);
 		delete node;
+		
+		// PublicAgesFolder
+		node = new tvNode(MType | MInt32_1);
+		node->type = KFolderNode;
+		node->int1 = KPublicAgesFolder;
+		publicAgesFolder = getChildNodeBCasted(KVaultID, adminNode, *node);
+		delete node;
+		
+		// public ages that must be in PublicAgesFolder
+		uint8_t guid[8];
+		{
+			if (!generateGuid(guid, "city", 0)) throw txProtocolError(_WHERE("error creating city GUID"));
+			tAgeInfoStruct ageInfo("city", "Ae'gura", "Ae'gura", "Ae'gura", guid);
+			uint32_t ageNode = getAge(ageInfo);
+			addRefBCasted(KVaultID, publicAgesFolder, ageNode);
+		}
+		{
+			if (!generateGuid(guid, "Neighborhood", 0)) throw txProtocolError(_WHERE("error creating hood GUID"));
+			tAgeInfoStruct ageInfo("Neighborhood", "Neighborhood", hoodName, hoodDesc, guid);
+			uint32_t ageNode = getAge(ageInfo);
+			addRefBCasted(KVaultID, publicAgesFolder, ageNode);
+		}
 		
 		// System node
 		node = new tvNode(MType);
@@ -191,15 +198,54 @@ namespace alc {
 	void tVaultBackend::send(tvMessage &msg, tNetSession *u, uint32_t ki, uint32_t x)
 	{
 		msg.print(&logHtml, /*clientToServer:*/false, u, shortHtml, ki);
-		tmVault vaultMsg(u, ki, x, msg.task, &msg);
-		net->send(vaultMsg);
+		net->send(tmVault(u, ki, x, msg.task, &msg));
 	}
 	
-	void tVaultBackend::sendPlayerList(tmCustomVaultAskPlayerList &askPlayerList)
+	void tVaultBackend::sendPlayerList(tmRequestMyVaultPlayerList &askPlayerList)
 	{
-		tmCustomVaultPlayerList list(askPlayerList.getSession(), askPlayerList.x, askPlayerList.sid, askPlayerList.uid);
-		list.numberPlayers = vaultDB->getPlayerList(askPlayerList.uid, &list.players);
+		tmVaultPlayerList list(askPlayerList.getSession(), askPlayerList.x, askPlayerList.sid, askPlayerList.uid);
+		vaultDB->getPlayerList(askPlayerList.uid, &list);
 		net->send(list);
+	}
+	
+	void tVaultBackend::sendAgeList(tmGetPublicAgeList &getAgeList)
+	{
+		tmPublicAgeList ageList(getAgeList.getSession(), getAgeList);
+		// fetch age info nodes
+		tvNode **nodes;
+		size_t size;
+		vaultDB->getAgeInfos(publicAgesFolder, getAgeList.age, &nodes, &size);
+		// put info into message
+		for (size_t i = 0; i < size; ++i) {
+			assert(nodes[i]->str1 == getAgeList.age);
+			uint8_t guid[8];
+			alcGetHexGuid(guid, nodes[i]->str4);
+			ageList.ages.push_back(tAgeInfoStruct(nodes[i]->str1, nodes[i]->str2, guid, i+1));
+			delete nodes[i];
+		}
+		free(nodes);
+		// done!
+		net->send(ageList);
+	}
+	
+	void tVaultBackend::createPublicAge(tmCreatePublicAge& createAge)
+	{
+		// add the age to it
+		uint32_t ageNode = getAge(createAge.age);
+		addRefBCasted(KVaultID, publicAgesFolder, ageNode);
+		// and send reply
+		net->send(tmPublicAgeCreated(createAge.getSession(), createAge));
+	}
+	
+	void tVaultBackend::removePublicAge(tmRemovePublicAge& removeAge)
+	{
+		// remove the age from it
+		uint32_t ageInfoNode = getAge(tAgeInfoStruct(removeAge.guid), /*create*/false);
+		if (ageInfoNode) { // if there is anything to remove
+			vaultDB->removeNodeRef(publicAgesFolder, ageInfoNode);
+			broadcastNodeRefUpdate(new tvNodeRef(0, publicAgesFolder, ageInfoNode), /*removal*/true);
+		}
+		net->send(tmPublicAgeRemoved(removeAge.getSession(), removeAge));
 	}
 	
 	void tVaultBackend::checkKi(tmCustomVaultCheckKi &checkKi)
@@ -289,8 +335,8 @@ namespace alc {
 		if (status.age == "Ahnonay" || status.age == "Neighborhood02" || status.age == "Myst") {
 			uint8_t guid[8];
 			alcGetHexGuid(guid, status.serverGuid);
-			tvAgeInfoStruct ageInfo(status.age, guid);
-			tvSpawnPoint spawnPoint("Default", "LinkInPointDefault");
+			tAgeInfoStruct ageInfo(status.age, guid);
+			tSpawnPoint spawnPoint("Default", "LinkInPointDefault");
 			log.log("Linking rule hack: adding link to %s to player %d\n", ageInfo.filename.c_str(), status.ki);
 			uint32_t ageInfoNode = getAge(ageInfo); // create if necessary
 			addAgeLinkToPlayer(status.ki, ageInfoNode, spawnPoint, /*noUpdate*/true);
@@ -671,7 +717,7 @@ namespace alc {
 		assert(msg.task);
 		msg.print(&logHtml, /*clientToServer:*/true, u, shortHtml, ki);
 		
-		tvAgeLinkStruct *ageLink = NULL;
+		tAgeLinkStruct *ageLink = NULL;
 		const uint8_t *ageGuid = NULL;
 		tString ageName;
 		
@@ -705,13 +751,12 @@ namespace alc {
 				log.log("TRegisterOwnedAge (age filename: %s) from %d\n", ageLink->ageInfo.filename.c_str(), msg.vmgr);
 				
 				// if necessary, generate the guid
-				uint8_t zeroGuid[8];
-				memset(zeroGuid, 0, 8);
-				if (memcmp(ageLink->ageInfo.guid, zeroGuid, 8) == 0) {
+				if (!ageLink->ageInfo.hasGuid()) {
 					// this happens for the Watcher's Guild link which is created "on the fly" as Relto expects it, and
 					// for the links to the 4 Ahnonay spheres which are created when linking to the Cathedral
 					if (!generateGuid(ageLink->ageInfo.guid, ageLink->ageInfo.filename, msg.vmgr))
 						throw txProtocolError(_WHERE("could not generate GUID"));
+					ageLink->ageInfo.flags |= 0x04; // GUID flag
 				}
 				
 				// now find the age info node of the age we're looking for
@@ -739,8 +784,7 @@ namespace alc {
 					throw txProtocolError(_WHERE("could not generate GUID"));
 				
 				// find age info node
-				tvAgeInfoStruct ageInfo(ageName, guid);
-				uint32_t ageInfoNode = getAge(ageInfo, /*create*/false);
+				uint32_t ageInfoNode = getAge(tAgeInfoStruct(ageName, guid), /*create*/false);
 				if (!ageInfoNode) throw txProtocolError(_WHERE("I should remove a non-existing owned age"));
 				// remove the link from the player
 				removeAgeLinkFromPlayer(msg.vmgr, ageInfoNode);
@@ -780,8 +824,7 @@ namespace alc {
 				// msg.vmgr is the reciever's KI, ki the sender's one
 				
 				// now find the age info node of the age we're looking for
-				tvAgeInfoStruct ageInfo("", ageGuid); // filename is unknown
-				uint32_t ageInfoNode = getAge(ageInfo, /*create*/false);
+				uint32_t ageInfoNode = getAge(tAgeInfoStruct(ageGuid), /*create*/false);
 				if (!ageInfoNode) throw txProtocolError(_WHERE("I should remove an invite for a non-existing age"));
 				// remove the link from the player
 				removeAgeLinkFromPlayer(msg.vmgr, ageInfoNode, /*visitedAge*/true);
@@ -797,13 +840,14 @@ namespace alc {
 		}
 	}
 	
-	uint32_t tVaultBackend::getAge(tvAgeInfoStruct &ageInfo, bool create)
+	uint32_t tVaultBackend::getAge(const tAgeInfoStruct &ageInfo, bool create)
 	{
+		if (!ageInfo.hasGuid()) throw txUnet(_WHERE("Can not find nor create age without GUID"));
 		tvNode *node;
 		// search for the age
 		node = new tvNode(MType | MStr64_4);
 		node->type = KAgeInfoNode;
-		if (ageInfo.filename.size() > 0) {
+		if (ageInfo.hasFilename()) { // we have some GUID-only requests
 			node->flagB |= MStr64_1;
 			node->str1 = ageInfo.filename;
 		}
@@ -818,8 +862,10 @@ namespace alc {
 		return createAge(ageInfo);
 	}
 	
-	uint32_t tVaultBackend::createAge(tvAgeInfoStruct &ageInfo)
+	uint32_t tVaultBackend::createAge(const tAgeInfoStruct &ageInfo)
 	{
+		if (!ageInfo.hasFilename() || !ageInfo.hasGuid())
+			throw txUnet(_WHERE("An age to be created MUST have filename and GUID set"));
 		tvNode *node;
 		// first create the age mgr node
 		node = new tvNode(MType | MStr64_1);
@@ -828,7 +874,7 @@ namespace alc {
 		uint32_t ageMgrNode = vaultDB->createNode(*node);
 		delete node;
 		
-		// now create the age info node as child of the age mgr
+		// now create the age info node as child of the age mgr (not broadcasted: Nobody can have a ref to this anyway yet)
 		node = new tvNode(MType | MUInt32_1 | MStr64_1 | MStr64_2 | MStr64_3 | MStr64_4 | MText_1);
 		node->type = KAgeInfoNode;
 		node->uInt1 = ageMgrNode;
@@ -867,7 +913,7 @@ namespace alc {
 		return ageLinkNode;
 	}
 	
-	uint32_t tVaultBackend::addAgeLinkToPlayer(uint32_t ki, uint32_t ageInfoNode, alc::tvSpawnPoint& spawnPoint, bool noUpdate, bool visitedAge)
+	uint32_t tVaultBackend::addAgeLinkToPlayer(uint32_t ki, uint32_t ageInfoNode, tSpawnPoint& spawnPoint, bool noUpdate, bool visitedAge)
 	{
 		uint32_t linkedAgesFolder;
 		uint32_t ageLinkNode = findAgeLink(ki, ageInfoNode, &linkedAgesFolder); // first check if the player owns that age
@@ -934,7 +980,7 @@ namespace alc {
 		if (!ageLinkNode) return; // the player does not have a link to this age
 		
 		// and now remove that node and broadcast the removal
-		vaultDB->removeNodeRef(linkedAgesFolder, ageLinkNode, /*cautious*/false); // this will remove the node if this was the only ref
+		vaultDB->removeNodeRef(linkedAgesFolder, ageLinkNode);
 		broadcastNodeRefUpdate(new tvNodeRef(0, linkedAgesFolder, ageLinkNode), /*removal*/true);
 	}
 	
@@ -1009,35 +1055,26 @@ namespace alc {
 		uint32_t infoNode = vaultDB->createChildNode(ki, ki, *node);
 		delete node;
 		
-		// link that player with Ae'gura, the hood and DniCityX2Final
+		// link that player with the (default) hood and the city (like UU does it)
 		uint8_t guid[8];
 		{
-			if (!generateGuid(guid, "city", ki)) throw txProtocolError(_WHERE("error creating GUID"));
-			tvAgeInfoStruct ageInfo("city", "Ae'gura", "Ae'gura", "Ae'gura", guid);
-			tvSpawnPoint spawnPoint("FerryTerminal", "LinkInPointFerry");
+			if (!generateGuid(guid, "city", 0)) throw txProtocolError(_WHERE("error creating city GUID"));
+			tAgeInfoStruct ageInfo("city", guid);
+			tSpawnPoint spawnPoint("FerryTerminal", "LinkInPointFerry");
 			
-			uint32_t ageNode = getAge(ageInfo);
+			uint32_t ageNode = getAge(ageInfo, /*create*/false);
+			if (!ageNode) throw txProtocolError(_WHERE("Could not find the one and only city?"));
 			addAgeLinkToPlayer(ki, ageNode, spawnPoint);
 		}
-		
 		{
-			if (!generateGuid(guid, "Neighborhood", ki)) throw txProtocolError(_WHERE("error creating GUID"));
-			tvAgeInfoStruct ageInfo("Neighborhood", "Neighborhood", hoodName, hoodDesc, guid);
-			tvSpawnPoint spawnPoint("Default", "LinkInPointDefault");
+			if (!generateGuid(guid, "Neighborhood", 0)) throw txProtocolError(_WHERE("error creating hood GUID"));
+			tAgeInfoStruct ageInfo("Neighborhood", guid);
+			tSpawnPoint spawnPoint("Default", "LinkInPointDefault");
 			
-			uint32_t ageNode = getAge(ageInfo);
+			uint32_t ageNode = getAge(ageInfo, /*create*/false);
+			if (!ageNode) throw txProtocolError(_WHERE("Could not find the one and only hood?"));
 			addAgeLinkToPlayer(ki, ageNode, spawnPoint);
 			addRemovePlayerToAge(ageNode, ki);
-		}
-		
-		{
-			if (!generateGuid(guid, "DniCityX2Finale", ki)) throw txProtocolError(_WHERE("error creating GUID"));
-			tvAgeInfoStruct ageInfo("DniCityX2Finale", "DniCityX2Finale", "", "", guid);
-			tvSpawnPoint spawnPoint("Default", "LinkInPointDefault");
-			
-			uint32_t ageNode = getAge(ageInfo);
-			addAgeLinkToPlayer(ki, ageNode, spawnPoint);
-			// I don't know why, but the NEWS file clearly says that DniCityX2Finale should not have an owner *shrug*
 		}
 		
 		// create link AllPlayersFolder -> info node (broadcasted)
@@ -1234,7 +1271,7 @@ namespace alc {
 		}
 	}
 	
-	bool tVaultBackend::setAgeGuid(alc::tvAgeLinkStruct* link, uint32_t ownerKi)
+	bool tVaultBackend::setAgeGuid(tAgeLinkStruct* link, uint32_t ownerKi)
 	{
 		return generateGuid(link->ageInfo.guid, link->ageInfo.filename, ownerKi);
 	}

@@ -33,6 +33,7 @@
 #include <netexception.h>
 #include <protocol/umsgbasic.h>
 #include <protocol/trackingmsg.h>
+#include <protocol/lobbybasemsg.h>
 #include <alcmain.h>
 
 #include <iostream>
@@ -45,6 +46,8 @@ namespace alc {
 
 	void tUnetVaultServer::onApplyConfig(void)
 	{
+		// (re)load vault backend
+		vaultBackend.applyConfig();
 		// check if we should clean the vault
 		tConfig *cfg = alcGetMain()->config();
 		tString var = cfg->getVar("daemon");
@@ -62,8 +65,6 @@ namespace alc {
 			forcestop(); // don't let the server run, we started just for cleaning
 			return;
 		}
-		// (re)load vault backend
-		vaultBackend.applyConfig();
 	}
 	
 	bool tUnetVaultServer::isValidAvatarName(const tString &avatar)
@@ -82,12 +83,10 @@ namespace alc {
 		if (ret != 0) return ret; // cancel if it was processed, otherwise it's our turn
 		
 		switch(msg->cmd) {
-			case NetMsgCustomVaultAskPlayerList:
+			case NetMsgRequestMyVaultPlayerList:
 			{
-				tmCustomVaultAskPlayerList askPlayerList(u, msg);
-				
+				tmRequestMyVaultPlayerList askPlayerList(u, msg);
 				vaultBackend.sendPlayerList(askPlayerList);
-				
 				return 1;
 			}
 			case NetMsgCustomVaultCreatePlayer:
@@ -122,49 +121,54 @@ namespace alc {
 			case NetMsgCustomVaultDeletePlayer:
 			{
 				tmCustomVaultDeletePlayer deletePlayer(u, msg);
-				
 				vaultBackend.deletePlayer(deletePlayer);
-				
 				return 1;
 			}
 			case NetMsgCustomVaultCheckKi:
 			{
 				tmCustomVaultCheckKi checkKi(u, msg);
-				
 				vaultBackend.checkKi(checkKi);
-				
 				return 1;
 			}
-			case NetMsgCustomVaultFindAge:
+			case NetMsgFindAge:
 			{
-				tmCustomVaultFindAge findAge(u, msg);
+				tmFindAge findAge(u, msg);
 				
-				tvAgeLinkStruct ageLink;
-				findAge.data.rewind();
-				findAge.data.get(ageLink);
-				if (!findAge.data.eof()) throw txProtocolError(_WHERE("Got a NetMsgFindAge which is too long"));
-				log->print(" %s\n", ageLink.str().c_str());
-				
-				if (!ageLink.ageInfo.hasGuid()) {
-					if (!vaultBackend.setAgeGuid(&ageLink, findAge.ki)) {
-						err->log("ERR: Request to link to unknown age %s - kicking player %d\n", ageLink.ageInfo.filename.c_str(), findAge.ki);
+				if (!findAge.link.ageInfo.hasGuid()) {
+					if (!vaultBackend.setAgeGuid(&findAge.link, findAge.ki)) {
+						err->log("ERR: Request to link to unknown age %s - kicking player %d\n", findAge.link.ageInfo.filename.c_str(), findAge.ki);
 						tmPlayerTerminated term(u, findAge.ki, RKickedOff);
 						send(term);
 						return 1;
 					}
 				}
 				
-				tmCustomFindServer findServer(u, findAge, alcGetStrGuid(ageLink.ageInfo.guid), ageLink.ageInfo.filename);
-				send(findServer);
+				send(tmCustomFindServer(u, findAge));
 				
 				return 1;
 			}
 			case NetMsgCustomVaultPlayerStatus:
 			{
 				tmCustomVaultPlayerStatus status(u, msg);
-				
 				vaultBackend.updatePlayerStatus(status);
-				
+				return 1;
+			}
+			case NetMsgGetPublicAgeList:
+			{
+				tmGetPublicAgeList getAgeList(u, msg);
+				vaultBackend.sendAgeList(getAgeList);
+				return 1;
+			}
+			case NetMsgCreatePublicAge:
+			{
+				tmCreatePublicAge createAge(u, msg);
+				vaultBackend.createPublicAge(createAge);
+				return 1;
+			}
+			case NetMsgRemovePublicAge:
+			{
+				tmRemovePublicAge removeAge(u, msg);
+				vaultBackend.removePublicAge(removeAge);
 				return 1;
 			}
 			case NetMsgVault:

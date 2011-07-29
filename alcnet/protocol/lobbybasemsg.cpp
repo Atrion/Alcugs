@@ -147,15 +147,34 @@ namespace alc {
 	}
 	
 	//// tmFindAge
+	tmFindAge::tmFindAge(tNetSession *u, uint32_t sid, const tmFindAge &findAge)
+	 : tmNetMsg(NetMsgFindAge, plNetX | plNetKi | plNetAck | plNetSid, u), link(findAge.link)
+	{
+		this->x = findAge.x;
+		this->ki = findAge.ki;
+		this->sid = sid;
+	}
+	
+	
 	void tmFindAge::store(tBBuf &t)
 	{
 		tmNetMsg::store(t);
 		if (!hasFlags(plNetX | plNetKi)) throw txProtocolError(_WHERE("X or KI flag missing"));
-		if (ki == 0 || ki != u->ki) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
-		// store the whole message
-		message.clear();
-		size_t remaining = t.remaining();
-		message.write(t.readAll(), remaining);
+		if (u->isUruClient() && (ki == 0 || ki != u->ki)) throw txProtocolError(_WHERE("KI mismatch (%d != %d)", ki, u->ki));
+		t.get(link);
+	}
+	
+	void tmFindAge::stream(alc::tBBuf& t) const
+	{
+		tmNetMsg::stream(t);
+		t.put(link);
+	}
+
+	tString tmFindAge::additionalFields(tString dbg) const
+	{
+		dbg.nl();
+		dbg.printf(" Age Link: %s", link.str().c_str());
+		return dbg;
 	}
 	
 	//// tmFindAgeReply

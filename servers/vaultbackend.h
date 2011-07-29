@@ -47,7 +47,10 @@ namespace alc {
 		~tVaultBackend(void);
 		void applyConfig(void);
 		
-		void sendPlayerList(tmCustomVaultAskPlayerList &askPlayerList);
+		void sendPlayerList(tmRequestMyVaultPlayerList &askPlayerList);
+		void sendAgeList(tmGetPublicAgeList &getAgeList);
+		void createPublicAge(tmCreatePublicAge &createAge);
+		void removePublicAge(tmRemovePublicAge &removeAge);
 		void checkKi(tmCustomVaultCheckKi &checkKi);
 		void updatePlayerStatus(tmCustomVaultPlayerStatus &status);
 		void processVaultMsg(tvMessage &msg, tNetSession *u, uint32_t ki);
@@ -57,7 +60,7 @@ namespace alc {
 		void cleanVault(bool cleanAges);
 		int getNumberOfPlayers(const uint8_t *uid);
 		int getMaxPlayers(void) { return maxPlayers; }
-		bool setAgeGuid(tvAgeLinkStruct *link, uint32_t ownerKi);
+		bool setAgeGuid(tAgeLinkStruct *link, uint32_t ownerKi);
 	private:
 		// first the new types
 		struct tVmgr {
@@ -86,10 +89,10 @@ namespace alc {
 		
 		/** searches the age by filename and creates it if necessary and wished, returns the ID of the age info node.
 		    If the age should not be created and it is not found, returns 0 */
-		uint32_t getAge(tvAgeInfoStruct &ageInfo, bool create = true);
+		uint32_t getAge(const tAgeInfoStruct &ageInfo, bool create = true);
 		
 		/** creates an age, returns the ID of the age info node */
-		uint32_t createAge(tvAgeInfoStruct &ageInfo);
+		uint32_t createAge(const tAgeInfoStruct &ageInfo);
 		
 		/** finds this age in the list of ages this player owns/can visit. The ID of the folder the link is in is saved in linkedAgesFolder
 		    \returns the ID of the link or 0 if not found */
@@ -98,7 +101,7 @@ namespace alc {
 		/** gives the player a link to that age and adds the linking point
 		    if noUpdate is true, the spawn point is only added if the link did not yet exist
 		    \returns the ID of the link node or 0 if it's an invite and the player owns that age */
-		uint32_t addAgeLinkToPlayer(uint32_t ki, uint32_t ageInfoNode, tvSpawnPoint &spawnPoint, bool noUpdate = false, bool visitedAge = false);
+		uint32_t addAgeLinkToPlayer(uint32_t ki, uint32_t ageInfoNode, tSpawnPoint &spawnPoint, bool noUpdate = false, bool visitedAge = false);
 		
 		/** removes the link to that age from the given player */
 		void removeAgeLinkFromPlayer(uint32_t ki, uint32_t ageInfoNode, bool visitedAge = false);
@@ -142,6 +145,7 @@ namespace alc {
 	
 		tVaultDB *vaultDB;
 		tString vaultFolderName;
+		uint32_t publicAgesFolder;
 		
 		int instanceMode;
 		tString privateAges; // msut start and end with a comma

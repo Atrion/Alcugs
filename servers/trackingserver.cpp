@@ -45,49 +45,38 @@ namespace alc {
 		switch(msg->cmd) {
 			case NetMsgCustomSetGuid:
 			{
-				// get the data out of the packet
 				tmCustomSetGuid setGuid(u, msg);
-				
-				// save the data for the session
 				trackingBackend.updateServer(u, setGuid);
-				
 				return 1;
 			}
 			case NetMsgCustomPlayerStatus:
 			{
-				// get the data out of the packet
 				tmCustomPlayerStatus playerStatus(u, msg);
-				
-				// update the player's data
 				trackingBackend.updatePlayer(u, playerStatus);
-				
 				return 1;
 			}
 			case NetMsgCustomFindServer:
 			{
-				// get the data out of the packet
 				tmCustomFindServer findServer(u, msg);
-				
 				trackingBackend.findServer(findServer);
-				
 				return 1;
 			}
 			case NetMsgCustomDirectedFwd:
 			{
-				// get the data out of the packet
 				tmCustomDirectedFwd directedFwd(u, msg);
-				
 				trackingBackend.forwardMessage(directedFwd);
-				
 				return 1;
 			}
 			case NetMsgCustomPlayerToCome:
 			{
-				// get the data out of the packet
 				tmCustomPlayerToCome playerToCome(u, msg);
-				
 				trackingBackend.playerCanCome(u, playerToCome.ki);
-				
+				return 1;
+			}
+			case NetMsgPublicAgeList:
+			{
+				tmPublicAgeList ageList(u, msg);
+				trackingBackend.getPopulationCounts(ageList);
 				return 1;
 			}
 		}

@@ -4,6 +4,7 @@ Improvements and Changes:
 - Switched to CMake build system
 - Multi-threading: The netcore (receiving and sending messages and acks, managing re-sends and so on) runs in a different thread than message processing (like vault DB queries), to avoid server halt during larger backend work
 - Code refactoring to be more readable and reasonable
+- UU support: The typeid change is handled consistenty, and the public age list is working (instancing is still a hack though, so you can have just one hood)
 - The age states are now saved in the directory specified by game.agestates (with an automatic migration from the old system)
 - The tracking server requires a confirmation from the game server that it is still alive before sending a player there - this hopefully fixes a lot of "Authentication Failed" crashes while linking
 - Congestion control is now actually working and Alcugs can achieve a fairly good bandwidth (concidering how broken the protocol is)

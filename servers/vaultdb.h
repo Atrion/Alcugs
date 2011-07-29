@@ -29,11 +29,16 @@
 /* CVS tag - DON'T TOUCH*/
 #define __U_VAULTDB_H_ID "$Id$"
 
-#include <protocol/vaultproto.h>
+#include <alctypes.h>
 
 namespace alc {
 	
 	class tSQL;
+	class tLog;
+	class tmVaultPlayerList;
+	class tvNode;
+	class tvManifest;
+	class tvNodeRef;
 
 	class tVaultDB {
 	public:
@@ -42,7 +47,7 @@ namespace alc {
 		tString getVaultFolderName(void);
 		
 		/** queries the player list and saves it in the buffer if the point is not NULL \returns the number of players */
-		int getPlayerList(const uint8_t *uid, tMBuf *t = NULL);
+		int getPlayerList(const uint8_t *uid, tmVaultPlayerList *t = NULL);
 		
 		/** checks if this account (uid) owns that ki and returns the avatar name. sets "ownAvatar" to true if the avatar belongs to the account, and to false if not */
 		tString checkKi(uint32_t ki, const uint8_t *uid, bool *ownAvatar);
@@ -67,8 +72,8 @@ namespace alc {
 		
 		/** get all the nodes whose IDs are in the table (saved as tableSize U32 values) and put them in the array.
 		    Remember to free the node table and delete all its elements! */
-		void fetchNodes(uint32_t* table, size_t tableSize, alc::tvNode*** nodes, size_t* nNodes); // this is a pointer to an array of pointers
-		void fetchNodes(alc::tMBuf& buf, size_t tableSize, alc::tvNode*** nodes, size_t* nNodes); // this is a pointer to an array of pointers
+		void fetchNodes(uint32_t* table, size_t tableSize, tvNode*** nodes, size_t* nNodes); // this is a pointer to an array of pointers
+		void fetchNodes(tMBuf& buf, size_t tableSize, tvNode*** nodes, size_t* nNodes); // this is a pointer to an array of pointers
 		
 		/** checks if this node exists */
 		bool checkNode(uint32_t node);
@@ -93,8 +98,11 @@ namespace alc {
 		/** saves a list of direct parent nodes */
 		void getParentNodes(uint32_t node, uint32_t **table, size_t *tableSize);
 		
-		/** get all references (direct and indirect) of this node */
+		/** get all references (direct and indirect) below this node */
 		void getReferences(uint32_t node, tvNodeRef ***ref, size_t *nRef); // this is a pointer to an array of pointers
+		
+		/** get all age infos to that age below the given parent */
+		void getAgeInfos(uint32_t parent, tString ageName, tvNode ***nodes, size_t *size); // pointer to an array of pointers
 		
 		/** removes all lost nodes and their subnodes */
 		void clean(bool cleanAges);

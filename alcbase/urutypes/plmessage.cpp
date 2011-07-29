@@ -41,12 +41,15 @@ namespace alc {
 		flags = 0;
 	}
 	
-	tpMessage *tpMessage::create(uint16_t type, bool mustBeComplete)
+	tpMessage *tpMessage::createFromStream(tStreamedObject *stream, bool UUFormat, bool mustBeComplete)
 	{
-		tpObject *obj = alcCreatePlasmaObject(type, mustBeComplete);
+		tpObject *obj = tpObject::createFromStream(stream, UUFormat, mustBeComplete);
 		tpMessage *specificObj = dynamic_cast<tpMessage *>(obj);
-		if (specificObj == NULL)
+		if (specificObj == NULL) {
+			uint16_t type = obj->getType();
+			delete obj;
 			throw txUnexpectedData(_WHERE("Unwanted message type %s (0x%04X)", alcGetPlasmaType(type), type));
+		}
 		return specificObj;
 	}
 	
@@ -59,10 +62,8 @@ namespace alc {
 		// read array of receivers - perhaps put this into a helper function?
 		receivers.clear();
 		receivers.reserve(refCount);
-		tReceiverList::iterator it;
 		for (uint32_t i = 0; i < refCount; ++i) {
-			it = receivers.insert(receivers.end(), tUruObjectRef());
-			t.get(*it);
+			t.get(*receivers.insert(receivers.end(), tUruObjectRef())); // first insert, then fill with data
 		}
 		// remaining values
 		tmpVal = t.get32();
@@ -96,12 +97,15 @@ namespace alc {
 	}
 	
 	//// tpLoadCloneMsg
-	tpLoadCloneMsg *tpLoadCloneMsg::create(uint16_t type, bool mustBeComplete)
+	tpLoadCloneMsg *tpLoadCloneMsg::createFromStream(tStreamedObject *stream, bool UUFormat, bool mustBeComplete)
 	{
-		tpObject *obj = alcCreatePlasmaObject(type, mustBeComplete);
+		tpObject *obj = tpObject::createFromStream(stream, UUFormat, mustBeComplete);
 		tpLoadCloneMsg *specificObj = dynamic_cast<tpLoadCloneMsg *>(obj);
-		if (specificObj == NULL)
+		if (specificObj == NULL) {
+			uint16_t type = obj->getType();
+			delete obj;
 			throw txUnexpectedData(_WHERE("Unwanted message type %s (0x%04X)", alcGetPlasmaType(type), type));
+		}
 		return specificObj;
 	}
 	
@@ -132,11 +136,13 @@ namespace alc {
 		isLoad = tmpVal;
 		
 		uint16_t subMsgType = t.get16();
+		if (UUFormat) subMsgType = alcOpcodeUU2POTS(subMsgType);
 		if (subMsgType != plNull && subMsgType != plParticleTransferMsg)
 			throw txUnexpectedData(_WHERE("Invalid type of plLoadCloneMsg.subMsg: %s (0x%04X)", alcGetPlasmaType(subMsgType), subMsgType));
 		if (subMessage) delete subMessage;
 		subMessage = NULL;
-		subMessage = alcCreatePlasmaObject(subMsgType);
+		subMessage = createByType(subMsgType);
+		subMessage->setUUFormat(UUFormat);
 		t.get(*subMessage);
 	}
 	
@@ -152,7 +158,8 @@ namespace alc {
 		t.put32(unk3);
 		t.put8(1);
 		t.put8(isLoad);
-		t.put16(subMessage->getType());
+		t.put16(UUFormat ? alcOpcodePOTS2UU(subMessage->getType()) : subMessage->getType());
+		subMessage->setUUFormat(UUFormat);
 		t.put(*subMessage);
 	}
 	
