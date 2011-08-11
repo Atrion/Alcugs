@@ -412,11 +412,11 @@ namespace alc {
 		tUnetLobbyServerBase::onIdle();
 	}
 	
-	bool tUnetGameServer::checkIfOnlyPlayer(tNetSession *u)
+	bool tUnetGameServer::checkIfOnlyPlayer(tNetSession *exclude)
 	{
 		tReadLock lock(smgrMutex);
 		for (tNetSessionMgr::tIterator it(smgr); it.next();) {
-			if (it->isUruClient() && *it != u) {
+			if (it->isUruClient() && *it != exclude) {
 				return false;
 			}
 		}

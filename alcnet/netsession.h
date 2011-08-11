@@ -69,7 +69,7 @@ public:
 	uint16_t getPort(void) const { return port; }
 	size_t getMaxPacketSz(void) const;
 	uint8_t getAccessLevel(void) { tReadLock lock(prvDataMutex); return accessLevel; }
-	bool isUruClient(void) { tReadLock lock(prvDataMutex); return authenticated; } //!< thread-safe
+	bool isUruClient(void) { tReadLock lock(prvDataMutex); return !passwd.isEmpty(); } //!< thread-safe
 	bool isClient(void) { tReadLock lock(prvDataMutex); return client; } //!< thread-safe
 	bool isTerminated(void) { tReadLock lock(prvDataMutex); return state >= Terminating; } //!< thread-safe
 	bool anythingToSend(void) { tMutexLock lock(sendMutex); return acksToSend() || !sndq.empty(); } //!< thread-safe

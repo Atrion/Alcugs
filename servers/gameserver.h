@@ -86,7 +86,7 @@ namespace alc {
 		void bcastMemberUpdate(tNetSession *u, bool isJoined);
 		
 		void removePlayerFromPage(tPageInfo *page, uint32_t ki);
-		bool checkIfOnlyPlayer(tNetSession *u);
+		bool checkIfOnlyPlayer(tNetSession *exclude);
 		
 		bool processGameMessage(tStreamedObject *msg, tNetSession *u, tUruObjectRef *receiver = NULL); //!< returns true if the message was processed and should not be broadcasted or forwarded
 		void processKICommand(const tString &text, tNetSession *u);
