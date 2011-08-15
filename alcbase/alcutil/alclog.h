@@ -31,6 +31,7 @@
 #define __U_ALCLOG_H
 
 #include "alctypes.h"
+#include "alcutil/alcthread.h"
 
 namespace alc {
 

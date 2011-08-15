@@ -135,30 +135,23 @@ void tMBuf::tRefBuf::resize(size_t newsize) {
 	if(b2==NULL) throw txNoMem(_WHERE("NoMem"));
 	buffer=b2;
 }
-void tMBuf::tRefBuf::inc() { tSpinLock lock(mutex); refs++; }
+void tMBuf::tRefBuf::inc() { __sync_add_and_fetch(&this->refs, 1); }
 void tMBuf::tRefBuf::dec() {
-	mutex.lock();
-	--this->refs;
-	if(refs==0) {
-		mutex.unlock();
-		delete this; // nobody wants us anymore :( but be sure not to hold the lock when deleting!
-	}
-	else
-		mutex.unlock();
+	int refs = __sync_sub_and_fetch(&this->refs, 1);
+	if(refs==0) delete this; // nobody wants us anymore :(
 }
 tMBuf::tRefBuf* tMBuf::tRefBuf::uniqueWithSize(size_t newsize)
 {
 	assert(newsize >= msize);
-	tSpinLock lock(mutex);
-	if (refs == 1) {
-		// nobody else can access this, so holing the spinlock doesn't even harm
+	if (__sync_bool_compare_and_swap(&this->refs, 1, 1)) { // how to do an atomic "refs == 1"?
+		// nobody else can access this, we can do whatever we want
 		if (newsize > msize) resize(newsize);
 		return this; // easy case
 	}
-	// got to create a new one and copy the data, and decrease our own refcount
+	// got to create a new one and copy the data, nobody willl modify the buffer since we hold a reference
 	tRefBuf *newBuf = new tRefBuf(newsize);
 	memcpy(newBuf->buffer, buffer, msize);
-	--this->refs;
+	dec(); // now we can release our origin... if two threads do this concurrently, the origin will be deleted, which is not necessary, but not wrong either
 	return newBuf;
 }
 /* end tRefBuf */

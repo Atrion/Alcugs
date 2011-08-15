@@ -32,7 +32,6 @@
 #define __U_ALCTYPES_H
 
 #include "alcutil/useful.h"
-#include "alcutil/alcthread.h"
 
 #include <cstdio>
 #include <cstring>
@@ -214,7 +213,6 @@ private:
 	private:
 		void resize(size_t newsize);
 		
-		tSpinEx mutex;
 		unsigned int refs;
 		size_t msize;
 		void *buffer;
