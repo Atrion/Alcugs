@@ -4,8 +4,6 @@ Diafero <diafero AT arcor.de> is the author of this tool - however, I got the id
 
 To build it, you will need Qt: http://qt.nokia.com/
 
-You can find more detailed documentation below and at http://alcugs.almlys.org/UruStarter
-
 = Building UruStarter =
 
 You can find the sources in the "tools/UruStarter" directory of Alcugs (http://gitorious.org/alcugs/alcugs). Obviously, this is a Windows application, since Uru runs on Windows only (UruStarter will work fine with Wine though, just like Uru itself). To compile it, download and install the Windows version of the latest Qt (http://qt.nokia.com/). Then use the "Qt Command Prompt" in the directory of the UruStarter sources, run "qmake" and then "mingw32-make".

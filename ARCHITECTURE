@@ -1,0 +1,18 @@
+This file serves to give you some overview about what the different parts of an Alcugs server actually do.
+
+== Auth Server ==
+Whenever a player joins a game or lobby server, it has to prove its identity, and lobby/game pass on the data (username, password) they got from the client to the auth server. That one decides if it is valid or not, and which privileges the players has (for example, VaultManager access).
+
+== Tracking Server ==
+This server keeps the overview over all lobby and game servers, it knows which game server instances are currently spawned and which lobbies are available. Whenever a player needs to connect to a certain age, it (indirectly) asks tracking where that age is hosted. Tracking then either sends back the IP and Port, or it asks one of its lobbies to spawn a new game server and sends IP and Port of that new server back to the player when the server is launched. Tracking also handles all kinds of inter-age communication.
+
+== Vault Server ==
+It holds all the persistently saved data (almost all - the age states are managed by the game servers). In addition, the vault server is responsible for generating the GUIDs for the ages and managing age instances and ownership. A vault is basically a huge amount of nodes connected by several tree structures (one tree for each player, one for each age and a global one). You can subscribe to such a tree which means that whenever something is changed in the tree, you get immediately notified. A node can be in several trees.
+
+Example: For each player, there is an info node holding the information whether this player is online and in which age it is. When you now log in, leave or link, your info node changes. That node in turn is a child node of all the buddy lists you are on as well as the owner list of your hood and the lists of players allowed to visit a certain age (for example). So everyone who has you on his buddylist gets notified (and can update the KI lists) as they subscribed to their own player node which in turn contains the buddylist. The best way to understand the vault structure is to start a small server and use VaultManager.
+
+== Game Server ==
+The game server broadcasts messages between it's players and forwards messages from and to auth, vault and tracking (from tracking they can in turn be relayed to other game server so that inter-age chat is possible). The game server also keeps track of the full age state (that is, the SDL of all objects in the age) so that it can tell new players what the current state is and can save and restore that state when it is terminated and launched again later on. 
+
+== Lobby Server ==
+This is the server you connect to when logging in initially, it's port is always 5000. It allows you to create and remove avatars, and to request to be linked to the initial game server (game and lobby share a huge lot of code). It is also the lobby which starts new game servers when asked so by tracking. You can have several lobbies for a Shard, which means game servers will be spawned on several machines (each game server is only on one machine, but some are on this and some on the other server). Players can choose one of the available lobbies for their initial connect - they will all act the same.

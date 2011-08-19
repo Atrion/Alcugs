@@ -1,0 +1,50 @@
+This file tries to give some general approaches to troubleshoot problems with the Alcugs servers. If you didn't yet do so, you should first read the architecture explanation (file ARCHITECTURE) to learn how the various servers together form a Shard.
+
+= Analysing Logfiles =
+
+Logfiles are the first and main source of information you get from and about the servers, so they are what you should base your troubleshooting on.
+
+If you followed the normal setup, you can find the log files in /home/alcugs/var/log/. There are four subdirs for the main servers as well as a "game" subdir containing dirs for each age and each age instance. When something doesn't work at all, "error.log" is usually the first place to look at (it should be empty). "access.log" lists when peers (other servers and clients) connected to and disconnected from your server, and if you get kicked, this often also contains the reason for that. "alcugs.log" lists what network messages the server sends and receives. For auth, tracking and vault there is also an additional logfile about what the server exactly did.
+
+There is a script contained in the alcugs servers which looks at all logfiles and filters them for problematic or interesting messages. You can use it as follows:
+
+  cd ~alcugs/var/log/vault
+  ~alcugs/alcugs-src/tools/log-filter.sh problems
+
+Instead of "problems" (which shows all errors and warnings), you can also pass "errors" to get only errors, "warnings" to get only warnings and "interesting" to get general information messages which are completely unproblematic, but might give some hint.
+The script can also recursively filter subdirs, which can for example be used to find problems caused by any Relto game server:
+
+  cd ~alcugs/var/log/game/Personal/
+  ~alcugs/alcugs-src/tools/log-filter.sh problems rec # "rec" tells the script to recursively filter all subdirs
+
+= Server-Specific tips =
+
+== Vault and Auth problems ==
+If the vault server doesn't startup at all or crtash immediately after startup and auth refuses to accept any user, the MySQL connection data might be wrong. Please double-check <tt>db.host</tt>, <tt>db.username</tt>, <tt>db.passwd</tt> and try to access the MySQL server directly:
+
+  mysql -u <user> -p
+
+== Game Server Problems ==
+If, when logging in, you get stuck at "Finding Player", "Authenticating" or a bit later, this is the primary symptom of the game server exiting too early.
+
+* Often this is a result of the bind addresses or the public_address being set up incorrectly. Make sure all the bind addresses are correct. Players coming from outside of your own network being stuck there while you can get in fine may be caused by public_address being set incorrectly or left unset.
+
+* It also may be the case that the "<tt>game.bin</tt>" setting is wrong (symptom for me: error 25 when forking the server in the error.log file). It must be the full name of the alcugs_game binary.
+
+* What also happens often is that there is a problem parsing an age or SDL file, in which case all game servers will exit immediately on startup. Make sure you applied the Gahreesen SDL fix as described during the [[AlcugsInstall#Setting_Up_the_Servers|installation instructions]] and try removing the SDL and age files you just added (in case you installed a new age).
+
+* For further diagnosis, the log files are invaluable, see above for how to find and read them. However, problems with the configuration files can result in no logs from the game server at all. There may be clues in the lobby server's logs.
+
+* It is also possible to start up the game server manually to see if there are errors printed out at that time before it dies. If you have a library problem or an error with the configuration files, this should tell you about it. At a command prompt, type in the following, replacing the values for your setup. 
+
+  <binary path>/alcugs_game -p 5001 -guid <guid> -name <age name> -log <logdir> -c <config file>
+
+<binary path> is the path name of the location of the alcugs_game server binaries, usually "~alcugs/bin".
+<age name> is the filename of the age. If you just set the Shard up and this is a new avatar, the age name will usually be "AvatarCustomization" (the name of the closet).
+<guid> is the GUID of the age you are going to. To figure out what to use, look in the lobby server's alcugs.log for a block like this:
+ (2009:01:03-12:06:36.449910)[0] <RCV> [5] NetMsgCustomForkServer 1010 00070000 on [1][127.0.0.1:2011][kLookup]
+  Flags: ack, UCPNPI, version (12.7)
+  Port: 5001, Server GUID: 00274E0000000D00, Age filename: Personal, Load SDL state: yes
+and the 00274E0000000D00 is the GUID.
+<logdir> is the log directory you used, usually "/home/alcugs/var/log/game/<agename>/<guid>".
+<config> is the game.config value from uru.conf. If you are using the set up here, this is "/home/alcugs/etc/uru.conf".
