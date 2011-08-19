@@ -24,8 +24,8 @@ The installation is described in the INSTALL file.
 Configuring
 -----------
 
-Read the uru.conf.dist file for more info. It explains most mof the variables, and how to configure them.
-You can find a complete list add http://alcugs.almlys.org/AlcugsConfig
+Read the uru.conf.dist file for more info. It explains the most important variables, and how to configure them.
+You can find a complete list in the CONFIG file.
 
 
 Running

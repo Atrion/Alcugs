@@ -1,8 +1,8 @@
 ###############################################################################
 #      Alcuge Server Configuration Template                                   #
 ###############################################################################
-# Please read http://alcugs.almlys.org/AlcugsConfig for an explanation of the #
-# syntax and a documentation of the possible values.                          #
+# Please read CONFIG for documentation.                                       #
+###############################################################################
 ############# Global Settings #################################################
 [global]
 # logging
