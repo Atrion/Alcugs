@@ -1,0 +1,674 @@
+= Alcugs Configuration Directives =
+
+Please note that the default values might have been different in older versions, I try to keep them up-to-date to the latest unet3+ revision.
+
+== Syntax ==
+
+<alcugs>
+# This is a comment
+; This is also a comment
+[this_is_a_key]
+this_is_a_subkey = "this is the value"
+
+[this_is_another_key]
+this_is_a_tuple[0] = "one","two","three"
+this_is_a_tuple[1] = "four","five","six"
+</alcugs>
+
+The last entry always overrides the previous one. For example:
+<alcugs>
+port = 4664
+
+# ... other stuff ...
+
+port = 8393
+</alcugs>
+The final port value will be 8393.
+
+There is a generic "global" key that defines options for all servers. In addition, there is one key per server ("auth", "vault" and so on). Options made in this key overwrite the same options from the global key for this server:
+<alcugs>
+[global]
+port = 7373
+[auth]
+port = 7316
+</alcugs>
+Then the auth server will use port 7316, and the others will use port 7373.
+
+== age ==
+Sets the path where all the AGE files are stored.
+
+Default value: None (must be set)
+Context: Vault, Tracking and Game
+Versions: All
+
+== age_filename ==
+Sets the age filename.
+
+Default value: None (should not be set in config file but via "-name" command line option)
+Context: Game
+Versions: All
+
+== age_guid ==
+Sets the age/server guid.
+
+Default value: None (should not be set in config file but via "-guid" command line option)
+Context: Game
+Versions: All
+
+== agestate.log ==
+When enabled, the game server will keep a logfile containing information about the age state (SDL and LoadClone messages). Disabling this might increase game server performance, but it will make debugging harder or impossible.
+
+Default value: 1
+Context: Game
+Versions: unet3+
+
+== agestate.log.detailed ==
+Tells the game server to also print the detailed contents of the exchanged messages in the agestate logfile. This will decrease server performance, so enable it only for debugging purposes.
+
+Default value: 0
+Context: Game
+Versions: unet3+
+
+== allow_uu_clients ==
+When set to 0, UntilUru clients will not be allowed to join. I recommend to set this in the game section to avoid SDL and other problems which can be caused by people using different clients. You should NOT set it in the lobby section though as it will prevent everyone from logging in!
+
+Default value: 0
+Context: Lobby, Game
+Versions: All
+
+== auth ==
+Sets the auth server address. This option is usually overwritten by the [[#bind|bind]] option set in the auth section, which should be set to "localhost".
+
+Default value: None
+Context: Lobby, Game
+Versions: unet3/unet3+
+
+== auth.att ==
+Set number of failed login attempts after temporay disabling an account.
+
+Default value: 10
+Context: Auth
+Versions: unet3/unet3+
+
+== auth.cgas.default_access ==
+Set the default access level for accounts that are not yet in the auth database, but confirmed by CGAS (requires a CGAS server to be set to take any effect)
+
+Default value: 15
+Context: Auth
+Versions: unet3+
+
+== auth.cgas.max_cache_time ==
+Set the time (in seconds) that the auth server will cache a successful authentication of an account against the CGAS server (requires a CGAS server to be set to take any effect)
+
+Default value: 60*60*24 = 24 hours
+Context: Auth
+Versions: unet3+
+
+== auth.cgas.path ==
+Set the path on the webserver that CGAS requests will be sent to (requires a CGAS server to be set to take any effect)
+
+Default value: /
+Context: Auth
+Versions: unet3+
+
+== auth.cgas.port ==
+Set the port of the webserver that CGAS requests will be sent to (requires a CGAS server to be set to take any effect)
+
+Default value: 80
+Context: Auth
+Versions: unet3+
+
+== auth.cgas.server ==
+Set the webserver that CGAS requests will be sent to. If this is empty, no CGAS will be used and all accounts must be stored in the local auth database.
+
+Default value: empty
+Context: Auth
+Versions: unet3+
+
+== auth.distime ==
+Set the tmp time in seconds that the disabled account will stay disabled.
+
+Default value: 300 (5 minutes)
+Context: Auth
+Versions: unet3/unet3+
+
+== auth.log ==
+When enabled, the auth server keeps a logfile about the authentication processes.
+
+Default value: 1
+Context: Auth
+Versions: unet3+
+
+== auth.minalevel ==
+Set minimal access level to be able to log into the servers.
+
+Default value: 25
+Context: Auth
+Versions: unet3/unet3+
+
+== auth.port ==
+Sets the auth server port. This option is usually overwritten by the [[#port|port]] option set in the auth section, which should be set to "2010".
+
+Default value: None
+Context: Lobby, Game
+Versions: unet3/unet3+
+
+== bind ==
+Sets the bind address for the server.
+
+The value can be a hostname or an IP address.
+
+Default value: 0.0.0.0
+Context: All
+Versions: All
+
+== cfg.dump ==
+When enabled, the effectively used configuration (with old deprecated vars being renamed, command line options being applied and the auth, tracking and vault ports being read from their sections) is dumped to stdout on startup.
+
+Default value: 0
+Context: All
+Versions: unet3+
+
+== crash.action ==
+Sets the shell command you want to run when a server process crashes. For example, a python script that sends an e-mail to you.
+
+Default value: None
+Context: All
+Versions: unet3+
+
+== daemon ==
+Sets daemon mode (parameter: [-D])
+
+If daemon mode is enabled, the server will start running in the background as any other system daemon.
+
+Default value: 0
+Context: All
+Versions: All
+
+== db.host ==
+Sets the host where the vault/auth database is hosted.
+
+Default value: None
+Context: Auth, Vault
+Versions: All
+
+== db.log ==
+Enable logging of the database driver (this is only useful for debugging, the server will run faster when this log is disabled).
+
+Default value: 1
+Context: Auth, Vault
+Versions: unet3/unet3+
+
+== db.name ==
+Set the databse name
+
+Default value: None
+Context: Auth, Vault
+Versions: All
+
+== db.password ==
+Set the databse password
+
+Default value: None
+Context: Auth, Vault
+Versions: All
+
+== db.port ==
+Set the Port used to connect to the database. A value of 0 means Unix sockets will be used.
+
+Default value: 0
+Context: Auth, Vault
+Versions: All
+
+== db.sql.log ==
+Logs all querys to the database log, requires [[#db.log|db.log]] to be set to 1. (the vault runs very slow if this is enabled)
+
+Default value: 0
+Context: Auth, Vault
+Versions: unet3/unet3+
+
+== db.username ==
+Set the databse username
+
+Default value: None
+Context: Auth, Vault
+Versions: All
+
+== game.agestates ==
+Sets the path where all the age state files are stored.
+
+Default value: None (if not set, the old system of saving in the game log folder is used)
+Context: Game
+Versions: unet3+
+
+== game.bin ==
+Sets the full path and name of the game server binary.
+
+Default value: None (must be set)
+Context: Lobby
+Versions: unet3+
+
+== game.config ==
+Sets an alternate configuration file for the game servers. When not set, game servers will use the same configuration file as the lobby server.
+
+Default value: None
+Context: Lobby
+Versions: All
+
+== game.linger_time ==
+If [[#game.persistent|game.persistent]] is not enabled, this value controls how long the game server will stay up after the last player left. You should not set this to a value lower than 20, that might cause problems.
+
+Default value: 120
+Context: Game
+Versions: unet3+
+
+== game.log ==
+Sets the path for the logs for the spawned game servers. There will be a subdir for each age, containing a subdir for each instance, containing the game server logs.
+
+Default value: None
+Context: Lobby
+Versions: All
+
+== game.persistent ==
+If enabled, the game server will continue running indefinitely if it is alone.
+
+Default value: 0
+Context: Game
+Versions: unet3/unet3+
+
+== game.serversidecommands ==
+If enabled, the game server will have a look at chat messages and react to some messages starting with "/!".
+
+Default value: 1
+Context: Game
+Versions: unet3+
+
+== game.tmp.hacks.linkidle ==
+Enable a hack that tries to work around crashes occurring when linking out while someone is animating, on a ladder, or sitting
+
+Default value: 1
+Context: Game
+Versions: unet3+
+
+== game.tmp.hacks.noreltoshare ==
+Workaround for crash when sharing a Relto book: Filter out the messages initiating that share
+
+Default value: 0
+Context: Game
+Versions: unet3+
+
+== game.tmp.hacks.resetting_ages ==
+Defines which ages the state should *not* be preserved of.
+
+Default value: "Kveer,Garden"
+Context: Game
+Versions: unet3+
+
+== instance_mode ==
+Sets the server age instantiation mode. Allowed values are:
+
+0 - All age are public (not recommended)
+1 - Only ages listed on [[#private_ages|private_ages]] will be private (recommended)
+
+It's only a debugging option that should not be used on production servers.
+
+Default value:1
+Context: All
+Versions: All
+
+== load_on_demand ==
+Enables the automatic spawning of game servers when a player links to an specific age. This is also a debugging option, if load on demand is disabled you need to manually start the desired game server.
+
+Default value:1
+Context: All
+Versions: All
+
+== log_files_path ==
+Sets where the logs are stored.
+
+Default value: "./log"
+Context: All
+Versions: All
+
+== log.enabled ==
+Enables stdout and stderr log files.
+
+Default value: 1
+Context: All
+Versions: unet3/unet3+
+
+== log.n_rotate ==
+Defines how often a logfile will be rotated before it is removed. A value of "5" means that there will usually be 5 logfiles - the main one (e.g. "alcugs.log") and four old ones ("alcugs.1.log" - "alcugs.4.log").
+
+Default value: 5
+Context: All
+Versions: unet3+
+
+== net.down ==
+Specifies your internet connection downstream in bits per second. If the deprecated "bandwidth" value is set and "net.down" is not, bandwidth will be used (in bit/s, too!).
+
+Default value: 512000 (512 kbit/s)
+Context: All
+Versions: unet3+
+
+== net.lan.down ==
+Specifies your LAN connection downstream in bits per second. What is LAN and what not is defined by the [[#private_mask|private_mask]] and [[#private_network|private_network]] values.
+
+Default value: 100000000 (100 MBit/s)
+Context: All
+Versions: unet3+
+
+== net.lan.up ==
+Specifies your LAN connection upstream in bits per second. What is LAN and what not is defined by the [[#private_mask|private_mask]] and [[#private_network|private_network]] values.
+
+Default value: 100000000 (100 MBit/s)
+Context: All
+Versions: unet3+
+
+== net.log.ack ==
+Specifies whether the server should keep a HTML logfile about each acked and each ack packet. This is useful to analyze connection problems, but makes the server run slower.
+
+Default value: 0
+Context: All
+Versions: unet3+
+
+== net.maxconnections ==
+Sets the maximum number of connections the server will accept. A value of 0 means that so restriction is applied.
+
+Default value: 0
+Context: All
+Versions: unet3+
+
+== net.noflood ==
+This should stop flood attacks. A flood attack is when a evil client sends too many packets per second, forcing the server to enter in an overloaded state where it has too many pending packets to process.
+
+Default value: 1
+Context: All
+Versions: unet3/unet3+
+
+== net.stop.timeout ==
+Specifies how many seconds the server will attempt to sanely disconnect from other peers, before it just removes the connections.
+
+Default value: 10
+Context: All
+Versions: unet3+
+
+== net.timeout ==
+Specifies how many seconds a connection can be idle before it is terminated. For connections to Uru clients, this will be overwritten after the player authenticated.
+
+Default value: 150 (2 minutes, 30 seconds)
+Context: All
+Versions: unet3/unet3+
+
+== net.timeout.loading ==
+Specifies how many seconds the connection to an Uru client which just loads an age can be idle before it is terminated. This will be overwritten after the player finished loading. If you encounter disconnects while linking to big ages, you could try increasing it - but I strongly suggest not to go above 180 seconds as this timeout also defines the time it takes the server to know the client crashed or left!
+
+Default value: 90
+Context: Game
+Versions: unet3+
+
+== net.timer ==
+Sets the netcore idle loop time in seconds (Suggested the default value)
+
+Default value: 10
+Context: All
+Versions: unet3+
+
+== net.up ==
+Specifies your internet connection upstream in bits per second. If the deprecated "bandwidth" value is set and "net.up" is not, bandwidth will be used (in bit/s, too!).
+
+Default value: 128000 (128 kbit/s)
+Context: All
+Versions: unet3+
+
+== port ==
+set the port where this server is going to listen. If you set this in the game section, it will be ignored since the game server port is defined by the lobby starting it.
+
+Default value:0
+Context: All
+Versions: All
+
+== private_ages ==
+Sets a coma separated list of ages that will have private instantiation. Each player will have his own instance of that age. Personal must be always a private age to avoid several nasty bugs, it's also strongly recommended to set AvatarCutomization as a private age. Nexus can be public, but not recmomended if you have a lot of players. BahroCave must also be private or you may see some weird things when two players appear on two different pedestals.
+
+This is only regarded if [[#instance_mode|instance_mode]] is set correctly.
+
+Default value: "AvatarCustomization,Personal,Nexus,BahroCave,BahroCave02,LiveBahroCaves,DniCityX2Finale,Cleft,Kadish,Gira,Garrison,Garden,Teledahn,Ercana,Minkata,Jalak"
+Context: Tracking, Vault, Game
+Versions: All
+
+== private_mask ==
+The network mask of the below [[#private_network|network address]].
+
+The value must be a valid 4 number doted address.
+
+Default value: 255.255.255.0
+Context: All
+Versions: All
+
+== private_network ==
+If your server has two different IP addresses, or is behind a NAT, you need to specify the address of your local network. This address is used to determine when a connection is inside or outside of your local network, and depending of the decision the server will announce a different connection speed.
+
+The value must be a valid 4 number doted address.
+
+Default value: 172.26.0.0
+Context: All
+Versions: All
+
+== public_address ==
+The address that will be announced to the clients to connect to your game servers. This is your public IP address, the one used to access your server. If you have a dynamic ip address, it is suggested to set a domain address such as the ones offered by [http://no-ip.org No-IP] or [http://dyndns.com DynDNS]
+
+The value can be a hostname, or an ip address.
+
+Default value: bind address
+Context: All
+Versions: All
+
+== read_config ==
+Read another configuration file for more options, you can for example split the configuration file in several tiny files.
+Remember the override rule.
+
+== sdl ==
+Sets the path where all the SDL files are stored.
+
+Default value: None (must be set)
+Context: Game
+Versions: All
+
+== shard.identifier ==
+Set the Shard identifier that can be requested by the client using "/!getshardidentifier"
+
+Default value: Empty
+Context: Game
+Versions: unet3+
+
+== spawn.start ==
+Sets the firts port of the port range where the lobby server will be allowed to spawn game servers.
+
+Default value: 5001
+Context: Lobby, Game
+Versions: All (broken on some old versions)
+
+== spawn.stop ==
+Sets the last port of the port range where the lobby server will be allowed to spawn game servers.
+
+Default value: 6000
+Context: Lobby, Game
+Versions: All (broken on some old versions)
+
+These options are useful if you want to run several shards on the same IP address, or if you need to share the same IP with plasma. The only problem is that there isn't yet any client that allows you to connect to a lobby server running on a port different to the 5000.
+
+== stop ==
+If this value is set the server will not start up.
+
+Default value: 0
+Context: All
+Versions: unet3/unet3+
+
+== track.html ==
+Enables the player list output in HTML format.
+
+Default value: 0
+Context: Tracking
+Versions: unet3/unet3+
+
+== track.html.path ==
+Sets the path for the track.html file.
+
+Default value: None (must be set for the page to work)
+Context: Tracking
+Versions: unet3/unet3+
+
+== track.htmldbg ==
+Enables the player list output in HTML format with debug information (like the list of running game servers and the GUID the player is in).
+
+Default value: 0
+Context: Tracking
+Versions: unet3/unet3+
+
+== track.htmldbg.path ==
+Sets the path for the track.htmldbg file.
+
+Default value: None (must be set for the page to work)
+Context: Tracking
+Versions: unet3/unet3+
+
+== track.xml ==
+Enables the UruVision compatible xml output.
+
+Default value: 0
+Context: Tracking
+Versions: unet3/unet3+
+
+== track.xml.path ==
+Sets the path for the track.xml file.
+
+Default value: None (must be set for the page to work)
+Context: Tracking
+Versions: unet3/unet3+
+
+== tracking ==
+Sets the tracking server address. This option is usually overwritten by the [[#bind|bind]] option set in the tracking section, which should be set to "localhost".
+
+Default value: None
+Context: Lobby, Game
+Versions: unet3/unet3+
+
+== tracking.log ==
+When enabled, the tracking server keeps a logfile about players going offline and online as well game server being requested, spawned and going down.
+
+Default value: 1
+Context: Tracking
+Versions: unet3+
+
+== tracking.port ==
+Sets the tracking server port. This option is usually overwritten by the [[#port|port]] option set in the tracking section, which should be set to "2010".
+
+Default value: None
+Context: Lobby, Game
+Versions: unet3/unet3+
+
+== vault ==
+Sets the vault server address. This option is usually overwritten by the [[#bind|bind]] option set in the vault section, which should be set to "localhost".
+
+Default value: None
+Context: Lobby, Game
+Versions: unet3/unet3+
+
+== vault.clean ==
+Performs a clean-up on the vault database (removes invalid and unreachable nodes). This can only be set via command line ("-clean"), and the server will immediately exit after having done the clean-up.
+
+Default value: 0
+Context: Vault
+Versions: unet3+
+
+== vault.clean.ages ==
+If this is set to 1, a vault clean-up will also removed ages which are no longer referenced anywhere. While this will remove a lot of ages from deleted players, I can't assure it won't delete some global instances, too, so please use it with care!
+
+Default value: 0
+Context: Vault
+Versions: unet3+
+
+== vault.hood.desc ==
+Sets the default hood description.
+
+Default value: "This is a hood on an Alcugs server"
+Context: Vault
+Versions: All
+
+== vault.hood.name ==
+Sets the default hood name.
+
+Default value: "Alcugs hood"
+Context: Vault
+Versions: All
+
+== vault.maxplayers ==
+Specifies the maximum number of avatars a normal user can have. Accounts with an access level of 7 or lower (CCR) can have an infinite amount of players.
+
+Default value: 5
+Context: Vault
+Versions: unet3/unet3+
+
+== vault.port ==
+Sets the vault server port. This option is usually overwritten by the [[#port|port]] option set in the vault section, which should be set to "2010".
+
+Default value: None
+Context: Lobby, Game
+Versions: unet3/unet3+
+
+== vault.html.log ==
+When enabled, the vault-subsystem will keep an HTML logfile containing incoming and outgoing vault messages. Disabling it will increase server performance, but make debugging vault problems almost impossible. I recommend to enable it and set [[#vault.html.log.short|vault.html.log.short]] to 0.
+
+Default value: 1
+Context: Lobby, Game, Vault
+Versions: unet3/unet3+
+
+== vault.html.log.short ==
+If [[#vault.html.log|vault.html.log]] is enabled, this variable controls whether the vault log should be kept short by leaving out some details (which will save about 75% of the needed disk space and drastically increase server performance) or whether everything should be logged and the binaty part of the nodes should be dumped to disk.
+
+Default value: 1
+Context: Lobby, Game, Vault
+Versions: unet3/unet3+
+
+== vault.tmp.hacks.linkrules ==
+Workaround for non-working linking rules for Myst, Ahnonay and Kveer.
+
+Default value: 0
+Context: Vault
+Versions: unet3/unet3+
+
+== vault.wipe.msg ==
+Sets the content of the global KI message which will be created when a enw vault is initialized (this doesn't change anything for already existing vaults).
+
+Default value: "Shorah b'shehmtee, this Shard is running the Alcugs server software.
+Thanks for your support!
+Welcome to the new adventure, feel free to explore Er'cana or any other age. Be careful if you see new books, some explorers have found some Kortee'nea and other ancient technology in a secret room in Kirel DRC neighborhood, and they are starting to learn the art of writting."
+Context: All
+Versions: unet3/unet3+
+
+== vault.wipe.msg.title ==
+Sets the title of the global KI message which will be created when a enw vault is initialized (this doesn't change anything for already existing vaults).
+
+Default value:"Shorah b'shehmtee"
+Context: All
+Versions: unet3/unet3+
+
+== verbose_level ==
+Sets the logging/verbose level (you can also set it as parameter [-v n])
+Allowed values:
+3-> print all messages to the stdout (default)
+2-> print only informative and error messages
+1-> print only error messages
+0-> total silence, perfect for daemon mode
+
+Default value: 3
+Context: All
+Versions: All
+
+== website ==
+Sets the displayed website, when the user logs into your shard.
+
+Default value: None
+Context: All
+Versions: All
