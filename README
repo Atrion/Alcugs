@@ -1,4 +1,4 @@
-Alcugs Uru server project.
+Alcugs Uru server project. See http://alcugs.almlys.org for an archive of (not only) Alcugs-related information.
 
 
 Status
@@ -18,7 +18,7 @@ Congratulations, you have arrived here, now continue reading! :)
 Installation
 ------------
 
-The installation is described at http://alcugs.almlys.org/AlcugsInstall and in the INSTALL file.
+The installation is described in the INSTALL file.
 
 
 Configuring
@@ -58,7 +58,7 @@ If you are reading this, then is because it is not working.
 Is expected to have several problems. I'm sure that it compiles without
 problems on Debian Etch and Ubuntu where it is being developed.
 
-Please go to the forums at http://forum.almlys.org/ and ask
+Please go to the forums at http://forum.guildofwriters.org/ or http://forum.almlys.org/ and ask
 for help.
 
 

@@ -220,8 +220,30 @@ Part 6: Starting the servers
         ===== Starting the client =====
         Start up the client, and put your IP address into "Server Address:" box.
 
-        Now try logging in. If it does not work, please check the configuration file.
+        Now try logging in. If it does not work, please check the configuration file and have a look at the TROUBLESHOOTING documentation.
 
         Try to make a new player and start the game (please note that importing an offline savegame is not supported!). If you can't get to your initial avatar customization from here, but "Fetching Player" and "Finding Age" work fine, you are probably having issues with creating the game server.
 
-        If nothing helps, you can ask for help at http://forum.almlys.org/ . Please describe in detail what you did, what happened and what you expected to happen instead!
+        If nothing helps, you can ask for help at http://forum.guildofwriters.org/ or http://forum.almlys.org/ . Please describe in detail what you did, what happened and what you expected to happen instead!
+
+        ==== Getting a status page and UruVision ====
+        To get a page which lists players who are online, change the settings for the status files in the [tracking] section accordingly
+        <alcugs>
+        track.html = 1 # Enable standard online players html output (default 0)
+        track.html.path = "/var/www/status/status.html" # Set file for online players list
+        track.htmldbg = 1 # Enable online players html output with debug information (default 0)
+        track.htmldbg.path = "/var/www/status/statusdbg.html" # Set file for online players list with debug information
+        track.xml = 1 # Enable online players XML output for UruVision (default 0)
+        track.xml.path = "/var/www/status/status.xml" # Set file for XML players list
+        </alcugs>
+        You will of course have to make sure that the alcugs user can write to that directory, by doing as root
+        <bash>
+        mkdir /var/www/status
+        chown alcugs:alcugs /var/www/status
+        </bash>
+
+        There is also tool called UruVision which was created by Cyan and released under an open-source license which can run on your own machine and display the Shard status in a graphical way - it's really nice to see players linking :D
+
+        You can find a version of UruVision that is adapted to the output of the Alcugs tracking server in the "tools" directory of your Alcugs checkout. In order to use it on Windows, you will also need Python 2. It should work with version 2.2 and higher, just download the latest 2.x version from http://python.org/download/ . To start UruVision, create a new file in the directory you put UruVision to, called it "UruVision.bat" and enter
+         "C:\Program Files\Python25\python.exe" UruVision.py yourserver.org /directory/status.xml
+        You might have to adapt that to your system and your Shard: The path to the python executable will be different if you use another version of Python or have a non-English windows system. "yourshard.org" must be the IP or hostname of your Shard. To get the last argument, you have to know how to access the status.xml file using your browser. If the full URL is "http://yourshard.org/directory/status.xml" then the above example will be correct, if the status file is in another directory or has another name, you have to change it. Make sure you don't forget the space between the IP/hostname and the path!

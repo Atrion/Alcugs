@@ -4,7 +4,7 @@ These are some scripts and tools which are useful when running an Alcugs Shard:
   To make a user an admin, create it normally and then use phpmyadmin or something similar to change the access level to 0 (meaning full access).
 - control-servers.sh + control-config.sh: This script can be used to start and stop the Alcugs servers.
 - log-filter.sh: run it in the log-directory of one of the servers with "problems", "errors", "warnings" or "infos" as argument.
-  It will filter the logfiles accordingly. Also see http://alcugs.almlys.org/AlcugsTroubleshooting .
+  It will filter the logfiles accordingly. Also see the TROUBLESHOOTING file in the Alcugs repository root.
 - The subdirectories contain their own README file for the tool they contain.
 
 Generally, there should be no need to touch the scripts themselves. Everything which should be changed is in the config files. This way, you can automatically benefit from script upgrades by using symlinks.

@@ -1,8 +1,7 @@
 If you think that you have time to contribute, and you have any ideas, patches,
  new code, new features, etc..., then please:
 
-A) Contact with diafero using the forums located at:
- http://forum.almlys.org/
+A) Contact with diafero using the forums at http://forum.guildofwriters.org/
 
 OR
 
@@ -13,7 +12,7 @@ Any contributions, patches, will be added to the tree ASAP, and you will be
  added to the Authors list.
 
 Please note that any patches/bug-fixes to actual code will be licensed under
- the License used under the scope of that specific module (library, etc,..).
+ the license used under the scope of that specific module (library, etc,..).
 
 Please also note that all contributions (plugins, new modules, new libraries), must
- be Licensed under a GNU GPL compatible license. (LGPL, Public Domain, etc...).
+ be licensed under a GNU GPL compatible license. (LGPL, Public Domain, etc...).
