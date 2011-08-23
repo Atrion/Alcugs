@@ -31,7 +31,7 @@ The [base] section contains age-related files, like agenname.age, agename.fni an
 == Sum file bug ==
 When there are ages on the dataserver containing stuff in the [pages] section, there's a problem: The generated sum file contains these files without the dat/ prefix, so you can't start this client without the dataserver being enabled afterwards - UruExplorer will not accept the sum files anymore.
 
-The [[Offline KI]] contains sum files that are always valid for all ages shipped with POTS. So if you want to disable the dataserver on a client, you can then copy these sum files into your dat folder to get into the POTS ages. For other ages, just make a copy of any of these sum files and rename it to overwrite the other age's sum file.
+The Offline KI contains sum files that are always valid for all ages shipped with POTS. So if you want to disable the dataserver on a client, you can then copy these sum files into your dat folder to get into the POTS ages. For other ages, just make a copy of any of these sum files and rename it to overwrite the other age's sum file.
 
 == Adding welcome pages ==
 
@@ -73,4 +73,4 @@ This is the full directory tree of the dataserver:
      `-- sfx
          `-- (optional) All the sfx (.ogg) files from the manifest files in the .dat directory
 
-Usually, the first file in the [others] section of game_clients/drcExplorer/client.mfs should be UruExplorer.exe as that is what UruSetup is intended to launch. However, you can specify your own starter there, intercepting the startup process - for example, UruStarter is intended for this purpose.
+Usually, the first file in the [others] section of game_clients/drcExplorer/client.mfs should be UruExplorer.exe as that is what UruSetup is intended to launch. However, you can specify your own starter there, intercepting the startup process - for example, UruStarter is intended for this purpose. You can find it in the "tools" directly of the Alcugs repository.
