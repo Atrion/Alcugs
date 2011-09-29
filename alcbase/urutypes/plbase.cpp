@@ -64,6 +64,7 @@ namespace alc {
 			case plLoadAvatarMsg: return "plLoadAvatarMsg";
 			case plSubWorldMsg: return "plSubWorldMsg";
 			case pfMarkerMsg: return "pfMarkerMsg";
+			case plAvCoopMsg: return "plAvCoopMsg";
 			case plSetNetGroupIDMsg: return "plSetNetGroupIDMsg";
 			case plPseudoLinkEffectMsg: return "plPseudoLinkEffectMsg";
 			// vault types
@@ -114,6 +115,7 @@ namespace alc {
 			case plBulletMsg:
 			case plSubWorldMsg:
 			case pfMarkerMsg:
+			case plAvCoopMsg:
 			case plSetNetGroupIDMsg:
 			case plPseudoLinkEffectMsg:
 			case pfClimbingWallMsg:
