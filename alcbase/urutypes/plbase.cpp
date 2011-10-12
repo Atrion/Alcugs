@@ -63,6 +63,7 @@ namespace alc {
 			case plBulletMsg: return "plBulletMsg";
 			case plLoadAvatarMsg: return "plLoadAvatarMsg";
 			case plSubWorldMsg: return "plSubWorldMsg";
+			case plClimbMsg: return "plClimbMsg";
 			case pfMarkerMsg: return "pfMarkerMsg";
 			case plAvCoopMsg: return "plAvCoopMsg";
 			case plSetNetGroupIDMsg: return "plSetNetGroupIDMsg";
@@ -114,6 +115,7 @@ namespace alc {
 			case plMultistageModMsg:
 			case plBulletMsg:
 			case plSubWorldMsg:
+			case plClimbMsg:
 			case pfMarkerMsg:
 			case plAvCoopMsg:
 			case plSetNetGroupIDMsg:

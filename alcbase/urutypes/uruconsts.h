@@ -370,6 +370,7 @@ unsilenced 29
 #define plBulletMsg                0x03A1
 #define plLoadAvatarMsg            0x03AC
 #define plSubWorldMsg              0x03BA
+#define plClimbMsg                 0x044C
 #define pfMarkerMsg                0x0455
 #define plAvCoopMsg                0x0459
 #define plSetNetGroupIDMsg         0x045F
