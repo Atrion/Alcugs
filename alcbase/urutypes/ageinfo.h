@@ -29,46 +29,25 @@
 
 #include "alctypes.h"
 
-#include <vector>
-#include <map>
-
 
 namespace alc {
-	
-	class tConfigVal;
 
-	class tPageInfo
-	{
-	public:
-		typedef std::vector<uint32_t> tPlayerList;
-		
-		tPageInfo(tConfigVal *val, int row);
-		bool hasPlayer(uint32_t ki) const;
-		bool removePlayer(uint32_t ki); //!< \returns false if that players was not on the list, true if it got removed
-		
-		tString name;
-		uint16_t number;
-		bool conditionalLoad;
-		
-		// data for the messages (filled when we get a NetMsgPagingRom for this page)
-		uint32_t owner;
-		uint32_t pageId; // this and the next one are used when we send a NetMsgGroupOwner
-		uint16_t pageType;
-		tPlayerList players;
-	};
-	
 	class tAgeInfo
 	{
 	public:
-		tAgeInfo(tString dir, const tString &name, bool loadPages);
-		tPageInfo *getPage(uint32_t pageId);
-		bool validPage(uint32_t pageId) const;
+		tAgeInfo(const tString &dir, const tString &name);
+		virtual ~tAgeInfo() {}
 		
+		bool validPage(uint32_t pageId) const;
+		uint32_t getSeqPrefix() const { return seqPrefix; }
+		const tString &getName() const { return name; }
+	protected:
+		tAgeInfo(const tString &name);
+		/** Parses the age file, generic data, and returns the configuration for it. The caller is responsible for deleting it! */
+		class tConfig *parseFile(const tString &filename);
+	private:
 		uint32_t seqPrefix; // it's actually 3 Bytes
 		tString name;
-	
-		typedef std::map<uint16_t, tPageInfo> tPageList;
-		tPageList pages;
 	};
 
 } //End alc namespace

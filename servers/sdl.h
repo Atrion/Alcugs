@@ -39,14 +39,14 @@ namespace alc {
 
 	class tmLoadClone;
 	class tUnetGameServer;
-	class tAgeInfo;
+	class tAgePages;
 	
 	
 	typedef std::vector<tSdlStruct> tSdlStructList;
 	
 	class tAgeStateManager {
 	public:
-		tAgeStateManager(tUnetGameServer *net, tAgeInfo *age);
+		tAgeStateManager(tUnetGameServer *net, tAgePages *pages);
 		~tAgeStateManager(void);
 		void applyConfig(void);
 		
@@ -81,7 +81,7 @@ namespace alc {
 		tSdlList sdlStates;
 		tSdlStructList structs;
 		tUnetGameServer *net;
-		tAgeInfo *age;
+		tAgePages *agePages;
 		tLog log;
 		bool logDetailed, initialized;
 		tString ageStateFile;

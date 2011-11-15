@@ -40,11 +40,77 @@
 
 #include <cstring>
 #include <ctime>
+#include <algorithm>
 
 namespace alc {
 	
 	const char *alcNetName = "Game";
 	tUnetServerBase *alcServerInstance(void) { return new tUnetGameServer(); }
+	
+	tPage::tPage(const alc::tString& name, uint16_t number, bool alwaysLoaded)
+	: name(name), number(number), alwaysLoaded(alwaysLoaded)
+	{
+		DBG(5, "New Page %s: number %d, always loaded: %d\n", this->name.c_str(), this->number, alwaysLoaded);
+		
+		owner = 0;
+		pageId = pageType = 0;
+	}
+	
+	bool tPage::hasPlayer(uint32_t ki) const
+	{
+		return std::find(players.begin(), players.end(), ki) != players.end();
+	}
+	
+	bool tPage::removePlayer(uint32_t ki)
+	{
+		const tPlayerList::iterator it = std::find(players.begin(), players.end(), ki);
+		if (it == players.end()) return false;
+		players.erase(it);
+		return true;
+	}
+	
+	tAgePages::tAgePages(tString dir, const alc::tString& name) : tAgeInfo(name)
+	{
+		tConfig *cfg = parseFile(dir + "/" + name + ".age");
+		// get pages
+		const tConfigVal *pageVal = cfg->findVar("Page");
+		const int nPages = pageVal ? pageVal->getRows() : 0;
+		if (!nPages) throw txBase(_WHERE("an age without pages? This is not possible"));
+		for (int i = 0; i < nPages; ++i) {
+			const tString name = pageVal->getVal(0, i);
+			const tString number = pageVal->getVal(1, i);
+			const tString flags = pageVal->getVal(2, i);
+			if (!flags.isEmpty() && flags != "1")
+				throw txBase(_WHERE("if a conditional load flag is specified, it must be set to 1"));
+			const tPage pageInfo(name, number.asInt(), flags.isEmpty());
+			pages.insert(std::make_pair(pageInfo.number, pageInfo));
+		}
+		// done
+		delete cfg;
+	}
+	
+	tPage *tAgePages::getPage(uint32_t pageId, const tString &pageName)
+	{
+		const uint16_t number = alcPageIdToNumber(getSeqPrefix(), pageId);
+		if (number == 254 || number == 255)
+			throw txProtocolError(_WHERE("Requested invalid page %d", number));
+		DBG(9, "pageId 0x%08X => number %d, existing: %Zd\n", pageId, number, pages.count(number));
+		const tPageList::iterator it = pages.find(number);
+		if (it == pages.end()) {
+			return &(pages.insert(std::make_pair(number, tPage(pageName, number, false))).first->second); // pages that are always loaded must be listed in the age file
+		}
+		return &(it->second);
+	}
+	
+	bool tAgePages::isConditionallyLoaded(uint32_t pageId) const
+	{
+		const uint16_t number = alcPageIdToNumber(getSeqPrefix(), pageId);
+		if (number == 254 || number == 255) return false; // BuiltIn and Texture are always loaded, but not in the page list
+		const tPageList::const_iterator it = pages.find(number);
+		return (it == pages.end() ? true : !it->second.alwaysLoaded); // pages we do not yet know about are obviouly dynamically loaded
+	}
+
+
 
 	tUnetGameServer::tUnetGameServer(void) : tUnetLobbyServerBase(KGame)
 	{
@@ -60,8 +126,8 @@ namespace alc {
 		
 		// load age file and SDL Manager
 		resetStateWhenEmpty = false;
-		ageInfo = new tAgeInfo(cfg->getVar("age"), serverName, /*loadPages*/true);
-		ageState = new tAgeStateManager(this, ageInfo);
+		agePages = new tAgePages(cfg->getVar("age"), serverName);
+		ageState = new tAgeStateManager(this, agePages);
 		
 		// make sure we quit if noone comes
 		lastPlayerLeft = time(NULL);
@@ -73,7 +139,7 @@ namespace alc {
 
 	tUnetGameServer::~tUnetGameServer(void)
 	{
-		delete ageInfo;
+		delete agePages;
 		delete ageState;
 	}
 	
@@ -236,7 +302,7 @@ namespace alc {
 			sendKIMessage(text, u);
 		}
 		else if (text == "/!resetage") {
-			if (ageInfo->seqPrefix <= 99) { // Cyan age
+			if (agePages->getSeqPrefix() <= 99) { // Cyan age
 				sendKIMessage("You can not reset Cyan ages this way", u);
 			}
 			else if (!checkIfOnlyPlayer(u)) {
@@ -307,7 +373,7 @@ namespace alc {
 			}
 			
 			// make sure this player is on none of the pages' player lists
-			for (tAgeInfo::tPageList::iterator it = ageInfo->pages.begin(); it != ageInfo->pages.end(); ++it)
+			for (tAgePages::tPageList::iterator it = agePages->pages.begin(); it != agePages->pages.end(); ++it)
 				removePlayerFromPage(&it->second, u->ki);
 			
 			// this player is no longer joined
@@ -423,7 +489,7 @@ namespace alc {
 		return true;
 	}
 	
-	void tUnetGameServer::removePlayerFromPage(alc::tPageInfo* page, uint32_t ki)
+	void tUnetGameServer::removePlayerFromPage(alc::tPage* page, uint32_t ki)
 	{
 		bool removed = page->removePlayer(ki); // remove player from list of players who loaded that age
 		if (!removed) return; // player did not even load that age
@@ -437,7 +503,7 @@ namespace alc {
 				throw txUnet(_WHERE("Player %d is on list of players who loaded page %s, but not connected anymore", newOwner, page->name.c_str()));
 			}
 			page->owner = newOwner;
-			tmGroupOwner groupOwner(*session, page, true/*is owner*/);
+			tmGroupOwner groupOwner(*session, page->pageId, page->pageType, true/*is owner*/);
 			send(groupOwner);
 		}
 		else {
@@ -571,9 +637,7 @@ namespace alc {
 				// get the data out of the packet
 				tmPagingRoom pagingRoom(u, msg);
 				
-				tPageInfo *page = ageInfo->getPage(pagingRoom.pageId);
-				if (!page)
-					throw txProtocolError(_WHERE("Requested non-existing page %s (0x%08X)", pagingRoom.pageName.c_str(), pagingRoom.pageId));
+				tPage *page = agePages->getPage(pagingRoom.pageId, pagingRoom.pageName);
 				// fill in page information
 				if (!page->pageId) {
 					page->pageId = pagingRoom.pageId;
@@ -593,7 +657,7 @@ namespace alc {
 						isOwner = true;
 						page->owner = u->ki; // this player is the new owner
 					}
-					tmGroupOwner groupOwner(u, page, isOwner);
+					tmGroupOwner groupOwner(u, page->pageId, page->pageType, isOwner);
 					send(groupOwner);
 				}
 				return 1;

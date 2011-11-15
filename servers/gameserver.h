@@ -29,6 +29,9 @@
 
 #include <unetlobbyserverbase.h>
 #include <protocol/gamemsg.h>
+#include <urutypes/ageinfo.h>
+
+#include <map>
 
 namespace alc {
 
@@ -48,6 +51,37 @@ namespace alc {
 		}
 		
 		FORBID_CLASS_COPY(tGameData)
+	};
+	
+	class tPage
+	{
+	public:
+		typedef std::vector<uint32_t> tPlayerList;
+		
+		tPage(const tString &name, uint16_t number, bool alwaysLoaded);
+		bool hasPlayer(uint32_t ki) const;
+		bool removePlayer(uint32_t ki); //!< \returns false if that players was not on the list, true if it got removed
+		
+		const tString name;
+		const uint16_t number;
+		const bool alwaysLoaded;
+		
+		// data for the messages (filled when we get a NetMsgPagingRom for this page)
+		uint32_t owner;
+		uint32_t pageId; // this and the next one are used when we send a NetMsgGroupOwner
+		uint16_t pageType;
+		tPlayerList players;
+	};
+	
+	class tAgePages : public tAgeInfo
+	{
+	public:
+		tAgePages(tString dir, const tString &name);
+		tPage *getPage(uint32_t pageId, const tString &pageName); // returns the page for the given Id and name, if necessary creating it on-the-fly
+		bool isConditionallyLoaded(uint32_t pageId) const;
+	
+		typedef std::map<uint16_t, tPage> tPageList;
+		tPageList pages;
 	};
 
 	class tUnetGameServer : public tUnetLobbyServerBase {
@@ -85,14 +119,14 @@ namespace alc {
 		void fwdDirectedGameMsg(tmGameMessageDirected &msg);
 		void bcastMemberUpdate(tNetSession *u, bool isJoined);
 		
-		void removePlayerFromPage(tPageInfo *page, uint32_t ki);
+		void removePlayerFromPage(tPage *page, uint32_t ki);
 		bool checkIfOnlyPlayer(tNetSession *exclude);
 		
 		bool processGameMessage(tStreamedObject *msg, tNetSession *u, tUruObjectRef *receiver = NULL); //!< returns true if the message was processed and should not be broadcasted or forwarded
 		void processKICommand(const tString &text, tNetSession *u);
 		void sendKIMessage(const tString &text, tNetSession *u);
 	
-		tAgeInfo *ageInfo;
+		tAgePages *agePages;
 		tAgeStateManager *ageState;
 		bool resetStateWhenEmpty; //!< used by /!resetage
 		

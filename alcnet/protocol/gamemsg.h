@@ -33,7 +33,6 @@
 namespace alc {
 	
 	class tpLoadCloneMsg;
-	class tPageInfo;
 
 	
 	// Helper class for the member list messages
@@ -131,7 +130,7 @@ namespace alc {
 	
 	class tmGroupOwner : public tmNetMsg {
 	public:
-		tmGroupOwner(tNetSession *u, tPageInfo *page, bool isOwner);
+		tmGroupOwner(tNetSession *u, uint32_t pageId, uint16_t pageType, bool isOwner);
 		virtual void stream(tBBuf &t) const;
 		virtual tString additionalFields(tString dbg) const;
 		// format

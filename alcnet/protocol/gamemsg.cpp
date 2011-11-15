@@ -314,10 +314,10 @@ namespace alc {
 	}
 	
 	//// tmGroupOwner
-	tmGroupOwner::tmGroupOwner(tNetSession *u, tPageInfo *page, bool isOwner) : tmNetMsg(NetMsgGroupOwner, plNetAck, u)
+	tmGroupOwner::tmGroupOwner(tNetSession *u, uint32_t pageId, uint16_t pageType, bool isOwner) : tmNetMsg(NetMsgGroupOwner, plNetAck, u)
 	{
-		this->pageId = page->pageId;
-		this->pageType = page->pageType;
+		this->pageId = pageId;
+		this->pageType = pageType;
 		this->isOwner = isOwner;
 	}
 	

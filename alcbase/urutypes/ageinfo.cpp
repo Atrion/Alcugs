@@ -34,44 +34,21 @@
 #include "urubasetypes.h"
 #include "alcutil/alcparser.h"
 
-#include <algorithm>
-
 namespace alc {
-
-	tPageInfo::tPageInfo(tConfigVal *val, int row)
+	
+	tAgeInfo::tAgeInfo(const tString &dir, const tString &name) : name(name)
 	{
-		tString number = val->getVal(1, row), conditionalLoad = val->getVal(2, row);
-		name = val->getVal(0, row);
-		this->number = number.asInt();
-		if (conditionalLoad.isEmpty()) this->conditionalLoad = false;
-		else {
-			if (conditionalLoad != "1") throw txBase(_WHERE("if a conditional load value is specified, it must be set to 1"));
-			this->conditionalLoad = true;
-		}
-		DBG(9, "New Page %s: Number %d, conditionalLoad %d\n", this->name.c_str(), this->number, this->conditionalLoad);
-		
-		owner = 0;
-		pageId = pageType = 0;
+		delete parseFile(dir + "/" + name + ".age");
 	}
 	
-	bool tPageInfo::hasPlayer(uint32_t ki) const
-	{
-		return std::find(players.begin(), players.end(), ki) != players.end();
-	}
+	tAgeInfo::tAgeInfo(const tString &name) : name(name)
+	{}
 	
-	bool tPageInfo::removePlayer(uint32_t ki)
-	{
-		tPlayerList::iterator it = std::find(players.begin(), players.end(), ki);
-		if (it == players.end()) return false;
-		players.erase(it);
-		return true;
-	}
-	
-	tAgeInfo::tAgeInfo(tString dir, const tString &name, bool loadPages) : name(name)
+	tConfig *tAgeInfo::parseFile(const tString &filename)
 	{
 		// open and decrypt file
 		tFBuf ageFile;
-		ageFile.open((dir + "/" + name + ".age").c_str(), "r");
+		ageFile.open(filename.c_str(), "r");
 		tWDYSBuf ageContent;
 		ageContent.put(ageFile);
 		ageContent.decrypt(/*mustBeWDYS*/false);
@@ -87,34 +64,18 @@ namespace alc {
 		if (seqPrefix > 0x00FFFFFF && seqPrefix < 0xFFFFFFF0) // allow only 3 Bytes (but allow negative prefixes)
 			throw txUnexpectedData(_WHERE("A sequence prefix of %d (higher than 0x00FFFFFF) is not allowed)", seqPrefix));
 		DBG(9, "found sequence prefix %d for age %s\n", seqPrefix, name.c_str());
-		// get pages
-		if (loadPages) {
-			tConfigVal *pageVal = cfg->findVar("Page");
-			int nPages = pageVal ? pageVal->getRows() : 0;
-			if (!nPages) throw txBase(_WHERE("an age without pages? This is not possible"));
-			for (int i = 0; i < nPages; ++i) {
-				tPageInfo pageInfo(pageVal, i);
-				pages.insert(std::pair<uint32_t, tPageInfo>(pageInfo.number, pageInfo));
-			}
-		}
-		// done!
-		delete cfg;
-	}
-	
-	tPageInfo *tAgeInfo::getPage(uint32_t pageId)
-	{
-		uint16_t number = alcPageIdToNumber(seqPrefix, pageId);
-		DBG(9, "pageId 0x%08X => number %d, existing: %Zd\n", pageId, number, pages.count(number));
-		tPageList::iterator it = pages.find(number);
-		return (it == pages.end() ? NULL : &it->second);
+		return cfg;
 	}
 	
 	bool tAgeInfo::validPage(uint32_t pageId) const
 	{
-		uint16_t number = alcPageIdToNumber(seqPrefix, pageId);
-		DBG(9, "pageId 0x%08X => number %d, existing: %Zd\n", pageId, number, pages.count(number));
-		if (number == 254) return true; // BuiltIn page (accept because we can get SDL states for it)
-		return pages.count(number);
+		try {
+			alcPageIdToNumber(seqPrefix, pageId);
+			return true;
+		}
+		catch (const txBase &) {
+			return false;
+		}
 	}
 
 

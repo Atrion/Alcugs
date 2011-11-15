@@ -40,6 +40,13 @@ namespace wdys {
 
 namespace alc {
 
+uint16_t alcPageIdToNumber(uint32_t seqPrefix, uint32_t pageId)
+{
+	uint32_t number = pageId - (seqPrefix << 8) - 33;
+	if (number >= 512) throw txUnexpectedData(_WHERE("Invalid page number %d", number));
+	return number;
+}
+
 const char * alcGetLinkingRule(uint8_t rule)
 {
 	switch (rule) {

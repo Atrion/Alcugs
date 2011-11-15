@@ -43,7 +43,7 @@
 namespace alc {
 
 	//// tAgeStateManager
-	tAgeStateManager::tAgeStateManager(tUnetGameServer *net, tAgeInfo *age) : net(net), age(age), initialized(false)
+	tAgeStateManager::tAgeStateManager(tUnetGameServer *net, tAgePages *pages) : net(net), agePages(pages), initialized(false)
 	{}
 	
 	tAgeStateManager::~tAgeStateManager(void)
@@ -152,7 +152,7 @@ namespace alc {
 			file.get(obj);
 			tStreamedObject sdlStream;
 			file.get(sdlStream);
-			if (obj.hasCloneId || !age->validPage(obj.pageId)) {
+			if (obj.hasCloneId || !agePages->validPage(obj.pageId)) {
 				log.log("Not loading state for object %s with clone ID or on a page not belonging to this age\n", obj.str().c_str());
 				continue;
 			}
@@ -246,7 +246,7 @@ namespace alc {
 			sdl.print(&log);
 		}
 		// check if this state is allowed in this age
-		if (!sdl.obj.hasCloneId && !age->validPage(sdl.obj.pageId))
+		if (!sdl.obj.hasCloneId && !agePages->validPage(sdl.obj.pageId))
 			throw txProtocolError(_WHERE("Object %s is not in this age", sdl.obj.str().c_str()));
 		// check if state is already in list
 		tSdlList::iterator it = findSdlState(&sdl);
@@ -272,7 +272,7 @@ namespace alc {
 		if (type != plNull)
 			throw txProtocolError(_WHERE("Plasma object type of an SDL must be plNull"));
 		tSdlState sdl(this, data);
-		if (sdl.content.getName() != age->name) return; // ignore updates for other ages
+		if (sdl.content.getName() != agePages->getName()) return; // ignore updates for other ages
 		if (logDetailed) {
 			log.log("Got SDL Vault Message ");
 			sdl.print(&log);
@@ -314,9 +314,7 @@ namespace alc {
 				if (!found) continue; // it's not on the list, don't send it
 			}
 			else if (!it->obj.hasCloneId) { // objects with CloneID are ok
-				tPageInfo *info = age->getPage(it->obj.pageId);
-				if (!info && !age->validPage(it->obj.pageId)) throw txUnet(_WHERE("How did this invalid state get here: %s", it->obj.str().c_str()));
-				else if (info && info->conditionalLoad) continue; // don't send this one, it's on an optional page
+				if (agePages->isConditionallyLoaded(it->obj.pageId)) continue; // don't send this one, it's on an optional page
 			}
 			if (logDetailed) {
 				log.log("Sending SDL State to %s:\n", u->str().c_str());
@@ -359,7 +357,7 @@ namespace alc {
 			else { // it's a new clone
 				log.log("Adding Clone ");
 			}
-			log.log("[%s]\n", clone->clonedObj.str().c_str());
+			log.print("[%s]\n", clone->clonedObj.str().c_str());
 			it = clones.insert(clones.end(), clone); // save the message we got
 		}
 		else { // remove clone if it was in list
@@ -408,18 +406,18 @@ namespace alc {
 		}
 		if (sdlHook != sdlStates.end()) return sdlHook;
 		// ok, there is none, let's try to create it
-		uint16_t ageSDLVersion = findLatestStructVersion(age->name, false/*don't throw exception if no struct found*/);
+		uint16_t ageSDLVersion = findLatestStructVersion(agePages->getName(), false/*don't throw exception if no struct found*/);
 		if (!ageSDLVersion) // no way, nothing to be done
 			return sdlStates.end();
 		// first make up the UruObject
 		tUruObject obj;
-		obj.pageId = alcPageNumberToId(age->seqPrefix, 254); // BultIn page ID
+		obj.pageId = alcPageNumberToId(agePages->getSeqPrefix(), 254); // BultIn page ID
 		obj.pageType = 0x0008; // BultIn
 		obj.objType = 0x0001; // SceneObject
 		obj.objName = "AgeSDLHook";
 		// now create the SDL state
-		sdlHook = sdlStates.insert(sdlStates.end(), tSdlState(this, obj, age->name, ageSDLVersion, true/*init default*/));
-		log.log("Set up default AgeSDLHook\n");
+		sdlHook = sdlStates.insert(sdlStates.end(), tSdlState(this, obj, agePages->getName(), ageSDLVersion, true/*init default*/));
+		log.log("Set up default AgeSDLHook: %s\n", sdlHook->str().c_str());
 		return sdlHook;
 	}
 	
