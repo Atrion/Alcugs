@@ -298,7 +298,7 @@ namespace alc {
 			throw txProtocolError(_WHERE("NetMsgPagingRoom.n must be 1, but is %d", n));
 		pageId = t.get32();
 		pageType = t.get16();
-		t.get(pageName);
+		t.get(nodeName);
 		uint8_t pageFlag = t.get8();
 		if (pageFlag == 0x00 || pageFlag == 0x01) isPageOut = pageFlag;
 		else
@@ -308,7 +308,7 @@ namespace alc {
 	tString tmPagingRoom::additionalFields(tString dbg) const
 	{
 		dbg.nl();
-		dbg.printf(" Page ID: 0x%08X, Page Type: 0x%04X, Page Name: %s, Paged out: ", pageId, pageType, pageName.c_str());
+		dbg.printf(" Page ID: 0x%08X, Page Type: 0x%04X, Node Name: %s, Paged out: ", pageId, pageType, nodeName.c_str());
 		dbg.printBoolean(isPageOut);
 		return dbg;
 	}

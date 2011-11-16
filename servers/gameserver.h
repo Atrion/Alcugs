@@ -58,11 +58,11 @@ namespace alc {
 	public:
 		typedef std::vector<uint32_t> tPlayerList;
 		
-		tPage(const tString &name, uint16_t number, bool alwaysLoaded);
+		tPage(uint16_t number, bool alwaysLoaded);
 		bool hasPlayer(uint32_t ki) const;
 		bool removePlayer(uint32_t ki); //!< \returns false if that players was not on the list, true if it got removed
 		
-		const tString name;
+		// we do not store the name - the ages don't always use the same name for scene node and page
 		const uint16_t number;
 		const bool alwaysLoaded;
 		
@@ -77,7 +77,7 @@ namespace alc {
 	{
 	public:
 		tAgePages(tString dir, const tString &name);
-		tPage *getPage(uint32_t pageId, const tString &pageName); // returns the page for the given Id and name, if necessary creating it on-the-fly
+		tPage *getPage(uint32_t pageId); // returns the page for the given Id and name, if necessary creating it on-the-fly
 		bool isConditionallyLoaded(uint32_t pageId) const;
 	
 		typedef std::map<uint16_t, tPage> tPageList;

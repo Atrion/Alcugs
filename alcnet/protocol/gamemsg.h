@@ -124,7 +124,7 @@ namespace alc {
 		// format
 		uint32_t pageId;
 		uint16_t pageType;
-		tString pageName;
+		tString nodeName; // the name of the scene node
 		bool isPageOut;
 	};
 	

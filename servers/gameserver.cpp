@@ -47,10 +47,10 @@ namespace alc {
 	const char *alcNetName = "Game";
 	tUnetServerBase *alcServerInstance(void) { return new tUnetGameServer(); }
 	
-	tPage::tPage(const alc::tString& name, uint16_t number, bool alwaysLoaded)
-	: name(name), number(number), alwaysLoaded(alwaysLoaded)
+	tPage::tPage(uint16_t number, bool alwaysLoaded)
+	: number(number), alwaysLoaded(alwaysLoaded)
 	{
-		DBG(5, "New Page %s: number %d, always loaded: %d\n", this->name.c_str(), this->number, alwaysLoaded);
+		DBG(5, "New Page: number %d, always loaded: %d\n", this->number, alwaysLoaded);
 		
 		owner = 0;
 		pageId = pageType = 0;
@@ -77,19 +77,18 @@ namespace alc {
 		const int nPages = pageVal ? pageVal->getRows() : 0;
 		if (!nPages) throw txBase(_WHERE("an age without pages? This is not possible"));
 		for (int i = 0; i < nPages; ++i) {
-			const tString name = pageVal->getVal(0, i);
 			const tString number = pageVal->getVal(1, i);
 			const tString flags = pageVal->getVal(2, i);
 			if (!flags.isEmpty() && flags != "1")
 				throw txBase(_WHERE("if a conditional load flag is specified, it must be set to 1"));
-			const tPage pageInfo(name, number.asInt(), flags.isEmpty());
+			const tPage pageInfo(number.asInt(), flags.isEmpty());
 			pages.insert(std::make_pair(pageInfo.number, pageInfo));
 		}
 		// done
 		delete cfg;
 	}
 	
-	tPage *tAgePages::getPage(uint32_t pageId, const tString &pageName)
+	tPage *tAgePages::getPage(uint32_t pageId)
 	{
 		const uint16_t number = alcPageIdToNumber(getSeqPrefix(), pageId);
 		if (number == 254 || number == 255)
@@ -97,9 +96,11 @@ namespace alc {
 		DBG(9, "pageId 0x%08X => number %d, existing: %Zd\n", pageId, number, pages.count(number));
 		const tPageList::iterator it = pages.find(number);
 		if (it == pages.end()) {
-			return &(pages.insert(std::make_pair(number, tPage(pageName, number, false))).first->second); // pages that are always loaded must be listed in the age file
+			return &(pages.insert(std::make_pair(number, tPage(number, false))).first->second); // pages that are always loaded must be listed in the age file
 		}
-		return &(it->second);
+		else {
+			return &(it->second);
+		}
 	}
 	
 	bool tAgePages::isConditionallyLoaded(uint32_t pageId) const
@@ -500,7 +501,7 @@ namespace alc {
 			tNetSessionRef session = sessionByKi(newOwner);
 			if (!*session) {
 				// very strange, the player is on the list but not connected anymore?
-				throw txUnet(_WHERE("Player %d is on list of players who loaded page %s, but not connected anymore", newOwner, page->name.c_str()));
+				throw txUnet(_WHERE("Player %d is on list of players who loaded page %d, but not connected anymore", newOwner, page->number));
 			}
 			page->owner = newOwner;
 			tmGroupOwner groupOwner(*session, page->pageId, page->pageType, true/*is owner*/);
@@ -637,7 +638,8 @@ namespace alc {
 				// get the data out of the packet
 				tmPagingRoom pagingRoom(u, msg);
 				
-				tPage *page = agePages->getPage(pagingRoom.pageId, pagingRoom.pageName);
+				// get the actual page name
+				tPage *page = agePages->getPage(pagingRoom.pageId);
 				// fill in page information
 				if (!page->pageId) {
 					page->pageId = pagingRoom.pageId;
