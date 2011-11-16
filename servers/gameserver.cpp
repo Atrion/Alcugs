@@ -90,7 +90,7 @@ namespace alc {
 	
 	tPage *tAgePages::getPage(uint32_t pageId)
 	{
-		const uint16_t number = alcPageIdToNumber(getSeqPrefix(), pageId);
+		const uint16_t number = alcPageIdToNumber(getAgePrefix(), pageId);
 		if (number == 254 || number == 255)
 			throw txProtocolError(_WHERE("Requested invalid page %d", number));
 		DBG(9, "pageId 0x%08X => number %d, existing: %Zd\n", pageId, number, pages.count(number));
@@ -105,7 +105,7 @@ namespace alc {
 	
 	bool tAgePages::isConditionallyLoaded(uint32_t pageId) const
 	{
-		const uint16_t number = alcPageIdToNumber(getSeqPrefix(), pageId);
+		const uint16_t number = alcPageIdToNumber(getAgePrefix(), pageId);
 		if (number == 254 || number == 255) return false; // BuiltIn and Texture are always loaded, but not in the page list
 		const tPageList::const_iterator it = pages.find(number);
 		return (it == pages.end() ? true : !it->second.alwaysLoaded); // pages we do not yet know about are obviouly dynamically loaded
@@ -303,7 +303,7 @@ namespace alc {
 			sendKIMessage(text, u);
 		}
 		else if (text == "/!resetage") {
-			if (agePages->getSeqPrefix() <= 99) { // Cyan age
+			if (agePages->getAgePrefix() <= 99) { // Cyan age
 				sendKIMessage("You can not reset Cyan ages this way", u);
 			}
 			else if (!checkIfOnlyPlayer(u)) {

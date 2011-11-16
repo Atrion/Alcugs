@@ -39,8 +39,8 @@ namespace alc {
 		virtual ~tAgeInfo() {}
 		
 		bool validPage(uint32_t pageId) const;
-		uint32_t getSeqPrefix() const { return seqPrefix; }
-		const tString &getName() const { return name; }
+		uint32_t getAgePrefix() const { return seqPrefix; }
+		const tString &getAgeName() const { return name; }
 	protected:
 		tAgeInfo(const tString &name);
 		/** Parses the age file, generic data, and returns the configuration for it. The caller is responsible for deleting it! */

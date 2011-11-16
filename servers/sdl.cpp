@@ -272,7 +272,7 @@ namespace alc {
 		if (type != plNull)
 			throw txProtocolError(_WHERE("Plasma object type of an SDL must be plNull"));
 		tSdlState sdl(this, data);
-		if (sdl.content.getName() != agePages->getName()) return; // ignore updates for other ages
+		if (sdl.content.getName() != agePages->getAgeName()) return; // ignore updates for other ages
 		if (logDetailed) {
 			log.log("Got SDL Vault Message ");
 			sdl.print(&log);
@@ -406,17 +406,17 @@ namespace alc {
 		}
 		if (sdlHook != sdlStates.end()) return sdlHook;
 		// ok, there is none, let's try to create it
-		uint16_t ageSDLVersion = findLatestStructVersion(agePages->getName(), false/*don't throw exception if no struct found*/);
+		uint16_t ageSDLVersion = findLatestStructVersion(agePages->getAgeName(), false/*don't throw exception if no struct found*/);
 		if (!ageSDLVersion) // no way, nothing to be done
 			return sdlStates.end();
 		// first make up the UruObject
 		tUruObject obj;
-		obj.pageId = alcPageNumberToId(agePages->getSeqPrefix(), 254); // BultIn page ID
+		obj.pageId = alcPageNumberToId(agePages->getAgePrefix(), 254); // BultIn page ID
 		obj.pageType = 0x0008; // BultIn
 		obj.objType = 0x0001; // SceneObject
 		obj.objName = "AgeSDLHook";
 		// now create the SDL state
-		sdlHook = sdlStates.insert(sdlStates.end(), tSdlState(this, obj, agePages->getName(), ageSDLVersion, true/*init default*/));
+		sdlHook = sdlStates.insert(sdlStates.end(), tSdlState(this, obj, agePages->getAgeName(), ageSDLVersion, true/*init default*/));
 		log.log("Set up default AgeSDLHook: %s\n", sdlHook->str().c_str());
 		return sdlHook;
 	}

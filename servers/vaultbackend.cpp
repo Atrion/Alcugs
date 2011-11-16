@@ -1223,7 +1223,7 @@ namespace alc {
 	{
 		try {
 			tAgeInfo ageInfo = tAgeInfo(ageFileDir, age);
-			if (ageInfo.getSeqPrefix() > 0x00FFFFFF) return false; // obviously he wants to link to an age like GlobalMarkers
+			if (ageInfo.getAgePrefix() > 0x00FFFFFF) return false; // obviously he wants to link to an age like GlobalMarkers
 			bool isPrivate = (instanceMode == 1) ? isAgePrivate(age) : false;
 			if (isPrivate && ki > 0x0FFFFFFF) throw txBase(_WHERE("KI is too big!")); // ensure 1st bit of the 4 byte is 0 (see comment below)
 			
@@ -1243,9 +1243,9 @@ namespace alc {
 			buf.put32(isPrivate ? ki : 0);
 			
 			// 3 byte sequence prefix: First the one which usually is zero, to keep compatability
-			buf.put8(ageInfo.getSeqPrefix() >> 16);
+			buf.put8(ageInfo.getAgePrefix() >> 16);
 			// then the remaining two bytes
-			buf.put16(ageInfo.getSeqPrefix() & 0x0000FFFF);
+			buf.put16(ageInfo.getAgePrefix() & 0x0000FFFF);
 			
 			buf.rewind();
 			memcpy(guid, buf.read(8), 8);
