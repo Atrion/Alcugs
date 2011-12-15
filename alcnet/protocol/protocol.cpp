@@ -431,7 +431,7 @@ tString tmNetClientComm::str() const {
 #ifdef ENABLE_MSGLOG
 	str.printf("(Re)Negotation (bandwidth: %i bps, time: %s)",bandwidth,timestamp.str().c_str());
 #else
-	str.printf("(Re)Negotatio",u->str());
+	str.printf("(Re)Negotation");
 #endif
 	return str;
 }
