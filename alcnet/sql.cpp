@@ -157,21 +157,10 @@ bool tSQL::query(const tString &str, const tString &desc, bool throwOnError)
 	return false;
 }
 
-tString tSQL::escape(const char *str)
-{
-	const size_t maxLength = 1024;
-	char escaped_str[maxLength*2+1]; // according to mysql doc
-	if (connection == NULL) throw txDatabaseError(_WHERE("can't escape a string"));
-	if (strlen(str) > maxLength)
-		throw txDatabaseError(_WHERE("string \"%s\" too long (max. length: %Zi), use the other escape function", str, maxLength));
-	mysql_real_escape_string(connection, escaped_str, str, strlen(str));
-	return tString(escaped_str);
-}
-
 tString tSQL::escape(const tMBuf &buf)
 {
 	if (connection == NULL) throw txDatabaseError(_WHERE("can't escape a string"));
-	char *out = new char[2*buf.size()+1];
+	char *out = new char[2*buf.size()+1]; // according to mysql doc
 	mysql_real_escape_string(connection, out, reinterpret_cast<const char *>(buf.data()), buf.size());
 	tString res(out);
 	delete []out;
