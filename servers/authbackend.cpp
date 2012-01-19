@@ -326,6 +326,8 @@ namespace alc {
 
 	int tAuthBackend::authenticatePlayer(alc::tNetSession* u, const alc::tString& login, const alc::tString& challenge, const alc::tString& hash, uint8_t release, const alc::tString& ip, alc::tString* passwd, uint8_t* hexUid, uint8_t* accessLevel)
 	{
+		log.log("AUTH: player %s (IP: %s, game server %s):\n ", login.c_str(), ip.c_str(), u->str().c_str());
+		
 		unsigned int attempts, lastAttempt;
 		tString guid;
 		tQueryResult queryResult = queryPlayer(login, passwd, &guid, &attempts, &lastAttempt, accessLevel); // query password, access level and guid of this user
@@ -333,7 +335,6 @@ namespace alc {
 			queryResult = queryCgas(login, challenge, hash, queryResult == kCacheTooOld, passwd, &guid, accessLevel);
 		alcGetHexUid(hexUid, guid);
 		
-		log.log("AUTH: player %s (IP: %s, game server %s):\n ", login.c_str(), ip.c_str(), u->str().c_str());
 		if (queryResult == kNotFound || queryResult == kCacheTooOld) {
 			log.print("Player not found\n");
 			return AInvalidUser;
