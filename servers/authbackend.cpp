@@ -228,7 +228,7 @@ namespace alc {
 		size_t idx = response.find("\r\n\r\n");
 		if (idx != npos) {
 			tString msg = response.substring(idx+4);
-			if (!msg.isEmpty()) log.log("CGAS error message: %s\n", msg.c_str());
+			if (!msg.isEmpty()) log.log("CGAS error message: %s\n ", msg.c_str());
 		}
 		return kNotFound;
 	}
