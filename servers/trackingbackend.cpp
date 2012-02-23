@@ -116,6 +116,8 @@ namespace alc {
 		statusXML = (!var.isEmpty() && var.asInt());
 		statusXMLFile = cfg->getVar("track.xml.path");
 		if (statusXMLFile.isEmpty()) statusXML = false;
+		
+		statusStyleSheet = cfg->getVar("track.stylesheet");
 	}
 	
 	void tTrackingBackend::findServer(tmCustomFindServer &findServer)
@@ -532,7 +534,9 @@ namespace alc {
 		// header
 		fprintf(f, "<html><head><title>Shard Status</title>\n");
 		fprintf(f, "<meta http-equiv=\"refresh\" content=\"30;url=%s\" />\n", statusfile.filename().c_str());
-		fprintf(f, "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=ISO-8859-1\">");
+		fprintf(f, "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=ISO-8859-1\" />");
+		if (!statusStyleSheet.isEmpty())
+			fprintf(f, "<link rel=\"stylesheet\" href=\"%s\" type=\"text/css\" />", statusStyleSheet.c_str());
 		fprintf(f, "</head><body>\n");
 		fprintf(f, "<h2>Current Online Players</h2>\n");
 		if (dbg) {

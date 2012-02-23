@@ -109,6 +109,7 @@ namespace alc {
 		
 		bool statusHTML, statusHTMLdbg, statusXML;
 		tString statusHTMLFile, statusHTMLdbgFile, statusXMLFile;
+		tString statusStyleSheet;
 	};
 
 } //End alc namespace

@@ -533,6 +533,13 @@ Default value: None (must be set for the page to work)
 Context: Tracking
 Versions: unet3/unet3+
 
+== track.stylesheet ==
+Sets the path for a CSS file referenced by the status pages
+
+Default value: None
+Context: Tracking
+Versions: unet3+
+
 == track.xml ==
 Enables the UruVision compatible xml output.
 
