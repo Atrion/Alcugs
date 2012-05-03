@@ -5,7 +5,6 @@ set -e
 
 # configuration
 source ${0%/*}/control-config.sh # the file has to be in the same directory as the script
-export LD_LIBRARY_PATH="$bindir"
 
 # Borrowed from LSB init-functions
 # define the output string colors and text
@@ -15,23 +14,8 @@ RESULT_WARN="${ESC}[\061;33m${ESC}[70G[\040\040WARN\040\040]${ESC}[m"
 RESULT_FAIL="${ESC}[\061;31m${ESC}[70G[\040FAILED\040]${ESC}[m"
 
 getPid(){
-	mkdir "$basedir" -p
-	if [[ -f "$basedir/$1.pid"  ]]; then
-		PID=$(cat "$basedir/$1.pid")
-		# check if the process is still running with the same name
-		if [[ ( -n "$PID" ) && ( -n $(ps -p $PID -u "$(whoami)" | grep alcugs_$1) ) ]]; then
-			echo $PID
-		else
-			rm "$basedir/$1.pid"
-		fi
-	else
-		# check if we can find the PID without the file
-		PID=$(ps -u "$(whoami)" | grep alcugs_$1 | sed 's/^ *//' | cut -f 1 -d ' ') # sed is required for cases where ps prints a space before the PID
-		if [[ $PID ]]; then
-			echo $PID > $basedir/$1.pid
-			echo $PID
-		fi
-	fi
+	# check if we can find the process, running as the current user
+	pgrep -u "$(whoami)" "^alcugs_$1\$" || true # pgrep returns non-0 if the process was not found
 }
 
 if [[ "$(whoami)" == "root" ]]; then
@@ -50,12 +34,12 @@ case $1 in
 				"$bindir/alcugs_$prog" -D -c "$config"
 				RETVAL=$?
 				
-				if [[ ( -n $(getPid $prog)) && ( $RETVAL ) ]]; then
+				if [[ ( -n "$(getPid "$prog")" ) && ( $RETVAL ) ]]; then
 					echo -e $RESULT_OK
 				else
 					echo -e $RESULT_FAIL
 				fi
-				sleep $waittime
+				sleep "$waittime" # don't be too quick
 			else
 				echo -n " already running"
 				echo -e $RESULT_WARN
@@ -65,22 +49,21 @@ case $1 in
 	
 	stop)
 		for prog in $stop_servers; do
-			unset PID
 			PID=$(getPid $prog)
 			echo -n "Stopping $prog..."
-			if [[ -n $PID ]]; then
-				kill -INT $PID
-				sleep 0.5
+			if [[ "$PID" ]]; then
+				kill -INT "$PID"
+				sleep "$waittime"
 				i=0
-				while [[ $(getPid $prog) ]]; do
+				while [[ "$(getPid "$prog")" ]]; do
 					echo -n "."
-					if [[ $i -lt 2 ]]; then
-						kill -INT $PID
+					if [[ "$i" -lt 2 ]]; then
+						kill -INT "$PID"
 					else
-						kill -KILL $PID
+						kill -KILL "$PID"
 					fi
 					i=$[$i+1]
-					sleep $waittime
+					sleep "$waittime"
 				done
 				echo -e $RESULT_OK
 			else
@@ -104,16 +87,22 @@ case $1 in
 	;;
 	
 	restart)
-		$0 stop
-		$0 start
+		"$0" stop
+		"$0" start
 	;;
 	
 	check)
 		for prog in $start_servers; do
-			if [[ ! $(getPid $prog) ]]; then
+			if [[ ! "$(getPid "$prog")" ]]; then
 				echo "$prog not running!"
+				fail=yes
 			fi
 		done
+		# check if we found a failure
+		if [[ "$fail" ]]; then
+			echo "Found a problem, restarting servers"
+			"$0" restart
+		fi
 	;;
 	
 	*)
