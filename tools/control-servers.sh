@@ -6,12 +6,18 @@ set -e
 # configuration
 source ${0%/*}/control-config.sh # the file has to be in the same directory as the script
 
-# Borrowed from LSB init-functions
-# define the output string colors and text
-ESC=$(echo -en "\033")
-RESULT_OK="${ESC}[\061;32m${ESC}[70G[\040\040\040OK\040\040\040]${ESC}[m"
-RESULT_WARN="${ESC}[\061;33m${ESC}[70G[\040\040WARN\040\040]${ESC}[m"
-RESULT_FAIL="${ESC}[\061;31m${ESC}[70G[\040FAILED\040]${ESC}[m"
+if [[ "$NOCOLOR" ]]; then
+	RESULT_OK="  [\040\040\040OK\040\040\040]"
+	RESULT_WARN="  [\040\040WARN\040\040]"
+	RESULT_FAIL="  [\040FAILED\040]"
+else
+	# Borrowed from LSB init-functions
+	# define the output string colors and text
+	ESC=$(echo -en "\033")
+	RESULT_OK="${ESC}[\061;32m${ESC}[70G[\040\040\040OK\040\040\040]${ESC}[m"
+	RESULT_WARN="${ESC}[\061;33m${ESC}[70G[\040\040WARN\040\040]${ESC}[m"
+	RESULT_FAIL="${ESC}[\061;31m${ESC}[70G[\040FAILED\040]${ESC}[m"
+fi
 
 getPid(){
 	# check if we can find the process, running as the current user
