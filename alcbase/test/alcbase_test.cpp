@@ -569,6 +569,15 @@ void alctypes_part4() {
 	assert(part1.endsWith("World") == true);
 	assert(part1.startsWith("Hllo") == false);
 	assert(part1.endsWith("Wrld") == false);
+	
+	// toInt
+	assert(tString("3333").asInt() == 3333);
+	assert(tString("-3333").asInt() == -3333);
+	assert(tString("hallo").asInt() == 0);
+	assert(tString("hallo22").asInt() == 0);
+	assert(tString("22hallo22").asInt() == 22); // no, I don't like this, but it's how atoi behaves
+	assert(tString("22hallo").asInt() == 22);
+	assert(tString("").asInt() == 0);
 }
 
 void alctypes_part5() {

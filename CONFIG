@@ -344,6 +344,13 @@ Default value: 5
 Context: All
 Versions: unet3+
 
+== log.rotation_size ==
+Defines how large a logfile may become before it is auto-rotaed. The size is given in kilobytes.
+
+Default value: 2048
+Context: All
+Versions: unet3+
+
 == net.down ==
 Specifies your internet connection downstream in bits per second. If the deprecated "bandwidth" value is set and "net.down" is not, bandwidth will be used (in bit/s, too!).
 

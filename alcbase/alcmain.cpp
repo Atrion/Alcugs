@@ -125,6 +125,14 @@ void tAlcMain::applyConfig() {
 	}
 	logCfg.n_files2rotate = var.asInt();
 	
+	var=cfg.getVar("log.rotation_size","global");
+	if(var.isEmpty()) {
+		logCfg.rotate_size = 2*1024*1024;
+	}
+	else {
+		logCfg.rotate_size = var.asInt()*1024;
+	}
+	
 	var=cfg.getVar("log.enabled","global");
 	if(var.isEmpty()) {
 		var="1";
