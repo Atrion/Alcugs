@@ -177,7 +177,7 @@ void tNetSession::send(const tmBase &msg, tNetTime delay) {
 		return;
 	}
 	if (!(flags & UNetAckReply))
-		net->log->log("<SND> %s %s\n",str().c_str(),msg.str().c_str());
+		net->log->log("%s <SND> %s\n",str().c_str(),msg.str().c_str());
 	tMBuf buf;
 	size_t csize,psize,hsize,pkt_sz;
 	unsigned int n_pkts;
@@ -421,7 +421,7 @@ void tNetSession::processIncomingMsg(void * buf,size_t size) {
 	// process negotation (will always require an ack)
 	if(msg->bhflags & UNetNegotiation) {
 		tmNetClientComm comm(this, msg);
-		net->log->log("<RCV> %s [%d] %s",str().c_str(),msg->sn(),comm.str().c_str());
+		net->log->log("%s <RCV> [%d] %s",str().c_str(),msg->sn(),comm.str().c_str());
 		// check what to do
 		if (getState() >= Terminating) { // we do not accept negos anymore, just drop it
 			net->log->print(" (dropped)\n");
