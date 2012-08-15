@@ -30,7 +30,7 @@
 
 #include <alcmain.h>
 #include <alcexception.h>
-
+#include <unistd.h>
 #include <iostream>
 
 using namespace alc;

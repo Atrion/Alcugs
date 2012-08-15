@@ -39,6 +39,7 @@
 
 #include <iostream>
 #include <sys/stat.h>
+#include <unistd.h>
 
 namespace alc {
 

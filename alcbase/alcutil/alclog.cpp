@@ -40,6 +40,7 @@
 #include <cstdarg>
 #include <sys/stat.h>
 #include <inttypes.h>
+#include <unistd.h>
 
 static const int lineBufferSize = 1024;
 static const int fullBufferSize = 16*1024;
