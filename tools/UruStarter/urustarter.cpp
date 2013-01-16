@@ -252,8 +252,11 @@ int main(int argc, char **argv)
 		// do the widescreen patch - so, first load our settings
 		{
 			QSettings settings("urustarter.ini", QSettings::IniFormat);
-			int width = settings.value("width").toInt();
-			int height = settings.value("height").toInt();
+			QRect screenSize = QDesktopWidget().screenGeometry(display);
+			QString widthStr = settings.value("width").toString();
+			int width = widthStr == "auto" ? screenSize.width() : widthStr.toInt();
+			QString heightStr = settings.value("height").toString();
+			int height = heightStr == "auto" ? screenSize.height() : heightStr.toInt();
 			int colourDepth = settings.value("colourDepth").toInt();
 			if (colourDepth != 0 && colourDepth != 16 && colourDepth != 32) {
 				log << "Invalid colour depth: must be 16 or 32\n";
