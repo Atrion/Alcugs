@@ -39,7 +39,7 @@
 namespace alc {
 
 // string/character not found
-const size_t npos = -1;
+const size_t npos = static_cast<size_t>(-1);
 
 //Forward
 class tBBuf;
@@ -111,8 +111,8 @@ public:
 	void operator++() { this->seek(+1); }
 	void operator--(int) { this->seek(-1); }
 	void operator--() { this->seek(-1); }
-	void operator+=(size_t n) { this->seek(+n); }
-	void operator-=(size_t n) { this->seek(-n); }
+	void operator+=(ssize_t n) { this->seek(+n); }
+	void operator-=(ssize_t n) { this->seek(-n); }
 	
 	// put and get functions
 	//NOTE: I have already thought about overloading a "put(U16 val)", and I don't want
@@ -195,7 +195,7 @@ protected:
 	//! assignment
 	void copy(const tMBuf &t);
 	//! comparison
-	int8_t compare(const tMBuf &t) const;
+	int compare(const tMBuf &t) const;
 	//! helper for tString::c_str - use only if msize is at least 1!
 	void addNullTerminator(void) const;
 private:
@@ -382,8 +382,8 @@ protected:
 	explicit tString(size_t size) : tMBuf(size) {}
 private:
 	//! comparison
-	int8_t compare(const tString &t) const { return tMBuf::compare(t); }
-	int8_t compare(const char * str) const;
+	int compare(const tString &t) const { return tMBuf::compare(t); }
+	int compare(const char * str) const;
 };
 
 inline tString operator+(const tString & str1, const tString & str2) {
@@ -437,7 +437,7 @@ public:
 	
 	// convenience functions
 	void setToNow();
-	double asDouble() const { return seconds + (microseconds / 1000000.0); }
+	double asDouble() const { return static_cast<double>(seconds) + (static_cast<double>(microseconds) / 1000000.0); }
 	tString str(bool relative = false) const;
 	bool isNull() const { return seconds == 0 && microseconds == 0; }
 	

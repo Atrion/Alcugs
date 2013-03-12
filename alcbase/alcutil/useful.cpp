@@ -49,7 +49,7 @@ tString alcConsoleAsk() {
 	char what[501];
 	fflush(0);
 	if (!fgets(what,500,stdin)) throw txReadErr(_WHERE("Error requesting user input"));
-	int str_len=strlen(what);
+	size_t str_len=strlen(what);
 	if(what[str_len-1]=='\n') {
 		what[str_len-1]='\0';
 	}
@@ -62,8 +62,8 @@ tString alcConsoleAsk() {
 bool alcGetLoginInfo(tString argv,tString * username,tString * hostname,uint16_t *port)
 {
 	if (username) { // don't look for username if its not requested
-		int at = argv.find('@');
-		if (at >= 0) {
+		size_t at = argv.find('@');
+		if (at != npos) {
 			*username = argv.substring(0, at);
 			argv = argv.substring(at+1);
 		}
@@ -72,8 +72,8 @@ bool alcGetLoginInfo(tString argv,tString * username,tString * hostname,uint16_t
 	}
 
 	// now look for host and port
-	int colon = argv.find(':', /*reverse*/true);
-	if (colon >= 0) {
+	size_t colon = argv.find(':', /*reverse*/true);
+	if (colon != npos) {
 		*hostname = argv.substring(0, colon);
 		argv = argv.substring(colon+1);
 		*port = argv.asInt();

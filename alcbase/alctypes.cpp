@@ -268,8 +268,8 @@ void tMBuf::clear() {
 		buf = NULL;
 	}
 }
-int8_t tMBuf::compare(const tMBuf &t) const {
-	DBG(9,"tBBuf::compare()\n");
+int tMBuf::compare(const tMBuf &t) const {
+	DBG(9,"tMBuf::compare()\n");
 	size_t s1 = size(), s2 = t.size();
 	if (!s1 || !s2) {
 		// needs special treatment as buf might be NULL
@@ -277,7 +277,7 @@ int8_t tMBuf::compare(const tMBuf &t) const {
 		else if (s1) return 1; // we empty
 		else return -1; // the other one empty
 	}
-	int8_t out = memcmp(buf->buf(), t.buf->buf(), std::min(s1, s2));
+	int out = memcmp(buf->buf(), t.buf->buf(), std::min(s1, s2));
 	if (out != 0 || s1 == s2) return out;
 	return (s1 < s2) ? -1 : 1;
 }
@@ -478,7 +478,7 @@ void tString::stream(tBBuf &t) const
 	t.put16(size());
 	tMBuf::stream(t); // just puts the bytes into the buffer
 }
-int8_t tString::compare(const char * str) const {
+int tString::compare(const char * str) const {
 	size_t s1 = size(), s2 = strlen(str);
 	if (!s1 || !s2) {
 		// needs special treatment as buf might be NULL
@@ -486,7 +486,7 @@ int8_t tString::compare(const char * str) const {
 		else if (s1) return 1; // we empty
 		else return -1; // the other one empty
 	}
-	int8_t out = memcmp(data(), str, std::min(s1, s2));
+	int out = memcmp(data(), str, std::min(s1, s2));
 	if (out != 0 || s1 == s2) return out;
 	return (s1 < s2) ? -1 : 1;
 }
@@ -587,12 +587,14 @@ tString tString::substring(size_t start,size_t len) const {
 	return shot;
 }
 bool tString::startsWith(const char * pat) const {
+	DBG(9,"this=%s\n", c_str());
 	size_t len = strlen(pat);
 	if (len == 0) return true; // substring() treats a 0 length special
 	if (len > size()) return false;
 	return(substring(0,len)==pat);
 }
 bool tString::endsWith(const char * pat) const {
+	DBG(9,"this=%s\n", c_str());
 	size_t len = strlen(pat);
 	if (len == 0) return true; // substring() treats a 0 length special
 	if (len > size()) return false;

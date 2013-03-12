@@ -396,9 +396,9 @@ void alctypes_part2() {
 	b1.put32(5);
 	const char * a="Hello";
 	b1.write(a,strlen(a));
-	char md5hash[16]={0x78, 0x86, 0x70, 0xf9, 0x99, 0xaa, 0x0b, 0x0c,
+	uint8_t md5hash[16]={0x78, 0x86, 0x70, 0xf9, 0x99, 0xaa, 0x0b, 0x0c,
 			  0xaf, 0x77, 0x89, 0x88, 0xbe, 0xfb, 0xe3, 0x1f};
-	char WDYS[24]={'w', 'h', 'a', 't', 'd', 'o', 'y', 'o', 'u', 's', 'e', 'e',
+	uint8_t WDYS[24]={'w', 'h', 'a', 't', 'd', 'o', 'y', 'o', 'u', 's', 'e', 'e',
 		       0x09, 0x00, 0x00, 0x00, 0xaf, 0x1a, 0x9b, 0xd1, 0xe9, 0xf2, 0x6b, 0x5b}; // the remaining 8 bytes are OS-dependent
 
 	tFBuf f1,f2;
@@ -532,10 +532,14 @@ void alctypes_part4() {
 	assert(tString("a") <= "zz");
 	assert(tString("a") <= "a");
 	assert(!(tString("a") > "z"));
-	assert(tString("zz") > "a");
-	assert(tString("z") >= "aa");
+	assert(tString("zz") > "aa");
+	assert(tString("aaa") >= "aa");
+	assert(tString("aa") >= "aa");
 	assert(tString("a") > "");
 	assert(tString("") < tString("a"));
+	assert(tString("Hell") == "Hell");
+	assert(tString("Hella") != tString("Hlloa"));
+	assert(tString("Hella") != "Hlloa");
 	
 	// isEmpty
 	tString emp;
