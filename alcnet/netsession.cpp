@@ -819,9 +819,9 @@ tNetTimeBoolPair tNetSession::processSendQueues()
 			* other servers dropping in that time. So do as many resends as are necessary to wait some seconds:
 			* n*(n+1)/2*timeout = waittime  <=>  n^2 + n - 2*waittime/timeout = 0  <=>  n = -0.5 + sqrt(-0.25 + 2*waittime/timeout)
 			* Also, don't wait more than conn_timeout. */
-			const tNetTime minWaitTime = std::min(conn_timeout, 5.0);
+			const tNetTime minWaitTime = std::min(conn_timeout, 3.0);
 			const double numResends = sqrt(2.0*minWaitTime/msg_timeout - 0.25) - 0.5;
-			const unsigned int resendLimit = std::max(3u, static_cast<unsigned int>(ceil(numResends))); // always round up, and give it at least 3 chances
+			const unsigned int resendLimit = std::max(5u, static_cast<unsigned int>(ceil(numResends))); // always round up, and give it at least 5 chances
 			
 			// urgent packets
 			tNetQeue<tUnetUruMsg>::iterator it = sndq.begin();
