@@ -284,7 +284,7 @@ void tLog::dumpbuf(const void * bufv, size_t n, size_t e, uint8_t how) const {
 	unsigned int i=0,j=0,k=0;
 
 	if(n>2048) {
-		this->print("MESSAGE of %Zi bytes TOO BIG TO BE DUMPED!! cutting it\n",n);
+		this->print("MESSAGE of %zi bytes TOO BIG TO BE DUMPED!! cutting it\n",n);
 		n=2048;
 	}
 	
@@ -365,7 +365,7 @@ void tLog::dumpbuf(const void * bufv, size_t n, size_t e, uint8_t how) const {
 			}
 			if(how==7) {
 				if((n-j)<0x10) {
-					for(k=k; k<=(((n/0x10)+1)*0x10); k++) {
+					for(; k<=(((n/0x10)+1)*0x10); k++) {
 						this->print(" ");
 					}
 				} else {

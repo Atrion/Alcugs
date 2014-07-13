@@ -88,9 +88,13 @@ bool alcGetLoginInfo(tString argv,tString * username,tString * hostname,uint16_t
  NOTE: I think that setlocale is going to be the way used in the future. The user will need to install
 	and set the prefered locales.
 */
-bool alcIsAlpha(char c) {
-	return index("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZáàâä"
-		"éèêëíìîïóòôöúùûüçÇñÑß", c) != NULL; //<- Some characters are not visible on UTF systems, or under other codifications, so you may see garbage
+bool alcIsAlpha(char ch) {
+	unsigned char c = ch; // just to be sure our comparison works...
+	if (c >= 'a' && c <= 'z') return true;
+	if (c >= 'A' && c <= 'Z') return true;
+	// additional codes which are characters both in ISO-8859-1 and ISO-8859-15
+	if (c >= 192 /* && c <= 255 */ && c != 215 && c != 247) return true;
+	return false;
 }
 
 void setCloseOnExec(int fd)

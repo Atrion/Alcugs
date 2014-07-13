@@ -171,7 +171,6 @@ public:
 	
 	typedef std::vector<tUnetAck> tAckList;
 	tAckList acks;
-	FORBID_CLASS_COPY(tmNetAck)
 };
 
 class tmNetMsg :public tmBase {

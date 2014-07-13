@@ -134,11 +134,11 @@ namespace alc {
 			size_t n = sdlVar->size;
 			if (!n) // a var with dynamic size
 				n = t.get32();
-			DBG(7, "Reading %Zd values for %s\n", n, sdlVar->name.c_str());
+			DBG(7, "Reading %zd values for %s\n", n, sdlVar->name.c_str());
 			if (sdlVar->type == DStruct) {
 				// it seems for structs the number of structs to be parsed is saved again before the first struct
 				uint8_t num = t.get8();
-				if (num != n) throw txProtocolError(_WHERE("Unexpected number of structs to be parsed - expected %Zd, got %d", n, num));
+				if (num != n) throw txProtocolError(_WHERE("Unexpected number of structs to be parsed - expected %zd, got %d", n, num));
 			}
 			for (size_t i = 0; i < n; ++i) {
 				tElementList::iterator it = elements.insert(elements.end(), tElement());
@@ -227,7 +227,7 @@ namespace alc {
 			// we have to write the value
 			if (!sdlVar->size) t.put32(elements.size());
 			else if (elements.size() != sdlVar->size)
-				throw txProtocolError(_WHERE("Element count mismatch, must be %Zd, is %Zd", sdlVar->size, elements.size()));
+				throw txProtocolError(_WHERE("Element count mismatch, must be %zd, is %zd", sdlVar->size, elements.size()));
 			if (sdlVar->type == DStruct) // for some reason, this needs the size again
 				t.put8(elements.size());
 			for (tElementList::const_iterator it = elements.begin(); it != elements.end(); ++it) {
@@ -286,7 +286,7 @@ namespace alc {
 	{
 		char indent[] = "                        ";
 		if (indentSize < strlen(indent)) indent[indentSize] = 0; // let the string end there
-		log->print("%s%s[%Zd] (", indent, sdlVar->name.c_str(), elements.size());
+		log->print("%s%s[%zd] (", indent, sdlVar->name.c_str(), elements.size());
 		if (str.size()) log->print("str: %s, ", str.c_str());
 		log->print("flags: 0x%02X) = ", flags);
 		if (flags & 0x08) {
@@ -440,7 +440,7 @@ namespace alc {
 		bool writeIndex = incompleteVars;
 		if (vars.size() != sdlStruct->nVar) {
 			if (!incompleteVars || vars.size() > sdlStruct->nVar)
-				throw txProtocolError(_WHERE("Size mismatch: %Zd vars to be stored, %d vars in struct, incomplete: %d", vars.size(), sdlStruct->nVar, incompleteVars));
+				throw txProtocolError(_WHERE("Size mismatch: %zd vars to be stored, %d vars in struct, incomplete: %d", vars.size(), sdlStruct->nVar, incompleteVars));
 		}
 		else
 			writeIndex = false;
@@ -456,7 +456,7 @@ namespace alc {
 		writeIndex = incompleteStructs;
 		if (structs.size() != sdlStruct->nStruct) {
 			if (!incompleteStructs || structs.size() > sdlStruct->nStruct)
-				throw txProtocolError(_WHERE("Size mismatch: %Zd structs to be stored, %d structs in struct, incomplete: %d", structs.size(), sdlStruct->nStruct, incompleteStructs));
+				throw txProtocolError(_WHERE("Size mismatch: %zd structs to be stored, %d structs in struct, incomplete: %d", structs.size(), sdlStruct->nStruct, incompleteStructs));
 		}
 		else
 			writeIndex = false;
@@ -500,11 +500,11 @@ namespace alc {
 		
 		DBG(8, "Updating %s.%d\n", sdlStruct->name.c_str(), sdlStruct->version);
 		// first merge the vars
-		DBG(8, "Merging %Zi current with %Zi new vars\n", vars.size(), newState->vars.size());
+		DBG(8, "Merging %zi current with %zi new vars\n", vars.size(), newState->vars.size());
 		mergeData(&vars, &newState->vars);
 		
 		// then the structs (if we have indexed sub-structs here, they are not recursively merged but overwritten as I see no way to decide which structs to merge if their number is dynamic and old and new number don't match)
-		DBG(8, "Merging %Zi current with %Zi new structs\n", structs.size(), newState->structs.size());
+		DBG(8, "Merging %zi current with %zi new structs\n", structs.size(), newState->structs.size());
 		mergeData(&structs, &newState->structs);
 	}
 	
@@ -598,7 +598,7 @@ namespace alc {
 		t.get(content);
 		
 		if (!t.eof()) {
-			throw txProtocolError(_WHERE("The SDL struct is too long (%Zd Bytes remaining after parsing)", t.remaining()));
+			throw txProtocolError(_WHERE("The SDL struct is too long (%zd Bytes remaining after parsing)", t.remaining()));
 		}
 	}
 	

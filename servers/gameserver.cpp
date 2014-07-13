@@ -93,7 +93,7 @@ namespace alc {
 		const uint16_t number = alcPageIdToNumber(getAgePrefix(), pageId);
 		if (number == 254 || number == 255)
 			throw txProtocolError(_WHERE("Requested invalid page %d", number));
-		DBG(9, "pageId 0x%08X => number %d, existing: %Zd\n", pageId, number, pages.count(number));
+		DBG(9, "pageId 0x%08X => number %d, existing: %zd\n", pageId, number, pages.count(number));
 		const tPageList::iterator it = pages.find(number);
 		if (it == pages.end()) {
 			return &(pages.insert(std::make_pair(number, tPage(number, false))).first->second); // pages that are always loaded must be listed in the age file

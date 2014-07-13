@@ -58,7 +58,7 @@ tNetSession *tNetSessionMgr::searchAndCreate(uint32_t ip, uint16_t port, bool cl
 	}
 	// not found, create and add
 	if (max != 0 && count >= max) // too many connections, ouch
-		throw txToMCons(_WHERE("Too many connections (already having the maximum of %Zi)",max));
+		throw txToMCons(_WHERE("Too many connections (already having the maximum of %zi)",max));
 	// find a place for us
 	size_t sid = findFreeSlot();
 	table[sid] = new tNetSession(net,ip,port,sid,client,validation);
@@ -72,7 +72,7 @@ size_t tNetSessionMgr::findFreeSlot(void)
 	}
 	assert(size == count); // when we get here (i.e. there's no free slot), size and count must be the same
 	// we have to resize the table
-	DBG(5, "growing to %Zd\n", size+1);
+	DBG(5, "growing to %zd\n", size+1);
 	tNetSession **ntable=static_cast<tNetSession **>(realloc(table,sizeof(tNetSession*) * (size+1)));
 	if(ntable==NULL) throw txNoMem(_WHERE("OOM"));
 	table=ntable;
@@ -105,7 +105,7 @@ void tNetSessionMgr::destroy(tNetSession *u) {
 	while (pos > 0 && table[pos-1] == NULL) --pos; // set pos to the last session that's still NULL
 	// now we can shrink the table to size pos
 	assert(count <= pos);
-	DBG(5, "shrinking to %Zd\n", pos);
+	DBG(5, "shrinking to %zd\n", pos);
 	table=static_cast<tNetSession **>(realloc(table,sizeof(tNetSession*) * pos));
 	if (pos > 0 && table==NULL) throw txNoMem(_WHERE("NoMem"));
 	size=pos;

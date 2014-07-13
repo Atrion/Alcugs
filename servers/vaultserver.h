@@ -43,8 +43,6 @@ namespace alc {
 		bool isValidAvatarName(const tString &avatar);
 	
 		tVaultBackend vaultBackend;
-		
-		bool vaultLogShort;
 	};
 	
 } //End alc namespace

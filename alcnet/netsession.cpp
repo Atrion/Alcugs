@@ -96,7 +96,7 @@ tNetSession::tNetSession(alc::tUnet* net, uint32_t ip, uint16_t port, uint32_t s
 	else resetMsgCounters();
 }
 tNetSession::~tNetSession() {
-	DBG(5,"~tNetSession() (sndq: %Zd messages left)\n", sndq.size());
+	DBG(5,"~tNetSession() (sndq: %zd messages left)\n", sndq.size());
 	delete data;
 	delete rcv;
 }
@@ -185,7 +185,7 @@ void tNetSession::send(const tmBase &msg, tNetTime delay) {
 	buf.put(msg);
 	psize=buf.size();
 	buf.rewind();
-	DBG(7,"Ok, I'm going to send a packet of %Zi bytes, for peer %i, with flags %02X\n",psize,sid,flags);
+	DBG(7,"Ok, I'm going to send a packet of %zi bytes, for peer %i, with flags %02X\n",psize,sid,flags);
 
 
 	if((flags & UNetNegotiation) && (flags & UNetAckReply))
@@ -208,7 +208,7 @@ void tNetSession::send(const tmBase &msg, tNetTime delay) {
 	pkt_sz=maxPacketSz - hsize; //get maxium message size
 	n_pkts=(psize-1)/pkt_sz; //get number of fragments (0 means everything is sent in one packet, which must be the case if psize == pkt_sz)
 	if(n_pkts>=256)
-		throw txTooBig(_WHERE("%s packet of %Zi bytes doesn't fit inside an Uru message\n",str().c_str(),psize));
+		throw txTooBig(_WHERE("%s packet of %zi bytes doesn't fit inside an Uru message\n",str().c_str(),psize));
 	if (n_pkts > 0 && ((flags & UNetNegotiation) || (flags & UNetAckReply)))
 		throw txProtocolError(_WHERE("Nego and ack packets must not be fragmented!"));
 	
@@ -287,7 +287,7 @@ void tNetSession::rawsend(tUnetUruMsg *msg)
 	buf=const_cast<uint8_t *>(mbuf->data()); // yes, we are writing directly into the tMBuf buffer... this saves us from copying everything
 
 	if(msg->val==2) {
-		DBG(8,"Encoding validation 2 packet of %Zi bytes...\n",msize);
+		DBG(8,"Encoding validation 2 packet of %zi bytes...\n",msize);
 		buf2=new uint8_t[msize];
 		alcEncodePacket(buf2,buf,msize);
 		buf=buf2; //don't need to decode again
@@ -348,7 +348,7 @@ void tNetSession::rawsend(tUnetUruMsg *msg)
 	DBG(9,"After the Sendto call...\n");
 	delete[] buf2;
 	delete mbuf;
-	DBG(8,"returning from uru_net_send RET:%Zi\n",msize);
+	DBG(8,"returning from uru_net_send RET:%zi\n",msize);
 }
 
 /** send a negotiation to the peer */
@@ -369,11 +369,11 @@ void tNetSession::negotiate() {
 
 /** process a recieved msg: put it in the rcvq, assemble fragments, create akcs */
 void tNetSession::processIncomingMsg(void * buf,size_t size) {
-	DBG(7,"Message of %Zi bytes\n",size);
+	DBG(7,"Message of %zi bytes\n",size);
 	assert(alcGetSelfThreadId() == alcGetMain()->threadId());
 	// check max packet size
 	if (size > maxPacketSz) { // catch impossible big messages
-		throw txProtocolError(_WHERE("[%s] Recieved a too big message of %Zi bytes\n",str().c_str(),size));
+		throw txProtocolError(_WHERE("[%s] Recieved a too big message of %zi bytes\n",str().c_str(),size));
 	}
 	//stamp
 	receive_stamp = net->getNetTime();
@@ -580,7 +580,7 @@ void tNetSession::acceptMessage(tUnetUruMsg *t)
 	if(rcv->fr_count==t->frt) {
 		size_t size = t->frt * frg_size + t->data.size();
 		if (rcv->data.size() != size)
-			throw txProtocolError(_WHERE("Expected a size of %Zd, got %Zd\n", size, rcv->data.size()));
+			throw txProtocolError(_WHERE("Expected a size of %zd, got %zd\n", size, rcv->data.size()));
 		// We are done!
 		rcv->data.rewind();
 		rcv->cmd=rcv->data.get16();
@@ -854,7 +854,7 @@ tNetTimeBoolPair tNetSession::processSendQueues()
 							tNetEvent *evt=new tNetEvent(this,UNET_TIMEOUT);
 							net->addEvent(evt);
 						} else {
-							DBG(5, "%s sending a %Zi byte acked message %f after time\n", str().c_str(), curmsg->size(), net->passedTimeSince(curmsg->timestamp));
+							DBG(5, "%s sending a %zi byte acked message %f after time\n", str().c_str(), curmsg->size(), net->passedTimeSince(curmsg->timestamp));
 							cur_size += curmsg->size();
 							send_stamp=curmsg->snt_timestamp=net->getNetTime();
 							rawsend(curmsg);
@@ -875,11 +875,11 @@ tNetTimeBoolPair tNetSession::processSendQueues()
 							net->err->log("%s Dropped a 0x00 packet due to unaceptable msg time %f,%f,%f\n",
 										str().c_str(),msg_timeout,net->passedTimeSince(curmsg->timestamp),rtt);
 						} else if(curmsg->bhflags == 0x00 && (sndq.size() > static_cast<size_t>((minTH + random()%(maxTH-minTH)))) ) {
-							net->err->log("%s Dropped a 0x00 packet due to a big queue (%Zd messages)\n", str().c_str(), sndq.size());
+							net->err->log("%s Dropped a 0x00 packet due to a big queue (%zd messages)\n", str().c_str(), sndq.size());
 						}
 						//end prob drop
 						else {
-							DBG(5, "%s sending a %Zi byte non-acked message %f after time\n", str().c_str(), curmsg->size(), net->passedTimeSince(curmsg->timestamp));
+							DBG(5, "%s sending a %zi byte non-acked message %f after time\n", str().c_str(), curmsg->size(), net->passedTimeSince(curmsg->timestamp));
 							cur_size += curmsg->size();
 							rawsend(curmsg);
 							send_stamp=net->getNetTime();

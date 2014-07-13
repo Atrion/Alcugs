@@ -244,7 +244,7 @@ namespace alc {
 	
 	void tvCreatableStream::asHtml(tLog *log, bool shortLog)
 	{
-		log->print("Size: %Zd<br />\n", size);
+		log->print("Size: %zd<br />\n", size);
 		tSBuf buf = getData();
 		// the format of the content depends on the ID
 		switch (id) {
@@ -684,7 +684,7 @@ namespace alc {
 			if (flagB & MText_1) log->print("<b>Text_1:</b> %s<br />\n", text1.c_str());
 			if (flagB & MText_2) log->print("<b>Text_2:</b> %s<br />\n", text2.c_str());
 			if (flagB & MBlob1) {
-				log->print("<b>Blob1:</b> Size: %Zd<br />\n", blob1.size());
+				log->print("<b>Blob1:</b> Size: %zd<br />\n", blob1.size());
 				if (!blob1.isEmpty()) blobAsHtml(log, blob1);
 			}
 			if (flagB & MBlob2) log->print("<b>Blob2:</b> Size: 0<br />\n"); // blob2 is always empty
@@ -917,7 +917,7 @@ namespace alc {
 			delete buf;
 		}
 		else if (t.tell()-startPos != realSize)
-			throw txProtocolError(_WHERE("Size mismatch (the packet says %d but it is %Zd)",realSize,t.tell()-startPos));
+			throw txProtocolError(_WHERE("Size mismatch (the packet says %d but it is %zd)",realSize,t.tell()-startPos));
 		
 		// get remaining info (which is always uncompressed)
 		if (task) {

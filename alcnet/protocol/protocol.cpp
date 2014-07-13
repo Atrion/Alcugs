@@ -271,7 +271,7 @@ void tUnetUruMsg::store(tBBuf &t) {
 	cps=t.get32();
 	uint32_t dsize=t.get32();
 	if(dsize==0) throw txUnexpectedData(_WHERE("A zero sized message!?"));
-	if (t.tell() != hsize) throw txUnexpectedData(_WHERE("Header size mismatch, %Zd != %Zd", t.tell(), hsize));
+	if (t.tell() != hsize) throw txUnexpectedData(_WHERE("Header size mismatch, %zd != %zd", t.tell(), hsize));
 	// done with the header - read data and check size
 	data.clear();
 	if(bhflags & UNetAckReply) {

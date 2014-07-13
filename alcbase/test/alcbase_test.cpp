@@ -521,7 +521,7 @@ void alctypes_part4() {
 	assert(test2.size() == 4);
 	
 	// find
-	printf("%Zi\n", tString("hiWorld").find("iW"));
+	printf("%zi\n", tString("hiWorld").find("iW"));
 	assert(tString("hiWorld").find("iW") == 1);
 	assert(tString("hiWorldW").find("W") == 2);
 	assert(tString("hiWorldW").find("Wdgdg") == npos);
@@ -589,15 +589,13 @@ void alctypes_part5() {
 	tString test("/path/to/something.txt");
 	assert(test == test.c_str());
 
-	char mychar;
-	
 	assert(test.getAt(0)=='/');
 	assert(test.getAt(1)=='p');
 	assert(test.getAt(3)=='t');
 	assert(test.getAt(0)=='/');
 	try {
-		mychar=test.getAt(100);
-		throw txBase("Expected OutofRange got "+mychar);
+		test.getAt(100);
+		throw txBase("Expected OutOfRange");
 	} catch(txOutOfRange) {
 	}
 	

@@ -52,7 +52,9 @@
 //udp packet max buffer size (0xFFFF = 65535) - no packet should be bigger.
 static const size_t INC_BUF_SIZE = 0xFFFF;
 
+#ifndef NDEBUG
 static const double timeTolerance = 0.05; // the non-sleeping operations may take up to 50 milliseconds
+#endif
 
 namespace alc {
 	

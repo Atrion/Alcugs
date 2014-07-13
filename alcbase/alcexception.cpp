@@ -113,7 +113,7 @@ tString txBase::printBacktrace(void *const* bt, unsigned int size) {
 	tString btPrinted;
 	btPrinted.printf("Backtrace with %u levels:\n",size);
 	for(size_t i=0; i<size; i++) {
-		btPrinted.printf("#%02Zd  %s at %s\n", i, getReadableFunctionName(btStrings[i]).c_str(), getReadableAddress(bt[i]).c_str());
+		btPrinted.printf("#%02zd  %s at %s\n", i, getReadableFunctionName(btStrings[i]).c_str(), getReadableAddress(bt[i]).c_str());
 	}
 	free(btStrings);
 	

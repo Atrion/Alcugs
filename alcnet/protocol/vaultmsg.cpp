@@ -63,7 +63,7 @@ namespace alc {
 	tString tmVault::additionalFields(tString dbg) const
 	{
 		dbg.nl();
-		dbg.printf(" Size of attached message: %Zd Bytes", message.size());
+		dbg.printf(" Size of attached message: %zd Bytes", message.size());
 		return dbg;
 	}
 	
@@ -150,7 +150,7 @@ namespace alc {
 	tString tmPublicAgeList::additionalFields(tString dbg) const
 	{
 		dbg.nl();
-		dbg.printf(" Number of ages: %Zd", ages.size());
+		dbg.printf(" Number of ages: %zd", ages.size());
 		return dbg;
 	}
 	
@@ -364,7 +364,7 @@ namespace alc {
 	tString tmVaultPlayerList::additionalFields(tString dbg) const
 	{
 		dbg.nl();
-		dbg.printf(" number of avatars: %Zd, URL: %s", avatars.size(), url.c_str());
+		dbg.printf(" number of avatars: %zd, URL: %s", avatars.size(), url.c_str());
 		return dbg;
 	}
 	

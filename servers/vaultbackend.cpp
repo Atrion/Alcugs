@@ -49,7 +49,7 @@ namespace alc {
 	{
 		delete vaultDB;
 		if (vmgrs.size() > 0)
-			log.log("ERR: The vault server is quitting and I still have %Zd vmgrs left\n", vmgrs.size());
+			log.log("ERR: The vault server is quitting and I still have %zd vmgrs left\n", vmgrs.size());
 	}
 	
 	void tVaultBackend::applyConfig(void)
@@ -539,7 +539,7 @@ namespace alc {
 			case VNegotiateManifest:
 			{
 				if (tableSize != 1)
-					throw txProtocolError(_WHERE("Getting %Zd manifests at once is not supported\n", tableSize));
+					throw txProtocolError(_WHERE("Getting %zd manifests at once is not supported\n", tableSize));
 				uint32_t mgr = table.get32();
 				log.log("Vault Negoiate Manifest (MGR: %d) for %d\n", mgr, ki);
 				tvManifest **mfs;
@@ -611,7 +611,7 @@ namespace alc {
 			case VFetchNode:
 			{
 				if (tableSize <= 0) break;
-				log.log("Vault Fetch Node (fetching %Zd nodes) for %d\n", tableSize, ki);
+				log.log("Vault Fetch Node (fetching %zd nodes) for %d\n", tableSize, ki);
 				tvNode **nodes;
 				size_t nNodes;
 				vaultDB->fetchNodes(table, tableSize, &nodes, &nNodes);
