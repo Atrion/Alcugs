@@ -45,7 +45,7 @@
 2.a) Downloading the source code:
      First, fetch the sources:
      <bash>cd # switch to our home directory
-     git clone git://gitorious.org/alcugs/alcugs.git alcugs-src</bash>
+     git clone https://gitlab.com/diafero/alcugs.git alcugs-src</bash>
 
 2.b) Compiling it:
      Now that we got the sources, let's compile them (cmake requires us to do that in a different directory)
@@ -243,7 +243,7 @@ Finally, you are nearing the point where you can log in to your Shard :)
 
      Try to make a new player and start the game (please note that importing an offline savegame is not supported!). If you can't get to your initial avatar customization from here, but "Fetching Player" and "Finding Age" work fine, you are probably having issues with creating the game server.
 
-     If nothing helps, you can ask for help at http://forum.guildofwriters.org/ or http://forum.almlys.org/ . Please describe in detail what you did, what happened and what you expected to happen instead!
+     If nothing helps, you can ask for help at http://forum.guildofwriters.org/ . Please describe in detail what you did, what happened and what you expected to happen instead!
 
 =================================
 = Part 7: Further configuration =
