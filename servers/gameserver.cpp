@@ -289,6 +289,7 @@ namespace alc {
 	
 	void tUnetGameServer::processKICommand(const tString &text, tNetSession *u)
 	{
+		log->log("%s sent KI command: %s\n", u->str().c_str(), text.c_str());
 		// process server-side commands
 		if (text == "/!ping") sendKIMessage("You are still online :)", u);
 		else if (text == "/!silentping") sendKIMessage("/!silentpong", u);
