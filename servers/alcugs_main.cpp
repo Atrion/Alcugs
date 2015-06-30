@@ -205,7 +205,7 @@ int main(int argc, char * argv[]) {
 		tString var;
 		var=cfg->getVar("stop","global");
 		if(!var.isEmpty() && var.asInt()) {
-			alcMain.std()->log("INFO: Administratively disabled! Please read the Alcugs configuration file (usually uru.conf) carefully to solve this issue.\n");
+			alcMain.std()->log("INFO: Administratively disabled! \"stop\" is set in the Alcugs configuration file (usually uru.conf). Please read that file carefully to solve this issue.\n");
 			return -1;
 		}
 		//daemon?
