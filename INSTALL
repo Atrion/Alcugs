@@ -72,7 +72,7 @@
 
      Some more manual work needs to be done here as Cyan for some reason has duplicate definitions of some SDL structs in their files, which the Alcugs server does not accept. However, this applies only to some TPOTS installations
      * First, check if you have the "grsnClimb.sdl" file. If yes, follow these steps:
-     ** You have to manually edit the file "Garrison.sdl" using PlasmaShop or UruFun (see http://www.guildofwriters.com/wiki/Free_and_useful_tools_to_help_in_Age_writing#PRP_Tools)
+     ** You have to manually edit the file "Garrison.sdl" using PlasmaShop or UruFun (see https://www.guildofwriters.org/wiki/Free_and_useful_tools_to_help_in_Age_writing#PRP_Tools)
      ** Scroll down to the line saying "sdl for climbing to 2nd floor in grsn"
      ** Remove everything below this line, save the file and upload it
 
@@ -164,16 +164,16 @@
 = Part 4: Setting up a basic client =
 =====================================
 4.a) Prerequisites:
-     No matter which way you choose, you will need:
+     No matter which way you choose, you will need both of:
      * A clean TPOTS or CC installation (no hacks or patches applied)
      * A clean UU installation (just the UU patcher and maybe D'mala updates applied, but no further hacks like the UserKI)
-     ** To get such an installation, install ABM without TPOTS, and then apply the UU patcher for ABM (http://www.the-deep-island.de/uru-tools/UU-Patcher_v0.38.9_for_Uru_ABM.7z, http://www.zibland.com/stuff/uuabm.exe)
+     ** To get such an UU installation, install ABM without TPOTS, and then apply the UU patcher for ABM (http://www.the-deep-island.de/uru-tools/UU-Patcher_v0.38.9_for_Uru_ABM.7z)
+     With both of these clients around, you can now convert your TPOTS/CC installation into an Alcugs client using either the Offline KI, or the Alcugs patcher.
 
 4.b) Using the Offline KI:
-     Installing the Offline KI version 3.0 or later (http://www.guildofwriters.com/wiki/Offline_KI) on your Alcugs Client as it fixes a lot of issues you would encounter with a bare Alcugs Patcher installation. To actually make your POTS installation an Alcugs Client, copy the file "UruSetup.exe" from your UU installation to the POTS folder.
+     Install the Offline KI version 3.0 or later (https://www.guildofwriters.org/wiki/Offline_KI) on your Alcugs Client as it fixes a lot of issues you would encounter with a bare Alcugs Patcher installation. To actually make your TPOTS installation an Alcugs Client, copy as a final step the file "UruSetup.exe" from your UU installation to the POTS folder.
 
-4.c) Using the Alcugs Patcher
-
+4.c) Using the Alcugs Patcher:
      In case you don't want the Offline KI in your client, you can use Alcugs Patcher (http://www.the-deep-island.de/uru-tools/AlcugsPatcher_v1.0d.zip), which is a simple application copying and patching some files from UU to POTS to bring the latter online. After preparing the two installations, just run it and follow the steps as described by the wizard.
 
 =====================================
@@ -181,16 +181,16 @@
 =====================================
 5)   A dataserver:
      Unfortunately, you are still not done with the setup. The client needs a bare minimal dataserver or it will refuse to start up.
-     First of all, you have to disable the "big" dataserver in the client. Use an application like PlasmaShop (http://guildofwriters.com/wiki/PlasmaShop) to edit the "plClientSetup.cfg" file. You will find a line in there starting with "UseDataserver" which you change to "UseDataserver false". That does not completely disable the usage of the dataserver though, it is just reduced a lot.
+     First of all, you have to disable the "big" dataserver in the client. Use an application like PlasmaShop (https://guildofwriters.org/wiki/PlasmaShop) to edit the "plClientSetup.cfg" file. (You can find this file in the root of your fresh Alcugs Client.) You will find a line in there starting with "UseDataserver" which you change to "UseDataserver false". That does not completely disable the usage of the dataserver though, it is just reduced a lot.
      To make your client use the dataserver you are about to create, open "serverconfig.ini" and enter the host name or IP adress of your dataserver.
 
-     To set up the dataserver, which is just a certain folder structure available via http, you first need a webserver like apache. I suggest installing the "apache2" packet which usually does what you want. Afterwards, log in to your server, and do the following:
+     To set up the dataserver, which is just a certain folder structure available via HTTP, you first need a webserver like apache. I suggest installing the "apache2" packet which usually does what you want. Afterwards, log in to your server, and do the following:
      <bash>
         cd /var/www # this is usually the webserver root directory
         mkdir -p install/Expanded # create the necessary directory
         touch install/Expanded/ClientSetupNew.mfs # create an empty file
      </bash>
-     That should be enough to let your client getting past the initial dataserver check, so that you can log in to your alcugs server.
+     That should be enough to let your client getting past the initial dataserver check, so that you can log in to your Alcugs server.
 
      If you want to learn more about Dataservers and use them to auto-upate your explorers' clients, check the DATASERVER file.
 
