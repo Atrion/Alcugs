@@ -106,7 +106,7 @@
      You will have to hand-edit the uru.conf file:
      <bash>nano etc/uru.conf # or your favourite editor</bash>
 
-     Change the settings in each section as follows. In this file ";" is a comment character in addition to "#". You will have to uncomment some things if you want to overwrite the default value. Of course you can also change configuration options which are not listed here (see the [[AlcugsConfig|full configuration option list]] - but make sure you _know what you do_! I will only explain what is mandatory to get the Shard running.
+     Change the settings in each section as follows. In this file ";" is a comment character in addition to "#". You will have to uncomment some things if you want to overwrite the default value. Of course you can also change configuration options which are not listed here (see the full configuration option list in the file "CONFIG" - but make sure you _know what you do_! I will only explain what is mandatory to get the Shard running.
 
      First, the IP settings in [global]:
      <config>
