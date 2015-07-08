@@ -847,7 +847,13 @@ tNetTimeBoolPair tNetSession::processSendQueues()
 							decreaseCabal(curmsg->tries > 1); // if even a re-send got lost, pull the emergency break!
 						}
 						
-						if (curmsg->tries >= resendLimit) {
+						/* Choose higher timeout and limits for client connections - the client's netcore sometimes seems
+						 * to be blocked long beyond any reasonable time (even when *sending* a whole lot of
+						 * packets, e.g. when linking to Noloben, it does not reply to acks). Hence we add some more retries,
+						 * and we extend the timeouts per retry. */
+						const double client_slack = authenticated ? 1.5 : 1.0;
+						
+						if (curmsg->tries >= resendLimit*client_slack) {
 							it = sndq.eraseAndDelete(it); // this is the next one
 							//timeout event
 							net->sec->log("%s Timeout (didn't ack a packet)\n", str().c_str());
@@ -859,11 +865,7 @@ tNetTimeBoolPair tNetSession::processSendQueues()
 							send_stamp=curmsg->snt_timestamp=net->getNetTime();
 							rawsend(curmsg);
 							curmsg->tries++;
-							double curmsg_timeout = msg_timeout*curmsg->tries; // increase timeout for further re-sends
-							/* choose higher timeout for client connections - the clients netcore sometimes seems
-							* to be blocked long beyond any reasonable time (even when *sending* a whole lot of
-							* packets, e.g. when linking to Noloben, it does not reply to acks). */
-							if (authenticated) curmsg_timeout *= 1.5;
+							double curmsg_timeout = msg_timeout*curmsg->tries*client_slack; // increase timeout for further re-sends
 							curmsg->timestamp=net->getNetTime() + curmsg_timeout;
 							if (timeout > curmsg_timeout) timeout = curmsg_timeout; // be sure to check this message on time
 							++it; // go on
