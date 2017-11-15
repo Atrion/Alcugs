@@ -28,7 +28,7 @@
 
 1.c) Dependencies:
      You will also need development packages for:
-     * mysql (Debian packet: libmysqlclient15-dev)
+     * mysql (Debian packet: libmysqlclient-dev)
      * zlib (Debian packet: zlib1g-dev)
 
 1.d) Alcugs user:
